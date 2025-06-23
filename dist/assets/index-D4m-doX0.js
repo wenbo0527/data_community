@@ -1,0 +1,1 @@
+import{_ as o,c,o as s,h as t,s as a,v as _}from"./index-CsgcdrY7.js";const d={},n=e=>(a("data-v-5bd3099c"),e=e(),_(),e),r={class:"exploration-container"},p=n(()=>t("h1",null,"数据探索",-1)),i=[p];function h(e,l){return s(),c("div",r,i)}const u=o(d,[["render",h],["__scopeId","data-v-5bd3099c"]]);export{u as default};

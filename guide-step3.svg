@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
+  <rect width="300" height="200" fill="#f2f3f5"/>
+  <text x="150" y="100" font-family="Arial" font-size="16" fill="#1d2129" text-anchor="middle">数据管理与权限</text>
+</svg>
