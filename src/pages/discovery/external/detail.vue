@@ -122,37 +122,98 @@
       @cancel="handleEditCancel"
       @ok="handleEditSubmit"
       title="编辑信息"
-      width="600px"
+      width="800px"
     >
-      <a-form :model="editForm" ref="editFormRef" :rules="editFormRules">
-        <a-form-item field="category" label="产品分类" required>
-          <a-select v-model="editForm.category">
-            <a-option value="核验类">核验类</a-option>
-            <a-option value="评分类">评分类</a-option>
-            <a-option value="标签类">标签类</a-option>
-            <a-option value="名单类">名单类</a-option>
-            <a-option value="价格评估类">价格评估类</a-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item field="interfaceType" label="接口类型" required>
-          <a-radio-group v-model="editForm.interfaceType">
-            <a-radio value="主接口">主接口</a-radio>
-            <a-radio value="备用接口">备用接口</a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item field="tableName" label="落库表名" required>
-          <a-input v-model="editForm.tableName" placeholder="请输入落库表名" />
-        </a-form-item>
-        <a-form-item field="supplier" label="供应商" required>
-          <a-input v-model="editForm.supplier" placeholder="请输入供应商" />
-        </a-form-item>
-        <a-form-item field="price" label="单价" required>
-          <a-input-number v-model="editForm.price" placeholder="请输入单价" :min="0" :precision="3" />
-        </a-form-item>
-        <a-form-item field="description" label="描述">
-          <a-textarea v-model="editForm.description" placeholder="请输入描述信息" />
-        </a-form-item>
-      </a-form>
+      <a-tabs default-active-key="1">
+        <a-tab-pane key="1" title="产品信息">
+          <a-card :bordered="false">
+            <a-form :model="editForm" ref="editFormRef" :rules="editFormRules">
+              <a-form-item field="dataName" label="产品名称">
+                <a-input v-model="dataDetail.dataName" disabled />
+              </a-form-item>
+              <a-form-item field="dataType" label="数源种类" required>
+                <a-select v-model="editForm.dataType" placeholder="请选择数源种类">
+                  <a-option value="核验类">核验类</a-option>
+                  <a-option value="评分类">评分类</a-option>
+                  <a-option value="标签类">标签类</a-option>
+                </a-select>
+              </a-form-item>
+              <a-form-item field="subType" label="数源分类" required>
+                <a-select v-model="editForm.subType" placeholder="请选择数源分类">
+                  <a-option value="身份核验类">身份核验类</a-option>
+                  <a-option value="信用评分">信用评分</a-option>
+                  <a-option value="用户画像">用户画像</a-option>
+                </a-select>
+              </a-form-item>
+              <a-form-item field="supplier" label="供应商" required>
+                <a-input v-model="editForm.supplier" placeholder="请输入供应商" />
+              </a-form-item>
+              <a-form-item field="price" label="单价" required>
+                <a-input-number v-model="editForm.price" :min="0" :precision="2" placeholder="请输入单价" />
+              </a-form-item>
+              <a-form-item field="description" label="产品描述" required>
+                <a-textarea v-model="editForm.description" placeholder="请输入产品描述" />
+              </a-form-item>
+            </a-form>
+          </a-card>
+        </a-tab-pane>
+        
+        <a-tab-pane key="2" title="已注册接口">
+          <a-tabs>
+            <a-tab-pane key="2-1" title="主接口">
+              <a-form :model="editForm" ref="editFormRef" :rules="editFormRules">
+                <a-form-item field="tableName" label="落库表名" required>
+                  <a-select v-model="editForm.tableName" placeholder="请选择已注册接口">
+                    <a-option v-for="(item, index) in registeredInterfaces" :key="index" :value="item.value">
+                      {{ item.label }}
+                    </a-option>
+                  </a-select>
+                </a-form-item>
+                <a-form-item field="callCost" label="调用费用(元/次)" required>
+                  <a-input-number v-model="editForm.callCost" :min="0" :precision="2" placeholder="请输入调用费用" />
+                </a-form-item>
+                <a-form-item field="dataManagement" label="数据管理" required>
+                  <a-select v-model="editForm.dataManagement" placeholder="请选择数据管理方式">
+                    <a-option value="自动">自动</a-option>
+                    <a-option value="手动">手动</a-option>
+                  </a-select>
+                </a-form-item>
+              </a-form>
+            </a-tab-pane>
+            
+            <a-tab-pane key="2-2" title="备用接口">
+          <a-form :model="editForm" ref="editFormRef" :rules="editFormRules">
+            <a-form-item field="backupTableName" label="落库表名" required>
+              <a-input v-model="editForm.backupTableName" placeholder="请输入落库表名" />
+            </a-form-item>
+            <a-form-item field="backupCallCost" label="调用费用(元/次)" required>
+                  <a-input-number v-model="editForm.backupCallCost" :min="0" :precision="2" placeholder="请输入调用费用" />
+                </a-form-item>
+                <a-form-item field="backupDataManagement" label="数据管理" required>
+                  <a-select v-model="editForm.backupDataManagement" placeholder="请选择数据管理方式">
+                    <a-option value="自动">自动</a-option>
+                    <a-option value="手动">手动</a-option>
+                  </a-select>
+                </a-form-item>
+          </a-form>
+        </a-tab-pane>
+        <a-tab-pane key="2-3" title="新增备用接口">
+          <a-table :columns="backupInterfaceColumns" :data="editForm.backupInterfaces">
+            <template #operations="{ record, index }">
+              <a-space>
+                <a-button type="text" size="small" @click="handleEditBackupInterface(index)">编辑</a-button>
+                <a-button type="text" size="small" status="danger" @click="handleRemoveBackupInterface(index)">删除</a-button>
+              </a-space>
+            </template>
+          </a-table>
+          <a-button type="primary" @click="handleAddBackupInterface" style="margin-top: 16px">
+            <template #icon><icon-plus /></template>
+            添加备用接口
+          </a-button>
+        </a-tab-pane>
+        </a-tabs>
+        </a-tab-pane>
+          </a-tabs>
     </a-drawer>
   </a-layout>
 </template>
@@ -163,7 +224,43 @@ import { useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconLeft, IconEdit, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
 
+// 已注册接口列表
+const registeredInterfaces = ref([
+  { value: 'interface1', label: '主接口1' },
+  { value: 'interface2', label: '主接口2' },
+  { value: 'interface3', label: '主接口3' }
+])
+
 const route = useRoute()
+
+// 备用接口表格列配置
+const backupInterfaceColumns = [
+  {
+    title: '接口名称',
+    dataIndex: 'name'
+  },
+  {
+    title: '接口地址',
+    dataIndex: 'url'
+  },
+  {
+    title: '操作',
+    slotName: 'operations'
+  }
+]
+
+// 添加备用接口
+const handleAddBackupInterface = () => {
+  editForm.value.backupInterfaces.push({
+    name: '',
+    url: ''
+  })
+}
+
+// 删除备用接口
+const handleRemoveBackupInterface = (index) => {
+  editForm.value.backupInterfaces.splice(index, 1)
+}
 
 // 计算基本信息
 const combinedBasicInfo = computed(() => [
@@ -244,6 +341,8 @@ const dataDetail = ref({
   requestMethod: 'POST',
   testUrl: 'https://test-api.example.com/api/v2/verify/phone',
   productionUrl: 'https://api.example.com/api/v2/verify/phone',
+  backupTestUrl: '',
+  backupProductionUrl: '',
   timeout: 1.5,
   retryCount: 2,
   cacheTime: 1800
@@ -254,20 +353,31 @@ const editDrawerVisible = ref(false)
 const editFormRef = ref(null)
 const editForm = ref({
   category: '',
-  interfaceType: '',
+  dataType: '',
+  interfaceType: '主接口',
   tableName: '',
+  callCost: 0,
   supplier: '',
   price: 0,
-  description: ''
+  description: '',
+  backupTestUrl: '',
+  backupProductionUrl: ''
 })
 
 // 表单校验规则
 const editFormRules = {
-  category: [{ required: true, message: '请选择产品分类' }],
+  category: [{ required: true, message: '请选择数源种类' }],
+  dataType: [{ required: true, message: '请选择数源分类' }],
   interfaceType: [{ required: true, message: '请选择接口类型' }],
   tableName: [{ required: true, message: '请输入落库表名' }],
   supplier: [{ required: true, message: '请输入供应商' }],
-  price: [{ required: true, message: '请输入单价' }]
+  price: [{ required: true, message: '请输入单价' }],
+  callCost: [
+    { required: true, message: '请输入调用费用' },
+    { type: 'number', min: 0, message: '费用不能为负数' }
+  ],
+  backupTestUrl: [{ required: false, message: '请输入备用测试环境地址' }],
+  backupProductionUrl: [{ required: false, message: '请输入备用生产环境地址' }]
 }
 
 

@@ -16,44 +16,61 @@
     </div>
 
     <a-table :data="tableData" :loading="loading" :pagination="pagination" @page-change="onPageChange"
-      @page-size-change="onPageSizeChange">
+      @page-size-change="onPageSizeChange" :bordered="true" :stripe="true">
       <template #columns>
-        <a-table-column title="券库存ID" data-index="id" />
-        <a-table-column title="券名称" data-index="name">
+        
+        <a-table-column title="券名称" data-index="name" :width="220">
           <template #cell="{ record }">
-            <a-link @click="handleViewDetail(record)" style="color: rgb(var(--primary-6))">
-              {{ record.name }}
-            </a-link>
+            <a-tooltip :content="record.name" position="top">
+              <a-space>
+                <a-tag :color="record.type === '满减券' ? 'blue' : 'green'">
+                  {{ record.type }}
+                </a-tag>
+                <a-link @click="handleViewDetail(record)" style="color: rgb(var(--primary-6)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">
+                  {{ record.name }}
+                </a-link>
+              </a-space>
+            </a-tooltip>
           </template>
         </a-table-column>
-        <a-table-column title="券类型" data-index="type">
-          <template #cell="{ record }">
-            <a-tag :color="record.type === '满减券' ? 'blue' : 'green'">
-              {{ record.type }}
-            </a-tag>
-          </template>
-        </a-table-column>
-        <a-table-column title="库存" data-index="stock" />
-        <a-table-column title="未领取" data-index="unclaimed" />
-        <a-table-column title="已领取" data-index="claimed" />
-        <a-table-column title="已锁定" data-index="locked" />
-        <a-table-column title="已核销" data-index="verified" />
-        <a-table-column title="已过期" data-index="expired" />
-        <a-table-column title="已作废" data-index="invalid" />
-        <a-table-column title="有效期" data-index="validity">
-          <template #cell="{ record }">
-            {{ new Date(record.startTime).toISOString().split('T')[0] }} - {{ new Date(record.endTime).toISOString().split('T')[0] }}
-          </template>
-        </a-table-column>
-        <a-table-column title="状态" data-index="status">
+        <a-table-column title="状态" data-index="status" :width="150" align="center" :filterable="{ filters: [
+            { text: '草稿', value: '草稿' },
+            { text: '待审核', value: '待审核' },
+            { text: '生效中', value: '生效中' },
+            { text: '已暂停', value: '已暂停' },
+            { text: '已失效', value: '已失效' }
+          ] }">
           <template #cell="{ record }">
             <a-tag :color="getStatusColor(record.status)">
               {{ record.status }}
             </a-tag>
           </template>
         </a-table-column>
+        
+        <a-table-column title="库存" data-index="stock" :width="120" align="center">
+          <template #cell="{ record }">
+            <a-tooltip :content="`初始化: ${record.unclaimed || 0}\n已领取: ${record.claimed || 0}\n已锁定: ${record.locked || 0}\n已核销: ${record.used || 0}\n已过期: ${record.expired || 0}\n已作废: ${record.invalid || 0}`" position="top" :mouse-enter-delay="100" :mouse-leave-delay="100">
+              <span style="cursor: pointer;">{{ record.stock }}</span>
+            </a-tooltip>
+          </template>
+        </a-table-column>
+        <a-table-column title="下发比例" :width="150" align="center">
+          <template #cell="{ record }">
+            {{ (record.claimed / record.stock * 100).toFixed(2) }}%
+          </template>
+        </a-table-column>
+        <a-table-column title="有效期" data-index="validity" :width="220">
+          <template #cell="{ record }">
+            <a-tooltip :content="`${new Date(record.startTime).toISOString().split('T')[0]} - ${new Date(record.endTime).toISOString().split('T')[0]}`" position="top">
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">
+                {{ new Date(record.startTime).toISOString().split('T')[0] }} - {{ new Date(record.endTime).toISOString().split('T')[0] }}
+              </span>
+            </a-tooltip>
+          </template>
+        </a-table-column>
+        
 
-        <a-table-column title="录入员" data-index="operator">
+        <a-table-column title="录入员" data-index="operator" :width="150" :filterable="{ filters: operatorOptions.map(op => ({ text: op.name, value: op.id })) }">
           <template #cell="{ record }">
             {{ record.operator }}
           </template>
@@ -236,7 +253,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconPlus, IconInfoCircle } from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@/store'
@@ -443,9 +460,22 @@ const fetchData = async () => {
   }
 }
 
+// 监听路由参数
+const route = useRoute()
+
 onMounted(() => {
   fetchData()
   fetchTemplateOptions()
+  
+  // 检查路由参数，显示创建弹窗
+  if (route.query.showCreateModal === 'true') {
+    showCreateModal.value = true
+    // 如果有模板ID和名称，自动填充
+    if (route.query.templateId) {
+      formData.value.templateId = route.query.templateId
+      formData.value.name = route.query.templateName
+    }
+  }
 })
 
 onUnmounted(() => {

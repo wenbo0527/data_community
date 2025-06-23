@@ -34,7 +34,7 @@
           </template>
         </a-table-column>
         <a-table-column title="包含券种类" data-index="couponTypes" :width="150" />
-        <a-table-column title="券数量" data-index="couponCount" :width="120" align="center" />
+        <a-table-column title="可下发券数量" data-index="couponCount" :width="120" align="center" />
         <a-table-column title="创建时间" data-index="createTime" :width="180" />
         <a-table-column title="状态" data-index="status" :width="120" align="center">
           <template #cell="{ record }">

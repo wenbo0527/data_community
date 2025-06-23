@@ -162,8 +162,10 @@ const handleCreate = () => {
 }
 
 const handleViewResult = (record) => {
-  // TODO: 实现查看结果功能
-  Message.info(`查看计划结果：${record.planName}`)
+  router.push({
+    path: '/management/accompany/result',
+    query: { planName: record.planName }
+  })
 }
 
 const handleRemark = (record) => {

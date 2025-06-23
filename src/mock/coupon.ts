@@ -75,6 +75,29 @@ export const approvalFlowMockData = [
 // 券模版数据
 export const templateMockData = [
   {
+    id: 5,
+    name: '长期免息券模版',
+    type: 'interest_free',
+    status: '生效中',
+    createTime: '2024-01-05',
+    creator: '王五',
+    approvalStatus: '审批通过',
+    validityPeriodType: 'unlimited',
+    firstUseOnly: false,
+    stackable: false,
+    products: ['personal_loan', 'SELF_APP'],
+    repaymentMethods: ['equal_principal', 'equal_installment'],
+    loanPeriodType: 'fixed',
+    loanPeriod: 60,
+    loanAmountMin: 20000,
+    loanAmountMax: 150000,
+    useChannels: ['app', 'miniprogram', 'h5'],
+    creditChannels: ['app', 'miniprogram'],
+    description: '长期免息活动券',
+    interestFreeDays: 60,
+    maxInterestFreeAmount: 150000
+  },
+  {
     id: 1,
     name: '首借30天免息券模版',
     type: 'interest_free',

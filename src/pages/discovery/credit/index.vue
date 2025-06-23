@@ -255,7 +255,3 @@ const filteredData = computed(() => {
   margin-bottom: 16px;
 }
 </style>
-
-<template #englishName="{ record }">
-  <a-link @click="handleView(record)">{{ record.englishName }}</a-link>
-</template>

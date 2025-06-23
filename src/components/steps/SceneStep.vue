@@ -38,6 +38,59 @@
         <template #ratio="{ record }">
           {{ calculateRatio(record.amount, product.totalAmount) }}%
         </template>
+        <template #amountCondition="{ record }">
+          <div class="condition-selects">
+            <a-select
+              v-model="record.selectedCondition"
+              placeholder="选择条件"
+              class="condition-type-select"
+              style="width: 100px"
+            >
+              <a-option value="amount">额度</a-option>
+              <a-option value="period">期数</a-option>
+              <a-option value="riskLevel">风险等级</a-option>
+            </a-select>
+            <a-select
+              v-model="record.amountCondition"
+              placeholder="选择关系"
+              class="condition-select"
+              @change="(value: string) => updateAmountCondition(value, record, product)"
+            >
+              <a-option v-for="option in amountConditionOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </a-option>
+            </a-select>
+            <div class="value-input" v-if="record.amountCondition">
+              <template v-if="record.amountCondition === 'range'">
+                <a-input
+                  v-model="record.minAmount"
+                  placeholder="最小值"
+                  class="condition-input"
+                  @change="updateAmountRange(record, product)"
+                  @update:model-value="(val: string) => record.minAmount = Number(val)"
+                />
+                <span class="separator">-</span>
+                <a-input
+                  v-model="record.maxAmount"
+                  placeholder="最大值"
+                  class="condition-input"
+                  @change="updateAmountRange(record, product)"
+                  @update:model-value="(val: string) => record.maxAmount = val ? Number(val) : null"
+                />
+              </template>
+              <template v-else>
+                <a-input
+                  v-model="record.amountValue"
+                  :placeholder="getAmountPlaceholder(record.amountCondition)"
+                  class="condition-input"
+                  @change="updateAmountValue(record, product)"
+                  @update:model-value="(val: string) => record.amountValue = Number(val)"
+                />
+              </template>
+              
+            </div>
+          </div>
+        </template>
       </a-table>
       <div class="allocation-progress">
         <span class="progress-text">分配进度：{{ calculateProgress(product) }}%</span>
@@ -74,10 +127,39 @@ const sceneOptions = [
   { label: '支用通过', value: 'loan_pass' }
 ]
 
+const conditionFields = [
+  { label: '条件', value: 'condition' }
+]
+
+const amountConditionOptions = [
+  { label: '等于', value: 'eq' },
+  { label: '大于', value: 'gt' },
+  { label: '小于', value: 'lt' },
+  { label: '大于等于', value: 'gte' },
+  { label: '小于等于', value: 'lte' },
+  { label: '区间', value: 'range' }
+]
+
+const periodConditionOptions = [
+  { label: '等于', value: 'eq' },
+  { label: '大于', value: 'gt' },
+  { label: '小于', value: 'lt' },
+  { label: '大于等于', value: 'gte' },
+  { label: '小于等于', value: 'lte' },
+  { label: '区间', value: 'range' }
+]
+
+const riskLevelOptions = [
+  { label: '低风险', value: 'low' },
+  { label: '中风险', value: 'medium' },
+  { label: '高风险', value: 'high' }
+]
+
 const columns = [
-  { title: '场景', slotName: 'scene', width: 200 },
-  { title: '分配条数', slotName: 'amount', width: 200 },
-  { title: '分配比例', slotName: 'ratio', width: 200 }
+  { title: '场景', slotName: 'scene', width: 150 },
+  { title: '分配条数', slotName: 'amount', width: 150 },
+  { title: '分配比例', slotName: 'ratio', width: 150 },
+  { title: '条件', slotName: 'amountCondition', width: 300 }
 ]
 
 const getProductSceneData = (product: { scenes?: any[] }) => {
@@ -87,7 +169,12 @@ const getProductSceneData = (product: { scenes?: any[] }) => {
     return {
       sceneValue,
       sceneName,
-      amount: existingScene?.amount || 0,
+      amount: Number(existingScene?.amount || 0),
+      selectedField: 'amount',
+      amountCondition: existingScene?.amountCondition || '',
+      amountValue: Number(existingScene?.amountValue || 0),
+      minAmount: Number(existingScene?.minAmount || 0),
+      maxAmount: existingScene?.maxAmount || null,
       creditProducts: []
     }
   })
@@ -197,6 +284,98 @@ const handlePrev = () => {
   emit('prev')
 }
 
+const getAmountPlaceholder = (condition: string) => {
+  const placeholders = {
+    gt: '大于金额',
+    lt: '小于金额',
+    gte: '大于等于金额',
+    lte: '小于等于金额'
+  }
+  return placeholders[condition as keyof typeof placeholders] || '请输入金额'
+}
+
+const updateAmountCondition = (value: string, record: any, product: { scenes?: any[] }) => {
+  if (!product.scenes) {
+    product.scenes = []
+  }
+  
+  const existingSceneIndex = product.scenes.findIndex((s) => s.sceneValue === record.sceneValue)
+  
+  if (existingSceneIndex >= 0) {
+    product.scenes[existingSceneIndex].amountCondition = value
+  } else {
+    product.scenes.push({
+      ...record,
+      amountCondition: value
+    })
+  }
+}
+
+const updateSelectedCondition = (value: string, record: any, product: { scenes?: any[] }) => {
+  if (!product.scenes) {
+    product.scenes = []
+  }
+  
+  const existingSceneIndex = product.scenes.findIndex((s) => s.sceneValue === record.sceneValue)
+  
+  if (existingSceneIndex >= 0) {
+    product.scenes[existingSceneIndex].selectedCondition = value
+  } else {
+    product.scenes.push({
+      ...record,
+      selectedCondition: value
+    })
+  }
+}
+
+const updateAmountValue = (record: any, product: { scenes?: any[] }) => {
+  // 确保数值有效
+  if (record.amountValue < 0) {
+    record.amountValue = 0
+  }
+  updateSceneData(record, product)
+}
+
+const updateAmountRange = (record: any, product: { scenes?: any[] }) => {
+  // 确保最小额度不为负
+  if (record.minAmount < 0) {
+    record.minAmount = 0
+  }
+  // 确保最大额度不小于最小额度
+  if (record.maxAmount && record.maxAmount < record.minAmount) {
+    record.maxAmount = record.minAmount
+  }
+  updateSceneData(record, product)
+}
+
+const updateSceneData = (record: any, product: { scenes?: any[] }) => {
+  if (!product.scenes) {
+    product.scenes = []
+  }
+
+  const existingSceneIndex = product.scenes.findIndex((s) => s.sceneValue === record.sceneValue)
+  if (existingSceneIndex >= 0) {
+    const updatedScene = {
+      ...product.scenes[existingSceneIndex],
+      amountCondition: String(record.amountCondition),
+      amountValue: String(record.amountValue),
+      minAmount: String(record.minAmount),
+      maxAmount: record.maxAmount ? String(record.maxAmount) : null
+    }
+    product.scenes[existingSceneIndex] = updatedScene
+  } else {
+    product.scenes.push({
+      sceneValue: String(record.sceneValue),
+      sceneName: String(record.sceneName),
+      amount: String(record.amount),
+      amountCondition: String(record.amountCondition),
+      amountValue: String(record.amountValue),
+      minAmount: String(record.minAmount),
+      maxAmount: record.maxAmount ? String(record.maxAmount) : null
+    })
+  }
+}
+
 // 添加场景数据更新监听
 watch(() => props.formData.dataProducts, () => {
   console.log('场景数据更新:', JSON.parse(JSON.stringify(props.formData.dataProducts)))
@@ -204,6 +383,38 @@ watch(() => props.formData.dataProducts, () => {
 </script>
 
 <style scoped>
+.condition-selects {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.condition-select {
+  width: 120px;
+}
+
+.condition-label {
+  display: inline-block;
+  width: 40px;
+  line-height: 32px;
+  color: var(--color-text-2);
+}
+
+.value-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.value-input .separator,
+.value-input .unit {
+  color: var(--color-text-2);
+}
+
+.amount-range-input {
+  width: 120px;
+}
+
 .scene-step {
   padding: 24px;
 }
@@ -251,6 +462,10 @@ watch(() => props.formData.dataProducts, () => {
 .scene-table {
   width: 100%;
   border-radius: 4px;
+}
+
+.amount-range-input {
+  width: 120px;
 }
 
 .amount-input {

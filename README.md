@@ -4,12 +4,40 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 
 Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
 
+20250623
 # 角色
 请作为一个资深的前端工程师，在修改前请阅读当期的代码，保证代码整体简洁流畅。
 
 # 项目架构说明
 项目整体使用 vue架构，项目为企业管理后台的web端页面
 项目只需要前端页面和模拟数据用于演示操作，无需后端
+
+## 项目改进计划
+
+### 1. 代码组织优化
+- 将通用组件从页面目录迁移到`/src/components`统一管理
+- 在`/src/mock`目录下建立统一的接口规范文档
+- 为每个业务模块创建独立的`types`定义文件
+
+### 2. 性能优化
+- 在`/src/router`中配置路由懒加载
+- 对大型组件如`BusinessProcessFlow.vue`进行代码分割
+- 优化`/src/utils`中的工具函数执行效率
+
+### 3. 开发体验
+- 为所有组件添加JSDoc注释
+- 完善`/src/types`中的类型定义
+- 建立统一的代码风格检查配置
+
+### 4. 测试覆盖
+- 为关键业务组件添加单元测试
+- 对核心流程添加E2E测试
+- 建立`__tests__`目录结构
+
+### 5. 文档完善
+- 编写组件使用文档
+- 完善API接口文档
+- 添加项目架构图说明
 
 # 前端组件说明
 前端组件统一使用Arco design

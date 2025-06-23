@@ -47,6 +47,19 @@ export const calculateCreditProductRatio = (scene: Scene, creditProductValue: st
   return Number((creditProduct.amount / scene.amount * 100).toFixed(2));
 }
 
+export const formatChangeValue = (value: number, type: 'amount' | 'number' | 'percent'): string => {
+  const sign = value > 0 ? '+' : '';
+  const percentage = ((value / 100) * 100).toFixed(2);
+  
+  if (type === 'amount') {
+    return `${sign}${formatAmount(value)} (${sign}${percentage}%)`;
+  } else if (type === 'number') {
+    return `${sign}${value} (${sign}${percentage}%)`;
+  } else {
+    return `${sign}${(value * 100).toFixed(2)}%`;
+  }
+}
+
 export const calculateDailyAmount = (count: number, days: number): number => {
   if (!days) return 0
   return Math.round(count / days)
@@ -59,4 +72,12 @@ export const calculateCost = (count: number, price: number, discountType: string
   if (discountType === 'discount') return baseAmount * (discountValue || 1)
   if (discountType === 'free') return (count - (discountValue || 0)) * price
   return baseAmount
+}
+
+export const formatAmount = (value: number): string => {
+  return value?.toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) || '-';
+}
+
+export const formatPercent = (value: number): string => {
+  return value ? `${(value * 100).toFixed(2)}%` : '-';
 }

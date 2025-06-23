@@ -215,7 +215,7 @@
           <a-space>
             <a-button @click="handleCancel">取消</a-button>
             <a-button type="primary" @click="handleSubmit">确定</a-button>
-            <a-button type="primary" status="success" @click="handleSubmitAndCreate">确定并创建库存</a-button>
+            <a-button type="primary" status="success" @click="handleSubmitAndCreate">上线并创建库存</a-button>
           </a-space>
         </div>
       </a-form>
@@ -261,69 +261,71 @@ const productOptions = [
 
 // 表单数据
 const formData = ref<{
+  id: string
   name: string
   type: string
   description: string
   validityPeriodType: string
-  validityPeriod: null | [Date, Date]
+  validityPeriod: [Date, Date] | undefined
   firstUseOnly: boolean
   stackable: boolean
   products: string[]
   repaymentMethods: string[]
   loanPeriodType: string
-  loanPeriodMin: number | null
-  loanPeriodMax: number | null
-  loanPeriodValue: number | null
-  loanAmountMin: number | null
-  loanAmountMax: number | null
+  loanPeriodMin: number | undefined
+  loanPeriodMax: number | undefined
+  loanPeriodValue: number | undefined
+  loanAmountMin: number | undefined
+  loanAmountMax: number | undefined
   useChannels: string[]
   creditChannels: string[]
-  interestFreeDays: number | null
-  maxInterestFreeAmount: number | null
+  interestFreeDays: number | undefined
+  maxInterestFreeAmount: number | undefined
   discountType: string
-  uniformDiscount: number | null
-  frontPeriods: number | null
-  frontDiscount: number | null
-  backPeriods: number | null
-  backDiscount: number | null
-  fixedFrontPeriods: number | null
-  fixedFrontValue: number | null
-  fixedBackPeriods: number | null
-  fixedBackDiscount: number | null
+  uniformDiscount: number | undefined
+  frontPeriods: number | undefined
+  frontDiscount: number | undefined
+  backPeriods: number | undefined
+  backDiscount: number | undefined
+  fixedFrontPeriods: number | undefined
+  fixedFrontValue: number | undefined
+  fixedBackPeriods: number | undefined
+  fixedBackDiscount: number | undefined
   limitMinRate: boolean
-  minRate: number | null
-}>({
+  minRate: number | undefined
+}>({  
+  id: '',
   name: '',
   type: '',
   description: '',
   validityPeriodType: 'limited',
-  validityPeriod: null,
+  validityPeriod: undefined,
   firstUseOnly: false,
   stackable: false,
   products: [],
   repaymentMethods: [],
   loanPeriodType: 'unlimited',
-  loanPeriodMin: null,
-  loanPeriodMax: null,
-  loanPeriodValue: null,
-  loanAmountMin: null,
-  loanAmountMax: null,
+  loanPeriodMin: undefined,
+  loanPeriodMax: undefined,
+  loanPeriodValue: undefined,
+  loanAmountMin: undefined,
+  loanAmountMax: undefined,
   useChannels: [],
   creditChannels: [],
-  interestFreeDays: null,
-  maxInterestFreeAmount: null,
+  interestFreeDays: undefined,
+  maxInterestFreeAmount: undefined,
   discountType: 'uniform',
-  uniformDiscount: null,
-  frontPeriods: null,
-  frontDiscount: null,
-  backPeriods: null,
-  backDiscount: null,
-  fixedFrontPeriods: null,
-  fixedFrontValue: null,
-  fixedBackPeriods: null,
-  fixedBackDiscount: null,
+  uniformDiscount: undefined,
+  frontPeriods: undefined,
+  frontDiscount: undefined,
+  backPeriods: undefined,
+  backDiscount: undefined,
+  fixedFrontPeriods: undefined,
+  fixedFrontValue: undefined,
+  fixedBackPeriods: undefined,
+  fixedBackDiscount: undefined,
   limitMinRate: false,
-  minRate: null
+  minRate: undefined
 })
 
 // 表单验证规则
@@ -481,9 +483,24 @@ const handleSubmit = async () => {
 const handleSubmitAndCreate = async () => {
   try {
     await formRef.value.validate()
+    // TODO: 调用接口提交数据，设置状态为已上线
+    const submitData = {
+      ...formData.value,
+      status: 'online' // 设置状态为已上线
+    }
     // TODO: 调用接口提交数据
-    Message.success('创建成功')
-    router.push('/marketing/coupon/management?createCoupon=true')
+    Message.success('创建并上线成功')
+    // 跳转到库存管理页面并传递参数以触发创建库存弹窗
+    router.push({
+      path: '/marketing/coupon/management',
+      query: {
+        createCoupon: 'true',
+        templateId: formData.value.id, // 传递模板ID
+        templateName: formData.value.name, // 传递模板名称
+        showCreateModal: 'true', // 控制创建券库存弹窗的显示
+        _t: Date.now() // 添加时间戳确保每次跳转都会触发参数变化
+      }
+    })
   } catch (error) {
     console.error('表单验证失败:', error)
   }
