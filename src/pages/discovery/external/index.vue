@@ -1,6 +1,5 @@
 <template>
-  <a-layout>
-    <a-layout-content class="content">
+  <div class="external-data-page">
       <a-tabs default-active-key="1" type="rounded">
         <a-tab-pane key="1" title="产品页面">
           <a-row :gutter="[24, 24]">
@@ -229,8 +228,7 @@
           </a-row>
         </a-tab-pane>
       </a-tabs>
-    </a-layout-content>
-  </a-layout>
+  </div>
 
   <a-modal 
     v-model:visible="showEditModal" 
@@ -511,7 +509,7 @@ const handleSearch = (value) => {
 </script>
 
 <style scoped>
-.content {
+.external-data-page {
   padding: 24px;
   background: #f5f6f7;
 }

@@ -47,7 +47,7 @@ const handleTopMenuClick = (key) => {
         activeTopMenu.value = '';
     }
 };
-import { touchMenuItems } from './touchMenuItems';
+import touchMenuItems from './touchMenuItems';
 const menuItems = [
     {
         key: 'discovery',
@@ -85,7 +85,7 @@ const menuItems = [
                     {
                         key: 'external-data',
                         title: '外部数据',
-                        path: '/external-data-v1/external-v1'
+                        path: '/external-data-v1/list'
                     }
                 ]
             },
@@ -133,17 +133,17 @@ const menuItems = [
                     {
                         key: 'budget-management',
                         title: '预算管理',
-                        path: '/exploration/budget-management'
+                        path: '/exploration/external-data-analysis/budget-management'
                     },
                     {
                         key: 'external-data-evaluation',
                         title: '外部数据评估',
-                        path: '/exploration/external-data-evaluation'
+                        path: '/exploration/external-data-analysis/external-data-evaluation'
                     },
                     {
                         key: 'external-data-monitor',
                         title: '外部数据监控',
-                        path: '/exploration/external-monitor'
+                        path: '/exploration/external-data-analysis/external-data-monitor'
                     }
                 ]
             },

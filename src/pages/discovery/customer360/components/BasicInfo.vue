@@ -1,7 +1,7 @@
 <template>
   <div class="basic-info">
     <a-skeleton v-if="!userInfo" :loading="true" />
-    <a-descriptions v-else bordered :column="{ xs: 1, sm: 2, md: 3 }" size="small">
+    <a-descriptions v-else :column="{ xs: 1, sm: 2, md: 3 }" size="small">
       <a-descriptions-item label="姓名">{{ userInfo.name }}</a-descriptions-item>
       <a-descriptions-item label="年龄">{{ userInfo.age }}</a-descriptions-item>
       <a-descriptions-item label="性别">{{ userInfo.gender }}</a-descriptions-item>

@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, withDefaults, defineEmits } from 'vue'
+import { withDefaults } from 'vue'
 import type { BasicInfo } from '@/types/accompany'
 
 interface Props {

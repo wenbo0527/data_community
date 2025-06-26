@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue';
-import { defineProps, defineEmits } from 'vue';
+// defineProps and defineEmits are compiler macros, no import needed
 import { Select as ASelect, Option as AOption } from '@arco-design/web-vue';
 
 

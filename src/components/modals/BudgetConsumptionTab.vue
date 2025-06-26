@@ -91,7 +91,7 @@ const tableData = ref([
     type: 'number',
     onClick: () => {
       router.push({
-        path: '/exploration/external-data-evaluation',
+        path: '/exploration/external-data-analysis/external-data-evaluation',
         query: {
           platform: props.platform
         }

@@ -195,6 +195,17 @@
                 </a-form-item>
               </a-grid-item>
               <a-grid-item :span="24">
+                <a-form-item field="usageScenarios" label="券使用场景">
+                  <template #help>
+                    <span class="help-text">选择券的适用场景，可多选</span>
+                  </template>
+                  <a-checkbox-group v-model="formData.usageScenarios">
+                    <a-checkbox value="batch_distribution">批量下发</a-checkbox>
+                    <a-checkbox value="telemarketing">电销使用</a-checkbox>
+                  </a-checkbox-group>
+                </a-form-item>
+              </a-grid-item>
+              <a-grid-item :span="24">
                 <a-alert type="info">
                   <template #icon>
                     <icon-info-circle />
@@ -399,7 +410,8 @@ const formData = ref({
   auditor: '',
   operator: userStore.userInfo.username, // 默认设置为当前登录用户
   validityPeriod: [],
-  userLimitDesc: '' // 用户持券限制说明
+  userLimitDesc: '', // 用户持券限制说明
+  usageScenarios: [] // 券使用场景（多选）
 })
 
 const rules = {

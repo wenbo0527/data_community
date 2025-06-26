@@ -320,7 +320,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineEmits, onMounted,h } from 'vue'
+import { ref, computed, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   IconInfoCircle,

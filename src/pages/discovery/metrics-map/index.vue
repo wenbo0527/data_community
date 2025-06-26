@@ -2,61 +2,77 @@
 
 <template>
   <div class="metrics-map">
-    <a-row :gutter="16">
-      <!-- 左侧树形导航 -->
+    <div class="page-header">
+      <h2>指标地图</h2>
+      <a-space>
+        <a-button type="primary" @click="showCreateModal = true">
+          <template #icon>
+            <icon-plus />
+          </template>
+          新建指标
+        </a-button>
+        <a-button @click="exportMetrics">
+          <template #icon>
+            <icon-download />
+          </template>
+          导出
+        </a-button>
+      </a-space>
+    </div>
+
+    <!-- 搜索和筛选 -->
+    <div class="search-section">
+      <a-row :gutter="16">
+        <a-col :span="8">
+          <a-input-search
+            v-model="searchKeyword"
+            placeholder="搜索指标名称、描述"
+            @search="handleSearch"
+          />
+        </a-col>
+        <a-col :span="4">
+          <a-select
+            v-model="selectedCategory"
+            placeholder="选择分类"
+            allow-clear
+            @change="handleSearch"
+          >
+            <a-option value="business">业务指标</a-option>
+            <a-option value="technical">技术指标</a-option>
+            <a-option value="quality">质量指标</a-option>
+          </a-select>
+        </a-col>
+        <a-col :span="4">
+          <a-select
+            v-model="selectedDomain"
+            placeholder="业务域"
+            allow-clear
+            @change="handleSearch"
+          >
+            <a-option value="user">用户域</a-option>
+            <a-option value="transaction">交易域</a-option>
+            <a-option value="product">产品域</a-option>
+          </a-select>
+        </a-col>
+      </a-row>
+    </div>
+
+    <a-row :gutter="24">
+      <!-- 左侧导航树 -->
       <a-col :span="6">
-        <a-card class="tree-card">
-          <template #title>指标地图</template>
+        <a-card title="指标分类" :bordered="false">
           <a-tree
+            v-model:selected-keys="selectedKeys"
             :data="treeData"
-            :default-expanded-keys="['用户指标', '交易指标']"
-            @select="handleTreeSelect"
+            :show-line="true"
+            @select="onTreeSelect"
           />
         </a-card>
       </a-col>
-
+      
       <!-- 右侧内容区 -->
-     <a-col :span="18">
-        
-        
-        <!-- 搜索和操作栏 -->
-        <div class="operation-bar">
-          <div class="search-area">
-            <a-input-search
-              v-model="searchForm.name"
-              placeholder="请输入指标名称"
-              style="width: 200px; margin-right: 16px"
-              @search="handleSearch"
-            />
-            <a-button 
-              type="text" 
-              size="mini"
-              :class="{ 'active': searchForm.onlyFavorite }"
-              @click="toggleFavoriteFilter"
-              style="margin-left: 16px"
-            >
-              <template #icon>
-                <icon-star-fill v-if="searchForm.onlyFavorite" style="color: #f7ba1e" />
-                <icon-star v-else />
-              </template>
-              仅收藏
-            </a-button>
-          </div>
-          <div class="action-area">
-            <a-space>
-              <a-button type="primary" @click="showIncrementalModal()">
-                <template #icon><icon-upload /></template>
-                新增上传
-              </a-button>
-              <a-button type="primary" @click="showBatchModal()">
-                <template #icon><icon-upload /></template>
-                覆盖上传
-              </a-button>
-            </a-space>
-            <IncrementalImportModal v-model:visible="incrementalModalVisible" />
-            <BatchImportModal v-model:visible="batchModalVisible" />
-          </div>
-        </div>
+      <a-col :span="18">
+        <a-card :bordered="false">
 
         <!-- 指标列表 -->
         <a-table :data="tableData" :pagination="pagination" @page-change="onPageChange" @after-render="handleTableRender">
@@ -84,6 +100,7 @@
             <a-table-column title="指标负责人" dataIndex="owner" />
           </template>
         </a-table>
+        </a-card>
       </a-col>
     </a-row>
 
@@ -236,7 +253,7 @@ import * as XLSX from 'xlsx'
 import type { TreeNodeData } from '@arco-design/web-vue'
 import type { RequestOption, UploadRequest, FileItem } from '@arco-design/web-vue/es/upload/interfaces'
 import metricsMock from '@/mock/metrics'
-import { IconUpload, IconStarFill, IconStar, IconDownload } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconStarFill, IconStar, IconDownload, IconPlus } from '@arco-design/web-vue/es/icon'
 import IncrementalImportModal from '@/components/modals/IncrementalImportModal.vue'
 import BatchImportModal from '@/components/modals/BatchImportModal.vue'
 import BusinessProcessFlow from '@/components/BusinessProcessFlow.vue'
@@ -263,6 +280,13 @@ const searchForm = ref<SearchForm>({
   businessDomain: '',
   onlyFavorite: false
 })
+
+// 添加缺失的响应式变量
+const searchKeyword = ref('')
+const selectedCategory = ref('')
+const selectedDomain = ref('')
+const selectedKeys = ref<(string | number)[]>([])
+const showCreateModal = ref(false)
 
 const pagination = ref({
   total: 0,
@@ -321,6 +345,10 @@ const treeData = ref([
 // 处理树节点选择
 const handleTabChange = (key: string | number) => {
   console.log('切换标签页:', key)
+}
+
+const onTreeSelect = (selectedKeys: (string | number)[], data: { selected?: boolean, selectedNodes: TreeNodeData[], node?: TreeNodeData, e?: Event }) => {
+  handleTreeSelect(selectedKeys, data)
 }
 
 const handleTreeSelect = (selectedKeys: (string | number)[], data: { selected?: boolean, selectedNodes: TreeNodeData[], node?: TreeNodeData, e?: Event }) => {
@@ -482,8 +510,19 @@ const fetchMetrics = async () => {
 
 // 搜索处理
 const handleSearch = () => {
+  // 同步搜索表单数据
+  searchForm.value.name = searchKeyword.value
+  searchForm.value.category = selectedCategory.value
+  searchForm.value.businessDomain = selectedDomain.value
+  
   pagination.value.current = 1
   fetchMetrics()
+}
+
+// 导出指标
+const exportMetrics = () => {
+  console.log('导出指标数据')
+  // 这里可以添加导出逻辑
 }
 
 // 分页处理
@@ -538,18 +577,75 @@ onMounted(() => {
 
 <style scoped>
 .metrics-map {
-  padding: 16px;
+  padding: 20px;
 }
 
-.tree-card {
-  margin-bottom: 16px;
-}
-
-.operation-bar {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.search-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.tree-card {
+  height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.metrics-table {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-name {
+  font-weight: 500;
+  color: #1890ff;
+  cursor: pointer;
+}
+
+.metric-name:hover {
+  text-decoration: underline;
+}
+
+.favorite-btn {
+  border: none;
+  background: none;
+  padding: 4px;
+}
+
+.favorite-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.metric-detail-drawer {
+  .drawer-content {
+    padding: 0;
+  }
+  
+  .detail-section {
+    margin-bottom: 24px;
+  }
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #1d2129;
+  }
 }
 
 .detail-card {

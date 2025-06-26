@@ -12,6 +12,12 @@ export default [{  path: '/management',  children: [
       meta: { title: '全量变量回溯申请' }
     },
     {
+      path: 'service/fund-usage-query',
+      name: 'fund-usage-query',
+      component: () => import('../pages/management/service/fund-usage-query/index.vue'),
+      meta: { title: '客户资金用途外数查询' }
+    },
+    {
       path: 'accompany',
       name: 'management-accompany',
       component: () => import('../pages/management/accompany/index.vue'),

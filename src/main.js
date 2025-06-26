@@ -1,6 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 
+// 引入mock数据
+import './mock/external-data'
+import './mock/budget'
+
 // 配置全局事件监听器为被动模式
 const eventOptions = { passive: true };
 document.addEventListener('wheel', () => {}, { passive: true });

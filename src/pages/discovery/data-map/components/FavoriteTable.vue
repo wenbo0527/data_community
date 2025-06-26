@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineEmits, computed, h, watch } from 'vue'
+import { ref, computed, h, watch } from 'vue'
 import { IconStar, IconStarFill, IconPlus, IconFile } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 

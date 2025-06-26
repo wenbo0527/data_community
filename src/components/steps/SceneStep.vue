@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import type { FormData, Scene } from '../../types/accompany'
 

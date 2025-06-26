@@ -23,7 +23,7 @@
             <a-input-search v-model="searchText" :style="{ width: '90%' }" placeholder="搜索菜单" allow-clear />
           </div>
           <a-menu :style="{ width: '100%' }" :collapsed="collapsed" :selected-keys="selectedKeys"
-            :default-open-keys="['management']" show-collapse-button @menu-item-click="handleMenuClick"
+            :default-open-keys="['management']" show-collapse-button
             :active-key-style="{ color: 'rgb(var(--primary-6))', fontWeight: 'bold', borderLeft: '3px solid rgb(var(--primary-6))', paddingLeft: '13px' }"
             :hover-key-style="{ backgroundColor: 'var(--color-fill-2)' }" :item-margin="12">
             <template v-for="item in filteredMenuItems" :key="item.key">
@@ -54,9 +54,21 @@
                       <a-sub-menu :key="child.key">
                         <template #title>{{ child.title }}</template>
                         <template v-for="grandchild in child.children" :key="grandchild.key">
-                          <a-menu-item @click="() => handleMenuClick(grandchild.key)">
-                            <span class="menu-item-text">{{ grandchild.title }}</span>
-                          </a-menu-item>
+                          <template v-if="grandchild.children && grandchild.children.length > 0">
+                            <a-sub-menu :key="grandchild.key">
+                              <template #title>{{ grandchild.title }}</template>
+                              <template v-for="greatGrandchild in grandchild.children" :key="greatGrandchild.key">
+                                <a-menu-item @click="() => handleMenuClick(greatGrandchild.key)">
+                                  <span class="menu-item-text">{{ greatGrandchild.title }}</span>
+                                </a-menu-item>
+                              </template>
+                            </a-sub-menu>
+                          </template>
+                          <template v-else>
+                            <a-menu-item @click="() => handleMenuClick(grandchild.key)">
+                              <span class="menu-item-text">{{ grandchild.title }}</span>
+                            </a-menu-item>
+                          </template>
                         </template>
                       </a-sub-menu>
                     </template>
@@ -101,6 +113,9 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import TourGuideButton from '@/components/guide/TourGuideButton.vue'
+import { ROUTE_NAMES, ROUTE_PATHS } from '@/router/constants'
+import { navigateTo } from '@/router/utils'
+import { warning } from '@/utils/message'
 import {
   IconApps,
   IconRobot,
@@ -124,43 +139,40 @@ const activeTopMenu = ref('discovery')
 const showSideMenu = ref(true)
 
 const handleTopMenuClick = (key) => {
-  activeTopMenu.value = key
-  selectedKeys.value = []
+  try {
+    activeTopMenu.value = key
+    selectedKeys.value = []
 
-  // 默认展开当前菜单
-  if (key !== 'home') {
+    // 使用路由常量进行跳转
+    if (key === 'home') {
+      navigateTo(router, ROUTE_PATHS.HOME)
+      activeTopMenu.value = ''
+      return
+    }
+
     const menuItem = menuItems.find(item => item.key === key)
     if (menuItem) {
       if (menuItem.children && menuItem.children.length > 0) {
         const firstChild = menuItem.children[0]
         if (firstChild && firstChild.path) {
-          router.push(firstChild.path)
+          navigateTo(router, firstChild.path)
           selectedKeys.value = [firstChild.key]
         }
-        // 设置当前激活的顶部菜单
         activeTopMenu.value = key
       } else if (menuItem.path) {
-        router.push(menuItem.path)
+        navigateTo(router, menuItem.path)
         selectedKeys.value = [menuItem.key]
       }
-      // 确保触达管理菜单点击时显示子菜单
-      if (key === 'touch') {
-        activeTopMenu.value = key
-        const firstChild = menuItem.children?.[0]
-        if (firstChild) {
-          selectedKeys.value = [firstChild.key]
-        }
-      }
     }
-  } else {
-    router.push('/home')
-    activeTopMenu.value = ''
+  } catch (error) {
+    console.error('顶部菜单点击错误:', error)
+    warning('菜单跳转失败，请重试')
   }
 }
 
 
 
-import { touchMenuItems } from './touchMenuItems'
+import touchMenuItems from './touchMenuItems'
 
 const menuItems = [
   {
@@ -168,10 +180,10 @@ const menuItems = [
     title: '数据发现',
     children: [
       {
-            key: 'asset-overview',
-            title: '资产总览',
-            path: '/discovery/asset-overview'
-          },
+        key: 'asset-overview',
+        title: '资产总览',
+        path: '/discovery/asset-overview'
+      },
       {
         key: 'dataMap',
         title: '统一搜索',
@@ -186,7 +198,6 @@ const menuItems = [
         key: 'data-asset',
         title: '数据资产',
         children: [
-          
           {
             key: 'metrics-map',
             title: '指标地图',
@@ -197,11 +208,10 @@ const menuItems = [
             title: '征信变量',
             path: '/discovery/credit'
           },
-
           {
             key: 'external-data',
             title: '外部数据',
-            path: '/external-data-v1/external-v1'
+            path: '/external-data-v1/list'
           }
         ]
       },
@@ -209,8 +219,7 @@ const menuItems = [
         key: 'data-register',
         title: '数据注册',
         children: [
-
-        {
+          {
             key: 'table-management',
             title: '表管理',
             path: '/discovery/asset-management/table-management'
@@ -247,43 +256,87 @@ const menuItems = [
         key: 'data-register',
         title: '外数生命周期',
         children: [
-      {
-        key: 'budget-management',
-        title: '预算管理',
-        path: '/exploration/budget-management'
+          {
+            key: 'budget-management',
+            title: '预算管理',
+            path: '/exploration/external-data-analysis/budget-management'
+          },
+          {
+            key: 'external-data-evaluation',
+            title: '外部数据评估',
+            path: '/exploration/external-data-analysis/external-data-evaluation'
+          },
+          {
+            key: 'external-data-monitor',
+            title: '外部数据监控',
+            path: '/exploration/external-data-analysis/external-data-monitor'
+          }
+        ]
       },
       {
-        key: 'external-data-evaluation',
-        title: '外部数据评估',
-        path: '/exploration/external-data-evaluation'
-      },
-      {
-        key: 'external-data-monitor',
-        title: '外部数据监控',
-        path: '/exploration/external-monitor'
-      }
-    ]
-    }
-      ,
-      { key: 'customer360',
-      title: '客户360',
+        key: 'customer360',
+        title: '客户360',
         path: '/discovery/customer360'
+      },
+      {
+        key: 'event-center',
+        title: '事件中心',
+        children: [
+          {
+            key: 'event-center-index',
+            title: '事件中心首页',
+            path: '/exploration/customer-center/event-center'
+          },
+          {
+            key: 'event-management',
+            title: '事件管理',
+            path: '/exploration/customer-center/event-center/event-management'
+          },
+          {
+            key: 'virtual-events',
+            title: '虚拟事件',
+            path: '/exploration/customer-center/event-center/virtual-events'
+          },
+          {
+            key: 'kafka-datasource',
+            title: 'Kafka数据源',
+            path: '/exploration/customer-center/event-center/kafka-datasource'
+          }
+        ]
       }
     ]
-
   },
   {
     key: 'management',
     title: '数据管理',
     children: [
-      { key: 'management-service', title: '数据服务', path: '/management/service', name: 'management-service' },
-
+      {
+        key: 'management-service',
+        title: '数据服务',
+        path: '/management/service'
+      },
       {
         key: 'permission',
         title: '权限管理',
         path: '/management/permission'
       },
-      { key: 'accompany', title: '陪跑计划', path: '/management/accompany', children: [{ key: 'management-accompany-create', title: '创建陪跑', path: '/management/accompany/create' }, { key: 'management-accompany-result', title: '陪跑结果', path: '/management/accompany/result' }] },
+      {
+        key: 'accompany',
+        title: '陪跑计划',
+        path: '/management/accompany',
+        children: [
+          {
+            key: 'management-accompany-create',
+            title: '创建陪跑',
+            path: '/management/accompany/create'
+          },
+          {
+            key: 'management-accompany-result',
+            title: '陪跑结果',
+            path: '/management/accompany/result'
+          }
+        ]
+      }
     ]
   },
   {
@@ -296,16 +349,40 @@ const menuItems = [
         path: '/marketing/dashboard'
       },
       {
-        key: 'benefitConfig', title: '权益配置', children: [
-          { key: 'template', title: '模板管理', route: '/marketing/benefit/template' },
-          { key: 'management', title: '券管理', route: '/marketing/benefit/management' },
-          { key: 'package', title: '券包管理', route: '/marketing/benefit/package' }
+        key: 'benefitConfig',
+        title: '权益配置',
+        children: [
+          {
+            key: 'template',
+            title: '模板管理',
+            path: '/marketing/benefit/template'
+          },
+          {
+            key: 'coupon-management',
+            title: '券管理',
+            path: '/marketing/benefit/management'
+          },
+          {
+            key: 'package',
+            title: '券包管理',
+            path: '/marketing/benefit/package'
+          }
         ]
       },
       {
-        key: 'dataStatistics', title: '数据统计', children: [
-          { key: 'couponLogs', title: '权益日志', path: '/marketing/statistics/logs' },
-          { key: 'inventory', title: '库存查询', path: '/marketing/statistics/inventory' }
+        key: 'dataStatistics',
+        title: '数据统计',
+        children: [
+          {
+            key: 'couponLogs',
+            title: '权益日志',
+            path: '/marketing/statistics/logs'
+          },
+          {
+            key: 'inventory',
+            title: '库存查询',
+            path: '/marketing/statistics/inventory'
+          }
         ]
       }
     ]
@@ -382,68 +459,49 @@ const routeLogs = ref([]);
 
 const handleMenuClick = (key) => {
   try {
-    // 只处理字符串类型的key
     if (typeof key !== 'string') {
-      console.error('Invalid route key:', key);
-      return;
+      console.error('Invalid route key:', key)
+      return
     }
 
-    const routeName = {
-      'dashboard': 'couponDashboard',
-      'budget-management': 'budgetManagement',
-      'external-data-evaluation': 'externalDataEvaluation',
-      'external-data-monitor': 'external-data-monitor',
-      'full-data': 'TableList',
-      'metrics-map': 'metricsMap',
-      'data-map': 'dataMap',
-      'credit-variables': 'credit',
-      'asset-overview': 'AssetOverview',
-      'external-data': 'ExternalDataV1List',
-      'table-management': 'TableManagement',
-      'external-data-management': 'ExternalDataManagement',
-      'metric-management': 'MetricManagement',
-      'batch-asset-management': 'BatchAssetManagement',
-      'management-service': 'management-service',
-      'management-data-map': 'management-data-map',
-      'permission': 'permission',
-      'accompany': 'accompany',
-      'data-map': 'managementDataMap',
-      'template': 'template',
-      'management': 'management',
-      'package': 'package',
-      'couponLogs': 'couponLogs',
-      'inventory': 'inventory'
-    }[key] || key;
-
-    try {
-      let route;
-      if (['service', 'permission', 'accompany', 'data-map'].includes(key)) {
-        route = router.resolve(`/management/${key}`);
-      } else {
-        route = router.resolve({ name: routeName });
+    // 查找菜单项对应的路径
+    const findMenuPath = (items, targetKey) => {
+      for (const item of items) {
+        if (item.key === targetKey) {
+          return item.path || item.route
+        }
+        if (item.children) {
+          const childPath = findMenuPath(item.children, targetKey)
+          if (childPath) return childPath
+        }
       }
-      if (route.matched.length === 0) {
-        throw new Error(`No match for route ${routeName}`);
-      }
+      return null
+    }
 
+    const menuPath = findMenuPath(menuItems, key)
+    if (menuPath) {
       // 记录路由跳转日志
       routeLogs.value.unshift({
         timestamp: new Date().toLocaleString(),
         from: route.path,
-        to: route.path,
+        to: menuPath,
         key: key
-      });
+      })
       // 只保留最近10条日志
       if (routeLogs.value.length > 10) {
-        routeLogs.value.pop();
+        routeLogs.value.pop()
       }
 
-      router.push(route);
-    } catch (error) {
-      console.error('Route navigation failed:', error);
+      // 使用路由工具函数进行跳转
+      navigateTo(router, menuPath)
+      selectedKeys.value = [key]
+    } else {
+      console.warn(`未找到菜单项 ${key} 对应的路径`)
+      warning('菜单路径未配置，请联系管理员')
     }
   } catch (error) {
-    console.error('路由跳转失败:', error);
+    console.error('菜单点击错误:', error)
+    warning('菜单跳转失败，请重试')
   }
 }
 </script>

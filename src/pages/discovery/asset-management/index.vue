@@ -100,6 +100,7 @@
               <a-tag>数据源配置</a-tag>
               <a-tag>连接测试</a-tag>
               <a-tag>数据同步</a-tag>
+              <a-tag color="green" @click.stop="navigateTo('external-purchase-register')">采购登记</a-tag>
             </div>
           </a-card>
         </a-col>

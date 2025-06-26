@@ -8,7 +8,8 @@ export const useUserStore = defineStore('user', {
       username: '张三',
       avatar: '',
       role: 'regular', // 'new' | 'regular'
-      department: 'risk' // 'risk' | 'marketing' | 'data'
+      department: 'risk', // 'risk' | 'marketing' | 'data'
+      token: 'mock-token-123456' // 添加token字段，避免路由守卫跳转到登录页
     },
     // 新人数据
     newUserData: {

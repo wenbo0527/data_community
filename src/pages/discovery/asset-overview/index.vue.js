@@ -1,7 +1,7 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { IconDashboard, IconRefresh, IconQuestionCircle, IconStorage, IconLink, IconSettings, IconApps } from '@arco-design/web-vue/es/icon';
+import { IconDashboard, IconRefresh, IconQuestionCircle, IconStorage, IconLink, IconSettings, IconApps, IconBarChart } from '@arco-design/web-vue/es/icon';
 const router = useRouter();
 // 响应式数据
 const layoutDimensions = ref({ width: 0, height: 0 });

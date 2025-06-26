@@ -34,35 +34,52 @@ export interface BudgetData {
 /**
  * 燃尽图数据接口
  * @property {string} month - 月份
- * @property {number} budget - 预算金额
- * @property {number} actual - 实际金额
+ * @property {number} budget - 预算剩余金额
+ * @property {number} actual - 实际剩余金额
+ * @property {number} initialBudget - 初始预算总额（用于计算累积消耗）
+ * @property {number} cumulativeBudget - 累积预算消耗
+ * @property {number} cumulativeActual - 累积实际消耗
  */
 export interface BurndownData {
   month: string
   budget: number
   actual: number
+  initialBudget?: number
+  cumulativeBudget?: number
+  cumulativeActual?: number
 }
 
 /**
  * 生成预算燃尽图数据
- * 模拟预算消耗情况，每月预算按80%递减，实际消耗在80%-90%之间随机波动
+ * 模拟预算消耗情况，每月预算按80%递减，实际消耗在70%-100%之间随机波动
+ * 同时计算累积消耗数据，支持燃尽图和累积消耗图两种显示模式
  * @returns {BurndownData[]} 燃尽图数据数组
  */
 export const generateBurndownData = (filter?: {businessType?: string, platform?: string}) => {
   const months = ['1月', '2月', '3月', '4月', '5月', '6月']
   const data: BurndownData[] = []
-  let budgetBase = 1000000
-  let actualBase = 1000000
+  const initialBudget = 1000000 // 初始预算总额
+  let budgetRemaining = initialBudget
+  let actualRemaining = initialBudget
 
-  months.forEach((month) => {
+  months.forEach((month, index) => {
+    // 计算累积消耗
+    const cumulativeBudget = initialBudget - budgetRemaining
+    const cumulativeActual = initialBudget - actualRemaining
+    
     data.push({
       month,
-      budget: budgetBase,
-      actual: actualBase
+      budget: budgetRemaining,
+      actual: actualRemaining,
+      initialBudget,
+      cumulativeBudget,
+      cumulativeActual
     })
-    budgetBase = Math.floor(budgetBase * 0.8)
-    // 随机生成实际值，使其有时高于预算(非预警)，有时低于预算(预警)
-    actualBase = Math.floor(actualBase * (0.7 + Math.random() * 0.3))
+    
+    // 更新下个月的剩余预算
+    budgetRemaining = Math.floor(budgetRemaining * 0.8)
+    // 随机生成实际剩余值，使其有时高于预算(非预警)，有时低于预算(预警)
+    actualRemaining = Math.floor(actualRemaining * (0.7 + Math.random() * 0.3))
   })
 
   return data

@@ -1,6 +1,5 @@
 <template>
-  <a-layout>
-    <a-layout-content class="content">
+  <div class="credit-detail-page">
       <!-- 主要信息区 -->
       <a-card :bordered="false" class="main-info">
         <a-row :gutter="24">
@@ -70,8 +69,6 @@
           </a-tab-pane>
         </a-tabs>
       </a-card>
-    </a-layout-content>
-
     <!-- 编辑抽屉 -->
     <a-drawer
       :visible="editDrawerVisible"
@@ -97,7 +94,7 @@
         </a-form-item>
       </a-form>
     </a-drawer>
-  </a-layout>
+  </div>
 </template>
 
 <script setup>
@@ -317,7 +314,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.content {
+.credit-detail-page {
   padding: 20px;
 }
 

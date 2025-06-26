@@ -6,6 +6,7 @@
     @ok="handleCreateCollection"
     @cancel="handleCancel"
     @update:visible="$emit('update:visible', $event)"
+    class="collection-modal"
   >
     <a-form :model="formData" ref="formRef" :rules="rules" layout="vertical">
       <a-form-item field="name" label="集合名称">
@@ -418,11 +419,49 @@ watch(() => props.editData, (newEditData) => {
   color: var(--color-text-1);
 }
 
-:deep(.arco-modal-header) {
-  border-bottom: 1px solid #e5e6eb;
+/* 集合弹窗样式优化 */
+:deep(.collection-modal) {
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-:deep(.arco-modal-footer) {
-  border-top: 1px solid #e5e6eb;
+:deep(.collection-modal .arco-modal-header) {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-border-2);
+  background: var(--color-bg-2);
+}
+
+:deep(.collection-modal .arco-modal-title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-1);
+}
+
+:deep(.collection-modal .arco-modal-body) {
+  padding: 24px;
+}
+
+:deep(.collection-modal .arco-modal-footer) {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--color-border-2);
+  background: var(--color-bg-2);
+}
+
+:deep(.collection-modal .arco-modal-footer .arco-btn) {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 8px 20px;
+  height: 36px;
+}
+
+:deep(.collection-modal .arco-modal-footer .arco-btn-primary) {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+:deep(.collection-modal .arco-modal-footer .arco-btn-primary:hover) {
+  background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
 }
 </style>

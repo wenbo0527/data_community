@@ -1,10 +1,25 @@
 <template>
-  <a-layout>
-    <a-layout-content class="content">
-      <a-row :gutter="[24, 24]">
-        <a-col :span="24">
-          <a-card title="征信变量" :bordered="false">
-            <!-- 变量详情抽屉 -->
+  <div class="credit-variables">
+    <div class="page-header">
+      <h2>征信变量</h2>
+      <a-space>
+        <a-button type="primary" @click="showBatchUpload = true">
+          <template #icon>
+            <icon-upload />
+          </template>
+          批量上传
+        </a-button>
+        <a-button @click="downloadTemplate">
+          <template #icon>
+            <icon-download />
+          </template>
+          下载模板
+        </a-button>
+      </a-space>
+    </div>
+    
+    <a-card :bordered="false">
+      <!-- 变量详情抽屉 -->
             <a-drawer
               v-model:visible="drawerVisible"
               :width="600"
@@ -52,63 +67,54 @@
                 </a-descriptions-item>
               </a-descriptions>
             </a-drawer>
-            <template #extra>
-              <a-space>
-                <a-button type="primary" @click="handleBatchUpload">
-                  <template #icon><icon-upload /></template>
-                  批量上传
-                </a-button>
-                <a-button @click="handleDownloadTemplate">
-                  <template #icon><icon-download /></template>
-                  下载模板
-                </a-button>
-                <a-input-search
-                  v-model="searchText"
-                  placeholder="搜索变量"
-                  style="width: 200px"
-                  @search="handleSearch"
-                />
-              </a-space>
-            </template>
-
-            <a-form :model="filterForm" layout="inline" class="filter-form">
-              <a-form-item field="variableTag" label="变量标签">
-                <a-select
-                  v-model="filterForm.variableTag"
-                  placeholder="请选择标签"
-                  style="width: 200px"
-                  allow-clear
-                >
-                  <a-option value="不限">不限</a-option>
-                  <a-option value="个人信息">个人信息</a-option>
-                  <a-option value="信用卡">信用卡</a-option>
-                  <a-option value="贷款">贷款</a-option>
-                  <a-option value="逾期">逾期</a-option>
-                </a-select>
-              </a-form-item>
-              <a-form-item field="category" label="一级分类">
-                <a-select
-                  v-model="filterForm.category"
-                  placeholder="请选择分类"
-                  style="width: 200px"
-                  allow-clear
-                >
-                  <a-option value="不限">不限</a-option>
-                  <a-option value="身份信息">身份信息</a-option>
-                  <a-option value="信用信息">信用信息</a-option>
-                  <a-option value="资产信息">资产信息</a-option>
-                  <a-option value="负债信息">负债信息</a-option>
-                </a-select>
-              </a-form-item>
-              <a-form-item field="supplier" label="供应商">
-                <a-input
-                  v-model="filterForm.supplier"
-                  placeholder="供应商名称"
-                  style="width: 200px"
-                  allow-clear
-                />
-              </a-form-item>
-            </a-form>
+       <!-- 搜索和筛选 -->
+       <div class="search-section">
+         <a-row :gutter="16">
+           <a-col :span="8">
+             <a-input-search
+               v-model="searchKeyword"
+               placeholder="搜索变量名称、描述"
+               @search="handleSearch"
+             />
+           </a-col>
+           <a-col :span="4">
+             <a-select
+               v-model="selectedTag"
+               placeholder="变量标签"
+               allow-clear
+               @change="handleSearch"
+             >
+               <a-option value="高风险">高风险</a-option>
+               <a-option value="中风险">中风险</a-option>
+               <a-option value="低风险">低风险</a-option>
+             </a-select>
+           </a-col>
+           <a-col :span="4">
+             <a-select
+               v-model="selectedCategory"
+               placeholder="变量分类"
+               allow-clear
+               @change="handleSearch"
+             >
+               <a-option value="基础信息">基础信息</a-option>
+               <a-option value="信贷记录">信贷记录</a-option>
+               <a-option value="行为特征">行为特征</a-option>
+             </a-select>
+           </a-col>
+           <a-col :span="4">
+             <a-select
+               v-model="selectedSupplier"
+               placeholder="数据供应商"
+               allow-clear
+               @change="handleSearch"
+             >
+               <a-option value="人行征信">人行征信</a-option>
+               <a-option value="百行征信">百行征信</a-option>
+               <a-option value="芝麻信用">芝麻信用</a-option>
+             </a-select>
+           </a-col>
+         </a-row>
+       </div>
 
             <a-table :columns="columns" :data="filteredData" :pagination="{ pageSize: 10 }" :loading="loading">
               <template #status="{ record }">
@@ -129,12 +135,9 @@
                 </a-space>
               </template>
             </a-table>
-          </a-card>
-        </a-col>
-      </a-row>
-    </a-layout-content>
-  </a-layout>
-</template>
+         </a-card>
+   </div>
+ </template>
 
 <script setup>
 import { ref, computed } from 'vue'
@@ -247,11 +250,60 @@ const filteredData = computed(() => {
 </script>
 
 <style scoped>
-.content {
+.credit-variables {
   padding: 20px;
 }
 
-.filter-form {
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.search-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.variable-name {
+  color: #1890ff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.variable-name:hover {
+  text-decoration: underline;
+}
+
+.tag-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.drawer-content {
+  padding: 0;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
   margin-bottom: 16px;
+  color: #1d2129;
+  border-bottom: 1px solid #e5e6eb;
+  padding-bottom: 8px;
 }
 </style>

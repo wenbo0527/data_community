@@ -48,7 +48,7 @@ const getTypeColor = (type: string) => {
   // 类型颜色匹配逻辑
   return '#1890ff'
 }
-import { defineProps, defineEmits } from 'vue'
+// defineProps and defineEmits are compiler macros, no import needed
 import IconTable from '@arco-design/web-vue/es/icon'
 import { IconRight } from '@arco-design/web-vue/es/icon'
 

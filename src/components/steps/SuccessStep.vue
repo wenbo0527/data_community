@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
+// No imports needed for this component
 import type { FormData } from '../../types/accompany'
 
 const props = defineProps<{

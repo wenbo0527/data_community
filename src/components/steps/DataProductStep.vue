@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, watch, reactive, toRefs, computed, onMounted } from 'vue'
+import { ref, watch, reactive, toRefs, computed, onMounted } from 'vue'
 import type { DataProduct, Period } from '../../types/accompany'
 import { IconDelete } from '@arco-design/web-vue/es/icon'
 

@@ -162,7 +162,7 @@
           </a-col>
         </a-row>
         
-        <a-row :gutter="24" style="margin-top: 24px;">
+        <a-row :gutter="24" style="margin-top: 16px;">
           <a-col :span="12">
             <a-card class="module-card" hoverable @click="navigateTo('metric-management')">
               <div class="module-header">
@@ -290,6 +290,8 @@ const navigateTo = (path: string) => {
 .asset-overview {
   background: var(--color-bg-1);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-header {
@@ -299,28 +301,29 @@ const navigateTo = (path: string) => {
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
+  flex-shrink: 0;
 }
 
 .title-area {
   width: 100%;
   max-width: 1420px;
   margin: 0 auto;
-  padding: 24px 0;
+  padding: 16px 0;
   box-sizing: border-box;
 }
 
 .page-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--color-text-1);
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .page-description {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--color-text-2);
   margin: 0;
 }
@@ -331,34 +334,33 @@ const navigateTo = (path: string) => {
 }
 
 .content-section {
-  margin-top: 16px;
-  min-height: calc(100vh - 180px);
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 16px 24px 24px;
   box-sizing: border-box;
   max-width: 1420px;
 }
 
 .section-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text-1);
-  margin: 0 0 16px 0;
+  margin: 0 0 12px 0;
 }
 
 .overview-section {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 .stat-card {
   cursor: pointer;
   transition: all 0.2s var(--transition-timing-function-standard);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  height: 132px;
+  height: 100px;
   border-radius: var(--border-radius-medium);
   background: var(--color-bg-2);
 }
@@ -371,19 +373,19 @@ const navigateTo = (path: string) => {
 .stat-content {
   display: flex;
   align-items: center;
-  padding: 16px 24px;
+  padding: 12px 20px;
   height: 100%;
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
-  font-size: 24px;
+  margin-right: 12px;
+  font-size: 20px;
   color: white;
 }
 
@@ -408,26 +410,26 @@ const navigateTo = (path: string) => {
 }
 
 .stat-number {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--color-text-1);
   line-height: 1;
 }
 
 .stat-unit {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--color-text-3);
   margin-left: 4px;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-text-2);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .relation-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .relation-diagram-card,
@@ -436,42 +438,42 @@ const navigateTo = (path: string) => {
 }
 
 .placeholder-diagram {
-  height: 400px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--color-fill-2);
   color: var(--color-text-3);
   border-radius: 8px;
-  margin: 16px;
+  margin: 12px;
   position: relative;
   text-align: center;
 }
 
 .charts-section {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 .placeholder-chart {
-  height: 300px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--color-fill-2);
   color: var(--color-text-3);
   border-radius: 8px;
-  margin: 16px;
+  margin: 12px;
   text-align: center;
 }
 
 .modules-section {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 .module-card {
   cursor: pointer;
   transition: all 0.3s;
-  height: 160px;
+  height: 120px;
 }
 
 .module-card:hover {
@@ -482,18 +484,18 @@ const navigateTo = (path: string) => {
 .module-header {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .module-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
-  font-size: 20px;
+  margin-right: 10px;
+  font-size: 16px;
   color: white;
   flex-shrink: 0;
 }
@@ -503,17 +505,17 @@ const navigateTo = (path: string) => {
 }
 
 .module-title h3 {
-  margin: 0 0 4px 0;
-  font-size: 18px;
+  margin: 0 0 2px 0;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-1);
 }
 
 .module-title p {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--color-text-2);
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .module-features {
@@ -524,6 +526,7 @@ const navigateTo = (path: string) => {
 
 .activity-section {
   max-width: 600px;
+  margin-bottom: 0;
 }
 
 .activity-item {

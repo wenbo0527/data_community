@@ -1,6 +1,6 @@
 <template>
     <a-modal :visible="visible" @update:visible="(val) => $emit('update:visible', val)" :title="modalTitle"
-        :mask-closable="false" :footer="false" width="800px">
+        :mask-closable="false" :footer="false" width="800px" class="welcome-modal">
         <!-- 新人引导内容 -->
         <div v-if="isNewUser" class="quick-start-guide">
             <div class="welcome-section" v-if="currentStep === 0 && !guideStarted">
@@ -381,7 +381,31 @@ const todoList = ref([
 .step-actions {
     display: flex;
     justify-content: space-between;
-    margin-top: 32px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border-2);
+}
+
+/* 欢迎弹窗样式优化 */
+:deep(.welcome-modal) {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+:deep(.welcome-modal .arco-modal-header) {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--color-border-2);
+    background: var(--color-bg-2);
+}
+
+:deep(.welcome-modal .arco-modal-title) {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-1);
+}
+
+:deep(.welcome-modal .arco-modal-body) {
+    padding: 24px;
 }
 
 .regular-user-content {

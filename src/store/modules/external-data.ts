@@ -23,7 +23,10 @@ export interface BurndownData {
   month: string
   budget: number
   actual: number
-  granularity: string
+  granularity?: string
+  initialBudget?: number
+  cumulativeBudget?: number
+  cumulativeActual?: number
 }
 
 export const useExternalDataStore = defineStore('externalData', {
