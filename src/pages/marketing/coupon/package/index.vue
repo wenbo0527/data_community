@@ -77,7 +77,7 @@
       @ok="handleCreateConfirm"
       @cancel="handleCreateCancel"
     >
-      <a-form :model="formData" :rules="isViewMode ? {} : rules" ref="formRef" layout="horizontal" :style="{ width: '90%', margin: '0 auto' }">
+      <a-form :model="formData" :rules="isViewMode ? {} : rules" ref="formRef" layout="horizontal" :style="{ width: '100%', maxWidth: '800px', margin: '0 auto' }">
         <a-form-item field="name" label="券包名称" validate-trigger="blur" :label-col-props="{ span: 6 }" :wrapper-col-props="{ span: 18 }">
           <a-input v-model="formData.name" placeholder="请输入券包名称" :readonly="isViewMode" allow-clear />
         </a-form-item>

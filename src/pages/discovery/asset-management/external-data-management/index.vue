@@ -213,7 +213,7 @@
     <a-modal
       v-model:visible="showCreateModal"
       :title="editingExternalData?.isViewMode ? '数源详情' : (editingExternalData ? '编辑数源' : '注册外部数据')"
-      width="1000px"
+      :width="Math.min(1000, (typeof window !== 'undefined' ? window.innerWidth : 1200) * 0.9)"
       @ok="handleSubmit"
       @cancel="resetForm"
       :ok-text="editingExternalData?.isViewMode ? '关闭' : '确定'"

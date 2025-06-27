@@ -440,8 +440,8 @@ const metrics = ref([
 <style scoped>
 .layout-container {
   height: 100vh;
-  min-width: 1200px;
-  overflow: hidden;
+  min-width: 320px;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);

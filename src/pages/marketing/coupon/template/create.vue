@@ -13,7 +13,7 @@
         :model="formData"
         :rules="rules"
         layout="vertical"
-        :style="{ maxWidth: '800px' }"
+        :style="{ width: '100%', maxWidth: '800px' }"
         :disabled="mode === 'view' || readonly"
       >
         <a-form-item field="name" label="优惠券名称" required>

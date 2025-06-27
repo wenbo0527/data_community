@@ -127,7 +127,7 @@
         <h3>关联数据产品</h3>
         <p class="step-description">请选择关联的外部数据产品，可以批量勾选</p>
         
-        <!-- 筛选条件 -->
+        <!-- 筛选条件和操作按钮 -->
         <a-card class="filter-card">
           <div class="filter-section">
             <a-form :model="filterForm" layout="inline">
@@ -149,17 +149,17 @@
                 <a-option value="第三方数据公司">第三方数据公司</a-option>
               </a-select>
             </a-form-item>
-            <a-form-item field="isNew" label="数据产品类型">
-              <a-radio-group v-model="filterForm.isNew">
-                <a-radio value="">全部</a-radio>
-                <a-radio value="true">新数据产品</a-radio>
-                <a-radio value="false">已有数据产品</a-radio>
-              </a-radio-group>
-            </a-form-item>
+
             <a-form-item>
               <a-space>
                 <a-button type="primary" @click="handleFilter">筛选</a-button>
                 <a-button @click="resetFilter">重置</a-button>
+                <a-button type="outline" @click="showNewDataModal = true">
+                  <template #icon>
+                    <icon-plus />
+                  </template>
+                  新增外数注册
+                </a-button>
               </a-space>
             </a-form-item>
           </a-form>
@@ -184,11 +184,7 @@
               <span>{{ record.dataName }}</span>
             </a-tooltip>
           </template>
-          <template #productType="{ record }">
-            <a-tag :color="record.isNew ? 'green' : 'blue'">
-              {{ record.isNew ? '新数据产品' : '已有数据产品' }}
-            </a-tag>
-          </template>
+
         </a-table>
         
         <div class="selected-summary" v-if="selectedRowKeys.length > 0">
@@ -227,6 +223,222 @@
         </div>
       </div>
     </a-card>
+
+    <!-- 新增外数注册模态框 -->
+    <a-modal
+      v-model:visible="showNewDataModal"
+      title="新增外数注册"
+      :width="Math.min(1000, window.innerWidth * 0.9)"
+      @ok="handleNewDataSubmit"
+      @cancel="resetNewDataForm"
+      ok-text="确定"
+      cancel-text="取消"
+    >
+      <a-form
+        ref="newDataFormRef"
+        :model="newDataFormData"
+        :rules="newDataFormRules"
+        layout="vertical"
+      >
+        <!-- 基本信息 -->
+        <a-divider orientation="left">基本信息</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="数源名称" field="name">
+              <a-input 
+                v-model="newDataFormData.name" 
+                placeholder="请输入数源名称" 
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="数源种类" field="dataCategory">
+              <a-select 
+                v-model="newDataFormData.dataCategory" 
+                placeholder="请选择数源种类"
+              >
+                <a-option value="征信数据">征信数据</a-option>
+                <a-option value="风控数据">风控数据</a-option>
+                <a-option value="运营商数据">运营商数据</a-option>
+                <a-option value="政务数据">政务数据</a-option>
+                <a-option value="金融数据">金融数据</a-option>
+                <a-option value="其他">其他</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="接口类型" field="interfaceType">
+              <a-select 
+                v-model="newDataFormData.interfaceType" 
+                placeholder="请选择接口类型"
+              >
+                <a-option value="REST API">REST API</a-option>
+                <a-option value="SOAP">SOAP</a-option>
+                <a-option value="FTP">FTP</a-option>
+                <a-option value="SFTP">SFTP</a-option>
+                <a-option value="数据库直连">数据库直连</a-option>
+                <a-option value="文件传输">文件传输</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="接口标签" field="interfaceTag">
+              <a-select 
+                v-model="newDataFormData.interfaceTag" 
+                placeholder="请选择接口标签"
+              >
+                <a-option value="主接口">主接口</a-option>
+                <a-option value="备接口">备接口</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="供应商" field="provider">
+              <a-input 
+                v-model="newDataFormData.provider" 
+                placeholder="请输入供应商名称" 
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="负责人" field="owner">
+              <a-input 
+                v-model="newDataFormData.owner" 
+                placeholder="请输入负责人" 
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="落库表名" field="targetTable">
+              <a-input v-model="newDataFormData.targetTable" placeholder="请输入落库表名" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="单价（元/条）" field="unitPrice">
+              <a-input-number 
+                v-model="newDataFormData.unitPrice" 
+                placeholder="请输入单价" 
+                :precision="4"
+                :min="0"
+                :max="9999.9999"
+                style="width: 100%"
+              >
+                <template #suffix>元/条</template>
+              </a-input-number>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="描述信息" field="description">
+              <a-textarea v-model="newDataFormData.description" placeholder="请输入描述信息" :rows="3" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <!-- 数据管理 -->
+        <a-divider orientation="left">数据管理</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="数据管理员" field="dataManager">
+              <a-input v-model="newDataFormData.dataManager" placeholder="请输入数据管理员" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="数据更新频率" field="updateFrequency">
+              <a-select v-model="newDataFormData.updateFrequency" placeholder="选择更新频率">
+                <a-option value="实时">实时</a-option>
+                <a-option value="日更新">日更新</a-option>
+                <a-option value="离线T+1">离线T+1</a-option>
+                <a-option value="每周">每周</a-option>
+                <a-option value="每月">每月</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="数据管理说明">
+              <a-textarea v-model="newDataFormData.dataManagementDescription" placeholder="请输入数据管理相关说明" :rows="3" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <!-- 文件管理 -->
+        <a-divider orientation="left">文件管理</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="相关文件">
+              <!-- 已上传文件列表 -->
+              <div v-if="newDataFormData.files && newDataFormData.files.length > 0" class="uploaded-files">
+                <div v-for="(file, index) in newDataFormData.files" :key="index" class="file-item">
+                  <div class="file-info">
+                    <a-input 
+                      v-model="file.displayName" 
+                      placeholder="请输入文件名称"
+                      class="file-name-input"
+                    />
+                    <span class="file-original-name">{{ file.originalName }}</span>
+                    <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                  </div>
+                  <div class="file-actions">
+                    <a-button 
+                      type="text" 
+                      size="small" 
+                      @click="downloadFile(file)"
+                    >
+                      下载
+                    </a-button>
+                    <a-button 
+                      type="text" 
+                      size="small" 
+                      status="danger" 
+                      @click="removeNewDataFile(index)"
+                    >
+                      删除
+                    </a-button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 文件上传 -->
+              <a-upload
+                :custom-request="handleNewDataFileUpload"
+                :show-file-list="false"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+                class="file-upload"
+              >
+                <template #upload-button>
+                  <a-button type="outline">
+                    <template #icon>
+                      <icon-upload />
+                    </template>
+                    上传文件
+                  </a-button>
+                </template>
+              </a-upload>
+              
+              <div class="upload-tips">
+                <p>支持格式：PDF、Word、Excel、TXT、ZIP、RAR</p>
+                <p>单个文件大小不超过 50MB</p>
+              </div>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -234,7 +446,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconUpload, IconCheckCircle } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconCheckCircle, IconPlus } from '@arco-design/web-vue/es/icon'
 import { useFileUpload } from '@/utils/fileUploadUtils'
 
 const router = useRouter()
@@ -296,6 +508,52 @@ const filterForm = reactive({
   isNew: ''
 })
 
+// 新增外数注册相关
+const showNewDataModal = ref(false)
+const newDataFormRef = ref()
+
+// 新增外数表单数据
+const newDataFormData = reactive({
+  name: '',
+  dataCategory: '',
+  interfaceType: '',
+  interfaceTag: '',
+  provider: '',
+  owner: '',
+  targetTable: '',
+  unitPrice: undefined,
+  description: '',
+  dataManager: '',
+  updateFrequency: '',
+  dataManagementDescription: '',
+  files: []
+})
+
+// 新增外数表单验证规则
+const newDataFormRules = {
+  name: [
+    { required: true, message: '请输入数源名称' }
+  ],
+  dataCategory: [
+    { required: true, message: '请选择数源种类' }
+  ],
+  interfaceType: [
+    { required: true, message: '请选择接口类型' }
+  ],
+  provider: [
+    { required: true, message: '请输入供应商名称' }
+  ],
+  owner: [
+    { required: true, message: '请输入负责人' }
+  ],
+  targetTable: [
+    { required: true, message: '请输入落库表名' }
+  ],
+  unitPrice: [
+    { required: true, message: '请输入单价' }
+  ]
+}
+
 // 表格列配置
 const columns = [
   {
@@ -324,12 +582,7 @@ const columns = [
     dataIndex: 'interfaceTag',
     width: 120
   },
-  {
-    title: '产品类型',
-    dataIndex: 'isNew',
-    slotName: 'productType',
-    width: 120
-  }
+
 ]
 
 // 摘要表格列配置
@@ -483,6 +736,94 @@ const finishRegistration = () => {
   const message = isEditMode.value ? '外数采购项目更新成功' : '外数采购项目注册成功'
   Message.success(message)
   router.push('/discovery/asset-management/external-data-management')
+}
+
+// 新增外数注册相关方法
+// 提交新增外数表单
+const handleNewDataSubmit = async () => {
+  try {
+    const valid = await newDataFormRef.value?.validate()
+    if (valid) {
+      // 模拟提交数据
+      const newDataProduct = {
+        id: `data-new-${Date.now()}`,
+        dataName: newDataFormData.name,
+        dataType: newDataFormData.dataCategory,
+        supplier: newDataFormData.provider,
+        price: newDataFormData.unitPrice,
+        interfaceTag: newDataFormData.interfaceTag,
+        isNew: true // 标记为新数据产品
+      }
+      
+      // 添加到表格数据中
+      tableData.value.unshift(newDataProduct)
+      
+      // 自动选中新添加的数据产品
+      selectedRowKeys.value.push(newDataProduct.id)
+      selectedProducts.value.push(newDataProduct)
+      
+      Message.success('外数注册成功，已自动关联到当前采购项目')
+      showNewDataModal.value = false
+      resetNewDataForm()
+    }
+  } catch (error) {
+    console.error('表单验证失败:', error)
+  }
+}
+
+// 重置新增外数表单
+const resetNewDataForm = () => {
+  newDataFormData.name = ''
+  newDataFormData.dataCategory = ''
+  newDataFormData.interfaceType = ''
+  newDataFormData.interfaceTag = ''
+  newDataFormData.provider = ''
+  newDataFormData.owner = ''
+  newDataFormData.targetTable = ''
+  newDataFormData.unitPrice = undefined
+  newDataFormData.description = ''
+  newDataFormData.dataManager = ''
+  newDataFormData.updateFrequency = ''
+  newDataFormData.dataManagementDescription = ''
+  newDataFormData.files = []
+  
+  newDataFormRef.value?.clearValidate()
+}
+
+// 处理新增外数文件上传
+const handleNewDataFileUpload = async (option) => {
+  const { fileItem } = option
+  
+  // 模拟文件上传
+  const newFile = {
+    id: Date.now().toString(),
+    displayName: fileItem.name,
+    originalName: fileItem.name,
+    size: fileItem.size,
+    type: fileItem.type,
+    uploadTime: new Date().toISOString()
+  }
+  
+  newDataFormData.files.push(newFile)
+  Message.success('文件上传成功')
+  
+  return {
+    abort: () => {
+      // 取消上传逻辑
+    }
+  }
+}
+
+// 删除新增外数文件
+const removeNewDataFile = (index) => {
+  newDataFormData.files.splice(index, 1)
+  Message.success('文件删除成功')
+}
+
+// 下载文件
+const downloadFile = (file) => {
+  // 模拟文件下载
+  Message.info(`正在下载文件: ${file.displayName}`)
 }
 
 // 加载编辑数据
@@ -658,5 +999,61 @@ onMounted(() => {
   color: var(--color-text-3);
   margin-top: 4px;
   font-style: italic;
+}
+
+/* 新增外数注册相关样式 */
+.uploaded-files {
+  margin-bottom: 16px;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--color-border-2);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background-color: var(--color-fill-1);
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 12px;
+}
+
+.file-name-input {
+  width: 200px;
+}
+
+.file-original-name {
+  color: var(--color-text-2);
+  font-size: 14px;
+}
+
+.file-size {
+  color: var(--color-text-3);
+  font-size: 12px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.file-upload {
+  margin-bottom: 16px;
+}
+
+.upload-tips {
+  color: var(--color-text-3);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.upload-tips p {
+  margin: 4px 0;
 }
 </style>

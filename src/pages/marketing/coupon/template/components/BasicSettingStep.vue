@@ -5,7 +5,7 @@
       :model="formData"
       :rules="rules"
       layout="vertical"
-      :style="{ maxWidth: '800px' }"
+      :style="{ width: '100%', maxWidth: '800px' }"
     >
       <admission-form :form-data="formData" />
 

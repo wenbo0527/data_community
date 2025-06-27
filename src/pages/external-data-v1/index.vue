@@ -221,6 +221,9 @@ const editForm = ref({
   supplier: '',
   description: ''
 })
+const batchForm = ref({
+  file: null
+})
 const filterForm = ref({
   dataType: undefined,
   dataCategory: undefined,
@@ -293,6 +296,17 @@ const handleBatchCancel = () => {
 
 const handleFileChange = (file) => {
   batchFile.value = file
+}
+
+const downloadTemplate = () => {
+  // 模拟下载模板文件
+  const link = document.createElement('a')
+  link.href = '/template/batch_import_template.xlsx'
+  link.download = '批量导入模板.xlsx'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  console.log('下载模板文件')
 }
 </script>
 

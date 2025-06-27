@@ -14,7 +14,7 @@
           <template-detail :id="templateId" :readonly="true" disable-operations />
         </a-tab-pane>
         <a-tab-pane key="instance" title="库存参数">
-          <a-form :model="instanceFormData" layout="vertical" :style="{ maxWidth: '800px' }" disabled>
+          <a-form :model="instanceFormData" layout="vertical" :style="{ width: '100%', maxWidth: '800px' }" disabled>
             <a-form-item field="name" label="券名称">
               <a-input v-model="instanceFormData.name" />
             </a-form-item>

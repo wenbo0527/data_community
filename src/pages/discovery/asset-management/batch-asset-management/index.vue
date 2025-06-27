@@ -164,7 +164,7 @@
       @ok="handleImport"
       @cancel="resetImportForm"
     >
-      <a-form layout="vertical">
+      <a-form :model="importConfig" layout="vertical">
         <a-form-item label="数据类型">
           <a-select v-model="importConfig.dataType" placeholder="选择数据类型" @change="handleDataTypeChange">
             <a-option value="behavior">行为变量</a-option>
@@ -263,7 +263,7 @@
       @ok="handleBatchOperation"
       @cancel="resetBatchForm"
     >
-      <a-form layout="vertical">
+      <a-form :model="batchOperation" layout="vertical">
         <a-form-item label="操作类型">
           <a-select v-model="batchOperation.type" placeholder="选择操作类型">
             <a-option value="updateStatus">更新状态</a-option>

@@ -251,7 +251,7 @@
     <a-modal
       v-model:visible="processListModalVisible"
       title="业务流程管理"
-      width="800px"
+      :width="Math.min(800, (typeof window !== 'undefined' ? window.innerWidth : 1200) * 0.9)"
       :footer="false"
       :mask-closable="false"
     >
@@ -823,8 +823,7 @@ const saveBusinessProcess = (data: any) => {
 /* 主容器样式 */
 .business-process-flow {
   padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   box-sizing: border-box;
   background: var(--color-bg-1);
   min-height: 100vh;
@@ -1884,8 +1883,7 @@ const saveBusinessProcess = (data: any) => {
 
 /* 桌面端优化样式 */
 .business-process-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* 表格内容优化 */

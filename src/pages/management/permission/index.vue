@@ -62,7 +62,7 @@
           <h2 class="page-title">申请权限</h2>
         </div>
 
-        <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical" :style="{ maxWidth: '720px' }">
+        <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical" :style="{ width: '100%', maxWidth: '720px' }">
           <a-card class="section-card">
             <a-grid :cols="2" :col-gap="16" :row-gap="16">
               <a-grid-item>
