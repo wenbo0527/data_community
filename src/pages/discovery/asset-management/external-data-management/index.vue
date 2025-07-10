@@ -213,7 +213,7 @@
     <a-modal
       v-model:visible="showCreateModal"
       :title="editingExternalData?.isViewMode ? '数源详情' : (editingExternalData ? '编辑数源' : '注册外部数据')"
-      :width="Math.min(1000, (typeof window !== 'undefined' ? window.innerWidth : 1200) * 0.9)"
+      :width="modalWidth"
       @ok="handleSubmit"
       @cancel="resetForm"
       :ok-text="editingExternalData?.isViewMode ? '关闭' : '确定'"
@@ -440,7 +440,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, h, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconFile, IconUpload, IconSearch } from '@arco-design/web-vue/es/icon'
@@ -512,6 +512,11 @@ interface ExternalDataItem {
 
 const editingExternalData = ref<ExternalDataItem | null>(null)
 const formRef = ref()
+
+// 模态框宽度计算
+const modalWidth = computed(() => {
+  return Math.min(1000, (typeof globalThis.window !== 'undefined' ? globalThis.window.innerWidth : 1200) * 0.9)
+})
 
 // 表格列配置
 const columns = [

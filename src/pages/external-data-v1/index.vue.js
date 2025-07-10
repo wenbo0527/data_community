@@ -1,4 +1,4 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { IconStar, IconStarFill, IconPlus, IconUpload, IconDownload } from '@arco-design/web-vue/es/icon';
@@ -13,6 +13,9 @@ const editForm = ref({
     dataCategory: '',
     supplier: '',
     description: ''
+});
+const batchForm = ref({
+    file: null
 });
 const filterForm = ref({
     dataType: undefined,
@@ -72,6 +75,16 @@ const handleBatchCancel = () => {
 };
 const handleFileChange = (file) => {
     batchFile.value = file;
+};
+const downloadTemplate = () => {
+    // 模拟下载模板文件
+    const link = document.createElement('a');
+    link.href = '/template/batch_import_template.xlsx';
+    link.download = '批量导入模板.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    console.log('下载模板文件');
 };
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
@@ -1104,6 +1117,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             showBatchModal: showBatchModal,
             batchFile: batchFile,
             editForm: editForm,
+            batchForm: batchForm,
             filterForm: filterForm,
             filteredData: filteredData,
             getTagColor: getTagColor,
@@ -1113,6 +1127,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             handleBatchSubmit: handleBatchSubmit,
             handleBatchCancel: handleBatchCancel,
             handleFileChange: handleFileChange,
+            downloadTemplate: downloadTemplate,
         };
     },
 });

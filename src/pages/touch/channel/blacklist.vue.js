@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { IconUndo, IconPlus, IconUpload } from '@arco-design/web-vue/es/icon';
 import mockData from '@/mock/touch';
 export default (await import('vue')).defineComponent({

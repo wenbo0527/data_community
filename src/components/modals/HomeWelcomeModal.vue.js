@@ -1,4 +1,4 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, computed, watch, onMounted } from 'vue';
 import { IconArrowRise, IconArrowFall, IconCheckCircle } from '@arco-design/web-vue/es/icon';
 import { Message } from '@arco-design/web-vue';
@@ -174,6 +174,9 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['feature-list']} */ ;
 /** @type {__VLS_StyleScopedClasses['feature-list']} */ ;
 /** @type {__VLS_StyleScopedClasses['step-detail']} */ ;
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
 /** @type {__VLS_StyleScopedClasses['arco-list-item']} */ ;
 // CSS variable injection 
 // CSS variable injection end 
@@ -187,6 +190,7 @@ const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     maskClosable: (false),
     footer: (false),
     width: "800px",
+    ...{ class: "welcome-modal" },
 }));
 const __VLS_2 = __VLS_1({
     ...{ 'onUpdate:visible': {} },
@@ -195,6 +199,7 @@ const __VLS_2 = __VLS_1({
     maskClosable: (false),
     footer: (false),
     width: "800px",
+    ...{ class: "welcome-modal" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 let __VLS_4;
 let __VLS_5;
@@ -536,6 +541,7 @@ else {
     var __VLS_64;
 }
 var __VLS_3;
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
 /** @type {__VLS_StyleScopedClasses['quick-start-guide']} */ ;
 /** @type {__VLS_StyleScopedClasses['welcome-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['welcome-title']} */ ;

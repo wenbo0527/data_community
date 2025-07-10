@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted, computed } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import { useRoute, useRouter } from 'vue-router';

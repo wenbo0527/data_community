@@ -1,5 +1,5 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
-import { defineProps, defineEmits, watch, reactive, computed, onMounted } from 'vue';
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+import { watch, reactive, computed, onMounted } from 'vue';
 import { IconDelete } from '@arco-design/web-vue/es/icon';
 const mockDataProducts = [
     { id: 'dp1', name: '数据产品A', description: '用于信用评估的综合数据产品', price: 100, supplier: '供应商A', sceneRatios: {} },
@@ -518,14 +518,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             handlePrev: handlePrev,
         };
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

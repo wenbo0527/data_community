@@ -44,6 +44,7 @@ export interface BurndownData {
   month: string
   budget: number
   actual: number
+  granularity?: string
   initialBudget?: number
   cumulativeBudget?: number
   cumulativeActual?: number
@@ -71,6 +72,7 @@ export const generateBurndownData = (filter?: {businessType?: string, platform?:
       month,
       budget: budgetRemaining,
       actual: actualRemaining,
+      granularity: 'month',
       initialBudget,
       cumulativeBudget,
       cumulativeActual

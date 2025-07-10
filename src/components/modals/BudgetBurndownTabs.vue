@@ -24,7 +24,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import * as echarts from 'echarts'
 
 type BurndownItem = { 
-  granularity: string;
+  granularity?: string;
   month: string;
   budget: number;
   actual: number;
@@ -242,8 +242,8 @@ const updateChart = (data: any[], type: string) => {
     console.log('图表渲染检查:', {
       hasCanvas: !!canvas,
       canvasSize: canvas ? { width: canvas.width, height: canvas.height } : null,
-      chartOption: burndownChart.getOption(),
-      isDisposed: burndownChart.isDisposed()
+      chartOption: burndownChart?.getOption(),
+      isDisposed: burndownChart?.isDisposed()
     })
   }, 100)
   

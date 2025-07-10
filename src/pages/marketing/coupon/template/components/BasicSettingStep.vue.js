@@ -1,4 +1,4 @@
-/// <reference types="../../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import { useRouter } from 'vue-router';
@@ -102,14 +102,14 @@ const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '800px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '800px' }) },
 }));
 const __VLS_2 = __VLS_1({
     ref: "formRef",
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '800px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '800px' }) },
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 /** @type {typeof __VLS_ctx.formRef} */ ;
 var __VLS_4 = {};

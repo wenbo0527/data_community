@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { IconArrowRise, IconArrowFall, IconDownload } from '@arco-design/web-vue/es/icon';
 import { Message } from '@arco-design/web-vue';

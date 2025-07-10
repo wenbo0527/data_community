@@ -1,6 +1,6 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, watchEffect } from 'vue';
-import { defineProps, defineEmits } from 'vue';
+// defineProps and defineEmits are compiler macros, no import needed
 import { Select as ASelect, Option as AOption } from '@arco-design/web-vue';
 const props = defineProps();
 const emit = defineEmits(['select-collection']);
@@ -73,13 +73,13 @@ const __VLS_self = (await import('vue')).defineComponent({
         };
     },
     emits: {},
-    props: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
     emits: {},
-    props: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

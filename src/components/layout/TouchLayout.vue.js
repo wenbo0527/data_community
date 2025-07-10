@@ -1,4 +1,4 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 const route = useRoute();

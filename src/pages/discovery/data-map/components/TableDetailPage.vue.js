@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed } from 'vue';
 const props = defineProps();
 const tableDetailData = computed(() => {
@@ -127,12 +127,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             tableDetailData: tableDetailData,
         };
     },
-    props: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    props: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

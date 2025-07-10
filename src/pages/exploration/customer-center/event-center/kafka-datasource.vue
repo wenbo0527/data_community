@@ -321,13 +321,26 @@ const pagination = reactive({
   total: 0
 })
 
+// 数据源接口
+interface DatasourceItem {
+  id: number
+  datasourceName: string
+  brokerAddress: string
+  port: number
+  authType: string
+  status: string
+  createTime: string
+  owner: string
+  description: string
+}
+
 // 表格数据
-const tableData = ref([])
+const tableData = ref<DatasourceItem[]>([])
 const datasourceFormRef = ref()
 
-// 状态颜色映射
+// 获取状态颜色
 const getStatusColor = (status: string) => {
-  const colorMap = {
+  const colorMap: Record<string, string> = {
     '正常': 'green',
     '异常': 'red',
     '未测试': 'gray'

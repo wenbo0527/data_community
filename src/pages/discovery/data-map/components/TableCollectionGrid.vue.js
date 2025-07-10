@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, computed, watch } from 'vue';
 import { IconStar, IconStarFill, IconMore, IconEdit, IconDelete, IconPlus } from '@arco-design/web-vue/es/icon';
 import { Message, Modal } from '@arco-design/web-vue';
@@ -650,14 +650,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             handlePageSizeChange: handlePageSizeChange,
         };
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

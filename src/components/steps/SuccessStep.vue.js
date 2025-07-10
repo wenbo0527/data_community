@@ -1,5 +1,4 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
-import { defineProps } from 'vue';
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 const props = defineProps();
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
@@ -14,12 +13,12 @@ const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    props: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    props: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

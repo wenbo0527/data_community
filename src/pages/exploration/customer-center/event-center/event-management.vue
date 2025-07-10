@@ -505,6 +505,7 @@ interface AttributeItem {
   id: string
   displayName: string
   dataType: string
+  relationId: string
   isUniqueId: boolean
   isEventTime: boolean
   isEnum: boolean
@@ -516,6 +517,7 @@ const attributes = ref<AttributeItem[]>([
     id: 'KE82KD',
     displayName: '客户姓名',
     dataType: 'string',
+    relationId: 'UID',
     isUniqueId: true,
     isEventTime: false,
     isEnum: false
@@ -524,6 +526,7 @@ const attributes = ref<AttributeItem[]>([
     id: 'phone',
     displayName: '联系电话',
     dataType: 'number',
+    relationId: 'CUSTID',
     isUniqueId: true,
     isEventTime: false,
     isEnum: false
@@ -532,6 +535,7 @@ const attributes = ref<AttributeItem[]>([
     id: 'gender',
     displayName: '性别',
     dataType: 'number',
+    relationId: '',
     isUniqueId: false,
     isEventTime: false,
     isEnum: true,

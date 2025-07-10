@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { onMounted, watch } from 'vue';
 const props = defineProps({
     userInfo: {
@@ -71,12 +71,10 @@ else {
     /** @type {[typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, ]} */ ;
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
-        bordered: true,
         column: ({ xs: 1, sm: 2, md: 3 }),
         size: "small",
     }));
     const __VLS_6 = __VLS_5({
-        bordered: true,
         column: ({ xs: 1, sm: 2, md: 3 }),
         size: "small",
     }, ...__VLS_functionalComponentArgsRest(__VLS_5));

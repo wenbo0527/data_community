@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Message, Modal } from '@arco-design/web-vue';
@@ -134,7 +134,8 @@ const formData = ref({
     auditor: '',
     operator: userStore.userInfo.username, // 默认设置为当前登录用户
     validityPeriod: [],
-    userLimitDesc: '' // 用户持券限制说明
+    userLimitDesc: '', // 用户持券限制说明
+    usageScenarios: [] // 券使用场景（多选）
 });
 const rules = {
     templateId: [{ required: true, message: '请选择券模版' }],
@@ -1021,14 +1022,14 @@ const __VLS_155 = __VLS_asFunctionalComponent(__VLS_154, new __VLS_154({
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '720px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '720px' }) },
 }));
 const __VLS_156 = __VLS_155({
     ref: "formRef",
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '720px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '720px' }) },
 }, ...__VLS_functionalComponentArgsRest(__VLS_155));
 /** @type {typeof __VLS_ctx.formRef} */ ;
 var __VLS_158 = {};
@@ -1449,245 +1450,308 @@ const __VLS_278 = __VLS_277({
     span: (24),
 }, ...__VLS_functionalComponentArgsRest(__VLS_277));
 __VLS_279.slots.default;
-const __VLS_280 = {}.AAlert;
-/** @type {[typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, ]} */ ;
+const __VLS_280 = {}.AFormItem;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
 // @ts-ignore
 const __VLS_281 = __VLS_asFunctionalComponent(__VLS_280, new __VLS_280({
-    type: "info",
+    field: "usageScenarios",
+    label: "券使用场景",
 }));
 const __VLS_282 = __VLS_281({
-    type: "info",
+    field: "usageScenarios",
+    label: "券使用场景",
 }, ...__VLS_functionalComponentArgsRest(__VLS_281));
 __VLS_283.slots.default;
 {
-    const { icon: __VLS_thisSlot } = __VLS_283.slots;
-    const __VLS_284 = {}.IconInfoCircle;
-    /** @type {[typeof __VLS_components.IconInfoCircle, typeof __VLS_components.iconInfoCircle, ]} */ ;
-    // @ts-ignore
-    const __VLS_285 = __VLS_asFunctionalComponent(__VLS_284, new __VLS_284({}));
-    const __VLS_286 = __VLS_285({}, ...__VLS_functionalComponentArgsRest(__VLS_285));
+    const { help: __VLS_thisSlot } = __VLS_283.slots;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "help-text" },
+    });
 }
-(__VLS_ctx.formData.userLimitDesc);
-var __VLS_283;
-var __VLS_279;
-const __VLS_288 = {}.AGridItem;
-/** @type {[typeof __VLS_components.AGridItem, typeof __VLS_components.aGridItem, typeof __VLS_components.AGridItem, typeof __VLS_components.aGridItem, ]} */ ;
+const __VLS_284 = {}.ACheckboxGroup;
+/** @type {[typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, ]} */ ;
 // @ts-ignore
-const __VLS_289 = __VLS_asFunctionalComponent(__VLS_288, new __VLS_288({}));
-const __VLS_290 = __VLS_289({}, ...__VLS_functionalComponentArgsRest(__VLS_289));
+const __VLS_285 = __VLS_asFunctionalComponent(__VLS_284, new __VLS_284({
+    modelValue: (__VLS_ctx.formData.usageScenarios),
+}));
+const __VLS_286 = __VLS_285({
+    modelValue: (__VLS_ctx.formData.usageScenarios),
+}, ...__VLS_functionalComponentArgsRest(__VLS_285));
+__VLS_287.slots.default;
+const __VLS_288 = {}.ACheckbox;
+/** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ ;
+// @ts-ignore
+const __VLS_289 = __VLS_asFunctionalComponent(__VLS_288, new __VLS_288({
+    value: "batch_distribution",
+}));
+const __VLS_290 = __VLS_289({
+    value: "batch_distribution",
+}, ...__VLS_functionalComponentArgsRest(__VLS_289));
 __VLS_291.slots.default;
-const __VLS_292 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+var __VLS_291;
+const __VLS_292 = {}.ACheckbox;
+/** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ ;
 // @ts-ignore
 const __VLS_293 = __VLS_asFunctionalComponent(__VLS_292, new __VLS_292({
-    field: "validityType",
-    label: "有效期类型",
-    required: true,
+    value: "telemarketing",
 }));
 const __VLS_294 = __VLS_293({
+    value: "telemarketing",
+}, ...__VLS_functionalComponentArgsRest(__VLS_293));
+__VLS_295.slots.default;
+var __VLS_295;
+var __VLS_287;
+var __VLS_283;
+var __VLS_279;
+const __VLS_296 = {}.AGridItem;
+/** @type {[typeof __VLS_components.AGridItem, typeof __VLS_components.aGridItem, typeof __VLS_components.AGridItem, typeof __VLS_components.aGridItem, ]} */ ;
+// @ts-ignore
+const __VLS_297 = __VLS_asFunctionalComponent(__VLS_296, new __VLS_296({
+    span: (24),
+}));
+const __VLS_298 = __VLS_297({
+    span: (24),
+}, ...__VLS_functionalComponentArgsRest(__VLS_297));
+__VLS_299.slots.default;
+const __VLS_300 = {}.AAlert;
+/** @type {[typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, ]} */ ;
+// @ts-ignore
+const __VLS_301 = __VLS_asFunctionalComponent(__VLS_300, new __VLS_300({
+    type: "info",
+}));
+const __VLS_302 = __VLS_301({
+    type: "info",
+}, ...__VLS_functionalComponentArgsRest(__VLS_301));
+__VLS_303.slots.default;
+{
+    const { icon: __VLS_thisSlot } = __VLS_303.slots;
+    const __VLS_304 = {}.IconInfoCircle;
+    /** @type {[typeof __VLS_components.IconInfoCircle, typeof __VLS_components.iconInfoCircle, ]} */ ;
+    // @ts-ignore
+    const __VLS_305 = __VLS_asFunctionalComponent(__VLS_304, new __VLS_304({}));
+    const __VLS_306 = __VLS_305({}, ...__VLS_functionalComponentArgsRest(__VLS_305));
+}
+(__VLS_ctx.formData.userLimitDesc);
+var __VLS_303;
+var __VLS_299;
+const __VLS_308 = {}.AGridItem;
+/** @type {[typeof __VLS_components.AGridItem, typeof __VLS_components.aGridItem, typeof __VLS_components.AGridItem, typeof __VLS_components.aGridItem, ]} */ ;
+// @ts-ignore
+const __VLS_309 = __VLS_asFunctionalComponent(__VLS_308, new __VLS_308({}));
+const __VLS_310 = __VLS_309({}, ...__VLS_functionalComponentArgsRest(__VLS_309));
+__VLS_311.slots.default;
+const __VLS_312 = {}.AFormItem;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+// @ts-ignore
+const __VLS_313 = __VLS_asFunctionalComponent(__VLS_312, new __VLS_312({
     field: "validityType",
     label: "有效期类型",
     required: true,
-}, ...__VLS_functionalComponentArgsRest(__VLS_293));
-__VLS_295.slots.default;
-{
-    const { help: __VLS_thisSlot } = __VLS_295.slots;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "help-text" },
-    });
-}
-const __VLS_296 = {}.ARadioGroup;
-/** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
-// @ts-ignore
-const __VLS_297 = __VLS_asFunctionalComponent(__VLS_296, new __VLS_296({
-    modelValue: (__VLS_ctx.formData.validityType),
-}));
-const __VLS_298 = __VLS_297({
-    modelValue: (__VLS_ctx.formData.validityType),
-}, ...__VLS_functionalComponentArgsRest(__VLS_297));
-__VLS_299.slots.default;
-const __VLS_300 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
-// @ts-ignore
-const __VLS_301 = __VLS_asFunctionalComponent(__VLS_300, new __VLS_300({
-    value: "absolute",
-}));
-const __VLS_302 = __VLS_301({
-    value: "absolute",
-}, ...__VLS_functionalComponentArgsRest(__VLS_301));
-__VLS_303.slots.default;
-var __VLS_303;
-const __VLS_304 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
-// @ts-ignore
-const __VLS_305 = __VLS_asFunctionalComponent(__VLS_304, new __VLS_304({
-    value: "relative",
-}));
-const __VLS_306 = __VLS_305({
-    value: "relative",
-}, ...__VLS_functionalComponentArgsRest(__VLS_305));
-__VLS_307.slots.default;
-var __VLS_307;
-var __VLS_299;
-var __VLS_295;
-const __VLS_308 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
-// @ts-ignore
-const __VLS_309 = __VLS_asFunctionalComponent(__VLS_308, new __VLS_308({
-    field: "validity",
-    label: "有效期",
-    required: true,
-}));
-const __VLS_310 = __VLS_309({
-    field: "validity",
-    label: "有效期",
-    required: true,
-}, ...__VLS_functionalComponentArgsRest(__VLS_309));
-__VLS_311.slots.default;
-{
-    const { help: __VLS_thisSlot } = __VLS_311.slots;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "help-text" },
-    });
-}
-const __VLS_312 = {}.ARangePicker;
-/** @type {[typeof __VLS_components.ARangePicker, typeof __VLS_components.aRangePicker, ]} */ ;
-// @ts-ignore
-const __VLS_313 = __VLS_asFunctionalComponent(__VLS_312, new __VLS_312({
-    modelValue: (__VLS_ctx.formData.validity),
-    showTime: true,
-    ...{ style: {} },
 }));
 const __VLS_314 = __VLS_313({
+    field: "validityType",
+    label: "有效期类型",
+    required: true,
+}, ...__VLS_functionalComponentArgsRest(__VLS_313));
+__VLS_315.slots.default;
+{
+    const { help: __VLS_thisSlot } = __VLS_315.slots;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "help-text" },
+    });
+}
+const __VLS_316 = {}.ARadioGroup;
+/** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+// @ts-ignore
+const __VLS_317 = __VLS_asFunctionalComponent(__VLS_316, new __VLS_316({
+    modelValue: (__VLS_ctx.formData.validityType),
+}));
+const __VLS_318 = __VLS_317({
+    modelValue: (__VLS_ctx.formData.validityType),
+}, ...__VLS_functionalComponentArgsRest(__VLS_317));
+__VLS_319.slots.default;
+const __VLS_320 = {}.ARadio;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+// @ts-ignore
+const __VLS_321 = __VLS_asFunctionalComponent(__VLS_320, new __VLS_320({
+    value: "absolute",
+}));
+const __VLS_322 = __VLS_321({
+    value: "absolute",
+}, ...__VLS_functionalComponentArgsRest(__VLS_321));
+__VLS_323.slots.default;
+var __VLS_323;
+const __VLS_324 = {}.ARadio;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+// @ts-ignore
+const __VLS_325 = __VLS_asFunctionalComponent(__VLS_324, new __VLS_324({
+    value: "relative",
+}));
+const __VLS_326 = __VLS_325({
+    value: "relative",
+}, ...__VLS_functionalComponentArgsRest(__VLS_325));
+__VLS_327.slots.default;
+var __VLS_327;
+var __VLS_319;
+var __VLS_315;
+const __VLS_328 = {}.AFormItem;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+// @ts-ignore
+const __VLS_329 = __VLS_asFunctionalComponent(__VLS_328, new __VLS_328({
+    field: "validity",
+    label: "有效期",
+    required: true,
+}));
+const __VLS_330 = __VLS_329({
+    field: "validity",
+    label: "有效期",
+    required: true,
+}, ...__VLS_functionalComponentArgsRest(__VLS_329));
+__VLS_331.slots.default;
+{
+    const { help: __VLS_thisSlot } = __VLS_331.slots;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "help-text" },
+    });
+}
+const __VLS_332 = {}.ARangePicker;
+/** @type {[typeof __VLS_components.ARangePicker, typeof __VLS_components.aRangePicker, ]} */ ;
+// @ts-ignore
+const __VLS_333 = __VLS_asFunctionalComponent(__VLS_332, new __VLS_332({
     modelValue: (__VLS_ctx.formData.validity),
     showTime: true,
     ...{ style: {} },
-}, ...__VLS_functionalComponentArgsRest(__VLS_313));
-var __VLS_311;
+}));
+const __VLS_334 = __VLS_333({
+    modelValue: (__VLS_ctx.formData.validity),
+    showTime: true,
+    ...{ style: {} },
+}, ...__VLS_functionalComponentArgsRest(__VLS_333));
+var __VLS_331;
 if (__VLS_ctx.formData.validityType === 'relative') {
-    const __VLS_316 = {}.AFormItem;
+    const __VLS_336 = {}.AFormItem;
     /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
     // @ts-ignore
-    const __VLS_317 = __VLS_asFunctionalComponent(__VLS_316, new __VLS_316({
+    const __VLS_337 = __VLS_asFunctionalComponent(__VLS_336, new __VLS_336({
         field: "relativeDays",
         label: "相对有效期",
         required: true,
     }));
-    const __VLS_318 = __VLS_317({
+    const __VLS_338 = __VLS_337({
         field: "relativeDays",
         label: "相对有效期",
         required: true,
-    }, ...__VLS_functionalComponentArgsRest(__VLS_317));
-    __VLS_319.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_337));
+    __VLS_339.slots.default;
     {
-        const { help: __VLS_thisSlot } = __VLS_319.slots;
+        const { help: __VLS_thisSlot } = __VLS_339.slots;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ class: "help-text" },
         });
     }
-    const __VLS_320 = {}.AInputNumber;
+    const __VLS_340 = {}.AInputNumber;
     /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
     // @ts-ignore
-    const __VLS_321 = __VLS_asFunctionalComponent(__VLS_320, new __VLS_320({
+    const __VLS_341 = __VLS_asFunctionalComponent(__VLS_340, new __VLS_340({
         modelValue: (__VLS_ctx.formData.relativeDays),
         min: (1),
         max: (45),
         step: (1),
         ...{ style: {} },
     }));
-    const __VLS_322 = __VLS_321({
+    const __VLS_342 = __VLS_341({
         modelValue: (__VLS_ctx.formData.relativeDays),
         min: (1),
         max: (45),
         step: (1),
         ...{ style: {} },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_321));
-    var __VLS_319;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_341));
+    var __VLS_339;
 }
-var __VLS_291;
+var __VLS_311;
 var __VLS_167;
-const __VLS_324 = {}.AFormItem;
+const __VLS_344 = {}.AFormItem;
 /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
 // @ts-ignore
-const __VLS_325 = __VLS_asFunctionalComponent(__VLS_324, new __VLS_324({
+const __VLS_345 = __VLS_asFunctionalComponent(__VLS_344, new __VLS_344({
     field: "rules",
     label: "使用规则说明",
 }));
-const __VLS_326 = __VLS_325({
+const __VLS_346 = __VLS_345({
     field: "rules",
     label: "使用规则说明",
-}, ...__VLS_functionalComponentArgsRest(__VLS_325));
-__VLS_327.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_345));
+__VLS_347.slots.default;
 {
-    const { help: __VLS_thisSlot } = __VLS_327.slots;
+    const { help: __VLS_thisSlot } = __VLS_347.slots;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "help-text" },
     });
 }
-const __VLS_328 = {}.ATextarea;
+const __VLS_348 = {}.ATextarea;
 /** @type {[typeof __VLS_components.ATextarea, typeof __VLS_components.aTextarea, ]} */ ;
 // @ts-ignore
-const __VLS_329 = __VLS_asFunctionalComponent(__VLS_328, new __VLS_328({
+const __VLS_349 = __VLS_asFunctionalComponent(__VLS_348, new __VLS_348({
     modelValue: (__VLS_ctx.formData.rules),
     placeholder: "请输入使用规则说明",
     maxLength: (200),
     showWordLimit: true,
 }));
-const __VLS_330 = __VLS_329({
+const __VLS_350 = __VLS_349({
     modelValue: (__VLS_ctx.formData.rules),
     placeholder: "请输入使用规则说明",
     maxLength: (200),
     showWordLimit: true,
-}, ...__VLS_functionalComponentArgsRest(__VLS_329));
-var __VLS_327;
+}, ...__VLS_functionalComponentArgsRest(__VLS_349));
+var __VLS_347;
 var __VLS_163;
 var __VLS_157;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "form-actions" },
 });
-const __VLS_332 = {}.ASpace;
+const __VLS_352 = {}.ASpace;
 /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
 // @ts-ignore
-const __VLS_333 = __VLS_asFunctionalComponent(__VLS_332, new __VLS_332({}));
-const __VLS_334 = __VLS_333({}, ...__VLS_functionalComponentArgsRest(__VLS_333));
-__VLS_335.slots.default;
-const __VLS_336 = {}.AButton;
+const __VLS_353 = __VLS_asFunctionalComponent(__VLS_352, new __VLS_352({}));
+const __VLS_354 = __VLS_353({}, ...__VLS_functionalComponentArgsRest(__VLS_353));
+__VLS_355.slots.default;
+const __VLS_356 = {}.AButton;
 /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
 // @ts-ignore
-const __VLS_337 = __VLS_asFunctionalComponent(__VLS_336, new __VLS_336({
+const __VLS_357 = __VLS_asFunctionalComponent(__VLS_356, new __VLS_356({
     ...{ 'onClick': {} },
     type: "primary",
 }));
-const __VLS_338 = __VLS_337({
+const __VLS_358 = __VLS_357({
     ...{ 'onClick': {} },
     type: "primary",
-}, ...__VLS_functionalComponentArgsRest(__VLS_337));
-let __VLS_340;
-let __VLS_341;
-let __VLS_342;
-const __VLS_343 = {
+}, ...__VLS_functionalComponentArgsRest(__VLS_357));
+let __VLS_360;
+let __VLS_361;
+let __VLS_362;
+const __VLS_363 = {
     onClick: (__VLS_ctx.handleSubmit)
 };
-__VLS_339.slots.default;
-var __VLS_339;
-const __VLS_344 = {}.AButton;
+__VLS_359.slots.default;
+var __VLS_359;
+const __VLS_364 = {}.AButton;
 /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
 // @ts-ignore
-const __VLS_345 = __VLS_asFunctionalComponent(__VLS_344, new __VLS_344({
+const __VLS_365 = __VLS_asFunctionalComponent(__VLS_364, new __VLS_364({
     ...{ 'onClick': {} },
 }));
-const __VLS_346 = __VLS_345({
+const __VLS_366 = __VLS_365({
     ...{ 'onClick': {} },
-}, ...__VLS_functionalComponentArgsRest(__VLS_345));
-let __VLS_348;
-let __VLS_349;
-let __VLS_350;
-const __VLS_351 = {
+}, ...__VLS_functionalComponentArgsRest(__VLS_365));
+let __VLS_368;
+let __VLS_369;
+let __VLS_370;
+const __VLS_371 = {
     onClick: (__VLS_ctx.resetForm)
 };
-__VLS_347.slots.default;
-var __VLS_347;
-var __VLS_335;
+__VLS_367.slots.default;
+var __VLS_367;
+var __VLS_355;
 var __VLS_148;
 /** @type {__VLS_StyleScopedClasses['coupon-container']} */ ;
 /** @type {__VLS_StyleScopedClasses['header-actions']} */ ;
@@ -1695,6 +1759,7 @@ var __VLS_148;
 /** @type {__VLS_StyleScopedClasses['page-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['page-title']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['help-text']} */ ;
 /** @type {__VLS_StyleScopedClasses['help-text']} */ ;
 /** @type {__VLS_StyleScopedClasses['help-text']} */ ;
 /** @type {__VLS_StyleScopedClasses['help-text']} */ ;

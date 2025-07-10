@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 const props = defineProps({
     mode: {
         type: String,
@@ -314,7 +314,7 @@ const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '800px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '800px' }) },
     disabled: (__VLS_ctx.mode === 'view' || __VLS_ctx.readonly),
 }));
 const __VLS_18 = __VLS_17({
@@ -322,7 +322,7 @@ const __VLS_18 = __VLS_17({
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '800px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '800px' }) },
     disabled: (__VLS_ctx.mode === 'view' || __VLS_ctx.readonly),
 }, ...__VLS_functionalComponentArgsRest(__VLS_17));
 /** @type {typeof __VLS_ctx.formRef} */ ;

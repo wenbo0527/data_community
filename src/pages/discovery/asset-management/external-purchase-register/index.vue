@@ -228,7 +228,7 @@
     <a-modal
       v-model:visible="showNewDataModal"
       title="新增外数注册"
-      :width="Math.min(1000, window.innerWidth * 0.9)"
+      :width="modalWidth"
       @ok="handleNewDataSubmit"
       @cancel="resetNewDataForm"
       ok-text="确定"
@@ -449,12 +449,22 @@ import { Message } from '@arco-design/web-vue'
 import { IconUpload, IconCheckCircle, IconPlus } from '@arco-design/web-vue/es/icon'
 import { useFileUpload } from '@/utils/fileUploadUtils'
 
+// 文件接口定义
+interface FileItem {
+  id: string
+  displayName: string
+  originalName: string
+  size: number
+  type: string
+  uploadTime: string
+}
+
 const router = useRouter()
 const route = useRoute()
 
 // 编辑模式相关
 const isEditMode = ref(false)
-const editingProjectId = ref('')
+const editingProjectId = ref<string>('')
 
 // 文件上传相关
 const { 
@@ -471,6 +481,14 @@ const {
 
 const fileList = ref([])
 const fileCount = ref(0)
+
+// 模态框宽度计算属性
+const modalWidth = computed(() => {
+  if (typeof window !== 'undefined') {
+    return Math.min(1000, window.innerWidth * 0.9)
+  }
+  return 1000
+})
 
 // 步骤控制
 const currentStep = ref(0)
@@ -526,7 +544,7 @@ const newDataFormData = reactive({
   dataManager: '',
   updateFrequency: '',
   dataManagementDescription: '',
-  files: []
+  files: [] as FileItem[]
 })
 
 // 新增外数表单验证规则
@@ -609,8 +627,19 @@ const summaryColumns = [
   }
 ]
 
+// 数据产品接口定义
+interface DataProduct {
+  id: string
+  dataName: string
+  dataType: string
+  supplier: string
+  price: number
+  interfaceTag: string
+  isNew: boolean
+}
+
 // 表格数据
-const tableData = ref([])
+const tableData = ref<DataProduct[]>([])
 
 // 分页配置
 const pagination = reactive({
@@ -620,12 +649,12 @@ const pagination = reactive({
 })
 
 // 选中的行
-const selectedRowKeys = ref([])
-const selectedProducts = ref([])
+const selectedRowKeys = ref<string[]>([])
+const selectedProducts = ref<DataProduct[]>([])
 
 // 筛选后的表格数据
 const filteredTableData = computed(() => {
-  let result = [...tableData.value]
+  let result: DataProduct[] = [...tableData.value]
   
   if (filterForm.name) {
     result = result.filter(item => 
@@ -683,7 +712,7 @@ const summaryData = computed(() => [
 
 
 // 处理文件上传
-const handleFileUpload = async (option) => {
+const handleFileUpload = async (option: any) => {
   const { fileItem } = option
   uploadProgress.value = 0
   
@@ -721,12 +750,12 @@ const resetFilter = () => {
 }
 
 // 处理分页变化
-const handlePageChange = (page) => {
+const handlePageChange = (page: number) => {
   pagination.current = page
 }
 
 // 处理选择变化
-const handleSelectionChange = (rowKeys, rows) => {
+const handleSelectionChange = (rowKeys: string[], rows: DataProduct[]) => {
   selectedRowKeys.value = rowKeys
   selectedProducts.value = rows
 }
@@ -745,12 +774,12 @@ const handleNewDataSubmit = async () => {
     const valid = await newDataFormRef.value?.validate()
     if (valid) {
       // 模拟提交数据
-      const newDataProduct = {
+      const newDataProduct: DataProduct = {
         id: `data-new-${Date.now()}`,
         dataName: newDataFormData.name,
         dataType: newDataFormData.dataCategory,
         supplier: newDataFormData.provider,
-        price: newDataFormData.unitPrice,
+        price: newDataFormData.unitPrice || 0,
         interfaceTag: newDataFormData.interfaceTag,
         isNew: true // 标记为新数据产品
       }
@@ -791,7 +820,7 @@ const resetNewDataForm = () => {
 }
 
 // 处理新增外数文件上传
-const handleNewDataFileUpload = async (option) => {
+const handleNewDataFileUpload = async (option: any) => {
   const { fileItem } = option
   
   // 模拟文件上传
@@ -815,13 +844,13 @@ const handleNewDataFileUpload = async (option) => {
 }
 
 // 删除新增外数文件
-const removeNewDataFile = (index) => {
+const removeNewDataFile = (index: number) => {
   newDataFormData.files.splice(index, 1)
   Message.success('文件删除成功')
 }
 
 // 下载文件
-const downloadFile = (file) => {
+const downloadFile = (file: FileItem) => {
   // 模拟文件下载
   Message.info(`正在下载文件: ${file.displayName}`)
 }
@@ -831,7 +860,7 @@ const loadEditData = () => {
   // 检查是否为编辑模式
   if (route.query.mode === 'edit' && route.query.id) {
     isEditMode.value = true
-    editingProjectId.value = route.query.id
+    editingProjectId.value = Array.isArray(route.query.id) ? (route.query.id[0] || '') : (route.query.id || '')
     
     // 从路由状态或历史记录中获取编辑数据
     const editData = history.state?.editData
@@ -845,13 +874,13 @@ const loadEditData = () => {
       
       // 如果有已关联的产品，设置选中状态
       if (editData.relatedProducts) {
-        selectedRowKeys.value = editData.relatedProducts.map(p => p.id)
+        selectedRowKeys.value = editData.relatedProducts.map((p: any) => p.id)
         selectedProducts.value = [...editData.relatedProducts]
       }
       
       // 如果有已上传的文件，设置文件列表
       if (editData.uploadedFiles) {
-        fileList.value = editData.uploadedFiles.map(file => ({
+        fileList.value = editData.uploadedFiles.map((file: any) => ({
           uid: file.id,
           name: file.name,
           status: 'done',
@@ -868,7 +897,7 @@ onMounted(() => {
   loadEditData()
   
   // 模拟获取外部数据产品列表
-  tableData.value = Array.from({ length: 50 }).map((_, index) => ({
+  tableData.value = Array.from({ length: 50 }).map((_, index): DataProduct => ({
     id: `data-${index + 1}`,
     dataName: `外部数据产品 ${index + 1}`,
     dataType: ['API', '文件', '数据库'][Math.floor(Math.random() * 3)],

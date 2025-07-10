@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Message } from '@arco-design/web-vue';
@@ -28,12 +28,21 @@ const serviceList = ref([
         id: 5,
         title: '数据文件清洗申请',
         description: '对接数据文件上传至指定文件夹，需要提供外名、身份证、手机号等信息，并根据返回的数据进行业务处理。'
+    },
+    {
+        id: 6,
+        title: '风险合规外数查询',
+        description: '查询客户风险合规相关外部数据，支持身份证号查询和批量回溯两种模式，可按时间筛选并生成查询确认列表。'
     }
 ]);
 const handleApply = (service) => {
     if (service.id === 4) {
         // 全量变量回溯申请，跳转到专门的申请页面
         router.push('/management/service/backtrack');
+    }
+    else if (service.id === 6) {
+        // 客户资金用途外数查询，跳转到专门的查询页面
+        router.push('/management/service/fund-usage-query');
     }
     else {
         Message.success(`已提交${service.title}申请`);

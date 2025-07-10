@@ -251,7 +251,7 @@
     <a-modal
       v-model:visible="processListModalVisible"
       title="业务流程管理"
-      :width="Math.min(800, (typeof window !== 'undefined' ? window.innerWidth : 1200) * 0.9)"
+      :width="modalWidth"
       :footer="false"
       :mask-closable="false"
     >
@@ -433,6 +433,14 @@ const selectedTables = ref<TableItem[]>([])
 const editModalVisible = ref(false)
 const processListModalVisible = ref(false)
 const currentEditProcess = ref<{id: number, name: string, description: string, businessType: string, productType: string, stepCount: number, creator: string, updateTime: string} | null>(null)
+
+// 模态框宽度计算属性
+const modalWidth = computed(() => {
+  if (typeof window !== 'undefined') {
+    return Math.min(800, window.innerWidth * 0.9)
+  }
+  return 800
+})
 
 // 流程列表数据
 const processList = ref([
@@ -1963,6 +1971,7 @@ const saveBusinessProcess = (data: any) => {
   margin: 0 0 12px 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

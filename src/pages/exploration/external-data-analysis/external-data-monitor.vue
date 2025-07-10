@@ -190,7 +190,7 @@ const filterForm = reactive<FilterForm>({
   businessType: '助贷业务',
   platform: '字节',
   targetLoan: undefined,
-  year: new Date().getFullYear(),
+  year: new Date().getFullYear().toString(),
   granularity: 'month',
   healthStatus: [],
   dateRange: []

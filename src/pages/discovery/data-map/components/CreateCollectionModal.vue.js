@@ -209,6 +209,17 @@ let __VLS_components;
 let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['table-selector']} */ ;
 /** @type {__VLS_StyleScopedClasses['table-selector']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
+/** @type {__VLS_StyleScopedClasses['arco-btn-primary']} */ ;
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.AModal;
@@ -221,6 +232,7 @@ const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     visible: (__VLS_ctx.visible),
     title: (__VLS_ctx.isEditMode ? '编辑表集合' : '创建表集合'),
     width: "800px",
+    ...{ class: "collection-modal" },
 }));
 const __VLS_2 = __VLS_1({
     ...{ 'onOk': {} },
@@ -229,6 +241,7 @@ const __VLS_2 = __VLS_1({
     visible: (__VLS_ctx.visible),
     title: (__VLS_ctx.isEditMode ? '编辑表集合' : '创建表集合'),
     width: "800px",
+    ...{ class: "collection-modal" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 let __VLS_4;
 let __VLS_5;
@@ -739,6 +752,7 @@ var __VLS_128;
 var __VLS_100;
 var __VLS_14;
 var __VLS_3;
+/** @type {__VLS_StyleScopedClasses['collection-modal']} */ ;
 /** @type {__VLS_StyleScopedClasses['table-selection']} */ ;
 /** @type {__VLS_StyleScopedClasses['selected-tables']} */ ;
 /** @type {__VLS_StyleScopedClasses['available-tables']} */ ;
@@ -763,14 +777,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             handleCancel: handleCancel,
         };
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

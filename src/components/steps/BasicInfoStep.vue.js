@@ -1,5 +1,5 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
-import { defineProps, withDefaults, defineEmits } from 'vue';
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+import { withDefaults } from 'vue';
 const props = withDefaults(defineProps(), {
     modelValue: () => ({
         name: '',
@@ -444,14 +444,16 @@ const __VLS_self = (await import('vue')).defineComponent({
             handleNext: handleNext,
         };
     },
-    emits: {},
+    __typeEmits: {},
+    __typeProps: {},
     props: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
+    __typeEmits: {},
+    __typeProps: {},
     props: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

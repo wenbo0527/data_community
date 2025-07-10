@@ -1058,14 +1058,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             handleCancel: handleCancel,
         };
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

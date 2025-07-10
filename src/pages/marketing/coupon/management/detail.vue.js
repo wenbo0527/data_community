@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IconLeft } from '@arco-design/web-vue/es/icon';
@@ -135,13 +135,13 @@ const __VLS_31 = {}.AForm;
 const __VLS_32 = __VLS_asFunctionalComponent(__VLS_31, new __VLS_31({
     model: (__VLS_ctx.instanceFormData),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '800px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '800px' }) },
     disabled: true,
 }));
 const __VLS_33 = __VLS_32({
     model: (__VLS_ctx.instanceFormData),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '800px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '800px' }) },
     disabled: true,
 }, ...__VLS_functionalComponentArgsRest(__VLS_32));
 __VLS_34.slots.default;

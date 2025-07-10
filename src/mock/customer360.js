@@ -8,7 +8,6 @@ const mockUsers = {
                 productKey: 'DP-2024-002',
                 productType: '活期存款',
                 productName: '活期存款',
-                productCategory: '自营产品',
                 amount: 20000,
                 startDate: '2023-01-10'
             },
@@ -16,7 +15,6 @@ const mockUsers = {
                 productKey: 'LN-2024-002',
                 productType: '消费贷款',
                 productName: '消费贷款',
-                productCategory: '助贷产品',
                 amount: 50000,
                 rate: 4.35,
                 startDate: '2023-08-15'
@@ -43,7 +41,6 @@ const mockUsers = {
             {
                 productKey: 'regular-887123',
                 name: '活期存款',
-                productCategory: '自营产品',
                 balance: 20000.00,
                 currency: 'CNY',
                 status: '正常',
@@ -55,7 +52,6 @@ const mockUsers = {
             {
                 productKey: 'consumer-887123',
                 name: '个人消费贷款',
-                productCategory: '助贷产品',
                 balance: 30000.00,
                 currency: 'CNY',
                 status: '正常',
@@ -144,7 +140,6 @@ const mockUsers = {
                 productKey: 'DP-2024-001',
                 productType: '定期存款',
                 productName: '三年期定存',
-                productCategory: '自营产品',
                 amount: 150000,
                 startDate: '2023-03-15'
             },
@@ -152,7 +147,6 @@ const mockUsers = {
                 productKey: 'LN-2024-001',
                 productType: '住房贷款',
                 productName: '公积金贷款',
-                productCategory: '自营产品',
                 amount: 800000,
                 rate: 3.25,
                 startDate: '2023-05-20'
@@ -179,7 +173,6 @@ const mockUsers = {
             {
                 productKey: 'regular',
                 name: '活期存款',
-                productCategory: '自营产品',
                 balance: 52800.56,
                 currency: 'CNY',
                 status: '正常',
@@ -189,7 +182,6 @@ const mockUsers = {
             {
                 productKey: 'fixed',
                 name: '定期存款(1年)',
-                productCategory: '自营产品',
                 balance: 100000.00,
                 currency: 'CNY',
                 status: '正常',
@@ -201,7 +193,6 @@ const mockUsers = {
             {
                 productKey: 'housing',
                 name: '个人住房贷款',
-                productCategory: '自营产品',
                 balance: 350000.00,
                 currency: 'CNY',
                 status: '正常',
@@ -213,7 +204,6 @@ const mockUsers = {
             {
                 productKey: 'consumer',
                 name: '个人消费贷款',
-                productCategory: '助贷产品',
                 balance: 25000.00,
                 currency: 'CNY',
                 status: '正常',
@@ -373,14 +363,53 @@ const mockUsers = {
     // 用户'456'的记录已被删除
 };
 export const fetchUserInfo = (userId) => {
+    console.log('[搜索日志] 开始查询用户信息, userId:', userId, '时间戳:', Date.now());
     return new Promise((resolve) => {
         setTimeout(() => {
             // 根据userId查询用户数据
             const userData = mockUsers[userId];
             if (userData) {
+                // 记录详细的数据结构信息
+                console.log('[搜索日志] 用户信息查询成功, userId:', userId, '时间戳:', Date.now());
+                console.debug('[数据完整性检查] 用户数据结构:', {
+                    userId: userId,
+                    timestamp: Date.now(),
+                    dataKeys: Object.keys(userData),
+                    hasBasicInfo: !!(userData.name && userData.age && userData.gender),
+                    depositProductsCount: userData.depositProducts?.length,
+                    loanProductsCount: userData.loanProducts?.length,
+                    creditsListCount: userData.creditsList?.length,
+                    loanRecordsCount: userData.loanRecords?.length,
+                    quotaAdjustHistoryCount: userData.quotaAdjustHistory?.length,
+                    // 检查关键字段是否存在
+                    hasMaxOverdueDays: 'maxOverdueDays' in userData,
+                    hasCurrentOverdueDays: 'currentOverdueDays' in userData,
+                    hasOverdueAmount: 'overdueAmount' in userData,
+                    hasRepaymentRate: 'repaymentRate' in userData,
+                    // 检查第一个产品数据的完整性
+                    firstDepositProduct: userData.depositProducts && userData.depositProducts.length > 0 ? {
+                        hasProductKey: 'productKey' in userData.depositProducts[0],
+                        hasName: 'name' in userData.depositProducts[0],
+                        hasBalance: 'balance' in userData.depositProducts[0],
+                        hasCurrency: 'currency' in userData.depositProducts[0],
+                        hasStatus: 'status' in userData.depositProducts[0],
+                        hasRate: 'rate' in userData.depositProducts[0]
+                    } : null,
+                    firstLoanProduct: userData.loanProducts && userData.loanProducts.length > 0 ? {
+                        hasProductKey: 'productKey' in userData.loanProducts[0],
+                        hasName: 'name' in userData.loanProducts[0],
+                        hasBalance: 'balance' in userData.loanProducts[0],
+                        hasCurrency: 'currency' in userData.loanProducts[0],
+                        hasStatus: 'status' in userData.loanProducts[0],
+                        hasRate: 'rate' in userData.loanProducts[0],
+                        hasRemainingPeriod: 'remainingPeriod' in userData.loanProducts[0],
+                        hasTotalPeriod: 'totalPeriod' in userData.loanProducts[0]
+                    } : null
+                });
                 resolve(userData);
             }
             else {
+                console.log('[搜索日志] 用户信息查询失败, userId:', userId, '错误: 找不到用户相关信息', '时间戳:', Date.now());
                 // 用户不存在时返回错误信息
                 resolve({
                     error: 'USER_NOT_FOUND',

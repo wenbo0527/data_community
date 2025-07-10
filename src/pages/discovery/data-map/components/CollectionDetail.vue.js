@@ -1,10 +1,10 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { useRouter } from 'vue-router';
 const getTypeColor = (type) => {
     // 类型颜色匹配逻辑
     return '#1890ff';
 };
-import { defineProps, defineEmits } from 'vue';
+// defineProps and defineEmits are compiler macros, no import needed
 import IconTable from '@arco-design/web-vue/es/icon';
 const props = defineProps();
 const emit = defineEmits();
@@ -212,14 +212,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             showTableDetail: showTableDetail,
         };
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

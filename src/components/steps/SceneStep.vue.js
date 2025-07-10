@@ -1,5 +1,5 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
-import { defineProps, defineEmits, ref, watch } from 'vue';
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+import { ref, watch } from 'vue';
 import { Message } from '@arco-design/web-vue';
 const props = defineProps();
 const emit = defineEmits(['next', 'prev']);
@@ -687,13 +687,13 @@ const __VLS_self = (await import('vue')).defineComponent({
         };
     },
     emits: {},
-    props: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
     emits: {},
-    props: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

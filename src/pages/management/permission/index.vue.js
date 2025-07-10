@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import { IconPlus, IconSafe } from '@arco-design/web-vue/es/icon';
@@ -413,14 +413,14 @@ const __VLS_107 = __VLS_asFunctionalComponent(__VLS_106, new __VLS_106({
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '720px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '720px' }) },
 }));
 const __VLS_108 = __VLS_107({
     ref: "formRef",
     model: (__VLS_ctx.formData),
     rules: (__VLS_ctx.rules),
     layout: "vertical",
-    ...{ style: ({ maxWidth: '720px' }) },
+    ...{ style: ({ width: '100%', maxWidth: '720px' }) },
 }, ...__VLS_functionalComponentArgsRest(__VLS_107));
 /** @type {typeof __VLS_ctx.formRef} */ ;
 var __VLS_110 = {};

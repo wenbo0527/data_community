@@ -15,7 +15,7 @@
           </template>
           导出
         </a-button>
-        <a-button @click="toggleFavoriteFilter" :type="searchForm.onlyFavorite ? 'primary' : 'default'">
+        <a-button @click="toggleFavoriteFilter" :type="searchForm.onlyFavorite ? 'primary' : 'secondary'">
           <template #icon>
             <icon-star-fill v-if="searchForm.onlyFavorite" />
             <icon-star v-else />
@@ -143,16 +143,16 @@
               <a-table-column title="操作" :width="200" fixed="right">
                 <template #cell="{ record }">
                   <a-space>
-                    <a-button type="text" size="small" @click="editMetric(record)">
+                    <a-button type="text" size="mini" @click="editMetric(record)">
                       编辑
                     </a-button>
-                    <a-button type="text" size="small" @click="viewVersionHistory(record)">
+                    <a-button type="text" size="mini" @click="viewVersionHistory(record)">
                       版本
                     </a-button>
-                    <a-button type="text" size="small" @click="copyMetric(record)">
+                    <a-button type="text" size="mini" @click="copyMetric(record)">
                       复制
                     </a-button>
-                    <a-button type="text" size="small" status="danger" @click="deleteMetric(record)">
+                    <a-button type="text" size="mini" status="danger" @click="deleteMetric(record)">
                       删除
                     </a-button>
                   </a-space>
@@ -440,13 +440,13 @@
         </template>
         <template #actions="{ record }">
           <a-space>
-            <a-button type="text" size="small" @click="viewVersionDetail(record)">
+            <a-button type="text" size="mini" @click="viewVersionDetail(record)">
               查看详情
             </a-button>
             <a-button 
               v-if="record.versionStatus !== 'active'" 
               type="text" 
-              size="small" 
+              size="mini" 
               @click="activateVersion(record)"
             >
               激活版本
@@ -464,7 +464,39 @@ import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconDownload, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
 import type { TreeNodeData } from '@arco-design/web-vue'
 import metricsMock from '@/mock/metrics'
-import type { MetricItem } from '@/types/metrics'
+// 指标项接口
+interface MetricItem {
+  id: string
+  name: string
+  code: string
+  category: string
+  businessDomain: string
+  description?: string
+  formula?: string
+  unit?: string
+  dataSource?: string
+  updateFrequency?: string
+  creator?: string
+  createTime?: string
+  lastUpdateTime?: string
+  updateTime?: string
+  owner: string
+  status: string
+  isFavorite: boolean
+  statisticalPeriod?: string
+  businessDefinition?: string
+  useCase?: string
+  sourceTable?: string
+  processingLogic?: string
+  fieldDescription?: string
+  reportInfo?: string
+  storageLocation?: string
+  queryCode?: string
+  versions?: Array<{
+    date: string
+    description: string
+  }>
+}
 
 // 响应式数据
 const loading = ref(false)
@@ -479,7 +511,16 @@ const drawerVisible = ref(false)
 const editingMetric = ref<MetricItem | null>(null)
 const currentMetric = ref<MetricItem | null>(null)
 const formRef = ref()
-const versionHistoryData = ref([])
+// 版本历史数据接口
+interface VersionHistoryItem {
+  version: string
+  versionStatus: string
+  updateTime: string
+  updater: string
+  description: string
+}
+
+const versionHistoryData = ref<VersionHistoryItem[]>([])
 
 // 搜索表单
 const searchForm = ref({
@@ -487,7 +528,8 @@ const searchForm = ref({
   category: '',
   businessDomain: '',
   status: '',
-  onlyFavorite: false
+  onlyFavorite: false,
+  isFavorite: false
 })
 
 // 分页

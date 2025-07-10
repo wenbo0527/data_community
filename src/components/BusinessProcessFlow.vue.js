@@ -1,5 +1,5 @@
-/// <reference types="../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
-import { ref, computed, defineEmits, onMounted, h } from 'vue';
+/// <reference types="../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+import { ref, computed, onMounted, h } from 'vue';
 import { useRouter } from 'vue-router';
 import { IconFile, IconBarChart, IconEdit, IconEye, IconUser, IconPlus, IconDelete, IconClockCircle } from '@arco-design/web-vue/es/icon';
 import { Message } from '@arco-design/web-vue';
@@ -61,6 +61,13 @@ const selectedTables = ref([]);
 const editModalVisible = ref(false);
 const processListModalVisible = ref(false);
 const currentEditProcess = ref(null);
+// 模态框宽度计算属性
+const modalWidth = computed(() => {
+    if (typeof window !== 'undefined') {
+        return Math.min(800, window.innerWidth * 0.9);
+    }
+    return 800;
+});
 // 流程列表数据
 const processList = ref([
     {
@@ -1197,14 +1204,14 @@ const __VLS_164 = {}.AModal;
 const __VLS_165 = __VLS_asFunctionalComponent(__VLS_164, new __VLS_164({
     visible: (__VLS_ctx.processListModalVisible),
     title: "业务流程管理",
-    width: "800px",
+    width: (__VLS_ctx.modalWidth),
     footer: (false),
     maskClosable: (false),
 }));
 const __VLS_166 = __VLS_165({
     visible: (__VLS_ctx.processListModalVisible),
     title: "业务流程管理",
-    width: "800px",
+    width: (__VLS_ctx.modalWidth),
     footer: (false),
     maskClosable: (false),
 }, ...__VLS_functionalComponentArgsRest(__VLS_165));
@@ -1542,6 +1549,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             editModalVisible: editModalVisible,
             processListModalVisible: processListModalVisible,
             currentEditProcess: currentEditProcess,
+            modalWidth: modalWidth,
             processList: processList,
             currentProcessSteps: currentProcessSteps,
             currentTables: currentTables,
@@ -1563,12 +1571,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             saveBusinessProcess: saveBusinessProcess,
         };
     },
-    emits: {},
+    __typeEmits: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
+    __typeEmits: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

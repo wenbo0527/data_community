@@ -1,5 +1,5 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
-import { ref, defineEmits, computed, watch } from 'vue';
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+import { ref, computed, watch } from 'vue';
 import { IconStar, IconStarFill, IconPlus, IconFile } from '@arco-design/web-vue/es/icon';
 import { Message } from '@arco-design/web-vue';
 const props = defineProps();
@@ -737,14 +737,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             showCollectionDetail: showCollectionDetail,
         };
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
-    emits: {},
-    props: {},
+    __typeEmits: {},
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

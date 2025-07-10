@@ -1,4 +1,4 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.3_0_0_0.d.ts" />
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, reactive, onMounted } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import { IconUpload, IconSettings, IconInfoCircle } from '@arco-design/web-vue/es/icon';
@@ -1095,9 +1095,11 @@ const __VLS_270 = {}.AForm;
 /** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ ;
 // @ts-ignore
 const __VLS_271 = __VLS_asFunctionalComponent(__VLS_270, new __VLS_270({
+    model: (__VLS_ctx.importConfig),
     layout: "vertical",
 }));
 const __VLS_272 = __VLS_271({
+    model: (__VLS_ctx.importConfig),
     layout: "vertical",
 }, ...__VLS_functionalComponentArgsRest(__VLS_271));
 __VLS_273.slots.default;
@@ -1523,9 +1525,11 @@ const __VLS_414 = {}.AForm;
 /** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ ;
 // @ts-ignore
 const __VLS_415 = __VLS_asFunctionalComponent(__VLS_414, new __VLS_414({
+    model: (__VLS_ctx.batchOperation),
     layout: "vertical",
 }));
 const __VLS_416 = __VLS_415({
+    model: (__VLS_ctx.batchOperation),
     layout: "vertical",
 }, ...__VLS_functionalComponentArgsRest(__VLS_415));
 __VLS_417.slots.default;
