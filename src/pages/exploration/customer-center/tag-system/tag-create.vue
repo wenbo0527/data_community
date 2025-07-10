@@ -159,6 +159,8 @@
                         :on-data-source-type-change="onDataSourceTypeChange"
                         :on-date-type-change="onDateTypeChange"
                         @add-condition-group="() => addConditionGroup(index)"
+                        @add-exclude-condition-group="() => addExcludeConditionGroup(index)"
+        @delete-exclude-condition-group="(groupIndex) => deleteExcludeConditionGroup(index, groupIndex)"
                         @delete-condition-group="(groupIndex) => deleteConditionGroup(index, groupIndex)"
                         @toggle-group-logic="(group) => toggleGroupLogic(index, group)"
                         @toggle-cross-group-logic="() => toggleCrossGroupLogic(index)"
@@ -217,6 +219,7 @@ const tagValues = ref([{
   conditionGroups: Array<{
     id?: string
     logic?: string
+    isExclude?: boolean
     conditions: Array<{
       id?: string
       type?: string
@@ -314,11 +317,53 @@ const addConditionGroup = (tagValueIndex: number) => {
   }
 }
 
+const addExcludeConditionGroup = (tagValueIndex: number) => {
+  if (tagValueIndex >= 0 && tagValueIndex < tagValues.value.length) {
+    const tagValue = tagValues.value[tagValueIndex]
+    tagValue.conditionGroups.push({
+      id: Date.now().toString(),
+      logic: 'and',
+      isExclude: true,
+      conditions: [{
+        id: Date.now().toString() + '_1',
+        type: 'detail',
+        dataSourceType: 'detail',
+        fieldName: '',
+        aggregationType: '',
+        operator: '',
+        value: '',
+        dateType: 'dynamic',
+        dynamicValue: 1,
+        dynamicUnit: 'days',
+        dateRange: undefined as [string, string] | undefined,
+        isExclude: false
+      }]
+    })
+  }
+}
+
 const deleteConditionGroup = (tagValueIndex: number, groupIndex: number) => {
   if (tagValueIndex >= 0 && tagValueIndex < tagValues.value.length) {
     const tagValue = tagValues.value[tagValueIndex]
-    if (tagValue.conditionGroups && groupIndex >= 0 && groupIndex < tagValue.conditionGroups.length) {
-      tagValue.conditionGroups.splice(groupIndex, 1)
+    // 找到常规条件组中的索引
+    const regularGroups = tagValue.conditionGroups.filter(group => !group.isExclude)
+    if (groupIndex >= 0 && groupIndex < regularGroups.length) {
+      const targetGroup = regularGroups[groupIndex]
+      const actualIndex = tagValue.conditionGroups.indexOf(targetGroup)
+      tagValue.conditionGroups.splice(actualIndex, 1)
+    }
+  }
+}
+
+const deleteExcludeConditionGroup = (tagValueIndex: number, groupIndex: number) => {
+  if (tagValueIndex >= 0 && tagValueIndex < tagValues.value.length) {
+    const tagValue = tagValues.value[tagValueIndex]
+    // 找到排除条件组中的索引
+    const excludeGroups = tagValue.conditionGroups.filter(group => group.isExclude)
+    if (groupIndex >= 0 && groupIndex < excludeGroups.length) {
+      const targetGroup = excludeGroups[groupIndex]
+      const actualIndex = tagValue.conditionGroups.indexOf(targetGroup)
+      tagValue.conditionGroups.splice(actualIndex, 1)
     }
   }
 }

@@ -80,18 +80,7 @@ export default [
           }
         ]
       },
-      {
-        path: 'audience-portrait',
-        name: 'audience-portrait',
-        component: () => import('../pages/exploration/customer-center/audience-portrait/index.vue'),
-        children: [
-          {
-            path: 'audience-management',
-            name: 'audience-management',
-            component: () => import('../pages/exploration/customer-center/audience-portrait/audience-management.vue')
-          }
-        ]
-      }
+      {        path: 'audience-system',        name: 'audience-system',        component: () => import('../pages/exploration/customer-center/audience-system/index.vue'),        children: [          {            path: 'audience-management',            name: 'audience-management',            component: () => import('../pages/exploration/customer-center/audience-system/audience-management.vue')          },          {            path: 'audience-create',            name: 'audience-create',            component: () => import('../pages/exploration/customer-center/audience-system/audience-create.vue')          },          {            path: 'audience-detail',            name: 'audience-detail',            component: () => import('../pages/exploration/customer-center/audience-system/audience-detail.vue')          }        ]      }
     ]
   }
 ];

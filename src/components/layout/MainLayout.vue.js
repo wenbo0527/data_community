@@ -155,11 +155,7 @@ const menuItems = [
                 key: 'customer-center',
                 title: '客群中心',
                 children: [
-                    {
-                        key: 'audience-management',
-                        title: '人群管理',
-                        path: '/exploration/customer-center/audience-portrait/audience-management'
-                    },
+                    { key: 'audience-management', title: '人群管理', path: '/exploration/customer-center/audience-system/audience-management' },
                     {
                         key: 'event-center',
                         title: '事件中心',

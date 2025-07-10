@@ -1,46 +1,74 @@
 /// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import * as echarts from 'echarts';
 import { IconHome, IconSettings, IconTag, IconEye, IconDashboard, IconBarChart, IconMore, IconPlus, IconDown, IconDelete, IconCheckCircle, IconExclamationCircle, IconInfoCircle, IconCopy, IconMinus, IconEdit, IconCheck, IconClose } from '@arco-design/web-vue/es/icon';
 import ConditionConfig from '@/components/common/ConditionConfig.vue';
 const route = useRoute();
 const router = useRouter();
 // 当前选中的标签页
 const activeTab = ref('distribution');
-// 编辑模式相关
-const isEditMode = ref(false); // 始终为false，禁止编辑
-const originalTagValues = ref(null); // 用于保存编辑前的数据
-// 配置选项卡相关
-const activeConfigTab = ref('tag_value_1');
-const tagValues = ref([
-    {
-        id: 'tag_value_1',
-        name: '',
-        description: '',
-        conditionGroups: [],
-        crossGroupLogic: 'or' // 跨条件组逻辑
-    }
-]);
-// 标签详情数据
-const tagDetail = reactive({
-    id: 'BEHAV_NSLFCPK',
-    name: '数字产品',
-    dataType: 'string',
-    category: '基础信息',
-    dimensionType: '客户级',
+// 人群详情数据
+const audienceDetail = reactive({
+    id: 'AUD_20231019_001',
+    name: '高价值客户群体',
+    type: 'custom',
+    status: 'active',
+    createMethod: 'rule',
+    updateFrequency: '每日',
+    validPeriod: '长期有效',
     shareLevel: 'public',
     createUser: '张力',
-    description: '这是一个产品、商品分类、商品中类、商品小类、商品品牌、商品规格、商品价格、商品促销、商品库存、商品销量、商品评价、商品推荐、商品搜索、商品收藏、商品分享、商品比较、商品咨询、商品投诉、商品退换货等信息的标签主体。'
+    description: '基于消费行为和用户属性筛选出的高价值客户群体，包含近30天消费金额超过1000元且活跃度较高的用户。'
 });
-// 标签统计数据
-const tagStats = reactive({
-    coverageCount: 9999773,
-    coverageRate: 98.99,
-    uniqueCount: 8891,
-    availableCount: 23,
-    updateTime: '2023-10-14 3:23:12',
-    totalCount: 9999773,
+// 人群统计数据
+const audienceStats = reactive({
+    totalCount: 156789,
+    coverageRate: 12.5,
+    activeCount: 142356,
+    qualityScore: 95.8,
+    updateTime: '2023-10-19 14:23:12',
     dataDate: '2023-10-19'
+});
+// 人群规则配置
+const audienceRules = reactive({
+    ruleType: 'custom',
+    crossGroupLogic: 'and',
+    estimatedCount: 156789,
+    conditionGroups: [
+        {
+            id: 'group_1',
+            name: '消费行为条件',
+            logic: 'and',
+            conditions: [
+                {
+                    id: 'condition_1',
+                    dataSourceType: 'behavior',
+                    fieldName: '消费金额',
+                    aggregationType: 'sum',
+                    operator: 'gte',
+                    value: '1000',
+                    dateType: 'dynamic',
+                    dynamicValue: 30,
+                    dynamicUnit: 'days'
+                }
+            ]
+        },
+        {
+            id: 'group_2',
+            name: '用户属性条件',
+            logic: 'and',
+            conditions: [
+                {
+                    id: 'condition_2',
+                    dataSourceType: 'attribute',
+                    fieldName: '用户等级',
+                    operator: 'in',
+                    value: 'VIP,SVIP'
+                }
+            ]
+        }
+    ]
 });
 // 数据分布数据
 const distributionData = ref([
@@ -48,6 +76,105 @@ const distributionData = ref([
     { label: '标签组2', percentage: 70, color: '#1890ff' },
     { label: '标签组3', percentage: 45, color: '#fadb14' }
 ]);
+// 血缘查询相关
+const lineageChartRef = ref(null);
+let lineageChart = null;
+// 血缘关系数据
+const lineageData = ref({
+    name: '高价值客户群体',
+    category: 'audience',
+    children: [
+        {
+            name: '消费行为标签',
+            category: 'tag',
+            children: [
+                {
+                    name: '消费金额',
+                    category: 'attribute',
+                    children: [
+                        {
+                            name: 'order_table',
+                            category: 'table',
+                            value: '订单表'
+                        },
+                        {
+                            name: 'payment_table',
+                            category: 'table',
+                            value: '支付表'
+                        }
+                    ]
+                },
+                {
+                    name: '消费频次',
+                    category: 'attribute',
+                    children: [
+                        {
+                            name: 'order_table',
+                            category: 'table',
+                            value: '订单表'
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            name: '用户属性标签',
+            category: 'tag',
+            children: [
+                {
+                    name: '用户等级',
+                    category: 'attribute',
+                    children: [
+                        {
+                            name: 'user_table',
+                            category: 'table',
+                            value: '用户表'
+                        }
+                    ]
+                },
+                {
+                    name: '注册时间',
+                    category: 'attribute',
+                    children: [
+                        {
+                            name: 'user_table',
+                            category: 'table',
+                            value: '用户表'
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            name: '活跃度标签',
+            category: 'tag',
+            children: [
+                {
+                    name: '登录频次',
+                    category: 'attribute',
+                    children: [
+                        {
+                            name: 'login_log_table',
+                            category: 'table',
+                            value: '登录日志表'
+                        }
+                    ]
+                },
+                {
+                    name: '页面浏览',
+                    category: 'attribute',
+                    children: [
+                        {
+                            name: 'behavior_table',
+                            category: 'table',
+                            value: '行为表'
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+});
 // 规则配置相关数据
 const conditionGroups = ref([]); // 条件组数组
 const estimatedCount = ref(12843); // 预估覆盖人数
@@ -74,21 +201,72 @@ const dynamicUnitOptions = [
     { label: '月', value: 'months' },
     { label: '年', value: 'years' }
 ];
-// 获取数据类型颜色
-const getDataTypeColor = (dataType) => {
+// 获取人群类型颜色
+const getTypeColor = (type) => {
     const colorMap = {
-        string: 'green',
-        number: 'blue'
+        custom: 'blue',
+        imported: 'green',
+        system: 'orange'
     };
-    return colorMap[dataType] || 'gray';
+    return colorMap[type] || 'gray';
 };
-// 获取数据类型文本
-const getDataTypeText = (dataType) => {
+// 获取人群类型文本
+const getTypeText = (type) => {
     const textMap = {
-        string: '字符型',
-        number: '数值型'
+        custom: '自定义人群',
+        imported: '导入人群',
+        system: '系统人群'
     };
-    return textMap[dataType] || dataType;
+    return textMap[type] || type;
+};
+// 获取状态颜色
+const getStatusColor = (status) => {
+    const colorMap = {
+        active: 'green',
+        inactive: 'red',
+        processing: 'orange',
+        pending: 'gray'
+    };
+    return colorMap[status] || 'gray';
+};
+// 获取状态文本
+const getStatusText = (status) => {
+    const textMap = {
+        active: '活跃',
+        inactive: '停用',
+        processing: '计算中',
+        pending: '待处理'
+    };
+    return textMap[status] || status;
+};
+// 获取创建方式文本
+const getCreateMethodText = (method) => {
+    const textMap = {
+        rule: '规则创建',
+        import: '数据导入',
+        api: 'API接口'
+    };
+    return textMap[method] || method;
+};
+// 获取规则类型文本
+const getRuleTypeText = (type) => {
+    const textMap = {
+        custom: '自定义规则',
+        template: '模板规则',
+        imported: '导入规则'
+    };
+    return textMap[type] || type;
+};
+// 获取规则复杂度
+const getRuleComplexity = () => {
+    const totalConditions = audienceRules.conditionGroups.reduce((sum, group) => {
+        return sum + group.conditions.length;
+    }, 0);
+    if (totalConditions <= 3)
+        return '简单';
+    if (totalConditions <= 8)
+        return '中等';
+    return '复杂';
 };
 // 获取共享级别颜色
 const getShareLevelColor = (shareLevel) => {
@@ -110,6 +288,107 @@ const getShareLevelText = (shareLevel) => {
 const formatNumber = (num) => {
     return num.toLocaleString();
 };
+// 血缘图表相关方法
+// 初始化血缘图表
+const initLineageChart = () => {
+    if (!lineageChartRef.value)
+        return;
+    lineageChart = echarts.init(lineageChartRef.value);
+    const option = {
+        tooltip: {
+            trigger: 'item',
+            triggerOn: 'mousemove',
+            formatter: function (params) {
+                const data = params.data;
+                let content = `<div style="padding: 8px;">`;
+                content += `<div style="font-weight: bold; margin-bottom: 4px;">${data.name}</div>`;
+                if (data.category === 'audience') {
+                    content += `<div style="color: #666;">类型: 人群</div>`;
+                    content += `<div style="color: #666;">规模: ${formatNumber(audienceStats.totalCount)}</div>`;
+                }
+                else if (data.category === 'tag') {
+                    content += `<div style="color: #666;">类型: 标签</div>`;
+                }
+                else if (data.category === 'attribute') {
+                    content += `<div style="color: #666;">类型: 属性</div>`;
+                }
+                else if (data.category === 'table') {
+                    content += `<div style="color: #666;">类型: 数据表</div>`;
+                    content += `<div style="color: #666;">表名: ${data.value || data.name}</div>`;
+                }
+                content += `</div>`;
+                return content;
+            }
+        },
+        series: [
+            {
+                type: 'tree',
+                data: [lineageData.value],
+                top: '5%',
+                left: '15%',
+                bottom: '5%',
+                right: '15%',
+                symbolSize: 12,
+                orient: 'LR',
+                label: {
+                    position: 'left',
+                    verticalAlign: 'middle',
+                    align: 'right',
+                    fontSize: 12,
+                    color: '#333',
+                    formatter: function (params) {
+                        return params.data.name;
+                    }
+                },
+                leaves: {
+                    label: {
+                        position: 'right',
+                        verticalAlign: 'middle',
+                        align: 'left'
+                    }
+                },
+                emphasis: {
+                    focus: 'descendant'
+                },
+                expandAndCollapse: true,
+                animationDuration: 550,
+                animationDurationUpdate: 750,
+                itemStyle: {
+                    color: function (params) {
+                        const colorMap = {
+                            'audience': '#1890ff',
+                            'tag': '#52c41a',
+                            'attribute': '#faad14',
+                            'table': '#f5222d'
+                        };
+                        return colorMap[params.data.category] || '#666';
+                    },
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                lineStyle: {
+                    color: '#ccc',
+                    width: 1.5,
+                    curveness: 0.3
+                }
+            }
+        ]
+    };
+    lineageChart.setOption(option);
+    // 监听窗口大小变化
+    window.addEventListener('resize', () => {
+        if (lineageChart) {
+            lineageChart.resize();
+        }
+    });
+};
+// 监听 activeTab 变化，初始化血缘图表
+watch(activeTab, async (newTab) => {
+    if (newTab === 'lineage') {
+        await nextTick();
+        initLineageChart();
+    }
+});
 // 规则配置相关方法
 // 生成唯一ID
 const generateId = () => {
@@ -159,76 +438,49 @@ const deleteConditionGroup = (groupIndex) => {
 const toggleGroupLogic = (group) => {
     group.logic = group.logic === 'and' ? 'or' : 'and';
 };
-// 标签值管理方法
-// 新增标签值
-const addTagValue = () => {
-    const newId = `tag_value_${Date.now()}`;
-    const newTagValue = {
-        id: newId,
-        name: '',
-        description: '',
-        conditionGroups: [],
-        crossGroupLogic: 'or'
+// 人群管理相关方法
+// 刷新人群数据
+const refreshAudience = async () => {
+    try {
+        // 这里可以添加刷新人群的API调用
+        console.log('刷新人群数据:', audienceDetail.id);
+        // 模拟刷新成功
+        audienceStats.updateTime = new Date().toLocaleString();
+    }
+    catch (error) {
+        console.error('刷新人群失败:', error);
+    }
+};
+// 导出人群数据
+const exportAudience = () => {
+    const exportData = {
+        audienceId: audienceDetail.id,
+        audienceName: audienceDetail.name,
+        totalCount: audienceStats.totalCount,
+        rules: audienceRules,
+        exportTime: new Date().toISOString()
     };
-    tagValues.value.push(newTagValue);
-    activeConfigTab.value = newId;
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audience-${audienceDetail.name || 'unnamed'}-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 };
-// 删除标签值
-const deleteTagValue = (targetKey) => {
-    const index = tagValues.value.findIndex(item => item.id === targetKey);
-    if (index > -1 && tagValues.value.length > 1) {
-        tagValues.value.splice(index, 1);
-        // 如果删除的是当前激活的tab，切换到第一个tab
-        if (activeConfigTab.value === targetKey) {
-            activeConfigTab.value = tagValues.value[0].id;
-        }
-    }
+// 编辑人群
+const editAudience = () => {
+    router.push({
+        name: 'AudienceCreate',
+        params: { id: audienceDetail.id },
+        query: { mode: 'edit' }
+    });
 };
-// 更新tab标题
-const updateTabTitle = (tagValue) => {
-    // 这个方法主要用于触发响应式更新，实际标题更新由模板中的计算属性处理
-};
-// 编辑模式相关方法
-// 进入编辑模式
-const enterEditMode = () => {
-    // 保存当前数据作为备份
-    originalTagValues.value = JSON.parse(JSON.stringify(tagValues.value));
-    isEditMode.value = true;
-};
-// 保存配置
-const saveConfiguration = () => {
-    // 这里可以添加保存到后端的逻辑
-    console.log('保存标签配置:', tagValues.value);
-    // 模拟保存成功
-    isEditMode.value = false;
-    originalTagValues.value = null;
-    // 显示保存成功提示
-    // Message.success('配置保存成功')
-};
-// 取消编辑
-const cancelEdit = () => {
-    if (originalTagValues.value) {
-        // 恢复原始数据
-        tagValues.value = JSON.parse(JSON.stringify(originalTagValues.value));
-    }
-    isEditMode.value = false;
-    originalTagValues.value = null;
-};
-// 获取当前标签值
-const getCurrentTagValue = () => {
-    return tagValues.value.find(item => item.id === activeConfigTab.value) || tagValues.value[0];
-};
-// 获取当前标签值的条件组
-const getCurrentTagValueConditionGroups = () => {
-    const currentTagValue = getCurrentTagValue();
-    return currentTagValue ? currentTagValue.conditionGroups : [];
-};
-// 切换跨条件组逻辑（针对当前标签值）
-const toggleCrossGroupLogic = () => {
-    const currentTagValue = getCurrentTagValue();
-    if (currentTagValue) {
-        currentTagValue.crossGroupLogic = currentTagValue.crossGroupLogic === 'and' ? 'or' : 'and';
-    }
+// 返回人群管理页面
+const goBack = () => {
+    router.push({ name: 'AudienceManagement' });
 };
 // 添加条件
 const addCondition = (group) => {
@@ -544,12 +796,15 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['info-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['info-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['stat-value']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-values-management']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-values-management']} */ ;
+/** @type {__VLS_StyleScopedClasses['rules-overview']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
+/** @type {__VLS_StyleScopedClasses['primary']} */ ;
+/** @type {__VLS_StyleScopedClasses['rule-detail-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['tag-value-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['tag-value-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['empty-state']} */ ;
+/** @type {__VLS_StyleScopedClasses['config-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['config-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-header']} */ ;
@@ -557,6 +812,8 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['section-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
 /** @type {__VLS_StyleScopedClasses['logic-badge']} */ ;
 /** @type {__VLS_StyleScopedClasses['empty-illustration']} */ ;
 /** @type {__VLS_StyleScopedClasses['vertical-logic-indicator']} */ ;
@@ -627,10 +884,16 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['logic-indicator']} */ ;
 /** @type {__VLS_StyleScopedClasses['clickable']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-title']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['trend-chart']} */ ;
+/** @type {__VLS_StyleScopedClasses['trend-placeholder']} */ ;
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "tag-detail" },
+    ...{ class: "audience-detail" },
 });
 const __VLS_0 = {}.ABreadcrumb;
 /** @type {[typeof __VLS_components.ABreadcrumb, typeof __VLS_components.aBreadcrumb, typeof __VLS_components.ABreadcrumb, typeof __VLS_components.aBreadcrumb, ]} */ ;
@@ -679,45 +942,64 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2
     ...{ class: "page-title" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "tag-info" },
+    ...{ class: "audience-info" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "tag-id" },
+    ...{ class: "audience-id" },
 });
-(__VLS_ctx.tagDetail.id);
+(__VLS_ctx.audienceDetail.id);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "tag-name" },
+    ...{ class: "audience-name" },
 });
-(__VLS_ctx.tagDetail.name);
+(__VLS_ctx.audienceDetail.name);
+const __VLS_20 = {}.ATag;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+// @ts-ignore
+const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
+    color: (__VLS_ctx.getStatusColor(__VLS_ctx.audienceDetail.status)),
+}));
+const __VLS_22 = __VLS_21({
+    color: (__VLS_ctx.getStatusColor(__VLS_ctx.audienceDetail.status)),
+}, ...__VLS_functionalComponentArgsRest(__VLS_21));
+__VLS_23.slots.default;
+(__VLS_ctx.getStatusText(__VLS_ctx.audienceDetail.status));
+var __VLS_23;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "header-actions" },
 });
-const __VLS_20 = {}.AButton;
+const __VLS_24 = {}.AButton;
 /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
 // @ts-ignore
-const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
+const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
     type: "primary",
 }));
-const __VLS_22 = __VLS_21({
+const __VLS_26 = __VLS_25({
     type: "primary",
-}, ...__VLS_functionalComponentArgsRest(__VLS_21));
-__VLS_23.slots.default;
-var __VLS_23;
+}, ...__VLS_functionalComponentArgsRest(__VLS_25));
+__VLS_27.slots.default;
+var __VLS_27;
+const __VLS_28 = {}.AButton;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+// @ts-ignore
+const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({}));
+const __VLS_30 = __VLS_29({}, ...__VLS_functionalComponentArgsRest(__VLS_29));
+__VLS_31.slots.default;
+var __VLS_31;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "content-section" },
 });
-const __VLS_24 = {}.ACard;
+const __VLS_32 = {}.ACard;
 /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
 // @ts-ignore
-const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
+const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
     ...{ class: "info-card" },
 }));
-const __VLS_26 = __VLS_25({
+const __VLS_34 = __VLS_33({
     ...{ class: "info-card" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_25));
-__VLS_27.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_33));
+__VLS_35.slots.default;
 {
-    const { title: __VLS_thisSlot } = __VLS_27.slots;
+    const { title: __VLS_thisSlot } = __VLS_35.slots;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "card-title" },
     });
@@ -734,18 +1016,18 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "label" },
 });
-const __VLS_28 = {}.ATag;
+const __VLS_36 = {}.ATag;
 /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
 // @ts-ignore
-const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
-    color: (__VLS_ctx.getDataTypeColor(__VLS_ctx.tagDetail.dataType)),
+const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
+    color: (__VLS_ctx.getTypeColor(__VLS_ctx.audienceDetail.type)),
 }));
-const __VLS_30 = __VLS_29({
-    color: (__VLS_ctx.getDataTypeColor(__VLS_ctx.tagDetail.dataType)),
-}, ...__VLS_functionalComponentArgsRest(__VLS_29));
-__VLS_31.slots.default;
-(__VLS_ctx.getDataTypeText(__VLS_ctx.tagDetail.dataType));
-var __VLS_31;
+const __VLS_38 = __VLS_37({
+    color: (__VLS_ctx.getTypeColor(__VLS_ctx.audienceDetail.type)),
+}, ...__VLS_functionalComponentArgsRest(__VLS_37));
+__VLS_39.slots.default;
+(__VLS_ctx.getTypeText(__VLS_ctx.audienceDetail.type));
+var __VLS_39;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "info-item" },
 });
@@ -755,7 +1037,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "value" },
 });
-(__VLS_ctx.tagDetail.category);
+(__VLS_ctx.getCreateMethodText(__VLS_ctx.audienceDetail.createMethod));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "info-row" },
 });
@@ -768,7 +1050,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "value" },
 });
-(__VLS_ctx.tagDetail.category);
+(__VLS_ctx.audienceDetail.updateFrequency);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "info-item" },
 });
@@ -778,7 +1060,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "value" },
 });
-(__VLS_ctx.tagDetail.dimensionType);
+(__VLS_ctx.audienceDetail.validPeriod);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "info-row" },
 });
@@ -788,18 +1070,18 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "label" },
 });
-const __VLS_32 = {}.ATag;
+const __VLS_40 = {}.ATag;
 /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
 // @ts-ignore
-const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
-    color: (__VLS_ctx.getShareLevelColor(__VLS_ctx.tagDetail.shareLevel)),
+const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
+    color: (__VLS_ctx.getShareLevelColor(__VLS_ctx.audienceDetail.shareLevel)),
 }));
-const __VLS_34 = __VLS_33({
-    color: (__VLS_ctx.getShareLevelColor(__VLS_ctx.tagDetail.shareLevel)),
-}, ...__VLS_functionalComponentArgsRest(__VLS_33));
-__VLS_35.slots.default;
-(__VLS_ctx.getShareLevelText(__VLS_ctx.tagDetail.shareLevel));
-var __VLS_35;
+const __VLS_42 = __VLS_41({
+    color: (__VLS_ctx.getShareLevelColor(__VLS_ctx.audienceDetail.shareLevel)),
+}, ...__VLS_functionalComponentArgsRest(__VLS_41));
+__VLS_43.slots.default;
+(__VLS_ctx.getShareLevelText(__VLS_ctx.audienceDetail.shareLevel));
+var __VLS_43;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "info-item" },
 });
@@ -809,7 +1091,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "value" },
 });
-(__VLS_ctx.tagDetail.createUser);
+(__VLS_ctx.audienceDetail.createUser);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "info-row full-width" },
 });
@@ -822,23 +1104,23 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "value description" },
 });
-(__VLS_ctx.tagDetail.description);
-var __VLS_27;
+(__VLS_ctx.audienceDetail.description);
+var __VLS_35;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "content-section" },
 });
-const __VLS_36 = {}.ACard;
+const __VLS_44 = {}.ACard;
 /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
 // @ts-ignore
-const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
+const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
     ...{ class: "subject-card" },
 }));
-const __VLS_38 = __VLS_37({
+const __VLS_46 = __VLS_45({
     ...{ class: "subject-card" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_37));
-__VLS_39.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_45));
+__VLS_47.slots.default;
 {
-    const { title: __VLS_thisSlot } = __VLS_39.slots;
+    const { title: __VLS_thisSlot } = __VLS_47.slots;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "card-header" },
     });
@@ -861,7 +1143,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-value primary" },
 });
-(__VLS_ctx.formatNumber(__VLS_ctx.tagStats.coverageCount));
+(__VLS_ctx.formatNumber(__VLS_ctx.audienceStats.totalCount));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-item" },
 });
@@ -871,7 +1153,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-value" },
 });
-(__VLS_ctx.tagStats.coverageRate);
+(__VLS_ctx.audienceStats.coverageRate);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-item" },
 });
@@ -881,7 +1163,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-value" },
 });
-(__VLS_ctx.formatNumber(__VLS_ctx.tagStats.uniqueCount));
+(__VLS_ctx.formatNumber(__VLS_ctx.audienceStats.activeCount));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-item" },
 });
@@ -891,7 +1173,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-value" },
 });
-(__VLS_ctx.tagStats.availableCount);
+(__VLS_ctx.audienceStats.qualityScore);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-item" },
 });
@@ -901,48 +1183,59 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-value" },
 });
-(__VLS_ctx.tagStats.updateTime);
+(__VLS_ctx.audienceStats.updateTime);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "chart-section" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "chart-tabs" },
 });
-const __VLS_40 = {}.ARadioGroup;
+const __VLS_48 = {}.ARadioGroup;
 /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
 // @ts-ignore
-const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
-    modelValue: (__VLS_ctx.activeTab),
-    type: "button",
-}));
-const __VLS_42 = __VLS_41({
-    modelValue: (__VLS_ctx.activeTab),
-    type: "button",
-}, ...__VLS_functionalComponentArgsRest(__VLS_41));
-__VLS_43.slots.default;
-const __VLS_44 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
-// @ts-ignore
-const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
-    value: "distribution",
-}));
-const __VLS_46 = __VLS_45({
-    value: "distribution",
-}, ...__VLS_functionalComponentArgsRest(__VLS_45));
-__VLS_47.slots.default;
-var __VLS_47;
-const __VLS_48 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
-// @ts-ignore
 const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
-    value: "trend",
+    modelValue: (__VLS_ctx.activeTab),
+    type: "button",
 }));
 const __VLS_50 = __VLS_49({
-    value: "trend",
+    modelValue: (__VLS_ctx.activeTab),
+    type: "button",
 }, ...__VLS_functionalComponentArgsRest(__VLS_49));
 __VLS_51.slots.default;
+const __VLS_52 = {}.ARadio;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+// @ts-ignore
+const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
+    value: "distribution",
+}));
+const __VLS_54 = __VLS_53({
+    value: "distribution",
+}, ...__VLS_functionalComponentArgsRest(__VLS_53));
+__VLS_55.slots.default;
+var __VLS_55;
+const __VLS_56 = {}.ARadio;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+// @ts-ignore
+const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
+    value: "trend",
+}));
+const __VLS_58 = __VLS_57({
+    value: "trend",
+}, ...__VLS_functionalComponentArgsRest(__VLS_57));
+__VLS_59.slots.default;
+var __VLS_59;
+const __VLS_60 = {}.ARadio;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+// @ts-ignore
+const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
+    value: "lineage",
+}));
+const __VLS_62 = __VLS_61({
+    value: "lineage",
+}, ...__VLS_functionalComponentArgsRest(__VLS_61));
+__VLS_63.slots.default;
+var __VLS_63;
 var __VLS_51;
-var __VLS_43;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "chart-content" },
 });
@@ -956,14 +1249,14 @@ if (__VLS_ctx.activeTab === 'distribution') {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "count-number" },
     });
-    (__VLS_ctx.formatNumber(__VLS_ctx.tagStats.totalCount));
+    (__VLS_ctx.formatNumber(__VLS_ctx.audienceStats.totalCount));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "count-label" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "count-desc" },
     });
-    (__VLS_ctx.tagStats.dataDate);
+    (__VLS_ctx.audienceStats.dataDate);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "distribution-bars" },
     });
@@ -997,22 +1290,83 @@ if (__VLS_ctx.activeTab === 'trend') {
         ...{ class: "trend-placeholder" },
     });
 }
-var __VLS_39;
+if (__VLS_ctx.activeTab === 'lineage') {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "lineage-chart" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "lineage-header" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "lineage-title" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "title-text" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "title-desc" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "lineage-legend" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "legend-item" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-color audience" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-text" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "legend-item" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-color tag" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-text" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "legend-item" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-color attribute" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-text" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "legend-item" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-color table" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "legend-text" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ref: "lineageChartRef",
+        ...{ class: "lineage-chart-container" },
+    });
+    /** @type {typeof __VLS_ctx.lineageChartRef} */ ;
+}
+var __VLS_47;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "content-section" },
 });
-const __VLS_52 = {}.ACard;
+const __VLS_64 = {}.ACard;
 /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
 // @ts-ignore
-const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
+const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({
     ...{ class: "rule-config-card" },
 }));
-const __VLS_54 = __VLS_53({
+const __VLS_66 = __VLS_65({
     ...{ class: "rule-config-card" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_53));
-__VLS_55.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_65));
+__VLS_67.slots.default;
 {
-    const { title: __VLS_thisSlot } = __VLS_55.slots;
+    const { title: __VLS_thisSlot } = __VLS_67.slots;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "card-title" },
     });
@@ -1021,363 +1375,126 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "rule-config-content" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "tag-values-config-vertical" },
+    ...{ class: "audience-rules-config" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "tag-values-management" },
+    ...{ class: "rules-overview" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "section-header" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
-const __VLS_56 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
-// @ts-ignore
-const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
-    ...{ 'onClick': {} },
-    type: "primary",
-}));
-const __VLS_58 = __VLS_57({
-    ...{ 'onClick': {} },
-    type: "primary",
-}, ...__VLS_functionalComponentArgsRest(__VLS_57));
-let __VLS_60;
-let __VLS_61;
-let __VLS_62;
-const __VLS_63 = {
-    onClick: (__VLS_ctx.addTagValue)
-};
-__VLS_59.slots.default;
-{
-    const { icon: __VLS_thisSlot } = __VLS_59.slots;
-    const __VLS_64 = {}.IconPlus;
-    /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
-    // @ts-ignore
-    const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({}));
-    const __VLS_66 = __VLS_65({}, ...__VLS_functionalComponentArgsRest(__VLS_65));
-}
-var __VLS_59;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "tag-values-list" },
+    ...{ class: "rule-stats" },
 });
-for (const [tagValue, index] of __VLS_getVForSourceType((__VLS_ctx.tagValues))) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        key: (tagValue.id),
-        ...{ class: "tag-value-item" },
-        ...{ class: ({ active: __VLS_ctx.activeConfigTab === tagValue.id }) },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: (...[$event]) => {
-                __VLS_ctx.activeConfigTab = tagValue.id;
-            } },
-        ...{ class: "tag-value-header" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "tag-value-info" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "tag-value-name" },
-    });
-    (tagValue.name || `标签值${index + 1}`);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "tag-value-desc" },
-    });
-    (tagValue.description || '暂无描述');
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ onClick: () => { } },
-        ...{ class: "tag-value-actions" },
-    });
-    if (__VLS_ctx.tagValues.length > 1) {
-        const __VLS_68 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
-        // @ts-ignore
-        const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
-            ...{ 'onClick': {} },
-            type: "text",
-            size: "small",
-            status: "danger",
-        }));
-        const __VLS_70 = __VLS_69({
-            ...{ 'onClick': {} },
-            type: "text",
-            size: "small",
-            status: "danger",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_69));
-        let __VLS_72;
-        let __VLS_73;
-        let __VLS_74;
-        const __VLS_75 = {
-            onClick: (...[$event]) => {
-                if (!(__VLS_ctx.tagValues.length > 1))
-                    return;
-                __VLS_ctx.deleteTagValue(tagValue.id);
-            }
-        };
-        __VLS_71.slots.default;
-        {
-            const { icon: __VLS_thisSlot } = __VLS_71.slots;
-            const __VLS_76 = {}.IconDelete;
-            /** @type {[typeof __VLS_components.IconDelete, ]} */ ;
-            // @ts-ignore
-            const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({}));
-            const __VLS_78 = __VLS_77({}, ...__VLS_functionalComponentArgsRest(__VLS_77));
-        }
-        var __VLS_71;
-    }
-}
-if (__VLS_ctx.tagValues.length === 0) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "empty-state" },
-    });
-    const __VLS_80 = {}.IconPlus;
-    /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
-    // @ts-ignore
-    const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
-        ...{ style: {} },
-    }));
-    const __VLS_82 = __VLS_81({
-        ...{ style: {} },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_81));
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-}
-if (__VLS_ctx.getCurrentTagValue()) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "tag-value-config-section" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "config-header" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({});
-    (__VLS_ctx.getCurrentTagValue().name || '标签值配置');
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "edit-actions" },
-    });
-    if (!__VLS_ctx.isEditMode) {
-        const __VLS_84 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
-        // @ts-ignore
-        const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({
-            type: "primary",
-            ...{ class: "edit-btn" },
-            disabled: true,
-        }));
-        const __VLS_86 = __VLS_85({
-            type: "primary",
-            ...{ class: "edit-btn" },
-            disabled: true,
-        }, ...__VLS_functionalComponentArgsRest(__VLS_85));
-        __VLS_87.slots.default;
-        {
-            const { icon: __VLS_thisSlot } = __VLS_87.slots;
-            const __VLS_88 = {}.IconEdit;
-            /** @type {[typeof __VLS_components.IconEdit, ]} */ ;
-            // @ts-ignore
-            const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({}));
-            const __VLS_90 = __VLS_89({}, ...__VLS_functionalComponentArgsRest(__VLS_89));
-        }
-        var __VLS_87;
-    }
-    else {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "edit-mode-actions" },
-        });
-        const __VLS_92 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
-        // @ts-ignore
-        const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({
-            ...{ 'onClick': {} },
-            type: "primary",
-            ...{ class: "save-btn" },
-        }));
-        const __VLS_94 = __VLS_93({
-            ...{ 'onClick': {} },
-            type: "primary",
-            ...{ class: "save-btn" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_93));
-        let __VLS_96;
-        let __VLS_97;
-        let __VLS_98;
-        const __VLS_99 = {
-            onClick: (__VLS_ctx.saveConfiguration)
-        };
-        __VLS_95.slots.default;
-        {
-            const { icon: __VLS_thisSlot } = __VLS_95.slots;
-            const __VLS_100 = {}.IconCheck;
-            /** @type {[typeof __VLS_components.IconCheck, ]} */ ;
-            // @ts-ignore
-            const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({}));
-            const __VLS_102 = __VLS_101({}, ...__VLS_functionalComponentArgsRest(__VLS_101));
-        }
-        var __VLS_95;
-        const __VLS_104 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
-        // @ts-ignore
-        const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
-            ...{ 'onClick': {} },
-            ...{ class: "cancel-btn" },
-        }));
-        const __VLS_106 = __VLS_105({
-            ...{ 'onClick': {} },
-            ...{ class: "cancel-btn" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_105));
-        let __VLS_108;
-        let __VLS_109;
-        let __VLS_110;
-        const __VLS_111 = {
-            onClick: (__VLS_ctx.cancelEdit)
-        };
-        __VLS_107.slots.default;
-        {
-            const { icon: __VLS_thisSlot } = __VLS_107.slots;
-            const __VLS_112 = {}.IconClose;
-            /** @type {[typeof __VLS_components.IconClose, ]} */ ;
-            // @ts-ignore
-            const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({}));
-            const __VLS_114 = __VLS_113({}, ...__VLS_functionalComponentArgsRest(__VLS_113));
-        }
-        var __VLS_107;
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "config-row" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "config-item" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "config-label" },
-    });
-    const __VLS_116 = {}.AInput;
-    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
-    // @ts-ignore
-    const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({
-        modelValue: (__VLS_ctx.getCurrentTagValue().name),
-        placeholder: "请输入标签值名称",
-        ...{ class: "config-input" },
-        disabled: (!__VLS_ctx.isEditMode),
-    }));
-    const __VLS_118 = __VLS_117({
-        modelValue: (__VLS_ctx.getCurrentTagValue().name),
-        placeholder: "请输入标签值名称",
-        ...{ class: "config-input" },
-        disabled: (!__VLS_ctx.isEditMode),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_117));
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "config-item" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "config-label" },
-    });
-    const __VLS_120 = {}.AInput;
-    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
-    // @ts-ignore
-    const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
-        modelValue: (__VLS_ctx.getCurrentTagValue().description),
-        placeholder: "请输入标签值描述",
-        ...{ class: "config-input" },
-        disabled: (!__VLS_ctx.isEditMode),
-    }));
-    const __VLS_122 = __VLS_121({
-        modelValue: (__VLS_ctx.getCurrentTagValue().description),
-        placeholder: "请输入标签值描述",
-        ...{ class: "config-input" },
-        disabled: (!__VLS_ctx.isEditMode),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_121));
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "condition-groups-section" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "section-header" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({
-        ...{ class: "section-title" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "section-info" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "condition-count" },
-    });
-    (__VLS_ctx.getCurrentTagValueConditionGroups().length);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "conditions-workspace" },
-    });
-    /** @type {[typeof ConditionConfig, ]} */ ;
-    // @ts-ignore
-    const __VLS_124 = __VLS_asFunctionalComponent(ConditionConfig, new ConditionConfig({
-        ...{ 'onAddConditionGroup': {} },
-        ...{ 'onDeleteConditionGroup': {} },
-        ...{ 'onToggleCrossGroupLogic': {} },
-        ...{ 'onToggleGroupLogic': {} },
-        ...{ 'onAddConditionByType': {} },
-        ...{ 'onRemoveCondition': {} },
-        conditionGroups: (__VLS_ctx.getCurrentTagValueConditionGroups()),
-        crossGroupLogic: (__VLS_ctx.getCurrentTagValue().crossGroupLogic),
-        editable: (__VLS_ctx.isEditMode),
-        dataSourceTypeOptions: (__VLS_ctx.dataSourceTypeOptions),
-        dateTypeOptions: (__VLS_ctx.dateTypeOptions),
-        dynamicUnitOptions: (__VLS_ctx.dynamicUnitOptions),
-        getFieldOptions: (__VLS_ctx.getFieldOptions),
-        getAggregationOptions: (__VLS_ctx.getAggregationOptions),
-        getOperatorOptions: (__VLS_ctx.getOperatorOptions),
-        needValueInput: (__VLS_ctx.needValueInput),
-        getValuePlaceholder: (__VLS_ctx.getValuePlaceholder),
-        onDataSourceTypeChange: (__VLS_ctx.onDataSourceTypeChange),
-        onDateTypeChange: (__VLS_ctx.onDateTypeChange),
-    }));
-    const __VLS_125 = __VLS_124({
-        ...{ 'onAddConditionGroup': {} },
-        ...{ 'onDeleteConditionGroup': {} },
-        ...{ 'onToggleCrossGroupLogic': {} },
-        ...{ 'onToggleGroupLogic': {} },
-        ...{ 'onAddConditionByType': {} },
-        ...{ 'onRemoveCondition': {} },
-        conditionGroups: (__VLS_ctx.getCurrentTagValueConditionGroups()),
-        crossGroupLogic: (__VLS_ctx.getCurrentTagValue().crossGroupLogic),
-        editable: (__VLS_ctx.isEditMode),
-        dataSourceTypeOptions: (__VLS_ctx.dataSourceTypeOptions),
-        dateTypeOptions: (__VLS_ctx.dateTypeOptions),
-        dynamicUnitOptions: (__VLS_ctx.dynamicUnitOptions),
-        getFieldOptions: (__VLS_ctx.getFieldOptions),
-        getAggregationOptions: (__VLS_ctx.getAggregationOptions),
-        getOperatorOptions: (__VLS_ctx.getOperatorOptions),
-        needValueInput: (__VLS_ctx.needValueInput),
-        getValuePlaceholder: (__VLS_ctx.getValuePlaceholder),
-        onDataSourceTypeChange: (__VLS_ctx.onDataSourceTypeChange),
-        onDateTypeChange: (__VLS_ctx.onDateTypeChange),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_124));
-    let __VLS_127;
-    let __VLS_128;
-    let __VLS_129;
-    const __VLS_130 = {
-        onAddConditionGroup: (__VLS_ctx.addConditionGroup)
-    };
-    const __VLS_131 = {
-        onDeleteConditionGroup: (__VLS_ctx.deleteConditionGroup)
-    };
-    const __VLS_132 = {
-        onToggleCrossGroupLogic: (__VLS_ctx.toggleCrossGroupLogic)
-    };
-    const __VLS_133 = {
-        onToggleGroupLogic: (__VLS_ctx.toggleGroupLogic)
-    };
-    const __VLS_134 = {
-        onAddConditionByType: (__VLS_ctx.addConditionByType)
-    };
-    const __VLS_135 = {
-        onRemoveCondition: (__VLS_ctx.removeCondition)
-    };
-    var __VLS_126;
-}
-var __VLS_55;
-/** @type {__VLS_StyleScopedClasses['tag-detail']} */ ;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "rule-count" },
+});
+(__VLS_ctx.audienceRules.conditionGroups.length);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "rule-logic" },
+});
+(__VLS_ctx.audienceRules.crossGroupLogic === 'and' ? '且' : '或');
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "rules-summary" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "summary-item" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "summary-label" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "summary-value" },
+});
+(__VLS_ctx.getRuleTypeText(__VLS_ctx.audienceRules.ruleType));
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "summary-item" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "summary-label" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "summary-value primary" },
+});
+(__VLS_ctx.formatNumber(__VLS_ctx.audienceRules.estimatedCount));
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "summary-item" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "summary-label" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "summary-value" },
+});
+(__VLS_ctx.getRuleComplexity());
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "rule-detail-section" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "config-header" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "condition-groups-section" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "section-header" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({
+    ...{ class: "section-title" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "section-info" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "condition-count" },
+});
+(__VLS_ctx.audienceRules.conditionGroups.length);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "conditions-workspace" },
+});
+/** @type {[typeof ConditionConfig, ]} */ ;
+// @ts-ignore
+const __VLS_68 = __VLS_asFunctionalComponent(ConditionConfig, new ConditionConfig({
+    conditionGroups: (__VLS_ctx.audienceRules.conditionGroups),
+    crossGroupLogic: (__VLS_ctx.audienceRules.crossGroupLogic),
+    editable: (false),
+    dataSourceTypeOptions: (__VLS_ctx.dataSourceTypeOptions),
+    dateTypeOptions: (__VLS_ctx.dateTypeOptions),
+    dynamicUnitOptions: (__VLS_ctx.dynamicUnitOptions),
+    getFieldOptions: (__VLS_ctx.getFieldOptions),
+    getAggregationOptions: (__VLS_ctx.getAggregationOptions),
+    getOperatorOptions: (__VLS_ctx.getOperatorOptions),
+    needValueInput: (__VLS_ctx.needValueInput),
+    getValuePlaceholder: (__VLS_ctx.getValuePlaceholder),
+    onDataSourceTypeChange: (__VLS_ctx.onDataSourceTypeChange),
+    onDateTypeChange: (__VLS_ctx.onDateTypeChange),
+}));
+const __VLS_69 = __VLS_68({
+    conditionGroups: (__VLS_ctx.audienceRules.conditionGroups),
+    crossGroupLogic: (__VLS_ctx.audienceRules.crossGroupLogic),
+    editable: (false),
+    dataSourceTypeOptions: (__VLS_ctx.dataSourceTypeOptions),
+    dateTypeOptions: (__VLS_ctx.dateTypeOptions),
+    dynamicUnitOptions: (__VLS_ctx.dynamicUnitOptions),
+    getFieldOptions: (__VLS_ctx.getFieldOptions),
+    getAggregationOptions: (__VLS_ctx.getAggregationOptions),
+    getOperatorOptions: (__VLS_ctx.getOperatorOptions),
+    needValueInput: (__VLS_ctx.needValueInput),
+    getValuePlaceholder: (__VLS_ctx.getValuePlaceholder),
+    onDataSourceTypeChange: (__VLS_ctx.onDataSourceTypeChange),
+    onDateTypeChange: (__VLS_ctx.onDateTypeChange),
+}, ...__VLS_functionalComponentArgsRest(__VLS_68));
+var __VLS_67;
+/** @type {__VLS_StyleScopedClasses['audience-detail']} */ ;
 /** @type {__VLS_StyleScopedClasses['breadcrumb']} */ ;
 /** @type {__VLS_StyleScopedClasses['page-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['header-content']} */ ;
 /** @type {__VLS_StyleScopedClasses['page-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-id']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-name']} */ ;
+/** @type {__VLS_StyleScopedClasses['audience-info']} */ ;
+/** @type {__VLS_StyleScopedClasses['audience-id']} */ ;
+/** @type {__VLS_StyleScopedClasses['audience-name']} */ ;
 /** @type {__VLS_StyleScopedClasses['header-actions']} */ ;
 /** @type {__VLS_StyleScopedClasses['content-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['info-card']} */ ;
@@ -1446,36 +1563,52 @@ var __VLS_55;
 /** @type {__VLS_StyleScopedClasses['bar-value']} */ ;
 /** @type {__VLS_StyleScopedClasses['trend-chart']} */ ;
 /** @type {__VLS_StyleScopedClasses['trend-placeholder']} */ ;
+/** @type {__VLS_StyleScopedClasses['lineage-chart']} */ ;
+/** @type {__VLS_StyleScopedClasses['lineage-header']} */ ;
+/** @type {__VLS_StyleScopedClasses['lineage-title']} */ ;
+/** @type {__VLS_StyleScopedClasses['title-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['title-desc']} */ ;
+/** @type {__VLS_StyleScopedClasses['lineage-legend']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['audience']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['tag']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['attribute']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-color']} */ ;
+/** @type {__VLS_StyleScopedClasses['table']} */ ;
+/** @type {__VLS_StyleScopedClasses['legend-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['lineage-chart-container']} */ ;
 /** @type {__VLS_StyleScopedClasses['content-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['rule-config-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-title']} */ ;
 /** @type {__VLS_StyleScopedClasses['rule-config-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-values-config-vertical']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-values-management']} */ ;
+/** @type {__VLS_StyleScopedClasses['audience-rules-config']} */ ;
+/** @type {__VLS_StyleScopedClasses['rules-overview']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-values-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-value-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['active']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-value-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-value-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-value-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-value-desc']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-value-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-value-config-section']} */ ;
+/** @type {__VLS_StyleScopedClasses['rule-stats']} */ ;
+/** @type {__VLS_StyleScopedClasses['rule-count']} */ ;
+/** @type {__VLS_StyleScopedClasses['rule-logic']} */ ;
+/** @type {__VLS_StyleScopedClasses['rules-summary']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
+/** @type {__VLS_StyleScopedClasses['primary']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
+/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
+/** @type {__VLS_StyleScopedClasses['rule-detail-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['config-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['edit-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['edit-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['edit-mode-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['save-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['cancel-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-input']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-title']} */ ;
@@ -1487,39 +1620,26 @@ const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             IconHome: IconHome,
-            IconPlus: IconPlus,
-            IconDelete: IconDelete,
-            IconEdit: IconEdit,
-            IconCheck: IconCheck,
-            IconClose: IconClose,
             ConditionConfig: ConditionConfig,
             activeTab: activeTab,
-            isEditMode: isEditMode,
-            activeConfigTab: activeConfigTab,
-            tagValues: tagValues,
-            tagDetail: tagDetail,
-            tagStats: tagStats,
+            audienceDetail: audienceDetail,
+            audienceStats: audienceStats,
+            audienceRules: audienceRules,
             distributionData: distributionData,
+            lineageChartRef: lineageChartRef,
             dataSourceTypeOptions: dataSourceTypeOptions,
             dateTypeOptions: dateTypeOptions,
             dynamicUnitOptions: dynamicUnitOptions,
-            getDataTypeColor: getDataTypeColor,
-            getDataTypeText: getDataTypeText,
+            getTypeColor: getTypeColor,
+            getTypeText: getTypeText,
+            getStatusColor: getStatusColor,
+            getStatusText: getStatusText,
+            getCreateMethodText: getCreateMethodText,
+            getRuleTypeText: getRuleTypeText,
+            getRuleComplexity: getRuleComplexity,
             getShareLevelColor: getShareLevelColor,
             getShareLevelText: getShareLevelText,
             formatNumber: formatNumber,
-            addConditionGroup: addConditionGroup,
-            deleteConditionGroup: deleteConditionGroup,
-            toggleGroupLogic: toggleGroupLogic,
-            addTagValue: addTagValue,
-            deleteTagValue: deleteTagValue,
-            saveConfiguration: saveConfiguration,
-            cancelEdit: cancelEdit,
-            getCurrentTagValue: getCurrentTagValue,
-            getCurrentTagValueConditionGroups: getCurrentTagValueConditionGroups,
-            toggleCrossGroupLogic: toggleCrossGroupLogic,
-            addConditionByType: addConditionByType,
-            removeCondition: removeCondition,
             onDataSourceTypeChange: onDataSourceTypeChange,
             onDateTypeChange: onDateTypeChange,
             getAggregationOptions: getAggregationOptions,

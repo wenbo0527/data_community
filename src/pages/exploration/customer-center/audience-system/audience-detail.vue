@@ -1,113 +1,117 @@
 <template>
-  <div class="tag-detail">
+  <div class="audience-detail">
     <!-- 面包屑导航 -->
     <a-breadcrumb class="breadcrumb">
       <a-breadcrumb-item>
         <icon-home />
       </a-breadcrumb-item>
-      <a-breadcrumb-item>可信数据</a-breadcrumb-item>
-      <a-breadcrumb-item>标签管理</a-breadcrumb-item>
+      <a-breadcrumb-item>客户中心</a-breadcrumb-item>
+      <a-breadcrumb-item>人群管理</a-breadcrumb-item>
     </a-breadcrumb>
 
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-content">
-        <h2 class="page-title">页面标题</h2>
-        <div class="tag-info">
-          <span class="tag-id">标签ID：{{ tagDetail.id }}</span>
-          <span class="tag-name">{{ tagDetail.name }}</span>
+        <h2 class="page-title">人群详情</h2>
+        <div class="audience-info">
+          <span class="audience-id">人群ID：{{ audienceDetail.id }}</span>
+          <span class="audience-name">{{ audienceDetail.name }}</span>
+          <a-tag :color="getStatusColor(audienceDetail.status)">
+            {{ getStatusText(audienceDetail.status) }}
+          </a-tag>
         </div>
       </div>
       <div class="header-actions">
-        <a-button type="primary">立即计算</a-button>
+        <a-button type="primary">刷新人群</a-button>
+        <a-button>导出人群</a-button>
       </div>
     </div>
 
-    <!-- 标签基本信息 -->
+    <!-- 人群基本信息 -->
     <div class="content-section">
       <a-card class="info-card">
         <template #title>
-          <span class="card-title">标签基本信息</span>
+          <span class="card-title">人群基本信息</span>
         </template>
         
         <div class="info-grid">
           <div class="info-row">
             <div class="info-item">
-              <span class="label">数据类型：</span>
-              <a-tag :color="getDataTypeColor(tagDetail.dataType)">
-                {{ getDataTypeText(tagDetail.dataType) }}
+              <span class="label">人群类型：</span>
+              <a-tag :color="getTypeColor(audienceDetail.type)">
+                {{ getTypeText(audienceDetail.type) }}
               </a-tag>
             </div>
             <div class="info-item">
-              <span class="label">字符类型：</span>
-              <span class="value">{{ tagDetail.category }}</span>
+              <span class="label">创建方式：</span>
+              <span class="value">{{ getCreateMethodText(audienceDetail.createMethod) }}</span>
             </div>
           </div>
           
           <div class="info-row">
             <div class="info-item">
-              <span class="label">标签分类：</span>
-              <span class="value">{{ tagDetail.category }}</span>
+              <span class="label">更新频率：</span>
+              <span class="value">{{ audienceDetail.updateFrequency }}</span>
             </div>
             <div class="info-item">
-              <span class="label">维度类型：</span>
-              <span class="value">{{ tagDetail.dimensionType }}</span>
+              <span class="label">有效期：</span>
+              <span class="value">{{ audienceDetail.validPeriod }}</span>
             </div>
           </div>
           
           <div class="info-row">
             <div class="info-item">
               <span class="label">共享级别：</span>
-              <a-tag :color="getShareLevelColor(tagDetail.shareLevel)">
-                {{ getShareLevelText(tagDetail.shareLevel) }}
+              <a-tag :color="getShareLevelColor(audienceDetail.shareLevel)">
+                {{ getShareLevelText(audienceDetail.shareLevel) }}
               </a-tag>
             </div>
             <div class="info-item">
               <span class="label">创建人：</span>
-              <span class="value">{{ tagDetail.createUser }}</span>
+              <span class="value">{{ audienceDetail.createUser }}</span>
             </div>
           </div>
           
           <div class="info-row full-width">
             <div class="info-item">
-              <span class="label">标签主体：</span>
-              <span class="value description">{{ tagDetail.description }}</span>
+              <span class="label">人群描述：</span>
+              <span class="value description">{{ audienceDetail.description }}</span>
             </div>
           </div>
         </div>
       </a-card>
     </div>
 
-    <!-- 标签主体 -->
+    <!-- 人群统计 -->
     <div class="content-section">
       <a-card class="subject-card">
         <template #title>
           <div class="card-header">
-            <span class="card-title">标签主体</span>
+            <span class="card-title">人群统计</span>
           </div>
         </template>
         
         <div class="subject-content">
           <div class="subject-stats">
             <div class="stat-item">
-              <div class="stat-label">标签覆盖人数：</div>
-              <div class="stat-value primary">{{ formatNumber(tagStats.coverageCount) }}</div>
+              <div class="stat-label">人群规模：</div>
+              <div class="stat-value primary">{{ formatNumber(audienceStats.totalCount) }}</div>
             </div>
             <div class="stat-item">
               <div class="stat-label">覆盖率：</div>
-              <div class="stat-value">{{ tagStats.coverageRate }}%</div>
+              <div class="stat-value">{{ audienceStats.coverageRate }}%</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">标签不重复人数：</div>
-              <div class="stat-value">{{ formatNumber(tagStats.uniqueCount) }}</div>
+              <div class="stat-label">活跃用户数：</div>
+              <div class="stat-value">{{ formatNumber(audienceStats.activeCount) }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">标签可用数量：</div>
-              <div class="stat-value">{{ tagStats.availableCount }}</div>
+              <div class="stat-label">数据质量评分：</div>
+              <div class="stat-value">{{ audienceStats.qualityScore }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">计算更新时间：</div>
-              <div class="stat-value">{{ tagStats.updateTime }}</div>
+              <div class="stat-label">最后更新时间：</div>
+              <div class="stat-value">{{ audienceStats.updateTime }}</div>
             </div>
           </div>
           
@@ -117,15 +121,16 @@
               <a-radio-group v-model="activeTab" type="button">
                 <a-radio value="distribution">数据分布</a-radio>
                 <a-radio value="trend">趋势分析</a-radio>
+                <a-radio value="lineage">血缘查询</a-radio>
               </a-radio-group>
             </div>
             
             <div class="chart-content">
               <div v-if="activeTab === 'distribution'" class="distribution-chart">
                 <div class="total-count">
-                  <span class="count-number">{{ formatNumber(tagStats.totalCount) }}</span>
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
                   <span class="count-label">人</span>
-                  <span class="count-desc">当前标签覆盖用户数据于 {{ tagStats.dataDate }} 02:38:12</span>
+                  <span class="count-desc">当前人群数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
                 </div>
                 
                 <!-- 数据分布条形图 -->
@@ -148,113 +153,80 @@
                   趋势分析图表区域
                 </div>
               </div>
+              
+              <div v-if="activeTab === 'lineage'" class="lineage-chart">
+                <div class="lineage-header">
+                  <div class="lineage-title">
+                    <span class="title-text">人群血缘关系</span>
+                    <span class="title-desc">展示人群引用的标签、属性及对应数据表的血缘关系</span>
+                  </div>
+                  <div class="lineage-legend">
+                    <div class="legend-item">
+                      <span class="legend-color audience"></span>
+                      <span class="legend-text">人群</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-color tag"></span>
+                      <span class="legend-text">标签</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-color attribute"></span>
+                      <span class="legend-text">属性</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-color table"></span>
+                      <span class="legend-text">数据表</span>
+                    </div>
+                  </div>
+                </div>
+                <div ref="lineageChartRef" class="lineage-chart-container"></div>
+              </div>
             </div>
           </div>
         </div>
       </a-card>
     </div>
 
-    <!-- 规则配置区域 -->
+    <!-- 人群规则配置 -->
     <div class="content-section">
       <a-card class="rule-config-card">
         <template #title>
-          <span class="card-title">标签逻辑配置</span>
+          <span class="card-title">人群规则配置</span>
         </template>
         
         <div class="rule-config-content">
-          <!-- 上下布局结构 -->
-          <div class="tag-values-config-vertical">
-            <!-- 标签值管理区域 -->
-            <div class="tag-values-management">
+          <!-- 规则配置区域 -->
+          <div class="audience-rules-config">
+            <!-- 规则概览 -->
+            <div class="rules-overview">
               <div class="section-header">
-                <h3>标签值管理</h3>
-                <a-button type="primary" @click="addTagValue">
-                  <template #icon><IconPlus /></template>
-                  添加标签值
-                </a-button>
+                <h3>规则概览</h3>
+                <div class="rule-stats">
+                  <span class="rule-count">共 {{ audienceRules.conditionGroups.length }} 个条件组</span>
+                  <span class="rule-logic">组间关系：{{ audienceRules.crossGroupLogic === 'and' ? '且' : '或' }}</span>
+                </div>
               </div>
               
-              <div class="tag-values-list">
-                <div 
-                  v-for="(tagValue, index) in tagValues" 
-                  :key="tagValue.id" 
-                  class="tag-value-item"
-                  :class="{ active: activeConfigTab === tagValue.id }"
-                >
-                  <div class="tag-value-header" @click="activeConfigTab = tagValue.id">
-                    <div class="tag-value-info">
-                      <span class="tag-value-name">{{ tagValue.name || `标签值${index + 1}` }}</span>
-                      <span class="tag-value-desc">{{ tagValue.description || '暂无描述' }}</span>
-                    </div>
-                    <div class="tag-value-actions" @click.stop>
-                      <a-button 
-                        v-if="tagValues.length > 1" 
-                        type="text" 
-                        size="small" 
-                        status="danger" 
-                        @click="deleteTagValue(tagValue.id)"
-                      >
-                        <template #icon><IconDelete /></template>
-                      </a-button>
-                    </div>
-                  </div>
+              <div class="rules-summary">
+                <div class="summary-item">
+                  <span class="summary-label">规则类型：</span>
+                  <span class="summary-value">{{ getRuleTypeText(audienceRules.ruleType) }}</span>
                 </div>
-                
-                <div v-if="tagValues.length === 0" class="empty-state">
-                  <IconPlus style="font-size: 48px; color: #c9cdd4;" />
-                  <p>暂无标签值，请添加第一个标签值</p>
+                <div class="summary-item">
+                  <span class="summary-label">预估人群规模：</span>
+                  <span class="summary-value primary">{{ formatNumber(audienceRules.estimatedCount) }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">规则复杂度：</span>
+                  <span class="summary-value">{{ getRuleComplexity() }}</span>
                 </div>
               </div>
             </div>
             
-            <!-- 标签值配置区域 -->
-            <div v-if="getCurrentTagValue()" class="tag-value-config-section">
+            <!-- 规则详情配置区域 -->
+            <div class="rule-detail-section">
               <div class="config-header">
-                <h4>{{ getCurrentTagValue().name || '标签值配置' }}</h4>
-                <!-- 编辑控制区域 -->
-                <div class="edit-actions">
-                  <a-button 
-                    v-if="!isEditMode" 
-                    type="primary" 
-                    class="edit-btn"
-                    disabled
-                  >
-                    <template #icon><IconEdit /></template>
-                    编辑配置
-                  </a-button>
-                  <div v-else class="edit-mode-actions">
-                    <a-button type="primary" @click="saveConfiguration" class="save-btn">
-                      <template #icon><IconCheck /></template>
-                      保存
-                    </a-button>
-                    <a-button @click="cancelEdit" class="cancel-btn">
-                      <template #icon><IconClose /></template>
-                      取消
-                    </a-button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 标签值基本信息 -->
-              <div class="config-row">
-                <div class="config-item">
-                  <label class="config-label">标签值名称</label>
-                  <a-input 
-                    v-model="getCurrentTagValue().name" 
-                    placeholder="请输入标签值名称" 
-                    class="config-input" 
-                    :disabled="!isEditMode"
-                  />
-                </div>
-                <div class="config-item">
-                  <label class="config-label">标签值描述</label>
-                  <a-input 
-                    v-model="getCurrentTagValue().description" 
-                    placeholder="请输入标签值描述" 
-                    class="config-input" 
-                    :disabled="!isEditMode"
-                  />
-                </div>
+                <h4>规则详情</h4>
               </div>
               
               <!-- 条件组配置 -->
@@ -262,16 +234,16 @@
                 <div class="section-header">
                   <h4 class="section-title">条件配置</h4>
                   <div class="section-info">
-                    <span class="condition-count">共 {{ getCurrentTagValueConditionGroups().length }} 个条件组</span>
+                    <span class="condition-count">共 {{ audienceRules.conditionGroups.length }} 个条件组</span>
                   </div>
                 </div>
                 
                 <!-- 条件组配置区域 -->
                 <div class="conditions-workspace">
                   <ConditionConfig
-                     :condition-groups="getCurrentTagValueConditionGroups()"
-                     :cross-group-logic="getCurrentTagValue().crossGroupLogic"
-                     :editable="isEditMode"
+                     :condition-groups="audienceRules.conditionGroups"
+                     :cross-group-logic="audienceRules.crossGroupLogic"
+                     :editable="false"
                      :data-source-type-options="dataSourceTypeOptions"
                      :date-type-options="dateTypeOptions"
                      :dynamic-unit-options="dynamicUnitOptions"
@@ -282,12 +254,6 @@
                      :get-value-placeholder="getValuePlaceholder"
                      :on-data-source-type-change="onDataSourceTypeChange"
                      :on-date-type-change="onDateTypeChange"
-                     @add-condition-group="addConditionGroup"
-                     @delete-condition-group="deleteConditionGroup"
-                     @toggle-cross-group-logic="toggleCrossGroupLogic"
-                     @toggle-group-logic="toggleGroupLogic"
-                     @add-condition-by-type="addConditionByType"
-                     @remove-condition="removeCondition"
                    />
                 </div>
               </div>
@@ -300,8 +266,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import * as echarts from 'echarts'
 import {
   IconHome,
   IconSettings,
@@ -330,43 +297,69 @@ const router = useRouter()
 // 当前选中的标签页
 const activeTab = ref('distribution')
 
-// 编辑模式相关
-const isEditMode = ref(false) // 始终为false，禁止编辑
-const originalTagValues = ref(null) // 用于保存编辑前的数据
-
-// 配置选项卡相关
-const activeConfigTab = ref('tag_value_1')
-const tagValues = ref([
-  {
-    id: 'tag_value_1',
-    name: '',
-    description: '',
-    conditionGroups: [],
-    crossGroupLogic: 'or' // 跨条件组逻辑
-  }
-])
-
-// 标签详情数据
-const tagDetail = reactive({
-  id: 'BEHAV_NSLFCPK',
-  name: '数字产品',
-  dataType: 'string',
-  category: '基础信息',
-  dimensionType: '客户级',
+// 人群详情数据
+const audienceDetail = reactive({
+  id: 'AUD_20231019_001',
+  name: '高价值客户群体',
+  type: 'custom',
+  status: 'active',
+  createMethod: 'rule',
+  updateFrequency: '每日',
+  validPeriod: '长期有效',
   shareLevel: 'public',
   createUser: '张力',
-  description: '这是一个产品、商品分类、商品中类、商品小类、商品品牌、商品规格、商品价格、商品促销、商品库存、商品销量、商品评价、商品推荐、商品搜索、商品收藏、商品分享、商品比较、商品咨询、商品投诉、商品退换货等信息的标签主体。'
+  description: '基于消费行为和用户属性筛选出的高价值客户群体，包含近30天消费金额超过1000元且活跃度较高的用户。'
 })
 
-// 标签统计数据
-const tagStats = reactive({
-  coverageCount: 9999773,
-  coverageRate: 98.99,
-  uniqueCount: 8891,
-  availableCount: 23,
-  updateTime: '2023-10-14 3:23:12',
-  totalCount: 9999773,
+// 人群统计数据
+const audienceStats = reactive({
+  totalCount: 156789,
+  coverageRate: 12.5,
+  activeCount: 142356,
+  qualityScore: 95.8,
+  updateTime: '2023-10-19 14:23:12',
   dataDate: '2023-10-19'
+})
+
+// 人群规则配置
+const audienceRules = reactive({
+  ruleType: 'custom',
+  crossGroupLogic: 'and',
+  estimatedCount: 156789,
+  conditionGroups: [
+    {
+      id: 'group_1',
+      name: '消费行为条件',
+      logic: 'and',
+      conditions: [
+        {
+          id: 'condition_1',
+          dataSourceType: 'behavior',
+          fieldName: '消费金额',
+          aggregationType: 'sum',
+          operator: 'gte',
+          value: '1000',
+          dateType: 'dynamic',
+          dynamicValue: 30,
+          dynamicUnit: 'days'
+        }
+      ]
+    },
+    {
+      id: 'group_2',
+      name: '用户属性条件',
+      logic: 'and',
+      conditions: [
+        {
+          id: 'condition_2',
+          dataSourceType: 'attribute',
+          fieldName: '用户等级',
+          operator: 'in',
+          value: 'VIP,SVIP'
+        }
+      ]
+    }
+  ]
 })
 
 // 数据分布数据
@@ -375,6 +368,107 @@ const distributionData = ref([
   { label: '标签组2', percentage: 70, color: '#1890ff' },
   { label: '标签组3', percentage: 45, color: '#fadb14' }
 ])
+
+// 血缘查询相关
+const lineageChartRef = ref(null)
+let lineageChart = null
+
+// 血缘关系数据
+const lineageData = ref({
+  name: '高价值客户群体',
+  category: 'audience',
+  children: [
+    {
+      name: '消费行为标签',
+      category: 'tag',
+      children: [
+        {
+          name: '消费金额',
+          category: 'attribute',
+          children: [
+            {
+              name: 'order_table',
+              category: 'table',
+              value: '订单表'
+            },
+            {
+              name: 'payment_table',
+              category: 'table',
+              value: '支付表'
+            }
+          ]
+        },
+        {
+          name: '消费频次',
+          category: 'attribute',
+          children: [
+            {
+              name: 'order_table',
+              category: 'table',
+              value: '订单表'
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: '用户属性标签',
+      category: 'tag',
+      children: [
+        {
+          name: '用户等级',
+          category: 'attribute',
+          children: [
+            {
+              name: 'user_table',
+              category: 'table',
+              value: '用户表'
+            }
+          ]
+        },
+        {
+          name: '注册时间',
+          category: 'attribute',
+          children: [
+            {
+              name: 'user_table',
+              category: 'table',
+              value: '用户表'
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: '活跃度标签',
+      category: 'tag',
+      children: [
+        {
+          name: '登录频次',
+          category: 'attribute',
+          children: [
+            {
+              name: 'login_log_table',
+              category: 'table',
+              value: '登录日志表'
+            }
+          ]
+        },
+        {
+          name: '页面浏览',
+          category: 'attribute',
+          children: [
+            {
+              name: 'behavior_table',
+              category: 'table',
+              value: '行为表'
+            }
+          ]
+        }
+      ]
+    }
+  ]
+})
 
 // 规则配置相关数据
 const conditionGroups = ref([]) // 条件组数组
@@ -408,22 +502,77 @@ const dynamicUnitOptions = [
 
 
 
-// 获取数据类型颜色
-const getDataTypeColor = (dataType) => {
+// 获取人群类型颜色
+const getTypeColor = (type) => {
   const colorMap = {
-    string: 'green',
-    number: 'blue'
+    custom: 'blue',
+    imported: 'green',
+    system: 'orange'
   }
-  return colorMap[dataType] || 'gray'
+  return colorMap[type] || 'gray'
 }
 
-// 获取数据类型文本
-const getDataTypeText = (dataType) => {
+// 获取人群类型文本
+const getTypeText = (type) => {
   const textMap = {
-    string: '字符型',
-    number: '数值型'
+    custom: '自定义人群',
+    imported: '导入人群',
+    system: '系统人群'
   }
-  return textMap[dataType] || dataType
+  return textMap[type] || type
+}
+
+// 获取状态颜色
+const getStatusColor = (status) => {
+  const colorMap = {
+    active: 'green',
+    inactive: 'red',
+    processing: 'orange',
+    pending: 'gray'
+  }
+  return colorMap[status] || 'gray'
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const textMap = {
+    active: '活跃',
+    inactive: '停用',
+    processing: '计算中',
+    pending: '待处理'
+  }
+  return textMap[status] || status
+}
+
+// 获取创建方式文本
+const getCreateMethodText = (method) => {
+  const textMap = {
+    rule: '规则创建',
+    import: '数据导入',
+    api: 'API接口'
+  }
+  return textMap[method] || method
+}
+
+// 获取规则类型文本
+const getRuleTypeText = (type) => {
+  const textMap = {
+    custom: '自定义规则',
+    template: '模板规则',
+    imported: '导入规则'
+  }
+  return textMap[type] || type
+}
+
+// 获取规则复杂度
+const getRuleComplexity = () => {
+  const totalConditions = audienceRules.conditionGroups.reduce((sum, group) => {
+    return sum + group.conditions.length
+  }, 0)
+  
+  if (totalConditions <= 3) return '简单'
+  if (totalConditions <= 8) return '中等'
+  return '复杂'
 }
 
 // 获取共享级别颜色
@@ -448,6 +597,111 @@ const getShareLevelText = (shareLevel) => {
 const formatNumber = (num) => {
   return num.toLocaleString()
 }
+
+// 血缘图表相关方法
+// 初始化血缘图表
+const initLineageChart = () => {
+  if (!lineageChartRef.value) return
+  
+  lineageChart = echarts.init(lineageChartRef.value)
+  
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      triggerOn: 'mousemove',
+      formatter: function(params) {
+        const data = params.data
+        let content = `<div style="padding: 8px;">`
+        content += `<div style="font-weight: bold; margin-bottom: 4px;">${data.name}</div>`
+        
+        if (data.category === 'audience') {
+          content += `<div style="color: #666;">类型: 人群</div>`
+          content += `<div style="color: #666;">规模: ${formatNumber(audienceStats.totalCount)}</div>`
+        } else if (data.category === 'tag') {
+          content += `<div style="color: #666;">类型: 标签</div>`
+        } else if (data.category === 'attribute') {
+          content += `<div style="color: #666;">类型: 属性</div>`
+        } else if (data.category === 'table') {
+          content += `<div style="color: #666;">类型: 数据表</div>`
+          content += `<div style="color: #666;">表名: ${data.value || data.name}</div>`
+        }
+        
+        content += `</div>`
+        return content
+      }
+    },
+    series: [
+      {
+        type: 'tree',
+        data: [lineageData.value],
+        top: '5%',
+        left: '15%',
+        bottom: '5%',
+        right: '15%',
+        symbolSize: 12,
+        orient: 'LR',
+        label: {
+          position: 'left',
+          verticalAlign: 'middle',
+          align: 'right',
+          fontSize: 12,
+          color: '#333',
+          formatter: function(params) {
+            return params.data.name
+          }
+        },
+        leaves: {
+          label: {
+            position: 'right',
+            verticalAlign: 'middle',
+            align: 'left'
+          }
+        },
+        emphasis: {
+          focus: 'descendant'
+        },
+        expandAndCollapse: true,
+        animationDuration: 550,
+        animationDurationUpdate: 750,
+        itemStyle: {
+          color: function(params) {
+            const colorMap = {
+              'audience': '#1890ff',
+              'tag': '#52c41a',
+              'attribute': '#faad14',
+              'table': '#f5222d'
+            }
+            return colorMap[params.data.category] || '#666'
+          },
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        lineStyle: {
+          color: '#ccc',
+          width: 1.5,
+          curveness: 0.3
+        }
+      }
+    ]
+  }
+  
+  lineageChart.setOption(option)
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', () => {
+    if (lineageChart) {
+      lineageChart.resize()
+    }
+  })
+}
+
+// 监听 activeTab 变化，初始化血缘图表
+watch(activeTab, async (newTab) => {
+  if (newTab === 'lineage') {
+    await nextTick()
+    initLineageChart()
+  }
+})
 
 // 规则配置相关方法
 
@@ -506,86 +760,52 @@ const toggleGroupLogic = (group) => {
   group.logic = group.logic === 'and' ? 'or' : 'and'
 }
 
-// 标签值管理方法
-// 新增标签值
-const addTagValue = () => {
-  const newId = `tag_value_${Date.now()}`
-  const newTagValue = {
-    id: newId,
-    name: '',
-    description: '',
-    conditionGroups: [],
-    crossGroupLogic: 'or'
-  }
-  tagValues.value.push(newTagValue)
-  activeConfigTab.value = newId
-}
-
-// 删除标签值
-const deleteTagValue = (targetKey) => {
-  const index = tagValues.value.findIndex(item => item.id === targetKey)
-  if (index > -1 && tagValues.value.length > 1) {
-    tagValues.value.splice(index, 1)
-    // 如果删除的是当前激活的tab，切换到第一个tab
-    if (activeConfigTab.value === targetKey) {
-      activeConfigTab.value = tagValues.value[0].id
-    }
+// 人群管理相关方法
+// 刷新人群数据
+const refreshAudience = async () => {
+  try {
+    // 这里可以添加刷新人群的API调用
+    console.log('刷新人群数据:', audienceDetail.id)
+    // 模拟刷新成功
+    audienceStats.updateTime = new Date().toLocaleString()
+  } catch (error) {
+    console.error('刷新人群失败:', error)
   }
 }
 
-// 更新tab标题
-const updateTabTitle = (tagValue) => {
-  // 这个方法主要用于触发响应式更新，实际标题更新由模板中的计算属性处理
-}
-
-// 编辑模式相关方法
-// 进入编辑模式
-const enterEditMode = () => {
-  // 保存当前数据作为备份
-  originalTagValues.value = JSON.parse(JSON.stringify(tagValues.value))
-  isEditMode.value = true
-}
-
-// 保存配置
-const saveConfiguration = () => {
-  // 这里可以添加保存到后端的逻辑
-  console.log('保存标签配置:', tagValues.value)
+// 导出人群数据
+const exportAudience = () => {
+  const exportData = {
+    audienceId: audienceDetail.id,
+    audienceName: audienceDetail.name,
+    totalCount: audienceStats.totalCount,
+    rules: audienceRules,
+    exportTime: new Date().toISOString()
+  }
   
-  // 模拟保存成功
-  isEditMode.value = false
-  originalTagValues.value = null
-  
-  // 显示保存成功提示
-  // Message.success('配置保存成功')
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `audience-${audienceDetail.name || 'unnamed'}-${Date.now()}.json`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
-// 取消编辑
-const cancelEdit = () => {
-  if (originalTagValues.value) {
-    // 恢复原始数据
-    tagValues.value = JSON.parse(JSON.stringify(originalTagValues.value))
-  }
-  isEditMode.value = false
-  originalTagValues.value = null
+// 编辑人群
+const editAudience = () => {
+  router.push({
+    name: 'AudienceCreate',
+    params: { id: audienceDetail.id },
+    query: { mode: 'edit' }
+  })
 }
 
-// 获取当前标签值
-const getCurrentTagValue = () => {
-  return tagValues.value.find(item => item.id === activeConfigTab.value) || tagValues.value[0]
-}
-
-// 获取当前标签值的条件组
-const getCurrentTagValueConditionGroups = () => {
-  const currentTagValue = getCurrentTagValue()
-  return currentTagValue ? currentTagValue.conditionGroups : []
-}
-
-// 切换跨条件组逻辑（针对当前标签值）
-const toggleCrossGroupLogic = () => {
-  const currentTagValue = getCurrentTagValue()
-  if (currentTagValue) {
-    currentTagValue.crossGroupLogic = currentTagValue.crossGroupLogic === 'and' ? 'or' : 'and'
-  }
+// 返回人群管理页面
+const goBack = () => {
+  router.push({ name: 'AudienceManagement' })
 }
 
 // 添加条件
@@ -920,7 +1140,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.tag-detail {
+.audience-detail {
   padding: 16px;
   background-color: #f5f5f5;
   min-height: 100vh;
@@ -951,18 +1171,18 @@ onMounted(() => {
   color: #1d2129;
 }
 
-.tag-info {
+.audience-info {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.tag-id {
+.audience-id {
   color: #86909c;
   font-size: 14px;
 }
 
-.tag-name {
+.audience-name {
   color: #1d2129;
   font-size: 16px;
   font-weight: 500;
@@ -1188,16 +1408,16 @@ onMounted(() => {
   padding: 24px;
 }
 
-/* 上下布局样式 */
-.tag-values-config-vertical {
+/* 人群规则配置样式 */
+.audience-rules-config {
   display: flex;
   flex-direction: column;
   gap: 24px;
   height: 100%;
 }
 
-/* 标签值管理区域 */
-.tag-values-management {
+/* 规则概览区域 */
+.rules-overview {
   background: #ffffff;
   border: 1px solid #e5e6eb;
   border-radius: 8px;
@@ -1205,10 +1425,69 @@ onMounted(() => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-.tag-values-management .section-header {
+.rules-overview .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.rule-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.rule-count,
+.rule-logic {
+  font-size: 12px;
+  color: #86909c;
+  padding: 4px 8px;
+  background: #f7f8fa;
+  border-radius: 4px;
+}
+
+.rules-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-label {
+  color: #86909c;
+  font-size: 14px;
+  min-width: 100px;
+}
+
+.summary-value {
+  color: #1d2129;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.summary-value.primary {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+/* 规则详情配置区域 */
+.rule-detail-section {
+  background: #ffffff;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.rule-detail-section .config-header {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e6eb;
@@ -2132,6 +2411,8 @@ onMounted(() => {
 .rotate-180 {
   transform: rotate(180deg);
   transition: transform 0.2s ease;
+}
+
 /* 标签值条件配置样式 */
 .tag-value-conditions {
   margin-top: 20px;
@@ -2193,9 +2474,8 @@ onMounted(() => {
 }
 
 .logic-indicator:not(.clickable) {
-    cursor: default;
-    opacity: 0.6;
-  }
+  cursor: default;
+  opacity: 0.6;
 }
 
 .section-title {
@@ -2205,5 +2485,100 @@ onMounted(() => {
   color: #333;
 }
 
+/* 血缘查询样式 */
+.lineage-chart {
+  padding: 16px 0;
+}
+
+.lineage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding: 0 16px;
+}
+
+.lineage-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.title-desc {
+  font-size: 12px;
+  color: #86909c;
+}
+
+.lineage-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.legend-color.audience {
+  background-color: #1890ff;
+}
+
+.legend-color.tag {
+  background-color: #52c41a;
+}
+
+.legend-color.attribute {
+  background-color: #faad14;
+}
+
+.legend-color.table {
+  background-color: #f5222d;
+}
+
+.legend-text {
+  font-size: 12px;
+  color: #666;
+}
+
+.lineage-chart-container {
+  width: 100%;
+  height: 500px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+/* 趋势分析占位样式 */
+.trend-chart {
+  padding: 16px;
+}
+
+.trend-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  background: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 6px;
+  color: #6c757d;
+  font-size: 14px;
+}
 
 </style>

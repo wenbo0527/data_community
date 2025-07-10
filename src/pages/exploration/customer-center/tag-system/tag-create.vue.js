@@ -95,11 +95,51 @@ const addConditionGroup = (tagValueIndex) => {
         });
     }
 };
+const addExcludeConditionGroup = (tagValueIndex) => {
+    if (tagValueIndex >= 0 && tagValueIndex < tagValues.value.length) {
+        const tagValue = tagValues.value[tagValueIndex];
+        tagValue.conditionGroups.push({
+            id: Date.now().toString(),
+            logic: 'and',
+            isExclude: true,
+            conditions: [{
+                    id: Date.now().toString() + '_1',
+                    type: 'detail',
+                    dataSourceType: 'detail',
+                    fieldName: '',
+                    aggregationType: '',
+                    operator: '',
+                    value: '',
+                    dateType: 'dynamic',
+                    dynamicValue: 1,
+                    dynamicUnit: 'days',
+                    dateRange: undefined,
+                    isExclude: false
+                }]
+        });
+    }
+};
 const deleteConditionGroup = (tagValueIndex, groupIndex) => {
     if (tagValueIndex >= 0 && tagValueIndex < tagValues.value.length) {
         const tagValue = tagValues.value[tagValueIndex];
-        if (tagValue.conditionGroups && groupIndex >= 0 && groupIndex < tagValue.conditionGroups.length) {
-            tagValue.conditionGroups.splice(groupIndex, 1);
+        // 找到常规条件组中的索引
+        const regularGroups = tagValue.conditionGroups.filter(group => !group.isExclude);
+        if (groupIndex >= 0 && groupIndex < regularGroups.length) {
+            const targetGroup = regularGroups[groupIndex];
+            const actualIndex = tagValue.conditionGroups.indexOf(targetGroup);
+            tagValue.conditionGroups.splice(actualIndex, 1);
+        }
+    }
+};
+const deleteExcludeConditionGroup = (tagValueIndex, groupIndex) => {
+    if (tagValueIndex >= 0 && tagValueIndex < tagValues.value.length) {
+        const tagValue = tagValues.value[tagValueIndex];
+        // 找到排除条件组中的索引
+        const excludeGroups = tagValue.conditionGroups.filter(group => group.isExclude);
+        if (groupIndex >= 0 && groupIndex < excludeGroups.length) {
+            const targetGroup = excludeGroups[groupIndex];
+            const actualIndex = tagValue.conditionGroups.indexOf(targetGroup);
+            tagValue.conditionGroups.splice(actualIndex, 1);
         }
     }
 };
@@ -1035,6 +1075,8 @@ for (const [tagValue, index] of __VLS_getVForSourceType((__VLS_ctx.tagValues))) 
     // @ts-ignore
     const __VLS_245 = __VLS_asFunctionalComponent(ConditionConfig, new ConditionConfig({
         ...{ 'onAddConditionGroup': {} },
+        ...{ 'onAddExcludeConditionGroup': {} },
+        ...{ 'onDeleteExcludeConditionGroup': {} },
         ...{ 'onDeleteConditionGroup': {} },
         ...{ 'onToggleGroupLogic': {} },
         ...{ 'onToggleCrossGroupLogic': {} },
@@ -1056,6 +1098,8 @@ for (const [tagValue, index] of __VLS_getVForSourceType((__VLS_ctx.tagValues))) 
     }));
     const __VLS_246 = __VLS_245({
         ...{ 'onAddConditionGroup': {} },
+        ...{ 'onAddExcludeConditionGroup': {} },
+        ...{ 'onDeleteExcludeConditionGroup': {} },
         ...{ 'onDeleteConditionGroup': {} },
         ...{ 'onToggleGroupLogic': {} },
         ...{ 'onToggleCrossGroupLogic': {} },
@@ -1082,18 +1126,24 @@ for (const [tagValue, index] of __VLS_getVForSourceType((__VLS_ctx.tagValues))) 
         onAddConditionGroup: (() => __VLS_ctx.addConditionGroup(index))
     };
     const __VLS_252 = {
-        onDeleteConditionGroup: ((groupIndex) => __VLS_ctx.deleteConditionGroup(index, groupIndex))
+        onAddExcludeConditionGroup: (() => __VLS_ctx.addExcludeConditionGroup(index))
     };
     const __VLS_253 = {
-        onToggleGroupLogic: ((group) => __VLS_ctx.toggleGroupLogic(index, group))
+        onDeleteExcludeConditionGroup: ((groupIndex) => __VLS_ctx.deleteExcludeConditionGroup(index, groupIndex))
     };
     const __VLS_254 = {
-        onToggleCrossGroupLogic: (() => __VLS_ctx.toggleCrossGroupLogic(index))
+        onDeleteConditionGroup: ((groupIndex) => __VLS_ctx.deleteConditionGroup(index, groupIndex))
     };
     const __VLS_255 = {
-        onAddConditionByType: ((group, type) => __VLS_ctx.addConditionByType(index, group, type))
+        onToggleGroupLogic: ((group) => __VLS_ctx.toggleGroupLogic(index, group))
     };
     const __VLS_256 = {
+        onToggleCrossGroupLogic: (() => __VLS_ctx.toggleCrossGroupLogic(index))
+    };
+    const __VLS_257 = {
+        onAddConditionByType: ((group, type) => __VLS_ctx.addConditionByType(index, group, type))
+    };
+    const __VLS_258 = {
         onRemoveCondition: ((group, conditionIndex) => __VLS_ctx.removeCondition(index, group, conditionIndex))
     };
     var __VLS_247;
@@ -1104,15 +1154,15 @@ if (__VLS_ctx.tagValues.length === 0) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "empty-state" },
     });
-    const __VLS_257 = {}.IconPlus;
+    const __VLS_259 = {}.IconPlus;
     /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ ;
     // @ts-ignore
-    const __VLS_258 = __VLS_asFunctionalComponent(__VLS_257, new __VLS_257({
+    const __VLS_260 = __VLS_asFunctionalComponent(__VLS_259, new __VLS_259({
         ...{ style: {} },
     }));
-    const __VLS_259 = __VLS_258({
+    const __VLS_261 = __VLS_260({
         ...{ style: {} },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_258));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_260));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
 }
 var __VLS_183;
@@ -1156,7 +1206,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             deleteTagValue: deleteTagValue,
             updateTabTitle: updateTabTitle,
             addConditionGroup: addConditionGroup,
+            addExcludeConditionGroup: addExcludeConditionGroup,
             deleteConditionGroup: deleteConditionGroup,
+            deleteExcludeConditionGroup: deleteExcludeConditionGroup,
             toggleCrossGroupLogic: toggleCrossGroupLogic,
             toggleGroupLogic: toggleGroupLogic,
             addConditionByType: addConditionByType,

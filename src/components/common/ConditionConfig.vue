@@ -5,12 +5,12 @@
       <div class="section-header">
         <div class="section-info">
           <h4>条件配置</h4>
-          <span class="condition-count">共 {{ conditionGroups.length }} 个条件组</span>
+          <span class="condition-count">共 {{ regularGroups.length + excludeGroups.length }} 个条件组</span>
         </div>
       </div>
       
       <!-- 空状态 -->
-      <div v-if="conditionGroups.length === 0" class="empty-condition-state">
+      <div v-if="regularGroups.length === 0 && excludeGroups.length === 0" class="empty-condition-state">
         <icon-plus style="font-size: 32px; color: #c9cdd4;" />
         <p>暂无条件组，请创建第一个条件组</p>
         <a-button type="primary" @click="addConditionGroup" :disabled="!editable">
@@ -21,9 +21,12 @@
       
       <!-- 条件组列表 -->
       <div v-else class="condition-groups-workspace">
-        <div class="workspace-container">
-          <!-- 左侧垂直逻辑连接线 -->
-          <div v-if="conditionGroups.length > 1" class="vertical-logic-line">
+        <!-- 常规条件组区域 -->
+        <div v-if="regularGroups.length > 0" class="regular-groups-section">
+          <div class="section-title">包含条件组</div>
+          
+          <!-- 常规条件组之间的逻辑连接线 -->
+          <div v-if="regularGroups.length > 1" class="vertical-logic-line">
             <div class="logic-line-vertical"></div>
             <div 
               class="cross-group-logic-indicator"
@@ -38,31 +41,23 @@
             </div>
           </div>
           
-          <!-- 条件组列表 -->
+          <!-- 常规条件组列表 -->
           <div class="condition-groups-list">
-            <div 
-              v-for="(group, groupIndex) in conditionGroups" 
-              :key="group.id || groupIndex" 
-              class="condition-group-card"
-            >
+              <div 
+                v-for="(group, groupIndex) in regularGroups" 
+                :key="group.id || groupIndex" 
+                class="condition-group-card"
+              >
               <!-- 条件组标题 -->
               <div class="condition-group-header">
                 <div class="group-title">
-                  <span class="group-name">{{ group.name || `条件组 ${groupIndex + 1}` }}</span>
+                  <div class="group-title-content">
+                    <span class="group-name">{{ group.name || `条件组 ${groupIndex + 1}` }}</span>
+                    <span v-if="group.isExclude" class="exclude-group-label">排除</span>
+                  </div>
                   <span class="group-count">({{ group.conditions.length }})</span>
                 </div>
                 <div class="group-actions">
-                  <a-button 
-                    type="text" 
-                    size="mini" 
-                    @click="deleteConditionGroup(groupIndex)" 
-                    class="delete-group-btn"
-                    :disabled="!editable"
-                  >
-                    <template #icon>
-                      <IconDelete />
-                    </template>
-                  </a-button>
                   <a-button type="text" size="mini" @click="group.collapsed = !group.collapsed">
                     <template #icon>
                       <IconDown :class="{ 'rotate-180': group.collapsed }" />
@@ -89,190 +84,613 @@
                   </div>
                 </div>
                 
-                <div 
-                  v-for="(condition, conditionIndex) in group.conditions" 
-                  :key="condition.id || conditionIndex"
-                  class="condition-item"
-                  :class="{ 'excluded': condition.isExclude }"
-                >
-                  <!-- 简化的条件连接点 -->
-                  <div class="condition-connector" v-if="condition.dataSourceType !== 'attribute'">
-                    <div class="condition-dot"></div>
+                <!-- 标签条件组 -->
+                <div class="condition-type-group tag-group">
+                  <div class="condition-type-header" @click="toggleSectionCollapse('tag')">
+                    <div class="condition-type-header-with-actions">
+                      <div class="condition-type-title-section">
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          class="collapse-btn"
+                        >
+                          <IconDown v-if="!collapsedSections.tag" />
+                          <IconRight v-else />
+                        </a-button>
+                        <span class="condition-type-title">标签条件</span>
+                        <span class="condition-type-count">({{ getConditionsByType(group, 'tag').length }})</span>
+                      </div>
+                      <div class="condition-type-buttons" v-if="editable" @click.stop>
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          @click="addConditionByType(group, 'tag')" 
+                          class="condition-type-add-btn"
+                          title="添加标签条件"
+                        >
+                          <IconPlus />
+                        </a-button>
+                        <a-button 
+                          v-if="getConditionsByType(group, 'tag').length > 0"
+                          type="text" 
+                          size="small" 
+                          @click="removeLastConditionByType(group, 'tag')" 
+                          class="condition-remove-btn"
+                          title="删除最后一个标签条件"
+                        >
+                          <IconMinus />
+                        </a-button>
+                      </div>
+                    </div>
                   </div>
-                  <!-- 属性条件的占位空间 -->
-                  <div class="condition-connector attribute-spacer" v-else></div>
-                    
-                  <!-- 条件配置区域 -->
-                  <div class="condition-config">
-                    <!-- 排除标识 -->
-                    <div v-if="condition.isExclude" class="exclude-indicator">
-                      <span class="exclude-label">排除条件</span>
+                  
+                  <div class="condition-type-content" v-show="!collapsedSections.tag">
+                    <div v-if="getConditionsByType(group, 'tag').length === 0" class="condition-type-empty">
+                      暂无标签条件
                     </div>
                     
-                    <!-- 条件配置表单 -->
-                    <div class="condition-form">
-                      <div class="form-row primary">
-                        <div class="form-group">
-                          <label class="form-label">数据源</label>
-                          <a-select 
-                            v-model="condition.dataSourceType" 
-                            size="small" 
-                            class="form-control"
-                            :options="dataSourceTypeOptions"
-                            @change="onDataSourceTypeChange && onDataSourceTypeChange(condition)"
-                            :disabled="!editable"
-                          />
-                        </div>
-                        
-                        <div class="form-group">
-                          <label class="form-label">字段</label>
-                          <a-select 
-                            v-model="condition.fieldName" 
-                            size="small" 
-                            class="form-control wide"
-                            placeholder="选择字段"
-                            :options="getFieldOptions && condition.dataSourceType ? getFieldOptions(condition.dataSourceType) : []"
-                            allow-search
-                            :disabled="!editable"
-                          />
-                        </div>
-                        
-                        <div v-if="condition.dataSourceType === 'detail' || condition.dataSourceType === 'behavior'" class="form-group">
-                          <label class="form-label">聚合</label>
-                          <a-select 
-                            v-model="condition.aggregationType" 
-                            size="small" 
-                            class="form-control"
-                            :options="getAggregationOptions && condition.dataSourceType ? getAggregationOptions(condition.dataSourceType) : []"
-                            :disabled="!editable"
-                          />
-                        </div>
-                        
-                        <div class="form-group">
-                          <label class="form-label">条件</label>
-                          <a-select 
-                            v-model="condition.operator" 
-                            size="small" 
-                            class="form-control"
-                            :options="getOperatorOptions && getOperatorOptions(condition) || []"
-                            :disabled="!editable"
-                          />
-                        </div>
-                        
-                        <div v-if="needValueInput && needValueInput(condition)" class="form-group">
-                          <label class="form-label">值</label>
-                          <a-input 
-                            v-model="condition.value" 
-                            size="small" 
-                            class="form-control"
-                            :placeholder="getValuePlaceholder && getValuePlaceholder(condition) || '请输入值'"
-                            :disabled="!editable"
-                          />
-                        </div>
+                    <div 
+                      v-for="(condition, conditionIndex) in getConditionsByType(group, 'tag')" 
+                      :key="condition.id || conditionIndex"
+                      class="condition-item-wrapper tag-condition"
+                      :class="{ 'excluded': condition.isExclude }"
+                    >
+                      <div class="condition-item">
+                    <div class="condition-config">
+                      <div v-if="condition.isExclude" class="exclude-indicator">
+                        <span class="exclude-label">排除条件</span>
                       </div>
                       
-                      <!-- 时间配置行 -->
-                      <div v-if="condition.dataSourceType !== 'attribute'" class="form-row secondary">
-                        <div class="form-group">
-                          <label class="form-label">时间类型</label>
-                          <a-select 
-                            v-model="condition.dateType" 
-                            size="small" 
-                            class="form-control"
-                            :options="dateTypeOptions"
-                            @change="onDateTypeChange && onDateTypeChange(condition)"
-                            :disabled="!editable"
-                          />
-                        </div>
-                        
-                        <div v-if="condition.dateType === 'fixed'" class="form-group wide">
-                          <label class="form-label">时间范围</label>
-                          <a-range-picker 
-                            v-model="condition.dateRange" 
-                            size="small" 
-                            class="form-control"
-                            format="YYYY-MM-DD"
-                            :disabled="!editable"
-                          />
-                        </div>
-                        
-                        <div v-else-if="condition.dateType === 'dynamic'" class="form-group dynamic-time">
-                          <label class="form-label">动态时间</label>
-                          <div class="dynamic-time-inputs">
-                            <span class="dynamic-prefix">近</span>
-                            <a-input-number 
-                              v-model="condition.dynamicValue" 
+                      <div class="condition-form">
+                        <div class="form-row primary tag-config">
+                          <div class="form-group wide">
+                            <label class="form-label">标签名称</label>
+                            <a-cascader 
+                              v-model="condition.tagPath" 
                               size="small" 
-                              class="dynamic-value"
-                              :min="1"
+                              class="form-control"
+                              placeholder="选择标签"
+                              :options="getTagOptions && getTagOptions() || []"
                               :disabled="!editable"
+                              allow-search
                             />
+                          </div>
+                          
+                          <div class="form-group">
+                            <label class="form-label">关系条件</label>
                             <a-select 
-                              v-model="condition.dynamicUnit" 
+                              v-model="condition.operator" 
                               size="small" 
-                              class="dynamic-unit"
-                              :options="dynamicUnitOptions"
+                              class="form-control"
+                              :options="getTagOperatorOptions && getTagOperatorOptions() || []"
                               :disabled="!editable"
                             />
+                          </div>
+                          
+                          <div v-if="needTagValueInput && needTagValueInput(condition)" class="form-group">
+                            <label class="form-label">输入项</label>
+                            <a-input 
+                              v-model="condition.value" 
+                              size="small" 
+                              class="form-control"
+                              :placeholder="getTagValuePlaceholder && getTagValuePlaceholder(condition) || '请输入值'"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div class="form-group tag-actions" v-if="editable">
+                            <a-button 
+                              type="text" 
+                              size="small" 
+                              @click="addTagConditionItem(group, condition)" 
+                              class="tag-action-btn add-btn"
+                              title="在此位置后添加标签条件"
+                            >
+                              <IconPlus />
+                            </a-button>
+                            <a-button 
+                              type="text" 
+                              size="small" 
+                              @click="removeTagConditionItem(group, condition)" 
+                              class="tag-action-btn remove-btn"
+                              title="删除此标签条件"
+                            >
+                              <IconMinus />
+                            </a-button>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 行为条件组 -->
+                <div class="condition-type-group behavior-group">
+                  <div class="condition-type-header" @click="toggleSectionCollapse('behavior')">
+                    <div class="condition-type-header-with-actions">
+                      <div class="condition-type-title-section">
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          class="collapse-btn"
+                        >
+                          <IconDown v-if="!collapsedSections.behavior" />
+                          <IconRight v-else />
+                        </a-button>
+                        <span class="condition-type-title">行为条件</span>
+                        <span class="condition-type-count">({{ getConditionsByType(group, 'behavior').length }})</span>
+                      </div>
+                      <div class="condition-type-buttons" v-if="editable" @click.stop>
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          @click="addConditionByType(group, 'behavior')" 
+                          class="condition-type-add-btn"
+                          title="添加行为条件"
+                        >
+                          <IconPlus />
+                        </a-button>
+                        <a-button 
+                          v-if="getConditionsByType(group, 'behavior').length > 0"
+                          type="text" 
+                          size="small" 
+                          @click="removeLastConditionByType(group, 'behavior')" 
+                          class="condition-remove-btn"
+                          title="删除最后一个行为条件"
+                        >
+                          <IconMinus />
+                        </a-button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="condition-type-content" v-show="!collapsedSections.behavior">
+                    <div v-if="getConditionsByType(group, 'behavior').length === 0" class="condition-type-empty">
+                      暂无行为条件
+                    </div>
+                    
+                    <div 
+                      v-for="(condition, conditionIndex) in getConditionsByType(group, 'behavior')" 
+                      :key="condition.id || conditionIndex"
+                      class="condition-item-wrapper behavior-condition"
+                      :class="{ 'excluded': condition.isExclude }"
+                    >
+                      <div class="condition-item">
+                    <div class="condition-config">
+                      <div v-if="condition.isExclude" class="exclude-indicator">
+                        <span class="exclude-label">排除条件</span>
+                      </div>
+                      
+                      <div class="condition-form">
+                        <div class="form-row primary event-config">
+                          <div class="form-group wide">
+                            <label class="form-label">事件名称</label>
+                            <a-select 
+                              v-model="condition.eventName" 
+                              size="small" 
+                              class="form-control"
+                              placeholder="选择事件"
+                              :options="getEventOptions && getEventOptions() || []"
+                              allow-search
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+
+                        </div>
+                        
+                        <!-- 事件属性配置 -->
+                        <div class="form-row secondary event-properties">
+                          <div class="event-properties-header">
+                            <label class="form-label">事件属性</label>
+                            <a-button 
+                              type="dashed" 
+                              size="mini" 
+                              @click="addEventProperty(condition)" 
+                              :disabled="!editable"
+                            >
+                              <template #icon><IconPlus /></template>
+                              添加属性
+                            </a-button>
+                          </div>
+                          
+                          <div v-if="condition.eventProperties && condition.eventProperties.length > 0" class="event-properties-list">
+                            <div 
+                              v-for="(property, propIndex) in condition.eventProperties" 
+                              :key="propIndex"
+                              class="event-property-item"
+                            >
+                              <div class="form-group">
+                                <a-select 
+                                  v-model="property.name" 
+                                  size="small" 
+                                  class="form-control"
+                                  placeholder="属性名称"
+                                  :options="getEventPropertyOptions && condition.eventName ? getEventPropertyOptions(condition.eventName) : []"
+                                  :disabled="!editable"
+                                />
+                              </div>
+                              
+                              <div class="form-group">
+                                <a-select 
+                                  v-model="property.operator" 
+                                  size="small" 
+                                  class="form-control"
+                                  :options="getPropertyOperatorOptions && getPropertyOperatorOptions() || []"
+                                  :disabled="!editable"
+                                />
+                              </div>
+                              
+                              <div class="form-group">
+                                <a-input 
+                                  v-model="property.value" 
+                                  size="small" 
+                                  class="form-control"
+                                  placeholder="属性值"
+                                  :disabled="!editable"
+                                />
+                              </div>
+                              
+                              <a-button 
+                                type="text" 
+                                size="small" 
+                                @click="removeEventProperty(condition, propIndex)" 
+                                class="remove-property-btn"
+                                :disabled="!editable"
+                              >
+                                <IconMinus />
+                              </a-button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- 时间配置行 -->
+                        <div class="form-row secondary">
+                          <div class="form-group">
+                            <label class="form-label">时间类型</label>
+                            <a-select 
+                              v-model="condition.dateType" 
+                              size="small" 
+                              class="form-control"
+                              :options="dateTypeOptions"
+                              @change="onDateTypeChange && onDateTypeChange(condition)"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div v-if="condition.dateType === 'fixed'" class="form-group wide">
+                            <label class="form-label">时间范围</label>
+                            <a-range-picker 
+                              v-model="condition.dateRange" 
+                              size="small" 
+                              class="form-control"
+                              format="YYYY-MM-DD"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div v-else-if="condition.dateType === 'dynamic'" class="form-group dynamic-time">
+                            <label class="form-label">动态时间</label>
+                            <div class="dynamic-time-inputs">
+                              <span class="dynamic-prefix">近</span>
+                              <a-input-number 
+                                v-model="condition.dynamicValue" 
+                                size="small" 
+                                class="dynamic-value"
+                                :min="1"
+                                :disabled="!editable"
+                              />
+                              <a-select 
+                                v-model="condition.dynamicUnit" 
+                                size="small" 
+                                class="dynamic-unit"
+                                :options="dynamicUnitOptions"
+                                :disabled="!editable"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 明细数据条件组 -->
+                <div class="condition-type-group detail-group">
+                  <div class="condition-type-header" @click="toggleSectionCollapse('detail')">
+                    <div class="condition-type-header-with-actions">
+                      <div class="condition-type-title-section">
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          class="collapse-btn"
+                        >
+                          <IconDown v-if="!collapsedSections.detail" />
+                          <IconRight v-else />
+                        </a-button>
+                        <span class="condition-type-title">明细数据条件</span>
+                        <span class="condition-type-count">({{ getConditionsByType(group, 'detail').length }})</span>
+                      </div>
+                      <div class="condition-type-buttons" v-if="editable" @click.stop>
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          @click="addConditionByType(group, 'detail')" 
+                          class="condition-type-add-btn"
+                          title="添加明细数据条件"
+                        >
+                          <IconPlus />
+                        </a-button>
+                        <a-button 
+                          v-if="getConditionsByType(group, 'detail').length > 0"
+                          type="text" 
+                          size="small" 
+                          @click="removeLastConditionByType(group, 'detail')" 
+                          class="condition-remove-btn"
+                          title="删除最后一个明细数据条件"
+                        >
+                          <IconMinus />
+                        </a-button>
+                      </div>
+                    </div>
                   </div>
                   
-                  <!-- 条件操作按钮 -->
-                  <div class="condition-actions" v-if="editable">
-                    <a-tooltip content="删除条件">
-                      <a-button 
-                        type="text" 
-                        size="small" 
-                        @click="removeCondition(group, conditionIndex)" 
-                        class="action-btn danger"
-                      >
-                        <IconDelete />
-                      </a-button>
-                    </a-tooltip>
+                  <div class="condition-type-content" v-show="!collapsedSections.detail">
+                    <div v-if="getConditionsByType(group, 'detail').length === 0" class="condition-type-empty">
+                      暂无明细数据条件
+                    </div>
+                    
+                    <div 
+                      v-for="(condition, conditionIndex) in getConditionsByType(group, 'detail')" 
+                      :key="condition.id || conditionIndex"
+                      class="condition-item-wrapper detail-condition"
+                      :class="{ 'excluded': condition.isExclude }"
+                    >
+                      <div class="condition-item">
+                    <div class="condition-config">
+                      <div v-if="condition.isExclude" class="exclude-indicator">
+                        <span class="exclude-label">排除条件</span>
+                      </div>
+                      
+                      <div class="condition-form">
+                        <div class="form-row primary">
+                          <div class="form-group">
+                            <label class="form-label">数据源</label>
+                            <a-select 
+                              v-model="condition.dataSourceType" 
+                              size="small" 
+                              class="form-control"
+                              :options="dataSourceTypeOptions"
+                              @change="onDataSourceTypeChange && onDataSourceTypeChange(condition)"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div class="form-group">
+                            <label class="form-label">字段</label>
+                            <a-select 
+                              v-model="condition.fieldName" 
+                              size="small" 
+                              class="form-control wide"
+                              placeholder="选择字段"
+                              :options="getFieldOptions && condition.dataSourceType ? getFieldOptions(condition.dataSourceType) : []"
+                              allow-search
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div class="form-group">
+                            <label class="form-label">聚合</label>
+                            <a-select 
+                              v-model="condition.aggregationType" 
+                              size="small" 
+                              class="form-control"
+                              :options="getAggregationOptions && condition.dataSourceType ? getAggregationOptions(condition.dataSourceType) : []"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div class="form-group">
+                            <label class="form-label">条件</label>
+                            <a-select 
+                              v-model="condition.operator" 
+                              size="small" 
+                              class="form-control"
+                              :options="getOperatorOptions && getOperatorOptions(condition) || []"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div v-if="needValueInput && needValueInput(condition)" class="form-group">
+                            <label class="form-label">值</label>
+                            <a-input 
+                              v-model="condition.value" 
+                              size="small" 
+                              class="form-control"
+                              :placeholder="getValuePlaceholder && getValuePlaceholder(condition) || '请输入值'"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+
+                        </div>
+                        
+                        <!-- 时间配置行 -->
+                        <div class="form-row secondary">
+                          <div class="form-group">
+                            <label class="form-label">时间类型</label>
+                            <a-select 
+                              v-model="condition.dateType" 
+                              size="small" 
+                              class="form-control"
+                              :options="dateTypeOptions"
+                              @change="onDateTypeChange && onDateTypeChange(condition)"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div v-if="condition.dateType === 'fixed'" class="form-group wide">
+                            <label class="form-label">时间范围</label>
+                            <a-range-picker 
+                              v-model="condition.dateRange" 
+                              size="small" 
+                              class="form-control"
+                              format="YYYY-MM-DD"
+                              :disabled="!editable"
+                            />
+                          </div>
+                          
+                          <div v-else-if="condition.dateType === 'dynamic'" class="form-group dynamic-time">
+                            <label class="form-label">动态时间</label>
+                            <div class="dynamic-time-inputs">
+                              <span class="dynamic-prefix">近</span>
+                              <a-input-number 
+                                v-model="condition.dynamicValue" 
+                                size="small" 
+                                class="dynamic-value"
+                                :min="1"
+                                :disabled="!editable"
+                              />
+                              <a-select 
+                                v-model="condition.dynamicUnit" 
+                                size="small" 
+                                class="dynamic-unit"
+                                :options="dynamicUnitOptions"
+                                :disabled="!editable"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                   
-                <!-- 添加条件按钮组 -->
-                <div class="add-condition-area" v-if="editable">
-                  <div class="add-condition-buttons">
-                    <a-button type="dashed" size="small" @click="addConditionByType(group, 'tag')" class="add-condition-btn">
-                      <template #icon><IconPlus /></template>
-                      添加属性
-                    </a-button>
-                    <a-button type="dashed" size="small" @click="addConditionByType(group, 'behavior')" class="add-condition-btn">
-                      <template #icon><IconPlus /></template>
-                      添加行为
-                    </a-button>
-                    <a-button type="dashed" size="small" @click="addConditionByType(group, 'detail')" class="add-condition-btn">
-                      <template #icon><IconPlus /></template>
-                      添加明细数据
-                    </a-button>
+                <!-- 空状态提示 -->
+                <div v-if="group.conditions.length === 0" class="empty-conditions">
+                  <div class="empty-content">
+                    <span class="empty-text">暂无条件，请添加条件</span>
+                    <div class="empty-actions" v-if="editable">
+                      <a-button type="dashed" size="small" @click="addConditionByType(group, 'tag')" class="add-condition-btn">
+                        <template #icon><IconPlus /></template>
+                        添加标签
+                      </a-button>
+                      <a-button type="dashed" size="small" @click="addConditionByType(group, 'behavior')" class="add-condition-btn">
+                        <template #icon><IconPlus /></template>
+                        添加行为
+                      </a-button>
+                      <a-button type="dashed" size="small" @click="addConditionByType(group, 'detail')" class="add-condition-btn">
+                        <template #icon><IconPlus /></template>
+                        添加明细数据
+                      </a-button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+              
+              <!-- 添加常规条件组按钮 -->
+              <div class="add-condition-group-area" v-if="editable">
+                <div class="add-group-buttons">
+                  <a-button type="dashed" @click="addConditionGroup" class="add-group-btn">
+                    <template #icon><IconPlus /></template>
+                    添加条件组
+                  </a-button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 排除条件组开关控制 -->
+          <div v-if="editable" class="exclude-control-section">
+            <div class="exclude-control-header">
+              <span class="exclude-control-label">排除条件组</span>
+              <a-switch 
+                v-model="enableExcludeGroups" 
+                size="small"
+                @change="onExcludeGroupsToggle"
+              />
+            </div>
+            <div v-if="enableExcludeGroups" class="exclude-control-description">
+              开启后可以添加排除条件组，用于排除不符合条件的用户
+            </div>
+          </div>
+          
+          <!-- 排除条件组区域 -->
+          <div v-if="enableExcludeGroups && excludeGroups.length > 0" class="exclude-groups-section">
+            <div class="section-title exclude-title">排除条件组</div>
             
-            <!-- 添加条件组按钮 -->
-            <div class="add-condition-group-area" v-if="editable">
-              <a-button type="dashed" @click="addConditionGroup" style="width: 100%;">
+            <!-- 排除条件组列表 -->
+            <div class="condition-groups-list">
+              <ConditionGroup
+                v-for="(group, groupIndex) in excludeGroups"
+                :key="group.id || groupIndex"
+                :group="group"
+                :group-index="groupIndex"
+                :is-exclude="true"
+                :editable="editable"
+                :data-source-type-options="dataSourceTypeOptions"
+                :date-type-options="dateTypeOptions"
+                :dynamic-unit-options="dynamicUnitOptions"
+                :get-field-options="getFieldOptions"
+                :get-aggregation-options="getAggregationOptions"
+                :get-operator-options="getOperatorOptions"
+                :need-value-input="needValueInput"
+                :get-value-placeholder="getValuePlaceholder"
+                :on-data-source-type-change="onDataSourceTypeChange"
+                :on-date-type-change="onDateTypeChange"
+                :get-tag-options="getTagOptions"
+                :get-tag-operator-options="getTagOperatorOptions"
+                :need-tag-value-input="needTagValueInput"
+                :get-tag-value-placeholder="getTagValuePlaceholder"
+                :get-event-options="getEventOptions"
+                :get-event-property-options="getEventPropertyOptions"
+                :get-property-operator-options="getPropertyOperatorOptions"
+                @delete-condition-group="deleteExcludeConditionGroup(groupIndex)"
+                @toggle-group-logic="toggleGroupLogic"
+                @add-condition-by-type="(type) => addConditionByType(group, type)"
+                @remove-condition="(conditionIndex: number) => removeCondition(group, conditionIndex)"
+                @add-tag-to-condition="(conditionIndex: number) => addTagToCondition(group, conditionIndex)"
+                @remove-tag-from-condition="(conditionIndex: number) => removeTagFromCondition(group, conditionIndex)"
+                @add-event-property="addEventProperty"
+                @remove-event-property="(condition, propertyIndex) => removeEventProperty(condition, propertyIndex)"
+              />
+            </div>
+          </div>
+          
+          <!-- 添加排除条件组按钮 -->
+          <div v-if="editable && enableExcludeGroups && excludeGroups.length === 0" class="add-exclude-group-area">
+            <div class="add-group-buttons">
+              <a-button type="dashed" @click="addExcludeConditionGroup" class="add-exclude-group-btn">
                 <template #icon><IconPlus /></template>
-                添加条件组
+                添加排除条件组
               </a-button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
-import { IconPlus, IconDelete, IconDown } from '@arco-design/web-vue/es/icon'
+import { computed, ref } from 'vue'
+import { IconPlus, IconDown, IconRight, IconMinus } from '@arco-design/web-vue/es/icon'
+import ConditionGroup from './ConditionGroup.vue'
 
 // 类型定义
+interface EventProperty {
+  name?: string
+  operator?: string
+  value?: string
+}
+
 interface Condition {
   id?: string
   dataSourceType?: string
@@ -285,6 +703,11 @@ interface Condition {
   dynamicValue?: number
   dynamicUnit?: string
   isExclude?: boolean
+  // 标签相关字段
+  tagPath?: string[]
+  // 事件相关字段
+  eventName?: string
+  eventProperties?: EventProperty[]
 }
 
 interface ConditionGroup {
@@ -292,6 +715,7 @@ interface ConditionGroup {
   name?: string
   logic?: string
   collapsed?: boolean
+  isExclude?: boolean
   conditions: Condition[]
 }
 
@@ -315,6 +739,15 @@ const props = withDefaults(defineProps<{
   getValuePlaceholder?: ((condition: Condition) => string) | null
   onDataSourceTypeChange?: ((condition: Condition) => void) | null
   onDateTypeChange?: ((condition: Condition) => void) | null
+  // 标签相关props
+  getTagOptions?: (() => Option[]) | null
+  getTagOperatorOptions?: (() => Option[]) | null
+  needTagValueInput?: ((condition: Condition) => boolean) | null
+  getTagValuePlaceholder?: ((condition: Condition) => string) | null
+  // 事件相关props
+  getEventOptions?: (() => Option[]) | null
+  getEventPropertyOptions?: ((eventName: string) => Option[]) | null
+  getPropertyOperatorOptions?: (() => Option[]) | null
 }>(), {
   crossGroupLogic: 'or',
   editable: true,
@@ -338,26 +771,78 @@ const props = withDefaults(defineProps<{
   needValueInput: null,
   getValuePlaceholder: null,
   onDataSourceTypeChange: null,
-  onDateTypeChange: null
+  onDateTypeChange: null,
+  // 标签相关默认值
+  getTagOptions: null,
+  getTagOperatorOptions: null,
+  needTagValueInput: null,
+  getTagValuePlaceholder: null,
+  // 事件相关默认值
+  getEventOptions: null,
+  getEventPropertyOptions: null,
+  getPropertyOperatorOptions: null
 })
 
 // Emits
 const emit = defineEmits<{
   addConditionGroup: []
+  addExcludeConditionGroup: []
   deleteConditionGroup: [groupIndex: number]
+  deleteExcludeConditionGroup: [groupIndex: number]
   toggleGroupLogic: [group: ConditionGroup]
   toggleCrossGroupLogic: []
   addConditionByType: [group: ConditionGroup, type: string]
   removeCondition: [group: ConditionGroup, conditionIndex: number]
+  addTagToCondition: [group: ConditionGroup, conditionIndex: number]
+  removeTagFromCondition: [group: ConditionGroup, conditionIndex: number]
+  addEventProperty: [condition: Condition]
+  removeEventProperty: [condition: Condition, propertyIndex: number]
 }>()
+
+// 响应式数据
+const enableExcludeGroups = ref(false)
+
+// 响应式状态
+const collapsedSections = ref({
+  tag: false,
+  behavior: false,
+  detail: false
+})
+
+// 计算属性
+const regularGroups = computed(() => {
+  return props.conditionGroups.filter(group => !group.isExclude)
+})
+
+const excludeGroups = computed(() => {
+  return props.conditionGroups.filter(group => group.isExclude)
+})
+
+// 监听排除条件组的变化，如果有排除条件组则自动开启开关
+const updateExcludeGroupsSwitch = () => {
+  if (excludeGroups.value.length > 0) {
+    enableExcludeGroups.value = true
+  }
+}
+
+// 初始化时检查是否有排除条件组
+updateExcludeGroupsSwitch()
 
 // 方法
 const addConditionGroup = () => {
   emit('addConditionGroup')
 }
 
+const addExcludeConditionGroup = () => {
+  emit('addExcludeConditionGroup')
+}
+
 const deleteConditionGroup = (groupIndex: number) => {
   emit('deleteConditionGroup', groupIndex)
+}
+
+const deleteExcludeConditionGroup = (groupIndex: number) => {
+  emit('deleteExcludeConditionGroup', groupIndex)
 }
 
 const toggleGroupLogic = (group: ConditionGroup) => {
@@ -375,36 +860,127 @@ const addConditionByType = (group: ConditionGroup, type: string) => {
 const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
   emit('removeCondition', group, conditionIndex)
 }
+
+// 标签相关方法
+const addTagToCondition = (group: ConditionGroup, conditionIndex: number) => {
+  emit('addTagToCondition', group, conditionIndex)
+}
+
+const removeTagFromCondition = (group: ConditionGroup, conditionIndex: number) => {
+  emit('removeTagFromCondition', group, conditionIndex)
+}
+
+// 事件相关方法
+const addEventProperty = (condition: Condition) => {
+  emit('addEventProperty', condition)
+}
+
+const removeEventProperty = (condition: Condition, propertyIndex: number) => {
+  emit('removeEventProperty', condition, propertyIndex)
+}
+
+// 按类型获取条件
+const getConditionsByType = (group: ConditionGroup, type: string) => {
+  if (!group.conditions) return []
+  
+  switch (type) {
+    case 'tag':
+      return group.conditions.filter(condition => 
+        condition.dataSourceType === 'attribute' || condition.dataSourceType === 'tag'
+      )
+    case 'behavior':
+      return group.conditions.filter(condition => 
+        condition.dataSourceType === 'behavior' || condition.dataSourceType === 'event'
+      )
+    case 'detail':
+      return group.conditions.filter(condition => 
+        condition.dataSourceType !== 'attribute' && 
+        condition.dataSourceType !== 'tag' && 
+        condition.dataSourceType !== 'behavior' && 
+        condition.dataSourceType !== 'event'
+      )
+    default:
+      return []
+  }
+}
+
+// 从条件组中移除指定条件
+const removeConditionFromGroup = (group: ConditionGroup, condition: Condition) => {
+  const conditionIndex = group.conditions.findIndex(c => c.id === condition.id || c === condition)
+  if (conditionIndex !== -1) {
+    emit('removeCondition', group, conditionIndex)
+  }
+}
+
+// 移除指定类型的最后一个条件
+const removeLastConditionByType = (group: ConditionGroup, type: string) => {
+  const conditionsOfType = getConditionsByType(group, type)
+  if (conditionsOfType.length > 0) {
+    const lastCondition = conditionsOfType[conditionsOfType.length - 1]
+    removeConditionFromGroup(group, lastCondition)
+  }
+}
+
+// 切换条件类型组的展开收起状态
+const toggleSectionCollapse = (type: 'tag' | 'behavior' | 'detail') => {
+  collapsedSections.value[type] = !collapsedSections.value[type]
+}
+
+// 为标签条件添加单个条件的加减号功能
+const addTagConditionItem = (group: ConditionGroup, condition: Condition) => {
+  emit('addConditionByType', group, 'tag')
+}
+
+const removeTagConditionItem = (group: ConditionGroup, condition: Condition) => {
+  removeConditionFromGroup(group, condition)
+}
+
+// 排除条件组开关切换处理
+const onExcludeGroupsToggle = (value: string | number | boolean) => {
+  const boolValue = Boolean(value)
+  if (!boolValue && excludeGroups.value.length > 0) {
+    // 如果关闭开关且存在排除条件组，需要删除所有排除条件组
+    // 这里可以添加确认对话框
+    console.warn('关闭排除条件组功能将删除所有已创建的排除条件组')
+  }
+}
 </script>
 
 <style scoped>
-/* 从tag-detail.vue复制的样式 */
+/* 简化的条件配置组件样式 */
 .condition-config-component {
   width: 100%;
 }
 
 .condition-groups-section {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .section-header {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e6eb;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .section-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+.section-info h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1d2129;
 }
 
 .condition-count {
   font-size: 12px;
   color: #86909c;
-  background: #f2f3f5;
-  padding: 2px 8px;
-  border-radius: 10px;
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 8px;
 }
 
 .empty-condition-state {
@@ -412,43 +988,35 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px 20px;
+  padding: 24px 16px;
   text-align: center;
   color: #86909c;
-  border: 1px dashed #e5e6eb;
-  border-radius: 6px;
-  margin-top: 16px;
+  border: 1px dashed #e0e0e0;
+  border-radius: 4px;
+  margin-top: 12px;
 }
 
 .empty-condition-state p {
-  margin: 8px 0 16px 0;
-  font-size: 14px;
+  margin: 8px 0 12px 0;
+  font-size: 13px;
 }
 
 .condition-groups-workspace {
   position: relative;
-  margin-top: 16px;
-}
-
-.workspace-container {
-  position: relative;
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  min-height: 200px;
+  margin-top: 12px;
 }
 
 .vertical-logic-line {
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
-  width: 48px;
+  top: 8px;
+  width: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 3;
+  height: calc(100% - 16px);
 }
 
 .logic-line-vertical {
@@ -456,10 +1024,11 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
   left: 50%;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, #165dff 0%, #165dff 100%);
+  width: 1px;
+  background: #d0d0d0;
   transform: translateX(-50%);
   z-index: 3;
+  height: 100%;
 }
 
 .cross-group-logic-indicator {
@@ -470,16 +1039,16 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  height: 32px;
-  border: 2px solid #165dff;
-  border-radius: 16px;
+  min-width: 32px;
+  height: 20px;
+  border: 1px solid #d0d0d0;
+  border-radius: 10px;
   background: white;
-  font-size: 12px;
-  font-weight: 600;
-  color: #165dff;
+  font-size: 10px;
+  font-weight: 500;
+  color: #666;
   z-index: 4;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .cross-group-logic-indicator.clickable {
@@ -487,78 +1056,167 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 }
 
 .cross-group-logic-indicator.clickable:hover {
-  background: #f2f3ff;
-  transform: translateY(-50%) scale(1.05);
-  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+  border-color: #165dff;
+  color: #165dff;
 }
 
 .cross-group-logic-indicator.and {
   border-color: #165dff;
-  background: #f0f5ff;
+  color: #165dff;
 }
 
 .cross-group-logic-indicator.or {
   border-color: #ff7d00;
-  background: #fff7e6;
   color: #ff7d00;
 }
 
+.regular-groups-section,
+.exclude-groups-section {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d2129;
+  margin-bottom: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section-title.exclude-title {
+  color: #f53f3f;
+}
+
+.exclude-control-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 4px;
+  border: 1px solid #f0f0f0;
+}
+
+.exclude-control-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.exclude-control-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.exclude-control-description {
+  font-size: 11px;
+  color: #86909c;
+  line-height: 1.4;
+}
+
 .condition-groups-list {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   position: relative;
   z-index: 2;
-  margin-left: 48px; /* 为跨组连接线留出空间 */
+}
+
+.regular-groups-section .condition-groups-list {
+  margin-left: 24px;
+  padding: 8px 0;
+}
+
+.exclude-groups-section .condition-groups-list {
+  margin-left: 0;
+  padding: 0;
+}
+
+.add-exclude-group-area {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.add-exclude-group-area .add-group-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 .condition-group-card {
   background: white;
-  border: 1px solid #e5e6eb;
-  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease;
 }
 
 .condition-group-card:hover {
-  border-color: #d4edda;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: #d0d0d0;
+}
+
+.condition-group-card.exclude-group {
+  border-color: #ffccc7;
+  background: #fffafa;
+}
+
+.condition-group-card.exclude-group:hover {
+  border-color: #ff7875;
+}
+
+.condition-group-card.exclude-group .condition-group-header {
+  background: #fff5f5;
+  border-bottom-color: #ffe0e0;
 }
 
 .condition-group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: #f7f8fa;
-  border-bottom: 1px solid #e5e6eb;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .group-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.group-title-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .group-name {
-  font-weight: 600;
+  font-weight: 500;
   color: #1d2129;
   font-size: 14px;
+}
+
+.exclude-group-label {
+  display: inline-block;
+  padding: 1px 4px;
+  background: #ff4d4f;
+  color: white;
+  border-radius: 2px;
+  font-size: 10px;
 }
 
 .group-count {
   font-size: 12px;
   color: #86909c;
-  background: #f2f3f5;
-  padding: 2px 8px;
-  border-radius: 10px;
+  background: #f0f0f0;
+  padding: 1px 6px;
+  border-radius: 8px;
 }
 
 .group-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .delete-group-btn {
@@ -576,17 +1234,17 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 
 .conditions-list {
   position: relative;
-  padding: 20px;
-  padding-left: 60px; /* 增加左侧padding为连接线留出空间 */
+  padding: 16px;
+  padding-left: 48px;
 }
 
 .group-logic-line {
   position: absolute;
-  left: 24px; /* 调整位置避免与condition-connector重叠 */
-  top: 20px;
-  bottom: 20px;
-  width: 2px;
+  left: 20px;
+  top: 16px;
+  width: 1px;
   z-index: 1;
+  height: calc(100% - 32px - 48px);
 }
 
 .logic-line {
@@ -594,8 +1252,8 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, #165dff 0%, #165dff 100%);
+  width: 1px;
+  background: #d9d9d9;
 }
 
 .logic-indicator {
@@ -606,16 +1264,16 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  height: 28px;
-  border: 2px solid #165dff;
-  border-radius: 14px;
+  min-width: 32px;
+  height: 20px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
   background: white;
-  font-size: 12px;
-  font-weight: 600;
-  color: #165dff;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
   z-index: 2;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease;
 }
 
 .logic-indicator.clickable {
@@ -623,20 +1281,18 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 }
 
 .logic-indicator.clickable:hover {
-  background: #f2f3ff;
-  transform: translate(-50%, -50%) scale(1.1);
-  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+  border-color: #1890ff;
+  color: #1890ff;
 }
 
 .logic-indicator.and {
-  border-color: #165dff;
-  background: #f0f5ff;
+  border-color: #1890ff;
+  color: #1890ff;
 }
 
 .logic-indicator.or {
-  border-color: #ff7d00;
-  background: #fff7e6;
-  color: #ff7d00;
+  border-color: #fa8c16;
+  color: #fa8c16;
 }
 
 .logic-text {
@@ -648,10 +1304,10 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 .condition-item {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
   position: relative;
   z-index: 3;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .condition-item:last-child {
@@ -663,64 +1319,58 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 }
 
 .condition-item.excluded .condition-config {
-  background: #fff2f0;
-  border-left: 3px solid #ff4d4f;
+  background: #fff5f5;
+  border-left: 2px solid #ff4d4f;
 }
 
 .condition-connector {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  padding-top: 8px;
-  margin-left: -40px; /* 负边距使连接点向左偏移，避免与组内连接线重叠 */
+  min-width: 40px;
+  padding-top: 6px;
+  margin-left: -32px;
+  align-self: flex-start;
 }
 
 .condition-dot {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: white;
-  border: 3px solid #165dff;
-  box-shadow: 0 2px 6px rgba(22, 93, 255, 0.3);
+  border: 2px solid #1890ff;
   position: relative;
   z-index: 4;
 }
 
 .attribute-spacer {
-  /* 属性条件的占位空间，保持布局一致但不显示圆形点 */
- visibility: hidden;
+  visibility: hidden;
 }
 
 .condition-config {
   flex: 1;
   background: white;
-  border: 1px solid #e5e6eb;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 12px;
+  transition: border-color 0.2s ease;
 }
 
 .condition-config:hover {
-  border-color: #d4edda;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d0d0d0;
 }
 
 .exclude-indicator {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .exclude-label {
   display: inline-block;
-  padding: 4px 8px;
-  background: #fff2f0;
+  padding: 2px 6px;
+  background: #fff5f5;
   color: #ff4d4f;
-  border-radius: 6px;
+  border-radius: 3px;
   font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .condition-form {
@@ -737,18 +1387,18 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 }
 
 .form-row.primary {
-  border-bottom: 1px solid #f2f3f5;
-  padding-bottom: 12px;
+  border-bottom: 1px solid #f5f5f5;
+  padding-bottom: 8px;
 }
 
 .form-row.secondary {
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 120px;
 }
 
@@ -762,8 +1412,7 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 
 .form-label {
   font-size: 12px;
-  color: #86909c;
-  font-weight: 500;
+  color: #999;
   white-space: nowrap;
 }
 
@@ -798,67 +1447,407 @@ const removeCondition = (group: ConditionGroup, conditionIndex: number) => {
 .condition-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 8px;
+  gap: 6px;
+  padding-top: 6px;
   flex-shrink: 0;
 }
 
 .action-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e5e6eb;
+  border: 1px solid #e8e8e8;
   background: white;
-  color: #86909c;
-  transition: all 0.2s ease;
+  color: #999;
+  transition: border-color 0.2s ease;
   cursor: pointer;
 }
 
 .action-btn:hover {
-  border-color: #165dff;
-  color: #165dff;
-  background: #f2f3ff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(22, 93, 255, 0.2);
+  border-color: #1890ff;
+  color: #1890ff;
 }
 
 .action-btn.danger:hover {
-  border-color: #f53f3f;
-  color: #f53f3f;
-  background: #ffece8;
+  border-color: #ff4d4f;
+  color: #ff4d4f;
 }
 
 .add-condition-area {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px dashed #e5e6eb;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #f0f0f0;
 }
 
 .add-condition-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .add-condition-btn {
-  border: 1px dashed #d4edda;
+  border: 1px dashed #d9f7be;
   background: #f6ffed;
   color: #52c41a;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease;
 }
 
 .add-condition-btn:hover {
   border-color: #52c41a;
-  background: #f6ffed;
-  color: #52c41a;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(82, 196, 26, 0.2);
 }
 
 .add-condition-group-area {
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.add-group-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.add-group-btn {
+  flex: 1;
+  border: 1px dashed #d9f7be;
+  background: #f6ffed;
+  color: #52c41a;
+  transition: border-color 0.2s ease;
+}
+
+.add-group-btn:hover {
+  border-color: #52c41a;
+}
+
+.add-exclude-group-btn {
+  flex: 1;
+  border: 1px dashed #ffccc7;
+  background: #fff5f5;
+  color: #ff4d4f;
+  transition: border-color 0.2s ease;
+}
+
+.add-exclude-group-btn:hover {
+  border-color: #ff4d4f;
+}
+
+/* 标签类型特殊样式 */
+.tag-config {
+  position: relative;
+}
+
+.tag-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+}
+
+.tag-action-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+
+.tag-action-btn.add {
+  color: #52c41a;
+  background-color: #f6ffed;
+  border: 1px solid #d9f7be;
+}
+
+.tag-action-btn.add:hover {
+  border-color: #52c41a;
+}
+
+.tag-action-btn.remove {
+  color: #ff4d4f;
+  background-color: #fff5f5;
+  border: 1px solid #ffccc7;
+}
+
+.tag-action-btn.remove:hover {
+  border-color: #ff4d4f;
+}
+
+/* 事件类型特殊样式 */
+.event-config {
+  margin-bottom: 8px;
+}
+
+.event-properties {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.event-properties-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.event-properties-header .form-label {
+  margin: 0;
+}
+
+.event-properties-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-property-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background-color: #fafafa;
+  border-radius: 3px;
+  border: 1px solid #f0f0f0;
+}
+
+.event-property-item .form-group {
+  margin: 0;
+  flex: 1;
+}
+
+.event-property-item .form-group:first-child {
+  flex: 1.2;
+}
+
+.event-property-item .form-group:last-of-type {
+  flex: 1.5;
+}
+
+.remove-property-btn {
+  color: #ff4d4f;
+  padding: 3px;
+  min-width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.remove-property-btn:hover {
+  background-color: #fff5f5;
+  color: #ff4d4f;
+}
+
+/* 条件类型分组样式 */
+.condition-type-group {
+  margin-bottom: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.condition-type-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 4px 4px 0 0;
+}
+
+.condition-type-header-with-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.condition-type-title-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.condition-type-buttons {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.condition-type-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.condition-type-icon {
+  width: 14px;
+  height: 14px;
+  color: #999;
+}
+
+.condition-type-count {
+  font-size: 11px;
+  color: #999;
+  background: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 6px;
+  margin-left: 3px;
+}
+
+.condition-type-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.condition-type-add-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: #52c41a;
+  background-color: #f6ffed;
+  border: 1px solid #d9f7be;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.condition-type-add-btn:hover {
+  border-color: #52c41a;
+}
+
+.condition-type-content {
+  padding: 12px;
+}
+
+.condition-type-empty {
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+  padding: 16px;
+  border: 1px dashed #f0f0f0;
+  border-radius: 3px;
+  background: white;
+}
+
+.condition-item-wrapper {
+  margin-bottom: 8px;
+  padding: 8px;
+  background: white;
+  border: 1px solid #f0f0f0;
+  border-radius: 3px;
+  position: relative;
+}
+
+.condition-item-wrapper:last-child {
+  margin-bottom: 0;
+}
+
+.condition-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.condition-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.condition-remove-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  color: #ff4d4f;
+  background-color: #fff5f5;
+  border: 1px solid #ffccc7;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.condition-remove-btn:hover {
+  border-color: #ff4d4f;
+}
+
+/* 展开收起按钮样式 */
+.collapse-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.collapse-btn:hover {
+  color: #1890ff;
+}
+
+.condition-type-header {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.condition-type-header:hover {
+  background-color: #f0f0f0;
+}
+
+/* 标签条件行内加减号按钮样式 */
+.tag-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+}
+
+.tag-action-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.tag-action-btn.add-btn {
+  color: #52c41a;
+  background-color: #f6ffed;
+  border: 1px solid #d9f7be;
+}
+
+.tag-action-btn.add-btn:hover {
+  border-color: #52c41a;
+}
+
+.tag-action-btn.remove-btn {
+  color: #ff4d4f;
+  background-color: #fff5f5;
+  border: 1px solid #ffccc7;
+}
+
+.tag-action-btn.remove-btn:hover {
+  border-color: #ff4d4f;
 }
 </style>

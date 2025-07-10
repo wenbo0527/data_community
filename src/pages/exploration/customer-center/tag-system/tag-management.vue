@@ -61,7 +61,7 @@
           <template #columns>
             <a-table-column title="标签名称" data-index="name" :width="150" fixed="left">
               <template #cell="{ record }">
-                <span>{{ record.name }}</span>
+                <a-link @click="goToTagDetail(record)">{{ record.name }}</a-link>
               </template>
             </a-table-column>
             <a-table-column title="标签ID" data-index="id" :width="120">
@@ -396,7 +396,9 @@
                     :on-data-source-type-change="onDataSourceTypeChange"
                     :on-date-type-change="onDateTypeChange"
                     @add-condition-group="addConditionGroup"
+                    @add-exclude-condition-group="addExcludeConditionGroup"
                     @delete-condition-group="deleteConditionGroup"
+                    @delete-exclude-condition-group="deleteExcludeConditionGroup"
                     @toggle-group-logic="toggleGroupLogic"
                     @toggle-cross-group-logic="toggleCrossGroupLogic"
                     @add-condition-by-type="addConditionByType"
@@ -632,6 +634,7 @@ const ruleForm = ref({
     value: string
     description: string
     conditionGroups: Array<{
+      isExclude?: boolean
       conditions: Array<{
         field: string
         operator: string
@@ -920,10 +923,38 @@ const addConditionGroup = () => {
   }
 }
 
+const addExcludeConditionGroup = () => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue) {
+    currentTagValue.conditionGroups.push({
+      isExclude: true,
+      conditions: [{
+        field: '',
+        operator: '',
+        value: '',
+        logic: 'and'
+      }]
+    })
+  }
+}
+
 const deleteConditionGroup = (groupIndex: number) => {
   const currentTagValue = getCurrentTagValue()
   if (currentTagValue && currentTagValue.conditionGroups) {
     currentTagValue.conditionGroups.splice(groupIndex, 1)
+  }
+}
+
+const deleteExcludeConditionGroup = (groupIndex: number) => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue && currentTagValue.conditionGroups) {
+    // 找到排除条件组中的索引
+    const excludeGroups = currentTagValue.conditionGroups.filter(group => group.isExclude)
+    if (groupIndex >= 0 && groupIndex < excludeGroups.length) {
+      const targetGroup = excludeGroups[groupIndex]
+      const actualIndex = currentTagValue.conditionGroups.indexOf(targetGroup)
+      currentTagValue.conditionGroups.splice(actualIndex, 1)
+    }
   }
 }
 
