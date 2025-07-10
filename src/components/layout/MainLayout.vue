@@ -279,28 +279,65 @@ const menuItems = [
         path: '/discovery/customer360'
       },
       {
-        key: 'event-center',
-        title: '事件中心',
+        key: 'customer-center',
+        title: '客群中心',
         children: [
           {
-            key: 'event-center-index',
-            title: '事件中心首页',
-            path: '/exploration/customer-center/event-center'
+            key: 'audience-management',
+            title: '人群管理',
+            path: '/exploration/customer-center/audience-portrait/audience-management'
           },
           {
-            key: 'event-management',
-            title: '事件管理',
-            path: '/exploration/customer-center/event-center/event-management'
+            key: 'event-center',
+            title: '事件中心',
+            children: [
+              {
+                key: 'event-center-index',
+                title: '事件中心首页',
+                path: '/exploration/customer-center/event-center'
+              },
+              {
+                key: 'event-management',
+                title: '事件管理',
+                path: '/exploration/customer-center/event-center/event-management'
+              },
+              {
+                key: 'virtual-events',
+                title: '虚拟事件',
+                path: '/exploration/customer-center/event-center/virtual-events'
+              },
+              {
+                key: 'sample-stats',
+                title: '样本统计',
+                path: '/exploration/customer-center/event-center/sample-stats'
+              },
+              {
+                key: 'kafka-datasource',
+                title: 'Kafka数据源',
+                path: '/exploration/customer-center/event-center/kafka-datasource'
+              }
+            ]
           },
           {
-            key: 'virtual-events',
-            title: '虚拟事件',
-            path: '/exploration/customer-center/event-center/virtual-events'
-          },
-          {
-            key: 'kafka-datasource',
-            title: 'Kafka数据源',
-            path: '/exploration/customer-center/event-center/kafka-datasource'
+            key: 'tag-system',
+            title: '标签管理',
+            children: [
+              {
+                key: 'tag-system-index',
+                title: '标签体系首页',
+                path: '/exploration/customer-center/tag-system'
+              },
+              {
+                key: 'tag-management',
+                title: '标签管理',
+                path: '/exploration/customer-center/tag-system/tag-management'
+              },
+              {
+                key: 'attribute-management',
+                title: '属性管理',
+                path: '/exploration/customer-center/tag-system/attribute-management'
+              }
+            ]
           }
         ]
       }

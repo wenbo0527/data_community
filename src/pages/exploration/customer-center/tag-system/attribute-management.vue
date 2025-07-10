@@ -144,20 +144,16 @@
           <a-col :span="12">
             <a-form-item label="属性类型" required>
               <a-select v-model="editForm.attributeType" placeholder="请选择属性类型">
-                <a-option value="basic">基础属性</a-option>
-                <a-option value="custom">自定义属性</a-option>
-                <a-option value="computed">计算属性</a-option>
-                <a-option value="derived">派生属性</a-option>
+                <a-option value="numeric">数值型</a-option>
+                <a-option value="string">字符型</a-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="维度类型" required>
               <a-select v-model="editForm.dimensionType" placeholder="请选择维度类型">
-                <a-option value="user">用户维度</a-option>
-                <a-option value="product">产品维度</a-option>
-                <a-option value="behavior">行为维度</a-option>
-                <a-option value="time">时间维度</a-option>
+                <a-option value="customer">客户级</a-option>
+                <a-option value="product-customer">产品客户级</a-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -220,8 +216,8 @@ const editModalVisible = ref(false)
 const editForm = ref<AttributeItem>({
   id: '',
   name: '',
-  attributeType: 'basic',
-  dimensionType: 'user',
+  attributeType: 'numeric',
+  dimensionType: 'customer',
   dimensionKey: '',
   createTime: '',
   createUser: '',
@@ -232,8 +228,8 @@ const editIndex = ref(-1)
 
 // 生成模拟数据
 const generateAttributeData = (count: number): AttributeItem[] => {
-  const attributeTypes = ['basic', 'custom', 'computed', 'derived']
-  const dimensionTypes = ['user', 'product', 'behavior', 'time']
+  const attributeTypes = ['numeric', 'string']
+  const dimensionTypes = ['customer', 'product-customer']
   const statuses: ('active' | 'inactive')[] = ['active', 'inactive']
   const users = ['张三', '李四', '王五', '赵六', '钱七']
   
@@ -311,8 +307,8 @@ const addAttribute = () => {
   editForm.value = {
     id: '',
     name: '',
-    attributeType: 'basic',
-    dimensionType: 'user',
+    attributeType: 'numeric',
+    dimensionType: 'customer',
     dimensionKey: '',
     createTime: new Date().toISOString(),
     createUser: '当前用户',
@@ -394,10 +390,8 @@ const getStatusText = (status: string) => {
 // 获取属性类型颜色
 const getAttributeTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    basic: 'blue',
-    custom: 'green',
-    computed: 'orange',
-    derived: 'purple'
+    numeric: 'blue',
+    string: 'green'
   }
   return colors[type] || 'gray'
 }
@@ -405,10 +399,8 @@ const getAttributeTypeColor = (type: string) => {
 // 获取属性类型文本
 const getAttributeTypeText = (type: string) => {
   const texts: Record<string, string> = {
-    basic: '基础属性',
-    custom: '自定义属性',
-    computed: '计算属性',
-    derived: '派生属性'
+    numeric: '数值型',
+    string: '字符型'
   }
   return texts[type] || type
 }
@@ -416,10 +408,8 @@ const getAttributeTypeText = (type: string) => {
 // 获取维度类型颜色
 const getDimensionTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    user: 'cyan',
-    product: 'lime',
-    behavior: 'magenta',
-    time: 'gold'
+    customer: 'blue',
+    'product-customer': 'green'
   }
   return colors[type] || 'gray'
 }
@@ -427,10 +417,8 @@ const getDimensionTypeColor = (type: string) => {
 // 获取维度类型文本
 const getDimensionTypeText = (type: string) => {
   const texts: Record<string, string> = {
-    user: '用户维度',
-    product: '产品维度',
-    behavior: '行为维度',
-    time: '时间维度'
+    customer: '客户级',
+    'product-customer': '产品客户级'
   }
   return texts[type] || type
 }

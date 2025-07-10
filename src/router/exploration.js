@@ -64,6 +64,16 @@ export default [
             component: () => import('../pages/exploration/customer-center/tag-system/tag-management.vue')
           },
           {
+            path: 'tag-create',
+            name: 'tag-create',
+            component: () => import('../pages/exploration/customer-center/tag-system/tag-create.vue')
+          },
+          {
+            path: 'tag-detail/:id',
+            name: 'tag-detail',
+            component: () => import('../pages/exploration/customer-center/tag-system/tag-detail.vue')
+          },
+          {
             path: 'attribute-management',
             name: 'attribute-management',
             component: () => import('../pages/exploration/customer-center/tag-system/attribute-management.vue')

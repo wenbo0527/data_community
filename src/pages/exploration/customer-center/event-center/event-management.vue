@@ -301,7 +301,12 @@
                 </a-table-column>
                 <a-table-column title="关联ID" data-index="relationId" :width="120">
                   <template #cell="{ record }">
-                    <a-select v-model="record.relationId" placeholder="选择关联ID" allow-clear>
+                    <a-select 
+                      v-model="record.relationId" 
+                      placeholder="选择关联ID" 
+                      allow-clear
+                      :disabled="!record.isUniqueId"
+                    >
                       <a-option value="UID">UID</a-option>
                       <a-option value="CUSTID">CUSTID</a-option>
                       <a-option value="CUSTNO">CUSTNO</a-option>
@@ -768,6 +773,10 @@ const validateAttributeId = (record: AttributeItem, index: number) => {
 
 // 处理用户唯一标识变化
 const handleUniqueIdChange = (record: AttributeItem) => {
+  // 当取消用户唯一标识时，清空关联ID
+  if (!record.isUniqueId) {
+    record.relationId = ''
+  }
   // 可以在这里添加业务逻辑，比如限制唯一标识的数量
 }
 

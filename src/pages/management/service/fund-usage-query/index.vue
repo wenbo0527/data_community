@@ -148,10 +148,9 @@
         </div>
 
         <!-- 借据列表 -->
-        <a-table 
-          v-if="loanData.length > 0"
-          :columns="loanColumns"
+        <a-table
           :data="filteredLoanData"
+          :columns="loanColumns"
           :loading="loanLoading"
           :pagination="{
             current: loanPagination.current,
@@ -161,12 +160,41 @@
             showPageSize: true,
             onChange: handleLoanPageChange
           }"
-          :row-selection="{
-            type: 'checkbox',
-            selectedRowKeys: selectedLoanKeys,
-            onChange: handleLoanSelection
-          }"
+          :row-selection="rowSelection"
           row-key="id"
+          @row-click="(record) => {
+            console.log('=== 表格行点击事件 ===', {
+              timestamp: new Date().toLocaleTimeString(),
+              clickedRecord: record,
+              recordId: record.id,
+              currentSelectedKeys: selectedLoanKeys
+            })
+            
+            // 手动处理行选择逻辑
+            const currentKeys = [...(selectedLoanKeys || [])]
+            const recordId = record.id
+            
+            if (currentKeys.includes(recordId)) {
+              // 如果已选中，则取消选中
+              const newKeys = currentKeys.filter(key => key !== recordId)
+              console.log('🔄 === 取消选中行 ===', {
+                recordId: recordId,
+                oldKeys: currentKeys,
+                newKeys: newKeys
+              })
+              onLoanSelectionChange(newKeys)
+            } else {
+              // 如果未选中，则选中
+              const newKeys = [...currentKeys, recordId]
+              console.log('✅ === 选中行 ===', {
+                recordId: recordId,
+                oldKeys: currentKeys,
+                newKeys: newKeys
+              })
+              onLoanSelectionChange(newKeys)
+            }
+          }"
+
         >
           <template #customerName="{ record }">
             <div>
@@ -190,8 +218,8 @@
         
         <div class="step-actions">
           <a-button style="margin-right: 8px" @click="prevStep">上一步</a-button>
-          <a-button type="primary" :disabled="selectedLoanKeys.length === 0" @click="nextStep">
-            下一步 (已选择{{ selectedLoanKeys.length }}条)
+          <a-button type="primary" :disabled="isNextButtonDisabled" @click="nextStep">
+            下一步 (已选择{{ selectedLoanKeys.length || 0 }}条)
           </a-button>
         </div>
       </div>
@@ -287,8 +315,8 @@
         <!-- 查询摘要 -->
         <div class="query-summary">
           <a-descriptions :column="2" bordered>
-            <a-descriptions-item label="查询客户数">{{ uniqueCustomers.length }}人</a-descriptions-item>
-            <a-descriptions-item label="查询借据数">{{ selectedLoans.length }}笔</a-descriptions-item>
+            <a-descriptions-item label="查询客户数">{{ uniqueCustomers.length || 0 }}人</a-descriptions-item>
+            <a-descriptions-item label="查询借据数">{{ selectedLoans.length || 0 }}笔</a-descriptions-item>
             <a-descriptions-item label="查询时间范围">
               {{ queryForm.usageTimeRange ? 
                 `${queryForm.usageTimeRange[0]} 至 ${queryForm.usageTimeRange[1]}` : 
@@ -339,8 +367,30 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { Message } from '@arco-design/web-vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { 
+  Table as ATable,
+  TableColumn as ATableColumn,
+  Button as AButton,
+  Input as AInput,
+  Textarea as ATextarea,
+  Select as ASelect,
+  Option as AOption,
+  Form as AForm,
+  FormItem as AFormItem,
+  Card as ACard,
+  Steps as ASteps,
+  Step as AStep,
+  Row as ARow,
+  Col as ACol,
+  RadioGroup as ARadioGroup,
+  Radio as ARadio,
+  RangePicker as ARangePicker,
+  Tag as ATag,
+  Descriptions as ADescriptions,
+  DescriptionsItem as ADescriptionsItem,
+  Message
+} from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -348,10 +398,20 @@ const router = useRouter()
 // 步骤控制
 const currentStep = ref(0)
 const nextStep = () => {
+  console.log('=== nextStep 函数调用 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    currentStep: currentStep.value,
+    selectedLoanKeys: selectedLoanKeys.value,
+    selectedLoanKeysLength: selectedLoanKeys.value?.length || 0,
+    isNextButtonDisabled: isNextButtonDisabled.value
+  })
+  
   if (currentStep.value < 2) {
     currentStep.value++
+    console.log('步骤已更新到:', currentStep.value)
   }
 }
+
 const prevStep = () => {
   if (currentStep.value > 0) {
     currentStep.value--
@@ -420,6 +480,8 @@ const loanData = ref([])
 const loanLoading = ref(false)
 const selectedLoanKeys = ref([])
 const selectedLoans = ref([])
+
+// 确保 selectedLoanKeys 正确初始化
 
 // 借据分页
 const loanPagination = reactive({
@@ -513,18 +575,34 @@ const summaryColumns = [
 const filteredLoanData = computed(() => {
   let result = [...loanData.value]
   
+  console.log('=== filteredLoanData 计算属性执行 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    originalDataLength: loanData.value?.length || 0,
+    loanFilter: loanFilter,
+    hasKeywordFilter: !!loanFilter.keyword,
+    hasStatusFilter: !!loanFilter.status
+  })
+  
   if (loanFilter.keyword) {
     result = result.filter(item => 
       item.customerName.includes(loanFilter.keyword) ||
       item.idNumber.includes(loanFilter.keyword)
     )
+    console.log('关键词筛选后数据长度:', result.length)
   }
   
   if (loanFilter.status) {
     result = result.filter(item => item.status === loanFilter.status)
+    console.log('状态筛选后数据长度:', result.length)
   }
   
   loanPagination.total = result.length
+  
+  console.log('=== filteredLoanData 最终结果 ===', {
+    filteredLength: result.length,
+    firstFewItems: result.slice(0, 3).map(item => ({ id: item.id, customerName: item.customerName }))
+  })
+  
   return result
 })
 
@@ -540,8 +618,58 @@ const uniqueCustomers = computed(() => {
   return Array.from(customerMap.values())
 })
 
+// 按钮禁用状态计算属性
+const isNextButtonDisabled = computed(() => {
+  const disabled = !selectedLoanKeys.value || selectedLoanKeys.value.length === 0
+  console.log('=== 按钮禁用状态计算 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    selectedLoanKeys: selectedLoanKeys.value,
+    selectedLoanKeysLength: selectedLoanKeys.value?.length || 0,
+    disabled: disabled
+  })
+  return disabled
+})
+
+// 处理表格选择变化
+const onLoanSelectionChange = (selectedKeys) => {
+  console.log('🎯 === onLoanSelectionChange 事件触发 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    selectedKeys: selectedKeys,
+    selectedKeysLength: selectedKeys?.length || 0,
+    selectedKeysType: typeof selectedKeys,
+    currentSelectedLoanKeys: selectedLoanKeys.value,
+    currentSelectedLoanKeysLength: selectedLoanKeys.value?.length || 0,
+    filteredLoanDataLength: filteredLoanData.value?.length || 0,
+    availableIds: filteredLoanData.value?.map(item => item.id) || []
+  })
+  
+  // 根据选中的 keys 获取对应的行数据
+  const selectedRows = filteredLoanData.value.filter(row => selectedKeys.includes(row.id))
+  console.log('🎯 === onLoanSelectionChange 调用 handleLoanSelection ===', {
+    selectedKeys: selectedKeys,
+    selectedRows: selectedRows,
+    selectedRowsLength: selectedRows?.length || 0,
+    selectedRowsDetails: selectedRows.map(row => ({ id: row.id, customerName: row.customerName }))
+  })
+  
+  handleLoanSelection(selectedKeys, selectedRows)
+}
+
+// 表格行选择配置
+const rowSelection = computed(() => ({
+  type: 'checkbox',
+  selectedRowKeys: selectedLoanKeys.value,
+  onSelectionChange: onLoanSelectionChange
+}))
+
 // 查询借据
 const searchLoans = () => {
+  console.log('=== searchLoans 函数开始执行 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    currentLoanDataLength: loanData.value?.length || 0,
+    queryForm: queryForm
+  })
+  
   loanLoading.value = true
   
   // 解析身份证号
@@ -549,6 +677,12 @@ const searchLoans = () => {
     .split('\n')
     .map(id => id.trim())
     .filter(id => id.length > 0)
+  
+  console.log('=== 身份证号解析结果 ===', {
+    originalInput: queryForm.idNumbers,
+    parsedIdNumbers: idNumbers,
+    count: idNumbers.length
+  })
   
   if (idNumbers.length === 0) {
     Message.error('请输入至少一个身份证号')
@@ -558,6 +692,10 @@ const searchLoans = () => {
   
   // 模拟查询借据数据
   setTimeout(() => {
+    console.log('=== 开始生成模拟借据数据 ===', {
+      timestamp: new Date().toLocaleTimeString()
+    })
+    
     const mockLoans = []
     const customerNames = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十']
     const fundPurposes = ['经营周转', '设备采购', '原材料采购', '流动资金', '技术改造', '扩大生产']
@@ -602,6 +740,10 @@ const searchLoans = () => {
           }
         ]
         mockLoans.push(...specificLoans)
+        console.log('=== 为身份证号111生成特定数据 ===', {
+          count: specificLoans.length,
+          loans: specificLoans
+        })
       } else {
         // 其他用户生成随机数据
         const loanCount = Math.floor(Math.random() * 3) + 1
@@ -621,7 +763,16 @@ const searchLoans = () => {
             fundPurpose: fundPurposes[Math.floor(Math.random() * fundPurposes.length)]
           })
         }
+        console.log(`=== 为身份证号${idNumber}生成随机数据 ===`, {
+          idNumber: idNumber,
+          loanCount: loanCount
+        })
       }
+    })
+    
+    console.log('=== 原始模拟数据生成完成 ===', {
+      totalCount: mockLoans.length,
+      firstFewItems: mockLoans.slice(0, 3).map(item => ({ id: item.id, customerName: item.customerName }))
     })
     
     // 按支用时间倒序排列
@@ -636,24 +787,46 @@ const searchLoans = () => {
         const loanDate = new Date(loan.usageTime)
         return loanDate >= startDate && loanDate <= endDate
       })
+      console.log('=== 时间范围筛选 ===', {
+        timeRange: queryForm.usageTimeRange,
+        beforeFilter: mockLoans.length,
+        afterFilter: filteredLoans.length
+      })
     }
     
     // 应用状态筛选
     if (queryForm.loanStatus) {
       filteredLoans = filteredLoans.filter(loan => loan.status === queryForm.loanStatus)
+      console.log('=== 状态筛选 ===', {
+        status: queryForm.loanStatus,
+        afterFilter: filteredLoans.length
+      })
     }
+    
+    console.log('=== 最终筛选结果 ===', {
+      finalCount: filteredLoans.length,
+      finalItems: filteredLoans.slice(0, 3).map(item => ({ id: item.id, customerName: item.customerName }))
+    })
     
     loanData.value = filteredLoans
     loanPagination.total = filteredLoans.length
     loanLoading.value = false
     
-
+    console.log('=== loanData 更新完成 ===', {
+      loanDataLength: loanData.value.length,
+      paginationTotal: loanPagination.total,
+      loading: loanLoading.value
+    })
     
     if (filteredLoans.length > 0) {
       Message.success(`查询到${filteredLoans.length}笔借据，请点击"下一步"继续`)
     } else {
       Message.warning('未查询到符合条件的借据')
     }
+    
+    console.log('=== searchLoans 函数执行完成 ===', {
+      timestamp: new Date().toLocaleTimeString()
+    })
   }, 1000)
 }
 
@@ -675,8 +848,27 @@ const handleLoanPageChange = (page) => {
 
 // 借据选择
 const handleLoanSelection = (rowKeys, rows) => {
+  console.log('=== handleLoanSelection 函数调用 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    inputRowKeys: rowKeys,
+    inputRows: rows,
+    inputRowKeysLength: rowKeys?.length || 0,
+    beforeUpdate: {
+      selectedLoanKeys: selectedLoanKeys.value,
+      selectedLoans: selectedLoans.value
+    }
+  })
+  
   selectedLoanKeys.value = rowKeys
   selectedLoans.value = rows
+  
+  console.log('=== handleLoanSelection 更新后 ===', {
+    afterUpdate: {
+      selectedLoanKeys: selectedLoanKeys.value,
+      selectedLoans: selectedLoans.value,
+      selectedLoanKeysLength: selectedLoanKeys.value?.length || 0
+    }
+  })
 }
 
 // 状态相关方法
@@ -732,8 +924,47 @@ const confirmBatchQuery = () => {
   router.push('/management/service')
 }
 
+// 监听selectedLoanKeys变化
+watch(selectedLoanKeys, (newValue, oldValue) => {
+  console.log('=== selectedLoanKeys 监听器触发 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    oldValue: oldValue,
+    newValue: newValue,
+    oldLength: oldValue?.length || 0,
+    newLength: newValue?.length || 0
+  })
+}, { deep: true })
+
+// 监听selectedLoans变化
+watch(selectedLoans, (newValue, oldValue) => {
+  console.log('=== selectedLoans 监听器触发 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    oldLength: oldValue?.length || 0,
+    newLength: newValue?.length || 0
+  })
+}, { deep: true })
+
+// 监听filteredLoanData变化
+watch(filteredLoanData, (newValue, oldValue) => {
+  console.log('=== filteredLoanData 监听器触发 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    oldLength: oldValue?.length || 0,
+    newLength: newValue?.length || 0,
+    hasData: newValue && newValue.length > 0,
+    firstItem: newValue && newValue.length > 0 ? { id: newValue[0].id, customerName: newValue[0].customerName } : null
+  })
+}, { deep: true })
+
 onMounted(() => {
-  // 初始化
+  console.log('=== 组件挂载完成 ===', {
+    timestamp: new Date().toLocaleTimeString(),
+    currentStep: currentStep.value,
+    queryType: queryType.value,
+    loanDataLength: loanData.value?.length || 0,
+    selectedLoanKeysLength: selectedLoanKeys.value?.length || 0
+  })
+  
+  // 组件初始化逻辑
 })
 </script>
 

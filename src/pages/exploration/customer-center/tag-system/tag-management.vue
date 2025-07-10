@@ -95,30 +95,11 @@
                 <span>{{ record.dimensionKey }}</span>
               </template>
             </a-table-column>
-            <a-table-column title="状态" data-index="status" :width="100">
-              <template #cell="{ record }">
-                <a-tag :color="getStatusColor(record.status)">
-                  {{ getStatusText(record.status) }}
-                </a-tag>
-              </template>
-            </a-table-column>
-            <a-table-column title="更新频次" data-index="updateFrequency" :width="120">
-              <template #cell="{ record }">
-                <a-tag :color="getFrequencyColor(record.updateFrequency)">
-                  {{ getFrequencyText(record.updateFrequency) }}
-                </a-tag>
-              </template>
-            </a-table-column>
             <a-table-column title="共享级别" data-index="shareLevel" :width="120">
               <template #cell="{ record }">
                 <a-tag :color="getShareLevelColor(record.shareLevel)">
                   {{ getShareLevelText(record.shareLevel) }}
                 </a-tag>
-              </template>
-            </a-table-column>
-            <a-table-column title="管理部门" data-index="department" :width="150">
-              <template #cell="{ record }">
-                <span>{{ record.department }}</span>
               </template>
             </a-table-column>
             <a-table-column title="创建人" data-index="createUser" :width="120">
@@ -132,7 +113,7 @@
                   <a-button 
                     type="text" 
                     size="small" 
-                    @click="editTag(record)"
+                    @click="goToTagDetail(record)"
                   >
                     编辑
                   </a-button>
@@ -187,11 +168,8 @@
             <a-col :span="12">
               <a-form-item label="数据类型" required>
                 <a-select v-model="editForm.dataType" placeholder="请选择数据类型">
-                  <a-option value="string">字符串</a-option>
-                  <a-option value="number">数值</a-option>
-                  <a-option value="boolean">布尔值</a-option>
-                  <a-option value="date">日期</a-option>
-                  <a-option value="enum">枚举</a-option>
+                  <a-option value="string">字符型</a-option>
+                  <a-option value="number">数值型</a-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -225,30 +203,11 @@
           </a-row>
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="更新频次" required>
-                <a-select v-model="editForm.updateFrequency" placeholder="请选择更新频次">
-                  <a-option value="realtime">实时</a-option>
-                  <a-option value="daily">每日</a-option>
-                  <a-option value="weekly">每周</a-option>
-                  <a-option value="monthly">每月</a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
               <a-form-item label="共享级别" required>
                 <a-select v-model="editForm.shareLevel" placeholder="请选择共享级别">
                   <a-option value="public">公开</a-option>
-                  <a-option value="internal">内部</a-option>
                   <a-option value="private">私有</a-option>
-                  <a-option value="restricted">受限</a-option>
                 </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="管理部门" required>
-                <a-input v-model="editForm.department" placeholder="请输入管理部门" />
               </a-form-item>
             </a-col>
             <a-col :span="12">
@@ -285,11 +244,8 @@
                 <a-col :span="12">
                   <a-form-item label="数据类型" required>
                     <a-select v-model="ruleForm.basic.dataType" placeholder="请选择数据类型">
-                      <a-option value="string">字符串</a-option>
-                      <a-option value="number">数值</a-option>
-                      <a-option value="boolean">布尔值</a-option>
-                      <a-option value="date">日期</a-option>
-                      <a-option value="enum">枚举</a-option>
+                      <a-option value="string">字符型</a-option>
+                      <a-option value="number">数值型</a-option>
                     </a-select>
                   </a-form-item>
                 </a-col>
@@ -308,11 +264,6 @@
                 <a-col :span="12">
                   <a-form-item label="维度主键" required>
                     <a-input v-model="ruleForm.basic.dimensionKey" placeholder="请输入维度主键" />
-                  </a-form-item>
-                </a-col>
-                <a-col :span="12">
-                  <a-form-item label="管理部门" required>
-                    <a-input v-model="ruleForm.basic.department" placeholder="请输入管理部门" />
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -365,133 +316,98 @@
             </a-form>
           </a-tab-pane>
 
-          <!-- 标签规则 -->
-          <a-tab-pane key="rules" title="标签规则">
-            <a-form :model="ruleForm.rules" layout="vertical">
-              <a-form-item label="规则类型" required>
-                <a-radio-group v-model="ruleForm.rules.type">
-                  <a-radio value="sql">SQL查询</a-radio>
-                  <a-radio value="condition">条件规则</a-radio>
-                  <a-radio value="script">脚本规则</a-radio>
-                </a-radio-group>
-              </a-form-item>
-              
-              <!-- SQL查询规则 -->
-              <div v-if="ruleForm.rules.type === 'sql'">
-                <a-form-item label="数据源">
-                  <a-select v-model="ruleForm.rules.dataSource" placeholder="请选择数据源">
-                    <a-option value="mysql_main">MySQL主库</a-option>
-                    <a-option value="mysql_slave">MySQL从库</a-option>
-                    <a-option value="clickhouse">ClickHouse</a-option>
-                    <a-option value="hive">Hive</a-option>
-                  </a-select>
-                </a-form-item>
-                <a-form-item label="SQL语句" required>
-                  <a-textarea 
-                    v-model="ruleForm.rules.sqlQuery" 
-                    placeholder="请输入SQL查询语句"
-                    :rows="8"
-                    style="font-family: 'Courier New', monospace;"
-                  />
-                </a-form-item>
-                <a-form-item>
-                  <a-space>
-                    <a-button @click="validateSql">验证SQL</a-button>
-                    <a-button @click="previewResult">预览结果</a-button>
-                  </a-space>
-                </a-form-item>
-              </div>
-              
-              <!-- 条件规则 -->
-              <div v-if="ruleForm.rules.type === 'condition'">
-                <a-form-item label="条件配置">
-                  <div class="condition-builder">
-                    <div v-for="(condition, index) in ruleForm.rules.conditions" :key="index" class="condition-item">
-                      <a-row :gutter="8" align="middle">
-                        <a-col :span="5">
-                          <a-select v-model="condition.field" placeholder="选择字段">
-                            <a-option value="age">年龄</a-option>
-                            <a-option value="gender">性别</a-option>
-                            <a-option value="city">城市</a-option>
-                            <a-option value="income">收入</a-option>
-                            <a-option value="last_login">最后登录</a-option>
-                          </a-select>
-                        </a-col>
-                        <a-col :span="4">
-                          <a-select v-model="condition.operator" placeholder="操作符">
-                            <a-option value="eq">等于</a-option>
-                            <a-option value="ne">不等于</a-option>
-                            <a-option value="gt">大于</a-option>
-                            <a-option value="lt">小于</a-option>
-                            <a-option value="in">包含</a-option>
-                            <a-option value="like">模糊匹配</a-option>
-                          </a-select>
-                        </a-col>
-                        <a-col :span="6">
-                          <a-input v-model="condition.value" placeholder="输入值" />
-                        </a-col>
-                        <a-col :span="3" v-if="index > 0">
-                          <a-select v-model="condition.logic" placeholder="逻辑">
-                            <a-option value="and">AND</a-option>
-                            <a-option value="or">OR</a-option>
-                          </a-select>
-                        </a-col>
-                        <a-col :span="3">
-                          <a-button 
-                            type="text" 
-                            status="danger" 
-                            @click="removeCondition(index)"
-                            v-if="ruleForm.rules.conditions.length > 1"
-                          >
-                            删除
-                          </a-button>
-                        </a-col>
-                      </a-row>
+          <!-- 标签值配置 -->
+          <a-tab-pane key="values" title="标签值配置">
+            <div class="tag-values-config-vertical">
+              <!-- 标签值管理区域 -->
+              <div class="tag-values-management">
+                <div class="section-header">
+                  <h3>标签值管理</h3>
+                  <a-button type="primary" @click="addTagValue">
+                    <template #icon><icon-plus /></template>
+                    添加标签值
+                  </a-button>
+                </div>
+                
+                <div class="tag-values-list">
+                  <div v-for="(tagValue, index) in ruleForm.tagValues" :key="index" class="tag-value-item" :class="{ active: selectedTagValueIndex === index }">
+                    <div class="tag-value-header" @click="selectTagValue(index)">
+                      <div class="tag-value-info">
+                        <span class="tag-value-name">{{ tagValue.name || '未命名标签值' }}</span>
+                        <span class="tag-value-desc">{{ tagValue.description || '暂无描述' }}</span>
+                      </div>
+                      <div class="tag-value-actions" @click.stop>
+                        <a-button type="text" size="small" status="danger" @click="removeTagValue(index)">
+                          <template #icon><icon-delete /></template>
+                        </a-button>
+                      </div>
                     </div>
-                    <a-button type="dashed" @click="addCondition" style="width: 100%; margin-top: 8px;">
-                      <template #icon><icon-plus /></template>
-                      添加条件
-                    </a-button>
                   </div>
-                </a-form-item>
+                  
+                  <div v-if="ruleForm.tagValues.length === 0" class="empty-state">
+                    <icon-plus style="font-size: 48px; color: #c9cdd4;" />
+                    <p>暂无标签值，请添加第一个标签值</p>
+                  </div>
+                </div>
               </div>
               
-              <!-- 脚本规则 -->
-              <div v-if="ruleForm.rules.type === 'script'">
-                <a-form-item label="脚本语言">
-                  <a-select v-model="ruleForm.rules.scriptLanguage" placeholder="请选择脚本语言">
-                    <a-option value="python">Python</a-option>
-                    <a-option value="javascript">JavaScript</a-option>
-                    <a-option value="groovy">Groovy</a-option>
-                  </a-select>
-                </a-form-item>
-                <a-form-item label="脚本内容" required>
-                  <a-textarea 
-                    v-model="ruleForm.rules.scriptContent" 
-                    placeholder="请输入脚本内容"
-                    :rows="10"
-                    style="font-family: 'Courier New', monospace;"
+              <!-- 标签值配置区域 -->
+              <div v-if="selectedTagValueIndex >= 0" class="tag-value-config-section">
+                <div class="config-header">
+                  <h4>标签值配置</h4>
+                </div>
+                
+                <a-form :model="getCurrentTagValue()" layout="vertical">
+                  <a-row :gutter="16">
+                    <a-col :span="12">
+                      <a-form-item label="标签值名称" required>
+                        <a-input v-model="getCurrentTagValue().name" placeholder="请输入标签值名称" />
+                      </a-form-item>
+                    </a-col>
+                    <a-col :span="12">
+                      <a-form-item label="标签值">
+                        <a-input v-model="getCurrentTagValue().value" placeholder="请输入标签值" />
+                      </a-form-item>
+                    </a-col>
+                  </a-row>
+                  <a-form-item label="描述">
+                    <a-textarea v-model="getCurrentTagValue().description" placeholder="请输入标签值描述" :rows="2" />
+                  </a-form-item>
+                </a-form>
+                
+                <!-- 条件配置 -->
+                <div class="condition-config-section">
+                  <div class="section-header">
+                    <h4>条件配置</h4>
+                  </div>
+                  
+                  <ConditionConfig
+                    :condition-groups="getCurrentTagValueConditionGroups()"
+                    :cross-group-logic="getCurrentTagValue().crossGroupLogic || 'or'"
+                    :editable="true"
+                    :data-source-type-options="dataSourceTypeOptions"
+                    :date-type-options="dateTypeOptions"
+                    :dynamic-unit-options="dynamicUnitOptions"
+                    :get-field-options="getFieldOptions"
+                    :get-aggregation-options="getAggregationOptions"
+                    :get-operator-options="getOperatorOptions"
+                    :need-value-input="needValueInput"
+                    :get-value-placeholder="getValuePlaceholder"
+                    :on-data-source-type-change="onDataSourceTypeChange"
+                    :on-date-type-change="onDateTypeChange"
+                    @add-condition-group="addConditionGroup"
+                    @delete-condition-group="deleteConditionGroup"
+                    @toggle-group-logic="toggleGroupLogic"
+                    @toggle-cross-group-logic="toggleCrossGroupLogic"
+                    @add-condition-by-type="addConditionByType"
+                    @remove-condition="removeCondition"
                   />
-                </a-form-item>
-                <a-form-item>
-                  <a-space>
-                    <a-button @click="validateScript">验证脚本</a-button>
-                    <a-button @click="testScript">测试运行</a-button>
-                  </a-space>
-                </a-form-item>
+                </div>
               </div>
-              
-              <a-form-item label="执行频率">
-                <a-select v-model="ruleForm.rules.frequency" placeholder="请选择执行频率">
-                  <a-option value="realtime">实时</a-option>
-                  <a-option value="hourly">每小时</a-option>
-                  <a-option value="daily">每日</a-option>
-                  <a-option value="weekly">每周</a-option>
-                  <a-option value="monthly">每月</a-option>
-                </a-select>
-              </a-form-item>
-            </a-form>
+            </div>
           </a-tab-pane>
+
+
         </a-tabs>
       </div>
 
@@ -518,7 +434,7 @@
               >
                 <template #upload-button>
                   <div class="upload-area">
-                    <icon-cloud-upload style="font-size: 48px; color: #c9cdd4;" />
+                    <icon-upload style="font-size: 48px; color: #c9cdd4;" />
                     <div style="margin-top: 8px;">点击或拖拽文件到此处上传</div>
                     <div style="color: #86909c; font-size: 12px; margin-top: 4px;">支持 CSV、Excel、JSON 格式</div>
                   </div>
@@ -635,8 +551,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconSearch, IconRefresh, IconDelete, IconDown, IconSettings, IconImport, IconUpload } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconSearch, IconRefresh, IconDelete, IconDown, IconSettings, IconImport, IconUpload, IconEdit, IconCheck, IconClose } from '@arco-design/web-vue/es/icon'
+import ConditionConfig from '@/components/common/ConditionConfig.vue'
+
+const router = useRouter()
 
 // 标签数据接口
 interface TagItem {
@@ -646,10 +566,7 @@ interface TagItem {
   category: string // 标签分类
   tagType: string // 标签类型
   dimensionKey: string // 维度主键
-  status: 'active' | 'inactive'
-  updateFrequency: string // 更新频次
   shareLevel: string // 共享级别
-  department: string // 管理部门
   createUser: string // 创建人
   createTime: string
   description?: string
@@ -686,10 +603,7 @@ const editForm = ref<TagItem>({
   category: 'basic',
   tagType: 'static',
   dimensionKey: '',
-  status: 'active',
-  updateFrequency: 'daily',
-  shareLevel: 'internal',
-  department: '',
+  shareLevel: 'public',
   createUser: '',
   createTime: '',
   description: ''
@@ -704,7 +618,6 @@ const ruleForm = ref({
     dataType: 'string',
     category: 'basic',
     dimensionKey: '',
-    department: '',
     description: ''
   },
   notification: {
@@ -714,21 +627,24 @@ const ruleForm = ref({
     recipients: [] as string[],
     webhookUrl: ''
   },
-  rules: {
-    type: 'sql',
-    dataSource: '',
-    sqlQuery: '',
-    conditions: [{
-      field: '',
-      operator: '',
-      value: '',
-      logic: 'and'
-    }],
-    scriptLanguage: 'python',
-    scriptContent: '',
-    frequency: 'daily'
-  }
+  tagValues: [] as Array<{
+    name: string
+    value: string
+    description: string
+    conditionGroups: Array<{
+      conditions: Array<{
+        field: string
+        operator: string
+        value: string
+        logic?: string
+      }>
+    }>
+    crossGroupLogic: string
+  }>
 })
+
+// 选中的标签值索引
+const selectedTagValueIndex = ref(-1)
 
 // 数据导入表单
 const importForm = ref({
@@ -748,13 +664,10 @@ const importForm = ref({
 
 // 生成模拟数据
 const generateTagData = (count: number): TagItem[] => {
-  const dataTypes = ['string', 'number', 'boolean', 'date', 'enum']
+  const dataTypes = ['string', 'number']
   const categories = ['basic', 'behavior', 'preference', 'business']
   const tagTypes = ['static', 'dynamic', 'computed', 'rule']
-  const statuses: ('active' | 'inactive')[] = ['active', 'inactive']
-  const frequencies = ['realtime', 'daily', 'weekly', 'monthly']
-  const shareLevels = ['public', 'internal', 'private', 'restricted']
-  const departments = ['数据部', '产品部', '运营部', '技术部', '市场部']
+  const shareLevels = ['public', 'private']
   const users = ['张三', '李四', '王五', '赵六', '钱七']
   
   return Array.from({ length: count }, (_, index) => ({
@@ -764,10 +677,7 @@ const generateTagData = (count: number): TagItem[] => {
     category: categories[Math.floor(Math.random() * categories.length)],
     tagType: tagTypes[Math.floor(Math.random() * tagTypes.length)],
     dimensionKey: `dim_key_${index + 1}`,
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    updateFrequency: frequencies[Math.floor(Math.random() * frequencies.length)],
     shareLevel: shareLevels[Math.floor(Math.random() * shareLevels.length)],
-    department: departments[Math.floor(Math.random() * departments.length)],
     createUser: users[Math.floor(Math.random() * users.length)],
     createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
     description: `这是标签${index + 1}的描述信息`
@@ -848,10 +758,7 @@ const addTag = () => {
     category: 'basic',
     tagType: 'static',
     dimensionKey: '',
-    status: 'active',
-    updateFrequency: 'daily',
-    shareLevel: 'internal',
-    department: '',
+    shareLevel: 'public',
     createUser: '当前用户',
     createTime: new Date().toISOString(),
     description: ''
@@ -862,43 +769,7 @@ const addTag = () => {
 
 // 自定义规则创建标签
 const addTagByRule = () => {
-  createMode.value = 'rule'
-  activeTab.value = 'basic'
-  // 重置规则表单
-  ruleForm.value = {
-    basic: {
-      id: '',
-      name: '',
-      dataType: 'string',
-      category: 'basic',
-      dimensionKey: '',
-      department: '',
-      description: ''
-    },
-    notification: {
-      enabled: false,
-      methods: [],
-      scenarios: [],
-      recipients: [],
-      webhookUrl: ''
-    },
-    rules: {
-      type: 'sql',
-      dataSource: '',
-      sqlQuery: '',
-      conditions: [{
-        field: '',
-        operator: '',
-        value: '',
-        logic: 'and'
-      }],
-      scriptLanguage: 'python',
-      scriptContent: '',
-      frequency: 'daily'
-    }
-  }
-  editIndex.value = -1
-  editModalVisible.value = true
+  router.push({ name: 'tag-create' })
 }
 
 // 数据导入创建标签
@@ -937,6 +808,16 @@ const editTag = (record: TagItem) => {
   editModalVisible.value = true
 }
 
+// 跳转到标签详情页
+const goToTagDetail = (record: TagItem) => {
+  router.push({
+    name: 'tag-detail',
+    params: {
+      id: record.id
+    }
+  })
+}
+
 // 更新标签
 const updateTag = (record: TagItem) => {
   Message.info('标签更新功能开发中...')
@@ -967,10 +848,7 @@ const saveTag = () => {
       category: ruleForm.value.basic.category,
       tagType: 'rule',
       dimensionKey: ruleForm.value.basic.dimensionKey,
-      status: 'active',
-      updateFrequency: ruleForm.value.rules.frequency,
-      shareLevel: 'internal',
-      department: ruleForm.value.basic.department,
+      shareLevel: 'public',
       createUser: '当前用户',
       createTime: new Date().toISOString(),
       description: ruleForm.value.basic.description
@@ -984,35 +862,235 @@ const saveTag = () => {
   editModalVisible.value = false
 }
 
-// 规则相关函数
-const addCondition = () => {
-  ruleForm.value.rules.conditions.push({
-    field: '',
+// 标签值配置相关函数
+const addTagValue = () => {
+  const newTagValue = {
+    name: '',
+    value: '',
+    description: '',
+    conditionGroups: [],
+    crossGroupLogic: 'or'
+  }
+  ruleForm.value.tagValues.push(newTagValue)
+  selectedTagValueIndex.value = ruleForm.value.tagValues.length - 1
+}
+
+const removeTagValue = (index: number) => {
+  ruleForm.value.tagValues.splice(index, 1)
+  if (selectedTagValueIndex.value === index) {
+    selectedTagValueIndex.value = ruleForm.value.tagValues.length > 0 ? 0 : -1
+  } else if (selectedTagValueIndex.value > index) {
+    selectedTagValueIndex.value--
+  }
+}
+
+const selectTagValue = (index: number) => {
+  selectedTagValueIndex.value = index
+}
+
+const getCurrentTagValue = () => {
+  if (selectedTagValueIndex.value >= 0 && selectedTagValueIndex.value < ruleForm.value.tagValues.length) {
+    return ruleForm.value.tagValues[selectedTagValueIndex.value]
+  }
+  return {
+    name: '',
+    value: '',
+    description: '',
+    conditionGroups: [],
+    crossGroupLogic: 'or'
+  }
+}
+
+const getCurrentTagValueConditionGroups = () => {
+  const currentTagValue = getCurrentTagValue()
+  return currentTagValue.conditionGroups || []
+}
+
+const addConditionGroup = () => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue) {
+    currentTagValue.conditionGroups.push({
+      conditions: [{
+        field: '',
+        operator: '',
+        value: '',
+        logic: 'and'
+      }]
+    })
+  }
+}
+
+const deleteConditionGroup = (groupIndex: number) => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue && currentTagValue.conditionGroups) {
+    currentTagValue.conditionGroups.splice(groupIndex, 1)
+  }
+}
+
+const addCondition = (groupIndex: number) => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue && currentTagValue.conditionGroups[groupIndex]) {
+    currentTagValue.conditionGroups[groupIndex].conditions.push({
+      field: '',
+      operator: '',
+      value: '',
+      logic: 'and'
+    })
+  }
+}
+
+const deleteCondition = (groupIndex: number, conditionIndex: number) => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue && currentTagValue.conditionGroups[groupIndex]) {
+    currentTagValue.conditionGroups[groupIndex].conditions.splice(conditionIndex, 1)
+  }
+}
+
+const toggleConditionLogic = (groupIndex: number, conditionIndex: number) => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue && currentTagValue.conditionGroups[groupIndex] && currentTagValue.conditionGroups[groupIndex].conditions[conditionIndex]) {
+    const condition = currentTagValue.conditionGroups[groupIndex].conditions[conditionIndex]
+    condition.logic = condition.logic === 'and' ? 'or' : 'and'
+  }
+}
+
+const toggleCrossGroupLogic = () => {
+  const currentTagValue = getCurrentTagValue()
+  if (currentTagValue) {
+    currentTagValue.crossGroupLogic = currentTagValue.crossGroupLogic === 'and' ? 'or' : 'and'
+  }
+}
+
+// ConditionConfig组件所需的数据选项
+const dataSourceTypeOptions = [
+  { label: '明细数据', value: 'detail' },
+  { label: '行为数据', value: 'behavior' },
+  { label: '属性数据', value: 'attribute' }
+]
+
+const dateTypeOptions = [
+  { label: '动态时间', value: 'dynamic' },
+  { label: '固定时间', value: 'fixed' }
+]
+
+const dynamicUnitOptions = [
+  { label: '天', value: 'days' },
+  { label: '周', value: 'weeks' },
+  { label: '月', value: 'months' }
+]
+
+// 获取字段选项
+const getFieldOptions = (dataSourceType: string) => {
+  const fieldMap: Record<string, Array<{label: string, value: string}>> = {
+    detail: [
+      { label: '用户ID', value: 'user_id' },
+      { label: '订单金额', value: 'order_amount' },
+      { label: '订单时间', value: 'order_time' },
+      { label: '商品类别', value: 'product_category' }
+    ],
+    behavior: [
+      { label: '页面访问', value: 'page_view' },
+      { label: '点击事件', value: 'click_event' },
+      { label: '停留时长', value: 'stay_duration' },
+      { label: '访问频次', value: 'visit_frequency' }
+    ],
+    attribute: [
+      { label: '年龄', value: 'age' },
+      { label: '性别', value: 'gender' },
+      { label: '城市', value: 'city' },
+      { label: '收入', value: 'income' }
+    ]
+  }
+  return fieldMap[dataSourceType] || []
+}
+
+// 获取聚合选项
+const getAggregationOptions = (dataSourceType: string) => {
+  if (dataSourceType === 'attribute') {
+    return []
+  }
+  return [
+    { label: '计数', value: 'count' },
+    { label: '求和', value: 'sum' },
+    { label: '平均值', value: 'avg' },
+    { label: '最大值', value: 'max' },
+    { label: '最小值', value: 'min' }
+  ]
+}
+
+// 获取操作符选项
+const getOperatorOptions = (condition: any) => {
+  return [
+    { label: '等于', value: 'eq' },
+    { label: '不等于', value: 'ne' },
+    { label: '大于', value: 'gt' },
+    { label: '小于', value: 'lt' },
+    { label: '大于等于', value: 'gte' },
+    { label: '小于等于', value: 'lte' },
+    { label: '包含', value: 'in' },
+    { label: '不包含', value: 'not_in' },
+    { label: '模糊匹配', value: 'like' }
+  ]
+}
+
+// 判断是否需要值输入
+const needValueInput = (condition: any) => {
+  return true
+}
+
+// 获取值输入占位符
+const getValuePlaceholder = (condition: any) => {
+  return '请输入值'
+}
+
+// 数据源类型变化处理
+const onDataSourceTypeChange = (condition: any) => {
+  condition.fieldName = ''
+  condition.aggregationType = ''
+}
+
+// 日期类型变化处理
+const onDateTypeChange = (condition: any) => {
+  if (condition.dateType === 'dynamic') {
+    condition.dateRange = undefined
+    condition.dynamicValue = 1
+    condition.dynamicUnit = 'days'
+  } else {
+    condition.dynamicValue = undefined
+    condition.dynamicUnit = undefined
+    condition.dateRange = []
+  }
+}
+
+// 切换条件组逻辑
+const toggleGroupLogic = (group: any) => {
+  group.logic = group.logic === 'and' ? 'or' : 'and'
+}
+
+// 按类型添加条件
+const addConditionByType = (group: any, type: string) => {
+  const newCondition = {
+    id: Date.now().toString(),
+    type: type,
+    dataSourceType: type === 'tag' ? 'attribute' : type,
+    fieldName: '',
+    aggregationType: '',
     operator: '',
     value: '',
-    logic: 'and'
-  })
+    dateType: 'dynamic',
+    dynamicValue: 1,
+    dynamicUnit: 'days',
+    isExclude: false
+  }
+  group.conditions.push(newCondition)
 }
 
-const removeCondition = (index: number) => {
-  ruleForm.value.rules.conditions.splice(index, 1)
+// 移除条件
+const removeCondition = (group: any, conditionIndex: number) => {
+  group.conditions.splice(conditionIndex, 1)
 }
 
-const validateSql = () => {
-  Message.info('SQL验证功能开发中...')
-}
 
-const previewResult = () => {
-  Message.info('结果预览功能开发中...')
-}
-
-const validateScript = () => {
-  Message.info('脚本验证功能开发中...')
-}
-
-const testScript = () => {
-  Message.info('脚本测试功能开发中...')
-}
 
 // 导入相关函数
 const handleFileChange = (fileList: any[]) => {
@@ -1039,11 +1117,8 @@ const cancelEdit = () => {
 // 获取数据类型颜色
 const getDataTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    string: 'blue',
-    number: 'green',
-    boolean: 'orange',
-    date: 'purple',
-    enum: 'cyan'
+    string: 'green',
+    number: 'blue'
   }
   return colors[type] || 'gray'
 }
@@ -1051,11 +1126,8 @@ const getDataTypeColor = (type: string) => {
 // 获取数据类型文本
 const getDataTypeText = (type: string) => {
   const texts: Record<string, string> = {
-    string: '字符串',
-    number: '数值',
-    boolean: '布尔值',
-    date: '日期',
-    enum: '枚举'
+    string: '字符型',
+    number: '数值型'
   }
   return texts[type] || type
 }
@@ -1104,45 +1176,13 @@ const getTagTypeText = (type: string) => {
   return texts[type] || type
 }
 
-// 获取状态颜色
-const getStatusColor = (status: string) => {
-  return status === 'active' ? 'green' : 'red'
-}
 
-// 获取状态文本
-const getStatusText = (status: string) => {
-  return status === 'active' ? '启用' : '禁用'
-}
-
-// 获取更新频次颜色
-const getFrequencyColor = (frequency: string) => {
-  const colors: Record<string, string> = {
-    realtime: 'red',
-    daily: 'orange',
-    weekly: 'blue',
-    monthly: 'green'
-  }
-  return colors[frequency] || 'gray'
-}
-
-// 获取更新频次文本
-const getFrequencyText = (frequency: string) => {
-  const texts: Record<string, string> = {
-    realtime: '实时',
-    daily: '每日',
-    weekly: '每周',
-    monthly: '每月'
-  }
-  return texts[frequency] || frequency
-}
 
 // 获取共享级别颜色
 const getShareLevelColor = (level: string) => {
   const colors: Record<string, string> = {
     public: 'green',
-    internal: 'blue',
-    private: 'orange',
-    restricted: 'red'
+    private: 'orange'
   }
   return colors[level] || 'gray'
 }
@@ -1151,9 +1191,7 @@ const getShareLevelColor = (level: string) => {
 const getShareLevelText = (level: string) => {
   const texts: Record<string, string> = {
     public: '公开',
-    internal: '内部',
-    private: '私有',
-    restricted: '受限'
+    private: '私有'
   }
   return texts[level] || level
 }
@@ -1239,6 +1277,253 @@ onMounted(() => {
   margin-top: 16px;
 }
 
+/* 标签值配置样式 - 上下布局 */
+.tag-values-config-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tag-values-management {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.tag-value-config-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  padding: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.section-header h3,
+.section-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.tag-values-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 0;
+}
+
+.tag-value-item {
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.tag-value-item:hover {
+  border-color: #165dff;
+  box-shadow: 0 2px 8px rgba(22, 93, 255, 0.1);
+}
+
+.tag-value-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tag-value-header:hover {
+  background: #f2f3f5;
+}
+
+.tag-value-info {
+  flex: 1;
+}
+
+.tag-value-name {
+  display: block;
+  font-weight: 500;
+  color: #1d2129;
+  margin-bottom: 4px;
+}
+
+.tag-value-desc {
+  display: block;
+  font-size: 12px;
+  color: #86909c;
+}
+
+.tag-value-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #86909c;
+}
+
+.empty-state p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+.config-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.condition-groups-section {
+  margin-top: 24px;
+}
+
+.section-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.condition-count {
+  font-size: 12px;
+  color: #86909c;
+  background: #f2f3f5;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.empty-condition-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  text-align: center;
+  color: #86909c;
+  border: 1px dashed #e5e6eb;
+  border-radius: 6px;
+  margin-top: 16px;
+}
+
+.empty-condition-state p {
+  margin: 8px 0 16px 0;
+  font-size: 14px;
+}
+
+.condition-groups-list {
+  margin-top: 16px;
+}
+
+.condition-group {
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.condition-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.group-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.group-title {
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.group-count {
+  font-size: 12px;
+  color: #86909c;
+  background: #f2f3f5;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.conditions-list {
+  padding: 16px;
+}
+
+.condition-item {
+  margin-bottom: 12px;
+}
+
+.condition-item:last-child {
+  margin-bottom: 0;
+}
+
+.add-condition-area {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.logic-connector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 28px;
+  background: #165dff;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logic-connector:hover {
+  background: #0e42d2;
+}
+
+.group-separator {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  gap: 12px;
+}
+
+.separator-line {
+  flex: 1;
+  height: 1px;
+  background: #e5e6eb;
+}
+
+.add-condition-group-area {
+  margin-top: 16px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .tag-management {
@@ -1252,6 +1537,19 @@ onMounted(() => {
   
   .header-actions {
     width: 100%;
+  }
+  
+  .tag-values-config {
+    flex-direction: column;
+  }
+  
+  .tag-values-section,
+  .tag-value-config {
+    min-width: auto;
+  }
+  
+  .tag-values-list {
+    grid-template-columns: 1fr;
   }
 }
 </style>
