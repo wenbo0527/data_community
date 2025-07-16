@@ -22,6 +22,20 @@
                   <icon-search style="color: var(--color-text-3)" />
                 </template>
               </a-input>
+              <a-button type="outline" size="small" @click="importFromEventCenter">
+                <template #icon><icon-import /></template>
+                从事件中心导入
+              </a-button>
+              <a-button 
+                type="outline" 
+                size="small" 
+                @click="batchSyncToEventCenter"
+                :loading="syncLoading"
+                :disabled="selectedEvents.length === 0"
+              >
+                <template #icon><icon-sync /></template>
+                批量同步
+              </a-button>
               <a-button type="primary" size="small" @click="showCreateEvent">
                 <template #icon><icon-plus /></template>
                 新建
@@ -48,7 +62,19 @@
             @page-size-change="onPageSizeChange"
             class="event-table"
             size="small"
-            :scroll="{ x: 1200 }"
+            :scroll="{ x: 1400 }"
+            :row-selection="{
+              type: 'checkbox',
+              selectedRowKeys: selectedEvents,
+              onSelect: (rowKeys: string[]) => { selectedEvents = rowKeys; },
+              onSelectAll: (selected: boolean, selectedRows: EventData[], changeRows: EventData[]) => {
+                if (selected) {
+                  selectedEvents = tableData.map(item => item.id);
+                } else {
+                  selectedEvents = [];
+                }
+              }
+            }"
           >
             <template #columns>
               <a-table-column title="虚拟事件名称" data-index="eventName" :width="200">
@@ -69,9 +95,25 @@
                   <a-tag :color="getStatusColor(record.status)" size="small">{{ record.status }}</a-tag>
                 </template>
               </a-table-column>
-              <a-table-column title="操作" :width="120" fixed="right">
+              <a-table-column title="同步状态" data-index="syncStatus" :width="100">
+                <template #cell="{ record }">
+                  <a-tag :color="getSyncStatusColor(record.syncStatus)" size="small">
+                    {{ getSyncStatusText(record.syncStatus) }}
+                  </a-tag>
+                </template>
+              </a-table-column>
+              <a-table-column title="操作" :width="180" fixed="right">
                 <template #cell="{ record }">
                   <a-space size="mini">
+                    <a-button 
+                      type="text" 
+                      size="mini" 
+                      @click="syncToEventCenter(record)"
+                      :disabled="record.syncStatus === 'synced'"
+                      :loading="syncLoading"
+                    >
+                      同步
+                    </a-button>
                     <a-button type="text" size="mini" @click="editEvent(record)">
                       编辑
                     </a-button>
@@ -308,58 +350,141 @@
         </div>
       </a-form>
     </a-modal>
+
+    <!-- 从事件中心导入模态框 -->
+    <a-modal
+      v-model:visible="importModalVisible"
+      title="从事件中心导入事件"
+      width="1000px"
+      @ok="confirmImportEvents"
+      @cancel="() => { importModalVisible = false; selectedEvents = []; }"
+      ok-text="导入选中事件"
+      cancel-text="取消"
+    >
+      <div class="import-content">
+        <div class="import-header">
+          <span class="import-description">选择要导入的事件，系统将基于这些事件创建对应的虚拟事件</span>
+        </div>
+        
+        <a-table 
+          :data="eventCenterData" 
+          :loading="loading" 
+          :pagination="{
+            current: 1,
+            pageSize: 10,
+            total: eventCenterData.length,
+            showTotal: true,
+            size: 'small'
+          }"
+          class="import-table"
+          size="small"
+          :scroll="{ x: 800, y: 400 }"
+          :row-selection="{
+            type: 'checkbox',
+            selectedRowKeys: selectedEvents,
+            onSelect: (rowKeys: string[]) => { selectedEvents = rowKeys; },
+            onSelectAll: (selected: boolean, selectedRows: EventData[], changeRows: EventData[]) => {
+              if (selected) {
+                selectedEvents = eventCenterData.map(item => item.id);
+              } else {
+                selectedEvents = [];
+              }
+            }
+          }"
+        >
+          <template #columns>
+            <a-table-column title="事件名称" data-index="eventName" :width="200" />
+            <a-table-column title="事件类型" data-index="eventType" :width="120" />
+            <a-table-column title="事件来源" data-index="eventSource" :width="120" />
+            <a-table-column title="负责人" data-index="owner" :width="100" />
+            <a-table-column title="状态" data-index="status" :width="80">
+              <template #cell="{ record }">
+                <a-tag :color="record.status === '上线' ? 'green' : 'red'" size="small">
+                  {{ record.status }}
+                </a-tag>
+              </template>
+            </a-table-column>
+            <a-table-column title="创建时间" data-index="createTime" :width="160">
+              <template #cell="{ record }">
+                <span style="font-size: 12px;">{{ record.createTime }}</span>
+              </template>
+            </a-table-column>
+          </template>
+        </a-table>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconSearch, IconPlus } from '@arco-design/web-vue/es/icon'
+import { IconSearch, IconPlus, IconSync, IconImport } from '@arco-design/web-vue/es/icon'
+import { generateVirtualEventData, generateEventData } from '@/mock/event'
+
+// 类型定义
+interface EventData {
+  id: string
+  eventName: string
+  eventId?: string
+  eventType?: string
+  eventSource?: string
+  scenario?: string
+  status: string
+  updater?: string
+  owner?: string
+  updateTime: string
+  createTime: string
+  description?: string
+  logicRelation?: string
+  conditionGroups?: ConditionGroup[]
+  realEventId?: string | null
+  syncStatus?: string
+  registryKey?: string
+  triggerCondition?: string
+}
+
+interface ConditionGroup {
+  id: number
+  conditions: Condition[]
+}
+
+interface Condition {
+  field: string
+  operator: string
+  value: string
+  logic: string
+}
+
+interface SearchForm {
+  eventName: string
+}
+
+interface CreateForm {
+  eventName: string
+  eventId: string
+  scenario: string
+  description: string
+  logicRelation: string
+  conditionGroups: ConditionGroup[]
+}
 
 // 搜索表单
-const searchForm = reactive({
+const searchForm = reactive<SearchForm>({
   eventName: ''
 })
 
 // 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    eventName: 'API注册成功事件',
-    eventId: '12345678',
-    scenario: '营销触达',
-    updater: '张三',
-    updateTime: '2024-08-13 12:32:21',
-    status: '已上线'
-  },
-  {
-    id: 2,
-    eventName: 'APP关键业务事件',
-    eventId: '12345678',
-    scenario: '营销触达',
-    updater: '张三',
-    updateTime: '2024-08-13 12:32:21',
-    status: '已上线'
-  },
-  {
-    id: 3,
-    eventName: '评估未来收益',
-    eventId: '12345678',
-    scenario: '营销触达',
-    updater: '李四',
-    updateTime: '2024-08-13 12:32:21',
-    status: '已下线'
-  },
-  {
-    id: 4,
-    eventName: '评估未来收益',
-    eventId: '12345678',
-    scenario: '营销触达',
-    updater: '李四',
-    updateTime: '2024-08-13 12:32:21',
-    status: '已下线'
-  }
-])
+const tableData = ref<EventData[]>([])
+
+// 事件中心数据（用于同步）
+const eventCenterData = ref<EventData[]>([])
+
+// 同步相关状态
+const syncModalVisible = ref(false)
+const importModalVisible = ref(false)
+const syncLoading = ref(false)
+const selectedEvents = ref<string[]>([])
 
 // 加载状态
 const loading = ref(false)
@@ -368,10 +493,21 @@ const loading = ref(false)
 const pagination = reactive({
   current: 1,
   pageSize: 15,
-  total: 25,
+  total: 0,
   showTotal: true,
   showPageSize: true
 })
+
+// 初始化数据
+const initData = () => {
+  // 生成虚拟事件数据
+  const virtualEvents = generateVirtualEventData(25)
+  tableData.value = virtualEvents
+  pagination.total = virtualEvents.length
+  
+  // 生成事件中心数据
+  eventCenterData.value = generateEventData(50)
+}
 
 // 获取状态颜色
 const getStatusColor = (status: string) => {
@@ -387,17 +523,145 @@ const getStatusColor = (status: string) => {
   }
 }
 
+// 获取同步状态颜色
+const getSyncStatusColor = (status: string) => {
+  switch (status) {
+    case 'synced':
+      return 'green'
+    case 'pending':
+      return 'orange'
+    case 'failed':
+      return 'red'
+    default:
+      return 'gray'
+  }
+}
+
+// 获取同步状态文本
+const getSyncStatusText = (status: string) => {
+  switch (status) {
+    case 'synced':
+      return '已同步'
+    case 'pending':
+      return '待同步'
+    case 'failed':
+      return '同步失败'
+    default:
+      return '未同步'
+  }
+}
+
 // 搜索处理
 const handleSearch = () => {
   console.log('搜索:', searchForm.eventName)
   // 这里添加搜索逻辑
 }
 
+// 从事件中心导入事件
+const importFromEventCenter = () => {
+  importModalVisible.value = true
+}
+
+// 同步虚拟事件到事件中心
+const syncToEventCenter = (record: EventData) => {
+  syncLoading.value = true
+  
+  // 模拟同步过程
+  setTimeout(() => {
+    // 更新虚拟事件的同步状态
+    const index = tableData.value.findIndex((item: EventData) => item.id === record.id)
+    if (index !== -1) {
+      tableData.value[index].syncStatus = 'synced'
+    }
+    
+    syncLoading.value = false
+    Message.success(`虚拟事件"${record.eventName}"已成功同步到事件中心`)
+  }, 2000)
+}
+
+// 批量同步选中的虚拟事件
+const batchSyncToEventCenter = () => {
+  if (selectedEvents.value.length === 0) {
+    Message.warning('请选择要同步的虚拟事件')
+    return
+  }
+  
+  syncLoading.value = true
+  let syncedCount = 0
+  
+  selectedEvents.value.forEach((eventId: string, index: number) => {
+    setTimeout(() => {
+      const record = tableData.value.find((item: EventData) => item.id === eventId)
+      if (record && record.syncStatus !== 'synced') {
+        record.syncStatus = 'synced'
+        syncedCount++
+      }
+      
+      if (index === selectedEvents.value.length - 1) {
+        setTimeout(() => {
+          syncLoading.value = false
+          Message.success(`成功同步${syncedCount}个虚拟事件到事件中心`)
+          selectedEvents.value = []
+        }, 1000)
+      }
+    }, index * 500)
+  })
+}
+
+// 确认导入选中的事件
+const confirmImportEvents = () => {
+  if (selectedEvents.value.length === 0) {
+    Message.warning('请选择要导入的事件')
+    return
+  }
+  
+  selectedEvents.value.forEach((eventId: string) => {
+    const realEvent = eventCenterData.value.find((item: EventData) => item.id === eventId)
+    if (realEvent) {
+      // 创建基于真实事件的虚拟事件
+      const virtualEvent: EventData = {
+        id: `VE${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        eventName: `${realEvent.eventName}虚拟事件`,
+        eventId: `virtual_${realEvent.id.toLowerCase()}`,
+        scenario: '营销触达',
+        status: '草稿',
+        updater: '当前用户',
+        updateTime: new Date().toLocaleString('zh-CN'),
+        createTime: new Date().toLocaleString('zh-CN'),
+        description: `基于事件中心"${realEvent.eventName}"创建的虚拟事件`,
+        logicRelation: 'AND',
+        conditionGroups: [
+          {
+            id: 1,
+            conditions: [
+              {
+                field: realEvent.eventName,
+                operator: '用户ID',
+                value: '',
+                logic: '等于'
+              }
+            ]
+          }
+        ],
+        realEventId: realEvent.id,
+        syncStatus: 'synced'
+      }
+      
+      tableData.value.unshift(virtualEvent)
+      pagination.total += 1
+    }
+  })
+  
+  Message.success(`成功导入${selectedEvents.value.length}个事件`)
+  importModalVisible.value = false
+  selectedEvents.value = []
+}
+
 // 新建事件模态框状态
 const createModalVisible = ref(false)
 
 // 新建事件表单
-const createForm = reactive({
+const createForm = reactive<CreateForm>({
   eventName: '',
   eventId: '',
   scenario: '',
@@ -517,12 +781,13 @@ const saveVirtualEvent = () => {
 
   // 模拟保存
   const newEvent = {
-    id: tableData.value.length + 1,
+    id: `VE${Date.now()}`,
     eventName: createForm.eventName,
     eventId: createForm.eventId,
     scenario: createForm.scenario,
     updater: '当前用户',
     updateTime: new Date().toLocaleString('zh-CN'),
+    createTime: new Date().toLocaleString('zh-CN'),
     status: '草稿'
   }
   
@@ -563,25 +828,25 @@ const cancelCreate = () => {
 }
 
 // 查看事件详情
-const viewEventDetail = (record: any) => {
+const viewEventDetail = (record: EventData) => {
   console.log('查看详情:', record)
   Message.info('查看详情功能开发中...')
 }
 
 // 编辑事件
-const editEvent = (record: any) => {
+const editEvent = (record: EventData) => {
   console.log('编辑事件:', record)
   Message.info('编辑功能开发中...')
 }
 
 // 复制事件
-const copyEvent = (record: any) => {
+const copyEvent = (record: EventData) => {
   console.log('复制事件:', record)
   Message.success('复制成功')
 }
 
 // 删除事件
-const deleteEvent = (record: any) => {
+const deleteEvent = (record: EventData) => {
   console.log('删除事件:', record)
   Message.warning('删除功能开发中...')
 }
@@ -600,7 +865,7 @@ const onPageSizeChange = (pageSize: number) => {
 
 // 组件挂载
 onMounted(() => {
-  // 初始化数据
+  initData()
 })
 </script>
 
@@ -949,5 +1214,42 @@ onMounted(() => {
 :deep(.arco-btn-primary:hover) {
   background-color: #4080ff;
   border-color: #4080ff;
+}
+
+/* 导入模态框样式 */
+.import-content {
+  padding: 0;
+}
+
+.import-header {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  border-radius: 6px;
+  border-left: 3px solid #165dff;
+}
+
+.import-description {
+  font-size: 14px;
+  color: #4e5969;
+  line-height: 1.5;
+}
+
+.import-table {
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+:deep(.import-table .arco-table-th) {
+  background: #f7f8fa;
+  font-weight: 600;
+}
+
+:deep(.import-table .arco-table-td) {
+  border-bottom: 1px solid #f2f3f5;
+}
+
+:deep(.import-table .arco-table-tr:hover .arco-table-td) {
+  background: #f7f8fa;
 }
 </style>

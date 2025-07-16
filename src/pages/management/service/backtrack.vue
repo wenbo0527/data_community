@@ -91,12 +91,42 @@
         
         <!-- 执行周期 -->
         <div class="form-section">
-          <div class="section-title">执行周期</div>
-          <a-radio-group v-model="formData.executionCycle" class="radio-group">
-            <a-radio value="daily">每日</a-radio>
-            <a-radio value="once">仅本次</a-radio>
-          </a-radio-group>
-
+          <div class="section-title">
+            <a-switch v-model="formData.isDailyFollow" /> 每日跟跑
+          </div>
+          
+          <div v-if="formData.isDailyFollow" class="daily-follow-settings">
+            <div class="date-range">
+              <span class="date-label">结束日期</span>
+              <a-date-picker 
+                v-model="formData.endDate"
+                placeholder="请选择结束日期"
+                :disabled-date="current => current && current > dayjs().subtract(2, 'day')"
+              />
+            </div>
+          </div>
+        </div>
+        
+        <!-- 历史回溯区间 -->
+        <div class="form-section">
+          <div class="section-title">
+            <a-switch v-model="formData.enableHistoryBacktrack" /> 历史回溯
+          </div>
+          
+          <div v-if="formData.enableHistoryBacktrack" class="history-backtrack-settings">
+            <div class="date-range">
+              <a-date-picker
+                v-model="formData.historyStartDate"
+                placeholder="开始日期"
+              />
+              <span class="date-separator">-</span>
+              <a-date-picker
+                v-model="formData.historyEndDate"
+                placeholder="结束日期"
+                :disabled-date="current => current && current > dayjs().subtract(2, 'day')"
+              />
+            </div>
+          </div>
         </div>
         
         <!-- 样本范围 -->
@@ -176,79 +206,49 @@ const applicationDescription = ref('')
 const formData = ref({
   variableScope: 'all',
   selectedProducts: [],
-  startDate: null,
+  isDailyFollow: false,
   endDate: null,
-  executionCycle: ''
+  historyStartDate: dayjs().subtract(7, 'day').format('YYYY-MM-DD'),
+  historyEndDate: dayjs().subtract(2, 'day').format('YYYY-MM-DD'),
 })
 
-// 数据产品选项
-const dataProducts = ref([
-  { value: 'user_profile', label: '用户画像数据' },
-  { value: 'transaction_data', label: '交易流水数据' },
-  { value: 'risk_score', label: '风险评分数据' },
-  { value: 'behavior_analysis', label: '行为分析数据' },
-  { value: 'credit_assessment', label: '信用评估数据' },
-  { value: 'market_data', label: '市场数据' },
-  { value: 'external_data', label: '外部数据源' },
-  { value: 'financial_indicators', label: '财务指标数据' }
-])
-
-// 显示添加弹窗
-const showAddModal = () => {
-  modalVisible.value = true
-  // 重置表单
-  formData.value = {
-    variableScope: 'all',
-    selectedProducts: [],
-    startDate: null,
-    endDate: null,
-    executionCycle: ''
-  }
+// 新增日期校验方法
+const validateHistoryDate = (current) => {
+  return current > dayjs().subtract(2, 'day')
 }
 
-// 处理执行周期变化
-const handleCycleChange = (value) => {
-  const yesterday = dayjs().subtract(1, 'day')
-  
-  if (value === 'daily') {
-    // 每日：开始时间默认为昨天
-    formData.value.startDate = yesterday.format('YYYY-MM-DD')
-    formData.value.endDate = null
-  } else if (value === 'once') {
-    // 仅本次：结束时间为昨天
-    formData.value.endDate = yesterday.format('YYYY-MM-DD')
-  }
-}
-
-// 禁用开始日期
-const disabledStartDate = (current) => {
-  if (formData.value.executionCycle === 'daily') {
-    // 每日模式：开始日期不能晚于昨天
-    return current && current.isAfter(dayjs().subtract(1, 'day'), 'day')
-  }
-  return false
-}
-
-// 禁用结束日期
-const disabledEndDate = (current) => {
-  if (formData.value.executionCycle === 'once') {
-    // 仅本次模式：结束日期必须是昨天
-    return current && !current.isSame(dayjs().subtract(1, 'day'), 'day')
-  }
-  if (formData.value.startDate) {
-    // 结束时间必须晚于开始时间
-    return current && current.isBefore(dayjs(formData.value.startDate), 'day')
-  }
-  return false
-}
-
-// 打开日期选择弹窗
-const openDateModal = () => {
-  dateModalVisible.value = true
-}
-
-// 确认添加任务
+// 更新提交校验逻辑
 const handleConfirm = () => {
+  if (formData.value.enableHistoryBacktrack) {
+    if (!formData.value.historyStartDate || !formData.value.historyEndDate) {
+      Message.error('请选择完整的历史回溯区间')
+      return
+    }
+    // 原有日期校验逻辑保持不动
+  }
+  if(formData.value.historyStartDate && formData.value.historyEndDate) {
+    const daysDiff = dayjs(formData.value.historyEndDate).diff(
+      formData.value.historyStartDate, 'day'
+    )
+    if(daysDiff < 0) {
+      Message.error('历史回溯结束日期不能早于开始日期')
+      return
+    }
+    if(daysDiff > 365) {
+      Message.error('历史回溯区间最大支持1年范围')
+      return
+    }
+  }
+  if (formData.value.isDailyFollow && !formData.value.endDate) {
+    Message.error('请选择每日跟跑的结束日期')
+    return
+  }
+  
+  if (formData.value.historyEndDate > dayjs().subtract(2, 'day')) {
+    Message.error('历史回溯结束日期不能晚于T-2日')
+    return
+  }
+  
   // 验证表单
   if (!formData.value.executionCycle) {
     Message.error('请选择执行周期')
@@ -310,6 +310,20 @@ const handleSubmitApplication = () => {
   }
   Message.success('申请提交成功')
 }
+
+// Add this in the script setup section
+const showAddModal = () => {
+  modalVisible.value = true;
+  // Reset form data
+  formData.value = {
+    variableScope: 'all',
+    selectedProducts: [],
+    isDailyFollow: false,
+    endDate: null,
+    historyStartDate: dayjs().subtract(7, 'day').format('YYYY-MM-DD'),
+    historyEndDate: dayjs().subtract(2, 'day').format('YYYY-MM-DD')
+  };
+};
 </script>
 
 <style scoped>

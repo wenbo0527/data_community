@@ -4,8 +4,8 @@ import managementRoutes from './management'
 import explorationRoutes from './exploration'
 import { ROUTE_NAMES, ROUTE_PATHS, ROUTE_GUARD_CONFIG } from './constants'
 import { checkRoutePermission, getBreadcrumb } from './utils'
-import { businessMessage, warning, error } from '@/utils/message'
-import { useUserStore } from '@/store/modules/user'
+import { businessMessage, warning, error } from '../utils/message'
+import { useUserStore } from '../store/modules/user'
 
 const router = createRouter({
   history: createWebHistory('/'), routes: [
@@ -32,7 +32,7 @@ const router = createRouter({
     {
       path: `${ROUTE_PATHS.DISCOVERY.TABLE_DETAIL}/:tableName`,
       name: ROUTE_NAMES.DISCOVERY.TABLE_DETAIL,
-      component: () => import('@/pages/discovery/data-map/TableDetailPage.vue'),
+      component: () => import('../pages/discovery/data-map/TableDetailPage.vue'),
       meta: {
         title: '表详情',
         hidden: true
@@ -40,13 +40,6 @@ const router = createRouter({
     },
     {
       path: ROUTE_PATHS.TOUCH.ROOT,
-      name: ROUTE_NAMES.TOUCH.ROOT,
-      component: () => import('../components/layout/TouchLayout.vue'),
-      meta: {
-        title: '触达管理',
-        icon: 'icon-send',
-        layout: 'touch'
-      },
       children: [
         {
           path: '',
@@ -73,6 +66,14 @@ const router = createRouter({
           }
         },
         {
+          path: 'manual-sms/list',
+          name: ROUTE_NAMES.TOUCH.MANUAL_SMS_LIST,
+          component: () => import('../pages/touch/manual-sms/list.vue'),
+          meta: {
+            title: '手动短信列表'
+          }
+        },
+        {
           path: 'policy/template',
           name: ROUTE_NAMES.TOUCH.POLICY_TEMPLATE,
           component: () => import('../pages/touch/policy/template/index.vue'),
@@ -81,22 +82,14 @@ const router = createRouter({
           }
         },
         {
-          path: 'channel',
-          name: 'ChannelManagement',
-          component: () => import('../pages/touch/channel/index.vue'),
-          children: [
-            {
-              path: 'blacklist',
-              name: 'ChannelBlacklist',
-              component: () => import('../pages/touch/channel/blacklist.vue')
-            }
-          ]
-        },
-
-        { path: 'query', name: 'TouchQuery', component: () => import('../pages/touch/query/index.vue') },
-        { path: 'manual-sms', name: 'ManualSMS', component: () => import('../pages/touch/manual-sms/index.vue'), meta: { title: '短信手工下发' } }
-      ],
-      props: true
+          path: 'query',
+          name: 'TouchQuery',
+          component: () => import('../pages/touch/query/index.vue'),
+          meta: {
+            title: '触达查询'
+          }
+        }
+      ]
     },
     {
       path: '/discovery',
@@ -203,6 +196,15 @@ beforeEnter: (to) => {
       ]
     },
     {
+      path: '/exploration/customer-center/tag-system/:tagId',
+      name: 'TagDetail',
+      component: () => import('@/pages/exploration/customer-center/tag-system/tag-detail.vue'),
+      meta: {
+        title: '标签详情',
+        requiresAuth: true
+      }
+    },
+    {
       path: '/exploration',
       name: 'exploration',
       redirect: '/exploration/index',
@@ -216,9 +218,20 @@ beforeEnter: (to) => {
       ]
     },
     {
-      path: '/risk',
-      name: 'risk',
-      redirect: '/risk/index'
+      path: ROUTE_PATHS.RISK.ROOT,
+      name: ROUTE_NAMES.RISK.ROOT,
+      redirect: ROUTE_PATHS.RISK.INDEX,
+      children: [
+        {
+          path: 'index',
+          name: ROUTE_NAMES.RISK.INDEX,
+          component: () => import('../pages/risk/index.vue'),
+          meta: {
+            title: '数字风险',
+            icon: 'icon-risk'
+          }
+        }
+      ]
     },
     {
       path: '/digital-marketing',
@@ -240,6 +253,28 @@ beforeEnter: (to) => {
           path: 'detail/:id',
           name: 'ExternalDataV1Detail',
           component: () => import('../pages/external-data-v1/detail.vue')
+        }
+      ]
+    },
+    {
+      path: '/test',
+      name: 'Test',
+      redirect: '/test/taskflow',
+      meta: {
+        title: '测试页面',
+        icon: 'icon-bug',
+        layout: 'blank'
+      },
+      children: [
+        {
+          path: 'taskflow',
+          name: 'TaskFlowTest',
+          component: () => import('../pages/test/TaskFlowTest.vue'),
+          meta: {
+            title: 'TaskFlow测试',
+            description: 'TaskFlow组件功能测试页面',
+            layout: 'blank'
+          }
         }
       ]
     },

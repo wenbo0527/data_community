@@ -3,7 +3,7 @@
     <!-- 头部导航区 -->
     <a-layout-header class="header">
       <div class="logo">
-        <img src="@/assets/logo.svg" alt="logo" />
+        <img src="../../assets/logo.svg" alt="logo" />
       </div>
       <div class="nav-menu">
         <a-menu mode="horizontal" :selected-keys="[activeMenu]">
@@ -234,10 +234,10 @@
 </template>
 
 <script setup>
-import ArchitectureChart from '@/components/layout/ArchitectureChart.vue';
+import ArchitectureChart from '../../components/layout/ArchitectureChart.vue';
 import { ref, onMounted, markRaw } from 'vue'
-import HomeWelcomeModal from '@/components/modals/HomeWelcomeModal.vue'
-import { useUserStore } from '@/store/modules/user'
+import HomeWelcomeModal from '../../components/modals/HomeWelcomeModal.vue'
+import { useUserStore } from '../../store/modules/user'
 import { Statistic } from '@arco-design/web-vue'
 import {
   IconUser,

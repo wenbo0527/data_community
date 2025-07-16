@@ -4,7 +4,27 @@
     <div class="condition-group-header">
       <div class="group-info">
         <div class="group-title-section">
-          <span class="group-title">{{ group.name || '条件组' }}</span>
+          <div class="group-name-wrapper">
+            <span 
+              v-if="!group.isEditingName"
+              class="group-title"
+              :class="{ 'editable': editable }"
+              @dblclick="editable && startEditGroupName(group)"
+              :title="editable ? '双击编辑名称' : ''"
+            >
+              {{ group.name || '条件组' }}
+            </span>
+            <a-input 
+              v-else
+              v-model="group.editingName"
+              size="small"
+              class="group-name-input"
+              @blur="saveGroupName(group)"
+              @keyup.enter="saveGroupName(group)"
+              @keyup.esc="cancelEditGroupName(group)"
+              ref="groupNameInput"
+            />
+          </div>
           <span class="condition-count">({{ group.conditions?.length || 0 }})</span>
         </div>
         
@@ -84,11 +104,15 @@
           </div>
           
           <div v-if="!collapsedSections.tag" class="condition-type-content">
-            <div 
-              v-for="(condition, conditionIndex) in tagConditions" 
-              :key="condition.id || conditionIndex"
-              class="condition-item-wrapper"
-            >
+            <template v-for="(condition, conditionIndex) in tagConditions" :key="condition.id || conditionIndex">
+              <!-- 条件间逻辑连接符 -->
+              <div v-if="conditionIndex > 0" class="condition-logic-connector">
+                <div class="logic-line"></div>
+                <span class="logic-text">{{ group.logic === 'and' ? '且' : '或' }}</span>
+                <div class="logic-line"></div>
+              </div>
+              
+              <div class="condition-item-wrapper">
               <!-- 条件项头部 -->
               <div class="condition-item-header">
                 <div class="condition-item-info">
@@ -174,7 +198,8 @@
                   </a-tooltip>
                 </div>
               </div>
-            </div>
+              </div>
+            </template>
           </div>
         </div>
         
@@ -214,11 +239,15 @@
           </div>
           
           <div v-if="!collapsedSections.behavior" class="condition-type-content">
-            <div 
-              v-for="(condition, conditionIndex) in behaviorConditions" 
-              :key="condition.id || conditionIndex"
-              class="condition-item-wrapper"
-            >
+            <template v-for="(condition, conditionIndex) in behaviorConditions" :key="condition.id || conditionIndex">
+              <!-- 条件间逻辑连接符 -->
+              <div v-if="conditionIndex > 0" class="condition-logic-connector">
+                <div class="logic-line"></div>
+                <span class="logic-text">{{ group.logic === 'and' ? '且' : '或' }}</span>
+                <div class="logic-line"></div>
+              </div>
+              
+              <div class="condition-item-wrapper">
               <!-- 条件项头部 -->
               <div class="condition-item-header">
                 <div class="condition-item-info">
@@ -316,7 +345,8 @@
                   </a-button>
                 </div>
               </div>
-            </div>
+              </div>
+            </template>
           </div>
         </div>
         
@@ -356,11 +386,15 @@
           </div>
           
           <div v-if="!collapsedSections.detail" class="condition-type-content">
-            <div 
-              v-for="(condition, conditionIndex) in detailConditions" 
-              :key="condition.id || conditionIndex"
-              class="condition-item-wrapper"
-            >
+            <template v-for="(condition, conditionIndex) in detailConditions" :key="condition.id || conditionIndex">
+              <!-- 条件间逻辑连接符 -->
+              <div v-if="conditionIndex > 0" class="condition-logic-connector">
+                <div class="logic-line"></div>
+                <span class="logic-text">{{ group.logic === 'and' ? '且' : '或' }}</span>
+                <div class="logic-line"></div>
+              </div>
+              
+              <div class="condition-item-wrapper">
               <!-- 条件项头部 -->
               <div class="condition-item-header">
                 <div class="condition-item-info">
@@ -490,7 +524,8 @@
                   </div>
                 </div>
               </div>
-            </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -517,7 +552,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import { IconPlus, IconDown, IconRight, IconMinus } from '@arco-design/web-vue/es/icon'
 
 // 类型定义
@@ -553,6 +588,8 @@ interface ConditionGroup {
   collapsed?: boolean
   isExclude?: boolean
   conditions: Condition[]
+  isEditingName?: boolean
+  editingName?: string
 }
 
 interface Option {
@@ -625,6 +662,7 @@ const emit = defineEmits<{
   removeCondition: [conditionIndex: number]
   addEventProperty: [condition: Condition]
   removeEventProperty: [condition: Condition, propertyIndex: number]
+  updateGroupName: [group: ConditionGroup, newName: string]
 }>()
 
 // 响应式状态
@@ -669,6 +707,36 @@ const removeConditionByIndex = (condition: Condition) => {
   if (conditionIndex !== -1) {
     emit('removeCondition', conditionIndex)
   }
+}
+
+// 条件组名称编辑相关方法
+const startEditGroupName = (group: ConditionGroup) => {
+  if (!props.editable) return
+  
+  group.isEditingName = true
+  group.editingName = group.name || ''
+  
+  // 使用 nextTick 确保输入框已渲染
+  nextTick(() => {
+    const input = document.querySelector('.group-name-input input') as HTMLInputElement
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  })
+}
+
+const saveGroupName = (group: ConditionGroup) => {
+  if (group.editingName && group.editingName.trim()) {
+    emit('updateGroupName', group, group.editingName.trim())
+  }
+  group.isEditingName = false
+  group.editingName = ''
+}
+
+const cancelEditGroupName = (group: ConditionGroup) => {
+  group.isEditingName = false
+  group.editingName = ''
 }
 </script>
 
@@ -772,12 +840,15 @@ const removeConditionByIndex = (condition: Condition) => {
 }
 
 .action-btn {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   border: 1px solid #d0d0d0;
   color: #666;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-btn:hover {
@@ -864,11 +935,14 @@ const removeConditionByIndex = (condition: Condition) => {
 }
 
 .condition-type-add-btn {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   color: #165dff;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .condition-type-add-btn:hover {
@@ -876,10 +950,13 @@ const removeConditionByIndex = (condition: Condition) => {
 }
 
 .collapse-btn {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   color: #666;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .collapse-btn:hover {
@@ -929,10 +1006,13 @@ const removeConditionByIndex = (condition: Condition) => {
 }
 
 .condition-remove-btn {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   color: #f53f3f;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .condition-remove-btn:hover {
@@ -962,10 +1042,13 @@ const removeConditionByIndex = (condition: Condition) => {
 }
 
 .tag-action-btn {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tag-action-btn.add-btn {
@@ -1036,8 +1119,11 @@ const removeConditionByIndex = (condition: Condition) => {
 .remove-property-btn {
   color: #f53f3f;
   padding: 0;
-  min-width: 20px;
-  height: 20px;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .remove-property-btn:hover {
@@ -1127,6 +1213,31 @@ const removeConditionByIndex = (condition: Condition) => {
   font-size: 11px;
   border: 1px solid #d0d0d0;
   transition: all 0.2s ease;
+}
+
+/* 条件间逻辑连接符样式 */
+.condition-logic-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0;
+  gap: 8px;
+}
+
+.logic-line {
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.logic-text {
+  font-size: 11px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  white-space: nowrap;
 }
 
 .add-condition-btn:hover {

@@ -65,12 +65,19 @@ export const ROUTE_NAMES = {
     INDEX: 'TouchIndex',
     CHANNEL_BLACKLIST: 'ChannelBlacklist',
     MANUAL_SMS: 'ManualSMS',
+    MANUAL_SMS_LIST: 'ManualSMSList',
     POLICY_TEMPLATE: 'PolicyTemplate'
   },
   
   // 发现模块
   DISCOVERY: {
     TABLE_DETAIL: 'TableDetail'
+  },
+  
+  // 风险模块
+  RISK: {
+    ROOT: 'risk',
+    INDEX: 'riskIndex'
   }
 }
 
@@ -131,11 +138,18 @@ export const ROUTE_PATHS = {
     ROOT: '/touch',
     CHANNEL_BLACKLIST: '/touch/channel/blacklist',
     MANUAL_SMS: '/touch/manual-sms',
+    MANUAL_SMS_LIST: '/touch/manual-sms/list',
     POLICY_TEMPLATE: '/touch/policy/template'
   },
   
   DISCOVERY: {
     TABLE_DETAIL: '/discovery/data-map/table'
+  },
+  
+  // 风险模块
+  RISK: {
+    ROOT: '/risk',
+    INDEX: '/risk/index'
   }
 }
 

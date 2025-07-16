@@ -1,5 +1,5 @@
 import { ROUTE_NAMES, ROUTE_PATHS, BREADCRUMB_CONFIG, ROUTE_GUARD_CONFIG } from './constants'
-import { businessMessage } from '@/utils/message'
+import { businessMessage } from '../utils/message'
 
 /**
  * 路由工具函数

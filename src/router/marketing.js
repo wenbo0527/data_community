@@ -1,13 +1,14 @@
 export default [
   {
-  path: '/marketing',
-  children: [
-    {
-      path: 'dashboard',
-      name: 'couponDashboard',
-      component: () => import('../pages/marketing/coupon/statistics/index.vue'),
-      meta: { title: '权益首页' }
-    },
+    path: '/marketing',
+    redirect: '/marketing/dashboard', // 添加重定向到默认页面
+    children: [
+      {
+        path: 'dashboard',
+        name: 'couponDashboard',
+        component: () => import('../pages/marketing/coupon/statistics/index.vue'),
+        meta: { title: '权益首页' }
+      },
       {
         path: 'benefit',
         name: 'benefitConfig',
@@ -66,6 +67,18 @@ export default [
       path: 'coupon/create',
       name: 'MarketingCouponCreate',
       component: () => import('../pages/marketing/coupon/template/create.vue')
+    },
+    {
+      path: 'tasks',
+      name: 'marketing-tasks',
+      component: () => import('../pages/marketing/tasks/index.vue'),
+      meta: { title: '营销任务' }
+    },
+    {
+      path: 'tasks/create',
+      name: 'marketing-tasks-create',
+      component: () => import('../pages/marketing/tasks/create.vue'),
+      meta: { title: '创建营销任务' }
     }
     ]
   }

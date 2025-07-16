@@ -117,6 +117,7 @@
               <a-radio-group v-model="activeTab" type="button">
                 <a-radio value="distribution">数据分布</a-radio>
                 <a-radio value="trend">趋势分析</a-radio>
+                <a-radio value="lineage">血缘查询</a-radio>
               </a-radio-group>
             </div>
             
@@ -144,10 +145,13 @@
               </div>
               
               <div v-if="activeTab === 'trend'" class="trend-chart">
-                <div class="trend-placeholder">
-                  趋势分析图表区域
-                </div>
-              </div>
+                 <div class="trend-placeholder">
+                   趋势分析图表区域
+                 </div>
+               </div>
+               <div v-if="activeTab === 'lineage'" class="lineage-chart">
+                 <div ref="lineageChartRef" style="height: 500px;"></div>
+               </div>
             </div>
           </div>
         </div>
@@ -300,7 +304,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, watch, nextTick, reactive } from 'vue'
+import * as echarts from 'echarts'
+import { getTagLineage } from '@/api/tag'
 import { useRoute, useRouter } from 'vue-router'
 import {
   IconHome,
@@ -323,12 +329,306 @@ import {
   IconClose
 } from '@arco-design/web-vue/es/icon'
 import ConditionConfig from '@/components/common/ConditionConfig.vue'
+import { onMounted } from 'vue';
+
+// 血缘数据处理函数
+const processLineageData = (data) => {
+  console.debug('[Lineage] 原始数据输入:', {
+    nodes: data.data.nodes?.length || 0,
+    links: data.data.links?.length || 0,
+    types: [...new Set(data.data.nodes.map(n => n.type))]
+  });
+  console.log('[Lineage Debug] 原始数据:', JSON.parse(JSON.stringify(data)));
+  // 构建标签为核心的三层树结构
+  const root = {
+  name: 'tag001',
+  type: 'root',
+  children: data.data.nodes
+    .filter(node => node.type === 'tag')
+    .map(tag => {
+      const attributes = data.data.links
+        .filter(l => l.source === tag.id && l.type === 'attribute')
+        .map(l => ({
+          ...data.data.nodes.find(n => n.id === l.target),
+          children: data.data.links
+            .filter(lt => lt.source === l.target && lt.type === 'table')
+            .map(lt => ({
+              ...data.data.nodes.find(n => n.id === lt.target),
+              _depth: 2
+            })),
+          _depth: 1
+        }));
+      return {
+        ...tag,
+        children: attributes,
+        _depth: 0
+      };
+    })
+};
+
+
+  // 建立类型映射
+  const nodeMap = data.data.nodes.reduce((acc, node) => {
+    acc[node.id] = {
+      ...node,
+      children: []
+    };
+    return acc;
+  }, {});
+
+  // 根据链接关系构建层级
+  data.data.links.forEach(link => {
+    if (link.type === 'attribute') {
+      nodeMap[link.source].children.push(nodeMap[link.target]);
+    } else if (link.type === 'table') {
+      nodeMap[link.source].children.forEach(attr => {
+        attr.children.push(nodeMap[link.target]);
+      });
+    }
+  });
+
+  // 提取标签节点作为根的子节点
+  root.children = data.data.nodes
+    .filter(node => node.type === 'tag')
+    .map(node => nodeMap[node.id]);
+
+  console.log('[Lineage Debug] 处理后的树结构:', JSON.parse(JSON.stringify(root)));
+  console.debug('[Lineage] 树结构生成完成', {
+  depth: getTreeDepth(root),
+  totalNodes: countNodes(root),
+  maxChildren: Math.max(...getChildrenCounts(root))
+});
+return root;
+}
+
+// 组件挂载时演示数据
+onMounted(() => {
+  // 使用静态演示数据替代API调用
+  console.log('展示静态标签详情演示数据');
+});
 
 const route = useRoute()
 const router = useRouter()
 
 // 当前选中的标签页
 const activeTab = ref('distribution')
+const lineageChartRef = ref(null)
+const lineageData = ref(null)
+
+const countNodes = (node) => {
+  let count = 0;
+  const stack = [node];
+  while (stack.length) {
+    const current = stack.pop();
+    count++;
+    current.children?.forEach(c => stack.push(c));
+  }
+  return count;
+};
+
+const getChildrenCounts = (node) => {
+  const counts = [];
+  const traverse = (n) => {
+    counts.push(n.children?.length || 0);
+    n.children?.forEach(traverse);
+  };
+  traverse(node);
+  return counts;
+};
+
+const initLineageChart = () => {
+  console.debug('[Lineage] 初始化图表', {
+    containerSize: {
+      width: lineageChartRef.value?.offsetWidth,
+      height: lineageChartRef.value?.offsetHeight
+    }
+  });
+  if (!lineageChartRef.value) return
+  const chart = echarts.init(lineageChartRef.value)
+  
+  console.log('[Lineage Debug] ECharts配置:', {
+    seriesType: 'tree',
+    nodeCount: lineageData.value.children.length,
+    maxDepth: getTreeDepth(lineageData.value)
+  });
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: ({ data }) => {
+        return `<div style='padding:8px;'>
+          <div style='font-weight:500;margin-bottom:4px;'>${data.name}</div>
+          <div style='color:#666;'>类型：${data.category}</div>
+          ${data.updatedAt ? `<div style='color:#666;margin-top:4px;'>更新时间：${new Date(data.updatedAt).toLocaleString()}</div>` : ''}
+        </div>`
+      }
+    },
+    series: [{
+      type: 'tree',
+      data: [lineageData.value],
+      orient: 'LR',
+      symbolSize: 36,
+      itemStyle: {
+        borderWidth: 2,
+        borderColor: '#fff'
+      },
+      lineStyle: {
+        color: '#99adef',
+        curveness: 0
+      },
+      symbolSize: 24,
+      itemStyle: {
+        color: ({ data }) => {
+          const typeColors = {
+            tag: '#52c41a',
+            attribute: '#1890ff',
+            table: '#f5222d'
+          };
+          return typeColors[data.type] || '#666';
+        }
+      },
+      label: {
+        position: 'right',
+        verticalAlign: 'middle',
+        formatter: ({ data }) => {
+          const typeIcons = {
+            tag: '🏷',
+            attribute: '📌',
+            table: '🗂',
+            root: '🌳'
+          };
+          return `${data._isRoot ? typeIcons.root : typeIcons[data.type]} ${data.name}`;
+        },
+        fontSize: 14
+      },
+      leaves: {
+        label: { position: 'bottom', show: true }
+      },
+      expandAndCollapse: false,
+      lineStyle: {
+        color: '#ccc',
+        curveness: 0.3
+      }
+    }]
+  }
+  
+  chart.setOption(option);
+  console.debug('[Lineage] 图表配置应用完成', {
+    seriesCount: option.series.length,
+    nodeTypes: [...new Set(option.series[0].data.flatMap(s => s.children).map(n => n.type))]
+  });
+  window.addEventListener('resize', () => chart.resize())
+}
+
+watch(() => activeTab.value, (val) => {
+  if (val === 'lineage' && !lineageData.value) {
+    fetchTagLineage()
+  }
+})
+
+const getTreeDepth = (node) => {
+  let maxDepth = 0;
+  function traverse(n, depth) {
+    if (depth > maxDepth) maxDepth = depth;
+    n.children?.forEach(child => traverse(child, depth + 1));
+  }
+  traverse(node, 0);
+  return maxDepth;
+};
+
+const fetchTagLineage = async () => {
+  console.info('[Lineage] 开始加载血缘数据', { tab: activeTab.value });
+  console.log('[Lineage Debug] 开始加载血缘数据');
+  try {
+    const startTime = performance.now();
+    // 本地mock数据
+const mockLineageData = {
+  nodes: [
+    {
+      id: 'TAG_001',
+      name: '高净值客户',
+      type: 'tag',
+      updatedAt: Date.now(),
+      description: '月均AUM大于50万的客户群体',
+      owner: '王伟',
+      version: 'v2.3',
+    },
+    {
+      id: 'ATT_001',
+      name: '资产属性',
+      type: 'attribute',
+      dataType: 'number',
+      lastUpdateTime: Date.now() - 3600000,
+    },
+    {
+      id: 'ATT_002',
+      name: '交易属性',
+      type: 'attribute',
+      dataType: 'number',
+      lastUpdateTime: Date.now() - 7200000,
+    },
+    {
+      id: 'TBL_001',
+      name: '客户资产明细表',
+      type: 'table',
+      database: 'wealth_db',
+      lastSyncTime: Date.now() - 86400000,
+    },
+    {
+      id: 'TBL_002',
+      name: '交易流水表',
+      type: 'table',
+      database: 'transaction_db',
+      lastSyncTime: Date.now() - 172800000,
+    },
+    {
+      id: 1, 
+      name: '用户基础属性', 
+      type: 'tag', 
+      updatedAt: Date.now(),
+    },
+    { 
+      id: 2, 
+      name: '活跃用户群体', 
+      type: 'audience', 
+      lastUpdateTime: Date.now() - 86400000, 
+    },
+    { 
+      id: 3, 
+      name: '用户行为日志表', 
+      type: 'table', 
+      lastSyncTime: Date.now() - 259200000, 
+    },
+  ],
+  links: [
+    { source: 'TAG_001', target: 'ATT_001', type: 'attribute' },
+    { source: 'TAG_001', target: 'ATT_002', type: 'attribute' },
+    { source: 'ATT_001', target: 'TBL_001', type: 'table' },
+    { source: 'ATT_002', target: 'TBL_002', type: 'table' },
+    { source: 1, target: 2 },
+    { source: 2, target: 3 },
+  ],
+  links: [
+    { source: 1, target: 2 },
+    { source: 2, target: 3 }
+  ]
+};
+const data = { data: mockLineageData };
+    lineageData.value = processLineageData(data);
+
+    console.info('[Lineage] 数据加载完成', {
+      duration: `${performance.now() - startTime}ms`,
+      source: 'mock',
+      dataVersion: data.data.version || '1.0'
+    });
+    console.log('[Lineage Debug] 数据加载完成', {
+      nodes: data.data.nodes.length,
+      links: data.data.links.length
+    });
+    nextTick(initLineageChart)
+  } catch (error) {
+    console.error('获取血缘数据失败:', error)
+  }
+}
 
 // 编辑模式相关
 const isEditMode = ref(false) // 始终为false，禁止编辑
@@ -1230,7 +1530,7 @@ onMounted(() => {
 .tag-value-item {
   border: 1px solid #e5e6eb;
   border-radius: 6px;
-  background: #f8f9fa;
+  background: #8f909c;
   transition: all 0.2s ease;
   cursor: pointer;
 }
@@ -1675,7 +1975,6 @@ onMounted(() => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   border-color: #d4edda;
 }
-
 
 
 
@@ -2207,3 +2506,14 @@ onMounted(() => {
 
 
 </style>
+
+const processLineageData = (data) => {
+  return {
+    nodes: data.data.nodes.map(node => ({
+      ...node,
+      label: node.name,
+      tooltip: `最后更新: ${new Date(node.updatedAt || node.lastUpdateTime).toLocaleString()}`
+    })),
+    links: data.data.links
+  };
+}

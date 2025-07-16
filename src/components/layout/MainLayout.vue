@@ -1,88 +1,27 @@
 <template>
   <a-layout class="layout-container">
     <!-- 顶部菜单栏 -->
-    <a-layout-header class="top-menu"
-      style="padding: 0 24px; background: #f8f9fa; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-      <a-menu mode="horizontal" :selected-keys="[activeTopMenu]" @menu-item-click="handleTopMenuClick">
-        <a-menu-item key="home">首页</a-menu-item>
-        <a-menu-item key="discovery">数据发现</a-menu-item>
-        <a-menu-item key="exploration">数据探索</a-menu-item>
-        <a-menu-item key="management">数据管理</a-menu-item>
-        <a-menu-item key="marketing">数字营销</a-menu-item>
-        <a-menu-item key="risk">数字风险</a-menu-item>
-        <a-menu-item key="touch">触达管理</a-menu-item>
-      </a-menu>
+    <a-layout-header class="top-menu-header">
+      <TopMenu @menu-change="handleTopMenuChange" ref="topMenuRef" />
     </a-layout-header>
 
     <a-layout>
       <!-- 侧边菜单栏 -->
-      <a-layout-sider :collapsed="collapsed" :breakpoint="breakpoint" :width="220" :collapsible="true"
-        @collapse="handleCollapse" class="layout-sider" v-show="showSideMenu">
-        <div class="menu-wrapper">
-          <div class="menu-header" v-if="!isDetailPage">
-            <a-input-search v-model="searchText" :style="{ width: '90%' }" placeholder="搜索菜单" allow-clear />
-          </div>
-          <a-menu :style="{ width: '100%' }" :collapsed="collapsed" :selected-keys="selectedKeys"
-            :default-open-keys="['management']" show-collapse-button
-            :active-key-style="{ color: 'rgb(var(--primary-6))', fontWeight: 'bold', borderLeft: '3px solid rgb(var(--primary-6))', paddingLeft: '13px' }"
-            :hover-key-style="{ backgroundColor: 'var(--color-fill-2)' }" :item-margin="12">
-            <template v-for="item in filteredMenuItems" :key="item.key">
-              <template v-if="!item.children">
-                <a-menu-item @click="() => handleMenuClick(item.key)">
-                  <template #icon>
-                    <icon-experiment v-if="item.key === 'exploration'" />
-                    <icon-dashboard v-else-if="item.key === 'marketing'" />
-                    <icon-safe v-else-if="item.key === 'risk'" />
-                    <icon-apps v-else />
-                  </template>
-                  <span class="menu-item-text">{{ item.title }}</span>
-                </a-menu-item>
-              </template>
-              <template v-else>
-                <a-sub-menu :key="item.key">
-                  <template #icon>
-                    <icon-common v-if="item.key === 'discovery'" />
-                    <icon-robot v-else-if="item.key === 'management'" />
-                    <icon-apps v-else-if="item.key === 'apps'" />
-                    <icon-common v-else-if="item.key === 'touch'" />
-                    <icon-common v-else-if="item.key === 'reach'" />
-                  </template>
-                  <template #title>{{ item.title }}</template>
-                  <!-- 递归渲染子菜单 -->
-                  <template v-for="child in item.children" :key="child.key">
-                    <template v-if="child.children && child.children.length > 0">
-                      <a-sub-menu :key="child.key">
-                        <template #title>{{ child.title }}</template>
-                        <template v-for="grandchild in child.children" :key="grandchild.key">
-                          <template v-if="grandchild.children && grandchild.children.length > 0">
-                            <a-sub-menu :key="grandchild.key">
-                              <template #title>{{ grandchild.title }}</template>
-                              <template v-for="greatGrandchild in grandchild.children" :key="greatGrandchild.key">
-                                <a-menu-item @click="() => handleMenuClick(greatGrandchild.key)">
-                                  <span class="menu-item-text">{{ greatGrandchild.title }}</span>
-                                </a-menu-item>
-                              </template>
-                            </a-sub-menu>
-                          </template>
-                          <template v-else>
-                            <a-menu-item @click="() => handleMenuClick(grandchild.key)">
-                              <span class="menu-item-text">{{ grandchild.title }}</span>
-                            </a-menu-item>
-                          </template>
-                        </template>
-                      </a-sub-menu>
-                    </template>
-                    <template v-else>
-                      <a-menu-item @click="() => handleMenuClick(child.key)">
-                        <span class="menu-item-text">{{ child.title }}</span>
-                      </a-menu-item>
-                    </template>
-                  </template>
-                </a-sub-menu>
-              </template>
-            </template>
-          </a-menu>
-        </div>
+      <a-layout-sider 
+        :collapsed="collapsed" 
+        :breakpoint="breakpoint" 
+        :width="220" 
+        :collapsible="true"
+        @collapse="handleCollapse" 
+        class="layout-sider" 
+        v-show="showSideMenu"
+      >
+        <SideMenu 
+          :active-module="activeModule"
+          :collapsed="collapsed"
+          :is-detail-page="isDetailPage"
+          ref="sideMenuRef"
+        />
       </a-layout-sider>
 
       <!-- 主内容区 -->
@@ -95,14 +34,12 @@
                 <icon-menu-unfold v-else />
               </template>
             </a-button>
-            <a-breadcrumb :style="{ marginLeft: '24px', color: '#666' }" separator="/">
-              <a-breadcrumb-item>首页</a-breadcrumb-item>
-              <a-breadcrumb-item>{{ currentRoute }}</a-breadcrumb-item>
-            </a-breadcrumb>
+            <BreadcrumbNav :current-path="route.path" />
           </a-space>
         </a-layout-header>
+        
         <a-layout-content class="layout-content">
-          <router-view></router-view>
+          <router-view />
         </a-layout-content>
       </a-layout>
     </a-layout>
@@ -110,477 +47,125 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import TourGuideButton from '@/components/guide/TourGuideButton.vue'
-import { ROUTE_NAMES, ROUTE_PATHS } from '@/router/constants'
-import { navigateTo } from '@/router/utils'
-import { warning } from '@/utils/message'
+import TopMenu from './TopMenu.vue'
+import SideMenu from './SideMenu.vue'
+import BreadcrumbNav from './BreadcrumbNav.vue'
+import { getMenuItemByPath } from '../../config/menuConfig'
 import {
-  IconApps,
-  IconRobot,
   IconMenuFold,
-  IconMenuUnfold,
-  IconCommon,
-  IconExperiment,
-  IconDashboard,
-  IconSafe
+  IconMenuUnfold
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
 const route = useRoute()
-const isDetailPage = computed(() => route.path.includes('/discovery/customer360/detail'))
 
+// 组件引用
+const topMenuRef = ref(null)
+const sideMenuRef = ref(null)
+
+// 布局状态
 const collapsed = ref(false)
-const searchText = ref('')
 const breakpoint = 'xl'
-const selectedKeys = ref([route.name])
-const activeTopMenu = ref('discovery')
-const showSideMenu = ref(true)
+const activeModule = ref('discovery')
 
-const handleTopMenuClick = (key) => {
-  try {
-    activeTopMenu.value = key
-    selectedKeys.value = []
+// 计算是否为详情页
+const isDetailPage = computed(() => {
+  return route.path.includes('/detail') || route.path.includes('/customer360/')
+})
 
-    // 使用路由常量进行跳转
-    if (key === 'home') {
-      navigateTo(router, ROUTE_PATHS.HOME)
-      activeTopMenu.value = ''
-      return
-    }
+// 计算是否显示侧边菜单
+const showSideMenu = computed(() => {
+  // 首页不显示侧边菜单
+  return activeModule.value !== 'home'
+})
 
-    const menuItem = menuItems.find(item => item.key === key)
-    if (menuItem) {
-      if (menuItem.children && menuItem.children.length > 0) {
-        const firstChild = menuItem.children[0]
-        if (firstChild && firstChild.path) {
-          navigateTo(router, firstChild.path)
-          selectedKeys.value = [firstChild.key]
-        }
-        activeTopMenu.value = key
-      } else if (menuItem.path) {
-        navigateTo(router, menuItem.path)
-        selectedKeys.value = [menuItem.key]
-      }
-    }
-  } catch (error) {
-    console.error('顶部菜单点击错误:', error)
-    warning('菜单跳转失败，请重试')
+// 处理顶部菜单变化
+const handleTopMenuChange = (moduleKey) => {
+  console.log('顶部菜单变化:', moduleKey)
+  activeModule.value = moduleKey
+  
+  // 清空侧边菜单搜索
+  if (sideMenuRef.value) {
+    sideMenuRef.value.clearSearch()
   }
 }
 
-
-
-import touchMenuItems from './touchMenuItems'
-
-const menuItems = [
-  {
-    key: 'discovery',
-    title: '数据发现',
-    children: [
-      {
-        key: 'asset-overview',
-        title: '资产总览',
-        path: '/discovery/asset-overview'
-      },
-      {
-        key: 'dataMap',
-        title: '统一搜索',
-        path: '/discovery/data-map'
-      },
-      {
-        key: 'full-data',
-        title: '全量数据',
-        path: '/discovery/data-map/TableList'
-      },
-      {
-        key: 'data-asset',
-        title: '数据资产',
-        children: [
-          {
-            key: 'metrics-map',
-            title: '指标地图',
-            path: '/discovery/metrics-map'
-          },
-          {
-            key: 'credit-variables',
-            title: '征信变量',
-            path: '/discovery/credit'
-          },
-          {
-            key: 'external-data',
-            title: '外部数据',
-            path: '/external-data-v1/list'
-          }
-        ]
-      },
-      {
-        key: 'data-register',
-        title: '数据注册',
-        children: [
-          {
-            key: 'table-management',
-            title: '表管理',
-            path: '/discovery/asset-management/table-management'
-          },
-          {
-            key: 'external-data-management',
-            title: '外部数据管理',
-            path: '/discovery/asset-management/external-data-management'
-          },
-          {
-            key: 'metric-management',
-            title: '指标管理',
-            path: '/discovery/asset-management/metric-management'
-          },
-          {
-            key: 'batch-asset-management',
-            title: '批量资产管理',
-            path: '/discovery/asset-management/batch-asset-management'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    key: 'exploration',
-    title: '数据探索',
-    children: [
-      {
-        key: 'explorationIndex',
-        title: '探索首页',
-        path: '/exploration/index'
-      },
-      {
-        key: 'data-register',
-        title: '外数生命周期',
-        children: [
-          {
-            key: 'budget-management',
-            title: '预算管理',
-            path: '/exploration/external-data-analysis/budget-management'
-          },
-          {
-            key: 'external-data-evaluation',
-            title: '外部数据评估',
-            path: '/exploration/external-data-analysis/external-data-evaluation'
-          },
-          {
-            key: 'external-data-monitor',
-            title: '外部数据监控',
-            path: '/exploration/external-data-analysis/external-data-monitor'
-          }
-        ]
-      },
-      {
-        key: 'customer360',
-        title: '客户360',
-        path: '/discovery/customer360'
-      },
-      {
-        key: 'customer-center',
-        title: '客群中心',
-        children: [
-          {            key: 'audience-management',            title: '人群管理',            path: '/exploration/customer-center/audience-system/audience-management'          },
-          {
-            key: 'event-center',
-            title: '事件中心',
-            children: [
-              {
-                key: 'event-center-index',
-                title: '事件中心首页',
-                path: '/exploration/customer-center/event-center'
-              },
-              {
-                key: 'event-management',
-                title: '事件管理',
-                path: '/exploration/customer-center/event-center/event-management'
-              },
-              {
-                key: 'virtual-events',
-                title: '虚拟事件',
-                path: '/exploration/customer-center/event-center/virtual-events'
-              },
-              {
-                key: 'sample-stats',
-                title: '样本统计',
-                path: '/exploration/customer-center/event-center/sample-stats'
-              },
-              {
-                key: 'kafka-datasource',
-                title: 'Kafka数据源',
-                path: '/exploration/customer-center/event-center/kafka-datasource'
-              }
-            ]
-          },
-          {
-            key: 'tag-system',
-            title: '标签管理',
-            children: [
-              {
-                key: 'tag-system-index',
-                title: '标签体系首页',
-                path: '/exploration/customer-center/tag-system'
-              },
-              {
-                key: 'tag-management',
-                title: '标签管理',
-                path: '/exploration/customer-center/tag-system/tag-management'
-              },
-              {
-                key: 'attribute-management',
-                title: '属性管理',
-                path: '/exploration/customer-center/tag-system/attribute-management'
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    key: 'management',
-    title: '数据管理',
-    children: [
-      {
-        key: 'management-service',
-        title: '数据服务',
-        path: '/management/service'
-      },
-      {
-        key: 'permission',
-        title: '权限管理',
-        path: '/management/permission'
-      },
-      {
-        key: 'accompany',
-        title: '陪跑计划',
-        path: '/management/accompany',
-        children: [
-          {
-            key: 'management-accompany-create',
-            title: '创建陪跑',
-            path: '/management/accompany/create'
-          },
-          {
-            key: 'management-accompany-result',
-            title: '陪跑结果',
-            path: '/management/accompany/result'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    key: 'marketing',
-    title: '数字营销',
-    children: [
-      {
-        key: 'dashboard',
-        title: '权益首页',
-        path: '/marketing/dashboard'
-      },
-      {
-        key: 'benefitConfig',
-        title: '权益配置',
-        children: [
-          {
-            key: 'template',
-            title: '模板管理',
-            path: '/marketing/benefit/template'
-          },
-          {
-            key: 'coupon-management',
-            title: '券管理',
-            path: '/marketing/benefit/management'
-          },
-          {
-            key: 'package',
-            title: '券包管理',
-            path: '/marketing/benefit/package'
-          }
-        ]
-      },
-      {
-        key: 'dataStatistics',
-        title: '数据统计',
-        children: [
-          {
-            key: 'couponLogs',
-            title: '权益日志',
-            path: '/marketing/statistics/logs'
-          },
-          {
-            key: 'inventory',
-            title: '库存查询',
-            path: '/marketing/statistics/inventory'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    key: 'risk',
-    title: '数字风险',
-    children: [
-      {
-        key: 'risk-index',
-        title: '风险首页',
-        path: '/risk/index'
-      }
-    ]
-  },
-  {
-    key: 'touch',
-    title: '触达管理',
-    children: [...touchMenuItems]
-  }
-]
-
-
-const filteredMenuItems = computed(() => {
-  let items = menuItems
-
-  // 根据顶部菜单过滤
-  if (activeTopMenu.value) {
-    items = items.filter(item =>
-      item.key === activeTopMenu.value ||
-      item.path?.startsWith('/marketing')
-    )
-  }
-
-  // 根据搜索文本过滤
-  if (searchText.value) {
-    const search = searchText.value.toLowerCase()
-    items = items.map(item => {
-      if (item.children) {
-        const filteredChildren = item.children.filter(child =>
-          child.title.toLowerCase().includes(search)
-        )
-        return { ...item, children: filteredChildren }
-      }
-      return item
-    }).filter(item =>
-      item.children?.length ||
-      item.title.toLowerCase().includes(search)
-    )
-  }
-
-  return items
-})
-
-const currentRoute = computed(() => {
-  const currentMenu = menuItems.find(item => {
-    if (item.children) {
-      return item.children.some(child => child.key === route.name)
-    }
-    return item.key === route.name
-  })
-  return currentMenu?.title || ''
-})
-
+// 处理侧边栏折叠
 const handleCollapse = (val) => {
   collapsed.value = val
 }
 
+// 切换侧边栏折叠状态
 const toggleCollapse = () => {
   collapsed.value = !collapsed.value
 }
 
-const routeLogs = ref([]);
-
-const handleMenuClick = (key) => {
-  try {
-    if (typeof key !== 'string') {
-      console.error('Invalid route key:', key)
-      return
+// 根据路由更新活动模块
+const updateActiveModuleFromRoute = () => {
+  const menuInfo = getMenuItemByPath(route.path)
+  if (menuInfo && menuInfo.module !== activeModule.value) {
+    activeModule.value = menuInfo.module
+    
+    // 更新顶部菜单选中状态
+    if (topMenuRef.value) {
+      topMenuRef.value.setActiveMenu(menuInfo.module)
     }
-
-    // 查找菜单项对应的路径
-    const findMenuPath = (items, targetKey) => {
-      for (const item of items) {
-        if (item.key === targetKey) {
-          return item.path || item.route
-        }
-        if (item.children) {
-          const childPath = findMenuPath(item.children, targetKey)
-          if (childPath) return childPath
-        }
-      }
-      return null
-    }
-
-    const menuPath = findMenuPath(menuItems, key)
-    if (menuPath) {
-      // 记录路由跳转日志
-      routeLogs.value.unshift({
-        timestamp: new Date().toLocaleString(),
-        from: route.path,
-        to: menuPath,
-        key: key
-      })
-      // 只保留最近10条日志
-      if (routeLogs.value.length > 10) {
-        routeLogs.value.pop()
-      }
-
-      // 使用路由工具函数进行跳转
-      navigateTo(router, menuPath)
-      selectedKeys.value = [key]
-    } else {
-      console.warn(`未找到菜单项 ${key} 对应的路径`)
-      warning('菜单路径未配置，请联系管理员')
-    }
-  } catch (error) {
-    console.error('菜单点击错误:', error)
-    warning('菜单跳转失败，请重试')
   }
 }
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    updateActiveModuleFromRoute()
+  },
+  { immediate: true }
+)
+
+// 组件挂载时初始化
+onMounted(() => {
+  console.log('MainLayout 组件挂载完成')
+  updateActiveModuleFromRoute()
+})
 </script>
 
 <style scoped>
 .layout-container {
   height: 100vh;
+  overflow: hidden;
 }
 
-.top-menu {
+.top-menu-header {
   padding: 0 24px;
   background: #f8f9fa;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  height: 48px;
+  line-height: 48px;
 }
 
 .layout-sider {
-  background: #ffffff;
-}
-
-.menu-wrapper {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.menu-header {
-  padding: 20px 16px;
-  display: flex;
-  justify-content: center;
-}
-
-.menu-item-text {
-  font-size: 14px;
-  line-height: 22px;
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
 }
 
 .layout-header {
-  background: #ffffff;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border-2);
+  height: 48px;
+  line-height: 48px;
 }
 
 .layout-content {
+  background: #f5f5f5;
   padding: 16px;
-  background: var(--color-fill-2);
+  overflow-y: auto;
+}
+
+:deep(.arco-layout-sider-trigger) {
+  background: #fff;
+  border-top: 1px solid var(--color-border-2);
 }
 </style>

@@ -1,60 +1,163 @@
 /// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, reactive, onMounted } from 'vue';
 import { Message } from '@arco-design/web-vue';
-import { IconSearch, IconPlus } from '@arco-design/web-vue/es/icon';
+import { IconSearch, IconPlus, IconSync, IconImport } from '@arco-design/web-vue/es/icon';
+import { generateVirtualEventData, generateEventData } from '@/mock/event';
 // 搜索表单
 const searchForm = reactive({
     eventName: ''
 });
 // 表格数据
-const tableData = ref([
-    {
-        id: 1,
-        eventName: 'API注册成功事件',
-        eventId: '12345678',
-        scenario: '营销触达',
-        updater: '张三',
-        updateTime: '2024-08-13 12:32:21',
-        status: '已上线'
-    },
-    {
-        id: 2,
-        eventName: 'APP关键业务事件',
-        eventId: '12345678',
-        scenario: '营销触达',
-        updater: '张三',
-        updateTime: '2024-08-13 12:32:21',
-        status: '已上线'
-    },
-    {
-        id: 3,
-        eventName: '评估未来收益',
-        eventId: '12345678',
-        scenario: '营销触达',
-        updater: '李四',
-        updateTime: '2024-08-13 12:32:21',
-        status: '已下线'
-    },
-    {
-        id: 4,
-        eventName: '评估未来收益',
-        eventId: '12345678',
-        scenario: '营销触达',
-        updater: '李四',
-        updateTime: '2024-08-13 12:32:21',
-        status: '已下线'
-    }
-]);
+const tableData = ref([]);
+
+// 事件中心数据（用于同步）
+const eventCenterData = ref([]);
+
+// 同步相关状态
+const syncModalVisible = ref(false);
+const importModalVisible = ref(false);
+const syncLoading = ref(false);
+const selectedEvents = ref([]);
 // 加载状态
 const loading = ref(false);
 // 分页配置
 const pagination = reactive({
     current: 1,
     pageSize: 15,
-    total: 25,
+    total: 0,
     showTotal: true,
     showPageSize: true
 });
+
+// 初始化数据
+const initData = () => {
+    // 生成虚拟事件数据
+    const virtualEvents = generateVirtualEventData(25);
+    tableData.value = virtualEvents;
+    pagination.total = virtualEvents.length;
+    
+    // 生成事件中心数据
+    eventCenterData.value = generateEventData(50);
+};
+
+// 从事件中心导入事件
+const importFromEventCenter = () => {
+    importModalVisible.value = true;
+};
+
+// 同步虚拟事件到事件中心
+const syncToEventCenter = (record) => {
+    syncLoading.value = true;
+    
+    // 模拟同步过程
+    setTimeout(() => {
+        // 创建对应的真实事件
+        const realEvent = {
+            id: `EVT${Date.now()}`,
+            eventName: record.eventName.replace('虚拟事件', ''),
+            eventType: '用户事件',
+            eventSource: '虚拟事件同步',
+            triggerCondition: `基于虚拟事件${record.eventName}的条件`,
+            status: '上线',
+            createTime: new Date().toLocaleString('zh-CN'),
+            updateTime: new Date().toLocaleString('zh-CN'),
+            owner: record.updater,
+            description: `从虚拟事件${record.eventName}同步而来`,
+            registryKey: 'user_id'
+        };
+        
+        // 更新虚拟事件的同步状态
+        const index = tableData.value.findIndex(item => item.id === record.id);
+        if (index !== -1) {
+            tableData.value[index].realEventId = realEvent.id;
+            tableData.value[index].syncStatus = 'synced';
+        }
+        
+        // 添加到事件中心数据
+        eventCenterData.value.unshift(realEvent);
+        
+        syncLoading.value = false;
+        Message.success(`虚拟事件"${record.eventName}"已成功同步到事件中心`);
+    }, 2000);
+};
+
+// 批量同步选中的虚拟事件
+const batchSyncToEventCenter = () => {
+    if (selectedEvents.value.length === 0) {
+        Message.warning('请选择要同步的虚拟事件');
+        return;
+    }
+    
+    syncLoading.value = true;
+    let syncedCount = 0;
+    
+    selectedEvents.value.forEach((eventId, index) => {
+        setTimeout(() => {
+            const record = tableData.value.find(item => item.id === eventId);
+            if (record && record.syncStatus !== 'synced') {
+                syncToEventCenter(record);
+                syncedCount++;
+            }
+            
+            if (index === selectedEvents.value.length - 1) {
+                setTimeout(() => {
+                    syncLoading.value = false;
+                    Message.success(`成功同步${syncedCount}个虚拟事件到事件中心`);
+                    selectedEvents.value = [];
+                }, 1000);
+            }
+        }, index * 500);
+    });
+};
+
+// 确认导入选中的事件
+const confirmImportEvents = () => {
+    if (selectedEvents.value.length === 0) {
+        Message.warning('请选择要导入的事件');
+        return;
+    }
+    
+    selectedEvents.value.forEach(eventId => {
+        const realEvent = eventCenterData.value.find(item => item.id === eventId);
+        if (realEvent) {
+            // 创建基于真实事件的虚拟事件
+            const virtualEvent = {
+                id: `VE${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                eventName: `${realEvent.eventName}虚拟事件`,
+                eventId: `virtual_${realEvent.id.toLowerCase()}`,
+                scenario: '营销触达',
+                status: '草稿',
+                updater: '当前用户',
+                updateTime: new Date().toLocaleString('zh-CN'),
+                createTime: new Date().toLocaleString('zh-CN'),
+                description: `基于事件中心"${realEvent.eventName}"创建的虚拟事件`,
+                logicRelation: 'AND',
+                conditionGroups: [
+                    {
+                        id: 1,
+                        conditions: [
+                            {
+                                field: realEvent.eventName,
+                                operator: '用户ID',
+                                value: '',
+                                logic: '等于'
+                            }
+                        ]
+                    }
+                ],
+                realEventId: realEvent.id,
+                syncStatus: 'synced'
+            };
+            
+            tableData.value.unshift(virtualEvent);
+            pagination.total += 1;
+        }
+    });
+    
+    Message.success(`成功导入${selectedEvents.value.length}个事件`);
+    importModalVisible.value = false;
+    selectedEvents.value = [];
+};
 // 获取状态颜色
 const getStatusColor = (status) => {
     switch (status) {
@@ -184,23 +287,34 @@ const saveVirtualEvent = () => {
         Message.error('请选择使用场景');
         return;
     }
+    
     // 模拟保存
     const newEvent = {
-        id: tableData.value.length + 1,
+        id: `VE${Date.now()}`,
         eventName: createForm.eventName,
         eventId: createForm.eventId,
         scenario: createForm.scenario,
+        status: '草稿',
         updater: '当前用户',
         updateTime: new Date().toLocaleString('zh-CN'),
-        status: '草稿'
+        createTime: new Date().toLocaleString('zh-CN'),
+        description: createForm.description || '',
+        logicRelation: createForm.logicRelation,
+        conditionGroups: JSON.parse(JSON.stringify(createForm.conditionGroups)),
+        realEventId: null,
+        syncStatus: 'pending'
     };
+    
     tableData.value.unshift(newEvent);
     pagination.total += 1;
     Message.success('虚拟事件创建成功');
     createModalVisible.value = false;
+    
+    // 重置表单
     resetCreateForm();
 };
-// 重置表单
+
+// 重置创建表单
 const resetCreateForm = () => {
     createForm.eventName = '';
     createForm.eventId = '';
@@ -221,44 +335,78 @@ const resetCreateForm = () => {
         }
     ];
 };
+
 // 取消创建
 const cancelCreate = () => {
     createModalVisible.value = false;
     resetCreateForm();
 };
+
 // 查看事件详情
 const viewEventDetail = (record) => {
     console.log('查看详情:', record);
     Message.info('查看详情功能开发中...');
 };
+
 // 编辑事件
 const editEvent = (record) => {
     console.log('编辑事件:', record);
     Message.info('编辑功能开发中...');
 };
+
 // 复制事件
 const copyEvent = (record) => {
     console.log('复制事件:', record);
     Message.success('复制成功');
 };
+
 // 删除事件
 const deleteEvent = (record) => {
     console.log('删除事件:', record);
     Message.warning('删除功能开发中...');
 };
-// 分页变化
+
+// 分页处理
 const onPageChange = (page) => {
     pagination.current = page;
     console.log('页码变化:', page);
 };
+
 const onPageSizeChange = (pageSize) => {
     pagination.pageSize = pageSize;
     pagination.current = 1;
     console.log('页大小变化:', pageSize);
 };
-// 组件挂载
+
+// 获取同步状态颜色
+const getSyncStatusColor = (syncStatus) => {
+    switch (syncStatus) {
+        case 'synced':
+            return 'green';
+        case 'failed':
+            return 'red';
+        case 'pending':
+        default:
+            return 'orange';
+    }
+};
+
+// 获取同步状态文本
+const getSyncStatusText = (syncStatus) => {
+    switch (syncStatus) {
+        case 'synced':
+            return '已同步';
+        case 'failed':
+            return '同步失败';
+        case 'pending':
+        default:
+            return '待同步';
+    }
+};
+
+// 组件挂载时初始化数据
 onMounted(() => {
-    // 初始化数据
+    initData();
 });
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
@@ -1322,12 +1470,25 @@ const __VLS_self = (await import('vue')).defineComponent({
         return {
             IconSearch: IconSearch,
             IconPlus: IconPlus,
+            IconSync: IconSync,
+            IconImport: IconImport,
             searchForm: searchForm,
             tableData: tableData,
+            eventCenterData: eventCenterData,
+            syncModalVisible: syncModalVisible,
+            importModalVisible: importModalVisible,
+            syncLoading: syncLoading,
+            selectedEvents: selectedEvents,
             loading: loading,
             pagination: pagination,
             getStatusColor: getStatusColor,
+            getSyncStatusColor: getSyncStatusColor,
+            getSyncStatusText: getSyncStatusText,
             handleSearch: handleSearch,
+            importFromEventCenter: importFromEventCenter,
+            syncToEventCenter: syncToEventCenter,
+            batchSyncToEventCenter: batchSyncToEventCenter,
+            confirmImportEvents: confirmImportEvents,
             createModalVisible: createModalVisible,
             createForm: createForm,
             scenarioOptions: scenarioOptions,
@@ -1340,6 +1501,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             removeCondition: removeCondition,
             removeConditionGroup: removeConditionGroup,
             saveVirtualEvent: saveVirtualEvent,
+            resetCreateForm: resetCreateForm,
             cancelCreate: cancelCreate,
             viewEventDetail: viewEventDetail,
             editEvent: editEvent,

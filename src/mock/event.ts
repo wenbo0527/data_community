@@ -14,6 +14,34 @@ export interface EventData {
   registryKey: string // 注册主键
 }
 
+export interface VirtualEventData {
+  id: string
+  eventName: string
+  eventId: string
+  scenario: string
+  status: string
+  updater: string
+  updateTime: string
+  createTime: string
+  description: string
+  logicRelation: string
+  conditionGroups: ConditionGroup[]
+  realEventId: string | null
+  syncStatus: string
+}
+
+export interface ConditionGroup {
+  id: number
+  conditions: Condition[]
+}
+
+export interface Condition {
+  field: string
+  operator: string
+  value: string
+  logic: string
+}
+
 // 生成事件管理数据
 export const generateEventData = (count: number): EventData[] => {
   const eventTypes = ['系统事件', '业务事件', '用户事件', '营销事件', '风控事件']
@@ -46,6 +74,53 @@ export const generateEventData = (count: number): EventData[] => {
     })
   }
 
+  return data
+}
+
+// 生成虚拟事件数据
+export const generateVirtualEventData = (count: number): VirtualEventData[] => {
+  const scenarios = ['营销触达', '风险控制', '用户分析', '行为监控']
+  const statusOptions = ['已上线', '已下线', '草稿']
+  const updaters = ['张三', '李四', '王五', '赵六', '系统管理员']
+  const eventTypes = ['用户注册', '用户登录', '订单支付', '页面访问', '商品收藏', '购物车添加', '优惠券使用', '评价提交']
+  
+  const data: VirtualEventData[] = []
+  
+  for (let i = 0; i < count; i++) {
+    const scenario = scenarios[Math.floor(Math.random() * scenarios.length)]
+    const status = statusOptions[Math.floor(Math.random() * statusOptions.length)]
+    const updater = updaters[Math.floor(Math.random() * updaters.length)]
+    const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
+    
+    data.push({
+      id: `VE${Mock.Random.string('number', 6)}`,
+      eventName: `${eventType}虚拟事件${Mock.Random.string('number', 3)}`,
+      eventId: `virtual_${Mock.Random.string('lower', 8)}`,
+      scenario,
+      status,
+      updater,
+      updateTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
+      createTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
+      description: Mock.Random.sentence(10, 20),
+      logicRelation: Math.random() > 0.5 ? 'AND' : 'OR',
+      conditionGroups: [
+        {
+          id: 1,
+          conditions: [
+            {
+              field: eventType,
+              operator: ['身份证号', '手机号', '用户ID'][Math.floor(Math.random() * 3)],
+              value: Mock.Random.string('number', 6),
+              logic: ['等于', '不等于', '包含'][Math.floor(Math.random() * 3)]
+            }
+          ]
+        }
+      ],
+      realEventId: null,
+      syncStatus: 'pending' // pending, synced, failed
+    })
+  }
+  
   return data
 }
 

@@ -33,7 +33,7 @@
         <template #title>
           <span class="card-title">人群基本信息</span>
         </template>
-        
+
         <div class="info-grid">
           <div class="info-row">
             <div class="info-item">
@@ -47,7 +47,7 @@
               <span class="value">{{ getCreateMethodText(audienceDetail.createMethod) }}</span>
             </div>
           </div>
-          
+
           <div class="info-row">
             <div class="info-item">
               <span class="label">更新频率：</span>
@@ -58,7 +58,7 @@
               <span class="value">{{ audienceDetail.validPeriod }}</span>
             </div>
           </div>
-          
+
           <div class="info-row">
             <div class="info-item">
               <span class="label">共享级别：</span>
@@ -71,7 +71,7 @@
               <span class="value">{{ audienceDetail.createUser }}</span>
             </div>
           </div>
-          
+
           <div class="info-row full-width">
             <div class="info-item">
               <span class="label">人群描述：</span>
@@ -90,7 +90,7 @@
             <span class="card-title">人群统计</span>
           </div>
         </template>
-        
+
         <div class="subject-content">
           <div class="subject-stats">
             <div class="stat-item">
@@ -114,7 +114,7 @@
               <div class="stat-value">{{ audienceStats.updateTime }}</div>
             </div>
           </div>
-          
+
           <!-- 数据分布图表 -->
           <div class="chart-section">
             <div class="chart-tabs">
@@ -124,7 +124,7 @@
                 <a-radio value="lineage">血缘查询</a-radio>
               </a-radio-group>
             </div>
-            
+
             <div class="chart-content">
               <div v-if="activeTab === 'distribution'" class="distribution-chart">
                 <div class="total-count">
@@ -132,28 +132,26 @@
                   <span class="count-label">人</span>
                   <span class="count-desc">当前人群数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
                 </div>
-                
+
                 <!-- 数据分布条形图 -->
                 <div class="distribution-bars">
                   <div v-for="(item, index) in distributionData" :key="index" class="bar-item">
                     <div class="bar-label">{{ item.label }}</div>
                     <div class="bar-container">
-                      <div 
-                        class="bar-fill" 
-                        :style="{ width: item.percentage + '%', backgroundColor: item.color }"
-                      ></div>
+                      <div class="bar-fill" :style="{ width: item.percentage + '%', backgroundColor: item.color }">
+                      </div>
                     </div>
                     <div class="bar-value">{{ item.percentage }}%</div>
                   </div>
                 </div>
               </div>
-              
+
               <div v-if="activeTab === 'trend'" class="trend-chart">
                 <div class="trend-placeholder">
                   趋势分析图表区域
                 </div>
               </div>
-              
+
               <div v-if="activeTab === 'lineage'" class="lineage-chart">
                 <div class="lineage-header">
                   <div class="lineage-title">
@@ -193,71 +191,17 @@
         <template #title>
           <span class="card-title">人群规则配置</span>
         </template>
-        
+
         <div class="rule-config-content">
-          <!-- 规则配置区域 -->
-          <div class="audience-rules-config">
-            <!-- 规则概览 -->
-            <div class="rules-overview">
-              <div class="section-header">
-                <h3>规则概览</h3>
-                <div class="rule-stats">
-                  <span class="rule-count">共 {{ audienceRules.conditionGroups.length }} 个条件组</span>
-                  <span class="rule-logic">组间关系：{{ audienceRules.crossGroupLogic === 'and' ? '且' : '或' }}</span>
-                </div>
-              </div>
-              
-              <div class="rules-summary">
-                <div class="summary-item">
-                  <span class="summary-label">规则类型：</span>
-                  <span class="summary-value">{{ getRuleTypeText(audienceRules.ruleType) }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label">预估人群规模：</span>
-                  <span class="summary-value primary">{{ formatNumber(audienceRules.estimatedCount) }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label">规则复杂度：</span>
-                  <span class="summary-value">{{ getRuleComplexity() }}</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 规则详情配置区域 -->
-            <div class="rule-detail-section">
-              <div class="config-header">
-                <h4>规则详情</h4>
-              </div>
-              
-              <!-- 条件组配置 -->
-              <div class="condition-groups-section">
-                <div class="section-header">
-                  <h4 class="section-title">条件配置</h4>
-                  <div class="section-info">
-                    <span class="condition-count">共 {{ audienceRules.conditionGroups.length }} 个条件组</span>
-                  </div>
-                </div>
-                
-                <!-- 条件组配置区域 -->
-                <div class="conditions-workspace">
-                  <ConditionConfig
-                     :condition-groups="audienceRules.conditionGroups"
-                     :cross-group-logic="audienceRules.crossGroupLogic"
-                     :editable="false"
-                     :data-source-type-options="dataSourceTypeOptions"
-                     :date-type-options="dateTypeOptions"
-                     :dynamic-unit-options="dynamicUnitOptions"
-                     :get-field-options="getFieldOptions"
-                     :get-aggregation-options="getAggregationOptions"
-                     :get-operator-options="getOperatorOptions"
-                     :need-value-input="needValueInput"
-                     :get-value-placeholder="getValuePlaceholder"
-                     :on-data-source-type-change="onDataSourceTypeChange"
-                     :on-date-type-change="onDateTypeChange"
-                   />
-                </div>
-              </div>
-            </div>
+          <!-- 条件配置区域 -->
+          <div class="conditions-workspace">
+            <ConditionConfig :condition-groups="audienceRules.conditionGroups"
+              :cross-group-logic="audienceRules.crossGroupLogic" :editable="false"
+              :data-source-type-options="dataSourceTypeOptions" :date-type-options="dateTypeOptions"
+              :dynamic-unit-options="dynamicUnitOptions" :get-field-options="getFieldOptions"
+              :get-aggregation-options="getAggregationOptions" :get-operator-options="getOperatorOptions"
+              :need-value-input="needValueInput" :get-value-placeholder="getValuePlaceholder"
+              :on-data-source-type-change="onDataSourceTypeChange" :on-date-type-change="onDateTypeChange" />
           </div>
         </div>
       </a-card>
@@ -569,7 +513,7 @@ const getRuleComplexity = () => {
   const totalConditions = audienceRules.conditionGroups.reduce((sum, group) => {
     return sum + group.conditions.length
   }, 0)
-  
+
   if (totalConditions <= 3) return '简单'
   if (totalConditions <= 8) return '中等'
   return '复杂'
@@ -602,30 +546,36 @@ const formatNumber = (num) => {
 // 初始化血缘图表
 const initLineageChart = () => {
   if (!lineageChartRef.value) return
-  
+
   lineageChart = echarts.init(lineageChartRef.value)
-  
+
   const option = {
     tooltip: {
       trigger: 'item',
       triggerOn: 'mousemove',
-      formatter: function(params) {
+      formatter: function (params) {
         const data = params.data
         let content = `<div style="padding: 8px;">`
         content += `<div style="font-weight: bold; margin-bottom: 4px;">${data.name}</div>`
-        
+
         if (data.category === 'audience') {
           content += `<div style="color: #666;">类型: 人群</div>`
           content += `<div style="color: #666;">规模: ${formatNumber(audienceStats.totalCount)}</div>`
+          content += `<div style="color: #666;">更新时间: ${new Date(audienceStats.updateTime).toLocaleString()}</div>`
         } else if (data.category === 'tag') {
           content += `<div style="color: #666;">类型: 标签</div>`
+          content += `<div style="color: #666;">最后更新: ${data.tagUpdatedTime || '无记录'}</div>`
         } else if (data.category === 'attribute') {
           content += `<div style="color: #666;">类型: 属性</div>`
+          content += `<div style="color: #666;">同步时间: ${data.lastSynced || '未同步'}</div>`
+          content += `<div style="color: #666;margin-top:4px;">更新时间: ${new Date(data.audienceStats?.updateTime || data.updatedAt).toLocaleString()}</div>`
         } else if (data.category === 'table') {
           content += `<div style="color: #666;">类型: 数据表</div>`
           content += `<div style="color: #666;">表名: ${data.value || data.name}</div>`
+          content += `<div style="color: #666;">分区更新: ${data.partitionTime || '无分区'}</div>`
+          content += `<div style="color: #666;margin-top:4px;">最后更新: ${new Date(data.tableUpdatedAt).toLocaleString()}</div>`
         }
-        
+
         content += `</div>`
         return content
       }
@@ -646,7 +596,7 @@ const initLineageChart = () => {
           align: 'right',
           fontSize: 12,
           color: '#333',
-          formatter: function(params) {
+          formatter: function (params) {
             return params.data.name
           }
         },
@@ -664,7 +614,7 @@ const initLineageChart = () => {
         animationDuration: 550,
         animationDurationUpdate: 750,
         itemStyle: {
-          color: function(params) {
+          color: function (params) {
             const colorMap = {
               'audience': '#1890ff',
               'tag': '#52c41a',
@@ -684,9 +634,9 @@ const initLineageChart = () => {
       }
     ]
   }
-  
+
   lineageChart.setOption(option)
-  
+
   // 监听窗口大小变化
   window.addEventListener('resize', () => {
     if (lineageChart) {
@@ -782,7 +732,7 @@ const exportAudience = () => {
     rules: audienceRules,
     exportTime: new Date().toISOString()
   }
-  
+
   const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -837,9 +787,9 @@ const addConditionByType = (group, type) => {
     'detail': 'detail',
     'user': 'attribute'
   }
-  
+
   const dataSourceType = typeMapping[type] || 'detail'
-  
+
   const newCondition = {
     id: generateId(),
     dataSourceType: dataSourceType,
@@ -927,7 +877,7 @@ const exportRules = () => {
     estimatedCount: estimatedCount.value,
     exportTime: new Date().toISOString()
   }
-  
+
   const blob = new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -951,7 +901,7 @@ const editGroupName = (group) => {
 // 删除条件
 const removeCondition = (group, conditionIndex) => {
   group.conditions.splice(conditionIndex, 1)
-  
+
   // 如果条件组为空，可以选择删除条件组
   if (group.conditions.length === 0) {
     // 这里可以提示用户是否删除空的条件组
@@ -966,7 +916,7 @@ const onDataSourceTypeChange = (condition) => {
   condition.aggregationType = getDefaultAggregationType(condition.dataSourceType)
   condition.operator = getDefaultOperator(condition.dataSourceType)
   condition.value = ''
-  
+
   // 属性数据不需要日期范围
   if (condition.dataSourceType === 'attribute') {
     condition.dateType = null
@@ -1040,32 +990,32 @@ const getOperatorOptions = (condition) => {
     { label: '等于', value: 'eq' },
     { label: '不等于', value: 'ne' }
   ]
-  
+
   const numericOptions = [
     { label: '大于', value: 'gt' },
     { label: '大于等于', value: 'gte' },
     { label: '小于', value: 'lt' },
     { label: '小于等于', value: 'lte' }
   ]
-  
+
   const stringOptions = [
     { label: '包含', value: 'contains' },
     { label: '不包含', value: 'not_contains' },
     { label: '开始于', value: 'starts_with' },
     { label: '结束于', value: 'ends_with' }
   ]
-  
+
   const existsOptions = [
     { label: '存在', value: 'exists' },
     { label: '不存在', value: 'not_exists' }
   ]
-  
+
   if (condition.dataSourceType === 'detail' || condition.dataSourceType === 'behavior') {
     return [...commonOptions, ...numericOptions, ...existsOptions]
   } else if (condition.dataSourceType === 'attribute') {
     return [...commonOptions, ...stringOptions, ...existsOptions]
   }
-  
+
   return commonOptions
 }
 
@@ -1408,89 +1358,13 @@ onMounted(() => {
   padding: 24px;
 }
 
-/* 人群规则配置样式 */
-.audience-rules-config {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  height: 100%;
-}
-
-/* 规则概览区域 */
-.rules-overview {
+/* 条件配置区域样式 */
+.conditions-workspace {
   background: #ffffff;
   border: 1px solid #e5e6eb;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.rules-overview .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e6eb;
-}
-
-.rule-stats {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.rule-count,
-.rule-logic {
-  font-size: 12px;
-  color: #86909c;
-  padding: 4px 8px;
-  background: #f7f8fa;
-  border-radius: 4px;
-}
-
-.rules-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.summary-label {
-  color: #86909c;
-  font-size: 14px;
-  min-width: 100px;
-}
-
-.summary-value {
-  color: #1d2129;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.summary-value.primary {
-  color: #1890ff;
-  font-size: 16px;
-}
-
-/* 规则详情配置区域 */
-.rule-detail-section {
-  background: #ffffff;
-  border: 1px solid #e5e6eb;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.rule-detail-section .config-header {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e6eb;
 }
 
 .tag-values-management .section-header h3 {
@@ -2580,5 +2454,4 @@ onMounted(() => {
   color: #6c757d;
   font-size: 14px;
 }
-
 </style>
