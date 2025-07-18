@@ -46,7 +46,7 @@ export const nodeTypes = {
       items: [
         { 
           group: 'out', 
-          id: 'out1',
+          id: 'out',
           attrs: {
             circle: {
               r: 6,
@@ -197,9 +197,9 @@ export const getNodeAttrs = (nodeType) => {
 
   return {
     body: {
-      fill: config.color,
-      stroke: config.color,
-      strokeWidth: 2,
+      fill: config.color,        // 使用实心颜色填充
+      stroke: config.color,      // 边框颜色与填充颜色一致
+      strokeWidth: 0,            // 去掉边框，使用纯实心效果
     },
     text: {
       fill: '#FFFFFF',
@@ -226,7 +226,7 @@ export const getNodePorts = (nodeType, options = {}) => {
     return config.ports
   }
 
-  // 默认端口配置
+  // 默认端口配置 - 统一为每个节点配置1个输入端口和1个输出端口
   const portGroups = canvasConfig.getPortGroups()
   const baseConfig = {
     groups: {
@@ -249,48 +249,15 @@ export const getNodePorts = (nodeType, options = {}) => {
         }
       }
     },
-    items: [
-      { group: 'in', id: 'in1' }
-    ]
+    items: []
   }
 
-  // 根据节点类型添加输出端口
-  if (config.maxOutputs === 'dynamic') {
-    // 动态端口，由配置决定
-    const outputCount = options.outputCount || 2
-    for (let i = 0; i < outputCount; i++) {
-      baseConfig.items.push({
-        group: 'out',
-        id: `out${i + 1}`,
-        attrs: {
-          circle: {
-            ...portGroups.out.attrs.circle,
-            stroke: config.color,
-            'data-label': `分支${i + 1}`
-          }
-        }
-      })
-    }
-  } else if (config.maxOutputs > 1) {
-    // 固定多个端口
-    for (let i = 0; i < config.maxOutputs; i++) {
-      baseConfig.items.push({
-        group: 'out',
-        id: `out${i + 1}`,
-        attrs: {
-          circle: {
-            ...portGroups.out.attrs.circle,
-            stroke: config.color,
-            'data-label': `分支${i + 1}`
-          }
-        }
-      })
-    }
-  } else if (config.maxOutputs === 1) {
-    // 单个输出端口
+  // 根据节点类型添加端口
+  if (nodeType === 'start') {
+    // 开始节点只有输出端口
     baseConfig.items.push({
       group: 'out',
-      id: 'out1',
+      id: 'out',
       attrs: {
         circle: {
           ...portGroups.out.attrs.circle,
@@ -298,8 +265,43 @@ export const getNodePorts = (nodeType, options = {}) => {
         }
       }
     })
+  } else if (nodeType === 'end') {
+    // 结束节点只有输入端口
+    baseConfig.items.push({
+      group: 'in',
+      id: 'in',
+      attrs: {
+        circle: {
+          ...portGroups.in.attrs.circle,
+          stroke: config.color
+        }
+      }
+    })
+  } else {
+    // 其他节点都有1个输入端口和1个输出端口
+    baseConfig.items.push(
+      {
+        group: 'in',
+        id: 'in',
+        attrs: {
+          circle: {
+            ...portGroups.in.attrs.circle,
+            stroke: config.color
+          }
+        }
+      },
+      {
+        group: 'out',
+        id: 'out',
+        attrs: {
+          circle: {
+            ...portGroups.out.attrs.circle,
+            stroke: config.color
+          }
+        }
+      }
+    )
   }
-  // maxOutputs === 0 的节点（如结束节点）不添加输出端口
 
   return baseConfig
 }

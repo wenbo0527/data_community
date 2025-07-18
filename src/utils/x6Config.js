@@ -297,6 +297,35 @@ export const getEdgeStyles = () => ({
   zIndex: 0
 })
 
+// 可拖拽预设线边形状配置
+export const getDraggablePreviewEdgeConfig = () => ({
+  inherit: 'edge',
+  attrs: {
+    line: {
+      stroke: '#1890ff',
+      strokeWidth: 2,
+      strokeDasharray: '5,5',
+      cursor: 'grab',
+      opacity: 0.8,
+      targetMarker: {
+        name: 'block',
+        width: 8,
+        height: 6,
+        fill: '#1890ff'
+      }
+    }
+  },
+  zIndex: 1000
+})
+
+// 注册自定义边形状
+export const registerCustomShapes = (Graph) => {
+  // 注册可拖拽预设线边形状
+  Graph.registerEdge('draggable-preview-edge', getDraggablePreviewEdgeConfig())
+  
+  console.log('✅ 自定义边形状注册完成')
+}
+
 // 动画配置
 export const getAnimationConfig = () => ({
   // 节点添加动画

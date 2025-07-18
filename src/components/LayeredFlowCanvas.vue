@@ -110,6 +110,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { Modal } from '@arco-design/web-vue'
 import NodeWithPresetSlots from './NodeWithPresetSlots.vue'
 import FlowNode from './FlowNode.vue'
 import NodeTypeSelector from './NodeTypeSelector.vue'
@@ -593,14 +594,66 @@ const handleNodeClick = (node) => {
   emit('node-selected', node)
 }
 
+// 递归获取所有子节点（用于计算删除数量）
+const getAllDescendantNodes = (nodeId, visited = new Set()) => {
+  if (visited.has(nodeId)) {
+    return []
+  }
+  visited.add(nodeId)
+  
+  const descendants = []
+  const outgoingConnections = connections.value.filter(conn => conn.sourceId === nodeId)
+  
+  for (const connection of outgoingConnections) {
+    const targetId = connection.targetId
+    if (!descendants.includes(targetId)) {
+      descendants.push(targetId)
+    }
+    
+    // 递归获取子节点的子节点
+    const grandChildren = getAllDescendantNodes(targetId, visited)
+    for (const grandChild of grandChildren) {
+      if (!descendants.includes(grandChild)) {
+        descendants.push(grandChild)
+      }
+    }
+  }
+  
+  return descendants
+}
+
 // 处理节点删除
 const handleNodeDelete = (node) => {
-  // 递归删除节点及其后续节点
-  deleteNodeAndDescendants(node.id)
+  // 获取所有需要删除的子节点
+  const descendants = getAllDescendantNodes(node.id)
+  const totalNodesToDelete = descendants.length + 1 // 包括当前节点
+  
+  // 如果有子节点，显示确认对话框
+  if (descendants.length > 0) {
+    Modal.confirm({
+      title: '确认删除',
+      content: `删除此节点将同时删除 ${descendants.length} 个子节点，共计 ${totalNodesToDelete} 个节点。是否继续？`,
+      okText: '确认删除',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: () => {
+        // 执行级联删除
+        deleteNodeAndDescendants(node.id)
+      },
+      onCancel: () => {
+        console.log('[LayeredFlowCanvas] 用户取消删除操作')
+      }
+    })
+  } else {
+    // 没有子节点，直接删除
+    deleteNodeAndDescendants(node.id)
+  }
 }
 
 // 递归删除节点及其后续节点
 const deleteNodeAndDescendants = (nodeId) => {
+  console.log(`[LayeredFlowCanvas] 开始级联删除节点: ${nodeId}`)
+  
   // 找到所有从该节点出发的连接
   const outgoingConnections = connections.value.filter(conn => conn.sourceId === nodeId)
   
@@ -647,6 +700,8 @@ const deleteNodeAndDescendants = (nodeId) => {
   if (nodeIndex >= 0) {
     const deletedNode = nodes.value[nodeIndex]
     nodes.value.splice(nodeIndex, 1)
+    
+    console.log(`[LayeredFlowCanvas] 删除节点: ${nodeId}`)
     
     // 触发节点删除事件
     emit('node-deleted', deletedNode)

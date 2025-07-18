@@ -15,7 +15,9 @@
     <div 
       v-if="actualDeletable" 
       class="flow-node__delete-btn" 
-      @click.stop="handleDeleteClick"
+      @click.stop.prevent="handleDeleteClick"
+      @mousedown.stop.prevent
+      @mouseup.stop.prevent
       title="删除节点"
     >
       <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
@@ -141,6 +143,11 @@ const handleClick = (event) => {
 // 处理删除按钮点击
 const handleDeleteClick = (event) => {
   console.log('[FlowNode] 删除按钮被点击:', props.node?.id)
+  
+  // 阻止事件冒泡和默认行为
+  event.preventDefault()
+  event.stopPropagation()
+  event.stopImmediatePropagation()
   
   // 首先尝试通过emit触发事件（用于LayeredFlowCanvas等直接使用的场景）
   emit('delete', { 

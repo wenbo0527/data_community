@@ -1,6 +1,6 @@
-import { ref, reactive } from 'vue'
-import useStructuredLayout from './useStructuredLayout.js'
-import { validateInterface, createInterfaceWrapper, STRUCTURED_LAYOUT_INTERFACE } from '../utils/interfaceValidator.js'
+import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { useStructuredLayout } from './useStructuredLayout.js'
+import { nodeConfigManager } from '../utils/NodeConfigManager.js'
 
 /**
  * 配置抽屉管理 Composable
@@ -9,6 +9,15 @@ import { validateInterface, createInterfaceWrapper, STRUCTURED_LAYOUT_INTERFACE 
 export function useConfigDrawers(getGraph, nodeOperations = {}) {
   // 初始化结构化布局
   const structuredLayout = useStructuredLayout(getGraph)
+  
+  // 增强预设线管理器引用
+  let enhancedPreviewManager = null
+  
+  // 设置增强预设线管理器
+  const setEnhancedPreviewManager = (manager) => {
+    enhancedPreviewManager = manager
+    console.log('[useConfigDrawers] 设置增强预设线管理器:', !!manager)
+  }
   
   // 抽屉状态管理
   const drawerStates = reactive({
@@ -61,30 +70,60 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
    * @param {Object} data - 配置数据
    */
   const openConfigDrawer = (nodeType, node, data = {}) => {
+    console.log(`[useConfigDrawers] 开始打开配置抽屉 - 节点类型: ${nodeType}, 节点ID: ${node.id}`)
+    
     // 映射节点类型到抽屉类型
     const drawerType = getDrawerType(nodeType)
+    console.log(`[useConfigDrawers] 映射后的抽屉类型: ${drawerType}`)
     
     if (!drawerStates[drawerType]) {
       console.warn(`Unknown drawer type: ${drawerType}`)
       return
     }
 
-    // 关闭其他抽屉
-    closeAllDrawers()
+    // 检查当前抽屉状态
+    console.log(`[useConfigDrawers] 当前抽屉状态:`, {
+      drawerType,
+      visible: drawerStates[drawerType].visible,
+      hasData: Object.keys(drawerStates[drawerType].data).length > 0,
+      hasInstance: !!drawerStates[drawerType].instance
+    })
 
-    // 确保data中包含节点ID
+    // 关闭其他抽屉（除了当前要打开的抽屉）
+    console.log(`[useConfigDrawers] 关闭其他抽屉（除了 ${drawerType}）...`)
+    closeAllDrawers(drawerType)
+
+    // 检查是否为新节点（没有配置数据或配置数据为空）
+    const isNewNode = !data || Object.keys(data).length === 0 || 
+                     (data.config && Object.keys(data.config).length === 0)
+    
+    console.log(`[useConfigDrawers] 节点状态检查:`, {
+      nodeId: node.id,
+      isNewNode,
+      dataKeys: data ? Object.keys(data) : [],
+      configKeys: data?.config ? Object.keys(data.config) : []
+    })
+
+    // 确保data中包含节点ID和新节点标识
     const drawerData = {
       ...data,
       nodeId: node.id,
-      nodeType: nodeType
+      nodeType: nodeType,
+      isNewNode: isNewNode  // 添加新节点标识
     }
 
     // 打开指定抽屉
+    console.log(`[useConfigDrawers] 设置抽屉状态为可见...`)
     drawerStates[drawerType].visible = true
     drawerStates[drawerType].data = drawerData
     drawerStates[drawerType].instance = node
 
-    console.log(`[useConfigDrawers] 打开配置抽屉: ${drawerType}, 节点ID: ${node.id}`)
+    console.log(`[useConfigDrawers] 打开配置抽屉完成: ${drawerType}, 节点ID: ${node.id}, 是否新节点: ${isNewNode}`)
+    console.log(`[useConfigDrawers] 最终抽屉状态:`, {
+      visible: drawerStates[drawerType].visible,
+      dataKeys: Object.keys(drawerStates[drawerType].data),
+      instanceId: drawerStates[drawerType].instance?.id
+    })
   }
 
   /**
@@ -92,25 +131,40 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
    * @param {string} drawerType - 抽屉类型
    */
   const closeConfigDrawer = (drawerType) => {
+    console.log(`[useConfigDrawers] 开始关闭配置抽屉: ${drawerType}`)
+    
     if (!drawerStates[drawerType]) {
-      console.warn(`Unknown drawer type: ${drawerType}`)
+      console.warn(`[useConfigDrawers] 未知的抽屉类型: ${drawerType}`)
       return
     }
 
+    const wasVisible = drawerStates[drawerType].visible
+    
+    // 如果抽屉已经关闭，避免重复操作
+    if (!wasVisible) {
+      console.log(`[useConfigDrawers] 抽屉 ${drawerType} 已经关闭，跳过重复关闭操作`)
+      return
+    }
+    
     drawerStates[drawerType].visible = false
     drawerStates[drawerType].data = {}
     drawerStates[drawerType].instance = null
 
-    console.log(`Closed config drawer: ${drawerType}`)
+    console.log(`[useConfigDrawers] 关闭配置抽屉完成: ${drawerType}`)
   }
 
   /**
    * 关闭所有抽屉
+   * @param {string} excludeDrawerType - 要排除的抽屉类型（不关闭）
    */
-  const closeAllDrawers = () => {
+  const closeAllDrawers = (excludeDrawerType = null) => {
+    console.log(`[useConfigDrawers] 关闭所有抽屉，排除: ${excludeDrawerType}`)
     Object.keys(drawerStates).forEach(drawerType => {
-      if (drawerStates[drawerType].visible) {
+      if (drawerStates[drawerType].visible && drawerType !== excludeDrawerType) {
+        console.log(`[useConfigDrawers] 关闭抽屉: ${drawerType}`)
         closeConfigDrawer(drawerType)
+      } else if (drawerType === excludeDrawerType) {
+        console.log(`[useConfigDrawers] 跳过关闭抽屉: ${drawerType}`)
       }
     })
   }
@@ -120,78 +174,64 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
    * @param {string} drawerType - 抽屉类型
    * @param {Object} config - 配置数据
    */
-  const handleConfigConfirm = (drawerType, config) => {
-    console.log(`[useConfigDrawers] 处理配置确认 - 抽屉类型: ${drawerType}`, config)
+  const handleConfigConfirm = async (drawerType, config) => {
+    console.log(`[useConfigDrawers] 开始处理配置确认 - ${drawerType}:`, config)
     
-    const drawerState = drawerStates[drawerType]
-    if (!drawerState) {
-      console.error(`[useConfigDrawers] 未找到抽屉状态: ${drawerType}`)
-      return
-    }
-
-    console.log(`[useConfigDrawers] 抽屉状态:`, drawerState)
-    
-    // 获取有效的节点实例
-    let nodeInstance = drawerState.instance
-    
-    if (!nodeInstance || typeof nodeInstance.getData !== 'function') {
-      console.warn(`[useConfigDrawers] 节点实例无效，尝试从图中获取 - 抽屉类型: ${drawerType}`)
-      console.log(`[useConfigDrawers] 当前实例:`, nodeInstance)
-      console.log(`[useConfigDrawers] 抽屉数据:`, drawerState.data)
-      
-      // 尝试从图中获取节点实例
-      const graph = getGraph()
-      if (graph && drawerState.data && drawerState.data.nodeId) {
-        const node = graph.getCellById(drawerState.data.nodeId)
-        if (node && typeof node.getData === 'function') {
-          console.log(`[useConfigDrawers] 从图中成功获取节点实例:`, node)
-          nodeInstance = node
-          drawerState.instance = node // 更新抽屉状态中的实例
-        } else {
-          console.error(`[useConfigDrawers] 从图中获取的节点实例无效:`, node)
-        }
-      }
-      
-      if (!nodeInstance || typeof nodeInstance.getData !== 'function') {
-        console.error(`[useConfigDrawers] 无法获取有效的节点实例，配置保存失败`)
-        console.error(`[useConfigDrawers] 最终节点实例:`, nodeInstance)
-        console.error(`[useConfigDrawers] 图实例:`, graph)
-        console.error(`[useConfigDrawers] 节点ID:`, drawerState.data?.nodeId)
-        return
-      }
-    }
-
     try {
-      // 根据不同的节点类型处理配置
-      switch (drawerType) {
-        case 'start':
-          handleStartNodeConfig(nodeInstance, config)
-          break
-        case 'crowd-split':
-          handleCrowdSplitNodeConfig(nodeInstance, config)
-          break
-        case 'event-split':
-          handleEventSplitNodeConfig(nodeInstance, config)
-          break
-        case 'ai-call':
-          handleAICallNodeConfig(nodeInstance, config)
-          break
-        case 'sms':
-          handleSMSNodeConfig(nodeInstance, config)
-          break
-        case 'manual-call':
-          handleManualCallNodeConfig(nodeInstance, config)
-          break
-        case 'ab-test':
-          handleABTestNodeConfig(nodeInstance, config)
-          break
-        case 'wait':
-          handleWaitNodeConfig(nodeInstance, config)
-          break
-        default:
-          handleDefaultNodeConfig(nodeInstance, config)
+      const nodeInstance = getCurrentNodeInstance()
+      console.log(`[useConfigDrawers] 获取到节点实例:`, { nodeId: nodeInstance?.id, nodeType: nodeInstance?.getData()?.type })
+      
+      if (!nodeInstance) {
+        console.error('[useConfigDrawers] 节点实例不存在')
+        throw new Error('节点实例不存在')
       }
 
+      // 获取节点类型
+      const nodeType = getNodeTypeFromDrawerType(drawerType)
+      console.log(`[useConfigDrawers] 映射节点类型: ${drawerType} -> ${nodeType}`)
+      
+      // 准备上下文对象
+      const context = {
+        nodeOperations,
+        structuredLayout,
+        graph: getGraph()
+      }
+
+      // 使用统一的节点配置管理器处理配置
+      await nodeConfigManager.processNodeConfig(nodeType, nodeInstance, config, context)
+
+      // 触发节点更新事件，让父组件能够同步本地数据
+      const graph = getGraph()
+      if (graph && graph.trigger) {
+        graph.trigger('node:config-updated', {
+          node: nodeInstance,
+          nodeType: nodeType,
+          config: config
+        })
+      }
+
+      // 触发统一预览线创建（配置完成后）
+      console.log(`[useConfigDrawers] 检查是否需要创建配置后预览线`)
+      const unifiedPreviewManager = structuredLayout.getConnectionPreviewManager()
+      console.log(`[useConfigDrawers] 统一预览线管理器实例:`, unifiedPreviewManager)
+      console.log(`[useConfigDrawers] 管理器类型:`, unifiedPreviewManager?.constructor?.name)
+      console.log(`[useConfigDrawers] createPreviewLineAfterConfig 方法存在:`, typeof unifiedPreviewManager?.createPreviewLineAfterConfig)
+      
+      if (unifiedPreviewManager && typeof unifiedPreviewManager.createPreviewLineAfterConfig === 'function') {
+        console.log(`[useConfigDrawers] 为节点 ${nodeInstance.id} 创建配置后预览线`)
+        try {
+          await unifiedPreviewManager.createPreviewLineAfterConfig(nodeInstance, config)
+          console.log(`[useConfigDrawers] 配置后预览线创建成功`)
+        } catch (error) {
+          console.error(`[useConfigDrawers] 配置后预览线创建失败:`, error)
+        }
+      } else {
+        console.log(`[useConfigDrawers] 统一预览线管理器不存在或方法不可用`)
+        console.log(`[useConfigDrawers] 可用方法:`, unifiedPreviewManager ? Object.getOwnPropertyNames(Object.getPrototypeOf(unifiedPreviewManager)) : 'N/A')
+      }
+
+      console.log(`[useConfigDrawers] 配置处理完成，准备关闭抽屉: ${drawerType}`)
+      
       // 关闭抽屉
       closeConfigDrawer(drawerType)
       
@@ -231,423 +271,38 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
   }
 
   /**
-   * 处理开始节点配置
+   * 从抽屉类型获取节点类型
+   * @param {string} drawerType - 抽屉类型
+   * @returns {string} 节点类型
    */
-  const handleStartNodeConfig = (node, config) => {
-    // 更新节点数据
-    const currentData = node.getData() || {}
-    node.setData({
-      ...currentData,
-      config
-    })
-
-    // 更新节点样式
-    updateStartNodeStyle(node, config)
-  }
-
-  /**
-   * 获取节点操作对象
-   */
-  const getNodeOperations = () => {
-    return nodeOperations
-  }
-
-  /**
-   * 处理人群分流节点配置
-   */
-  const handleCrowdSplitNodeConfig = (node, config) => {
-    const graph = getGraph()
-    if (!graph) {
-      console.error('[useConfigDrawers] 图实例不存在')
-      return
+  const getNodeTypeFromDrawerType = (drawerType) => {
+    const reverseMapping = {
+      'start': 'start',
+      'crowd-split': 'audience-split',
+      'event-split': 'event-split',
+      'ai-call': 'ai-call',
+      'sms': 'sms',
+      'manual-call': 'manual-call',
+      'ab-test': 'ab-test',
+      'wait': 'wait'
     }
-
-    console.log('[useConfigDrawers] 处理人群分流节点配置:', config)
-    console.log('[useConfigDrawers] 节点实例:', node)
-
-    // 验证节点实例
-    if (!node || typeof node.getData !== 'function') {
-      console.error('[useConfigDrawers] 无效的节点实例:', node)
-      console.error('[useConfigDrawers] 节点类型:', typeof node)
-      console.error('[useConfigDrawers] 节点方法:', node ? Object.getOwnPropertyNames(node) : 'node is null/undefined')
-      return
-    }
-
-    try {
-      // 更新节点数据
-      const currentNodeData = node.getData() || {}
-      const nodeData = {
-        ...currentNodeData,
-        config
-      }
-      node.setData(nodeData)
-
-      // 更新节点标签
-      if (config.nodeName) {
-        node.setAttrByPath('text/text', config.nodeName)
-      }
-
-      // 将新的 crowdLayers 数据结构转换为兼容旧逻辑的 branches 格式
-      if (config.crowdLayers && config.crowdLayers.length > 0) {
-        const branches = config.crowdLayers.map((layer, index) => ({
-          id: layer.id,
-          name: layer.crowdName || `分支${index + 1}`, // 使用人群名称作为分支名称
-          crowdId: layer.crowdId,
-          crowdName: layer.crowdName,
-          order: layer.order || index + 1
-        }))
-
-        // 添加默认的未命中分支
-        branches.push({
-          id: 'default',
-          name: '未命中人群',
-          crowdId: null,
-          crowdName: '未命中人群',
-          order: branches.length + 1
-        })
-
-        // 更新节点配置，包含转换后的分支信息
-        const updatedConfig = {
-          ...config,
-          branches,
-          branchCount: branches.length,
-          audiences: branches.map(branch => ({
-            id: branch.crowdId,
-            name: branch.crowdName,
-            condition: branch.id
-          }))
-        }
-
-        node.setData({
-          ...nodeData,
-          config: updatedConfig
-        })
-
-        console.log('[useConfigDrawers] 转换后的分支配置:', branches)
-
-        // 使用结构化布局管理器更新分支布局
-        if (structuredLayout.isReady.value) {
-          structuredLayout.updateSplitNodeBranches(node, updatedConfig)
-        } else {
-          // 如果布局引擎未就绪，初始化后再更新
-          structuredLayout.initLayoutEngine()
-          setTimeout(() => {
-            structuredLayout.updateSplitNodeBranches(node, updatedConfig)
-          }, 100)
-        }
-      }
-
-      // 触发预设位重新生成
-      const nodeOperations = getNodeOperations()
-      if (nodeOperations && nodeOperations.updateNodePorts) {
-        nodeOperations.updateNodePorts(node.id)
-      }
-    } catch (error) {
-      console.error('[useConfigDrawers] 处理人群分流节点配置时发生错误:', error)
-      throw error
-    }
+    return reverseMapping[drawerType] || drawerType
   }
 
   /**
-   * 处理事件分流节点配置
+   * 获取当前节点实例
    */
-  const handleEventSplitNodeConfig = (node, config) => {
-    const graph = getGraph()
-    if (!graph) {
-      console.error('[useConfigDrawers] 图实例不存在')
-      return
-    }
-
-    console.log('[useConfigDrawers] 处理事件分流节点配置:', config)
-
-    try {
-      // 更新节点数据
-      const currentNodeData = node.getData() || {}
-      const nodeData = {
-        ...currentNodeData,
-        config
+  const getCurrentNodeInstance = () => {
+    // 遍历所有抽屉状态，找到当前打开的抽屉
+    for (const [drawerType, state] of Object.entries(drawerStates)) {
+      if (state.visible && state.instance) {
+        console.log(`[useConfigDrawers] 从 ${drawerType} 抽屉获取节点实例:`, state.instance.id)
+        return state.instance
       }
-      node.setData(nodeData)
-
-      // 更新节点标签
-      if (config.nodeName) {
-        node.setAttrByPath('text/text', config.nodeName)
-      }
-
-      // 事件分流节点固定有两个分支：是/否
-      const branches = [
-        {
-          id: 'event_yes',
-          name: config.yesLabel || '是',
-          condition: 'yes'
-        },
-        {
-          id: 'event_no', 
-          name: config.noLabel || '否',
-          condition: 'no'
-        }
-      ]
-
-      const updatedConfig = {
-        ...config,
-        branches,
-        branchCount: branches.length
-      }
-
-      node.setData({
-        ...nodeData,
-        config: updatedConfig
-      })
-
-      console.log('[useConfigDrawers] 事件分流分支配置:', branches)
-
-      // 使用结构化布局管理器更新分支布局
-      if (structuredLayout.isReady.value) {
-        structuredLayout.updateSplitNodeBranches(node, updatedConfig)
-      } else {
-        // 如果布局引擎未就绪，初始化后再更新
-        structuredLayout.initLayoutEngine()
-        setTimeout(() => {
-          structuredLayout.updateSplitNodeBranches(node, updatedConfig)
-        }, 100)
-      }
-
-      // 触发预设位重新生成
-      const nodeOperations = getNodeOperations()
-      if (nodeOperations && nodeOperations.updateNodePorts) {
-        nodeOperations.updateNodePorts(node.id)
-      }
-    } catch (error) {
-      console.error('[useConfigDrawers] 处理事件分流节点配置时发生错误:', error)
-      throw error
-    }
-  }
-
-  /**
-   * 处理AI外呼节点配置
-   */
-  const handleAICallNodeConfig = (node, config) => {
-    nodeOperations.updateNodeData(node.id, { config })
-  }
-
-  /**
-   * 处理短信节点配置
-   */
-  const handleSMSNodeConfig = (node, config) => {
-    nodeOperations.updateNodeData(node.id, { config })
-  }
-
-  /**
-   * 处理人工外呼节点配置
-   */
-  const handleManualCallNodeConfig = (node, config) => {
-    nodeOperations.updateNodeData(node.id, { config })
-  }
-
-  /**
-   * 处理AB测试节点配置
-   */
-  const handleABTestNodeConfig = (node, config) => {
-    const graph = getGraph()
-    if (!graph) {
-      console.error('[useConfigDrawers] 图实例不存在')
-      return
-    }
-
-    console.log('[useConfigDrawers] 处理AB测试节点配置:', config)
-
-    try {
-      // 更新节点数据
-      const currentNodeData = node.getData() || {}
-      const nodeData = {
-        ...currentNodeData,
-        config
-      }
-      node.setData(nodeData)
-
-      // 更新节点标签
-      if (config.nodeName) {
-        node.setAttrByPath('text/text', config.nodeName)
-      }
-
-      // AB测试节点固定有两个分支：A组/B组
-      const branches = [
-        {
-          id: 'ab_a',
-          name: config.groupALabel || '实验组A',
-          condition: 'group_a',
-          ratio: config.groupARatio || 50
-        },
-        {
-          id: 'ab_b',
-          name: config.groupBLabel || '实验组B',
-          condition: 'group_b',
-          ratio: config.groupBRatio || 50
-        }
-      ]
-
-      const updatedConfig = {
-        ...config,
-        branches,
-        branchCount: branches.length
-      }
-
-      node.setData({
-        ...nodeData,
-        config: updatedConfig
-      })
-
-      console.log('[useConfigDrawers] AB测试分支配置:', branches)
-
-      // 使用结构化布局管理器更新分支布局
-      if (structuredLayout.isReady.value) {
-        structuredLayout.updateSplitNodeBranches(node, updatedConfig)
-      } else {
-        // 如果布局引擎未就绪，初始化后再更新
-        structuredLayout.initLayoutEngine()
-        setTimeout(() => {
-          structuredLayout.updateSplitNodeBranches(node, updatedConfig)
-        }, 100)
-      }
-
-      // 触发预设位重新生成
-      const nodeOperations = getNodeOperations()
-      if (nodeOperations && nodeOperations.updateNodePorts) {
-        nodeOperations.updateNodePorts(node.id)
-      }
-    } catch (error) {
-      console.error('[useConfigDrawers] 处理AB测试节点配置时发生错误:', error)
-      throw error
-    }
-  }
-
-  /**
-   * 处理等待节点配置
-   */
-  const handleWaitNodeConfig = (node, config) => {
-    nodeOperations.updateNodeData(node.id, { config })
-  }
-
-  /**
-   * 处理默认节点配置
-   */
-  const handleDefaultNodeConfig = (node, config) => {
-    nodeOperations.updateNodeData(node.id, { config })
-  }
-
-  /**
-   * 更新开始节点样式
-   */
-  const updateStartNodeStyle = (node, config) => {
-    // 根据任务类型设置不同的颜色
-    const typeColors = {
-      marketing: '#FF6B6B',
-      notification: '#4ECDC4',
-      survey: '#45B7D1',
-      retention: '#96CEB4'
-    }
-
-    const color = typeColors[config.taskType] || '#5F95FF'
-
-    node.attr({
-      body: {
-        fill: color,
-        stroke: color
-      }
-    })
-
-    // 更新标签显示配置信息
-    const taskTypeLabels = {
-      marketing: '营销活动',
-      notification: '通知推送',
-      survey: '问卷调研',
-      retention: '用户留存'
     }
     
-    const label = config.taskType 
-      ? `开始\n(${taskTypeLabels[config.taskType] || config.taskType})`
-      : '开始'
-    
-    node.attr({
-      text: {
-        text: label
-      }
-    })
-  }
-
-  /**
-   * 动态更新端口
-   */
-  const updateDynamicPorts = (node, portGroup, branches) => {
-    const oldPorts = node.getPorts().filter(p => p.group === portGroup)
-    oldPorts.forEach(p => node.removePort(p.id))
-
-    branches.forEach((branch, index) => {
-      const portId = `${portGroup}-${index}`
-      node.addPort({
-        id: portId,
-        group: portGroup,
-        attrs: {
-          text: {
-            text: branch.name,
-            fill: '#666',
-            fontSize: 10,
-            textAnchor: 'middle',
-            textVerticalAnchor: 'top'
-          }
-        }
-      })
-    })
-  }
-
-  /**
-   * 创建分支节点
-   */
-  const createBranchNodes = (graph, parentNode, config) => {
-    const { x, y } = parentNode.position()
-    const { width } = parentNode.size()
-    const gap = 150
-
-    config.branches?.forEach((branch, index) => {
-      const branchX = x + width + 100
-      const branchY = y + (index - (config.branches.length - 1) / 2) * gap
-      const portId = `out-${index}`
-
-      // 创建分支节点
-      const branchNode = nodeOperations.addNode({
-        type: 'branch-node',
-        data: {
-          parentNode: parentNode.id,
-          branchIndex: index,
-          branchConfig: branch
-        }
-      }, { x: branchX + 50, y: branchY + 50 })
-
-      if (branchNode) {
-        // 创建连接线
-        graph.addEdge({
-          source: { cell: parentNode.id, port: portId },
-          target: { cell: branchNode.id },
-          attrs: {
-            line: {
-              stroke: '#A2B1C3',
-              strokeWidth: 2,
-              targetMarker: {
-                name: 'block',
-                width: 12,
-                height: 8
-              }
-            }
-          },
-          data: {
-            branchIndex: index
-          }
-        })
-
-        // 将分支节点置于底层
-        branchNode.toBack()
-      }
-    })
+    console.warn('[useConfigDrawers] 未找到当前打开的抽屉或节点实例')
+    return null
   }
 
   return {
@@ -661,6 +316,11 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
     handleConfigConfirm,
     handleConfigCancel,
     getDrawerType,
+    getNodeTypeFromDrawerType,
+    setEnhancedPreviewManager,
+    
+    // 节点配置管理器
+    nodeConfigManager,
     
     // 结构化布局功能
     structuredLayout: {

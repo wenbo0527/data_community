@@ -268,9 +268,8 @@ export class BranchLayoutManager {
    * @param {Array} branches - 分支数组
    */
   updateNodePorts(node, branches) {
-    // 检查是否启用简化模式
     const nodeData = node.getData() || {}
-    const isSimplified = nodeData.portMode === 'simplified' || (branches.length > 2 && !nodeData.portMode)
+    const nodeType = nodeData.nodeType || nodeData.type
     
     // 先移除现有的输出端口
     const existingPorts = node.getPorts().filter(p => p.group === 'out')
@@ -278,66 +277,33 @@ export class BranchLayoutManager {
       node.removePort(port.id)
     })
     
-    if (isSimplified && branches.length > 1) {
-      // 简化模式：只显示一个主输出端口
+    // 根据节点类型添加统一的输出端口
+    if (nodeType !== 'end') {
+      // 除了结束节点，所有节点都有一个统一的输出端口
       node.addPort({
         group: 'out',
-        id: 'out_main',
-        args: {
-          label: `${branches.length}个分支`
-        },
+        id: 'out',
         attrs: {
           circle: {
-            r: 8,
+            r: 6,
             magnet: true,
             stroke: '#5F95FF',
             strokeWidth: 2,
             fill: '#fff'
-          },
-          text: {
-            fontSize: 12,
-            fill: '#666'
           }
         }
       })
-      
-      // 存储分支信息到节点数据中
-      const updatedData = {
-        ...nodeData,
-        portMode: 'simplified',
-        virtualBranches: branches
-      }
-      node.setData(updatedData)
-    } else {
-      // 详细模式：为每个分支创建输出端口
-      branches.forEach((branch, index) => {
-        node.addPort({
-          group: 'out',
-          id: `out_${branch.id}`,
-          args: {
-            label: branch.label
-          },
-          attrs: {
-            circle: {
-              r: 6,
-              magnet: true,
-              stroke: '#5F95FF',
-              strokeWidth: 2,
-              fill: '#fff'
-            }
-          }
-        })
-      })
-      
-      // 更新节点数据
-      const updatedData = {
-        ...nodeData,
-        portMode: 'detailed'
-      }
-      node.setData(updatedData)
     }
     
-    console.log('[BranchLayoutManager] 节点端口已更新:', node.id, branches.length, isSimplified ? '简化模式' : '详细模式')
+    // 存储分支信息到节点数据中，但不影响端口配置
+    const updatedData = {
+      ...nodeData,
+      branches: branches,
+      branchCount: branches.length
+    }
+    node.setData(updatedData)
+    
+    console.log('[BranchLayoutManager] 节点端口已更新（统一模式）:', node.id, '分支数量:', branches.length)
   }
 
   /**
@@ -394,6 +360,8 @@ export class BranchLayoutManager {
    */
   clearBranchLayout(node) {
     const currentData = node.getData() || {}
+    const nodeType = currentData.nodeType || currentData.type
+    
     const updatedData = {
       ...currentData,
       branches: [],
@@ -408,35 +376,46 @@ export class BranchLayoutManager {
       node.removePort(port.id)
     })
     
+    // 重新添加统一的输出端口（除了结束节点）
+    if (nodeType !== 'end') {
+      node.addPort({
+        group: 'out',
+        id: 'out',
+        attrs: {
+          circle: {
+            r: 6,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 2,
+            fill: '#fff'
+          }
+        }
+      })
+    }
+    
     console.log('[BranchLayoutManager] 分支布局数据已清理:', node.id)
   }
 
   /**
-   * 切换端口显示模式
+   * 切换端口显示模式（简化版本，现在所有节点都使用统一端口）
    * @param {Object} node - 节点
-   * @param {string} mode - 模式 ('simplified' | 'detailed' | 'auto')
+   * @param {string} mode - 模式（保留参数兼容性，但实际不使用）
    */
   togglePortMode(node, mode = 'auto') {
     const nodeData = node.getData() || {}
-    const branches = nodeData.virtualBranches || nodeData.branches || []
+    const branches = nodeData.branches || []
     
-    let newMode = mode
-    if (mode === 'auto') {
-      // 自动模式：根据分支数量决定
-      newMode = branches.length > 2 ? 'simplified' : 'detailed'
-    }
-    
-    // 更新节点数据
+    // 统一模式：所有节点都使用相同的端口配置
     const updatedData = {
       ...nodeData,
-      portMode: newMode
+      portMode: 'unified' // 标记为统一模式
     }
     node.setData(updatedData)
     
-    // 重新更新端口
+    // 重新更新端口（使用统一配置）
     this.updateNodePorts(node, branches)
     
-    console.log('[BranchLayoutManager] 端口模式已切换:', node.id, newMode)
+    console.log('[BranchLayoutManager] 端口模式已设置为统一模式:', node.id)
   }
 
   /**
@@ -446,17 +425,17 @@ export class BranchLayoutManager {
    */
   getNodeBranches(node) {
     const nodeData = node.getData() || {}
-    return nodeData.virtualBranches || nodeData.branches || []
+    return nodeData.branches || []
   }
 
   /**
-   * 检查节点是否为简化模式
+   * 检查节点是否为简化模式（现在所有节点都是统一模式）
    * @param {Object} node - 节点
-   * @returns {boolean} 是否为简化模式
+   * @returns {boolean} 始终返回false，因为不再使用简化模式
    */
   isSimplifiedMode(node) {
-    const nodeData = node.getData() || {}
-    return nodeData.portMode === 'simplified'
+    // 统一模式下，不再区分简化模式
+    return false
   }
 }
 

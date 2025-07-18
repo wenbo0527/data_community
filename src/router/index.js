@@ -275,6 +275,16 @@ beforeEnter: (to) => {
             description: 'TaskFlow组件功能测试页面',
             layout: 'blank'
           }
+        },
+        {
+          path: 'canvas-validation',
+          name: 'CanvasValidationTest',
+          component: () => import('../pages/test/CanvasValidationTest.vue'),
+          meta: {
+            title: '画布校验测试',
+            description: '画布数据校验功能测试页面',
+            layout: 'blank'
+          }
         }
       ]
     },

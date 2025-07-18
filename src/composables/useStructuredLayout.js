@@ -6,33 +6,80 @@
 import { ref, computed } from 'vue'
 import StructuredLayoutEngine, { CONNECTION_RULES } from '../utils/StructuredLayoutEngine.js'
 import BranchLayoutManager from '../utils/BranchLayoutManager.js'
-import ConnectionPreviewManager from '../utils/ConnectionPreviewManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import PreviewLineMigrationTool from '../utils/PreviewLineMigrationTool.js'
 
 export function useStructuredLayout(getGraph) {
   const layoutEngine = ref(null)
   const branchManager = ref(null)
-  const connectionPreviewManager = ref(null)
+  const connectionPreviewManager = ref(null) // 保持变量名不变，确保兼容性
+  const migrationTool = ref(null)
   const isLayouting = ref(false)
 
   // 初始化布局引擎
   const initLayoutEngine = () => {
-    console.log('[useStructuredLayout] 尝试初始化布局引擎')
-    const graph = getGraph()
-    console.log('[useStructuredLayout] 获取到的图实例:', graph)
+    console.log('[useStructuredLayout] 开始初始化布局引擎（使用统一预览线系统）')
     
-    if (graph && !layoutEngine.value) {
-      layoutEngine.value = new StructuredLayoutEngine(graph)
-      branchManager.value = new BranchLayoutManager(graph)
-      connectionPreviewManager.value = new ConnectionPreviewManager(graph, branchManager.value)
+    try {
+      const graph = getGraph()
       
-      console.log('[useStructuredLayout] 结构化布局引擎已初始化')
+      if (!graph) {
+        console.error('[useStructuredLayout] 图实例不存在，无法初始化布局引擎')
+        return null
+      }
+      
+      if (layoutEngine.value) {
+        console.log('[useStructuredLayout] 布局引擎已存在，跳过初始化')
+        return layoutEngine.value
+      }
+      
+      // 初始化各个组件
+      console.log('[useStructuredLayout] 创建布局引擎实例')
+      layoutEngine.value = new StructuredLayoutEngine(graph)
+      
+      console.log('[useStructuredLayout] 创建分支管理器实例')
+      branchManager.value = new BranchLayoutManager(graph)
+      
+      console.log('[useStructuredLayout] 创建统一预览线管理器实例')
+      connectionPreviewManager.value = new UnifiedPreviewLineManager(graph, branchManager.value)
+      
+      console.log('[useStructuredLayout] 创建迁移工具实例')
+      migrationTool.value = new PreviewLineMigrationTool(graph, branchManager.value)
+      
+      // 初始化统一预览线管理器
+      if (connectionPreviewManager.value) {
+        connectionPreviewManager.value.init()
+        console.log('✨ [useStructuredLayout] 统一预览线管理器初始化完成')
+      }
+      
+      // 验证初始化结果
+      if (!layoutEngine.value || !branchManager.value || !connectionPreviewManager.value) {
+        throw new Error('布局组件初始化失败')
+      }
+      
+      console.log('[useStructuredLayout] 统一预览线系统初始化成功')
       console.log('[useStructuredLayout] 布局引擎实例:', layoutEngine.value)
       console.log('[useStructuredLayout] 分支管理器实例:', branchManager.value)
-      console.log('[useStructuredLayout] 连接预览管理器实例:', connectionPreviewManager.value)
-    } else {
-      console.log('[useStructuredLayout] 布局引擎初始化跳过 - 图实例:', !!graph, '引擎已存在:', !!layoutEngine.value)
+      console.log('[useStructuredLayout] 统一预览线管理器实例:', connectionPreviewManager.value)
+      
+      // 暴露到全局变量以便调试和测试
+      window.unifiedPreviewManager = connectionPreviewManager.value
+      window.previewMigrationTool = migrationTool.value
+      console.log('🔍 [useStructuredLayout] 统一预览线系统已暴露到全局变量')
+      
+      return layoutEngine.value
+      
+    } catch (error) {
+      console.error('[useStructuredLayout] 布局引擎初始化失败:', error)
+      
+      // 清理部分初始化的组件
+      layoutEngine.value = null
+      branchManager.value = null
+      connectionPreviewManager.value = null
+      migrationTool.value = null
+      
+      return null
     }
-    return layoutEngine.value
   }
 
   // 获取布局引擎
@@ -172,9 +219,21 @@ export function useStructuredLayout(getGraph) {
       if (previewManager) {
         console.log('[useStructuredLayout] 为分流节点创建预览线:', splitNode.id)
         // 先清除该节点的现有预览线
-        previewManager.clearNodePreviews(splitNode.id)
-        // 创建新的预览线
-        previewManager.createPersistentPreview(splitNode)
+        previewManager.removePreviewLine(splitNode.id)
+        
+        // 检查节点类型，使用相应的预览线创建方法
+        const nodeData = splitNode.getData() || {}
+        const nodeType = nodeData.type || nodeData.nodeType
+        
+        if (nodeType === 'start') {
+          // 开始节点使用增强预览线功能
+          console.log('[useStructuredLayout] 开始节点使用增强预览线功能')
+          previewManager.createEnhancedPreviewLinesForNode(splitNode)
+        } else {
+          // 其他节点使用传统预览线功能
+          console.log('[useStructuredLayout] 分流节点使用传统预览线功能')
+          previewManager.createPersistentPreview(splitNode)
+        }
       } else {
         console.warn('[useStructuredLayout] 连接预览管理器未初始化，跳过预览线创建')
       }
@@ -295,29 +354,63 @@ export function useStructuredLayout(getGraph) {
    * 清理布局数据
    */
   const clearLayout = () => {
+    console.log('[useStructuredLayout] 开始清理统一预览线系统')
+    
     if (connectionPreviewManager.value) {
       connectionPreviewManager.value.destroy()
       connectionPreviewManager.value = null
+      console.log('[useStructuredLayout] 统一预览线管理器已销毁')
     }
+    
+    if (migrationTool.value) {
+      migrationTool.value.destroy()
+      migrationTool.value = null
+      console.log('[useStructuredLayout] 迁移工具已销毁')
+    }
+    
     if (layoutEngine.value) {
       layoutEngine.value = null
+      console.log('[useStructuredLayout] 布局引擎已清理')
     }
+    
     if (branchManager.value) {
       branchManager.value = null
+      console.log('[useStructuredLayout] 分支管理器已清理')
     }
-    console.log('[useStructuredLayout] 布局数据已清理')
+    
+    // 清理全局变量
+    if (window.unifiedPreviewManager) {
+      delete window.unifiedPreviewManager
+    }
+    if (window.previewMigrationTool) {
+      delete window.previewMigrationTool
+    }
+    
+    console.log('[useStructuredLayout] 统一预览线系统清理完成')
   }
 
   // 计算状态
   const isReady = computed(() => {
-    const ready = !!layoutEngine.value && !!branchManager.value && !!connectionPreviewManager.value
-    console.log('[useStructuredLayout] isReady 计算:', {
-      layoutEngine: !!layoutEngine.value,
-      branchManager: !!branchManager.value,
-      connectionPreviewManager: !!connectionPreviewManager.value,
-      ready
-    })
-    return ready
+    try {
+      const hasLayoutEngine = layoutEngine.value !== null && layoutEngine.value !== undefined
+      const hasBranchManager = branchManager.value !== null && branchManager.value !== undefined
+      const hasPreviewManager = connectionPreviewManager.value !== null && connectionPreviewManager.value !== undefined
+      
+      const ready = hasLayoutEngine && hasBranchManager && hasPreviewManager
+      
+      console.log('[useStructuredLayout] isReady 状态检查:', {
+        layoutEngine: hasLayoutEngine,
+        branchManager: hasBranchManager,
+        connectionPreviewManager: hasPreviewManager,
+        ready,
+        timestamp: new Date().toISOString()
+      })
+      
+      return ready
+    } catch (error) {
+      console.error('[useStructuredLayout] isReady 计算失败:', error)
+      return false
+    }
   })
 
   return {

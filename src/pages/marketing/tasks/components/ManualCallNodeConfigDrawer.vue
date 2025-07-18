@@ -1,35 +1,53 @@
 <template>
-  <a-drawer
-    v-model:visible="visible"
+  <BaseDrawer
+    :visible="visible"
+    :form-data="formData"
+    :form-rules="formRules"
+    :is-submitting="isSubmitting"
+    :is-form-valid="isFormValid"
     title="人工外呼节点配置"
     width="480px"
-    placement="right"
+    @update:visible="visible = $event"
+    @confirm="handleSubmit"
     @cancel="handleCancel"
   >
-    <div class="config-form">
-      <a-form
-        ref="formRef"
-        :model="formData"
-        layout="vertical"
-      >
-        <!-- 待开发 -->
-        <a-form-item label="外呼配置" field="callConfig">
-          <a-input placeholder="请输入外呼配置" />
-        </a-form-item>
-      </a-form>
-    </div>
+    <template #form>
+      <!-- 配置ID -->
+      <a-form-item label="配置ID" field="configId">
+        <a-input 
+          v-model="formData.configId" 
+          placeholder="请输入人工外呼配置ID" 
+          allow-clear
+        />
+      </a-form-item>
+      
+      <!-- 外呼配置描述 -->
+      <a-form-item label="配置描述" field="description">
+        <a-textarea 
+          v-model="formData.description" 
+          placeholder="请输入配置描述（可选）" 
+          :max-length="200"
+          show-word-limit
+          :auto-size="{ minRows: 2, maxRows: 4 }"
+        />
+      </a-form-item>
+    </template>
 
-    <template #footer>
-      <div class="drawer-footer">
-        <a-button @click="handleCancel">取消</a-button>
-        <a-button type="primary" @click="handleSubmit">确定</a-button>
+    <template #debug>
+      <div class="debug-info">
+        <div><strong>配置ID:</strong> {{ formData.configId || '未设置' }}</div>
+        <div><strong>配置描述:</strong> {{ formData.description || '未设置' }}</div>
+        <div><strong>表单验证状态:</strong> {{ isFormValid ? '有效' : '无效' }}</div>
+        <div><strong>是否新节点:</strong> {{ nodeData?.isNewNode ? '是' : '否' }}</div>
       </div>
     </template>
-  </a-drawer>
+  </BaseDrawer>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
+import BaseDrawer from './BaseDrawer.vue'
+import { useBaseDrawer } from '@/composables/useBaseDrawer.js'
 
 const props = defineProps({
   visible: {
@@ -44,19 +62,88 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'confirm', 'cancel'])
 
-const formRef = ref()
-const visible = ref(false)
-const formData = reactive({
-  callConfig: ''
+// 表单验证规则
+const formRules = {
+  configId: [
+    { required: true, message: '请输入配置ID' },
+    { 
+      pattern: /^[A-Za-z0-9_-]+$/, 
+      message: '配置ID只能包含字母、数字、下划线和横线' 
+    },
+    {
+      min: 3,
+      max: 50,
+      message: '配置ID长度应在3-50个字符之间'
+    }
+  ]
+}
+
+// 初始表单数据
+const getInitialFormData = () => ({
+  configId: '',
+  description: ''
 })
 
-const handleCancel = () => {
-  emit('update:visible', false)
-  emit('cancel')
+// 自定义验证函数
+const customValidation = (formData) => {
+  const errors = []
+  
+  // 验证配置ID
+  if (!formData.configId || formData.configId.trim() === '') {
+    errors.push('请输入配置ID')
+  } else if (!/^[A-Za-z0-9_-]+$/.test(formData.configId)) {
+    errors.push('配置ID只能包含字母、数字、下划线和横线')
+  } else if (formData.configId.length < 3 || formData.configId.length > 50) {
+    errors.push('配置ID长度应在3-50个字符之间')
+  }
+  
+  return errors
 }
 
-const handleSubmit = () => {
-  emit('confirm', formData)
-  emit('update:visible', false)
+// 使用基础抽屉组合式函数
+const {
+  formData,
+  visible,
+  isSubmitting,
+  isFormValid,
+  handleSubmit: baseHandleSubmit,
+  handleCancel
+} = useBaseDrawer({
+  props,
+  emit,
+  formRules,
+  getInitialFormData,
+  customValidation,
+  nodeType: 'manual-call'
+})
+
+// 处理提交
+const handleSubmit = async () => {
+  const config = {
+    configId: formData.configId,
+    description: formData.description,
+    nodeType: 'manual-call'
+  }
+  
+  await baseHandleSubmit(config)
 }
 </script>
+
+<style scoped>
+.debug-info {
+  padding: 8px;
+  background-color: var(--color-bg-2);
+  border: 1px solid var(--color-border-2);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+
+.debug-info > div {
+  margin-bottom: 4px;
+}
+
+.debug-info > div:last-child {
+  margin-bottom: 0;
+}
+</style>
