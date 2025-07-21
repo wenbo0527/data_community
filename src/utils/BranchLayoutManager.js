@@ -277,25 +277,102 @@ export class BranchLayoutManager {
       node.removePort(port.id)
     })
     
-    // 根据节点类型添加统一的输出端口
-    if (nodeType !== 'end') {
-      // 除了结束节点，所有节点都有一个统一的输出端口
+    // 根据节点类型添加正确的输出端口
+    if (nodeType === 'event-split') {
+      // 事件分流节点只使用统一的'out'端口
       node.addPort({
         group: 'out',
         id: 'out',
+        position: {
+          name: 'bottom',
+          args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+        },
         attrs: {
           circle: {
             r: 6,
             magnet: true,
             stroke: '#5F95FF',
             strokeWidth: 2,
-            fill: '#fff'
+            fill: '#fff',
+            style: { visibility: 'visible' }
           }
-        }
+        },
+        markup: [{ tagName: 'circle', selector: 'circle' }]
       })
+      
+      console.log(`[BranchLayoutManager] 添加统一输出端口: out`)
+    } else if (nodeType === 'ab-test') {
+      // AB测试节点只使用统一的'out'端口
+      node.addPort({
+        group: 'out',
+        id: 'out',
+        position: {
+          name: 'bottom',
+          args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+        },
+        attrs: {
+          circle: {
+            r: 6,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 2,
+            fill: '#fff',
+            style: { visibility: 'visible' }
+          }
+        },
+        markup: [{ tagName: 'circle', selector: 'circle' }]
+      })
+      
+      console.log(`[BranchLayoutManager] 添加统一输出端口: out`)
+    } else if (nodeType === 'audience-split' && branches.length > 0) {
+      // 人群分流节点只使用统一的'out'端口
+      node.addPort({
+        group: 'out',
+        id: 'out',
+        position: {
+          name: 'bottom',
+          args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+        },
+        attrs: {
+          circle: {
+            r: 6,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 2,
+            fill: '#fff',
+            style: { visibility: 'visible' }
+          }
+        },
+        markup: [{ tagName: 'circle', selector: 'circle' }]
+      })
+      
+      console.log(`[BranchLayoutManager] 添加统一输出端口: out`)
+    } else if (nodeType !== 'end') {
+      // 其他节点使用统一的输出端口
+      node.addPort({
+        group: 'out',
+        id: 'out',
+        position: {
+          name: 'bottom',
+          args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+        },
+        attrs: {
+          circle: {
+            r: 6,
+            magnet: true,
+            stroke: '#5F95FF',
+            strokeWidth: 2,
+            fill: '#fff',
+            style: { visibility: 'visible' }
+          }
+        },
+        markup: [{ tagName: 'circle', selector: 'circle' }]
+      })
+      
+      console.log(`[BranchLayoutManager] 添加统一输出端口: out`)
     }
     
-    // 存储分支信息到节点数据中，但不影响端口配置
+    // 存储分支信息到节点数据中
     const updatedData = {
       ...nodeData,
       branches: branches,
@@ -303,7 +380,7 @@ export class BranchLayoutManager {
     }
     node.setData(updatedData)
     
-    console.log('[BranchLayoutManager] 节点端口已更新（统一模式）:', node.id, '分支数量:', branches.length)
+    console.log('[BranchLayoutManager] 节点端口已更新:', node.id, '节点类型:', nodeType, '分支数量:', branches.length)
   }
 
   /**

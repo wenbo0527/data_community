@@ -106,20 +106,8 @@ export const getConnectingConfig = () => ({
       radius: 6
     }
   },
-  anchor: {
-    name: 'nodeCenter',
-    args: {
-      dx: 0,
-      dy: 0
-    }
-  },
-  connectionPoint: {
-    name: 'boundary',
-    args: {
-      sticky: true,
-      offset: 0
-    }
-  },
+  // anchor: 自动处理端口连接，不需要显式设置
+  connectionPoint: 'anchor',
   allowBlank: false,
   allowLoop: false,
   allowNode: false,
@@ -212,8 +200,10 @@ export const getPortGroups = () => ({
     position: {
       name: 'top',
       args: {
-        dx: 0,  // 水平偏移为0，确保在中心
-        dy: 0   // 垂直偏移为0，确保在边缘
+        x: '50%',  // 水平居中
+        y: 0,      // 顶部
+        dx: 0,
+        dy: 0
       }
     },
     attrs: {
@@ -237,8 +227,10 @@ export const getPortGroups = () => ({
     position: {
       name: 'bottom',
       args: {
-        dx: 0,  // 水平偏移为0，确保在中心
-        dy: 0   // 垂直偏移为0，确保在边缘
+        x: '50%',    // 水平居中
+        y: '100%',   // 底部
+        dx: 0,
+        dy: 0
       }
     },
     attrs: {
@@ -318,12 +310,53 @@ export const getDraggablePreviewEdgeConfig = () => ({
   zIndex: 1000
 })
 
+// 全局标记，防止重复注册
+let customShapesRegistered = false
+
 // 注册自定义边形状
 export const registerCustomShapes = (Graph) => {
-  // 注册可拖拽预设线边形状
-  Graph.registerEdge('draggable-preview-edge', getDraggablePreviewEdgeConfig())
+  // 如果已经注册过，直接返回
+  if (customShapesRegistered) {
+    console.log('⏭️ 自定义边形状已注册，跳过重复注册')
+    return
+  }
   
-  console.log('✅ 自定义边形状注册完成')
+  try {
+    // 检查 Graph.registry 是否存在并且有 edge 属性
+    if (Graph.registry && Graph.registry.edge) {
+      // 尝试获取已注册的形状
+      const existingEdges = Graph.registry.edge.data
+      if (existingEdges && existingEdges['draggable-preview-edge']) {
+        console.log('⏭️ 自定义边形状 "draggable-preview-edge" 已存在于注册表中，跳过注册')
+        customShapesRegistered = true
+        return
+      }
+    }
+  } catch (error) {
+    // 忽略检查错误，继续注册
+    console.log('🔍 检查现有注册时出现错误，继续注册:', error.message)
+  }
+  
+  try {
+    // 注册可拖拽预设线边形状
+    Graph.registerEdge('draggable-preview-edge', getDraggablePreviewEdgeConfig())
+    customShapesRegistered = true
+    console.log('✅ 自定义边形状注册完成')
+  } catch (error) {
+    if (error.message.includes('already registered')) {
+      console.log('⏭️ 自定义边形状已存在，跳过重复注册')
+      customShapesRegistered = true
+    } else {
+      console.error('❌ 自定义边形状注册失败:', error)
+      throw error
+    }
+  }
+}
+
+// 重置注册状态（用于测试或特殊情况）
+export const resetCustomShapesRegistration = () => {
+  customShapesRegistered = false
+  console.log('🔄 自定义边形状注册状态已重置')
 }
 
 // 动画配置

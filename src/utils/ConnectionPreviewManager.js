@@ -284,12 +284,15 @@ export class ConnectionPreviewManager {
         y: position.end.y
       },
       router: {
-        name: 'manhattan',
+        name: 'orth', // 使用更稳定的orth路由算法
         args: {
+          padding: 10,
           startDirections: ['bottom'],
           endDirections: ['top']
         }
       },
+      // 确保预览线从端口开始，而不是节点中心
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           ...style,
@@ -385,12 +388,15 @@ export class ConnectionPreviewManager {
           y: position.end.y
         },
         router: {
-          name: 'manhattan',
+          name: 'orth', // 使用更稳定的orth路由算法
           args: {
+            padding: 10,
             startDirections: ['bottom'],
             endDirections: ['top']
           }
         },
+        // 确保预览线从端口开始，而不是节点中心
+        connectionPoint: 'anchor',
         attrs: {
           line: {
             ...style,
@@ -625,11 +631,33 @@ export class ConnectionPreviewManager {
       return
     }
     
+    // 确定源端口
+    const sourcePort = this.getSourcePort(sourceNode, branchId)
     
-    // 创建连接边
+    // 创建连接边 - 使用端口连接
     const edge = this.graph.addEdge({
-      source: sourceNode,
-      target: targetNode,
+      source: {
+        cell: sourceNodeId,
+        port: sourcePort
+      },
+      target: {
+        cell: targetNodeId,
+        port: 'in'
+      },
+      router: {
+        name: 'orth',
+        args: {
+          padding: 10
+        }
+      },
+      connector: {
+        name: 'rounded',
+        args: {
+          radius: 8
+        }
+      },
+      // 确保连接从端口开始，而不是节点中心
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           stroke: branchId ? '#1890ff' : '#52c41a',
@@ -1295,22 +1323,58 @@ export class ConnectionPreviewManager {
     const sourceNode = edge.getSourceNode()
     const targetNode = edge.getTargetNode()
     const sourcePort = edge.getSourcePortId()
+    const targetPort = edge.getTargetPortId()
     
-    console.log('🔗 [ConnectionPreview] 连接创建:', {
+    console.log('🔗 [ConnectionPreview] 连接创建事件:', {
       edgeId: edge.id,
       sourceNodeId: sourceNode?.id,
       targetNodeId: targetNode?.id,
-      sourcePort
+      sourcePort,
+      targetPort,
+      sourceNodeType: sourceNode?.getData()?.nodeType || sourceNode?.getData()?.type,
+      targetNodeType: targetNode?.getData()?.nodeType || targetNode?.getData()?.type
     })
     
+    // 检查端口是否存在
+    if (sourceNode && sourcePort) {
+      const sourcePorts = sourceNode.getPorts ? sourceNode.getPorts() : []
+      const sourcePortExists = sourcePorts.find(p => p.id === sourcePort)
+      
+      console.log('🔌 [ConnectionPreview] 源端口检查:', {
+        sourcePort,
+        sourcePortExists: !!sourcePortExists,
+        availableSourcePorts: sourcePorts.map(p => ({ id: p.id, group: p.group }))
+      })
+    }
+    
+    if (targetNode && targetPort) {
+      const targetPorts = targetNode.getPorts ? targetNode.getPorts() : []
+      const targetPortExists = targetPorts.find(p => p.id === targetPort)
+      
+      console.log('🔌 [ConnectionPreview] 目标端口检查:', {
+        targetPort,
+        targetPortExists: !!targetPortExists,
+        availableTargetPorts: targetPorts.map(p => ({ id: p.id, group: p.group }))
+      })
+    }
+    
     if (sourceNode && targetNode && sourcePort) {
+      console.log('✅ [ConnectionPreview] 连接有效，开始处理预览线')
+      
       // 删除对应的预览线
       this.removePreviewLineForConnection(sourceNode, sourcePort)
       
       // 如果是分流节点，处理智能连接
       if (this.isBranchNode(sourceNode) && this.branchManager.isSimplifiedMode(sourceNode)) {
+        console.log('🌿 [ConnectionPreview] 处理分流节点智能连接')
         this.handleSmartConnection(edge, sourceNode)
       }
+    } else {
+      console.error('❌ [ConnectionPreview] 连接无效，缺少必要信息:', {
+        hasSourceNode: !!sourceNode,
+        hasTargetNode: !!targetNode,
+        hasSourcePort: !!sourcePort
+      })
     }
   }
 
@@ -1511,12 +1575,15 @@ export class ConnectionPreviewManager {
         y: position.end.y
       },
       router: {
-        name: 'manhattan',
+        name: 'orth',
         args: {
+          padding: 10,
           startDirections: ['bottom'],
           endDirections: ['top']
         }
       },
+      // 确保预览线从端口开始，而不是节点中心
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           ...style,
@@ -1654,15 +1721,6 @@ export class ConnectionPreviewManager {
    * @returns {Object} 预览线条元素
    */
   createPreviewLine(node, branch, index, nodePosition, nodeSize) {
-    console.log('🎨 [ConnectionPreview] 创建分支预览线:', {
-      nodeId: node.id,
-      branchId: branch.id,
-      branchLabel: branch.label,
-      index,
-      nodePosition,
-      nodeSize
-    })
-    
     const startX = nodePosition.x + nodeSize.width
     const startY = nodePosition.y + nodeSize.height / 2
     
@@ -1670,15 +1728,15 @@ export class ConnectionPreviewManager {
     const endX = startX + 150
     const endY = startY + (index - (this.branchManager.getNodeBranches(node).length - 1) / 2) * 40
     
-    console.log('📏 [ConnectionPreview] 预览线坐标:', {
-      start: { x: startX, y: startY },
-      end: { x: endX, y: endY }
-    })
-    
-    // 创建预览线条
+    // 创建预览线条 - 使用统一的输出端口
     const previewLine = this.graph.addEdge({
-      source: { x: startX, y: startY },
-      target: { x: endX, y: endY },
+      source: {
+        cell: node.id,
+        port: 'out' // 使用统一的输出端口，确保所有分支从同一位置开始
+      },
+      target: { x: endX, y: endY }, // 预览线的终点仍使用坐标，因为还没有目标节点
+      // 确保预览线从端口开始，而不是节点中心
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           stroke: '#5F95FF',
@@ -1727,12 +1785,6 @@ export class ConnectionPreviewManager {
       }
     })
 
-    console.log('✨ [ConnectionPreview] 分支预览线创建完成:', {
-      lineId: previewLine.id,
-      labelId: label.id,
-      branchLabel: branch.label
-    })
-
     return { line: previewLine, label }
   }
 
@@ -1763,10 +1815,15 @@ export class ConnectionPreviewManager {
       end: { x: endX, y: endY }
     })
     
-    // 创建预览线条
+    // 创建预览线条 - 使用端口连接
     const previewLine = this.graph.addEdge({
-      source: { x: startX, y: startY },
-      target: { x: endX, y: endY },
+      source: {
+        cell: node.id,
+        port: 'out' // 使用节点的输出端口
+      },
+      target: { x: endX, y: endY }, // 预览线的终点仍使用坐标，因为还没有目标节点
+      // 确保预览线从端口开始，而不是节点中心
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           stroke: '#5F95FF',
@@ -2014,7 +2071,7 @@ export class ConnectionPreviewManager {
             id: line.id,
             sourceNode: sourceNode,
             targetNode: null, // 持久化预览线没有目标节点
-            sourcePort: branchId ? `out-${branchId}` : 'out-0',
+            sourcePort: 'out', // 统一使用'out'端口
             targetPort: null,
             type: 'persistent',
             branchId: branchId,
@@ -2042,7 +2099,7 @@ export class ConnectionPreviewManager {
             id: line.id,
             sourceNode: sourceNode,
             targetNode: null,
-            sourcePort: 'out-0',
+            sourcePort: 'out', // 统一使用'out'端口
             targetPort: null,
             type: 'temporary',
             position: {
@@ -2202,22 +2259,14 @@ export class ConnectionPreviewManager {
     const nodeData = sourceNode.getData() || {}
     const branches = nodeData.branches || []
     
-    console.log('🌿 [统一预览线管理器] 创建增强分支预览线:', {
-      nodeId: sourceNode.id,
-      branchCount: branches.length,
-      branches: branches
-    })
-    
     if (branches.length === 0) {
       // 如果没有分支配置，创建默认的预览线
-      console.log('⚠️ [统一预览线管理器] 分流节点无分支配置，创建默认预览线')
       this.createDraggablePreviewLine(sourceNode)
       return
     }
     
     // 为每个分支创建预览线
     branches.forEach((branch, index) => {
-      console.log(`🔗 [统一预览线管理器] 创建分支 ${index + 1}/${branches.length} 预览线:`, branch)
       this.createDraggablePreviewLine(sourceNode, branch.id, index, branches.length)
     })
   }
@@ -2226,23 +2275,24 @@ export class ConnectionPreviewManager {
    * 创建可拖拽的预设线（增强功能）
    */
   createDraggablePreviewLine(sourceNode, branchId = null, branchIndex = 0, totalBranches = 1) {
-    console.log('✨ [统一预览线管理器] 开始创建可拖拽预设线:', {
-      nodeId: sourceNode.id,
-      branchId: branchId,
-      branchIndex: branchIndex,
-      totalBranches: totalBranches
+    console.log('🚀 [ConnectionPreview] 开始创建可拖拽预设线:', {
+      sourceNodeId: sourceNode.id,
+      branchId,
+      branchIndex,
+      totalBranches,
+      nodeData: sourceNode.getData()
     })
     
     // 检查节点是否已有连接
     if (this.hasExistingConnections(sourceNode, branchId)) {
-      console.log('⚠️ [统一预览线管理器] 节点已有连接，跳过预设线创建')
+      console.log('⚠️ [ConnectionPreview] 节点已有连接，跳过创建:', sourceNode.id)
       return null
     }
 
     // 获取源端口
     const sourcePort = this.getSourcePort(sourceNode, branchId)
     if (!sourcePort) {
-      console.log('⚠️ [统一预览线管理器] 未找到源端口，跳过预设线创建')
+      console.log('❌ [ConnectionPreview] 无法获取源端口，跳过创建:', sourceNode.id)
       return null
     }
 
@@ -2271,13 +2321,13 @@ export class ConnectionPreviewManager {
       y: nodeBottomCenter.y + 100
     }
 
-    console.log('📍 [统一预览线管理器] 预设线位置计算:', {
-      sourcePosition: sourcePosition,
-      sourceSize: sourceSize,
-      nodeBottomCenter: nodeBottomCenter,
-      xOffset: xOffset,
-      endPosition: endPosition,
-      port: sourcePort
+    console.log('📍 [ConnectionPreview] 计算连线位置:', {
+      sourcePosition,
+      sourceSize,
+      nodeBottomCenter,
+      xOffset,
+      endPosition,
+      sourcePort
     })
 
     // 计算分支颜色
@@ -2303,14 +2353,8 @@ export class ConnectionPreviewManager {
       markerColor = '#fa8c16'
     }
 
-    console.log('🎨 [统一预览线管理器] 预设线初始状态:', {
-      nodeType: nodeType,
-      initialState: initialState,
-      strokeColor: strokeColor
-    })
-
     // 创建预设线 - source在上方（节点端口），target在下方（可拖拽端点）
-    const previewLine = this.graph.addEdge({
+    const previewLineConfig = {
       id: `preview_${sourceNode.id}_${branchId || 'default'}_${Date.now()}`,
       shape: 'edge', // 使用标准边形状
       source: {
@@ -2318,6 +2362,8 @@ export class ConnectionPreviewManager {
         port: sourcePort
       },
       target: endPosition, // 这是底部的可拖拽端点
+      // 确保预览线从端口开始，而不是节点中心
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           stroke: strokeColor,
@@ -2344,9 +2390,18 @@ export class ConnectionPreviewManager {
         state: initialState,
         isDraggable: true
       }
+    }
+    
+    console.log('⚙️ [ConnectionPreview] 预设线配置:', previewLineConfig)
+    
+    const previewLine = this.graph.addEdge(previewLineConfig)
+    
+    console.log('✅ [ConnectionPreview] 预设线创建成功:', {
+      previewLineId: previewLine.id,
+      sourceCell: previewLine.getSourceCellId(),
+      sourcePort: previewLine.getSourcePortId(),
+      targetPosition: previewLine.getTargetPoint()
     })
-
-    console.log('🎨 [统一预览线管理器] 预设线已添加到画布:', previewLine.id)
 
     // 添加拖拽能力
     this.makeDraggable(previewLine)
@@ -2366,7 +2421,6 @@ export class ConnectionPreviewManager {
       targetHintNode: null  // 目标端拖拽提示节点
     })
 
-    console.log('✅ [统一预览线管理器] 可拖拽预设线创建完成:', previewLine.id)
     return previewLine
   }
 
@@ -2386,13 +2440,6 @@ export class ConnectionPreviewManager {
              edgeData.type !== 'preview-line'
     })
     
-    console.log('🔍 [统一预览线管理器] 检查现有连接:', {
-      nodeId: sourceNode.id,
-      branchId: branchId,
-      totalEdges: outgoingEdges.length,
-      realConnections: realConnections.length
-    })
-    
     return realConnections.length > 0
   }
 
@@ -2400,10 +2447,22 @@ export class ConnectionPreviewManager {
    * 获取源端口（增强版）
    */
   getSourcePort(sourceNode, branchId = null) {
-    if (branchId) {
-      return `out-${branchId}`
-    }
-    return 'out'
+    const nodeData = sourceNode.getData() || {}
+    const nodeType = nodeData.type || nodeData.nodeType
+    
+    // 统一使用'out'端口，从UI层面的同一个位置出发
+    let sourcePort = 'out'
+    
+    // 添加详细日志
+    console.log('🔍 [ConnectionPreview] 获取源端口:', {
+      nodeId: sourceNode.id,
+      nodeType,
+      branchId,
+      calculatedPort: sourcePort,
+      availablePorts: sourceNode.getPorts ? sourceNode.getPorts().map(p => ({ id: p.id, group: p.group })) : 'N/A'
+    })
+    
+    return sourcePort
   }
 
   /**
@@ -2582,14 +2641,23 @@ export class ConnectionPreviewManager {
     
     const sourcePosition = sourceNode.getPosition()
     const sourceSize = sourceNode.getSize()
-    const sourceCenter = {
+    
+    // 计算源端口的实际位置（从节点底部中心的端口开始）
+    const sourcePortPosition = {
       x: sourcePosition.x + sourceSize.width / 2,
-      y: sourcePosition.y + sourceSize.height / 2
+      y: sourcePosition.y + sourceSize.height
     }
     
-    // 更新预览线路径
+    console.log('🔄 [统一预览线管理器] 更新预览线路径:', {
+      sourceNodeId: previewData.sourceNodeId,
+      branchId: previewData.branchId,
+      sourcePortPosition: sourcePortPosition,
+      targetPosition: clientPoint
+    })
+    
+    // 更新预览线路径 - 从端口位置开始
     this.currentDragLine.setVertices([
-      { x: sourceCenter.x, y: sourceCenter.y + sourceSize.height / 2 },
+      { x: sourcePortPosition.x, y: sourcePortPosition.y },
       { x: clientPoint.x, y: clientPoint.y }
     ])
     
@@ -2752,10 +2820,33 @@ export class ConnectionPreviewManager {
     const edgeId = `edge_${sourceNodeId}_${targetNodeId}_${Date.now()}`
     const sourcePort = this.getSourcePort(sourceNode, branchId)
     
+    console.log('🔗 [ConnectionPreviewManager] 开始创建连接:', {
+      sourceNodeId: sourceNodeId,
+      targetNodeId: targetNodeId,
+      sourcePort: sourcePort,
+      targetPort: 'in',
+      branchId: branchId,
+      edgeId: edgeId
+    })
+    
     const edge = this.graph.addEdge({
       id: edgeId,
       source: { cell: sourceNodeId, port: sourcePort },
       target: { cell: targetNodeId, port: 'in' },
+      router: {
+        name: 'orth',
+        args: {
+          padding: 10
+        }
+      },
+      connector: {
+        name: 'rounded',
+        args: {
+          radius: 8
+        }
+      },
+      // 确保连接从端口开始
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           stroke: branchId ? this.getBranchColor(parseInt(branchId) - 1) : '#1890ff',
@@ -2811,16 +2902,23 @@ export class ConnectionPreviewManager {
     if (sourceNode) {
       const endPosition = this.calculatePreviewEndPosition(sourceNode, previewData.branchId)
       
-      // 更新预览线路径
+      // 更新预览线路径 - 从端口位置开始
       const sourcePosition = sourceNode.getPosition()
       const sourceSize = sourceNode.getSize()
-      const sourceCenter = {
+      const sourcePortPosition = {
         x: sourcePosition.x + sourceSize.width / 2,
-        y: sourcePosition.y + sourceSize.height / 2
+        y: sourcePosition.y + sourceSize.height
       }
       
+      console.log('🔄 [统一预览线管理器] 恢复预览线到端口位置:', {
+        sourceNodeId: previewData.sourceNodeId,
+        branchId: previewData.branchId,
+        sourcePortPosition: sourcePortPosition,
+        endPosition: endPosition
+      })
+      
       previewLine.setVertices([
-        { x: sourceCenter.x, y: sourceCenter.y + sourceSize.height / 2 },
+        { x: sourcePortPosition.x, y: sourcePortPosition.y },
         { x: endPosition.x, y: endPosition.y }
       ])
       

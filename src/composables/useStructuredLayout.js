@@ -157,9 +157,20 @@ export function useStructuredLayout(getGraph) {
         Object.entries(layoutResult.positions).forEach(([nodeId, position]) => {
           const node = graph.getCellById(nodeId)
           if (node && node.isNode()) {
-            node.setPosition(position.x, position.y, { silent: true })
+            console.log(`[useStructuredLayout] 移动节点 ${nodeId} 到位置 (${position.x}, ${position.y})`)
+            // 移除silent选项，确保触发重绘
+            node.setPosition(position.x, position.y)
           }
         })
+
+        // 强制触发画布重绘和更新，但不触发可能导致错误的node:moved事件
+        graph.trigger('layout:applied')
+        
+        // 强制重新渲染画布
+        setTimeout(() => {
+          graph.centerContent()
+          graph.trigger('render:done')
+        }, 100)
 
         // 如果有预览线且布局完成，将预览线转换为实际连接
         if (includePreviewLines && previewLines.length > 0 && previewManager) {
@@ -184,11 +195,9 @@ export function useStructuredLayout(getGraph) {
                 )
               }
             })
-          }, 200) // 给布局一些时间完成
+          }, 300) // 给布局更多时间完成
         }
 
-        // 触发画布重绘
-        graph.trigger('layout:applied')
         console.log('[useStructuredLayout] 结构化布局应用完成')
       }
     } catch (error) {

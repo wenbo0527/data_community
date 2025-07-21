@@ -4,6 +4,8 @@
  */
 
 import { generateDynamicNextSlots } from './nodeTypes.js'
+import { validatePortConfig } from './portConfigFactory.js'
+import { logger } from './enhancedErrorHandler.js'
 
 /**
  * 节点配置策略基类
@@ -107,7 +109,7 @@ class BaseNodeConfigStrategy {
         console.log(`[NodeConfigManager] 节点 ${node.id} 需要 ${requiredOutputs} 个输出端口`)
         
         // 更新节点的输出端口
-        this.updateNodeOutputPorts(node, requiredOutputs)
+        this.updateNodeOutputPorts(node, requiredOutputs, config)
         
         // 如果有布局管理器，通知其更新分支
         if (context.structuredLayout && context.structuredLayout.updateSplitNodeBranches) {
@@ -132,7 +134,7 @@ class BaseNodeConfigStrategy {
    * @param {Object} node - 节点实例
    * @param {number} requiredOutputs - 需要的输出端口数量
    */
-  updateNodeOutputPorts(node, requiredOutputs) {
+  updateNodeOutputPorts(node, requiredOutputs, config = {}) {
     if (!node || typeof node.getPorts !== 'function') {
       console.warn(`[NodeConfigManager] 节点不支持端口操作`)
       return
@@ -143,33 +145,175 @@ class BaseNodeConfigStrategy {
       const outputPorts = currentPorts.filter(port => port.group === 'out')
       const currentOutputCount = outputPorts.length
       
-      console.log(`[NodeConfigManager] 当前输出端口数: ${currentOutputCount}, 需要: ${requiredOutputs}`)
+      console.log(`🔧 [NodeConfigManager] 开始更新端口 - 节点: ${node.id}`)
+      console.log(`📊 [NodeConfigManager] 端口状态:`, {
+        nodeId: node.id,
+        nodeType: this.nodeType,
+        currentOutputCount,
+        requiredOutputs,
+        currentPorts: currentPorts.map(p => ({ id: p.id, group: p.group, position: p.position }))
+      })
+      
+      // 获取分支配置以确定正确的端口ID
+      const processedConfig = this.preprocessConfig(config)
+      const branches = processedConfig.branches || []
+      
+      console.log(`🌿 [NodeConfigManager] 分支配置:`, {
+        nodeId: node.id,
+        nodeType: this.nodeType,
+        branches,
+        processedConfig
+      })
+      
+      // 特别针对事件分流节点的日志
+      if (this.nodeType === 'event-split') {
+        console.log(`🎯 [NodeConfigManager] 事件分流节点端口更新详情:`, {
+          nodeId: node.id,
+          currentOutputPorts: outputPorts.map(p => p.id),
+          expectedBranches: branches.map(b => ({ id: b.id, name: b.name })),
+          requiredOutputs: 1 // 统一使用单个out端口
+        })
+      }
       
       if (currentOutputCount < requiredOutputs) {
         // 需要添加更多输出端口
+        console.log(`➕ [NodeConfigManager] 需要添加端口: ${requiredOutputs - currentOutputCount} 个`)
+        
         for (let i = currentOutputCount; i < requiredOutputs; i++) {
-          const newPortId = `out${i + 1}`
-          node.addPort({
-            group: 'out',
-            id: newPortId
-          })
-          console.log(`[NodeConfigManager] 添加输出端口: ${newPortId}`)
+          // 为了与BranchLayoutManager.js保持一致，我们只创建统一的'out'端口
+          // 检查是否已经有统一的'out'端口
+          const hasUnifiedOutPort = outputPorts.some(port => port.id === 'out')
+          
+          if (!hasUnifiedOutPort && i === 0) {
+            // 只在第一次循环时添加统一的'out'端口
+            const unifiedPortConfig = {
+              group: 'out',
+              id: 'out',
+              position: {
+                name: 'bottom',
+                args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+              },
+              attrs: {
+                circle: {
+                  r: 6,
+                  magnet: true,
+                  stroke: '#5F95FF',
+                  strokeWidth: 2,
+                  fill: '#fff',
+                  style: { visibility: 'visible' }
+                }
+              },
+              markup: [{ tagName: 'circle', selector: 'circle' }]
+            }
+            
+            console.log(`🔌 [NodeConfigManager] 添加统一输出端口配置:`, {
+              nodeId: node.id,
+              nodeType: this.nodeType,
+              portConfig: unifiedPortConfig
+            })
+            
+            node.addPort(unifiedPortConfig)
+            console.log(`✅ [NodeConfigManager] 成功添加统一输出端口: out`)
+          }
+          
+
+          
+          // 跳出循环，因为我们只需要添加一次统一端口
+          break
         }
       } else if (currentOutputCount > requiredOutputs) {
         // 需要移除多余的输出端口（但保留至少1个）
         const portsToRemove = Math.min(currentOutputCount - requiredOutputs, currentOutputCount - 1)
+        console.log(`➖ [NodeConfigManager] 需要移除端口: ${portsToRemove} 个`)
+        
         for (let i = 0; i < portsToRemove; i++) {
           const portToRemove = outputPorts[currentOutputCount - 1 - i]
           if (portToRemove) {
             node.removePort(portToRemove.id)
-            console.log(`[NodeConfigManager] 移除输出端口: ${portToRemove.id}`)
+            console.log(`🗑️ [NodeConfigManager] 移除输出端口: ${portToRemove.id}`)
+          }
+        }
+      } else {
+        console.log(`⚖️ [NodeConfigManager] 端口数量已匹配，无需添加或移除`)
+        
+        // 但是需要检查端口ID是否正确
+        if (this.nodeType === 'event-split' && branches.length > 0) {
+          console.log(`🔄 [NodeConfigManager] 检查事件分流节点端口ID是否正确`)
+          
+          // 确保有统一的'out'端口
+          const hasUnifiedOutPort = outputPorts.some(port => port.id === 'out')
+          
+          if (!hasUnifiedOutPort) {
+            console.log(`🔄 [NodeConfigManager] 缺少统一的'out'端口，重新创建`)
+            
+            // 添加统一的'out'端口
+            const unifiedPortConfig = {
+              group: 'out',
+              id: 'out',
+              position: {
+                name: 'bottom',
+                args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+              },
+              attrs: {
+                circle: {
+                  r: 6,
+                  magnet: true,
+                  stroke: '#5F95FF',
+                  strokeWidth: 2,
+                  fill: '#fff',
+                  style: { visibility: 'visible' }
+                }
+              },
+              markup: [{ tagName: 'circle', selector: 'circle' }]
+            }
+            
+            node.addPort(unifiedPortConfig)
+            console.log(`✅ [NodeConfigManager] 重新添加统一输出端口: out`)
           }
         }
       }
       
-      console.log(`[NodeConfigManager] 端口更新完成`)
+      // 确保统一的'out'端口位置正确（不需要更新位置，因为它应该始终在底部中心）
+      if (currentOutputCount === requiredOutputs && requiredOutputs > 1) {
+        console.log(`🔄 [NodeConfigManager] 检查统一端口位置`)
+        
+        // 确保统一的'out'端口位置正确
+        const unifiedPort = outputPorts.find(port => port.id === 'out')
+        if (unifiedPort) {
+          // 确保统一端口位置在底部中心
+          node.setPortProp('out', 'position/args/dx', 0)
+          node.setPortProp('out', 'position/args/dy', 0)
+          console.log(`📍 [NodeConfigManager] 确保统一端口 'out' 位置在底部中心`)
+        }
+      }
+      
+      // 验证最终端口状态
+      const finalPorts = node.getPorts()
+      const finalOutputPorts = finalPorts.filter(port => port.group === 'out')
+      console.log(`🎯 [NodeConfigManager] 端口更新完成:`, {
+        nodeId: node.id,
+        nodeType: this.nodeType,
+        finalOutputCount: finalOutputPorts.length,
+        finalPorts: finalOutputPorts.map(p => ({ 
+          id: p.id, 
+          group: p.group, 
+          position: p.position,
+          args: p.position?.args 
+        }))
+      })
+      
+      // 特别针对事件分流节点的最终验证
+      if (this.nodeType === 'event-split') {
+        console.log(`🎯 [NodeConfigManager] 事件分流节点最终端口验证:`, {
+          nodeId: node.id,
+          finalOutputPortIds: finalOutputPorts.map(p => p.id),
+          portUpdateSuccess: finalOutputPorts.length === requiredOutputs,
+          hasUnifiedOutPort: finalOutputPorts.some(p => p.id === 'out')
+        })
+      }
+      
     } catch (error) {
-      console.error(`[NodeConfigManager] 更新端口失败:`, error)
+      console.error(`❌ [NodeConfigManager] 更新端口失败:`, error)
     }
   }
 
@@ -258,8 +402,8 @@ class BranchNodeConfigStrategy extends BaseNodeConfigStrategy {
  * 人群分流节点配置策略
  */
 class AudienceSplitConfigStrategy extends BranchNodeConfigStrategy {
-  constructor() {
-    super('audience-split')
+  constructor(nodeType = 'audience-split') {
+    super(nodeType)
   }
 
   preprocessConfig(config) {
@@ -464,9 +608,12 @@ class NodeConfigManager {
   initStrategies() {
     // 注册各种节点配置策略
     this.strategies.set('start', new StartNodeConfigStrategy())
-    this.strategies.set('audience-split', new AudienceSplitConfigStrategy())
+    this.strategies.set('audience-split', new AudienceSplitConfigStrategy('audience-split'))
     this.strategies.set('event-split', new EventSplitConfigStrategy())
     this.strategies.set('ab-test', new ABTestConfigStrategy())
+    
+    // crowd-split 使用 audience-split 策略（UI层面的映射）
+    this.strategies.set('crowd-split', new AudienceSplitConfigStrategy('crowd-split'))
     
     // 简单节点策略
     this.strategies.set('ai-call', new SimpleNodeConfigStrategy('ai-call'))

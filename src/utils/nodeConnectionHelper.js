@@ -83,6 +83,17 @@ export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPo
         x: targetPosition.x,
         y: targetPosition.y
       },
+      router: {
+        name: 'manhattan'
+      },
+      connector: {
+        name: 'rounded',
+        args: {
+          radius: 8
+        }
+      },
+      // 确保连接从端口开始
+      connectionPoint: 'anchor',
       attrs: {
         line: {
           stroke: '#91C9FF',
@@ -143,19 +154,56 @@ export const removePresetConnection = (graph, connectionId) => {
  * @param {string} targetPortId - 目标端口ID
  * @returns {boolean} 是否转换成功
  */
-export const convertPresetToActualConnection = (graph, connectionId, targetNode, targetPortId = 'in1') => {
-  if (!graph || !targetNode) return false
+export const convertPresetToActualConnection = (graph, connectionId, targetNode, targetPortId = 'in') => {
+  console.log('🔄 [预览线转换] 开始转换预设连接为正式连接:', {
+    connectionId,
+    targetNodeId: targetNode?.id,
+    targetPortId
+  })
+
+  if (!graph || !targetNode) {
+    console.warn('❌ [预览线转换] 参数无效:', { graph: !!graph, targetNode: !!targetNode })
+    return false
+  }
 
   try {
     const edge = graph.getCellById(connectionId)
-    if (!edge || !edge.getData()?.isPreset) {
+    if (!edge) {
+      console.warn('❌ [预览线转换] 找不到连接线:', connectionId)
       return false
     }
 
-    // 更新连接目标
-    edge.setTarget({
-      cell: targetNode.id,
-      port: targetPortId
+    const edgeData = edge.getData()
+    console.log('📊 [预览线转换] 连接线当前数据:', edgeData)
+
+    if (!edgeData?.isPreset) {
+      console.warn('❌ [预览线转换] 不是预设连接线:', { connectionId, isPreset: edgeData?.isPreset })
+      return false
+    }
+
+    // 记录转换前的连接点配置
+    const beforeProps = edge.prop()
+    console.log('📋 [预览线转换] 转换前的连接属性:', {
+      source: beforeProps.source,
+      target: beforeProps.target,
+      connectionPoint: beforeProps.connectionPoint
+    })
+
+    // 使用prop方法更新连接目标，同时保持connectionPoint配置
+    edge.prop({
+      target: {
+        cell: targetNode.id,
+        port: targetPortId
+      },
+      connectionPoint: 'anchor'
+    })
+
+    // 记录转换后的连接点配置
+    const afterProps = edge.prop()
+    console.log('✅ [预览线转换] 转换后的连接属性:', {
+      source: afterProps.source,
+      target: afterProps.target,
+      connectionPoint: afterProps.connectionPoint
     })
 
     // 更新样式为正式连接
@@ -183,10 +231,17 @@ export const convertPresetToActualConnection = (graph, connectionId, targetNode,
 
     edge.setZIndex(0) // 恢复正常层级
 
-    console.log(`Preset connection converted to actual: ${connectionId}`)
+    console.log('🎉 [预览线转换] 预设连接转换成功:', {
+      connectionId,
+      sourceNode: afterProps.source?.cell,
+      sourcePort: afterProps.source?.port,
+      targetNode: targetNode.id,
+      targetPort: targetPortId,
+      connectionPoint: afterProps.connectionPoint
+    })
     return true
   } catch (error) {
-    console.error('Failed to convert preset connection:', error)
+    console.error('💥 [预览线转换] 转换失败:', error)
     return false
   }
 }

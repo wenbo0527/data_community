@@ -180,7 +180,7 @@ export function calculateBranchPreviewPosition(sourceNode, branches, branchIndex
     end: { 
       x: endX, 
       y: endY,
-      port: 'in1' // 指定输入端口
+      port: 'in' // 指定输入端口
     },
     snapZone: {
       x: endX,
@@ -231,7 +231,7 @@ export function calculateSinglePreviewPosition(sourceNode) {
     end: { 
       x: endX, 
       y: endY,
-      port: 'in1' // 指定输入端口
+      port: 'in' // 指定输入端口
     },
     snapZone: {
       x: endX,

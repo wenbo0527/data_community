@@ -21,7 +21,7 @@ export const LAYOUT_LEVELS = {
 export const CONNECTION_RULES = {
   'start': { 
     maxOutput: 1, 
-    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end'],
+    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'blacklist', 'end'],
     level: LAYOUT_LEVELS.START
   },
   'audience-split': { 
@@ -29,44 +29,50 @@ export const CONNECTION_RULES = {
       const config = node.getData()?.config
       return config?.audiences?.length || 2
     },
-    allowedTargets: ['sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end'],
+    allowedTargets: ['sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'blacklist', 'end'],
     autoCreateBranches: true,
     level: LAYOUT_LEVELS.SPLIT
   },
   'event-split': { 
     maxOutput: 2,
-    allowedTargets: ['sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end'],
+    allowedTargets: ['sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'blacklist', 'end'],
     autoCreateBranches: true,
     level: LAYOUT_LEVELS.SPLIT
   },
   'sms': { 
     maxOutput: 1, 
     maxInput: 1,
-    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end'],
+    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'blacklist', 'end'],
     level: LAYOUT_LEVELS.PROCESS
   },
   'ai-call': { 
     maxOutput: 1, 
     maxInput: 1,
-    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end'],
+    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'blacklist', 'end'],
     level: LAYOUT_LEVELS.PROCESS
   },
   'manual-call': { 
     maxOutput: 1, 
     maxInput: 1,
-    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end'],
+    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'blacklist', 'end'],
     level: LAYOUT_LEVELS.PROCESS
   },
   'ab-test': { 
     maxOutput: 2,
-    allowedTargets: ['sms', 'ai-call', 'manual-call', 'wait', 'end'],
+    allowedTargets: ['sms', 'ai-call', 'manual-call', 'wait', 'blacklist', 'end'],
     autoCreateBranches: true,
     level: LAYOUT_LEVELS.SPLIT
   },
   'wait': { 
     maxOutput: 1, 
     maxInput: 1,
-    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end'],
+    allowedTargets: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'blacklist', 'end'],
+    level: LAYOUT_LEVELS.PROCESS
+  },
+  'blacklist': { 
+    maxOutput: 1, 
+    maxInput: 1,
+    allowedTargets: ['end'],
     level: LAYOUT_LEVELS.PROCESS
   },
   'end': { 
@@ -196,19 +202,19 @@ export class StructuredLayoutEngine {
       previewLineCount: previewLines.length
     })
     
-    // 按层级分组节点
-    const levels = this.groupNodesByLevel(nodes)
+    // 使用拓扑排序按连接关系分层
+    const levels = this.groupNodesByTopology(nodes, edges, previewLines)
     const positions = {}
     
     // 为每个层级计算位置
-    levels.forEach((levelNodes, level) => {
-      const y = level * this.layoutConfig.levelHeight
-      const levelPositions = this.calculateLevelPositions(levelNodes, y)
+    levels.forEach((levelNodes, levelIndex) => {
+      const y = levelIndex * this.layoutConfig.levelHeight
+      const levelPositions = this.calculateLevelPositions(levelNodes, y, levelIndex)
       
-      levelNodes.forEach((node, index) => {
+      levelNodes.forEach((node, nodeIndex) => {
         positions[node.id] = {
-          x: levelPositions[index].x,
-          y: levelPositions[index].y
+          x: levelPositions[nodeIndex].x,
+          y: levelPositions[nodeIndex].y
         }
       })
     })
@@ -267,17 +273,223 @@ export class StructuredLayoutEngine {
     const splitPos = positions[splitNode.id]
     const targetPos = positions[previewLine.targetNode.id]
     
-    // 根据分支索引调整水平位置
-    const branchIndex = previewLine.sourcePort ? parseInt(previewLine.sourcePort.replace('out-', '')) : 0
-    const branchOffset = (branchIndex - 0.5) * this.layoutConfig.branchSpacing
+    // 获取分支索引 - 现在从branchId或branchIndex属性获取
+    let branchIndex = 0
     
+    if (previewLine.branchIndex !== undefined) {
+      branchIndex = previewLine.branchIndex
+    } else if (previewLine.branchId) {
+      // 如果有branchId，尝试从分流节点的分支列表中找到索引
+      try {
+        const splitNodeData = splitNode.getData() || {}
+        const branches = splitNodeData.branches || []
+        const foundIndex = branches.findIndex(branch => branch.id === previewLine.branchId)
+        branchIndex = foundIndex >= 0 ? foundIndex : 0
+      } catch (error) {
+        console.warn(`[StructuredLayoutEngine] 无法从branchId获取分支索引: ${previewLine.branchId}`, error)
+        branchIndex = 0
+      }
+    }
+    
+    // 根据分支索引调整水平位置
+    const branchOffset = (branchIndex - 0.5) * this.layoutConfig.branchSpacing
     targetPos.x = splitPos.x + branchOffset
     
-    console.log(`[StructuredLayoutEngine] 调整分支位置: ${previewLine.targetNode.id}, 分支索引: ${branchIndex}`)
+    console.log(`[StructuredLayoutEngine] 调整分支位置: ${previewLine.targetNode.id}, 分支索引: ${branchIndex}, branchId: ${previewLine.branchId}`)
   }
 
   /**
-   * 按层级分组节点
+   * 使用拓扑排序按连接关系分组节点
+   * @param {Array} nodes - 节点数组
+   * @param {Array} edges - 边数组
+   * @param {Array} previewLines - 预览线数组
+   * @returns {Array} 层级分组的节点数组
+   */
+  groupNodesByTopology(nodes, edges, previewLines = []) {
+    console.log('[StructuredLayoutEngine] 开始拓扑排序分层')
+    
+    // 构建节点映射和邻接表
+    const nodeMap = new Map()
+    const adjacencyList = new Map()
+    const inDegree = new Map()
+    const nodeBranchCount = new Map() // 存储每个节点的分支数
+    
+    // 初始化
+    nodes.forEach(node => {
+      nodeMap.set(node.id, node)
+      adjacencyList.set(node.id, [])
+      inDegree.set(node.id, 0)
+      
+      // 计算节点的分支数
+      const branchCount = this.getNodeBranchCount(node)
+      nodeBranchCount.set(node.id, branchCount)
+      console.log(`[StructuredLayoutEngine] 节点 ${node.id} (${node.getData()?.type}) 分支数: ${branchCount}`)
+    })
+    
+    // 处理现有连接
+    edges.forEach(edge => {
+      const sourceId = edge.getSourceCellId()
+      const targetId = edge.getTargetCellId()
+      
+      if (adjacencyList.has(sourceId) && adjacencyList.has(targetId)) {
+        adjacencyList.get(sourceId).push(targetId)
+        inDegree.set(targetId, inDegree.get(targetId) + 1)
+      }
+    })
+    
+    // 处理预览线连接
+    previewLines.forEach(previewLine => {
+      if (previewLine.sourceNode && previewLine.targetNode) {
+        const sourceId = previewLine.sourceNode.id
+        const targetId = previewLine.targetNode.id
+        
+        if (adjacencyList.has(sourceId) && adjacencyList.has(targetId)) {
+          // 检查是否已存在连接，避免重复
+          if (!adjacencyList.get(sourceId).includes(targetId)) {
+            adjacencyList.get(sourceId).push(targetId)
+            inDegree.set(targetId, inDegree.get(targetId) + 1)
+          }
+        }
+      }
+    })
+    
+    // 拓扑排序
+    const levels = []
+    const queue = []
+    
+    // 找到所有入度为0的节点（开始节点）
+    inDegree.forEach((degree, nodeId) => {
+      if (degree === 0) {
+        queue.push(nodeId)
+      }
+    })
+    
+    // 如果没有入度为0的节点，找到start类型的节点
+    if (queue.length === 0) {
+      nodes.forEach(node => {
+        if (node.getData()?.type === 'start') {
+          queue.push(node.id)
+        }
+      })
+    }
+    
+    // 按层级处理，考虑分支数
+    while (queue.length > 0) {
+      const currentLevel = []
+      const nextQueue = []
+      
+      // 处理当前层级的所有节点
+      while (queue.length > 0) {
+        const nodeId = queue.shift()
+        const node = nodeMap.get(nodeId)
+        if (node) {
+          currentLevel.push(node)
+        }
+        
+        // 处理该节点的所有邻接节点
+        const neighbors = adjacencyList.get(nodeId) || []
+        neighbors.forEach(neighborId => {
+          const newDegree = inDegree.get(neighborId) - 1
+          inDegree.set(neighborId, newDegree)
+          
+          if (newDegree === 0) {
+            nextQueue.push(neighborId)
+          }
+        })
+      }
+      
+      if (currentLevel.length > 0) {
+        levels.push(currentLevel)
+        
+        // 记录当前层级的总分支数，用于下一层级的布局计算
+        const totalBranches = currentLevel.reduce((sum, node) => {
+          return sum + nodeBranchCount.get(node.id)
+        }, 0)
+        
+        console.log(`[StructuredLayoutEngine] 层级 ${levels.length - 1}: ${currentLevel.length} 个节点, 总分支数: ${totalBranches}`)
+      }
+      
+      // 准备下一层级
+      queue.push(...nextQueue)
+    }
+    
+    // 处理剩余的孤立节点
+    const processedNodes = new Set()
+    levels.forEach(level => {
+      level.forEach(node => processedNodes.add(node.id))
+    })
+    
+    const isolatedNodes = nodes.filter(node => !processedNodes.has(node.id))
+    if (isolatedNodes.length > 0) {
+      levels.push(isolatedNodes)
+    }
+    
+    console.log('[StructuredLayoutEngine] 拓扑排序完成，共', levels.length, '层')
+    levels.forEach((level, index) => {
+      const levelInfo = level.map(n => {
+        const branchCount = nodeBranchCount.get(n.id)
+        return `${n.getData()?.type}(${n.id})[${branchCount}分支]`
+      })
+      console.log(`层级 ${index}:`, levelInfo)
+    })
+    
+    return levels
+  }
+
+  /**
+   * 获取节点的分支数
+   * @param {Object} node - 节点
+   * @returns {number} 分支数
+   */
+  getNodeBranchCount(node) {
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.type
+    
+    // 如果节点有存储的分支数据，直接使用
+    if (nodeData.branches && Array.isArray(nodeData.branches)) {
+      return nodeData.branches.length
+    }
+    
+    // 如果有branchCount字段，直接使用
+    if (typeof nodeData.branchCount === 'number') {
+      return nodeData.branchCount
+    }
+    
+    // 根据节点类型和配置计算分支数
+    switch (nodeType) {
+      case 'audience-split':
+        // 人群分流节点的分支数基于配置的人群数量
+        if (nodeData.config && nodeData.config.crowdLayers) {
+          return nodeData.config.crowdLayers.length + 1 // +1 for 未命中人群
+        }
+        if (nodeData.config && nodeData.config.audiences) {
+          return nodeData.config.audiences.length
+        }
+        return 2 // 默认2个分支
+        
+      case 'event-split':
+        // 事件分流节点固定2个分支（是/否）
+        return 2
+        
+      case 'ab-test':
+        // AB测试节点的分支数基于配置
+        if (nodeData.config && nodeData.config.branches) {
+          return nodeData.config.branches.length
+        }
+        return 2 // 默认2个分支
+        
+      case 'end':
+        // 结束节点没有输出分支
+        return 0
+        
+      default:
+        // 其他节点默认1个分支
+        return 1
+    }
+  }
+
+  /**
+   * 按层级分组节点（原有方法，保留作为备用）
    * @param {Array} nodes - 节点数组
    * @returns {Array} 层级分组的节点数组
    */
@@ -310,9 +522,10 @@ export class StructuredLayoutEngine {
    * 计算层级内节点位置
    * @param {Array} levelNodes - 层级内的节点
    * @param {number} y - Y坐标
+   * @param {number} levelIndex - 层级索引
    * @returns {Array} 位置数组
    */
-  calculateLevelPositions(levelNodes, y) {
+  calculateLevelPositions(levelNodes, y, levelIndex = 0) {
     const positions = []
     const nodeCount = levelNodes.length
     
@@ -320,11 +533,14 @@ export class StructuredLayoutEngine {
       // 单个节点居中
       positions.push({ x: 0, y })
     } else {
-      // 多个节点垂直分布（从上到下）
+      // 多个节点水平分布
+      const totalWidth = (nodeCount - 1) * this.layoutConfig.nodeSpacing
+      const startX = -totalWidth / 2
+      
       levelNodes.forEach((node, index) => {
         positions.push({
-          x: 0, // 保持相同的X坐标
-          y: y + index * this.layoutConfig.nodeSpacing // 垂直分布
+          x: startX + index * this.layoutConfig.nodeSpacing,
+          y: y
         })
       })
     }

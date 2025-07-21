@@ -246,9 +246,42 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
    * 处理配置取消
    * @param {string} drawerType - 抽屉类型
    */
-  const handleConfigCancel = (drawerType) => {
-    closeConfigDrawer(drawerType)
-    console.log(`Config cancelled for ${drawerType}`)
+  const handleConfigCancel = async (drawerType) => {
+    console.log(`[useConfigDrawers] 开始处理配置取消 - ${drawerType}`)
+    
+    try {
+      // 获取当前节点实例
+      const nodeInstance = getCurrentNodeInstance()
+      
+      if (nodeInstance) {
+        console.log(`[useConfigDrawers] 配置取消，检查是否需要恢复预览线:`, { 
+          nodeId: nodeInstance.id, 
+          nodeType: nodeInstance.getData()?.type 
+        })
+        
+        // 检查是否有已配置的源节点需要恢复预览线
+        const unifiedPreviewManager = structuredLayout.getConnectionPreviewManager()
+        if (unifiedPreviewManager && typeof unifiedPreviewManager.restorePreviewLinesAfterCancel === 'function') {
+          console.log(`[useConfigDrawers] 尝试恢复预览线`)
+          try {
+            await unifiedPreviewManager.restorePreviewLinesAfterCancel(nodeInstance)
+            console.log(`[useConfigDrawers] 预览线恢复成功`)
+          } catch (error) {
+            console.error(`[useConfigDrawers] 预览线恢复失败:`, error)
+          }
+        } else {
+          console.log(`[useConfigDrawers] 预览线恢复方法不可用`)
+        }
+      }
+      
+      // 关闭抽屉
+      closeConfigDrawer(drawerType)
+      console.log(`[useConfigDrawers] 配置取消处理完成 - ${drawerType}`)
+    } catch (error) {
+      console.error(`[useConfigDrawers] 配置取消处理失败 - ${drawerType}:`, error)
+      // 即使出错也要关闭抽屉
+      closeConfigDrawer(drawerType)
+    }
   }
 
   /**
@@ -337,7 +370,14 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       getConnectionPreviewManager: structuredLayout.getConnectionPreviewManager,
       updateSplitNodeBranches: structuredLayout.updateSplitNodeBranches,
       clearLayout: structuredLayout.clearLayout,
-      isReady: structuredLayout.isReady
+      // 保持isReady作为计算属性的引用，而不是值
+      get isReady() {
+        return structuredLayout.isReady
+      },
+      // 添加一个方法来获取isReady的值
+      getIsReady() {
+        return structuredLayout.isReady.value
+      }
     }
   }
 }

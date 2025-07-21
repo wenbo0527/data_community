@@ -79,6 +79,12 @@ export default [
       name: 'marketing-tasks-create',
       component: () => import('../pages/marketing/tasks/create.vue'),
       meta: { title: '创建营销任务' }
+    },
+    {
+      path: 'tasks/editor',
+      name: 'marketing-tasks-editor',
+      component: () => import('../pages/marketing/tasks/task-editor.vue'),
+      meta: { title: '任务管理' }
     }
     ]
   }

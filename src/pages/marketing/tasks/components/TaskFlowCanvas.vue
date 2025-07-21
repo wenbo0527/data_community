@@ -24,13 +24,13 @@
       @visibility-change="handleDrawerVisibilityChange" />
 
     <!-- 工具栏 -->
-    <div class="canvas-toolbar">
+    <div v-if="!readonly" class="canvas-toolbar">
       <!-- 缩放控制工具栏 -->
       <a-button-group>
-        <a-button @click="zoomIn" size="small" title="放大 (+)">
+        <a-button @click="zoomIn" size="small" title="放大 (Ctrl++)">
           <template #icon><icon-plus /></template>
         </a-button>
-        <a-button @click="zoomOut" size="small" title="缩小 (-)">
+        <a-button @click="zoomOut" size="small" title="缩小 (Ctrl+-)">
           <template #icon><icon-minus /></template>
         </a-button>
         <a-button @click="resetZoom" size="small" title="重置缩放 (Ctrl+0)">
@@ -92,7 +92,11 @@ import { getNodeConfig } from '../../../../utils/nodeTypes.js'
 import { useConfigDrawers } from '../../../../composables/useConfigDrawers.js'
 import { useEnhancedAutoLayout } from '../../../../composables/useEnhancedAutoLayout.js'
 import CanvasPanZoomManager from '../../../../utils/CanvasPanZoomManager.js'
+import { nodeConfigManager } from '../../../../utils/NodeConfigManager.js'
 import { registerCustomShapes } from '../../../../utils/x6Config.js'
+import { createBranchConnectionConfig, validateConnectionConfig } from '../../../../utils/connectionConfigFactory.js'
+import { connectionErrorHandler, logger } from '../../../../utils/enhancedErrorHandler.js'
+import portConfigFactory from '../../../../utils/portConfigFactory.js'
 import {
   IconPlus,
   IconMinus,
@@ -105,7 +109,7 @@ import {
   IconLocation,
   IconThunderbolt
 } from '@arco-design/web-vue/es/icon'
-import { Modal } from '@arco-design/web-vue'
+import { Modal, Message } from '@arco-design/web-vue'
 
 // 注册 Vue 节点
 register({
@@ -128,6 +132,10 @@ const props = defineProps({
   autoAddStartNode: {
     type: Boolean,
     default: true
+  },
+  readonly: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -297,7 +305,7 @@ const initCanvas = async () => {
     },
     // 启用节点拖拽
     interacting: {
-      nodeMovable: true,
+      nodeMovable: !props.readonly,
       edgeMovable: false,
       edgeLabelMovable: false,
       arrowheadMovable: false,
@@ -343,13 +351,16 @@ const initCanvas = async () => {
           radius: 8,
         },
       },
-      anchor: 'center',
+      // anchor: 自动处理端口连接
       connectionPoint: 'anchor',
       allowBlank: false,
       snap: {
         radius: 20,
       },
       createEdge() {
+        if (props.readonly) {
+          return null // 只读模式下不允许创建连接
+        }
         return new Shape.Edge({
           attrs: {
             line: {
@@ -366,6 +377,9 @@ const initCanvas = async () => {
         })
       },
       validateConnection({ targetMagnet }) {
+        if (props.readonly) {
+          return false // 只读模式下不允许连接
+        }
         return !!targetMagnet
       },
     },
@@ -531,6 +545,12 @@ const bindEvents = () => {
 
       console.log('[TaskFlowCanvas] 节点被点击:', nodeData.type, nodeData.id)
 
+      // 只读模式下不打开配置抽屉
+      if (props.readonly) {
+        console.log('[TaskFlowCanvas] 只读模式，不打开配置抽屉')
+        return
+      }
+
       // 从图形节点实例中获取最新的配置数据
       const graphNodeData = node.getData() || {}
       const latestConfig = graphNodeData.config || {}
@@ -614,7 +634,10 @@ const bindEvents = () => {
           })
         }
       })
+    } else {
+      console.warn('❌ [自动连接检测] 统一预览线管理器不可用')
     }
+  
   })
 
   // 节点位置变化事件（备用方案）
@@ -634,7 +657,12 @@ const bindEvents = () => {
   })
 
   // 节点移动完成事件（合并处理）
-  graph.on('node:moved', ({ node }) => {
+  graph.on('node:moved', async ({ node }) => {
+    console.log('🚚 [节点移动] 节点移动完成:', {
+      nodeId: node.id,
+      position: node.getPosition()
+    })
+
     const nodeData = nodes.value.find(n => n.id === node.id)
     if (nodeData) {
       const position = node.getPosition()
@@ -648,11 +676,18 @@ const bindEvents = () => {
         const centerX = position.x + size.width / 2
         const centerY = position.y + size.height / 2
 
+        console.log('🔍 [自动连接检测] 开始检测拖拽提示点:', {
+          nodeId: node.id,
+          centerPosition: { x: centerX, y: centerY }
+        })
+
         // 检测是否接近拖拽提示点，如果是则尝试自动连接
         const dragHints = graph.getNodes().filter(n => {
           const data = n.getData() || {}
           return data.isDragHint || data.type === 'drag-hint'
         })
+
+        console.log('📍 [自动连接检测] 找到拖拽提示点数量:', dragHints.length)
 
         // 找到最近的拖拽提示点
         let nearestHint = null
@@ -669,29 +704,70 @@ const bindEvents = () => {
             Math.pow(centerY - hintCenterY, 2)
           )
 
-          if (distance <= 50 && distance < nearestDistance) { // 50px 吸附范围
+          console.log('📏 [自动连接检测] 计算距离:', {
+            hintId: hint.id,
+            hintCenter: { x: hintCenterX, y: hintCenterY },
+            distance,
+            withinRange: distance <= 80,
+            currentNearest: nearestDistance
+          })
+
+          if (distance <= 80 && distance < nearestDistance) { // 80px 吸附范围（增加范围）
             nearestDistance = distance
             nearestHint = hint
+            console.log('🎯 [自动连接检测] 更新最近提示点:', {
+              hintId: hint.id,
+              newNearestDistance: distance
+            })
           }
+        })
+
+        console.log('🔍 [自动连接检测] 最近提示点选择结果:', {
+          nearestHint: nearestHint?.id || null,
+          nearestDistance: nearestDistance === Infinity ? 'Infinity' : nearestDistance,
+          totalHints: dragHints.length
         })
 
         // 如果找到最近的拖拽提示点，则进行连接
         if (nearestHint) {
+          console.log('🎯 [自动连接] 找到最近的拖拽提示点:', {
+            hintId: nearestHint.id,
+            distance: nearestDistance
+          })
+
           // 获取拖拽提示点对应的预览线信息
           const hintData = nearestHint.getData() || {}
           const parentPreviewLine = hintData.parentPreviewLine
 
+          console.log('📊 [自动连接] 拖拽提示点数据:', {
+            hintData,
+            parentPreviewLine,
+            sourceNodeId: hintData.sourceNodeId,
+            branchId: hintData.branchId,
+            branchLabel: hintData.branchLabel,
+            isDragHint: hintData.isDragHint,
+            type: hintData.type
+          })
+
           if (parentPreviewLine) {
+            console.log('✅ [自动连接] 找到预览线信息，开始解析源节点ID')
+            
             // 解析预览线ID，格式可能是: unified_preview_sourceNodeId_branchId_timestamp
             // 或者从hintData中直接获取源节点ID
             let sourceNodeId = hintData.sourceNodeId
 
+            console.log('🔍 [自动连接] 直接获取的源节点ID:', sourceNodeId)
+
             if (!sourceNodeId && parentPreviewLine) {
+              console.log('🔍 [自动连接] 尝试从预览线ID解析源节点ID:', parentPreviewLine)
+              
               // 尝试从预览线ID中解析
               // 格式: unified_preview_node_1752751847152_8kuocwzz9_single_1752751847153
               // 或者: unified_preview_node_1752751914304_pbxrpkh53_single_1752751914305
               // 需要提取 node_timestamp 部分
               const parts = parentPreviewLine.split('_')
+              console.log('🔍 [自动连接] 预览线ID分割结果:', parts)
+              
               if (parts.length >= 4 && parts[0] === 'unified' && parts[1] === 'preview') {
                 // 源节点ID通常是 node_timestamp 格式，在第2和第3个位置
                 // 但需要考虑branchId可能包含下划线的情况
@@ -703,12 +779,18 @@ const bindEvents = () => {
                   for (let i = 2; i < parts.length - 1; i++) {
                     if (/^\d+$/.test(parts[i])) {
                       sourceNodeId = `${parts[i - 1]}_${parts[i]}`
+                      console.log('🔍 [自动连接] 从预览线ID解析出源节点ID:', sourceNodeId)
                       break
                     }
                   }
                 }
               }
             }
+
+            console.log('🔍 [自动连接] 解析源节点ID:', {
+              sourceNodeId,
+              parentPreviewLine
+            })
 
             if (sourceNodeId) {
               // 首先尝试直接查找
@@ -720,54 +802,99 @@ const bindEvents = () => {
                 sourceNode = allNodes.find(node => node.id.startsWith(sourceNodeId))
               }
 
+              console.log('🔍 [自动连接] 查找源节点结果:', {
+                sourceNodeId,
+                sourceNodeFound: !!sourceNode,
+                sourceNodeActualId: sourceNode?.id
+              })
+
               if (sourceNode && sourceNode.isNode && sourceNode.isNode() && sourceNode.id !== node.id) {
                 // 创建连接
                 try {
                   const branchId = hintData.branchId || 'default'
-                  const sourcePort = branchId !== 'default' ? `out-${branchId}` : 'out'
-
-                  const connection = graph.addEdge({
-                    source: {
-                      cell: sourceNode.id,
-                      port: sourcePort
-                    },
-                    target: {
-                      cell: node.id,
-                      port: 'in'
-                    },
-                    router: {
-                      name: 'manhattan'
-                    },
-                    attrs: {
-                      line: {
-                        stroke: '#5F95FF',
-                        strokeWidth: 2,
-                        targetMarker: {
-                          name: 'block',
-                          width: 8,
-                          height: 6,
-                          fill: '#5F95FF'
-                        }
-                      }
-                    },
-                    data: {
-                      type: 'connection',
-                      sourceNodeId: sourceNode.id,
-                      targetNodeId: node.id,
-                      branchId: branchId
-                    }
+                  const branchLabel = hintData.branchLabel // 获取分支标签
+                  const sourcePort = 'out' // 统一使用'out'端口，从UI层面的同一个位置出发
+                  
+                  console.log('🔗 [自动连接] 开始创建连接:', {
+                    sourceNodeId: sourceNode.id,
+                    targetNodeId: node.id,
+                    sourcePort,
+                    targetPort: 'in',
+                    branchId,
+                    branchLabel
                   })
+                  
 
-                  // 通知统一预览线管理器节点已连接
-                  if (unifiedPreviewManager.onNodeConnected) {
-                    unifiedPreviewManager.onNodeConnected(sourceNode, branchId)
+
+                  // 使用连接配置工厂创建配置
+                  const connectionConfig = createBranchConnectionConfig(
+                    { cell: sourceNode.id, port: sourcePort },
+                    { cell: node.id, port: 'in' },
+                    branchId,
+                    branchLabel
+                  )
+
+                  // 验证连接配置
+                  const validationResult = validateConnectionConfig(connectionConfig)
+                  if (!validationResult.valid) {
+                    logger.error('连接配置验证失败', { 
+                      connectionConfig, 
+                      errors: validationResult.errors 
+                    })
+                    return
                   }
 
+                  console.log('⚙️ [自动连接] 连接配置:', {
+                    connectionConfig,
+                    connectionPoint: connectionConfig.connectionPoint
+                  })
+
+                  const connectionResult = await connectionErrorHandler.safeCreateConnection(
+                    graph,
+                    connectionConfig
+                  )
+
+                  if (!connectionResult.success) {
+                    logger.error('连接创建失败', { errors: connectionResult.errors })
+                    return
+                  }
+
+                  const connection = connectionResult.result
+
+                  // 验证连接创建后的属性
+                  const createdProps = connection.prop()
+                  console.log('✅ [自动连接] 连接创建成功，验证属性:', {
+                    connectionId: connection.id,
+                    source: createdProps.source,
+                    target: createdProps.target,
+                    connectionPoint: createdProps.connectionPoint,
+                    hasLabels: !!branchLabel
+                  })
+
+                  // 通知统一预览线管理器节点已连接，传递标签信息
+                  if (unifiedPreviewManager.onNodeConnected) {
+                    unifiedPreviewManager.onNodeConnected(sourceNode, branchId, branchLabel)
+                  }
+
+                  console.log('🎉 [自动连接] 自动连接完成')
+
                 } catch (error) {
-                  console.error('[TaskFlowCanvas] 自动连接失败:', error)
+                  console.error('💥 [自动连接] 自动连接失败:', error)
                 }
+              } else {
+                console.warn('❌ [自动连接] 源节点无效或相同:', {
+                  sourceNodeFound: !!sourceNode,
+                  isSameNode: sourceNode?.id === node.id
+                })
               }
+            } else {
+              console.warn('❌ [自动连接] 无法解析源节点ID')
             }
+          } else {
+            console.warn('❌ [自动连接] 拖拽提示点没有parentPreviewLine信息:', {
+              hintId: nearestHint.id,
+              hintData: hintData
+            })
           }
 
           // 清除拖拽过程中的高亮效果
@@ -810,8 +937,23 @@ const bindEvents = () => {
 
   // 连接创建事件
   graph.on('edge:connected', ({ edge }) => {
+    console.log('🔗 [TaskFlowCanvas] edge:connected 事件触发:', {
+      edgeId: edge.id,
+      sourceNodeId: edge.getSourceCellId(),
+      targetNodeId: edge.getTargetCellId(),
+      sourcePortId: edge.getSourcePortId(),
+      targetPortId: edge.getTargetPortId()
+    })
+    
     const sourceNode = edge.getSourceNode()
     const targetNode = edge.getTargetNode()
+
+    console.log('📍 [TaskFlowCanvas] 连接节点信息:', {
+      sourceNodeFound: !!sourceNode,
+      targetNodeFound: !!targetNode,
+      sourceNodeType: sourceNode?.getData()?.nodeType || sourceNode?.getData()?.type,
+      targetNodeType: targetNode?.getData()?.nodeType || targetNode?.getData()?.type
+    })
 
     if (sourceNode && targetNode) {
       const connection = {
@@ -822,8 +964,14 @@ const bindEvents = () => {
         targetPort: edge.getTargetPortId()
       }
 
+      console.log('✅ [TaskFlowCanvas] 连接数据创建成功:', connection)
+      
       connections.value.push(connection)
       emit('connection-created', connection)
+      
+      console.log('📊 [TaskFlowCanvas] 当前连接总数:', connections.value.length)
+    } else {
+      console.error('❌ [TaskFlowCanvas] 连接节点不存在，无法创建连接数据')
     }
   })
 
@@ -1035,14 +1183,17 @@ const addNodeToGraph = (nodeData) => {
   }
 
   // 创建端口配置
-  const ports = createNodePorts(nodeConfig)
+  const ports = createNodePorts(nodeConfig, nodeData.type)
 
+  // 确保position对象存在
+  const position = nodeData.position || { x: 100, y: 100 }
+  
   // 创建节点
   const node = graph.addNode({
     id: nodeData.id,
     shape: 'vue-shape',
-    x: nodeData.position.x,
-    y: nodeData.position.y,
+    x: position.x,
+    y: position.y,
     width: nodeConfig.width || 100,
     height: nodeConfig.height || 100,
     ports,
@@ -1059,6 +1210,9 @@ const addNodeToGraph = (nodeData) => {
 
   console.log('[TaskFlowCanvas] X6节点创建成功，节点数据:', node.getData())
 
+  // 注意：分支节点的端口配置应该在配置确认后进行，而不是在节点创建时
+  // 因为此时还没有分支配置信息，端口配置会在 useConfigDrawers.js 的 handleConfigConfirm 中处理
+
   // 添加到节点列表
   nodes.value.push(nodeData)
   console.log('[TaskFlowCanvas] 节点已添加到nodes数组，当前节点总数:', nodes.value.length)
@@ -1073,101 +1227,56 @@ const addNodeToGraph = (nodeData) => {
 }
 
 // 创建节点端口配置
-const createNodePorts = (nodeConfig) => {
-  const ports = {
-    groups: {
-      in: {
-        position: {
-          name: 'top',
-          args: {
-            dx: 0,  // 水平偏移为0，确保在中心
-            dy: 0   // 垂直偏移为0，确保在边缘
-          }
-        },
-        attrs: {
-          circle: {
-            r: 5,
-            magnet: true,
-            stroke: '#5F95FF',
-            strokeWidth: 2,
-            fill: '#fff',
-            style: {
-              visibility: 'visible'
-            }
-          },
-        },
-        markup: [{
-          tagName: 'circle',
-          selector: 'circle'
-        }]
-      },
-      out: {
-        position: {
-          name: 'bottom',
-          args: {
-            dx: 0,  // 水平偏移为0，确保在中心
-            dy: 0   // 垂直偏移为0，确保在边缘
-          }
-        },
-        attrs: {
-          circle: {
-            r: 5,
-            magnet: true,
-            stroke: nodeConfig.color,
-            strokeWidth: 2,
-            fill: '#fff',
-            style: {
-              visibility: 'visible'
-            }
-          },
-        },
-        markup: [{
-          tagName: 'circle',
-          selector: 'circle'
-        }]
-      },
-    },
-    items: []
-  }
-
-  // 添加输入端口（除了开始节点）
-  if (nodeConfig.label !== '开始节点') {
-    ports.items.push({
-      group: 'in',
-      id: 'in1'
-    })
-  }
-
-  // 添加输出端口
-  if (nodeConfig.maxOutputs === 'dynamic') {
-    // 动态端口，默认2个
-    for (let i = 0; i < 2; i++) {
-      ports.items.push({
-        group: 'out',
-        id: `out${i + 1}`
-      })
-    }
-  } else if (nodeConfig.maxOutputs > 0) {
-    for (let i = 0; i < nodeConfig.maxOutputs; i++) {
-      ports.items.push({
-        group: 'out',
-        id: `out${i + 1}`
-      })
-    }
-  }
-
-  return ports
+const createNodePorts = (nodeConfig, nodeType) => {
+  console.log('[TaskFlowCanvas] 创建端口配置:', { nodeType, nodeConfig })
+  
+  // 使用专门的端口配置工厂
+  const portConfig = portConfigFactory.createNodePortConfig(nodeType, nodeConfig)
+  
+  console.log('[TaskFlowCanvas] 端口配置结果:', portConfig)
+  
+  return portConfig
 }
 
 // 添加连接到图中
 const addConnectionToGraph = (connectionData) => {
-  if (!graph) return
+  console.log('🔗 [TaskFlowCanvas] 开始创建连接:', connectionData)
+  
+  if (!graph) {
+    console.error('❌ [TaskFlowCanvas] 图形实例不存在')
+    return
+  }
 
   const sourceNode = graph.getCellById(connectionData.source)
   const targetNode = graph.getCellById(connectionData.target)
 
+  console.log('📍 [TaskFlowCanvas] 节点查找结果:', {
+    sourceNodeId: connectionData.source,
+    targetNodeId: connectionData.target,
+    sourceNodeFound: !!sourceNode,
+    targetNodeFound: !!targetNode,
+    sourceNodeType: sourceNode?.getData()?.nodeType || sourceNode?.getData()?.type,
+    targetNodeType: targetNode?.getData()?.nodeType || targetNode?.getData()?.type
+  })
+
   if (sourceNode && targetNode) {
-    graph.addEdge({
+    // 检查端口是否存在
+    const sourcePorts = sourceNode.getPorts ? sourceNode.getPorts() : []
+    const targetPorts = targetNode.getPorts ? targetNode.getPorts() : []
+    
+    const sourcePortExists = sourcePorts.find(p => p.id === connectionData.sourcePort)
+    const targetPortExists = targetPorts.find(p => p.id === connectionData.targetPort)
+    
+    console.log('🔌 [TaskFlowCanvas] 端口检查:', {
+      sourcePort: connectionData.sourcePort,
+      targetPort: connectionData.targetPort,
+      sourcePortExists: !!sourcePortExists,
+      targetPortExists: !!targetPortExists,
+      sourcePorts: sourcePorts.map(p => ({ id: p.id, group: p.group })),
+      targetPorts: targetPorts.map(p => ({ id: p.id, group: p.group }))
+    })
+    
+    const edgeConfig = {
       id: connectionData.id,
       source: {
         cell: connectionData.source,
@@ -1176,8 +1285,36 @@ const addConnectionToGraph = (connectionData) => {
       target: {
         cell: connectionData.target,
         port: connectionData.targetPort
-      }
-    })
+      },
+      router: {
+        name: 'manhattan'
+      },
+      connector: {
+        name: 'rounded',
+        args: {
+          radius: 8
+        }
+      },
+      // 确保连接从端口开始
+      connectionPoint: 'anchor'
+    }
+    
+    console.log('⚙️ [TaskFlowCanvas] 连接配置:', edgeConfig)
+    
+    try {
+      const edge = graph.addEdge(edgeConfig)
+      console.log('✅ [TaskFlowCanvas] 连接创建成功:', {
+        edgeId: edge.id,
+        sourceCell: edge.getSourceCellId(),
+        sourcePort: edge.getSourcePortId(),
+        targetCell: edge.getTargetCellId(),
+        targetPort: edge.getTargetPortId()
+      })
+    } catch (error) {
+      console.error('❌ [TaskFlowCanvas] 连接创建失败:', error)
+    }
+  } else {
+    console.error('❌ [TaskFlowCanvas] 节点不存在，无法创建连接')
   }
 }
 
@@ -1218,10 +1355,8 @@ const handleNodeTypeSelected = (nodeType) => {
     // 添加节点到图中
     addNodeToGraph(result.nodeData)
 
-    // 确定输出端口ID
-    const sourcePortId = maxOutputs === 'dynamic' || maxOutputs > 1
-      ? `out${branchIndex + 1}`
-      : 'out1'
+    // 统一使用'out'端口，从UI层面的同一个位置出发
+    let sourcePortId = 'out'
 
     // 创建连接
     const connection = {
@@ -1229,20 +1364,20 @@ const handleNodeTypeSelected = (nodeType) => {
       source: nodeSelectorSourceNode.value.id,
       target: result.nodeData.id,
       sourcePort: sourcePortId,
-      targetPort: 'in1',
+      targetPort: 'in',
       label: result.connectionLabel || ''
     }
 
     addConnectionToGraph(connection)
     connections.value.push(connection)
 
-    console.log(`[TaskFlowCanvas] 节点已通过增强布局添加: ${result.nodeData.id}, 层级: ${result.level}, 连接: ${sourcePortId} -> in1`)
+    console.log(`[TaskFlowCanvas] 节点已通过增强布局添加: ${result.nodeData.id}, 层级: ${result.level}, 连接: ${sourcePortId} -> in`)
 
     // 更新布局统计信息
     updateLayoutStats()
 
     // 如果是动态端口且需要添加新的输出端口
-    if (maxOutputs === 'dynamic' && branchIndex >= 1) {
+    if (maxOutputs === 'dynamic' && branchIndex >= 0) {
       addDynamicOutputPort(sourceNode, branchIndex + 2)
     }
   }
@@ -1254,7 +1389,7 @@ const handleNodeTypeSelected = (nodeType) => {
 // 为动态端口节点添加新的输出端口
 const addDynamicOutputPort = (node, portNumber) => {
   const ports = node.getPorts()
-  const newPortId = `out${portNumber}`
+  const newPortId = 'out' // 统一使用'out'端口
 
   // 检查端口是否已存在
   const existingPort = ports.find(port => port.id === newPortId)
@@ -1550,6 +1685,34 @@ const handleSingleNodeDelete = (data, shouldCascade = true) => {
       closeConfigDrawer()
     }
 
+    // 11. 刷新剩余节点的预览线（确保删除节点后预览线正确显示）
+    if (configDrawers.value?.structuredLayout) {
+      const previewManager = configDrawers.value.structuredLayout.getConnectionPreviewManager()
+      
+      if (previewManager && typeof previewManager.refreshAllPreviewLines === 'function') {
+        console.log(`[TaskFlowCanvas] 刷新所有预览线以确保正确显示`)
+        setTimeout(() => {
+          previewManager.refreshAllPreviewLines(true) // 传入true表示是节点删除后的刷新
+        }, 100) // 延迟执行，确保节点删除完全完成
+      } else if (previewManager) {
+        // 如果没有refreshAllPreviewLines方法，手动刷新所有有预览线的节点
+        console.log(`[TaskFlowCanvas] 手动刷新预览线`)
+        setTimeout(() => {
+          const remainingNodes = graph.getNodes()
+          remainingNodes.forEach(node => {
+            const nodeData = node.getData() || {}
+            // 跳过拖拽提示点和预览相关节点
+            if (!nodeData.isDragHint && !nodeData.isUnifiedPreview && !nodeData.isPersistentPreview) {
+              if (previewManager.previewLines && previewManager.previewLines.has(node.id)) {
+                console.log(`[TaskFlowCanvas] 刷新节点 ${node.id} 的预览线`)
+                previewManager.updatePreviewLinePosition(node)
+              }
+            }
+          })
+        }, 100)
+      }
+    }
+
     console.log(`[TaskFlowCanvas] 单个节点 ${nodeId} 删除完成，清理了 ${deletedConnections.length} 个连接`)
 
   } catch (error) {
@@ -1822,7 +1985,10 @@ const applyStructuredLayout = async () => {
     console.log('[TaskFlowCanvas] 图实例:', graph)
     console.log('[TaskFlowCanvas] configDrawers:', configDrawers.value)
     console.log('[TaskFlowCanvas] structuredLayout:', configDrawers.value?.structuredLayout)
-    console.log('[TaskFlowCanvas] isReady:', configDrawers.value?.structuredLayout?.isReady?.value)
+    
+    // 使用getIsReady方法获取正确的isReady值
+    const isReadyValue = configDrawers.value?.structuredLayout?.getIsReady?.()
+    console.log('[TaskFlowCanvas] isReady:', isReadyValue)
 
     if (!graph) {
       console.warn('[TaskFlowCanvas] 图实例不存在')
@@ -1834,16 +2000,24 @@ const applyStructuredLayout = async () => {
       return
     }
 
-    if (!configDrawers.value.structuredLayout.isReady.value) {
+    // 检查结构化布局是否就绪
+    const isLayoutReady = configDrawers.value.structuredLayout.getIsReady?.()
+    console.log('[TaskFlowCanvas] 布局就绪状态:', isLayoutReady)
+    
+    if (!isLayoutReady) {
       console.warn('[TaskFlowCanvas] 结构化布局未就绪，尝试初始化')
       // 尝试初始化布局引擎
       if (configDrawers.value.structuredLayout.initLayoutEngine) {
         configDrawers.value.structuredLayout.initLayoutEngine()
-        console.log('[TaskFlowCanvas] 布局引擎初始化完成，重新检查就绪状态:', configDrawers.value.structuredLayout.isReady.value)
-      }
-
-      if (!configDrawers.value.structuredLayout.isReady.value) {
-        console.error('[TaskFlowCanvas] 结构化布局初始化失败')
+        const newReadyState = configDrawers.value.structuredLayout.getIsReady?.()
+        console.log('[TaskFlowCanvas] 布局引擎初始化完成，重新检查就绪状态:', newReadyState)
+        
+        if (!newReadyState) {
+          console.error('[TaskFlowCanvas] 结构化布局初始化失败')
+          return
+        }
+      } else {
+        console.error('[TaskFlowCanvas] 初始化方法不存在')
         return
       }
     }
@@ -1904,6 +2078,30 @@ const exportData = () => {
   return {
     nodes: nodes.value,
     connections: connections.value
+  }
+}
+
+// 加载画布数据（用于自动修复后重新渲染）
+const loadCanvasData = (data) => {
+  if (!graph || !data) return
+
+  try {
+    // 清空当前画布
+    graph.clearCells()
+    
+    // 重新加载节点
+    data.nodes.forEach(nodeData => {
+      addNodeToGraph(nodeData)
+    })
+    
+    // 重新加载连接
+    data.connections.forEach(connectionData => {
+      addConnectionToGraph(connectionData)
+    })
+    
+    console.log('[TaskFlowCanvas] 画布数据已重新加载')
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 加载画布数据失败:', error)
   }
 }
 
@@ -2072,6 +2270,7 @@ onUnmounted(() => {
 defineExpose({
   addNode,
   getCanvasData,
+  loadCanvasData,
   clearCanvas,
   exportData,
   zoomIn,

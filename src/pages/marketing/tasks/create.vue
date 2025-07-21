@@ -37,26 +37,42 @@
               </a-form-item>
             </a-col>
           </a-row>
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="执行时间" field="executeTime">
-                <a-date-picker 
-                  v-model="taskForm.executeTime" 
-                  show-time 
-                  placeholder="请选择执行时间"
-                  @change="handleFormChange"
-                />
-              </a-form-item>
+          
+          <!-- 保存和发布按钮 -->
+          <a-row :gutter="16" style="margin-top: 24px;">
+            <a-col :span="24">
+              <a-space size="large">
+                <a-button 
+                  type="primary" 
+                  size="large"
+                  :loading="isSaving"
+                  @click="saveTask"
+                >
+                  <template #icon>
+                    <icon-save />
+                  </template>
+                  {{ isSaving ? '保存中...' : '保存' }}
+                </a-button>
+                <a-button 
+                  type="primary" 
+                  status="success"
+                  size="large"
+                  :loading="isPublishing"
+                  @click="publishTask"
+                >
+                  <template #icon>
+                    <icon-send />
+                  </template>
+                  {{ isPublishing ? '发布中...' : '发布' }}
+                </a-button>
+                <div class="task-status" v-if="taskStatus">
+                  <a-tag :color="taskStatus === 'published' ? 'green' : 'blue'">
+                    {{ taskStatus === 'published' ? '已发布' : '草稿' }}
+                  </a-tag>
+                </div>
+              </a-space>
             </a-col>
           </a-row>
-          <a-form-item label="任务描述" field="description">
-            <a-textarea 
-              v-model="taskForm.description" 
-              placeholder="请输入任务描述"
-              :rows="3"
-              @change="handleFormChange"
-            />
-          </a-form-item>
         </a-form>
       </a-card>
 
@@ -213,10 +229,12 @@ import {
   IconExperiment,
   IconSwap,
   IconSettings,
-  IconClockCircle
+  IconClockCircle,
+  IconSave
 } from '@arco-design/web-vue/es/icon'
 import TaskFlowCanvas from './components/TaskFlowCanvas.vue'
 import { validateCanvasData, formatValidationMessage } from '../../../utils/canvasValidation.js'
+import { validateForSave, validateForPublish, formatPublishValidationMessage } from '../../../utils/enhancedCanvasValidation.js'
 
 const router = useRouter()
 const formRef = ref()
@@ -226,12 +244,15 @@ const searchKeyword = ref('')
 // 页面状态标记
 const hasUnsavedChanges = ref(false)
 
+// 保存和发布状态
+const isSaving = ref(false)
+const isPublishing = ref(false)
+const taskStatus = ref('draft') // 'draft' | 'published'
+
 // 表单数据
 const taskForm = reactive({
   name: '',
-  type: '',
-  executeTime: null,
-  description: ''
+  type: ''
 })
 
 // 监听表单变化
@@ -365,25 +386,12 @@ const saveDraft = async () => {
   }
 }
 
-// 保存任务
+// 保存任务（草稿）
 const saveTask = async () => {
+  if (isSaving.value) return
+
   try {
-    // 添加确认对话框，防止意外保存
-    const confirmed = await new Promise((resolve) => {
-      Modal.confirm({
-        title: '确认保存任务',
-        content: '保存后将创建营销任务并跳转到任务列表页面，确定要保存吗？',
-        okText: '确定保存',
-        cancelText: '取消',
-        onOk: () => resolve(true),
-        onCancel: () => resolve(false)
-      })
-    })
-    
-    if (!confirmed) {
-      console.log('[TaskCreate] 用户取消保存任务')
-      return
-    }
+    isSaving.value = true
     
     if (!taskForm.name) {
       Message.error('请输入任务名称')
@@ -397,60 +405,237 @@ const saveTask = async () => {
     // 获取画布数据
     const canvasData = canvasRef.value?.getCanvasData()
     
-    // 校验画布数据
-    const validationResult = validateCanvasData(canvasData)
+    // 基础校验（对于保存，只做轻量级校验）
+    const validationResult = validateForSave({
+      ...taskForm,
+      canvasData
+    })
     
     if (!validationResult.isValid) {
-      // 有错误，阻止保存
-      const message = formatValidationMessage(validationResult)
-      Modal.error({
-        title: '画布数据校验失败',
-        content: message,
-        width: 500,
-        okText: '我知道了'
-      })
-      return
-    }
-    
-    // 有警告，询问用户是否继续
-    if (validationResult.warnings.length > 0) {
-      const message = formatValidationMessage(validationResult)
-      const confirmed = await new Promise((resolve) => {
-        Modal.warning({
-          title: '画布数据校验警告',
-          content: `${message}\n\n是否继续保存任务？`,
-          width: 500,
-          okText: '继续保存',
-          cancelText: '取消',
-          onOk: () => resolve(true),
-          onCancel: () => resolve(false)
-        })
-      })
-      
-      if (!confirmed) {
-        return
-      }
+      // 对于保存，即使有错误也只显示警告，不阻止保存
+      Message.warning(`保存成功，但存在问题：${validationResult.errors.join(', ')}`)
     }
     
     const taskData = {
       ...taskForm,
       canvasData,
-      status: 'pending',
-      createTime: new Date().toLocaleString('zh-CN'),
+      status: 'draft',
+      updateTime: new Date().toLocaleString('zh-CN'),
       creator: '当前用户'
     }
     
-    console.log('保存任务:', taskData)
-    Message.success('任务创建成功')
+    console.log('[TaskCreate] 保存任务草稿:', taskData)
     
-    // 标记为已保存，避免离开确认
+    // 模拟保存延迟
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // 保存成功，状态仍为草稿
+    taskStatus.value = 'draft'
+    Message.success('保存成功')
+    
+    // 标记为已保存
     hasUnsavedChanges.value = false
     
-    // 返回任务列表页面
-    router.push('/marketing/tasks')
   } catch (error) {
-    console.error('保存任务失败:', error)
-    Message.error('保存任务失败')
+    console.error('[TaskCreate] 保存任务失败:', error)
+    Message.error('保存失败，请重试')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+// 发布任务
+const publishTask = async () => {
+  if (isPublishing.value) return
+
+  try {
+    isPublishing.value = true
+    
+    if (!taskForm.name) {
+      Message.error('请输入任务名称')
+      return
+    }
+    if (!taskForm.type) {
+      Message.error('请选择任务类型')
+      return
+    }
+    
+    // 获取画布数据
+    const canvasData = canvasRef.value?.getCanvasData()
+    if (!canvasData) {
+      Message.error('无法获取画布数据')
+      return
+    }
+    
+    // 获取预览线信息（用于自动补充结束节点）
+    let previewLines = []
+    try {
+      // 尝试从画布组件获取预览线管理器
+      const previewManager = canvasRef.value?.previewManager || 
+                            canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
+                            canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
+      
+      if (previewManager && previewManager.getActivePreviewLines) {
+        previewLines = previewManager.getActivePreviewLines()
+      } else if (previewManager && previewManager.previewLines) {
+        // 如果是UnifiedPreviewLineManager
+        previewLines = []
+        previewManager.previewLines.forEach((previewInstance, nodeId) => {
+          const node = canvasData.nodes.find(n => n.id === nodeId)
+          if (node && previewInstance) {
+            if (Array.isArray(previewInstance)) {
+              // 分支预览线
+              previewInstance.forEach((instance, branchIndex) => {
+                if (instance.line) {
+                  previewLines.push({
+                    id: instance.line.id || `preview_${nodeId}_${branchIndex}`,
+                    sourceNodeId: nodeId,
+                    branchId: instance.branchId,
+                    branchIndex: branchIndex,
+                    branchLabel: instance.branchLabel,
+                    position: instance.endPosition || { x: node.position.x + 200, y: node.position.y + 100 }
+                  })
+                }
+              })
+            } else {
+              // 单一预览线
+              if (previewInstance.line) {
+                previewLines.push({
+                  id: previewInstance.line.id || `preview_${nodeId}`,
+                  sourceNodeId: nodeId,
+                  position: previewInstance.endPosition || { x: node.position.x + 200, y: node.position.y + 100 }
+                })
+              }
+            }
+          }
+        })
+      }
+      
+      console.log('📋 [发布校验] 获取到预览线信息:', {
+        previewLineCount: previewLines.length,
+        previewLines: previewLines.map(line => ({
+          id: line.id,
+          sourceNodeId: line.sourceNodeId,
+          branchId: line.branchId
+        }))
+      })
+    } catch (error) {
+      console.warn('⚠️ [发布校验] 获取预览线信息失败:', error)
+      previewLines = []
+    }
+    
+    // 发布前完整校验
+    const validationResult = validateForPublish({
+      ...taskForm,
+      canvasData
+    }, { autoFix: true, previewLines })
+    
+    if (!validationResult.isValid) {
+      // 显示详细的校验错误信息
+      const errorMessage = formatPublishValidationMessage(validationResult)
+      
+      Modal.error({
+        title: '发布失败',
+        content: errorMessage,
+        width: 600,
+        okText: '确定'
+      })
+      return
+    }
+
+    // 如果有自动修复，询问用户是否接受
+    if (validationResult.autoFixApplied) {
+      const confirmMessage = formatPublishValidationMessage(validationResult)
+      
+      const confirmed = await new Promise((resolve) => {
+        Modal.confirm({
+          title: '发布确认',
+          content: confirmMessage + '\n\n是否接受自动修复并继续发布？',
+          width: 600,
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false)
+        })
+      })
+
+      if (!confirmed) {
+        return
+      }
+
+      // 应用自动修复的数据到画布
+      if (validationResult.fixedData && validationResult.fixedData.canvasData) {
+        // 重新加载修复后的数据到画布
+        canvasRef.value?.loadCanvasData(validationResult.fixedData.canvasData)
+        
+        // 清理预览线并重新结构化布局
+        try {
+          const previewManager = canvasRef.value?.previewManager || 
+                                canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
+                                canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
+          
+          if (previewManager) {
+            // 清理已连接的预览线
+            if (previewManager.clearConnectedPreviewLines) {
+              previewManager.clearConnectedPreviewLines()
+            } else if (previewManager.refreshAllPreviewLines) {
+              previewManager.refreshAllPreviewLines()
+            }
+          }
+          
+          // 触发重新布局
+          if (canvasRef.value?.triggerLayout) {
+            canvasRef.value.triggerLayout()
+          }
+          
+          console.log('✅ [发布校验] 已应用自动修复并重新布局')
+        } catch (error) {
+          console.warn('⚠️ [发布校验] 重新布局失败:', error)
+        }
+        
+        Message.success('已自动补充结束节点并优化布局')
+      }
+    }
+
+    const taskData = {
+      ...taskForm,
+      canvasData: validationResult.fixedData?.canvasData || canvasData,
+      status: 'published',
+      publishTime: new Date().toLocaleString('zh-CN'),
+      creator: '当前用户'
+    }
+    
+    console.log('[TaskCreate] 发布任务:', taskData)
+    
+    // 模拟发布延迟
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // 发布成功
+    taskStatus.value = 'published'
+    Message.success('发布成功')
+    
+    // 标记为已保存
+    hasUnsavedChanges.value = false
+    
+    // 询问是否跳转到任务列表
+    const shouldRedirect = await new Promise((resolve) => {
+      Modal.success({
+        title: '发布成功',
+        content: '任务已成功发布，是否跳转到任务列表页面？',
+        okText: '跳转',
+        cancelText: '留在当前页',
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false)
+      })
+    })
+    
+    if (shouldRedirect) {
+      router.push('/marketing/tasks')
+    }
+    
+  } catch (error) {
+    console.error('[TaskCreate] 发布任务失败:', error)
+    Message.error('发布失败，请重试')
+  } finally {
+    isPublishing.value = false
   }
 }
 
@@ -693,6 +878,53 @@ onBeforeUnmount(() => {
 :deep(.arco-picker-focused) {
   border-color: #165dff;
   box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
+}
+
+/* 保存发布按钮区域样式 */
+.task-status {
+  display: flex;
+  align-items: center;
+}
+
+.task-status .arco-tag {
+  font-weight: 500;
+  border-radius: 12px;
+  padding: 4px 12px;
+}
+
+/* 保存发布按钮样式 */
+:deep(.arco-btn-size-large) {
+  height: 40px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+:deep(.arco-btn-size-large:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.arco-btn-primary) {
+  background: linear-gradient(135deg, #165dff, #4080ff);
+  border-color: #165dff;
+}
+
+:deep(.arco-btn-primary:hover) {
+  background: linear-gradient(135deg, #4080ff, #3366ff);
+  border-color: #4080ff;
+}
+
+:deep(.arco-btn-status-success) {
+  background: linear-gradient(135deg, #00b42a, #23c343);
+  border-color: #00b42a;
+}
+
+:deep(.arco-btn-status-success:hover) {
+  background: linear-gradient(135deg, #23c343, #7bc142);
+  border-color: #23c343;
 }
 
 /* 响应式设计 */

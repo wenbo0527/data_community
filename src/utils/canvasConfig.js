@@ -3,6 +3,8 @@
  * 统一管理 X6 画布的各种配置
  */
 
+import { createPortConfig } from './portConfigFactory.js'
+
 /**
  * 获取画布基础配置
  */
@@ -121,7 +123,7 @@ export const getConnectingConfig = () => ({
       radius: 8,
     },
   },
-  anchor: 'center',
+  // anchor: 自动处理端口连接
   connectionPoint: 'anchor',
   allowBlank: false,
   snap: {
@@ -150,43 +152,58 @@ export const getEdgeConfig = () => ({
 /**
  * 获取端口组配置
  */
-export const getPortGroups = () => ({
-  in: {
-    position: 'top',
-    attrs: {
-      circle: {
-        r: 4,
-        magnet: true,
-        strokeWidth: 2,
-        fill: '#fff',
-      },
-    },
-  },
-  out: {
-    position: 'bottom',
-    attrs: {
-      circle: {
-        r: 4,
-        magnet: true,
-        strokeWidth: 2,
-        fill: '#fff',
-      },
-    },
-  },
-  right: {
-    position: { name: 'right' },
-    attrs: {
-      circle: {
-        r: 12,
-        fill: '#66cc67',
-        stroke: '#fff',
-        strokeWidth: 2,
-        visibility: 'visible',
-        magnet: true
+export const getPortGroups = () => {
+  // 使用端口配置工厂创建标准端口配置
+  const inPortConfig = createPortConfig({
+    id: 'in',
+    group: 'in',
+    position: {
+      name: 'top',
+      args: {
+        x: '50%',
+        y: 0,
+        dx: 0,
+        dy: 0
+      }
+    }
+  })
+
+  const outPortConfig = createPortConfig({
+    id: 'out',
+    group: 'out',
+    position: {
+      name: 'bottom',
+      args: {
+        x: '50%',
+        y: '100%',
+        dx: 0,
+        dy: 0
+      }
+    }
+  })
+
+  // 提取端口组配置（移除id字段）
+  const { id: inId, ...inGroup } = inPortConfig
+  const { id: outId, ...outGroup } = outPortConfig
+
+  return {
+    in: inGroup,
+    out: outGroup,
+    right: {
+      position: { name: 'right' },
+      attrs: {
+        circle: {
+          r: 12,
+          fill: '#66cc67',
+          stroke: '#fff',
+          strokeWidth: 2,
+          visibility: 'visible',
+          magnet: true
+        }
       }
     }
   }
-})
+}
 
 /**
  * 画布配置对象
