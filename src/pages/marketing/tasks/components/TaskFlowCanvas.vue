@@ -552,24 +552,7 @@ const initCanvas = async () => {
     connections: connections.value
   })
 
-  // 在开发环境中加载测试脚本
-  if (import.meta.env.DEV) {
-    try {
-      // 动态加载public目录下的测试脚本
-      const script = document.createElement('script')
-      script.src = '/testEnhancedPreviewLine.js'
-      script.onload = () => {
-        console.log('🧪 [TaskFlowCanvas] 测试脚本已成功加载')
-        console.log('🔧 [TaskFlowCanvas] 可用测试函数:', Object.keys(window).filter(key => key.startsWith('test') || key === 'runFullTest' || key === 'cleanupPreviewLines'))
-      }
-      script.onerror = (error) => {
-        console.warn('⚠️ [TaskFlowCanvas] 测试脚本加载失败:', error)
-      }
-      document.head.appendChild(script)
-    } catch (error) {
-      console.warn('⚠️ [TaskFlowCanvas] 测试脚本加载异常:', error)
-    }
-  }
+
 }
 
 // 绑定事件
