@@ -172,15 +172,69 @@ export function useX6Events(graph, canvasState, emit) {
     graph.on('node:port:click', ({ node, port }) => {
       const nodeData = canvasState.nodes.value.find(n => n.id === node.id)
       if (nodeData && port.group === 'out') {
-        const portPosition = node.getPortPosition(port.id)
-        const graphPosition = graph.localToGraph(portPosition)
-        const clientPosition = graph.graphToClient(graphPosition)
-        
-        emit('port-click', {
-          node: nodeData,
-          port,
-          position: clientPosition
-        })
+        try {
+          // 计算端口的绝对位置
+          const nodePosition = node.getPosition()
+          const nodeSize = node.getSize()
+          const portConfig = node.getPortProp(port.id, 'position') || {}
+          
+          let portX = nodePosition.x
+          let portY = nodePosition.y
+          
+          // 根据端口配置计算位置
+          if (portConfig.name === 'bottom') {
+            const args = portConfig.args || {}
+            const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+              parseFloat(args.x) / 100 : 0.5
+            portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+            portY = nodePosition.y + nodeSize.height + (args.dy || 0)
+          } else if (portConfig.name === 'top') {
+            const args = portConfig.args || {}
+            const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+              parseFloat(args.x) / 100 : 0.5
+            portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+            portY = nodePosition.y + (args.dy || 0)
+          } else if (portConfig.name === 'left') {
+            const args = portConfig.args || {}
+            const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+              parseFloat(args.y) / 100 : 0.5
+            portX = nodePosition.x + (args.dx || 0)
+            portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+          } else if (portConfig.name === 'right') {
+            const args = portConfig.args || {}
+            const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+              parseFloat(args.y) / 100 : 0.5
+            portX = nodePosition.x + nodeSize.width + (args.dx || 0)
+            portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+          }
+          
+          const portPosition = { x: portX, y: portY }
+          const graphPosition = graph.localToGraph(portPosition)
+          const clientPosition = graph.graphToClient(graphPosition)
+          
+          emit('port-click', {
+            node: nodeData,
+            port,
+            position: clientPosition
+          })
+        } catch (error) {
+          console.warn('端口位置计算失败:', error)
+          // 降级处理：使用节点中心位置
+          const nodePosition = node.getPosition()
+          const nodeSize = node.getSize()
+          const centerPosition = {
+            x: nodePosition.x + nodeSize.width / 2,
+            y: nodePosition.y + nodeSize.height / 2
+          }
+          const graphPosition = graph.localToGraph(centerPosition)
+          const clientPosition = graph.graphToClient(graphPosition)
+          
+          emit('port-click', {
+            node: nodeData,
+            port,
+            position: clientPosition
+          })
+        }
       }
     })
     

@@ -62,10 +62,33 @@
       </a-button-group>
 
       <a-button-group style="margin-left: 8px;">
-        <a-button @click="applyStructuredLayout" size="small" type="primary" :loading="isApplyingLayout">
-          <template #icon><icon-sort /></template>
-          结构化布局
-        </a-button>
+        <!-- 智能布局下拉菜单 -->
+        <a-dropdown>
+          <a-button size="small" type="primary" :loading="isApplyingLayout">
+            <template #icon><icon-sort /></template>
+            智能布局
+            <template #suffix><icon-down /></template>
+          </a-button>
+          <template #content>
+            <a-doption @click="() => handleLayoutOptionSelect('enhanced')">
+              <template #icon><icon-sort /></template>
+              增强型布局
+            </a-doption>
+            <a-doption @click="() => handleLayoutOptionSelect('intelligent')">
+              <template #icon><icon-thunderbolt /></template>
+              智能分层布局
+            </a-doption>
+            <a-doption @click="() => handleLayoutOptionSelect('native-dagre')">
+              <template #icon><icon-sort /></template>
+              原生Dagre布局
+            </a-doption>
+            <a-doption @click="() => handleLayoutOptionSelect('center')">
+              <template #icon><icon-location /></template>
+              居中对齐
+            </a-doption>
+          </template>
+        </a-dropdown>
+        
         <a-button @click="clearCanvas" size="small" status="danger">
           <template #icon><icon-delete /></template>
           清空画布
@@ -107,7 +130,8 @@ import {
   IconSort,
   IconDragDot,
   IconLocation,
-  IconThunderbolt
+  IconThunderbolt,
+  IconDown
 } from '@arco-design/web-vue/es/icon'
 import { Modal, Message } from '@arco-design/web-vue'
 
@@ -218,6 +242,7 @@ const layoutStats = ref(null)
 // 手动更新统计信息的函数
 const updateLayoutStats = () => {
   if (isUpdatingLayout.value) {
+    console.log('[TaskFlowCanvas] 统计信息更新正在进行中，跳过')
     return // 防止递归更新
   }
 
@@ -234,10 +259,8 @@ const updateLayoutStats = () => {
     console.warn('[TaskFlowCanvas] 获取布局统计信息失败:', error)
     layoutStats.value = null
   } finally {
-    // 使用 setTimeout 确保在下一个事件循环重置
-    setTimeout(() => {
-      isUpdatingLayout.value = false
-    }, 0)
+    // 立即重置状态，不使用异步
+    isUpdatingLayout.value = false
   }
 }
 
@@ -316,10 +339,10 @@ const initCanvas = async () => {
     },
     scroller: {
       enabled: true,
-      pannable: true,
-      cursor: 'grab',
+      pannable: false, // 🔧 禁用X6内置拖拽，使用CanvasPanZoomManager接管
+      cursor: 'default',
       passive: false,
-      modifiers: [], // 移除修饰键要求，支持直接拖拽移动画布
+      modifiers: ['ctrl'], // 需要Ctrl键才能拖拽（实际不会生效，因为pannable已禁用）
       pageVisible: false,
       pageBreak: false,
       autoResize: true,
@@ -404,6 +427,29 @@ const initCanvas = async () => {
 
   console.log('[TaskFlowCanvas] X6图形实例创建成功')
 
+  // 输出画布配置调试信息
+  console.log('⚙️ [TaskFlowCanvas] 画布配置信息:', {
+    scroller: {
+      enabled: true,
+      pannable: false, // 已禁用X6内置拖拽
+      modifiers: ['ctrl']
+    },
+    interacting: {
+      nodeMovable: !props.readonly
+    },
+    readonly: props.readonly
+  })
+
+  // 检查scroller是否正确启用
+  const scrollerEnabled = graph.scroller && graph.scroller.options.enabled
+  const scrollerPannable = graph.scroller && graph.scroller.options.pannable
+  console.log('🔍 [TaskFlowCanvas] Scroller状态检查:', {
+    scrollerExists: !!graph.scroller,
+    scrollerEnabled,
+    scrollerPannable,
+    scrollerOptions: graph.scroller ? graph.scroller.options : null
+  })
+
   // 注册自定义边形状
   registerCustomShapes(Graph)
   console.log('[TaskFlowCanvas] 自定义边形状注册完成')
@@ -427,7 +473,7 @@ const initCanvas = async () => {
   console.log('[TaskFlowCanvas] 开始手动初始化结构化布局')
   if (configDrawers.value?.structuredLayout) {
     // 首先初始化布局引擎
-    configDrawers.value.structuredLayout.initLayoutEngine()
+    configDrawers.value.structuredLayout.initializeLayoutEngine()
     console.log('[TaskFlowCanvas] 布局引擎初始化完成')
 
     // 获取初始化后的管理器实例
@@ -467,6 +513,10 @@ const initCanvas = async () => {
     console.error('[TaskFlowCanvas] StructuredLayout 不存在，无法获取统一预览线管理器')
   }
 
+  // 初始化拖拽缩放管理器（在绑定其他事件之前）
+  panZoomManager = new CanvasPanZoomManager(graph)
+  console.log('[TaskFlowCanvas] 拖拽缩放管理器初始化完成')
+
   // 绑定事件
   bindEvents()
   console.log('[TaskFlowCanvas] 事件绑定完成')
@@ -475,10 +525,6 @@ const initCanvas = async () => {
   watchZoomChange()
   updateCurrentScale()
   console.log('[TaskFlowCanvas] 缩放监听初始化完成')
-
-  // 初始化拖拽缩放管理器
-  panZoomManager = new CanvasPanZoomManager(graph)
-  console.log('[TaskFlowCanvas] 拖拽缩放管理器初始化完成')
 
   // 加载初始数据
   loadInitialData()
@@ -529,6 +575,44 @@ const initCanvas = async () => {
 // 绑定事件
 const bindEvents = () => {
   if (!graph) return
+
+  console.log('🔗 [TaskFlowCanvas] 开始绑定画布事件')
+
+  // 添加画布级别的鼠标事件监听（用于调试）
+  const container = graph.container
+  if (container) {
+    console.log('📦 [TaskFlowCanvas] 画布容器信息:', {
+      container,
+      containerTagName: container.tagName,
+      containerClasses: container.className,
+      containerId: container.id
+    })
+
+    // 添加调试用的鼠标事件监听器（使用冒泡阶段，避免干扰CanvasPanZoomManager）
+    const debugMouseDown = (e) => {
+      console.log('🖱️ [TaskFlowCanvas] 画布容器鼠标按下事件:', {
+        target: e.target,
+        targetTagName: e.target.tagName,
+        targetClasses: e.target.className,
+        button: e.button,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        eventPhase: e.eventPhase,
+        bubbles: e.bubbles,
+        cancelable: e.cancelable
+      })
+    }
+
+    const debugMouseMove = (e) => {
+      // 移除鼠标移动日志，避免日志过多
+    }
+
+    // 使用冒泡阶段，不干扰CanvasPanZoomManager的事件处理
+    container.addEventListener('mousedown', debugMouseDown, false)
+    container.addEventListener('mousemove', debugMouseMove, false)
+    
+    console.log('🎯 [TaskFlowCanvas] 画布容器调试事件监听器已添加（冒泡阶段）')
+  }
 
   // 节点点击事件 - 选择节点并打开配置抽屉
   graph.on('node:click', ({ node }) => {
@@ -592,11 +676,26 @@ const bindEvents = () => {
     dragNodeType.value = node.getData()?.type || 'unknown'
   })
 
+  // 添加画布空白区域点击事件监听
+  graph.on('blank:mousedown', (e) => {
+    // 空白区域鼠标按下事件
+  })
+
+  // 添加画布空白区域鼠标移动事件监听
+  graph.on('blank:mousemove', (e) => {
+    // 移除鼠标移动日志，避免日志过多
+  })
+
+  // 添加画布空白区域鼠标抬起事件监听
+  graph.on('blank:mouseup', (e) => {
+    // 空白区域鼠标抬起事件
+  })
+
   // 节点拖拽过程中的事件（实时更新）
   graph.on('node:moving', ({ node }) => {
     // 在节点拖拽过程中触发吸附逻辑
     const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
-    if (unifiedPreviewManager) {
+    if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
       const position = node.getPosition()
       const size = node.getSize()
       const centerX = position.x + size.width / 2
@@ -634,8 +733,6 @@ const bindEvents = () => {
           })
         }
       })
-    } else {
-      console.warn('❌ [自动连接检测] 统一预览线管理器不可用')
     }
   
   })
@@ -645,7 +742,7 @@ const bindEvents = () => {
     if (isDragging.value) {
       // 在节点位置变化时触发吸附逻辑
       const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
-      if (unifiedPreviewManager) {
+      if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
         const size = node.getSize()
         const centerX = current.x + size.width / 2
         const centerY = current.y + size.height / 2
@@ -658,36 +755,34 @@ const bindEvents = () => {
 
   // 节点移动完成事件（合并处理）
   graph.on('node:moved', async ({ node }) => {
-    console.log('🚚 [节点移动] 节点移动完成:', {
-      nodeId: node.id,
-      position: node.getPosition()
-    })
-
     const nodeData = nodes.value.find(n => n.id === node.id)
     if (nodeData) {
       const position = node.getPosition()
       nodeData.position = position
       emit('node-moved', { nodeId: node.id, position })
 
-      // 检测是否需要自动连接到预览线
+      // 强制刷新所有拖拽提示点位置（解决自动化布局后位置不同步问题）
       const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
+      if (unifiedPreviewManager && typeof unifiedPreviewManager.refreshAllPreviewLines === 'function') {
+        try {
+          unifiedPreviewManager.refreshAllPreviewLines()
+          console.log('🔄 [节点移动] 已刷新所有预览线和拖拽提示点位置')
+        } catch (error) {
+          console.warn('⚠️ [节点移动] 刷新预览线位置失败:', error)
+        }
+      }
+
+      // 检测是否需要自动连接到预览线
       if (unifiedPreviewManager) {
         const size = node.getSize()
         const centerX = position.x + size.width / 2
         const centerY = position.y + size.height / 2
-
-        console.log('🔍 [自动连接检测] 开始检测拖拽提示点:', {
-          nodeId: node.id,
-          centerPosition: { x: centerX, y: centerY }
-        })
 
         // 检测是否接近拖拽提示点，如果是则尝试自动连接
         const dragHints = graph.getNodes().filter(n => {
           const data = n.getData() || {}
           return data.isDragHint || data.type === 'drag-hint'
         })
-
-        console.log('📍 [自动连接检测] 找到拖拽提示点数量:', dragHints.length)
 
         // 找到最近的拖拽提示点
         let nearestHint = null
@@ -704,93 +799,41 @@ const bindEvents = () => {
             Math.pow(centerY - hintCenterY, 2)
           )
 
-          console.log('📏 [自动连接检测] 计算距离:', {
-            hintId: hint.id,
-            hintCenter: { x: hintCenterX, y: hintCenterY },
-            distance,
-            withinRange: distance <= 80,
-            currentNearest: nearestDistance
-          })
-
           if (distance <= 80 && distance < nearestDistance) { // 80px 吸附范围（增加范围）
             nearestDistance = distance
             nearestHint = hint
-            console.log('🎯 [自动连接检测] 更新最近提示点:', {
-              hintId: hint.id,
-              newNearestDistance: distance
-            })
           }
-        })
-
-        console.log('🔍 [自动连接检测] 最近提示点选择结果:', {
-          nearestHint: nearestHint?.id || null,
-          nearestDistance: nearestDistance === Infinity ? 'Infinity' : nearestDistance,
-          totalHints: dragHints.length
         })
 
         // 如果找到最近的拖拽提示点，则进行连接
         if (nearestHint) {
-          console.log('🎯 [自动连接] 找到最近的拖拽提示点:', {
-            hintId: nearestHint.id,
-            distance: nearestDistance
-          })
-
           // 获取拖拽提示点对应的预览线信息
           const hintData = nearestHint.getData() || {}
           const parentPreviewLine = hintData.parentPreviewLine
 
-          console.log('📊 [自动连接] 拖拽提示点数据:', {
-            hintData,
-            parentPreviewLine,
-            sourceNodeId: hintData.sourceNodeId,
-            branchId: hintData.branchId,
-            branchLabel: hintData.branchLabel,
-            isDragHint: hintData.isDragHint,
-            type: hintData.type
-          })
-
           if (parentPreviewLine) {
-            console.log('✅ [自动连接] 找到预览线信息，开始解析源节点ID')
-            
             // 解析预览线ID，格式可能是: unified_preview_sourceNodeId_branchId_timestamp
             // 或者从hintData中直接获取源节点ID
             let sourceNodeId = hintData.sourceNodeId
 
-            console.log('🔍 [自动连接] 直接获取的源节点ID:', sourceNodeId)
-
             if (!sourceNodeId && parentPreviewLine) {
-              console.log('🔍 [自动连接] 尝试从预览线ID解析源节点ID:', parentPreviewLine)
-              
               // 尝试从预览线ID中解析
-              // 格式: unified_preview_node_1752751847152_8kuocwzz9_single_1752751847153
-              // 或者: unified_preview_node_1752751914304_pbxrpkh53_single_1752751914305
-              // 需要提取 node_timestamp 部分
               const parts = parentPreviewLine.split('_')
-              console.log('🔍 [自动连接] 预览线ID分割结果:', parts)
               
               if (parts.length >= 4 && parts[0] === 'unified' && parts[1] === 'preview') {
                 // 源节点ID通常是 node_timestamp 格式，在第2和第3个位置
-                // 但需要考虑branchId可能包含下划线的情况
-                // 找到最后一个数字部分作为timestamp，倒推找到源节点ID
                 const lastPart = parts[parts.length - 1]
                 if (/^\d+$/.test(lastPart)) {
                   // 最后一部分是时间戳，往前找到源节点ID
-                  // 通常源节点ID是 node_timestamp 格式
                   for (let i = 2; i < parts.length - 1; i++) {
                     if (/^\d+$/.test(parts[i])) {
                       sourceNodeId = `${parts[i - 1]}_${parts[i]}`
-                      console.log('🔍 [自动连接] 从预览线ID解析出源节点ID:', sourceNodeId)
                       break
                     }
                   }
                 }
               }
             }
-
-            console.log('🔍 [自动连接] 解析源节点ID:', {
-              sourceNodeId,
-              parentPreviewLine
-            })
 
             if (sourceNodeId) {
               // 首先尝试直接查找
@@ -802,27 +845,12 @@ const bindEvents = () => {
                 sourceNode = allNodes.find(node => node.id.startsWith(sourceNodeId))
               }
 
-              console.log('🔍 [自动连接] 查找源节点结果:', {
-                sourceNodeId,
-                sourceNodeFound: !!sourceNode,
-                sourceNodeActualId: sourceNode?.id
-              })
-
               if (sourceNode && sourceNode.isNode && sourceNode.isNode() && sourceNode.id !== node.id) {
                 // 创建连接
                 try {
                   const branchId = hintData.branchId || 'default'
                   const branchLabel = hintData.branchLabel // 获取分支标签
                   const sourcePort = 'out' // 统一使用'out'端口，从UI层面的同一个位置出发
-                  
-                  console.log('🔗 [自动连接] 开始创建连接:', {
-                    sourceNodeId: sourceNode.id,
-                    targetNodeId: node.id,
-                    sourcePort,
-                    targetPort: 'in',
-                    branchId,
-                    branchLabel
-                  })
                   
 
 
@@ -844,11 +872,6 @@ const bindEvents = () => {
                     return
                   }
 
-                  console.log('⚙️ [自动连接] 连接配置:', {
-                    connectionConfig,
-                    connectionPoint: connectionConfig.connectionPoint
-                  })
-
                   const connectionResult = await connectionErrorHandler.safeCreateConnection(
                     graph,
                     connectionConfig
@@ -861,40 +884,16 @@ const bindEvents = () => {
 
                   const connection = connectionResult.result
 
-                  // 验证连接创建后的属性
-                  const createdProps = connection.prop()
-                  console.log('✅ [自动连接] 连接创建成功，验证属性:', {
-                    connectionId: connection.id,
-                    source: createdProps.source,
-                    target: createdProps.target,
-                    connectionPoint: createdProps.connectionPoint,
-                    hasLabels: !!branchLabel
-                  })
-
                   // 通知统一预览线管理器节点已连接，传递标签信息
                   if (unifiedPreviewManager.onNodeConnected) {
                     unifiedPreviewManager.onNodeConnected(sourceNode, branchId, branchLabel)
                   }
 
-                  console.log('🎉 [自动连接] 自动连接完成')
-
                 } catch (error) {
                   console.error('💥 [自动连接] 自动连接失败:', error)
                 }
-              } else {
-                console.warn('❌ [自动连接] 源节点无效或相同:', {
-                  sourceNodeFound: !!sourceNode,
-                  isSameNode: sourceNode?.id === node.id
-                })
               }
-            } else {
-              console.warn('❌ [自动连接] 无法解析源节点ID')
             }
-          } else {
-            console.warn('❌ [自动连接] 拖拽提示点没有parentPreviewLine信息:', {
-              hintId: nearestHint.id,
-              hintData: hintData
-            })
           }
 
           // 清除拖拽过程中的高亮效果
@@ -937,23 +936,8 @@ const bindEvents = () => {
 
   // 连接创建事件
   graph.on('edge:connected', ({ edge }) => {
-    console.log('🔗 [TaskFlowCanvas] edge:connected 事件触发:', {
-      edgeId: edge.id,
-      sourceNodeId: edge.getSourceCellId(),
-      targetNodeId: edge.getTargetCellId(),
-      sourcePortId: edge.getSourcePortId(),
-      targetPortId: edge.getTargetPortId()
-    })
-    
     const sourceNode = edge.getSourceNode()
     const targetNode = edge.getTargetNode()
-
-    console.log('📍 [TaskFlowCanvas] 连接节点信息:', {
-      sourceNodeFound: !!sourceNode,
-      targetNodeFound: !!targetNode,
-      sourceNodeType: sourceNode?.getData()?.nodeType || sourceNode?.getData()?.type,
-      targetNodeType: targetNode?.getData()?.nodeType || targetNode?.getData()?.type
-    })
 
     if (sourceNode && targetNode) {
       const connection = {
@@ -963,15 +947,9 @@ const bindEvents = () => {
         sourcePort: edge.getSourcePortId(),
         targetPort: edge.getTargetPortId()
       }
-
-      console.log('✅ [TaskFlowCanvas] 连接数据创建成功:', connection)
       
       connections.value.push(connection)
       emit('connection-created', connection)
-      
-      console.log('📊 [TaskFlowCanvas] 当前连接总数:', connections.value.length)
-    } else {
-      console.error('❌ [TaskFlowCanvas] 连接节点不存在，无法创建连接数据')
     }
   })
 
@@ -994,21 +972,11 @@ const bindEvents = () => {
 
   // 键盘删除事件
   graph.on('cell:removed', ({ cell }) => {
-    console.log('🗑️ [TaskFlowCanvas] 检测到cell删除事件:', {
-      cellId: cell.id,
-      cellType: cell.isNode() ? 'node' : 'edge',
-      cellData: cell.getData()
-    })
-
     if (cell.isNode()) {
       const cellData = cell.getData() || {}
 
       // 检查是否是拖拽提示点
       if (cellData.isDragHint || cellData.type === 'drag-hint' || cell.id.includes('hint_')) {
-        console.log('🎯 [TaskFlowCanvas] 删除拖拽提示点:', {
-          cellId: cell.id,
-          cellData: cellData
-        })
         // 拖拽提示点不在nodes数组中，直接返回
         return
       }
@@ -1016,48 +984,22 @@ const bindEvents = () => {
       const index = nodes.value.findIndex(n => n.id === cell.id)
       if (index >= 0) {
         const nodeData = nodes.value[index]
-        console.log('🗑️ [TaskFlowCanvas] 删除节点:', {
-          nodeId: nodeData.id,
-          nodeType: nodeData.type,
-          nodeLabel: nodeData.label,
-          nodePosition: nodeData.position,
-          nodeIndex: index,
-          totalNodesBefore: nodes.value.length
-        })
 
         nodes.value.splice(index, 1)
 
-        console.log('🗑️ [TaskFlowCanvas] 节点删除完成:', {
-          deletedNodeId: nodeData.id,
-          totalNodesAfter: nodes.value.length,
-          remainingNodes: nodes.value.map(n => ({ id: n.id, type: n.type }))
-        })
-
         emit('node-deleted', nodeData)
-      } else {
-        console.warn('⚠️ [TaskFlowCanvas] 未找到要删除的节点数据:', {
-          cellId: cell.id,
-          availableNodes: nodes.value.map(n => ({ id: n.id, type: n.type }))
-        })
       }
     } else if (cell.isEdge()) {
-      console.log('🗑️ [TaskFlowCanvas] 删除边:', {
-        edgeId: cell.id,
-        sourceId: cell.getSourceCellId(),
-        targetId: cell.getTargetCellId(),
-        edgeData: cell.getData()
-      })
+      // 边删除处理
     }
   })
 
   // Vue组件自定义事件监听
   graph.on('vue:delete', ({ node }) => {
-    console.log('[TaskFlowCanvas] 收到Vue组件删除事件:', node.id)
     handleNodeDelete({ node })
   })
 
   graph.on('vue:slot-click', ({ node, data }) => {
-    console.log('[TaskFlowCanvas] 收到Vue组件预设位点击事件:', node.id, data)
     handlePresetSlotClick(data)
   })
 
@@ -1065,23 +1007,76 @@ const bindEvents = () => {
   graph.on('node:port:click', ({ node, port }) => {
     const nodeData = nodes.value.find(n => n.id === node.id)
     if (nodeData && port.group === 'out') {
-      const portPosition = node.getPortPosition(port.id)
-      const graphPosition = graph.localToGraph(portPosition)
-      const clientPosition = graph.graphToClient(graphPosition)
+      try {
+        // 计算端口的绝对位置
+        const nodePosition = node.getPosition()
+        const nodeSize = node.getSize()
+        const portConfig = node.getPortProp(port.id, 'position') || {}
+        
+        let portX = nodePosition.x
+        let portY = nodePosition.y
+        
+        // 根据端口配置计算位置
+        if (portConfig.name === 'bottom') {
+          const args = portConfig.args || {}
+          const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+            parseFloat(args.x) / 100 : 0.5
+          portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+          portY = nodePosition.y + nodeSize.height + (args.dy || 0)
+        } else if (portConfig.name === 'top') {
+          const args = portConfig.args || {}
+          const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+            parseFloat(args.x) / 100 : 0.5
+          portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+          portY = nodePosition.y + (args.dy || 0)
+        } else if (portConfig.name === 'left') {
+          const args = portConfig.args || {}
+          const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+            parseFloat(args.y) / 100 : 0.5
+          portX = nodePosition.x + (args.dx || 0)
+          portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+        } else if (portConfig.name === 'right') {
+          const args = portConfig.args || {}
+          const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+            parseFloat(args.y) / 100 : 0.5
+          portX = nodePosition.x + nodeSize.width + (args.dx || 0)
+          portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+        }
+        
+        const portPosition = { x: portX, y: portY }
+        const graphPosition = graph.localToGraph(portPosition)
+        const clientPosition = graph.graphToClient(graphPosition)
 
-      nodeSelectorPosition.value = {
-        x: clientPosition.x,
-        y: clientPosition.y
+        nodeSelectorPosition.value = {
+          x: clientPosition.x,
+          y: clientPosition.y
+        }
+        nodeSelectorSourceNode.value = nodeData
+        showNodeSelector.value = true
+      } catch (error) {
+        console.warn('端口位置计算失败:', error)
+        // 降级处理：使用节点中心位置
+        const nodePosition = node.getPosition()
+        const nodeSize = node.getSize()
+        const centerPosition = {
+          x: nodePosition.x + nodeSize.width / 2,
+          y: nodePosition.y + nodeSize.height / 2
+        }
+        const graphPosition = graph.localToGraph(centerPosition)
+        const clientPosition = graph.graphToClient(graphPosition)
+
+        nodeSelectorPosition.value = {
+          x: clientPosition.x,
+          y: clientPosition.y
+        }
+        nodeSelectorSourceNode.value = nodeData
+        showNodeSelector.value = true
       }
-      nodeSelectorSourceNode.value = nodeData
-      showNodeSelector.value = true
     }
   })
 
   // 节点配置更新事件 - 同步本地节点数据
   graph.on('node:config-updated', ({ node, nodeType, config }) => {
-    console.log('[TaskFlowCanvas] 收到节点配置更新事件:', { nodeId: node.id, nodeType, config })
-
     const nodeIndex = nodes.value.findIndex(n => n.id === node.id)
     if (nodeIndex >= 0) {
       const nodeData = nodes.value[nodeIndex]
@@ -1094,10 +1089,7 @@ const bindEvents = () => {
         lastUpdated: Date.now()
       }
 
-      console.log('[TaskFlowCanvas] 本地节点数据已同步更新:', nodeData)
       emit('node-updated', nodeData)
-    } else {
-      console.warn('[TaskFlowCanvas] 未找到对应的本地节点数据:', node.id)
     }
   })
 }
@@ -1198,13 +1190,14 @@ const addNodeToGraph = (nodeData) => {
     height: nodeConfig.height || 100,
     ports,
     data: {
-      nodeType: nodeData.type,
+      ...nodeData.data,
+      type: nodeData.type,  // 确保节点类型正确设置
+      nodeType: nodeData.type,  // 保持兼容性
       label: nodeData.label,
       selected: false,
       deletable: nodeData.type !== 'start',
       level: nodeData.data?.level || 0,
-      levelIndex: nodeData.data?.levelIndex || 0,
-      ...nodeData.data
+      levelIndex: nodeData.data?.levelIndex || 0
     }
   })
 
@@ -1967,12 +1960,186 @@ const watchZoomChange = () => {
 }
 
 // 应用结构化布局
-const applyStructuredLayout = async () => {
-  if (isApplyingLayout.value || isUpdatingLayout.value) {
-    console.log('[TaskFlowCanvas] 布局操作正在进行中，跳过')
+// 强制重置所有布局状态
+const forceResetLayoutStates = () => {
+  console.log('[TaskFlowCanvas] 强制重置布局状态', {
+    isApplyingLayout: isApplyingLayout.value,
+    isUpdatingLayout: isUpdatingLayout.value
+  })
+  isApplyingLayout.value = false
+  isUpdatingLayout.value = false
+}
+
+// 处理布局选项选择
+const handleLayoutOptionSelect = async (value) => {
+  // 强制重置所有状态，确保没有残留
+  forceResetLayoutStates()
+  
+  console.log('[TaskFlowCanvas] 选择布局选项:', value)
+
+  try {
+    // 设置布局状态
+    isApplyingLayout.value = true
+
+    switch (value) {
+      case 'enhanced':
+        await applyEnhancedLayout()
+        break
+      case 'intelligent':
+        await applyIntelligentLayout()
+        break
+      case 'native-dagre':
+        await applyNativeDagreLayout()
+        break
+      case 'center':
+        await applyCenterAlignment()
+        break
+      default:
+        console.warn('[TaskFlowCanvas] 未知的布局选项:', value)
+    }
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 应用布局失败:', error)
+    Message.error('布局应用失败，请重试')
+  } finally {
+    setTimeout(() => {
+      isApplyingLayout.value = false
+      isUpdatingLayout.value = false
+    }, 200)
+  }
+}
+
+// 应用增强型布局
+const applyEnhancedLayout = async () => {
+  console.log('[TaskFlowCanvas] 应用增强型布局')
+  await applyStructuredLayout()
+}
+
+// 应用智能分层布局
+const applyIntelligentLayout = async () => {
+  console.log('[TaskFlowCanvas] 应用智能分层布局')
+  
+  if (!configDrawers.value?.structuredLayout) {
+    console.error('[TaskFlowCanvas] 结构化布局对象不存在')
     return
   }
 
+  // 确保布局引擎已初始化
+  if (!configDrawers.value.structuredLayout.isReady) {
+    console.log('[TaskFlowCanvas] 布局引擎未就绪，尝试初始化')
+    if (configDrawers.value.structuredLayout.initializeLayoutEngine) {
+      const initSuccess = configDrawers.value.structuredLayout.initializeLayoutEngine()
+      console.log('[TaskFlowCanvas] 布局引擎初始化结果:', initSuccess)
+      if (!initSuccess) {
+        console.error('[TaskFlowCanvas] 布局引擎初始化失败')
+        Message.error('布局引擎初始化失败')
+        return
+      }
+    }
+  }
+
+  // 调试：检查structuredLayout对象的所有方法
+  console.log('[TaskFlowCanvas] structuredLayout 可用方法:', Object.keys(configDrawers.value.structuredLayout))
+  console.log('[TaskFlowCanvas] applyIntelligentLayout 方法存在:', !!configDrawers.value.structuredLayout.applyIntelligentLayout)
+  console.log('[TaskFlowCanvas] applyIntelligentLayout 类型:', typeof configDrawers.value.structuredLayout.applyIntelligentLayout)
+
+  // 检查智能布局引擎是否可用
+  if (!configDrawers.value.structuredLayout.applyIntelligentLayout) {
+    console.error('[TaskFlowCanvas] 智能布局功能不可用')
+    Message.error('智能布局功能不可用，请使用增强型布局')
+    return
+  }
+
+  try {
+    // 应用智能布局
+    const success = await configDrawers.value.structuredLayout.applyIntelligentLayout({
+      centerAfterLayout: true,
+      animateTransition: true
+    })
+
+    if (success) {
+      console.log('[TaskFlowCanvas] 智能分层布局应用成功')
+      Message.success('智能分层布局应用成功')
+      
+      // 自动缩放到合适大小
+      await nextTick()
+      setTimeout(() => {
+        zoomToFit()
+      }, 300)
+    } else {
+      console.error('[TaskFlowCanvas] 智能分层布局应用失败')
+      Message.error('智能分层布局应用失败')
+    }
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 智能分层布局应用异常:', error)
+    Message.error('智能分层布局应用异常')
+  }
+}
+
+// 应用原生Dagre布局
+const applyNativeDagreLayout = async () => {
+  console.log('[TaskFlowCanvas] 应用原生Dagre布局')
+  
+  if (!configDrawers.value?.structuredLayout) {
+    console.error('[TaskFlowCanvas] 结构化布局对象不存在')
+    return
+  }
+
+  // 检查原生Dagre布局方法是否可用
+  if (!configDrawers.value.structuredLayout.applyNativeDagreLayout) {
+    console.error('[TaskFlowCanvas] 原生Dagre布局功能不可用')
+    Message.error('原生Dagre布局功能不可用')
+    return
+  }
+
+  try {
+    // 应用原生Dagre布局
+    const result = await configDrawers.value.structuredLayout.applyNativeDagreLayout(graph)
+
+    if (result && result.success) {
+      console.log('[TaskFlowCanvas] 原生Dagre布局应用成功:', result)
+      Message.success(`原生Dagre布局应用成功 (${result.layoutTime.toFixed(2)}ms)`)
+      
+      // 自动缩放到合适大小
+      await nextTick()
+      setTimeout(() => {
+        zoomToFit()
+      }, 300)
+    } else {
+      console.error('[TaskFlowCanvas] 原生Dagre布局应用失败')
+      Message.error('原生Dagre布局应用失败')
+    }
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 原生Dagre布局应用异常:', error)
+    Message.error('原生Dagre布局应用异常: ' + error.message)
+  }
+}
+
+// 应用居中对齐
+const applyCenterAlignment = async () => {
+  console.log('[TaskFlowCanvas] 应用居中对齐')
+  
+  if (!graph) {
+    console.error('[TaskFlowCanvas] 图实例不存在')
+    return
+  }
+
+  try {
+    // 居中内容
+    graph.centerContent()
+    
+    // 适应内容大小
+    await nextTick()
+    graph.zoomToFit({ padding: 50 })
+    
+    console.log('[TaskFlowCanvas] 居中对齐完成')
+    Message.success('居中对齐完成')
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 居中对齐失败:', error)
+    Message.error('居中对齐失败')
+  }
+}
+
+const applyStructuredLayout = async () => {
   try {
     isApplyingLayout.value = true
     isUpdatingLayout.value = true
@@ -2007,8 +2174,8 @@ const applyStructuredLayout = async () => {
     if (!isLayoutReady) {
       console.warn('[TaskFlowCanvas] 结构化布局未就绪，尝试初始化')
       // 尝试初始化布局引擎
-      if (configDrawers.value.structuredLayout.initLayoutEngine) {
-        configDrawers.value.structuredLayout.initLayoutEngine()
+      if (configDrawers.value.structuredLayout.initializeLayoutEngine) {
+        configDrawers.value.structuredLayout.initializeLayoutEngine()
         const newReadyState = configDrawers.value.structuredLayout.getIsReady?.()
         console.log('[TaskFlowCanvas] 布局引擎初始化完成，重新检查就绪状态:', newReadyState)
         
@@ -2033,7 +2200,17 @@ const applyStructuredLayout = async () => {
     // 延迟执行缩放，避免与布局冲突
     setTimeout(() => {
       if (!isApplyingLayout.value) return // 如果布局已经结束，不执行缩放
-      zoomToFit()
+      
+      // 限制结构化布局的最大缩放比例为120%
+      const currentZoom = graph.zoom()
+      const targetZoom = Math.min(currentZoom, 1.2) // 限制最大缩放比例为120%
+      
+      if (currentZoom > 1.2) {
+        console.log(`[TaskFlowCanvas] 限制缩放比例从 ${currentZoom.toFixed(2)} 到 1.2`)
+        graph.zoomTo(1.2, { center: graph.getGraphArea().center })
+      } else {
+        zoomToFit()
+      }
     }, 200)
 
     console.log('[TaskFlowCanvas] 结构化布局应用完成')

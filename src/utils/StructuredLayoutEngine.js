@@ -533,19 +533,65 @@ export class StructuredLayoutEngine {
       // 单个节点居中
       positions.push({ x: 0, y })
     } else {
-      // 多个节点水平分布
-      const totalWidth = (nodeCount - 1) * this.layoutConfig.nodeSpacing
+      // 计算动态间距，考虑下一层的分流数
+      const dynamicSpacing = this.calculateDynamicSpacing(levelNodes, levelIndex)
+      
+      // 多个节点水平分布，使用动态间距
+      const totalWidth = (nodeCount - 1) * dynamicSpacing
       const startX = -totalWidth / 2
       
       levelNodes.forEach((node, index) => {
         positions.push({
-          x: startX + index * this.layoutConfig.nodeSpacing,
+          x: startX + index * dynamicSpacing,
           y: y
         })
       })
     }
     
     return positions.map(pos => this.snapToGrid(pos))
+  }
+
+  /**
+   * 计算动态间距，根据下一层的分流数调整
+   * @param {Array} levelNodes - 当前层级的节点
+   * @param {number} levelIndex - 层级索引
+   * @returns {number} 动态间距
+   */
+  calculateDynamicSpacing(levelNodes, levelIndex) {
+    let maxNextLevelBranches = 0
+    
+    // 分析当前层级节点的分支数，预测下一层的复杂度
+    levelNodes.forEach(node => {
+      const branchCount = this.getNodeBranchCount(node)
+      maxNextLevelBranches = Math.max(maxNextLevelBranches, branchCount)
+    })
+    
+    // 基础间距
+    let spacing = this.layoutConfig.nodeSpacing
+    
+    // 根据下一层的分流数调整间距
+    if (maxNextLevelBranches >= 3) {
+      // 如果下一层有3个或更多分支，增加间距
+      spacing = this.layoutConfig.nodeSpacing * 1.5
+      console.log(`[StructuredLayoutEngine] 层级 ${levelIndex} 检测到下一层有 ${maxNextLevelBranches} 个分支，增加间距到 ${spacing}`)
+    } else if (maxNextLevelBranches === 2) {
+      // 如果下一层有2个分支，适度增加间距
+      spacing = this.layoutConfig.nodeSpacing * 1.2
+      console.log(`[StructuredLayoutEngine] 层级 ${levelIndex} 检测到下一层有 ${maxNextLevelBranches} 个分支，适度增加间距到 ${spacing}`)
+    }
+    
+    // 特殊处理：如果当前层有多个分流节点，进一步增加间距
+    const splitNodeCount = levelNodes.filter(node => {
+      const nodeType = node.getData()?.type
+      return ['audience-split', 'event-split', 'ab-test'].includes(nodeType)
+    }).length
+    
+    if (splitNodeCount > 1) {
+      spacing = spacing * 1.3
+      console.log(`[StructuredLayoutEngine] 层级 ${levelIndex} 有 ${splitNodeCount} 个分流节点，进一步增加间距到 ${spacing}`)
+    }
+    
+    return spacing
   }
 
   /**

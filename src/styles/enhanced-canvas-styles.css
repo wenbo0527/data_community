@@ -1,0 +1,726 @@
+/* 现代化画布样式配置 */
+
+/* 画布容器 */
+.enhanced-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 画布背景网格 */
+.canvas-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+  background-image: 
+    radial-gradient(circle at 1px 1px, #cbd5e1 1px, transparent 0);
+  background-size: 20px 20px;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.enhanced-canvas-container:hover .canvas-grid {
+  opacity: 0.6;
+}
+
+/* 画布主体 */
+.canvas-main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* X6 画布样式覆盖 */
+.x6-graph {
+  background: transparent !important;
+}
+
+.x6-graph-svg {
+  border-radius: 12px;
+}
+
+/* 连接线样式 */
+.x6-edge {
+  cursor: pointer;
+}
+
+.x6-edge-path {
+  stroke: #64748b;
+  stroke-width: 2;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.x6-edge:hover .x6-edge-path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.x6-edge.selected .x6-edge-path {
+  stroke: #3b82f6;
+  stroke-width: 3;
+  stroke-dasharray: 5, 5;
+  animation: dash-flow 1s linear infinite;
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* 连接线箭头 */
+.x6-edge-marker {
+  fill: #64748b;
+  transition: fill 0.3s ease;
+}
+
+.x6-edge:hover .x6-edge-marker,
+.x6-edge.selected .x6-edge-marker {
+  fill: #3b82f6;
+}
+
+/* 连接线标签 */
+.x6-edge-label {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #374151;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.x6-edge:hover .x6-edge-label {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: scale(1.05);
+}
+
+/* 选择框样式 */
+.x6-widget-selection {
+  border: 2px solid #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+.x6-widget-selection-box {
+  border: 2px dashed #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.05) !important;
+  border-radius: 8px !important;
+}
+
+/* 连接点样式 */
+.x6-port {
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.x6-node:hover .x6-port {
+  visibility: visible;
+}
+
+.x6-port-body {
+  fill: #e5e7eb;
+  stroke: white;
+  stroke-width: 2;
+  r: 6;
+  transition: all 0.2s ease;
+}
+
+.x6-port:hover .x6-port-body {
+  fill: #3b82f6;
+  r: 8;
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.x6-port.connected .x6-port-body {
+  fill: #10b981;
+}
+
+.x6-port.connecting .x6-port-body {
+  fill: #f59e0b;
+  animation: pulse-port 1s infinite;
+}
+
+/* 拖拽预览 */
+.canvas-drag-preview {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.8;
+  transform: rotate(2deg) scale(1.05);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+}
+
+/* 拖拽目标区域 */
+.canvas-drop-zone {
+  position: absolute;
+  border: 2px dashed #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 12px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.canvas-drop-zone.active {
+  opacity: 1;
+  animation: pulse-drop-zone 2s infinite;
+}
+
+@keyframes pulse-drop-zone {
+  0%, 100% {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+  }
+  50% {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+  }
+}
+
+/* 画布工具提示 */
+.canvas-tooltip {
+  position: absolute;
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.canvas-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid #1f2937;
+}
+
+.canvas-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 画布缩放指示器 */
+.canvas-zoom-indicator {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.canvas-zoom-indicator:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+/* 画布坐标指示器 */
+.canvas-coordinates {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* 画布加载状态 */
+.canvas-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(248, 250, 252, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.canvas-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.canvas-loading-text {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* 画布错误状态 */
+.canvas-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1000;
+}
+
+.canvas-error-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  color: #ef4444;
+  font-size: 64px;
+}
+
+.canvas-error-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.canvas-error-message {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.canvas-error-retry {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.canvas-error-retry:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* 画布空状态 */
+.canvas-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1;
+  opacity: 0.6;
+}
+
+.canvas-empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  color: #9ca3af;
+  font-size: 80px;
+}
+
+.canvas-empty-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.canvas-empty-message {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 24px;
+  max-width: 300px;
+}
+
+.canvas-empty-action {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.canvas-empty-action:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* 画布连接线绘制状态 */
+.canvas-connecting {
+  cursor: crosshair;
+}
+
+.canvas-connecting .x6-node {
+  cursor: pointer;
+}
+
+.canvas-connecting .x6-node:hover {
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+}
+
+/* 画布选择状态 */
+.canvas-selecting {
+  cursor: crosshair;
+}
+
+/* 画布拖拽状态 */
+.canvas-dragging {
+  cursor: grabbing;
+}
+
+.canvas-dragging .x6-node {
+  cursor: grabbing;
+}
+
+/* 画布缩放状态 */
+.canvas-zooming {
+  cursor: zoom-in;
+}
+
+/* 画布平移状态 */
+.canvas-panning {
+  cursor: grab;
+}
+
+.canvas-panning:active {
+  cursor: grabbing;
+}
+
+/* 画布只读状态 */
+.canvas-readonly {
+  pointer-events: none;
+  opacity: 0.8;
+  filter: grayscale(0.2);
+}
+
+.canvas-readonly::after {
+  content: '只读模式';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f59e0b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+/* 画布全屏状态 */
+.canvas-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: white;
+}
+
+.canvas-fullscreen .enhanced-canvas-container {
+  border-radius: 0;
+}
+
+/* 画布性能优化 */
+.canvas-performance-mode .x6-edge-path {
+  transition: none;
+}
+
+.canvas-performance-mode .x6-node {
+  transition: none;
+}
+
+.canvas-performance-mode .flow-node {
+  transition: none;
+}
+
+/* 画布动画禁用 */
+.canvas-no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .canvas-zoom-indicator,
+  .canvas-coordinates {
+    font-size: 10px;
+    padding: 6px 8px;
+  }
+  
+  .canvas-empty-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 60px;
+  }
+  
+  .canvas-empty-title {
+    font-size: 18px;
+  }
+  
+  .canvas-empty-message {
+    font-size: 14px;
+  }
+  
+  .canvas-tooltip {
+    font-size: 10px;
+    padding: 6px 8px;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .enhanced-canvas-container {
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  }
+  
+  .canvas-grid {
+    background-image: 
+      radial-gradient(circle at 1px 1px, #374151 1px, transparent 0);
+  }
+  
+  .x6-edge-path {
+    stroke: #9ca3af;
+  }
+  
+  .x6-edge:hover .x6-edge-path,
+  .x6-edge.selected .x6-edge-path {
+    stroke: #60a5fa;
+  }
+  
+  .x6-edge-marker {
+    fill: #9ca3af;
+  }
+  
+  .x6-edge:hover .x6-edge-marker,
+  .x6-edge.selected .x6-edge-marker {
+    fill: #60a5fa;
+  }
+  
+  .x6-edge-label {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+  }
+  
+  .x6-edge:hover .x6-edge-label {
+    border-color: #60a5fa;
+    color: #60a5fa;
+  }
+  
+  .x6-widget-selection {
+    border-color: #60a5fa !important;
+    background: rgba(96, 165, 250, 0.1) !important;
+  }
+  
+  .x6-widget-selection-box {
+    border-color: #60a5fa !important;
+    background: rgba(96, 165, 250, 0.05) !important;
+  }
+  
+  .x6-port-body {
+    fill: #4b5563;
+    stroke: #1f2937;
+  }
+  
+  .x6-port:hover .x6-port-body {
+    fill: #60a5fa;
+  }
+  
+  .canvas-drop-zone {
+    border-color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+  }
+  
+  .canvas-drop-zone.active {
+    border-color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+  }
+  
+  @keyframes pulse-drop-zone {
+    0%, 100% {
+      border-color: #60a5fa;
+      background: rgba(96, 165, 250, 0.1);
+    }
+    50% {
+      border-color: #34d399;
+      background: rgba(52, 211, 153, 0.1);
+    }
+  }
+  
+  .canvas-zoom-indicator,
+  .canvas-coordinates {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+  }
+  
+  .canvas-zoom-indicator:hover {
+    border-color: #60a5fa;
+    color: #60a5fa;
+  }
+  
+  .canvas-loading {
+    background: rgba(17, 24, 39, 0.9);
+  }
+  
+  .canvas-loading-spinner {
+    border-color: #4b5563;
+    border-top-color: #60a5fa;
+  }
+  
+  .canvas-loading-text {
+    color: #9ca3af;
+  }
+  
+  .canvas-error-title {
+    color: #f9fafb;
+  }
+  
+  .canvas-error-message {
+    color: #9ca3af;
+  }
+  
+  .canvas-error-retry {
+    background: #60a5fa;
+  }
+  
+  .canvas-error-retry:hover {
+    background: #3b82f6;
+  }
+  
+  .canvas-empty-title {
+    color: #f3f4f6;
+  }
+  
+  .canvas-empty-message {
+    color: #9ca3af;
+  }
+  
+  .canvas-empty-action {
+    background: #60a5fa;
+  }
+  
+  .canvas-empty-action:hover {
+    background: #3b82f6;
+  }
+  
+  .canvas-readonly::after {
+    background: #d97706;
+  }
+  
+  .canvas-fullscreen {
+    background: #111827;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .x6-edge-path {
+    stroke-width: 3;
+  }
+  
+  .x6-edge:hover .x6-edge-path,
+  .x6-edge.selected .x6-edge-path {
+    stroke-width: 4;
+  }
+  
+  .x6-widget-selection {
+    border-width: 3px !important;
+  }
+  
+  .x6-widget-selection-box {
+    border-width: 3px !important;
+  }
+  
+  .canvas-drop-zone {
+    border-width: 3px;
+  }
+  
+  .canvas-zoom-indicator,
+  .canvas-coordinates {
+    border-width: 2px;
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .x6-edge-path,
+  .x6-edge-marker,
+  .x6-edge-label,
+  .x6-port-body,
+  .canvas-drop-zone,
+  .canvas-tooltip,
+  .canvas-zoom-indicator,
+  .canvas-error-retry,
+  .canvas-empty-action {
+    transition: none;
+    animation: none;
+  }
+  
+  .x6-edge.selected .x6-edge-path {
+    animation: none;
+    stroke-dasharray: none;
+  }
+  
+  .x6-port.connecting .x6-port-body {
+    animation: none;
+  }
+  
+  .canvas-drop-zone.active {
+    animation: none;
+  }
+  
+  .canvas-loading-spinner {
+    animation: none;
+  }
+}

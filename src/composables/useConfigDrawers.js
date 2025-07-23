@@ -212,7 +212,7 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
 
       // 触发统一预览线创建（配置完成后）
       console.log(`[useConfigDrawers] 检查是否需要创建配置后预览线`)
-      const unifiedPreviewManager = structuredLayout.getConnectionPreviewManager()
+      const unifiedPreviewManager = structuredLayout.unifiedPreviewManager?.value
       console.log(`[useConfigDrawers] 统一预览线管理器实例:`, unifiedPreviewManager)
       console.log(`[useConfigDrawers] 管理器类型:`, unifiedPreviewManager?.constructor?.name)
       console.log(`[useConfigDrawers] createPreviewLineAfterConfig 方法存在:`, typeof unifiedPreviewManager?.createPreviewLineAfterConfig)
@@ -260,7 +260,7 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
         })
         
         // 检查是否有已配置的源节点需要恢复预览线
-        const unifiedPreviewManager = structuredLayout.getConnectionPreviewManager()
+        const unifiedPreviewManager = structuredLayout.unifiedPreviewManager
         if (unifiedPreviewManager && typeof unifiedPreviewManager.restorePreviewLinesAfterCancel === 'function') {
           console.log(`[useConfigDrawers] 尝试恢复预览线`)
           try {
@@ -358,25 +358,49 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
     // 结构化布局功能
     structuredLayout: {
       validateConnection: structuredLayout.validateConnection,
-      applyLayout: structuredLayout.applyLayout,
+      applyLayout: structuredLayout.applyStructuredLayout, // 新API中的主要布局方法
       applyStructuredLayout: structuredLayout.applyStructuredLayout,
-      getNodeConstraints: structuredLayout.getNodeConstraints,
-      canAddOutput: structuredLayout.canAddOutput,
-      canAddInput: structuredLayout.canAddInput,
-      getAllowedTargetTypes: structuredLayout.getAllowedTargetTypes,
-      initLayoutEngine: structuredLayout.initLayoutEngine,
-      getLayoutEngine: structuredLayout.getLayoutEngine,
-      getBranchManager: structuredLayout.getBranchManager,
-      getConnectionPreviewManager: structuredLayout.getConnectionPreviewManager,
-      updateSplitNodeBranches: structuredLayout.updateSplitNodeBranches,
-      clearLayout: structuredLayout.clearLayout,
+      applyIntelligentLayout: structuredLayout.applyIntelligentLayout, // 智能布局方法
+      applyNativeDagreLayout: structuredLayout.applyNativeDagreLayout, // 原生Dagre布局方法
+      // 正确的初始化方法
+      initializeLayoutEngine: () => {
+        console.log('[useConfigDrawers] 调用 initializeLayoutEngine')
+        return structuredLayout.initializeLayoutEngine()
+      },
+      // 兼容性方法
+      initLayoutEngine: () => {
+        console.log('[useConfigDrawers] initLayoutEngine已废弃，调用 initializeLayoutEngine')
+        return structuredLayout.initializeLayoutEngine()
+      },
+      getLayoutEngine: () => {
+        console.log('[useConfigDrawers] getLayoutEngine已废弃，使用增强型布局引擎')
+        return structuredLayout.enhancedLayoutEngine
+      },
+      getBranchManager: () => {
+        console.log('[useConfigDrawers] getBranchManager已废弃，功能已集成到增强型布局引擎')
+        return null
+      },
+      getConnectionPreviewManager: () => {
+        console.log('[useConfigDrawers] 返回统一预览线管理器')
+        return structuredLayout.unifiedPreviewManager?.value
+      },
+      // 保持现有的方法
+      getNodeConstraints: structuredLayout.getNodeConstraints || (() => ({})),
+      canAddOutput: structuredLayout.canAddOutput || (() => true),
+      canAddInput: structuredLayout.canAddInput || (() => true),
+      getAllowedTargetTypes: structuredLayout.getAllowedTargetTypes || (() => []),
+      updateSplitNodeBranches: structuredLayout.updateSplitNodeBranches || (() => {}),
+      clearLayout: structuredLayout.clearCache || (() => {}), // 使用新的clearCache方法
+      // 性能监控方法
+      getPerformanceMetrics: structuredLayout.getPerformanceMetrics,
+      clearCache: structuredLayout.clearCache,
       // 保持isReady作为计算属性的引用，而不是值
       get isReady() {
-        return structuredLayout.isReady
+        return structuredLayout.isReady || { value: true }
       },
       // 添加一个方法来获取isReady的值
       getIsReady() {
-        return structuredLayout.isReady.value
+        return structuredLayout.isReady?.value || true
       }
     }
   }

@@ -1,0 +1,1183 @@
+/* 现代化节点样式配置 */
+
+/**
+ * 增强的节点样式和动画
+ * 支持现代化的纯色节点设计和流畅的用户交互
+ */
+
+/* 基础节点样式 */
+.flow-node {
+  position: relative;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  overflow: hidden;
+  border: 2px solid transparent;
+  backdrop-filter: blur(8px);
+}
+
+/* Enhanced Node Styles - 避免直接修改DOM样式导致位置事件触发 */
+.enhanced-node {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  transform-origin: center center;
+}
+
+/* 节点状态样式 */
+.enhanced-node.normal {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.enhanced-node--hover {
+  opacity: 1;
+  transform: scale(1.05) !important;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.15)) !important;
+  cursor: pointer !important;
+}
+
+.enhanced-node--selected {
+  opacity: 1;
+  transform: scale(1.05) !important;
+  filter: drop-shadow(0 6px 20px rgba(24,144,255,0.3)) !important;
+}
+
+.enhanced-node--dragging {
+  opacity: 0.8 !important;
+  transform: scale(1.1) rotate(2deg) !important;
+  filter: drop-shadow(0 12px 32px rgba(0,0,0,0.2)) !important;
+  z-index: 1000 !important;
+}
+
+.enhanced-node--disabled {
+  opacity: 0.5 !important;
+  filter: grayscale(100%) !important;
+  cursor: not-allowed !important;
+}
+
+/* 确保变换不影响布局 */
+.enhanced-node--hover,
+.enhanced-node--selected,
+.enhanced-node--dragging {
+  /* 使用 transform 而不是修改位置，避免触发位置事件 */
+  position: relative;
+  will-change: transform, opacity, filter;
+}
+
+/* 针对 Vue 组件节点的特殊处理 */
+[data-cell-id] .enhanced-node {
+  /* 确保变换以节点中心为原点 */
+  transform-origin: center center;
+}
+
+.enhanced-node.error {
+  animation: shake 0.5s ease-in-out;
+  border-color: #ff4d4f;
+  border-width: 2px;
+}
+
+.enhanced-node.success {
+  animation: pulse 0.6s ease-in-out;
+  filter: drop-shadow(0 0 10px rgba(82, 196, 26, 0.5));
+}
+
+/* 节点图标样式 */
+.node-icon {
+  transition: all 0.2s ease-out;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: #ffffff;
+  font-family: 'Font Awesome 5 Free', sans-serif;
+  font-weight: 900;
+}
+
+.enhanced-node.hover .node-icon {
+  font-size: 20px;
+}
+
+.enhanced-node.disabled .node-icon {
+  opacity: 0.5;
+}
+
+/* 状态指示器 */
+.state-indicator {
+  transition: all 0.2s ease-out;
+}
+
+.state-indicator.selected {
+  fill: #1890ff;
+  stroke: #ffffff;
+  stroke-width: 2;
+  r: 4;
+}
+
+/* 连接线样式 */
+.enhanced-edge {
+  transition: all 0.2s ease-out;
+  opacity: 0.8;
+}
+
+.enhanced-edge.hover {
+  opacity: 1;
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+}
+
+.enhanced-edge.selected {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+.enhanced-edge.invalid {
+  stroke: #ff4d4f;
+  stroke-dasharray: 5,5;
+  animation: dash 1s linear infinite;
+}
+
+/* 预览线样式 */
+.preview-line {
+  stroke-dasharray: 8,4;
+  opacity: 0.8;
+  animation: preview-pulse 1.5s ease-in-out infinite;
+}
+
+/* 增强动画定义 */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes dash {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 20; }
+}
+
+@keyframes preview-pulse {
+  0% { opacity: 0.6; stroke-width: 2; }
+  50% { opacity: 1; stroke-width: 3; }
+  100% { opacity: 0.6; stroke-width: 2; }
+}
+
+@keyframes node-add {
+  0% { 
+    transform: scale(0) rotate(180deg); 
+    opacity: 0; 
+  }
+  70% { 
+    transform: scale(1.1) rotate(0deg); 
+    opacity: 0.8; 
+  }
+  100% { 
+    transform: scale(1) rotate(0deg); 
+    opacity: 1; 
+  }
+}
+
+@keyframes node-remove {
+  0% { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+  30% { 
+    transform: scale(1.1); 
+    opacity: 0.8; 
+  }
+  100% { 
+    transform: scale(0) rotate(-180deg); 
+    opacity: 0; 
+  }
+}
+
+@keyframes node-select {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1.05); }
+}
+
+@keyframes edge-add {
+  0% { 
+    stroke-dashoffset: 100; 
+    opacity: 0; 
+  }
+  80% { 
+    stroke-dashoffset: 0; 
+    opacity: 0.8; 
+  }
+  100% { 
+    stroke-dashoffset: 0; 
+    opacity: 1; 
+  }
+}
+
+@keyframes edge-remove {
+  0% { 
+    opacity: 1; 
+    stroke-width: 2; 
+  }
+  50% { 
+    opacity: 0.5; 
+    stroke-width: 4; 
+  }
+  100% { 
+    opacity: 0; 
+    stroke-width: 0; 
+  }
+}
+
+/* 工具提示样式 */
+.node-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.2s ease-out;
+}
+
+.node-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.node-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+}
+
+/* 加载状态 */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #f0f0f0;
+  border-top: 2px solid #1890ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 错误提示 */
+.error-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-left: 4px solid #ff4d4f;
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-width: 400px;
+  animation: slide-in 0.3s ease-out;
+}
+
+.error-toast.closing {
+  animation: slide-out 0.3s ease-in;
+}
+
+@keyframes slide-in {
+  0% { 
+    transform: translateX(100%); 
+    opacity: 0; 
+  }
+  100% { 
+    transform: translateX(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes slide-out {
+  0% { 
+    transform: translateX(0); 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateX(100%); 
+    opacity: 0; 
+  }
+}
+
+/* 选择框样式 */
+.selection-box {
+  fill: rgba(24, 144, 255, 0.1);
+  stroke: #1890ff;
+  stroke-width: 1;
+  stroke-dasharray: 5,5;
+  animation: selection-dash 1s linear infinite;
+}
+
+@keyframes selection-dash {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 10; }
+}
+
+/* 拖拽引导线 */
+.snap-guide {
+  stroke: #1890ff;
+  stroke-width: 1;
+  stroke-dasharray: 3,3;
+  opacity: 0.6;
+  animation: guide-pulse 1s ease-in-out infinite;
+}
+
+@keyframes guide-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* 端口样式 */
+.node-port {
+  transition: all 0.15s ease-out;
+  cursor: crosshair;
+}
+
+.node-port.hover {
+  transform: scale(1.5);
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+}
+
+.node-port.active {
+  transform: scale(1.8);
+  filter: drop-shadow(0 4px 12px rgba(24,144,255,0.4));
+}
+
+/* 兼容原有样式 */
+.node {
+  transition: all 0.3s ease;
+}
+
+.node:hover {
+  filter: brightness(1.1);
+}
+
+.node.selected {
+  stroke: #1890ff;
+  stroke-width: 2;
+}
+
+.edge {
+  transition: stroke-width 0.2s ease;
+}
+
+.edge:hover {
+  stroke-width: 3;
+}
+
+.flow-node::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* 悬停效果 */
+.flow-node:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 3px 10px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* 选中状态 */
+.flow-node.selected {
+  border-color: #3b82f6;
+  box-shadow: 
+    0 0 0 3px rgba(59, 130, 246, 0.2),
+    0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+/* 拖拽状态 */
+.flow-node.dragging {
+  opacity: 0.8;
+  transform: rotate(2deg) scale(1.05);
+  z-index: 1000;
+}
+
+/* 连接状态 */
+.flow-node.connecting {
+  border-color: #10b981;
+  box-shadow: 
+    0 0 0 3px rgba(16, 185, 129, 0.2),
+    0 0 20px rgba(16, 185, 129, 0.3);
+  animation: pulse-connect 2s infinite;
+}
+
+@keyframes pulse-connect {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 3px rgba(16, 185, 129, 0.2),
+      0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 6px rgba(16, 185, 129, 0.1),
+      0 0 30px rgba(16, 185, 129, 0.4);
+  }
+}
+
+/* 错误状态 */
+.flow-node.error {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* 警告状态 */
+.flow-node.warning {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+}
+
+/* 成功状态 */
+.flow-node.success {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+}
+
+/* 节点内容区域 */
+.flow-node-content {
+  padding: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 节点头部 */
+.flow-node-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.flow-node-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.flow-node-icon::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: rotate(45deg);
+  transition: all 0.6s;
+  opacity: 0;
+}
+
+.flow-node:hover .flow-node-icon::before {
+  opacity: 1;
+  animation: shine 0.6s ease-in-out;
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.flow-node-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.flow-node-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 2px 0 0 0;
+  line-height: 1.2;
+}
+
+/* 节点状态指示器 */
+.flow-node-status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.status-indicator.running {
+  background: #10b981;
+  animation: pulse-status 2s infinite;
+}
+
+.status-indicator.paused {
+  background: #f59e0b;
+}
+
+.status-indicator.error {
+  background: #ef4444;
+  animation: blink-error 1s infinite;
+}
+
+@keyframes pulse-status {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes blink-error {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* 节点统计信息 */
+.flow-node-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 节点操作按钮 */
+.flow-node-actions {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all 0.2s ease;
+}
+
+.flow-node:hover .flow-node-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.node-action-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.node-action-btn.delete {
+  background: #ef4444;
+  color: white;
+}
+
+.node-action-btn.delete:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.node-action-btn.config {
+  background: #3b82f6;
+  color: white;
+}
+
+.node-action-btn.config:hover {
+  background: #2563eb;
+  transform: scale(1.1);
+}
+
+.node-action-btn.copy {
+  background: #10b981;
+  color: white;
+}
+
+.node-action-btn.copy:hover {
+  background: #059669;
+  transform: scale(1.1);
+}
+
+/* 连接端口 */
+.flow-node-ports {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.flow-node-ports.input {
+  left: -6px;
+}
+
+.flow-node-ports.output {
+  right: -6px;
+}
+
+.node-port {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  border: 2px solid white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.node-port:hover {
+  background: #3b82f6;
+  transform: scale(1.3);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.node-port.connected {
+  background: #10b981;
+}
+
+.node-port.connecting {
+  background: #f59e0b;
+  animation: pulse-port 1s infinite;
+}
+
+@keyframes pulse-port {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+}
+
+/* 预设位样式 */
+.preset-slots {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.preset-slot {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px dashed #d1d5db;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.preset-slot:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+.preset-slot.occupied {
+  border-style: solid;
+  border-color: #10b981;
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.preset-slot.highlighted {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  color: #f59e0b;
+  animation: highlight-slot 0.5s ease;
+}
+
+@keyframes highlight-slot {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.1); }
+}
+
+/* 节点类型特定样式 */
+
+/* 开始节点 */
+.flow-node.start {
+  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+  border-color: #10b981;
+}
+
+.flow-node.start .flow-node-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+/* 结束节点 */
+.flow-node.end {
+  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+  border-color: #ef4444;
+}
+
+.flow-node.end .flow-node-icon {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* 受众拆分节点 */
+.flow-node.audience-split {
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+  border-color: #3b82f6;
+}
+
+.flow-node.audience-split .flow-node-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+/* 事件拆分节点 */
+.flow-node.event-split {
+  background: linear-gradient(135deg, #f3e8ff 0%, #ffffff 100%);
+  border-color: #8b5cf6;
+}
+
+.flow-node.event-split .flow-node-icon {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+/* 条件节点 */
+.flow-node.condition {
+  background: linear-gradient(135deg, #fef3c7 0%, #ffffff 100%);
+  border-color: #f59e0b;
+}
+
+.flow-node.condition .flow-node-icon {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* 短信节点 */
+.flow-node.sms {
+  background: linear-gradient(135deg, #ecfeff 0%, #ffffff 100%);
+  border-color: #06b6d4;
+}
+
+.flow-node.sms .flow-node-icon {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+/* 邮件节点 */
+.flow-node.email {
+  background: linear-gradient(135deg, #fdf2f8 0%, #ffffff 100%);
+  border-color: #ec4899;
+}
+
+.flow-node.email .flow-node-icon {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+}
+
+/* 微信节点 */
+.flow-node.wechat {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border-color: #22c55e;
+}
+
+.flow-node.wechat .flow-node-icon {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+/* AI呼叫节点 */
+.flow-node.ai-call {
+  background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
+  border-color: #6366f1;
+}
+
+.flow-node.ai-call .flow-node-icon {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+/* 人工呼叫节点 */
+.flow-node.manual-call {
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+  border-color: #f59e0b;
+}
+
+.flow-node.manual-call .flow-node-icon {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* AB测试节点 */
+.flow-node.ab-test {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-color: #64748b;
+}
+
+.flow-node.ab-test .flow-node-icon {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+}
+
+/* 等待节点 */
+.flow-node.wait {
+  background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
+  border-color: #94a3b8;
+}
+
+.flow-node.wait .flow-node-icon {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+}
+
+/* 紧凑模式 */
+.flow-node.compact {
+  padding: 8px 12px;
+}
+
+.flow-node.compact .flow-node-content {
+  padding: 8px;
+}
+
+.flow-node.compact .flow-node-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+.flow-node.compact .flow-node-title {
+  font-size: 12px;
+}
+
+.flow-node.compact .flow-node-subtitle {
+  font-size: 10px;
+}
+
+/* 大尺寸模式 */
+.flow-node.large {
+  min-width: 200px;
+}
+
+.flow-node.large .flow-node-content {
+  padding: 20px;
+}
+
+.flow-node.large .flow-node-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+.flow-node.large .flow-node-title {
+  font-size: 16px;
+}
+
+.flow-node.large .flow-node-subtitle {
+  font-size: 14px;
+}
+
+/* 禁用状态 */
+.flow-node.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.flow-node.disabled:hover {
+  transform: none;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* 加载状态 */
+.flow-node.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.flow-node.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .flow-node {
+    min-width: 120px;
+  }
+  
+  .flow-node-content {
+    padding: 12px;
+  }
+  
+  .flow-node-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+  
+  .flow-node-title {
+    font-size: 13px;
+  }
+  
+  .flow-node-subtitle {
+    font-size: 11px;
+  }
+  
+  .flow-node-actions {
+    top: -6px;
+    right: -6px;
+  }
+  
+  .node-action-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .flow-node {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+  
+  .flow-node:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 
+      0 8px 25px rgba(0, 0, 0, 0.4),
+      0 3px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .flow-node-title {
+    color: #f9fafb;
+  }
+  
+  .flow-node-subtitle {
+    color: #9ca3af;
+  }
+  
+  .flow-node-stats {
+    border-color: #374151;
+  }
+  
+  .stat-value {
+    color: #f9fafb;
+  }
+  
+  .stat-label {
+    color: #6b7280;
+  }
+  
+  .node-port {
+    background: #4b5563;
+    border-color: #1f2937;
+  }
+  
+  .preset-slot {
+    background: rgba(31, 41, 55, 0.9);
+    border-color: #4b5563;
+    color: #6b7280;
+  }
+  
+  .preset-slot:hover {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+    color: #93c5fd;
+  }
+  
+  /* 深色模式下的节点类型样式 */
+  .flow-node.start {
+    background: linear-gradient(135deg, #064e3b 0%, #1f2937 100%);
+  }
+  
+  .flow-node.end {
+    background: linear-gradient(135deg, #7f1d1d 0%, #1f2937 100%);
+  }
+  
+  .flow-node.audience-split {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1f2937 100%);
+  }
+  
+  .flow-node.event-split {
+    background: linear-gradient(135deg, #581c87 0%, #1f2937 100%);
+  }
+  
+  .flow-node.condition {
+    background: linear-gradient(135deg, #92400e 0%, #1f2937 100%);
+  }
+  
+  .flow-node.sms {
+    background: linear-gradient(135deg, #155e75 0%, #1f2937 100%);
+  }
+  
+  .flow-node.email {
+    background: linear-gradient(135deg, #9d174d 0%, #1f2937 100%);
+  }
+  
+  .flow-node.wechat {
+    background: linear-gradient(135deg, #14532d 0%, #1f2937 100%);
+  }
+  
+  .flow-node.ai-call {
+    background: linear-gradient(135deg, #3730a3 0%, #1f2937 100%);
+  }
+  
+  .flow-node.manual-call {
+    background: linear-gradient(135deg, #92400e 0%, #1f2937 100%);
+  }
+  
+  .flow-node.ab-test {
+    background: linear-gradient(135deg, #334155 0%, #1f2937 100%);
+  }
+  
+  .flow-node.wait {
+    background: linear-gradient(135deg, #475569 0%, #1f2937 100%);
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .flow-node {
+    border-width: 3px;
+  }
+  
+  .flow-node:hover {
+    border-width: 4px;
+  }
+  
+  .flow-node.selected {
+    border-width: 4px;
+  }
+  
+  .flow-node-title {
+    font-weight: 700;
+  }
+  
+  .node-action-btn {
+    border: 2px solid currentColor;
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .flow-node,
+  .flow-node-icon,
+  .flow-node-actions,
+  .node-action-btn,
+  .node-port,
+  .preset-slot {
+    transition: none;
+    animation: none;
+  }
+  
+  .flow-node:hover {
+    transform: none;
+  }
+  
+  .status-indicator.running,
+  .status-indicator.error,
+  .node-port.connecting,
+  .preset-slot.highlighted {
+    animation: none;
+  }
+}

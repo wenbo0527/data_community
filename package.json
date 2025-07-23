@@ -17,6 +17,7 @@
     "quality:fix": "npm run lint:fix && npm run type-check"
   },
   "dependencies": {
+    "@antv/layout": "^1.2.13",
     "@antv/x6": "^2.18.1",
     "@antv/x6-vue-shape": "^2.1.2",
     "@arco-design/web-vue": "^2.57.0",

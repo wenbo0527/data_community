@@ -12,23 +12,32 @@ export class CanvasPanZoomManager {
     this.maxScale = 5.0
     this.zoomStep = 0.1
     
+    // 调试标志
+    this.loggedNonPanning = false
+    
+    // 位移累积算法相关
+    this.accumulatedDelta = { x: 0, y: 0 } // 累积的位移
+    this.lastProcessedTime = 0 // 上次处理时间
+    this.minProcessInterval = 16 // 最小处理间隔(约60fps)
+    this.smoothingFactor = 0.95 // 提高平滑因子，减少过度平滑
+    
     // 拖拽模式配置
     this.dragModes = {
       default: {
         cursor: 'grab',
-        sensitivity: 1.0,
+        sensitivity: 1.5, // 提高默认灵敏度
         name: '默认模式',
         description: '平衡速度和精度'
       },
       precise: {
         cursor: 'crosshair',
-        sensitivity: 0.3,
+        sensitivity: 0.5, // 稍微提高精确模式灵敏度
         name: '精确模式',
         description: '适合精细调整'
       },
       fast: {
         cursor: 'move',
-        sensitivity: 2.0,
+        sensitivity: 2.5, // 提高快速模式灵敏度
         name: '快速模式',
         description: '适合大范围导航'
       }
@@ -77,24 +86,32 @@ export class CanvasPanZoomManager {
     // 设置默认光标
     this.updateCursor()
     
-    // 鼠标事件
-    container.addEventListener('mousedown', this.handleMouseDown.bind(this))
-    container.addEventListener('mousemove', this.handleMouseMove.bind(this))
-    container.addEventListener('mouseup', this.handleMouseUp.bind(this))
-    container.addEventListener('mouseleave', this.handleMouseLeave.bind(this))
-    container.addEventListener('mouseenter', this.handleMouseEnter.bind(this))
+    // 鼠标事件 - 使用捕获阶段确保优先处理
+    container.addEventListener('mousedown', this.handleMouseDown.bind(this), true)
+    container.addEventListener('mousemove', this.handleMouseMove.bind(this), true)
+    container.addEventListener('mouseup', this.handleMouseUp.bind(this), true)
+    container.addEventListener('mouseleave', this.handleMouseLeave.bind(this), true)
+    container.addEventListener('mouseenter', this.handleMouseEnter.bind(this), true)
+    
+    // 全局事件监听 - 确保拖拽在容器外也能正常工作
+    this.globalMouseMove = this.handleMouseMove.bind(this)
+    this.globalMouseUp = this.handleMouseUp.bind(this)
+    document.addEventListener('mousemove', this.globalMouseMove, true)
+    document.addEventListener('mouseup', this.globalMouseUp, true)
     
     // 滚轮事件（支持Ctrl+滚轮缩放）
-    container.addEventListener('wheel', this.handleWheel.bind(this), { passive: false })
+    container.addEventListener('wheel', this.handleWheel.bind(this), { passive: false, capture: true })
     
     // 触摸事件（移动端支持）
-    container.addEventListener('touchstart', this.handleTouchStart.bind(this))
-    container.addEventListener('touchmove', this.handleTouchMove.bind(this))
-    container.addEventListener('touchend', this.handleTouchEnd.bind(this))
+    container.addEventListener('touchstart', this.handleTouchStart.bind(this), true)
+    container.addEventListener('touchmove', this.handleTouchMove.bind(this), true)
+    container.addEventListener('touchend', this.handleTouchEnd.bind(this), true)
     
     // 画布事件监听
     this.graph.on('scale', this.handleScaleChange.bind(this))
     this.graph.on('translate', this.handleTranslateChange.bind(this))
+    
+    console.log('🔗 [CanvasPanZoomManager] 事件监听器已绑定（捕获阶段 + 全局事件）')
   }
 
   /**
@@ -203,6 +220,16 @@ export class CanvasPanZoomManager {
    * 鼠标按下事件
    */
   handleMouseDown(e) {
+    console.log('🖱️ [CanvasPanZoomManager] 鼠标按下事件触发:', {
+      button: e.button,
+      clientX: e.clientX,
+      clientY: e.clientY,
+      target: e.target,
+      targetTagName: e.target.tagName,
+      targetClasses: e.target.className,
+      targetId: e.target.id
+    })
+    
     // 检查是否点击在空白区域
     const target = e.target
     const isBlankArea = target === this.graph.container || 
@@ -210,17 +237,57 @@ export class CanvasPanZoomManager {
                        target.classList.contains('x6-graph-svg-stage') ||
                        target.tagName === 'svg'
     
+    console.log('🎯 [CanvasPanZoomManager] 空白区域检查:', {
+      isBlankArea,
+      targetIsContainer: target === this.graph.container,
+      hasX6GraphSvg: target.classList.contains('x6-graph-svg'),
+      hasX6GraphSvgStage: target.classList.contains('x6-graph-svg-stage'),
+      isSvgTag: target.tagName === 'svg',
+      containerElement: this.graph.container
+    })
+    
+    // 检查修饰键状态
+    console.log('⌨️ [CanvasPanZoomManager] 修饰键状态:', {
+      isShiftPressed: this.isShiftPressed,
+      isCtrlPressed: this.isCtrlPressed,
+      isSpacePressed: this.isSpacePressed,
+      tempPanningEnabled: this.tempPanningEnabled,
+      currentDragMode: this.currentDragMode
+    })
+    
     // 判断是否可以开始拖拽
     const canPan = isBlankArea && e.button === 0 && (
       this.tempPanningEnabled || // 空格键临时启用
       !this.isShiftPressed // 非Shift键模式下直接拖拽
     )
     
+    console.log('🚀 [CanvasPanZoomManager] 拖拽条件判断:', {
+      canPan,
+      isBlankArea,
+      isLeftButton: e.button === 0,
+      tempPanningEnabled: this.tempPanningEnabled,
+      notShiftPressed: !this.isShiftPressed,
+      finalCondition: `${isBlankArea} && ${e.button === 0} && (${this.tempPanningEnabled} || ${!this.isShiftPressed})`
+    })
+    
     if (canPan) {
+      console.log('✅ [CanvasPanZoomManager] 开始拖拽操作')
       this.isPanning = true
       this.panStartPoint = { x: e.clientX, y: e.clientY }
       this.lastPanPoint = { x: e.clientX, y: e.clientY }
+      this.accumulatedDelta = { x: 0, y: 0 }
+      this.lastProcessedTime = performance.now()
+      this.dragStartTime = performance.now() // 记录拖拽开始时间
       this.updateCursor('grabbing')
+      
+      // 记录拖拽开始
+      const currentTranslate = this.graph.translate()
+      console.log('🚀 [CanvasPanZoomManager] 拖拽开始:', {
+        startPosition: { x: e.clientX, y: e.clientY },
+        currentTranslate: { tx: currentTranslate.tx, ty: currentTranslate.ty },
+        mode: this.currentDragMode,
+        sensitivity: this.getCurrentSensitivity()
+      })
       
       // 启用高性能模式
       this.enableHighPerformanceMode()
@@ -230,15 +297,37 @@ export class CanvasPanZoomManager {
       
       e.preventDefault()
       e.stopPropagation()
+      
+      console.log('🎯 [CanvasPanZoomManager] 拖拽状态已设置:', {
+        isPanning: this.isPanning,
+        panStartPoint: this.panStartPoint,
+        lastPanPoint: this.lastPanPoint
+      })
+    } else {
+      console.log('❌ [CanvasPanZoomManager] 拖拽条件不满足，无法开始拖拽')
+      
+      // 详细分析为什么不能拖拽
+      if (!isBlankArea) {
+        console.log('❌ [CanvasPanZoomManager] 拒绝原因: 不是空白区域')
+      }
+      if (e.button !== 0) {
+        console.log('❌ [CanvasPanZoomManager] 拒绝原因: 不是左键点击，button =', e.button)
+      }
+      if (!this.tempPanningEnabled && this.isShiftPressed) {
+        console.log('❌ [CanvasPanZoomManager] 拒绝原因: 需要空格键或非Shift键模式')
+      }
     }
   }
 
   /**
-   * 鼠标移动事件
+   * 鼠标移动事件 - 使用位移累积算法
    */
   handleMouseMove(e) {
-    if (!this.isPanning || !this.lastPanPoint) return
+    if (!this.isPanning || !this.lastPanPoint) {
+      return
+    }
     
+    const currentTime = performance.now()
     const deltaX = e.clientX - this.lastPanPoint.x
     const deltaY = e.clientY - this.lastPanPoint.y
     
@@ -247,27 +336,59 @@ export class CanvasPanZoomManager {
     const adjustedDeltaX = deltaX * sensitivity
     const adjustedDeltaY = deltaY * sensitivity
     
-    // 只有移动距离足够大时才进行平移，避免微小抖动
-    if (Math.abs(adjustedDeltaX) > this.panThreshold || Math.abs(adjustedDeltaY) > this.panThreshold) {
+    // 累积位移
+    this.accumulatedDelta.x += adjustedDeltaX
+    this.accumulatedDelta.y += adjustedDeltaY
+    
+    // 检查是否需要处理累积的位移
+    const shouldProcess = currentTime - this.lastProcessedTime >= this.minProcessInterval ||
+                         Math.abs(this.accumulatedDelta.x) > 1 ||
+                         Math.abs(this.accumulatedDelta.y) > 1
+    
+    if (shouldProcess && (Math.abs(this.accumulatedDelta.x) > 0.01 || Math.abs(this.accumulatedDelta.y) > 0.01)) {
+      // 应用平滑处理
+      const smoothedDeltaX = this.accumulatedDelta.x * this.smoothingFactor
+      const smoothedDeltaY = this.accumulatedDelta.y * this.smoothingFactor
+      
       // 检查边界限制
       const currentTranslate = this.graph.translate()
-      const newTranslateX = currentTranslate.tx + adjustedDeltaX
-      const newTranslateY = currentTranslate.ty + adjustedDeltaY
+      const newTranslateX = currentTranslate.tx + smoothedDeltaX
+      const newTranslateY = currentTranslate.ty + smoothedDeltaY
       
-      // 应用边界检查
+      // 应用边界检查和平移
       if (this.isWithinBounds(newTranslateX, newTranslateY)) {
-        this.graph.translate(adjustedDeltaX, adjustedDeltaY)
-        this.lastPanPoint = { x: e.clientX, y: e.clientY }
+        // 计算新的绝对位置并执行平移
+        const newAbsoluteX = currentTranslate.tx + smoothedDeltaX
+        const newAbsoluteY = currentTranslate.ty + smoothedDeltaY
+        this.graph.translate(newAbsoluteX, newAbsoluteY)
+        
+        // 减少已处理的累积位移
+        this.accumulatedDelta.x *= (1 - this.smoothingFactor)
+        this.accumulatedDelta.y *= (1 - this.smoothingFactor)
         
         // 更新位置信息显示
         this.showPositionInfo(newTranslateX, newTranslateY)
       } else {
         // 接近边界时增加阻力
         const resistanceFactor = 0.1
-        this.graph.translate(adjustedDeltaX * resistanceFactor, adjustedDeltaY * resistanceFactor)
-        this.lastPanPoint = { x: e.clientX, y: e.clientY }
+        const resistedDeltaX = smoothedDeltaX * resistanceFactor
+        const resistedDeltaY = smoothedDeltaY * resistanceFactor
+        
+        // 计算新的绝对位置并执行平移
+        const newAbsoluteX = currentTranslate.tx + resistedDeltaX
+        const newAbsoluteY = currentTranslate.ty + resistedDeltaY
+        this.graph.translate(newAbsoluteX, newAbsoluteY)
+        
+        // 大幅减少累积位移，避免在边界处堆积
+        this.accumulatedDelta.x *= 0.3
+        this.accumulatedDelta.y *= 0.3
       }
+      
+      this.lastProcessedTime = currentTime
     }
+    
+    // 更新最后鼠标位置
+    this.lastPanPoint = { x: e.clientX, y: e.clientY }
     
     e.preventDefault()
     e.stopPropagation()
@@ -278,9 +399,32 @@ export class CanvasPanZoomManager {
    */
   handleMouseUp(e) {
     if (this.isPanning) {
+      // 记录拖拽结束
+      const currentTranslate = this.graph.translate()
+      const dragStartTime = this.dragStartTime || this.lastProcessedTime
+      const totalDragTime = performance.now() - dragStartTime
+      const totalDistance = this.panStartPoint ? Math.sqrt(
+        Math.pow(e.clientX - this.panStartPoint.x, 2) + 
+        Math.pow(e.clientY - this.panStartPoint.y, 2)
+      ) : 0
+      
+      console.log('🔚 [CanvasPanZoomManager] 拖拽结束:', {
+        endPosition: { x: e.clientX, y: e.clientY },
+        finalTranslate: { tx: currentTranslate.tx, ty: currentTranslate.ty },
+        finalAccumulatedDelta: { ...this.accumulatedDelta },
+        totalDragTime: Math.round(totalDragTime),
+        totalDistance: Math.round(totalDistance),
+        averageSpeed: totalDragTime > 0 ? Math.round(totalDistance / totalDragTime * 1000) / 1000 : 0
+      })
+      
       this.isPanning = false
       this.lastPanPoint = null
       this.panStartPoint = null
+      
+      // 重置累积位移
+      this.accumulatedDelta = { x: 0, y: 0 }
+      this.lastProcessedTime = 0
+      
       this.updateCursor()
       
       // 禁用高性能模式
@@ -298,7 +442,16 @@ export class CanvasPanZoomManager {
    * 鼠标离开事件
    */
   handleMouseLeave(e) {
-    this.handleMouseUp(e)
+    // 只有在非拖拽状态下才处理鼠标离开事件
+    // 拖拽过程中鼠标可能会移出容器边界，这是正常的
+    if (!this.isPanning) {
+      console.log('🚪 [CanvasPanZoomManager] 鼠标离开容器（非拖拽状态）')
+      // 重置光标
+      this.updateCursor()
+    } else {
+      console.log('🚪 [CanvasPanZoomManager] 鼠标离开容器（拖拽状态中，继续拖拽）')
+      // 拖拽状态下不结束拖拽，让用户可以在容器外继续拖拽
+    }
   }
 
   /**
@@ -763,6 +916,14 @@ export class CanvasPanZoomManager {
       container.removeEventListener('touchstart', this.handleTouchStart)
       container.removeEventListener('touchmove', this.handleTouchMove)
       container.removeEventListener('touchend', this.handleTouchEnd)
+    }
+    
+    // 移除全局事件监听器
+    if (this.globalMouseMove) {
+      document.removeEventListener('mousemove', this.globalMouseMove, true)
+    }
+    if (this.globalMouseUp) {
+      document.removeEventListener('mouseup', this.globalMouseUp, true)
     }
     
     // 移除键盘事件监听器

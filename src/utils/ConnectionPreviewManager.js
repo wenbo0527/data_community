@@ -1725,8 +1725,9 @@ export class ConnectionPreviewManager {
     const startY = nodePosition.y + nodeSize.height / 2
     
     // 计算预览线的终点位置
+    const branchSpacing = this.config?.branchSpacing || 40 // 从配置获取分支间距，默认40
     const endX = startX + 150
-    const endY = startY + (index - (this.branchManager.getNodeBranches(node).length - 1) / 2) * 40
+    const endY = startY + (index - (this.branchManager.getNodeBranches(node).length - 1) / 2) * branchSpacing
     
     // 创建预览线条 - 使用统一的输出端口
     const previewLine = this.graph.addEdge({
@@ -2120,6 +2121,106 @@ export class ConnectionPreviewManager {
     })
     
     return activeLines
+  }
+
+  /**
+   * 获取所有预览线（包括活跃和非活跃的）
+   * @returns {Array} 所有预览线数组
+   */
+  getAllPreviewLines() {
+    const allLines = []
+    
+    // 收集持久化预览线
+    this.persistentPreviews.forEach(({ line, label }, key) => {
+      if (line) {
+        const lineData = line.getData() || {}
+        const sourceNodeId = lineData.sourceNodeId
+        const branchId = lineData.branchId
+        
+        if (sourceNodeId) {
+          const sourceNode = this.graph ? this.graph.getCellById(sourceNodeId) : null
+          
+          // 构造预览线信息
+          const previewLine = {
+            id: line.id,
+            sourceNode: sourceNode,
+            targetNode: null, // 持久化预览线没有目标节点
+            sourcePort: 'out', // 统一使用'out'端口
+            targetPort: null,
+            type: 'persistent',
+            branchId: branchId,
+            position: {
+              start: line.getSourcePoint ? line.getSourcePoint() : null,
+              end: line.getTargetPoint ? line.getTargetPoint() : null
+            },
+            isActive: this.graph ? this.graph.hasCell(line) : false
+          }
+          
+          allLines.push(previewLine)
+        }
+      }
+    })
+    
+    // 收集临时预览线
+    this.previewLines.forEach(({ line, label }, key) => {
+      if (line) {
+        const lineData = line.getData() || {}
+        const sourceNodeId = lineData.sourceNodeId
+        
+        if (sourceNodeId) {
+          const sourceNode = this.graph ? this.graph.getCellById(sourceNodeId) : null
+          
+          const previewLine = {
+            id: line.id,
+            sourceNode: sourceNode,
+            targetNode: null,
+            sourcePort: 'out', // 统一使用'out'端口
+            targetPort: null,
+            type: 'temporary',
+            position: {
+              start: line.getSourcePoint ? line.getSourcePoint() : null,
+              end: line.getTargetPoint ? line.getTargetPoint() : null
+            },
+            isActive: this.graph ? this.graph.hasCell(line) : false
+          }
+          
+          allLines.push(previewLine)
+        }
+      }
+    })
+    
+    // 收集可拖拽预览线
+    this.draggablePreviewLines.forEach((previewData, previewLineId) => {
+      if (previewData.line) {
+        const sourceNode = this.graph ? this.graph.getCellById(previewData.sourceNodeId) : null
+        
+        const previewLine = {
+          id: previewData.line.id,
+          sourceNode: sourceNode,
+          targetNode: null,
+          sourcePort: 'out',
+          targetPort: null,
+          type: 'draggable',
+          branchId: previewData.branchId,
+          position: {
+            start: previewData.line.getSourcePoint ? previewData.line.getSourcePoint() : null,
+            end: previewData.line.getTargetPoint ? previewData.line.getTargetPoint() : null
+          },
+          isActive: this.graph ? this.graph.hasCell(previewData.line) : false
+        }
+        
+        allLines.push(previewLine)
+      }
+    })
+    
+    console.log('[ConnectionPreview] 获取所有预览线:', {
+      persistentCount: this.persistentPreviews.size,
+      temporaryCount: this.previewLines.size,
+      draggableCount: this.draggablePreviewLines.size,
+      totalLines: allLines.length
+    })
+    
+    return allLines
   }
 
   /**
