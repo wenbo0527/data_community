@@ -398,9 +398,14 @@ export function validateForSave(canvasData) {
     warnings: []
   }
 
-  if (!canvasData || !canvasData.nodes) {
-    result.errors.push('画布数据不能为空')
-    result.isValid = false
+  // 对于保存操作，允许空画布（作为草稿保存）
+  if (!canvasData) {
+    result.warnings.push('画布数据为空，已保存为空白草稿')
+    return result
+  }
+
+  if (!canvasData.nodes || canvasData.nodes.length === 0) {
+    result.warnings.push('画布中暂无节点，已保存为空白草稿')
     return result
   }
 

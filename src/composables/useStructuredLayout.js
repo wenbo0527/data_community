@@ -535,7 +535,7 @@ export function useStructuredLayout(getGraph) {
       if (connectionPreviewManager.value) {
         try {
           if (typeof connectionPreviewManager.value.refreshAllPreviewLines === 'function') {
-            connectionPreviewManager.value.refreshAllPreviewLines()
+            connectionPreviewManager.value.refreshAllPreviewLines(false, true) // 智能布局后刷新
             console.log('[useStructuredLayout] 预览线刷新完成 - 使用 refreshAllPreviewLines')
           } else if (typeof connectionPreviewManager.value.updateAllPreviewLinePositions === 'function') {
             connectionPreviewManager.value.updateAllPreviewLinePositions()

@@ -452,10 +452,15 @@ export class UnifiedLayoutManager {
    * 更新分流节点的分支布局
    * @param {Object} splitNode - 分流节点
    * @param {Object} config - 节点配置
-   * @param {boolean} skipStructuredLayout - 是否跳过结构化布局触发
+   * @param {boolean} skipStructuredLayout - 是否跳过结构化布局触发，默认false
+   * @param {Set} protectedNodes - 需要保护位置的节点集合
    */
-  updateBranchLayout(splitNode, config, skipStructuredLayout = false) {
-    console.log('[UnifiedLayoutManager] 更新分支布局:', splitNode.id, config, { skipStructuredLayout })
+  updateBranchLayout(splitNode, config, skipStructuredLayout = false, protectedNodes = new Set()) {
+    console.log('[UnifiedLayoutManager] 更新分流节点分支布局:', splitNode.id, { 
+      skipStructuredLayout, 
+      protectedNodesCount: protectedNodes.size,
+      protectedNodes: Array.from(protectedNodes)
+    })
     
     // 确保获取到正确的X6节点实例
     let x6Node = splitNode
@@ -506,12 +511,22 @@ export class UnifiedLayoutManager {
       // 更新连接端口
       this.updateNodePorts(x6Node, branches)
       
-      // 根据参数决定是否触发结构化布局
-      if (!skipStructuredLayout) {
-        console.log('[UnifiedLayoutManager] 分支布局更新完成，将触发结构化布局')
-        this.onBranchLayoutUpdated?.(x6Node, branchLayout)
+      // 🔧 修复：检查并保护已连接的未命中人群节点位置
+      if (protectedNodes.size > 0) {
+        console.log('[UnifiedLayoutManager] 保护已连接节点的位置，跳过结构化布局触发')
+        
+        // 传递保护节点信息给回调
+        if (this.onBranchLayoutUpdated) {
+          this.onBranchLayoutUpdated(x6Node, branchLayout, { protectedNodes })
+        }
       } else {
-        console.log('[UnifiedLayoutManager] 分支布局更新完成，跳过结构化布局触发')
+        // 根据参数决定是否触发结构化布局
+        if (!skipStructuredLayout) {
+          console.log('[UnifiedLayoutManager] 分支布局更新完成，将触发结构化布局')
+          this.onBranchLayoutUpdated?.(x6Node, branchLayout)
+        } else {
+          console.log('[UnifiedLayoutManager] 分支布局更新完成，跳过结构化布局触发')
+        }
       }
     }
   }
@@ -665,9 +680,17 @@ export class UnifiedLayoutManager {
    * @param {Object} options - 选项
    */
   applyAutoLayout(options) {
-    console.log('[UnifiedLayoutManager] 应用自动布局模式')
+    console.log('[UnifiedLayoutManager] 应用自动布局模式（统一使用原生Dagre）')
     this.initCoordinateSystem()
-    // 这里可以添加自动布局的具体逻辑
+    
+    // 统一使用原生Dagre布局
+    if (this.structuredLayoutEngine && typeof this.structuredLayoutEngine.applyNativeDagreLayout === 'function') {
+      console.log('[UnifiedLayoutManager] 调用原生Dagre布局')
+      return this.structuredLayoutEngine.applyNativeDagreLayout()
+    } else {
+      console.warn('[UnifiedLayoutManager] 原生Dagre布局方法不可用，使用默认布局')
+      // 这里可以添加默认布局的具体逻辑
+    }
   }
 
   /**

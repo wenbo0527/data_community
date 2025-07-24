@@ -89,15 +89,10 @@ export const getBaseGraphConfig = (container) => ({
 // 连接配置
 export const getConnectingConfig = () => ({
   router: {
-    name: 'manhattan',
+    name: 'orth',  // 使用更稳定的orth路由器替代manhattan
     args: {
-      step: 20,
-      maximumLoops: 500,
-      padding: 10,
-      excludeEnds: ['source', 'target'],
-      excludeShapes: ['rect'],
-      startDirections: ['bottom'],  // 从底部开始
-      endDirections: ['top']        // 到顶部结束
+      padding: 20,
+      step: 20
     }
   },
   connector: {

@@ -166,12 +166,13 @@ export default {
       
       try {
         isLayouting.value = true
-        console.log('[CanvasManualControls] 🚀 手动触发结构化布局')
+        console.log('[CanvasManualControls] 🚀 手动触发布局（统一使用原生Dagre）')
         
-        if (typeof structuredLayout.applyStructuredLayout === 'function') {
-          await structuredLayout.applyStructuredLayout(true, true) // 强制应用
+        // 统一使用原生Dagre布局
+        if (typeof structuredLayout.applyNativeDagreLayout === 'function') {
+          await structuredLayout.applyNativeDagreLayout()
         } else if (typeof structuredLayout.applyLayout === 'function') {
-          await structuredLayout.applyLayout()
+          await structuredLayout.applyLayout() // 已配置为原生Dagre布局
         } else {
           console.error('[CanvasManualControls] 布局方法不可用')
         }

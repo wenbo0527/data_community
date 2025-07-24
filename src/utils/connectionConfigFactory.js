@@ -25,13 +25,10 @@ export const createConnectionConfig = (source, target, options = {}) => {
     },
     // 路由器配置
     router: {
-      name: 'manhattan',
+      name: 'orth',  // 使用更稳定的orth路由器替代manhattan
       args: {
-        step: 20,
-        maximumLoops: 500,
-        padding: 10,
-        excludeEnds: ['source', 'target'],
-        excludeShapes: ['rect']
+        padding: 20,
+        step: 20
       }
     },
     // 默认样式

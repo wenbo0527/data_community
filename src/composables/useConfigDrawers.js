@@ -355,12 +355,12 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
     // 节点配置管理器
     nodeConfigManager,
     
-    // 结构化布局功能
+    // 结构化布局功能 - 统一使用原生Dagre布局
     structuredLayout: {
       validateConnection: structuredLayout.validateConnection,
-      applyLayout: structuredLayout.applyStructuredLayout, // 新API中的主要布局方法
-      applyStructuredLayout: structuredLayout.applyStructuredLayout,
-      applyIntelligentLayout: structuredLayout.applyIntelligentLayout, // 智能布局方法
+      applyLayout: structuredLayout.applyNativeDagreLayout, // 统一使用原生Dagre布局
+      applyStructuredLayout: structuredLayout.applyNativeDagreLayout, // 统一使用原生Dagre布局
+      applyIntelligentLayout: structuredLayout.applyNativeDagreLayout, // 统一使用原生Dagre布局
       applyNativeDagreLayout: structuredLayout.applyNativeDagreLayout, // 原生Dagre布局方法
       // 正确的初始化方法
       initializeLayoutEngine: () => {

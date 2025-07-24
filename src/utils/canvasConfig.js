@@ -108,13 +108,10 @@ export const getConnectingConfig = () => ({
     dangling: false
   },
   router: {
-    name: 'manhattan',
+    name: 'orth',  // 使用更稳定的orth路由器替代manhattan
     args: {
-      step: 30,
-      maximumLoops: 500,
-      padding: 15,
-      excludeEnds: ['target'],
-      excludeShapes: ['rect']
+      padding: 20,
+      step: 20
     }
   },
   connector: {

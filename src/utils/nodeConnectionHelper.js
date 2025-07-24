@@ -84,7 +84,7 @@ export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPo
         y: targetPosition.y
       },
       router: {
-        name: 'manhattan'
+        name: 'orth'  // 使用更稳定的orth路由器替代manhattan
       },
       connector: {
         name: 'rounded',

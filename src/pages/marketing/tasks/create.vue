@@ -414,6 +414,12 @@ const saveTask = async () => {
     if (!validationResult.isValid) {
       // 对于保存，即使有错误也只显示警告，不阻止保存
       Message.warning(`保存成功，但存在问题：${validationResult.errors.join(', ')}`)
+    } else if (validationResult.warnings.length > 0) {
+      // 显示警告信息
+      Message.info(`保存成功：${validationResult.warnings.join(', ')}`)
+    } else {
+      // 没有问题，正常保存成功
+      Message.success('保存成功')
     }
     
     const taskData = {
@@ -431,7 +437,6 @@ const saveTask = async () => {
     
     // 保存成功，状态仍为草稿
     taskStatus.value = 'draft'
-    Message.success('保存成功')
     
     // 标记为已保存
     hasUnsavedChanges.value = false

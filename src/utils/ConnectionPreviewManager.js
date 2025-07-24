@@ -151,13 +151,6 @@ export class ConnectionPreviewManager {
     const nodePosition = node.getPosition()
     const nodeSize = node.getSize()
     
-    console.log('📌 [ConnectionPreview] 创建持久化预览线:', {
-      nodeId: node.id,
-      nodeType,
-      position: nodePosition,
-      size: nodeSize
-    })
-    
     if (this.isBranchNode(node)) {
       this.createPersistentBranchPreviews(node, nodePosition, nodeSize)
     } else {
@@ -175,13 +168,11 @@ export class ConnectionPreviewManager {
   shouldSkipPreview(node, nodeData, nodeType) {
     // 跳过拖拽提示点（防止为拖拽提示点创建预览线）
     if (nodeData.isDragHint || nodeData.type === 'drag-hint' || nodeType === 'drag-hint') {
-      console.log('⏭️ [统一预览线管理器] 跳过拖拽提示点，不创建预览线')
       return true
     }
     
     // 开始节点由增强预览线管理器处理，跳过传统预览线
     if (nodeType === 'start') {
-      console.log('⏭️ [统一预览线管理器] 开始节点由增强功能处理，跳过传统预览线')
       return true
     }
     
