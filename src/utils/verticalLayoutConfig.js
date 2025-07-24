@@ -256,10 +256,10 @@ export function canConnectVertically(sourceNode, targetNode) {
 }
 
 /**
- * 获取最佳吸附位置
+ * 获取最佳吸附位置（仅支持单节点吸附）
  * @param {Object} dragNode - 被拖拽的节点
  * @param {Array} snapTargets - 吸附目标数组
- * @returns {Object|null} 最佳吸附位置
+ * @returns {Object|null} 最近的单个吸附位置
  */
 export function getBestSnapPosition(dragNode, snapTargets) {
   const config = VERTICAL_LAYOUT_CONFIG
@@ -273,6 +273,7 @@ export function getBestSnapPosition(dragNode, snapTargets) {
   let bestSnap = null
   let minDistance = Infinity
   
+  // 遍历所有候选目标，只返回最近的一个
   snapTargets.forEach(target => {
     const distance = Math.sqrt(
       Math.pow(dragCenter.x - target.x, 2) + 

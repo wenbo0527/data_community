@@ -92,8 +92,13 @@ export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPo
           radius: 8
         }
       },
-      // 确保连接从端口开始
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           stroke: '#91C9FF',
@@ -195,7 +200,12 @@ export const convertPresetToActualConnection = (graph, connectionId, targetNode,
         cell: targetNode.id,
         port: targetPortId
       },
-      connectionPoint: 'anchor'
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      }
     })
 
     // 记录转换后的连接点配置

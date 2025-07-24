@@ -10,11 +10,12 @@ export class EnhancedStructuredLayoutEngine {
     this.graph = graph
     this.layoutConfig = {
       levelHeight: 150,           // 层级间距
-      nodeSpacing: 120,           // 同层节点间距
+      nodeSpacing: 200,           // 同层节点间距
       branchSpacing: 180,         // 分支间距
       previewLineSpacing: 80,     // 预览线预留空间
       centerAlignment: true,      // 中心对齐
       gridSize: 20,              // 网格大小
+      startNodeCentered: true,    // 开始节点居中
       enableIncrementalLayout: true, // 增量布局
       enableBatching: true,       // 批量处理
       layoutThrottle: 100,        // 布局节流
@@ -318,7 +319,7 @@ export class EnhancedStructuredLayoutEngine {
     const positions = {}
     let currentY = 0
     
-    console.log('[EnhancedStructuredLayoutEngine] 开始计算节点位置，确保行对齐')
+    console.log('[EnhancedStructuredLayoutEngine] 开始计算节点位置，确保行对齐和分流节点分支居中')
     
     levels.forEach((level, levelIndex) => {
       // 计算当前层级的最大预览线空间需求
@@ -332,7 +333,46 @@ export class EnhancedStructuredLayoutEngine {
       
       // 计算层级Y坐标，考虑预览线空间
       const levelY = currentY
-      const levelPositions = this.calculateLevelPositions(level, levelY)
+      
+      // 🔧 修复分流节点分支居中问题：
+      // 检查是否是分流节点的子层
+      let levelPositions
+      if (levelIndex > 0) {
+        const parentLevel = levels[levelIndex - 1]
+        const hasSplitNodeParent = parentLevel.some(node => {
+          const nodeData = node.getData() || {}
+          const nodeType = nodeData.type || nodeData.nodeType
+          return ['audience-split', 'event-split', 'ab-test'].includes(nodeType)
+        })
+        
+        if (hasSplitNodeParent && parentLevel.length === 1) {
+          // 分流节点的子节点需要相对于分流节点居中
+          const splitNode = parentLevel[0]
+          const splitNodePosition = positions[splitNode.id]
+          
+          if (splitNodePosition) {
+            // 使用分流节点的X坐标作为居中基准
+            levelPositions = this.calculateLevelPositionsRelativeToParent(level, levelY, splitNodePosition.x)
+            
+            console.log(`[EnhancedStructuredLayoutEngine] 第${levelIndex}层位置计算（分流节点子层）:`, {
+              levelY,
+              nodeCount: level.length,
+              maxPreviewSpace,
+              splitNodeX: splitNodePosition.x,
+              positions: levelPositions
+            })
+          } else {
+            // 如果找不到分流节点位置，使用默认计算
+            levelPositions = this.calculateLevelPositions(level, levelY)
+          }
+        } else {
+          // 非分流节点子层，使用默认计算
+          levelPositions = this.calculateLevelPositions(level, levelY)
+        }
+      } else {
+        // 第一层，使用默认计算
+        levelPositions = this.calculateLevelPositions(level, levelY)
+      }
       
       console.log(`[EnhancedStructuredLayoutEngine] 第${levelIndex}层位置计算:`, {
         levelY,
@@ -531,7 +571,21 @@ export class EnhancedStructuredLayoutEngine {
             // 多分支节点：拖拽点在节点右侧
             const previewLineLength = 200 // 预览线长度
             previewLineEndX = finalOutputX + previewLineLength
-            previewLineEndY = finalOutputY + verticalOffset
+            
+            // 🔧 修复拖拽点Y坐标计算：应该基于目标层级而不是源节点位置
+            // 计算拖拽点应该所在的层级Y坐标
+            const sourceY = sourcePos.y
+            const targetLayerY = sourceY + this.layoutConfig.levelHeight // 下一层的Y坐标
+            previewLineEndY = targetLayerY + verticalOffset
+            
+            console.log(`[EnhancedStructuredLayoutEngine] 多分支拖拽点Y坐标修正:`, {
+              sourceNodeY: sourceY,
+              originalCalculation: finalOutputY + verticalOffset,
+              targetLayerY: targetLayerY,
+              correctedY: previewLineEndY,
+              verticalOffset,
+              levelHeight: this.layoutConfig.levelHeight
+            })
           }
           
           if (totalBranches > 1) {

@@ -86,13 +86,28 @@ export const getBaseGraphConfig = (container) => ({
   }
 })
 
-// 连接配置
+// 连接配置 - 高优先级优化
 export const getConnectingConfig = () => ({
   router: {
-    name: 'orth',  // 使用更稳定的orth路由器替代manhattan
+    name: 'orth',  // 使用更稳定的orth路由器
     args: {
-      padding: 20,
-      step: 20
+      padding: 15,    // 减少padding，避免过度绕行
+      step: 10,       // 减少step，使路径更精确
+      startDirections: ['bottom'],  // 从底部端口出发
+      endDirections: ['top'],       // 到顶部端口结束
+      // 添加自定义回退路由，确保在复杂情况下也能生成合理路径
+      fallbackRoute: (vertices, options) => {
+        if (vertices.length < 2) return vertices
+        const sourcePoint = vertices[0]
+        const targetPoint = vertices[vertices.length - 1]
+        const midY = sourcePoint.y + (targetPoint.y - sourcePoint.y) / 2
+        return [
+          sourcePoint,
+          { x: sourcePoint.x, y: midY },
+          { x: targetPoint.x, y: midY },
+          targetPoint
+        ]
+      }
     }
   },
   connector: {
@@ -101,8 +116,13 @@ export const getConnectingConfig = () => ({
       radius: 6
     }
   },
-  // anchor: 自动处理端口连接，不需要显式设置
-  connectionPoint: 'anchor',
+  // 🔧 高优先级修复：使用更可靠的边界连接点
+  connectionPoint: {
+    name: 'boundary',
+    args: {
+      anchor: 'center'
+    }
+  },
   allowBlank: false,
   allowLoop: false,
   allowNode: false,
@@ -125,7 +145,14 @@ export const getConnectingConfig = () => ({
           }
         }
       },
-      zIndex: 0
+      zIndex: 0,
+      // 🔧 为新创建的边设置默认的连接点配置
+      defaultConnectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      }
     })
   },
   validateConnection({ targetMagnet, sourceMagnet, sourceView, targetView }) {

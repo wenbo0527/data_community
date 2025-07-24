@@ -282,8 +282,13 @@ export class ConnectionPreviewManager {
           endDirections: ['top']
         }
       },
-      // 确保预览线从端口开始，而不是节点中心
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           ...style,
@@ -386,8 +391,13 @@ export class ConnectionPreviewManager {
             endDirections: ['top']
           }
         },
-        // 确保预览线从端口开始，而不是节点中心
-        connectionPoint: 'anchor',
+        // 使用更可靠的boundary连接点
+        connectionPoint: {
+          name: 'boundary',
+          args: {
+            anchor: 'center'
+          }
+        },
         attrs: {
           line: {
             ...style,
@@ -556,6 +566,13 @@ export class ConnectionPreviewManager {
    * @param {Object} nodeSize - 节点大小
    */
   checkSnapToPreviewLines(dragNode, nodePosition, nodeSize) {
+    // 注意：这里是手工拖拽节点的情况，需要检查节点是否已有连接
+    // 如果节点已有输入连接，则不应该自动吸附
+    if (this.hasAnyIncomingConnections(dragNode)) {
+      console.log('⏭️ [ConnectionPreview] 节点已有输入连接，跳过自动吸附:', dragNode.id)
+      return
+    }
+    
     const dragNodeCenter = {
       x: nodePosition.x + nodeSize.width / 2,
       y: nodePosition.y
@@ -647,8 +664,13 @@ export class ConnectionPreviewManager {
           radius: 8
         }
       },
-      // 确保连接从端口开始，而不是节点中心
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           stroke: branchId ? '#1890ff' : '#52c41a',
@@ -1505,6 +1527,44 @@ export class ConnectionPreviewManager {
   }
 
   /**
+   * 检查节点是否有任何输入连接（排除预览线）
+   * @param {Object} node - 节点
+   * @returns {boolean} 是否有输入连接
+   */
+  hasAnyIncomingConnections(node) {
+    const edges = this.graph.getConnectedEdges(node, { incoming: true })
+    
+    // 过滤掉预览线，只检查真实的业务连接
+    const realConnections = edges.filter(edge => {
+      const edgeData = edge.getData() || {}
+      
+      // 排除持久化预览线
+      if (edgeData.isPersistentPreview) {
+        return false
+      }
+      
+      // 排除可拖拽预设线
+      if (edgeData.type === 'draggable-preview' || edgeData.isDraggable) {
+        return false
+      }
+      
+      // 排除统一预览线
+      if (edgeData.isUnifiedPreview || edgeData.type === 'unified-preview-line') {
+        return false
+      }
+      
+      // 排除临时预览线
+      if (edgeData.isPreview || edgeData.type === 'preview-line') {
+        return false
+      }
+      
+      return true
+    })
+    
+    return realConnections.length > 0
+  }
+
+  /**
    * 检查节点是否有任何输出连接（排除预览线）
    * @param {Object} node - 节点
    * @returns {boolean} 是否有输出连接
@@ -1573,8 +1633,13 @@ export class ConnectionPreviewManager {
           endDirections: ['top']
         }
       },
-      // 确保预览线从端口开始，而不是节点中心
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           ...style,
@@ -1727,8 +1792,13 @@ export class ConnectionPreviewManager {
         port: 'out' // 使用统一的输出端口，确保所有分支从同一位置开始
       },
       target: { x: endX, y: endY }, // 预览线的终点仍使用坐标，因为还没有目标节点
-      // 确保预览线从端口开始，而不是节点中心
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           stroke: '#5F95FF',
@@ -1814,8 +1884,13 @@ export class ConnectionPreviewManager {
         port: 'out' // 使用节点的输出端口
       },
       target: { x: endX, y: endY }, // 预览线的终点仍使用坐标，因为还没有目标节点
-      // 确保预览线从端口开始，而不是节点中心
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           stroke: '#5F95FF',
@@ -2454,8 +2529,13 @@ export class ConnectionPreviewManager {
         port: sourcePort
       },
       target: endPosition, // 这是底部的可拖拽端点
-      // 确保预览线从端口开始，而不是节点中心
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           stroke: strokeColor,
@@ -2819,6 +2899,9 @@ export class ConnectionPreviewManager {
         return // 跳过拖拽提示点
       }
       
+      // 注意：这里是预览线终点的吸附，不需要检查目标节点是否已有连接
+      // 因为节点的in端口支持多个连接
+      
       const nodePosition = node.getPosition()
       const nodeSize = node.getSize()
       const nodeCenter = {
@@ -2857,6 +2940,9 @@ export class ConnectionPreviewManager {
         return // 跳过拖拽提示点
       }
       
+      // 注意：这里是预览线终点查找目标节点，不需要检查目标节点是否已有连接
+      // 因为节点的in端口支持多个连接
+      
       const nodePosition = node.getPosition()
       const nodeSize = node.getSize()
       const nodeCenter = {
@@ -2886,7 +2972,9 @@ export class ConnectionPreviewManager {
       return false // 不能连接自己
     }
     
-    // 检查是否已存在连接
+    // 注意：移除对目标节点已有连接的检查，因为节点的in端口支持多个连接
+    
+    // 检查是否已存在相同的连接
     const existingEdges = this.graph.getEdges()
     const hasConnection = existingEdges.some(edge => {
       const source = edge.getSourceCell()
@@ -2937,8 +3025,13 @@ export class ConnectionPreviewManager {
           radius: 8
         }
       },
-      // 确保连接从端口开始
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           stroke: branchId ? this.getBranchColor(parseInt(branchId) - 1) : '#1890ff',

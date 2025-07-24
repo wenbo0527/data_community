@@ -87,7 +87,7 @@ export class StructuredLayoutEngine {
     this.graph = graph
     this.layoutConfig = {
       levelHeight: 150,     // 层级间距
-      nodeSpacing: 120,     // 同层节点间距
+      nodeSpacing: 200,     // 同层节点间距
       branchSpacing: 180,   // 分支间距
       centerAlignment: true, // 中心对齐
       gridSize: 20          // 网格大小

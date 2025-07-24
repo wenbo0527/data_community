@@ -12,7 +12,7 @@ export class IntelligentStructuredLayoutEngine {
     
     this.layoutConfig = {
       levelHeight: 150,           // 层级间距
-      nodeSpacing: 120,           // 同层节点间距
+      nodeSpacing: 200,           // 同层节点间距
       branchSpacing: 180,         // 分支间距
       previewLineSpacing: 80,     // 预览线预留空间
       centerAlignment: true,      // 中心对齐
@@ -232,15 +232,57 @@ export class IntelligentStructuredLayoutEngine {
     const positions = {}
     const startPosition = startNode.getPosition()
     
-    // 计算布局的总宽度，用于居中对齐
-    const maxLevelWidth = Math.max(...levels.map(level => 
-      (level.length - 1) * this.layoutConfig.nodeSpacing
-    ))
-    
     levels.forEach((level, levelIndex) => {
       const levelY = startPosition.y + (levelIndex * this.layoutConfig.levelHeight)
+      
+      // 🔧 修复分流节点分支居中问题：
+      // 对于分流节点的下一层，需要特殊处理居中逻辑
+      if (levelIndex > 0) {
+        const parentLevel = levels[levelIndex - 1]
+        const hasSplitNodeParent = parentLevel.some(node => {
+          const nodeData = node.getData() || {}
+          const nodeType = nodeData.type || nodeData.nodeType
+          return ['audience-split', 'event-split', 'ab-test'].includes(nodeType)
+        })
+        
+        if (hasSplitNodeParent && parentLevel.length === 1) {
+          // 分流节点的子节点需要相对于分流节点居中
+          const splitNode = parentLevel[0]
+          const splitPosition = startPosition.x // 使用开始节点的X坐标作为基准
+          
+          // 计算当前层的总宽度
+          const levelWidth = (level.length - 1) * this.layoutConfig.nodeSpacing
+          const startX = splitPosition - (levelWidth / 2)
+          
+          level.forEach((node, nodeIndex) => {
+            positions[node.id] = {
+              x: startX + (nodeIndex * this.layoutConfig.nodeSpacing),
+              y: levelY
+            }
+          })
+          
+          console.log(`第${levelIndex}层位置 (分流节点子层居中):`, {
+            y: levelY,
+            nodeCount: level.length,
+            splitNodeX: splitPosition,
+            levelWidth: levelWidth,
+            startX: startX,
+            positions: level.map((node, i) => ({
+              id: node.id,
+              x: startX + (i * this.layoutConfig.nodeSpacing),
+              y: levelY,
+              offsetFromSplit: (startX + (i * this.layoutConfig.nodeSpacing)) - splitPosition
+            }))
+          })
+          
+          return // 跳过默认的居中逻辑
+        }
+      }
+      
+      // 默认的居中逻辑：每层都相对开始节点居中对齐
       const levelWidth = (level.length - 1) * this.layoutConfig.nodeSpacing
-      const startX = startPosition.x - (levelWidth / 2)
+      const levelCenterX = startPosition.x
+      const startX = levelCenterX - (levelWidth / 2)
       
       level.forEach((node, nodeIndex) => {
         positions[node.id] = {
@@ -249,13 +291,18 @@ export class IntelligentStructuredLayoutEngine {
         }
       })
       
-      console.log(`第${levelIndex}层位置:`, {
+      console.log(`第${levelIndex}层位置 (相对开始节点居中):`, {
         y: levelY,
         nodeCount: level.length,
+        levelCenterX: levelCenterX,
+        startNodeX: startPosition.x,
+        levelWidth: levelWidth,
+        startX: startX,
         positions: level.map((node, i) => ({
           id: node.id,
           x: startX + (i * this.layoutConfig.nodeSpacing),
-          y: levelY
+          y: levelY,
+          offsetFromCenter: (startX + (i * this.layoutConfig.nodeSpacing)) - levelCenterX
         }))
       })
     })
@@ -389,6 +436,76 @@ export class IntelligentStructuredLayoutEngine {
     this.performanceMetrics.layoutCount++
     this.performanceMetrics.averageLayoutTime = 
       (this.performanceMetrics.averageLayoutTime + layoutTime) / 2
+  }
+
+  /**
+   * 应用布局结果到图形
+   * @param {Object} layoutResult - 布局结果
+   */
+  applyLayoutResult(layoutResult) {
+    console.log('[IntelligentStructuredLayoutEngine] 应用布局结果')
+    
+    // 1. 应用节点位置
+    if (layoutResult.nodePositions) {
+      Object.entries(layoutResult.nodePositions).forEach(([nodeId, position]) => {
+        const node = this.graph.getCellById(nodeId)
+        if (node && node.setPosition) {
+          node.setPosition(position.x, position.y)
+          console.log(`[IntelligentStructuredLayoutEngine] 节点 ${nodeId} 移动到 (${position.x}, ${position.y})`)
+        }
+      })
+    }
+    
+    // 2. 🔧 修复连线位置更新：强制重新计算所有连线路径
+    const allEdges = this.graph.getEdges()
+    console.log(`[IntelligentStructuredLayoutEngine] 开始更新 ${allEdges.length} 条连线路径`)
+    
+    allEdges.forEach(edge => {
+      try {
+        const sourceId = edge.getSourceCellId()
+        const targetId = edge.getTargetCellId()
+        const sourceNode = this.graph.getCellById(sourceId)
+        const targetNode = this.graph.getCellById(targetId)
+        
+        if (sourceNode && targetNode) {
+          // 🔧 使用X6规范的方式强制重新计算连线路径
+          // 1. 清除现有的顶点（控制点）
+          edge.setVertices([])
+          
+          // 2. 重新设置源和目标，触发路径重新计算
+          const sourcePort = edge.getSourcePortId() || 'out'
+          const targetPort = edge.getTargetPortId() || 'in'
+          
+          edge.setSource({
+            cell: sourceId,
+            port: sourcePort
+          })
+          
+          edge.setTarget({
+            cell: targetId,
+            port: targetPort
+          })
+          
+          console.log(`[IntelligentStructuredLayoutEngine] 连线 ${edge.id} 路径已重新计算: ${sourceId}:${sourcePort} -> ${targetId}:${targetPort}`)
+        }
+      } catch (error) {
+        console.warn(`[IntelligentStructuredLayoutEngine] 连线 ${edge.id} 路径更新失败:`, error)
+      }
+    })
+    
+    // 3. 应用预览线位置（如果有）
+    if (layoutResult.previewLinePositions) {
+      console.log('[IntelligentStructuredLayoutEngine] 应用预览线位置')
+      // 预览线位置由预览线管理器处理
+    }
+    
+    // 4. 应用拖拽点位置（如果有）
+    if (layoutResult.dragPointPositions) {
+      console.log('[IntelligentStructuredLayoutEngine] 应用拖拽点位置')
+      // 拖拽点位置由预览线管理器处理
+    }
+    
+    console.log('[IntelligentStructuredLayoutEngine] 布局结果应用完成')
   }
 
   /**

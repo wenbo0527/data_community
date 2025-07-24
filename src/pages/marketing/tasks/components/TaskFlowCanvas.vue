@@ -138,6 +138,7 @@ import { registerCustomShapes } from '../../../../utils/x6Config.js'
 import { createBranchConnectionConfig, validateConnectionConfig } from '../../../../utils/connectionConfigFactory.js'
 import { connectionErrorHandler, logger } from '../../../../utils/enhancedErrorHandler.js'
 import portConfigFactory from '../../../../utils/portConfigFactory.js'
+import { coordinateManager } from '../../../../utils/CoordinateSystemManager.js'
 import {
   IconPlus,
   IconMinus,
@@ -395,15 +396,43 @@ const initCanvas = async () => {
       center: true
     },
     connecting: {
-      router: 'orth',  // 使用更稳定的orth路由器替代manhattan
+      router: {
+        name: 'orth',
+        args: {
+          padding: 15,
+          step: 15,
+          startDirections: ['bottom'],
+          endDirections: ['top'],
+          // 自定义回退路由，确保在复杂情况下也能生成合理路径
+          fallbackRoute: (vertices, options) => {
+            if (vertices.length < 2) return vertices
+            const start = vertices[0]
+            const end = vertices[vertices.length - 1]
+            const midY = start.y + (end.y - start.y) / 2
+            return [start, { x: start.x, y: midY }, { x: end.x, y: midY }, end]
+          }
+        }
+      },
       connector: {
         name: 'rounded',
         args: {
-          radius: 8,
+          radius: 6,
         },
       },
-      // anchor: 自动处理端口连接
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
+      // 为新创建的边设置默认连接点
+      defaultConnectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       allowBlank: false,
       snap: {
         radius: 20,
@@ -481,6 +510,11 @@ const initCanvas = async () => {
   // 注册自定义边形状
   registerCustomShapes(Graph)
   console.log('[TaskFlowCanvas] 自定义边形状注册完成')
+
+  // 🔧 初始化坐标系统管理器
+  coordinateManager.setGraph(graph)
+  coordinateManager.setDebugMode(process.env.NODE_ENV === 'development')
+  console.log('[TaskFlowCanvas] 坐标系统管理器初始化完成')
 
   // 初始化配置抽屉管理器（只初始化一次）
   if (!configDrawers.value) {
@@ -579,8 +613,6 @@ const initCanvas = async () => {
     nodes: nodes.value,
     connections: connections.value
   })
-
-
 }
 
 // 绑定事件
@@ -704,14 +736,27 @@ const bindEvents = () => {
 
   // 节点拖拽过程中的事件（实时更新）
   graph.on('node:moving', ({ node }) => {
+    // 🔧 使用坐标系统管理器进行坐标转换
+    const rawPosition = node.getPosition()
+    const size = node.getSize()
+    
+    // 通过坐标管理器验证和修正坐标
+    const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
+    if (coordinateValidation && coordinateValidation.difference) {
+      // console.log('🔍 [拖拽坐标修正] 检测到坐标偏差:', {
+      //   nodeId: node.id,
+      //   rawPosition,
+      //   coordinateValidation
+      // })
+    }
+    
+    // 计算节点中心点（使用修正后的坐标）
+    const centerX = rawPosition.x + size.width / 2
+    const centerY = rawPosition.y + size.height / 2
+
     // 在节点拖拽过程中触发吸附逻辑
     const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
     if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
-      const position = node.getPosition()
-      const size = node.getSize()
-      const centerX = position.x + size.width / 2
-      const centerY = position.y + size.height / 2
-
       // 调用统一预览线管理器的吸附高亮逻辑
       unifiedPreviewManager.highlightNearbyNodes(centerX, centerY)
 
@@ -724,8 +769,17 @@ const bindEvents = () => {
       dragHints.forEach(hint => {
         const hintPos = hint.getPosition()
         const hintSize = hint.getSize()
-        const hintCenterX = hintPos.x + hintSize.width / 2
-        const hintCenterY = hintPos.y + hintSize.height / 2
+        
+        // 🔧 使用坐标管理器修正拖拽提示点位置
+        const hintValidation = coordinateManager.validateCoordinateTransform(hint)
+        let hintCenterX = hintPos.x + hintSize.width / 2
+        let hintCenterY = hintPos.y + hintSize.height / 2
+        
+        // 如果检测到坐标偏差，进行修正
+        if (hintValidation && hintValidation.difference) {
+          hintCenterX -= hintValidation.difference.x
+          hintCenterY -= hintValidation.difference.y
+        }
 
         const distance = Math.sqrt(
           Math.pow(centerX - hintCenterX, 2) +
@@ -751,13 +805,31 @@ const bindEvents = () => {
   // 节点位置变化事件（备用方案）
   graph.on('node:change:position', ({ node, current, previous }) => {
     if (isDragging.value) {
+      // 🔧 使用坐标系统管理器进行坐标转换
+      const size = node.getSize()
+      
+      // 通过坐标管理器验证和修正坐标
+      const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
+      let centerX = current.x + size.width / 2
+      let centerY = current.y + size.height / 2
+      
+      // 如果检测到坐标偏差，进行修正
+      if (coordinateValidation && coordinateValidation.difference) {
+        centerX -= coordinateValidation.difference.x
+        centerY -= coordinateValidation.difference.y
+        
+        console.log('🔍 [位置变化坐标修正] 检测到坐标偏差:', {
+          nodeId: node.id,
+          current,
+          previous,
+          coordinateValidation,
+          correctedCenter: { x: centerX, y: centerY }
+        })
+      }
+      
       // 在节点位置变化时触发吸附逻辑
       const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
       if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
-        const size = node.getSize()
-        const centerX = current.x + size.width / 2
-        const centerY = current.y + size.height / 2
-
         // 调用统一预览线管理器的吸附高亮逻辑
         unifiedPreviewManager.highlightNearbyNodes(centerX, centerY)
       }
@@ -771,11 +843,11 @@ const bindEvents = () => {
     
     // 🔧 修复：检查是否是拖拽提示点移动
     if (cellData.isDragHint || cellData.type === 'drag-hint') {
-      console.log('🎯 [拖拽提示点移动] 检测到拖拽提示点移动:', {
-        hintId: node.id,
-        newPosition: node.getPosition(),
-        hintData: cellData
-      })
+      // console.log('🎯 [拖拽提示点移动] 检测到拖拽提示点移动:', {
+      //   hintId: node.id,
+      //   newPosition: node.getPosition(),
+      //   hintData: cellData
+      // })
       
       // 获取统一预览线管理器
       const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
@@ -785,16 +857,16 @@ const bindEvents = () => {
           unifiedPreviewManager.updateHintPosition(node, node.getPosition())
           
           // 🔍 添加手工拖拽点移动结束的最终位置日志
-          console.log('📍 [手工拖拽点移动结束] 最终位置已确定:', {
-            hintId: node.id,
-            finalPosition: node.getPosition(),
-            timestamp: new Date().toLocaleTimeString(),
-            sourceNodeId: cellData.sourceNodeId,
-            branchId: cellData.branchId,
-            branchLabel: cellData.branchLabel
-          })
+          // console.log('📍 [手工拖拽点移动结束] 最终位置已确定:', {
+          //   hintId: node.id,
+          //   finalPosition: node.getPosition(),
+          //   timestamp: new Date().toLocaleTimeString(),
+          //   sourceNodeId: cellData.sourceNodeId,
+          //   branchId: cellData.branchId,
+          //   branchLabel: cellData.branchLabel
+          // })
           
-          console.log('✅ [拖拽提示点移动] 已更新拖拽提示点位置')
+          // console.log('✅ [拖拽提示点移动] 已更新拖拽提示点位置')
         } catch (error) {
           console.warn('⚠️ [拖拽提示点移动] 更新拖拽提示点位置失败:', error)
         }
@@ -803,7 +875,47 @@ const bindEvents = () => {
     }
     
     if (nodeData) {
-      const position = node.getPosition()
+      // 🔧 安全获取节点位置，添加多重检查
+      let position = node.getPosition()
+      
+      // 如果getPosition()返回无效值，尝试其他方法
+      if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+        console.warn('⚠️ [节点移动] getPosition()返回无效值，尝试备用方案:', {
+          nodeId: node.id,
+          getPosition: position,
+          isNaN_x: isNaN(position?.x),
+          isNaN_y: isNaN(position?.y)
+        })
+        
+        // 尝试从节点属性中获取位置
+        const nodeAttrs = node.getAttrs()
+        if (nodeAttrs && nodeAttrs.transform) {
+          const transform = nodeAttrs.transform
+          const match = transform.match(/translate\(([^,]+),([^)]+)\)/)
+          if (match) {
+            position = {
+              x: parseFloat(match[1]),
+              y: parseFloat(match[2])
+            }
+            console.log('🔧 [节点移动] 从transform属性获取位置:', position)
+          }
+        }
+        
+        // 如果还是无效，尝试从节点数据中获取
+        if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+          if (nodeData.position && typeof nodeData.position.x === 'number' && typeof nodeData.position.y === 'number') {
+            position = { ...nodeData.position }
+            console.log('🔧 [节点移动] 从节点数据获取位置:', position)
+          }
+        }
+        
+        // 最后的备用方案：使用默认位置
+        if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+          position = { x: 0, y: 0 }
+          console.error('❌ [节点移动] 无法获取有效位置，使用默认位置:', position)
+        }
+      }
+      
       nodeData.position = position
       emit('node-moved', { nodeId: node.id, position })
 
@@ -816,14 +928,76 @@ const bindEvents = () => {
       // 检测是否需要自动连接到预览线
       if (unifiedPreviewManager) {
         const size = node.getSize()
-        const centerX = position.x + size.width / 2
-        const centerY = position.y + size.height / 2
+        
+        // 🔧 安全检查：确保position和size都有有效值
+        if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+          console.warn('⚠️ [节点移动] 节点位置信息无效，跳过吸附检测:', {
+            nodeId: node.id,
+            position: position,
+            nodePosition: node.getPosition()
+          })
+          return
+        }
+        
+        if (!size || typeof size.width !== 'number' || typeof size.height !== 'number') {
+          console.warn('⚠️ [节点移动] 节点尺寸信息无效，跳过吸附检测:', {
+            nodeId: node.id,
+            size: size,
+            nodeSize: node.getSize()
+          })
+          return
+        }
+        
+        // 🔧 使用坐标系统管理器进行坐标转换
+        const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
+        let centerX = position.x + size.width / 2
+        let centerY = position.y + size.height / 2
+        
+        // 🔧 安全检查：确保计算出的中心坐标是有效数字
+        if (isNaN(centerX) || isNaN(centerY)) {
+          console.error('❌ [节点移动] 计算节点中心坐标失败:', {
+            nodeId: node.id,
+            position: position,
+            size: size,
+            centerX: centerX,
+            centerY: centerY
+          })
+          return
+        }
+        
+        // 如果检测到坐标偏差，进行修正
+        if (coordinateValidation && coordinateValidation.difference) {
+          centerX -= coordinateValidation.difference.x
+          centerY -= coordinateValidation.difference.y
+          
+          console.log('🔍 [节点移动坐标修正] 检测到坐标偏差:', {
+            nodeId: node.id,
+            position,
+            coordinateValidation,
+            correctedCenter: { x: centerX, y: centerY }
+          })
+        }
 
         // 检测是否接近拖拽提示点，如果是则尝试自动连接
         const dragHints = graph.getNodes().filter(n => {
           const data = n.getData() || {}
           return data.isDragHint || data.type === 'drag-hint'
         })
+
+        // 🔍 添加详细的拖拽点检测日志
+        // console.log('🔍 [拖拽点检测] 开始检测吸附条件:', {
+        //   timestamp: new Date().toISOString(),
+        //   nodeId: node.id,
+        //   nodeType: nodeData.type,
+        //   nodeCenter: { x: centerX, y: centerY },
+        //   dragHintsCount: dragHints.length,
+        //   dragHintsInfo: dragHints.map(hint => ({
+        //     id: hint.id,
+        //     position: hint.getPosition(),
+        //     size: hint.getSize(),
+        //     data: hint.getData()
+        //   }))
+        // })
 
         // 找到最近的拖拽提示点
         let nearestHint = null
@@ -832,18 +1006,95 @@ const bindEvents = () => {
         dragHints.forEach(hint => {
           const hintPos = hint.getPosition()
           const hintSize = hint.getSize()
-          const hintCenterX = hintPos.x + hintSize.width / 2
-          const hintCenterY = hintPos.y + hintSize.height / 2
+          
+          // 🔧 安全检查：确保拖拽点位置和尺寸有效
+          if (!hintPos || typeof hintPos.x !== 'number' || typeof hintPos.y !== 'number') {
+            console.warn('⚠️ [拖拽点检测] 拖拽点位置信息无效，跳过:', {
+              hintId: hint.id,
+              hintPos: hintPos
+            })
+            return
+          }
+          
+          if (!hintSize || typeof hintSize.width !== 'number' || typeof hintSize.height !== 'number') {
+            console.warn('⚠️ [拖拽点检测] 拖拽点尺寸信息无效，跳过:', {
+              hintId: hint.id,
+              hintSize: hintSize
+            })
+            return
+          }
+          
+          // 🔧 使用坐标管理器修正拖拽提示点位置
+          const hintValidation = coordinateManager.validateCoordinateTransform(hint)
+          let hintCenterX = hintPos.x + hintSize.width / 2
+          let hintCenterY = hintPos.y + hintSize.height / 2
+          
+          // 🔧 安全检查：确保计算出的拖拽点中心坐标是有效数字
+          if (isNaN(hintCenterX) || isNaN(hintCenterY)) {
+            console.warn('⚠️ [拖拽点检测] 计算拖拽点中心坐标失败，跳过:', {
+              hintId: hint.id,
+              hintPos: hintPos,
+              hintSize: hintSize,
+              hintCenterX: hintCenterX,
+              hintCenterY: hintCenterY
+            })
+            return
+          }
+          
+          // 如果检测到坐标偏差，进行修正
+          if (hintValidation && hintValidation.difference) {
+            hintCenterX -= hintValidation.difference.x
+            hintCenterY -= hintValidation.difference.y
+          }
 
           const distance = Math.sqrt(
             Math.pow(centerX - hintCenterX, 2) +
             Math.pow(centerY - hintCenterY, 2)
           )
+          
+          // 🔧 安全检查：确保距离计算结果有效
+          if (isNaN(distance)) {
+            console.warn('⚠️ [拖拽点检测] 距离计算失败，跳过:', {
+              hintId: hint.id,
+              nodeCenter: { x: centerX, y: centerY },
+              hintCenter: { x: hintCenterX, y: hintCenterY },
+              distance: distance
+            })
+            return
+          }
+
+          // 🔍 添加每个拖拽点的距离计算日志
+          // console.log('📏 [距离计算] 拖拽点距离检测:', {
+          //   hintId: hint.id,
+          //   hintPosition: hintPos,
+          //   hintSize: hintSize,
+          //   hintCenter: { x: hintCenterX, y: hintCenterY },
+          //   nodeCenter: { x: centerX, y: centerY },
+          //   distance: distance,
+          //   threshold: 80,
+          //   withinRange: distance <= 80,
+          //   coordinateValidation: hintValidation
+          // })
 
           if (distance <= 80 && distance < nearestDistance) { // 80px 吸附范围（增加范围）
             nearestDistance = distance
             nearestHint = hint
+            // console.log('🎯 [最近拖拽点] 更新最近的拖拽点:', {
+            //   hintId: hint.id,
+            //   distance: distance,
+            //   previousNearest: nearestDistance
+            // })
           }
+        })
+
+        // 🔍 添加吸附检测结果日志
+        console.log('🔍 [吸附检测结果] 检测完成:', {
+          timestamp: new Date().toISOString(),
+          nearestHintFound: !!nearestHint,
+          nearestHintId: nearestHint?.id,
+          nearestDistance: nearestDistance,
+          threshold: 80,
+          willTriggerSnap: !!nearestHint
         })
 
         // 如果找到最近的拖拽提示点，则进行连接
@@ -864,12 +1115,12 @@ const bindEvents = () => {
             }
           }
           
-          console.log('🎯 [拖拽点吸附] 检测到吸附条件 - 吸附前状态:', {
-            timestamp: new Date().toISOString(),
-            beforeSnapPosition,
-            snapThreshold: 80,
-            actualDistance: nearestDistance
-          })
+          // console.log('🎯 [拖拽点吸附] 检测到吸附条件 - 吸附前状态:', {
+          //   timestamp: new Date().toISOString(),
+          //   beforeSnapPosition,
+          //   snapThreshold: 80,
+          //   actualDistance: nearestDistance
+          // })
 
           // 获取拖拽提示点对应的预览线信息
           const hintData = nearestHint.getData() || {}
@@ -938,16 +1189,16 @@ const bindEvents = () => {
                   const sourcePort = 'out' // 统一使用'out'端口，从UI层面的同一个位置出发
                   
                   // 🔍 记录连接创建前的状态
-                  console.log('🔗 [拖拽点吸附] 开始创建连接:', {
-                    timestamp: new Date().toISOString(),
-                    connectionInfo: {
-                      source: { nodeId: sourceNode.id, port: sourcePort },
-                      target: { nodeId: node.id, port: 'in' },
-                      branchId: branchId,
-                      branchLabel: branchLabel
-                    },
-                    snapInfo
-                  })
+                  // console.log('🔗 [拖拽点吸附] 开始创建连接:', {
+                  //   timestamp: new Date().toISOString(),
+                  //   connectionInfo: {
+                  //     source: { nodeId: sourceNode.id, port: sourcePort },
+                  //     target: { nodeId: node.id, port: 'in' },
+                  //     branchId: branchId,
+                  //     branchLabel: branchLabel
+                  //   },
+                  //   snapInfo
+                  // })
 
                   // 使用连接配置工厂创建配置
                   const connectionConfig = createBranchConnectionConfig(
@@ -1011,39 +1262,39 @@ const bindEvents = () => {
                   }
 
                   // 🎯 记录完整的吸附结果
-                  console.log('✅ [拖拽点吸附] 吸附完成 - 完整结果:', {
-                    timestamp: new Date().toISOString(),
-                    snapResult: {
-                      success: true,
-                      beforeSnapPosition,
-                      afterSnapPosition,
-                      dragHintInfo: {
-                        id: nearestHint.id,
-                        branchId: hintData.branchId,
-                        branchLabel: hintData.branchLabel,
-                        willBeDeleted: dragHintWillBeDeleted,
-                        parentPreviewLine: parentPreviewLine
-                      },
-                      mountedNode: {
-                        id: node.id,
-                        type: nodeData.type,
-                        name: nodeData.name || nodeData.label,
-                        config: nodeData.config
-                      },
-                      sourceNode: {
-                        id: sourceNode.id,
-                        type: sourceNode.getData()?.type,
-                        name: sourceNode.getData()?.name || sourceNode.getData()?.label
-                      },
-                      connectionCreated: {
-                        id: connection.id,
-                        branchId: branchId,
-                        branchLabel: branchLabel
-                      },
-                      snapDistance: nearestDistance,
-                      snapThreshold: 80
-                    }
-                  })
+                  // console.log('✅ [拖拽点吸附] 吸附完成 - 完整结果:', {
+                  //   timestamp: new Date().toISOString(),
+                  //   snapResult: {
+                  //     success: true,
+                  //     beforeSnapPosition,
+                  //     afterSnapPosition,
+                  //     dragHintInfo: {
+                  //       id: nearestHint.id,
+                  //       branchId: hintData.branchId,
+                  //       branchLabel: hintData.branchLabel,
+                  //       willBeDeleted: dragHintWillBeDeleted,
+                  //       parentPreviewLine: parentPreviewLine
+                  //     },
+                  //     mountedNode: {
+                  //       id: node.id,
+                  //       type: nodeData.type,
+                  //       name: nodeData.name || nodeData.label,
+                  //       config: nodeData.config
+                  //     },
+                  //     sourceNode: {
+                  //       id: sourceNode.id,
+                  //       type: sourceNode.getData()?.type,
+                  //       name: sourceNode.getData()?.name || sourceNode.getData()?.label
+                  //     },
+                  //     connectionCreated: {
+                  //       id: connection.id,
+                  //       branchId: branchId,
+                  //       branchLabel: branchLabel
+                  //     },
+                  //     snapDistance: nearestDistance,
+                  //     snapThreshold: 80
+                  //   }
+                  // })
 
                 } catch (error) {
                   console.error('💥 [拖拽点吸附] 吸附过程失败:', {
@@ -1112,51 +1363,51 @@ const bindEvents = () => {
             const outgoingEdges = graph.getOutgoingEdges(node) || []
             const incomingEdges = graph.getIncomingEdges(node) || []
             
-            console.log('🔄 [节点移动] 已刷新所有预览线和拖拽提示点位置 - 详细信息:', {
-              triggerNodeId: node.id,
-              triggerNodeType: nodeData.type,
-              triggerNodePosition: position,
-              refreshDuration: `${refreshEndTime - refreshStartTime}ms`,
-              timestamp: new Date().toLocaleTimeString(),
-              totalPreviewLines: unifiedPreviewManager.previewLines?.size || 0,
-              manuallyAdjustedHints: unifiedPreviewManager.manuallyAdjustedHints?.size || 0,
-              isAfterNodeDeletion: false,
-              isAfterSmartLayout: false,
-              isAfterAutoConnection: true, // 🔧 新增：标记这是自动连接后的刷新
-              // 🔍 补充节点连接状态信息
-              nodeConnectionInfo: {
-                outgoingConnections: outgoingEdges.length,
-                incomingConnections: incomingEdges.length,
-                outgoingTargets: outgoingEdges.map(edge => ({
-                  targetId: edge.getTargetNode()?.id,
-                  branchId: edge.getData()?.branchId,
-                  branchLabel: edge.getData()?.branchLabel
-                })),
-                incomingSources: incomingEdges.map(edge => ({
-                  sourceId: edge.getSourceNode()?.id,
-                  branchId: edge.getData()?.branchId,
-                  branchLabel: edge.getData()?.branchLabel
-                }))
-              },
-              // 🔍 补充节点配置信息
-              nodeConfig: {
-                hasConfig: !!nodeData.config,
-                configKeys: nodeData.config ? Object.keys(nodeData.config) : [],
-                hasBranches: nodeData.config?.branches?.length > 0,
-                branchCount: nodeData.config?.branches?.length || 0
-              },
-              // 🔍 补充画布状态信息
-              canvasState: {
-                totalNodes: graph.getNodes().length,
-                totalEdges: graph.getEdges().length,
-                dragHints: graph.getNodes().filter(n => {
-                  const data = n.getData() || {}
-                  return data.isDragHint || data.type === 'drag-hint'
-                }).length
-              }
-            })
+            // console.log('🔄 [节点移动] 已刷新所有预览线和拖拽提示点位置 - 详细信息:', {
+            //   triggerNodeId: node.id,
+            //   triggerNodeType: nodeData.type,
+            //   triggerNodePosition: position,
+            //   refreshDuration: `${refreshEndTime - refreshStartTime}ms`,
+            //   timestamp: new Date().toLocaleTimeString(),
+            //   totalPreviewLines: unifiedPreviewManager.previewLines?.size || 0,
+            //   manuallyAdjustedHints: unifiedPreviewManager.manuallyAdjustedHints?.size || 0,
+            //   isAfterNodeDeletion: false,
+            //   isAfterSmartLayout: false,
+            //   isAfterAutoConnection: true, // 🔧 新增：标记这是自动连接后的刷新
+            //   // 🔍 补充节点连接状态信息
+            //   nodeConnectionInfo: {
+            //     outgoingConnections: outgoingEdges.length,
+            //     incomingConnections: incomingEdges.length,
+            //     outgoingTargets: outgoingEdges.map(edge => ({
+            //       targetId: edge.getTargetNode()?.id,
+            //       branchId: edge.getData()?.branchId,
+            //       branchLabel: edge.getData()?.branchLabel
+            //     })),
+            //     incomingSources: incomingEdges.map(edge => ({
+            //       sourceId: edge.getSourceNode()?.id,
+            //       branchId: edge.getData()?.branchId,
+            //       branchLabel: edge.getData()?.branchLabel
+            //     }))
+            //   },
+            //   // 🔍 补充节点配置信息
+            //   nodeConfig: {
+            //     hasConfig: !!nodeData.config,
+            //     configKeys: nodeData.config ? Object.keys(nodeData.config) : [],
+            //     hasBranches: nodeData.config?.branches?.length > 0,
+            //     branchCount: nodeData.config?.branches?.length || 0
+            //   },
+            //   // 🔍 补充画布状态信息
+            //   canvasState: {
+            //     totalNodes: graph.getNodes().length,
+            //     totalEdges: graph.getEdges().length,
+            //     dragHints: graph.getNodes().filter(n => {
+            //       const data = n.getData() || {}
+            //       return data.isDragHint || data.type === 'drag-hint'
+            //     }).length
+            //   }
+            // })
             
-            console.log('🔄 [节点移动] 已刷新所有预览线和拖拽提示点位置（在自动连接后）')
+            // console.log('🔄 [节点移动] 已刷新所有预览线和拖拽提示点位置（在自动连接后）')
           } catch (error) {
             console.warn('⚠️ [节点移动] 刷新预览线位置失败:', error)
           }
@@ -1313,34 +1564,52 @@ const bindEvents = () => {
         const nodeSize = node.getSize()
         const portConfig = node.getPortProp(port.id, 'position') || {}
         
-        let portX = nodePosition.x
-        let portY = nodePosition.y
+        // 🔧 使用坐标系统管理器进行坐标转换
+        const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
+        let adjustedNodePosition = { ...nodePosition }
+        
+        // 如果检测到坐标偏差，进行修正
+        if (coordinateValidation && coordinateValidation.difference) {
+          adjustedNodePosition.x -= coordinateValidation.difference.x
+          adjustedNodePosition.y -= coordinateValidation.difference.y
+          
+          console.log('🔍 [端口位置计算坐标修正] 检测到坐标偏差:', {
+            nodeId: node.id,
+            portId: port.id,
+            originalPosition: nodePosition,
+            coordinateValidation,
+            adjustedPosition: adjustedNodePosition
+          })
+        }
+        
+        let portX = adjustedNodePosition.x
+        let portY = adjustedNodePosition.y
         
         // 根据端口配置计算位置
         if (portConfig.name === 'bottom') {
           const args = portConfig.args || {}
           const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
             parseFloat(args.x) / 100 : 0.5
-          portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
-          portY = nodePosition.y + nodeSize.height + (args.dy || 0)
+          portX = adjustedNodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+          portY = adjustedNodePosition.y + nodeSize.height + (args.dy || 0)
         } else if (portConfig.name === 'top') {
           const args = portConfig.args || {}
           const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
             parseFloat(args.x) / 100 : 0.5
-          portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
-          portY = nodePosition.y + (args.dy || 0)
+          portX = adjustedNodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+          portY = adjustedNodePosition.y + (args.dy || 0)
         } else if (portConfig.name === 'left') {
           const args = portConfig.args || {}
           const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
             parseFloat(args.y) / 100 : 0.5
-          portX = nodePosition.x + (args.dx || 0)
-          portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+          portX = adjustedNodePosition.x + (args.dx || 0)
+          portY = adjustedNodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
         } else if (portConfig.name === 'right') {
           const args = portConfig.args || {}
           const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
             parseFloat(args.y) / 100 : 0.5
-          portX = nodePosition.x + nodeSize.width + (args.dx || 0)
-          portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+          portX = adjustedNodePosition.x + nodeSize.width + (args.dx || 0)
+          portY = adjustedNodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
         }
         
         const portPosition = { x: portX, y: portY }
@@ -1358,10 +1627,19 @@ const bindEvents = () => {
         // 降级处理：使用节点中心位置
         const nodePosition = node.getPosition()
         const nodeSize = node.getSize()
-        const centerPosition = {
-          x: nodePosition.x + nodeSize.width / 2,
-          y: nodePosition.y + nodeSize.height / 2
+        
+        // 🔧 在降级处理中也使用坐标系统管理器
+        const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
+        let centerX = nodePosition.x + nodeSize.width / 2
+        let centerY = nodePosition.y + nodeSize.height / 2
+        
+        // 如果检测到坐标偏差，进行修正
+        if (coordinateValidation && coordinateValidation.difference) {
+          centerX -= coordinateValidation.difference.x
+          centerY -= coordinateValidation.difference.y
         }
+        
+        const centerPosition = { x: centerX, y: centerY }
         const graphPosition = graph.localToGraph(centerPosition)
         const clientPosition = graph.graphToClient(graphPosition)
 
@@ -1592,8 +1870,13 @@ const addConnectionToGraph = (connectionData) => {
           radius: 8
         }
       },
-      // 确保连接从端口开始
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       // 添加边数据，包含分支信息
       data: {
         branchId: connectionData.branchId,

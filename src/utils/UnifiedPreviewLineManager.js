@@ -136,6 +136,9 @@ export class UnifiedPreviewLineManager {
     this.branchManager = branchManager
     this.layoutConfig = layoutConfig
     
+    // 调试模式开关
+    this.debugMode = false
+    
     // 初始化坐标系统管理器
     this.coordinateManager = coordinateManager
     this.coordinateManager.setGraph(graph)
@@ -482,6 +485,13 @@ export class UnifiedPreviewLineManager {
     // 设置初始状态
     this.setPreviewLineState(previewInstance, initialState)
     
+    // 🔧 多线偏移优化：分支预览线创建完成后应用偏移
+    if (totalBranches > 1) {
+      setTimeout(() => {
+        this.optimizeOverlappingPreviewLines(node)
+      }, 100) // 稍长延迟确保所有分支线都创建完成
+    }
+    
     console.log('✅ [统一预览线管理器] 单个分支预览线创建成功:', {
       lineId: previewLine.id,
       branchId: branch.id,
@@ -511,17 +521,34 @@ export class UnifiedPreviewLineManager {
       return null
     }
     
+    // 🔧 多线偏移处理：检查是否有其他预览线连接到相同目标
+    const offsetConfig = this.calculateMultiLineOffset(sourceNode, endPosition, branchIndex, totalBranches)
+    
     // 使用端口连接而不是坐标点，确保节点移动时预览线跟随移动
     console.log('📍 [统一预览线管理器] 使用端口连接创建预览线:', {
       nodeId: sourceNode.id,
       branchIndex: branchIndex,
       branchId: branchId,
       sourcePort: 'out',
-      targetPosition: endPosition
+      targetPosition: endPosition,
+      offsetConfig: offsetConfig
     })
     
     // 生成唯一ID
     const lineId = `unified_preview_${sourceNode.id}_${branchId || 'single'}_${Date.now()}`
+    
+    // 🔧 路由器选择逻辑
+    const useOrthRouter = totalBranches > 1 && Math.abs(offsetConfig.offset) > 5
+    const routerName = useOrthRouter ? 'orth' : 'normal'
+    
+    console.log('🛤️ [预览线路由器] 路由器选择:', {
+      sourceNodeId: sourceNode.id,
+      branchId: branchId,
+      totalBranches: totalBranches,
+      offsetValue: offsetConfig.offset,
+      routerSelected: routerName,
+      reason: useOrthRouter ? '多分支需要偏移路径' : '单分支使用直线路径'
+    })
     
     // 基础预览线配置 - 使用端口连接确保节点移动时预览线跟随
     const edgeConfig = {
@@ -533,29 +560,35 @@ export class UnifiedPreviewLineManager {
       },
       target: endPosition,
       router: {
-        name: 'orth',
-        args: {
-          padding: 10,
+        name: routerName,
+        args: useOrthRouter ? {
+          padding: 15, // 统一使用15，与其他配置保持一致
+          step: 10, // 统一使用10
           startDirections: ['bottom'],
-          endDirections: ['top']
-        }
+          endDirections: ['top'],
+          offset: offsetConfig.offset,
+          excludeEnds: offsetConfig.excludeEnds,
+          // 🔧 简化路径约束
+          maxAllowedDirectionChange: 1,
+          perpendicular: true
+        } : {}
       },
       attrs: {
         line: {
-          stroke: '#d9d9d9', // 默认灰色
-          strokeWidth: 2,
-          strokeDasharray: '5,5',
+          stroke: offsetConfig.strokeColor, // 使用偏移配置的颜色
+          strokeWidth: offsetConfig.strokeWidth,
+          strokeDasharray: offsetConfig.dashArray,
           opacity: 0.6,
           cursor: 'default',
           targetMarker: {
             name: 'block',
             width: 8,
             height: 6,
-            fill: '#d9d9d9'
+            fill: offsetConfig.strokeColor
           }
         }
       },
-      zIndex: 1001,
+      zIndex: 1001 + branchIndex, // 🔧 根据分支索引调整层级
       data: {
         type: 'unified-preview-line',
         sourceNodeId: sourceNode.id,
@@ -563,7 +596,8 @@ export class UnifiedPreviewLineManager {
         branchId: branchId,
         branchIndex: branchIndex,
         totalBranches: totalBranches,
-        isUnifiedPreview: true
+        isUnifiedPreview: true,
+        offsetConfig: offsetConfig // 保存偏移配置用于后续调整
       }
     }
     
@@ -603,6 +637,13 @@ export class UnifiedPreviewLineManager {
     // 创建预览线
     const previewLine = this.graph.addEdge(edgeConfig)
 
+    // 🔧 多线偏移优化：创建完成后立即应用偏移配置
+    if (totalBranches > 1) {
+      setTimeout(() => {
+        this.optimizeOverlappingPreviewLines(sourceNode)
+      }, 50) // 短暂延迟确保线条完全创建
+    }
+
     // 强制设置标签样式（如果有标签）
     if (totalBranches > 1 && branchLabel) {
       setTimeout(() => {
@@ -640,10 +681,179 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
-   * 设置预览线状态
-   * @param {Object} previewInstance - 预览线实例
-   * @param {string} state - 目标状态
+   * 计算多线偏移配置
+   * 当多条预览线连接到相同目标时，提供偏移和视觉区分
+   * @param {Object} sourceNode - 源节点
+   * @param {Object} endPosition - 终点位置
+   * @param {number} branchIndex - 分支索引
+   * @param {number} totalBranches - 总分支数
+   * @returns {Object} 偏移配置
    */
+  calculateMultiLineOffset(sourceNode, endPosition, branchIndex, totalBranches) {
+    // 🎨 颜色配置：为不同分支提供不同颜色
+    const branchColors = [
+      '#1890ff', // 蓝色
+      '#fa8c16', // 橙色
+      '#52c41a', // 绿色
+      '#722ed1', // 紫色
+      '#eb2f96', // 粉色
+      '#13c2c2', // 青色
+      '#f5222d', // 红色
+      '#faad14'  // 黄色
+    ]
+    
+    // 🔧 基础偏移配置
+    const baseConfig = {
+      padding: 15,
+      step: 15,
+      offset: 0,
+      excludeEnds: [],
+      strokeColor: '#d9d9d9',
+      strokeWidth: 2,
+      dashArray: '5,5'
+    }
+    
+    // 🔧 单线情况：使用默认配置
+    if (totalBranches <= 1) {
+      return baseConfig
+    }
+    
+    // 🔧 多线情况：计算偏移和视觉区分
+    const colorIndex = branchIndex % branchColors.length
+    const strokeColor = branchColors[colorIndex]
+    
+    // 计算水平偏移：每条线在不同的水平位置
+    const maxOffset = 30 // 最大偏移距离
+    const offsetStep = totalBranches > 1 ? maxOffset / (totalBranches - 1) : 0
+    const horizontalOffset = branchIndex * offsetStep - maxOffset / 2
+    
+    // 计算路由器参数偏移
+    const paddingOffset = Math.abs(horizontalOffset) * 0.5
+    const stepOffset = Math.abs(horizontalOffset) * 0.3
+    
+    console.log('🎨 [多线偏移] 计算偏移配置:', {
+      sourceNodeId: sourceNode.id,
+      branchIndex: branchIndex,
+      totalBranches: totalBranches,
+      horizontalOffset: horizontalOffset,
+      strokeColor: strokeColor,
+      paddingOffset: paddingOffset,
+      stepOffset: stepOffset
+    })
+    
+    return {
+      padding: baseConfig.padding + paddingOffset,
+      step: baseConfig.step + stepOffset,
+      offset: horizontalOffset,
+      excludeEnds: horizontalOffset !== 0 ? ['source'] : [],
+      strokeColor: strokeColor,
+      strokeWidth: 2.5, // 稍微加粗以提高可见性
+      dashArray: branchIndex % 2 === 0 ? '5,5' : '8,3' // 交替使用不同的虚线样式
+    }
+  }
+
+  /**
+   * 检查并优化重叠的预览线
+   * 当检测到多条预览线路径重叠时，自动应用偏移优化
+   * @param {Object} sourceNode - 源节点
+   */
+  optimizeOverlappingPreviewLines(sourceNode) {
+    const previewInstance = this.previewLines.get(sourceNode.id)
+    if (!previewInstance) return
+    
+    // 处理分支预览线的重叠优化
+    if (Array.isArray(previewInstance)) {
+      console.log('🔧 [重叠优化] 开始优化分支预览线重叠:', {
+        sourceNodeId: sourceNode.id,
+        branchCount: previewInstance.length
+      })
+      
+      previewInstance.forEach((instance, index) => {
+        if (instance.line) {
+          // 重新计算偏移配置
+          const endPosition = this.getLineEndPosition(instance.line)
+          const offsetConfig = this.calculateMultiLineOffset(
+            sourceNode, 
+            endPosition, 
+            index, 
+            previewInstance.length
+          )
+          
+          // 应用新的偏移配置
+          this.applyOffsetToLine(instance.line, offsetConfig)
+        }
+      })
+    }
+  }
+
+  /**
+   * 获取预览线的终点位置
+   * @param {Object} line - 预览线对象
+   * @returns {Object} 终点位置
+   */
+  getLineEndPosition(line) {
+    const target = line.getTarget()
+    if (target.x !== undefined && target.y !== undefined) {
+      return { x: target.x, y: target.y }
+    }
+    
+    // 如果目标是节点，获取节点位置
+    if (target.cell) {
+      const targetNode = this.graph.getCellById(target.cell)
+      if (targetNode) {
+        const pos = targetNode.getPosition()
+        const size = targetNode.getSize()
+        return {
+          x: pos.x + size.width / 2,
+          y: pos.y
+        }
+      }
+    }
+    
+    return { x: 0, y: 0 }
+  }
+
+  /**
+   * 将偏移配置应用到预览线
+   * @param {Object} line - 预览线对象
+   * @param {Object} offsetConfig - 偏移配置
+   */
+  applyOffsetToLine(line, offsetConfig) {
+    // 更新路由器配置
+    line.setRouter({
+      name: 'orth',
+      args: {
+        padding: offsetConfig.padding,
+        step: offsetConfig.step,
+        startDirections: ['bottom'],
+        endDirections: ['top'],
+        offset: offsetConfig.offset,
+        excludeEnds: offsetConfig.excludeEnds
+      }
+    })
+    
+    // 更新视觉样式
+    line.attr({
+      line: {
+        stroke: offsetConfig.strokeColor,
+        strokeWidth: offsetConfig.strokeWidth,
+        strokeDasharray: offsetConfig.dashArray,
+        targetMarker: {
+          fill: offsetConfig.strokeColor
+        }
+      }
+    })
+    
+    // 更新数据中的偏移配置
+    const data = line.getData() || {}
+    data.offsetConfig = offsetConfig
+    line.setData(data)
+    
+    console.log('✅ [偏移应用] 已应用偏移配置到预览线:', {
+      lineId: line.id,
+      offsetConfig: offsetConfig
+    })
+  }
   setPreviewLineState(previewInstance, state) {
     if (!previewInstance || !previewInstance.line) {
       console.warn('⚠️ [统一预览线管理器] 预览线实例无效')
@@ -917,9 +1127,13 @@ export class UnifiedPreviewLineManager {
     }
     
     // 如果endPosition不存在或无效，从预览线获取当前终点
-    if (!endPosition || (endPosition.x === undefined || endPosition.y === undefined)) {
+    if (!endPosition || 
+        typeof endPosition.x !== 'number' || isNaN(endPosition.x) ||
+        typeof endPosition.y !== 'number' || isNaN(endPosition.y)) {
       const targetPoint = line.getTargetPoint()
-      if (targetPoint) {
+      if (targetPoint && 
+          typeof targetPoint.x === 'number' && !isNaN(targetPoint.x) &&
+          typeof targetPoint.y === 'number' && !isNaN(targetPoint.y)) {
         endPosition = {
           x: targetPoint.x,
           y: targetPoint.y
@@ -932,9 +1146,27 @@ export class UnifiedPreviewLineManager {
           endPosition: endPosition
         })
       } else {
-        console.warn('⚠️ [统一预览线管理器] 无法获取预览线终点位置')
-        return
+        console.warn('⚠️ [统一预览线管理器] 无法获取有效的预览线终点位置，使用默认位置')
+        // 使用源节点位置作为默认位置
+        const sourcePosition = sourceNode.getPosition()
+        const sourceSize = sourceNode.getSize()
+        endPosition = {
+          x: sourcePosition.x + sourceSize.width + 50,
+          y: sourcePosition.y + sourceSize.height / 2
+        }
+        previewInstance.endPosition = endPosition
       }
+    }
+    
+    // 🔧 最终安全检查：确保endPosition是有效数字
+    if (typeof endPosition.x !== 'number' || isNaN(endPosition.x) ||
+        typeof endPosition.y !== 'number' || isNaN(endPosition.y)) {
+      console.error('💥 [统一预览线管理器] 终点位置仍然无效，无法创建拖拽提示点:', {
+        endPosition,
+        lineId: line.id,
+        sourceNodeId: sourceNode.id
+      })
+      return
     }
     
     // 创建拖拽提示点
@@ -1037,18 +1269,18 @@ export class UnifiedPreviewLineManager {
         }
       }
       
-      console.log('🗑️ [拖拽点删除] 删除拖拽提示点 - 详细信息:', deletionInfo)
+      // console.log('🗑️ [拖拽点删除] 删除拖拽提示点 - 详细信息:', deletionInfo)
       
       this.graph.removeNode(previewInstance.hintNode)
       previewInstance.hintNode = null
       
       // 🔍 记录删除完成
-      console.log('✅ [拖拽点删除] 拖拽提示点已删除:', {
-        timestamp: new Date().toISOString(),
-        deletedHintId: deletionInfo.dragHint.id,
-        associatedSourceNode: deletionInfo.previewInstance.sourceNodeId,
-        associatedBranch: deletionInfo.previewInstance.branchId
-      })
+      // console.log('✅ [拖拽点删除] 拖拽提示点已删除:', {
+      //   timestamp: new Date().toISOString(),
+      //   deletedHintId: deletionInfo.dragHint.id,
+      //   associatedSourceNode: deletionInfo.previewInstance.sourceNodeId,
+      //   associatedBranch: deletionInfo.previewInstance.branchId
+      // })
     }
   }
 
@@ -1106,10 +1338,10 @@ export class UnifiedPreviewLineManager {
       })
     }
     
-    console.log('✅ [拖拽] 开始拖拽:', {
-      branchId: enhancedPreviewInstance.branchId,
-      sourceNodeId: enhancedPreviewInstance.sourceNodeId
-    })
+    // console.log('✅ [拖拽] 开始拖拽:', {
+    //   branchId: enhancedPreviewInstance.branchId,
+    //   sourceNodeId: enhancedPreviewInstance.sourceNodeId
+    // })
   }
 
   /**
@@ -2093,6 +2325,34 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
+   * 检查节点是否有任何输入连接（排除预览线）
+   * @param {Object} node - 节点
+   * @returns {boolean} 是否有输入连接
+   */
+  hasAnyIncomingConnections(node) {
+    const edges = this.graph.getConnectedEdges(node, { incoming: true })
+    
+    // 过滤掉预览线，只检查真实的业务连接
+    const realConnections = edges.filter(edge => {
+      const edgeData = edge.getData() || {}
+      return !edgeData.isUnifiedPreview && 
+             !edgeData.isPersistentPreview && 
+             !edgeData.isPreview &&
+             edgeData.type !== 'unified-preview-line' &&
+             edgeData.type !== 'preview-line'
+    })
+    
+    console.log('🔍 [统一预览线管理器] 检查节点输入连接:', {
+      nodeId: node.id,
+      totalIncomingEdges: edges.length,
+      realConnections: realConnections.length,
+      hasIncomingConnections: realConnections.length > 0
+    })
+    
+    return realConnections.length > 0
+  }
+
+  /**
    * 判断是否是分支节点
    * @param {Object} node - 节点
    * @param {Object} config - 节点配置（可选）
@@ -2281,70 +2541,111 @@ export class UnifiedPreviewLineManager {
    * @param {Object} routerConfig - 路由器配置
    */
   setSafeRouter(edge, routerConfig = {}) {
-    try {
-      // 首先尝试使用manhattan路由器
-      const manhattanConfig = {
-        name: 'manhattan',
-        args: {
-          step: 10,
-          padding: 20,
-          excludeEnds: ['source'],
-          startDirections: ['bottom'],
-          endDirections: ['top'],
-          ...routerConfig.args
-        }
-      }
-      
-      edge.setRouter(manhattanConfig)
-      
-      // 验证路由器是否正常工作
-      // 通过检查边的路径是否正确生成来验证
-      const vertices = edge.getVertices()
-      const source = edge.getSourcePoint()
-      const target = edge.getTargetPoint()
-      
-      // 如果源点或目标点无效，则回退到orth
-      if (!source || !target || isNaN(source.x) || isNaN(source.y) || isNaN(target.x) || isNaN(target.y)) {
-        throw new Error('Invalid source or target position for manhattan router')
-      }
-      
-      console.log('✅ [路由器设置] Manhattan路由器设置成功:', {
+    if (!edge) {
+      console.warn('⚠️ [路由器设置] 边对象无效')
+      return
+    }
+
+    // 🔧 优化：根据连接类型智能选择路由器
+    const source = edge.getSourcePoint()
+    const target = edge.getTargetPoint()
+    
+    // 检查源点和目标点是否有效
+    const hasValidPoints = source && target && 
+                          typeof source.x === 'number' && !isNaN(source.x) &&
+                          typeof source.y === 'number' && !isNaN(source.y) &&
+                          typeof target.x === 'number' && !isNaN(target.x) &&
+                          typeof target.y === 'number' && !isNaN(target.y)
+    
+    if (!hasValidPoints) {
+      console.warn('⚠️ [路由器设置] 源点或目标点坐标无效，使用默认路由器:', {
         edgeId: edge.id,
-        source: source,
-        target: target,
-        vertices: vertices
+        source,
+        target
       })
+      edge.setRouter('normal')
+      return
+    }
+
+    // 计算连接距离和角度，选择最适合的路由器
+    const distance = Math.sqrt(Math.pow(target.x - source.x, 2) + Math.pow(target.y - source.y, 2))
+    const isVerticalConnection = Math.abs(target.x - source.x) < 50 // 垂直连接阈值
+    const isShortConnection = distance < 100 // 短距离连接阈值
+
+    // 🔧 智能路由器选择策略
+    let preferredRouter = 'orth' // 默认使用更稳定的orth路由器
+    
+    // 只在特定条件下使用manhattan路由器
+    if (!isShortConnection && !isVerticalConnection && distance > 150) {
+      preferredRouter = 'manhattan'
+    }
+
+    try {
+      if (preferredRouter === 'manhattan') {
+        // 尝试使用manhattan路由器
+        const manhattanConfig = {
+          name: 'manhattan',
+          args: {
+            step: 10, // 统一步长
+            padding: 15, // 统一边距
+            excludeEnds: ['source'],
+            startDirections: ['bottom'],
+            endDirections: ['top'],
+            ...routerConfig.args
+          }
+        }
+        
+        edge.setRouter(manhattanConfig)
+        
+        // 🔧 简化验证：只检查基本有效性
+        const vertices = edge.getVertices()
+        if (vertices && Array.isArray(vertices)) {
+          console.log('✅ [路由器设置] Manhattan路由器设置成功:', {
+            edgeId: edge.id,
+            distance: distance.toFixed(2),
+            config: manhattanConfig.args
+          })
+          return
+        } else {
+          throw new Error('Manhattan router generated invalid vertices')
+        }
+      } else {
+        // 直接使用orth路由器
+        throw new Error('Using orth router by preference')
+      }
       
     } catch (error) {
-      console.warn('⚠️ [路由器设置] Manhattan算法失败，回退到orth路由器:', {
-        edgeId: edge.id,
-        error: error.message
-      })
+      // 🔧 减少日志噪音：只在调试模式下输出详细信息
+      if (this.debugMode) {
+        console.log('🔄 [路由器设置] 使用Orth路由器:', {
+          edgeId: edge.id,
+          reason: preferredRouter === 'manhattan' ? 'Manhattan失败' : '智能选择',
+          distance: distance.toFixed(2),
+          isVertical: isVerticalConnection,
+          isShort: isShortConnection
+        })
+      }
       
-      // 回退到orth路由器
+      // 使用orth路由器
       const orthConfig = {
         name: 'orth',
         args: {
-          padding: 20,
+          padding: 15, // 统一边距
+          step: 10, // 统一步长
+          startDirections: ['bottom'],  // 确保从底部端口出发
+          endDirections: ['top'],       // 确保到顶部端口结束
           ...routerConfig.orthArgs
         }
       }
       
       try {
         edge.setRouter(orthConfig)
-        console.log('✅ [路由器设置] Orth路由器设置成功:', {
-          edgeId: edge.id,
-          config: orthConfig
-        })
       } catch (orthError) {
-        console.error('❌ [路由器设置] Orth路由器也失败了:', {
+        console.warn('⚠️ [路由器设置] Orth路由器失败，使用默认路由器:', {
           edgeId: edge.id,
           error: orthError.message
         })
-        
-        // 最后的回退：使用默认路由器
         edge.setRouter('normal')
-        console.log('🔄 [路由器设置] 使用默认normal路由器')
       }
     }
   }
@@ -2353,9 +2654,14 @@ export class UnifiedPreviewLineManager {
    * 计算单一预览线位置
    */
   calculateSinglePreviewPosition(node, nodePosition, nodeSize) {
+    // 🔧 修复坐标系统：确保使用中心点坐标
+    // nodePosition 是左上角坐标，需要转换为中心点坐标
+    const nodeCenterX = nodePosition.x + nodeSize.width / 2
+    const nodeCenterY = nodePosition.y + nodeSize.height / 2
+    
     return {
-      x: nodePosition.x + nodeSize.width / 2,
-      y: nodePosition.y + nodeSize.height + 100
+      x: nodeCenterX,  // 使用节点中心X坐标
+      y: nodeCenterY + nodeSize.height / 2 + 100  // 从节点底部向下100px
     }
   }
 
@@ -2364,12 +2670,17 @@ export class UnifiedPreviewLineManager {
    * 修改：所有分支预览线都从节点中心的同一个位置出发
    */
   calculateBranchPreviewPosition(node, branches, index) {
-    const nodePosition = node.getPosition()
+    const nodePosition = node.getPosition()  // 左上角坐标
     const nodeSize = node.getSize()
     
+    // 🔧 修复坐标系统：计算节点的中心点坐标
+    // node.getPosition() 返回左上角坐标，需要转换为中心点坐标
+    const nodeCenterX = nodePosition.x + nodeSize.width / 2
+    const nodeCenterY = nodePosition.y + nodeSize.height / 2
+    
     // 所有分支预览线都从节点中心出发，到达不同的终点位置
-    const centerX = nodePosition.x + nodeSize.width / 2
-    const baseY = nodePosition.y + nodeSize.height + 100
+    const centerX = nodeCenterX  // 使用节点中心X坐标
+    const baseY = nodeCenterY + nodeSize.height / 2 + 100  // 从节点底部向下100px
     
     // 计算终点位置的分散，但起点保持在中心
     const baseSpacing = Math.max(nodeSize.width * 0.8, 60) // 最小60px，最大为节点宽度的80%
@@ -2549,8 +2860,8 @@ export class UnifiedPreviewLineManager {
         // 使用安全的路由器设置方法
         this.setSafeRouter(instance.line, {
           args: {
-            step: 20,
-            padding: 10,
+            step: 10,
+            padding: 15,
             excludeEnds: ['source', 'target'],
             startDirections: ['bottom'],
             endDirections: ['top']
@@ -2668,8 +2979,8 @@ export class UnifiedPreviewLineManager {
       // 使用安全的路由器设置方法
       this.setSafeRouter(previewInstance.line, {
         args: {
-          step: 20,
-          padding: 10,
+          step: 10,
+          padding: 15,
           excludeEnds: ['source', 'target'],
           startDirections: ['bottom'],
           endDirections: ['top']
@@ -2890,12 +3201,12 @@ export class UnifiedPreviewLineManager {
     // 确保使用正确的路由器 - 使用安全路由器设置
     this.setSafeRouter(line, {
       args: {
-        padding: 10,
-        step: 20
+        padding: 15,
+        step: 10
       },
       orthArgs: {
-        padding: 10,
-        step: 20
+        padding: 15,
+        step: 10
       }
     })
     
@@ -2949,15 +3260,43 @@ export class UnifiedPreviewLineManager {
       const nodePosition = node.getPosition()
       const nodeSize = node.getSize()
       
-      // 检查是否在检测范围内
+      // 🔧 使用坐标管理器验证和修正节点坐标
+      let nodeCenterX = nodePosition.x + nodeSize.width / 2
+      let nodeCenterY = nodePosition.y + nodeSize.height / 2
+      
+      if (this.coordinateManager) {
+        const coordinateValidation = this.coordinateManager.validateCoordinateTransform(node)
+        if (coordinateValidation && coordinateValidation.difference) {
+          nodeCenterX -= coordinateValidation.difference.x
+          nodeCenterY -= coordinateValidation.difference.y
+          
+          console.log('🔍 [吸附坐标修正] 检测到节点坐标偏差:', {
+            nodeId: node.id,
+            originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
+            correctedCenter: { x: nodeCenterX, y: nodeCenterY },
+            coordinateValidation
+          })
+        }
+      }
+      
+      // 检查是否在检测范围内（使用修正后的坐标）
       const distance = Math.sqrt(
-        Math.pow(x - (nodePosition.x + nodeSize.width / 2), 2) +
-        Math.pow(y - (nodePosition.y + nodeSize.height / 2), 2)
+        Math.pow(x - nodeCenterX, 2) +
+        Math.pow(y - nodeCenterY, 2)
       )
       
       if (distance <= tolerance) {
         // 高亮节点
         this.highlightNode(node)
+        
+        console.log('🎯 [节点吸附] 高亮附近节点:', {
+          nodeId: node.id,
+          nodeType: nodeData.type,
+          distance: distance.toFixed(2),
+          tolerance,
+          dragPosition: { x, y },
+          nodeCenter: { x: nodeCenterX, y: nodeCenterY }
+        })
       }
     }
   }
@@ -2987,10 +3326,29 @@ export class UnifiedPreviewLineManager {
       const nodePosition = node.getPosition()
       const nodeSize = node.getSize()
       
-      // 检查是否在检测范围内
+      // 🔧 使用坐标管理器验证和修正节点坐标
+      let nodeCenterX = nodePosition.x + nodeSize.width / 2
+      let nodeCenterY = nodePosition.y + nodeSize.height / 2
+      
+      if (this.coordinateManager) {
+        const coordinateValidation = this.coordinateManager.validateCoordinateTransform(node)
+        if (coordinateValidation && coordinateValidation.difference) {
+          nodeCenterX -= coordinateValidation.difference.x
+          nodeCenterY -= coordinateValidation.difference.y
+          
+          console.log('🔍 [分支吸附坐标修正] 检测到节点坐标偏差:', {
+            nodeId: node.id,
+            originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
+            correctedCenter: { x: nodeCenterX, y: nodeCenterY },
+            coordinateValidation
+          })
+        }
+      }
+      
+      // 检查是否在检测范围内（使用修正后的坐标）
       const distance = Math.sqrt(
-        Math.pow(x - (nodePosition.x + nodeSize.width / 2), 2) +
-        Math.pow(y - (nodePosition.y + nodeSize.height / 2), 2)
+        Math.pow(x - nodeCenterX, 2) +
+        Math.pow(y - nodeCenterY, 2)
       )
       
       if (distance <= tolerance && distance < nearestDistance) {
@@ -3625,14 +3983,49 @@ export class UnifiedPreviewLineManager {
       const nodePosition = node.getPosition()
       const nodeSize = node.getSize()
       
-      // 检查点是否在节点范围内（包含容差）
-      if (x >= nodePosition.x - tolerance && 
-          x <= nodePosition.x + nodeSize.width + tolerance &&
-          y >= nodePosition.y - tolerance && 
-          y <= nodePosition.y + nodeSize.height + tolerance) {
+      // 🔧 使用坐标管理器验证和修正节点坐标
+      let correctedX = nodePosition.x
+      let correctedY = nodePosition.y
+      
+      if (this.coordinateManager) {
+        const coordinateValidation = this.coordinateManager.validateCoordinateTransform(node)
+        if (coordinateValidation && coordinateValidation.difference) {
+          correctedX -= coordinateValidation.difference.x
+          correctedY -= coordinateValidation.difference.y
+          
+          console.log('🔍 [位置查找坐标修正] 检测到节点坐标偏差:', {
+            nodeId: node.id,
+            originalPosition: { x: nodePosition.x, y: nodePosition.y },
+            correctedPosition: { x: correctedX, y: correctedY },
+            coordinateValidation
+          })
+        }
+      }
+      
+      // 检查点是否在节点范围内（包含容差，使用修正后的坐标）
+      if (x >= correctedX - tolerance && 
+          x <= correctedX + nodeSize.width + tolerance &&
+          y >= correctedY - tolerance && 
+          y <= correctedY + nodeSize.height + tolerance) {
+        
+        console.log('🎯 [位置查找] 在位置找到节点:', {
+          nodeId: node.id,
+          nodeType: nodeData.type,
+          searchPosition: { x, y },
+          nodePosition: { x: correctedX, y: correctedY },
+          nodeSize,
+          tolerance
+        })
+        
         return node
       }
     }
+    
+    console.log('❌ [位置查找] 在位置未找到节点:', {
+      searchPosition: { x, y },
+      tolerance,
+      totalNodesChecked: nodes.length
+    })
     
     return null
   }
@@ -3642,6 +4035,8 @@ export class UnifiedPreviewLineManager {
    */
   createConnection(sourceNode, targetNode, previewInstance) {
     const { branchId, branchLabel } = previewInstance
+    
+    // 注意：移除对目标节点已有连接的检查，因为节点的in端口支持多个连接
     
     // 确定源端口（源节点的out端口）- 修改：所有连接都使用统一的'out'端口，从UI层面的同一个位置出发
     const sourcePort = 'out'
@@ -3679,8 +4074,13 @@ export class UnifiedPreviewLineManager {
           radius: 8
         }
       },
-      // 确保连接从端口开始
-      connectionPoint: 'anchor',
+      // 使用更可靠的boundary连接点
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
       attrs: {
         line: {
           stroke: '#5F95FF',
@@ -3989,43 +4389,34 @@ export class UnifiedPreviewLineManager {
                 
                 // 更新拖拽提示点位置
                 if (instance.hintNode) {
-                  const targetPoint = instance.line.getTargetPoint()
-                  const lineTarget = instance.line.getTarget()
-                  
                   console.log('🎯 [智能布局后] 拖拽提示点位置调试信息:', {
                     nodeId: nodeId,
                     branchId: instance.branchId,
                     branchIndex: branchIndex,
-                    targetPoint: targetPoint,
-                    lineTarget: lineTarget,
                     endPosition: instance.endPosition,
                     hintCurrentPosition: instance.hintNode.getPosition()
                   })
                   
-                  // 🔧 修复：智能布局后使用存储的endPosition而不是getTargetPoint()
-                  let finalPosition
+                  // 🔧 修复：直接使用已经统一计算好的endPosition
                   if (instance.endPosition) {
-                    // 优先使用存储的endPosition
-                    finalPosition = {
+                    const finalPosition = {
                       x: instance.endPosition.x - 6,
                       y: instance.endPosition.y - 6
                     }
-                    console.log('✅ [智能布局后] 使用存储的endPosition更新拖拽提示点:', finalPosition)
-                  } else if (targetPoint) {
-                    // 备用方案：使用getTargetPoint()
-                    finalPosition = {
-                      x: targetPoint.x - 6,
-                      y: targetPoint.y - 6
-                    }
-                    console.log('⚠️ [智能布局后] 使用getTargetPoint()更新拖拽提示点:', finalPosition)
-                  }
-                  
-                  if (finalPosition) {
+                    
                     instance.hintNode.setPosition(finalPosition.x, finalPosition.y)
-                    console.log('🔄 [智能布局后] 拖拽提示点位置已更新:', {
+                    console.log('✅ [智能布局后] 拖拽提示点位置已更新（使用统一计算的endPosition）:', {
                       nodeId: nodeId,
                       branchId: instance.branchId,
-                      newPosition: finalPosition
+                      branchIndex: branchIndex,
+                      endPosition: instance.endPosition,
+                      finalPosition: finalPosition
+                    })
+                  } else {
+                    console.warn('⚠️ [智能布局后] endPosition不存在，跳过拖拽提示点更新:', {
+                      nodeId: nodeId,
+                      branchId: instance.branchId,
+                      branchIndex: branchIndex
                     })
                   }
                 }
@@ -4053,40 +4444,28 @@ export class UnifiedPreviewLineManager {
             }
             
             if (previewInstance.hintNode && previewInstance.line) {
-              const targetPoint = previewInstance.line.getTargetPoint()
-              const lineTarget = previewInstance.line.getTarget()
-              
               console.log('🎯 [智能布局后] 单一预览线拖拽提示点位置调试信息:', {
                 nodeId: nodeId,
-                targetPoint: targetPoint,
-                lineTarget: lineTarget,
                 endPosition: previewInstance.endPosition,
                 hintCurrentPosition: previewInstance.hintNode.getPosition()
               })
               
-              // 🔧 修复：智能布局后使用存储的endPosition而不是getTargetPoint()
-              let finalPosition
+              // 🔧 修复：直接使用已经统一计算好的endPosition
               if (previewInstance.endPosition) {
-                // 优先使用存储的endPosition
-                finalPosition = {
+                const finalPosition = {
                   x: previewInstance.endPosition.x - 6,
                   y: previewInstance.endPosition.y - 6
                 }
-                console.log('✅ [智能布局后] 单一预览线使用存储的endPosition更新拖拽提示点:', finalPosition)
-              } else if (targetPoint) {
-                // 备用方案：使用getTargetPoint()
-                finalPosition = {
-                  x: targetPoint.x - 6,
-                  y: targetPoint.y - 6
-                }
-                console.log('⚠️ [智能布局后] 单一预览线使用getTargetPoint()更新拖拽提示点:', finalPosition)
-              }
-              
-              if (finalPosition) {
+                
                 previewInstance.hintNode.setPosition(finalPosition.x, finalPosition.y)
-                console.log('🔄 [智能布局后] 单一预览线拖拽提示点位置已更新:', {
+                console.log('✅ [智能布局后] 单一预览线拖拽提示点位置已更新（使用统一计算的endPosition）:', {
                   nodeId: nodeId,
-                  newPosition: finalPosition
+                  endPosition: previewInstance.endPosition,
+                  finalPosition: finalPosition
+                })
+              } else {
+                console.warn('⚠️ [智能布局后] 单一预览线endPosition不存在，跳过拖拽提示点更新:', {
+                  nodeId: nodeId
                 })
               }
             }
@@ -4760,6 +5139,17 @@ export class UnifiedPreviewLineManager {
     const hintData = hintNode.getData() || {}
     const hintId = hintNode.id
     
+    // 🔧 安全检查：确保新位置是有效数字
+    if (!newPosition || 
+        typeof newPosition.x !== 'number' || isNaN(newPosition.x) ||
+        typeof newPosition.y !== 'number' || isNaN(newPosition.y)) {
+      console.error('💥 [统一预览线管理器] 新位置无效，无法更新拖拽提示点:', {
+        hintId,
+        newPosition
+      })
+      return
+    }
+    
     console.log('🎯 [统一预览线管理器] 开始更新拖拽提示点位置:', {
       hintId: hintId,
       newPosition: newPosition,
@@ -4863,9 +5253,33 @@ export class UnifiedPreviewLineManager {
     
     // 计算拖拽提示点中心位置作为预览线的新终点
     const hintSize = hintNode.getSize()
+    
+    // 🔧 安全检查：确保hintSize是有效的
+    if (!hintSize || 
+        typeof hintSize.width !== 'number' || isNaN(hintSize.width) ||
+        typeof hintSize.height !== 'number' || isNaN(hintSize.height)) {
+      console.error('💥 [统一预览线管理器] 拖拽提示点尺寸无效:', {
+        hintId,
+        hintSize
+      })
+      return
+    }
+    
     const newEndPosition = {
       x: newPosition.x + hintSize.width / 2,
       y: newPosition.y + hintSize.height / 2
+    }
+    
+    // 🔧 最终安全检查：确保计算结果是有效数字
+    if (typeof newEndPosition.x !== 'number' || isNaN(newEndPosition.x) ||
+        typeof newEndPosition.y !== 'number' || isNaN(newEndPosition.y)) {
+      console.error('💥 [统一预览线管理器] 计算的新终点位置无效:', {
+        hintId,
+        newPosition,
+        hintSize,
+        newEndPosition
+      })
+      return
     }
     
     console.log('📐 [统一预览线管理器] 计算新的预览线终点位置:', {
@@ -4884,8 +5298,8 @@ export class UnifiedPreviewLineManager {
       // 强制重新路由预览线
       this.setSafeRouter(foundPreviewInstance.line, {
         args: {
-          step: 20,
-          padding: 10,
+          step: 10,
+          padding: 15,
           excludeEnds: ['source', 'target'],
           startDirections: ['bottom'],
           endDirections: ['top']
@@ -4983,6 +5397,173 @@ export class UnifiedPreviewLineManager {
     console.log('🧹 [统一预览线管理器] 拖拽提示点清理完成:', {
       nodeId: nodeId,
       removedHintNodes: hintNodesToRemove.length
+    })
+  }
+
+  /**
+   * 统一重新计算所有预览线的终点位置
+   * 用于布局完成后与普通节点同步更新预览线终点位置
+   */
+  recalculateAllPreviewLineEndPositions() {
+    console.log('🔧 [统一预览线管理器] 开始统一重新计算所有预览线终点位置')
+    
+    let updatedCount = 0
+    let totalBranches = 0
+    let syncedHintNodes = 0
+    
+    this.previewLines.forEach((previewInstance, nodeId) => {
+      const node = this.graph.getCellById(nodeId)
+      
+      if (!node) {
+        console.warn('⚠️ [统一预览线管理器] 节点不存在，跳过:', nodeId)
+        return
+      }
+      
+      console.log('🔄 [统一预览线管理器] 重新计算节点预览线终点位置:', {
+        nodeId: nodeId,
+        isArray: Array.isArray(previewInstance),
+        branchCount: Array.isArray(previewInstance) ? previewInstance.length : 1
+      })
+      
+      // 如果是分支预览线，为每个分支单独重新计算终点位置
+      if (Array.isArray(previewInstance)) {
+        const branches = this.getNodeBranches(node)
+        
+        previewInstance.forEach((instance, branchIndex) => {
+          if (instance.line && instance.state !== UnifiedPreviewStates.HIDDEN) {
+            // 🔧 获取对应的拖拽点实际位置（布局引擎计算后的位置）
+            let actualHintPosition = null
+            if (instance.hintNode) {
+              const hintPosition = instance.hintNode.getPosition()
+              const hintSize = instance.hintNode.getSize()
+              // 计算拖拽点的中心坐标
+              actualHintPosition = {
+                x: hintPosition.x + hintSize.width / 2,
+                y: hintPosition.y + hintSize.height / 2
+              }
+              
+              console.log('🎯 [终点位置重新计算] 获取拖拽点实际位置:', {
+                nodeId: nodeId,
+                branchId: instance.branchId,
+                branchIndex: branchIndex,
+                hintNodeId: instance.hintNode.id,
+                hintPosition: hintPosition,
+                hintSize: hintSize,
+                actualHintPosition: actualHintPosition
+              })
+            }
+            
+            // 🔧 优先使用拖拽点的实际位置，如果没有则重新计算
+            let newEndPosition
+            if (actualHintPosition) {
+              // 使用拖拽点的实际位置作为终点位置
+              newEndPosition = actualHintPosition
+              console.log('✅ [终点位置重新计算] 使用拖拽点实际位置作为终点:', {
+                nodeId: nodeId,
+                branchId: instance.branchId,
+                newEndPosition: newEndPosition
+              })
+            } else {
+              // 如果没有拖拽点，重新计算终点位置
+              newEndPosition = this.calculateBranchPreviewPosition(node, branches, branchIndex)
+              console.log('⚠️ [终点位置重新计算] 拖拽点不存在，重新计算终点位置:', {
+                nodeId: nodeId,
+                branchId: instance.branchId,
+                newEndPosition: newEndPosition
+              })
+            }
+            
+            // 更新预览线的终点位置
+            instance.line.setTarget(newEndPosition)
+            
+            // 更新存储的endPosition
+            instance.endPosition = newEndPosition
+            
+            console.log('✅ [统一预览线管理器] 分支预览线终点位置已重新计算:', {
+              nodeId: nodeId,
+              branchId: instance.branchId,
+              branchIndex: branchIndex,
+              newEndPosition: newEndPosition,
+              usedHintPosition: !!actualHintPosition
+            })
+            
+            totalBranches++
+            if (actualHintPosition) {
+              syncedHintNodes++
+            }
+          }
+        })
+      } else {
+        // 单一预览线
+        if (previewInstance.line && previewInstance.state !== UnifiedPreviewStates.HIDDEN) {
+          // 🔧 获取对应的拖拽点实际位置（布局引擎计算后的位置）
+          let actualHintPosition = null
+          if (previewInstance.hintNode) {
+            const hintPosition = previewInstance.hintNode.getPosition()
+            const hintSize = previewInstance.hintNode.getSize()
+            // 计算拖拽点的中心坐标
+            actualHintPosition = {
+              x: hintPosition.x + hintSize.width / 2,
+              y: hintPosition.y + hintSize.height / 2
+            }
+            
+            console.log('🎯 [终点位置重新计算] 获取单一预览线拖拽点实际位置:', {
+              nodeId: nodeId,
+              hintNodeId: previewInstance.hintNode.id,
+              hintPosition: hintPosition,
+              hintSize: hintSize,
+              actualHintPosition: actualHintPosition
+            })
+          }
+          
+          // 🔧 优先使用拖拽点的实际位置，如果没有则重新计算
+          let newEndPosition
+          if (actualHintPosition) {
+            // 使用拖拽点的实际位置作为终点位置
+            newEndPosition = actualHintPosition
+            console.log('✅ [终点位置重新计算] 使用单一预览线拖拽点实际位置作为终点:', {
+              nodeId: nodeId,
+              newEndPosition: newEndPosition
+            })
+          } else {
+            // 如果没有拖拽点，重新计算终点位置
+            const nodePosition = node.getPosition()
+            const nodeSize = node.getSize()
+            newEndPosition = this.calculateSinglePreviewPosition(node, nodePosition, nodeSize)
+            console.log('⚠️ [终点位置重新计算] 单一预览线拖拽点不存在，重新计算终点位置:', {
+              nodeId: nodeId,
+              newEndPosition: newEndPosition
+            })
+          }
+          
+          // 更新预览线的终点位置
+          previewInstance.line.setTarget(newEndPosition)
+          
+          // 更新存储的endPosition
+          previewInstance.endPosition = newEndPosition
+          
+          console.log('✅ [统一预览线管理器] 单一预览线终点位置已重新计算:', {
+            nodeId: nodeId,
+            newEndPosition: newEndPosition,
+            usedHintPosition: !!actualHintPosition
+          })
+          
+          totalBranches++
+          if (actualHintPosition) {
+            syncedHintNodes++
+          }
+        }
+      }
+      
+      updatedCount++
+    })
+    
+    console.log('✅ [统一预览线管理器] 所有预览线终点位置重新计算完成:', {
+      totalPreviewLines: this.previewLines.size,
+      updatedNodes: updatedCount,
+      totalBranches: totalBranches,
+      syncedHintNodes: syncedHintNodes,
+      syncRate: totalBranches > 0 ? `${((syncedHintNodes / totalBranches) * 100).toFixed(1)}%` : '0%'
     })
   }
 

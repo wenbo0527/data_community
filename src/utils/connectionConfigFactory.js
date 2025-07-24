@@ -14,21 +14,36 @@ export const createConnectionConfig = (source, target, options = {}) => {
   const defaultConfig = {
     source,
     target,
-    // 确保连接点使用端口锚点
-    connectionPoint: 'anchor',
+    // 使用更可靠的boundary连接点
+    connectionPoint: {
+      name: 'boundary',
+      args: {
+        anchor: 'center'
+      }
+    },
     // 连接器配置
     connector: {
       name: 'rounded',
       args: {
-        radius: options.radius || 10
+        radius: options.radius || 6
       }
     },
     // 路由器配置
     router: {
-      name: 'orth',  // 使用更稳定的orth路由器替代manhattan
+      name: 'orth',
       args: {
-        padding: 20,
-        step: 20
+        padding: 15,
+        step: 15,
+        startDirections: ['bottom'],
+        endDirections: ['top'],
+        // 自定义回退路由，确保在复杂情况下也能生成合理路径
+        fallbackRoute: (vertices, options) => {
+          if (vertices.length < 2) return vertices
+          const start = vertices[0]
+          const end = vertices[vertices.length - 1]
+          const midY = start.y + (end.y - start.y) / 2
+          return [start, { x: start.x, y: midY }, { x: end.x, y: midY }, end]
+        }
       }
     },
     // 默认样式
@@ -58,7 +73,12 @@ export const createConnectionConfig = (source, target, options = {}) => {
     ...defaultConfig,
     ...options,
     // 确保关键配置不被覆盖
-    connectionPoint: 'anchor',
+    connectionPoint: {
+      name: 'boundary',
+      args: {
+        anchor: 'center'
+      }
+    },
     source,
     target
   }

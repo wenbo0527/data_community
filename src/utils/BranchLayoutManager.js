@@ -77,30 +77,35 @@ export class BranchLayoutManager {
       // 使用新的自适应分支间距计算
       const adaptiveSpacing = calculateAdaptiveBranchSpacing(branchCount, nodeType)
       
+      // 🔧 修复分支居中问题：确保分支相对于分流节点居中
       const totalWidth = (branchCount - 1) * adaptiveSpacing
       const startX = splitPosition.x - totalWidth / 2
       
-      console.log('[BranchLayoutManager] 分支布局计算:', {
+      console.log('[BranchLayoutManager] 分支布局计算（修复居中）:', {
         nodeType,
         branchCount,
         adaptiveSpacing,
         totalWidth,
+        splitNodeX: splitPosition.x,
         startX,
         baseY,
-        splitPosition
+        splitPosition,
+        centerOffset: totalWidth / 2
       })
       
       for (let i = 0; i < branchCount; i++) {
         const branchX = startX + i * adaptiveSpacing
         positions.push({
-          x: branchX, // 水平分布
+          x: branchX, // 水平分布，相对于分流节点居中
           y: baseY // 保持相同的Y坐标（同一行）
         })
         
-        console.log(`[BranchLayoutManager] 分支${i + 1}位置:`, {
+        console.log(`[BranchLayoutManager] 分支${i + 1}位置（居中修复）:`, {
           x: branchX,
           y: baseY,
-          spacing: adaptiveSpacing
+          spacing: adaptiveSpacing,
+          offsetFromSplit: branchX - splitPosition.x,
+          isCenter: i === Math.floor((branchCount - 1) / 2)
         })
       }
       
@@ -108,6 +113,21 @@ export class BranchLayoutManager {
       if (checkBranchOverlap(positions, this.layoutConfig.nodeWidth)) {
         console.warn('[BranchLayoutManager] 检测到分支重叠，建议调整间距配置')
       }
+      
+      // 验证居中效果
+      const leftmostX = Math.min(...positions.map(p => p.x))
+      const rightmostX = Math.max(...positions.map(p => p.x))
+      const actualCenter = (leftmostX + rightmostX) / 2
+      const centerDeviation = Math.abs(actualCenter - splitPosition.x)
+      
+      console.log('[BranchLayoutManager] 分支居中验证:', {
+        splitNodeX: splitPosition.x,
+        leftmostX,
+        rightmostX,
+        actualCenter,
+        centerDeviation,
+        isCentered: centerDeviation < 1 // 允许1像素的误差
+      })
     }
     
     return positions.map(pos => this.snapToGrid(pos))

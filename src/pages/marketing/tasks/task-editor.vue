@@ -22,11 +22,8 @@
                 <icon-down />
               </a-button>
               <template #content>
-                <a-doption 
-                  v-for="version in taskVersions" 
-                  :key="version.version"
-                  @click="switchVersion(version.version)"
-                >
+                <a-doption v-for="version in taskVersions" :key="version.version"
+                  @click="switchVersion(version.version)">
                   <div class="version-item">
                     <span>v{{ version.version }}</span>
                     <a-tag v-if="version.isActive" color="green" size="small">运行中</a-tag>
@@ -47,30 +44,18 @@
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="任务名称" field="name" required>
-                <a-input 
-                  v-model="taskForm.name" 
-                  placeholder="请输入任务名称"
-                  :readonly="mode === 'view'"
-                  @change="handleFormChange"
-                />
+                <a-input v-model="taskForm.name" placeholder="请输入任务名称" :readonly="mode === 'view'"
+                  @change="handleFormChange" />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="任务类型" field="type" required>
-                <a-select 
-                  v-model="taskForm.type" 
-                  placeholder="请选择任务类型"
-                  :disabled="mode === 'view'"
-                  @change="handleFormChange"
-                >
-                  <a-option value="marketing">营销活动</a-option>
-                  <a-option value="notification">通知推送</a-option>
-                  <a-option value="survey">问卷调研</a-option>
-                </a-select>
+              <a-form-item label="任务说明" field="description" required>
+                <a-input v-model="taskForm.description" placeholder="请输入任务说明" :readonly="mode === 'view'"
+                  @change="handleFormChange" />
               </a-form-item>
             </a-col>
           </a-row>
-          
+
           <!-- 任务状态和版本信息 -->
           <a-row :gutter="16" v-if="mode !== 'create'">
             <a-col :span="8">
@@ -91,7 +76,7 @@
               </a-form-item>
             </a-col>
           </a-row>
-          
+
           <!-- 操作按钮 - 仅在编辑和新建模式显示 -->
           <a-row :gutter="16" style="margin-top: 24px;" v-if="mode !== 'view'">
             <a-col :span="24" style="text-align: right;">
@@ -102,24 +87,13 @@
                   </template>
                   返回
                 </a-button>
-                <a-button 
-                  type="primary" 
-                  size="large"
-                  :loading="isSaving"
-                  @click="saveTask"
-                >
+                <a-button type="primary" size="large" :loading="isSaving" @click="saveTask">
                   <template #icon>
                     <icon-save />
                   </template>
                   {{ isSaving ? '保存中...' : '保存' }}
                 </a-button>
-                <a-button 
-                  type="primary" 
-                  status="success"
-                  size="large"
-                  :loading="isPublishing"
-                  @click="publishTask"
-                >
+                <a-button type="primary" status="success" size="large" :loading="isPublishing" @click="publishTask">
                   <template #icon>
                     <icon-send />
                   </template>
@@ -145,12 +119,7 @@
           <!-- 左侧节点面板 - 仅在编辑和新建模式显示 -->
           <div class="node-panel" v-if="mode !== 'view'">
             <div class="node-panel-header">
-              <a-input-search 
-                v-model="searchKeyword" 
-                placeholder="搜索节点" 
-                size="small"
-                @search="handleSearch"
-              />
+              <a-input-search v-model="searchKeyword" placeholder="搜索节点" size="small" @search="handleSearch" />
             </div>
             <div class="node-categories">
               <div class="node-category">
@@ -159,29 +128,13 @@
                   分流节点
                 </div>
                 <div class="node-list">
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'audience-split')"
-                  >
+                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'audience-split')">
                     <icon-user-group class="node-icon" />
                     <span>人群分流</span>
                   </div>
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'event-split')"
-                  >
+                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'event-split')">
                     <icon-thunderbolt class="node-icon" />
                     <span>事件分流</span>
-                  </div>
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'blacklist')"
-                  >
-                    <icon-stop class="node-icon" />
-                    <span>黑名单</span>
                   </div>
                 </div>
               </div>
@@ -192,27 +145,15 @@
                   触达节点
                 </div>
                 <div class="node-list">
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'sms')"
-                  >
+                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'sms')">
                     <icon-message class="node-icon" />
                     <span>短信</span>
                   </div>
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'ai-call')"
-                  >
+                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'ai-call')">
                     <icon-robot class="node-icon" />
                     <span>AI外呼</span>
                   </div>
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'manual-call')"
-                  >
+                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'manual-call')">
                     <icon-phone class="node-icon" />
                     <span>人工外呼</span>
                   </div>
@@ -225,11 +166,7 @@
                   实验节点
                 </div>
                 <div class="node-list">
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'ab-test')"
-                  >
+                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'ab-test')">
                     <icon-swap class="node-icon" />
                     <span>AB实验</span>
                   </div>
@@ -242,21 +179,9 @@
                   流程节点
                 </div>
                 <div class="node-list">
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'wait')"
-                  >
+                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'wait')">
                     <icon-clock-circle class="node-icon" />
                     <span>等待</span>
-                  </div>
-                  <div 
-                    class="node-item" 
-                    draggable="true"
-                    @dragstart="handleNodeDragStart($event, 'end')"
-                  >
-                    <icon-check-circle class="node-icon" />
-                    <span>结束</span>
                   </div>
                 </div>
               </div>
@@ -265,22 +190,11 @@
 
           <!-- 画布区域 -->
           <div class="canvas-area" :class="{ 'full-width': mode === 'view' }">
-            <TaskFlowCanvas 
-              ref="canvasRef" 
-              :auto-add-start-node="mode !== 'view'"
-              :readonly="mode === 'view'"
-              :initial-nodes="taskForm.nodes" 
-              :initial-connections="taskForm.connections"
-              @drop="handleCanvasDrop"
-              @dragover="handleCanvasDragOver"
-              @canvas-ready="handleCanvasReady"
-              @node-created="handleNodeCreated"
-              @node-moved="handleNodeMoved"
-              @node-selected="handleNodeSelected"
-              @node-updated="handleNodeUpdated"
-              @node-deleted="handleNodeDeleted"
-              @connection-created="handleConnectionCreated"
-            />
+            <TaskFlowCanvas ref="canvasRef" :auto-add-start-node="mode !== 'view'" :readonly="mode === 'view'"
+              :initial-nodes="taskForm.nodes" :initial-connections="taskForm.connections" @drop="handleCanvasDrop"
+              @dragover="handleCanvasDragOver" @canvas-ready="handleCanvasReady" @node-created="handleNodeCreated"
+              @node-moved="handleNodeMoved" @node-selected="handleNodeSelected" @node-updated="handleNodeUpdated"
+              @node-deleted="handleNodeDeleted" @connection-created="handleConnectionCreated" />
           </div>
         </div>
       </a-card>
@@ -302,9 +216,9 @@
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Modal, Message } from '@arco-design/web-vue'
-import { 
-  IconEdit, IconSave, IconSend, IconDown, IconBranch, 
-  IconUserGroup, IconThunderbolt, IconMessage, IconRobot, 
+import {
+  IconEdit, IconSave, IconSend, IconDown, IconBranch,
+  IconUserGroup, IconThunderbolt, IconMessage, IconRobot,
   IconPhone, IconExperiment, IconSwap, IconSettings, IconClockCircle,
   IconStop, IconCheckCircle, IconArrowLeft
 } from '@arco-design/web-vue/es/icon'
@@ -364,11 +278,11 @@ const breadcrumbText = computed(() => {
 // 初始化页面
 const initPage = async () => {
   const { mode: routeMode, id, version } = route.query
-  
+
   mode.value = routeMode || 'create'
   taskId.value = id
   currentVersion.value = parseInt(version) || 1
-  
+
   if (mode.value !== 'create' && taskId.value) {
     await loadTaskData()
   }
@@ -379,7 +293,7 @@ const loadTaskData = async () => {
   try {
     // 模拟API调用 - 根据任务ID获取对应的数据
     let mockTaskData = {}
-    
+
     if (taskId.value === '1') {
       // 消费贷促实名认证活动 - 完整的画布流程
       mockTaskData = {
@@ -391,22 +305,22 @@ const loadTaskData = async () => {
         version: currentVersion.value,
         canvasData: {
           nodes: [
-            { 
-              id: 'start', 
-              type: 'start', 
-              x: 300, 
-              y: 100, 
+            {
+              id: 'start',
+              type: 'start',
+              x: 300,
+              y: 100,
               label: '开始',
               config: {
                 name: '开始节点',
                 description: '消费贷促实名认证活动开始'
               }
             },
-            { 
-              id: 'crowd-split', 
-              type: 'crowd-split', 
-              x: 300, 
-              y: 220, 
+            {
+              id: 'crowd-split',
+              type: 'crowd-split',
+              x: 300,
+              y: 220,
               label: '人群分流',
               config: {
                 name: '人群分流',
@@ -417,22 +331,22 @@ const loadTaskData = async () => {
                 ]
               }
             },
-            { 
-              id: 'blacklist-end', 
-              type: 'end', 
-              x: 150, 
-              y: 340, 
+            {
+              id: 'blacklist-end',
+              type: 'end',
+              x: 150,
+              y: 340,
               label: '黑名单结束',
               config: {
                 name: '黑名单用户结束',
                 description: '命中黑名单的用户直接结束流程'
               }
             },
-            { 
-              id: 'ab-test', 
-              type: 'ab-test', 
-              x: 450, 
-              y: 340, 
+            {
+              id: 'ab-test',
+              type: 'ab-test',
+              x: 450,
+              y: 340,
               label: 'AB实验',
               config: {
                 name: 'AB实验分组',
@@ -443,11 +357,11 @@ const loadTaskData = async () => {
                 ]
               }
             },
-            { 
-              id: 'manual-call-1', 
-              type: 'manual-call', 
-              x: 350, 
-              y: 460, 
+            {
+              id: 'manual-call-1',
+              type: 'manual-call',
+              x: 350,
+              y: 460,
               label: '人工电销A组',
               config: {
                 name: '人工电销A组',
@@ -456,11 +370,11 @@ const loadTaskData = async () => {
                 maxAttempts: 3
               }
             },
-            { 
-              id: 'manual-call-2', 
-              type: 'manual-call', 
-              x: 550, 
-              y: 460, 
+            {
+              id: 'manual-call-2',
+              type: 'manual-call',
+              x: 550,
+              y: 460,
               label: '人工电销B组',
               config: {
                 name: '人工电销B组',
@@ -469,11 +383,11 @@ const loadTaskData = async () => {
                 maxAttempts: 3
               }
             },
-            { 
-              id: 'end', 
-              type: 'end', 
-              x: 450, 
-              y: 580, 
+            {
+              id: 'end',
+              type: 'end',
+              x: 450,
+              y: 580,
               label: '结束',
               config: {
                 name: '流程结束',
@@ -482,45 +396,45 @@ const loadTaskData = async () => {
             }
           ],
           connections: [
-            { 
+            {
               id: 'conn1',
-              source: 'start', 
+              source: 'start',
               target: 'crowd-split',
               label: ''
             },
-            { 
+            {
               id: 'conn2',
-              source: 'crowd-split', 
-              target: 'blacklist-end', 
+              source: 'crowd-split',
+              target: 'blacklist-end',
               label: '命中黑名单'
             },
-            { 
+            {
               id: 'conn3',
-              source: 'crowd-split', 
-              target: 'ab-test', 
+              source: 'crowd-split',
+              target: 'ab-test',
               label: '未命中黑名单'
             },
-            { 
+            {
               id: 'conn4',
-              source: 'ab-test', 
-              target: 'manual-call-1', 
+              source: 'ab-test',
+              target: 'manual-call-1',
               label: 'A组(50%)'
             },
-            { 
+            {
               id: 'conn5',
-              source: 'ab-test', 
-              target: 'manual-call-2', 
+              source: 'ab-test',
+              target: 'manual-call-2',
               label: 'B组(50%)'
             },
-            { 
+            {
               id: 'conn6',
-              source: 'manual-call-1', 
+              source: 'manual-call-1',
               target: 'end',
               label: ''
             },
-            { 
+            {
               id: 'conn7',
-              source: 'manual-call-2', 
+              source: 'manual-call-2',
               target: 'end',
               label: ''
             }
@@ -542,7 +456,7 @@ const loadTaskData = async () => {
         }
       }
     }
-    
+
     taskData.value = mockTaskData
     Object.assign(taskForm, {
       name: mockTaskData.name,
@@ -550,20 +464,20 @@ const loadTaskData = async () => {
       nodes: mockTaskData.canvasData.nodes,
       connections: mockTaskData.canvasData.connections
     })
-    
+
     // 加载版本列表
     taskVersions.value = [
       { version: 1, createTime: '2024-01-15 10:30:00', isActive: false },
       { version: 2, createTime: '2024-01-16 14:20:00', isActive: true }
     ]
-    
+
     // 延迟加载画布数据，确保组件已经渲染
     setTimeout(() => {
       if (canvasRef.value && mockTaskData.canvasData) {
         canvasRef.value.loadCanvasData(mockTaskData.canvasData)
       }
     }, 100)
-    
+
   } catch (error) {
     console.error('加载任务数据失败:', error)
     Message.error('加载任务数据失败')
@@ -707,7 +621,7 @@ const saveTask = async () => {
 
   try {
     isSaving.value = true
-    
+
     if (!taskForm.name) {
       Message.error('请输入任务名称')
       return
@@ -716,21 +630,21 @@ const saveTask = async () => {
       Message.error('请选择任务类型')
       return
     }
-    
+
     // 获取画布数据
     const canvasData = canvasRef.value?.getCanvasData()
-    
+
     // 基础校验（对于保存，只做轻量级校验）
     const validationResult = validateForSave({
       ...taskForm,
       canvasData
     })
-    
+
     if (!validationResult.isValid) {
       // 对于保存，即使有错误也只显示警告，不阻止保存
       Message.warning(`保存成功，但存在问题：${validationResult.errors.join(', ')}`)
     }
-    
+
     const taskData = {
       ...taskForm,
       canvasData,
@@ -738,19 +652,19 @@ const saveTask = async () => {
       updateTime: new Date().toLocaleString('zh-CN'),
       creator: '当前用户'
     }
-    
+
     console.log('[TaskEditor] 保存任务草稿:', taskData)
-    
+
     // 模拟保存延迟
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     // 保存成功，状态仍为草稿
     taskStatus.value = 'draft'
     Message.success('保存成功')
-    
+
     // 标记为已保存
     hasUnsavedChanges.value = false
-    
+
   } catch (error) {
     console.error('[TaskEditor] 保存任务失败:', error)
     Message.error('保存失败，请重试')
@@ -764,7 +678,7 @@ const publishTask = async () => {
 
   try {
     isPublishing.value = true
-    
+
     if (!taskForm.name) {
       Message.error('请输入任务名称')
       return
@@ -773,22 +687,22 @@ const publishTask = async () => {
       Message.error('请选择任务类型')
       return
     }
-    
+
     // 获取画布数据
     const canvasData = canvasRef.value?.getCanvasData()
     if (!canvasData) {
       Message.error('无法获取画布数据')
       return
     }
-    
+
     // 获取预览线信息（用于自动补充结束节点）
     let previewLines = []
     try {
       // 尝试从画布组件获取预览线管理器
-      const previewManager = canvasRef.value?.previewManager || 
-                            canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
-                            canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
-      
+      const previewManager = canvasRef.value?.previewManager ||
+        canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
+        canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
+
       if (previewManager && previewManager.getActivePreviewLines) {
         previewLines = previewManager.getActivePreviewLines()
       } else if (previewManager && previewManager.previewLines) {
@@ -824,7 +738,7 @@ const publishTask = async () => {
           }
         })
       }
-      
+
       console.log('📋 [发布校验] 获取到预览线信息:', {
         previewLineCount: previewLines.length,
         previewLines: previewLines.map(line => ({
@@ -837,17 +751,17 @@ const publishTask = async () => {
       console.warn('⚠️ [发布校验] 获取预览线信息失败:', error)
       previewLines = []
     }
-    
+
     // 发布前完整校验
     const validationResult = validateForPublish({
       ...taskForm,
       canvasData
     }, { autoFix: true, previewLines })
-    
+
     if (!validationResult.isValid) {
       // 显示详细的校验错误信息
       const errorMessage = formatPublishValidationMessage(validationResult)
-      
+
       Modal.error({
         title: '发布失败',
         content: errorMessage,
@@ -860,7 +774,7 @@ const publishTask = async () => {
     // 如果有自动修复，询问用户是否接受
     if (validationResult.autoFixApplied) {
       const confirmMessage = formatPublishValidationMessage(validationResult)
-      
+
       const confirmed = await new Promise((resolve) => {
         Modal.confirm({
           title: '发布确认',
@@ -879,13 +793,13 @@ const publishTask = async () => {
       if (validationResult.fixedData && validationResult.fixedData.canvasData) {
         // 重新加载修复后的数据到画布
         canvasRef.value?.loadCanvasData(validationResult.fixedData.canvasData)
-        
+
         // 清理预览线并重新结构化布局
         try {
-          const previewManager = canvasRef.value?.previewManager || 
-                                canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
-                                canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
-          
+          const previewManager = canvasRef.value?.previewManager ||
+            canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
+            canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
+
           if (previewManager) {
             // 清理已连接的预览线
             if (previewManager.clearConnectedPreviewLines) {
@@ -894,17 +808,17 @@ const publishTask = async () => {
               previewManager.refreshAllPreviewLines()
             }
           }
-          
+
           // 触发重新布局
           if (canvasRef.value?.triggerLayout) {
             canvasRef.value.triggerLayout()
           }
-          
+
           console.log('✅ [发布校验] 已应用自动修复并重新布局')
         } catch (error) {
           console.warn('⚠️ [发布校验] 重新布局失败:', error)
         }
-        
+
         Message.success('已自动补充结束节点并优化布局')
       }
     }
@@ -916,19 +830,19 @@ const publishTask = async () => {
       publishTime: new Date().toLocaleString('zh-CN'),
       creator: '当前用户'
     }
-    
+
     console.log('[TaskEditor] 发布任务:', taskData)
-    
+
     // 模拟发布延迟
     await new Promise(resolve => setTimeout(resolve, 1500))
-    
+
     // 发布成功
     taskStatus.value = 'published'
     Message.success('发布成功')
-    
+
     // 标记为已保存
     hasUnsavedChanges.value = false
-    
+
     // 询问是否跳转到任务列表
     const shouldRedirect = await new Promise((resolve) => {
       Modal.success({
@@ -940,11 +854,11 @@ const publishTask = async () => {
         onCancel: () => resolve(false)
       })
     })
-    
+
     if (shouldRedirect) {
       router.push('/marketing/tasks')
     }
-    
+
   } catch (error) {
     console.error('[TaskEditor] 发布任务失败:', error)
     Message.error('发布失败，请重试')
@@ -1095,7 +1009,8 @@ watch(() => route.query, () => {
   flex: 1;
   background: white;
   position: relative;
-  overflow: auto; /* 添加滚动条 */
+  overflow: auto;
+  /* 添加滚动条 */
 }
 
 .canvas-area.full-width {

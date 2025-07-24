@@ -32,10 +32,29 @@ export class CoordinateSystemManager {
   getCanvasTransform() {
     if (!this.graph) return { translate: { tx: 0, ty: 0 }, scale: { sx: 1, sy: 1 } };
     
-    return {
-      translate: this.graph.translate(),
-      scale: this.graph.scale()
-    };
+    try {
+      const translate = this.graph.translate() || { tx: 0, ty: 0 };
+      const scale = this.graph.scale() || { sx: 1, sy: 1 };
+      
+      // 🔧 安全检查：确保变换值是有效数字
+      const safeTranslate = {
+        tx: typeof translate.tx === 'number' && !isNaN(translate.tx) ? translate.tx : 0,
+        ty: typeof translate.ty === 'number' && !isNaN(translate.ty) ? translate.ty : 0
+      };
+      
+      const safeScale = {
+        sx: typeof scale.sx === 'number' && !isNaN(scale.sx) && scale.sx > 0 ? scale.sx : 1,
+        sy: typeof scale.sy === 'number' && !isNaN(scale.sy) && scale.sy > 0 ? scale.sy : 1
+      };
+      
+      return {
+        translate: safeTranslate,
+        scale: safeScale
+      };
+    } catch (error) {
+      this.log('Error getting canvas transform, using defaults:', error);
+      return { translate: { tx: 0, ty: 0 }, scale: { sx: 1, sy: 1 } };
+    }
   }
 
   /**
@@ -44,6 +63,13 @@ export class CoordinateSystemManager {
   logicalToDOM(logicalX, logicalY) {
     if (!this.graph) return { x: logicalX, y: logicalY };
     
+    // 🔧 安全检查：确保输入坐标是有效数字
+    if (typeof logicalX !== 'number' || isNaN(logicalX) || 
+        typeof logicalY !== 'number' || isNaN(logicalY)) {
+      this.log('Invalid logical coordinates:', { logicalX, logicalY });
+      return { x: 0, y: 0 };
+    }
+    
     const transform = this.getCanvasTransform();
     const scale = transform.scale;
     const translate = transform.translate;
@@ -51,6 +77,14 @@ export class CoordinateSystemManager {
     // 应用变换：先缩放，再平移
     const domX = logicalX * scale.sx + translate.tx;
     const domY = logicalY * scale.sy + translate.ty;
+    
+    // 🔧 安全检查：确保计算结果是有效数字
+    if (isNaN(domX) || isNaN(domY)) {
+      this.log('DOM coordinate calculation failed:', {
+        logicalX, logicalY, scale, translate, domX, domY
+      });
+      return { x: logicalX, y: logicalY }; // 返回原始坐标作为备用
+    }
     
     return { x: domX, y: domY };
   }
@@ -61,6 +95,13 @@ export class CoordinateSystemManager {
   DOMToLogical(domX, domY) {
     if (!this.graph) return { x: domX, y: domY };
     
+    // 🔧 安全检查：确保输入坐标是有效数字
+    if (typeof domX !== 'number' || isNaN(domX) || 
+        typeof domY !== 'number' || isNaN(domY)) {
+      this.log('Invalid DOM coordinates:', { domX, domY });
+      return { x: 0, y: 0 };
+    }
+    
     const transform = this.getCanvasTransform();
     const scale = transform.scale;
     const translate = transform.translate;
@@ -68,6 +109,14 @@ export class CoordinateSystemManager {
     // 逆变换：先减去平移，再除以缩放
     const logicalX = (domX - translate.tx) / scale.sx;
     const logicalY = (domY - translate.ty) / scale.sy;
+    
+    // 🔧 安全检查：确保计算结果是有效数字
+    if (isNaN(logicalX) || isNaN(logicalY)) {
+      this.log('Logical coordinate calculation failed:', {
+        domX, domY, scale, translate, logicalX, logicalY
+      });
+      return { x: domX, y: domY }; // 返回原始坐标作为备用
+    }
     
     return { x: logicalX, y: logicalY };
   }
@@ -239,7 +288,16 @@ export class CoordinateSystemManager {
     
     try {
       const logicalPosition = node.getPosition();
-      const domPosition = this.logicalToDOM(logicalPosition);
+      
+      // 🔧 安全检查：确保逻辑位置是有效的
+      if (!logicalPosition || 
+          typeof logicalPosition.x !== 'number' || isNaN(logicalPosition.x) ||
+          typeof logicalPosition.y !== 'number' || isNaN(logicalPosition.y)) {
+        this.log('Invalid logical position for node:', { nodeId: node.id, logicalPosition });
+        return null;
+      }
+      
+      const domPosition = this.logicalToDOM(logicalPosition.x, logicalPosition.y);
       const actualDOMCenter = this.getNodeDOMCenter(node);
       
       const validation = {

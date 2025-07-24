@@ -211,7 +211,7 @@ export class EnhancedLayoutEngine {
     const positions = {}
     const config = {
       levelHeight: 150,
-      nodeSpacing: 120,
+      nodeSpacing: 200,
       branchSpacing: 180,
       ...options.layoutConfig
     }
