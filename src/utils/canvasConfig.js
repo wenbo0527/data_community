@@ -113,15 +113,8 @@ export const getConnectingConfig = () => ({
       padding: 15,
       step: 15,
       startDirections: ['bottom'],
-      endDirections: ['top'],
-      // 自定义回退路由，确保在复杂情况下也能生成合理路径
-      fallbackRoute: (vertices, options) => {
-        if (vertices.length < 2) return vertices
-        const start = vertices[0]
-        const end = vertices[vertices.length - 1]
-        const midY = start.y + (end.y - start.y) / 2
-        return [start, { x: start.x, y: midY }, { x: end.x, y: midY }, end]
-      }
+      endDirections: ['top']
+      // 🚀 [智能路径] 移除fallbackRoute，完全依赖orth路由器的自动最短路径算法
     }
   },
   connector: {

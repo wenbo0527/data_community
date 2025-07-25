@@ -110,10 +110,29 @@
           <template #icon><icon-delete /></template>
           清空画布
         </a-button>
-        <a-button @click="exportData" size="small">
-          <template #icon><icon-download /></template>
-          导出数据
+        
+        <!-- 撤销重做按钮 -->
+        <a-button @click="undo" size="small" :disabled="!canUndo">
+          <template #icon><icon-up /></template>
+          撤销
         </a-button>
+        <a-button @click="redo" size="small" :disabled="!canRedo">
+          <template #icon><icon-down /></template>
+          重做
+        </a-button>
+        
+        <!-- 导出图片按钮 -->
+        <a-dropdown @select="handleExport">
+          <a-button size="small">
+            <template #icon><icon-download /></template>
+            导出图片
+          </a-button>
+          <template #content>
+            <a-doption value="png">导出PNG</a-doption>
+            <a-doption value="jpg">导出JPG</a-doption>
+            <a-doption value="svg">导出SVG</a-doption>
+          </template>
+        </a-dropdown>
       </a-button-group>
     </div>
   </div>
@@ -123,6 +142,9 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { Graph, Shape, Cell } from '@antv/x6'
 import { MiniMap } from '@antv/x6-plugin-minimap'
+import { Export } from '@antv/x6-plugin-export'
+import { History } from '@antv/x6-plugin-history'
+import { Snapline } from '@antv/x6-plugin-snapline'
 import { register } from '@antv/x6-vue-shape'
 import NodeTypeSelector from '../../../../components/NodeTypeSelector.vue'
 import NodeConfigDrawer from '../../../../components/NodeConfigDrawer.vue'
@@ -257,6 +279,10 @@ let panZoomManager = null
 
 // 拖拽模式相关状态
 const currentDragMode = ref('default')
+
+// 撤销重做相关状态
+const canUndo = ref(false)
+const canRedo = ref(false)
 
 // 添加防护标志，避免递归更新
 const isUpdatingScale = ref(false)
@@ -402,15 +428,8 @@ const initCanvas = async () => {
           padding: 15,
           step: 15,
           startDirections: ['bottom'],
-          endDirections: ['top'],
-          // 自定义回退路由，确保在复杂情况下也能生成合理路径
-          fallbackRoute: (vertices, options) => {
-            if (vertices.length < 2) return vertices
-            const start = vertices[0]
-            const end = vertices[vertices.length - 1]
-            const midY = start.y + (end.y - start.y) / 2
-            return [start, { x: start.x, y: midY }, { x: end.x, y: midY }, end]
-          }
+          endDirections: ['top']
+          // 🚀 [智能路径] 移除fallbackRoute，完全依赖orth路由器的自动最短路径算法
         }
       },
       connector: {
@@ -483,6 +502,79 @@ const initCanvas = async () => {
   })
 
   console.log('[TaskFlowCanvas] X6图形实例创建成功')
+
+  // 初始化插件
+  console.log('[TaskFlowCanvas] 开始初始化插件')
+  
+  // 初始化导出插件
+  graph.use(new Export())
+  console.log('[TaskFlowCanvas] 导出插件初始化完成')
+  
+  // 初始化历史记录插件
+  const historyPlugin = new History({
+    enabled: true,
+    ignoreAdd: false,
+    ignoreRemove: false,
+    ignoreChange: false
+  })
+  graph.use(historyPlugin)
+  console.log('[TaskFlowCanvas] 历史记录插件初始化完成')
+  console.log('[TaskFlowCanvas] 历史记录插件配置:', {
+    enabled: historyPlugin.options.enabled,
+    ignoreAdd: historyPlugin.options.ignoreAdd,
+    ignoreRemove: historyPlugin.options.ignoreRemove,
+    ignoreChange: historyPlugin.options.ignoreChange
+  })
+  
+  // 初始化对齐线插件
+  graph.use(new Snapline({
+    enabled: true,
+    sharp: true,
+    resizing: true,
+    clean: 1000
+  }))
+  console.log('[TaskFlowCanvas] 对齐线插件初始化完成')
+
+  // 监听历史记录变化
+  graph.on('history:change', () => {
+    const canUndoValue = graph.canUndo()
+    const canRedoValue = graph.canRedo()
+    canUndo.value = canUndoValue
+    canRedo.value = canRedoValue
+    console.log('[历史记录] 状态变化:', {
+      canUndo: canUndoValue,
+      canRedo: canRedoValue,
+      undoStackLength: graph.history?.undoStack?.length || 0,
+      redoStackLength: graph.history?.redoStack?.length || 0
+    })
+  })
+
+  // 监听其他可能影响历史记录的事件
+  graph.on('cell:added', (args) => {
+    console.log('[历史记录] 节点/边添加:', args.cell.id)
+  })
+  
+  graph.on('cell:removed', (args) => {
+    console.log('[历史记录] 节点/边删除:', args.cell.id)
+  })
+  
+  graph.on('cell:changed', (args) => {
+    console.log('[历史记录] 节点/边变化:', args.cell.id, args.options)
+  })
+
+  console.log('[TaskFlowCanvas] 所有插件初始化完成')
+  
+  // 检查历史记录插件状态
+  setTimeout(() => {
+    console.log('[历史记录] 插件状态检查:', {
+      historyExists: !!graph.history,
+      canUndo: graph.canUndo(),
+      canRedo: graph.canRedo(),
+      undoStackLength: graph.history?.undoStack?.length || 0,
+      redoStackLength: graph.history?.redoStack?.length || 0,
+      historyEnabled: graph.history?.options?.enabled
+    })
+  }, 1000)
 
   // 输出画布配置调试信息
   console.log('⚙️ [TaskFlowCanvas] 画布配置信息:', {
@@ -2930,16 +3022,144 @@ const handleResize = () => {
       canvasContainer.value.clientHeight
     )
   }
+};
+
+// 撤销重做功能
+const undo = () => {
+  console.log('[撤销功能] 开始执行撤销操作')
+  console.log('[撤销功能] graph 实例:', graph)
+  
+  if (!graph) {
+    console.warn('[撤销功能] graph 实例不存在')
+    Message.error('画布未初始化，无法撤销')
+    return
+  }
+  
+  console.log('[撤销功能] 检查是否可以撤销:', graph.canUndo())
+  console.log('[撤销功能] 历史记录堆栈大小:', graph.history?.undoStack?.length || 0)
+  
+  if (graph.canUndo()) {
+    try {
+      graph.undo()
+      console.log('[撤销功能] 撤销操作执行成功')
+      Message.success('撤销成功')
+    } catch (error) {
+      console.error('[撤销功能] 撤销操作执行失败:', error)
+      Message.error('撤销操作失败')
+    }
+  } else {
+    console.warn('[撤销功能] 没有可撤销的操作')
+    Message.warning('没有可撤销的操作')
+  }
+}
+
+const redo = () => {
+  console.log('[重做功能] 开始执行重做操作')
+  console.log('[重做功能] graph 实例:', graph)
+  
+  if (!graph) {
+    console.warn('[重做功能] graph 实例不存在')
+    Message.error('画布未初始化，无法重做')
+    return
+  }
+  
+  console.log('[重做功能] 检查是否可以重做:', graph.canRedo())
+  console.log('[重做功能] 重做堆栈大小:', graph.history?.redoStack?.length || 0)
+  
+  if (graph.canRedo()) {
+    try {
+      graph.redo()
+      console.log('[重做功能] 重做操作执行成功')
+      Message.success('重做成功')
+    } catch (error) {
+      console.error('[重做功能] 重做操作执行失败:', error)
+      Message.error('重做操作失败')
+    }
+  } else {
+    console.warn('[重做功能] 没有可重做的操作')
+    Message.warning('没有可重做的操作')
+  }
+}
+
+// 导出图片功能
+const handleExport = (format) => {
+  if (!graph) {
+    Message.error('画布未初始化')
+    return
+  }
+
+  try {
+    const fileName = `canvas_${new Date().getTime()}`
+    
+    switch (format) {
+      case 'png':
+        graph.exportPNG(fileName, {
+          backgroundColor: '#f8f9fa',
+          padding: 20,
+          quality: 1
+        })
+        Message.success('PNG图片导出成功')
+        break
+      case 'jpg':
+        graph.exportJPEG(fileName, {
+          backgroundColor: '#f8f9fa',
+          padding: 20,
+          quality: 0.9
+        })
+        Message.success('JPG图片导出成功')
+        break
+      case 'svg':
+        graph.exportSVG(fileName, {
+          preserveDimensions: true,
+          copyStyles: true,
+          serializeImages: true
+        })
+        Message.success('SVG图片导出成功')
+        break
+      default:
+        Message.error('不支持的导出格式')
+    }
+  } catch (error) {
+    console.error('导出图片失败:', error)
+    Message.error('导出图片失败')
+  }
+}
+
+// 键盘快捷键支持
+const handleKeydown = (e) => {
+  console.log('[键盘快捷键] 按键事件:', {
+    key: e.key,
+    metaKey: e.metaKey,
+    ctrlKey: e.ctrlKey,
+    shiftKey: e.shiftKey,
+    target: e.target.tagName
+  })
+  
+  // Mac: Command + Z, Windows: Ctrl + Z
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+    console.log('[键盘快捷键] 检测到撤销快捷键')
+    e.preventDefault()
+    undo()
+  }
+  // Mac: Command + Shift + Z, Windows: Ctrl + Y
+  else if (((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) || 
+           ((e.ctrlKey) && e.key === 'y')) {
+    console.log('[键盘快捷键] 检测到重做快捷键')
+    e.preventDefault()
+    redo()
+  }
 }
 
 // 生命周期
 onMounted(() => {
   initCanvas()
   window.addEventListener('resize', handleResize)
+  window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  window.removeEventListener('keydown', handleKeydown)
 
   // 清理小地图
   if (minimap) {
@@ -2970,7 +3190,10 @@ defineExpose({
   zoomToFit,
   resetZoom,
   setDragMode,
-  currentDragMode
+  currentDragMode,
+  undo,
+  redo,
+  handleExport
 })
 </script>
 
@@ -2980,8 +3203,8 @@ defineExpose({
   width: 100%;
   height: 100%;
   background: #f8f9fa;
-  overflow: hidden;
-  /* 防止滚动条出现 */
+  overflow: visible;
+  /* 允许内容超出时显示滚动条 */
 }
 
 .canvas-container {
@@ -2990,6 +3213,8 @@ defineExpose({
   position: relative;
   user-select: none;
   /* 防止文本选择 */
+  overflow: visible;
+  /* 允许画布内容超出容器 */
 }
 
 .canvas-toolbar {

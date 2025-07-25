@@ -9,12 +9,20 @@
       <div class="task-section">
         <div class="section-header">
           <h2>任务列表</h2>
-          <a-button type="primary" @click="createTask">
-            <template #icon>
-              <icon-plus />
-            </template>
-            新建任务
-          </a-button>
+          <a-space>
+            <a-button @click="refreshTaskList">
+              <template #icon>
+                <icon-refresh />
+              </template>
+              刷新
+            </a-button>
+            <a-button type="primary" @click="createTask">
+              <template #icon>
+                <icon-plus />
+              </template>
+              新建任务
+            </a-button>
+          </a-space>
         </div>
         
         <div class="task-filters">
@@ -86,7 +94,8 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconDown } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconDown, IconRefresh } from '@arco-design/web-vue/es/icon'
+import { TaskStorage } from '../../../utils/taskStorage.js'
 
 const router = useRouter()
 
@@ -157,7 +166,13 @@ const pagination = reactive({
 
 // 初始化数据
 const initData = () => {
-  // 模拟任务数据
+  console.log('🔄 [TaskList] 开始加载任务列表数据')
+  
+  // 从本地存储获取所有任务
+  const storedTasks = TaskStorage.getAllTasks()
+  console.log('📦 [TaskList] 从本地存储加载的任务:', storedTasks)
+  
+  // 模拟任务数据（作为示例数据）
   const mockTasks = [
     {
       id: 1,
@@ -234,8 +249,40 @@ const initData = () => {
     }
   ]
   
-  taskData.value = mockTasks
-  pagination.total = mockTasks.length
+  // 转换本地存储的任务格式以匹配列表显示
+  const convertedStoredTasks = storedTasks.map(task => ({
+    id: task.id,
+    taskName: task.name || '未命名任务',
+    taskType: task.type || '未分类',
+    status: task.status || 'draft',
+    version: task.version || 1,
+    createTime: task.createTime || new Date().toLocaleString('zh-CN'),
+    executeTime: task.executeTime || '-',
+    creator: task.creator || '当前用户',
+    versions: task.versions || [
+      { version: task.version || 1, createTime: task.createTime || new Date().toLocaleString('zh-CN'), isActive: task.status === 'running' }
+    ],
+    canvasData: task.canvasData || { nodes: [], connections: [] }
+  }))
+  
+  // 合并数据：本地存储的任务优先，避免ID冲突
+  const existingIds = new Set(convertedStoredTasks.map(task => task.id))
+  const filteredMockTasks = mockTasks.filter(task => !existingIds.has(task.id))
+  
+  const allTasks = [...convertedStoredTasks, ...filteredMockTasks]
+  
+  console.log('✅ [TaskList] 任务列表数据加载完成:', {
+    storedTasksCount: convertedStoredTasks.length,
+    mockTasksCount: filteredMockTasks.length,
+    totalTasksCount: allTasks.length
+  })
+  
+  taskData.value = allTasks
+  pagination.total = allTasks.length
+  
+  // 显示存储统计
+  const stats = TaskStorage.getStorageStats()
+  console.log('📈 [TaskList] 存储统计:', stats)
 }
 
 // 获取状态颜色
@@ -304,8 +351,38 @@ const stopTask = (record) => {
 
 // 删除任务
 const deleteTask = (record) => {
-  console.log('删除任务:', record)
-  Message.warning('删除任务功能开发中...')
+  console.log('🗑️ [TaskList] 删除任务:', record)
+  
+  try {
+    // 从本地存储删除任务
+    const success = TaskStorage.deleteTask(record.id)
+    
+    if (success) {
+      // 从当前列表中移除任务
+      const index = taskData.value.findIndex(task => task.id === record.id)
+      if (index > -1) {
+        taskData.value.splice(index, 1)
+        pagination.total = taskData.value.length
+      }
+      
+      Message.success('任务删除成功')
+      console.log('✅ [TaskList] 任务删除成功:', record.id)
+      
+      // 显示更新后的存储统计
+      const stats = TaskStorage.getStorageStats()
+      console.log('📈 [TaskList] 删除后存储统计:', stats)
+    } else {
+      // 如果是模拟数据（ID 1-4），提示无法删除
+      if (record.id >= 1 && record.id <= 4) {
+        Message.warning('示例任务无法删除')
+      } else {
+        Message.error('任务删除失败')
+      }
+    }
+  } catch (error) {
+    console.error('❌ [TaskList] 删除任务失败:', error)
+    Message.error('删除任务时发生错误')
+  }
 }
 
 // 分页变化
@@ -318,6 +395,13 @@ const onPageSizeChange = (pageSize) => {
   pagination.pageSize = pageSize
   pagination.current = 1
   console.log('页大小变化:', pageSize)
+}
+
+// 刷新任务列表
+const refreshTaskList = () => {
+  console.log('🔄 [TaskList] 刷新任务列表')
+  initData()
+  Message.success('任务列表已刷新')
 }
 
 // 组件挂载

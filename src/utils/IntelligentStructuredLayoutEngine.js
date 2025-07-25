@@ -1,14 +1,41 @@
 /**
  * 智能结构化布局引擎
- * 基于开始节点的分层自动化布局，集成统一坐标系统管理
+ * 基于开始节点的分层自动化布局，集成统一坐标系统管理和碰撞检测
  */
 
 import { coordinateManager } from './CoordinateSystemManager.js'
+import CollisionDetectionManager from './CollisionDetectionManager.js'
 
 export class IntelligentStructuredLayoutEngine {
   constructor(graph, options = {}) {
     this.graph = graph
     this.coordinateManager = coordinateManager
+    
+    // 初始化碰撞检测管理器
+    this.collisionManager = new CollisionDetectionManager(graph, {
+      minSpacing: {
+        nodeToNode: 60,
+        nodeToDragPoint: 40,
+        nodeToEdge: 30,
+        nodeToPreviewLine: 50,
+        dragPointToEdge: 25,
+        dragPointToPreviewLine: 30,
+        edgeToPreviewLine: 20
+      },
+      parentChildConfig: {
+        minParentChildSpacing: 100,
+        maxChildOverlapRatio: 0.05,
+        enableParentExpansion: true
+      },
+      detectionPrecision: 'high',
+      resolutionStrategy: 'smart',
+      enableRealTimeDetection: false, // 在智能布局中禁用实时检测
+      performanceConfig: {
+        enableBatching: true,
+        batchSize: 100,
+        throttleDelay: 0 // 智能布局中不需要节流
+      }
+    })
     
     this.layoutConfig = {
       levelHeight: 150,           // 层级间距
@@ -18,6 +45,8 @@ export class IntelligentStructuredLayoutEngine {
       centerAlignment: true,      // 中心对齐
       gridSize: 20,              // 网格大小
       startNodeCentered: true,    // 开始节点居中
+      enableCollisionDetection: true, // 启用碰撞检测
+      collisionResolutionIterations: 3, // 碰撞解决迭代次数
       ...options
     }
     
@@ -39,7 +68,8 @@ export class IntelligentStructuredLayoutEngine {
     console.log('[IntelligentStructuredLayoutEngine] 开始计算智能布局', {
       nodeCount: nodes.length,
       edgeCount: edges.length,
-      previewLineCount: previewLines.length
+      previewLineCount: previewLines.length,
+      enableCollisionDetection: this.layoutConfig.enableCollisionDetection
     })
 
     try {
@@ -53,20 +83,82 @@ export class IntelligentStructuredLayoutEngine {
       const levels = this.performTopologicalLayering(nodes, edges, previewLines, startNode)
       
       // 3. 计算优化的节点位置
-      const nodePositions = this.calculateOptimizedNodePositions(levels, startNode)
+      let nodePositions = this.calculateOptimizedNodePositions(levels, startNode)
       
       // 4. 计算连线优化位置
-      const edgePositions = this.calculateOptimizedEdgePositions(edges, nodePositions)
+      let edgePositions = this.calculateOptimizedEdgePositions(edges, nodePositions)
       
       // 5. 计算预览线优化位置（使用坐标管理器）
-      const previewLinePositions = this.calculateOptimizedPreviewLinePositions(
+      let previewLinePositions = this.calculateOptimizedPreviewLinePositions(
         previewLines, nodePositions
       )
       
       // 6. 计算拖拽点优化位置（使用坐标管理器）
-      const dragPointPositions = this.calculateOptimizedDragPointPositions(
+      let dragPointPositions = this.calculateOptimizedDragPointPositions(
         previewLines, nodePositions
       )
+
+      // 🔍 新增：7. 碰撞检测和解决
+      if (this.layoutConfig.enableCollisionDetection && this.collisionManager) {
+        console.log('🔍 [智能布局] 开始碰撞检测和解决')
+        
+        const collisionStartTime = performance.now()
+        let collisionResolutionCount = 0
+        let hasCollisions = true
+        
+        // 迭代解决碰撞，最多进行指定次数的迭代
+        while (hasCollisions && collisionResolutionCount < this.layoutConfig.collisionResolutionIterations) {
+          collisionResolutionCount++
+          
+          console.log(`🔍 [智能布局] 第 ${collisionResolutionCount} 次碰撞检测`)
+          
+          // 应用当前位置到图形中（临时）
+          this.applyPositionsToGraph(nodePositions, edgePositions, previewLinePositions, dragPointPositions)
+          
+          // 执行全面碰撞检测
+          const collisionResult = await this.collisionManager.performComprehensiveCollisionDetection()
+          
+          if (collisionResult.hasCollisions) {
+            console.log(`⚠️ [智能布局] 第 ${collisionResolutionCount} 次检测到碰撞:`, {
+              '节点碰撞': collisionResult.nodeCollisions.length,
+              '拖拽点碰撞': collisionResult.dragPointCollisions.length,
+              '连线碰撞': collisionResult.edgeCollisions.length,
+              '预览线碰撞': collisionResult.previewLineCollisions.length,
+              '父子节点碰撞': collisionResult.parentChildCollisions.length
+            })
+            
+            // 生成解决方案
+            const resolutionPlan = this.collisionManager.generateResolutionPlan(collisionResult)
+            
+            if (resolutionPlan && resolutionPlan.actions.length > 0) {
+              // 执行解决方案并更新位置
+              const resolutionResult = await this.collisionManager.executeResolutionPlan(resolutionPlan)
+              
+              if (resolutionResult.success) {
+                // 更新位置数据
+                nodePositions = this.updateNodePositionsFromGraph(nodes, nodePositions)
+                edgePositions = this.calculateOptimizedEdgePositions(edges, nodePositions)
+                previewLinePositions = this.calculateOptimizedPreviewLinePositions(previewLines, nodePositions)
+                dragPointPositions = this.calculateOptimizedDragPointPositions(previewLines, nodePositions)
+                
+                console.log(`✅ [智能布局] 第 ${collisionResolutionCount} 次碰撞解决成功`)
+              } else {
+                console.warn(`⚠️ [智能布局] 第 ${collisionResolutionCount} 次碰撞解决失败`)
+                hasCollisions = false // 停止迭代
+              }
+            } else {
+              console.log(`ℹ️ [智能布局] 第 ${collisionResolutionCount} 次无法生成解决方案`)
+              hasCollisions = false // 停止迭代
+            }
+          } else {
+            console.log(`✅ [智能布局] 第 ${collisionResolutionCount} 次检测无碰撞`)
+            hasCollisions = false
+          }
+        }
+        
+        const collisionTime = performance.now() - collisionStartTime
+        console.log(`📊 [智能布局] 碰撞检测和解决完成，耗时: ${collisionTime.toFixed(2)}ms，迭代次数: ${collisionResolutionCount}`)
+      }
 
       const result = {
         nodePositions,
@@ -78,7 +170,9 @@ export class IntelligentStructuredLayoutEngine {
         layoutMetrics: {
           layoutTime: performance.now() - startTime,
           nodesProcessed: nodes.length,
-          previewLinesProcessed: previewLines.length
+          previewLinesProcessed: previewLines.length,
+          collisionDetectionEnabled: this.layoutConfig.enableCollisionDetection,
+          collisionResolutionIterations: this.layoutConfig.enableCollisionDetection ? collisionResolutionCount : 0
         }
       }
 
@@ -516,6 +610,48 @@ export class IntelligentStructuredLayoutEngine {
       ...this.performanceMetrics,
       coordinateManagerStatus: this.coordinateManager.getStatus()
     }
+  }
+
+  /**
+   * 应用位置到图形中（临时，用于碰撞检测）
+   */
+  applyPositionsToGraph(nodePositions, edgePositions, previewLinePositions, dragPointPositions) {
+    // 应用节点位置
+    Object.entries(nodePositions).forEach(([nodeId, position]) => {
+      const node = this.graph.getCellById(nodeId)
+      if (node && node.isNode()) {
+        node.setPosition(position.x, position.y)
+      }
+    })
+    
+    // 应用拖拽点位置
+    Object.entries(dragPointPositions).forEach(([dragPointId, position]) => {
+      const dragPoint = this.graph.getCellById(dragPointId)
+      if (dragPoint && dragPoint.isNode()) {
+        const finalPosition = position.correctedPosition || position.layoutPosition || position
+        dragPoint.setPosition(finalPosition.x, finalPosition.y)
+      }
+    })
+  }
+
+  /**
+   * 从图形中更新节点位置数据
+   */
+  updateNodePositionsFromGraph(nodes, originalPositions) {
+    const updatedPositions = { ...originalPositions }
+    
+    nodes.forEach(node => {
+      const graphNode = this.graph.getCellById(node.id)
+      if (graphNode && graphNode.isNode()) {
+        const position = graphNode.getPosition()
+        updatedPositions[node.id] = {
+          x: position.x,
+          y: position.y
+        }
+      }
+    })
+    
+    return updatedPositions
   }
 }
 

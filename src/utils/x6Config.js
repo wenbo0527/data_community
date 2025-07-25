@@ -86,28 +86,17 @@ export const getBaseGraphConfig = (container) => ({
   }
 })
 
-// 连接配置 - 高优先级优化
+// 连接配置 - 智能最短路径优化
 export const getConnectingConfig = () => ({
   router: {
-    name: 'orth',  // 使用更稳定的orth路由器
+    name: 'orth',  // 使用orth路由器自动计算最短路径
     args: {
-      padding: 15,    // 减少padding，避免过度绕行
-      step: 10,       // 减少step，使路径更精确
+      padding: 15,    // 适中的padding，平衡避障和路径长度
+      step: 10,       // 精确的step，确保路径计算准确
       startDirections: ['bottom'],  // 从底部端口出发
       endDirections: ['top'],       // 到顶部端口结束
-      // 添加自定义回退路由，确保在复杂情况下也能生成合理路径
-      fallbackRoute: (vertices, options) => {
-        if (vertices.length < 2) return vertices
-        const sourcePoint = vertices[0]
-        const targetPoint = vertices[vertices.length - 1]
-        const midY = sourcePoint.y + (targetPoint.y - sourcePoint.y) / 2
-        return [
-          sourcePoint,
-          { x: sourcePoint.x, y: midY },
-          { x: targetPoint.x, y: midY },
-          targetPoint
-        ]
-      }
+      // 🚀 [智能路径] 移除fallbackRoute，完全依赖orth路由器的自动最短路径算法
+      // orth路由器内置了最短路径计算，无需手动干预
     }
   },
   connector: {

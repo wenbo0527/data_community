@@ -1,213 +1,205 @@
 <template>
   <div class="task-editor-page">
-    <div class="page-header">
-      <a-breadcrumb>
-        <a-breadcrumb-item>营销中心</a-breadcrumb-item>
-        <a-breadcrumb-item>营销任务</a-breadcrumb-item>
-        <a-breadcrumb-item>{{ breadcrumbText }}</a-breadcrumb-item>
-      </a-breadcrumb>
-      <div class="header-content">
-        <h1>{{ pageTitle }}</h1>
-        <div class="header-actions" v-if="mode === 'view'">
-          <a-space>
-            <a-button type="primary" @click="enterEditMode">
-              <template #icon>
-                <icon-edit />
-              </template>
-              编辑
-            </a-button>
-            <a-dropdown v-if="taskVersions.length > 1">
-              <a-button>
-                版本 v{{ currentVersion }}
-                <icon-down />
+    <div class="page-container">
+      <div class="page-header">
+        <a-breadcrumb>
+          <a-breadcrumb-item>营销中心</a-breadcrumb-item>
+          <a-breadcrumb-item>营销任务</a-breadcrumb-item>
+          <a-breadcrumb-item>{{ breadcrumbText }}</a-breadcrumb-item>
+        </a-breadcrumb>
+        <div class="header-content">
+          <h1>{{ pageTitle }}</h1>
+          <div class="header-actions" v-if="mode === 'view'">
+            <a-space>
+              <a-button type="primary" @click="enterEditMode">
+                <template #icon>
+                  <icon-edit />
+                </template>
+                编辑
               </a-button>
-              <template #content>
-                <a-doption v-for="version in taskVersions" :key="version.version"
-                  @click="switchVersion(version.version)">
-                  <div class="version-item">
-                    <span>v{{ version.version }}</span>
-                    <a-tag v-if="version.isActive" color="green" size="small">运行中</a-tag>
-                    <a-tag v-if="version.version === currentVersion" color="blue" size="small">当前</a-tag>
-                  </div>
-                </a-doption>
-              </template>
-            </a-dropdown>
-          </a-space>
+              <a-dropdown v-if="taskVersions.length > 1">
+                <a-button>
+                  版本 v{{ currentVersion }}
+                  <icon-down />
+                </a-button>
+                <template #content>
+                  <a-doption v-for="version in taskVersions" :key="version.version"
+                    @click="switchVersion(version.version)">
+                    <div class="version-item">
+                      <span>v{{ version.version }}</span>
+                      <a-tag v-if="version.isActive" color="green" size="small">运行中</a-tag>
+                      <a-tag v-if="version.version === currentVersion" color="blue" size="small">当前</a-tag>
+                    </div>
+                  </a-doption>
+                </template>
+              </a-dropdown>
+            </a-space>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="page-content">
-      <!-- 基础信息区域 -->
-      <a-card title="基础信息" class="basic-info-card">
-        <a-form ref="formRef" :model="taskForm" layout="vertical">
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="任务名称" field="name" required>
-                <a-input v-model="taskForm.name" placeholder="请输入任务名称" :readonly="mode === 'view'"
-                  @change="handleFormChange" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="任务说明" field="description" required>
-                <a-input v-model="taskForm.description" placeholder="请输入任务说明" :readonly="mode === 'view'"
-                  @change="handleFormChange" />
-              </a-form-item>
-            </a-col>
-          </a-row>
+      <div class="page-content">
+        <!-- 基础信息区域 -->
+        <a-card title="基础信息" class="basic-info-card">
+          <a-form ref="formRef" :model="taskForm" layout="vertical">
+            <a-row :gutter="16">
+              <a-col :span="12">
+                <a-form-item label="任务名称" field="name" required>
+                  <a-input v-model="taskForm.name" placeholder="请输入任务名称" :readonly="mode === 'view'"
+                    @change="handleFormChange" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="任务说明" field="description">
+                  <a-input v-model="taskForm.description" placeholder="请输入任务说明" :readonly="mode === 'view'"
+                    @change="handleFormChange" />
+                </a-form-item>
+              </a-col>
+            </a-row>
 
-          <!-- 任务状态和版本信息 -->
-          <a-row :gutter="16" v-if="mode !== 'create'">
-            <a-col :span="8">
-              <a-form-item label="任务状态">
-                <a-tag :color="getStatusColor(taskData.status)" size="large">
-                  {{ getStatusText(taskData.status) }}
-                </a-tag>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="当前版本">
-                <span class="version-info">v{{ currentVersion }}</span>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="创建时间">
-                <span>{{ taskData.createTime }}</span>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <!-- 操作按钮 - 仅在编辑和新建模式显示 -->
-          <a-row :gutter="16" style="margin-top: 24px;" v-if="mode !== 'view'">
-            <a-col :span="24" style="text-align: right;">
-              <a-space size="large">
-                <a-button @click="goBack">
-                  <template #icon>
-                    <icon-arrow-left />
-                  </template>
-                  返回
-                </a-button>
-                <a-button type="primary" size="large" :loading="isSaving" @click="saveTask">
-                  <template #icon>
-                    <icon-save />
-                  </template>
-                  {{ isSaving ? '保存中...' : '保存' }}
-                </a-button>
-                <a-button type="primary" status="success" size="large" :loading="isPublishing" @click="publishTask">
-                  <template #icon>
-                    <icon-send />
-                  </template>
-                  {{ isPublishing ? '发布中...' : '发布' }}
-                </a-button>
-                <a-button @click="cancelEdit" v-if="mode === 'edit'">
-                  取消编辑
-                </a-button>
-                <div class="task-status" v-if="taskStatus">
-                  <a-tag :color="taskStatus === 'published' ? 'green' : 'blue'">
-                    {{ taskStatus === 'published' ? '已发布' : '草稿' }}
+            <!-- 任务状态和版本信息 -->
+            <a-row :gutter="16" v-if="mode !== 'create'">
+              <a-col :span="8">
+                <a-form-item label="任务状态">
+                  <a-tag :color="getStatusColor(taskData.status)" size="large">
+                    {{ getStatusText(taskData.status) }}
                   </a-tag>
-                </div>
-              </a-space>
-            </a-col>
-          </a-row>
-        </a-form>
-      </a-card>
+                </a-form-item>
+              </a-col>
+              <a-col :span="8">
+                <a-form-item label="当前版本">
+                  <span class="version-info">v{{ currentVersion }}</span>
+                </a-form-item>
+              </a-col>
+              <a-col :span="8">
+                <a-form-item label="创建时间">
+                  <span>{{ taskData.createTime }}</span>
+                </a-form-item>
+              </a-col>
+            </a-row>
 
-      <!-- 任务流程设计区域 -->
-      <a-card title="任务流程设计" class="flow-design-card">
-        <div class="flow-design-container">
-          <!-- 左侧节点面板 - 仅在编辑和新建模式显示 -->
-          <div class="node-panel" v-if="mode !== 'view'">
-            <div class="node-panel-header">
-              <a-input-search v-model="searchKeyword" placeholder="搜索节点" size="small" @search="handleSearch" />
+            <!-- 操作按钮 - 仅在编辑和新建模式显示 -->
+            <a-row :gutter="16" style="margin-top: 24px;" v-if="mode !== 'view'">
+              <a-col :span="24" style="text-align: right;">
+                <a-space size="large">
+                  <a-button @click="goBack">
+                    <template #icon>
+                      <icon-arrow-left />
+                    </template>
+                    返回
+                  </a-button>
+                  <a-button type="primary" size="large" :loading="isSaving" @click="saveTask">
+                    <template #icon>
+                      <icon-save />
+                    </template>
+                    {{ isSaving ? '保存中...' : '保存' }}
+                  </a-button>
+                  <a-button type="primary" status="success" size="large" :loading="isPublishing" @click="publishTask">
+                    <template #icon>
+                      <icon-send />
+                    </template>
+                    {{ isPublishing ? '发布中...' : '发布' }}
+                  </a-button>
+                  <a-button @click="cancelEdit" v-if="mode === 'edit'">
+                    取消编辑
+                  </a-button>
+                  <div class="task-status" v-if="taskStatus">
+                    <a-tag :color="taskStatus === 'published' ? 'green' : 'blue'">
+                      {{ taskStatus === 'published' ? '已发布' : '草稿' }}
+                    </a-tag>
+                  </div>
+                </a-space>
+              </a-col>
+            </a-row>
+          </a-form>
+        </a-card>
+
+        <!-- 任务流程设计区域 -->
+        <a-card title="任务流程设计" class="flow-design-card">
+          <div class="flow-design-container">
+            <!-- 左侧节点面板 - 仅在编辑和新建模式显示 -->
+            <div class="node-panel" v-if="mode !== 'view'">
+              <div class="node-panel-header">
+                <a-input-search v-model="searchKeyword" placeholder="搜索节点" size="small" @search="handleSearch" />
+              </div>
+              <div class="node-categories">
+                <div class="node-category">
+                  <div class="category-title">
+                    <icon-branch class="category-icon" />
+                    分流节点
+                  </div>
+                  <div class="node-list">
+                    <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'audience-split')">
+                      <icon-user-group class="node-icon" />
+                      <span>人群分流</span>
+                    </div>
+                    <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'event-split')">
+                      <icon-thunderbolt class="node-icon" />
+                      <span>事件分流</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="node-category">
+                  <div class="category-title">
+                    <icon-send class="category-icon" />
+                    触达节点
+                  </div>
+                  <div class="node-list">
+                    <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'sms')">
+                      <icon-message class="node-icon" />
+                      <span>短信</span>
+                    </div>
+                    <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'ai-call')">
+                      <icon-robot class="node-icon" />
+                      <span>AI外呼</span>
+                    </div>
+                    <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'manual-call')">
+                      <icon-phone class="node-icon" />
+                      <span>人工外呼</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="node-category">
+                  <div class="category-title">
+                    <icon-experiment class="category-icon" />
+                    实验节点
+                  </div>
+                  <div class="node-list">
+                    <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'ab-test')">
+                      <icon-swap class="node-icon" />
+                      <span>AB实验</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="node-category">
+                  <div class="category-title">
+                    <icon-settings class="category-icon" />
+                    流程节点
+                  </div>
+                  <div class="node-list">
+                    <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'wait')">
+                      <icon-clock-circle class="node-icon" />
+                      <span>等待</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="node-categories">
-              <div class="node-category">
-                <div class="category-title">
-                  <icon-branch class="category-icon" />
-                  分流节点
-                </div>
-                <div class="node-list">
-                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'audience-split')">
-                    <icon-user-group class="node-icon" />
-                    <span>人群分流</span>
-                  </div>
-                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'event-split')">
-                    <icon-thunderbolt class="node-icon" />
-                    <span>事件分流</span>
-                  </div>
-                </div>
-              </div>
 
-              <div class="node-category">
-                <div class="category-title">
-                  <icon-send class="category-icon" />
-                  触达节点
-                </div>
-                <div class="node-list">
-                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'sms')">
-                    <icon-message class="node-icon" />
-                    <span>短信</span>
-                  </div>
-                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'ai-call')">
-                    <icon-robot class="node-icon" />
-                    <span>AI外呼</span>
-                  </div>
-                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'manual-call')">
-                    <icon-phone class="node-icon" />
-                    <span>人工外呼</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="node-category">
-                <div class="category-title">
-                  <icon-experiment class="category-icon" />
-                  实验节点
-                </div>
-                <div class="node-list">
-                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'ab-test')">
-                    <icon-swap class="node-icon" />
-                    <span>AB实验</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="node-category">
-                <div class="category-title">
-                  <icon-settings class="category-icon" />
-                  流程节点
-                </div>
-                <div class="node-list">
-                  <div class="node-item" draggable="true" @dragstart="handleNodeDragStart($event, 'wait')">
-                    <icon-clock-circle class="node-icon" />
-                    <span>等待</span>
-                  </div>
-                </div>
-              </div>
+            <!-- 画布区域 -->
+            <div class="canvas-area" :class="{ 'full-width': mode === 'view' }">
+              <TaskFlowCanvas ref="canvasRef" :auto-add-start-node="mode !== 'view'" :readonly="mode === 'view'"
+                :initial-nodes="taskForm.nodes" :initial-connections="taskForm.connections" @drop="handleCanvasDrop"
+                @dragover="handleCanvasDragOver" @canvas-ready="handleCanvasReady" @node-created="handleNodeCreated"
+                @node-moved="handleNodeMoved" @node-selected="handleNodeSelected" @node-updated="handleNodeUpdated"
+                @node-deleted="handleNodeDeleted" @connection-created="handleConnectionCreated" />
             </div>
           </div>
-
-          <!-- 画布区域 -->
-          <div class="canvas-area" :class="{ 'full-width': mode === 'view' }">
-            <TaskFlowCanvas ref="canvasRef" :auto-add-start-node="mode !== 'view'" :readonly="mode === 'view'"
-              :initial-nodes="taskForm.nodes" :initial-connections="taskForm.connections" @drop="handleCanvasDrop"
-              @dragover="handleCanvasDragOver" @canvas-ready="handleCanvasReady" @node-created="handleNodeCreated"
-              @node-moved="handleNodeMoved" @node-selected="handleNodeSelected" @node-updated="handleNodeUpdated"
-              @node-deleted="handleNodeDeleted" @connection-created="handleConnectionCreated" />
-          </div>
-        </div>
-      </a-card>
-    </div>
-
-    <!-- 页面底部操作栏 -->
-    <div class="page-footer">
-      <a-space>
-        <a-button @click="goBack">返回</a-button>
-        <template v-if="mode === 'view'">
-          <a-button type="primary" @click="enterEditMode">编辑任务</a-button>
-        </template>
-      </a-space>
+        </a-card>
+      </div>
     </div>
   </div>
 </template>
@@ -224,6 +216,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import TaskFlowCanvas from './components/TaskFlowCanvas.vue'
 import { validateForSave, validateForPublish, formatPublishValidationMessage } from '../../../utils/enhancedCanvasValidation.js'
+import { TaskStorage } from '../../../utils/taskStorage.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -291,14 +284,24 @@ const initPage = async () => {
 // 加载任务数据
 const loadTaskData = async () => {
   try {
-    // 模拟API调用 - 根据任务ID获取对应的数据
+    console.log('🔄 [TaskEditor] 开始加载任务数据:', { taskId: taskId.value, version: currentVersion.value })
+    
+    // 首先尝试从本地存储加载
+    const storedTask = TaskStorage.getTaskById(parseInt(taskId.value))
+    
     let mockTaskData = {}
-
-    if (taskId.value === '1') {
-      // 消费贷促实名认证活动 - 完整的画布流程
+    
+    if (storedTask) {
+      // 使用本地存储的数据
+      console.log('✅ [TaskEditor] 从本地存储加载任务数据:', storedTask)
+      mockTaskData = storedTask
+    } else if (taskId.value === '1') {
+      // 保留原有的示例数据作为演示
+      console.log('📋 [TaskEditor] 使用示例数据 (ID=1)')
       mockTaskData = {
         id: taskId.value,
         name: '消费贷促实名认证活动',
+        description: '通过多渠道触达提升用户实名认证率',
         type: 'marketing',
         status: 'running',
         createTime: '2024-01-15 10:30:00',
@@ -308,8 +311,8 @@ const loadTaskData = async () => {
             {
               id: 'start',
               type: 'start',
-              x: 300,
-              y: 100,
+              x: 400,
+              y: 80,
               label: '开始',
               config: {
                 name: '开始节点',
@@ -317,25 +320,53 @@ const loadTaskData = async () => {
               }
             },
             {
-              id: 'crowd-split',
-              type: 'crowd-split',
-              x: 300,
-              y: 220,
-              label: '人群分流',
+              id: 'user-filter',
+              type: 'audience-split',
+              x: 400,
+              y: 200,
+              label: '用户筛选',
               config: {
-                name: '人群分流',
-                description: '根据用户黑名单状态进行分流',
-                conditions: [
-                  { name: '命中黑名单', expression: 'user.isBlacklisted == true' },
-                  { name: '未命中黑名单', expression: 'user.isBlacklisted == false' }
+                name: '用户筛选',
+                description: '筛选符合条件的目标用户',
+                branchCount: 1,
+                branches: [
+                  { name: '符合条件', isDefault: false },
+                  { name: '不符合条件', isDefault: true }
+                ]
+              }
+            },
+            {
+              id: 'filter-end',
+              type: 'end',
+              x: 200,
+              y: 320,
+              label: '筛选结束',
+              config: {
+                name: '不符合条件结束',
+                description: '不符合筛选条件的用户结束流程'
+              }
+            },
+            {
+              id: 'blacklist-check',
+              type: 'audience-split',
+              x: 600,
+              y: 320,
+              label: '黑名单检查',
+              config: {
+                name: '黑名单检查',
+                description: '检查用户是否在黑名单中',
+                branchCount: 1,
+                branches: [
+                  { name: '未命中黑名单', isDefault: false },
+                  { name: '命中黑名单', isDefault: true }
                 ]
               }
             },
             {
               id: 'blacklist-end',
               type: 'end',
-              x: 150,
-              y: 340,
+              x: 800,
+              y: 440,
               label: '黑名单结束',
               config: {
                 name: '黑名单用户结束',
@@ -343,55 +374,16 @@ const loadTaskData = async () => {
               }
             },
             {
-              id: 'ab-test',
-              type: 'ab-test',
-              x: 450,
-              y: 340,
-              label: 'AB实验',
+              id: 'sms-notification',
+              type: 'sms',
+              x: 400,
+              y: 440,
+              label: '短信通知',
               config: {
-                name: 'AB实验分组',
-                description: '对未命中黑名单的用户进行AB实验分组',
-                groups: [
-                  { name: 'A组', ratio: 50, description: '电销策略A' },
-                  { name: 'B组', ratio: 50, description: '电销策略B' }
-                ]
-              }
-            },
-            {
-              id: 'manual-call-1',
-              type: 'manual-call',
-              x: 350,
-              y: 460,
-              label: '人工电销A组',
-              config: {
-                name: '人工电销A组',
-                description: '针对A组用户的电销策略',
-                callScript: '促实名认证话术A版本',
-                maxAttempts: 3
-              }
-            },
-            {
-              id: 'manual-call-2',
-              type: 'manual-call',
-              x: 550,
-              y: 460,
-              label: '人工电销B组',
-              config: {
-                name: '人工电销B组',
-                description: '针对B组用户的电销策略',
-                callScript: '促实名认证话术B版本',
-                maxAttempts: 3
-              }
-            },
-            {
-              id: 'end',
-              type: 'end',
-              x: 450,
-              y: 580,
-              label: '结束',
-              config: {
-                name: '流程结束',
-                description: '营销活动流程结束'
+                name: '实名认证提醒短信',
+                description: '发送实名认证提醒短信',
+                template: '【消费贷】尊敬的用户，请完成实名认证以享受更优惠的贷款利率。',
+                sendTime: 'immediate'
               }
             }
           ],
@@ -399,56 +391,46 @@ const loadTaskData = async () => {
             {
               id: 'conn1',
               source: 'start',
-              target: 'crowd-split',
+              target: 'user-filter',
               label: ''
             },
             {
               id: 'conn2',
-              source: 'crowd-split',
+              source: 'user-filter',
+              target: 'filter-end',
+              label: '不符合条件'
+            },
+            {
+              id: 'conn3',
+              source: 'user-filter',
+              target: 'blacklist-check',
+              label: '符合条件'
+            },
+            {
+              id: 'conn4',
+              source: 'blacklist-check',
               target: 'blacklist-end',
               label: '命中黑名单'
             },
             {
-              id: 'conn3',
-              source: 'crowd-split',
-              target: 'ab-test',
-              label: '未命中黑名单'
-            },
-            {
-              id: 'conn4',
-              source: 'ab-test',
-              target: 'manual-call-1',
-              label: 'A组(50%)'
-            },
-            {
               id: 'conn5',
-              source: 'ab-test',
-              target: 'manual-call-2',
-              label: 'B组(50%)'
-            },
-            {
-              id: 'conn6',
-              source: 'manual-call-1',
-              target: 'end',
-              label: ''
-            },
-            {
-              id: 'conn7',
-              source: 'manual-call-2',
-              target: 'end',
-              label: ''
+              source: 'blacklist-check',
+              target: 'sms-notification',
+              label: '未命中黑名单'
             }
           ]
         }
       }
     } else {
       // 其他任务的默认数据
+      console.log('📋 [TaskEditor] 使用默认空数据')
       mockTaskData = {
         id: taskId.value,
-        name: '消费贷营销任务',
+        name: '新建营销任务',
+        description: '',
         type: 'marketing',
         status: 'draft',
-        createTime: '2024-01-15 10:30:00',
+        createTime: new Date().toLocaleString('zh-CN'),
         version: currentVersion.value,
         canvasData: {
           nodes: [],
@@ -457,12 +439,24 @@ const loadTaskData = async () => {
       }
     }
 
+    // 更新任务数据和表单
     taskData.value = mockTaskData
     Object.assign(taskForm, {
+      name: mockTaskData.name || '',
+      description: mockTaskData.description || '',
+      type: mockTaskData.type || '',
+      nodes: mockTaskData.canvasData?.nodes || [],
+      connections: mockTaskData.canvasData?.connections || []
+    })
+
+    // 设置任务状态
+    taskStatus.value = mockTaskData.status || 'draft'
+
+    console.log('✅ [TaskEditor] 任务数据加载完成:', {
+      id: mockTaskData.id,
       name: mockTaskData.name,
-      type: mockTaskData.type,
-      nodes: mockTaskData.canvasData.nodes,
-      connections: mockTaskData.canvasData.connections
+      nodesCount: mockTaskData.canvasData?.nodes?.length || 0,
+      connectionsCount: mockTaskData.canvasData?.connections?.length || 0
     })
 
     // 加载版本列表
@@ -479,7 +473,7 @@ const loadTaskData = async () => {
     }, 100)
 
   } catch (error) {
-    console.error('加载任务数据失败:', error)
+    console.error('❌ [TaskEditor] 加载任务数据失败:', error)
     Message.error('加载任务数据失败')
   }
 }
@@ -626,13 +620,19 @@ const saveTask = async () => {
       Message.error('请输入任务名称')
       return
     }
-    if (!taskForm.type) {
-      Message.error('请选择任务类型')
-      return
-    }
+
+    console.log('💾 [TaskEditor] 开始保存任务:', { 
+      id: taskId.value, 
+      name: taskForm.name,
+      mode: mode.value 
+    })
 
     // 获取画布数据
     const canvasData = canvasRef.value?.getCanvasData()
+    console.log('📊 [TaskEditor] 获取画布数据:', {
+      nodesCount: canvasData?.nodes?.length || 0,
+      connectionsCount: canvasData?.connections?.length || 0
+    })
 
     // 基础校验（对于保存，只做轻量级校验）
     const validationResult = validateForSave({
@@ -645,28 +645,58 @@ const saveTask = async () => {
       Message.warning(`保存成功，但存在问题：${validationResult.errors.join(', ')}`)
     }
 
-    const taskData = {
-      ...taskForm,
-      canvasData,
-      status: 'draft',
-      updateTime: new Date().toLocaleString('zh-CN'),
-      creator: '当前用户'
+    // 准备保存的数据
+    const saveData = {
+      name: taskForm.name,
+      description: taskForm.description || '',
+      type: taskForm.type || 'marketing',
+      status: taskStatus.value || 'draft',
+      canvasData: canvasData || { nodes: [], connections: [] },
+      updateTime: new Date().toLocaleString('zh-CN')
     }
 
-    console.log('[TaskEditor] 保存任务草稿:', taskData)
+    let savedTask
+    if (mode.value === 'create') {
+      // 创建新任务
+      savedTask = TaskStorage.createTask(saveData)
+      console.log('✅ [TaskEditor] 创建新任务成功:', savedTask)
+      
+      // 更新路由到编辑模式
+      router.replace({
+        path: '/marketing/tasks/editor',
+        query: { mode: 'edit', id: savedTask.id }
+      })
+      
+      // 更新当前状态
+      taskId.value = savedTask.id.toString()
+      mode.value = 'edit'
+      
+    } else {
+      // 更新现有任务
+      savedTask = TaskStorage.updateTask(parseInt(taskId.value), saveData)
+      console.log('✅ [TaskEditor] 更新任务成功:', savedTask)
+    }
+
+    // 更新本地任务数据
+    taskData.value = savedTask
+    taskStatus.value = savedTask.status
+
+    console.log('[TaskEditor] 保存任务草稿:', savedTask)
 
     // 模拟保存延迟
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    // 保存成功，状态仍为草稿
-    taskStatus.value = 'draft'
     Message.success('保存成功')
+    
+    // 显示存储统计
+    const stats = TaskStorage.getStorageStats()
+    console.log('📈 [TaskEditor] 存储统计:', stats)
 
     // 标记为已保存
     hasUnsavedChanges.value = false
 
   } catch (error) {
-    console.error('[TaskEditor] 保存任务失败:', error)
+    console.error('❌ [TaskEditor] 保存任务失败:', error)
     Message.error('保存失败，请重试')
   } finally {
     isSaving.value = false
@@ -683,10 +713,12 @@ const publishTask = async () => {
       Message.error('请输入任务名称')
       return
     }
-    if (!taskForm.type) {
-      Message.error('请选择任务类型')
-      return
-    }
+
+    console.log('🚀 [TaskEditor] 开始发布任务:', { 
+      id: taskId.value, 
+      name: taskForm.name,
+      mode: mode.value 
+    })
 
     // 获取画布数据
     const canvasData = canvasRef.value?.getCanvasData()
@@ -694,6 +726,11 @@ const publishTask = async () => {
       Message.error('无法获取画布数据')
       return
     }
+
+    console.log('📊 [TaskEditor] 获取画布数据:', {
+      nodesCount: canvasData?.nodes?.length || 0,
+      connectionsCount: canvasData?.connections?.length || 0
+    })
 
     // 获取预览线信息（用于自动补充结束节点）
     let previewLines = []
@@ -823,22 +860,54 @@ const publishTask = async () => {
       }
     }
 
-    const taskData = {
-      ...taskForm,
-      canvasData: validationResult.fixedData?.canvasData || canvasData,
+    // 准备发布的数据
+    const publishData = {
+      name: taskForm.name,
+      description: taskForm.description || '',
+      type: taskForm.type || 'marketing',
       status: 'published',
+      canvasData: validationResult.fixedData?.canvasData || canvasData,
       publishTime: new Date().toLocaleString('zh-CN'),
-      creator: '当前用户'
+      updateTime: new Date().toLocaleString('zh-CN')
     }
 
-    console.log('[TaskEditor] 发布任务:', taskData)
+    let publishedTask
+    if (mode.value === 'create') {
+      // 创建并发布新任务
+      publishedTask = TaskStorage.createTask(publishData)
+      console.log('✅ [TaskEditor] 创建并发布新任务成功:', publishedTask)
+      
+      // 更新路由到编辑模式
+      router.replace({
+        path: '/marketing/tasks/editor',
+        query: { mode: 'edit', id: publishedTask.id }
+      })
+      
+      // 更新当前状态
+      taskId.value = publishedTask.id.toString()
+      mode.value = 'edit'
+      
+    } else {
+      // 更新并发布现有任务
+      publishedTask = TaskStorage.updateTask(parseInt(taskId.value), publishData)
+      console.log('✅ [TaskEditor] 更新并发布任务成功:', publishedTask)
+    }
+
+    // 更新本地任务数据
+    taskData.value = publishedTask
+    taskStatus.value = publishedTask.status
+
+    console.log('[TaskEditor] 发布任务:', publishedTask)
 
     // 模拟发布延迟
     await new Promise(resolve => setTimeout(resolve, 1500))
 
     // 发布成功
-    taskStatus.value = 'published'
     Message.success('发布成功')
+    
+    // 显示存储统计
+    const stats = TaskStorage.getStorageStats()
+    console.log('📈 [TaskEditor] 存储统计:', stats)
 
     // 标记为已保存
     hasUnsavedChanges.value = false
@@ -860,7 +929,7 @@ const publishTask = async () => {
     }
 
   } catch (error) {
-    console.error('[TaskEditor] 发布任务失败:', error)
+    console.error('❌ [TaskEditor] 发布任务失败:', error)
     Message.error('发布失败，请重试')
   } finally {
     isPublishing.value = false
@@ -884,13 +953,47 @@ watch(() => route.query, () => {
 
 <style scoped>
 .task-editor-page {
-  padding: 24px;
-  background-color: #f5f5f5;
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  /* 自定义滚动条样式 */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.page-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.page-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.page-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  border: 1px solid #f1f1f1;
+}
+
+.page-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .page-header {
-  margin-bottom: 24px;
+  flex-shrink: 0;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e5e6eb;
 }
 
 .header-content {
@@ -904,6 +1007,7 @@ watch(() => route.query, () => {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
+  color: #1d2129;
 }
 
 .version-item {
@@ -912,112 +1016,145 @@ watch(() => route.query, () => {
   gap: 8px;
 }
 
-.basic-info-card {
-  margin-bottom: 24px;
-}
-
-.flow-design-card {
-  margin-bottom: 24px;
-}
-
-.flow-design-container {
-  display: flex;
-  height: 600px;
-  border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-/* 左侧节点面板 */
-.node-panel {
-  width: 280px;
-  background: #fafbfc;
-  border-right: 1px solid #e5e6eb;
+.page-content {
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+  background: #f7f8fa;
   display: flex;
   flex-direction: column;
 }
 
-.node-panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #e5e6eb;
-  background: white;
+.basic-info-card {
+  margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
-.node-categories {
+.version-info {
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.task-status {
+  display: flex;
+  align-items: center;
+}
+
+.flow-design-card {
   flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-design-card :deep(.arco-card-body) {
+  flex: 1;
+  min-height: 0;
+  padding: 16px;
+}
+
+.flow-design-container {
+  display: flex;
+  height: 100%;
+  gap: 16px;
+  min-height: 0;
+}
+
+.node-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  padding: 16px;
   overflow-y: auto;
 }
 
+.node-panel-header {
+  margin-bottom: 16px;
+}
+
+.node-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .node-category {
-  margin-bottom: 8px;
+  border-bottom: 1px solid #f2f3f5;
+  padding-bottom: 16px;
+}
+
+.node-category:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .category-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
   font-weight: 500;
   color: #1d2129;
-  background: #f2f3f5;
-  border-bottom: 1px solid #e5e6eb;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
 .category-icon {
-  font-size: 14px;
-  color: #86909c;
+  font-size: 16px;
+  color: #4080ff;
 }
 
 .node-list {
-  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .node-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 24px;
+  padding: 8px 12px;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 4px;
   cursor: grab;
   transition: all 0.2s;
-  user-select: none;
+  font-size: 13px;
 }
 
 .node-item:hover {
   background: #e8f4ff;
-  color: #165dff;
+  border-color: #4080ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(64, 128, 255, 0.15);
 }
 
 .node-item:active {
   cursor: grabbing;
+  transform: translateY(0);
 }
 
 .node-icon {
   font-size: 14px;
-  color: #86909c;
+  color: #4080ff;
 }
 
-.node-item:hover .node-icon {
-  color: #165dff;
-}
-
-.node-item span {
-  font-size: 13px;
-}
-
-/* 右侧画布区域 */
 .canvas-area {
   flex: 1;
-  background: white;
-  position: relative;
+  min-height: 0;
+  height: 100%;
   overflow: auto;
-  /* 添加滚动条 */
+  background: #fff;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  position: relative;
+  /* 自定义滚动条样式 */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
-.canvas-area.full-width {
-  width: 100%;
-}
-
-/* 滚动条样式优化 */
 .canvas-area::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -1031,60 +1168,38 @@ watch(() => route.query, () => {
 .canvas-area::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 4px;
+  border: 1px solid #f1f1f1;
 }
 
 .canvas-area::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
 
-.page-footer {
-  background: white;
-  border-top: 1px solid #e5e6eb;
-  padding: 16px 24px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.version-info {
-  font-weight: 500;
-  color: #1890ff;
-}
-
-.flow-design-container {
-  display: flex;
-  height: 600px;
-  gap: 16px;
-}
-
-.node-panel {
-  width: 280px;
-  background: #fff;
-  border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.canvas-area {
-  flex: 1;
-  background: #fff;
-  border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  position: relative;
-}
-
 .canvas-area.full-width {
   width: 100%;
 }
 
-.page-footer {
-  margin-top: 24px;
-  padding: 16px 0;
-  border-top: 1px solid #e5e6eb;
-  background: #fff;
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .node-panel {
+    width: 240px;
+  }
 }
 
-/* 其他样式保持不变... */
+@media (max-width: 768px) {
+  .flow-design-container {
+    flex-direction: column;
+  }
+  
+  .node-panel {
+    width: 100%;
+    height: 200px;
+    order: 2;
+  }
+  
+  .canvas-area {
+    order: 1;
+    height: 400px;
+  }
+}
 </style>

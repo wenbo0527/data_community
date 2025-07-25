@@ -2626,15 +2626,15 @@ export class UnifiedPreviewLineManager {
         })
       }
       
-      // 使用orth路由器
+      // 使用orth路由器 - 智能最短路径优化
       const orthConfig = {
         name: 'orth',
         args: {
           padding: 15, // 统一边距
           step: 10, // 统一步长
           startDirections: ['bottom'],  // 确保从底部端口出发
-          endDirections: ['top'],       // 确保到顶部端口结束
-          ...routerConfig.orthArgs
+          endDirections: ['top']        // 确保到顶部端口结束
+          // 🚀 [智能路径] 移除手动干预，完全依赖orth路由器的自动最短路径算法
         }
       }
       
