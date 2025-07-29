@@ -5,8 +5,9 @@
  */
 
 export class UnifiedStructuredLayoutEngine {
-  constructor(graph, options = {}) {
+  constructor(graph, options = {}, previewLineManager = null) {
     this.graph = graph
+    this.previewLineManager = previewLineManager // 🎯 关键：接收预览线管理器实例
     this.options = {
       // 层级配置
       layer: {
@@ -109,7 +110,7 @@ export class UnifiedStructuredLayoutEngine {
       const nodeId = node.id || node.getId()
       const nodeData = node.getData() || {}
       return !nodeId.includes('hint') && 
-             !nodeData.isDragHint && 
+             !nodeData.isEndpoint && 
              !nodeData.isPreview &&
              !nodeId.startsWith('hint_')
     })
@@ -149,52 +150,84 @@ export class UnifiedStructuredLayoutEngine {
   async extractPreviewEndpoints() {
     const endpointNodes = []
     
-    // 从全局预览线管理器获取预览线信息
-    const previewLineManager = window.unifiedPreviewLineManager || 
+    console.log('🔍 [预览线提取] 开始提取预览线endpoint并校验连接状态')
+    
+    // 获取预览线管理器（用于获取预览线位置信息）
+    const previewLineManager = this.previewLineManager || 
+                              window.unifiedPreviewLineManager || 
                               this.graph.previewLineManager ||
                               null
     
-    if (!previewLineManager || !previewLineManager.getAllPreviewLines) {
-      console.log('⚠️ [预览线提取] 未找到预览线管理器')
-      return endpointNodes
+    if (!previewLineManager || !previewLineManager.previewLines || previewLineManager.previewLines.size === 0) {
+      console.log('⚠️ [预览线提取] 预览线管理器不可用，将为所有叶子节点创建默认虚拟endpoint')
+      return this.createVirtualEndpointsForLeafNodes()
     }
     
-    const previewLines = previewLineManager.getAllPreviewLines()
-    console.log(`🔍 [预览线提取] 开始提取预览线endpoint，发现 ${previewLines.size} 个源节点的预览线`)
+    const previewLines = previewLineManager.previewLines
+    console.log(`🔍 [预览线提取] 发现 ${previewLines.size} 个源节点的预览线`)
     
+    // 🎯 关键修复：在创建endpoint前校验分支连接状态
     previewLines.forEach((previewInstance, sourceNodeId) => {
       console.log(`🔍 [预览线提取] 处理源节点 ${sourceNodeId} 的预览线:`, previewInstance)
       
+      // 检查源节点是否存在
+      const sourceNode = this.graph.getCellById(sourceNodeId)
+      if (!sourceNode) {
+        console.warn(`⚠️ [预览线提取] 源节点 ${sourceNodeId} 不存在，跳过`)
+        return
+      }
+      
       if (Array.isArray(previewInstance)) {
-        // 分支预览线
+        // 分支预览线 - 只为未连接的分支创建虚拟endpoint
         console.log(`📋 [预览线提取] 源节点 ${sourceNodeId} 有 ${previewInstance.length} 个分支预览线`)
         previewInstance.forEach((instance, index) => {
           if (instance.endPosition && !instance.isAttached) {
-            const endpointNode = this.createEndpointVirtualNode(
-              sourceNodeId, 
-              instance.branchId || `branch_${index}`, 
-              instance.endPosition,
-              instance.branchLabel
-            )
-            endpointNodes.push(endpointNode)
-            this.layoutModel.endpointNodes.set(endpointNode.id, endpointNode)
-            console.log(`✅ [预览线提取] 成功创建分支endpoint虚拟节点: ${endpointNode.id}`)
+            const branchId = instance.branchId || `branch_${index}`
+            
+            // 🎯 关键校验：检查该分支是否已有实际连接
+            const hasConnection = this.hasBranchConnection(sourceNode, branchId, instance)
+            
+            if (!hasConnection) {
+              const endpointNode = this.createEndpointVirtualNode(
+                sourceNodeId, 
+                branchId, 
+                instance.endPosition,
+                instance.branchLabel
+              )
+              endpointNodes.push(endpointNode)
+              this.layoutModel.endpointNodes.set(endpointNode.id, endpointNode)
+              console.log(`✅ [预览线提取] 成功创建分支endpoint虚拟节点: ${endpointNode.id}`)
+            } else {
+              console.log(`⏭️ [预览线提取] 跳过已连接的分支 ${branchId}:`, {
+                sourceNodeId,
+                branchId,
+                branchLabel: instance.branchLabel
+              })
+            }
           } else {
             console.log(`⚠️ [预览线提取] 跳过已附着或无端点的分支预览线:`, instance)
           }
         })
       } else if (previewInstance && previewInstance.endPosition && !previewInstance.isAttached) {
-        // 单一预览线
+        // 单一预览线 - 检查节点是否已有连接
         console.log(`📋 [预览线提取] 源节点 ${sourceNodeId} 有单一预览线`)
-        const endpointNode = this.createEndpointVirtualNode(
-          sourceNodeId, 
-          'single', 
-          previewInstance.endPosition,
-          null
-        )
-        endpointNodes.push(endpointNode)
-        this.layoutModel.endpointNodes.set(endpointNode.id, endpointNode)
-        console.log(`✅ [预览线提取] 成功创建单一endpoint虚拟节点: ${endpointNode.id}`)
+        
+        // 🎯 关键校验：检查节点是否已有实际连接
+        const hasConnection = this.hasExistingRealConnections(sourceNode)
+        
+        if (!hasConnection) {
+          const endpointNode = this.createEndpointVirtualNode(
+            sourceNodeId, 
+            'single', 
+            previewInstance.endPosition,
+            null
+          )
+          endpointNodes.push(endpointNode)
+          this.layoutModel.endpointNodes.set(endpointNode.id, endpointNode)
+          console.log(`✅ [预览线提取] 成功创建单一endpoint虚拟节点: ${endpointNode.id}`)
+        } else {
+          console.log(`⏭️ [预览线提取] 跳过已连接的节点 ${sourceNodeId}`)
+        }
       } else {
         console.log(`⚠️ [预览线提取] 跳过已附着或无端点的预览线:`, previewInstance)
       }
@@ -203,6 +236,196 @@ export class UnifiedStructuredLayoutEngine {
     console.log(`🎯 [预览线提取] 提取完成，共创建 ${endpointNodes.length} 个endpoint虚拟节点:`, 
       endpointNodes.map(node => node.id))
     
+    return endpointNodes
+  }
+
+  /**
+   * 检查特定分支是否已有实际连接
+   * @param {Object} sourceNode - 源节点对象
+   * @param {string} branchId - 分支ID
+   * @param {Object} previewInstance - 预览线实例
+   * @returns {boolean} 该分支是否已有实际连接
+   */
+  hasBranchConnection(sourceNode, branchId, previewInstance) {
+    if (!sourceNode || !this.graph) return false
+    
+    const outgoingEdges = this.graph.getOutgoingEdges(sourceNode) || []
+    
+    // 过滤掉预览线，只检查实际连接
+    const realConnections = outgoingEdges.filter(edge => {
+      const edgeData = edge.getData() || {}
+      return !edgeData.isUnifiedPreview && 
+             !edgeData.isPersistentPreview && 
+             !edgeData.isPreview &&
+             edgeData.type !== 'preview-line' &&
+             edgeData.type !== 'unified-preview-line' &&
+             edgeData.type !== 'draggable-preview'
+    })
+    
+    // 🎯 关键：检查是否有连接与当前分支相关
+    const branchLabel = previewInstance?.branchLabel
+    const branchConnections = realConnections.filter(edge => {
+      const edgeData = edge.getData() || {}
+      
+      // 方法1：检查边的数据中是否包含分支信息
+      if (edgeData.branchId === branchId || edgeData.branchLabel === branchLabel) {
+        return true
+      }
+      
+      // 方法2：检查边的标签是否匹配分支标签
+      const edgeLabels = edge.getLabels() || []
+      if (branchLabel && edgeLabels.some(label => 
+        label.attrs?.text?.text === branchLabel || 
+        label.attrs?.label?.text === branchLabel
+      )) {
+        return true
+      }
+      
+      // 方法3：对于分流节点，检查连接的目标位置是否与分支预览线位置匹配
+      if (previewInstance?.endPosition) {
+        const targetPoint = edge.getTargetPoint()
+        if (targetPoint) {
+          const distance = Math.sqrt(
+            Math.pow(targetPoint.x - previewInstance.endPosition.x, 2) + 
+            Math.pow(targetPoint.y - previewInstance.endPosition.y, 2)
+          )
+          // 如果连接的目标位置与预览线端点位置很接近（50像素内），认为是同一分支
+          if (distance < 50) {
+            return true
+          }
+        }
+      }
+      
+      return false
+    })
+    
+    // 方法4：对于分流节点的特殊处理 - 检查连接数量与分支数量的关系
+    if (branchConnections.length === 0 && realConnections.length > 0) {
+      const sourceNodeData = sourceNode.getData() || {}
+      const nodeType = sourceNodeData.type || sourceNodeData.nodeType
+      
+      if (nodeType === 'crowd-split' || nodeType === 'condition') {
+        // 获取预览线管理器中该节点的所有分支
+        const previewLineManager = this.previewLineManager || 
+                                  window.unifiedPreviewLineManager || 
+                                  this.graph.previewLineManager
+        
+        if (previewLineManager && previewLineManager.previewLines) {
+          const nodePreviewLines = previewLineManager.previewLines.get(sourceNode.id)
+          if (Array.isArray(nodePreviewLines)) {
+            const totalBranches = nodePreviewLines.length
+            // 如果实际连接数等于或超过总分支数，说明所有分支都已连接
+            if (realConnections.length >= totalBranches) {
+              console.log(`🔍 [分支连接检查] 节点 ${sourceNode.id} 所有分支都已连接 (${realConnections.length}/${totalBranches})`)
+              return true
+            }
+            
+            // 如果当前分支索引小于已连接数量，认为该分支已连接
+            const currentBranchIndex = nodePreviewLines.findIndex(instance => 
+              instance.branchId === branchId || instance === previewInstance
+            )
+            if (currentBranchIndex >= 0 && currentBranchIndex < realConnections.length) {
+              console.log(`🔍 [分支连接检查] 分支 ${branchId} 按索引判断已连接 (索引${currentBranchIndex} < 连接数${realConnections.length})`)
+              return true
+            }
+          }
+        }
+      }
+    }
+    
+    const hasConnection = branchConnections.length > 0
+    
+    console.log(`🔍 [分支连接检查] 节点 ${sourceNode.id} 分支 ${branchId}:`, {
+      branchLabel,
+      hasConnection,
+      branchConnections: branchConnections.length,
+      totalRealConnections: realConnections.length,
+      branchConnectionIds: branchConnections.map(edge => edge.id),
+      previewEndPosition: previewInstance?.endPosition
+    })
+    
+    return hasConnection
+  }
+
+  /**
+   * 检查节点是否已有实际连接（非预览线）
+   * @param {Object} node - 节点对象
+   * @returns {boolean} 是否有实际连接
+   */
+  hasExistingRealConnections(node) {
+    if (!node || !this.graph) return false
+    
+    const outgoingEdges = this.graph.getOutgoingEdges(node) || []
+    
+    // 过滤掉预览线，只检查实际连接
+    const realConnections = outgoingEdges.filter(edge => {
+      const edgeData = edge.getData() || {}
+      return !edgeData.isUnifiedPreview && 
+             !edgeData.isPersistentPreview && 
+             !edgeData.isPreview &&
+             edgeData.type !== 'preview-line' &&
+             edgeData.type !== 'unified-preview-line'
+    })
+    
+    console.log(`🔍 [连接检查] 节点 ${node.id} 实际连接数: ${realConnections.length}`, {
+      totalEdges: outgoingEdges.length,
+      realConnections: realConnections.length,
+      realConnectionIds: realConnections.map(edge => edge.id)
+    })
+    
+    return realConnections.length > 0
+  }
+
+  /**
+   * 为所有叶子节点创建虚拟endpoint节点
+   * @returns {Array} 虚拟endpoint节点数组
+   */
+  createVirtualEndpointsForLeafNodes() {
+    const endpointNodes = []
+    const nodes = this.graph.getNodes()
+    
+    console.log('🔍 [虚拟endpoint] 开始为叶子节点创建虚拟endpoint（带连接校验）')
+    
+    nodes.forEach(node => {
+      const nodeData = node.getData() || {}
+      const nodeType = nodeData.type || nodeData.nodeType
+      
+      // 跳过特殊节点
+      if (nodeData.isEndpoint || nodeType === 'endpoint' || 
+          nodeType === 'end' || nodeType === 'finish' ||
+          nodeData.isUnifiedPreview || nodeData.isPersistentPreview || nodeData.isPreview) {
+        return
+      }
+      
+      // 🎯 关键校验：检查节点是否已有实际连接
+      const hasRealConnections = this.hasExistingRealConnections(node)
+      
+      if (!hasRealConnections) {
+        // 这是一个没有实际连接的叶子节点，为它创建虚拟endpoint
+        const nodePosition = node.getPosition()
+        const nodeSize = node.getSize()
+        
+        // 计算虚拟endpoint位置
+        const endPosition = {
+          x: nodePosition.x + nodeSize.width + 100,
+          y: nodePosition.y + nodeSize.height / 2
+        }
+        
+        const virtualNode = this.createEndpointVirtualNode(
+           node.id,
+           'virtual',
+           endPosition,
+           `${node.id}_virtual_endpoint`
+         )
+        
+        endpointNodes.push(virtualNode)
+        console.log(`✅ [虚拟endpoint] 为叶子节点 ${node.id} 创建虚拟endpoint: ${virtualNode.id}`)
+      } else {
+        console.log(`⏭️ [虚拟endpoint] 跳过已有连接的节点 ${node.id}`)
+      }
+    })
+    
+    console.log(`🎯 [虚拟endpoint] 虚拟endpoint创建完成，共创建 ${endpointNodes.length} 个虚拟节点`)
     return endpointNodes
   }
 
@@ -265,14 +488,95 @@ export class UnifiedStructuredLayoutEngine {
    * @param {Object} position - 新位置
    */
   updatePreviewEndpointPosition(sourceNodeId, branchId, position) {
-    const previewLineManager = window.unifiedPreviewLineManager || 
+    console.log('🔄 [位置同步] 更新endpoint位置:', { sourceNodeId, branchId, position })
+    
+    const previewLineManager = this.previewLineManager || 
+                              window.unifiedPreviewLineManager || 
                               this.graph.previewLineManager
     
-    if (previewLineManager && previewLineManager.updateEndpointPosition) {
-      previewLineManager.updateEndpointPosition(sourceNodeId, branchId, {
-        x: position.x + this.options.node.endpointSize.width / 2,
-        y: position.y + this.options.node.endpointSize.height / 2
+    if (!previewLineManager) {
+      console.warn(`⚠️ [位置同步] 预览线管理器不可用，无法更新endpoint位置: ${sourceNodeId}_${branchId}`)
+      return
+    }
+    
+    console.log('✅ [位置同步] 找到预览线管理器，开始更新预览线终点位置')
+    
+    // 🎯 关键修复：直接查找并更新预览线的终点位置
+    const previewInstances = previewLineManager.previewLines.get(sourceNodeId)
+    if (!previewInstances) {
+      console.warn(`⚠️ [位置同步] 未找到节点 ${sourceNodeId} 的预览线实例`)
+      return
+    }
+    
+    let updatedCount = 0
+    
+    if (Array.isArray(previewInstances)) {
+      // 分支预览线：查找匹配的分支
+      previewInstances.forEach(instance => {
+        if (instance.branchId === branchId) {
+          console.log(`🎯 [位置同步] 找到匹配的分支预览线: ${branchId}`)
+          
+          // 直接更新预览线的终点位置
+          if (instance.line && typeof instance.line.setTarget === 'function') {
+            instance.line.setTarget({
+              x: position.x,
+              y: position.y
+            })
+            
+            // 同步更新实例中的endPosition
+            if (instance.endPosition) {
+              instance.endPosition.x = position.x
+              instance.endPosition.y = position.y
+            }
+            
+            // 更新endpoint标记位置
+            if (typeof previewLineManager.updateEndpointMarker === 'function') {
+              previewLineManager.updateEndpointMarker(instance.line, position)
+            }
+            
+            updatedCount++
+            console.log(`✅ [位置同步] 分支预览线终点位置已更新: ${branchId} -> (${position.x}, ${position.y})`)
+          }
+        }
       })
+    } else {
+      // 单一预览线
+      const instance = previewInstances
+      console.log(`🎯 [位置同步] 更新单一预览线终点位置`)
+      
+      if (instance.line && typeof instance.line.setTarget === 'function') {
+        instance.line.setTarget({
+          x: position.x,
+          y: position.y
+        })
+        
+        // 同步更新实例中的endPosition
+        if (instance.endPosition) {
+          instance.endPosition.x = position.x
+          instance.endPosition.y = position.y
+        }
+        
+        // 更新endpoint标记位置
+        if (typeof previewLineManager.updateEndpointMarker === 'function') {
+          previewLineManager.updateEndpointMarker(instance.line, position)
+        }
+        
+        updatedCount++
+        console.log(`✅ [位置同步] 单一预览线终点位置已更新: -> (${position.x}, ${position.y})`)
+      }
+    }
+    
+    if (updatedCount === 0) {
+      console.warn(`⚠️ [位置同步] 未找到可更新的预览线: ${sourceNodeId}_${branchId}`)
+      
+      // 尝试强制刷新预览线位置
+      const sourceNode = this.graph.getCellById(sourceNodeId)
+      if (sourceNode && typeof previewLineManager.updatePreviewLinePosition === 'function') {
+        console.log('🔄 [位置同步] 尝试强制刷新预览线位置')
+        previewLineManager.updatePreviewLinePosition(sourceNode)
+      }
+    } else {
+      console.log(`✅ [位置同步] 成功更新 ${updatedCount} 条预览线的终点位置`)
     }
   }
 
@@ -530,67 +834,73 @@ export class UnifiedStructuredLayoutEngine {
     const startX = -totalWidth / 2
     const layerY = layerIndex * this.options.layer.baseHeight
     
+    console.log(`📊 [底层定位] 第${layerIndex}层（最底层），目标Y坐标: ${layerY}，节点数: ${bottomLayer.length}`)
+    
     // 🎯 关键：按X坐标排序，确保endpoint和普通节点统一排列
     const sortedNodes = bottomLayer.sort((a, b) => {
       let aPos, bPos
       
       // 处理虚拟 endpoint 节点
-      if (a.isEndpoint && a.getPosition) {
-        aPos = a.getPosition()
-      } else if (a.isEndpoint && a.position) {
-        aPos = a.position
+      if (a.isEndpoint || a.isVirtual) {
+        aPos = a.position || a.getPosition() || { x: 0, y: 0 }
       } else if (a.getPosition) {
         aPos = a.getPosition()
       } else {
         aPos = { x: 0, y: 0 }
       }
       
-      if (b.isEndpoint && b.getPosition) {
-        bPos = b.getPosition()
-      } else if (b.isEndpoint && b.position) {
-        bPos = b.position
+      if (b.isEndpoint || b.isVirtual) {
+        bPos = b.position || b.getPosition() || { x: 0, y: 0 }
       } else if (b.getPosition) {
         bPos = b.getPosition()
       } else {
         bPos = { x: 0, y: 0 }
       }
       
-      console.log(`🔍 [排序调试] 节点 ${a.id || a.getId()}: x=${aPos.x}, 节点 ${b.id || b.getId()}: x=${bPos.x}`)
+      console.log(`🔍 [排序调试] 节点 ${a.id || a.getId()}: x=${aPos.x} (${a.isEndpoint ? 'endpoint' : 'normal'}), 节点 ${b.id || b.getId()}: x=${bPos.x} (${b.isEndpoint ? 'endpoint' : 'normal'})`)
       
       return aPos.x - bPos.x
     })
     
     console.log(`📊 [底层排序] 排序后的节点顺序:`, sortedNodes.map(node => {
       const nodeId = node.id || node.getId()
-      const pos = node.isEndpoint && node.position ? node.position : (node.getPosition ? node.getPosition() : { x: 0, y: 0 })
+      const pos = (node.isEndpoint || node.isVirtual) ? 
+        (node.position || node.getPosition() || { x: 0, y: 0 }) : 
+        (node.getPosition ? node.getPosition() : { x: 0, y: 0 })
       return `${nodeId}(${node.isEndpoint ? 'endpoint' : 'normal'}, x=${pos.x})`
     }))
     
+    // 🎯 关键：统一分配位置，不再依赖原始位置
     sortedNodes.forEach((node, index) => {
       const nodeId = node.id || node.getId()
       const finalX = startX + index * nodeSpacing
       
       // 获取原始位置用于记录
       let originalPos
-      if (node.isEndpoint && node.position) {
-        originalPos = node.position
+      if (node.isEndpoint || node.isVirtual) {
+        originalPos = node.position || node.getPosition() || { x: 0, y: 0 }
       } else if (node.getPosition) {
         originalPos = node.getPosition()
       } else {
         originalPos = { x: 0, y: 0 }
       }
       
-      positions.set(nodeId, {
+      const positionData = {
         x: finalX,
         y: layerY,
         layerIndex,
         isBottomLayer: true,
         nodeType: node.isEndpoint ? 'endpoint' : 'normal',
-        originalX: originalPos.x
-      })
+        originalX: originalPos.x,
+        sortIndex: index  // 添加排序索引用于调试
+      }
       
-      console.log(`📍 [底层定位] ${node.isEndpoint ? 'Endpoint' : '普通节点'} ${nodeId}: (${finalX}, ${layerY}), 原始X: ${originalPos.x}`)
+      positions.set(nodeId, positionData)
+      
+      console.log(`📍 [底层定位] ${node.isEndpoint ? 'Endpoint' : '普通节点'} ${nodeId}: (${finalX.toFixed(1)}, ${layerY}), 原始X: ${originalPos.x}, 排序索引: ${index}`)
     })
+    
+    console.log(`📊 [底层定位] 最底层位置计算完成，共处理 ${sortedNodes.length} 个节点`)
   }
 
   /**
@@ -602,6 +912,7 @@ export class UnifiedStructuredLayoutEngine {
    */
   calculateParentLayerPositions(parentLayer, positions, layerIndex, layerStructure) {
     const layerY = layerIndex * this.options.layer.baseHeight
+    console.log(`📍 [父层定位] 第${layerIndex}层，目标Y坐标: ${layerY}，父节点数: ${parentLayer.length}`)
     
     parentLayer.forEach(parentNode => {
       const parentId = parentNode.id || parentNode.getId()
@@ -616,16 +927,20 @@ export class UnifiedStructuredLayoutEngine {
         // 🎯 关键：基于子节点（包含endpoint）计算父节点最优位置
         const parentX = this.calculateOptimalParentPosition(childPositions)
         
-        positions.set(parentId, {
+        const positionData = {
           x: parentX,
           y: layerY,
           layerIndex,
           nodeType: parentNode.isEndpoint ? 'endpoint' : 'normal',
           childrenCount: childPositions.length,
           childrenSpread: this.calculateChildrenSpread(childPositions)
-        })
+        }
         
-        console.log(`📍 [父层定位] ${parentNode.isEndpoint ? 'Endpoint' : '普通节点'} ${parentId}: (${parentX}, ${layerY}), 子节点数: ${childPositions.length}`)
+        positions.set(parentId, positionData)
+        
+        console.log(`📍 [父层定位] ${parentNode.isEndpoint ? 'Endpoint' : '普通节点'} ${parentId}: (${parentX.toFixed(1)}, ${layerY}), 子节点数: ${childPositions.length}`)
+      } else {
+        console.warn(`⚠️ [父层定位] 节点 ${parentId} 没有有效的子节点位置`)
       }
     })
   }
@@ -871,18 +1186,26 @@ export class UnifiedStructuredLayoutEngine {
    */
   adjustGlobalLayerSpacing(positions, layerStructure) {
     const baseHeight = this.options.layer.baseHeight
+    console.log(`🔧 [层级间距] 开始调整全局层级间距，baseHeight: ${baseHeight}`)
     
     layerStructure.layers.forEach((layer, layerIndex) => {
       const targetY = layerIndex * baseHeight
+      console.log(`🔧 [层级间距] 第${layerIndex}层，目标Y坐标: ${targetY}，节点数: ${layer.length}`)
       
       layer.forEach(node => {
         const nodeId = node.id || node.getId()
         const pos = positions.get(nodeId)
         if (pos) {
+          const oldY = pos.y
           pos.y = targetY
+          console.log(`🔧 [层级间距] 节点 ${nodeId}: Y坐标 ${oldY} → ${targetY}`)
+        } else {
+          console.warn(`⚠️ [层级间距] 节点 ${nodeId} 在positions中不存在`)
         }
       })
     })
+    
+    console.log(`🔧 [层级间距] 全局层级间距调整完成`)
   }
 
   /**
@@ -899,13 +1222,35 @@ export class UnifiedStructuredLayoutEngine {
     const maxX = Math.max(...allPositions.map(pos => pos.x))
     const minY = Math.min(...allPositions.map(pos => pos.y))
     
+    console.log(`🌍 [全局居中] 边界计算: minX=${minX}, maxX=${maxX}, minY=${minY}`)
+    
     // 居中到原点
     const offsetX = -(minX + maxX) / 2
     const offsetY = -minY
     
+    console.log(`🌍 [全局居中] 偏移量计算: offsetX=${offsetX.toFixed(1)}, offsetY=${offsetY.toFixed(1)}`)
+    
+    // 记录偏移前的一些节点位置
+    let sampleCount = 0
+    positions.forEach((pos, nodeId) => {
+      if (sampleCount < 3) {
+        console.log(`🌍 [全局居中] 偏移前节点 ${nodeId}: (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`)
+        sampleCount++
+      }
+    })
+    
     positions.forEach(pos => {
       pos.x += offsetX
       pos.y += offsetY
+    })
+    
+    // 记录偏移后的一些节点位置
+    sampleCount = 0
+    positions.forEach((pos, nodeId) => {
+      if (sampleCount < 3) {
+        console.log(`🌍 [全局居中] 偏移后节点 ${nodeId}: (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`)
+        sampleCount++
+      }
     })
     
     console.log(`🌍 [全局居中] 整体偏移: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`)
@@ -932,35 +1277,52 @@ export class UnifiedStructuredLayoutEngine {
     let endpointCount = 0
     
     finalPositions.forEach((position, nodeId) => {
+      // 🎯 关键：统一计算中心点位置，确保Y坐标一致
+      const centerPosition = {
+        x: position.x,
+        y: position.y  // 直接使用层级计算的Y坐标
+      }
+      
       // 处理普通节点
       const graphNode = this.graph.getCellById(nodeId)
       if (graphNode) {
         const size = graphNode.getSize()
-        const newPosition = {
-          x: position.x - size.width / 2,
-          y: position.y - size.height / 2
+        const topLeftPosition = {
+          x: centerPosition.x - size.width / 2,
+          y: centerPosition.y - size.height / 2
         }
-        graphNode.setPosition(newPosition)
+        graphNode.setPosition(topLeftPosition)
         appliedCount++
         
-        console.log(`📍 [位置应用] 普通节点 ${nodeId}: (${newPosition.x.toFixed(1)}, ${newPosition.y.toFixed(1)})`)
+        console.log(`📍 [位置应用] 普通节点 ${nodeId}: 中心点(${centerPosition.x.toFixed(1)}, ${centerPosition.y.toFixed(1)}) 左上角(${topLeftPosition.x.toFixed(1)}, ${topLeftPosition.y.toFixed(1)})`)
+        return
       }
       
-      // 🎯 关键：处理endpoint虚拟节点
+      // 🎯 关键：处理虚拟endpoint节点 - 使用与同层节点相同的Y坐标
       const endpointNode = this.layoutModel.endpointNodes.get(nodeId)
       if (endpointNode) {
-        const newPosition = {
-          x: position.x - endpointNode.size.width / 2,
-          y: position.y - endpointNode.size.height / 2
+        // 🎯 关键修复：虚拟endpoint使用与同层节点相同的Y坐标
+        if (endpointNode.setPosition) {
+          endpointNode.setPosition(centerPosition)
+        } else if (endpointNode.position) {
+          endpointNode.position.x = centerPosition.x
+          endpointNode.position.y = centerPosition.y
         }
-        endpointNode.setPosition(newPosition)
+        
+        // 🎯 关键：同步更新预览线管理器中的endpoint位置
+        this.updatePreviewEndpointPosition(
+          endpointNode.sourceNodeId, 
+          endpointNode.branchId, 
+          centerPosition
+        )
+        
         endpointCount++
         
-        console.log(`📍 [位置应用] Endpoint ${nodeId}: (${newPosition.x.toFixed(1)}, ${newPosition.y.toFixed(1)})`)
+        console.log(`📍 [位置应用] 虚拟Endpoint ${nodeId}: 中心点(${centerPosition.x.toFixed(1)}, ${centerPosition.y.toFixed(1)}) 源节点: ${endpointNode.sourceNodeId} 分支: ${endpointNode.branchId} 层级: ${position.layerIndex}`)
       }
     })
     
-    console.log(`📍 [位置应用] 应用完成: ${appliedCount}个普通节点 + ${endpointCount}个endpoint`)
+    console.log(`📍 [位置应用] 应用完成: ${appliedCount}个普通节点 + ${endpointCount}个虚拟endpoint`)
   }
 
   /**

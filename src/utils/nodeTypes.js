@@ -343,8 +343,6 @@ export const getNodeLabel = (nodeType) => {
  * @returns {Array} 预设位配置数组
  */
 export const generateDynamicNextSlots = (nodeType, config = {}) => {
-  console.log('[nodeTypes] 生成预设位，节点类型:', nodeType, '配置:', config)
-  
   const allowedTypes = ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end']
   
   switch (nodeType) {
@@ -361,7 +359,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           state: 'empty'
         }
       ]
-      console.log('[nodeTypes] 生成开始节点预设位:', startSlots)
       return startSlots
 
     case 'sms':
@@ -380,7 +377,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           state: 'empty'
         }
       ]
-      console.log('[nodeTypes] 生成单输出节点预设位:', singleSlots)
       return singleSlots
 
     case 'audience-split':
@@ -410,7 +406,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
             }
           }
         })
-        console.log('[nodeTypes] 生成人群分流预设位:', branchSlots)
         return branchSlots
       }
       
@@ -445,7 +440,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           })
         }
         
-        console.log('[nodeTypes] 根据分流条数生成人群分流预设位:', branchSlots)
         return branchSlots
       }
       
@@ -466,7 +460,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           }
         }
       ]
-      console.log('[nodeTypes] 生成默认人群分流预设位:', defaultAudienceSlots)
       return defaultAudienceSlots
 
     case 'event-split':
@@ -491,7 +484,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           state: 'empty'
         }
       ]
-      console.log('[nodeTypes] 生成事件分流预设位:', eventSlots)
       return eventSlots
 
     case 'ab-test':
@@ -509,7 +501,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           occupied: false,
           state: 'empty'
         }))
-        console.log('[nodeTypes] 生成AB实验预设位:', versionSlots)
         return versionSlots
       }
       // 默认两个版本
@@ -533,12 +524,10 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           state: 'empty'
         }
       ]
-      console.log('[nodeTypes] 生成默认AB实验预设位:', defaultAbSlots)
       return defaultAbSlots
 
     case 'end':
       // 结束节点没有预设位
-      console.log('[nodeTypes] 结束节点无预设位')
       return []
 
     default:

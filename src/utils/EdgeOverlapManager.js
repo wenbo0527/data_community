@@ -494,17 +494,50 @@ export class EdgeOverlapManager {
       // 设置连线标签位置，避免重叠
       const labelOffset = this.calculateLabelOffset(index, totalCount, this.layoutDirection)
       
-      // 🔧 优先处理分支标签：如果连线有分支标签，确保正确显示
-      if (branchLabel) {
+      // 🔧 检查连线是否已经有标签，避免重复创建
+      const hasExistingLabels = currentLabels && currentLabels.length > 0
+      
+      if (hasExistingLabels) {
+        // 如果已经有标签，只更新位置偏移，不重新创建标签内容
+        const labelsWithUpdatedPosition = currentLabels.map(label => ({
+          ...label,
+          position: {
+            distance: label.position?.distance || 0.5, // 保持原有距离
+            offset: labelOffset // 更新偏移以避免重叠
+          }
+        }))
+        
+        edge.setLabels(labelsWithUpdatedPosition)
+        console.log('🏷️ [跨分支偏移] 更新现有标签位置:', {
+          edgeId: edge.id,
+          labelsCount: labelsWithUpdatedPosition.length,
+          labelOffset: labelOffset,
+          preservedLabels: labelsWithUpdatedPosition.map(l => ({ 
+            text: l.attrs?.label?.text || l.attrs?.text?.text, 
+            position: l.position 
+          }))
+        })
+      } else if (branchLabel) {
+        // 只有在没有现有标签且有分支标签时才创建新标签
         const branchLabelConfig = {
+          markup: [
+            {
+              tagName: 'rect',
+              selector: 'body'
+            },
+            {
+              tagName: 'text',
+              selector: 'label'
+            }
+          ],
           attrs: {
-            text: {
+            label: {
               text: branchLabel,
               fontSize: 12,
               fill: '#666',
               fontWeight: 'normal'
             },
-            rect: {
+            body: {
               fill: '#fff',
               stroke: '#ddd',
               strokeWidth: 1,
@@ -519,38 +552,16 @@ export class EdgeOverlapManager {
         }
         
         edge.setLabels([branchLabelConfig])
-        console.log('🏷️ [跨分支偏移] 设置分支连线标签:', {
+        console.log('🏷️ [跨分支偏移] 创建新的分支连线标签:', {
           edgeId: edge.id,
           branchLabel: branchLabel,
           labelOffset: labelOffset
         })
-      } else if (currentLabels && currentLabels.length > 0) {
-        // 如果没有分支标签但有其他标签，恢复原有标签
-        const labelsWithPosition = currentLabels.map(label => ({
-          ...label,
-          position: label.position || {
-            distance: 0.5, // 在连线中点
-            offset: labelOffset // 使用计算的标签偏移
-          }
-        }))
-        
-        edge.setLabels(labelsWithPosition)
-        console.log('🏷️ [跨分支偏移] 恢复原有连线标签:', {
-          edgeId: edge.id,
-          labelsCount: labelsWithPosition.length,
-          labelOffset: labelOffset,
-          labelsWithPosition: labelsWithPosition.map(l => ({ 
-            text: l.attrs?.text?.text, 
-            position: l.position 
-          }))
-        })
       } else {
-        // 如果没有任何标签，设置一个空的标签位置配置
-        edge.setLabelAt(0, {
-          position: {
-            distance: 0.5,
-            offset: labelOffset
-          }
+        // 如果没有任何标签且没有分支标签，不设置标签
+        console.log('🏷️ [跨分支偏移] 跳过标签设置（无现有标签且无分支标签):', {
+          edgeId: edge.id,
+          labelOffset: labelOffset
         })
       }
       

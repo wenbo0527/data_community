@@ -202,8 +202,8 @@ export function useStructuredLayout(getGraph) {
         const nodeData = node.getData() || {}
         const nodeType = nodeData.nodeType || nodeData.type
         
-        if (!nodeType || nodeType === 'drag-hint') {
-          return // 跳过拖拽提示点
+        if (!nodeType || nodeType === 'endpoint') {
+          return // 跳过endpoint
         }
         
         console.log(`🔧 [端口更新] 更新节点 ${node.id} (${nodeType}) 的端口配置`)
@@ -392,7 +392,7 @@ export function useStructuredLayout(getGraph) {
         const nodeData = node.getData() || {}
         
         // 跳过拖拽点和预览线相关的节点
-        if (nodeData.isDragHint || nodeData.isPreview || nodeData.isPersistentPreview) {
+        if (nodeData.isEndpoint || nodeData.isPreview || nodeData.isPersistentPreview) {
           return false
         }
         
@@ -474,10 +474,10 @@ export function useStructuredLayout(getGraph) {
     nodes.forEach(node => {
       const nodeId = node.id || node.getId()
       const nodeData = node.getData() || {}
-      const isDragHint = nodeData.nodeType === 'drag-hint' || nodeData.isDragHint || nodeId.startsWith('hint_')
+      const isEndpoint = nodeData.nodeType === 'endpoint' || nodeData.isEndpoint || nodeId.startsWith('hint_')
       
-      // 跳过拖拽点，稍后单独处理
-      if (!isDragHint && inDegree.get(nodeId) === 0) {
+      // 跳过endpoint，稍后单独处理
+      if (!isEndpoint && inDegree.get(nodeId) === 0) {
         queue.push({ nodeId, level: 0 })
         nodeToLayer.set(nodeId, 0)
       }
@@ -496,17 +496,32 @@ export function useStructuredLayout(getGraph) {
       if (endpointVirtualNodes.has(nodeId)) {
         // 处理虚拟endpoint节点
         const virtualNodeInfo = endpointVirtualNodes.get(nodeId)
-        layers[level].push({
+        
+        // 🎯 关键修复：虚拟endpoint节点应该在其源节点的下一层
+        const sourceNodeId = virtualNodeInfo.sourceId
+        const sourceNodeLevel = nodeToLayer.get(sourceNodeId)
+        const correctLevel = sourceNodeLevel !== undefined ? sourceNodeLevel + 1 : level
+        
+        // 确保正确的层级存在
+        while (layers.length <= correctLevel) {
+          layers.push([])
+        }
+        
+        layers[correctLevel].push({
           node: null, // 虚拟节点没有真实的node对象
           nodeId,
           position: virtualNodeInfo.endPosition,
           size: { width: 0, height: 0 }, // 虚拟节点没有尺寸
           data: virtualNodeInfo,
-          type: 'virtual-endpoint',
-          isDragHint: false,
+          type: 'endpoint',
+          isEndpoint: true,
           isVirtualEndpoint: true
         })
-        console.log(`🎯 [拓扑分层] 虚拟endpoint节点 ${nodeId} 分配到第${level}层`)
+        
+        // 更新虚拟endpoint节点的层级映射
+        nodeToLayer.set(nodeId, correctLevel)
+        
+        console.log(`🎯 [拓扑分层] 虚拟endpoint节点 ${nodeId} 分配到第${correctLevel}层 (源节点 ${sourceNodeId} 在第${sourceNodeLevel}层)`)
       } else {
         // 处理真实节点
         const node = nodes.find(n => (n.id || n.getId()) === nodeId)
@@ -519,7 +534,7 @@ export function useStructuredLayout(getGraph) {
             size: node.getSize(),
             data: nodeData,
             type: nodeData.nodeType || nodeData.type || 'normal',
-            isDragHint: false,
+            isEndpoint: false,
             isVirtualEndpoint: false
           })
         }
@@ -541,13 +556,13 @@ export function useStructuredLayout(getGraph) {
     
 
     
-    // 处理拖拽点：将拖拽点放在其源节点的同一层（保持向后兼容）
+    // 处理拖拽点：将拖拽点放在其源节点的下一层
     nodes.forEach(node => {
       const nodeId = node.id || node.getId()
       const nodeData = node.getData() || {}
-      const isDragHint = nodeData.nodeType === 'drag-hint' || nodeData.isDragHint || nodeId.startsWith('hint_')
+      const isEndpoint = nodeData.nodeType === 'endpoint' || nodeData.isEndpoint || nodeId.startsWith('hint_')
       
-      if (isDragHint) {
+      if (isEndpoint) {
         // 尝试从拖拽点ID中提取源节点信息
         let sourceNodeId = null
         if (nodeId.startsWith('hint_')) {
@@ -561,11 +576,11 @@ export function useStructuredLayout(getGraph) {
         let targetLevel = 0 // 默认层级
         
         if (sourceNodeId && nodeToLayer.has(sourceNodeId)) {
-          // 拖拽点应该在其源节点的同一层
-          targetLevel = nodeToLayer.get(sourceNodeId)
-          console.log(`🎯 [拓扑分层] 拖拽点 ${nodeId} 分配到第${targetLevel}层 (源节点: ${sourceNodeId})`)
+          // endpoint应该在其源节点的下一层
+          targetLevel = nodeToLayer.get(sourceNodeId) + 1
+          console.log(`🎯 [拓扑分层] endpoint ${nodeId} 分配到第${targetLevel}层 (源节点 ${sourceNodeId} 在第${nodeToLayer.get(sourceNodeId)}层)`)
         } else {
-          console.log(`⚠️ [拓扑分层] 拖拽点 ${nodeId} 未找到源节点，分配到第0层`)
+          console.log(`⚠️ [拓扑分层] endpoint ${nodeId} 未找到源节点，分配到第0层`)
         }
         
         // 确保目标层级存在
@@ -579,8 +594,8 @@ export function useStructuredLayout(getGraph) {
           position: node.getPosition(),
           size: node.getSize(),
           data: nodeData,
-          type: nodeData.nodeType || nodeData.type || 'drag-hint',
-          isDragHint: true
+          type: nodeData.nodeType || nodeData.type || 'endpoint',
+          isEndpoint: true
         })
         nodeToLayer.set(nodeId, targetLevel)
       }
@@ -590,9 +605,9 @@ export function useStructuredLayout(getGraph) {
     nodes.forEach(node => {
       const nodeId = node.id || node.getId()
       const nodeData = node.getData() || {}
-      const isDragHint = nodeData.nodeType === 'drag-hint' || nodeData.isDragHint || nodeId.startsWith('hint_')
-      
-      if (!isDragHint && !nodeToLayer.has(nodeId)) {
+      const isEndpoint = nodeData.nodeType === 'endpoint' || nodeData.isEndpoint || nodeId.startsWith('hint_')
+    
+    if (!isEndpoint && !nodeToLayer.has(nodeId)) {
         // 将孤立的普通节点放在第0层
         if (layers.length === 0) {
           layers.push([])
@@ -604,7 +619,7 @@ export function useStructuredLayout(getGraph) {
           size: node.getSize(),
           data: nodeData,
           type: nodeData.nodeType || nodeData.type || 'normal',
-          isDragHint: false
+          isEndpoint: false
         })
         nodeToLayer.set(nodeId, 0)
         console.log(`⚠️ [拓扑分层] 孤立普通节点 ${nodeId} 分配到第0层`)
@@ -618,11 +633,11 @@ export function useStructuredLayout(getGraph) {
       layerDistribution: layers.map((layer, index) => ({
         layer: index,
         nodeCount: layer.length,
-        normalNodes: layer.filter(n => !n.isDragHint && !n.isVirtualEndpoint).length,
-        dragHints: layer.filter(n => n.isDragHint).length,
+        normalNodes: layer.filter(n => !n.isEndpoint && !n.isVirtualEndpoint).length,
+      endpoints: layer.filter(n => n.isEndpoint).length,
         virtualEndpoints: layer.filter(n => n.isVirtualEndpoint).length,
         nodes: layer.map(n => {
-          if (n.isDragHint) return `${n.nodeId}(拖拽点)`
+          if (n.isEndpoint) return `${n.nodeId}(endpoint)`
           if (n.isVirtualEndpoint) return `${n.nodeId}(虚拟endpoint)`
           return `${n.nodeId}(普通节点)`
         })
@@ -648,6 +663,49 @@ export function useStructuredLayout(getGraph) {
     }
 
     console.log('🚀 [统一结构化布局] 开始应用基于父子关联关系的分层分级自底向上布局')
+    
+    // 🔍 调试：检查预览线管理器状态
+    console.log('🔍 [调试] connectionPreviewManager状态:', {
+      存在: !!connectionPreviewManager.value,
+      类型: typeof connectionPreviewManager.value,
+      构造函数: connectionPreviewManager.value?.constructor?.name,
+      有预览线数据: !!connectionPreviewManager.value?.previewLines,
+      预览线数量: connectionPreviewManager.value?.previewLines?.size || 0
+    })
+    
+    // 详细检查节点和连接状态
+    if (connectionPreviewManager.value) {
+      const nodes = graph.getNodes()
+      const edges = graph.getEdges()
+      
+      console.log('🔍 [调试] 图形状态检查:', {
+        totalNodes: nodes.length,
+        totalEdges: edges.length
+      })
+      
+      // 检查每个节点是否应该创建预览线
+      nodes.forEach(node => {
+        const nodeData = node.getData() || {}
+        const nodeType = nodeData.type || nodeData.nodeType
+        const shouldCreate = connectionPreviewManager.value.shouldCreatePreviewLine(node)
+        const hasConnections = connectionPreviewManager.value.hasExistingConnections(node)
+        
+        console.log('🔍 [调试] 节点预览线检查:', {
+          nodeId: node.id,
+          nodeType: nodeType,
+          shouldCreatePreviewLine: shouldCreate,
+          hasExistingConnections: hasConnections,
+          isConfigured: nodeData.isConfigured || !!nodeData.config
+        })
+      })
+      
+      // 手动触发预览线初始化
+      console.log('🔄 [调试] 手动触发预览线初始化')
+      connectionPreviewManager.value.initializeExistingNodes()
+      
+      console.log('🔍 [调试] 初始化后预览线数量:', connectionPreviewManager.value.previewLines.size)
+    }
+    
     isLayouting.value = true
 
     try {
@@ -686,7 +744,7 @@ export function useStructuredLayout(getGraph) {
           batchSize: 50,
           enableCaching: true
         }
-      })
+      }, connectionPreviewManager.value) // 🎯 关键：传递预览线管理器实例
 
       // 执行统一结构化布局
       const layoutResult = await layoutEngine.executeLayout()
@@ -760,7 +818,7 @@ export function useStructuredLayout(getGraph) {
       // 分类统计
       const nodesSummary = {
         normal: [],
-        dragHints: [],
+        endpoints: [],
         total: 0
       }
       
@@ -800,8 +858,8 @@ export function useStructuredLayout(getGraph) {
           }
         }
         
-        if (nodeType === 'drag-hint' || nodeData.isDragHint) {
-          nodesSummary.dragHints.push(nodeInfo)
+        if (nodeType === 'endpoint' || nodeData.isEndpoint || node.id.startsWith('virtual_endpoint_')) {
+          nodesSummary.endpoints.push(nodeInfo)
         } else {
           nodesSummary.normal.push(nodeInfo)
         }
@@ -897,6 +955,10 @@ export function useStructuredLayout(getGraph) {
           // 获取坐标失败
         }
         
+        // 检查目标是否为坐标点（预览线的情况）
+        const targetCell = edge.getTargetCell()
+        const isTargetCoordinate = !targetCell && targetPoint
+        
         const edgeInfo = {
           id: edge.id,
           source: {
@@ -907,7 +969,14 @@ export function useStructuredLayout(getGraph) {
               y: Math.round(sourcePoint.y)
             } : null
           },
-          target: {
+          target: isTargetCoordinate ? {
+            nodeId: '坐标点',
+            portId: `(${Math.round(targetPoint.x)}, ${Math.round(targetPoint.y)})`,
+            point: targetPoint ? {
+              x: Math.round(targetPoint.x),
+              y: Math.round(targetPoint.y)
+            } : null
+          } : {
             nodeId: targetId,
             portId: targetPort,
             point: targetPoint ? {
@@ -934,7 +1003,8 @@ export function useStructuredLayout(getGraph) {
         totalLayers: 0,
         mixedLayers: 0,
         pureNormalLayers: 0,
-        pureDragHintLayers: 0
+        pureEndpointLayers: 0,
+        virtualEndpoints: [] // 存储虚拟endpoint信息
       }
       
       // 构建拓扑分层结构
@@ -943,46 +1013,61 @@ export function useStructuredLayout(getGraph) {
       layerAnalysis.nodeToLayer = topologicalLayers.nodeToLayer
       layerAnalysis.totalLayers = topologicalLayers.layers.length
       
+      // 收集虚拟endpoint信息（替代直接从图中获取的预览线信息）
+      layerAnalysis.layers.forEach((layer, layerIndex) => {
+        layer.forEach(layerNode => {
+          if (layerNode.isVirtualEndpoint) {
+            const virtualEndpointInfo = {
+              id: layerNode.nodeId,
+              sourceNodeId: layerNode.data.sourceId,
+              endPosition: layerNode.data.endPosition,
+              branchId: layerNode.data.branchId,
+              branchLabel: layerNode.data.branchLabel,
+              layer: layerIndex
+            }
+            layerAnalysis.virtualEndpoints.push(virtualEndpointInfo)
+          }
+        })
+      })
+      
       // 分析每层的节点类型分布
       layerAnalysis.layers.forEach((layer, layerIndex) => {
         let normalCount = 0
-        let dragHintCount = 0
+        let endpointCount = 0
         
         layer.forEach(layerNode => {
-          const nodeInfo = nodesSummary.normal.find(n => n.id === layerNode.nodeId) ||
-                          nodesSummary.dragHints.find(n => n.id === layerNode.nodeId)
-          
-          if (nodeInfo) {
-            if (nodeInfo.type === 'drag-hint' || nodesSummary.dragHints.find(n => n.id === layerNode.nodeId)) {
-              dragHintCount++
-            } else {
-              normalCount++
-            }
+          if (layerNode.isEndpoint || layerNode.isVirtualEndpoint) {
+            endpointCount++
+          } else {
+            normalCount++
           }
         })
         
         // 统计层级类型
-        if (normalCount > 0 && dragHintCount > 0) {
+        if (normalCount > 0 && endpointCount > 0) {
           layerAnalysis.mixedLayers++
         } else if (normalCount > 0) {
           layerAnalysis.pureNormalLayers++
-        } else if (dragHintCount > 0) {
-          layerAnalysis.pureDragHintLayers++
+        } else if (endpointCount > 0) {
+          layerAnalysis.pureEndpointLayers++
         }
       })
       
       // 输出总结日志
+      const totalEndpoints = nodesSummary.endpoints.length + layerAnalysis.virtualEndpoints.length
       console.log(`📊 [重绘总结] 节点统计 (布局方向: ${layoutDirection.value}):`)
       console.log(`  ├─ 普通节点: ${nodesSummary.normal.length} 个`)
-      console.log(`  ├─ 拖拽点: ${nodesSummary.dragHints.length} 个`)
-      console.log(`  └─ 总计: ${nodesSummary.total} 个`)
+      console.log(`  ├─ 真实endpoint: ${nodesSummary.endpoints.length} 个`)
+      console.log(`  ├─ 虚拟endpoint: ${layerAnalysis.virtualEndpoints.length} 个`)
+      console.log(`  ├─ endpoint总计: ${totalEndpoints} 个`)
+      console.log(`  └─ 节点总计: ${nodesSummary.total + layerAnalysis.virtualEndpoints.length} 个`)
       
       console.log(`📏 [重绘总结] 分层统计 (${layoutDirection.value === 'TB' ? '垂直分层' : '水平分层'}):`)
       console.log(`  ├─ 总层数: ${layerAnalysis.totalLayers} 层`)
-      console.log(`  ├─ 混合层级: ${layerAnalysis.mixedLayers} 层 (拖拽点与普通节点共存)`)
+      console.log(`  ├─ 混合层级: ${layerAnalysis.mixedLayers} 层 (endpoint与普通节点共存)`)
       console.log(`  ├─ 纯普通节点层: ${layerAnalysis.pureNormalLayers} 层`)
-      console.log(`  ├─ 纯拖拽点层: ${layerAnalysis.pureDragHintLayers} 层`)
-      console.log(`  └─ 统一分层效果: ${layerAnalysis.mixedLayers > 0 ? '✅ 成功实现拖拽点与普通节点统一分层' : '⚠️ 未发现混合层级'}`)
+      console.log(`  ├─ 纯endpoint层: ${layerAnalysis.pureEndpointLayers} 层`)
+      console.log(`  └─ 统一分层效果: ${layerAnalysis.mixedLayers > 0 ? '✅ 成功实现endpoint与普通节点统一分层' : '⚠️ 未发现混合层级'}`)
       
       console.log(`🔌 [重绘总结] 端口统计:`)
       console.log(`  ├─ 输入端口: ${portsSummary.input.length} 个`)
@@ -999,14 +1084,14 @@ export function useStructuredLayout(getGraph) {
         console.log(`📏 [重绘总结] 拓扑分层详情 (基于节点连接关系):`)
         
         layerAnalysis.layers.forEach((layer, layerIndex) => {
-          const normalNodes = layer.filter(node => !node.isDragHint)
-          const dragHints = layer.filter(node => node.isDragHint)
-          const layerType = normalNodes.length > 0 && dragHints.length > 0 ? '混合层' :
-                           normalNodes.length > 0 ? '普通节点层' : '拖拽点层'
+          const normalNodes = layer.filter(node => !node.isEndpoint)
+        const endpoints = layer.filter(node => node.isEndpoint)
+          const layerType = normalNodes.length > 0 && endpoints.length > 0 ? '混合层' :
+                            normalNodes.length > 0 ? '普通节点层' : 'endpoint层'
           
           console.log(`  第${layerIndex + 1}层 (${layerType}):`)
           console.log(`    ├─ 普通节点: ${normalNodes.length} 个`)
-          console.log(`    ├─ 拖拽点: ${dragHints.length} 个`)
+          console.log(`    ├─ endpoint: ${endpoints.length} 个`)
           console.log(`    └─ 总计: ${layer.length} 个`)
           
           // 显示该层的节点详情
@@ -1016,9 +1101,14 @@ export function useStructuredLayout(getGraph) {
             })
           }
           
-          if (dragHints.length > 0) {
-            dragHints.forEach((hint, hintIndex) => {
-              console.log(`      拖拽点${hintIndex + 1}: (${hint.nodeId}) - 位置(${hint.position.x}, ${hint.position.y})`)
+          if (endpoints.length > 0) {
+            endpoints.forEach((hint, hintIndex) => {
+              if (hint.isVirtualEndpoint) {
+                const branchInfo = hint.data.branchId ? ` [分支: ${hint.data.branchLabel || hint.data.branchId}]` : ''
+                console.log(`      虚拟endpoint${hintIndex + 1}: (${hint.nodeId}) - 终点位置(${Math.round(hint.position.x)}, ${Math.round(hint.position.y)}) - 源节点: ${hint.data.sourceId}${branchInfo}`)
+              } else {
+                console.log(`      endpoint${hintIndex + 1}: (${hint.nodeId}) - 位置(${Math.round(hint.position.x)}, ${Math.round(hint.position.y)})`)
+              }
             })
           }
         })
@@ -1032,10 +1122,10 @@ export function useStructuredLayout(getGraph) {
         })
       }
       
-      if (nodesSummary.dragHints.length > 0) {
-        console.log(`🎯 [重绘总结] 拖拽点位置详情:`)
-        nodesSummary.dragHints.forEach((hint, index) => {
-          console.log(`  ${index + 1}. 拖拽点 (${hint.id}): 中心点(${hint.center.x}, ${hint.center.y}), 位置(${hint.position.x}, ${hint.position.y})`)
+      if (nodesSummary.endpoints.length > 0) {
+        console.log(`🎯 [重绘总结] endpoint位置详情:`)
+        nodesSummary.endpoints.forEach((hint, index) => {
+          console.log(`  ${index + 1}. endpoint (${hint.id}): 中心点(${hint.center.x}, ${hint.center.y}), 位置(${hint.position.x}, ${hint.position.y})`)
         })
       }
       
@@ -1065,13 +1155,23 @@ export function useStructuredLayout(getGraph) {
       }
       
       if (edgesSummary.previews.length > 0) {
-        console.log(`🔗 [重绘总结] 预览线位置详情:`)
+        console.log(`🔗 [重绘总结] 预览线位置详情 (基于图中边):`)
         edgesSummary.previews.forEach((edge, index) => {
           const routerName = typeof edge.router === 'string' ? edge.router : edge.router?.name || 'unknown'
           console.log(`  ${index + 1}. 预览线 (${edge.id}): ${edge.source.nodeId}[${edge.source.portId}] → ${edge.target.nodeId}[${edge.target.portId}], 路由器: ${routerName}`)
           if (edge.source.point && edge.target.point) {
             console.log(`     起点(${edge.source.point.x}, ${edge.source.point.y}) → 终点(${edge.target.point.x}, ${edge.target.point.y})`)
           }
+        })
+      }
+      
+      // 🎯 使用拓扑分层中的虚拟endpoint信息（更准确的预览线表示）
+      if (layerAnalysis.virtualEndpoints.length > 0) {
+        console.log(`🎯 [重绘总结] 虚拟endpoint详情 (基于拓扑关系):`)
+        layerAnalysis.virtualEndpoints.forEach((virtualEndpoint, index) => {
+          const branchInfo = virtualEndpoint.branchId ? ` [分支: ${virtualEndpoint.branchLabel || virtualEndpoint.branchId}]` : ''
+          console.log(`  ${index + 1}. 虚拟endpoint (${virtualEndpoint.id}): ${virtualEndpoint.sourceNodeId} → 坐标点(${Math.round(virtualEndpoint.endPosition.x)}, ${Math.round(virtualEndpoint.endPosition.y)})${branchInfo}`)
+          console.log(`     位于第${virtualEndpoint.layer + 1}层`)
         })
       }
       
@@ -1097,7 +1197,7 @@ export function useStructuredLayout(getGraph) {
    * @returns {Object} 布局质量分析结果
    */
   const analyzeLayoutQuality = (nodesSummary, direction) => {
-    const allNodes = [...nodesSummary.normal, ...nodesSummary.dragHints]
+    const allNodes = [...nodesSummary.normal, ...nodesSummary.endpoints]
     
     if (allNodes.length === 0) {
       return {

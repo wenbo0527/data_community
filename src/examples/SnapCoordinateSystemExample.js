@@ -72,7 +72,7 @@ class NodeMoveSnapHandler {
       const nodeData = targetNode.getData() || {}
       
       // 跳过特殊节点
-      if (nodeData.isDragHint || nodeData.type === 'drag-hint' || 
+      if (nodeData.isEndpoint || nodeData.type === 'endpoint' || 
           nodeData.isUnifiedPreview || nodeData.isPersistentPreview) {
         continue
       }
@@ -199,7 +199,7 @@ class DragHintSnapHandler {
     // 获取所有拖拽提示点
     const dragHints = this.graph.getNodes().filter(n => {
       const data = n.getData() || {}
-      return data.isDragHint || data.type === 'drag-hint'
+      return data.isEndpoint || data.type === 'endpoint'
     })
     
     let nearestHint = null
@@ -372,7 +372,7 @@ class PreviewLineCoordinateManager {
     )
     
     const dragHintConfig = {
-      id: `drag-hint-${sourceNode.id}-${branchInfo.id}`,
+      id: `endpoint-${sourceNode.id}-${branchInfo.id}`,
       shape: 'circle',
       x: correctedPosition.x - 6,
       y: correctedPosition.y - 6,
@@ -387,8 +387,8 @@ class PreviewLineCoordinateManager {
         }
       },
       data: {
-        isDragHint: true,
-        type: 'drag-hint',
+        isEndpoint: true,
+          type: 'endpoint',
         sourceNodeId: sourceNode.id,
         branchId: branchInfo.id,
         branchLabel: branchInfo.label,

@@ -200,8 +200,17 @@ export function useBaseDrawer(options = {}) {
   // 表单验证状态
   const isFormValid = computed(() => {
     if (customValidation && typeof customValidation === 'function') {
-      const errors = customValidation(formData)
-      return !errors || errors.length === 0
+      const result = customValidation(formData)
+      // 如果返回布尔值，直接使用
+      if (typeof result === 'boolean') {
+        return result
+      }
+      // 如果返回数组（错误列表），检查是否为空
+      if (Array.isArray(result)) {
+        return result.length === 0
+      }
+      // 其他情况，检查是否为假值
+      return !result
     }
     return true
   })

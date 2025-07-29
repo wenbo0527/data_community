@@ -1003,40 +1003,42 @@ const bindEvents = () => {
 
   console.log('🔗 [TaskFlowCanvas] 开始绑定画布事件')
 
-  // 添加画布级别的鼠标事件监听（用于调试）
-  const container = graph.container
-  if (container) {
-    console.log('📦 [TaskFlowCanvas] 画布容器信息:', {
-      container,
-      containerTagName: container.tagName,
-      containerClasses: container.className,
-      containerId: container.id
-    })
-
-    // 添加调试用的鼠标事件监听器（使用冒泡阶段，避免干扰CanvasPanZoomManager）
-    const debugMouseDown = (e) => {
-      console.log('🖱️ [TaskFlowCanvas] 画布容器鼠标按下事件:', {
-        target: e.target,
-        targetTagName: e.target.tagName,
-        targetClasses: e.target.className,
-        button: e.button,
-        clientX: e.clientX,
-        clientY: e.clientY,
-        eventPhase: e.eventPhase,
-        bubbles: e.bubbles,
-        cancelable: e.cancelable
+  // 添加画布级别的鼠标事件监听（仅在开发环境下用于调试）
+  if (import.meta.env.DEV) {
+    const container = graph.container
+    if (container) {
+      console.log('📦 [TaskFlowCanvas] 画布容器信息:', {
+        container,
+        containerTagName: container.tagName,
+        containerClasses: container.className,
+        containerId: container.id
       })
-    }
 
-    const debugMouseMove = (e) => {
-      // 移除鼠标移动日志，避免日志过多
-    }
+      // 添加调试用的鼠标事件监听器（使用冒泡阶段，避免干扰CanvasPanZoomManager）
+      const debugMouseDown = (e) => {
+        console.log('🖱️ [TaskFlowCanvas] 画布容器鼠标按下事件:', {
+          target: e.target,
+          targetTagName: e.target.tagName,
+          targetClasses: e.target.className,
+          button: e.button,
+          clientX: e.clientX,
+          clientY: e.clientY,
+          eventPhase: e.eventPhase,
+          bubbles: e.bubbles,
+          cancelable: e.cancelable
+        })
+      }
 
-    // 使用冒泡阶段，不干扰CanvasPanZoomManager的事件处理
-    container.addEventListener('mousedown', debugMouseDown, false)
-    container.addEventListener('mousemove', debugMouseMove, false)
-    
-    console.log('🎯 [TaskFlowCanvas] 画布容器调试事件监听器已添加（冒泡阶段）')
+      const debugMouseMove = (e) => {
+        // 移除鼠标移动日志，避免日志过多
+      }
+
+      // 使用冒泡阶段，不干扰CanvasPanZoomManager的事件处理
+      container.addEventListener('mousedown', debugMouseDown, false)
+      container.addEventListener('mousemove', debugMouseMove, false)
+      
+      console.log('🎯 [TaskFlowCanvas] 画布容器调试事件监听器已添加（冒泡阶段）')
+    }
   }
 
   // 节点点击事件 - 选择节点并打开配置抽屉
@@ -1068,9 +1070,14 @@ const bindEvents = () => {
 
       if (nodeData.type === 'start') {
         // 开始节点打开专用配置抽屉
-        selectedStartNodeData.value = latestConfig
+        // 构造完整的节点数据结构，确保包含最新的配置信息
+        const completeNodeData = {
+          ...nodeData,
+          config: latestConfig || nodeData.config || {}
+        }
+        selectedStartNodeData.value = completeNodeData
         showStartNodeConfigDrawer.value = true
-        console.log('[TaskFlowCanvas] 打开开始节点配置抽屉')
+        console.log('[TaskFlowCanvas] 打开开始节点配置抽屉，节点数据:', completeNodeData)
       } else if (['audience-split', 'event-split', 'ai-call', 'sms', 'manual-call', 'ab-test', 'wait'].includes(nodeData.type)) {
         // 使用专门的配置抽屉
         console.log('[TaskFlowCanvas] 调用configDrawers.openConfigDrawer:', nodeData.type)
@@ -1101,8 +1108,8 @@ const bindEvents = () => {
     const nodeData = node.getData() || {}
     dragNodeType.value = nodeData.type || 'unknown'
     
-    // 只对拖拽点启动吸附日志记录
-    if (nodeData.isDragHint || nodeData.type === 'drag-hint') {
+    // 只对endpoint启动吸附日志记录
+    if (nodeData.isEndpoint || nodeData.type === 'endpoint') {
       const position = node.getPosition()
       currentDragSession.value = startNodeDragLogging(node, position)
       
@@ -1161,6 +1168,30 @@ const bindEvents = () => {
     }
     
     const edgeData = edge.getData() || {}
+    
+    // 获取标签信息 - 优先从 edge.getLabels() 中获取，然后从 edgeData 中获取
+    let label = ''
+    const labels = edge.getLabels() || []
+    if (labels.length > 0) {
+      // 尝试从多个可能的位置获取标签文本
+      const labelData = labels[0]
+      if (labelData.markup && typeof labelData.markup === 'string') {
+        // 如果标签是通过 markup 设置的（直接文本）
+        label = labelData.markup
+      } else if (labelData.attrs && labelData.attrs.text && labelData.attrs.text.text) {
+        // 如果标签是通过 attrs.text.text 设置的
+        label = labelData.attrs.text.text
+      } else if (labelData.attrs && labelData.attrs.label && labelData.attrs.label.text) {
+        // 如果标签是通过 attrs.label.text 设置的
+        label = labelData.attrs.label.text
+      }
+    }
+    
+    // 如果从标签中没有获取到，则从 edgeData 中获取
+    if (!label) {
+      label = edgeData.branchLabel || edgeData.label || ''
+    }
+    
     const connectionData = {
       id: edge.id,
       source: sourceId,
@@ -1168,7 +1199,7 @@ const bindEvents = () => {
       sourcePort: edge.getSourcePortId() || 'out',
       targetPort: edge.getTargetPortId() || 'in',
       branchId: edgeData.branchId,
-      label: edgeData.label || ''
+      label: label
     }
     
     // 检查连接是否已存在，避免重复添加
@@ -1222,10 +1253,10 @@ const bindEvents = () => {
     const size = node.getSize()
     const nodeData = node.getData() || {}
     
-    // 只对拖拽点进行坐标修正和吸附相关的日志记录
-    const isDragHint = nodeData.isDragHint || nodeData.type === 'drag-hint'
+    // 只对endpoint进行坐标修正和吸附相关的日志记录
+    const isEndpoint = nodeData.isEndpoint || nodeData.type === 'endpoint'
     
-    if (isDragHint) {
+    if (isEndpoint) {
       // 通过坐标管理器验证和修正坐标
       const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
       if (coordinateValidation && coordinateValidation.difference && currentDragSession.value) {
@@ -1253,14 +1284,14 @@ const bindEvents = () => {
         unifiedPreviewManager.checkSnapToPreviewLines(node, rawPosition, size)
       }
 
-      // 同时检测是否接近预览线的拖拽提示点
-      const dragHints = graph.getNodes().filter(n => {
+      // 同时检测是否接近预览线的endpoint
+      const endpoints = graph.getNodes().filter(n => {
         const data = n.getData() || {}
-        return data.isDragHint || data.type === 'drag-hint'
+        return data.isEndpoint || data.type === 'endpoint'
       })
 
-      // 只对拖拽点收集附近的节点信息（用于最终日志）
-      if (isDragHint && currentDragSession.value) {
+      // 只对endpoint收集附近的节点信息（用于最终日志）
+      if (isEndpoint && currentDragSession.value) {
         const sessionData = dragSessionData.value.get(currentDragSession.value)
         if (sessionData) {
           // 更新附近节点信息
@@ -1270,7 +1301,7 @@ const bindEvents = () => {
           graph.getNodes().forEach(n => {
             if (n.id !== node.id) {
               const nData = n.getData() || {}
-              if (!nData.isDragHint && nData.type !== 'drag-hint') {
+              if (!nData.isEndpoint && nData.type !== 'endpoint') {
                 const nPos = n.getPosition()
                 const nSize = n.getSize()
                 const nCenterX = nPos.x + nSize.width / 2
@@ -1299,11 +1330,11 @@ const bindEvents = () => {
         }
       }
 
-      dragHints.forEach(hint => {
+      endpoints.forEach(hint => {
         const hintPos = hint.getPosition()
         const hintSize = hint.getSize()
         
-        // 🔧 使用坐标管理器修正拖拽提示点位置
+        // 🔧 使用坐标管理器修正endpoint位置
         const hintValidation = coordinateManager.validateCoordinateTransform(hint)
         let hintCenterX = hintPos.x + hintSize.width / 2
         let hintCenterY = hintPos.y + hintSize.height / 2
@@ -1320,7 +1351,7 @@ const bindEvents = () => {
         )
 
         if (distance <= 50) { // 50px 吸附范围
-          // 高亮拖拽提示点
+          // 高亮endpoint
           hint.setAttrs({
             body: {
               ...hint.getAttrs().body,
@@ -1330,8 +1361,8 @@ const bindEvents = () => {
             }
           })
           
-          // 只对拖拽点记录高亮变化到拖拽会话（不立即输出）
-          if (isDragHint && currentDragSession.value) {
+          // 只对endpoint记录高亮变化到拖拽会话（不立即输出）
+          if (isEndpoint && currentDragSession.value) {
             dragSnapLogger.logProcess(currentDragSession.value, 'highlight_change', {
               hintId: hint.id,
               distance: distance,
@@ -1388,20 +1419,20 @@ const bindEvents = () => {
     const nodeData = nodes.value.find(n => n.id === node.id)
     const cellData = node.getData() || {}
     
-    // 🔧 修复：检查是否是拖拽提示点移动
-    if (cellData.isDragHint || cellData.type === 'drag-hint') {
-      // console.log('🎯 [拖拽提示点移动] 检测到拖拽提示点移动:', {
+    // 🔧 修复：检查是否是endpoint移动
+    if (cellData.isEndpoint || cellData.type === 'endpoint') {
+      // console.log('🎯 [endpoint移动] 检测到endpoint移动:', {
       //   hintId: node.id,
       //   newPosition: node.getPosition(),
       //   hintData: cellData
       // })
       
-      // 获取统一预览线管理器 - 已改为预览线终点拖拽，不再使用拖拽提示点
+      // 获取统一预览线管理器 - 已改为预览线终点拖拽，不再使用endpoint
       /*
       const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
       if (unifiedPreviewManager && typeof unifiedPreviewManager.updateHintPosition === 'function') {
         try {
-          // 调用专门的拖拽提示点位置更新方法
+          // 调用专门的endpoint位置更新方法
           unifiedPreviewManager.updateHintPosition(node, node.getPosition())
           
           // 🔍 添加手工拖拽点移动结束的最终位置日志
@@ -1420,7 +1451,7 @@ const bindEvents = () => {
         }
       }
       */
-      return // 拖拽提示点移动不需要后续的普通节点处理逻辑
+      return // endpoint移动不需要后续的普通节点处理逻辑
     }
     
     if (nodeData) {
@@ -1548,9 +1579,9 @@ const bindEvents = () => {
         }
 
         // 检测是否接近拖拽提示点，如果是则尝试自动连接
-        const dragHints = graph.getNodes().filter(n => {
+        const endpoints = graph.getNodes().filter(n => {
           const data = n.getData() || {}
-          return data.isDragHint || data.type === 'drag-hint'
+          return data.isEndpoint || data.type === 'endpoint'
         })
 
         // 🔍 添加详细的拖拽点检测日志
@@ -1559,8 +1590,8 @@ const bindEvents = () => {
         //   nodeId: node.id,
         //   nodeType: nodeData.type,
         //   nodeCenter: { x: centerX, y: centerY },
-        //   dragHintsCount: dragHints.length,
-        //   dragHintsInfo: dragHints.map(hint => ({
+        //   endpointsCount: endpoints.length,
+        //   endpointsInfo: endpoints.map(hint => ({
         //     id: hint.id,
         //     position: hint.getPosition(),
         //     size: hint.getSize(),
@@ -1572,7 +1603,7 @@ const bindEvents = () => {
         let nearestHint = null
         let nearestDistance = Infinity
 
-        dragHints.forEach(hint => {
+        endpoints.forEach(hint => {
           const hintPos = hint.getPosition()
           const hintSize = hint.getSize()
           
@@ -1868,7 +1899,7 @@ const bindEvents = () => {
           // 清除拖拽过程中的高亮效果
           unifiedPreviewManager.clearNodeHighlights()
 
-          dragHints.forEach(hint => {
+          endpoints.forEach(hint => {
             // 恢复拖拽提示点的原始样式
             const hintData = hint.getData() || {}
             if (hintData.originalAttrs) {
@@ -2029,7 +2060,7 @@ const bindEvents = () => {
                 if (sessionData) {
                   // 检查是否是拖拽点
                   const sessionNodeData = sessionData.node.getData() || {}
-                  if (sessionNodeData.isDragHint || sessionNodeData.type === 'drag-hint') {
+                  if (sessionNodeData.isEndpoint || sessionNodeData.type === 'endpoint') {
                     const endPosition = sessionData.node.getPosition()
                     
                     // 查找最近的普通节点in端口坐标
@@ -2062,7 +2093,7 @@ const bindEvents = () => {
             if (sessionData) {
               // 检查是否是拖拽点
               const sessionNodeData = sessionData.node.getData() || {}
-              if (sessionNodeData.isDragHint || sessionNodeData.type === 'drag-hint') {
+              if (sessionNodeData.isEndpoint || sessionNodeData.type === 'endpoint') {
                 const endPosition = sessionData.node.getPosition()
                 
                 // 查找最近的普通节点in端口坐标
@@ -2128,7 +2159,7 @@ const bindEvents = () => {
       const cellData = cell.getData() || {}
 
       // 检查是否是拖拽提示点
-      if (cellData.isDragHint || cellData.type === 'drag-hint' || cell.id.includes('hint_')) {
+      if (cellData.isEndpoint || cellData.type === 'endpoint' || cell.id.includes('hint_')) {
         // 拖拽提示点不在nodes数组中，直接返回
         return
       }
@@ -2260,12 +2291,42 @@ const bindEvents = () => {
     if (nodeIndex >= 0) {
       const nodeData = nodes.value[nodeIndex]
 
-      // 更新本地节点数据，保持与图形节点实例的数据结构一致
-      nodeData.config = config
+      // 获取图形节点中NodeConfigManager处理后的完整数据
+      const graphNodeData = node.getData() || {}
+      const processedConfig = graphNodeData.config || config
+
+      console.log(`[TaskFlowCanvas] 节点配置更新事件 - ${nodeType}:`, {
+        nodeId: node.id,
+        originalConfig: config,
+        processedConfig: processedConfig,
+        hasBranches: !!(processedConfig.branches && processedConfig.branches.length > 0)
+      })
+
+      // 更新本地节点数据，使用NodeConfigManager处理后的配置
+      nodeData.config = processedConfig
       nodeData.data = {
         ...nodeData.data,
-        config: config,
+        config: processedConfig,
         lastUpdated: Date.now()
+      }
+
+      // 对于分流节点，确保branches数据正确同步
+      if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
+        if (processedConfig.branches && Array.isArray(processedConfig.branches)) {
+          nodeData.branches = processedConfig.branches
+          console.log(`[TaskFlowCanvas] 分流节点分支数据已同步:`, {
+            nodeId: node.id,
+            nodeType: nodeType,
+            branchCount: processedConfig.branches.length,
+            branches: processedConfig.branches.map(b => ({ id: b.id, name: b.name }))
+          })
+        } else {
+          console.warn(`[TaskFlowCanvas] 分流节点缺少分支数据:`, {
+            nodeId: node.id,
+            nodeType: nodeType,
+            processedConfig: processedConfig
+          })
+        }
       }
 
       emit('node-updated', nodeData)
@@ -2344,14 +2405,26 @@ const loadInitialData = () => {
   })
 }
 
-// 汇总日志 - 统计页面中各种元素的数量
+// 汇总日志 - 统计页面中各种元素的数量（仅在开发环境下执行详细统计）
 const logCanvasSummary = () => {
   if (!graph) {
     console.warn('[TaskFlowCanvas] 图形实例不存在，无法统计汇总信息')
     return
   }
 
-  // 统计节点数量
+  // 在生产环境下只输出简要统计
+  if (import.meta.env.PROD) {
+    const allNodes = graph.getNodes()
+    const allEdges = graph.getEdges()
+    console.log(`📊 [画布汇总] 节点: ${allNodes.length}, 边: ${allEdges.length}, 数据: nodes(${nodes.value.length}), connections(${connections.value.length})`)
+    return {
+      nodes: { total: allNodes.length },
+      connections: { total: allEdges.length },
+      dataArrays: { nodes: nodes.value.length, connections: connections.value.length }
+    }
+  }
+
+  // 开发环境下执行详细统计
   const allNodes = graph.getNodes()
   const normalNodes = allNodes.filter(node => {
     const nodeData = node.getData()
@@ -2508,6 +2581,33 @@ const addNodeToGraph = (nodeData) => {
   // 确保position对象存在
   const position = nodeData.position || { x: 100, y: 100 }
   
+  // 准备节点数据，确保config和branches数据正确传递
+  const nodeDataForGraph = {
+    ...nodeData.data,
+    type: nodeData.type,  // 确保节点类型正确设置
+    nodeType: nodeData.type,  // 保持兼容性
+    label: nodeData.label,
+    selected: false,
+    deletable: nodeData.type !== 'start',
+    level: nodeData.data?.level || 0,
+    levelIndex: nodeData.data?.levelIndex || 0,
+    // 确保config数据正确传递
+    config: nodeData.config || {},
+    // 对于分流节点，确保branches数据正确传递
+    branches: nodeData.branches || (nodeData.config?.branches) || []
+  }
+
+  // 对于分流节点，添加额外的调试信息
+  if (['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)) {
+    console.log('[TaskFlowCanvas] 添加分流节点，分支数据:', {
+      nodeId: nodeData.id,
+      nodeType: nodeData.type,
+      configBranches: nodeData.config?.branches,
+      directBranches: nodeData.branches,
+      finalBranches: nodeDataForGraph.branches
+    })
+  }
+  
   // 创建节点
   const node = graph.addNode({
     id: nodeData.id,
@@ -2517,16 +2617,7 @@ const addNodeToGraph = (nodeData) => {
     width: nodeConfig.width || 100,
     height: nodeConfig.height || 100,
     ports,
-    data: {
-      ...nodeData.data,
-      type: nodeData.type,  // 确保节点类型正确设置
-      nodeType: nodeData.type,  // 保持兼容性
-      label: nodeData.label,
-      selected: false,
-      deletable: nodeData.type !== 'start',
-      level: nodeData.data?.level || 0,
-      levelIndex: nodeData.data?.levelIndex || 0
-    }
+    data: nodeDataForGraph
   })
 
   console.log('[TaskFlowCanvas] X6节点创建成功，节点数据:', node.getData())
@@ -2694,6 +2785,7 @@ const addConnectionToGraph = (connectionData) => {
       data: {
         branchId: connectionData.branchId,
         label: connectionData.label,
+        branchLabel: connectionData.label, // 确保branchLabel也被设置
         sourceNodeId: connectionData.source,
         targetNodeId: connectionData.target
       }
@@ -2704,33 +2796,38 @@ const addConnectionToGraph = (connectionData) => {
     try {
       const edge = graph.addEdge(edgeConfig)
       
-      // 🔧 修复：如果是分支连接且有label，设置连线标签
-      if (connectionData.branchId && connectionData.label) {
+      // 🔧 修复：如果连接有label，设置连线标签（不仅限于分支连接）
+      if (connectionData.label) {
+        // 使用简化的X6标签格式，确保兼容性
         edge.setLabels([{
           markup: [
             {
               tagName: 'rect',
-              selector: 'rect'
+              selector: 'body'
             },
             {
               tagName: 'text',
-              selector: 'text'
+              selector: 'label'
             }
           ],
           attrs: {
-            text: {
+            label: {
               text: connectionData.label,
               fontSize: 12,
-              fill: '#333',
+              fill: '#333333',
               textAnchor: 'middle',
               textVerticalAnchor: 'middle'
             },
-            rect: {
-              fill: '#fff',
-              stroke: '#d9d9d9',
+            body: {
+              fill: '#ffffff',
+              stroke: '#5F95FF',
               strokeWidth: 1,
               rx: 4,
-              ry: 4
+              ry: 4,
+              refWidth: '100%',
+              refHeight: '100%',
+              refX: '-50%',
+              refY: '-50%'
             }
           },
           position: {
@@ -2739,10 +2836,11 @@ const addConnectionToGraph = (connectionData) => {
           }
         }])
         
-        console.log('🏷️ [TaskFlowCanvas] 为恢复的分支连接添加标签:', {
+        console.log('🏷️ [TaskFlowCanvas] 为恢复的连接添加标签:', {
           edgeId: edge.id,
-          branchId: connectionData.branchId,
-          label: connectionData.label
+          branchId: connectionData.branchId || 'none',
+          label: connectionData.label,
+          labelType: typeof connectionData.label
         })
       }
       
@@ -3199,7 +3297,7 @@ const handleSingleNodeDelete = (data, shouldCascade = true) => {
           remainingNodes.forEach(node => {
             const nodeData = node.getData() || {}
             // 跳过拖拽提示点和预览相关节点
-            if (!nodeData.isDragHint && !nodeData.isUnifiedPreview && !nodeData.isPersistentPreview) {
+            if (!nodeData.isEndpoint && !nodeData.isUnifiedPreview && !nodeData.isPersistentPreview) {
               if (previewManager.previewLines && previewManager.previewLines.has(node.id)) {
                 console.log(`[TaskFlowCanvas] 刷新节点 ${node.id} 的预览线`)
                 previewManager.updatePreviewLinePosition(node)
@@ -3307,14 +3405,36 @@ const handleStartNodeConfigConfirm = async (configData) => {
         await configDrawers.value.nodeConfigManager.processNodeConfig('start', graphNode, configData, context)
 
         // 更新本地节点数据，保持与图形节点实例的数据结构一致
-        startNode.config = configData
-        startNode.data = {
-          ...startNode.data,
+        const updatedNodeData = {
+          ...startNode,
           config: configData,
-          lastUpdated: Date.now()
+          data: {
+            ...startNode.data,
+            config: configData,
+            isConfigured: true,  // 标记为已配置
+            lastUpdated: Date.now()
+          }
         }
 
-        console.log('[TaskFlowCanvas] 本地节点数据已更新:', startNode)
+        // 更新 nodes.value 数组中的节点数据（触发响应式更新）
+        nodes.value[startNodeIndex] = updatedNodeData
+
+        // 更新图形节点的数据
+        graphNode.setData({
+          ...graphNode.getData(),
+          config: configData,
+          isConfigured: true,  // 标记为已配置
+          lastUpdated: Date.now()
+        })
+
+        console.log('[TaskFlowCanvas] 本地节点数据已更新:', updatedNodeData)
+
+        // 触发节点配置更新事件，让预览线管理器创建预览线
+        graph.trigger('node:config-updated', {
+          node: graphNode,
+          nodeType: 'start',
+          config: configData
+        })
 
         emit('node-updated', startNode)
         console.log('[TaskFlowCanvas] 开始节点配置处理完成')
@@ -3595,18 +3715,18 @@ const generateLayoutSummary = () => {
         return !(nodeData?.isUnifiedPreview || nodeData?.isPersistentPreview)
       })
       
-      const dragHints = businessNodes.filter(node => {
+      const endpoints = businessNodes.filter(node => {
         const nodeData = node.getData()
         const nodeType = nodeData?.type || nodeData?.nodeType
-        return nodeData?.isDragHint || nodeType === 'drag-hint' || node.id.includes('hint_')
+        return nodeData?.isEndpoint || nodeType === 'endpoint' || node.id.includes('hint_')
       })
       
-      const pureBusinessNodes = businessNodes.filter(node => !dragHints.includes(node))
-      
-      console.log('📊 [TaskFlowCanvas] 简化布局总结:')
-      console.log(`   总节点数: ${allNodes.length}`)
-      console.log(`   业务节点数: ${pureBusinessNodes.length}`)
-      console.log(`   拖拽点数: ${dragHints.length}`)
+      const pureBusinessNodes = businessNodes.filter(node => !endpoints.includes(node))
+        
+        console.log('📊 [TaskFlowCanvas] 简化布局总结:')
+        console.log(`   总节点数: ${allNodes.length}`)
+        console.log(`   业务节点数: ${pureBusinessNodes.length}`)
+        console.log(`   拖拽点数: ${endpoints.length}`)
       console.log(`   连接线数: ${allEdges.length}`)
     }
 
@@ -3756,9 +3876,17 @@ const exportData = () => {
     }
   }
 
+  // 注意：预览线不需要保存，它们是动态生成的UI元素
+  // 在任务恢复时，预览线会根据节点配置自动重新创建
+  console.log('[TaskFlowCanvas] 导出画布数据:', {
+    nodeCount: nodes.value.length,
+    connectionCount: connections.value.length
+  })
+
   return {
     nodes: nodes.value,
     connections: connections.value
+    // 移除 previewLines 字段 - 预览线应该动态生成，不需要持久化
   }
 }
 
@@ -3770,6 +3898,10 @@ const loadCanvasData = (data) => {
     // 清空当前画布
     graph.clearCells()
     
+    // 清空当前节点和连接数组
+    nodes.value = []
+    connections.value = []
+    
     // 重新加载节点
     data.nodes.forEach(nodeData => {
       addNodeToGraph(nodeData)
@@ -3780,7 +3912,295 @@ const loadCanvasData = (data) => {
       addConnectionToGraph(connectionData)
     })
     
-    console.log('[TaskFlowCanvas] 画布数据已重新加载')
+    // 检查是否需要开始节点但还没有
+    if (props.autoAddStartNode) {
+      const hasStartNode = nodes.value.some(node => node.type === 'start')
+      if (!hasStartNode) {
+        console.log('[TaskFlowCanvas] 加载数据时发现缺少开始节点，检查原始数据中是否有开始节点配置')
+        
+        // 检查原始数据中是否有开始节点的配置信息
+        const originalStartNode = data.nodes?.find(node => node.type === 'start')
+        if (originalStartNode && originalStartNode.config) {
+          console.log('[TaskFlowCanvas] 找到原始开始节点配置，使用原始配置重新创建:', originalStartNode.config)
+          
+          // 使用原始配置信息重新创建开始节点
+          const startNodeData = {
+            id: 'start-node',
+            type: 'start',
+            label: originalStartNode.label || '开始',
+            position: originalStartNode.position || { x: 400, y: 100 },
+            data: {
+              ...originalStartNode.data,
+              fixed: true,
+              level: 0,
+              isConfigured: true
+            },
+            config: originalStartNode.config  // 保持原始配置
+          }
+          
+          addNodeToGraph(startNodeData)
+          console.log('[TaskFlowCanvas] 使用原始配置重新创建开始节点完成')
+        } else {
+          console.log('[TaskFlowCanvas] 未找到原始开始节点配置，创建默认开始节点')
+          addStartNode()
+        }
+      }
+    }
+    
+    // 延迟触发预览线重新生成，确保所有节点和连接都已加载完成
+    nextTick(() => {
+      setTimeout(() => {
+        // 获取所有已配置的节点，为它们重新生成预览线
+        nodes.value.forEach(nodeData => {
+          const graphNode = graph.getCellById(nodeData.id)
+          if (graphNode && nodeData.config) {
+            // 检查节点是否已有实际连接（从图中检查，更准确）
+            const outgoingEdges = graph.getOutgoingEdges(graphNode) || []
+            const realConnections = outgoingEdges.filter(edge => {
+              const edgeData = edge.getData() || {}
+              // 排除预览线，只检查真实连接
+              return !edgeData.isPersistentPreview && 
+                     !edgeData.isPreview && 
+                     !edgeData.isUnifiedPreview &&
+                     edgeData.type !== 'preview-line' &&
+                     edgeData.type !== 'unified-preview-line' &&
+                     edgeData.type !== 'draggable-preview'
+            })
+            
+            const hasRealConnections = realConnections.length > 0
+            
+            // 分流节点特殊处理：需要检查每个分支是否有连接
+            const isBranchNode = ['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)
+            
+            // 检查是否需要重新生成预览线
+            // 使用智能配置验证逻辑
+            const configValidation = validateNodeConfiguration(nodeData, realConnections)
+            
+            if (configValidation.shouldCreatePreview) {
+              // 触发节点配置更新事件，让预览线管理器重新创建预览线
+              graph.trigger('node:config-updated', {
+                node: graphNode,
+                nodeType: nodeData.type,
+                config: nodeData.config
+              })
+            }
+          }
+        })
+        
+        // 🔧 修复：在加载完成后删除已有连接的节点的预览线，保留未连接节点的预览线
+        // 预览线的作用是引导用户连接，只有已经有真实连接的节点才应该删除预览线
+        setTimeout(() => {
+          const allEdges = graph.getEdges() || []
+          const allNodes = graph.getNodes() || []
+          
+          // 1. 统计每个节点的真实连接情况
+          const nodeConnections = new Map() // nodeId -> { hasOutgoing: boolean, hasIncoming: boolean, branches: Set }
+          
+          allNodes.forEach(node => {
+            nodeConnections.set(node.id, {
+              hasOutgoing: false,
+              hasIncoming: false,
+              branches: new Set()
+            })
+          })
+          
+          // 2. 分析真实连接
+          const realConnections = []
+          const previewLines = []
+          
+          allEdges.forEach(edge => {
+            const edgeData = edge.getData() || {}
+            const isPreview = edgeData.isPersistentPreview || 
+                             edgeData.isPreview || 
+                             edgeData.isUnifiedPreview ||
+                             edgeData.type === 'preview-line' ||
+                             edgeData.type === 'unified-preview-line' ||
+                             edgeData.type === 'draggable-preview'
+            
+            const sourceId = edge.getSourceCellId()
+            const targetId = edge.getTargetCellId()
+            
+            if (isPreview) {
+              previewLines.push({
+                id: edge.id,
+                type: edgeData.type,
+                source: sourceId,
+                target: targetId,
+                branchId: edgeData.branchId,
+                labels: edge.getLabels()?.length || 0
+              })
+            } else {
+              // 真实连接
+              realConnections.push({
+                id: edge.id,
+                source: sourceId,
+                target: targetId,
+                branchId: edgeData.branchId
+              })
+              
+              // 更新节点连接状态
+              if (nodeConnections.has(sourceId)) {
+                const sourceConn = nodeConnections.get(sourceId)
+                sourceConn.hasOutgoing = true
+                if (edgeData.branchId) {
+                  sourceConn.branches.add(edgeData.branchId)
+                }
+              }
+              
+              if (nodeConnections.has(targetId)) {
+                const targetConn = nodeConnections.get(targetId)
+                targetConn.hasIncoming = true
+              }
+            }
+          })
+          
+          // 3. 确定需要删除的预览线
+          const previewLinesToRemove = []
+          
+          previewLines.forEach(previewInfo => {
+            const sourceConn = nodeConnections.get(previewInfo.source)
+            
+            if (sourceConn) {
+              let shouldRemove = false
+              
+              if (previewInfo.branchId) {
+                // 分支预览线：检查该分支是否已有真实连接
+                if (sourceConn.branches.has(previewInfo.branchId)) {
+                  shouldRemove = true
+                }
+              } else {
+                // 单一预览线：检查节点是否已有任何出向连接
+                if (sourceConn.hasOutgoing) {
+                  shouldRemove = true
+                }
+              }
+              
+              if (shouldRemove) {
+                previewLinesToRemove.push(previewInfo)
+              }
+            }
+          })
+          
+          // 4. 删除已连接的预览线
+          previewLinesToRemove.forEach(previewInfo => {
+            const edge = graph.getCellById(previewInfo.id)
+            if (edge) {
+              graph.removeCell(edge) // 这会同时删除边和它的所有标签
+            }
+          })
+          
+          // 5. 保留的预览线统计
+          const remainingPreviewLines = previewLines.length - previewLinesToRemove.length
+          console.log(`✅ [TaskFlowCanvas] 预览线清理完成: 删除 ${previewLinesToRemove.length} 条已连接预览线，保留 ${remainingPreviewLines} 条未连接预览线`)
+          
+          // 🔧 在预览线清理完成后，执行统一布局以确保连线标签正确显示
+          setTimeout(async () => {
+            try {
+              await applyUnifiedStructuredLayout()
+            } catch (error) {
+              console.error('❌ [TaskFlowCanvas] 统一布局执行失败:', error)
+            }
+          }, 100)
+          
+        }, 100) // 短暂延迟确保预览线生成完成后再清理
+        
+        // 🔍 添加详细的加载完成日志
+        setTimeout(() => {
+          console.log('📊 [TaskFlowCanvas] ===== 加载完成状态检查 =====')
+          
+          // 1. 统计所有节点
+          const allNodes = graph.getNodes() || []
+          console.log(`📍 [TaskFlowCanvas] 画布上共有 ${allNodes.length} 个节点:`)
+          allNodes.forEach((node, index) => {
+            const nodeData = node.getData() || {}
+            const nodeType = nodeData.type || 'unknown'
+            const nodeId = node.id
+            const position = node.getPosition()
+            console.log(`  ${index + 1}. 节点ID: ${nodeId}, 类型: ${nodeType}, 位置: (${position.x}, ${position.y})`)
+            
+            // 如果是分流节点，输出分支信息
+            if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
+              const branches = nodeData.branches || []
+              console.log(`    分支数据: ${branches.length} 个分支`)
+              branches.forEach((branch, branchIndex) => {
+                console.log(`      分支 ${branchIndex + 1}: ID="${branch.id}", 标签="${branch.label || branch.name || 'unknown'}"`)
+              })
+            }
+          })
+          
+          // 2. 统计所有连接和预览线
+          const allEdges = graph.getEdges() || []
+          console.log(`🔗 [TaskFlowCanvas] 画布上共有 ${allEdges.length} 个连接/预览线:`)
+          
+          let realConnections = 0
+          let previewLines = 0
+          let labelCount = 0
+          
+          allEdges.forEach((edge, index) => {
+            const edgeData = edge.getData() || {}
+            const sourceId = edge.getSourceCellId()
+            const targetId = edge.getTargetCellId()
+            const labels = edge.getLabels() || []
+            
+            // 判断连接类型
+            const isPreview = edgeData.isPersistentPreview || 
+                             edgeData.isPreview || 
+                             edgeData.isUnifiedPreview ||
+                             edgeData.type === 'preview-line' ||
+                             edgeData.type === 'unified-preview-line' ||
+                             edgeData.type === 'draggable-preview'
+            
+            if (isPreview) {
+              previewLines++
+              console.log(`  ${index + 1}. [预览线] ${sourceId} -> ${targetId}, 类型: ${edgeData.type || 'unknown'}, 标签数: ${labels.length}`)
+            } else {
+              realConnections++
+              console.log(`  ${index + 1}. [真实连接] ${sourceId} -> ${targetId}, 分支ID: ${edgeData.branchId || 'none'}, 标签数: ${labels.length}`)
+            }
+            
+            // 统计标签
+            labelCount += labels.length
+            if (labels.length > 0) {
+              labels.forEach((label, labelIndex) => {
+                console.log(`    标签 ${labelIndex + 1}: "${label.markup || label.text || 'empty'}", 位置: ${JSON.stringify(label.position || {})}`)
+              })
+            }
+          })
+          
+          // 3. 统计connections.value数组
+          console.log(`📋 [TaskFlowCanvas] connections.value 数组中有 ${connections.value.length} 个连接:`)
+          connections.value.forEach((conn, index) => {
+            console.log(`  ${index + 1}. ${conn.source} -> ${conn.target}, 分支ID: ${conn.branchId || 'none'}, 标签: "${conn.label || 'none'}"`)
+          })
+          
+          // 4. 汇总统计
+          console.log('📈 [TaskFlowCanvas] 汇总统计:')
+          console.log(`  - 节点总数: ${allNodes.length}`)
+          console.log(`  - 真实连接: ${realConnections}`)
+          console.log(`  - 预览线: ${previewLines}`)
+          console.log(`  - 标签总数: ${labelCount}`)
+          console.log(`  - connections数组: ${connections.value.length}`)
+          
+          // 5. 检查是否有异常
+          if (previewLines > 0) {
+            console.warn(`⚠️ [TaskFlowCanvas] 加载完成后仍有 ${previewLines} 条预览线，这可能是清理逻辑的问题`)
+          }
+          
+          if (previewLines > allNodes.length) {
+            console.warn(`⚠️ [TaskFlowCanvas] 预览线数量(${previewLines})超过节点数量(${allNodes.length})，可能存在重复创建`)
+          }
+          
+          if (labelCount > realConnections + previewLines) {
+            console.warn(`⚠️ [TaskFlowCanvas] 标签数量(${labelCount})超过连接总数(${realConnections + previewLines})，可能存在重复标签`)
+          }
+          
+          console.log('📊 [TaskFlowCanvas] ===== 状态检查完成 =====')
+        }, 300) // 再延迟200ms确保清理操作完成
+        
+      }, 200) // 延迟200ms确保所有节点都已完全初始化
+    })
+    
+    console.log('[TaskFlowCanvas] 画布数据已重新加载，预览线将自动重新创建')
   } catch (error) {
     console.error('[TaskFlowCanvas] 加载画布数据失败:', error)
   }
@@ -4173,6 +4593,141 @@ onUnmounted(() => {
     graph.dispose()
   }
 })
+const validateNodeConfiguration = (nodeData, realConnections = []) => {
+  // 1. 检查基础配置标志
+  const hasConfigFlag = !!nodeData.isConfigured
+  
+  // 2. 检查实际配置数据
+  let hasActualConfig = false
+  let configValidationDetails = {}
+  
+  if (nodeData.config && typeof nodeData.config === 'object') {
+    const configKeys = Object.keys(nodeData.config)
+    hasActualConfig = configKeys.length > 0
+    
+    // 对分流节点进行特殊验证
+    const isBranchNode = ['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)
+    if (isBranchNode) {
+      switch (nodeData.type) {
+        case 'audience-split':
+          configValidationDetails.crowdLayers = nodeData.config.crowdLayers?.length || 0
+          hasActualConfig = configValidationDetails.crowdLayers > 0
+          break
+        case 'event-split':
+          configValidationDetails.events = nodeData.config.events?.length || 0
+          hasActualConfig = configValidationDetails.events > 0
+          break
+        case 'ab-test':
+          configValidationDetails.testGroups = nodeData.config.testGroups?.length || 0
+          hasActualConfig = configValidationDetails.testGroups > 0
+          break
+      }
+    }
+  }
+  
+  // 3. 检查分支数据（即使没有明确配置）
+  let hasBranchData = false
+  let branchValidationDetails = {}
+  
+  if (nodeData.branches && Array.isArray(nodeData.branches)) {
+    hasBranchData = nodeData.branches.length > 0
+    branchValidationDetails = {
+      branchCount: nodeData.branches.length,
+      branches: nodeData.branches.map(b => ({
+        id: b.id,
+        label: b.label || b.name,
+        hasLabel: !!(b.label || b.name)
+      }))
+    }
+  }
+  
+  // 4. 特殊节点处理
+  const isStartNode = nodeData.type === 'start'
+  const hasMeaningfulData = hasActualConfig || hasBranchData || isStartNode
+  
+  // 5. 检查连接状态
+  const hasConnections = realConnections && realConnections.length > 0
+  
+  // 6. 智能判断逻辑
+  let shouldCreatePreview = false
+  let validationMethod = 'unknown'
+  let reason = '未知原因'
+  
+  if (hasConnections) {
+    // 如果已有连接，需要进一步检查分支节点的分支连接情况
+    const isBranchNode = ['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)
+    if (isBranchNode) {
+      // 统计已连接的分支
+      const connectedBranches = new Set()
+      realConnections.forEach(edge => {
+        const edgeData = edge.getData() || {}
+        if (edgeData.branchId) {
+          connectedBranches.add(edgeData.branchId)
+        }
+      })
+      
+      // 计算期望的分支数量
+      let expectedBranches = 2 // 默认分支数
+      if (nodeData.type === 'audience-split' && nodeData.config?.crowdLayers) {
+        expectedBranches = nodeData.config.crowdLayers.length + 1
+      } else if (nodeData.type === 'ab-test' && nodeData.config?.testGroups) {
+        expectedBranches = nodeData.config.testGroups.length
+      } else if (hasBranchData) {
+        expectedBranches = nodeData.branches.length
+      }
+      
+      shouldCreatePreview = connectedBranches.size < expectedBranches
+      validationMethod = 'branch-connection-check'
+      reason = shouldCreatePreview ? 
+        `分支节点有 ${expectedBranches} 个分支，但只连接了 ${connectedBranches.size} 个` :
+        `分支节点的所有 ${expectedBranches} 个分支都已连接`
+    } else {
+      shouldCreatePreview = false
+      validationMethod = 'has-connections'
+      reason = '非分支节点已有连接'
+    }
+  } else {
+    // 没有连接的情况下，根据配置状态判断
+    if (hasConfigFlag && hasActualConfig) {
+      shouldCreatePreview = true
+      validationMethod = 'config-flag-and-data'
+      reason = '节点已配置且有实际配置数据'
+    } else if (hasBranchData) {
+      shouldCreatePreview = true
+      validationMethod = 'branch-data-fallback'
+      reason = '节点虽未标记为已配置，但有分支数据'
+    } else if (isStartNode) {
+      shouldCreatePreview = true
+      validationMethod = 'start-node-special'
+      reason = '开始节点特殊处理'
+    } else if (hasMeaningfulData) {
+      shouldCreatePreview = true
+      validationMethod = 'meaningful-data'
+      reason = '节点有有意义的数据'
+    } else {
+      shouldCreatePreview = false
+      validationMethod = 'no-valid-config'
+      reason = '节点未配置且无有效数据'
+    }
+  }
+  
+  const result = {
+    shouldCreatePreview,
+    isConfigured: hasConfigFlag,
+    hasActualConfig,
+    hasBranchData,
+    hasConnections,
+    validationMethod,
+    reason,
+    details: {
+      configValidation: configValidationDetails,
+      branchValidation: branchValidationDetails,
+      connectionCount: realConnections ? realConnections.length : 0
+    }
+  }
+  
+  return result
+}
 
 // 暴露方法
 defineExpose({

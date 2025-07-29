@@ -5,37 +5,16 @@
 
 export class SmartCacheManager {
   constructor(options = {}) {
-    this.options = {
-      maxSize: options.maxSize || 1000,
-      ttl: options.ttl || 300000, // 5分钟
-      cleanupInterval: options.cleanupInterval || 60000, // 1分钟
-      enableLRU: options.enableLRU !== false,
-      enableStats: options.enableStats !== false,
-      ...options
-    }
+    this.cache = new Map()
+    this.accessTimes = new Map()
+    this.hitCounts = new Map()
+    this.maxSize = options.maxSize || 1000
+    this.ttl = options.ttl || 5 * 60 * 1000 // 5分钟
+    this.cleanupInterval = options.cleanupInterval || 60 * 1000 // 1分钟
+    this.hitRateThreshold = options.hitRateThreshold || 0.1
     
-    // 多层级缓存
-    this.caches = {
-      layout: new Map(),      // 布局计算缓存
-      position: new Map(),    // 位置计算缓存
-      branch: new Map(),      // 分支信息缓存
-      validation: new Map(),  // 验证结果缓存
-      render: new Map()       // 渲染数据缓存
-    }
-    
-    // LRU访问记录
-    this.accessOrder = new Map()
-    
-    // 统计信息
-    this.stats = {
-      hits: 0,
-      misses: 0,
-      evictions: 0,
-      cleanups: 0
-    }
-    
-    // 启动清理定时器
-    this.startCleanupTimer()
+    // 启动定期清理
+    this.startCleanup()
   }
 
   /**

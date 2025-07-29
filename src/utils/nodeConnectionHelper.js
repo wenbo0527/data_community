@@ -142,7 +142,7 @@ export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPo
       zIndex: -1 // 置于底层
     })
 
-    console.log(`Preset connection created: ${connectionId}`)
+    // console.log(`Preset connection created: ${connectionId}`)
     return edge
   } catch (error) {
     console.error('Failed to create preset connection:', error)
@@ -163,7 +163,6 @@ export const removePresetConnection = (graph, connectionId) => {
     const edge = graph.getCellById(connectionId)
     if (edge && edge.getData()?.isPreset) {
       graph.removeCell(edge)
-      console.log(`Preset connection removed: ${connectionId}`)
       return true
     }
     return false

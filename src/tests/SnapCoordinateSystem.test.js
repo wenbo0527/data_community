@@ -263,7 +263,7 @@ describe('节点移动吸附测试', () => {
     // 创建拖拽提示点
     const dragHint = graph.addNode({
       x: 200, y: 200, width: 12, height: 12,
-      data: { isDragHint: true, type: 'drag-hint' }
+      data: { isEndpoint: true, type: 'endpoint' }
     })
     
     // 创建移动节点
@@ -317,7 +317,7 @@ describe('拖拽点吸附测试', () => {
     // 创建拖拽提示点
     const dragHint = graph.addNode({
       x: 200, y: 200, width: 12, height: 12,
-      data: { isDragHint: true, type: 'drag-hint', sourceNodeId: 'source-1' }
+      data: { isEndpoint: true, type: 'endpoint', sourceNodeId: 'source-1' }
     })
     
     // 创建拖拽节点
@@ -337,7 +337,7 @@ describe('拖拽点吸附测试', () => {
     // 创建距离较远的拖拽提示点
     const dragHint = graph.addNode({
       x: 300, y: 300, width: 12, height: 12,
-      data: { isDragHint: true, type: 'drag-hint' }
+      data: { isEndpoint: true, type: 'endpoint' }
     })
     
     const draggedNode = graph.addNode({
@@ -365,8 +365,8 @@ describe('拖拽点吸附测试', () => {
     const dragHint = graph.addNode({
       x: 200, y: 200, width: 12, height: 12,
       data: {
-        isDragHint: true,
-        type: 'drag-hint',
+        isEndpoint: true,
+          type: 'endpoint',
         sourceNodeId: sourceNode.id,
         branchId: 'branch-1',
         branchLabel: 'Yes'
@@ -435,7 +435,7 @@ describe('预览线坐标管理测试', () => {
     
     // 验证拖拽提示点创建
     expect(dragHint).toBeDefined()
-    expect(dragHint.getData().isDragHint).toBe(true)
+    expect(dragHint.getData().isEndpoint).toBe(true)
     expect(dragHint.getData().sourceNodeId).toBe(sourceNode.id)
     expect(dragHint.getData().branchId).toBe(branchInfo.id)
     

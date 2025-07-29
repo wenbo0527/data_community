@@ -74,7 +74,7 @@ export class CanvasPanZoomManager {
     this.setupKeyboardShortcuts()
     this.setupModeIndicator()
     this.setupPositionIndicator()
-    console.log('[CanvasPanZoomManager] 增强版画布拖拽缩放管理器初始化完成')
+    // console.log('[CanvasPanZoomManager] 增强版画布拖拽缩放管理器初始化完成')
   }
 
   /**
@@ -111,7 +111,7 @@ export class CanvasPanZoomManager {
     this.graph.on('scale', this.handleScaleChange.bind(this))
     this.graph.on('translate', this.handleTranslateChange.bind(this))
     
-    console.log('🔗 [CanvasPanZoomManager] 事件监听器已绑定（捕获阶段 + 全局事件）')
+    // console.log('🔗 [CanvasPanZoomManager] 事件监听器已绑定（捕获阶段 + 全局事件）')
   }
 
   /**
@@ -220,15 +220,15 @@ export class CanvasPanZoomManager {
    * 鼠标按下事件
    */
   handleMouseDown(e) {
-    console.log('🖱️ [CanvasPanZoomManager] 鼠标按下事件触发:', {
-      button: e.button,
-      clientX: e.clientX,
-      clientY: e.clientY,
-      target: e.target,
-      targetTagName: e.target.tagName,
-      targetClasses: e.target.className,
-      targetId: e.target.id
-    })
+    // console.log('🖱️ [CanvasPanZoomManager] 鼠标按下事件触发:', {
+    //   button: e.button,
+    //   clientX: e.clientX,
+    //   clientY: e.clientY,
+    //   target: e.target,
+    //   targetTagName: e.target.tagName,
+    //   targetClasses: e.target.className,
+    //   targetId: e.target.id
+    // })
     
     // 检查是否点击在空白区域
     const target = e.target
@@ -269,42 +269,42 @@ export class CanvasPanZoomManager {
       target.tagName === 'svg'
     )
     
-    console.log('🎯 [CanvasPanZoomManager] 空白区域检查:', {
-      isBlankArea,
-      isPreviewLine,
-      isInteractiveElement,
-      targetIsContainer: target === this.graph.container,
-      hasX6GraphSvg: target.classList.contains('x6-graph-svg'),
-      hasX6GraphSvgStage: target.classList.contains('x6-graph-svg-stage'),
-      isSvgTag: target.tagName === 'svg',
-      containerElement: this.graph.container,
-      // 新增详细的目标元素信息
-      targetDetails: {
-        tagName: target.tagName,
-        id: target.id,
-        className: target.className,
-        classList: Array.from(target.classList || []),
-        parentId: target.parentElement?.id,
-        parentClassName: target.parentElement?.className,
-        dataAttributes: {
-          preview: target.getAttribute('data-preview'),
-          unifiedPreview: target.getAttribute('data-unified-preview')
-        }
-      }
-    })
+    // console.log('🎯 [CanvasPanZoomManager] 空白区域检查:', {
+    //   isBlankArea,
+    //   isPreviewLine,
+    //   isInteractiveElement,
+    //   targetIsContainer: target === this.graph.container,
+    //   hasX6GraphSvg: target.classList.contains('x6-graph-svg'),
+    //   hasX6GraphSvgStage: target.classList.contains('x6-graph-svg-stage'),
+    //   isSvgTag: target.tagName === 'svg',
+    //   containerElement: this.graph.container,
+    //   // 新增详细的目标元素信息
+    //   targetDetails: {
+    //     tagName: target.tagName,
+    //     id: target.id,
+    //     className: target.className,
+    //     classList: Array.from(target.classList || []),
+    //     parentId: target.parentElement?.id,
+    //     parentClassName: target.parentElement?.className,
+    //     dataAttributes: {
+    //       preview: target.getAttribute('data-preview'),
+    //       unifiedPreview: target.getAttribute('data-unified-preview')
+    //     }
+    //   }
+    // })
     
     // 检查修饰键状态
-    console.log('⌨️ [CanvasPanZoomManager] 修饰键状态:', {
-      isShiftPressed: this.isShiftPressed,
-      isCtrlPressed: this.isCtrlPressed,
-      isSpacePressed: this.isSpacePressed,
-      tempPanningEnabled: this.tempPanningEnabled,
-      currentDragMode: this.currentDragMode
-    })
+    // console.log('⌨️ [CanvasPanZoomManager] 修饰键状态:', {
+    //   isShiftPressed: this.isShiftPressed,
+    //   isCtrlPressed: this.isCtrlPressed,
+    //   isSpacePressed: this.isSpacePressed,
+    //   tempPanningEnabled: this.tempPanningEnabled,
+    //   currentDragMode: this.currentDragMode
+    // })
     
     // 如果点击的是预览线，直接跳过画布拖拽处理，让事件传播到预览线
     if (isPreviewLine) {
-      console.log('🎯 [CanvasPanZoomManager] 检测到预览线点击，跳过画布拖拽处理')
+      // console.log('🎯 [CanvasPanZoomManager] 检测到预览线点击，跳过画布拖拽处理')
       // 确保事件不被阻止，让它继续传播到预览线的事件监听器
       return // 直接返回，不阻止事件传播
     }
@@ -315,17 +315,17 @@ export class CanvasPanZoomManager {
       !this.isShiftPressed // 非Shift键模式下直接拖拽
     )
     
-    console.log('🚀 [CanvasPanZoomManager] 拖拽条件判断:', {
-      canPan,
-      isBlankArea,
-      isLeftButton: e.button === 0,
-      tempPanningEnabled: this.tempPanningEnabled,
-      notShiftPressed: !this.isShiftPressed,
-      finalCondition: `${isBlankArea} && ${e.button === 0} && (${this.tempPanningEnabled} || ${!this.isShiftPressed})`
-    })
+    // console.log('🚀 [CanvasPanZoomManager] 拖拽条件判断:', {
+    //   canPan,
+    //   isBlankArea,
+    //   isLeftButton: e.button === 0,
+    //   tempPanningEnabled: this.tempPanningEnabled,
+    //   notShiftPressed: !this.isShiftPressed,
+    //   finalCondition: `${isBlankArea} && ${e.button === 0} && (${this.tempPanningEnabled} || ${!this.isShiftPressed})`
+    // })
     
     if (canPan) {
-      console.log('✅ [CanvasPanZoomManager] 开始拖拽操作')
+      // console.log('✅ [CanvasPanZoomManager] 开始拖拽操作')
       this.isPanning = true
       this.panStartPoint = { x: e.clientX, y: e.clientY }
       this.lastPanPoint = { x: e.clientX, y: e.clientY }
@@ -360,18 +360,18 @@ export class CanvasPanZoomManager {
       //   lastPanPoint: this.lastPanPoint
       // })
     } else {
-      console.log('❌ [CanvasPanZoomManager] 拖拽条件不满足，无法开始拖拽')
+      // console.log('❌ [CanvasPanZoomManager] 拖拽条件不满足，无法开始拖拽')
       
       // 详细分析为什么不能拖拽
-      if (!isBlankArea) {
-        console.log('❌ [CanvasPanZoomManager] 拒绝原因: 不是空白区域')
-      }
-      if (e.button !== 0) {
-        console.log('❌ [CanvasPanZoomManager] 拒绝原因: 不是左键点击，button =', e.button)
-      }
-      if (!this.tempPanningEnabled && this.isShiftPressed) {
-        console.log('❌ [CanvasPanZoomManager] 拒绝原因: 需要空格键或非Shift键模式')
-      }
+      // if (!isBlankArea) {
+      //   console.log('❌ [CanvasPanZoomManager] 拒绝原因: 不是空白区域')
+      // }
+      // if (e.button !== 0) {
+      //   console.log('❌ [CanvasPanZoomManager] 拒绝原因: 不是左键点击，button =', e.button)
+      // }
+      // if (!this.tempPanningEnabled && this.isShiftPressed) {
+      //   console.log('❌ [CanvasPanZoomManager] 拒绝原因: 需要空格键或非Shift键模式')
+      // }
     }
   }
 
@@ -502,11 +502,11 @@ export class CanvasPanZoomManager {
     // 只有在非拖拽状态下才处理鼠标离开事件
     // 拖拽过程中鼠标可能会移出容器边界，这是正常的
     if (!this.isPanning) {
-      console.log('🚪 [CanvasPanZoomManager] 鼠标离开容器（非拖拽状态）')
+      // console.log('🚪 [CanvasPanZoomManager] 鼠标离开容器（非拖拽状态）')
       // 重置光标
       this.updateCursor()
     } else {
-      console.log('🚪 [CanvasPanZoomManager] 鼠标离开容器（拖拽状态中，继续拖拽）')
+      // console.log('🚪 [CanvasPanZoomManager] 鼠标离开容器（拖拽状态中，继续拖拽）')
       // 拖拽状态下不结束拖拽，让用户可以在容器外继续拖拽
     }
   }
@@ -923,7 +923,7 @@ export class CanvasPanZoomManager {
    */
   showDragHint() {
     const hint = document.createElement('div')
-    hint.id = 'drag-hint'
+    hint.id = 'endpoint'
     hint.textContent = '拖拽中...'
     hint.style.cssText = `
       position: fixed;
@@ -946,7 +946,7 @@ export class CanvasPanZoomManager {
    * 隐藏拖拽提示
    */
   hideDragHint() {
-    const hint = document.getElementById('drag-hint')
+    const hint = document.getElementById('endpoint')
     if (hint) {
       hint.remove()
     }
@@ -956,7 +956,7 @@ export class CanvasPanZoomManager {
    * 销毁管理器
    */
   destroy() {
-    console.log('[CanvasPanZoomManager] 销毁管理器...')
+    // console.log('[CanvasPanZoomManager] 销毁管理器...')
     
     const container = this.graph.container
     if (container) {
@@ -1012,7 +1012,7 @@ export class CanvasPanZoomManager {
       positionIndicator.remove()
     }
     
-    const dragHint = document.getElementById('drag-hint')
+    const dragHint = document.getElementById('endpoint')
     if (dragHint) {
       dragHint.remove()
     }
@@ -1028,7 +1028,7 @@ export class CanvasPanZoomManager {
     this.isHighPerformanceMode = false
     this.currentDragMode = 'default'
     
-    console.log('[CanvasPanZoomManager] 画布拖拽缩放管理器已销毁')
+    // console.log('[CanvasPanZoomManager] 画布拖拽缩放管理器已销毁')
   }
 }
 

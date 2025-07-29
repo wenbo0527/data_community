@@ -143,7 +143,7 @@ class DragSnapLogger {
 
     // 找到最近的普通节点
     const nearestNode = endInfo.nearestNodes.find(node => 
-      node.type === 'normal' || !['drag-hint', 'preview'].includes(node.type)
+      node.type === 'normal' || !['endpoint', 'preview'].includes(node.type)
     )
 
     if (!nearestNode) return null
