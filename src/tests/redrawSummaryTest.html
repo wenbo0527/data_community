@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重绘总结日志功能测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .feature-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .feature-section h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-section h3 {
+            color: #34495e;
+            margin-top: 25px;
+            font-size: 1.3em;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid #4a5568;
+        }
+        
+        .highlight {
+            background: #ffeaa7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-box h4 {
+            color: #1976d2;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warning-box {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .warning-box h4 {
+            color: #f57c00;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .log-output {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            border: 2px solid #4a5568;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+        }
+        
+        ul {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="emoji">📋</span> 重绘总结日志功能测试</h1>
+            <p>布局方向切换时的详细位置信息统计</p>
+        </div>
+        
+        <div class="content">
+            <div class="feature-section">
+                <h2><span class="emoji">🎯</span> 功能概述</h2>
+                <p>在布局方向切换的重绘机制完成时，系统会自动生成一个详细的总结日志，包含：</p>
+                <ul>
+                    <li><strong>节点统计</strong>：普通节点和拖拽点的数量及位置</li>
+                    <li><strong>端口统计</strong>：输入端口和输出端口的位置信息</li>
+                    <li><strong>连接线统计</strong>：普通连接和预览线的路由信息</li>
+                    <li><strong>布局质量分析</strong>：自动评估对齐质量和间距分布</li>
+                </ul>
+            </div>
+            
+            <div class="feature-section">
+                <h2><span class="emoji">🔧</span> 实现位置</h2>
+                <div class="info-box">
+                    <h4><span class="emoji">📁</span> 文件位置</h4>
+                    <p><code>src/composables/useStructuredLayout.js</code></p>
+                </div>
+                <div class="info-box">
+                    <h4><span class="emoji">⚙️</span> 核心函数</h4>
+                    <p><code>logRedrawSummary(graph, direction)</code></p>
+                </div>
+                <div class="info-box">
+                    <h4><span class="emoji">🔄</span> 调用时机</h4>
+                    <p>在 <code>switchLayoutDirection</code> 函数的重绘完成后自动调用</p>
+                </div>
+            </div>
+            
+            <div class="feature-section">
+                <h2><span class="emoji">📊</span> 日志示例</h2>
+                
+                <h3>1. 节点统计</h3>
+                <div class="code-block">📊 [重绘总结] 节点统计 (布局方向: LR):
+  ├─ 普通节点: 3 个
+  ├─ 拖拽点: 2 个
+  └─ 总计: 5 个</div>
+                
+                <h3>2. 端口统计</h3>
+                <div class="code-block">🔌 [重绘总结] 端口统计:
+  ├─ 输入端口: 3 个
+  ├─ 输出端口: 3 个
+  └─ 总计: 6 个</div>
+                
+                <h3>3. 连接线统计</h3>
+                <div class="code-block">🔗 [重绘总结] 连接线统计:
+  ├─ 普通连接: 2 条
+  ├─ 预览线: 2 条
+  └─ 总计: 4 条</div>
+                
+                <h3>4. 详细位置信息</h3>
+                <div class="code-block">📍 [重绘总结] 普通节点位置详情:
+  1. start (node_start): 中心点(150, 100), 位置(100, 75), 尺寸(100×50)
+  2. audience-split (node_split): 中心点(150, 200), 位置(100, 175), 尺寸(100×50)
+  3. end (node_end): 中心点(150, 300), 位置(100, 275), 尺寸(100×50)
+
+🎯 [重绘总结] 拖拽点位置详情:
+  1. 拖拽点 (hint_node_split_branch1): 中心点(250, 180), 位置(240, 170)
+  2. 拖拽点 (hint_node_split_branch2): 中心点(250, 220), 位置(240, 210)</div>
+                
+                <h3>5. 布局质量分析</h3>
+                <div class="code-block">📈 [重绘总结] 布局质量分析:
+  ├─ 对齐质量: 优秀
+  ├─ 间距分布: 合理
+  ├─ 整体评分: 优秀
+  └─ 建议: 布局质量良好，无需调整</div>
+            </div>
+            
+            <div class="feature-section">
+                <h2><span class="emoji">📏</span> 质量评估标准</h2>
+                
+                <h3>对齐质量</h3>
+                <ul>
+                    <li><span class="highlight">优秀</span>：节点在主轴方向上对齐良好（偏差 ≤ 50px）</li>
+                    <li><span class="highlight">良好</span>：节点对齐基本合理（偏差 ≤ 100px）</li>
+                    <li><span class="highlight">需要改进</span>：节点对齐存在明显问题（偏差 > 100px）</li>
+                </ul>
+                
+                <h3>间距分布</h3>
+                <ul>
+                    <li><span class="highlight">合理</span>：节点间距适中（最小间距 ≥ 50px，平均间距 ≤ 300px）</li>
+                    <li><span class="highlight">可接受</span>：节点间距基本合理</li>
+                    <li><span class="highlight">需要调整</span>：节点过于密集或过于分散</li>
+                </ul>
+                
+                <h3>整体评分</h3>
+                <ul>
+                    <li><span class="highlight">优秀</span>：综合评分 ≥ 80分</li>
+                    <li><span class="highlight">良好</span>：综合评分 ≥ 60分</li>
+                    <li><span class="highlight">需要优化</span>：综合评分 < 60分</li>
+                </ul>
+            </div>
+            
+            <div class="feature-section">
+                <h2><span class="emoji">🚀</span> 使用方法</h2>
+                
+                <h3>自动触发</h3>
+                <p>当调用布局方向切换函数时，重绘总结日志会自动生成：</p>
+                <div class="code-block">// 切换到从左到右布局
+await switchLayoutDirection('LR')
+
+// 切换到从上到下布局
+await switchLayoutDirection('TB')</div>
+                
+                <h3>手动调用</h3>
+                <div class="code-block">import { useStructuredLayout } from '@/composables/useStructuredLayout'
+
+const { logRedrawSummary } = useStructuredLayout()
+
+// 手动生成总结日志
+await logRedrawSummary(graph, 'LR')</div>
+            </div>
+            
+            <div class="feature-section">
+                <h2><span class="emoji">💡</span> 应用场景</h2>
+                <ul>
+                    <li><strong>开发调试</strong>：帮助开发者了解布局切换后的实际效果</li>
+                    <li><strong>性能监控</strong>：监控重绘操作的完成情况</li>
+                    <li><strong>质量评估</strong>：自动评估布局质量，提供优化建议</li>
+                    <li><strong>问题排查</strong>：当布局出现问题时，提供详细的位置信息用于排查</li>
+                </ul>
+            </div>
+            
+            <div class="warning-box">
+                <h4><span class="emoji">⚠️</span> 注意事项</h4>
+                <ul>
+                    <li>总结日志会在控制台输出，建议在开发环境使用</li>
+                    <li>对于大型画布（节点数量 > 50），日志可能较长</li>
+                    <li>坐标信息已四舍五入到整数，便于阅读</li>
+                    <li>质量分析基于经验值，可根据实际需求调整评估标准</li>
+                </ul>
+            </div>
+            
+            <div class="feature-section">
+                <h2><span class="emoji">🧪</span> 测试说明</h2>
+                <p>要测试这个功能，请：</p>
+                <ol>
+                    <li>打开营销任务画布页面</li>
+                    <li>添加一些节点（开始节点、分流节点、结束节点等）</li>
+                    <li>切换布局方向（从 TB 到 LR 或从 LR 到 TB）</li>
+                    <li>打开浏览器开发者工具的控制台</li>
+                    <li>查看详细的重绘总结日志输出</li>
+                </ol>
+                
+                <div class="info-box">
+                    <h4><span class="emoji">🔍</span> 查看日志</h4>
+                    <p>在浏览器中按 <kbd>F12</kbd> 打开开发者工具，切换到 <strong>Console</strong> 标签页，即可看到详细的重绘总结日志。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 重绘总结日志功能测试页面已加载');
+            console.log('🔍 请在营销任务画布中测试布局方向切换功能，查看重绘总结日志');
+        });
+    </script>
+</body>
+</html>

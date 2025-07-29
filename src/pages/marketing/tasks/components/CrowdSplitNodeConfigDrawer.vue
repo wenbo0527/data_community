@@ -68,6 +68,41 @@
         </div>
       </div>
 
+      <!-- 未命中分支配置（固定，不可删除） -->
+      <div class="unmatch-branch-section">
+        <div class="section-title">
+          <span>未命中分支配置</span>
+          <a-tooltip content="未命中分支用于处理不满足上述任何人群条件的用户，此分支不可删除">
+            <icon-info-circle class="info-icon" />
+          </a-tooltip>
+        </div>
+        
+        <div class="crowd-layer unmatch-layer">
+          <div class="layer-header">
+            <span class="layer-title">未命中人群：</span>
+            <span class="layer-label fixed-label">固定分支</span>
+          </div>
+          
+          <div class="layer-content">
+            <a-input
+              v-model="formData.unmatchBranch.name"
+              placeholder="请输入未命中分支名称"
+              class="branch-name-input"
+              @change="handleUnmatchBranchNameChange"
+            />
+            
+            <a-button
+              type="text"
+              size="small"
+              class="search-btn"
+              disabled
+            >
+              <icon-search />
+            </a-button>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="action-buttons">
         <a-button 
@@ -128,7 +163,7 @@
 <script setup>
 import { ref, reactive, watch, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconMinus, IconSearch } from '@arco-design/web-vue/es/icon'
+import { IconMinus, IconSearch, IconInfoCircle } from '@arco-design/web-vue/es/icon'
 import BaseDrawer from './BaseDrawer.vue'
 import { useBaseDrawer } from '@/composables/useBaseDrawer.js'
 import crowdSplitLogger from '@/utils/crowdSplitLogger.js'
@@ -216,12 +251,21 @@ const getInitialFormData = () => {
         crowdId: null,
         crowdName: ''
       }
-    ]
+    ],
+    // 添加未命中分支配置
+    unmatchBranch: {
+      id: 'unmatch_default',
+      name: '未命中人群',
+      isDefault: true,
+      crowdId: null,
+      crowdName: '未命中人群'
+    }
   }
   
   crowdSplitLogger.info('INIT', '初始化表单数据', {
     crowdLayersCount: initialData.crowdLayers.length,
-    layerIds: initialData.crowdLayers.map(l => l.id)
+    layerIds: initialData.crowdLayers.map(l => l.id),
+    unmatchBranch: initialData.unmatchBranch
   })
   
   return initialData
@@ -274,6 +318,16 @@ const customValidation = (formData) => {
       validCrowdIds,
       uniqueCrowdIds,
       duplicateCount: validCrowdIds.length - uniqueCrowdIds.length
+    })
+  }
+  
+  // 验证未命中分支名称
+  if (!formData.unmatchBranch || !formData.unmatchBranch.name || formData.unmatchBranch.name.trim() === '') {
+    const error = '请输入未命中分支名称'
+    errors.push(error)
+    crowdSplitLogger.warn('VALIDATION', error, {
+      unmatchBranchExists: !!formData.unmatchBranch,
+      unmatchBranchName: formData.unmatchBranch?.name
     })
   }
   
@@ -564,6 +618,25 @@ const addHitCrowdLayer = () => {
   addCrowdLayer()
 }
 
+// 处理未命中分支名称变化
+const handleUnmatchBranchNameChange = (value) => {
+  if (!formData || !formData.unmatchBranch) {
+    crowdSplitLogger.warn('UNMATCH_BRANCH', '无法处理未命中分支名称变化：数据不完整')
+    return
+  }
+  
+  const oldName = formData.unmatchBranch.name
+  formData.unmatchBranch.name = value || '未命中人群'
+  formData.unmatchBranch.crowdName = formData.unmatchBranch.name
+  
+  crowdSplitLogger.info('UNMATCH_BRANCH', '未命中分支名称变化', {
+    oldName,
+    newName: formData.unmatchBranch.name
+  })
+  
+  crowdSplitLogger.logFormDataChange('未命中分支名称变化', formData)
+}
+
 // 移除人群层级
 const removeCrowdLayer = (index) => {
   if (!formData || !formData.crowdLayers || formData.crowdLayers.length <= 1) {
@@ -661,6 +734,17 @@ const handleSubmit = async () => {
     return
   }
   
+  // 验证未命中分支名称
+  if (!formData.unmatchBranch || !formData.unmatchBranch.name || formData.unmatchBranch.name.trim() === '') {
+    const error = '请输入未命中分支名称'
+    crowdSplitLogger.warn('SUBMIT', error, {
+      unmatchBranchExists: !!formData.unmatchBranch,
+      unmatchBranchName: formData.unmatchBranch?.name
+    })
+    Message.error(error)
+    return
+  }
+  
   // 构建配置数据
   const configData = {
     type: 'crowd-split',
@@ -670,13 +754,23 @@ const handleSubmit = async () => {
       crowdId: layer.crowdId,
       crowdName: layer.crowdName
     })),
+    // 包含未命中分支配置
+    unmatchBranch: {
+      id: formData.unmatchBranch.id,
+      name: formData.unmatchBranch.name,
+      isDefault: true,
+      crowdId: null,
+      crowdName: formData.unmatchBranch.name,
+      order: formData.crowdLayers.length + 1
+    },
     nodeType: 'crowd-split'
   }
   
   crowdSplitLogger.logSubmit(configData, true)
   crowdSplitLogger.info('SUBMIT', '表单提交成功，配置数据已生成', {
     layersCount: configData.crowdLayers.length,
-    crowdIds: configData.crowdLayers.map(l => l.crowdId)
+    crowdIds: configData.crowdLayers.map(l => l.crowdId),
+    unmatchBranchName: configData.unmatchBranch.name
   })
   
   await baseHandleSubmit(configData)
@@ -697,6 +791,42 @@ const handleSubmit = async () => {
 
 .crowd-layers {
   margin-bottom: 24px;
+}
+
+.unmatch-branch-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.info-icon {
+  color: #1890ff;
+  cursor: help;
+}
+
+.unmatch-layer {
+  background-color: #f0f8ff;
+  border: 1px solid #b3d8ff;
+}
+
+.fixed-label {
+  background-color: #e6f4ff;
+  color: #1890ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.branch-name-input {
+  flex: 1;
 }
 
 .crowd-layer {

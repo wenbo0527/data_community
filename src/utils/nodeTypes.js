@@ -226,8 +226,11 @@ export const getNodePorts = (nodeType, options = {}) => {
     return config.ports
   }
 
+  // 获取布局方向，默认为TB
+  const layoutDirection = options.layoutDirection || 'TB'
+
   // 默认端口配置 - 统一为每个节点配置1个输入端口和1个输出端口
-  const portGroups = canvasConfig.getPortGroups()
+  const portGroups = canvasConfig.getPortGroups(layoutDirection)
   const baseConfig = {
     groups: {
       in: {
@@ -414,7 +417,8 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
       // 如果有 branchCount 配置，根据数量生成分支
       if (config.branchCount && typeof config.branchCount === 'number') {
         const branchCount = Math.max(1, Math.min(10, config.branchCount)) // 限制在1-10之间
-        const totalBranches = branchCount + 1 // 包含未命中人群分支
+        // 不再自动添加未命中分支，总数就是配置的分支数
+        const totalBranches = branchCount
         const spacing = Math.min(120, 200 / Math.max(1, totalBranches - 1))
         const startX = -(totalBranches - 1) * spacing / 2
         
@@ -441,35 +445,16 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           })
         }
         
-        // 添加未命中人群分支
-        branchSlots.push({
-          id: `audience-split-branch-${branchCount}`,
-          type: 'branch',
-          position: { 
-            x: startX + branchCount * spacing, 
-            y: 160 
-          },
-          label: '未命中人群',
-          allowedTypes,
-          occupied: false,
-          state: 'empty',
-          branchData: {
-            isDefault: true,
-            crowdId: null,
-            name: '未命中人群'
-          }
-        })
-        
         console.log('[nodeTypes] 根据分流条数生成人群分流预设位:', branchSlots)
         return branchSlots
       }
       
-      // 默认配置：1个分流 + 1个未命中人群
+      // 默认配置：只生成一个分流分支，未命中分支由配置管理
       const defaultAudienceSlots = [
         {
           id: 'audience-split-branch-0',
           type: 'branch',
-          position: { x: -60, y: 160 },
+          position: { x: 0, y: 160 },
           label: '分流1',
           allowedTypes,
           occupied: false,
@@ -478,20 +463,6 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
             isDefault: false,
             crowdId: null,
             name: '分流1'
-          }
-        },
-        {
-          id: 'audience-split-branch-1',
-          type: 'branch',
-          position: { x: 60, y: 160 },
-          label: '未命中人群',
-          allowedTypes,
-          occupied: false,
-          state: 'empty',
-          branchData: {
-            isDefault: true,
-            crowdId: null,
-            name: '未命中人群'
           }
         }
       ]

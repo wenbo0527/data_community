@@ -108,8 +108,8 @@ const updateActiveModuleFromRoute = () => {
   if (menuInfo && menuInfo.module !== activeModule.value) {
     activeModule.value = menuInfo.module
     
-    // 更新顶部菜单选中状态
-    if (topMenuRef.value) {
+    // 只在需要时更新顶部菜单选中状态，避免重复调用
+    if (topMenuRef.value && !topMenuRef.value.selectedKeys?.includes(menuInfo.module)) {
       topMenuRef.value.setActiveMenu(menuInfo.module)
     }
   }

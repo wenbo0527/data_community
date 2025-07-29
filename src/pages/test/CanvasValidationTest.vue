@@ -48,7 +48,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { validateCanvasData, formatValidationMessage } from '../../../utils/canvasValidation.js'
+import { validateCanvasData, formatValidationMessage } from '../../utils/canvasValidation.js'
 
 const validationResult = ref(null)
 

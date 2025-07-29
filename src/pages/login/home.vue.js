@@ -1,8 +1,8 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import ArchitectureChart from '@/components/layout/ArchitectureChart.vue';
+import ArchitectureChart from '../../components/layout/ArchitectureChart.vue';
 import { ref, onMounted, markRaw } from 'vue';
-import HomeWelcomeModal from '@/components/modals/HomeWelcomeModal.vue';
-import { useUserStore } from '@/store/modules/user';
+import HomeWelcomeModal from '../../components/modals/HomeWelcomeModal.vue';
+import { useUserStore } from '../../store/modules/user';
 import { Statistic } from '@arco-design/web-vue';
 import { IconUser, IconDown, IconApps, IconFile, IconNotification, IconStorage, IconBook, IconBulb, IconArrowRise, IconArrowFall, IconQuestion, IconCompass, IconEye, IconCloud, IconStar, IconPlus } from '@arco-design/web-vue/es/icon';
 const userStore = useUserStore();
@@ -238,7 +238,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "logo" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
-    src: "@/assets/logo.svg",
+    src: "../../assets/logo.svg",
     alt: "logo",
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({

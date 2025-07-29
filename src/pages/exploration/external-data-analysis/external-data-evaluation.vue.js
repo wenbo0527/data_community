@@ -1,4 +1,3 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref } from 'vue';
 import { formatAmount } from '@/utils/calculations';
 import ExternalProductModal from '@/components/modals/ExternalProductModal.vue';

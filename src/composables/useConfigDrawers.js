@@ -355,34 +355,32 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
     // 节点配置管理器
     nodeConfigManager,
     
-    // 结构化布局功能 - 统一使用原生Dagre布局
+    // 结构化布局功能 - 使用统一结构化布局
     structuredLayout: {
       validateConnection: structuredLayout.validateConnection,
-      applyLayout: structuredLayout.applyNativeDagreLayout, // 统一使用原生Dagre布局
-      applyStructuredLayout: structuredLayout.applyNativeDagreLayout, // 统一使用原生Dagre布局
-      applyIntelligentLayout: structuredLayout.applyNativeDagreLayout, // 统一使用原生Dagre布局
-      applyNativeDagreLayout: structuredLayout.applyNativeDagreLayout, // 原生Dagre布局方法
+      applyLayout: structuredLayout.applyUnifiedStructuredLayout, // 统一使用统一结构化布局
+      applyStructuredLayout: structuredLayout.applyUnifiedStructuredLayout, // 统一使用统一结构化布局
+      applyUnifiedStructuredLayout: structuredLayout.applyUnifiedStructuredLayout, // 统一结构化布局方法
+      switchLayoutDirection: structuredLayout.switchLayoutDirection, // 布局方向切换方法
+      // 分层分析方法
+      generateRedrawSummary: structuredLayout.generateRedrawSummary,
+      analyzeLayoutQuality: structuredLayout.analyzeLayoutQuality,
       // 正确的初始化方法
       initializeLayoutEngine: () => {
         console.log('[useConfigDrawers] 调用 initializeLayoutEngine')
         return structuredLayout.initializeLayoutEngine()
       },
-      // 兼容性方法
-      initLayoutEngine: () => {
-        console.log('[useConfigDrawers] initLayoutEngine已废弃，调用 initializeLayoutEngine')
-        return structuredLayout.initializeLayoutEngine()
-      },
-      getLayoutEngine: () => {
-        console.log('[useConfigDrawers] getLayoutEngine已废弃，使用增强型布局引擎')
-        return structuredLayout.enhancedLayoutEngine
-      },
-      getBranchManager: () => {
-        console.log('[useConfigDrawers] getBranchManager已废弃，功能已集成到增强型布局引擎')
-        return null
-      },
       getConnectionPreviewManager: () => {
         console.log('[useConfigDrawers] 返回统一预览线管理器')
         return structuredLayout.unifiedPreviewManager?.value
+      },
+      // 统一预览线管理器 - 添加缺失的属性
+      get unifiedPreviewManager() {
+        return structuredLayout.unifiedPreviewManager
+      },
+      // 布局方向相关
+      get layoutDirection() {
+        return structuredLayout.layoutDirection
       },
       // 保持现有的方法
       getNodeConstraints: structuredLayout.getNodeConstraints || (() => ({})),

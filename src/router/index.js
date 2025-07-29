@@ -259,23 +259,13 @@ beforeEnter: (to) => {
     {
       path: '/test',
       name: 'Test',
-      redirect: '/test/taskflow',
+      redirect: '/test/canvas-validation',
       meta: {
         title: '测试页面',
         icon: 'icon-bug',
         layout: 'blank'
       },
       children: [
-        {
-          path: 'taskflow',
-          name: 'TaskFlowTest',
-          component: () => import('../pages/test/TaskFlowTest.vue'),
-          meta: {
-            title: 'TaskFlow测试',
-            description: 'TaskFlow组件功能测试页面',
-            layout: 'blank'
-          }
-        },
         {
           path: 'canvas-validation',
           name: 'CanvasValidationTest',

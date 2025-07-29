@@ -1,12 +1,296 @@
 /// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { ref, reactive, onMounted } from 'vue';
+import { ref, watch, nextTick, reactive } from 'vue';
+import * as echarts from 'echarts';
+import { getTagLineage } from '@/api/tag';
 import { useRoute, useRouter } from 'vue-router';
 import { IconHome, IconSettings, IconTag, IconEye, IconDashboard, IconBarChart, IconMore, IconPlus, IconDown, IconDelete, IconCheckCircle, IconExclamationCircle, IconInfoCircle, IconCopy, IconMinus, IconEdit, IconCheck, IconClose } from '@arco-design/web-vue/es/icon';
 import ConditionConfig from '@/components/common/ConditionConfig.vue';
+import { onMounted } from 'vue';
+// 血缘数据处理函数
+const processLineageData = (data) => {
+    console.debug('[Lineage] 原始数据输入:', {
+        nodes: data.data.nodes?.length || 0,
+        links: data.data.links?.length || 0,
+        types: [...new Set(data.data.nodes.map(n => n.type))]
+    });
+    console.log('[Lineage Debug] 原始数据:', JSON.parse(JSON.stringify(data)));
+    // 构建标签为核心的三层树结构
+    const root = {
+        name: 'tag001',
+        type: 'root',
+        children: data.data.nodes
+            .filter(node => node.type === 'tag')
+            .map(tag => {
+            const attributes = data.data.links
+                .filter(l => l.source === tag.id && l.type === 'attribute')
+                .map(l => ({
+                ...data.data.nodes.find(n => n.id === l.target),
+                children: data.data.links
+                    .filter(lt => lt.source === l.target && lt.type === 'table')
+                    .map(lt => ({
+                    ...data.data.nodes.find(n => n.id === lt.target),
+                    _depth: 2
+                })),
+                _depth: 1
+            }));
+            return {
+                ...tag,
+                children: attributes,
+                _depth: 0
+            };
+        })
+    };
+    // 建立类型映射
+    const nodeMap = data.data.nodes.reduce((acc, node) => {
+        acc[node.id] = {
+            ...node,
+            children: []
+        };
+        return acc;
+    }, {});
+    // 根据链接关系构建层级
+    data.data.links.forEach(link => {
+        if (link.type === 'attribute') {
+            nodeMap[link.source].children.push(nodeMap[link.target]);
+        }
+        else if (link.type === 'table') {
+            nodeMap[link.source].children.forEach(attr => {
+                attr.children.push(nodeMap[link.target]);
+            });
+        }
+    });
+    // 提取标签节点作为根的子节点
+    root.children = data.data.nodes
+        .filter(node => node.type === 'tag')
+        .map(node => nodeMap[node.id]);
+    console.log('[Lineage Debug] 处理后的树结构:', JSON.parse(JSON.stringify(root)));
+    console.debug('[Lineage] 树结构生成完成', {
+        depth: getTreeDepth(root),
+        totalNodes: countNodes(root),
+        maxChildren: Math.max(...getChildrenCounts(root))
+    });
+    return root;
+};
+// 组件挂载时演示数据
+onMounted(() => {
+    // 使用静态演示数据替代API调用
+    console.log('展示静态标签详情演示数据');
+});
 const route = useRoute();
 const router = useRouter();
 // 当前选中的标签页
 const activeTab = ref('distribution');
+const lineageChartRef = ref(null);
+const lineageData = ref(null);
+const countNodes = (node) => {
+    let count = 0;
+    const stack = [node];
+    while (stack.length) {
+        const current = stack.pop();
+        count++;
+        current.children?.forEach(c => stack.push(c));
+    }
+    return count;
+};
+const getChildrenCounts = (node) => {
+    const counts = [];
+    const traverse = (n) => {
+        counts.push(n.children?.length || 0);
+        n.children?.forEach(traverse);
+    };
+    traverse(node);
+    return counts;
+};
+const initLineageChart = () => {
+    console.debug('[Lineage] 初始化图表', {
+        containerSize: {
+            width: lineageChartRef.value?.offsetWidth,
+            height: lineageChartRef.value?.offsetHeight
+        }
+    });
+    if (!lineageChartRef.value)
+        return;
+    const chart = echarts.init(lineageChartRef.value);
+    console.log('[Lineage Debug] ECharts配置:', {
+        seriesType: 'tree',
+        nodeCount: lineageData.value.children.length,
+        maxDepth: getTreeDepth(lineageData.value)
+    });
+    const option = {
+        tooltip: {
+            trigger: 'item',
+            formatter: ({ data }) => {
+                return `<div style='padding:8px;'>
+          <div style='font-weight:500;margin-bottom:4px;'>${data.name}</div>
+          <div style='color:#666;'>类型：${data.category}</div>
+          ${data.updatedAt ? `<div style='color:#666;margin-top:4px;'>更新时间：${new Date(data.updatedAt).toLocaleString()}</div>` : ''}
+        </div>`;
+            }
+        },
+        series: [{
+                type: 'tree',
+                data: [lineageData.value],
+                orient: 'LR',
+                symbolSize: 36,
+                itemStyle: {
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                },
+                lineStyle: {
+                    color: '#99adef',
+                    curveness: 0
+                },
+                symbolSize: 24,
+                itemStyle: {
+                    color: ({ data }) => {
+                        const typeColors = {
+                            tag: '#52c41a',
+                            attribute: '#1890ff',
+                            table: '#f5222d'
+                        };
+                        return typeColors[data.type] || '#666';
+                    }
+                },
+                label: {
+                    position: 'right',
+                    verticalAlign: 'middle',
+                    formatter: ({ data }) => {
+                        const typeIcons = {
+                            tag: '🏷',
+                            attribute: '📌',
+                            table: '🗂',
+                            root: '🌳'
+                        };
+                        return `${data._isRoot ? typeIcons.root : typeIcons[data.type]} ${data.name}`;
+                    },
+                    fontSize: 14
+                },
+                leaves: {
+                    label: { position: 'bottom', show: true }
+                },
+                expandAndCollapse: false,
+                lineStyle: {
+                    color: '#ccc',
+                    curveness: 0.3
+                }
+            }]
+    };
+    chart.setOption(option);
+    console.debug('[Lineage] 图表配置应用完成', {
+        seriesCount: option.series.length,
+        nodeTypes: [...new Set(option.series[0].data.flatMap(s => s.children).map(n => n.type))]
+    });
+    window.addEventListener('resize', () => chart.resize());
+};
+watch(() => activeTab.value, (val) => {
+    if (val === 'lineage' && !lineageData.value) {
+        fetchTagLineage();
+    }
+});
+const getTreeDepth = (node) => {
+    let maxDepth = 0;
+    function traverse(n, depth) {
+        if (depth > maxDepth)
+            maxDepth = depth;
+        n.children?.forEach(child => traverse(child, depth + 1));
+    }
+    traverse(node, 0);
+    return maxDepth;
+};
+const fetchTagLineage = async () => {
+    console.info('[Lineage] 开始加载血缘数据', { tab: activeTab.value });
+    console.log('[Lineage Debug] 开始加载血缘数据');
+    try {
+        const startTime = performance.now();
+        // 本地mock数据
+        const mockLineageData = {
+            nodes: [
+                {
+                    id: 'TAG_001',
+                    name: '高净值客户',
+                    type: 'tag',
+                    updatedAt: Date.now(),
+                    description: '月均AUM大于50万的客户群体',
+                    owner: '王伟',
+                    version: 'v2.3',
+                },
+                {
+                    id: 'ATT_001',
+                    name: '资产属性',
+                    type: 'attribute',
+                    dataType: 'number',
+                    lastUpdateTime: Date.now() - 3600000,
+                },
+                {
+                    id: 'ATT_002',
+                    name: '交易属性',
+                    type: 'attribute',
+                    dataType: 'number',
+                    lastUpdateTime: Date.now() - 7200000,
+                },
+                {
+                    id: 'TBL_001',
+                    name: '客户资产明细表',
+                    type: 'table',
+                    database: 'wealth_db',
+                    lastSyncTime: Date.now() - 86400000,
+                },
+                {
+                    id: 'TBL_002',
+                    name: '交易流水表',
+                    type: 'table',
+                    database: 'transaction_db',
+                    lastSyncTime: Date.now() - 172800000,
+                },
+                {
+                    id: 1,
+                    name: '用户基础属性',
+                    type: 'tag',
+                    updatedAt: Date.now(),
+                },
+                {
+                    id: 2,
+                    name: '活跃用户群体',
+                    type: 'audience',
+                    lastUpdateTime: Date.now() - 86400000,
+                },
+                {
+                    id: 3,
+                    name: '用户行为日志表',
+                    type: 'table',
+                    lastSyncTime: Date.now() - 259200000,
+                },
+            ],
+            links: [
+                { source: 'TAG_001', target: 'ATT_001', type: 'attribute' },
+                { source: 'TAG_001', target: 'ATT_002', type: 'attribute' },
+                { source: 'ATT_001', target: 'TBL_001', type: 'table' },
+                { source: 'ATT_002', target: 'TBL_002', type: 'table' },
+                { source: 1, target: 2 },
+                { source: 2, target: 3 },
+            ],
+            links: [
+                { source: 1, target: 2 },
+                { source: 2, target: 3 }
+            ]
+        };
+        const data = { data: mockLineageData };
+        lineageData.value = processLineageData(data);
+        console.info('[Lineage] 数据加载完成', {
+            duration: `${performance.now() - startTime}ms`,
+            source: 'mock',
+            dataVersion: data.data.version || '1.0'
+        });
+        console.log('[Lineage Debug] 数据加载完成', {
+            nodes: data.data.nodes.length,
+            links: data.data.links.length
+        });
+        nextTick(initLineageChart);
+    }
+    catch (error) {
+        console.error('获取血缘数据失败:', error);
+    }
+};
 // 编辑模式相关
 const isEditMode = ref(false); // 始终为false，禁止编辑
 const originalTagValues = ref(null); // 用于保存编辑前的数据
@@ -942,6 +1226,17 @@ const __VLS_50 = __VLS_49({
 }, ...__VLS_functionalComponentArgsRest(__VLS_49));
 __VLS_51.slots.default;
 var __VLS_51;
+const __VLS_52 = {}.ARadio;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+// @ts-ignore
+const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
+    value: "lineage",
+}));
+const __VLS_54 = __VLS_53({
+    value: "lineage",
+}, ...__VLS_functionalComponentArgsRest(__VLS_53));
+__VLS_55.slots.default;
+var __VLS_55;
 var __VLS_43;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "chart-content" },
@@ -997,22 +1292,32 @@ if (__VLS_ctx.activeTab === 'trend') {
         ...{ class: "trend-placeholder" },
     });
 }
+if (__VLS_ctx.activeTab === 'lineage') {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "lineage-chart" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ref: "lineageChartRef",
+        ...{ style: {} },
+    });
+    /** @type {typeof __VLS_ctx.lineageChartRef} */ ;
+}
 var __VLS_39;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "content-section" },
 });
-const __VLS_52 = {}.ACard;
+const __VLS_56 = {}.ACard;
 /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
 // @ts-ignore
-const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
+const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
     ...{ class: "rule-config-card" },
 }));
-const __VLS_54 = __VLS_53({
+const __VLS_58 = __VLS_57({
     ...{ class: "rule-config-card" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_53));
-__VLS_55.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_57));
+__VLS_59.slots.default;
 {
-    const { title: __VLS_thisSlot } = __VLS_55.slots;
+    const { title: __VLS_thisSlot } = __VLS_59.slots;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "card-title" },
     });
@@ -1030,33 +1335,33 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "section-header" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
-const __VLS_56 = {}.AButton;
+const __VLS_60 = {}.AButton;
 /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
 // @ts-ignore
-const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
+const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
     ...{ 'onClick': {} },
     type: "primary",
 }));
-const __VLS_58 = __VLS_57({
+const __VLS_62 = __VLS_61({
     ...{ 'onClick': {} },
     type: "primary",
-}, ...__VLS_functionalComponentArgsRest(__VLS_57));
-let __VLS_60;
-let __VLS_61;
-let __VLS_62;
-const __VLS_63 = {
+}, ...__VLS_functionalComponentArgsRest(__VLS_61));
+let __VLS_64;
+let __VLS_65;
+let __VLS_66;
+const __VLS_67 = {
     onClick: (__VLS_ctx.addTagValue)
 };
-__VLS_59.slots.default;
+__VLS_63.slots.default;
 {
-    const { icon: __VLS_thisSlot } = __VLS_59.slots;
-    const __VLS_64 = {}.IconPlus;
+    const { icon: __VLS_thisSlot } = __VLS_63.slots;
+    const __VLS_68 = {}.IconPlus;
     /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
     // @ts-ignore
-    const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({}));
-    const __VLS_66 = __VLS_65({}, ...__VLS_functionalComponentArgsRest(__VLS_65));
+    const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({}));
+    const __VLS_70 = __VLS_69({}, ...__VLS_functionalComponentArgsRest(__VLS_69));
 }
-var __VLS_59;
+var __VLS_63;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "tag-values-list" },
 });
@@ -1088,56 +1393,56 @@ for (const [tagValue, index] of __VLS_getVForSourceType((__VLS_ctx.tagValues))) 
         ...{ class: "tag-value-actions" },
     });
     if (__VLS_ctx.tagValues.length > 1) {
-        const __VLS_68 = {}.AButton;
+        const __VLS_72 = {}.AButton;
         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
         // @ts-ignore
-        const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
+        const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({
             ...{ 'onClick': {} },
             type: "text",
             size: "small",
             status: "danger",
         }));
-        const __VLS_70 = __VLS_69({
+        const __VLS_74 = __VLS_73({
             ...{ 'onClick': {} },
             type: "text",
             size: "small",
             status: "danger",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_69));
-        let __VLS_72;
-        let __VLS_73;
-        let __VLS_74;
-        const __VLS_75 = {
+        }, ...__VLS_functionalComponentArgsRest(__VLS_73));
+        let __VLS_76;
+        let __VLS_77;
+        let __VLS_78;
+        const __VLS_79 = {
             onClick: (...[$event]) => {
                 if (!(__VLS_ctx.tagValues.length > 1))
                     return;
                 __VLS_ctx.deleteTagValue(tagValue.id);
             }
         };
-        __VLS_71.slots.default;
+        __VLS_75.slots.default;
         {
-            const { icon: __VLS_thisSlot } = __VLS_71.slots;
-            const __VLS_76 = {}.IconDelete;
+            const { icon: __VLS_thisSlot } = __VLS_75.slots;
+            const __VLS_80 = {}.IconDelete;
             /** @type {[typeof __VLS_components.IconDelete, ]} */ ;
             // @ts-ignore
-            const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({}));
-            const __VLS_78 = __VLS_77({}, ...__VLS_functionalComponentArgsRest(__VLS_77));
+            const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({}));
+            const __VLS_82 = __VLS_81({}, ...__VLS_functionalComponentArgsRest(__VLS_81));
         }
-        var __VLS_71;
+        var __VLS_75;
     }
 }
 if (__VLS_ctx.tagValues.length === 0) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "empty-state" },
     });
-    const __VLS_80 = {}.IconPlus;
+    const __VLS_84 = {}.IconPlus;
     /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
     // @ts-ignore
-    const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
+    const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({
         ...{ style: {} },
     }));
-    const __VLS_82 = __VLS_81({
+    const __VLS_86 = __VLS_85({
         ...{ style: {} },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_81));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_85));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
 }
 if (__VLS_ctx.getCurrentTagValue()) {
@@ -1153,90 +1458,90 @@ if (__VLS_ctx.getCurrentTagValue()) {
         ...{ class: "edit-actions" },
     });
     if (!__VLS_ctx.isEditMode) {
-        const __VLS_84 = {}.AButton;
+        const __VLS_88 = {}.AButton;
         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
         // @ts-ignore
-        const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({
+        const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({
             type: "primary",
             ...{ class: "edit-btn" },
             disabled: true,
         }));
-        const __VLS_86 = __VLS_85({
+        const __VLS_90 = __VLS_89({
             type: "primary",
             ...{ class: "edit-btn" },
             disabled: true,
-        }, ...__VLS_functionalComponentArgsRest(__VLS_85));
-        __VLS_87.slots.default;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_89));
+        __VLS_91.slots.default;
         {
-            const { icon: __VLS_thisSlot } = __VLS_87.slots;
-            const __VLS_88 = {}.IconEdit;
+            const { icon: __VLS_thisSlot } = __VLS_91.slots;
+            const __VLS_92 = {}.IconEdit;
             /** @type {[typeof __VLS_components.IconEdit, ]} */ ;
             // @ts-ignore
-            const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({}));
-            const __VLS_90 = __VLS_89({}, ...__VLS_functionalComponentArgsRest(__VLS_89));
+            const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({}));
+            const __VLS_94 = __VLS_93({}, ...__VLS_functionalComponentArgsRest(__VLS_93));
         }
-        var __VLS_87;
+        var __VLS_91;
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "edit-mode-actions" },
         });
-        const __VLS_92 = {}.AButton;
+        const __VLS_96 = {}.AButton;
         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
         // @ts-ignore
-        const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({
+        const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
             ...{ 'onClick': {} },
             type: "primary",
             ...{ class: "save-btn" },
         }));
-        const __VLS_94 = __VLS_93({
+        const __VLS_98 = __VLS_97({
             ...{ 'onClick': {} },
             type: "primary",
             ...{ class: "save-btn" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_93));
-        let __VLS_96;
-        let __VLS_97;
-        let __VLS_98;
-        const __VLS_99 = {
+        }, ...__VLS_functionalComponentArgsRest(__VLS_97));
+        let __VLS_100;
+        let __VLS_101;
+        let __VLS_102;
+        const __VLS_103 = {
             onClick: (__VLS_ctx.saveConfiguration)
         };
-        __VLS_95.slots.default;
+        __VLS_99.slots.default;
         {
-            const { icon: __VLS_thisSlot } = __VLS_95.slots;
-            const __VLS_100 = {}.IconCheck;
+            const { icon: __VLS_thisSlot } = __VLS_99.slots;
+            const __VLS_104 = {}.IconCheck;
             /** @type {[typeof __VLS_components.IconCheck, ]} */ ;
             // @ts-ignore
-            const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({}));
-            const __VLS_102 = __VLS_101({}, ...__VLS_functionalComponentArgsRest(__VLS_101));
+            const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({}));
+            const __VLS_106 = __VLS_105({}, ...__VLS_functionalComponentArgsRest(__VLS_105));
         }
-        var __VLS_95;
-        const __VLS_104 = {}.AButton;
+        var __VLS_99;
+        const __VLS_108 = {}.AButton;
         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
         // @ts-ignore
-        const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
+        const __VLS_109 = __VLS_asFunctionalComponent(__VLS_108, new __VLS_108({
             ...{ 'onClick': {} },
             ...{ class: "cancel-btn" },
         }));
-        const __VLS_106 = __VLS_105({
+        const __VLS_110 = __VLS_109({
             ...{ 'onClick': {} },
             ...{ class: "cancel-btn" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_105));
-        let __VLS_108;
-        let __VLS_109;
-        let __VLS_110;
-        const __VLS_111 = {
+        }, ...__VLS_functionalComponentArgsRest(__VLS_109));
+        let __VLS_112;
+        let __VLS_113;
+        let __VLS_114;
+        const __VLS_115 = {
             onClick: (__VLS_ctx.cancelEdit)
         };
-        __VLS_107.slots.default;
+        __VLS_111.slots.default;
         {
-            const { icon: __VLS_thisSlot } = __VLS_107.slots;
-            const __VLS_112 = {}.IconClose;
+            const { icon: __VLS_thisSlot } = __VLS_111.slots;
+            const __VLS_116 = {}.IconClose;
             /** @type {[typeof __VLS_components.IconClose, ]} */ ;
             // @ts-ignore
-            const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({}));
-            const __VLS_114 = __VLS_113({}, ...__VLS_functionalComponentArgsRest(__VLS_113));
+            const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({}));
+            const __VLS_118 = __VLS_117({}, ...__VLS_functionalComponentArgsRest(__VLS_117));
         }
-        var __VLS_107;
+        var __VLS_111;
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "config-row" },
@@ -1247,42 +1552,42 @@ if (__VLS_ctx.getCurrentTagValue()) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "config-label" },
     });
-    const __VLS_116 = {}.AInput;
+    const __VLS_120 = {}.AInput;
     /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
     // @ts-ignore
-    const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({
+    const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
         modelValue: (__VLS_ctx.getCurrentTagValue().name),
         placeholder: "请输入标签值名称",
         ...{ class: "config-input" },
         disabled: (!__VLS_ctx.isEditMode),
     }));
-    const __VLS_118 = __VLS_117({
+    const __VLS_122 = __VLS_121({
         modelValue: (__VLS_ctx.getCurrentTagValue().name),
         placeholder: "请输入标签值名称",
         ...{ class: "config-input" },
         disabled: (!__VLS_ctx.isEditMode),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_117));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_121));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "config-item" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "config-label" },
     });
-    const __VLS_120 = {}.AInput;
+    const __VLS_124 = {}.AInput;
     /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
     // @ts-ignore
-    const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
+    const __VLS_125 = __VLS_asFunctionalComponent(__VLS_124, new __VLS_124({
         modelValue: (__VLS_ctx.getCurrentTagValue().description),
         placeholder: "请输入标签值描述",
         ...{ class: "config-input" },
         disabled: (!__VLS_ctx.isEditMode),
     }));
-    const __VLS_122 = __VLS_121({
+    const __VLS_126 = __VLS_125({
         modelValue: (__VLS_ctx.getCurrentTagValue().description),
         placeholder: "请输入标签值描述",
         ...{ class: "config-input" },
         disabled: (!__VLS_ctx.isEditMode),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_121));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_125));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "condition-groups-section" },
     });
@@ -1304,7 +1609,7 @@ if (__VLS_ctx.getCurrentTagValue()) {
     });
     /** @type {[typeof ConditionConfig, ]} */ ;
     // @ts-ignore
-    const __VLS_124 = __VLS_asFunctionalComponent(ConditionConfig, new ConditionConfig({
+    const __VLS_128 = __VLS_asFunctionalComponent(ConditionConfig, new ConditionConfig({
         ...{ 'onAddConditionGroup': {} },
         ...{ 'onDeleteConditionGroup': {} },
         ...{ 'onToggleCrossGroupLogic': {} },
@@ -1325,7 +1630,7 @@ if (__VLS_ctx.getCurrentTagValue()) {
         onDataSourceTypeChange: (__VLS_ctx.onDataSourceTypeChange),
         onDateTypeChange: (__VLS_ctx.onDateTypeChange),
     }));
-    const __VLS_125 = __VLS_124({
+    const __VLS_129 = __VLS_128({
         ...{ 'onAddConditionGroup': {} },
         ...{ 'onDeleteConditionGroup': {} },
         ...{ 'onToggleCrossGroupLogic': {} },
@@ -1345,31 +1650,31 @@ if (__VLS_ctx.getCurrentTagValue()) {
         getValuePlaceholder: (__VLS_ctx.getValuePlaceholder),
         onDataSourceTypeChange: (__VLS_ctx.onDataSourceTypeChange),
         onDateTypeChange: (__VLS_ctx.onDateTypeChange),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_124));
-    let __VLS_127;
-    let __VLS_128;
-    let __VLS_129;
-    const __VLS_130 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_128));
+    let __VLS_131;
+    let __VLS_132;
+    let __VLS_133;
+    const __VLS_134 = {
         onAddConditionGroup: (__VLS_ctx.addConditionGroup)
     };
-    const __VLS_131 = {
+    const __VLS_135 = {
         onDeleteConditionGroup: (__VLS_ctx.deleteConditionGroup)
     };
-    const __VLS_132 = {
+    const __VLS_136 = {
         onToggleCrossGroupLogic: (__VLS_ctx.toggleCrossGroupLogic)
     };
-    const __VLS_133 = {
+    const __VLS_137 = {
         onToggleGroupLogic: (__VLS_ctx.toggleGroupLogic)
     };
-    const __VLS_134 = {
+    const __VLS_138 = {
         onAddConditionByType: (__VLS_ctx.addConditionByType)
     };
-    const __VLS_135 = {
+    const __VLS_139 = {
         onRemoveCondition: (__VLS_ctx.removeCondition)
     };
-    var __VLS_126;
+    var __VLS_130;
 }
-var __VLS_55;
+var __VLS_59;
 /** @type {__VLS_StyleScopedClasses['tag-detail']} */ ;
 /** @type {__VLS_StyleScopedClasses['breadcrumb']} */ ;
 /** @type {__VLS_StyleScopedClasses['page-header']} */ ;
@@ -1446,6 +1751,7 @@ var __VLS_55;
 /** @type {__VLS_StyleScopedClasses['bar-value']} */ ;
 /** @type {__VLS_StyleScopedClasses['trend-chart']} */ ;
 /** @type {__VLS_StyleScopedClasses['trend-placeholder']} */ ;
+/** @type {__VLS_StyleScopedClasses['lineage-chart']} */ ;
 /** @type {__VLS_StyleScopedClasses['content-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['rule-config-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-title']} */ ;
@@ -1494,6 +1800,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             IconClose: IconClose,
             ConditionConfig: ConditionConfig,
             activeTab: activeTab,
+            lineageChartRef: lineageChartRef,
             isEditMode: isEditMode,
             activeConfigTab: activeConfigTab,
             tagValues: tagValues,

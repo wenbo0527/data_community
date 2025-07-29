@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, ref, nextTick } from 'vue';
 import { IconPlus, IconDown, IconRight, IconMinus } from '@arco-design/web-vue/es/icon';
 const props = withDefaults(defineProps(), {
     editable: true,
@@ -68,6 +68,32 @@ const removeConditionByIndex = (condition) => {
     if (conditionIndex !== -1) {
         emit('removeCondition', conditionIndex);
     }
+};
+// 条件组名称编辑相关方法
+const startEditGroupName = (group) => {
+    if (!props.editable)
+        return;
+    group.isEditingName = true;
+    group.editingName = group.name || '';
+    // 使用 nextTick 确保输入框已渲染
+    nextTick(() => {
+        const input = document.querySelector('.group-name-input input');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    });
+};
+const saveGroupName = (group) => {
+    if (group.editingName && group.editingName.trim()) {
+        emit('updateGroupName', group, group.editingName.trim());
+    }
+    group.isEditingName = false;
+    group.editingName = '';
+};
+const cancelEditGroupName = (group) => {
+    group.isEditingName = false;
+    group.editingName = '';
 };
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_withDefaultsArg = (function (t) { return t; })({
@@ -147,10 +173,72 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "group-title-section" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "group-title" },
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "group-name-wrapper" },
 });
-(__VLS_ctx.group.name || '条件组');
+if (!__VLS_ctx.group.isEditingName) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ onDblclick: (...[$event]) => {
+                if (!(!__VLS_ctx.group.isEditingName))
+                    return;
+                __VLS_ctx.editable && __VLS_ctx.startEditGroupName(__VLS_ctx.group);
+            } },
+        ...{ class: "group-title" },
+        ...{ class: ({ 'editable': __VLS_ctx.editable }) },
+        title: (__VLS_ctx.editable ? '双击编辑名称' : ''),
+    });
+    (__VLS_ctx.group.name || '条件组');
+}
+else {
+    const __VLS_0 = {}.AInput;
+    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+    // @ts-ignore
+    const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
+        ...{ 'onBlur': {} },
+        ...{ 'onKeyup': {} },
+        ...{ 'onKeyup': {} },
+        modelValue: (__VLS_ctx.group.editingName),
+        size: "small",
+        ...{ class: "group-name-input" },
+        ref: "groupNameInput",
+    }));
+    const __VLS_2 = __VLS_1({
+        ...{ 'onBlur': {} },
+        ...{ 'onKeyup': {} },
+        ...{ 'onKeyup': {} },
+        modelValue: (__VLS_ctx.group.editingName),
+        size: "small",
+        ...{ class: "group-name-input" },
+        ref: "groupNameInput",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_1));
+    let __VLS_4;
+    let __VLS_5;
+    let __VLS_6;
+    const __VLS_7 = {
+        onBlur: (...[$event]) => {
+            if (!!(!__VLS_ctx.group.isEditingName))
+                return;
+            __VLS_ctx.saveGroupName(__VLS_ctx.group);
+        }
+    };
+    const __VLS_8 = {
+        onKeyup: (...[$event]) => {
+            if (!!(!__VLS_ctx.group.isEditingName))
+                return;
+            __VLS_ctx.saveGroupName(__VLS_ctx.group);
+        }
+    };
+    const __VLS_9 = {
+        onKeyup: (...[$event]) => {
+            if (!!(!__VLS_ctx.group.isEditingName))
+                return;
+            __VLS_ctx.cancelEditGroupName(__VLS_ctx.group);
+        }
+    };
+    /** @type {typeof __VLS_ctx.groupNameInput} */ ;
+    var __VLS_10 = {};
+    var __VLS_3;
+}
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "condition-count" },
 });
@@ -167,53 +255,14 @@ if (__VLS_ctx.editable) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "group-actions" },
     });
-    const __VLS_0 = {}.ATooltip;
-    /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
-    // @ts-ignore
-    const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
-        content: "切换逻辑",
-    }));
-    const __VLS_2 = __VLS_1({
-        content: "切换逻辑",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-    __VLS_3.slots.default;
-    const __VLS_4 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
-    // @ts-ignore
-    const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
-        ...{ 'onClick': {} },
-        type: "text",
-        size: "small",
-        ...{ class: "logic-btn" },
-    }));
-    const __VLS_6 = __VLS_5({
-        ...{ 'onClick': {} },
-        type: "text",
-        size: "small",
-        ...{ class: "logic-btn" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_5));
-    let __VLS_8;
-    let __VLS_9;
-    let __VLS_10;
-    const __VLS_11 = {
-        onClick: (...[$event]) => {
-            if (!(__VLS_ctx.editable))
-                return;
-            __VLS_ctx.$emit('toggleGroupLogic', __VLS_ctx.group);
-        }
-    };
-    __VLS_7.slots.default;
-    (__VLS_ctx.group.logic === 'and' ? 'AND' : 'OR');
-    var __VLS_7;
-    var __VLS_3;
     const __VLS_12 = {}.ATooltip;
     /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
-        content: "删除条件组",
+        content: "切换逻辑",
     }));
     const __VLS_14 = __VLS_13({
-        content: "删除条件组",
+        content: "切换逻辑",
     }, ...__VLS_functionalComponentArgsRest(__VLS_13));
     __VLS_15.slots.default;
     const __VLS_16 = {}.AButton;
@@ -223,13 +272,13 @@ if (__VLS_ctx.editable) {
         ...{ 'onClick': {} },
         type: "text",
         size: "small",
-        ...{ class: "action-btn danger" },
+        ...{ class: "logic-btn" },
     }));
     const __VLS_18 = __VLS_17({
         ...{ 'onClick': {} },
         type: "text",
         size: "small",
-        ...{ class: "action-btn danger" },
+        ...{ class: "logic-btn" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_17));
     let __VLS_20;
     let __VLS_21;
@@ -238,17 +287,56 @@ if (__VLS_ctx.editable) {
         onClick: (...[$event]) => {
             if (!(__VLS_ctx.editable))
                 return;
-            __VLS_ctx.$emit('deleteConditionGroup');
+            __VLS_ctx.$emit('toggleGroupLogic', __VLS_ctx.group);
         }
     };
     __VLS_19.slots.default;
-    const __VLS_24 = {}.IconMinus;
-    /** @type {[typeof __VLS_components.IconMinus, ]} */ ;
-    // @ts-ignore
-    const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({}));
-    const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
+    (__VLS_ctx.group.logic === 'and' ? 'AND' : 'OR');
     var __VLS_19;
     var __VLS_15;
+    const __VLS_24 = {}.ATooltip;
+    /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
+    // @ts-ignore
+    const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
+        content: "删除条件组",
+    }));
+    const __VLS_26 = __VLS_25({
+        content: "删除条件组",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_25));
+    __VLS_27.slots.default;
+    const __VLS_28 = {}.AButton;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    // @ts-ignore
+    const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
+        ...{ 'onClick': {} },
+        type: "text",
+        size: "small",
+        ...{ class: "action-btn danger" },
+    }));
+    const __VLS_30 = __VLS_29({
+        ...{ 'onClick': {} },
+        type: "text",
+        size: "small",
+        ...{ class: "action-btn danger" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_29));
+    let __VLS_32;
+    let __VLS_33;
+    let __VLS_34;
+    const __VLS_35 = {
+        onClick: (...[$event]) => {
+            if (!(__VLS_ctx.editable))
+                return;
+            __VLS_ctx.$emit('deleteConditionGroup');
+        }
+    };
+    __VLS_31.slots.default;
+    const __VLS_36 = {}.IconMinus;
+    /** @type {[typeof __VLS_components.IconMinus, ]} */ ;
+    // @ts-ignore
+    const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({}));
+    const __VLS_38 = __VLS_37({}, ...__VLS_functionalComponentArgsRest(__VLS_37));
+    var __VLS_31;
+    var __VLS_27;
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "condition-group-content" },
@@ -286,25 +374,25 @@ else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "condition-type-buttons" },
         });
-        const __VLS_28 = {}.AButton;
+        const __VLS_40 = {}.AButton;
         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
         // @ts-ignore
-        const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
+        const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
             ...{ 'onClick': {} },
             type: "text",
             size: "mini",
             ...{ class: "collapse-btn" },
         }));
-        const __VLS_30 = __VLS_29({
+        const __VLS_42 = __VLS_41({
             ...{ 'onClick': {} },
             type: "text",
             size: "mini",
             ...{ class: "collapse-btn" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_29));
-        let __VLS_32;
-        let __VLS_33;
-        let __VLS_34;
-        const __VLS_35 = {
+        }, ...__VLS_functionalComponentArgsRest(__VLS_41));
+        let __VLS_44;
+        let __VLS_45;
+        let __VLS_46;
+        const __VLS_47 = {
             onClick: (...[$event]) => {
                 if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                     return;
@@ -313,22 +401,22 @@ else {
                 __VLS_ctx.toggleSectionCollapse('tag');
             }
         };
-        __VLS_31.slots.default;
+        __VLS_43.slots.default;
         if (!__VLS_ctx.collapsedSections.tag) {
-            const __VLS_36 = {}.IconDown;
+            const __VLS_48 = {}.IconDown;
             /** @type {[typeof __VLS_components.IconDown, ]} */ ;
             // @ts-ignore
-            const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({}));
-            const __VLS_38 = __VLS_37({}, ...__VLS_functionalComponentArgsRest(__VLS_37));
+            const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({}));
+            const __VLS_50 = __VLS_49({}, ...__VLS_functionalComponentArgsRest(__VLS_49));
         }
         else {
-            const __VLS_40 = {}.IconRight;
+            const __VLS_52 = {}.IconRight;
             /** @type {[typeof __VLS_components.IconRight, ]} */ ;
             // @ts-ignore
-            const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({}));
-            const __VLS_42 = __VLS_41({}, ...__VLS_functionalComponentArgsRest(__VLS_41));
+            const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({}));
+            const __VLS_54 = __VLS_53({}, ...__VLS_functionalComponentArgsRest(__VLS_53));
         }
-        var __VLS_31;
+        var __VLS_43;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ class: "condition-type-title" },
         });
@@ -340,35 +428,35 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "condition-type-actions" },
             });
-            const __VLS_44 = {}.ATooltip;
+            const __VLS_56 = {}.ATooltip;
             /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
             // @ts-ignore
-            const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
+            const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
                 content: "添加标签条件",
             }));
-            const __VLS_46 = __VLS_45({
+            const __VLS_58 = __VLS_57({
                 content: "添加标签条件",
-            }, ...__VLS_functionalComponentArgsRest(__VLS_45));
-            __VLS_47.slots.default;
-            const __VLS_48 = {}.AButton;
+            }, ...__VLS_functionalComponentArgsRest(__VLS_57));
+            __VLS_59.slots.default;
+            const __VLS_60 = {}.AButton;
             /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
             // @ts-ignore
-            const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
+            const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
                 ...{ 'onClick': {} },
                 type: "text",
                 size: "mini",
                 ...{ class: "condition-type-add-btn" },
             }));
-            const __VLS_50 = __VLS_49({
+            const __VLS_62 = __VLS_61({
                 ...{ 'onClick': {} },
                 type: "text",
                 size: "mini",
                 ...{ class: "condition-type-add-btn" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_49));
-            let __VLS_52;
-            let __VLS_53;
-            let __VLS_54;
-            const __VLS_55 = {
+            }, ...__VLS_functionalComponentArgsRest(__VLS_61));
+            let __VLS_64;
+            let __VLS_65;
+            let __VLS_66;
+            const __VLS_67 = {
                 onClick: (...[$event]) => {
                     if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                         return;
@@ -379,22 +467,37 @@ else {
                     __VLS_ctx.$emit('addConditionByType', 'tag');
                 }
             };
-            __VLS_51.slots.default;
-            const __VLS_56 = {}.IconPlus;
+            __VLS_63.slots.default;
+            const __VLS_68 = {}.IconPlus;
             /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
             // @ts-ignore
-            const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({}));
-            const __VLS_58 = __VLS_57({}, ...__VLS_functionalComponentArgsRest(__VLS_57));
-            var __VLS_51;
-            var __VLS_47;
+            const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({}));
+            const __VLS_70 = __VLS_69({}, ...__VLS_functionalComponentArgsRest(__VLS_69));
+            var __VLS_63;
+            var __VLS_59;
         }
         if (!__VLS_ctx.collapsedSections.tag) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "condition-type-content" },
             });
             for (const [condition, conditionIndex] of __VLS_getVForSourceType((__VLS_ctx.tagConditions))) {
+                (condition.id || conditionIndex);
+                if (conditionIndex > 0) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "condition-logic-connector" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "logic-line" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: "logic-text" },
+                    });
+                    (__VLS_ctx.group.logic === 'and' ? '且' : '或');
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "logic-line" },
+                    });
+                }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    key: (condition.id || conditionIndex),
                     ...{ class: "condition-item-wrapper" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -411,35 +514,35 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "condition-item-actions" },
                     });
-                    const __VLS_60 = {}.ATooltip;
+                    const __VLS_72 = {}.ATooltip;
                     /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
                     // @ts-ignore
-                    const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
+                    const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({
                         content: "删除条件",
                     }));
-                    const __VLS_62 = __VLS_61({
+                    const __VLS_74 = __VLS_73({
                         content: "删除条件",
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_61));
-                    __VLS_63.slots.default;
-                    const __VLS_64 = {}.AButton;
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_73));
+                    __VLS_75.slots.default;
+                    const __VLS_76 = {}.AButton;
                     /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
                     // @ts-ignore
-                    const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({
+                    const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "condition-remove-btn" },
                     }));
-                    const __VLS_66 = __VLS_65({
+                    const __VLS_78 = __VLS_77({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "condition-remove-btn" },
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_65));
-                    let __VLS_68;
-                    let __VLS_69;
-                    let __VLS_70;
-                    const __VLS_71 = {
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_77));
+                    let __VLS_80;
+                    let __VLS_81;
+                    let __VLS_82;
+                    const __VLS_83 = {
                         onClick: (...[$event]) => {
                             if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                 return;
@@ -452,14 +555,14 @@ else {
                             __VLS_ctx.removeConditionByIndex(condition);
                         }
                     };
-                    __VLS_67.slots.default;
-                    const __VLS_72 = {}.IconMinus;
+                    __VLS_79.slots.default;
+                    const __VLS_84 = {}.IconMinus;
                     /** @type {[typeof __VLS_components.IconMinus, ]} */ ;
                     // @ts-ignore
-                    const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({}));
-                    const __VLS_74 = __VLS_73({}, ...__VLS_functionalComponentArgsRest(__VLS_73));
-                    var __VLS_67;
-                    var __VLS_63;
+                    const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({}));
+                    const __VLS_86 = __VLS_85({}, ...__VLS_functionalComponentArgsRest(__VLS_85));
+                    var __VLS_79;
+                    var __VLS_75;
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "tag-condition-row" },
@@ -473,10 +576,10 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                     ...{ class: "form-label" },
                 });
-                const __VLS_76 = {}.ASelect;
+                const __VLS_88 = {}.ASelect;
                 /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                 // @ts-ignore
-                const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({
+                const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({
                     modelValue: (condition.tagPath),
                     size: "small",
                     ...{ class: "form-control" },
@@ -485,7 +588,7 @@ else {
                     allowSearch: true,
                     disabled: (!__VLS_ctx.editable),
                 }));
-                const __VLS_78 = __VLS_77({
+                const __VLS_90 = __VLS_89({
                     modelValue: (condition.tagPath),
                     size: "small",
                     ...{ class: "form-control" },
@@ -493,30 +596,30 @@ else {
                     options: (__VLS_ctx.getTagOptions && __VLS_ctx.getTagOptions() || []),
                     allowSearch: true,
                     disabled: (!__VLS_ctx.editable),
-                }, ...__VLS_functionalComponentArgsRest(__VLS_77));
+                }, ...__VLS_functionalComponentArgsRest(__VLS_89));
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "form-group" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                     ...{ class: "form-label" },
                 });
-                const __VLS_80 = {}.ASelect;
+                const __VLS_92 = {}.ASelect;
                 /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                 // @ts-ignore
-                const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
+                const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({
                     modelValue: (condition.operator),
                     size: "small",
                     ...{ class: "form-control" },
                     options: (__VLS_ctx.getTagOperatorOptions && __VLS_ctx.getTagOperatorOptions() || []),
                     disabled: (!__VLS_ctx.editable),
                 }));
-                const __VLS_82 = __VLS_81({
+                const __VLS_94 = __VLS_93({
                     modelValue: (condition.operator),
                     size: "small",
                     ...{ class: "form-control" },
                     options: (__VLS_ctx.getTagOperatorOptions && __VLS_ctx.getTagOperatorOptions() || []),
                     disabled: (!__VLS_ctx.editable),
-                }, ...__VLS_functionalComponentArgsRest(__VLS_81));
+                }, ...__VLS_functionalComponentArgsRest(__VLS_93));
                 if (__VLS_ctx.needTagValueInput && __VLS_ctx.needTagValueInput(condition)) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "form-group" },
@@ -524,57 +627,57 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                         ...{ class: "form-label" },
                     });
-                    const __VLS_84 = {}.AInput;
+                    const __VLS_96 = {}.AInput;
                     /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
                     // @ts-ignore
-                    const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({
+                    const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
                         modelValue: (condition.value),
                         size: "small",
                         ...{ class: "form-control" },
                         placeholder: (__VLS_ctx.getTagValuePlaceholder && __VLS_ctx.getTagValuePlaceholder(condition) || '请输入值'),
                         disabled: (!__VLS_ctx.editable),
                     }));
-                    const __VLS_86 = __VLS_85({
+                    const __VLS_98 = __VLS_97({
                         modelValue: (condition.value),
                         size: "small",
                         ...{ class: "form-control" },
                         placeholder: (__VLS_ctx.getTagValuePlaceholder && __VLS_ctx.getTagValuePlaceholder(condition) || '请输入值'),
                         disabled: (!__VLS_ctx.editable),
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_85));
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_97));
                 }
                 if (__VLS_ctx.editable) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "tag-actions" },
                     });
-                    const __VLS_88 = {}.ATooltip;
+                    const __VLS_100 = {}.ATooltip;
                     /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
                     // @ts-ignore
-                    const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({
+                    const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({
                         content: "添加标签条件",
                     }));
-                    const __VLS_90 = __VLS_89({
+                    const __VLS_102 = __VLS_101({
                         content: "添加标签条件",
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_89));
-                    __VLS_91.slots.default;
-                    const __VLS_92 = {}.AButton;
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_101));
+                    __VLS_103.slots.default;
+                    const __VLS_104 = {}.AButton;
                     /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
                     // @ts-ignore
-                    const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({
+                    const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "tag-action-btn add-btn" },
                     }));
-                    const __VLS_94 = __VLS_93({
+                    const __VLS_106 = __VLS_105({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "tag-action-btn add-btn" },
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_93));
-                    let __VLS_96;
-                    let __VLS_97;
-                    let __VLS_98;
-                    const __VLS_99 = {
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_105));
+                    let __VLS_108;
+                    let __VLS_109;
+                    let __VLS_110;
+                    const __VLS_111 = {
                         onClick: (...[$event]) => {
                             if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                 return;
@@ -587,43 +690,43 @@ else {
                             __VLS_ctx.$emit('addConditionByType', 'tag');
                         }
                     };
-                    __VLS_95.slots.default;
-                    const __VLS_100 = {}.IconPlus;
+                    __VLS_107.slots.default;
+                    const __VLS_112 = {}.IconPlus;
                     /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
                     // @ts-ignore
-                    const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({}));
-                    const __VLS_102 = __VLS_101({}, ...__VLS_functionalComponentArgsRest(__VLS_101));
-                    var __VLS_95;
-                    var __VLS_91;
-                    const __VLS_104 = {}.ATooltip;
+                    const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({}));
+                    const __VLS_114 = __VLS_113({}, ...__VLS_functionalComponentArgsRest(__VLS_113));
+                    var __VLS_107;
+                    var __VLS_103;
+                    const __VLS_116 = {}.ATooltip;
                     /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
                     // @ts-ignore
-                    const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
+                    const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({
                         content: "删除标签条件",
                     }));
-                    const __VLS_106 = __VLS_105({
+                    const __VLS_118 = __VLS_117({
                         content: "删除标签条件",
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_105));
-                    __VLS_107.slots.default;
-                    const __VLS_108 = {}.AButton;
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_117));
+                    __VLS_119.slots.default;
+                    const __VLS_120 = {}.AButton;
                     /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
                     // @ts-ignore
-                    const __VLS_109 = __VLS_asFunctionalComponent(__VLS_108, new __VLS_108({
+                    const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "tag-action-btn remove-btn" },
                     }));
-                    const __VLS_110 = __VLS_109({
+                    const __VLS_122 = __VLS_121({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "tag-action-btn remove-btn" },
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_109));
-                    let __VLS_112;
-                    let __VLS_113;
-                    let __VLS_114;
-                    const __VLS_115 = {
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_121));
+                    let __VLS_124;
+                    let __VLS_125;
+                    let __VLS_126;
+                    const __VLS_127 = {
                         onClick: (...[$event]) => {
                             if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                 return;
@@ -636,14 +739,14 @@ else {
                             __VLS_ctx.removeConditionByIndex(condition);
                         }
                     };
-                    __VLS_111.slots.default;
-                    const __VLS_116 = {}.IconMinus;
+                    __VLS_123.slots.default;
+                    const __VLS_128 = {}.IconMinus;
                     /** @type {[typeof __VLS_components.IconMinus, ]} */ ;
                     // @ts-ignore
-                    const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({}));
-                    const __VLS_118 = __VLS_117({}, ...__VLS_functionalComponentArgsRest(__VLS_117));
-                    var __VLS_111;
-                    var __VLS_107;
+                    const __VLS_129 = __VLS_asFunctionalComponent(__VLS_128, new __VLS_128({}));
+                    const __VLS_130 = __VLS_129({}, ...__VLS_functionalComponentArgsRest(__VLS_129));
+                    var __VLS_123;
+                    var __VLS_119;
                 }
             }
         }
@@ -671,25 +774,25 @@ else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "condition-type-buttons" },
         });
-        const __VLS_120 = {}.AButton;
+        const __VLS_132 = {}.AButton;
         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
         // @ts-ignore
-        const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
+        const __VLS_133 = __VLS_asFunctionalComponent(__VLS_132, new __VLS_132({
             ...{ 'onClick': {} },
             type: "text",
             size: "mini",
             ...{ class: "collapse-btn" },
         }));
-        const __VLS_122 = __VLS_121({
+        const __VLS_134 = __VLS_133({
             ...{ 'onClick': {} },
             type: "text",
             size: "mini",
             ...{ class: "collapse-btn" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_121));
-        let __VLS_124;
-        let __VLS_125;
-        let __VLS_126;
-        const __VLS_127 = {
+        }, ...__VLS_functionalComponentArgsRest(__VLS_133));
+        let __VLS_136;
+        let __VLS_137;
+        let __VLS_138;
+        const __VLS_139 = {
             onClick: (...[$event]) => {
                 if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                     return;
@@ -698,22 +801,22 @@ else {
                 __VLS_ctx.toggleSectionCollapse('behavior');
             }
         };
-        __VLS_123.slots.default;
+        __VLS_135.slots.default;
         if (!__VLS_ctx.collapsedSections.behavior) {
-            const __VLS_128 = {}.IconDown;
+            const __VLS_140 = {}.IconDown;
             /** @type {[typeof __VLS_components.IconDown, ]} */ ;
             // @ts-ignore
-            const __VLS_129 = __VLS_asFunctionalComponent(__VLS_128, new __VLS_128({}));
-            const __VLS_130 = __VLS_129({}, ...__VLS_functionalComponentArgsRest(__VLS_129));
+            const __VLS_141 = __VLS_asFunctionalComponent(__VLS_140, new __VLS_140({}));
+            const __VLS_142 = __VLS_141({}, ...__VLS_functionalComponentArgsRest(__VLS_141));
         }
         else {
-            const __VLS_132 = {}.IconRight;
+            const __VLS_144 = {}.IconRight;
             /** @type {[typeof __VLS_components.IconRight, ]} */ ;
             // @ts-ignore
-            const __VLS_133 = __VLS_asFunctionalComponent(__VLS_132, new __VLS_132({}));
-            const __VLS_134 = __VLS_133({}, ...__VLS_functionalComponentArgsRest(__VLS_133));
+            const __VLS_145 = __VLS_asFunctionalComponent(__VLS_144, new __VLS_144({}));
+            const __VLS_146 = __VLS_145({}, ...__VLS_functionalComponentArgsRest(__VLS_145));
         }
-        var __VLS_123;
+        var __VLS_135;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ class: "condition-type-title" },
         });
@@ -725,35 +828,35 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "condition-type-actions" },
             });
-            const __VLS_136 = {}.ATooltip;
+            const __VLS_148 = {}.ATooltip;
             /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
             // @ts-ignore
-            const __VLS_137 = __VLS_asFunctionalComponent(__VLS_136, new __VLS_136({
+            const __VLS_149 = __VLS_asFunctionalComponent(__VLS_148, new __VLS_148({
                 content: "添加行为条件",
             }));
-            const __VLS_138 = __VLS_137({
+            const __VLS_150 = __VLS_149({
                 content: "添加行为条件",
-            }, ...__VLS_functionalComponentArgsRest(__VLS_137));
-            __VLS_139.slots.default;
-            const __VLS_140 = {}.AButton;
+            }, ...__VLS_functionalComponentArgsRest(__VLS_149));
+            __VLS_151.slots.default;
+            const __VLS_152 = {}.AButton;
             /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
             // @ts-ignore
-            const __VLS_141 = __VLS_asFunctionalComponent(__VLS_140, new __VLS_140({
+            const __VLS_153 = __VLS_asFunctionalComponent(__VLS_152, new __VLS_152({
                 ...{ 'onClick': {} },
                 type: "text",
                 size: "mini",
                 ...{ class: "condition-type-add-btn" },
             }));
-            const __VLS_142 = __VLS_141({
+            const __VLS_154 = __VLS_153({
                 ...{ 'onClick': {} },
                 type: "text",
                 size: "mini",
                 ...{ class: "condition-type-add-btn" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_141));
-            let __VLS_144;
-            let __VLS_145;
-            let __VLS_146;
-            const __VLS_147 = {
+            }, ...__VLS_functionalComponentArgsRest(__VLS_153));
+            let __VLS_156;
+            let __VLS_157;
+            let __VLS_158;
+            const __VLS_159 = {
                 onClick: (...[$event]) => {
                     if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                         return;
@@ -764,22 +867,37 @@ else {
                     __VLS_ctx.$emit('addConditionByType', 'behavior');
                 }
             };
-            __VLS_143.slots.default;
-            const __VLS_148 = {}.IconPlus;
+            __VLS_155.slots.default;
+            const __VLS_160 = {}.IconPlus;
             /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
             // @ts-ignore
-            const __VLS_149 = __VLS_asFunctionalComponent(__VLS_148, new __VLS_148({}));
-            const __VLS_150 = __VLS_149({}, ...__VLS_functionalComponentArgsRest(__VLS_149));
-            var __VLS_143;
-            var __VLS_139;
+            const __VLS_161 = __VLS_asFunctionalComponent(__VLS_160, new __VLS_160({}));
+            const __VLS_162 = __VLS_161({}, ...__VLS_functionalComponentArgsRest(__VLS_161));
+            var __VLS_155;
+            var __VLS_151;
         }
         if (!__VLS_ctx.collapsedSections.behavior) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "condition-type-content" },
             });
             for (const [condition, conditionIndex] of __VLS_getVForSourceType((__VLS_ctx.behaviorConditions))) {
+                (condition.id || conditionIndex);
+                if (conditionIndex > 0) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "condition-logic-connector" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "logic-line" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: "logic-text" },
+                    });
+                    (__VLS_ctx.group.logic === 'and' ? '且' : '或');
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "logic-line" },
+                    });
+                }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    key: (condition.id || conditionIndex),
                     ...{ class: "condition-item-wrapper" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -796,35 +914,35 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "condition-item-actions" },
                     });
-                    const __VLS_152 = {}.ATooltip;
+                    const __VLS_164 = {}.ATooltip;
                     /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
                     // @ts-ignore
-                    const __VLS_153 = __VLS_asFunctionalComponent(__VLS_152, new __VLS_152({
+                    const __VLS_165 = __VLS_asFunctionalComponent(__VLS_164, new __VLS_164({
                         content: "删除条件",
                     }));
-                    const __VLS_154 = __VLS_153({
+                    const __VLS_166 = __VLS_165({
                         content: "删除条件",
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_153));
-                    __VLS_155.slots.default;
-                    const __VLS_156 = {}.AButton;
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_165));
+                    __VLS_167.slots.default;
+                    const __VLS_168 = {}.AButton;
                     /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
                     // @ts-ignore
-                    const __VLS_157 = __VLS_asFunctionalComponent(__VLS_156, new __VLS_156({
+                    const __VLS_169 = __VLS_asFunctionalComponent(__VLS_168, new __VLS_168({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "condition-remove-btn" },
                     }));
-                    const __VLS_158 = __VLS_157({
+                    const __VLS_170 = __VLS_169({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "condition-remove-btn" },
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_157));
-                    let __VLS_160;
-                    let __VLS_161;
-                    let __VLS_162;
-                    const __VLS_163 = {
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_169));
+                    let __VLS_172;
+                    let __VLS_173;
+                    let __VLS_174;
+                    const __VLS_175 = {
                         onClick: (...[$event]) => {
                             if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                 return;
@@ -837,14 +955,14 @@ else {
                             __VLS_ctx.removeConditionByIndex(condition);
                         }
                     };
-                    __VLS_159.slots.default;
-                    const __VLS_164 = {}.IconMinus;
+                    __VLS_171.slots.default;
+                    const __VLS_176 = {}.IconMinus;
                     /** @type {[typeof __VLS_components.IconMinus, ]} */ ;
                     // @ts-ignore
-                    const __VLS_165 = __VLS_asFunctionalComponent(__VLS_164, new __VLS_164({}));
-                    const __VLS_166 = __VLS_165({}, ...__VLS_functionalComponentArgsRest(__VLS_165));
-                    var __VLS_159;
-                    var __VLS_155;
+                    const __VLS_177 = __VLS_asFunctionalComponent(__VLS_176, new __VLS_176({}));
+                    const __VLS_178 = __VLS_177({}, ...__VLS_functionalComponentArgsRest(__VLS_177));
+                    var __VLS_171;
+                    var __VLS_167;
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "event-config" },
@@ -855,10 +973,10 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                     ...{ class: "form-label" },
                 });
-                const __VLS_168 = {}.ASelect;
+                const __VLS_180 = {}.ASelect;
                 /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                 // @ts-ignore
-                const __VLS_169 = __VLS_asFunctionalComponent(__VLS_168, new __VLS_168({
+                const __VLS_181 = __VLS_asFunctionalComponent(__VLS_180, new __VLS_180({
                     modelValue: (condition.eventName),
                     size: "small",
                     ...{ class: "form-control" },
@@ -867,7 +985,7 @@ else {
                     allowSearch: true,
                     disabled: (!__VLS_ctx.editable),
                 }));
-                const __VLS_170 = __VLS_169({
+                const __VLS_182 = __VLS_181({
                     modelValue: (condition.eventName),
                     size: "small",
                     ...{ class: "form-control" },
@@ -875,7 +993,7 @@ else {
                     options: (__VLS_ctx.getEventOptions && __VLS_ctx.getEventOptions() || []),
                     allowSearch: true,
                     disabled: (!__VLS_ctx.editable),
-                }, ...__VLS_functionalComponentArgsRest(__VLS_169));
+                }, ...__VLS_functionalComponentArgsRest(__VLS_181));
                 if (condition.eventProperties && condition.eventProperties.length > 0) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "event-properties" },
@@ -894,10 +1012,10 @@ else {
                             key: (propertyIndex),
                             ...{ class: "event-property-item" },
                         });
-                        const __VLS_172 = {}.ASelect;
+                        const __VLS_184 = {}.ASelect;
                         /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                         // @ts-ignore
-                        const __VLS_173 = __VLS_asFunctionalComponent(__VLS_172, new __VLS_172({
+                        const __VLS_185 = __VLS_asFunctionalComponent(__VLS_184, new __VLS_184({
                             modelValue: (property.name),
                             size: "small",
                             ...{ class: "property-name" },
@@ -906,7 +1024,7 @@ else {
                             allowSearch: true,
                             disabled: (!__VLS_ctx.editable),
                         }));
-                        const __VLS_174 = __VLS_173({
+                        const __VLS_186 = __VLS_185({
                             modelValue: (property.name),
                             size: "small",
                             ...{ class: "property-name" },
@@ -914,61 +1032,61 @@ else {
                             options: (__VLS_ctx.getEventPropertyOptions && condition.eventName ? __VLS_ctx.getEventPropertyOptions(condition.eventName) : []),
                             allowSearch: true,
                             disabled: (!__VLS_ctx.editable),
-                        }, ...__VLS_functionalComponentArgsRest(__VLS_173));
-                        const __VLS_176 = {}.ASelect;
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_185));
+                        const __VLS_188 = {}.ASelect;
                         /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                         // @ts-ignore
-                        const __VLS_177 = __VLS_asFunctionalComponent(__VLS_176, new __VLS_176({
+                        const __VLS_189 = __VLS_asFunctionalComponent(__VLS_188, new __VLS_188({
                             modelValue: (property.operator),
                             size: "small",
                             ...{ class: "property-operator" },
                             options: (__VLS_ctx.getPropertyOperatorOptions && __VLS_ctx.getPropertyOperatorOptions() || []),
                             disabled: (!__VLS_ctx.editable),
                         }));
-                        const __VLS_178 = __VLS_177({
+                        const __VLS_190 = __VLS_189({
                             modelValue: (property.operator),
                             size: "small",
                             ...{ class: "property-operator" },
                             options: (__VLS_ctx.getPropertyOperatorOptions && __VLS_ctx.getPropertyOperatorOptions() || []),
                             disabled: (!__VLS_ctx.editable),
-                        }, ...__VLS_functionalComponentArgsRest(__VLS_177));
-                        const __VLS_180 = {}.AInput;
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_189));
+                        const __VLS_192 = {}.AInput;
                         /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
                         // @ts-ignore
-                        const __VLS_181 = __VLS_asFunctionalComponent(__VLS_180, new __VLS_180({
+                        const __VLS_193 = __VLS_asFunctionalComponent(__VLS_192, new __VLS_192({
                             modelValue: (property.value),
                             size: "small",
                             ...{ class: "property-value" },
                             placeholder: "属性值",
                             disabled: (!__VLS_ctx.editable),
                         }));
-                        const __VLS_182 = __VLS_181({
+                        const __VLS_194 = __VLS_193({
                             modelValue: (property.value),
                             size: "small",
                             ...{ class: "property-value" },
                             placeholder: "属性值",
                             disabled: (!__VLS_ctx.editable),
-                        }, ...__VLS_functionalComponentArgsRest(__VLS_181));
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_193));
                         if (__VLS_ctx.editable) {
-                            const __VLS_184 = {}.AButton;
+                            const __VLS_196 = {}.AButton;
                             /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
                             // @ts-ignore
-                            const __VLS_185 = __VLS_asFunctionalComponent(__VLS_184, new __VLS_184({
+                            const __VLS_197 = __VLS_asFunctionalComponent(__VLS_196, new __VLS_196({
                                 ...{ 'onClick': {} },
                                 type: "text",
                                 size: "mini",
                                 ...{ class: "remove-property-btn" },
                             }));
-                            const __VLS_186 = __VLS_185({
+                            const __VLS_198 = __VLS_197({
                                 ...{ 'onClick': {} },
                                 type: "text",
                                 size: "mini",
                                 ...{ class: "remove-property-btn" },
-                            }, ...__VLS_functionalComponentArgsRest(__VLS_185));
-                            let __VLS_188;
-                            let __VLS_189;
-                            let __VLS_190;
-                            const __VLS_191 = {
+                            }, ...__VLS_functionalComponentArgsRest(__VLS_197));
+                            let __VLS_200;
+                            let __VLS_201;
+                            let __VLS_202;
+                            const __VLS_203 = {
                                 onClick: (...[$event]) => {
                                     if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                         return;
@@ -983,35 +1101,35 @@ else {
                                     __VLS_ctx.$emit('removeEventProperty', condition, propertyIndex);
                                 }
                             };
-                            __VLS_187.slots.default;
-                            const __VLS_192 = {}.IconMinus;
+                            __VLS_199.slots.default;
+                            const __VLS_204 = {}.IconMinus;
                             /** @type {[typeof __VLS_components.IconMinus, ]} */ ;
                             // @ts-ignore
-                            const __VLS_193 = __VLS_asFunctionalComponent(__VLS_192, new __VLS_192({}));
-                            const __VLS_194 = __VLS_193({}, ...__VLS_functionalComponentArgsRest(__VLS_193));
-                            var __VLS_187;
+                            const __VLS_205 = __VLS_asFunctionalComponent(__VLS_204, new __VLS_204({}));
+                            const __VLS_206 = __VLS_205({}, ...__VLS_functionalComponentArgsRest(__VLS_205));
+                            var __VLS_199;
                         }
                     }
                     if (__VLS_ctx.editable) {
-                        const __VLS_196 = {}.AButton;
+                        const __VLS_208 = {}.AButton;
                         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
                         // @ts-ignore
-                        const __VLS_197 = __VLS_asFunctionalComponent(__VLS_196, new __VLS_196({
+                        const __VLS_209 = __VLS_asFunctionalComponent(__VLS_208, new __VLS_208({
                             ...{ 'onClick': {} },
                             type: "dashed",
                             size: "small",
                             ...{ class: "add-property-btn" },
                         }));
-                        const __VLS_198 = __VLS_197({
+                        const __VLS_210 = __VLS_209({
                             ...{ 'onClick': {} },
                             type: "dashed",
                             size: "small",
                             ...{ class: "add-property-btn" },
-                        }, ...__VLS_functionalComponentArgsRest(__VLS_197));
-                        let __VLS_200;
-                        let __VLS_201;
-                        let __VLS_202;
-                        const __VLS_203 = {
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_209));
+                        let __VLS_212;
+                        let __VLS_213;
+                        let __VLS_214;
+                        const __VLS_215 = {
                             onClick: (...[$event]) => {
                                 if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                     return;
@@ -1026,16 +1144,16 @@ else {
                                 __VLS_ctx.$emit('addEventProperty', condition);
                             }
                         };
-                        __VLS_199.slots.default;
+                        __VLS_211.slots.default;
                         {
-                            const { icon: __VLS_thisSlot } = __VLS_199.slots;
-                            const __VLS_204 = {}.IconPlus;
+                            const { icon: __VLS_thisSlot } = __VLS_211.slots;
+                            const __VLS_216 = {}.IconPlus;
                             /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
                             // @ts-ignore
-                            const __VLS_205 = __VLS_asFunctionalComponent(__VLS_204, new __VLS_204({}));
-                            const __VLS_206 = __VLS_205({}, ...__VLS_functionalComponentArgsRest(__VLS_205));
+                            const __VLS_217 = __VLS_asFunctionalComponent(__VLS_216, new __VLS_216({}));
+                            const __VLS_218 = __VLS_217({}, ...__VLS_functionalComponentArgsRest(__VLS_217));
                         }
-                        var __VLS_199;
+                        var __VLS_211;
                     }
                 }
             }
@@ -1064,25 +1182,25 @@ else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "condition-type-buttons" },
         });
-        const __VLS_208 = {}.AButton;
+        const __VLS_220 = {}.AButton;
         /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
         // @ts-ignore
-        const __VLS_209 = __VLS_asFunctionalComponent(__VLS_208, new __VLS_208({
+        const __VLS_221 = __VLS_asFunctionalComponent(__VLS_220, new __VLS_220({
             ...{ 'onClick': {} },
             type: "text",
             size: "mini",
             ...{ class: "collapse-btn" },
         }));
-        const __VLS_210 = __VLS_209({
+        const __VLS_222 = __VLS_221({
             ...{ 'onClick': {} },
             type: "text",
             size: "mini",
             ...{ class: "collapse-btn" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_209));
-        let __VLS_212;
-        let __VLS_213;
-        let __VLS_214;
-        const __VLS_215 = {
+        }, ...__VLS_functionalComponentArgsRest(__VLS_221));
+        let __VLS_224;
+        let __VLS_225;
+        let __VLS_226;
+        const __VLS_227 = {
             onClick: (...[$event]) => {
                 if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                     return;
@@ -1091,22 +1209,22 @@ else {
                 __VLS_ctx.toggleSectionCollapse('detail');
             }
         };
-        __VLS_211.slots.default;
+        __VLS_223.slots.default;
         if (!__VLS_ctx.collapsedSections.detail) {
-            const __VLS_216 = {}.IconDown;
+            const __VLS_228 = {}.IconDown;
             /** @type {[typeof __VLS_components.IconDown, ]} */ ;
             // @ts-ignore
-            const __VLS_217 = __VLS_asFunctionalComponent(__VLS_216, new __VLS_216({}));
-            const __VLS_218 = __VLS_217({}, ...__VLS_functionalComponentArgsRest(__VLS_217));
+            const __VLS_229 = __VLS_asFunctionalComponent(__VLS_228, new __VLS_228({}));
+            const __VLS_230 = __VLS_229({}, ...__VLS_functionalComponentArgsRest(__VLS_229));
         }
         else {
-            const __VLS_220 = {}.IconRight;
+            const __VLS_232 = {}.IconRight;
             /** @type {[typeof __VLS_components.IconRight, ]} */ ;
             // @ts-ignore
-            const __VLS_221 = __VLS_asFunctionalComponent(__VLS_220, new __VLS_220({}));
-            const __VLS_222 = __VLS_221({}, ...__VLS_functionalComponentArgsRest(__VLS_221));
+            const __VLS_233 = __VLS_asFunctionalComponent(__VLS_232, new __VLS_232({}));
+            const __VLS_234 = __VLS_233({}, ...__VLS_functionalComponentArgsRest(__VLS_233));
         }
-        var __VLS_211;
+        var __VLS_223;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ class: "condition-type-title" },
         });
@@ -1118,35 +1236,35 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "condition-type-actions" },
             });
-            const __VLS_224 = {}.ATooltip;
+            const __VLS_236 = {}.ATooltip;
             /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
             // @ts-ignore
-            const __VLS_225 = __VLS_asFunctionalComponent(__VLS_224, new __VLS_224({
+            const __VLS_237 = __VLS_asFunctionalComponent(__VLS_236, new __VLS_236({
                 content: "添加明细数据条件",
             }));
-            const __VLS_226 = __VLS_225({
+            const __VLS_238 = __VLS_237({
                 content: "添加明细数据条件",
-            }, ...__VLS_functionalComponentArgsRest(__VLS_225));
-            __VLS_227.slots.default;
-            const __VLS_228 = {}.AButton;
+            }, ...__VLS_functionalComponentArgsRest(__VLS_237));
+            __VLS_239.slots.default;
+            const __VLS_240 = {}.AButton;
             /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
             // @ts-ignore
-            const __VLS_229 = __VLS_asFunctionalComponent(__VLS_228, new __VLS_228({
+            const __VLS_241 = __VLS_asFunctionalComponent(__VLS_240, new __VLS_240({
                 ...{ 'onClick': {} },
                 type: "text",
                 size: "mini",
                 ...{ class: "condition-type-add-btn" },
             }));
-            const __VLS_230 = __VLS_229({
+            const __VLS_242 = __VLS_241({
                 ...{ 'onClick': {} },
                 type: "text",
                 size: "mini",
                 ...{ class: "condition-type-add-btn" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_229));
-            let __VLS_232;
-            let __VLS_233;
-            let __VLS_234;
-            const __VLS_235 = {
+            }, ...__VLS_functionalComponentArgsRest(__VLS_241));
+            let __VLS_244;
+            let __VLS_245;
+            let __VLS_246;
+            const __VLS_247 = {
                 onClick: (...[$event]) => {
                     if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                         return;
@@ -1157,22 +1275,37 @@ else {
                     __VLS_ctx.$emit('addConditionByType', 'detail');
                 }
             };
-            __VLS_231.slots.default;
-            const __VLS_236 = {}.IconPlus;
+            __VLS_243.slots.default;
+            const __VLS_248 = {}.IconPlus;
             /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
             // @ts-ignore
-            const __VLS_237 = __VLS_asFunctionalComponent(__VLS_236, new __VLS_236({}));
-            const __VLS_238 = __VLS_237({}, ...__VLS_functionalComponentArgsRest(__VLS_237));
-            var __VLS_231;
-            var __VLS_227;
+            const __VLS_249 = __VLS_asFunctionalComponent(__VLS_248, new __VLS_248({}));
+            const __VLS_250 = __VLS_249({}, ...__VLS_functionalComponentArgsRest(__VLS_249));
+            var __VLS_243;
+            var __VLS_239;
         }
         if (!__VLS_ctx.collapsedSections.detail) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "condition-type-content" },
             });
             for (const [condition, conditionIndex] of __VLS_getVForSourceType((__VLS_ctx.detailConditions))) {
+                (condition.id || conditionIndex);
+                if (conditionIndex > 0) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "condition-logic-connector" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "logic-line" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: "logic-text" },
+                    });
+                    (__VLS_ctx.group.logic === 'and' ? '且' : '或');
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "logic-line" },
+                    });
+                }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    key: (condition.id || conditionIndex),
                     ...{ class: "condition-item-wrapper" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1189,35 +1322,35 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "condition-item-actions" },
                     });
-                    const __VLS_240 = {}.ATooltip;
+                    const __VLS_252 = {}.ATooltip;
                     /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
                     // @ts-ignore
-                    const __VLS_241 = __VLS_asFunctionalComponent(__VLS_240, new __VLS_240({
+                    const __VLS_253 = __VLS_asFunctionalComponent(__VLS_252, new __VLS_252({
                         content: "删除条件",
                     }));
-                    const __VLS_242 = __VLS_241({
+                    const __VLS_254 = __VLS_253({
                         content: "删除条件",
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_241));
-                    __VLS_243.slots.default;
-                    const __VLS_244 = {}.AButton;
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_253));
+                    __VLS_255.slots.default;
+                    const __VLS_256 = {}.AButton;
                     /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
                     // @ts-ignore
-                    const __VLS_245 = __VLS_asFunctionalComponent(__VLS_244, new __VLS_244({
+                    const __VLS_257 = __VLS_asFunctionalComponent(__VLS_256, new __VLS_256({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "condition-remove-btn" },
                     }));
-                    const __VLS_246 = __VLS_245({
+                    const __VLS_258 = __VLS_257({
                         ...{ 'onClick': {} },
                         type: "text",
                         size: "mini",
                         ...{ class: "condition-remove-btn" },
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_245));
-                    let __VLS_248;
-                    let __VLS_249;
-                    let __VLS_250;
-                    const __VLS_251 = {
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_257));
+                    let __VLS_260;
+                    let __VLS_261;
+                    let __VLS_262;
+                    const __VLS_263 = {
                         onClick: (...[$event]) => {
                             if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                 return;
@@ -1230,14 +1363,14 @@ else {
                             __VLS_ctx.removeConditionByIndex(condition);
                         }
                     };
-                    __VLS_247.slots.default;
-                    const __VLS_252 = {}.IconMinus;
+                    __VLS_259.slots.default;
+                    const __VLS_264 = {}.IconMinus;
                     /** @type {[typeof __VLS_components.IconMinus, ]} */ ;
                     // @ts-ignore
-                    const __VLS_253 = __VLS_asFunctionalComponent(__VLS_252, new __VLS_252({}));
-                    const __VLS_254 = __VLS_253({}, ...__VLS_functionalComponentArgsRest(__VLS_253));
-                    var __VLS_247;
-                    var __VLS_243;
+                    const __VLS_265 = __VLS_asFunctionalComponent(__VLS_264, new __VLS_264({}));
+                    const __VLS_266 = __VLS_265({}, ...__VLS_functionalComponentArgsRest(__VLS_265));
+                    var __VLS_259;
+                    var __VLS_255;
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "condition-form" },
@@ -1251,10 +1384,10 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                     ...{ class: "form-label" },
                 });
-                const __VLS_256 = {}.ASelect;
+                const __VLS_268 = {}.ASelect;
                 /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                 // @ts-ignore
-                const __VLS_257 = __VLS_asFunctionalComponent(__VLS_256, new __VLS_256({
+                const __VLS_269 = __VLS_asFunctionalComponent(__VLS_268, new __VLS_268({
                     ...{ 'onChange': {} },
                     modelValue: (condition.dataSourceType),
                     size: "small",
@@ -1262,18 +1395,18 @@ else {
                     options: (__VLS_ctx.dataSourceTypeOptions),
                     disabled: (!__VLS_ctx.editable),
                 }));
-                const __VLS_258 = __VLS_257({
+                const __VLS_270 = __VLS_269({
                     ...{ 'onChange': {} },
                     modelValue: (condition.dataSourceType),
                     size: "small",
                     ...{ class: "form-control" },
                     options: (__VLS_ctx.dataSourceTypeOptions),
                     disabled: (!__VLS_ctx.editable),
-                }, ...__VLS_functionalComponentArgsRest(__VLS_257));
-                let __VLS_260;
-                let __VLS_261;
-                let __VLS_262;
-                const __VLS_263 = {
+                }, ...__VLS_functionalComponentArgsRest(__VLS_269));
+                let __VLS_272;
+                let __VLS_273;
+                let __VLS_274;
+                const __VLS_275 = {
                     onChange: (...[$event]) => {
                         if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                             return;
@@ -1284,17 +1417,17 @@ else {
                         __VLS_ctx.onDataSourceTypeChange && __VLS_ctx.onDataSourceTypeChange(condition);
                     }
                 };
-                var __VLS_259;
+                var __VLS_271;
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "form-group" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                     ...{ class: "form-label" },
                 });
-                const __VLS_264 = {}.ASelect;
+                const __VLS_276 = {}.ASelect;
                 /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                 // @ts-ignore
-                const __VLS_265 = __VLS_asFunctionalComponent(__VLS_264, new __VLS_264({
+                const __VLS_277 = __VLS_asFunctionalComponent(__VLS_276, new __VLS_276({
                     modelValue: (condition.fieldName),
                     size: "small",
                     ...{ class: "form-control wide" },
@@ -1303,7 +1436,7 @@ else {
                     allowSearch: true,
                     disabled: (!__VLS_ctx.editable),
                 }));
-                const __VLS_266 = __VLS_265({
+                const __VLS_278 = __VLS_277({
                     modelValue: (condition.fieldName),
                     size: "small",
                     ...{ class: "form-control wide" },
@@ -1311,7 +1444,7 @@ else {
                     options: (__VLS_ctx.getFieldOptions && condition.dataSourceType ? __VLS_ctx.getFieldOptions(condition.dataSourceType) : []),
                     allowSearch: true,
                     disabled: (!__VLS_ctx.editable),
-                }, ...__VLS_functionalComponentArgsRest(__VLS_265));
+                }, ...__VLS_functionalComponentArgsRest(__VLS_277));
                 if (condition.dataSourceType === 'detail' || condition.dataSourceType === 'behavior') {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "form-group" },
@@ -1319,23 +1452,23 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                         ...{ class: "form-label" },
                     });
-                    const __VLS_268 = {}.ASelect;
+                    const __VLS_280 = {}.ASelect;
                     /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                     // @ts-ignore
-                    const __VLS_269 = __VLS_asFunctionalComponent(__VLS_268, new __VLS_268({
+                    const __VLS_281 = __VLS_asFunctionalComponent(__VLS_280, new __VLS_280({
                         modelValue: (condition.aggregationType),
                         size: "small",
                         ...{ class: "form-control" },
                         options: (__VLS_ctx.getAggregationOptions && condition.dataSourceType ? __VLS_ctx.getAggregationOptions(condition.dataSourceType) : []),
                         disabled: (!__VLS_ctx.editable),
                     }));
-                    const __VLS_270 = __VLS_269({
+                    const __VLS_282 = __VLS_281({
                         modelValue: (condition.aggregationType),
                         size: "small",
                         ...{ class: "form-control" },
                         options: (__VLS_ctx.getAggregationOptions && condition.dataSourceType ? __VLS_ctx.getAggregationOptions(condition.dataSourceType) : []),
                         disabled: (!__VLS_ctx.editable),
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_269));
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_281));
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "form-group" },
@@ -1343,23 +1476,23 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                     ...{ class: "form-label" },
                 });
-                const __VLS_272 = {}.ASelect;
+                const __VLS_284 = {}.ASelect;
                 /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                 // @ts-ignore
-                const __VLS_273 = __VLS_asFunctionalComponent(__VLS_272, new __VLS_272({
+                const __VLS_285 = __VLS_asFunctionalComponent(__VLS_284, new __VLS_284({
                     modelValue: (condition.operator),
                     size: "small",
                     ...{ class: "form-control" },
                     options: (__VLS_ctx.getOperatorOptions && __VLS_ctx.getOperatorOptions(condition) || []),
                     disabled: (!__VLS_ctx.editable),
                 }));
-                const __VLS_274 = __VLS_273({
+                const __VLS_286 = __VLS_285({
                     modelValue: (condition.operator),
                     size: "small",
                     ...{ class: "form-control" },
                     options: (__VLS_ctx.getOperatorOptions && __VLS_ctx.getOperatorOptions(condition) || []),
                     disabled: (!__VLS_ctx.editable),
-                }, ...__VLS_functionalComponentArgsRest(__VLS_273));
+                }, ...__VLS_functionalComponentArgsRest(__VLS_285));
                 if (__VLS_ctx.needValueInput && __VLS_ctx.needValueInput(condition)) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "form-group" },
@@ -1367,23 +1500,23 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                         ...{ class: "form-label" },
                     });
-                    const __VLS_276 = {}.AInput;
+                    const __VLS_288 = {}.AInput;
                     /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
                     // @ts-ignore
-                    const __VLS_277 = __VLS_asFunctionalComponent(__VLS_276, new __VLS_276({
+                    const __VLS_289 = __VLS_asFunctionalComponent(__VLS_288, new __VLS_288({
                         modelValue: (condition.value),
                         size: "small",
                         ...{ class: "form-control" },
                         placeholder: (__VLS_ctx.getValuePlaceholder && __VLS_ctx.getValuePlaceholder(condition) || '请输入值'),
                         disabled: (!__VLS_ctx.editable),
                     }));
-                    const __VLS_278 = __VLS_277({
+                    const __VLS_290 = __VLS_289({
                         modelValue: (condition.value),
                         size: "small",
                         ...{ class: "form-control" },
                         placeholder: (__VLS_ctx.getValuePlaceholder && __VLS_ctx.getValuePlaceholder(condition) || '请输入值'),
                         disabled: (!__VLS_ctx.editable),
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_277));
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_289));
                 }
                 if (condition.dataSourceType !== 'attribute') {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1395,10 +1528,10 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                         ...{ class: "form-label" },
                     });
-                    const __VLS_280 = {}.ASelect;
+                    const __VLS_292 = {}.ASelect;
                     /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                     // @ts-ignore
-                    const __VLS_281 = __VLS_asFunctionalComponent(__VLS_280, new __VLS_280({
+                    const __VLS_293 = __VLS_asFunctionalComponent(__VLS_292, new __VLS_292({
                         ...{ 'onChange': {} },
                         modelValue: (condition.dateType),
                         size: "small",
@@ -1406,18 +1539,18 @@ else {
                         options: (__VLS_ctx.dateTypeOptions),
                         disabled: (!__VLS_ctx.editable),
                     }));
-                    const __VLS_282 = __VLS_281({
+                    const __VLS_294 = __VLS_293({
                         ...{ 'onChange': {} },
                         modelValue: (condition.dateType),
                         size: "small",
                         ...{ class: "form-control" },
                         options: (__VLS_ctx.dateTypeOptions),
                         disabled: (!__VLS_ctx.editable),
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_281));
-                    let __VLS_284;
-                    let __VLS_285;
-                    let __VLS_286;
-                    const __VLS_287 = {
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_293));
+                    let __VLS_296;
+                    let __VLS_297;
+                    let __VLS_298;
+                    const __VLS_299 = {
                         onChange: (...[$event]) => {
                             if (!!(!__VLS_ctx.group.conditions || __VLS_ctx.group.conditions.length === 0))
                                 return;
@@ -1430,7 +1563,7 @@ else {
                             __VLS_ctx.onDateTypeChange && __VLS_ctx.onDateTypeChange(condition);
                         }
                     };
-                    var __VLS_283;
+                    var __VLS_295;
                     if (condition.dateType === 'fixed') {
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                             ...{ class: "form-group wide" },
@@ -1438,23 +1571,23 @@ else {
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                             ...{ class: "form-label" },
                         });
-                        const __VLS_288 = {}.ARangePicker;
+                        const __VLS_300 = {}.ARangePicker;
                         /** @type {[typeof __VLS_components.ARangePicker, typeof __VLS_components.aRangePicker, ]} */ ;
                         // @ts-ignore
-                        const __VLS_289 = __VLS_asFunctionalComponent(__VLS_288, new __VLS_288({
+                        const __VLS_301 = __VLS_asFunctionalComponent(__VLS_300, new __VLS_300({
                             modelValue: (condition.dateRange),
                             size: "small",
                             ...{ class: "form-control" },
                             format: "YYYY-MM-DD",
                             disabled: (!__VLS_ctx.editable),
                         }));
-                        const __VLS_290 = __VLS_289({
+                        const __VLS_302 = __VLS_301({
                             modelValue: (condition.dateRange),
                             size: "small",
                             ...{ class: "form-control" },
                             format: "YYYY-MM-DD",
                             disabled: (!__VLS_ctx.editable),
-                        }, ...__VLS_functionalComponentArgsRest(__VLS_289));
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_301));
                     }
                     else if (condition.dateType === 'dynamic') {
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1469,40 +1602,40 @@ else {
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                             ...{ class: "dynamic-prefix" },
                         });
-                        const __VLS_292 = {}.AInputNumber;
+                        const __VLS_304 = {}.AInputNumber;
                         /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
                         // @ts-ignore
-                        const __VLS_293 = __VLS_asFunctionalComponent(__VLS_292, new __VLS_292({
+                        const __VLS_305 = __VLS_asFunctionalComponent(__VLS_304, new __VLS_304({
                             modelValue: (condition.dynamicValue),
                             size: "small",
                             ...{ class: "dynamic-value" },
                             min: (1),
                             disabled: (!__VLS_ctx.editable),
                         }));
-                        const __VLS_294 = __VLS_293({
+                        const __VLS_306 = __VLS_305({
                             modelValue: (condition.dynamicValue),
                             size: "small",
                             ...{ class: "dynamic-value" },
                             min: (1),
                             disabled: (!__VLS_ctx.editable),
-                        }, ...__VLS_functionalComponentArgsRest(__VLS_293));
-                        const __VLS_296 = {}.ASelect;
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_305));
+                        const __VLS_308 = {}.ASelect;
                         /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
                         // @ts-ignore
-                        const __VLS_297 = __VLS_asFunctionalComponent(__VLS_296, new __VLS_296({
+                        const __VLS_309 = __VLS_asFunctionalComponent(__VLS_308, new __VLS_308({
                             modelValue: (condition.dynamicUnit),
                             size: "small",
                             ...{ class: "dynamic-unit" },
                             options: (__VLS_ctx.dynamicUnitOptions),
                             disabled: (!__VLS_ctx.editable),
                         }));
-                        const __VLS_298 = __VLS_297({
+                        const __VLS_310 = __VLS_309({
                             modelValue: (condition.dynamicUnit),
                             size: "small",
                             ...{ class: "dynamic-unit" },
                             options: (__VLS_ctx.dynamicUnitOptions),
                             disabled: (!__VLS_ctx.editable),
-                        }, ...__VLS_functionalComponentArgsRest(__VLS_297));
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_309));
                     }
                 }
             }
@@ -1516,41 +1649,6 @@ if (__VLS_ctx.editable) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "add-condition-buttons" },
     });
-    const __VLS_300 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
-    // @ts-ignore
-    const __VLS_301 = __VLS_asFunctionalComponent(__VLS_300, new __VLS_300({
-        ...{ 'onClick': {} },
-        type: "dashed",
-        size: "small",
-        ...{ class: "add-condition-btn" },
-    }));
-    const __VLS_302 = __VLS_301({
-        ...{ 'onClick': {} },
-        type: "dashed",
-        size: "small",
-        ...{ class: "add-condition-btn" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_301));
-    let __VLS_304;
-    let __VLS_305;
-    let __VLS_306;
-    const __VLS_307 = {
-        onClick: (...[$event]) => {
-            if (!(__VLS_ctx.editable))
-                return;
-            __VLS_ctx.$emit('addConditionByType', 'tag');
-        }
-    };
-    __VLS_303.slots.default;
-    {
-        const { icon: __VLS_thisSlot } = __VLS_303.slots;
-        const __VLS_308 = {}.IconPlus;
-        /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
-        // @ts-ignore
-        const __VLS_309 = __VLS_asFunctionalComponent(__VLS_308, new __VLS_308({}));
-        const __VLS_310 = __VLS_309({}, ...__VLS_functionalComponentArgsRest(__VLS_309));
-    }
-    var __VLS_303;
     const __VLS_312 = {}.AButton;
     /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
     // @ts-ignore
@@ -1573,7 +1671,7 @@ if (__VLS_ctx.editable) {
         onClick: (...[$event]) => {
             if (!(__VLS_ctx.editable))
                 return;
-            __VLS_ctx.$emit('addConditionByType', 'behavior');
+            __VLS_ctx.$emit('addConditionByType', 'tag');
         }
     };
     __VLS_315.slots.default;
@@ -1608,7 +1706,7 @@ if (__VLS_ctx.editable) {
         onClick: (...[$event]) => {
             if (!(__VLS_ctx.editable))
                 return;
-            __VLS_ctx.$emit('addConditionByType', 'detail');
+            __VLS_ctx.$emit('addConditionByType', 'behavior');
         }
     };
     __VLS_327.slots.default;
@@ -1621,13 +1719,51 @@ if (__VLS_ctx.editable) {
         const __VLS_334 = __VLS_333({}, ...__VLS_functionalComponentArgsRest(__VLS_333));
     }
     var __VLS_327;
+    const __VLS_336 = {}.AButton;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    // @ts-ignore
+    const __VLS_337 = __VLS_asFunctionalComponent(__VLS_336, new __VLS_336({
+        ...{ 'onClick': {} },
+        type: "dashed",
+        size: "small",
+        ...{ class: "add-condition-btn" },
+    }));
+    const __VLS_338 = __VLS_337({
+        ...{ 'onClick': {} },
+        type: "dashed",
+        size: "small",
+        ...{ class: "add-condition-btn" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_337));
+    let __VLS_340;
+    let __VLS_341;
+    let __VLS_342;
+    const __VLS_343 = {
+        onClick: (...[$event]) => {
+            if (!(__VLS_ctx.editable))
+                return;
+            __VLS_ctx.$emit('addConditionByType', 'detail');
+        }
+    };
+    __VLS_339.slots.default;
+    {
+        const { icon: __VLS_thisSlot } = __VLS_339.slots;
+        const __VLS_344 = {}.IconPlus;
+        /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
+        // @ts-ignore
+        const __VLS_345 = __VLS_asFunctionalComponent(__VLS_344, new __VLS_344({}));
+        const __VLS_346 = __VLS_345({}, ...__VLS_functionalComponentArgsRest(__VLS_345));
+    }
+    var __VLS_339;
 }
 /** @type {__VLS_StyleScopedClasses['condition-group-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['exclude-group']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-group-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['group-info']} */ ;
 /** @type {__VLS_StyleScopedClasses['group-title-section']} */ ;
+/** @type {__VLS_StyleScopedClasses['group-name-wrapper']} */ ;
 /** @type {__VLS_StyleScopedClasses['group-title']} */ ;
+/** @type {__VLS_StyleScopedClasses['editable']} */ ;
+/** @type {__VLS_StyleScopedClasses['group-name-input']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-count']} */ ;
 /** @type {__VLS_StyleScopedClasses['exclude-indicator']} */ ;
 /** @type {__VLS_StyleScopedClasses['exclude-label']} */ ;
@@ -1649,6 +1785,10 @@ if (__VLS_ctx.editable) {
 /** @type {__VLS_StyleScopedClasses['condition-type-actions']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-type-add-btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-type-content']} */ ;
+/** @type {__VLS_StyleScopedClasses['condition-logic-connector']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-line']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-line']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-wrapper']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-info']} */ ;
@@ -1682,6 +1822,10 @@ if (__VLS_ctx.editable) {
 /** @type {__VLS_StyleScopedClasses['condition-type-actions']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-type-add-btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-type-content']} */ ;
+/** @type {__VLS_StyleScopedClasses['condition-logic-connector']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-line']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-line']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-wrapper']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-info']} */ ;
@@ -1713,6 +1857,10 @@ if (__VLS_ctx.editable) {
 /** @type {__VLS_StyleScopedClasses['condition-type-actions']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-type-add-btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-type-content']} */ ;
+/** @type {__VLS_StyleScopedClasses['condition-logic-connector']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-line']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-text']} */ ;
+/** @type {__VLS_StyleScopedClasses['logic-line']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-wrapper']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-item-info']} */ ;
@@ -1759,6 +1907,8 @@ if (__VLS_ctx.editable) {
 /** @type {__VLS_StyleScopedClasses['add-condition-btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['add-condition-btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['add-condition-btn']} */ ;
+// @ts-ignore
+var __VLS_11 = __VLS_10;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
@@ -1773,6 +1923,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             detailConditions: detailConditions,
             toggleSectionCollapse: toggleSectionCollapse,
             removeConditionByIndex: removeConditionByIndex,
+            startEditGroupName: startEditGroupName,
+            saveGroupName: saveGroupName,
+            cancelEditGroupName: cancelEditGroupName,
         };
     },
     __typeEmits: {},

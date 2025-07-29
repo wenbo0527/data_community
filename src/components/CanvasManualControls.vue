@@ -164,13 +164,18 @@ export default {
     const triggerManualLayout = async () => {
       if (!structuredLayout || isLayouting.value) return
       
+      if (!graph) {
+        console.error('[CanvasManualControls] 图实例不存在，无法应用布局')
+        return
+      }
+      
       try {
         isLayouting.value = true
         console.log('[CanvasManualControls] 🚀 手动触发布局（统一使用原生Dagre）')
         
-        // 统一使用原生Dagre布局
-        if (typeof structuredLayout.applyNativeDagreLayout === 'function') {
-          await structuredLayout.applyNativeDagreLayout()
+        // 统一使用统一结构化布局
+        if (typeof structuredLayout.applyUnifiedStructuredLayout === 'function') {
+          await structuredLayout.applyUnifiedStructuredLayout(graph)
         } else if (typeof structuredLayout.applyLayout === 'function') {
           await structuredLayout.applyLayout() // 已配置为原生Dagre布局
         } else {

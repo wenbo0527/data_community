@@ -232,18 +232,65 @@ export class CanvasPanZoomManager {
     
     // 检查是否点击在空白区域
     const target = e.target
-    const isBlankArea = target === this.graph.container || 
-                       target.classList.contains('x6-graph-svg') ||
-                       target.classList.contains('x6-graph-svg-stage') ||
-                       target.tagName === 'svg'
+    
+    // 检查是否是预览线或其他交互元素
+    const isPreviewLine = target.tagName === 'path' && (
+      target.id.includes('preview') || 
+      target.id.includes('unified_preview') ||
+      target.classList.contains('x6-edge-path') ||
+      // 检查父元素是否包含预览线标识
+      (target.parentElement && (
+        target.parentElement.id.includes('preview') ||
+        target.parentElement.id.includes('unified_preview')
+      )) ||
+      // 检查是否有预览线相关的data属性
+      target.getAttribute('data-preview') ||
+      target.getAttribute('data-unified-preview') ||
+      // 检查是否是X6边的路径元素
+      (target.classList.contains('x6-edge-path') || 
+       target.parentElement?.classList.contains('x6-edge'))
+    )
+    
+    // 检查是否是节点或其他交互元素
+    const isInteractiveElement = target.tagName === 'rect' || 
+                                target.tagName === 'circle' || 
+                                target.tagName === 'ellipse' ||
+                                target.tagName === 'text' ||
+                                target.tagName === 'image' ||
+                                target.tagName === 'g' ||
+                                target.classList.contains('x6-node') ||
+                                target.classList.contains('x6-port') ||
+                                isPreviewLine
+    
+    const isBlankArea = !isInteractiveElement && (
+      target === this.graph.container || 
+      target.classList.contains('x6-graph-svg') ||
+      target.classList.contains('x6-graph-svg-stage') ||
+      target.tagName === 'svg'
+    )
     
     console.log('🎯 [CanvasPanZoomManager] 空白区域检查:', {
       isBlankArea,
+      isPreviewLine,
+      isInteractiveElement,
       targetIsContainer: target === this.graph.container,
       hasX6GraphSvg: target.classList.contains('x6-graph-svg'),
       hasX6GraphSvgStage: target.classList.contains('x6-graph-svg-stage'),
       isSvgTag: target.tagName === 'svg',
-      containerElement: this.graph.container
+      containerElement: this.graph.container,
+      // 新增详细的目标元素信息
+      targetDetails: {
+        tagName: target.tagName,
+        id: target.id,
+        className: target.className,
+        classList: Array.from(target.classList || []),
+        parentId: target.parentElement?.id,
+        parentClassName: target.parentElement?.className,
+        dataAttributes: {
+          preview: target.getAttribute('data-preview'),
+          unifiedPreview: target.getAttribute('data-unified-preview')
+        }
+      }
     })
     
     // 检查修饰键状态
@@ -254,6 +301,13 @@ export class CanvasPanZoomManager {
       tempPanningEnabled: this.tempPanningEnabled,
       currentDragMode: this.currentDragMode
     })
+    
+    // 如果点击的是预览线，直接跳过画布拖拽处理，让事件传播到预览线
+    if (isPreviewLine) {
+      console.log('🎯 [CanvasPanZoomManager] 检测到预览线点击，跳过画布拖拽处理')
+      // 确保事件不被阻止，让它继续传播到预览线的事件监听器
+      return // 直接返回，不阻止事件传播
+    }
     
     // 判断是否可以开始拖拽
     const canPan = isBlankArea && e.button === 0 && (
@@ -282,12 +336,13 @@ export class CanvasPanZoomManager {
       
       // 记录拖拽开始
       const currentTranslate = this.graph.translate()
-      console.log('🚀 [CanvasPanZoomManager] 拖拽开始:', {
-        startPosition: { x: e.clientX, y: e.clientY },
-        currentTranslate: { tx: currentTranslate.tx, ty: currentTranslate.ty },
-        mode: this.currentDragMode,
-        sensitivity: this.getCurrentSensitivity()
-      })
+      // 已禁用拖拽开始日志以减少控制台冗余信息
+      // console.log('🚀 [CanvasPanZoomManager] 拖拽开始:', {
+      //   startPosition: { x: e.clientX, y: e.clientY },
+      //   currentTranslate: { tx: currentTranslate.tx, ty: currentTranslate.ty },
+      //   mode: this.currentDragMode,
+      //   sensitivity: this.getCurrentSensitivity()
+      // })
       
       // 启用高性能模式
       this.enableHighPerformanceMode()
@@ -298,11 +353,12 @@ export class CanvasPanZoomManager {
       e.preventDefault()
       e.stopPropagation()
       
-      console.log('🎯 [CanvasPanZoomManager] 拖拽状态已设置:', {
-        isPanning: this.isPanning,
-        panStartPoint: this.panStartPoint,
-        lastPanPoint: this.lastPanPoint
-      })
+      // 已禁用拖拽状态设置日志以减少控制台冗余信息
+      // console.log('🎯 [CanvasPanZoomManager] 拖拽状态已设置:', {
+      //   isPanning: this.isPanning,
+      //   panStartPoint: this.panStartPoint,
+      //   lastPanPoint: this.lastPanPoint
+      // })
     } else {
       console.log('❌ [CanvasPanZoomManager] 拖拽条件不满足，无法开始拖拽')
       
@@ -408,14 +464,15 @@ export class CanvasPanZoomManager {
         Math.pow(e.clientY - this.panStartPoint.y, 2)
       ) : 0
       
-      console.log('🔚 [CanvasPanZoomManager] 拖拽结束:', {
-        endPosition: { x: e.clientX, y: e.clientY },
-        finalTranslate: { tx: currentTranslate.tx, ty: currentTranslate.ty },
-        finalAccumulatedDelta: { ...this.accumulatedDelta },
-        totalDragTime: Math.round(totalDragTime),
-        totalDistance: Math.round(totalDistance),
-        averageSpeed: totalDragTime > 0 ? Math.round(totalDistance / totalDragTime * 1000) / 1000 : 0
-      })
+      // 已禁用拖拽结束日志以减少控制台冗余信息
+      // console.log('🔚 [CanvasPanZoomManager] 拖拽结束:', {
+      //   endPosition: { x: e.clientX, y: e.clientY },
+      //   finalTranslate: { tx: currentTranslate.tx, ty: currentTranslate.ty },
+      //   finalAccumulatedDelta: { ...this.accumulatedDelta },
+      //   totalDragTime: Math.round(totalDragTime),
+      //   totalDistance: Math.round(totalDistance),
+      //   averageSpeed: totalDragTime > 0 ? Math.round(totalDistance / totalDragTime * 1000) / 1000 : 0
+      // })
       
       this.isPanning = false
       this.lastPanPoint = null

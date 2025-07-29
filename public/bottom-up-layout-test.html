@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自底向上布局优化器测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .test-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logs {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .log-info { color: #007bff; }
+        .log-success { color: #28a745; }
+        .log-warning { color: #ffc107; }
+        .log-error { color: #dc3545; }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .stat-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🚀 自底向上布局优化器测试</h1>
+            <p>测试智能布局中的自底向上节点分布优化算法</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="createTestFlow()">创建测试流程</button>
+            <button class="btn btn-success" onclick="applyBottomUpLayout()">应用自底向上布局</button>
+            <button class="btn btn-secondary" onclick="applyNormalLayout()">应用普通布局</button>
+            <button class="btn btn-secondary" onclick="clearCanvas()">清空画布</button>
+            <button class="btn btn-secondary" onclick="clearLogs()">清空日志</button>
+        </div>
+        
+        <div class="canvas-container" id="canvas-container">
+            <!-- X6 画布将在这里渲染 -->
+        </div>
+        
+        <div class="stats" id="stats">
+            <!-- 统计信息将在这里显示 -->
+        </div>
+        
+        <div class="logs" id="logs">
+            <div class="log-entry log-info">📋 等待创建测试流程...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 使用本地X6库
+        const { Graph, Shape } = window.X6 || {}
+        
+        if (!Graph) {
+            document.getElementById('logs').innerHTML = '<div class="log-entry log-error">❌ X6库未加载，请确保在主应用中使用此测试页面</div>'
+        }
+        
+        let graph = null
+        let testNodes = []
+        let testEdges = []
+        
+        // 初始化画布
+        function initGraph() {
+            if (graph) {
+                graph.dispose()
+            }
+            
+            graph = new Graph({
+                container: document.getElementById('canvas-container'),
+                width: document.getElementById('canvas-container').offsetWidth,
+                height: document.getElementById('canvas-container').offsetHeight,
+                background: {
+                    color: '#ffffff'
+                },
+                grid: {
+                    visible: true,
+                    type: 'dot',
+                    args: {
+                        color: '#f0f0f0',
+                        thickness: 1
+                    }
+                },
+                panning: {
+                    enabled: true,
+                    eventTypes: ['leftMouseDown', 'mouseWheel']
+                },
+                mousewheel: {
+                    enabled: true,
+                    modifiers: 'ctrl',
+                    factor: 1.1,
+                    maxScale: 3,
+                    minScale: 0.3
+                },
+                selecting: {
+                    enabled: true,
+                    rubberband: true,
+                    movable: true,
+                    showNodeSelectionBox: true
+                },
+                connecting: {
+                    router: 'orth',
+                    connector: {
+                        name: 'rounded',
+                        args: {
+                            radius: 8
+                        }
+                    },
+                    anchor: 'center',
+                    connectionPoint: 'anchor',
+                    allowBlank: false,
+                    snap: {
+                        radius: 20
+                    },
+                    createEdge() {
+                        return new Shape.Edge({
+                            attrs: {
+                                line: {
+                                    stroke: '#A2B1C3',
+                                    strokeWidth: 2,
+                                    targetMarker: {
+                                        name: 'block',
+                                        width: 12,
+                                        height: 8
+                                    }
+                                }
+                            },
+                            zIndex: 0
+                        })
+                    },
+                    validateConnection({ targetMagnet }) {
+                        return !!targetMagnet
+                    }
+                }
+            })
+            
+            addLog('✅ 画布初始化完成', 'success')
+        }
+        
+        // 创建测试流程
+        window.createTestFlow = function() {
+            if (!graph) {
+                initGraph()
+            }
+            
+            graph.clearCells()
+            testNodes = []
+            testEdges = []
+            
+            addLog('🔧 开始创建测试流程...', 'info')
+            
+            // 创建一个复杂的多层级流程
+            const nodeConfigs = [
+                // 第一层（顶层）
+                { id: 'start', x: 400, y: 50, label: '开始', type: 'start', layer: 0 },
+                
+                // 第二层
+                { id: 'condition1', x: 400, y: 150, label: '条件判断1', type: 'condition', layer: 1 },
+                
+                // 第三层 - 分支较多
+                { id: 'process1', x: 200, y: 250, label: '处理A', type: 'process', layer: 2 },
+                { id: 'process2', x: 400, y: 250, label: '处理B', type: 'process', layer: 2 },
+                { id: 'process3', x: 600, y: 250, label: '处理C', type: 'process', layer: 2 },
+                
+                // 第四层 - 更多分支
+                { id: 'sub1', x: 100, y: 350, label: '子流程1', type: 'process', layer: 3 },
+                { id: 'sub2', x: 250, y: 350, label: '子流程2', type: 'process', layer: 3 },
+                { id: 'sub3', x: 350, y: 350, label: '子流程3', type: 'process', layer: 3 },
+                { id: 'sub4', x: 450, y: 350, label: '子流程4', type: 'process', layer: 3 },
+                { id: 'sub5', x: 550, y: 350, label: '子流程5', type: 'process', layer: 3 },
+                { id: 'sub6', x: 700, y: 350, label: '子流程6', type: 'process', layer: 3 },
+                
+                // 第五层（底层）- 最多分支
+                { id: 'end1', x: 50, y: 450, label: '结束A', type: 'end', layer: 4 },
+                { id: 'end2', x: 150, y: 450, label: '结束B', type: 'end', layer: 4 },
+                { id: 'end3', x: 250, y: 450, label: '结束C', type: 'end', layer: 4 },
+                { id: 'end4', x: 350, y: 450, label: '结束D', type: 'end', layer: 4 },
+                { id: 'end5', x: 450, y: 450, label: '结束E', type: 'end', layer: 4 },
+                { id: 'end6', x: 550, y: 450, label: '结束F', type: 'end', layer: 4 },
+                { id: 'end7', x: 650, y: 450, label: '结束G', type: 'end', layer: 4 },
+                { id: 'end8', x: 750, y: 450, label: '结束H', type: 'end', layer: 4 }
+            ]
+            
+            // 创建节点
+            nodeConfigs.forEach(config => {
+                const node = graph.addNode({
+                    id: config.id,
+                    x: config.x - 50,
+                    y: config.y - 15,
+                    width: 100,
+                    height: 30,
+                    label: config.label,
+                    attrs: {
+                        body: {
+                            stroke: getNodeColor(config.type),
+                            fill: getNodeFillColor(config.type),
+                            strokeWidth: 2,
+                            rx: 6,
+                            ry: 6
+                        },
+                        text: {
+                            fontSize: 12,
+                            fill: '#333'
+                        }
+                    },
+                    ports: {
+                        groups: {
+                            top: {
+                                position: 'top',
+                                attrs: {
+                                    circle: {
+                                        r: 4,
+                                        magnet: true,
+                                        stroke: '#5F95FF',
+                                        strokeWidth: 1,
+                                        fill: '#fff'
+                                    }
+                                }
+                            },
+                            bottom: {
+                                position: 'bottom',
+                                attrs: {
+                                    circle: {
+                                        r: 4,
+                                        magnet: true,
+                                        stroke: '#5F95FF',
+                                        strokeWidth: 1,
+                                        fill: '#fff'
+                                    }
+                                }
+                            }
+                        },
+                        items: [
+                            { group: 'top', id: 'top' },
+                            { group: 'bottom', id: 'bottom' }
+                        ]
+                    },
+                    data: {
+                        type: config.type,
+                        layer: config.layer
+                    }
+                })
+                
+                testNodes.push(node)
+            })
+            
+            // 创建连接关系
+            const connections = [
+                // 第一层到第二层
+                { source: 'start', target: 'condition1' },
+                
+                // 第二层到第三层
+                { source: 'condition1', target: 'process1' },
+                { source: 'condition1', target: 'process2' },
+                { source: 'condition1', target: 'process3' },
+                
+                // 第三层到第四层
+                { source: 'process1', target: 'sub1' },
+                { source: 'process1', target: 'sub2' },
+                { source: 'process2', target: 'sub3' },
+                { source: 'process2', target: 'sub4' },
+                { source: 'process3', target: 'sub5' },
+                { source: 'process3', target: 'sub6' },
+                
+                // 第四层到第五层
+                { source: 'sub1', target: 'end1' },
+                { source: 'sub1', target: 'end2' },
+                { source: 'sub2', target: 'end3' },
+                { source: 'sub3', target: 'end4' },
+                { source: 'sub4', target: 'end5' },
+                { source: 'sub5', target: 'end6' },
+                { source: 'sub6', target: 'end7' },
+                { source: 'sub6', target: 'end8' }
+            ]
+            
+            // 创建连线
+            connections.forEach(conn => {
+                const edge = graph.addEdge({
+                    source: { cell: conn.source, port: 'bottom' },
+                    target: { cell: conn.target, port: 'top' },
+                    attrs: {
+                        line: {
+                            stroke: '#A2B1C3',
+                            strokeWidth: 2,
+                            targetMarker: {
+                                name: 'block',
+                                width: 8,
+                                height: 6
+                            }
+                        }
+                    },
+                    router: {
+                        name: 'orth',
+                        args: {
+                            padding: 10
+                        }
+                    }
+                })
+                
+                testEdges.push(edge)
+            })
+            
+            // 居中显示
+            graph.centerContent()
+            
+            addLog(`✅ 测试流程创建完成: ${testNodes.length} 个节点, ${testEdges.length} 条连线`, 'success')
+            updateStats()
+        }
+        
+        // 应用自底向上布局
+        window.applyBottomUpLayout = async function() {
+            if (!graph || testNodes.length === 0) {
+                addLog('❌ 请先创建测试流程', 'error')
+                return
+            }
+            
+            addLog('🚀 开始应用自底向上布局优化...', 'info')
+            
+            try {
+                // 模拟自底向上布局优化器的逻辑
+                const layers = groupNodesByLayer()
+                addLog(`📊 检测到 ${layers.length} 个层级`, 'info')
+                
+                // 从最底层开始优化
+                for (let i = layers.length - 1; i >= 0; i--) {
+                    const layer = layers[i]
+                    addLog(`🔧 优化第 ${i} 层 (${layer.length} 个节点)`, 'info')
+                    
+                    if (layer.length > 1) {
+                        // 计算该层节点的最优分布
+                        const totalWidth = (layer.length - 1) * 120 // 节点间距
+                        const centerX = 400 // 画布中心
+                        const startX = centerX - totalWidth / 2
+                        
+                        layer.forEach((node, index) => {
+                            const newX = startX + index * 120
+                            const currentPos = node.getPosition()
+                            
+                            // 平滑移动到新位置
+                            animateNodeToPosition(node, { x: newX - 50, y: currentPos.y })
+                        })
+                        
+                        // 等待动画完成
+                        await new Promise(resolve => setTimeout(resolve, 500))
+                    }
+                }
+                
+                // 重新路由所有连线
+                testEdges.forEach(edge => {
+                    edge.setVertices([])
+                    edge.setRouter({
+                        name: 'orth',
+                        args: {
+                            padding: 15,
+                            step: 10
+                        }
+                    })
+                })
+                
+                addLog('✅ 自底向上布局优化完成', 'success')
+                updateStats()
+                
+            } catch (error) {
+                addLog(`❌ 布局优化失败: ${error.message}`, 'error')
+            }
+        }
+        
+        // 应用普通布局（对比用）
+        window.applyNormalLayout = function() {
+            if (!graph || testNodes.length === 0) {
+                addLog('❌ 请先创建测试流程', 'error')
+                return
+            }
+            
+            addLog('🔧 应用普通布局...', 'info')
+            
+            // 简单的从上到下布局
+            const layers = groupNodesByLayer()
+            
+            layers.forEach((layer, layerIndex) => {
+                const y = 50 + layerIndex * 100
+                const totalWidth = (layer.length - 1) * 150
+                const centerX = 400
+                const startX = centerX - totalWidth / 2
+                
+                layer.forEach((node, index) => {
+                    const newX = startX + index * 150
+                    animateNodeToPosition(node, { x: newX - 50, y: y - 15 })
+                })
+            })
+            
+            // 重新路由连线
+            setTimeout(() => {
+                testEdges.forEach(edge => {
+                    edge.setVertices([])
+                    edge.setRouter({
+                        name: 'orth',
+                        args: {
+                            padding: 10
+                        }
+                    })
+                })
+            }, 600)
+            
+            addLog('✅ 普通布局应用完成', 'success')
+        }
+        
+        // 清空画布
+        window.clearCanvas = function() {
+            if (graph) {
+                graph.clearCells()
+                testNodes = []
+                testEdges = []
+                addLog('🗑️ 画布已清空', 'info')
+                updateStats()
+            }
+        }
+        
+        // 清空日志
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = ''
+        }
+        
+        // 辅助函数
+        function groupNodesByLayer() {
+            const layers = {}
+            testNodes.forEach(node => {
+                const layer = node.getData().layer || 0
+                if (!layers[layer]) {
+                    layers[layer] = []
+                }
+                layers[layer].push(node)
+            })
+            
+            return Object.keys(layers).sort((a, b) => a - b).map(key => layers[key])
+        }
+        
+        function animateNodeToPosition(node, targetPos) {
+            const currentPos = node.getPosition()
+            const duration = 500
+            const startTime = Date.now()
+            
+            function animate() {
+                const elapsed = Date.now() - startTime
+                const progress = Math.min(elapsed / duration, 1)
+                
+                // 使用缓动函数
+                const easeProgress = 1 - Math.pow(1 - progress, 3)
+                
+                const x = currentPos.x + (targetPos.x - currentPos.x) * easeProgress
+                const y = currentPos.y + (targetPos.y - currentPos.y) * easeProgress
+                
+                node.setPosition({ x, y })
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate)
+                }
+            }
+            
+            animate()
+        }
+        
+        function getNodeColor(type) {
+            const colors = {
+                start: '#28a745',
+                end: '#dc3545',
+                condition: '#ffc107',
+                process: '#007bff'
+            }
+            return colors[type] || '#6c757d'
+        }
+        
+        function getNodeFillColor(type) {
+            const colors = {
+                start: '#d4edda',
+                end: '#f8d7da',
+                condition: '#fff3cd',
+                process: '#d1ecf1'
+            }
+            return colors[type] || '#e9ecef'
+        }
+        
+        function addLog(message, type = 'info') {
+            const logs = document.getElementById('logs')
+            const entry = document.createElement('div')
+            entry.className = `log-entry log-${type}`
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`
+            logs.appendChild(entry)
+            logs.scrollTop = logs.scrollHeight
+        }
+        
+        function updateStats() {
+            const stats = document.getElementById('stats')
+            const layers = groupNodesByLayer()
+            
+            const layerStats = layers.map((layer, index) => ({
+                layer: index,
+                count: layer.length,
+                spread: layer.length > 1 ? Math.max(...layer.map(n => n.getPosition().x)) - Math.min(...layer.map(n => n.getPosition().x)) : 0
+            }))
+            
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-title">总节点数</div>
+                    <div class="stat-value">${testNodes.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">总连线数</div>
+                    <div class="stat-value">${testEdges.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">层级数</div>
+                    <div class="stat-value">${layers.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">最大层宽度</div>
+                    <div class="stat-value">${Math.max(...layerStats.map(s => s.spread)).toFixed(0)}px</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">最多节点层</div>
+                    <div class="stat-value">第${layerStats.reduce((max, curr) => curr.count > max.count ? curr : max, {count: 0, layer: 0}).layer}层 (${Math.max(...layerStats.map(s => s.count))}个)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">布局质量</div>
+                    <div class="stat-value">${layerStats.every(s => s.spread < 800) ? '良好' : '需优化'}</div>
+                </div>
+            `
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initGraph()
+            addLog('🎯 自底向上布局优化器测试页面已就绪', 'success')
+        })
+        
+        // 窗口大小改变时重新调整画布
+        window.addEventListener('resize', function() {
+            if (graph) {
+                const container = document.getElementById('canvas-container')
+                graph.resize(container.offsetWidth, container.offsetHeight)
+            }
+        })
+    </script>
+</body>
+</html>

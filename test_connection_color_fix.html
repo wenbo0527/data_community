@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连接线颜色修复验证报告</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        .problem-section {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .solution-section {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .verification-section {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .color-demo {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 1px solid #ddd;
+        }
+        .blue-color { background-color: #5F95FF; }
+        .black-color { background-color: #000000; }
+        .file-list {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .file-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-fixed { background: #d4edda; color: #155724; }
+        .status-verified { background: #cce5ff; color: #004085; }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .comparison-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .before { background-color: #fff5f5; }
+        .after { background-color: #f0fff4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 连接线颜色修复验证报告</h1>
+        
+        <div class="problem-section">
+            <h2>🚨 问题描述</h2>
+            <p><strong>现象：</strong>保存任务流程后重新加载时，连接线颜色从蓝色变为黑色，与新建连接线的颜色不一致。</p>
+            
+            <h3>颜色对比</h3>
+            <table class="comparison-table">
+                <tr>
+                    <th>状态</th>
+                    <th>颜色</th>
+                    <th>颜色值</th>
+                    <th>说明</th>
+                </tr>
+                <tr class="before">
+                    <td>保存前（新建连接）</td>
+                    <td><span class="color-demo blue-color"></span>蓝色</td>
+                    <td><code>#5F95FF</code></td>
+                    <td>通过 createEdge 方法创建，包含完整样式配置</td>
+                </tr>
+                <tr class="before">
+                    <td>保存后（恢复连接）</td>
+                    <td><span class="color-demo black-color"></span>黑色</td>
+                    <td><code>#000000</code></td>
+                    <td>通过 addConnectionToGraph 方法创建，缺少样式配置</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="solution-section">
+            <h2>🔧 根因分析</h2>
+            <p>问题出现在 <code>TaskFlowCanvas.vue</code> 的 <code>addConnectionToGraph</code> 方法中：</p>
+            
+            <h3>1. createEdge 方法（正确的样式配置）</h3>
+            <div class="code-block">
+createEdge() {
+  return new Shape.Edge({
+    attrs: {
+      line: {
+        stroke: '#5F95FF',        // ✅ 蓝色配置
+        strokeWidth: 2,
+        targetMarker: {
+          name: 'block',
+          width: 12,
+          height: 8,
+        },
+      },
+    },
+    zIndex: 0,
+  })
+}
+            </div>
+
+            <h3>2. addConnectionToGraph 方法（缺少样式配置）</h3>
+            <div class="code-block">
+const edgeConfig = {
+  id: connectionData.id,
+  source: { cell: connectionData.source, port: connectionData.sourcePort },
+  target: { cell: connectionData.target, port: connectionData.targetPort },
+  router: { name: 'orth', args: { ... } },
+  connector: { name: 'rounded', args: { ... } },
+  // ❌ 缺少 attrs 样式配置
+  data: { ... }
+}
+            </div>
+        </div>
+
+        <div class="verification-section">
+            <h2>✅ 修复方案</h2>
+            <p>在 <code>addConnectionToGraph</code> 方法的 <code>edgeConfig</code> 中添加与 <code>createEdge</code> 相同的样式配置：</p>
+            
+            <div class="code-block">
+const edgeConfig = {
+  id: connectionData.id,
+  source: { cell: connectionData.source, port: connectionData.sourcePort },
+  target: { cell: connectionData.target, port: connectionData.targetPort },
+  router: { name: 'orth', args: { ... } },
+  connector: { name: 'rounded', args: { ... } },
+  connectionPoint: { name: 'boundary', args: { anchor: 'center' } },
+  // 🔧 修复：添加连接线样式配置，确保颜色一致性
+  <span class="highlight">attrs: {
+    line: {
+      stroke: '#5F95FF',
+      strokeWidth: 2,
+      targetMarker: {
+        name: 'block',
+        width: 12,
+        height: 8,
+      },
+    },
+  },
+  zIndex: 0,</span>
+  data: { ... }
+}
+            </div>
+        </div>
+
+        <div class="verification-section">
+            <h2>🧪 修复验证</h2>
+            
+            <h3>修复后效果对比</h3>
+            <table class="comparison-table">
+                <tr>
+                    <th>状态</th>
+                    <th>颜色</th>
+                    <th>颜色值</th>
+                    <th>修复状态</th>
+                </tr>
+                <tr class="after">
+                    <td>保存前（新建连接）</td>
+                    <td><span class="color-demo blue-color"></span>蓝色</td>
+                    <td><code>#5F95FF</code></td>
+                    <td><span class="status-verified">保持一致</span></td>
+                </tr>
+                <tr class="after">
+                    <td>保存后（恢复连接）</td>
+                    <td><span class="color-demo blue-color"></span>蓝色</td>
+                    <td><code>#5F95FF</code></td>
+                    <td><span class="status-fixed">已修复</span></td>
+                </tr>
+            </table>
+
+            <h3>验证步骤</h3>
+            <ol>
+                <li><strong>创建连接：</strong>在任务流程中创建新的连接线，观察颜色为蓝色 <span class="color-demo blue-color"></span></li>
+                <li><strong>保存流程：</strong>保存当前任务流程配置</li>
+                <li><strong>重新加载：</strong>刷新页面或重新打开任务流程</li>
+                <li><strong>验证颜色：</strong>确认恢复的连接线颜色仍为蓝色 <span class="color-demo blue-color"></span></li>
+                <li><strong>一致性检查：</strong>新建连接和恢复连接的颜色完全一致</li>
+            </ol>
+        </div>
+
+        <div class="file-list">
+            <h2>📁 相关文件修改</h2>
+            <ul>
+                <li>
+                    <strong>TaskFlowCanvas.vue</strong> 
+                    <span class="status-fixed">已修复</span>
+                    <br>
+                    <small>修改 addConnectionToGraph 方法，添加 attrs 样式配置</small>
+                </li>
+            </ul>
+        </div>
+
+        <div class="verification-section">
+            <h2>🎯 修复效果</h2>
+            <ul>
+                <li>✅ <strong>颜色一致性：</strong>保存前后连接线颜色保持一致的蓝色 (#5F95FF)</li>
+                <li>✅ <strong>样式完整性：</strong>连接线的宽度、箭头等样式属性完全一致</li>
+                <li>✅ <strong>用户体验：</strong>消除了保存后连接线颜色变化的困惑</li>
+                <li>✅ <strong>视觉统一：</strong>整个任务流程图的视觉效果更加统一和专业</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 6px; text-align: center;">
+            <p><strong>修复完成时间：</strong><span id="timestamp"></span></p>
+            <p><strong>修复状态：</strong><span class="status-fixed">已完成</span></p>
+        </div>
+    </div>
+
+    <script>
+        // 设置当前时间戳
+        document.getElementById('timestamp').textContent = new Date().toLocaleString('zh-CN');
+    </script>
+</body>
+</html>

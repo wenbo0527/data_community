@@ -1,4 +1,3 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import TableDetail from '@/pages/management/data-map/components/TableDetail.vue';

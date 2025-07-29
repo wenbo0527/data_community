@@ -32,10 +32,11 @@ export const NodeStates = {
 }
 
 export class ConnectionPreviewManager {
-  constructor(graph, branchManager, layoutEngine = null) {
+  constructor(graph, branchManager, layoutEngine = null, layoutDirection = 'TB') {
     this.graph = graph
     this.branchManager = branchManager
     this.layoutEngine = layoutEngine
+    this.layoutDirection = layoutDirection
     
     // 原有的预览线管理
     this.previewLines = new Map() // 存储预览线条
@@ -128,6 +129,48 @@ export class ConnectionPreviewManager {
     this.graph.on('node:config-updated', this.handleNodeConfigUpdated.bind(this))
     
     console.log('✅ [统一预览线管理器] 增强拖拽事件监听器已绑定')
+  }
+
+  /**
+   * 获取动态方向配置
+   * 根据当前布局方向返回相应的连接线方向
+   * @returns {Object} 包含startDirections和endDirections的配置对象
+   */
+  getDynamicDirectionConfig() {
+    if (this.layoutDirection === 'LR') {
+      return {
+        startDirections: ['right'],
+        endDirections: ['left']
+      }
+    } else {
+      return {
+        startDirections: ['bottom'],
+        endDirections: ['top']
+      }
+    }
+  }
+
+  /**
+   * 更新布局方向
+   * @param {string} newDirection - 新的布局方向 ('TB' 或 'LR')
+   */
+  updateLayoutDirection(newDirection) {
+    if (this.layoutDirection !== newDirection) {
+      this.layoutDirection = newDirection
+      console.log('🔄 [ConnectionPreviewManager] 布局方向已更新:', newDirection)
+      // 刷新所有预览线以应用新的方向配置
+      this.refreshAllPreviews()
+    }
+  }
+
+  /**
+   * 刷新所有预览线
+   */
+  refreshAllPreviews() {
+    // 清除现有预览线
+    this.clearAllPreviews()
+    // 重新创建预览线
+    this.initPersistentPreviews()
   }
 
   /**
@@ -275,13 +318,12 @@ export class ConnectionPreviewManager {
         y: position.end.y
       },
       router: {
-        name: 'orth', // 使用更稳定的orth路由算法
-        args: {
-          padding: 10,
-          startDirections: ['bottom'],
-          endDirections: ['top']
-        }
-      },
+          name: 'orth', // 使用更稳定的orth路由算法
+          args: {
+            padding: 10,
+            ...this.getDynamicDirectionConfig()
+          }
+        },
       // 使用更可靠的boundary连接点
       connectionPoint: {
         name: 'boundary',
@@ -387,8 +429,7 @@ export class ConnectionPreviewManager {
           name: 'orth', // 使用更稳定的orth路由算法
           args: {
             padding: 10,
-            startDirections: ['bottom'],
-            endDirections: ['top']
+            ...this.getDynamicDirectionConfig()
           }
         },
         // 使用更可靠的boundary连接点
@@ -697,6 +738,10 @@ export class ConnectionPreviewManager {
       
       if (branch) {
         edge.setLabels([{
+          position: {
+            distance: 0.5, // 在连线中点
+            offset: 0      // 无偏移
+          },
           attrs: {
             text: {
               text: branch.label,
@@ -712,6 +757,12 @@ export class ConnectionPreviewManager {
             }
           }
         }])
+        
+        console.log('🏷️ [ConnectionPreview] 为分支连接添加标签:', {
+          edgeId: edge.id,
+          branchId: branchId,
+          branchLabel: branch.label
+        })
       }
     }
     
@@ -2007,6 +2058,10 @@ export class ConnectionPreviewManager {
 
     // 添加边标签
     edge.setLabels([{
+      position: {
+        distance: 0.5, // 在连线中点
+        offset: 0      // 无偏移
+      },
       attrs: {
         text: {
           text: branch.label,
@@ -2022,6 +2077,12 @@ export class ConnectionPreviewManager {
         }
       }
     }])
+    
+    console.log('🏷️ [ConnectionPreview] 更新分支边标签:', {
+      edgeId: edge.id,
+      branchLabel: branch.label,
+      branchType: branch.type
+    })
   }
 
   /**
@@ -3052,11 +3113,22 @@ export class ConnectionPreviewManager {
     // 如果是分支连接，添加标签
     if (branchId) {
       edge.setLabels([{
+        position: {
+          distance: 0.5, // 在连线中点
+          offset: 0      // 无偏移
+        },
         attrs: {
           text: {
             text: `分支${branchId}`,
             fontSize: 12,
             fill: '#666'
+          },
+          rect: {
+            fill: '#fff',
+            stroke: '#ccc',
+            strokeWidth: 1,
+            rx: 3,
+            ry: 3
           }
         }
       }])

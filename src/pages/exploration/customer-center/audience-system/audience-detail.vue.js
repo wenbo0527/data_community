@@ -305,16 +305,22 @@ const initLineageChart = () => {
                 if (data.category === 'audience') {
                     content += `<div style="color: #666;">类型: 人群</div>`;
                     content += `<div style="color: #666;">规模: ${formatNumber(audienceStats.totalCount)}</div>`;
+                    content += `<div style="color: #666;">更新时间: ${new Date(audienceStats.updateTime).toLocaleString()}</div>`;
                 }
                 else if (data.category === 'tag') {
                     content += `<div style="color: #666;">类型: 标签</div>`;
+                    content += `<div style="color: #666;">最后更新: ${data.tagUpdatedTime || '无记录'}</div>`;
                 }
                 else if (data.category === 'attribute') {
                     content += `<div style="color: #666;">类型: 属性</div>`;
+                    content += `<div style="color: #666;">同步时间: ${data.lastSynced || '未同步'}</div>`;
+                    content += `<div style="color: #666;margin-top:4px;">更新时间: ${new Date(data.audienceStats?.updateTime || data.updatedAt).toLocaleString()}</div>`;
                 }
                 else if (data.category === 'table') {
                     content += `<div style="color: #666;">类型: 数据表</div>`;
                     content += `<div style="color: #666;">表名: ${data.value || data.name}</div>`;
+                    content += `<div style="color: #666;">分区更新: ${data.partitionTime || '无分区'}</div>`;
+                    content += `<div style="color: #666;margin-top:4px;">最后更新: ${new Date(data.tableUpdatedAt).toLocaleString()}</div>`;
                 }
                 content += `</div>`;
                 return content;
@@ -796,25 +802,18 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['info-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['info-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['stat-value']} */ ;
-/** @type {__VLS_StyleScopedClasses['rules-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
-/** @type {__VLS_StyleScopedClasses['primary']} */ ;
-/** @type {__VLS_StyleScopedClasses['rule-detail-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['tag-value-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['tag-value-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['empty-state']} */ ;
 /** @type {__VLS_StyleScopedClasses['config-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['section-header']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
 /** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
 /** @type {__VLS_StyleScopedClasses['logic-badge']} */ ;
+/** @type {__VLS_StyleScopedClasses['conditions-workspace']} */ ;
 /** @type {__VLS_StyleScopedClasses['empty-illustration']} */ ;
 /** @type {__VLS_StyleScopedClasses['vertical-logic-indicator']} */ ;
 /** @type {__VLS_StyleScopedClasses['vertical-logic-indicator']} */ ;
@@ -1375,83 +1374,6 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "rule-config-content" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "audience-rules-config" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rules-overview" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "section-header" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rule-stats" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "rule-count" },
-});
-(__VLS_ctx.audienceRules.conditionGroups.length);
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "rule-logic" },
-});
-(__VLS_ctx.audienceRules.crossGroupLogic === 'and' ? '且' : '或');
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rules-summary" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "summary-item" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "summary-label" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "summary-value" },
-});
-(__VLS_ctx.getRuleTypeText(__VLS_ctx.audienceRules.ruleType));
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "summary-item" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "summary-label" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "summary-value primary" },
-});
-(__VLS_ctx.formatNumber(__VLS_ctx.audienceRules.estimatedCount));
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "summary-item" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "summary-label" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "summary-value" },
-});
-(__VLS_ctx.getRuleComplexity());
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rule-detail-section" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "config-header" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "condition-groups-section" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "section-header" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({
-    ...{ class: "section-title" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "section-info" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "condition-count" },
-});
-(__VLS_ctx.audienceRules.conditionGroups.length);
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "conditions-workspace" },
 });
 /** @type {[typeof ConditionConfig, ]} */ ;
@@ -1590,30 +1512,6 @@ var __VLS_67;
 /** @type {__VLS_StyleScopedClasses['rule-config-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-title']} */ ;
 /** @type {__VLS_StyleScopedClasses['rule-config-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['audience-rules-config']} */ ;
-/** @type {__VLS_StyleScopedClasses['rules-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['rule-stats']} */ ;
-/** @type {__VLS_StyleScopedClasses['rule-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['rule-logic']} */ ;
-/** @type {__VLS_StyleScopedClasses['rules-summary']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
-/** @type {__VLS_StyleScopedClasses['primary']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-value']} */ ;
-/** @type {__VLS_StyleScopedClasses['rule-detail-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['config-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-count']} */ ;
 /** @type {__VLS_StyleScopedClasses['conditions-workspace']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
@@ -1635,8 +1533,6 @@ const __VLS_self = (await import('vue')).defineComponent({
             getStatusColor: getStatusColor,
             getStatusText: getStatusText,
             getCreateMethodText: getCreateMethodText,
-            getRuleTypeText: getRuleTypeText,
-            getRuleComplexity: getRuleComplexity,
             getShareLevelColor: getShareLevelColor,
             getShareLevelText: getShareLevelText,
             formatNumber: formatNumber,

@@ -1,4 +1,3 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { h, ref } from 'vue';
 import { Button as AButton } from '@arco-design/web-vue';
 import { useRouter } from 'vue-router';

@@ -328,12 +328,31 @@ const handleCanvasDrop = (event) => {
   event.preventDefault()
   const nodeType = event.dataTransfer.getData('nodeType')
   console.log('添加节点:', nodeType)
-  // 这里可以调用画布组件的方法添加节点
-  if (canvasRef.value) {
-    canvasRef.value.addNode(nodeType, {
-      x: event.offsetX,
-      y: event.offsetY
-    })
+  
+  // 获取画布组件的graph实例
+  const graph = canvasRef.value?.graph
+  if (graph && canvasRef.value) {
+    // 使用X6原生坐标转换，自动处理缩放和平移
+    const position = graph.clientToLocal(event.clientX, event.clientY)
+    // 已禁用拖拽坐标处理日志以减少控制台冗余信息
+    // console.log('🎯 [坐标转换] 拖拽坐标处理:', {
+    //   clientX: event.clientX,
+    //   clientY: event.clientY,
+    //   offsetX: event.offsetX,
+    //   offsetY: event.offsetY,
+    //   convertedPosition: position,
+    //   currentZoom: graph.zoom()
+    // })
+    canvasRef.value.addNode(nodeType, position)
+  } else {
+    // 备用方案：使用offset坐标
+    console.warn('⚠️ [坐标转换] Graph实例不可用，使用备用坐标方案')
+    if (canvasRef.value) {
+      canvasRef.value.addNode(nodeType, {
+        x: event.offsetX,
+        y: event.offsetY
+      })
+    }
   }
 }
 
@@ -476,9 +495,7 @@ const publishTask = async () => {
     let previewLines = []
     try {
       // 尝试从画布组件获取预览线管理器
-      const previewManager = canvasRef.value?.previewManager || 
-                            canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
-                            canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
+      const previewManager = canvasRef.value?.previewManager
       
       if (previewManager && previewManager.getActivePreviewLines) {
         previewLines = previewManager.getActivePreviewLines()
@@ -573,9 +590,7 @@ const publishTask = async () => {
         
         // 清理预览线并重新结构化布局
         try {
-          const previewManager = canvasRef.value?.previewManager || 
-                                canvasRef.value?.$refs?.layeredCanvas?.previewManager ||
-                                canvasRef.value?.$refs?.layeredCanvas?.connectionPreviewManager
+          const previewManager = canvasRef.value?.previewManager
           
           if (previewManager) {
             // 清理已连接的预览线

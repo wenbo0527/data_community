@@ -1,4 +1,3 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, watchEffect } from 'vue';
 // defineProps and defineEmits are compiler macros, no import needed
 import { Select as ASelect, Option as AOption } from '@arco-design/web-vue';

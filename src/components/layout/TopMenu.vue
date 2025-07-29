@@ -35,20 +35,24 @@ const selectedKeys = ref([])
 const emit = defineEmits(['menu-change'])
 
 // 根据当前路由更新选中状态
-const updateSelectedFromRoute = () => {
+const updateSelectedFromRoute = (shouldEmit = true) => {
   const menuInfo = getMenuItemByPath(route.path)
   if (menuInfo) {
     const newSelectedKeys = [menuInfo.module]
     if (JSON.stringify(selectedKeys.value) !== JSON.stringify(newSelectedKeys)) {
       selectedKeys.value = newSelectedKeys
-      emit('menu-change', menuInfo.module)
+      if (shouldEmit) {
+        emit('menu-change', menuInfo.module)
+      }
     }
   } else {
     // 默认选中首页或第一个菜单
     const defaultKey = route.path === '/' ? 'home' : topMenuOrder[1] // discovery
     if (!selectedKeys.value.includes(defaultKey)) {
       selectedKeys.value = [defaultKey]
-      emit('menu-change', defaultKey)
+      if (shouldEmit) {
+        emit('menu-change', defaultKey)
+      }
     }
   }
 }
@@ -85,7 +89,10 @@ watch(
 // 暴露方法供父组件调用
 defineExpose({
   setActiveMenu: (menuKey) => {
-    selectedKeys.value = [menuKey]
+    if (!selectedKeys.value.includes(menuKey)) {
+      selectedKeys.value = [menuKey]
+      // 不触发 emit，避免递归更新
+    }
   }
 })
 </script>

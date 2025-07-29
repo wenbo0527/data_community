@@ -1,4 +1,3 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted, reactive, nextTick } from 'vue';
 import * as echarts from 'echarts';
 import { useExternalDataStore } from '@/store/modules/external-data';

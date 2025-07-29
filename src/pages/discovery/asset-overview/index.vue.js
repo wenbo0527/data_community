@@ -1,4 +1,3 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { IconDashboard, IconRefresh, IconQuestionCircle, IconStorage, IconLink, IconSettings, IconApps } from '@arco-design/web-vue/es/icon';

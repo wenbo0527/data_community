@@ -3,3 +3,13 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+
+// Vue Router 类型定义
+declare module '@vue/runtime-core' {
+  import { Router, RouteLocationNormalizedLoaded } from 'vue-router'
+  
+  interface ComponentCustomProperties {
+    $router: Router
+    $route: RouteLocationNormalizedLoaded
+  }
+}

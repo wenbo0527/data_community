@@ -1,4 +1,3 @@
-/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, reactive, onMounted } from 'vue';
 import { Message, Modal } from '@arco-design/web-vue';
 import { IconSearch, IconPlus, IconEdit, IconDelete, IconMore, IconLink, IconCheckCircle, IconCloseCircle } from '@arco-design/web-vue/es/icon';

@@ -49,8 +49,8 @@ class BranchLabelUtils {
         branch.label = branch.crowdName
       }
       // 如果是默认分支（未命中人群），确保标签正确
-      else if (branch.id === 'default_audience' || branch.id === 'default') {
-        branch.label = '未命中人群'
+    else if (branch.id === 'unmatch_default' || branch.id === 'default') {
+      branch.label = '未命中人群'
       }
       // 如果没有标签，生成默认标签
       else if (!branch.label) {
@@ -131,10 +131,11 @@ export const PreviewLineTypes = {
 }
 
 export class UnifiedPreviewLineManager {
-  constructor(graph, branchManager, layoutConfig) {
+  constructor(graph, branchManager, layoutConfig, layoutDirection = 'TB') {
     this.graph = graph
     this.branchManager = branchManager
     this.layoutConfig = layoutConfig
+    this.layoutDirection = layoutDirection
     
     // 调试模式开关
     this.debugMode = false
@@ -184,7 +185,43 @@ export class UnifiedPreviewLineManager {
       200
     )
     
+    // 防重复吸附状态管理
+    this.isProcessingSnap = false
+    this.snappedNodes = new Set()
+    
     console.log('🚀 [统一预览线管理器] 初始化完成 - 已启用性能优化和坐标系统管理')
+  }
+
+  /**
+   * 获取动态方向配置
+   * 根据当前布局方向返回相应的连接线方向
+   * @returns {Object} 包含startDirections和endDirections的配置对象
+   */
+  getDynamicDirectionConfig() {
+    if (this.layoutDirection === 'LR') {
+      return {
+        startDirections: ['right'],
+        endDirections: ['left']
+      }
+    } else {
+      return {
+        startDirections: ['bottom'],
+        endDirections: ['top']
+      }
+    }
+  }
+
+  /**
+   * 更新布局方向
+   * @param {string} newDirection - 新的布局方向 ('TB' 或 'LR')
+   */
+  updateLayoutDirection(newDirection) {
+    if (this.layoutDirection !== newDirection) {
+      this.layoutDirection = newDirection
+      console.log('🔄 [统一预览线管理器] 布局方向已更新:', newDirection)
+      // 刷新所有预览线以应用新的方向配置
+      this.refreshAllPreviewLines()
+    }
   }
 
   /**
@@ -258,6 +295,11 @@ export class UnifiedPreviewLineManager {
     // 边相关事件
     this.graph.on('edge:added', this.handleEdgeAdded.bind(this))
     this.graph.on('edge:removed', this.handleEdgeRemoved.bind(this))
+    
+    // 预览线相关事件
+    this.graph.on('edge:mousedown', this.handlePreviewLineMouseDown.bind(this))
+    this.graph.on('edge:mouseenter', this.handlePreviewLineMouseEnter.bind(this))
+    this.graph.on('edge:mouseleave', this.handlePreviewLineMouseLeave.bind(this))
     
     // 画布事件
     this.graph.on('blank:mouseup', this.handleBlankMouseUp.bind(this))
@@ -564,8 +606,7 @@ export class UnifiedPreviewLineManager {
         args: useOrthRouter ? {
           padding: 15, // 统一使用15，与其他配置保持一致
           step: 10, // 统一使用10
-          startDirections: ['bottom'],
-          endDirections: ['top'],
+          ...this.getDynamicDirectionConfig(),
           offset: offsetConfig.offset,
           excludeEnds: offsetConfig.excludeEnds,
           // 🔧 简化路径约束
@@ -825,8 +866,7 @@ export class UnifiedPreviewLineManager {
       args: {
         padding: offsetConfig.padding,
         step: offsetConfig.step,
-        startDirections: ['bottom'],
-        endDirections: ['top'],
+        ...this.getDynamicDirectionConfig(),
         offset: offsetConfig.offset,
         excludeEnds: offsetConfig.excludeEnds
       }
@@ -1067,18 +1107,16 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
-   * 添加交互能力
+   * 添加交互能力 - 直接在预览线终点实现拖拽功能
    */
   addInteractivity(previewInstance) {
     const { line } = previewInstance
     
-    // 添加拖拽提示点
-    this.addDragHint(previewInstance)
+    // 为预览线添加拖拽功能，不再创建独立的拖拽点
+    this.addPreviewLineEndpointDrag(previewInstance)
     
-    // 添加鼠标事件监听
-    line.on('mousedown', (e) => {
-      this.startPreviewLineDrag(previewInstance, e)
-    })
+    // 注意：预览线的鼠标事件现在通过X6的标准事件系统处理
+    // 在setupEventListeners方法中已经绑定了edge:mousedown等事件
   }
 
   /**
@@ -1087,16 +1125,239 @@ export class UnifiedPreviewLineManager {
   removeInteractivity(previewInstance) {
     const { line } = previewInstance
     
-    // 移除拖拽提示点
-    this.removeDragHint(previewInstance)
+    // 移除预览线终点拖拽功能
+    this.removePreviewLineEndpointDrag(previewInstance)
     
-    // 移除事件监听
-    line.off('mousedown')
+    // 注意：预览线的鼠标事件通过X6的标准事件系统处理，无需手动移除
   }
 
   /**
-   * 添加拖拽提示点
+   * 为预览线终点添加拖拽功能
    */
+  addPreviewLineEndpointDrag(previewInstance) {
+    const { line, sourceNode } = previewInstance
+    
+    // 设置预览线终点的可视化样式
+    this.updatePreviewLineEndpointStyle(previewInstance, false)
+    
+    // 设置预览线终点拖拽功能
+    this.setupPreviewLineEndpointDrag(line)
+    
+    // 存储预览线实例以便后续访问
+    if (!this.endpointDragInstances) {
+      this.endpointDragInstances = new Map()
+    }
+    this.endpointDragInstances.set(line.id, previewInstance)
+    
+    console.log('✅ [预览线终点] 添加拖拽功能:', {
+      lineId: line.id,
+      sourceNodeId: sourceNode?.id,
+      branchId: previewInstance.branchId
+    })
+  }
+
+  /**
+   * 移除预览线终点拖拽功能
+   */
+  removePreviewLineEndpointDrag(previewInstance) {
+    const { line } = previewInstance
+    
+    if (this.endpointDragInstances) {
+      this.endpointDragInstances.delete(line.id)
+    }
+    
+    // 重置预览线样式
+    this.updatePreviewLineEndpointStyle(previewInstance, false)
+    
+    console.log('🗑️ [预览线终点] 移除拖拽功能:', line.id)
+  }
+
+  /**
+   * 检查鼠标点击是否在预览线终点附近
+   */
+  isClickNearEndpoint(event, previewInstance) {
+    const { line } = previewInstance
+    const targetPoint = line.getTargetPoint()
+    
+    if (!targetPoint) return false
+    
+    // 获取鼠标在画布上的坐标
+    const rect = this.graph.container.getBoundingClientRect()
+    const domX = event.clientX - rect.left
+    const domY = event.clientY - rect.top
+    
+    // 转换为逻辑坐标
+    let logicalCoords = { x: domX, y: domY }
+    if (this.coordinateManager) {
+      logicalCoords = this.coordinateManager.DOMToLogical(domX, domY)
+    }
+    
+    // 计算距离
+    const distance = Math.sqrt(
+      Math.pow(logicalCoords.x - targetPoint.x, 2) + 
+      Math.pow(logicalCoords.y - targetPoint.y, 2)
+    )
+    
+    // 如果距离小于20像素，认为是点击在终点附近
+    const isNearEndpoint = distance < 20
+    
+    console.log('🎯 [预览线终点] 点击检测:', {
+      lineId: line.id,
+      clickPosition: logicalCoords,
+      endpointPosition: targetPoint,
+      distance: distance,
+      isNearEndpoint: isNearEndpoint
+    })
+    
+    return isNearEndpoint
+  }
+
+  /**
+   * 高亮预览线终点
+   */
+  highlightPreviewLineEndpoint(previewInstance, highlight) {
+    this.updatePreviewLineEndpointStyle(previewInstance, highlight)
+  }
+
+  /**
+   * 更新预览线终点样式
+   */
+  updatePreviewLineEndpointStyle(previewInstance, highlight) {
+    // 🔧 添加安全检查，确保previewInstance和line存在
+    if (!previewInstance) {
+      console.warn('⚠️ [统一预览线管理器] updatePreviewLineEndpointStyle: 预览线实例不存在')
+      return
+    }
+    
+    if (!previewInstance.line || previewInstance.line.removed) {
+      console.warn('⚠️ [统一预览线管理器] updatePreviewLineEndpointStyle: 预览线实例或line对象不存在', {
+        hasPreviewInstance: !!previewInstance,
+        hasLine: !!(previewInstance && previewInstance.line),
+        lineRemoved: !!(previewInstance && previewInstance.line && previewInstance.line.removed)
+      })
+      
+      // 🔧 如果line对象不存在或已被删除，尝试重新创建预览线
+      if (previewInstance.sourceNode && previewInstance.branchId) {
+        console.log('🔄 [统一预览线管理器] 尝试重新创建已删除的预览线:', {
+          nodeId: previewInstance.sourceNode.id,
+          branchId: previewInstance.branchId,
+          branchLabel: previewInstance.branchLabel
+        })
+        
+        // 重新创建分支预览线
+        this.createBranchPreviewLine(
+          previewInstance.sourceNode, 
+          previewInstance.branchId, 
+          previewInstance.branchLabel,
+          previewInstance.endPosition
+        )
+      } else if (previewInstance.sourceNode) {
+        console.log('🔄 [统一预览线管理器] 尝试重新创建已删除的单一预览线:', {
+          nodeId: previewInstance.sourceNode.id
+        })
+        
+        // 重新创建单一预览线
+        this.createUnifiedPreviewLine(previewInstance.sourceNode, UnifiedPreviewStates.INTERACTIVE)
+      }
+      
+      return
+    }
+    
+    const { line } = previewInstance
+    
+    // 🔧 确保line对象有setAttrs方法
+    if (typeof line.setAttrs !== 'function') {
+      console.warn('⚠️ [统一预览线管理器] updatePreviewLineEndpointStyle: line对象没有setAttrs方法', {
+        lineId: line.id,
+        lineType: typeof line,
+        hasSetAttrs: typeof line.setAttrs
+      })
+      return
+    }
+    
+    try {
+      if (highlight) {
+        // 高亮状态：增加线宽，改变颜色，添加终点标记
+        line.setAttrs({
+          line: {
+            strokeWidth: 3,
+            stroke: '#4080FF',
+            cursor: 'grab'
+          }
+        })
+        
+        // 在终点添加可视化标记
+        this.addEndpointMarker(previewInstance)
+      } else {
+        // 正常状态：恢复原始样式
+        line.setAttrs({
+          line: {
+            strokeWidth: 2,
+            stroke: '#1890ff',
+            cursor: 'default'
+          }
+        })
+        
+        // 移除终点标记
+        this.removeEndpointMarker(previewInstance)
+      }
+    } catch (error) {
+      console.error('💥 [统一预览线管理器] updatePreviewLineEndpointStyle 执行失败:', {
+        error: error.message,
+        lineId: line.id,
+        highlight: highlight
+      })
+    }
+  }
+
+  /**
+   * 添加终点可视化标记
+   */
+  addEndpointMarker(previewInstance) {
+    const { line } = previewInstance
+    const targetPoint = line.getTargetPoint()
+    
+    if (!targetPoint || previewInstance.endpointMarker) return
+    
+    // 创建终点标记
+    const marker = this.graph.addNode({
+      id: `endpoint_marker_${line.id}`,
+      shape: 'circle',
+      x: targetPoint.x - 8,
+      y: targetPoint.y - 8,
+      width: 16,
+      height: 16,
+      attrs: {
+        body: {
+          fill: '#4080FF',
+          stroke: '#fff',
+          strokeWidth: 2,
+          cursor: 'grab'
+        }
+      },
+      zIndex: 1002,
+      data: {
+        isEndpointMarker: true,
+        parentPreviewLine: line.id
+      }
+    })
+    
+    previewInstance.endpointMarker = marker
+  }
+
+  /**
+   * 移除终点可视化标记
+   */
+  removeEndpointMarker(previewInstance) {
+    if (previewInstance.endpointMarker) {
+      this.graph.removeNode(previewInstance.endpointMarker)
+      previewInstance.endpointMarker = null
+    }
+  }
+  // ===== 以下是原有的拖拽点实现，已被预览线终点拖拽功能替代 =====
+  // 保留代码以备回滚，但不再使用
+  
+  /*
   addDragHint(previewInstance) {
     // 🔧 修复：在拖拽过程中不要重复创建拖拽提示点
     if (this.isDragging && this.currentDragLine && 
@@ -1106,12 +1367,9 @@ export class UnifiedPreviewLineManager {
       return
     }
     
-    // 如果已存在拖拽提示点，先移除它
-    if (previewInstance.hintNode) {
-      console.log('🔄 [统一预览线管理器] 移除旧的拖拽提示点:', previewInstance.hintNode.id)
-      this.removeDragHint(previewInstance)
-    }
-
+    // 新的预览线终点拖拽功能不需要移除旧的拖拽提示点
+    // 因为我们直接在预览线上添加拖拽功能
+    
     const { line, branchId, branchLabel, sourceNode } = previewInstance
     let { endPosition } = previewInstance
     
@@ -1234,6 +1492,7 @@ export class UnifiedPreviewLineManager {
   /**
    * 移除拖拽提示点
    */
+  /*
   removeDragHint(previewInstance) {
     if (previewInstance.hintNode) {
       // 🔧 修复：在拖拽过程中不要移除当前正在拖拽的提示点
@@ -1283,25 +1542,22 @@ export class UnifiedPreviewLineManager {
       // })
     }
   }
+  */
 
   /**
-   * 开始预览线拖拽
+   * 开始预览线拖拽 - 适配预览线终点拖拽
    */
   startPreviewLineDrag(previewInstance, event) {
     this.isDragging = true
     
-    // 🔧 修复：确保从拖拽提示点获取完整的分支信息
-    const hintNodeData = previewInstance.hintNode?.getData() || {}
-    const enhancedPreviewInstance = {
+    // 设置当前拖拽的预览线实例
+    this.currentDragLine = {
       ...previewInstance,
-      // 从拖拽提示点数据中获取分支信息，确保数据完整性
-      branchId: previewInstance.branchId || hintNodeData.branchId,
-      branchLabel: previewInstance.branchLabel || hintNodeData.branchLabel,
-      branchIndex: previewInstance.branchIndex || hintNodeData.branchIndex,
-      sourceNodeId: previewInstance.sourceNode?.id || hintNodeData.sourceNodeId
+      // 确保分支信息完整
+      branchId: previewInstance.branchId || 'default',
+      branchLabel: previewInstance.branchLabel || '',
+      sourceNodeId: previewInstance.sourceNode?.id
     }
-    
-    this.currentDragLine = enhancedPreviewInstance
     
     // 获取初始位置 - X6事件对象结构
     const rect = this.graph.container.getBoundingClientRect()
@@ -1327,21 +1583,28 @@ export class UnifiedPreviewLineManager {
     // 设置为拖拽状态
     this.setPreviewLineState(previewInstance, UnifiedPreviewStates.DRAGGING)
     
-    // 更新拖拽提示点样式
-    if (previewInstance.hintNode) {
-      previewInstance.hintNode.setAttrs({
-        body: {
-          fill: '#ff4d4f',
-          cursor: 'grabbing',
-          strokeWidth: 3
-        }
-      })
+    // 高亮预览线终点，表示正在拖拽
+    this.highlightPreviewLineEndpoint(previewInstance, true)
+    
+    // 更新预览线样式为拖拽状态
+    previewInstance.line.setAttrs({
+      line: {
+        strokeWidth: 4,
+        stroke: '#ff4d4f',
+        cursor: 'grabbing'
+      }
+    })
+    
+    // 阻止事件冒泡
+    if (event.stopPropagation) {
+      event.stopPropagation()
     }
     
-    // console.log('✅ [拖拽] 开始拖拽:', {
-    //   branchId: enhancedPreviewInstance.branchId,
-    //   sourceNodeId: enhancedPreviewInstance.sourceNodeId
-    // })
+    console.log('✅ [预览线终点拖拽] 开始拖拽:', {
+      lineId: previewInstance.line.id,
+      branchId: this.currentDragLine.branchId,
+      sourceNodeId: this.currentDragLine.sourceNodeId
+    })
   }
 
   /**
@@ -1663,6 +1926,10 @@ export class UnifiedPreviewLineManager {
   onNodeConnected(node, branchId = null, branchLabel = null) {
     const previewInstance = this.previewLines.get(node.id)
     if (previewInstance) {
+      // 🔧 修复：临时保存拖拽状态，确保拖拽点能被正确删除
+      const originalIsDragging = this.isDragging
+      const originalCurrentDragLine = this.currentDragLine
+      
       if (Array.isArray(previewInstance)) {
         // 分支预览线 - 只隐藏特定分支的预览线
         if (branchId) {
@@ -1671,9 +1938,8 @@ export class UnifiedPreviewLineManager {
           )
           if (targetInstance) {
             this.setPreviewLineState(targetInstance, UnifiedPreviewStates.HIDDEN)
-            // 删除对应的拖拽提示点
-            this.removeDragHint(targetInstance)
-            console.log('🔄 [统一预览线管理器] 特定分支预览线已隐藏并删除拖拽提示点:', {
+            
+            console.log('🔄 [统一预览线管理器] 特定分支预览线已隐藏:', {
               nodeId: node.id,
               branchId: branchId,
               branchLabel: branchLabel
@@ -1683,21 +1949,22 @@ export class UnifiedPreviewLineManager {
           // 如果没有指定分支ID，隐藏所有分支预览线（向后兼容）
           previewInstance.forEach(instance => {
             this.setPreviewLineState(instance, UnifiedPreviewStates.HIDDEN)
-            // 删除对应的拖拽提示点
-            this.removeDragHint(instance)
           })
-          console.log('🔄 [统一预览线管理器] 所有分支预览线已隐藏并删除拖拽提示点:', node.id)
+          console.log('🔄 [统一预览线管理器] 所有分支预览线已隐藏:', node.id)
         }
       } else {
         // 单一预览线
         this.setPreviewLineState(previewInstance, UnifiedPreviewStates.HIDDEN)
-        // 删除对应的拖拽提示点
-        this.removeDragHint(previewInstance)
-        console.log('🔄 [统一预览线管理器] 单一预览线已隐藏并删除拖拽提示点:', {
+        
+        console.log('🔄 [统一预览线管理器] 单一预览线已隐藏:', {
           nodeId: node.id,
           branchLabel: branchLabel
         })
       }
+      
+      // 恢复拖拽状态
+      this.isDragging = originalIsDragging
+      this.currentDragLine = originalCurrentDragLine
     }
   }
 
@@ -1716,6 +1983,19 @@ export class UnifiedPreviewLineManager {
             instance.branchId === branchId
           )
           if (targetInstance) {
+            // 🔧 检查预览线的line对象是否存在，如果不存在则重新创建
+            if (!targetInstance.line || targetInstance.line.removed) {
+              console.log('🔄 [统一预览线管理器] 预览线line对象不存在，重新创建分支预览线:', {
+                nodeId: node.id,
+                branchId: branchId,
+                branchLabel: branchLabel
+              })
+              
+              // 重新创建该分支的预览线
+              this.createBranchPreviewLine(node, branchId, branchLabel, targetInstance.endPosition)
+              return
+            }
+            
             // 如果有标签信息，更新预览线实例的标签
             if (branchLabel) {
               targetInstance.branchLabel = branchLabel
@@ -1740,10 +2020,29 @@ export class UnifiedPreviewLineManager {
               branchLabel: branchLabel,
               newEndPosition: targetInstance.endPosition
             })
+          } else {
+            // 如果找不到目标实例，创建新的分支预览线
+            console.log('🔄 [统一预览线管理器] 未找到目标分支实例，创建新的分支预览线:', {
+              nodeId: node.id,
+              branchId: branchId,
+              branchLabel: branchLabel
+            })
+            this.createBranchPreviewLine(node, branchId, branchLabel)
           }
         } else {
           // 如果没有指定分支ID，恢复所有分支预览线（向后兼容）
           previewInstance.forEach(instance => {
+            // 🔧 检查每个分支的line对象是否存在
+            if (!instance.line || instance.line.removed) {
+              console.log('🔄 [统一预览线管理器] 分支预览线line对象不存在，重新创建:', {
+                nodeId: node.id,
+                branchId: instance.branchId,
+                branchLabel: instance.branchLabel
+              })
+              this.createBranchPreviewLine(node, instance.branchId, instance.branchLabel, instance.endPosition)
+              return
+            }
+            
             // 重新计算预览线的结束位置
             this.recalculatePreviewLineEndPosition(instance)
             this.setPreviewLineState(instance, UnifiedPreviewStates.INTERACTIVE)
@@ -1752,6 +2051,18 @@ export class UnifiedPreviewLineManager {
         }
       } else {
         // 单一预览线
+        // 🔧 检查预览线的line对象是否存在，如果不存在则重新创建
+        if (!previewInstance.line || previewInstance.line.removed) {
+          console.log('🔄 [统一预览线管理器] 单一预览线line对象不存在，重新创建:', {
+            nodeId: node.id,
+            branchLabel: branchLabel
+          })
+          
+          // 重新创建单一预览线
+          this.createUnifiedPreviewLine(node, UnifiedPreviewStates.INTERACTIVE)
+          return
+        }
+        
         if (branchLabel) {
           previewInstance.branchLabel = branchLabel
           this.updatePreviewLineLabel(previewInstance.line, branchLabel)
@@ -1766,6 +2077,19 @@ export class UnifiedPreviewLineManager {
           branchLabel: branchLabel,
           newEndPosition: previewInstance.endPosition
         })
+      }
+    } else {
+      // 如果预览线实例不存在，创建新的预览线
+      console.log('🔄 [统一预览线管理器] 预览线实例不存在，创建新的预览线:', {
+        nodeId: node.id,
+        branchId: branchId,
+        branchLabel: branchLabel
+      })
+      
+      if (branchId) {
+        this.createBranchPreviewLine(node, branchId, branchLabel)
+      } else {
+        this.createUnifiedPreviewLine(node, UnifiedPreviewStates.INTERACTIVE)
       }
     }
   }
@@ -2146,6 +2470,77 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
+   * 处理预览线鼠标按下事件
+   */
+  handlePreviewLineMouseDown(e) {
+    const { edge } = e
+    console.log('🖱️ [统一预览线管理器] 预览线鼠标按下事件:', {
+      edgeId: edge.id,
+      edgeData: edge.getData()
+    })
+    
+    // 查找对应的预览线实例
+    const previewInstance = this.findPreviewInstanceByEdgeId(edge.id)
+    if (previewInstance) {
+      console.log('✅ [统一预览线管理器] 找到预览线实例，开始拖拽')
+      this.startPreviewLineDrag(previewInstance, e)
+    } else {
+      console.warn('⚠️ [统一预览线管理器] 未找到预览线实例:', edge.id)
+    }
+  }
+
+  /**
+   * 处理预览线鼠标进入事件
+   */
+  handlePreviewLineMouseEnter(e) {
+    const { edge } = e
+    console.log('🖱️ [统一预览线管理器] 预览线鼠标进入事件:', edge.id)
+    
+    // 查找对应的预览线实例
+    const previewInstance = this.findPreviewInstanceByEdgeId(edge.id)
+    if (previewInstance) {
+      this.setPreviewLineState(previewInstance, UnifiedPreviewStates.HOVER)
+    }
+  }
+
+  /**
+   * 处理预览线鼠标离开事件
+   */
+  handlePreviewLineMouseLeave(e) {
+    const { edge } = e
+    console.log('🖱️ [统一预览线管理器] 预览线鼠标离开事件:', edge.id)
+    
+    // 查找对应的预览线实例
+    const previewInstance = this.findPreviewInstanceByEdgeId(edge.id)
+    if (previewInstance && !this.isDragging) {
+      this.setPreviewLineState(previewInstance, UnifiedPreviewStates.INTERACTIVE)
+    }
+  }
+
+  /**
+   * 根据边ID查找预览线实例
+   */
+  findPreviewInstanceByEdgeId(edgeId) {
+    for (const [nodeId, previewInstance] of this.previewLines) {
+      if (Array.isArray(previewInstance)) {
+        // 分支预览线
+        const targetInstance = previewInstance.find(instance => 
+          instance.line.id === edgeId
+        )
+        if (targetInstance) {
+          return targetInstance
+        }
+      } else {
+        // 单一预览线
+        if (previewInstance.line.id === edgeId) {
+          return previewInstance
+        }
+      }
+    }
+    return null
+  }
+
+  /**
    * 处理边添加事件
    */
   handleEdgeAdded(e) {
@@ -2172,15 +2567,27 @@ export class UnifiedPreviewLineManager {
    */
   handleEdgeRemoved(e) {
     const { edge } = e
+    const edgeData = edge.getData() || {}
+
+    // 跳过预览线的删除事件，只处理真实连线的删除
+    if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview || 
+        edgeData.type === 'unified-preview-line' || edgeData.type === 'preview-line') {
+      console.log('⏭️ [统一预览线管理器] 跳过预览线删除事件:', {
+        edgeId: edge.id,
+        edgeType: edgeData.type,
+        isPreview: edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview
+      })
+      return
+    }
+    
     const sourceNode = edge.getSourceNode()
     
     if (sourceNode) {
       // 获取边数据中的分支ID和标签
-      const edgeData = edge.getData() || {}
       const branchId = edgeData.branchId
       const branchLabel = edgeData.branchLabel
       
-      console.log('🔗 [统一预览线管理器] 边移除事件:', {
+      console.log('🔗 [统一预览线管理器] 真实连线删除，恢复预览线:', {
         sourceNodeId: sourceNode.id,
         branchId: branchId,
         branchLabel: branchLabel,
@@ -2480,21 +2887,24 @@ export class UnifiedPreviewLineManager {
             order: layer.order || index + 1
           }))
           
-          // 添加未命中人群分支
-          branches.push({
-            id: 'default_audience',
-            label: '未命中人群',
-            crowdName: '未命中人群', // 添加crowdName属性
-            type: 'audience',
-            crowdId: null,
-            order: branches.length + 1
-          })
+          // 从配置中读取未命中分支信息
+          if (nodeConfig.unmatchBranch) {
+            branches.push({
+              id: nodeConfig.unmatchBranch.id || 'unmatch_default',
+              label: nodeConfig.unmatchBranch.name || '未命中人群',
+              crowdName: nodeConfig.unmatchBranch.crowdName || nodeConfig.unmatchBranch.name || '未命中人群',
+              type: 'audience',
+              crowdId: nodeConfig.unmatchBranch.crowdId || null,
+              order: nodeConfig.unmatchBranch.order || branches.length + 1,
+              isDefault: true
+            })
+          }
           
           return branches
         }
         return [
           { id: 'audience_1', label: '人群1', crowdName: '人群1', type: 'audience' },
-          { id: 'default_audience', label: '未命中人群', crowdName: '未命中人群', type: 'audience' }
+          { id: 'unmatch_default', label: '未命中人群', crowdName: '未命中人群', type: 'audience', isDefault: true }
         ]
         
       case 'event-split':
@@ -2589,8 +2999,7 @@ export class UnifiedPreviewLineManager {
             step: 10, // 统一步长
             padding: 15, // 统一边距
             excludeEnds: ['source'],
-            startDirections: ['bottom'],
-            endDirections: ['top'],
+            ...this.getDynamicDirectionConfig(),
             ...routerConfig.args
           }
         }
@@ -2600,11 +3009,13 @@ export class UnifiedPreviewLineManager {
         // 🔧 简化验证：只检查基本有效性
         const vertices = edge.getVertices()
         if (vertices && Array.isArray(vertices)) {
-          console.log('✅ [路由器设置] Manhattan路由器设置成功:', {
-            edgeId: edge.id,
-            distance: distance.toFixed(2),
-            config: manhattanConfig.args
-          })
+          if (this.debugMode) {
+            console.log('✅ [路由器设置] Manhattan路由器设置成功:', {
+              edgeId: edge.id,
+              distance: distance.toFixed(2),
+              config: manhattanConfig.args
+            })
+          }
           return
         } else {
           throw new Error('Manhattan router generated invalid vertices')
@@ -2615,8 +3026,10 @@ export class UnifiedPreviewLineManager {
       }
       
     } catch (error) {
-      // 🔧 减少日志噪音：只在调试模式下输出详细信息
-      if (this.debugMode) {
+      // 🔧 完全静默处理：拖拽时不输出任何日志，避免控制台噪音
+      // 只在非拖拽状态且调试模式下输出信息
+      const isDragging = this.currentDragLine !== null
+      if (!isDragging && this.debugMode) {
         console.log('🔄 [路由器设置] 使用Orth路由器:', {
           edgeId: edge.id,
           reason: preferredRouter === 'manhattan' ? 'Manhattan失败' : '智能选择',
@@ -2632,8 +3045,7 @@ export class UnifiedPreviewLineManager {
         args: {
           padding: 15, // 统一边距
           step: 10, // 统一步长
-          startDirections: ['bottom'],  // 确保从底部端口出发
-          endDirections: ['top']        // 确保到顶部端口结束
+          ...this.getDynamicDirectionConfig()
           // 🚀 [智能路径] 移除手动干预，完全依赖orth路由器的自动最短路径算法
         }
       }
@@ -2641,10 +3053,13 @@ export class UnifiedPreviewLineManager {
       try {
         edge.setRouter(orthConfig)
       } catch (orthError) {
-        console.warn('⚠️ [路由器设置] Orth路由器失败，使用默认路由器:', {
-          edgeId: edge.id,
-          error: orthError.message
-        })
+        // 只在非拖拽状态下输出错误信息
+        if (!isDragging) {
+          console.warn('⚠️ [路由器设置] Orth路由器失败，使用默认路由器:', {
+            edgeId: edge.id,
+            error: orthError.message
+          })
+        }
         edge.setRouter('normal')
       }
     }
@@ -2879,10 +3294,8 @@ export class UnifiedPreviewLineManager {
           target: afterProps.target
         })
         
-        // 更新拖拽提示点位置
-        if (instance.hintNode) {
-          instance.hintNode.setPosition(newEndPosition.x - 6, newEndPosition.y - 6)
-        }
+        // 更新预览线终点标记位置
+        this.updateEndpointMarker(instance.line, newEndPosition)
       })
     } else {
       console.log('📏 [预览线位置更新] 更新单一预览线:', {
@@ -2996,15 +3409,118 @@ export class UnifiedPreviewLineManager {
         target: afterProps.target
       })
       
-      // 更新拖拽提示点位置
-      if (previewInstance.hintNode) {
-        previewInstance.hintNode.setPosition(newEndPosition.x - 6, newEndPosition.y - 6)
-      }
+      // 更新预览线终点标记位置
+      this.updateEndpointMarker(previewInstance.line, newEndPosition)
     }
 
     console.log('🎉 [预览线位置更新] 预览线位置更新完成:', {
       nodeId: node.id,
       isArray: Array.isArray(previewInstance)
+    })
+  }
+
+  /**
+   * 设置预览线终点拖拽功能
+   * @param {Object} line - 预览线实例
+   */
+  setupPreviewLineEndpointDrag(line) {
+    if (!line) {
+      console.warn('⚠️ [预览线终点拖拽] 预览线实例不存在，无法设置拖拽功能')
+      return
+    }
+    
+    try {
+      // 设置预览线的拖拽样式
+      line.attr('line/cursor', 'grab')
+      
+      console.log('✅ [预览线终点拖拽] 设置预览线终点拖拽功能:', {
+        lineId: line.id
+      })
+      
+      // 注意：预览线的鼠标事件现在通过X6的标准事件系统处理
+      // 在setupEventListeners方法中已经绑定了edge:mousedown等事件
+    } catch (error) {
+      console.error('❌ [预览线终点拖拽] 设置拖拽功能失败:', error)
+    }
+  }
+
+  /**
+   * 开始预览线终点拖拽
+   * @param {Object} line - 预览线实例
+   * @param {Event} event - 鼠标事件
+   */
+  startPreviewLineEndpointDrag(line, event) {
+    console.log('🚀 [预览线终点拖拽] 开始拖拽预览线终点:', line.id)
+    
+    // 设置当前拖拽状态
+    this.currentDragLine = { line }
+    this.isDragging = true
+    
+    // 高亮预览线
+    const previewInstance = this.endpointDragInstances?.get(line.id)
+    if (previewInstance) {
+      this.highlightPreviewLineEndpoint(previewInstance, true)
+    }
+    line.attr('line/cursor', 'grabbing')
+    
+    console.log('✅ [预览线终点拖拽] 拖拽开始')
+  }
+
+  /**
+   * 添加终点标记
+   * @param {Object} line - 预览线实例
+   * @param {Object} position - 终点位置
+   */
+  addEndpointMarker(line, position) {
+    if (!line || !position) return
+    
+    // 这里可以添加终点标记的可视化逻辑
+    // 例如在终点位置添加一个小圆点或其他标记
+    console.log('🎯 [预览线终点拖拽] 添加终点标记:', {
+      lineId: line.id,
+      position: position
+    })
+  }
+
+  /**
+   * 移除预览线终点拖拽功能
+   * @param {Object} line - 预览线实例
+   */
+  removePreviewLineEndpointDrag(line) {
+    if (!line) {
+      console.warn('⚠️ [预览线终点拖拽] 预览线实例不存在，无法移除拖拽功能')
+      return
+    }
+    
+    try {
+      // 移除预览线终点的高亮效果
+      const previewInstance = this.endpointDragInstances?.get(line.id)
+      if (previewInstance) {
+        this.highlightPreviewLineEndpoint(previewInstance, false)
+      }
+      
+      console.log('✅ [预览线终点拖拽] 移除预览线终点拖拽功能:', {
+        lineId: line.id
+      })
+    } catch (error) {
+      console.error('❌ [预览线终点拖拽] 移除拖拽功能失败:', error)
+    }
+  }
+
+  /**
+   * 更新预览线终点标记位置
+   * @param {Object} line - 预览线对象
+   * @param {Object} position - 新的终点位置
+   */
+  updateEndpointMarker(line, position) {
+    if (!line || !position) return
+    
+    // 更新预览线终点的可视化标记
+    this.addEndpointMarker(line, position)
+    
+    console.log('🎯 [预览线终点拖拽] 更新终点标记位置:', {
+      lineId: line.id,
+      position: position
     })
   }
 
@@ -3021,7 +3537,7 @@ export class UnifiedPreviewLineManager {
     if (Array.isArray(previewInstance)) {
       // 分支预览线
       previewInstance.forEach(instance => {
-        this.removeDragHint(instance)
+        this.removePreviewLineEndpointDrag(instance)
         this.graph.removeEdge(instance.line)
         
         // 清理对应的手工调整记录
@@ -3033,7 +3549,7 @@ export class UnifiedPreviewLineManager {
       })
     } else {
       // 单一预览线
-      this.removeDragHint(previewInstance)
+      this.removePreviewLineEndpointDrag(previewInstance)
       this.graph.removeEdge(previewInstance.line)
       
       // 清理对应的手工调整记录
@@ -3047,7 +3563,7 @@ export class UnifiedPreviewLineManager {
     this.previewLines.delete(nodeId)
     this.nodeStates.delete(nodeId)
     
-    console.log('🗑️ [统一预览线管理器] 移除预览线:', {
+    console.log('🗑️ [预览线终点拖拽] 移除预览线:', {
       nodeId,
       removedManualAdjustments: removedHints,
       remainingAdjustments: this.manuallyAdjustedHints.size
@@ -3062,7 +3578,7 @@ export class UnifiedPreviewLineManager {
   removeSpecificBranchPreviewLine(nodeId, branchId) {
     const previewInstance = this.previewLines.get(nodeId)
     if (!previewInstance) {
-      console.warn('⚠️ [统一预览线管理器] 未找到预览线实例:', nodeId)
+      console.warn('⚠️ [预览线终点拖拽] 未找到预览线实例:', nodeId)
       return
     }
     
@@ -3075,8 +3591,8 @@ export class UnifiedPreviewLineManager {
       if (targetIndex !== -1) {
         const targetInstance = previewInstance[targetIndex]
         
-        // 移除拖拽提示点和预览线
-        this.removeDragHint(targetInstance)
+        // 移除预览线终点拖拽功能和预览线
+        this.removePreviewLineEndpointDrag(targetInstance)
         this.graph.removeEdge(targetInstance.line)
         
         // 清理对应的手工调整记录
@@ -3089,7 +3605,7 @@ export class UnifiedPreviewLineManager {
         // 从数组中移除该分支
         previewInstance.splice(targetIndex, 1)
         
-        console.log('🗑️ [统一预览线管理器] 移除特定分支预览线:', {
+        console.log('🗑️ [预览线终点拖拽] 移除特定分支预览线:', {
           nodeId: nodeId,
           branchId: branchId,
           remainingBranches: previewInstance.length,
@@ -3100,10 +3616,10 @@ export class UnifiedPreviewLineManager {
         if (previewInstance.length === 0) {
           this.previewLines.delete(nodeId)
           this.nodeStates.delete(nodeId)
-          console.log('🗑️ [统一预览线管理器] 所有分支已删除，清理预览线实例:', nodeId)
+          console.log('🗑️ [预览线终点拖拽] 所有分支已删除，清理预览线实例:', nodeId)
         }
       } else {
-        console.warn('⚠️ [统一预览线管理器] 未找到指定分支:', {
+        console.warn('⚠️ [预览线终点拖拽] 未找到指定分支:', {
           nodeId: nodeId,
           branchId: branchId,
           availableBranches: previewInstance.map(instance => instance.branchId)
@@ -3111,12 +3627,12 @@ export class UnifiedPreviewLineManager {
       }
     } else {
       // 单一预览线：如果指定了分支ID但实际是单一预览线，则删除整个预览线
-      console.log('🗑️ [统一预览线管理器] 单一预览线，删除整个预览线:', {
+      console.log('🗑️ [预览线终点拖拽] 单一预览线，删除整个预览线:', {
         nodeId: nodeId,
         requestedBranchId: branchId
       })
       
-      this.removeDragHint(previewInstance)
+      this.removePreviewLineEndpointDrag(previewInstance)
       this.graph.removeEdge(previewInstance.line)
       
       // 清理对应的手工调整记录
@@ -3129,7 +3645,7 @@ export class UnifiedPreviewLineManager {
       this.previewLines.delete(nodeId)
       this.nodeStates.delete(nodeId)
       
-      console.log('🗑️ [统一预览线管理器] 单一预览线删除完成:', {
+      console.log('🗑️ [预览线终点拖拽] 单一预览线删除完成:', {
         nodeId,
         removedManualAdjustments: removedHints,
         remainingAdjustments: this.manuallyAdjustedHints.size
@@ -3145,7 +3661,7 @@ export class UnifiedPreviewLineManager {
       return
     }
     
-    const { line, hintNode, sourceNode, branchId } = this.currentDragLine
+    const { line, sourceNode, branchId } = this.currentDragLine
     const rect = this.graph.container.getBoundingClientRect()
     const domX = e.clientX - rect.left
     const domY = e.clientY - rect.top
@@ -3154,30 +3670,15 @@ export class UnifiedPreviewLineManager {
     let logicalCoords = { x: domX, y: domY }
     if (this.coordinateManager) {
       logicalCoords = this.coordinateManager.DOMToLogical(domX, domY)
-      console.log('🔄 [拖拽位置更新] 坐标转换:', {
-        domCoords: { x: domX, y: domY },
-        logicalCoords: logicalCoords,
-        transform: this.coordinateManager.getCanvasTransform()
-      })
     }
     
     const { x, y } = logicalCoords
     
-    // 🔧 使用X6规范的方式更新拖拽位置
-    // 使用setVertices方法设置路径点，而不是直接设置target
-    const vertices = []
-    
-    // 设置路径点（不包括起点和终点）
-    line.setVertices(vertices)
-    
-    // 设置终点位置（使用逻辑坐标）
-    line.setTarget({ x, y })
-    
-    // 🔧 修复：确保连接点信息正确设置
-    const sourcePort = branchId && branchId !== 'default' ? branchId : 'out'
+    // 🔧 修复：确保预览线始终从源节点的out端口开始
+    // 只设置一次source，确保使用正确的out端口
     line.setSource({
       cell: sourceNode.id,
-      port: sourcePort,
+      port: 'out',  // 始终使用out端口，不使用branchId作为端口
       connectionPoint: {
         name: 'boundary',
         args: {
@@ -3186,7 +3687,7 @@ export class UnifiedPreviewLineManager {
       }
     })
     
-    // 设置目标连接点（使用逻辑坐标）
+    // 设置终点位置（使用逻辑坐标）
     line.setTarget({
       x,
       y,
@@ -3198,15 +3699,21 @@ export class UnifiedPreviewLineManager {
       }
     })
     
-    // 确保使用正确的路由器 - 使用安全路由器设置
-    this.setSafeRouter(line, {
+    // 🔧 使用X6规范的方式更新拖拽位置
+    // 使用setVertices方法设置路径点，而不是直接设置target
+    const vertices = []
+    
+    // 设置路径点（不包括起点和终点）
+    line.setVertices(vertices)
+    
+    // 确保使用正确的路由器 - 拖拽时优先使用稳定的orth路由器
+    // 避免在拖拽过程中频繁尝试manhattan算法导致的警告信息
+    line.setRouter({
+      name: 'orth',
       args: {
         padding: 15,
-        step: 10
-      },
-      orthArgs: {
-        padding: 15,
-        step: 10
+        step: 10,
+        ...this.getDynamicDirectionConfig()
       }
     })
     
@@ -3218,9 +3725,10 @@ export class UnifiedPreviewLineManager {
       }
     })
     
-    // 更新拖拽提示点位置（使用逻辑坐标）
-    if (hintNode) {
-      hintNode.setPosition(x - 6, y - 6)
+    // 更新预览线终点的高亮效果
+    const previewInstance = this.endpointDragInstances?.get(line.id)
+    if (previewInstance) {
+      this.highlightPreviewLineEndpoint(previewInstance, true)
     }
     
     // 检测附近的节点并高亮显示（使用逻辑坐标）
@@ -3270,12 +3778,13 @@ export class UnifiedPreviewLineManager {
           nodeCenterX -= coordinateValidation.difference.x
           nodeCenterY -= coordinateValidation.difference.y
           
-          console.log('🔍 [吸附坐标修正] 检测到节点坐标偏差:', {
-            nodeId: node.id,
-            originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
-            correctedCenter: { x: nodeCenterX, y: nodeCenterY },
-            coordinateValidation
-          })
+          // 已禁用坐标修正日志以减少控制台冗余信息
+          // console.log('🔍 [吸附坐标修正] 检测到节点坐标偏差:', {
+          //   nodeId: node.id,
+          //   originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
+          //   correctedCenter: { x: nodeCenterX, y: nodeCenterY },
+          //   coordinateValidation
+          // })
         }
       }
       
@@ -3336,12 +3845,13 @@ export class UnifiedPreviewLineManager {
           nodeCenterX -= coordinateValidation.difference.x
           nodeCenterY -= coordinateValidation.difference.y
           
-          console.log('🔍 [分支吸附坐标修正] 检测到节点坐标偏差:', {
-            nodeId: node.id,
-            originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
-            correctedCenter: { x: nodeCenterX, y: nodeCenterY },
-            coordinateValidation
-          })
+          // 已禁用分支吸附坐标修正日志以减少控制台冗余信息
+          // console.log('🔍 [分支吸附坐标修正] 检测到节点坐标偏差:', {
+          //   nodeId: node.id,
+          //   originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
+          //   correctedCenter: { x: nodeCenterX, y: nodeCenterY },
+          //   coordinateValidation
+          // })
         }
       }
       
@@ -3428,7 +3938,7 @@ export class UnifiedPreviewLineManager {
   handleDragEnd(e) {
     if (!this.currentDragLine) return
     
-    const { line, sourceNode, branchId, nearestTargetNode, branchLabel, hintNode } = this.currentDragLine
+    const { line, sourceNode, branchId, nearestTargetNode, branchLabel } = this.currentDragLine
     const rect = this.graph.container.getBoundingClientRect()
     const domDropX = e.clientX - rect.left
     const domDropY = e.clientY - rect.top
@@ -3437,11 +3947,6 @@ export class UnifiedPreviewLineManager {
     let logicalDropCoords = { x: domDropX, y: domDropY }
     if (this.coordinateManager) {
       logicalDropCoords = this.coordinateManager.DOMToLogical(domDropX, domDropY)
-      console.log('🔄 [拖拽结束] 坐标转换:', {
-        domCoords: { x: domDropX, y: domDropY },
-        logicalCoords: logicalDropCoords,
-        transform: this.coordinateManager.getCanvasTransform()
-      })
     }
     
     const dropX = logicalDropCoords.x
@@ -3455,18 +3960,13 @@ export class UnifiedPreviewLineManager {
         branchId: branchId,
         branchLabel: branchLabel
       },
-      dragHint: {
-        id: hintNode?.id,
-        position: hintNode?.getPosition(),
-        willBeDeleted: false
-      },
       dropPosition: { x: dropX, y: dropY },
       domDropPosition: { x: domDropX, y: domDropY },
       nearestTargetNode: nearestTargetNode?.id,
       timestamp: new Date().toISOString()
     }
     
-    console.log('🎯 [拖拽结束] 开始处理拖拽结束 - 初始状态:', dragEndInfo)
+    console.log('🎯 [预览线终点拖拽] 拖拽结束处理:', dragEndInfo)
     
     // 优先使用智能选择的最近目标节点
     let targetNode = nearestTargetNode
@@ -3474,70 +3974,18 @@ export class UnifiedPreviewLineManager {
     // 如果没有智能选择的目标，则使用传统的位置检测
     if (!targetNode) {
       targetNode = this.findNodeAtPosition(dropX, dropY)
-      console.log('🔍 [拖拽结束] 通过位置检测找到目标节点:', targetNode?.id)
     }
     
     if (targetNode && targetNode.id !== sourceNode.id) {
-      // 🔍 记录成功吸附的详细信息
-      const snapSuccessInfo = {
-        ...dragEndInfo,
-        targetNode: {
-          id: targetNode.id,
-          type: targetNode.getData()?.type,
-          position: targetNode.getPosition(),
-          name: targetNode.getData()?.name || targetNode.getData()?.label
-        },
-        snapResult: 'success',
-        actionTaken: 'create_connection'
-      }
-      
       // 找到目标节点，显示吸附完成的标签（如果有分支标签）
       if (branchLabel) {
         this.showSnapCompleteLabel(line, branchLabel, targetNode)
-        snapSuccessInfo.labelShown = true
       }
-      
-      // 标记拖拽点将被删除
-      snapSuccessInfo.dragHint.willBeDeleted = true
       
       // 创建连接（源节点out → 目标节点in）
       this.createConnection(sourceNode, targetNode, this.currentDragLine)
       
-      // 🎯 记录完整的拖拽吸附成功结果
-      console.log('✅ [拖拽结束] 拖拽吸附成功 - 完整结果:', {
-        timestamp: new Date().toISOString(),
-        snapResult: {
-          success: true,
-          beforeDrop: {
-            dragHintPosition: dragEndInfo.dragHint.position,
-            dropPosition: dragEndInfo.dropPosition
-          },
-          afterSnap: {
-            targetNodePosition: snapSuccessInfo.targetNode.position,
-            connectionCreated: true
-          },
-          dragHintInfo: {
-            id: dragEndInfo.dragHint.id,
-            branchId: branchId,
-            branchLabel: branchLabel,
-            deleted: true,
-            deletionReason: 'successful_connection'
-          },
-          mountedNode: snapSuccessInfo.targetNode,
-          sourceNode: {
-            id: sourceNode.id,
-            type: sourceNode.getData()?.type,
-            name: sourceNode.getData()?.name || sourceNode.getData()?.label
-          },
-          connectionInfo: {
-            branchId: branchId,
-            branchLabel: branchLabel,
-            hasLabel: !!branchLabel
-          }
-        }
-      })
-      
-      console.log('✅ [拖拽] 连接成功:', {
+      console.log('✅ [预览线终点拖拽] 连接成功:', {
         source: sourceNode.id,
         target: targetNode.id,
         branchId: branchId
@@ -3546,53 +3994,11 @@ export class UnifiedPreviewLineManager {
       // 没有找到目标节点，检查是否需要创建新节点
       const shouldCreateNode = this.shouldCreateNodeAtPosition(dropX, dropY)
       
-      // 🔍 记录拖拽失败或创建新节点的情况
-      const snapFailInfo = {
-        ...dragEndInfo,
-        snapResult: shouldCreateNode ? 'create_new_node' : 'failed',
-        reason: !targetNode ? 'no_target_found' : 'same_node',
-        actionTaken: shouldCreateNode ? 'create_node' : 'reset_state'
-      }
-      
       if (shouldCreateNode) {
         this.createNodeAtPosition(dropX, dropY, sourceNode, this.currentDragLine)
-        snapFailInfo.dragHint.willBeDeleted = true
-        snapFailInfo.newNodePosition = { x: dropX, y: dropY }
-        
-        console.log('🆕 [拖拽结束] 创建新节点 - 详细信息:', {
-          timestamp: new Date().toISOString(),
-          createNodeResult: {
-            position: { x: dropX, y: dropY },
-            sourceNode: {
-              id: sourceNode.id,
-              type: sourceNode.getData()?.type
-            },
-            dragHintInfo: {
-              id: dragEndInfo.dragHint.id,
-              branchId: branchId,
-              branchLabel: branchLabel,
-              deleted: true,
-              deletionReason: 'new_node_created'
-            }
-          }
-        })
-        
-        console.log('✅ [拖拽] 创建新节点:', { x: dropX, y: dropY })
+        console.log('✅ [预览线终点拖拽] 创建新节点:', { x: dropX, y: dropY })
       } else {
-        snapFailInfo.dragHint.willBeDeleted = false
-        
-        console.log('❌ [拖拽结束] 拖拽未成功吸附 - 详细信息:', {
-          timestamp: new Date().toISOString(),
-          failureInfo: snapFailInfo,
-          dragHintInfo: {
-            id: dragEndInfo.dragHint.id,
-            branchId: branchId,
-            branchLabel: branchLabel,
-            deleted: false,
-            deletionReason: 'none',
-            remainsActive: true
-          }
-        })
+        console.log('❌ [预览线终点拖拽] 拖拽未成功吸附，恢复预览线状态')
       }
     }
     
@@ -3605,25 +4011,27 @@ export class UnifiedPreviewLineManager {
    * @param {Array} incomingEdges - 传入的边数组（可选，用于优化性能）
    */
   restorePreviewLinesAfterNodeDeletion(deletedNode, incomingEdges = null) {
-    console.log('🔄 [统一预览线管理器] 开始检查节点删除后的预览线恢复:', {
-      deletedNodeId: deletedNode.id,
-      deletedNodeType: deletedNode.getData()?.type,
-      providedIncomingEdges: !!incomingEdges
-    })
+    // 已禁用节点删除后恢复预览线日志以减少控制台冗余信息
+    // console.log('🔄 [统一预览线管理器] 开始检查节点删除后的预览线恢复:', {
+    //   deletedNodeId: deletedNode.id,
+    //   deletedNodeType: deletedNode.getData()?.type,
+    //   providedIncomingEdges: !!incomingEdges
+    // })
     
     // 获取所有连接到被删除节点的边（如果没有提供则重新获取）
     const edges = incomingEdges || this.graph.getIncomingEdges(deletedNode) || []
     
-    console.log('🔍 [统一预览线管理器] 找到连接到被删除节点的边:', {
-      deletedNodeId: deletedNode.id,
-      incomingEdgesCount: edges.length,
-      edges: edges.map(edge => ({
-        id: edge.id,
-        sourceId: edge.getSourceNode()?.id,
-        targetId: edge.getTargetNode()?.id,
-        data: edge.getData()
-      }))
-    })
+    // 已禁用边信息日志以减少控制台冗余信息
+    // console.log('🔍 [统一预览线管理器] 找到连接到被删除节点的边:', {
+    //   deletedNodeId: deletedNode.id,
+    //   incomingEdgesCount: edges.length,
+    //   edges: edges.map(edge => ({
+    //     id: edge.id,
+    //     sourceId: edge.getSourceNode()?.id,
+    //     targetId: edge.getTargetNode()?.id,
+    //     data: edge.getData()
+    //   }))
+    // })
 
     // 收集所有需要检查的源节点
     const sourceNodesToCheck = new Set()
@@ -4259,7 +4667,7 @@ export class UnifiedPreviewLineManager {
             y: targetPoint.y
           }
           
-          console.log('📍 [统一预览线管理器] 拖拽结束时更新endPosition:', {
+          console.log('📍 [预览线终点拖拽] 拖拽结束时更新endPosition:', {
             lineId: line.id,
             newEndPosition: this.currentDragLine.endPosition,
             targetPoint: targetPoint
@@ -4272,40 +4680,17 @@ export class UnifiedPreviewLineManager {
         // 只有在预览线未被隐藏时才重置为交互状态
         this.setPreviewLineState(this.currentDragLine, UnifiedPreviewStates.INTERACTIVE)
         
-        // 🔧 修复：确保拖拽提示点正确恢复
-        if (this.currentDragLine.hintNode && this.graph.hasCell(this.currentDragLine.hintNode)) {
-          // 重置拖拽提示点样式
-          this.currentDragLine.hintNode.setAttrs({
-            body: {
-              fill: '#5F95FF',
-              cursor: 'grab',
-              strokeWidth: 2
-            }
-          })
-          
-          // 🔧 修复：确保拖拽提示点位置与预览线终点同步
-          if (line) {
-            const targetPoint = line.getTargetPoint()
-            if (targetPoint) {
-              this.currentDragLine.hintNode.setPosition(targetPoint.x - 6, targetPoint.y - 6)
-              console.log('🔄 [统一预览线管理器] 同步拖拽提示点位置:', {
-                hintNodeId: this.currentDragLine.hintNode.id,
-                position: { x: targetPoint.x - 6, y: targetPoint.y - 6 }
-              })
-            }
-          }
-        } else if (this.currentDragLine.hintNode) {
-          // 🔧 修复：如果拖拽提示点已被意外移除，重新创建它
-          console.log('🔄 [统一预览线管理器] 拖拽提示点丢失，重新创建:', this.currentDragLine.hintNode.id)
-          this.addDragHint(this.currentDragLine)
+        // 移除预览线终点的高亮效果
+        if (this.currentDragLine.line) {
+          this.updatePreviewLineEndpointStyle(this.currentDragLine.line, false)
         }
         
-        console.log('🔄 [统一预览线管理器] 预览线状态重置为交互状态:', {
+        console.log('🔄 [预览线终点拖拽] 预览线状态重置为交互状态:', {
           lineId: this.currentDragLine.line.id,
           state: this.currentDragLine.state
         })
       } else {
-        console.log('⏭️ [统一预览线管理器] 预览线已隐藏，跳过状态重置:', {
+        console.log('⏭️ [预览线终点拖拽] 预览线已隐藏，跳过状态重置:', {
           lineId: this.currentDragLine.line.id,
           state: this.currentDragLine.state
         })
@@ -4324,7 +4709,7 @@ export class UnifiedPreviewLineManager {
     this.currentDragLine = null
     this.dragStartPosition = null
     
-    console.log('🔄 [统一预览线管理器] 拖拽状态已重置')
+    console.log('🔄 [预览线终点拖拽] 拖拽状态已重置')
   }
 
   // ==================== 兼容性API ====================
@@ -4387,39 +4772,8 @@ export class UnifiedPreviewLineManager {
                   console.warn('⚠️ [智能布局后] 强制刷新分支预览线终点位置失败:', error)
                 }
                 
-                // 更新拖拽提示点位置
-                if (instance.hintNode) {
-                  console.log('🎯 [智能布局后] 拖拽提示点位置调试信息:', {
-                    nodeId: nodeId,
-                    branchId: instance.branchId,
-                    branchIndex: branchIndex,
-                    endPosition: instance.endPosition,
-                    hintCurrentPosition: instance.hintNode.getPosition()
-                  })
-                  
-                  // 🔧 修复：直接使用已经统一计算好的endPosition
-                  if (instance.endPosition) {
-                    const finalPosition = {
-                      x: instance.endPosition.x - 6,
-                      y: instance.endPosition.y - 6
-                    }
-                    
-                    instance.hintNode.setPosition(finalPosition.x, finalPosition.y)
-                    console.log('✅ [智能布局后] 拖拽提示点位置已更新（使用统一计算的endPosition）:', {
-                      nodeId: nodeId,
-                      branchId: instance.branchId,
-                      branchIndex: branchIndex,
-                      endPosition: instance.endPosition,
-                      finalPosition: finalPosition
-                    })
-                  } else {
-                    console.warn('⚠️ [智能布局后] endPosition不存在，跳过拖拽提示点更新:', {
-                      nodeId: nodeId,
-                      branchId: instance.branchId,
-                      branchIndex: branchIndex
-                    })
-                  }
-                }
+                // 更新预览线终点标记位置
+                this.updateEndpointMarker(instance.line, instance.endPosition)
               }
             })
           } else {
@@ -4443,32 +4797,8 @@ export class UnifiedPreviewLineManager {
               console.warn('⚠️ [智能布局后] 强制刷新单一预览线终点位置失败:', error)
             }
             
-            if (previewInstance.hintNode && previewInstance.line) {
-              console.log('🎯 [智能布局后] 单一预览线拖拽提示点位置调试信息:', {
-                nodeId: nodeId,
-                endPosition: previewInstance.endPosition,
-                hintCurrentPosition: previewInstance.hintNode.getPosition()
-              })
-              
-              // 🔧 修复：直接使用已经统一计算好的endPosition
-              if (previewInstance.endPosition) {
-                const finalPosition = {
-                  x: previewInstance.endPosition.x - 6,
-                  y: previewInstance.endPosition.y - 6
-                }
-                
-                previewInstance.hintNode.setPosition(finalPosition.x, finalPosition.y)
-                console.log('✅ [智能布局后] 单一预览线拖拽提示点位置已更新（使用统一计算的endPosition）:', {
-                  nodeId: nodeId,
-                  endPosition: previewInstance.endPosition,
-                  finalPosition: finalPosition
-                })
-              } else {
-                console.warn('⚠️ [智能布局后] 单一预览线endPosition不存在，跳过拖拽提示点更新:', {
-                  nodeId: nodeId
-                })
-              }
-            }
+            // 更新预览线终点标记位置
+            this.updateEndpointMarker(previewInstance.line, previewInstance.endPosition)
           }
           
           refreshedCount++
@@ -4556,37 +4886,8 @@ export class UnifiedPreviewLineManager {
               this.updatePreviewLinePosition(node, instance.branchId, branchIndex)
               totalBranchesRefreshed++
               
-              // 更新拖拽提示点位置
-              if (instance.hintNode) {
-                const hintId = instance.hintNode.id
-                
-                // 🔧 检查是否有手工调整的位置
-                const manuallyAdjusted = this.manuallyAdjustedHints.get(hintId)
-                
-                if (manuallyAdjusted) {
-                  // 保护手工调整的位置，不重置
-                  console.log('🛡️ [统一预览线管理器] 保护手工调整的拖拽点位置:', {
-                    nodeId: nodeId,
-                    branchId: instance.branchId,
-                    branchIndex: branchIndex,
-                    hintId: hintId,
-                    manualPosition: { x: manuallyAdjusted.x, y: manuallyAdjusted.y },
-                    adjustedAt: new Date(manuallyAdjusted.timestamp).toLocaleTimeString()
-                  })
-                } else {
-                  // 没有手工调整，正常更新位置
-                  const targetPoint = instance.line.getTargetPoint()
-                  if (targetPoint) {
-                    instance.hintNode.setPosition(targetPoint.x - 6, targetPoint.y - 6)
-                    console.log('🔄 [统一预览线管理器] 更新分支拖拽提示点位置:', {
-                      nodeId: nodeId,
-                      branchId: instance.branchId,
-                      branchIndex: branchIndex,
-                      position: { x: targetPoint.x - 6, y: targetPoint.y - 6 }
-                    })
-                  }
-                }
-              }
+              // 更新预览线终点标记位置
+              this.updateEndpointMarker(instance.line, instance.endPosition)
             } else if (instance.state === UnifiedPreviewStates.HIDDEN) {
               console.log('⏭️ [预览线刷新] 跳过已隐藏的分支预览线:', {
                 nodeId: nodeId,
@@ -4600,32 +4901,8 @@ export class UnifiedPreviewLineManager {
           this.updatePreviewLinePosition(node)
           totalBranchesRefreshed++
           
-          if (previewInstance.hintNode && previewInstance.line) {
-            const hintId = previewInstance.hintNode.id
-            
-            // 🔧 检查是否有手工调整的位置
-            const manuallyAdjusted = this.manuallyAdjustedHints.get(hintId)
-            
-            if (manuallyAdjusted) {
-              // 保护手工调整的位置，不重置
-              console.log('🛡️ [统一预览线管理器] 保护手工调整的拖拽点位置:', {
-                nodeId: nodeId,
-                hintId: hintId,
-                manualPosition: { x: manuallyAdjusted.x, y: manuallyAdjusted.y },
-                adjustedAt: new Date(manuallyAdjusted.timestamp).toLocaleTimeString()
-              })
-            } else {
-              // 没有手工调整，正常更新位置
-              const targetPoint = previewInstance.line.getTargetPoint()
-              if (targetPoint) {
-                previewInstance.hintNode.setPosition(targetPoint.x - 6, targetPoint.y - 6)
-                console.log('🔄 [统一预览线管理器] 更新单一拖拽提示点位置:', {
-                  nodeId: nodeId,
-                  position: { x: targetPoint.x - 6, y: targetPoint.y - 6 }
-                })
-              }
-            }
-          }
+          // 更新预览线终点标记位置
+          this.updateEndpointMarker(previewInstance.line, previewInstance.endPosition)
         }
         
         refreshedCount++
@@ -5131,10 +5408,11 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
-   * 更新拖拽提示点位置（手工调整）
+   * 更新拖拽提示点位置（手工调整）- 已废弃，改为预览线终点拖拽
    * @param {Object} hintNode - 拖拽提示点节点
    * @param {Object} newPosition - 新位置 {x, y}
    */
+  /*
   updateHintPosition(hintNode, newPosition) {
     const hintData = hintNode.getData() || {}
     const hintId = hintNode.id
@@ -5318,6 +5596,7 @@ export class UnifiedPreviewLineManager {
       console.error('💥 [统一预览线管理器] 更新拖拽提示点位置失败:', error)
     }
   }
+  */
 
   /**
    * 清理过期缓存
@@ -5565,6 +5844,334 @@ export class UnifiedPreviewLineManager {
       syncedHintNodes: syncedHintNodes,
       syncRate: totalBranches > 0 ? `${((syncedHintNodes / totalBranches) * 100).toFixed(1)}%` : '0%'
     })
+  }
+
+  /**
+   * 检查并执行自动吸附到预览线终点
+   * 这是一个代理方法，调用ConnectionPreviewManager的checkSnapToPreviewLines方法
+   * @param {Object} dragNode - 被拖拽的节点
+   * @param {Object} nodePosition - 节点位置
+   * @param {Object} nodeSize - 节点大小
+   */
+  checkSnapToPreviewLines(dragNode, nodePosition, nodeSize) {
+    // 检查节点是否已有输入连接，如果有则跳过吸附
+    const edges = this.graph.getIncomingEdges(dragNode)
+    if (edges && edges.length > 0) {
+      console.log('⏭️ [统一预览线管理器] 节点已有输入连接，跳过预览线终点吸附:', dragNode.id)
+      return
+    }
+    
+    // 🔧 防止重复吸附：检查是否正在处理吸附
+    if (this.isProcessingSnap) {
+      console.log('⏭️ [统一预览线管理器] 正在处理吸附，跳过重复调用:', dragNode.id)
+      return
+    }
+    
+    // 🔧 防止重复吸附：检查节点是否已经被标记为吸附目标
+    if (this.snappedNodes && this.snappedNodes.has(dragNode.id)) {
+      console.log('⏭️ [统一预览线管理器] 节点已被吸附，跳过重复处理:', dragNode.id)
+      return
+    }
+    
+    const dragNodeCenter = {
+      x: nodePosition.x + nodeSize.width / 2,
+      y: nodePosition.y + nodeSize.height / 2
+    }
+    
+    let closestSnap = null
+    let minDistance = Infinity
+    const snapDistance = 80 // 80px吸附距离
+    
+    // 检查所有预览线的终点是否在吸附范围内
+    this.previewLines.forEach((previewInstance, sourceNodeId) => {
+      // 跳过自己的预览线
+      if (sourceNodeId === dragNode.id) return
+      
+      // 🔧 新增：检查是否已经存在从这个源节点到目标节点的连接
+      const existingConnection = this.graph.getEdges().find(edge => {
+        const sourceNode = edge.getSourceNode()
+        const targetNode = edge.getTargetNode()
+        return sourceNode && targetNode && 
+               sourceNode.id === sourceNodeId && 
+               targetNode.id === dragNode.id
+      })
+      
+      if (existingConnection) {
+        console.log('⏭️ [统一预览线管理器] 已存在连接，跳过此源节点:', {
+          sourceNodeId,
+          targetNodeId: dragNode.id,
+          existingEdgeId: existingConnection.id
+        })
+        return
+      }
+      
+      // 处理分支预览线
+      if (Array.isArray(previewInstance)) {
+        previewInstance.forEach((instance, branchIndex) => {
+          if (instance.line && instance.state !== UnifiedPreviewStates.HIDDEN && instance.endPosition) {
+            const distance = Math.sqrt(
+              Math.pow(dragNodeCenter.x - instance.endPosition.x, 2) + 
+              Math.pow(dragNodeCenter.y - instance.endPosition.y, 2)
+            )
+            
+            if (distance < snapDistance && distance < minDistance) {
+              minDistance = distance
+              closestSnap = {
+                x: instance.endPosition.x - nodeSize.width / 2,
+                y: instance.endPosition.y - nodeSize.height / 2,
+                sourceNodeId: sourceNodeId,
+                branchId: instance.branchId,
+                branchLabel: instance.branchLabel,
+                distance: distance,
+                endPosition: instance.endPosition
+              }
+            }
+          }
+        })
+      } else {
+        // 处理单一预览线
+        if (previewInstance.line && previewInstance.state !== UnifiedPreviewStates.HIDDEN && previewInstance.endPosition) {
+          const distance = Math.sqrt(
+            Math.pow(dragNodeCenter.x - previewInstance.endPosition.x, 2) + 
+            Math.pow(dragNodeCenter.y - previewInstance.endPosition.y, 2)
+          )
+          
+          if (distance < snapDistance && distance < minDistance) {
+            minDistance = distance
+            closestSnap = {
+              x: previewInstance.endPosition.x - nodeSize.width / 2,
+              y: previewInstance.endPosition.y - nodeSize.height / 2,
+              sourceNodeId: sourceNodeId,
+              branchId: null,
+              branchLabel: null,
+              distance: distance,
+              endPosition: previewInstance.endPosition
+            }
+          }
+        }
+      }
+    })
+    
+    // 执行自动吸附
+    if (closestSnap) {
+      console.log('🎯 [统一预览线管理器] 检测到预览线终点吸附:', {
+        dragNodeId: dragNode.id,
+        sourceNodeId: closestSnap.sourceNodeId,
+        branchId: closestSnap.branchId,
+        distance: closestSnap.distance,
+        snapPosition: { x: closestSnap.x, y: closestSnap.y }
+      })
+      
+      // 🔧 设置吸附处理标志，防止重复处理
+      this.isProcessingSnap = true
+      
+      // 🔧 初始化已吸附节点集合
+      if (!this.snappedNodes) {
+        this.snappedNodes = new Set()
+      }
+      this.snappedNodes.add(dragNode.id)
+      
+      // 设置节点位置到吸附点
+      dragNode.setPosition(closestSnap.x, closestSnap.y)
+      
+      // 高亮显示吸附的预览线
+      this.highlightSnapTarget(closestSnap.sourceNodeId, closestSnap.branchId)
+      
+      // 延迟创建连接，避免拖拽过程中的冲突
+      setTimeout(() => {
+        // 🔧 再次检查是否已经存在连接，防止重复创建
+        const finalCheck = this.graph.getEdges().find(edge => {
+          const sourceNode = edge.getSourceNode()
+          const targetNode = edge.getTargetNode()
+          return sourceNode && targetNode && 
+                 sourceNode.id === closestSnap.sourceNodeId && 
+                 targetNode.id === dragNode.id
+        })
+        
+        if (!finalCheck) {
+          this.createSnapConnection(closestSnap.sourceNodeId, dragNode.id, closestSnap.branchId, closestSnap.branchLabel)
+        } else {
+          console.log('⏭️ [统一预览线管理器] 连接已存在，跳过创建:', {
+            sourceNodeId: closestSnap.sourceNodeId,
+            targetNodeId: dragNode.id,
+            existingEdgeId: finalCheck.id
+          })
+        }
+        
+        // 🔧 重置吸附处理标志
+        this.isProcessingSnap = false
+      }, 100)
+      
+      return true
+    }
+    
+    return false
+  }
+
+  /**
+   * 高亮吸附目标预览线
+   * @param {string} sourceNodeId - 源节点ID
+   * @param {string} branchId - 分支ID（可选）
+   */
+  highlightSnapTarget(sourceNodeId, branchId) {
+    const previewInstance = this.previewLines.get(sourceNodeId)
+    if (!previewInstance) return
+    
+    if (Array.isArray(previewInstance)) {
+      // 分支预览线
+      const targetInstance = previewInstance.find(instance => instance.branchId === branchId)
+      if (targetInstance && targetInstance.line) {
+        targetInstance.line.setAttrs({
+          line: {
+            stroke: '#ff4d4f',
+            strokeWidth: 3,
+            strokeDasharray: '5,5'
+          }
+        })
+      }
+    } else {
+      // 单一预览线
+      if (previewInstance.line) {
+        previewInstance.line.setAttrs({
+          line: {
+            stroke: '#ff4d4f',
+            strokeWidth: 3,
+            strokeDasharray: '5,5'
+          }
+        })
+      }
+    }
+  }
+
+  /**
+   * 创建吸附连接
+   * @param {string} sourceNodeId - 源节点ID
+   * @param {string} targetNodeId - 目标节点ID
+   * @param {string} branchId - 分支ID（可选）
+   * @param {string} branchLabel - 分支标签（可选）
+   */
+  createSnapConnection(sourceNodeId, targetNodeId, branchId, branchLabel) {
+    const sourceNode = this.graph.getCellById(sourceNodeId)
+    const targetNode = this.graph.getCellById(targetNodeId)
+    
+    if (!sourceNode || !targetNode) {
+      console.warn('🚫 [统一预览线管理器] 无法找到源节点或目标节点:', {
+        sourceNodeId,
+        targetNodeId,
+        sourceNodeFound: !!sourceNode,
+        targetNodeFound: !!targetNode
+      })
+      return
+    }
+    
+    // 创建连接边
+    const edge = this.graph.addEdge({
+      source: {
+        cell: sourceNodeId,
+        port: 'out'
+      },
+      target: {
+        cell: targetNodeId,
+        port: 'in'
+      },
+      router: {
+        name: 'orth',
+        args: {
+          padding: 10
+        }
+      },
+      connector: {
+        name: 'rounded',
+        args: {
+          radius: 8
+        }
+      },
+      connectionPoint: {
+        name: 'boundary',
+        args: {
+          anchor: 'center'
+        }
+      },
+      attrs: {
+        line: {
+          stroke: branchId ? '#1890ff' : '#52c41a',
+          strokeWidth: 2,
+          targetMarker: {
+            name: 'block',
+            width: 8,
+            height: 6
+          }
+        }
+      },
+      data: {
+        branchId,
+        branchLabel,
+        sourceNodeId,
+        targetNodeId,
+        isAutoSnapped: true
+      }
+    })
+    
+    // 如果是分支连接，添加标签
+    if (branchId && branchLabel) {
+      edge.setLabels([{
+        position: {
+          distance: 0.5,
+          offset: 0
+        },
+        attrs: {
+          text: {
+            text: branchLabel,
+            fontSize: 12,
+            fill: '#666'
+          },
+          rect: {
+            fill: '#fff',
+            stroke: '#1890ff',
+            strokeWidth: 1,
+            rx: 3,
+            ry: 3
+          }
+        }
+      }])
+      
+      console.log('🏷️ [统一预览线管理器] 为分支连接添加标签:', {
+        edgeId: edge.id,
+        branchId: branchId,
+        branchLabel: branchLabel
+      })
+    }
+    
+    // 移除对应的预览线
+    if (branchId) {
+      // 分支预览线：移除特定分支
+      this.removeSpecificBranchPreviewLine(sourceNodeId, branchId)
+    } else {
+      // 单一预览线：移除整个预览线
+      this.removePreviewLine(sourceNodeId)
+    }
+    
+    console.log('✅ [统一预览线管理器] 预览线终点吸附连接创建成功:', {
+      edgeId: edge.id,
+      sourceNodeId,
+      targetNodeId,
+      branchId,
+      branchLabel
+    })
+    
+    return edge
+  }
+
+  /**
+   * 清理吸附状态
+   * 在节点拖拽结束后调用，清理防重复状态
+   */
+  clearSnapState() {
+    this.isProcessingSnap = false
+    if (this.snappedNodes) {
+      this.snappedNodes.clear()
+    }
+    console.log('🧹 [统一预览线管理器] 已清理吸附状态')
   }
 
   /**

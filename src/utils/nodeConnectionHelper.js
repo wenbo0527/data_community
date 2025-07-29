@@ -61,13 +61,31 @@ export const calculateNextNodePosition = (sourceNode, outputIndex = 0, targetNod
  * @param {string} sourcePortId - 源端口ID
  * @param {Object} targetPosition - 目标位置
  * @param {string} connectionId - 连接线ID
+ * @param {string} layoutDirection - 布局方向 ('TB' | 'LR')
  * @returns {Object|null} 创建的连接线
  */
-export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPosition, connectionId) => {
+export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPosition, connectionId, layoutDirection = 'TB') => {
   if (!graph || !sourceNode) {
     console.warn('Graph or source node not available for preset connection')
     return null
   }
+
+  // 根据布局方向配置连接方向
+  const getDynamicDirectionConfig = (layoutDirection) => {
+    if (layoutDirection === 'LR') {
+      return {
+        startDirections: ['right'],
+        endDirections: ['left']
+      }
+    } else {
+      return {
+        startDirections: ['bottom'],
+        endDirections: ['top']
+      }
+    }
+  }
+  
+  const directionConfig = getDynamicDirectionConfig(layoutDirection)
 
   try {
     // 创建临时目标点
@@ -84,7 +102,10 @@ export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPo
         y: targetPosition.y
       },
       router: {
-        name: 'orth'  // 使用更稳定的orth路由器替代manhattan
+        name: 'orth',
+        args: {
+          ...directionConfig
+        }
       },
       connector: {
         name: 'rounded',
@@ -115,7 +136,8 @@ export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPo
       data: {
         isPreset: true,
         sourcePortId,
-        targetPosition
+        targetPosition,
+        layoutDirection
       },
       zIndex: -1 // 置于底层
     })
@@ -302,9 +324,10 @@ export const clearNodePresetConnections = (graph, nodeId) => {
  * 创建节点的所有预设连接线
  * @param {Object} graph - X6 图实例
  * @param {Object} node - 节点对象
+ * @param {string} layoutDirection - 布局方向 ('TB' | 'LR')
  * @returns {Array} 创建的预设连接线数组
  */
-export const createNodePresetConnections = (graph, node) => {
+export const createNodePresetConnections = (graph, node, layoutDirection = 'TB') => {
   if (!graph || !node) return []
 
   const nodeData = node.getData()
@@ -326,7 +349,8 @@ export const createNodePresetConnections = (graph, node) => {
       node, 
       port.id || `out${index + 1}`, 
       targetPosition, 
-      connectionId
+      connectionId,
+      layoutDirection
     )
     
     if (connection) {

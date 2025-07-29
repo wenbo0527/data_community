@@ -323,9 +323,10 @@ export class CoordinateSystemManager {
    * 调试日志
    */
   log(message, data = null) {
-    if (this.debugMode) {
-      console.log(`[CoordinateSystemManager] ${message}`, data || '');
-    }
+    // 已禁用日志输出以减少控制台冗余信息
+    // if (this.debugMode) {
+    //   console.log(`[CoordinateSystemManager] ${message}`, data || '');
+    // }
   }
 
   /**

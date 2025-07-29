@@ -92,9 +92,9 @@ class BaseNodeConfigStrategy {
           if (processedConfig.branches && Array.isArray(processedConfig.branches)) {
             requiredOutputs = processedConfig.branches.length
           } else if (processedConfig.branchCount && typeof processedConfig.branchCount === 'number') {
-            requiredOutputs = processedConfig.branchCount + 1 // 包含未命中人群分支
+            requiredOutputs = processedConfig.branchCount // 不再自动加1，分支数量就是配置的数量
           } else {
-            requiredOutputs = 2 // 默认：1个分流 + 1个未命中人群
+            requiredOutputs = 1 // 默认：只有1个输出端口，分支由配置管理
           }
         } else if (this.nodeType === 'event-split') {
           requiredOutputs = 2 // 是/否两个分支
@@ -414,17 +414,21 @@ class AudienceSplitConfigStrategy extends BranchNodeConfigStrategy {
         name: layer.crowdName || `分支${index + 1}`,
         crowdId: layer.crowdId,
         crowdName: layer.crowdName,
-        order: layer.order || index + 1
+        order: layer.order || index + 1,
+        isDefault: false
       }))
 
-      // 添加默认的未命中分支
-      branches.push({
-        id: 'default',
-        name: '未命中人群',
-        crowdId: null,
-        crowdName: '未命中人群',
-        order: branches.length + 1
-      })
+      // 从配置中读取未命中分支，而不是自动添加
+      if (config.unmatchBranch) {
+        branches.push({
+          id: config.unmatchBranch.id || 'default',
+          name: config.unmatchBranch.name || '未命中人群',
+          crowdId: null,
+          crowdName: config.unmatchBranch.name || '未命中人群',
+          order: config.unmatchBranch.order || branches.length + 1,
+          isDefault: true
+        })
+      }
 
       return {
         ...config,

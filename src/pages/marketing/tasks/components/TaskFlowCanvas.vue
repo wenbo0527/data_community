@@ -37,6 +37,69 @@
       <div v-show="!minimapCollapsed" class="minimap-content" ref="minimapContent"></div>
     </div>
 
+    <!-- 历史面板 -->
+    <div 
+      v-show="showHistoryPanel" 
+      class="history-panel"
+    >
+      <div class="history-header">
+        <span class="history-title">操作历史</span>
+        <a-button 
+          size="mini" 
+          type="text" 
+          @click="toggleHistoryPanel"
+          title="关闭历史面板"
+        >
+          <template #icon><icon-close /></template>
+        </a-button>
+      </div>
+      <div class="history-content">
+        <div class="history-stats">
+          <span class="history-stat">
+            可撤销: {{ historyStack.undoStack.length }}
+          </span>
+          <span class="history-stat">
+            可重做: {{ historyStack.redoStack.length }}
+          </span>
+        </div>
+        <div class="history-list">
+          <div 
+            v-for="(item, index) in historyStack.undoStack.slice().reverse()" 
+            :key="`undo-${index}`"
+            class="history-item"
+            :class="{ 'history-item-current': index === 0 }"
+            @click="jumpToHistoryState(historyStack.undoStack.length - 1 - index)"
+          >
+            <div class="history-item-icon">
+              <icon-check v-if="index === 0" />
+              <icon-history v-else />
+            </div>
+            <div class="history-item-content">
+              <div class="history-item-title">{{ getOperationDescription(item) }}</div>
+              <div class="history-item-time">{{ formatTime(item.timestamp) }}</div>
+            </div>
+          </div>
+          <div v-if="historyStack.redoStack.length > 0" class="history-divider">
+            <span>可重做操作</span>
+          </div>
+          <div 
+            v-for="(item, index) in historyStack.redoStack" 
+            :key="`redo-${index}`"
+            class="history-item history-item-redo"
+            @click="jumpToHistoryState(historyStack.undoStack.length + index + 1)"
+          >
+            <div class="history-item-icon">
+              <icon-redo />
+            </div>
+            <div class="history-item-content">
+              <div class="history-item-title">{{ getOperationDescription(item) }}</div>
+              <div class="history-item-time">{{ formatTime(item.timestamp) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 节点类型选择器 -->
     <NodeTypeSelector v-if="showNodeSelector" :visible="showNodeSelector" :position="nodeSelectorPosition"
       :source-node="nodeSelectorSourceNode" @select="handleNodeTypeSelected" @close="closeNodeSelector" />
@@ -94,11 +157,29 @@
       </a-button-group>
 
       <a-button-group style="margin-left: 8px;">
-        <!-- 智能布局按钮 -->
-        <a-button @click="applySmartLayout" size="small" type="primary" :loading="isApplyingLayout">
+        <!-- 🎯 统一结构化布局按钮 -->
+        <a-button @click="applyUnifiedStructuredLayout" size="small" type="primary" :loading="isApplyingLayout">
           <template #icon><icon-sort /></template>
-          智能布局
+          统一布局
         </a-button>
+        
+        <!-- 布局方向切换按钮 -->
+        <a-dropdown @select="handleLayoutDirectionChange">
+          <a-button size="small" :type="currentLayoutDirection === 'TB' ? 'primary' : 'secondary'">
+            <template #icon><icon-swap /></template>
+            {{ currentLayoutDirection === 'TB' ? '从上到下' : '从左到右' }}
+          </a-button>
+          <template #content>
+            <a-doption value="TB" :class="{ 'arco-dropdown-option-selected': currentLayoutDirection === 'TB' }">
+              <icon-down style="margin-right: 8px;" />
+              从上到下
+            </a-doption>
+            <a-doption value="LR" :class="{ 'arco-dropdown-option-selected': currentLayoutDirection === 'LR' }">
+              <icon-right style="margin-right: 8px;" />
+              从左到右
+            </a-doption>
+          </template>
+        </a-dropdown>
         
         <!-- 小地图控制按钮 -->
         <a-button @click="toggleMinimap" size="small" :type="showMinimap ? 'primary' : 'secondary'">
@@ -112,13 +193,19 @@
         </a-button>
         
         <!-- 撤销重做按钮 -->
-        <a-button @click="undo" size="small" :disabled="!canUndo">
+        <a-button @click="undo" size="small" :disabled="!canUndo" title="撤销 (Ctrl+Z)">
           <template #icon><icon-up /></template>
           撤销
         </a-button>
-        <a-button @click="redo" size="small" :disabled="!canRedo">
+        <a-button @click="redo" size="small" :disabled="!canRedo" title="重做 (Ctrl+Y)">
           <template #icon><icon-down /></template>
           重做
+        </a-button>
+        
+        <!-- 历史面板按钮 -->
+        <a-button @click="toggleHistoryPanel" size="small" :type="showHistoryPanel ? 'primary' : 'secondary'" title="操作历史">
+          <template #icon><icon-history /></template>
+          历史
         </a-button>
         
         <!-- 导出图片按钮 -->
@@ -153,7 +240,8 @@ import TaskFlowConfigDrawers from './TaskFlowConfigDrawers.vue'
 import FlowNode from '../../../../components/FlowNode.vue'
 import { getNodeConfig } from '../../../../utils/nodeTypes.js'
 import { useConfigDrawers } from '../../../../composables/useConfigDrawers.js'
-import { useEnhancedAutoLayout } from '../../../../composables/useEnhancedAutoLayout.js'
+import { useStructuredLayout } from '../../../../composables/useStructuredLayout.js'
+// import { useEnhancedAutoLayout } from '../../../../composables/useEnhancedAutoLayout.js' // 已删除，功能已整合到原生Dagre布局
 import CanvasPanZoomManager from '../../../../utils/CanvasPanZoomManager.js'
 import { nodeConfigManager } from '../../../../utils/NodeConfigManager.js'
 import { registerCustomShapes } from '../../../../utils/x6Config.js'
@@ -161,6 +249,8 @@ import { createBranchConnectionConfig, validateConnectionConfig } from '../../..
 import { connectionErrorHandler, logger } from '../../../../utils/enhancedErrorHandler.js'
 import portConfigFactory from '../../../../utils/portConfigFactory.js'
 import { coordinateManager } from '../../../../utils/CoordinateSystemManager.js'
+import EdgeOverlapManager from '../../../../utils/EdgeOverlapManager.js'
+import { dragSnapLogger, startNodeDragLogging, endNodeDragLogging } from '../../../../utils/DragSnapLogger.js'
 import {
   IconPlus,
   IconMinus,
@@ -175,7 +265,12 @@ import {
   IconEye,
   IconUp,
   IconDown,
-  IconClose
+  IconClose,
+  IconHistory,
+  IconCheck,
+  IconRedo,
+  IconSwap,
+  IconRight
 } from '@arco-design/web-vue/es/icon'
 import { Modal, Message } from '@arco-design/web-vue'
 
@@ -267,6 +362,10 @@ const selectedStartNodeData = ref(null)
 const isDragging = ref(false)
 const dragNodeType = ref(null)
 
+// 拖拽会话管理
+const currentDragSession = ref(null) // 当前拖拽会话ID
+const dragSessionData = ref(new Map()) // 拖拽会话数据缓存
+
 // 删除状态
 const isDeletingNode = ref(false)
 
@@ -276,6 +375,7 @@ const isApplyingLayout = ref(false)
 // 缩放相关状态
 const currentScale = ref(1)
 let panZoomManager = null
+let edgeOverlapManager = null
 
 // 拖拽模式相关状态
 const currentDragMode = ref('default')
@@ -284,15 +384,81 @@ const currentDragMode = ref('default')
 const canUndo = ref(false)
 const canRedo = ref(false)
 
+// 历史面板相关状态
+const showHistoryPanel = ref(false)
+const historyStack = ref({
+  undoStack: [],
+  redoStack: []
+})
+const currentHistoryIndex = ref(-1)
+const lastOperationTime = ref(0)
+const operationThrottleDelay = 300 // 操作节流延迟（毫秒）
+
 // 添加防护标志，避免递归更新
 const isUpdatingScale = ref(false)
 const isUpdatingLayout = ref(false)
 
-// 初始化增强自动布局管理
-const autoLayout = useEnhancedAutoLayout(() => graph)
+// 初始化增强自动布局管理（已废弃，使用原生Dagre布局）
+// const autoLayout = useEnhancedAutoLayout(() => graph)
 
 // 使用 ref 而不是 computed 来避免递归更新问题
 const layoutStats = ref(null)
+
+// 配置抽屉管理器（响应式变量）
+const configDrawers = ref(null)
+
+// 布局方向状态管理
+const currentLayoutDirection = computed(() => {
+  return configDrawers.value?.structuredLayout?.layoutDirection?.value || 'TB'
+})
+
+// 布局方向切换处理函数
+const handleLayoutDirectionChange = async (direction) => {
+  console.log(`[TaskFlowCanvas] 切换布局方向: ${direction}`)
+  
+  if (!configDrawers.value?.structuredLayout?.switchLayoutDirection) {
+    console.error('[TaskFlowCanvas] 布局方向切换功能不可用')
+    Message.error('布局方向切换功能不可用')
+    return
+  }
+
+  try {
+    isApplyingLayout.value = true
+    const result = await configDrawers.value.structuredLayout.switchLayoutDirection(direction)
+    
+    if (result && result.success) {
+      console.log(`[TaskFlowCanvas] 布局方向切换成功: ${direction}`)
+      Message.success(`布局方向已切换为${direction === 'TB' ? '从上到下' : '从左到右'}`)
+      
+      // 更新连线重叠管理器的布局方向
+      if (edgeOverlapManager && edgeOverlapManager.updateLayoutDirection) {
+        edgeOverlapManager.updateLayoutDirection(direction)
+        console.log(`[TaskFlowCanvas] 连线重叠管理器布局方向已更新: ${direction}`)
+      }
+      
+      // 自动缩放到合适大小
+      await nextTick()
+      setTimeout(() => {
+        graph.zoomToFit({ padding: 50 })
+        
+        // 检查并限制缩放比例
+        const currentZoom = graph.zoom()
+        if (currentZoom > 1.2) {
+          console.log(`[TaskFlowCanvas] 限制缩放比例从 ${currentZoom.toFixed(2)} 到 1.2`)
+          graph.zoomTo(1.2, { center: graph.getGraphArea().center })
+        }
+      }, 300)
+    } else {
+      console.error('[TaskFlowCanvas] 布局方向切换失败')
+      Message.error('布局方向切换失败')
+    }
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 布局方向切换异常:', error)
+    Message.error('布局方向切换异常: ' + error.message)
+  } finally {
+    isApplyingLayout.value = false
+  }
+}
 
 // 手动更新统计信息的函数
 const updateLayoutStats = () => {
@@ -303,7 +469,8 @@ const updateLayoutStats = () => {
 
   try {
     isUpdatingLayout.value = true
-    const stats = autoLayout.currentStats.value
+    // 使用原生Dagre布局的统计信息
+    const stats = configDrawers.value?.structuredLayout?.layoutStats?.value
     if (stats) {
       // 深拷贝避免引用问题
       layoutStats.value = JSON.parse(JSON.stringify(stats))
@@ -318,9 +485,6 @@ const updateLayoutStats = () => {
     isUpdatingLayout.value = false
   }
 }
-
-// 配置抽屉管理器（响应式变量）
-const configDrawers = ref(null)
 
 // 初始化画布
 // 全局初始化标志，防止重复初始化
@@ -438,19 +602,83 @@ const initCanvas = async () => {
           radius: 6,
         },
       },
-      // 使用更可靠的boundary连接点
+      // 🔧 修复：使用端口位置而不是节点中心点
       connectionPoint: {
-        name: 'boundary',
+        name: 'anchor',
         args: {
-          anchor: 'center'
+          // 自定义端口位置计算函数
+          getConnectionPoint(terminal, view, magnet, connectionPoint, type, options) {
+            if (!magnet || !view) {
+              return connectionPoint
+            }
+            
+            try {
+              const node = view.cell
+              const nodePosition = node.getPosition()
+              const nodeSize = node.getSize()
+              
+              // 获取端口配置
+              const portId = magnet.getAttribute('port')
+              if (!portId) {
+                return connectionPoint
+              }
+              
+              const portConfig = node.getPortProp(portId, 'position') || {}
+              
+              let portX = nodePosition.x
+              let portY = nodePosition.y
+              
+              // 根据端口配置计算精确位置
+              if (portConfig.name === 'bottom') {
+                const args = portConfig.args || {}
+                const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+                  parseFloat(args.x) / 100 : 0.5
+                portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+                portY = nodePosition.y + nodeSize.height + (args.dy || 0)
+              } else if (portConfig.name === 'top') {
+                const args = portConfig.args || {}
+                const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+                  parseFloat(args.x) / 100 : 0.5
+                portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
+                portY = nodePosition.y + (args.dy || 0)
+              } else if (portConfig.name === 'left') {
+                const args = portConfig.args || {}
+                const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+                  parseFloat(args.y) / 100 : 0.5
+                portX = nodePosition.x + (args.dx || 0)
+                portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+              } else if (portConfig.name === 'right') {
+                const args = portConfig.args || {}
+                const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+                  parseFloat(args.y) / 100 : 0.5
+                portX = nodePosition.x + nodeSize.width + (args.dx || 0)
+                portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
+              } else {
+                // 默认使用节点中心
+                portX = nodePosition.x + nodeSize.width / 2
+                portY = nodePosition.y + nodeSize.height / 2
+              }
+              
+              console.log('🎯 [连接点计算] 端口位置:', {
+                nodeId: node.id,
+                portId,
+                portConfig: portConfig.name,
+                calculatedPosition: { x: portX, y: portY },
+                nodePosition,
+                nodeSize
+              })
+              
+              return { x: portX, y: portY }
+            } catch (error) {
+              console.warn('⚠️ [连接点计算] 端口位置计算失败，使用默认位置:', error)
+              return connectionPoint
+            }
+          }
         }
       },
       // 为新创建的边设置默认连接点
       defaultConnectionPoint: {
-        name: 'boundary',
-        args: {
-          anchor: 'center'
-        }
+        name: 'anchor'
       },
       allowBlank: false,
       snap: {
@@ -515,15 +743,38 @@ const initCanvas = async () => {
     enabled: true,
     ignoreAdd: false,
     ignoreRemove: false,
-    ignoreChange: false
+    ignoreChange: false,
+    beforeAddCommand: (event, args) => {
+      const now = Date.now()
+      
+      // 过滤频繁的位置更新操作
+      if (event === 'cell:change:position' && 
+          now - lastOperationTime.value < operationThrottleDelay) {
+        return false
+      }
+      
+      // 过滤临时的样式变化
+      if (event === 'cell:change:attrs' && args.options?.temp) {
+        return false
+      }
+      
+      // 过滤预览线相关的操作
+      if (args.cell && args.cell.id && args.cell.id.includes('preview-line')) {
+        return false
+      }
+      
+      lastOperationTime.value = now
+      return true
+    }
   })
   graph.use(historyPlugin)
-  console.log('[TaskFlowCanvas] 历史记录插件初始化完成')
+  console.log('[TaskFlowCanvas] 历史记录插件初始化完成，已启用操作过滤')
   console.log('[TaskFlowCanvas] 历史记录插件配置:', {
     enabled: historyPlugin.options.enabled,
     ignoreAdd: historyPlugin.options.ignoreAdd,
     ignoreRemove: historyPlugin.options.ignoreRemove,
-    ignoreChange: historyPlugin.options.ignoreChange
+    ignoreChange: historyPlugin.options.ignoreChange,
+    hasBeforeAddCommand: !!historyPlugin.options.beforeAddCommand
   })
   
   // 初始化对齐线插件
@@ -541,12 +792,45 @@ const initCanvas = async () => {
     const canRedoValue = graph.canRedo()
     canUndo.value = canUndoValue
     canRedo.value = canRedoValue
+    
+    // 更新历史栈信息
+    updateHistoryStack()
+    
     console.log('[历史记录] 状态变化:', {
       canUndo: canUndoValue,
       canRedo: canRedoValue,
       undoStackLength: graph.history?.undoStack?.length || 0,
       redoStackLength: graph.history?.redoStack?.length || 0
     })
+  })
+
+  // 监听命令添加事件
+  graph.on('history:command:added', (args) => {
+    const { command } = args
+    console.log('[历史记录] 命令添加:', {
+      event: command.event,
+      cellId: command.data?.cell?.id,
+      timestamp: Date.now()
+    })
+    updateHistoryStack()
+  })
+
+  // 监听撤销事件
+  graph.on('history:undo', (args) => {
+    const { command } = args
+    const description = getOperationDescription(command)
+    Message.success(`已撤销: ${description}`)
+    console.log('[历史记录] 撤销操作:', description)
+    updateHistoryStack()
+  })
+
+  // 监听重做事件
+  graph.on('history:redo', (args) => {
+    const { command } = args
+    const description = getOperationDescription(command)
+    Message.success(`已重做: ${description}`)
+    console.log('[历史记录] 重做操作:', description)
+    updateHistoryStack()
   })
 
   // 监听其他可能影响历史记录的事件
@@ -615,9 +899,9 @@ const initCanvas = async () => {
     console.log('[TaskFlowCanvas] 配置抽屉管理器初始化完成')
   }
 
-  // 初始化自动布局管理器
-  autoLayout.initLayoutManager()
-  console.log('[TaskFlowCanvas] 自动布局管理器初始化完成')
+  // 初始化自动布局管理器（已废弃，使用原生Dagre布局）
+  // autoLayout.initLayoutManager()
+  console.log('[TaskFlowCanvas] 自动布局管理器初始化完成（使用原生Dagre布局）')
 
   // 初始化统计信息
   updateLayoutStats()
@@ -630,15 +914,13 @@ const initCanvas = async () => {
     configDrawers.value.structuredLayout.initializeLayoutEngine()
     console.log('[TaskFlowCanvas] 布局引擎初始化完成')
 
-    // 获取初始化后的管理器实例
-    const layoutEngine = configDrawers.value.structuredLayout.getLayoutEngine()
-    const branchManager = configDrawers.value.structuredLayout.getBranchManager()
-    const connectionPreviewManager = configDrawers.value.structuredLayout.getConnectionPreviewManager()
+    // 获取初始化后的管理器实例（使用正确的属性名）
+    const connectionPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager
 
     console.log('[TaskFlowCanvas] 结构化布局组件初始化结果:', {
-      layoutEngine: !!layoutEngine,
-      branchManager: !!branchManager,
-      unifiedPreviewManager: !!connectionPreviewManager
+      layoutEngineStatus: configDrawers.value.structuredLayout.getLayoutEngineStatus?.() || 'unknown',
+      unifiedPreviewManager: !!connectionPreviewManager,
+      isReady: configDrawers.value.structuredLayout.isReady || false
     })
 
     if (connectionPreviewManager) {
@@ -652,7 +934,7 @@ const initCanvas = async () => {
   console.log('[TaskFlowCanvas] 获取已有的统一预览线管理器')
   let enhancedPreviewManager = null
   if (configDrawers.value?.structuredLayout) {
-    enhancedPreviewManager = configDrawers.value.structuredLayout.getConnectionPreviewManager()
+    enhancedPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager
 
     if (enhancedPreviewManager) {
       console.log('[TaskFlowCanvas] 已获取现有的统一预览线管理器')
@@ -670,6 +952,11 @@ const initCanvas = async () => {
   // 初始化拖拽缩放管理器（在绑定其他事件之前）
   panZoomManager = new CanvasPanZoomManager(graph)
   console.log('[TaskFlowCanvas] 拖拽缩放管理器初始化完成')
+
+  // 初始化连线重叠管理器
+  const layoutDirection = currentLayoutDirection.value || 'TB'
+  edgeOverlapManager = new EdgeOverlapManager(graph, layoutDirection)
+  console.log('[TaskFlowCanvas] 连线重叠管理器初始化完成, 布局方向:', layoutDirection)
 
   // 绑定事件
   bindEvents()
@@ -692,6 +979,9 @@ const initCanvas = async () => {
       addStartNode()
     }
   }
+
+  // 添加汇总日志 - 统计页面中各种元素的数量
+  logCanvasSummary()
 
   console.log('[TaskFlowCanvas] 画布初始化完成，当前节点数:', nodes.value.length)
 
@@ -808,7 +1098,106 @@ const bindEvents = () => {
   // 节点拖拽开始事件
   graph.on('node:move', ({ node }) => {
     isDragging.value = true
-    dragNodeType.value = node.getData()?.type || 'unknown'
+    const nodeData = node.getData() || {}
+    dragNodeType.value = nodeData.type || 'unknown'
+    
+    // 只对拖拽点启动吸附日志记录
+    if (nodeData.isDragHint || nodeData.type === 'drag-hint') {
+      const position = node.getPosition()
+      currentDragSession.value = startNodeDragLogging(node, position)
+      
+      // 记录拖拽会话数据
+      dragSessionData.value.set(currentDragSession.value, {
+        startTime: Date.now(),
+        node: node,
+        startPosition: { ...position },
+        nearestNodes: [] // 将在拖拽过程中收集
+      })
+    }
+  })
+
+  // 连接添加事件 - 确保连接数据同步到 connections 数组
+  graph.on('edge:added', ({ edge }) => {
+    // 过滤掉预览线，只处理真正的连接
+    const edgeId = edge.id
+    if (edgeId.includes('preview') || edgeId.includes('unified_preview')) {
+      console.log('🔍 [TaskFlowCanvas] 跳过预览线，不添加到连接数组:', edgeId)
+      return
+    }
+    
+    // 验证边的源和目标是否为有效的节点ID
+    const sourceId = edge.getSourceCellId()
+    const targetId = edge.getTargetCellId()
+    
+    // 检查是否是临时连线（拖拽过程中的连线，targetId 为 undefined）
+    if (!targetId) {
+      console.log('🔍 [TaskFlowCanvas] 跳过临时连线（拖拽中），不添加到连接数组:', {
+        edgeId,
+        sourceId,
+        targetId
+      })
+      return
+    }
+    
+    if (!sourceId || !targetId) {
+      console.warn('⚠️ [TaskFlowCanvas] 边缺少有效的源或目标节点ID，跳过添加:', {
+        edgeId,
+        sourceId,
+        targetId
+      })
+      return
+    }
+    
+    // 验证源和目标是否为字符串类型的节点ID
+    if (typeof sourceId !== 'string' || typeof targetId !== 'string') {
+      console.warn('⚠️ [TaskFlowCanvas] 边的源或目标不是有效的节点ID，跳过添加:', {
+        edgeId,
+        sourceId,
+        targetId,
+        sourceType: typeof sourceId,
+        targetType: typeof targetId
+      })
+      return
+    }
+    
+    const edgeData = edge.getData() || {}
+    const connectionData = {
+      id: edge.id,
+      source: sourceId,
+      target: targetId,
+      sourcePort: edge.getSourcePortId() || 'out',
+      targetPort: edge.getTargetPortId() || 'in',
+      branchId: edgeData.branchId,
+      label: edgeData.label || ''
+    }
+    
+    // 检查连接是否已存在，避免重复添加
+    const existingConnection = connections.value.find(conn => conn.id === connectionData.id)
+    if (!existingConnection) {
+      connections.value.push(connectionData)
+      console.log('✅ [TaskFlowCanvas] 连接已添加到数据数组:', connectionData)
+    } else {
+      console.log('🔍 [TaskFlowCanvas] 连接已存在，跳过重复添加:', connectionData.id)
+    }
+  })
+
+  // 连接删除事件 - 确保连接数据从 connections 数组中移除
+  graph.on('edge:removed', ({ edge }) => {
+    const edgeId = edge.id
+    
+    // 过滤掉预览线，只处理真正的连接
+    if (edgeId.includes('preview') || edgeId.includes('unified_preview')) {
+      console.log('🔍 [TaskFlowCanvas] 跳过预览线删除，不从连接数组中移除:', edgeId)
+      return
+    }
+    
+    const index = connections.value.findIndex(conn => conn.id === edgeId)
+    if (index !== -1) {
+      const removedConnection = connections.value.splice(index, 1)[0]
+      console.log('✅ [TaskFlowCanvas] 连接已从数据数组中移除:', removedConnection)
+    } else {
+      console.log('🔍 [TaskFlowCanvas] 连接不在数据数组中，无需移除:', edgeId)
+    }
   })
 
   // 添加画布空白区域点击事件监听
@@ -831,15 +1220,22 @@ const bindEvents = () => {
     // 🔧 使用坐标系统管理器进行坐标转换
     const rawPosition = node.getPosition()
     const size = node.getSize()
+    const nodeData = node.getData() || {}
     
-    // 通过坐标管理器验证和修正坐标
-    const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
-    if (coordinateValidation && coordinateValidation.difference) {
-      // console.log('🔍 [拖拽坐标修正] 检测到坐标偏差:', {
-      //   nodeId: node.id,
-      //   rawPosition,
-      //   coordinateValidation
-      // })
+    // 只对拖拽点进行坐标修正和吸附相关的日志记录
+    const isDragHint = nodeData.isDragHint || nodeData.type === 'drag-hint'
+    
+    if (isDragHint) {
+      // 通过坐标管理器验证和修正坐标
+      const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
+      if (coordinateValidation && coordinateValidation.difference && currentDragSession.value) {
+        // 记录坐标修正信息到拖拽会话（不立即输出）
+        dragSnapLogger.logProcess(currentDragSession.value, 'coordinate_correction', {
+          nodeId: node.id,
+          rawPosition,
+          coordinateValidation
+        })
+      }
     }
     
     // 计算节点中心点（使用修正后的坐标）
@@ -851,12 +1247,57 @@ const bindEvents = () => {
     if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
       // 调用统一预览线管理器的吸附高亮逻辑
       unifiedPreviewManager.highlightNearbyNodes(centerX, centerY)
+      
+      // 🔧 添加预览线终点吸附检查
+      if (typeof unifiedPreviewManager.checkSnapToPreviewLines === 'function') {
+        unifiedPreviewManager.checkSnapToPreviewLines(node, rawPosition, size)
+      }
 
       // 同时检测是否接近预览线的拖拽提示点
       const dragHints = graph.getNodes().filter(n => {
         const data = n.getData() || {}
         return data.isDragHint || data.type === 'drag-hint'
       })
+
+      // 只对拖拽点收集附近的节点信息（用于最终日志）
+      if (isDragHint && currentDragSession.value) {
+        const sessionData = dragSessionData.value.get(currentDragSession.value)
+        if (sessionData) {
+          // 更新附近节点信息
+          const nearbyNodes = []
+          
+          // 检查普通节点
+          graph.getNodes().forEach(n => {
+            if (n.id !== node.id) {
+              const nData = n.getData() || {}
+              if (!nData.isDragHint && nData.type !== 'drag-hint') {
+                const nPos = n.getPosition()
+                const nSize = n.getSize()
+                const nCenterX = nPos.x + nSize.width / 2
+                const nCenterY = nPos.y + nSize.height / 2
+                const distance = Math.sqrt(
+                  Math.pow(centerX - nCenterX, 2) +
+                  Math.pow(centerY - nCenterY, 2)
+                )
+                
+                if (distance <= 150) { // 收集150px范围内的节点
+                  nearbyNodes.push({
+                    id: n.id,
+                    type: nData.type,
+                    position: nPos,
+                    size: nSize,
+                    distance: distance
+                  })
+                }
+              }
+            }
+          })
+          
+          // 按距离排序
+          nearbyNodes.sort((a, b) => a.distance - b.distance)
+          sessionData.nearestNodes = nearbyNodes.slice(0, 5) // 只保留最近的5个节点
+        }
+      }
 
       dragHints.forEach(hint => {
         const hintPos = hint.getPosition()
@@ -888,6 +1329,15 @@ const bindEvents = () => {
               fill: 'rgba(255, 77, 79, 0.1)'
             }
           })
+          
+          // 只对拖拽点记录高亮变化到拖拽会话（不立即输出）
+          if (isDragHint && currentDragSession.value) {
+            dragSnapLogger.logProcess(currentDragSession.value, 'highlight_change', {
+              hintId: hint.id,
+              distance: distance,
+              highlighted: true
+            })
+          }
         }
       })
     }
@@ -924,6 +1374,11 @@ const bindEvents = () => {
       if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
         // 调用统一预览线管理器的吸附高亮逻辑
         unifiedPreviewManager.highlightNearbyNodes(centerX, centerY)
+        
+        // 🔧 添加预览线终点吸附检查
+        if (typeof unifiedPreviewManager.checkSnapToPreviewLines === 'function') {
+          unifiedPreviewManager.checkSnapToPreviewLines(node, current, size)
+        }
       }
     }
   })
@@ -941,7 +1396,8 @@ const bindEvents = () => {
       //   hintData: cellData
       // })
       
-      // 获取统一预览线管理器
+      // 获取统一预览线管理器 - 已改为预览线终点拖拽，不再使用拖拽提示点
+      /*
       const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
       if (unifiedPreviewManager && typeof unifiedPreviewManager.updateHintPosition === 'function') {
         try {
@@ -963,6 +1419,7 @@ const bindEvents = () => {
           console.warn('⚠️ [拖拽提示点移动] 更新拖拽提示点位置失败:', error)
         }
       }
+      */
       return // 拖拽提示点移动不需要后续的普通节点处理逻辑
     }
     
@@ -1008,7 +1465,27 @@ const bindEvents = () => {
         }
       }
       
-      nodeData.position = position
+      // 🔧 修复：确保节点位置更新正确同步到nodes数组
+      const nodeIndex = nodes.value.findIndex(n => n.id === node.id)
+      if (nodeIndex >= 0) {
+        // 使用响应式更新确保数据同步
+        nodes.value[nodeIndex] = {
+          ...nodes.value[nodeIndex],
+          position: { ...position }
+        }
+        console.log('✅ [节点移动] 节点位置已同步到数据数组:', {
+          nodeId: node.id,
+          nodeIndex,
+          newPosition: position,
+          nodeType: nodes.value[nodeIndex].type
+        })
+      } else {
+        console.warn('⚠️ [节点移动] 在nodes数组中未找到对应节点:', {
+          nodeId: node.id,
+          nodesCount: nodes.value.length
+        })
+      }
+      
       emit('node-moved', { nodeId: node.id, position })
 
       // 获取统一预览线管理器
@@ -1180,39 +1657,36 @@ const bindEvents = () => {
         })
 
         // 🔍 添加吸附检测结果日志
-        console.log('🔍 [吸附检测结果] 检测完成:', {
-          timestamp: new Date().toISOString(),
-          nearestHintFound: !!nearestHint,
-          nearestHintId: nearestHint?.id,
-          nearestDistance: nearestDistance,
-          threshold: 80,
-          willTriggerSnap: !!nearestHint
-        })
+        if (currentDragSession.value) {
+          // 记录吸附检测结果到拖拽会话
+          dragSnapLogger.logProcess(currentDragSession.value, 'snap_detection', {
+            nearestHintFound: !!nearestHint,
+            nearestHintId: nearestHint?.id,
+            nearestDistance: nearestDistance,
+            threshold: 80,
+            willTriggerSnap: !!nearestHint
+          })
+        }
 
         // 如果找到最近的拖拽提示点，则进行连接
         if (nearestHint) {
-          // 🔍 记录吸附前的位置信息
-          const beforeSnapPosition = {
-            draggedNode: {
-              id: node.id,
-              type: nodeData.type,
-              position: { ...position },
-              center: { x: centerX, y: centerY }
-            },
-            dragHint: {
-              id: nearestHint.id,
-              position: { ...nearestHint.getPosition() },
-              size: { ...nearestHint.getSize() },
-              distance: nearestDistance
-            }
+          // 🔍 记录吸附前的位置信息（不立即输出）
+          if (currentDragSession.value) {
+            dragSnapLogger.logProcess(currentDragSession.value, 'before_snap', {
+              draggedNode: {
+                id: node.id,
+                type: nodeData.type,
+                position: { ...position },
+                center: { x: centerX, y: centerY }
+              },
+              dragHint: {
+                id: nearestHint.id,
+                position: { ...nearestHint.getPosition() },
+                size: { ...nearestHint.getSize() },
+                distance: nearestDistance
+              }
+            })
           }
-          
-          // console.log('🎯 [拖拽点吸附] 检测到吸附条件 - 吸附前状态:', {
-          //   timestamp: new Date().toISOString(),
-          //   beforeSnapPosition,
-          //   snapThreshold: 80,
-          //   actualDistance: nearestDistance
-          // })
 
           // 获取拖拽提示点对应的预览线信息
           const hintData = nearestHint.getData() || {}
@@ -1326,19 +1800,21 @@ const bindEvents = () => {
 
                   const connection = connectionResult.result
 
-                  // 🔍 记录连接创建成功后的状态
-                  const afterSnapPosition = {
-                    targetNode: {
-                      id: node.id,
-                      positionAfterSnap: node.getPosition()
-                    },
-                    connection: {
-                      id: connection.id,
-                      sourceId: connection.getSourceNode()?.id,
-                      targetId: connection.getTargetNode()?.id,
-                      branchId: connection.getData()?.branchId,
-                      branchLabel: connection.getData()?.branchLabel
-                    }
+                  // 🔍 记录连接创建成功后的状态（不立即输出）
+                  if (currentDragSession.value) {
+                    dragSnapLogger.logProcess(currentDragSession.value, 'connection_created', {
+                      targetNode: {
+                        id: node.id,
+                        positionAfterSnap: node.getPosition()
+                      },
+                      connection: {
+                        id: connection.id,
+                        sourceId: connection.getSourceNode()?.id,
+                        targetId: connection.getTargetNode()?.id,
+                        branchId: connection.getData()?.branchId,
+                        branchLabel: connection.getData()?.branchLabel
+                      }
+                    })
                   }
 
                   // 检查拖拽点是否会被删除
@@ -1353,74 +1829,40 @@ const bindEvents = () => {
                     console.error('❌ [拖拽点吸附] 通知预览线管理器失败:', error)
                   }
 
-                  // 🎯 记录完整的吸附结果
-                  // console.log('✅ [拖拽点吸附] 吸附完成 - 完整结果:', {
-                  //   timestamp: new Date().toISOString(),
-                  //   snapResult: {
-                  //     success: true,
-                  //     beforeSnapPosition,
-                  //     afterSnapPosition,
-                  //     dragHintInfo: {
-                  //       id: nearestHint.id,
-                  //       branchId: hintData.branchId,
-                  //       branchLabel: hintData.branchLabel,
-                  //       willBeDeleted: dragHintWillBeDeleted,
-                  //       parentPreviewLine: parentPreviewLine
-                  //     },
-                  //     mountedNode: {
-                  //       id: node.id,
-                  //       type: nodeData.type,
-                  //       name: nodeData.name || nodeData.label,
-                  //       config: nodeData.config
-                  //     },
-                  //     sourceNode: {
-                  //       id: sourceNode.id,
-                  //       type: sourceNode.getData()?.type,
-                  //       name: sourceNode.getData()?.name || sourceNode.getData()?.label
-                  //     },
-                  //     connectionCreated: {
-                  //       id: connection.id,
-                  //       branchId: branchId,
-                  //       branchLabel: branchLabel
-                  //     },
-                  //     snapDistance: nearestDistance,
-                  //     snapThreshold: 80
-                  //   }
-                  // })
-
                 } catch (error) {
                   console.error('💥 [拖拽点吸附] 吸附过程失败:', {
                     timestamp: new Date().toISOString(),
                     error: error.message,
-                    stack: error.stack,
-                    snapInfo,
-                    beforeSnapPosition
+                    stack: error.stack
                   })
                 }
               } else {
-                console.warn('⚠️ [拖拽点吸附] 无法找到有效的源节点:', {
-                  timestamp: new Date().toISOString(),
-                  sourceNodeId,
-                  sourceNodeFound: !!sourceNode,
-                  isValidNode: sourceNode?.isNode?.(),
-                  isSameNode: sourceNode?.id === node.id,
-                  beforeSnapPosition
-                })
+                // 记录无法找到有效源节点的情况（不立即输出）
+                if (currentDragSession.value) {
+                  dragSnapLogger.logProcess(currentDragSession.value, 'source_node_not_found', {
+                    sourceNodeId,
+                    sourceNodeFound: !!sourceNode,
+                    isValidNode: sourceNode?.isNode?.(),
+                    isSameNode: sourceNode?.id === node.id
+                  })
+                }
               }
             } else {
-              console.warn('⚠️ [拖拽点吸附] 无法解析源节点ID:', {
-                timestamp: new Date().toISOString(),
-                parentPreviewLine,
-                hintData,
-                beforeSnapPosition
-              })
+              // 记录无法解析源节点ID的情况（不立即输出）
+              if (currentDragSession.value) {
+                dragSnapLogger.logProcess(currentDragSession.value, 'source_id_parse_failed', {
+                  parentPreviewLine,
+                  hintData
+                })
+              }
             }
           } else {
-            console.warn('⚠️ [拖拽点吸附] 拖拽点缺少父预览线信息:', {
-              timestamp: new Date().toISOString(),
-              hintData,
-              beforeSnapPosition
-            })
+            // 记录拖拽点缺少父预览线信息的情况（不立即输出）
+            if (currentDragSession.value) {
+              dragSnapLogger.logProcess(currentDragSession.value, 'missing_preview_line', {
+                hintData
+              })
+            }
           }
 
           // 清除拖拽过程中的高亮效果
@@ -1447,65 +1889,77 @@ const bindEvents = () => {
         // 🔧 修复：在自动连接逻辑完成后，刷新所有预览线和拖拽提示点位置
         if (unifiedPreviewManager && typeof unifiedPreviewManager.refreshAllPreviewLines === 'function') {
           try {
-            const refreshStartTime = Date.now()
             unifiedPreviewManager.refreshAllPreviewLines(false, false) // 节点移动时不是智能布局
-            const refreshEndTime = Date.now()
-            
-            // 🔍 添加详细的预览线刷新完成日志
-            const outgoingEdges = graph.getOutgoingEdges(node) || []
-            const incomingEdges = graph.getIncomingEdges(node) || []
-            
-            // console.log('🔄 [节点移动] 已刷新所有预览线和拖拽提示点位置 - 详细信息:', {
-            //   triggerNodeId: node.id,
-            //   triggerNodeType: nodeData.type,
-            //   triggerNodePosition: position,
-            //   refreshDuration: `${refreshEndTime - refreshStartTime}ms`,
-            //   timestamp: new Date().toLocaleTimeString(),
-            //   totalPreviewLines: unifiedPreviewManager.previewLines?.size || 0,
-            //   manuallyAdjustedHints: unifiedPreviewManager.manuallyAdjustedHints?.size || 0,
-            //   isAfterNodeDeletion: false,
-            //   isAfterSmartLayout: false,
-            //   isAfterAutoConnection: true, // 🔧 新增：标记这是自动连接后的刷新
-            //   // 🔍 补充节点连接状态信息
-            //   nodeConnectionInfo: {
-            //     outgoingConnections: outgoingEdges.length,
-            //     incomingConnections: incomingEdges.length,
-            //     outgoingTargets: outgoingEdges.map(edge => ({
-            //       targetId: edge.getTargetNode()?.id,
-            //       branchId: edge.getData()?.branchId,
-            //       branchLabel: edge.getData()?.branchLabel
-            //     })),
-            //     incomingSources: incomingEdges.map(edge => ({
-            //       sourceId: edge.getSourceNode()?.id,
-            //       branchId: edge.getData()?.branchId,
-            //       branchLabel: edge.getData()?.branchLabel
-            //     }))
-            //   },
-            //   // 🔍 补充节点配置信息
-            //   nodeConfig: {
-            //     hasConfig: !!nodeData.config,
-            //     configKeys: nodeData.config ? Object.keys(nodeData.config) : [],
-            //     hasBranches: nodeData.config?.branches?.length > 0,
-            //     branchCount: nodeData.config?.branches?.length || 0
-            //   },
-            //   // 🔍 补充画布状态信息
-            //   canvasState: {
-            //     totalNodes: graph.getNodes().length,
-            //     totalEdges: graph.getEdges().length,
-            //     dragHints: graph.getNodes().filter(n => {
-            //       const data = n.getData() || {}
-            //       return data.isDragHint || data.type === 'drag-hint'
-            //     }).length
-            //   }
-            // })
-            
-            // console.log('🔄 [节点移动] 已刷新所有预览线和拖拽提示点位置（在自动连接后）')
           } catch (error) {
             console.warn('⚠️ [节点移动] 刷新预览线位置失败:', error)
           }
 
-          // 分流节点移动时只更新分支布局，不触发结构化布局
-          if (['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)) {
+          // 🔧 清理吸附状态，防止循环连接
+          if (typeof unifiedPreviewManager.clearSnapState === 'function') {
+            unifiedPreviewManager.clearSnapState()
+          }
+
+          // 🔧 新增：节点移动后更新所有普通连接线的路由器，防止变成直线
+          try {
+            const allEdges = graph.getEdges()
+            let updatedEdgesCount = 0
+            
+            allEdges.forEach(edge => {
+              const edgeData = edge.getData() || {}
+              
+              // 跳过预览线，只处理普通连接线
+              if (edgeData.isPersistentPreview || edgeData.isPreview) {
+                return
+              }
+              
+              const sourceNode = edge.getSourceNode()
+              const targetNode = edge.getTargetNode()
+              
+              if (sourceNode && targetNode) {
+                const sourcePos = sourceNode.getPosition()
+                const targetPos = targetNode.getPosition()
+                const sourceSize = sourceNode.getSize()
+                const targetSize = targetNode.getSize()
+                
+                if (sourcePos && targetPos && sourceSize && targetSize) {
+                  const sourceCenterX = sourcePos.x + sourceSize.width / 2
+                  const targetCenterX = targetPos.x + targetSize.width / 2
+                  const sourceCenterY = sourcePos.y + sourceSize.height / 2
+                  const targetCenterY = targetPos.y + targetSize.height / 2
+                  const xDiff = Math.abs(sourceCenterX - targetCenterX)
+                  const yDiff = Math.abs(targetCenterY - sourceCenterY)
+                  
+                  // 使用与智能布局相同的路由器选择逻辑
+                  if (xDiff < 5 && yDiff > 80) {
+                    // 节点几乎完全垂直对齐且距离较远时使用直线
+                    edge.setRouter('normal')
+                  } else {
+                    // 其他情况使用orth路由器
+                    edge.setRouter({
+                      name: 'orth',
+                      args: {
+                        padding: 15,
+                        step: 10,
+                        startDirections: ['bottom'],
+                        endDirections: ['top']
+                      }
+                    })
+                  }
+                  updatedEdgesCount++
+                }
+              }
+            })
+            
+            if (updatedEdgesCount > 0) {
+              console.log(`✅ [节点移动] 已更新 ${updatedEdgesCount} 条连接线的路由器`)
+            }
+          } catch (error) {
+            console.warn('⚠️ [节点移动] 更新连接线路由器失败:', error)
+          }
+        }
+
+        // 分流节点移动时只更新分支布局，不触发结构化布局
+        if (['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)) {
             // 延迟执行，确保位置更新完成
             setTimeout(() => {
               if (configDrawers.value?.structuredLayout?.branchLayoutManager) {
@@ -1568,10 +2022,71 @@ const bindEvents = () => {
                   }
                 })
               }
+              
+              // 结束拖拽会话日志记录（仅针对拖拽点）
+              if (currentDragSession.value) {
+                const sessionData = dragSessionData.value.get(currentDragSession.value)
+                if (sessionData) {
+                  // 检查是否是拖拽点
+                  const sessionNodeData = sessionData.node.getData() || {}
+                  if (sessionNodeData.isDragHint || sessionNodeData.type === 'drag-hint') {
+                    const endPosition = sessionData.node.getPosition()
+                    
+                    // 查找最近的普通节点in端口坐标
+                    let nearestInPortCoord = null
+                    if (sessionData.nearestNodes && sessionData.nearestNodes.length > 0) {
+                      const nearestNode = sessionData.nearestNodes[0] // 最近的节点
+                      // 计算in端口坐标（通常在节点顶部中央）
+                      nearestInPortCoord = {
+                        x: nearestNode.position.x + nearestNode.size.width / 2,
+                        y: nearestNode.position.y
+                      }
+                    }
+                    
+                    endNodeDragLogging(currentDragSession.value, endPosition, nearestInPortCoord)
+                  }
+                }
+                
+                // 清理拖拽会话数据
+                dragSessionData.value.delete(currentDragSession.value)
+                currentDragSession.value = null
+              }
+              
               isDragging.value = false
               dragNodeType.value = null
             }, 100)
+        } else {
+          // 通用拖拽结束逻辑（针对非分流节点）
+          if (currentDragSession.value) {
+            const sessionData = dragSessionData.value.get(currentDragSession.value)
+            if (sessionData) {
+              // 检查是否是拖拽点
+              const sessionNodeData = sessionData.node.getData() || {}
+              if (sessionNodeData.isDragHint || sessionNodeData.type === 'drag-hint') {
+                const endPosition = sessionData.node.getPosition()
+                
+                // 查找最近的普通节点in端口坐标
+                let nearestInPortCoord = null
+                if (sessionData.nearestNodes && sessionData.nearestNodes.length > 0) {
+                  const nearestNode = sessionData.nearestNodes[0] // 最近的节点
+                  // 计算in端口坐标（通常在节点顶部中央）
+                  nearestInPortCoord = {
+                    x: nearestNode.position.x + nearestNode.size.width / 2,
+                    y: nearestNode.position.y
+                  }
+                }
+                
+                endNodeDragLogging(currentDragSession.value, endPosition, nearestInPortCoord)
+              }
+            }
+            
+            // 清理拖拽会话数据
+            dragSessionData.value.delete(currentDragSession.value)
+            currentDragSession.value = null
           }
+          
+          isDragging.value = false
+          dragNodeType.value = null
         }
       }
     }
@@ -1591,18 +2106,12 @@ const bindEvents = () => {
         targetPort: edge.getTargetPortId()
       }
       
-      connections.value.push(connection)
+      // 注意：不需要手动添加到 connections.value，edge:added 事件会自动处理
       emit('connection-created', connection)
     }
   })
 
-  // 连接删除事件
-  graph.on('edge:removed', ({ edge }) => {
-    const index = connections.value.findIndex(c => c.id === edge.id)
-    if (index >= 0) {
-      connections.value.splice(index, 1)
-    }
-  })
+  // 注意：edge:removed 事件监听器已在前面定义，这里移除重复的监听器
 
   // 空白区域点击事件
   graph.on('blank:click', () => {
@@ -1766,16 +2275,177 @@ const bindEvents = () => {
 
 // 加载初始数据
 const loadInitialData = () => {
+  console.log('[TaskFlowCanvas] 开始加载初始数据')
+  
+  // 首先加载所有节点
   if (props.initialNodes.length > 0) {
+    console.log('[TaskFlowCanvas] 加载初始节点，数量:', props.initialNodes.length)
     props.initialNodes.forEach(nodeData => {
       addNodeToGraph(nodeData)
     })
+    console.log('[TaskFlowCanvas] 所有初始节点加载完成')
   }
 
-  if (props.initialConnections.length > 0) {
-    props.initialConnections.forEach(connectionData => {
-      addConnectionToGraph(connectionData)
-    })
+  // 等待下一个 tick，确保所有节点都已经添加到图中
+  nextTick(() => {
+    // 然后加载连接
+    if (props.initialConnections.length > 0) {
+      console.log('[TaskFlowCanvas] 加载初始连接，数量:', props.initialConnections.length)
+      console.log('[TaskFlowCanvas] 初始连接数据详情:', props.initialConnections)
+      
+      props.initialConnections.forEach((connectionData, index) => {
+        // 详细验证连接数据结构
+        console.log(`[TaskFlowCanvas] 处理连接 ${index + 1}:`, {
+          connectionData,
+          hasId: !!connectionData.id,
+          hasSource: !!connectionData.source,
+          hasTarget: !!connectionData.target,
+          sourceType: typeof connectionData.source,
+          targetType: typeof connectionData.target
+        })
+        
+        // 检查必要字段
+        if (!connectionData.source) {
+          console.error(`[TaskFlowCanvas] 连接 ${index + 1} 缺少 source 字段:`, connectionData)
+          return
+        }
+        
+        if (!connectionData.target) {
+          console.error(`[TaskFlowCanvas] 连接 ${index + 1} 缺少 target 字段:`, connectionData)
+          return
+        }
+        
+        // 验证源节点和目标节点是否存在
+        const sourceNode = graph.getCellById(connectionData.source)
+        const targetNode = graph.getCellById(connectionData.target)
+        
+        console.log(`[TaskFlowCanvas] 连接 ${index + 1} 节点查找结果:`, {
+          sourceNodeId: connectionData.source,
+          targetNodeId: connectionData.target,
+          sourceNodeFound: !!sourceNode,
+          targetNodeFound: !!targetNode,
+          allNodesInGraph: graph.getNodes().map(n => ({ id: n.id, type: n.getData()?.type }))
+        })
+        
+        if (sourceNode && targetNode) {
+          addConnectionToGraph(connectionData)
+        } else {
+          console.warn('[TaskFlowCanvas] 跳过连接创建，节点不存在:', {
+            connectionId: connectionData.id,
+            source: connectionData.source,
+            target: connectionData.target,
+            sourceExists: !!sourceNode,
+            targetExists: !!targetNode
+          })
+        }
+      })
+      console.log('[TaskFlowCanvas] 所有初始连接加载完成')
+    }
+  })
+}
+
+// 汇总日志 - 统计页面中各种元素的数量
+const logCanvasSummary = () => {
+  if (!graph) {
+    console.warn('[TaskFlowCanvas] 图形实例不存在，无法统计汇总信息')
+    return
+  }
+
+  // 统计节点数量
+  const allNodes = graph.getNodes()
+  const normalNodes = allNodes.filter(node => {
+    const nodeData = node.getData()
+    return nodeData && nodeData.type !== 'start'
+  })
+  const startNodes = allNodes.filter(node => {
+    const nodeData = node.getData()
+    return nodeData && nodeData.type === 'start'
+  })
+  
+  // 统计可拖拽节点（除了开始节点，其他节点都是可拖拽的）
+  const draggableNodes = allNodes.filter(node => {
+    const nodeData = node.getData()
+    return nodeData && nodeData.deletable !== false && nodeData.type !== 'start'
+  })
+
+  // 统计连接线数量
+  const allEdges = graph.getEdges()
+  const connectionLines = allEdges.filter(edge => {
+    const edgeId = edge.id
+    // 连接线不包含 preview 关键字
+    return !edgeId.includes('preview') && !edgeId.includes('unified_preview')
+  })
+
+  // 统计预览线数量
+  const previewLines = allEdges.filter(edge => {
+    const edgeId = edge.id
+    // 预览线包含 preview 关键字
+    return edgeId.includes('preview') || edgeId.includes('unified_preview')
+  })
+
+  // 从预览线管理器获取更准确的预览线统计
+  let previewLineManagerStats = null
+  try {
+    const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
+    if (unifiedPreviewManager && unifiedPreviewManager.previewLines) {
+      previewLineManagerStats = {
+        totalPreviewInstances: unifiedPreviewManager.previewLines.size,
+        activePreviewLines: 0
+      }
+      
+      // 统计活跃的预览线
+      unifiedPreviewManager.previewLines.forEach((previewInstance, nodeId) => {
+        if (Array.isArray(previewInstance)) {
+          previewLineManagerStats.activePreviewLines += previewInstance.length
+        } else if (previewInstance && previewInstance.line) {
+          previewLineManagerStats.activePreviewLines += 1
+        }
+      })
+    }
+  } catch (error) {
+    console.warn('[TaskFlowCanvas] 获取预览线管理器统计失败:', error)
+  }
+
+  // 输出汇总日志
+  console.log('📊 [画布汇总统计] ==========================================')
+  console.log('📊 [画布汇总统计] 节点统计:')
+  console.log(`📊 [画布汇总统计]   - 普通节点: ${normalNodes.length} 个`)
+  console.log(`📊 [画布汇总统计]   - 开始节点: ${startNodes.length} 个`)
+  console.log(`📊 [画布汇总统计]   - 可拖拽节点: ${draggableNodes.length} 个`)
+  console.log(`📊 [画布汇总统计]   - 节点总数: ${allNodes.length} 个`)
+  console.log('📊 [画布汇总统计] 连接统计:')
+  console.log(`📊 [画布汇总统计]   - 连接线: ${connectionLines.length} 条`)
+  console.log(`📊 [画布汇总统计]   - 预览线(图形): ${previewLines.length} 条`)
+  
+  if (previewLineManagerStats) {
+    console.log(`📊 [画布汇总统计]   - 预览线实例: ${previewLineManagerStats.totalPreviewInstances} 个`)
+    console.log(`📊 [画布汇总统计]   - 活跃预览线: ${previewLineManagerStats.activePreviewLines} 条`)
+  }
+  
+  console.log(`📊 [画布汇总统计]   - 边总数: ${allEdges.length} 条`)
+  console.log('📊 [画布汇总统计] 数据数组统计:')
+  console.log(`📊 [画布汇总统计]   - nodes数组: ${nodes.value.length} 个`)
+  console.log(`📊 [画布汇总统计]   - connections数组: ${connections.value.length} 个`)
+  console.log('📊 [画布汇总统计] ==========================================')
+
+  // 返回统计数据，供其他地方使用
+  return {
+    nodes: {
+      normal: normalNodes.length,
+      start: startNodes.length,
+      draggable: draggableNodes.length,
+      total: allNodes.length
+    },
+    connections: {
+      connectionLines: connectionLines.length,
+      previewLines: previewLines.length,
+      total: allEdges.length
+    },
+    dataArrays: {
+      nodes: nodes.value.length,
+      connections: connections.value.length
+    },
+    previewLineManager: previewLineManagerStats
   }
 }
 
@@ -1790,43 +2460,31 @@ const addStartNode = () => {
   }
   console.log('[TaskFlowCanvas] 获取到开始节点配置:', nodeConfig)
 
-  // 使用增强布局管理器添加开始节点
-  const result = autoLayout.addNodeWithEnhancedLayout('start', null, {
-    forceLevel: 0
-  })
+  // 使用增强布局管理器添加开始节点（已废弃，改用原生Dagre布局）
+  // const result = autoLayout.addNodeWithEnhancedLayout('start', null, {
+  //   forceLevel: 0
+  // })
 
-  if (result) {
-    // 更新节点数据以包含固定属性
-    result.nodeData.data = {
-      ...result.nodeData.data,
+  // 直接创建开始节点，不使用已废弃的增强布局
+  const startNodeData = {
+    id: 'start-node',
+    type: 'start',
+    label: nodeConfig.label,
+    position: { x: 400, y: 100 },
+    data: {
       fixed: true,
       level: 0
-    }
-
-    console.log('[TaskFlowCanvas] 创建的开始节点数据:', result.nodeData)
-    addNodeToGraph(result.nodeData)
-
-    // 初始化布局管理器的坐标系统
-    autoLayout.initLayoutManager()
-
-    console.log(`[TaskFlowCanvas] 开始节点已通过增强布局添加: ${result.nodeData.id}, 层级: ${result.level}`)
-  } else {
-    // 降级处理：如果增强布局失败，使用传统方式
-    const startNodeData = {
-      id: 'start-node',
-      type: 'start',
-      label: nodeConfig.label,
-      position: { x: 400, y: 100 },
-      data: {
-        fixed: true,
-        level: 0
-      },
-      config: nodeConfig
-    }
-
-    console.log('[TaskFlowCanvas] 降级处理：创建的开始节点数据:', startNodeData)
-    addNodeToGraph(startNodeData)
+    },
+    config: nodeConfig
   }
+
+  console.log('[TaskFlowCanvas] 创建的开始节点数据:', startNodeData)
+  addNodeToGraph(startNodeData)
+
+  // 初始化布局管理器的坐标系统（已废弃）
+  // autoLayout.initLayoutManager()
+
+  console.log(`[TaskFlowCanvas] 开始节点已添加: ${startNodeData.id}, 层级: 0`)
 }
 
 // 添加节点到图中
@@ -1893,10 +2551,13 @@ const addNodeToGraph = (nodeData) => {
 const createNodePorts = (nodeConfig, nodeType) => {
   console.log('[TaskFlowCanvas] 创建端口配置:', { nodeType, nodeConfig })
   
-  // 使用专门的端口配置工厂
-  const portConfig = portConfigFactory.createNodePortConfig(nodeType, nodeConfig)
+  // 获取当前布局方向
+  const layoutDirection = currentLayoutDirection.value || 'TB'
   
-  console.log('[TaskFlowCanvas] 端口配置结果:', portConfig)
+  // 使用专门的端口配置工厂，传递布局方向
+  const portConfig = portConfigFactory.createNodePortConfig(nodeType, nodeConfig, layoutDirection)
+  
+  console.log('[TaskFlowCanvas] 端口配置结果:', { portConfig, layoutDirection })
   
   return portConfig
 }
@@ -1904,6 +2565,32 @@ const createNodePorts = (nodeConfig, nodeType) => {
 // 添加连接到图中
 const addConnectionToGraph = (connectionData) => {
   console.log('🔗 [TaskFlowCanvas] 开始创建连接:', connectionData)
+  
+  // 详细验证连接数据
+  if (!connectionData) {
+    console.error('❌ [TaskFlowCanvas] 连接数据为空')
+    return
+  }
+  
+  if (!connectionData.source) {
+    console.error('❌ [TaskFlowCanvas] 连接数据缺少 source 字段:', connectionData)
+    return
+  }
+  
+  if (!connectionData.target) {
+    console.error('❌ [TaskFlowCanvas] 连接数据缺少 target 字段:', connectionData)
+    return
+  }
+  
+  if (typeof connectionData.source !== 'string' || typeof connectionData.target !== 'string') {
+    console.error('❌ [TaskFlowCanvas] source 或 target 字段类型错误:', {
+      source: connectionData.source,
+      target: connectionData.target,
+      sourceType: typeof connectionData.source,
+      targetType: typeof connectionData.target
+    })
+    return
+  }
   
   if (!graph) {
     console.error('❌ [TaskFlowCanvas] 图形实例不存在')
@@ -1939,6 +2626,26 @@ const addConnectionToGraph = (connectionData) => {
       targetPorts: targetPorts.map(p => ({ id: p.id, group: p.group }))
     })
     
+    // 获取当前布局方向
+    const layoutDirection = currentLayoutDirection.value || 'TB'
+    
+    // 根据布局方向配置连接方向
+    const getDynamicDirectionConfig = (layoutDirection) => {
+      if (layoutDirection === 'LR') {
+        return {
+          startDirections: ['right'],
+          endDirections: ['left']
+        }
+      } else {
+        return {
+          startDirections: ['bottom'],
+          endDirections: ['top']
+        }
+      }
+    }
+    
+    const directionConfig = getDynamicDirectionConfig(layoutDirection)
+    
     const edgeConfig = {
       id: connectionData.id,
       source: {
@@ -1950,10 +2657,11 @@ const addConnectionToGraph = (connectionData) => {
         port: connectionData.targetPort
       },
       router: {
-        name: 'orth',  // 使用更稳定的orth路由器
+        name: 'orth',
         args: {
           padding: 20,
-          step: 20
+          step: 20,
+          ...directionConfig
         }
       },
       connector: {
@@ -1969,6 +2677,19 @@ const addConnectionToGraph = (connectionData) => {
           anchor: 'center'
         }
       },
+      // 🔧 修复：添加连接线样式配置，确保颜色一致性
+      attrs: {
+        line: {
+          stroke: '#5F95FF',
+          strokeWidth: 2,
+          targetMarker: {
+            name: 'block',
+            width: 12,
+            height: 8,
+          },
+        },
+      },
+      zIndex: 0,
       // 添加边数据，包含分支信息
       data: {
         branchId: connectionData.branchId,
@@ -1982,12 +2703,57 @@ const addConnectionToGraph = (connectionData) => {
     
     try {
       const edge = graph.addEdge(edgeConfig)
+      
+      // 🔧 修复：如果是分支连接且有label，设置连线标签
+      if (connectionData.branchId && connectionData.label) {
+        edge.setLabels([{
+          markup: [
+            {
+              tagName: 'rect',
+              selector: 'rect'
+            },
+            {
+              tagName: 'text',
+              selector: 'text'
+            }
+          ],
+          attrs: {
+            text: {
+              text: connectionData.label,
+              fontSize: 12,
+              fill: '#333',
+              textAnchor: 'middle',
+              textVerticalAnchor: 'middle'
+            },
+            rect: {
+              fill: '#fff',
+              stroke: '#d9d9d9',
+              strokeWidth: 1,
+              rx: 4,
+              ry: 4
+            }
+          },
+          position: {
+            distance: 0.5, // 在连线中点
+            offset: 0      // 无偏移
+          }
+        }])
+        
+        console.log('🏷️ [TaskFlowCanvas] 为恢复的分支连接添加标签:', {
+          edgeId: edge.id,
+          branchId: connectionData.branchId,
+          label: connectionData.label
+        })
+      }
+      
       console.log('✅ [TaskFlowCanvas] 连接创建成功:', {
         edgeId: edge.id,
         sourceCell: edge.getSourceCellId(),
         sourcePort: edge.getSourcePortId(),
         targetCell: edge.getTargetCellId(),
-        targetPort: edge.getTargetPortId()
+        targetPort: edge.getTargetPortId(),
+        branchId: connectionData.branchId,
+        label: connectionData.label
       })
     } catch (error) {
       console.error('❌ [TaskFlowCanvas] 连接创建失败:', error)
@@ -2039,43 +2805,70 @@ const handleNodeTypeSelected = (nodeType) => {
     }
   }
 
-  // 使用增强自动布局添加节点
-  const result = autoLayout.addNodeWithEnhancedLayout(nodeType, sourceNode, {
-    branchIndex,
-    totalBranches,
-    connectionLabel: branchLabel
-  })
+  // 使用增强自动布局添加节点（已废弃，改用原生Dagre布局）
+  // const result = autoLayout.addNodeWithEnhancedLayout(nodeType, sourceNode, {
+  //   branchIndex,
+  //   totalBranches,
+  //   connectionLabel: branchLabel
+  // })
 
-  if (result) {
-    // 添加节点到图中
-    addNodeToGraph(result.nodeData)
+  // 直接创建节点，不使用已废弃的增强布局
+  const newNodeId = `${nodeType}_${Date.now()}`
+  const nodeConfig = getNodeConfig(nodeType)
+  
+  if (!nodeConfig) {
+    console.error('[TaskFlowCanvas] 无法获取节点配置:', nodeType)
+    return
+  }
 
-    // 统一使用'out'端口，从UI层面的同一个位置出发
-    let sourcePortId = 'out'
+  // 计算新节点位置（简单的垂直布局）
+  const sourcePosition = nodeSelectorSourceNode.value.position || { x: 400, y: 100 }
+  const newPosition = {
+    x: sourcePosition.x,
+    y: sourcePosition.y + 150 // 在源节点下方150px
+  }
 
-    // 创建连接
-    const connection = {
-      id: `edge_${Date.now()}`,
-      source: nodeSelectorSourceNode.value.id,
-      target: result.nodeData.id,
-      sourcePort: sourcePortId,
-      targetPort: 'in',
-      branchId: branchId, // 添加分支ID
-      label: branchLabel || ''
-    }
+  const newNodeData = {
+    id: newNodeId,
+    type: nodeType,
+    label: nodeConfig.label,
+    position: newPosition,
+    data: {
+      level: (nodeSelectorSourceNode.value.data?.level || 0) + 1,
+      branchIndex,
+      totalBranches
+    },
+    config: nodeConfig
+  }
 
-    addConnectionToGraph(connection)
-    connections.value.push(connection)
+  // 添加节点到图中
+  addNodeToGraph(newNodeData)
 
-    console.log(`[TaskFlowCanvas] 节点已通过增强布局添加: ${result.nodeData.id}, 层级: ${result.level}, 连接: ${sourcePortId} -> in`)
+  // 统一使用'out'端口，从UI层面的同一个位置出发
+  let sourcePortId = 'out'
 
-    // 更新布局统计信息
-    updateLayoutStats()
+  // 创建连接
+  const connection = {
+    id: `edge_${Date.now()}`,
+    source: nodeSelectorSourceNode.value.id,
+    target: newNodeData.id,
+    sourcePort: sourcePortId,
+    targetPort: 'in',
+    branchId: branchId, // 添加分支ID
+    label: branchLabel || ''
+  }
 
-    // 如果是动态端口且需要添加新的输出端口
-    if (maxOutputs === 'dynamic' && branchIndex >= 0) {
-      addDynamicOutputPort(sourceNode, branchIndex + 2)
-    }
+  addConnectionToGraph(connection)
+  // 注意：不需要手动添加到 connections.value，edge:added 事件会自动处理
+
+  console.log(`[TaskFlowCanvas] 节点已添加: ${newNodeData.id}, 层级: ${newNodeData.data.level}, 连接: ${sourcePortId} -> in`)
+
+  // 更新布局统计信息
+  updateLayoutStats()
+
+  // 如果是动态端口且需要添加新的输出端口
+  if (maxOutputs === 'dynamic' && branchIndex >= 0) {
+    addDynamicOutputPort(sourceNode, branchIndex + 2)
   }
 
   // 关闭节点选择器
@@ -2217,13 +3010,21 @@ const cascadeDeleteNode = (nodeId) => {
     }
   }
 
-  // 级联删除完成后重新布局
-  if (autoLayout && typeof autoLayout.relayoutAll === 'function') {
+  // 级联删除完成后重新布局（已废弃，使用原生Dagre布局）
+  // if (autoLayout && typeof autoLayout.relayoutAll === 'function') {
+  //   nextTick(() => {
+  //     const remainingNodes = graph.getNodes()
+  //     const remainingEdges = graph.getEdges()
+  //     autoLayout.relayoutAll(remainingNodes, remainingEdges)
+  //     console.log('[TaskFlowCanvas] 级联删除后重新布局完成')
+  //   })
+  // }
+
+  // 使用统一结构化布局重新布局
+  if (configDrawers.value?.structuredLayout?.applyUnifiedStructuredLayout && graph) {
     nextTick(() => {
-      const remainingNodes = graph.getNodes()
-      const remainingEdges = graph.getEdges()
-      autoLayout.relayoutAll(remainingNodes, remainingEdges)
-      console.log('[TaskFlowCanvas] 级联删除后重新布局完成')
+      configDrawers.value.structuredLayout.applyUnifiedStructuredLayout(graph)
+      console.log('[TaskFlowCanvas] 级联删除后重新布局完成（统一结构化布局）')
     })
   }
 
@@ -2363,10 +3164,10 @@ const handleSingleNodeDelete = (data, shouldCascade = true) => {
       emit('node-deleted', deletedNode)
     }
 
-    // 7. 清理增强布局管理器的坐标系统
-    if (autoLayout && typeof autoLayout.removeNodeFromCoordinateSystem === 'function') {
-      autoLayout.removeNodeFromCoordinateSystem(nodeId)
-    }
+    // 7. 清理增强布局管理器的坐标系统（已废弃，使用原生Dagre布局）
+    // if (autoLayout && typeof autoLayout.removeNodeFromCoordinateSystem === 'function') {
+    //   autoLayout.removeNodeFromCoordinateSystem(nodeId)
+    // }
 
     // 8. 更新布局统计信息
     updateLayoutStats()
@@ -2716,44 +3517,34 @@ const forceResetLayoutStates = () => {
   isUpdatingLayout.value = false
 }
 
-// 智能布局（直接运行原生dagre布局）
-const applySmartLayout = async () => {
-  console.log('[TaskFlowCanvas] 应用智能布局（原生Dagre）')
-  
-  try {
-    isApplyingLayout.value = true
-    await applyNativeDagreLayout()
-  } catch (error) {
-    console.error('[TaskFlowCanvas] 智能布局应用失败:', error)
-    Message.error('智能布局应用失败: ' + error.message)
-  } finally {
-    isApplyingLayout.value = false
-  }
-}
-
-// 应用原生Dagre布局
-const applyNativeDagreLayout = async () => {
-  console.log('[TaskFlowCanvas] 应用原生Dagre布局')
+// 🎯 应用统一结构化布局
+const applyUnifiedStructuredLayout = async () => {
+  console.log('[TaskFlowCanvas] 应用统一结构化布局')
   
   if (!configDrawers.value?.structuredLayout) {
     console.error('[TaskFlowCanvas] 结构化布局对象不存在')
     return
   }
 
-  // 检查原生Dagre布局方法是否可用
-  if (!configDrawers.value.structuredLayout.applyNativeDagreLayout) {
-    console.error('[TaskFlowCanvas] 原生Dagre布局功能不可用')
-    Message.error('原生Dagre布局功能不可用')
+  // 检查统一结构化布局方法是否可用
+  if (!configDrawers.value.structuredLayout.applyUnifiedStructuredLayout) {
+    console.error('[TaskFlowCanvas] 统一结构化布局功能不可用')
+    Message.error('统一结构化布局功能不可用')
     return
   }
 
   try {
-    // 应用原生Dagre布局
-    const result = await configDrawers.value.structuredLayout.applyNativeDagreLayout(graph)
+    isApplyingLayout.value = true
+    
+    // 应用统一结构化布局
+    const result = await configDrawers.value.structuredLayout.applyUnifiedStructuredLayout(graph)
 
     if (result && result.success) {
-      console.log('[TaskFlowCanvas] 原生Dagre布局应用成功:', result)
-      Message.success(`原生Dagre布局应用成功 (${result.layoutTime.toFixed(2)}ms)`)
+      console.log('[TaskFlowCanvas] 统一结构化布局应用成功:', result)
+      Message.success(`统一结构化布局应用成功 (${result.layoutTime.toFixed(2)}ms)`)
+      
+      // 生成布局总结日志
+      generateLayoutSummary()
       
       // 自动缩放到合适大小，限制最大缩放比例为120%
       await nextTick()
@@ -2769,12 +3560,58 @@ const applyNativeDagreLayout = async () => {
         }
       }, 300)
     } else {
-      console.error('[TaskFlowCanvas] 原生Dagre布局应用失败')
-      Message.error('原生Dagre布局应用失败')
+      console.error('[TaskFlowCanvas] 统一结构化布局应用失败')
+      Message.error('统一结构化布局应用失败')
     }
   } catch (error) {
-    console.error('[TaskFlowCanvas] 原生Dagre布局应用异常:', error)
-    Message.error('原生Dagre布局应用异常: ' + error.message)
+    console.error('[TaskFlowCanvas] 统一结构化布局应用异常:', error)
+    Message.error('统一结构化布局应用异常: ' + error.message)
+  } finally {
+    isApplyingLayout.value = false
+  }
+}
+
+// 生成布局总结日志
+const generateLayoutSummary = () => {
+  if (!graph) {
+    console.warn('[TaskFlowCanvas] 无法生成布局总结：图实例不存在')
+    return
+  }
+
+  try {
+    // 调用useStructuredLayout中的专业分层分析功能
+    if (configDrawers.value?.structuredLayout && configDrawers.value.structuredLayout.generateRedrawSummary) {
+      console.log('📊 [TaskFlowCanvas] 调用专业分层分析功能...')
+      configDrawers.value.structuredLayout.generateRedrawSummary(graph)
+    } else {
+      console.warn('[TaskFlowCanvas] useStructuredLayout的分层分析功能不可用，使用简化版本')
+      
+      // 简化版本：仅统计基本信息
+      const allNodes = graph.getNodes()
+      const allEdges = graph.getEdges()
+      
+      const businessNodes = allNodes.filter(node => {
+        const nodeData = node.getData()
+        return !(nodeData?.isUnifiedPreview || nodeData?.isPersistentPreview)
+      })
+      
+      const dragHints = businessNodes.filter(node => {
+        const nodeData = node.getData()
+        const nodeType = nodeData?.type || nodeData?.nodeType
+        return nodeData?.isDragHint || nodeType === 'drag-hint' || node.id.includes('hint_')
+      })
+      
+      const pureBusinessNodes = businessNodes.filter(node => !dragHints.includes(node))
+      
+      console.log('📊 [TaskFlowCanvas] 简化布局总结:')
+      console.log(`   总节点数: ${allNodes.length}`)
+      console.log(`   业务节点数: ${pureBusinessNodes.length}`)
+      console.log(`   拖拽点数: ${dragHints.length}`)
+      console.log(`   连接线数: ${allEdges.length}`)
+    }
+
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 生成布局总结失败:', error)
   }
 }
 
@@ -2804,14 +3641,80 @@ const applyCenterAlignment = async () => {
 }
 
 const applyStructuredLayout = async () => {
-  console.log('[TaskFlowCanvas] 应用结构化布局（统一使用原生Dagre）')
+  console.log('[TaskFlowCanvas] 应用结构化布局（统一结构化布局）')
+  
+  if (!graph) {
+    console.error('[TaskFlowCanvas] 图实例不存在，无法应用结构化布局')
+    Message.error('图实例不存在，无法应用结构化布局')
+    return
+  }
+  
+  if (!configDrawers.value?.structuredLayout) {
+    console.error('[TaskFlowCanvas] 结构化布局对象不存在')
+    return
+  }
+
+  // 检查统一结构化布局方法是否可用
+  if (!configDrawers.value.structuredLayout.applyUnifiedStructuredLayout) {
+    console.error('[TaskFlowCanvas] 统一结构化布局功能不可用')
+    Message.error('统一结构化布局功能不可用')
+    return
+  }
   
   try {
     isApplyingLayout.value = true
-    await applyNativeDagreLayout()
+    
+    // 应用统一结构化布局
+    const result = await configDrawers.value.structuredLayout.applyUnifiedStructuredLayout(graph)
+
+    if (result && result.success) {
+      console.log('[TaskFlowCanvas] 统一结构化布局应用成功:', result)
+      Message.success(`统一结构化布局应用成功 (${result.layoutTime.toFixed(2)}ms)`)
+      
+      // 生成布局总结日志
+      generateLayoutSummary()
+      
+      // 自动缩放到合适大小，限制最大缩放比例为120%
+      await nextTick()
+      setTimeout(() => {
+        // 先执行适应内容缩放
+        graph.zoomToFit({ padding: 50 })
+        
+        // 检查并限制缩放比例
+        const currentZoom = graph.zoom()
+        if (currentZoom > 1.2) {
+          console.log(`[TaskFlowCanvas] 限制缩放比例从 ${currentZoom.toFixed(2)} 到 1.2`)
+          graph.zoomTo(1.2, { center: graph.getGraphArea().center })
+        }
+      }, 300)
+    } else {
+      console.error('[TaskFlowCanvas] 统一结构化布局应用失败')
+      Message.error('统一结构化布局应用失败')
+    }
   } catch (error) {
     console.error('[TaskFlowCanvas] 结构化布局应用失败:', error)
     Message.error('结构化布局应用失败: ' + error.message)
+  } finally {
+    isApplyingLayout.value = false
+  }
+}
+
+// 智能布局（直接运行原生dagre布局）
+const applySmartLayout = async () => {
+  console.log('[TaskFlowCanvas] 应用智能布局（原生Dagre）')
+  
+  if (!graph) {
+    console.error('[TaskFlowCanvas] 图实例不存在，无法应用智能布局')
+    Message.error('图实例不存在，无法应用智能布局')
+    return
+  }
+  
+  try {
+    isApplyingLayout.value = true
+    await applyUnifiedStructuredLayout()
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 智能布局应用失败:', error)
+    Message.error('智能布局应用失败: ' + error.message)
   } finally {
     isApplyingLayout.value = false
   }
@@ -2825,10 +3728,10 @@ const clearCanvas = () => {
     connections.value = []
     selectedNodeId.value = null
 
-    // 清理增强布局管理器的坐标系统
-    if (autoLayout && typeof autoLayout.clearEnhancedLayout === 'function') {
-      autoLayout.clearEnhancedLayout()
-    }
+    // 清理增强布局管理器的坐标系统（已废弃，使用原生Dagre布局）
+    // if (autoLayout && typeof autoLayout.clearEnhancedLayout === 'function') {
+    //   autoLayout.clearEnhancedLayout()
+    // }
 
     // 重新添加开始节点
     if (props.autoAddStartNode) {
@@ -3026,58 +3929,145 @@ const handleResize = () => {
 
 // 撤销重做功能
 const undo = () => {
-  console.log('[撤销功能] 开始执行撤销操作')
-  console.log('[撤销功能] graph 实例:', graph)
-  
   if (!graph) {
-    console.warn('[撤销功能] graph 实例不存在')
     Message.error('画布未初始化，无法撤销')
     return
   }
   
-  console.log('[撤销功能] 检查是否可以撤销:', graph.canUndo())
-  console.log('[撤销功能] 历史记录堆栈大小:', graph.history?.undoStack?.length || 0)
-  
   if (graph.canUndo()) {
     try {
       graph.undo()
-      console.log('[撤销功能] 撤销操作执行成功')
-      Message.success('撤销成功')
     } catch (error) {
       console.error('[撤销功能] 撤销操作执行失败:', error)
       Message.error('撤销操作失败')
     }
   } else {
-    console.warn('[撤销功能] 没有可撤销的操作')
     Message.warning('没有可撤销的操作')
   }
 }
 
 const redo = () => {
-  console.log('[重做功能] 开始执行重做操作')
-  console.log('[重做功能] graph 实例:', graph)
-  
   if (!graph) {
-    console.warn('[重做功能] graph 实例不存在')
     Message.error('画布未初始化，无法重做')
     return
   }
   
-  console.log('[重做功能] 检查是否可以重做:', graph.canRedo())
-  console.log('[重做功能] 重做堆栈大小:', graph.history?.redoStack?.length || 0)
-  
   if (graph.canRedo()) {
     try {
       graph.redo()
-      console.log('[重做功能] 重做操作执行成功')
-      Message.success('重做成功')
     } catch (error) {
       console.error('[重做功能] 重做操作执行失败:', error)
       Message.error('重做操作失败')
     }
   } else {
-    console.warn('[重做功能] 没有可重做的操作')
     Message.warning('没有可重做的操作')
+  }
+}
+
+// 历史面板相关辅助函数
+const updateHistoryStack = () => {
+  if (!graph || !graph.history) return
+  
+  try {
+    const undoStack = graph.history.undoStack || []
+    const redoStack = graph.history.redoStack || []
+    
+    historyStack.value = {
+      undoStack: undoStack.map((command, index) => ({
+        ...command,
+        timestamp: command.timestamp || Date.now(),
+        index
+      })),
+      redoStack: redoStack.map((command, index) => ({
+        ...command,
+        timestamp: command.timestamp || Date.now(),
+        index
+      }))
+    }
+    
+    currentHistoryIndex.value = undoStack.length - 1
+  } catch (error) {
+    console.error('[历史面板] 更新历史栈失败:', error)
+  }
+}
+
+const getOperationDescription = (command) => {
+  if (!command) return '未知操作'
+  
+  const { event, data } = command
+  
+  switch (event) {
+    case 'cell:added':
+      return data?.cell?.shape === 'vue-shape' ? '添加节点' : '添加元素'
+    case 'cell:removed':
+      return data?.cell?.shape === 'vue-shape' ? '删除节点' : '删除元素'
+    case 'cell:change:position':
+      return '移动节点'
+    case 'cell:change:size':
+      return '调整大小'
+    case 'cell:change:attrs':
+      return '修改样式'
+    case 'edge:connected':
+      return '连接节点'
+    case 'edge:disconnected':
+      return '断开连接'
+    default:
+      return event ? event.replace('cell:', '').replace(':', ' ') : '操作'
+  }
+}
+
+const toggleHistoryPanel = () => {
+  showHistoryPanel.value = !showHistoryPanel.value
+  if (showHistoryPanel.value) {
+    updateHistoryStack()
+  }
+}
+
+const jumpToHistoryState = (targetIndex) => {
+  if (!graph || !graph.history) return
+  
+  try {
+    const currentIndex = graph.history.undoStack.length - 1
+    const diff = targetIndex - currentIndex
+    
+    if (diff > 0) {
+      // 需要重做
+      for (let i = 0; i < diff; i++) {
+        if (graph.canRedo()) {
+          graph.redo()
+        }
+      }
+    } else if (diff < 0) {
+      // 需要撤销
+      for (let i = 0; i < Math.abs(diff); i++) {
+        if (graph.canUndo()) {
+          graph.undo()
+        }
+      }
+    }
+    
+    updateHistoryStack()
+  } catch (error) {
+    console.error('[历史面板] 跳转到历史状态失败:', error)
+    Message.error('跳转失败')
+  }
+}
+
+const formatTime = (timestamp) => {
+  if (!timestamp) return ''
+  
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) { // 1分钟内
+    return '刚刚'
+  } else if (diff < 3600000) { // 1小时内
+    return `${Math.floor(diff / 60000)}分钟前`
+  } else if (diff < 86400000) { // 24小时内
+    return `${Math.floor(diff / 3600000)}小时前`
+  } else {
+    return date.toLocaleString()
   }
 }
 
@@ -3173,6 +4163,12 @@ onUnmounted(() => {
     panZoomManager = null
   }
 
+  // 清理连线重叠管理器
+  if (edgeOverlapManager) {
+    edgeOverlapManager.cleanup()
+    edgeOverlapManager = null
+  }
+
   if (graph) {
     graph.dispose()
   }
@@ -3193,7 +4189,11 @@ defineExpose({
   currentDragMode,
   undo,
   redo,
-  handleExport
+  handleExport,
+  applySmartLayout,
+  applyUnifiedStructuredLayout, // 🎯 新增：统一结构化布局方法
+  // 暴露graph实例用于坐标转换
+  graph: computed(() => graph)
 })
 </script>
 
@@ -3301,7 +4301,7 @@ defineExpose({
 /* 小地图样式 */
 .minimap-container {
   position: absolute;
-  bottom: 20px;
+  top: 20px;
   right: 20px;
   z-index: 20;
   background: rgba(255, 255, 255, 0.95);
@@ -3371,5 +4371,156 @@ defineExpose({
 
 :deep(.x6-widget-minimap-viewport-zoom) {
   border: 2px solid #ff6b6b !important;
+}
+
+/* 历史面板样式 */
+.history-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 20;
+  width: 300px;
+  max-height: 500px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(95, 149, 255, 0.1);
+  border-bottom: 1px solid rgba(95, 149, 255, 0.2);
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.history-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-content {
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.history-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+  color: #666;
+}
+
+.history-stat {
+  font-weight: 500;
+}
+
+.history-list {
+  padding: 8px 0;
+}
+
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.history-item:hover {
+  background: rgba(95, 149, 255, 0.05);
+  border-left-color: rgba(95, 149, 255, 0.3);
+}
+
+.history-item-current {
+  background: rgba(95, 149, 255, 0.1);
+  border-left-color: #5F95FF;
+}
+
+.history-item-current:hover {
+  background: rgba(95, 149, 255, 0.15);
+}
+
+.history-item-redo {
+  opacity: 0.6;
+}
+
+.history-item-redo:hover {
+  opacity: 0.8;
+  background: rgba(255, 193, 7, 0.05);
+  border-left-color: rgba(255, 193, 7, 0.3);
+}
+
+.history-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(95, 149, 255, 0.1);
+  color: #5F95FF;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.history-item-current .history-item-icon {
+  background: #5F95FF;
+  color: white;
+}
+
+.history-item-redo .history-item-icon {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ff9800;
+}
+
+.history-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.history-item-time {
+  font-size: 11px;
+  color: #999;
+}
+
+.history-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  margin: 4px 0;
+  font-size: 11px;
+  color: #999;
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.history-divider span {
+  background: white;
+  padding: 0 8px;
 }
 </style>
