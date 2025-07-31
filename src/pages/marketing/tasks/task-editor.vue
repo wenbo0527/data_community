@@ -808,12 +808,37 @@ const publishTask = async () => {
     }
 
     // 发布前完整校验
-    const validationResult = validateForPublish({
-      ...taskForm,
-      canvasData
-    }, { autoFix: true, previewLines })
+const validationResult = validateForPublish({
+  ...taskForm,
+  canvasData
+}, { autoFix: true, previewLines })
 
-    if (!validationResult.isValid) {
+// 添加发布校验汇总日志
+console.log('📊 [发布校验汇总]', {
+  timestamp: new Date().toISOString(),
+  taskId: taskId.value,
+  nodes: {
+    total: canvasData.nodes?.length || 0,
+    types: canvasData.nodes?.map(n => n.type) || [],
+    endNodes: canvasData.nodes?.filter(n => n.type === 'end').length || 0
+  },
+  connections: {
+    total: canvasData.connections?.length || 0,
+    valid: canvasData.connections?.filter(c => c.valid !== false).length || 0
+  },
+  previewLines: {
+    total: previewLines.length,
+    sourceNodes: [...new Set(previewLines.map(l => l.sourceNodeId))].length
+  },
+  validation: {
+    isValid: validationResult.isValid,
+    autoFixApplied: validationResult.autoFixApplied,
+    errorCount: validationResult.errors?.length || 0,
+    fixCount: validationResult.fixedIssues?.length || 0
+  }
+})
+
+if (!validationResult.isValid) {
       // 显示详细的校验错误信息
       const errorMessage = formatPublishValidationMessage(validationResult)
 

@@ -451,6 +451,31 @@ class AudienceSplitConfigStrategy extends BranchNodeConfigStrategy {
     if (config.crowdLayers && !Array.isArray(config.crowdLayers)) {
       errors.push('人群层级必须是数组')
     }
+    
+    // 检查crowdLayers数组中的元素是否包含有效的crowdId
+    if (config.crowdLayers && Array.isArray(config.crowdLayers)) {
+      const invalidLayers = config.crowdLayers.filter(layer => 
+        !layer.crowdId || layer.crowdId === null || layer.crowdId === undefined || layer.crowdId === ''
+      )
+      
+      // 添加调试日志，显示具体的分层信息
+      console.log('[调试] 人群分流节点验证:', {
+        totalLayers: config.crowdLayers.length,
+        validLayers: config.crowdLayers.length - invalidLayers.length,
+        invalidLayers: invalidLayers.length,
+        layerDetails: config.crowdLayers.map((layer, index) => ({
+          index,
+          id: layer.id,
+          crowdId: layer.crowdId,
+          crowdName: layer.crowdName,
+          isValid: !!layer.crowdId
+        }))
+      })
+      
+      if (invalidLayers.length > 0) {
+        errors.push(`有${invalidLayers.length}个人群层级未选择人群`)
+      }
+    }
 
     return { valid: errors.length === 0, errors }
   }

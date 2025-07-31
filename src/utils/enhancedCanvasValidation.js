@@ -56,15 +56,22 @@ export function validateForPublish(canvasData, options = {}) {
   }
 
   // 4. 检查结束节点的输入连接数量
-  const endNodes = fixedNodes.filter(node => node.type === 'end')
-  endNodes.forEach(endNode => {
-    const endNodeInConnections = fixedConnections.filter(conn => conn.target === endNode.id)
-    if (endNodeInConnections.length === 0) {
-      result.errors.push(`结束节点"${endNode.label || endNode.id}"必须有输入连接`)
-    } else if (endNodeInConnections.length > 1) {
-      result.errors.push(`结束节点"${endNode.label || endNode.id}"只能有一个输入连接`)
-    }
-  })
+  const endNodeResult = autoAddEndNodes(nodes, fixedConnections, options);
+  // 从结果中提取并筛选出结束节点
+  const endNodes = endNodeResult.nodes.filter(node => node.type === 'end');
+  endNodes.forEach(node => {
+  // 合并固定连接和预览线连接用于结束节点验证
+  const allConnections = [...fixedConnections, ...(options.previewLines || [])];
+  const incomingConnections = allConnections.filter(c => c.target.cell === node.id);
+
+  if (incomingConnections.length !== 1) {
+    errors.push({
+      type: 'END_NODE_CONNECTION',
+      message: `自动生成的结束节点必须有且仅有一个输入连接，当前为 ${incomingConnections.length} 个`,
+      nodeId: node.id
+    });
+  }
+});
 
   // 5. 检查循环依赖
   const cycleResult = detectCycles(fixedNodes, fixedConnections)
@@ -76,20 +83,17 @@ export function validateForPublish(canvasData, options = {}) {
   }
 
   // 6. 检查是否需要添加结束节点
+  // 修改逻辑：在发布校验时自动添加结束节点，而不是仅仅添加警告信息
   const nodesNeedingEndNodes = findNodesNeedingEndNodes(fixedNodes, fixedConnections, previewLines)
   if (nodesNeedingEndNodes.length > 0) {
     result.canAutoFix = true
-    if (autoFix) {
-      // 自动修复：为没有后续节点的节点添加结束节点
-      const fixResult = autoAddEndNodes(fixedNodes, fixedConnections, previewLines)
-      if (fixResult.modified) {
-        fixedNodes = fixResult.nodes
-        fixedConnections = fixResult.connections
-        hasAutoFix = true
-        result.warnings.push(`自动添加了 ${fixResult.addedEndNodes} 个结束节点`)
-      }
-    } else {
-      result.warnings.push(`以下节点没有后续连接，建议添加结束节点: ${nodesNeedingEndNodes.map(n => n.label || n.id).join(', ')}`)
+    // 自动修复：为没有后续节点的节点添加结束节点
+    const fixResult = autoAddEndNodes(fixedNodes, fixedConnections, previewLines)
+    if (fixResult.modified) {
+      fixedNodes = fixResult.nodes
+      fixedConnections = fixResult.connections
+      hasAutoFix = true
+      result.warnings.push(`自动添加了 ${fixResult.addedEndNodes} 个结束节点`)
     }
   }
 
@@ -192,9 +196,11 @@ export function detectCycles(nodes, connections) {
  * @param {Array} previewLines - 预览线数组
  * @returns {Array} 需要添加结束节点的节点列表
  */
-export function findNodesNeedingEndNodes(nodes, connections, previewLines = []) {
+export function findNodesNeedingEndNodes(nodes, connections, previewLines) {
+  // 确保previewLines是数组类型
+  previewLines = Array.isArray(previewLines) ? previewLines : [];
   const nodesWithOutgoing = new Set()
-  
+
   // 统计有真实连接的节点
   connections.forEach(connection => {
     nodesWithOutgoing.add(connection.source)
@@ -218,7 +224,7 @@ export function findNodesNeedingEndNodes(nodes, connections, previewLines = []) 
     
     // 如果有预览线但没有真实连接，需要添加结束节点
     // 如果既没有预览线也没有真实连接，也需要添加结束节点
-    return !hasRealConnection && (hasPreviewLine || !hasRealConnection)
+    return !hasRealConnection && hasPreviewLine
   })
 }
 
@@ -344,45 +350,140 @@ export function autoAddEndNodes(nodes, connections, previewLines = []) {
  * @returns {Array} 配置不完整的节点列表
  */
 export function findIncompleteNodes(nodes) {
-  return nodes.filter(node => {
-    // 排除开始节点和结束节点
-    if (node.type === 'start' || node.type === 'end') return false
-    
-    // 检查不同类型节点的配置完整性
-    switch (node.type) {
-      case 'sms':
-        // 短信节点需要有模板内容
-        return !node.data?.template || !node.data?.template.content
-        
-      case 'ai-call':
-        // AI外呼节点需要有话术配置
-        return !node.data?.script || !node.data?.script.content
-        
-      case 'manual-call':
-        // 人工外呼节点需要有话术配置
-        return !node.data?.script || !node.data?.script.content
-        
-      case 'wait':
-        // 等待节点需要有等待时间配置
-        return !node.data?.duration || node.data?.duration <= 0
-        
+  // 定义分支节点类型
+  const branchNodeTypes = ['audience-split', 'event-split', 'ab-test'];
+  
+  // 验证存储的分支数据是否基于有效配置
+  function validateStoredBranches(nodeType, nodeConfig) {
+    switch (nodeType) {
       case 'audience-split':
-        // 受众分流节点需要有人群配置
-        return !node.data?.audiences || node.data?.audiences.length === 0
+        return nodeConfig.crowdLayers && 
+               Array.isArray(nodeConfig.crowdLayers) && 
+               nodeConfig.crowdLayers.length > 0;
         
       case 'event-split':
-        // 事件分流节点需要有事件配置
-        return !node.data?.event || !node.data?.event.type
+        return !!(nodeConfig.eventCondition || 
+                 nodeConfig.yesLabel || 
+                 nodeConfig.noLabel);
         
       case 'ab-test':
-        // A/B测试节点需要有测试配置
-        return !node.data?.testConfig || !node.data?.testConfig.groups
+        return !!(
+          (nodeConfig.versions && Array.isArray(nodeConfig.versions) && nodeConfig.versions.length > 0) ||
+          nodeConfig.groupALabel || 
+          nodeConfig.groupBLabel || 
+          nodeConfig.groupARatio || 
+          nodeConfig.groupBRatio
+        );
         
       default:
-        // 其他类型节点检查是否有基本配置
-        return !node.data || Object.keys(node.data).length === 0
+        return true;
     }
-  })
+  }
+  
+  return nodes.filter(node => {
+    // 排除结束节点
+    if (node.type === 'end') return false;
+    
+    const nodeData = node.data || {};
+    const nodeConfig = nodeData.config || {};
+    const nodeType = node.type;
+    
+    // 添加调试日志
+    console.log('[调试] 检查节点配置完整性:', {
+      nodeId: node.id,
+      nodeType,
+      isConfigured: nodeData.isConfigured,
+      hasConfigData: !!(nodeConfig && Object.keys(nodeConfig).length > 0),
+      configKeys: nodeConfig ? Object.keys(nodeConfig) : [],
+      crowdLayers: nodeConfig.crowdLayers
+    });
+    
+    // 采用与UnifiedPreviewLineManager中validateNodeConfiguration相同的验证策略
+    // 方法1：检查 isConfigured 标志
+    if (nodeData.isConfigured === true) {
+      console.log('[调试] 节点标记为已配置:', node.id);
+      return false;
+    }
+    
+    // 方法2：检查是否有实际配置数据
+    const hasConfigData = nodeConfig && Object.keys(nodeConfig).length > 0;
+    if (hasConfigData) {
+      // 对于分流节点，需要验证配置的有效性
+      const isBranchNode = branchNodeTypes.includes(nodeType);
+      
+      if (isBranchNode) {
+        const isValidBranchConfig = validateStoredBranches(nodeType, nodeConfig);
+        console.log('[调试] 分流节点配置验证:', {
+          nodeId: node.id,
+          nodeType,
+          isValidBranchConfig,
+          crowdLayers: nodeConfig.crowdLayers,
+          crowdLayersLength: nodeConfig.crowdLayers ? nodeConfig.crowdLayers.length : 0
+        });
+        
+        if (isValidBranchConfig) {
+          return false;
+        } else {
+          // 分流节点配置数据无效，认为未配置完整
+          console.log('[调试] 分流节点配置无效:', node.id);
+          return true;
+        }
+      } else {
+        // 非分流节点，有配置数据就认为已配置
+        console.log('[调试] 非分流节点有配置数据:', node.id);
+        return false;
+      }
+    }
+    
+    // 方法3：对于分流节点，检查是否有分支数据（即使没有明确的配置）
+    const isBranchNode = branchNodeTypes.includes(nodeType);
+    if (isBranchNode && nodeData.branches && nodeData.branches.length > 0) {
+      // 验证分支数据的合理性
+      const validBranches = nodeData.branches.filter(branch => 
+        branch && (branch.id || branch.label || branch.name)
+      );
+      
+      console.log('[调试] 检查现有分支数据:', {
+        nodeId: node.id,
+        branchCount: nodeData.branches.length,
+        validBranchCount: validBranches.length
+      });
+      
+      if (validBranches.length > 0) {
+        return false;
+      }
+    }
+    
+    // 方法4：对于开始节点，总是认为已配置
+    if (nodeType === 'start') {
+      console.log('[调试] 开始节点默认已配置:', node.id);
+      return false;
+    }
+    
+    // 方法5：检查节点是否有任何有意义的数据
+    const hasAnyMeaningfulData = !!(
+      node.label || 
+      node.name || 
+      node.title ||
+      (nodeData && Object.keys(nodeData).length > 0)
+    );
+    
+    console.log('[调试] 检查是否有任何有意义数据:', {
+      nodeId: node.id,
+      hasAnyMeaningfulData,
+      nodeLabel: node.label,
+      nodeName: node.name,
+      nodeTitle: node.title
+    });
+    
+    if (hasAnyMeaningfulData) {
+      return false;
+    }
+    
+    // 如果以上检查都未通过，则认为节点配置不完整
+    console.log('[调试] 节点配置不完整:', node.id);
+    return true;
+  });
 }
 
 /**
