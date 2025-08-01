@@ -122,7 +122,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { tableMockData } from '@/mock/tableData'
+import { tableMockData } from '@/mock/tableData.ts'
 
 interface TableField {
   name: string
@@ -178,7 +178,11 @@ const formData = ref({
 })
 
 // 编辑模式判断
-const isEditMode = computed(() => !!props.editData)
+const isEditMode = computed(() => {
+  const editMode = !!props.editData
+  console.log('[CreateCollectionModal] isEditMode computed:', editMode, 'props.editData:', props.editData)
+  return editMode
+})
 
 const rules = {
   name: [
@@ -214,7 +218,7 @@ const filteredTables = computed(() => {
   if (!searchKeyword.value) {
     return mockTransferData.value
   }
-  return mockTransferData.value.filter(table => 
+  return mockTransferData.value.filter((table: TableItem & { key: string }) => 
     table.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
     table.description.toLowerCase().includes(searchKeyword.value.toLowerCase())
   )
@@ -231,52 +235,52 @@ const tableColumns = [
 const rowSelection = computed(() => ({
   type: 'checkbox',
   selectedRowKeys: selectedKeys.value,
-  onSelect: (rowKeys: string[], rowKey: string, record: any) => {
-    const table = mockTransferData.value.find(t => t.key === rowKey)
+  onSelect: (rowKeys: string[], rowKey: string, record: TableItem & { key: string }) => {
+    const table = mockTransferData.value.find((t: TableItem & { key: string }) => t.key === rowKey)
     if (table) {
       if (rowKeys.includes(rowKey)) {
         // 添加到已选表
-        if (!formData.value.tables.find(t => t.name === table.name)) {
+        if (!formData.value.tables.find((t: TableItem) => t.name === table.name)) {
           formData.value.tables.push(table)
         }
       } else {
         // 从已选表中移除
-        formData.value.tables = formData.value.tables.filter(t => t.name !== table.name)
+        formData.value.tables = formData.value.tables.filter((t: TableItem) => t.name !== table.name)
       }
     }
   },
-  onSelectAll: (selected: boolean, selectedRows: any[], changeRows: any[]) => {
+  onSelectAll: (selected: boolean, selectedRows: (TableItem & { key: string })[], changeRows: (TableItem & { key: string })[]) => {
     if (selected) {
       // 全选
-      changeRows.forEach(row => {
-        const table = mockTransferData.value.find(t => t.key === row.key)
-        if (table && !formData.value.tables.find(t => t.name === table.name)) {
+      changeRows.forEach((row: TableItem & { key: string }) => {
+        const table = mockTransferData.value.find((t: TableItem & { key: string }) => t.key === row.key)
+        if (table && !formData.value.tables.find((t: TableItem) => t.name === table.name)) {
           formData.value.tables.push(table)
         }
       })
     } else {
       // 取消全选
-      changeRows.forEach(row => {
-        formData.value.tables = formData.value.tables.filter(t => t.name !== row.name)
+      changeRows.forEach((row: TableItem & { key: string }) => {
+        formData.value.tables = formData.value.tables.filter((t: TableItem) => t.name !== row.name)
       })
     }
   }
 }))
 
 // 监听已选表变化，同步更新selectedKeys
-watch(() => formData.value.tables, (newTables) => {
-  selectedKeys.value = newTables.map(table => {
-    const item = mockTransferData.value.find(t => t.name === table.name)
+watch(() => formData.value.tables, (newTables: TableItem[]) => {
+  selectedKeys.value = newTables.map((table: TableItem) => {
+    const item = mockTransferData.value.find((t: TableItem & { key: string }) => t.name === table.name)
     return item?.key || ''
-  }).filter(key => key)
+  }).filter((key: string) => key)
 }, { deep: true })
 
 // 移除已选表
 const removeSelectedTable = (table: TableItem) => {
-  formData.value.tables = formData.value.tables.filter(t => t.name !== table.name)
-  const item = mockTransferData.value.find(t => t.name === table.name)
+  formData.value.tables = formData.value.tables.filter((t: TableItem) => t.name !== table.name)
+  const item = mockTransferData.value.find((t: TableItem & { key: string }) => t.name === table.name)
   if (item) {
-    selectedKeys.value = selectedKeys.value.filter(key => key !== item.key)
+    selectedKeys.value = selectedKeys.value.filter((key: string) => key !== item.key)
   }
 }
 
@@ -302,35 +306,43 @@ const handleCreateCollection = async () => {
       return
     }
     
+    const collectionData: Omit<TableCollection, 'id'> = {
+      name: formData.value.name,
+      description: formData.value.description,
+      type: formData.value.type,
+      owner: formData.value.owner,
+      tables: formData.value.tables.map(table => ({
+        name: table.name,
+        type: table.type,
+        category: table.category,
+        domain: table.domain,
+        updateFrequency: table.updateFrequency,
+        owner: table.owner,
+        description: table.description,
+        fields: table.fields
+      })),
+      updateTime: new Date().toISOString(),
+      isFavorite: false
+    }
+    
     if (isEditMode.value && props.editData) {
       // 编辑模式
       emit('update', {
-        ...props.editData,
-        name: formData.value.name,
-        description: formData.value.description,
-        type: formData.value.type,
-        owner: formData.value.owner,
-        tables: formData.value.tables,
-        updateTime: new Date().toISOString()
-      })
+        ...collectionData,
+        id: props.editData.id,
+        isFavorite: props.editData.isFavorite
+      } as TableCollection)
       Message.success('集合更新成功')
     } else {
       // 创建模式
-      emit('create', {
-        name: formData.value.name,
-        description: formData.value.description,
-        type: formData.value.type,
-        owner: formData.value.owner,
-        tables: formData.value.tables,
-        updateTime: new Date().toISOString(),
-        isFavorite: false
-      })
+      emit('create', collectionData)
       Message.success('集合创建成功')
     }
     
     handleCancel()
   } catch (error) {
     console.error('表单验证失败:', error)
+    Message.error(isEditMode.value ? '更新失败' : '创建失败')
   }
 }
 
@@ -351,10 +363,13 @@ const handleCancel = () => {
 }
 
 // 监听visible变化
-watch(() => props.visible, (newVisible) => {
+watch(() => props.visible, (newVisible: boolean) => {
+  console.log('[CreateCollectionModal] visible watcher triggered with newVisible:', newVisible)
   if (!newVisible) {
+    console.log('[CreateCollectionModal] Modal is closing, calling handleCancel')
     handleCancel()
   } else if (newVisible && props.editData) {
+    console.log('[CreateCollectionModal] Modal is opening in edit mode, filling form data with editData')
     // 编辑模式时填充数据
     formData.value = {
       name: props.editData.name,
@@ -363,12 +378,17 @@ watch(() => props.visible, (newVisible) => {
       owner: props.editData.owner || '当前用户',
       tables: [...props.editData.tables]
     }
+    console.log('[CreateCollectionModal] Form data filled from editData:', formData.value)
+  } else {
+    console.log('[CreateCollectionModal] Modal is opening but not in edit mode. editData exists:', !!props.editData)
   }
 })
 
 // 监听editData变化
-watch(() => props.editData, (newEditData) => {
+watch(() => props.editData, (newEditData: TableCollection | null | undefined) => {
+  console.log('[CreateCollectionModal] editData watcher triggered with newEditData:', newEditData)
   if (newEditData && props.visible) {
+    console.log('[CreateCollectionModal] Filling form data with editData')
     formData.value = {
       name: newEditData.name,
       description: newEditData.description || '',
@@ -376,6 +396,9 @@ watch(() => props.editData, (newEditData) => {
       owner: newEditData.owner || '当前用户',
       tables: [...newEditData.tables]
     }
+    console.log('[CreateCollectionModal] Form data filled:', formData.value)
+  } else {
+    console.log('[CreateCollectionModal] Not filling form data. newEditData exists:', !!newEditData, 'props.visible:', props.visible)
   }
 }, { deep: true })
 </script>

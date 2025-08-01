@@ -104,7 +104,7 @@ import TableCollectionGrid from './components/TableCollectionGrid.vue'
 import LoadingState from './components/LoadingState.vue'
 import CreateCollectionModal from './components/CreateCollectionModal.vue'
 import BusinessProcessFlow from '@/components/BusinessProcessFlow.vue'
-import { tableMockData } from '@/mock/tableData'
+import { tableMockData } from '@/mock/tableData.ts'
 import mockData from '@/mock/data-map'
 
 
@@ -325,8 +325,11 @@ const handleUpdateCollectionSubmit = (collection: TableCollection) => {
 
 // 编辑表集合
 const handleEditCollection = (collection: TableCollection) => {
+  console.log('[DataMap] handleEditCollection called with collection:', collection)
   editingCollection.value = collection
+  console.log('[DataMap] Set editingCollection.value to:', collection)
   createCollectionVisible.value = true
+  console.log('[DataMap] Set createCollectionVisible.value to true')
 }
 
 // 删除表集合

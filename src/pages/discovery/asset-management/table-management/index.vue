@@ -2,7 +2,7 @@
   <div class="table-management">
     <div class="page-header">
       <h2>表管理</h2>
-      <a-button type="primary" @click="showCreateModal = true">
+      <a-button type="primary" @click="goToRegisterForm">
         <template #icon>
           <icon-plus />
         </template>
@@ -139,6 +139,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
+import { useRouter } from 'vue-router'
 
 // 响应式数据
 const loading = ref(false)
@@ -148,6 +149,8 @@ const selectedStatus = ref('')
 const showCreateModal = ref(false)
 const editingTable = ref(null)
 const formRef = ref()
+
+const router = useRouter()
 
 // 表格列配置
 const columns = [
@@ -342,6 +345,11 @@ const resetForm = () => {
     owner: ''
   })
   formRef.value?.resetFields()
+}
+
+// 跳转到注册表单页面
+const goToRegisterForm = () => {
+  router.push('/discovery/asset-management/table-management/register')
 }
 
 onMounted(() => {

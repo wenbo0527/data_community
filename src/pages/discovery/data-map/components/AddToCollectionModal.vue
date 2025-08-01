@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue';
+import { ref, watch } from 'vue';
 // defineProps and defineEmits are compiler macros, no import needed
 import { Select as ASelect, Option as AOption } from '@arco-design/web-vue';
 
@@ -39,8 +39,8 @@ const emit = defineEmits(['select-collection']);
 
 const selectedCollection = ref(props.initialSelectedCollection);
 
-watchEffect(() => {
-  selectedCollection.value = props.initialSelectedCollection;
+watch(() => props.initialSelectedCollection, (newValue) => {
+  selectedCollection.value = newValue;
 });
 
 const handleSelect = (value: string) => {

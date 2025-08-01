@@ -13,3 +13,8 @@ declare module '@vue/runtime-core' {
     $route: RouteLocationNormalizedLoaded
   }
 }
+
+// Ensure Vue 3 exports are available
+declare module 'vue' {
+  export * from '@vue/runtime-core'
+}

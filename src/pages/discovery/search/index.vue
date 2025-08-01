@@ -243,7 +243,7 @@ import {
 import LoadingState from '../data-map/components/LoadingState.vue'
 
 // 导入模拟数据
-import { tableMockData } from '@/mock/tableData'
+import { tableMockData } from '@/mock/tableData.ts'
 import mockDataMap from '@/mock/data-map'
 import mockMetrics from '@/mock/metrics'
 import { generateBurndownData, generateWarningData } from '@/mock/external-data'
@@ -320,7 +320,7 @@ onMounted(() => {
 })
 
 // 监听搜索查询变化
-watch(searchQuery, (newValue) => {
+watch(searchQuery, (newValue: string) => {
   if (newValue) {
     debouncedSearch()
   } else {

@@ -180,6 +180,12 @@ beforeEnter: (to) => {
           component: () => import('../pages/discovery/asset-management/table-management/index.vue')
         },
         {
+          path: 'asset-management/table-management/register',
+          name: 'TableRegister',
+          meta: { title: '注册表单' },
+          component: () => import('../pages/discovery/asset-management/table-management/RegisterTableForm.vue')
+        },
+        {
           path: 'asset-management/external-data-management',
           name: 'ExternalDataManagement',
           meta: { title: '外数管理' },

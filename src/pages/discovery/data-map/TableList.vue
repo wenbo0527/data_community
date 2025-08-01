@@ -125,7 +125,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 
 
-import { tableMockData } from '@/mock/tableData'
+import { tableMockData } from '@/mock/tableData.ts'
 
 interface TableItem {
   name: string
@@ -194,7 +194,7 @@ const checkThemeMatch = (item: TableItem & {theme?: string}) => {
 }
 
 // 搜索处理
-const handleSearch = async () => {
+const handleSearch = async (value?: string) => {
   loading.value = true
   try {
     // 使用共享mock数据
@@ -314,7 +314,7 @@ const copyTableName = async (record: TableItem) => {
 const addToCollection = async (record: TableItem) => {
   try {
     const { Modal, Select, Option } = await import('@arco-design/web-vue')
-    const { h } = await import('vue')
+    const { h } = await import('vue') as { h: typeof import('vue').h }
     
     let selectedCollection = ref('')
     

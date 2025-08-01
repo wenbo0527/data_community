@@ -21,7 +21,11 @@ interface TableCollection {
   id: string;
   name: string;
   description: string;
+  type?: string;
   tables: TableItem[];
+  owner?: string;
+  updateTime?: string;
+  isFavorite?: boolean;
 }
 
 // 模拟数据
@@ -132,25 +136,41 @@ const mockCollections: TableCollection[] = [
     id: 'collection-1',
     name: '贷前分析',
     description: '贷前分析场景的相关数据表，包含贷款申请、用户信息等核心数据',
-    tables: mockTables.filter(table => ['贷前分析', '用户域'].includes(table.domain))
+    type: '业务流程',
+    tables: mockTables.filter(table => ['贷前分析', '用户域'].includes(table.domain)),
+    owner: '张三',
+    updateTime: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5分钟前
+    isFavorite: true
   },
   {
     id: 'collection-2',
     name: '风控评估',
     description: '风控评估场景的相关数据表，用于风险评分和信用评估',
-    tables: mockTables.filter(table => table.domain === '风控评估')
+    type: '风险管控',
+    tables: mockTables.filter(table => table.domain === '风控评估'),
+    owner: '李四',
+    updateTime: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2小时前
+    isFavorite: false
   },
   {
     id: 'collection-3',
     name: '反欺诈分析',
     description: '反欺诈场景的相关数据表，用于识别和预防欺诈行为',
-    tables: mockTables.filter(table => table.domain === '反欺诈' || table.name.includes('fraud'))
+    type: '风险管控',
+    tables: mockTables.filter(table => table.domain === '反欺诈' || table.name.includes('fraud')),
+    owner: '王五',
+    updateTime: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30分钟前
+    isFavorite: true
   },
   {
     id: 'collection-4',
     name: '自营业务分析',
     description: '自营业务场景的相关数据表，用于分析自营贷款业务的运营情况',
-    tables: mockTables.filter(table => table.domain === '自营业务')
+    type: '业务流程',
+    tables: mockTables.filter(table => table.domain === '自营业务'),
+    owner: '赵六',
+    updateTime: new Date().toISOString(), // 刚刚
+    isFavorite: false
   }
 ];
 

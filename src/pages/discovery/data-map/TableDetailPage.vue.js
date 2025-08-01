@@ -20,7 +20,6 @@ const goToTableDetail = (table) => {
     router.push(`/discovery/data-map/table/${encodeURIComponent(table.name)}`);
 };
 const isFavorite = ref(false);
-const relationModalVisible = ref(false);
 const sampleData = ref([]);
 const currentField = ref();
 const activeModalTab = ref('structure'); // 控制关联弹窗内的标签页
@@ -227,8 +226,10 @@ const showRelatedTables = (field) => {
             relationDescription
         };
     });
-    relationModalVisible.value = true;
-    activeModalTab.value = 'view';
+    activeModalTab.value = 'relations';
+    // 设置关联说明tab为列表视图模式
+    // 这里需要访问父组件的relationViewMode变量，暂时用注释表示
+    // relationViewMode.value = 'list';
     // 记录最终处理结果
     logger.info('关联表查询完成', {
         field: field.name,
@@ -262,8 +263,9 @@ const showRelatedTablesByName = (tableName) => {
             relationType,
             relationDescription
         });
-        relationModalVisible.value = true;
-        activeModalTab.value = 'view';
+        activeModalTab.value = 'relations';
+        // 设置关联说明tab为列表视图模式
+        // relationViewMode.value = 'list';
     }
 };
 // 获取关联表信息
@@ -313,8 +315,9 @@ const editFieldRelations = (field) => {
     editingField.value = field;
     // Load existing relations for this field (mock data or from API)
     fieldRelations.value = getMockRelationsForField(field.name); // Implement this function to fetch real data
-    relationModalVisible.value = true;
-    activeModalTab.value = 'edit';
+    activeModalTab.value = 'relations';
+    // 设置关联说明tab为列表视图模式
+    // relationViewMode.value = 'list';
 };
 const handleSaveRelations = (relations) => {
     logger.info('保存关联关系', { field: editingField.value?.name, relations });
@@ -328,13 +331,31 @@ const getMockRelationsForField = (fieldName) => {
     // This is a placeholder. In a real app, fetch this data.
     if (fieldName.toLowerCase() === 'user_id') {
         return [
-            { targetTable: 'fact_loan_apply', relationField: 'user_id', relationType: '维度-事实关联', relationDescription: '提供申请人基础信息' },
-            { targetTable: 'dws_risk_score', relationField: 'user_id', relationType: '维度-汇总关联', relationDescription: '提供用户基础画像数据' },
+            { 
+                sourceTable: tableData.value?.name || '',
+                targetTable: 'fact_loan_apply', 
+                relationFields: [{ sourceField: 'user_id', targetField: 'user_id' }],
+                relationType: '1:N', 
+                relationDescription: '提供申请人基础信息' 
+            },
+            { 
+                sourceTable: tableData.value?.name || '',
+                targetTable: 'dws_risk_score', 
+                relationFields: [{ sourceField: 'user_id', targetField: 'user_id' }],
+                relationType: '1:N', 
+                relationDescription: '提供用户基础画像数据' 
+            },
         ];
     }
     else if (fieldName.toLowerCase() === 'id') {
         return [
-            { targetTable: 'dim_product', relationField: 'product_id', relationType: '字段关联', relationDescription: '关联产品信息' },
+            { 
+                sourceTable: tableData.value?.name || '',
+                targetTable: 'dim_product', 
+                relationFields: [{ sourceField: 'id', targetField: 'product_id' }],
+                relationType: 'N:1', 
+                relationDescription: '关联产品信息' 
+            },
         ];
     }
     return [];
@@ -343,8 +364,8 @@ const getMockRelationsForField = (fieldName) => {
 const getRelationType = (sourceTable, targetTable) => {
     if (!sourceTable || !targetTable)
         return '字段关联';
-    const sourceType = mockTables.find(t => t.name === sourceTable)?.type?.toLowerCase() || '';
-    const targetType = mockTables.find(t => t.name === targetTable)?.type?.toLowerCase() || '';
+    const sourceType = mockTables.find((t) => t.name === sourceTable)?.type?.toLowerCase() || '';
+    const targetType = mockTables.find((t) => t.name === targetTable)?.type?.toLowerCase() || '';
     if (sourceType === 'dim' && targetType.startsWith('fact')) {
         return '维度-事实关联';
     }
@@ -360,7 +381,7 @@ const getRelationType = (sourceTable, targetTable) => {
     return '字段关联';
 };
 // 获取关联说明
-const getRelationDescription = (sourceTable, targetTable, fieldName) => {
+const getRelationDescription = (sourceTable: string, targetTable: string, fieldName: string) => {
     if (sourceTable === 'dim_user') {
         if (targetTable === 'fact_loan_apply') {
             return '提供申请人基础信息';
@@ -957,12 +978,12 @@ if (__VLS_ctx.tableData) {
     /** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
     // @ts-ignore
     const __VLS_193 = __VLS_asFunctionalComponent(__VLS_192, new __VLS_192({
-        visible: (__VLS_ctx.relationModalVisible),
+        visible: false,
         title: (__VLS_ctx.modalTitle),
         width: "800px",
     }));
     const __VLS_194 = __VLS_193({
-        visible: (__VLS_ctx.relationModalVisible),
+        visible: false,
         title: (__VLS_ctx.modalTitle),
         width: "800px",
     }, ...__VLS_functionalComponentArgsRest(__VLS_193));
@@ -1169,7 +1190,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             tableData: tableData,
             goToTableDetail: goToTableDetail,
             isFavorite: isFavorite,
-            relationModalVisible: relationModalVisible,
+
             sampleData: sampleData,
             currentField: currentField,
             activeModalTab: activeModalTab,

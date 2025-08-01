@@ -37,127 +37,113 @@
       
       <!-- 标签页内容 -->
       <a-card class="tab-content">
-        <a-tabs type="rounded" v-model:active-key="activeModalTab">
+        <a-tabs default-active-key="details" class="table-content">
+      <a-tab-pane key="details" title="明细信息">
+        <a-tabs default-active-key="structure">
           <a-tab-pane key="structure" title="表结构">
-            <!-- <a-button type="primary" size="mini" style="margin-bottom: 16px;" @click="showRelationEditor">编辑关联关系</a-button> -->
-            <a-table :data="tableData.fields || []" :bordered="false" :pagination="false">
-              <template #columns>
-                <a-table-column title="字段名" dataIndex="name">
-                  <template #cell="{ record }">
-                    <a-link v-if="['id', 'user_id'].includes(record.name.toLowerCase())" @click="showRelatedTables(record)">
-                      {{ record.name }}
-                    </a-link>
-                    <span v-else>{{ record.name }}</span>
-                  </template>
-                </a-table-column>
-                <a-table-column title="类型" dataIndex="type" />
-                <a-table-column title="描述" dataIndex="description" />
-                <a-table-column title="操作">
-                  <template #cell="{ record }">
-                    <a-button type="text" size="mini" @click="editFieldRelations(record)">编辑关联关系</a-button>
-                  </template>
-                </a-table-column>
-              </template>
-            </a-table>
+            <a-card class="table-info" title="基本信息">
+              <a-descriptions
+                :data="tableBasicInfo"
+                :column="3"
+                size="medium"
+                bordered
+              />
+            </a-card>
+            <a-card class="table-info" title="字段信息">
+              <a-table
+                :data="tableData?.fields || []"
+                :pagination="false"
+                :scroll="{ x: '100%' }"
+              >
+                <template #columns>
+                  <a-table-column title="字段名" data-index="name" />
+                  <a-table-column title="类型" data-index="type" />
+                  <a-table-column title="描述" data-index="description" />
+                </template>
+              </a-table>
+            </a-card>
           </a-tab-pane>
-          
           <a-tab-pane key="preview" title="数据预览">
-            <a-table :data="sampleData" :bordered="false" :pagination="false">
-              <template #columns>
-                <a-table-column 
-                  v-for="field in tableData.fields" 
-                  :key="field.name" 
-                  :title="field.name" 
-                  :dataIndex="field.name" 
-                />
+            <a-card class="table-info">
+              <template #title>
+                <div class="structure-header">
+                  <span>数据预览</span>
+                </div>
               </template>
-            </a-table>
-          </a-tab-pane>
-          
-          <a-tab-pane key="usage" title="使用说明">
-            <a-typography-paragraph>
-              {{ tableData.description || '暂无使用说明' }}
-              <a-link copyable>
-                /discovery/data-map/table/dim_user
-              </a-link>
-              <a-button type="primary" size="small" style="margin-left: 8px" @click="router.push('/discovery/data-map/table/dim_user')">
-                <template #icon>
-                  <icon-link />
+              <a-table
+                :data="sampleData"
+                :pagination="false"
+                :scroll="{ x: '100%' }"
+              >
+                <template #columns>
+                  <a-table-column
+                    v-for="field in tableData?.fields"
+                    :key="field.name"
+                    :title="field.name"
+                    :data-index="field.name"
+                  />
                 </template>
-                访问示例
-              </a-button>
-            </a-typography-paragraph>
-            <a-typography-paragraph>
-              <a-alert type="info">
-                <template #icon><icon-info-circle /></template>
-                <template #message>
-                  您可以将表名替换为任意有效的表名，例如：
-                  <a-space>
-                    <a-tag color="#165DFF" style="cursor: pointer" @click="router.push('/discovery/data-map/table/fact_loan_apply')">fact_loan_apply</a-tag>
-                    <a-tag color="#722ED1" style="cursor: pointer" @click="router.push('/discovery/data-map/table/dwd_fraud_alert')">dwd_fraud_alert</a-tag>
-                    <a-tag color="#0FC6C2" style="cursor: pointer" @click="router.push('/discovery/data-map/table/dws_risk_score')">dws_risk_score</a-tag>
-                  </a-space>
-                </template>
-              </a-alert>
-            </a-typography-paragraph>
-            <a-typography-paragraph>
-              <a-alert type="warning">
-                <template #icon><icon-exclamation-circle /></template>
-                <template #message>
-                  注意：请确保您有访问相应表的权限。如果没有权限，您可以点击页面右上角的"申请权限"按钮。
-                </template>
-              </a-alert>
-            </a-typography-paragraph>
+              </a-table>
+            </a-card>
           </a-tab-pane>
         </a-tabs>
+      </a-tab-pane>
+      <a-tab-pane key="relations" title="业务关系">
+        <div class="relation-info">
+          <a-space direction="vertical" style="width: 100%">
+            <a-card>
+              <a-tabs v-model:activeKey="relationViewMode" type="rounded">
+                <a-tab-pane key="graph" title="可视化">
+                  <div ref="relationTreeRef" class="relation-tree-container"></div>
+                </a-tab-pane>
+                <a-tab-pane key="list" title="列表">
+                  <a-table
+                    :data="allRelations"
+                    :pagination="false"
+                    :scroll="{ x: '100%' }"
+                  >
+                    <template #columns>
+                      <a-table-column title="关联表" data-index="targetTable">
+                        <template #cell="{ record }">
+                          <a-link @click="goToTableByRelation(record)">
+                            {{ record.targetTable }}
+                          </a-link>
+                        </template>
+                      </a-table-column>
+                      <a-table-column title="关联字段">
+                        <template #cell="{ record }">
+                          {{ record.relationFields.map(f => `${f.sourceField}=${f.targetField}`).join(', ') }}
+                        </template>
+                      </a-table-column>
+                      <a-table-column title="关联类型" data-index="relationType" />
+                      <a-table-column title="关联说明" data-index="relationDescription" />
+                    </template>
+                  </a-table>
+                </a-tab-pane>
+              </a-tabs>
+            </a-card>
+          </a-space>
+        </div>
+      </a-tab-pane>
+      <a-tab-pane key="usage" title="使用说明">
+        <a-card class="table-info">
+          <a-alert type="info">
+            <template #title>
+              <div style="font-size: 16px; font-weight: 500">使用说明</div>
+            </template>
+            <div style="margin-top: 12px">
+              <p>1. 该表包含用户相关的维度信息</p>
+              <p>2. 主键字段为 id</p>
+              <p>3. 常用于与订单表、行为表等进行关联分析</p>
+              <p>4. 数据每日更新</p>
+            </div>
+          </a-alert>
+        </a-card>
+      </a-tab-pane>
+    </a-tabs>
       </a-card>
       
-      <!-- 关联关系弹窗 -->
-      <a-modal 
-        v-model:visible="relationModalVisible" 
-        :title="modalTitle"
-        width="800px"
-      >
-        <div v-if="activeModalTab === 'view'">
-          <a-table :data="relatedTables" :bordered="false">
-            <template #columns>
-              <a-table-column title="表名" dataIndex="name">
-                <template #cell="{ record }">
-                  <a-link @click="goToTableDetail(record)">{{ record.name }}</a-link>
-                </template>
-              </a-table-column>
-              <a-table-column title="类型" dataIndex="type">
-                <template #cell="{ record }">
-                  <a-tag :color="getTypeColor(record.type)">{{ record.type }}</a-tag>
-                </template>
-              </a-table-column>
-              <a-table-column title="关联字段" dataIndex="relationField">
-                <template #cell="{ record }">
-                  {{ currentField?.name || 'user_id' }}
-                </template>
-              </a-table-column>
-              <a-table-column title="关联类型" dataIndex="relationType">
-                <template #cell="{ record }">
-                  {{ record.relationType || '主表关联' }}
-                </template>
-              </a-table-column>
-              <a-table-column title="关联说明" dataIndex="relationDescription">
-                <template #cell="{ record }">
-                  {{ record.relationDescription || '提供数据关联' }}
-                </template>
-              </a-table-column>
-            </template>
-          </a-table>
-        </div>
-        
-        <div v-if="activeModalTab === 'edit'">
-          <RelationEditorPanel
-            :field-name="editingField?.name || ''"
-            :initial-relations="fieldRelations"
-            @save-relations="handleSaveRelations"
-          />
-        </div>
-      </a-modal>
+
     </div>
     <div v-else class="empty-state">
       <a-empty description="请选择一个数据表查看详情" />
@@ -167,7 +153,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, watchEffect, h } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, h } from 'vue'
+import type { VNode } from 'vue'
 import { 
   IconStar, 
   IconSafe,
@@ -179,8 +166,15 @@ import {
 import { Modal } from '@arco-design/web-vue'
 import { mockTables } from '@/mock/data-map'
 import { useRoute, useRouter } from 'vue-router'
-import RelationEditorPanel from './components/RelationEditorPanel.vue'
+import RelationEditor from './components/RelationEditor.vue'
 import AddToCollectionModal from './components/AddToCollectionModal.vue'
+import * as echarts from 'echarts/core'
+import { TreeChart } from 'echarts/charts'
+import { CanvasRenderer } from 'echarts/renderers'
+import type { EChartsType, CallbackDataParams } from 'echarts/types/dist/shared'
+
+// 注册必须的组件
+echarts.use([TreeChart, CanvasRenderer])
 
 
 
@@ -218,20 +212,63 @@ interface TableItem {
   relationDescription?: string
 }
 
+interface Relation {
+  id?: string
+  sourceTable: string
+  targetTable: string
+  relationFields: { sourceField: string; targetField: string }[]
+  relationType: '1:1' | '1:N' | 'N:1' | 'N:N'
+  relationDescription: string
+}
+
 const route = useRoute()
 const router = useRouter()
 const tableData = ref<TableItem | undefined>()
 
+// 关联关系相关
+const allRelations = ref<Relation[]>([])
+const relationTreeRef = ref<HTMLElement | null>(null)
+const relationViewMode = ref<'graph' | 'list'>('list') // 默认展示列表视图
+let relationChart: echarts.ECharts | null = null
+
 const goToTableDetail = (table: TableItem) => {
   router.push(`/discovery/data-map/table/${encodeURIComponent(table.name)}`)
 }
+
+// 通过关联关系跳转到目标表
+const goToTableByRelation = (relation: Relation) => {
+  router.push(`/discovery/data-map/table/${encodeURIComponent(relation.targetTable)}`)
+}
 const isFavorite = ref(false)
-const relationModalVisible = ref(false)
 const sampleData = ref<any[]>([])
 const currentField = ref<TableField>()
 const activeModalTab = ref('structure') // 控制关联弹窗内的标签页
 const relatedTables = ref<TableItem[]>([])
 const currentTableName = ref<string>('')
+
+// 监听标签页切换
+const handleTabChange = (key: string) => {
+  activeModalTab.value = key;
+  // 如果切换到关联说明tab，且视图模式为图表，则渲染树图
+  if (key === 'relations' && relationViewMode.value === 'graph') {
+    nextTick(() => {
+      renderRelationTree();
+    });
+  }
+}
+
+// 监听关联关系视图模式切换
+watch(relationViewMode, (newMode: 'graph' | 'list') => {
+  if (activeModalTab.value === 'relations' && newMode === 'graph') {
+    nextTick(() => {
+      renderRelationTree();
+    });
+  }
+})
+
+onMounted(() => {
+  initRelations();
+})
 
 // 基本信息数据 - 提取为计算属性
 const tableBasicInfo = computed(() => {
@@ -253,12 +290,12 @@ const tableBasicInfo = computed(() => {
 
 // 获取关联字段 - 提取为顶层计算属性
 const relatedFields = computed(() => {
-  const fields = tableData.value?.fields?.filter(field => 
+  const fields = tableData.value?.fields?.filter((field: TableField) => 
     ['id', 'user_id', 'product_id'].includes(field.name.toLowerCase())
   ) || []
   logger.debug('关联字段解析', {
     totalFields: tableData.value?.fields?.length || 0,
-    matchedFields: fields.map(f => f.name)
+    matchedFields: fields.map((f: TableField) => f.name)
   })
   return fields
 })
@@ -266,15 +303,15 @@ const relatedFields = computed(() => {
 // 弹窗标题
 const modalTitle = computed(() => {
   if (currentTableName.value) {
-    return `${tableData.value?.name} 与 ${currentTableName.value} 的关联关系`
+    return `当前表 与 ${currentTableName.value} 的关联关系` // 不直接引用tableData.value?.name以避免循环依赖
   }
   return `${currentField?.value?.name || ''} 关联表`
 })
 
 // 从路由参数加载表数据
-watchEffect(() => {
-  const tableParam = Array.isArray(route.params.table) ? route.params.table[0] : route.params.table || 
-              Array.isArray(route.params.tableName) ? route.params.tableName[0] : route.params.tableName
+watch(() => route.params, (params) => {
+  const tableParam = Array.isArray(params.table) ? params.table[0] : params.table || 
+              Array.isArray(params.tableName) ? params.tableName[0] : params.tableName
   logger.debug('路由参数', { tableParam })
   
   if (tableParam) {
@@ -283,7 +320,7 @@ watchEffect(() => {
   } else {
     tableData.value = createSafeTableData({})
   }
-})
+}, { immediate: true })
 
 
 
@@ -341,7 +378,7 @@ function createSafeTableData(source: Partial<TableItem>): TableItem {
 
 
 
-watch(tableData, (currentRefData) => {
+watch(tableData, (currentRefData: TableItem | undefined) => {
   if (!currentRefData || !currentRefData.fields?.length) {
     logger.debug('样本数据重置', '表数据为空或无字段')
     sampleData.value = []
@@ -349,11 +386,11 @@ watch(tableData, (currentRefData) => {
   }
   
   try {
-    sampleData.value = Array(2).fill(0).map((_, i) => {
-      const row = { id: i + 1 }
-      currentRefData.fields.forEach(field => {
+    sampleData.value = Array(2).fill(0).map((_: undefined, i: number) => {
+      const row: Record<string, string> = { id: `${i + 1}` }
+      currentRefData.fields?.forEach((field: TableField) => {
         if (field?.name) {
-          (row as Record<string, any>)[field.name] = `mock_${field.name}_${i + 1}`
+          row[field.name] = `mock_${field.name}_${i + 1}`
         }
       })
       return row
@@ -363,10 +400,283 @@ watch(tableData, (currentRefData) => {
     logger.error('样本数据生成失败', error)
     sampleData.value = []
   }
-}, { immediate: true, deep: true })
+  
+  // 当表数据变化时，仅在关联标签页且图表视图模式下重新渲染树图
+  if (activeModalTab.value === 'relations' && relationViewMode.value === 'graph') {
+    nextTick(() => {
+      renderRelationTree()
+    })
+  }
+}, { deep: true })
 
 const toggleFavorite = () => {
   isFavorite.value = !isFavorite.value
+}
+
+// 显示关联关系编辑器
+const showRelationEditor = () => {
+  // 切换到关联说明tab并设置为编辑模式
+  activeModalTab.value = 'relations'
+  relationViewMode.value = 'list'
+}
+
+// 初始化关联关系数据
+const initRelations = () => {
+  // 模拟关联关系数据
+  allRelations.value = [
+    {
+      id: '1',
+      sourceTable: '', // 不直接引用tableData.value?.name以避免循环依赖
+      targetTable: 'dim_user',
+      relationFields: [{ sourceField: 'user_id', targetField: 'id' }],
+      relationType: 'N:1',
+      relationDescription: '关联到用户维度表'
+    },
+    {
+      id: '2',
+      sourceTable: '', // 不直接引用tableData.value?.name以避免循环依赖
+      targetTable: 'fact_order',
+      relationFields: [{ sourceField: 'id', targetField: 'user_id' }],
+      relationType: '1:N',
+      relationDescription: '关联到订单事实表'
+    }
+  ]
+}
+
+// 渲染关联关系图
+const renderRelationTree = () => {
+  logger.debug('开始渲染关联关系图')
+  if (!relationTreeRef.value) {
+    logger.warn('relationTreeRef 未找到，无法渲染图表')
+    return
+  }
+  
+  // 销毁之前的图表实例
+  if (relationChart) {
+    logger.debug('销毁之前的图表实例')
+    relationChart.dispose()
+  }
+  
+  // 初始化ECharts实例
+  logger.debug('初始化ECharts实例')
+  relationChart = echarts.init(relationTreeRef.value)
+  
+  // 构造关系图数据
+  logger.debug('构造关系图数据', { allRelations: allRelations.value })
+  
+  // 构造节点数据 - 优化的三层结构：当前表 -> 目标表 -> 关联详情
+  const nodes = [
+    {
+      name: tableData.value?.name || '当前表',
+      itemStyle: {
+        color: '#1890ff'
+      },
+      label: {
+        fontWeight: 'bold'
+      },
+      children: allRelations.value.map((relation: Relation, index: number) => {
+        const targetNode = {
+          name: relation.targetTable,
+          // 添加节点标识用于区分点击行为
+          relationId: relation.id || index,
+          itemStyle: {
+            color: '#52c41a'
+          },
+          label: {
+            fontWeight: 'bold'
+          }
+        };
+        
+        return {
+          ...targetNode,
+          children: [
+            {
+              name: `关联字段: ${relation.relationFields.map((f: { sourceField: string; targetField: string }) => `${f.sourceField}=${f.targetField}`).join(', ')}`,
+              // 添加类型标识用于样式区分
+              nodeType: 'field',
+              // 添加父节点引用用于tooltip
+              parentNode: targetNode,
+              itemStyle: {
+                color: '#1890ff'
+              }
+            },
+            {
+              name: `关联类型: ${relation.relationType}`,
+              // 添加类型标识用于样式区分
+              nodeType: 'type',
+              // 添加父节点引用用于tooltip
+              parentNode: targetNode,
+              itemStyle: {
+                color: '#52c41a'
+              }
+            }
+          ]
+        };
+      })
+    }
+  ];
+  
+  // Tree图的连线数据通过节点的父子关系自动生成，不需要显式定义links数组
+  
+  logger.debug('构造完成的关系图数据', { nodes });
+  
+  // 配置项
+  const option = {
+    title: {
+      text: '表关联关系图'
+    },
+    tooltip: {
+      show: true,
+      trigger: 'item',
+      formatter: (params: any) => {
+        const nodeData = params.data;
+        // 为字段和类型节点显示详细信息
+        if (nodeData && nodeData.nodeType) {
+          // 查找父节点（目标表）
+          const parentNode = nodeData.parentNode;
+          if (parentNode && parentNode.relationId !== undefined) {
+            const relation = allRelations.value.find((r: Relation) => 
+              r.id === parentNode.relationId || allRelations.value.indexOf(r).toString() === parentNode.relationId
+            );
+            if (relation) {
+              if (nodeData.nodeType === 'field') {
+                return `关联字段: ${relation.relationFields.map(f => `${f.sourceField}=${f.targetField}`).join(', ')}<br/>` +
+                       `源表: ${tableData.value?.name}<br/>` +
+                       `目标表: ${relation.targetTable}`;
+              } else if (nodeData.nodeType === 'type') {
+                return `关联类型: ${relation.relationType}<br/>` +
+                       `关联说明: ${relation.relationDescription || '无'}<br/>` +
+                       `源表: ${tableData.value?.name}<br/>` +
+                       `目标表: ${relation.targetTable}`;
+              }
+            }
+          }
+        }
+        // 其他节点显示默认信息
+        return params.name;
+      }
+    },
+    animationDurationUpdate: 1500,
+    animationEasingUpdate: 'quinticInOut' as const,
+    series: [
+      {
+        type: 'tree',
+        layout: 'orthogonal',
+        orient: 'LR',
+        symbolSize: 10,
+        roam: true,
+        label: {
+          show: true,
+          position: 'left',
+          verticalAlign: 'middle',
+          align: 'right',
+          fontSize: 14,
+          color: '#333',
+          backgroundColor: '#fff',
+          borderColor: '#eee',
+          borderWidth: 1,
+          borderRadius: 4,
+          padding: [4, 8],
+          // 根据节点类型设置不同样式
+          formatter: (params: { data: any; name: string }) => {
+            const nodeData = params.data;
+            if (nodeData.nodeType === 'field') {
+              return `{field|${params.name}}`;
+            } else if (nodeData.nodeType === 'type') {
+              return `{type|${params.name}}`;
+            }
+            return params.name;
+          },
+          // 设置悬停提示信息
+          rich: {
+            field: {
+              color: '#1890ff',
+              fontSize: 13,
+              fontWeight: 'bold'
+            },
+            type: {
+              color: '#52c41a',
+              fontSize: 13,
+              fontStyle: 'italic'
+            },
+            description: {
+              color: '#faad14',
+              fontSize: 12
+            }
+          },
+        leaves: {
+          label: {
+            position: 'right',
+            verticalAlign: 'middle',
+            align: 'left',
+            fontSize: 14,
+            color: '#333',
+            backgroundColor: '#fff',
+            borderColor: '#eee',
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: [4, 8],
+            formatter: (params: { data: any; name: string }) => {
+              const nodeData = params.data;
+              if (nodeData.nodeType === 'field') {
+                return `{field|${params.name}}`;
+              } else if (nodeData.nodeType === 'type') {
+                return `{type|${params.name}}`;
+              }
+              return params.name;
+            },
+            // 设置悬停提示信息
+            rich: {
+              field: {
+                color: '#1890ff',
+                fontSize: 13,
+                fontWeight: 'bold'
+              },
+              type: {
+                color: '#52c41a',
+                fontSize: 13,
+                fontStyle: 'italic'
+              },
+              description: {
+                color: '#faad14',
+                fontSize: 12
+              }
+            }
+          }
+        },
+        data: [nodes[0]], // 根节点
+        lineStyle: {
+          color: '#ccc',
+          width: 1,
+          curveness: 0
+        }
+      }
+    ]
+  };
+  
+  // 渲染图表
+  logger.debug('设置图表配置项', { option });
+  relationChart.setOption(option);
+  logger.debug('图表渲染完成');
+  
+  // 监听节点点击事件
+  relationChart.on('click', (params: CallbackDataParams) => {
+    logger.debug('节点被点击', { params });
+    const data = params.data as { name?: string; relationId?: string; nodeType?: string };
+    
+    // 只有点击目标表节点时才跳转
+    if (data && data.name && data.relationId !== undefined && !data.nodeType) {
+      // 查找对应的关联关系
+      const relation = allRelations.value.find((r: Relation) => 
+        r.id === data.relationId || allRelations.value.indexOf(r).toString() === data.relationId
+      );
+      if (relation) {
+        // 跳转到目标表
+        goToTableByRelation(relation);
+      }
+    }
+    // 关联字段和关联类型节点不处理点击事件
+  });
 }
 
 const collections = ref([
@@ -393,7 +703,7 @@ const showAddToCollection = () => {
       logger.info('添加到集合', {
         table: tableData.value?.name,
         collection: value,
-        collectionLabel: collections.value.find(c => c.value === value)?.label || ''
+        collectionLabel: collections.value.find((c: { value: string; label: string }) => c.value === value)?.label || ''
       })
       
       Modal.success({ 
@@ -428,212 +738,21 @@ const applyPermission = () => {
   logger.info('申请权限', tableData.value?.name)
 }
 
-const showRelatedTables = (field: TableField) => {
-  console.group('关联字段处理')
-  logger.debug('开始处理关联字段', { 
-    field: field.name, 
-    fieldType: field.type,
-    currentTable: tableData.value?.name 
-  })
-  
-  currentField.value = field
-  currentTableName.value = ''
-  const tables = getRelatedTables(field)
-  
-  logger.debug('获取关联表结果', {
-    fieldName: field.name,
-    matchedTables: tables.map(t => t.name),
-    totalCount: tables.length
-  })
-  
-  // 为关联表添加更多信息
-  relatedTables.value = tables.map(table => {
-    const relationType = getRelationType(tableData.value?.name || '', table.name)
-    const relationDescription = getRelationDescription(tableData.value?.name || '', table.name, field.name)
-    
-    logger.debug('处理关联表信息', {
-      tableName: table.name,
-      relationType,
-      relationDescription
-    })
-    
-    return {
-      ...table,
-      relationField: field.name,
-      relationType,
-      relationDescription
-    }
-  })
-  
-  relationModalVisible.value = true
-  activeModalTab.value = 'view'
-
-  // 记录最终处理结果
-  logger.info('关联表查询完成', { 
-    field: field.name, 
-    count: tables.length,
-    relations: relatedTables.value.map(t => `${t.name}(${t.relationType})`)
-  })
-  console.groupEnd()
+const switchToRelationsTab = () => {
+  // 切换到关联说明tab
+  activeModalTab.value = 'relations'
+  relationViewMode.value = 'list'
 }
     
-// 通过表名查看关联表
-const showRelatedTablesByName = (tableName: string) => {
-  currentTableName.value = tableName
-  const targetTable = mockTables.find(t => t.name === tableName)
-  
-  if (targetTable) {
-    // 查找关联字段，默认为user_id
-    const relationField = targetTable.fields?.find(f => f.name.toLowerCase() === 'user_id') || {
-      name: 'user_id',
-      type: 'string',
-      description: '用户ID'
-    }
-    
-    const relationType = getRelationType(tableData.value?.name || '', tableName)
-    const relationDescription = getRelationDescription(tableData.value?.name || '', tableName, 'user_id')
-    
-    relatedTables.value = [{
-      ...targetTable,
-      relationField: relationField.name,
-      relationType,
-      relationDescription
-    }]
-    
-    logger.debug('关联表信息更新', {
-      tableName,
-      relationField: relationField.name,
-      relationType,
-      relationDescription
-    })
-    
-    relationModalVisible.value = true
-    activeModalTab.value = 'view'
-  }
-}
 
-// 获取关联表信息
-const getRelatedTables = (field: TableField) => {
-  console.group('获取关联表')
-  logger.debug('开始查找关联表', { 
-    fieldName: field.name,
-    isRelationField: ['id', 'user_id'].includes(field.name.toLowerCase())
-  })
-  
-  let result: TableItem[] = []
-  if (['id', 'user_id'].includes(field.name.toLowerCase())) {
-    // 返回与当前表关联的表
-    result = mockTables.filter(t => {
-      const hasMatchingField = t.fields?.some(f => f.name.toLowerCase() === field.name.toLowerCase())
-      logger.debug('检查表字段匹配', {
-        tableName: t.name,
-        hasMatchingField,
-        matchedField: field.name
-      })
-      return hasMatchingField
-    })
-  }
-  
-  logger.debug('关联表查找完成', {
-    fieldName: field.name,
-    matchedTables: result.map(t => t.name),
-    totalMatches: result.length
-  })
-  console.groupEnd()
-  return result
-}
 
-// 获取表类型对应的颜色
-const getTypeColor = (type: string) => {
-  const typeColors = {
-    'dim': '#165DFF',
-    'fact': '#FF7D00',
-    'dwd': '#722ED1',
-    'dws': '#0FC6C2',
-    'ads': '#F5319D'
-  }
-  const typeKey = type.toLowerCase() as keyof typeof typeColors;
-  return typeColors[typeKey] || '#86909C'
-}
 
-const editingField = ref<TableField | null>(null)
-const fieldRelations = ref<Relation[]>([]) // State to hold relations for the currently edited field
 
-interface Relation {
-  targetTable: string
-  relationField: string
-  relationType?: string
-  relationDescription?: string
-}
 
-const editFieldRelations = (field: TableField) => {
-  logger.debug('编辑字段关联关系', { fieldName: field.name })
-  editingField.value = field
-  // Load existing relations for this field (mock data or from API)
-  fieldRelations.value = getMockRelationsForField(field.name) // Implement this function to fetch real data
-  relationModalVisible.value = true
-  activeModalTab.value = 'edit'
-}
 
-const handleSaveRelations = (relations: Relation[]) => {
-  logger.info('保存关联关系', { field: editingField.value?.name, relations })
-  // Here you would typically save the relations to your backend or state management
-  // For this mock, we'll just log it.
-  // You might want to update a local state that stores relations per field.
-  // Example: updateFieldRelations(editingField.value.name, relations)
-}
 
-// Mock function to get existing relations for a field
-const getMockRelationsForField = (fieldName: string): Relation[] => {
-  // This is a placeholder. In a real app, fetch this data.
-  if (fieldName.toLowerCase() === 'user_id') {
-    return [
-      { targetTable: 'fact_loan_apply', relationField: 'user_id', relationType: '维度-事实关联', relationDescription: '提供申请人基础信息' },
-      { targetTable: 'dws_risk_score', relationField: 'user_id', relationType: '维度-汇总关联', relationDescription: '提供用户基础画像数据' },
-    ]
-  } else if (fieldName.toLowerCase() === 'id') {
-     return [
-      { targetTable: 'dim_product', relationField: 'product_id', relationType: '字段关联', relationDescription: '关联产品信息' },
-    ]
-  }
-  return []
-}
 
-// 获取关联类型
-const getRelationType = (sourceTable: string, targetTable: string) => {
-  if (!sourceTable || !targetTable) return '字段关联'
-  
-  const sourceType = mockTables.find(t => t.name === sourceTable)?.type?.toLowerCase() || ''
-  const targetType = mockTables.find(t => t.name === targetTable)?.type?.toLowerCase() || ''
-  
-  if (sourceType === 'dim' && targetType.startsWith('fact')) {
-    return '维度-事实关联'
-  } else if (sourceType === 'dim' && (targetType.startsWith('dwd') || targetType.startsWith('dws'))) {
-    return '维度-汇总关联'
-  } else if (sourceType.startsWith('fact') && targetType === 'dim') {
-    return '事实-维度关联'
-  } else if ((sourceType.startsWith('dwd') || sourceType.startsWith('dws')) && targetType === 'dim') {
-    return '汇总-维度关联'
-  }
-  
-  return '字段关联'
-}
 
-// 获取关联说明
-const getRelationDescription = (sourceTable: string, targetTable: string, fieldName: string) => {
-  if (sourceTable === 'dim_user') {
-    if (targetTable === 'fact_loan_apply') {
-      return '提供申请人基础信息'
-    } else if (targetTable === 'dws_risk_score') {
-      return '提供用户基础画像数据'
-    } else if (targetTable === 'dwd_fraud_alert') {
-      return '提供欺诈风险信息'
-    }
-  } else if (targetTable === 'dim_user') {
-    return '获取用户基础信息'
-  }
-  return '数据关联'  
-}
 </script>
 
 <style scoped>
@@ -666,5 +785,21 @@ const getRelationDescription = (sourceTable: string, targetTable: string, fieldN
 
 .relation-diagram {
   margin-top: 8px;
+}
+
+.structure-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.relations-content {
+  min-height: 400px;
+}
+
+.relation-tree-container {
+  width: 100%;
+  height: 400px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
 }
 </style>

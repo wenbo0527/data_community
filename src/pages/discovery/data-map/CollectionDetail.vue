@@ -36,7 +36,7 @@
                 <a-tag>{{ table.type }}</a-tag>
                 <a-tag>{{ table.category }}</a-tag>
                 <a-tag>{{ table.domain }}</a-tag>
-              <a-tag>{{ table.owner }}</a-tag>
+                <a-tag>{{ table.owner }}</a-tag>
               </div>
               <a-typography-paragraph :ellipsis="{ rows: 2 }" type="secondary" class="table-description">
                 {{ table.description }}

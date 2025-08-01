@@ -2,9 +2,19 @@
   <div class="collection-detail">
     <!-- 场景说明部分 -->
     <a-card class="collection-info">
-      <a-typography-title :heading="4">
-        {{ collection.name }}
-      </a-typography-title>
+      <template #title>
+        <a-space>
+          <a-typography-title :heading="4" style="margin: 0">
+            {{ collection.name }}
+          </a-typography-title>
+          <a-button type="outline" size="small" @click="handleEditCollection">
+            <template #icon>
+              <icon-edit />
+            </template>
+            编辑
+          </a-button>
+        </a-space>
+      </template>
       <a-typography-paragraph>
         {{ collection.description }}
       </a-typography-paragraph>
@@ -51,6 +61,7 @@ const getTypeColor = (type: string) => {
 // defineProps and defineEmits are compiler macros, no import needed
 import IconTable from '@arco-design/web-vue/es/icon'
 import { IconRight } from '@arco-design/web-vue/es/icon'
+import { IconEdit } from '@arco-design/web-vue/es/icon'
 
 interface TableItem {
   [key: string]: any;
@@ -82,7 +93,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'show-table-detail', table: TableItem): void
+  (e: 'show-table-detail', table: TableItem): void,
+  (e: 'edit-collection', collection: TableCollection): void
 }>()
 
 const showTableDetail = (table: TableItem) => {
@@ -92,6 +104,10 @@ router.push({
     params: { tableName: table.name },
     state: { table }
   })
+}
+
+const handleEditCollection = () => {
+  emit('edit-collection', props.collection)
 }
 </script>
 

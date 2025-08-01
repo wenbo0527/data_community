@@ -54,16 +54,18 @@
                     <icon-star-fill v-if="collection.isFavorite" />
                     <icon-star v-else />
                   </a-button>
-                  <a-dropdown @select="handleActionSelect">
+                  <a-dropdown @select="handleActionSelect" @click.stop>
                     <a-button type="text" size="mini" @click.stop>
                       <icon-more />
                     </a-button>
                     <template #content>
-                      <a-doption :value="`edit-${collection.id}`">
-                        <icon-edit />编辑
+                      <a-doption :value="{ action: 'edit', collection: collection }">
+                        <template #icon><icon-edit /></template>
+                        编辑集合
                       </a-doption>
-                      <a-doption :value="`delete-${collection.id}`" class="danger-option">
-                        <icon-delete />删除
+                      <a-doption :value="{ action: 'delete', collection: collection }" class="danger-option">
+                        <template #icon><icon-delete /></template>
+                        删除集合
                       </a-doption>
                     </template>
                   </a-dropdown>
@@ -102,7 +104,13 @@
                 
                 <div class="footer-meta">
                   <span class="meta-item">
-                    {{ collection.owner || '未指定' }}
+                    <span 
+                      v-if="collection.owner" 
+                      :class="{ 'admin-highlight': collection.owner === '当前用户' || collection.owner === '管理员' }"
+                    >
+                      {{ collection.owner }}
+                    </span>
+                    <span v-else>未指定</span>
                   </span>
                   <span class="meta-item">
                     {{ formatDate(collection.updateTime) }}
@@ -147,7 +155,7 @@
 import { ref, computed, watch } from 'vue'
 import { 
   IconStar, IconStarFill, IconMore, IconEdit, 
-  IconCopy, IconDelete, IconPlus 
+  IconDelete, IconPlus 
 } from '@arco-design/web-vue/es/icon'
 import { Message, Modal } from '@arco-design/web-vue'
 import { formatDistanceToNow } from 'date-fns'
@@ -179,7 +187,6 @@ interface TableCollectionGridEmits {
   (e: 'collection-click', collection: TableCollection): void
   (e: 'create-collection'): void
   (e: 'edit-collection', collection: TableCollection): void
-  (e: 'copy-collection', collection: TableCollection): void
   (e: 'delete-collection', collection: TableCollection): void
   (e: 'favorite-change', collection: TableCollection, isFavorite: boolean): void
 }
@@ -220,7 +227,16 @@ const getCollectionColor = (type?: string) => {
 const formatDate = (dateString?: string) => {
   if (!dateString) return '未知'
   try {
-    return formatDistanceToNow(new Date(dateString), { 
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    
+    // 如果是不到1分钟前的数据，特殊展示
+    if (diffInSeconds < 60) {
+      return '刚刚'
+    }
+    
+    return formatDistanceToNow(date, { 
       addSuffix: true, 
       locale: zhCN 
     })
@@ -248,37 +264,55 @@ const toggleFavorite = (collection: TableCollection) => {
 }
 
 // 处理操作选择
-const handleActionSelect = (value: string) => {
-  const [action, id] = value.split('-')
-  const collection = props.collections.find(c => c.id === id)
+const handleActionSelect = (value: string | number | Record<string, any>) => {
+  console.log('[TableCollectionGrid] handleActionSelect called with value:', value, 'type:', typeof value)
   
-  if (!collection) return
+  // 如果传递的是对象，直接使用
+  if (typeof value === 'object' && value !== null && 'action' in value && 'collection' in value) {
+    console.log('[TableCollectionGrid] Received collection object directly:', value)
+    const { action, collection } = value
+    
+    switch (action) {
+      case 'edit':
+        console.log('[TableCollectionGrid] Emitting edit-collection event for collection:', collection)
+        emit('edit-collection', collection)
+        break
+      case 'delete':
+        console.log('[TableCollectionGrid] Handling delete for collection:', collection)
+        handleDeleteCollection(collection)
+        break
+      default:
+        console.warn('[TableCollectionGrid] Unknown action:', action)
+    }
+    return
+  }
+  
+  // 保持原有的字符串处理方式
+  const [action, id] = (value as string).split('-')
+  console.log('[TableCollectionGrid] Parsed action and id:', { action, id })
+  const collection = props.collections.find((c: TableCollection) => c.id === id)
+  
+  if (!collection) {
+    console.warn('[TableCollectionGrid] Collection not found for id:', id)
+    return
+  }
+  
+  console.log('[TableCollectionGrid] Found collection:', collection)
   
   switch (action) {
     case 'edit':
+      console.log('[TableCollectionGrid] Emitting edit-collection event for collection:', collection)
       emit('edit-collection', collection)
       break
-    case 'copy':
-      handleCopyCollection(collection)
-      break
     case 'delete':
+      console.log('[TableCollectionGrid] Handling delete for collection:', collection)
       handleDeleteCollection(collection)
       break
+    default:
+      console.warn('[TableCollectionGrid] Unknown action:', action)
   }
 }
 
-
-// 复制集合
-const handleCopyCollection = (collection: TableCollection) => {
-  const copiedCollection = {
-    ...collection,
-    id: Date.now().toString(),
-    name: `${collection.name} (副本)`,
-    createTime: new Date().toISOString()
-  }
-  emit('copy-collection', copiedCollection)
-  Message.success('集合已复制')
-}
 
 // 删除集合
 const handleDeleteCollection = (collection: TableCollection) => {
@@ -290,7 +324,7 @@ const handleDeleteCollection = (collection: TableCollection) => {
     okButtonProps: { status: 'danger' },
     onOk: () => {
       emit('delete-collection', collection)
-      Message.success('集合已删除')
+      Message.success(`集合 "${collection.name}" 删除成功`)
     }
   })
 }
@@ -484,6 +518,7 @@ watch(() => props.collections.length, () => {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   min-height: 44px;
 }
@@ -541,6 +576,25 @@ watch(() => props.collections.length, () => {
   display: flex;
   align-items: center;
   white-space: nowrap;
+}
+
+.admin-highlight {
+  color: #165dff;
+  font-weight: 500;
+  position: relative;
+  padding-left: 10px;
+}
+
+.admin-highlight::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #165dff;
 }
 
 .empty-state {

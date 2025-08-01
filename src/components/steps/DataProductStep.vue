@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, reactive, toRefs, computed, onMounted } from 'vue'
+import { ref, watch, reactive, computed, onMounted } from 'vue'
 import type { DataProduct, Period } from '../../types/accompany'
 import { IconDelete } from '@arco-design/web-vue/es/icon'
 
@@ -113,7 +113,7 @@ const products = computed(() => modelValueRef.products)
 const periodDays = computed(() => modelValueRef.periodDays)
 
 // 监听props变化更新reactive对象
-watch(() => props.modelValue, (newValue) => {
+watch(() => props.modelValue, (newValue: ModelValue) => {
   Object.assign(modelValueRef, newValue)
 }, { deep: true })
 
@@ -129,9 +129,9 @@ onMounted(() => {
     addProduct()
   }
   // 为每个数据产品初始化期数配置
-  modelValueRef.products.forEach(product => {
+  modelValueRef.products.forEach((product: DataProduct) => {
     if (!product.periods || product.periods.length !== periodDays.value.length) {
-      product.periods = periodDays.value.map((days, index) => ({
+      product.periods = periodDays.value.map((days: number, index: number) => ({
         count: 0,
         days,
         ratio: 0,
@@ -167,7 +167,7 @@ const addProduct = () => {
     id: `dp${modelValueRef.products.length + 1}`,
     name: '',
     totalAmount: 0,
-    periods: periodDays.value.map((days, index) => ({
+    periods: periodDays.value.map((days: number, index: number) => ({
       count: 0,
       days,
       ratio: 0,
@@ -188,7 +188,7 @@ const addProduct = () => {
 const handleNext = () => emit('next')
 const handlePrev = () => emit('prev')
 
-watch(products, (newProducts) => {
+watch(products, (newProducts: DataProduct[]) => {
   emit('update:modelValue', {
     ...modelValueRef,
     products: newProducts
