@@ -179,12 +179,15 @@ export class UnifiedPreviewLineManager {
     // 性能优化：防抖和节流函数
     this.debouncedUpdatePosition = PerformanceUtils.debounce(
       this.updatePreviewLinePosition.bind(this), 
-      100
+      16  // 🔧 修复：减少防抖延迟到16ms（约60fps）提升实时性
     )
     this.throttledRefreshAll = PerformanceUtils.throttle(
       this.refreshAllPreviewLines.bind(this), 
       200
     )
+    
+    // 🔧 新增：立即更新方法，用于实时响应
+    this.immediateUpdatePosition = this.updatePreviewLinePosition.bind(this)
     
     // 防重复吸附状态管理
     this.isProcessingSnap = false
@@ -250,10 +253,10 @@ export class UnifiedPreviewLineManager {
       this.recalculateAllPreviewPositions()
     }
     
-    // 🔧 新增：处理待处理计算队列
+    // 🔧 修复：不在此处立即处理待处理队列，等待布局引擎完全就绪
+    // 布局引擎会在nodeToLayer映射建立完成后主动调用processPendingCalculations
     if (layoutEngine && this.pendingCalculations.size > 0) {
-      console.log('📋 [统一预览线管理器] 处理待处理计算队列:', this.pendingCalculations.size, '个任务')
-      this.processPendingCalculations()
+      console.log('📋 [统一预览线管理器] 发现待处理计算队列:', this.pendingCalculations.size, '个任务，等待布局引擎就绪通知')
     }
   }
 
@@ -2506,8 +2509,15 @@ export class UnifiedPreviewLineManager {
       return
     }
     
-    // 使用防抖的位置更新方法
-    this.debouncedUpdatePosition(node)
+    // 🔧 修复：使用立即更新提升实时性，同时保留防抖作为备份
+    try {
+      // 立即更新预览线位置，确保实时响应
+      this.immediateUpdatePosition(node)
+    } catch (error) {
+      console.warn('⚠️ [统一预览线管理器] 立即更新失败，使用防抖更新:', error)
+      // 如果立即更新失败，回退到防抖更新
+      this.debouncedUpdatePosition(node)
+    }
   }
 
   /**
@@ -6552,8 +6562,26 @@ export class UnifiedPreviewLineManager {
   performLoadCompleteCheck() {
     console.log('🔍 [加载完成检查] 开始检查预览线状态')
     
-    // 延迟执行，确保所有数据加载完成
+    // 🎯 关键修复：增加更长的延迟，确保布局和endpoint创建完全完成
     setTimeout(() => {
+      // 🎯 新增：检查是否刚完成布局，如果是则跳过清理
+      const now = Date.now()
+      if (this.lastLayoutTime && (now - this.lastLayoutTime) < 2000) {
+        console.log('⏭️ [加载完成检查] 刚完成布局，跳过预览线清理，保留endpoint预览线')
+        
+        // 仅统计状态，不执行清理
+        const totalPreviewLines = this.previewLines.size
+        const totalNodes = this.graph.getNodes().length
+        
+        console.log('📊 [加载完成检查] 状态统计（跳过清理）:', {
+          总节点数: totalNodes,
+          预览线数量: totalPreviewLines,
+          清理数量: 0,
+          状态: '保留endpoint预览线'
+        })
+        return
+      }
+      
       const cleanedCount = this.cleanupOrphanedPreviewLines()
       
       // 统计当前状态
@@ -6570,7 +6598,7 @@ export class UnifiedPreviewLineManager {
       if (cleanedCount === 0 && totalPreviewLines > 0) {
         console.log('✅ [加载完成检查] 预览线状态良好，无需清理')
       }
-    }, 100) // 100ms延迟确保所有异步操作完成
+    }, 500) // 🎯 增加延迟到500ms，确保endpoint创建完成
   }
 
   /**
@@ -6589,6 +6617,39 @@ export class UnifiedPreviewLineManager {
              !edge.id.includes('preview_')
     })
     
+    // 🎯 关键修复：对于分支节点，检查是否所有分支都已连接
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.type || nodeData.nodeType
+    
+    // 如果是分支节点，需要检查分支连接情况
+    if (nodeType === 'audience-split' || nodeType === 'event-split' || nodeType === 'condition-split') {
+      const branches = nodeData.branches || []
+      if (branches.length > 0) {
+        // 统计已连接的分支
+        const connectedBranches = new Set()
+        realConnections.forEach(edge => {
+          const edgeData = edge.getData() || {}
+          if (edgeData.branchId) {
+            connectedBranches.add(edgeData.branchId)
+          }
+        })
+        
+        // 🎯 只有当所有分支都已连接时，才认为节点完全连接
+        const allBranchesConnected = branches.every(branch => 
+          connectedBranches.has(branch.id) || connectedBranches.has(branch.branchId)
+        )
+        
+        console.log(`🔍 [连接检查] 分支节点 ${node.id} 连接状态:`, {
+          总分支数: branches.length,
+          已连接分支: Array.from(connectedBranches),
+          所有分支已连接: allBranchesConnected
+        })
+        
+        return allBranchesConnected
+      }
+    }
+    
+    // 对于非分支节点，有任何实际连接就认为已连接
     return realConnections.length > 0
   }
 

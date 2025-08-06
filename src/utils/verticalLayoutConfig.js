@@ -20,7 +20,7 @@ export const VERTICAL_LAYOUT_CONFIG = {
     PREVIEW_LENGTH: 100,     // 预览线长度（从80增加到100，给节点更多空间）
     SNAP_ZONE: 40,          // 吸附区域半径（从35增加到40，更容易吸附）
     MIN_DISTANCE: 60,       // 最小距离（从50增加到60）
-    MIN_BRANCH_SPACING: 200, // 🔧 优化：最小分支间距从150增加到200，改善层间距
+    MIN_BRANCH_SPACING: 220, // 🔧 优化：最小分支间距从200增加到220，改善X轴分布
     MAX_BRANCH_SPACING: 250  // 最大分支间距（新增）
   },
   

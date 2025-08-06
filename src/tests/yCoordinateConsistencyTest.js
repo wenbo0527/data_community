@@ -113,7 +113,8 @@ async function testYCoordinateConsistency() {
   // 创建布局引擎
   const layoutEngine = new UnifiedStructuredLayoutEngine(graph, {
     layer: { baseHeight: 200 }, // 🔧 优化：更新测试基准值以匹配新的层间距
-    node: { preferredSpacing: 200 },
+    node: { preferredSpacing: 220 }, // 🔧 优化：从200增加到220，改善X轴分布
+    branchSpacing: 220, // 🔧 优化：从200增加到220，改善X轴分布
     optimization: { enableEndpointIntegration: true }
   }, previewManager)
   

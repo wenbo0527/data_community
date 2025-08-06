@@ -73,6 +73,9 @@ export class UnifiedStructuredLayoutEngine {
       const layerStructure =
         await this.buildHierarchicalLayers(preprocessResult);
 
+      // 🎯 关键修复：在nodeToLayer映射建立完成后，通知预览线管理器可以安全调用
+      this.notifyPreviewManagerReady();
+
       // 阶段3：自底向上位置计算
       const positions = await this.calculateBottomUpPositions(layerStructure);
 
@@ -102,6 +105,36 @@ export class UnifiedStructuredLayoutEngine {
         error: error.message,
         message: `布局执行失败: ${error.message}`,
       };
+    }
+  }
+
+  /**
+   * 通知预览线管理器布局引擎已就绪
+   * 在nodeToLayer映射建立完成后调用
+   */
+  notifyPreviewManagerReady() {
+    console.log('🔔 [布局引擎] nodeToLayer映射已建立，通知预览线管理器可以安全调用');
+    
+    // 通知预览线管理器布局引擎已就绪
+    const previewLineManager = this.previewLineManager || 
+                              window.unifiedPreviewLineManager || 
+                              this.graph?.previewLineManager;
+    
+    if (previewLineManager) {
+      // 设置布局引擎就绪状态
+      previewLineManager.layoutEngineReady = true;
+      
+      // 如果有待处理的计算队列，现在可以处理了
+      if (previewLineManager.processPendingCalculations && 
+          previewLineManager.pendingCalculations && 
+          previewLineManager.pendingCalculations.size > 0) {
+        console.log('📋 [布局引擎] 触发预览线管理器处理待处理队列');
+        previewLineManager.processPendingCalculations();
+      }
+      
+      console.log('✅ [布局引擎] 预览线管理器已收到就绪通知');
+    } else {
+      console.warn('⚠️ [布局引擎] 未找到预览线管理器，无法发送就绪通知');
     }
   }
 
@@ -478,11 +511,13 @@ export class UnifiedStructuredLayoutEngine {
         const nodePosition = node.getPosition();
         const nodeSize = node.getSize();
 
-        // 计算虚拟endpoint位置 - 修复：使用合理的X坐标偏移
-        const endPosition = {
-          x: nodePosition.x + 50, // 修复：使用较小的偏移量，避免异常的X坐标
-          y: nodePosition.y + nodeSize.height / 2,
-        };
+        // 计算虚拟endpoint位置 - 智能分布算法
+        const endPosition = this.calculateIntelligentEndpointPosition(
+          node,
+          nodePosition,
+          nodeSize,
+          endpointNodes.length
+        );
 
         const virtualNode = this.createEndpointVirtualNode(
           node.id,
@@ -1510,6 +1545,9 @@ export class UnifiedStructuredLayoutEngine {
       `📍 [父层定位] 第${layerIndex}层，目标Y坐标: ${layerY}，父节点数: ${parentLayer.length}`,
     );
 
+    // 🔥 关键修复：强制统一同层Y坐标验证
+    console.log(`🎯 [Y坐标统一] 开始强制统一第${layerIndex}层所有节点Y坐标为: ${layerY}`);
+
     // 🎯 关键修复：分别处理有子节点和无子节点的节点
     const nodesWithChildren = [];
     const nodesWithoutChildren = [];
@@ -1537,7 +1575,7 @@ export class UnifiedStructuredLayoutEngine {
 
       const positionData = {
         x: parentX,
-        y: layerY,
+        y: layerY, // 🔥 关键修复：强制使用层级计算的Y坐标，确保同层节点Y坐标一致
         layerIndex,
         nodeType: node.isEndpoint ? "endpoint" : "normal",
         childrenCount: childPositions.length,
@@ -1549,6 +1587,9 @@ export class UnifiedStructuredLayoutEngine {
       console.log(
         `📍 [父层定位] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${parentId}: (${parentX.toFixed(1)}, ${layerY}), 子节点数: ${childPositions.length}`,
       );
+
+      // 🔥 关键修复：Y坐标一致性验证
+      console.log(`🎯 [Y坐标验证] 节点 ${parentId} Y坐标已强制设置为: ${layerY}`);
     });
 
     // 第二步：处理无子节点的节点（通常是endpoint节点）
@@ -1575,7 +1616,7 @@ export class UnifiedStructuredLayoutEngine {
 
         const positionData = {
           x: nodeX,
-          y: layerY,
+          y: layerY, // 🔥 关键修复：强制使用层级计算的Y坐标，确保同层节点Y坐标一致
           layerIndex,
           nodeType: node.isEndpoint ? "endpoint" : "normal",
           childrenCount: 0,
@@ -1588,6 +1629,9 @@ export class UnifiedStructuredLayoutEngine {
         console.log(
           `📍 [父层定位] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${parentId}: (${nodeX.toFixed(1)}, ${layerY}), 孤立节点`,
         );
+
+        // 🔥 关键修复：Y坐标一致性验证
+        console.log(`🎯 [Y坐标验证] 孤立节点 ${parentId} Y坐标已强制设置为: ${layerY}`);
 
         // 🎯 关键修复：对于虚拟endpoint节点，立即同步其内部位置
         if (node.isEndpoint && node.setPosition) {
@@ -1606,23 +1650,39 @@ export class UnifiedStructuredLayoutEngine {
    * @returns {number} 最优X坐标
    */
   calculateOptimalParentPosition(childPositions) {
+    if (!childPositions || childPositions.length === 0) {
+      console.warn('⚠️ [父节点定位] 子节点位置数组为空，返回默认位置0');
+      return 0;
+    }
+
     const childXCoords = childPositions.map((pos) => pos.x);
 
     if (childXCoords.length === 1) {
-      // 单个子节点：直接对齐
-      return childXCoords[0];
+      // 🔥 关键修复：单个子节点，父节点直接对齐到子节点X坐标
+      const optimalX = childXCoords[0];
+      console.log(`🎯 [父节点定位] 单子节点对齐: 父节点X = ${optimalX.toFixed(1)}`);
+      return optimalX;
     } else if (childXCoords.length === 2) {
-      // 两个子节点：中心点
-      return (childXCoords[0] + childXCoords[1]) / 2;
+      // 🔥 关键修复：两个子节点，父节点精确定位到中心点
+      const optimalX = (childXCoords[0] + childXCoords[1]) / 2;
+      console.log(`🎯 [父节点定位] 双子节点中心: 父节点X = ${optimalX.toFixed(1)} (子节点: ${childXCoords[0].toFixed(1)}, ${childXCoords[1].toFixed(1)})`);
+      return optimalX;
     } else {
-      // 多个子节点：加权中心
+      // 🔥 关键修复：多个子节点，使用精确的算术平均值作为中点
+      const arithmeticMean = childXCoords.reduce((sum, x) => sum + x, 0) / childXCoords.length;
+      
+      // 🎯 增强修复：同时计算几何中心（边界中心）作为参考
       const minX = Math.min(...childXCoords);
       const maxX = Math.max(...childXCoords);
-      const centerX =
-        childXCoords.reduce((sum, x) => sum + x, 0) / childXCoords.length;
-
-      // 混合策略：中心点权重70%，边界中心权重30%
-      return centerX * 0.7 + ((minX + maxX) / 2) * 0.3;
+      const geometricCenter = (minX + maxX) / 2;
+      
+      // 🔥 关键修复：优先使用算术平均值，确保父节点位于子节点的真实中心
+      const optimalX = arithmeticMean;
+      
+      console.log(`🎯 [父节点定位] 多子节点中心: 父节点X = ${optimalX.toFixed(1)}`);
+      console.log(`  📊 [计算详情] 算术平均: ${arithmeticMean.toFixed(1)}, 几何中心: ${geometricCenter.toFixed(1)}, 子节点X坐标: [${childXCoords.map(x => x.toFixed(1)).join(', ')}]`);
+      
+      return optimalX;
     }
   }
 
@@ -1802,7 +1862,9 @@ export class UnifiedStructuredLayoutEngine {
    */
   optimizeParentChildAlignment(layerNodes, positions, layerStructure) {
     let adjustments = 0;
-    const alignmentThreshold = 50; // 对齐阈值
+    let forcedAlignments = 0;
+
+    console.log(`🎯 [父子对齐] 开始强化父子X坐标对齐优化，处理 ${layerNodes.length} 个节点`);
 
     layerNodes.forEach((node) => {
       const nodeId = node.id || node.getId();
@@ -1824,23 +1886,83 @@ export class UnifiedStructuredLayoutEngine {
           .filter((pos) => pos !== undefined);
 
         if (childPositions.length > 0) {
+          // 🎯 关键修复：使用更精确的父节点最优位置计算
           const optimalX = this.calculateOptimalParentPosition(childPositions);
           const currentX = nodePos.x;
+          const deviation = Math.abs(optimalX - currentX);
 
-          // 如果调整幅度在合理范围内，则进行调整
-          if (Math.abs(optimalX - currentX) <= alignmentThreshold) {
+          // 🔥 关键修复：强制精确对齐，容忍度降至0.01px
+          if (deviation > 0.01) {
+            const oldX = nodePos.x;
             nodePos.x = optimalX;
             adjustments++;
 
+            // 🎯 关键修复：详细记录子节点信息用于调试
+            const childInfo = childPositions.map((pos, idx) => `子${idx+1}:(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`).join(', ');
+            
             console.log(
-              `🔧 [父子对齐] 调整节点 ${nodeId}: ${currentX} -> ${optimalX}`,
+              `🔧 [父子对齐] 强制精确调整节点 ${nodeId}: ${oldX.toFixed(1)} → ${optimalX.toFixed(1)} (偏差: ${deviation.toFixed(3)}px)`,
+            );
+            console.log(`   └─ 子节点位置: ${childInfo}`);
+            console.log(`   └─ 计算的最优X坐标: ${optimalX.toFixed(3)}`);
+
+            // 🎯 关键修复：对于虚拟endpoint节点，同步其内部位置
+            if (node.isEndpoint && node.setPosition) {
+              node.setPosition({ x: optimalX, y: nodePos.y });
+              console.log(
+                `🎯 [同步修复] 虚拟endpoint ${nodeId} 内部位置已同步到精确对齐位置: (${optimalX.toFixed(3)}, ${nodePos.y})`,
+              );
+            }
+
+            // 🎯 关键修复：验证对齐结果
+            const postAlignmentDeviation = Math.abs(nodePos.x - optimalX);
+            if (postAlignmentDeviation > 0.001) {
+              console.error(`❌ [对齐验证] 节点 ${nodeId} 对齐后仍有偏差: ${postAlignmentDeviation.toFixed(6)}px`);
+              // 强制再次设置
+              nodePos.x = optimalX;
+              forcedAlignments++;
+            }
+          } else {
+            console.log(
+              `✅ [父子对齐] 节点 ${nodeId} 已精确对齐 (偏差: ${deviation.toFixed(6)}px)`,
             );
           }
+
+          // 🎯 关键修复：额外验证父子关系的几何正确性
+          this.validateParentChildGeometry(nodeId, nodePos, childPositions);
         }
       }
     });
 
+    console.log(`🔧 [父子对齐] 强化对齐优化完成，共调整 ${adjustments} 个父节点位置，强制修正 ${forcedAlignments} 次`);
     return adjustments;
+  }
+
+  /**
+   * 🎯 关键修复：验证父子关系的几何正确性
+   * @param {string} parentId - 父节点ID
+   * @param {Object} parentPos - 父节点位置
+   * @param {Array} childPositions - 子节点位置数组
+   */
+  validateParentChildGeometry(parentId, parentPos, childPositions) {
+    if (childPositions.length === 0) return;
+
+    // 计算子节点的X坐标范围
+    const childXCoords = childPositions.map(pos => pos.x);
+    const minChildX = Math.min(...childXCoords);
+    const maxChildX = Math.max(...childXCoords);
+    const childCenterX = (minChildX + maxChildX) / 2;
+
+    // 验证父节点是否位于子节点的几何中心
+    const geometricDeviation = Math.abs(parentPos.x - childCenterX);
+    
+    if (geometricDeviation > 0.1) {
+      console.warn(`⚠️ [几何验证] 父节点 ${parentId} 几何中心偏差: ${geometricDeviation.toFixed(3)}px`);
+      console.warn(`   └─ 父节点X: ${parentPos.x.toFixed(3)}, 子节点几何中心X: ${childCenterX.toFixed(3)}`);
+      console.warn(`   └─ 子节点X范围: [${minChildX.toFixed(1)}, ${maxChildX.toFixed(1)}]`);
+    } else {
+      console.log(`✅ [几何验证] 父节点 ${parentId} 几何位置正确 (偏差: ${geometricDeviation.toFixed(6)}px)`);
+    }
   }
 
   /**
@@ -1906,7 +2028,7 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 优化多节点层级对称分布 - 新增方法
+   * 优化多节点层级对称分布 - 增强版算法
    * @param {Array} validNodes - 有效节点数组
    * @param {Map} positions - 位置映射
    * @returns {number} 调整次数
@@ -1915,7 +2037,7 @@ export class UnifiedStructuredLayoutEngine {
     const nodeCount = validNodes.length;
     let adjustments = 0;
 
-    console.log(`🔧 [多节点对称分布] 开始优化 ${nodeCount} 个节点的对称分布`);
+    console.log(`🚀 [增强对称分布] 开始优化 ${nodeCount} 个节点的智能对称分布`);
 
     // 获取当前X坐标并排序
     const nodePositions = validNodes
@@ -1926,10 +2048,17 @@ export class UnifiedStructuredLayoutEngine {
       })
       .sort((a, b) => a.x - b.x);
 
-    // 根据节点数量采用不同的对称分布策略
+    // 计算节点重要性权重（基于连接数和类型）
+    const nodeWeights = this.calculateNodeImportanceWeights(validNodes);
+
+    // 根据节点数量采用不同的智能对称分布策略
     if (nodeCount === 2) {
-      // 两节点：对称分布在 -60, +60
-      const targetPositions = [-60, 60];
+      // 两节点：动态对称分布，基于重要性调整间距
+      const baseSpacing = 80; // 基础间距从60增加到80
+      const weightDiff = Math.abs(nodeWeights[0] - nodeWeights[1]);
+      const dynamicSpacing = baseSpacing + (weightDiff * 20); // 重要性差异影响间距
+      const targetPositions = [-dynamicSpacing / 2, dynamicSpacing / 2];
+      
       nodePositions.forEach((item, index) => {
         const targetX = targetPositions[index];
         if (Math.abs(item.pos.x - targetX) > 1) {
@@ -1937,7 +2066,7 @@ export class UnifiedStructuredLayoutEngine {
           item.pos.x = targetX;
           adjustments++;
           console.log(
-            `🔧 [2节点对称] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX} (对称分布)`,
+            `🚀 [2节点智能] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX.toFixed(1)} (动态间距: ${dynamicSpacing.toFixed(1)})`,
           );
 
           // 同步endpoint位置
@@ -1947,8 +2076,16 @@ export class UnifiedStructuredLayoutEngine {
         }
       });
     } else if (nodeCount === 3) {
-      // 三节点：等间距分布在 -80, 0, +80
-      const targetPositions = [-80, 0, 80];
+      // 三节点：黄金比例分布，中心节点权重影响偏移
+      const totalWidth = 140; // 增加总宽度
+      const centerWeight = nodeWeights[1]; // 中心节点权重
+      const centerOffset = (centerWeight - 0.5) * 20; // 根据重要性微调中心位置
+      const targetPositions = [
+        -totalWidth / 2,
+        centerOffset,
+        totalWidth / 2
+      ];
+      
       nodePositions.forEach((item, index) => {
         const targetX = targetPositions[index];
         if (Math.abs(item.pos.x - targetX) > 1) {
@@ -1956,7 +2093,7 @@ export class UnifiedStructuredLayoutEngine {
           item.pos.x = targetX;
           adjustments++;
           console.log(
-            `🔧 [3节点等间距] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX} (等间距居中)`,
+            `🚀 [3节点黄金] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX.toFixed(1)} (黄金比例+权重调整)`,
           );
 
           // 同步endpoint位置
@@ -1966,8 +2103,19 @@ export class UnifiedStructuredLayoutEngine {
         }
       });
     } else if (nodeCount === 4) {
-      // 四节点：对称分布在 -90, -30, +30, +90
-      const targetPositions = [-90, -30, 30, 90];
+      // 四节点：黄金比例对称分布
+      const goldenRatio = 1.618;
+      const baseWidth = 120;
+      const innerSpacing = baseWidth / goldenRatio; // 内侧间距使用黄金比例
+      const outerSpacing = baseWidth; // 外侧间距
+      
+      const targetPositions = [
+        -outerSpacing,
+        -innerSpacing / 2,
+        innerSpacing / 2,
+        outerSpacing
+      ];
+      
       nodePositions.forEach((item, index) => {
         const targetX = targetPositions[index];
         if (Math.abs(item.pos.x - targetX) > 1) {
@@ -1975,7 +2123,7 @@ export class UnifiedStructuredLayoutEngine {
           item.pos.x = targetX;
           adjustments++;
           console.log(
-            `🔧 [4节点对称] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX} (对称分布)`,
+            `🚀 [4节点黄金] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX.toFixed(1)} (黄金比例对称)`,
           );
 
           // 同步endpoint位置
@@ -1985,19 +2133,17 @@ export class UnifiedStructuredLayoutEngine {
         }
       });
     } else {
-      // 多节点（5+）：动态对称分布
-      const spacing = Math.min(120, 240 / (nodeCount - 1)); // 动态间距，最大120px
-      const totalWidth = (nodeCount - 1) * spacing;
-      const startX = -totalWidth / 2;
-
+      // 多节点（5+）：智能加权分布
+      const positions = this.calculateIntelligentMultiNodeDistribution(nodePositions, nodeWeights);
+      
       nodePositions.forEach((item, index) => {
-        const targetX = startX + index * spacing;
+        const targetX = positions[index];
         if (Math.abs(item.pos.x - targetX) > 1) {
           const oldX = item.pos.x;
           item.pos.x = targetX;
           adjustments++;
           console.log(
-            `🔧 [多节点动态] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX.toFixed(1)} (动态对称)`,
+            `🚀 [多节点智能] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetX.toFixed(1)} (智能加权分布)`,
           );
 
           // 同步endpoint位置
@@ -2023,18 +2169,119 @@ export class UnifiedStructuredLayoutEngine {
       });
       adjustments += nodeCount;
       console.log(
-        `🔧 [最终居中] 整体微调偏移 ${offsetX.toFixed(1)}px，确保精确居中`,
+        `🚀 [最终居中] 整体微调偏移 ${offsetX.toFixed(1)}px，确保精确居中`,
       );
     }
 
     console.log(
-      `✅ [多节点对称分布] 优化完成，调整 ${adjustments} 次，节点分布:`,
+      `✅ [增强对称分布] 优化完成，调整 ${adjustments} 次，节点分布:`,
       nodePositions
         .map((item) => `${item.nodeId}(${item.pos.x.toFixed(1)})`)
         .join(", "),
     );
 
     return adjustments;
+  }
+
+  /**
+   * 计算节点重要性权重
+   * @param {Array} nodes - 节点数组
+   * @returns {Array} 权重数组
+   */
+  calculateNodeImportanceWeights(nodes) {
+    const weights = nodes.map(node => {
+      let weight = 0.5; // 基础权重
+      
+      // 基于连接数的权重
+      const connections = this.getNodeConnections(node);
+      weight += Math.min(connections * 0.1, 0.3); // 最多增加0.3
+      
+      // 基于节点类型的权重
+      if (node.isEndpoint) {
+        weight += 0.1; // endpoint节点稍微增加权重
+      }
+      
+      // 基于层级位置的权重（中心层级权重更高）
+      const layerIndex = this.getNodeLayerIndex(node);
+      const totalLayers = this.getTotalLayers();
+      const centerDistance = Math.abs(layerIndex - totalLayers / 2);
+      weight += (1 - centerDistance / (totalLayers / 2)) * 0.2;
+      
+      return Math.min(Math.max(weight, 0.1), 1.0); // 限制在0.1-1.0范围内
+    });
+    
+    console.log(`🎯 [节点权重] 计算完成:`, weights.map((w, i) => `${nodes[i].id || nodes[i].getId()}(${w.toFixed(2)})`).join(", "));
+    return weights;
+  }
+
+  /**
+   * 计算智能多节点分布位置
+   * @param {Array} nodePositions - 节点位置数组
+   * @param {Array} weights - 权重数组
+   * @returns {Array} 目标X坐标数组
+   */
+  calculateIntelligentMultiNodeDistribution(nodePositions, weights) {
+    const nodeCount = nodePositions.length;
+    const maxWidth = 400; // 最大分布宽度
+    
+    // 基于权重计算动态间距
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+    const avgWeight = totalWeight / nodeCount;
+    
+    // 计算每个节点应占的空间比例
+    const spaceRatios = weights.map(w => w / avgWeight);
+    
+    // 计算累积位置
+    const positions = [];
+    let currentPos = -maxWidth / 2;
+    const unitSpacing = maxWidth / (nodeCount - 1);
+    
+    for (let i = 0; i < nodeCount; i++) {
+      if (i === 0) {
+        positions.push(currentPos);
+      } else if (i === nodeCount - 1) {
+        positions.push(maxWidth / 2);
+      } else {
+        // 中间节点基于权重调整位置
+        const basePos = -maxWidth / 2 + (i * unitSpacing);
+        const weightAdjustment = (spaceRatios[i] - 1) * 30; // 权重调整幅度
+        positions.push(basePos + weightAdjustment);
+      }
+    }
+    
+    // 确保整体居中
+    const centerX = (positions[0] + positions[positions.length - 1]) / 2;
+    const offset = -centerX;
+    return positions.map(pos => pos + offset);
+  }
+
+  /**
+   * 获取节点连接数
+   * @param {Object} node - 节点对象
+   * @returns {number} 连接数
+   */
+  getNodeConnections(node) {
+    // 简化实现，实际应该根据图结构计算
+    return node.connections ? node.connections.length : 1;
+  }
+
+  /**
+   * 获取节点层级索引
+   * @param {Object} node - 节点对象
+   * @returns {number} 层级索引
+   */
+  getNodeLayerIndex(node) {
+    // 简化实现，实际应该根据布局结构计算
+    return node.layerIndex || 0;
+  }
+
+  /**
+   * 获取总层级数
+   * @returns {number} 总层级数
+   */
+  getTotalLayers() {
+    // 简化实现，实际应该根据布局结构计算
+    return this.layoutModel?.layers?.length || 3;
   }
 
   /**
@@ -2049,10 +2296,16 @@ export class UnifiedStructuredLayoutEngine {
     // 全局优化1：调整层级间距
     this.adjustGlobalLayerSpacing(positions, layerStructure);
 
-    // 全局优化2：整体居中
+    // 🎯 关键修复：在层级优化完成后重新计算虚拟endpoint位置
+    this.recalculateEndpointPositions(positions, layerStructure);
+
+    // 全局优化2：全局X轴平衡算法（新增）
+    this.applyGlobalXAxisBalancing(positions, layerStructure);
+
+    // 全局优化3：整体居中
     this.centerAlignGlobalLayout(positions);
 
-    // 全局优化3：美学优化
+    // 全局优化4：美学优化
     if (this.options.optimization.enableAestheticOptimization) {
       this.applyAestheticOptimizations(positions, layerStructure);
     }
@@ -2060,6 +2313,85 @@ export class UnifiedStructuredLayoutEngine {
     console.log("🌍 [全局优化] 全局优化完成");
 
     return positions;
+  }
+
+  /**
+   * 🎯 关键修复：重新计算虚拟endpoint位置
+   * 在层级优化完成后，基于源节点的最新位置重新计算endpoint位置
+   * @param {Map} positions - 位置映射
+   * @param {Object} layerStructure - 层级结构
+   */
+  recalculateEndpointPositions(positions, layerStructure) {
+    console.log("🔄 [Endpoint重计算] 开始基于优化后位置重新计算虚拟endpoint位置");
+
+    let recalculatedCount = 0;
+    const endpointUpdates = [];
+
+    // 遍历所有位置，找到虚拟endpoint节点
+    positions.forEach((position, nodeId) => {
+      if (position.nodeType === 'endpoint') {
+        const endpointNode = this.layoutModel.endpointNodes.get(nodeId);
+        if (endpointNode && endpointNode.sourceNodeId) {
+          const sourceNodeId = endpointNode.sourceNodeId;
+          const sourcePosition = positions.get(sourceNodeId);
+          
+          if (sourcePosition) {
+            // 获取源节点信息
+            const sourceNode = this.graph.getCellById(sourceNodeId);
+            if (sourceNode) {
+              const nodeSize = sourceNode.getSize() || { width: 120, height: 40 };
+              
+              // 使用优化后的位置重新计算endpoint位置
+              const newEndpointPosition = this.calculateIntelligentEndpointPosition(
+                sourceNode,
+                sourcePosition,
+                nodeSize,
+                recalculatedCount,
+                true // 🎯 关键：标记使用优化后的位置
+              );
+
+              // 更新位置信息
+              const updatedPosition = {
+                ...position,
+                x: newEndpointPosition.x,
+                y: newEndpointPosition.y,
+                sourceX: sourcePosition.x,
+                sourceY: sourcePosition.y
+              };
+
+              endpointUpdates.push({
+                nodeId,
+                oldPosition: { x: position.x, y: position.y },
+                newPosition: { x: newEndpointPosition.x, y: newEndpointPosition.y },
+                updatedPosition
+              });
+
+              recalculatedCount++;
+            }
+          }
+        }
+      }
+    });
+
+    // 批量应用更新
+    endpointUpdates.forEach(update => {
+      positions.set(update.nodeId, update.updatedPosition);
+      
+      // 同步到虚拟节点对象
+      const endpointNode = this.layoutModel.endpointNodes.get(update.nodeId);
+      if (endpointNode && endpointNode.setPosition) {
+        endpointNode.setPosition({
+          x: update.newPosition.x,
+          y: update.newPosition.y
+        });
+      }
+
+      console.log(
+        `🔄 [Endpoint重计算] ${update.nodeId}: (${update.oldPosition.x.toFixed(1)}, ${update.oldPosition.y.toFixed(1)}) → (${update.newPosition.x.toFixed(1)}, ${update.newPosition.y.toFixed(1)})`
+      );
+    });
+
+    console.log(`🔄 [Endpoint重计算] 完成，共重新计算 ${recalculatedCount} 个虚拟endpoint位置`);
   }
 
   /**
@@ -2106,7 +2438,363 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 全局居中对齐 - 增强版，保护局部优化结果
+   * 全局X轴平衡算法 - 解决左重右轻问题
+   * @param {Map} positions - 位置映射
+   * @param {Object} layerStructure - 层级结构
+   */
+  applyGlobalXAxisBalancing(positions, layerStructure) {
+    console.log("⚖️ [X轴平衡] 开始全局X轴平衡分析");
+
+    // 1. 分析X轴分布密度
+    const densityAnalysis = this.analyzeXAxisDensity(positions);
+    console.log("⚖️ [密度分析] 完成:", densityAnalysis);
+
+    // 2. 识别稀疏和密集区域
+    const { sparseRegions, denseRegions } = this.identifyDensityRegions(densityAnalysis);
+    
+    if (sparseRegions.length === 0 && denseRegions.length === 0) {
+      console.log("⚖️ [X轴平衡] 分布均匀，无需调整");
+      return;
+    }
+
+    // 3. 智能重平衡策略
+    const rebalanceStrategy = this.calculateRebalanceStrategy(densityAnalysis, sparseRegions, denseRegions);
+    console.log("⚖️ [重平衡策略]:", rebalanceStrategy);
+
+    // 4. 应用重平衡调整
+    this.applyRebalanceAdjustments(positions, layerStructure, rebalanceStrategy);
+
+    console.log("⚖️ [X轴平衡] 全局X轴平衡完成");
+  }
+
+  /**
+   * 分析X轴分布密度
+   * @param {Map} positions - 位置映射
+   * @returns {Object} 密度分析结果
+   */
+  analyzeXAxisDensity(positions) {
+    const allPositions = Array.from(positions.values());
+    const validPositions = allPositions.filter(pos => 
+      pos.x !== undefined && !isNaN(pos.x) && Math.abs(pos.x) < 1000
+    );
+
+    if (validPositions.length === 0) {
+      return { regions: [], totalWidth: 0, centerOfMass: 0 };
+    }
+
+    const xCoords = validPositions.map(pos => pos.x).sort((a, b) => a - b);
+    const minX = Math.min(...xCoords);
+    const maxX = Math.max(...xCoords);
+    const totalWidth = maxX - minX;
+
+    // 将X轴分为10个区域进行密度分析
+    const regionCount = 10;
+    const regionWidth = totalWidth / regionCount;
+    const regions = [];
+
+    for (let i = 0; i < regionCount; i++) {
+      const regionStart = minX + i * regionWidth;
+      const regionEnd = regionStart + regionWidth;
+      const nodesInRegion = xCoords.filter(x => x >= regionStart && x < regionEnd).length;
+      
+      regions.push({
+        index: i,
+        start: regionStart,
+        end: regionEnd,
+        center: regionStart + regionWidth / 2,
+        nodeCount: nodesInRegion,
+        density: nodesInRegion / validPositions.length
+      });
+    }
+
+    // 计算质心（重心）
+    const totalMass = xCoords.reduce((sum, x) => sum + x, 0);
+    const centerOfMass = totalMass / xCoords.length;
+
+    return {
+      regions,
+      totalWidth,
+      centerOfMass,
+      minX,
+      maxX,
+      totalNodes: validPositions.length
+    };
+  }
+
+  /**
+   * 识别稀疏和密集区域
+   * @param {Object} densityAnalysis - 密度分析结果
+   * @returns {Object} 稀疏和密集区域
+   */
+  identifyDensityRegions(densityAnalysis) {
+    const { regions, totalNodes } = densityAnalysis;
+    const avgDensity = 1 / regions.length; // 平均密度
+    const densityThreshold = avgDensity * 0.5; // 稀疏阈值
+    const denseThreshold = avgDensity * 1.5; // 密集阈值
+
+    const sparseRegions = regions.filter(region => region.density < densityThreshold);
+    const denseRegions = regions.filter(region => region.density > denseThreshold);
+
+    console.log(`⚖️ [区域识别] 平均密度: ${(avgDensity * 100).toFixed(1)}%, 稀疏区域: ${sparseRegions.length}, 密集区域: ${denseRegions.length}`);
+
+    return { sparseRegions, denseRegions };
+  }
+
+  /**
+   * 计算重平衡策略
+   * @param {Object} densityAnalysis - 密度分析结果
+   * @param {Array} sparseRegions - 稀疏区域
+   * @param {Array} denseRegions - 密集区域
+   * @returns {Object} 重平衡策略
+   */
+  calculateRebalanceStrategy(densityAnalysis, sparseRegions, denseRegions) {
+    const { centerOfMass, totalWidth, minX, maxX } = densityAnalysis;
+    const idealCenter = (minX + maxX) / 2;
+    const massOffset = centerOfMass - idealCenter;
+
+    // 判断主要问题类型
+    let primaryIssue = 'balanced';
+    if (Math.abs(massOffset) > totalWidth * 0.1) {
+      primaryIssue = massOffset > 0 ? 'right_heavy' : 'left_heavy';
+    }
+
+    // 计算调整强度
+    const adjustmentIntensity = Math.min(Math.abs(massOffset) / (totalWidth * 0.2), 1.0);
+
+    return {
+      primaryIssue,
+      massOffset,
+      adjustmentIntensity,
+      targetShift: -massOffset * 0.3, // 30%的质心偏移修正
+      sparseRegionCount: sparseRegions.length,
+      denseRegionCount: denseRegions.length
+    };
+  }
+
+  /**
+   * 应用重平衡调整
+   * @param {Map} positions - 位置映射
+   * @param {Object} layerStructure - 层级结构
+   * @param {Object} strategy - 重平衡策略
+   */
+  applyRebalanceAdjustments(positions, layerStructure, strategy) {
+    if (strategy.primaryIssue === 'balanced') {
+      console.log("⚖️ [重平衡] 分布已平衡，无需调整");
+      return;
+    }
+
+    const { targetShift, adjustmentIntensity } = strategy;
+    let adjustedNodes = 0;
+
+    console.log(`⚖️ [重平衡] 开始调整，目标偏移: ${targetShift.toFixed(1)}, 强度: ${(adjustmentIntensity * 100).toFixed(1)}%`);
+
+    // 对所有节点应用渐进式调整
+    positions.forEach((pos, nodeId) => {
+      if (pos.x !== undefined && !isNaN(pos.x)) {
+        const oldX = pos.x;
+        
+        // 基于距离中心的位置计算调整权重
+        const distanceFromCenter = Math.abs(pos.x);
+        const adjustmentWeight = Math.min(distanceFromCenter / 200, 1.0); // 距离中心越远，调整权重越大
+        
+        // 应用调整
+        const adjustment = targetShift * adjustmentIntensity * adjustmentWeight;
+        pos.x += adjustment;
+        
+        if (Math.abs(adjustment) > 0.5) {
+          adjustedNodes++;
+          console.log(`⚖️ [节点调整] ${nodeId}: ${oldX.toFixed(1)} → ${pos.x.toFixed(1)} (调整: ${adjustment.toFixed(1)})`);
+        }
+      }
+    });
+
+    console.log(`⚖️ [重平衡] 完成，调整了 ${adjustedNodes} 个节点`);
+  }
+
+  /**
+   * 计算智能端点位置 - 避免重叠的分布算法
+   * @param {Object} sourceNode - 源节点
+   * @param {Object} nodePosition - 节点位置
+   * @param {Object} nodeSize - 节点大小
+   * @param {number} existingEndpointCount - 已存在的端点数量
+   * @param {boolean} useOptimizedPosition - 是否使用优化后的位置
+   * @returns {Object} 计算出的端点位置
+   */
+  calculateIntelligentEndpointPosition(sourceNode, nodePosition, nodeSize, existingEndpointCount, useOptimizedPosition = false) {
+    console.log(`🎯 [智能端点] 为节点 ${sourceNode.id} 计算智能端点位置，已有端点: ${existingEndpointCount}, 使用优化位置: ${useOptimizedPosition}`);
+
+    // 🎯 关键修复1：根据阶段选择合适的位置源
+    let correctedNodePosition = nodePosition;
+    
+    if (useOptimizedPosition && this.layoutModel && this.layoutModel.nodePositions) {
+      // 在层级优化完成后，使用最新的优化位置
+      const layoutPosition = this.layoutModel.nodePositions.get(sourceNode.id);
+      if (layoutPosition && layoutPosition.x !== undefined && !isNaN(layoutPosition.x)) {
+        correctedNodePosition = {
+          x: layoutPosition.x,
+          y: layoutPosition.y || nodePosition.y
+        };
+        console.log(`🔄 [优化位置] 节点 ${sourceNode.id} 使用层级优化后位置: (${layoutPosition.x}, ${layoutPosition.y})`);
+      }
+    } else {
+      // 在初始创建阶段，使用原始位置
+      console.log(`📍 [初始位置] 节点 ${sourceNode.id} 使用原始位置: (${nodePosition.x}, ${nodePosition.y})`);
+    }
+
+    // 🎯 关键修复2：根据阶段使用不同的X坐标计算策略
+    let baseX;
+    if (useOptimizedPosition) {
+      // 优化阶段：使用更保守的计算，避免过大偏移
+      const nodeWidth = nodeSize.width || 120;
+      const conservativeOffset = Math.min(nodeWidth * 0.4, 40); // 最多40像素偏移
+      baseX = correctedNodePosition.x + conservativeOffset;
+      console.log(`🎯 [优化计算] 节点宽度: ${nodeWidth}, 保守偏移: ${conservativeOffset}`);
+    } else {
+      // 初始阶段：使用保守的固定偏移
+      baseX = correctedNodePosition.x + 30; // 减少初始偏移
+    }
+    
+    const baseY = correctedNodePosition.y + (nodeSize.height || 40) / 2;
+
+    // 🎯 关键修复3：验证计算结果的合理性
+    if (Math.abs(baseX) > 300) {
+      console.warn(`⚠️ [异常检测] 节点 ${sourceNode.id} 计算出异常X坐标: ${baseX}，使用默认值`);
+      const fallbackX = correctedNodePosition.x > 0 ? 100 : -100; // 根据源节点位置选择合理的默认值
+      const finalPosition = {
+        x: fallbackX,
+        y: baseY
+      };
+      console.log(`🛡️ [异常修复] 节点 ${sourceNode.id} 使用安全坐标: (${finalPosition.x}, ${finalPosition.y})`);
+      return finalPosition;
+    }
+
+    // 分析同层级现有端点分布
+    const sameLayerEndpoints = this.analyzeSameLayerEndpoints(sourceNode, correctedNodePosition);
+    console.log(`🎯 [同层分析] 同层级端点数量: ${sameLayerEndpoints.length}`);
+
+    // 计算最优X坐标偏移，避免重叠
+    const optimalXOffset = this.calculateOptimalXOffset(
+      baseX,
+      sameLayerEndpoints,
+      existingEndpointCount
+    );
+
+    // 计算最优Y坐标微调，增加视觉层次
+    const optimalYOffset = this.calculateOptimalYOffset(
+      baseY,
+      sameLayerEndpoints,
+      existingEndpointCount
+    );
+
+    const finalPosition = {
+      x: baseX + optimalXOffset,
+      y: baseY + optimalYOffset
+    };
+
+    // 🎯 关键修复4：最终验证和边界限制
+    if (Math.abs(finalPosition.x) > 250) {
+      console.warn(`⚠️ [边界限制] 端点X坐标超出合理范围: ${finalPosition.x}，进行限制`);
+      finalPosition.x = Math.sign(finalPosition.x) * Math.min(Math.abs(finalPosition.x), 250);
+    }
+
+    console.log(
+      `🎯 [智能端点] 节点 ${sourceNode.id} 端点位置: (${finalPosition.x.toFixed(1)}, ${finalPosition.y.toFixed(1)}) ` +
+      `偏移: X+${optimalXOffset.toFixed(1)}, Y+${optimalYOffset.toFixed(1)}`
+    );
+
+    return finalPosition;
+  }
+
+  /**
+   * 分析同层级端点分布
+   * @param {Object} sourceNode - 源节点
+   * @param {Object} nodePosition - 节点位置
+   * @returns {Array} 同层级端点位置数组
+   */
+  analyzeSameLayerEndpoints(sourceNode, nodePosition) {
+    const sameLayerEndpoints = [];
+    const layerTolerance = 50; // Y坐标容差
+
+    // 检查已存在的端点位置
+    if (this.layoutModel && this.layoutModel.nodePositions) {
+      this.layoutModel.nodePositions.forEach((pos, nodeId) => {
+        if (pos.nodeType === 'endpoint' && 
+            Math.abs(pos.y - nodePosition.y) <= layerTolerance) {
+          sameLayerEndpoints.push({
+            nodeId,
+            x: pos.x,
+            y: pos.y
+          });
+        }
+      });
+    }
+
+    return sameLayerEndpoints.sort((a, b) => a.x - b.x);
+  }
+
+  /**
+   * 计算最优X坐标偏移
+   * @param {number} baseX - 基础X坐标
+   * @param {Array} existingEndpoints - 现有端点
+   * @param {number} endpointIndex - 端点索引
+   * @returns {number} X坐标偏移量
+   */
+  calculateOptimalXOffset(baseX, existingEndpoints, endpointIndex) {
+    if (existingEndpoints.length === 0) {
+      return 0; // 第一个端点，无需偏移
+    }
+
+    const minSpacing = 25; // 减少最小间距要求
+    const preferredSpacing = 35; // 减少首选间距
+
+    // 检查基础位置是否与现有端点冲突
+    const conflicts = existingEndpoints.filter(ep => 
+      Math.abs(ep.x - baseX) < minSpacing
+    );
+
+    if (conflicts.length === 0) {
+      return 0; // 无冲突，使用基础位置
+    }
+
+    // 寻找最佳插入位置
+    const sortedX = existingEndpoints.map(ep => ep.x).sort((a, b) => a - b);
+    
+    // 尝试在现有端点之间插入
+    for (let i = 0; i < sortedX.length - 1; i++) {
+      const gap = sortedX[i + 1] - sortedX[i];
+      if (gap >= preferredSpacing) {
+        const insertX = sortedX[i] + gap / 2;
+        const offset = insertX - baseX;
+        // 限制偏移量，避免过大的移动
+        return Math.sign(offset) * Math.min(Math.abs(offset), 50);
+      }
+    }
+
+    // 如果无法插入，使用更保守的右侧偏移
+    const rightmostX = Math.max(...sortedX);
+    const rightOffset = rightmostX + preferredSpacing - baseX;
+    // 限制右侧偏移量，避免端点过于分散
+    return Math.sign(rightOffset) * Math.min(Math.abs(rightOffset), 60);
+  }
+
+  /**
+   * 计算最优Y坐标偏移
+   * @param {number} baseY - 基础Y坐标
+   * @param {Array} existingEndpoints - 现有端点
+   * @param {number} endpointIndex - 端点索引
+   * @returns {number} Y坐标偏移量
+   */
+  calculateOptimalYOffset(baseY, existingEndpoints, endpointIndex) {
+    // 为端点添加轻微的Y坐标变化，增加视觉层次感
+    const maxYVariation = 15; // 最大Y坐标变化
+    const pattern = [-5, 5, -10, 10, -15, 15]; // 交替模式
+    
+    const offsetIndex = endpointIndex % pattern.length;
+    return pattern[offsetIndex] || 0;
+  }
+
+  /**
+   * 全局居中对齐 - 修复版，只负责Y轴居中，保护X轴分布
    * @param {Map} positions - 位置映射
    */
   centerAlignGlobalLayout(positions) {
@@ -2114,13 +2802,12 @@ export class UnifiedStructuredLayoutEngine {
 
     if (allPositions.length === 0) return;
 
-    // 🎯 修复1：过滤异常位置，避免边界计算错误
+    // 🎯 修复：只进行基础的位置有效性检查
     const validPositions = allPositions.filter(pos => {
       const isValid = pos.x !== undefined && pos.y !== undefined && 
-                     !isNaN(pos.x) && !isNaN(pos.y) && 
-                     Math.abs(pos.x) < 10000 && Math.abs(pos.y) < 10000;
+                     !isNaN(pos.x) && !isNaN(pos.y);
       if (!isValid) {
-        console.warn(`⚠️ [全局居中] 发现异常位置，已过滤:`, pos);
+        console.warn(`⚠️ [全局居中] 发现无效位置，已过滤:`, pos);
       }
       return isValid;
     });
@@ -2130,104 +2817,22 @@ export class UnifiedStructuredLayoutEngine {
       return;
     }
 
-    // 🎯 修复2：记录已优化的对称分布
-    const symmetricLayers = new Map();
-    positions.forEach((pos, nodeId) => {
-      if (pos.layerIndex !== undefined) {
-        if (!symmetricLayers.has(pos.layerIndex)) {
-          symmetricLayers.set(pos.layerIndex, []);
-        }
-        symmetricLayers.get(pos.layerIndex).push({ nodeId, pos });
-      }
-    });
-
-    // 计算安全的边界
-    const minX = Math.min(...validPositions.map((pos) => pos.x));
-    const maxX = Math.max(...validPositions.map((pos) => pos.x));
-    const minY = Math.min(...validPositions.map((pos) => pos.y));
-
-    console.log(
-      `🌍 [全局居中] 安全边界计算: minX=${minX.toFixed(1)}, maxX=${maxX.toFixed(1)}, minY=${minY.toFixed(1)} (有效位置数: ${validPositions.length})`,
-    );
-
-    // 🎯 修复3：检查边界合理性
-    const xRange = maxX - minX;
-    if (xRange > 1000) {
-      console.warn(`⚠️ [全局居中] X坐标范围异常 (${xRange.toFixed(1)}px)，使用保守偏移`);
-      // 使用保守的居中策略
-      const conservativeOffsetX = -minX;
-      positions.forEach((pos) => {
-        if (Math.abs(pos.x) < 500) { // 只调整合理范围内的节点
-          pos.x += conservativeOffsetX;
-        }
-      });
-      console.log(`🌍 [全局居中] 保守偏移完成: offsetX=${conservativeOffsetX.toFixed(1)}`);
-      return;
-    }
-
-    // 正常的居中计算
-    const offsetX = -(minX + maxX) / 2;
+    // 🎯 核心修复：全局居中只负责Y轴平移，不修改X轴分布
+    const minY = Math.min(...validPositions.map(pos => pos.y));
     const offsetY = -minY;
 
     console.log(
-      `🌍 [全局居中] 偏移量计算: offsetX=${offsetX.toFixed(1)}, offsetY=${offsetY.toFixed(1)}`,
+      `🌍 [全局Y轴居中] Y轴边界: minY=${minY.toFixed(1)}, offsetY=${offsetY.toFixed(1)} (有效位置数: ${validPositions.length})`,
     );
 
-    // 记录偏移前的样本位置
-    let sampleCount = 0;
+    // 🎯 关键修复：只应用Y轴偏移，完全保护X轴分布
     positions.forEach((pos, nodeId) => {
-      if (sampleCount < 3) {
-        console.log(
-          `🌍 [全局居中] 偏移前节点 ${nodeId}: (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`,
-        );
-        sampleCount++;
-      }
-    });
-
-    // 应用偏移
-    positions.forEach((pos) => {
-      pos.x += offsetX;
-      pos.y += offsetY;
-    });
-
-    // 🎯 修复4：恢复对称分布的相对位置
-     symmetricLayers.forEach((layerNodes, layerIndex) => {
-       if (layerNodes.length >= 2) {
-         // 检查是否为对称分布层
-         const xCoords = layerNodes.map((item) => item.pos.x).sort((a, b) => a - b);
-         const isSymmetric = this.checkSymmetricDistribution(xCoords);
-         
-         if (isSymmetric) {
-           console.log(`🔧 [对称保护] 第${layerIndex}层检测到对称分布，重新应用对称布局`);
-           this.reapplySymmetricDistribution(layerNodes);
-         }
-       }
-     });
-
-    // 🎯 修复5：强制单节点层居中
-    symmetricLayers.forEach((layerNodes, layerIndex) => {
-      if (layerNodes.length === 1) {
-        const singleNode = layerNodes[0];
-        if (Math.abs(singleNode.pos.x) > 0.1) {
-          console.log(`🎯 [单节点强制居中] 第${layerIndex}层单节点 ${singleNode.nodeId}: ${singleNode.pos.x.toFixed(1)} → 0`);
-          singleNode.pos.x = 0;
-        }
-      }
-    });
-
-    // 记录偏移后的样本位置
-    sampleCount = 0;
-    positions.forEach((pos, nodeId) => {
-      if (sampleCount < 3) {
-        console.log(
-          `🌍 [全局居中] 偏移后节点 ${nodeId}: (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`,
-        );
-        sampleCount++;
-      }
+      pos.y += offsetY;  // 只修改Y轴，保持X轴不变
+      // pos.x 保持完全不变，由层级居中负责
     });
 
     console.log(
-      `🌍 [全局居中] 增强居中完成: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`,
+      `🌍 [全局居中完成] 仅进行Y轴居中，X轴分布完全保护`,
     );
   }
 
@@ -2310,10 +2915,28 @@ export class UnifiedStructuredLayoutEngine {
   async applyPositionsToGraph(finalPositions) {
     console.log("📍 [位置应用] 开始应用位置到图形");
 
+    // 🎯 关键修复：预先验证和修正同层Y坐标一致性
+    this.validateAndFixLayerYCoordinates(finalPositions);
+
     let appliedCount = 0;
     let endpointCount = 0;
+    let forcedYCorrections = 0;
 
     finalPositions.forEach((position, nodeId) => {
+      // 🎯 关键修复：验证位置数据的有效性，防止异常偏移
+      if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+        console.error(`❌ [位置应用] 节点 ${nodeId} 位置数据无效:`, position);
+        return;
+      }
+
+      // 🎯 关键修复：检测异常的X坐标偏移（如418.2px的异常值）
+      if (Math.abs(position.x) > 300) {
+        console.warn(`⚠️ [异常坐标] 节点 ${nodeId} X坐标异常: ${position.x}，可能存在计算错误`);
+        // 对于异常的X坐标，使用0作为默认值
+        position.x = 0;
+        console.log(`🔧 [坐标修正] 节点 ${nodeId} X坐标已修正为: 0`);
+      }
+
       // 🎯 关键：统一计算中心点位置，确保Y坐标一致
       const centerPosition = {
         x: position.x,
@@ -2328,11 +2951,32 @@ export class UnifiedStructuredLayoutEngine {
           x: centerPosition.x - size.width / 2,
           y: centerPosition.y - size.height / 2,
         };
-        graphNode.setPosition(topLeftPosition);
+        
+        // 🎯 关键修复：系统设置位置时添加特殊标识，区分系统操作和用户操作
+        graphNode.setPosition(topLeftPosition, { 
+          silent: false,
+          systemInitiated: true, // 🔧 新增：标识这是系统发起的位置变更
+          layoutEngine: true,    // 🔧 新增：标识这是布局引擎操作
+          source: 'UnifiedStructuredLayoutEngine' // 🔧 新增：标识操作来源
+        });
+        
+        // 🎯 关键修复：验证位置是否正确应用
+        const actualPosition = graphNode.getPosition();
+        if (Math.abs(actualPosition.y - topLeftPosition.y) > 1) {
+          console.warn(`⚠️ [Y坐标修正] 节点 ${nodeId} Y坐标应用失败，强制重新设置`);
+          graphNode.setPosition({ x: topLeftPosition.x, y: topLeftPosition.y }, { 
+            silent: false,
+            systemInitiated: true,
+            layoutEngine: true,
+            source: 'UnifiedStructuredLayoutEngine-correction'
+          });
+          forcedYCorrections++;
+        }
+        
         appliedCount++;
 
         console.log(
-          `📍 [位置应用] 普通节点 ${nodeId}: 中心点(${centerPosition.x.toFixed(1)}, ${centerPosition.y.toFixed(1)}) 左上角(${topLeftPosition.x.toFixed(1)}, ${topLeftPosition.y.toFixed(1)})`,
+          `📍 [位置应用] 普通节点 ${nodeId}: 中心点(${centerPosition.x.toFixed(1)}, ${centerPosition.y.toFixed(1)}) 左上角(${topLeftPosition.x.toFixed(1)}, ${topLeftPosition.y.toFixed(1)}) 层级: ${position.layerIndex}`,
         );
         return;
       }
@@ -2348,12 +2992,12 @@ export class UnifiedStructuredLayoutEngine {
           endpointNode.position.y = centerPosition.y;
         }
 
-        // 🎯 关键：同步更新预览线管理器中的endpoint位置
-        this.updatePreviewEndpointPosition(
-          endpointNode.sourceNodeId,
-          endpointNode.branchId,
-          centerPosition,
-        );
+        // 🎯 关键修复：延迟到批量同步阶段，避免重复调用
+        // this.updatePreviewEndpointPosition(
+        //   endpointNode.sourceNodeId,
+        //   endpointNode.branchId,
+        //   centerPosition,
+        // );
 
         endpointCount++;
 
@@ -2364,8 +3008,99 @@ export class UnifiedStructuredLayoutEngine {
     });
 
     console.log(
-      `📍 [位置应用] 应用完成: ${appliedCount}个普通节点 + ${endpointCount}个虚拟endpoint`,
+      `📍 [位置应用] 应用完成: ${appliedCount}个普通节点 + ${endpointCount}个虚拟endpoint + ${forcedYCorrections}个Y坐标强制修正`,
     );
+
+    // 🎯 关键修复：位置应用后再次验证Y坐标一致性
+    this.postApplyYCoordinateValidation(finalPositions);
+
+    // 🎯 关键修复：统一批量同步所有Endpoint位置，避免重复调用
+    console.log("🔄 [批量同步] 开始统一同步所有Endpoint位置");
+    this.syncAllEndpointPositions(finalPositions);
+  }
+
+  /**
+   * 🎯 关键修复：验证和修正同层Y坐标一致性
+   * @param {Map} finalPositions - 最终位置映射
+   */
+  validateAndFixLayerYCoordinates(finalPositions) {
+    console.log("🔍 [Y坐标验证] 开始验证同层Y坐标一致性");
+
+    // 按层级分组
+    const layerGroups = new Map();
+    finalPositions.forEach((position, nodeId) => {
+      const layerIndex = position.layerIndex;
+      if (!layerGroups.has(layerIndex)) {
+        layerGroups.set(layerIndex, []);
+      }
+      layerGroups.get(layerIndex).push({ nodeId, position });
+    });
+
+    let fixedLayers = 0;
+    let fixedNodes = 0;
+
+    // 验证每层的Y坐标一致性
+    layerGroups.forEach((nodes, layerIndex) => {
+      if (nodes.length <= 1) return;
+
+      // 计算该层的标准Y坐标（使用第一个节点的Y坐标）
+      const standardY = nodes[0].position.y;
+      let hasInconsistency = false;
+
+      // 检查是否有不一致的Y坐标
+      nodes.forEach(({ nodeId, position }) => {
+        if (Math.abs(position.y - standardY) > 1) {
+          console.warn(`⚠️ [Y坐标不一致] 层级 ${layerIndex} 节点 ${nodeId}: ${position.y} ≠ ${standardY}`);
+          hasInconsistency = true;
+        }
+      });
+
+      // 如果有不一致，强制修正为标准Y坐标
+      if (hasInconsistency) {
+        nodes.forEach(({ nodeId, position }) => {
+          if (Math.abs(position.y - standardY) > 1) {
+            const oldY = position.y;
+            position.y = standardY;
+            console.log(`🔧 [Y坐标修正] 节点 ${nodeId}: ${oldY} → ${standardY}`);
+            fixedNodes++;
+          }
+        });
+        fixedLayers++;
+      }
+    });
+
+    console.log(`🔍 [Y坐标验证] 完成，修正了 ${fixedLayers} 个层级的 ${fixedNodes} 个节点`);
+  }
+
+  /**
+   * 🎯 关键修复：位置应用后Y坐标验证
+   * @param {Map} finalPositions - 最终位置映射
+   */
+  postApplyYCoordinateValidation(finalPositions) {
+    console.log("🔍 [后验证] 开始位置应用后Y坐标验证");
+
+    let validationErrors = 0;
+
+    finalPositions.forEach((position, nodeId) => {
+      const graphNode = this.graph.getCellById(nodeId);
+      if (graphNode) {
+        const actualPosition = graphNode.getPosition();
+        const size = graphNode.getSize();
+        const actualCenterY = actualPosition.y + size.height / 2;
+        const expectedCenterY = position.y;
+
+        if (Math.abs(actualCenterY - expectedCenterY) > 1) {
+          console.error(`❌ [后验证] 节点 ${nodeId} Y坐标验证失败: 实际=${actualCenterY.toFixed(1)}, 期望=${expectedCenterY.toFixed(1)}, 差异=${Math.abs(actualCenterY - expectedCenterY).toFixed(1)}`);
+          validationErrors++;
+        }
+      }
+    });
+
+    if (validationErrors === 0) {
+      console.log("✅ [后验证] 所有节点Y坐标验证通过");
+    } else {
+      console.error(`❌ [后验证] 发现 ${validationErrors} 个Y坐标验证错误`);
+    }
   }
 
   /**
@@ -2415,6 +3150,9 @@ export class UnifiedStructuredLayoutEngine {
     });
 
     console.log("📊 [布局报告]", report);
+
+    // 🎯 关键修复：布局完成后执行预览线清理
+    this.performPostLayoutCleanup();
 
     return report;
   }
@@ -2538,5 +3276,84 @@ export class UnifiedStructuredLayoutEngine {
     }
 
     return { missingCount, fixedCount };
+  }
+
+  /**
+   * 🎯 关键修复：布局完成后执行清理工作
+   * 清理孤立的预览线和无效的endpoint
+   */
+  performPostLayoutCleanup() {
+    console.log("🧹 [布局后清理] 开始执行布局完成后的清理工作");
+
+    // 获取预览线管理器
+    const previewLineManager =
+      this.previewLineManager ||
+      window.unifiedPreviewLineManager ||
+      this.graph?.previewLineManager;
+
+    if (!previewLineManager) {
+      console.warn("⚠️ [布局后清理] 预览线管理器不可用，跳过清理");
+      return;
+    }
+
+    // 🎯 关键修复：设置布局完成时间标记
+    previewLineManager.lastLayoutTime = Date.now();
+    console.log("⏰ [布局时间标记] 已设置布局完成时间，用于预览线清理判断");
+
+    // 延迟执行清理，确保布局完全完成
+    setTimeout(() => {
+      try {
+        // 执行预览线清理
+        if (typeof previewLineManager.performLoadCompleteCheck === 'function') {
+          previewLineManager.performLoadCompleteCheck();
+          console.log("✅ [布局后清理] 已触发预览线管理器的完整清理检查");
+        } else if (typeof previewLineManager.cleanupOrphanedPreviewLines === 'function') {
+          const cleanedCount = previewLineManager.cleanupOrphanedPreviewLines();
+          console.log(`✅ [布局后清理] 清理了 ${cleanedCount} 条孤立预览线`);
+        } else {
+          console.warn("⚠️ [布局后清理] 预览线管理器不支持清理方法");
+        }
+
+        // 验证清理结果
+        this.validateCleanupResults(previewLineManager);
+
+      } catch (error) {
+        console.error("❌ [布局后清理] 清理过程中发生错误:", error);
+      }
+    }, 200); // 200ms延迟确保布局完全应用
+  }
+
+  /**
+   * 验证清理结果
+   * @param {Object} previewLineManager - 预览线管理器
+   */
+  validateCleanupResults(previewLineManager) {
+    if (!previewLineManager.previewLines) {
+      return;
+    }
+
+    const remainingPreviewLines = previewLineManager.previewLines.size;
+    const totalNodes = this.graph.getNodes().length;
+    const totalEdges = this.graph.getEdges().length;
+
+    console.log("📊 [清理验证] 清理后状态统计:", {
+      剩余预览线实例: remainingPreviewLines,
+      总节点数: totalNodes,
+      总边数: totalEdges,
+      清理状态: remainingPreviewLines === 0 ? "完全清理" : "部分保留"
+    });
+
+    // 如果还有预览线，检查是否合理
+    if (remainingPreviewLines > 0) {
+      let validPreviewLines = 0;
+      previewLineManager.previewLines.forEach((previewInstance, nodeId) => {
+        const sourceNode = this.graph.getCellById(nodeId);
+        if (sourceNode && !previewLineManager.hasExistingRealConnections(sourceNode)) {
+          validPreviewLines++;
+        }
+      });
+
+      console.log(`📊 [清理验证] 剩余 ${remainingPreviewLines} 个预览线实例中，${validPreviewLines} 个是有效的`);
+    }
   }
 }

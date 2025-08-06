@@ -35,7 +35,7 @@ export function useStructuredLayout(getGraph) {
   const layoutConfig = ref({
     levelHeight: 200, // 🔧 优化：从150增加到200，改善层间距视觉效果
     nodeSpacing: 200,
-    branchSpacing: 180,
+    branchSpacing: 220, // 🔧 优化：从180增加到220，改善X轴节点分布
     centerAlignment: true,
     gridSize: 20,
     previewLineSpacing: 80,

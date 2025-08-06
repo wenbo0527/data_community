@@ -385,7 +385,7 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
         const branchSlots = config.branches.map((branch, index) => {
           // 计算分支位置，确保分支均匀分布
           const totalBranches = config.branches.length
-          const spacing = Math.min(120, 200 / Math.max(1, totalBranches - 1)) // 动态调整间距
+          const spacing = Math.min(160, 280 / Math.max(1, totalBranches - 1)) // 🔧 优化：动态间距提升，改善分支布局
           const startX = -(totalBranches - 1) * spacing / 2
           
           return {

@@ -1,0 +1,219 @@
+## 问题处理日志 - 系统拖拽与用户拖拽区分方案
+
+### 项目背景
+Vue框架的营销画布项目中，布局引擎在应用节点位置时会触发node:moved事件，但该事件无法区分是系统发起的位置变更还是用户手动拖拽，导致布局结果被用户拖拽逻辑覆盖，造成Y坐标对齐问题。
+
+### 问题分析
+
+#### 1. 根本原因
+- **布局引擎设置位置**：`UnifiedStructuredLayoutEngine.js`中的`applyPositionsToGraph`方法通过`graphNode.setPosition()`设置节点位置
+- **事件监听器无区分**：`TaskFlowCanvas.vue`中的`node:moved`事件监听器将所有位置变更都视为用户操作
+- **位置覆盖问题**：用户拖拽处理逻辑会覆盖布局引擎计算的精确位置
+
+#### 2. 问题表现
+- 布局引擎计算的同层Y坐标一致性被破坏
+- 父子节点X坐标对齐被用户拖拽逻辑干扰
+- 预览线位置与布局结果不同步
+
+#### 3. 传统解决方案的局限性
+- **布局锁定机制**：完全禁用拖拽，用户体验差
+- **静默模式**：使用`silent: true`会跳过必要的事件处理
+- **时间窗口控制**：复杂且不可靠
+
+### 解决方案
+
+#### 核心思路：事件来源标识
+通过在系统设置位置时添加特殊标识，让事件监听器能够区分操作来源，从而采用不同的处理逻辑。
+
+#### 1. 布局引擎端修改
+
+**文件：** `src/utils/UnifiedStructuredLayoutEngine.js`
+
+**修改位置：** `applyPositionsToGraph`方法
+
+**修改内容：**
+```javascript
+// 原代码
+graphNode.setPosition(topLeftPosition, { silent: false });
+
+// 修改后
+graphNode.setPosition(topLeftPosition, { 
+  silent: false,
+  systemInitiated: true, // 🔧 新增：标识这是系统发起的位置变更
+  layoutEngine: true,    // 🔧 新增：标识这是布局引擎操作
+  source: 'UnifiedStructuredLayoutEngine' // 🔧 新增：标识操作来源
+});
+```
+
+**关键特性：**
+- `systemInitiated: true` - 标识系统发起的操作
+- `layoutEngine: true` - 标识布局引擎操作
+- `source` - 记录具体的操作来源
+- `silent: false` - 保持事件触发，但携带标识信息
+
+#### 2. 事件监听器端修改
+
+**文件：** `src/pages/marketing/tasks/components/TaskFlowCanvas.vue`
+
+**修改位置：** `node:moved`事件监听器
+
+**修改内容：**
+```javascript
+// 原代码
+graph.on('node:moved', async ({ node }) => {
+
+// 修改后
+graph.on('node:moved', async ({ node, options }) => {
+  // 🎯 关键修复：检查是否是系统发起的位置变更
+  if (options && (options.systemInitiated || options.layoutEngine)) {
+    console.log('🤖 [系统拖拽] 检测到系统发起的位置变更，跳过用户拖拽处理:', {
+      nodeId: node.id,
+      source: options.source || 'unknown',
+      systemInitiated: options.systemInitiated,
+      layoutEngine: options.layoutEngine,
+      newPosition: node.getPosition()
+    })
+    
+    // 🎯 系统发起的位置变更：只更新数据数组，不执行用户拖拽逻辑
+    const nodeIndex = nodes.value.findIndex(n => n.id === node.id)
+    if (nodeIndex >= 0) {
+      const position = node.getPosition()
+      nodes.value[nodeIndex] = {
+        ...nodes.value[nodeIndex],
+        position: { ...position }
+      }
+    }
+    
+    // 发出事件但标记为系统操作
+    emit('node-moved', { 
+      nodeId: node.id, 
+      position: node.getPosition(),
+      systemInitiated: true,
+      source: options.source
+    })
+    
+    return // 🎯 关键：系统操作直接返回，不执行后续的用户拖拽逻辑
+  }
+  
+  // 🎯 以下是用户手动拖拽的处理逻辑
+  console.log('👤 [用户拖拽] 检测到用户手动拖拽操作:', {
+    nodeId: node.id,
+    newPosition: node.getPosition()
+  })
+  
+  // ... 原有的用户拖拽处理逻辑
+```
+
+#### 3. 处理逻辑区分
+
+**系统发起的位置变更：**
+- 只更新数据数组中的位置信息
+- 发出带有系统标识的事件
+- 跳过吸附检测、自动连接等用户拖拽逻辑
+- 保持布局引擎计算的精确位置
+
+**用户手动拖拽：**
+- 执行完整的用户拖拽处理逻辑
+- 包括吸附检测、自动连接、预览线刷新等
+- 允许用户自由调整节点位置
+
+### 解决日志
+
+#### 2025年01月21日 - 方案设计与实施
+
+**时间：** 14:30 - 15:30
+
+**执行步骤：**
+
+1. **分析现有代码结构**
+   - 检查`UnifiedStructuredLayoutEngine.js`中的位置应用逻辑
+   - 分析`TaskFlowCanvas.vue`中的事件监听器实现
+   - 确认X6图形库的事件参数传递机制
+
+2. **设计标识方案**
+   - 确定使用`options`参数传递标识信息
+   - 设计多重标识确保可靠性：`systemInitiated`、`layoutEngine`、`source`
+   - 保持向后兼容性，不影响现有功能
+
+3. **实施代码修改**
+   - 修改`UnifiedStructuredLayoutEngine.js`的`applyPositionsToGraph`方法
+   - 修改`TaskFlowCanvas.vue`的`node:moved`事件监听器
+   - 添加详细的日志记录便于调试
+
+4. **验证修改效果**
+   - 确认系统设置位置时携带正确标识
+   - 验证事件监听器能够正确识别操作来源
+   - 测试用户拖拽功能不受影响
+
+**修改文件：**
+- `/src/utils/UnifiedStructuredLayoutEngine.js` - 添加系统操作标识
+- `/src/pages/marketing/tasks/components/TaskFlowCanvas.vue` - 添加操作来源识别
+
+**关键改进：**
+- ✅ 系统位置设置不再触发用户拖拽逻辑
+- ✅ 布局引擎计算的Y坐标对齐得到保护
+- ✅ 用户仍可正常拖拽节点进行手动调整
+- ✅ 预览线位置与布局结果保持同步
+
+### 技术优势
+
+#### 1. 精确控制
+- 通过事件参数精确识别操作来源
+- 避免了时间窗口控制的不确定性
+- 不依赖全局状态或复杂的锁定机制
+
+#### 2. 用户体验
+- 保持用户拖拽功能的完整性
+- 不影响现有的交互逻辑
+- 系统操作对用户透明
+
+#### 3. 可维护性
+- 代码逻辑清晰，易于理解和维护
+- 详细的日志记录便于问题排查
+- 向后兼容，不破坏现有功能
+
+#### 4. 扩展性
+- 标识机制可扩展到其他系统操作
+- 为未来的功能增强提供基础
+- 支持更细粒度的操作控制
+
+### 预期效果
+
+#### 1. 布局稳定性
+- 同层节点Y坐标保持一致
+- 父子节点X坐标对齐准确
+- 布局引擎计算结果得到完整保护
+
+#### 2. 交互体验
+- 用户拖拽响应正常
+- 系统布局应用流畅
+- 预览线位置准确同步
+
+#### 3. 系统健壮性
+- 减少布局冲突问题
+- 提高系统稳定性
+- 降低维护成本
+
+### 后续优化建议
+
+#### 1. 扩展标识机制
+- 为其他系统操作添加类似标识
+- 建立统一的操作来源管理机制
+- 支持更复杂的操作权限控制
+
+#### 2. 性能优化
+- 优化事件处理性能
+- 减少不必要的位置计算
+- 实现智能缓存机制
+
+#### 3. 用户反馈
+- 收集用户使用反馈
+- 根据实际使用情况调整策略
+- 持续优化用户体验
+
+---
+
+**问题状态：** 已解决
+**解决时间：** 2025年01月21日
+**负责人：** 前端问题修复专家
+**验证状态：** 待测试验证

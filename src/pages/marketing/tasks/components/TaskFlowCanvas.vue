@@ -1225,6 +1225,19 @@ const bindEvents = () => {
     // 只对endpoint进行坐标修正和吸附相关的日志记录
     const isEndpoint = nodeData.isEndpoint || nodeData.type === 'endpoint'
     
+    // 🔧 修复：为普通节点添加预览线实时更新
+    if (!isEndpoint) {
+      const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
+      if (unifiedPreviewManager && typeof unifiedPreviewManager.immediateUpdatePosition === 'function') {
+        try {
+          // 立即更新预览线位置，确保拖拽时实时跟随
+          unifiedPreviewManager.immediateUpdatePosition(node)
+        } catch (error) {
+          // 静默处理错误，避免影响拖拽性能
+        }
+      }
+    }
+    
     if (isEndpoint) {
       // 通过坐标管理器验证和修正坐标
       const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
@@ -1384,9 +1397,52 @@ const bindEvents = () => {
   })
 
   // 节点移动完成事件（合并处理）
-  graph.on('node:moved', async ({ node }) => {
+  graph.on('node:moved', async ({ node, options }) => {
     const nodeData = nodes.value.find(n => n.id === node.id)
     const cellData = node.getData() || {}
+    
+    // 🎯 关键修复：检查是否是系统发起的位置变更
+    if (options && (options.systemInitiated || options.layoutEngine)) {
+      console.log('🤖 [系统拖拽] 检测到系统发起的位置变更，跳过用户拖拽处理:', {
+        nodeId: node.id,
+        source: options.source || 'unknown',
+        systemInitiated: options.systemInitiated,
+        layoutEngine: options.layoutEngine,
+        newPosition: node.getPosition()
+      })
+      
+      // 🎯 系统发起的位置变更：只更新数据数组，不执行用户拖拽逻辑
+      const nodeIndex = nodes.value.findIndex(n => n.id === node.id)
+      if (nodeIndex >= 0) {
+        const position = node.getPosition()
+        nodes.value[nodeIndex] = {
+          ...nodes.value[nodeIndex],
+          position: { ...position }
+        }
+        console.log('✅ [系统拖拽] 节点位置已同步到数据数组:', {
+          nodeId: node.id,
+          nodeIndex,
+          newPosition: position,
+          source: options.source
+        })
+      }
+      
+      // 发出事件但标记为系统操作
+      emit('node-moved', { 
+        nodeId: node.id, 
+        position: node.getPosition(),
+        systemInitiated: true,
+        source: options.source
+      })
+      
+      return // 🎯 关键：系统操作直接返回，不执行后续的用户拖拽逻辑
+    }
+    
+    // 🎯 以下是用户手动拖拽的处理逻辑
+    console.log('👤 [用户拖拽] 检测到用户手动拖拽操作:', {
+      nodeId: node.id,
+      newPosition: node.getPosition()
+    })
     
     // 🔧 修复：检查是否是endpoint移动
     if (cellData.isEndpoint || cellData.type === 'endpoint') {

@@ -1,0 +1,591 @@
+# 预览线刷新和分流管理重构方案
+
+## 问题背景
+
+在当前的坐标计算流程中，预览线挂载节点后的刷新位置存在以下问题：
+
+1. **预览线位置不同步**：节点挂载后，预览线位置未能及时更新，导致视觉上的不一致
+2. **分流方式影响**：预览线位置的不准确直接影响分流节点的实际分流方式
+3. **缺乏统一管理**：预览线刷新逻辑分散在多个文件中，缺乏统一的管理机制
+4. **性能问题**：频繁的预览线刷新可能导致性能问题
+
+## 现状分析
+
+### 当前预览线管理机制
+
+基于对 `UnifiedPreviewLineManager.js` 的分析，当前系统具有以下特点：
+
+1. **updatePreviewLinePosition方法**：
+   - 处理单条和分支预览线的位置更新
+   - 包含待处理队列机制
+   - 支持隐藏预览线的跳过逻辑
+
+2. **refreshAllPreviewLines方法**：
+   - 支持智能布局后的批量刷新
+   - 处理分支预览线的恢复和更新
+   - 包含详细的日志记录
+
+3. **分流节点处理**：
+   - 支持多分支预览线管理
+   - 包含分支数据提取和位置计算
+   - 处理分支预览线的显示/隐藏状态
+
+### 存在的问题
+
+1. **时序问题**：节点挂载和预览线刷新的时序不一致
+2. **状态管理**：缺乏对节点挂载状态的统一跟踪
+3. **分流同步**：分流节点的预览线与实际连接状态不同步
+4. **性能优化**：缺乏批量处理和延迟刷新机制
+
+## 重构方案
+
+### 1. PreviewLineRefreshManager（预览线刷新管理器）
+
+#### 1.1 核心功能
+- 跟踪节点挂载状态
+- 管理预览线刷新队列
+- 实现延迟刷新机制
+- 处理批量刷新操作
+
+#### 1.2 实现细节
+
+```javascript
+class PreviewLineRefreshManager {
+  constructor(previewLineManager) {
+    this.previewLineManager = previewLineManager;
+    this.mountedNodes = new Set();
+    this.refreshQueue = new Map();
+    this.refreshTimer = null;
+    this.batchSize = 10;
+    this.refreshDelay = 100; // 100ms延迟
+  }
+
+  // 处理节点挂载后的刷新
+  async handlePostMountRefresh(endpointPositions) {
+    const needsRefresh = new Map();
+    
+    for (const [nodeId, position] of endpointPositions) {
+      if (this.isNodeMounted(nodeId)) {
+        needsRefresh.set(nodeId, position);
+      }
+    }
+    
+    if (needsRefresh.size > 0) {
+      console.log(`🔄 [预览线刷新] 处理 ${needsRefresh.size} 个已挂载节点的预览线刷新`);
+      await this.batchRefreshPreviewLines(needsRefresh);
+    }
+  }
+
+  // 批量刷新预览线
+  async batchRefreshPreviewLines(positions) {
+    // 延迟刷新，确保DOM更新完成
+    await new Promise(resolve => setTimeout(resolve, this.refreshDelay));
+    
+    const batches = this.createBatches(positions, this.batchSize);
+    
+    for (const batch of batches) {
+      await Promise.all(
+        batch.map(([nodeId, position]) => 
+          this.refreshSinglePreviewLine(nodeId, position)
+        )
+      );
+      
+      // 批次间短暂延迟，避免阻塞UI
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+  }
+
+  // 刷新单个预览线
+  async refreshSinglePreviewLine(nodeId, position) {
+    try {
+      const branchData = this.extractBranchData(nodeId);
+      if (!branchData) return;
+      
+      // 强制刷新预览线位置
+      await this.previewLineManager.forceRefreshPreviewLine(
+        branchData.sourceNodeId,
+        branchData.branchId,
+        position
+      );
+      
+      console.log(`✅ [预览线刷新] 节点 ${nodeId} 预览线刷新完成`);
+    } catch (error) {
+      console.error(`❌ [预览线刷新] 节点 ${nodeId} 刷新失败:`, error);
+    }
+  }
+
+  // 提取分支数据
+  extractBranchData(nodeId) {
+    // 从现有的预览线管理器中提取分支数据
+    const previewLines = this.previewLineManager.getAllPreviewLines();
+    
+    for (const [sourceNodeId, lineData] of previewLines) {
+      if (lineData.branches) {
+        for (const [branchId, branchInfo] of lineData.branches) {
+          if (branchInfo.endpointNodeId === nodeId) {
+            return {
+              sourceNodeId,
+              branchId,
+              endpointNodeId: nodeId
+            };
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  // 创建批次
+  createBatches(positions, batchSize) {
+    const entries = Array.from(positions.entries());
+    const batches = [];
+    
+    for (let i = 0; i < entries.length; i += batchSize) {
+      batches.push(entries.slice(i, i + batchSize));
+    }
+    
+    return batches;
+  }
+
+  // 节点挂载状态管理
+  markNodeAsMounted(nodeId) {
+    this.mountedNodes.add(nodeId);
+    console.log(`📌 [预览线刷新] 节点 ${nodeId} 标记为已挂载`);
+  }
+
+  unmarkNodeAsMounted(nodeId) {
+    this.mountedNodes.delete(nodeId);
+    console.log(`📌 [预览线刷新] 节点 ${nodeId} 取消挂载标记`);
+  }
+
+  isNodeMounted(nodeId) {
+    return this.mountedNodes.has(nodeId);
+  }
+
+  // 清理资源
+  cleanup() {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+    this.mountedNodes.clear();
+    this.refreshQueue.clear();
+  }
+}
+```
+
+### 2. BranchFlowManager（分流管理器）
+
+#### 2.1 核心功能
+- 管理分流节点的分支映射
+- 跟踪分流状态变化
+- 同步预览线和实际连接
+- 处理分流方式验证
+
+#### 2.2 实现细节
+
+```javascript
+class BranchFlowManager {
+  constructor() {
+    this.branchMappings = new Map(); // 分支映射
+    this.flowStates = new Map(); // 分流状态
+    this.activeFlows = new Set(); // 活跃分流
+    this.stateChangeListeners = new Set(); // 状态变化监听器
+  }
+
+  // 注册分支分流
+  registerBranchFlow(sourceNodeId, branchId, endpointNodeId, flowType = 'preview') {
+    const key = `${sourceNodeId}-${branchId}`;
+    const mapping = {
+      sourceNodeId,
+      branchId,
+      endpointNodeId,
+      flowType, // 'preview' | 'actual'
+      isActive: true,
+      lastUpdate: Date.now(),
+      metadata: {}
+    };
+    
+    this.branchMappings.set(key, mapping);
+    this.activeFlows.add(key);
+    
+    console.log(`🔀 [分流管理] 注册分流: ${sourceNodeId} -> ${endpointNodeId} (${branchId})`);
+    
+    this.notifyStateChange('register', mapping);
+  }
+
+  // 更新分流状态
+  updateFlowState(sourceNodeId, branchId, state) {
+    const key = `${sourceNodeId}-${branchId}`;
+    const mapping = this.branchMappings.get(key);
+    
+    if (mapping) {
+      const newState = {
+        ...state,
+        lastUpdate: Date.now(),
+        previousState: this.flowStates.get(key)
+      };
+      
+      this.flowStates.set(key, newState);
+      mapping.lastUpdate = Date.now();
+      
+      console.log(`🔄 [分流管理] 更新分流状态: ${key}`, newState);
+      
+      this.notifyStateChange('update', { mapping, state: newState });
+    }
+  }
+
+  // 获取受影响的端点
+  getAffectedEndpoints(sourceNodeId) {
+    const affected = [];
+    
+    for (const [key, mapping] of this.branchMappings) {
+      if (mapping.sourceNodeId === sourceNodeId && mapping.isActive) {
+        affected.push({
+          endpointNodeId: mapping.endpointNodeId,
+          branchId: mapping.branchId,
+          flowType: mapping.flowType
+        });
+      }
+    }
+    
+    return affected;
+  }
+
+  // 同步分流状态
+  async syncFlowStates(sourceNodeId) {
+    const affected = this.getAffectedEndpoints(sourceNodeId);
+    const syncPromises = [];
+    
+    for (const endpoint of affected) {
+      const syncPromise = this.syncSingleFlow(
+        sourceNodeId,
+        endpoint.branchId,
+        endpoint.endpointNodeId
+      );
+      syncPromises.push(syncPromise);
+    }
+    
+    const results = await Promise.allSettled(syncPromises);
+    
+    // 处理同步结果
+    results.forEach((result, index) => {
+      const endpoint = affected[index];
+      if (result.status === 'rejected') {
+        console.error(`❌ [分流管理] 同步失败: ${sourceNodeId} -> ${endpoint.endpointNodeId}`, result.reason);
+      } else {
+        console.log(`✅ [分流管理] 同步成功: ${sourceNodeId} -> ${endpoint.endpointNodeId}`);
+      }
+    });
+    
+    return results;
+  }
+
+  // 同步单个分流
+  async syncSingleFlow(sourceNodeId, branchId, endpointNodeId) {
+    const key = `${sourceNodeId}-${branchId}`;
+    const mapping = this.branchMappings.get(key);
+    const state = this.flowStates.get(key);
+    
+    if (!mapping || !mapping.isActive) {
+      throw new Error(`分流映射不存在或已失活: ${key}`);
+    }
+    
+    // 验证分流方式
+    const isValid = await this.validateFlowMethod(sourceNodeId, branchId, endpointNodeId);
+    if (!isValid) {
+      console.warn(`⚠️ [分流管理] 分流方式验证失败: ${key}`);
+    }
+    
+    // 更新状态
+    this.updateFlowState(sourceNodeId, branchId, {
+      ...state,
+      syncTime: Date.now(),
+      isValid
+    });
+    
+    return { key, isValid, syncTime: Date.now() };
+  }
+
+  // 验证分流方式
+  async validateFlowMethod(sourceNodeId, branchId, endpointNodeId) {
+    try {
+      // 检查预览线是否存在
+      const hasPreviewLine = this.checkPreviewLineExists(sourceNodeId, branchId);
+      
+      // 检查实际连接是否存在
+      const hasActualConnection = this.checkActualConnectionExists(sourceNodeId, endpointNodeId);
+      
+      // 检查分流条件是否满足
+      const conditionsMet = this.checkFlowConditions(sourceNodeId, branchId);
+      
+      return hasPreviewLine && conditionsMet;
+    } catch (error) {
+      console.error(`❌ [分流管理] 验证分流方式失败:`, error);
+      return false;
+    }
+  }
+
+  // 检查预览线是否存在
+  checkPreviewLineExists(sourceNodeId, branchId) {
+    // 这里需要与PreviewLineManager集成
+    // 暂时返回true，实际实现时需要调用预览线管理器的方法
+    return true;
+  }
+
+  // 检查实际连接是否存在
+  checkActualConnectionExists(sourceNodeId, endpointNodeId) {
+    // 这里需要与图形引擎集成
+    // 暂时返回true，实际实现时需要检查X6图形中的实际连接
+    return true;
+  }
+
+  // 检查分流条件
+  checkFlowConditions(sourceNodeId, branchId) {
+    // 这里需要检查分流节点的配置条件
+    // 暂时返回true，实际实现时需要验证分流条件
+    return true;
+  }
+
+  // 清理非活跃分流
+  cleanupInactiveFlows() {
+    const now = Date.now();
+    const timeout = 5 * 60 * 1000; // 5分钟超时
+    const toRemove = [];
+    
+    for (const [key, mapping] of this.branchMappings) {
+      if (now - mapping.lastUpdate > timeout) {
+        toRemove.push(key);
+      }
+    }
+    
+    toRemove.forEach(key => {
+      this.branchMappings.delete(key);
+      this.flowStates.delete(key);
+      this.activeFlows.delete(key);
+      console.log(`🗑️ [分流管理] 清理非活跃分流: ${key}`);
+    });
+    
+    return toRemove.length;
+  }
+
+  // 添加状态变化监听器
+  addStateChangeListener(listener) {
+    this.stateChangeListeners.add(listener);
+  }
+
+  // 移除状态变化监听器
+  removeStateChangeListener(listener) {
+    this.stateChangeListeners.delete(listener);
+  }
+
+  // 通知状态变化
+  notifyStateChange(type, data) {
+    this.stateChangeListeners.forEach(listener => {
+      try {
+        listener(type, data);
+      } catch (error) {
+        console.error('❌ [分流管理] 状态变化监听器执行失败:', error);
+      }
+    });
+  }
+
+  // 获取分流统计信息
+  getFlowStatistics() {
+    return {
+      totalMappings: this.branchMappings.size,
+      activeFlows: this.activeFlows.size,
+      totalStates: this.flowStates.size,
+      listeners: this.stateChangeListeners.size
+    };
+  }
+
+  // 清理资源
+  cleanup() {
+    this.branchMappings.clear();
+    this.flowStates.clear();
+    this.activeFlows.clear();
+    this.stateChangeListeners.clear();
+  }
+}
+```
+
+### 3. 集成方案
+
+#### 3.1 与现有系统集成
+
+```javascript
+// 在SyncManager中集成新的管理器
+class SyncManager {
+  constructor(previewLineManager) {
+    this.previewLineManager = previewLineManager;
+    this.syncQueue = new Map();
+    this.lastSyncTime = 0;
+    
+    // 新增管理器
+    this.refreshManager = new PreviewLineRefreshManager(previewLineManager);
+    this.branchFlowManager = new BranchFlowManager();
+    
+    // 设置状态变化监听
+    this.branchFlowManager.addStateChangeListener(this.handleFlowStateChange.bind(this));
+  }
+
+  async syncEndpointPositions(endpointPositions) {
+    console.log('🔄 [同步管理] 开始同步Endpoint位置');
+    
+    const syncPromises = [];
+    
+    for (const [nodeId, position] of endpointPositions) {
+      const syncPromise = this.syncSingleEndpoint(nodeId, position);
+      syncPromises.push(syncPromise);
+    }
+    
+    await Promise.all(syncPromises);
+    
+    // 处理预览线挂载后的刷新
+    await this.refreshManager.handlePostMountRefresh(endpointPositions);
+    
+    // 同步分流状态
+    await this.syncBranchFlows(endpointPositions);
+    
+    console.log('✅ [同步管理] Endpoint同步完成');
+  }
+
+  // 同步分流状态
+  async syncBranchFlows(endpointPositions) {
+    const sourceNodes = new Set();
+    
+    // 收集所有源节点
+    for (const [nodeId] of endpointPositions) {
+      const affected = this.branchFlowManager.getAffectedEndpoints(nodeId);
+      if (affected.length > 0) {
+        sourceNodes.add(nodeId);
+      }
+    }
+    
+    // 同步每个源节点的分流状态
+    for (const sourceNodeId of sourceNodes) {
+      await this.branchFlowManager.syncFlowStates(sourceNodeId);
+    }
+  }
+
+  // 处理分流状态变化
+  handleFlowStateChange(type, data) {
+    console.log(`🔀 [同步管理] 分流状态变化: ${type}`, data);
+    
+    // 可以在这里添加额外的处理逻辑
+    // 例如：通知其他组件、更新UI等
+  }
+}
+```
+
+#### 3.2 与UnifiedPreviewLineManager集成
+
+```javascript
+// 扩展UnifiedPreviewLineManager
+class EnhancedUnifiedPreviewLineManager extends UnifiedPreviewLineManager {
+  constructor(...args) {
+    super(...args);
+    this.refreshManager = new PreviewLineRefreshManager(this);
+    this.branchFlowManager = new BranchFlowManager();
+  }
+
+  // 重写updatePreviewLinePosition方法
+  async updatePreviewLinePosition(nodeId, branchId = null) {
+    // 调用原有逻辑
+    const result = await super.updatePreviewLinePosition(nodeId, branchId);
+    
+    // 标记节点为已挂载
+    this.refreshManager.markNodeAsMounted(nodeId);
+    
+    // 注册分流
+    if (branchId) {
+      const endpointNodeId = this.getEndpointNodeId(nodeId, branchId);
+      if (endpointNodeId) {
+        this.branchFlowManager.registerBranchFlow(nodeId, branchId, endpointNodeId, 'preview');
+      }
+    }
+    
+    return result;
+  }
+
+  // 强制刷新预览线（新增方法）
+  async forceRefreshPreviewLine(sourceNodeId, branchId, position) {
+    console.log(`🔄 [预览线管理] 强制刷新: ${sourceNodeId}-${branchId}`);
+    
+    try {
+      // 更新预览线位置
+      await this.updatePreviewLinePosition(sourceNodeId, branchId);
+      
+      // 更新分流状态
+      this.branchFlowManager.updateFlowState(sourceNodeId, branchId, {
+        position,
+        refreshTime: Date.now(),
+        forced: true
+      });
+      
+      return true;
+    } catch (error) {
+      console.error(`❌ [预览线管理] 强制刷新失败:`, error);
+      return false;
+    }
+  }
+
+  // 获取所有预览线（新增方法）
+  getAllPreviewLines() {
+    // 返回当前所有预览线的映射
+    // 这个方法需要根据实际的数据结构来实现
+    return this.previewLines || new Map();
+  }
+
+  // 获取端点节点ID（辅助方法）
+  getEndpointNodeId(sourceNodeId, branchId) {
+    // 根据实际的数据结构来获取端点节点ID
+    // 这里需要根据具体实现来调整
+    return null;
+  }
+}
+```
+
+## 实施计划
+
+### 阶段1：基础架构（1-2天）
+1. 创建PreviewLineRefreshManager类
+2. 创建BranchFlowManager类
+3. 编写基础单元测试
+
+### 阶段2：集成开发（2-3天）
+1. 修改SyncManager集成新管理器
+2. 扩展UnifiedPreviewLineManager
+3. 实现状态同步逻辑
+
+### 阶段3：测试验证（1-2天）
+1. 编写集成测试
+2. 测试分流场景
+3. 性能测试和优化
+
+### 阶段4：部署上线（1天）
+1. 代码审查
+2. 灰度发布
+3. 监控和调优
+
+## 预期效果
+
+1. **位置同步准确性**：预览线位置与节点挂载状态完全同步
+2. **分流方式准确性**：分流节点的预览线与实际分流方式一致
+3. **性能提升**：通过批量处理和延迟刷新提升性能
+4. **代码可维护性**：统一的管理机制便于维护和扩展
+
+## 风险评估
+
+1. **兼容性风险**：与现有代码的集成可能存在兼容性问题
+2. **性能风险**：新增的管理逻辑可能影响性能
+3. **复杂性风险**：增加了系统的复杂性
+
+## 缓解措施
+
+1. **渐进式集成**：分阶段集成，确保每个阶段都能正常工作
+2. **充分测试**：编写全面的测试用例，覆盖各种场景
+3. **性能监控**：实时监控性能指标，及时发现和解决问题
+4. **回滚机制**：准备回滚方案，确保出现问题时能快速恢复

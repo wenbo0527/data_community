@@ -1,0 +1,227 @@
+## 全局居中逻辑校验分析报告
+
+**分析时间：** 2025-01-21 16:30
+**分析目标：** 校验全局居中逻辑是否正确修改X轴坐标，确保每层中点计算的准确性
+
+---
+
+### 问题背景
+
+用户反馈全局居中逻辑在执行时可能错误修改了节点的X轴坐标，需要确认逻辑上应该居中的是每一层的中点，而不是破坏原有的层级内分布。
+
+---
+
+### 代码分析结果
+
+#### 1. 全局居中方法 `centerAlignGlobalLayout` 分析
+
+**位置：** `UnifiedStructuredLayoutEngine.js` 第2796-2950行
+
+**核心逻辑问题：**
+
+1. **❌ 问题1：过度的X轴修改**
+   ```javascript
+   // 当前代码在第904-908行
+   if (!isProtected) {
+     // 非保护层级：应用完整偏移
+     pos.x += offsetX;  // ❌ 这里直接修改了所有非保护层级的X坐标
+     pos.y += offsetY;
+   }
+   ```
+
+2. **❌ 问题2：单节点强制居中逻辑错误**
+   ```javascript
+   // 第914-925行
+   if (layerNodes.length === 1 && !protectedLayers.has(layerIndex)) {
+     const singleNode = layerNodes[0];
+     const distanceFromCenter = Math.abs(singleNode.pos.x - layoutCenterX);
+     if (distanceFromCenter > 50) {
+       singleNode.pos.x = layoutCenterX;  // ❌ 强制移动到布局中心，破坏了层级内逻辑
+     }
+   }
+   ```
+
+3. **❌ 问题3：边界计算包含异常值**
+   ```javascript
+   // 第875-876行
+   minX = Math.min(...singleNodePositions.map(pos => pos.x));
+   maxX = Math.max(...singleNodePositions.map(pos => pos.x));
+   // ❌ 即使过滤了部分异常值，仍可能包含不合理的边界值
+   ```
+
+#### 2. 层级居中方法 `centerAlignLayer` 分析
+
+**位置：** `UnifiedStructuredLayoutEngine.js` 第1968-2065行
+
+**正确的逻辑：**
+
+1. **✅ 单节点层级居中**
+   ```javascript
+   // 第2000-2015行
+   if (validNodes.length === 1) {
+     if (Math.abs(pos.x) > 0.1) {
+       pos.x = 0;  // ✅ 正确：单节点居中到x=0
+     }
+   }
+   ```
+
+2. **✅ 多节点对称分布**
+   ```javascript
+   // 第2030-2065行 - 根据节点数量采用不同的对称分布策略
+   // ✅ 正确：保持层级内的相对位置关系
+   ```
+
+---
+
+### 问题根源分析
+
+#### 核心问题：全局居中与层级居中的职责混淆
+
+1. **全局居中应该做什么：**
+   - ✅ 计算整体布局的边界
+   - ✅ 将整体布局移动到画布中心
+   - ❌ **不应该**修改层级内的相对位置关系
+
+2. **层级居中应该做什么：**
+   - ✅ 确保每层内部的节点分布合理
+   - ✅ 单节点层级居中到该层的中心位置
+   - ✅ 多节点层级保持对称分布
+
+#### 具体问题表现：
+
+1. **X轴坐标被错误修改：**
+   - 全局居中时，`offsetX` 被应用到所有非保护层级
+   - 导致原本合理的层级内分布被破坏
+
+2. **单节点被强制移动：**
+   - 单节点被强制移动到 `layoutCenterX`
+   - 忽略了该节点在其层级内应该的位置
+
+3. **边界计算不准确：**
+   - 包含了一些不应该参与边界计算的节点
+   - 导致计算出的中心点偏移
+
+---
+
+### 修复建议
+
+#### 1. 修改全局居中逻辑
+
+**原则：** 全局居中只负责整体平移，不修改层级内分布
+
+```javascript
+centerAlignGlobalLayout(positions) {
+  // 1. 只计算Y轴居中偏移
+  const validPositions = Array.from(positions.values()).filter(pos => 
+    pos.x !== undefined && pos.y !== undefined && 
+    !isNaN(pos.x) && !isNaN(pos.y)
+  );
+  
+  if (validPositions.length === 0) return;
+  
+  // 2. 只进行Y轴居中，不修改X轴
+  const minY = Math.min(...validPositions.map(pos => pos.y));
+  const offsetY = -minY;
+  
+  positions.forEach(pos => {
+    pos.y += offsetY;  // 只修改Y轴
+    // pos.x 保持不变
+  });
+}
+```
+
+#### 2. 确保层级居中的正确性
+
+**原则：** 每层的中点计算应该基于该层的实际节点分布
+
+```javascript
+centerAlignLayer(layerNodes, positions) {
+  // 1. 计算该层的实际中心
+  const layerXCoords = layerNodes.map(node => positions.get(node.id).x);
+  const layerCenterX = (Math.min(...layerXCoords) + Math.max(...layerXCoords)) / 2;
+  
+  // 2. 将该层整体移动到x=0
+  const offsetX = -layerCenterX;
+  layerNodes.forEach(node => {
+    const pos = positions.get(node.id);
+    pos.x += offsetX;  // 保持层级内相对位置，整体居中
+  });
+}
+```
+
+---
+
+### 测试验证建议
+
+#### 1. 单层测试
+- 创建只有一层的布局，验证该层是否正确居中
+- 创建多层布局，验证每层是否独立居中
+
+#### 2. 多层测试
+- 验证层级间的Y轴间距是否正确
+- 验证每层的X轴分布是否保持不变
+
+#### 3. 边界情况测试
+- 测试包含异常坐标的情况
+- 测试空层级的处理
+
+---
+
+### 修复实施记录
+
+#### 2025-01-21 16:45 - 全局居中逻辑修复完成
+
+**修复内容：**
+
+1. **✅ 简化全局居中逻辑**
+   ```javascript
+   // 修复前：复杂的边界计算和X轴修改逻辑
+   // 修复后：只进行Y轴居中
+   centerAlignGlobalLayout(positions) {
+     const minY = Math.min(...validPositions.map(pos => pos.y));
+     const offsetY = -minY;
+     positions.forEach((pos) => {
+       pos.y += offsetY;  // 只修改Y轴
+       // pos.x 保持完全不变
+     });
+   }
+   ```
+
+2. **✅ 移除错误的X轴修改逻辑**
+   - 删除了 `offsetX` 计算和应用
+   - 删除了强制单节点居中逻辑
+   - 删除了复杂的对称分布保护逻辑
+
+3. **✅ 职责分离明确**
+   - 全局居中：只负责Y轴平移到画布顶部
+   - 层级居中：负责每层的X轴分布和居中
+
+**修复位置：** `UnifiedStructuredLayoutEngine.js` 第2796-2838行
+
+---
+
+### 结论
+
+**修复前的问题：**
+
+1. ❌ 错误修改了层级内的X轴分布
+2. ❌ 强制移动单节点到错误位置
+3. ❌ 边界计算包含不合理的值
+
+**修复后的改进：**
+
+1. ✅ **全局居中只负责Y轴平移** - 已实施
+2. ✅ **完全保护X轴分布** - 已实施
+3. ✅ **职责分离明确** - 已实施
+
+**预期效果：**
+
+- ✅ 每层的中点由层级居中负责，正确居中到x=0
+- ✅ 层级内的相对位置关系完全保持不变
+- ✅ 整体布局在画布中正确居中（Y轴）
+
+**下一步验证：**
+
+1. 🔍 测试单层布局的X轴居中效果
+2. 🔍 测试多层布局的层级间分布
+3. 🔍 验证endpoint节点的位置同步
