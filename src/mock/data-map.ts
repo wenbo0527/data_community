@@ -6,6 +6,14 @@ interface TableField {
   description: string;
 }
 
+interface FieldRelation {
+  fieldName: string;
+  targetTable: string;
+  relationField: string;
+  relationType?: string;
+  relationDescription?: string;
+}
+
 interface TableItem {
   name: string;
   type: string;
@@ -15,6 +23,7 @@ interface TableItem {
   owner: string;
   description: string;
   fields: TableField[];
+  fieldRelations?: FieldRelation[];
 }
 
 interface TableCollection {

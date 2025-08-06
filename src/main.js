@@ -5,6 +5,14 @@ import App from './App.vue';
 import './mock/external-data'
 import './mock/budget'
 
+// 初始化控制台日志系统（仅在开发环境）
+if (import.meta.env.DEV) {
+  import('./utils/consoleLogger.js').then(({ initConsoleLogger }) => {
+    initConsoleLogger();
+    console.log('🚀 控制台日志系统已启动 - 日志将自动保存到技术方案目录');
+  });
+}
+
 // 配置全局事件监听器为被动模式
 const eventOptions = { passive: true };
 document.addEventListener('wheel', () => {}, { passive: true });

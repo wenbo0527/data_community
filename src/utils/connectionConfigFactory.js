@@ -116,27 +116,14 @@ export const createLabeledConnectionConfig = (source, target, labelText, options
         text: {
           text: labelText,
           fill: options.labelColor || '#333',
-          fontSize: options.labelFontSize || 14,
-          fontWeight: options.labelFontWeight || 'bold',
+          fontSize: options.labelFontSize || 12,
+          fontWeight: options.labelFontWeight || 'normal',
           textAnchor: 'middle',
           textVerticalAnchor: 'middle'
-        },
-        rect: {
-          ref: 'text',
-          refX: -8,
-          refY: -6,
-          refWidth: '100%',
-          refHeight: '100%',
-          refWidth2: 16,
-          refHeight2: 12,
-          fill: options.labelBgColor || '#fff',
-          stroke: options.labelBorderColor || '#5F95FF',
-          strokeWidth: 2,
-          rx: 4,
-          ry: 4
         }
+        // 移除rect背景框配置，只保留纯文本标签
       },
-      position: options.labelPosition || 0.8
+      position: options.labelPosition || 0.5
     }]
   }
 

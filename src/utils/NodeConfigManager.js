@@ -40,11 +40,18 @@ class BaseNodeConfigStrategy {
    */
   updateNodeData(node, config) {
     const currentData = node.getData() || {}
-    node.setData({
+    const updatedData = {
       ...currentData,
       config: this.preprocessConfig(config),
       lastUpdated: Date.now()
-    })
+    }
+    
+    // 如果配置中包含节点名称，同时更新到label字段
+    if (config.nodeName) {
+      updatedData.label = config.nodeName
+    }
+    
+    node.setData(updatedData)
   }
 
   /**

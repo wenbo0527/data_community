@@ -12,6 +12,15 @@
     @cancel="handleCancel"
   >
     <template #form>
+      <!-- 节点名称 -->
+      <a-form-item label="节点名称" field="nodeName" required>
+        <a-input
+          v-model="formData.nodeName"
+          placeholder="请输入节点名称"
+          allow-clear
+        />
+      </a-form-item>
+
       <!-- 实验名称 -->
       <a-form-item label="实验名称" field="experimentName">
         <a-input
@@ -189,6 +198,7 @@ const formRules = {
 
 // 初始表单数据
 const getInitialFormData = () => ({
+  nodeName: props.nodeData?.nodeName || 'AB实验分流',
   experimentName: '',
   description: '',
   branches: [

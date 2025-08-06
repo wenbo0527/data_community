@@ -13,6 +13,7 @@ import { UnifiedStructuredLayoutEngine } from '../utils/UnifiedStructuredLayoutE
 
 export function useStructuredLayout(getGraph) {
   const connectionPreviewManager = ref(null)
+  const layoutEngineInstance = ref(null) // 🔧 新增：布局引擎实例管理
   const isLayouting = ref(false)
   const layoutOptions = ref({
     centerAfterLayout: true,
@@ -32,7 +33,7 @@ export function useStructuredLayout(getGraph) {
   
   // 布局配置
   const layoutConfig = ref({
-    levelHeight: 150,
+    levelHeight: 200, // 🔧 优化：从150增加到200，改善层间距视觉效果
     nodeSpacing: 200,
     branchSpacing: 180,
     centerAlignment: true,
@@ -746,6 +747,24 @@ export function useStructuredLayout(getGraph) {
         }
       }, connectionPreviewManager.value) // 🎯 关键：传递预览线管理器实例
 
+      // 🔧 关键修复：保存布局引擎实例以供后续访问
+      layoutEngineInstance.value = layoutEngine
+      console.log('💾 [布局引擎管理] 布局引擎实例已保存')
+
+      // 🔧 关键修复：将布局引擎引用传递给预览线管理器
+      if (connectionPreviewManager.value && connectionPreviewManager.value.setLayoutEngine) {
+        connectionPreviewManager.value.setLayoutEngine(layoutEngine)
+        console.log('🔗 [布局引擎集成] 布局引擎引用已传递给预览线管理器')
+      } else if (connectionPreviewManager.value) {
+        // 如果没有setLayoutEngine方法，直接设置属性
+        connectionPreviewManager.value.layoutEngine = layoutEngine
+        console.log('🔗 [布局引擎集成] 布局引擎引用已直接设置到预览线管理器')
+      }
+      
+      // 🌐 设置全局引用作为备用方案
+      window.layoutEngine = layoutEngine
+      console.log('🌐 [全局引用] 布局引擎已设置为全局引用')
+
       // 执行统一结构化布局
       const layoutResult = await layoutEngine.executeLayout()
 
@@ -1293,6 +1312,12 @@ export function useStructuredLayout(getGraph) {
       coordinateManager: coordinateManager.getStatus(),
       stats: layoutStats.value
     }),
+    
+    // 🔧 关键修复：添加 getLayoutEngine 方法
+    getLayoutEngine: () => {
+      console.log('🔍 [布局引擎获取] 当前布局引擎实例:', !!layoutEngineInstance.value)
+      return layoutEngineInstance.value
+    },
     
     // 管理器实例
     unifiedPreviewManager: computed(() => connectionPreviewManager.value),

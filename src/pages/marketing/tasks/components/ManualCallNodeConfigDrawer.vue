@@ -12,6 +12,15 @@
     @cancel="handleCancel"
   >
     <template #form>
+      <!-- 节点名称 -->
+      <a-form-item label="节点名称" field="nodeName" required>
+        <a-input
+          v-model="formData.nodeName"
+          placeholder="请输入节点名称"
+          allow-clear
+        />
+      </a-form-item>
+
       <!-- 配置ID -->
       <a-form-item label="配置ID" field="configId">
         <a-input 
@@ -80,6 +89,7 @@ const formRules = {
 
 // 初始表单数据
 const getInitialFormData = () => ({
+  nodeName: props.nodeData?.nodeName || '人工外呼',
   configId: '',
   description: ''
 })

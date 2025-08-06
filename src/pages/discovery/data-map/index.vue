@@ -69,6 +69,54 @@
               <BusinessProcessFlow />
             </div>
           </a-tab-pane>
+          <a-tab-pane key="3" title="指标地图">
+            <div class="tab-content-wrapper">
+              <!-- 指标层级筛选区域 -->
+              <div class="metrics-filter-section">
+                <div class="filter-header">
+                  <div class="filter-controls">
+                    <a-space>
+                      <span class="filter-label">指标层级:</span>
+                      <a-select 
+                        v-model="selectedLevel" 
+                        placeholder="选择层级" 
+                        style="width: 120px"
+                        @change="handleLevelChange"
+                      >
+                        <a-option value="all">全部层级</a-option>
+                        <a-option value="1">战略层(L1)</a-option>
+                        <a-option value="2">管理层(L2)</a-option>
+                        <a-option value="3">执行层(L3)</a-option>
+                      </a-select>
+                      
+                      <span class="filter-label">业务线:</span>
+                      <a-select 
+                        v-model="selectedLine" 
+                        placeholder="选择业务线" 
+                        style="width: 120px"
+                        @change="handleLineChange"
+                      >
+                        <a-option value="all">全部线路</a-option>
+                        <a-option value="scale">规模线</a-option>
+                        <a-option value="quality">质量线</a-option>
+                      </a-select>
+                      
+                      <a-button type="text" @click="resetFilters">
+                        <template #icon><icon-refresh /></template>
+                        重置
+                      </a-button>
+                    </a-space>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 指标画布 -->
+              <SubwayMap 
+                :level-filter="selectedLevel"
+                :line-filter="selectedLine"
+              />
+            </div>
+          </a-tab-pane>
         </a-tabs>
       </div>
 
@@ -104,6 +152,7 @@ import TableCollectionGrid from './components/TableCollectionGrid.vue'
 import LoadingState from './components/LoadingState.vue'
 import CreateCollectionModal from './components/CreateCollectionModal.vue'
 import BusinessProcessFlow from '@/components/BusinessProcessFlow.vue'
+import SubwayMap from './components/SubwayMap.vue'
 import { tableMockData } from '@/mock/tableData.ts'
 import mockData from '@/mock/data-map'
 
@@ -117,6 +166,10 @@ const createCollectionVisible = ref(false)
 const editingCollection = ref<TableCollection | null>(null)
 const showAdvancedFilter = ref(false)
 const showHistory = ref(false)
+
+// 指标地图筛选状态
+const selectedLevel = ref('all')
+const selectedLine = ref('all')
 
 // 防抖搜索
 const debouncedFetchData = useDebounceFn(async () => {
@@ -159,6 +212,7 @@ interface TableCollection {
   owner?: string
   updateTime?: string
   isFavorite?: boolean
+  isRecommended?: boolean
 }
 
 const router = useRouter()
@@ -193,7 +247,8 @@ const enhancedCollections = computed(() => {
     type: collection.type || getCollectionType(collection),
     owner: collection.owner || '系统管理员',
     updateTime: collection.updateTime || new Date().toISOString(),
-    isFavorite: collection.isFavorite || false
+    isFavorite: collection.isFavorite || false,
+    isRecommended: collection.isRecommended || false
   }))
 })
 
@@ -363,6 +418,23 @@ const toggleHistory = () => {
   if (showHistory.value) {
     showAdvancedFilter.value = false
   }
+}
+
+// 指标地图筛选方法
+const handleLevelChange = (value: string) => {
+  selectedLevel.value = value
+  console.log('Level filter changed to:', value)
+}
+
+const handleLineChange = (value: string) => {
+  selectedLine.value = value
+  console.log('Line filter changed to:', value)
+}
+
+const resetFilters = () => {
+  selectedLevel.value = 'all'
+  selectedLine.value = 'all'
+  console.log('Filters reset')
 }
 
 onMounted(async () => {

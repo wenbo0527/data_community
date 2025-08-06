@@ -15,6 +15,15 @@
   >
     <!-- 表单内容 -->
     <template #form="{ formData }: { formData: Record<string, any> }">
+      <!-- 节点名称 -->
+      <a-form-item label="节点名称" field="nodeName" required>
+        <a-input
+          v-model="formData.nodeName"
+          placeholder="请输入节点名称"
+          allow-clear
+        />
+      </a-form-item>
+
       <!-- 任务类型 -->
       <a-form-item label="任务类型" field="taskType">
         <a-select
@@ -197,6 +206,7 @@ const formRules = {
 
 // 初始表单数据
 const initialFormData = {
+  nodeName: props.nodeData?.nodeName || '开始节点',
   taskType: '',
   entryDate: '',
   frequency: '',

@@ -192,19 +192,25 @@ const initData = () => {
           { id: 'start', type: 'start', x: 100, y: 100, label: '开始' },
           { id: 'crowd-split', type: 'crowd-split', x: 100, y: 200, label: '人群分流' },
           { id: 'blacklist-end', type: 'end', x: 50, y: 300, label: '黑名单结束' },
-          { id: 'ab-test', type: 'ab-test', x: 150, y: 300, label: 'AB实验' },
-          { id: 'manual-call-1', type: 'manual-call', x: 100, y: 400, label: '人工电销A组' },
-          { id: 'manual-call-2', type: 'manual-call', x: 200, y: 400, label: '人工电销B组' },
-          { id: 'end', type: 'end', x: 150, y: 500, label: '结束' }
+          { id: 'sms-send', type: 'sms', x: 150, y: 300, label: '短信发送' },
+          { id: 'event-split', type: 'event-split', x: 150, y: 400, label: '短信发送成功事件分流' },
+          { id: 'high-response', type: 'manual-call', x: 100, y: 500, label: '高响应客群电销' },
+          { id: 'medium-response', type: 'push', x: 200, y: 500, label: '中响应客群推送' },
+          { id: 'low-response', type: 'email', x: 300, y: 500, label: '低响应客群邮件' },
+          { id: 'end', type: 'end', x: 200, y: 600, label: '结束' }
         ],
         connections: [
           { source: 'start', target: 'crowd-split' },
-          { source: 'crowd-split', target: 'blacklist-end', label: '命中黑名单' },
-          { source: 'crowd-split', target: 'ab-test', label: '未命中黑名单' },
-          { source: 'ab-test', target: 'manual-call-1', label: 'A组' },
-          { source: 'ab-test', target: 'manual-call-2', label: 'B组' },
-          { source: 'manual-call-1', target: 'end' },
-          { source: 'manual-call-2', target: 'end' }
+          { source: 'crowd-split', target: 'blacklist-end', label: '黑名单' },
+          { source: 'crowd-split', target: 'sms-send', label: '高响应客群' },
+          { source: 'crowd-split', target: 'sms-send', label: '中响应客群' },
+          { source: 'crowd-split', target: 'sms-send', label: '低响应客群' },
+          { source: 'sms-send', target: 'event-split' },
+          { source: 'event-split', target: 'high-response', label: '短信发送成功' },
+          { source: 'event-split', target: 'medium-response', label: '短信发送失败' },
+          { source: 'high-response', target: 'end' },
+          { source: 'medium-response', target: 'end' },
+          { source: 'low-response', target: 'end' }
         ]
       }
     },
@@ -219,7 +225,30 @@ const initData = () => {
       creator: '李四',
       versions: [
         { version: 1, createTime: '2024-01-14 09:15:00', isActive: true }
-      ]
+      ],
+      canvasData: {
+        nodes: [
+          { id: 'start', type: 'start', x: 100, y: 100, label: '开始' },
+          { id: 'crowd-split', type: 'crowd-split', x: 100, y: 200, label: '人群分流' },
+          { id: 'blacklist-end', type: 'end', x: 50, y: 300, label: '黑名单结束' },
+          { id: 'app-push', type: 'push', x: 150, y: 300, label: 'APP推送' },
+          { id: 'event-split', type: 'event-split', x: 150, y: 400, label: 'APP热场景事件分流' },
+          { id: 'hot-scene-follow', type: 'manual-call', x: 100, y: 500, label: '热场景跟进' },
+          { id: 'normal-follow', type: 'email', x: 200, y: 500, label: '常规跟进' },
+          { id: 'end', type: 'end', x: 150, y: 600, label: '结束' }
+        ],
+        connections: [
+          { source: 'start', target: 'crowd-split' },
+          { source: 'crowd-split', target: 'blacklist-end', label: '黑名单' },
+          { source: 'crowd-split', target: 'app-push', label: '高响应客群' },
+          { source: 'crowd-split', target: 'app-push', label: '中响应客群' },
+          { source: 'app-push', target: 'event-split' },
+          { source: 'event-split', target: 'hot-scene-follow', label: 'APP热场景触发' },
+          { source: 'event-split', target: 'normal-follow', label: '未触发热场景' },
+          { source: 'hot-scene-follow', target: 'end' },
+          { source: 'normal-follow', target: 'end' }
+        ]
+      }
     },
     {
       id: 3,

@@ -9,7 +9,7 @@
           </template>
           批量上传
         </a-button>
-        <a-button @click="downloadTemplate">
+        <a-button @click="handleDownloadTemplate">
           <template #icon>
             <icon-download />
           </template>
@@ -145,6 +145,10 @@ import { Message } from '@arco-design/web-vue'
 import { IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
 
 const searchText = ref('')
+const searchKeyword = ref('')
+const selectedTag = ref('')
+const selectedCategory = ref('')
+const selectedSupplier = ref('')
 const loading = ref(false)
 const drawerVisible = ref(false)
 const currentVariable = ref({})

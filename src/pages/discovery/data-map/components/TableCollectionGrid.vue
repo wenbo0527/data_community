@@ -43,6 +43,9 @@
               <div class="card-title">
                 <h4 class="title-text" :title="collection.name">
                   {{ collection.name }}
+                  <span v-if="collection.isRecommended" class="recommended-icon">
+                    <IconThumbUpFill />
+                  </span>
                 </h4>
                 <div class="title-actions">
                   <a-button 
@@ -83,40 +86,6 @@
               <p class="card-description" :title="collection.description || '暂无描述'">
                 {{ collection.description || '暂无描述' }}
               </p>
-              
-              <div class="card-footer">
-                <div class="table-tags">
-                  <a-tag 
-                    v-for="table in collection.tables.slice(0, 3)" 
-                    :key="table.name"
-                    size="small"
-                    class="table-tag"
-                  >
-                    {{ table.name }}
-                  </a-tag>
-                  <span 
-                    v-if="collection.tables.length > 3" 
-                    class="more-tables"
-                  >
-                    +{{ collection.tables.length - 3 }}个表
-                  </span>
-                </div>
-                
-                <div class="footer-meta">
-                  <span class="meta-item">
-                    <span 
-                      v-if="collection.owner" 
-                      :class="{ 'admin-highlight': collection.owner === '当前用户' || collection.owner === '管理员' }"
-                    >
-                      {{ collection.owner }}
-                    </span>
-                    <span v-else>未指定</span>
-                  </span>
-                  <span class="meta-item">
-                    {{ formatDate(collection.updateTime) }}
-                  </span>
-                </div>
-              </div>
             </div>
           </a-card>
         </a-col>
@@ -155,7 +124,7 @@
 import { ref, computed, watch } from 'vue'
 import { 
   IconStar, IconStarFill, IconMore, IconEdit, 
-  IconDelete, IconPlus 
+  IconDelete, IconPlus, IconThumbUpFill 
 } from '@arco-design/web-vue/es/icon'
 import { Message, Modal } from '@arco-design/web-vue'
 import { formatDistanceToNow } from 'date-fns'
@@ -181,6 +150,7 @@ interface TableCollection {
   owner?: string
   updateTime?: string
   isFavorite?: boolean
+  isRecommended?: boolean
 }
 
 interface TableCollectionGridEmits {
@@ -379,6 +349,7 @@ watch(() => props.collections.length, () => {
 }
 
 .collection-card {
+  position: relative;
   border-radius: 8px;
   border: 1px solid #e5e6eb;
   transition: all 0.2s ease;
@@ -389,6 +360,24 @@ watch(() => props.collections.length, () => {
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.recommended-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  color: #ff4757;
+  font-size: 14px;
+  animation: thumbBounce 2s infinite;
+}
+
+@keyframes thumbBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .collection-card:hover {
@@ -535,67 +524,7 @@ watch(() => props.collections.length, () => {
   min-height: 28px;
 }
 
-.table-tag {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: #e8f3ff;
-  color: #165dff;
-  border: 1px solid #b8d4ff;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
 
-.table-tag:hover {
-  background: #d4e8ff;
-  border-color: #9cc5ff;
-}
-
-.more-tables {
-  font-size: 12px;
-  color: #86909c;
-  white-space: nowrap;
-  padding: 4px 8px;
-  background: #f7f8fa;
-  border-radius: 4px;
-  border: 1px solid #e5e6eb;
-}
-
-.footer-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: #86909c;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f2f3f5;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-}
-
-.admin-highlight {
-  color: #165dff;
-  font-weight: 500;
-  position: relative;
-  padding-left: 10px;
-}
-
-.admin-highlight::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #165dff;
-}
 
 .empty-state {
   text-align: center;
@@ -708,18 +637,6 @@ watch(() => props.collections.length, () => {
   .card-title {
     gap: 8px;
     margin-bottom: 12px;
-  }
-  
-  .table-tags {
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-  
-  .footer-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 11px;
   }
   
   .empty-state {

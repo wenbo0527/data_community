@@ -35,6 +35,8 @@
           placeholder="请选择事件类型"
           allow-clear
         >
+          <a-option value="sms_success">短信发送成功事件</a-option>
+          <a-option value="app_hot_scene">APP热场景事件</a-option>
           <a-option value="click">点击事件</a-option>
           <a-option value="view">浏览事件</a-option>
           <a-option value="purchase">购买事件</a-option>
@@ -137,7 +139,7 @@ const formRules = {
 
 // 初始表单数据
 const getInitialFormData = () => ({
-  nodeName: '',
+  nodeName: props.nodeData?.nodeName || '事件分流',
   eventType: '',
   customEventName: '',
   eventCondition: '',

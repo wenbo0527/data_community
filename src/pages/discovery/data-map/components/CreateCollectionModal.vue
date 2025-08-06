@@ -50,6 +50,19 @@
         </a-select>
       </a-form-item>
       
+      <a-form-item field="isRecommended" label="推荐设置">
+        <div class="recommendation-setting">
+          <a-switch 
+            v-model="formData.isRecommended" 
+            size="small"
+          />
+          <span class="switch-label">设为推荐集合</span>
+          <a-typography-text type="secondary" style="margin-left: 8px; font-size: 12px;">
+            推荐集合将在左上角显示推荐标识
+          </a-typography-text>
+        </div>
+      </a-form-item>
+      
       <a-form-item label="选择表">
         <div class="table-selection">
           <a-input-search
@@ -150,6 +163,7 @@ interface TableCollection {
   owner?: string
   updateTime?: string
   isFavorite?: boolean
+  isRecommended?: boolean
 }
 
 interface CreateCollectionModalEmits {
@@ -174,6 +188,7 @@ const formData = ref({
   description: '',
   type: '通用',
   owner: '当前用户',
+  isRecommended: false,
   tables: [] as TableItem[]
 })
 
@@ -311,6 +326,7 @@ const handleCreateCollection = async () => {
       description: formData.value.description,
       type: formData.value.type,
       owner: formData.value.owner,
+      isRecommended: formData.value.isRecommended,
       tables: formData.value.tables.map(table => ({
         name: table.name,
         type: table.type,
@@ -355,6 +371,7 @@ const handleCancel = () => {
     description: '',
     type: '通用',
     owner: '当前用户',
+    isRecommended: false,
     tables: []
   }
   selectedKeys.value = []
@@ -376,6 +393,7 @@ watch(() => props.visible, (newVisible: boolean) => {
       description: props.editData.description || '',
       type: props.editData.type || '通用',
       owner: props.editData.owner || '当前用户',
+      isRecommended: props.editData.isRecommended || false,
       tables: [...props.editData.tables]
     }
     console.log('[CreateCollectionModal] Form data filled from editData:', formData.value)

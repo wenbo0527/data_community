@@ -12,6 +12,17 @@
     @cancel="handleCancel"
   >
     <template #form>
+      <!-- 节点名称配置 -->
+      <div class="node-name-section">
+        <a-form-item label="节点名称" field="nodeName" required>
+          <a-input
+            v-model="formData.nodeName"
+            placeholder="请输入节点名称"
+            @change="handleNodeNameChange"
+          />
+        </a-form-item>
+      </div>
+
       <!-- 系统提示 -->
       <div class="system-tip">
         <a-alert type="info" show-icon>
@@ -172,39 +183,63 @@ import crowdSplitLogger from '@/utils/crowdSplitLogger.js'
 const mockCrowdData = [
   {
     id: 1,
-    name: '高净值客户',
-    count: 1500,
-    tags: ['VIP', 'AUM>50万']
+    name: '黑名单',
+    count: 850,
+    tags: ['风险', '禁止营销', '高风险']
   },
   {
     id: 2,
-    name: '新注册用户',
-    count: 4500,
-    tags: ['新手', '30日内']
+    name: '高响应客群',
+    count: 2800,
+    tags: ['高转化', '活跃用户', '响应率>80%']
   },
   {
     id: 3,
-    name: '活跃交易用户',
-    count: 2800,
-    tags: ['高频', '月交易>10次']
+    name: '中响应客群',
+    count: 4200,
+    tags: ['中等转化', '潜在客户', '响应率40-80%']
   },
   {
     id: 4,
-    name: '潜在流失用户',
-    count: 1200,
-    tags: ['风险', '30日未登录']
+    name: '低响应客群',
+    count: 3500,
+    tags: ['低转化', '观望用户', '响应率<40%']
   },
   {
     id: 5,
-    name: '理财产品用户',
-    count: 3200,
-    tags: ['理财', '稳健型']
+    name: '高净值客户',
+    count: 1500,
+    tags: ['VIP', 'AUM>50万', '优质客户']
   },
   {
     id: 6,
+    name: '新注册用户',
+    count: 4500,
+    tags: ['新手', '30日内', '待激活']
+  },
+  {
+    id: 7,
+    name: '活跃交易用户',
+    count: 2800,
+    tags: ['高频', '月交易>10次', '核心用户']
+  },
+  {
+    id: 8,
+    name: '潜在流失用户',
+    count: 1200,
+    tags: ['风险', '30日未登录', '需挽回']
+  },
+  {
+    id: 9,
+    name: '理财产品用户',
+    count: 3200,
+    tags: ['理财', '稳健型', '长期客户']
+  },
+  {
+    id: 10,
     name: '基金投资用户',
     count: 2100,
-    tags: ['基金', '成长型']
+    tags: ['基金', '成长型', '投资偏好']
   }
 ]
 
@@ -240,6 +275,8 @@ const generateId = () => {
 // 初始表单数据
 const getInitialFormData = () => {
   const initialData = {
+    // 节点名称，默认为节点类型
+    nodeName: props.nodeData?.nodeName || '人群分流',
     crowdLayers: [
       {
         id: generateId(),
@@ -616,6 +653,24 @@ const addCrowdLayer = () => {
 const addHitCrowdLayer = () => {
   crowdSplitLogger.info('LAYER_OP', '添加命中人群层级（调用添加层级）')
   addCrowdLayer()
+}
+
+// 处理节点名称变化
+const handleNodeNameChange = (value) => {
+  if (!formData) {
+    crowdSplitLogger.warn('NODE_NAME', '无法处理节点名称变化：数据不完整')
+    return
+  }
+  
+  const oldName = formData.nodeName
+  formData.nodeName = value || '人群分流'
+  
+  crowdSplitLogger.info('NODE_NAME', '节点名称变化', {
+    oldName,
+    newName: formData.nodeName
+  })
+  
+  crowdSplitLogger.logFormDataChange('节点名称变化', formData)
 }
 
 // 处理未命中分支名称变化

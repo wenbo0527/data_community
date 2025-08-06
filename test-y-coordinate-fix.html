@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Y坐标一致性修复测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .test-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .log-container {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .implementation-summary {
+            background-color: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .implementation-summary h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .fix-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .fix-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .fix-list li:before {
+            content: "🎯 ";
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Y坐标一致性修复测试</h1>
+            <p>验证方案一的实施效果：确保同层所有节点（包括虚拟endpoint）使用相同的Y坐标</p>
+        </div>
+
+        <div class="implementation-summary">
+            <h3>📋 已实施的修复内容</h3>
+            <ul class="fix-list">
+                <li><strong>createEndpointVirtualNode():</strong> 初始Y坐标设置为0，确保后续层级计算的一致性</li>
+                <li><strong>calculateBottomLayerPositions():</strong> 强制使用层级计算的Y坐标，同步虚拟endpoint内部位置</li>
+                <li><strong>adjustGlobalLayerSpacing():</strong> 对虚拟endpoint节点同步其内部位置到层级Y坐标</li>
+                <li><strong>updatePreviewEndpointPosition():</strong> 强制更新预览线管理器的endPosition属性</li>
+                <li><strong>syncAllEndpointPositions():</strong> 批量同步所有endpoint位置到预览线管理器</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 测试控制</h3>
+            <button class="test-button" onclick="runYCoordinateTest()">运行Y坐标一致性测试</button>
+            <button class="test-button" onclick="clearLog()">清空日志</button>
+            <button class="test-button" onclick="exportLog()">导出日志</button>
+            
+            <div id="status" class="status info">
+                准备就绪，点击"运行Y坐标一致性测试"开始测试
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 测试日志</h3>
+            <div id="logContainer" class="log-container">
+                等待测试开始...
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 重写console.log来捕获日志
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        const logContainer = document.getElementById('logContainer');
+        const statusDiv = document.getElementById('status');
+        
+        function addLogEntry(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            
+            let color = '#ffffff';
+            if (type === 'error') color = '#ff6b6b';
+            else if (type === 'warn') color = '#ffd93d';
+            else if (message.includes('✅')) color = '#51cf66';
+            else if (message.includes('❌')) color = '#ff6b6b';
+            else if (message.includes('🎯')) color = '#74c0fc';
+            else if (message.includes('🔍')) color = '#ffd43b';
+            
+            logEntry.innerHTML = `<span style="color: #888;">[${timestamp}]</span> <span style="color: ${color};">${message}</span>`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLogEntry(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLogEntry(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addLogEntry(args.join(' '), 'warn');
+        };
+        
+        // 全局函数
+        window.runYCoordinateTest = async function() {
+            statusDiv.className = 'status info';
+            statusDiv.textContent = '正在运行测试...';
+            
+            try {
+                // 动态导入测试模块
+                const { testYCoordinateConsistency } = await import('./src/tests/yCoordinateConsistencyTest.js');
+                
+                console.log('🚀 开始Y坐标一致性测试...');
+                const result = await testYCoordinateConsistency();
+                
+                if (result.success) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `✅ 测试通过！共${result.layerCount}层，${result.totalNodes}个节点，Y坐标一致性正常`;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `❌ 测试失败！存在Y坐标不一致的情况`;
+                }
+                
+                console.log('🎉 测试完成，结果:', result);
+                
+            } catch (error) {
+                console.error('❌ 测试执行失败:', error);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ 测试执行失败: ${error.message}`;
+            }
+        };
+        
+        window.clearLog = function() {
+            logContainer.innerHTML = '日志已清空...';
+            statusDiv.className = 'status info';
+            statusDiv.textContent = '日志已清空，准备新的测试';
+        };
+        
+        window.exportLog = function() {
+            const logText = logContainer.innerText;
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `y-coordinate-test-log-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('📄 日志已导出');
+        };
+        
+        // 页面加载完成后的初始化
+        console.log('🎯 Y坐标一致性修复测试页面已加载');
+        console.log('📋 本次修复实施了以下关键改进：');
+        console.log('  1. createEndpointVirtualNode(): 初始Y坐标设为0');
+        console.log('  2. calculateBottomLayerPositions(): 强制使用layerY坐标');
+        console.log('  3. adjustGlobalLayerSpacing(): 同步虚拟endpoint内部位置');
+        console.log('  4. updatePreviewEndpointPosition(): 强制更新预览线管理器');
+        console.log('  5. syncAllEndpointPositions(): 批量同步所有endpoint位置');
+        console.log('✨ 准备就绪，可以开始测试！');
+    </script>
+</body>
+</html>

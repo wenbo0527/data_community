@@ -136,10 +136,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 import { useRouter } from 'vue-router'
+import { mockTables as tableManagementData } from '../../../../mock/data-map.js'
 
 // 响应式数据
 const loading = ref(false)
@@ -155,23 +156,22 @@ const router = useRouter()
 // 表格列配置
 const columns = [
   {
-    title: '表名',
+    title: '中文表名',
     dataIndex: 'tableName',
     width: 200
   },
   {
-    title: '数据库',
-    dataIndex: 'database',
-    width: 120
+    title: '计算集群表名',
+    dataIndex: 'computeClusterTable',
+    width: 200
   },
   {
-    title: '描述',
-    dataIndex: 'description',
-    ellipsis: true,
-    tooltip: true
+    title: '分析集群表名',
+    dataIndex: 'analysisClusterTable',
+    width: 200
   },
   {
-    title: '业务分类',
+    title: '业务域',
     dataIndex: 'category',
     width: 120
   },
@@ -181,14 +181,8 @@ const columns = [
     width: 120
   },
   {
-    title: '状态',
-    dataIndex: 'status',
-    slotName: 'status',
-    width: 100
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
+    title: '注册时间',
+    dataIndex: 'registerTime',
     width: 180
   },
   {
@@ -200,44 +194,25 @@ const columns = [
 ]
 
 // 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    tableName: 'user_profile',
-    database: 'mysql',
-    description: '用户基础信息表，包含用户的基本属性和画像数据',
-    category: '用户数据',
-    owner: '张三',
-    status: 'active',
-    createTime: '2024-01-15 10:30:00'
-  },
-  {
-    id: 2,
-    tableName: 'transaction_records',
-    database: 'postgresql',
-    description: '交易记录表，存储所有用户的交易明细',
-    category: '交易数据',
-    owner: '李四',
-    status: 'active',
-    createTime: '2024-01-10 14:20:00'
-  },
-  {
-    id: 3,
-    tableName: 'product_catalog',
-    database: 'mysql',
-    description: '产品目录表，包含所有产品的详细信息',
-    category: '产品数据',
-    owner: '王五',
-    status: 'inactive',
-    createTime: '2024-01-05 09:15:00'
-  }
-])
+const tableData = computed(() => {
+  return tableManagementData.map((item, index) => ({
+    id: index + 1,
+    tableName: item.name,
+    // 使用现有的name属性来模拟计算集群表名和分析集群表名，删除hive和doris前缀
+    computeClusterTable: `${item.category}.${item.name}`,
+    analysisClusterTable: `${item.category}.${item.name}`,
+    category: item.domain,
+    owner: item.owner,
+    // 使用固定的日期或基于index的日期来模拟注册时间
+    registerTime: `2024-01-${String(index + 1).padStart(2, '0')}`
+  }))
+})
 
 // 分页配置
 const pagination = reactive({
   current: 1,
   pageSize: 10,
-  total: 3,
+  total: computed(() => tableData.value.length),
   showTotal: true,
   showPageSize: true
 })
@@ -305,13 +280,18 @@ const getStatusText = (status: string) => {
 
 const viewTable = (record: any) => {
   // 跳转到表详情页
-  console.log('查看表:', record)
+  router.push(`/discovery/data-map/table/${encodeURIComponent(record.tableName)}`)
 }
 
 const editTable = (record: any) => {
-  editingTable.value = record
-  Object.assign(formData, record)
-  showCreateModal.value = true
+  // 重定向到注册表单页面，并传递编辑模式和数据
+  router.push({
+    path: '/discovery/asset-management/table-management/register',
+    query: { 
+      mode: 'edit',
+      id: record.tableName // 使用表名作为ID
+    }
+  })
 }
 
 const deleteTable = (record: any) => {

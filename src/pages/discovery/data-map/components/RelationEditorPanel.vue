@@ -1,74 +1,126 @@
 <template>
   <div class="relation-editor-panel">
-    <a-space direction="vertical" style="width: 100%;">
-      <a-button type="primary" size="mini" @click="addRelation">
-        <template #icon><icon-plus /></template>
-        新增关联
-      </a-button>
+    <div class="relation-header">
+      <h3>字段 "{{ props.fieldName }}" 的关联关系配置</h3>
+    </div>
+    <div class="table-container">
+      <div class="toolbar">
+        <a-button type="primary" size="mini" @click="addRelationForField">
+          <template #icon><icon-plus /></template>
+          为当前字段新增关联
+        </a-button>
+      </div>
       
-      <a-table :data="relations" :bordered="false" :pagination="false">
+      <a-table :data="relations" :bordered="false" :pagination="false" style="width: 100%;">
         <template #columns>
-          <a-table-column title="关联表" dataIndex="targetTable" />
-          <a-table-column title="关联字段" dataIndex="relationField" />
-          <a-table-column title="关联类型" dataIndex="relationType" />
-          <a-table-column title="关联说明" dataIndex="relationDescription" />
-          <a-table-column title="操作">
+          <a-table-column title="关联表" dataIndex="targetTable">
             <template #cell="{ record, rowIndex }">
-              <a-space>
-                <a-button type="text" size="mini" @click="editRelation(record, rowIndex)">编辑</a-button>
-                <a-button type="text" size="mini" status="danger" @click="deleteRelation(rowIndex)">删除</a-button>
+              <span v-if="editingRowIndex !== rowIndex">{{ record.targetTable }}</span>
+              <a-select
+                v-else
+                v-model="record.targetTable"
+                :options="availableTables.map((t: TableItem) => ({ label: t.name, value: t.name }))"
+                placeholder="请选择关联表"
+                allow-clear
+              />
+            </template>
+          </a-table-column>
+          <a-table-column title="关联类型" dataIndex="relationType">
+            <template #cell="{ record, rowIndex }">
+              <span v-if="editingRowIndex !== rowIndex">{{ record.relationType }}</span>
+              <a-select
+                v-else
+                v-model="record.relationType"
+                :options="[
+                  { label: '1:1', value: '1:1' },
+                  { label: '1:N', value: '1:N' }
+                ]"
+                placeholder="请选择关联类型"
+                allow-clear
+              />
+            </template>
+          </a-table-column>
+          <a-table-column title="关联说明" dataIndex="relationDescription">
+            <template #cell="{ record, rowIndex }">
+              <span v-if="editingRowIndex !== rowIndex">{{ record.relationDescription }}</span>
+              <a-input
+                v-else
+                v-model="record.relationDescription"
+                placeholder="请输入关联说明"
+                allow-clear
+              />
+            </template>
+          </a-table-column>
+
+          <a-table-column title="关联字段" dataIndex="relationFields">
+        <template #cell="{ record, rowIndex }">
+          <div v-if="editingRowIndex !== rowIndex">
+            <div v-for="(pair, index) in record.relationFields" :key="index">
+              {{ pair.sourceField }} = {{ pair.targetField }}
+            </div>
+          </div>
+          <div v-else class="field-pairs-container">
+            <div v-for="(pair, index) in record.relationFields" :key="index" class="field-pair">
+              <a-select
+                v-model="pair.sourceField"
+                :options="getSourceFieldOptions()"
+                placeholder="请选择源字段"
+                allow-clear
+                style="width: 45%"
+              />
+              <span class="equal-sign">=</span>
+              <a-select
+                v-model="pair.targetField"
+                :options="getTargetFieldOptions(record.targetTable)"
+                placeholder="请选择目标字段"
+                allow-clear
+                style="width: 45%"
+              />
+              <a-button 
+                v-if="record.relationFields.length > 1" 
+                type="text" 
+                size="mini" 
+                status="danger" 
+                @click="removeFieldPair(record, index)"
+                class="remove-btn"
+              >
+                <template #icon>
+                  <icon-delete />
+                </template>
+              </a-button>
+            </div>
+            <a-button type="dashed" size="mini" @click="addFieldPair(record)" style="width: 100%">
+              <template #icon>
+                <icon-plus />
+              </template>
+              添加字段对
+            </a-button>
+          </div>
+        </template>
+      </a-table-column>
+          <a-table-column title="操作" :width="150">
+            <template #cell="{ record, column, rowIndex }">
+              <a-space v-if="editingRowIndex === rowIndex">
+                <a-button type="primary" size="mini" @click="saveRelation(rowIndex)">
+                  保存
+                </a-button>
+                <a-button type="outline" size="mini" @click="cancelEdit(rowIndex)">
+                  取消
+                </a-button>
+              </a-space>
+              <a-space v-else>
+                <a-button type="primary" size="mini" @click="editRelation(record, rowIndex)">
+                  编辑
+                </a-button>
+                <a-button type="outline" status="danger" size="mini" @click="deleteRelation(rowIndex)">
+                  删除
+                </a-button>
               </a-space>
             </template>
           </a-table-column>
         </template>
       </a-table>
-      
-    </a-space>
-    
-    <!-- 新增/编辑关联关系弹窗 -->
-    <a-modal
-      v-model:visible="editModalVisible"
-      :title="isEditing ? '编辑关联关系' : '新增关联关系'"
-      @ok="handleEditModalOk"
-      @cancel="handleEditModalCancel"
-    >
-      <a-form :model="currentRelationForm" layout="vertical">
-        <a-form-item label="关联表" field="targetTable" required>
-          <a-select
-            v-model="currentRelationForm.targetTable"
-            placeholder="请选择关联表"
-            allow-search
-            :disabled="isEditing"
-          >
-            <a-option 
-              v-for="table in availableTables"
-              :key="table.name"
-              :value="table.name"
-            >
-              {{ table.name }}
-            </a-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="关联字段" field="relationField" required>
-           <a-input v-model="currentRelationForm.relationField" placeholder="请输入关联字段" />
-        </a-form-item>
-        <a-form-item label="关联类型" field="relationType">
-          <a-select v-model="currentRelationForm.relationType" placeholder="请选择关联类型">
-            <a-option value="主表关联">主表关联</a-option>
-            <a-option value="维度-事实关联">维度-事实关联</a-option>
-            <a-option value="维度-汇总关联">维度-汇总关联</a-option>
-            <a-option value="字段关联">字段关联</a-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="关联说明" field="relationDescription">
-          <a-textarea 
-            v-model="currentRelationForm.relationDescription"
-            placeholder="请输入关联说明"
-            :auto-size="{ minRows: 2, maxRows: 4 }"
-          />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+    </div>
   </div>
 </template>
 
@@ -92,115 +144,268 @@ interface TableItem {
   fields?: any[]
 }
 import { Modal } from '@arco-design/web-vue'
-import { IconPlus } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconDelete } from '@arco-design/web-vue/es/icon'
+
+// 从mock数据中导入表信息
+import { mockTables } from '@/mock/data-map.js'
+
+interface RelationFieldPair {
+  sourceField: string
+  targetField: string
+}
 
 interface Relation {
+  id?: string
+  fieldName?: string
   targetTable: string
-  relationField: string
+  relationFields: RelationFieldPair[]
   relationType?: string
   relationDescription?: string
+}
+
+// 用于表示一个字段的多条关联关系
+interface FieldRelationGroup {
+  fieldName: string
+  relations: Relation[]
 }
 
 const props = defineProps<{
   fieldName: string
   initialRelations: Relation[] // Change type to Relation[]
+  currentTableName?: string // Add current table name prop
 }>()
 
 const emit = defineEmits(['save-relations'])
 
 const relations = ref<Relation[]>([]) // State to hold the list of relations
-const availableTables = ref<TableItem[]>([]) // Assuming you have a list of all available tables
+const availableTables = ref<TableItem[]>(mockTables) // Using mock data for available tables
 
-// State for the Add/Edit modal
-const editModalVisible = ref(false)
-const isEditing = ref(false)
-const currentRelationForm = reactive<Relation>({ // Form state for the modal
-  targetTable: '',
-  relationField: '',
-  relationType: '',
-  relationDescription: ''
-})
-const editingIndex = ref<number | null>(null) // Index of the relation being edited
+// State for inline editing
+const editingRowIndex = ref<number | null>(null) // Index of the relation being edited
+const originalRelation = ref<Relation | null>(null) // To store original data for cancel operation
 
 // Watch for initial relations prop changes and initialize the relations state
-watch(() => props.initialRelations, (newVal) => {
+watch(() => props.initialRelations, (newVal: Relation[]) => {
   relations.value = [...newVal] // Initialize relations with prop data
 }, { immediate: true, deep: true })
 
-// Mock data for available tables (replace with actual data fetching)
-// For now, let's use a simple mock list
-availableTables.value = [
-  { name: 'dim_user', type: 'dimension', category: '', domain: '', updateFrequency: '', owner: '', description: '', fields: [] },
-  { name: 'fact_loan_apply', type: 'fact', category: '', domain: '', updateFrequency: '', owner: '', description: '', fields: [] },
-  { name: 'dws_risk_score', type: 'dws', category: '', domain: '', updateFrequency: '', owner: '', description: '', fields: [] },
-  { name: 'dwd_fraud_alert', type: 'dwd', category: '', domain: '', updateFrequency: '', owner: '', description: '', fields: [] },
-  { name: 'dim_product', type: 'dimension', category: '', domain: '', updateFrequency: '', owner: '', description: '', fields: [] },
-]
-
-// --- Modal Actions ---
-
-const addRelation = () => {
-  isEditing.value = false
-  editingIndex.value = null
-  // Reset form
-  currentRelationForm.targetTable = ''
-  currentRelationForm.relationField = props.fieldName // Default to current field name
-  currentRelationForm.relationType = ''
-  currentRelationForm.relationDescription = ''
-  editModalVisible.value = true
+// 添加新的关联关系
+// 为当前字段添加新的关联关系
+const addRelationForField = () => {
+  const newRelation: Relation = {
+    id: Date.now().toString(),
+    fieldName: props.fieldName || '',
+    targetTable: '',
+    relationFields: [{ sourceField: '', targetField: '' }],
+    relationType: '',
+    relationDescription: ''
+  }
+  relations.value.push(newRelation)
+  // Set the new row in edit mode
+  editingRowIndex.value = relations.value.length - 1
 }
 
+// 为指定字段添加新的关联关系
+const addRelationForSpecificField = (fieldName: string) => {
+  const newRelation: Relation = {
+    fieldName: fieldName,
+    targetTable: '',
+    relationFields: [{ sourceField: '', targetField: '' }],
+    relationType: '',
+    relationDescription: ''
+  }
+  relations.value.push(newRelation)
+  // Set the new row in edit mode
+  editingRowIndex.value = relations.value.length - 1
+}
+
+
+
+
+
+// Function to edit an existing relation
 const editRelation = (record: Relation, index: number) => {
-  isEditing.value = true
-  editingIndex.value = index
-  // Populate form with record data
-  currentRelationForm.targetTable = record.targetTable
-  currentRelationForm.relationField = record.relationField
-  currentRelationForm.relationType = record.relationType || ''
-  currentRelationForm.relationDescription = record.relationDescription || ''
-  editModalVisible.value = true
+  // Save a copy of the original relation for potential cancellation
+  originalRelation.value = JSON.parse(JSON.stringify(relations.value[index]))
+  editingRowIndex.value = index
 }
 
+// 添加字段对
+const addFieldPair = (record: Relation) => {
+  record.relationFields.push({ sourceField: '', targetField: '' })
+}
+
+// 删除字段对
+const removeFieldPair = (record: Relation, index: number) => {
+  if (record.relationFields.length > 1) {
+    record.relationFields.splice(index, 1)
+  }
+}
+
+// Function to save an edited relation
+const saveRelation = (index: number) => {
+  // 验证必填字段
+  const relation = relations.value[index]
+  if (!relation.targetTable) {
+    Modal.warning({
+      title: '验证失败',
+      content: '请选择关联表。'
+    })
+    return
+  }
+  
+  if (relation.relationFields.some((pair: RelationFieldPair) => !pair.sourceField || !pair.targetField)) {
+    Modal.warning({
+      title: '验证失败',
+      content: '请填写所有字段对的源字段和目标字段。'
+    })
+    return
+  }
+  
+  // Exit edit mode
+  editingRowIndex.value = null
+  originalRelation.value = null
+  emit('save-relations', relations.value);
+}
+
+// Function to cancel editing
+const cancelEdit = (index: number) => {
+  // Restore original relation data if it exists
+  if (originalRelation.value) {
+    relations.value[index] = { ...originalRelation.value }
+    originalRelation.value = null
+  }
+  // Exit edit mode
+  editingRowIndex.value = null
+}
+
+// Function to delete a relation
 const deleteRelation = (index: number) => {
   Modal.confirm({
     title: '确认删除',
     content: '确定要删除这条关联关系吗？',
     onOk: () => {
       relations.value.splice(index, 1);
+      // Adjust editing index if necessary
+      if (editingRowIndex.value === index) {
+        editingRowIndex.value = null
+      } else if (editingRowIndex.value !== null && editingRowIndex.value > index) {
+        editingRowIndex.value -= 1
+      }
       emit('save-relations', relations.value);
     }
   })
 }
 
-const handleEditModalOk = () => {
-  // Basic validation (add more robust validation as needed)
-  if (!currentRelationForm.targetTable || !currentRelationForm.relationField) {
-    // Show error message
-    return
+// 获取源字段选项
+const getSourceFieldOptions = () => {
+  // 获取当前表的字段作为源字段选项
+  console.log('getSourceFieldOptions called, props:', { fieldName: props.fieldName, currentTableName: props.currentTableName });
+  console.log('getSourceFieldOptions, mockTables:', mockTables);
+  
+  // 使用传递的当前表名来查找当前表
+  let currentTable = null;
+  if (props.currentTableName) {
+    currentTable = mockTables.find((table: TableItem) => table.name === props.currentTableName);
+    console.log('getSourceFieldOptions, found currentTable by name:', currentTable);
   }
-
-  if (isEditing.value && editingIndex.value !== null) {
-    // Update existing relation
-    relations.value[editingIndex.value] = { ...currentRelationForm }
-  } else {
-    // Add new relation
-    relations.value.push({ ...currentRelationForm });
+  
+  // 如果没有传递当前表名或未找到，则使用旧的逻辑
+  if (!currentTable) {
+    currentTable = mockTables.find((table: TableItem) => table.fields);
+    console.log('getSourceFieldOptions, fallback to first table with fields:', currentTable);
   }
-  emit('save-relations', relations.value);
-  editModalVisible.value = false
-}
+  
+  console.log('getSourceFieldOptions, currentTable:', currentTable);
+  if (currentTable && currentTable.fields) {
+    const options = currentTable.fields.map((field: { name: string }) => ({
+      label: field.name,
+      value: field.name
+    }));
+    console.log('getSourceFieldOptions, options:', options);
+    return options;
+  }
+  console.log('getSourceFieldOptions, returning empty array');
+  return [];
+};
 
-const handleEditModalCancel = () => {
-  editModalVisible.value = false
-}
-
-// --- Panel Actions ---
-
-// (In Vue 3 setup script, everything declared here is automatically exposed)
+// 获取目标字段选项
+const getTargetFieldOptions = (targetTableName: string) => {
+  // 根据目标表名获取目标表的字段作为选项
+  console.log('getTargetFieldOptions called, targetTableName:', targetTableName);
+  const targetTable = mockTables.find((table: TableItem) => table.name === targetTableName);
+  console.log('getTargetFieldOptions, targetTable:', targetTable);
+  if (targetTable && targetTable.fields) {
+    const options = targetTable.fields.map((field: { name: string }) => ({
+      label: field.name,
+      value: field.name
+    }));
+    console.log('getTargetFieldOptions, options:', options);
+    return options;
+  }
+  console.log('getTargetFieldOptions, returning empty array');
+  return [];
+};
 </script>
 
 <style scoped>
 .relation-editor-panel {
-  padding: 16px;
+  padding: 20px;
+  width: 100%;
+}
+
+.relation-editor-panel :deep(.arco-table-th) {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+.relation-editor-panel :deep(.arco-table-td) {
+  vertical-align: top;
+}
+
+.relation-editor-panel :deep(.arco-table) {
+  width: 100%;
+}
+
+.relation-editor-panel :deep(.arco-form-item) {
+  margin-bottom: 15px;
+}
+
+.toolbar {
+  margin-bottom: 16px;
+}
+
+.toolbar .arco-btn {
+  margin-right: 8px;
+}
+
+.relation-header {
+  margin-bottom: 16px;
+}
+
+.relation-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.field-pairs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.equal-sign {
+  font-weight: bold;
+  margin: 0 4px;
+}
+
+.remove-btn {
+  flex-shrink: 0;
 }
 </style>

@@ -12,6 +12,15 @@
     @cancel="handleCancel"
   >
     <template #form>
+      <!-- 节点名称 -->
+      <a-form-item label="节点名称" field="nodeName" required>
+        <a-input
+          v-model="formData.nodeName"
+          placeholder="请输入节点名称"
+          allow-clear
+        />
+      </a-form-item>
+
       <!-- 等待时间配置 -->
       <a-form-item label="等待时间设置" field="waitTime">
         <div class="wait-time-container">
@@ -76,6 +85,7 @@ const formRules = {
 
 // 初始表单数据
 const getInitialFormData = () => ({
+  nodeName: props.nodeData?.nodeName || '等待节点',
   waitTime: {
     value: 30,
     unit: 'minutes'

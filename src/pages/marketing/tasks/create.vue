@@ -681,7 +681,7 @@ onMounted(() => {
   
   // 监听表单变化
   Object.keys(taskForm).forEach(key => {
-    const originalValue = taskForm[key]
+    let originalValue = taskForm[key]
     Object.defineProperty(taskForm, key, {
       get() {
         return originalValue

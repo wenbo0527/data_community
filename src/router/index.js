@@ -169,8 +169,8 @@ beforeEnter: (to) => {
         },
         {
           path: 'search',
-          name: 'AggregatedSearch',
-          meta: { title: '聚合搜索' },
+          name: 'UnifiedSearch',
+          meta: { title: '统一搜索' },
           component: () => import('../pages/discovery/search/index.vue')
         },
         {

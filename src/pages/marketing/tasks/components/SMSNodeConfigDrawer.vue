@@ -15,6 +15,15 @@
   >
     <!-- 表单内容 -->
     <template #form="{ formData }">
+      <!-- 节点名称 -->
+      <a-form-item label="节点名称" field="nodeName" required>
+        <a-input
+          v-model="formData.nodeName"
+          placeholder="请输入节点名称"
+          allow-clear
+        />
+      </a-form-item>
+
       <!-- 短信模板 -->
       <a-form-item label="短信模板" field="smsTemplate">
         <a-select
@@ -98,6 +107,7 @@ const formRules = {
 
 // 初始表单数据
 const initialFormData = {
+  nodeName: props.nodeData?.nodeName || '短信发送',
   smsTemplate: ''
 }
 

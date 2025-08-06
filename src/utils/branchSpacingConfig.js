@@ -8,7 +8,7 @@ export const BRANCH_SPACING_CONFIG = {
   BASE_SPACING: {
     HORIZONTAL: 180,        // 基础水平间距
     VERTICAL: 100,          // 垂直间距（预览线长度）
-    MIN_SPACING: 150,       // 最小间距
+    MIN_SPACING: 200,       // 🔧 优化：最小间距从150增加到200，改善层间距
     MAX_SPACING: 250        // 最大间距
   },
   

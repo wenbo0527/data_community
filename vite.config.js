@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
+import { logServerPlugin } from './vite-plugins/logServerPlugin.js'
 
 // https://vite.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue']
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
@@ -49,7 +53,7 @@ export default defineConfig({
       }
     }
   },
-  plugins: [vue()],
+  plugins: [vue(), logServerPlugin()],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')

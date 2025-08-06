@@ -7,6 +7,12 @@
     >
       <template #extra>
         <a-space>
+          <a-button type="outline" size="mini" @click="editTable">
+            <template #icon>
+              <icon-edit />
+            </template>
+            编辑
+          </a-button>
           <a-button type="outline" size="mini" @click="toggleFavorite">
             <template #icon>
               <icon-star :fill="isFavorite ? '#ffb400' : 'none'" />
@@ -37,18 +43,10 @@
       
       <!-- 标签页内容 -->
       <a-card class="tab-content">
-        <a-tabs default-active-key="details" class="table-content">
+        <a-tabs v-model:active-key="activeMainTab" class="table-content" @change="handleMainTabChange">
       <a-tab-pane key="details" title="明细信息">
         <a-tabs default-active-key="structure">
           <a-tab-pane key="structure" title="表结构">
-            <a-card class="table-info" title="基本信息">
-              <a-descriptions
-                :data="tableBasicInfo"
-                :column="3"
-                size="medium"
-                bordered
-              />
-            </a-card>
             <a-card class="table-info" title="字段信息">
               <a-table
                 :data="tableData?.fields || []"
@@ -56,7 +54,17 @@
                 :scroll="{ x: '100%' }"
               >
                 <template #columns>
-                  <a-table-column title="字段名" data-index="name" />
+                  <a-table-column title="字段名" data-index="name">
+                    <template #cell="{ record }">
+                      <span 
+                        :class="{ 'relation-field': isRelationField(record.name) }"
+                        @click="isRelationField(record.name) ? switchToRelationsTab() : null"
+                        :style="{ cursor: isRelationField(record.name) ? 'pointer' : 'default' }"
+                      >
+                        {{ record.name }}
+                      </span>
+                    </template>
+                  </a-table-column>
                   <a-table-column title="类型" data-index="type" />
                   <a-table-column title="描述" data-index="description" />
                 </template>
@@ -88,11 +96,11 @@
           </a-tab-pane>
         </a-tabs>
       </a-tab-pane>
-      <a-tab-pane key="relations" title="业务关系">
+      <a-tab-pane key="relations" title="数据关系">
         <div class="relation-info">
           <a-space direction="vertical" style="width: 100%">
             <a-card>
-              <a-tabs v-model:activeKey="relationViewMode" type="rounded">
+              <a-tabs v-model:activeKey="relationViewMode" type="rounded" @change="onRelationViewModeChange">
                 <a-tab-pane key="graph" title="可视化">
                   <div ref="relationTreeRef" class="relation-tree-container"></div>
                 </a-tab-pane>
@@ -112,7 +120,7 @@
                       </a-table-column>
                       <a-table-column title="关联字段">
                         <template #cell="{ record }">
-                          {{ record.relationFields.map(f => `${f.sourceField}=${f.targetField}`).join(', ') }}
+                          {{ record.relationFields.map((f: { sourceField: string; targetField: string }) => `${f.sourceField}=${f.targetField}`).join(', ') }}
                         </template>
                       </a-table-column>
                       <a-table-column title="关联类型" data-index="relationType" />
@@ -153,15 +161,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick, h } from 'vue'
-import type { VNode } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { h } from 'vue'
 import { 
   IconStar, 
   IconSafe,
   IconFolderAdd,
   IconLink,
   IconInfoCircle,
-  IconExclamationCircle
+  IconExclamationCircle,
+  IconEdit
 } from '@arco-design/web-vue/es/icon'
 import { Modal } from '@arco-design/web-vue'
 import { mockTables } from '@/mock/data-map'
@@ -171,10 +180,11 @@ import AddToCollectionModal from './components/AddToCollectionModal.vue'
 import * as echarts from 'echarts/core'
 import { TreeChart } from 'echarts/charts'
 import { CanvasRenderer } from 'echarts/renderers'
+import { TitleComponent, TooltipComponent } from 'echarts/components'
 import type { EChartsType, CallbackDataParams } from 'echarts/types/dist/shared'
 
 // 注册必须的组件
-echarts.use([TreeChart, CanvasRenderer])
+echarts.use([TreeChart, CanvasRenderer, TitleComponent, TooltipComponent])
 
 
 
@@ -243,10 +253,22 @@ const isFavorite = ref(false)
 const sampleData = ref<any[]>([])
 const currentField = ref<TableField>()
 const activeModalTab = ref('structure') // 控制关联弹窗内的标签页
+const activeMainTab = ref('details') // 控制主标签页
 const relatedTables = ref<TableItem[]>([])
 const currentTableName = ref<string>('')
 
-// 监听标签页切换
+// 监听主标签页切换
+const handleMainTabChange = (key: string) => {
+  activeMainTab.value = key;
+  // 如果切换到关联说明tab，且视图模式为图表，则渲染树图
+  if (key === 'relations' && relationViewMode.value === 'graph') {
+    nextTick(() => {
+      renderRelationTree();
+    });
+  }
+}
+
+// 监听标签页切换（保留原有函数以防其他地方使用）
 const handleTabChange = (key: string) => {
   activeModalTab.value = key;
   // 如果切换到关联说明tab，且视图模式为图表，则渲染树图
@@ -259,16 +281,16 @@ const handleTabChange = (key: string) => {
 
 // 监听关联关系视图模式切换
 watch(relationViewMode, (newMode: 'graph' | 'list') => {
-  if (activeModalTab.value === 'relations' && newMode === 'graph') {
+  if (activeMainTab.value === 'relations' && newMode === 'graph') {
     nextTick(() => {
       renderRelationTree();
     });
   }
 })
 
-onMounted(() => {
-  initRelations();
-})
+// onMounted(() => {
+//   initRelations();
+// })
 
 // 基本信息数据 - 提取为计算属性
 const tableBasicInfo = computed(() => {
@@ -300,6 +322,87 @@ const relatedFields = computed(() => {
   return fields
 })
 
+// 判断是否为关联字段
+const isRelationField = (fieldName: string) => {
+  const relationFieldNames = ['id', 'user_id', 'product_id']
+  return relationFieldNames.includes(fieldName.toLowerCase())
+}
+
+// 初始化关联关系数据
+const initRelations = () => {
+  logger.debug('初始化关联关系数据', { tableName: tableData.value?.name });
+  
+  // 根据表名动态生成关联关系数据
+  if (tableData.value?.name === 'dim_user') {
+    allRelations.value = [
+      {
+        id: '1',
+        sourceTable: 'dim_user',
+        targetTable: 'dim_user_profile',
+        relationFields: [{ sourceField: 'id', targetField: 'user_id' }],
+        relationType: '1:1',
+        relationDescription: '关联到用户画像维度表'
+      },
+      {
+        id: '2',
+        sourceTable: 'dim_user',
+        targetTable: 'fact_loan_apply',
+        relationFields: [{ sourceField: 'id', targetField: 'user_id' }],
+        relationType: '1:N',
+        relationDescription: '关联到贷款申请事实表'
+      }
+    ];
+  } else if (tableData.value?.name === 'fact_loan_apply') {
+    allRelations.value = [
+      {
+        id: '1',
+        sourceTable: 'fact_loan_apply',
+        targetTable: 'dim_user',
+        relationFields: [{ sourceField: 'user_id', targetField: 'id' }],
+        relationType: 'N:1',
+        relationDescription: '关联到用户维度表'
+      }
+    ];
+  } else {
+    // 默认的关联关系数据
+    allRelations.value = [
+      {
+        id: '1',
+        sourceTable: tableData.value?.name || '',
+        targetTable: 'dim_user',
+        relationFields: [{ sourceField: 'user_id', targetField: 'id' }],
+        relationType: 'N:1',
+        relationDescription: '关联到用户维度表'
+      },
+      {
+        id: '2',
+        sourceTable: tableData.value?.name || '',
+        targetTable: 'fact_loan_apply',
+        relationFields: [{ sourceField: 'id', targetField: 'user_id' }],
+        relationType: '1:N',
+        relationDescription: '关联到贷款申请事实表'
+      }
+    ];
+  }
+  
+  logger.debug('关联关系数据初始化完成', { relations: allRelations.value });
+  
+  // 如果当前在关联说明tab且视图模式为图表，则渲染树图
+  logger.debug('初始化关联关系数据完成，检查是否需要渲染树图', { 
+    activeTab: activeMainTab.value, 
+    viewMode: relationViewMode.value,
+    shouldRender: activeMainTab.value === 'relations' && relationViewMode.value === 'graph'
+  });
+  if (activeMainTab.value === 'relations' && relationViewMode.value === 'graph') {
+    nextTick(() => {
+      logger.debug('准备渲染关系树图');
+      renderRelationTree();
+    });
+  } else {
+    logger.debug('条件不满足，跳过渲染');
+  }
+}
+
 // 弹窗标题
 const modalTitle = computed(() => {
   if (currentTableName.value) {
@@ -309,7 +412,7 @@ const modalTitle = computed(() => {
 })
 
 // 从路由参数加载表数据
-watch(() => route.params, (params) => {
+watch(() => route.params, (params: { [key: string]: string | string[] }) => {
   const tableParam = Array.isArray(params.table) ? params.table[0] : params.table || 
               Array.isArray(params.tableName) ? params.tableName[0] : params.tableName
   logger.debug('路由参数', { tableParam })
@@ -317,6 +420,8 @@ watch(() => route.params, (params) => {
   if (tableParam) {
     tableData.value = parseTableData(tableParam) || createSafeTableData({})
     logger.debug('解析表数据', { name: tableData.value?.name })
+    // 初始化关联关系数据
+    initRelations()
   } else {
     tableData.value = createSafeTableData({})
   }
@@ -402,10 +507,18 @@ watch(tableData, (currentRefData: TableItem | undefined) => {
   }
   
   // 当表数据变化时，仅在关联标签页且图表视图模式下重新渲染树图
+  logger.debug('表数据变化，检查是否需要重新渲染树图', { 
+    activeTab: activeModalTab.value, 
+    viewMode: relationViewMode.value,
+    shouldRender: activeModalTab.value === 'relations' && relationViewMode.value === 'graph'
+  });
   if (activeModalTab.value === 'relations' && relationViewMode.value === 'graph') {
     nextTick(() => {
-      renderRelationTree()
-    })
+      logger.debug('准备渲染关系树图');
+      renderRelationTree();
+    });
+  } else {
+    logger.debug('条件不满足，跳过渲染');
   }
 }, { deep: true })
 
@@ -420,28 +533,28 @@ const showRelationEditor = () => {
   relationViewMode.value = 'list'
 }
 
-// 初始化关联关系数据
-const initRelations = () => {
-  // 模拟关联关系数据
-  allRelations.value = [
-    {
-      id: '1',
-      sourceTable: '', // 不直接引用tableData.value?.name以避免循环依赖
-      targetTable: 'dim_user',
-      relationFields: [{ sourceField: 'user_id', targetField: 'id' }],
-      relationType: 'N:1',
-      relationDescription: '关联到用户维度表'
-    },
-    {
-      id: '2',
-      sourceTable: '', // 不直接引用tableData.value?.name以避免循环依赖
-      targetTable: 'fact_order',
-      relationFields: [{ sourceField: 'id', targetField: 'user_id' }],
-      relationType: '1:N',
-      relationDescription: '关联到订单事实表'
-    }
-  ]
+// 处理关系视图模式变化
+const onRelationViewModeChange = (value: string) => {
+  logger.debug('关系视图模式变化', { value, activeTab: activeModalTab.value });
+  if (value === 'graph' && activeModalTab.value === 'relations') {
+    nextTick(() => {
+      logger.debug('切换到可视化视图，准备渲染关系树图');
+      renderRelationTree();
+    });
+  }
 }
+
+// 监听活动标签页变化
+watch(activeModalTab, (newTab: string, oldTab: string) => {
+  logger.debug('活动标签页变化', { oldTab, newTab, viewMode: relationViewMode.value });
+  // 当切换到关联说明tab且视图模式为图表时，渲染树图
+  if (newTab === 'relations' && relationViewMode.value === 'graph') {
+    nextTick(() => {
+      logger.debug('切换到关联标签页且为图表模式，准备渲染关系树图');
+      renderRelationTree();
+    });
+  }
+});
 
 // 渲染关联关系图
 const renderRelationTree = () => {
@@ -449,6 +562,28 @@ const renderRelationTree = () => {
   if (!relationTreeRef.value) {
     logger.warn('relationTreeRef 未找到，无法渲染图表')
     return
+  }
+  
+  // 检查容器元素的尺寸
+  const container = relationTreeRef.value;
+  logger.debug('图表容器元素', { 
+    offsetWidth: container.offsetWidth, 
+    offsetHeight: container.offsetHeight,
+    clientWidth: container.clientWidth,
+    clientHeight: container.clientHeight
+  });
+  
+  // 检查是否有关联关系数据
+  logger.debug('检查关联关系数据', { 
+    hasRelations: allRelations.value && allRelations.value.length > 0,
+    relationCount: allRelations.value?.length,
+    tableData: tableData.value?.name
+  });
+  
+  // 如果没有关联关系数据，则不渲染图表
+  if (!allRelations.value || allRelations.value.length === 0) {
+    logger.warn('没有关联关系数据，跳过图表渲染');
+    return;
   }
   
   // 销毁之前的图表实例
@@ -459,7 +594,13 @@ const renderRelationTree = () => {
   
   // 初始化ECharts实例
   logger.debug('初始化ECharts实例')
-  relationChart = echarts.init(relationTreeRef.value)
+  try {
+    relationChart = echarts.init(relationTreeRef.value)
+    logger.debug('ECharts实例初始化成功', { chart: !!relationChart });
+  } catch (error) {
+    logger.error('ECharts实例初始化失败', error);
+    return;
+  }
   
   // 构造关系图数据
   logger.debug('构造关系图数据', { allRelations: allRelations.value })
@@ -475,17 +616,35 @@ const renderRelationTree = () => {
         fontWeight: 'bold'
       },
       children: allRelations.value.map((relation: Relation, index: number) => {
-        const targetNode = {
-          name: relation.targetTable,
-          // 添加节点标识用于区分点击行为
-          relationId: relation.id || index,
-          itemStyle: {
-            color: '#52c41a'
-          },
-          label: {
-            fontWeight: 'bold'
-          }
-        };
+            // 检查关联关系数据完整性
+            logger.debug('处理关联关系', { 
+              index, 
+              relation, 
+              hasTargetTable: !!relation.targetTable,
+              hasRelationFields: !!relation.relationFields && relation.relationFields.length > 0
+            });
+            
+            // 如果关联关系数据不完整，跳过该关系
+            if (!relation.targetTable || !relation.relationFields || relation.relationFields.length === 0) {
+              logger.warn('关联关系数据不完整，跳过该关系', { index, relation });
+              return null;
+            }
+            
+            const targetNode = {
+              name: relation.targetTable,
+              // 添加节点标识用于区分点击行为
+              relationId: relation.id || index,
+              itemStyle: {
+                color: '#52c41a'
+              },
+              label: {
+                fontWeight: 'bold'
+              },
+              // 为tooltip添加额外信息
+              description: `关联字段: ${relation.relationFields.map((f: { sourceField: string; targetField: string }) => `${f.sourceField}=${f.targetField}`).join(', ')}
+关联类型: ${relation.relationType}
+关联说明: ${relation.relationDescription || '无'}`
+            };
         
         return {
           ...targetNode,
@@ -512,7 +671,7 @@ const renderRelationTree = () => {
             }
           ]
         };
-      })
+      }).filter((node: any) => node !== null) // 过滤掉空节点
     }
   ];
   
@@ -521,41 +680,38 @@ const renderRelationTree = () => {
   logger.debug('构造完成的关系图数据', { nodes });
   
   // 配置项
-  const option = {
-    title: {
-      text: '表关联关系图'
-    },
-    tooltip: {
-      show: true,
-      trigger: 'item',
-      formatter: (params: any) => {
-        const nodeData = params.data;
-        // 为字段和类型节点显示详细信息
-        if (nodeData && nodeData.nodeType) {
-          // 查找父节点（目标表）
-          const parentNode = nodeData.parentNode;
-          if (parentNode && parentNode.relationId !== undefined) {
-            const relation = allRelations.value.find((r: Relation) => 
-              r.id === parentNode.relationId || allRelations.value.indexOf(r).toString() === parentNode.relationId
-            );
-            if (relation) {
-              if (nodeData.nodeType === 'field') {
-                return `关联字段: ${relation.relationFields.map(f => `${f.sourceField}=${f.targetField}`).join(', ')}<br/>` +
-                       `源表: ${tableData.value?.name}<br/>` +
-                       `目标表: ${relation.targetTable}`;
-              } else if (nodeData.nodeType === 'type') {
-                return `关联类型: ${relation.relationType}<br/>` +
-                       `关联说明: ${relation.relationDescription || '无'}<br/>` +
-                       `源表: ${tableData.value?.name}<br/>` +
-                       `目标表: ${relation.targetTable}`;
-              }
-            }
-          }
+const option = {
+  title: {
+    text: '表关联关系图'
+  },
+  tooltip: {
+    show: true,
+    trigger: 'item',
+    position: 'top',
+    formatter: (params: CallbackDataParams) => {
+        const nodeData = params.data as { 
+          nodeType?: string; 
+          parentNode?: { relationId?: string; name?: string; description?: string }; 
+          name?: string;
+          relationId?: string;
+          description?: string;
+        };
+        
+        // 根据节点类型显示不同的tooltip内容
+        if (nodeData.nodeType === 'field' && nodeData.parentNode && nodeData.name) {
+          return `关联表: ${nodeData.parentNode.name}<br/>关联字段: ${nodeData.name.replace('关联字段: ', '')}`;
+        } else if (nodeData.nodeType === 'type' && nodeData.parentNode && nodeData.name) {
+          return `关联表: ${nodeData.parentNode.name}<br/>关联类型: ${nodeData.name.replace('关联类型: ', '')}`;
+        } else if (nodeData.description && nodeData.name) {
+          // 对于目标表节点，显示完整的关联信息，分行展示
+          const lines = nodeData.description.split('\n');
+          return `${nodeData.name}<br/>${lines.join('<br/>')}`;
         }
-        // 其他节点显示默认信息
-        return params.name;
+        
+        // 默认显示节点名称
+        return nodeData.name || '';
       }
-    },
+  },
     animationDurationUpdate: 1500,
     animationEasingUpdate: 'quinticInOut' as const,
     series: [
@@ -579,7 +735,7 @@ const renderRelationTree = () => {
           padding: [4, 8],
           // 根据节点类型设置不同样式
           formatter: (params: { data: any; name: string }) => {
-            const nodeData = params.data;
+            const nodeData = params.data as { nodeType?: string; name?: string };
             if (nodeData.nodeType === 'field') {
               return `{field|${params.name}}`;
             } else if (nodeData.nodeType === 'type') {
@@ -603,7 +759,8 @@ const renderRelationTree = () => {
               color: '#faad14',
               fontSize: 12
             }
-          },
+          }
+        },
         leaves: {
           label: {
             position: 'right',
@@ -617,7 +774,7 @@ const renderRelationTree = () => {
             borderRadius: 4,
             padding: [4, 8],
             formatter: (params: { data: any; name: string }) => {
-              const nodeData = params.data;
+              const nodeData = params.data as { nodeType?: string; name?: string };
               if (nodeData.nodeType === 'field') {
                 return `{field|${params.name}}`;
               } else if (nodeData.nodeType === 'type') {
@@ -655,28 +812,46 @@ const renderRelationTree = () => {
   };
   
   // 渲染图表
-  logger.debug('设置图表配置项', { option });
-  relationChart.setOption(option);
-  logger.debug('图表渲染完成');
+  try {
+    relationChart.setOption(option);
+  } catch (error) {
+    logger.error('图表渲染失败', error);
+    return;
+  }
   
   // 监听节点点击事件
-  relationChart.on('click', (params: CallbackDataParams) => {
-    logger.debug('节点被点击', { params });
-    const data = params.data as { name?: string; relationId?: string; nodeType?: string };
-    
-    // 只有点击目标表节点时才跳转
-    if (data && data.name && data.relationId !== undefined && !data.nodeType) {
-      // 查找对应的关联关系
-      const relation = allRelations.value.find((r: Relation) => 
-        r.id === data.relationId || allRelations.value.indexOf(r).toString() === data.relationId
-      );
-      if (relation) {
-        // 跳转到目标表
-        goToTableByRelation(relation);
+  try {
+    relationChart.on('click', (params: CallbackDataParams) => {
+      const data = params.data as { name?: string; relationId?: string; nodeType?: string; description?: string };
+      
+      // 只有点击目标表节点时才跳转
+      if (data && data.name && data.relationId !== undefined && !data.nodeType) {
+        // 使用更准确的方式查找relation
+        const relation = allRelations.value.find((r: Relation) => r.id === data.relationId) || 
+                        allRelations.value[Number(data.relationId)];
+        if (relation) {
+          // 跳转到目标表
+          goToTableByRelation(relation);
+        }
       }
-    }
-    // 关联字段和关联类型节点不处理点击事件
-  });
+      // 关联字段和关联类型节点不处理点击事件
+    });
+  } catch (error) {
+    logger.error('设置节点点击事件监听器失败', error);
+  }
+}
+
+const editTable = () => {
+  // 重定向到注册表单页面，并传递编辑模式和数据
+  if (tableData.value?.name) {
+    router.push({
+      path: '/discovery/asset-management/table-management/register',
+      query: { 
+        mode: 'edit',
+        id: tableData.value.name // 使用表名作为ID
+      }
+    })
+  }
 }
 
 const collections = ref([
@@ -739,10 +914,27 @@ const applyPermission = () => {
 }
 
 const switchToRelationsTab = () => {
-  // 切换到关联说明tab
-  activeModalTab.value = 'relations'
+  // 切换到主标签页的数据关系tab
+  activeMainTab.value = 'relations'
   relationViewMode.value = 'list'
 }
+
+// 组件挂载时检查是否需要渲染关系图
+onMounted(() => {
+  logger.debug('组件挂载完成', { 
+    activeTab: activeMainTab.value, 
+    viewMode: relationViewMode.value,
+    hasRelations: allRelations.value && allRelations.value.length > 0
+  });
+  
+  // 如果当前在关联说明tab且视图模式为图表，则渲染树图
+  if (activeMainTab.value === 'relations' && relationViewMode.value === 'graph') {
+    nextTick(() => {
+      logger.debug('组件挂载后准备渲染关系树图');
+      renderRelationTree();
+    });
+  }
+});
     
 
 
@@ -798,8 +990,16 @@ const switchToRelationsTab = () => {
 
 .relation-tree-container {
   width: 100%;
-  height: 400px;
+  height: 500px;
   border: 1px solid #e5e5e5;
   border-radius: 4px;
+  margin-top: 16px;
+  position: static;
+  z-index: 1000;
+}
+
+.relation-field {
+  color: #1890ff;
+  text-decoration: underline;
 }
 </style>

@@ -399,6 +399,11 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       // 添加一个方法来获取isReady的值
       getIsReady() {
         return structuredLayout.isReady?.value || true
+      },
+      // 获取布局引擎实例
+      getLayoutEngine() {
+        console.log('[useConfigDrawers] 调用 getLayoutEngine')
+        return structuredLayout.getLayoutEngine ? structuredLayout.getLayoutEngine() : null
       }
     }
   }

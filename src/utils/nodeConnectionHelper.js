@@ -24,7 +24,7 @@ export const calculateNextNodePosition = (sourceNode, outputIndex = 0, targetNod
   
   // 基础间距配置
   const HORIZONTAL_SPACING = 200 // 水平间距
-  const VERTICAL_SPACING = 150   // 垂直间距
+  const VERTICAL_SPACING = 200   // 🔧 优化：垂直间距从150增加到200，改善层间距
   const BRANCH_OFFSET = 100      // 分支偏移
 
   let targetX = sourcePos.x + sourceSize.width + HORIZONTAL_SPACING

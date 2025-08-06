@@ -210,6 +210,7 @@ export class CoordinateSystemManager {
   /**
    * 修正预览线路径
    */
+  // @ts-ignore
   correctPreviewLinePath(sourceNodeId, branchIndex, startPoint, endPoint, controlPoints = []) {
     if (!this.graph) return { startPoint, endPoint, controlPoints };
 

@@ -131,11 +131,12 @@ export const PreviewLineTypes = {
 }
 
 export class UnifiedPreviewLineManager {
-  constructor(graph, branchManager, layoutConfig, layoutDirection = 'TB') {
+  constructor(graph, branchManager, layoutConfig, layoutDirection = 'TB', layoutEngine = null) {
     this.graph = graph
     this.branchManager = branchManager
     this.layoutConfig = layoutConfig
     this.layoutDirection = layoutDirection
+    this.layoutEngine = layoutEngine // 布局引擎引用
     
     // 调试模式开关
     this.debugMode = false
@@ -189,7 +190,11 @@ export class UnifiedPreviewLineManager {
     this.isProcessingSnap = false
     this.snappedNodes = new Set()
     
-    console.log('🚀 [统一预览线管理器] 初始化完成 - 已启用性能优化和坐标系统管理')
+    // 🔧 新增：待处理计算队列机制
+    this.pendingCalculations = new Map() // key: nodeId, value: { node, type, timestamp }
+    this.layoutEngineReady = false
+    
+    console.log('🚀 [统一预览线管理器] 初始化完成 - 已启用性能优化、坐标系统管理和待处理计算队列')
   }
 
   /**
@@ -222,6 +227,202 @@ export class UnifiedPreviewLineManager {
       // 刷新所有预览线以应用新的方向配置
       this.refreshAllPreviewLines()
     }
+  }
+
+  /**
+   * 设置布局引擎引用
+   * @param {Object} layoutEngine - 布局引擎实例
+   */
+  setLayoutEngine(layoutEngine) {
+    this.layoutEngine = layoutEngine
+    this.layoutEngineReady = !!layoutEngine
+    
+    console.log('🔗 [统一预览线管理器] 布局引擎引用已设置:', {
+      引擎类型: layoutEngine?.constructor?.name,
+      有getNodeLayerY方法: typeof layoutEngine?.getNodeLayerY === 'function',
+      有getNextLayerY方法: typeof layoutEngine?.getNextLayerY === 'function',
+      引擎就绪状态: this.layoutEngineReady
+    })
+    
+    // 🔧 关键修复：重新计算所有预览线位置
+    if (layoutEngine && this.previewLines.size > 0) {
+      console.log('🔄 [统一预览线管理器] 开始重新计算所有预览线位置...')
+      this.recalculateAllPreviewPositions()
+    }
+    
+    // 🔧 新增：处理待处理计算队列
+    if (layoutEngine && this.pendingCalculations.size > 0) {
+      console.log('📋 [统一预览线管理器] 处理待处理计算队列:', this.pendingCalculations.size, '个任务')
+      this.processPendingCalculations()
+    }
+  }
+
+  /**
+   * 重新计算所有预览线位置
+   * 当布局引擎设置后调用，确保所有预览线使用正确的Y坐标
+   */
+  recalculateAllPreviewPositions() {
+    let recalculatedCount = 0
+    let errorCount = 0
+    
+    this.previewLines.forEach((previewInstance, nodeId) => {
+      try {
+        const node = previewInstance.sourceNode
+        if (!node) {
+          console.warn('⚠️ [统一预览线管理器] 节点不存在，跳过重新计算:', nodeId)
+          return
+        }
+        
+        const nodePosition = node.getPosition()
+        const nodeSize = node.getSize()
+        
+        if (previewInstance.type === PreviewLineTypes.SINGLE) {
+          // 重新计算单一预览线位置
+          const newEndPosition = this.calculateSinglePreviewPosition(node, nodePosition, nodeSize)
+          this.updatePreviewLineEndPosition(previewInstance, newEndPosition)
+          recalculatedCount++
+        } else if (previewInstance.type === PreviewLineTypes.BRANCH) {
+          // 重新计算分支预览线位置
+          this.recalculateBranchPreviewPositions(previewInstance, node, nodePosition, nodeSize)
+          recalculatedCount++
+        }
+      } catch (error) {
+        console.error('❌ [统一预览线管理器] 重新计算预览线位置失败:', nodeId, error)
+        errorCount++
+      }
+    })
+    
+    console.log('✅ [统一预览线管理器] 预览线位置重新计算完成:', {
+      总数: this.previewLines.size,
+      成功: recalculatedCount,
+      失败: errorCount
+    })
+   }
+
+  /**
+   * 处理待处理计算队列
+   * 当布局引擎设置后，处理所有待处理的预览线计算任务
+   */
+  processPendingCalculations() {
+    let processedCount = 0
+    let errorCount = 0
+    
+    this.pendingCalculations.forEach((task, nodeId) => {
+      try {
+        const { node, type } = task
+        
+        if (!node || !this.graph.hasCell(node.id)) {
+          console.warn('⚠️ [待处理队列] 节点不存在，跳过:', nodeId)
+          return
+        }
+        
+        // 根据任务类型执行相应的计算
+        if (type === 'create') {
+          this.createUnifiedPreviewLine(node, UnifiedPreviewStates.STATIC_DISPLAY)
+        } else if (type === 'update') {
+          this.updatePreviewLinePosition(node)
+        }
+        
+        processedCount++
+        console.log('✅ [待处理队列] 任务处理完成:', { nodeId, type })
+        
+      } catch (error) {
+        console.error('❌ [待处理队列] 任务处理失败:', nodeId, error)
+        errorCount++
+      }
+    })
+    
+    // 清空队列
+    this.pendingCalculations.clear()
+    
+    console.log('📋 [待处理队列] 处理完成:', {
+      总任务数: processedCount + errorCount,
+      成功: processedCount,
+      失败: errorCount
+    })
+  }
+
+  /**
+   * 添加任务到待处理计算队列
+   * @param {string} nodeId - 节点ID
+   * @param {Object} node - 节点对象
+   * @param {string} type - 任务类型 ('create' 或 'update')
+   */
+  addToPendingCalculations(nodeId, node, type) {
+    if (!this.layoutEngineReady) {
+      this.pendingCalculations.set(nodeId, {
+        node,
+        type,
+        timestamp: Date.now()
+      })
+      console.log('📋 [待处理队列] 任务已添加:', { nodeId, type, 队列大小: this.pendingCalculations.size })
+      return true
+    }
+    return false
+  }
+
+  /**
+   * 更新预览线终点位置
+   * @param {Object} previewInstance - 预览线实例
+   * @param {Object} newEndPosition - 新的终点位置
+   */
+  updatePreviewLineEndPosition(previewInstance, newEndPosition) {
+    if (!previewInstance.line || !newEndPosition) return
+    
+    try {
+      // 更新存储的终点位置
+      previewInstance.endPosition = newEndPosition
+      
+      // 更新X6线条的终点
+      const currentTarget = previewInstance.line.getTarget()
+      previewInstance.line.setTarget({
+        ...currentTarget,
+        x: newEndPosition.x,
+        y: newEndPosition.y
+      })
+      
+      console.log('🎯 [统一预览线管理器] 预览线位置已更新:', {
+        节点ID: previewInstance.sourceNode?.id,
+        新位置: newEndPosition
+      })
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 更新预览线位置失败:', error)
+    }
+  }
+
+  /**
+   * 重新计算分支预览线位置
+   * @param {Object} previewInstance - 分支预览线实例
+   * @param {Object} node - 源节点
+   * @param {Object} nodePosition - 节点位置
+   * @param {Object} nodeSize - 节点大小
+   */
+  recalculateBranchPreviewPositions(previewInstance, node, nodePosition, nodeSize) {
+    if (!previewInstance.branches || !Array.isArray(previewInstance.branches)) {
+      console.warn('⚠️ [统一预览线管理器] 分支预览线数据无效')
+      return
+    }
+    
+    previewInstance.branches.forEach((branch, index) => {
+      try {
+        const newEndPosition = this.calculateBranchPreviewPosition(node, nodePosition, nodeSize, index, previewInstance.branches.length)
+        
+        if (branch.line && newEndPosition) {
+          // 更新分支线条的终点
+          const currentTarget = branch.line.getTarget()
+          branch.line.setTarget({
+            ...currentTarget,
+            x: newEndPosition.x,
+            y: newEndPosition.y
+          })
+          
+          // 更新存储的位置
+          branch.endPosition = newEndPosition
+        }
+      } catch (error) {
+        console.error('❌ [统一预览线管理器] 重新计算分支预览线位置失败:', index, error)
+      }
+    })
   }
 
   /**
@@ -347,6 +548,15 @@ export class UnifiedPreviewLineManager {
     if (!this.shouldCreatePreviewLine(node)) {
       console.log('⏭️ [统一预览线管理器] 跳过预览线创建:', node.id)
       return null
+    }
+
+    // 🔧 新增：如果布局引擎未就绪，添加到待处理队列
+    if (!this.layoutEngineReady) {
+      const added = this.addToPendingCalculations(node.id, node, 'create')
+      if (added) {
+        console.log('📋 [统一预览线管理器] 预览线创建任务已加入待处理队列:', node.id)
+        return null
+      }
     }
 
     const nodeData = node.getData() || {}
@@ -3240,11 +3450,31 @@ export class UnifiedPreviewLineManager {
     // 🔧 修复坐标系统：确保使用中心点坐标
     // nodePosition 是左上角坐标，需要转换为中心点坐标
     const nodeCenterX = nodePosition.x + nodeSize.width / 2
-    const nodeCenterY = nodePosition.y + nodeSize.height / 2
+    
+    // 🎯 关键修复：使用布局引擎的层级Y坐标系统
+    const nodeId = node.id || node.getId()
+    let endY = nodePosition.y + nodeSize.height + 100 // 默认固定偏移
+    
+    // 尝试获取布局引擎并使用层级Y坐标
+    const layoutEngine = this.layoutEngine || 
+                        window.unifiedStructuredLayoutEngine || 
+                        this.graph?.layoutEngine
+    
+    if (layoutEngine && typeof layoutEngine.getNextLayerY === 'function') {
+      try {
+        const nextLayerY = layoutEngine.getNextLayerY(nodeId)
+        endY = nextLayerY
+        console.log(`📍 [预览线位置] 节点 ${nodeId} 使用布局引擎层级Y坐标: ${endY}`)
+      } catch (error) {
+        console.warn(`⚠️ [预览线位置] 获取布局引擎层级Y坐标失败，使用固定偏移: ${error.message}`)
+      }
+    } else {
+      console.warn(`⚠️ [预览线位置] 布局引擎不可用，节点 ${nodeId} 使用固定偏移Y坐标: ${endY}`)
+    }
     
     return {
       x: nodeCenterX,  // 使用节点中心X坐标
-      y: nodeCenterY + nodeSize.height / 2 + 100  // 从节点底部向下100px
+      y: endY  // 使用布局引擎的层级Y坐标或固定偏移
     }
   }
 
@@ -3259,11 +3489,27 @@ export class UnifiedPreviewLineManager {
     // 🔧 修复坐标系统：计算节点的中心点坐标
     // node.getPosition() 返回左上角坐标，需要转换为中心点坐标
     const nodeCenterX = nodePosition.x + nodeSize.width / 2
-    const nodeCenterY = nodePosition.y + nodeSize.height / 2
     
-    // 所有分支预览线都从节点中心出发，到达不同的终点位置
-    const centerX = nodeCenterX  // 使用节点中心X坐标
-    const baseY = nodeCenterY + nodeSize.height / 2 + 100  // 从节点底部向下100px
+    // 🎯 关键修复：使用布局引擎的层级Y坐标系统
+    const nodeId = node.id || node.getId()
+    let baseY = nodePosition.y + nodeSize.height + 100 // 默认固定偏移
+    
+    // 尝试获取布局引擎并使用层级Y坐标
+    const layoutEngine = this.layoutEngine || 
+                        window.unifiedStructuredLayoutEngine || 
+                        this.graph?.layoutEngine
+    
+    if (layoutEngine && typeof layoutEngine.getNextLayerY === 'function') {
+      try {
+        const nextLayerY = layoutEngine.getNextLayerY(nodeId)
+        baseY = nextLayerY
+        console.log(`📍 [分支预览线位置] 节点 ${nodeId} 使用布局引擎层级Y坐标: ${baseY}`)
+      } catch (error) {
+        console.warn(`⚠️ [分支预览线位置] 获取布局引擎层级Y坐标失败，使用固定偏移: ${error.message}`)
+      }
+    } else {
+      console.warn(`⚠️ [分支预览线位置] 布局引擎不可用，节点 ${nodeId} 使用固定偏移Y坐标: ${baseY}`)
+    }
     
     // 计算终点位置的分散，但起点保持在中心
     const baseSpacing = Math.max(nodeSize.width * 0.8, 60) // 最小60px，最大为节点宽度的80%
@@ -3271,11 +3517,11 @@ export class UnifiedPreviewLineManager {
     const spacing = Math.min(baseSpacing, maxSpacing)
     
     const totalWidth = (branches.length - 1) * spacing
-    const endX = centerX - totalWidth / 2 + index * spacing
+    const endX = nodeCenterX - totalWidth / 2 + index * spacing
     
     return {
       x: endX, // 终点X坐标分散
-      y: baseY  // 终点Y坐标相同
+      y: baseY  // 使用布局引擎的层级Y坐标或固定偏移
     }
   }
 
@@ -3286,6 +3532,15 @@ export class UnifiedPreviewLineManager {
     // 检查节点是否应该有预览线
     if (!this.shouldCreatePreviewLine(node)) {
       return
+    }
+
+    // 🔧 新增：如果布局引擎未就绪，添加到待处理队列
+    if (!this.layoutEngineReady) {
+      const added = this.addToPendingCalculations(node.id, node, 'update')
+      if (added) {
+        console.log('📋 [统一预览线管理器] 预览线更新任务已加入待处理队列:', node.id)
+        return
+      }
     }
 
     const previewInstance = this.previewLines.get(node.id)
@@ -6236,6 +6491,105 @@ export class UnifiedPreviewLineManager {
       this.snappedNodes.clear()
     }
     console.log('🧹 [统一预览线管理器] 已清理吸附状态')
+  }
+
+  /**
+   * 🎯 新增：清理孤立预览线
+   * 清理源节点不存在或已连接的预览线
+   */
+  cleanupOrphanedPreviewLines() {
+    console.log('🧹 [预览线清理] 开始清理孤立预览线')
+    
+    let cleanedCount = 0
+    const previewLinesToRemove = []
+    
+    // 检查所有预览线
+    this.previewLines.forEach((previewInstance, nodeId) => {
+      const sourceNode = this.graph.getCellById(nodeId)
+      
+      // 检查源节点是否存在
+      if (!sourceNode) {
+        previewLinesToRemove.push(nodeId)
+        console.log(`🗑️ [预览线清理] 源节点不存在，标记清理: ${nodeId}`)
+        return
+      }
+      
+      // 检查节点是否已有实际连接
+      const hasRealConnections = this.hasExistingRealConnections(sourceNode)
+      if (hasRealConnections) {
+        previewLinesToRemove.push(nodeId)
+        console.log(`🗑️ [预览线清理] 节点已有实际连接，标记清理: ${nodeId}`)
+        return
+      }
+      
+      // 检查预览线实例是否有效
+      if (previewInstance.line && previewInstance.line.removed) {
+        previewLinesToRemove.push(nodeId)
+        console.log(`🗑️ [预览线清理] 预览线已被移除，标记清理: ${nodeId}`)
+        return
+      }
+    })
+    
+    // 执行清理
+    previewLinesToRemove.forEach(nodeId => {
+      this.removePreviewLine(nodeId)
+      cleanedCount++
+    })
+    
+    if (cleanedCount > 0) {
+      console.log(`🧹 [预览线清理] 清理完成，共清理 ${cleanedCount} 条孤立预览线`)
+    } else {
+      console.log('✅ [预览线清理] 无需清理，所有预览线状态正常')
+    }
+    
+    return cleanedCount
+  }
+
+  /**
+   * 🎯 新增：执行加载完成检查
+   * 在数据加载完成后调用，确保预览线状态正确
+   */
+  performLoadCompleteCheck() {
+    console.log('🔍 [加载完成检查] 开始检查预览线状态')
+    
+    // 延迟执行，确保所有数据加载完成
+    setTimeout(() => {
+      const cleanedCount = this.cleanupOrphanedPreviewLines()
+      
+      // 统计当前状态
+      const totalPreviewLines = this.previewLines.size
+      const totalNodes = this.graph.getNodes().length
+      
+      console.log('📊 [加载完成检查] 状态统计:', {
+        总节点数: totalNodes,
+        预览线数量: totalPreviewLines,
+        清理数量: cleanedCount,
+        状态: cleanedCount > 0 ? '已优化' : '正常'
+      })
+      
+      if (cleanedCount === 0 && totalPreviewLines > 0) {
+        console.log('✅ [加载完成检查] 预览线状态良好，无需清理')
+      }
+    }, 100) // 100ms延迟确保所有异步操作完成
+  }
+
+  /**
+   * 检查节点是否已有实际连接
+   * @param {Object} node - 节点对象
+   * @returns {boolean} 是否有实际连接
+   */
+  hasExistingRealConnections(node) {
+    const edges = this.graph.getConnectedEdges(node)
+    const realConnections = edges.filter(edge => {
+      const edgeData = edge.getData() || {}
+      return !edgeData.isPreview && 
+             !edgeData.isUnifiedPreview && 
+             !edgeData.isPersistentPreview &&
+             !edge.id.includes('unified_preview') &&
+             !edge.id.includes('preview_')
+    })
+    
+    return realConnections.length > 0
   }
 
   /**

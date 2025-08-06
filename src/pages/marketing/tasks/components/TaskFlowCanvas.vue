@@ -907,47 +907,16 @@ const initCanvas = async () => {
   updateLayoutStats()
   console.log('[TaskFlowCanvas] 布局统计信息初始化完成')
 
-  // 手动初始化结构化布局和连接预览管理器
-  console.log('[TaskFlowCanvas] 开始手动初始化结构化布局')
+  // 🔧 时序修复：先初始化基础组件，稍后在节点加载后再初始化布局引擎
+  console.log('[TaskFlowCanvas] 开始初始化结构化布局基础组件')
   if (configDrawers.value?.structuredLayout) {
-    // 首先初始化布局引擎
-    configDrawers.value.structuredLayout.initializeLayoutEngine()
-    console.log('[TaskFlowCanvas] 布局引擎初始化完成')
-
-    // 获取初始化后的管理器实例（使用正确的属性名）
-    const connectionPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager
-
-    console.log('[TaskFlowCanvas] 结构化布局组件初始化结果:', {
-      layoutEngineStatus: configDrawers.value.structuredLayout.getLayoutEngineStatus?.() || 'unknown',
-      unifiedPreviewManager: !!connectionPreviewManager,
-      isReady: configDrawers.value.structuredLayout.isReady || false
-    })
-
-    if (connectionPreviewManager) {
-      console.log('[TaskFlowCanvas] 统一预览线管理器已成功初始化并绑定事件监听器')
-    } else {
-      console.error('[TaskFlowCanvas] 统一预览线管理器初始化失败')
-    }
+    // 只初始化基础组件，不立即初始化布局引擎
+    console.log('[TaskFlowCanvas] 结构化布局基础组件初始化完成，等待节点加载后再初始化布局引擎')
   }
 
-  // 获取已有的统一预览线管理器（避免重复创建）
-  console.log('[TaskFlowCanvas] 获取已有的统一预览线管理器')
-  let enhancedPreviewManager = null
-  if (configDrawers.value?.structuredLayout) {
-    enhancedPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager
-
-    if (enhancedPreviewManager) {
-      console.log('[TaskFlowCanvas] 已获取现有的统一预览线管理器')
-
-      // 暴露到全局变量以便调试（保持兼容性）
-      window.enhancedPreviewManager = enhancedPreviewManager
-      console.log('🔍 [TaskFlowCanvas] 统一预览线管理器已暴露到全局变量')
-    } else {
-      console.error('[TaskFlowCanvas] 无法获取统一预览线管理器')
-    }
-  } else {
-    console.error('[TaskFlowCanvas] StructuredLayout 不存在，无法获取统一预览线管理器')
-  }
+  // 🔧 方案D：移除过早的预览线管理器访问，避免初始化时序问题
+  // 预览线管理器将在数据加载完成后通过 initializeLayoutEngineAfterDataLoad 方法初始化
+  console.log('[TaskFlowCanvas] 跳过预览线管理器的过早访问，将在数据加载后初始化')
 
   // 初始化拖拽缩放管理器（在绑定其他事件之前）
   panZoomManager = new CanvasPanZoomManager(graph)
@@ -2402,7 +2371,72 @@ const loadInitialData = () => {
       })
       console.log('[TaskFlowCanvas] 所有初始连接加载完成')
     }
+
+    // 🔧 关键时序修复：在节点和连接都加载完成后，再初始化布局引擎
+    console.log('[TaskFlowCanvas] 开始初始化布局引擎（节点已加载）')
+    initializeLayoutEngineAfterDataLoad()
   })
+}
+
+// 🔧 新增函数：在数据加载完成后初始化布局引擎
+const initializeLayoutEngineAfterDataLoad = async () => {
+  if (!configDrawers.value?.structuredLayout) {
+    console.warn('[TaskFlowCanvas] 结构化布局组件不存在，跳过布局引擎初始化')
+    return
+  }
+
+  try {
+    // 首先初始化布局引擎
+    configDrawers.value.structuredLayout.initializeLayoutEngine()
+    console.log('[TaskFlowCanvas] 布局引擎初始化完成')
+
+    // 立即应用布局来创建布局引擎实例（现在画布上有节点了）
+    if (graph && typeof configDrawers.value.structuredLayout.applyUnifiedStructuredLayout === 'function') {
+      try {
+        await configDrawers.value.structuredLayout.applyUnifiedStructuredLayout(graph)
+        console.log('✅ [TaskFlowCanvas] 布局引擎实例已创建（包含层级信息）')
+      } catch (error) {
+        console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败:', error)
+      }
+    }
+
+    // 获取初始化后的管理器实例
+    const connectionPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager
+
+    console.log('[TaskFlowCanvas] 结构化布局组件初始化结果:', {
+      layoutEngineStatus: configDrawers.value.structuredLayout.getLayoutEngineStatus?.() || 'unknown',
+      unifiedPreviewManager: !!connectionPreviewManager,
+      isReady: configDrawers.value.structuredLayout.isReady || false
+    })
+
+    if (connectionPreviewManager) {
+      console.log('[TaskFlowCanvas] 统一预览线管理器已成功初始化并绑定事件监听器')
+      
+      // 设置布局引擎引用到预览线管理器
+      const layoutEngine = configDrawers.value.structuredLayout.getLayoutEngine?.()
+      if (layoutEngine && typeof connectionPreviewManager.setLayoutEngine === 'function') {
+        connectionPreviewManager.setLayoutEngine(layoutEngine)
+        console.log('✅ [TaskFlowCanvas] 布局引擎引用已设置（包含层级信息）')
+      } else {
+        console.warn('⚠️ [TaskFlowCanvas] 无法设置布局引擎引用:', {
+          layoutEngine: !!layoutEngine,
+          setLayoutEngineMethod: typeof connectionPreviewManager.setLayoutEngine
+        })
+      }
+
+      // 🔧 新增：执行数据加载完成后的预览线清理检查
+      if (typeof connectionPreviewManager.performLoadCompleteCheck === 'function') {
+        connectionPreviewManager.performLoadCompleteCheck()
+        console.log('✅ [TaskFlowCanvas] 已触发数据加载完成后的预览线清理检查')
+      } else {
+        console.warn('⚠️ [TaskFlowCanvas] 预览线管理器不支持数据加载完成检查方法')
+      }
+    } else {
+      console.error('[TaskFlowCanvas] 统一预览线管理器初始化失败')
+    }
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 布局引擎初始化过程中发生错误:', error)
+  }
 }
 
 // 汇总日志 - 统计页面中各种元素的数量（仅在开发环境下执行详细统计）

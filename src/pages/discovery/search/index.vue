@@ -11,11 +11,17 @@
     />
     
     <template v-else>
+      <!-- 缺失工单弹窗 -->
+      <MissingTicketModal 
+        v-model:visible="showMissingTicketModal" 
+        @confirm="handleMissingTicketConfirm"
+      />
+      
       <!-- 搜索区域 -->
       <div class="search-section">
         <div class="search-header">
           <div class="title-area">
-            <h2 class="page-title">聚合搜索</h2>
+            <h2 class="page-title">统一搜索</h2>
             <p class="page-description">搜索和管理您的数据资产</p>
           </div>
           
@@ -26,6 +32,9 @@
               :class="{ active: showAdvancedFilter }"
             >
               <icon-filter />高级搜索
+            </a-button>
+            <a-button type="text" @click="showMissingTicket">
+              <icon-plus />缺失工单
             </a-button>
             <a-button type="text" @click="toggleHistory">
               <icon-history />搜索历史
@@ -236,11 +245,13 @@ import {
   IconHeart, 
   IconUser, 
   IconClockCircle, 
-  IconApps 
+  IconApps,
+  IconPlus
 } from '@arco-design/web-vue/es/icon'
 
 // 导入组件
 import LoadingState from '../data-map/components/LoadingState.vue'
+import MissingTicketModal from './MissingTicketModal.vue'
 
 // 导入模拟数据
 import { tableMockData } from '@/mock/tableData.ts'
@@ -275,6 +286,7 @@ const searchLoading = ref(false)
 const searchQuery = ref('')
 const showAdvancedFilter = ref(false)
 const showHistory = ref(false)
+const showMissingTicketModal = ref(false)
 const activeResultType = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(12)
@@ -403,8 +415,8 @@ const performSearch = async (query?: string) => {
   const filterResults = (items: SearchResult[]) => {
     return items.filter(item => {
       const matchesQuery = !searchTerm || 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
       
       const matchesType = !filters.value.type || item.type === filters.value.type
       const matchesDomain = !filters.value.domain || item.domain === filters.value.domain
@@ -529,6 +541,17 @@ const handlePageChange = (page: number) => {
 const handlePageSizeChange = (size: number) => {
   pageSize.value = size
   currentPage.value = 1
+}
+
+// 缺失工单方法
+const showMissingTicket = () => {
+  showMissingTicketModal.value = true
+}
+
+const handleMissingTicketConfirm = (data: any) => {
+  console.log('提交缺失工单:', data)
+  // 这里可以调用API提交工单
+  Message.success('缺失工单已提交')
 }
 
 // 工具方法
