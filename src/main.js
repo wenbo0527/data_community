@@ -1,9 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 
-// 引入mock数据
-import './mock/external-data'
-import './mock/budget'
+// Mock数据现在通过vite-plugin-mock自动加载
 
 // 初始化控制台日志系统（仅在开发环境）
 if (import.meta.env.DEV) {

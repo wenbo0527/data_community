@@ -2,27 +2,47 @@ export default [
   {
     path: '/exploration',
     name: 'exploration',
-    component: () => import('@/views/exploration/index.vue'),
+    component: () => import('@/pages/exploration/index.vue'),
     children: [
       {
         path: 'index',
         name: 'explorationIndex',
-        component: () => import('@/views/exploration/index/index.vue')
+        component: () => import('@/pages/exploration/index.vue')
       },
       {
         path: 'external-monitor',
         name: 'external-data-monitor',
-        component: () => import('@/views/exploration/external-monitor/index.vue')
+        component: () => import('@/pages/exploration/external-data-monitor.vue')
       },
       {
         path: 'budget-management',
         name: 'budgetManagement',
-        component: () => import('@/views/exploration/budget-management/index.vue')
+        component: () => import('@/pages/exploration/budget-management.vue')
       },
       {
-        path: 'external-data-evaluation',
-        name: 'externalDataEvaluation',
-        component: () => import('@/views/exploration/external-data-evaluation/index.vue')
+        path: 'external-data-evaluation/list',
+        name: 'externalDataEvaluationList',
+        component: () => import('@/pages/exploration/ExternalDataEvaluationList.vue')
+      },
+      {
+        path: 'external-data-evaluation/create',
+        name: 'createExternalDataEvaluation',
+        component: () => import('@/pages/exploration/CreateExternalDataEvaluationPage.vue')
+      },
+      {
+        path: 'external-data-evaluation/detail/:id',
+        name: 'externalDataEvaluationDetail',
+        component: () => import('@/pages/exploration/ExternalDataEvaluationDetail.vue')
+      },
+      {
+        path: 'external-data-evaluation/edit/:id',
+        name: 'externalDataEvaluationEdit',
+        component: () => import('@/pages/exploration/ExternalDataEvaluationEdit.vue')
+      },
+      {
+        path: 'external-data-evaluation/progress',
+        name: 'externalDataEvaluationProgress',
+        component: () => import('@/pages/exploration/TaskProgressPage.vue')
       }
     ]
   }

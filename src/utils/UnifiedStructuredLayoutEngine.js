@@ -2,16 +2,49 @@
  * 统一结构化布局引擎
  * 基于父子关联关系的分层分级自底向上定位系统
  * 统一处理预览线endpoint和普通节点的同层排列
+ * 集成性能优化器和AI外呼节点验证器
  */
+
+import { PerformanceOptimizer } from './coordinate-refactor/performance/PerformanceOptimizer.js';
+import { AICallNodeValidator } from './coordinate-refactor/validation/AICallNodeValidator.js';
+import { GeometricCenterAlignment } from './coordinate-refactor/algorithms/GeometricCenterAlignment.js';
 
 export class UnifiedStructuredLayoutEngine {
   constructor(graph, options = {}, previewLineManager = null) {
     this.graph = graph;
     this.previewLineManager = previewLineManager; // 🎯 关键：接收预览线管理器实例
+    
+    // 🚀 新增：初始化性能优化器
+    this.performanceOptimizer = new PerformanceOptimizer({
+      enableDelayedExecution: true,
+      enableBatching: true,
+      enableSmartCache: true,
+      enablePreviewLineThrottling: true,
+      enableDebug: true,
+      ...options.performance
+    });
+    
+    // 🔍 新增：初始化AI外呼节点验证器
+    this.aiCallValidator = new AICallNodeValidator({
+      enableStrictValidation: true,
+      enableBusinessConfigCheck: true,
+      enablePreviewLineValidation: true,
+      enableDebug: true,
+      ...options.validation
+    });
+    
+    // 📐 新增：初始化几何中心对齐器
+    this.geometricAligner = new GeometricCenterAlignment({
+      enableMixedDepthHandling: true,
+      enableVirtualNodeStrategy: true,
+      enableGlobalCenterAlignment: true,
+      enableDebug: true,
+      ...options.alignment
+    });
     this.options = {
       // 层级配置
       layer: {
-        baseHeight: 200, // 🔧 优化：基础层级高度从150增加到200，改善视觉层次
+        baseHeight: 150, // 🔧 还原：基础层级高度从200还原到150，减少Y轴间距
         dynamicSpacing: true, // 动态间距调整
         maxLayers: 10, // 最大层级数
         tolerance: 20, // 层级容差
@@ -65,47 +98,124 @@ export class UnifiedStructuredLayoutEngine {
   async executeLayout() {
     console.log("🚀 [统一结构化布局] 开始执行布局");
 
-    try {
-      // 阶段1：数据预处理
-      const preprocessResult = await this.preprocessLayoutData();
+    // 🚀 使用性能优化器优化布局执行
+    return await this.performanceOptimizer.optimizeLayoutExecution(
+      async () => {
+        try {
+          // 阶段1：数据预处理（优化版）
+          const preprocessResult = await this.performanceOptimizer.optimizeLayoutExecution(
+            () => this.preprocessLayoutData(),
+            this,
+            { stage: 'preprocessing' }
+          );
 
-      // 阶段2：分层构建（包含endpoint集成）
-      const layerStructure =
-        await this.buildHierarchicalLayers(preprocessResult);
+          // 阶段2：分层构建（包含endpoint集成）
+          const layerStructure = await this.performanceOptimizer.optimizeLayoutExecution(
+            () => this.buildHierarchicalLayers(preprocessResult),
+            this,
+            { stage: 'layering' }
+          );
 
-      // 🎯 关键修复：在nodeToLayer映射建立完成后，通知预览线管理器可以安全调用
-      this.notifyPreviewManagerReady();
+          // 🎯 关键修复：在nodeToLayer映射建立完成后，通知预览线管理器可以安全调用
+          this.notifyPreviewManagerReady();
 
-      // 阶段3：自底向上位置计算
-      const positions = await this.calculateBottomUpPositions(layerStructure);
+          // 阶段3：自底向上位置计算（使用几何中心对齐）
+          const positions = await this.performanceOptimizer.optimizeLayoutExecution(
+            () => this.calculateBottomUpPositionsWithGeometricAlignment(layerStructure),
+            this,
+            { stage: 'positioning' }
+          );
 
-      // 阶段4：层级内统一优化（普通节点+endpoint）
-      const optimizedPositions = await this.optimizeUnifiedLayerAlignment(
-        positions,
-        layerStructure,
-      );
+          // 阶段4：层级内统一优化（普通节点+endpoint）
+          const optimizedPositions = await this.performanceOptimizer.optimizeLayoutExecution(
+            () => this.optimizeUnifiedLayerAlignment(positions, layerStructure),
+            this,
+            { stage: 'optimization' }
+          );
 
-      // 阶段5：全局平衡优化
-      const finalPositions = await this.applyGlobalOptimization(
-        optimizedPositions,
-        layerStructure,
-      );
+          // 阶段5：全局平衡优化
+          const finalPositions = await this.performanceOptimizer.optimizeLayoutExecution(
+            () => this.applyGlobalOptimization(optimizedPositions, layerStructure),
+            this,
+            { stage: 'global_optimization' }
+          );
 
-      // 阶段6：应用到图形
-      await this.applyPositionsToGraph(finalPositions);
+          // 阶段6：应用到图形（优化预览线更新频率）
+          await this.performanceOptimizer.optimizeLayoutExecution(
+            () => this.applyPositionsToGraphOptimized(finalPositions),
+            this,
+            { stage: 'application' }
+          );
 
-      // 🎯 关键修复：最终同步所有endpoint位置到预览线管理器
-      this.syncAllEndpointPositions(finalPositions);
+          // 🎯 关键修复：最终同步所有endpoint位置到预览线管理器（节流优化）
+          const optimizedSyncFunction = this.performanceOptimizer.optimizePreviewLineUpdates(
+            () => this.syncAllEndpointPositions(finalPositions),
+            { nodeId: 'global_sync' }
+          );
+          optimizedSyncFunction();
 
-      return this.generateLayoutReport(layerStructure, finalPositions);
-    } catch (error) {
-      console.error("❌ [统一结构化布局] 布局执行失败:", error);
-      return {
-        success: false,
-        error: error.message,
-        message: `布局执行失败: ${error.message}`,
-      };
+          return this.generateLayoutReport(layerStructure, finalPositions);
+        } catch (error) {
+          console.error("❌ [统一结构化布局] 布局执行失败:", error);
+          return {
+            success: false,
+            error: error.message,
+            message: `布局执行失败: ${error.message}`,
+          };
+        }
+      },
+      this,
+      { operation: 'full_layout' }
+    );
+  }
+
+  /**
+   * 🔧 更新图实例（支持布局引擎实例复用）
+   * @param {Object} newGraph - 新的图实例
+   */
+  updateGraph(newGraph) {
+    if (!newGraph) {
+      console.warn('⚠️ [布局引擎更新] 新图实例为空，跳过更新')
+      return
     }
+
+    console.log('🔄 [布局引擎更新] 更新图实例')
+    this.graph = newGraph
+    
+    // 清理旧的布局数据
+    this.layoutModel = {
+      layers: [],
+      nodePositions: new Map(),
+      parentChildMap: new Map(),
+      childParentMap: new Map(),
+      layerMetrics: new Map(),
+      endpointNodes: new Map(),
+      mixedLayerNodes: new Map(),
+      nodeToLayer: new Map(),
+      optimizationHistory: [],
+    }
+    
+    console.log('✅ [布局引擎更新] 图实例更新完成，布局数据已重置')
+  }
+
+  /**
+   * 🔧 更新预览线管理器（支持布局引擎实例复用）
+   * @param {Object} newPreviewManager - 新的预览线管理器实例
+   */
+  updatePreviewManager(newPreviewManager) {
+    console.log('🔄 [布局引擎更新] 更新预览线管理器')
+    this.previewLineManager = newPreviewManager
+    
+    // 重新建立引用关系
+    if (newPreviewManager && newPreviewManager.setLayoutEngine) {
+      newPreviewManager.setLayoutEngine(this)
+      console.log('🔗 [布局引擎更新] 预览线管理器引用已重新建立')
+    } else if (newPreviewManager) {
+      newPreviewManager.layoutEngine = this
+      console.log('🔗 [布局引擎更新] 预览线管理器引用已直接设置')
+    }
+    
+    console.log('✅ [布局引擎更新] 预览线管理器更新完成')
   }
 
   /**
@@ -609,33 +719,240 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 获取节点的层级Y坐标
+   * 🎯 全局简单层级计算：获取节点的层级Y坐标
+   * 使用统一的简单层级方式，不再依赖复杂的自动计算
    * @param {string} nodeId - 节点ID
    * @returns {number} 层级Y坐标
    */
   getNodeLayerY(nodeId) {
-    // 🎯 修复1：增强布局模型检查
-    if (!this.layoutModel || !this.layoutModel.nodeToLayer) {
-      console.warn(
-        `⚠️ [布局引擎] 布局模型未初始化，节点 ${nodeId} 使用默认Y坐标`,
-      );
-      return this.getDefaultLayerY(nodeId);
-    }
-
-    // 🎯 修复2：首先检查节点层级映射
-    const layerIndex = this.layoutModel.nodeToLayer.get(nodeId);
-    if (layerIndex === undefined) {
-      console.warn(
-        `⚠️ [布局引擎] 未找到节点 ${nodeId} 的层级信息，尝试智能推断`,
-      );
-      return this.inferNodeLayerY(nodeId);
-    }
-
+    // 🔧 简化方案：直接使用预定义的层级索引
+    const layerIndex = this.getSimpleLayerIndex(nodeId);
     const layerY = layerIndex * this.options.layer.baseHeight;
+    
     console.log(
-      `📍 [布局引擎] 节点 ${nodeId} 层级Y坐标: 第${layerIndex}层 -> Y=${layerY}`,
+      `📍 [全局简单层级] 节点 ${nodeId} 层级Y坐标: 第${layerIndex}层 -> Y=${layerY}`,
     );
     return layerY;
+  }
+
+  /**
+   * 🎯 基于连接关系的简化层级计算（按照技术方案文档实现）
+   * 规则：
+   * 1. 开始节点：固定为第1层
+   * 2. 普通节点：上一层连接节点的层级 + 1  
+   * 3. 预览线endpoint：源节点层级 + 1
+   * @param {string} nodeId - 节点ID
+   * @returns {number} 层级索引（从1开始）
+   */
+  getSimpleLayerIndex(nodeId) {
+    // 🔧 层级缓存避免重复计算
+    if (!this.layerCache) {
+      this.layerCache = new Map();
+    }
+    
+    if (this.layerCache.has(nodeId)) {
+      return this.layerCache.get(nodeId);
+    }
+
+    let layerIndex = 1;
+
+    try {
+      // 🎯 规则1：开始节点固定为第1层
+      if (nodeId.includes('start') || nodeId.includes('Start') || nodeId.includes('begin')) {
+        layerIndex = 1;
+        console.log(`🎯 [连接层级] 开始节点 ${nodeId} -> 第1层`);
+      }
+      // 🎯 规则2：预览线endpoint = 源节点层级 + 1
+      else if (nodeId.includes('virtual_endpoint') || nodeId.includes('endpoint')) {
+        const sourceNodeId = this.extractSourceNodeFromEndpoint(nodeId);
+        if (sourceNodeId) {
+          const sourceLayer = this.getSimpleLayerIndex(sourceNodeId);
+          layerIndex = sourceLayer + 1;
+          console.log(`🎯 [连接层级] endpoint ${nodeId} 源节点 ${sourceNodeId} 第${sourceLayer}层 -> 第${layerIndex}层`);
+        } else {
+          layerIndex = 4; // 无法确定源节点时的默认层级
+          console.log(`⚠️ [连接层级] endpoint ${nodeId} 无法确定源节点，使用默认第4层`);
+        }
+      }
+      // 🎯 规则3：普通节点 = 父节点最大层级 + 1
+      else {
+        const parentNodes = this.getParentNodes(nodeId);
+        if (parentNodes.length > 0) {
+          const parentLayers = parentNodes.map(parentId => 
+            this.getSimpleLayerIndex(parentId)
+          );
+          layerIndex = Math.max(...parentLayers) + 1;
+          console.log(`🎯 [连接层级] 普通节点 ${nodeId} 父节点层级 [${parentLayers.join(',')}] -> 第${layerIndex}层`);
+        } else {
+          layerIndex = 2; // 无父节点时的默认层级
+          console.log(`⚠️ [连接层级] 普通节点 ${nodeId} 无父节点，使用默认第2层`);
+        }
+      }
+
+    } catch (error) {
+      console.warn(`⚠️ [连接层级] 节点 ${nodeId} 层级计算失败:`, error.message);
+      layerIndex = 2; // 出错时默认第2层
+    }
+
+    // 缓存结果并同步到布局模型
+    this.layerCache.set(nodeId, layerIndex);
+    if (this.layoutModel && this.layoutModel.nodeToLayer) {
+      this.layoutModel.nodeToLayer.set(nodeId, layerIndex);
+    }
+
+    return layerIndex;
+  }
+
+  /**
+   * 根据节点类型获取固定层级
+   * @param {string} nodeType - 节点类型
+   * @param {string} nodeId - 节点ID
+   * @returns {number} 层级索引
+   */
+  getLayerByNodeType(nodeType, nodeId) {
+    // 🎯 固定层级分配表
+    const layerMapping = {
+      // 第1层：开始节点
+      'start': 1,
+      'begin': 1,
+      
+      // 第2层：主要处理节点（统一分配到第2层，解决对齐问题）
+      'ai-call': 2,
+      'manual-call': 2,
+      'audience-split': 2,
+      'condition': 2,
+      'decision': 2,
+      'process': 2,
+      'action': 2,
+      'task': 2,
+      
+      // 第3层：后续处理节点
+      'operation': 3,
+      'transform': 3,
+      'filter': 3,
+      
+      // 第4层：结束节点和endpoint
+      'end': 4,
+      'finish': 4,
+      'endpoint': 4,
+      'terminal': 4
+    };
+
+    // 🔧 特殊处理：根据节点ID模式判断
+    if (nodeId.includes('endpoint') || nodeId.includes('preview') || nodeId.includes('virtual')) {
+      return 4;
+    }
+    
+    if (nodeId.includes('start') || nodeId.includes('begin')) {
+      return 1;
+    }
+
+    // 🔧 关键修正：ai-call, manual-call, audience-split 统一第2层
+    if (nodeId.includes('ai-call') || nodeId.includes('manual-call') || nodeId.includes('audience-split')) {
+      return 2;
+    }
+
+    // 使用映射表或默认第2层
+    return layerMapping[nodeType] || 2;
+  }
+
+  /**
+   * 获取节点类型
+   * @param {string} nodeId - 节点ID
+   * @returns {string} 节点类型
+   */
+  getNodeType(nodeId) {
+    try {
+      // 尝试从图中获取节点数据
+      if (this.graph) {
+        const node = this.graph.getCellById(nodeId);
+        if (node) {
+          const nodeData = node.getData() || {};
+          return nodeData.type || nodeData.nodeType || 'unknown';
+        }
+      }
+    } catch (error) {
+      console.warn(`⚠️ [节点类型] 获取节点 ${nodeId} 类型失败:`, error.message);
+    }
+    
+    // 从节点ID推断类型
+    if (nodeId.includes('ai-call')) return 'ai-call';
+    if (nodeId.includes('manual-call')) return 'manual-call';
+    if (nodeId.includes('audience-split')) return 'audience-split';
+    if (nodeId.includes('start')) return 'start';
+    if (nodeId.includes('end')) return 'end';
+    if (nodeId.includes('endpoint')) return 'endpoint';
+    
+    return 'process'; // 默认类型
+  }
+
+  /**
+   * 🔧 兼容性方法：保持原有接口
+   * @param {string} nodeId - 节点ID
+   * @returns {number} 层级索引
+   */
+  calculateNodeLayerByConnection(nodeId) {
+    // 直接调用简单层级计算
+    return this.getSimpleLayerIndex(nodeId);
+  }
+
+  /**
+   * 从endpoint节点ID中提取源节点ID
+   * @param {string} endpointId - endpoint节点ID
+   * @returns {string|null} 源节点ID
+   */
+  extractSourceNodeFromEndpoint(endpointId) {
+    // 预览线endpoint的命名规则通常是: sourceNodeId_virtual_endpoint_branchId
+    if (endpointId.includes('virtual_endpoint')) {
+      const parts = endpointId.split('_virtual_endpoint');
+      return parts[0];
+    }
+    
+    // 其他endpoint命名规则
+    if (endpointId.includes('_endpoint_')) {
+      const parts = endpointId.split('_endpoint_');
+      return parts[0];
+    }
+    
+    return null;
+  }
+
+  /**
+   * 获取节点的父节点列表
+   * @param {string} nodeId - 节点ID
+   * @returns {Array} 父节点ID列表
+   */
+  getParentNodes(nodeId) {
+    const parentNodes = [];
+    
+    try {
+      // 方法1：从图形结构中获取入边
+      const node = this.graph.getCellById(nodeId);
+      if (node) {
+        const incomingEdges = this.graph.getIncomingEdges(node);
+        if (incomingEdges && incomingEdges.length > 0) {
+          incomingEdges.forEach(edge => {
+            const sourceId = edge.getSourceCellId();
+            if (sourceId && sourceId !== nodeId) {
+              parentNodes.push(sourceId);
+            }
+          });
+        }
+      }
+      
+      // 方法2：从布局模型的父子关系映射中获取
+      if (parentNodes.length === 0 && this.layoutModel && this.layoutModel.childParentMap) {
+        const parents = this.layoutModel.childParentMap.get(nodeId);
+        if (parents && parents.length > 0) {
+          parentNodes.push(...parents);
+        }
+      }
+      
+    } catch (error) {
+      console.warn(`⚠️ [简化层级] 获取节点 ${nodeId} 父节点失败:`, error.message);
+    }
+    
+    return parentNodes;
   }
 
   /**
@@ -1426,6 +1743,43 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
+   * 几何中心对齐的自底向上位置计算
+   * @param {Object} layerStructure - 层级结构
+   * @returns {Map} 节点位置映射
+   */
+  async calculateBottomUpPositionsWithGeometricAlignment(layerStructure) {
+    console.log("🎯 [几何对齐] 开始几何中心对齐的自底向上位置计算");
+
+    try {
+      // 使用几何中心对齐算法
+      const alignmentResult = await this.geometricAligner.calculateGeometricAlignment(
+        layerStructure,
+        this.graph,
+        this.options
+      );
+
+      console.log(
+        `🎯 [几何对齐] 几何中心对齐完成，共计算 ${alignmentResult.positions.size} 个节点位置`,
+      );
+
+      // 验证对齐结果
+      const validationResult = this.geometricAligner.validateAlignment(alignmentResult);
+      if (!validationResult.isValid) {
+        console.warn('⚠️ [几何对齐] 对齐验证失败，回退到标准算法');
+        console.warn('验证错误:', validationResult.errors);
+        return await this.calculateBottomUpPositions(layerStructure);
+      }
+
+      console.log('✅ [几何对齐] 对齐验证通过');
+      return alignmentResult.positions;
+
+    } catch (error) {
+      console.error('❌ [几何对齐] 几何中心对齐失败，回退到标准算法:', error);
+      return await this.calculateBottomUpPositions(layerStructure);
+    }
+  }
+
+  /**
    * 计算最底层位置（统一排列普通节点和endpoint）
    * @param {Array} bottomLayer - 最底层节点
    * @param {Map} positions - 位置映射
@@ -1772,13 +2126,15 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 解决节点重叠
+   * 解决节点重叠 - 增强版
    * @param {Array} layerNodes - 层级节点
    * @param {Map} positions - 位置映射
    * @returns {number} 调整次数
    */
   resolveNodeOverlaps(layerNodes, positions) {
-    const minSpacing = this.options.node.minSpacing;
+    // 🔧 增强修复：强制最小间距，确保底层节点不重叠
+    const baseMinSpacing = this.options.node.minSpacing;
+    const enhancedMinSpacing = Math.max(baseMinSpacing, 150); // 强制最小150px间距
     let adjustments = 0;
 
     // 🎯 关键修复：过滤掉没有位置信息的节点，避免TypeError
@@ -1799,7 +2155,7 @@ export class UnifiedStructuredLayoutEngine {
       return 0;
     }
 
-    console.log(`📊 [重叠解决] 开始处理 ${validNodes.length} 个节点的重叠问题`);
+    console.log(`📊 [重叠解决] 开始处理 ${validNodes.length} 个节点的重叠问题，强制最小间距: ${enhancedMinSpacing}px`);
 
     // 按X坐标排序
     const sortedNodes = validNodes.sort((a, b) => {
@@ -1817,7 +2173,93 @@ export class UnifiedStructuredLayoutEngine {
       }),
     );
 
-    // 从左到右检查并调整重叠
+    // 🔧 增强修复：多轮重叠检测，确保彻底解决重叠
+    let maxIterations = 3;
+    let iteration = 0;
+    
+    while (iteration < maxIterations) {
+      let iterationAdjustments = 0;
+      
+      // 从左到右检查并调整重叠
+      for (let i = 1; i < sortedNodes.length; i++) {
+        const currentNode = sortedNodes[i];
+        const prevNode = sortedNodes[i - 1];
+
+        const currentPos = positions.get(currentNode.id || currentNode.getId());
+        const prevPos = positions.get(prevNode.id || prevNode.getId());
+
+        // 🔧 增强修复：根据节点类型动态调整间距
+        let requiredSpacing = enhancedMinSpacing;
+        
+        // 如果是不同类型的节点，增加额外间距
+        const currentIsEndpoint = currentNode.isEndpoint;
+        const prevIsEndpoint = prevNode.isEndpoint;
+        if (currentIsEndpoint !== prevIsEndpoint) {
+          requiredSpacing += 30; // 混合类型节点额外间距
+        }
+
+        const actualSpacing = currentPos.x - prevPos.x;
+
+        if (actualSpacing < requiredSpacing) {
+          const adjustment = requiredSpacing - actualSpacing + 10; // 额外10px缓冲
+          const oldX = currentPos.x;
+          currentPos.x += adjustment;
+          adjustments++;
+          iterationAdjustments++;
+
+          console.log(
+            `🔧 [重叠解决-轮次${iteration + 1}] 调整节点 ${currentNode.id || currentNode.getId()}: ${oldX.toFixed(1)} -> ${currentPos.x.toFixed(1)} (+${adjustment.toFixed(1)}px, 需求间距: ${requiredSpacing}px)`,
+          );
+
+          // 🎯 关键修复：对于虚拟endpoint节点，同步其内部位置
+          if (currentNode.isEndpoint && currentNode.setPosition) {
+            currentNode.setPosition({ x: currentPos.x, y: currentPos.y });
+            console.log(
+              `🎯 [同步修复] 虚拟endpoint ${currentNode.id || currentNode.getId()} 内部位置已同步: (${currentPos.x.toFixed(1)}, ${currentPos.y})`,
+            );
+          }
+
+          // 🔧 增强修复：同步更新图形节点位置
+          if (!currentNode.isEndpoint) {
+            const graphNode = this.graph.getCellById(currentNode.id || currentNode.getId());
+            if (graphNode) {
+              graphNode.setPosition({ x: currentPos.x, y: currentPos.y });
+              console.log(`🎯 [图形同步] 普通节点 ${currentNode.id || currentNode.getId()} 图形位置已同步`);
+            }
+          }
+        }
+      }
+      
+      iteration++;
+      
+      // 如果本轮没有调整，说明重叠已解决
+      if (iterationAdjustments === 0) {
+        console.log(`✅ [重叠解决] 第${iteration}轮检测无重叠，解决完成`);
+        break;
+      }
+      
+      console.log(`📊 [重叠解决] 第${iteration}轮完成，调整了${iterationAdjustments}个节点`);
+    }
+
+    // 🔧 增强修复：最终验证，确保没有遗漏的重叠
+    this.validateNoOverlaps(sortedNodes, positions, enhancedMinSpacing);
+
+    console.log(`📊 [重叠解决] 重叠解决完成，共调整 ${adjustments} 个节点，执行了${iteration}轮检测`);
+
+    return adjustments;
+  }
+
+  /**
+   * 🔧 增强修复：验证没有节点重叠
+   * @param {Array} sortedNodes - 排序后的节点
+   * @param {Map} positions - 位置映射
+   * @param {number} minSpacing - 最小间距
+   */
+  validateNoOverlaps(sortedNodes, positions, minSpacing) {
+    console.log('🔍 [重叠验证] 开始最终重叠验证');
+    
+    let overlapCount = 0;
+    
     for (let i = 1; i < sortedNodes.length; i++) {
       const currentNode = sortedNodes[i];
       const prevNode = sortedNodes[i - 1];
@@ -1825,32 +2267,19 @@ export class UnifiedStructuredLayoutEngine {
       const currentPos = positions.get(currentNode.id || currentNode.getId());
       const prevPos = positions.get(prevNode.id || prevNode.getId());
 
-      const requiredSpacing = minSpacing;
       const actualSpacing = currentPos.x - prevPos.x;
 
-      if (actualSpacing < requiredSpacing) {
-        const adjustment = requiredSpacing - actualSpacing;
-        const oldX = currentPos.x;
-        currentPos.x += adjustment;
-        adjustments++;
-
-        console.log(
-          `🔧 [重叠解决] 调整节点 ${currentNode.id || currentNode.getId()}: ${oldX.toFixed(1)} -> ${currentPos.x.toFixed(1)} (+${adjustment.toFixed(1)}px)`,
-        );
-
-        // 🎯 关键修复：对于虚拟endpoint节点，同步其内部位置
-        if (currentNode.isEndpoint && currentNode.setPosition) {
-          currentNode.setPosition({ x: currentPos.x, y: currentPos.y });
-          console.log(
-            `🎯 [同步修复] 虚拟endpoint ${currentNode.id || currentNode.getId()} 内部位置已同步: (${currentPos.x.toFixed(1)}, ${currentPos.y})`,
-          );
-        }
+      if (actualSpacing < minSpacing) {
+        overlapCount++;
+        console.error(`❌ [重叠验证] 发现残留重叠: ${prevNode.id || prevNode.getId()} 和 ${currentNode.id || currentNode.getId()}, 间距: ${actualSpacing.toFixed(1)}px (需求: ${minSpacing}px)`);
       }
     }
-
-    console.log(`📊 [重叠解决] 重叠解决完成，共调整 ${adjustments} 个节点`);
-
-    return adjustments;
+    
+    if (overlapCount === 0) {
+      console.log('✅ [重叠验证] 验证通过，无节点重叠');
+    } else {
+      console.error(`❌ [重叠验证] 发现${overlapCount}处重叠，需要进一步处理`);
+    }
   }
 
   /**
@@ -2310,6 +2739,9 @@ export class UnifiedStructuredLayoutEngine {
       this.applyAestheticOptimizations(positions, layerStructure);
     }
 
+    // 🎯 关键修复：验证和修正同层Y坐标一致性（增强版 - 包含父子节点对齐）
+    this.validateAndFixLayerYCoordinates(positions);
+
     console.log("🌍 [全局优化] 全局优化完成");
 
     return positions;
@@ -2613,12 +3045,12 @@ export class UnifiedStructuredLayoutEngine {
 
   /**
    * 计算智能端点位置 - 避免重叠的分布算法
-   * @param {Object} sourceNode - 源节点
-   * @param {Object} nodePosition - 节点位置
-   * @param {Object} nodeSize - 节点大小
+   * @param {any} sourceNode - 源节点
+   * @param {any} nodePosition - 节点位置
+   * @param {any} nodeSize - 节点大小
    * @param {number} existingEndpointCount - 已存在的端点数量
    * @param {boolean} useOptimizedPosition - 是否使用优化后的位置
-   * @returns {Object} 计算出的端点位置
+   * @returns {any} 计算出的端点位置
    */
   calculateIntelligentEndpointPosition(sourceNode, nodePosition, nodeSize, existingEndpointCount, useOptimizedPosition = false) {
     console.log(`🎯 [智能端点] 为节点 ${sourceNode.id} 计算智能端点位置，已有端点: ${existingEndpointCount}, 使用优化位置: ${useOptimizedPosition}`);
@@ -2641,7 +3073,17 @@ export class UnifiedStructuredLayoutEngine {
       console.log(`📍 [初始位置] 节点 ${sourceNode.id} 使用原始位置: (${nodePosition.x}, ${nodePosition.y})`);
     }
 
-    // 🎯 关键修复2：根据阶段使用不同的X坐标计算策略
+    // 🎯 关键修复2：预先检查源节点位置的合理性，避免异常传播
+    if (Math.abs(correctedNodePosition.x) > 250) {
+      console.warn(`⚠️ [源节点位置异常] 节点 ${sourceNode.id} 源位置X坐标异常: ${correctedNodePosition.x}，进行预修正`);
+      correctedNodePosition = {
+        x: correctedNodePosition.x > 0 ? 200 : -200, // 限制在合理范围内
+        y: correctedNodePosition.y
+      };
+      console.log(`🛡️ [源位置修正] 节点 ${sourceNode.id} 修正后源位置: (${correctedNodePosition.x}, ${correctedNodePosition.y})`);
+    }
+
+    // 🎯 关键修复3：根据阶段使用不同的X坐标计算策略
     let baseX;
     if (useOptimizedPosition) {
       // 优化阶段：使用更保守的计算，避免过大偏移
@@ -2707,9 +3149,9 @@ export class UnifiedStructuredLayoutEngine {
 
   /**
    * 分析同层级端点分布
-   * @param {Object} sourceNode - 源节点
-   * @param {Object} nodePosition - 节点位置
-   * @returns {Array} 同层级端点位置数组
+   * @param {any} sourceNode - 源节点
+   * @param {any} nodePosition - 节点位置
+   * @returns {any[]} 同层级端点位置数组
    */
   analyzeSameLayerEndpoints(sourceNode, nodePosition) {
     const sameLayerEndpoints = [];
@@ -2735,7 +3177,7 @@ export class UnifiedStructuredLayoutEngine {
   /**
    * 计算最优X坐标偏移
    * @param {number} baseX - 基础X坐标
-   * @param {Array} existingEndpoints - 现有端点
+   * @param {any[]} existingEndpoints - 现有端点
    * @param {number} endpointIndex - 端点索引
    * @returns {number} X坐标偏移量
    */
@@ -2780,7 +3222,7 @@ export class UnifiedStructuredLayoutEngine {
   /**
    * 计算最优Y坐标偏移
    * @param {number} baseY - 基础Y坐标
-   * @param {Array} existingEndpoints - 现有端点
+   * @param {any[]} existingEndpoints - 现有端点
    * @param {number} endpointIndex - 端点索引
    * @returns {number} Y坐标偏移量
    */
@@ -2864,38 +3306,107 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 重新应用对称分布
+   * 重新应用对称分布（增强版 - 支持混合层级）
    * @param {Array} layerNodes - 层级节点
    */
   reapplySymmetricDistribution(layerNodes) {
+    // 🔧 关键修复：使用新的混合层级对称分布算法
+    try {
+      // 动态导入混合层级对称分布算法
+      const MixedLayerSymmetricDistribution = require('./coordinate-refactor/strategies/MixedLayerSymmetricDistribution.js').default || 
+                                              require('./coordinate-refactor/strategies/MixedLayerSymmetricDistribution.js').MixedLayerSymmetricDistribution;
+      
+      const distributionAlgorithm = new MixedLayerSymmetricDistribution();
+      const optimizedPositions = distributionAlgorithm.optimizeLayer(layerNodes);
+      
+      // 应用优化后的位置
+      optimizedPositions.forEach(position => {
+        const targetNode = layerNodes.find(node => 
+          (node.nodeId || node.id) === position.nodeId
+        );
+        
+        if (targetNode) {
+          const oldX = targetNode.pos?.x || targetNode.x || 0;
+          if (targetNode.pos) {
+            targetNode.pos.x = position.x;
+          } else {
+            targetNode.x = position.x;
+          }
+          
+          console.log(`🔧 [混合层级对称分布] ${position.nodeType}节点 ${position.nodeId}: ${oldX.toFixed(1)} → ${position.x.toFixed(1)}`);
+        }
+      });
+      
+      console.log(`✅ [混合层级对称分布] 完成 ${layerNodes.length} 个节点的优化分布`);
+      
+    } catch (error) {
+      console.warn(`⚠️ [对称分布] 混合层级算法加载失败，使用备用算法:`, error.message);
+      this.reapplySymmetricDistributionFallback(layerNodes);
+    }
+  }
+
+  /**
+   * 备用对称分布算法
+   * @param {Array} layerNodes - 层级节点
+   */
+  reapplySymmetricDistributionFallback(layerNodes) {
     const nodeCount = layerNodes.length;
     let targetPositions = [];
     
+    // 🔧 关键修复：根据节点类型和数量计算更合适的间距
+    const hasEndpoints = layerNodes.some(node => node.nodeType === 'endpoint');
+    const normalNodes = layerNodes.filter(node => node.nodeType !== 'endpoint');
+    const endpointNodes = layerNodes.filter(node => node.nodeType === 'endpoint');
+    
+    console.log(`🔄 [备用对称分布] 层级节点分析:`, {
+      总数: nodeCount,
+      普通节点: normalNodes.length,
+      虚拟端点: endpointNodes.length,
+      混合层级: hasEndpoints
+    });
+    
     if (nodeCount === 2) {
-      targetPositions = [-60, 60];
+      // 双节点对称分布 - 使用更大的间距确保清晰度
+      const spacing = hasEndpoints ? 120 : 160; // endpoint间距稍小
+      targetPositions = [-spacing/2, spacing/2];
     } else if (nodeCount === 3) {
-      targetPositions = [-80, 0, 80];
+      // 三节点对称分布 - 中心对齐
+      const spacing = hasEndpoints ? 100 : 120;
+      targetPositions = [-spacing, 0, spacing];
     } else if (nodeCount === 4) {
-      targetPositions = [-90, -30, 30, 90];
+      // 四节点对称分布
+      const spacing = hasEndpoints ? 80 : 100;
+      targetPositions = [-spacing*1.5, -spacing*0.5, spacing*0.5, spacing*1.5];
     } else {
-      // 动态对称分布
-      const spacing = Math.min(120, 240 / (nodeCount - 1));
+      // 动态对称分布 - 根据节点类型调整间距
+      const baseSpacing = hasEndpoints ? 80 : 120;
+      const spacing = Math.max(60, Math.min(baseSpacing, 300 / (nodeCount - 1)));
       const totalWidth = (nodeCount - 1) * spacing;
       const startX = -totalWidth / 2;
       targetPositions = Array.from({length: nodeCount}, (_, i) => startX + i * spacing);
     }
     
-    // 按当前X坐标排序
-    layerNodes.sort((a, b) => a.pos.x - b.pos.x);
+    // 🔧 关键修复：智能排序 - 优先考虑节点类型和重要性
+    layerNodes.sort((a, b) => {
+      // 首先按节点类型排序：普通节点优先
+      if (a.nodeType !== b.nodeType) {
+        if (a.nodeType === 'endpoint') return 1;
+        if (b.nodeType === 'endpoint') return -1;
+      }
+      // 然后按X坐标排序
+      return a.pos.x - b.pos.x;
+    });
     
     // 应用目标位置
     layerNodes.forEach((item, index) => {
       if (index < targetPositions.length) {
         const oldX = item.pos.x;
         item.pos.x = targetPositions[index];
-        console.log(`🔧 [对称恢复] 节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetPositions[index]}`);
+        console.log(`🔧 [备用对称恢复] ${item.nodeType || '普通'}节点 ${item.nodeId}: ${oldX.toFixed(1)} → ${targetPositions[index]}`);
       }
     });
+    
+    console.log(`✅ [备用对称分布] 完成 ${nodeCount} 个节点的对称分布，目标位置:`, targetPositions);
   }
 
   /**
@@ -2906,6 +3417,47 @@ export class UnifiedStructuredLayoutEngine {
   applyAestheticOptimizations(positions, layerStructure) {
     // 美学优化可以在这里添加更多细节
     console.log("✨ [美学优化] 应用美学优化");
+  }
+
+  /**
+   * 优化版本的位置应用方法
+   * @param {Map} finalPositions - 最终位置映射
+   */
+  async applyPositionsToGraphOptimized(finalPositions) {
+    console.log("📍 [优化位置应用] 开始优化版本的位置应用");
+
+    try {
+      // 使用性能优化器进行批处理应用
+      const optimizedResult = await this.performanceOptimizer.optimizeBatchOperation(
+        'positionApplication',
+        async () => {
+          // 使用AI外呼节点验证器验证节点配置
+          const validationResults = new Map();
+          for (const [nodeId, position] of finalPositions) {
+            const graphNode = this.graph.getCellById(nodeId);
+            if (graphNode) {
+              const validationResult = this.aiCallValidator.validateAICallNode(graphNode);
+              validationResults.set(nodeId, validationResult);
+            }
+          }
+
+          // 应用位置
+          return await this.applyPositionsToGraph(finalPositions);
+        },
+        { 
+          batchSize: 50,
+          delay: 10,
+          enableCache: true 
+        }
+      );
+
+      console.log("✅ [优化位置应用] 优化版本应用完成");
+      return optimizedResult;
+
+    } catch (error) {
+      console.error('❌ [优化位置应用] 优化版本失败，回退到标准方法:', error);
+      return await this.applyPositionsToGraph(finalPositions);
+    }
   }
 
   /**
@@ -3043,14 +3595,17 @@ export class UnifiedStructuredLayoutEngine {
     layerGroups.forEach((nodes, layerIndex) => {
       if (nodes.length <= 1) return;
 
-      // 计算该层的标准Y坐标（使用第一个节点的Y坐标）
-      const standardY = nodes[0].position.y;
+      console.log(`🔍 [层级验证] 检查第 ${layerIndex} 层，共 ${nodes.length} 个节点`);
+
+      // 计算层级标准Y坐标（使用理论层级Y坐标）
+      const standardY = layerIndex * this.options.layer.baseHeight;
       let hasInconsistency = false;
 
       // 检查是否有不一致的Y坐标
       nodes.forEach(({ nodeId, position }) => {
-        if (Math.abs(position.y - standardY) > 1) {
-          console.warn(`⚠️ [Y坐标不一致] 层级 ${layerIndex} 节点 ${nodeId}: ${position.y} ≠ ${standardY}`);
+        const deviation = Math.abs(position.y - standardY);
+        if (deviation > 1) {
+          console.warn(`⚠️ [Y坐标不一致] 层级 ${layerIndex} 节点 ${nodeId}: ${position.y.toFixed(1)} ≠ ${standardY.toFixed(1)} (偏差: ${deviation.toFixed(1)}px)`);
           hasInconsistency = true;
         }
       });
@@ -3058,11 +3613,15 @@ export class UnifiedStructuredLayoutEngine {
       // 如果有不一致，强制修正为标准Y坐标
       if (hasInconsistency) {
         nodes.forEach(({ nodeId, position }) => {
-          if (Math.abs(position.y - standardY) > 1) {
+          const deviation = Math.abs(position.y - standardY);
+          if (deviation > 1) {
             const oldY = position.y;
             position.y = standardY;
-            console.log(`🔧 [Y坐标修正] 节点 ${nodeId}: ${oldY} → ${standardY}`);
+            console.log(`🔧 [Y坐标修正] 节点 ${nodeId}: ${oldY.toFixed(1)} → ${standardY.toFixed(1)} (修正偏差: ${deviation.toFixed(1)}px)`);
             fixedNodes++;
+
+            // 🎯 关键修复：同步虚拟endpoint节点的内部位置
+            this.syncVirtualEndpointPosition(nodeId, { x: position.x, y: standardY });
           }
         });
         fixedLayers++;
@@ -3070,6 +3629,21 @@ export class UnifiedStructuredLayoutEngine {
     });
 
     console.log(`🔍 [Y坐标验证] 完成，修正了 ${fixedLayers} 个层级的 ${fixedNodes} 个节点`);
+  }
+
+
+
+  /**
+   * 🎯 新增：同步虚拟endpoint节点的内部位置
+   * @param {string} nodeId - 节点ID
+   * @param {Object} position - 新位置 {x, y}
+   */
+  syncVirtualEndpointPosition(nodeId, position) {
+    const endpointNode = this.layoutModel.endpointNodes.get(nodeId);
+    if (endpointNode && endpointNode.setPosition) {
+      endpointNode.setPosition(position);
+      console.log(`🎯 [同步修复] 虚拟endpoint ${nodeId} 内部位置已同步: (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+    }
   }
 
   /**
@@ -3214,6 +3788,18 @@ export class UnifiedStructuredLayoutEngine {
     }
 
     console.log(`🔄 [批量同步] 同步完成，共处理 ${syncedCount} 个endpoint位置`);
+
+    // 🎯 新增：调用预览线管理器的新同步方法
+    if (typeof previewLineManager.syncLayoutEndpointPositions === 'function') {
+      try {
+        previewLineManager.syncLayoutEndpointPositions(finalPositions);
+        console.log("✅ [新同步方法] 已调用预览线管理器的布局endpoint位置同步方法");
+      } catch (error) {
+        console.error("❌ [新同步方法] 调用新同步方法时发生错误:", error);
+      }
+    } else {
+      console.warn("⚠️ [新同步方法] 预览线管理器不支持新的同步方法");
+    }
   }
 
   /**
@@ -3300,27 +3886,62 @@ export class UnifiedStructuredLayoutEngine {
     previewLineManager.lastLayoutTime = Date.now();
     console.log("⏰ [布局时间标记] 已设置布局完成时间，用于预览线清理判断");
 
-    // 延迟执行清理，确保布局完全完成
+    // 🎯 关键修复：增加更长的延迟，确保虚拟endpoint创建完全完成
     setTimeout(() => {
       try {
-        // 执行预览线清理
-        if (typeof previewLineManager.performLoadCompleteCheck === 'function') {
-          previewLineManager.performLoadCompleteCheck();
-          console.log("✅ [布局后清理] 已触发预览线管理器的完整清理检查");
-        } else if (typeof previewLineManager.cleanupOrphanedPreviewLines === 'function') {
-          const cleanedCount = previewLineManager.cleanupOrphanedPreviewLines();
-          console.log(`✅ [布局后清理] 清理了 ${cleanedCount} 条孤立预览线`);
-        } else {
-          console.warn("⚠️ [布局后清理] 预览线管理器不支持清理方法");
+        // 🎯 新增：检查虚拟endpoint是否已创建完成
+        const nodes = this.graph.getNodes();
+        const virtualEndpoints = nodes.filter(node => {
+          const nodeData = node.getData() || {};
+          return nodeData.isEndpoint && nodeData.isVirtual;
+        });
+        
+        console.log(`🔍 [布局后清理] 检测到 ${virtualEndpoints.length} 个虚拟endpoint节点`);
+        
+        // 如果有虚拟endpoint，延迟清理以保护它们的预览线
+        if (virtualEndpoints.length > 0) {
+          console.log("⏭️ [布局后清理] 检测到虚拟endpoint，延迟清理以保护endpoint预览线");
+          
+          // 再次延迟清理
+          setTimeout(() => {
+            this.executeDelayedCleanup(previewLineManager);
+          }, 1500); // 额外1.5秒延迟
+          
+          return;
         }
-
-        // 验证清理结果
-        this.validateCleanupResults(previewLineManager);
+        
+        // 没有虚拟endpoint时，正常执行清理
+        this.executeDelayedCleanup(previewLineManager);
 
       } catch (error) {
         console.error("❌ [布局后清理] 清理过程中发生错误:", error);
       }
-    }, 200); // 200ms延迟确保布局完全应用
+    }, 500); // 🎯 增加延迟到500ms，确保布局完全应用
+  }
+
+  /**
+   * 🎯 新增：执行延迟清理
+   * @param {Object} previewLineManager - 预览线管理器
+   */
+  executeDelayedCleanup(previewLineManager) {
+    try {
+      // 执行预览线清理
+      if (typeof previewLineManager.performLoadCompleteCheck === 'function') {
+        previewLineManager.performLoadCompleteCheck();
+        console.log("✅ [延迟清理] 已触发预览线管理器的完整清理检查");
+      } else if (typeof previewLineManager.cleanupOrphanedPreviewLines === 'function') {
+        const cleanedCount = previewLineManager.cleanupOrphanedPreviewLines();
+        console.log(`✅ [延迟清理] 清理了 ${cleanedCount} 条孤立预览线`);
+      } else {
+        console.warn("⚠️ [延迟清理] 预览线管理器不支持清理方法");
+      }
+
+      // 验证清理结果
+      this.validateCleanupResults(previewLineManager);
+
+    } catch (error) {
+      console.error("❌ [延迟清理] 清理过程中发生错误:", error);
+    }
   }
 
   /**
@@ -3356,4 +3977,6 @@ export class UnifiedStructuredLayoutEngine {
       console.log(`📊 [清理验证] 剩余 ${remainingPreviewLines} 个预览线实例中，${validPreviewLines} 个是有效的`);
     }
   }
+
+
 }

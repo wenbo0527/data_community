@@ -1,0 +1,119 @@
+预览线生成条件修复方案
+===================
+
+## 项目背景
+数据社区项目是一个基于Vue的社区管理系统，使用X6图形库实现流程图编辑功能。系统中的预览线用于显示节点的潜在连接，帮助用户进行流程设计。
+
+## 问题分析
+用户反馈预览线在节点未完成配置时就会生成，这不符合业务逻辑。预览线应该只在节点完成配置后才生成，未配置的节点不应该有预览线。
+
+### 问题现象
+1. 新创建的节点立即显示预览线，即使还未进行配置
+2. 预览线在节点配置抽屉打开前就已存在
+3. 用户体验混乱，无法区分已配置和未配置的节点
+
+### 根本原因
+1. **配置状态标记缺失**：`NodeConfigManager.js` 中的 `updateNodeData` 方法没有设置 `isConfigured` 标志
+2. **预览线生成条件过于宽松**：`UnifiedPreviewLineManager.js` 中的 `shouldCreatePreviewLine` 方法使用了过于宽松的配置验证逻辑，包括：
+   - 检查是否有任何配置数据
+   - 检查是否有分支数据
+   - 对开始节点总是允许
+   - 检查是否有任何有意义的数据
+
+## 解决方案
+
+### 核心策略
+严格控制预览线生成条件，只有明确完成配置的节点才允许生成预览线。
+
+### 技术实现
+
+#### 1. 修复配置状态标记
+**文件**：`/src/utils/NodeConfigManager.js`
+**修改位置**：`updateNodeData` 方法
+
+```javascript
+// 修改前
+const updatedData = {
+  ...currentData,
+  config: this.preprocessConfig(config),
+  lastUpdated: Date.now()
+}
+
+// 修改后
+const updatedData = {
+  ...currentData,
+  config: this.preprocessConfig(config),
+  isConfigured: true, // 🔧 修复：配置完成后明确标记节点为已配置
+  lastUpdated: Date.now()
+}
+```
+
+#### 2. 严格化预览线生成条件
+**文件**：`/src/utils/UnifiedPreviewLineManager.js`
+**修改位置**：`shouldCreatePreviewLine` 方法
+
+```javascript
+// 修改前：使用复杂的配置验证逻辑
+const configValidation = this.validateNodeConfiguration(node, nodeType, nodeData)
+if (!configValidation.isConfigured) {
+  return false
+}
+
+// 修改后：严格检查 isConfigured 标志
+const isExplicitlyConfigured = nodeData.isConfigured === true
+if (!isExplicitlyConfigured) {
+  console.log('⏭️ [统一预览线管理器] 跳过未配置节点的预览线创建:', {
+    nodeId: node.id,
+    nodeType: nodeType,
+    reason: '节点未明确标记为已配置'
+  })
+  return false
+}
+```
+
+### 实施记录
+- **修改时间**：2025年1月21日
+- **修改文件**：
+  1. `/src/utils/NodeConfigManager.js` - 添加 `isConfigured: true` 标记
+  2. `/src/utils/UnifiedPreviewLineManager.js` - 严格化预览线生成条件
+- **测试环境**：开发服务器 `http://localhost:5175/`
+
+## 预期效果
+
+### 用户体验改善
+1. **清晰的状态区分**：未配置的节点不会显示预览线，已配置的节点才显示预览线
+2. **符合业务逻辑**：预览线只在节点配置完成后生成，避免误导用户
+3. **更好的视觉反馈**：用户可以通过预览线的存在与否判断节点是否已配置
+
+### 技术效果
+1. **配置状态明确**：通过 `isConfigured` 标志明确标记节点配置状态
+2. **预览线生成精确**：严格的生成条件确保预览线只在适当时机出现
+3. **代码逻辑清晰**：简化了复杂的配置验证逻辑，使用明确的布尔标志
+
+## 验证计划
+
+### 功能验证
+1. **新节点创建**：验证新创建的节点不会立即显示预览线
+2. **配置完成**：验证节点配置完成后会正确显示预览线
+3. **配置取消**：验证配置取消后节点状态保持未配置
+4. **不同节点类型**：验证各种节点类型（开始节点、分流节点、动作节点等）的行为一致性
+
+### 回归测试
+1. **现有功能**：确保修改不影响已有的预览线功能
+2. **布局系统**：验证结构化布局功能正常工作
+3. **连接创建**：确保预览线到真实连接的转换正常
+
+## 未来优化建议
+
+### 配置状态管理
+1. **配置进度跟踪**：可以考虑添加配置进度字段，支持部分配置状态
+2. **配置验证增强**：为不同节点类型添加特定的配置完整性验证
+3. **配置历史记录**：记录节点配置的修改历史
+
+### 预览线功能增强
+1. **预览线样式区分**：为不同状态的预览线使用不同样式
+2. **智能预览线**：根据节点配置内容智能生成预览线数量和标签
+3. **预览线交互**：增强预览线的交互功能，如悬停提示等
+
+## 总结
+本次修复通过严格控制预览线生成条件，确保只有完成配置的节点才会显示预览线，从根本上解决了预览线过早生成的问题。修改简洁明确，符合业务逻辑，提升了用户体验。

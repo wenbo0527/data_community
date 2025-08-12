@@ -181,6 +181,160 @@ Mock.mock(/\/api\/external-data\/burndown/, 'get', (options) => {
 })
 
 /**
+ * 任务配置接口
+ * @property {string} productName - 产品名称
+ * @property {string} startDate - 开始日期
+ * @property {string} endDate - 结束日期
+ * @property {string} reportName - 报告名称
+ * @property {string} templateType - 模板类型
+ * @property {string} description - 描述
+ * @property {object[]} fieldMapping - 字段映射
+ * @property {object} fileInfo - 文件信息
+ */
+interface TaskConfig {
+  productName: string
+  startDate: string
+  endDate: string
+  reportName: string
+  templateType: string
+  description: string
+  fieldMapping: {[key: string]: any}[]
+  fileInfo: {[key: string]: any}
+}
+
+/**
+ * 任务接口
+ * @property {number} id - 任务ID
+ * @property {string} taskName - 任务名称
+ * @property {string} createTime - 创建时间
+ * @property {string} estimatedTime - 预计完成时间
+ * @property {string} status - 任务状态
+ * @property {number} progress - 任务进度
+ * @property {TaskConfig} config - 任务配置
+ */
+interface Task {
+  id: number
+  taskName: string
+  createTime: string
+  estimatedTime: string
+  status: '已创建' | '进行中' | '已完成' | '已失败'
+  progress: number
+  config: TaskConfig
+}
+
+/**
+ * 生成模拟任务数据
+ * @param {number} count - 任务数量
+ * @returns {Task[]} 任务数组
+ */
+export const generateTasks = (count: number = 10): Task[] => {
+  const tasks: Task[] = []
+  const statusOptions = ['已创建', '进行中', '已完成', '已失败']
+  const templateTypes = ['基础分析', '深度分析', '定制分析']
+  const productNames = ['产品A', '产品B', '产品C', '产品D']
+
+  for (let i = 1; i <= count; i++) {
+      // 使用类型断言明确status的类型
+      const status = statusOptions[Math.floor(Math.random() * statusOptions.length)] as '已创建' | '进行中' | '已完成' | '已失败'
+      const progress = status === '已完成' ? 100 : status === '已失败' ? Math.floor(Math.random() * 70) : Math.floor(Math.random() * 100)
+      const createDate = new Date()
+      createDate.setDate(createDate.getDate() - Math.floor(Math.random() * 30))
+      const estimatedDate = new Date(createDate)
+      estimatedDate.setDate(createDate.getDate() + 7)
+
+      tasks.push({
+        id: i,
+        taskName: `外部数据评估任务 ${i}`,
+        createTime: createDate.toISOString().split('T')[0],
+        estimatedTime: estimatedDate.toISOString().split('T')[0],
+        status,
+        progress,
+        config: {
+          productName: productNames[Math.floor(Math.random() * productNames.length)],
+          startDate: createDate.toISOString().split('T')[0],
+          endDate: estimatedDate.toISOString().split('T')[0],
+          reportName: `外部数据评估报告 ${i}`,
+          templateType: templateTypes[Math.floor(Math.random() * templateTypes.length)],
+          description: `这是外部数据评估任务 ${i} 的详细描述，包含对外部数据源的分析和评估。`,
+          fieldMapping: [
+            { sourceField: 'id', targetField: 'userId' },
+            { sourceField: 'name', targetField: 'userName' },
+            { sourceField: 'score', targetField: 'creditScore' }
+          ],
+          fileInfo: {
+            fileName: `data_source_${i}.csv`,
+            fileSize: Math.floor(Math.random() * 10000) + 1000,
+            uploadTime: createDate.toISOString()
+          }
+        }
+      })
+    }
+
+  return tasks
+}
+
+/**
+ * 获取任务详情
+ * @param {number} taskId - 任务ID
+ * @returns {Task | null} 任务详情或null
+ */
+export const getTaskDetail = (taskId: number): Task | null => {
+  const tasks = generateTasks(20)
+  return tasks.find(task => task.id === taskId) || null
+}
+
+/**
+ * 模拟任务列表数据API
+ * @param {string} path - 路径: /api/external/tasks
+ * @param {string} method - 方法: GET
+ * @returns {object} 返回: 任务列表数据
+ */
+Mock.mock(/\/api\/external\/tasks/, 'get', (options) => {
+  const url = new URL(options.url, 'http://dummy.com')
+  const page = parseInt(url.searchParams.get('page') || '1')
+  const pageSize = parseInt(url.searchParams.get('pageSize') || '10')
+  const status = url.searchParams.get('status') || undefined
+
+  const allTasks = generateTasks(50)
+  const filteredTasks = status ? allTasks.filter(task => task.status === status) : allTasks
+  const total = filteredTasks.length
+  const startIndex = (page - 1) * pageSize
+  const endIndex = Math.min(startIndex + pageSize, total)
+  const paginatedTasks = filteredTasks.slice(startIndex, endIndex)
+
+  return {
+    code: 200,
+    data: {
+      list: paginatedTasks,
+      total
+    }
+  }
+})
+
+/**
+ * 模拟任务详情数据API
+ * @param {string} path - 路径: /api/external/task/:id
+ * @param {string} method - 方法: GET
+ * @returns {object} 返回: 任务详情数据
+ */
+Mock.mock(/\/api\/external\/task\/\d+/, 'get', (options) => {
+  const taskId = parseInt(options.url.split('/').pop() || '0')
+  const task = getTaskDetail(taskId)
+
+  if (task) {
+    return {
+      code: 200,
+      data: task
+    }
+  } else {
+    return {
+      code: 404,
+      message: '任务不存在'
+    }
+  }
+})
+
+/**
  * 模拟预算超支预警数据API
  * @param {string} path - 路径: /api/external-data/warning
  * @param {string} method - 方法: GET

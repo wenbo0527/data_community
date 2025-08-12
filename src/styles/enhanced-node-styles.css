@@ -138,11 +138,37 @@
   animation: dash 1s linear infinite;
 }
 
-/* 预览线样式 */
+/* 预览线样式 - 🔧 增强修复：优化层级和可见性 */
 .preview-line {
   stroke-dasharray: 8,4;
-  opacity: 0.8;
+  opacity: 0.9; /* 🔧 增强修复：提高透明度，增强可见性 */
   animation: preview-pulse 1.5s ease-in-out infinite;
+  z-index: 10; /* 🔧 增强修复：设置层级，确保在背景上方但在节点下方 */
+  pointer-events: none; /* 🔧 增强修复：防止预览线干扰节点交互 */
+  stroke-width: 2.5; /* 🔧 增强修复：增加线条粗细，提高可见性 */
+}
+
+/* 🔧 增强修复：预览线悬停状态 */
+.preview-line:hover {
+  opacity: 1;
+  stroke-width: 3;
+  z-index: 15; /* 悬停时提升层级 */
+}
+
+/* 🔧 增强修复：预览线在节点重叠时的特殊样式 */
+.preview-line.overlap-mode {
+  opacity: 1;
+  stroke-width: 3;
+  z-index: 20; /* 重叠模式下最高层级 */
+  stroke-dasharray: 12,6; /* 更明显的虚线样式 */
+  animation: preview-pulse-enhanced 1s ease-in-out infinite;
+}
+
+/* 🔧 增强修复：增强版预览线动画 */
+@keyframes preview-pulse-enhanced {
+  0% { opacity: 0.8; stroke-width: 2.5; }
+  50% { opacity: 1; stroke-width: 4; }
+  100% { opacity: 0.8; stroke-width: 2.5; }
 }
 
 /* 增强动画定义 */

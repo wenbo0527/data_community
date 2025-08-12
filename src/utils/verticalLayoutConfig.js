@@ -17,7 +17,8 @@ export const VERTICAL_LAYOUT_CONFIG = {
     NODE_VERTICAL: 120,      // 节点垂直间距
     NODE_HORIZONTAL: 200,    // 节点水平间距
     BRANCH_HORIZONTAL: 180,  // 分支水平间距（从60增加到180，确保有足够空间放置实体节点）
-    PREVIEW_LENGTH: 100,     // 预览线长度（从80增加到100，给节点更多空间）
+    PREVIEW_LENGTH: 150,     // 🔧 优化：预览线长度从100增加到150，解决位置过近问题
+    ENHANCED_PREVIEW_LENGTH: 200, // 🔧 新增：为分流节点提供更长的预览线
     SNAP_ZONE: 40,          // 吸附区域半径（从35增加到40，更容易吸附）
     MIN_DISTANCE: 60,       // 最小距离（从50增加到60）
     MIN_BRANCH_SPACING: 220, // 🔧 优化：最小分支间距从200增加到220，改善X轴分布

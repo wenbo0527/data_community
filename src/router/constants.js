@@ -44,7 +44,7 @@ export const ROUTE_NAMES = {
     EXTERNAL_DATA_ANALYSIS: {
       ROOT: 'external-data-analysis',
       BUDGET_MANAGEMENT: 'budget-management',
-      EVALUATION: 'external-data-evaluation',
+      EVALUATION: 'externalDataEvaluationList',
       MONITOR: 'external-data-monitor'
     },
     CUSTOMER_CENTER: {
@@ -119,8 +119,8 @@ export const ROUTE_PATHS = {
     EXTERNAL_DATA_ANALYSIS: {
       ROOT: '/exploration/external-data-analysis',
       BUDGET_MANAGEMENT: '/exploration/external-data-analysis/budget-management',
-      EVALUATION: '/exploration/external-data-analysis/external-data-evaluation',
-      MONITOR: '/exploration/external-data-analysis/external-data-monitor'
+      EVALUATION: '/exploration/external-data-evaluation/list',
+      MONITOR: '/exploration/external-monitor'
     },
     CUSTOMER_CENTER: {
       ROOT: '/exploration/customer-center',

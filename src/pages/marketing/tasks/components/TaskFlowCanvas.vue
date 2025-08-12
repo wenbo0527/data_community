@@ -2684,7 +2684,15 @@ const addNodeToGraph = (nodeData) => {
     // 确保config数据正确传递
     config: nodeData.config || {},
     // 对于分流节点，确保branches数据正确传递
-    branches: nodeData.branches || (nodeData.config?.branches) || []
+    branches: nodeData.branches || (nodeData.config?.branches) || [],
+    // 🔧 修复：正确初始化isConfigured字段
+    isConfigured: nodeData.data?.isConfigured || 
+                  nodeData.isConfigured || 
+                  // 如果节点有配置信息，则认为已配置
+                  (nodeData.config && Object.keys(nodeData.config).length > 0) ||
+                  // 对于开始节点，默认为已配置
+                  nodeData.type === 'start' ||
+                  false
   }
 
   // 对于分流节点，添加额外的调试信息

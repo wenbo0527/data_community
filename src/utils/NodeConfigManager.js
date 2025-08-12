@@ -43,6 +43,7 @@ class BaseNodeConfigStrategy {
     const updatedData = {
       ...currentData,
       config: this.preprocessConfig(config),
+      isConfigured: true, // 🔧 修复：配置完成后明确标记节点为已配置
       lastUpdated: Date.now()
     }
     
@@ -391,16 +392,92 @@ class BranchNodeConfigStrategy extends BaseNodeConfigStrategy {
   }
 
   updateNodeLayout(node, config, layoutManager) {
-    if (layoutManager && layoutManager.isReady && layoutManager.isReady.value) {
-      layoutManager.updateSplitNodeBranches(node, config)
-    } else if (layoutManager && layoutManager.initLayoutEngine) {
-      // 如果布局引擎未就绪，初始化后再更新
-      layoutManager.initLayoutEngine()
-      setTimeout(() => {
-        if (layoutManager.updateSplitNodeBranches) {
-          layoutManager.updateSplitNodeBranches(node, config)
+    console.log(`[NodeConfigManager] 节点配置完成 - 节点类型: ${this.nodeType}, 节点ID: ${node.id}`)
+    
+    // 🎯 新方案：只更新节点层级信息，不触发完整布局
+    this.updateNodeLayerInfo(node, config, layoutManager)
+    
+    // 注释掉原有的完整布局引擎触发逻辑
+    // if (layoutManager && layoutManager.isReady && layoutManager.isReady.value) {
+    //   layoutManager.updateSplitNodeBranches(node, config)
+    // } else if (layoutManager && layoutManager.initLayoutEngine) {
+    //   // 如果布局引擎未就绪，初始化后再更新
+    //   layoutManager.initLayoutEngine()
+    //   setTimeout(() => {
+    //     if (layoutManager.updateSplitNodeBranches) {
+    //       layoutManager.updateSplitNodeBranches(node, config)
+    //     }
+    //   }, 100)
+    // }
+  }
+
+  /**
+   * 🎯 新方案：只更新节点层级信息，不触发完整布局
+   * @param {Object} node - 节点对象
+   * @param {Object} config - 配置对象
+   * @param {Object} layoutManager - 布局管理器
+   */
+  updateNodeLayerInfo(node, config, layoutManager) {
+    try {
+      console.log(`[NodeConfigManager] 开始更新节点层级信息: ${node.id}`)
+      
+      // 获取布局引擎实例
+      const layoutEngine = layoutManager?.layoutEngine || 
+                          window.unifiedStructuredLayoutEngine ||
+                          layoutManager?.unifiedStructuredLayoutEngine
+      
+      if (!layoutEngine) {
+        console.warn(`[NodeConfigManager] 未找到布局引擎，无法更新层级信息`)
+        return
+      }
+      
+      // 🎯 关键：清除该节点的层级缓存，强制重新计算
+      if (layoutEngine.layerCache) {
+        layoutEngine.layerCache.delete(node.id)
+        console.log(`[NodeConfigManager] 已清除节点 ${node.id} 的层级缓存`)
+      }
+      
+      // 🎯 关键：使用新的简化层级计算方法
+      const newLayerIndex = layoutEngine.calculateNodeLayerByConnection(node.id)
+      console.log(`[NodeConfigManager] 节点 ${node.id} 新层级: 第${newLayerIndex}层`)
+      
+      // 🎯 关键：通知预览线管理器层级信息已更新
+      this.notifyPreviewManagerLayerUpdate(node.id, newLayerIndex)
+      
+      console.log(`[NodeConfigManager] 节点层级信息更新完成: ${node.id} -> 第${newLayerIndex}层`)
+      
+    } catch (error) {
+      console.error(`[NodeConfigManager] 更新节点层级信息失败:`, error)
+    }
+  }
+
+  /**
+   * 通知预览线管理器层级信息已更新
+   * @param {string} nodeId - 节点ID
+   * @param {number} layerIndex - 层级索引
+   */
+  notifyPreviewManagerLayerUpdate(nodeId, layerIndex) {
+    try {
+      const previewLineManager = window.unifiedPreviewLineManager
+      
+      if (previewLineManager) {
+        // 设置布局引擎就绪状态
+        previewLineManager.layoutEngineReady = true
+        
+        // 如果有该节点的预览线，触发重新计算
+        if (previewLineManager.previewLines && previewLineManager.previewLines.has(nodeId)) {
+          console.log(`[NodeConfigManager] 通知预览线管理器: 节点 ${nodeId} 层级已更新为第${layerIndex}层`)
+          
+          // 触发预览线位置重新计算
+          if (previewLineManager.refreshPreviewLines) {
+            setTimeout(() => {
+              previewLineManager.refreshPreviewLines(nodeId)
+            }, 100)
+          }
         }
-      }, 100)
+      }
+    } catch (error) {
+      console.warn(`[NodeConfigManager] 通知预览线管理器失败:`, error)
     }
   }
 }

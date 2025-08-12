@@ -132,6 +132,11 @@ class ConsoleLogger {
 
 
   async saveToFile() {
+    // 如果日志服务器URL未设置或无效，则不尝试保存
+    if (!this.logServerUrl || this.logServerUrl === 'http://localhost:5173' || this.logServerUrl === 'http://localhost:5174') {
+      return;
+    }
+    
     const content = this.generateLogContent();
     
     try {

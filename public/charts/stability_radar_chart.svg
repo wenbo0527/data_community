@@ -1,0 +1,77 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="radarGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#45B7D1;stop-opacity:0.1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="600" height="400" fill="#f8f9fa"/>
+  
+  <!-- 标题 -->
+  <text x="300" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">平台稳定性雷达图</text>
+  
+  <!-- 雷达图中心 -->
+  <g transform="translate(300,200)">
+    <!-- 网格线 -->
+    <circle cx="0" cy="0" r="20" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+    <circle cx="0" cy="0" r="80" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+    
+    <!-- 轴线 -->
+    <line x1="0" y1="0" x2="0" y2="-100" stroke="#ddd" stroke-width="1"/>
+    <line x1="0" y1="0" x2="95" y2="-31" stroke="#ddd" stroke-width="1"/>
+    <line x1="0" y1="0" x2="59" y2="81" stroke="#ddd" stroke-width="1"/>
+    <line x1="0" y1="0" x2="-59" y2="81" stroke="#ddd" stroke-width="1"/>
+    <line x1="0" y1="0" x2="-95" y2="-31" stroke="#ddd" stroke-width="1"/>
+    
+    <!-- iOS数据 -->
+    <polygon points="0,-85 76,-25 47,65 -47,65 -76,-25" 
+             fill="#FF6B6B" fill-opacity="0.3" stroke="#FF6B6B" stroke-width="2"/>
+    
+    <!-- Android数据 -->
+    <polygon points="0,-78 72,-23 39,54 -39,54 -68,-27" 
+             fill="#4ECDC4" fill-opacity="0.3" stroke="#4ECDC4" stroke-width="2"/>
+    
+    <!-- Web数据 -->
+    <polygon points="0,-72 57,-18 35,49 -35,49 -57,-18" 
+             fill="#45B7D1" fill-opacity="0.3" stroke="#45B7D1" stroke-width="2"/>
+    
+    <!-- 数据点 -->
+    <circle cx="0" cy="-85" r="3" fill="#FF6B6B"/>
+    <circle cx="76" cy="-25" r="3" fill="#FF6B6B"/>
+    <circle cx="47" cy="65" r="3" fill="#FF6B6B"/>
+    <circle cx="-47" cy="65" r="3" fill="#FF6B6B"/>
+    <circle cx="-76" cy="-25" r="3" fill="#FF6B6B"/>
+    
+    <!-- 轴标签 -->
+    <text x="0" y="-115" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">转化稳定性</text>
+    <text x="105" y="-25" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#666">成本稳定性</text>
+    <text x="65" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">质量稳定性</text>
+    <text x="-65" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">时间稳定性</text>
+    <text x="-105" y="-25" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#666">渠道稳定性</text>
+    
+    <!-- 数值标签 -->
+    <text x="20" y="20" font-family="Arial, sans-serif" font-size="10" fill="#666">20</text>
+    <text x="40" y="40" font-family="Arial, sans-serif" font-size="10" fill="#666">40</text>
+    <text x="60" y="60" font-family="Arial, sans-serif" font-size="10" fill="#666">60</text>
+    <text x="80" y="80" font-family="Arial, sans-serif" font-size="10" fill="#666">80</text>
+    <text x="100" y="100" font-family="Arial, sans-serif" font-size="10" fill="#666">100</text>
+  </g>
+  
+  <!-- 图例 -->
+  <rect x="450" y="60" width="15" height="15" fill="#FF6B6B" fill-opacity="0.3" stroke="#FF6B6B"/>
+  <text x="470" y="72" font-family="Arial, sans-serif" font-size="12" fill="#666">iOS平台</text>
+  
+  <rect x="450" y="80" width="15" height="15" fill="#4ECDC4" fill-opacity="0.3" stroke="#4ECDC4"/>
+  <text x="470" y="92" font-family="Arial, sans-serif" font-size="12" fill="#666">Android平台</text>
+  
+  <rect x="450" y="100" width="15" height="15" fill="#45B7D1" fill-opacity="0.3" stroke="#45B7D1"/>
+  <text x="470" y="112" font-family="Arial, sans-serif" font-size="12" fill="#666">Web平台</text>
+  
+  <!-- 生成时间戳 -->
+  <text x="580" y="390" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#999">Generated: 2025-01-08</text>
+</svg>

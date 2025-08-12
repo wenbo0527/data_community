@@ -10,9 +10,9 @@ export default [
         component: () => import('../pages/exploration/external-data-analysis/budget-management.vue')
       },
       {
-        path: 'external-data-evaluation',
-        name: 'external-data-evaluation',
-        component: () => import('../pages/exploration/external-data-analysis/external-data-evaluation.vue')
+        path: 'external-data-tracking-overview',
+        name: 'externalDataTrackingOverview',
+        component: () => import('../pages/exploration/external-data-analysis/external-data-tracking-overview.vue')
       },
       {
         path: 'external-data-monitor',
@@ -21,6 +21,44 @@ export default [
       }
     ]
   },
+  {
+    path: 'external-data-evaluation',
+    name: 'external-data-evaluation',
+    component: () => import('../pages/exploration/external-data-evaluation.vue'),
+    children: [
+      {
+        path: 'list',
+        name: 'externalDataEvaluationList',
+        component: () => import('../pages/exploration/ExternalDataEvaluationList.vue')
+      },
+      {
+        path: 'create',
+        name: 'createExternalDataEvaluation',
+        component: () => import('../pages/exploration/CreateExternalDataEvaluationPage.vue')
+      },
+      {
+        path: 'detail/:id',
+        name: 'externalDataEvaluationDetail',
+        component: () => import('../pages/exploration/ExternalDataEvaluationDetail.vue')
+      },
+      {
+        path: 'edit/:id',
+        name: 'externalDataEvaluationEdit',
+        component: () => import('../pages/exploration/ExternalDataEvaluationEdit.vue')
+      },
+      {
+        path: 'task-list',
+        name: 'externalDataEvaluationTaskList',
+        component: () => import('../pages/exploration/TaskListPage.vue')
+      },
+      {
+        path: 'progress',
+        name: 'externalDataEvaluationProgress',
+        component: () => import('../pages/exploration/TaskProgressPage.vue')
+      }
+    ]
+  },
+
   {
     path: 'customer-center',
     name: 'customer-center',

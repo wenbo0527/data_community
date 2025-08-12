@@ -5,6 +5,16 @@
 
 import { ROUTE_PATHS, ROUTE_NAMES } from '../router/constants'
 
+/**
+ * 安全获取对象属性
+ * @param {Object} obj - 目标对象
+ * @param {string} key - 属性键
+ * @returns {*} 属性值或undefined
+ */
+function safeGet(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
+}
+
 // 菜单配置
 export const MENU_CONFIG = {
   // 首页
@@ -136,8 +146,28 @@ export const MENU_CONFIG = {
           'external-data-evaluation': {
             key: 'external-data-evaluation',
             title: '外部数据评估',
-            path: '/exploration/external-data-analysis/external-data-evaluation',
-            routeName: 'external-data-evaluation'
+            path: '/exploration/external-data-evaluation/list',
+            routeName: 'externalDataEvaluationList',
+            children: {
+              'external-data-evaluation-list': {
+                key: 'external-data-evaluation-list',
+                title: '效果查询',
+                path: '/exploration/external-data-evaluation/list',
+                routeName: 'externalDataEvaluationList'
+              },
+              'external-data-evaluation-progress': {
+                key: 'external-data-evaluation-progress',
+                title: '任务进度',
+                path: '/exploration/external-data-evaluation/progress',
+                routeName: 'externalDataEvaluationProgress'
+              },
+              'external-data-tracking-overview': {
+                key: 'external-data-tracking-overview',
+                title: '外数效果追踪总览',
+                path: '/exploration/external-data-analysis/external-data-tracking-overview',
+                routeName: 'externalDataTrackingOverview'
+              }
+            }
           },
           'external-data-monitor': {
             key: 'external-data-monitor',
@@ -424,117 +454,184 @@ export const TOP_MENU_ORDER = [
   'touch'
 ]
 
-// 工具函数：根据路径获取菜单项
+/**
+ * 菜单项类型定义
+ * @typedef {Object} MenuItem
+ * @property {string} key - 菜单项唯一标识
+ * @property {string} title - 菜单项标题
+ * @property {string} path - 菜单项路径
+ * @property {string} routeName - 菜单项路由名称
+ * @property {string} [icon] - 菜单项图标
+ * @property {string} type - 菜单项类型
+ * @property {string} [defaultPath] - 默认路径
+ * @property {Object.<string, MenuItem>} [children] - 子菜单项
+ */
+
+/**
+ * 菜单配置类型定义
+ * @typedef {Object.<string, MenuItem>} MenuConfig
+ */
+
+/**
+ * 根据路径获取菜单项
+ * @param {string} path - 要查找的路径
+ * @returns {{ module: string; item: MenuItem; parent?: string } | null} 菜单项信息或null
+ */
 export function getMenuItemByPath(path) {
-  for (const moduleKey in MENU_CONFIG) {
-    const module = MENU_CONFIG[moduleKey]
+  const moduleKeys = Object.keys(MENU_CONFIG);
+  
+  for (const moduleKey of moduleKeys) {
+    const module = safeGet(MENU_CONFIG, moduleKey);
     
-    if (module.path === path) {
-      return { module: moduleKey, item: module }
+    if (module && module.path === path) {
+      return { module: moduleKey, item: module };
     }
     
-    if (module.children) {
-      const result = findInChildren(module.children, path)
+    if (module && module.children && typeof module.children === 'object') {
+      const result = findInChildren(module.children, path);
       if (result) {
-        return { module: moduleKey, ...result }
+        return { module: moduleKey, ...result };
       }
     }
   }
-  return null
+  return null;
 }
 
-// 递归查找子菜单
+/**
+ * 递归查找子菜单
+ * @param {Object.<string, MenuItem>} children - 子菜单对象
+ * @param {string} path - 要查找的路径
+ * @returns {{ item: MenuItem; parent: string } | null} 菜单项信息或null
+ */
 function findInChildren(children, path) {
-  for (const childKey in children) {
-    const child = children[childKey]
+  const childKeys = Object.keys(children);
+  
+  for (const childKey of childKeys) {
+    const child = safeGet(children, childKey);
     
-    if (child.path === path) {
-      return { item: child, parent: childKey }
+    if (child && child.path === path) {
+      return { item: child, parent: childKey };
     }
     
-    if (child.children) {
-      const result = findInChildren(child.children, path)
+    if (child && child.children && typeof child.children === 'object') {
+      const result = findInChildren(child.children, path);
       if (result) {
-        return { ...result, parent: childKey }
+        return { ...result, parent: childKey };
       }
     }
   }
-  return null
+  return null;
 }
 
-// 工具函数：根据路由名称获取菜单项
+/**
+ * 根据路由名称获取菜单项
+ * @param {string} routeName - 要查找的路由名称
+ * @returns {{ module: string; item: MenuItem; parent?: string } | null} 菜单项信息或null
+ */
 export function getMenuItemByRouteName(routeName) {
-  for (const moduleKey in MENU_CONFIG) {
-    const module = MENU_CONFIG[moduleKey]
+  const moduleKeys = Object.keys(MENU_CONFIG);
+  
+  for (const moduleKey of moduleKeys) {
+    const module = safeGet(MENU_CONFIG, moduleKey);
     
-    if (module.routeName === routeName) {
-      return { module: moduleKey, item: module }
+    if (module && module.routeName === routeName) {
+      return { module: moduleKey, item: module };
     }
     
-    if (module.children) {
-      const result = findInChildrenByRouteName(module.children, routeName)
+    if (module && module.children && typeof module.children === 'object') {
+      const result = findInChildrenByRouteName(module.children, routeName);
       if (result) {
-        return { module: moduleKey, ...result }
+        return { module: moduleKey, ...result };
       }
     }
   }
-  return null
+  return null;
 }
 
-// 递归查找子菜单（按路由名称）
+/**
+ * 递归查找子菜单（按路由名称）
+ * @param {Object.<string, MenuItem>} children - 子菜单对象
+ * @param {string} routeName - 要查找的路由名称
+ * @returns {{ item: MenuItem; parent: string } | null} 菜单项信息或null
+ */
 function findInChildrenByRouteName(children, routeName) {
-  for (const childKey in children) {
-    const child = children[childKey]
+  const childKeys = Object.keys(children);
+  
+  for (const childKey of childKeys) {
+    const child = safeGet(children, childKey);
     
-    if (child.routeName === routeName) {
-      return { item: child, parent: childKey }
+    if (child && child.routeName === routeName) {
+      return { item: child, parent: childKey };
     }
     
-    if (child.children) {
-      const result = findInChildrenByRouteName(child.children, routeName)
+    if (child && child.children && typeof child.children === 'object') {
+      const result = findInChildrenByRouteName(child.children, routeName);
       if (result) {
-        return { ...result, parent: childKey }
+        return { ...result, parent: childKey };
       }
     }
   }
-  return null
+  return null;
 }
 
-// 工具函数：获取模块的默认路径
+/**
+ * 获取模块的默认路径
+ * @param {string} moduleKey - 模块键名
+ * @returns {string | null} 默认路径或null
+ */
 export function getModuleDefaultPath(moduleKey) {
-  const module = MENU_CONFIG[moduleKey]
-  if (!module) return null
+  if (!Object.prototype.hasOwnProperty.call(MENU_CONFIG, moduleKey)) {
+    return null;
+  }
   
-  return module.defaultPath || module.path
+  const module = safeGet(MENU_CONFIG, moduleKey);
+  return module.defaultPath || module.path;
 }
 
-// 工具函数：将配置转换为菜单树结构
+/**
+ * 将配置转换为菜单树结构
+ * @param {string} moduleKey - 模块键名
+ * @returns {Array<{ key: string; title: string; path: string; routeName: string; type: string; children?: any[] }>} 菜单树结构数组
+ */
 export function convertToMenuTree(moduleKey) {
-  const module = MENU_CONFIG[moduleKey]
-  if (!module || !module.children) return []
+  if (!Object.prototype.hasOwnProperty.call(MENU_CONFIG, moduleKey)) {
+    return [];
+  }
   
-  return convertChildrenToTree(module.children)
+  const module = safeGet(MENU_CONFIG, moduleKey);
+  if (!module || !module.children) return [];
+  
+  return convertChildrenToTree(module.children);
 }
 
+/**
+ * 转换子菜单为树结构
+ * @param {Object.<string, MenuItem>} children - 子菜单对象
+ * @returns {Array<{ key: string; title: string; path: string; routeName: string; type: string; children?: any[] }>} 菜单树结构数组
+ */
 function convertChildrenToTree(children) {
-  const result = []
+  const result = [];
   
-  for (const childKey in children) {
-    const child = children[childKey]
+  const childKeys = Object.keys(children);
+  
+  for (const childKey of childKeys) {
+    const child = safeGet(children, childKey);
+    if (!child) continue;
+    
     const menuItem = {
       key: child.key,
       title: child.title,
       path: child.path,
       routeName: child.routeName,
       type: child.type
+    };
+    
+    if (child.children && typeof child.children === 'object') {
+      menuItem.children = convertChildrenToTree(child.children);
     }
     
-    if (child.children) {
-      menuItem.children = convertChildrenToTree(child.children)
-    }
-    
-    result.push(menuItem)
+    result.push(menuItem);
   }
   
-  return result
+  return result;
 }

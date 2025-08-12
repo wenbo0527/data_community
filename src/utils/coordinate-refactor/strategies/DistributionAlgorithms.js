@@ -237,9 +237,11 @@ export class UniformDistribution extends DistributionAlgorithm {
   constructor() {
     super('UniformDistribution');
     this.config = {
-      spacing: 80,
-      centerAlign: true,
-      maintainOrder: true
+      spacing: 150,        // 🔧 从80增加到150，增强分布效果
+      centerAlign: false,  // 🔧 禁用居中对齐，避免偏移
+      maintainOrder: true,
+      minSpacing: 120,     // 🔧 新增最小间距保证
+      maxSpacing: 300      // 🔧 新增最大间距限制
     };
   }
 
@@ -282,23 +284,78 @@ export class UniformDistribution extends DistributionAlgorithm {
       });
     }
 
-    // 计算均匀分布的位置
-    const totalWidth = (layerNodes.length - 1) * config.spacing;
+    // 🔧 根据节点数量动态调整间距
+    const dynamicSpacing = this.calculateDynamicSpacing(layerNodes.length, config);
+    
+    // 🔧 计算更合理的分布位置
+    const totalWidth = (layerNodes.length - 1) * dynamicSpacing;
     const startX = config.centerAlign ? -totalWidth / 2 : 0;
 
     layerNodes.forEach((node, index) => {
       const currentPos = positions.get(node.id);
-      const newX = startX + index * config.spacing;
+      const newX = startX + index * dynamicSpacing;
       const newPos = {
         ...currentPos,
         x: newX
       };
       
       positions.set(node.id, newPos);
-      console.log(`📍 [均匀分布] 节点 ${node.id}: ${currentPos.x.toFixed(1)} -> ${newPos.x.toFixed(1)}`);
+      console.log(`📍 [增强均匀分布] 节点 ${node.id}: ${currentPos.x.toFixed(1)} -> ${newPos.x.toFixed(1)}`);
     });
 
-    console.log(`🔧 [均匀分布] 层级 ${layer.index} 均匀分布完成，间距: ${config.spacing}px`);
+    // 🔧 验证分布效果
+    const isEffective = this.validateDistributionEffect(positions, layerNodes);
+    
+    console.log(`🔧 [增强均匀分布] 层级 ${layer.index} 完成，动态间距: ${dynamicSpacing}px，效果: ${isEffective ? '✅明显' : '❌需优化'}`);
+  }
+
+  /**
+   * 计算动态间距
+   * @param {number} nodeCount - 节点数量
+   * @param {Object} config - 配置对象
+   * @returns {number} 动态间距
+   */
+  calculateDynamicSpacing(nodeCount, config) {
+    if (nodeCount <= 1) return config.spacing;
+    
+    // 根据节点数量调整间距：节点越多，间距适当减小但不低于最小值
+    let dynamicSpacing = config.spacing;
+    
+    if (nodeCount >= 5) {
+      dynamicSpacing = Math.max(config.minSpacing || 120, config.spacing * 0.8);
+    } else if (nodeCount >= 3) {
+      dynamicSpacing = Math.max(config.minSpacing || 120, config.spacing * 0.9);
+    }
+    
+    // 确保不超过最大间距
+    dynamicSpacing = Math.min(dynamicSpacing, config.maxSpacing || 300);
+    
+    console.log(`🔧 [动态间距] 节点数: ${nodeCount}, 基础间距: ${config.spacing}, 动态间距: ${dynamicSpacing}`);
+    
+    return dynamicSpacing;
+  }
+
+  /**
+   * 验证分布效果
+   * @param {Map} positions - 位置映射
+   * @param {Array} layerNodes - 层级节点
+   * @returns {boolean} 分布效果是否明显
+   */
+  validateDistributionEffect(positions, layerNodes) {
+    if (layerNodes.length < 2) return true;
+    
+    const xCoordinates = layerNodes.map(node => positions.get(node.id).x).sort((a, b) => a - b);
+    const spacings = xCoordinates.slice(1).map((x, i) => x - xCoordinates[i]);
+    const minSpacing = Math.min(...spacings);
+    const maxSpacing = Math.max(...spacings);
+    const totalSpread = xCoordinates[xCoordinates.length - 1] - xCoordinates[0];
+    
+    // 分布效果评估：最小间距>=100px 且 总跨度>=200px
+    const isEffective = minSpacing >= 100 && totalSpread >= 200;
+    
+    console.log(`🔍 [分布效果验证] 最小间距: ${minSpacing.toFixed(1)}, 最大间距: ${maxSpacing.toFixed(1)}, 总跨度: ${totalSpread.toFixed(1)}`);
+    
+    return isEffective;
   }
 }
 

@@ -4,20 +4,20 @@
  */
 
 export const BRANCH_SPACING_CONFIG = {
-  // 基础间距设置
+  // 基础间距设置 - 🔧 增强修复：大幅增加间距防止重叠
   BASE_SPACING: {
-    HORIZONTAL: 220,        // 🔧 优化：基础水平间距从180增加到220，改善X轴分布
+    HORIZONTAL: 280,        // 🔧 增强修复：基础水平间距从220增加到280，确保充足间距
     VERTICAL: 100,          // 垂直间距（预览线长度）
-    MIN_SPACING: 200,       // 🔧 优化：最小间距从150增加到200，改善层间距
-    MAX_SPACING: 250        // 最大间距
+    MIN_SPACING: 250,       // 🔧 增强修复：最小间距从200增加到250，强制防重叠
+    MAX_SPACING: 350        // 🔧 增强修复：最大间距从250增加到350，允许更大布局
   },
   
-  // 节点尺寸配置
+  // 节点尺寸配置 - 🔧 增强修复：增加安全间隙
   NODE_DIMENSIONS: {
     STANDARD_WIDTH: 120,    // 标准节点宽度
     STANDARD_HEIGHT: 80,    // 标准节点高度
-    MIN_GAP: 30,           // 节点间最小间隙
-    SAFE_MARGIN: 40        // 安全边距
+    MIN_GAP: 50,           // 🔧 增强修复：节点间最小间隙从30增加到50
+    SAFE_MARGIN: 60        // 🔧 增强修复：安全边距从40增加到60
   },
   
   // 自适应间距规则
@@ -40,21 +40,21 @@ export const BRANCH_SPACING_CONFIG = {
     EXTENSION_LENGTH: 20    // 预览线延伸长度
   },
   
-  // 分支类型特定配置
+  // 分支类型特定配置 - 🔧 增强修复：大幅增加各类型间距
   BRANCH_TYPE_CONFIG: {
     'audience-split': {
-      minSpacing: 160,      // 人群分流最小间距
-      optimalSpacing: 200,  // 人群分流最优间距
+      minSpacing: 220,      // 🔧 增强修复：人群分流最小间距从160增加到220
+      optimalSpacing: 280,  // 🔧 增强修复：人群分流最优间距从200增加到280
       maxBranches: 6        // 最大分支数
     },
     'event-split': {
-      minSpacing: 180,      // 事件分流最小间距
-      optimalSpacing: 220,  // 事件分流最优间距
+      minSpacing: 240,      // 🔧 增强修复：事件分流最小间距从180增加到240
+      optimalSpacing: 300,  // 🔧 增强修复：事件分流最优间距从220增加到300
       maxBranches: 2        // 最大分支数（是/否）
     },
     'ab-test': {
-      minSpacing: 170,      // A/B测试最小间距
-      optimalSpacing: 210,  // A/B测试最优间距
+      minSpacing: 230,      // 🔧 增强修复：A/B测试最小间距从170增加到230
+      optimalSpacing: 290,  // 🔧 增强修复：A/B测试最优间距从210增加到290
       maxBranches: 4        // 最大分支数
     }
   }
@@ -84,8 +84,8 @@ export function calculateAdaptiveBranchSpacing(branchCount, nodeType = 'default'
     // 单分支情况
     adaptiveSpacing = baseSpacing
   } else if (branchCount === 2) {
-    // 双分支情况
-    adaptiveSpacing = config.ADAPTIVE_RULES.TWO_BRANCH_SPACING
+    // 双分支情况 - 确保不小于最小间距
+    adaptiveSpacing = Math.max(minSpacing, config.ADAPTIVE_RULES.TWO_BRANCH_SPACING)
   } else if (branchCount >= config.ADAPTIVE_RULES.MIN_BRANCHES_FOR_ADAPTIVE) {
     // 多分支自适应
     const reduction = (branchCount - 2) * config.ADAPTIVE_RULES.BRANCH_COUNT_FACTOR
@@ -95,6 +95,9 @@ export function calculateAdaptiveBranchSpacing(branchCount, nodeType = 'default'
     )
   }
   
+  // 🔧 关键修复：确保最终间距不小于配置的最小值
+  const finalSpacing = Math.max(minSpacing, adaptiveSpacing)
+  
   console.log(`[BranchSpacing] 计算自适应间距:`, {
     branchCount,
     nodeType,
@@ -102,10 +105,12 @@ export function calculateAdaptiveBranchSpacing(branchCount, nodeType = 'default'
     minSpacing,
     nodeMinSpacing,
     adaptiveSpacing,
+    finalSpacing,
+    enforced: finalSpacing > adaptiveSpacing ? '✅ 强制最小间距' : '✅ 正常间距',
     typeConfig: typeConfig || 'default'
   })
   
-  return adaptiveSpacing
+  return finalSpacing
 }
 
 /**

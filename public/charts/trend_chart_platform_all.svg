@@ -1,0 +1,76 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lineGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4ECDC4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="600" height="400" fill="#f8f9fa"/>
+  
+  <!-- 标题 -->
+  <text x="300" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">时间趋势图</text>
+  
+  <!-- 坐标轴 -->
+  <line x1="80" y1="50" x2="80" y2="320" stroke="#ddd" stroke-width="2"/>
+  <line x1="80" y1="320" x2="520" y2="320" stroke="#ddd" stroke-width="2"/>
+  
+  <!-- Y轴标签 -->
+  <text x="70" y="60" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#666">35</text>
+  <text x="70" y="120" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#666">30</text>
+  <text x="70" y="180" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#666">25</text>
+  <text x="70" y="240" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#666">20</text>
+  <text x="70" y="300" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#666">15</text>
+  
+  <!-- X轴标签 -->
+  <text x="130" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">11-01</text>
+  <text x="200" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">11-08</text>
+  <text x="270" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">11-15</text>
+  <text x="340" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">11-22</text>
+  <text x="410" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">11-29</text>
+  
+  <!-- CTR线 -->
+  <polyline points="130,290 200,295 270,285 340,292 410,294" 
+            fill="none" stroke="#FF6B6B" stroke-width="3"/>
+  
+  <!-- CVR线 -->
+  <polyline points="130,100 200,95 270,98 340,102 410,99" 
+            fill="none" stroke="#4ECDC4" stroke-width="3"/>
+  
+  <!-- ROI线 -->
+  <polyline points="130,240 200,220 270,210 340,230 410,220" 
+            fill="none" stroke="#45B7D1" stroke-width="3"/>
+  
+  <!-- 数据点 -->
+  <circle cx="130" cy="290" r="4" fill="#FF6B6B"/>
+  <circle cx="200" cy="295" r="4" fill="#FF6B6B"/>
+  <circle cx="270" cy="285" r="4" fill="#FF6B6B"/>
+  <circle cx="340" cy="292" r="4" fill="#FF6B6B"/>
+  <circle cx="410" cy="294" r="4" fill="#FF6B6B"/>
+  
+  <circle cx="130" cy="100" r="4" fill="#4ECDC4"/>
+  <circle cx="200" cy="95" r="4" fill="#4ECDC4"/>
+  <circle cx="270" cy="98" r="4" fill="#4ECDC4"/>
+  <circle cx="340" cy="102" r="4" fill="#4ECDC4"/>
+  <circle cx="410" cy="99" r="4" fill="#4ECDC4"/>
+  
+  <circle cx="130" cy="240" r="4" fill="#45B7D1"/>
+  <circle cx="200" cy="220" r="4" fill="#45B7D1"/>
+  <circle cx="270" cy="210" r="4" fill="#45B7D1"/>
+  <circle cx="340" cy="230" r="4" fill="#45B7D1"/>
+  <circle cx="410" cy="220" r="4" fill="#45B7D1"/>
+  
+  <!-- 图例 -->
+  <rect x="450" y="60" width="15" height="3" fill="#FF6B6B"/>
+  <text x="470" y="68" font-family="Arial, sans-serif" font-size="12" fill="#666">CTR</text>
+  
+  <rect x="450" y="80" width="15" height="3" fill="#4ECDC4"/>
+  <text x="470" y="88" font-family="Arial, sans-serif" font-size="12" fill="#666">CVR</text>
+  
+  <rect x="450" y="100" width="15" height="3" fill="#45B7D1"/>
+  <text x="470" y="108" font-family="Arial, sans-serif" font-size="12" fill="#666">ROI</text>
+  
+  <!-- 生成时间戳 -->
+  <text x="580" y="390" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#999">Generated: 2025-01-08</text>
+</svg>

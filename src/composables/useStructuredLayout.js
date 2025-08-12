@@ -654,6 +654,70 @@ export function useStructuredLayout(getGraph) {
   }
 
   /**
+   * 🔧 预创建布局引擎实例（性能优化）
+   * @param {Object} graph - 图实例
+   * @returns {Object} 布局引擎实例
+   */
+  const createLayoutEngineInstance = (graph) => {
+    if (!graph) {
+      console.warn('⚠️ [布局引擎预创建] Graph实例为空，跳过预创建')
+      return null
+    }
+
+    console.log('🏗️ [布局引擎预创建] 开始预创建布局引擎实例')
+
+    const layoutEngine = new UnifiedStructuredLayoutEngine(graph, {
+      // 层级配置
+      layer: {
+        baseHeight: layoutConfig.value.levelHeight || 150,
+        dynamicSpacing: true,
+        maxLayers: 10,
+        tolerance: 20
+      },
+      
+      // 节点配置
+      node: {
+        minSpacing: layoutConfig.value.nodeSpacing * 0.6 || 120,
+        preferredSpacing: layoutConfig.value.nodeSpacing || 180,
+        maxSpacing: layoutConfig.value.nodeSpacing * 1.5 || 300,
+        endpointSize: { width: 20, height: 20 }
+      },
+      
+      // 优化配置
+      optimization: {
+        enableGlobalOptimization: true,
+        maxIterations: 5,
+        convergenceThreshold: 0.01,
+        enableAestheticOptimization: true,
+        enableEndpointIntegration: true // 🎯 关键：启用endpoint集成
+      },
+      
+      // 性能配置
+      performance: {
+        enableParallelProcessing: false,
+        batchSize: 50,
+        enableCaching: true
+      }
+    }, connectionPreviewManager.value) // 🎯 关键：传递预览线管理器实例
+
+    // 🔗 集成预览线管理器
+    if (connectionPreviewManager.value && connectionPreviewManager.value.setLayoutEngine) {
+      connectionPreviewManager.value.setLayoutEngine(layoutEngine)
+      console.log('🔗 [布局引擎集成] 布局引擎引用已传递给预览线管理器')
+    } else if (connectionPreviewManager.value) {
+      connectionPreviewManager.value.layoutEngine = layoutEngine
+      console.log('🔗 [布局引擎集成] 布局引擎引用已直接设置到预览线管理器')
+    }
+    
+    // 🌐 设置全局引用作为备用方案
+    window.layoutEngine = layoutEngine
+    console.log('🌐 [全局引用] 布局引擎已设置为全局引用')
+
+    console.log('✅ [布局引擎预创建] 布局引擎实例预创建完成')
+    return layoutEngine
+  }
+
+  /**
    * 应用统一结构化布局（基于父子关联关系的分层分级自底向上定位）
    * @param {Object} graph - 图实例
    * @returns {Promise<Object>} 布局结果
@@ -712,44 +776,23 @@ export function useStructuredLayout(getGraph) {
     try {
       const startTime = performance.now()
 
-      // 创建统一结构化布局引擎实例
-      const layoutEngine = new UnifiedStructuredLayoutEngine(graph, {
-        // 层级配置
-        layer: {
-          baseHeight: layoutConfig.value.levelHeight || 150,
-          dynamicSpacing: true,
-          maxLayers: 10,
-          tolerance: 20
-        },
-        
-        // 节点配置
-        node: {
-          minSpacing: layoutConfig.value.nodeSpacing * 0.6 || 120,
-          preferredSpacing: layoutConfig.value.nodeSpacing || 180,
-          maxSpacing: layoutConfig.value.nodeSpacing * 1.5 || 300,
-          endpointSize: { width: 20, height: 20 }
-        },
-        
-        // 优化配置
-        optimization: {
-          enableGlobalOptimization: true,
-          maxIterations: 5,
-          convergenceThreshold: 0.01,
-          enableAestheticOptimization: true,
-          enableEndpointIntegration: true // 🎯 关键：启用endpoint集成
-        },
-        
-        // 性能配置
-        performance: {
-          enableParallelProcessing: false,
-          batchSize: 50,
-          enableCaching: true
+      // 🔧 性能优化：优先使用预创建的布局引擎实例
+      let layoutEngine = layoutEngineInstance.value
+      
+      if (!layoutEngine || layoutEngine.graph !== graph) {
+        console.log('🏗️ [布局引擎管理] 需要创建新的布局引擎实例')
+        layoutEngine = createLayoutEngineInstance(graph)
+        layoutEngineInstance.value = layoutEngine
+      } else {
+        console.log('♻️ [布局引擎管理] 复用现有布局引擎实例')
+        // 更新图实例和预览线管理器
+        layoutEngine.updateGraph(graph)
+        if (connectionPreviewManager.value) {
+          layoutEngine.updatePreviewManager(connectionPreviewManager.value)
         }
-      }, connectionPreviewManager.value) // 🎯 关键：传递预览线管理器实例
+      }
 
-      // 🔧 关键修复：保存布局引擎实例以供后续访问
-      layoutEngineInstance.value = layoutEngine
-      console.log('💾 [布局引擎管理] 布局引擎实例已保存')
+      console.log('💾 [布局引擎管理] 布局引擎实例已准备就绪')
 
       // 🔧 关键修复：将布局引擎引用传递给预览线管理器
       if (connectionPreviewManager.value && connectionPreviewManager.value.setLayoutEngine) {

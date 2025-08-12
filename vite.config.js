@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import { logServerPlugin } from './vite-plugins/logServerPlugin.js'
+import { viteMockServe } from 'vite-plugin-mock'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -50,13 +51,21 @@ export default defineConfig({
              return;
           }
         }
-      }
+      },
+
     }
   },
-  plugins: [vue(), logServerPlugin()],
+  plugins: [
+    vue(), 
+    logServerPlugin(),
+    viteMockServe({
+      mockPath: 'src/mock',
+      enable: true,
+    })
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
     }
   }
-});;
+});

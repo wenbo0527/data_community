@@ -1,0 +1,42 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="funnelGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="600" height="400" fill="#f8f9fa"/>
+  
+  <!-- 标题 -->
+  <text x="300" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#333">全平台转化漏斗图</text>
+  
+  <!-- 漏斗层级 -->
+  <!-- 曝光 -->
+  <polygon points="150,60 450,60 420,100 180,100" fill="url(#funnelGradient)" stroke="#fff" stroke-width="2"/>
+  <text x="300" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">曝光: 8,500 (100%)</text>
+  
+  <!-- 点击 -->
+  <polygon points="180,100 420,100 390,140 210,140" fill="url(#funnelGradient)" stroke="#fff" stroke-width="2"/>
+  <text x="300" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">点击: 1,200 (14.1%)</text>
+  
+  <!-- 访问 -->
+  <polygon points="210,140 390,140 360,180 240,180" fill="url(#funnelGradient)" stroke="#fff" stroke-width="2"/>
+  <text x="300" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">访问: 980 (11.5%)</text>
+  
+  <!-- 注册 -->
+  <polygon points="240,180 360,180 330,220 270,220" fill="url(#funnelGradient)" stroke="#fff" stroke-width="2"/>
+  <text x="300" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">注册: 520 (6.1%)</text>
+  
+  <!-- 转化 -->
+  <polygon points="270,220 330,220 315,260 285,260" fill="url(#funnelGradient)" stroke="#fff" stroke-width="2"/>
+  <text x="300" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white">转化: 360 (4.2%)</text>
+  
+  <!-- 数据标签 -->
+  <text x="300" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">整体转化率: 4.2%</text>
+  <text x="300" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#666">ROI: 2.3</text>
+  
+  <!-- 生成时间戳 -->
+  <text x="580" y="390" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#999">Generated: 2025-01-08</text>
+</svg>
