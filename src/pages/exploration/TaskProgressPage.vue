@@ -77,15 +77,21 @@
         />
         
         <div class="task-info">
-          <a-descriptions title="任务基本信息" :column="1" bordered>
-            <a-descriptions-item label="任务ID">{{ taskId }}</a-descriptions-item>
+          <a-descriptions title="任务基本信息" :column="2" style="margin-top: 30px;">
             <a-descriptions-item label="任务名称">{{ taskName }}</a-descriptions-item>
             <a-descriptions-item label="创建时间">{{ createTime }}</a-descriptions-item>
             <a-descriptions-item label="预计完成时间">{{ estimatedTime }}</a-descriptions-item>
-            <a-descriptions-item label="任务状态">
-              <a-tag :color="getStatusColor(taskStatus)">{{ taskStatus }}</a-tag>
+            <a-descriptions-item label="当前状态">
+              <a-tag 
+                :color="taskStatus === '进行中' || taskStatus === 'running' ? 'blue' : 
+                       taskStatus === '已完成' || taskStatus === 'completed' ? 'green' : 
+                       taskStatus === '已失败' || taskStatus === 'failed' ? 'red' : 'gray'"
+              >
+                {{ taskStatus }}
+              </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="执行时长">{{ executionDuration }}</a-descriptions-item>
+            <a-descriptions-item label="预计剩余时间">{{ estimatedRemainingTime }}</a-descriptions-item>
           </a-descriptions>
         </div>
 
@@ -98,41 +104,46 @@
         </div>
         
         <!-- 执行日志 -->
-        <div class="execution-logs" style="margin-top: 20px;">
-          <a-card title="执行日志" size="small">
-            <div class="log-container">
-              <div 
-                v-for="(log, index) in executionLogs" 
-                :key="index" 
-                class="log-item"
-                :class="log.type"
-              >
-                <span class="log-time">{{ log.time }}</span>
-                <span class="log-message">{{ log.message }}</span>
-              </div>
-              <div v-if="executionLogs.length === 0" class="no-logs">
-                暂无执行日志
-              </div>
+        <a-card title="执行日志" style="margin-top: 20px;">
+          <div class="execution-logs">
+            <div 
+              v-for="(log, index) in executionLogs" 
+              :key="index" 
+              class="log-item"
+              :class="`log-${log.type}`"
+            >
+              <span class="log-time">{{ log.time }}</span>
+              <span class="log-message">{{ log.message }}</span>
             </div>
-          </a-card>
-        </div>
+            
+            <div v-if="executionLogs.length === 0" class="no-logs">
+              暂无执行日志
+            </div>
+          </div>
+        </a-card>
         
         <div class="action-buttons">
           <a-button @click="goToList">返回任务列表</a-button>
-          <a-button type="primary" @click="refreshProgress" :loading="refreshing">刷新进度</a-button>
           <a-button 
-            v-if="taskStatus === '已失败'" 
-            type="outline" 
-            status="warning" 
+            type="primary" 
+            @click="refreshProgress" 
+            :loading="refreshing"
+          >
+            刷新进度
+          </a-button>
+          <a-button 
+            v-if="taskStatus === '已失败' || taskStatus === 'failed'"
+            type="outline"
+            status="warning"
             @click="retryTask"
             :loading="retrying"
           >
             重试任务
           </a-button>
           <a-button 
-            v-if="taskStatus === '已完成'" 
-            type="primary" 
-            status="success" 
+            v-if="taskStatus === '已完成' || taskStatus === 'completed'"
+            type="outline"
+            status="success"
             @click="viewReport"
           >
             查看报告
@@ -454,13 +465,26 @@ onUnmounted(() => {
 <style scoped>
 .task-progress-page {
   padding: 20px;
-  background-color: var(--color-fill-2);
-  min-height: calc(100vh - 60px);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-header h2 {
+  margin: 0 0 10px 0;
+  color: #1d2129;
+}
+
+.task-id {
+  color: #86909c;
+  margin: 0;
 }
 
 .progress-card {
-  max-width: 800px;
-  margin: 0 auto;
+  margin-bottom: 20px;
 }
 
 .progress-details {
@@ -472,16 +496,98 @@ onUnmounted(() => {
 }
 
 .current-status {
-  margin-bottom: 20px;
+  text-align: center;
+  margin: 20px 0;
+  padding: 15px;
+  background: #f7f8fa;
+  border-radius: 6px;
 }
 
 .current-status h4 {
   margin-bottom: 10px;
 }
 
+/* 执行日志样式 */
+.execution-logs {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.log-item {
+  display: flex;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: #fff;
+  border-left: 3px solid #e5e6eb;
+}
+
+.log-item.log-info {
+  border-left-color: #165dff;
+}
+
+.log-item.log-success {
+  border-left-color: #00b42a;
+}
+
+.log-item.log-warning {
+  border-left-color: #ff7d00;
+}
+
+.log-item.log-error {
+  border-left-color: #f53f3f;
+}
+
+.log-time {
+  color: #86909c;
+  font-size: 12px;
+  min-width: 140px;
+  margin-right: 12px;
+}
+
+.log-message {
+  color: #1d2129;
+  font-size: 14px;
+  flex: 1;
+}
+
+.no-logs {
+  text-align: center;
+  color: #86909c;
+  padding: 20px;
+  font-style: italic;
+}
+
 .action-buttons {
   display: flex;
   justify-content: center;
   gap: 20px;
+  margin-top: 30px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .task-progress-page {
+    padding: 10px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .log-item {
+    flex-direction: column;
+  }
+  
+  .log-time {
+    min-width: auto;
+    margin-right: 0;
+    margin-bottom: 4px;
+  }
 }
 </style>

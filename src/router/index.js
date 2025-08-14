@@ -319,15 +319,15 @@ router.beforeEach(async (to, from, next) => {
     
     // 检查路由权限
     if (!checkRoutePermission(to, userStore.userInfo)) {
-      error('您没有访问该页面的权限')
+      console.error('您没有访问该页面的权限')
       next({ path: ROUTE_GUARD_CONFIG.defaultRedirect })
       return
     }
     
     next()
-  } catch (error) {
-    console.error('Route guard error:', error)
-    error('页面访问异常')
+  } catch (err) {
+    console.error('Route guard error:', err)
+    console.error('页面访问异常')
     next({ path: ROUTE_GUARD_CONFIG.defaultRedirect })
   }
 })
@@ -352,7 +352,7 @@ router.afterEach((to, from) => {
 // 路由错误处理
 router.onError((error) => {
   console.error('Router error:', error)
-  error('页面加载失败，请刷新重试')
+  console.error('页面加载失败，请刷新重试')
 })
 
 // 默认重定向

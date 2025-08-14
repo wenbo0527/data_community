@@ -150,10 +150,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { IconArrowRise, IconArrowFall, IconDownload } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import * as echarts from 'echarts'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 
 // 数据加载状态
 const loading = ref(false)
@@ -327,13 +328,14 @@ const failureDistributionData = ref([
 const failureChartRef = ref(null)
 let failureChart = null
 
-const initFailureChart = () => {
+const initFailureChart = async () => {
   if (!failureChartRef.value || !failureChartRef.value.clientWidth) {
     setTimeout(initFailureChart, 100)
     return
   }
   
-  failureChart = echarts.init(failureChartRef.value)
+  try {
+    failureChart = await safeInitECharts(failureChartRef.value)
   const option = {
     tooltip: {
       trigger: 'item',
@@ -375,6 +377,9 @@ const initFailureChart = () => {
     ]
   }
   failureChart.setOption(option)
+  } catch (error) {
+    console.error('失败原因图表初始化失败:', error)
+  }
 }
 
 // 获取统计数据

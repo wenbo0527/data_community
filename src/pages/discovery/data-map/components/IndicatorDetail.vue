@@ -176,6 +176,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconBarChart, IconCode, IconHeart, IconNotification } from '@arco-design/web-vue/es/icon'
 import * as echarts from 'echarts'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 
 interface Props {
   node: any
@@ -273,10 +274,11 @@ const getTrendText = (index: number) => {
 }
 
 // 初始化图表
-const initChart = () => {
+const initChart = async () => {
   if (!chartContainer.value) return
   
-  chartInstance = echarts.init(chartContainer.value)
+  try {
+    chartInstance = await safeInitECharts(chartContainer.value)
   
   const option = {
     title: {
@@ -308,6 +310,9 @@ const initChart = () => {
   }
   
   chartInstance.setOption(option)
+  } catch (error) {
+    console.error('图表初始化失败:', error)
+  }
 }
 
 // 生成模拟数据

@@ -193,23 +193,7 @@
         <div v-show="currentStep === 2">
           <a-card :bordered="false">
             <a-form :model="form" :rules="rules" ref="formRef">
-              <a-form-item field="productName" label="外数产品">
-                <a-select
-                  v-model="form.productName"
-                  :style="{ width: '320px' }"
-                  :allow-search="true"
-                  :allow-create="true"
-                  :allow-clear="true"
-                  placeholder="请选择或输入外数产品名称"
-                  @change="handleProductChange"
-                >
-                  <a-option v-for="product in registeredProducts" :key="product.id" :value="product.name">
-                    {{ product.name }}
-                    <span style="color: green; margin-left: 8px">已注册</span>
-                  </a-option>
-                </a-select>
-                <div class="product-note">选择已有产品或手工输入新名称（未注册产品将自动添加"(未注册)"标识）</div>
-              </a-form-item>
+
 
               <a-form-item field="analysisPeriod" label="分析时间跨度">
                 <a-range-picker
@@ -224,10 +208,9 @@
                 <a-input
                   v-model="form.reportName"
                   :style="{ width: '320px' }"
-                  placeholder="系统将根据产品名称和时间自动生成"
-                  disabled
+                  placeholder="请输入报告名称"
                 />
-                <div class="report-name-note">格式：[外数产品名]-[模版名称]-[分析日期]</div>
+                <div class="report-name-note">请输入自定义报告名称</div>
               </a-form-item>
 
               <a-form-item field="description" label="分析说明">
@@ -250,7 +233,6 @@
             <a-descriptions :column="1" bordered>
               <a-descriptions-item label="模板类型">{{ form.templateType }}</a-descriptions-item>
               <a-descriptions-item label="样本文件">{{ currentFileInfo.name }}</a-descriptions-item>
-              <a-descriptions-item label="外数产品">{{ form.productName }}</a-descriptions-item>
               <a-descriptions-item label="分析时间跨度">{{ form.analysisPeriod[0] }} 至 {{ form.analysisPeriod[1] }}</a-descriptions-item>
               <a-descriptions-item label="报告名称">{{ form.reportName }}</a-descriptions-item>
               <a-descriptions-item label="分析说明">{{ form.description || '无' }}</a-descriptions-item>
@@ -396,7 +378,6 @@ const registeredProducts = ref([
 
 // 表单数据
 const form = reactive({
-  productName: '',
   analysisPeriod: [],
   reportName: '',
   templateType: '风险外数效果评估模板',
@@ -487,13 +468,18 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// 监听字段变化，自动清理冲突
+// 监听字段变化，自动清理冲突并更新时间跨度
 watch(() => fieldMapping.value.dateField, (newVal: string, oldVal: string) => {
   if (newVal && fieldMapping.value.variableFields.includes(newVal)) {
     fieldMapping.value.variableFields = fieldMapping.value.variableFields.filter((f: string) => f !== newVal);
   }
   if (newVal && newVal === fieldMapping.value.platformField) {
     fieldMapping.value.platformField = '';
+  }
+  
+  // 更新时间跨度
+  if (newVal) {
+    updateTimeSpanFromDateField(newVal);
   }
 });
 
@@ -517,6 +503,8 @@ const smartRecommendMapping = () => {
   );
   if (dateField) {
     fieldMapping.value.dateField = dateField;
+    // 更新时间跨度
+    updateTimeSpanFromDateField(dateField);
   }
 
   // 推荐平台字段
@@ -542,8 +530,8 @@ const smartRecommendMapping = () => {
 
 // 表单规则
 const rules = {
-  productName: [
-    { required: true, message: '请选择或输入外数产品名称' }
+  reportName: [
+    { required: true, message: '请输入报告名称' }
   ],
   analysisPeriod: [
     { required: true, message: '请选择分析时间跨度' }
@@ -563,57 +551,50 @@ const rules = {
   ]
 };
 
-// 监听产品名称和时间范围变化，自动生成报告名称
-watch([() => form.productName, () => form.analysisPeriod], () => {
-  generateReportName();
+// 监听时间范围变化，自动更新报告名称
+watch([() => form.analysisPeriod], () => {
+  updateReportNameWithDate();
 });
 
-// 处理产品选择变化
-const handleProductChange = (value: string) => {
-  form.productName = value;
-  generateReportName();
-};
-
-// 解析样本文件时间跨度
-const parseSampleTimeSpan = (file: File) => {
-  return new Promise((resolve) => {
-    // 模拟从CSV文件解析时间跨度
-    setTimeout(() => {
-      // 根据文件名或内容解析时间范围
-      const fileName = file.name;
-      const dateMatch = fileName.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/);
-      
-      if (dateMatch) {
-        resolve({
-          startDate: dateMatch[1].replace(/-/g, ''),
-          endDate: dateMatch[2].replace(/-/g, '')
-        });
-      } else {
-        // 默认生成一个合理的时间跨度
-        const endDate = new Date();
-        const startDate = new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000); // 30天前
-        resolve({
-          startDate: startDate.toISOString().split('T')[0].replace(/-/g, ''),
-          endDate: endDate.toISOString().split('T')[0].replace(/-/g, '')
-        });
-      }
-    }, 500);
-  });
-};
-
-// 生成报告名称
-const generateReportName = () => {
-  if (form.productName && form.analysisPeriod.length === 2) {
-    // 检查是否为未注册产品
-    const isRegistered = registeredProducts.value.some((p: { name: string }) => p.name === form.productName);
-    const productName = isRegistered ? form.productName : `${form.productName}(未注册)`;
+// 根据日期字段更新时间跨度
+const updateTimeSpanFromDateField = (dateField: string) => {
+  try {
+    const dates = sampleData.value
+      .map((row: Record<string, string>) => row[dateField])
+      .filter((date: string) => date && date.trim())
+      .map((date: string) => new Date(date))
+      .filter((date: Date) => !isNaN(date.getTime()))
+      .sort((a: Date, b: Date) => a.getTime() - b.getTime());
     
+    if (dates.length >= 2) {
+      const startDate = dates[0].toISOString().split('T')[0].replace(/-/g, '');
+      const endDate = dates[dates.length - 1].toISOString().split('T')[0].replace(/-/g, '');
+      
+      form.analysisPeriod = [startDate, endDate];
+      updateReportNameWithDate();
+      
+      AMessage.success(`已根据样本日期字段更新时间跨度：${startDate} 至 ${endDate}`);
+    }
+  } catch (error) {
+    console.error('更新时间跨度失败:', error);
+  }
+};
+
+// 更新报告名称（仅包含日期）
+const updateReportNameWithDate = () => {
+  if (form.analysisPeriod.length === 2) {
     const startDate = form.analysisPeriod[0];
     const endDate = form.analysisPeriod[1];
     
-    form.reportName = `${productName}-产品级评估-${startDate}-${endDate}`;
+    // 如果报告名称为空或之前是自动生成的，则更新为新的默认名称
+    if (!form.reportName || form.reportName.includes('-产品级评估-')) {
+      form.reportName = `产品级评估-${startDate}-${endDate}`;
+    }
   } else {
-    form.reportName = '';
+    // 如果时间跨度为空且报告名称是自动生成的，则清空报告名称
+    if (!form.reportName || form.reportName.includes('-产品级评估-')) {
+      form.reportName = '';
+    }
   }
 };
 
@@ -680,14 +661,9 @@ const parseFileFields = (file: File): Promise<{ fields: string[], sampleData: an
   });
 };
 
-// 处理文件上传并解析时间跨度
+// 处理文件上传
 const handleFileUpload = async (file: File) => {
   try {
-    // 解析时间跨度
-    const timeSpan = await parseSampleTimeSpan(file) as { startDate: string, endDate: string };
-    form.analysisPeriod = [timeSpan.startDate, timeSpan.endDate];
-    generateReportName();
-    
     // 解析文件字段
     const { fields, sampleData: parsedSampleData } = await parseFileFields(file);
     
@@ -702,7 +678,7 @@ const handleFileUpload = async (file: File) => {
     // 自动进行智能推荐字段映射
     smartRecommendMapping();
     
-    AMessage.success(`已解析样本时间跨度：${timeSpan.startDate} 至 ${timeSpan.endDate}`);
+    AMessage.success('文件解析成功');
   } catch (error) {
     AMessage.error('文件解析失败，请检查文件格式');
     console.error('文件解析错误:', error);
@@ -737,29 +713,7 @@ const handleFileUpload = async (file: File) => {
 
 
 
-// 根据日期字段更新时间跨度
-const updateTimeSpanFromDateField = (dateField: string) => {
-  try {
-    const dates = sampleData.value
-      .map((row: Record<string, string>) => row[dateField])
-      .filter((date: string) => date && date.trim())
-      .map((date: string) => new Date(date))
-      .filter((date: Date) => !isNaN(date.getTime()))
-      .sort((a: Date, b: Date) => a.getTime() - b.getTime());
-    
-    if (dates.length >= 2) {
-      const startDate = dates[0].toISOString().split('T')[0].replace(/-/g, '');
-      const endDate = dates[dates.length - 1].toISOString().split('T')[0].replace(/-/g, '');
-      
-      form.analysisPeriod = [startDate, endDate];
-      generateReportName();
-      
-      AMessage.success(`已根据样本日期字段更新时间跨度：${startDate} 至 ${endDate}`);
-    }
-  } catch (error) {
-    console.error('更新时间跨度失败:', error);
-  }
-};
+
 
 // 文件上传前验证
 const beforeUpload = (file: File) => {
@@ -812,7 +766,6 @@ const handleSubmit = async () => {
       const taskData = {
         taskName: form.reportName,
         config: {
-          productName: form.productName,
           startDate: form.analysisPeriod[0],
           endDate: form.analysisPeriod[1],
           reportName: form.reportName,

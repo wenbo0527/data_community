@@ -306,6 +306,7 @@
 <script setup>
 import { ref, watch, nextTick, reactive } from 'vue'
 import * as echarts from 'echarts'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 import { getTagLineage } from '@/api/tag'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -436,7 +437,7 @@ const getChildrenCounts = (node) => {
   return counts;
 };
 
-const initLineageChart = () => {
+const initLineageChart = async () => {
   console.debug('[Lineage] 初始化图表', {
     containerSize: {
       width: lineageChartRef.value?.offsetWidth,
@@ -444,79 +445,78 @@ const initLineageChart = () => {
     }
   });
   if (!lineageChartRef.value) return
-  const chart = echarts.init(lineageChartRef.value)
   
-  console.log('[Lineage Debug] ECharts配置:', {
-    seriesType: 'tree',
-    nodeCount: lineageData.value.children.length,
-    maxDepth: getTreeDepth(lineageData.value)
-  });
-  const option = {
-    tooltip: {
-      trigger: 'item',
-      formatter: ({ data }) => {
-        return `<div style='padding:8px;'>
-          <div style='font-weight:500;margin-bottom:4px;'>${data.name}</div>
-          <div style='color:#666;'>类型：${data.category}</div>
-          ${data.updatedAt ? `<div style='color:#666;margin-top:4px;'>更新时间：${new Date(data.updatedAt).toLocaleString()}</div>` : ''}
-        </div>`
-      }
-    },
-    series: [{
-      type: 'tree',
-      data: [lineageData.value],
-      orient: 'LR',
-      symbolSize: 36,
-      itemStyle: {
-        borderWidth: 2,
-        borderColor: '#fff'
-      },
-      lineStyle: {
-        color: '#99adef',
-        curveness: 0
-      },
-      symbolSize: 24,
-      itemStyle: {
-        color: ({ data }) => {
-          const typeColors = {
-            tag: '#52c41a',
-            attribute: '#1890ff',
-            table: '#f5222d'
-          };
-          return typeColors[data.type] || '#666';
+  try {
+    const chart = await safeInitECharts(lineageChartRef.value)
+    
+    console.log('[Lineage Debug] ECharts配置:', {
+      seriesType: 'tree',
+      nodeCount: lineageData.value.children.length,
+      maxDepth: getTreeDepth(lineageData.value)
+    });
+    
+    const option = {
+      tooltip: {
+        trigger: 'item',
+        formatter: ({ data }) => {
+          return `<div style='padding:8px;'>
+            <div style='font-weight:500;margin-bottom:4px;'>${data.name}</div>
+            <div style='color:#666;'>类型：${data.category}</div>
+            ${data.updatedAt ? `<div style='color:#666;margin-top:4px;'>更新时间：${new Date(data.updatedAt).toLocaleString()}</div>` : ''}
+          </div>`
         }
       },
-      label: {
-        position: 'right',
-        verticalAlign: 'middle',
-        formatter: ({ data }) => {
-          const typeIcons = {
-            tag: '🏷',
-            attribute: '📌',
-            table: '🗂',
-            root: '🌳'
-          };
-          return `${data._isRoot ? typeIcons.root : typeIcons[data.type]} ${data.name}`;
+      series: [{
+        type: 'tree',
+        data: [lineageData.value],
+        orient: 'LR',
+        symbolSize: 24,
+        itemStyle: {
+          borderWidth: 2,
+          borderColor: '#fff',
+          color: ({ data }) => {
+            const typeColors = {
+              tag: '#52c41a',
+              attribute: '#1890ff',
+              table: '#f5222d'
+            };
+            return typeColors[data.type] || '#666';
+          }
         },
-        fontSize: 14
-      },
-      leaves: {
-        label: { position: 'bottom', show: true }
-      },
-      expandAndCollapse: false,
-      lineStyle: {
-        color: '#ccc',
-        curveness: 0.3
-      }
-    }]
+        lineStyle: {
+          color: '#ccc',
+          curveness: 0.3
+        },
+        label: {
+          position: 'right',
+          verticalAlign: 'middle',
+          formatter: ({ data }) => {
+            const typeIcons = {
+              tag: '🏷',
+              attribute: '📌',
+              table: '🗂',
+              root: '🌳'
+            };
+            return `${data._isRoot ? typeIcons.root : typeIcons[data.type]} ${data.name}`;
+          },
+          fontSize: 14
+        },
+        leaves: {
+          label: { position: 'bottom', show: true }
+        },
+        expandAndCollapse: false
+      }]
+    }
+    
+    chart.setOption(option);
+    console.debug('[Lineage] 图表配置应用完成', {
+      seriesCount: option.series.length,
+      nodeTypes: [...new Set(option.series[0].data.flatMap(s => s.children).map(n => n.type))]
+    });
+    window.addEventListener('resize', () => chart.resize())
+  } catch (error) {
+    console.error('❌ 血缘图表初始化失败:', error)
   }
-  
-  chart.setOption(option);
-  console.debug('[Lineage] 图表配置应用完成', {
-    seriesCount: option.series.length,
-    nodeTypes: [...new Set(option.series[0].data.flatMap(s => s.children).map(n => n.type))]
-  });
-  window.addEventListener('resize', () => chart.resize())
 }
 
 watch(() => activeTab.value, (val) => {
@@ -604,10 +604,6 @@ const mockLineageData = {
     { source: 'TAG_001', target: 'ATT_002', type: 'attribute' },
     { source: 'ATT_001', target: 'TBL_001', type: 'table' },
     { source: 'ATT_002', target: 'TBL_002', type: 'table' },
-    { source: 1, target: 2 },
-    { source: 2, target: 3 },
-  ],
-  links: [
     { source: 1, target: 2 },
     { source: 2, target: 3 }
   ]

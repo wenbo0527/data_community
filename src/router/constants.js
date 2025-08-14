@@ -31,6 +31,13 @@ export const ROUTE_NAMES = {
       BACKTRACK: 'management-service-backtrack',
       FUND_USAGE_QUERY: 'fund-usage-query'
     },
+    DATA_MODELS: {
+      ROOT: 'data-models',
+      LIST: 'data-models-list',
+      CREATE: 'data-models-create',
+      EDIT: 'data-models-edit',
+      DETAIL: 'data-models-detail'
+    },
     ACCOMPANY: {
       ROOT: 'management-accompany',
       CREATE: 'management-accompany-create',
@@ -106,6 +113,13 @@ export const ROUTE_PATHS = {
       ROOT: '/management/service',
       BACKTRACK: '/management/service/backtrack',
       FUND_USAGE_QUERY: '/management/service/fund-usage-query'
+    },
+    DATA_MODELS: {
+      ROOT: '/management/data-models',
+      LIST: '/management/data-models',
+      CREATE: '/management/data-models/create',
+      EDIT: '/management/data-models/:id/edit',
+      DETAIL: '/management/data-models/:id'
     },
     ACCOMPANY: {
       ROOT: '/management/accompany',

@@ -20,8 +20,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 
 type BurndownItem = { 
   granularity?: string;
@@ -260,19 +261,32 @@ watch(() => props.chartData, (newData) => {
 
 onMounted(() => {
   console.log('初始化ECharts实例，数据长度:', props.chartData.length)
-  burndownChart = echarts.init(burndownChartRef.value, undefined, {
-    useCoarsePointer: true,
-    pointerSize: 3,
-    renderer: 'canvas',
-    eventProcessors: {
-      touch: { passive: true },
-      mouse: { passive: true }
-    }
-  } as any);
-
-  // 初始化图表数据
-  updateChartWithCurrentData();
+  
+  // 延迟初始化，确保DOM完全渲染
+  nextTick(() => {
+    initChart()
+  })
 })
+
+// 初始化图表函数
+const initChart = async () => {
+  try {
+    console.log('开始安全初始化燃尽图表...')
+    
+    burndownChart = await safeInitECharts(burndownChartRef.value, {
+      width: 800,
+      height: 400,
+      renderer: 'canvas'
+    })
+    
+    console.log('燃尽图表初始化成功')
+    
+    // 初始化图表数据
+    updateChartWithCurrentData()
+  } catch (error) {
+    console.error('燃尽图表初始化失败:', error)
+  }
+}
 </script>
 
 <style scoped>

@@ -120,7 +120,7 @@
                       </a-table-column>
                       <a-table-column title="关联字段">
                         <template #cell="{ record }">
-                          {{ record.relationFields.map((f: { sourceField: string; targetField: string }) => `${f.sourceField}=${f.targetField}`).join(', ') }}
+                          {{ record.relationFields.map((f) => `${f.sourceField}=${f.targetField}`).join(', ') }}
                         </template>
                       </a-table-column>
                       <a-table-column title="关联类型" data-index="relationType" />
@@ -182,6 +182,7 @@ import { TreeChart } from 'echarts/charts'
 import { CanvasRenderer } from 'echarts/renderers'
 import { TitleComponent, TooltipComponent } from 'echarts/components'
 import type { EChartsType, CallbackDataParams } from 'echarts/types/dist/shared'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 
 // 注册必须的组件
 echarts.use([TreeChart, CanvasRenderer, TitleComponent, TooltipComponent])
@@ -557,7 +558,7 @@ watch(activeModalTab, (newTab: string, oldTab: string) => {
 });
 
 // 渲染关联关系图
-const renderRelationTree = () => {
+const renderRelationTree = async () => {
   logger.debug('开始渲染关联关系图')
   if (!relationTreeRef.value) {
     logger.warn('relationTreeRef 未找到，无法渲染图表')
@@ -593,12 +594,16 @@ const renderRelationTree = () => {
   }
   
   // 初始化ECharts实例
-  logger.debug('初始化ECharts实例')
+  logger.debug('开始安全初始化关联关系图表')
   try {
-    relationChart = echarts.init(relationTreeRef.value)
-    logger.debug('ECharts实例初始化成功', { chart: !!relationChart });
+    relationChart = await safeInitECharts(relationTreeRef.value, {
+      width: 800,
+      height: 600,
+      renderer: 'canvas'
+    })
+    logger.debug('关联关系图表初始化成功', { chart: !!relationChart });
   } catch (error) {
-    logger.error('ECharts实例初始化失败', error);
+    logger.error('关联关系图表初始化失败', error);
     return;
   }
   

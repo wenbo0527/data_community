@@ -65,7 +65,27 @@ export class GeometricCenterAlignment {
   async calculateGeometricAlignment(layers, currentPositions) {
     console.log('🎯 [几何中心对齐] 开始计算');
     
-    const optimizedPositions = new Map(currentPositions);
+    // 参数验证：确保layers和currentPositions有效
+    if (!layers || !Array.isArray(layers)) {
+      console.error('❌ [几何中心对齐] layers参数无效:', layers);
+      throw new Error('layers参数必须是数组');
+    }
+    
+    // 确保currentPositions是可迭代的Map对象
+    let optimizedPositions;
+    if (!currentPositions) {
+      console.warn('⚠️ [几何中心对齐] currentPositions为空，创建新的Map');
+      optimizedPositions = new Map();
+    } else if (currentPositions instanceof Map) {
+      optimizedPositions = new Map(currentPositions);
+    } else if (typeof currentPositions === 'object') {
+      // 如果是普通对象，转换为Map
+      console.warn('⚠️ [几何中心对齐] currentPositions不是Map对象，正在转换');
+      optimizedPositions = new Map(Object.entries(currentPositions));
+    } else {
+      console.error('❌ [几何中心对齐] currentPositions类型无效:', typeof currentPositions);
+      throw new Error('currentPositions必须是Map对象或普通对象');
+    }
     
     try {
       // 步骤1：识别所有叶子节点

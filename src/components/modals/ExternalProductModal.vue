@@ -74,9 +74,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import { generateExternalProductData } from '@/mock/external-data'
+import { safeInitECharts, batchInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 
 const props = defineProps({
   visible: Boolean,
@@ -438,48 +439,35 @@ const updatePsiChart = (data: any[]) => {
 }
 
 // 初始化图表
-const initCharts = () => {
-  console.log('初始化图表...')
+const initCharts = async () => {
+  console.log('开始安全初始化图表...')
   
-  const checkAndInit = () => {
-    if (priceChartRef.value && priceChartRef.value.clientWidth > 0 && priceChartRef.value.clientHeight > 0) {
-      console.log('价格图表容器尺寸:', priceChartRef.value.clientWidth, 'x', priceChartRef.value.clientHeight)
-      priceChart = echarts.init(priceChartRef.value)
-      console.log('价格图表初始化成功')
-    }
+  try {
+    // 使用批量初始化功能
+    const chartConfigs = [
+      { container: priceChartRef.value, name: 'price', options: {} },
+      { container: costChartRef.value, name: 'cost', options: {} },
+      { container: valueChartRef.value, name: 'value', options: {} },
+      { container: ivChartRef.value, name: 'iv', options: {} },
+      { container: ksChartRef.value, name: 'ks', options: {} },
+      { container: psiChartRef.value, name: 'psi', options: {} }
+    ].filter(config => config.container) // 过滤掉不存在的容器
     
-    if (costChartRef.value && costChartRef.value.clientWidth > 0 && costChartRef.value.clientHeight > 0) {
-      console.log('成本图表容器尺寸:', costChartRef.value.clientWidth, 'x', costChartRef.value.clientHeight)
-      costChart = echarts.init(costChartRef.value)
-      console.log('成本图表初始化成功')
-    }
+    const charts = await batchInitECharts(chartConfigs)
     
-    if (valueChartRef.value && valueChartRef.value.clientWidth > 0 && valueChartRef.value.clientHeight > 0) {
-      valueChart = echarts.init(valueChartRef.value)
-      console.log('性价比图表初始化成功')
-    }
+    // 分配图表实例
+    priceChart = charts.price
+    costChart = charts.cost
+    valueChart = charts.value
+    ivChart = charts.iv
+    ksChart = charts.ks
+    psiChart = charts.psi
     
-    if (ivChartRef.value && ivChartRef.value.clientWidth > 0 && ivChartRef.value.clientHeight > 0) {
-      ivChart = echarts.init(ivChartRef.value)
-      console.log('IV图表初始化成功')
-    }
+    console.log('所有图表初始化完成')
     
-    if (ksChartRef.value && ksChartRef.value.clientWidth > 0 && ksChartRef.value.clientHeight > 0) {
-      ksChart = echarts.init(ksChartRef.value)
-      console.log('KS图表初始化成功')
-    }
-    
-    if (psiChartRef.value && psiChartRef.value.clientWidth > 0 && psiChartRef.value.clientHeight > 0) {
-      psiChart = echarts.init(psiChartRef.value)
-      console.log('PSI图表初始化成功')
-    }
-    
-    if (!priceChart || !costChart || !valueChart || !ivChart || !ksChart || !psiChart) {
-      requestAnimationFrame(checkAndInit)
-    }
+  } catch (error) {
+    console.error('图表初始化失败:', error)
   }
-  
-  checkAndInit()
 }
 
 const handleCancel = () => {

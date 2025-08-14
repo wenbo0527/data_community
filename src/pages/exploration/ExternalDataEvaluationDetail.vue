@@ -451,19 +451,23 @@ const getTableRows = (table: { rows?: string[][]; data?: any[] }) => {
 };
 
 // 渲染图表
-const renderCharts = () => {
-  reportData.modules.forEach((module: { id: number; charts?: any[]; }) => {
+const renderCharts = async () => {
+  for (const module of reportData.modules) {
     if (module.charts) {
-      module.charts.forEach((chart: { type: string; }) => {
+      for (const chart of module.charts) {
         const chartDom = document.getElementById(`chart-${module.id}-${chart.type}`);
         if (chartDom) {
-          const myChart = echarts.init(chartDom);
-          const option = getChartOption(chart);
-          myChart.setOption(option);
+          try {
+            const myChart = await safeInitECharts(chartDom);
+            const option = getChartOption(chart);
+            myChart.setOption(option);
+          } catch (error) {
+            console.error('图表初始化失败:', error);
+          }
         }
-      });
+      }
     }
-  });
+  }
 };
 
 // 获取图表配置

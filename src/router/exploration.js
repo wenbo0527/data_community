@@ -120,5 +120,34 @@ export default [
       },
       {        path: 'audience-system',        name: 'audience-system',        component: () => import('../pages/exploration/customer-center/audience-system/index.vue'),        children: [          {            path: 'audience-management',            name: 'audience-management',            component: () => import('../pages/exploration/customer-center/audience-system/audience-management.vue')          },          {            path: 'audience-create',            name: 'audience-create',            component: () => import('../pages/exploration/customer-center/audience-system/audience-create.vue')          },          {            path: 'audience-detail',            name: 'audience-detail',            component: () => import('../pages/exploration/customer-center/audience-system/audience-detail.vue')          }        ]      }
     ]
+  },
+
+  // 分析流程可视化编辑工具
+  {
+    path: 'workflows',
+    name: 'workflows',
+    component: () => import('../pages/exploration/workflows/index.vue'),
+    children: [
+      {
+        path: '',
+        name: 'workflow-manager',
+        component: () => import('../pages/exploration/workflows/WorkflowManager.vue')
+      },
+      {
+        path: 'create',
+        name: 'workflow-create',
+        component: () => import('../pages/exploration/workflows/WorkflowCreate.vue')
+      },
+      {
+        path: ':id/edit',
+        name: 'workflow-editor',
+        component: () => import('../pages/exploration/workflows/WorkflowEditor.vue')
+      },
+      {
+        path: 'datasources',
+        name: 'workflow-datasources',
+        component: () => import('../pages/exploration/workflows/DataSourceConfig.vue')
+      }
+    ]
   }
 ];

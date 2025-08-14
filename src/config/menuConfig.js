@@ -251,6 +251,39 @@ export const MENU_CONFIG = {
             }
           }
         }
+      },
+      'analysis-tools': {
+        key: 'analysis-tools',
+        title: '分析工具',
+        type: 'group',
+        children: {
+          'workflow-management': {
+            key: 'workflow-management',
+            title: '分析流程管理',
+            path: '/exploration/workflows',
+            routeName: 'workflowManager',
+            children: {
+              'workflow-list': {
+                key: 'workflow-list',
+                title: '流程列表',
+                path: '/exploration/workflows',
+                routeName: 'workflowManager'
+              },
+              'workflow-create': {
+                key: 'workflow-create',
+                title: '创建流程',
+                path: '/exploration/workflows/create',
+                routeName: 'workflowCreate'
+              },
+              'data-source-config': {
+            key: 'data-source-config',
+            title: '数据源配置',
+            path: '/exploration/workflows/datasources',
+            routeName: 'dataSourceConfig'
+          }
+            }
+          }
+        }
       }
     }
   },
@@ -266,14 +299,33 @@ export const MENU_CONFIG = {
       'management-service': {
         key: 'management-service',
         title: '数据服务',
-        path: '/management/service',
-        routeName: 'management-service'
+        type: 'group',
+        children: {
+          'service-index': {
+            key: 'service-index',
+            title: '服务首页',
+            path: '/management/service',
+            routeName: 'management-service'
+          },
+          'detail-data-query': {
+            key: 'detail-data-query',
+            title: '明细数据查询服务',
+            path: '/management/service/detail-data-query',
+            routeName: 'detail-data-query'
+          }
+        }
       },
       'permission': {
         key: 'permission',
         title: '权限管理',
         path: '/management/permission',
         routeName: 'permission'
+      },
+      'data-models': {
+        key: 'data-models',
+        title: '数据查询&管理模型',
+        path: '/management/data-models',
+        routeName: 'data-models'
       },
       'accompany': {
         key: 'accompany',

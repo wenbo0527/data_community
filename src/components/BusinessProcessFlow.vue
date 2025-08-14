@@ -90,8 +90,7 @@
               编辑绑定
             </a-button>
             <a-select 
-               :model-value="activeTab === 'tables' ? tableViewMode : metricViewMode"
-               @update:model-value="(value: string) => activeTab === 'tables' ? (tableViewMode = value) : (metricViewMode = value)"
+               v-model="currentViewMode"
                size="small"
                :style="{width:'100px'}"
              >
@@ -247,80 +246,22 @@
       </a-card>
     </div>
 
-    <!-- 流程列表弹窗 -->
-    <a-modal
-      v-model:visible="processListModalVisible"
-      title="业务流程管理"
-      :width="modalWidth"
-      :footer="false"
-      :mask-closable="false"
-    >
-      <div class="process-list-modal">
-        <div class="modal-header">
-          <div class="header-actions">
-            <a-button type="primary" @click="createNewProcess">
-              <template #icon><icon-plus /></template>
-              新增流程
-            </a-button>
-          </div>
-        </div>
-        
-        <div class="process-list">
-          <div 
-            v-for="process in processList" 
-            :key="process.id"
-            class="process-item"
-          >
-            <div class="process-info">
-              <div class="process-header">
-                <h4 class="process-name">{{ process.name }}</h4>
-                <div class="process-tags">
-                  <a-tag size="small" color="blue">{{ getBusinessTypeText(process.businessType) }}</a-tag>
-                  <a-tag size="small" color="green">{{ getProductTypeText(process.productType) }}</a-tag>
-                </div>
-              </div>
-              <p class="process-description">{{ process.description }}</p>
-              <div class="process-meta">
-                <span class="meta-item">
-                  <icon-file class="meta-icon" />
-                  {{ process.stepCount }} 个步骤
-                </span>
-                <span class="meta-item">
-                  <icon-user class="meta-icon" />
-                  {{ process.creator }}
-                </span>
-                <span class="meta-item">
-                  <icon-clock-circle class="meta-icon" />
-                  {{ process.updateTime }}
-                </span>
-              </div>
-            </div>
-            <div class="process-actions">
-              <a-button type="text" size="small" @click="editProcess(process)">
-                <template #icon><icon-edit /></template>
-                编辑
-              </a-button>
-              <a-button type="text" size="small" status="danger" @click="deleteProcess(process.id)">
-                <template #icon><icon-delete /></template>
-                删除
-              </a-button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </a-modal>
+    <!-- 弹窗逻辑已移除，现在直接使用抽屉的两阶段界面 -->
 
-    <!-- 业务流程编辑弹窗 -->
-    <BusinessProcessEditModal
-      v-model:visible="editModalVisible"
-      :process-data="currentEditProcess"
+    <!-- 业务流程编辑抽屉 -->
+    <BusinessProcessDrawer
+      v-model:visible="editDrawerVisible"
+      :mode="currentEditProcess ? 'edit' : 'create'"
+      :process-id="currentEditProcess?.id?.toString()"
       @save="saveBusinessProcess"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, h } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { h } from '@vue/runtime-core'
+import { unref } from '@vue/reactivity'
 import { useRouter } from 'vue-router'
 import { 
   IconInfoCircle,
@@ -337,7 +278,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue';
 import { processSteps, tableColumns } from '@/mock/businessProcessData'
-import BusinessProcessEditModal from './modals/BusinessProcessEditModal.vue'
+import BusinessProcessDrawer from './business-process/BusinessProcessDrawer.vue'
 
 interface TableField {
   name: string
@@ -429,12 +370,11 @@ const metricCurrentPage = ref<number>(1)
 const isEditing = ref(false)
 const selectedTables = ref<TableItem[]>([])
 
-// 编辑弹窗状态
-const editModalVisible = ref(false)
-const processListModalVisible = ref(false)
+// 编辑抽屉状态
+const editDrawerVisible = ref(false)
 const currentEditProcess = ref<{id: number, name: string, description: string, businessType: string, productType: string, stepCount: number, creator: string, updateTime: string} | null>(null)
 
-// 模态框宽度计算属性
+// 保留原有的模态框宽度计算（虽然不再使用弹窗，但可能其他地方需要）
 const modalWidth = computed(() => {
   if (typeof window !== 'undefined') {
     return Math.min(800, window.innerWidth * 0.9)
@@ -603,6 +543,25 @@ const currentMetrics = computed(() => {
   return metrics;
 })
 
+// 当前视图模式计算属性（支持双向绑定）
+const currentViewMode = computed({
+  get: () => {
+    // 使用unref确保在正确的渲染上下文中访问响应式数据
+    const currentTab = unref(activeTab)
+    const tableMode = unref(tableViewMode)
+    const metricMode = unref(metricViewMode)
+    return currentTab === 'tables' ? tableMode : metricMode
+  },
+  set: (value: string) => {
+    const currentTab = unref(activeTab)
+    if (currentTab === 'tables') {
+      tableViewMode.value = value
+    } else {
+      metricViewMode.value = value
+    }
+  }
+})
+
 // 获取步骤的指标数量
 const getStepMetricsCount = (step: ProcessStep) => {
   return step.tables.reduce((count, table) => {
@@ -749,33 +708,33 @@ const editMetricBinding = () => {
   Message.info('编辑指标绑定功能')
 }
 
-// 打开流程列表弹窗
-const openEditModal = () => {
-  processListModalVisible.value = true
+// 视图模式变更处理
+const handleViewModeChange = (value: string) => {
+  console.log('视图模式变更:', value)
+  // 通过currentViewMode计算属性的setter自动处理
 }
 
-// 新增流程
+// 直接打开编辑抽屉（第一阶段：流程选择）
+const openEditModal = () => {
+  // 直接打开抽屉的第一阶段，不传入具体的流程ID
+  currentEditProcess.value = null
+  editDrawerVisible.value = true
+}
+
+// 新增流程（已废弃，由抽屉内部处理）
 const createNewProcess = () => {
   currentEditProcess.value = null
-  processListModalVisible.value = false
-  editModalVisible.value = true
+  editDrawerVisible.value = true
 }
 
-// 编辑流程
+// 编辑流程（已废弃，由抽屉内部处理）
 const editProcess = (process: any) => {
-  currentEditProcess.value = process
-  processListModalVisible.value = false
-  editModalVisible.value = true
+  // 不再直接编辑具体流程，而是打开流程选择界面
+  currentEditProcess.value = null
+  editDrawerVisible.value = true
 }
 
-// 删除流程
-const deleteProcess = (processId: number) => {
-  const index = processList.value.findIndex(p => p.id === processId)
-  if (index > -1) {
-    processList.value.splice(index, 1)
-    Message.success('流程删除成功')
-  }
-}
+// 删除流程功能已移至 ProcessSelectionView 组件内部处理
 
 // 获取业务类型文本
 const getBusinessTypeText = (type: string) => {
@@ -822,7 +781,7 @@ const saveBusinessProcess = (data: any) => {
     Message.success('业务流程创建成功')
   }
   
-  editModalVisible.value = false
+  editDrawerVisible.value = false
   currentEditProcess.value = null
 }
 </script>

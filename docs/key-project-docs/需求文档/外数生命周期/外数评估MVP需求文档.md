@@ -557,17 +557,17 @@ id,review_date,product_id,credit_amount,dpd30m3,dpd15m3,dpd15m2,dpd30m1,分数1,
 ### Python脚本执行流程
 
 #### 分析流程步骤详细说明
-| 步骤 | 处理内容 | 输入文件 | 输出文件 | 预计时间 |
-|---|---|---|---|---|
-| 步骤1 | 文件解析验证 | 用户上传的CSV/Excel | `parsed_data.json` | < 10秒 |
-| 步骤2 | 数据质量检查 | `parsed_data.json` | `quality_report.json` | < 15秒 |
-| 步骤3 | 样本组成统计 | `parsed_data.json` | `sample_composition.json` | < 20秒 |
-| 步骤4 | 饱和度分析 | `parsed_data.json` | `sample_overview.json` | < 10秒 |
-| 步骤5 | 相关性计算 | `parsed_data.json` | `correlation_analysis.json` | < 30秒 |
-| 步骤6 | 全平台分析 | `parsed_data.json` | `platform_all_analysis.json` | < 25秒 |
-| 步骤7 | 分平台分析 | `parsed_data.json` | `platform_split_analysis.json` | < 25秒 |
-| 步骤8 | 图表生成 | 所有分析结果 | `*.png` 图表文件 | < 20秒 |
-| 步骤9 | 报告生成 | 所有数据和图表 | `final_report.json` | < 10秒 |
+| 步骤  | 处理内容   | 输入文件               | 输出文件                           | 预计时间  |
+| --- | ------ | ------------------ | ------------------------------ | ----- |
+| 步骤1 | 文件解析验证 | 用户上传的CSV/Excel     | `parsed_data.json`             | < 10秒 |
+| 步骤2 | 数据质量检查 | `parsed_data.json` | `quality_report.json`          | < 15秒 |
+| 步骤3 | 样本组成统计 | `parsed_data.json` | `sample_composition.json`      | < 20秒 |
+| 步骤4 | 饱和度分析  | `parsed_data.json` | `sample_overview.json`         | < 10秒 |
+| 步骤5 | 相关性计算  | `parsed_data.json` | `correlation_analysis.json`    | < 30秒 |
+| 步骤6 | 全平台分析  | `parsed_data.json` | `platform_all_analysis.json`   | < 25秒 |
+| 步骤7 | 分平台分析  | `parsed_data.json` | `platform_split_analysis.json` | < 25秒 |
+| 步骤8 | 图表生成   | 所有分析结果             | `*.png` 图表文件                   | < 20秒 |
+| 步骤9 | 报告生成   | 所有数据和图表            | `final_report.json`            | < 10秒 |
 
 ### Mock指标说明
 

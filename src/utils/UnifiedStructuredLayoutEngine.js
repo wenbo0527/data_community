@@ -12,7 +12,29 @@ import { GeometricCenterAlignment } from './coordinate-refactor/algorithms/Geome
 export class UnifiedStructuredLayoutEngine {
   constructor(graph, options = {}, previewLineManager = null) {
     this.graph = graph;
-    this.previewLineManager = previewLineManager; // 🎯 关键：接收预览线管理器实例
+    // 🎯 修复循环引用：使用WeakRef来避免强引用
+    this._previewLineManagerRef = previewLineManager ? new WeakRef(previewLineManager) : null;
+    
+    // 🚀 新增：布局计算防抖机制
+    this.debounceConfig = {
+      delay: 300, // 防抖延迟时间（毫秒）
+      maxWait: 1000, // 最大等待时间（毫秒）
+      immediate: false, // 是否立即执行第一次
+    };
+    this.layoutTimer = null;
+    this.lastLayoutTime = 0;
+    this.pendingLayoutPromise = null;
+    this.layoutQueue = [];
+    this.isLayouting = false;
+    
+    // 🚀 新增：布局结果缓存机制
+    this.layoutCache = {
+      enabled: true,
+      maxSize: 10,
+      cache: new Map(),
+      hits: 0,
+      misses: 0,
+    };
     
     // 🚀 新增：初始化性能优化器
     this.performanceOptimizer = new PerformanceOptimizer({
@@ -89,13 +111,97 @@ export class UnifiedStructuredLayoutEngine {
       nodeToLayer: new Map(), // 节点到层级的映射
       optimizationHistory: [], // 优化历史
     };
+    
+    // 🚀 新增：性能监控指标
+    this.performanceMetrics = {
+      layoutCount: 0,
+      totalLayoutTime: 0,
+      averageLayoutTime: 0,
+      cacheHitRate: 0,
+      lastLayoutDuration: 0,
+    };
   }
 
   /**
-   * 执行统一结构化布局
+   * 🚀 新增：防抖版本的布局执行器
+   * @param {Object} options - 布局选项
+   * @returns {Promise<Object>} 布局结果
+   */
+  async executeLayoutDebounced(options = {}) {
+    const { force = false, priority = 'normal' } = options;
+    
+    // 如果强制执行，直接调用原始方法
+    if (force) {
+      return this.executeLayoutImmediate(options);
+    }
+    
+    // 检查缓存
+    const cacheKey = this.generateLayoutCacheKey();
+    if (this.layoutCache.enabled && this.layoutCache.cache.has(cacheKey)) {
+      this.layoutCache.hits++;
+      this.updateCacheHitRate();
+      console.log('📦 [布局缓存] 命中缓存，直接返回结果');
+      return this.layoutCache.cache.get(cacheKey);
+    }
+    
+    // 如果已有待处理的布局，返回现有的Promise
+    if (this.pendingLayoutPromise) {
+      console.log('⏳ [布局防抖] 已有待处理的布局，等待现有布局完成');
+      return this.pendingLayoutPromise;
+    }
+    
+    // 创建防抖Promise
+    this.pendingLayoutPromise = new Promise((resolve, reject) => {
+      // 清除现有定时器
+      if (this.layoutTimer) {
+        clearTimeout(this.layoutTimer);
+      }
+      
+      // 检查是否超过最大等待时间
+      const now = Date.now();
+      const timeSinceLastLayout = now - this.lastLayoutTime;
+      const shouldExecuteImmediately = timeSinceLastLayout >= this.debounceConfig.maxWait;
+      
+      const executeLayout = async () => {
+        try {
+          this.layoutTimer = null;
+          const result = await this.executeLayoutImmediate(options);
+          
+          // 缓存结果
+          if (this.layoutCache.enabled) {
+            this.cacheLayoutResult(cacheKey, result);
+          }
+          
+          this.pendingLayoutPromise = null;
+          resolve(result);
+        } catch (error) {
+          this.pendingLayoutPromise = null;
+          reject(error);
+        }
+      };
+      
+      if (shouldExecuteImmediately || priority === 'high') {
+        console.log('🚀 [布局防抖] 立即执行布局（超时或高优先级）');
+        executeLayout();
+      } else {
+        console.log(`⏱️ [布局防抖] 延迟 ${this.debounceConfig.delay}ms 执行布局`);
+        this.layoutTimer = setTimeout(executeLayout, this.debounceConfig.delay);
+      }
+    });
+    
+    return this.pendingLayoutPromise;
+  }
+  
+  /**
+   * 执行统一结构化布局（立即执行版本）
+   * @param {Object} options - 布局选项
    * @returns {Object} 布局结果
    */
-  async executeLayout() {
+  async executeLayoutImmediate(options = {}) {
+    const startTime = Date.now();
+    this.isLayouting = true;
+    this.performanceMetrics.layoutCount++;
+    
     console.log("🚀 [统一结构化布局] 开始执行布局");
 
     // 🚀 使用性能优化器优化布局执行
@@ -154,9 +260,19 @@ export class UnifiedStructuredLayoutEngine {
           );
           optimizedSyncFunction();
 
-          return this.generateLayoutReport(layerStructure, finalPositions);
+          const result = this.generateLayoutReport(layerStructure, finalPositions);
+          
+          // 更新性能指标
+          const endTime = Date.now();
+          const duration = endTime - startTime;
+          this.updatePerformanceMetrics(duration);
+          this.lastLayoutTime = endTime;
+          this.isLayouting = false;
+          
+          return result;
         } catch (error) {
           console.error("❌ [统一结构化布局] 布局执行失败:", error);
+          this.isLayouting = false;
           return {
             success: false,
             error: error.message,
@@ -167,6 +283,15 @@ export class UnifiedStructuredLayoutEngine {
       this,
       { operation: 'full_layout' }
     );
+  }
+  
+  /**
+   * 执行统一结构化布局（对外接口，默认使用防抖）
+   * @param {Object} options - 布局选项
+   * @returns {Object} 布局结果
+   */
+  async executeLayout(options = {}) {
+    return this.executeLayoutDebounced(options);
   }
 
   /**
@@ -204,7 +329,8 @@ export class UnifiedStructuredLayoutEngine {
    */
   updatePreviewManager(newPreviewManager) {
     console.log('🔄 [布局引擎更新] 更新预览线管理器')
-    this.previewLineManager = newPreviewManager
+    // 🎯 修复循环引用：使用WeakRef
+    this._previewLineManagerRef = newPreviewManager ? new WeakRef(newPreviewManager) : null;
     
     // 重新建立引用关系
     if (newPreviewManager && newPreviewManager.setLayoutEngine) {
@@ -219,16 +345,36 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
+   * 🎯 获取预览线管理器（安全访问WeakRef）
+   * @returns {Object|null} 预览线管理器实例或null
+   */
+  get previewLineManager() {
+    if (this._previewLineManagerRef) {
+      const manager = this._previewLineManagerRef.deref();
+      if (manager) {
+        return manager;
+      } else {
+        // WeakRef已被垃圾回收，清理引用
+        this._previewLineManagerRef = null;
+        console.log('🗑️ [布局引擎] 预览线管理器已被垃圾回收，清理WeakRef');
+      }
+    }
+    
+    // 回退到全局查找
+    return window.unifiedPreviewLineManager || 
+           this.graph?.previewLineManager || 
+           null;
+  }
+
+  /**
    * 通知预览线管理器布局引擎已就绪
    * 在nodeToLayer映射建立完成后调用
    */
   notifyPreviewManagerReady() {
     console.log('🔔 [布局引擎] nodeToLayer映射已建立，通知预览线管理器可以安全调用');
     
-    // 通知预览线管理器布局引擎已就绪
-    const previewLineManager = this.previewLineManager || 
-                              window.unifiedPreviewLineManager || 
-                              this.graph?.previewLineManager;
+    // 🎯 使用getter安全获取预览线管理器
+    const previewLineManager = this.previewLineManager;
     
     if (previewLineManager) {
       // 设置布局引擎就绪状态
@@ -1077,6 +1223,12 @@ export class UnifiedStructuredLayoutEngine {
       return;
     }
 
+    // 🔧 新增：检查预览线管理器状态
+    if (previewLineManager.isDestroyed || previewLineManager.disposed) {
+      console.warn(`⚠️ [位置同步] 预览线管理器已销毁，跳过位置更新: ${sourceNodeId}_${branchId}`);
+      return;
+    }
+
     console.log("✅ [位置同步] 找到预览线管理器，开始更新预览线终点位置");
 
     // 🎯 关键修复：强制更新预览线管理器的endPosition属性
@@ -1092,9 +1244,40 @@ export class UnifiedStructuredLayoutEngine {
     // 🎯 关键修复：直接查找并更新预览线的终点位置
     const previewInstances = previewLineManager.previewLines.get(sourceNodeId);
     if (!previewInstances) {
-      console.warn(`⚠️ [位置同步] 未找到节点 ${sourceNodeId} 的预览线实例`);
+      // 🔧 修复：检查节点是否应该有预览线
+      const sourceNode = this.graph.getCellById(sourceNodeId);
+      if (sourceNode && previewLineManager.shouldCreatePreviewLine && previewLineManager.shouldCreatePreviewLine(sourceNode)) {
+        console.log(`🔄 [位置同步] 节点应该有预览线但未找到，尝试创建: ${sourceNodeId}`);
+        
+        // 尝试创建预览线
+        if (typeof previewLineManager.createUnifiedPreviewLine === 'function') {
+          try {
+            const newPreviewInstance = previewLineManager.createUnifiedPreviewLine(sourceNode);
+            if (newPreviewInstance) {
+              console.log(`✅ [位置同步] 成功创建预览线实例: ${sourceNodeId}`);
+              // 递归调用自己来更新位置
+              this.updatePreviewEndpointPosition(sourceNodeId, branchId, position);
+              return;
+            }
+          } catch (error) {
+            console.warn(`⚠️ [位置同步] 创建预览线失败: ${sourceNodeId}`, error.message);
+          }
+        }
+      }
+      
+      console.debug(`🔍 [位置同步] 未找到节点 ${sourceNodeId} 的预览线实例，可能节点不需要预览线`);
       return;
     }
+
+    // 🔧 新增：验证预览线实例的完整性
+    const isValidPreviewInstance = (instance) => {
+      if (!instance) return false;
+      if (!instance.line) return false;
+      if (instance.line.removed) return false;
+      if (!this.graph.hasCell(instance.line.id)) return false;
+      if (instance.isDestroyed || instance.disposed) return false;
+      return true;
+    };
 
     let updatedCount = 0;
 
@@ -1104,8 +1287,18 @@ export class UnifiedStructuredLayoutEngine {
         if (instance.branchId === branchId) {
           console.log(`🎯 [位置同步] 找到匹配的分支预览线: ${branchId}`);
 
+          // 🔧 修复：使用统一的验证函数检查预览线实例
+          if (!isValidPreviewInstance(instance)) {
+            console.warn(`⚠️ [位置同步] 分支预览线实例无效或已被移除: ${branchId}`);
+            // 🔧 新增：从预览线管理器中清理无效实例
+            if (typeof previewLineManager.removeInvalidPreviewLine === 'function') {
+              previewLineManager.removeInvalidPreviewLine(sourceNodeId, branchId);
+            }
+            return;
+          }
+
           // 直接更新预览线的终点位置
-          if (instance.line && typeof instance.line.setTarget === "function") {
+          if (typeof instance.line.setTarget === "function") {
             instance.line.setTarget({
               x: position.x,
               y: position.y,
@@ -1126,6 +1319,8 @@ export class UnifiedStructuredLayoutEngine {
             console.log(
               `✅ [位置同步] 分支预览线终点位置已更新: ${branchId} -> (${position.x}, ${position.y})`,
             );
+          } else {
+            console.warn(`⚠️ [位置同步] 分支预览线缺少setTarget方法: ${branchId}`);
           }
         }
       });
@@ -1134,7 +1329,17 @@ export class UnifiedStructuredLayoutEngine {
       const instance = previewInstances;
       console.log('🎯 [位置同步] 更新单一预览线终点位置');
 
-      if (instance.line && typeof instance.line.setTarget === "function") {
+      // 🔧 修复：使用统一的验证函数检查单一预览线实例
+      if (!isValidPreviewInstance(instance)) {
+        console.warn(`⚠️ [位置同步] 单一预览线实例无效或已被移除`);
+        // 🔧 新增：从预览线管理器中清理无效实例
+        if (typeof previewLineManager.removeInvalidPreviewLine === 'function') {
+          previewLineManager.removeInvalidPreviewLine(sourceNodeId);
+        }
+        return;
+      }
+
+      if (typeof instance.line.setTarget === "function") {
         instance.line.setTarget({
           x: position.x,
           y: position.y,
@@ -1155,6 +1360,8 @@ export class UnifiedStructuredLayoutEngine {
         console.log(
           `✅ [位置同步] 单一预览线终点位置已更新: -> (${position.x}, ${position.y})`,
         );
+      } else {
+        console.warn(`⚠️ [位置同步] 单一预览线缺少setTarget方法`);
       }
     }
 
@@ -3429,7 +3636,6 @@ export class UnifiedStructuredLayoutEngine {
     try {
       // 使用性能优化器进行批处理应用
       const optimizedResult = await this.performanceOptimizer.optimizeBatchOperation(
-        'positionApplication',
         async () => {
           // 使用AI外呼节点验证器验证节点配置
           const validationResults = new Map();
@@ -3444,6 +3650,7 @@ export class UnifiedStructuredLayoutEngine {
           // 应用位置
           return await this.applyPositionsToGraph(finalPositions);
         },
+        this,
         { 
           batchSize: 50,
           delay: 10,
@@ -3976,6 +4183,109 @@ export class UnifiedStructuredLayoutEngine {
 
       console.log(`📊 [清理验证] 剩余 ${remainingPreviewLines} 个预览线实例中，${validPreviewLines} 个是有效的`);
     }
+  }
+
+  /**
+   * 🚀 新增：生成布局缓存键
+   * @returns {string} 缓存键
+   */
+  generateLayoutCacheKey() {
+    const graph = this.graph;
+    if (!graph) return 'no-graph';
+    
+    const nodes = graph.getNodes();
+    const edges = graph.getEdges();
+    
+    // 基于节点和边的基本信息生成缓存键
+    const nodeInfo = nodes.map(node => ({
+      id: node.id,
+      position: node.getPosition(),
+      size: node.getSize()
+    }));
+    
+    const edgeInfo = edges.map(edge => ({
+      id: edge.id,
+      source: edge.getSourceCellId(),
+      target: edge.getTargetCellId()
+    }));
+    
+    return JSON.stringify({ nodes: nodeInfo, edges: edgeInfo });
+  }
+  
+  /**
+   * 🚀 新增：缓存布局结果
+   * @param {string} key - 缓存键
+   * @param {Object} result - 布局结果
+   */
+  cacheLayoutResult(key, result) {
+    if (!this.layoutCache.enabled) return;
+    
+    // 检查缓存大小限制
+    if (this.layoutCache.cache.size >= this.layoutCache.maxSize) {
+      // 删除最旧的缓存项（LRU策略）
+      const firstKey = this.layoutCache.cache.keys().next().value;
+      this.layoutCache.cache.delete(firstKey);
+    }
+    
+    this.layoutCache.cache.set(key, result);
+    this.layoutCache.misses++;
+    this.updateCacheHitRate();
+    console.log(`💾 [布局缓存] 缓存布局结果，当前缓存大小: ${this.layoutCache.cache.size}`);
+  }
+  
+  /**
+   * 🚀 新增：更新缓存命中率
+   */
+  updateCacheHitRate() {
+    const total = this.layoutCache.hits + this.layoutCache.misses;
+    this.performanceMetrics.cacheHitRate = total > 0 ? (this.layoutCache.hits / total) * 100 : 0;
+  }
+  
+  /**
+   * 🚀 新增：更新性能指标
+   * @param {number} duration - 布局持续时间（毫秒）
+   */
+  updatePerformanceMetrics(duration) {
+    this.performanceMetrics.totalLayoutTime += duration;
+    this.performanceMetrics.averageLayoutTime = 
+      this.performanceMetrics.totalLayoutTime / this.performanceMetrics.layoutCount;
+    this.performanceMetrics.lastLayoutDuration = duration;
+    
+    console.log(`📊 [性能监控] 布局耗时: ${duration}ms, 平均耗时: ${this.performanceMetrics.averageLayoutTime.toFixed(2)}ms`);
+  }
+  
+  /**
+   * 🚀 新增：清除布局缓存
+   */
+  clearLayoutCache() {
+    this.layoutCache.cache.clear();
+    this.layoutCache.hits = 0;
+    this.layoutCache.misses = 0;
+    this.updateCacheHitRate();
+    console.log('🗑️ [布局缓存] 缓存已清除');
+  }
+  
+  /**
+   * 🚀 新增：获取性能报告
+   * @returns {Object} 性能报告
+   */
+  getPerformanceReport() {
+    return {
+      ...this.performanceMetrics,
+      cacheInfo: {
+        enabled: this.layoutCache.enabled,
+        size: this.layoutCache.cache.size,
+        maxSize: this.layoutCache.maxSize,
+        hits: this.layoutCache.hits,
+        misses: this.layoutCache.misses
+      },
+      debounceInfo: {
+        delay: this.debounceConfig.delay,
+        maxWait: this.debounceConfig.maxWait,
+        isLayouting: this.isLayouting,
+        hasPendingLayout: !!this.pendingLayoutPromise
+      }
+    };
   }
 
 

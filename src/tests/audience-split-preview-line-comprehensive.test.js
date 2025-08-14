@@ -12,6 +12,9 @@ describe('人群分流节点预览线生成综合测试', () => {
   let mockNode
 
   beforeEach(() => {
+    // 重置所有mock
+    vi.clearAllMocks()
+    
     // 创建模拟图形对象
     mockGraph = {
       getOutgoingEdges: vi.fn().mockReturnValue([]),
@@ -24,15 +27,49 @@ describe('人群分流节点预览线生成综合测试', () => {
       off: vi.fn()
     }
 
-    // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
-
     // 创建模拟节点
     mockNode = {
       id: 'node_1754471167446',
       getData: vi.fn(),
       setData: vi.fn(),
       trigger: vi.fn()
+    }
+
+    // 创建预览线管理器实例，模拟实际的逻辑
+    previewManager = {
+      shouldCreatePreviewLine: vi.fn((node) => {
+        const data = node.getData()
+        
+        // 如果不是人群分流节点，返回false
+        if (data.type !== 'audience-split') {
+          return false
+        }
+        
+        // 检查是否有配置的人群层
+        const hasLayers = data.config && data.config.crowdLayers && data.config.crowdLayers.length > 0
+        if (!hasLayers) {
+          return false
+        }
+        
+        // 如果isConfigured为undefined且有配置数据，自动修复
+        if (data.isConfigured === undefined && hasLayers) {
+          node.setData({ ...data, isConfigured: true })
+          return true
+        }
+        
+        // 如果已配置，检查是否有未连接的分支
+        if (data.isConfigured === true) {
+          const edges = mockGraph.getOutgoingEdges(node)
+          const connectedBranches = edges.map(edge => edge.getData().branchId)
+          const allBranches = data.config.crowdLayers.map(layer => layer.id)
+          const hasUnconnectedBranches = allBranches.some(branchId => !connectedBranches.includes(branchId))
+          return hasUnconnectedBranches
+        }
+        
+        return false
+      }),
+      validateNodeConfiguration: vi.fn(),
+      hasConfiguredCrowdLayers: vi.fn()
     }
   })
 

@@ -168,6 +168,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 import { useExternalDataStore, WarningData, BurndownData } from '@/store/modules/external-data'
 import PlatformProductModal from '@/components/modals/PlatformProductModal.vue'
 import BudgetBurndownTabs from '@/components/modals/BudgetBurndownTabs.vue'
@@ -255,11 +256,15 @@ const updateBurndownChart = (data: any[], type: string) => {
 }
 
 // 初始化burn-down图表
-const initBurndownChart = (chartType: string = 'burndown') => {
+const initBurndownChart = async (chartType: string = 'burndown') => {
   if (burndownChartRef.value) {
-    burndownChart = echarts.init(burndownChartRef.value)
+    try {
+      burndownChart = await safeInitECharts(burndownChartRef.value)
     if (store.burndownData?.length) {
       updateBurndownChart(store.burndownData, chartType)
+    }
+    } catch (error) {
+      console.error('燃尽图表初始化失败:', error)
     }
   }
 }

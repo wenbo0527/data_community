@@ -23,32 +23,21 @@
           </a-form-item>
         </a-col>
         <a-col :span="8">
-          <a-form-item label="状态">
-            <a-select
-              v-model="statusFilter"
-              @change="handleStatusChange"
-              placeholder="请选择状态"
-              allow-clear
-            >
-              <a-option value="已提交">已提交</a-option>
-              <a-option value="草稿">草稿</a-option>
-              <a-option value="已发布">已发布</a-option>
-              <a-option value="已归档">已归档</a-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
           <a-button
             type="primary"
             @click="handleCreateReport"
             style="float: right"
           >
-            新建分析报告
+            新建产品级效果评估
           </a-button>
         </a-col>
       </a-row>
     </a-card>
 
+    <!-- 新建评估表单 -->
+    <a-card v-if="showCreateForm" title="新建产品级效果评估" style="margin-bottom: 20px">
+      <CreateExternalDataEvaluation @cancel="handleCancelCreate" @submit="handleSubmitCreate" />
+    </a-card>
 
     <a-card>
       <a-table
@@ -67,9 +56,8 @@
           </a-tag>
         </template>
         <template #reportName="{ record }">
-          <a @click="handleReportNameClick(record)">{{ record.reportName }}</a>
+          <a @click="goToDetail(record.id)">{{ record.reportName }}</a>
         </template>
-
       </a-table>
     </a-card>
   </div>
@@ -88,31 +76,15 @@ import {
   Option as AOption,
   Button as AButton,
   Table as ATable,
-  Tag as ATag,
-  Message
+  Tag as ATag
 } from '@arco-design/web-vue';
+import CreateExternalDataEvaluation from './CreateExternalDataEvaluationPage.vue';
 
 const router = useRouter();
 
 // 筛选条件
 const dateRange = ref([]);
 const reportType = ref('产品级效果评估');
-const statusFilter = ref('');
-
-/**
- * 处理状态变更
- * @param value - 状态值
- */
-/**
- * 处理状态变更
- * @param value - 状态值
- */
-const handleStatusChange = (value: string) => {
-  statusFilter.value = value;
-  console.log('状态筛选值:', value);
-  // 重新加载数据
-  loadReportList();
-};
 
 // 表格数据
 const reportList = ref([]);
@@ -136,10 +108,25 @@ const pagination = reactive<PaginationConfig>({
   pageSizeOptions: [10, 20, 50, 100]
 });
 
+// 控制新建评估表单的显示
+const showCreateForm = ref(false);
+
 // 处理新建报告
 const handleCreateReport = () => {
-  // 跳转到新建分析报告页面
-  router.push({ name: 'createExternalDataEvaluation' });
+  // 显示新建评估表单
+  showCreateForm.value = true;
+};
+
+// 取消新建评估
+const handleCancelCreate = () => {
+  showCreateForm.value = false;
+};
+
+// 提交新建评估
+const handleSubmitCreate = () => {
+  showCreateForm.value = false;
+  // 重新加载报告列表
+  loadReportList();
 };
 
 // 表格列定义
@@ -148,10 +135,6 @@ const columns = [
     title: '报告名称',
     dataIndex: 'reportName',
     slotName: 'reportName'
-  },
-  {
-    title: '外数产品名称',
-    dataIndex: 'productName'
   },
   {
     title: '报告类型',
@@ -175,13 +158,13 @@ const columns = [
 // 状态颜色映射
 const getStatusColor = (status: string) => {
   switch (status) {
-    case '已提交':
-      return 'blue';
-    case '草稿':
-      return 'orange';
-    case '已发布':
+    case '已完成':
       return 'green';
-    case '已归档':
+    case '处理中':
+      return 'orange';
+    case '失败':
+      return 'red';
+    case '待处理':
       return 'gray';
     default:
       return 'blue';
@@ -222,82 +205,11 @@ const goToDetail = (id: number) => {
   });
 };
 
-/**
- * 处理报告名称点击事件
- * @param record - 报告记录
- */
-const handleReportNameClick = (record: ReportItem) => {
-  // 如果状态为'已提交'，跳转到任务进度页面
-  if (record.status === '已提交') {
-    router.push({ 
-      name: 'externalDataEvaluationProgress', 
-      query: { 
-        taskId: record.id, 
-        taskName: record.reportName 
-      } 
-    }).catch(err => {
-      console.error('Navigation error:', err);
-    });
-  } else {
-    // 否则跳转到详情页面
-    goToDetail(record.id);
-  }
-};
-
-/**
- * 发布报告
- * @param id - 报告ID
- */
-const handlePublishReport = async (id: number) => {
-  try {
-    // 调用发布API
-    const response = await publishReport(id);
-    if (response.data && response.data.code === 200) {
-      // 更新本地状态
-      const report = reportList.value.find((item: ReportItem) => item.id === id);
-      if (report) {
-        report.status = '已发布';
-      }
-      Message.success('发布成功');
-    } else {
-      Message.error(response.data?.message || '发布失败');
-    }
-  } catch (error) {
-    console.error('发布报告失败:', error);
-    Message.error('发布失败');
-  }
-};
-
-/**
- * 归档报告
- * @param id - 报告ID
- */
-const handleArchiveReport = async (id: number) => {
-  try {
-    // 调用归档API
-    const response = await archiveReport(id);
-    if (response.data && response.data.code === 200) {
-      // 更新本地状态
-      const report = reportList.value.find((item: ReportItem) => item.id === id);
-      if (report) {
-        report.status = '已归档';
-      }
-      Message.success('归档成功');
-    } else {
-      Message.error(response.data?.message || '归档失败');
-    }
-  } catch (error) {
-    console.error('归档报告失败:', error);
-    Message.error('归档失败');
-  }
-};
-
 
 // 定义报告数据类型
 interface ReportItem {
   id: number;
   reportName: string;
-  productName: string;
   reportType: string;
   analysisPeriod: string;
   generateDate: string;
@@ -308,35 +220,18 @@ interface ReportItem {
 }
 
 // 导入API方法
-import { getEvaluationReports, publishReport, archiveReport } from '@/api/external/evaluation';
+import { getEvaluationReports } from '@/api/external/evaluation';
 
 const loadReportList = async () => {
   try {
     // 调用API获取数据
-    // 定义API参数类型接口
-    interface GetEvaluationReportsParams {
-      page: number;
-      pageSize: number;
-      startDate: string;
-      endDate: string;
-      reportType: string;
-      status?: string;
-    }
-
-    const params: GetEvaluationReportsParams = {
+    const response = await getEvaluationReports({
       page: pagination.current,
       pageSize: pagination.pageSize,
       startDate: '',
       endDate: '',
       reportType: reportType.value
-    };
-
-    // 只有当statusFilter有值时才添加该参数
-    if (statusFilter.value) {
-      params.status = statusFilter.value;
-    }
-
-    const response = await getEvaluationReports(params);
+    });
     console.log('API响应:', response);
     
     if (response.data && response.data.code === 200) {
@@ -358,49 +253,30 @@ const loadReportList = async () => {
     console.error('获取报告列表失败:', error);
     // 失败时使用模拟数据
     reportList.value = [
-      {
-        id: 1,
-        reportName: '京东金融-产品级评估-20250101-20250131',
-        productName: '京东金融',
-        reportType: '产品级效果评估',
-        analysisPeriod: '20250101-20250131',
-        generateDate: '2025-01-15',
-        status: '已完成'
-      },
-      {
-        id: 2,
-        reportName: '蚂蚁花呗-产品级评估-20250101-20250131',
-        productName: '蚂蚁花呗',
-        reportType: '产品级效果评估',
-        analysisPeriod: '20250101-20250131',
-        generateDate: '2025-01-16',
-        status: '处理中'
-      },
-      {
-        id: 3,
-        reportName: '腾讯支付-产品级评估-20250101-20250131',
-        productName: '腾讯支付',
-        reportType: '产品级效果评估',
-        analysisPeriod: '20250101-20250131',
-        generateDate: '2025-01-17',
-        status: '已提交'
-      }
-    ] as ReportItem[];
-    pagination.total = 3;
+        {
+          id: 1,
+          reportName: '京东金融-产品级评估-20250101-20250131',
+          reportType: '产品级效果评估',
+          analysisPeriod: '20250101-20250131',
+          generateDate: '2025-01-15',
+          status: '已完成'
+        },
+        {
+          id: 2,
+          reportName: '蚂蚁花呗-产品级评估-20250101-20250131',
+          reportType: '产品级效果评估',
+          analysisPeriod: '20250101-20250131',
+          generateDate: '2025-01-16',
+          status: '处理中'
+        }
+      ] as ReportItem[];
+    pagination.total = 2;
   }
 };
 
 onMounted(() => {
-    loadReportList();
-  });
-
-  defineExpose({
-    goToDetail,
-    handleCreateReport,
-    handlePublishReport,
-    handleArchiveReport,
-    handleReportNameClick
-  });
+  loadReportList();
+});
 </script>
 
 <style scoped>

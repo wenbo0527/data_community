@@ -5,12 +5,10 @@ import { Message } from '@arco-design/web-vue';
 /**
  * 任务配置接口
  * @interface TaskConfig
- * @property {string} productName - 产品名称
  * @property {string} reportType - 报告类型
  * @property {string} analysisPeriod - 分析周期
  */
 interface TaskConfig {
-  productName: string;
   reportType: string;
   analysisPeriod: string;
 }
@@ -47,10 +45,9 @@ let tasks: Task[] = [
     status: '已完成',
     progress: 100,
     config: {
-      productName: '京东金融',
-      reportType: '产品级效果评估',
-      analysisPeriod: '20250101-20250131'
-    }
+        reportType: '产品级效果评估',
+        analysisPeriod: '20250101-20250131'
+      }
   },
   {
     id: 2,
@@ -60,10 +57,9 @@ let tasks: Task[] = [
     status: '进行中',
     progress: 60,
     config: {
-      productName: '蚂蚁花呗',
-      reportType: '产品级效果评估',
-      analysisPeriod: '20250101-20250131'
-    }
+        reportType: '产品级效果评估',
+        analysisPeriod: '20250101-20250131'
+      }
   },
   {
     id: 3,
@@ -73,10 +69,9 @@ let tasks: Task[] = [
     status: '进行中',
     progress: 30,
     config: {
-      productName: '腾讯支付',
-      reportType: '产品级效果评估',
-      analysisPeriod: '20250101-20250131'
-    }
+        reportType: '产品级效果评估',
+        analysisPeriod: '20250101-20250131'
+      }
   },
   {
     id: 4,
@@ -86,10 +81,9 @@ let tasks: Task[] = [
     status: '已失败',
     progress: 45,
     config: {
-      productName: '百度钱包',
-      reportType: '产品级效果评估',
-      analysisPeriod: '20250101-20250131'
-    }
+        reportType: '产品级效果评估',
+        analysisPeriod: '20250101-20250131'
+      }
   }
 ];
 
@@ -178,7 +172,6 @@ export const createTask = (taskData: { taskName: string; config?: Partial<TaskCo
         status: '进行中',
         progress: 0,
         config: taskData.config || {
-          productName: '',
           reportType: '',
           analysisPeriod: ''
         }

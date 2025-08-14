@@ -213,6 +213,7 @@
 import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as echarts from 'echarts'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 import {
   IconHome,
   IconSettings,
@@ -544,10 +545,11 @@ const formatNumber = (num) => {
 
 // 血缘图表相关方法
 // 初始化血缘图表
-const initLineageChart = () => {
+const initLineageChart = async () => {
   if (!lineageChartRef.value) return
 
-  lineageChart = echarts.init(lineageChartRef.value)
+  try {
+    lineageChart = await safeInitECharts(lineageChartRef.value)
 
   const option = {
     tooltip: {
@@ -635,14 +637,17 @@ const initLineageChart = () => {
     ]
   }
 
-  lineageChart.setOption(option)
+    lineageChart.setOption(option)
 
-  // 监听窗口大小变化
-  window.addEventListener('resize', () => {
-    if (lineageChart) {
-      lineageChart.resize()
-    }
-  })
+    // 监听窗口大小变化
+    window.addEventListener('resize', () => {
+      if (lineageChart) {
+        lineageChart.resize()
+      }
+    })
+  } catch (error) {
+    console.error('初始化血缘图表失败:', error)
+  }
 }
 
 // 监听 activeTab 变化，初始化血缘图表

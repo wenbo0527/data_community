@@ -238,7 +238,7 @@
                             @error="handleImageError"
                           />
                           <div class="chart-thumbnail-overlay">
-                            <icon-check v-if="module.chartSelection.showFunnel" class="selected-icon" />
+                            <IconCheck v-if="module.chartSelection.showFunnel" class="selected-icon" />
                           </div>
                           <div class="chart-thumbnail-label">转化漏斗图</div>
                         </div>
@@ -258,7 +258,7 @@
                             @error="handleImageError"
                           />
                           <div class="chart-thumbnail-overlay">
-                            <icon-check v-if="module.chartSelection.showTrend" class="selected-icon" />
+                            <IconCheck v-if="module.chartSelection.showTrend" class="selected-icon" />
                           </div>
                           <div class="chart-thumbnail-label">时间趋势图</div>
                         </div>
@@ -318,7 +318,7 @@
                             @error="handleImageError"
                           />
                           <div class="chart-thumbnail-overlay">
-                            <icon-check v-if="module.chartSelection.showComparison" class="selected-icon" />
+                            <IconCheck v-if="module.chartSelection.showComparison" class="selected-icon" />
                           </div>
                           <div class="chart-thumbnail-label">平台对比图</div>
                         </div>
@@ -338,7 +338,7 @@
                             @error="handleImageError"
                           />
                           <div class="chart-thumbnail-overlay">
-                            <icon-check v-if="module.chartSelection.showRadar" class="selected-icon" />
+                            <IconCheck v-if="module.chartSelection.showRadar" class="selected-icon" />
                           </div>
                           <div class="chart-thumbnail-label">稳定性雷达图</div>
                         </div>

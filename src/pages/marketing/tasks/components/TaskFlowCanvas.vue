@@ -71,8 +71,8 @@
             @click="jumpToHistoryState(historyStack.undoStack.length - 1 - index)"
           >
             <div class="history-item-icon">
-              <icon-check v-if="index === 0" />
-              <icon-history v-else />
+              <IconCheck v-if="index === 0" />
+              <IconHistory v-else />
             </div>
             <div class="history-item-content">
               <div class="history-item-title">{{ getOperationDescription(item) }}</div>
@@ -4279,13 +4279,84 @@ const loadCanvasData = (data) => {
           console.log(`  - 标签总数: ${labelCount}`)
           console.log(`  - connections数组: ${connections.value.length}`)
           
-          // 5. 检查是否有异常
+          // 5. 检查是否有异常预览线并智能清理
           if (previewLines > 0) {
-            console.warn(`⚠️ [TaskFlowCanvas] 加载完成后仍有 ${previewLines} 条预览线，这可能是清理逻辑的问题`)
+            console.log(`🔍 [TaskFlowCanvas] 加载完成后检测到 ${previewLines} 条预览线，开始智能验证...`)
+            
+            // 🎯 智能验证预览线的有效性
+            console.log('🔍 [TaskFlowCanvas] 开始智能验证预览线有效性...')
+            const previewEdges = allEdges.filter(edge => {
+              const edgeData = edge.getData() || {}
+              return edgeData.isPersistentPreview || 
+                     edgeData.isPreview || 
+                     edgeData.isUnifiedPreview ||
+                     edgeData.type === 'preview-line' ||
+                     edgeData.type === 'unified-preview-line' ||
+                     edgeData.type === 'draggable-preview'
+            })
+            
+            let invalidCount = 0
+            let validCount = 0
+            
+            previewEdges.forEach(edge => {
+              const sourceId = edge.getSourceCellId()
+              const sourceNode = graph.getCellById(sourceId)
+              
+              // 检查源节点是否存在且有效
+              if (!sourceNode) {
+                console.log(`🗑️ [TaskFlowCanvas] 清理无效预览线(源节点不存在): ${edge.id}`)
+                try {
+                  graph.removeCell(edge)
+                  invalidCount++
+                } catch (error) {
+                  console.error(`❌ [TaskFlowCanvas] 清理预览线失败: ${edge.id}`, error)
+                }
+                return
+              }
+              
+              // 检查源节点是否已配置
+              const sourceData = sourceNode.getData() || {}
+              if (!sourceData.isConfigured) {
+                console.log(`🗑️ [TaskFlowCanvas] 清理无效预览线(源节点未配置): ${edge.id}`)
+                try {
+                  graph.removeCell(edge)
+                  invalidCount++
+                } catch (error) {
+                  console.error(`❌ [TaskFlowCanvas] 清理预览线失败: ${edge.id}`, error)
+                }
+                return
+              }
+              
+              // 预览线有效，保留
+              validCount++
+              console.log(`✅ [TaskFlowCanvas] 保留有效预览线: ${edge.id}`)
+            })
+            
+            console.log(`✅ [TaskFlowCanvas] 智能清理完成，清理了 ${invalidCount} 条无效预览线，保留了 ${validCount} 条有效预览线`)
+            
+            // 🎯 如果仍有无效预览线，触发预览线管理器清理
+            if (invalidCount > 0 && window.unifiedPreviewLineManager) {
+              console.log('🧹 [TaskFlowCanvas] 触发预览线管理器清理无效数据...')
+              window.unifiedPreviewLineManager.validateAndCleanupDuplicates()
+            }
           }
           
-          if (previewLines > allNodes.length) {
-            console.warn(`⚠️ [TaskFlowCanvas] 预览线数量(${previewLines})超过节点数量(${allNodes.length})，可能存在重复创建`)
+          // 6. 检查预览线数量是否合理
+          const configuredNodes = allNodes.filter(node => {
+            const nodeData = node.getData() || {}
+            return nodeData.isConfigured
+          })
+          
+          if (previewLines > configuredNodes.length) {
+            console.log(`🔍 [TaskFlowCanvas] 预览线数量(${previewLines})超过已配置节点数量(${configuredNodes.length})，触发重复检查清理`)
+            
+            // 🎯 触发预览线管理器的重复检查清理
+            if (window.unifiedPreviewLineManager) {
+              console.log('🔍 [TaskFlowCanvas] 触发预览线管理器重复检查清理...')
+              window.unifiedPreviewLineManager.validateAndCleanupDuplicates()
+            }
+          } else {
+            console.log(`✅ [TaskFlowCanvas] 预览线数量(${previewLines})在合理范围内，已配置节点数量: ${configuredNodes.length}`)
           }
           
           if (labelCount > realConnections + previewLines) {

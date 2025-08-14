@@ -151,6 +151,7 @@ import {
   IconEye
 } from '@arco-design/web-vue/es/icon'
 import * as echarts from 'echarts'
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 
 // 路由相关
 const router = useRouter()
@@ -238,10 +239,11 @@ const generateTimeStats = () => {
 }
 
 // 初始化图表
-const initChart = () => {
+const initChart = async () => {
   if (!chartContainer.value) return
   
-  chartInstance = echarts.init(chartContainer.value)
+  try {
+    chartInstance = await safeInitECharts(chartContainer.value)
   const { hours, counts } = generateTimeStats()
   
   const option = {
@@ -306,6 +308,9 @@ const initChart = () => {
   window.addEventListener('resize', () => {
     chartInstance?.resize()
   })
+  } catch (error) {
+    console.error('图表初始化失败:', error)
+  }
 }
 
 // 获取数据

@@ -38,7 +38,7 @@
           <a-card class="stat-card" hoverable @click="navigateTo('metric-management')">
             <div class="stat-content">
               <div class="stat-icon metric-icon">
-                <icon-bar-chart />
+                <IconBarChart />
               </div>
               <div class="stat-info">
                 <div class="stat-number">45</div>
@@ -111,7 +111,7 @@
           <a-card class="module-card" hoverable @click="navigateTo('metric-management')">
             <div class="module-header">
               <div class="module-icon metric-icon">
-                <icon-bar-chart />
+                <IconBarChart />
               </div>
               <div class="module-title">
                 <h3>指标管理</h3>

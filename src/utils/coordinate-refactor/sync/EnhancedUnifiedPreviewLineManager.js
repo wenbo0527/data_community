@@ -160,16 +160,37 @@ export class EnhancedUnifiedPreviewLineManager {
     this.eventListeners = new Map();
     this.setupEventListeners();
 
-    // 性能统计
+    // 初始化性能统计
     this.stats = {
       totalPreviewLines: 0,
       activePreviewLines: 0,
       updateOperations: 0,
       refreshOperations: 0,
       errorCount: 0,
+      lastUpdateTime: 0,
       averageUpdateTime: 0,
-      lastUpdateTime: 0
+      syncOperations: 0,
+      batchSyncOperations: 0,
+      averageSyncTime: 0
     };
+
+    // 状态同步优化配置
+    this.syncConfig = {
+      enableBatchSync: options.enableBatchSync !== false,
+      batchSize: options.batchSize || 10,
+      syncDelay: options.syncDelay || 50,
+      maxSyncRetries: options.maxSyncRetries || 3,
+      enableSmartSync: options.enableSmartSync !== false,
+      syncPriority: options.syncPriority || 'balanced' // 'performance', 'accuracy', 'balanced'
+    };
+
+    // 状态同步队列和状态
+    this.syncQueue = new Map(); // 待同步的预览线队列
+    this.syncTimer = null; // 批量同步定时器
+    this.isSyncing = false; // 是否正在同步
+    this.syncHistory = new Map(); // 同步历史记录
+    this.lastSyncTime = 0; // 上次同步时间
+    this.syncConflicts = new Map(); // 同步冲突记录
 
     console.log(`🎯 [增强版预览线管理器] 初始化完成 - 坐标重构: ${this.options.enableCoordinateRefactor}, 刷新管理: ${this.options.enablePreviewLineRefresh}, 分流管理: ${this.options.enableBranchFlow}`);
   }
@@ -349,13 +370,13 @@ export class EnhancedUnifiedPreviewLineManager {
   }
 
   /**
-   * 更新预览线位置
+   * 智能状态同步
    * @param {string} previewLineId - 预览线ID
-   * @param {Object} newPosition - 新位置
-   * @param {Object} options - 更新选项
-   * @returns {Promise<boolean>} 是否成功更新
+   * @param {Object} newState - 新状态数据
+   * @param {Object} options - 同步选项
+   * @returns {Promise<boolean>} 是否成功同步
    */
-  async updatePreviewLinePosition(previewLineId, newPosition, options = {}) {
+  async smartStateSync(previewLineId, newState, options = {}) {
     const startTime = Date.now();
     
     try {
@@ -364,62 +385,371 @@ export class EnhancedUnifiedPreviewLineManager {
         throw ErrorFactory.createPreviewLineRefreshError(`预览线不存在: ${previewLineId}`);
       }
 
-      // 使用坐标重构系统计算精确位置
-      if (this.coordinateSystem && options.useCoordinateRefactor !== false) {
-        newPosition = await this.calculatePrecisePosition(previewLine, newPosition, options);
+      // 检查是否需要同步
+      if (!this.shouldSync(previewLine, newState, options)) {
+        return true;
       }
 
-      // 更新预览线状态
-      previewLine.updateState(PreviewLineState.UPDATING);
-
-      // 更新位置
-      previewLine.updatePosition(newPosition);
-
-      // 应用位置到DOM
-      await this.applyPositionToDOM(previewLine);
-
-      // 更新状态为可见
-      previewLine.updateState(PreviewLineState.VISIBLE);
-
-      // 更新统计
-      this.stats.updateOperations++;
-      const updateTime = Date.now() - startTime;
-      this.stats.lastUpdateTime = updateTime;
-      this.stats.averageUpdateTime = 
-        (this.stats.averageUpdateTime * (this.stats.updateOperations - 1) + updateTime) / this.stats.updateOperations;
-
-      // 触发事件
-      this.emitEvent('previewLineUpdated', {
-        previewLineId,
-        newPosition,
-        updateTime,
-        previewLine: previewLine.getSummary()
-      });
-
-      if (this.options.enableDebug) {
-        console.log(`🔄 [增强版预览线管理器] 更新预览线位置 - ID: ${previewLineId}, 耗时: ${updateTime}ms`);
+      // 智能同步策略选择
+      const syncStrategy = this.selectSyncStrategy(previewLine, newState, options);
+      
+      // 根据配置选择同步方式
+      if (this.syncConfig.enableBatchSync && !options.immediate) {
+        return await this.addToSyncQueue(previewLineId, newState, options, syncStrategy);
+      } else {
+        return await this.executeSyncImmediate(previewLineId, newState, options, syncStrategy);
       }
-
-      return true;
 
     } catch (error) {
-      const previewLine = this.previewLines.get(previewLineId);
-      if (previewLine) {
-        previewLine.updateState(PreviewLineState.ERROR, error.message);
-      }
-
+      console.error(`❌ [增强版预览线管理器] 智能状态同步失败:`, error.message);
       this.stats.errorCount++;
-      console.error(`❌ [增强版预览线管理器] 更新预览线位置失败:`, error.message);
-      
-      // 触发错误事件
-      this.emitEvent('previewLineError', {
-        previewLineId,
-        error: error.message,
-        operation: 'updatePosition'
-      });
-
       return false;
     }
+  }
+
+  /**
+   * 判断是否需要同步
+   */
+  shouldSync(previewLine, newState, options) {
+    // 强制同步
+    if (options.force) return true;
+    
+    // 检查状态变化
+    const hasStateChange = this.hasSignificantStateChange(previewLine, newState);
+    const hasPositionChange = this.hasSignificantPositionChange(previewLine, newState);
+    
+    // 检查同步频率限制
+    const timeSinceLastSync = Date.now() - (this.syncHistory.get(previewLine.id)?.lastSyncTime || 0);
+    const minSyncInterval = this.getSyncInterval(previewLine, options);
+    
+    return (hasStateChange || hasPositionChange) && timeSinceLastSync >= minSyncInterval;
+  }
+
+  /**
+   * 检查是否有显著状态变化
+   */
+  hasSignificantStateChange(previewLine, newState) {
+    if (newState.state && newState.state !== previewLine.state) return true;
+    if (newState.type && newState.type !== previewLine.type) return true;
+    if (newState.metadata && JSON.stringify(newState.metadata) !== JSON.stringify(previewLine.metadata)) return true;
+    return false;
+  }
+
+  /**
+   * 检查是否有显著位置变化
+   */
+  hasSignificantPositionChange(previewLine, newState) {
+    if (!newState.position) return false;
+    
+    const threshold = 2; // 像素阈值
+    const currentPos = previewLine.position;
+    const newPos = newState.position;
+    
+    return Math.abs(currentPos.x1 - newPos.x1) > threshold ||
+           Math.abs(currentPos.y1 - newPos.y1) > threshold ||
+           Math.abs(currentPos.x2 - newPos.x2) > threshold ||
+           Math.abs(currentPos.y2 - newPos.y2) > threshold;
+  }
+
+  /**
+   * 获取同步间隔
+   */
+  getSyncInterval(previewLine, options) {
+    if (options.highFrequency) return 16; // 60fps
+    if (previewLine.state === PreviewLineState.ACTIVE) return 33; // 30fps
+    return 100; // 10fps for normal lines
+  }
+
+  /**
+   * 选择同步策略
+   */
+  selectSyncStrategy(previewLine, newState, options) {
+    if (options.strategy) return options.strategy;
+    
+    switch (this.syncConfig.syncPriority) {
+      case 'performance':
+        return 'fast';
+      case 'accuracy':
+        return 'precise';
+      case 'balanced':
+      default:
+        return previewLine.state === PreviewLineState.ACTIVE ? 'precise' : 'fast';
+    }
+  }
+
+  /**
+   * 添加到同步队列
+   */
+  async addToSyncQueue(previewLineId, newState, options, strategy) {
+    const syncItem = {
+      previewLineId,
+      newState,
+      options,
+      strategy,
+      timestamp: Date.now(),
+      retryCount: 0
+    };
+    
+    this.syncQueue.set(previewLineId, syncItem);
+    
+    // 启动批量同步定时器
+    this.scheduleBatchSync();
+    
+    return true;
+  }
+
+  /**
+   * 调度批量同步
+   */
+  scheduleBatchSync() {
+    if (this.syncTimer || this.isSyncing) return;
+    
+    this.syncTimer = setTimeout(() => {
+      this.executeBatchSync();
+    }, this.syncConfig.syncDelay);
+  }
+
+  /**
+   * 执行批量同步
+   */
+  async executeBatchSync() {
+    if (this.isSyncing || this.syncQueue.size === 0) return;
+    
+    this.isSyncing = true;
+    this.syncTimer = null;
+    
+    const startTime = Date.now();
+    const batchItems = Array.from(this.syncQueue.values()).slice(0, this.syncConfig.batchSize);
+    
+    try {
+      // 按优先级排序
+      batchItems.sort((a, b) => this.getSyncPriority(b) - this.getSyncPriority(a));
+      
+      // 并行执行同步
+      const syncPromises = batchItems.map(item => 
+        this.executeSyncImmediate(item.previewLineId, item.newState, item.options, item.strategy)
+          .catch(error => ({ error, item }))
+      );
+      
+      const results = await Promise.allSettled(syncPromises);
+      
+      // 处理结果
+      let successCount = 0;
+      let failureCount = 0;
+      
+      results.forEach((result, index) => {
+        const item = batchItems[index];
+        this.syncQueue.delete(item.previewLineId);
+        
+        if (result.status === 'fulfilled' && !result.value?.error) {
+          successCount++;
+          this.updateSyncHistory(item.previewLineId, true);
+        } else {
+          failureCount++;
+          this.handleSyncFailure(item, result.reason || result.value?.error);
+        }
+      });
+      
+      // 更新统计
+      this.stats.batchSyncOperations++;
+      const syncTime = Date.now() - startTime;
+      this.stats.averageSyncTime = 
+        (this.stats.averageSyncTime * (this.stats.batchSyncOperations - 1) + syncTime) / this.stats.batchSyncOperations;
+      
+      // 触发批量同步完成事件
+      this.emitEvent('batchSyncCompleted', {
+        batchSize: batchItems.length,
+        successCount,
+        failureCount,
+        syncTime
+      });
+      
+      if (this.options.enableDebug) {
+        console.log(`📦 [增强版预览线管理器] 批量同步完成 - 成功: ${successCount}, 失败: ${failureCount}, 耗时: ${syncTime}ms`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ [增强版预览线管理器] 批量同步失败:`, error.message);
+    } finally {
+      this.isSyncing = false;
+      this.lastSyncTime = Date.now();
+      
+      // 如果还有待同步项，继续调度
+      if (this.syncQueue.size > 0) {
+        this.scheduleBatchSync();
+      }
+    }
+  }
+
+  /**
+   * 获取同步优先级
+   */
+  getSyncPriority(syncItem) {
+    const previewLine = this.previewLines.get(syncItem.previewLineId);
+    if (!previewLine) return 0;
+    
+    let priority = 0;
+    
+    // 活跃状态优先级更高
+    if (previewLine.state === PreviewLineState.ACTIVE) priority += 100;
+    
+    // 错误状态需要立即处理
+    if (previewLine.state === PreviewLineState.ERROR) priority += 200;
+    
+    // 强制同步优先级最高
+    if (syncItem.options.force) priority += 300;
+    
+    // 时间因素
+    const age = Date.now() - syncItem.timestamp;
+    priority += Math.min(age / 1000, 50); // 最多增加50优先级
+    
+    return priority;
+  }
+
+  /**
+   * 处理同步失败
+   */
+  handleSyncFailure(syncItem, error) {
+    syncItem.retryCount++;
+    
+    if (syncItem.retryCount < this.syncConfig.maxSyncRetries) {
+      // 重新加入队列
+      this.syncQueue.set(syncItem.previewLineId, syncItem);
+    } else {
+      // 记录冲突
+      this.syncConflicts.set(syncItem.previewLineId, {
+        error: error?.message || 'Unknown error',
+        timestamp: Date.now(),
+        retryCount: syncItem.retryCount
+      });
+      
+      this.updateSyncHistory(syncItem.previewLineId, false, error);
+    }
+  }
+
+  /**
+   * 立即执行同步
+   */
+  async executeSyncImmediate(previewLineId, newState, options, strategy) {
+    const startTime = Date.now();
+    
+    try {
+      const previewLine = this.previewLines.get(previewLineId);
+      if (!previewLine) {
+        throw new Error(`预览线不存在: ${previewLineId}`);
+      }
+      
+      // 根据策略执行同步
+      switch (strategy) {
+        case 'fast':
+          await this.executeFastSync(previewLine, newState, options);
+          break;
+        case 'precise':
+          await this.executePreciseSync(previewLine, newState, options);
+          break;
+        default:
+          await this.executeBalancedSync(previewLine, newState, options);
+      }
+      
+      // 更新统计
+      this.stats.syncOperations++;
+      const syncTime = Date.now() - startTime;
+      
+      // 触发同步完成事件
+      this.emitEvent('stateSyncCompleted', {
+        previewLineId,
+        strategy,
+        syncTime,
+        newState
+      });
+      
+      return true;
+      
+    } catch (error) {
+      console.error(`❌ [增强版预览线管理器] 立即同步失败:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * 执行快速同步
+   */
+  async executeFastSync(previewLine, newState, options) {
+    // 只更新关键状态，跳过复杂计算
+    if (newState.state) previewLine.updateState(newState.state);
+    if (newState.position) previewLine.updatePosition(newState.position);
+    if (newState.metadata) previewLine.updateMetadata(newState.metadata);
+  }
+
+  /**
+   * 执行精确同步
+   */
+  async executePreciseSync(previewLine, newState, options) {
+    // 使用坐标重构系统进行精确计算
+    if (newState.position && this.coordinateSystem) {
+      const precisePosition = await this.calculatePrecisePosition(previewLine, newState.position, options);
+      previewLine.updatePosition(precisePosition);
+    } else if (newState.position) {
+      previewLine.updatePosition(newState.position);
+    }
+    
+    if (newState.state) previewLine.updateState(newState.state);
+    if (newState.metadata) previewLine.updateMetadata(newState.metadata);
+    
+    // 应用到DOM
+    await this.applyPositionToDOM(previewLine);
+  }
+
+  /**
+   * 执行平衡同步
+   */
+  async executeBalancedSync(previewLine, newState, options) {
+    // 根据预览线状态选择同步方式
+    if (previewLine.state === PreviewLineState.ACTIVE || options.requiresPrecision) {
+      await this.executePreciseSync(previewLine, newState, options);
+    } else {
+      await this.executeFastSync(previewLine, newState, options);
+    }
+  }
+
+  /**
+   * 更新同步历史
+   */
+  updateSyncHistory(previewLineId, success, error = null) {
+    const history = this.syncHistory.get(previewLineId) || {
+      successCount: 0,
+      failureCount: 0,
+      lastSyncTime: 0,
+      lastError: null
+    };
+    
+    if (success) {
+      history.successCount++;
+    } else {
+      history.failureCount++;
+      history.lastError = error?.message || 'Unknown error';
+    }
+    
+    history.lastSyncTime = Date.now();
+    this.syncHistory.set(previewLineId, history);
+  }
+
+  /**
+   * 更新预览线位置
+   * @param {string} previewLineId - 预览线ID
+   * @param {Object} newPosition - 新位置
+   * @param {Object} options - 更新选项
+   * @returns {Promise<boolean>} 是否成功更新
+   */
+  async updatePreviewLinePosition(previewLineId, newPosition, options = {}) {
+    // 使用智能状态同步机制
+    return await this.smartStateSync(previewLineId, {
+      position: newPosition,
+      state: options.targetState || PreviewLineState.VISIBLE
+    }, {
+      ...options,
+      requiresPrecision: options.useCoordinateRefactor !== false
+    });
   }
 
   /**
@@ -956,6 +1286,12 @@ export class EnhancedUnifiedPreviewLineManager {
     // 停止自动更新
     this.stopAutoUpdate();
 
+    // 停止批量同步
+    if (this.syncTimer) {
+      clearTimeout(this.syncTimer);
+      this.syncTimer = null;
+    }
+
     // 清理子系统
     if (this.coordinateSystem) {
       this.coordinateSystem.cleanup();
@@ -973,6 +1309,11 @@ export class EnhancedUnifiedPreviewLineManager {
     this.previewLines.clear();
     this.nodePreviewLines.clear();
     this.typePreviewLines.clear();
+
+    // 清空同步相关数据
+    this.syncQueue.clear();
+    this.syncHistory.clear();
+    this.syncConflicts.clear();
 
     // 清空事件监听器
     this.eventListeners.clear();

@@ -4,7 +4,6 @@ import { MockMethod } from 'vite-plugin-mock';
 const generateEvaluationReports = (count = 20) => {
   const statuses = ['草稿', '已发布', '已归档'];
   const reportTypes = ['效果评估']; // 只保留效果评估一种类型
-  const products = ['产品A', '产品B', '产品C', '产品D'];
   const analysisTypes = ['周期性分析', '实时分析', '批量分析'];
   
   const reports = [];
@@ -14,7 +13,6 @@ const generateEvaluationReports = (count = 20) => {
     {
       id: 11,
       reportName: '产品A效果评估报告_20241201',
-      productName: '产品A',
       reportType: '效果评估',
       analysisType: '周期性分析',
       generateDate: '2024-12-01',
@@ -28,7 +26,6 @@ const generateEvaluationReports = (count = 20) => {
     {
       id: 10,
       reportName: '产品A完整效果评估报告_20241207',
-      productName: '产品A',
       reportType: '效果评估',
       analysisType: '周期性分析',
       generateDate: '2024-12-07',
@@ -42,7 +39,6 @@ const generateEvaluationReports = (count = 20) => {
     {
       id: 12,
       reportName: '产品B效果评估报告_20241202',
-      productName: '产品B',
       reportType: '效果评估',
       analysisType: '实时分析',
       generateDate: '2024-12-02',
@@ -56,7 +52,6 @@ const generateEvaluationReports = (count = 20) => {
     {
       id: 13,
       reportName: '产品C效果评估报告_20241203',
-      productName: '产品C',
       reportType: '效果评估',
       analysisType: '批量分析',
       generateDate: '2024-12-03',
@@ -70,7 +65,6 @@ const generateEvaluationReports = (count = 20) => {
     {
       id: 14,
       reportName: '产品D效果评估报告_20241204',
-      productName: '产品D',
       reportType: '效果评估',
       analysisType: '周期性分析',
       generateDate: '2024-12-04',
@@ -84,7 +78,6 @@ const generateEvaluationReports = (count = 20) => {
     {
       id: 15,
       reportName: '产品A效果评估报告_20241205',
-      productName: '产品A',
       reportType: '效果评估',
       analysisType: '实时分析',
       generateDate: '2024-12-05',
@@ -103,7 +96,6 @@ const generateEvaluationReports = (count = 20) => {
   for (let i = reports.length; i < count; i++) {
     const status = statuses[Math.floor(Math.random() * statuses.length)];
     const reportType = reportTypes[Math.floor(Math.random() * reportTypes.length)];
-    const product = products[Math.floor(Math.random() * products.length)];
     const analysisType = analysisTypes[Math.floor(Math.random() * analysisTypes.length)];
     
     const date = new Date();
@@ -116,8 +108,7 @@ const generateEvaluationReports = (count = 20) => {
     
     reports.push({
       id: i + 1,
-      reportName: `${product}${reportType}报告_${dateStr.replace(/-/g, '')}`,
-      productName: product,
+      reportName: `${reportType}报告_${dateStr.replace(/-/g, '')}`,
       reportType,
       analysisType,
       generateDate: dateStr,
@@ -744,7 +735,6 @@ export default [
         current = 1, 
         pageSize = 10, 
         reportName, 
-        productName, 
         status, 
         startDate, 
         endDate 
@@ -756,12 +746,6 @@ export default [
       if (reportName) {
         reports = reports.filter(report => 
           report.reportName.toLowerCase().includes(reportName.toLowerCase())
-        );
-      }
-      
-      if (productName) {
-        reports = reports.filter(report => 
-          report.productName.toLowerCase().includes(productName.toLowerCase())
         );
       }
       
@@ -824,12 +808,11 @@ export default [
     url: '/api/external-data-evaluation/create',
     method: 'post',
     response: ({ body }: { body: any }) => {
-      const { reportName, productName, reportType, analysisType, sampleFiles } = body;
+      const { reportName, reportType, analysisType, sampleFiles } = body;
       
       const newReport = {
         id: Date.now(),
         reportName,
-        productName,
         reportType,
         analysisType,
         generateDate: new Date().toISOString().split('T')[0],

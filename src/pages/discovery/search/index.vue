@@ -518,7 +518,7 @@ const handleItemClick = (item: SearchResult) => {
   // 根据类型跳转到不同的详情页
   switch (item.type) {
     case 'table':
-      router.push(`/discovery/data-map/${encodeURIComponent(JSON.stringify(item))}`)
+      router.push(`/discovery/data-map/table/${encodeURIComponent(item.name)}`)
       break
     case 'metric':
       router.push(`/discovery/metrics-map/${item.id}`)

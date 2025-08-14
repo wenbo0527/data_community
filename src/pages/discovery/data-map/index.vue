@@ -102,7 +102,7 @@
                       </a-select>
                       
                       <a-button type="text" @click="resetFilters">
-                        <template #icon><icon-refresh /></template>
+                        <template #icon><IconRefresh /></template>
                         重置
                       </a-button>
                     </a-space>
@@ -139,14 +139,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick } from 'vue'
-import { Message } from '@arco-design/web-vue'
-import { IconFilter, IconHistory } from '@arco-design/web-vue/es/icon'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { HistoryState } from 'vue-router'
+import { Message } from '@arco-design/web-vue'
 import { useDebounceFn } from '@vueuse/core'
-
-// 导入新组件
+import { IconRefresh, IconFilter, IconHistory } from '@arco-design/web-vue/es/icon'
 import SearchSection from './components/SearchSection.vue'
 import TableCollectionGrid from './components/TableCollectionGrid.vue'
 import LoadingState from './components/LoadingState.vue'

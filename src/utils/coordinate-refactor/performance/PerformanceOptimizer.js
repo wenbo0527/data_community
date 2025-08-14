@@ -178,16 +178,68 @@ export class PerformanceOptimizer {
       timestamp: Date.now()
     };
     
+    // 检查是否有相同的操作已在队列中（去重优化）
+    const operationHash = this.hashString(JSON.stringify({
+      functionName: layoutFunction.name,
+      context: context,
+      options: options
+    }));
+    
+    const existingOperation = this.state.executionQueue.find(op => {
+      const existingHash = this.hashString(JSON.stringify({
+        functionName: op.function.name,
+        context: op.context,
+        options: op.options
+      }));
+      return existingHash === operationHash;
+    });
+    
+    if (existingOperation) {
+      console.log(`🔄 [批处理去重] 发现重复操作，复用现有Promise - ID: ${operationId}`);
+      this.state.performanceMetrics.skippedOperations++;
+      
+      // 返回现有操作的Promise
+      return new Promise((resolve, reject) => {
+        const originalResolve = existingOperation.resolve;
+        const originalReject = existingOperation.reject;
+        
+        existingOperation.resolve = (result) => {
+          if (originalResolve) originalResolve(result);
+          resolve(result);
+        };
+        
+        existingOperation.reject = (error) => {
+          if (originalReject) originalReject(error);
+          reject(error);
+        };
+      });
+    }
+    
     this.state.executionQueue.push(operation);
+    
+    // 返回Promise等待批处理执行
+    const promise = new Promise((resolve, reject) => {
+      operation.resolve = resolve;
+      operation.reject = reject;
+    });
     
     // 如果队列达到批处理大小，立即执行
     if (this.state.executionQueue.length >= this.config.batchSize) {
-      return await this.processBatch();
+      // 清除现有的延迟执行定时器，避免重复执行
+      if (this.timers.has('batchExecution')) {
+        clearTimeout(this.timers.get('batchExecution'));
+        this.timers.delete('batchExecution');
+      }
+      
+      console.log(`🚀 [批处理] 队列已满(${this.config.batchSize})，立即执行批处理`);
+      this.processBatch();
+      return promise;
     }
     
-    // 否则设置延迟执行
+    // 否则设置延迟执行（仅在没有定时器时设置）
     if (!this.timers.has('batchExecution')) {
       const timer = setTimeout(() => {
+        console.log(`⏰ [批处理] 延迟时间到达，执行批处理`);
         this.processBatch();
         this.timers.delete('batchExecution');
       }, this.config.batchDelay);
@@ -195,53 +247,77 @@ export class PerformanceOptimizer {
       this.timers.set('batchExecution', timer);
     }
     
-    // 返回Promise等待批处理执行
-    return new Promise((resolve, reject) => {
-      operation.resolve = resolve;
-      operation.reject = reject;
-    });
+    return promise;
   }
 
   /**
    * 处理批处理
    */
   async processBatch() {
-    if (this.state.executionQueue.length === 0) return;
+    if (this.state.executionQueue.length === 0) {
+      console.log(`⚠️ [批处理] 队列为空，跳过执行`);
+      return;
+    }
     
     console.log(`🔄 [批处理执行] 开始处理 ${this.state.executionQueue.length} 个操作`);
     
     const batch = [...this.state.executionQueue];
     this.state.executionQueue = [];
     
-    // 并行执行批处理操作
-    const results = await Promise.allSettled(
-      batch.map(async (operation) => {
-        try {
-          const result = await this.executeWithMonitoring(
-            operation.function,
-            operation.context,
-            operation.options,
-            operation.id
-          );
-          
-          if (operation.resolve) {
-            operation.resolve(result);
+    // 清除批处理定时器
+    if (this.timers.has('batchExecution')) {
+      clearTimeout(this.timers.get('batchExecution'));
+      this.timers.delete('batchExecution');
+    }
+    
+    try {
+      // 并行执行批处理操作
+      const results = await Promise.allSettled(
+        batch.map(async (operation) => {
+          try {
+            const result = await this.executeWithMonitoring(
+              operation.function,
+              operation.context,
+              operation.options,
+              operation.id
+            );
+            
+            if (operation.resolve) {
+              operation.resolve(result);
+            }
+            
+            return result;
+          } catch (error) {
+            console.error(`❌ [批处理操作失败] ID: ${operation.id}:`, error);
+            if (operation.reject) {
+              operation.reject(error);
+            }
+            throw error;
           }
-          
-          return result;
-        } catch (error) {
-          if (operation.reject) {
-            operation.reject(error);
-          }
-          throw error;
+        })
+      );
+      
+      this.state.performanceMetrics.batchedOperations += batch.length;
+      
+      // 统计成功和失败的操作
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      
+      console.log(`✅ [批处理完成] 处理了 ${batch.length} 个操作 (成功: ${successful}, 失败: ${failed})`);
+      
+      return results;
+    } catch (error) {
+      console.error(`❌ [批处理执行失败]:`, error);
+      
+      // 确保所有操作的Promise都被拒绝
+      batch.forEach(operation => {
+        if (operation.reject) {
+          operation.reject(error);
         }
-      })
-    );
-    
-    this.state.performanceMetrics.batchedOperations += batch.length;
-    console.log(`✅ [批处理完成] 处理了 ${batch.length} 个操作`);
-    
-    return results;
+      });
+      
+      throw error;
+    }
   }
 
   /**
@@ -405,9 +481,96 @@ export class PerformanceOptimizer {
     
     const cacheKey = this.generateCacheKey(layoutFunction, context, options);
     this.cache.set(cacheKey, {
-      result: JSON.parse(JSON.stringify(result)), // 深拷贝
+      result: this.safeDeepCopy(result), // 安全的深拷贝
       timestamp: Date.now()
     });
+  }
+
+  /**
+   * 安全的深拷贝，处理循环引用
+   */
+  safeDeepCopy(obj, maxDepth = 5) {
+    const seen = new WeakMap();
+    
+    const copy = (value, depth = 0) => {
+      // 限制递归深度
+      if (depth > maxDepth) {
+        return '[Max Depth Reached]';
+      }
+      
+      // 处理基本类型
+      if (value === null || value === undefined || typeof value !== 'object') {
+        return value;
+      }
+      
+      // 检测循环引用
+      if (seen.has(value)) {
+        return seen.get(value);
+      }
+      
+      // 处理特殊对象类型
+      if (value instanceof Date) {
+        return new Date(value.getTime());
+      }
+      
+      if (value instanceof RegExp) {
+        return new RegExp(value.source, value.flags);
+      }
+      
+      // 跳过函数、DOM元素等不可序列化的对象
+      if (typeof value === 'function' || value instanceof Element) {
+        return null;
+      }
+      
+      // 跳过可能导致循环引用的属性
+      if (value.layoutEngine || value.previewLineManager || 
+          value.graph || value.canvas || value.parent) {
+        return '[Circular Reference Skipped]';
+      }
+      
+      let result;
+      
+      // 处理数组
+      if (Array.isArray(value)) {
+        result = [];
+        seen.set(value, result);
+        
+        for (let i = 0; i < value.length; i++) {
+          try {
+            result[i] = copy(value[i], depth + 1);
+          } catch (error) {
+            result[i] = '[Copy Error]';
+          }
+        }
+      } else {
+        // 处理普通对象
+        result = {};
+        seen.set(value, result);
+        
+        for (const [key, val] of Object.entries(value)) {
+          try {
+            // 跳过一些可能导致问题的属性
+            if (key === 'layoutEngine' || key === 'previewLineManager' || 
+                key === 'graph' || key === 'canvas' || key === 'parent') {
+              result[key] = '[Skipped: Circular Reference Risk]';
+              continue;
+            }
+            result[key] = copy(val, depth + 1);
+          } catch (error) {
+            result[key] = '[Copy Error]';
+          }
+        }
+      }
+      
+      return result;
+    };
+    
+    try {
+      return copy(obj);
+    } catch (error) {
+      console.warn('⚠️ [性能优化器] 深拷贝失败，返回原始对象:', error.message);
+      return obj;
+    }
   }
 
   /**
@@ -415,23 +578,171 @@ export class PerformanceOptimizer {
    */
   generateCacheKey(layoutFunction, context, options) {
     const functionName = layoutFunction.name || 'anonymous';
-    const contextHash = JSON.stringify(context);
-    const optionsHash = JSON.stringify(options);
+    
+    // 安全的JSON序列化，处理循环引用
+    const contextHash = this.safeStringify(context);
+    const optionsHash = this.safeStringify(options);
     
     return `${functionName}_${this.hashString(contextHash)}_${this.hashString(optionsHash)}`;
+  }
+
+  /**
+   * 安全的JSON序列化，处理循环引用
+   */
+  safeStringify(obj, maxDepth = 3) {
+    const seen = new WeakSet();
+    
+    const replacer = (key, value, depth = 0) => {
+      // 限制递归深度
+      if (depth > maxDepth) {
+        return '[Max Depth Reached]';
+      }
+      
+      // 处理null和undefined
+      if (value === null || value === undefined) {
+        return value === null ? 'null' : 'undefined';
+      }
+      
+      // 处理基本类型
+      if (typeof value !== 'object') {
+        return value;
+      }
+      
+      // 检测循环引用
+      if (seen.has(value)) {
+        return '[Circular Reference]';
+      }
+      
+      // 处理特殊对象类型
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      
+      if (value instanceof RegExp) {
+        return value.toString();
+      }
+      
+      // 处理函数
+      if (typeof value === 'function') {
+        return `[Function: ${value.name || 'anonymous'}]`;
+      }
+      
+      // 处理DOM元素
+      if (value instanceof Element) {
+        return `[Element: ${value.tagName}]`;
+      }
+      
+      // 处理Map和Set
+      if (value instanceof Map) {
+        return `[Map: ${value.size} entries]`;
+      }
+      
+      if (value instanceof Set) {
+        return `[Set: ${value.size} entries]`;
+      }
+      
+      // 跳过可能导致循环引用的属性（在标记seen之前检查）
+      if (key === 'layoutEngine' || key === 'previewLineManager' || 
+          key === 'graph' || key === 'canvas' || key === 'parent' ||
+          key === '_previewLineManagerRef' || key === '_layoutEngineRef' ||
+          key === 'performanceOptimizer') {
+        return '[Skipped: Circular Reference Risk]';
+      }
+      
+      // 标记已访问的对象
+      seen.add(value);
+      
+      let result;
+      
+      try {
+        // 处理数组
+        if (Array.isArray(value)) {
+          result = value.map((item, index) => {
+            try {
+              return replacer(index.toString(), item, depth + 1);
+            } catch (error) {
+              return '[Serialization Error]';
+            }
+          });
+        } else {
+          // 处理普通对象
+          result = {};
+          for (const [k, v] of Object.entries(value)) {
+            try {
+              result[k] = replacer(k, v, depth + 1);
+            } catch (error) {
+              result[k] = '[Serialization Error]';
+            }
+          }
+        }
+      } catch (error) {
+        result = '[Object Serialization Error]';
+      }
+      
+      // 处理完成后从seen中移除
+      seen.delete(value);
+      return result;
+    };
+    
+    try {
+      return JSON.stringify(obj, (key, value) => replacer(key, value));
+    } catch (error) {
+      console.warn('⚠️ [性能优化器] JSON序列化失败，使用备用方案:', error.message);
+      return `[Serialization Failed: ${error.message}]`;
+    }
   }
 
   /**
    * 字符串哈希
    */
   hashString(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // 转换为32位整数
+    // 🔧 增强参数验证：处理各种边界情况
+    if (str === null || str === undefined) {
+      console.warn('⚠️ [性能优化器] hashString接收到null/undefined参数，使用默认值');
+      return '0';
     }
-    return hash.toString(36);
+    
+    // 确保str是字符串类型
+    if (typeof str !== 'string') {
+      try {
+        str = String(str);
+      } catch (error) {
+        console.warn('⚠️ [性能优化器] hashString参数转换失败，使用默认值:', error.message);
+        return '0';
+      }
+    }
+    
+    // 🔧 新增：处理空字符串
+    if (str.length === 0) {
+      return '0';
+    }
+    
+    // 🔧 新增：处理超长字符串（避免性能问题）
+    if (str.length > 10000) {
+      // 使用调试级别日志，避免在正常使用中产生警告
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔧 [性能优化器] 处理超长字符串(${str.length}字符)，使用智能采样优化`);
+      }
+      // 使用智能采样策略：取开头、中间、结尾的片段
+      const start = str.substring(0, 3000);
+      const middle = str.substring(Math.floor(str.length / 2) - 1500, Math.floor(str.length / 2) + 1500);
+      const end = str.substring(str.length - 3000);
+      str = start + middle + end + `_len${str.length}`;
+    }
+    
+    let hash = 0;
+    try {
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 转换为32位整数
+      }
+      return hash.toString(36);
+    } catch (error) {
+      console.warn('⚠️ [性能优化器] hashString计算失败，使用备用方案:', error.message);
+      // 备用方案：使用简单的字符串长度和首字符
+      return `${str.length}_${str.charCodeAt(0) || 0}`.toString();
+    }
   }
 
   /**

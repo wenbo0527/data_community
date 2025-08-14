@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="title-area">
         <h1 class="page-title">
-          <icon-dashboard />
+          <IconDashboard />
           资产总览
         </h1>
         <p class="page-description">全面展示数据资产概况，统一管理各类数据资源</p>
@@ -13,11 +13,11 @@
       <!-- 快速操作按钮 -->
       <div class="quick-actions">
         <a-button type="primary" @click="refreshData">
-          <template #icon><icon-refresh /></template>
+          <template #icon><IconRefresh /></template>
           刷新数据
         </a-button>
         <a-button @click="showGuide">
-          <template #icon><icon-question-circle /></template>
+          <template #icon><IconQuestionCircle /></template>
           使用指南
         </a-button>
       </div>
@@ -31,7 +31,7 @@
             <a-card class="stat-card" hoverable @click="navigateTo('table-management')">
               <div class="stat-content">
                 <div class="stat-icon table-icon">
-                  <icon-storage />
+                  <IconStorage />
                 </div>
                 <div class="stat-info">
                   <div class="stat-number">89<span class="stat-unit">个</span></div>
@@ -44,7 +44,7 @@
             <a-card class="stat-card" hoverable @click="navigateTo('external-data-management')">
               <div class="stat-content">
                 <div class="stat-icon external-icon">
-                  <icon-link />
+                  <IconLink />
                 </div>
                 <div class="stat-info">
                   <div class="stat-number">22<span class="stat-unit">个</span></div>
@@ -57,7 +57,7 @@
             <a-card class="stat-card" hoverable @click="navigateTo('metric-management')">
               <div class="stat-content">
                 <div class="stat-icon metric-icon">
-                  <icon-bar-chart />
+                  <IconBarChart />
                 </div>
                 <div class="stat-info">
                   <div class="stat-number">45<span class="stat-unit">个</span></div>
@@ -70,7 +70,7 @@
             <a-card class="stat-card" hoverable @click="navigateTo('batch-asset-management')">
               <div class="stat-content">
                 <div class="stat-icon batch-icon">
-                  <icon-settings />
+                  <IconSettings />
                 </div>
                 <div class="stat-info">
                   <div class="stat-number">156<span class="stat-unit">个</span></div>
@@ -87,7 +87,7 @@
         <a-card class="relation-diagram-card" title="资产关系图">
           <div class="placeholder-diagram">
             <div>
-              <icon-apps style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;" />
+              <IconApps style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;" />
               <div>资产关系图将在此处显示</div>
               <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">展示数据表、指标、外数之间的血缘关系</div>
             </div>
@@ -127,7 +127,7 @@
             <a-card class="module-card" hoverable @click="navigateTo('table-management')">
               <div class="module-header">
                 <div class="module-icon table-icon">
-                  <icon-storage />
+                  <IconStorage />
                 </div>
                 <div class="module-title">
                   <h3>表管理</h3>
@@ -146,7 +146,7 @@
             <a-card class="module-card" hoverable @click="navigateTo('external-data-management')">
               <div class="module-header">
                 <div class="module-icon external-icon">
-                  <icon-link />
+                  <IconLink />
                 </div>
                 <div class="module-title">
                   <h3>外数管理</h3>
@@ -167,7 +167,7 @@
             <a-card class="module-card" hoverable @click="navigateTo('metric-management')">
               <div class="module-header">
                 <div class="module-icon metric-icon">
-                  <icon-bar-chart />
+                  <IconBarChart />
                 </div>
                 <div class="module-title">
                   <h3>指标管理</h3>
@@ -186,7 +186,7 @@
             <a-card class="module-card" hoverable @click="navigateTo('batch-asset-management')">
               <div class="module-header">
                 <div class="module-icon batch-icon">
-                  <icon-settings />
+                  <IconSettings />
                 </div>
                 <div class="module-title">
                   <h3>资产批量管理</h3>
@@ -247,6 +247,7 @@ import {
   IconQuestionCircle,
   IconStorage, 
   IconLink, 
+  IconBarChart,
   IconSettings,
   IconApps
 } from '@arco-design/web-vue/es/icon'

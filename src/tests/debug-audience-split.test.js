@@ -18,6 +18,7 @@ describe('调试人群分流节点预览线问题', () => {
       addEdge: vi.fn(),
       removeEdge: vi.fn(),
       getCellById: vi.fn(),
+      hasCell: vi.fn(() => true),
       on: vi.fn(),
       off: vi.fn()
     }
