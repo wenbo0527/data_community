@@ -239,10 +239,10 @@ export default class NodeConfigValidator {
         break
 
       case 'file':
-        if (!dataSource.destination) {
+        if (!dataSource.connectionString) {
           errors.push({
             type: 'MISSING_FILE_PATH',
-            field: 'dataSource.destination',
+            field: 'dataSource.connectionString',
             message: '文件数据源需要指定文件路径',
             severity: 'error',
             nodeId

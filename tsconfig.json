@@ -2,8 +2,10 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": false,
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "noImplicitAny": false,
     "noImplicitReturns": false,
     "noImplicitThis": false,
@@ -24,6 +26,7 @@
       "@/*": ["src/*"]
     },
     "types": ["vite/client", "node"],
+    "allowImportingTsExtensions": true,
     "allowJs": true,
     "checkJs": false
   },
@@ -31,10 +34,22 @@
     "src/**/*.ts", 
     "src/**/*.d.ts", 
     "src/**/*.tsx", 
-    "src/**/*.vue",
-    "src/pages/**/*.vue",
-    "src/components/**/*.vue"
+    "src/**/*.vue"
   ],
-  "exclude": ["node_modules", "dist", "**/*.vue.js", "src/**/*.js"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": [
+    "node_modules", 
+    "dist", 
+    "build",
+    "**/*.vue.js", 
+    "src/**/*.js",
+    "src/mock/**/*",
+    "src/examples/**/*",
+    "src/tests/**/*",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "coverage",
+    ".eslintcache",
+    ".tsbuildinfo"
+  ],
+
 }

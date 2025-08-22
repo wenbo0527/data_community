@@ -289,9 +289,11 @@ export class DeletionCascadeHandler {
       // 获取该节点的所有分支
       const branches = this.cacheManager.get(`node_branches_${nodeId}`) || [];
       
-      for (const branch of branches) {
-        const branchId = `${nodeId}_branch_${branch.index}`;
-        this.eventBus.emit('label:remove', { branchId });
+      if (Array.isArray(branches)) {
+        for (const branch of branches) {
+          const branchId = `${nodeId}_branch_${branch.index}`;
+          this.eventBus.emit('label:remove', { branchId });
+        }
       }
       
       // 清理分支缓存
@@ -313,7 +315,7 @@ export class DeletionCascadeHandler {
       // 检查是否还有其他预览线指向该结束节点
       const incomingPreviewLines = this.cacheManager.get(`preview_lines_target_${nodeId}`) || [];
       
-      if (incomingPreviewLines.length === 0) {
+      if (!Array.isArray(incomingPreviewLines) || incomingPreviewLines.length === 0) {
         // 如果没有其他预览线，可以安全删除
         this.cacheManager.delete(`auto_end_node_${nodeId}`);
         this.eventBus.emit('end-node:auto-removed', { nodeId });
@@ -400,7 +402,7 @@ export class DeletionCascadeHandler {
       
       // 检查是否有预览线连接
       const incomingPreviewLines = this.cacheManager.get(`preview_lines_target_${nodeId}`) || [];
-      const hasIncomingPreviewLines = incomingPreviewLines.length > 0;
+      const hasIncomingPreviewLines = Array.isArray(incomingPreviewLines) && incomingPreviewLines.length > 0;
       
       if (!hasIncomingConnections && !hasIncomingPreviewLines) {
         // 标记为孤立节点

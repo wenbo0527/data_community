@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { withDefaults } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import type { BasicInfo } from '@/types/accompany'
 
 interface Props {
@@ -74,17 +74,17 @@ interface Props {
   step: number
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  modelValue: () => ({
-    name: '',
-    cacheTime: '30',
-    days: 0,
-    periods: 0,
-    description: '',
-    periodDays: [30]
-  }),
-  step: 0
-})
+const props = defineProps<Props>()
+
+// 提供默认值
+const defaultData: BasicInfo = {
+  name: '',
+  cacheTime: '30',
+  days: 0,
+  periods: 0,
+  description: '',
+  periodDays: [30]
+}
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: BasicInfo): void

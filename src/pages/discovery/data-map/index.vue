@@ -189,6 +189,10 @@ interface TableField {
   description: string
 }
 
+interface HistoryState {
+  [key: string]: any
+}
+
 interface TableItem {
   name: string
   type: string
@@ -331,8 +335,7 @@ const showCollectionDetail = (collection: TableCollection) => {
   // 这里添加跳转到场景详情页的逻辑
   router.push({
     name: 'CollectionDetail',
-    params: { id: collection.id },
-    state: { data: collection as unknown as HistoryState }
+    params: { id: collection.id }
   })
 }
 

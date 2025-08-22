@@ -161,8 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { h } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, h } from 'vue'
 import { 
   IconStar, 
   IconSafe,
@@ -213,6 +212,7 @@ interface TableItem {
   owner: string
   description: string
   fields: TableField[]
+  fieldRelations?: Relation[]
   rowCount?: number
   createTime?: string
   lastUpdateTime?: string
@@ -240,7 +240,7 @@ const tableData = ref<TableItem | undefined>()
 const allRelations = ref<Relation[]>([])
 const relationTreeRef = ref<HTMLElement | null>(null)
 const relationViewMode = ref<'graph' | 'list'>('list') // 默认展示列表视图
-let relationChart: echarts.ECharts | null = null
+let relationChart: any = null
 
 const goToTableDetail = (table: TableItem) => {
   router.push(`/discovery/data-map/table/${encodeURIComponent(table.name)}`)
@@ -597,6 +597,7 @@ const renderRelationTree = async () => {
   logger.debug('开始安全初始化关联关系图表')
   try {
     relationChart = await safeInitECharts(relationTreeRef.value, {
+      theme: 'default',
       width: 800,
       height: 600,
       renderer: 'canvas'

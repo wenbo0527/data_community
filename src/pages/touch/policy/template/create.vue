@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, ref } from 'vue'
+import { ref, h } from 'vue'
 import { Button as AButton } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
 

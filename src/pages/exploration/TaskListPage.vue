@@ -245,7 +245,7 @@ const loadTaskList = async () => {
       taskList.value = response.data.list as TaskItem[];
       pagination.total = response.data.total || 0;
     } else {
-      Message.error('获取任务列表失败: ' + ((response && response.message) || '未知错误'));
+      Message.error('获取任务列表失败: 未知错误');
     }
   } catch (error) {
     console.error('获取任务列表失败:', error);

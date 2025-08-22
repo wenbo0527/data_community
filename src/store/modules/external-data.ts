@@ -69,7 +69,7 @@ export const useExternalDataStore = defineStore('externalData', {
       try {
         const budgetStore = useBudgetStore()
         const { data } = await budgetStore.fetchBudgetList({ page: 1, pageSize: 100 })
-        this.targetLoanOptions = [...new Set(data.map(item => item.targetLoan))].sort((a, b) => a - b)
+        this.targetLoanOptions = [...new Set(data.map(item => item.targetLoan))].sort((a: number, b: number) => a - b)
       } catch (error: any) {
         this.error = { message: error.message }
       }

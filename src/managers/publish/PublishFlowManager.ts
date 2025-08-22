@@ -1,7 +1,7 @@
 import type { Graph } from '@antv/x6';
-import { UnifiedEventBus } from '../core/UnifiedEventBus';
-import { UnifiedCacheManager } from '../core/UnifiedCacheManager';
-import { ErrorHandler } from '../core/ErrorHandler';
+import { UnifiedEventBus } from '../../core/UnifiedEventBus';
+import { UnifiedCacheManager } from '../../core/UnifiedCacheManager';
+import { ErrorHandler } from '../../core/ErrorHandler';
 import { CoordinateSystemManager } from '../../utils/CoordinateSystemManager';
 import ValidationManager from './ValidationManager';
 import { EndNodeAutoGenerator } from './EndNodeAutoGenerator';
@@ -9,6 +9,9 @@ import { CycleDetector } from './CycleDetector';
 import { BranchLineProcessor } from './BranchLineProcessor';
 import { LabelManager } from './LabelManager';
 import { DeletionCascadeHandler } from './DeletionCascadeHandler';
+
+// 发布状态类型定义
+type PublishState = 'idle' | 'validating' | 'processing' | 'publishing' | 'completed' | 'failed' | 'cancelled' | 'detecting_cycles' | 'generating_end_nodes' | 'generating_config' | 'running';
 
 /**
  * 发布流程管理器
@@ -32,7 +35,7 @@ export class PublishFlowManager {
   private deletionHandler: DeletionCascadeHandler;
   
   // 发布状态
-  private publishState: 'idle' | 'validating' | 'processing' | 'publishing' | 'completed' | 'failed' | 'cancelled' | 'detecting_cycles' | 'generating_end_nodes' | 'generating_config' | 'running';
+  private publishState: PublishState;
   private publishHistory: Array<{
     id: string;
     timestamp: number;
@@ -197,7 +200,7 @@ export class PublishFlowManager {
       this.eventBus.emit('publish:started', { publishId });
 
       // 检查是否已被取消
-      if (this.publishState === 'cancelled') {
+      if ((this.publishState as PublishState) === 'cancelled') {
         publishResult.errors.push({ type: 'cancelled', message: '发布流程已被取消' });
         return publishResult;
       }
@@ -211,7 +214,7 @@ export class PublishFlowManager {
         const unconnectedLines = await this.endNodeGenerator.detectUnconnectedPreviewLines();
         
         if (unconnectedLines.length > 0) {
-          const endNodeResults = await this.endNodeGenerator.autoAddEndNodes(unconnectedLines);
+          const endNodeResults = await this.endNodeGenerator.autoAddEndNodes();
           publishResult.generatedEndNodes = endNodeResults;
           
           if (endNodeResults.length > 0) {
@@ -234,7 +237,7 @@ export class PublishFlowManager {
       }
 
       // 检查是否已被取消
-      if (this.publishState === 'cancelled') {
+      if ((this.publishState as PublishState) === 'cancelled') {
         publishResult.errors.push({ type: 'cancelled', message: '发布流程已被取消' });
         return publishResult;
       }
@@ -267,7 +270,7 @@ export class PublishFlowManager {
       }
 
       // 检查是否已被取消
-      if (this.publishState === 'cancelled') {
+      if ((this.publishState as PublishState) === 'cancelled') {
         publishResult.errors.push({ type: 'cancelled', message: '发布流程已被取消' });
         return publishResult;
       }
@@ -356,7 +359,7 @@ export class PublishFlowManager {
       this.setPublishState('completed');
       
       // 缓存发布结果
-      this.cacheManager.set('publish_flow_result', publishResult, 86400000); // 24小时缓存
+      this.cacheManager.set('publish_flow_result', publishResult, { ttl: 86400000 }); // 24小时缓存
       
       this.eventBus.emit('publish:flow:completed', { publishId, result: publishResult });
       
@@ -412,7 +415,7 @@ export class PublishFlowManager {
       };
       
       // 缓存发布配置
-      this.cacheManager.set('latest_publish_config', config, 3600000); // 1小时
+      this.cacheManager.set('latest_publish_config', config, { ttl: 3600000 }); // 1小时
       
       return config;
       
@@ -428,7 +431,7 @@ export class PublishFlowManager {
   /**
    * 设置发布状态
    */
-  private setPublishState(state: typeof this.publishState): void {
+  private setPublishState(state: PublishState): void {
     const previousState = this.publishState;
     this.publishState = state;
     
@@ -454,7 +457,7 @@ export class PublishFlowManager {
     };
     
     // 缓存发布历史
-    this.cacheManager.set(`publish_history_${publishId}`, historyRecord, 86400000); // 24小时缓存
+    this.cacheManager.set(`publish_history_${publishId}`, historyRecord, { ttl: 86400000 }); // 24小时缓存
     
     // 发布历史事件
     this.eventBus.emit('publish:history:recorded', {
@@ -660,10 +663,12 @@ export class PublishFlowManager {
       for (const decisionNode of decisionNodes) {
         const branches = await this.branchProcessor.getBranchesForDecisionNode(decisionNode.id);
         
-        for (const branch of branches) {
-          if (!branch.isAttached) {
-            const processResult = await this.branchProcessor.processUnattachedBranch(branch, decisionNode.id);
-            results.push(processResult);
+        if (Array.isArray(branches)) {
+          for (const branch of branches) {
+            if (!branch.isAttached) {
+              const processResult = await this.branchProcessor.processUnattachedBranch(branch, decisionNode.id);
+              results.push(processResult);
+            }
           }
         }
       }

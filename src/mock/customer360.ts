@@ -1,6 +1,7 @@
 // 催收记录接口
 interface CollectionRecord {
   id: string;
+  productKey?: string;
   collectionDate: string;
   collectionTime: string;
   collectionMethod: string; // 电话、短信、上门、邮件
@@ -15,34 +16,50 @@ interface CollectionRecord {
   remarks: string;
   effectiveScore: number; // 催收效果评分
   duration: number; // 通话时长（分钟）
+  reportSource: string;
 }
 
 // 征信记录接口
 interface CreditReport {
   reportId: string;
   reportDate: string;
-  reportType: string; // 个人征信、企业征信
-  reportSource: string; // 人行征信、百行征信
   creditScore: number;
-  creditLevel: string; // AAA、AA、A、BBB、BB、B、CCC、CC、C、D
-  riskStatus: string; // 正常、关注、次级、可疑、损失
-  reportUrl: string;
-  validUntil: string;
+  creditGrade: string;
+  reportType: string;
+  reportStatus: string;
   queryReason: string;
-  basicInfo: {
-    name: string;
-    idCard: string;
-    queryDate: string;
-    reportVersion: string;
+  riskLevel: string;
+  queryCount: number;
+  overdueTimes: number;
+  maxOverdueDays: number;
+  totalCreditLimit: number;
+  usedCreditLimit: number;
+  creditUtilization: number;
+  accountCount: number;
+  normalAccounts: number;
+  overdueAccounts: number;
+  reportSource: string;
+  validUntil: string;
+  reportContent: {
+    personalInfo: {
+      name: string;
+      idNumber: string;
+      phoneNumber: string;
+      address: string;
+    };
+    creditHistory: {
+      totalAccounts: number;
+      activeAccounts: number;
+      overdueAccounts: number;
+      maxOverdueDays: number;
+    };
+    publicRecords: {
+      courtRecords: number;
+      taxRecords: number;
+      administrativePenalties: number;
+    };
   };
-  summary: {
-    totalAccounts: number;
-    activeAccounts: number;
-    overdueAccounts: number;
-    totalCreditLimit: number;
-    totalBalance: number;
-    monthlyPayment: number;
-  };
+  productKey?: string;
 }
 
 // 营销记录接口
@@ -91,11 +108,16 @@ interface MarketingRecord {
 // 还款记录明细接口
 interface RepaymentDetail {
   repaymentId: string;
+  period: number;
   repaymentDate: string;
+  actualPaymentDate: string;
   repaymentAmount: number;
   principalAmount: number;
   interestAmount: number;
   penaltyAmount: number;
+  totalAmount: number;
+  remainingBalance: number;
+  status: string;
   repaymentMethod: string; // 自动扣款、主动还款、线下还款
   repaymentStatus: string; // 成功、失败、部分还款
   bankCard: string;
@@ -106,6 +128,7 @@ interface RepaymentDetail {
 // 扩展用信记录接口
 interface EnhancedLoanRecord {
   loanNo: string;
+  productKey: string;
   loanDate: string;
   bankCard: string;
   channel: string;
@@ -128,6 +151,7 @@ interface EnhancedLoanRecord {
     principalAmount: number;
     interestAmount: number;
     totalAmount: number;
+    remainingBalance: number;
     status: string; // 未到期、已还款、逾期、部分还款
   }>;
   overdueInfo?: {
@@ -188,6 +212,7 @@ interface UserData {
   repaymentRate: number;
   creditsList: Array<{
     creditNo: string;
+    productKey?: string;
     creditDate: string;
     channel: string;
     productName: string;
@@ -214,6 +239,7 @@ interface UserData {
   marketingRecords: MarketingRecord;
   quotaAdjustHistory: Array<{
     customerNo: string;
+    productKey?: string;
     adjustDate: string;
     beforeAmount: number;
     afterAmount: number;
@@ -240,21 +266,6 @@ const mockUsers: { [key: string]: UserData } = {
   '887123': {
     userId: '887123',
     name: '张*',
-    // 添加基本信息字段，这是页面渲染的关键依赖
-    basicInfo: {
-      name: '张*',
-      age: 35,
-      gender: '男',
-      idCard: '320*******123X',
-      phone: '159****5678',
-      email: 'zhang@example.com',
-      address: '上海市浦东新区',
-      customerNo: 'KH100100022002',
-      idExpiry: '2028-05-20',
-      status: '正常',
-      joinDate: '2020-03-10',
-      customerLevel: '普通客户'
-    },
     products: [
       {
         productKey: 'DP-2024-002',
@@ -334,7 +345,8 @@ const mockUsers: { [key: string]: UserData } = {
         followUpAction: '3天后回访',
         remarks: '客户态度良好，有还款意愿',
         effectiveScore: 8,
-        duration: 15
+        duration: 15,
+        reportSource: '催收系统'
       },
       {
         id: 'COL002',
@@ -349,7 +361,8 @@ const mockUsers: { [key: string]: UserData } = {
         followUpAction: '电话跟进',
         remarks: '发送还款提醒短信',
         effectiveScore: 5,
-        duration: 0
+        duration: 0,
+        reportSource: '催收系统'
       }
     ],
     
@@ -361,24 +374,38 @@ const mockUsers: { [key: string]: UserData } = {
         reportType: '个人征信',
         reportSource: '人行征信',
         creditScore: 720,
-        creditLevel: 'AA',
-        riskStatus: '正常',
-        reportUrl: 'https://example.com/credit-report/CR20240115001.pdf',
+        creditGrade: 'AA',
+        riskLevel: '正常',
         validUntil: '2024-07-15',
         queryReason: '贷款审批',
-        basicInfo: {
-          name: '张三',
-          idCard: '110101199001011234',
-          queryDate: '2024-01-15',
-          reportVersion: 'V2.1'
-        },
-        summary: {
-          totalAccounts: 5,
-          activeAccounts: 3,
-          overdueAccounts: 0,
-          totalCreditLimit: 500000,
-          totalBalance: 150000,
-          monthlyPayment: 8500
+        reportStatus: '有效',
+        queryCount: 2,
+        overdueTimes: 0,
+        maxOverdueDays: 0,
+        totalCreditLimit: 100000,
+        usedCreditLimit: 30000,
+        creditUtilization: 30,
+        accountCount: 3,
+        normalAccounts: 3,
+        overdueAccounts: 0,
+        reportContent: {
+          personalInfo: {
+            name: '张三',
+            idNumber: '110*******123X',
+            phoneNumber: '138****5678',
+            address: '北京市朝阳区'
+          },
+          creditHistory: {
+            totalAccounts: 3,
+            activeAccounts: 3,
+            overdueAccounts: 0,
+            maxOverdueDays: 0
+          },
+          publicRecords: {
+            courtRecords: 0,
+            taxRecords: 0,
+            administrativePenalties: 0
+          }
         }
       }
     ],
@@ -476,6 +503,7 @@ const mockUsers: { [key: string]: UserData } = {
     
     loanRecords: [
       {
+        productKey: 'loan001',
         loanNo: '3276555',
         loanDate: '2023-08-15 10:30:45',
         bankCard: '6228****9876',
@@ -493,34 +521,58 @@ const mockUsers: { [key: string]: UserData } = {
         nextPaymentDate: '2024-10-15',
         repaymentDetails: [
           {
+            repaymentId: 'RPY001',
             period: 1,
-            paymentDate: '2023-09-15',
+            repaymentDate: '2023-09-15',
+            actualPaymentDate: '2023-09-15',
+            repaymentAmount: 1312.50,
             principalAmount: 1062.50,
             interestAmount: 250.00,
+            penaltyAmount: 0,
             totalAmount: 1312.50,
             remainingBalance: 28937.50,
             status: '已还款',
-            actualPaymentDate: '2023-09-15'
+            repaymentMethod: '自动扣款',
+            repaymentStatus: '成功',
+            bankCard: '****1234',
+            transactionId: 'TXN001',
+            remarks: '按时还款'
           },
           {
+            repaymentId: 'RPY002',
             period: 2,
-            paymentDate: '2023-10-15',
+            repaymentDate: '2023-10-15',
+            actualPaymentDate: '2023-10-15',
+            repaymentAmount: 1312.50,
             principalAmount: 1066.25,
             interestAmount: 246.25,
+            penaltyAmount: 0,
             totalAmount: 1312.50,
             remainingBalance: 27871.25,
             status: '已还款',
-            actualPaymentDate: '2023-10-15'
+            repaymentMethod: '自动扣款',
+            repaymentStatus: '成功',
+            bankCard: '****1234',
+            transactionId: 'TXN002',
+            remarks: '按时还款'
           },
           {
+            repaymentId: 'RPY003',
             period: 3,
-            paymentDate: '2023-11-15',
+            repaymentDate: '2023-11-15',
+            actualPaymentDate: '2023-11-15',
+            repaymentAmount: 1312.50,
             principalAmount: 1070.00,
             interestAmount: 242.50,
+            penaltyAmount: 0,
             totalAmount: 1312.50,
             remainingBalance: 26801.25,
             status: '已还款',
-            actualPaymentDate: '2023-11-15'
+            repaymentMethod: '自动扣款',
+            repaymentStatus: '成功',
+            bankCard: '****1234',
+            transactionId: 'TXN003',
+            remarks: '按时还款'
           }
         ],
         repaymentPlan: [
@@ -634,6 +686,20 @@ const mockUsers: { [key: string]: UserData } = {
       }
     ],
     
+    loanProducts: [
+      {
+        productKey: 'loan001',
+        name: '个人住房贷款',
+        balance: 800000.00,
+        currency: 'CNY',
+        status: '正常',
+        rate: 3.25,
+        remainingPeriod: 240,
+        totalPeriod: 360,
+        nextPaymentDate: '2024-02-15'
+      }
+    ],
+    
     // 催收记录
     collectionRecords: [
       {
@@ -650,7 +716,8 @@ const mockUsers: { [key: string]: UserData } = {
         followUpAction: '上门催收',
         remarks: '多次拒接电话，需要上门处理',
         effectiveScore: 2,
-        duration: 0
+        duration: 0,
+        reportSource: '催收系统'
       },
       {
         id: 'COL004',
@@ -668,7 +735,8 @@ const mockUsers: { [key: string]: UserData } = {
         followUpAction: '明日电话确认',
         remarks: '客户经济困难，需要协商还款计划',
         effectiveScore: 6,
-        duration: 30
+        duration: 30,
+        reportSource: '催收系统'
       },
       {
         id: 'COL005',
@@ -684,17 +752,22 @@ const mockUsers: { [key: string]: UserData } = {
         followUpAction: '继续观察',
         remarks: '自动催收短信，客户已读',
         effectiveScore: 4,
-        duration: 0
+        duration: 0,
+        reportSource: '催收系统'
       }
     ],
     
     // 征信记录
     creditReports: [
       {
+        reportId: 'CR001',
         productKey: 'regular',
         reportDate: '2024-09-12',
         reportType: '个人信用报告',
         creditScore: 750,
+        creditGrade: 'A',
+        reportStatus: '有效',
+        queryReason: '贷款申请',
         riskLevel: '低风险',
         queryCount: 3,
         overdueTimes: 0,
@@ -706,13 +779,36 @@ const mockUsers: { [key: string]: UserData } = {
         normalAccounts: 5,
         overdueAccounts: 0,
         reportSource: '人民银行征信中心',
-        validUntil: '2024-12-12'
+        validUntil: '2024-12-12',
+        reportContent: {
+          personalInfo: {
+            name: '李明',
+            idNumber: '110*******939X',
+            phoneNumber: '139****8866',
+            address: '江苏省昆山市'
+          },
+          creditHistory: {
+            totalAccounts: 5,
+            activeAccounts: 5,
+            overdueAccounts: 0,
+            maxOverdueDays: 0
+          },
+          publicRecords: {
+            courtRecords: 0,
+            taxRecords: 0,
+            administrativePenalties: 0
+          }
+        }
       },
       {
+        reportId: 'CR002',
         productKey: 'fixed',
         reportDate: '2024-09-10',
         reportType: '个人信用报告',
         creditScore: 720,
+        creditGrade: 'A',
+        reportStatus: '有效',
+        queryReason: '信用评估',
         riskLevel: '低风险',
         queryCount: 2,
         overdueTimes: 0,
@@ -724,13 +820,36 @@ const mockUsers: { [key: string]: UserData } = {
         normalAccounts: 3,
         overdueAccounts: 0,
         reportSource: '人民银行征信中心',
-        validUntil: '2024-12-10'
+        validUntil: '2024-12-10',
+        reportContent: {
+          personalInfo: {
+            name: '李明',
+            idNumber: '110*******939X',
+            phoneNumber: '139****8866',
+            address: '江苏省昆山市'
+          },
+          creditHistory: {
+            totalAccounts: 3,
+            activeAccounts: 3,
+            overdueAccounts: 0,
+            maxOverdueDays: 0
+          },
+          publicRecords: {
+            courtRecords: 0,
+            taxRecords: 0,
+            administrativePenalties: 0
+          }
+        }
       },
       {
+        reportId: 'CR003',
         productKey: 'loan001',
         reportDate: '2024-08-15',
         reportType: '企业信用报告',
         creditScore: 680,
+        creditGrade: 'B',
+        reportStatus: '有效',
+        queryReason: '贷款审批',
         riskLevel: '中风险',
         queryCount: 5,
         overdueTimes: 1,
@@ -742,7 +861,26 @@ const mockUsers: { [key: string]: UserData } = {
         normalAccounts: 2,
         overdueAccounts: 1,
         reportSource: '人民银行征信中心',
-        validUntil: '2024-11-15'
+        validUntil: '2024-11-15',
+        reportContent: {
+          personalInfo: {
+            name: '李明',
+            idNumber: '110*******939X',
+            phoneNumber: '139****8866',
+            address: '江苏省昆山市'
+          },
+          creditHistory: {
+            totalAccounts: 3,
+            activeAccounts: 2,
+            overdueAccounts: 1,
+            maxOverdueDays: 15
+          },
+          publicRecords: {
+            courtRecords: 0,
+            taxRecords: 0,
+            administrativePenalties: 0
+          }
+        }
       }
     ],
     
@@ -1064,7 +1202,8 @@ const mockUsers: { [key: string]: UserData } = {
         followUpAction: '',
         remarks: '',
         effectiveScore: -1, // 异常评分
-        duration: -10 // 异常时长
+        duration: -10, // 异常时长
+        reportSource: '异常数据源'
       }
     ],
     marketingRecords: {

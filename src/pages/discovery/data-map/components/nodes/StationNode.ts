@@ -1,4 +1,5 @@
-import { defineComponent, h, ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { defineComponent, h } from 'vue'
 import { register } from '@antv/x6-vue-shape'
 import * as echarts from 'echarts'
 

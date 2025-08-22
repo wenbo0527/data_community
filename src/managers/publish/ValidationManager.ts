@@ -389,59 +389,64 @@ export default class ValidationManager {
     this.validationResults.clear()
   }
 
+  // 存储事件处理器引用
+  private nodeChangedHandler = async (data: { nodeId: string }) => {
+    try {
+      const result = await this.validateNode(data.nodeId)
+      this.eventBus.emit('node:validation:completed', { nodeId: data.nodeId, result })
+    } catch (error) {
+      this.errorHandler.handleError(error as Error, {
+        context: 'ValidationManager.node:changed',
+        severity: 'medium'
+      })
+    }
+  }
+
+  private edgeChangedHandler = async (data: { edgeId: string }) => {
+    try {
+      const edge = this.canvas.getCellById(data.edgeId) as Edge
+      if (edge) {
+        const sourceId = edge.getSourceCellId()
+        const targetId = edge.getTargetCellId()
+        const sourceNode = this.canvas.getCellById(sourceId) as Node
+        const targetNode = this.canvas.getCellById(targetId) as Node
+
+        const validation = await this.validators.connection.validate({
+          edge,
+          sourceNode,
+          targetNode
+        })
+
+        this.eventBus.emit('edge:validation:completed', {
+          edgeId: data.edgeId,
+          result: validation
+        })
+      }
+    } catch (error) {
+      this.errorHandler.handleError(error as Error, {
+        context: 'ValidationManager.edge:changed',
+        severity: 'medium'
+      })
+    }
+  }
+
   /**
    * 设置事件监听器
    */
   private setupEventListeners(): void {
     // 监听节点变化，触发增量校验
-    this.eventBus.on('node:changed', async (data: { nodeId: string }) => {
-      try {
-        const result = await this.validateNode(data.nodeId)
-        this.eventBus.emit('node:validation:completed', { nodeId: data.nodeId, result })
-      } catch (error) {
-        this.errorHandler.handleError(error as Error, {
-          context: 'ValidationManager.node:changed',
-          severity: 'medium'
-        })
-      }
-    })
+    this.eventBus.on('node:changed', this.nodeChangedHandler)
 
     // 监听连接变化，触发相关校验
-    this.eventBus.on('edge:changed', async (data: { edgeId: string }) => {
-      try {
-        const edge = this.canvas.getCellById(data.edgeId) as Edge
-        if (edge) {
-          const sourceId = edge.getSourceCellId()
-          const targetId = edge.getTargetCellId()
-          const sourceNode = this.canvas.getCellById(sourceId) as Node
-          const targetNode = this.canvas.getCellById(targetId) as Node
-
-          const validation = await this.validators.connection.validate({
-            edge,
-            sourceNode,
-            targetNode
-          })
-
-          this.eventBus.emit('edge:validation:completed', {
-            edgeId: data.edgeId,
-            result: validation
-          })
-        }
-      } catch (error) {
-        this.errorHandler.handleError(error as Error, {
-          context: 'ValidationManager.edge:changed',
-          severity: 'medium'
-        })
-      }
-    })
+    this.eventBus.on('edge:changed', this.edgeChangedHandler)
   }
 
   /**
    * 销毁管理器
    */
   destroy(): void {
-    this.eventBus.off('node:changed')
-    this.eventBus.off('edge:changed')
+    this.eventBus.off('node:changed', this.nodeChangedHandler)
+    this.eventBus.off('edge:changed', this.edgeChangedHandler)
     this.clearValidationCache()
   }
 }

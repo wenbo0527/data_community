@@ -118,12 +118,10 @@ export class NodeConnectionOptimizer {
       this.eventBus.on('drag:start', this.handleDragStart.bind(this))
       this.eventBus.on('drag:end', this.handleDragEnd.bind(this))
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'EVENT_LISTENER_INIT_FAILED',
-        message: '连接优化器事件监听器初始化失败',
-        error,
-        context: { component: 'NodeConnectionOptimizer' }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('连接优化器事件监听器初始化失败'),
+        { component: 'NodeConnectionOptimizer', action: 'EVENT_LISTENER_INIT_FAILED' }
+      )
     }
   }
 
@@ -131,7 +129,7 @@ export class NodeConnectionOptimizer {
    * 初始化缓存
    */
   private initializeCache(): void {
-    this.cacheManager.set('connection_optimizer_config', this.config, 300000) // 5分钟缓存
+    this.cacheManager.set('connection_optimizer_config', this.config, { ttl: 300000 }) // 5分钟缓存
   }
 
   /**
@@ -146,11 +144,10 @@ export class NodeConnectionOptimizer {
     try {
       // 验证参数
       if (!sourceNodeId || !targetNodeId || !sourcePort || !targetPort) {
-        this.errorHandler.handleError({
-          type: 'INVALID_CONNECTION_PARAMS',
-          message: '连接参数无效',
-          context: { sourceNodeId, targetNodeId, sourcePort, targetPort }
-        })
+        this.errorHandler.handleError(
+          new Error('连接参数无效'),
+          { component: 'NodeConnectionOptimizer', action: 'INVALID_CONNECTION_PARAMS', sourceNodeId, targetNodeId, sourcePort, targetPort }
+        )
         return false
       }
 
@@ -167,16 +164,15 @@ export class NodeConnectionOptimizer {
         return false
       }
 
-      // 使用坐标管理器获取精确的端口位置
-      const sourcePortPos = this.coordinateManager.getPortPosition(sourceNode, sourcePort)
-      const targetPortPos = this.coordinateManager.getPortPosition(targetNode, targetPort)
+      // 获取精确的端口位置
+      const sourcePortPos = this.getPortPosition(sourceNode, sourcePort)
+      const targetPortPos = this.getPortPosition(targetNode, targetPort)
       
       if (!sourcePortPos || !targetPortPos) {
-        this.errorHandler.handleError({
-          type: 'PORT_POSITION_NOT_FOUND',
-          message: '无法获取端口位置',
-          context: { sourceNodeId, targetNodeId, sourcePort, targetPort }
-        })
+        this.errorHandler.handleError(
+          new Error('无法获取端口位置'),
+          { component: 'NodeConnectionOptimizer', action: 'PORT_POSITION_NOT_FOUND', sourceNodeId, targetNodeId, sourcePort, targetPort }
+        )
         return false
       }
 
@@ -226,12 +222,10 @@ export class NodeConnectionOptimizer {
 
       return true
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'CONNECTION_CREATION_FAILED',
-        message: '预览连接创建失败',
-        error,
-        context: { sourceNodeId, targetNodeId, sourcePort, targetPort }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('预览连接创建失败'),
+        { component: 'NodeConnectionOptimizer', action: 'CONNECTION_CREATION_FAILED', sourceNodeId, targetNodeId, sourcePort, targetPort }
+      )
       return false
     }
   }
@@ -246,12 +240,10 @@ export class NodeConnectionOptimizer {
       
       this.eventBus.emit('preview:connection:removed', { edgeId: previewId })
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'PREVIEW_CONNECTION_REMOVAL_FAILED',
-        message: '预览连接移除失败',
-        error,
-        context: { previewId }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('预览连接移除失败'),
+        { component: 'NodeConnectionOptimizer', action: 'PREVIEW_CONNECTION_REMOVAL_FAILED', previewId }
+      )
     }
   }
 
@@ -268,11 +260,10 @@ export class NodeConnectionOptimizer {
       
       this.eventBus.emit('preview:connections:cleared')
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'PREVIEW_CONNECTIONS_CLEAR_FAILED',
-        message: '清除所有预览连接失败',
-        error
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('清除所有预览连接失败'),
+        { component: 'NodeConnectionOptimizer', action: 'PREVIEW_CONNECTIONS_CLEAR_FAILED' }
+      )
     }
   }
 
@@ -339,12 +330,10 @@ export class NodeConnectionOptimizer {
       this.validationCache.set(cacheKey, true)
       return true
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'CONNECTION_VALIDATION_FAILED',
-        message: '连接验证失败',
-        error,
-        context: { sourceNodeId, targetNodeId, sourcePort, targetPort }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('连接验证失败'),
+        { component: 'NodeConnectionOptimizer', action: 'CONNECTION_VALIDATION_FAILED', sourceNodeId, targetNodeId, sourcePort, targetPort }
+      )
       return false
     }
   }
@@ -426,12 +415,10 @@ export class NodeConnectionOptimizer {
       // 从源节点开始检查是否能形成循环
       return hasCycle(sourceNodeId)
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'CYCLE_DETECTION_FAILED',
-        message: '循环依赖检测失败',
-        error,
-        context: { sourceNodeId, targetNodeId }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('循环依赖检测失败'),
+        { component: 'NodeConnectionOptimizer', action: 'CYCLE_DETECTION_FAILED', sourceNodeId, targetNodeId }
+      )
       return false
     }
   }
@@ -484,12 +471,10 @@ export class NodeConnectionOptimizer {
       
       return path
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'PATH_OPTIMIZATION_FAILED',
-        message: '连接路径优化失败',
-        error,
-        context: { sourcePos, targetPos }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('连接路径优化失败'),
+        { component: 'NodeConnectionOptimizer', action: 'PATH_OPTIMIZATION_FAILED', sourcePos, targetPos }
+      )
       return [sourcePos, targetPos]
     }
   }
@@ -527,12 +512,10 @@ export class NodeConnectionOptimizer {
       
       return bestSuggestion
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'PORT_SUGGESTION_FAILED',
-        message: '端口建议失败',
-        error,
-        context: { sourceNode, targetNode }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('端口建议失败'),
+        { component: 'NodeConnectionOptimizer', action: 'PORT_SUGGESTION_FAILED', sourceNode, targetNode }
+      )
       return {
         sourcePort: 'output',
         targetPort: 'input'
@@ -566,12 +549,10 @@ export class NodeConnectionOptimizer {
         targetPort: edge.target?.port
       })
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'CONNECTION_EVENT_HANDLING_FAILED',
-        message: '连接创建事件处理失败',
-        error,
-        context: { data }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('连接创建事件处理失败'),
+        { component: 'NodeConnectionOptimizer', action: 'CONNECTION_EVENT_HANDLING_FAILED', data }
+      )
     }
   }
 
@@ -591,12 +572,10 @@ export class NodeConnectionOptimizer {
         targetNodeId: edge.target?.cell
       })
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'CONNECTION_REMOVAL_EVENT_HANDLING_FAILED',
-        message: '连接删除事件处理失败',
-        error,
-        context: { data }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('连接删除事件处理失败'),
+        { component: 'NodeConnectionOptimizer', action: 'CONNECTION_REMOVAL_EVENT_HANDLING_FAILED', data }
+      )
     }
   }
 
@@ -612,12 +591,10 @@ export class NodeConnectionOptimizer {
       
       keysToDelete.forEach(key => this.validationCache.delete(key))
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'NODE_MOVE_EVENT_HANDLING_FAILED',
-        message: '节点移动事件处理失败',
-        error,
-        context: { data }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('节点移动事件处理失败'),
+        { component: 'NodeConnectionOptimizer', action: 'NODE_MOVE_EVENT_HANDLING_FAILED', data }
+      )
     }
   }
 
@@ -635,6 +612,20 @@ export class NodeConnectionOptimizer {
   private handleDragEnd(data: any): void {
     // 拖拽结束时清除所有预览连接
     this.clearAllPreviewConnections()
+  }
+
+  /**
+   * 处理边连接事件
+   */
+  private handleEdgeConnected(data: any): void {
+    this.handleConnectionCreated(data)
+  }
+
+  /**
+   * 处理边断开事件
+   */
+  private handleEdgeDisconnected(data: any): void {
+    this.handleConnectionRemoved(data)
   }
 
   /**
@@ -675,12 +666,10 @@ export class NodeConnectionOptimizer {
         )
       })
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'BATCH_CONNECTION_CREATION_FAILED',
-        message: '批量连接创建失败',
-        error,
-        context: { connections }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('批量连接创建失败'),
+        { component: 'NodeConnectionOptimizer', action: 'BATCH_CONNECTION_CREATION_FAILED', connections }
+      )
     }
   }
 
@@ -716,12 +705,10 @@ export class NodeConnectionOptimizer {
         }
       }
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'PORT_POSITION_CALCULATION_FAILED',
-        message: '端口位置计算失败',
-        error,
-        context: { node, portType }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('端口位置计算失败'),
+        { component: 'NodeConnectionOptimizer', action: 'PORT_POSITION_CALCULATION_FAILED', node, portType }
+      )
       
       // 返回默认位置
       return {
@@ -770,12 +757,10 @@ export class NodeConnectionOptimizer {
       
       return true
     } catch (error) {
-      this.errorHandler.handleError({
-        type: 'PREVIEW_LINE_CREATION_FAILED',
-        message: '预览线创建失败',
-        error,
-        context: { sourceNodeId, sourcePort, targetPoint }
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('预览线创建失败'),
+        { component: 'NodeConnectionOptimizer', action: 'PREVIEW_LINE_CREATION_FAILED', sourceNodeId, sourcePort, targetPoint }
+      )
       return false
     }
   }
@@ -808,10 +793,10 @@ export class NodeConnectionOptimizer {
   public destroy(): void {
     try {
       // 移除事件监听器
-      this.graph.off('edge:connected')
-      this.graph.off('edge:disconnected')
-      this.eventBus.off('node:moved')
-      this.eventBus.off('drag:start')
+      this.graph.off('edge:connected', this.handleEdgeConnected)
+      this.graph.off('edge:disconnected', this.handleEdgeDisconnected)
+      this.eventBus.off('node:moved', this.handleNodeMoved.bind(this))
+      this.eventBus.off('drag:start', this.handleDragStart.bind(this))
       this.eventBus.off('drag:end', this.handleDragEnd.bind(this))
       
       // 清除所有预览连接
@@ -824,10 +809,10 @@ export class NodeConnectionOptimizer {
       
       this.enabled = false
     } catch (error) {
-      this.errorHandler.handleError(error as Error, {
-        context: 'CONNECTION_OPTIMIZER_DESTROY_FAILED',
-        severity: 'high'
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('连接优化器销毁失败'),
+        { component: 'NodeConnectionOptimizer', action: 'CONNECTION_OPTIMIZER_DESTROY_FAILED' }
+      )
     }
   }
 }

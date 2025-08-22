@@ -143,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, nextTick, withDefaults } from 'vue'
+import { ref, reactive, watch, nextTick } from 'vue'
 import type { FormInstance } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 
@@ -166,16 +166,17 @@ interface Emits {
   (e: 'validate', isValid: boolean): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  data: () => ({
-    name: '',
-    description: '',
-    businessType: '',
-    productType: '',
-    priority: 'medium',
-    tags: []
-  })
-})
+const props = defineProps<Props>()
+
+// 提供默认值
+const defaultData: BasicInfo = {
+  name: '',
+  description: '',
+  businessType: '',
+  productType: '',
+  priority: 'medium',
+  tags: []
+}
 const emit = defineEmits<Emits>()
 
 // 表单引用
@@ -183,14 +184,7 @@ const formRef = ref<FormInstance>()
 const tagInputRef = ref()
 
 // 表单数据
-const formData = reactive<BasicInfo>({
-  name: '',
-  description: '',
-  businessType: '',
-  productType: '',
-  priority: 'medium',
-  tags: []
-})
+const formData = reactive<BasicInfo>({ ...defaultData, ...props.data })
 
 // 标签输入
 const showTagInput = ref(false)

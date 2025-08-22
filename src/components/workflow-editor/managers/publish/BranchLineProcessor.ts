@@ -1,7 +1,7 @@
 import type { Graph, Node, Edge } from '@antv/x6';
-import type { UnifiedEventBus } from '../base/UnifiedEventBus';
-import type { UnifiedCacheManager } from '../base/UnifiedCacheManager';
-import type { ErrorHandler } from '../base/ErrorHandler';
+import type { UnifiedEventBus } from '../../../../core/UnifiedEventBus';
+import type { UnifiedCacheManager } from '../../../../core/UnifiedCacheManager';
+import type { ErrorHandler } from '../../../../core/ErrorHandler';
 
 /**
  * 分支信息接口
@@ -147,7 +147,10 @@ export class BranchLineProcessor {
 
     } catch (error) {
       const errorMessage = `处理分支挂载失败: ${error instanceof Error ? error.message : String(error)}`;
-      this.errorHandler.handleError(error as Error, 'BranchLineProcessor.processBranchAttachment');
+      this.errorHandler.handleError(error as Error, {
+        context: 'BranchLineProcessor.processBranchAttachment',
+        severity: 'medium'
+      });
       
       return {
         success: false,
@@ -165,7 +168,7 @@ export class BranchLineProcessor {
    */
   async getBranchesForDecisionNode(decisionNodeId: string): Promise<BranchInfo[]> {
     const cacheKey = `branches_${decisionNodeId}`;
-    const cached = this.cacheManager.get(cacheKey);
+    const cached = this.cacheManager.get(cacheKey) as BranchInfo[];
     if (cached) {
       return cached;
     }
@@ -206,7 +209,7 @@ export class BranchLineProcessor {
     });
 
     // 缓存结果
-    this.cacheManager.set(cacheKey, branches, 300); // 5分钟缓存
+    this.cacheManager.set(cacheKey, branches, { ttl: 300 }); // 5分钟缓存
     return branches;
   }
 
@@ -283,7 +286,10 @@ export class BranchLineProcessor {
     } catch (error) {
       this.errorHandler.handleError(
         error as Error,
-        `BranchLineProcessor.processUnattachedBranch - 分支 ${branch.id}`
+        {
+          context: `BranchLineProcessor.processUnattachedBranch - 分支 ${branch.id}`,
+          severity: 'medium'
+        }
       );
     }
 
@@ -382,7 +388,10 @@ export class BranchLineProcessor {
       } catch (error) {
         this.errorHandler.handleError(
           error as Error,
-          `BranchLineProcessor.updateBranchLabels - 分支 ${branch.id}`
+          {
+            context: `BranchLineProcessor.updateBranchLabels - 分支 ${branch.id}`,
+            severity: 'medium'
+          }
         );
       }
     }

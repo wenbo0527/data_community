@@ -698,7 +698,7 @@ const handleFileUpload = async (file: File) => {
       }
     } else {
       form.analysisPeriod = [];
-      generateReportName();
+      updateReportNameWithDate();
       // 清空字段映射相关数据
       detectedFields.value = [];
       sampleData.value = [];
@@ -766,13 +766,9 @@ const handleSubmit = async () => {
       const taskData = {
         taskName: form.reportName,
         config: {
-          startDate: form.analysisPeriod[0],
-          endDate: form.analysisPeriod[1],
-          reportName: form.reportName,
-          templateType: form.templateType,
-          description: form.description,
-          fieldMapping: fieldMapping.value,
-          fileInfo: currentFileInfo.value
+          productName: form.reportName,
+          reportType: form.templateType || '外部数据评估',
+          analysisPeriod: form.analysisPeriod.length > 0 ? `${form.analysisPeriod[0]}-${form.analysisPeriod[1]}` : ''
         }
       };
       

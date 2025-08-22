@@ -274,9 +274,10 @@ const initChart = async () => {
     console.log('开始安全初始化燃尽图表...')
     
     burndownChart = await safeInitECharts(burndownChartRef.value, {
+      theme: 'default',
+      renderer: 'canvas',
       width: 800,
-      height: 400,
-      renderer: 'canvas'
+      height: 400
     })
     
     console.log('燃尽图表初始化成功')

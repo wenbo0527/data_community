@@ -1,4 +1,4 @@
-import { defineComponent, h, ref } from 'vue'
+import { ref, defineComponent, h } from 'vue'
 import { Graph, Node } from '@antv/x6'
 import { register } from '@antv/x6-vue-shape'
 import * as echarts from 'echarts'

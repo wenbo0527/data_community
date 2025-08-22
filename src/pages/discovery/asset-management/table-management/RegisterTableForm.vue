@@ -231,7 +231,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, type Ref } from 'vue'
+import { ref, reactive, computed } from 'vue'
+import type { Ref } from '@vue/reactivity'
 import { Message, Notification } from '@arco-design/web-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { mockTables as tableManagementData } from '../../../../mock/data-map.js'
@@ -264,8 +265,8 @@ onMounted(() => {
       formData.step2.manager = tableData.owner
       
       // 加载字段关联关系数据
-      if (tableData.fieldRelations && Array.isArray(tableData.fieldRelations)) {
-        formData.step3.fieldRelations = [...tableData.fieldRelations]
+      if ((tableData as any).fieldRelations && Array.isArray((tableData as any).fieldRelations)) {
+        formData.step3.fieldRelations = [...(tableData as any).fieldRelations]
       }
       
       // 设置页面标题
@@ -320,6 +321,19 @@ interface FieldRelation {
   relationFields: RelationFieldPair[]
   relationType?: string
   relationDescription?: string
+}
+
+// TableItem接口定义
+interface TableItem {
+  name: string
+  type: string
+  category: string
+  domain: string
+  updateFrequency: string
+  owner: string
+  description: string
+  fieldRelations?: FieldRelation[]
+  fields: any[]
 }
 
 // 定义Hive和Doris表的类型
@@ -489,7 +503,7 @@ const submitForm = async () => {
           category: tableManagementData[index].category,
           updateFrequency: tableManagementData[index].updateFrequency,
           fields: tableManagementData[index].fields
-        }
+        } as any
       }
       
       // 显示编辑成功
@@ -510,7 +524,7 @@ const submitForm = async () => {
         description: formData.step1.description,
         fieldRelations: formData.step3.fieldRelations,
         fields: [] // 默认空字段数组
-      })
+      } as any)
       
       // 显示提交成功
       Notification.success({

@@ -245,6 +245,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Message } from '@arco-design/web-vue';
 import * as echarts from 'echarts';
+import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils';
 import {
   Row as ARow,
   Col as ACol,

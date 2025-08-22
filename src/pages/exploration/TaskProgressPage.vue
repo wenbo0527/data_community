@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   Message,
@@ -457,7 +457,7 @@ onMounted(() => {
 });
 
 // 组件卸载时清理定时器
-onUnmounted(() => {
+onBeforeUnmount(() => {
   stopAutoRefresh();
 });
 </script>

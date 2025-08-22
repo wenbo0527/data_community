@@ -1,7 +1,7 @@
 import type {
   Workflow,
   DataSourceStorage,
-  WorkflowStorage as WorkflowStorageType,
+  WorkflowStorageType,
   AppSettings,
   FileDataSource,
   DatabaseConnection
@@ -39,7 +39,7 @@ export class WorkflowStorage {
       const existingIndex = workflows.findIndex(w => w.id === workflow.id);
       
       if (existingIndex >= 0) {
-        workflows[existingIndex] = { ...workflow, updatedAt: new Date().toISOString() };
+        workflows[existingIndex] = { ...workflow, updatedAt: new Date() };
       } else {
         workflows.push(workflow);
       }
@@ -240,7 +240,6 @@ export class WorkflowStorage {
       return false;
     }
   }
-
 }
 
 export default WorkflowStorage;

@@ -98,7 +98,10 @@ export class LayoutModeManager {
       this.graph.on('node:removed', nodeRemovedHandler)
       this.graph.on('edge:added', edgeAddedHandler)
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.initializeEventListeners')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Initialize event listeners failed'), {
+        component: 'LayoutModeManager',
+        action: 'initializeEventListeners'
+      })
     }
   }
 
@@ -123,7 +126,10 @@ export class LayoutModeManager {
         autoLayoutTriggered
       })
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.handleNodeAdded')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Handle node added failed'), {
+        component: 'LayoutModeManager',
+        action: 'handleNodeAdded'
+      })
     }
   }
 
@@ -142,7 +148,10 @@ export class LayoutModeManager {
         nodeId
       })
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.handleNodeRemoved')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Handle node removed failed'), {
+        component: 'LayoutModeManager',
+        action: 'handleNodeRemoved'
+      })
     }
   }
 
@@ -156,7 +165,10 @@ export class LayoutModeManager {
         this.applyUnifiedLayout()
       }
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.handleEdgeAdded')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Handle edge added failed'), {
+        component: 'LayoutModeManager',
+        action: 'handleEdgeAdded'
+      })
     }
   }
 
@@ -180,7 +192,10 @@ export class LayoutModeManager {
       
       return true
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.switchToUnifiedMode')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Switch to unified mode failed'), {
+        component: 'LayoutModeManager',
+        action: 'switchToUnifiedMode'
+      })
       return false
     }
   }
@@ -205,7 +220,10 @@ export class LayoutModeManager {
       
       return true
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.switchToManualMode')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Switch to manual mode failed'), {
+        component: 'LayoutModeManager',
+        action: 'switchToManualMode'
+      })
       return false
     }
   }
@@ -264,7 +282,10 @@ export class LayoutModeManager {
       return true
     } catch (error) {
       console.error('LayoutModeManager: 布局算法执行失败', error)
-      this.errorHandler.handleError(error, 'LayoutModeManager.applyUnifiedLayout')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Apply unified layout failed'), {
+        component: 'LayoutModeManager',
+        action: 'applyUnifiedLayout'
+      })
       return false
     }
   }
@@ -644,17 +665,13 @@ export class LayoutModeManager {
     layerIndex: number
   ): NodePosition {
     // 使用坐标管理器验证和修正位置
-    const validatedPosition = this.coordinateManager.validateCoordinateTransform(
-      position,
-      node
-    )
+    const validatedPosition = this.coordinateManager.validateCoordinateTransform(position)
     
     // 如果验证失败，使用布局位置修正机制
     return validatedPosition.isValid 
       ? validatedPosition.position
       : this.coordinateManager.correctLayoutPosition(
           position,
-          node,
           { nodeType, layerIndex }
         )
   }
@@ -677,7 +694,10 @@ export class LayoutModeManager {
         { ttl: 24 * 60 * 60 * 1000 } // 24小时缓存
       )
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.saveManualPosition')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Save manual position failed'), {
+        component: 'LayoutModeManager',
+        action: 'saveManualPosition'
+      })
     }
   }
 
@@ -688,7 +708,10 @@ export class LayoutModeManager {
     try {
       return this.cacheManager.get(`manual_position_${nodeId}`) || null
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.restoreManualPosition')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Restore manual position failed'), {
+        component: 'LayoutModeManager',
+        action: 'restoreManualPosition'
+      })
       return null
     }
   }
@@ -725,7 +748,10 @@ export class LayoutModeManager {
       }
       return true
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.updateLayoutConfig')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Update layout config failed'), {
+        component: 'LayoutModeManager',
+        action: 'updateLayoutConfig'
+      })
       return false
     }
   }
@@ -750,13 +776,16 @@ export class LayoutModeManager {
         }
         
         // 使用原有的坐标验证
-        if (!this.coordinateManager.validateCoordinateTransform(position, position)) {
+        if (!this.coordinateManager.validateCoordinateTransform(position).isValid) {
           return false
         }
       }
       return true
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.validateLayoutCoordinates')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Validate layout coordinates failed'), {
+        component: 'LayoutModeManager',
+        action: 'validateLayoutCoordinates'
+      })
       return false
     }
   }
@@ -796,7 +825,10 @@ export class LayoutModeManager {
       
       return true
     } catch (error) {
-      this.errorHandler.handleError(error, { context: 'LayoutModeManager.validateNodePosition' })
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Validate node position failed'), {
+        component: 'LayoutModeManager',
+        action: 'validateNodePosition'
+      })
       return false
     }
   }
@@ -813,7 +845,10 @@ export class LayoutModeManager {
       
       this.eventListeners.clear()
     } catch (error) {
-      this.errorHandler.handleError(error, 'LayoutModeManager.destroy')
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Destroy layout manager failed'), {
+        component: 'LayoutModeManager',
+        action: 'destroy'
+      })
     }
   }
 }

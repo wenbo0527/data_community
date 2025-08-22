@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.output/
+.nuxt/
+.next/
+.vite/
+
+# Cache directories
+.cache/
+.eslintcache
+.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Mock data and examples (large files that don't need linting)
+src/mock/
+src/examples/
+
+# Generated files
+*.generated.*
+*.min.js
+*.min.css
+
+# Configuration files
+*.config.js
+*.config.ts
+vite.config.*
+vitest.config.*
+rollup.config.*
+webpack.config.*
+
+# Documentation
+*.md
+*.txt
+
+# Assets
+src/assets/
+public/
+static/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

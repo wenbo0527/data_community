@@ -314,7 +314,7 @@ const copyTableName = async (record: TableItem) => {
 const addToCollection = async (record: TableItem) => {
   try {
     const { Modal, Select, Option } = await import('@arco-design/web-vue')
-    const { h } = await import('vue') as { h: typeof import('vue').h }
+    const { h } = await import('vue')
     
     let selectedCollection = ref('')
     

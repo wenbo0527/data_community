@@ -14,7 +14,4 @@ declare module '@vue/runtime-core' {
   }
 }
 
-// Ensure Vue 3 exports are available
-declare module 'vue' {
-  export * from '@vue/runtime-core'
-}
+// Vue 3 exports are handled by the official Vue package
