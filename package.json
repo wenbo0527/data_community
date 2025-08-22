@@ -24,6 +24,7 @@
     "check": "npm run quality:check:parallel"
   },
   "dependencies": {
+    "@antv/graphlib": "^2.0.4",
     "@antv/hierarchy": "^0.6.14",
     "@antv/layout": "^1.2.13",
     "@antv/x6": "^2.18.1",
