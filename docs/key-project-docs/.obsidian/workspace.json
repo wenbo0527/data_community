@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "agent/TDD测试驱动前端开发专家.md",
-                "mode": "source",
+                "file": "需求文档/外数生命周期/外数评估MVP需求文档.md",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "TDD测试驱动前端开发专家"
+              "title": "外数评估MVP需求文档"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "agent/TDD测试驱动前端开发专家.md",
+                "file": "需求文档/外数生命周期/外数评估MVP需求文档.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "TDD测试驱动前端开发专家 的反向链接列表"
+              "title": "外数评估MVP需求文档 的反向链接列表"
             }
           },
           {
@@ -155,7 +155,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -170,6 +171,9 @@
   },
   "active": "7cc1b752c5128ddb",
   "lastOpenFiles": [
+    "需求文档/外数生命周期/外数评估需求文档.md",
+    "需求文档/外数生命周期/分析报告管理系统完整需求文档.md",
+    "agent/TDD测试驱动前端开发专家.md",
     "开发日志/061_2025-01-27.md",
     "需求文档/project_requirements.md",
     "开发日志/001_2025-08-13.md",
@@ -180,7 +184,6 @@
     "技术方案/2025-01-16/ECharts警告修复总结_2025-01-16.md",
     "技术方案/2025-01-16/问题编号_034_2025-01-16.md",
     "agent/结构化需求文档生成助手.md",
-    "agent/TDD测试驱动前端开发专家.md",
     "未命名.canvas",
     "需求文档/外数生命周期/外数采购项目注册.md",
     "技术方案/PNG图片生成与处理技术方案.md",
@@ -199,8 +202,6 @@
     "开发日志/2024-12-26/外数评估MVP更新日志_2024-12-26.md",
     "开发日志/2024-12-26",
     "开发日志",
-    "需求文档/外数生命周期/外数评估需求文档.md",
-    "需求文档/外数生命周期/分析报告管理系统完整需求文档.md",
     "需求文档/外数生命周期/分析报告管理系统需求文档.md",
     "需求文档/外数生命周期",
     "技术方案/2025-01-27",

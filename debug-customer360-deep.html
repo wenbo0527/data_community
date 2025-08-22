@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer360 深度诊断工具</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+            background: #2a2a2a;
+        }
+        .button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #005a9e;
+        }
+        .output {
+            background: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .warning {
+            color: #ffaa00;
+        }
+        .success {
+            color: #44ff44;
+        }
+        .info {
+            color: #4488ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Customer360 深度诊断工具</h1>
+        
+        <div class="section">
+            <h2>🚀 快速操作</h2>
+            <button class="button" onclick="openCustomer360()">打开 Customer360 页面</button>
+            <button class="button" onclick="runFullDiagnosis()">运行完整诊断</button>
+            <button class="button" onclick="checkMemoryLeaks()">检查内存泄漏</button>
+            <button class="button" onclick="clearOutput()">清空输出</button>
+        </div>
+
+        <div class="section">
+            <h2>📊 诊断结果</h2>
+            <div id="output" class="output">等待诊断...</div>
+        </div>
+    </div>
+
+    <script>
+        let outputDiv = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            outputDiv.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+        
+        function clearOutput() {
+            outputDiv.innerHTML = '输出已清空\n';
+        }
+        
+        function openCustomer360() {
+            log('🚀 正在打开 Customer360 页面...', 'info');
+            window.open('http://localhost:5173/discovery/customer360/887123', '_blank');
+        }
+        
+        async function checkPageContent() {
+            try {
+                log('🔍 检查页面内容...', 'info');
+                
+                // 检查当前页面是否是Customer360
+                const currentUrl = window.location.href;
+                log(`当前页面: ${currentUrl}`, 'info');
+                
+                if (currentUrl.includes('customer360')) {
+                    log('✅ 当前在Customer360页面', 'success');
+                    
+                    // 检查Vue应用
+                    if (window.Vue) {
+                        log('✅ Vue已加载', 'success');
+                    } else {
+                        log('❌ Vue未加载', 'error');
+                    }
+                    
+                    // 检查DOM元素
+                    const appElement = document.getElementById('app');
+                    if (appElement) {
+                        log('✅ #app元素存在', 'success');
+                        log(`#app内容长度: ${appElement.innerHTML.length}`, 'info');
+                        
+                        if (appElement.innerHTML.length < 100) {
+                            log('⚠️ #app内容过少，可能未正确渲染', 'warning');
+                            log(`#app内容: ${appElement.innerHTML.substring(0, 200)}`, 'info');
+                        }
+                    } else {
+                        log('❌ #app元素不存在', 'error');
+                    }
+                    
+                    // 检查特定的Customer360元素
+                    const customer360Elements = document.querySelectorAll('[class*="customer360"], [id*="customer360"]');
+                    log(`找到 ${customer360Elements.length} 个Customer360相关元素`, 'info');
+                    
+                    // 检查加载状态元素
+                    const loadingElements = document.querySelectorAll('[class*="loading"], [class*="spinner"]');
+                    if (loadingElements.length > 0) {
+                        log(`⚠️ 发现 ${loadingElements.length} 个加载状态元素，页面可能仍在加载`, 'warning');
+                    }
+                    
+                    // 检查错误元素
+                    const errorElements = document.querySelectorAll('[class*="error"], [class*="fail"]');
+                    if (errorElements.length > 0) {
+                        log(`❌ 发现 ${errorElements.length} 个错误元素`, 'error');
+                    }
+                    
+                } else {
+                    log('ℹ️ 当前不在Customer360页面', 'info');
+                }
+                
+            } catch (error) {
+                log(`❌ 检查页面内容时出错: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkConsoleErrors() {
+            log('🔍 检查控制台错误...', 'info');
+            
+            // 重写console.error来捕获错误
+            const originalError = console.error;
+            const errors = [];
+            
+            console.error = function(...args) {
+                errors.push(args.join(' '));
+                originalError.apply(console, args);
+            };
+            
+            setTimeout(() => {
+                if (errors.length > 0) {
+                    log(`❌ 发现 ${errors.length} 个控制台错误:`, 'error');
+                    errors.forEach(error => {
+                        log(`  - ${error}`, 'error');
+                    });
+                } else {
+                    log('✅ 没有发现控制台错误', 'success');
+                }
+                
+                // 恢复原始console.error
+                console.error = originalError;
+            }, 2000);
+        }
+        
+        async function checkNetworkRequests() {
+            log('🔍 检查网络请求...', 'info');
+            
+            // 监听fetch请求
+            const originalFetch = window.fetch;
+            const requests = [];
+            
+            window.fetch = function(...args) {
+                const url = args[0];
+                requests.push({ url, timestamp: Date.now() });
+                log(`📡 网络请求: ${url}`, 'info');
+                
+                return originalFetch.apply(this, args)
+                    .then(response => {
+                        log(`✅ 请求成功: ${url} (${response.status})`, 'success');
+                        return response;
+                    })
+                    .catch(error => {
+                        log(`❌ 请求失败: ${url} - ${error.message}`, 'error');
+                        throw error;
+                    });
+            };
+            
+            setTimeout(() => {
+                log(`📊 总共监听到 ${requests.length} 个网络请求`, 'info');
+                
+                // 恢复原始fetch
+                window.fetch = originalFetch;
+            }, 5000);
+        }
+        
+        function checkMemoryLeaks() {
+            log('🔍 检查内存泄漏...', 'info');
+            
+            // 检查事件监听器
+            const elements = document.querySelectorAll('*');
+            let totalListeners = 0;
+            
+            elements.forEach(element => {
+                const listeners = getEventListeners ? getEventListeners(element) : {};
+                const listenerCount = Object.keys(listeners).length;
+                if (listenerCount > 0) {
+                    totalListeners += listenerCount;
+                }
+            });
+            
+            log(`📊 总事件监听器数量: ${totalListeners}`, 'info');
+            
+            if (totalListeners > 100) {
+                log('⚠️ 事件监听器数量较多，可能存在内存泄漏', 'warning');
+            }
+            
+            // 检查内存使用情况
+            if (performance.memory) {
+                const memory = performance.memory;
+                log(`💾 内存使用情况:`, 'info');
+                log(`  - 已使用: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`, 'info');
+                log(`  - 总计: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`, 'info');
+                log(`  - 限制: ${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`, 'info');
+            }
+        }
+        
+        async function testApiDirectly() {
+            log('🔍 直接测试API...', 'info');
+            
+            try {
+                // 模拟API调用
+                const response = await fetch('/api/customer360/887123');
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ API调用成功', 'success');
+                    log(`📊 返回数据: ${JSON.stringify(data, null, 2)}`, 'info');
+                } else {
+                    log(`❌ API调用失败: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ API调用异常: ${error.message}`, 'error');
+                
+                // 尝试直接调用模拟函数
+                try {
+                    log('🔄 尝试直接调用模拟函数...', 'info');
+                    
+                    // 这里需要根据实际的API函数路径调整
+                    if (window.fetchUserInfo) {
+                        const result = await window.fetchUserInfo('887123');
+                        log('✅ 模拟函数调用成功', 'success');
+                        log(`📊 返回数据: ${JSON.stringify(result, null, 2)}`, 'info');
+                    } else {
+                        log('❌ 找不到fetchUserInfo函数', 'error');
+                    }
+                } catch (mockError) {
+                    log(`❌ 模拟函数调用失败: ${mockError.message}`, 'error');
+                }
+            }
+        }
+        
+        async function runFullDiagnosis() {
+            log('🚀 开始完整诊断...', 'info');
+            log('=' .repeat(50), 'info');
+            
+            await checkPageContent();
+            await checkConsoleErrors();
+            await checkNetworkRequests();
+            await testApiDirectly();
+            
+            log('=' .repeat(50), 'info');
+            log('✅ 完整诊断完成', 'success');
+        }
+        
+        // 页面加载完成后自动运行基础检查
+        window.addEventListener('load', () => {
+            log('🚀 诊断工具已加载', 'success');
+            log('💡 点击"运行完整诊断"开始深度分析', 'info');
+        });
+    </script>
+</body>
+</html>

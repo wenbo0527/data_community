@@ -36,11 +36,25 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+console.log('🌟🌟🌟 INDEX.VUE SCRIPT SETUP 开始执行 🌟🌟🌟')
+console.log('🌟 当前时间:', new Date().toLocaleString())
+console.log('🌟 当前URL:', window.location.href)
+
+import { ref, reactive, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { IconSearch } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { fetchUserInfo } from '../../../mock/customer360'
+
+const route = useRoute()
+
+// 监听路由变化
+watch(() => route.params.userId, (newUserId) => {
+  console.log('🌟 路由参数变化 - userId:', newUserId)
+  console.log('🌟 当前路由名称:', route.name)
+  console.log('🌟 当前路由路径:', route.path)
+  console.log('🌟 当前路由完整参数:', route.params)
+}, { immediate: true })
 
 const router = useRouter()
 const loading = ref(false)

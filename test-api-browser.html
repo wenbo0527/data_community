@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试 - Customer360</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+        .status-info { background-color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Customer360 API 深度测试</h1>
+        
+        <div class="test-section info">
+            <h3>📊 测试控制面板</h3>
+            <button onclick="testDirectAPI()">🚀 测试API调用</button>
+            <button onclick="testPageLoad()">📄 测试页面加载</button>
+            <button onclick="testDataFlow()">🔄 测试数据流</button>
+            <button onclick="checkMemoryLeaks()">🧠 检查内存泄漏</button>
+            <button onclick="clearLogs()">🗑️ 清空日志</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📈 测试状态</h3>
+            <div id="test-status">
+                <div><span class="status-indicator status-info"></span>等待测试开始...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 详细日志</h3>
+            <div id="log-output" class="log-output">等待测试结果...
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        let logOutput = document.getElementById('log-output');
+        let testStatus = document.getElementById('test-status');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logOutput.textContent += logEntry;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusClass = `status-${type}`;
+            testStatus.innerHTML = `<div><span class="status-indicator ${statusClass}"></span>${message}</div>`;
+        }
+        
+        window.clearLogs = function() {
+            logOutput.textContent = '';
+            updateStatus('日志已清空', 'info');
+        }
+        
+        // 测试直接API调用
+        window.testDirectAPI = async function() {
+            addLog('🚀 开始测试API调用...');
+            updateStatus('正在测试API调用...', 'warning');
+            
+            try {
+                // 动态导入API函数
+                const { fetchUserInfo } = await import('./src/mock/customer360.ts');
+                addLog('✅ API模块导入成功');
+                
+                // 测试API调用
+                addLog('📞 调用 fetchUserInfo("887123")...');
+                const result = await fetchUserInfo('887123');
+                
+                addLog('✅ API调用成功');
+                addLog(`📊 返回数据类型: ${typeof result}`);
+                addLog(`📊 返回数据是否为null: ${result === null}`);
+                addLog(`📊 返回数据是否为undefined: ${result === undefined}`);
+                
+                if (result) {
+                    addLog(`📊 返回数据键: ${Object.keys(result).join(', ')}`);
+                    addLog(`📊 是否有error属性: ${'error' in result}`);
+                    addLog(`📊 是否有basicInfo: ${'basicInfo' in result}`);
+                    
+                    if (result.error) {
+                        addLog(`❌ API返回错误: ${result.error}`);
+                        addLog(`❌ 错误消息: ${result.message}`);
+                        updateStatus('API返回错误', 'error');
+                    } else {
+                        addLog('✅ API返回正常数据');
+                        addLog(`👤 用户姓名: ${result.basicInfo?.name || '未知'}`);
+                        addLog(`📱 用户手机: ${result.basicInfo?.phone || '未知'}`);
+                        addLog(`🏦 自营产品数量: ${result.selfProducts?.length || 0}`);
+                        addLog(`💰 助贷产品数量: ${result.loanProducts?.length || 0}`);
+                        updateStatus('API测试成功', 'success');
+                    }
+                } else {
+                    addLog('❌ API返回null或undefined');
+                    updateStatus('API返回空数据', 'error');
+                }
+                
+            } catch (error) {
+                addLog(`❌ API调用异常: ${error.message}`);
+                addLog(`❌ 错误堆栈: ${error.stack}`);
+                updateStatus('API测试失败', 'error');
+            }
+        }
+        
+        // 测试页面加载
+        window.testPageLoad = function() {
+            addLog('📄 开始测试页面加载...');
+            updateStatus('正在测试页面加载...', 'warning');
+            
+            // 打开Customer360页面
+            const testWindow = window.open('/discovery/customer360/887123', '_blank');
+            
+            if (testWindow) {
+                addLog('✅ 页面窗口已打开');
+                
+                // 监听页面加载
+                testWindow.addEventListener('load', () => {
+                    addLog('✅ 页面加载完成');
+                    
+                    // 检查页面内容
+                    setTimeout(() => {
+                        try {
+                            const doc = testWindow.document;
+                            const hasContent = doc.body.children.length > 0;
+                            const hasVueApp = doc.querySelector('#app') !== null;
+                            const hasLoadingSpinner = doc.querySelector('.arco-spin') !== null;
+                            
+                            addLog(`📊 页面有内容: ${hasContent}`);
+                            addLog(`📊 有Vue应用: ${hasVueApp}`);
+                            addLog(`📊 有加载动画: ${hasLoadingSpinner}`);
+                            
+                            if (hasContent && hasVueApp) {
+                                updateStatus('页面加载成功', 'success');
+                            } else {
+                                updateStatus('页面加载异常', 'error');
+                            }
+                        } catch (e) {
+                            addLog(`❌ 无法访问页面内容: ${e.message}`);
+                            updateStatus('页面访问受限', 'warning');
+                        }
+                    }, 2000);
+                });
+                
+                testWindow.addEventListener('error', (e) => {
+                    addLog(`❌ 页面加载错误: ${e.message}`);
+                    updateStatus('页面加载失败', 'error');
+                });
+            } else {
+                addLog('❌ 无法打开页面窗口');
+                updateStatus('页面打开失败', 'error');
+            }
+        }
+        
+        // 测试数据流
+        window.testDataFlow = async function() {
+            addLog('🔄 开始测试数据流...');
+            updateStatus('正在测试数据流...', 'warning');
+            
+            try {
+                // 模拟Vue组件的数据流
+                const { fetchUserInfo } = await import('./src/mock/customer360.ts');
+                
+                // 模拟loading状态
+                let loading = true;
+                let userInfo = null;
+                let error = null;
+                
+                addLog('📊 初始状态:');
+                addLog(`  loading: ${loading}`);
+                addLog(`  userInfo: ${userInfo}`);
+                addLog(`  error: ${error}`);
+                
+                // 模拟API调用
+                addLog('📞 开始API调用...');
+                try {
+                    const response = await fetchUserInfo('887123');
+                    
+                    if (response && response.error) {
+                        // API返回错误
+                        userInfo = {
+                            error: true,
+                            errorType: response.error,
+                            errorMessage: response.message || '用户不存在',
+                            userId: '887123'
+                        };
+                        addLog('📊 API返回错误，设置错误状态');
+                    } else {
+                        // API返回正常数据
+                        userInfo = response;
+                        addLog('📊 API返回正常数据');
+                    }
+                } catch (apiError) {
+                    error = apiError.message;
+                    addLog(`📊 API调用异常: ${error}`);
+                } finally {
+                    loading = false;
+                }
+                
+                addLog('📊 最终状态:');
+                addLog(`  loading: ${loading}`);
+                addLog(`  userInfo: ${userInfo ? (userInfo.error ? '错误对象' : '正常数据') : 'null'}`);
+                addLog(`  error: ${error}`);
+                
+                // 模拟条件渲染逻辑
+                addLog('🎭 模拟条件渲染:');
+                if (loading) {
+                    addLog('  → 显示加载状态');
+                } else if (userInfo && userInfo.error) {
+                    addLog('  → 显示错误页面');
+                } else if (!userInfo) {
+                    addLog('  → 显示无数据状态');
+                } else {
+                    addLog('  → 显示主要内容');
+                }
+                
+                updateStatus('数据流测试完成', 'success');
+                
+            } catch (error) {
+                addLog(`❌ 数据流测试失败: ${error.message}`);
+                updateStatus('数据流测试失败', 'error');
+            }
+        }
+        
+        // 检查内存泄漏
+        window.checkMemoryLeaks = function() {
+            addLog('🧠 开始检查内存泄漏...');
+            updateStatus('正在检查内存泄漏...', 'warning');
+            
+            // 检查事件监听器
+            const eventTargets = [window, document, document.body];
+            let totalListeners = 0;
+            
+            eventTargets.forEach((target, index) => {
+                const targetName = ['window', 'document', 'document.body'][index];
+                
+                // 检查常见事件类型
+                const eventTypes = ['click', 'scroll', 'resize', 'load', 'unload', 'beforeunload'];
+                
+                eventTypes.forEach(eventType => {
+                    // 这里只能检测到我们能访问的监听器
+                    // 实际的Vue应用可能有更多内部监听器
+                    try {
+                        const listeners = target.getEventListeners ? target.getEventListeners(eventType) : [];
+                        if (listeners && listeners.length > 0) {
+                            totalListeners += listeners.length;
+                            addLog(`📊 ${targetName}.${eventType}: ${listeners.length} 个监听器`);
+                        }
+                    } catch (e) {
+                        // getEventListeners 在某些浏览器中不可用
+                    }
+                });
+            });
+            
+            // 检查内存使用情况
+            if (performance.memory) {
+                const memory = performance.memory;
+                addLog('📊 内存使用情况:');
+                addLog(`  已使用: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`);
+                addLog(`  总分配: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`);
+                addLog(`  限制: ${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`);
+                
+                const usagePercent = (memory.usedJSHeapSize / memory.jsHeapSizeLimit * 100).toFixed(2);
+                addLog(`  使用率: ${usagePercent}%`);
+                
+                if (usagePercent > 80) {
+                    updateStatus('内存使用率过高', 'error');
+                } else if (usagePercent > 60) {
+                    updateStatus('内存使用率较高', 'warning');
+                } else {
+                    updateStatus('内存使用正常', 'success');
+                }
+            } else {
+                addLog('❌ 无法获取内存信息（浏览器不支持）');
+                updateStatus('内存检查完成', 'info');
+            }
+            
+            addLog(`📊 检测到 ${totalListeners} 个事件监听器`);
+        }
+        
+        // 页面加载时自动开始测试
+        addLog('🎉 API测试工具已加载');
+        addLog('💡 点击上方按钮开始测试');
+    </script>
+</body>
+</html>

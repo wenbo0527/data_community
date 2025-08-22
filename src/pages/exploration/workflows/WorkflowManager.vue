@@ -50,7 +50,7 @@
     <!-- 流程列表 -->
     <div class="workflow-list">
       <div v-if="loading" class="loading-container">
-        <a-spin size="large" />
+        <a-spin :size="32" />
       </div>
       
       <div v-else-if="filteredWorkflows.length === 0" class="empty-container">

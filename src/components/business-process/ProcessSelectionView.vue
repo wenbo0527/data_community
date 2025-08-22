@@ -29,10 +29,11 @@
         allow-clear
         @change="handleFilter"
       >
-        <a-option value="data-analysis">数据分析</a-option>
-        <a-option value="data-processing">数据处理</a-option>
-        <a-option value="data-integration">数据集成</a-option>
-        <a-option value="data-governance">数据治理</a-option>
+        <a-option value="core-business">自营业务</a-option>
+        <a-option value="marketing">营销触达</a-option>
+        <a-option value="benefits">权益使用</a-option>
+        <a-option value="risk-control">风险管控</a-option>
+        <a-option value="customer-service">客户服务</a-option>
       </a-select>
     </div>
 
@@ -86,15 +87,6 @@
           </div>
           
           <div class="card-content">
-            <div class="process-meta">
-              <a-tag :color="getBusinessTypeColor(process.businessType)">
-                {{ getBusinessTypeName(process.businessType) }}
-              </a-tag>
-              <a-tag v-if="process.productType" color="blue">
-                {{ getProductTypeName(process.productType) }}
-              </a-tag>
-            </div>
-            
             <div class="process-stats">
               <span class="stat-item">
                 <icon-layers />
@@ -145,47 +137,85 @@ const processes = ref<any[]>([])
 const mockProcesses = [
   {
     id: '1',
-    name: '用户行为数据分析流程',
-    description: '分析用户在平台上的行为数据，生成用户画像和行为报告',
-    businessType: 'data-analysis',
-    productType: 'analytics',
+    name: '自营业务核心流程',
+    description: '涵盖用户注册、身份认证、产品申请、风险评估、审批决策等核心业务环节的完整流程',
+    businessType: 'core-business',
+    productType: 'business-core',
     steps: [
-      { id: '1-1', name: '数据收集' },
-      { id: '1-2', name: '数据清洗' },
-      { id: '1-3', name: '数据分析' },
-      { id: '1-4', name: '报告生成' }
+      { id: '1-1', name: '用户注册' },
+      { id: '1-2', name: '身份认证' },
+      { id: '1-3', name: '产品申请' },
+      { id: '1-4', name: '风险评估' },
+      { id: '1-5', name: '审批决策' },
+      { id: '1-6', name: '业务开通' }
     ],
     createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-20T15:30:00Z'
+    updatedAt: '2024-01-25T15:30:00Z'
   },
   {
     id: '2',
-    name: '销售数据处理流程',
-    description: '处理和整合来自不同渠道的销售数据',
-    businessType: 'data-processing',
-    productType: 'etl',
+    name: '营销触达流程',
+    description: '基于用户画像分析，制定营销策略，选择合适渠道进行内容推送，并跟踪营销效果的完整流程',
+    businessType: 'marketing',
+    productType: 'marketing-platform',
     steps: [
-      { id: '2-1', name: '数据提取' },
-      { id: '2-2', name: '数据转换' },
-      { id: '2-3', name: '数据加载' }
+      { id: '2-1', name: '用户画像分析' },
+      { id: '2-2', name: '营销策略制定' },
+      { id: '2-3', name: '渠道选择' },
+      { id: '2-4', name: '内容推送' },
+      { id: '2-5', name: '效果跟踪' },
+      { id: '2-6', name: '策略优化' }
     ],
-    createdAt: '2024-01-10T09:00:00Z',
-    updatedAt: '2024-01-18T11:20:00Z'
+    createdAt: '2024-01-18T09:00:00Z',
+    updatedAt: '2024-01-26T11:20:00Z'
   },
   {
     id: '3',
-    name: '客户数据集成流程',
-    description: '整合多个系统中的客户数据，建立统一的客户视图',
-    businessType: 'data-integration',
-    productType: 'mdm',
+    name: '权益使用流程',
+    description: '管理权益发放、使用验证、消费记录、结算处理和数据统计的完整权益管理流程',
+    businessType: 'benefits',
+    productType: 'benefits-system',
     steps: [
-      { id: '3-1', name: '数据源识别' },
-      { id: '3-2', name: '数据映射' },
-      { id: '3-3', name: '数据合并' },
-      { id: '3-4', name: '质量检查' }
+      { id: '3-1', name: '权益发放' },
+      { id: '3-2', name: '使用验证' },
+      { id: '3-3', name: '消费记录' },
+      { id: '3-4', name: '结算处理' },
+      { id: '3-5', name: '数据统计' }
     ],
-    createdAt: '2024-01-05T14:00:00Z',
-    updatedAt: '2024-01-22T16:45:00Z'
+    createdAt: '2024-01-20T14:00:00Z',
+    updatedAt: '2024-01-27T16:45:00Z'
+  },
+  {
+    id: '4',
+    name: '风险管控流程',
+    description: '实时风险识别、评估、预警处理、风险处置和监控反馈的全方位风险管控体系',
+    businessType: 'risk-control',
+    productType: 'risk-system',
+    steps: [
+      { id: '4-1', name: '风险识别' },
+      { id: '4-2', name: '风险评估' },
+      { id: '4-3', name: '预警处理' },
+      { id: '4-4', name: '风险处置' },
+      { id: '4-5', name: '监控反馈' }
+    ],
+    createdAt: '2024-01-22T08:30:00Z',
+    updatedAt: '2024-01-28T10:15:00Z'
+  },
+  {
+    id: '5',
+    name: '客户服务流程',
+    description: '从问题接收、分类处理、解决跟踪到满意度调研的完整客户服务管理流程',
+    businessType: 'customer-service',
+    productType: 'service-platform',
+    steps: [
+      { id: '5-1', name: '问题接收' },
+      { id: '5-2', name: '问题分类' },
+      { id: '5-3', name: '处理分配' },
+      { id: '5-4', name: '解决跟踪' },
+      { id: '5-5', name: '满意度调研' }
+    ],
+    createdAt: '2024-01-24T13:20:00Z',
+    updatedAt: '2024-01-29T14:30:00Z'
   }
 ]
 
@@ -265,30 +295,33 @@ const handleFilter = () => {
 // 工具方法
 const getBusinessTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    'data-analysis': 'blue',
-    'data-processing': 'green',
-    'data-integration': 'orange',
-    'data-governance': 'purple'
+    'core-business': 'blue',
+    'marketing': 'green',
+    'benefits': 'orange',
+    'risk-control': 'red',
+    'customer-service': 'purple'
   }
   return colors[type] || 'gray'
 }
 
 const getBusinessTypeName = (type: string) => {
   const names: Record<string, string> = {
-    'data-analysis': '数据分析',
-    'data-processing': '数据处理',
-    'data-integration': '数据集成',
-    'data-governance': '数据治理'
+    'core-business': '自营业务',
+    'marketing': '营销触达',
+    'benefits': '权益使用',
+    'risk-control': '风险管控',
+    'customer-service': '客户服务'
   }
   return names[type] || type
 }
 
 const getProductTypeName = (type: string) => {
   const names: Record<string, string> = {
-    'analytics': '分析平台',
-    'etl': 'ETL工具',
-    'mdm': '主数据管理',
-    'governance': '治理平台'
+    'business-core': '核心业务系统',
+    'marketing-platform': '营销平台',
+    'benefits-system': '权益系统',
+    'risk-system': '风控系统',
+    'service-platform': '服务平台'
   }
   return names[type] || type
 }
@@ -314,10 +347,17 @@ onMounted(() => {
 
 <style scoped>
 .process-selection-view {
+  /* 调整padding以匹配抽屉编辑区域的布局 */
   padding: 24px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  /* 设置容器宽度以匹配编辑阶段的有效内容宽度 */
+  /* 编辑阶段：1000px总宽 - 200px导航 - 48px编辑区padding = 752px有效宽度 */
+  /* 选择阶段：为了视觉一致，使用相同的有效内容宽度 */
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 .selection-header {
@@ -325,6 +365,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
+  /* 确保头部内容在容器内正确对齐 */
+  width: 100%;
 }
 
 .header-title h4 {
@@ -369,8 +411,11 @@ onMounted(() => {
 
 .process-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* 修改为单列布局，1行1个流程 */
+  grid-template-columns: 1fr;
   gap: 16px;
+  /* 确保网格在容器宽度下有良好的适配 */
+  max-width: 100%;
 }
 
 .process-card {
@@ -431,11 +476,7 @@ onMounted(() => {
   gap: 12px;
 }
 
-.process-meta {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+
 
 .process-stats {
   display: flex;
@@ -462,5 +503,18 @@ onMounted(() => {
 
 :deep(.arco-dropdown-option.danger:hover) {
   background-color: var(--color-danger-light-1);
+}
+
+/* 响应式媒体查询 - 保持单列布局 */
+@media (max-width: 600px) {
+  .process-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .process-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue组件简单测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Vue组件渲染测试</h1>
+    
+    <div class="test-section">
+        <h3>基础Vue测试</h3>
+        <div id="vue-app">
+            <p>{{ message }}</p>
+            <p>计数器: {{ count }}</p>
+            <button @click="increment">增加</button>
+            <button @click="testApi">测试API</button>
+        </div>
+        <div id="results"></div>
+    </div>
+    
+    <script type="module">
+        import { createApp, ref, onMounted } from 'vue';
+        
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `
+                <h4>${title}</h4>
+                <pre>${typeof content === 'object' ? JSON.stringify(content, null, 2) : content}</pre>
+                <small>时间: ${new Date().toLocaleTimeString()}</small>
+            `;
+            results.appendChild(div);
+        }
+        
+        // Vue已经通过ES模块导入，直接使用createApp
+        
+        const app = createApp({
+            setup() {
+                const message = ref('Vue 3 组件正常工作！');
+                const count = ref(0);
+                
+                const increment = () => {
+                    count.value++;
+                    addResult('✅ 按钮点击', `计数器更新为: ${count.value}`, 'success');
+                };
+                
+                const testApi = async () => {
+                    addResult('🚀 开始API测试', '正在调用fetchUserInfo...');
+                    
+                    try {
+                        // 动态导入API函数
+                        const { fetchUserInfo } = await import('/src/mock/customer360.ts');
+                        
+                        console.log('🔍 调用 fetchUserInfo(887123)');
+                        const result = await fetchUserInfo('887123');
+                        
+                        console.log('📥 API响应:', result);
+                        
+                        if (result && result.error) {
+                            addResult('❌ API返回错误', {
+                                error: result.error,
+                                message: result.message,
+                                userId: result.userId
+                            }, 'error');
+                        } else if (result) {
+                            addResult('✅ API调用成功', {
+                                userId: result.userId,
+                                name: result.name,
+                                hasBasicInfo: !!result.basicInfo,
+                                hasProducts: !!(result.selfProducts || result.loanProducts),
+                                dataKeys: Object.keys(result)
+                            }, 'success');
+                        } else {
+                            addResult('⚠️ API返回空数据', { userId: '887123' }, 'error');
+                        }
+                        
+                    } catch (error) {
+                        console.error('💥 API调用失败:', error);
+                        addResult('💥 API调用异常', {
+                            error: error.message,
+                            stack: error.stack
+                        }, 'error');
+                    }
+                };
+                
+                onMounted(() => {
+                    addResult('🎯 Vue组件挂载完成', 'setup函数执行成功', 'success');
+                    console.log('🎯 Vue组件挂载完成');
+                    
+                    // 自动测试API
+                    setTimeout(() => {
+                        testApi();
+                    }, 1000);
+                });
+                
+                return {
+                    message,
+                    count,
+                    increment,
+                    testApi
+                };
+            }
+        });
+        
+        try {
+            app.mount('#vue-app');
+            addResult('🚀 Vue应用启动', 'Vue应用成功挂载到DOM', 'success');
+        } catch (error) {
+            addResult('💥 Vue应用启动失败', {
+                error: error.message,
+                stack: error.stack
+            }, 'error');
+        }
+    </script>
+</body>
+</html>

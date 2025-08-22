@@ -210,20 +210,29 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
         })
       }
 
-      // 触发统一预览线创建（配置完成后）
+      // 🔧 关键修复：触发统一预览线创建（配置完成后）
       console.log(`[useConfigDrawers] 检查是否需要创建配置后预览线`)
       const unifiedPreviewManager = structuredLayout.unifiedPreviewManager?.value
       console.log(`[useConfigDrawers] 统一预览线管理器实例:`, unifiedPreviewManager)
       console.log(`[useConfigDrawers] 管理器类型:`, unifiedPreviewManager?.constructor?.name)
-      console.log(`[useConfigDrawers] createPreviewLineAfterConfig 方法存在:`, typeof unifiedPreviewManager?.createPreviewLineAfterConfig)
       
-      if (unifiedPreviewManager && typeof unifiedPreviewManager.createPreviewLineAfterConfig === 'function') {
-        console.log(`[useConfigDrawers] 为节点 ${nodeInstance.id} 创建配置后预览线`)
+      // 🎯 新方案：直接调用onNodeConfigured方法，这是标准的配置完成事件
+      if (unifiedPreviewManager && typeof unifiedPreviewManager.onNodeConfigured === 'function') {
+        console.log(`[useConfigDrawers] 触发节点配置完成事件: ${nodeInstance.id}`)
+        try {
+          await unifiedPreviewManager.onNodeConfigured(nodeInstance.id, config)
+          console.log(`[useConfigDrawers] 节点配置完成事件处理成功`)
+        } catch (error) {
+          console.error(`[useConfigDrawers] 节点配置完成事件处理失败:`, error)
+        }
+      } else if (unifiedPreviewManager && typeof unifiedPreviewManager.createPreviewLineAfterConfig === 'function') {
+        // 🔄 备用方案：使用原有的createPreviewLineAfterConfig方法
+        console.log(`[useConfigDrawers] 为节点 ${nodeInstance.id} 创建配置后预览线（备用方案）`)
         try {
           await unifiedPreviewManager.createPreviewLineAfterConfig(nodeInstance, config)
-          console.log(`[useConfigDrawers] 配置后预览线创建成功`)
+          console.log(`[useConfigDrawers] 配置后预览线创建成功（备用方案）`)
         } catch (error) {
-          console.error(`[useConfigDrawers] 配置后预览线创建失败:`, error)
+          console.error(`[useConfigDrawers] 配置后预览线创建失败（备用方案）:`, error)
         }
       } else {
         console.log(`[useConfigDrawers] 统一预览线管理器不存在或方法不可用`)

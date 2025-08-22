@@ -345,7 +345,9 @@ export const ROUTE_GUARD_CONFIG = {
   // 白名单路由（无需登录）
   whiteList: [
     ROUTE_PATHS.LOGIN,
-    ROUTE_PATHS.HOME
+    ROUTE_PATHS.HOME,
+    '/discovery/customer360',
+    '/discovery/customer360/123'
   ],
   
   // 需要权限验证的路由

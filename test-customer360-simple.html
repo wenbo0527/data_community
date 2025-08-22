@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer360 简化测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+        }
+        .success { background: #f6ffed; border-color: #b7eb8f; }
+        .error { background: #fff2f0; border-color: #ffccc7; }
+        .warning { background: #fffbe6; border-color: #ffe58f; }
+        .info { background: #f0f9ff; border-color: #91d5ff; }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #40a9ff; }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Customer360 简化测试</h1>
+        
+        <div class="test-section info">
+            <h3>📋 测试目标</h3>
+            <p>验证Customer360页面的核心功能是否正常工作</p>
+            <ul>
+                <li>测试API调用是否成功</li>
+                <li>测试数据渲染是否正常</li>
+                <li>测试Vue组件是否正确挂载</li>
+                <li>检查是否存在JavaScript错误</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 测试操作</h3>
+            <button onclick="testAPI()">测试API调用</button>
+            <button onclick="testPageLoad()">测试页面加载</button>
+            <button onclick="openCustomer360()">打开Customer360页面</button>
+            <button onclick="checkConsoleErrors()">检查控制台错误</button>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 测试结果</h3>
+            <div id="testLog" class="log">等待测试开始...
+</div>
+        </div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('testLog');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            }[type] || 'ℹ️';
+            
+            logContainer.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`${prefix} ${message}`);
+        }
+        
+        function clearLog() {
+            logContainer.textContent = '日志已清空\n';
+        }
+        
+        async function testAPI() {
+            log('开始测试API调用...', 'info');
+            
+            try {
+                // 测试fetchUserInfo API
+                const response = await fetch('/api/customer360/887123');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    log(`API返回错误: ${data.message}`, 'error');
+                } else {
+                    log('API调用成功', 'success');
+                    log(`用户数据: ${data.name || '未知用户'}`, 'info');
+                    log(`数据字段: ${Object.keys(data).join(', ')}`, 'info');
+                }
+                
+            } catch (error) {
+                log(`API调用失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testPageLoad() {
+            log('开始测试页面加载...', 'info');
+            
+            try {
+                // 在新窗口中打开Customer360页面并检查
+                const testWindow = window.open('http://localhost:5173/discovery/customer360/887123', '_blank');
+                
+                if (!testWindow) {
+                    log('无法打开测试窗口，请检查弹窗拦截', 'error');
+                    return;
+                }
+                
+                log('测试窗口已打开，等待页面加载...', 'info');
+                
+                // 等待页面加载
+                setTimeout(() => {
+                    try {
+                        const doc = testWindow.document;
+                        
+                        // 检查基本元素
+                        const app = doc.getElementById('app');
+                        const title = doc.title;
+                        
+                        log(`页面标题: ${title}`, 'info');
+                        log(`#app元素: ${app ? '存在' : '不存在'}`, app ? 'success' : 'error');
+                        
+                        // 检查Vue应用
+                        if (app && app.__vue_app__) {
+                            log('Vue应用已正确挂载', 'success');
+                        } else {
+                            log('Vue应用未正确挂载', 'warning');
+                        }
+                        
+                        // 检查Customer360特定元素
+                        const debugBtn = doc.querySelector('.debug-toggle-btn');
+                        const container = doc.querySelector('.customer-detail-container');
+                        
+                        log(`调试按钮: ${debugBtn ? '存在' : '不存在'}`, debugBtn ? 'success' : 'warning');
+                        log(`主容器: ${container ? '存在' : '不存在'}`, container ? 'success' : 'error');
+                        
+                        // 检查是否有内容显示
+                        const content = doc.querySelector('.content');
+                        const loading = doc.querySelector('.loading-container');
+                        const error = doc.querySelector('.error-container');
+                        const empty = doc.querySelector('.empty-container');
+                        
+                        log(`内容区域: ${content ? '存在' : '不存在'}`, content ? 'success' : 'warning');
+                        log(`加载状态: ${loading ? '显示中' : '未显示'}`, loading ? 'warning' : 'info');
+                        log(`错误状态: ${error ? '显示中' : '未显示'}`, error ? 'error' : 'info');
+                        log(`空数据状态: ${empty ? '显示中' : '未显示'}`, empty ? 'warning' : 'info');
+                        
+                        // 如果有调试按钮，建议点击
+                        if (debugBtn) {
+                            log('建议点击调试按钮查看详细信息', 'info');
+                        }
+                        
+                    } catch (e) {
+                        log(`无法访问测试窗口内容: ${e.message}`, 'warning');
+                    }
+                }, 3000);
+                
+            } catch (error) {
+                log(`页面加载测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function openCustomer360() {
+            log('正在打开Customer360页面...', 'info');
+            window.open('http://localhost:5173/discovery/customer360/887123', '_blank');
+        }
+        
+        function checkConsoleErrors() {
+            log('检查控制台错误...', 'info');
+            
+            // 检查是否有全局错误
+            const errors = window.console.errors || [];
+            
+            if (errors.length > 0) {
+                log(`发现 ${errors.length} 个控制台错误`, 'error');
+                errors.forEach((error, index) => {
+                    log(`错误 ${index + 1}: ${error}`, 'error');
+                });
+            } else {
+                log('未发现明显的控制台错误', 'success');
+            }
+            
+            // 建议手动检查
+            log('建议手动打开浏览器开发者工具检查详细错误信息', 'info');
+        }
+        
+        // 捕获全局错误
+        window.addEventListener('error', (event) => {
+            log(`全局错误: ${event.error?.message || event.message}`, 'error');
+        });
+        
+        // 捕获未处理的Promise拒绝
+        window.addEventListener('unhandledrejection', (event) => {
+            log(`未处理的Promise拒绝: ${event.reason}`, 'error');
+        });
+        
+        // 初始化
+        log('测试工具已准备就绪', 'success');
+        log('请点击上方按钮开始测试', 'info');
+    </script>
+</body>
+</html>

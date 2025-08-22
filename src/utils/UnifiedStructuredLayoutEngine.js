@@ -215,6 +215,40 @@ export class UnifiedStructuredLayoutEngine {
             { stage: 'preprocessing' }
           );
 
+          // 🎯 关键修复：节点数量验证，确保在只有开始节点时正确跳过布局
+          const { validNodes, endpointNodes, totalNodes } = preprocessResult;
+          
+          // 检查是否只有一个开始节点且没有其他有效节点
+          if (validNodes.length === 1 && endpointNodes.length === 0) {
+            const singleNode = validNodes[0];
+            const nodeId = singleNode.id || singleNode.getId();
+            const nodeData = singleNode.getData() || {};
+            
+            // 如果是开始节点且没有预览线endpoint，跳过布局
+            if (nodeData.type === 'start' || nodeId.includes('start')) {
+              console.log('⚠️ [统一结构化布局] 检测到只有单个开始节点，无需执行布局');
+              this.isLayouting = false;
+              return {
+                success: true,
+                message: '只有单个开始节点，无需执行布局',
+                nodeCount: 1,
+                skipped: true
+              };
+            }
+          }
+          
+          // 检查总节点数量是否足够执行布局
+          if (totalNodes < 2) {
+            console.log(`⚠️ [统一结构化布局] 节点数量不足(${totalNodes})，无需执行布局`);
+            this.isLayouting = false;
+            return {
+              success: true,
+              message: `节点数量不足(${totalNodes})，无需执行布局`,
+              nodeCount: totalNodes,
+              skipped: true
+            };
+          }
+
           // 阶段2：分层构建（包含endpoint集成）
           const layerStructure = await this.performanceOptimizer.optimizeLayoutExecution(
             () => this.buildHierarchicalLayers(preprocessResult),
@@ -225,9 +259,10 @@ export class UnifiedStructuredLayoutEngine {
           // 🎯 关键修复：在nodeToLayer映射建立完成后，通知预览线管理器可以安全调用
           this.notifyPreviewManagerReady();
 
-          // 阶段3：自底向上位置计算（使用几何中心对齐）
+          // 阶段3：自底向上位置计算（临时禁用几何对齐，使用标准算法）
+          console.log('🔧 [临时禁用] 几何对齐已禁用，使用标准布局算法');
           const positions = await this.performanceOptimizer.optimizeLayoutExecution(
-            () => this.calculateBottomUpPositionsWithGeometricAlignment(layerStructure),
+            () => this.calculateBottomUpPositions(layerStructure),
             this,
             { stage: 'positioning' }
           );
@@ -1510,6 +1545,33 @@ export class UnifiedStructuredLayoutEngine {
     );
     console.log('🌿 [叶子识别] 叶子节点列表:', leafNodes.map(n => n.id || n.getId()));
 
+    // 🎯 关键修复：如果没有边连接，根据节点类型进行分层
+    if (leafNodes.length === 0 || leafNodes.length === normalNodes.length) {
+      console.warn('⚠️ [叶子识别] 无边连接或所有节点都是叶子节点，启用节点类型分层模式');
+      
+      // 按节点类型分层：end节点作为叶子节点（最底层）
+      const endNodes = normalNodes.filter((node) => {
+        const nodeType = node.type || node.getType?.() || '';
+        return nodeType === 'end';
+      });
+      
+      if (endNodes.length > 0) {
+        console.log(`🌿 [类型分层] 使用 ${endNodes.length} 个end节点作为叶子节点`);
+        return endNodes;
+      }
+      
+      // 如果没有end节点，使用非start节点作为叶子节点
+      const nonStartNodes = normalNodes.filter((node) => {
+        const nodeType = node.type || node.getType?.() || '';
+        return nodeType !== 'start';
+      });
+      
+      if (nonStartNodes.length > 0) {
+        console.log(`🌿 [类型分层] 使用 ${nonStartNodes.length} 个非start节点作为叶子节点`);
+        return nonStartNodes;
+      }
+    }
+
     // 如果没有找到叶子节点，可能是因为图中有循环或者所有节点都有连接
     // 在这种情况下，选择入度为0的节点作为起始点
     if (leafNodes.length === 0) {
@@ -1567,6 +1629,27 @@ export class UnifiedStructuredLayoutEngine {
     );
     console.log('🔍 [层级构建] 叶子节点列表:', leafNodes.map(n => n.id || n.getId()))
     console.log(`🔍 [层级构建] 总节点数: ${allNodes.length}个`);
+
+    // 🎯 关键修复：检查是否为无边连接的节点类型分层模式
+    const normalNodes = allNodes.filter(node => !(node.isEndpoint || node.isVirtual));
+    
+    // 检查图中是否有真实的边连接（从graph.getEdges()获取）
+    const edges = this.graph ? this.graph.getEdges() : [];
+    const hasRealConnections = edges && edges.length > 0;
+    
+    console.log('🔍 [连接检测] 详细信息:', {
+      图实例存在: !!this.graph,
+      边数组: edges,
+      边数量: edges.length,
+      有真实连接: hasRealConnections,
+      普通节点数: normalNodes.length,
+      节点类型: normalNodes.map(n => ({ id: n.id || n.getId(), type: n.type || n.getType?.() || 'unknown' }))
+    });
+    
+    if (!hasRealConnections && normalNodes.length > 1) {
+      console.log('🎯 [类型分层] 检测到无边连接模式，启用节点类型垂直分层');
+      return this.buildTypeBasedLayers(normalNodes);
+    }
 
     // 从叶子节点开始，逐层向上构建
     while (currentLayer.length > 0) {
@@ -1711,6 +1794,71 @@ export class UnifiedStructuredLayoutEngine {
 
     // 🎯 关键修复：重新调整endpoint节点的层级
     this.adjustEndpointLayers(layers, allNodes);
+
+    return layers;
+  }
+
+  /**
+   * 基于节点类型的垂直分层（无边连接模式）
+   * @param {Array} normalNodes - 普通节点列表
+   * @returns {Array} 分层结果
+   */
+  buildTypeBasedLayers(normalNodes) {
+    const layers = [];
+    const startNodes = [];
+    const endNodes = [];
+    const otherNodes = [];
+
+    // 按节点类型分类
+    normalNodes.forEach(node => {
+      const nodeType = node.type || node.getType?.() || '';
+      if (nodeType === 'start') {
+        startNodes.push(node);
+      } else if (nodeType === 'end') {
+        endNodes.push(node);
+      } else {
+        otherNodes.push(node);
+      }
+    });
+
+    console.log('🎯 [类型分层] 节点分类:', {
+      start: startNodes.length,
+      end: endNodes.length,
+      other: otherNodes.length
+    });
+
+    // 构建垂直分层：start在顶层，end在底层，其他节点在中间
+    if (startNodes.length > 0) {
+      layers.push(startNodes);
+      console.log('📊 [类型分层] 第0层(顶层): start节点', startNodes.map(n => n.id || n.getId()));
+    }
+
+    if (otherNodes.length > 0) {
+      layers.push(otherNodes);
+      console.log(`📊 [类型分层] 第${layers.length - 1}层(中间层): 其他节点`, otherNodes.map(n => n.id || n.getId()));
+    }
+
+    if (endNodes.length > 0) {
+      layers.push(endNodes);
+      console.log(`📊 [类型分层] 第${layers.length - 1}层(底层): end节点`, endNodes.map(n => n.id || n.getId()));
+    }
+
+    // 如果只有一种类型的节点，确保至少有一层
+    if (layers.length === 0 && normalNodes.length > 0) {
+      layers.push(normalNodes);
+      console.log('📊 [类型分层] 单一类型层级:', normalNodes.map(n => n.id || n.getId()));
+    }
+
+    // 更新nodeToLayer映射
+    this.layoutModel.nodeToLayer = new Map();
+    layers.forEach((layer, index) => {
+      layer.forEach((node) => {
+        const nodeId = node.id || node.getId();
+        this.layoutModel.nodeToLayer.set(nodeId, index);
+      });
+    });
+
+    console.log(`📋 [类型分层] nodeToLayer映射完成，共 ${this.layoutModel.nodeToLayer.size} 个节点`);
 
     return layers;
   }
@@ -1958,12 +2106,27 @@ export class UnifiedStructuredLayoutEngine {
     console.log("🎯 [几何对齐] 开始几何中心对齐的自底向上位置计算");
 
     try {
+      // 转换layerStructure为layers数组格式
+      const layers = layerStructure.layers || [];
+      
+      // 获取当前节点位置映射
+      const currentPositions = new Map();
+      this.graph.getNodes().forEach(node => {
+        const position = node.getPosition();
+        currentPositions.set(node.id, position);
+      });
+      
       // 使用几何中心对齐算法
-      const alignmentResult = await this.geometricAligner.calculateGeometricAlignment(
-        layerStructure,
-        this.graph,
-        this.options
+      const optimizedPositions = await this.geometricAligner.calculateGeometricAlignment(
+        layers,
+        currentPositions
       );
+      
+      // 构造返回结果格式
+      const alignmentResult = {
+        positions: optimizedPositions,
+        isValid: true
+      };
 
       console.log(
         `🎯 [几何对齐] 几何中心对齐完成，共计算 ${alignmentResult.positions.size} 个节点位置`,
@@ -1987,105 +2150,97 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 计算最底层位置（统一排列普通节点和endpoint）
+   * 计算最底层位置（垂直分层布局）
    * @param {Array} bottomLayer - 最底层节点
    * @param {Map} positions - 位置映射
    * @param {number} layerIndex - 层级索引
    */
   calculateBottomLayerPositions(bottomLayer, positions, layerIndex) {
     const nodeSpacing = this.options.node.preferredSpacing;
-    const totalWidth = (bottomLayer.length - 1) * nodeSpacing;
-    const startX = -totalWidth / 2;
-    const layerY = layerIndex * this.options.layer.baseHeight;
-
+    
+    // 🎯 关键修复：垂直分层布局 - 计算Y坐标（层级位置）
+    const layerY = this.calculateLayerY(layerIndex);
+    
     console.log(
-      `📊 [底层定位] 第${layerIndex}层（最底层），目标Y坐标: ${layerY}，节点数: ${bottomLayer.length}`,
+      `📊 [垂直分层] 第${layerIndex}层，目标Y坐标: ${layerY}，节点数: ${bottomLayer.length}`,
     );
 
-    // 🎯 关键：按X坐标排序，确保endpoint和普通节点统一排列
+    // 🎯 关键修复：垂直分层布局 - 按节点类型排序，开始节点在顶层
     const sortedNodes = bottomLayer.sort((a, b) => {
-      let aPos, bPos;
-
-      // 处理虚拟 endpoint 节点
-      if (a.isEndpoint || a.isVirtual) {
-        aPos = a.position || a.getPosition() || { x: 0, y: 0 };
-      } else if (a.getPosition) {
-        aPos = a.getPosition();
-      } else {
-        aPos = { x: 0, y: 0 };
-      }
-
-      if (b.isEndpoint || b.isVirtual) {
-        bPos = b.position || b.getPosition() || { x: 0, y: 0 };
-      } else if (b.getPosition) {
-        bPos = b.getPosition();
-      } else {
-        bPos = { x: 0, y: 0 };
-      }
-
-      console.log(
-        `🔍 [排序调试] 节点 ${a.id || a.getId()}: x=${aPos.x} (${a.isEndpoint ? "endpoint" : "normal"}), 节点 ${b.id || b.getId()}: x=${bPos.x} (${b.isEndpoint ? "endpoint" : "normal"})`,
-      );
-
-      return aPos.x - bPos.x;
+      const aId = a.id || a.getId();
+      const bId = b.id || b.getId();
+      
+      // 开始节点永远在最顶层（Y坐标最小）
+      if (aId.includes('start')) return -1;
+      if (bId.includes('start')) return 1;
+      
+      // 结束节点在最底层（Y坐标最大）
+      if (aId.includes('end')) return 1;
+      if (bId.includes('end')) return -1;
+      
+      // 其他节点按ID排序保持稳定性
+      return aId.localeCompare(bId);
     });
 
-    console.log('📊 [底层排序] 排序后的节点顺序:', sortedNodes.map(node => {
-        const nodeId = node.id || node.getId();
-        const pos =
-          node.isEndpoint || node.isVirtual
-            ? node.position || node.getPosition() || { x: 0, y: 0 }
-            : node.getPosition
-              ? node.getPosition()
-              : { x: 0, y: 0 };
-        return `${nodeId}(${node.isEndpoint ? "endpoint" : "normal"}, x=${pos.x})`;
-      }),
-    );
-
-    // 🎯 关键：统一分配位置，不再依赖原始位置
+    // 🎯 垂直分层布局：为每个节点分配位置
     sortedNodes.forEach((node, index) => {
       const nodeId = node.id || node.getId();
-      const finalX = startX + index * nodeSpacing;
-
-      // 获取原始位置用于记录
-      let originalPos;
-      if (node.isEndpoint || node.isVirtual) {
-        originalPos = node.position || node.getPosition() || { x: 0, y: 0 };
-      } else if (node.getPosition) {
-        originalPos = node.getPosition();
+      
+      // 🎯 关键修复：垂直分层布局 - 所有节点使用相同的X坐标（居中对齐）
+      const centerX = this.options.canvas.width / 2 || 400; // 画布中心X坐标
+      const nodeX = centerX;
+      
+      // 🎯 关键修复：单节点特殊处理
+      let finalY;
+      if (bottomLayer.length === 1) {
+        finalY = 300; // 单节点使用画布中心Y坐标
       } else {
-        originalPos = { x: 0, y: 0 };
+        finalY = layerY; // 多节点使用层级Y坐标
       }
-
+      
       const positionData = {
-        x: finalX,
-        y: layerY, // 🎯 关键修复：强制使用层级计算的Y坐标，确保同层所有节点Y坐标一致
+        x: nodeX,
+        y: finalY,
         layerIndex,
         isBottomLayer: true,
         nodeType: node.isEndpoint ? "endpoint" : "normal",
-        originalX: originalPos.x,
-        originalY: originalPos.y, // 记录原始Y坐标用于调试
-        sortIndex: index, // 添加排序索引用于调试
+        sortIndex: index
       };
-
+      
       positions.set(nodeId, positionData);
-
+      
       console.log(
-        `📍 [底层定位] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${nodeId}: (${finalX.toFixed(1)}, ${layerY}), 原始位置: (${originalPos.x}, ${originalPos.y}), 排序索引: ${index}`,
+        `📍 [垂直分层] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${nodeId}: (${nodeX}, ${finalY}), 层级: ${layerIndex}`,
       );
-
+      
       // 🎯 关键修复：对于虚拟endpoint节点，立即同步其内部位置
       if (node.isEndpoint && node.setPosition) {
-        node.setPosition({ x: finalX, y: layerY });
+        node.setPosition({ x: nodeX, y: finalY });
         console.log(
-          `🎯 [同步修复] 虚拟endpoint ${nodeId} 内部位置已同步: (${finalX.toFixed(1)}, ${layerY})`,
+          `🎯 [同步修复] 虚拟endpoint ${nodeId} 内部位置已同步: (${nodeX}, ${finalY})`,
         );
       }
     });
 
     console.log(
-      `📊 [底层定位] 最底层位置计算完成，共处理 ${sortedNodes.length} 个节点`,
+      `📊 [垂直分层] 垂直分层布局完成，共处理 ${sortedNodes.length} 个节点`,
     );
+  }
+
+  /**
+   * 计算层级Y坐标
+   * @param {number} layerIndex - 层级索引（0为最底层）
+   * @returns {number} Y坐标
+   */
+  calculateLayerY(layerIndex) {
+    const baseY = 300; // 基础Y坐标（画布中心）
+    const layerSpacing = 150; // 层级间距
+    
+    // 从底层开始，向上递减Y坐标（因为Y轴向下为正）
+    // layerIndex=0（底层）-> Y=300
+    // layerIndex=1（上一层）-> Y=150
+    // layerIndex=2（再上一层）-> Y=0
+    return baseY - (layerIndex * layerSpacing);
   }
 
   /**
@@ -2101,7 +2256,7 @@ export class UnifiedStructuredLayoutEngine {
     layerIndex,
     layerStructure,
   ) {
-    const layerY = layerIndex * this.options.layer.baseHeight;
+    const layerY = this.calculateLayerY(layerIndex);
     console.log(
       `📍 [父层定位] 第${layerIndex}层，目标Y坐标: ${layerY}，父节点数: ${parentLayer.length}`,
     );
@@ -2368,8 +2523,20 @@ export class UnifiedStructuredLayoutEngine {
     const sortedNodes = validNodes.sort((a, b) => {
       const aPos = positions.get(a.id || a.getId());
       const bPos = positions.get(b.id || b.getId());
-      // 现在可以安全访问，因为已经过滤了无效节点
-      return aPos.x - bPos.x;
+      // 🎯 修复：按逻辑流程排序，而非X坐标排序
+      const aId = a.id || a.getId();
+      const bId = b.id || b.getId();
+      
+      // 开始节点优先级最高
+      if (aId.includes('start')) return -1;
+      if (bId.includes('start')) return 1;
+      
+      // 结束节点优先级最低
+      if (aId.includes('end')) return 1;
+      if (bId.includes('end')) return -1;
+      
+      // 其他节点按节点ID排序，保持稳定顺序
+      return aId.localeCompare(bId);
     });
 
     // 打印排序后的节点信息
@@ -3593,15 +3760,46 @@ export class UnifiedStructuredLayoutEngine {
       targetPositions = Array.from({length: nodeCount}, (_, i) => startX + i * spacing);
     }
     
-    // 🔧 关键修复：智能排序 - 优先考虑节点类型和重要性
+    // 🔧 关键修复：按节点类型、层级关系和模块分组排序，而非X坐标排序
     layerNodes.sort((a, b) => {
-      // 首先按节点类型排序：普通节点优先
+      const aId = a.nodeId || a.id;
+      const bId = b.nodeId || b.id;
+      
+      // 第一优先级：开始节点永远在最前面
+      if (aId && aId.includes('start')) return -1;
+      if (bId && bId.includes('start')) return 1;
+      
+      // 第二优先级：结束节点永远在最后面
+      if (aId && aId.includes('end')) return 1;
+      if (bId && bId.includes('end')) return -1;
+      
+      // 第三优先级：按节点类型分组（普通节点优先于endpoint）
       if (a.nodeType !== b.nodeType) {
         if (a.nodeType === 'endpoint') return 1;
         if (b.nodeType === 'endpoint') return -1;
       }
-      // 然后按X坐标排序
-      return a.pos.x - b.pos.x;
+      
+      // 第四优先级：按模块功能分组（基于节点类型）
+      const getNodeTypeOrder = (nodeId) => {
+        if (!nodeId) return 8;
+        if (nodeId.includes('audience')) return 1;
+        if (nodeId.includes('event')) return 2;
+        if (nodeId.includes('sms')) return 3;
+        if (nodeId.includes('ai-call')) return 4;
+        if (nodeId.includes('manual-call')) return 5;
+        if (nodeId.includes('ab-test')) return 6;
+        if (nodeId.includes('wait')) return 7;
+        return 8; // 其他节点
+      };
+      
+      const aTypeOrder = getNodeTypeOrder(aId);
+      const bTypeOrder = getNodeTypeOrder(bId);
+      if (aTypeOrder !== bTypeOrder) {
+        return aTypeOrder - bTypeOrder;
+      }
+      
+      // 最后：按创建时间或ID稳定排序（避免随机性）
+      return (aId || '').localeCompare(bId || '');
     });
     
     // 应用目标位置

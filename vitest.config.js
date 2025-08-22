@@ -67,10 +67,9 @@ export default defineConfig({
     },
     
     // 报告器配置
-    reporter: ['verbose', 'json', 'html'],
+    reporter: ['verbose', 'json'],
     outputFile: {
-      json: './test-results.json',
-      html: './test-results.html'
+      json: './test-results.json'
     }
   },
   

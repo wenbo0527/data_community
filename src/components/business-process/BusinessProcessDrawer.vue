@@ -1238,4 +1238,64 @@ onMounted(() => {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .business-process-drawer :deep(.arco-drawer) {
+    width: 90vw !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .business-process-drawer :deep(.arco-drawer) {
+    width: 100vw !important;
+  }
+  
+  .drawer-content {
+    flex-direction: column;
+  }
+  
+  .step-navigation {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-2);
+  }
+  
+  .edit-area {
+    padding: 16px;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .progress-indicator {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .business-process-drawer :deep(.arco-drawer-header) {
+    padding: 12px 16px;
+  }
+  
+  .business-process-drawer :deep(.arco-drawer-footer) {
+    padding: 12px 16px;
+  }
+  
+  .edit-area {
+    padding: 12px;
+  }
+  
+  .drawer-title {
+    font-size: 14px;
+  }
+  
+  .footer-right {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
 </style>

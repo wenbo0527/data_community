@@ -72,7 +72,7 @@
               </a-tag>
             </template>
           </a-table-column>
-          <a-table-column title="操作" fixed="right" width="180">
+          <a-table-column title="操作" fixed="right" :width="180">
             <template #cell="{ record }">
               <a-space>
                 <a-button type="text" size="small" @click="handleView(record)">

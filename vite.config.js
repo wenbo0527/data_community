@@ -14,7 +14,20 @@ export default defineConfig({
     port: 5173,
     hmr: {
       port: 5173,
-      host: 'localhost'
+      host: 'localhost',
+      // 添加更精确的文件监听配置
+      overlay: true,
+      clientPort: 5173
+    },
+    watch: {
+      // 排除可能导致无限重载的文件
+      ignored: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.git/**',
+        '**/docs/key-project-docs/技术方案/实时控制台日志.log',
+        '**/test-*.html'
+      ]
     },
     proxy: {
       '/api/crowds': {

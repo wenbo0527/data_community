@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API直接测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Customer360 API 直接测试</h1>
+    
+    <div class="test-section">
+        <h3>测试控制</h3>
+        <button onclick="testFetchUserInfo()">测试 fetchUserInfo API</button>
+        <button onclick="testMockData()">检查 Mock 数据</button>
+        <button onclick="clearResults()">清空结果</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>测试结果</h3>
+        <div id="results"></div>
+    </div>
+    
+    <script type="module">
+        // 直接导入 fetchUserInfo 函数
+        import { fetchUserInfo } from '/src/mock/customer360.ts';
+        
+        window.fetchUserInfo = fetchUserInfo;
+        
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `
+                <h4>${title}</h4>
+                <pre>${typeof content === 'object' ? JSON.stringify(content, null, 2) : content}</pre>
+                <small>时间: ${new Date().toLocaleTimeString()}</small>
+            `;
+            results.appendChild(div);
+        }
+        
+        window.testFetchUserInfo = async function() {
+            addResult('🚀 开始测试 fetchUserInfo', '测试用户ID: 887123');
+            
+            try {
+                console.log('📡 调用 fetchUserInfo(887123)');
+                const result = await fetchUserInfo('887123');
+                
+                console.log('📥 API 响应:', result);
+                addResult('✅ fetchUserInfo 成功', {
+                    hasData: !!result,
+                    dataType: typeof result,
+                    keys: result ? Object.keys(result) : [],
+                    basicInfo: result?.basicInfo ? '存在' : '不存在',
+                    products: result?.products ? '存在' : '不存在',
+                    fullData: result
+                }, 'success');
+                
+            } catch (error) {
+                console.error('💥 API 调用失败:', error);
+                addResult('❌ fetchUserInfo 失败', {
+                    error: error.message,
+                    stack: error.stack
+                }, 'error');
+            }
+        };
+        
+        window.testMockData = async function() {
+            addResult('🔍 检查 Mock 数据结构', '直接访问 mock 数据');
+            
+            try {
+                // 尝试直接导入 mock 数据
+                const mockModule = await import('/src/mock/customer360.ts');
+                console.log('📦 Mock 模块:', mockModule);
+                
+                addResult('📦 Mock 模块内容', {
+                    exports: Object.keys(mockModule),
+                    fetchUserInfo: typeof mockModule.fetchUserInfo
+                }, 'success');
+                
+            } catch (error) {
+                console.error('💥 导入 Mock 模块失败:', error);
+                addResult('❌ Mock 模块导入失败', {
+                    error: error.message,
+                    stack: error.stack
+                }, 'error');
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        // 页面加载时自动运行测试
+        window.addEventListener('load', () => {
+            addResult('🎯 页面加载完成', '准备进行 API 测试');
+            
+            // 自动测试
+            setTimeout(() => {
+                testMockData();
+                setTimeout(() => {
+                    testFetchUserInfo();
+                }, 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

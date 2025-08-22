@@ -185,7 +185,7 @@
     >
       <div class="test-result">
         <div v-if="testLoading" class="test-loading">
-          <a-spin size="large" />
+          <a-spin :size="32" />
           <p>正在执行SQL查询...</p>
         </div>
         <div v-else-if="testData" class="test-success">

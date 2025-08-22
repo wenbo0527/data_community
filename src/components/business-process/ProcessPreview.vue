@@ -73,73 +73,20 @@
             </div>
             
             <div class="step-content">
-              <!-- 关联数据表 -->
-              <div v-if="step.tables && step.tables.length > 0" class="step-tables">
-                <div class="content-header">
-                  <icon-storage class="content-icon" />
-                  <span class="content-title">关联数据表 ({{ step.tables.length }})</span>
-                </div>
-                <div class="tables-list">
-                  <div
-                    v-for="table in step.tables"
-                    :key="table.name"
-                    class="table-item"
-                  >
-                    <div class="table-info">
-                      <span class="table-name">{{ table.name }}</span>
-                      <a-tag
-                        :color="getTableTypeColor(table.type)"
-                        size="small"
-                      >
-                        {{ getTableTypeLabel(table.type) }}
-                      </a-tag>
-                    </div>
-                    <p class="table-description">{{ table.description }}</p>
+              <!-- 关联数据统计 -->
+              <div class="step-stats">
+                <div class="stat-row">
+                  <div class="stat-item-inline">
+                    <icon-storage class="stat-icon" />
+                    <span class="stat-label">关联数据表：</span>
+                    <span class="stat-value">{{ step.tables?.length || 0 }} 个</span>
+                  </div>
+                  <div class="stat-item-inline">
+                    <IconBarChart class="stat-icon" />
+                    <span class="stat-label">关联指标：</span>
+                    <span class="stat-value">{{ step.metrics?.length || 0 }} 个</span>
                   </div>
                 </div>
-              </div>
-
-              <!-- 关联指标 -->
-              <div v-if="step.metrics && step.metrics.length > 0" class="step-metrics">
-                <div class="content-header">
-                  <IconBarChart class="content-icon" />
-                  <span class="content-title">关联指标 ({{ step.metrics.length }})</span>
-                </div>
-                <div class="metrics-list">
-                  <div
-                    v-for="metric in step.metrics"
-                    :key="metric.name"
-                    class="metric-item"
-                  >
-                    <div class="metric-info">
-                      <span class="metric-name">{{ metric.name }}</span>
-                      <div class="metric-tags">
-                        <a-tag
-                          :color="getMetricCategoryColor(metric.category)"
-                          size="small"
-                        >
-                          {{ getMetricCategoryLabel(metric.category) }}
-                        </a-tag>
-                        <a-tag
-                          :color="getMetricLevelColor(metric.level)"
-                          size="small"
-                        >
-                          {{ getMetricLevelLabel(metric.level) }}
-                        </a-tag>
-                      </div>
-                    </div>
-                    <p class="metric-description">{{ metric.description }}</p>
-                    <div v-if="metric.unit" class="metric-unit">
-                      单位：{{ metric.unit }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 空状态 -->
-              <div v-if="(!step.tables || step.tables.length === 0) && (!step.metrics || step.metrics.length === 0)" class="step-empty">
-                <icon-exclamation-circle class="empty-icon" />
-                <span class="empty-text">该步骤暂无关联的数据表和指标</span>
               </div>
             </div>
           </div>
@@ -571,78 +518,40 @@ onMounted(() => {
   color: var(--color-text-1);
 }
 
-/* 数据表样式 */
-.tables-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.table-item {
-  padding: 12px;
+/* 步骤统计样式 */
+.step-stats {
+  padding: 16px;
   background: var(--color-bg-2);
   border-radius: 6px;
   border: 1px solid var(--color-border-3);
 }
 
-.table-info {
+.stat-row {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.stat-item-inline {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
+  gap: 6px;
 }
 
-.table-name {
+.stat-icon {
+  color: var(--color-text-2);
+  font-size: 14px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--color-text-2);
+}
+
+.stat-value {
+  font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-1);
-}
-
-.table-description {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-3);
-}
-
-/* 指标样式 */
-.metrics-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.metric-item {
-  padding: 12px;
-  background: var(--color-bg-2);
-  border-radius: 6px;
-  border: 1px solid var(--color-border-3);
-}
-
-.metric-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.metric-name {
-  font-weight: 500;
-  color: var(--color-text-1);
-}
-
-.metric-tags {
-  display: flex;
-  gap: 4px;
-}
-
-.metric-description {
-  margin: 0 0 4px 0;
-  font-size: 12px;
-  color: var(--color-text-3);
-}
-
-.metric-unit {
-  font-size: 12px;
-  color: var(--color-text-4);
+  color: var(--color-primary);
 }
 
 /* 统计信息样式 */
@@ -673,8 +582,7 @@ onMounted(() => {
 }
 
 /* 空状态样式 */
-.empty-state,
-.step-empty {
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -683,24 +591,10 @@ onMounted(() => {
   color: var(--color-text-3);
 }
 
-.step-empty {
-  flex-direction: row;
-  padding: 20px;
-  background: var(--color-bg-2);
-  border-radius: 6px;
-  border: 1px solid var(--color-border-3);
-}
-
 .empty-icon {
   font-size: 24px;
   margin-bottom: 8px;
   color: var(--color-text-4);
-}
-
-.step-empty .empty-icon {
-  margin-bottom: 0;
-  margin-right: 8px;
-  font-size: 16px;
 }
 
 .empty-text {

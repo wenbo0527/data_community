@@ -1,32 +1,36 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import WorkflowNode from '../components/workflow/WorkflowNode.vue'
-// Mock workflowNodeTypes
-vi.mock('../utils/workflowNodeTypes.js', () => ({
-  NodeType: {
-    INPUT: 'INPUT',
-    PROCESSING: 'PROCESSING', 
-    OUTPUT: 'OUTPUT'
+// Mock nodeTypes for 营销画布
+vi.mock('../utils/nodeTypes.js', () => ({
+  nodeTypes: {
+    'start': { label: '开始节点', color: '#5F95FF' },
+    'audience-split': { label: '人群分流', color: '#FF6A6A' },
+    'event-split': { label: '事件分流', color: '#69C0FF' },
+    'sms': { label: '短信触达', color: '#45B7D1' },
+    'ai-call': { label: 'AI外呼', color: '#96CEB4' },
+    'manual-call': { label: '人工外呼', color: '#FFEAA7' },
+    'ab-test': { label: 'AB实验', color: '#DDA0DD' },
+    'wait': { label: '等待节点', color: '#A8A8A8' },
+    'end': { label: '结束节点', color: '#8C8C8C' }
   },
-  getNodeTypeName: vi.fn((type) => {
-    const names = {
-      INPUT: '数据输入',
-      PROCESSING: '数据处理',
-      OUTPUT: '数据输出'
+  getNodeConfig: vi.fn((type) => {
+    const configs = {
+      'start': { label: '开始节点', color: '#5F95FF', maxOutputs: 1 },
+      'audience-split': { label: '人群分流', color: '#FF6A6A', maxOutputs: 'dynamic' },
+      'event-split': { label: '事件分流', color: '#69C0FF', maxOutputs: 2 },
+      'sms': { label: '短信触达', color: '#45B7D1', maxOutputs: 1 },
+      'ai-call': { label: 'AI外呼', color: '#96CEB4', maxOutputs: 1 },
+      'manual-call': { label: '人工外呼', color: '#FFEAA7', maxOutputs: 1 },
+      'ab-test': { label: 'AB实验', color: '#DDA0DD', maxOutputs: 2 },
+      'wait': { label: '等待节点', color: '#A8A8A8', maxOutputs: 1 },
+      'end': { label: '结束节点', color: '#8C8C8C', maxOutputs: 0 }
     }
-    return names[type] || '未知类型'
-  }),
-  getNodeTypeColor: vi.fn((type) => {
-    const colors = {
-      INPUT: '#52c41a',
-      PROCESSING: '#1890ff',
-      OUTPUT: '#fa541c'
-    }
-    return colors[type] || '#d9d9d9'
+    return configs[type] || null
   })
 }))
 
-const { NodeType } = await import('../utils/workflowNodeTypes.js')
+const { nodeTypes } = await import('../utils/nodeTypes.js')
 import { createMockGraph, createMockNode } from './setup.js'
 
 // Mock Arco Design 组件
@@ -66,8 +70,8 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
     node: {
       id: 'test-node-1',
       getData: () => ({
-        type: NodeType.PROCESSING,
-        name: '数据处理',
+        type: 'sms',
+        name: '短信触达',
         config: { test: true }
       }),
       getPosition: () => ({ x: 100, y: 100 })
@@ -82,7 +86,7 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
 
   beforeEach(() => {
     mockGraph = createMockGraph()
-    mockNode = createMockNode('test-node-1', NodeType.PROCESSING, { x: 100, y: 100 })
+    mockNode = createMockNode('test-node-1', 'sms', { x: 100, y: 100 })
     mockSetSelectedNode = vi.fn()
     
     defaultProvide.graph = mockGraph
@@ -123,7 +127,7 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
     it('应该显示节点名称', () => {
       wrapper = createWrapper()
       
-      expect(wrapper.text()).toContain('数据处理')
+      expect(wrapper.text()).toContain('短信触达')
     })
 
     it('应该显示节点类型图标', () => {
@@ -137,11 +141,13 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       wrapper = createWrapper()
       
       const workflowNode = wrapper.find('.workflow-node')
-      expect(workflowNode.classes()).toContain('node-processing')
+      expect(workflowNode.classes()).toContain('node-sms')
     })
 
     it('应该在选中状态下应用选中样式', () => {
-      wrapper = createWrapper({}, { selectedNodeId: 'test-node-1' })
+      // selectedNodeId应该是ref对象
+      const selectedNodeIdRef = { value: 'test-node-1' }
+      wrapper = createWrapper({}, { selectedNodeId: selectedNodeIdRef })
       
       const workflowNode = wrapper.find('.workflow-node')
       expect(workflowNode.classes()).toContain('node-selected')
@@ -205,14 +211,14 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
     })
 
     it('应该过滤掉不可用的节点类型', async () => {
-      // 输入节点不应该出现在下游选项中
+      // 开始节点不应该出现在下游选项中
       wrapper = createWrapper()
       wrapper.vm.isHover = true
       wrapper.vm.plusMenuVisible = true
       await wrapper.vm.$nextTick()
       
       const optionTexts = wrapper.findAll('.menu-item').map(item => item.text())
-      expect(optionTexts).not.toContain('数据输入')
+      expect(optionTexts).not.toContain('开始节点')
     })
 
     it('点击节点类型选项应该创建下游节点', async () => {
@@ -282,9 +288,9 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       expect(Array.isArray(availableTypes)).toBe(true)
       expect(availableTypes.length).toBeGreaterThan(0)
       
-      // 不应该包含输入节点类型
-      const hasInputType = availableTypes.some(type => type.value === NodeType.INPUT)
-      expect(hasInputType).toBe(false)
+      // 不应该包含开始节点类型
+      const hasStartType = availableTypes.some(type => type.value === 'start')
+      expect(hasStartType).toBe(false)
     })
 
     it('nodeData应该返回节点数据', () => {
@@ -293,8 +299,8 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       const vm = wrapper.vm
       const nodeData = vm.nodeData
       
-      expect(nodeData.type).toBe(NodeType.FILTER)
-      expect(nodeData.name).toBe('数据筛选')
+      expect(nodeData.type).toBe('sms')
+      expect(nodeData.name).toBe('短信触达')
       expect(nodeData.config.test).toBe(true)
     })
 
@@ -303,10 +309,9 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       wrapper = createWrapper()
       expect(wrapper.vm.isSelected).toBe(false)
       
-      // 选中状态 - 需要通过ref来设置
-      wrapper = createWrapper()
-      const selectedNodeIdRef = wrapper.vm.selectedNodeId || { value: null }
-      selectedNodeIdRef.value = 'test-node-1'
+      // 选中状态 - 通过provide重新创建wrapper
+      const selectedNodeIdRef = { value: 'test-node-1' }
+      wrapper = createWrapper({}, { selectedNodeId: selectedNodeIdRef })
       expect(wrapper.vm.isSelected).toBe(true)
     })
 
@@ -315,21 +320,21 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       
       // 检查workflow-node元素是否包含正确的类名
       const workflowNode = wrapper.find('.workflow-node')
-      expect(workflowNode.classes()).toContain('node-filter')
+      expect(workflowNode.classes()).toContain('node-sms')
     })
   })
 
   describe('端口显示逻辑测试', () => {
-    it('输入节点应该只显示输出端口', () => {
-      const inputNodeProps = {
+    it('开始节点应该只显示输出端口', () => {
+      const startNodeProps = {
         node: {
-          id: 'input-node',
-          getData: () => ({ type: NodeType.INPUT, name: '数据输入' }),
+          id: 'start-node',
+          getData: () => ({ type: 'start', name: '开始节点' }),
           getPosition: () => ({ x: 0, y: 0 })
         }
       }
       
-      wrapper = createWrapper(inputNodeProps)
+      wrapper = createWrapper(startNodeProps)
       
       const inputPort = wrapper.find('.port-input')
       const outputPort = wrapper.find('.port-output')
@@ -338,16 +343,16 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       expect(outputPort.exists()).toBe(true)
     })
 
-    it('输出节点应该只显示输入端口', () => {
-      const outputNodeProps = {
+    it('结束节点应该只显示输入端口', () => {
+      const endNodeProps = {
         node: {
-          id: 'output-node',
-          getData: () => ({ type: NodeType.OUTPUT, name: '数据输出' }),
+          id: 'end-node',
+          getData: () => ({ type: 'end', name: '结束节点' }),
           getPosition: () => ({ x: 0, y: 0 })
         }
       }
       
-      wrapper = createWrapper(outputNodeProps)
+      wrapper = createWrapper(endNodeProps)
       
       const inputPort = wrapper.find('.port-input')
       const outputPort = wrapper.find('.port-output')
@@ -356,7 +361,7 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       expect(outputPort.exists()).toBe(false)
     })
 
-    it('处理节点应该显示输入和输出端口', () => {
+    it('短信触达节点应该显示输入和输出端口', () => {
       wrapper = createWrapper()
       
       const inputPort = wrapper.find('.port-input')
@@ -414,8 +419,8 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       const newNodeData = {
         id: 'test-node-1',
         getData: () => ({
-          type: NodeType.JOIN,
-          name: '数据合并',
+          type: 'ai-call',
+          name: 'AI外呼',
           config: { updated: true }
         }),
         getPosition: () => ({ x: 100, y: 100 })
@@ -423,8 +428,8 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       
       await wrapper.setProps({ node: newNodeData })
       
-      expect(wrapper.text()).toContain('数据合并')
-      expect(wrapper.find('.workflow-node').classes()).toContain('node-join')
+      expect(wrapper.text()).toContain('AI外呼')
+      expect(wrapper.find('.workflow-node').classes()).toContain('node-ai-call')
     })
 
     it('选中状态变化时应该更新样式', async () => {
@@ -434,7 +439,8 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       expect(wrapper.find('.workflow-node').classes()).not.toContain('node-selected')
       
       // 更新为选中状态 - 通过重新创建wrapper的方式
-      wrapper = createWrapper({}, { selectedNodeId: 'test-node-1' })
+      const selectedNodeIdRef = { value: 'test-node-1' }
+      wrapper = createWrapper({}, { selectedNodeId: selectedNodeIdRef })
       await wrapper.vm.$nextTick()
       
       expect(wrapper.find('.workflow-node').classes()).toContain('node-selected')
@@ -451,7 +457,7 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
         const nodeProps = {
           node: {
             id: `node-${i}`,
-            getData: () => ({ type: NodeType.FILTER, name: `节点${i}` }),
+            getData: () => ({ type: 'sms', name: `节点${i}` }),
             getPosition: () => ({ x: i * 10, y: 100 })
           }
         }
@@ -493,7 +499,7 @@ describe('WorkflowNode.vue - 工作流节点组件测试', () => {
       const workflowNode = wrapper.find('.workflow-node')
       // 检查组件是否可以正常渲染，ARIA属性可以在后续版本中添加
       expect(workflowNode.exists()).toBe(true)
-      expect(workflowNode.text()).toContain('数据筛选')
+      expect(workflowNode.text()).toContain('短信触达')
     })
 
     it('应该支持键盘导航', async () => {

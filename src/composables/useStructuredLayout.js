@@ -10,6 +10,7 @@ import { Graph } from '@antv/graphlib'
 import { coordinateManager } from '../utils/CoordinateSystemManager.js'
 import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 import { UnifiedStructuredLayoutEngine } from '../utils/UnifiedStructuredLayoutEngine.js'
+import { HierarchyLayoutEngine } from './layout/HierarchyLayoutEngine.js'
 
 export function useStructuredLayout(getGraph) {
   const connectionPreviewManager = ref(null)
@@ -41,7 +42,10 @@ export function useStructuredLayout(getGraph) {
     previewLineSpacing: 80,
     enableIncrementalLayout: true,
     enableBatching: true,
-    layoutThrottle: 100
+    layoutThrottle: 100,
+    // 🆕 新增：布局引擎选择配置 - 临时切换到hierarchy测试原生@antv/hierarchy
+    layoutEngine: 'hierarchy', // 'unified' | 'hierarchy'
+    enableHierarchyEngine: true // 是否启用@antv/hierarchy引擎
   })
   
   // 根据布局方向计算动态配置
@@ -82,12 +86,23 @@ export function useStructuredLayout(getGraph) {
         connectionPreviewManager.value.init()
       }
       
+      // 🔧 关键修复：创建布局引擎实例
+      console.log('🏗️ [布局系统初始化] 开始创建布局引擎实例')
+      layoutEngineInstance.value = createLayoutEngineInstance(graph)
+      
+      if (layoutEngineInstance.value) {
+        console.log('✅ [布局系统初始化] 布局引擎实例创建成功')
+      } else {
+        console.warn('⚠️ [布局系统初始化] 布局引擎实例创建失败')
+      }
+      
       console.log('✅ [布局系统] 原生Dagre布局系统初始化完成')
       return true
       
     } catch (error) {
       console.error('[useStructuredLayout] 初始化失败:', error)
       connectionPreviewManager.value = null
+      layoutEngineInstance.value = null
       return false
     }
   }
@@ -126,6 +141,62 @@ export function useStructuredLayout(getGraph) {
       lastLayoutTime: layoutTime,
       totalLayouts: (layoutStats.value.totalLayouts || 0) + 1,
       lastLayoutTimestamp: Date.now()
+    }
+  }
+
+  /**
+   * 🆕 切换布局引擎类型
+   * @param {string} engineType - 布局引擎类型 'unified' | 'hierarchy'
+   * @returns {Promise<Object>} 切换结果
+   */
+  const switchLayoutEngine = async (engineType) => {
+    if (!['unified', 'hierarchy'].includes(engineType)) {
+      console.warn('[useStructuredLayout] 无效的布局引擎类型:', engineType)
+      return { success: false, message: '无效的布局引擎类型' }
+    }
+    
+    const oldEngineType = layoutConfig.value.layoutEngine
+    
+    if (oldEngineType === engineType) {
+      console.log(`[布局引擎切换] 已经是${engineType}引擎，无需切换`)
+      return { success: true, message: '无需切换' }
+    }
+    
+    console.log(`🔄 [布局引擎切换] 从 ${oldEngineType} 切换到 ${engineType}`)
+    
+    try {
+      // 更新配置
+      layoutConfig.value.layoutEngine = engineType
+      
+      // 清除现有布局引擎实例，强制重新创建
+      layoutEngineInstance.value = null
+      
+      // 获取图实例
+      const graph = getGraph()
+      if (!graph) {
+        throw new Error('图实例不存在，无法切换布局引擎')
+      }
+      
+      // 重新应用布局
+      const result = await applyUnifiedStructuredLayout(graph)
+      
+      console.log(`✅ [布局引擎切换] 布局引擎切换完成: ${engineType}`)
+      return {
+        success: true,
+        message: `成功切换到${engineType === 'hierarchy' ? '@antv/hierarchy' : 'UnifiedStructured'}引擎`,
+        engineType,
+        layoutResult: result
+      }
+      
+    } catch (error) {
+      console.error('[useStructuredLayout] 切换布局引擎失败:', error)
+      // 回滚配置
+      layoutConfig.value.layoutEngine = oldEngineType
+      return {
+        success: false,
+        message: `切换失败: ${error.message}`,
+        error
+      }
     }
   }
 
@@ -664,41 +735,95 @@ export function useStructuredLayout(getGraph) {
       return null
     }
 
-    console.log('🏗️ [布局引擎预创建] 开始预创建布局引擎实例')
+    const engineType = layoutConfig.value.layoutEngine || 'unified'
+    console.log(`🏗️ [布局引擎预创建] 开始预创建布局引擎实例，类型: ${engineType}`)
 
-    const layoutEngine = new UnifiedStructuredLayoutEngine(graph, {
-      // 层级配置
-      layer: {
-        baseHeight: layoutConfig.value.levelHeight || 150,
-        dynamicSpacing: true,
-        maxLayers: 10,
-        tolerance: 20
-      },
+    let layoutEngine
+    
+    // 🆕 根据配置选择布局引擎
+    if (engineType === 'hierarchy' && layoutConfig.value.enableHierarchyEngine) {
+      console.log('🌲 [布局引擎选择] 使用HierarchyLayoutEngine (@antv/hierarchy)')
       
-      // 节点配置
-      node: {
-        minSpacing: layoutConfig.value.nodeSpacing * 0.6 || 120,
-        preferredSpacing: layoutConfig.value.nodeSpacing || 180,
-        maxSpacing: layoutConfig.value.nodeSpacing * 1.5 || 300,
-        endpointSize: { width: 20, height: 20 }
-      },
+      layoutEngine = new HierarchyLayoutEngine(graph, {
+        // 层级配置
+        layer: {
+          baseHeight: layoutConfig.value.levelHeight || 200,
+          dynamicSpacing: true,
+          maxLayers: 10,
+          tolerance: 20
+        },
+        
+        // 节点配置
+        node: {
+          minSpacing: layoutConfig.value.nodeSpacing * 0.6 || 120,
+          preferredSpacing: layoutConfig.value.nodeSpacing || 200,
+          maxSpacing: layoutConfig.value.nodeSpacing * 1.5 || 300,
+          endpointSize: { width: 20, height: 20 }
+        },
+        
+        // @antv/hierarchy特定配置
+        hierarchy: {
+          algorithm: 'compactBox', // 使用CompactBox算法
+          direction: layoutDirection.value === 'TB' ? 'TB' : 'LR',
+          getHGap: () => layoutConfig.value.nodeSpacing || 200,
+          getVGap: () => layoutConfig.value.levelHeight || 200,
+          enableOptimization: true
+        },
+        
+        // 优化配置
+        optimization: {
+          enableGlobalOptimization: true,
+          maxIterations: 3, // hierarchy引擎迭代次数较少
+          convergenceThreshold: 0.01,
+          enableAestheticOptimization: true,
+          enableEndpointIntegration: true
+        },
+        
+        // 性能配置
+        performance: {
+          enableParallelProcessing: false,
+          batchSize: 50,
+          enableCaching: true
+        }
+      }, connectionPreviewManager.value)
       
-      // 优化配置
-      optimization: {
-        enableGlobalOptimization: true,
-        maxIterations: 5,
-        convergenceThreshold: 0.01,
-        enableAestheticOptimization: true,
-        enableEndpointIntegration: true // 🎯 关键：启用endpoint集成
-      },
+    } else {
+      console.log('🔧 [布局引擎选择] 使用UnifiedStructuredLayoutEngine (默认)')
       
-      // 性能配置
-      performance: {
-        enableParallelProcessing: false,
-        batchSize: 50,
-        enableCaching: true
-      }
-    }, connectionPreviewManager.value) // 🎯 关键：传递预览线管理器实例
+      layoutEngine = new UnifiedStructuredLayoutEngine(graph, {
+        // 层级配置
+        layer: {
+          baseHeight: layoutConfig.value.levelHeight || 150,
+          dynamicSpacing: true,
+          maxLayers: 10,
+          tolerance: 20
+        },
+        
+        // 节点配置
+        node: {
+          minSpacing: layoutConfig.value.nodeSpacing * 0.6 || 120,
+          preferredSpacing: layoutConfig.value.nodeSpacing || 180,
+          maxSpacing: layoutConfig.value.nodeSpacing * 1.5 || 300,
+          endpointSize: { width: 20, height: 20 }
+        },
+        
+        // 优化配置
+        optimization: {
+          enableGlobalOptimization: true,
+          maxIterations: 5,
+          convergenceThreshold: 0.01,
+          enableAestheticOptimization: true,
+          enableEndpointIntegration: true // 🎯 关键：启用endpoint集成
+        },
+        
+        // 性能配置
+        performance: {
+          enableParallelProcessing: false,
+          batchSize: 50,
+          enableCaching: true
+        }
+      }, connectionPreviewManager.value) // 🎯 关键：传递预览线管理器实例
+    }
 
     // 🔗 集成预览线管理器
     if (connectionPreviewManager.value && connectionPreviewManager.value.setLayoutEngine) {
@@ -727,6 +852,33 @@ export function useStructuredLayout(getGraph) {
       throw new Error('[useStructuredLayout] Graph实例不能为空')
     }
 
+    // 🎯 关键修复：添加节点数量验证，与LayoutModeManager保持一致
+    const nodes = graph.getNodes()
+    if (!nodes || nodes.length === 0) {
+      console.warn('[useStructuredLayout] 没有节点可以布局')
+      return {
+        type: 'unified-structured',
+        success: false,
+        message: '没有节点可以布局',
+        layoutTime: 0,
+        nodeCount: 0,
+        skipped: true
+      }
+    }
+
+    // 🎯 关键修复：统一布局需要至少3个节点才能执行（与LayoutModeManager保持一致）
+    if (nodes.length < 3) {
+      console.warn('[useStructuredLayout] 统一布局需要至少3个节点，当前节点数量:', nodes.length)
+      return {
+        type: 'unified-structured',
+        success: false,
+        message: `统一布局需要至少3个节点，当前节点数量: ${nodes.length}`,
+        layoutTime: 0,
+        nodeCount: nodes.length,
+        skipped: true
+      }
+    }
+
     console.log('🚀 [统一结构化布局] 开始应用基于父子关联关系的分层分级自底向上布局')
     
     // 🔍 调试：检查预览线管理器状态
@@ -740,7 +892,6 @@ export function useStructuredLayout(getGraph) {
     
     // 详细检查节点和连接状态
     if (connectionPreviewManager.value) {
-      const nodes = graph.getNodes()
       const edges = graph.getEdges()
       
       console.log('🔍 [调试] 图形状态检查:', {
@@ -1333,12 +1484,24 @@ export function useStructuredLayout(getGraph) {
     initializeLayoutEngine,
     applyUnifiedStructuredLayout, // 🎯 统一结构化布局方法
     switchLayoutDirection,
+    switchLayoutEngine, // 🆕 布局引擎切换方法
     
     // 布局选项控制
     updateLayoutOptions: (options) => { 
       layoutOptions.value = { ...layoutOptions.value, ...options } 
     },
     
+    // 🆕 布局配置控制
+    updateLayoutConfig: (config) => {
+      layoutConfig.value = { ...layoutConfig.value, ...config }
+    },
+    
+    // 🆕 获取当前布局引擎类型
+    getCurrentLayoutEngine: () => layoutConfig.value.layoutEngine,
+    
+    // 🆕 检查是否支持hierarchy引擎
+    isHierarchyEngineEnabled: () => layoutConfig.value.enableHierarchyEngine,
+     
     // 坐标管理器
     coordinateManager,
     
@@ -1361,6 +1524,9 @@ export function useStructuredLayout(getGraph) {
       console.log('🔍 [布局引擎获取] 当前布局引擎实例:', !!layoutEngineInstance.value)
       return layoutEngineInstance.value
     },
+    
+    // 🔧 新增：暴露createLayoutEngineInstance方法供外部调用
+    createLayoutEngineInstance,
     
     // 管理器实例
     unifiedPreviewManager: computed(() => connectionPreviewManager.value),

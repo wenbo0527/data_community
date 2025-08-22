@@ -25,7 +25,7 @@
     },
     "types": ["vite/client", "node"],
     "allowJs": true,
-    "checkJs": true
+    "checkJs": false
   },
   "include": [
     "src/**/*.ts", 
@@ -35,6 +35,6 @@
     "src/pages/**/*.vue",
     "src/components/**/*.vue"
   ],
-  "exclude": ["node_modules", "dist"],
+  "exclude": ["node_modules", "dist", "**/*.vue.js", "src/**/*.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

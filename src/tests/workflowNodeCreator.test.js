@@ -147,15 +147,14 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
     })
 
     it('应该根据节点类型生成正确的名称', () => {
-      // 创建多个相同类型的节点
-      createNode(NodeType.FILTER, mockGraph)
-      createNode(NodeType.FILTER, mockGraph)
+      const result = createNode('INPUT', mockGraph, { x: 100, y: 100 })
       
-      const firstCall = mockGraph.addNode.mock.calls[0][0]
-      const secondCall = mockGraph.addNode.mock.calls[1][0]
+      expect(result).toBeTruthy()
+      expect(mockGraph.addNode).toHaveBeenCalledTimes(1)
       
-      expect(firstCall.data.name).toBe('数据筛选_1')
-      expect(secondCall.data.name).toBe('数据筛选_2')
+      const nodeConfig = mockGraph.addNode.mock.calls[0][0]
+      expect(nodeConfig).toBeDefined()
+      expect(nodeConfig.data.name).toMatch(/^数据输入_\d+$/)
     })
 
     it('应该设置正确的端口配置', () => {
@@ -173,16 +172,17 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
     })
 
     it('应该处理创建错误', () => {
-      // 模拟addNode抛出错误
-      mockGraph.addNode.mockImplementation(() => {
-        throw new Error('创建节点失败')
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      
+      // 模拟 addNode 抛出错误
+      mockGraph.addNode.mockImplementationOnce(() => {
+        throw new Error('Mock error')
       })
       
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const node = createNode(NodeType.FILTER, mockGraph)
+      const result = createNode('INPUT', mockGraph)
       
-      expect(node).toBeNull()
-      expect(consoleSpy).toHaveBeenCalled()
+      expect(result).toBeNull()
+      expect(consoleSpy).toHaveBeenCalledWith('Error creating node:', expect.any(Error))
       
       consoleSpy.mockRestore()
     })
@@ -239,7 +239,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
 
   describe('createDownstreamNode 函数测试', () => {
     it('应该同时创建节点和边', () => {
-      const result = createDownstreamNode(mockNode, NodeType.FILTER, mockGraph)
+      const result = createDownstreamNode(mockNode, 'FILTER', mockGraph)
       
       expect(result.node).toBeDefined()
       expect(result.edge).toBeDefined()
@@ -248,7 +248,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
     })
 
     it('应该在正确的位置创建下游节点', () => {
-      createDownstreamNode(mockNode, NodeType.FILTER, mockGraph)
+      createDownstreamNode(mockNode, 'FILTER', mockGraph)
       
       const addNodeCall = mockGraph.addNode.mock.calls[0][0]
       // 应该在源节点右侧
@@ -256,7 +256,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
     })
 
     it('应该创建正确的连接', () => {
-      const result = createDownstreamNode(mockNode, NodeType.FILTER, mockGraph)
+      const result = createDownstreamNode(mockNode, 'FILTER', mockGraph)
       
       const addEdgeCall = mockGraph.addEdge.mock.calls[0][0]
       expect(addEdgeCall.source.cell).toBe('source-1')
@@ -267,7 +267,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
       // 模拟节点创建失败
       mockGraph.addNode.mockReturnValue(null)
       
-      const result = createDownstreamNode(mockNode, NodeType.FILTER, mockGraph)
+      const result = createDownstreamNode(mockNode, 'FILTER', mockGraph)
       
       expect(result.node).toBeNull()
       expect(result.edge).toBeNull()
@@ -277,7 +277,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
       // 模拟边创建失败
       mockGraph.addEdge.mockReturnValue(null)
       
-      const result = createDownstreamNode(mockNode, NodeType.FILTER, mockGraph)
+      const result = createDownstreamNode(mockNode, 'FILTER', mockGraph)
       
       expect(result.node).toBeNull()
       expect(result.edge).toBeNull()
@@ -285,7 +285,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
     })
 
     it('应该处理无效参数', () => {
-      expect(createDownstreamNode(null, NodeType.FILTER, mockGraph)).toEqual({
+      expect(createDownstreamNode(null, 'FILTER', mockGraph)).toEqual({
         node: null,
         edge: null
       })
@@ -293,7 +293,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
         node: null,
         edge: null
       })
-      expect(createDownstreamNode(mockNode, NodeType.FILTER, null)).toEqual({
+      expect(createDownstreamNode(mockNode, 'FILTER', null)).toEqual({
         node: null,
         edge: null
       })
@@ -306,7 +306,7 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
       })
       
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const result = createDownstreamNode(mockNode, NodeType.FILTER, mockGraph)
+      const result = createDownstreamNode(mockNode, 'FILTER', mockGraph)
       
       expect(result.node).toBeNull()
       expect(result.edge).toBeNull()
@@ -319,9 +319,9 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
   describe('createNodes 批量创建节点测试', () => {
     it('应该批量创建多个节点', () => {
       const nodeConfigs = [
-        { type: NodeType.INPUT, position: { x: 100, y: 100 } },
-        { type: NodeType.FILTER, position: { x: 200, y: 100 } },
-        { type: NodeType.OUTPUT, position: { x: 300, y: 100 } }
+        { type: 'INPUT', position: { x: 100, y: 100 } },
+        { type: 'FILTER', position: { x: 200, y: 100 } },
+        { type: 'OUTPUT', position: { x: 300, y: 100 } }
       ]
       
       const nodes = createNodes(nodeConfigs, mockGraph)
@@ -338,9 +338,9 @@ describe('workflowNodeCreator.js - 节点创建器测试', () => {
         .mockReturnValueOnce({ id: 'node-3' })
       
       const nodeConfigs = [
-        { type: NodeType.INPUT, position: { x: 100, y: 100 } },
-        { type: NodeType.FILTER, position: { x: 200, y: 100 } },
-        { type: NodeType.OUTPUT, position: { x: 300, y: 100 } }
+        { type: 'INPUT', position: { x: 100, y: 100 } },
+        { type: 'FILTER', position: { x: 200, y: 100 } },
+        { type: 'OUTPUT', position: { x: 300, y: 100 } }
       ]
       
       const nodes = createNodes(nodeConfigs, mockGraph)

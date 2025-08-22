@@ -145,9 +145,13 @@ export function calculateBranchPreviewPosition(sourceNode, branches, branchIndex
   const nodeData = sourceNode.getData() || {}
   const nodeType = nodeData.type || nodeData.nodeType
   
+  // 🔧 安全检查：确保nodeSize有效
+  const safeWidth = nodeSize?.width || 120; // 默认宽度120px
+  const safeHeight = nodeSize?.height || 40; // 默认高度40px
+  
   // 从节点底部中心的out端口开始（统一出口）
-  const startX = nodePosition.x + nodeSize.width / 2
-  const startY = nodePosition.y + nodeSize.height
+  const startX = nodePosition.x + safeWidth / 2
+  const startY = nodePosition.y + safeHeight
   
   // 使用新的自适应分支间距计算
   const branchCount = branches.length
@@ -209,9 +213,13 @@ export function calculateSinglePreviewPosition(sourceNode) {
   const nodePosition = sourceNode.getPosition()
   const nodeSize = sourceNode.getSize()
   
+  // 🔧 安全检查：确保nodeSize有效
+  const safeWidth = nodeSize?.width || 120; // 默认宽度120px
+  const safeHeight = nodeSize?.height || 40; // 默认高度40px
+  
   // 从节点底部中心的out端口开始（统一出口）
-  const startX = nodePosition.x + nodeSize.width / 2
-  const startY = nodePosition.y + nodeSize.height
+  const startX = nodePosition.x + safeWidth / 2
+  const startY = nodePosition.y + safeHeight
   
   // 垂直向下延伸
   const endX = startX
@@ -266,8 +274,11 @@ export function getBestSnapPosition(dragNode, snapTargets) {
   const config = VERTICAL_LAYOUT_CONFIG
   const dragPos = dragNode.getPosition()
   const dragSize = dragNode.getSize()
+  // 🔧 安全检查：确保dragSize有效
+  const safeWidth = dragSize?.width || 120; // 默认宽度120px
+  
   const dragCenter = {
-    x: dragPos.x + dragSize.width / 2,
+    x: dragPos.x + safeWidth / 2,
     y: dragPos.y
   }
   

@@ -56,7 +56,7 @@ describe('workflowNodeTypes.js - 节点类型定义和工具函数测试', () =>
 
   describe('PROCESSING_TYPE_LIST 测试', () => {
     it('应该包含所有节点类型的配置', () => {
-      expect(PROCESSING_TYPE_LIST).toHaveLength(6)
+      expect(PROCESSING_TYPE_LIST).toHaveLength(4)
       
       const types = PROCESSING_TYPE_LIST.map(item => item.type)
       Object.values(NodeType).forEach(type => {
@@ -118,24 +118,20 @@ describe('workflowNodeTypes.js - 节点类型定义和工具函数测试', () =>
       })
     })
 
-    it('中间节点应该有输入和输出端口', () => {
-      const middleNodeTypes = [NodeType.FILTER, NodeType.JOIN, NodeType.UNION, NodeType.AGG]
+    it('PROCESSING节点应该有输入和输出端口', () => {
+      const ports = getPortsByType(NodeType.PROCESSING, testNodeId)
+      expect(ports).toHaveLength(2)
       
-      middleNodeTypes.forEach(type => {
-        const ports = getPortsByType(type, testNodeId)
-        expect(ports).toHaveLength(2)
-        
-        const inputPort = ports.find(p => p.group === 'in')
-        const outputPort = ports.find(p => p.group === 'out')
-        
-        expect(inputPort).toEqual({
-          id: `${testNodeId}-in`,
-          group: 'in'
-        })
-        expect(outputPort).toEqual({
-          id: `${testNodeId}-out`,
-          group: 'out'
-        })
+      const inputPort = ports.find(p => p.group === 'in')
+      const outputPort = ports.find(p => p.group === 'out')
+      
+      expect(inputPort).toEqual({
+        id: `${testNodeId}-in`,
+        group: 'in'
+      })
+      expect(outputPort).toEqual({
+        id: `${testNodeId}-out`,
+        group: 'out'
       })
     })
 
@@ -154,10 +150,7 @@ describe('workflowNodeTypes.js - 节点类型定义和工具函数测试', () =>
   describe('getNodeTypeName 函数测试', () => {
     it('应该返回正确的节点类型名称', () => {
       expect(getNodeTypeName(NodeType.INPUT)).toBe('数据输入')
-      expect(getNodeTypeName(NodeType.FILTER)).toBe('数据筛选')
-      expect(getNodeTypeName(NodeType.JOIN)).toBe('数据连接')
-      expect(getNodeTypeName(NodeType.UNION)).toBe('数据合并')
-      expect(getNodeTypeName(NodeType.AGG)).toBe('数据聚合')
+      expect(getNodeTypeName(NodeType.PROCESSING)).toBe('数据处理')
       expect(getNodeTypeName(NodeType.OUTPUT)).toBe('数据输出')
     })
 
@@ -171,10 +164,7 @@ describe('workflowNodeTypes.js - 节点类型定义和工具函数测试', () =>
   describe('getNodeTypeColor 函数测试', () => {
     it('应该返回正确的节点类型颜色', () => {
       expect(getNodeTypeColor(NodeType.INPUT)).toBe('#1890ff')
-      expect(getNodeTypeColor(NodeType.FILTER)).toBe('#52c41a')
-      expect(getNodeTypeColor(NodeType.JOIN)).toBe('#1890ff')
-      expect(getNodeTypeColor(NodeType.UNION)).toBe('#fa8c16')
-      expect(getNodeTypeColor(NodeType.AGG)).toBe('#722ed1')
+      expect(getNodeTypeColor(NodeType.PROCESSING)).toBe('#52c41a')
       expect(getNodeTypeColor(NodeType.OUTPUT)).toBe('#f5222d')
     })
 
@@ -194,11 +184,9 @@ describe('workflowNodeTypes.js - 节点类型定义和工具函数测试', () =>
 
   describe('getNodeTypeIcon 函数测试', () => {
     it('应该返回正确的图标组件', () => {
-      Object.values(NodeType).forEach(type => {
-        const icon = getNodeTypeIcon(type)
-        expect(icon).toBeDefined()
-        expect(typeof icon).toBe('object') // Vue组件
-      })
+      expect(getNodeTypeIcon(NodeType.INPUT)).toBe('IconDatabase')
+      expect(getNodeTypeIcon(NodeType.PROCESSING)).toBe('IconSettings')
+      expect(getNodeTypeIcon(NodeType.OUTPUT)).toBe('IconExport')
     })
 
     it('应该为未知类型返回默认图标', () => {

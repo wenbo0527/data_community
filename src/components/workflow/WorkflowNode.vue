@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick, inject } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, inject } from 'vue';
 import { IconPlus, IconClose } from '@arco-design/web-vue/es/icon';
 import { Dropdown as ADropdown } from '@arco-design/web-vue';
 import { 
@@ -147,23 +147,33 @@ const isHover = ref(false);
 const plusMenuVisible = ref(false);
 const isConnecting = ref(false);
 
-// 计算属性
-const nodeData = computed(() => props.node.getData() || {});
+// 计算属性（添加安全访问机制）
+const nodeData = computed(() => {
+  try {
+    return props.node?.getData?.() || {}
+  } catch (error) {
+    consoleLogger.warn('[WorkflowNode] 获取节点数据时发生错误:', error)
+    return {}
+  }
+})
 
 const isSelected = computed(() => {
   return selectedNodeId?.value === props.node.id;
 });
 
 const canAddDownstream = computed(() => {
-  return nodeData.value.type !== NodeType.OUTPUT;
+  // 营销画布节点类型：end节点不能添加下游节点
+  return nodeData.value.type !== 'end';
 });
 
 const hasInputPort = computed(() => {
-  return nodeData.value.type !== NodeType.INPUT;
+  // 营销画布节点类型：start节点没有输入端口
+  return nodeData.value.type !== 'start';
 });
 
 const hasOutputPort = computed(() => {
-  return nodeData.value.type !== NodeType.OUTPUT;
+  // 营销画布节点类型：end节点没有输出端口
+  return nodeData.value.type !== 'end';
 });
 
 const showPorts = computed(() => {
@@ -173,12 +183,12 @@ const showPorts = computed(() => {
 const availableNodeTypes = computed(() => {
   // 根据当前节点类型过滤可用的下游节点类型
   return PROCESSING_TYPE_LIST.filter(item => {
-    // 输入节点可以连接所有类型
-    if (nodeData.value.type === NodeType.INPUT) {
+    // start节点可以连接所有类型
+    if (nodeData.value.type === 'start') {
       return true;
     }
-    // 其他节点不能连接输入节点
-    return item.type !== NodeType.INPUT;
+    // 其他节点不能连接start节点
+    return item.type !== 'start';
   });
 });
 
@@ -234,23 +244,25 @@ const onDeleteNode = () => {
   }
 };
 
-// 监听graph实例变化
-watch(
-  () => graph?.value,
-  (newGraph, oldGraph) => {
-    consoleLogger.info('[WorkflowNode] graph实例发生变化')
-    consoleLogger.info('- 旧graph:', oldGraph)
-    consoleLogger.info('- 新graph:', newGraph)
-    consoleLogger.info('- 新graph类型:', typeof newGraph)
-    consoleLogger.info('- 新graph是否有效:', !!newGraph)
-  },
-  { immediate: true }
-)
-
 // 存储待执行的操作队列
 const pendingOperations = ref([])
 
-// 简化的graph监听机制
+// 防抖函数（带清理机制）
+let debounceTimeout = null
+const debounce = (func, wait) => {
+  return function executedFunction(...args) {
+    const later = () => {
+      debounceTimeout = null
+      func(...args)
+    }
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout)
+    }
+    debounceTimeout = setTimeout(later, wait)
+  }
+}
+
+// 执行待处理操作的函数
 const checkAndExecutePendingOperations = () => {
   if (graph?.value && pendingOperations.value.length > 0) {
     consoleLogger.info('[WorkflowNode] Graph实例已可用，执行待处理操作')
@@ -258,13 +270,17 @@ const checkAndExecutePendingOperations = () => {
     pendingOperations.value = []
     
     operations.forEach(operation => {
-      operation()
+      try {
+        operation()
+      } catch (error) {
+        consoleLogger.error('[WorkflowNode] 执行待处理操作时发生错误:', error)
+      }
     })
   }
 }
 
-// 定期检查graph实例状态
-let graphCheckInterval = null
+// 防抖的操作执行函数
+const debouncedExecutePendingOperations = debounce(checkAndExecutePendingOperations, 100)
 
 const createDownstream = (type) => {
   consoleLogger.group('[WorkflowNode] createDownstream函数执行')
@@ -342,19 +358,26 @@ const getNodeTypeLogo = (type) => {
   return NODE_TYPE_LOGO[type] || '';
 };
 
-// 监听graph实例的变化
-watch(graph, (newGraph) => {
-  consoleLogger.info('[WorkflowNode] Graph实例发生变化:', {
-    newGraph: newGraph,
-    graphValid: !!newGraph,
-    nodeId: props.node?.id
-  })
-  
-  if (newGraph) {
-    consoleLogger.info('[WorkflowNode] Graph实例已可用，执行待处理操作')
-    checkAndExecutePendingOperations()
-  }
-}, { immediate: true })
+// 统一的graph实例监听器（带防抖机制）
+watch(
+  () => graph?.value,
+  (newGraph, oldGraph) => {
+    consoleLogger.info('[WorkflowNode] Graph实例发生变化:', {
+      oldGraph: oldGraph,
+      newGraph: newGraph,
+      graphValid: !!newGraph,
+      nodeId: props.node?.id,
+      graphType: typeof newGraph
+    })
+    
+    if (newGraph && newGraph !== oldGraph) {
+      consoleLogger.info('[WorkflowNode] Graph实例已可用，执行待处理操作')
+      // 使用防抖函数避免频繁触发
+      debouncedExecutePendingOperations()
+    }
+  },
+  { immediate: true, flush: 'post' }
+)
 
 // 组件生命周期日志跟踪
 onMounted(() => {
@@ -365,6 +388,24 @@ onMounted(() => {
     graphType: typeof graph?.value,
     graphValid: !!graph?.value
   })
+})
+
+// 组件卸载时清理资源
+onUnmounted(() => {
+  consoleLogger.info('[WorkflowNode] 组件即将卸载，清理资源，节点ID:', props.node?.id)
+  
+  // 清理防抖定时器
+  if (debounceTimeout) {
+    clearTimeout(debounceTimeout)
+    debounceTimeout = null
+    consoleLogger.info('[WorkflowNode] 已清理防抖定时器')
+  }
+  
+  // 清空待处理操作队列
+  if (pendingOperations.value.length > 0) {
+    consoleLogger.info('[WorkflowNode] 清空待处理操作队列，数量:', pendingOperations.value.length)
+    pendingOperations.value = []
+  }
 })
 
 // 暴露方法给父组件

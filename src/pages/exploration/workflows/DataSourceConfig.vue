@@ -290,7 +290,7 @@
     >
       <div class="file-preview">
         <div v-if="previewLoading" class="preview-loading">
-          <a-spin size="large" />
+          <a-spin :size="32" />
         </div>
         <div v-else-if="previewData" class="preview-content">
           <!-- CSV/Excel 表格预览 -->

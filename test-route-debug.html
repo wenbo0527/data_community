@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路由调试测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+        .url-test { background: #e3f2fd; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Customer360 路由调试测试</h1>
+    
+    <div class="test-section">
+        <h3>当前URL信息</h3>
+        <div class="url-test">
+            <p><strong>当前URL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>路径:</strong> <span id="currentPath"></span></p>
+            <p><strong>查询参数:</strong> <span id="currentQuery"></span></p>
+            <p><strong>Hash:</strong> <span id="currentHash"></span></p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>测试不同的URL格式</h3>
+        <button onclick="testUrl('/discovery/customer360/detail/887123')">测试路径参数</button>
+        <button onclick="testUrl('/discovery/customer360/detail?userId=887123')">测试查询参数</button>
+        <button onclick="testUrl('/discovery/customer360/detail/887123?debug=true')">测试混合参数</button>
+        <button onclick="testDirectApi()">直接测试API</button>
+        <button onclick="clearResults()">清空结果</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>测试结果</h3>
+        <div id="results"></div>
+    </div>
+    
+    <script type="module">
+        // 更新当前URL信息
+        function updateUrlInfo() {
+            document.getElementById('currentUrl').textContent = window.location.href;
+            document.getElementById('currentPath').textContent = window.location.pathname;
+            document.getElementById('currentQuery').textContent = window.location.search;
+            document.getElementById('currentHash').textContent = window.location.hash;
+        }
+        
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `
+                <h4>${title}</h4>
+                <pre>${typeof content === 'object' ? JSON.stringify(content, null, 2) : content}</pre>
+                <small>时间: ${new Date().toLocaleTimeString()}</small>
+            `;
+            results.appendChild(div);
+        }
+        
+        window.testUrl = function(url) {
+            addResult(`🔗 测试URL: ${url}`, '模拟路由跳转...');
+            
+            // 模拟解析URL参数
+            const urlObj = new URL(url, window.location.origin);
+            const pathParts = urlObj.pathname.split('/');
+            const userId = pathParts[pathParts.length - 1]; // 假设userId是路径的最后一部分
+            const queryUserId = urlObj.searchParams.get('userId');
+            
+            addResult('📍 URL解析结果', {
+                originalUrl: url,
+                pathname: urlObj.pathname,
+                pathParts: pathParts,
+                pathUserId: userId,
+                queryParams: Object.fromEntries(urlObj.searchParams),
+                queryUserId: queryUserId,
+                finalUserId: queryUserId || userId
+            }, 'success');
+            
+            // 如果有有效的userId，测试API调用
+            const finalUserId = queryUserId || userId;
+            if (finalUserId && finalUserId !== 'detail') {
+                testApiWithUserId(finalUserId);
+            }
+        };
+        
+        async function testApiWithUserId(userId) {
+            addResult(`📡 测试API调用`, `userId: ${userId}`);
+            
+            try {
+                // 动态导入API函数
+                const { fetchUserInfo } = await import('/src/mock/customer360.ts');
+                
+                console.log(`🚀 调用 fetchUserInfo(${userId})`);
+                const result = await fetchUserInfo(userId);
+                
+                console.log('📥 API响应:', result);
+                
+                if (result && result.error) {
+                    addResult('❌ API返回错误', {
+                        error: result.error,
+                        message: result.message,
+                        userId: result.userId
+                    }, 'error');
+                } else if (result) {
+                    addResult('✅ API调用成功', {
+                        userId: result.userId,
+                        name: result.name,
+                        hasBasicInfo: !!result.basicInfo,
+                        hasProducts: !!(result.selfProducts || result.loanProducts),
+                        dataKeys: Object.keys(result),
+                        selfProductsCount: result.selfProducts?.length || 0,
+                        loanProductsCount: result.loanProducts?.length || 0
+                    }, 'success');
+                } else {
+                    addResult('⚠️ API返回空数据', { userId }, 'error');
+                }
+                
+            } catch (error) {
+                console.error('💥 API调用失败:', error);
+                addResult('💥 API调用异常', {
+                    error: error.message,
+                    stack: error.stack
+                }, 'error');
+            }
+        }
+        
+        window.testDirectApi = async function() {
+            await testApiWithUserId('887123');
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        // 页面加载时更新URL信息
+        updateUrlInfo();
+        
+        // 监听URL变化
+        window.addEventListener('popstate', updateUrlInfo);
+        
+        // 自动测试当前URL
+        window.addEventListener('load', () => {
+            addResult('🎯 页面加载完成', '开始自动测试当前URL');
+            
+            // 检查当前URL是否包含userId
+            const currentPath = window.location.pathname;
+            const currentQuery = window.location.search;
+            
+            if (currentPath.includes('customer360') || currentQuery.includes('userId')) {
+                addResult('🔍 检测到customer360相关URL', '开始解析参数');
+                testUrl(currentPath + currentQuery);
+            } else {
+                addResult('ℹ️ 当前不是customer360页面', '手动测试API调用');
+                setTimeout(() => {
+                    testDirectApi();
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

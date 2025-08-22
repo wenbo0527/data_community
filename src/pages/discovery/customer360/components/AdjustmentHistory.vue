@@ -15,6 +15,19 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['debug-info'])
+
+// 发送调试信息到父组件
+const sendDebugInfo = (type, message, data = null) => {
+  emit('debug-info', {
+    component: 'AdjustmentHistory',
+    type,
+    message,
+    data,
+    timestamp: new Date().toISOString()
+  })
+}
+
 // 定义表格列配置
 const columns = [
   {
@@ -69,14 +82,18 @@ const columns = [
 
 // 监听props变化
 watch(() => props.history, (newVal) => {
-  // 可以在这里添加必要的业务逻辑
+  sendDebugInfo('props-change', 'history数据变化', {
+    hasHistory: !!newVal,
+    historyCount: newVal?.length || 0,
+    dataType: typeof newVal,
+    isArray: Array.isArray(newVal)
+  })
 }, { immediate: true, deep: true });
 
 onMounted(() => {
-  console.debug('[AdjustmentHistory] 组件挂载完成，初始数据:', {
-    timestamp: Date.now(),
+  sendDebugInfo('mounted', 'AdjustmentHistory组件挂载完成', {
     hasHistory: !!props.history,
-    historyCount: props.history?.length
+    historyCount: props.history?.length || 0
   });
 });
 </script>

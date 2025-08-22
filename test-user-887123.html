@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户887123专项测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .data-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+        .status-info { background-color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 用户887123专项测试</h1>
+        
+        <div class="test-section info">
+            <h3>📊 测试控制面板</h3>
+            <button onclick="testUserData()">🚀 测试用户数据获取</button>
+            <button onclick="testRenderLogic()">🎭 测试渲染逻辑</button>
+            <button onclick="openCustomer360()">📄 打开Customer360页面</button>
+            <button onclick="testMemoryIssue()">🧠 测试内存问题</button>
+            <button onclick="clearAll()">🗑️ 清空所有</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📈 测试状态</h3>
+            <div id="test-status">
+                <div><span class="status-indicator status-info"></span>等待测试开始...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 测试日志</h3>
+            <div id="log-output" class="log-output">等待测试结果...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 用户数据</h3>
+            <div id="data-display" class="data-display">等待数据加载...
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        let logOutput = document.getElementById('log-output');
+        let testStatus = document.getElementById('test-status');
+        let dataDisplay = document.getElementById('data-display');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logOutput.textContent += logEntry;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusClass = `status-${type}`;
+            testStatus.innerHTML = `<div><span class="status-indicator ${statusClass}"></span>${message}</div>`;
+        }
+        
+        function displayData(data, title = '数据') {
+            const dataStr = JSON.stringify(data, null, 2);
+            dataDisplay.innerHTML = `<h4>${title}</h4><pre>${dataStr}</pre>`;
+        }
+        
+        window.clearAll = function() {
+            logOutput.textContent = '';
+            dataDisplay.innerHTML = '等待数据加载...';
+            updateStatus('已清空', 'info');
+        }
+        
+        // 测试用户数据获取
+        window.testUserData = async function() {
+            addLog('🚀 开始测试用户887123数据获取...');
+            updateStatus('正在测试数据获取...', 'warning');
+            
+            try {
+                // 动态导入API函数
+                addLog('📦 导入API模块...');
+                const { fetchUserInfo } = await import('./src/mock/customer360.ts');
+                addLog('✅ API模块导入成功');
+                
+                // 测试API调用
+                addLog('📞 调用 fetchUserInfo("887123")...');
+                const startTime = performance.now();
+                const result = await fetchUserInfo('887123');
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+                
+                addLog(`✅ API调用完成，耗时: ${duration}ms`);
+                addLog(`📊 返回数据类型: ${typeof result}`);
+                addLog(`📊 数据是否为null: ${result === null}`);
+                addLog(`📊 数据是否为undefined: ${result === undefined}`);
+                
+                if (result) {
+                    if (result.error) {
+                        addLog(`❌ API返回错误: ${result.error}`);
+                        addLog(`❌ 错误消息: ${result.message}`);
+                        updateStatus('API返回错误', 'error');
+                        displayData(result, 'API错误响应');
+                    } else {
+                        addLog('✅ API返回正常数据');
+                        addLog(`📊 数据键: ${Object.keys(result).join(', ')}`);
+                        
+                        // 检查关键字段
+                        const checks = {
+                            'basicInfo': !!result.basicInfo,
+                            'name': !!result.basicInfo?.name,
+                            'age': !!result.basicInfo?.age,
+                            'phone': !!result.basicInfo?.phone,
+                            'depositProducts': Array.isArray(result.depositProducts),
+                            'loanProducts': Array.isArray(result.loanProducts),
+                            'creditsList': Array.isArray(result.creditsList),
+                            'loanRecords': Array.isArray(result.loanRecords),
+                            'quotaAdjustHistory': Array.isArray(result.quotaAdjustHistory)
+                        };
+                        
+                        addLog('🔍 关键字段检查:');
+                        Object.entries(checks).forEach(([key, value]) => {
+                            addLog(`  ${key}: ${value ? '✅' : '❌'}`);
+                        });
+                        
+                        // 显示基本信息
+                        if (result.basicInfo) {
+                            addLog('👤 用户基本信息:');
+                            addLog(`  姓名: ${result.basicInfo.name}`);
+                            addLog(`  年龄: ${result.basicInfo.age}`);
+                            addLog(`  性别: ${result.basicInfo.gender}`);
+                            addLog(`  手机: ${result.basicInfo.phone}`);
+                            addLog(`  客户号: ${result.basicInfo.customerNo}`);
+                        }
+                        
+                        // 显示产品信息
+                        addLog('🏦 产品信息:');
+                        addLog(`  存款产品: ${result.depositProducts?.length || 0} 个`);
+                        addLog(`  贷款产品: ${result.loanProducts?.length || 0} 个`);
+                        addLog(`  征信记录: ${result.creditsList?.length || 0} 条`);
+                        addLog(`  贷款记录: ${result.loanRecords?.length || 0} 条`);
+                        addLog(`  额度调整: ${result.quotaAdjustHistory?.length || 0} 条`);
+                        
+                        updateStatus('数据获取成功', 'success');
+                        displayData(result, '用户887123完整数据');
+                    }
+                } else {
+                    addLog('❌ API返回null或undefined');
+                    updateStatus('API返回空数据', 'error');
+                }
+                
+            } catch (error) {
+                addLog(`❌ 数据获取异常: ${error.message}`);
+                addLog(`❌ 错误堆栈: ${error.stack}`);
+                updateStatus('数据获取失败', 'error');
+                displayData({ error: error.message, stack: error.stack }, 'API调用异常');
+            }
+        }
+        
+        // 测试渲染逻辑
+        window.testRenderLogic = async function() {
+            addLog('🎭 开始测试渲染逻辑...');
+            updateStatus('正在测试渲染逻辑...', 'warning');
+            
+            try {
+                // 获取用户数据
+                const { fetchUserInfo } = await import('./src/mock/customer360.ts');
+                const userInfo = await fetchUserInfo('887123');
+                
+                // 模拟Vue组件的状态
+                let loading = true;
+                let error = null;
+                
+                addLog('📊 初始状态:');
+                addLog(`  loading: ${loading}`);
+                addLog(`  userInfo: ${userInfo ? '有数据' : 'null'}`);
+                addLog(`  error: ${error}`);
+                
+                // 模拟数据获取完成
+                loading = false;
+                
+                addLog('📊 数据获取后状态:');
+                addLog(`  loading: ${loading}`);
+                addLog(`  userInfo: ${userInfo ? (userInfo.error ? '错误对象' : '正常数据') : 'null'}`);
+                addLog(`  error: ${error}`);
+                
+                // 模拟条件渲染逻辑
+                addLog('🎭 条件渲染判断:');
+                if (loading) {
+                    addLog('  → 应该显示: 加载状态 (a-spin)');
+                } else if (userInfo && userInfo.error) {
+                    addLog('  → 应该显示: 错误页面');
+                    addLog(`    错误类型: ${userInfo.error}`);
+                    addLog(`    错误消息: ${userInfo.message}`);
+                } else if (!userInfo) {
+                    addLog('  → 应该显示: 无数据状态');
+                } else {
+                    addLog('  → 应该显示: 主要内容');
+                    addLog('    包含: 客户概览卡片、产品信息模块等');
+                }
+                
+                // 检查计算属性
+                if (userInfo && !userInfo.error) {
+                    addLog('🧮 计算属性检查:');
+                    
+                    // 模拟selfProductData计算属性
+                    const selfProducts = userInfo.depositProducts || [];
+                    addLog(`  selfProducts: ${selfProducts.length} 个`);
+                    
+                    // 模拟loanProductData计算属性
+                    const loanProducts = userInfo.loanProducts || [];
+                    addLog(`  loanProducts: ${loanProducts.length} 个`);
+                    
+                    // 模拟creditData计算属性
+                    const creditData = userInfo.creditsList || [];
+                    addLog(`  creditData: ${creditData.length} 条`);
+                    
+                    // 模拟loanData计算属性
+                    const loanData = userInfo.loanRecords || [];
+                    addLog(`  loanData: ${loanData.length} 条`);
+                    
+                    // 模拟adjustmentData计算属性
+                    const adjustmentData = userInfo.quotaAdjustHistory || [];
+                    addLog(`  adjustmentData: ${adjustmentData.length} 条`);
+                    
+                    // 检查是否有数据显示
+                    const hasAnyData = selfProducts.length > 0 || loanProducts.length > 0 || 
+                                     creditData.length > 0 || loanData.length > 0 || adjustmentData.length > 0;
+                    
+                    addLog(`  是否有数据可显示: ${hasAnyData ? '是' : '否'}`);
+                    
+                    if (!hasAnyData) {
+                        addLog('  ⚠️ 警告: 所有数据数组都为空，页面可能显示为空白');
+                    }
+                }
+                
+                updateStatus('渲染逻辑测试完成', 'success');
+                
+            } catch (error) {
+                addLog(`❌ 渲染逻辑测试失败: ${error.message}`);
+                updateStatus('渲染逻辑测试失败', 'error');
+            }
+        }
+        
+        // 打开Customer360页面
+        window.openCustomer360 = function() {
+            addLog('📄 打开Customer360页面...');
+            const url = '/discovery/customer360/887123';
+            const newWindow = window.open(url, '_blank');
+            
+            if (newWindow) {
+                addLog('✅ 页面已在新窗口中打开');
+                addLog(`🔗 URL: ${url}`);
+                updateStatus('页面已打开', 'success');
+                
+                // 监听页面加载事件
+                newWindow.addEventListener('load', () => {
+                    addLog('✅ 页面加载完成');
+                });
+                
+                newWindow.addEventListener('error', (e) => {
+                    addLog(`❌ 页面加载错误: ${e.message}`);
+                });
+            } else {
+                addLog('❌ 无法打开页面（可能被弹窗拦截）');
+                updateStatus('页面打开失败', 'error');
+            }
+        }
+        
+        // 测试内存问题
+        window.testMemoryIssue = function() {
+            addLog('🧠 开始测试内存问题...');
+            updateStatus('正在检查内存问题...', 'warning');
+            
+            // 检查EventEmitter监听器
+            addLog('🔍 检查EventEmitter监听器...');
+            
+            // 模拟多次API调用，看是否会累积监听器
+            let callCount = 0;
+            const maxCalls = 10;
+            
+            const testMultipleCalls = async () => {
+                try {
+                    const { fetchUserInfo } = await import('./src/mock/customer360.ts');
+                    
+                    for (let i = 0; i < maxCalls; i++) {
+                        callCount++;
+                        addLog(`📞 第${callCount}次API调用...`);
+                        
+                        const result = await fetchUserInfo('887123');
+                        
+                        if (result && !result.error) {
+                            addLog(`✅ 第${callCount}次调用成功`);
+                        } else {
+                            addLog(`❌ 第${callCount}次调用失败`);
+                        }
+                        
+                        // 检查内存使用
+                        if (performance.memory) {
+                            const memory = performance.memory;
+                            const usedMB = (memory.usedJSHeapSize / 1024 / 1024).toFixed(2);
+                            addLog(`📊 内存使用: ${usedMB} MB`);
+                        }
+                        
+                        // 短暂延迟
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
+                    addLog('✅ 多次调用测试完成');
+                    updateStatus('内存测试完成', 'success');
+                    
+                } catch (error) {
+                    addLog(`❌ 内存测试失败: ${error.message}`);
+                    updateStatus('内存测试失败', 'error');
+                }
+            };
+            
+            testMultipleCalls();
+        }
+        
+        // 页面加载时显示初始信息
+        addLog('🎉 用户887123专项测试工具已加载');
+        addLog('💡 点击上方按钮开始测试');
+        addLog('🎯 专门针对用户ID: 887123');
+    </script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer360 页面渲染检查</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .check-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .check-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #1890ff;
+            background: #f0f9ff;
+        }
+        .success { border-left-color: #52c41a; background: #f6ffed; }
+        .error { border-left-color: #ff4d4f; background: #fff2f0; }
+        .warning { border-left-color: #faad14; background: #fffbe6; }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="check-container">
+        <h1>🔍 Customer360 页面渲染检查工具</h1>
+        
+        <div class="check-item">
+            <strong>当前页面URL:</strong> <span id="current-url"></span>
+        </div>
+        
+        <div class="check-item">
+            <strong>检查时间:</strong> <span id="check-time"></span>
+        </div>
+        
+        <div>
+            <button onclick="checkPageInNewTab()">在新标签页中检查Customer360页面</button>
+            <button onclick="checkCurrentPage()">检查当前页面状态</button>
+            <button onclick="openCustomer360()">直接打开Customer360页面</button>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // 更新页面信息
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('check-time').textContent = new Date().toLocaleString();
+        
+        function log(message, type = 'info') {
+            const result = document.getElementById('result');
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            result.textContent += logMessage;
+            result.className = `result ${type}`;
+            console.log(message);
+        }
+        
+        function checkPageInNewTab() {
+            log('正在新标签页中打开Customer360页面...');
+            const customer360Url = 'http://localhost:5173/discovery/customer360/887123';
+            const newTab = window.open(customer360Url, '_blank');
+            
+            if (newTab) {
+                log('✅ 新标签页已打开，请手动检查页面内容');
+                
+                // 尝试在新标签页中执行检查（可能被跨域限制）
+                setTimeout(() => {
+                    try {
+                        const doc = newTab.document;
+                        if (doc) {
+                            const app = doc.getElementById('app');
+                            const debugPanel = doc.querySelector('.debug-toggle-btn');
+                            const customer360Container = doc.querySelector('.customer-detail-container');
+                            
+                            log(`检查结果:`);
+                            log(`- #app 元素: ${app ? '✅ 存在' : '❌ 不存在'}`);
+                            log(`- 调试按钮: ${debugPanel ? '✅ 存在' : '❌ 不存在'}`);
+                            log(`- 主容器: ${customer360Container ? '✅ 存在' : '❌ 不存在'}`);
+                            
+                            if (debugPanel) {
+                                log('🎯 找到调试按钮，建议点击查看调试信息');
+                            }
+                        }
+                    } catch (e) {
+                        log('⚠️ 无法访问新标签页内容（跨域限制），请手动检查页面');
+                    }
+                }, 2000);
+            } else {
+                log('❌ 无法打开新标签页，请检查弹窗拦截设置', 'error');
+            }
+        }
+        
+        function checkCurrentPage() {
+            log('开始检查当前页面状态...');
+            
+            // 基本页面检查
+            const checks = [
+                { name: 'document.readyState', value: document.readyState },
+                { name: 'window.location.href', value: window.location.href },
+                { name: 'document.title', value: document.title },
+                { name: 'DOM元素数量', value: document.querySelectorAll('*').length }
+            ];
+            
+            checks.forEach(check => {
+                log(`${check.name}: ${check.value}`);
+            });
+            
+            // 检查是否在Customer360页面
+            if (window.location.pathname.includes('customer360')) {
+                log('✅ 当前在Customer360页面');
+                checkCustomer360Elements();
+            } else {
+                log('ℹ️ 当前不在Customer360页面');
+            }
+        }
+        
+        function checkCustomer360Elements() {
+            const elements = [
+                { selector: '#app', name: 'Vue应用根元素' },
+                { selector: '.customer-detail-container', name: '客户详情容器' },
+                { selector: '.debug-toggle-btn', name: '调试按钮' },
+                { selector: '.unified-debug-panel', name: '调试面板' },
+                { selector: '.header', name: '页面头部' },
+                { selector: '.content', name: '主要内容' },
+                { selector: '.loading-container', name: '加载容器' },
+                { selector: '.error-container', name: '错误容器' },
+                { selector: '.empty-container', name: '空数据容器' }
+            ];
+            
+            log('\n🔍 检查页面元素:');
+            elements.forEach(element => {
+                const el = document.querySelector(element.selector);
+                const status = el ? '✅ 存在' : '❌ 不存在';
+                log(`  ${element.name}: ${status}`);
+                
+                if (el && element.selector === '.debug-toggle-btn') {
+                    log('    💡 建议点击调试按钮查看详细信息');
+                }
+            });
+            
+            // 检查Vue应用状态
+            const app = document.getElementById('app');
+            if (app && app.__vue_app__) {
+                log('\n✅ Vue应用已正确挂载');
+            } else {
+                log('\n❌ Vue应用未正确挂载', 'error');
+            }
+        }
+        
+        function openCustomer360() {
+            log('正在跳转到Customer360页面...');
+            window.location.href = 'http://localhost:5173/discovery/customer360/887123';
+        }
+        
+        // 自动执行初始检查
+        setTimeout(() => {
+            log('=== 自动检查开始 ===');
+            checkCurrentPage();
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -2319,12 +2319,36 @@ const bindEvents = () => {
       // 获取图形节点中NodeConfigManager处理后的完整数据
       const graphNodeData = node.getData() || {}
       const processedConfig = graphNodeData.config || config
-
+      
+      // 🔧 修复：检查配置更新前后的isConfigured状态
+      const beforeIsConfigured = graphNodeData.isConfigured
       console.log(`[TaskFlowCanvas] 节点配置更新事件 - ${nodeType}:`, {
         nodeId: node.id,
         originalConfig: config,
         processedConfig: processedConfig,
+        beforeIsConfigured: beforeIsConfigured,
         hasBranches: !!(processedConfig.branches && processedConfig.branches.length > 0)
+      })
+
+      // 🔧 修复：确保图形节点的isConfigured状态被正确设置为true
+      const updatedGraphNodeData = {
+        ...graphNodeData,
+        isConfigured: true,
+        config: processedConfig,
+        lastUpdated: Date.now()
+      }
+      
+      // 更新图形节点数据
+      node.setData(updatedGraphNodeData)
+      
+      // 验证图形节点的isConfigured状态是否正确设置
+      const afterGraphNodeData = node.getData() || {}
+      console.log(`[TaskFlowCanvas] 图形节点isConfigured状态同步:`, {
+        nodeId: node.id,
+        nodeType: nodeType,
+        beforeIsConfigured: beforeIsConfigured,
+        afterIsConfigured: afterGraphNodeData.isConfigured,
+        syncSuccess: afterGraphNodeData.isConfigured === true
       })
 
       // 更新本地节点数据，使用NodeConfigManager处理后的配置
@@ -2332,6 +2356,7 @@ const bindEvents = () => {
       nodeData.data = {
         ...nodeData.data,
         config: processedConfig,
+        isConfigured: true,
         lastUpdated: Date.now()
       }
 
@@ -2353,6 +2378,15 @@ const bindEvents = () => {
           })
         }
       }
+      
+      // 🔧 修复：确保本地节点数据和图形节点数据的isConfigured状态保持一致
+      console.log(`[TaskFlowCanvas] 节点配置同步完成:`, {
+        nodeId: node.id,
+        nodeType: nodeType,
+        localIsConfigured: nodeData.data.isConfigured,
+        graphIsConfigured: afterGraphNodeData.isConfigured,
+        dataConsistent: nodeData.data.isConfigured === afterGraphNodeData.isConfigured
+      })
 
       emit('node-updated', nodeData)
     }
@@ -2446,11 +2480,17 @@ const initializeLayoutEngineAfterDataLoad = async () => {
     configDrawers.value.structuredLayout.initializeLayoutEngine()
     console.log('[TaskFlowCanvas] 布局引擎初始化完成')
 
-    // 立即应用布局来创建布局引擎实例（现在画布上有节点了）
-    if (graph && typeof configDrawers.value.structuredLayout.applyUnifiedStructuredLayout === 'function') {
+    // 🔧 关键修复：直接创建布局引擎实例，不依赖于布局应用
+    // 因为applyUnifiedStructuredLayout要求至少3个节点，但在开始节点配置时可能只有1-2个节点
+    if (graph) {
       try {
-        await configDrawers.value.structuredLayout.applyUnifiedStructuredLayout(graph)
-        console.log('✅ [TaskFlowCanvas] 布局引擎实例已创建（包含层级信息）')
+        // 强制创建布局引擎实例（即使节点数量不足）
+        const layoutEngineInstance = configDrawers.value.structuredLayout.createLayoutEngineInstance?.(graph)
+        if (layoutEngineInstance) {
+          console.log('✅ [TaskFlowCanvas] 布局引擎实例已强制创建')
+        } else {
+          console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败')
+        }
       } catch (error) {
         console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败:', error)
       }
@@ -2468,16 +2508,42 @@ const initializeLayoutEngineAfterDataLoad = async () => {
     if (connectionPreviewManager) {
       console.log('[TaskFlowCanvas] 统一预览线管理器已成功初始化并绑定事件监听器')
       
-      // 设置布局引擎引用到预览线管理器
-      const layoutEngine = configDrawers.value.structuredLayout.getLayoutEngine?.()
-      if (layoutEngine && typeof connectionPreviewManager.setLayoutEngine === 'function') {
-        connectionPreviewManager.setLayoutEngine(layoutEngine)
-        console.log('✅ [TaskFlowCanvas] 布局引擎引用已设置（包含层级信息）')
-      } else {
-        console.warn('⚠️ [TaskFlowCanvas] 无法设置布局引擎引用:', {
+      // 🔧 修复：设置布局引擎引用到预览线管理器
+      const setupLayoutEngineReference = () => {
+        const layoutEngine = configDrawers.value.structuredLayout.getLayoutEngine?.()
+        console.log('🔍 [TaskFlowCanvas] 获取布局引擎实例:', {
           layoutEngine: !!layoutEngine,
-          setLayoutEngineMethod: typeof connectionPreviewManager.setLayoutEngine
+          isNull: layoutEngine === null,
+          isUndefined: layoutEngine === undefined,
+          type: typeof layoutEngine,
+          hasSetMethod: typeof connectionPreviewManager.setLayoutEngine === 'function'
         })
+        
+        if (layoutEngine && typeof connectionPreviewManager.setLayoutEngine === 'function') {
+          connectionPreviewManager.setLayoutEngine(layoutEngine)
+          console.log('✅ [TaskFlowCanvas] 布局引擎引用已设置')
+          return true
+        } else {
+          console.warn('⚠️ [TaskFlowCanvas] 无法设置布局引擎引用:', {
+            layoutEngine: !!layoutEngine,
+            setLayoutEngineMethod: typeof connectionPreviewManager.setLayoutEngine,
+            reason: !layoutEngine ? 'layoutEngine不存在' : 
+                    typeof connectionPreviewManager.setLayoutEngine !== 'function' ? 'setLayoutEngine方法不可用' : '未知原因'
+          })
+          return false
+        }
+      }
+      
+      // 🔧 修复：如果布局引擎还未就绪，则创建布局引擎实例
+      let layoutEngineSet = setupLayoutEngineReference()
+      
+      if (!layoutEngineSet && typeof configDrawers.value.structuredLayout.createLayoutEngineInstance === 'function') {
+        console.log('🏗️ [TaskFlowCanvas] 布局引擎未就绪，尝试创建布局引擎实例')
+        const createdEngine = configDrawers.value.structuredLayout.createLayoutEngineInstance(graph)
+        if (createdEngine) {
+          console.log('✅ [TaskFlowCanvas] 布局引擎实例创建成功，重新设置引用')
+          layoutEngineSet = setupLayoutEngineReference()
+        }
       }
 
       // 🔧 新增：执行数据加载完成后的预览线清理检查
@@ -2636,9 +2702,13 @@ const addStartNode = () => {
     position: { x: 400, y: 100 },
     data: {
       fixed: true,
-      level: 0
+      level: 0,
+      // 🔧 修复：开始节点默认为已配置状态
+      isConfigured: true
     },
-    config: nodeConfig
+    config: nodeConfig,
+    // 🔧 修复：在顶层也设置isConfigured字段
+    isConfigured: true
   }
 
   console.log('[TaskFlowCanvas] 创建的开始节点数据:', startNodeData)
@@ -4316,8 +4386,15 @@ const loadCanvasData = (data) => {
               
               // 检查源节点是否已配置
               const sourceData = sourceNode.getData() || {}
+              const nodeType = sourceData.nodeType || sourceData.type
+              
+              // 🎯 区分分流类节点和普通节点的清理标准
+              const isSplitNode = ['audience-split', 'event-split', 'ab-test'].includes(nodeType)
+              
               if (!sourceData.isConfigured) {
-                console.log(`🗑️ [TaskFlowCanvas] 清理无效预览线(源节点未配置): ${edge.id}`)
+                // 对于分流类节点，如果未配置则清理
+                // 对于普通节点，如果未配置也清理
+                console.log(`🗑️ [TaskFlowCanvas] 清理无效预览线(源节点未配置): ${edge.id}, 节点类型: ${nodeType}`)
                 try {
                   graph.removeCell(edge)
                   invalidCount++
@@ -4327,9 +4404,33 @@ const loadCanvasData = (data) => {
                 return
               }
               
-              // 预览线有效，保留
+              // 🎯 对于已配置的分流类节点，检查是否有分支配置
+              if (isSplitNode && sourceData.isConfigured) {
+                // 分流类节点已配置，保留其预览线（即使目标节点不存在）
+                validCount++
+                console.log(`✅ [TaskFlowCanvas] 保留分流节点预览线: ${edge.id}, 节点类型: ${nodeType}`)
+                return
+              }
+              
+              // 🎯 对于普通节点，检查目标节点是否存在
+              const targetId = edge.getTargetCellId()
+              const targetNode = graph.getCellById(targetId)
+              
+              if (!targetNode && !isSplitNode) {
+                // 普通节点的预览线如果没有有效目标，则清理
+                console.log(`🗑️ [TaskFlowCanvas] 清理无效预览线(目标节点不存在): ${edge.id}, 源节点类型: ${nodeType}`)
+                try {
+                  graph.removeCell(edge)
+                  invalidCount++
+                } catch (error) {
+                  console.error(`❌ [TaskFlowCanvas] 清理预览线失败: ${edge.id}`, error)
+                }
+                return
+              }
+              
+              // 🎯 默认情况：普通节点的有效预览线，保留
               validCount++
-              console.log(`✅ [TaskFlowCanvas] 保留有效预览线: ${edge.id}`)
+              console.log(`✅ [TaskFlowCanvas] 保留有效预览线: ${edge.id}, 节点类型: ${nodeType || 'unknown'}`)
             })
             
             console.log(`✅ [TaskFlowCanvas] 智能清理完成，清理了 ${invalidCount} 条无效预览线，保留了 ${validCount} 条有效预览线`)

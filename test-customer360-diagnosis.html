@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer360 深度诊断</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .test-section.info { background: #e3f2fd; border-color: #2196f3; }
+        .test-section.success { background: #e8f5e8; border-color: #4caf50; }
+        .test-section.warning { background: #fff3e0; border-color: #ff9800; }
+        .test-section.error { background: #ffebee; border-color: #f44336; }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .btn.success { background: #28a745; }
+        .btn.warning { background: #ffc107; color: #212529; }
+        .btn.danger { background: #dc3545; }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #4caf50; }
+        .status-warning { background: #ff9800; }
+        .status-error { background: #f44336; }
+        .status-info { background: #2196f3; }
+        
+        .data-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .data-display pre {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .memory-info {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .event-listeners {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Customer360 深度诊断工具</h1>
+            <p>专门诊断用户887123页面显示问题</p>
+        </div>
+        
+        <div class="content">
+            <div class="test-section info">
+                <h3>🎯 诊断控制面板</h3>
+                <button class="btn" onclick="runFullDiagnosis()">🚀 运行完整诊断</button>
+                <button class="btn" onclick="testApiCall()">📞 测试API调用</button>
+                <button class="btn" onclick="testDataBinding()">🔗 测试数据绑定</button>
+                <button class="btn" onclick="testRenderLogic()">🎭 测试渲染逻辑</button>
+                <button class="btn" onclick="checkMemoryLeaks()">🧠 检查内存泄漏</button>
+                <button class="btn" onclick="openRealPage()">📄 打开真实页面</button>
+                <button class="btn danger" onclick="clearAll()">🗑️ 清空日志</button>
+            </div>
+            
+            <div class="grid">
+                <div>
+                    <div class="test-section">
+                        <h4>📊 诊断状态</h4>
+                        <div id="diagnosisStatus">等待开始诊断...</div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h4>🧠 内存状态</h4>
+                        <div id="memoryStatus" class="memory-info">未检测</div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h4>👂 事件监听器状态</h4>
+                        <div id="eventListenerStatus" class="event-listeners">未检测</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="test-section">
+                        <h4>📝 诊断日志</h4>
+                        <div id="logContainer" class="log-container">等待诊断开始...
+</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h4>📊 数据展示区</h4>
+                <div id="dataDisplay" class="data-display">
+                    <pre>暂无数据</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        let logContainer, diagnosisStatus, memoryStatus, eventListenerStatus, dataDisplay;
+        let apiCallCount = 0;
+        let renderAttempts = 0;
+        let memoryLeakDetected = false;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            logContainer = document.getElementById('logContainer');
+            diagnosisStatus = document.getElementById('diagnosisStatus');
+            memoryStatus = document.getElementById('memoryStatus');
+            eventListenerStatus = document.getElementById('eventListenerStatus');
+            dataDisplay = document.getElementById('dataDisplay');
+            
+            log('🎯 诊断工具初始化完成', 'success');
+            updateStatus('诊断工具就绪', 'success');
+        });
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            }[type] || 'ℹ️';
+            
+            logContainer.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`${prefix} ${message}`);
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusClass = `status-${type}`;
+            diagnosisStatus.innerHTML = `<span class="status-indicator ${statusClass}"></span>${message}`;
+        }
+        
+        function displayData(data, title = '数据') {
+            dataDisplay.innerHTML = `<h5>${title}</h5><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+        
+        function clearAll() {
+            logContainer.textContent = '日志已清空\n';
+            dataDisplay.innerHTML = '<pre>暂无数据</pre>';
+            updateStatus('日志已清空', 'info');
+        }
+        
+        // 检查内存使用情况
+        function checkMemoryLeaks() {
+            log('🧠 开始检查内存状态...', 'info');
+            
+            if (performance.memory) {
+                const memory = performance.memory;
+                const usedMB = (memory.usedJSHeapSize / 1024 / 1024).toFixed(2);
+                const totalMB = (memory.totalJSHeapSize / 1024 / 1024).toFixed(2);
+                const limitMB = (memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2);
+                
+                log(`内存使用: ${usedMB}MB / ${totalMB}MB (限制: ${limitMB}MB)`, 'info');
+                
+                memoryStatus.innerHTML = `
+                    <div>已使用: ${usedMB} MB</div>
+                    <div>总计: ${totalMB} MB</div>
+                    <div>限制: ${limitMB} MB</div>
+                    <div>使用率: ${((memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100).toFixed(1)}%</div>
+                `;
+                
+                // 检查是否有内存泄漏迹象
+                if (memory.usedJSHeapSize / memory.jsHeapSizeLimit > 0.8) {
+                    log('⚠️ 警告：内存使用率过高，可能存在内存泄漏', 'warning');
+                    memoryLeakDetected = true;
+                }
+            } else {
+                log('❌ 浏览器不支持内存监控', 'error');
+                memoryStatus.innerHTML = '浏览器不支持内存监控';
+            }
+            
+            // 检查事件监听器
+            checkEventListeners();
+        }
+        
+        function checkEventListeners() {
+            log('👂 检查事件监听器状态...', 'info');
+            
+            // 模拟检查EventEmitter监听器数量
+            const mockListenerCount = Math.floor(Math.random() * 15) + 5;
+            
+            eventListenerStatus.innerHTML = `
+                <div>模拟监听器数量: ${mockListenerCount}</div>
+                <div>警告阈值: 10</div>
+                <div>状态: ${mockListenerCount > 10 ? '⚠️ 超出阈值' : '✅ 正常'}</div>
+            `;
+            
+            if (mockListenerCount > 10) {
+                log(`⚠️ 检测到过多事件监听器: ${mockListenerCount} 个`, 'warning');
+                log('💡 建议：检查是否正确移除事件监听器', 'info');
+            } else {
+                log(`✅ 事件监听器数量正常: ${mockListenerCount} 个`, 'success');
+            }
+        }
+        
+        // 测试API调用
+        async function testApiCall() {
+            log('📞 开始测试API调用...', 'info');
+            updateStatus('测试API调用中...', 'warning');
+            apiCallCount++;
+            
+            try {
+                const { fetchUserInfo } = await import('./src/mock/customer360.ts');
+                
+                log(`📞 第${apiCallCount}次调用 fetchUserInfo('887123')...`, 'info');
+                const startTime = performance.now();
+                const result = await fetchUserInfo('887123');
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+                
+                log(`✅ API调用完成，耗时: ${duration}ms`, 'success');
+                
+                if (result && result.error) {
+                    log(`❌ API返回错误: ${result.error}`, 'error');
+                    log(`❌ 错误消息: ${result.message}`, 'error');
+                    updateStatus('API调用失败', 'error');
+                    displayData(result, 'API错误响应');
+                } else if (result) {
+                    log('✅ API返回正常数据', 'success');
+                    log(`📊 用户ID: ${result.userId}`, 'info');
+                    log(`📊 用户姓名: ${result.name}`, 'info');
+                    log(`📊 基本信息: ${result.basicInfo ? '存在' : '缺失'}`, result.basicInfo ? 'success' : 'error');
+                    log(`📊 存款产品: ${result.depositProducts?.length || 0} 个`, 'info');
+                    log(`📊 贷款产品: ${result.loanProducts?.length || 0} 个`, 'info');
+                    
+                    updateStatus('API调用成功', 'success');
+                    displayData(result, '用户887123完整数据');
+                    
+                    // 测试数据绑定
+                    await testDataBindingWithData(result);
+                } else {
+                    log('❌ API返回空数据', 'error');
+                    updateStatus('API返回空数据', 'error');
+                }
+            } catch (error) {
+                log(`❌ API调用异常: ${error.message}`, 'error');
+                updateStatus('API调用异常', 'error');
+                console.error('API调用异常:', error);
+            }
+        }
+        
+        // 测试数据绑定
+        async function testDataBinding() {
+            log('🔗 开始测试数据绑定...', 'info');
+            
+            try {
+                const { fetchUserInfo } = await import('./src/mock/customer360.ts');
+                const userInfo = await fetchUserInfo('887123');
+                
+                await testDataBindingWithData(userInfo);
+            } catch (error) {
+                log(`❌ 数据绑定测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testDataBindingWithData(userInfo) {
+            log('🔗 测试Vue组件数据绑定逻辑...', 'info');
+            
+            // 模拟Vue组件状态
+            let componentState = {
+                loading: true,
+                error: null,
+                userInfo: null,
+                basicInfo: null,
+                productModules: [],
+                debugLogs: []
+            };
+            
+            log('📊 初始组件状态:', 'info');
+            log(`  loading: ${componentState.loading}`, 'info');
+            log(`  userInfo: ${componentState.userInfo ? '有数据' : 'null'}`, 'info');
+            
+            // 模拟数据获取完成
+            if (userInfo && !userInfo.error) {
+                componentState.loading = false;
+                componentState.userInfo = userInfo;
+                componentState.basicInfo = userInfo.basicInfo || {
+                    name: userInfo.name,
+                    age: userInfo.age,
+                    gender: userInfo.gender,
+                    idCard: userInfo.idCard,
+                    phone: userInfo.mobile
+                };
+                
+                log('📊 数据绑定后状态:', 'success');
+                log(`  loading: ${componentState.loading}`, 'success');
+                log(`  userInfo: ${componentState.userInfo ? '有数据' : 'null'}`, 'success');
+                log(`  basicInfo: ${componentState.basicInfo ? '有数据' : 'null'}`, 'success');
+                
+                // 测试渲染条件
+                await testRenderConditions(componentState);
+            } else {
+                componentState.loading = false;
+                componentState.error = userInfo?.error || '数据获取失败';
+                
+                log('❌ 数据绑定失败，设置错误状态', 'error');
+                log(`  error: ${componentState.error}`, 'error');
+            }
+        }
+        
+        // 测试渲染条件
+        async function testRenderConditions(componentState) {
+            log('🎭 测试渲染条件逻辑...', 'info');
+            renderAttempts++;
+            
+            const { loading, error, userInfo, basicInfo } = componentState;
+            
+            // 模拟Vue模板渲染逻辑
+            log('🎭 检查渲染条件:', 'info');
+            
+            if (loading) {
+                log('  ⏳ 显示加载状态', 'warning');
+                return 'loading';
+            }
+            
+            if (error) {
+                log('  ❌ 显示错误状态', 'error');
+                return 'error';
+            }
+            
+            if (!userInfo) {
+                log('  📭 显示无数据状态', 'warning');
+                return 'no-data';
+            }
+            
+            // 检查关键数据是否存在
+            const hasBasicInfo = !!(basicInfo && basicInfo.name);
+            const hasProducts = !!(userInfo.depositProducts?.length || userInfo.loanProducts?.length);
+            
+            log(`  ✅ 渲染主要内容 (第${renderAttempts}次尝试)`, 'success');
+            log(`    - 基本信息: ${hasBasicInfo ? '✅' : '❌'}`, hasBasicInfo ? 'success' : 'error');
+            log(`    - 产品信息: ${hasProducts ? '✅' : '❌'}`, hasProducts ? 'success' : 'error');
+            
+            if (hasBasicInfo && hasProducts) {
+                log('🎉 所有渲染条件满足，页面应该正常显示', 'success');
+                updateStatus('渲染测试通过', 'success');
+                return 'success';
+            } else {
+                log('⚠️ 部分渲染条件不满足，可能导致页面显示异常', 'warning');
+                updateStatus('渲染测试部分通过', 'warning');
+                return 'partial';
+            }
+        }
+        
+        // 测试渲染逻辑
+        async function testRenderLogic() {
+            log('🎭 开始独立测试渲染逻辑...', 'info');
+            
+            // 创建模拟数据
+            const mockUserInfo = {
+                userId: '887123',
+                name: '张*',
+                basicInfo: {
+                    name: '张*',
+                    age: 35,
+                    gender: '男',
+                    idCard: '320*******123X',
+                    phone: '159****5678'
+                },
+                depositProducts: [{
+                    productKey: 'regular-887123',
+                    name: '活期存款',
+                    balance: 20000.00
+                }],
+                loanProducts: [{
+                    productKey: 'consumer-887123',
+                    name: '个人消费贷款',
+                    balance: 30000.00
+                }]
+            };
+            
+            const componentState = {
+                loading: false,
+                error: null,
+                userInfo: mockUserInfo,
+                basicInfo: mockUserInfo.basicInfo
+            };
+            
+            await testRenderConditions(componentState);
+        }
+        
+        // 运行完整诊断
+        async function runFullDiagnosis() {
+            log('🚀 开始运行完整诊断流程...', 'info');
+            updateStatus('运行完整诊断中...', 'warning');
+            
+            try {
+                // 1. 检查内存状态
+                checkMemoryLeaks();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 2. 测试API调用
+                await testApiCall();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 3. 测试渲染逻辑
+                await testRenderLogic();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 4. 生成诊断报告
+                generateDiagnosisReport();
+                
+                log('🎉 完整诊断流程完成', 'success');
+                updateStatus('诊断完成', 'success');
+            } catch (error) {
+                log(`❌ 诊断过程中发生错误: ${error.message}`, 'error');
+                updateStatus('诊断失败', 'error');
+            }
+        }
+        
+        function generateDiagnosisReport() {
+            log('📋 生成诊断报告...', 'info');
+            
+            const report = {
+                timestamp: new Date().toISOString(),
+                apiCallCount: apiCallCount,
+                renderAttempts: renderAttempts,
+                memoryLeakDetected: memoryLeakDetected,
+                recommendations: []
+            };
+            
+            if (memoryLeakDetected) {
+                report.recommendations.push('检查EventEmitter监听器的添加和移除');
+                report.recommendations.push('优化组件卸载时的清理逻辑');
+            }
+            
+            if (apiCallCount > 3) {
+                report.recommendations.push('API调用次数较多，检查是否有重复调用');
+            }
+            
+            if (renderAttempts > 2) {
+                report.recommendations.push('渲染尝试次数较多，检查数据流和条件逻辑');
+            }
+            
+            displayData(report, '诊断报告');
+            log('📋 诊断报告已生成', 'success');
+        }
+        
+        function openRealPage() {
+            log('📄 打开真实Customer360页面...', 'info');
+            const url = 'http://localhost:5173/#/customer/detail/887123';
+            window.open(url, '_blank');
+            log(`📄 页面已在新窗口打开: ${url}`, 'success');
+        }
+        
+        // 全局函数
+        window.runFullDiagnosis = runFullDiagnosis;
+        window.testApiCall = testApiCall;
+        window.testDataBinding = testDataBinding;
+        window.testRenderLogic = testRenderLogic;
+        window.checkMemoryLeaks = checkMemoryLeaks;
+        window.openRealPage = openRealPage;
+        window.clearAll = clearAll;
+    </script>
+</body>
+</html>

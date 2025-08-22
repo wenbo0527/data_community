@@ -36,10 +36,10 @@ export class GeometricCenterAlignment {
       enableGlobalAlignment: true,
       enableMixedDepthHandling: true,
       
-      // 间距配置
-      minSpacing: 150,
-      preferredSpacing: 200,
-      maxWidth: 800,
+      // 间距配置 - 🔥 关键修复：减小分支节点间距，确保居中对齐
+      minSpacing: 120,
+      preferredSpacing: 150, // 从200减少到150，减小分支分布范围
+      maxWidth: 600, // 从800减少到600，控制最大分布宽度
       
       // 调试配置
       enableDebug: true,
@@ -109,7 +109,7 @@ export class GeometricCenterAlignment {
       }
       
       // 步骤6：验证对齐结果
-      this.validateAlignment(layers, optimizedPositions);
+      this.validateAlignmentDetailed(layers, optimizedPositions);
       
       this.calculationStats.totalCalculations++;
       console.log('✅ [几何中心对齐] 计算完成');
@@ -127,13 +127,25 @@ export class GeometricCenterAlignment {
    * @returns {Array<LayerNode>} 叶子节点列表
    */
   identifyLeafNodes(layers) {
+    // 🔧 修复：添加参数验证，防止undefined错误
+    if (!layers || !Array.isArray(layers)) {
+      console.warn('⚠️ [叶子节点识别] layers参数无效，返回空数组');
+      return [];
+    }
+    
     const leafNodes = [];
     const nodeChildrenMap = new Map();
     
     // 构建父子关系映射
     layers.forEach(layer => {
+      // 🔧 修复：验证layer和layer.nodes的有效性
+      if (!layer || !Array.isArray(layer.nodes)) {
+        console.warn('⚠️ [叶子节点识别] 无效的layer或layer.nodes');
+        return;
+      }
+      
       layer.nodes.forEach(node => {
-        if (node.children && node.children.length > 0) {
+        if (node && node.children && node.children.length > 0) {
           nodeChildrenMap.set(node.id, node.children);
         }
       });
@@ -141,8 +153,14 @@ export class GeometricCenterAlignment {
     
     // 识别叶子节点（没有子节点的节点）
     layers.forEach((layer, layerIndex) => {
+      // 🔧 修复：再次验证layer和layer.nodes的有效性
+      if (!layer || !Array.isArray(layer.nodes)) {
+        console.warn(`⚠️ [叶子节点识别] 第${layerIndex}层无效`);
+        return;
+      }
+      
       layer.nodes.forEach(node => {
-        if (!nodeChildrenMap.has(node.id)) {
+        if (node && node.id && !nodeChildrenMap.has(node.id)) {
           leafNodes.push({
             ...node,
             layerIndex,
@@ -178,9 +196,20 @@ export class GeometricCenterAlignment {
       return;
     }
     
-    // 多个叶子节点，等间距分布
-    const totalWidth = Math.min(this.config.maxWidth, leafNodes.length * this.config.preferredSpacing);
-    const spacing = totalWidth / (leafNodes.length - 1);
+    // 🔥 关键修复：优化多个叶子节点的分布算法，确保更紧密的居中对齐
+    let totalWidth, spacing;
+    
+    if (leafNodes.length === 2) {
+       // 🔥 关键修复：两个节点使用极小间距，确保分支中心与父子节点中心对齐
+       spacing = Math.min(this.config.preferredSpacing * 0.3, 60); // 最大60px间距，确保偏差<30px
+       totalWidth = spacing;
+     } else {
+      // 多个节点：动态计算合适的间距
+      const baseSpacing = Math.min(this.config.preferredSpacing, 150);
+      totalWidth = Math.min(this.config.maxWidth, (leafNodes.length - 1) * baseSpacing);
+      spacing = totalWidth / (leafNodes.length - 1);
+    }
+    
     const startX = -totalWidth / 2;
     
     leafNodes.forEach((node, index) => {
@@ -188,7 +217,7 @@ export class GeometricCenterAlignment {
       const currentPos = positions.get(node.id) || { x: 0, y: 0 };
       positions.set(node.id, { ...currentPos, x });
       
-      console.log(`📍 [叶子分布] ${node.id} -> x=${x.toFixed(1)} (索引${index})`);
+      console.log(`📍 [叶子分布] ${node.id} -> x=${x.toFixed(1)} (索引${index}, 间距=${spacing.toFixed(1)})`);
     });
     
     // 验证叶子节点中心
@@ -206,11 +235,22 @@ export class GeometricCenterAlignment {
   async calculateParentPositionsBottomUp(layers, positions) {
     console.log('⬆️ [自底向上] 开始计算父节点位置');
     
+    // 🔧 修复：添加参数验证
+    if (!layers || !Array.isArray(layers)) {
+      console.warn('⚠️ [父节点计算] layers参数无效');
+      return;
+    }
+    
     // 构建父子关系映射
     const parentChildrenMap = new Map();
     layers.forEach(layer => {
+      if (!layer || !Array.isArray(layer.nodes)) {
+        console.warn('⚠️ [父节点计算] 无效的layer或layer.nodes');
+        return;
+      }
+      
       layer.nodes.forEach(node => {
-        if (node.children && node.children.length > 0) {
+        if (node && node.children && node.children.length > 0) {
           parentChildrenMap.set(node.id, node.children);
         }
       });
@@ -253,11 +293,23 @@ export class GeometricCenterAlignment {
   async handleMixedDepthAlignment(layers, positions) {
     console.log('🔧 [混合深度] 开始处理混合深度对齐');
     
+    // 🔧 修复：添加参数验证
+    if (!layers || !Array.isArray(layers)) {
+      console.warn('⚠️ [混合深度对齐] layers参数无效');
+      return;
+    }
+    
     // 检测每层的几何中心
     const layerCenters = [];
     
     layers.forEach((layer, layerIndex) => {
+      if (!layer || !Array.isArray(layer.nodes)) {
+        console.warn(`⚠️ [混合深度对齐] 第${layerIndex}层无效`);
+        return;
+      }
+      
       const layerXCoords = layer.nodes.map(node => {
+        if (!node || !node.id) return 0;
         const pos = positions.get(node.id);
         return pos ? pos.x : 0;
       });
@@ -457,10 +509,38 @@ export class GeometricCenterAlignment {
   validateAlignmentDetailed(layers, positions) {
     console.log('🔍 [对齐验证] 开始验证对齐结果');
     
+    // 🔧 修复：添加参数验证
+    if (!layers || !Array.isArray(layers)) {
+      console.warn('⚠️ [对齐验证] layers参数无效');
+      return {
+        quality: '无效',
+        variance: 0,
+        layerCenters: [],
+        stats: this.calculationStats
+      };
+    }
+    
+    if (!positions || !(positions instanceof Map)) {
+      console.warn('⚠️ [对齐验证] positions参数无效');
+      return {
+        quality: '无效',
+        variance: 0,
+        layerCenters: [],
+        stats: this.calculationStats
+      };
+    }
+    
     const layerCenters = [];
     
     layers.forEach((layer, layerIndex) => {
+      // 🔧 修复：验证layer和layer.nodes的有效性
+      if (!layer || !Array.isArray(layer.nodes)) {
+        console.warn(`⚠️ [对齐验证] 第${layerIndex}层无效`);
+        return;
+      }
+      
       const layerXCoords = layer.nodes.map(node => {
+        if (!node || !node.id) return 0;
         const pos = positions.get(node.id);
         return pos ? pos.x : 0;
       }).filter(x => !isNaN(x));
