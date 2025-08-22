@@ -71,6 +71,9 @@ importers:
       file-saver:
         specifier: ^2.0.5
         version: 2.0.5
+      mockjs:
+        specifier: ^1.1.0
+        version: 1.1.0
       monaco-editor:
         specifier: ^0.52.2
         version: 0.52.2
