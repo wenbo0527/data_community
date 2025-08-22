@@ -83,6 +83,9 @@ importers:
       pinia:
         specifier: ^2.1.7
         version: 2.3.1(typescript@5.9.2)(vue@3.5.19(typescript@5.9.2))
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
       vue:
         specifier: ^3.5.19
         version: 3.5.19(typescript@5.9.2)
@@ -3226,6 +3229,10 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
 
   varint@6.0.0:
     resolution: {integrity: sha512-cXEIW6cfr15lFv563k4GuVuW/fiwjknytD37jIOLSdSWuOI6WnO/oKwmP2FQTU2l01LP8/M5TSAJpzUaGe3uWg==}
@@ -6534,6 +6541,8 @@ snapshots:
   utility-types@3.11.0: {}
 
   utils-merge@1.0.1: {}
+
+  uuid@11.1.0: {}
 
   varint@6.0.0: {}
 
