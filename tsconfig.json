@@ -26,7 +26,6 @@
       "@/*": ["src/*"]
     },
     "types": ["vite/client", "node"],
-    "allowImportingTsExtensions": true,
     "allowJs": true,
     "checkJs": false
   },

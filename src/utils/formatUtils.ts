@@ -276,4 +276,20 @@ export class FormatUtils {
   }
 }
 
+// 导出便捷函数
+export const formatAmount = FormatUtils.formatAmount
+export const formatPercent = FormatUtils.formatPercentage
+export const formatNumber = FormatUtils.formatNumber
+export const formatPhone = FormatUtils.formatPhone
+export const maskPhone = FormatUtils.maskPhone
+export const maskIdCard = FormatUtils.maskIdCard
+export const maskBankCard = FormatUtils.maskBankCard
+export const formatFileSize = FormatUtils.formatFileSize
+export const formatTerm = FormatUtils.formatTerm
+export const formatAddress = FormatUtils.formatAddress
+export const truncateText = FormatUtils.truncateText
+export const formatEnum = FormatUtils.formatEnum
+export const formatStatus = FormatUtils.formatStatus
+export const formatRiskLevel = FormatUtils.formatRiskLevel
+
 export default FormatUtils
