@@ -1,17 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-library'
+import { mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import BasicInfo from '@/pages/discovery/customer360/components/BasicInfo.vue'
 import { createMockUserData } from '../setup'
-
-// Mock Arco Design 组件
-vi.mock('@arco-design/web-vue', () => ({
-  Card: { name: 'ACard', template: '<div class="arco-card"><slot /></div>' },
-  Descriptions: { name: 'ADescriptions', template: '<div class="arco-descriptions"><slot /></div>' },
-  DescriptionsItem: { name: 'ADescriptionsItem', template: '<div class="arco-descriptions-item"><slot /></div>' },
-  Tag: { name: 'ATag', template: '<span class="arco-tag"><slot /></span>' },
-  Avatar: { name: 'AAvatar', template: '<div class="arco-avatar"><slot /></div>' }
-}))
 
 describe('BasicInfo Component', () => {
   let wrapper: any
@@ -34,176 +25,116 @@ describe('BasicInfo Component', () => {
   describe('组件渲染', () => {
     it('应该正确渲染基本信息组件', () => {
       expect(wrapper.exists()).toBe(true)
-      expect(wrapper.find('.arco-card').exists()).toBe(true)
-    })
-    
-    it('应该显示用户头像', () => {
-      expect(wrapper.find('.arco-avatar').exists()).toBe(true)
+      expect(wrapper.find('.basic-info').exists()).toBe(true)
     })
     
     it('应该显示用户基本信息描述列表', () => {
-      expect(wrapper.find('.arco-descriptions').exists()).toBe(true)
+      expect(wrapper.find('.a-descriptions').exists()).toBe(true)
+    })
+    
+    it('应该显示骨架屏当无数据时', async () => {
+      await wrapper.setProps({ userInfo: null })
+      expect(wrapper.find('.a-skeleton').exists()).toBe(true)
     })
   })
   
   describe('数据展示测试', () => {
     it('应该正确显示用户姓名', () => {
-      expect(wrapper.text()).toContain(mockUserData.name)
-    })
-    
-    it('应该正确显示客户编号', () => {
-      expect(wrapper.text()).toContain(mockUserData.customerNo)
-    })
-    
-    it('应该正确显示手机号码', () => {
-      expect(wrapper.text()).toContain(mockUserData.phone)
-    })
-    
-    it('应该正确显示身份证号', () => {
-      expect(wrapper.text()).toContain(mockUserData.idCard)
-    })
-    
-    it('应该正确显示性别', () => {
-      expect(wrapper.text()).toContain(mockUserData.gender)
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.name)
     })
     
     it('应该正确显示年龄', () => {
-      expect(wrapper.text()).toContain(mockUserData.age.toString())
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.age.toString())
+    })
+    
+    it('应该正确显示性别', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.gender)
+    })
+    
+    it('应该正确显示手机号码', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.phone)
+    })
+    
+    it('应该正确显示客户号', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.customerNo)
     })
     
     it('应该正确显示地址', () => {
-      expect(wrapper.text()).toContain(mockUserData.address)
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.address)
     })
     
-    it('应该正确显示邮箱', () => {
-      expect(wrapper.text()).toContain(mockUserData.email)
+    it('应该正确显示身份证号', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.idCard)
     })
     
-    it('应该正确显示注册日期', () => {
-      expect(wrapper.text()).toContain(mockUserData.registrationDate)
+    it('应该正确显示身份证有效期', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.idExpiry)
     })
     
-    it('应该正确显示客户等级', () => {
-      expect(wrapper.text()).toContain(mockUserData.customerLevel)
+    it('应该正确显示用户状态', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.status)
     })
     
-    it('应该正确显示风险等级', () => {
-      expect(wrapper.text()).toContain(mockUserData.riskLevel)
+    it('应该正确显示活体相似度', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.similarity.toString())
     })
     
-    it('应该正确显示最后登录日期', () => {
-      expect(wrapper.text()).toContain(mockUserData.lastLoginDate)
-    })
-    
-    it('应该正确显示账户状态', () => {
-      expect(wrapper.text()).toContain(mockUserData.accountStatus)
+    it('应该正确显示相似度阈值', () => {
+      expect(wrapper.text()).toContain(mockUserData.basicInfo.threshold.toString())
     })
   })
   
-  describe('风险等级标签测试', () => {
-    it('低风险应该显示绿色标签', async () => {
-      await wrapper.setProps({
-        userInfo: { ...mockUserData, riskLevel: '低' }
-      })
-      
-      const riskTag = wrapper.find('.arco-tag')
-      expect(riskTag.exists()).toBe(true)
-    })
-    
-    it('中风险应该显示橙色标签', async () => {
-      await wrapper.setProps({
-        userInfo: { ...mockUserData, riskLevel: '中' }
-      })
-      
-      const riskTag = wrapper.find('.arco-tag')
-      expect(riskTag.exists()).toBe(true)
-    })
-    
-    it('高风险应该显示红色标签', async () => {
-      await wrapper.setProps({
-        userInfo: { ...mockUserData, riskLevel: '高' }
-      })
-      
-      const riskTag = wrapper.find('.arco-tag')
-      expect(riskTag.exists()).toBe(true)
-    })
-  })
-  
-  describe('账户状态标签测试', () => {
-    it('正常状态应该显示绿色标签', async () => {
-      await wrapper.setProps({
-        userInfo: { ...mockUserData, accountStatus: '正常' }
-      })
-      
-      const statusTag = wrapper.find('.arco-tag')
-      expect(statusTag.exists()).toBe(true)
-    })
-    
-    it('冻结状态应该显示红色标签', async () => {
-      await wrapper.setProps({
-        userInfo: { ...mockUserData, accountStatus: '冻结' }
-      })
-      
-      const statusTag = wrapper.find('.arco-tag')
-      expect(statusTag.exists()).toBe(true)
-    })
-    
-    it('注销状态应该显示灰色标签', async () => {
-      await wrapper.setProps({
-        userInfo: { ...mockUserData, accountStatus: '注销' }
-      })
-      
-      const statusTag = wrapper.find('.arco-tag')
-      expect(statusTag.exists()).toBe(true)
-    })
-  })
+
   
   describe('空数据处理测试', () => {
-    it('应该处理空用户信息', async () => {
+    it('当用户信息为空时应该显示骨架屏', async () => {
       await wrapper.setProps({ userInfo: null })
-      expect(wrapper.exists()).toBe(true)
+      
+      const skeleton = wrapper.find('.a-skeleton')
+      expect(skeleton.exists()).toBe(true)
     })
     
-    it('应该处理缺失字段', async () => {
-      const incompleteData = {
-        name: '测试用户',
-        customerNo: 'TEST001'
-        // 缺少其他字段
-      }
+    it('当用户信息为空对象时应该显示描述列表', async () => {
+      await wrapper.setProps({ userInfo: {} })
       
-      await wrapper.setProps({ userInfo: incompleteData })
-      expect(wrapper.exists()).toBe(true)
-      expect(wrapper.text()).toContain('测试用户')
+      // 空对象是truthy值，所以应该显示descriptions而不是skeleton
+      const skeleton = wrapper.find('.a-skeleton')
+      expect(skeleton.exists()).toBe(false)
+      
+      // 应该显示descriptions组件
+      expect(wrapper.find('.basic-info').exists()).toBe(true)
+      // 空对象时应该显示默认值 '-'
+      expect(wrapper.text()).toContain('-')
     })
   })
   
-  describe('响应式测试', () => {
-    it('应该在小屏幕上正确显示', async () => {
+  describe('响应式显示测试', () => {
+    it('在小屏幕上应该正确显示', async () => {
       // 模拟小屏幕
       Object.defineProperty(window, 'innerWidth', {
         writable: true,
         configurable: true,
-        value: 768
+        value: 768,
       })
       
       window.dispatchEvent(new Event('resize'))
       await wrapper.vm.$nextTick()
       
-      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.find('.basic-info').exists()).toBe(true)
     })
     
-    it('应该在大屏幕上正确显示', async () => {
+    it('在大屏幕上应该正确显示', async () => {
       // 模拟大屏幕
       Object.defineProperty(window, 'innerWidth', {
         writable: true,
         configurable: true,
-        value: 1920
+        value: 1200,
       })
       
       window.dispatchEvent(new Event('resize'))
       await wrapper.vm.$nextTick()
       
-      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.find('.basic-info').exists()).toBe(true)
     })
   })
   
@@ -211,20 +142,26 @@ describe('BasicInfo Component', () => {
     it('应该响应用户信息的变化', async () => {
       const newUserData = {
         ...mockUserData,
-        name: '新用户名',
-        customerLevel: 'Gold'
+        basicInfo: {
+          ...mockUserData.basicInfo,
+          name: '新用户名',
+          status: '正常'
+        }
       }
       
       await wrapper.setProps({ userInfo: newUserData })
       
       expect(wrapper.text()).toContain('新用户名')
-      expect(wrapper.text()).toContain('Gold')
+      expect(wrapper.text()).toContain('正常')
     })
     
     it('应该正确处理数据类型转换', async () => {
       const dataWithStringAge = {
         ...mockUserData,
-        age: '30' // 字符串类型的年龄
+        basicInfo: {
+          ...mockUserData.basicInfo,
+          age: '30' // 字符串类型的年龄
+        }
       }
       
       await wrapper.setProps({ userInfo: dataWithStringAge })
@@ -233,11 +170,13 @@ describe('BasicInfo Component', () => {
   })
   
   describe('错误处理测试', () => {
-    it('应该处理无效的日期格式', async () => {
+    it('应该处理无效的身份证有效期格式', async () => {
       const invalidDateData = {
         ...mockUserData,
-        registrationDate: 'invalid-date',
-        lastLoginDate: ''
+        basicInfo: {
+          ...mockUserData.basicInfo,
+          idExpiry: 'invalid-date'
+        }
       }
       
       await wrapper.setProps({ userInfo: invalidDateData })
@@ -247,8 +186,11 @@ describe('BasicInfo Component', () => {
     it('应该处理特殊字符', async () => {
       const specialCharData = {
         ...mockUserData,
-        name: '<script>alert("test")</script>',
-        address: '地址包含&特殊字符<>"'
+        basicInfo: {
+          ...mockUserData.basicInfo,
+          name: '<script>alert("test")</script>',
+          address: '地址包含&特殊字符<>"'
+        }
       }
       
       await wrapper.setProps({ userInfo: specialCharData })

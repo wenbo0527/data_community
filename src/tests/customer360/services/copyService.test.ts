@@ -241,39 +241,26 @@ describe('CopyService 测试', () => {
   describe('产品信息复制', () => {
     it('应该成功复制产品信息', async () => {
       const productInfo = {
-        deposits: mockUsers['887123'].depositProducts,
-        loans: mockUsers['887123'].loanProducts
+        loans: mockUsers['887123'].products // 所有产品都是信贷产品
       }
       const result = await copyService.copyProductInfo(productInfo)
       
       expect(result).toBe(true)
       expect(mockClipboard.writeText).toHaveBeenCalled()
       const callArgs = mockClipboard.writeText.mock.calls[0][0]
-      expect(callArgs).toContain('产品信息:')
+      expect(callArgs).toContain('信贷产品:') // 所有产品都是信贷产品
     })
 
-    it('应该处理只有存款产品的情况', async () => {
+    it('应该处理信贷产品的情况', async () => {
       const productInfo = {
-        deposits: mockUsers['887123'].depositProducts
+        loans: mockUsers['887123'].loanRecords
       }
       const result = await copyService.copyProductInfo(productInfo)
       
       expect(result).toBe(true)
       expect(mockClipboard.writeText).toHaveBeenCalled()
       const callArgs = mockClipboard.writeText.mock.calls[0][0]
-      expect(callArgs).toContain('存款产品:')
-    })
-
-    it('应该处理只有贷款产品的情况', async () => {
-      const productInfo = {
-        loans: mockUsers['887123'].loanProducts
-      }
-      const result = await copyService.copyProductInfo(productInfo)
-      
-      expect(result).toBe(true)
-      expect(mockClipboard.writeText).toHaveBeenCalled()
-      const callArgs = mockClipboard.writeText.mock.calls[0][0]
-      expect(callArgs).toContain('贷款产品:')
+      expect(callArgs).toContain('信贷产品:')
     })
   })
 
@@ -313,8 +300,8 @@ describe('CopyService 测试', () => {
 
   describe('营销记录复制', () => {
     it('应该成功复制营销触达记录', async () => {
-      const marketingRecord = mockUsers['887123'].marketingRecords[0]
-      const result = await copyService.copyMarketingRecord(marketingRecord, 'outreach')
+      const touchRecord = mockUsers['887123'].marketingRecords.touchRecords[0]
+      const result = await copyService.copyMarketingRecord(touchRecord, 'outreach')
       
       expect(result).toBe(true)
       expect(mockClipboard.writeText).toHaveBeenCalled()
@@ -324,9 +311,8 @@ describe('CopyService 测试', () => {
     })
 
     it('应该成功复制权益发放记录', async () => {
-      // 使用第一个营销记录中的权益发放数据
-      const marketingRecord = mockUsers['887123'].marketingRecords[0]
-      const benefitRecord = marketingRecord.benefitGrants[0]
+      // 使用营销记录中的权益发放数据
+      const benefitRecord = mockUsers['887123'].marketingRecords.benefitRecords[0]
       const result = await copyService.copyMarketingRecord(benefitRecord, 'benefit')
       
       expect(result).toBe(true)
@@ -344,7 +330,7 @@ describe('CopyService 测试', () => {
       expect(result).toBe(true)
       expect(mockClipboard.writeText).toHaveBeenCalled()
       const callArgs = mockClipboard.writeText.mock.calls[0][0]
-      expect(callArgs).toContain('贷款产品:')
+      expect(callArgs).toContain('信贷产品:')
       expect(callArgs).toContain('放款金额:')
     })
 
@@ -384,7 +370,7 @@ describe('CopyService 测试', () => {
           phone: mockUsers['empty'].mobile,
           idCard: mockUsers['empty'].idCard
         },
-        mockUsers['887123'].depositProducts?.[0] || {},
+        mockUsers['887123'].products?.[0] || {}, // 所有产品都是信贷产品
         mockUsers['887123'].collectionRecords?.[0] || {}
       ]
       

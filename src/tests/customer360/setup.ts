@@ -64,6 +64,45 @@ config.global.stubs = {
   'a-skeleton-shape': {
     template: '<div class="a-skeleton-shape"></div>'
   },
+  'a-descriptions': {
+    template: '<div class="a-descriptions"><slot /></div>'
+  },
+  'a-descriptions-item': {
+    template: '<div class="a-descriptions-item"><slot /></div>'
+  },
+  'a-progress': {
+    template: '<div class="a-progress"><slot /></div>'
+  },
+  'a-alert': {
+    template: '<div class="a-alert"><slot /></div>'
+  },
+  'a-spin': {
+    template: '<div class="a-spin"><slot /></div>'
+  },
+  'a-pagination': {
+    template: '<div class="a-pagination"><slot /></div>'
+  },
+  'a-empty': {
+    template: '<div class="a-empty"><slot /></div>'
+  },
+  'a-date-picker': {
+    template: '<div class="a-date-picker"><slot /></div>'
+  },
+  'a-range-picker': {
+    template: '<div class="a-range-picker"><slot /></div>'
+  },
+  'a-table': {
+    template: '<div class="a-table"><slot /></div>'
+  },
+  'a-timeline': {
+    template: '<div class="a-timeline"><slot /></div>'
+  },
+  'a-timeline-item': {
+    template: '<div class="a-timeline-item"><slot /></div>'
+  },
+  'a-tree': {
+    template: '<div class="a-tree"><slot /></div>'
+  },
   'a-tag': {
     template: '<span class="a-tag"><slot /></span>'
   },
@@ -116,14 +155,14 @@ export const createMockUserData = () => ({
     age: 30,
     gender: '男',
     phone: '138****1234',
-    customerId: 'C001',
+    customerNo: 'C001',
     address: '北京市朝阳区',
     idCard: '110101199001011234',
-    idCardExpiry: '2030-01-01',
+    idExpiry: '2030-01-01',
     status: '正常',
-    faceScore: 95.5,
+    similarity: 95.5,
     threshold: 85.0,
-    errorInfo: null
+    errorMsg: null
   },
   productInfo: {
     selfOperated: [],
@@ -131,7 +170,94 @@ export const createMockUserData = () => ({
   },
   creditList: [],
   loanList: [],
-  adjustmentHistory: []
+  adjustmentHistory: [],
+  collectionRecords: [
+    {
+      id: '1',
+      type: '电话催收',
+      date: '2024-01-15',
+      status: '已联系',
+      method: '电话催收',
+      collector: '李催收',
+      overdueAmount: 5000,
+      overdueDays: 15,
+      riskLevel: 'medium',
+      notes: '客户承诺本周内还款'
+    },
+    {
+      id: '2',
+      type: '短信催收',
+      date: '2024-01-14',
+      status: '无法联系',
+      method: '短信催收',
+      collector: '王催收',
+      overdueAmount: 3000,
+      overdueDays: 10,
+      riskLevel: 'low',
+      notes: '客户电话无人接听'
+    }
+  ],
+  creditRecords: [
+    {
+      id: '1',
+      reportDate: '2024-01-10',
+      creditScore: 750,
+      riskLevel: '低风险',
+      reportSource: '人民银行',
+      queryReason: '贷款审批',
+      details: '信用记录良好'
+    }
+  ],
+  creditReports: [
+    {
+      queryDate: '2024-01-15',
+      reportDate: '2024-01-15',
+      validUntil: '2024-07-15',
+      creditScore: 750,
+      creditLevel: '优秀',
+      reportType: '个人征信报告',
+      reportSource: '中国人民银行征信中心',
+      status: 'valid',
+      reportUrl: 'https://example.com/report1.pdf',
+      notes: '征信状况良好',
+      institution: '中国人民银行征信中心',
+      queryReason: '贷款审批',
+      version: '2.0',
+      overdueRecords: [],
+      guaranteeRecords: [],
+      queryRecords: []
+    },
+    {
+      queryDate: '2024-02-20',
+      reportDate: '2024-02-20',
+      validUntil: '2024-08-20',
+      creditScore: 680,
+      creditLevel: '良好',
+      reportType: '个人征信报告',
+      reportSource: '中国人民银行征信中心',
+      status: 'valid',
+      reportUrl: 'https://example.com/report2.pdf',
+      notes: '征信记录正常',
+      institution: '中国人民银行征信中心',
+      queryReason: '贷款审批',
+      version: '2.0',
+      overdueRecords: [],
+      guaranteeRecords: [],
+      queryRecords: []
+    }
+  ],
+  marketingRecords: [
+    {
+      id: '1',
+      campaignName: '新年理财活动',
+      productName: '理财产品A',
+      channel: '短信',
+      sendTime: '2024-01-01 09:00:00',
+      responseTime: '2024-01-01 10:30:00',
+      status: '已响应',
+      responseRate: 85.5
+    }
+  ]
 })
 
 // 测试数据验证工具

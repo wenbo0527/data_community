@@ -16,25 +16,25 @@
       </div>
     </div>
     
-    <!-- 产品级客户信息 -->
-    <div class="customer-metrics" v-if="productType === 'self'">
-      <div class="metrics-title">产品级客户信息</div>
+    <!-- 产品概览 -->
+    <div class="customer-metrics" v-if="productType === 'loan'">
+      <div class="metrics-title">产品概览</div>
       <div class="metrics-grid">
         <div class="metric-item">
-          <div class="metric-label">历史最大透支天数</div>
+          <div class="metric-label">历史最大逾期天数</div>
           <div class="metric-value">{{ userInfo?.maxOverdueDays || 0 }}天</div>
         </div>
         <div class="metric-item">
-          <div class="metric-label">当前透支天数</div>
+          <div class="metric-label">当前逾期天数</div>
           <div class="metric-value">{{ userInfo?.currentOverdueDays || 0 }}天</div>
         </div>
         <div class="metric-item">
-          <div class="metric-label">当前透支金额</div>
-          <div class="metric-value">¥{{ formatAmount(userInfo?.currentOverdueAmount || 0) }}</div>
+          <div class="metric-label">当前总在贷余额</div>
+          <div class="metric-value">{{ formatAmount(currentTotalLoanBalance) }}</div>
         </div>
         <div class="metric-item">
-          <div class="metric-label">当前还款率</div>
-          <div class="metric-value">{{ formatPercent(userInfo?.currentRepaymentRate || 0) }}%</div>
+          <div class="metric-label">当前总授信金额</div>
+          <div class="metric-value">{{ formatAmount(currentTotalCreditAmount) }}</div>
         </div>
       </div>
     </div>
@@ -42,7 +42,7 @@
     <!-- 产品列表 -->
     <div class="products-section">
       <div class="section-header">
-        <h4>{{ productType === 'self' ? '自营产品列表' : '助贷产品列表' }}</h4>
+        <h4>信贷产品列表</h4>
         <div class="copy-actions">
           <a-button size="small" @click="copyData('selected')" :disabled="selectedRows.length === 0">
             <template #icon><icon-copy /></template>
@@ -237,6 +237,22 @@ const safeProductData = computed(() => {
   return data
 })
 
+// 计算当前总在贷余额
+const currentTotalLoanBalance = computed(() => {
+  if (!props.productData || !Array.isArray(props.productData)) return 0
+  return props.productData.reduce((total, product) => {
+    return total + (product.balance || 0)
+  }, 0)
+})
+
+// 计算当前总授信金额
+const currentTotalCreditAmount = computed(() => {
+  if (!props.productData || !Array.isArray(props.productData)) return 0
+  return props.productData.reduce((total, product) => {
+    return total + (product.creditLimit || product.totalAmount || 0)
+  }, 0)
+})
+
 // 表格列配置
 const tableColumns = computed(() => {
   const baseColumns = [
@@ -279,14 +295,7 @@ const tableColumns = computed(() => {
   ]
   
   // 根据产品类型添加特定列
-  if (props.productType === 'self') {
-    baseColumns.splice(5, 0, {
-      title: '最后交易日',
-      dataIndex: 'lastTransaction',
-      slotName: 'lastTransaction',
-      width: 120
-    })
-  } else if (props.productType === 'loan') {
+  if (props.productType === 'loan') {
     baseColumns.push(
       {
         title: '剩余期数',
@@ -357,9 +366,7 @@ const copyData = async (type) => {
     
     // 转换为CSV格式
     const headers = ['产品编号', '产品名称', '余额', '状态', '币种', '利率']
-    if (props.productType === 'self') {
-      headers.push('最后交易日')
-    } else if (props.productType === 'loan') {
+    if (props.productType === 'loan') {
       headers.push('剩余期数', '下次还款日')
     }
     
@@ -373,9 +380,7 @@ const copyData = async (type) => {
         item.currency,
         formatPercent(item.rate)
       ]
-      if (props.productType === 'self') {
-        row.push(item.lastTransaction || '')
-      } else if (props.productType === 'loan') {
+      if (props.productType === 'loan') {
         row.push(`${item.remainingPeriod}/${item.totalPeriod}`, item.nextPaymentDate || '')
       }
       csvContent.push(row.join(','))

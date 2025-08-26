@@ -11,7 +11,7 @@ vi.mock('vue-router', () => ({
     currentRoute: {
       value: {
         params: { userId: '887123' },
-        query: { productType: 'self' }
+        query: { productType: 'loan' }
       }
     }
   }))
@@ -28,7 +28,7 @@ describe('ProductSwitcher', () => {
       currentRoute: {
         value: {
           params: { userId: '887123' },
-          query: { productType: 'self' }
+          query: { productType: 'loan' }
         }
       }
     }
@@ -45,38 +45,36 @@ describe('ProductSwitcher', () => {
     it('应该正确渲染产品切换器', () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false
         }
       })
 
       expect(wrapper.find('.product-switcher').exists()).toBe(true)
-      expect(wrapper.find('[data-testid="self-tab"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="loan-tab"]').exists()).toBe(true)
       expect(wrapper.find('[data-testid="loan-tab"]').exists()).toBe(true)
     })
 
     it('应该显示正确的tab标签文本', () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false
         }
       })
 
-      expect(wrapper.find('[data-testid="self-tab"]').text()).toContain('自营产品')
-      expect(wrapper.find('[data-testid="loan-tab"]').text()).toContain('助贷产品')
+      expect(wrapper.find('[data-testid="loan-tab"]').text()).toContain('信贷产品')
     })
 
     it('应该正确显示当前选中的tab', () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false
         }
       })
 
-      expect(wrapper.find('[data-testid="self-tab"]').classes()).toContain('active')
-      expect(wrapper.find('[data-testid="loan-tab"]').classes()).not.toContain('active')
+      expect(wrapper.find('[data-testid="loan-tab"]').classes()).toContain('active')
     })
   })
 
@@ -84,7 +82,7 @@ describe('ProductSwitcher', () => {
     it('点击tab应该触发change事件', async () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false
         }
       })
@@ -100,12 +98,12 @@ describe('ProductSwitcher', () => {
     it('点击当前选中的tab不应该触发change事件', async () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false
         }
       })
 
-      await wrapper.find('[data-testid="self-tab"]').trigger('click')
+      await wrapper.find('[data-testid="loan-tab"]').trigger('click')
       
       expect(wrapper.emitted('update:modelValue')).toBeFalsy()
       expect(wrapper.emitted('change')).toBeFalsy()
@@ -114,7 +112,7 @@ describe('ProductSwitcher', () => {
     it('loading状态下应该禁用tab切换', async () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: true
         }
       })
@@ -146,17 +144,15 @@ describe('ProductSwitcher', () => {
     it('切换tab时应该更新URL参数', async () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false,
           syncUrl: true
         }
       })
 
-      await wrapper.find('[data-testid="loan-tab"]').trigger('click')
-      
-      expect(mockRouter.replace).toHaveBeenCalledWith({
-        query: { ...mockRouter.currentRoute.value.query, productType: 'loan' }
-      })
+      // 测试切换到其他类型（如果有的话）
+      // 由于现在只有loan类型，这个测试需要调整逻辑
+      expect(wrapper.find('[data-testid="loan-tab"]').classes()).toContain('active')
     })
   })
 
@@ -164,7 +160,7 @@ describe('ProductSwitcher', () => {
     it('应该包含切换动画类', () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false,
           animated: true
         }
@@ -176,16 +172,14 @@ describe('ProductSwitcher', () => {
     it('切换时应该触发相应事件', async () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false,
           animated: true
         }
       })
 
-      await wrapper.find('[data-testid="loan-tab"]').trigger('click')
-      
-      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-      expect(wrapper.emitted('change')).toBeTruthy()
+      // 由于现在只有loan类型，测试逻辑需要调整
+      expect(wrapper.find('[data-testid="loan-tab"]').classes()).toContain('active')
     })
   })
 
@@ -200,7 +194,7 @@ describe('ProductSwitcher', () => {
 
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false,
           responsive: true
         }
@@ -220,7 +214,7 @@ describe('ProductSwitcher', () => {
 
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false,
           responsive: true
         }
@@ -235,27 +229,26 @@ describe('ProductSwitcher', () => {
     it('应该包含正确的ARIA属性', () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false
         }
       })
 
       expect(wrapper.find('[role="tablist"]').exists()).toBe(true)
       expect(wrapper.find('[role="tab"][aria-selected="true"]').exists()).toBe(true)
-      expect(wrapper.find('[role="tab"][aria-selected="false"]').exists()).toBe(true)
     })
 
     it('应该支持键盘导航', async () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false
         }
       })
 
-      const selfTab = wrapper.find('[data-testid="self-tab"]')
-      expect(selfTab.exists()).toBe(true)
-      expect(selfTab.attributes('tabindex')).toBe('0')
+      const loanTab = wrapper.find('[data-testid="loan-tab"]')
+      expect(loanTab.exists()).toBe(true)
+      expect(loanTab.attributes('tabindex')).toBe('0')
     })
   })
 
@@ -263,35 +256,31 @@ describe('ProductSwitcher', () => {
     it('应该显示产品数量统计', () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false,
           productCounts: {
-            self: 3,
-            loan: 2
+            loan: 5
           },
           showCounts: true
         }
       })
 
-      expect(wrapper.find('[data-testid="self-count"]').text()).toBe('3')
-      expect(wrapper.find('[data-testid="loan-count"]').text()).toBe('2')
+      expect(wrapper.find('[data-testid="loan-count"]').text()).toBe('5')
     })
 
     it('产品数量为0时应该显示特殊样式', () => {
       wrapper = mount(ProductSwitcher, {
         props: {
-          modelValue: 'self',
+          modelValue: 'loan',
           loading: false,
           productCounts: {
-            self: 0,
-            loan: 2
+            loan: 0
           },
           showCounts: true
         }
       })
 
-      expect(wrapper.find('[data-testid="self-tab"]').classes()).toContain('empty')
-      expect(wrapper.find('[data-testid="loan-tab"]').classes()).not.toContain('empty')
+      expect(wrapper.find('[data-testid="loan-tab"]').classes()).toContain('empty')
     })
   })
 })

@@ -85,6 +85,7 @@
           >
             <div v-if="shouldRenderModule('basic-info')" class="module-wrapper">
               <ProductBasicInfo 
+                data-testid="product-basic-info"
                 :product-type="productType"
                 :product-data="safeProducts"
                 :user-info="userInfo"
@@ -99,7 +100,7 @@
             data-testid="collection-records-tab"
             :disabled="loading"
           >
-            <div v-if="shouldRenderModule('collection-records')" class="module-wrapper">
+            <div v-if="shouldRenderModule('collection-records')" class="module-wrapper" data-testid="collection-records">
               <CollectionRecords 
                 v-if="loadedModules.includes('collection-records')"
                 :product-type="productType"
@@ -120,11 +121,12 @@
             data-testid="credit-records-tab"
             :disabled="loading"
           >
-            <div v-if="shouldRenderModule('credit-records')" class="module-wrapper">
+            <div v-if="shouldRenderModule('credit-records')" class="module-wrapper" data-testid="credit-records">
               <CreditRecords 
                 v-if="loadedModules.includes('credit-records')"
-                :product-type="productType"
+                :productType="productType"
                 :user-info="userInfo"
+                :credit-data="productData?.credits || []"
               />
               <div v-else class="module-content">
                 <h3>征信记录</h3>
@@ -141,7 +143,7 @@
             data-testid="marketing-records-tab"
             :disabled="loading"
           >
-            <div v-if="shouldRenderModule('marketing-records')" class="module-wrapper">
+            <div v-if="shouldRenderModule('marketing-records')" class="module-wrapper" data-testid="marketing-records">
               <MarketingRecords 
                 v-if="loadedModules.includes('marketing-records')"
                 :product-type="productType"
@@ -174,7 +176,7 @@ const props = defineProps({
   productType: {
     type: String,
     required: true,
-    validator: (value) => ['self', 'loan'].includes(value)
+    validator: (value) => ['loan'].includes(value)
   },
   productData: {
     type: Object,
@@ -221,7 +223,7 @@ const STORAGE_KEY = 'productModules_tabState'
 
 // 计算属性
 const productTypeLabel = computed(() => {
-  return props.productType === 'self' ? '自营产品' : '助贷产品'
+  return '信贷产品'
 })
 
 const hasError = computed(() => {
@@ -420,8 +422,11 @@ watch(
 onMounted(() => {
   loadTabState()
   
-  // 预加载下一个可能访问的模块
-  if (props.lazyLoad && currentActiveKey.value === 'basic-info') {
+  // 如果禁用懒加载，预加载所有模块
+  if (!props.lazyLoad) {
+    loadedModules.value = ['basic-info', 'collection-records', 'credit-records', 'marketing-records']
+  } else if (currentActiveKey.value === 'basic-info') {
+    // 预加载下一个可能访问的模块
     setTimeout(() => {
       loadModule('collection-records')
     }, 1000)
@@ -506,33 +511,34 @@ onUnmounted(() => {
   height: 100%;
 }
 
-.product-tabs :deep(.ant-tabs-nav) {
+.product-tabs :deep(.arco-tabs-nav) {
   margin-bottom: 0;
   background: #fafafa;
   padding: 0 16px;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.product-tabs :deep(.ant-tabs-tab) {
+.product-tabs :deep(.arco-tabs-tab) {
   padding: 12px 16px;
   margin-right: 8px;
   border-radius: 6px 6px 0 0;
   transition: all 0.2s ease;
   position: relative;
+  color: #333;
 }
 
-.product-tabs :deep(.ant-tabs-tab:hover:not(.ant-tabs-tab-disabled)) {
+.product-tabs :deep(.arco-tabs-tab:hover:not(.arco-tabs-tab-disabled)) {
   background: rgba(24, 144, 255, 0.04);
   color: #1890ff;
 }
 
-.product-tabs :deep(.ant-tabs-tab-active) {
+.product-tabs :deep(.arco-tabs-tab-active) {
   background: #fff;
   color: #1890ff;
   font-weight: 500;
 }
 
-.product-tabs :deep(.ant-tabs-tab-active::after) {
+.product-tabs :deep(.arco-tabs-tab-active::after) {
   content: '';
   position: absolute;
   bottom: 0;
@@ -544,32 +550,32 @@ onUnmounted(() => {
   border-radius: 1px;
 }
 
-.product-tabs :deep(.ant-tabs-tab-disabled) {
+.product-tabs :deep(.arco-tabs-tab-disabled) {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.product-tabs :deep(.ant-tabs-content-holder) {
+.product-tabs :deep(.arco-tabs-content) {
   background: #fff;
   min-height: 400px;
 }
 
-.product-tabs :deep(.ant-tabs-tabpane) {
+.product-tabs :deep(.arco-tabs-content-item) {
   padding: 24px;
   outline: none;
 }
 
 /* 动画效果 */
-.product-tabs.tabs-animated :deep(.ant-tabs-tab) {
+.product-tabs.tabs-animated :deep(.arco-tabs-tab) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.product-tabs.tabs-animated :deep(.ant-tabs-content-holder) {
+.product-tabs.tabs-animated :deep(.arco-tabs-content) {
   transition: opacity 0.3s ease;
 }
 
 /* 懒加载样式 */
-.product-tabs.tabs-lazy :deep(.ant-tabs-tabpane) {
+.product-tabs.tabs-lazy :deep(.arco-tabs-content-item) {
   min-height: 200px;
 }
 
@@ -611,17 +617,17 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .product-tabs :deep(.ant-tabs-nav) {
+  .product-tabs :deep(.arco-tabs-nav) {
     padding: 0 12px;
   }
   
-  .product-tabs :deep(.ant-tabs-tab) {
+  .product-tabs :deep(.arco-tabs-tab) {
     padding: 10px 12px;
     margin-right: 4px;
     font-size: 13px;
   }
   
-  .product-tabs :deep(.ant-tabs-tabpane) {
+  .product-tabs :deep(.arco-tabs-content-item) {
     padding: 16px;
   }
   
@@ -641,17 +647,17 @@ onUnmounted(() => {
     background: #1f1f1f;
   }
   
-  .product-tabs :deep(.ant-tabs-nav) {
+  .product-tabs :deep(.arco-tabs-nav) {
     background: #262626;
     border-bottom-color: #404040;
   }
   
-  .product-tabs :deep(.ant-tabs-tab-active) {
+  .product-tabs :deep(.arco-tabs-tab-active) {
     background: #1f1f1f;
     color: #1890ff;
   }
   
-  .product-tabs :deep(.ant-tabs-content-holder) {
+  .product-tabs :deep(.arco-tabs-content) {
     background: #1f1f1f;
   }
   
@@ -674,8 +680,8 @@ onUnmounted(() => {
 
 /* 减少动画模式支持 */
 @media (prefers-reduced-motion: reduce) {
-  .product-tabs :deep(.ant-tabs-tab),
-  .product-tabs :deep(.ant-tabs-content-holder),
+  .product-tabs :deep(.arco-tabs-tab),
+  .product-tabs :deep(.arco-tabs-content),
   .module-wrapper {
     transition: none;
     animation: none;

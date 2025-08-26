@@ -111,20 +111,20 @@ class CopyService {
    */
   async copyProductInfo(productInfo: any): Promise<boolean> {
     try {
-      let info = '产品信息:\n'
+      const hasLoans = productInfo.loans && productInfo.loans.length > 0
       
-      if (productInfo.deposits && productInfo.deposits.length > 0) {
-        info += '\n存款产品:\n'
-        productInfo.deposits.forEach((deposit: any, index: number) => {
-          info += `${index + 1}. ${deposit.productName} - 余额: ${deposit.balance}\n`
-        })
-      }
+      let info = ''
       
-      if (productInfo.loans && productInfo.loans.length > 0) {
-        info += '\n贷款产品:\n'
+      // 如果有信贷产品
+      if (hasLoans) {
+        info = '信贷产品:\n'
         productInfo.loans.forEach((loan: any, index: number) => {
           info += `${index + 1}. ${loan.productName} - 余额: ${loan.balance}\n`
         })
+      }
+      // 如果没有产品
+      else {
+        info = '产品信息:\n暂无产品信息\n'
       }
       
       return await this.copyText(info)
@@ -222,7 +222,7 @@ class CopyService {
   async copyLoanRecord(record: any): Promise<boolean> {
     try {
       const info = [
-        `贷款产品: ${record.productName}`,
+        `信贷产品: ${record.productName}`,
         `放款金额: ${record.amount}`,
         `贷款期限: ${record.installments}期`,
         `放款时间: ${record.loanDate}`,

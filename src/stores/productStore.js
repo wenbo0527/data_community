@@ -2,9 +2,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useProductStore = defineStore('product', () => {
-  // 当前选中的产品类型
-  const selectedProductType = ref('self')
-  
   // 当前选中的具体产品
   const selectedProduct = ref(null)
   
@@ -17,77 +14,32 @@ export const useProductStore = defineStore('product', () => {
     // 当用户数据更新时，重置产品选择
     if (data && data.products && data.products.length > 0) {
       // 默认选择第一个产品
-      const firstProduct = data.products[0]
-      selectedProduct.value = firstProduct
-      selectedProductType.value = getProductTypeFromProduct(firstProduct)
+      selectedProduct.value = data.products[0]
     }
   }
   
-  // 根据产品判断产品类型
-  const getProductTypeFromProduct = (product) => {
-    if (!product) return 'self'
-    // 根据产品类型判断是自营还是助贷
-    const selfProductTypes = ['活期存款', '定期存款', '理财产品']
-    const loanProductTypes = ['消费贷款', '住房贷款', '信用贷款', '个人消费贷款']
-    
-    if (selfProductTypes.includes(product.productType) || selfProductTypes.includes(product.productName)) {
-      return 'self'
-    } else if (loanProductTypes.includes(product.productType) || loanProductTypes.includes(product.productName)) {
-      return 'loan'
-    }
-    return 'self'
-  }
-  
-  // 设置产品类型
-  const setProductType = (type) => {
-    selectedProductType.value = type
-    // 当产品类型改变时，选择该类型下的第一个产品
-    const productsOfType = getProductsByType(type)
-    if (productsOfType.length > 0) {
-      selectedProduct.value = productsOfType[0]
-    } else {
-      selectedProduct.value = null
-    }
+  // 获取用户拥有的所有产品
+  const getUserProducts = () => {
+    if (!userData.value || !userData.value.products) return []
+    return userData.value.products
   }
   
   // 设置具体产品
   const setProduct = (product) => {
     selectedProduct.value = product
-    if (product) {
-      selectedProductType.value = getProductTypeFromProduct(product)
-    }
   }
   
-  // 获取指定类型的产品列表
-  const getProductsByType = (type) => {
-    if (!userData.value || !userData.value.products) return []
-    
-    return userData.value.products.filter(product => {
-      const productType = getProductTypeFromProduct(product)
-      return productType === type
-    })
-  }
-  
-  // 计算属性：当前产品类型的产品列表
-  const currentTypeProducts = computed(() => {
-    return getProductsByType(selectedProductType.value)
+  // 计算属性：用户拥有的所有产品
+  const userProducts = computed(() => {
+    return getUserProducts()
   })
   
-  // 计算属性：自营产品列表
-  const selfProducts = computed(() => {
-    return getProductsByType('self')
-  })
-  
-  // 计算属性：助贷产品列表
-  const loanProducts = computed(() => {
-    return getProductsByType('loan')
-  })
-  
-  // 计算属性：产品数量统计
+  // 计算属性：产品数量统计（所有产品都是信贷产品）
   const productCounts = computed(() => {
+    const products = getUserProducts()
     return {
-      self: selfProducts.value.length,
-      loan: loanProducts.value.length
+      total: products.length,
+      creditProducts: products.length // 所有产品都是信贷产品
     }
   })
   
@@ -114,7 +66,7 @@ export const useProductStore = defineStore('product', () => {
   // 获取当前产品相关的用信记录
   const getCurrentLoanRecords = computed(() => {
     if (!userData.value || !userData.value.loanRecords) return []
-    return filterDataByProduct(userData.value.loanRecords, 'productName')
+    return filterDataByProduct(userData.value.loanRecords, 'productKey')
   })
   
   // 获取当前产品相关的调额历史
@@ -144,29 +96,39 @@ export const useProductStore = defineStore('product', () => {
     return userData.value.marketingRecords
   })
   
+  // 为了兼容现有代码，添加别名
+  const loanRecords = computed(() => getCurrentLoanRecords.value)
+  const creditRecords = computed(() => getCurrentCreditRecords.value)
+  const collectionRecords = computed(() => getCurrentCollectionRecords.value)
+  const quotaAdjustHistory = computed(() => getCurrentAdjustmentHistory.value)
+  const creditReports = computed(() => getCurrentCreditReports.value)
+
   return {
     // 状态
-    selectedProductType,
     selectedProduct,
     userData,
     
     // 方法
     setUserData,
-    setProductType,
     setProduct,
-    getProductsByType,
+    getUserProducts,
     filterDataByProduct,
     
     // 计算属性
-    currentTypeProducts,
-    selfProducts,
-    loanProducts,
+    userProducts,
     productCounts,
     getCurrentCreditRecords,
     getCurrentLoanRecords,
     getCurrentAdjustmentHistory,
     getCurrentCollectionRecords,
     getCurrentCreditReports,
-    getCurrentMarketingRecords
+    getCurrentMarketingRecords,
+    
+    // 兼容性别名
+    loanRecords,
+    creditRecords,
+    collectionRecords,
+    quotaAdjustHistory,
+    creditReports
   }
 })

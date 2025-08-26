@@ -1,7 +1,7 @@
 <template>
   <div class="credit-records">
     <div class="section-header">
-      <h4>{{ productType === 'self' ? '自营产品征信记录' : '助贷产品征信记录' }}</h4>
+      <h4>信贷产品征信记录</h4>
       <div class="copy-actions">
         <a-button size="small" @click="copyData('selected')" :disabled="selectedRows.length === 0">
           <template #icon><icon-copy /></template>
@@ -129,7 +129,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconCopy, IconEye, IconLink } from '@arco-design/web-vue/es/icon'

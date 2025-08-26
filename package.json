@@ -24,6 +24,7 @@
     "check": "npm run quality:check:parallel"
   },
   "dependencies": {
+    "@antv/g6": "^5.0.49",
     "@antv/graphlib": "^2.0.4",
     "@antv/hierarchy": "^0.6.14",
     "@antv/layout": "^1.2.13",
@@ -46,6 +47,7 @@
     "echarts": "^6.0.0",
     "express": "^5.1.0",
     "file-saver": "^2.0.5",
+    "lucide-vue-next": "^0.541.0",
     "mockjs": "^1.1.0",
     "monaco-editor": "^0.52.2",
     "nanoid": "^5.1.5",
@@ -65,7 +67,7 @@
     "@vitest/ui": "^3.2.4",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/eslint-config-typescript": "^13.0.0",
-    "@vue/test-utils": "^2.4.0",
+    "@vue/test-utils": "^2.4.6",
     "concurrently": "^9.2.0",
     "esbuild": "^0.25.9",
     "eslint": "^8.57.0",

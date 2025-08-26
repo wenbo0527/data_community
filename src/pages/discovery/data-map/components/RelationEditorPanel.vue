@@ -15,21 +15,18 @@
         <template #columns>
           <a-table-column title="关联表" dataIndex="targetTable">
             <template #cell="{ record, rowIndex }">
-              <span v-if="editingRowIndex !== rowIndex">{{ record.targetTable }}</span>
               <a-select
-                v-else
                 v-model="record.targetTable"
                 :options="availableTables.map((t: TableItem) => ({ label: t.name, value: t.name }))"
                 placeholder="请选择关联表"
                 allow-clear
+                @change="handleRelationChange"
               />
             </template>
           </a-table-column>
           <a-table-column title="关联类型" dataIndex="relationType">
             <template #cell="{ record, rowIndex }">
-              <span v-if="editingRowIndex !== rowIndex">{{ record.relationType }}</span>
               <a-select
-                v-else
                 v-model="record.relationType"
                 :options="[
                   { label: '1:1', value: '1:1' },
@@ -37,29 +34,24 @@
                 ]"
                 placeholder="请选择关联类型"
                 allow-clear
+                @change="handleRelationChange"
               />
             </template>
           </a-table-column>
           <a-table-column title="关联说明" dataIndex="relationDescription">
             <template #cell="{ record, rowIndex }">
-              <span v-if="editingRowIndex !== rowIndex">{{ record.relationDescription }}</span>
               <a-input
-                v-else
                 v-model="record.relationDescription"
                 placeholder="请输入关联说明"
                 allow-clear
+                @change="handleRelationChange"
               />
             </template>
           </a-table-column>
 
           <a-table-column title="关联字段" dataIndex="relationFields">
         <template #cell="{ record, rowIndex }">
-          <div v-if="editingRowIndex !== rowIndex">
-            <div v-for="(pair, index) in record.relationFields" :key="index">
-              {{ pair.sourceField }} = {{ pair.targetField }}
-            </div>
-          </div>
-          <div v-else class="field-pairs-container">
+          <div class="field-pairs-container">
             <div v-for="(pair, index) in record.relationFields" :key="index" class="field-pair">
               <a-select
                 v-model="pair.sourceField"
@@ -67,6 +59,7 @@
                 placeholder="请选择源字段"
                 allow-clear
                 style="width: 45%"
+                @change="handleRelationChange"
               />
               <span class="equal-sign">=</span>
               <a-select
@@ -75,6 +68,7 @@
                 placeholder="请选择目标字段"
                 allow-clear
                 style="width: 45%"
+                @change="handleRelationChange"
               />
               <a-button 
                 v-if="record.relationFields.length > 1" 
@@ -98,24 +92,11 @@
           </div>
         </template>
       </a-table-column>
-          <a-table-column title="操作" :width="150">
+          <a-table-column title="操作" :width="80">
             <template #cell="{ record, column, rowIndex }">
-              <a-space v-if="editingRowIndex === rowIndex">
-                <a-button type="primary" size="mini" @click="saveRelation(rowIndex)">
-                  保存
-                </a-button>
-                <a-button type="outline" size="mini" @click="cancelEdit(rowIndex)">
-                  取消
-                </a-button>
-              </a-space>
-              <a-space v-else>
-                <a-button type="primary" size="mini" @click="editRelation(record, rowIndex)">
-                  编辑
-                </a-button>
-                <a-button type="outline" status="danger" size="mini" @click="deleteRelation(rowIndex)">
-                  删除
-                </a-button>
-              </a-space>
+              <a-button type="outline" status="danger" size="mini" @click="deleteRelation(rowIndex)">
+                删除
+              </a-button>
             </template>
           </a-table-column>
         </template>
@@ -180,10 +161,6 @@ const emit = defineEmits(['save-relations'])
 const relations = ref<Relation[]>([]) // State to hold the list of relations
 const availableTables = ref<TableItem[]>(mockTables) // Using mock data for available tables
 
-// State for inline editing
-const editingRowIndex = ref<number | null>(null) // Index of the relation being edited
-const originalRelation = ref<Relation | null>(null) // To store original data for cancel operation
-
 // Watch for initial relations prop changes and initialize the relations state
 watch(() => props.initialRelations, (newVal: Relation[]) => {
   relations.value = [...newVal] // Initialize relations with prop data
@@ -201,8 +178,8 @@ const addRelationForField = () => {
     relationDescription: ''
   }
   relations.value.push(newRelation)
-  // Set the new row in edit mode
-  editingRowIndex.value = relations.value.length - 1
+  // 实时保存数据
+  emit('save-relations', relations.value)
 }
 
 // 为指定字段添加新的关联关系
@@ -215,68 +192,29 @@ const addRelationForSpecificField = (fieldName: string) => {
     relationDescription: ''
   }
   relations.value.push(newRelation)
-  // Set the new row in edit mode
-  editingRowIndex.value = relations.value.length - 1
+  // 实时保存数据
+  emit('save-relations', relations.value)
 }
 
-
-
-
-
-// Function to edit an existing relation
-const editRelation = (record: Relation, index: number) => {
-  // Save a copy of the original relation for potential cancellation
-  originalRelation.value = JSON.parse(JSON.stringify(relations.value[index]))
-  editingRowIndex.value = index
+// 处理关联关系变化的实时保存
+const handleRelationChange = () => {
+  emit('save-relations', relations.value)
 }
 
 // 添加字段对
 const addFieldPair = (record: Relation) => {
   record.relationFields.push({ sourceField: '', targetField: '' })
+  // 实时保存数据
+  emit('save-relations', relations.value)
 }
 
 // 删除字段对
 const removeFieldPair = (record: Relation, index: number) => {
   if (record.relationFields.length > 1) {
     record.relationFields.splice(index, 1)
+    // 实时保存数据
+    emit('save-relations', relations.value)
   }
-}
-
-// Function to save an edited relation
-const saveRelation = (index: number) => {
-  // 验证必填字段
-  const relation = relations.value[index]
-  if (!relation.targetTable) {
-    Modal.warning({
-      title: '验证失败',
-      content: '请选择关联表。'
-    })
-    return
-  }
-  
-  if (relation.relationFields.some((pair: RelationFieldPair) => !pair.sourceField || !pair.targetField)) {
-    Modal.warning({
-      title: '验证失败',
-      content: '请填写所有字段对的源字段和目标字段。'
-    })
-    return
-  }
-  
-  // Exit edit mode
-  editingRowIndex.value = null
-  originalRelation.value = null
-  emit('save-relations', relations.value);
-}
-
-// Function to cancel editing
-const cancelEdit = (index: number) => {
-  // Restore original relation data if it exists
-  if (originalRelation.value) {
-    relations.value[index] = { ...originalRelation.value }
-    originalRelation.value = null
-  }
-  // Exit edit mode
-  editingRowIndex.value = null
 }
 
 // Function to delete a relation
@@ -285,14 +223,8 @@ const deleteRelation = (index: number) => {
     title: '确认删除',
     content: '确定要删除这条关联关系吗？',
     onOk: () => {
-      relations.value.splice(index, 1);
-      // Adjust editing index if necessary
-      if (editingRowIndex.value === index) {
-        editingRowIndex.value = null
-      } else if (editingRowIndex.value !== null && editingRowIndex.value > index) {
-        editingRowIndex.value -= 1
-      }
-      emit('save-relations', relations.value);
+      relations.value.splice(index, 1)
+      emit('save-relations', relations.value)
     }
   })
 }

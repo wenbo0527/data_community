@@ -2,7 +2,7 @@
   <div>
     <div class="loan-list">
       <a-empty v-if="!loans || loans.length === 0" description="暂无用信记录" />
-      <a-table v-else :data="loans" :pagination="false" size="small" :bordered="true">
+      <a-table v-else :data="loans" :loading="loading" :pagination="false" size="small" :bordered="true">
         <template #columns>
           <a-table-column title="用信编号" data-index="loanNo" :width="120">
             <template #cell="{ record }">
@@ -210,6 +210,10 @@ const props = defineProps({
   loans: {
     type: Array,
     default: () => []
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -349,6 +353,18 @@ const getStatusColor = (status) => {
     '关闭': 'gray'
   }
   return colorMap[status] || 'default'
+}
+
+// 获取支付方式颜色
+const getPaymentMethodColor = (method) => {
+  const colorMap = {
+    '银行转账': 'blue',
+    '自动扣款': 'green',
+    '现金': 'orange',
+    '支付宝': 'cyan',
+    '微信': 'lime'
+  }
+  return colorMap[method] || 'default'
 }
 
 // 复制还款记录数据

@@ -2,7 +2,7 @@
   <div class="credit-reports">
     <div class="section-header">
       <h3 class="section-title">
-        <icon-file-text class="title-icon" />
+        <icon-file class="title-icon" />
         征信记录
       </h3>
       <div class="section-meta">
@@ -148,7 +148,6 @@
 import { computed } from 'vue'
 import { Button as AButton, Tag as ATag } from '@arco-design/web-vue'
 import { 
-  IconFileText, 
   IconFile, 
   IconRefresh, 
   IconExclamationCircle 

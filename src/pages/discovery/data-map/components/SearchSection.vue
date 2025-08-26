@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import { IconSearch, IconDelete } from '@arco-design/web-vue/es/icon'
@@ -265,9 +265,9 @@ onMounted(() => {
 })
 
 // 组件卸载时移除事件监听
-const onUnmounted = () => {
+onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
-}
+})
 </script>
 
 <style scoped>

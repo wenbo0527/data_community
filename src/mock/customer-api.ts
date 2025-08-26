@@ -26,8 +26,7 @@ export default [
           userId,
           dataKeys: Object.keys(userData),
           hasName: !!userData.name,
-          depositProductsCount: userData.depositProducts?.length || 0,
-          loanProductsCount: userData.loanProducts?.length || 0
+          totalProductsCount: userData.products?.length || 0 // 所有产品都是信贷产品
         });
         
         return userData;

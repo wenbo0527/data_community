@@ -59,6 +59,40 @@ vi.mock('@arco-design/web-vue', () => ({
   }
 }))
 
+// Mock fetchUserInfo 函数
+vi.mock('@/mock/customer360', () => ({
+  fetchUserInfo: vi.fn().mockResolvedValue({
+    basicInfo: {
+      name: '张三',
+      idCard: '110101199001011234',
+      phone: '13800138000',
+      age: 30,
+      gender: '男',
+      address: '北京市朝阳区'
+    },
+    products: [
+      { id: 1, productType: 'loan', amount: 10000 },
+      { id: 2, productType: 'loan', amount: 50000 }
+    ],
+    collectionRecords: [{ id: 1, type: '电话催收', amount: 1000 }],
+    creditReports: [{ id: 1, reportDate: '2024-01-01', score: 750 }],
+    marketingRecords: [{ id: 1, campaignName: '信贷推广', responseRate: 15.5 }],
+    loanRecords: [{ id: 1, amount: 50000, status: '正常' }]
+  }),
+  mockUsers: {
+    '887123': {
+      basicInfo: {
+        name: '张三',
+        idCard: '110101199001011234',
+        phone: '13800138000',
+        age: 30,
+        gender: '男',
+        address: '北京市朝阳区'
+      }
+    }
+  }
+}))
+
 // Mock API 服务
 const mockApiService = {
   getUserInfo: vi.fn().mockResolvedValue({
@@ -72,8 +106,7 @@ const mockApiService = {
   getProductInfo: vi.fn().mockResolvedValue({
     success: true,
     data: {
-      deposits: mockUsers['887123'].depositProducts,
-      loans: mockUsers['887123'].loanProducts
+      loans: mockUsers['887123'].products // 所有产品都是信贷产品
     }
   }),
   getCollectionRecords: vi.fn().mockResolvedValue({
@@ -137,6 +170,8 @@ describe('Customer360 集成测试', () => {
     
     // 重置所有 mock
     vi.clearAllMocks()
+    
+    // fetchUserInfo已在mock中设置默认返回值
     
     // 设置初始路由
     await router.push('/customer360/887123')
@@ -577,27 +612,64 @@ describe('Customer360 集成测试', () => {
       // 等待所有数据加载完成
       await new Promise(resolve => setTimeout(resolve, 100))
       
-      expect(wrapper.vm.userData).toBeDefined()
-      expect(wrapper.vm.userData.basicInfo).toBeDefined()
-      expect(wrapper.vm.userData.depositProducts).toBeDefined()
-      expect(wrapper.vm.userData.loanProducts).toBeDefined()
-      expect(wrapper.vm.userData.collectionRecords).toBeDefined()
-      expect(wrapper.vm.userData.creditReports).toBeDefined()
-      expect(wrapper.vm.userData.marketingRecords).toBeDefined()
-      expect(wrapper.vm.userData.loanRecords).toBeDefined()
+      expect(wrapper.vm.userInfo).toBeDefined()
+      expect(wrapper.vm.userInfo.basicInfo).toBeDefined()
+      // 所有产品都是信贷产品，不再有存款产品
+      expect(wrapper.vm.userInfo.products).toBeDefined()
+      expect(wrapper.vm.userInfo.collectionRecords).toBeDefined()
+      expect(wrapper.vm.userInfo.creditReports).toBeDefined()
+      expect(wrapper.vm.userInfo.marketingRecords).toBeDefined()
+      expect(wrapper.vm.userInfo.loanRecords).toBeDefined()
     })
 
     it('应该处理数据不一致的情况', async () => {
-      // 模拟数据不一致
-      mockApiService.getUserInfo.mockResolvedValueOnce({
-        success: true,
-        data: { ...mockUsers['887123'], basicInfo: null }
-      })
+      // 模拟缺少关键基本信息字段的情况
+      const inconsistentData = {
+        basicInfo: {
+          // 缺少关键字段 name, idCard, phone
+          age: 30,
+          gender: '男'
+          // name: undefined,
+          // idCard: undefined,
+          // phone: undefined
+        },
+        products: [
+          { id: 1, productType: 'deposit', amount: 10000 },
+          { id: 2, productType: 'loan', amount: 50000 }
+        ],
+        // 产品数据与记录数据不一致
+        creditsList: [], // 有信贷产品但没有信贷记录
+        loanRecords: []  // 有贷款产品但没有贷款记录
+      }
+      
+      // 模拟fetchUserInfo返回不一致的数据
+      const { fetchUserInfo } = await import('@/mock/customer360')
+      vi.mocked(fetchUserInfo).mockResolvedValueOnce(inconsistentData)
       
       wrapper = createWrapper()
       await wrapper.vm.$nextTick()
       
-      expect(wrapper.find('.data-inconsistency-warning').exists()).toBe(true)
+      // 等待组件完全渲染和数据加载
+      await new Promise(resolve => setTimeout(resolve, 200))
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // 添加调试信息
+      console.log('=== 测试调试信息 ===')
+      console.log('userInfo:', wrapper.vm.userInfo)
+      console.log('userInfo.basicInfo:', wrapper.vm.userInfo?.basicInfo)
+      console.log('basicInfo.name:', wrapper.vm.userInfo?.basicInfo?.name)
+      console.log('basicInfo.idCard:', wrapper.vm.userInfo?.basicInfo?.idCard)
+      console.log('basicInfo.phone:', wrapper.vm.userInfo?.basicInfo?.phone)
+      console.log('hasDataInconsistency:', wrapper.vm.hasDataInconsistency)
+      console.log('products:', wrapper.vm.userInfo?.products)
+      console.log('creditsList:', wrapper.vm.userInfo?.creditsList)
+      console.log('DOM中的警告元素:', wrapper.find('.data-inconsistency-warning').exists())
+      console.log('=== 调试信息结束 ===')
+      
+      // 验证数据不一致警告显示
+      const warningElement = wrapper.find('.data-inconsistency-warning')
+      expect(warningElement.exists()).toBe(true)
     })
   })
 

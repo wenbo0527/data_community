@@ -35,7 +35,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 console.log('🌟🌟🌟 INDEX.VUE SCRIPT SETUP 开始执行 🌟🌟🌟')
 console.log('🌟 当前时间:', new Date().toLocaleString())
 console.log('🌟 当前URL:', window.location.href)

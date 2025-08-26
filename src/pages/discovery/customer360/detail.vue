@@ -1,234 +1,7 @@
 <template>
   <div class="customer-detail-container">
-    <!-- 🚨 明显的页面加载标识 🚨 -->
-    <div style="background: red; color: white; padding: 10px; font-size: 20px; text-align: center; margin-bottom: 10px;">
-      🔥 DETAIL.VUE 页面已加载！用户ID: {{ userId }} 🔥
-    </div>
-    <!-- 调试面板开关按钮 -->
-    <a-button 
-      class="debug-toggle-btn"
-      type="primary" 
-      size="small"
-      @click="showDebugPanel = !showDebugPanel"
-    >
-      {{ showDebugPanel ? '隐藏调试' : '显示调试' }}
-    </a-button>
     
-    <!-- 强制状态显示已移除 -->
-    
-    <!-- 统一调试面板 -->
-    <div v-if="showDebugPanel" class="unified-debug-panel">
-      <div class="debug-header">
-        <h4>🔍 统一调试日志面板</h4>
-        <div class="debug-controls">
-          <a-button size="mini" @click="clearDebugLogs">清空日志</a-button>
-          <a-button size="mini" @click="exportDebugLogs">导出日志</a-button>
-          <a-button size="mini" @click="manualRefreshData" type="primary">手动刷新数据</a-button>
-          <a-button size="mini" @click="showDebugPanel = false">隐藏面板</a-button>
-        </div>
-      </div>
-      
-      <div class="debug-content">
-        <!-- 主页面状态 -->
-        <div class="debug-section">
-          <h5>📄 主页面状态</h5>
-          <div class="debug-item">
-            <span class="debug-label">时间戳:</span>
-            <span class="debug-value">{{ currentTimestamp }}</span>
-          </div>
-          <div class="debug-item">
-            <span class="debug-label">Loading状态:</span>
-            <span class="debug-value" :class="{ 'status-loading': loading }">{{ loading }}</span>
-          </div>
-          <div class="debug-item">
-            <span class="debug-label">用户ID:</span>
-            <span class="debug-value">{{ userId }}</span>
-          </div>
-          <div class="debug-item">
-            <span class="debug-label">UserInfo存在:</span>
-            <span class="debug-value" :class="{ 'status-success': !!userInfo, 'status-error': !userInfo }">{{ !!userInfo }}</span>
-          </div>
-          <div class="debug-item">
-            <span class="debug-label">路由参数:</span>
-            <span class="debug-value">{{ JSON.stringify(route.params) }}</span>
-          </div>
-          <div class="debug-item">
-            <span class="debug-label">路由查询:</span>
-            <span class="debug-value">{{ JSON.stringify(route.query) }}</span>
-          </div>
-        </div>
-
-        <!-- 数据流跟踪 -->
-        <div class="debug-section">
-          <h5>🔄 数据流跟踪</h5>
-          <div class="debug-flow">
-            <div v-for="(log, index) in debugLogs" :key="index" class="debug-log-item">
-              <span class="debug-timestamp">{{ log.timestamp }}</span>
-              <span class="debug-component" :class="`component-${log.component}`">{{ log.component }}</span>
-              <span class="debug-message">{{ log.message }}</span>
-              <span v-if="log.data" class="debug-data">{{ formatDebugData(log.data) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 组件状态汇总 -->
-        <div class="debug-section">
-          <h5>🧩 组件状态汇总</h5>
-          <div class="component-status-grid">
-            <div class="component-status-item">
-              <h6>BasicInfo</h6>
-              <div class="status-details">
-                <div>数据状态: {{ componentStatus.basicInfo.hasData ? '✅' : '❌' }}</div>
-                <div>渲染状态: {{ componentStatus.basicInfo.rendered ? '✅' : '❌' }}</div>
-                <div>最后更新: {{ componentStatus.basicInfo.lastUpdate }}</div>
-              </div>
-            </div>
-            <div class="component-status-item">
-              <h6>ProductModules</h6>
-              <div class="status-details">
-                <div>自营产品: {{ selfProductData?.products?.length || 0 }}个</div>
-                <div>助贷产品: {{ loanProductData?.products?.length || 0 }}个</div>
-                <div>当前模块: {{ selectedProductType }}</div>
-              </div>
-            </div>
-            <div class="component-status-item">
-              <h6>LoanList</h6>
-              <div class="status-details">
-                <div>数据状态: {{ componentStatus.loanList.hasData ? '✅' : '❌' }}</div>
-                <div>记录数量: {{ loanData?.length || 0 }}条</div>
-                <div>最后更新: {{ componentStatus.loanList.lastUpdate }}</div>
-              </div>
-            </div>
-            <div class="component-status-item">
-              <h6>CreditList</h6>
-              <div class="status-details">
-                <div>数据状态: {{ componentStatus.creditList.hasData ? '✅' : '❌' }}</div>
-                <div>记录数量: {{ creditData?.length || 0 }}条</div>
-                <div>最后更新: {{ componentStatus.creditList.lastUpdate }}</div>
-              </div>
-            </div>
-            <div class="component-status-item">
-              <h6>AdjustmentHistory</h6>
-              <div class="status-details">
-                <div>数据状态: {{ componentStatus.adjustmentHistory.hasData ? '✅' : '❌' }}</div>
-                <div>记录数量: {{ adjustmentData?.length || 0 }}条</div>
-                <div>最后更新: {{ componentStatus.adjustmentHistory.lastUpdate }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 数据流跟踪 -->
-        <div class="debug-section">
-          <h5>🔄 数据流跟踪详情</h5>
-          <a-tabs size="small">
-            <a-tab-pane key="api" title="API调用">
-              <div class="data-flow-list">
-                <div 
-                  v-for="(call, index) in dataFlowTracker.apiCalls" 
-                  :key="index"
-                  class="data-flow-item"
-                  :class="`status-${call.status}`"
-                >
-                  <div class="flow-header">
-                    <span class="flow-name">{{ call.apiName }}</span>
-                    <span class="flow-status">{{ call.status }}</span>
-                    <span class="flow-time">{{ call.timestamp }}</span>
-                  </div>
-                  <div class="flow-data" v-if="call.data">
-                    {{ typeof call.data === 'object' ? JSON.stringify(call.data, null, 2) : call.data }}
-                  </div>
-                </div>
-              </div>
-            </a-tab-pane>
-            
-            <a-tab-pane key="transfer" title="数据传递">
-              <div class="data-flow-list">
-                <div 
-                  v-for="(transfer, index) in dataFlowTracker.dataTransfers" 
-                  :key="index"
-                  class="data-flow-item"
-                >
-                  <div class="flow-header">
-                    <span class="flow-path">{{ transfer.from }} → {{ transfer.to }}</span>
-                    <span class="flow-count">{{ transfer.dataCount }}条</span>
-                    <span class="flow-time">{{ transfer.timestamp }}</span>
-                  </div>
-                  <div class="flow-data">{{ transfer.dataType }}</div>
-                </div>
-              </div>
-            </a-tab-pane>
-            
-            <a-tab-pane key="component" title="组件更新">
-              <div class="data-flow-list">
-                <div 
-                  v-for="(update, index) in dataFlowTracker.componentUpdates" 
-                  :key="index"
-                  class="data-flow-item"
-                >
-                  <div class="flow-header">
-                    <span class="flow-name">{{ update.component }}</span>
-                    <span class="flow-action">{{ update.updateType }}</span>
-                    <span class="flow-time">{{ update.timestamp }}</span>
-                  </div>
-                  <div class="flow-data" v-if="update.details">
-                    {{ typeof update.details === 'object' ? JSON.stringify(update.details, null, 2) : update.details }}
-                  </div>
-                </div>
-              </div>
-            </a-tab-pane>
-          </a-tabs>
-        </div>
-
-        <!-- 数据详情 -->
-        <div class="debug-section">
-          <h5>📊 数据详情</h5>
-          <a-collapse>
-            <a-collapse-item header="UserInfo 原始数据" key="userInfo">
-              <pre class="debug-json">{{ JSON.stringify(userInfo, null, 2) }}</pre>
-            </a-collapse-item>
-            <a-collapse-item header="计算属性数据" key="computed">
-              <div class="computed-data">
-                <div><strong>selfProductData:</strong> {{ JSON.stringify(selfProductData, null, 2) }}</div>
-                <div><strong>loanProductData:</strong> {{ JSON.stringify(loanProductData, null, 2) }}</div>
-                <div><strong>creditData:</strong> {{ JSON.stringify(creditData, null, 2) }}</div>
-                <div><strong>loanData:</strong> {{ JSON.stringify(loanData, null, 2) }}</div>
-                <div><strong>adjustmentData:</strong> {{ JSON.stringify(adjustmentData, null, 2) }}</div>
-              </div>
-            </a-collapse-item>
-          </a-collapse>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 调试面板切换按钮 -->
-    <div class="debug-toggle" v-if="!showDebugPanel">
-      <a-button type="primary" size="small" @click="showDebugPanel = true">
-        🔍 显示调试面板
-      </a-button>
-    </div>
-    
-    <!-- 顶部操作栏 -->
-    <div class="header">
-      <div class="header-left">
-        <a-button type="text" class="back-button" @click="goBack">
-          <template #icon><icon-arrow-left /></template>
-          返回搜索
-        </a-button>
-        <div class="breadcrumb">
-          <span>客户360视图</span>
-          <icon-right />
-          <span>{{ userInfo?.name || '客户详情' }}</span>
-        </div>
-      </div>
-      <div class="header-right">
-        <HistoryQueryButton :user-info="userInfo" />
-        <a-button type="primary" @click="fetchData">
-          <template #icon><icon-refresh /></template>
-          刷新数据
-        </a-button>
-      </div>
-    </div>
+    <!-- 头部区域已删除，默认显示客户画像 -->
 
     <!-- 数据不一致警告 -->
     <div v-if="hasDataInconsistency" class="data-inconsistency-warning">
@@ -292,209 +65,20 @@
           <div v-if="userInfo">userInfo键: {{ Object.keys(userInfo).join(', ') }}</div>
         </div>
 
-        <!-- 客户概览卡片 -->
-        <div class="overview-cards">
-          <div class="overview-card">
-            <div class="card-header">
-              <icon-user class="card-icon" />
-              <span class="card-title">客户信息</span>
-            </div>
-            <div class="card-content">
-              <div class="info-item">
-                <span class="label">姓名</span>
-                <span class="value">{{ userInfo?.basicInfo?.name || '-' }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">手机号</span>
-                <span class="value">{{ userInfo?.basicInfo?.phone || '-' }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">风险等级</span>
-                <a-tag :color="getRiskLevelColor(riskLevel)">{{ riskLevel }}</a-tag>
-              </div>
-            </div>
-          </div>
-          
-          <div class="overview-card">
-            <div class="card-header">
-              <icon-storage class="card-icon" />
-              <span class="card-title">资产负债</span>
-            </div>
-            <div class="card-content">
-              <div class="info-item">
-                <span class="label">总资产</span>
-                <span class="value amount">{{ formatAmount(totalAssets) }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">总负债</span>
-                <span class="value amount">{{ formatAmount(totalLiabilities) }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">净资产</span>
-                <span class="value amount" :class="{ 'negative': totalAssets - totalLiabilities < 0 }">
-                  {{ formatAmount(totalAssets - totalLiabilities) }}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="overview-card">
-            <div class="card-header">
-              <icon-safe class="card-icon" />
-              <span class="card-title">授信情况</span>
-            </div>
-            <div class="card-content">
-              <div class="info-item">
-                <span class="label">总授信额度</span>
-                <span class="value amount">{{ formatAmount(userInfo?.totalCredit || 0) }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">已用额度</span>
-                <span class="value amount">{{ formatAmount(userInfo?.usedCredit || 0) }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">额度使用率</span>
-                <span class="value">{{ creditUtilizationRate }}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- 顶部概览卡片已删除，按需求文档要求移除 -->
 
-        <!-- 主要内容区域 -->
+        <!-- 主要内容区域 - 新的两级Tab架构 -->
         <div class="main-content">
-          <!-- 左侧内容 -->
-          <div class="left-content">
-            <!-- 基本信息区域 -->
-            <div class="basic-info-section">
-              <div class="section-title">
-                <h3><icon-user /> 基本信息</h3>
-              </div>
-              
-              <!-- 基本信息网格布局 -->
-              <div class="basic-info-grid">
-                <!-- 客户基本信息 -->
-                <div class="basic-info-card">
-                  <BasicInfo :user-info="userInfo" @debug-info="handleDebugInfo" />
-                </div>
-                
-                <!-- 催收记录 -->
-                <div class="basic-info-card">
-                  <div class="card-header">
-                    <h4><icon-safe /> 催收记录</h4>
-                  </div>
-                  <CollectionRecords 
-                    :collection-data="productStore.getCurrentCollectionRecords" 
-                    :loading="loading"
-                    @debug-info="handleDebugInfo" 
-                  />
-                </div>
-                
-                <!-- 征信记录 -->
-                <div class="basic-info-card">
-                  <div class="card-header">
-                    <h4><icon-storage /> 征信记录</h4>
-                  </div>
-                  <CreditReports 
-                    :credit-reports="productStore.getCurrentCreditReports" 
-                    :loading="loading"
-                    @debug-info="handleDebugInfo" 
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- 产品信息 -->
-            <div class="detail-section">
-              <div class="section-title">
-                <h3><icon-storage /> 产品信息</h3>
-              </div>
-              
-              <!-- 产品选择器调试信息 -->
-              <div v-if="showDebugPanel" class="product-debug-info" style="background: #fff7e6; border: 2px solid #fa8c16; padding: 16px; margin: 16px 24px; border-radius: 6px;">
-                <h4 style="color: #fa8c16; margin: 0 0 12px 0;">🔍 产品选择器调试信息</h4>
-                <div style="font-size: 12px; line-height: 1.5;">
-                  <div><strong>当前选中类型:</strong> {{ productStore.selectedProductType }}</div>
-                  <div><strong>selfProductData:</strong> {{ selfProductData ? `有数据(${selfProductData.products?.length || 0}个产品)` : '无数据' }}</div>
-                  <div><strong>loanProductData:</strong> {{ loanProductData ? `有数据(${loanProductData.products?.length || 0}个产品)` : '无数据' }}</div>
-                  <div><strong>userInfo状态:</strong> {{ userInfo ? '已加载' : '未加载' }}</div>
-                  <div><strong>loading状态:</strong> {{ loading }}</div>
-                  <div><strong>产品统计:</strong> {{ JSON.stringify(productStats) }}</div>
-                </div>
-              </div>
-              
-              <!-- 新的产品切换器 -->
-              <div class="product-switcher-container">
-                <ProductSwitcher 
-                  :active-product="productStore.selectedProductType"
-                  :product-stats="productStats"
-                  :loading="loading"
-                  @product-change="handleProductTypeChange"
-                />
-                
-                <!-- 产品模块内容 -->
-                <div class="product-modules-container">
-                  <ProductModules 
-                    :product-type="productStore.selectedProductType"
-                    :user-info="userInfo"
-                    :product-data="currentProductData"
-                    :loading="loading"
-                    :show-debug-panel="showDebugPanel"
-                    :remember-state="true"
-                    :lazy-load="true"
-                    :animated="true"
-                    @debug-info="handleDebugInfo"
-                    @tab-change="handleModuleTabChange"
-                    @module-loaded="handleModuleLoaded"
-                    @retry="manualRefreshData"
-                  />
-                </div>
-              </div>
-            </div>
-
-
-          </div>
-
-          <!-- 右侧内容 -->
-          <div class="right-content">
-            <!-- 授信记录 -->
-            <div class="detail-section">
-              <div class="section-title">
-                <h3><icon-safe /> 授信记录</h3>
-                <span class="product-indicator">{{ productStore.selectedProductType === 'self' ? '自营产品' : '助贷产品' }}</span>
-              </div>
-              <CreditList 
-                :credits="productStore.getCurrentCreditRecords" 
-                :loading="loading"
-                @debug-info="handleDebugInfo" 
-              />
-            </div>
-
-            <!-- 用信记录 -->
-            <div class="detail-section">
-              <div class="section-title">
-                <h3><icon-storage /> 用信记录</h3>
-                <span class="product-indicator">{{ productStore.selectedProductType === 'self' ? '自营产品' : '助贷产品' }}</span>
-              </div>
-              <LoanList 
-                :loans="productStore.getCurrentLoanRecords" 
-                :loading="loading"
-                @debug-info="handleDebugInfo" 
-              />
-            </div>
-
-            <!-- 调额历史 -->
-            <div class="detail-section">
-              <div class="section-title">
-                <h3><icon-safe /> 调额历史</h3>
-                <span class="product-indicator">{{ productStore.selectedProductType === 'self' ? '自营产品' : '助贷产品' }}</span>
-              </div>
-              <AdjustmentHistory 
-                :adjustments="productStore.getCurrentAdjustmentHistory" 
-                :loading="loading"
-                @debug-info="handleDebugInfo" 
-              />
-            </div>
-          </div>
+          <MainTabs
+          :user-info="userInfo"
+          :products="userOwnedProducts"
+          :credit-info="creditData"
+          :collection-records="collectionRecords"
+          :loading="loading"
+          :show-debug-panel="showDebugPanel"
+          @main-tab-change="handleMainTabChange"
+          @module-change="handleModuleChange"
+        />
         </div>
       </div>
 
@@ -523,7 +107,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 console.log('🔥🔥🔥 DETAIL.VUE SCRIPT SETUP 开始执行 🔥🔥🔥')
 console.log('🔥 当前时间:', new Date().toLocaleString())
 console.log('🔥 window.location.href:', window.location.href)
@@ -535,26 +119,20 @@ document.title = '🔥 Customer360 Detail - ' + new Date().toLocaleTimeString()
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { 
-  IconArrowLeft, 
-  IconRight, 
-  IconRefresh,
-  IconUser,
-  IconStorage,
-  IconSafe
-} from '@arco-design/web-vue/es/icon'
+// 删除了不再需要的图标导入
 import { fetchUserInfo } from '../../../mock/customer360'
 import { formatAmount, formatPercent } from '../../../utils/formatUtils'
 import { useProductStore } from '../../../stores/productStore'
 import BasicInfo from './components/BasicInfo.vue'
-import ProductModules from './components/ProductModules.vue'
-import ProductSwitcher from './components/ProductSwitcher.vue'
+import UserOwnedProducts from './components/UserOwnedProducts.vue'
 import CreditList from './components/CreditList.vue'
 import LoanList from './components/LoanList.vue'
 import AdjustmentHistory from './components/AdjustmentHistory.vue'
 import CollectionRecords from './components/CollectionRecords.vue'
 import CreditReports from './components/CreditRecords.vue'
-import HistoryQueryButton from './components/HistoryQueryButton.vue'
+// HistoryQueryButton组件已删除，不再需要历史查询按钮
+import UserProfile from './components/UserProfile.vue'
+import MainTabs from './components/MainTabs.vue'
 
 // 基础响应式变量
 const route = useRoute()
@@ -562,215 +140,42 @@ const router = useRouter()
 const productStore = useProductStore()
 const userInfo = ref(null)
 const loading = ref(true)
-// activeTab 已移除，改为垂直展示
-const selectedProduct = ref('')
+const showDebugPanel = ref(false)
+// Tab切换控制
+const activeInfoTab = ref('basic') // 默认显示基本信息Tab
+const selectedProduct = ref(null)
+// 移除了selectedProductType，不再使用产品类型切换
 
-// 调试系统状态管理
-const debugLogs = ref([])
-const showDebugPanel = ref(true) // 调试面板显示控制
-const currentTimestamp = ref(new Date().toLocaleString())
-const componentStatus = ref({
-  basicInfo: { status: 'loading', timestamp: '', info: null, hasData: false, rendered: false },
-  productModules: { status: 'loading', timestamp: '', info: null, hasData: false, rendered: false },
-  loanList: { status: 'loading', timestamp: '', info: null, hasData: false, rendered: false },
-  creditList: { status: 'loading', timestamp: '', info: null, hasData: false, rendered: false },
-  adjustmentHistory: { status: 'loading', timestamp: '', info: null, hasData: false, rendered: false }
-})
+// 移除了调试系统相关的状态变量
 
-// 数据流跟踪
-const dataFlowTracker = ref({
-  apiCalls: [],
-  dataTransfers: [],
-  componentUpdates: []
-})
+// 移除了数据流跟踪相关的函数
 
-// 跟踪API调用
-const trackApiCall = (apiName, status, data = null) => {
-  const apiCall = {
-    id: Date.now(),
-    apiName,
-    status, // 'start', 'success', 'error'
-    timestamp: new Date().toISOString(),
-    data: data ? { count: Array.isArray(data) ? data.length : 1, type: typeof data } : null
-  }
-  dataFlowTracker.value.apiCalls.unshift(apiCall)
-  if (dataFlowTracker.value.apiCalls.length > 20) {
-    dataFlowTracker.value.apiCalls.pop()
-  }
-}
+// 移除了组件状态更新和调试日志相关的函数
 
-// 跟踪数据传递
-const trackDataTransfer = (from, to, dataType, dataCount) => {
-  const transfer = {
-    id: Date.now(),
-    from,
-    to,
-    dataType,
-    dataCount,
-    timestamp: new Date().toISOString()
-  }
-  dataFlowTracker.value.dataTransfers.unshift(transfer)
-  if (dataFlowTracker.value.dataTransfers.length > 30) {
-    dataFlowTracker.value.dataTransfers.pop()
-  }
-}
+// 移除了手动刷新和调试处理相关的函数
 
-// 跟踪组件更新
-const trackComponentUpdate = (component, updateType, details) => {
-  const update = {
-    id: Date.now(),
-    component,
-    updateType, // 'mounted', 'props-change', 'data-update'
-    details,
-    timestamp: new Date().toISOString()
-  }
-  dataFlowTracker.value.componentUpdates.unshift(update)
-  if (dataFlowTracker.value.componentUpdates.length > 50) {
-    dataFlowTracker.value.componentUpdates.pop()
-  }
-}
-
-// 调试日志方法
-const addDebugLog = (component, message, data = null) => {
-  const timestamp = new Date().toLocaleTimeString()
-  debugLogs.value.unshift({
-    timestamp,
-    component,
-    message,
-    data
+// 用户拥有的产品数据（所有产品都是信贷产品）
+const userOwnedProducts = computed(() => {
+  if (!userInfo.value || userInfo.value.error) return []
+  
+  const products = []
+  const userProducts = userInfo.value.products || []
+  
+  // 所有产品都是信贷产品
+  userProducts.forEach(product => {
+    products.push({
+      ...product,
+      category: '信贷产品',
+      type: 'loan'
+    })
   })
   
-  // 限制日志数量，保留最新的100条
-  if (debugLogs.value.length > 100) {
-    debugLogs.value = debugLogs.value.slice(0, 100)
-  }
-  
-  console.log(`[${timestamp}] ${component}: ${message}`, data)
-}
-
-// 更新组件状态
-const updateComponentStatus = (component, status) => {
-  if (componentStatus.value[component]) {
-    componentStatus.value[component] = {
-      ...componentStatus.value[component],
-      ...status,
-      lastUpdate: new Date().toLocaleTimeString()
-    }
-    addDebugLog(component, `状态更新: ${JSON.stringify(status)}`)
-  }
-}
-
-// 格式化调试数据
-const formatDebugData = (data) => {
-  if (!data) return ''
-  const str = JSON.stringify(data)
-  return str.length > 100 ? str.substring(0, 100) + '...' : str
-}
-
-// 清空调试日志
-const clearDebugLogs = () => {
-  debugLogs.value = []
-  addDebugLog('system', '调试日志已清空')
-}
-
-// 导出调试日志
-const exportDebugLogs = () => {
-  const logData = {
-    timestamp: new Date().toISOString(),
-    userId: userId.value,
-    componentStatus: componentStatus.value,
-    logs: debugLogs.value,
-    userInfo: userInfo.value,
-    computedData: {
-      selfProductData: selfProductData.value,
-      loanProductData: loanProductData.value,
-      creditData: creditData.value,
-      loanData: loanData.value,
-      adjustmentData: adjustmentData.value
-    }
-  }
-  
-  const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `customer360-debug-${userId.value}-${Date.now()}.json`
-  a.click()
-  URL.revokeObjectURL(url)
-  
-  addDebugLog('system', '调试日志已导出')
-}
-
-// 手动刷新数据
-const manualRefreshData = async () => {
-  console.log('🔄 [MANUAL] 手动刷新数据开始')
-  addDebugLog('manual', '用户手动触发数据刷新')
-  
-  // 重置状态
-  userInfo.value = null
-  loading.value = true
-  
-  console.log('🔄 [MANUAL] 状态已重置，开始获取数据')
-  addDebugLog('manual', '状态已重置，准备重新获取数据')
-  
-  try {
-    await fetchData()
-    console.log('🔄 [MANUAL] 手动刷新完成')
-    addDebugLog('manual', '手动刷新数据完成')
-    Message.success('数据刷新成功')
-  } catch (error) {
-    console.error('🔄 [MANUAL] 手动刷新失败:', error)
-    addDebugLog('manual', '手动刷新数据失败', { error: error.message })
-    Message.error(`数据刷新失败: ${error.message}`)
-  }
-}
-
-// 更新时间戳
-const updateTimestamp = () => {
-  currentTimestamp.value = new Date().toLocaleString()
-}
-
-// 定时更新时间戳
-let timestampTimer = null
-
-// 定时器将在主onMounted中启动
-
-// 处理子组件调试信息
-const handleDebugInfo = (debugInfo) => {
-  addDebugLog(debugInfo.type, `[${debugInfo.component}] ${debugInfo.message}`, debugInfo.data)
-  
-  // 跟踪组件更新
-  trackComponentUpdate(debugInfo.component, debugInfo.type, debugInfo.data)
-  
-  // 如果是数据相关的操作，记录数据传递
-  if (debugInfo.message.includes('数据') || debugInfo.message.includes('更新') || debugInfo.message.includes('变化')) {
-    const dataCount = debugInfo.data && typeof debugInfo.data === 'object' ? 
-      (Array.isArray(debugInfo.data) ? debugInfo.data.length : Object.keys(debugInfo.data).length) : 1
-    trackDataTransfer('Component', debugInfo.component, debugInfo.type, dataCount)
-  }
-  
-  // 更新对应组件的状态
-  if (debugInfo.component === 'LoanList') {
-    updateComponentStatus('loanList', {
-      hasData: debugInfo.data?.hasLoans || debugInfo.data?.length > 0,
-      rendered: true,
-      lastUpdate: debugInfo.timestamp
-    })
-  }
-}
-updateTimestamp()
-
-// 模块状态管理
-const activeModules = ref({
-  self: 'basic', // 自营产品默认显示基础信息
-  loan: 'basic'  // 助贷产品默认显示基础信息
+  return products
 })
 
-// 产品选项
+// 产品选项（已简化，不再区分自营和助贷）
 const productOptions = ref([
-  { label: '全部产品', value: '全部产品' },
-  { label: '自营产品', value: '自营产品' },
-  { label: '助贷产品', value: '助贷产品' }
+  { label: '全部产品', value: '全部产品' }
 ])
 
 // 获取用户ID
@@ -780,28 +185,7 @@ const userId = computed(() => {
   return route.params.userId || route.query.userId
 })
 
-// 计算属性：根据产品类型获取对应数据
-const selfProductData = computed(() => {
-  console.log('🧮 计算selfProductData，使用productStore数据')
-  
-  return {
-    products: productStore.selfProducts,
-    collections: productStore.collectionRecords,
-    credits: productStore.creditRecords,
-    marketing: productStore.userData?.marketingRecords?.touchRecords || []
-  }
-})
-
-const loanProductData = computed(() => {
-  console.log('🧮 计算loanProductData，使用productStore数据')
-  
-  return {
-    products: productStore.loanProducts,
-    collections: productStore.collectionRecords,
-    credits: productStore.creditRecords,
-    marketing: productStore.userData?.marketingRecords?.benefitRecords || []
-  }
-})
+// 移除了selfProductData和loanProductData计算属性，改为直接使用userOwnedProducts
 
 const creditData = computed(() => {
   console.log('🔍 creditData计算属性被调用，使用productStore数据');
@@ -816,7 +200,23 @@ const adjustmentData = computed(() => {
   return productStore.quotaAdjustHistory
 })
 
-// 数据完整性检查
+// 催收记录数据
+const collectionRecords = computed(() => {
+  if (!userInfo.value || userInfo.value.error) return []
+  return userInfo.value.collectionRecords || []
+})
+
+// 处理主Tab切换
+const handleMainTabChange = (tabKey) => {
+  console.log('🔄 [MAIN-TAB] 主Tab切换:', tabKey)
+}
+
+// 处理模块切换
+const handleModuleChange = (moduleKey) => {
+  console.log('🔄 [MODULE] 模块切换:', moduleKey)
+}
+
+// 数据完整性检查（只检查信贷产品）
 const hasDataInconsistency = computed(() => {
   if (!userInfo.value || userInfo.value.error) return false
   
@@ -827,64 +227,30 @@ const hasDataInconsistency = computed(() => {
   const basicInfo = userInfo.value.basicInfo
   if (!basicInfo.name || !basicInfo.idCard || !basicInfo.phone) return true
   
-  // 检查产品数据一致性
-  const depositProducts = userInfo.value.depositProducts || [] // 修复：使用depositProducts
-  const loanProducts = userInfo.value.loanProducts || []
+  // 检查信贷产品数据一致性
+  const products = userInfo.value.products || []
   
-  // 如果有产品但没有对应的记录，可能存在不一致
-  if (depositProducts.length > 0 && (!userInfo.value.creditsList || userInfo.value.creditsList.length === 0)) {
-    return true
-  }
-  
-  if (loanProducts.length > 0 && (!userInfo.value.loanRecords || userInfo.value.loanRecords.length === 0)) {
+  // 如果有信贷产品但没有对应的记录，可能存在不一致
+  if (products.length > 0 && (!userInfo.value.loanRecords || userInfo.value.loanRecords.length === 0)) {
     return true
   }
   
   return false
 })
 
-// 计算属性
-const creditUtilizationRate = computed(() => {
-  if (!userInfo.value || userInfo.value.error) return 0
-  const { totalCredit, usedCredit } = userInfo.value
-  return totalCredit > 0 ? (usedCredit / totalCredit * 100).toFixed(2) : 0
-})
-
-const totalAssets = computed(() => {
-  if (!userInfo.value || userInfo.value.error) return 0
-  const depositTotal = userInfo.value.depositProducts?.reduce((sum, product) => sum + product.balance, 0) || 0
-  return depositTotal
-})
-
-const totalLiabilities = computed(() => {
-  if (!userInfo.value || userInfo.value.error) return 0
-  const loanTotal = userInfo.value.loanProducts?.reduce((sum, product) => sum + product.balance, 0) || 0
-  return loanTotal
-})
-
-const riskLevel = computed(() => {
-  if (!userInfo.value || userInfo.value.error) return '未知'
-  const { currentOverdueDays, repaymentRate } = userInfo.value
-  if (currentOverdueDays > 90) return '高风险'
-  if (currentOverdueDays > 30) return '中风险'
-  if (repaymentRate < 80) return '中风险'
-  return '低风险'
-})
+// 删除了不再需要的计算属性（creditUtilizationRate, totalAssets, totalLiabilities, riskLevel）
 
 // 获取数据
 const fetchData = async () => {
   console.log('🔍 [DEBUG] 开始获取用户数据', { userId: userId.value })
   if (!userId.value) {
     console.log('❌ [DEBUG] 用户ID为空，无法获取数据')
-    addDebugLog('main', 'userId 为空，无法获取数据')
     return
   }
   
   console.log('📡 [DEBUG] 调用fetchUserInfo API', { userId: userId.value })
-  addDebugLog('main', `开始获取用户数据，userId: ${userId.value}`)
   loading.value = true
   console.log('⏳ [DEBUG] 设置loading状态为true')
-  trackApiCall('fetchUserData', 'start')
   
   try {
     // 添加延迟确保API调用完成
@@ -907,13 +273,10 @@ const fetchData = async () => {
       responseType: typeof response,
       stringified: JSON.stringify(response, null, 2)
     })
-    addDebugLog('api', '用户数据获取成功', { dataKeys: response ? Object.keys(response) : null })
-    trackApiCall('fetchUserData', 'success', response)
     
     // 验证响应数据结构
     if (!response) {
       console.log('⚠️ [DEBUG] API返回空数据')
-      addDebugLog('api', 'API 返回数据为空', null)
       Message.error('API 返回数据为空')
       return
     }
@@ -921,7 +284,6 @@ const fetchData = async () => {
     // 检查API是否返回错误
     if (response.error) {
       console.log('❌ [DEBUG] API返回错误', { error: response.error })
-      addDebugLog('api', 'API 返回错误', { error: response.error, message: response.message })
       Message.error(response.message || '用户不存在')
       // 设置错误状态而不是null，这样页面可以显示错误信息
       userInfo.value = {
@@ -960,7 +322,6 @@ const fetchData = async () => {
     // 使用nextTick确保DOM更新
     await nextTick()
     console.log('🔄 [DEBUG] nextTick完成，DOM已更新')
-    addDebugLog('main', 'nextTick完成，DOM已更新')
     
     // 强制检查渲染条件
     console.log('🎯 [RENDER DEBUG] 渲染条件检查:', {
@@ -969,51 +330,13 @@ const fetchData = async () => {
       shouldRenderMain: !!(userInfo.value && !userInfo.value.error),
       loadingState: loading.value
     })
-    trackDataTransfer('API', 'BasicInfo', 'userInfo', 1)
-    addDebugLog('main', 'userInfo 数据已设置', { 
-      hasData: !!userInfo.value,
-      dataType: typeof userInfo.value,
-      keys: userInfo.value ? Object.keys(userInfo.value) : null
-    })
-    
-    // 更新组件状态 - BasicInfo
-    updateComponentStatus('basicInfo', {
-      hasData: !!(userInfo.value?.basicInfo),
-      rendered: true
-    })
-    
-    // 更新组件状态 - ProductModules
-    updateComponentStatus('productModules', {
-      hasData: !!(userInfo.value?.depositProducts || userInfo.value?.loanProducts), // 修复：使用depositProducts
-      rendered: true
-    })
-    
-    // 更新组件状态 - LoanList
-    updateComponentStatus('loanList', {
-      hasData: !!(userInfo.value?.loanRecords && userInfo.value.loanRecords.length > 0),
-      rendered: true
-    })
-    trackDataTransfer('API', 'LoanList', 'loanData', userInfo.value?.loanRecords?.length || 0)
-    
-    // 更新组件状态 - CreditList
-    updateComponentStatus('creditList', {
-      hasData: !!(userInfo.value?.creditsList && userInfo.value.creditsList.length > 0),
-      rendered: true
-    })
-    trackDataTransfer('API', 'CreditList', 'creditData', userInfo.value?.creditsList?.length || 0)
-    
-    // 更新组件状态 - AdjustmentHistory
-    updateComponentStatus('adjustmentHistory', {
-      hasData: !!(userInfo.value?.quotaAdjustHistory && userInfo.value.quotaAdjustHistory.length > 0),
-      rendered: true
-    })
-    trackDataTransfer('API', 'AdjustmentHistory', 'adjustmentData', userInfo.value?.quotaAdjustHistory?.length || 0)
     
     // 检查关键数据字段
     if (userInfo.value) {
-      addDebugLog('data', '关键数据字段检查', {
-        depositProducts: userInfo.value.depositProducts?.length || 0, // 修复：使用depositProducts
-        loanProducts: userInfo.value.loanProducts?.length || 0,
+      const products = userInfo.value.products || []
+      // 所有产品都是信贷产品
+      console.log('📊 关键数据字段检查:', {
+        totalProducts: products.length,
         creditRecords: userInfo.value.creditsList?.length || 0,
         loanRecords: userInfo.value.loanRecords?.length || 0,
         adjustmentRecords: userInfo.value.quotaAdjustHistory?.length || 0
@@ -1021,32 +344,24 @@ const fetchData = async () => {
     }
     
     // 检查计算属性
-    addDebugLog('computed', '计算属性检查', {
-      selfProductData: selfProductData.value?.products?.length || 0,
-      loanProductData: loanProductData.value?.products?.length || 0,
+    console.log('🧮 计算属性检查:', {
+      userOwnedProducts: userOwnedProducts.value?.length || 0,
       creditData: creditData.value?.length || 0,
       loanData: loanData.value?.length || 0,
       adjustmentData: adjustmentData.value?.length || 0
     })
     
     // 验证计算属性是否正确计算
-    if (!selfProductData.value && !loanProductData.value) {
-      addDebugLog('warning', '所有产品数据都为空，可能存在数据结构问题')
+    if (!userOwnedProducts.value || userOwnedProducts.value.length === 0) {
+      console.log('⚠️ 用户拥有产品数据为空，可能存在数据结构问题')
     }
     
     // 再次使用nextTick确保所有组件状态更新完成
     await nextTick()
     console.log('🔄 [DEBUG] 组件状态更新后nextTick完成')
-    addDebugLog('main', '组件状态更新后nextTick完成，所有数据传递应已生效')
     
   } catch (error) {
     console.error('💥 [DEBUG] 获取数据失败', { error: error.message, stack: error.stack })
-    trackApiCall('fetchUserData', 'error', { error: error.message })
-    addDebugLog('error', '获取用户数据失败', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    })
     Message.error(`获取用户数据失败: ${error.message}`)
   } finally {
     loading.value = false
@@ -1055,13 +370,10 @@ const fetchData = async () => {
       hasUserInfo: !!userInfo.value,
       userInfoValue: userInfo.value
     })
-    addDebugLog('main', `数据获取流程结束，loading: ${loading.value}`)
   }
 }
 
-const goBack = () => {
-  router.push('/discovery/customer360')
-}
+// goBack函数已删除，不再需要返回功能
 
 
 
@@ -1078,200 +390,84 @@ const getRiskLevelColor = (level) => {
   return colorMap[level] || 'blue'
 }
 
-// 处理产品类型切换
-const handleProductTypeChange = (productType) => {
-  selectedProductType.value = productType
-  console.log('切换产品类型:', productType)
+// 处理产品选择
+const handleProductSelect = (product) => {
+  selectedProduct.value = product
+  console.log('选中产品:', product)
 }
-
-// 处理模块切换
-const handleModuleChange = (productType, module) => {
-  activeModules.value[productType] = module
-  console.log(`${productType}产品切换到模块:`, module)
-}
-
-// 处理产品切换
-const handleProductChange = (value) => {
-  console.log('产品切换:', value)
-  selectedProductType.value = value
-  // 这里可以根据选择的产品类型过滤显示的数据
-  Message.info(`已切换到: ${value}`)
-}
-
-// 当前产品数据计算属性
-const currentProductData = computed(() => {
-  return selectedProductType.value === 'self' ? selfProductData.value : loanProductData.value
-})
 
 // 产品统计数据计算属性
 const productStats = computed(() => {
-  const selfCount = selfProductData.value?.products?.length || 0
-  const loanCount = loanProductData.value?.products?.length || 0
+  // 所有产品都是信贷产品
+  const totalCount = userOwnedProducts.value.length
   
   return {
-    self: {
-      count: selfCount,
-      label: '自营产品',
-      hasData: selfCount > 0
-    },
-    loan: {
-      count: loanCount,
-      label: '助贷产品', 
-      hasData: loanCount > 0
+    total: totalCount,
+    creditProducts: {
+      count: totalCount,
+      label: '信贷产品', 
+      hasData: totalCount > 0
     }
   }
 })
 
-// 处理模块Tab切换
-const handleModuleTabChange = (productType, moduleKey) => {
-  console.log('模块Tab切换:', { productType, moduleKey })
-  activeModules.value[productType] = moduleKey
-  addDebugLog('interaction', `${productType}产品模块切换到: ${moduleKey}`)
-}
-
-// 处理模块加载完成
-const handleModuleLoaded = (productType, moduleKey, data) => {
-  console.log('模块加载完成:', { productType, moduleKey, data })
-  addDebugLog('module', `${productType}产品${moduleKey}模块加载完成`, {
-    hasData: !!data,
-    dataCount: Array.isArray(data) ? data.length : 0
-  })
-}
-
 // 监听路由变化
 watch(() => userId.value, (newUserId, oldUserId) => {
   console.log('🔄 路由userId变化:', { oldUserId, newUserId })
-  addDebugLog('route', `userId变化: ${oldUserId} → ${newUserId}`)
   if (newUserId && newUserId !== oldUserId) {
     console.log('🔄 检测到userId变化，重新获取数据')
-    addDebugLog('route', '检测到userId变化，重新获取数据')
     fetchData()
   }
 })
 
-// 监听userInfo变化
-watch(() => userInfo.value, (newUserInfo, oldUserInfo) => {
-  addDebugLog('data', 'userInfo数据变化', {
-    hasOldData: !!oldUserInfo,
-    hasNewData: !!newUserInfo,
-    isError: newUserInfo?.error,
-    dataKeys: newUserInfo ? Object.keys(newUserInfo) : null
-  })
-  
-  // 检查关键数据字段的变化
-  if (newUserInfo && !newUserInfo.error) {
-    addDebugLog('data', '用户数据结构检查', {
-      hasBasicInfo: !!newUserInfo.basicInfo,
-      hasDepositProducts: !!(newUserInfo.depositProducts && newUserInfo.depositProducts.length > 0), // 修复：使用depositProducts
-      hasLoanProducts: !!(newUserInfo.loanProducts && newUserInfo.loanProducts.length > 0),
-      hasCreditsList: !!(newUserInfo.creditsList && newUserInfo.creditsList.length > 0),
-      hasLoanRecords: !!(newUserInfo.loanRecords && newUserInfo.loanRecords.length > 0),
-      hasQuotaAdjustHistory: !!(newUserInfo.quotaAdjustHistory && newUserInfo.quotaAdjustHistory.length > 0)
-    })
-  }
-}, { deep: true })
+// 移除userInfo监听器以避免重复刷新
+// userInfo的变化会自动触发相关计算属性更新，无需额外监听
 
-// 监听loading状态变化
-watch(() => loading.value, (newLoading, oldLoading) => {
-  addDebugLog('state', `Loading状态变化: ${oldLoading} → ${newLoading}`)
-})
+// 移除loading状态监听器以避免重复刷新
+// loading状态变化不需要额外的监听处理
 
 // 监听计算属性变化
-watch(() => selfProductData.value, (newData) => {
-  addDebugLog('computed', 'selfProductData计算属性变化', {
-    hasData: !!newData,
-    productsCount: newData?.products?.length || 0
+watch(() => userOwnedProducts.value, (newProducts, oldProducts) => {
+  console.log('🧮 userOwnedProducts计算属性变化:', {
+    hasData: !!newProducts,
+    totalCount: newProducts?.length || 0,
+    creditProductsCount: newProducts?.length || 0 // 所有产品都是信贷产品
   })
-})
+  
+  // 只在产品数据真正变化时自动选择第一个产品
+  // 避免重复触发导致无限循环
+  if (newProducts && newProducts.length > 0 && 
+      (!oldProducts || oldProducts.length === 0) && 
+      !selectedProduct.value) {
+    const firstProduct = newProducts[0]
+    selectedProduct.value = firstProduct.productKey
+    console.log('🔄 自动选择第一个产品:', firstProduct.productKey, firstProduct.productName)
+  }
+}, { immediate: false })
 
-watch(() => loanProductData.value, (newData) => {
-  addDebugLog('computed', 'loanProductData计算属性变化', {
-    hasData: !!newData,
-    productsCount: newData?.products?.length || 0
-  })
-})
+// 移除userId变化监听器以避免重复刷新
+// 数据获取已在onMounted中处理，无需重复监听userId变化
 
-// 同时监听params和query的变化
-watch(() => [route.params.userId, route.query.userId], ([newParamsId, newQueryId], [oldParamsId, oldQueryId]) => {
-  console.log('🔄 路由参数变化:', {
-    params: { old: oldParamsId, new: newParamsId },
-    query: { old: oldQueryId, new: newQueryId }
-  })
-})
+// 移除路由参数监听器以避免重复刷新
+// 路由变化时组件会重新挂载，onMounted会自动处理数据获取
 
 onMounted(async () => {
-  console.log('🚀🚀🚀 详情页组件已挂载，开始获取数据 🚀🚀🚀')
-  console.log('🚀 当前时间:', new Date().toLocaleString())
-  addDebugLog('lifecycle', '组件已挂载，开始初始化')
-  
-  console.log('🚀 挂载时的路由信息:', {
-    params: route.params,
-    query: route.query,
-    path: route.path,
-    name: route.name
-  })
-  
-  console.log('🚀 计算的userId值:', userId.value)
-  console.log('🚀 route.params.userId:', route.params.userId)
-  console.log('🚀 route.query.userId:', route.query.userId)
-  
-  addDebugLog('lifecycle', '路由信息检查', {
-    params: route.params,
-    query: route.query,
-    path: route.path,
-    userId: userId.value
-  })
-  
-  // 检查初始状态
-  addDebugLog('lifecycle', '初始状态检查', {
-    userInfo: !!userInfo.value,
-    loading: loading.value,
-    userId: userId.value,
-    showDebugPanel: showDebugPanel.value
-  })
-  
-  // 默认选中自营产品（与a-tabs的key匹配）
-  selectedProductType.value = 'self'
-  addDebugLog('lifecycle', `默认选中产品类型: ${selectedProductType.value}`)
-  
   // 检查userId是否存在
   if (!userId.value) {
-    addDebugLog('error', 'userId为空，无法获取数据', {
-      params: route.params,
-      query: route.query
-    })
     Message.error('用户ID不存在，请检查URL参数')
     return
   }
   
-  console.log('🚀 准备调用fetchData函数')
-  addDebugLog('lifecycle', `准备获取用户数据，userId: ${userId.value}`)
-  
-  // 启动定时器更新时间戳
-  timestampTimer = setInterval(updateTimestamp, 1000)
-  addDebugLog('lifecycle', '定时器已启动')
-  
   try {
     await fetchData()
-    console.log('🚀 fetchData函数调用成功')
-    addDebugLog('lifecycle', 'fetchData函数调用成功')
   } catch (error) {
-    console.error('🚀 fetchData函数调用失败:', error)
-    addDebugLog('error', 'fetchData函数调用失败', {
-      message: error.message,
-      stack: error.stack
-    })
+    console.error('数据获取失败:', error)
     Message.error(`初始化失败: ${error.message}`)
   }
 })
 
-// 在组件卸载时清理定时器
 onUnmounted(() => {
-  if (timestampTimer) {
-    clearInterval(timestampTimer)
-    timestampTimer = null
-    addDebugLog('lifecycle', '定时器已清理，防止内存泄漏')
-  }
+  // 组件卸载清理
 })
 </script>
 
@@ -1424,87 +620,14 @@ onUnmounted(() => {
   gap: 24px;
 }
 
-/* 概览卡片样式 */
-.overview-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.overview-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f0f0;
-  transition: all 0.3s ease;
-}
-
-.overview-card:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.card-icon {
-  font-size: 18px;
-  color: #1890ff;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.info-item .label {
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
-}
-
-.info-item .value {
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-}
-
-.info-item .value.amount {
-  color: #1890ff;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-.info-item .value.negative {
-  color: #ff4d4f;
-}
+/* 概览卡片样式已删除，按需求文档要求移除顶部模块 */
 
 /* 主要内容区域 */
 .main-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .left-content,
@@ -1594,9 +717,7 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
   }
   
-  .overview-cards {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
+  /* 删除了overview-cards样式 */
 }
 
 @media (max-width: 768px) {
@@ -1615,11 +736,7 @@ onUnmounted(() => {
     justify-content: flex-end;
   }
   
-  .overview-cards {
-    grid-template-columns: 1fr;
-  }
-  
-  .overview-card,
+  /* 删除了overview-cards相关样式 */
   .detail-section {
     padding: 16px;
   }
@@ -1646,9 +763,7 @@ onUnmounted(() => {
     padding: 16px;
   }
   
-  .overview-card {
-    padding: 16px;
-  }
+  /* 删除了overview-card样式 */
   
   .card-content {
     gap: 8px;
@@ -1982,5 +1097,86 @@ onUnmounted(() => {
   white-space: pre-wrap;
   max-height: 100px;
   overflow-y: auto;
+}
+
+/* Tab切换样式 */
+.customer-info-tabs {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.customer-info-tabs .arco-tabs-nav {
+  background: #f8f9fa;
+  margin: 0;
+  padding: 0 16px;
+}
+
+.customer-info-tabs .arco-tabs-tab {
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.customer-info-tabs .arco-tabs-tab:hover {
+  color: #1890ff;
+}
+
+.customer-info-tabs .arco-tabs-tab-active {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.customer-info-tabs .arco-tabs-content {
+  padding: 0;
+}
+
+.tab-content {
+  padding: 24px;
+  min-height: 400px;
+}
+
+.tab-content .section-subtitle {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Tab内容区域样式优化 */
+.tab-content .basic-info-section,
+.tab-content .credit-reports-section,
+.tab-content .collection-records-section {
+  background: transparent;
+}
+
+.tab-content .basic-info-grid {
+  margin-top: 0;
+}
+
+.tab-content .basic-info-card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.tab-content .credit-reports-container,
+.tab-content .collection-records-container {
+  background: #fafafa;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .customer-info-tabs .arco-tabs-nav {
+    padding: 0 8px;
+  }
+  
+  .tab-content {
+    padding: 16px;
+  }
 }
 </style>

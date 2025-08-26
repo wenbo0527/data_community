@@ -1,4 +1,4 @@
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDebounceFn } from '@vueuse/core';
 import { IconSearch, IconDelete } from '@arco-design/web-vue/es/icon';
@@ -109,9 +109,9 @@ onMounted(() => {
     document.addEventListener('click', handleClickOutside);
 });
 // 组件卸载时移除事件监听
-const onUnmounted = () => {
+onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
-};
+});
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
