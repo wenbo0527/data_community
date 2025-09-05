@@ -21,6 +21,8 @@
       :data="tableData"
       :loading="loading"
       :pagination="pagination"
+      :bordered="false"
+      class="table-borderless table-compact"
       @page-change="onPageChange"
       @page-size-change="onPageSizeChange"
       @row-dblclick="handleRowDblClick"

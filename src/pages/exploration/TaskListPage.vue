@@ -43,6 +43,8 @@
         :columns="columns"
         :data="taskList"
         :pagination="pagination"
+        :bordered="false"
+        class="table-borderless table-compact"
         @page-change="handlePageChange"
         @page-size-change="handlePageSizeChange"
       >

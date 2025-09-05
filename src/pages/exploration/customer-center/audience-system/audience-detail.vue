@@ -110,6 +110,22 @@
               <div class="stat-value">{{ audienceStats.qualityScore }}</div>
             </div>
             <div class="stat-item">
+              <div class="stat-label">平均信用评分：</div>
+              <div class="stat-value">{{ audienceStats.avgCreditScore }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">平均年收入：</div>
+              <div class="stat-value">{{ formatNumber(audienceStats.avgIncome) }}元</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">平均贷款金额：</div>
+              <div class="stat-value">{{ formatNumber(audienceStats.avgLoanAmount) }}元</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">违约率：</div>
+              <div class="stat-value">{{ audienceStats.defaultRate }}%</div>
+            </div>
+            <div class="stat-item">
               <div class="stat-label">最后更新时间：</div>
               <div class="stat-value">{{ audienceStats.updateTime }}</div>
             </div>
@@ -119,36 +135,208 @@
           <div class="chart-section">
             <div class="chart-tabs">
               <a-radio-group v-model="activeTab" type="button">
-                <a-radio value="distribution">数据分布</a-radio>
-                <a-radio value="trend">趋势分析</a-radio>
+                <a-radio value="age">年龄分布</a-radio>
+                <a-radio value="income">收入分布</a-radio>
+                <a-radio value="credit">信用评级</a-radio>
+                <a-radio value="occupation">职业分布</a-radio>
+                <a-radio value="education">教育程度</a-radio>
+                <a-radio value="loan">贷款金额</a-radio>
+                <a-radio value="repayment">还款行为</a-radio>
+                <a-radio value="consumption">消费偏好</a-radio>
+                <a-radio value="risk">风险等级</a-radio>
+                <a-radio value="activity">账户活跃度</a-radio>
                 <a-radio value="lineage">血缘查询</a-radio>
               </a-radio-group>
             </div>
 
-            <div class="chart-content">
-              <div v-if="activeTab === 'distribution'" class="distribution-chart">
+            <div class="chart-content" style="max-height: 500px; overflow-y: auto;">
+              <!-- 年龄分布 -->
+              <div v-if="activeTab === 'age'" class="distribution-chart">
                 <div class="total-count">
                   <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
                   <span class="count-label">人</span>
-                  <span class="count-desc">当前人群数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                  <span class="count-desc">年龄分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
                 </div>
-
-                <!-- 数据分布条形图 -->
                 <div class="distribution-bars">
-                  <div v-for="(item, index) in distributionData" :key="index" class="bar-item">
-                    <div class="bar-label">{{ item.label }}</div>
+                  <div v-for="(item, index) in distributionData.ageDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}岁</div>
                     <div class="bar-container">
-                      <div class="bar-fill" :style="{ width: item.percentage + '%', backgroundColor: item.color }">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
                       </div>
                     </div>
-                    <div class="bar-value">{{ item.percentage }}%</div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
                   </div>
                 </div>
               </div>
 
-              <div v-if="activeTab === 'trend'" class="trend-chart">
-                <div class="trend-placeholder">
-                  趋势分析图表区域
+              <!-- 收入分布 -->
+              <div v-if="activeTab === 'income'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">收入分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.incomeDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 信用评级分布 -->
+              <div v-if="activeTab === 'credit'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">信用评级分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.creditRatingDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}级</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 职业分布 -->
+              <div v-if="activeTab === 'occupation'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">职业分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.occupationDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 教育程度分布 -->
+              <div v-if="activeTab === 'education'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">教育程度分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.educationDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 贷款金额分布 -->
+              <div v-if="activeTab === 'loan'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">贷款金额分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.loanAmountDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 还款行为分布 -->
+              <div v-if="activeTab === 'repayment'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">还款行为分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.repaymentBehaviorDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 消费偏好分布 -->
+              <div v-if="activeTab === 'consumption'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">消费偏好分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.consumptionPreferenceDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 风险等级分布 -->
+              <div v-if="activeTab === 'risk'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">风险等级分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.riskLevelDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 账户活跃度分布 -->
+              <div v-if="activeTab === 'activity'" class="distribution-chart">
+                <div class="total-count">
+                  <span class="count-number">{{ formatNumber(audienceStats.totalCount) }}</span>
+                  <span class="count-label">人</span>
+                  <span class="count-desc">账户活跃度分布数据更新于 {{ audienceStats.dataDate }} 02:38:12</span>
+                </div>
+                <div class="distribution-bars">
+                  <div v-for="(item, index) in distributionData.accountActivityDistribution" :key="index" class="bar-item">
+                    <div class="bar-label">{{ item.name }}</div>
+                    <div class="bar-container">
+                      <div class="bar-fill" :style="{ width: (item.value / audienceStats.totalCount * 100) + '%', backgroundColor: getDistributionColor(index) }">
+                      </div>
+                    </div>
+                    <div class="bar-value">{{ formatNumber(item.value) }}人</div>
+                  </div>
                 </div>
               </div>
 
@@ -192,7 +380,7 @@
           <span class="card-title">人群规则配置</span>
         </template>
 
-        <div class="rule-config-content">
+        <div class="rule-config-content" style="max-height: 600px; overflow-y: auto;">
           <!-- 条件配置区域 -->
           <div class="conditions-workspace">
             <ConditionConfig :condition-groups="audienceRules.conditionGroups"
@@ -202,6 +390,101 @@
               :get-aggregation-options="getAggregationOptions" :get-operator-options="getOperatorOptions"
               :need-value-input="needValueInput" :get-value-placeholder="getValuePlaceholder"
               :on-data-source-type-change="onDataSourceTypeChange" :on-date-type-change="onDateTypeChange" />
+          </div>
+        </div>
+      </a-card>
+    </div>
+
+    <!-- 消费金融明细数据 -->
+    <div class="content-section">
+      <a-card class="detail-data-card">
+        <template #title>
+          <span class="card-title">消费金融明细数据</span>
+        </template>
+
+        <div class="detail-data-content">
+          <!-- 明细数据标签页 -->
+          <div class="detail-tabs">
+            <a-radio-group v-model="detailActiveTab" type="button">
+              <a-radio value="transactions">交易记录</a-radio>
+              <a-radio value="accounts">账户信息</a-radio>
+              <a-radio value="products">产品使用</a-radio>
+              <a-radio value="risk">风险评估</a-radio>
+            </a-radio-group>
+          </div>
+
+          <div class="detail-content" style="max-height: 400px; overflow-y: auto;">
+            <!-- 交易记录明细 -->
+            <div v-if="detailActiveTab === 'transactions'" class="detail-section">
+              <div class="detail-header">
+                <span class="detail-title">近期交易记录</span>
+                <span class="detail-desc">展示客户最近的金融交易明细</span>
+              </div>
+              <a-table :columns="transactionColumns" :data-source="detailData.transactions" :pagination="false" size="small" :bordered="false" class="table-borderless table-compact">
+                <template #status="{ record }">
+                  <a-tag :color="getTransactionStatusColor(record.status)">{{ record.status }}</a-tag>
+                </template>
+                <template #amount="{ record }">
+                  <span class="amount-text">¥{{ formatNumber(record.amount) }}</span>
+                </template>
+              </a-table>
+            </div>
+
+            <!-- 账户信息明细 -->
+            <div v-if="detailActiveTab === 'accounts'" class="detail-section">
+              <div class="detail-header">
+                <span class="detail-title">账户信息概览</span>
+                <span class="detail-desc">客户在各金融产品的账户状态</span>
+              </div>
+              <a-table :columns="accountColumns" :data-source="detailData.accounts" :pagination="false" size="small" :bordered="false" class="table-borderless table-compact">
+                <template #status="{ record }">
+                  <a-tag :color="getAccountStatusColor(record.status)">{{ record.status }}</a-tag>
+                </template>
+                <template #balance="{ record }">
+                  <span class="amount-text">¥{{ formatNumber(record.balance) }}</span>
+                </template>
+              </a-table>
+            </div>
+
+            <!-- 产品使用明细 -->
+            <div v-if="detailActiveTab === 'products'" class="detail-section">
+              <div class="detail-header">
+                <span class="detail-title">产品使用情况</span>
+                <span class="detail-desc">客户使用的金融产品及使用频率</span>
+              </div>
+              <a-table :columns="productColumns" :data-source="detailData.products" :pagination="false" size="small" :bordered="false" class="table-borderless table-compact">
+                <template #status="{ record }">
+                  <a-tag :color="getProductStatusColor(record.status)">{{ record.status }}</a-tag>
+                </template>
+                <template #usage="{ record }">
+                  <div class="usage-bar">
+                    <div class="usage-fill" :style="{ width: record.usageRate + '%' }"></div>
+                    <span class="usage-text">{{ record.usageRate }}%</span>
+                  </div>
+                </template>
+              </a-table>
+            </div>
+
+            <!-- 风险评估明细 -->
+            <div v-if="detailActiveTab === 'risk'" class="detail-section">
+              <div class="detail-header">
+                <span class="detail-title">风险评估详情</span>
+                <span class="detail-desc">客户的风险评估指标和历史变化</span>
+              </div>
+              <a-table :columns="riskColumns" :data-source="detailData.risks" :pagination="false" size="small" :bordered="false" class="table-borderless table-compact">
+                <template #level="{ record }">
+                  <a-tag :color="getRiskLevelColor(record.level)">{{ record.level }}</a-tag>
+                </template>
+                <template #score="{ record }">
+                  <span class="score-text">{{ record.score }}</span>
+                </template>
+                <template #trend="{ record }">
+                  <span :class="['trend-text', record.trend === '上升' ? 'trend-up' : record.trend === '下降' ? 'trend-down' : 'trend-stable']">
+                    {{ record.trend }}
+                  </span>
+                </template>
+              </a-table>
+            </div>
           </div>
         </div>
       </a-card>
@@ -240,12 +523,15 @@ const route = useRoute()
 const router = useRouter()
 
 // 当前选中的标签页
-const activeTab = ref('distribution')
+const activeTab = ref('age')
+
+// 明细数据当前选中的标签页
+const detailActiveTab = ref('transactions')
 
 // 人群详情数据
 const audienceDetail = reactive({
   id: 'AUD_20231019_001',
-  name: '高价值客户群体',
+  name: '消费金融优质客户群体',
   type: 'custom',
   status: 'active',
   createMethod: 'rule',
@@ -253,7 +539,7 @@ const audienceDetail = reactive({
   validPeriod: '长期有效',
   shareLevel: 'public',
   createUser: '张力',
-  description: '基于消费行为和用户属性筛选出的高价值客户群体，包含近30天消费金额超过1000元且活跃度较高的用户。'
+  description: '基于消费金融业务场景筛选的优质客户群体，包含信用评级良好、收入稳定、还款记录优秀的客户。'
 })
 
 // 人群统计数据
@@ -263,7 +549,12 @@ const audienceStats = reactive({
   activeCount: 142356,
   qualityScore: 95.8,
   updateTime: '2023-10-19 14:23:12',
-  dataDate: '2023-10-19'
+  dataDate: '2023-10-19',
+  // 消费金融相关统计
+  avgCreditScore: 785,
+  avgIncome: 125000,
+  avgLoanAmount: 85000,
+  defaultRate: 1.2
 })
 
 // 人群规则配置
@@ -274,33 +565,175 @@ const audienceRules = reactive({
   conditionGroups: [
     {
       id: 'group_1',
-      name: '消费行为条件',
+      name: '客户基本属性条件',
       logic: 'and',
       conditions: [
         {
           id: 'condition_1',
-          dataSourceType: 'behavior',
-          fieldName: '消费金额',
-          aggregationType: 'sum',
+          dataSourceType: 'attribute',
+          fieldName: '年龄',
+          operator: 'between',
+          value: '25,55',
+          description: '年龄在25-55岁之间'
+        },
+        {
+          id: 'condition_2',
+          dataSourceType: 'attribute',
+          fieldName: '月收入',
           operator: 'gte',
-          value: '1000',
-          dateType: 'dynamic',
-          dynamicValue: 30,
-          dynamicUnit: 'days'
+          value: '8000',
+          description: '月收入不低于8000元'
+        },
+        {
+          id: 'condition_3',
+          dataSourceType: 'attribute',
+          fieldName: '信用评级',
+          operator: 'in',
+          value: 'A,AA,AAA',
+          description: '信用评级为A级及以上'
         }
       ]
     },
     {
       id: 'group_2',
-      name: '用户属性条件',
+      name: '职业与教育背景',
       logic: 'and',
       conditions: [
         {
-          id: 'condition_2',
+          id: 'condition_4',
           dataSourceType: 'attribute',
-          fieldName: '用户等级',
+          fieldName: '职业类型',
           operator: 'in',
-          value: 'VIP,SVIP'
+          value: '公务员,教师,医生,工程师,金融从业者,企业管理者',
+          description: '稳定职业类型'
+        },
+        {
+          id: 'condition_5',
+          dataSourceType: 'attribute',
+          fieldName: '教育程度',
+          operator: 'in',
+          value: '本科,硕士,博士',
+          description: '本科及以上学历'
+        }
+      ]
+    },
+    {
+      id: 'group_3',
+      name: '金融行为条件',
+      logic: 'and',
+      conditions: [
+        {
+          id: 'condition_6',
+          dataSourceType: 'behavior',
+          fieldName: '贷款申请次数',
+          aggregationType: 'count',
+          operator: 'lte',
+          value: '3',
+          dateType: 'dynamic',
+          dynamicValue: 12,
+          dynamicUnit: 'months',
+          description: '近12个月贷款申请不超过3次'
+        },
+        {
+          id: 'condition_7',
+          dataSourceType: 'behavior',
+          fieldName: '逾期次数',
+          aggregationType: 'count',
+          operator: 'eq',
+          value: '0',
+          dateType: 'dynamic',
+          dynamicValue: 24,
+          dynamicUnit: 'months',
+          description: '近24个月无逾期记录'
+        }
+      ]
+    },
+    {
+      id: 'group_4',
+      name: '还款行为分析',
+      logic: 'and',
+      conditions: [
+        {
+          id: 'condition_8',
+          dataSourceType: 'behavior',
+          fieldName: '提前还款次数',
+          aggregationType: 'count',
+          operator: 'gte',
+          value: '2',
+          dateType: 'dynamic',
+          dynamicValue: 12,
+          dynamicUnit: 'months',
+          description: '近12个月提前还款至少2次'
+        },
+        {
+          id: 'condition_9',
+          dataSourceType: 'behavior',
+          fieldName: '按时还款率',
+          aggregationType: 'avg',
+          operator: 'gte',
+          value: '95',
+          dateType: 'dynamic',
+          dynamicValue: 24,
+          dynamicUnit: 'months',
+          description: '近24个月按时还款率不低于95%'
+        }
+      ]
+    },
+    {
+      id: 'group_5',
+      name: '消费偏好特征',
+      logic: 'or',
+      conditions: [
+        {
+          id: 'condition_10',
+          dataSourceType: 'behavior',
+          fieldName: '月均消费金额',
+          aggregationType: 'avg',
+          operator: 'between',
+          value: '3000,15000',
+          dateType: 'dynamic',
+          dynamicValue: 6,
+          dynamicUnit: 'months',
+          description: '近6个月月均消费3000-15000元'
+        },
+        {
+          id: 'condition_11',
+          dataSourceType: 'behavior',
+          fieldName: '理财产品购买次数',
+          aggregationType: 'count',
+          operator: 'gte',
+          value: '1',
+          dateType: 'dynamic',
+          dynamicValue: 12,
+          dynamicUnit: 'months',
+          description: '近12个月购买过理财产品'
+        }
+      ]
+    },
+    {
+      id: 'group_6',
+      name: '风险评估指标',
+      logic: 'and',
+      conditions: [
+        {
+          id: 'condition_12',
+          dataSourceType: 'attribute',
+          fieldName: '风险等级',
+          operator: 'in',
+          value: '低风险,中低风险',
+          description: '风险等级为低风险或中低风险'
+        },
+        {
+          id: 'condition_13',
+          dataSourceType: 'behavior',
+          fieldName: '账户活跃度',
+          aggregationType: 'avg',
+          operator: 'gte',
+          value: '80',
+          dateType: 'dynamic',
+          dynamicValue: 3,
+          dynamicUnit: 'months',
+          description: '近3个月账户活跃度不低于80%'
         }
       ]
     }
@@ -308,11 +741,74 @@ const audienceRules = reactive({
 })
 
 // 数据分布数据
-const distributionData = ref([
-  { label: '标签组1', percentage: 85, color: '#ff7d00' },
-  { label: '标签组2', percentage: 70, color: '#1890ff' },
-  { label: '标签组3', percentage: 45, color: '#fadb14' }
-])
+const distributionData = reactive({
+  ageDistribution: [
+    { name: '25-30', value: 25234 },
+    { name: '31-35', value: 45678 },
+    { name: '36-40', value: 38900 },
+    { name: '41-45', value: 28456 },
+    { name: '46-55', value: 18521 }
+  ],
+  incomeDistribution: [
+    { name: '8K-12K', value: 32456 },
+    { name: '12K-20K', value: 45678 },
+    { name: '20K-30K', value: 38900 },
+    { name: '30K-50K', value: 25234 },
+    { name: '50K+', value: 14521 }
+  ],
+  creditRatingDistribution: [
+    { name: 'AAA', value: 45678 },
+    { name: 'AA', value: 67890 },
+    { name: 'A', value: 43221 }
+  ],
+  occupationDistribution: [
+    { name: '公务员', value: 23456 },
+    { name: '教师', value: 18900 },
+    { name: '医生', value: 15678 },
+    { name: '工程师', value: 34567 },
+    { name: '金融从业者', value: 28900 },
+    { name: '企业管理者', value: 35288 }
+  ],
+  educationDistribution: [
+    { name: '本科', value: 89234 },
+    { name: '硕士', value: 55678 },
+    { name: '博士', value: 11877 }
+  ],
+  loanAmountDistribution: [
+    { name: '5万以下', value: 28456 },
+    { name: '5-10万', value: 45678 },
+    { name: '10-20万', value: 38900 },
+    { name: '20-50万', value: 32234 },
+    { name: '50万以上', value: 11521 }
+  ],
+  // 行为数据分布
+  repaymentBehaviorDistribution: [
+    { name: '提前还款', value: 89234 },
+    { name: '按时还款', value: 55678 },
+    { name: '延期还款', value: 8900 },
+    { name: '逾期还款', value: 2977 }
+  ],
+  consumptionPreferenceDistribution: [
+    { name: '日常消费', value: 67890 },
+    { name: '投资理财', value: 45678 },
+    { name: '教育培训', value: 23456 },
+    { name: '旅游娱乐', value: 12345 },
+    { name: '医疗健康', value: 7420 }
+  ],
+  riskLevelDistribution: [
+    { name: '低风险', value: 89234 },
+    { name: '中低风险', value: 45678 },
+    { name: '中风险', value: 18900 },
+    { name: '中高风险', value: 2977 }
+  ],
+  accountActivityDistribution: [
+    { name: '90-100%', value: 78900 },
+    { name: '80-90%', value: 45678 },
+    { name: '70-80%', value: 23456 },
+    { name: '60-70%', value: 6755 },
+    { name: '60%以下', value: 2000 }
+  ]
+})
 
 // 血缘查询相关
 const lineageChartRef = ref(null)
@@ -320,93 +816,138 @@ let lineageChart = null
 
 // 血缘关系数据
 const lineageData = ref({
-  name: '高价值客户群体',
+  name: '消费金融优质客户群体',
   category: 'audience',
   children: [
     {
-      name: '消费行为标签',
+      name: '客户基本属性标签',
       category: 'tag',
       children: [
         {
-          name: '消费金额',
+          name: '年龄',
           category: 'attribute',
           children: [
             {
-              name: 'order_table',
+              name: 'customer_info_table',
               category: 'table',
-              value: '订单表'
-            },
-            {
-              name: 'payment_table',
-              category: 'table',
-              value: '支付表'
+              value: '客户信息表'
             }
           ]
         },
         {
-          name: '消费频次',
+          name: '月收入',
           category: 'attribute',
           children: [
             {
-              name: 'order_table',
+              name: 'customer_income_table',
               category: 'table',
-              value: '订单表'
+              value: '客户收入表'
+            }
+          ]
+        },
+        {
+          name: '信用评级',
+          category: 'attribute',
+          children: [
+            {
+              name: 'credit_rating_table',
+              category: 'table',
+              value: '信用评级表'
             }
           ]
         }
       ]
     },
     {
-      name: '用户属性标签',
+      name: '职业教育标签',
       category: 'tag',
       children: [
         {
-          name: '用户等级',
+          name: '职业类型',
           category: 'attribute',
           children: [
             {
-              name: 'user_table',
+              name: 'customer_info_table',
               category: 'table',
-              value: '用户表'
+              value: '客户信息表'
             }
           ]
         },
         {
-          name: '注册时间',
+          name: '教育程度',
           category: 'attribute',
           children: [
             {
-              name: 'user_table',
+              name: 'customer_info_table',
               category: 'table',
-              value: '用户表'
+              value: '客户信息表'
             }
           ]
         }
       ]
     },
     {
-      name: '活跃度标签',
+      name: '金融行为标签',
       category: 'tag',
       children: [
         {
-          name: '登录频次',
+          name: '贷款申请次数',
           category: 'attribute',
           children: [
             {
-              name: 'login_log_table',
+              name: 'loan_application_table',
               category: 'table',
-              value: '登录日志表'
+              value: '贷款申请表'
             }
           ]
         },
         {
-          name: '页面浏览',
+          name: '逾期次数',
           category: 'attribute',
           children: [
             {
-              name: 'behavior_table',
+              name: 'repayment_record_table',
               category: 'table',
-              value: '行为表'
+              value: '还款记录表'
+            }
+          ]
+        },
+        {
+          name: '还款记录',
+          category: 'attribute',
+          children: [
+            {
+              name: 'repayment_record_table',
+              category: 'table',
+              value: '还款记录表'
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: '风险评估标签',
+      category: 'tag',
+      children: [
+        {
+          name: '风险等级',
+          category: 'attribute',
+          children: [
+            {
+              name: 'risk_assessment_table',
+              category: 'table',
+              value: '风险评估表'
+            }
+          ]
+        },
+        {
+          name: '违约概率',
+          category: 'attribute',
+          children: [
+            {
+              name: 'risk_model_table',
+              category: 'table',
+              value: '风险模型表'
             }
           ]
         }
@@ -542,6 +1083,196 @@ const getShareLevelText = (shareLevel) => {
 const formatNumber = (num) => {
   return num.toLocaleString()
 }
+
+// 获取分布图表颜色
+const getDistributionColor = (index) => {
+  const colors = [
+    '#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1',
+    '#13c2c2', '#eb2f96', '#fa8c16', '#a0d911', '#2f54eb'
+  ]
+  return colors[index % colors.length]
+}
+
+// 明细数据相关辅助函数
+// 获取交易状态颜色
+const getTransactionStatusColor = (status) => {
+  const colorMap = {
+    '成功': 'green',
+    '失败': 'red',
+    '处理中': 'orange',
+    '待确认': 'blue'
+  }
+  return colorMap[status] || 'gray'
+}
+
+// 获取账户状态颜色
+const getAccountStatusColor = (status) => {
+  const colorMap = {
+    '正常': 'green',
+    '冻结': 'red',
+    '限制': 'orange',
+    '注销': 'gray'
+  }
+  return colorMap[status] || 'gray'
+}
+
+// 获取产品状态颜色
+const getProductStatusColor = (status) => {
+  const colorMap = {
+    '已放款': 'green',
+    '审批中': 'orange',
+    '已拒绝': 'red',
+    '持有中': 'blue',
+    '已结清': 'gray'
+  }
+  return colorMap[status] || 'gray'
+}
+
+// 获取风险等级颜色
+const getRiskLevelColor = (level) => {
+  const colorMap = {
+    '低风险': 'green',
+    '中低风险': 'lime',
+    '中风险': 'orange',
+    '中高风险': 'red',
+    '高风险': 'magenta'
+  }
+  return colorMap[level] || 'gray'
+}
+
+// 明细数据表格列定义
+const transactionColumns = [
+  { title: '交易ID', dataIndex: 'transactionId', width: 120 },
+  { title: '交易时间', dataIndex: 'transactionTime', width: 160 },
+  { title: '交易类型', dataIndex: 'transactionType', width: 100 },
+  { title: '交易金额', dataIndex: 'amount', width: 120 },
+  { title: '交易状态', dataIndex: 'status', width: 100 },
+  { title: '商户名称', dataIndex: 'merchantName', width: 150 },
+  { title: '备注', dataIndex: 'remark', width: 200 }
+]
+
+const accountColumns = [
+  { title: '账户ID', dataIndex: 'accountId', width: 120 },
+  { title: '账户类型', dataIndex: 'accountType', width: 100 },
+  { title: '开户时间', dataIndex: 'openTime', width: 160 },
+  { title: '账户余额', dataIndex: 'balance', width: 120 },
+  { title: '信用额度', dataIndex: 'creditLimit', width: 120 },
+  { title: '账户状态', dataIndex: 'status', width: 100 },
+  { title: '最后活跃时间', dataIndex: 'lastActiveTime', width: 160 }
+]
+
+const productColumns = [
+  { title: '产品ID', dataIndex: 'productId', width: 120 },
+  { title: '产品名称', dataIndex: 'productName', width: 150 },
+  { title: '产品类型', dataIndex: 'productType', width: 100 },
+  { title: '申请时间', dataIndex: 'applyTime', width: 160 },
+  { title: '审批状态', dataIndex: 'approvalStatus', width: 100 },
+  { title: '产品金额', dataIndex: 'amount', width: 120 },
+  { title: '利率', dataIndex: 'interestRate', width: 80 },
+  { title: '期限', dataIndex: 'term', width: 80 }
+]
+
+const riskColumns = [
+  { title: '评估时间', dataIndex: 'assessmentTime', width: 160 },
+  { title: '风险等级', dataIndex: 'riskLevel', width: 100 },
+  { title: '风险分数', dataIndex: 'riskScore', width: 100 },
+  { title: '评估模型', dataIndex: 'model', width: 120 },
+  { title: '主要风险因子', dataIndex: 'riskFactors', width: 200 },
+  { title: '建议措施', dataIndex: 'recommendation', width: 200 }
+]
+
+// 明细数据
+const detailData = reactive({
+  transactions: [
+    {
+      transactionId: 'TXN202401001',
+      transactionTime: '2024-01-15 14:30:25',
+      transactionType: '消费',
+      amount: '¥2,580.00',
+      status: '成功',
+      merchantName: '京东商城',
+      remark: '电子产品购买'
+    },
+    {
+      transactionId: 'TXN202401002',
+      transactionTime: '2024-01-14 09:15:42',
+      transactionType: '还款',
+      amount: '¥5,000.00',
+      status: '成功',
+      merchantName: '银行系统',
+      remark: '信用卡还款'
+    },
+    {
+      transactionId: 'TXN202401003',
+      transactionTime: '2024-01-12 16:22:18',
+      transactionType: '转账',
+      amount: '¥1,200.00',
+      status: '成功',
+      merchantName: '支付宝',
+      remark: '朋友转账'
+    }
+  ],
+  accounts: [
+    {
+      accountId: 'ACC001',
+      accountType: '储蓄账户',
+      openTime: '2020-03-15 10:30:00',
+      balance: '¥45,680.50',
+      creditLimit: '-',
+      status: '正常',
+      lastActiveTime: '2024-01-15 14:30:25'
+    },
+    {
+      accountId: 'ACC002',
+      accountType: '信用卡',
+      openTime: '2021-06-20 14:15:30',
+      balance: '¥8,520.00',
+      creditLimit: '¥50,000.00',
+      status: '正常',
+      lastActiveTime: '2024-01-14 09:15:42'
+    }
+  ],
+  products: [
+    {
+      productId: 'PRD001',
+      productName: '个人消费贷',
+      productType: '贷款产品',
+      applyTime: '2023-08-15 11:20:30',
+      approvalStatus: '已放款',
+      amount: '¥200,000.00',
+      interestRate: '6.8%',
+      term: '36个月'
+    },
+    {
+      productId: 'PRD002',
+      productName: '理财通',
+      productType: '理财产品',
+      applyTime: '2023-12-10 15:45:20',
+      approvalStatus: '持有中',
+      amount: '¥50,000.00',
+      interestRate: '4.2%',
+      term: '12个月'
+    }
+  ],
+  risks: [
+    {
+      assessmentTime: '2024-01-01 00:00:00',
+      riskLevel: '低风险',
+      riskScore: '85',
+      model: 'RiskModel_V2.1',
+      riskFactors: '收入稳定，信用记录良好',
+      recommendation: '可适当提高信用额度'
+    },
+    {
+      assessmentTime: '2023-10-01 00:00:00',
+      riskLevel: '中低风险',
+      riskScore: '78',
+      model: 'RiskModel_V2.0',
+      riskFactors: '负债率略高，但还款能力强',
+      recommendation: '保持现有额度，关注负债变化'
+    }
+  ]
+})
 
 // 血缘图表相关方法
 // 初始化血缘图表
@@ -1099,6 +1830,8 @@ onMounted(() => {
   padding: 16px;
   background-color: #f5f5f5;
   min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .breadcrumb {
@@ -1213,31 +1946,65 @@ onMounted(() => {
 }
 
 .subject-stats {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e8f4ff 100%);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid #e8f4ff;
+  box-shadow: 0 2px 8px rgba(22, 93, 255, 0.08);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.15);
+  border-color: #165dff;
 }
 
 .stat-label {
   color: #86909c;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stat-value {
   color: #1d2129;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 600;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
 
 .stat-value.primary {
-  color: #1890ff;
-  font-size: 18px;
+  color: #165dff;
+  font-size: 24px;
+}
+
+.stat-value.success {
+  color: #00b42a;
+}
+
+.stat-value.warning {
+  color: #ff7d00;
+}
+
+.stat-value.danger {
+  color: #f53f3f;
 }
 
 .chart-section {
@@ -1259,69 +2026,116 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .total-count {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e8f4ff 100%);
+  border-radius: 8px;
+  border: 1px solid #e8f4ff;
 }
 
 .count-number {
-  font-size: 32px;
-  font-weight: bold;
-  color: #1890ff;
+  font-size: 36px;
+  font-weight: 700;
+  color: #165dff;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
 
 .count-label {
-  font-size: 16px;
+  font-size: 18px;
   color: #1d2129;
+  font-weight: 600;
 }
 
 .count-desc {
   font-size: 14px;
   color: #86909c;
   margin-left: 16px;
+  font-style: italic;
 }
 
 .distribution-bars {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 600px;
+  gap: 16px;
+  max-width: 100%;
+  padding: 16px;
+  background: #fafbfc;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
 }
 
 .bar-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.bar-item:hover {
+  box-shadow: 0 2px 8px rgba(22, 93, 255, 0.1);
+  border-color: #165dff;
 }
 
 .bar-label {
-  min-width: 80px;
+  min-width: 120px;
   font-size: 14px;
   color: #1d2129;
+  font-weight: 500;
 }
 
 .bar-container {
   flex: 1;
-  height: 20px;
+  height: 24px;
   background-color: #f2f3f5;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
+  position: relative;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 10px;
-  transition: width 0.3s ease;
+  border-radius: 12px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .bar-value {
-  min-width: 50px;
+  min-width: 60px;
   text-align: right;
   font-size: 14px;
   color: #1d2129;
+  font-weight: 600;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
 
 .trend-chart {
@@ -2441,6 +3255,7 @@ onMounted(() => {
   border: 1px solid #f0f0f0;
   border-radius: 6px;
   background: #fafafa;
+  overflow: auto;
 }
 
 /* 趋势分析占位样式 */
@@ -2458,5 +3273,109 @@ onMounted(() => {
   border-radius: 6px;
   color: #6c757d;
   font-size: 14px;
+}
+
+/* 消费金融明细数据样式优化 */
+.detail-data-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+}
+
+.detail-data-content {
+  padding: 24px;
+}
+
+.detail-tabs {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-section {
+  background: #fafbfc;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e8eaed;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.detail-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+  margin: 0;
+}
+
+.detail-desc {
+  font-size: 12px;
+  color: #86909c;
+  margin: 0;
+}
+
+.amount-text {
+  font-weight: 600;
+  color: #165dff;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+.score-text {
+  font-weight: 600;
+  color: #00b42a;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+.usage-bar {
+  position: relative;
+  width: 100px;
+  height: 20px;
+  background: #f2f3f5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.usage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00b42a 0%, #52c41a 100%);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.usage-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.trend-text {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.trend-up {
+  color: #f53f3f;
+}
+
+.trend-down {
+  color: #00b42a;
+}
+
+.trend-stable {
+  color: #86909c;
 }
 </style>

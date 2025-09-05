@@ -153,7 +153,7 @@ export class PreviewLineRefreshManager {
     // 事件监听器
     this.eventListeners = new Map();
 
-    console.log(`🔄 [预览线刷新管理器] 初始化完成 - 批量大小: ${this.options.batchSize}, 延迟: ${this.options.batchDelay}ms`);
+    // console.log(`🔄 [预览线刷新管理器] 初始化完成 - 批量大小: ${this.options.batchSize}, 延迟: ${this.options.batchDelay}ms`);
   }
 
   /**
@@ -197,7 +197,7 @@ export class PreviewLineRefreshManager {
     }
 
     if (this.options.enableDebug) {
-      console.log(`👀 [预览线刷新管理器] 开始跟踪节点挂载 - 节点: ${nodeId}`);
+      // console.log(`👀 [预览线刷新管理器] 开始跟踪节点挂载 - 节点: ${nodeId}`);
     }
   }
 
@@ -219,7 +219,7 @@ export class PreviewLineRefreshManager {
     });
 
     if (this.options.enableDebug) {
-      console.log(`📊 [预览线刷新管理器] 节点状态变化 - 节点: ${nodeId}, ${oldState} -> ${state}`);
+      // console.log(`📊 [预览线刷新管理器] 节点状态变化 - 节点: ${nodeId}, ${oldState} -> ${state}`);
     }
   }
 
@@ -253,7 +253,7 @@ export class PreviewLineRefreshManager {
     });
 
     if (this.options.enableDebug) {
-      console.log(`🚀 [预览线刷新管理器] 触发挂载后刷新 - 节点: ${nodeId}`);
+      // console.log(`🚀 [预览线刷新管理器] 触发挂载后刷新 - 节点: ${nodeId}`);
     }
   }
 
@@ -290,7 +290,7 @@ export class PreviewLineRefreshManager {
     }
 
     if (this.options.enableDebug) {
-      console.log(`📝 [预览线刷新管理器] 调度刷新任务 - 节点: ${nodeId}, 类型: ${type}, 优先级: ${priority}, 任务ID: ${task.id}`);
+      // console.log(`📝 [预览线刷新管理器] 调度刷新任务 - 节点: ${nodeId}, 类型: ${type}, 优先级: ${priority}, 任务ID: ${task.id}`);
     }
 
     return task.id;
@@ -356,7 +356,7 @@ export class PreviewLineRefreshManager {
     }
 
     if (this.options.enableDebug) {
-      console.log(`🔄 [预览线刷新管理器] 开始处理批次 - 任务数: ${executableTasks.length}`);
+      // console.log(`🔄 [预览线刷新管理器] 开始处理批次 - 任务数: ${executableTasks.length}`);
     }
 
     // 并行处理任务
@@ -407,7 +407,7 @@ export class PreviewLineRefreshManager {
     }
 
     if (this.options.enableDebug) {
-      console.log(`✅ [预览线刷新管理器] 批次处理完成 - 耗时: ${processingTime}ms, 成功: ${results.filter(r => r.status === 'fulfilled').length}, 失败: ${results.filter(r => r.status === 'rejected').length}`);
+      // console.log(`✅ [预览线刷新管理器] 批次处理完成 - 耗时: ${processingTime}ms, 成功: ${results.filter(r => r.status === 'fulfilled').length}, 失败: ${results.filter(r => r.status === 'rejected').length}`);
     }
   }
 
@@ -509,7 +509,7 @@ export class PreviewLineRefreshManager {
     }
 
     if (this.options.enableDebug) {
-      console.log(`🔄 [预览线刷新管理器] 刷新完成 - 节点: ${nodeId}, 类型: ${type}`);
+      // console.log(`🔄 [预览线刷新管理器] 刷新完成 - 节点: ${nodeId}, 类型: ${type}`);
     }
   }
 
@@ -623,7 +623,7 @@ export class PreviewLineRefreshManager {
       this.batchTimer = null;
     }
 
-    console.log(`🗑️ [预览线刷新管理器] 队列已清空`);
+    // console.log(`🗑️ [预览线刷新管理器] 队列已清空`);
   }
 
   /**
@@ -651,7 +651,7 @@ export class PreviewLineRefreshManager {
     });
 
     if (this.options.enableDebug) {
-      console.log(`🛑 [预览线刷新管理器] 停止跟踪节点 - 节点: ${nodeId}`);
+      // console.log(`🛑 [预览线刷新管理器] 停止跟踪节点 - 节点: ${nodeId}`);
     }
   }
 
@@ -691,7 +691,7 @@ export class PreviewLineRefreshManager {
         try {
           listener(data);
         } catch (error) {
-          console.error(`❌ [预览线刷新管理器] 事件监听器错误:`, error);
+          // console.error(`❌ [预览线刷新管理器] 事件监听器错误:`, error);
         }
       });
     }
@@ -754,7 +754,7 @@ export class PreviewLineRefreshManager {
     // 清空事件监听器
     this.eventListeners.clear();
 
-    console.log(`🗑️ [预览线刷新管理器] 资源清理完成`);
+    // console.log(`🗑️ [预览线刷新管理器] 资源清理完成`);
   }
 }
 

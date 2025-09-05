@@ -13,17 +13,34 @@
     <!-- 条件组列表 -->
     <div v-else class="conditions-list">
       <div v-for="(group, groupIndex) in conditionGroups" :key="groupIndex" class="condition-group">
-        <!-- 条件组头部 -->
+        <!-- 条件组头部 - 统一逻辑控制 -->
         <div class="condition-group-header">
           <div class="group-info">
             <div class="group-title">
               <span>条件组 {{ groupIndex + 1 }}</span>
               <span class="condition-count">{{ group.conditions.length }} 个条件</span>
             </div>
-            <div class="group-logic" v-if="group.conditions.length > 1">
-              <span class="logic-label">组内逻辑：</span>
-              <div class="logic-indicator" @click="$emit('toggle-group-logic', groupIndex)">
-                {{ (group.logic || 'and').toUpperCase() }}
+            <!-- 统一逻辑控制器 -->
+            <div class="unified-logic-controller" v-if="group.conditions.length > 1">
+              <div class="logic-toggle-group">
+                <button 
+                  :class="['logic-btn', { active: (group.logic || 'and').toLowerCase() === 'and' }]"
+                  @click="toggleGroupLogic(groupIndex, 'AND')"
+                  :disabled="!editable"
+                >
+                  且(AND)
+                </button>
+                <button 
+                  :class="['logic-btn', { active: (group.logic || 'and').toLowerCase() === 'or' }]"
+                  @click="toggleGroupLogic(groupIndex, 'OR')"
+                  :disabled="!editable"
+                >
+                  或(OR)
+                </button>
+              </div>
+              <div class="logic-indicator">
+                <span class="logic-status">{{ (group.logic || 'and').toLowerCase() === 'and' ? '所有条件都满足' : '任一条件满足' }}</span>
+              </div>
               </div>
             </div>
           </div>
@@ -43,11 +60,22 @@
         <!-- 条件列表 -->
         <div v-show="!group.collapsed" class="condition-items">
           <div v-for="(condition, conditionIndex) in group.conditions" :key="conditionIndex" class="condition-item">
-            <!-- 条件连接点 -->
-            <div v-if="conditionIndex > 0" class="condition-connector">
-              <div class="connector-line"></div>
-              <div class="logic-connector" @click="toggleConditionLogic(groupIndex, conditionIndex)">
-                {{ (condition.logic || 'and').toUpperCase() }}
+            <!-- 树状结构连接线 -->
+            <div class="tree-structure">
+              <div class="tree-line-container">
+                <!-- 垂直连接线 -->
+                <div v-if="conditionIndex > 0" class="vertical-line"></div>
+                <!-- 水平连接线 -->
+                <div class="horizontal-line"></div>
+                <!-- 节点指示器 -->
+                <div class="tree-node">
+                  <div class="node-circle"></div>
+                  <div class="node-number">{{ conditionIndex + 1 }}</div>
+                </div>
+              </div>
+              <!-- 逻辑连接符 -->
+              <div v-if="conditionIndex > 0" class="logic-connector">
+                <span class="logic-text">{{ (group.logic || 'and').toUpperCase() }}</span>
               </div>
             </div>
 
@@ -56,73 +84,126 @@
               <span>排除</span>
             </div>
 
-            <!-- 条件配置表单 -->
+            <!-- 条件内容 -->
+            <div class="condition-content">
+
+            <!-- 条件配置表单 - 水平布局优化 -->
             <div class="condition-form">
-              <div class="condition-row">
-                <div class="condition-group">
-                  <label class="condition-label">数据源</label>
-                  <a-select 
-                    v-model="condition.dataSourceType" 
-                    placeholder="选择数据源"
-                    :options="dataSourceTypeOptions"
-                    @change="onDataSourceTypeChange?.(groupIndex, conditionIndex, $event)"
-                  />
+              <!-- 标签条件行 - 水平布局 -->
+              <div class="tag-condition-row">
+                <div class="tag-config">
+                  <div class="form-group">
+                    <label class="form-label">数据源</label>
+                    <a-select 
+                      v-model="condition.dataSourceType" 
+                      placeholder="选择数据源"
+                      :options="dataSourceTypeOptions"
+                      @change="onDataSourceTypeChange?.(groupIndex, conditionIndex, $event)"
+                      class="form-control"
+                      size="small"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">字段</label>
+                    <a-select 
+                      v-model="condition.field" 
+                      placeholder="选择字段"
+                      :options="getFieldOptions?.(condition.dataSourceType || '')"
+                      class="form-control"
+                      size="small"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">聚合</label>
+                    <a-select 
+                      v-model="condition.aggregation" 
+                      placeholder="选择聚合"
+                      :options="getAggregationOptions?.(condition.field || '')"
+                      class="form-control"
+                      size="small"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">条件</label>
+                    <a-select 
+                      v-model="condition.operator" 
+                      placeholder="选择条件"
+                      :options="getOperatorOptions?.(condition.field || '')"
+                      class="form-control"
+                      size="small"
+                    />
+                  </div>
+                  <div class="form-group" v-if="needValueInput?.(condition.operator || '')">
+                    <label class="form-label">值</label>
+                    <a-input 
+                      v-model="condition.value" 
+                      :placeholder="getValuePlaceholder?.(condition.field || '', condition.operator || '')"
+                      class="form-control"
+                      size="small"
+                    />
+                  </div>
                 </div>
-                <div class="condition-group">
-                  <label class="condition-label">字段</label>
-                  <a-select 
-                    v-model="condition.field" 
-                    placeholder="选择字段"
-                    :options="getFieldOptions?.(condition.dataSourceType || '')"
-                  />
-                </div>
-                <div class="condition-group">
-                  <label class="condition-label">聚合</label>
-                  <a-select 
-                    v-model="condition.aggregation" 
-                    placeholder="选择聚合"
-                    :options="getAggregationOptions?.(condition.field || '')"
-                  />
+                <div class="tag-actions">
+                  <a-button type="text" size="mini" status="danger" @click="$emit('remove-condition', groupIndex, conditionIndex)">
+                    <template #icon><icon-delete /></template>
+                  </a-button>
                 </div>
               </div>
-              
-              <div class="condition-row">
-                <div class="condition-group">
-                  <label class="condition-label">条件</label>
+
+              <!-- 事件属性配置 - 水平布局 -->
+              <div v-if="condition.dataSourceType === 'event'" class="event-config-row">
+                <div class="form-group">
+                  <label class="form-label">事件名称</label>
                   <a-select 
-                    v-model="condition.operator" 
-                    placeholder="选择条件"
-                    :options="getOperatorOptions?.(condition.field || '')"
+                    v-model="condition.eventName" 
+                    :options="eventOptions"
+                    placeholder="选择事件"
+                    class="form-control"
+                    size="small"
                   />
                 </div>
-                <div class="condition-group" v-if="needValueInput?.(condition.operator || '')">
-                  <label class="condition-label">值</label>
-                  <a-input 
-                    v-model="condition.value" 
-                    :placeholder="getValuePlaceholder?.(condition.field || '', condition.operator || '')"
+                <div class="form-group">
+                  <label class="form-label">属性名称</label>
+                  <a-select 
+                    v-model="condition.propertyName" 
+                    :options="propertyOptions"
+                    placeholder="选择属性"
+                    class="form-control"
+                    size="small"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">聚合方式</label>
+                  <a-select 
+                    v-model="condition.aggregation" 
+                    :options="getAggregationOptions?.(condition.dataSourceType) || []"
+                    class="form-control"
+                    size="small"
                   />
                 </div>
               </div>
 
-              <!-- 时间类型配置 -->
-              <div v-if="condition.field?.includes('time') || condition.field?.includes('date')" class="condition-row">
-                <div class="condition-group">
-                  <label class="condition-label">时间类型</label>
+              <!-- 时间类型配置 - 水平布局 -->
+              <div v-if="condition.field?.includes('time') || condition.field?.includes('date')" class="time-config-row">
+                <div class="form-group">
+                  <label class="form-label">时间类型</label>
                   <a-select 
                     v-model="condition.dateType" 
                     :options="dateTypeOptions"
                     @change="onDateTypeChange?.(groupIndex, conditionIndex, $event)"
+                    class="form-control"
+                    size="small"
                   />
                 </div>
-                <div v-if="condition.dateType === 'absolute'" class="condition-group">
-                  <label class="condition-label">时间范围</label>
-                  <a-input v-model="condition.timeRange" placeholder="选择时间范围" />
+                <div v-if="condition.dateType === 'absolute'" class="form-group">
+                  <label class="form-label">时间范围</label>
+                  <a-input v-model="condition.timeRange" placeholder="选择时间范围" class="form-control" size="small" />
                 </div>
-                <div v-if="condition.dateType === 'relative'" class="condition-group">
-                  <label class="condition-label">动态时间</label>
+                <div v-if="condition.dateType === 'relative'" class="form-group">
+                  <label class="form-label">动态时间</label>
                   <div class="dynamic-time-input">
-                    <a-input-number v-model="condition.dynamicValue" placeholder="数值" style="width: 80px;" />
-                    <a-select v-model="condition.dynamicUnit" :options="dynamicUnitOptions" style="width: 80px;" />
+                    <a-input-number v-model="condition.dynamicValue" placeholder="数值" class="form-control" size="small" style="width: 80px;" />
+                    <a-select v-model="condition.dynamicUnit" :options="dynamicUnitOptions" class="form-control" size="small" style="width: 80px;" />
                   </div>
                 </div>
               </div>
@@ -253,6 +334,15 @@ const toggleGroupCollapse = (groupIndex: number) => {
   }
 }
 
+// 切换条件组逻辑
+const toggleGroupLogic = (groupIndex: number, logic?: string) => {
+  if (logic) {
+    emit('toggle-group-logic', groupIndex, logic)
+  } else {
+    emit('toggle-group-logic', groupIndex)
+  }
+}
+
 // 切换条件逻辑
 const toggleConditionLogic = (groupIndex: number, conditionIndex: number) => {
   const condition = props.conditionGroups[groupIndex]?.conditions[conditionIndex]
@@ -311,6 +401,7 @@ const toggleConditionLogic = (groupIndex: number, conditionIndex: number) => {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
 }
 
 .group-title {
@@ -329,6 +420,66 @@ const toggleConditionLogic = (groupIndex: number, conditionIndex: number) => {
   border-radius: 10px;
 }
 
+/* 统一逻辑控制器样式 */
+.unified-logic-controller {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.logic-toggle-group {
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.logic-btn {
+  padding: 6px 12px;
+  border: none;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-right: 1px solid #e5e7eb;
+}
+
+.logic-btn:last-child {
+  border-right: none;
+}
+
+.logic-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.logic-btn.active {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.logic-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.logic-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.logic-status {
+  font-size: 11px;
+  color: #6b7280;
+  padding: 4px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
 .group-logic {
   display: flex;
   align-items: center;
@@ -338,25 +489,6 @@ const toggleConditionLogic = (groupIndex: number, conditionIndex: number) => {
 .logic-label {
   font-size: 12px;
   color: #86909c;
-}
-
-.logic-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 20px;
-  background: #165dff;
-  color: white;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.logic-indicator:hover {
-  background: #0e42d2;
 }
 
 .group-actions {
@@ -369,13 +501,156 @@ const toggleConditionLogic = (groupIndex: number, conditionIndex: number) => {
   padding: 16px;
 }
 
+/* 条件项样式 */
 .condition-item {
   position: relative;
-  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+/* 树状结构样式 */
+.tree-structure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 16px;
+  min-width: 40px;
+}
+
+.tree-line-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.vertical-line {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 12px;
+  background: #d1d5db;
+}
+
+.horizontal-line {
+  width: 20px;
+  height: 2px;
+  background: #d1d5db;
+  margin-right: 8px;
+}
+
+.tree-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.node-circle {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #3b82f6;
+  border-radius: 50%;
+  background: #ffffff;
+  position: relative;
+  z-index: 2;
+}
+
+.node-number {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: 500;
+  background: #ffffff;
+  padding: 2px 4px;
+  border-radius: 2px;
+  z-index: 3;
+}
+
+.logic-connector {
+  margin-top: 4px;
+  padding: 2px 6px;
+  background: #e0e7ff;
+  border-radius: 4px;
+  border: 1px solid #c7d2fe;
+}
+
+.logic-text {
+  font-size: 10px;
+  color: #3730a3;
+  font-weight: 600;
+}
+
+/* 条件内容区域 */
+.condition-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.condition-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.condition-item.excluded {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.condition-item.excluded:hover {
+  border-color: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
 }
 
 .condition-item:last-child {
   margin-bottom: 0;
+}
+
+/* 水平布局样式 */
+.tag-condition-row,
+.event-config-row,
+.time-config-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  flex: 1;
+}
+
+.form-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.form-control {
+  min-width: 100px;
+}
+
+.tag-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .condition-connector {
@@ -455,6 +730,98 @@ const toggleConditionLogic = (groupIndex: number, conditionIndex: number) => {
 .dynamic-time-input {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .tag-condition-row,
+  .event-config-row,
+  .time-config-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .form-group {
+    min-width: auto;
+  }
+  
+  .tag-actions {
+    margin-left: 0;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+  
+  .dynamic-time-input {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .dynamic-time-input .form-control {
+    width: 100% !important;
+  }
+  
+  /* 统一逻辑控制器响应式 */
+  .unified-logic-controller {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+  
+  .logic-toggle-group {
+    width: 100%;
+  }
+  
+  .logic-btn {
+    flex: 1;
+    text-align: center;
+  }
+  
+  /* 树状结构响应式 */
+  .tree-structure {
+    display: none;
+  }
+  
+  .condition-item {
+    flex-direction: column;
+  }
+  
+  .condition-content {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .condition-item {
+    padding: 12px;
+  }
+  
+  .form-label {
+    font-size: 11px;
+  }
+  
+  .tag-actions {
+    gap: 4px;
+  }
+  
+  .condition-group-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .group-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .logic-status {
+    font-size: 10px;
+  }
 }
 
 .condition-actions {

@@ -27,6 +27,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 h1 {
@@ -64,6 +65,46 @@ button:focus-visible {
   text-align: left;
 }
 
+/* 统一滚动样式配置 */
+* {
+  box-sizing: border-box;
+}
+
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  border: 1px solid #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Firefox滚动条样式 */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* 确保页面内容可以正常滚动 */
+.page-container,
+.main-content,
+.content-wrapper {
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -76,3 +117,6 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* 引入表格优化样式 */
+@import './styles/table-optimization.css';

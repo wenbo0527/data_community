@@ -79,6 +79,16 @@
       @cancel="handleConfigCancel('wait')"
       @update:visible="(visible) => handleVisibilityChange('wait', visible)"
     />
+
+    <!-- 权益节点配置抽屉 -->
+    <BenefitNodeConfigDrawer
+      v-if="drawerStates?.benefit?.visible"
+      :visible="drawerStates.benefit.visible"
+      :node-data="drawerStates.benefit.data || {}"
+      @confirm="handleConfigConfirm('benefit', $event)"
+      @cancel="handleConfigCancel('benefit')"
+      @update:visible="(visible) => handleVisibilityChange('benefit', visible)"
+    />
   </div>
 </template>
 
@@ -92,6 +102,7 @@ import AICallNodeConfigDrawer from './AICallNodeConfigDrawer.vue'
 import SMSNodeConfigDrawer from './SMSNodeConfigDrawer.vue'
 import ManualCallNodeConfigDrawer from './ManualCallNodeConfigDrawer.vue'
 import WaitNodeConfigDrawer from './WaitNodeConfigDrawer.vue'
+import BenefitNodeConfigDrawer from './BenefitNodeConfigDrawer.vue'
 
 // 定义 props
 const props = defineProps({

@@ -411,6 +411,19 @@ export const MENU_CONFIG = {
                 routeName: 'inventory'
               }
             }
+          },
+          'global-management': {
+            key: 'global-management',
+            title: '全局管理',
+            type: 'group',
+            children: {
+              'global-rules': {
+                key: 'global-rules',
+                title: '全局规则',
+                path: '/marketing/global/rules',
+                routeName: 'globalRules'
+              }
+            }
           }
         }
       },

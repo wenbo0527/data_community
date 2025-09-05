@@ -129,9 +129,68 @@
             </template>
           </a-table-column>
 
-          <a-table-column title="剩余本金" data-index="balance" width="120" align="right">
+          <a-table-column title="逾期天数" data-index="overdueDays" width="100" align="center">
             <template #cell="{ record }">
-              <span class="balance">{{ formatAmount(record.balance) }}</span>
+              <span :class="{ 'text-red-500': record.overdueDays > 0 }">
+                {{ record.overdueDays }}
+              </span>
+            </template>
+          </a-table-column>
+
+          <a-table-column title="历史最大逾期天数" data-index="maxOverdueDays" width="140" align="center">
+            <template #cell="{ record }">
+              <span :class="{ 'text-orange-500': record.maxOverdueDays > 0 }">
+                {{ record.maxOverdueDays }}
+              </span>
+            </template>
+          </a-table-column>
+
+          <a-table-column title="结清日期" data-index="settlementDate" width="120">
+            <template #cell="{ record }">
+              <span v-if="record.settlementDate">{{ formatDate(record.settlementDate) }}</span>
+              <span v-else class="text-gray-400">-</span>
+            </template>
+          </a-table-column>
+
+          <a-table-column title="当前期次" data-index="currentPeriod" width="100" align="center">
+            <template #cell="{ record }">
+              {{ record.currentPeriod }}
+            </template>
+          </a-table-column>
+
+          <a-table-column title="剩余本金" data-index="remainingPrincipal" width="120" align="right">
+            <template #cell="{ record }">
+              <span class="amount">{{ formatAmount(record.remainingPrincipal) }}</span>
+            </template>
+          </a-table-column>
+
+          <a-table-column title="剩余利息" data-index="remainingInterest" width="120" align="right">
+            <template #cell="{ record }">
+              <span class="amount">{{ formatAmount(record.remainingInterest) }}</span>
+            </template>
+          </a-table-column>
+
+          <a-table-column title="剩余罚息" data-index="remainingPenalty" width="120" align="right">
+            <template #cell="{ record }">
+              <span class="amount" v-if="record.remainingPenalty > 0">
+                {{ formatAmount(record.remainingPenalty) }}
+                <a-tooltip content="本金罚息+利息罚息">
+                  <icon-exclamation-circle class="ml-1 text-orange-500 cursor-help" :size="14" />
+                </a-tooltip>
+              </span>
+              <span v-else class="text-gray-400">-</span>
+            </template>
+          </a-table-column>
+
+          <a-table-column title="剩余应还总额" data-index="remainingTotal" width="140" align="right">
+            <template #cell="{ record }">
+              <span class="amount font-semibold">{{ formatAmount(record.remainingTotal) }}</span>
+            </template>
+          </a-table-column>
+
+          <a-table-column title="借款利率" data-index="loanRate" width="100" align="center">
+            <template #cell="{ record }">
+              {{ (record.loanRate * 100).toFixed(2) }}%
             </template>
           </a-table-column>
 
@@ -162,13 +221,13 @@
           <a-table-column title="操作" width="180" fixed="right">
             <template #cell="{ record }">
               <div class="action-buttons">
-                <a-button type="text" size="small" @click="viewRepaymentDetails(record)">
-                  <Eye class="action-icon" />
-                  还款详情
-                </a-button>
                 <a-button type="text" size="small" @click="viewDisbursementDetails(record)">
                   <FileText class="action-icon" />
-                  放款详情
+                  放款信息
+                </a-button>
+                <a-button type="text" size="small" @click="viewRepaymentDetails(record)">
+                  <Eye class="action-icon" />
+                  还款信息
                 </a-button>
               </div>
             </template>
@@ -182,6 +241,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { CreditCard, RefreshCw, Download, Copy, Eye, FileText } from 'lucide-vue-next'
+import { IconExclamationCircle } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { exportToExcel } from '@/utils/export'
 
@@ -202,6 +262,16 @@ interface LoanRecord {
   paidInstallments: number
   nextPayment: number
   nextPaymentDate: string
+  // 新增字段
+  overdueDays: number
+  maxOverdueDays: number
+  settlementDate?: string
+  currentPeriod: number
+  remainingPrincipal: number
+  remainingInterest: number
+  remainingPenalty: number
+  remainingTotal: number
+  loanRate: number
   repaymentDetails?: any[]
   repaymentPlan?: any[]
 }
@@ -374,7 +444,16 @@ const exportData = () => {
     '借据号': record.contractNo,
     '借据状态': record.status,
     '借款金额': formatAmount(record.amount),
-    '剩余本金': formatAmount(record.balance),
+    '逾期天数': record.overdueDays,
+    '历史最大逾期天数': record.maxOverdueDays,
+    '结清日期': record.settlementDate ? formatDate(record.settlementDate) : '-',
+    '当前期次': record.currentPeriod,
+    '剩余本金': formatAmount(record.remainingPrincipal),
+    '剩余利息': formatAmount(record.remainingInterest),
+    '剩余罚息': formatAmount(record.remainingPenalty),
+    '剩余应还总额': formatAmount(record.remainingTotal),
+    '借款利率': `${(record.loanRate * 100).toFixed(2)}%`,
+    '剩余本金(原)': formatAmount(record.balance),
     '期数': `${record.installments}期`,
     '已还期数': `${record.paidInstallments}/${record.installments}`,
     '下期应还': formatAmount(record.nextPayment),
@@ -408,7 +487,7 @@ const viewDisbursementDetails = (record: LoanRecord) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
   background: #fafafa;
 }
@@ -431,7 +510,7 @@ const viewDisbursementDetails = (record: LoanRecord) => {
 
 .table-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -490,7 +569,11 @@ const viewDisbursementDetails = (record: LoanRecord) => {
 
 .amount,
 .balance,
-.next-payment {
+.next-payment,
+.remaining-principal,
+.remaining-interest,
+.remaining-penalty,
+.remaining-total {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 600;
 }
@@ -507,6 +590,52 @@ const viewDisbursementDetails = (record: LoanRecord) => {
   color: #ff7d00;
 }
 
+.remaining-principal {
+  color: #165dff;
+}
+
+.remaining-interest {
+  color: #ff7d00;
+}
+
+.remaining-penalty {
+  color: #f53f3f;
+}
+
+.remaining-total {
+  color: #722ed1;
+  font-weight: 700;
+}
+
+.penalty-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.penalty-icon {
+  width: 14px;
+  height: 14px;
+  color: #f53f3f;
+  cursor: help;
+}
+
+.overdue-days {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  color: #f53f3f;
+}
+
+.overdue-days.zero {
+  color: #00b42a;
+}
+
+.loan-rate {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 500;
+  color: #722ed1;
+}
+
 .installments,
 .paid-installments {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -515,7 +644,7 @@ const viewDisbursementDetails = (record: LoanRecord) => {
 
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 

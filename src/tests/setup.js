@@ -167,10 +167,11 @@ export const createMockGraph = () => {
       const node = {
         id: config.id,
         ...config,
-        getPosition: vi.fn(() => config.position || { x: 0, y: 0 }),
-        getData: vi.fn(() => config.data || {}),
-        setData: vi.fn(),
-        remove: vi.fn()
+        // 只有当config没有这些方法时才添加默认方法
+        getPosition: config.getPosition || vi.fn(() => config.position || { x: 0, y: 0 }),
+        getData: config.getData || vi.fn(() => config.data || {}),
+        setData: config.setData || vi.fn(),
+        remove: config.remove || vi.fn()
       }
       nodes.set(config.id, node)
       return node
@@ -179,9 +180,10 @@ export const createMockGraph = () => {
       const edge = {
         id: config.id,
         ...config,
-        getSourceCellId: vi.fn(() => config.source?.cell || config.source),
-        getTargetCellId: vi.fn(() => config.target?.cell || config.target),
-        remove: vi.fn()
+        // 只有当config没有这些方法时才添加默认方法
+        getSourceCellId: config.getSourceCellId || vi.fn(() => config.source?.cell || config.source),
+        getTargetCellId: config.getTargetCellId || vi.fn(() => config.target?.cell || config.target),
+        remove: config.remove || vi.fn()
       }
       edges.set(config.id, edge)
       return edge

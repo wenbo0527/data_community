@@ -75,7 +75,7 @@
         <a-card :bordered="false">
 
         <!-- 指标列表 -->
-        <a-table :data="tableData" :pagination="pagination" @page-change="onPageChange" @after-render="handleTableRender">
+        <a-table :data="tableData" :pagination="pagination" :bordered="false" class="table-borderless table-compact" @page-change="onPageChange" @after-render="handleTableRender">
           <template #columns>
             <a-table-column title="指标名称" dataIndex="name">
               <template #cell="{ record }: { record: any }">

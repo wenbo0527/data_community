@@ -60,6 +60,11 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       visible: false,
       data: {},
       instance: null
+    },
+    benefit: {
+      visible: false,
+      data: {},
+      instance: null
     }
   })
 
@@ -307,7 +312,8 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       'sms': 'sms',                       // 短信节点 -> SMSNodeConfigDrawer.vue
       'manual-call': 'manual-call',       // 人工外呼节点 -> ManualCallNodeConfigDrawer.vue
       'ab-test': 'ab-test',               // AB测试节点 -> ABTestNodeConfigDrawer.vue
-      'wait': 'wait'                      // 等待节点 -> WaitNodeConfigDrawer.vue
+      'wait': 'wait',                     // 等待节点 -> WaitNodeConfigDrawer.vue
+      'benefit': 'benefit'                // 权益节点 -> BenefitNodeConfigDrawer.vue
     }
     return mapping[nodeType] || nodeType
   }
@@ -326,7 +332,8 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       'sms': 'sms',
       'manual-call': 'manual-call',
       'ab-test': 'ab-test',
-      'wait': 'wait'
+      'wait': 'wait',
+      'benefit': 'benefit'
     }
     return reverseMapping[drawerType] || drawerType
   }

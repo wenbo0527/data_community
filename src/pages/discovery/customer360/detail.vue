@@ -67,6 +67,14 @@
 
         <!-- 顶部概览卡片已删除，按需求文档要求移除 -->
 
+        <!-- 页面标题和历史切片查询按钮 -->
+        <div class="page-header">
+          <h2 class="page-title">客户360-查询条件</h2>
+          <div class="header-actions">
+            <HistoryQueryButton :user-id="userId" />
+          </div>
+        </div>
+
         <!-- 主要内容区域 - 新的两级Tab架构 -->
         <div class="main-content">
           <MainTabs
@@ -130,7 +138,7 @@ import LoanList from './components/LoanList.vue'
 import AdjustmentHistory from './components/AdjustmentHistory.vue'
 import CollectionRecords from './components/CollectionRecords.vue'
 import CreditReports from './components/CreditRecords.vue'
-// HistoryQueryButton组件已删除，不再需要历史查询按钮
+import HistoryQueryButton from './components/HistoryQueryButton.vue'
 import UserProfile from './components/UserProfile.vue'
 import MainTabs from './components/MainTabs.vue'
 
@@ -474,17 +482,26 @@ onUnmounted(() => {
 <style scoped>
 .customer-detail-container {
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
-  background: #f7f8fa;
+  max-width: none;
+  margin: 0;
+  padding: 12px;
+  background: transparent;
   min-height: 100vh;
-  max-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* 使用页面级滚动，移除容器内部滚动 */
   /* 自定义滚动条样式 */
   scrollbar-width: thin;
   scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* 历史切片查询按钮样式 */
+.history-query-section {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: flex-end;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* Webkit浏览器滚动条样式 */
@@ -512,7 +529,6 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  background: white;
   padding: 20px 24px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -555,7 +571,6 @@ onUnmounted(() => {
 }
 
 .product-tabs-container {
-  background: white;
   padding: 0 24px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -610,14 +625,16 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   height: 400px;
-  background: white;
   border-radius: 12px;
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* 概览卡片样式已删除，按需求文档要求移除顶部模块 */
@@ -626,8 +643,11 @@ onUnmounted(() => {
 .main-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   align-items: stretch;
+  padding: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .left-content,
@@ -640,11 +660,10 @@ onUnmounted(() => {
 .detail-sections {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .detail-section {
-  background: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -654,7 +673,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px 16px 24px;
+  padding: 12px 16px 8px 16px;
   background: #fafbfc;
   border-bottom: 1px solid #e5e6eb;
 }
@@ -688,7 +707,7 @@ onUnmounted(() => {
 }
 
 .detail-section > *:not(.section-title) {
-  padding: 24px;
+  padding: 16px;
 }
 
 .error-container {
@@ -696,74 +715,91 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   height: 400px;
-  background: white;
   border-radius: 12px;
 }
 
 /* 响应式设计 */
-@media (max-width: 1400px) {
-  .customer-detail-container {
-    max-width: 1200px;
-  }
-}
-
 @media (max-width: 1200px) {
-  .customer-detail-container {
-    max-width: 100%;
+  .content {
     padding: 20px;
   }
   
   .main-content {
-    grid-template-columns: 1fr;
+    padding: 0 20px;
   }
   
-  /* 删除了overview-cards样式 */
+  .page-header {
+    padding: 16px 20px;
+  }
 }
 
 @media (max-width: 768px) {
   .customer-detail-container {
-    padding: 16px;
+    padding: 8px;
   }
   
-  .header {
+  .content {
+    padding: 12px;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+  }
+  
+  .main-content {
+    padding: 0 12px;
+  }
+  
+  .page-header {
+    padding: 12px;
+    flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
   
-  .header-right {
+  .header-actions {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   
-  /* 删除了overview-cards相关样式 */
   .detail-section {
-    padding: 16px;
+    padding: 12px;
+  }
+  
+  .detail-sections {
+    gap: 12px;
   }
   
   .product-tabs-container {
-    padding: 0 16px;
+    padding: 0 12px;
   }
   
   .section-title {
-    padding: 16px 20px 0 20px;
+    padding: 12px 16px 6px 16px;
   }
   
   .detail-section > *:not(.section-title) {
-    padding: 20px;
+    padding: 16px;
+  }
+  
+  .tab-content {
+    padding: 12px;
   }
 }
 
 @media (max-width: 480px) {
-  .customer-detail-container {
+  .content {
     padding: 12px;
   }
   
-  .header {
-    padding: 16px;
+  .main-content {
+    padding: 0 12px;
+    gap: 16px;
   }
   
-  /* 删除了overview-card样式 */
+  .page-header {
+    padding: 12px;
+  }
   
   .card-content {
     gap: 8px;
@@ -773,10 +809,6 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
-  }
-  
-  .main-content {
-    gap: 16px;
   }
   
   .left-content,
@@ -792,7 +824,6 @@ onUnmounted(() => {
   right: 20px;
   width: 600px;
   max-height: 80vh;
-  background: white;
   border: 1px solid #d9d9d9;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -821,8 +852,7 @@ onUnmounted(() => {
 }
 
 .debug-content {
-  max-height: calc(80vh - 60px);
-  overflow-y: auto;
+  /* 移除内部滚动，使用页面级滚动 */
   padding: 16px;
 }
 
@@ -866,8 +896,7 @@ onUnmounted(() => {
 }
 
 .debug-flow {
-  max-height: 200px;
-  overflow-y: auto;
+  /* 移除内部滚动，使用页面级滚动 */
   border: 1px solid #f0f0f0;
   border-radius: 4px;
 }
@@ -994,8 +1023,7 @@ onUnmounted(() => {
 
 .debug-json {
   font-size: 11px;
-  max-height: 200px;
-  overflow-y: auto;
+  /* 移除内部滚动，使用页面级滚动 */
   background-color: #f5f5f5;
   padding: 8px;
   border-radius: 4px;
@@ -1004,8 +1032,7 @@ onUnmounted(() => {
 
 .computed-data {
   font-size: 11px;
-  max-height: 300px;
-  overflow-y: auto;
+  /* 移除内部滚动，使用页面级滚动 */
 }
 
 .computed-data > div {
@@ -1133,8 +1160,8 @@ onUnmounted(() => {
 }
 
 .tab-content {
-  padding: 24px;
-  min-height: 400px;
+  padding: 16px;
+  min-height: 300px;
 }
 
 .tab-content .section-subtitle {
@@ -1169,6 +1196,32 @@ onUnmounted(() => {
   padding: 16px;
 }
 
+/* 页面标题和操作按钮布局 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+  line-height: 1.4;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .customer-info-tabs .arco-tabs-nav {
@@ -1177,6 +1230,17 @@ onUnmounted(() => {
   
   .tab-content {
     padding: 16px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 </style>

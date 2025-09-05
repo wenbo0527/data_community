@@ -686,8 +686,7 @@ onMounted(() => {
 }
 
 .execution-list {
-  max-height: 300px;
-  overflow-y: auto;
+  /* 移除内部滚动，使用页面级滚动 */
 }
 
 .execution-item {
@@ -771,8 +770,7 @@ onMounted(() => {
   border: 1px solid #e5e6eb;
   border-radius: 6px;
   padding: 16px;
-  max-height: 400px;
-  overflow-y: auto;
+  /* 移除内部滚动，使用页面级滚动 */
 }
 
 .result-content pre,

@@ -307,9 +307,21 @@ export class LabelManager {
         });
         element.innerHTML = labelHTML;
 
+        // 🔧 坐标验证：确保位置样式不包含NaN值
+        const validX = (typeof label.position.x === 'number' && !isNaN(label.position.x) && isFinite(label.position.x)) ? label.position.x : 200;
+        const validY = (typeof label.position.y === 'number' && !isNaN(label.position.y) && isFinite(label.position.y)) ? label.position.y : 100;
+        
+        if (validX !== label.position.x || validY !== label.position.y) {
+          console.warn('⚠️ [LabelManager] 检测到NaN坐标，使用默认值:', {
+            branchId,
+            originalPosition: label.position,
+            correctedPosition: { x: validX, y: validY }
+          });
+        }
+        
         // 更新位置
-        element.style.left = `${label.position.x}px`;
-        element.style.top = `${label.position.y}px`;
+        element.style.left = `${validX}px`;
+        element.style.top = `${validY}px`;
 
         // 更新样式
         element.style.fontSize = `${label.style.fontSize || 12}px`;
@@ -484,8 +496,21 @@ export class LabelManager {
         label.position = newPosition;
         
         if (label.element) {
-          label.element.style.left = `${newPosition.x}px`;
-          label.element.style.top = `${newPosition.y}px`;
+          // 🔧 坐标验证：确保位置样式不包含NaN值
+          const validX = (typeof newPosition.x === 'number' && !isNaN(newPosition.x) && isFinite(newPosition.x)) ? newPosition.x : 200;
+          const validY = (typeof newPosition.y === 'number' && !isNaN(newPosition.y) && isFinite(newPosition.y)) ? newPosition.y : 100;
+          
+          if (validX !== newPosition.x || validY !== newPosition.y) {
+            console.warn('⚠️ [LabelManager] 节点移动时检测到NaN坐标，使用默认值:', {
+              nodeId,
+              branchId,
+              originalPosition: newPosition,
+              correctedPosition: { x: validX, y: validY }
+            });
+          }
+          
+          label.element.style.left = `${validX}px`;
+          label.element.style.top = `${validY}px`;
         }
       }
     }
@@ -501,7 +526,20 @@ export class LabelManager {
         label.position = newPosition;
         
         if (label.element) {
-          label.element.style.left = `${newPosition.x}px`;
+          // 🔧 坐标验证：确保位置样式不包含NaN值
+          const validX = (typeof newPosition.x === 'number' && !isNaN(newPosition.x) && isFinite(newPosition.x)) ? newPosition.x : 200;
+          const validY = (typeof newPosition.y === 'number' && !isNaN(newPosition.y) && isFinite(newPosition.y)) ? newPosition.y : 100;
+          
+          if (validX !== newPosition.x || validY !== newPosition.y) {
+            console.warn('⚠️ [LabelManager] 更新所有标签位置时检测到NaN坐标，使用默认值:', {
+              branchId,
+              originalPosition: newPosition,
+              correctedPosition: { x: validX, y: validY }
+            });
+          }
+          
+          label.element.style.left = `${validX}px`;
+          label.element.style.top = `${validY}px`;
           label.element.style.top = `${newPosition.y}px`;
         }
       } catch (error) {

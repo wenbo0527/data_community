@@ -262,7 +262,7 @@ class FlowStateTracker {
       try {
         listener(event);
       } catch (error) {
-        console.error(`❌ [流状态跟踪器] 监听器错误:`, error);
+        // console.error(`❌ [流状态跟踪器] 监听器错误:`, error);
       }
     });
   }
@@ -294,8 +294,8 @@ export class BranchFlowManager {
     this.options = {
       enableValidation: true,
       enableMetrics: true,
-      enableAutoSync: true,
-      syncInterval: 1000,
+      enableAutoSync: false, // 禁用自动同步防止频繁触发
+      syncInterval: 10000, // 增加到10秒，减少频繁同步
       maxBranches: 1000,
       maxHistorySize: 100,
       enableDebug: false,
@@ -336,7 +336,7 @@ export class BranchFlowManager {
       this.startAutoSync();
     }
 
-    console.log(`🌊 [分流管理器] 初始化完成 - 自动同步: ${this.options.enableAutoSync}, 间隔: ${this.options.syncInterval}ms`);
+    // console.log(`🌊 [分流管理器] 初始化完成 - 自动同步: ${this.options.enableAutoSync}, 间隔: ${this.options.syncInterval}ms`);
   }
 
   /**
@@ -423,7 +423,7 @@ export class BranchFlowManager {
     this.markForSync(branchId);
 
     if (this.options.enableDebug) {
-      console.log(`🌿 [分流管理器] 创建分支 - ID: ${branchId}, 源: ${sourceNodeId}, 目标: ${targetNodeId}, 类型: ${type}`);
+      // console.log(`🌿 [分流管理器] 创建分支 - ID: ${branchId}, 源: ${sourceNodeId}, 目标: ${targetNodeId}, 类型: ${type}`);
     }
 
     return branch;
@@ -502,7 +502,7 @@ export class BranchFlowManager {
     this.markForSync(branchId);
 
     if (this.options.enableDebug) {
-      console.log(`🔄 [分流管理器] 更新分支 - ID: ${branchId}, 更新: ${Object.keys(updates).join(', ')}`);
+      // console.log(`🔄 [分流管理器] 更新分支 - ID: ${branchId}, 更新: ${Object.keys(updates).join(', ')}`);
     }
 
     return branch;
@@ -539,7 +539,7 @@ export class BranchFlowManager {
     this.emitEvent('branchDeleted', { branchId, branch: branch.getSummary() });
 
     if (this.options.enableDebug) {
-      console.log(`🗑️ [分流管理器] 删除分支 - ID: ${branchId}`);
+      // console.log(`🗑️ [分流管理器] 删除分支 - ID: ${branchId}`);
     }
 
     return true;
@@ -581,7 +581,7 @@ export class BranchFlowManager {
     this.markForSync(branchId);
 
     if (this.options.enableDebug) {
-      console.log(`✅ [分流管理器] 激活分支 - ID: ${branchId}`);
+      // console.log(`✅ [分流管理器] 激活分支 - ID: ${branchId}`);
     }
 
     return true;
@@ -618,7 +618,7 @@ export class BranchFlowManager {
     this.markForSync(branchId);
 
     if (this.options.enableDebug) {
-      console.log(`⏸️ [分流管理器] 停用分支 - ID: ${branchId}, 原因: ${reason}`);
+      // console.log(`⏸️ [分流管理器] 停用分支 - ID: ${branchId}, 原因: ${reason}`);
     }
 
     return true;
@@ -706,11 +706,11 @@ export class BranchFlowManager {
       });
 
       if (this.options.enableDebug) {
-        console.log(`🔄 [分流管理器] 同步完成 - 分支数: ${syncBranches.length}, 耗时: ${this.stats.lastSyncDuration}ms`);
+        // console.log(`🔄 [分流管理器] 同步完成 - 分支数: ${syncBranches.length}, 耗时: ${this.stats.lastSyncDuration}ms`);
       }
 
     } catch (error) {
-      console.error(`❌ [分流管理器] 同步失败:`, error);
+      // console.error(`❌ [分流管理器] 同步失败:`, error);
       
       // 重新标记失败的分支
       syncBranches.forEach(branchId => this.pendingSyncs.add(branchId));
@@ -815,7 +815,7 @@ export class BranchFlowManager {
     };
 
     this.syncTimer = setTimeout(sync, this.options.syncInterval);
-    console.log(`🔄 [分流管理器] 启动自动同步 - 间隔: ${this.options.syncInterval}ms`);
+    // console.log(`🔄 [分流管理器] 启动自动同步 - 间隔: ${this.options.syncInterval}ms`);
   }
 
   /**
@@ -825,7 +825,7 @@ export class BranchFlowManager {
     if (this.syncTimer) {
       clearTimeout(this.syncTimer);
       this.syncTimer = null;
-      console.log(`⏸️ [分流管理器] 停止自动同步`);
+      // console.log(`⏸️ [分流管理器] 停止自动同步`);
     }
   }
 
@@ -892,7 +892,7 @@ export class BranchFlowManager {
         try {
           listener(data);
         } catch (error) {
-          console.error(`❌ [分流管理器] 事件监听器错误:`, error);
+          // console.error(`❌ [分流管理器] 事件监听器错误:`, error);
         }
       });
     }
@@ -973,7 +973,7 @@ export class BranchFlowManager {
     this.validators.clear();
     this.setupDefaultValidators();
 
-    console.log(`🗑️ [分流管理器] 资源清理完成`);
+    // console.log(`🗑️ [分流管理器] 资源清理完成`);
   }
 }
 

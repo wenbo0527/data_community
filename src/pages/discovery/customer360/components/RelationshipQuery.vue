@@ -13,10 +13,7 @@
             <template #icon><icon-refresh /></template>
             重置
           </a-button>
-          <a-button @click="exportRelationship" :disabled="!hasRelationshipData">
-            <template #icon><icon-download /></template>
-            导出
-          </a-button>
+
         </div>
       </div>
       
@@ -326,7 +323,6 @@ import RelationshipGraph from './RelationshipGraph.vue'
 import {
   IconSearch,
   IconRefresh,
-  IconDownload,
   IconExpand,
   IconBranch,
   IconList,
@@ -601,34 +597,7 @@ const resetQuery = () => {
   }
 }
 
-const exportRelationship = () => {
-  if (!hasRelationshipData.value) {
-    Message.warning('暂无数据可导出')
-    return
-  }
-  
-  // 生成导出数据
-  const exportData = {
-    nodes: relationshipData.value.nodes,
-    edges: relationshipData.value.edges,
-    stats: relationshipStats.value,
-    queryParams: queryParams.value,
-    exportTime: new Date().toISOString()
-  }
-  
-  // 下载JSON文件
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-    type: 'application/json'
-  })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `relationship-${Date.now()}.json`
-  a.click()
-  URL.revokeObjectURL(url)
-  
-  Message.success('导出成功')
-}
+
 
 const renderGraph = () => {
   if (!graphRef.value || !hasRelationshipData.value) return

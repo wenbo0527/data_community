@@ -106,7 +106,7 @@ export class SyncManager {
       totalSyncTime: 0
     };
 
-    console.log(`✅ [同步管理器] 初始化完成 - 验证: ${!!this.validator}, 回滚: ${this.config.enableRollback}`);
+    // console.log(`✅ [同步管理器] 初始化完成 - 验证: ${!!this.validator}, 回滚: ${this.config.enableRollback}`);
   }
 
   /**
@@ -120,11 +120,11 @@ export class SyncManager {
     const syncId = this.generateSyncId();
     const startTime = performance.now();
 
-    console.log(`🔄 [同步管理器] 开始同步 - ID: ${syncId}, 层级数: ${layers.length}`);
+    // console.log(`🔄 [同步管理器] 开始同步 - ID: ${syncId}, 层级数: ${layers.length}`);
 
     // 检查并发限制
     if (this.activeSyncs.size >= this.config.maxConcurrentSyncs) {
-      console.log(`⏳ [同步管理器] 达到并发限制，加入队列 - ID: ${syncId}`);
+      // console.log(`⏳ [同步管理器] 达到并发限制，加入队列 - ID: ${syncId}`);
       return this.queueSync(syncId, layers, context, options);
     }
 
@@ -150,7 +150,7 @@ export class SyncManager {
       
       await this.completeSyncSession(syncSession, result, syncTime);
       
-      console.log(`✅ [同步管理器] 同步完成 - ID: ${syncId}, 耗时: ${syncTime.toFixed(2)}ms`);
+      // console.log(`✅ [同步管理器] 同步完成 - ID: ${syncId}, 耗时: ${syncTime.toFixed(2)}ms`);
       
       return {
         syncId,
@@ -264,7 +264,7 @@ export class SyncManager {
    * 执行坐标计算
    */
   async executeCalculation(session, layers, options) {
-    console.log(`🔄 [同步管理器] 执行坐标计算 - ID: ${session.id}`);
+    // console.log(`🔄 [同步管理器] 执行坐标计算 - ID: ${session.id}`);
 
     try {
       const calculationOptions = {
@@ -280,10 +280,10 @@ export class SyncManager {
         nodeCount: positions.size
       });
 
-      console.log(`✅ [同步管理器] 坐标计算完成 - ID: ${session.id}, 节点数: ${positions.size}`);
+      // console.log(`✅ [同步管理器] 坐标计算完成 - ID: ${session.id}, 节点数: ${positions.size}`);
       return positions;
     } catch (error) {
-      console.error(`❌ [同步管理器] 坐标计算失败 - ID: ${session.id}:`, error.message);
+      // console.error(`❌ [同步管理器] 坐标计算失败 - ID: ${session.id}:`, error.message);
       throw new CoordinateCalculationError(
         `坐标计算失败: ${error.message}`,
         null,
@@ -296,7 +296,7 @@ export class SyncManager {
    * 执行坐标验证
    */
   async executeValidation(session, positions, layers, context) {
-    console.log(`🔄 [同步管理器] 执行坐标验证 - ID: ${session.id}`);
+    // console.log(`🔄 [同步管理器] 执行坐标验证 - ID: ${session.id}`);
 
     try {
       const validationContext = {
@@ -313,10 +313,10 @@ export class SyncManager {
         validationResult
       });
 
-      console.log(`✅ [同步管理器] 坐标验证完成 - ID: ${session.id}, 状态: ${validationResult.isValid ? '通过' : '失败'}`);
+      // console.log(`✅ [同步管理器] 坐标验证完成 - ID: ${session.id}, 状态: ${validationResult.isValid ? '通过' : '失败'}`);
       return validationResult;
     } catch (error) {
-      console.error(`❌ [同步管理器] 坐标验证失败 - ID: ${session.id}:`, error.message);
+      // console.error(`❌ [同步管理器] 坐标验证失败 - ID: ${session.id}:`, error.message);
       throw new CoordinateCalculationError(
         `坐标验证失败: ${error.message}`,
         null,
@@ -329,7 +329,7 @@ export class SyncManager {
    * 执行位置应用
    */
   async executeApplication(session, positions, context) {
-    console.log(`🔄 [同步管理器] 执行位置应用 - ID: ${session.id}`);
+    // console.log(`🔄 [同步管理器] 执行位置应用 - ID: ${session.id}`);
 
     try {
       const applicationContext = {
@@ -344,7 +344,7 @@ export class SyncManager {
         applicationResult
       });
 
-      console.log(`✅ [同步管理器] 位置应用完成 - ID: ${session.id}, 成功: ${applicationResult.applied}, 失败: ${applicationResult.failed}`);
+      // console.log(`✅ [同步管理器] 位置应用完成 - ID: ${session.id}, 成功: ${applicationResult.applied}, 失败: ${applicationResult.failed}`);
       
       // 刷新预览线
       this.updateProgress(session, 85, 'refreshing', '刷新预览线');
@@ -356,7 +356,7 @@ export class SyncManager {
       
       return applicationResult;
     } catch (error) {
-      console.error(`❌ [同步管理器] 位置应用失败 - ID: ${session.id}:`, error.message);
+      // console.error(`❌ [同步管理器] 位置应用失败 - ID: ${session.id}:`, error.message);
       throw new CoordinateCalculationError(
         `位置应用失败: ${error.message}`,
         null,
@@ -371,9 +371,9 @@ export class SyncManager {
   async refreshPreviewLines(layers, positions, context) {
     try {
       await this.previewLineManager.refreshPreviewLines(layers, positions, context);
-      console.log(`✅ [同步管理器] 预览线刷新完成`);
+      // console.log(`✅ [同步管理器] 预览线刷新完成`);
     } catch (error) {
-      console.error(`❌ [同步管理器] 预览线刷新失败:`, error.message);
+      // console.error(`❌ [同步管理器] 预览线刷新失败:`, error.message);
       // 预览线刷新失败不应该阻止整个同步流程
     }
   }
@@ -384,9 +384,9 @@ export class SyncManager {
   async syncBranchFlow(layers, positions, context) {
     try {
       await this.branchFlowManager.syncBranchFlow(layers, positions, context);
-      console.log(`✅ [同步管理器] 分流状态同步完成`);
+      // console.log(`✅ [同步管理器] 分流状态同步完成`);
     } catch (error) {
-      console.error(`❌ [同步管理器] 分流状态同步失败:`, error.message);
+      // console.error(`❌ [同步管理器] 分流状态同步失败:`, error.message);
       // 分流状态同步失败不应该阻止整个同步流程
     }
   }
@@ -398,7 +398,7 @@ export class SyncManager {
     const oldState = session.state;
     session.state = newState;
 
-    console.log(`🔄 [同步管理器] 状态变更 - ID: ${session.id}: ${oldState} -> ${newState}`);
+    // console.log(`🔄 [同步管理器] 状态变更 - ID: ${session.id}: ${oldState} -> ${newState}`);
 
     this.emitEvent(SyncEventType.STATE_CHANGED, {
       syncId: session.id,
@@ -437,7 +437,7 @@ export class SyncManager {
     return setTimeout(() => {
       const session = this.activeSyncs.get(syncId);
       if (session && session.state !== SyncState.COMPLETED) {
-        console.warn(`⏰ [同步管理器] 同步超时 - ID: ${syncId}`);
+        // console.warn(`⏰ [同步管理器] 同步超时 - ID: ${syncId}`);
         this.cancelSync(syncId, '同步超时');
       }
     }, this.config.syncTimeout);
@@ -449,11 +449,11 @@ export class SyncManager {
   async cancelSync(syncId, reason = '用户取消') {
     const session = this.activeSyncs.get(syncId);
     if (!session) {
-      console.warn(`⚠️ [同步管理器] 未找到同步会话 - ID: ${syncId}`);
+      // console.warn(`⚠️ [同步管理器] 未找到同步会话 - ID: ${syncId}`);
       return false;
     }
 
-    console.log(`🛑 [同步管理器] 取消同步 - ID: ${syncId}, 原因: ${reason}`);
+    // console.log(`🛑 [同步管理器] 取消同步 - ID: ${syncId}, 原因: ${reason}`);
 
     session.cancelled = true;
     this.updateSyncState(session, SyncState.CANCELLED);
@@ -462,9 +462,9 @@ export class SyncManager {
     if (session.results.application && this.config.enableRollback) {
       try {
         await this.applicator.rollback(session.results.application.applicationId);
-        console.log(`✅ [同步管理器] 回滚完成 - ID: ${syncId}`);
+        // console.log(`✅ [同步管理器] 回滚完成 - ID: ${syncId}`);
       } catch (error) {
-        console.error(`❌ [同步管理器] 回滚失败 - ID: ${syncId}:`, error.message);
+        // console.error(`❌ [同步管理器] 回滚失败 - ID: ${syncId}:`, error.message);
       }
     }
 
@@ -498,7 +498,7 @@ export class SyncManager {
       timestamp: Date.now()
     });
 
-    console.log(`📊 [同步管理器] 会话完成 - ID: ${session.id}`);
+    // console.log(`📊 [同步管理器] 会话完成 - ID: ${session.id}`);
   }
 
   /**
@@ -507,7 +507,7 @@ export class SyncManager {
   async handleSyncError(syncId, error) {
     const session = this.activeSyncs.get(syncId);
     
-    console.error(`❌ [同步管理器] 同步错误 - ID: ${syncId}:`, error.message);
+    // console.error(`❌ [同步管理器] 同步错误 - ID: ${syncId}:`, error.message);
 
     // 记录统计信息
     if (session) {
@@ -518,9 +518,9 @@ export class SyncManager {
     if (session?.results.application && this.config.enableRollback) {
       try {
         await this.applicator.rollback(session.results.application.applicationId);
-        console.log(`✅ [同步管理器] 错误回滚完成 - ID: ${syncId}`);
+        // console.log(`✅ [同步管理器] 错误回滚完成 - ID: ${syncId}`);
       } catch (rollbackError) {
-        console.error(`❌ [同步管理器] 错误回滚失败 - ID: ${syncId}:`, rollbackError.message);
+        // console.error(`❌ [同步管理器] 错误回滚失败 - ID: ${syncId}:`, rollbackError.message);
       }
     }
 
@@ -555,7 +555,7 @@ export class SyncManager {
         timestamp: Date.now()
       });
 
-      console.log(`📋 [同步管理器] 同步已加入队列 - ID: ${syncId}, 队列长度: ${this.syncQueue.length}`);
+      // console.log(`📋 [同步管理器] 同步已加入队列 - ID: ${syncId}, 队列长度: ${this.syncQueue.length}`);
     });
   }
 
@@ -570,7 +570,7 @@ export class SyncManager {
     const queuedSync = this.syncQueue.shift();
     if (!queuedSync) return;
 
-    console.log(`📋 [同步管理器] 处理队列同步 - ID: ${queuedSync.syncId}`);
+    // console.log(`📋 [同步管理器] 处理队列同步 - ID: ${queuedSync.syncId}`);
 
     try {
       const result = await this.sync(queuedSync.layers, queuedSync.context, queuedSync.options);
@@ -648,7 +648,7 @@ export class SyncManager {
         try {
           listener(data);
         } catch (error) {
-          console.error(`事件监听器错误 [${eventType}]:`, error);
+          // console.error(`事件监听器错误 [${eventType}]:`, error);
         }
       });
     }
@@ -726,7 +726,7 @@ export class SyncManager {
       this.applicator.reconfigure(newConfig.applicatorConfig);
     }
 
-    console.log(`🔧 [同步管理器] 重新配置完成`);
+    // console.log(`🔧 [同步管理器] 重新配置完成`);
   }
 
   /**
@@ -761,6 +761,6 @@ export class SyncManager {
       this.branchFlowManager.cleanup();
     }
 
-    console.log(`🗑️ [同步管理器] 资源清理完成`);
+    // console.log(`🗑️ [同步管理器] 资源清理完成`);
   }
 }

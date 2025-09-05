@@ -180,5 +180,7 @@ defineExpose({
   border: 1px solid var(--color-border-2);
   border-radius: 4px;
   overflow: hidden;
+  /* 确保编辑器内部滚动不与页面滚动冲突 */
+  position: relative;
 }
 </style>

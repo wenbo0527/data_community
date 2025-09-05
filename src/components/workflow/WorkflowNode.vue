@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick, inject } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, watch, nextTick, inject } from 'vue';
 import { IconPlus, IconClose } from '@arco-design/web-vue/es/icon';
 import { Dropdown as ADropdown } from '@arco-design/web-vue';
 import { 
@@ -379,16 +379,50 @@ watch(
   { immediate: true, flush: 'post' }
 )
 
-// 组件生命周期日志跟踪
+// 监听全局Graph初始化完成事件
 onMounted(() => {
-  consoleLogger.info('[WorkflowNode] 组件已挂载，节点ID:', props.node?.id)
-  consoleLogger.info('[WorkflowNode] 挂载时graph状态:', {
-    graph: graph,
-    graphValue: graph?.value,
-    graphType: typeof graph?.value,
-    graphValid: !!graph?.value
-  })
+  // 设置全局回调函数，当Graph初始化完成时执行
+  if (!window.workflowGraphInitialized) {
+    window.workflowGraphInitialized = () => {
+      consoleLogger.info('[WorkflowNode] 收到Graph初始化完成通知')
+      // 检查并执行待处理操作
+      setTimeout(() => {
+        checkAndExecutePendingOperations()
+      }, 50)
+    }
+  }
+  
+  // 如果Graph已经存在，立即检查待处理操作
+  if (window.workflowGraph) {
+    consoleLogger.info('[WorkflowNode] 发现已存在的Graph实例')
+    setTimeout(() => {
+      checkAndExecutePendingOperations()
+    }, 50)
+  }
 })
+
+// 组件卸载时清理
+onBeforeUnmount(() => {
+  // 清理防抖定时器
+  if (debounceTimeout) {
+    clearTimeout(debounceTimeout)
+    debounceTimeout = null
+  }
+  
+  // 清理待处理操作
+  pendingOperations.value = []
+})
+
+// 组件生命周期日志跟踪（合并到上面的onMounted中）
+// onMounted(() => {
+//   consoleLogger.info('[WorkflowNode] 组件已挂载，节点ID:', props.node?.id)
+//   consoleLogger.info('[WorkflowNode] 挂载时graph状态:', {
+//     graph: graph,
+//     graphValue: graph?.value,
+//     graphType: typeof graph?.value,
+//     graphValid: !!graph?.value
+//   })
+// })
 
 // 组件卸载时清理资源
 onUnmounted(() => {

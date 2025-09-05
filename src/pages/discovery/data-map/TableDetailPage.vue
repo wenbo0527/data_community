@@ -52,6 +52,8 @@
                 :data="tableData?.fields || []"
                 :pagination="false"
                 :scroll="{ x: '100%' }"
+                :bordered="false"
+                class="table-borderless table-compact"
               >
                 <template #columns>
                   <a-table-column title="字段名" data-index="name">
@@ -82,6 +84,8 @@
                 :data="sampleData"
                 :pagination="false"
                 :scroll="{ x: '100%' }"
+                :bordered="false"
+                class="table-borderless table-compact"
               >
                 <template #columns>
                   <a-table-column
@@ -109,6 +113,8 @@
                     :data="allRelations"
                     :pagination="false"
                     :scroll="{ x: '100%' }"
+                    :bordered="false"
+                    class="table-borderless table-compact"
                   >
                     <template #columns>
                       <a-table-column title="关联表" data-index="targetTable">

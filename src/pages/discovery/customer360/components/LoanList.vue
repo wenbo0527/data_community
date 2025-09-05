@@ -66,11 +66,74 @@
               <span>{{ record.installments }}</span>
             </template>
           </a-table-column>
-          <a-table-column title="操作" :width="150">
+          <a-table-column title="逾期天数" data-index="overdueDays" :width="100">
+            <template #cell="{ record }">
+              <span :class="{ 'text-red-500 font-medium': record.overdueDays > 0 }">
+                {{ record.overdueDays || 0 }}
+              </span>
+            </template>
+          </a-table-column>
+          <a-table-column title="历史最大逾期天数" data-index="maxOverdueDays" :width="140">
+            <template #cell="{ record }">
+              <span :class="{ 'text-red-500 font-medium': record.maxOverdueDays > 0 }">
+                {{ record.maxOverdueDays || 0 }}
+              </span>
+            </template>
+          </a-table-column>
+          <a-table-column title="结清日期" data-index="settlementDate" :width="120">
+            <template #cell="{ record }">
+              <span v-if="record.settlementDate" class="text-green-600">
+                {{ record.settlementDate }}
+              </span>
+              <span v-else class="text-gray-400">-</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="当前期次" data-index="currentPeriod" :width="100">
+            <template #cell="{ record }">
+              <span>{{ record.currentPeriod || '-' }}</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="剩余本金" data-index="remainingPrincipal" :width="120">
+            <template #cell="{ record }">
+              <span class="font-medium text-blue-600">{{ formatAmount(record.remainingPrincipal) }}</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="剩余利息" data-index="remainingInterest" :width="120">
+            <template #cell="{ record }">
+              <span class="font-medium text-orange-600">{{ formatAmount(record.remainingInterest) }}</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="剩余罚息" data-index="remainingPenalty" :width="120">
+            <template #cell="{ record }">
+              <div class="flex items-center">
+                <span class="font-medium text-red-600">{{ formatAmount(record.remainingPenalty) }}</span>
+                <a-tooltip content="本金罚息+利息罚息" v-if="Number(record.remainingPenalty || 0) > 0">
+                  <icon-exclamation-circle class="ml-1 text-red-500 cursor-help" :size="14" />
+                </a-tooltip>
+              </div>
+            </template>
+          </a-table-column>
+          <a-table-column title="剩余应还总额" data-index="remainingTotal" :width="140">
+            <template #cell="{ record }">
+              <span class="font-medium text-purple-600">{{ formatAmount(record.remainingTotal) }}</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="借款利率" data-index="interestRate" :width="100">
+            <template #cell="{ record }">
+              <span class="font-medium text-green-600">{{ record.interestRate }}%</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="操作" :width="200">
             <template #cell="{ record }">
               <a-space>
-                <a-button type="text" size="small" @click="viewLoanDetail(record)">查看详情</a-button>
-                <a-button type="text" size="small" @click="viewRepaymentRecords(record)">还款记录</a-button>
+                <a-button size="mini" type="text" @click="viewDisbursementInfo(record)">
+                  <template #icon><icon-eye /></template>
+                  放款信息
+                </a-button>
+                <a-button size="mini" type="text" @click="viewRepaymentInfo(record)">
+                  <template #icon><icon-list /></template>
+                  还款信息
+                </a-button>
               </a-space>
             </template>
           </a-table-column>
@@ -196,13 +259,29 @@
         </a-table>
       </div>
     </a-modal>
+    
+    <!-- 放款信息抽屉 -->
+    <DisbursementDrawer 
+      :visible="disbursementVisible"
+      :loan-record="currentLoan"
+      @close="disbursementVisible = false"
+    />
+    
+    <!-- 还款信息抽屉 -->
+    <RepaymentDrawer 
+      :visible="repaymentDrawerVisible"
+      :loan-record="currentLoan"
+      @close="repaymentDrawerVisible = false"
+    />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconCopy } from '@arco-design/web-vue/es/icon'
+import { IconEye, IconList, IconCopy, IconExclamationCircle } from '@arco-design/web-vue/es/icon'
+import DisbursementDrawer from './DisbursementDrawer.vue'
+import RepaymentDrawer from './RepaymentDrawer.vue'
 import { copyToClipboard } from '../../../../utils/copy'
 import { formatAmount } from '../../../../utils/formatUtils'
 
@@ -261,9 +340,13 @@ onMounted(() => {
 // 响应式数据
 const repaymentVisible = ref(false)
 const loadingRepayment = ref(false)
-const currentLoan = ref({})
+const currentLoan = ref(null)
 const repaymentRecords = ref([])
 const selectedRepaymentRows = ref([])
+
+// 抽屉组件状态
+const disbursementVisible = ref(false)
+const repaymentDrawerVisible = ref(false)
 
 // 还款记录分页配置
 const repaymentPagination = {
@@ -280,9 +363,24 @@ const repaymentRowSelection = {
 
 // 主表格列配置已移至模板中
 
-// 查看用信详情
-const viewLoanDetail = (record) => {
-  Message.info('用信详情功能开发中...')
+// 查看放款信息
+const viewDisbursementInfo = (record) => {
+  currentLoan.value = record
+  disbursementVisible.value = true
+  sendDebugInfo('disbursement-info', '打开放款信息抽屉', {
+    loanId: record.loanNo,
+    loanAmount: record.amount
+  })
+}
+
+// 查看还款信息
+const viewRepaymentInfo = (record) => {
+  currentLoan.value = record
+  repaymentDrawerVisible.value = true
+  sendDebugInfo('repayment-info', '打开还款信息抽屉', {
+    loanId: record.loanNo,
+    balance: record.balance
+  })
 }
 
 // 查看还款记录
@@ -309,11 +407,11 @@ const viewRepaymentRecords = async (record) => {
       mockRepaymentData.push({
         period: i,
         dueDate: dueDate.toISOString().split('T')[0],
-        dueAmount: (parseFloat(record.amount) / installments).toFixed(2),
+        dueAmount: (parseFloat(record.amount || '0') / installments).toFixed(2),
         actualDate: isPaid ? dueDate.toISOString().split('T')[0] : null,
-        actualAmount: isPaid ? (parseFloat(record.amount) / installments).toFixed(2) : null,
+        actualAmount: isPaid ? (parseFloat(record.amount || '0') / installments).toFixed(2) : null,
         status: isPaid ? '已还款' : (isOverdue ? '逾期' : '未到期'),
-        overdueDays: isOverdue ? Math.floor((new Date() - dueDate) / (1000 * 60 * 60 * 24)) : 0,
+        overdueDays: isOverdue ? Math.floor((new Date().getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0,
         paymentMethod: isPaid ? ['银行转账', '自动扣款', '现金'][Math.floor(Math.random() * 3)] : null,
         notes: isOverdue ? '逾期未还' : (isPaid ? '正常还款' : '')
       })

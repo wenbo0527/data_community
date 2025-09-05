@@ -415,13 +415,13 @@ const copyText = async (text: string) => {
 .stats-section,
 .records-section,
 .plan-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  margin: 0 0 16px 0;
+  margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
   color: #1d2129;
@@ -512,7 +512,7 @@ const copyText = async (text: string) => {
 .stat-card {
   background: #f7f8fa;
   border-radius: 6px;
-  padding: 16px;
+  padding: 12px;
   text-align: center;
 }
 
@@ -544,7 +544,7 @@ const copyText = async (text: string) => {
 .record-card {
   background: #f7f8fa;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid #e5e6eb;
 }
 

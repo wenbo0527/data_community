@@ -13,11 +13,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     hmr: {
-      port: 5173,
       host: 'localhost',
       // 添加更精确的文件监听配置
-      overlay: true,
-      clientPort: 5173
+      overlay: true
     },
     watch: {
       // 排除可能导致无限重载的文件

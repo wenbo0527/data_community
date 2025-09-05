@@ -97,7 +97,7 @@ export class SymmetricDistribution extends DistributionAlgorithm {
   optimizeLayerSymmetry(layer, positions, config) {
     if (!layer.nodes || layer.nodes.length === 0) return;
 
-    const layerNodes = layer.nodes.filter(node => positions.has(node.id));
+    const layerNodes = (layer.nodes || []).filter(node => positions.has(node.id));
     if (layerNodes.length === 0) return;
 
     // 计算当前分布的中心
@@ -172,7 +172,7 @@ export class GoldenRatioDistribution extends DistributionAlgorithm {
   optimizeLayerGoldenRatio(layer, positions, config) {
     if (!layer.nodes || layer.nodes.length <= 1) return;
 
-    const layerNodes = layer.nodes.filter(node => positions.has(node.id));
+    const layerNodes = (layer.nodes || []).filter(node => positions.has(node.id));
     if (layerNodes.length <= 1) return;
 
     // 按当前X坐标排序
@@ -272,7 +272,7 @@ export class UniformDistribution extends DistributionAlgorithm {
   optimizeLayerUniform(layer, positions, config) {
     if (!layer.nodes || layer.nodes.length === 0) return;
 
-    const layerNodes = layer.nodes.filter(node => positions.has(node.id));
+    const layerNodes = (layer.nodes || []).filter(node => positions.has(node.id));
     if (layerNodes.length === 0) return;
 
     // 如果需要保持顺序，按当前X坐标排序
@@ -401,7 +401,7 @@ export class ForceDirectedDistribution extends DistributionAlgorithm {
   optimizeLayerForceDirected(layer, positions, config) {
     if (!layer.nodes || layer.nodes.length <= 1) return;
 
-    const layerNodes = layer.nodes.filter(node => positions.has(node.id));
+    const layerNodes = (layer.nodes || []).filter(node => positions.has(node.id));
     if (layerNodes.length <= 1) return;
 
     console.log(`🔧 [力导向分布] 开始优化层级 ${layer.index}，${layerNodes.length} 个节点`);

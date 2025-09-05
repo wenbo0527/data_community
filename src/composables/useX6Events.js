@@ -273,7 +273,7 @@ export function useX6Events(graph, canvasState, emit) {
             }
           }
         })
-        graph.removeCells(selectedCells.filter(cell => 
+        graph.removeCells((selectedCells || []).filter(cell => 
           !cell.isNode() || canvasState.nodes.value.find(n => n.id === cell.id)?.type !== 'start'
         ))
       }

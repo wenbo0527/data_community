@@ -12,7 +12,7 @@
 
 <style scoped>
 .data-models {
-  height: 100%;
+  /* 移除固定高度，使用自然高度避免双重滚动 */
   background-color: #f5f5f5;
 }
 </style>

@@ -32,6 +32,23 @@
           </template>
         </a-table-column>
         <a-table-column title="限制值" data-index="limitValue" />
+        <a-table-column title="标签" data-index="tags" :width="200">
+          <template #cell="{ record }">
+            <a-select
+              v-model="record.tags"
+              :options="tagOptions"
+              multiple
+              placeholder="选择标签"
+              :max-tag-count="2"
+              size="small"
+              @change="(value) => handleTagChange(record, value)"
+            >
+              <template #label="{ data }">
+                <a-tag :color="data.color" size="small">{{ data.label }}</a-tag>
+              </template>
+            </a-select>
+          </template>
+        </a-table-column>
         <a-table-column title="状态" data-index="status">
           <template #cell="{ record }">
             <a-switch
@@ -119,6 +136,20 @@
           />
         </a-form-item>
 
+        <a-form-item field="tags" label="标签">
+          <a-select
+            v-model="formData.tags"
+            :options="tagOptions"
+            multiple
+            placeholder="选择标签"
+            allow-clear
+          >
+            <template #label="{ data }">
+              <a-tag :color="data.color" size="small">{{ data.label }}</a-tag>
+            </template>
+          </a-select>
+        </a-form-item>
+
         <a-form-item field="status" label="是否生效">
           <a-switch v-model="formData.status" />
         </a-form-item>
@@ -156,8 +187,21 @@ const formData = ref({
   description: '',
   limitType: 'user', // 'user' | 'daily' | 'weekly' | 'monthly'
   limitValue: 1,
+  tags: [],
   status: true
 })
+
+// 标签选项数据
+const tagOptions = ref([
+  { value: 'hot', label: '热门', color: 'red' },
+  { value: 'new', label: '新品', color: 'green' },
+  { value: 'limited', label: '限时', color: 'orange' },
+  { value: 'vip', label: 'VIP专享', color: 'purple' },
+  { value: 'discount', label: '折扣', color: 'blue' },
+  { value: 'gift', label: '赠品', color: 'cyan' },
+  { value: 'festival', label: '节日', color: 'magenta' },
+  { value: 'member', label: '会员', color: 'gold' }
+])
 
 const rules = {
   name: [{ required: true, message: '请输入规则名称' }],
@@ -179,6 +223,7 @@ const fetchData = async () => {
         description: '限制单个用户领券数量',
         limitType: 'user',
         limitValue: 10,
+        tags: ['hot', 'vip'],
         status: true,
         createTime: '2024-01-01 12:00:00'
       },
@@ -188,6 +233,7 @@ const fetchData = async () => {
         description: '限制每日领券总数量',
         limitType: 'daily',
         limitValue: 3,
+        tags: ['new', 'limited'],
         status: true,
         createTime: '2024-01-01 12:00:00'
       },
@@ -197,6 +243,7 @@ const fetchData = async () => {
         description: '限制每周领券总数量',
         limitType: 'weekly',
         limitValue: 10,
+        tags: ['discount'],
         status: true,
         createTime: '2024-01-01 12:00:00'
       },
@@ -206,6 +253,7 @@ const fetchData = async () => {
         description: '限制每月领券总数量',
         limitType: 'monthly',
         limitValue: 30,
+        tags: ['member', 'festival'],
         status: true,
         createTime: '2024-01-01 12:00:00'
       }
@@ -234,6 +282,14 @@ const onPageSizeChange = (pageSize) => {
 // 重置表单
 const resetForm = () => {
   formRef.value?.resetFields()
+  formData.value = {
+    name: '',
+    description: '',
+    limitType: 'user',
+    limitValue: 1,
+    tags: [],
+    status: true
+  }
   editingRule.value = null
   showCreateModal.value = false
 }
@@ -291,6 +347,20 @@ const handleStatusChange = async (record, value) => {
     Message.error('状态更新失败')
   } finally {
     record.statusLoading = false
+  }
+}
+
+// 处理标签变更
+const handleTagChange = async (record, tags) => {
+  const originalTags = [...record.tags]
+  record.tags = tags
+  
+  try {
+    // TODO: 调用接口保存标签
+    Message.success('标签更新成功')
+  } catch (error) {
+    record.tags = originalTags // 恢复原标签
+    Message.error('标签更新失败')
   }
 }
 

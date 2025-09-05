@@ -150,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { IconArrowRise, IconArrowFall, IconDownload } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import * as echarts from 'echarts'
@@ -423,8 +423,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  trendChart?.dispose()
-  failureChart?.dispose()
+  safeDisposeChart(trendChart, '趋势图表')
+  safeDisposeChart(failureChart, '失败原因图表')
 })
 </script>
 

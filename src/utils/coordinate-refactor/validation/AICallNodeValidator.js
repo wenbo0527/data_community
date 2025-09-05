@@ -377,7 +377,7 @@ export class AICallNodeValidator {
     const businessConfig = node.businessConfig || node.config || {};
     
     // 检查是否有至少一半的必需业务配置
-    const configuredFields = this.config.requiredBusinessFields.filter(field => {
+    const configuredFields = (this.config.requiredBusinessFields || []).filter(field => {
       const value = businessConfig[field];
       return value && 
              value !== '' && 
@@ -568,7 +568,7 @@ export class AICallNodeValidator {
    * @returns {Object} 统计信息
    */
   getValidationStats() {
-    const recentValidations = this.validationHistory.filter(
+    const recentValidations = (this.validationHistory || []).filter(
       h => Date.now() - h.timestamp < 300000 // 最近5分钟
     );
 

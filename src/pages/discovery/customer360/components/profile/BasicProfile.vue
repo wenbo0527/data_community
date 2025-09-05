@@ -218,44 +218,22 @@
       </div>
     </div>
 
-    <!-- 营销记录概览 -->
-    <div class="profile-section">
-      <h3 class="section-title">营销记录概览</h3>
-      <div class="marketing-overview">
-        <div class="marketing-stats">
-          <div class="stat-item">
-            <div class="stat-value">{{ marketingStats.totalCampaigns }}</div>
-            <div class="stat-label">总营销次数</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value success">{{ marketingStats.successfulCampaigns }}</div>
-            <div class="stat-label">成功营销</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ marketingStats.successRate }}%</div>
-            <div class="stat-label">成功率</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ marketingStats.lastContactDate }}</div>
-            <div class="stat-label">最近联系</div>
-          </div>
-        </div>
-        <div class="recent-campaigns">
-          <h4 class="subsection-title">最近营销活动</h4>
-          <div class="campaign-list">
-            <div v-for="campaign in recentCampaigns" :key="campaign.id" class="campaign-item">
-              <div class="campaign-info">
-                <div class="campaign-name">{{ campaign.campaignName }}</div>
-                <div class="campaign-date">{{ campaign.date }}</div>
-              </div>
-              <div class="campaign-status">
-                <a-tag :color="getCampaignStatusColor(campaign.status)">{{ campaign.status }}</a-tag>
-              </div>
-            </div>
-          </div>
-        </div>
+
+
+    <!-- 关系查询抽屉 -->
+    <a-drawer
+      v-model:visible="relationshipDrawerVisible"
+      title="关系查询"
+      width="800px"
+      placement="right"
+    >
+      <div class="relationship-content">
+        <RelationshipQuery 
+          :user-info="userInfo"
+          :loading="false"
+        />
       </div>
-    </div>
+    </a-drawer>
 
     <!-- 联系人抽屉 -->
     <a-drawer
@@ -294,6 +272,7 @@
 import { computed, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconUser, IconPhone } from '@arco-design/web-vue/es/icon'
+import RelationshipQuery from '../RelationshipQuery.vue'
 
 interface Props {
   userInfo?: any
@@ -303,8 +282,9 @@ const props = withDefaults(defineProps<Props>(), {
   userInfo: () => ({})
 })
 
-// 联系人抽屉状态
+// 抽屉状态
 const contactDrawerVisible = ref(false)
+const relationshipDrawerVisible = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const totalContacts = ref(0)
@@ -330,57 +310,7 @@ const customerInfo = computed(() => {
 // 客户画像信息
 const userProfile = computed(() => props.userInfo?.userProfile)
 
-// 营销记录统计
-const marketingStats = computed(() => {
-  const marketingRecords = props.userInfo?.marketingRecords
-  if (!marketingRecords) {
-    return {
-      totalCampaigns: 0,
-      successfulCampaigns: 0,
-      successRate: 0,
-      lastContactDate: '-'
-    }
-  }
 
-  const touchRecords = marketingRecords.touchRecords || []
-  const benefitRecords = marketingRecords.benefitRecords || []
-  const allRecords = [...touchRecords, ...benefitRecords]
-
-  const totalCampaigns = allRecords.length
-  const successfulCampaigns = allRecords.filter(record => record.status === '成功').length
-  const successRate = totalCampaigns > 0 ? Math.round((successfulCampaigns / totalCampaigns) * 100) : 0
-  
-  // 获取最近联系日期
-  const sortedRecords = allRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  const lastContactDate = sortedRecords.length > 0 ? sortedRecords[0].date : '-'
-
-  return {
-    totalCampaigns,
-    successfulCampaigns,
-    successRate,
-    lastContactDate
-  }
-})
-
-// 最近营销活动
-const recentCampaigns = computed(() => {
-  const marketingRecords = props.userInfo?.marketingRecords
-  if (!marketingRecords) return []
-
-  const touchRecords = marketingRecords.touchRecords || []
-  const benefitRecords = marketingRecords.benefitRecords || []
-  const allRecords = [...touchRecords, ...benefitRecords]
-
-  return allRecords
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5)
-    .map(record => ({
-      id: record.id,
-      campaignName: record.campaignName || record.productName || '未知活动',
-      date: record.date,
-      status: record.status
-    }))
-})
 
 // 联系人列表
 const contactList = computed(() => {
@@ -445,7 +375,7 @@ const getRiskColor = (riskLevel: string | undefined) => {
 
 // 处理关系查询
 const handleRelationshipQuery = () => {
-  Message.info('关系查询功能开发中...')
+  relationshipDrawerVisible.value = true
 }
 
 // 处理查看联系人
@@ -465,17 +395,7 @@ const handlePageSizeChange = (size: number) => {
   currentPage.value = 1
 }
 
-// 获取营销活动状态颜色
-const getCampaignStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    '成功': 'green',
-    '失败': 'red',
-    '进行中': 'blue',
-    '待执行': 'orange',
-    '已取消': 'gray'
-  }
-  return colorMap[status] || 'default'
-}
+
 </script>
 
 <style scoped>
@@ -538,91 +458,7 @@ const getCampaignStatusColor = (status: string) => {
   padding: 16px 0;
 }
 
-/* 营销记录概览样式 */
-.marketing-overview {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
 
-.marketing-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e5e6eb;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1d2129;
-  margin-bottom: 4px;
-}
-
-.stat-value.success {
-  color: #00b42a;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #86909c;
-}
-
-.recent-campaigns {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e5e6eb;
-  padding: 16px;
-}
-
-.recent-campaigns .subsection-title {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #262626;
-}
-
-.campaign-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.campaign-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f7f8fa;
-  border-radius: 6px;
-}
-
-.campaign-info {
-  flex: 1;
-}
-
-.campaign-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1d2129;
-  margin-bottom: 2px;
-}
-
-.campaign-date {
-  font-size: 12px;
-  color: #86909c;
-}
-
-.campaign-status {
-  flex-shrink: 0;
-}
 
 .contact-list :deep(.arco-table) {
   border-radius: 6px;

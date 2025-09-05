@@ -1,7 +1,7 @@
 <template>
-  <div class="base-table-container">
+  <div :class="containerClasses">
     <!-- 表格工具栏 -->
-    <div v-if="showToolbar" class="table-toolbar">
+    <div v-if="showToolbar" :class="toolbarClasses">
       <div class="toolbar-left">
         <slot name="toolbar-left">
           <a-space>
@@ -60,6 +60,7 @@
     <!-- 表格主体 -->
     <a-table
       v-bind="tableProps"
+      :class="tableClasses"
       :columns="computedColumns"
       :data="data"
       :loading="loading"
@@ -68,6 +69,7 @@
       :scroll="scroll"
       :row-selection="rowSelection"
       :expandable="expandable"
+      :bordered="bordered"
       @page-change="handlePageChange"
       @page-size-change="handlePageSizeChange"
       @sorter-change="handleSorterChange"
@@ -180,6 +182,22 @@ export default {
       type: Boolean,
       default: true
     },
+    // 是否显示边框
+    bordered: {
+      type: Boolean,
+      default: true
+    },
+    // 紧凑模式
+    compact: {
+      type: String,
+      default: 'normal',
+      validator: (value) => ['normal', 'compact', 'ultra-compact'].includes(value)
+    },
+    // 空间优化模式
+    spaceOptimized: {
+      type: Boolean,
+      default: false
+    },
     // 其他表格属性
     tableProps: {
       type: Object,
@@ -204,6 +222,61 @@ export default {
     
     // 可见列
     const visibleColumns = ref([])
+    
+    // 容器样式类
+    const containerClasses = computed(() => {
+      const classes = ['base-table-container']
+      
+      if (props.spaceOptimized) {
+        classes.push('table-space-optimized')
+      }
+      
+      if (!props.bordered) {
+        classes.push('table-borderless')
+      }
+      
+      if (props.compact === 'compact') {
+        classes.push('table-compact')
+      } else if (props.compact === 'ultra-compact') {
+        classes.push('table-ultra-compact')
+      }
+      
+      if (!props.bordered && props.compact === 'compact') {
+        classes.push('table-borderless-compact')
+      }
+      
+      return classes
+    })
+    
+    // 工具栏样式类
+    const toolbarClasses = computed(() => {
+      const classes = ['table-toolbar']
+      
+      if (props.compact !== 'normal') {
+        classes.push('table-toolbar-compact')
+      }
+      
+      return classes
+    })
+    
+    // 表格样式类
+    const tableClasses = computed(() => {
+      const classes = []
+      
+      if (props.compact === 'compact') {
+        classes.push('table-compact')
+      } else if (props.compact === 'ultra-compact') {
+        classes.push('table-ultra-compact')
+      }
+      
+      if (!props.bordered) {
+        classes.push('table-borderless')
+      }
+      
+      classes.push('table-hover-optimized')
+      
+      return classes
+    })
     
     // 可设置的列（排除操作列等）
     const settableColumns = computed(() => {
@@ -294,6 +367,9 @@ export default {
     return {
       currentSize,
       visibleColumns,
+      containerClasses,
+      toolbarClasses,
+      tableClasses,
       settableColumns,
       computedColumns,
       computedPagination,

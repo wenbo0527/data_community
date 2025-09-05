@@ -78,3 +78,40 @@ app.use(pinia);
 app.use(ArcoVue);
 
 app.mount('#app');
+
+// 🧪 Y坐标计算测试（仅在开发环境）
+if (import.meta.env.DEV) {
+  // 导入快速Y坐标测试
+  import('./tests/quickYCoordinateTest.js').then(({ quickYCoordinateTest }) => {
+    console.log('✅ [快速测试] 快速Y坐标测试已加载，可在控制台运行: quickYCoordinateTest()');
+  }).catch(error => {
+    console.error('❌ [快速测试] 快速测试加载失败:', error);
+  });
+  
+  // 延迟执行测试，确保应用完全加载
+  setTimeout(() => {
+    try {
+      // 动态导入布局引擎进行测试
+      import('./utils/UnifiedStructuredLayoutEngine.js').then(({ UnifiedStructuredLayoutEngine }) => {
+        console.log('🧪 [Y坐标测试] 开始执行Y坐标计算测试');
+        
+        const layoutEngine = new UnifiedStructuredLayoutEngine();
+        
+        // 执行Y坐标测试
+        const testResult = layoutEngine.testYCoordinateCalculation();
+        
+        console.log('🧪 [Y坐标测试] 测试结果:', testResult);
+        
+        // 在浏览器控制台中显示测试完成信息
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.log('🎯 Y坐标测试已完成，请检查控制台日志验证修复效果');
+          window.console.log('💡 提示：运行 quickYCoordinateTest() 进行快速验证');
+        }
+      }).catch(error => {
+        console.error('🧪 [Y坐标测试] 测试执行失败:', error);
+      });
+    } catch (error) {
+      console.error('🧪 [Y坐标测试] 测试初始化失败:', error);
+    }
+  }, 2000); // 延迟2秒执行
+}

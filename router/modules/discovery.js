@@ -57,6 +57,33 @@ const discoveryRoutes = [
           requiresAuth: true
         },
         props: true
+      },
+      {
+        path: 'unified-metrics',
+        name: 'unifiedMetrics',
+        component: () => import('@/pages/discovery/unified-metrics/index.vue'),
+        meta: {
+          title: '统一指标管理',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'batch-registration',
+        name: 'BatchRegistration',
+        component: () => import('../../src/pages/discovery/batch-registration/index.vue'),
+        meta: {
+          title: '批量注册指标',
+          keepAlive: false
+        }
+      },
+      {
+        path: 'regulatory-config',
+        name: 'RegulatoryConfig',
+        component: () => import('../../src/pages/discovery/regulatory-config/index.vue'),
+        meta: {
+          title: '监管报表配置',
+          keepAlive: false
+        }
       }
     ]
   }

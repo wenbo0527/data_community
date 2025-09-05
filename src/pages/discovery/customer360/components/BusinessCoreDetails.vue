@@ -3,10 +3,6 @@
     <div class="details-header">
       <h4>业务核心明细</h4>
       <div class="header-actions">
-        <a-button size="small" @click="exportData">
-          <template #icon><icon-download /></template>
-          导出
-        </a-button>
         <a-button size="small" @click="refreshData">
           <template #icon><icon-refresh /></template>
           刷新
@@ -131,6 +127,12 @@
             <template #actions="{ record }">
               <a-button size="mini" type="text" @click="viewLoanDetail(record)">
                 查看详情
+              </a-button>
+              <a-button size="mini" type="text" @click="viewDisbursementDetails(record)">
+                放款详情
+              </a-button>
+              <a-button size="mini" type="text" @click="viewRepaymentDetails(record)">
+                还款详情
               </a-button>
             </template>
           </a-table>
@@ -257,6 +259,31 @@
         </div>
       </div>
     </div>
+    <!-- 授信详情抽屉 -->
+    <CreditDetailDrawer
+      v-model:visible="creditDetailVisible"
+      :credit-data="currentCreditData"
+    />
+
+    <!-- 用信详情抽屉 -->
+    <LoanDetailDrawer
+      v-model:visible="loanDetailVisible"
+      :loan-data="currentLoanData"
+      @view-disbursement-details="viewDisbursementDetails"
+      @view-repayment-details="viewRepaymentDetails"
+    />
+
+    <!-- 放款记录抽屉 -->
+    <DisbursementDrawer
+      v-model:visible="disbursementVisible"
+      :loanRecord="currentLoanData"
+    />
+
+    <!-- 还款记录抽屉 -->
+    <RepaymentDrawer
+      v-model:visible="repaymentVisible"
+      :loanRecord="currentLoanData"
+    />
   </div>
 </template>
 
@@ -267,12 +294,15 @@ import {
   IconUser, 
   IconSwap, 
   IconMore,
-  IconDownload,
   IconRefresh,
   IconCopy,
   IconWechatpay
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
+import CreditDetailDrawer from './CreditDetailDrawer.vue'
+import LoanDetailDrawer from './LoanDetailDrawer.vue'
+import DisbursementDrawer from '@/views/customer360/components/DisbursementDrawer.vue'
+import RepaymentDrawer from '@/views/customer360/components/RepaymentDrawer.vue'
 
 interface Props {
   productKey: string
@@ -307,14 +337,24 @@ const loanPagination = ref({ current: 1, pageSize: 5, total: 0 })
 const adjustmentPagination = ref({ current: 1, pageSize: 5, total: 0 })
 const paymentPagination = ref({ current: 1, pageSize: 5, total: 0 })
 
+// 抽屉状态管理
+const creditDetailVisible = ref(false)
+const loanDetailVisible = ref(false)
+const disbursementVisible = ref(false)
+const repaymentVisible = ref(false)
+
+// 当前选中的数据
+const currentCreditData = ref(null)
+const currentLoanData = ref(null)
+
 // 表格列定义
 const creditColumns = [
-  { title: '产品名称', dataIndex: 'productName', width: 120 },
-  { title: '状态', dataIndex: 'status', slotName: 'status', width: 80 },
+  { title: '授信单号', dataIndex: 'productName', width: 120 },
+  { title: '授信状态', dataIndex: 'status', slotName: 'status', width: 80 },
   { title: '授信额度', dataIndex: 'currentAmount', slotName: 'currentAmount', width: 100 },
   { title: '已用额度', dataIndex: 'usedAmount', slotName: 'usedAmount', width: 100 },
   { title: '可用额度', dataIndex: 'availableAmount', slotName: 'availableAmount', width: 100 },
-  { title: '开通时间', dataIndex: 'openDate', width: 120 },
+  { title: '授信日期', dataIndex: 'openDate', width: 120 },
   { title: '操作', slotName: 'actions', width: 80 }
 ]
 
@@ -325,11 +365,11 @@ const loanColumns = [
   { title: '剩余金额', dataIndex: 'remainingAmount', slotName: 'remainingAmount', width: 100 },
   { title: '借款时间', dataIndex: 'loanDate', width: 120 },
   { title: '到期时间', dataIndex: 'dueDate', width: 120 },
-  { title: '操作', slotName: 'actions', width: 80 }
+  { title: '操作', slotName: 'actions', width: 200 }
 ]
 
 const adjustmentColumns = [
-  { title: '调额类型', dataIndex: 'type', slotName: 'type', width: 80 },
+  { title: '授信单号', dataIndex: 'type', slotName: 'type', width: 80 },
   { title: '产品名称', dataIndex: 'productName', width: 120 },
   { title: '原额度', dataIndex: 'previousAmount', slotName: 'previousAmount', width: 100 },
   { title: '新额度', dataIndex: 'newAmount', slotName: 'newAmount', width: 100 },
@@ -448,14 +488,7 @@ const refreshData = () => {
   })
 }
 
-const exportData = () => {
-  Message.success('数据导出功能开发中...')
-  emit('debug-info', {
-    action: 'export',
-    component: 'BusinessCoreDetails',
-    productKey: props.productKey
-  })
-}
+
 
 const copyCreditData = () => {
   Message.success('授信数据已复制到剪贴板')
@@ -551,11 +584,13 @@ const handlePaymentPageChange = (page: number) => {
 
 // 详情查看方法
 const viewCreditDetail = (record: any) => {
-  Message.info(`查看授信详情: ${record.productName}`)
+  currentCreditData.value = record
+  creditDetailVisible.value = true
 }
 
 const viewLoanDetail = (record: any) => {
-  Message.info(`查看用信详情: ${record.loanId}`)
+  currentLoanData.value = record
+  loanDetailVisible.value = true
 }
 
 const viewAdjustmentDetail = (record: any) => {
@@ -564,6 +599,18 @@ const viewAdjustmentDetail = (record: any) => {
 
 const viewPaymentDetail = (record: any) => {
   Message.info(`查看支付详情: ${record.paymentId}`)
+}
+
+// 查看放款详情
+const viewDisbursementDetails = (record: any) => {
+  currentLoanData.value = record
+  disbursementVisible.value = true
+}
+
+// 查看还款详情
+const viewRepaymentDetails = (record: any) => {
+  currentLoanData.value = record
+  repaymentVisible.value = true
 }
 </script>
 

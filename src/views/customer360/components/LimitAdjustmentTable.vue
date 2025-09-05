@@ -411,7 +411,7 @@ const viewDetails = (record: LimitAdjustment) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
   background: #fafafa;
 }
@@ -434,7 +434,7 @@ const viewDetails = (record: LimitAdjustment) => {
 
 .table-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -525,7 +525,7 @@ const viewDetails = (record: LimitAdjustment) => {
 
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .action-buttons .action-icon {

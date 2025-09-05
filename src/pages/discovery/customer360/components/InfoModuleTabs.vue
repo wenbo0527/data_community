@@ -46,15 +46,7 @@
         </div>
       </a-tab-pane>
       
-      <a-tab-pane key="relationship" title="关系查询">
-        <div class="module-content">
-          <RelationshipQuery 
-            :product-key="productKey"
-            :user-info="userInfo"
-            :loading="loading"
-          />
-        </div>
-      </a-tab-pane>
+
 
     </a-tabs>
   </div>
@@ -65,7 +57,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import CustomerOverview from './CustomerOverview.vue'
 import BusinessCoreDetails from './BusinessCoreDetails.vue'
 import MarketingRecords from './MarketingRecords.vue'
-import RelationshipQuery from './RelationshipQuery.vue'
+
 
 interface Props {
   productKey: string

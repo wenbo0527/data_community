@@ -25,9 +25,9 @@ export class PreviewLineIntegrationManager {
     this.options = {
       enableDebug: false,
       autoRefresh: true,
-      refreshDelay: 100,
-      maxConcurrentRefreshes: 3,
-      enableEventLogging: true,
+      refreshDelay: 1000, // 增加刷新延迟到1秒，减少频繁刷新
+      maxConcurrentRefreshes: 1, // 限制并发刷新数量为1，避免资源竞争
+      enableEventLogging: false, // 关闭事件日志，减少日志输出
       ...options
     };
 
@@ -52,7 +52,7 @@ export class PreviewLineIntegrationManager {
       lastRefreshTime: null
     };
 
-    console.log('🔧 [预览线集成管理器] 初始化完成');
+    // console.log('🔧 [预览线集成管理器] 初始化完成');
   }
 
   /**
@@ -67,12 +67,12 @@ export class PreviewLineIntegrationManager {
       this.originalPreviewLineManager = previewLineManager;
       this.layoutEngine = layoutEngine;
 
-      // 创建增强版刷新管理器
+      // 创建增强版刷新管理器 - 增强防抖控制
       this.enhancedRefreshManager = new EnhancedPreviewLineRefreshManager({
-        enableDebug: this.options.enableDebug,
+        enableDebug: false, // 强制关闭调试日志
         refreshStrategy: RefreshStrategy.BALANCED,
         syncMode: SyncMode.DEBOUNCED,
-        debounceDelay: this.options.refreshDelay
+        debounceDelay: Math.max(this.options.refreshDelay, 1000) // 确保最小1秒延迟
       });
 
       // 初始化增强版管理器
@@ -92,11 +92,11 @@ export class PreviewLineIntegrationManager {
       this.isInitialized = true;
 
       if (this.options.enableDebug) {
-        console.log('✅ [预览线集成管理器] 初始化完成，已集成增强功能');
+        // console.log('✅ [预览线集成管理器] 初始化完成，已集成增强功能');
       }
 
     } catch (error) {
-      console.error('❌ [预览线集成管理器] 初始化失败:', error);
+      // console.error('❌ [预览线集成管理器] 初始化失败:', error);
       throw error;
     }
   }
@@ -106,7 +106,7 @@ export class PreviewLineIntegrationManager {
    */
   integrateWithOriginalManager() {
     if (!this.originalPreviewLineManager) {
-      console.warn('⚠️ [预览线集成] 原有预览线管理器不存在');
+      // console.warn('⚠️ [预览线集成] 原有预览线管理器不存在');
       return;
     }
 
@@ -143,7 +143,7 @@ export class PreviewLineIntegrationManager {
     this.originalPreviewLineManager.refreshWithBranchAnalysis = this.refreshWithBranchAnalysis.bind(this);
 
     if (this.options.enableDebug) {
-      console.log('🔗 [预览线集成] 已增强原有预览线管理器方法');
+      // console.log('🔗 [预览线集成] 已增强原有预览线管理器方法');
     }
   }
 
@@ -256,7 +256,7 @@ export class PreviewLineIntegrationManager {
               focusType: 'position'
             });
           } catch (error) {
-            console.warn('⚠️ [预览线集成] 创建后自动刷新失败:', error.message);
+            // console.warn('⚠️ [预览线集成] 创建后自动刷新失败:', error.message);
           }
         }, this.options.refreshDelay);
       }
@@ -264,7 +264,7 @@ export class PreviewLineIntegrationManager {
       return result;
 
     } catch (error) {
-      console.error('❌ [预览线集成] 增强创建预览线失败:', error);
+      // console.error('❌ [预览线集成] 增强创建预览线失败:', error);
       throw error;
     }
   }
@@ -286,7 +286,7 @@ export class PreviewLineIntegrationManager {
     // 防止并发刷新同一节点
     if (this.activeRefreshes.has(nodeId)) {
       if (this.options.enableDebug) {
-        console.log(`⏳ [综合刷新] 节点 ${nodeId} 正在刷新中，跳过重复请求`);
+        // console.log(`⏳ [综合刷新] 节点 ${nodeId} 正在刷新中，跳过重复请求`);
       }
       return;
     }
@@ -328,11 +328,11 @@ export class PreviewLineIntegrationManager {
     const branchAnalysis = await this.enhancedRefreshManager.analyzeBranches(sourceNode, options);
     
     if (this.options.enableDebug) {
-      console.log('🔍 [分支分析刷新] 分支分析结果:', {
-        nodeId,
-        totalBranches: branchAnalysis.totalBranches,
-        activeBranches: branchAnalysis.activeBranches
-      });
+      // console.log('🔍 [分支分析刷新] 分支分析结果:', {
+      //   nodeId,
+      //   totalBranches: branchAnalysis.totalBranches,
+      //   activeBranches: branchAnalysis.activeBranches
+      // });
     }
 
     // 基于分析结果进行刷新
@@ -398,7 +398,7 @@ export class PreviewLineIntegrationManager {
           const nodeId = event.node.id;
           setTimeout(() => {
             this.comprehensiveRefresh(nodeId, { reason: 'node_moved' }).catch(error => {
-              console.warn('⚠️ [自动刷新] 节点移动后刷新失败:', error.message);
+              // console.warn('⚠️ [自动刷新] 节点移动后刷新失败:', error.message);
             });
           }, this.options.refreshDelay);
         }
@@ -410,7 +410,7 @@ export class PreviewLineIntegrationManager {
           if (sourceId) {
             setTimeout(() => {
               this.comprehensiveRefresh(sourceId, { reason: 'edge_connected' }).catch(error => {
-                console.warn('⚠️ [自动刷新] 连接后刷新失败:', error.message);
+                // console.warn('⚠️ [自动刷新] 连接后刷新失败:', error.message);
               });
             }, this.options.refreshDelay);
           }
@@ -426,7 +426,7 @@ export class PreviewLineIntegrationManager {
    */
   emitEvent(eventType, data) {
     if (this.options.enableEventLogging) {
-      console.log(`📡 [预览线集成] 事件: ${eventType}`, data);
+      // console.log(`📡 [预览线集成] 事件: ${eventType}`, data);
     }
 
     const listeners = this.eventListeners.get(eventType);
@@ -435,7 +435,7 @@ export class PreviewLineIntegrationManager {
         try {
           listener(data);
         } catch (error) {
-          console.error(`❌ [事件监听] 事件处理失败: ${eventType}`, error);
+          // console.error(`❌ [事件监听] 事件处理失败: ${eventType}`, error);
         }
       });
     }
@@ -523,7 +523,7 @@ export class PreviewLineIntegrationManager {
     // 重置标志
     this.isInitialized = false;
 
-    console.log('🗑️ [预览线集成管理器] 资源已清理');
+    // console.log('🗑️ [预览线集成管理器] 资源已清理');
   }
 }
 

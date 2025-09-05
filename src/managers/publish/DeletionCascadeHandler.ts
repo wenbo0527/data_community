@@ -257,15 +257,102 @@ export class DeletionCascadeHandler {
    */
   private async cleanupPreviewLines(nodeId: string): Promise<void> {
     try {
+      // 🔧 坐标验证：在删除预览线前验证节点坐标
+      const node = this.canvas.getCellById(nodeId);
+      if (node && node.isNode()) {
+        const position = node.getPosition();
+        const size = node.getSize();
+        
+        // 验证节点位置坐标
+        if (position && (isNaN(position.x) || isNaN(position.y) || 
+            !isFinite(position.x) || !isFinite(position.y))) {
+          console.warn('⚠️ [DeletionCascadeHandler] 删除节点时发现NaN坐标，修正为默认值:', {
+            nodeId,
+            invalidPosition: position
+          });
+          // 修正坐标为默认值
+          node.setPosition(200, 100);
+        }
+        
+        // 验证节点尺寸
+        if (size && (isNaN(size.width) || isNaN(size.height) || 
+            !isFinite(size.width) || !isFinite(size.height))) {
+          console.warn('⚠️ [DeletionCascadeHandler] 删除节点时发现NaN尺寸，修正为默认值:', {
+            nodeId,
+            invalidSize: size
+          });
+          // 修正尺寸为默认值
+          node.setSize(40, 40);
+        }
+      }
+      
       // 清理以该节点为源的预览线
       const sourcePreviewLines = (this.cacheManager.get(`preview_lines_source_${nodeId}`) || []) as string[];
       for (const lineId of sourcePreviewLines) {
+        // 🔧 坐标验证：在移除预览线前验证其坐标
+        const previewLine = this.canvas.getCellById(lineId);
+        if (previewLine && previewLine.isEdge()) {
+          const source = previewLine.getSource();
+          const target = previewLine.getTarget();
+          
+          // 验证源坐标
+          if (source && typeof source === 'object' && 'x' in source && 'y' in source) {
+            if (isNaN(source.x) || isNaN(source.y) || !isFinite(source.x) || !isFinite(source.y)) {
+              console.warn('⚠️ [DeletionCascadeHandler] 预览线源坐标无效，跳过删除:', {
+                lineId,
+                invalidSource: source
+              });
+              continue;
+            }
+          }
+          
+          // 验证目标坐标
+          if (target && typeof target === 'object' && 'x' in target && 'y' in target) {
+            if (isNaN(target.x) || isNaN(target.y) || !isFinite(target.x) || !isFinite(target.y)) {
+              console.warn('⚠️ [DeletionCascadeHandler] 预览线目标坐标无效，跳过删除:', {
+                lineId,
+                invalidTarget: target
+              });
+              continue;
+            }
+          }
+        }
+        
         this.eventBus.emit('preview:remove', { lineId });
       }
       
       // 清理以该节点为目标的预览线
       const targetPreviewLines = (this.cacheManager.get(`preview_lines_target_${nodeId}`) || []) as string[];
       for (const lineId of targetPreviewLines) {
+        // 🔧 坐标验证：在移除预览线前验证其坐标
+        const previewLine = this.canvas.getCellById(lineId);
+        if (previewLine && previewLine.isEdge()) {
+          const source = previewLine.getSource();
+          const target = previewLine.getTarget();
+          
+          // 验证源坐标
+          if (source && typeof source === 'object' && 'x' in source && 'y' in source) {
+            if (isNaN(source.x) || isNaN(source.y) || !isFinite(source.x) || !isFinite(source.y)) {
+              console.warn('⚠️ [DeletionCascadeHandler] 预览线源坐标无效，跳过删除:', {
+                lineId,
+                invalidSource: source
+              });
+              continue;
+            }
+          }
+          
+          // 验证目标坐标
+          if (target && typeof target === 'object' && 'x' in target && 'y' in target) {
+            if (isNaN(target.x) || isNaN(target.y) || !isFinite(target.x) || !isFinite(target.y)) {
+              console.warn('⚠️ [DeletionCascadeHandler] 预览线目标坐标无效，跳过删除:', {
+                lineId,
+                invalidTarget: target
+              });
+              continue;
+            }
+          }
+        }
+        
         this.eventBus.emit('preview:remove', { lineId });
       }
       

@@ -73,7 +73,7 @@ export class EnhancedPreviewLineRefreshManager {
       branchCacheMisses: 0
     };
 
-    console.log('🚀 [增强预览线刷新管理器] 初始化完成', this.options);
+    // console.log('🚀 [增强预览线刷新管理器] 初始化完成', this.options);
   }
 
   /**
@@ -87,7 +87,7 @@ export class EnhancedPreviewLineRefreshManager {
     this.layoutEngine = dependencies.layoutEngine;
 
     if (this.options.enableDebug) {
-      console.log('🔧 [增强预览线刷新管理器] 依赖注入完成');
+      // console.log('🔧 [增强预览线刷新管理器] 依赖注入完成');
     }
   }
 
@@ -132,20 +132,20 @@ export class EnhancedPreviewLineRefreshManager {
       this.updateStats(true, refreshTime);
 
       if (this.options.enableDebug) {
-        console.log(`✅ [增强预览线刷新] 综合刷新完成`, {
-          nodeId,
-          refreshTime,
-          branchCount: branchAnalysis.branches.length,
-          connectionCount: connectionAnalysis.connections.length,
-          previewLineCount: positionAnalysis.previewLines.length
-        });
+        // console.log(`✅ [增强预览线刷新] 综合刷新完成`, {
+        //   nodeId,
+        //   refreshTime,
+        //   branchCount: branchAnalysis.branches.length,
+        //   connectionCount: connectionAnalysis.connections.length,
+        //   previewLineCount: positionAnalysis.previewLines.length
+        // });
       }
 
       return refreshResult;
 
     } catch (error) {
       this.updateStats(false, Date.now() - startTime);
-      console.error(`❌ [增强预览线刷新] 综合刷新失败:`, error);
+      // console.error(`❌ [增强预览线刷新] 综合刷新失败:`, error);
       throw error;
     }
   }
@@ -166,7 +166,7 @@ export class EnhancedPreviewLineRefreshManager {
     if (cached && (now - cached.timestamp) < this.cacheTimeout && !options.forceRefresh) {
       this.stats.branchCacheHits++;
       if (this.options.enableDebug) {
-        console.log(`📦 [分支分析] 使用缓存数据: ${nodeId}`);
+        // console.log(`📦 [分支分析] 使用缓存数据: ${nodeId}`);
       }
       return cached;
     }
@@ -198,7 +198,7 @@ export class EnhancedPreviewLineRefreshManager {
       branches: branchStates,
       layoutInfo,
       totalBranches: branches.length,
-      activeBranches: branchStates.filter(b => !b.hasConnection).length,
+      activeBranches: (branchStates || []).filter(b => !b.hasConnection).length,
       timestamp: now
     };
 
@@ -206,17 +206,17 @@ export class EnhancedPreviewLineRefreshManager {
     this.branchCache.set(nodeId, result);
 
     if (this.options.enableDebug) {
-      console.log(`🔍 [分支分析] 完成分析:`, {
-        nodeId,
-        totalBranches: result.totalBranches,
-        activeBranches: result.activeBranches,
-        branchStates: branchStates.map(b => ({
-          id: b.id,
-          label: b.label,
-          hasConnection: b.hasConnection,
-          hasPreviewLine: b.hasPreviewLine
-        }))
-      });
+      // console.log(`🔍 [分支分析] 完成分析:`, {
+      //   nodeId,
+      //   totalBranches: result.totalBranches,
+      //   activeBranches: result.activeBranches,
+      //   branchStates: branchStates.map(b => ({
+      //     id: b.id,
+      //     label: b.label,
+      //     hasConnection: b.hasConnection,
+      //     hasPreviewLine: b.hasPreviewLine
+      //   }))
+      // });
     }
 
     return result;
@@ -235,7 +235,7 @@ export class EnhancedPreviewLineRefreshManager {
     const outgoingEdges = this.graph ? this.graph.getOutgoingEdges(sourceNode) : [];
     
     // 过滤实际连接线（排除预览线）
-    const realConnections = outgoingEdges.filter(edge => {
+    const realConnections = (outgoingEdges || []).filter(edge => {
       const edgeData = edge.getData() || {};
       return !edgeData.isUnifiedPreview && !edgeData.isPreview;
     });
@@ -266,7 +266,7 @@ export class EnhancedPreviewLineRefreshManager {
       connections: connectionStates,
       branchMapping: branchConnectionMapping,
       totalConnections: realConnections.length,
-      validConnections: connectionStates.filter(c => c.isValid).length,
+      validConnections: (connectionStates || []).filter(c => c.isValid).length,
       timestamp: Date.now()
     };
 
@@ -274,12 +274,12 @@ export class EnhancedPreviewLineRefreshManager {
     this.connectionStates.set(nodeId, result);
 
     if (this.options.enableDebug) {
-      console.log(`🔗 [连接分析] 完成分析:`, {
-        nodeId,
-        totalConnections: result.totalConnections,
-        validConnections: result.validConnections,
-        branchMappingCount: Object.keys(branchConnectionMapping).length
-      });
+      // console.log(`🔗 [连接分析] 完成分析:`, {
+      //   nodeId,
+      //   totalConnections: result.totalConnections,
+      //   validConnections: result.validConnections,
+      //   branchMappingCount: Object.keys(branchConnectionMapping).length
+      // });
     }
 
     return result;
@@ -329,17 +329,17 @@ export class EnhancedPreviewLineRefreshManager {
       previewLines: previewLineStates,
       layoutCalculation,
       totalPreviewLines: previewLines.length,
-      needsUpdateCount: previewLineStates.filter(p => p.needsUpdate).length,
+      needsUpdateCount: (previewLineStates || []).filter(p => p.needsUpdate).length,
       timestamp: Date.now()
     };
 
     if (this.options.enableDebug) {
-      console.log(`📍 [位置分析] 完成分析:`, {
-        nodeId,
-        totalPreviewLines: result.totalPreviewLines,
-        needsUpdateCount: result.needsUpdateCount,
-        layoutInfo: layoutCalculation
-      });
+      // console.log(`📍 [位置分析] 完成分析:`, {
+      //   nodeId,
+      //   totalPreviewLines: result.totalPreviewLines,
+      //   needsUpdateCount: result.needsUpdateCount,
+      //   layoutInfo: layoutCalculation
+      // });
     }
 
     return result;
@@ -698,7 +698,7 @@ export class EnhancedPreviewLineRefreshManager {
   async performFinalSync(sourceNode, updateResults) {
     // 执行最终同步
     if (this.options.enableDebug) {
-      console.log(`🔄 [最终同步] 执行最终同步检查: ${sourceNode.id || sourceNode.getId()}`);
+      // console.log(`🔄 [最终同步] 执行最终同步检查: ${sourceNode.id || sourceNode.getId()}`);
     }
   }
 
@@ -706,7 +706,7 @@ export class EnhancedPreviewLineRefreshManager {
     // 验证刷新结果
     const hasErrors = refreshResult.errors && refreshResult.errors.length > 0;
     if (hasErrors) {
-      console.warn(`⚠️ [刷新验证] 发现错误:`, refreshResult.errors);
+      // console.warn(`⚠️ [刷新验证] 发现错误:`, refreshResult.errors);
     }
   }
 
@@ -762,7 +762,7 @@ export class EnhancedPreviewLineRefreshManager {
       clearTimeout(this.batchProcessor);
     }
     
-    console.log('🗑️ [增强预览线刷新管理器] 资源已清理');
+    // console.log('🗑️ [增强预览线刷新管理器] 资源已清理');
   }
 }
 

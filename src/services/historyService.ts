@@ -282,32 +282,6 @@ class HistoryService {
   }
 
   /**
-   * 导出历史数据
-   */
-  async exportHistoryData(customerId: string, options: {
-    format: 'excel' | 'pdf' | 'json'
-    startDate?: string
-    endDate?: string
-    includeFullData?: boolean
-  }): Promise<boolean> {
-    try {
-      await this.delay(1000)
-      
-      const { format, includeFullData = false } = options
-      
-      // 模拟导出操作
-      console.log(`导出历史数据: 客户${customerId}, 格式${format}, 包含完整数据${includeFullData}`)
-      
-      Message.success(`历史数据导出成功 (${format.toUpperCase()})`)
-      return true
-    } catch (error) {
-      console.error('导出历史数据失败:', error)
-      Message.error('导出历史数据失败')
-      return false
-    }
-  }
-
-  /**
    * 搜索历史记录
    */
   async searchHistory(customerId: string, query: {

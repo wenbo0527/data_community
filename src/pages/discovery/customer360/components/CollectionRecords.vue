@@ -130,14 +130,7 @@
           >
             重置筛选
           </a-button>
-          <a-button 
-            size="small" 
-            @click="exportRecords"
-            :disabled="filteredRecords.length === 0"
-            :loading="isExporting"
-          >
-            {{ isExporting ? '导出中...' : '导出记录' }}
-          </a-button>
+
           <a-button 
             size="small" 
             @click="copyAllRecords"
@@ -529,7 +522,7 @@ const filterAmount = ref('')
 const filterDate = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
-const isExporting = ref(false)
+
 const isCopying = ref(false)
 
 // 时间线交互状态
@@ -967,43 +960,7 @@ const formatSingleRecordText = (record) => {
   return lines.join('\n')
 }
 
-// 导出功能
-const exportRecords = async () => {
-  if (isExporting.value) return
-  
-  try {
-    isExporting.value = true
-    Message.info('正在准备导出数据...')
-    
-    // 验证数据
-    if (!filteredRecords.value || filteredRecords.value.length === 0) {
-      throw new Error('没有可导出的数据')
-    }
-    
-    // 模拟数据处理时间
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    const csvContent = generateCSV(filteredRecords.value)
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0]
-    const filename = `催收记录_${timestamp}.csv`
-    
-    Message.info('正在下载文件...')
-    
-    await downloadCSV(csvContent, filename)
-    Message.success({
-      content: `成功导出 ${filteredRecords.value.length} 条催收记录`,
-      duration: 3000
-    })
-  } catch (error) {
-    console.error('导出失败:', error)
-    Message.error({
-      content: `导出失败: ${error.message || '请重试'}`,
-      duration: 5000
-    })
-  } finally {
-    isExporting.value = false
-  }
-}
+
 
 // 批量复制功能
 const copyAllRecords = async () => {
@@ -1142,105 +1099,7 @@ const getFilterSummary = () => {
   return filters.length > 0 ? filters.join(', ') : '无筛选条件'
 }
 
-// 生成CSV内容
-const generateCSV = (records) => {
-  const headers = [
-    '催收日期', '催收时间', '催收方式', '催收员姓名', '催收员电话', 
-    '逾期金额', '逾期天数', '联系结果', '效果评分', '客户响应', 
-    '承诺还款金额', '承诺还款日期', '风险等级', '后续行动', '备注'
-  ]
-  
-  // 添加BOM以支持中文显示
-  const BOM = '\uFEFF'
-  const csvRows = [BOM + headers.join(',')]
-  
-  records.forEach(record => {
-    const row = [
-      record.collectionDate || '',
-      record.collectionTime || '',
-      record.collectionMethod || '',
-      record.collectorName || '',
-      record.collectorPhone || '',
-      record.overdueAmount ? `¥${parseFloat(record.overdueAmount).toLocaleString()}` : '',
-      record.overdueDays ? `${record.overdueDays}天` : '',
-      record.contactResult || '',
-      record.effectiveScore || '',
-      record.customerResponse || '',
-      record.promiseAmount ? `¥${parseFloat(record.promiseAmount).toLocaleString()}` : '',
-      record.promiseDate || '',
-      record.riskLevel || '',
-      record.followUpAction || '',
-      (record.remarks || '').replace(/[\r\n]/g, ' ') // 处理换行符
-    ]
-    // 正确处理CSV字段转义
-    csvRows.push(row.map(field => {
-      const str = String(field)
-      // 如果包含逗号、引号或换行符，需要用引号包围并转义内部引号
-      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-        return `"${str.replace(/"/g, '""')}"`
-      }
-      return str
-    }).join(','))
-  })
-  
-  return csvRows.join('\n')
-}
 
-// 下载CSV文件
-const downloadCSV = (content, filename) => {
-  return new Promise((resolve, reject) => {
-    try {
-      // 验证输入参数
-      if (!content || !filename) {
-        throw new Error('缺少必要的参数')
-      }
-      
-      const blob = new Blob([content], { 
-        type: 'text/csv;charset=utf-8;' 
-      })
-      
-      // 检查浏览器支持
-      if (window.navigator && (window.navigator as any).msSaveOrOpenBlob) {
-        // IE浏览器
-        ;(window.navigator as any).msSaveOrOpenBlob(blob, filename)
-        resolve(undefined)
-      } else if (window.URL && window.URL.createObjectURL) {
-        // 现代浏览器
-        const link = document.createElement('a')
-        const url = URL.createObjectURL(blob)
-        
-        link.setAttribute('href', url)
-        link.setAttribute('download', filename)
-        link.style.visibility = 'hidden'
-        link.style.position = 'absolute'
-        link.style.left = '-9999px'
-        
-        document.body.appendChild(link)
-        
-        // 触发下载
-        link.click()
-        
-        // 清理DOM和URL对象
-        setTimeout(() => {
-          document.body.removeChild(link)
-          URL.revokeObjectURL(url)
-          resolve(undefined)
-        }, 100)
-      } else {
-        // 降级方案：尝试使用data URL
-        const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(content)
-        const link = document.createElement('a')
-        link.setAttribute('href', dataUrl)
-        link.setAttribute('download', filename)
-        link.click()
-        resolve(undefined)
-      }
-    } catch (error) {
-      console.error('下载文件失败:', error)
-      reject(new Error(`下载失败: ${error.message}`))
-    }
-  })
-}
 
 // 时间线交互方法
 const toggleExpanded = (recordId) => {
@@ -1286,7 +1145,9 @@ const batchCopyTimelineItems = () => {
     const selectedRecords = filteredTimelineRecords.value.filter(record => 
       selectedTimelineItems.value.has(record.id)
     )
-    const csv = generateCSV(selectedRecords)
+    const csv = selectedRecords.map(record => 
+      `${record.collectionDate},${record.collectionMethod},${record.collectorName},${record.contactResult},${record.effectiveScore}`
+    ).join('\n')
     
     // 复制到剪贴板
     navigator.clipboard.writeText(csv).then(() => {

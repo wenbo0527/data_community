@@ -191,34 +191,17 @@
             </a-select>
           </a-form-item>
           
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item 
-                label="查询日期" 
-                field="queryDate" 
-                :rules="[{ required: true, message: '请选择查询日期' }]"
-              >
-                <a-date-picker 
-                  v-model="newQueryForm.queryDate" 
-                  placeholder="选择查询日期"
-                  style="width: 100%"
-                />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="版本" field="version">
-                <a-select 
-                  v-model="newQueryForm.version" 
-                  placeholder="选择版本"
-                  :disabled="!newQueryForm.modelType"
-                >
-                  <a-option v-for="version in availableVersions" :key="version" :value="version">
-                    {{ version }}
-                  </a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
+          <a-form-item 
+            label="查询日期" 
+            field="queryDate" 
+            :rules="[{ required: true, message: '请选择查询日期' }]"
+          >
+            <a-date-picker 
+              v-model="newQueryForm.queryDate" 
+              placeholder="选择查询日期"
+              style="width: 100%"
+            />
+          </a-form-item>
           
           <!-- 自定义查询条件 -->
           <a-form-item label="自定义条件（可选）">
@@ -300,10 +283,6 @@
             <a-statistic title="数据模型" :value="getModelTypeName(currentQueryRecord.modelType)" />
           </div>
           <div class="result-actions">
-            <a-button @click="exportQueryResult">
-              <template #icon><icon-download /></template>
-              导出
-            </a-button>
             <a-button @click="copyQueryResult">
               <template #icon><icon-copy /></template>
               复制
@@ -349,7 +328,6 @@ import {
   IconRefresh, 
   IconFile, 
   IconDelete, 
-  IconDownload, 
   IconCopy 
 } from '@arco-design/web-vue/es/icon'
 import { copyToClipboard } from '../../../../utils/copy'
@@ -383,14 +361,12 @@ const newQueryForm = ref({
   name: '',
   modelType: '',
   queryDate: '',
-  version: '',
   customConditions: []
 })
 
 const newQueryFormRef = ref(null)
 
-// 可用版本和字段
-const availableVersions = ref(['v1.0', 'v1.1', 'v1.2', 'v2.0', 'v2.1'])
+// 可用字段
 const availableFields = ref([])
 
 // 分页配置
@@ -547,7 +523,6 @@ const resetNewQueryForm = () => {
     name: '',
     modelType: '',
     queryDate: '',
-    version: '',
     customConditions: []
   }
   availableFields.value = []
@@ -588,7 +563,6 @@ const createNewQuery = async () => {
       name: newQueryForm.value.name,
       modelType: newQueryForm.value.modelType,
       queryDate: newQueryForm.value.queryDate,
-      version: newQueryForm.value.version,
       customConditions: newQueryForm.value.customConditions.filter(c => c.field && c.value),
       status: 'running',
       createTime: new Date().toISOString(),
@@ -647,7 +621,7 @@ const generateMockQueryRecords = () => {
       name: `查询任务${i + 1}`,
       modelType,
       queryDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      version: availableVersions.value[Math.floor(Math.random() * availableVersions.value.length)],
+
       customConditions: [],
       status,
       createTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -754,7 +728,6 @@ const duplicateQuery = (record) => {
     name: `${record.name} - 副本`,
     modelType: record.modelType,
     queryDate: record.queryDate,
-    version: record.version,
     customConditions: [...record.customConditions]
   }
   handleNewQueryModelChange(record.modelType)
@@ -774,10 +747,6 @@ const deleteQueryRecord = async (id) => {
   } catch (error) {
     Message.error('删除失败')
   }
-}
-
-const exportQueryResult = () => {
-  Message.info('导出功能开发中...')
 }
 
 const copyQueryResult = async () => {
@@ -840,6 +809,15 @@ const formatCellValue = (value) => {
   }
   return value
 }
+
+// 监听器
+watch(() => newQueryForm.value.modelType, (newModelType) => {
+  handleNewQueryModelChange(newModelType)
+  // 当模型类型变更时，清空版本选择
+  if (newQueryForm.value.version) {
+    newQueryForm.value.version = ''
+  }
+})
 
 // 生命周期
 onMounted(() => {

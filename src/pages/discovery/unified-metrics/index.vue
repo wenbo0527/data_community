@@ -9,6 +9,18 @@
           </template>
           新建指标
         </a-button>
+        <a-button @click="goToBatchRegistration">
+          <template #icon>
+            <icon-upload />
+          </template>
+          批量注册
+        </a-button>
+        <a-button @click="goToRegulatoryConfig" v-if="currentMetricType === MetricType.REGULATORY">
+          <template #icon>
+            <icon-settings />
+          </template>
+          监管配置
+        </a-button>
         <a-button @click="exportMetrics">
           <template #icon>
             <icon-download />
@@ -25,56 +37,104 @@
       </a-space>
     </div>
 
+    <!-- 指标类型切换Tab -->
+    <a-tabs 
+      v-model:active-key="currentMetricType" 
+      @change="handleMetricTypeChange"
+      class="metric-type-tabs"
+    >
+      <a-tab-pane :key="MetricType.BUSINESS_CORE" :title="METRIC_TYPE_LABELS[MetricType.BUSINESS_CORE]" />
+      <a-tab-pane :key="MetricType.REGULATORY" :title="METRIC_TYPE_LABELS[MetricType.REGULATORY]" />
+    </a-tabs>
+
     <!-- 搜索和筛选 -->
     <div class="search-section">
       <a-row :gutter="16">
-        <a-col :span="8">
-          <a-input-search
-            v-model="searchKeyword"
-            placeholder="搜索指标名称、描述"
-            @search="handleSearch"
-          />
-        </a-col>
-        <a-col :span="4">
-          <a-select
-            v-model="selectedCategory"
-            placeholder="指标分类"
-            allow-clear
-            @change="handleSearch"
-          >
-            <a-option value="business">业务指标</a-option>
-            <a-option value="technical">技术指标</a-option>
-            <a-option value="financial">财务指标</a-option>
-            <a-option value="risk">风险指标</a-option>
-          </a-select>
-        </a-col>
-        <a-col :span="4">
-          <a-select
-            v-model="selectedDomain"
-            placeholder="业务域"
-            allow-clear
-            @change="handleSearch"
-          >
-            <a-option value="user">用户域</a-option>
-            <a-option value="transaction">交易域</a-option>
-            <a-option value="product">产品域</a-option>
-            <a-option value="retention">留存域</a-option>
-            <a-option value="conversion">转化域</a-option>
-          </a-select>
-        </a-col>
-        <a-col :span="4">
-          <a-select
-            v-model="selectedStatus"
-            placeholder="状态"
-            allow-clear
-            @change="handleSearch"
-          >
-            <a-option value="active">启用</a-option>
-            <a-option value="inactive">停用</a-option>
-            <a-option value="draft">草稿</a-option>
-          </a-select>
-        </a-col>
-      </a-row>
+          <a-col :span="6">
+            <a-input
+              v-model="searchKeyword"
+              placeholder="搜索指标名称或编码"
+              allow-clear
+              @press-enter="handleSearch"
+            />
+          </a-col>
+          <a-col :span="4">
+            <a-select
+              v-model="selectedCategory"
+              placeholder="指标分类"
+              allow-clear
+              @change="handleSearch"
+            >
+              <a-option value="business">业务指标</a-option>
+              <a-option value="technical">技术指标</a-option>
+              <a-option value="financial">财务指标</a-option>
+              <a-option value="risk">风险指标</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="4" v-if="currentMetricType === MetricType.BUSINESS_CORE">
+            <a-select
+              v-model="selectedDomain"
+              placeholder="业务域"
+              allow-clear
+              @change="handleSearch"
+            >
+              <a-option value="user">用户域</a-option>
+              <a-option value="transaction">交易域</a-option>
+              <a-option value="product">产品域</a-option>
+              <a-option value="retention">留存域</a-option>
+              <a-option value="conversion">转化域</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="4" v-if="currentMetricType === MetricType.REGULATORY">
+            <a-select
+              v-model="searchForm.regulatoryCategory"
+              placeholder="监管报表大类"
+              allow-clear
+              @change="handleSearch"
+            >
+              <a-option :value="RegulatoryCategory.CAPITAL_ADEQUACY">{{ REGULATORY_CATEGORY_LABELS[RegulatoryCategory.CAPITAL_ADEQUACY] }}</a-option>
+              <a-option :value="RegulatoryCategory.LIQUIDITY_RISK">{{ REGULATORY_CATEGORY_LABELS[RegulatoryCategory.LIQUIDITY_RISK] }}</a-option>
+              <a-option :value="RegulatoryCategory.CREDIT_RISK">{{ REGULATORY_CATEGORY_LABELS[RegulatoryCategory.CREDIT_RISK] }}</a-option>
+              <a-option :value="RegulatoryCategory.MARKET_RISK">{{ REGULATORY_CATEGORY_LABELS[RegulatoryCategory.MARKET_RISK] }}</a-option>
+              <a-option :value="RegulatoryCategory.OPERATIONAL_RISK">{{ REGULATORY_CATEGORY_LABELS[RegulatoryCategory.OPERATIONAL_RISK] }}</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="4">
+            <a-select
+              v-model="selectedStatus"
+              placeholder="状态"
+              allow-clear
+              @change="handleSearch"
+            >
+              <a-option value="active">启用</a-option>
+              <a-option value="inactive">停用</a-option>
+              <a-option value="draft">草稿</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-space>
+              <a-button type="primary" @click="handleSearch">搜索</a-button>
+              <a-button @click="resetSearch">重置</a-button>
+            </a-space>
+          </a-col>
+        </a-row>
+        <!-- 监管指标额外筛选行 -->
+        <a-row :gutter="16" v-if="currentMetricType === MetricType.REGULATORY" style="margin-top: 16px;">
+          <a-col :span="6">
+            <a-select
+              v-model="searchForm.reportName"
+              placeholder="报表名称"
+              allow-clear
+              @change="handleSearch"
+            >
+              <a-option value="资本充足率报告">资本充足率报告</a-option>
+              <a-option value="流动性风险监测报告">流动性风险监测报告</a-option>
+              <a-option value="信用风险报告">信用风险报告</a-option>
+              <a-option value="市场风险报告">市场风险报告</a-option>
+              <a-option value="操作风险报告">操作风险报告</a-option>
+            </a-select>
+          </a-col>
+        </a-row>
     </div>
 
     <a-row :gutter="24">
@@ -106,6 +166,13 @@
                 <template #cell="{ record }">
                   <div style="display: flex; align-items: center; gap: 8px">
                     <a-link @click="showDetail(record)">{{ record.name }}</a-link>
+                    <a-tag 
+                      v-if="record.type"
+                      :color="record.type === MetricType.BUSINESS_CORE ? 'blue' : 'orange'"
+                      size="small"
+                    >
+                      {{ METRIC_TYPE_LABELS[record.type] }}
+                    </a-tag>
                     <a-button
                       type="text"
                       size="mini"
@@ -128,7 +195,8 @@
               </a-table-column>
               <a-table-column title="业务域" dataIndex="businessDomain" :width="120">
                 <template #cell="{ record }">
-                  <a-tag color="purple">{{ record.businessDomain }}</a-tag>
+                  <a-tag v-if="record.type === MetricType.BUSINESS_CORE" color="purple">{{ record.businessDomain }}</a-tag>
+                  <a-tag v-else-if="record.regulatoryCategory" color="cyan">{{ REGULATORY_CATEGORY_LABELS[record.regulatoryCategory] }}</a-tag>
                 </template>
               </a-table-column>
               <a-table-column title="状态" dataIndex="status" :width="100">
@@ -199,12 +267,27 @@
                     <span class="highlight-text">{{ currentMetric.name }}</span>
                   </a-descriptions-item>
                   <a-descriptions-item label="指标编号">{{ currentMetric.code }}</a-descriptions-item>
-                  <a-descriptions-item label="分类/业务域">
+                  <a-descriptions-item label="指标类型">
+                    <a-tag :color="currentMetric.type === MetricType.BUSINESS_CORE ? 'blue' : 'orange'">
+                      {{ METRIC_TYPE_LABELS[currentMetric.type] }}
+                    </a-tag>
+                  </a-descriptions-item>
+                  <a-descriptions-item label="分类/业务域" v-if="currentMetric.type === MetricType.BUSINESS_CORE">
                     <a-tag>{{ currentMetric.category }}</a-tag>
                     <a-tag color="purple" style="margin-left: 8px">{{ currentMetric.businessDomain }}</a-tag>
                   </a-descriptions-item>
-                  <a-descriptions-item label="负责人">
+                  <a-descriptions-item label="分类/监管大类" v-else>
+                    <a-tag>{{ currentMetric.category }}</a-tag>
+                    <a-tag color="cyan" style="margin-left: 8px">{{ REGULATORY_CATEGORY_LABELS[currentMetric.regulatoryCategory] }}</a-tag>
+                  </a-descriptions-item>
+                  <a-descriptions-item label="负责人" v-if="currentMetric.type === MetricType.BUSINESS_CORE">
                     <span class="highlight-text">{{ currentMetric.owner }}</span>
+                  </a-descriptions-item>
+                  <a-descriptions-item label="业务负责人" v-else>
+                    <span class="highlight-text">{{ currentMetric.businessOwner }}</span>
+                  </a-descriptions-item>
+                  <a-descriptions-item label="技术负责人" v-if="currentMetric.type === MetricType.REGULATORY">
+                    <span class="highlight-text">{{ currentMetric.technicalOwner }}</span>
                   </a-descriptions-item>
                   <a-descriptions-item label="状态">
                     <a-tag :color="getStatusColor(currentMetric.status)">
@@ -258,8 +341,11 @@
                   <span class="card-title">报表位置</span>
                 </template>
                 <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-                  <a-descriptions-item label="报表信息">
+                  <a-descriptions-item label="报表信息" v-if="currentMetric.type === MetricType.BUSINESS_CORE">
                     <div class="description-content">{{ currentMetric.reportInfo }}</div>
+                  </a-descriptions-item>
+                  <a-descriptions-item label="报表名称" v-else>
+                    <div class="description-content">{{ currentMetric.reportName }}</div>
                   </a-descriptions-item>
                 </a-descriptions>
               </a-card>
@@ -326,12 +412,20 @@
         <!-- 基本信息 -->
         <a-divider orientation="left">基本信息</a-divider>
         <a-row :gutter="16">
-          <a-col :span="12">
+          <a-col :span="8">
+            <a-form-item label="指标类型" field="type">
+              <a-select v-model="formData.type" placeholder="请选择指标类型" @change="handleFormTypeChange">
+                <a-option :value="MetricType.BUSINESS_CORE">业务核心指标</a-option>
+                <a-option :value="MetricType.REGULATORY">监管指标</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
             <a-form-item label="指标名称" field="name">
               <a-input v-model="formData.name" placeholder="请输入指标名称" />
             </a-form-item>
           </a-col>
-          <a-col :span="12">
+          <a-col :span="8">
             <a-form-item label="指标编码" field="code">
               <a-input v-model="formData.code" placeholder="请输入指标编码" />
             </a-form-item>
@@ -349,7 +443,7 @@
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="8">
+          <a-col :span="8" v-if="formData.type === MetricType.BUSINESS_CORE">
             <a-form-item label="业务域" field="businessDomain">
               <a-select v-model="formData.businessDomain" placeholder="请选择业务域">
                 <a-option value="user">用户域</a-option>
@@ -357,6 +451,16 @@
                 <a-option value="product">产品域</a-option>
                 <a-option value="retention">留存域</a-option>
                 <a-option value="conversion">转化域</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8" v-if="formData.type === MetricType.REGULATORY">
+            <a-form-item label="监管报表大类" field="regulatoryCategory">
+              <a-select v-model="formData.regulatoryCategory" placeholder="请选择监管报表大类">
+                <a-option :value="RegulatoryCategory.CAPITAL_ADEQUACY">资本充足率</a-option>
+                <a-option :value="RegulatoryCategory.LIQUIDITY">流动性</a-option>
+                <a-option :value="RegulatoryCategory.ASSET_QUALITY">资产质量</a-option>
+                <a-option :value="RegulatoryCategory.RISK_CONCENTRATION">风险集中度</a-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -374,13 +478,31 @@
           </a-col>
         </a-row>
         
-        <a-row :gutter="16">
+        <a-row :gutter="16" v-if="formData.type === MetricType.BUSINESS_CORE">
           <a-col :span="12">
             <a-form-item label="负责人" field="owner">
               <a-input v-model="formData.owner" placeholder="请输入负责人" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
+            <a-form-item label="版本号" field="version">
+              <a-input v-model="formData.version" placeholder="请输入版本号（如：v1.0.0）" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <a-row :gutter="16" v-if="formData.type === MetricType.REGULATORY">
+          <a-col :span="8">
+            <a-form-item label="业务负责人" field="businessOwner">
+              <a-input v-model="formData.businessOwner" placeholder="请输入业务负责人" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="技术负责人" field="technicalOwner">
+              <a-input v-model="formData.technicalOwner" placeholder="请输入技术负责人" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
             <a-form-item label="版本号" field="version">
               <a-input v-model="formData.version" placeholder="请输入版本号（如：v1.0.0）" />
             </a-form-item>
@@ -416,6 +538,14 @@
         <a-form-item label="查询代码">
           <a-textarea v-model="formData.queryCode" placeholder="请输入查询代码" :rows="5" />
         </a-form-item>
+        
+        <!-- 监管指标专用字段 -->
+        <template v-if="formData.type === MetricType.REGULATORY">
+          <a-divider orientation="left">监管报表信息</a-divider>
+          <a-form-item label="报表名称" field="reportName">
+            <a-input v-model="formData.reportName" placeholder="请输入报表名称" />
+          </a-form-item>
+        </template>
       </a-form>
     </a-modal>
 
@@ -461,44 +591,17 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconDownload, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconDownload, IconStar, IconStarFill, IconUpload, IconSettings } from '@arco-design/web-vue/es/icon'
 import type { TreeNodeData } from '@arco-design/web-vue'
+import { useRouter } from 'vue-router'
 import metricsMock from '@/mock/metrics'
-// 指标项接口
-interface MetricItem {
-  id: string
-  name: string
-  code: string
-  category: string
-  businessDomain: string
-  description?: string
-  formula?: string
-  unit?: string
-  dataSource?: string
-  updateFrequency?: string
-  creator?: string
-  createTime?: string
-  lastUpdateTime?: string
-  updateTime?: string
-  owner: string
-  status: string
-  isFavorite: boolean
-  statisticalPeriod?: string
-  businessDefinition?: string
-  useCase?: string
-  sourceTable?: string
-  processingLogic?: string
-  fieldDescription?: string
-  reportInfo?: string
-  storageLocation?: string
-  queryCode?: string
-  versions?: Array<{
-    date: string
-    description: string
-  }>
-}
+import type { MetricItem } from '@/types/metrics'
+import { MetricType, RegulatoryCategory, METRIC_TYPE_LABELS, REGULATORY_CATEGORY_LABELS } from '@/types/metrics'
+// 当前选中的指标类型
+const currentMetricType = ref<MetricType>(MetricType.BUSINESS_CORE)
 
 // 响应式数据
+const router = useRouter()
 const loading = ref(false)
 const searchKeyword = ref('')
 const selectedCategory = ref('')
@@ -529,7 +632,10 @@ const searchForm = ref({
   businessDomain: '',
   status: '',
   onlyFavorite: false,
-  isFavorite: false
+  isFavorite: false,
+  type: MetricType.BUSINESS_CORE,
+  regulatoryCategory: '',
+  reportName: ''
 })
 
 // 分页
@@ -595,19 +701,43 @@ const formData = reactive({
   fieldDescription: '',
   storageLocation: '',
   queryCode: '',
-  status: 'active'
+  status: 'active',
+  type: MetricType.BUSINESS_CORE,
+  regulatoryCategory: '',
+  businessOwner: '',
+  technicalOwner: '',
+  reportName: ''
 })
 
 // 表单验证规则
-const formRules = {
-  name: [{ required: true, message: '请输入指标名称' }],
-  code: [{ required: true, message: '请输入指标编码' }],
-  category: [{ required: true, message: '请选择指标分类' }],
-  businessDomain: [{ required: true, message: '请选择业务域' }],
-  owner: [{ required: true, message: '请输入负责人' }],
-  businessDefinition: [{ required: true, message: '请输入业务定义' }],
-  sourceTable: [{ required: true, message: '请输入来源表' }]
+const getFormRules = () => {
+  const baseRules = {
+    name: [{ required: true, message: '请输入指标名称' }],
+    code: [{ required: true, message: '请输入指标编码' }],
+    category: [{ required: true, message: '请选择指标分类' }],
+    type: [{ required: true, message: '请选择指标类型' }],
+    businessDefinition: [{ required: true, message: '请输入业务定义' }],
+    sourceTable: [{ required: true, message: '请输入来源表' }]
+  }
+  
+  if (formData.type === MetricType.BUSINESS_CORE) {
+    return {
+      ...baseRules,
+      businessDomain: [{ required: true, message: '请选择业务域' }],
+      owner: [{ required: true, message: '请输入负责人' }]
+    }
+  } else {
+    return {
+      ...baseRules,
+      regulatoryCategory: [{ required: true, message: '请选择监管报表大类' }],
+      businessOwner: [{ required: true, message: '请输入业务负责人' }],
+      technicalOwner: [{ required: true, message: '请输入技术负责人' }],
+      reportName: [{ required: true, message: '请输入报表名称' }]
+    }
+  }
 }
+
+const formRules = ref(getFormRules())
 
 // 版本历史表格列
 const versionHistoryColumns = [
@@ -665,9 +795,50 @@ const handleSearch = () => {
   searchForm.value.category = selectedCategory.value
   searchForm.value.businessDomain = selectedDomain.value
   searchForm.value.status = selectedStatus.value
+  searchForm.value.type = currentMetricType.value
   
   pagination.value.current = 1
   fetchMetrics()
+}
+
+// 重置搜索
+const resetSearch = () => {
+  searchKeyword.value = ''
+  selectedCategory.value = ''
+  selectedDomain.value = ''
+  selectedStatus.value = ''
+  searchForm.value.regulatoryCategory = ''
+  searchForm.value.reportName = ''
+  searchForm.value.onlyFavorite = false
+  handleSearch()
+}
+
+// 指标类型切换处理
+const handleMetricTypeChange = (type: MetricType) => {
+  currentMetricType.value = type
+  searchForm.value.type = type
+  // 切换类型时重置相关筛选条件
+  selectedDomain.value = ''
+  searchForm.value.regulatoryCategory = ''
+  searchForm.value.reportName = ''
+  handleSearch()
+}
+
+// 表单指标类型切换处理
+const handleFormTypeChange = (type: MetricType) => {
+  formData.type = type
+  // 切换类型时重置相关字段
+  if (type === MetricType.BUSINESS_CORE) {
+    formData.regulatoryCategory = ''
+    formData.businessOwner = ''
+    formData.technicalOwner = ''
+    formData.reportName = ''
+  } else {
+    formData.businessDomain = ''
+    formData.owner = ''
+  }
+  // 更新验证规则
+  formRules.value = getFormRules()
 }
 
 // 分页处理
@@ -831,14 +1002,31 @@ const resetForm = () => {
     fieldDescription: '',
     storageLocation: '',
     queryCode: '',
-    status: 'active'
+    status: 'active',
+    type: MetricType.BUSINESS_CORE,
+    regulatoryCategory: '',
+    businessOwner: '',
+    technicalOwner: '',
+    reportName: ''
   })
+  // 重置验证规则
+  formRules.value = getFormRules()
   formRef.value?.resetFields()
 }
 
 // 导出指标
 const exportMetrics = () => {
   Message.success('指标数据导出成功')
+}
+
+// 跳转到批量注册页面
+const goToBatchRegistration = () => {
+  router.push('/discovery/batch-registration')
+}
+
+// 跳转到监管配置页面
+const goToRegulatoryConfig = () => {
+  router.push('/discovery/regulatory-config')
 }
 
 // 标签页切换
@@ -911,6 +1099,18 @@ onMounted(() => {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+}
+
+.metric-type-tabs {
+  margin-bottom: 20px;
+}
+
+.metric-type-tabs :deep(.arco-tabs-nav) {
+  margin-bottom: 0;
+}
+
+.metric-type-tabs :deep(.arco-tabs-tab) {
+  font-weight: 500;
 }
 
 .search-section {

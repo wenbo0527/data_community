@@ -67,9 +67,50 @@
     
     <!-- 编辑器主体 -->
     <div class="editor-body">
+      <!-- 工具栏面板 -->
+      <div class="toolbar-panel">
+        <div class="panel-header">
+          <span class="panel-title">节点工具箱</span>
+        </div>
+        <div class="panel-content">
+          <div class="node-categories">
+            <div class="category-section">
+              <h4 class="category-title">基础节点</h4>
+              <div class="node-items">
+                <div 
+                  v-for="nodeType in availableNodeTypes" 
+                  :key="nodeType.type"
+                  class="node-item"
+                  :draggable="true"
+                  @dragstart="onNodeDragStart($event, nodeType)"
+                  @dragend="onNodeDragEnd"
+                >
+                  <div class="node-item-icon">
+                    <img 
+                      :src="getNodeTypeLogo(nodeType.type)" 
+                      :alt="nodeType.name"
+                      class="node-logo"
+                    />
+                  </div>
+                  <div class="node-item-info">
+                    <div class="node-item-name">{{ nodeType.name }}</div>
+                    <div class="node-item-desc">{{ nodeType.description }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <!-- 画布区域 -->
       <div class="canvas-container" :class="{ 'full-width': !showPropertyPanel }">
-        <div ref="canvasRef" class="canvas"></div>
+        <div 
+          ref="canvasRef" 
+          class="canvas"
+          @dragover="onCanvasDragOver"
+          @drop="onCanvasDrop"
+        ></div>
       </div>
       
       <!-- 属性面板 -->
@@ -286,7 +327,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { WorkflowStorage } from '../../../utils/workflowStorage'
 import WorkflowNode from '../../../components/workflow/WorkflowNode.vue'
-import { NodeType, PROCESSING_TYPE_LIST } from '../../../utils/workflowNodeTypes.js'
+import { NodeType, PROCESSING_TYPE_LIST, NODE_TYPE_LOGO, getNodeTypeLogo } from '../../../utils/workflowNodeTypes.js'
 import { createNode, createEdge } from '../../../utils/workflowNodeCreator.js'
 import { consoleLogger } from '../../../utils/consoleLogger.js'
 
@@ -348,6 +389,27 @@ const newVersionData = ref({
   description: '',
   basedOn: ''
 })
+
+// 拖拽相关数据
+const draggedNodeType = ref(null)
+const availableNodeTypes = computed(() => {
+  return PROCESSING_TYPE_LIST.map(item => ({
+    ...item,
+    description: getNodeTypeDescription(item.type)
+  }))
+})
+
+// 获取节点类型描述
+const getNodeTypeDescription = (type) => {
+  const descriptions = {
+    'start': '流程开始节点',
+    'end': '流程结束节点',
+    'condition': '条件判断节点',
+    'action': '执行动作节点',
+    'delay': '延时等待节点'
+  }
+  return descriptions[type] || '处理节点'
+}
 
 // 方法
 const goBack = () => {
@@ -524,6 +586,94 @@ const cancelCreateVersion = () => {
   showNewVersionModal.value = false
 }
 
+// 拖拽相关方法
+const onNodeDragStart = (event, nodeType) => {
+  consoleLogger.info('[WorkflowEditor] 开始拖拽节点:', nodeType)
+  draggedNodeType.value = nodeType
+  
+  // 设置拖拽数据
+  event.dataTransfer.setData('application/json', JSON.stringify(nodeType))
+  event.dataTransfer.effectAllowed = 'copy'
+  
+  // 添加拖拽样式
+  event.target.style.opacity = '0.5'
+}
+
+const onNodeDragEnd = (event) => {
+  consoleLogger.info('[WorkflowEditor] 拖拽结束')
+  draggedNodeType.value = null
+  
+  // 恢复样式
+  event.target.style.opacity = '1'
+}
+
+const onCanvasDragOver = (event) => {
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'copy'
+}
+
+const onCanvasDrop = (event) => {
+  event.preventDefault()
+  
+  try {
+    const nodeTypeData = JSON.parse(event.dataTransfer.getData('application/json'))
+    consoleLogger.info('[WorkflowEditor] 在画布上放置节点:', nodeTypeData)
+    
+    if (!graph.value) {
+      consoleLogger.error('[WorkflowEditor] Graph实例不存在，无法创建节点')
+      Message.error('画布未初始化，请稍后再试')
+      return
+    }
+    
+    // 获取放置位置（相对于画布的坐标）
+    const canvasRect = canvasRef.value.getBoundingClientRect()
+    const x = event.clientX - canvasRect.left
+    const y = event.clientY - canvasRect.top
+    
+    // 转换为画布坐标
+    const position = graph.value.clientToLocal({ x, y })
+    
+    consoleLogger.info('[WorkflowEditor] 节点放置位置:', position)
+    
+    // 创建节点
+    createNodeOnCanvas(nodeTypeData, position)
+    
+  } catch (error) {
+    consoleLogger.error('[WorkflowEditor] 处理拖拽放置时发生错误:', error)
+    Message.error('创建节点失败')
+  }
+}
+
+const createNodeOnCanvas = (nodeTypeData, position) => {
+  try {
+    const nodeConfig = {
+      id: `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: nodeTypeData.type,
+      name: nodeTypeData.name,
+      position: {
+        x: position.x - 100, // 节点宽度的一半
+        y: position.y - 40   // 节点高度的一半
+      }
+    }
+    
+    consoleLogger.info('[WorkflowEditor] 创建节点配置:', nodeConfig)
+    
+    const node = createNode(graph.value, nodeConfig)
+    
+    if (node) {
+      consoleLogger.info('[WorkflowEditor] 节点创建成功:', node.id)
+      Message.success(`${nodeTypeData.name} 节点创建成功`)
+    } else {
+      consoleLogger.error('[WorkflowEditor] 节点创建失败')
+      Message.error('节点创建失败')
+    }
+    
+  } catch (error) {
+    consoleLogger.error('[WorkflowEditor] 创建节点时发生错误:', error)
+    Message.error('创建节点失败: ' + error.message)
+  }
+}
+
 const initGraph = () => {
   consoleLogger.info('[WorkflowEditor] initGraph函数开始执行')
   
@@ -557,16 +707,70 @@ const initGraph = () => {
     clipboard: true,
     keyboard: true,
     mousewheel: {
-      enabled: false
+      enabled: true,
+      modifiers: ['ctrl', 'meta']
     },
     scroller: {
       enabled: true,
       pannable: true,
       pageVisible: false,
-      pageBreak: false,
-      modifiers: ['shift', 'ctrl'],
-      panDirection: 'x'
-    }
+      pageBreak: false
+    },
+    // 启用拖拽功能
+    panning: {
+      enabled: true,
+      modifiers: 'shift'
+    },
+    // 启用连接功能
+    connecting: {
+      router: 'manhattan',
+      connector: {
+        name: 'rounded',
+        args: {
+          radius: 8,
+        },
+      },
+      anchor: 'center',
+      connectionPoint: 'anchor',
+      allowBlank: false,
+      snap: {
+        radius: 20,
+      },
+      createEdge() {
+        return new Shape.Edge({
+          attrs: {
+            line: {
+              stroke: '#165dff',
+              strokeWidth: 2,
+              targetMarker: {
+                name: 'block',
+                width: 12,
+                height: 8,
+              },
+            },
+          },
+          zIndex: 0,
+        })
+      },
+      validateConnection({ targetMagnet }) {
+        return !!targetMagnet
+      },
+    },
+    // 启用选择功能
+    selecting: {
+      enabled: true,
+      rubberband: true,
+      movable: true,
+      showNodeSelectionBox: true,
+    },
+    // 启用调整大小
+    resizing: {
+      enabled: true,
+    },
+    // 启用旋转
+    rotating: {
+      enabled: false,
+    },
   })
   
   consoleLogger.info('[WorkflowEditor] Graph实例创建成功:', graph.value)
@@ -675,10 +879,19 @@ const addDefaultInputNode = () => {
 // 生命周期
 onMounted(() => {
   consoleLogger.info('[WorkflowEditor] onMounted生命周期钩子执行')
-  nextTick(() => {
-    consoleLogger.info('[WorkflowEditor] nextTick回调执行，准备初始化Graph')
+  // 使用setTimeout确保DOM完全渲染后再初始化Graph
+  setTimeout(() => {
+    consoleLogger.info('[WorkflowEditor] setTimeout回调执行，准备初始化Graph')
     initGraph()
-  })
+    // 确保Graph实例初始化完成后再通知子组件
+    nextTick(() => {
+      consoleLogger.info('[WorkflowEditor] Graph初始化完成，通知子组件')
+      // 触发一个事件通知所有等待的操作
+      if (window.workflowGraphInitialized) {
+        window.workflowGraphInitialized()
+      }
+    })
+  }, 100)
 })
 
 onBeforeUnmount(() => {
@@ -692,7 +905,7 @@ onBeforeUnmount(() => {
 .workflow-editor {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background: #f5f5f5;
 }
 
@@ -748,6 +961,124 @@ onBeforeUnmount(() => {
   display: flex;
   flex: 1;
   overflow: hidden;
+}
+
+/* 工具栏面板样式 */
+.toolbar-panel {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #e5e6eb;
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+}
+
+.toolbar-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e5e6eb;
+  background: #fafafa;
+}
+
+.toolbar-panel .panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.toolbar-panel .panel-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.node-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.category-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.category-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4e5969;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.node-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.node-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  background: white;
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.node-item:hover {
+  border-color: #165dff;
+  background: #f2f7ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(22, 93, 255, 0.15);
+}
+
+.node-item:active {
+  cursor: grabbing;
+  transform: translateY(0);
+}
+
+.node-item-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #f2f3f5;
+}
+
+.node-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.node-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d2129;
+  line-height: 1.4;
+}
+
+.node-item-desc {
+  font-size: 11px;
+  color: #86909c;
+  line-height: 1.3;
 }
 
 .canvas-container {

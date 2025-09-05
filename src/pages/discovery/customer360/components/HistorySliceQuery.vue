@@ -78,10 +78,6 @@
             <template #icon><icon-copy /></template>
             复制全部
           </a-button>
-          <a-button size="small" @click="exportResults">
-            <template #icon><icon-download /></template>
-            导出
-          </a-button>
         </div>
       </div>
       
@@ -160,7 +156,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconCopy, IconRefresh, IconSearch, IconDownload } from '@arco-design/web-vue/es/icon'
+import { IconCopy, IconRefresh, IconSearch } from '@arco-design/web-vue/es/icon'
 import { copyToClipboard } from '../../../../utils/copy'
 
 // Props
@@ -480,16 +476,7 @@ const copyResults = async (type) => {
   }
 }
 
-// 导出结果
-const exportResults = () => {
-  if (queryResults.value.length === 0) {
-    Message.warning('没有数据可导出')
-    return
-  }
-  
-  // 这里可以实现真实的导出功能
-  Message.info('导出功能开发中...')
-}
+
 </script>
 
 <style scoped>

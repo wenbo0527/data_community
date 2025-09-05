@@ -22,7 +22,7 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 160 }, // 对齐到网格（8个小网格单位）
         label: '下一步',
-        allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end']
+        allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
       }
     ],
     ports: {
@@ -95,7 +95,7 @@ export const nodeTypes = {
       {
         type: 'single',
         position: { x: 0, y: 150 },        label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end']
+        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
       }
     ]
   },
@@ -122,7 +122,7 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 150 },
         label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end']
+        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
       }
     ]
   },
@@ -139,7 +139,7 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 150 },
         label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end']
+        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
       }
     ]
   },
@@ -166,7 +166,24 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 150 },
         label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end']
+        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
+      }
+    ]
+  },
+  'benefit': {
+    label: '权益节点',
+    color: '#FFD700',
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
       }
     ]
   }
@@ -343,7 +360,7 @@ export const getNodeLabel = (nodeType) => {
  * @returns {Array} 预设位配置数组
  */
 export const generateDynamicNextSlots = (nodeType, config = {}) => {
-  const allowedTypes = ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'end']
+  const allowedTypes = ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
   
   switch (nodeType) {
     case 'start':
@@ -365,6 +382,7 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
     case 'ai-call':
     case 'manual-call':
     case 'wait':
+    case 'benefit':
       // 单输出节点的预设位
       const singleSlots = [
         {

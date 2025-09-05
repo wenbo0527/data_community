@@ -179,6 +179,14 @@
                     <icon-clock-circle class="node-icon" />
                     <span>等待</span>
                   </div>
+                  <div 
+                    class="node-item" 
+                    draggable="true"
+                    @dragstart="handleDragStart($event, 'benefit')"
+                  >
+                    <icon-gift class="node-icon" />
+                    <span>权益节点</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -230,7 +238,8 @@ import {
   IconSwap,
   IconSettings,
   IconClockCircle,
-  IconSave
+  IconSave,
+  IconGift
 } from '@arco-design/web-vue/es/icon'
 import TaskFlowCanvas from './components/TaskFlowCanvas.vue'
 import { validateCanvasData, formatValidationMessage } from '../../../utils/canvasValidation.js'
@@ -708,7 +717,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .create-task-page {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #f5f5f5;

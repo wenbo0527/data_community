@@ -60,7 +60,19 @@ export class DirectApplicationStrategy extends ApplicationStrategy {
             if (this.enableAnimation) {
               nodeElement.style.transition = `transform ${this.animationDuration}ms ease-in-out`;
             }
-            nodeElement.style.transform = `translate(${position.x}px, ${position.y}px)`;
+            // 🔧 坐标验证：确保transform属性不包含NaN值
+            const validX = (typeof position.x === 'number' && !isNaN(position.x) && isFinite(position.x)) ? position.x : 200;
+            const validY = (typeof position.y === 'number' && !isNaN(position.y) && isFinite(position.y)) ? position.y : 100;
+            
+            if (validX !== position.x || validY !== position.y) {
+              console.warn('⚠️ [PositionApplicator] 检测到NaN坐标，使用默认值:', {
+                nodeId,
+                originalPosition: position,
+                correctedPosition: { x: validX, y: validY }
+              });
+            }
+            
+            nodeElement.style.transform = `translate(${validX}px, ${validY}px)`;
           } else {
             throw new Error(`找不到节点元素: ${nodeId}`);
           }
@@ -169,7 +181,19 @@ export class BatchApplicationStrategy extends ApplicationStrategy {
             if (this.enableAnimation) {
               nodeElement.style.transition = `transform ${this.animationDuration}ms ease-in-out`;
             }
-            nodeElement.style.transform = `translate(${position.x}px, ${position.y}px)`;
+            // 🔧 坐标验证：确保transform属性不包含NaN值
+            const validX = (typeof position.x === 'number' && !isNaN(position.x) && isFinite(position.x)) ? position.x : 200;
+            const validY = (typeof position.y === 'number' && !isNaN(position.y) && isFinite(position.y)) ? position.y : 100;
+            
+            if (validX !== position.x || validY !== position.y) {
+              console.warn('⚠️ [PositionApplicator] 检测到NaN坐标，使用默认值:', {
+                nodeId,
+                originalPosition: position,
+                correctedPosition: { x: validX, y: validY }
+              });
+            }
+            
+            nodeElement.style.transform = `translate(${validX}px, ${validY}px)`;
           } else {
             throw new Error(`找不到节点元素: ${nodeId}`);
           }
@@ -339,7 +363,20 @@ export class ProgressiveApplicationStrategy extends ApplicationStrategy {
           // 直接更新DOM元素
           const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`);
           if (nodeElement) {
-            nodeElement.style.transform = `translate(${position.x}px, ${position.y}px)`;
+            // 🔧 坐标验证：确保transform属性不包含NaN值
+            const validX = (typeof position.x === 'number' && !isNaN(position.x) && isFinite(position.x)) ? position.x : 200;
+            const validY = (typeof position.y === 'number' && !isNaN(position.y) && isFinite(position.y)) ? position.y : 100;
+            
+            if (validX !== position.x || validY !== position.y) {
+              console.warn('⚠️ [PositionApplicator] 渐进应用中检测到NaN坐标，使用默认值:', {
+                nodeId,
+                step,
+                originalPosition: position,
+                correctedPosition: { x: validX, y: validY }
+              });
+            }
+            
+            nodeElement.style.transform = `translate(${validX}px, ${validY}px)`;
           } else {
             throw new Error(`找不到节点元素: ${nodeId}`);
           }

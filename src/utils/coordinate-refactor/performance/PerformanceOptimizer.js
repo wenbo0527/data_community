@@ -19,10 +19,10 @@ export class PerformanceOptimizer {
       enableSmartCache: true,
       cacheExpiry: 5000, // 5秒缓存过期
       
-      // 预览线优化
+      // 预览线优化 - 增强防抖和节流
       enablePreviewLineThrottling: true,
-      previewLineUpdateDelay: 100,
-      maxPreviewLineUpdates: 3,
+      previewLineUpdateDelay: 500, // 增加到500ms，减少频繁更新
+      maxPreviewLineUpdates: 1, // 减少到1次，避免频繁触发
       
       // 调试配置
       enableDebug: true,
@@ -185,7 +185,7 @@ export class PerformanceOptimizer {
       options: options
     }));
     
-    const existingOperation = this.state.executionQueue.find(op => {
+    const existingOperation = (this.state.executionQueue || []).find(op => {
       const existingHash = this.hashString(JSON.stringify({
         functionName: op.function.name,
         context: op.context,
@@ -272,36 +272,43 @@ export class PerformanceOptimizer {
     
     try {
       // 并行执行批处理操作
-      const results = await Promise.allSettled(
-        batch.map(async (operation) => {
-          try {
-            const result = await this.executeWithMonitoring(
-              operation.function,
-              operation.context,
-              operation.options,
-              operation.id
-            );
-            
-            if (operation.resolve) {
-              operation.resolve(result);
+      let results = [];
+      try {
+        results = await Promise.allSettled(
+          batch.map(async (operation) => {
+            try {
+              const result = await this.executeWithMonitoring(
+                operation.function,
+                operation.context,
+                operation.options,
+                operation.id
+              );
+              
+              if (operation.resolve) {
+                operation.resolve(result);
+              }
+              
+              return result;
+            } catch (error) {
+              console.error(`❌ [批处理操作失败] ID: ${operation.id}:`, error);
+              if (operation.reject) {
+                operation.reject(error);
+              }
+              throw error;
             }
-            
-            return result;
-          } catch (error) {
-            console.error(`❌ [批处理操作失败] ID: ${operation.id}:`, error);
-            if (operation.reject) {
-              operation.reject(error);
-            }
-            throw error;
-          }
-        })
-      );
+          })
+        );
+      } catch (error) {
+        console.error(`❌ [Promise.allSettled执行失败]:`, error);
+        results = [];
+      }
       
       this.state.performanceMetrics.batchedOperations += batch.length;
       
-      // 统计成功和失败的操作
-      const successful = results.filter(r => r.status === 'fulfilled').length;
-      const failed = results.filter(r => r.status === 'rejected').length;
+      // 统计成功和失败的操作 - 增强空值检查
+      const safeResults = Array.isArray(results) ? results : [];
+      const successful = (safeResults || []).filter(r => r && typeof r === 'object' && r.status === 'fulfilled').length;
+      const failed = (safeResults || []).filter(r => r && typeof r === 'object' && r.status === 'rejected').length;
       
       console.log(`✅ [批处理完成] 处理了 ${batch.length} 个操作 (成功: ${successful}, 失败: ${failed})`);
       

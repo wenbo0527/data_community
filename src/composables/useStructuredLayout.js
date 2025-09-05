@@ -43,8 +43,8 @@ export function useStructuredLayout(getGraph) {
     enableIncrementalLayout: true,
     enableBatching: true,
     layoutThrottle: 100,
-    // 🆕 新增：布局引擎选择配置 - 临时切换到hierarchy测试原生@antv/hierarchy
-    layoutEngine: 'hierarchy', // 'unified' | 'hierarchy'
+    // 🆕 新增：布局引擎选择配置 - 临时切换回unified引擎
+    layoutEngine: 'unified', // 'unified' | 'hierarchy'
     enableHierarchyEngine: true // 是否启用@antv/hierarchy引擎
   })
   
@@ -66,41 +66,65 @@ export function useStructuredLayout(getGraph) {
    * 初始化布局系统
    */
   const initializeLayoutEngine = () => {
+    console.log('🚀 [布局系统] 开始初始化布局系统')
+    
     try {
       const graph = getGraph()
       
       if (!graph) {
-        console.error('[useStructuredLayout] 图实例不存在，无法初始化')
+        console.error('❌ [useStructuredLayout] 图实例不存在，无法初始化')
         return false
       }
       
+      console.log('✅ [布局系统] Graph实例获取成功')
+      
       // 初始化坐标管理器
+      console.log('🔧 [布局系统] 初始化坐标管理器')
       coordinateManager.setGraph(graph)
       coordinateManager.setDebugMode(process.env.NODE_ENV === 'development')
       
       // 创建统一预览线管理器
-      connectionPreviewManager.value = new UnifiedPreviewLineManager(graph, null, layoutConfig.value, layoutDirection.value)
+      console.log('🔧 [布局系统] 创建统一预览线管理器')
+      try {
+        connectionPreviewManager.value = new UnifiedPreviewLineManager(graph, null, layoutConfig.value, layoutDirection.value)
+        console.log('✅ [布局系统] 预览线管理器创建成功')
+      } catch (previewError) {
+        console.error('❌ [布局系统] 预览线管理器创建失败:', previewError)
+        connectionPreviewManager.value = null
+      }
       
       // 初始化预览线管理器
       if (connectionPreviewManager.value) {
-        connectionPreviewManager.value.init()
+        try {
+          connectionPreviewManager.value.init()
+          console.log('✅ [布局系统] 预览线管理器初始化成功')
+        } catch (initError) {
+          console.error('❌ [布局系统] 预览线管理器初始化失败:', initError)
+        }
       }
       
       // 🔧 关键修复：创建布局引擎实例
       console.log('🏗️ [布局系统初始化] 开始创建布局引擎实例')
-      layoutEngineInstance.value = createLayoutEngineInstance(graph)
+      console.log('🔍 [布局系统初始化] 当前布局配置:', layoutConfig.value)
       
-      if (layoutEngineInstance.value) {
-        console.log('✅ [布局系统初始化] 布局引擎实例创建成功')
-      } else {
-        console.warn('⚠️ [布局系统初始化] 布局引擎实例创建失败')
+      try {
+        layoutEngineInstance.value = createLayoutEngineInstance(graph)
+        
+        if (layoutEngineInstance.value) {
+          console.log('✅ [布局系统初始化] 布局引擎实例创建成功，类型:', layoutConfig.value.layoutEngine)
+        } else {
+          console.warn('⚠️ [布局系统初始化] 布局引擎实例创建失败，返回null')
+        }
+      } catch (engineError) {
+        console.error('❌ [布局系统初始化] 布局引擎实例创建异常:', engineError)
+        layoutEngineInstance.value = null
       }
       
       console.log('✅ [布局系统] 原生Dagre布局系统初始化完成')
       return true
       
     } catch (error) {
-      console.error('[useStructuredLayout] 初始化失败:', error)
+      console.error('❌ [useStructuredLayout] 初始化失败:', error)
       connectionPreviewManager.value = null
       layoutEngineInstance.value = null
       return false
@@ -376,6 +400,67 @@ export function useStructuredLayout(getGraph) {
   const buildTopologicalLayers = (nodes, edges, unifiedPreviewLineManager = null) => {
     console.log('🔍 [拓扑分层] 开始构建节点拓扑分层结构')
     
+    // 🚨 关键调试：检查输入参数
+    if (!nodes || !Array.isArray(nodes)) {
+      console.error('❌ [拓扑分层] nodes参数无效:', nodes)
+      return { layers: [], nodeToLayer: new Map(), adjacencyList: new Map(), totalLayers: 0 }
+    }
+    
+    if (!edges || !Array.isArray(edges)) {
+      console.error('❌ [拓扑分层] edges参数无效:', edges)
+      return { layers: [], nodeToLayer: new Map(), adjacencyList: new Map(), totalLayers: 0 }
+    }
+    
+    console.log(`🔍 [拓扑分层] 输入参数检查: nodes=${nodes.length}个, edges=${edges.length}个`)
+    
+    // 🔍 详细调试：输出当前图中所有节点的类型和属性
+    console.log('🔍 [拓扑分层] 当前图中所有节点详情:')
+    nodes.forEach((node, index) => {
+      const nodeId = node.id || node.getId()
+      const nodeData = node.getData() || {}
+      const position = node.getPosition()
+      const size = node.getSize()
+      
+      console.log(`  节点${index + 1}: ${nodeId}`, {
+        nodeType: nodeData.nodeType,
+        isEndpoint: nodeData.isEndpoint,
+        isPreview: nodeData.isPreview,
+        isPersistentPreview: nodeData.isPersistentPreview,
+        isUnifiedPreview: nodeData.isUnifiedPreview,
+        position: position,
+        size: size,
+        allData: nodeData
+      })
+    })
+    
+    // 🔍 详细调试：输出当前图中所有边的类型和属性
+    console.log('🔍 [拓扑分层] 当前图中所有边详情:')
+    edges.forEach((edge, index) => {
+      const edgeId = edge.id || edge.getId()
+      const edgeData = edge.getData() || {}
+      const sourceId = edge.getSourceCellId()
+      const targetId = edge.getTargetCellId()
+      
+      console.log(`  边${index + 1}: ${edgeId}`, {
+        sourceId: sourceId,
+        targetId: targetId,
+        isPreview: edgeData.isPreview,
+        isPersistentPreview: edgeData.isPersistentPreview,
+        isUnifiedPreview: edgeData.isUnifiedPreview,
+        allData: edgeData
+      })
+    })
+    
+    // 🔍 详细调试：输出预览线管理器状态
+    if (unifiedPreviewLineManager) {
+      console.log('🔍 [拓扑分层] 预览线管理器状态:', {
+        previewLinesCount: unifiedPreviewLineManager.previewLines.size,
+        previewLines: Array.from(unifiedPreviewLineManager.previewLines.entries())
+      })
+    } else {
+      console.log('🔍 [拓扑分层] 预览线管理器为空')
+    }
+    
     // 构建邻接表
     const adjacencyList = new Map()
     const inDegree = new Map()
@@ -451,90 +536,41 @@ export function useStructuredLayout(getGraph) {
       }
     })
     
-    // 🔧 在拓扑排序前，先处理预览线endpoint，将其作为虚拟节点和虚拟边添加到邻接表中
-    const endpointVirtualNodes = new Map() // 存储endpoint虚拟节点信息
+    // 🔧 新的预览线分层策略：直接使用预览线坐标进行分层计算（不依赖endpoint节点）
+    const previewLineElements = new Map() // 存储预览线元素信息
     
     previewEndpointToSource.forEach((endpointInfo, endpointKey) => {
       const { sourceId, endPosition, branchId, branchLabel } = endpointInfo
       
-      // 查找是否有真实节点位于endpoint附近（已经吸附到endpoint的节点）
-      const snapDistance = 50 // 吸附距离阈值
-      const nearbyNode = nodes.find(node => {
-        const nodeId = node.id || node.getId()
-        const nodeData = node.getData() || {}
-        
-        // 跳过拖拽点和预览线相关的节点
-        if (nodeData.isEndpoint || nodeData.isPreview || nodeData.isPersistentPreview) {
-          return false
+      // 直接将预览线作为分层元素，根据其Y坐标确定层级
+      const previewElementId = branchId ? `preview_branch_${sourceId}_${branchId}` : `preview_single_${sourceId}`
+      
+      previewLineElements.set(previewElementId, {
+        type: branchId ? 'branch_preview_line' : 'single_preview_line',
+        sourceId,
+        endPosition,
+        branchId,
+        branchLabel,
+        isPreviewLine: true,
+        // 根据Y坐标计算相对层级（相对于源节点）
+        calculateLayer: (sourceNodeLayer, sourceNodeY) => {
+          const yDifference = endPosition.y - sourceNodeY
+          // 如果预览线终点在源节点下方，则分配到下一层或更下层
+          if (yDifference > 50) {
+            return sourceNodeLayer + Math.ceil(yDifference / 100) // 每100px一层
+          } else {
+            return sourceNodeLayer + 1 // 默认下一层
+          }
         }
-        
-        const nodePosition = node.getPosition()
-        const nodeCenter = {
-          x: nodePosition.x + node.getSize().width / 2,
-          y: nodePosition.y
-        }
-        
-        // 计算节点中心与endpoint的距离
-        const distance = Math.sqrt(
-          Math.pow(nodeCenter.x - endPosition.x, 2) + 
-          Math.pow(nodeCenter.y - endPosition.y, 2)
-        )
-        
-        return distance <= snapDistance
       })
       
-      if (nearbyNode) {
-        const targetNodeId = nearbyNode.id || nearbyNode.getId()
-        
-        // 将预览线endpoint作为虚拟边添加到邻接表中
-        if (!adjacencyList.has(sourceId)) {
-          adjacencyList.set(sourceId, [])
-        }
-        adjacencyList.get(sourceId).push(targetNodeId)
-        
-        // 更新入度和出度
-        inDegree.set(targetNodeId, (inDegree.get(targetNodeId) || 0) + 1)
-        outDegree.set(sourceId, (outDegree.get(sourceId) || 0) + 1)
-        
-        console.log(`🔗 [拓扑分层] 预览线endpoint ${endpointKey} 连接: ${sourceId} -> ${targetNodeId}`, {
-          sourceId,
-          targetNodeId,
-          branchId,
-          endPosition,
-          nodePosition: nearbyNode.getPosition()
-        })
-      } else {
-        // 🎯 关键修改：将没有吸附节点的endpoint作为虚拟节点添加到分层结构中
-        const virtualNodeId = `virtual_endpoint_${endpointKey}`
-        
-        // 创建虚拟节点信息
-        endpointVirtualNodes.set(virtualNodeId, {
-          id: virtualNodeId,
-          endpointKey,
-          sourceId,
-          endPosition,
-          branchId,
-          branchLabel,
-          isVirtualEndpoint: true
-        })
-        
-        // 将虚拟endpoint节点添加到邻接表中
-        if (!adjacencyList.has(sourceId)) {
-          adjacencyList.set(sourceId, [])
-        }
-        adjacencyList.get(sourceId).push(virtualNodeId)
-        
-        // 初始化虚拟节点的度数
-        inDegree.set(virtualNodeId, 1) // 来自源节点的连接
-        outDegree.set(virtualNodeId, 0) // 虚拟endpoint没有出度
-        outDegree.set(sourceId, (outDegree.get(sourceId) || 0) + 1)
-        
-        console.log(`🎯 [拓扑分层] 创建虚拟endpoint节点: ${virtualNodeId}`, {
-          sourceId,
-          endPosition,
-          branchId
-        })
-      }
+      console.log(`🎯 [拓扑分层] 记录预览线元素: ${previewElementId}`, {
+        sourceId,
+        endPosition,
+        branchId,
+        branchLabel,
+        type: branchId ? 'branch_preview_line' : 'single_preview_line'
+      })
     })
     
     // 拓扑排序确定层级
@@ -564,52 +600,20 @@ export function useStructuredLayout(getGraph) {
         layers.push([])
       }
       
-      // 检查是否是虚拟endpoint节点
-      if (endpointVirtualNodes.has(nodeId)) {
-        // 处理虚拟endpoint节点
-        const virtualNodeInfo = endpointVirtualNodes.get(nodeId)
-        
-        // 🎯 关键修复：虚拟endpoint节点应该在其源节点的下一层
-        const sourceNodeId = virtualNodeInfo.sourceId
-        const sourceNodeLevel = nodeToLayer.get(sourceNodeId)
-        const correctLevel = sourceNodeLevel !== undefined ? sourceNodeLevel + 1 : level
-        
-        // 确保正确的层级存在
-        while (layers.length <= correctLevel) {
-          layers.push([])
-        }
-        
-        layers[correctLevel].push({
-          node: null, // 虚拟节点没有真实的node对象
+      // 处理真实节点
+      const node = nodes.find(n => (n.id || n.getId()) === nodeId)
+      if (node) {
+        const nodeData = node.getData() || {}
+        layers[level].push({
+          node,
           nodeId,
-          position: virtualNodeInfo.endPosition,
-          size: { width: 0, height: 0 }, // 虚拟节点没有尺寸
-          data: virtualNodeInfo,
-          type: 'endpoint',
-          isEndpoint: true,
-          isVirtualEndpoint: true
+          position: node.getPosition(),
+          size: node.getSize(),
+          data: nodeData,
+          type: nodeData.nodeType || nodeData.type || 'normal',
+          isEndpoint: false,
+          isPreviewLine: false
         })
-        
-        // 更新虚拟endpoint节点的层级映射
-        nodeToLayer.set(nodeId, correctLevel)
-        
-        console.log(`🎯 [拓扑分层] 虚拟endpoint节点 ${nodeId} 分配到第${correctLevel}层 (源节点 ${sourceNodeId} 在第${sourceNodeLevel}层)`)
-      } else {
-        // 处理真实节点
-        const node = nodes.find(n => (n.id || n.getId()) === nodeId)
-        if (node) {
-          const nodeData = node.getData() || {}
-          layers[level].push({
-            node,
-            nodeId,
-            position: node.getPosition(),
-            size: node.getSize(),
-            data: nodeData,
-            type: nodeData.nodeType || nodeData.type || 'normal',
-            isEndpoint: false,
-            isVirtualEndpoint: false
-          })
-        }
       }
       
       // 处理子节点
@@ -625,6 +629,46 @@ export function useStructuredLayout(getGraph) {
         }
       })
     }
+    
+    // 🎯 新增：将预览线元素直接添加到相应层级
+    previewLineElements.forEach((previewElement, previewElementId) => {
+      const { sourceId, endPosition, calculateLayer } = previewElement
+      const sourceNodeLevel = nodeToLayer.get(sourceId)
+      
+      if (sourceNodeLevel !== undefined) {
+        // 获取源节点的Y坐标
+        const sourceNode = nodes.find(n => (n.id || n.getId()) === sourceId)
+        const sourceNodeY = sourceNode ? sourceNode.getPosition().y : 0
+        
+        // 计算预览线应该分配到的层级
+        const previewLineLevel = calculateLayer(sourceNodeLevel, sourceNodeY)
+        
+        // 确保目标层级存在
+        while (layers.length <= previewLineLevel) {
+          layers.push([])
+        }
+        
+        // 将预览线元素添加到对应层级
+        layers[previewLineLevel].push({
+          node: null, // 预览线没有真实的node对象
+          nodeId: previewElementId,
+          position: endPosition,
+          size: { width: 0, height: 0 }, // 预览线没有尺寸
+          data: previewElement,
+          type: 'preview_line',
+          isEndpoint: false,
+          isPreviewLine: true
+        })
+        
+        console.log(`🎯 [拓扑分层] 预览线元素 ${previewElementId} 分配到第${previewLineLevel}层 (源节点 ${sourceId} 在第${sourceNodeLevel}层)`, {
+          endPosition,
+          sourceNodeY,
+          calculatedLevel: previewLineLevel
+        })
+      } else {
+        console.warn(`⚠️ [拓扑分层] 预览线元素 ${previewElementId} 的源节点 ${sourceId} 未找到层级信息`)
+      }
+    })
     
 
     
@@ -700,28 +744,46 @@ export function useStructuredLayout(getGraph) {
     
     console.log('📊 [拓扑分层] 拓扑分层结构构建完成', {
       totalLayers: layers.length,
-      previewEndpointMappings: Array.from(previewEndpointToSource.entries()),
-      virtualEndpointNodes: Array.from(endpointVirtualNodes.entries()),
+      previewLineElements: Array.from(previewLineElements.entries()),
       layerDistribution: layers.map((layer, index) => ({
         layer: index,
         nodeCount: layer.length,
-        normalNodes: layer.filter(n => !n.isEndpoint && !n.isVirtualEndpoint).length,
-      endpoints: layer.filter(n => n.isEndpoint).length,
-        virtualEndpoints: layer.filter(n => n.isVirtualEndpoint).length,
+        normalNodes: (layer || []).filter(n => !n.isEndpoint && !n.isPreviewLine).length,
+        endpoints: (layer || []).filter(n => n.isEndpoint).length,
+        previewLines: (layer || []).filter(n => n.isPreviewLine).length,
         nodes: layer.map(n => {
           if (n.isEndpoint) return `${n.nodeId}(endpoint)`
-          if (n.isVirtualEndpoint) return `${n.nodeId}(虚拟endpoint)`
+          if (n.isPreviewLine) return `${n.nodeId}(预览线)`
           return `${n.nodeId}(普通节点)`
         })
       }))
     })
     
-    return {
+    // 🚨 关键调试：检查返回值
+    const result = {
       layers,
       nodeToLayer,
       adjacencyList,
       totalLayers: layers.length
     }
+    
+    console.log('🔍 [拓扑分层] 返回结果检查:', {
+      layersLength: result.layers.length,
+      nodeToLayerSize: result.nodeToLayer.size,
+      totalLayers: result.totalLayers
+    })
+    
+    if (result.totalLayers === 0 && nodes.length > 0) {
+      console.error('❌ [拓扑分层] 严重错误：有节点但总层数为0！', {
+        nodesCount: nodes.length,
+        edgesCount: edges.length,
+        queueProcessed: queue.length === 0,
+        inDegreeMap: Array.from(inDegree.entries()),
+        adjacencyListMap: Array.from(adjacencyList.entries())
+      })
+    }
+    
+    return result
   }
 
   /**
@@ -730,9 +792,14 @@ export function useStructuredLayout(getGraph) {
    * @returns {Object} 布局引擎实例
    */
   const createLayoutEngineInstance = (graph) => {
+    // 🔧 修复：如果没有传入graph，尝试从getGraph获取
     if (!graph) {
-      console.warn('⚠️ [布局引擎预创建] Graph实例为空，跳过预创建')
-      return null
+      graph = getGraph()
+      if (!graph) {
+        console.warn('⚠️ [布局引擎预创建] Graph实例为空，跳过预创建')
+        return null
+      }
+      console.log('🔧 [布局引擎预创建] 从getGraph()获取到Graph实例')
     }
 
     const engineType = layoutConfig.value.layoutEngine || 'unified'
@@ -854,6 +921,17 @@ export function useStructuredLayout(getGraph) {
 
     // 🎯 关键修复：添加节点数量验证，与LayoutModeManager保持一致
     const nodes = graph.getNodes()
+    console.log('🔍 [调试] applyUnifiedStructuredLayout - 节点数量检查:', {
+      nodes: nodes ? nodes.length : 0,
+      nodeIds: nodes ? nodes.map(n => n.id) : [],
+      nodeDetails: nodes ? nodes.map(n => ({
+        id: n.id,
+        type: n.getData()?.type || n.getData()?.nodeType,
+        isPreview: n.getData()?.isPreview,
+        isHint: n.getData()?.type === 'hint'
+      })) : []
+    })
+    
     if (!nodes || nodes.length === 0) {
       console.warn('[useStructuredLayout] 没有节点可以布局')
       return {
@@ -866,18 +944,35 @@ export function useStructuredLayout(getGraph) {
       }
     }
 
-    // 🎯 关键修复：统一布局需要至少3个节点才能执行（与LayoutModeManager保持一致）
-    if (nodes.length < 3) {
-      console.warn('[useStructuredLayout] 统一布局需要至少3个节点，当前节点数量:', nodes.length)
+    // 🎯 关键修复：统一布局需要至少2个节点才能执行（降低门槛以支持更多场景）
+    if (nodes.length < 2) {
+      console.error('❌ [useStructuredLayout] 统一布局需要至少2个节点，当前节点数量:', nodes.length)
+      console.error('❌ [useStructuredLayout] 节点详情:', nodes.map(n => ({
+        id: n.id,
+        type: n.getData()?.type || n.getData()?.nodeType,
+        data: n.getData()
+      })))
       return {
         type: 'unified-structured',
         success: false,
-        message: `统一布局需要至少3个节点，当前节点数量: ${nodes.length}`,
+        message: `统一布局需要至少2个节点，当前节点数量: ${nodes.length}`,
         layoutTime: 0,
         nodeCount: nodes.length,
         skipped: true
       }
     }
+    
+    // 🔍 额外调试：检查节点类型分布
+    const nodeTypeStats = nodes.reduce((stats, node) => {
+      const nodeData = node.getData() || {}
+      const nodeType = nodeData.type || nodeData.nodeType || 'unknown'
+      stats[nodeType] = (stats[nodeType] || 0) + 1
+      return stats
+    }, {})
+    console.log('📊 [useStructuredLayout] 节点类型分布:', nodeTypeStats)
+    console.log('📊 [useStructuredLayout] 节点数量检查通过，当前节点数量:', nodes.length)
+    
+    console.log('✅ [调试] 节点数量检查通过，开始执行布局')
 
     console.log('🚀 [统一结构化布局] 开始应用基于父子关联关系的分层分级自底向上布局')
     
@@ -960,7 +1055,9 @@ export function useStructuredLayout(getGraph) {
       console.log('🌐 [全局引用] 布局引擎已设置为全局引用')
 
       // 执行统一结构化布局
+      console.log('🚀 [调试] 即将调用 layoutEngine.executeLayout()')
       const layoutResult = await layoutEngine.executeLayout()
+      console.log('✅ [调试] layoutEngine.executeLayout() 调用完成，结果:', layoutResult)
 
       const endTime = performance.now()
       const layoutTime = endTime - startTime
@@ -1054,20 +1151,30 @@ export function useStructuredLayout(getGraph) {
         const nodeData = node.getData() || {}
         const nodeType = nodeData.nodeType || nodeData.type || 'unknown'
         
+        // 🎯 关键修复：检查并修复节点位置中的NaN值
+        const safeNodePosition = {
+          x: isNaN(position.x) ? 0 : position.x,
+          y: isNaN(position.y) ? 100 : position.y // 使用默认Y坐标100
+        }
+        
+        if (isNaN(position.y)) {
+          console.warn(`⚠️ [NaN修复] 节点 ${node.id} 的Y坐标为NaN，在节点信息统计中使用默认值100`)
+        }
+        
         const nodeInfo = {
           id: node.id,
           type: nodeType,
           position: {
-            x: Math.round(position.x),
-            y: Math.round(position.y)
+            x: Math.round(safeNodePosition.x),
+            y: Math.round(safeNodePosition.y)
           },
           size: {
             width: Math.round(size.width),
             height: Math.round(size.height)
           },
           center: {
-            x: Math.round(position.x + size.width / 2),
-            y: Math.round(position.y + size.height / 2)
+            x: Math.round(safeNodePosition.x + size.width / 2),
+            y: Math.round(safeNodePosition.y + size.height / 2)
           }
         }
         
@@ -1083,11 +1190,21 @@ export function useStructuredLayout(getGraph) {
           const portConfig = node.getPortProp(port.id, 'position') || {}
           const portGroup = port.group || 'unknown'
           
+          // 🎯 关键修复：检查并修复节点位置中的NaN值
+          const safePosition = {
+            x: isNaN(position.x) ? 0 : position.x,
+            y: isNaN(position.y) ? 100 : position.y // 使用默认Y坐标100
+          }
+          
+          if (isNaN(position.y)) {
+            console.warn(`⚠️ [NaN修复] 节点 ${node.id} 的Y坐标为NaN，使用默认值100`)
+          }
+          
           // 计算端口的实际位置
           let portX = 0
           let portY = 0
-          let absoluteX = position.x
-          let absoluteY = position.y
+          let absoluteX = safePosition.x
+          let absoluteY = safePosition.y
           
           if (portConfig.name === 'bottom') {
             const args = portConfig.args || {}
@@ -1095,32 +1212,32 @@ export function useStructuredLayout(getGraph) {
               parseFloat(args.x) / 100 : 0.5
             portX = size.width * xPercent + (args.dx || 0)
             portY = size.height + (args.dy || 0)
-            absoluteX = position.x + portX
-            absoluteY = position.y + portY
+            absoluteX = safePosition.x + portX
+            absoluteY = safePosition.y + portY
           } else if (portConfig.name === 'top') {
             const args = portConfig.args || {}
             const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
               parseFloat(args.x) / 100 : 0.5
             portX = size.width * xPercent + (args.dx || 0)
             portY = args.dy || 0
-            absoluteX = position.x + portX
-            absoluteY = position.y + portY
+            absoluteX = safePosition.x + portX
+            absoluteY = safePosition.y + portY
           } else if (portConfig.name === 'left') {
             const args = portConfig.args || {}
             const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
               parseFloat(args.y) / 100 : 0.5
             portX = args.dx || 0
             portY = size.height * yPercent + (args.dy || 0)
-            absoluteX = position.x + portX
-            absoluteY = position.y + portY
+            absoluteX = safePosition.x + portX
+            absoluteY = safePosition.y + portY
           } else if (portConfig.name === 'right') {
             const args = portConfig.args || {}
             const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
               parseFloat(args.y) / 100 : 0.5
             portX = size.width + (args.dx || 0)
             portY = size.height * yPercent + (args.dy || 0)
-            absoluteX = position.x + portX
-            absoluteY = position.y + portY
+            absoluteX = safePosition.x + portX
+            absoluteY = safePosition.y + portY
           }
           
           const portInfo = {
@@ -1226,61 +1343,17 @@ export function useStructuredLayout(getGraph) {
       layerAnalysis.nodeToLayer = topologicalLayers.nodeToLayer
       layerAnalysis.totalLayers = topologicalLayers.layers.length
       
-      // 收集虚拟endpoint信息（替代直接从图中获取的预览线信息）
-      layerAnalysis.layers.forEach((layer, layerIndex) => {
-        layer.forEach(layerNode => {
-          if (layerNode.isVirtualEndpoint) {
-            const virtualEndpointInfo = {
-              id: layerNode.nodeId,
-              sourceNodeId: layerNode.data.sourceId,
-              endPosition: layerNode.data.endPosition,
-              branchId: layerNode.data.branchId,
-              branchLabel: layerNode.data.branchLabel,
-              layer: layerIndex
-            }
-            layerAnalysis.virtualEndpoints.push(virtualEndpointInfo)
-          }
-        })
-      })
+      // 🗑️ [已删除] 虚拟endpoint收集逻辑已被新的预览线分层策略替代
       
-      // 分析每层的节点类型分布
-      layerAnalysis.layers.forEach((layer, layerIndex) => {
-        let normalCount = 0
-        let endpointCount = 0
-        
-        layer.forEach(layerNode => {
-          if (layerNode.isEndpoint || layerNode.isVirtualEndpoint) {
-            endpointCount++
-          } else {
-            normalCount++
-          }
-        })
-        
-        // 统计层级类型
-        if (normalCount > 0 && endpointCount > 0) {
-          layerAnalysis.mixedLayers++
-        } else if (normalCount > 0) {
-          layerAnalysis.pureNormalLayers++
-        } else if (endpointCount > 0) {
-          layerAnalysis.pureEndpointLayers++
-        }
-      })
+      // 🗑️ [已删除] endpoint节点类型分布分析已被新的预览线分层策略替代
       
       // 输出总结日志
-      const totalEndpoints = nodesSummary.endpoints.length + layerAnalysis.virtualEndpoints.length
       console.log(`📊 [重绘总结] 节点统计 (布局方向: ${layoutDirection.value}):`)
       console.log(`  ├─ 普通节点: ${nodesSummary.normal.length} 个`)
-      console.log(`  ├─ 真实endpoint: ${nodesSummary.endpoints.length} 个`)
-      console.log(`  ├─ 虚拟endpoint: ${layerAnalysis.virtualEndpoints.length} 个`)
-      console.log(`  ├─ endpoint总计: ${totalEndpoints} 个`)
-      console.log(`  └─ 节点总计: ${nodesSummary.total + layerAnalysis.virtualEndpoints.length} 个`)
+      console.log(`  └─ 节点总计: ${nodesSummary.total} 个`)
       
-      console.log(`📏 [重绘总结] 分层统计 (${layoutDirection.value === 'TB' ? '垂直分层' : '水平分层'}):`)
-      console.log(`  ├─ 总层数: ${layerAnalysis.totalLayers} 层`)
-      console.log(`  ├─ 混合层级: ${layerAnalysis.mixedLayers} 层 (endpoint与普通节点共存)`)
-      console.log(`  ├─ 纯普通节点层: ${layerAnalysis.pureNormalLayers} 层`)
-      console.log(`  ├─ 纯endpoint层: ${layerAnalysis.pureEndpointLayers} 层`)
-      console.log(`  └─ 统一分层效果: ${layerAnalysis.mixedLayers > 0 ? '✅ 成功实现endpoint与普通节点统一分层' : '⚠️ 未发现混合层级'}`)
+      console.log(`📏 [重绘总结] 分层统计 (${layoutDirection.value === 'TB' ? '垂直分层' : '水平分层'}):`);
+      console.log(`  └─ 总层数: ${layerAnalysis.totalLayers} 层`)
       
       console.log(`🔌 [重绘总结] 端口统计:`)
       console.log(`  ├─ 输入端口: ${portsSummary.input.length} 个`)
@@ -1292,40 +1365,7 @@ export function useStructuredLayout(getGraph) {
       console.log(`  ├─ 预览线: ${edgesSummary.previews.length} 条`)
       console.log(`  └─ 总计: ${edgesSummary.total} 条`)
       
-      // 🎯 分层详情输出
-      if (layerAnalysis.totalLayers > 0) {
-        console.log(`📏 [重绘总结] 拓扑分层详情 (基于节点连接关系):`)
-        
-        layerAnalysis.layers.forEach((layer, layerIndex) => {
-          const normalNodes = layer.filter(node => !node.isEndpoint)
-        const endpoints = layer.filter(node => node.isEndpoint)
-          const layerType = normalNodes.length > 0 && endpoints.length > 0 ? '混合层' :
-                            normalNodes.length > 0 ? '普通节点层' : 'endpoint层'
-          
-          console.log(`  第${layerIndex + 1}层 (${layerType}):`)
-          console.log(`    ├─ 普通节点: ${normalNodes.length} 个`)
-          console.log(`    ├─ endpoint: ${endpoints.length} 个`)
-          console.log(`    └─ 总计: ${layer.length} 个`)
-          
-          // 显示该层的节点详情
-          if (normalNodes.length > 0) {
-            normalNodes.forEach((node, nodeIndex) => {
-              console.log(`      普通节点${nodeIndex + 1}: ${node.type} (${node.nodeId}) - 位置(${node.position.x}, ${node.position.y})`)
-            })
-          }
-          
-          if (endpoints.length > 0) {
-            endpoints.forEach((hint, hintIndex) => {
-              if (hint.isVirtualEndpoint) {
-                const branchInfo = hint.data.branchId ? ` [分支: ${hint.data.branchLabel || hint.data.branchId}]` : ''
-                console.log(`      虚拟endpoint${hintIndex + 1}: (${hint.nodeId}) - 终点位置(${Math.round(hint.position.x)}, ${Math.round(hint.position.y)}) - 源节点: ${hint.data.sourceId}${branchInfo}`)
-              } else {
-                console.log(`      endpoint${hintIndex + 1}: (${hint.nodeId}) - 位置(${Math.round(hint.position.x)}, ${Math.round(hint.position.y)})`)
-              }
-            })
-          }
-        })
-      }
+      // 🗑️ [已删除] 拓扑分层详情中的endpoint处理已被新的预览线分层策略替代
       
       // 详细位置信息
       if (nodesSummary.normal.length > 0) {
@@ -1335,12 +1375,7 @@ export function useStructuredLayout(getGraph) {
         })
       }
       
-      if (nodesSummary.endpoints.length > 0) {
-        console.log(`🎯 [重绘总结] endpoint位置详情:`)
-        nodesSummary.endpoints.forEach((hint, index) => {
-          console.log(`  ${index + 1}. endpoint (${hint.id}): 中心点(${hint.center.x}, ${hint.center.y}), 位置(${hint.position.x}, ${hint.position.y})`)
-        })
-      }
+      // 🗑️ [已删除] endpoint位置详情已被新的预览线分层策略替代
       
       if (portsSummary.input.length > 0) {
         console.log(`🔌 [重绘总结] 输入端口位置详情:`)
@@ -1378,15 +1413,7 @@ export function useStructuredLayout(getGraph) {
         })
       }
       
-      // 🎯 使用拓扑分层中的虚拟endpoint信息（更准确的预览线表示）
-      if (layerAnalysis.virtualEndpoints.length > 0) {
-        console.log(`🎯 [重绘总结] 虚拟endpoint详情 (基于拓扑关系):`)
-        layerAnalysis.virtualEndpoints.forEach((virtualEndpoint, index) => {
-          const branchInfo = virtualEndpoint.branchId ? ` [分支: ${virtualEndpoint.branchLabel || virtualEndpoint.branchId}]` : ''
-          console.log(`  ${index + 1}. 虚拟endpoint (${virtualEndpoint.id}): ${virtualEndpoint.sourceNodeId} → 坐标点(${Math.round(virtualEndpoint.endPosition.x)}, ${Math.round(virtualEndpoint.endPosition.y)})${branchInfo}`)
-          console.log(`     位于第${virtualEndpoint.layer + 1}层`)
-        })
-      }
+      // 🗑️ [已删除] 虚拟endpoint详情已被新的预览线分层策略替代
       
       // 布局质量分析
       const layoutQuality = analyzeLayoutQuality(nodesSummary, layoutDirection.value)
@@ -1410,7 +1437,7 @@ export function useStructuredLayout(getGraph) {
    * @returns {Object} 布局质量分析结果
    */
   const analyzeLayoutQuality = (nodesSummary, direction) => {
-    const allNodes = [...nodesSummary.normal, ...nodesSummary.endpoints]
+    const allNodes = [...nodesSummary.normal]
     
     if (allNodes.length === 0) {
       return {

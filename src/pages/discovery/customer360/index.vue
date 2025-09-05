@@ -105,8 +105,7 @@ const handleSearch = async () => {
 
 <style scoped>
 .customer-360-container {
-  padding: 40px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px 16px;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -114,17 +113,16 @@ const handleSearch = async () => {
 }
 
 .search-section {
-  background: white;
-  padding: 48px;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  max-width: 700px;
   width: 100%;
   text-align: center;
 }
 
 .search-header {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .search-header h2 {

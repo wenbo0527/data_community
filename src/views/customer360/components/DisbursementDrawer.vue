@@ -40,19 +40,12 @@
             <span class="value">{{ loanRecord.productName }}</span>
           </div>
           <div class="info-item">
-            <span class="label">合同号：</span>
-            <span class="value contract-no">{{ loanRecord.contractNo }}</span>
-            <a-button type="text" size="mini" @click="copyText(loanRecord.contractNo)">
-              <Copy class="copy-icon" />
-            </a-button>
-          </div>
-          <div class="info-item">
             <span class="label">借款金额：</span>
-            <span class="value amount highlight">{{ formatAmount(loanRecord.amount) }}</span>
+            <span class="value amount">{{ formatAmount(loanRecord.amount) }}</span>
           </div>
           <div class="info-item">
-            <span class="label">剩余本金：</span>
-            <span class="value amount">{{ formatAmount(loanRecord.balance) }}</span>
+            <span class="label">借款利率：</span>
+            <span class="value rate">{{ loanRecord.loanRate }}%</span>
           </div>
           <div class="info-item">
             <span class="label">借据状态：</span>
@@ -61,42 +54,59 @@
             </a-tag>
           </div>
           <div class="info-item">
-            <span class="label">用信日期：</span>
-            <span class="value date">{{ formatDate(loanRecord.loanDate) }}</span>
+            <span class="label">总期数：</span>
+            <span class="value">{{ loanRecord.installments }}期</span>
           </div>
           <div class="info-item">
-            <span class="label">银行卡号：</span>
-            <span class="value bank-card">{{ maskBankCard(loanRecord.bankCard) }}</span>
+            <span class="label">当前期次：</span>
+            <span class="value">{{ loanRecord.currentPeriod }}期</span>
           </div>
           <div class="info-item">
-            <span class="label">渠道：</span>
-            <span class="value">{{ loanRecord.channel }}</span>
+            <span class="label">逾期天数：</span>
+            <span class="value" :class="{ 'overdue': loanRecord.overdueDays > 0 }">
+              {{ loanRecord.overdueDays }}天
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="label">历史最大逾期：</span>
+            <span class="value" :class="{ 'overdue': loanRecord.maxOverdueDays > 0 }">
+              {{ loanRecord.maxOverdueDays }}天
+            </span>
+          </div>
+          <div class="info-item" v-if="loanRecord.settlementDate">
+            <span class="label">结清日期：</span>
+            <span class="value date">{{ formatDate(loanRecord.settlementDate) }}</span>
           </div>
         </div>
       </div>
 
-      <!-- 放款统计 -->
+      <!-- 剩余金额统计 -->
       <div class="stats-section">
         <h4 class="section-title">
           <BarChart3 class="section-icon" />
-          放款统计
+          剩余金额统计
         </h4>
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-value">{{ formatAmount(getTotalDisbursed()) }}</div>
-            <div class="stat-label">累计放款</div>
+            <div class="stat-value">{{ formatAmount(loanRecord.remainingPrincipal) }}</div>
+            <div class="stat-label">剩余本金</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ getDisbursementCount() }}笔</div>
-            <div class="stat-label">放款笔数</div>
+            <div class="stat-value">{{ formatAmount(loanRecord.remainingInterest) }}</div>
+            <div class="stat-label">剩余利息</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ formatAmount(getAverageAmount()) }}</div>
-            <div class="stat-label">平均金额</div>
+          <div class="stat-card penalty-card">
+            <div class="stat-value penalty">{{ formatAmount(loanRecord.remainingPenalty) }}</div>
+            <div class="stat-label">
+              剩余罚息
+              <a-tooltip content="本金罚息+利息罚息">
+                <ExclamationCircle class="penalty-icon" />
+              </a-tooltip>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ getSuccessRate() }}%</div>
-            <div class="stat-label">成功率</div>
+          <div class="stat-card total-card">
+            <div class="stat-value total">{{ formatAmount(loanRecord.remainingTotal) }}</div>
+            <div class="stat-label">剩余应还总额</div>
           </div>
         </div>
       </div>
@@ -106,11 +116,11 @@
         <h4 class="section-title">
           <History class="section-icon" />
           放款记录
-          <span class="record-count">({{ disbursementDetails.length }}笔)</span>
+          <span class="record-count">({{ disbursementRecords.length }}笔)</span>
         </h4>
         
         <div class="records-container">
-          <div v-if="disbursementDetails.length === 0" class="empty-state">
+          <div v-if="disbursementRecords.length === 0" class="empty-state">
             <div class="empty-icon">
               <FileX />
             </div>
@@ -119,13 +129,13 @@
           
           <div v-else class="record-list">
             <div
-              v-for="(record, index) in disbursementDetails"
+              v-for="(record, index) in disbursementRecords"
               :key="index"
               class="record-card"
             >
               <div class="record-header">
                 <div class="record-title">
-                  <span class="batch">第{{ index + 1 }}笔</span>
+                  <span class="batch">第{{ record.batch }}笔</span>
                   <a-tag :color="getDisbursementStatusColor(record.status)" size="small">
                     {{ record.status }}
                   </a-tag>
@@ -138,37 +148,29 @@
               <div class="record-details">
                 <div class="detail-row">
                   <span class="detail-label">放款日期：</span>
-                  <span class="detail-value date">{{ formatDateTime(record.disbursementDate) }}</span>
+                  <span class="detail-value">{{ formatDate(record.disbursementDate) }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">申请日期：</span>
-                  <span class="detail-value date">{{ formatDateTime(record.applicationDate) }}</span>
+                  <span class="detail-label">到账银行：</span>
+                  <span class="detail-value">{{ record.bankName }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">放款方式：</span>
-                  <span class="detail-value">{{ record.method }}</span>
+                  <span class="detail-label">银行卡号：</span>
+                  <span class="detail-value bank-card">{{ record.bankCard }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">收款账户：</span>
-                  <span class="detail-value bank-card">{{ maskBankCard(record.receivingAccount) }}</span>
+                  <span class="detail-label">放款渠道：</span>
+                  <span class="detail-value">{{ record.channel }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">收款银行：</span>
-                  <span class="detail-value">{{ record.receivingBank }}</span>
+                  <span class="detail-label">交易流水：</span>
+                  <span class="detail-value transaction-id">{{ record.transactionId }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">处理时长：</span>
-                  <span class="detail-value">{{ getProcessingTime(record.applicationDate, record.disbursementDate) }}</span>
+                  <span class="detail-label">处理状态：</span>
+                  <span class="detail-value">{{ record.processStatus }}</span>
                 </div>
-                <div v-if="record.fee > 0" class="detail-row">
-                  <span class="detail-label">手续费：</span>
-                  <span class="detail-value amount">{{ formatAmount(record.fee) }}</span>
-                </div>
-                <div v-if="record.failureReason" class="detail-row full-width">
-                  <span class="detail-label">失败原因：</span>
-                  <span class="detail-value failure-reason">{{ record.failureReason }}</span>
-                </div>
-                <div v-if="record.remark" class="detail-row full-width">
+                <div v-if="record.remark" class="detail-row">
                   <span class="detail-label">备注：</span>
                   <span class="detail-value">{{ record.remark }}</span>
                 </div>
@@ -178,36 +180,44 @@
         </div>
       </div>
 
-      <!-- 放款流程 -->
-      <div class="process-section">
+      <!-- 审批信息 -->
+      <div class="approval-section">
         <h4 class="section-title">
-          <GitBranch class="section-icon" />
-          放款流程
+          <CheckCircle class="section-icon" />
+          审批信息
         </h4>
         
-        <div class="process-container">
-          <div v-if="processSteps.length === 0" class="empty-state">
+        <div class="approval-container">
+          <div v-if="!loanRecord.approvalInfo" class="empty-state">
             <div class="empty-icon">
               <FileX />
             </div>
-            <div class="empty-text">暂无流程记录</div>
+            <div class="empty-text">暂无审批信息</div>
           </div>
           
-          <div v-else class="process-timeline">
-            <div
-              v-for="(step, index) in processSteps"
-              :key="index"
-              class="timeline-item"
-              :class="{ 'is-last': index === processSteps.length - 1 }"
-            >
-              <div class="timeline-dot" :class="getStepStatusClass(step.status)">
-                <component :is="getStepIcon(step.status)" class="step-icon" />
+          <div v-else class="approval-info">
+            <div class="approval-grid">
+              <div class="approval-item">
+                <span class="label">申请时间：</span>
+                <span class="value">{{ formatDate(loanRecord.approvalInfo.applyTime) }}</span>
               </div>
-              <div class="timeline-content">
-                <div class="step-title">{{ step.stepName }}</div>
-                <div class="step-time">{{ formatDateTime(step.processTime) }}</div>
-                <div v-if="step.operator" class="step-operator">操作人：{{ step.operator }}</div>
-                <div v-if="step.remark" class="step-remark">{{ step.remark }}</div>
+              <div class="approval-item">
+                <span class="label">审批时间：</span>
+                <span class="value">{{ formatDate(loanRecord.approvalInfo.approvalTime) }}</span>
+              </div>
+              <div class="approval-item">
+                <span class="label">审批人员：</span>
+                <span class="value">{{ loanRecord.approvalInfo.approver }}</span>
+              </div>
+              <div class="approval-item">
+                <span class="label">审批结果：</span>
+                <a-tag :color="getApprovalStatusColor(loanRecord.approvalInfo.result)" size="small">
+                  {{ loanRecord.approvalInfo.result }}
+                </a-tag>
+              </div>
+              <div class="approval-item full-width" v-if="loanRecord.approvalInfo.remark">
+                <span class="label">审批意见：</span>
+                <span class="value">{{ loanRecord.approvalInfo.remark }}</span>
               </div>
             </div>
           </div>
@@ -226,54 +236,48 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { 
-  Banknote, 
-  FileText, 
-  Copy, 
-  BarChart3, 
-  History, 
-  GitBranch, 
-  FileX,
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle
-} from 'lucide-vue-next'
+import { Banknote, FileText, Copy, BarChart3, History, CheckCircle, FileX } from 'lucide-vue-next'
+import { IconExclamationCircle } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 
-interface DisbursementDetail {
+interface DisbursementRecord {
+  batch: number
   disbursementDate: string
-  applicationDate: string
   amount: number
-  method: string
-  receivingAccount: string
-  receivingBank: string
+  bankName: string
+  bankCard: string
+  channel: string
+  transactionId: string
   status: string
-  fee: number
-  failureReason?: string
+  processStatus: string
   remark?: string
 }
 
-interface ProcessStep {
-  stepName: string
-  processTime: string
-  status: string
-  operator?: string
+interface ApprovalInfo {
+  applyTime: string
+  approvalTime: string
+  approver: string
+  result: string
   remark?: string
 }
 
 interface LoanRecord {
   loanNo: string
   productName: string
-  contractNo: string
   amount: number
-  balance: number
+  loanRate: number
   status: string
-  loanDate: string
-  bankCard: string
-  channel: string
-  disbursementDetails: DisbursementDetail[]
-  processSteps: ProcessStep[]
+  installments: number
+  currentPeriod: number
+  overdueDays: number
+  maxOverdueDays: number
+  settlementDate?: string
+  remainingPrincipal: number
+  remainingInterest: number
+  remainingPenalty: number
+  remainingTotal: number
+  disbursementRecords: DisbursementRecord[]
+  approvalInfo?: ApprovalInfo
 }
 
 interface Props {
@@ -297,8 +301,7 @@ const visible = computed({
   set: (value) => emit('update:visible', value)
 })
 
-const disbursementDetails = computed(() => props.loanRecord?.disbursementDetails || [])
-const processSteps = computed(() => props.loanRecord?.processSteps || [])
+const disbursementRecords = computed(() => props.loanRecord?.disbursementRecords || [])
 
 // 格式化金额
 const formatAmount = (amount: number): string => {
@@ -314,25 +317,6 @@ const formatDate = (dateStr: string): string => {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   return date.toLocaleDateString('zh-CN')
-}
-
-// 格式化日期时间
-const formatDateTime = (dateStr: string): string => {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-// 掩码银行卡号
-const maskBankCard = (cardNo: string): string => {
-  if (!cardNo || cardNo.length < 8) return cardNo
-  return cardNo.substring(0, 4) + '****' + cardNo.substring(cardNo.length - 4)
 }
 
 // 获取状态颜色
@@ -351,73 +335,20 @@ const getDisbursementStatusColor = (status: string): string => {
   const colorMap: Record<string, string> = {
     '成功': 'green',
     '失败': 'red',
-    '处理中': 'blue',
-    '待处理': 'orange'
+    '处理中': 'orange',
+    '待处理': 'blue'
   }
   return colorMap[status] || 'gray'
 }
 
-// 获取步骤状态类
-const getStepStatusClass = (status: string): string => {
-  const classMap: Record<string, string> = {
-    '成功': 'success',
-    '失败': 'error',
-    '处理中': 'processing',
-    '待处理': 'pending'
+// 获取审批状态颜色
+const getApprovalStatusColor = (result: string): string => {
+  const colorMap: Record<string, string> = {
+    '通过': 'green',
+    '拒绝': 'red',
+    '待审批': 'orange'
   }
-  return classMap[status] || 'default'
-}
-
-// 获取步骤图标
-const getStepIcon = (status: string) => {
-  const iconMap: Record<string, any> = {
-    '成功': CheckCircle,
-    '失败': XCircle,
-    '处理中': Clock,
-    '待处理': AlertCircle
-  }
-  return iconMap[status] || Clock
-}
-
-// 计算处理时长
-const getProcessingTime = (startDate: string, endDate: string): string => {
-  if (!startDate || !endDate) return '-'
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  const diffMs = end.getTime() - start.getTime()
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-  
-  if (diffHours > 0) {
-    return `${diffHours}小时${diffMinutes}分钟`
-  }
-  return `${diffMinutes}分钟`
-}
-
-// 计算累计放款
-const getTotalDisbursed = (): number => {
-  return disbursementDetails.value
-    .filter(record => record.status === '成功')
-    .reduce((total, record) => total + record.amount, 0)
-}
-
-// 计算放款笔数
-const getDisbursementCount = (): number => {
-  return disbursementDetails.value.length
-}
-
-// 计算平均金额
-const getAverageAmount = (): number => {
-  const successfulRecords = disbursementDetails.value.filter(record => record.status === '成功')
-  if (successfulRecords.length === 0) return 0
-  return getTotalDisbursed() / successfulRecords.length
-}
-
-// 计算成功率
-const getSuccessRate = (): string => {
-  if (disbursementDetails.value.length === 0) return '0'
-  const successCount = disbursementDetails.value.filter(record => record.status === '成功').length
-  return ((successCount / disbursementDetails.value.length) * 100).toFixed(1)
+  return colorMap[result] || 'gray'
 }
 
 // 复制文本
@@ -443,7 +374,7 @@ const copyText = async (text: string) => {
   width: 18px;
   height: 18px;
   margin-right: 8px;
-  color: #165dff;
+  color: #00b42a;
 }
 
 .loading-container {
@@ -460,7 +391,7 @@ const copyText = async (text: string) => {
 .info-section,
 .stats-section,
 .records-section,
-.process-section {
+.approval-section {
   margin-bottom: 24px;
 }
 
@@ -493,7 +424,18 @@ const copyText = async (text: string) => {
   gap: 12px;
 }
 
-.info-item {
+.approval-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.approval-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.info-item,
+.approval-item {
   display: flex;
   align-items: center;
   padding: 8px 0;
@@ -512,7 +454,8 @@ const copyText = async (text: string) => {
 }
 
 .value.loan-no,
-.value.contract-no {
+.value.bank-card,
+.value.transaction-id {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
@@ -521,17 +464,19 @@ const copyText = async (text: string) => {
   font-weight: 600;
 }
 
-.value.amount.highlight {
-  color: #00b42a;
-  font-size: 14px;
+.value.rate {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  color: #165dff;
 }
 
 .value.date {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
-.value.bank-card {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+.value.overdue {
+  color: #f53f3f;
+  font-weight: 600;
 }
 
 .copy-icon {
@@ -559,6 +504,16 @@ const copyText = async (text: string) => {
   text-align: center;
 }
 
+.penalty-card {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+}
+
+.total-card {
+  background: #f0f9ff;
+  border: 1px solid #bae7ff;
+}
+
 .stat-value {
   font-size: 18px;
   font-weight: 600;
@@ -567,13 +522,31 @@ const copyText = async (text: string) => {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
+.stat-value.penalty {
+  color: #f53f3f;
+}
+
+.stat-value.total {
+  color: #165dff;
+}
+
 .stat-label {
   font-size: 12px;
   color: #86909c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.penalty-icon {
+  width: 12px;
+  height: 12px;
+  color: #f53f3f;
 }
 
 .records-container,
-.process-container {
+.approval-container {
   max-height: 400px;
   overflow-y: auto;
 }
@@ -629,13 +602,6 @@ const copyText = async (text: string) => {
   padding: 4px 0;
 }
 
-.detail-row.full-width {
-  grid-column: 1 / -1;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
 .detail-label {
   font-size: 12px;
   color: #86909c;
@@ -646,120 +612,17 @@ const copyText = async (text: string) => {
   color: #1d2129;
 }
 
-.detail-value.amount {
+.detail-value.bank-card,
+.detail-value.transaction-id {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 500;
 }
 
-.detail-value.date {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-}
-
-.detail-value.bank-card {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-}
-
-.detail-value.failure-reason {
-  color: #f53f3f;
-  font-weight: 500;
-}
-
-.process-timeline {
-  position: relative;
-}
-
-.timeline-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.timeline-item:not(.is-last)::after {
-  content: '';
-  position: absolute;
-  left: 15px;
-  top: 32px;
-  width: 2px;
-  height: calc(100% + 8px);
-  background: #e5e6eb;
-}
-
-.timeline-dot {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.timeline-dot.success {
-  background: #00b42a;
-  color: white;
-}
-
-.timeline-dot.error {
-  background: #f53f3f;
-  color: white;
-}
-
-.timeline-dot.processing {
-  background: #165dff;
-  color: white;
-}
-
-.timeline-dot.pending {
-  background: #ff7d00;
-  color: white;
-}
-
-.timeline-dot.default {
-  background: #86909c;
-  color: white;
-}
-
-.step-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.timeline-content {
-  flex: 1;
-  padding-top: 4px;
-}
-
-.step-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1d2129;
-  margin-bottom: 4px;
-}
-
-.step-time {
-  font-size: 12px;
-  color: #86909c;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  margin-bottom: 4px;
-}
-
-.step-operator {
-  font-size: 12px;
-  color: #86909c;
-  margin-bottom: 4px;
-}
-
-.step-remark {
-  font-size: 12px;
-  color: #1d2129;
+.approval-info {
   background: #f7f8fa;
-  padding: 8px;
-  border-radius: 4px;
-  border-left: 3px solid #165dff;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e5e6eb;
 }
 
 .empty-container,
@@ -787,7 +650,8 @@ const copyText = async (text: string) => {
 }
 
 @media (max-width: 768px) {
-  .info-grid {
+  .info-grid,
+  .approval-grid {
     grid-template-columns: 1fr;
   }
   

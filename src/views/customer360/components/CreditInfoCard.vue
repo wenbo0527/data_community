@@ -298,7 +298,7 @@ const copyCreditData = async (text: string) => {
 }
 
 .card-content {
-  padding: 20px;
+  padding: 16px;
 }
 
 .loading-wrapper {
@@ -311,12 +311,12 @@ const copyCreditData = async (text: string) => {
 .credit-details {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .info-row {
   display: flex;
-  gap: 32px;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -369,8 +369,8 @@ const copyCreditData = async (text: string) => {
 .amount-row {
   background: #f7f8fa;
   border-radius: 8px;
-  padding: 16px;
-  gap: 24px;
+  padding: 12px;
+  gap: 20px;
 }
 
 .amount-item {

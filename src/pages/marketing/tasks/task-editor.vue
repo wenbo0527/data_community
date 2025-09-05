@@ -997,7 +997,6 @@ watch(() => route.query, () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .page-container {

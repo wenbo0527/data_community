@@ -76,6 +76,7 @@
               @add-event-property="addEventProperty"
               @remove-event-property="(condition, propertyIndex) => removeEventProperty(condition, propertyIndex)"
               @update-group-name="handleUpdateGroupName"
+              @update-condition="handleUpdateCondition"
             />
 
               
@@ -145,6 +146,7 @@
                 @add-event-property="addEventProperty"
                 @remove-event-property="(condition, propertyIndex) => removeEventProperty(condition, propertyIndex)"
                 @update-group-name="handleUpdateGroupName"
+                @update-condition="handleUpdateCondition"
               />
             </div>
           </div>
@@ -284,6 +286,7 @@ const emit = defineEmits<{
   addEventProperty: [condition: Condition]
   removeEventProperty: [condition: Condition, propertyIndex: number]
   updateGroupName: [group: ConditionGroup, newName: string]
+  updateCondition: [condition: Condition]
 }>()
 
 // 响应式数据
@@ -468,6 +471,11 @@ const handleUpdateGroupName = (group: ConditionGroup, newName: string) => {
   group.isEditingName = false
   group.editingName = ''
 }
+
+// 处理条件更新
+const handleUpdateCondition = (condition: Condition) => {
+  emit('updateCondition', condition)
+}
 </script>
 
 <style scoped>
@@ -565,9 +573,9 @@ const handleUpdateGroupName = (group: ConditionGroup, newName: string) => {
   justify-content: center;
   min-width: 32px;
   height: 20px;
-  border: 1px solid #d0d0d0;
+  border: 1px solid #d9d9d9;
   border-radius: 10px;
-  background: white;
+  background: #f5f5f5;
   font-size: 10px;
   font-weight: 500;
   color: #666;
@@ -585,13 +593,11 @@ const handleUpdateGroupName = (group: ConditionGroup, newName: string) => {
 }
 
 .cross-group-logic-indicator.and {
-  border-color: #165dff;
-  color: #165dff;
+  /* 统一样式，不再使用蓝色 */
 }
 
 .cross-group-logic-indicator.or {
-  border-color: #ff7d00;
-  color: #ff7d00;
+  /* 统一样式，不再使用橙色 */
 }
 
 .regular-groups-section,
@@ -1091,33 +1097,34 @@ const handleUpdateGroupName = (group: ConditionGroup, newName: string) => {
 }
 
 .tag-action-btn {
-  width: 20px;
-  height: 20px;
-  padding: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border: 1px solid #e8e8e8;
+  background: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .tag-action-btn.add {
-  color: #52c41a;
-  background-color: #f6ffed;
-  border: 1px solid #d9f7be;
+  color: #1890ff;
 }
 
 .tag-action-btn.add:hover {
-  border-color: #52c41a;
+  border-color: #1890ff;
+  color: #1890ff;
 }
 
 .tag-action-btn.remove {
   color: #ff4d4f;
-  background-color: #fff5f5;
-  border: 1px solid #ffccc7;
 }
 
 .tag-action-btn.remove:hover {
   border-color: #ff4d4f;
+  color: #ff4d4f;
 }
 
 /* 事件类型特殊样式 */
@@ -1279,22 +1286,22 @@ const handleUpdateGroupName = (group: ConditionGroup, newName: string) => {
 }
 
 .condition-type-add-btn {
-  width: 20px;
-  height: 20px;
-  padding: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
-  color: #52c41a;
-  background-color: #f6ffed;
-  border: 1px solid #d9f7be;
+  border: 1px solid #e8e8e8;
+  background: white;
+  color: #1890ff;
+  transition: all 0.2s ease;
   cursor: pointer;
-  transition: border-color 0.2s ease;
 }
 
 .condition-type-add-btn:hover {
-  border-color: #52c41a;
+  border-color: #1890ff;
+  color: #1890ff;
 }
 
 .condition-type-content {
@@ -1338,22 +1345,28 @@ const handleUpdateGroupName = (group: ConditionGroup, newName: string) => {
 }
 
 .condition-remove-btn {
-  width: 18px;
-  height: 18px;
-  padding: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border: 1px solid #e8e8e8;
+  background: white;
   color: #ff4d4f;
-  background-color: #fff5f5;
-  border: 1px solid #ffccc7;
+  transition: all 0.2s ease;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+}
+
+.action-btn.danger {
+  color: #f53f3f;
+  border-color: #f53f3f;
 }
 
 .condition-remove-btn:hover {
-  border-color: #ff4d4f;
+  background-color: #ffece8;
+  border-color: #f76965;
+  color: #cb272d;
 }
 
 /* 展开收起按钮样式 */
@@ -1405,22 +1418,20 @@ const handleUpdateGroupName = (group: ConditionGroup, newName: string) => {
 }
 
 .tag-action-btn.add-btn {
-  color: #52c41a;
-  background-color: #f6ffed;
-  border: 1px solid #d9f7be;
+  color: #1890ff;
 }
 
 .tag-action-btn.add-btn:hover {
-  border-color: #52c41a;
+  border-color: #1890ff;
+  color: #1890ff;
 }
 
 .tag-action-btn.remove-btn {
   color: #ff4d4f;
-  background-color: #fff5f5;
-  border: 1px solid #ffccc7;
 }
 
 .tag-action-btn.remove-btn:hover {
   border-color: #ff4d4f;
+  color: #ff4d4f;
 }
 </style>

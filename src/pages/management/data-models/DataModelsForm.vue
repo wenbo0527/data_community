@@ -745,6 +745,8 @@ onMounted(() => {
 
 .form-content {
   max-width: 1200px;
+  /* 确保内容可以正常滚动 */
+  width: 100%;
 }
 
 .form-section {

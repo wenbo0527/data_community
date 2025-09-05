@@ -17,11 +17,11 @@
 
 | 页面名称 | 模块名称 | 功能描述 |
 |----------|----------|----------|
-| 客户360主页 | 客户画像Tab | 展示客户基础信息、风险评估、行为分析等核心画像数据 |
-| 客户360主页 | 产品Tab | 展示客户的产品信息、授信情况、用信记录等产品相关数据 |
+| 客户360主页 | 客户画像Tab | 展示客户基础信息、风险评估、行为分析等核心画像数据，**不包含营销记录概览** |
+| 客户360主页 | 产品Tab | 展示客户的产品信息、授信情况、用信记录等产品相关数据，**包含营销记录模块** |
 | 客户360主页 | 征信Tab | 展示客户征信报告，支持无报告、无权限、查得报告三种状态切换 |
 | 客户360主页 | 催收Tab | 展示客户催收记录，包括催收活动、结果、统计信息和时间线 |
-| 客户360主页 | 营销Tab | 展示客户营销记录，包括活动参与、效果统计、渠道分析等 |
+| 客户360主页 | 营销记录模块 | **仅在产品Tab下展示**，包括客户营销记录、活动参与、效果统计、渠道分析等 |
 | 历史切片查询页 | 数据查询模块 | 支持多种数据模型的历史版本查询、对比分析和数据导出 |
 | 调额历史页 | 调额记录模块 | 展示客户额度调整历史，包括调整原因、过程和结果追踪 |
 | 支付流程页 | 签约记录模块 | 管理客户签约记录，包括合同信息、签约方式和状态跟踪 |
@@ -114,6 +114,11 @@ interface CreditDispute {
 
 #### 2.2.2 客户基础信息展示
 
+**功能说明**
+- 用户基础画像专注于展示客户的核心身份信息、风险评估和行为特征
+- **不包含营销记录概览**：营销相关数据统一在产品Tab下的营销记录模块中展示
+- 确保信息展示的专业性和模块职责的清晰划分
+
 **客户基本信息字段**
 ```typescript
 interface CustomerBasicInfo {
@@ -148,14 +153,89 @@ interface CustomerOverview {
 **删除字段**
 - 客户基本信息相关字段（已移至客户画像Tab）
 
-#### 2.3.2 产品概览合并优化
+#### 2.3.2 用信列表功能优化
+
+**用信列表字段定义**
+```typescript
+interface LoanRecord {
+  loanNo: string;             // 用信单号
+  loanDate: string;           // 用信日期
+  bankCardNo: string;         // 银行卡号（脱敏）
+  loanResult: string;         // 用信结果（成功/失败/处理中）
+  rejectReason?: string;      // 拒绝原因
+  contractNo: string;         // 借据号
+  contractStatus: string;     // 借据状态（正常/逾期/结清）
+  loanAmount: number;         // 借款金额
+  periods: number;            // 期数
+  productKey: string;         // 产品标识
+  interestRate: number;       // 利率
+  repaymentMethod: string;    // 还款方式
+  createTime: string;         // 创建时间
+  dueDate: string;            // 到期时间
+  
+  // 新增字段
+  overdueDays: number;        // 逾期天数
+  maxOverdueDays: number;     // 历史最大逾期天数
+  settlementDate?: string;    // 结清日期
+  currentPeriod: number;      // 当前期次
+  remainingPrincipal: number; // 剩余本金
+  remainingInterest: number;  // 剩余利息
+  remainingPenalty: number;   // 剩余罚息（本金罚息+利息罚息）
+  remainingTotal: number;     // 剩余应还总额
+  loanRate: number;           // 借款利率
+}
+```
+
+**用信列表操作功能**
+- **放款信息**：查看详细的放款记录信息
+- **还款信息**：查看详细的还款记录信息
+- **移除操作**：删除原有的"查看详情"操作
+
+**放款信息数据结构**
+```typescript
+interface LoanDisbursementInfo {
+  disbursementNo: string;     // 放款流水号
+  disbursementTime: string;   // 放款时间
+  repaymentMethod: string;    // 还款方式
+  remainingPrincipal: number; // 剩余本金
+  repaymentDate: string;      // 还款日
+  contractStartDate: string;  // 借据起始日期
+  contractEndDate: string;    // 借据结束日期
+}
+```
+
+**还款信息数据结构**
+```typescript
+interface RepaymentInfo {
+  dueDate: string;            // 应还款日
+  actualRepaymentDate?: string; // 实际还款日
+  duePrincipal: number;       // 应还本金
+  remainingPrincipal: number; // 剩余本金
+  currentDueAmount: number;   // 当期应还款金额
+  currentActualAmount: number; // 当期实际还款金额
+  maxOverdueDays: number;     // 最大逾期天数
+  repaymentStatus: string;    // 还款状态
+  actualInterest: number;     // 实际还款利息
+  actualPenalty: number;      // 实际还款罚息
+  remainingTotal: number;     // 剩余应还总额
+  loanRate: number;           // 借款利率
+}
+```
+
+**字段展示说明**
+- **剩余罚息**：显示时需要添加感叹号提示"本金罚息+利息罚息"
+- **操作按钮**：每行包含"放款信息"和"还款信息"两个操作按钮
+- **状态展示**：借据状态使用标签形式，不同状态不同颜色
+- **抽屉展示**：点击操作按钮打开右侧抽屉展示详细信息
+
+#### 2.3.3 产品概览合并优化
 
 **合并策略**
 - 将原有产品概览信息整合到客户概览中
 - 统一展示客户的产品使用情况
 - 优化信息层级结构
 
-#### 2.3.3 Su贷产品特殊功能
+#### 2.3.4 Su贷产品特殊功能
 
 **APP信息查询抽屉**
 
@@ -983,6 +1063,11 @@ interface CollectionTags {
 
 #### 2.6.1 功能概述
 营销记录模块用于展示客户的营销活动参与情况和效果，支持多维度的数据分析和管理。
+
+**重要说明**：
+- **模块位置**：营销记录功能仅在产品Tab下的营销记录模块中展示
+- **职责边界**：用户基础画像Tab不包含任何营销记录相关的概览或统计信息
+- **数据完整性**：所有营销相关数据（触达记录、权益记录、活动参与等）统一在此模块管理
 
 #### 2.6.2 数据结构
 - **营销活动记录**：活动ID、活动名称、活动类型、参与时间、活动状态

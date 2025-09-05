@@ -27,12 +27,12 @@
         </template>
         <a-form :model="audienceForm.basic" layout="vertical" class="basic-form">
           <a-row :gutter="24">
-            <a-col :span="12">
+            <a-col :span="6">
               <a-form-item label="人群名称" required>
                 <a-input v-model="audienceForm.basic.name" placeholder="请输入人群名称" />
               </a-form-item>
             </a-col>
-            <a-col :span="12">
+            <a-col :span="6">
               <a-form-item label="人群类型" required>
                 <a-select v-model="audienceForm.basic.audienceType" placeholder="请选择人群类型">
                   <a-option value="static">静态人群</a-option>
@@ -42,9 +42,7 @@
                 </a-select>
               </a-form-item>
             </a-col>
-          </a-row>
-          <a-row :gutter="24">
-            <a-col :span="12">
+            <a-col :span="6">
               <a-form-item label="共享级别" required>
                 <a-select v-model="audienceForm.basic.shareLevel" placeholder="请选择共享级别">
                   <a-option value="public">公开</a-option>
@@ -53,7 +51,7 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="12">
+            <a-col :span="6">
               <a-form-item label="更新频率">
                 <a-select v-model="audienceForm.basic.updateFrequency" placeholder="请选择更新频率">
                   <a-option value="realtime">实时</a-option>
@@ -66,7 +64,7 @@
             </a-col>
           </a-row>
           <a-row :gutter="24">
-            <a-col :span="12">
+            <a-col :span="6">
               <a-form-item label="有效期">
                 <a-date-picker 
                   v-model="audienceForm.basic.expireDate" 
@@ -111,6 +109,13 @@
             :get-value-placeholder="getValuePlaceholder"
             :on-data-source-type-change="onDataSourceTypeChange"
             :on-date-type-change="onDateTypeChange"
+            :get-tag-options="getTagOptions"
+            :get-tag-operator-options="getTagOperatorOptions"
+            :need-tag-value-input="needTagValueInput"
+            :get-tag-value-placeholder="getTagValuePlaceholder"
+            :get-event-options="getEventOptions"
+            :get-event-property-options="getEventPropertyOptions"
+            :get-property-operator-options="getPropertyOperatorOptions"
             @add-condition-group="addConditionGroup"
             @add-exclude-condition-group="addExcludeConditionGroup"
             @delete-exclude-condition-group="deleteExcludeConditionGroup"
@@ -392,10 +397,20 @@ const toggleGroupLogic = (group: any) => {
 }
 
 const addConditionByType = (group: any, type: string) => {
+  // 映射类型到正确的dataSourceType
+  let dataSourceType = type
+  if (type === 'tag') {
+    dataSourceType = 'attribute'
+  } else if (type === 'behavior') {
+    dataSourceType = 'behavior'
+  } else if (type === 'detail') {
+    dataSourceType = 'detail'
+  }
+  
   group.conditions.push({
     id: Date.now().toString() + '_' + group.conditions.length,
     type: type,
-    dataSourceType: type,
+    dataSourceType: dataSourceType,
     fieldName: '',
     aggregationType: '',
     operator: '',
@@ -435,27 +450,101 @@ const dynamicUnitOptions = [
 // 获取字段选项
 const getFieldOptions = (dataSourceType: string) => {
   const fieldMap: Record<string, Array<{label: string, value: string}>> = {
+    attribute: [
+      { label: '年龄', value: 'age' },
+      { label: '性别', value: 'gender' },
+      { label: '城市', value: 'city' },
+      { label: '收入', value: 'income' },
+      { label: '职业', value: 'occupation' },
+      { label: '教育程度', value: 'education' },
+      // 消费金融相关标签
+      { label: '信用评级', value: 'credit_rating' },
+      { label: '收入水平', value: 'income_level' },
+      { label: '职业类型', value: 'occupation_type' },
+      { label: '婚姻状况', value: 'marital_status' },
+      { label: '年龄段', value: 'age_group' },
+      { label: '资产规模', value: 'asset_scale' },
+      { label: '负债情况', value: 'debt_status' },
+      { label: '风险等级', value: 'risk_level' },
+      { label: '征信记录', value: 'credit_history' },
+      { label: '居住状况', value: 'residence_status' }
+    ],
     tag: [
       { label: '年龄', value: 'age' },
       { label: '性别', value: 'gender' },
       { label: '城市', value: 'city' },
       { label: '收入', value: 'income' },
       { label: '职业', value: 'occupation' },
-      { label: '教育程度', value: 'education' }
+      { label: '教育程度', value: 'education' },
+      // 消费金融相关标签
+      { label: '信用评级', value: 'credit_rating' },
+      { label: '收入水平', value: 'income_level' },
+      { label: '职业类型', value: 'occupation_type' },
+      { label: '婚姻状况', value: 'marital_status' },
+      { label: '年龄段', value: 'age_group' },
+      { label: '资产规模', value: 'asset_scale' },
+      { label: '负债情况', value: 'debt_status' },
+      { label: '风险等级', value: 'risk_level' },
+      { label: '征信记录', value: 'credit_history' },
+      { label: '居住状况', value: 'residence_status' }
+    ],
+    behavior: [
+      { label: '登录行为', value: 'login_behavior' },
+      { label: '购买行为', value: 'purchase_behavior' },
+      { label: '浏览行为', value: 'view_behavior' },
+      { label: '点击行为', value: 'click_behavior' },
+      { label: '分享行为', value: 'share_behavior' },
+      // 消费金融相关行为
+      { label: '贷款申请行为', value: 'loan_application_behavior' },
+      { label: '还款行为', value: 'repayment_behavior' },
+      { label: '逾期行为', value: 'overdue_behavior' },
+      { label: '提前还款行为', value: 'early_repayment_behavior' },
+      { label: '额度调整行为', value: 'credit_limit_adjustment_behavior' },
+      { label: '风险评估行为', value: 'risk_assessment_behavior' },
+      { label: '征信查询行为', value: 'credit_inquiry_behavior' },
+      { label: '产品咨询行为', value: 'product_consultation_behavior' },
+      { label: '合同签署行为', value: 'contract_signing_behavior' },
+      { label: '账户开通行为', value: 'account_opening_behavior' }
     ],
     event: [
       { label: '登录事件', value: 'login_event' },
       { label: '购买事件', value: 'purchase_event' },
       { label: '浏览事件', value: 'view_event' },
       { label: '点击事件', value: 'click_event' },
-      { label: '分享事件', value: 'share_event' }
+      { label: '分享事件', value: 'share_event' },
+      // 消费金融相关事件
+      { label: '贷款申请事件', value: 'loan_application_event' },
+      { label: '还款事件', value: 'repayment_event' },
+      { label: '逾期事件', value: 'overdue_event' },
+      { label: '提前还款事件', value: 'early_repayment_event' },
+      { label: '额度调整事件', value: 'credit_limit_adjustment_event' },
+      { label: '风险评估事件', value: 'risk_assessment_event' },
+      { label: '征信查询事件', value: 'credit_inquiry_event' },
+      { label: '产品咨询事件', value: 'product_consultation_event' },
+      { label: '合同签署事件', value: 'contract_signing_event' },
+      { label: '账户开通事件', value: 'account_opening_event' }
     ],
     detail: [
       { label: '用户ID', value: 'user_id' },
       { label: '订单金额', value: 'order_amount' },
       { label: '订单时间', value: 'order_time' },
       { label: '商品类别', value: 'product_category' },
-      { label: '支付方式', value: 'payment_method' }
+      { label: '支付方式', value: 'payment_method' },
+      // 消费金融相关明细数据
+      { label: '贷款金额', value: 'loan_amount' },
+      { label: '还款金额', value: 'repayment_amount' },
+      { label: '逾期天数', value: 'overdue_days' },
+      { label: '信用分数', value: 'credit_score' },
+      { label: '月收入', value: 'monthly_income' },
+      { label: '负债率', value: 'debt_ratio' },
+      { label: '担保方式', value: 'guarantee_type' },
+      { label: '贷款期限', value: 'loan_term' },
+      { label: '利率', value: 'interest_rate' },
+      { label: '还款方式', value: 'repayment_method' },
+      { label: '贷款用途', value: 'loan_purpose' },
+      { label: '抵押物价值', value: 'collateral_value' },
+      { label: '账户余额', value: 'account_balance' },
+      { label: '交易金额', value: 'transaction_amount' }
     ]
   }
   return fieldMap[dataSourceType] || []
@@ -463,10 +552,38 @@ const getFieldOptions = (dataSourceType: string) => {
 
 // 获取聚合选项
 const getAggregationOptions = (dataSourceType: string) => {
-  if (dataSourceType === 'tag') {
+  const aggregationMap: Record<string, Array<{label: string, value: string}>> = {
+    behavior: [
+      { label: '次数', value: 'count' },
+      { label: '总和', value: 'sum' },
+      { label: '平均值', value: 'avg' },
+      { label: '最大值', value: 'max' },
+      { label: '最小值', value: 'min' },
+      { label: '去重计数', value: 'distinct_count' }
+    ],
+    event: [
+      { label: '次数', value: 'count' },
+      { label: '总和', value: 'sum' },
+      { label: '平均值', value: 'avg' },
+      { label: '最大值', value: 'max' },
+      { label: '最小值', value: 'min' },
+      { label: '去重计数', value: 'distinct_count' }
+    ],
+    detail: [
+      { label: '计数', value: 'count' },
+      { label: '求和', value: 'sum' },
+      { label: '平均值', value: 'avg' },
+      { label: '最大值', value: 'max' },
+      { label: '最小值', value: 'min' },
+      { label: '去重计数', value: 'distinct_count' }
+    ]
+  }
+  
+  if (dataSourceType === 'tag' || dataSourceType === 'attribute') {
     return []
   }
-  return [
+  
+  return aggregationMap[dataSourceType] || [
     { label: '计数', value: 'count' },
     { label: '求和', value: 'sum' },
     { label: '平均值', value: 'avg' },
@@ -518,6 +635,146 @@ const onDateTypeChange = (condition: any) => {
     condition.dynamicUnit = undefined
     condition.dateRange = ['', ''] as [string, string]
   }
+}
+
+// 获取标签选项
+const getTagOptions = () => {
+  return [
+    // 基础属性
+    { label: '年龄', value: 'age' },
+    { label: '性别', value: 'gender' },
+    { label: '城市', value: 'city' },
+    { label: '婚姻状况', value: 'marital_status' },
+    { label: '教育程度', value: 'education' },
+    { label: '职业类型', value: 'occupation_type' },
+    { label: '居住状况', value: 'residence_status' },
+    
+    // 金融属性
+    { label: '收入水平', value: 'income_level' },
+    { label: '信用评级', value: 'credit_rating' },
+    { label: '风险等级', value: 'risk_level' },
+    { label: '信用分数', value: 'credit_score' },
+    { label: '资产规模', value: 'asset_scale' },
+    { label: '负债情况', value: 'debt_status' },
+    { label: '征信记录', value: 'credit_history' },
+    { label: '月收入', value: 'monthly_income' },
+    { label: '负债率', value: 'debt_ratio' },
+    
+    // 行为特征
+    { label: '活跃度', value: 'activity_level' },
+    { label: '响应层级', value: 'response_level' },
+    { label: '产品使用频率', value: 'product_usage_frequency' },
+    { label: '客户价值等级', value: 'customer_value_level' },
+    { label: '风险偏好', value: 'risk_preference' }
+  ]
+}
+
+// 获取标签操作符选项
+const getTagOperatorOptions = () => {
+  return [
+    { label: '等于', value: 'eq' },
+    { label: '不等于', value: 'ne' },
+    { label: '包含', value: 'in' },
+    { label: '不包含', value: 'not_in' }
+  ]
+}
+
+// 判断标签是否需要值输入
+const needTagValueInput = (condition: any) => {
+  return true
+}
+
+// 获取标签值输入占位符
+const getTagValuePlaceholder = (condition: any) => {
+  return '请选择或输入标签值'
+}
+
+// 获取事件选项
+const getEventOptions = () => {
+  return [
+    // 贷款相关事件
+    { label: '贷款申请', value: 'loan_application' },
+    { label: '贷款审批', value: 'loan_approval' },
+    { label: '贷款放款', value: 'loan_disbursement' },
+    { label: '还款', value: 'repayment' },
+    { label: '提前还款', value: 'early_repayment' },
+    { label: '逾期还款', value: 'overdue_repayment' },
+    { label: '贷款结清', value: 'loan_settlement' },
+    
+    // 风险相关事件
+    { label: '风险评估', value: 'risk_assessment' },
+    { label: '征信查询', value: 'credit_inquiry' },
+    { label: '风险预警', value: 'risk_warning' },
+    { label: '逾期提醒', value: 'overdue_reminder' },
+    { label: '催收记录', value: 'collection_record' },
+    
+    // 业务相关事件
+    { label: '产品咨询', value: 'product_consultation' },
+    { label: '合同签署', value: 'contract_signing' },
+    { label: '账户开通', value: 'account_opening' },
+    { label: '额度调整', value: 'credit_limit_adjustment' },
+    { label: '产品升级', value: 'product_upgrade' },
+    { label: '服务申请', value: 'service_application' },
+    
+    // 用户行为事件
+    { label: '登录', value: 'login' },
+    { label: '页面访问', value: 'page_visit' },
+    { label: '功能使用', value: 'feature_usage' },
+    { label: '文档下载', value: 'document_download' },
+    { label: '客服咨询', value: 'customer_service_inquiry' }
+  ]
+}
+
+// 获取事件属性选项
+const getEventPropertyOptions = (eventName: string) => {
+  const propertyMap: Record<string, Array<{label: string, value: string}>> = {
+    loan_events: [
+      { label: '贷款金额', value: 'loan_amount' },
+      { label: '贷款期限', value: 'loan_term' },
+      { label: '利率', value: 'interest_rate' },
+      { label: '贷款用途', value: 'loan_purpose' }
+    ],
+    risk_events: [
+      { label: '风险等级', value: 'risk_level' },
+      { label: '信用分数', value: 'credit_score' },
+      { label: '逾期天数', value: 'overdue_days' },
+      { label: '违约概率', value: 'default_probability' }
+    ],
+    business_events: [
+      { label: '产品类型', value: 'product_type' },
+      { label: '渠道来源', value: 'channel_source' },
+      { label: '业务状态', value: 'business_status' },
+      { label: '处理结果', value: 'process_result' }
+    ],
+    user_behavior_events: [
+      { label: '访问页面', value: 'page_visit' },
+      { label: '点击按钮', value: 'button_click' },
+      { label: '停留时长', value: 'stay_duration' },
+      { label: '操作类型', value: 'operation_type' }
+    ],
+    system_events: [
+      { label: '系统模块', value: 'system_module' },
+      { label: '操作类型', value: 'operation_type' },
+      { label: '执行状态', value: 'execution_status' },
+      { label: '响应时间', value: 'response_time' }
+    ]
+  }
+  return propertyMap[eventName] || []
+}
+
+// 获取属性操作符选项
+const getPropertyOperatorOptions = () => {
+  return [
+    { label: '等于', value: 'eq' },
+    { label: '不等于', value: 'ne' },
+    { label: '大于', value: 'gt' },
+    { label: '小于', value: 'lt' },
+    { label: '大于等于', value: 'gte' },
+    { label: '小于等于', value: 'lte' },
+    { label: '包含', value: 'in' },
+    { label: '不包含', value: 'not_in' },
+    { label: '模糊匹配', value: 'like' }
+  ]
 }
 
 
@@ -603,10 +860,14 @@ const goBack = () => {
 </script>
 
 <style scoped>
+/* 页面容器 */
 .audience-create {
   padding: 20px;
   background: #f5f5f5;
   min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .breadcrumb {

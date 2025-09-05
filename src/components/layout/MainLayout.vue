@@ -133,8 +133,9 @@ onMounted(() => {
 
 <style scoped>
 .layout-container {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .top-menu-header {
@@ -161,7 +162,9 @@ onMounted(() => {
 .layout-content {
   background: #f5f5f5;
   padding: 16px;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 :deep(.arco-layout-sider-trigger) {

@@ -7,11 +7,7 @@
           <template #icon><icon-refresh /></template>
           刷新
         </a-button>
-        <!-- 关系查询按钮 -->
-        <a-button size="small" @click="showRelationQuery">
-          <template #icon><icon-relation /></template>
-          关系查询
-        </a-button>
+
         <!-- 查看联系人按钮 -->
         <a-button size="small" @click="showContacts">
           <template #icon><icon-user-group /></template>
@@ -135,7 +131,6 @@ import {
   IconMobile,
   // IconHistory, IconCheckCircle, IconExclamationCircle, IconInfoCircle 已删除（最近活动相关）
   IconRefresh,
-  IconRelation,
   IconUserGroup
 } from '@arco-design/web-vue/es/icon'
 import AppInfoDrawer from './AppInfoDrawer.vue'
@@ -211,11 +206,6 @@ const showAppInfo = (appInfo: any) => {
 const closeAppDrawer = () => {
   appDrawerVisible.value = false
   currentAppInfo.value = null
-}
-
-// 显示关系查询
-const showRelationQuery = () => {
-  // TODO: 实现关系查询功能
 }
 
 // 显示联系人

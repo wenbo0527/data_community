@@ -267,7 +267,17 @@ interface EnhancedLoanRecord {
   paidInstallments: number;
   nextPayment: number;
   nextPaymentDate: string;
-  // 新增字段
+  // 新增字段 - 根据需求文档
+  overdueDays: number;           // 逾期天数
+  maxOverdueDays: number;        // 历史最大逾期天数
+  settlementDate?: string;       // 结清日期
+  currentPeriod: number;         // 当前期次
+  remainingPrincipal: number;    // 剩余本金
+  remainingInterest: number;     // 剩余利息
+  remainingPenalty: number;      // 剩余罚息
+  remainingTotal: number;        // 剩余应还总额
+  loanRate: number;              // 借款利率
+  // 原有字段
   repaymentDetails: RepaymentDetail[];
   repaymentPlan: Array<{
     period: number;
@@ -725,9 +735,11 @@ const mockUsers: { [key: string]: UserData } = {
         creditNo: '20701555',
         productKey: 'LN-2024-002',
         creditDate: '2023-08-15 10:20:30',
+        openDate: '2023-08-15', // 新增字段：开户日期
         channel: '手机银行',
         productName: '蚂蚁借呗',
         result: '通过',
+        status: '正常', // 新增字段：状态（从result字段转换）
         rejectReason: '-',
         initialAmount: 50000.00,
         currentAmount: 50000.00,
@@ -741,9 +753,11 @@ const mockUsers: { [key: string]: UserData } = {
         creditNo: '20701556',
         productKey: 'LN-2024-003',
         creditDate: '2023-09-20 11:15:20',
+        openDate: '2023-09-20', // 新增字段：开户日期
         channel: '手机银行',
         productName: '京东白条',
         result: '通过',
+        status: '正常', // 新增字段：状态（从result字段转换）
         rejectReason: '-',
         initialAmount: 100000.00,
         currentAmount: 100000.00,
@@ -757,9 +771,11 @@ const mockUsers: { [key: string]: UserData } = {
         creditNo: '20701564',
         productKey: 'LN-2024-009',
         creditDate: '2024-01-15 14:30:20',
+        openDate: '2024-01-15', // 新增字段：开户日期
         channel: 'Su贷APP',
         productName: 'Su贷',
         result: '通过',
+        status: '正常', // 新增字段：状态（从result字段转换）
         rejectReason: '-',
         initialAmount: 200000.00,
         currentAmount: 200000.00,
@@ -775,7 +791,9 @@ const mockUsers: { [key: string]: UserData } = {
       {
         productKey: 'LN-2024-002',
         loanNo: '3276555',
+        loanId: '3276555', // 新增字段：用信ID（映射自loanNo）
         loanDate: '2023-08-15 10:30:45',
+        dueDate: '2024-02-15', // 新增字段：到期日期（映射自nextPaymentDate）
         bankCard: '6228****9876',
         channel: '手机银行',
         productName: '蚂蚁借呗',
@@ -784,16 +802,51 @@ const mockUsers: { [key: string]: UserData } = {
         contractNo: 'HT-20230815-005',
         status: '正常',
         amount: 50000.00,
+        loanAmount: 50000.00, // 新增字段：借款金额（映射自amount）
         balance: 30000.00,
+        remainingAmount: 30000.00, // 新增字段：剩余金额（映射自balance）
         installments: 24,
         paidInstallments: 8,
         nextPayment: 2200.00,
         nextPaymentDate: '2024-02-15',
+        // 新增字段
+        overdueDays: 0,
+        maxOverdueDays: 5,
+        settlementDate: undefined,
+        currentPeriod: 9,
+        remainingPrincipal: 28100.00,
+        remainingInterest: 4800.00,
+        remainingPenalty: 0,
+        remainingTotal: 32900.00,
+        loanRate: 4.35,
+        disbursementRecords: [
+          {
+            batch: 1,
+            disbursementDate: '2023-08-15',
+            amount: 50000.00,
+            bankName: '招商银行',
+            bankCard: '6228****9876',
+            channel: '银行转账',
+            transactionId: 'TXN-20230815-001',
+            status: '成功',
+            processStatus: '已到账',
+            remark: '首次放款'
+          }
+        ],
         repaymentDetails: [
           {
             repaymentId: 'RPY001',
             period: 1,
             repaymentDate: '2023-09-15',
+            dueDate: '2023-09-15',
+            amount: 2200.00,
+            principal: 1800.00,
+            interest: 400.00,
+            penalty: 0,
+            fee: 0,
+            method: '自动扣款',
+            status: '已还',
+            overdueDays: 0,
             actualPaymentDate: '2023-09-15',
             repaymentAmount: 2200.00,
             principalAmount: 1800.00,
@@ -801,7 +854,6 @@ const mockUsers: { [key: string]: UserData } = {
             penaltyAmount: 0,
             totalAmount: 2200.00,
             remainingBalance: 48200.00,
-            status: '已还款',
             repaymentMethod: '自动扣款',
             repaymentStatus: '成功',
             bankCard: '****9876',
@@ -812,6 +864,15 @@ const mockUsers: { [key: string]: UserData } = {
             repaymentId: 'RPY002',
             period: 2,
             repaymentDate: '2023-10-15',
+            dueDate: '2023-10-15',
+            amount: 2200.00,
+            principal: 1850.00,
+            interest: 350.00,
+            penalty: 0,
+            fee: 0,
+            method: '自动扣款',
+            status: '已还',
+            overdueDays: 0,
             actualPaymentDate: '2023-10-15',
             repaymentAmount: 2200.00,
             principalAmount: 1850.00,
@@ -819,7 +880,6 @@ const mockUsers: { [key: string]: UserData } = {
             penaltyAmount: 0,
             totalAmount: 2200.00,
             remainingBalance: 46350.00,
-            status: '已还款',
             repaymentMethod: '自动扣款',
             repaymentStatus: '成功',
             bankCard: '****9876',
@@ -831,27 +891,35 @@ const mockUsers: { [key: string]: UserData } = {
           {
             period: 9,
             dueDate: '2024-02-15',
+            amount: 2200.00,
+            principal: 1900.00,
+            interest: 300.00,
+            status: '待还',
             principalAmount: 1900.00,
             interestAmount: 300.00,
             totalAmount: 2200.00,
-            remainingBalance: 28100.00,
-            status: '待还款'
+            remainingBalance: 28100.00
           },
           {
             period: 10,
             dueDate: '2024-03-15',
+            amount: 2200.00,
+            principal: 1950.00,
+            interest: 250.00,
+            status: '待还',
             principalAmount: 1950.00,
             interestAmount: 250.00,
             totalAmount: 2200.00,
-            remainingBalance: 26150.00,
-            status: '待还款'
+            remainingBalance: 26150.00
           }
         ]
       },
       {
         productKey: 'LN-2024-003',
         loanNo: '3276556',
+        loanId: '3276556', // 新增字段：用信ID（映射自loanNo）
         loanDate: '2023-09-20 14:20:30',
+        dueDate: '2024-02-20', // 新增字段：到期日期（映射自nextPaymentDate）
         bankCard: '6228****9876',
         channel: '手机银行',
         productName: '京东白条',
@@ -860,16 +928,51 @@ const mockUsers: { [key: string]: UserData } = {
         contractNo: 'HT-20230920-006',
         status: '正常',
         amount: 30000.00,
+        loanAmount: 30000.00, // 新增字段：借款金额（映射自amount）
         balance: 25000.00,
+        remainingAmount: 25000.00, // 新增字段：剩余金额（映射自balance）
         installments: 12,
         paidInstallments: 3,
         nextPayment: 2800.00,
         nextPaymentDate: '2024-02-20',
+        // 新增字段
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: undefined,
+        currentPeriod: 4,
+        remainingPrincipal: 22600.00,
+        remainingInterest: 2400.00,
+        remainingPenalty: 0,
+        remainingTotal: 25000.00,
+        loanRate: 5.2,
+        disbursementRecords: [
+          {
+            batch: 1,
+            disbursementDate: '2023-09-20',
+            amount: 30000.00,
+            bankName: '招商银行',
+            bankCard: '6228****9876',
+            channel: '手机银行',
+            transactionId: 'TXN-20230920-001',
+            status: '成功',
+            processStatus: '已到账',
+            remark: '京东白条放款'
+          }
+        ],
         repaymentDetails: [
           {
             repaymentId: 'RPY003',
             period: 1,
             repaymentDate: '2023-10-20',
+            dueDate: '2023-10-20',
+            amount: 2800.00,
+            principal: 2300.00,
+            interest: 500.00,
+            penalty: 0,
+            fee: 0,
+            method: '主动还款',
+            status: '已还',
+            overdueDays: 0,
             actualPaymentDate: '2023-10-20',
             repaymentAmount: 2800.00,
             principalAmount: 2300.00,
@@ -877,7 +980,6 @@ const mockUsers: { [key: string]: UserData } = {
             penaltyAmount: 0,
             totalAmount: 2800.00,
             remainingBalance: 27700.00,
-            status: '已还款',
             repaymentMethod: '主动还款',
             repaymentStatus: '成功',
             bankCard: '****9876',
@@ -889,18 +991,23 @@ const mockUsers: { [key: string]: UserData } = {
           {
             period: 4,
             dueDate: '2024-02-20',
+            amount: 2800.00,
+            principal: 2400.00,
+            interest: 400.00,
+            status: '待还',
             principalAmount: 2400.00,
             interestAmount: 400.00,
             totalAmount: 2800.00,
-            remainingBalance: 22600.00,
-            status: '待还款'
+            remainingBalance: 22600.00
           }
         ]
       },
       {
         productKey: 'LN-2024-009',
         loanNo: '3276564',
+        loanId: '3276564', // 新增字段：用信ID（映射自loanNo）
         loanDate: '2024-01-15 14:30:20',
+        dueDate: '2024-04-15', // 新增字段：到期日期（映射自nextPaymentDate）
         bankCard: '6228****9876',
         channel: 'Su贷APP',
         productName: 'Su贷',
@@ -909,16 +1016,51 @@ const mockUsers: { [key: string]: UserData } = {
         contractNo: 'HT-20240115-009',
         status: '正常',
         amount: 200000.00,
+        loanAmount: 200000.00, // 新增字段：借款金额（映射自amount）
         balance: 150000.00,
+        remainingAmount: 150000.00, // 新增字段：剩余金额（映射自balance）
         installments: 36,
         paidInstallments: 2,
         nextPayment: 4520.80,
         nextPaymentDate: '2024-04-15',
+        // 新增字段
+        overdueDays: 3,
+        maxOverdueDays: 10,
+        settlementDate: undefined,
+        currentPeriod: 3,
+        remainingPrincipal: 187860.65,
+        remainingInterest: 15680.50,
+        remainingPenalty: 450.80,
+        remainingTotal: 203991.95,
+        loanRate: 3.9,
+        disbursementRecords: [
+          {
+            batch: 1,
+            disbursementDate: '2024-01-15',
+            amount: 200000.00,
+            bankName: '招商银行',
+            bankCard: '6228****9876',
+            channel: 'Su贷APP',
+            transactionId: 'TXN-20240115-001',
+            status: '成功',
+            processStatus: '已到账',
+            remark: 'Su贷大额放款'
+          }
+        ],
         repaymentDetails: [
           {
             repaymentId: 'RPY009',
             period: 1,
             repaymentDate: '2024-02-15',
+            dueDate: '2024-02-15',
+            amount: 4520.80,
+            principal: 4033.30,
+            interest: 487.50,
+            penalty: 0,
+            fee: 0,
+            method: '自动扣款',
+            status: '已还',
+            overdueDays: 0,
             actualPaymentDate: '2024-02-15',
             repaymentAmount: 4520.80,
             principalAmount: 4033.30,
@@ -926,7 +1068,6 @@ const mockUsers: { [key: string]: UserData } = {
             penaltyAmount: 0,
             totalAmount: 4520.80,
             remainingBalance: 195966.70,
-            status: '已还款',
             repaymentMethod: '自动扣款',
             repaymentStatus: '成功',
             bankCard: '****9876',
@@ -937,6 +1078,15 @@ const mockUsers: { [key: string]: UserData } = {
             repaymentId: 'RPY010',
             period: 2,
             repaymentDate: '2024-03-15',
+            dueDate: '2024-03-15',
+            amount: 4520.80,
+            principal: 4046.40,
+            interest: 474.40,
+            penalty: 0,
+            fee: 0,
+            method: '自动扣款',
+            status: '已还',
+            overdueDays: 0,
             actualPaymentDate: '2024-03-15',
             repaymentAmount: 4520.80,
             principalAmount: 4046.40,
@@ -944,7 +1094,6 @@ const mockUsers: { [key: string]: UserData } = {
             penaltyAmount: 0,
             totalAmount: 4520.80,
             remainingBalance: 191920.30,
-            status: '已还款',
             repaymentMethod: '自动扣款',
             repaymentStatus: '成功',
             bankCard: '****9876',
@@ -956,20 +1105,26 @@ const mockUsers: { [key: string]: UserData } = {
           {
             period: 3,
             dueDate: '2024-04-15',
+            amount: 4520.80,
+            principal: 4059.65,
+            interest: 461.15,
+            status: '待还',
             principalAmount: 4059.65,
             interestAmount: 461.15,
             totalAmount: 4520.80,
-            remainingBalance: 187860.65,
-            status: '待还款'
+            remainingBalance: 187860.65
           },
           {
             period: 4,
             dueDate: '2024-05-15',
+            amount: 4520.80,
+            principal: 4073.05,
+            interest: 447.75,
+            status: '待还',
             principalAmount: 4073.05,
             interestAmount: 447.75,
             totalAmount: 4520.80,
-            remainingBalance: 183787.60,
-            status: '待还款'
+            remainingBalance: 183787.60
           }
         ]
       }
@@ -981,8 +1136,13 @@ const mockUsers: { [key: string]: UserData } = {
         productKey: 'LN-2024-002',
         productName: '蚂蚁借呗',
         adjustDate: '2023-09-15 14:30:22',
+        adjustmentDate: '2023-09-15 14:30:22', // 新增字段：调额日期（映射自adjustDate）
         beforeAmount: 30000,
+        previousAmount: 30000, // 新增字段：调额前金额（映射自beforeAmount）
         afterAmount: 50000,
+        newAmount: 50000, // 新增字段：调额后金额（映射自afterAmount）
+        adjustmentAmount: 20000, // 新增字段：调额金额（计算得出）
+        type: '提额', // 新增字段：调额类型（根据金额变化计算）
         adjustReason: '客户信用评级提升',
         beforeRate: 4.85,
         afterRate: 4.35,
@@ -996,8 +1156,13 @@ const mockUsers: { [key: string]: UserData } = {
         productKey: 'LN-2024-003',
         productName: '京东白条',
         adjustDate: '2023-10-20 16:45:10',
+        adjustmentDate: '2023-10-20 16:45:10', // 新增字段：调额日期（映射自adjustDate）
         beforeAmount: 20000,
+        previousAmount: 20000, // 新增字段：调额前金额（映射自beforeAmount）
         afterAmount: 30000,
+        newAmount: 30000, // 新增字段：调额后金额（映射自afterAmount）
+        adjustmentAmount: 10000, // 新增字段：调额金额（计算得出）
+        type: '提额', // 新增字段：调额类型（根据金额变化计算）
         adjustReason: '消费行为良好',
         beforeRate: 5.8,
         afterRate: 5.2,
@@ -1011,8 +1176,13 @@ const mockUsers: { [key: string]: UserData } = {
         productKey: 'LN-2024-009',
         productName: 'Su贷',
         adjustDate: '2024-02-01 10:30:15',
+        adjustmentDate: '2024-02-01 10:30:15', // 新增字段：调额日期（映射自adjustDate）
         beforeAmount: 150000,
+        previousAmount: 150000, // 新增字段：调额前金额（映射自beforeAmount）
         afterAmount: 200000,
+        newAmount: 200000, // 新增字段：调额后金额（映射自afterAmount）
+        adjustmentAmount: 50000, // 新增字段：调额金额（计算得出）
+        type: '提额', // 新增字段：调额类型（根据金额变化计算）
         adjustReason: '信用评级提升',
         beforeRate: 4.2,
         afterRate: 3.9,
@@ -1066,69 +1236,87 @@ const mockUsers: { [key: string]: UserData } = {
       }
     },
     
-    // 支付流程记录数据
-    paymentProcessRecords: {
-      contractRecords: [
-        {
-          contractId: 'CT-20230815-001',
-          productKey: 'LN-2024-002',
-          signDate: '2023-08-15',
-          signMethod: '电子签约',
-          contractType: '借款合同',
-          contractStatus: '有效',
-          contractAmount: 50000,
-          contractTerm: 24,
-          signLocation: '线上',
-          documentUrl: '/contracts/CT-20230815-001.pdf'
-        }
-      ],
-      disbursementRecords: [
-        {
-          disbursementId: 'DB-20230815-001',
-          productKey: 'LN-2024-002',
-          disbursementDate: '2023-08-15',
-          disbursementAmount: 50000,
-          disbursementChannel: '银行转账',
-          receivingAccount: '6228****9876',
-          disbursementStatus: '成功',
-          transactionId: 'TXN-20230815-001',
-          arrivalTime: '2023-08-15 15:30:00',
-          handlingFee: 0
-        }
-      ],
-      repaymentRecords: [
-        {
-          repaymentId: 'RP-20230915-001',
-          productKey: 'LN-2024-002',
-          repaymentDate: '2023-09-15',
-          repaymentAmount: 2500,
-          repaymentMethod: '自动扣款',
-          repaymentChannel: '银行卡',
-          repaymentStatus: '成功',
-          paymentAccount: '6228****9876',
-          transactionId: 'TXN-20230915-001',
-          principalAmount: 1800,
-          interestAmount: 700,
-          penaltyAmount: 0,
-          remainingBalance: 48200
-        },
-        {
-          repaymentId: 'RP-20231015-001',
-          productKey: 'LN-2024-002',
-          repaymentDate: '2023-10-15',
-          repaymentAmount: 2500,
-          repaymentMethod: '自动扣款',
-          repaymentChannel: '银行卡',
-          repaymentStatus: '成功',
-          paymentAccount: '6228****9876',
-          transactionId: 'TXN-20231015-001',
-          principalAmount: 1850,
-          interestAmount: 650,
-          penaltyAmount: 0,
-          remainingBalance: 45700
-        }
-      ]
-    }
+    // 支付流程记录数据（转换为数组格式以匹配前端组件需求）
+    paymentProcessRecords: [
+      {
+        paymentId: 'CT-20230815-001', // 新增字段：支付ID（映射自contractId）
+        productKey: 'LN-2024-002',
+        status: '有效', // 新增字段：状态（映射自contractStatus）
+        amount: 50000, // 新增字段：金额（映射自contractAmount）
+        paymentMethod: '电子签约', // 新增字段：支付方式（映射自signMethod）
+        paymentTime: '2023-08-15', // 新增字段：支付时间（映射自signDate）
+        type: '合同签约',
+        contractId: 'CT-20230815-001',
+        signDate: '2023-08-15',
+        signMethod: '电子签约',
+        contractType: '借款合同',
+        contractStatus: '有效',
+        contractAmount: 50000,
+        contractTerm: 24,
+        signLocation: '线上',
+        documentUrl: '/contracts/CT-20230815-001.pdf'
+      },
+      {
+        paymentId: 'DB-20230815-001', // 新增字段：支付ID（映射自disbursementId）
+        productKey: 'LN-2024-002',
+        status: '成功', // 新增字段：状态（映射自disbursementStatus）
+        amount: 50000, // 新增字段：金额（映射自disbursementAmount）
+        paymentMethod: '银行转账', // 新增字段：支付方式（映射自disbursementChannel）
+        paymentTime: '2023-08-15', // 新增字段：支付时间（映射自disbursementDate）
+        type: '放款记录',
+        disbursementId: 'DB-20230815-001',
+        disbursementDate: '2023-08-15',
+        disbursementAmount: 50000,
+        disbursementChannel: '银行转账',
+        receivingAccount: '6228****9876',
+        disbursementStatus: '成功',
+        transactionId: 'TXN-20230815-001',
+        arrivalTime: '2023-08-15 15:30:00',
+        handlingFee: 0
+      },
+      {
+        paymentId: 'RP-20230915-001', // 新增字段：支付ID（映射自repaymentId）
+        productKey: 'LN-2024-002',
+        status: '成功', // 新增字段：状态（映射自repaymentStatus）
+        amount: 2500, // 新增字段：金额（映射自repaymentAmount）
+        paymentMethod: '自动扣款', // 新增字段：支付方式（映射自repaymentMethod）
+        paymentTime: '2023-09-15', // 新增字段：支付时间（映射自repaymentDate）
+        type: '还款记录',
+        repaymentId: 'RP-20230915-001',
+        repaymentDate: '2023-09-15',
+        repaymentAmount: 2500,
+        repaymentMethod: '自动扣款',
+        repaymentChannel: '银行卡',
+        repaymentStatus: '成功',
+        paymentAccount: '6228****9876',
+        transactionId: 'TXN-20230915-001',
+        principalAmount: 1800,
+        interestAmount: 700,
+        penaltyAmount: 0,
+        remainingBalance: 48200
+      },
+      {
+        paymentId: 'RP-20231015-001', // 新增字段：支付ID（映射自repaymentId）
+        productKey: 'LN-2024-002',
+        status: '成功', // 新增字段：状态（映射自repaymentStatus）
+        amount: 2500, // 新增字段：金额（映射自repaymentAmount）
+        paymentMethod: '自动扣款', // 新增字段：支付方式（映射自repaymentMethod）
+        paymentTime: '2023-10-15', // 新增字段：支付时间（映射自repaymentDate）
+        type: '还款记录',
+        repaymentId: 'RP-20231015-001',
+        repaymentDate: '2023-10-15',
+        repaymentAmount: 2500,
+        repaymentMethod: '自动扣款',
+        repaymentChannel: '银行卡',
+        repaymentStatus: '成功',
+        paymentAccount: '6228****9876',
+        transactionId: 'TXN-20231015-001',
+        principalAmount: 1850,
+        interestAmount: 650,
+        penaltyAmount: 0,
+        remainingBalance: 45700
+      }
+    ]
   },
   '123': {
     userId: '123',
@@ -1605,6 +1793,16 @@ const mockUsers: { [key: string]: UserData } = {
         paidInstallments: 60,
         nextPayment: 4200.00,
         nextPaymentDate: '2024-10-20',
+        // 新增字段
+        overdueDays: 0,
+        maxOverdueDays: 5,
+        settlementDate: null,
+        currentPeriod: 61,
+        remainingPrincipal: 720000.00,
+        remainingInterest: 25000.00,
+        remainingPenalty: 1500.00,
+        remainingTotal: 746500.00,
+        loanRate: 0.0325,
         repaymentDetails: [],
         repaymentPlan: []
       }

@@ -197,6 +197,13 @@ beforeEnter: (to) => {
           meta: { title: '指标管理' },
           component: () => import('../pages/discovery/asset-management/metric-management/index.vue')
         },
+        {
+          path: 'asset-management/metric-management/:id/:mode?',
+          name: 'MetricDetail',
+          meta: { title: '指标详情' },
+          component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue'),
+          props: true
+        },
         {          path: 'asset-management/batch-asset-management',          name: 'BatchAssetManagement',          meta: { title: '资产批量管理' },          component: () => import('../pages/discovery/asset-management/batch-asset-management/index.vue')        },
         {          path: 'asset-management/external-purchase-register',          name: 'ExternalPurchaseRegister',          meta: { title: '外部数据采购登记' },          component: () => import('../pages/discovery/asset-management/external-purchase-register/index.vue')        }
       ]
@@ -279,6 +286,16 @@ beforeEnter: (to) => {
           meta: {
             title: '画布校验测试',
             description: '画布数据校验功能测试页面',
+            layout: 'blank'
+          }
+        },
+        {
+          path: 'button-test',
+          name: 'ButtonTest',
+          component: () => import('../pages/test/button-test.vue'),
+          meta: {
+            title: '按钮测试',
+            description: 'audience-create页面按钮显示测试',
             layout: 'blank'
           }
         }

@@ -128,7 +128,7 @@ export class OverlapValidationRule extends ValidationRule {
     }
 
     if (overlaps.length > 0) {
-      const criticalOverlaps = overlaps.filter(o => o.severity === 'critical');
+      const criticalOverlaps = (overlaps || []).filter(o => o.severity === 'critical');
       results.push(this.createResult(
         false,
         `检测到 ${overlaps.length} 个重叠问题 (${criticalOverlaps.length} 个严重)`,
@@ -164,7 +164,7 @@ export class LayerConsistencyValidationRule extends ValidationRule {
     layers.forEach((layer, index) => {
       if (!layer.nodes || layer.nodes.length === 0) return;
 
-      const layerPositions = layer.nodes
+      const layerPositions = (layer.nodes || [])
         .filter(node => positions.has(node.id))
         .map(node => positions.get(node.id));
 
@@ -537,7 +537,7 @@ export class CoordinateValidator {
   async executeValidationRules(positions, layers, context) {
     const ruleResults = [];
     const enabledRules = Array.from(this.rules.values())
-      .filter(rule => rule.enabled && this.config.enabledRules.includes(rule.name));
+      .filter(rule => rule.enabled && (this.config.enabledRules || []).includes(rule.name));
 
     console.log(`🔄 [坐标验证器] 执行 ${enabledRules.length} 个验证规则`);
 
