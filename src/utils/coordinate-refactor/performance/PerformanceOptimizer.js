@@ -155,6 +155,10 @@ export class PerformanceOptimizer {
       timestamp: Date.now()
     };
     
+    // 确保pendingOperations存在且为数组
+    if (!this.state.pendingOperations || !Array.isArray(this.state.pendingOperations)) {
+      this.state.pendingOperations = [];
+    }
     this.state.pendingOperations.push(operation);
     
     // 返回一个Promise，在延迟执行时解析
@@ -185,7 +189,10 @@ export class PerformanceOptimizer {
       options: options
     }));
     
-    const existingOperation = (this.state.executionQueue || []).find(op => {
+    // 确保state和executionQueue存在且为数组
+    const safeExecutionQueue = (this.state && Array.isArray(this.state.executionQueue)) ? this.state.executionQueue : [];
+    const existingOperation = safeExecutionQueue.find(op => {
+      if (!op || !op.function) return false;
       const existingHash = this.hashString(JSON.stringify({
         functionName: op.function.name,
         context: op.context,
@@ -215,6 +222,10 @@ export class PerformanceOptimizer {
       });
     }
     
+    // 确保executionQueue存在且为数组
+    if (!this.state.executionQueue || !Array.isArray(this.state.executionQueue)) {
+      this.state.executionQueue = [];
+    }
     this.state.executionQueue.push(operation);
     
     // 返回Promise等待批处理执行
@@ -224,7 +235,8 @@ export class PerformanceOptimizer {
     });
     
     // 如果队列达到批处理大小，立即执行
-    if (this.state.executionQueue.length >= this.config.batchSize) {
+    const currentQueueLength = (this.state.executionQueue && Array.isArray(this.state.executionQueue)) ? this.state.executionQueue.length : 0;
+    if (currentQueueLength >= this.config.batchSize) {
       // 清除现有的延迟执行定时器，避免重复执行
       if (this.timers.has('batchExecution')) {
         clearTimeout(this.timers.get('batchExecution'));
@@ -254,15 +266,19 @@ export class PerformanceOptimizer {
    * 处理批处理
    */
   async processBatch() {
-    if (this.state.executionQueue.length === 0) {
+    // 确保state和executionQueue存在且为数组
+    const safeExecutionQueue = (this.state && Array.isArray(this.state.executionQueue)) ? this.state.executionQueue : [];
+    if (safeExecutionQueue.length === 0) {
       console.log(`⚠️ [批处理] 队列为空，跳过执行`);
       return;
     }
     
-    console.log(`🔄 [批处理执行] 开始处理 ${this.state.executionQueue.length} 个操作`);
+    console.log(`🔄 [批处理执行] 开始处理 ${safeExecutionQueue.length} 个操作`);
     
-    const batch = [...this.state.executionQueue];
-    this.state.executionQueue = [];
+    const batch = [...safeExecutionQueue];
+    if (this.state) {
+      this.state.executionQueue = [];
+    }
     
     // 清除批处理定时器
     if (this.timers.has('batchExecution')) {
@@ -274,8 +290,14 @@ export class PerformanceOptimizer {
       // 并行执行批处理操作
       let results = [];
       try {
+        const safeBatchForMapping = Array.isArray(batch) ? batch : [];
         results = await Promise.allSettled(
-          batch.map(async (operation) => {
+          safeBatchForMapping.map(async (operation) => {
+            if (!operation || !operation.function) {
+              console.warn(`⚠️ [批处理] 跳过无效操作:`, operation);
+              return null;
+            }
+            
             try {
               const result = await this.executeWithMonitoring(
                 operation.function,
@@ -307,8 +329,8 @@ export class PerformanceOptimizer {
       
       // 统计成功和失败的操作 - 增强空值检查
       const safeResults = Array.isArray(results) ? results : [];
-      const successful = (safeResults || []).filter(r => r && typeof r === 'object' && r.status === 'fulfilled').length;
-      const failed = (safeResults || []).filter(r => r && typeof r === 'object' && r.status === 'rejected').length;
+      const successful = safeResults.filter(r => r && typeof r === 'object' && r.status === 'fulfilled').length;
+      const failed = safeResults.filter(r => r && typeof r === 'object' && r.status === 'rejected').length;
       
       console.log(`✅ [批处理完成] 处理了 ${batch.length} 个操作 (成功: ${successful}, 失败: ${failed})`);
       
@@ -317,8 +339,9 @@ export class PerformanceOptimizer {
       console.error(`❌ [批处理执行失败]:`, error);
       
       // 确保所有操作的Promise都被拒绝
-      batch.forEach(operation => {
-        if (operation.reject) {
+      const safeBatch = Array.isArray(batch) ? batch : [];
+      safeBatch.forEach(operation => {
+        if (operation && operation.reject) {
           operation.reject(error);
         }
       });
@@ -331,17 +354,26 @@ export class PerformanceOptimizer {
    * 处理待执行操作
    */
   async processPendingOperations() {
-    if (this.state.pendingOperations.length === 0) return;
+    // 确保state和pendingOperations存在且为数组
+    const safePendingOperations = (this.state && Array.isArray(this.state.pendingOperations)) ? this.state.pendingOperations : [];
+    if (safePendingOperations.length === 0) return;
     
-    console.log(`🔄 [待执行处理] 开始处理 ${this.state.pendingOperations.length} 个待执行操作`);
+    console.log(`🔄 [待执行处理] 开始处理 ${safePendingOperations.length} 个待执行操作`);
     
-    const operations = [...this.state.pendingOperations];
-    this.state.pendingOperations = [];
+    const operations = [...safePendingOperations];
+    if (this.state) {
+      this.state.pendingOperations = [];
+    }
     
     // 按时间戳排序，确保执行顺序
-    operations.sort((a, b) => a.timestamp - b.timestamp);
+    const safeOperations = Array.isArray(operations) ? operations : [];
+    safeOperations.sort((a, b) => {
+      const aTime = (a && typeof a.timestamp === 'number') ? a.timestamp : 0;
+      const bTime = (b && typeof b.timestamp === 'number') ? b.timestamp : 0;
+      return aTime - bTime;
+    });
     
-    for (const operation of operations) {
+    for (const operation of safeOperations) {
       try {
         const result = await this.executeWithMonitoring(
           operation.function,
@@ -361,7 +393,7 @@ export class PerformanceOptimizer {
       }
     }
     
-    console.log(`✅ [待执行完成] 处理了 ${operations.length} 个待执行操作`);
+    console.log(`✅ [待执行完成] 处理了 ${safeOperations.length} 个待执行操作`);
   }
 
   /**
@@ -775,12 +807,23 @@ export class PerformanceOptimizer {
    * 获取性能统计
    */
   getPerformanceStats() {
+    // 确保state和相关数组存在
+    const safePendingOperations = (this.state && Array.isArray(this.state.pendingOperations)) ? this.state.pendingOperations : [];
+    const safeExecutionQueue = (this.state && Array.isArray(this.state.executionQueue)) ? this.state.executionQueue : [];
+    const safeMetrics = (this.state && this.state.performanceMetrics) ? this.state.performanceMetrics : {
+      totalOperations: 0,
+      skippedOperations: 0,
+      batchedOperations: 0,
+      cacheHits: 0,
+      averageExecutionTime: 0
+    };
+    
     return {
-      ...this.state.performanceMetrics,
-      pendingOperations: this.state.pendingOperations.length,
-      queuedOperations: this.state.executionQueue.length,
-      cacheSize: this.cache.size,
-      isInitialLoad: this.state.isInitialLoad
+      ...safeMetrics,
+      pendingOperations: safePendingOperations.length,
+      queuedOperations: safeExecutionQueue.length,
+      cacheSize: this.cache ? this.cache.size : 0,
+      isInitialLoad: this.state ? this.state.isInitialLoad : true
     };
   }
 
