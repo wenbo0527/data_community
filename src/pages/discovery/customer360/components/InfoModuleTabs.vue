@@ -46,7 +46,16 @@
         </div>
       </a-tab-pane>
       
-
+      <a-tab-pane key="product" title="产品信息">
+        <div class="module-content">
+          <ProductInfo 
+            :product-key="productKey"
+            :product-data="productData"
+            :user-info="userInfo"
+            :loading="loading"
+          />
+        </div>
+      </a-tab-pane>
 
     </a-tabs>
   </div>
@@ -57,6 +66,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import CustomerOverview from './CustomerOverview.vue'
 import BusinessCoreDetails from './BusinessCoreDetails.vue'
 import MarketingRecords from './MarketingRecords.vue'
+import ProductInfo from './ProductInfo.vue'
 
 
 interface Props {

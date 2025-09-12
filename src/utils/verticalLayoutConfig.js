@@ -144,6 +144,7 @@ export function calculateBranchPreviewPosition(sourceNode, branches, branchIndex
   const nodeSize = sourceNode.getSize()
   const nodeData = sourceNode.getData() || {}
   const nodeType = nodeData.type || nodeData.nodeType
+  const nodeId = sourceNode.id || sourceNode.getId()
   
   // 🔧 安全检查：确保nodeSize有效
   const safeWidth = nodeSize?.width || 120; // 默认宽度120px
@@ -153,15 +154,34 @@ export function calculateBranchPreviewPosition(sourceNode, branches, branchIndex
   const startX = nodePosition.x + safeWidth / 2
   const startY = nodePosition.y + safeHeight
   
-  // 使用新的自适应分支间距计算
-  const branchCount = branches.length
-  const adaptiveSpacing = calculateAdaptiveBranchSpacing(branchCount, nodeType)
-  const previewLength = getRecommendedPreviewLength(branchCount, nodeType)
+  // 🎯 检查是否处于统一布局模式
+  const layoutEngine = (typeof window !== 'undefined' ? window.unifiedStructuredLayoutEngine : null)
+  const isUnifiedLayoutActive = layoutEngine && 
+                               layoutEngine.isLayoutActive && 
+                               typeof layoutEngine.getNextLayerY === 'function'
+  
+  let endY
+  if (isUnifiedLayoutActive) {
+    // 🎯 统一布局模式：使用布局引擎的层级Y坐标
+    try {
+      endY = layoutEngine.getNextLayerY(nodeId)
+      console.log(`📍 [VerticalLayout-统一布局] 节点 ${nodeId} 分支 ${branchIndex} 使用布局引擎层级Y坐标: ${endY}`)
+    } catch (error) {
+      endY = startY + getRecommendedPreviewLength(branches.length, nodeType)
+      console.warn(`⚠️ [VerticalLayout-统一布局] 获取布局引擎层级Y坐标失败，使用默认延伸: ${error.message}`)
+    }
+  } else {
+    // 🎯 非统一布局模式：使用相对位置计算
+    const previewLength = getRecommendedPreviewLength(branches.length, nodeType)
+    endY = startY + previewLength
+    console.log(`📍 [VerticalLayout-相对布局] 节点 ${nodeId} 分支 ${branchIndex} 使用相对位置延伸: ${endY}`)
+  }
   
   // 计算分支的水平偏移
+  const branchCount = branches.length
+  const adaptiveSpacing = calculateAdaptiveBranchSpacing(branchCount, nodeType)
   const branchOffset = (branchIndex - (branchCount - 1) / 2) * adaptiveSpacing
   const endX = startX + branchOffset
-  const endY = startY + previewLength
   
   console.log('📏 [VerticalLayout] 计算分支预览线位置:', {
     nodeId: sourceNode.id,
@@ -212,6 +232,7 @@ export function calculateSinglePreviewPosition(sourceNode) {
   const config = VERTICAL_LAYOUT_CONFIG
   const nodePosition = sourceNode.getPosition()
   const nodeSize = sourceNode.getSize()
+  const nodeId = sourceNode.id || sourceNode.getId()
   
   // 🔧 安全检查：确保nodeSize有效
   const safeWidth = nodeSize?.width || 120; // 默认宽度120px
@@ -221,9 +242,30 @@ export function calculateSinglePreviewPosition(sourceNode) {
   const startX = nodePosition.x + safeWidth / 2
   const startY = nodePosition.y + safeHeight
   
+  // 🎯 检查是否处于统一布局模式
+  const layoutEngine = (typeof window !== 'undefined' ? window.unifiedStructuredLayoutEngine : null)
+  const isUnifiedLayoutActive = layoutEngine && 
+                               layoutEngine.isLayoutActive && 
+                               typeof layoutEngine.getNextLayerY === 'function'
+  
   // 垂直向下延伸
   const endX = startX
-  const endY = startY + config.SPACING.PREVIEW_LENGTH
+  let endY
+  
+  if (isUnifiedLayoutActive) {
+    // 🎯 统一布局模式：使用布局引擎的层级Y坐标
+    try {
+      endY = layoutEngine.getNextLayerY(nodeId)
+      console.log(`📍 [VerticalLayout-统一布局] 节点 ${nodeId} 单一预览线使用布局引擎层级Y坐标: ${endY}`)
+    } catch (error) {
+      endY = startY + config.SPACING.PREVIEW_LENGTH
+      console.warn(`⚠️ [VerticalLayout-统一布局] 获取布局引擎层级Y坐标失败，使用默认延伸: ${error.message}`)
+    }
+  } else {
+    // 🎯 非统一布局模式：使用相对位置计算
+    endY = startY + config.SPACING.PREVIEW_LENGTH
+    console.log(`📍 [VerticalLayout-相对布局] 节点 ${nodeId} 单一预览线使用相对位置延伸: ${endY}`)
+  }
   
   console.log('📏 [VerticalLayout] 计算单一预览线位置:', {
     nodeId: sourceNode.id,

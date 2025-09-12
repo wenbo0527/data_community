@@ -134,7 +134,7 @@ async function testYCoordinateConsistency() {
     console.log(`📍 [验证] 普通节点 ${node.id}: (${pos.x.toFixed(1)}, ${pos.y.toFixed(1)})`)
   })
   
-  // 🗑️ [已删除] 虚拟endpoint节点检查已被新的预览线分层策略替代
+  
   
   // 按层级分组验证Y坐标一致性
   const layerGroups = new Map()

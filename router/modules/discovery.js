@@ -68,6 +68,25 @@ const discoveryRoutes = [
         }
       },
       {
+        path: 'metrics-map',
+        name: 'metricsMap',
+        component: () => import('@/pages/discovery/metrics-map/index.vue'),
+        meta: {
+          title: '指标地图',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'metrics-map/detail/:id',
+        name: 'metricsMapDetail',
+        component: () => import('@/pages/discovery/metrics-map/detail.vue'),
+        meta: {
+          title: '指标详情',
+          requiresAuth: true
+        },
+        props: true
+      },
+      {
         path: 'batch-registration',
         name: 'BatchRegistration',
         component: () => import('../../src/pages/discovery/batch-registration/index.vue'),

@@ -178,7 +178,7 @@ export default class FlowIntegrityValidator {
     errors: ValidationError[],
     warnings: ValidationError[]
   ): void {
-    const inputNodes = nodes.filter(node => {
+    const inputNodes = (nodes || []).filter(node => {
       const nodeType = node.getData()?.type || node.getData()?.nodeType
       return this.nodeTypes.INPUT.includes(nodeType)
     })
@@ -195,7 +195,7 @@ export default class FlowIntegrityValidator {
 
     // 检查输入节点是否有输入连接（不应该有）
     for (const inputNode of inputNodes) {
-      const incomingEdges = edges.filter(edge => edge.getTargetCellId() === inputNode.id)
+      const incomingEdges = (edges || []).filter(edge => edge.getTargetCellId() === inputNode.id)
       if (incomingEdges.length > 0) {
         warnings.push({
           type: 'INPUT_NODE_HAS_INCOMING',
@@ -208,7 +208,7 @@ export default class FlowIntegrityValidator {
 
     // 检查输入节点是否有输出连接
     for (const inputNode of inputNodes) {
-      const outgoingEdges = edges.filter(edge => edge.getSourceCellId() === inputNode.id)
+      const outgoingEdges = (edges || []).filter(edge => edge.getSourceCellId() === inputNode.id)
       if (outgoingEdges.length === 0) {
         warnings.push({
           type: 'ISOLATED_INPUT_NODE',
@@ -229,7 +229,7 @@ export default class FlowIntegrityValidator {
     errors: ValidationError[],
     warnings: ValidationError[]
   ): void {
-    const outputNodes = nodes.filter(node => {
+    const outputNodes = (nodes || []).filter(node => {
       const nodeType = node.getData()?.type || node.getData()?.nodeType
       return this.nodeTypes.OUTPUT.includes(nodeType)
     })
@@ -246,7 +246,7 @@ export default class FlowIntegrityValidator {
 
     // 检查输出节点是否有输出连接（不应该有）
     for (const outputNode of outputNodes) {
-      const outgoingEdges = edges.filter(edge => edge.getSourceCellId() === outputNode.id)
+      const outgoingEdges = (edges || []).filter(edge => edge.getSourceCellId() === outputNode.id)
       if (outgoingEdges.length > 0) {
         warnings.push({
           type: 'OUTPUT_NODE_HAS_OUTGOING',
@@ -259,7 +259,7 @@ export default class FlowIntegrityValidator {
 
     // 检查输出节点是否有输入连接
     for (const outputNode of outputNodes) {
-      const incomingEdges = edges.filter(edge => edge.getTargetCellId() === outputNode.id)
+      const incomingEdges = (edges || []).filter(edge => edge.getTargetCellId() === outputNode.id)
       if (incomingEdges.length === 0) {
         warnings.push({
           type: 'ISOLATED_OUTPUT_NODE',
@@ -300,12 +300,12 @@ export default class FlowIntegrityValidator {
     }
 
     // 检查从输入节点到输出节点的连通性
-    const inputNodes = nodes.filter(node => {
+    const inputNodes = (nodes || []).filter(node => {
       const nodeType = node.getData()?.type || node.getData()?.nodeType
       return this.nodeTypes.INPUT.includes(nodeType)
     })
     
-    const outputNodes = nodes.filter(node => {
+    const outputNodes = (nodes || []).filter(node => {
       const nodeType = node.getData()?.type || node.getData()?.nodeType
       return this.nodeTypes.OUTPUT.includes(nodeType)
     })
@@ -385,7 +385,7 @@ export default class FlowIntegrityValidator {
       if (this.nodeTypes.PROCESSING.includes(targetType)) {
         const targetData = targetNode.getData()
         const requiredInputs = targetData?.requiredInputs || 1
-        const actualInputs = edges.filter(e => e.getTargetCellId() === targetId).length
+        const actualInputs = (edges || []).filter(e => e.getTargetCellId() === targetId).length
         
         if (actualInputs < requiredInputs) {
           warnings.push({
@@ -408,8 +408,8 @@ export default class FlowIntegrityValidator {
     warnings: ValidationError[]
   ): void {
     for (const node of nodes) {
-      const hasIncoming = edges.some(edge => edge.getTargetCellId() === node.id)
-      const hasOutgoing = edges.some(edge => edge.getSourceCellId() === node.id)
+      const hasIncoming = (edges || []).some(edge => edge.getTargetCellId() === node.id)
+      const hasOutgoing = (edges || []).some(edge => edge.getSourceCellId() === node.id)
       
       const nodeType = node.getData()?.type || node.getData()?.nodeType
       
@@ -463,7 +463,7 @@ export default class FlowIntegrityValidator {
       const nodeData = node.getData()
       const nodeType = nodeData?.type || nodeData?.nodeType
       if (nodeType === 'audience-split' || nodeType === 'event-split' || nodeData?.hasBranches) {
-        const outgoingEdges = edges.filter(edge => edge.getSourceCellId() === node.id)
+        const outgoingEdges = (edges || []).filter(edge => edge.getSourceCellId() === node.id)
         
         // 检查分支数量
         const expectedBranches = nodeData?.expectedBranches || 2

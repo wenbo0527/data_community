@@ -51,6 +51,10 @@ export class UnifiedCacheManager extends EventEmitter {
 
   constructor(config: CacheManagerConfig = {}) {
     super()
+    
+    // 🔧 修复：设置最大监听器数量，防止MaxListenersExceededWarning
+    this.setMaxListeners(50)
+    
     this.config = {
       maxSize: config.maxSize ?? Infinity,
       defaultTtl: config.defaultTtl ?? 0,

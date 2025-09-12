@@ -125,13 +125,10 @@ import { ref, reactive, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconDownload, IconUpload } from '@arco-design/web-vue/es/icon'
 import type { FileItem } from '@arco-design/web-vue'
-import type { MetricType, RegulatoryCategory } from '@/types/metrics'
-import { MetricType as MetricTypeEnum, RegulatoryCategory as RegulatoryCategoryEnum } from '@/types/metrics'
+import { MetricType, RegulatoryCategory } from '@/types/metrics'
 
 // 当前指标类型
-const currentMetricType = ref<MetricType>(MetricTypeEnum.BUSINESS_CORE)
-const MetricType = MetricTypeEnum
-const RegulatoryCategory = RegulatoryCategoryEnum
+const currentMetricType = ref<MetricType>(MetricType.BUSINESS_CORE)
 
 // 文件上传相关
 const uploadRef = ref()
@@ -159,7 +156,7 @@ const previewColumns = computed(() => {
     { title: '错误信息', slotName: 'errors', width: 200 }
   ]
 
-  if (currentMetricType.value === MetricTypeEnum.BUSINESS_CORE) {
+  if (currentMetricType.value === MetricType.BUSINESS_CORE) {
     baseColumns.splice(4, 0, { title: '业务域', dataIndex: 'businessDomain', width: 120 })
     baseColumns.splice(6, 0, { title: '负责人', dataIndex: 'owner', width: 120 })
   } else {
@@ -211,10 +208,11 @@ const downloadTemplate = () => {
 }
 
 // 文件变化处理
-const handleFileChange = (fileList: FileItem[]) => {
+const handleFileChange = (newFileList: FileItem[]) => {
+  fileList.value = newFileList
   // 限制只能上传一个文件
-  if (fileList.length > 1) {
-    fileList.splice(0, fileList.length - 1)
+  if (fileList.value.length > 1) {
+    fileList.value.splice(0, fileList.value.length - 1)
   }
 }
 
@@ -285,14 +283,14 @@ const parseFile = async () => {
 
 
 // 数据校验
-const validateItem = (item: any) => {
-  const errors = []
+const validateItem = (item: any): string[] => {
+  const errors: string[] = []
   
   if (!item.name) errors.push('指标名称不能为空')
   if (!item.code) errors.push('指标编码不能为空')
   if (!item.category) errors.push('指标分类不能为空')
   
-  if (currentMetricType.value === MetricTypeEnum.BUSINESS_CORE) {
+  if (currentMetricType.value === MetricType.BUSINESS_CORE) {
     if (!item.businessDomain) errors.push('业务域不能为空')
     if (!item.owner) errors.push('负责人不能为空')
   } else {

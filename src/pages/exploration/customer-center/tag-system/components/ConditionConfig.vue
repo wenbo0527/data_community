@@ -4,7 +4,7 @@
     <div v-if="conditionGroups.length === 0" class="empty-condition-state">
       <icon-plus style="font-size: 32px; color: #c9cdd4;" />
       <p>暂无条件组，请创建第一个条件组</p>
-      <a-button type="primary" @click="$emit('add-condition-group')">
+      <a-button type="primary" @click="emit('add-condition-group')">
         <template #icon><icon-plus /></template>
         创建第一个条件组
       </a-button>
@@ -51,7 +51,7 @@
                 <icon-right v-else />
               </template>
             </a-button>
-            <a-button type="text" size="small" status="danger" @click="$emit('delete-condition-group', groupIndex)">
+            <a-button type="text" size="small" status="danger" @click="emit('delete-condition-group', groupIndex)">
               <template #icon><icon-delete /></template>
             </a-button>
           </div>
@@ -144,7 +144,7 @@
                   </div>
                 </div>
                 <div class="tag-actions">
-                  <a-button type="text" size="mini" status="danger" @click="$emit('remove-condition', groupIndex, conditionIndex)">
+                  <a-button type="text" size="mini" status="danger" @click="emit('remove-condition', groupIndex, conditionIndex)">
                     <template #icon><icon-delete /></template>
                   </a-button>
                 </div>
@@ -211,7 +211,7 @@
 
             <!-- 条件操作按钮 -->
             <div class="condition-actions" v-if="editable">
-              <a-button type="text" size="small" status="danger" @click="$emit('remove-condition', groupIndex, conditionIndex)">
+              <a-button type="text" size="small" status="danger" @click="emit('remove-condition', groupIndex, conditionIndex)">
                 <template #icon><icon-delete /></template>
               </a-button>
             </div>
@@ -219,15 +219,15 @@
 
           <!-- 添加条件按钮组 -->
           <div v-if="editable" class="add-condition-buttons">
-            <a-button type="dashed" size="small" @click="$emit('add-condition-by-type', groupIndex, 'property')">
+            <a-button type="dashed" size="small" @click="emit('add-condition-by-type', groupIndex, 'property')">
               <template #icon><icon-plus /></template>
               添加属性
             </a-button>
-            <a-button type="dashed" size="small" @click="$emit('add-condition-by-type', groupIndex, 'behavior')">
+            <a-button type="dashed" size="small" @click="emit('add-condition-by-type', groupIndex, 'behavior')">
               <template #icon><icon-plus /></template>
               添加行为
             </a-button>
-            <a-button type="dashed" size="small" @click="$emit('add-condition-by-type', groupIndex, 'detail')">
+            <a-button type="dashed" size="small" @click="emit('add-condition-by-type', groupIndex, 'detail')">
               <template #icon><icon-plus /></template>
               添加明细数据
             </a-button>
@@ -237,7 +237,7 @@
         <!-- 跨组逻辑连接线 -->
         <div v-if="groupIndex < conditionGroups.length - 1" class="group-logic-line">
           <div class="logic-line"></div>
-          <div class="cross-group-logic" @click="$emit('toggle-cross-group-logic')">
+          <div class="cross-group-logic" @click="emit('toggle-cross-group-logic')">
             {{ (crossGroupLogic || 'or').toUpperCase() }}
           </div>
           <div class="logic-line"></div>
@@ -246,7 +246,7 @@
 
       <!-- 添加条件组按钮 -->
       <div v-if="editable" class="add-condition-group">
-        <a-button type="dashed" @click="$emit('add-condition-group')" style="width: 100%;">
+        <a-button type="dashed" @click="emit('add-condition-group')" style="width: 100%;">
           <template #icon><icon-plus /></template>
           添加条件组
         </a-button>
@@ -317,14 +317,18 @@ const props = withDefaults(defineProps<{
 })
 
 // Emits定义
-defineEmits<{
+const emit = defineEmits<{
   'add-condition-group': []
   'delete-condition-group': [groupIndex: number]
-  'toggle-group-logic': [groupIndex: number]
+  'toggle-group-logic': [groupIndex: number, logic?: string]
   'toggle-cross-group-logic': []
   'add-condition-by-type': [groupIndex: number, type: string]
   'remove-condition': [groupIndex: number, conditionIndex: number]
 }>()
+
+// 事件和属性选项
+const eventOptions = ref<Option[]>([])
+const propertyOptions = ref<Option[]>([])
 
 // 切换条件组折叠状态
 const toggleGroupCollapse = (groupIndex: number) => {

@@ -203,3 +203,16 @@ export const getProcessingSubTypeConfig = (subType) => {
   };
   return configs[subType] || configs[ProcessingSubType.PYTHON];
 };
+
+/**
+ * 获取节点类型的Logo URL
+ * @param {string} type 节点类型
+ * @param {string} subType 子类型（可选）
+ * @returns {string} Logo URL
+ */
+export const getNodeTypeLogo = (type, subType = null) => {
+  if (type === NodeType.PROCESSING && subType) {
+    return PROCESSING_SUBTYPE_LOGO[subType] || NODE_TYPE_LOGO[NodeType.PROCESSING];
+  }
+  return NODE_TYPE_LOGO[type] || NODE_TYPE_LOGO[NodeType.INPUT];
+};

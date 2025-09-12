@@ -355,15 +355,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { 
-  IconArrowLeft, 
-  IconHeart, 
-  IconHeartFill, 
-  IconShareAlt 
+import {
+  IconArrowLeft,
+  IconHeart,
+  IconHeartFill,
+  IconShareAlt
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { MetricType, type MetricItem } from '@/types/metrics'
-import { metricsMock } from '@/mock/metrics'
 
 // 路由
 const route = useRoute()
@@ -412,12 +411,12 @@ const goBack = () => {
 }
 
 // SQL展开/收起功能
-const toggleSqlExpand = (sqlType) => {
+const toggleSqlExpand = (sqlType: string) => {
   sqlExpanded.value[sqlType] = !sqlExpanded.value[sqlType]
 }
 
 // SQL复制功能
-const copySql = async (sqlContent) => {
+const copySql = async (sqlContent: string) => {
   try {
     await navigator.clipboard.writeText(sqlContent)
     // 这里可以添加成功提示
@@ -446,6 +445,7 @@ const fetchMetricDetail = async () => {
     const mockMetrics = [
       {
         id: '1',
+        type: 'business_core' as MetricType,
         name: 'DAU',
         category: '用户指标',
         businessDomain: '留存域',
@@ -470,6 +470,7 @@ const fetchMetricDetail = async () => {
       },
       {
         id: '2',
+        type: 'regulatory' as MetricType,
         name: '当日风控授信通过笔数',
         category: '业务域',
         businessDomain: '业务规模',
@@ -493,6 +494,7 @@ const fetchMetricDetail = async () => {
       },
       {
         id: '3',
+        type: 'business_core' as MetricType,
         name: '用户注册转化率',
         category: '用户指标',
         businessDomain: '转化域',
@@ -527,23 +529,27 @@ const fetchMetricDetail = async () => {
     }
     
     // 根据指标类型添加特定数据
-    if (metricType === 'core') {
+    if (currentMetric.type === 'business_core') {
       // 业务核心指标特有数据
-      baseData.businessImpact = {
-        keyMetrics: '影响核心业务收入和用户增长',
-        scope: '全公司业务部门',
-        riskLevel: '高',
-        monitorFrequency: '实时监控'
-      }
-    } else if (metricType === 'regulatory') {
+      Object.assign(baseData, {
+        businessImpact: {
+          keyMetrics: '影响核心业务收入和用户增长',
+          scope: '全公司业务部门',
+          riskLevel: '高',
+          monitorFrequency: '实时监控'
+        }
+      })
+    } else if (currentMetric.type === 'regulatory') {
       // 监管指标特有数据
-      baseData.compliance = {
-        regulator: '银保监会',
-        regulation: '《银行业监督管理法》第三十七条',
-        reportFrequency: '月报',
-        status: '合规',
-        lastCheck: '2024-01-15'
-      }
+      Object.assign(baseData, {
+        compliance: {
+          regulator: '银保监会',
+          regulation: '《银行业监督管理法》第三十七条',
+          reportFrequency: '月报',
+          status: '合规',
+          lastCheck: '2024-01-15'
+        }
+      })
     }
     
     // 模拟数据
@@ -568,19 +574,45 @@ const fetchRelatedMetrics = async () => {
     if (!metricDetail.value) return
     
     // 模拟获取相关指标（同分类或同业务域）
-    const mockResponse = metricsMock[0].response({ 
-      query: { 
-        type: metricType.value,
-        category: metricDetail.value.category,
-        pageSize: '5'
-      } 
-    })
+    const mockMetrics = [
+      {
+        id: '4',
+        type: 'business_core' as MetricType,
+        name: '月活跃用户数',
+        category: '用户指标',
+        businessDomain: '留存域',
+        businessDefinition: '月活跃用户数',
+        owner: '张三',
+        code: 'USER_003'
+      },
+      {
+        id: '5',
+        type: 'business_core' as MetricType,
+        name: '用户留存率',
+        category: '用户指标',
+        businessDomain: '留存域',
+        businessDefinition: '用户留存率',
+        owner: '李四',
+        code: 'USER_004'
+      },
+      {
+        id: '6',
+        type: 'regulatory' as MetricType,
+        name: '风险资产比率',
+        category: '风险指标',
+        businessDomain: '风险管理',
+        businessDefinition: '风险资产比率',
+        owner: '王五',
+        code: 'RISK_001'
+      }
+    ]
     
-    if (mockResponse?.data?.list) {
-      relatedMetrics.value = mockResponse.data.list
-        .filter((item: any) => item.id !== metricDetail.value?.id)
-        .slice(0, 3)
-    }
+    // 过滤相关指标
+    relatedMetrics.value = mockMetrics
+      .filter(item => item.id !== metricDetail.value?.id && 
+                     (item.category === metricDetail.value?.category || 
+                      item.businessDomain === metricDetail.value?.businessDomain))
+      .slice(0, 3)
   } catch (error) {
     console.error('获取相关指标失败:', error)
   }
@@ -639,7 +671,7 @@ const viewRelatedMetric = (metricId: string) => {
   })
 }
 
-const handleRelatedMetricClick = (metric) => {
+const handleRelatedMetricClick = (metric: any) => {
   // 跳转到相关指标详情页
   router.push({
     path: `/discovery/metrics-map/detail/${metric.id}`,
@@ -672,12 +704,12 @@ onMounted(() => {
 }
 
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 32px;
-  border-radius: 12px;
+  background: #f8f9fa;
+  color: #1d2129;
+  padding: 24px;
+  border-radius: 8px;
   margin-bottom: 24px;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+  border: 1px solid #e5e6eb;
   position: relative;
   overflow: hidden;
 }
@@ -706,11 +738,10 @@ onMounted(() => {
 }
 
 .metric-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1d2129;
   margin: 0 0 12px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .metric-meta {
@@ -723,45 +754,43 @@ onMounted(() => {
 
 .asset-id {
   font-size: 14px;
-  color: #667eea;
-  background: rgba(255, 255, 255, 0.9);
+  color: #165dff;
+  background: #f2f3ff;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-family: monospace;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .asset-description {
-  color: rgba(255, 255, 255, 0.9);
+  color: #4e5969;
   margin: 12px 0 0 0;
   line-height: 1.6;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .metric-type-tag {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  backdrop-filter: blur(10px);
+  background: #f2f3ff !important;
+  color: #165dff !important;
+  border: 1px solid #d4e4ff !important;
 .action-buttons :deep(.arco-btn-outline) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: white;
-  backdrop-filter: blur(10px);
+  background: white;
+  border-color: #e5e6eb;
+  color: #4e5969;
 }
 
 .action-buttons :deep(.arco-btn-outline:hover) {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: #f2f3ff;
+  border-color: #165dff;
+  color: #165dff;
 }
 
 .breadcrumb :deep(.arco-breadcrumb-item-link) {
-  color: rgba(102, 126, 234, 0.8);
+  color: #165dff;
 }
 
 .breadcrumb :deep(.arco-breadcrumb-item-link:hover) {
-  color: #667eea;
+  color: #0e42d2;
 } position: relative;
   z-index: 1;
 }
@@ -792,12 +821,11 @@ onMounted(() => {
 }
 
 .detail-card {
-  margin-bottom: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 16px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background: white;
+  border: 1px solid #e5e6eb;
   overflow: hidden;
 }
 
@@ -806,20 +834,19 @@ onMounted(() => {
 }
 
 .detail-card :deep(.arco-card-header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-bottom: none;
-  padding: 16px 24px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e6eb;
+  padding: 12px 16px;
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  color: #1d2129;
 }
 
 .detail-card :deep(.arco-card-body) {
-  padding: 24px;
+  padding: 16px;
 }
 
 .highlight-text {
@@ -1072,9 +1099,9 @@ onMounted(() => {
 }
 
 .related-card {
-  margin-top: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 16px;
+  border-radius: 6px;
+  border: 1px solid #e5e6eb;
 }
 
 .related-metrics {
@@ -1089,8 +1116,8 @@ onMounted(() => {
 }
 
 .related-tag:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #f2f3ff;
+  color: #165dff;
 }
 
 .loading-container {
@@ -1099,8 +1126,8 @@ onMounted(() => {
   align-items: center;
   height: 400px;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  border: 1px solid #e5e6eb;
 }
 
 /* 响应式设计 */

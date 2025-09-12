@@ -21,250 +21,12 @@
       class="query-drawer"
     >
       <div class="drawer-content">
-        <!-- 操作栏 -->
-        <div class="action-bar">
-          <div class="action-left">
-            <a-input-search
-              v-model="searchKeyword"
-              placeholder="搜索查询记录..."
-              style="width: 300px"
-              @search="handleSearch"
-            />
-          </div>
-          <div class="action-right">
-            <a-button type="primary" @click="openNewQueryModal">
-              <template #icon><icon-plus /></template>
-              新建查询
-            </a-button>
-            <a-button @click="refreshQueryRecords">
-              <template #icon><icon-refresh /></template>
-              刷新
-            </a-button>
-          </div>
-        </div>
-
-        <!-- 查询记录列表 -->
-        <div class="query-records">
-          <a-table
-            :data="filteredQueryRecords"
-            :loading="recordsLoading"
-            :pagination="pagination"
-            row-key="id"
-            @row-click="handleRecordClick"
-          >
-            <template #columns>
-              <a-table-column title="查询名称" data-index="name" :width="200">
-                <template #cell="{ record }">
-                  <div class="record-name">
-                    <span>{{ record.name }}</span>
-                    <a-tag 
-                      :color="getStatusColor(record.status)" 
-                      size="small"
-                    >
-                      {{ getStatusText(record.status) }}
-                    </a-tag>
-                  </div>
-                </template>
-              </a-table-column>
-              
-              <a-table-column title="数据模型" data-index="modelType" :width="150">
-                <template #cell="{ record }">
-                  {{ getModelTypeName(record.modelType) }}
-                </template>
-              </a-table-column>
-              
-              <a-table-column title="查询条件" data-index="conditions" :width="300">
-                <template #cell="{ record }">
-                  <div class="conditions-preview">
-                    <a-tag v-if="record.queryDate" size="small">{{ record.queryDate }}</a-tag>
-                    <a-tag v-if="record.version" size="small">{{ record.version }}</a-tag>
-                    <span v-if="record.customConditions" class="custom-conditions">
-                      {{ formatConditions(record.customConditions) }}
-                    </span>
-                  </div>
-                </template>
-              </a-table-column>
-              
-              <a-table-column title="结果数量" data-index="resultCount" :width="100" align="center">
-                <template #cell="{ record }">
-                  <span v-if="record.status === 'completed'">{{ record.resultCount || 0 }}</span>
-                  <span v-else>-</span>
-                </template>
-              </a-table-column>
-              
-              <a-table-column title="创建时间" data-index="createTime" :width="160">
-                <template #cell="{ record }">
-                  {{ formatTime(record.createTime) }}
-                </template>
-              </a-table-column>
-              
-              <a-table-column title="操作" :width="150" fixed="right">
-                <template #cell="{ record }">
-                  <a-space>
-                    <a-button 
-                      type="text" 
-                      size="small" 
-                      @click.stop="viewQueryResult(record)"
-                      :disabled="record.status !== 'completed'"
-                    >
-                      查看结果
-                    </a-button>
-                    <a-button 
-                      type="text" 
-                      size="small" 
-                      @click.stop="duplicateQuery(record)"
-                    >
-                      复制查询
-                    </a-button>
-                    <a-popconfirm
-                      content="确定要删除这个查询记录吗？"
-                      @ok="deleteQueryRecord(record.id)"
-                    >
-                      <a-button 
-                        type="text" 
-                        size="small" 
-                        status="danger"
-                        @click.stop
-                      >
-                        删除
-                      </a-button>
-                    </a-popconfirm>
-                  </a-space>
-                </template>
-              </a-table-column>
-            </template>
-            
-            <template #empty>
-              <a-empty description="暂无查询记录">
-                <template #image>
-                  <icon-file />
-                </template>
-                <a-button type="primary" @click="openNewQueryModal">
-                  创建第一个查询
-                </a-button>
-              </a-empty>
-            </template>
-          </a-table>
-        </div>
+        <!-- 历史切片查询组件 -->
+        <HistorySliceQuery :user-id="props.userInfo?.userId || props.userInfo?.customerId" />
       </div>
     </a-drawer>
 
-    <!-- 新建查询弹窗 -->
-    <a-modal
-      v-model:visible="newQueryModalVisible"
-      title="新建历史切片数据查询"
-      width="600px"
-      @ok="createNewQuery"
-      @cancel="resetNewQueryForm"
-      :confirm-loading="creating"
-    >
-      <div class="new-query-form">
-        <a-form :model="newQueryForm" layout="vertical" ref="newQueryFormRef">
-          <a-form-item 
-            label="查询名称" 
-            field="name" 
-            :rules="[{ required: true, message: '请输入查询名称' }]"
-          >
-            <a-input 
-              v-model="newQueryForm.name" 
-              placeholder="请输入查询名称"
-              :max-length="50"
-            />
-          </a-form-item>
-          
-          <a-form-item 
-            label="数据模型" 
-            field="modelType" 
-            :rules="[{ required: true, message: '请选择数据模型' }]"
-          >
-            <a-select 
-              v-model="newQueryForm.modelType" 
-              placeholder="选择数据模型"
-              @change="handleNewQueryModelChange"
-            >
-              <a-option value="customer_basic">客户基础信息</a-option>
-              <a-option value="product_info">产品信息</a-option>
-              <a-option value="credit_record">授信记录</a-option>
-              <a-option value="loan_record">用信记录</a-option>
-              <a-option value="collection_record">催收记录</a-option>
-              <a-option value="marketing_record">营销记录</a-option>
-            </a-select>
-          </a-form-item>
-          
-          <a-form-item 
-            label="查询日期" 
-            field="queryDate" 
-            :rules="[{ required: true, message: '请选择查询日期' }]"
-          >
-            <a-date-picker 
-              v-model="newQueryForm.queryDate" 
-              placeholder="选择查询日期"
-              style="width: 100%"
-            />
-          </a-form-item>
-          
-          <!-- 自定义查询条件 -->
-          <a-form-item label="自定义条件（可选）">
-            <div class="custom-conditions">
-              <div 
-                v-for="(condition, index) in newQueryForm.customConditions" 
-                :key="index"
-                class="condition-row"
-              >
-                <a-select 
-                  v-model="condition.field" 
-                  placeholder="选择字段"
-                  style="width: 150px"
-                >
-                  <a-option 
-                    v-for="field in availableFields" 
-                    :key="field.value" 
-                    :value="field.value"
-                  >
-                    {{ field.label }}
-                  </a-option>
-                </a-select>
-                
-                <a-select 
-                  v-model="condition.operator" 
-                  placeholder="操作符"
-                  style="width: 100px"
-                >
-                  <a-option value="=">等于</a-option>
-                  <a-option value="!=">不等于</a-option>
-                  <a-option value=">">&gt;</a-option>
-                  <a-option value="<">&lt;</a-option>
-                  <a-option value="like">包含</a-option>
-                </a-select>
-                
-                <a-input 
-                  v-model="condition.value" 
-                  placeholder="值"
-                  style="flex: 1"
-                />
-                
-                <a-button 
-                  type="text" 
-                  status="danger" 
-                  @click="removeCondition(index)"
-                >
-                  <template #icon><icon-delete /></template>
-                </a-button>
-              </div>
-              
-              <a-button 
-                type="dashed" 
-                @click="addCondition"
-                style="width: 100%; margin-top: 8px"
-              >
-                <template #icon><icon-plus /></template>
-                添加条件
-              </a-button>
-            </div>
-          </a-form-item>
-        </a-form>
-      </div>
-    </a-modal>
+
 
     <!-- 查询结果弹窗 -->
     <a-modal
@@ -282,12 +44,7 @@
             <a-statistic title="查询时间" :value="formatTime(currentQueryRecord.createTime)" />
             <a-statistic title="数据模型" :value="getModelTypeName(currentQueryRecord.modelType)" />
           </div>
-          <div class="result-actions">
-            <a-button @click="copyQueryResult">
-              <template #icon><icon-copy /></template>
-              复制
-            </a-button>
-          </div>
+
         </div>
         
         <!-- 结果表格 -->
@@ -323,17 +80,17 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { 
-  IconHistory, 
-  IconPlus, 
-  IconRefresh, 
-  IconFile, 
-  IconDelete, 
-  IconCopy 
+  IconHistory
 } from '@arco-design/web-vue/es/icon'
-import { copyToClipboard } from '../../../../utils/copy'
+import { getDataModelsList } from '@/api/dataModels.ts'
+import HistorySliceQuery from './HistorySliceQuery.vue'
 
 // Props
 const props = defineProps({
+  userId: {
+    type: String,
+    required: true
+  },
   userInfo: {
     type: Object,
     default: () => ({})
@@ -343,39 +100,19 @@ const props = defineProps({
 // 响应式数据
 const loading = ref(false)
 const drawerVisible = ref(false)
-const newQueryModalVisible = ref(false)
 const resultModalVisible = ref(false)
-const recordsLoading = ref(false)
 const resultLoading = ref(false)
-const creating = ref(false)
-const searchKeyword = ref('')
 
-// 查询记录相关
-const queryRecords = ref([])
+// 查询结果相关
 const currentQueryRecord = ref(null)
 const queryResultData = ref([])
 const resultColumns = ref([])
 
-// 新建查询表单
-const newQueryForm = ref({
-  name: '',
-  modelType: '',
-  queryDate: '',
-  customConditions: []
-})
 
-const newQueryFormRef = ref(null)
 
-// 可用字段
-const availableFields = ref([])
+
 
 // 分页配置
-const pagination = {
-  pageSize: 10,
-  showTotal: true,
-  showPageSize: true
-}
-
 const resultPagination = {
   pageSize: 20,
   showTotal: true,
@@ -496,155 +233,20 @@ const modelConfigs = {
   }
 }
 
-// 计算属性
-const filteredQueryRecords = computed(() => {
-  if (!searchKeyword.value) {
-    return queryRecords.value
-  }
-  return queryRecords.value.filter(record => 
-    record.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-    getModelTypeName(record.modelType).toLowerCase().includes(searchKeyword.value.toLowerCase())
-  )
-})
+// 计算属性（暂无）
 
 // 方法
 const openQueryDrawer = () => {
   drawerVisible.value = true
-  loadQueryRecords()
 }
 
-const openNewQueryModal = () => {
-  newQueryModalVisible.value = true
-  resetNewQueryForm()
-}
 
-const resetNewQueryForm = () => {
-  newQueryForm.value = {
-    name: '',
-    modelType: '',
-    queryDate: '',
-    customConditions: []
-  }
-  availableFields.value = []
-}
 
-const handleNewQueryModelChange = (modelType) => {
-  if (modelType && modelConfigs[modelType]) {
-    availableFields.value = modelConfigs[modelType].fields
-  } else {
-    availableFields.value = []
-  }
-}
 
-const addCondition = () => {
-  newQueryForm.value.customConditions.push({
-    field: '',
-    operator: '=',
-    value: ''
-  })
-}
 
-const removeCondition = (index) => {
-  newQueryForm.value.customConditions.splice(index, 1)
-}
 
-const createNewQuery = async () => {
-  try {
-    const valid = await newQueryFormRef.value.validate()
-    if (!valid) return
-    
-    creating.value = true
-    
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const newQuery = {
-      id: Date.now().toString(),
-      name: newQueryForm.value.name,
-      modelType: newQueryForm.value.modelType,
-      queryDate: newQueryForm.value.queryDate,
-      customConditions: newQueryForm.value.customConditions.filter(c => c.field && c.value),
-      status: 'running',
-      createTime: new Date().toISOString(),
-      resultCount: 0
-    }
-    
-    queryRecords.value.unshift(newQuery)
-    
-    // 模拟查询执行
-    setTimeout(() => {
-      const record = queryRecords.value.find(r => r.id === newQuery.id)
-      if (record) {
-        record.status = 'completed'
-        record.resultCount = Math.floor(Math.random() * 100) + 1
-      }
-    }, 3000)
-    
-    Message.success('查询任务创建成功')
-    newQueryModalVisible.value = false
-    resetNewQueryForm()
-  } catch (error) {
-    Message.error('创建查询失败')
-  } finally {
-    creating.value = false
-  }
-}
 
-const loadQueryRecords = async () => {
-  recordsLoading.value = true
-  try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // 生成模拟数据
-    if (queryRecords.value.length === 0) {
-      queryRecords.value = generateMockQueryRecords()
-    }
-  } catch (error) {
-    Message.error('加载查询记录失败')
-  } finally {
-    recordsLoading.value = false
-  }
-}
 
-const generateMockQueryRecords = () => {
-  const records = []
-  const modelTypes = Object.keys(modelConfigs)
-  const statuses = ['completed', 'running', 'failed']
-  
-  for (let i = 0; i < 8; i++) {
-    const modelType = modelTypes[Math.floor(Math.random() * modelTypes.length)]
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
-    
-    records.push({
-      id: (i + 1).toString(),
-      name: `查询任务${i + 1}`,
-      modelType,
-      queryDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-
-      customConditions: [],
-      status,
-      createTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      resultCount: status === 'completed' ? Math.floor(Math.random() * 100) + 1 : 0
-    })
-  }
-  
-  return records.sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
-}
-
-const handleSearch = () => {
-  // 搜索逻辑已在计算属性中实现
-}
-
-const refreshQueryRecords = () => {
-  loadQueryRecords()
-}
-
-const handleRecordClick = (record) => {
-  if (record.status === 'completed') {
-    viewQueryResult(record)
-  }
-}
 
 const viewQueryResult = async (record) => {
   currentQueryRecord.value = record
@@ -723,52 +325,18 @@ const generateMockValue = (field, index) => {
   return mockValues[field] || `值${index + 1}`
 }
 
-const duplicateQuery = (record) => {
-  newQueryForm.value = {
-    name: `${record.name} - 副本`,
-    modelType: record.modelType,
-    queryDate: record.queryDate,
-    customConditions: [...record.customConditions]
-  }
-  handleNewQueryModelChange(record.modelType)
-  newQueryModalVisible.value = true
-}
 
-const deleteQueryRecord = async (id) => {
-  try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    const index = queryRecords.value.findIndex(r => r.id === id)
-    if (index > -1) {
-      queryRecords.value.splice(index, 1)
-      Message.success('删除成功')
-    }
-  } catch (error) {
-    Message.error('删除失败')
-  }
-}
 
-const copyQueryResult = async () => {
-  try {
-    const headers = resultColumns.value.map(col => col.title)
-    const csvContent = [headers.join(',')]
-    
-    queryResultData.value.forEach(item => {
-      const row = resultColumns.value.map(col => item[col.dataIndex] || '')
-      csvContent.push(row.join(','))
-    })
-    
-    await copyToClipboard(csvContent.join('\n'))
-    Message.success('复制成功')
-  } catch (error) {
-    Message.error('复制失败')
-  }
-}
+
+
+
+
+
 
 // 工具方法
 const getModelTypeName = (modelType) => {
-  return modelConfigs[modelType]?.name || modelType
+  const model = modelConfigs[modelType]
+  return model?.name || modelType
 }
 
 const getStatusColor = (status) => {
@@ -795,10 +363,7 @@ const formatTime = (timeStr) => {
   return date.toLocaleString('zh-CN')
 }
 
-const formatConditions = (conditions) => {
-  if (!conditions || conditions.length === 0) return '无'
-  return conditions.map(c => `${c.field} ${c.operator} ${c.value}`).join(', ')
-}
+
 
 const formatCellValue = (value) => {
   if (value === null || value === undefined) {
@@ -810,18 +375,11 @@ const formatCellValue = (value) => {
   return value
 }
 
-// 监听器
-watch(() => newQueryForm.value.modelType, (newModelType) => {
-  handleNewQueryModelChange(newModelType)
-  // 当模型类型变更时，清空版本选择
-  if (newQueryForm.value.version) {
-    newQueryForm.value.version = ''
-  }
-})
+
 
 // 生命周期
 onMounted(() => {
-  // 组件挂载时可以预加载一些数据
+  // 组件初始化
 })
 </script>
 
@@ -848,64 +406,13 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #e5e6eb;
-  background-color: #f7f8fa;
-}
 
-.action-left {
-  display: flex;
-  align-items: center;
-}
-
-.action-right {
-  display: flex;
-  gap: 8px;
-}
-
-.query-records {
-  flex: 1;
-  padding: 16px 24px;
-  overflow: auto;
-}
-
-.record-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.conditions-preview {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.custom-conditions {
-  font-size: 12px;
-  color: #86909c;
-  margin-left: 4px;
-}
 
 .new-query-form {
   width: 100%;
 }
 
-.custom-conditions {
-  width: 100%;
-}
 
-.condition-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
 
 .result-modal {
   :deep(.arco-modal-body) {

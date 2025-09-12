@@ -24,7 +24,11 @@ describe('LayoutModeManager', () => {
       off: vi.fn(),
       layout: vi.fn(),
       freeze: vi.fn(),
-      unfreeze: vi.fn()
+      unfreeze: vi.fn(),
+      disableSelection: vi.fn(),
+      enableSelection: vi.fn(),
+      disableNodeMovable: vi.fn(),
+      enableNodeMovable: vi.fn()
     }
 
     // Mock dependencies
@@ -456,24 +460,18 @@ describe('LayoutModeManager', () => {
     })
 
     it('应该处理坐标转换错误', () => {
-      const nodes = [{ id: 'node1', type: 'INPUT' }]
-      
-      mockGraph.getNodes.mockReturnValue(nodes)
-      mockGraph.getEdges.mockReturnValue([])
-      
-      // 模拟坐标验证抛出异常
-      mockCoordinateManager.validateCoordinateTransform.mockImplementation(() => {
-        throw new Error('坐标验证失败')
+      // 模拟坐标转换方法抛出异常
+      mockCoordinateManager.logicalToDOM.mockImplementation(() => {
+        throw new Error('坐标转换失败')
       })
-      
-      layoutManager.switchToUnifiedMode()
-      const result = layoutManager.applyUnifiedLayout()
-      
+
+      const positions = new Map([
+        ['node1', { x: 100, y: 200 }]
+      ])
+
+      const result = layoutManager.validateLayoutCoordinates(positions)
       expect(result).toBe(false)
-      expect(mockErrorHandler.handleError).toHaveBeenCalledWith(
-        expect.any(Error),
-        'LayoutModeManager.applyUnifiedLayout'
-      )
+      expect(mockErrorHandler.handleError).toHaveBeenCalled()
     })
 
     it('应该正确保存手动位置到缓存', () => {

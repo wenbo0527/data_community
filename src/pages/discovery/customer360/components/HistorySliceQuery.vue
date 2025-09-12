@@ -1,135 +1,240 @@
 <template>
   <div class="history-slice-query">
-    <div class="section-header">
-      <h4>历史切片数据查询</h4>
-      <div class="header-actions">
-        <a-button size="small" @click="refreshData">
-          <template #icon><icon-refresh /></template>
-          刷新
-        </a-button>
-      </div>
-    </div>
     
-    <!-- 查询条件 -->
-    <div class="query-form">
-      <a-form :model="queryForm" layout="inline" size="small">
-        <a-form-item label="数据模型">
-          <a-select 
-            v-model="queryForm.modelType" 
-            placeholder="选择数据模型"
-            style="width: 200px"
-            @change="handleModelChange"
+    <!-- 历史记录列表 -->
+    <div class="history-records-section">
+      <div class="section-header">
+        <h4>历史查询记录</h4>
+        <div class="header-actions">
+          <a-input
+              v-model="searchKeyword"
+              placeholder="搜索查询记录"
+              style="width: 200px; margin-right: 8px"
+              allow-clear
+              @input="handleSearchInput"
+              @clear="handleSearchClear"
+            />
+          <a-select
+            v-model="historyFilterForm.modelName"
+            placeholder="筛选数据模型"
+            style="width: 150px; margin-right: 8px"
+            allow-clear
+            @change="handleFilterChange"
           >
-            <a-option value="customer_basic">客户基础信息</a-option>
-            <a-option value="product_info">产品信息</a-option>
-            <a-option value="credit_record">授信记录</a-option>
-            <a-option value="loan_record">用信记录</a-option>
-            <a-option value="collection_record">催收记录</a-option>
-            <a-option value="marketing_record">营销记录</a-option>
+            <a-option value="">全部模型</a-option>
+            <a-option value="客户基础信息">客户基础信息</a-option>
+            <a-option value="产品信息">产品信息</a-option>
+            <a-option value="授信记录">授信记录</a-option>
+            <a-option value="用信记录">用信记录</a-option>
+            <a-option value="催收记录">催收记录</a-option>
+            <a-option value="营销记录">营销记录</a-option>
           </a-select>
-        </a-form-item>
-        
-        <a-form-item label="查询日期">
-          <a-date-picker 
-            v-model="queryForm.queryDate" 
-            placeholder="选择查询日期"
-            style="width: 200px"
-            @change="handleDateChange"
+          <a-range-picker
+            v-model="historyFilterForm.dateRange"
+            style="width: 240px; margin-right: 8px"
+            placeholder="筛选创建时间"
+            @change="handleFilterChange"
+            allow-clear
           />
-        </a-form-item>
-        
-        <a-form-item label="版本">
-          <a-select 
-            v-model="queryForm.version" 
-            placeholder="选择版本"
-            style="width: 150px"
-            :disabled="!queryForm.modelType"
-          >
-            <a-option v-for="version in availableVersions" :key="version" :value="version">
-              {{ version }}
-            </a-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item>
-          <a-button type="primary" @click="executeQuery" :loading="querying">
-            <template #icon><icon-search /></template>
-            查询
+          <a-button @click="clearFilters" size="small" style="margin-right: 8px">
+            <template #icon><icon-filter /></template>
+            清空筛选
           </a-button>
-        </a-form-item>
-      </a-form>
-    </div>
-    
-    <!-- 查询结果 -->
-    <div class="query-results" v-if="queryResults.length > 0">
-      <div class="results-header">
-        <div class="results-info">
-          <span>查询结果：共 {{ queryResults.length }} 条记录</span>
-          <a-tag color="blue" v-if="queryForm.modelType">{{ getModelTypeName(queryForm.modelType) }}</a-tag>
-          <a-tag color="green" v-if="queryForm.queryDate">{{ queryForm.queryDate }}</a-tag>
-          <a-tag color="orange" v-if="queryForm.version">{{ queryForm.version }}</a-tag>
-        </div>
-        <div class="results-actions">
-          <a-button size="small" @click="copyResults('selected')" :disabled="selectedRows.length === 0">
-            <template #icon><icon-copy /></template>
-            复制选中
+          <a-button @click="refreshHistoryRecords" size="small">
+            <template #icon><icon-refresh /></template>
+            刷新
           </a-button>
-          <a-button size="small" @click="copyResults('all')">
-            <template #icon><icon-copy /></template>
-            复制全部
+          <a-button type="primary" size="small" @click="createNewQuery">
+            <template #icon><icon-plus /></template>
+            新建查询
           </a-button>
         </div>
       </div>
       
-      <a-table 
-        :data="queryResults" 
-        :loading="querying"
-        :row-selection="rowSelection"
-        :pagination="pagination"
-        :scroll="{ x: 'max-content' }"
+      <!-- 历史记录表格 -->
+      <a-table
+        :data="filteredHistoryRecords"
+        :loading="historyRecordsLoading"
+        :pagination="historyPagination"
+        row-key="id"
+        @row-click="handleHistoryRecordClick"
         size="small"
-        @selection-change="handleSelectionChange"
       >
         <template #columns>
-          <a-table-column 
-            v-for="column in dynamicColumns" 
-            :key="column.dataIndex"
-            :title="column.title"
-            :data-index="column.dataIndex"
-            :width="column.width"
-          >
+          <a-table-column title="查询名称" data-index="name" :width="200">
             <template #cell="{ record }">
-              <div class="cell-content">
-                <span 
-                  class="copyable" 
-                  @click="copyText(record[column.dataIndex])"
-                  :title="record[column.dataIndex]"
+              <div class="record-name">
+                <span>{{ record.name }}</span>
+                <a-tag 
+                  :color="getStatusColor(record.status)" 
+                  size="small"
                 >
-                  {{ formatCellValue(record[column.dataIndex]) }}
-                </span>
-                <a-button 
-                  type="text" 
-                  size="mini" 
-                  @click="copyText(record[column.dataIndex])"
-                  class="copy-btn"
-                >
-                  <template #icon><icon-copy /></template>
-                </a-button>
+                  {{ record.status }}
+                </a-tag>
               </div>
             </template>
           </a-table-column>
-        </template>
-        
-        <template #empty>
-          <a-empty description="暂无查询结果" />
+          
+          <a-table-column title="数据模型" data-index="modelName" :width="150" />
+          
+          <a-table-column title="创建时间" data-index="createTime" :width="160">
+            <template #cell="{ record }">
+              {{ formatDateTime(record.createTime) }}
+            </template>
+          </a-table-column>
+          
+          <a-table-column title="结果数量" data-index="resultCount" :width="100" align="center">
+            <template #cell="{ record }">
+              <span v-if="record.status === 'completed'">{{ record.resultCount || 0 }}</span>
+              <span v-else>-</span>
+            </template>
+          </a-table-column>
+          
+          <a-table-column title="操作" :width="120" align="center">
+            <template #cell="{ record }">
+              <a-space>
+                <a-button 
+                  type="text" 
+                  size="small" 
+                  @click.stop="viewHistoryDetail(record)"
+                >
+                  <template #icon><icon-eye /></template>
+                  查看
+                </a-button>
+                <a-popconfirm
+                  content="确定要删除这个查询记录吗？"
+                  @ok="deleteHistoryRecord(record.id)"
+                >
+                  <a-button 
+                    type="text" 
+                    size="small" 
+                    status="danger"
+                    @click.stop
+                  >
+                    <template #icon><icon-delete /></template>
+                    删除
+                  </a-button>
+                </a-popconfirm>
+              </a-space>
+            </template>
+          </a-table-column>
         </template>
       </a-table>
     </div>
     
-    <!-- 空状态 -->
-    <div class="empty-state" v-else-if="!querying">
-      <a-empty description="请选择查询条件并执行查询" />
-    </div>
+
+
+    
+    <!-- 新建查询弹窗 -->
+    <a-modal
+      v-model:visible="showNewQueryModal"
+      title="新建查询"
+      width="800px"
+      :footer="false"
+      class="new-query-modal"
+    >
+      <div class="new-query-content">
+        <a-form :model="queryForm" layout="vertical" size="medium">
+          <a-form-item label="数据模型" required>
+            <a-select
+              v-model="queryForm.modelType"
+              placeholder="请选择数据模型"
+              @change="(value) => handleModelSelect(value)"
+              :loading="modelsLoading"
+            >
+              <a-option
+                v-for="model in availableModels"
+                :key="model.value"
+                :value="model.value"
+              >
+                {{ model.label }}
+              </a-option>
+            </a-select>
+          </a-form-item>
+          
+          <a-form-item label="查询名称" required>
+            <a-input
+              v-model="queryForm.name"
+              placeholder="选择数据模型后将自动生成默认名称，您也可以自定义"
+              :max-length="50"
+              allow-clear
+            >
+              <template #suffix>
+                <a-tooltip content="查询名称将自动生成为：数据模型名称_当前日期">
+                  <icon-info-circle style="color: #86909c" />
+                </a-tooltip>
+              </template>
+            </a-input>
+          </a-form-item>
+          
+
+          
+          <!-- 动态参数配置 -->
+          <div v-if="selectedModelParams.length > 0" class="params-section">
+            <h5>参数配置</h5>
+            <a-form-item
+              v-for="param in selectedModelParams"
+              :key="param.name"
+              :label="param.label"
+              :required="param.required"
+            >
+              <!-- 字符串类型 -->
+              <a-input
+                v-if="param.type === 'string'"
+                v-model="queryForm.params[param.name]"
+                :placeholder="param.placeholder || `请输入${param.label}`"
+              />
+              
+              <!-- 数字类型 -->
+              <a-input-number
+                v-else-if="param.type === 'number'"
+                v-model="queryForm.params[param.name]"
+                :placeholder="param.placeholder || `请输入${param.label}`"
+                style="width: 100%"
+              />
+              
+              <!-- 日期类型 -->
+              <a-date-picker
+                v-else-if="param.type === 'date'"
+                v-model="queryForm.params[param.name]"
+                style="width: 100%"
+                :placeholder="param.placeholder || `请选择${param.label}`"
+              />
+              
+              <!-- 布尔类型 -->
+              <a-switch
+                v-else-if="param.type === 'boolean'"
+                v-model="queryForm.params[param.name]"
+              />
+              
+              <!-- 枚举类型 -->
+              <a-select
+                v-else-if="param.type === 'enum'"
+                v-model="queryForm.params[param.name]"
+                :placeholder="param.placeholder || `请选择${param.label}`"
+              >
+                <a-option
+                  v-for="option in param.options"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </a-option>
+              </a-select>
+            </a-form-item>
+          </div>
+        </a-form>
+        
+        <div class="modal-actions">
+          <a-space>
+            <a-button @click="closeNewQueryModal">取消</a-button>
+            <a-button type="primary" @click="executeQuery" :loading="querying">
+              执行查询
+            </a-button>
+          </a-space>
+        </div>
+      </div>
+    </a-modal>
     
     <!-- SQL预览弹窗 -->
     <a-modal 
@@ -150,285 +255,586 @@
         </div>
       </div>
     </a-modal>
+    
+    <!-- 查询结果详情抽屉 -->
+    <QueryResultDetail 
+      v-model:visible="showQueryResultDrawer"
+      :query-id="selectedQueryRecord?.id"
+    />
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { Message } from '@arco-design/web-vue'
-import { IconCopy, IconRefresh, IconSearch } from '@arco-design/web-vue/es/icon'
-import { copyToClipboard } from '../../../../utils/copy'
+import { ref, computed, onMounted, watch, h } from 'vue'
+import { useRouter } from 'vue-router'
+import { Message, Modal } from '@arco-design/web-vue'
+import { getDataModelsList, executeDataModel } from '@/api/dataModels'
+import { IconCopy, IconRefresh, IconDelete, IconEye, IconPlus, IconFilter, IconInfoCircle } from '@arco-design/web-vue/es/icon'
+import { copyToClipboard } from '@/utils/clipboard'
+import QueryResultDetail from './QueryResultDetail.vue'
 
-// Props
+// 路由实例
+const router = useRouter()
+
+// Props定义
 const props = defineProps({
   userInfo: {
     type: Object,
-    default: () => ({})
+    default: () => ({
+      idCard: '110101199001011234' // 默认身份证号
+    })
   }
 })
 
 // 响应式数据
-const querying = ref(false)
-const selectedRows = ref([])
 const sqlPreviewVisible = ref(false)
 const generatedSQL = ref('')
 
-// 查询表单
+// 新建查询弹窗相关
+const showNewQueryModal = ref(false)
+const availableModels = ref([])
+const selectedModelParams = ref([])
+const modelsLoading = ref(false)
+const querying = ref(false)
 const queryForm = ref({
+  name: '',
   modelType: '',
-  queryDate: '',
-  version: ''
+  params: {}
 })
 
-// 查询结果
-const queryResults = ref([])
+// 历史记录相关
+const historyRecordsLoading = ref(false)
+const searchKeyword = ref('')
+const historyLoading = ref(false)
+const historyQueryRecords = ref([])
+const historyFilterForm = ref({
+  modelName: '',
+  dateRange: []
+})
 
-// 可用版本列表
-const availableVersions = ref(['v1.0', 'v1.1', 'v1.2', 'v2.0', 'v2.1'])
-
-// 动态列配置
-const dynamicColumns = ref([])
-
-// 分页配置
-const pagination = {
-  pageSize: 20,
+// 历史记录分页配置
+const historyPagination = {
+  pageSize: 10,
   showTotal: true,
   showPageSize: true
 }
 
-// 表格行选择配置
-const rowSelection = {
-  type: 'checkbox',
-  showCheckedAll: true
+// 查询结果详情抽屉相关
+const showQueryResultDrawer = ref(false)
+const selectedQueryRecord = ref(null)
+
+
+
+// 筛选后的历史查询记录
+const filteredHistoryRecords = computed(() => {
+  let filtered = historyQueryRecords.value
+  
+  // 搜索关键词筛选
+  if (searchKeyword.value) {
+    filtered = filtered.filter(record => 
+      record.name?.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
+      record.modelName?.toLowerCase().includes(searchKeyword.value.toLowerCase())
+    )
+  }
+  
+  // 数据模型筛选
+  if (historyFilterForm.value.modelName) {
+    filtered = filtered.filter(record => 
+      record.modelName === historyFilterForm.value.modelName
+    )
+  }
+  
+  // 创建时间筛选
+  if (historyFilterForm.value.dateRange && historyFilterForm.value.dateRange.length === 2) {
+    const [startDate, endDate] = historyFilterForm.value.dateRange
+    filtered = filtered.filter(record => {
+      const recordDate = new Date(record.createTime)
+      return recordDate >= startDate && recordDate <= endDate
+    })
+  }
+  
+  return filtered
+})
+
+// 历史记录表格列定义
+const historyColumns = [
+  {
+    title: '查询名称',
+    dataIndex: 'name',
+    key: 'name',
+    width: 200
+  },
+  {
+    title: '数据模型',
+    dataIndex: 'modelName',
+    key: 'modelName',
+    width: 150
+  },
+  {
+    title: '查询条件',
+    dataIndex: 'conditions',
+    key: 'conditions',
+    width: 250,
+    render: ({ record }) => formatConditions(record.conditions)
+  },
+  {
+    title: '创建时间',
+    dataIndex: 'createTime',
+    key: 'createTime',
+    width: 180,
+    render: ({ record }) => formatDateTime(record.createTime)
+  },
+  {
+    title: '状态',
+    dataIndex: 'status',
+    key: 'status',
+    width: 100
+  },
+  {
+    title: '操作',
+    key: 'action',
+    width: 150
+  }
+]
+
+
+
+
+
+// 处理筛选条件变化
+const handleFilterChange = () => {
+  // 筛选逻辑已在计算属性中处理
 }
 
-// 数据模型配置
-const modelConfigs = {
-  customer_basic: {
-    name: '客户基础信息',
-    columns: [
-      { title: '客户号', dataIndex: 'customerId', width: 120 },
-      { title: '姓名', dataIndex: 'name', width: 100 },
-      { title: '手机号', dataIndex: 'phone', width: 120 },
-      { title: '身份证号', dataIndex: 'idCard', width: 180 },
-      { title: '年龄', dataIndex: 'age', width: 80 },
-      { title: '性别', dataIndex: 'gender', width: 80 },
-      { title: '户籍', dataIndex: 'residence', width: 150 },
-      { title: '更新时间', dataIndex: 'updateTime', width: 160 }
-    ]
-  },
-  product_info: {
-    name: '产品信息',
-    columns: [
-      { title: '产品编号', dataIndex: 'productId', width: 120 },
-      { title: '产品名称', dataIndex: 'productName', width: 150 },
-      { title: '产品类型', dataIndex: 'productType', width: 100 },
-      { title: '余额', dataIndex: 'balance', width: 120 },
-      { title: '状态', dataIndex: 'status', width: 100 },
-      { title: '开户时间', dataIndex: 'openTime', width: 160 },
-      { title: '更新时间', dataIndex: 'updateTime', width: 160 }
-    ]
-  },
-  credit_record: {
-    name: '授信记录',
-    columns: [
-      { title: '授信编号', dataIndex: 'creditId', width: 120 },
-      { title: '授信日期', dataIndex: 'creditDate', width: 120 },
-      { title: '渠道', dataIndex: 'channel', width: 100 },
-      { title: '结果', dataIndex: 'result', width: 100 },
-      { title: '初始额度', dataIndex: 'initialLimit', width: 120 },
-      { title: '当前额度', dataIndex: 'currentLimit', width: 120 },
-      { title: '风险等级', dataIndex: 'riskLevel', width: 100 }
-    ]
-  },
-  loan_record: {
-    name: '用信记录',
-    columns: [
-      { title: '用信编号', dataIndex: 'loanId', width: 120 },
-      { title: '用信日期', dataIndex: 'loanDate', width: 120 },
-      { title: '产品名称', dataIndex: 'productName', width: 150 },
-      { title: '金额', dataIndex: 'amount', width: 120 },
-      { title: '余额', dataIndex: 'balance', width: 120 },
-      { title: '状态', dataIndex: 'status', width: 100 },
-      { title: '分期数', dataIndex: 'installments', width: 100 }
-    ]
-  },
-  collection_record: {
-    name: '催收记录',
-    columns: [
-      { title: '催收编号', dataIndex: 'collectionId', width: 120 },
-      { title: '催收时间', dataIndex: 'collectionTime', width: 160 },
-      { title: '催收方式', dataIndex: 'collectionType', width: 100 },
-      { title: '催收结果', dataIndex: 'result', width: 100 },
-      { title: '催收人员', dataIndex: 'collector', width: 100 },
-      { title: '逾期金额', dataIndex: 'overdueAmount', width: 120 },
-      { title: '逾期天数', dataIndex: 'overdueDays', width: 100 }
-    ]
-  },
-  marketing_record: {
-    name: '营销记录',
-    columns: [
-      { title: '记录编号', dataIndex: 'recordId', width: 120 },
-      { title: '营销时间', dataIndex: 'marketingTime', width: 160 },
-      { title: '营销类型', dataIndex: 'marketingType', width: 100 },
-      { title: '营销内容', dataIndex: 'content', width: 200 },
-      { title: '营销结果', dataIndex: 'result', width: 100 },
-      { title: '执行人员', dataIndex: 'operator', width: 100 }
-    ]
+// 清空筛选条件
+const clearFilters = () => {
+  historyFilterForm.value = {
+    modelName: '',
+    dateRange: []
+  }
+  searchKeyword.value = ''
+  Message.success('筛选条件已清空')
+}
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '-'
+  return new Date(dateTime).toLocaleString('zh-CN')
+}
+
+// 格式化查询条件
+const formatConditions = (conditions) => {
+  if (!conditions || Object.keys(conditions).length === 0) {
+    return '无条件'
+  }
+  
+  const conditionTexts = Object.entries(conditions)
+    .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+    .map(([key, value]) => `${key}: ${value}`)
+  
+  return conditionTexts.length > 0 ? conditionTexts.join(', ') : '无条件'
+}
+
+// 获取状态颜色
+const getStatusColor = (status) => {
+  switch (status) {
+    case '成功': return 'green'
+    case '失败': return 'red'
+    case '执行中': return 'blue'
+    default: return 'gray'
   }
 }
 
-// 处理模型类型变化
-const handleModelChange = (modelType) => {
-  if (modelType && modelConfigs[modelType]) {
-    dynamicColumns.value = modelConfigs[modelType].columns
-  } else {
-    dynamicColumns.value = []
+// 查看历史记录详情
+const viewHistoryDetail = (record) => {
+  // 打开查询结果详情抽屉
+  selectedQueryRecord.value = record
+  showQueryResultDrawer.value = true
+  console.log('打开查询结果详情抽屉:', record)
+}
+
+
+
+// 删除历史记录
+const deleteHistoryRecord = async (recordId) => {
+  try {
+    const index = historyQueryRecords.value.findIndex(record => record.id === recordId)
+    if (index > -1) {
+      historyQueryRecords.value.splice(index, 1)
+      Message.success('历史记录已删除')
+    }
+  } catch (error) {
+    console.error('删除历史记录失败:', error)
+    Message.error('删除失败')
   }
-  queryResults.value = []
 }
 
-// 处理日期变化
-const handleDateChange = (date) => {
-  queryResults.value = []
+// 搜索历史记录
+const handleSearchInput = () => {
+  // 搜索逻辑已在计算属性 filteredHistoryRecords 中处理
+  console.log('搜索关键词:', searchKeyword.value)
 }
 
-// 处理行选择变化
-const handleSelectionChange = (selectedRowKeys) => {
-  selectedRows.value = selectedRowKeys
+// 清空搜索
+const handleSearchClear = () => {
+  searchKeyword.value = ''
+  console.log('搜索已清空')
 }
 
-// 获取模型类型名称
-const getModelTypeName = (modelType) => {
-  return modelConfigs[modelType]?.name || modelType
-}
-
-// 格式化单元格值
-const formatCellValue = (value) => {
-  if (value === null || value === undefined) {
-    return '-'
+// 刷新历史记录
+const refreshHistoryRecords = async () => {
+  historyRecordsLoading.value = true
+  try {
+    await loadHistoryQueryRecords()
+    Message.success('历史记录已刷新')
+  } catch (error) {
+    console.error('刷新历史记录失败:', error)
+    Message.error('刷新失败')
+  } finally {
+    historyRecordsLoading.value = false
   }
-  if (typeof value === 'string' && value.length > 50) {
-    return value.substring(0, 50) + '...'
+}
+
+// 新建查询
+const createNewQuery = async () => {
+  await loadDataModels()
+  showNewQueryModal.value = true
+  // 重置表单
+  queryForm.value = {
+    name: '',
+    modelType: '',
+    params: {}
   }
-  return value
+  selectedModelParams.value = []
+}
+
+// 监听selectedModelParams变化
+watch(selectedModelParams, (newVal) => {
+  console.log('参数配置更新:', newVal ? newVal.length : 0, '个参数')
+}, { deep: true })
+
+// 加载数据模型列表
+const loadDataModels = async () => {
+  modelsLoading.value = true
+  try {
+    // 模拟API调用
+    const response = await new Promise(resolve => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          data: [
+            { label: '客户基础信息', value: 'dm_001', description: '包含客户的基本信息如姓名、身份证、联系方式等' },
+            { label: '产品持有信息', value: 'dm_002', description: '客户持有的各类金融产品信息' },
+            { label: '授信记录', value: 'dm_003', description: '客户的授信历史和当前授信状态' },
+            { label: '用信记录', value: 'dm_004', description: '客户的用信历史和还款记录' },
+            { label: '催收记录', value: 'dm_005', description: '客户的逾期和催收相关记录' },
+            { label: '营销记录', value: 'dm_006', description: '客户参与的营销活动和响应情况' }
+          ]
+        })
+      }, 500)
+    })
+    
+    if (response.success) {
+      availableModels.value = response.data
+      console.log('数据模型加载成功:', response.data.length, '个模型')
+    }
+  } catch (error) {
+    console.error('加载数据模型失败:', error)
+    // 使用默认数据
+    availableModels.value = [
+      { label: '客户基础信息', value: 'customer_basic', description: '包含客户的基本信息' },
+      { label: '产品信息', value: 'product_info', description: '客户的产品持有信息' }
+    ]
+  } finally {
+    modelsLoading.value = false
+  }
+}
+
+// 格式化日期为 YYYY-MM-DD 格式
+const formatDate = (date = new Date()) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// 处理模型选择
+const handleModelSelect = (modelType) => {
+  console.log('选择数据模型:', modelType)
+  
+  // 根据选中的模型加载参数配置
+  // 建立模型ID到参数配置的映射
+  const modelParamsMap = {
+    // API返回的模型ID映射
+    'dm_001': [
+      { name: 'customerId', label: '客户号', type: 'string', required: false, placeholder: '请输入客户号' },
+      { name: 'name', label: '姓名', type: 'string', required: false, placeholder: '请输入姓名' },
+      { name: 'phone', label: '手机号', type: 'string', required: false, placeholder: '请输入手机号' },
+      { name: 'idCard', label: '身份证号', type: 'string', required: false, placeholder: '请输入身份证号' },
+      { name: 'ageRange', label: '年龄范围', type: 'enum', required: false, options: [
+        { label: '18-30岁', value: '18-30' },
+        { label: '31-50岁', value: '31-50' },
+        { label: '51-65岁', value: '51-65' },
+        { label: '65岁以上', value: '65+' }
+      ]},
+      { name: 'gender', label: '性别', type: 'enum', required: false, options: [
+        { label: '男', value: 'male' },
+        { label: '女', value: 'female' }
+      ]}
+    ],
+    'dm_002': [
+      { name: 'productId', label: '产品编号', type: 'string', required: false, placeholder: '请输入产品编号' },
+      { name: 'productType', label: '产品类型', type: 'enum', required: false, options: [
+        { label: '储蓄卡', value: 'savings' },
+        { label: '信用卡', value: 'credit' },
+        { label: '理财产品', value: 'wealth' },
+        { label: '贷款产品', value: 'loan' }
+      ]},
+      { name: 'minBalance', label: '最小余额', type: 'number', required: false, placeholder: '请输入最小余额' },
+      { name: 'isActive', label: '是否激活', type: 'boolean', required: false }
+    ],
+    // 保留原有的键名映射以兼容默认数据
+    customer_basic: [
+      { name: 'customerId', label: '客户号', type: 'string', required: false, placeholder: '请输入客户号' },
+      { name: 'name', label: '姓名', type: 'string', required: false, placeholder: '请输入姓名' },
+      { name: 'phone', label: '手机号', type: 'string', required: false, placeholder: '请输入手机号' },
+      { name: 'idCard', label: '身份证号', type: 'string', required: false, placeholder: '请输入身份证号' },
+      { name: 'ageRange', label: '年龄范围', type: 'enum', required: false, options: [
+        { label: '18-30岁', value: '18-30' },
+        { label: '31-50岁', value: '31-50' },
+        { label: '51-65岁', value: '51-65' },
+        { label: '65岁以上', value: '65+' }
+      ]},
+      { name: 'gender', label: '性别', type: 'enum', required: false, options: [
+        { label: '男', value: 'male' },
+        { label: '女', value: 'female' }
+      ]}
+    ],
+    customer_basic: [
+      { name: 'customerId', label: '客户号', type: 'string', required: false, placeholder: '请输入客户号' },
+      { name: 'name', label: '姓名', type: 'string', required: false, placeholder: '请输入姓名' },
+      { name: 'phone', label: '手机号', type: 'string', required: false, placeholder: '请输入手机号' },
+      { name: 'idCard', label: '身份证号', type: 'string', required: false, placeholder: '请输入身份证号' },
+      { name: 'ageRange', label: '年龄范围', type: 'enum', required: false, options: [
+        { label: '18-30岁', value: '18-30' },
+        { label: '31-50岁', value: '31-50' },
+        { label: '51-65岁', value: '51-65' },
+        { label: '65岁以上', value: '65+' }
+      ]},
+      { name: 'gender', label: '性别', type: 'enum', required: false, options: [
+        { label: '男', value: 'male' },
+        { label: '女', value: 'female' }
+      ]}
+    ],
+    product_info: [
+      { name: 'productId', label: '产品编号', type: 'string', required: false, placeholder: '请输入产品编号' },
+      { name: 'productType', label: '产品类型', type: 'enum', required: false, options: [
+        { label: '储蓄卡', value: 'savings' },
+        { label: '信用卡', value: 'credit' },
+        { label: '理财产品', value: 'wealth' },
+        { label: '贷款产品', value: 'loan' }
+      ]},
+      { name: 'minBalance', label: '最小余额', type: 'number', required: false, placeholder: '请输入最小余额' },
+      { name: 'isActive', label: '是否激活', type: 'boolean', required: false }
+    ],
+    credit_record: [
+      { name: 'creditId', label: '授信编号', type: 'string', required: false, placeholder: '请输入授信编号' },
+      { name: 'channel', label: '渠道', type: 'enum', required: false, options: [
+        { label: '线上', value: 'online' },
+        { label: '线下', value: 'offline' },
+        { label: '电话', value: 'phone' },
+        { label: '移动端', value: 'mobile' }
+      ]},
+      { name: 'riskLevel', label: '风险等级', type: 'enum', required: false, options: [
+        { label: '低风险', value: 'low' },
+        { label: '中风险', value: 'medium' },
+        { label: '高风险', value: 'high' }
+      ]},
+      { name: 'creditAmount', label: '授信金额', type: 'number', required: false, placeholder: '请输入授信金额' },
+      { name: 'startDate', label: '开始日期', type: 'date', required: false }
+    ],
+    loan_record: [
+      { name: 'loanId', label: '用信编号', type: 'string', required: false, placeholder: '请输入用信编号' },
+      { name: 'loanAmount', label: '用信金额', type: 'number', required: false, placeholder: '请输入用信金额' },
+      { name: 'loanStatus', label: '用信状态', type: 'enum', required: false, options: [
+        { label: '正常', value: 'normal' },
+        { label: '逾期', value: 'overdue' },
+        { label: '结清', value: 'settled' }
+      ]},
+      { name: 'loanDate', label: '用信日期', type: 'date', required: false }
+    ],
+    collection_record: [
+      { name: 'collectionId', label: '催收编号', type: 'string', required: false, placeholder: '请输入催收编号' },
+      { name: 'collectionType', label: '催收方式', type: 'enum', required: false, options: [
+        { label: '电话催收', value: 'phone' },
+        { label: '短信催收', value: 'sms' },
+        { label: '上门催收', value: 'visit' },
+        { label: '法务催收', value: 'legal' }
+      ]},
+      { name: 'overdueAmount', label: '逾期金额', type: 'number', required: false, placeholder: '请输入逾期金额' },
+      { name: 'overdueDays', label: '逾期天数', type: 'number', required: false, placeholder: '请输入逾期天数' }
+    ],
+    marketing_record: [
+      { name: 'campaignId', label: '营销活动编号', type: 'string', required: false, placeholder: '请输入活动编号' },
+      { name: 'marketingType', label: '营销类型', type: 'enum', required: false, options: [
+        { label: '产品推广', value: 'product' },
+        { label: '优惠活动', value: 'promotion' },
+        { label: '客户回访', value: 'callback' },
+        { label: '满意度调研', value: 'survey' }
+      ]},
+      { name: 'channel', label: '营销渠道', type: 'enum', required: false, options: [
+        { label: '短信', value: 'sms' },
+        { label: '电话', value: 'phone' },
+        { label: '邮件', value: 'email' },
+        { label: '推送', value: 'push' }
+      ]},
+      { name: 'responseStatus', label: '响应状态', type: 'enum', required: false, options: [
+        { label: '已响应', value: 'responded' },
+        { label: '未响应', value: 'no_response' },
+        { label: '拒绝', value: 'rejected' }
+      ]}
+    ]
+  }
+  
+  const params = modelParamsMap[modelType] || []
+  console.log('加载参数配置:', params.length, '个参数')
+  
+  selectedModelParams.value = params
+  
+  // 重置参数值
+  queryForm.value.params = {}
+  
+  // 自动生成查询名称：数据模型名称_当前日期
+  const selectedModel = availableModels.value.find(model => model.value === modelType)
+  if (selectedModel) {
+    const currentDate = formatDate()
+    queryForm.value.name = `${selectedModel.label}_${currentDate}`
+  }
 }
 
 // 执行查询
 const executeQuery = async () => {
+  // 验证必填字段
+  if (!queryForm.value.name) {
+    Message.warning('请输入查询名称')
+    return
+  }
+  
   if (!queryForm.value.modelType) {
     Message.warning('请选择数据模型')
     return
   }
   
-  if (!queryForm.value.queryDate) {
-    Message.warning('请选择查询日期')
-    return
+
+  
+  // 验证必填参数
+  for (const param of selectedModelParams.value) {
+    if (param.required && !queryForm.value.params[param.name]) {
+      Message.warning(`请填写${param.label}`)
+      return
+    }
   }
   
   querying.value = true
-  
   try {
     // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 2000))
     
-    // 生成模拟数据
-    const mockData = generateMockData(queryForm.value.modelType, 15)
-    queryResults.value = mockData
+    // 保存到历史记录
+    await saveQueryToHistory()
     
-    // 生成SQL
-    generatedSQL.value = generateSQL()
+    Message.success('查询执行成功')
+    closeNewQueryModal()
     
-    Message.success(`查询完成，共找到 ${mockData.length} 条记录`)
+    // 刷新历史记录
+    await loadHistoryQueryRecords()
   } catch (error) {
-    Message.error('查询失败，请重试')
+    console.error('查询执行失败:', error)
+    Message.error('查询执行失败')
   } finally {
     querying.value = false
   }
 }
 
-// 生成模拟数据
-const generateMockData = (modelType, count) => {
-  const data = []
-  const config = modelConfigs[modelType]
-  
-  for (let i = 0; i < count; i++) {
-    const record = {}
-    config.columns.forEach(column => {
-      record[column.dataIndex] = generateMockValue(column.dataIndex, i)
-    })
-    data.push(record)
+// 保存查询到历史记录
+const saveQueryToHistory = async () => {
+  const newRecord = {
+    id: Date.now().toString(),
+    name: queryForm.value.name,
+    modelName: availableModels.value.find(m => m.value === queryForm.value.modelType)?.label || queryForm.value.modelType,
+    modelId: queryForm.value.modelType,
+    createTime: new Date().toISOString(),
+    status: '成功',
+    resultCount: Math.floor(Math.random() * 100) + 1,
+    conditions: queryForm.value.params
   }
   
-  return data
+  historyQueryRecords.value.unshift(newRecord)
 }
 
-// 生成模拟值
-const generateMockValue = (field, index) => {
-  const mockValues = {
-    customerId: `C${String(index + 1).padStart(6, '0')}`,
-    name: `客户${index + 1}`,
-    phone: `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
-    idCard: `${Math.floor(Math.random() * 900000) + 100000}${Math.floor(Math.random() * 90) + 10}0101${Math.floor(Math.random() * 9000) + 1000}`,
-    age: Math.floor(Math.random() * 50) + 20,
-    gender: Math.random() > 0.5 ? '男' : '女',
-    residence: ['北京市', '上海市', '广州市', '深圳市', '杭州市'][Math.floor(Math.random() * 5)],
-    productId: `P${String(index + 1).padStart(6, '0')}`,
-    productName: ['储蓄卡', '信用卡', '理财产品', '贷款产品'][Math.floor(Math.random() * 4)],
-    productType: ['自营', '助贷'][Math.floor(Math.random() * 2)],
-    balance: (Math.random() * 100000).toFixed(2),
-    status: ['正常', '冻结', '注销'][Math.floor(Math.random() * 3)],
-    creditId: `CR${String(index + 1).padStart(6, '0')}`,
-    creditDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    channel: ['线上', '线下', '电话'][Math.floor(Math.random() * 3)],
-    result: ['通过', '拒绝', '待审核'][Math.floor(Math.random() * 3)],
-    initialLimit: (Math.random() * 50000).toFixed(2),
-    currentLimit: (Math.random() * 50000).toFixed(2),
-    riskLevel: ['低', '中', '高'][Math.floor(Math.random() * 3)],
-    loanId: `LN${String(index + 1).padStart(6, '0')}`,
-    loanDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    amount: (Math.random() * 100000).toFixed(2),
-    installments: Math.floor(Math.random() * 36) + 1,
-    collectionId: `CL${String(index + 1).padStart(6, '0')}`,
-    collectionTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    collectionType: ['电话', '短信', '上门'][Math.floor(Math.random() * 3)],
-    collector: `催收员${index + 1}`,
-    overdueAmount: (Math.random() * 10000).toFixed(2),
-    overdueDays: Math.floor(Math.random() * 90) + 1,
-    recordId: `MR${String(index + 1).padStart(6, '0')}`,
-    marketingTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    marketingType: ['短信', '电话', '邮件'][Math.floor(Math.random() * 3)],
-    content: `营销内容${index + 1}`,
-    operator: `营销员${index + 1}`,
-    openTime: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
-    updateTime: new Date().toISOString()
+// 关闭新建查询弹窗
+const closeNewQueryModal = () => {
+  showNewQueryModal.value = false
+  queryForm.value = {
+    name: '',
+    modelType: '',
+    params: {}
   }
-  
-  return mockValues[field] || `值${index + 1}`
+  selectedModelParams.value = []
 }
 
-// 生成SQL
-const generateSQL = () => {
-  const tableName = `${queryForm.value.modelType}_${queryForm.value.queryDate.replace(/-/g, '')}`
-  const columns = dynamicColumns.value.map(col => col.dataIndex).join(', ')
-  
-  return `SELECT ${columns}
-FROM ${tableName}
-WHERE customer_id = '${props.userInfo.customerId || 'C000001'}'
-  AND date_partition = '${queryForm.value.queryDate}'
-  AND version = '${queryForm.value.version}'
-ORDER BY update_time DESC
-LIMIT 1000;`
-}
 
-// 刷新数据
-const refreshData = () => {
-  if (queryForm.value.modelType && queryForm.value.queryDate) {
-    executeQuery()
-  } else {
-    Message.info('请先设置查询条件')
+
+// 加载历史查询记录
+const loadHistoryQueryRecords = async () => {
+  try {
+    // 暂时初始化一些示例数据
+    historyQueryRecords.value = [
+      {
+        id: '1',
+        name: '客户基础信息查询_2024-01-15',
+        modelName: '客户基础信息',
+        modelId: 'customer_basic',
+        createTime: '2024-01-15T10:30:00Z',
+        status: '成功',
+        resultCount: 156
+      },
+      {
+        id: '2', 
+        name: '订单数据查询_2024-01-14',
+        modelName: '订单数据',
+        modelId: 'order_data',
+        createTime: '2024-01-14T15:20:00Z',
+        status: '成功',
+        resultCount: 89
+      }
+    ]
+    
+  } catch (error) {
+    console.error('加载历史记录失败:', error)
+    historyQueryRecords.value = []
   }
 }
+
+
+
+
+
+
+
+
+// 组件挂载时加载历史记录和数据模型
+onMounted(async () => {
+  console.log('🌟🌟🌟🌟🌟 [HistorySliceQuery组件] 组件已成功挂载! 🌟🌟🌟🌟🌟')
+  console.log('👤 传入的用户ID:', props.userId)
+  console.log('📅 挂载时间:', new Date().toLocaleTimeString())
+  console.log('🔍 About to call loadHistoryQueryRecords()');
+  loadHistoryQueryRecords()
+  console.log('🔍 About to call loadDataModels()');
+  await loadDataModels()
+  console.log('🔍 Component mounted initialization completed');
+})
 
 // 复制单个文本
 const copyText = async (text) => {
@@ -444,38 +850,8 @@ const copyText = async (text) => {
   }
 }
 
-// 复制查询结果
-const copyResults = async (type) => {
-  try {
-    let dataToCopy = []
-    
-    if (type === 'selected') {
-      dataToCopy = queryResults.value.filter((_, index) => selectedRows.value.includes(index))
-    } else {
-      dataToCopy = queryResults.value
-    }
-    
-    if (dataToCopy.length === 0) {
-      Message.warning('没有数据可复制')
-      return
-    }
-    
-    // 转换为CSV格式
-    const headers = dynamicColumns.value.map(col => col.title)
-    const csvContent = [headers.join(',')]
-    
-    dataToCopy.forEach(item => {
-      const row = dynamicColumns.value.map(col => item[col.dataIndex] || '')
-      csvContent.push(row.join(','))
-    })
-    
-    await copyToClipboard(csvContent.join('\n'))
-    Message.success(`已复制${dataToCopy.length}条记录`)
-  } catch (error) {
-    Message.error('复制失败')
-  }
-}
-
+// 在 <script setup> 中，所有顶层声明的变量和函数都会自动暴露给模板
+// 不需要使用 return 语句
 
 </script>
 
@@ -503,37 +879,48 @@ const copyResults = async (type) => {
   gap: 8px;
 }
 
-.query-form {
-  padding: 16px;
-  background-color: #f7f8fa;
-  border-radius: 6px;
-  margin-bottom: 16px;
-}
 
-.query-results {
-  width: 100%;
-}
 
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background-color: #f7f8fa;
-  border-radius: 6px;
-}
 
-.results-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 .results-actions {
   display: flex;
   gap: 8px;
 }
+
+.records-header {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  border-radius: 6px;
+  border: 1px solid #e5e6eb;
+}
+
+.records-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.records-title-row h5 {
+  margin: 0;
+  color: #1d2129;
+  font-weight: 600;
+}
+
+.records-filters {
+  display: flex;
+  align-items: center;
+}
+
+.records-info {
+  color: #4e5969;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+
 
 .empty-state {
   padding: 40px;
@@ -608,4 +995,8 @@ const copyResults = async (type) => {
 :deep(.arco-form-item) {
   margin-bottom: 0;
 }
+
+
+
+
 </style>

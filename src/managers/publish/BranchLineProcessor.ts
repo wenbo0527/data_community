@@ -3,9 +3,67 @@ import { UnifiedEventBus } from '../../core/UnifiedEventBus';
 import { UnifiedCacheManager } from '../../core/UnifiedCacheManager';
 import { ErrorHandler } from '../../core/ErrorHandler';
 
+// 类型定义
+interface BranchCondition {
+  expression?: string;
+  type: string;
+  value?: any;
+  label?: string;
+}
+
+interface Branch {
+  id: string;
+  index: number;
+  condition: BranchCondition;
+  label: string;
+  isAttached: boolean;
+  targetNodeId?: string;
+  connectionId?: string;
+  previewLineId?: string;
+}
+
+interface BranchState {
+  state: string;
+  timestamp: number;
+  lastUpdate: string;
+}
+
+interface PreviewLineConfig {
+  id: string;
+  type: string;
+  source: {
+    cell: string;
+    port: string;
+    point: { x: number; y: number };
+  };
+  target: {
+    point: { x: number; y: number };
+  };
+  branchId: string;
+  condition: BranchCondition;
+  label: string;
+  style: {
+    stroke: string;
+    strokeWidth: number;
+    strokeDasharray: string;
+  };
+}
+
+interface LabelConfig {
+  branchId: string;
+  text: string;
+  condition: string;
+  isAttached: boolean;
+  style: {
+    fontSize: number;
+    fill: string;
+    fontWeight: string;
+  };
+}
+
 /**
  * 分支线处理器
- * 负责处理分流节点的分支挂载和预览线管理
+ * 负责处理决策节点的分支线创建、更新和管理
  */
 export class BranchLineProcessor {
   private canvas: Graph;
@@ -14,7 +72,7 @@ export class BranchLineProcessor {
   private errorHandler: ErrorHandler;
   private previewLineManager: any; // 预览线管理器
   private labelManager: any; // 标签管理器
-  private branchStates: Map<string, Map<string, any>>; // 分支状态管理
+  private branchStates: Map<string, Map<string, BranchState>>; // 分支状态管理
 
   constructor(
     canvas: Graph,
@@ -32,8 +90,8 @@ export class BranchLineProcessor {
     this.errorHandler = errorHandler;
     this.branchStates = new Map();
     
-    // 临时注释掉事件监听器设置，避免测试中的TypeError
-    // this.setupEventListeners();
+    // 🔧 修复：启用事件监听器设置，防止EventEmitter内存泄漏
+    this.setupEventListeners();
   }
 
   /**
@@ -61,7 +119,7 @@ export class BranchLineProcessor {
    * @param attachedBranchId 挂载的分支ID
    * @param targetNodeId 目标节点ID
    */
-  async processBranchAttachment(decisionNodeId: string, attachedBranchId: string, targetNodeId: string) {
+  async processBranchAttachment(decisionNodeId: string, attachedBranchId: string, targetNodeId: string): Promise<any> {
     try {
       const result = {
         success: true,
@@ -106,16 +164,14 @@ export class BranchLineProcessor {
       return result;
 
     } catch (error) {
-      this.errorHandler.handleError(error as Error, {
-        context: 'BranchLineProcessor.processBranchAttachment',
-        severity: 'high'
-      });
+      this.errorHandler.handleError(error as Error, { component: 'BranchLineProcessor', method: 'processBranchAttachment' });
       return {
           success: false,
           error: (error as Error).message,
           attachedBranch: null,
           updatedPreviewLines: [],
-          updatedLabels: []
+          updatedLabels: [],
+          errors: [(error as Error).message]
         };
     }
   }
@@ -123,9 +179,9 @@ export class BranchLineProcessor {
   /**
    * 获取决策节点的所有分支
    */
-  async getBranchesForDecisionNode(decisionNodeId: string) {
+  async getBranchesForDecisionNode(decisionNodeId: string): Promise<Branch[]> {
     const cacheKey = `branches_${decisionNodeId}`;
-    const cached = this.cacheManager.get(cacheKey);
+    const cached = this.cacheManager.get(cacheKey) as Branch[];
     if (cached) {
       return cached;
     }
@@ -138,12 +194,11 @@ export class BranchLineProcessor {
     }
 
     const conditions = nodeData.conditions || [];
-    const branches = [];
+    const branches: Branch[] = [];
 
     conditions.forEach((condition, index) => {
       branches.push({
         id: `${decisionNodeId}_branch_${index}`,
-        decisionNodeId: decisionNodeId,
         condition: condition,
         index: index,
         label: condition.label || `分支${index + 1}`,
@@ -156,7 +211,6 @@ export class BranchLineProcessor {
     // 添加默认分支（else分支）
     branches.push({
       id: `${decisionNodeId}_branch_default`,
-      decisionNodeId: decisionNodeId,
       condition: { type: 'default', expression: 'else' },
       index: conditions.length,
       label: '默认分支',
@@ -173,11 +227,11 @@ export class BranchLineProcessor {
   /**
    * 将分支挂载到目标节点
    */
-  async attachBranchToNode(branch: any, targetNodeId: string) {
+  async attachBranchToNode(branch: Branch, targetNodeId: string): Promise<any> {
     // 1. 创建实际连接
     const connection = this.canvas.addEdge({
       source: {
-        cell: branch.decisionNodeId,
+        cell: targetNodeId,
         port: `output_${branch.index}`
       },
       target: {
@@ -213,7 +267,7 @@ export class BranchLineProcessor {
   /**
    * 处理未挂载的分支
    */
-  async processUnattachedBranch(branch: any, decisionNodeId: string) {
+  async processUnattachedBranch(branch: Branch, decisionNodeId: string): Promise<any[]> {
     const processedLines = [];
 
     try {
@@ -240,10 +294,7 @@ export class BranchLineProcessor {
       }
 
     } catch (error) {
-      this.errorHandler.handleError(error as Error, {
-        context: `处理分支 ${branch.id} 的预览线失败`,
-        severity: 'medium'
-      });
+      this.errorHandler.handleError(error as Error, { component: 'BranchLineProcessor', method: 'processUnattachedBranch', branchId: branch.id });
       // 在测试环境中，我们仍然需要返回空数组而不是抛出错误
     }
 
@@ -253,7 +304,7 @@ export class BranchLineProcessor {
   /**
    * 为分支创建预览线
    */
-  async createPreviewLineForBranch(branch: any, decisionNodeId: string) {
+  async createPreviewLineForBranch(branch: Branch, decisionNodeId: string): Promise<any> {
     const sourceNode = this.canvas.getCellById(decisionNodeId) as Node;
     const sourcePosition = sourceNode.getPosition();
     const sourceSize = sourceNode.getSize();
@@ -319,7 +370,7 @@ export class BranchLineProcessor {
   /**
    * 更新预览线
    */
-  async updatePreviewLineForBranch(previewLine: any, branch: any) {
+  async updatePreviewLineForBranch(previewLine: any, branch: Branch): Promise<void> {
     // 更新预览线的样式和数据
     if (previewLine.setData) {
       previewLine.setData({
@@ -333,12 +384,12 @@ export class BranchLineProcessor {
   /**
    * 更新分支标签
    */
-  async updateBranchLabels(decisionNodeId: string, branches: any[]) {
+  async updateBranchLabels(decisionNodeId: string, branches: Branch[]): Promise<any[]> {
     const updatedLabels = [];
 
     for (const branch of branches) {
       try {
-        const labelConfig = {
+        const labelConfig: LabelConfig = {
           branchId: branch.id,
           text: branch.label,
           condition: branch.condition.expression || branch.condition.type,
@@ -357,10 +408,7 @@ export class BranchLineProcessor {
         }
 
       } catch (error) {
-        this.errorHandler.handleError(error as Error, {
-          context: `更新分支 ${branch.id} 标签失败`,
-          severity: 'medium'
-        });
+        this.errorHandler.handleError(error as Error, { component: 'BranchLineProcessor', method: 'updateBranchLabel', branchId: branch.id });
       }
     }
 
@@ -394,15 +442,15 @@ export class BranchLineProcessor {
   /**
    * 获取分支状态
    */
-  getBranchState(decisionNodeId: string, branchId: string) {
+  getBranchState(decisionNodeId: string, branchId: string): BranchState {
     const nodeBranches = this.branchStates.get(decisionNodeId);
-    return nodeBranches?.get(branchId) || { state: 'unattached', timestamp: 0 };
+    return nodeBranches?.get(branchId) || { state: 'unattached', timestamp: 0, lastUpdate: new Date().toISOString() };
   }
 
   /**
    * 处理分支挂载事件
    */
-  private async handleBranchAttach(event: any) {
+  private async handleBranchAttach(event: { decisionNodeId: string; branchId: string; targetNodeId: string }): Promise<void> {
     const { decisionNodeId, branchId, targetNodeId } = event;
     await this.processBranchAttachment(decisionNodeId, branchId, targetNodeId);
   }
@@ -410,7 +458,7 @@ export class BranchLineProcessor {
   /**
    * 处理分支分离事件
    */
-  private async handleBranchDetach(event: any) {
+  private async handleBranchDetach(event: { decisionNodeId: string; branchId: string }): Promise<void> {
     const { decisionNodeId, branchId } = event;
     
     try {
@@ -427,17 +475,14 @@ export class BranchLineProcessor {
       this.updateBranchState(decisionNodeId, branchId, 'unattached');
       
     } catch (error) {
-      this.errorHandler.handleError(error as Error, {
-        context: 'BranchLineProcessor.handleBranchDetach',
-        severity: 'medium'
-      });
+      this.errorHandler.handleError(error as Error, { component: 'BranchLineProcessor', method: 'handleBranchDetach' });
     }
   }
 
   /**
    * 处理节点删除事件
    */
-  private async handleNodeRemoved(event: any) {
+  private async handleNodeRemoved(event: { nodeId: string }): Promise<void> {
     const { nodeId } = event;
     
     // 清理相关的分支状态
@@ -452,33 +497,35 @@ export class BranchLineProcessor {
   /**
    * 从决策节点获取特定分支
    */
-  private async getBranchByIdFromDecisionNode(decisionNodeId: string, branchId: string) {
+  private async getBranchByIdFromDecisionNode(decisionNodeId: string, branchId: string): Promise<Branch | undefined> {
     const branches = await this.getBranchesForDecisionNode(decisionNodeId);
-    return (branches as any[]).find(b => b.id === branchId);
+    return branches.find(b => b.id === branchId);
   }
 
   /**
    * 设置预览线管理器
    */
-  setPreviewLineManager(previewLineManager: any) {
+  setPreviewLineManager(previewLineManager: any): void {
     this.previewLineManager = previewLineManager;
   }
 
   /**
    * 设置标签管理器
    */
-  setLabelManager(labelManager: any) {
+  setLabelManager(labelManager: any): void {
     this.labelManager = labelManager;
   }
 
   /**
    * 清理资源
    */
-  dispose() {
+  dispose(): void {
     this.branchStates.clear();
-    // 临时注释掉事件监听器清理，避免测试中的TypeError
-    // this.eventBus.off('branch:attach', this.handleBranchAttach.bind(this));
-    // this.eventBus.off('branch:detach', this.handleBranchDetach.bind(this));
-    // this.eventBus.off('node:removed', this.handleNodeRemoved.bind(this));
+    // 🔧 修复：正确清理事件监听器，防止EventEmitter内存泄漏
+    if (this.eventBus) {
+      this.eventBus.off('branch:attach', this.handleBranchAttach.bind(this));
+      this.eventBus.off('branch:detach', this.handleBranchDetach.bind(this));
+      this.eventBus.off('node:removed', this.handleNodeRemoved.bind(this));
+    }
   }
 }

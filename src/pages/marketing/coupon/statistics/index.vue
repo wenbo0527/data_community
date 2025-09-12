@@ -150,11 +150,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { IconArrowRise, IconArrowFall, IconDownload } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import * as echarts from 'echarts'
-import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
+import { safeInitECharts, safeDisposeChart, waitForContainer } from '@/utils/echartsUtils'
 
 // 数据加载状态
 const loading = ref(false)
@@ -329,12 +329,13 @@ const failureChartRef = ref(null)
 let failureChart = null
 
 const initFailureChart = async () => {
-  if (!failureChartRef.value || !failureChartRef.value.clientWidth) {
-    setTimeout(initFailureChart, 100)
-    return
-  }
-  
   try {
+    // 等待容器准备就绪
+    await waitForContainer(failureChartRef.value, '失败原因图表容器')
+    
+    // 使用 nextTick 确保 DOM 完全渲染
+    await nextTick()
+    
     failureChart = await safeInitECharts(failureChartRef.value)
   const option = {
     tooltip: {
@@ -394,8 +395,16 @@ const fetchStatisticsData = async () => {
   try {
     // TODO: 调用接口获取数据
     await new Promise(resolve => setTimeout(resolve, 1000))
-    // 更新图表数据
-    initFailureChart()
+    
+    // 如果图表已经初始化，则更新数据
+    if (failureChart) {
+      const option = {
+        series: [{
+          data: failureDistributionData.value
+        }]
+      }
+      failureChart.setOption(option)
+    }
 
   } catch (error) {
     Message.error('获取统计数据失败')
@@ -415,16 +424,36 @@ const handleResize = () => {
   typeChart?.resize()
 }
 
-onMounted(() => {
-  fetchStatisticsData()
-  window.addEventListener('resize', handleResize)
-  initFailureChart()
+onMounted(async () => {
+  try {
+    await fetchStatisticsData()
+    window.addEventListener('resize', handleResize)
+    
+    // 使用 nextTick 确保 DOM 完全渲染后再初始化图表
+    await nextTick()
+    await initFailureChart()
+  } catch (error) {
+    console.error('组件初始化失败:', error)
+    Message.error('页面初始化失败，请刷新重试')
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  safeDisposeChart(trendChart, '趋势图表')
-  safeDisposeChart(failureChart, '失败原因图表')
+  
+  // 安全清理图表实例
+  if (trendChart) {
+    safeDisposeChart(trendChart, '趋势图表')
+    trendChart = null
+  }
+  if (typeChart) {
+    safeDisposeChart(typeChart, '类型图表')
+    typeChart = null
+  }
+  if (failureChart) {
+    safeDisposeChart(failureChart, '失败原因图表')
+    failureChart = null
+  }
 })
 </script>
 

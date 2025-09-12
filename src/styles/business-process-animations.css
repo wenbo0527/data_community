@@ -1,0 +1,330 @@
+/* 业务流程模块动画样式 */
+
+/* 基础过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+/* 卡片悬浮动画 */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* 步骤切换动画 */
+.step-transition {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.step-active {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(var(--arcoblue-6), 0.2);
+}
+
+/* 指标数值动画 */
+.metric-value {
+  transition: all 0.5s ease-out;
+}
+
+.metric-value-enter-active {
+  animation: countUp 0.8s ease-out;
+}
+
+@keyframes countUp {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 趋势指示器动画 */
+.trend-up {
+  animation: trendUpPulse 2s infinite;
+}
+
+.trend-down {
+  animation: trendDownPulse 2s infinite;
+}
+
+@keyframes trendUpPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+    color: var(--color-success-5);
+  }
+}
+
+@keyframes trendDownPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+    color: var(--color-danger-5);
+  }
+}
+
+/* 加载骨架屏动画 */
+.skeleton-loading {
+  background: linear-gradient(90deg, 
+    var(--color-fill-2) 25%, 
+    var(--color-fill-1) 50%, 
+    var(--color-fill-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 步骤连接线动画 */
+.step-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.step-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(var(--arcoblue-6), 0.4), 
+    transparent
+  );
+  animation: stepProgress 2s infinite;
+}
+
+@keyframes stepProgress {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* 表格行悬浮效果 */
+.table-row-hover {
+  transition: all 0.2s ease;
+}
+
+.table-row-hover:hover {
+  background: var(--color-primary-light-1);
+  transform: translateX(4px);
+}
+
+/* 按钮点击波纹效果 */
+.button-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.button-ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.button-ripple:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* 标签页切换动画 */
+.tab-content-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.tab-content-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.tab-content-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.tab-content-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 搜索高亮动画 */
+.search-highlight {
+  background: var(--color-warning-light-2);
+  animation: highlightPulse 1s ease-out;
+}
+
+@keyframes highlightPulse {
+  0% {
+    background: var(--color-warning-6);
+    color: white;
+  }
+  100% {
+    background: var(--color-warning-light-2);
+    color: inherit;
+  }
+}
+
+/* 数据更新闪烁效果 */
+.data-updated {
+  animation: dataFlash 0.6s ease-out;
+}
+
+@keyframes dataFlash {
+  0% {
+    background: var(--color-success-light-1);
+    transform: scale(1);
+  }
+  50% {
+    background: var(--color-success-light-2);
+    transform: scale(1.02);
+  }
+  100% {
+    background: transparent;
+    transform: scale(1);
+  }
+}
+
+/* 错误状态动画 */
+.error-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+/* 成功状态动画 */
+.success-bounce {
+  animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 响应式动画调整 */
+@media (max-width: 768px) {
+  /* 移动端减少动画效果，提升性能 */
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .step-active {
+    transform: scale(1.01);
+  }
+  
+  /* 禁用部分复杂动画 */
+  .step-line::after,
+  .trend-up,
+  .trend-down {
+    animation: none;
+  }
+}
+
+/* 减少动画偏好设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式适配 */
+@media (prefers-contrast: high) {
+  .card-hover:hover {
+    border: 2px solid var(--color-primary-6);
+  }
+  
+  .step-active {
+    border: 2px solid var(--color-primary-6);
+    background: var(--color-primary-light-1);
+  }
+}
+
+/* 暗色主题适配 */
+@media (prefers-color-scheme: dark) {
+  .skeleton-loading {
+    background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0.1) 25%, 
+      rgba(255, 255, 255, 0.2) 50%, 
+      rgba(255, 255, 255, 0.1) 75%
+    );
+  }
+  
+  .button-ripple::before {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}

@@ -218,17 +218,17 @@ const paginationConfig = ref({
 
 // 过滤后的数据
 const filteredData = computed(() => {
-  let result = props.data
+  let result = props.data || []
 
   // 产品过滤
   if (props.productKey) {
-    result = result.filter(item => item.productKey === props.productKey)
+    result = (result || []).filter(item => item.productKey === props.productKey)
   }
 
   // 搜索过滤
   if (searchText.value) {
     const searchLower = searchText.value.toLowerCase()
-    result = result.filter(item => 
+    result = (result || []).filter(item => 
       (item.creditNo && item.creditNo.toLowerCase().includes(searchLower)) ||
       item.productName.toLowerCase().includes(searchLower)
     )
@@ -236,7 +236,7 @@ const filteredData = computed(() => {
 
   // 操作类型过滤
   if (operationFilter.value) {
-    result = result.filter(item => {
+    result = (result || []).filter(item => {
       const adjustmentAmount = item.afterAmount - item.beforeAmount
       if (operationFilter.value === '提额') return adjustmentAmount > 0
       if (operationFilter.value === '降额') return adjustmentAmount < 0
@@ -249,7 +249,7 @@ const filteredData = computed(() => {
   // 日期范围过滤
   if (dateRange.value && dateRange.value.length === 2) {
     const [startDate, endDate] = dateRange.value
-    result = result.filter(item => {
+    result = (result || []).filter(item => {
       const adjustDate = new Date(item.adjustDate)
       return adjustDate >= new Date(startDate) && adjustDate <= new Date(endDate)
     })

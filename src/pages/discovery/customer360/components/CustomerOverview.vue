@@ -82,29 +82,81 @@
         </div>
       </div>
       
-      <!-- 产品概览卡片（合并产品概览和风险概览） -->
+      <!-- 账户状态卡片 -->
       <div class="info-card">
         <div class="card-header">
-          <icon-apps class="card-icon" />
-          <span class="card-title">产品概览</span>
+          <icon-safe class="card-icon" />
+          <span class="card-title">账户状态</span>
         </div>
         <div class="card-content">
-          <div class="product-overview">
-            <div class="overview-item">
-              <span class="label">历史最大逾期天数</span>
-              <span class="value highlight">{{ maxOverdueDays }}天</span>
-            </div>
-            <div class="overview-item">
-              <span class="label">当前逾期天数</span>
-              <span class="value highlight">{{ currentOverdueDays }}天</span>
-            </div>
-            <div class="overview-item">
-              <span class="label">当前总在贷余额</span>
-              <span class="value highlight">{{ formatAmount(currentTotalLoanBalance) }}</span>
-            </div>
-            <div class="overview-item">
+          <div class="account-status-grid">
+            <div class="status-item">
               <span class="label">当前总授信金额</span>
-              <span class="value highlight">{{ formatAmount(currentTotalCreditAmount) }}</span>
+              <span class="value amount">{{ formatAmount(accountStatus.currentTotalCreditAmount) }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">当前总在贷余额</span>
+              <span class="value amount">{{ formatAmount(accountStatus.currentTotalLoanBalance) }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">未结清借据笔数</span>
+              <span class="value count">{{ accountStatus.unsettledLoanCount }}笔</span>
+            </div>
+            <div class="status-item">
+              <span class="label">最大期数</span>
+              <span class="value count">{{ accountStatus.maxInstallments }}期</span>
+            </div>
+            <div class="status-item">
+              <span class="label">最早借款时间</span>
+              <span class="value date">{{ formatDate(accountStatus.earliestLoanDate) }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">已还本金</span>
+              <span class="value amount">{{ formatAmount(accountStatus.totalPaidPrincipal) }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">已还利息罚息</span>
+              <span class="value amount">{{ formatAmount(accountStatus.totalPaidInterestPenalty) }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">剩余应还本金</span>
+              <span class="value amount">{{ formatAmount(accountStatus.remainingPrincipal) }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">剩余应还利息</span>
+              <span class="value amount">{{ formatAmount(accountStatus.remainingInterest) }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">剩余应还罚息</span>
+              <span class="value amount">{{ formatAmount(accountStatus.remainingPenalty) }}</span>
+            </div>
+            <div class="status-item total">
+              <span class="label">剩余应还总额</span>
+              <span class="value amount highlight">{{ formatAmount(accountStatus.remainingTotalAmount) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 风险情况卡片 -->
+      <div class="info-card">
+        <div class="card-header">
+          <icon-exclamation-circle class="card-icon risk-icon" />
+          <span class="card-title">风险情况</span>
+        </div>
+        <div class="card-content">
+          <div class="risk-status-grid">
+            <div class="risk-item">
+              <span class="label">历史最大逾期天数</span>
+              <span class="value risk-value">{{ riskStatus.historyMaxOverdueDays }}天</span>
+            </div>
+            <div class="risk-item">
+              <span class="label">当前逾期期数</span>
+              <span class="value risk-value">{{ riskStatus.currentOverduePeriods }}期</span>
+            </div>
+            <div class="risk-item">
+              <span class="label">当前总逾期金额</span>
+              <span class="value amount risk-value">{{ formatAmount(riskStatus.currentTotalOverdueAmount) }}</span>
             </div>
           </div>
         </div>
@@ -129,7 +181,7 @@ import {
   IconApps,
   IconSafe,
   IconMobile,
-  // IconHistory, IconCheckCircle, IconExclamationCircle, IconInfoCircle 已删除（最近活动相关）
+  IconExclamationCircle,
   IconRefresh,
   IconUserGroup
 } from '@arco-design/web-vue/es/icon'
@@ -159,24 +211,30 @@ const currentAppInfo = ref(null)
 
 // 计算属性
 
-// 计算历史最大逾期天数
-const maxOverdueDays = computed(() => {
-  return props.userInfo?.maxOverdueDays || 0
+// 账户状态相关计算属性
+const accountStatus = computed(() => {
+  return {
+    currentTotalCreditAmount: props.userInfo?.currentTotalCreditAmount || 0,
+    currentTotalLoanBalance: props.userInfo?.currentTotalLoanBalance || 0,
+    unsettledLoanCount: props.userInfo?.unsettledLoanCount || 0,
+    maxInstallments: props.userInfo?.maxInstallments || 0,
+    earliestLoanDate: props.userInfo?.earliestLoanDate || '',
+    totalPaidPrincipal: props.userInfo?.totalPaidPrincipal || 0,
+    totalPaidInterestPenalty: props.userInfo?.totalPaidInterestPenalty || 0,
+    remainingPrincipal: props.userInfo?.remainingPrincipal || 0,
+    remainingInterest: props.userInfo?.remainingInterest || 0,
+    remainingPenalty: props.userInfo?.remainingPenalty || 0,
+    remainingTotalAmount: props.userInfo?.remainingTotalAmount || 0
+  }
 })
 
-// 计算当前逾期天数
-const currentOverdueDays = computed(() => {
-  return props.userInfo?.currentOverdueDays || 0
-})
-
-// 计算当前总在贷余额
-const currentTotalLoanBalance = computed(() => {
-  return props.userInfo?.currentTotalLoanBalance || 0
-})
-
-// 计算当前总授信金额
-const currentTotalCreditAmount = computed(() => {
-  return props.userInfo?.currentTotalCreditAmount || 0
+// 风险情况相关计算属性
+const riskStatus = computed(() => {
+  return {
+    historyMaxOverdueDays: props.userInfo?.historyMaxOverdueDays || 0,
+    currentOverduePeriods: props.userInfo?.currentOverduePeriods || 0,
+    currentTotalOverdueAmount: props.userInfo?.currentTotalOverdueAmount || 0
+  }
 })
 
 // recentActivities 计算属性已删除（最近活动模块已删除）
@@ -225,7 +283,7 @@ const formatIdCard = (idCard: string) => {
 
 const formatDate = (date: string) => {
   if (!date) return '--'
-  return new Date(date).toLocaleString('zh-CN')
+  return new Date(date).toLocaleDateString('zh-CN')
 }
 
 const formatAmount = (amount: number) => {
@@ -428,6 +486,87 @@ const getStatusColor = (status: string) => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 账户状态样式 */
+.account-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.status-item.total {
+  grid-column: 1 / -1;
+  border-top: 1px solid #f2f3f5;
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+.status-item .label {
+  color: #86909c;
+  font-size: 12px;
+}
+
+.status-item .value {
+  color: #1d2129;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-item .value.amount {
+  color: #165dff;
+  font-weight: 600;
+}
+
+.status-item .value.count {
+  color: #00b42a;
+  font-weight: 600;
+}
+
+.status-item .value.date {
+  color: #86909c;
+}
+
+.status-item .value.highlight {
+  color: #ff7d00;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 风险情况样式 */
+.risk-status-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 12px;
+}
+
+.risk-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.risk-item .label {
+  color: #86909c;
+  font-size: 12px;
+}
+
+.risk-item .value.risk-value {
+  color: #f53f3f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.risk-icon {
+  color: #f53f3f !important;
 }
 
 .risk-overview {

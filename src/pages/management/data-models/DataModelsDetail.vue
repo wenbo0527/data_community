@@ -52,29 +52,66 @@
           <a-card title="基本信息" class="info-card">
             <a-descriptions :column="2" bordered>
               <a-descriptions-item label="模型名称">
-                {{ modelData.name }}
+                <span class="model-name">{{ modelData.name }}</span>
+              </a-descriptions-item>
+              <a-descriptions-item label="模型ID">
+                <a-typography-text copyable>{{ modelData.id }}</a-typography-text>
               </a-descriptions-item>
               <a-descriptions-item label="使用场景">
                 <a-tag :color="getUseCaseColor(modelData.useCase)">
+                  <template #icon>
+                    <icon-apps v-if="modelData.useCase === 'download'" />
+                    <icon-file v-else />
+                  </template>
                   {{ getUseCaseText(modelData.useCase) }}
                 </a-tag>
               </a-descriptions-item>
-              <a-descriptions-item label="语言类型">
-                <a-tag :color="modelData.language === 'sql' ? 'orange' : 'purple'">
-                  {{ modelData.language?.toUpperCase() }}
+              <a-descriptions-item label="开发语言">
+                <a-tag color="blue">
+                  <template #icon>
+                    <icon-code />
+                  </template>
+                  {{ modelData.language }}
                 </a-tag>
               </a-descriptions-item>
-              <a-descriptions-item label="管理人">
+              <a-descriptions-item label="负责人">
+                <a-avatar :size="20" style="margin-right: 8px">
+                  <icon-user />
+                </a-avatar>
                 {{ modelData.manager }}
               </a-descriptions-item>
-              <a-descriptions-item label="版本">
-                v{{ modelData.version }}
+              <a-descriptions-item label="当前版本">
+                <a-tag color="green" @click="showVersionHistory">
+                  <template #icon>
+                    <icon-branch />
+                  </template>
+                  v{{ modelData.version }}
+                </a-tag>
+                <a-button type="text" size="mini" @click="showVersionHistory">
+                  <template #icon>
+                    <icon-history />
+                  </template>
+                  版本历史
+                </a-button>
+              </a-descriptions-item>
+              <a-descriptions-item label="创建时间">
+                <icon-clock-circle style="margin-right: 4px; color: #86909c;" />
+                {{ modelData.createdAt }}
               </a-descriptions-item>
               <a-descriptions-item label="更新时间">
+                <icon-clock-circle style="margin-right: 4px; color: #86909c;" />
                 {{ modelData.updatedAt }}
               </a-descriptions-item>
+              <a-descriptions-item label="代码行数">
+                <a-statistic :value="getCodeLines()" suffix="行" />
+              </a-descriptions-item>
+              <a-descriptions-item label="参数数量">
+                <a-statistic :value="modelData.parameters?.length || 0" suffix="个" />
+              </a-descriptions-item>
               <a-descriptions-item label="模型描述" :span="2">
-                {{ modelData.description || '暂无描述' }}
+                <div class="description-content">
+                  {{ modelData.description || '暂无描述' }}
+                </div>
               </a-descriptions-item>
             </a-descriptions>
           </a-card>
@@ -228,39 +265,178 @@
     <!-- 执行结果弹窗 -->
     <a-modal
       v-model:visible="executionModalVisible"
-      title="执行结果"
-      width="80%"
+      :title="executionModalMode === 'test' ? '测试执行' : '执行详情'"
+      width="85%"
       :footer="false"
     >
       <div class="execution-result">
-        <div class="result-header">
-          <a-tag
-            :color="getExecutionStatusColor(currentExecution.status)"
-          >
-            {{ getExecutionStatusText(currentExecution.status) }}
-          </a-tag>
-          <span class="result-time">执行时间: {{ currentExecution.duration }}ms</span>
+        <!-- 测试参数输入区域 -->
+        <div v-if="executionModalMode === 'test'" class="test-params-section">
+          <a-card title="测试参数" size="small" class="params-input-card">
+            <div v-if="modelData.parameters && modelData.parameters.length > 0" class="params-form">
+              <a-row :gutter="16">
+                <a-col 
+                  v-for="param in modelData.parameters" 
+                  :key="param.name"
+                  :span="12"
+                >
+                  <a-form-item 
+                    :label="param.name"
+                    :required="param.required"
+                  >
+                    <a-input
+                      v-if="param.type === 'string'"
+                      v-model="testParams[param.name]"
+                      :placeholder="param.defaultValue || `请输入${param.name}`"
+                    />
+                    <a-input-number
+                      v-else-if="param.type === 'number'"
+                      v-model="testParams[param.name]"
+                      :placeholder="param.defaultValue || `请输入${param.name}`"
+                      style="width: 100%"
+                    />
+                    <a-date-picker
+                      v-else-if="param.type === 'date'"
+                      v-model="testParams[param.name]"
+                      :placeholder="param.defaultValue || `请选择${param.name}`"
+                      style="width: 100%"
+                    />
+                    <a-switch
+                      v-else-if="param.type === 'boolean'"
+                      v-model="testParams[param.name]"
+                    />
+                    <a-input
+                      v-else
+                      v-model="testParams[param.name]"
+                      :placeholder="param.defaultValue || `请输入${param.name}`"
+                    />
+                    <div class="param-description" v-if="param.description">
+                      {{ param.description }}
+                    </div>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <div class="test-actions">
+                <a-button 
+                  type="primary" 
+                  @click="executeWithParams"
+                  :loading="executing"
+                >
+                  <template #icon>
+                    <icon-play-arrow />
+                  </template>
+                  执行测试
+                </a-button>
+                <a-button @click="resetTestParams">
+                  重置参数
+                </a-button>
+              </div>
+            </div>
+            <div v-else class="no-params">
+              <a-empty description="该模型无需输入参数">
+                <a-button 
+                  type="primary" 
+                  @click="executeWithParams"
+                  :loading="executing"
+                >
+                  <template #icon>
+                    <icon-play-arrow />
+                  </template>
+                  直接执行
+                </a-button>
+              </a-empty>
+            </div>
+          </a-card>
         </div>
         
-        <a-tabs default-active-key="result">
-          <a-tab-pane key="result" title="执行结果">
-            <div class="result-content">
-              <pre>{{ currentExecution.result }}</pre>
-            </div>
-          </a-tab-pane>
-          <a-tab-pane key="log" title="执行日志">
-            <div class="log-content">
-              <pre>{{ currentExecution.log }}</pre>
-            </div>
-          </a-tab-pane>
-        </a-tabs>
+        <!-- 执行结果区域 -->
+        <div class="result-section">
+          <div class="result-header">
+            <a-tag
+              :color="getExecutionStatusColor(currentExecution.status)"
+            >
+              {{ getExecutionStatusText(currentExecution.status) }}
+            </a-tag>
+            <span class="result-time">执行时间: {{ currentExecution.duration }}ms</span>
+          </div>
+          
+          <a-tabs default-active-key="result">
+            <a-tab-pane key="result" title="执行结果">
+              <div class="result-content">
+                <pre>{{ currentExecution.result }}</pre>
+              </div>
+            </a-tab-pane>
+            <a-tab-pane key="log" title="执行日志">
+              <div class="log-content">
+                <pre>{{ currentExecution.log }}</pre>
+              </div>
+            </a-tab-pane>
+            <a-tab-pane v-if="executionModalMode === 'test'" key="params" title="执行参数">
+              <div class="params-content">
+                <pre>{{ JSON.stringify(testParams, null, 2) }}</pre>
+              </div>
+            </a-tab-pane>
+          </a-tabs>
+        </div>
+      </div>
+    </a-modal>
+
+    <!-- 版本历史弹窗 -->
+    <a-modal
+      v-model:visible="versionHistoryVisible"
+      title="版本历史"
+      width="70%"
+      :footer="false"
+    >
+      <div class="version-history">
+        <div class="version-actions">
+          <a-button type="primary" @click="handleCreateNewVersion">
+            <template #icon>
+              <icon-plus />
+            </template>
+            创建新版本
+          </a-button>
+        </div>
+        
+        <a-table
+          :columns="versionColumns"
+          :data="versionHistory"
+          :pagination="false"
+          :loading="loadingVersions"
+        >
+          <template #version="{ record }">
+            <a-tag :color="record.version === modelData.version ? 'green' : 'blue'">
+              v{{ record.version }}
+              <span v-if="record.version === modelData.version"> (当前)</span>
+            </a-tag>
+          </template>
+          <template #actions="{ record }">
+            <a-space>
+              <a-button 
+                size="small" 
+                type="text" 
+                @click="viewVersionDetail(record)"
+              >
+                查看
+              </a-button>
+              <a-button 
+                size="small" 
+                type="text" 
+                @click="rollbackVersion(record)"
+                :disabled="record.version === modelData.version"
+              >
+                回滚
+              </a-button>
+            </a-space>
+          </template>
+        </a-table>
       </div>
     </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { 
@@ -268,16 +444,27 @@ import {
   executeDataModel, 
   getExecutionHistory,
   copyDataModel,
-  deleteDataModel 
+  deleteDataModel,
+  getVersionHistory,
+  createNewVersion,
+  rollbackToVersion
 } from '@/api/dataModels'
-import {
+import { 
   IconArrowLeft,
   IconCopy,
   IconEdit,
   IconPlayArrow,
   IconDownload,
   IconInfoCircle,
-  IconArrowRight
+  IconArrowRight,
+  IconHistory,
+  IconPlus,
+  IconApps,
+  IconFile,
+  IconCode,
+  IconUser,
+  IconBranch,
+  IconClockCircle
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
@@ -286,6 +473,15 @@ const route = useRoute()
 // 响应式数据
 const executing = ref(false)
 const executionModalVisible = ref(false)
+const executionModalMode = ref('test') // 'test' 或 'view'
+const versionHistoryVisible = ref(false)
+const loadingVersions = ref(false)
+
+// 测试参数
+const testParams = ref({})
+
+// 版本历史数据
+const versionHistory = ref([])
 
 // 模型数据
 const modelData = reactive({
@@ -341,6 +537,35 @@ const paramColumns = [
   {
     title: '默认值',
     dataIndex: 'defaultValue'
+  }
+]
+
+// 版本历史表格列配置
+const versionColumns = [
+  {
+    title: '版本号',
+    dataIndex: 'version',
+    slotName: 'version',
+    width: 120
+  },
+  {
+    title: '创建时间',
+    dataIndex: 'createdAt',
+    width: 180
+  },
+  {
+    title: '创建人',
+    dataIndex: 'creator',
+    width: 100
+  },
+  {
+    title: '变更说明',
+    dataIndex: 'description'
+  },
+  {
+    title: '操作',
+    slotName: 'actions',
+    width: 120
   }
 ]
 
@@ -430,13 +655,29 @@ const handleCopy = async () => {
 }
 
 const handleEdit = () => {
-  router.push(`/management/data-models/edit/${route.params.id}`)
+  router.push(`/management/data-models/${route.params.id}/edit`)
 }
 
 const handleExecute = async () => {
+  // 初始化测试参数
+  initTestParams()
+  executionModalMode.value = 'test'
+  executionModalVisible.value = true
+  
+  // 清空之前的执行结果
+  Object.assign(currentExecution, {
+    status: '',
+    duration: 0,
+    result: '',
+    log: ''
+  })
+}
+
+// 执行带参数的测试
+const executeWithParams = async () => {
   executing.value = true
   try {
-    const response = await executeDataModel(route.params.id, {})
+    const response = await executeDataModel(route.params.id, testParams.value)
     
     if (response.code === 200) {
       const result = {
@@ -447,7 +688,6 @@ const handleExecute = async () => {
       }
       
       Object.assign(currentExecution, result)
-      executionModalVisible.value = true
       
       // 重新加载执行历史
       await loadExecutionHistory()
@@ -462,27 +702,45 @@ const handleExecute = async () => {
       }
       
       Object.assign(currentExecution, result)
-      executionModalVisible.value = true
       
       Message.error(response.message || '模型执行失败')
     }
   } catch (error) {
+    // 🔧 修复：改进错误处理逻辑，避免Vue组件事件处理器错误
     console.error('模型执行失败:', error)
+    
+    const errorMessage = error && error.message ? error.message : '未知错误'
     
     const result = {
       status: 'failed',
       duration: 0,
       result: '',
-      log: '执行失败：' + error.message
+      log: '执行失败：' + errorMessage
     }
     
     Object.assign(currentExecution, result)
-    executionModalVisible.value = true
     
     Message.error('执行失败，请重试')
   } finally {
     executing.value = false
   }
+}
+
+// 初始化测试参数
+const initTestParams = () => {
+  const params = {}
+  if (modelData.parameters && modelData.parameters.length > 0) {
+    modelData.parameters.forEach(param => {
+      params[param.name] = param.defaultValue || ''
+    })
+  }
+  testParams.value = params
+}
+
+// 重置测试参数
+const resetTestParams = () => {
+  initTestParams()
+  Message.success('参数已重置')
 }
 
 const handleCopyCode = async () => {
@@ -513,11 +771,85 @@ const viewExecutionDetail = (execution) => {
     result: '模拟执行结果数据...',
     log: '模拟执行日志...'
   })
+  executionModalMode.value = 'view'
   executionModalVisible.value = true
 }
 
 const viewAllExecutions = () => {
   Message.info('查看全部执行记录功能开发中')
+}
+
+// 版本历史相关函数
+const showVersionHistory = async () => {
+  versionHistoryVisible.value = true
+  await loadVersionHistory()
+}
+
+const loadVersionHistory = async () => {
+  loadingVersions.value = true
+  try {
+    const response = await getVersionHistory(route.params.id)
+    if (response.code === 200) {
+      versionHistory.value = response.data || []
+    } else {
+      Message.error(response.message || '加载版本历史失败')
+    }
+  } catch (error) {
+    console.error('加载版本历史失败:', error)
+    Message.error('加载版本历史失败')
+  } finally {
+    loadingVersions.value = false
+  }
+}
+
+const handleCreateNewVersion = async () => {
+  Modal.confirm({
+    title: '创建新版本',
+    content: '确定要基于当前版本创建新版本吗？',
+    onOk: async () => {
+      try {
+        const response = await createNewVersion(route.params.id, {
+          description: '基于v' + modelData.version + '创建的新版本'
+        })
+        if (response.code === 200) {
+          Message.success('新版本创建成功')
+          await loadVersionHistory()
+          await loadModelData() // 重新加载模型数据以获取最新版本号
+        } else {
+          Message.error(response.message || '创建新版本失败')
+        }
+      } catch (error) {
+        console.error('创建新版本失败:', error)
+        Message.error('创建新版本失败')
+      }
+    }
+  })
+}
+
+const rollbackVersion = async (record) => {
+  Modal.confirm({
+    title: '版本回滚',
+    content: `确定要回滚到版本 v${record.version} 吗？此操作将创建一个新版本。`,
+    onOk: async () => {
+      try {
+        const response = await rollbackToVersion(route.params.id, record.version)
+        if (response.code === 200) {
+          Message.success('版本回滚成功')
+          await loadVersionHistory()
+          await loadModelData() // 重新加载模型数据
+        } else {
+          Message.error(response.message || '版本回滚失败')
+        }
+      } catch (error) {
+        console.error('版本回滚失败:', error)
+        Message.error('版本回滚失败')
+      }
+    }
+  })
+}
+
+const viewVersionDetail = (record) => {
+  Message.info(`查看版本 v${record.version} 详情功能开发中`)
 }
 
 // 加载模型数据
@@ -563,6 +895,20 @@ const loadExecutionHistory = async () => {
 // 组件挂载时加载数据
 onMounted(() => {
   loadModelData()
+})
+
+// 组件卸载时清理资源
+onUnmounted(() => {
+  // 清理可能的定时器
+  if (window.executionTimer) {
+    clearInterval(window.executionTimer)
+    window.executionTimer = null
+  }
+  
+  // 清理可能的事件监听器
+  if (window.removeEventListeners) {
+    window.removeEventListeners()
+  }
 })
 </script>
 
@@ -620,6 +966,41 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 
+.model-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1d2129;
+}
+
+.description-content {
+  padding: 8px 12px;
+  background-color: #f7f8fa;
+  border-radius: 4px;
+  border-left: 3px solid #165dff;
+  font-style: italic;
+  color: #4e5969;
+  line-height: 1.5;
+}
+
+.arco-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.arco-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.arco-descriptions-item-label {
+  font-weight: 500;
+  color: #4e5969;
+}
+
+.arco-statistic-content {
+  font-weight: 600;
+}
+
 .code-header {
   display: flex;
   justify-content: space-between;
@@ -638,6 +1019,88 @@ onMounted(() => {
   border: 1px solid #e5e6eb;
   border-radius: 6px;
   overflow: hidden;
+}
+
+/* 执行弹窗样式 */
+.execution-result {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.test-params-section {
+  margin-bottom: 20px;
+}
+
+.params-input-card {
+  border: 1px solid #e5e6eb;
+}
+
+.params-form {
+  padding: 16px 0;
+}
+
+.param-description {
+  font-size: 12px;
+  color: #86909c;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.test-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e6eb;
+}
+
+.no-params {
+  padding: 20px;
+  text-align: center;
+}
+
+.result-section {
+  border-top: 1px solid #e5e6eb;
+  padding-top: 16px;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: #f7f8fa;
+  border-radius: 6px;
+}
+
+.result-time {
+  color: #86909c;
+  font-size: 14px;
+}
+
+.result-content,
+.log-content,
+.params-content {
+  background-color: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.result-content pre,
+.log-content pre,
+.params-content pre {
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1d2129;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .code-content {

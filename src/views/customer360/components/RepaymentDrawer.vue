@@ -69,6 +69,22 @@
             <span class="label">下期还款日：</span>
             <span class="value date">{{ formatDate(loanRecord.nextPaymentDate) }}</span>
           </div>
+          <div class="info-item">
+            <span class="label">借款利率：</span>
+            <span class="value">{{ formatRate(loanRecord.loanRate) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">是否和小：</span>
+            <a-tag :color="loanRecord.isSettlement ? 'green' : 'gray'" size="small">
+              {{ loanRecord.isSettlement ? '是' : '否' }}
+            </a-tag>
+          </div>
+          <div class="info-item">
+            <span class="label">是否理赔：</span>
+            <a-tag :color="loanRecord.isClaim ? 'blue' : 'gray'" size="small">
+              {{ loanRecord.isClaim ? '是' : '否' }}
+            </a-tag>
+          </div>
         </div>
       </div>
 
@@ -104,6 +120,16 @@
           <History class="section-icon" />
           还款记录
           <span class="record-count">({{ repaymentDetails.length }}笔)</span>
+          <a-button 
+            v-if="repaymentDetails.length > 0" 
+            type="text" 
+            size="small" 
+            @click="copyRepaymentData"
+            class="copy-btn"
+          >
+            <Copy class="copy-icon" />
+            一键复制
+          </a-button>
         </h4>
         
         <div class="records-container">
@@ -122,48 +148,95 @@
             >
               <div class="record-header">
                 <div class="record-title">
-                  <span class="period">第{{ record.period }}期</span>
-                  <a-tag :color="getRepaymentStatusColor(record.status)" size="small">
-                    {{ record.status }}
+                  <span class="period">第{{ record.installmentNo || record.period }}期</span>
+                  <a-tag :color="getRepaymentStatusColor(record.repaymentStatus || record.status)" size="small">
+                    {{ record.repaymentStatus || record.status }}
                   </a-tag>
                 </div>
                 <div class="record-amount">
-                  {{ formatAmount(record.amount) }}
+                  {{ formatAmount(record.dueAmount || record.amount) }}
                 </div>
               </div>
               
               <div class="record-details">
-                <div class="detail-row">
-                  <span class="detail-label">还款日期：</span>
-                  <span class="detail-value">{{ formatDate(record.repaymentDate) }}</span>
+                <!-- 基本信息 -->
+                <div class="detail-section">
+                  <div class="section-header">基本信息</div>
+                  <div class="detail-row">
+                    <span class="detail-label">应还款日：</span>
+                    <span class="detail-value">{{ formatDate(record.dueDate) }}</span>
+                  </div>
+                  <div v-if="record.maxOverdueDays > 0" class="detail-row">
+                    <span class="detail-label">最大逾期天数：</span>
+                    <span class="detail-value overdue">{{ record.maxOverdueDays }}天</span>
+                  </div>
                 </div>
-                <div class="detail-row">
-                  <span class="detail-label">应还日期：</span>
-                  <span class="detail-value">{{ formatDate(record.dueDate) }}</span>
+
+                <!-- 应还信息 -->
+                <div class="detail-section">
+                  <div class="section-header due-section">应还信息</div>
+                  <div class="detail-row">
+                    <span class="detail-label">应还本金：</span>
+                    <span class="detail-value amount due">{{ formatAmount(record.duePrincipal || record.principal) }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">应还利息：</span>
+                    <span class="detail-value amount due">{{ formatAmount(record.dueInterest || record.interest) }}</span>
+                  </div>
+                  <div v-if="(record.duePenalty || record.penalty) > 0" class="detail-row">
+                    <span class="detail-label">应还罚息：</span>
+                    <span class="detail-value amount penalty">{{ formatAmount(record.duePenalty || record.penalty) }}</span>
+                  </div>
+                  <div v-if="record.dueCompoundInterest > 0" class="detail-row">
+                    <span class="detail-label">应还复利：</span>
+                    <span class="detail-value amount due">{{ formatAmount(record.dueCompoundInterest) }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">当期应还金额：</span>
+                    <span class="detail-value amount due highlight">{{ formatAmount(record.dueAmount || record.amount) }}</span>
+                  </div>
                 </div>
-                <div class="detail-row">
-                  <span class="detail-label">本金：</span>
-                  <span class="detail-value amount">{{ formatAmount(record.principal) }}</span>
+
+                <!-- 实还信息 -->
+                <div class="detail-section">
+                  <div class="section-header paid-section">实还信息</div>
+                  <div class="detail-row">
+                    <span class="detail-label">实际还款本金：</span>
+                    <span class="detail-value amount paid">{{ formatAmount(record.actualPaidPrincipal || record.principal) }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">实际还款利息：</span>
+                    <span class="detail-value amount paid">{{ formatAmount(record.actualPaidInterest || record.interest) }}</span>
+                  </div>
+                  <div v-if="(record.actualPaidPenalty || record.penalty) > 0" class="detail-row">
+                    <span class="detail-label">实际还款罚息：</span>
+                    <span class="detail-value amount penalty">{{ formatAmount(record.actualPaidPenalty || record.penalty) }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">实际还款费用：</span>
+                    <span class="detail-value amount paid">{{ formatAmount(record.actualPaidFee || record.fee || 0) }}</span>
+                  </div>
                 </div>
-                <div class="detail-row">
-                  <span class="detail-label">利息：</span>
-                  <span class="detail-value amount">{{ formatAmount(record.interest) }}</span>
-                </div>
-                <div v-if="record.penalty > 0" class="detail-row">
-                  <span class="detail-label">罚息：</span>
-                  <span class="detail-value amount penalty">{{ formatAmount(record.penalty) }}</span>
-                </div>
-                <div v-if="record.fee > 0" class="detail-row">
-                  <span class="detail-label">费用：</span>
-                  <span class="detail-value amount">{{ formatAmount(record.fee) }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">还款方式：</span>
-                  <span class="detail-value">{{ record.method }}</span>
-                </div>
-                <div v-if="record.overdueDays > 0" class="detail-row">
-                  <span class="detail-label">逾期天数：</span>
-                  <span class="detail-value overdue">{{ record.overdueDays }}天</span>
+
+                <!-- 剩余信息 -->
+                <div class="detail-section">
+                  <div class="section-header remaining-section">剩余信息</div>
+                  <div class="detail-row">
+                    <span class="detail-label">剩余本金：</span>
+                    <span class="detail-value amount remaining">{{ formatAmount(record.remainingPrincipal || 0) }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">剩余利息：</span>
+                    <span class="detail-value amount remaining">{{ formatAmount(record.remainingInterest || 0) }}</span>
+                  </div>
+                  <div v-if="(record.remainingPenalty || 0) > 0" class="detail-row">
+                    <span class="detail-label">剩余罚息：</span>
+                    <span class="detail-value amount penalty">{{ formatAmount(record.remainingPenalty) }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">剩余应还总额：</span>
+                    <span class="detail-value amount remaining highlight">{{ formatAmount(record.remainingTotal || 0) }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -245,9 +318,29 @@ import { CreditCard, FileText, Copy, BarChart3, History, Calendar, FileX } from 
 import { Message } from '@arco-design/web-vue'
 
 interface RepaymentDetail {
+  installmentNo: number           // 期次
+  dueDate: string                // 应还款日
+  maxOverdueDays: number         // 最大逾期天数
+  repaymentStatus: string        // 还款状态
+  duePrincipal: number           // 应还本金
+  dueInterest: number            // 应还利息
+  duePenalty: number             // 应还罚息
+  dueCompoundInterest: number    // 应还复利
+  dueAmount: number              // 当期应还金额
+  actualPaidPrincipal: number    // 实际还款本金
+  actualPaidInterest: number     // 实际还款利息
+  actualPaidPenalty: number      // 实际还款罚息
+  actualPaidFee: number          // 实际还款费用
+  remainingPrincipal: number     // 剩余本金
+  remainingPenalty: number       // 剩余罚息
+  remainingInterest: number      // 剩余利息
+  remainingTotal: number         // 剩余应还总额
+  loanRate: number               // 借款利率
+  isSettlement: boolean          // 是否和小
+  isClaim: boolean               // 是否理赔
+  // 保留原有字段用于兼容
   period: number
   repaymentDate: string
-  dueDate: string
   amount: number
   principal: number
   interest: number
@@ -277,6 +370,9 @@ interface LoanRecord {
   paidInstallments: number
   nextPayment: number
   nextPaymentDate: string
+  loanRate: number
+  isSettlement: boolean
+  isClaim: boolean
   repaymentDetails: RepaymentDetail[]
   repaymentPlan: RepaymentPlan[]
 }
@@ -319,6 +415,12 @@ const formatDate = (dateStr: string): string => {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   return date.toLocaleDateString('zh-CN')
+}
+
+// 格式化利率
+const formatRate = (rate: number): string => {
+  if (rate === undefined || rate === null) return '-'
+  return `${(rate * 100).toFixed(2)}%`
 }
 
 // 获取状态颜色
@@ -383,6 +485,63 @@ const copyText = async (text: string) => {
     Message.error('复制失败')
   }
 }
+
+// 一键复制还款数据
+const copyRepaymentData = async () => {
+  try {
+    const headers = [
+      '期次',
+      '应还款日',
+      '最大逾期天数',
+      '还款状态',
+      '应还本金',
+      '应还利息',
+      '应还罚息',
+      '应还复利',
+      '当期应还金额',
+      '实际还款本金',
+      '实际还款利息',
+      '实际还款罚息',
+      '实际还款费用',
+      '剩余本金',
+      '剩余利息',
+      '剩余罚息',
+      '剩余应还总额',
+      '借款利率',
+      '是否和小',
+      '是否理赔'
+    ].join('\t')
+    
+    const rows = repaymentDetails.value.map(record => [
+      record.installmentNo || record.period || '-',
+      formatDate(record.dueDate) || '-',
+      record.maxOverdueDays || 0,
+      record.repaymentStatus || record.status || '-',
+      (record.duePrincipal || record.principal || 0).toFixed(2),
+      (record.dueInterest || record.interest || 0).toFixed(2),
+      (record.duePenalty || record.penalty || 0).toFixed(2),
+      (record.dueCompoundInterest || 0).toFixed(2),
+      (record.dueAmount || record.amount || 0).toFixed(2),
+      (record.actualPaidPrincipal || record.principal || 0).toFixed(2),
+      (record.actualPaidInterest || record.interest || 0).toFixed(2),
+      (record.actualPaidPenalty || record.penalty || 0).toFixed(2),
+      (record.actualPaidFee || record.fee || 0).toFixed(2),
+      (record.remainingPrincipal || 0).toFixed(2),
+      (record.remainingInterest || 0).toFixed(2),
+      (record.remainingPenalty || 0).toFixed(2),
+      (record.remainingTotal || 0).toFixed(2),
+      formatRate(record.loanRate || 0),
+      record.isSettlement ? '是' : '否',
+      record.isClaim ? '是' : '否'
+    ].join('\t')).join('\n')
+    
+    const content = `${headers}\n${rows}`
+    await navigator.clipboard.writeText(content)
+    Message.success(`已复制 ${repaymentDetails.value.length} 条还款记录到剪贴板`)
+  } catch (error) {
+    Message.error('复制失败，请重试')
+  }
+}
 </script>
 
 <style scoped>
@@ -441,6 +600,21 @@ const copyText = async (text: string) => {
   font-weight: normal;
 }
 
+.copy-btn {
+  margin-left: auto;
+  color: #165dff;
+  
+  .copy-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+  }
+  
+  &:hover {
+    background-color: #f2f3f5;
+  }
+}
+
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -480,6 +654,29 @@ const copyText = async (text: string) => {
 
 .value.amount.penalty {
   color: #f53f3f;
+}
+
+/* 应还金额样式 */
+.value.amount.due {
+  color: #165dff;
+}
+
+/* 实还金额样式 */
+.value.amount.paid {
+  color: #00b42a;
+}
+
+/* 剩余金额样式 */
+.value.amount.remaining {
+  color: #ff7d00;
+}
+
+/* 逾期相关样式 */
+.value.amount.overdue {
+  color: #f53f3f;
+  background-color: #ffece8;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .value.date {
@@ -599,6 +796,31 @@ const copyText = async (text: string) => {
 .detail-value.amount {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 500;
+}
+
+/* 详情卡片中的金额颜色 */
+.detail-value.amount.due {
+  color: #165dff;
+}
+
+.detail-value.amount.paid {
+  color: #00b42a;
+}
+
+.detail-value.amount.remaining {
+  color: #ff7d00;
+}
+
+.detail-value.amount.penalty {
+  color: #f53f3f;
+}
+
+.detail-value.overdue {
+  color: #f53f3f;
+  font-weight: 600;
+  background-color: #ffece8;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .plan-table {

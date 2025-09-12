@@ -185,10 +185,16 @@ export class LayoutModeManager {
       this.currentMode = 'unified'
       this.layoutConfig.mode = 'unified'
       
+      // 禁用手动拖拽
+      this.graph.disableSelection()
+      this.graph.disableNodeMovable()
+      
       this.eventBus.emit('layout:mode:changed', {
         from: previousMode,
         to: 'unified'
       })
+      
+      console.log('LayoutModeManager: 已切换到统一布局模式')
       
       return true
     } catch (error) {
@@ -213,10 +219,16 @@ export class LayoutModeManager {
       this.currentMode = 'manual'
       this.layoutConfig.mode = 'manual'
       
+      // 启用手动拖拽
+      this.graph.enableSelection()
+      this.graph.enableNodeMovable()
+      
       this.eventBus.emit('layout:mode:changed', {
         from: previousMode,
         to: 'manual'
       })
+      
+      console.log('LayoutModeManager: 已切换到手动布局模式')
       
       return true
     } catch (error) {
@@ -224,6 +236,28 @@ export class LayoutModeManager {
         component: 'LayoutModeManager',
         action: 'switchToManualMode'
       })
+      return false
+    }
+  }
+
+  /**
+   * 切换布局模式
+   */
+  public switchToMode(mode: LayoutMode): boolean {
+    try {
+      if (mode === 'unified') {
+        return this.switchToUnifiedMode()
+      } else if (mode === 'manual') {
+        return this.switchToManualMode()
+      } else {
+        console.warn(`LayoutModeManager: 不支持的布局模式 ${mode}`)
+        return false
+      }
+    } catch (error) {
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('Mode switch failed'),
+        { component: 'LayoutModeManager', method: 'switchToMode' }
+      )
       return false
     }
   }
@@ -282,10 +316,10 @@ export class LayoutModeManager {
       return true
     } catch (error) {
       console.error('LayoutModeManager: 布局算法执行失败', error)
-      this.errorHandler.handleError(error instanceof Error ? error : new Error('Apply unified layout failed'), {
-        component: 'LayoutModeManager',
-        action: 'applyUnifiedLayout'
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('Apply unified layout failed'),
+        { component: 'LayoutModeManager', method: 'applyUnifiedLayout' }
+      )
       return false
     }
   }
@@ -664,16 +698,33 @@ export class LayoutModeManager {
     nodeType: string, 
     layerIndex: number
   ): NodePosition {
-    // 使用坐标管理器验证和修正位置
-    const validatedPosition = this.coordinateManager.validateCoordinateTransform(position)
-    
-    // 如果验证失败，使用布局位置修正机制
-    return validatedPosition.isValid 
-      ? validatedPosition.position
-      : this.coordinateManager.correctLayoutPosition(
-          position,
-          { nodeType, layerIndex }
-        )
+    try {
+      // 使用坐标管理器验证和修正位置
+      const validatedPosition = this.coordinateManager.validateCoordinateTransform(position)
+      
+      // 如果验证失败，使用布局位置修正机制
+      if (typeof validatedPosition === 'boolean') {
+        return validatedPosition 
+          ? position
+          : this.coordinateManager.correctLayoutPosition(
+              position,
+              { nodeType, layerIndex }
+            )
+      } else {
+        return validatedPosition.isValid 
+          ? validatedPosition.position
+          : this.coordinateManager.correctLayoutPosition(
+              position,
+              { nodeType, layerIndex }
+            )
+      }
+    } catch (error) {
+      this.errorHandler.handleError(error instanceof Error ? error : new Error('Validate and correct position failed'), {
+        component: 'LayoutModeManager',
+        action: 'validateAndCorrectPosition'
+      })
+      return position
+    }
   }
 
   /**
@@ -776,16 +827,23 @@ export class LayoutModeManager {
         }
         
         // 使用原有的坐标验证
-        if (!this.coordinateManager.validateCoordinateTransform(position).isValid) {
-          return false
+        const validationResult = this.coordinateManager.validateCoordinateTransform(position)
+        if (typeof validationResult === 'boolean') {
+          if (!validationResult) {
+            return false
+          }
+        } else {
+          if (!validationResult.isValid) {
+            return false
+          }
         }
       }
       return true
     } catch (error) {
-      this.errorHandler.handleError(error instanceof Error ? error : new Error('Validate layout coordinates failed'), {
-        component: 'LayoutModeManager',
-        action: 'validateLayoutCoordinates'
-      })
+      this.errorHandler.handleError(
+        error instanceof Error ? error : new Error('Validate layout coordinates failed'),
+        { component: 'LayoutModeManager', method: 'validateLayoutCoordinates' }
+      )
       return false
     }
   }

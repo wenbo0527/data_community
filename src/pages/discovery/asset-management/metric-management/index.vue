@@ -29,91 +29,130 @@
       </a-dropdown>
     </div>
 
-    <!-- 搜索和筛选 -->
-    <div class="search-section">
-      <a-row :gutter="16">
-        <a-col :span="5">
+    <!-- 搜索和筛选区域 -->
+    <div class="search-filter-section">
+      <div class="search-row">
+        <!-- 指标类型切换 -->
+        <div class="filter-item">
+          <a-radio-group v-model="currentMetricType" @change="handleMetricTypeChange">
+            <a-radio value="business_core">业务核心指标</a-radio>
+            <a-radio value="regulatory">监管指标</a-radio>
+          </a-radio-group>
+        </div>
+      </div>
+      
+      <div class="search-row">
+        <!-- 指标名称搜索 -->
+        <div class="search-item">
           <a-input
             v-model="searchKeyword"
-            placeholder="搜索指标名称"
+            placeholder="请输入指标名称"
             allow-clear
-            @press-enter="handleSearch"
+            style="width: 300px"
           >
             <template #prefix>
               <icon-search />
             </template>
           </a-input>
-        </a-col>
-        <a-col :span="3">
-          <a-select
-            v-model="selectedCategory"
-            placeholder="指标分类"
-            allow-clear
-            @change="handleSearch"
-          >
-            <a-option value="用户指标">用户指标</a-option>
-            <a-option value="业务域">业务域</a-option>
-            <a-option value="技术指标">技术指标</a-option>
-            <a-option value="财务指标">财务指标</a-option>
-            <a-option value="风险指标">风险指标</a-option>
-          </a-select>
-        </a-col>
-        <a-col :span="3">
-          <a-select
-            v-model="selectedDomain"
-            placeholder="业务域"
-            allow-clear
-            @change="handleSearch"
-          >
-            <a-option value="留存域">留存域</a-option>
-            <a-option value="转化域">转化域</a-option>
-            <a-option value="业务规模">业务规模</a-option>
-            <a-option value="风控域">风控域</a-option>
-          </a-select>
-        </a-col>
-        <a-col :span="4">
-          <a-select
-            v-model="selectedRegulatoryCategory"
-            placeholder="监管报表大类"
-            allow-clear
-            @change="handleSearch"
-          >
-            <a-option :value="RegulatoryCategory.CBIRC_BANKING">银保监会-银监报表</a-option>
-            <a-option :value="RegulatoryCategory.PBOC_CENTRALIZED">人行-大集中报表</a-option>
-            <a-option :value="RegulatoryCategory.PBOC_FINANCIAL_BASE">人行-金融基础数据</a-option>
-            <a-option :value="RegulatoryCategory.PBOC_INTEREST_RATE">人行-利率报备检测分析</a-option>
-          </a-select>
-        </a-col>
-        <a-col :span="3">
+        </div>
+        
+        <!-- 业务核心指标的筛选条件 -->
+        <template v-if="currentMetricType === 'business_core'">
+          <!-- 指标分类筛选 -->
+          <div class="filter-item">
+            <a-select
+              v-model="selectedCategory"
+              placeholder="指标分类"
+              allow-clear
+              style="width: 150px"
+            >
+              <a-option value="用户指标">用户指标</a-option>
+              <a-option value="业务指标">业务指标</a-option>
+              <a-option value="风控指标">风控指标</a-option>
+              <a-option value="财务指标">财务指标</a-option>
+            </a-select>
+          </div>
+          
+          <!-- 业务域筛选 -->
+          <div class="filter-item">
+            <a-select
+              v-model="selectedBusinessDomain"
+              placeholder="业务域"
+              allow-clear
+              style="width: 150px"
+            >
+              <a-option value="用户域">用户域</a-option>
+              <a-option value="交易域">交易域</a-option>
+              <a-option value="风控域">风控域</a-option>
+              <a-option value="转化域">转化域</a-option>
+            </a-select>
+          </div>
+        </template>
+        
+        <!-- 监管指标的筛选条件 -->
+        <template v-else-if="currentMetricType === 'regulatory'">
+          <!-- 监管大类筛选 -->
+          <div class="filter-item">
+            <a-select
+              v-model="selectedRegulatoryCategory"
+              placeholder="监管大类"
+              allow-clear
+              style="width: 150px"
+            >
+              <a-option value="资本监管">资本监管</a-option>
+              <a-option value="流动性监管">流动性监管</a-option>
+              <a-option value="信贷风险监管">信贷风险监管</a-option>
+              <a-option value="市场风险监管">市场风险监管</a-option>
+            </a-select>
+          </div>
+          
+          <!-- 报表名称筛选 -->
+          <div class="filter-item">
+            <a-select
+              v-model="selectedReportName"
+              placeholder="报表名称"
+              allow-clear
+              style="width: 180px"
+            >
+              <a-option value="资本充足率报告">资本充足率报告</a-option>
+              <a-option value="流动性风险监管报告">流动性风险监管报告</a-option>
+              <a-option value="信贷资产质量报告">信贷资产质量报告</a-option>
+            </a-select>
+          </div>
+        </template>
+        
+        <!-- 状态筛选 -->
+        <div class="filter-item">
           <a-select
             v-model="selectedStatus"
             placeholder="状态"
             allow-clear
-            @change="handleSearch"
+            style="width: 120px"
           >
-            <a-option value="active">生效</a-option>
-            <a-option value="inactive">失效</a-option>
+            <a-option value="active">启用</a-option>
+            <a-option value="inactive">停用</a-option>
             <a-option value="draft">草稿</a-option>
           </a-select>
-        </a-col>
-        <a-col :span="6">
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon>
-                <icon-search />
-              </template>
-              搜索
-            </a-button>
-            <a-button @click="resetSearch">重置</a-button>
-          </a-space>
-        </a-col>
-      </a-row>
+        </div>
+        
+        <!-- 搜索和重置按钮 -->
+        <div class="action-buttons">
+          <a-button type="primary" @click="handleSearch">
+            <template #icon><icon-search /></template>
+            搜索
+          </a-button>
+          <a-button @click="handleReset">
+            <template #icon><icon-refresh /></template>
+            重置
+          </a-button>
+        </div>
+      </div>
     </div>
 
     <!-- 表格 -->
     <a-table
-      :columns="columns"
-      :data="mockData"
+      :columns="dynamicColumns"
+      :data="filteredMetrics"
       :loading="loading"
       :pagination="pagination"
       @page-change="handlePageChange"
@@ -139,20 +178,16 @@
         >
           {{ getCategoryText(record.category) }}
         </a-tag>
-        <a-tag 
-          v-if="record.type === MetricType.BUSINESS_CORE && record.businessDomain" 
-          color="purple" 
-          style="margin-left: 8px"
-        >
-          {{ record.businessDomain }}
-        </a-tag>
-        <a-tag 
-          v-if="record.type === MetricType.REGULATORY && record.regulatoryCategory" 
-          color="cyan" 
-          style="margin-left: 8px"
-        >
+      </template>
+      
+      <template #regulatoryCategory="{ record }">
+        <a-tag color="cyan">
           {{ REGULATORY_CATEGORY_LABELS[record.regulatoryCategory] }}
         </a-tag>
+      </template>
+      
+      <template #reportName="{ record }">
+        <span>{{ record.reportName }}</span>
       </template>
       
       <template #actions="{ record }">
@@ -225,7 +260,7 @@
       <div class="batch-upload-content">
         <a-alert
           type="info"
-          message="请先下载模版，按照模版格式填写数据后上传Excel文件"
+          message="执行"
           style="margin-bottom: 16px"
         />
         
@@ -336,7 +371,8 @@ import {
   IconHistory,
   IconDown,
   IconUpload,
-  IconDownload
+  IconDownload,
+  IconRefresh
 } from '@arco-design/web-vue/es/icon'
 import { MetricType, RegulatoryCategory } from '@/types/metrics'
 
@@ -344,7 +380,9 @@ import { MetricType, RegulatoryCategory } from '@/types/metrics'
 const router = useRouter()
 
 // 响应式数据
-const loading = ref(false)// 常量定义
+const loading = ref(false)
+
+// 常量定义
 const METRIC_TYPE_LABELS = {
   [MetricType.BUSINESS_CORE]: '业务核心指标',
   [MetricType.REGULATORY]: '监管指标'
@@ -357,12 +395,16 @@ const REGULATORY_CATEGORY_LABELS = {
   [RegulatoryCategory.PBOC_INTEREST_RATE]: '人行-利率报备检测分析'
 }
 
+// 指标类型切换
+const currentMetricType = ref('business_core') // 默认显示业务核心指标
+
 // 响应式数据
 const searchKeyword = ref('')
 const selectedCategory = ref('')
-const selectedStatus = ref('')
-const selectedDomain = ref('')
+const selectedBusinessDomain = ref('')
 const selectedRegulatoryCategory = ref('')
+const selectedReportName = ref('')
+const selectedStatus = ref('')
 
 const showVersionHistoryModal = ref(false)
 const showBatchUploadBusinessModal = ref(false)
@@ -410,68 +452,154 @@ interface VersionHistoryItem {
 
 const versionHistoryData = ref<VersionHistoryItem[]>([])
 
-// 表格列配置
-const columns = [
-  {
-    title: '指标名称',
-    dataIndex: 'name',
-    width: 180,
-    render: ({ record }: { record: any }) => {
-      return h('a-button', {
-        type: 'text',
-        onClick: () => viewMetricDetail(record)
-      }, record.name)
+// 根据指标类型过滤数据
+const filteredMetrics = computed(() => {
+  let filtered = mockData.value.filter(metric => {
+    if (currentMetricType.value === 'business_core') {
+      return metric.type === MetricType.BUSINESS_CORE
+    } else {
+      return metric.type === MetricType.REGULATORY
     }
-  },
-  {
-    title: '业务口径',
-    dataIndex: 'businessDefinition',
-    width: 200,
-    ellipsis: true,
-    tooltip: true
-  },
-  {
-    title: '指标类型',
-    dataIndex: 'type',
-    width: 120,
-    slotName: 'type'
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    width: 100,
-    slotName: 'status'
-  },
-  {
-    title: '分类',
-    dataIndex: 'category',
-    width: 150,
-    slotName: 'category'
-  },
-  {
-    title: '技术负责人',
-    dataIndex: 'owner',
-    width: 120
-  },
-  {
-    title: '更新时间',
-    dataIndex: 'updateTime',
-    width: 160
-  },
-  {
-    title: '操作',
-    dataIndex: 'operations',
-    slotName: 'actions',
-    width: 220
+  })
+  
+  // 应用搜索关键词过滤
+  if (searchKeyword.value) {
+    filtered = filtered.filter(metric => 
+      metric.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
+    )
   }
-]
+  
+  // 应用分类筛选
+  if (currentMetricType.value === 'business_core') {
+    if (selectedCategory.value) {
+      filtered = filtered.filter(metric => metric.category === selectedCategory.value)
+    }
+    if (selectedBusinessDomain.value) {
+      filtered = filtered.filter(metric => metric.businessDomain === selectedBusinessDomain.value)
+    }
+  } else if (currentMetricType.value === 'regulatory') {
+    if (selectedRegulatoryCategory.value) {
+      filtered = filtered.filter(metric => metric.regulatoryCategory === selectedRegulatoryCategory.value)
+    }
+    if (selectedReportName.value) {
+      filtered = filtered.filter(metric => metric.reportName === selectedReportName.value)
+    }
+  }
+  
+  // 应用状态筛选
+  if (selectedStatus.value) {
+    filtered = filtered.filter(metric => metric.status === selectedStatus.value)
+  }
+  
+  return filtered
+})
+
+// 动态列配置 - 根据指标类型显示不同的列
+const dynamicColumns = computed(() => {
+  const baseColumns = [
+    {
+      title: '指标名称',
+      dataIndex: 'name',
+      width: 180,
+      render: ({ record }: { record: any }) => {
+        return h('a-button', {
+          type: 'text',
+          onClick: () => viewMetricDetail(record)
+        }, record.name)
+      }
+    },
+    {
+      title: '业务口径',
+      dataIndex: 'businessDefinition',
+      width: 200,
+      ellipsis: true,
+      tooltip: true
+    },
+    {
+      title: '指标类型',
+      dataIndex: 'type',
+      width: 120,
+      slotName: 'type'
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      width: 100,
+      slotName: 'status'
+    }
+  ]
+  
+  // 根据指标类型添加不同的分类列
+  if (currentMetricType.value === 'business_core') {
+    // 业务核心指标显示指标分类
+    baseColumns.push(
+      {
+        title: '指标分类',
+        dataIndex: 'category',
+        width: 120,
+        slotName: 'category'
+      },
+      {
+        title: '业务域',
+        dataIndex: 'businessDomain',
+        width: 120,
+        slotName: 'businessDomain'
+      }
+    )
+  } else if (currentMetricType.value === 'regulatory') {
+    // 监管指标显示监管大类和报表名称
+    baseColumns.push(
+      {
+        title: '监管大类',
+        dataIndex: 'regulatoryCategory',
+        width: 120,
+        slotName: 'regulatoryCategory'
+      },
+      {
+        title: '报表名称',
+        dataIndex: 'reportName',
+        width: 150,
+        ellipsis: true,
+        tooltip: true
+      }
+    )
+  }
+  
+  // 添加通用列
+  baseColumns.push(
+    {
+      title: '技术负责人',
+      dataIndex: 'owner',
+      width: 120,
+      ellipsis: true,
+      tooltip: true
+    },
+    {
+      title: '更新时间',
+      dataIndex: 'updateTime',
+      width: 160,
+      ellipsis: true,
+      tooltip: true
+    },
+    {
+      title: '操作',
+      dataIndex: 'operations',
+      slotName: 'actions',
+      width: 220
+    }
+  )
+  
+  return baseColumns
+})
 
 // 版本历史表格列配置
 const versionHistoryColumns = [
   {
     title: '版本号',
     dataIndex: 'version',
-    width: 120
+    width: 120,
+    ellipsis: true,
+    tooltip: true
   },
   {
     title: '版本状态',
@@ -488,15 +616,20 @@ const versionHistoryColumns = [
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    width: 150
+    width: 150,
+    ellipsis: true,
+    tooltip: true
   },
   {
     title: '创建人',
     dataIndex: 'creator',
-    width: 100
+    width: 100,
+    ellipsis: true,
+    tooltip: true
   },
   {
     title: '操作',
+    dataIndex: 'operations',
     slotName: 'actions',
     width: 150,
     fixed: 'right'
@@ -520,11 +653,14 @@ const mockData = ref([
     useCase: '用于监控产品的日常活跃情况，是产品健康度的重要指标',
     statisticalPeriod: '日更新',
     sourceTable: 'dwd.user_login_detail',
-    processingLogic: 'SELECT dt, COUNT(DISTINCT user_id) as dau\nFROM dwd.user_login_detail\nWHERE dt = ${date}\nGROUP BY dt',
+    processingLogic: `SELECT dt, COUNT(DISTINCT user_id) as dau
+FROM dwd.user_login_detail
+WHERE dt = '\${date}'
+GROUP BY dt`,
     fieldDescription: 'user_id: 用户唯一标识, dt: 统计日期',
     reports: [{ name: '用户分析报表', url: '/reports/user-analysis' }, { name: '核心指标报表', url: '/reports/core-metrics' }],
     storageLocation: 'adm.ads_user_core_metrics',
-    queryCode: 'SELECT dau FROM adm.ads_user_core_metrics WHERE dt = ${date}',
+    queryCode: 'SELECT dau FROM adm.ads_user_core_metrics WHERE dt = \'\${date}\'',
     status: 'active',
     updateTime: '2024-01-15 10:30:00'
   },
@@ -547,7 +683,11 @@ const mockData = ref([
     fieldDescription: '',
     reports: [{ name: '发展日测报告', url: '/reports/daily-development' }, { name: '公司级报表', url: '/reports/company-level' }, { name: '市场营销报表', url: '/reports/marketing' }],
     storageLocation: 'adm.ads_report_index_commonality_info_full',
-    queryCode: 'SELECT data_dt=20250401\nFROM adm.ads_report_numbersinfo_free_temporal_code\nWHERE data_dt=20250401\nAND indicator_name=\'风控授信通过量\'\nAND indicator_id=\'A00043\'',
+    queryCode: `SELECT data_dt=20250401
+FROM adm.ads_report_numbersinfo_free_temporal_code
+WHERE data_dt=20250401
+AND indicator_name='风控授信通过量'
+AND indicator_id='A00043'`,
     status: 'active',
     updateTime: '2024-01-15 11:45:00'
   },
@@ -566,11 +706,14 @@ const mockData = ref([
     useCase: '衡量产品获客效果，优化注册流程',
     statisticalPeriod: '日更新',
     sourceTable: 'dwd.user_register_detail',
-    processingLogic: 'SELECT dt, COUNT(DISTINCT register_user_id) / COUNT(DISTINCT visit_user_id) as conversion_rate\nFROM dwd.user_register_detail\nWHERE dt = ${date}\nGROUP BY dt',
+    processingLogic: `SELECT dt, COUNT(DISTINCT register_user_id) / COUNT(DISTINCT visit_user_id) as conversion_rate
+FROM dwd.user_register_detail
+WHERE dt = '\${date}'
+GROUP BY dt`,
     fieldDescription: 'register_user_id: 完成注册的用户ID, visit_user_id: 访问用户ID',
     reports: [{ name: '用户分析报表', url: '/reports/user-analysis' }, { name: '转化分析报表', url: '/reports/conversion-analysis' }],
     storageLocation: 'adm.ads_user_conversion_metrics',
-    queryCode: 'SELECT conversion_rate FROM adm.ads_user_conversion_metrics WHERE dt = ${date}',
+    queryCode: 'SELECT conversion_rate FROM adm.ads_user_conversion_metrics WHERE dt = \'\${date}\'',
     status: 'active',
     updateTime: '2024-01-14 16:20:00'
   },
@@ -581,6 +724,7 @@ const mockData = ref([
     type: MetricType.REGULATORY,
     category: '风险指标',
     regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '资本充足率报告',
     businessDefinition: '银行资本与风险加权资产的比率',
     owner: '王五',
     version: 'v1.0.0',
@@ -596,6 +740,54 @@ const mockData = ref([
     queryCode: 'SELECT capital_adequacy_ratio FROM adm.ads_regulatory_metrics WHERE report_date = ${quarter_end_date}',
     status: 'active',
     updateTime: '2024-01-13 09:15:00'
+  },
+  {
+    id: 5,
+    name: '流动性覆盖率',
+    code: 'REG_002',
+    type: MetricType.REGULATORY,
+    category: '流动性指标',
+    regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '流动性风险监管报告',
+    businessDefinition: '银行流动性覆盖率监管指标，衡量银行短期流动性风险抵御能力',
+    owner: '李四',
+    version: 'v1.5.0',
+    versionStatus: 'active',
+    versionDescription: '优化计算逻辑',
+    useCase: '流动性风险管理',
+    statisticalPeriod: '日度',
+    sourceTable: 'dwd.liquidity_report',
+    processingLogic: '合格流动性资产 / 未来30天净现金流出量 * 100%',
+    fieldDescription: 'LCR: 流动性覆盖率',
+    reports: [{ name: '流动性监管报表', url: '/reports/liquidity' }],
+    storageLocation: 'adm.ads_liquidity_metrics',
+    queryCode: 'SELECT lcr FROM adm.ads_liquidity_metrics WHERE report_date = ${date}',
+    status: 'active',
+    updateTime: '2024-01-14 08:30:00'
+  },
+  {
+    id: 6,
+    name: '不良贷款率',
+    code: 'REG_003',
+    type: MetricType.REGULATORY,
+    category: '信贷风险指标',
+    regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '信贷资产质量报告',
+    businessDefinition: '银行不良贷款率监管指标，反映信贷资产质量状况',
+    owner: '赵六',
+    version: 'v3.0.0',
+    versionStatus: 'active',
+    versionDescription: '新增分类统计',
+    useCase: '信贷风险监控',
+    statisticalPeriod: '月度',
+    sourceTable: 'dwd.loan_portfolio',
+    processingLogic: '不良贷款余额 / 贷款总余额 * 100%',
+    fieldDescription: 'NPL_RATIO: 不良贷款率',
+    reports: [{ name: '信贷风险报表', url: '/reports/credit-risk' }],
+    storageLocation: 'adm.ads_credit_metrics',
+    queryCode: 'SELECT npl_ratio FROM adm.ads_credit_metrics WHERE month = ${month}',
+    status: 'active',
+    updateTime: '2024-01-15 10:15:00'
   }
 ])
 
@@ -603,14 +795,10 @@ const mockData = ref([
 const pagination = reactive({
   current: 1,
   pageSize: 10,
-  total: 4,
+  total: computed(() => filteredMetrics.value.length),
   showTotal: true,
   showPageSize: true
 })
-
-
-
-
 
 // 方法
 // 处理新建指标下拉菜单点击
@@ -635,15 +823,30 @@ const handleCreateMetric = (type: string) => {
   }
 }
 
+// 指标类型切换处理
+const handleMetricTypeChange = () => {
+  // 切换指标类型时清空筛选条件
+  selectedCategory.value = ''
+  selectedBusinessDomain.value = ''
+  selectedRegulatoryCategory.value = ''
+  selectedReportName.value = ''
+  selectedStatus.value = ''
+  searchKeyword.value = ''
+  // 重置分页到第一页
+  pagination.current = 1
+}
+
 const handleSearch = () => {
   loading.value = true
   // 实际项目中这里会调用API进行搜索
   console.log('搜索条件:', {
+    metricType: currentMetricType.value,
     keyword: searchKeyword.value,
     category: selectedCategory.value,
-    status: selectedStatus.value,
-    businessDomain: selectedDomain.value,
-    regulatoryCategory: selectedRegulatoryCategory.value
+    businessDomain: selectedBusinessDomain.value,
+    regulatoryCategory: selectedRegulatoryCategory.value,
+    reportName: selectedReportName.value,
+    status: selectedStatus.value
   })
   setTimeout(() => {
     loading.value = false
@@ -659,12 +862,13 @@ const handlePageSizeChange = (pageSize: number) => {
   pagination.current = 1
 }
 
-const resetSearch = () => {
+const handleReset = () => {
   searchKeyword.value = ''
   selectedCategory.value = ''
-  selectedStatus.value = ''
-  selectedDomain.value = ''
+  selectedBusinessDomain.value = ''
   selectedRegulatoryCategory.value = ''
+  selectedReportName.value = ''
+  selectedStatus.value = ''
   handleSearch()
 }
 
@@ -700,8 +904,6 @@ const getCategoryColor = (category: string) => {
 const getCategoryText = (category: string) => {
   return category
 }
-
-
 
 const viewMetricDetail = (record: any) => {
   router.push(`/discovery/asset-management/metric-management/${record.id}/view`)
@@ -758,8 +960,6 @@ const activateVersion = (versionRecord: any) => {
   Message.success(`版本 ${versionRecord.version} 已激活`)
 }
 
-
-
 const copyMetric = (record: any) => {
   router.push(`/discovery/asset-management/metric-management/${record.id}/copy`)
 }
@@ -769,10 +969,8 @@ const deleteMetric = (record: any) => {
   Message.success('删除成功')
 }
 
-
-
 // 批量上传相关方法
-const downloadTemplate = (type) => {
+const downloadTemplate = (type: string) => {
   // 创建模版数据
   const templateData = {
     business: {
@@ -827,29 +1025,29 @@ const downloadTemplate = (type) => {
   Message.success(`${template.filename} 下载成功`)
 }
 
-const handleBusinessFileChange = (fileList) => {
+const handleBusinessFileChange = (fileList: any[]) => {
   businessFileList.value = fileList
 }
 
-const handleBusinessFileRemove = (file) => {
+const handleBusinessFileRemove = (file: any) => {
   const index = businessFileList.value.findIndex(item => item.uid === file.uid)
   if (index > -1) {
     businessFileList.value.splice(index, 1)
   }
 }
 
-const handleRegulatoryFileChange = (fileList) => {
+const handleRegulatoryFileChange = (fileList: any[]) => {
   regulatoryFileList.value = fileList
 }
 
-const handleRegulatoryFileRemove = (file) => {
+const handleRegulatoryFileRemove = (file: any) => {
   const index = regulatoryFileList.value.findIndex(item => item.uid === file.uid)
   if (index > -1) {
     regulatoryFileList.value.splice(index, 1)
   }
 }
 
-const handleBatchUploadSubmit = async (type) => {
+const handleBatchUploadSubmit = async (type: string) => {
   const fileList = type === 'business' ? businessFileList.value : regulatoryFileList.value
   
   if (fileList.length === 0) {
@@ -909,7 +1107,12 @@ const resetBatchUpload = () => {
 
 onMounted(() => {
   // 初始化数据
+  console.log('页面初始化 - currentMetricType:', currentMetricType.value)
+  console.log('页面初始化 - 筛选后的指标数量:', filteredMetrics.value.length)
+  console.log('页面初始化 - 动态列配置:', dynamicColumns.value.map(col => col.title))
 })
+
+const handleNewMetricDropdown = handleCreateMetric
 </script>
 
 <style scoped>

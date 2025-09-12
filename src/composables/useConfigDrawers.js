@@ -215,20 +215,30 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
         })
       }
 
-      // 🔧 关键修复：触发统一预览线创建（配置完成后）
-      console.log(`[useConfigDrawers] 检查是否需要创建配置后预览线`)
-      const unifiedPreviewManager = structuredLayout.unifiedPreviewManager?.value
-      console.log(`[useConfigDrawers] 统一预览线管理器实例:`, unifiedPreviewManager)
-      console.log(`[useConfigDrawers] 管理器类型:`, unifiedPreviewManager?.constructor?.name)
-      
-      // 🎯 新方案：直接调用onNodeConfigured方法，这是标准的配置完成事件
+      // 🔧 修复：调用统一预览线管理器的onNodeConfigured方法
+      const unifiedPreviewManager = structuredLayout.unifiedPreviewManager.value
       if (unifiedPreviewManager && typeof unifiedPreviewManager.onNodeConfigured === 'function') {
-        console.log(`[useConfigDrawers] 触发节点配置完成事件: ${nodeInstance.id}`)
+        console.log(`🎯 [useConfigDrawers] 准备调用统一预览线管理器的onNodeConfigured方法`)
+        const nodeType = getNodeTypeFromDrawerType(drawerType)
+        
+        // 添加详细的调试信息
+        if (window.TASK_FLOW_DEBUG) {
+          console.log('🔍 [useConfigDrawers] 调用onNodeConfigured详细信息:', {
+            nodeId: nodeInstance.id,
+            nodeType,
+            drawerType,
+            config,
+            timestamp: new Date().toISOString(),
+            unifiedPreviewManagerExists: !!unifiedPreviewManager,
+            methodExists: typeof unifiedPreviewManager.onNodeConfigured === 'function'
+          })
+        }
+        
         try {
-          await unifiedPreviewManager.onNodeConfigured(nodeInstance.id, config)
-          console.log(`[useConfigDrawers] 节点配置完成事件处理成功`)
+          await unifiedPreviewManager.onNodeConfigured(nodeInstance.id, nodeType, config)
+          console.log(`✅ [useConfigDrawers] onNodeConfigured 调用成功`)
         } catch (error) {
-          console.error(`[useConfigDrawers] 节点配置完成事件处理失败:`, error)
+          console.error(`❌ [useConfigDrawers] onNodeConfigured 调用失败:`, error)
         }
       } else if (unifiedPreviewManager && typeof unifiedPreviewManager.createPreviewLineAfterConfig === 'function') {
         // 🔄 备用方案：使用原有的createPreviewLineAfterConfig方法
@@ -274,7 +284,7 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
         })
         
         // 检查是否有已配置的源节点需要恢复预览线
-        const unifiedPreviewManager = structuredLayout.unifiedPreviewManager
+        const unifiedPreviewManager = structuredLayout.unifiedPreviewManager.value
         if (unifiedPreviewManager && typeof unifiedPreviewManager.restorePreviewLinesAfterCancel === 'function') {
           console.log(`[useConfigDrawers] 尝试恢复预览线`)
           try {
@@ -388,7 +398,7 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       },
       getConnectionPreviewManager: () => {
         console.log('[useConfigDrawers] 返回统一预览线管理器')
-        return structuredLayout.unifiedPreviewManager?.value
+        return structuredLayout.unifiedPreviewManager.value
       },
       // 统一预览线管理器 - 添加缺失的属性
       get unifiedPreviewManager() {
@@ -420,6 +430,11 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       getLayoutEngine() {
         console.log('[useConfigDrawers] 调用 getLayoutEngine')
         return structuredLayout.getLayoutEngine ? structuredLayout.getLayoutEngine() : null
+      },
+      // 布局引擎实例创建方法
+      createLayoutEngineInstance: (graph) => {
+        console.log('[useConfigDrawers] 调用 createLayoutEngineInstance')
+        return structuredLayout.createLayoutEngineInstance ? structuredLayout.createLayoutEngineInstance(graph) : null
       }
     }
   }

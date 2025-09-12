@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow自动修复系统测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-header {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+        .status-info { background-color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-header">🧪 TaskFlow自动修复系统测试</h1>
+        
+        <div class="test-section">
+            <h3>系统状态检查</h3>
+            <button class="test-button" onclick="checkSystemStatus()">检查系统状态</button>
+            <button class="test-button" onclick="runFullTest()">运行完整测试</button>
+            <button class="test-button" onclick="testEnvironmentSeparation()">测试环境分离</button>
+            <button class="test-button" onclick="testHealthCheck()">测试健康检查</button>
+            <button class="test-button" onclick="testAutoRepair()">测试自动修复</button>
+            <button class="test-button" onclick="clearResults()">清空结果</button>
+        </div>
+        
+        <div class="test-results" id="testResults">
+等待测试开始...
+        </div>
+    </div>
+
+    <!-- 引入自动修复系统脚本 -->
+    <script src="/auto-repair/autoRepairSystem.js"></script>
+    <script src="/auto-repair/monitoring.js"></script>
+    <script src="/auto-repair/test-auto-repair.js"></script>
+
+    <script>
+        let testResults = document.getElementById('testResults');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = `status-${type}`;
+            const statusIcon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            testResults.innerHTML += `[${timestamp}] ${statusIcon} ${message}\n`;
+            testResults.scrollTop = testResults.scrollHeight;
+        }
+        
+        function clearResults() {
+            testResults.innerHTML = '测试结果已清空，等待新的测试...\n';
+        }
+        
+        async function checkSystemStatus() {
+            log('开始检查系统状态...', 'info');
+            
+            // 检查自动修复系统是否加载
+            if (typeof window.TaskFlowAutoRepairSystem === 'function') {
+                log('✅ TaskFlowAutoRepairSystem 已加载', 'success');
+                
+                try {
+                    const instance = new window.TaskFlowAutoRepairSystem();
+                    log('✅ 自动修复系统实例创建成功', 'success');
+                    log(`环境: ${instance.config.environment}`, 'info');
+                    log(`功能状态: ${JSON.stringify(instance.config.features)}`, 'info');
+                } catch (error) {
+                    log(`❌ 实例创建失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ TaskFlowAutoRepairSystem 未加载', 'error');
+            }
+            
+            // 检查监控系统是否加载
+            if (typeof window.TaskFlowMonitoringSystem === 'function') {
+                log('✅ TaskFlowMonitoringSystem 已加载', 'success');
+                
+                try {
+                    const instance = new window.TaskFlowMonitoringSystem();
+                    log('✅ 监控系统实例创建成功', 'success');
+                } catch (error) {
+                    log(`❌ 监控实例创建失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ TaskFlowMonitoringSystem 未加载', 'error');
+            }
+            
+            // 检查测试器是否加载
+            if (typeof window.TaskFlowAutoRepairTester === 'function') {
+                log('✅ TaskFlowAutoRepairTester 已加载', 'success');
+            } else {
+                log('❌ TaskFlowAutoRepairTester 未加载', 'error');
+            }
+            
+            log('系统状态检查完成', 'info');
+        }
+        
+        async function runFullTest() {
+            log('开始运行完整测试套件...', 'info');
+            
+            if (typeof window.TaskFlowAutoRepairTester === 'function') {
+                try {
+                    const tester = new window.TaskFlowAutoRepairTester();
+                    await tester.runAllTests();
+                    
+                    // 显示测试结果
+                    if (window.taskFlowTestResults) {
+                        const results = window.taskFlowTestResults;
+                        log(`测试完成! 总计: ${results.summary.totalTests}, 通过: ${results.summary.passedTests}, 失败: ${results.summary.failedTests}`, 
+                            results.summary.failedTests === 0 ? 'success' : 'warning');
+                        log(`成功率: ${results.summary.successRate.toFixed(1)}%`, 'info');
+                        
+                        // 显示失败的测试详情
+                        if (results.summary.failedTests > 0) {
+                            log('失败的测试:', 'error');
+                            results.details.filter(r => !r.passed).forEach(result => {
+                                log(`  - ${result.name}: ${result.message}`, 'error');
+                            });
+                        }
+                    }
+                } catch (error) {
+                    log(`测试执行失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('测试器未加载，无法运行测试', 'error');
+            }
+        }
+        
+        async function testEnvironmentSeparation() {
+            log('测试环境分离功能...', 'info');
+            
+            if (typeof window.TaskFlowAutoRepairSystem === 'function') {
+                try {
+                    const instance = new window.TaskFlowAutoRepairSystem();
+                    const config = instance.config;
+                    
+                    log(`当前环境: ${config.environment}`, 'info');
+                    log(`功能配置: ${JSON.stringify(config.features, null, 2)}`, 'info');
+                    
+                    if (config.environment === 'development') {
+                        log('开发环境 - 所有功能应该启用', 'info');
+                        const allEnabled = config.features.healthCheck && config.features.autoRepair && config.features.monitoring;
+                        log(allEnabled ? '✅ 开发环境功能配置正确' : '❌ 开发环境功能配置有误', allEnabled ? 'success' : 'error');
+                    } else {
+                        log('生产环境 - 部分功能应该限制', 'info');
+                        log(config.features.detailedLogging ? '⚠️ 生产环境不应启用详细日志' : '✅ 生产环境日志配置正确', 
+                            config.features.detailedLogging ? 'warning' : 'success');
+                    }
+                } catch (error) {
+                    log(`环境分离测试失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('自动修复系统未加载', 'error');
+            }
+        }
+        
+        async function testHealthCheck() {
+            log('测试健康检查功能...', 'info');
+            
+            if (typeof window.TaskFlowAutoRepairSystem === 'function') {
+                try {
+                    const instance = new window.TaskFlowAutoRepairSystem();
+                    await instance.initialize();
+                    
+                    log('执行健康检查...', 'info');
+                    await instance.performHealthCheck();
+                    
+                    const healthStatus = instance.getHealthStatus();
+                    log(`健康状态: ${JSON.stringify(healthStatus, null, 2)}`, 'info');
+                    log('✅ 健康检查执行成功', 'success');
+                } catch (error) {
+                    log(`健康检查失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('自动修复系统未加载', 'error');
+            }
+        }
+        
+        async function testAutoRepair() {
+            log('测试自动修复功能...', 'info');
+            
+            if (typeof window.TaskFlowAutoRepairSystem === 'function') {
+                try {
+                    const instance = new window.TaskFlowAutoRepairSystem();
+                    await instance.initialize();
+                    
+                    log('执行自动修复...', 'info');
+                    const repairResult = await instance.performAutoRepair();
+                    
+                    log(`修复结果: ${JSON.stringify(repairResult, null, 2)}`, 'info');
+                    log('✅ 自动修复执行成功', 'success');
+                } catch (error) {
+                    log(`自动修复失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('自动修复系统未加载', 'error');
+            }
+        }
+        
+        // 页面加载完成后自动检查系统状态
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('页面加载完成，开始自动检查系统状态...', 'info');
+                checkSystemStatus();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -983,7 +983,22 @@ const goBack = () => {
 
 // 生命周期
 onMounted(() => {
+  console.log('🚀🚀🚀 [TaskEditor] ===== 页面开始挂载 =====')
+  console.log('🚀🚀🚀 [TaskEditor] 当前时间:', new Date().toISOString())
+  console.log('🚀🚀🚀 [TaskEditor] 页面URL:', window.location.href)
+  console.log('🚀🚀🚀 [TaskEditor] 路由参数:', route.query)
+  console.log('🔍 [TaskEditor] 检查TaskFlowCanvas组件引用:', !!canvasRef.value)
+  
   initPage()
+  
+  // 延迟检查组件是否挂载
+  setTimeout(() => {
+    console.log('🔍 [TaskEditor] 延迟检查TaskFlowCanvas组件:', {
+      canvasRef: !!canvasRef.value,
+      canvasElement: !!document.querySelector('.task-flow-canvas'),
+      canvasArea: !!document.querySelector('.canvas-area')
+    });
+  }, 1000);
 })
 
 // 监听路由变化

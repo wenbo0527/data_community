@@ -228,29 +228,97 @@ export function safeDisposeChart(chart, name = '图表') {
 export function createChartResizeObserver(container, chart, callback) {
   if (!window.ResizeObserver) {
     console.warn('浏览器不支持ResizeObserver，使用window.resize事件')
+    
     const handleResize = () => {
       if (chart && !chart.isDisposed()) {
         chart.resize()
-        callback && callback()
+        if (callback) callback()
       }
     }
+    
     window.addEventListener('resize', handleResize)
     return {
       disconnect: () => window.removeEventListener('resize', handleResize)
     }
   }
   
+  // 🔧 修复：添加防抖处理和循环检测，避免ResizeObserver循环错误
+  let resizeTimer = null
+  let isResizing = false
+  let resizeCount = 0
+  let lastResizeTime = 0
+  
   const resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      if (chart && !chart.isDisposed()) {
-        chart.resize()
-        callback && callback(entry)
+    try {
+      const now = Date.now()
+      
+      // 防止过于频繁的调用
+      if (now - lastResizeTime < 16) {
+        return
       }
+      
+      // 检测循环调用
+      if (isResizing) {
+        resizeCount++
+        if (resizeCount > 10) {
+          console.warn('🔄 ResizeObserver 循环调用检测，暂停处理')
+          return
+        }
+      } else {
+        resizeCount = 0
+      }
+      
+      isResizing = true
+      lastResizeTime = now
+      
+      // 清除之前的定时器
+      if (resizeTimer) {
+        clearTimeout(resizeTimer)
+      }
+      
+      // 使用防抖处理，避免频繁触发
+      resizeTimer = setTimeout(() => {
+        try {
+          if (chart && !chart.isDisposed()) {
+            chart.resize()
+            if (callback) callback()
+          }
+        } catch (error) {
+          console.error('Chart resize error:', error)
+        } finally {
+          isResizing = false
+          resizeCount = 0
+        }
+      }, 32) // 增加防抖时间到32ms
+    } catch (error) {
+      console.error('ResizeObserver error:', error)
+      isResizing = false
     }
   })
   
   resizeObserver.observe(container)
-  return resizeObserver
+  
+  // 返回增强的observer，包含清理定时器和状态的功能
+  return {
+    ...resizeObserver,
+    disconnect: () => {
+      try {
+        if (resizeTimer) {
+          clearTimeout(resizeTimer)
+          resizeTimer = null
+        }
+        // 重置状态变量
+        isResizing = false
+        resizeCount = 0
+        lastResizeTime = 0
+        
+        resizeObserver.disconnect()
+        console.log('📊 ResizeObserver 已清理')
+      } catch (error) {
+        console.error('ResizeObserver disconnect error:', error)
+      }
+    }
+  }
 }
 
 /**

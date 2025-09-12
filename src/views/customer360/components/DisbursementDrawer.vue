@@ -100,7 +100,7 @@
             <div class="stat-label">
               剩余罚息
               <a-tooltip content="本金罚息+利息罚息">
-                <ExclamationCircle class="penalty-icon" />
+                <AlertCircle class="penalty-icon" />
               </a-tooltip>
             </div>
           </div>
@@ -117,6 +117,10 @@
           <History class="section-icon" />
           放款记录
           <span class="record-count">({{ disbursementRecords.length }}笔)</span>
+          <a-button v-if="disbursementRecords.length > 0" type="text" size="mini" class="copy-btn" @click="copyDisbursementData">
+            <Copy class="copy-icon" />
+            一键复制
+          </a-button>
         </h4>
         
         <div class="records-container">
@@ -147,8 +151,44 @@
               
               <div class="record-details">
                 <div class="detail-row">
-                  <span class="detail-label">放款日期：</span>
+                  <span class="detail-label">放款流水号：</span>
+                  <span class="detail-value transaction-id">{{ record.disbursementSerialNo || record.transactionId }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">放款时间：</span>
                   <span class="detail-value">{{ formatDate(record.disbursementDate) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">还款方式：</span>
+                  <span class="detail-value">{{ record.repaymentMethod || '等额本息' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">还款日：</span>
+                  <span class="detail-value">{{ record.repaymentDay || '每月15日' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">借据起期：</span>
+                  <span class="detail-value">{{ formatDate(record.loanStartDate || record.disbursementDate) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">借据止期：</span>
+                  <span class="detail-value">{{ formatDate(record.loanEndDate) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">出资比例：</span>
+                  <span class="detail-value">{{ record.fundingRatio || '100%' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">支付流水号：</span>
+                  <span class="detail-value transaction-id">{{ record.paymentSerialNo || record.transactionId }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">支付清算编号：</span>
+                  <span class="detail-value">{{ record.clearingNo || '-' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">支付渠道名称：</span>
+                  <span class="detail-value">{{ record.paymentChannelName || record.channel }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">到账银行：</span>
@@ -157,14 +197,6 @@
                 <div class="detail-row">
                   <span class="detail-label">银行卡号：</span>
                   <span class="detail-value bank-card">{{ record.bankCard }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">放款渠道：</span>
-                  <span class="detail-value">{{ record.channel }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">交易流水：</span>
-                  <span class="detail-value transaction-id">{{ record.transactionId }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">处理状态：</span>
@@ -236,8 +268,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Banknote, FileText, Copy, BarChart3, History, CheckCircle, FileX } from 'lucide-vue-next'
-import { IconExclamationCircle } from '@arco-design/web-vue/es/icon'
+import { Banknote, FileText, Copy, BarChart3, History, CheckCircle, FileX, AlertCircle } from 'lucide-vue-next'
 import { Message } from '@arco-design/web-vue'
 
 interface DisbursementRecord {
@@ -251,6 +282,16 @@ interface DisbursementRecord {
   status: string
   processStatus: string
   remark?: string
+  // 新增字段
+  disbursementSerialNo?: string // 放款流水号
+  repaymentMethod?: string // 还款方式
+  repaymentDay?: string // 还款日
+  loanStartDate?: string // 借据起期
+  loanEndDate?: string // 借据止期
+  fundingRatio?: string // 出资比例
+  paymentSerialNo?: string // 支付流水号
+  clearingNo?: string // 支付清算编号
+  paymentChannelName?: string // 支付渠道名称
 }
 
 interface ApprovalInfo {
@@ -356,6 +397,42 @@ const copyText = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text)
     Message.success('复制成功')
+  } catch (error) {
+    Message.error('复制失败')
+  }
+}
+
+// 复制放款明细数据
+const copyDisbursementData = async () => {
+  try {
+    const headers = [
+      '批次', '放款流水号', '放款时间', '还款方式', '还款日', '借据起期', '借据止期',
+      '出资比例', '支付流水号', '支付清算编号', '支付渠道名称', '放款金额', '到账银行',
+      '银行卡号', '处理状态', '备注'
+    ].join('\t')
+    
+    const rows = disbursementRecords.value.map(record => [
+      record.batch,
+      record.disbursementSerialNo || record.transactionId,
+      formatDate(record.disbursementDate),
+      record.repaymentMethod || '等额本息',
+      record.repaymentDay || '每月15日',
+      formatDate(record.loanStartDate || record.disbursementDate),
+      formatDate(record.loanEndDate),
+      record.fundingRatio || '100%',
+      record.paymentSerialNo || record.transactionId,
+      record.clearingNo || '-',
+      record.paymentChannelName || record.channel,
+      formatAmount(record.amount),
+      record.bankName,
+      record.bankCard,
+      record.processStatus,
+      record.remark || '-'
+    ].join('\t'))
+    
+    const csvContent = [headers, ...rows].join('\n')
+    await navigator.clipboard.writeText(csvContent)
+    Message.success('放款明细数据复制成功')
   } catch (error) {
     Message.error('复制失败')
   }

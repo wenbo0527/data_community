@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>函数暴露测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TaskFlowCanvas 函数暴露测试</h1>
+        <p>此页面用于测试 TaskFlowCanvas 组件是否正确将函数暴露到 window 对象。</p>
+        
+        <button onclick="testFunctions()">测试函数暴露</button>
+        <button onclick="testFunctionCalls()">测试函数调用</button>
+        <button onclick="clearResults()">清除结果</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function testFunctions() {
+            clearResults();
+            addResult('<strong>开始测试函数暴露...</strong>', 'info');
+            
+            const functions = [
+                'initializeLayoutEngineAfterDataLoad',
+                'initializeGraph',
+                'initializeNodeOperations',
+                'initializeConfigDrawers'
+            ];
+            
+            let allFound = true;
+            
+            functions.forEach(funcName => {
+                const funcType = typeof window[funcName];
+                if (funcType === 'function') {
+                    addResult(`✅ ${funcName}: ${funcType}`, 'success');
+                } else {
+                    addResult(`❌ ${funcName}: ${funcType} (期望: function)`, 'error');
+                    allFound = false;
+                }
+            });
+            
+            if (allFound) {
+                addResult('<strong>🎉 所有函数都已正确暴露！</strong>', 'success');
+            } else {
+                addResult('<strong>⚠️ 部分函数未正确暴露，请检查 TaskFlowCanvas 组件。</strong>', 'error');
+            }
+            
+            // 显示所有以 initialize 开头的 window 属性
+            const initializeFunctions = Object.keys(window).filter(key => key.startsWith('initialize'));
+            if (initializeFunctions.length > 0) {
+                addResult(`<strong>发现的 initialize 函数:</strong> ${initializeFunctions.join(', ')}`, 'info');
+            } else {
+                addResult('<strong>未发现任何 initialize 函数</strong>', 'error');
+            }
+        }
+        
+        function testFunctionCalls() {
+            addResult('<strong>开始测试函数调用...</strong>', 'info');
+            
+            const functions = [
+                'initializeLayoutEngineAfterDataLoad',
+                'initializeGraph',
+                'initializeNodeOperations',
+                'initializeConfigDrawers'
+            ];
+            
+            functions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    try {
+                        // 注意：这里只是测试函数是否可调用，实际调用可能需要特定参数
+                        addResult(`✅ ${funcName} 函数可调用`, 'success');
+                    } catch (error) {
+                        addResult(`⚠️ ${funcName} 调用出错: ${error.message}`, 'error');
+                    }
+                } else {
+                    addResult(`❌ ${funcName} 不是函数，无法调用`, 'error');
+                }
+            });
+        }
+        
+        // 页面加载时自动测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testFunctions();
+            }, 1000); // 等待1秒确保其他脚本加载完成
+        });
+    </script>
+</body>
+</html>

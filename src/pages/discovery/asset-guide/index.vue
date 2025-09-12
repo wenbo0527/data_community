@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import IconDataAnalysis from '@arco-design/web-vue/es/icon';
 // 导入Vue组合式API
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 // 导入Vue路由
 import { useRouter } from 'vue-router'
 
@@ -152,6 +152,11 @@ onMounted(() => {
   logLayoutDimensions()
   // 添加窗口大小变化监听
   window.addEventListener('resize', logLayoutDimensions)
+})
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', logLayoutDimensions)
 })
 
 /**

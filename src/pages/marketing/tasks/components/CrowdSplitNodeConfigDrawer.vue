@@ -343,7 +343,7 @@ const customValidation = (formData) => {
   }
   
   // 检查是否有重复的人群
-  const validCrowdIds = formData.crowdLayers
+  const validCrowdIds = (formData.crowdLayers || [])
     .map(layer => layer.crowdId)
     .filter(id => id && id !== null && id !== undefined && id !== '')
   
@@ -563,11 +563,11 @@ const getAvailableCrowds = (currentIndex) => {
     return crowdList.value || []
   }
   
-  const selectedCrowdIds = formData.crowdLayers
+  const selectedCrowdIds = (formData.crowdLayers || [])
     .filter((layer, index) => index !== currentIndex && layer.crowdId)
     .map(layer => layer.crowdId)
   
-  return crowdList.value.filter(crowd => !selectedCrowdIds.includes(crowd.id))
+  return (crowdList.value || []).filter(crowd => !selectedCrowdIds.includes(crowd.id))
 }
 
 // 处理人群选择变化
@@ -622,7 +622,7 @@ const handleCrowdChange = (index, crowdId) => {
     oldCrowdName,
     newCrowdName: layer.crowdName,
     totalLayers: formData.crowdLayers.length,
-    selectedCount: formData.crowdLayers.filter(l => l.crowdId).length
+    selectedCount: (formData.crowdLayers || []).filter(l => l.crowdId).length
   })
 }
 

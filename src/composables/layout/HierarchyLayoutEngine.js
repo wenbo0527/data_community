@@ -9,8 +9,7 @@
  * 5. 提供性能优化和缓存机制
  */
 
-import pkg from '@antv/hierarchy';
-const { compactBox } = pkg;
+import { compactBox } from '@antv/hierarchy';
 import { HierarchyAdapter } from './HierarchyAdapter.js';
 
 export class HierarchyLayoutEngine {
@@ -165,6 +164,20 @@ export class HierarchyLayoutEngine {
         { nodes: layoutData.nodes || [], edges: layoutData.edges || [] },
         layoutData.previewEndpoints || []
       );
+
+      // 🔍 添加数据转换后的调试日志
+      console.log('🔍 [performLayout] 数据转换完成，检查hierarchy数据结构:');
+      console.log('📊 [performLayout] hierarchyData类型:', typeof hierarchyData);
+      console.log('📊 [performLayout] hierarchyData是否为null/undefined:', hierarchyData === null || hierarchyData === undefined);
+      
+      if (hierarchyData) {
+        console.log('📊 [performLayout] hierarchyData根节点信息:', {
+          id: hierarchyData.id,
+          子节点数量: hierarchyData.children ? hierarchyData.children.length : 0,
+          是否有children属性: 'children' in hierarchyData,
+          children类型: typeof hierarchyData.children
+        });
+      }
 
       if (!hierarchyData) {
         throw new Error('数据转换失败：无法生成hierarchy数据');
@@ -352,7 +365,7 @@ export class HierarchyLayoutEngine {
     return processedMap;
   }
 
-  // 🗑️ [已删除] adjustEndpointPositions 方法已被新的预览线分层策略替代
+
 
   /**
    * 应用层级对齐规则

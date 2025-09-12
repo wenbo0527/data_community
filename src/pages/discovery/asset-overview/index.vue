@@ -239,7 +239,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   IconDashboard,
@@ -261,6 +261,11 @@ const layoutDimensions = ref({ width: 0, height: 0 })
 onMounted(() => {
   updateLayoutDimensions()
   window.addEventListener('resize', updateLayoutDimensions)
+})
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', updateLayoutDimensions)
 })
 
 // 方法

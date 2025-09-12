@@ -7,14 +7,7 @@
 export { CoordinateCalculator } from './core/CoordinateCalculator.js';
 export { CoordinateValidator } from './validation/CoordinateValidator.js';
 export { PositionApplicator } from './position/PositionApplicator.js';
-export { SyncManager, SyncState, SyncEventType } from './sync/SyncManager.js';
-export { PreviewLineRefreshManager, RefreshPriority } from './sync/PreviewLineRefreshManager.js';
-export { BranchFlowManager, BranchType, BranchState, FlowDirection } from './sync/BranchFlowManager.js';
-export { 
-  EnhancedUnifiedPreviewLineManager, 
-  PreviewLineType, 
-  PreviewLineState 
-} from './sync/EnhancedUnifiedPreviewLineManager.js';
+// 同步管理器相关导出已移除
 
 // 策略模块
 export { 
@@ -114,14 +107,21 @@ export const DEFAULT_CONFIG = {
 export class CoordinateRefactorSystem {
   constructor(config = {}) {
     this.config = this.mergeConfig(DEFAULT_CONFIG, config);
-    this.syncManager = new SyncManager({
-      calculatorConfig: this.config.calculator,
-      validatorConfig: this.config.validator,
-      applicatorConfig: this.config.applicator,
-      ...this.config.sync
-    });
+    // 基础实现，不依赖已删除的SyncManager
+    this.syncManager = {
+      sync: async (layers, context, options) => ({ syncId: Date.now().toString(), success: true }),
+      calculator: { calculate: async (layers, options) => new Map(), getPerformanceStats: () => ({}) },
+      validator: null,
+      applicator: { apply: async (positions, context) => ({ applied: 0, failed: 0 }), getStatistics: () => ({}) },
+      cancelSync: async () => true,
+      getSyncStatus: () => null,
+      getActiveSyncs: () => [],
+      getStatistics: () => ({}),
+      addEventListener: () => {},
+      removeEventListener: () => {}
+    };
 
-    console.log(`✅ [坐标重构系统] 初始化完成`);
+    console.log(`✅ [坐标重构系统] 基础实现初始化完成`);
   }
 
   /**

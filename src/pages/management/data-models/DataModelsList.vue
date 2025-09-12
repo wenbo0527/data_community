@@ -3,7 +3,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h2 class="page-title">数据查询&管理模型</h2>
+        <h2 class="page-title">代码模块管理</h2>
         <p class="page-description">管理和维护数据查询模型，支持SQL和Python两种语言</p>
       </div>
       <div class="header-right">
@@ -81,7 +81,7 @@
         <!-- 模型名称 -->
         <template #name="{ record }">
           <div class="model-name">
-            <a-link @click="handleView(record)">
+            <a-link @click="handleViewDetail(record.id)">
               {{ record.name }}
             </a-link>
             <div class="model-description">{{ record.description }}</div>
@@ -102,7 +102,7 @@
           <a-tag
             :color="record.language === 'sql' ? 'orange' : 'purple'"
           >
-            {{ record.language.toUpperCase() }}
+            {{ record.language ? record.language.toUpperCase() : 'N/A' }}
           </a-tag>
         </template>
 
@@ -125,15 +125,26 @@
           </div>
         </template>
 
+        <!-- 版本 -->
+        <template #version="{ record }">
+          <a-link @click="handleViewVersionHistory(record.id, record.name)">
+            <a-tag color="blue" size="small">
+              v{{ record.version }}
+            </a-tag>
+          </a-link>
+        </template>
+
         <!-- 操作 -->
         <template #actions="{ record }">
           <a-space>
+            <!-- 上线按钮 - 仅草稿状态显示 -->
             <a-button
+              v-if="record.status === 'draft'"
               type="text"
               size="small"
-              @click="handleView(record)"
+              @click="handlePublish(record)"
             >
-              查看
+              上线
             </a-button>
             <a-button
               type="text"
@@ -150,21 +161,28 @@
               复制
             </a-button>
             <a-popconfirm
-              content="确定要删除这个数据模型吗？"
-              @ok="handleDelete(record)"
+              content="确定要归档这个数据模型吗？"
+              @ok="handleArchive(record)"
             >
               <a-button
                 type="text"
                 size="small"
                 status="danger"
               >
-                删除
+                归档
               </a-button>
             </a-popconfirm>
           </a-space>
         </template>
       </a-table>
     </div>
+
+    <!-- 版本历史模态框 -->
+    <VersionHistoryModal 
+      v-model:visible="showVersionHistory"
+      :model-id="currentModelId"
+      :model-name="currentModelName"
+    />
   </div>
 </template>
 
@@ -179,8 +197,12 @@ import {
 import { 
   getDataModelsList, 
   deleteDataModel, 
-  copyDataModel 
+  publishDataModel,
+  archiveDataModel,
+  copyDataModel,
+  getVersionHistory 
 } from '@/api/dataModels'
+import VersionHistoryModal from './components/VersionHistoryModal.vue'
 
 const router = useRouter()
 
@@ -241,7 +263,8 @@ const columns = [
   {
     title: '版本',
     dataIndex: 'version',
-    width: 80
+    slotName: 'version',
+    width: 100
   },
   {
     title: '更新时间',
@@ -317,12 +340,42 @@ const handleCreate = () => {
   router.push('/management/data-models/create')
 }
 
+const handleViewDetail = (id) => {
+  router.push(`/management/data-models/${id}`)
+}
+
+// 查看版本历史
+const showVersionHistory = ref(false)
+const currentModelId = ref('')
+const currentModelName = ref('')
+
 const handleView = (record) => {
   router.push(`/management/data-models/${record.id}`)
 }
 
+const handleViewVersionHistory = (id, name) => {
+  currentModelId.value = id
+  currentModelName.value = name
+  showVersionHistory.value = true
+}
+
 const handleEdit = (record) => {
   router.push(`/management/data-models/${record.id}/edit`)
+}
+
+const handlePublish = async (record) => {
+  try {
+    const response = await publishDataModel(record.id)
+    if (response.code === 200) {
+      Message.success('上线成功')
+      loadData()
+    } else {
+      Message.error(response.message || '上线失败')
+    }
+  } catch (error) {
+    console.error('上线失败:', error)
+    Message.error('上线失败')
+  }
 }
 
 const handleCopy = async (record) => {
@@ -340,22 +393,22 @@ const handleCopy = async (record) => {
   }
 }
 
-const handleDelete = async (record) => {
+const handleArchive = async (record) => {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除模型 "${record.name}" 吗？此操作不可恢复。`,
+    title: '确认归档',
+    content: `确定要归档模型 "${record.name}" 吗？归档后可以重新激活。`,
     onOk: async () => {
       try {
-        const response = await deleteDataModel(record.id)
+        const response = await archiveDataModel(record.id)
         if (response.code === 200) {
-          Message.success('删除成功')
+          Message.success('归档成功')
           loadData()
         } else {
-          Message.error(response.message || '删除失败')
+          Message.error(response.message || '归档失败')
         }
       } catch (error) {
-        console.error('删除失败:', error)
-        Message.error('删除失败')
+        console.error('归档失败:', error)
+        Message.error('归档失败')
       }
     }
   })

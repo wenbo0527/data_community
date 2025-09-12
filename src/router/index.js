@@ -103,14 +103,24 @@ const router = createRouter({
           children: [
             {
               path: ':userId',
-name: 'Customer360Detail',
-component: () => import('../pages/discovery/customer360/detail.vue'),
-props: true,
-beforeEnter: (to) => {
-  if (!/^\d+$/.test(to.params.userId)) {
-    return '/discovery/customer360';
-  }
-}
+              name: 'Customer360Detail',
+              component: () => import('../pages/discovery/customer360/detail.vue'),
+              props: true,
+              beforeEnter: (to) => {
+                if (!/^\d+$/.test(to.params.userId)) {
+                  return '/discovery/customer360';
+                }
+              }
+            },
+            {
+              path: 'query-result/:id',
+              name: 'QueryResultDetail',
+              component: () => import('../pages/discovery/customer360/components/QueryResultDetail.vue'),
+              meta: {
+                title: '查询结果详情',
+                hideBreadcrumb: true
+              },
+              props: true
             }
           ]
         },
@@ -141,8 +151,17 @@ beforeEnter: (to) => {
         },
         {
           path: 'metrics-map',
-          name: 'metricsMap',
+          name: 'MetricsMap',
           component: () => import('../pages/discovery/metrics-map/index.vue')
+        },
+        {
+          path: 'metrics-map/detail/:id',
+          name: 'MetricsMapDetail',
+          component: () => import('../pages/discovery/metrics-map/detail.vue'),
+          meta: {
+            title: '指标详情',
+            hidden: true
+          }
         },
         {
           path: 'unified-metrics',
@@ -155,6 +174,29 @@ beforeEnter: (to) => {
           name: 'dataMap',
           meta: { title: '数据搜索' },
           component: () => import('../pages/discovery/data-map/index.vue')
+        },
+
+        {
+          path: 'data-map/navigation',
+          name: 'DataMapNavigation',
+          meta: { title: '数据地图导航' },
+          component: () => import('../pages/discovery/data-map/navigation.vue')
+        },
+        {
+          path: 'data-map/simple-flow-demo',
+          name: 'SimpleFlowDemo',
+          meta: { title: '业务流程概览演示' },
+          component: () => import('../pages/discovery/data-map/simple-flow-demo.vue')
+        },
+        {
+          path: 'data-map/sidebar-layout-demo',
+          name: 'SidebarLayoutDemo',
+          meta: { title: '侧边栏布局演示 - 方案三' },
+          component: () => import('../pages/discovery/data-map/sidebar-layout-demo.vue')
+        },
+        {
+          path: 'data-map/process-flow-demo',
+          redirect: '/discovery/data-map/simple-flow-demo'
         },
         {
           path: 'data-map/collection/:id',
@@ -204,8 +246,18 @@ beforeEnter: (to) => {
           component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue'),
           props: true
         },
-        {          path: 'asset-management/batch-asset-management',          name: 'BatchAssetManagement',          meta: { title: '资产批量管理' },          component: () => import('../pages/discovery/asset-management/batch-asset-management/index.vue')        },
-        {          path: 'asset-management/external-purchase-register',          name: 'ExternalPurchaseRegister',          meta: { title: '外部数据采购登记' },          component: () => import('../pages/discovery/asset-management/external-purchase-register/index.vue')        }
+        {
+          path: 'asset-management/batch-asset-management',
+          name: 'BatchAssetManagement',
+          meta: { title: '资产批量管理' },
+          component: () => import('../pages/discovery/asset-management/batch-asset-management/index.vue')
+        },
+        {
+          path: 'asset-management/external-purchase-register',
+          name: 'ExternalPurchaseRegister',
+          meta: { title: '外部数据采购登记' },
+          component: () => import('../pages/discovery/asset-management/external-purchase-register/index.vue')
+        }
       ]
     },
     {

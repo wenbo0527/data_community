@@ -117,6 +117,153 @@ const metrics: MetricItem[] = [
     regulatoryCategory: RegulatoryCategory.PBOC_CENTRALIZED,
     reportName: '人民银行大集中系统报表',
     isFavorite: false
+  },
+  {
+    id: '6',
+    type: MetricType.REGULATORY,
+    name: '不良贷款率',
+    category: '信贷风险',
+    businessDefinition: '不良贷款余额与各项贷款余额的比率，反映银行信贷资产质量',
+    code: 'REG_003',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.loan_quality_detail',
+    processingLogic: 'SELECT npl_balance / total_loan_balance * 100 as npl_ratio\nFROM reg.loan_quality_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_npl_ratio',
+    queryCode: 'SELECT npl_ratio FROM reg.ads_npl_ratio WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-01-01', description: '监管指标创建' }
+    ],
+    businessOwner: '风险管理部-李主任',
+    technicalOwner: '数据团队-王工程师',
+    regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '银行业风险监管报表',
+    isFavorite: false
+  },
+  {
+    id: '7',
+    type: MetricType.REGULATORY,
+    name: '存贷比',
+    category: '流动性管理',
+    businessDefinition: '各项贷款余额与各项存款余额的比率，衡量银行资金运用效率',
+    code: 'REG_004',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.deposit_loan_detail',
+    processingLogic: 'SELECT total_loan_balance / total_deposit_balance * 100 as loan_deposit_ratio\nFROM reg.deposit_loan_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_loan_deposit_ratio',
+    queryCode: 'SELECT loan_deposit_ratio FROM reg.ads_loan_deposit_ratio WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-01-01', description: '监管指标创建' }
+    ],
+    businessOwner: '资产负债管理部-陈经理',
+    technicalOwner: '数据团队-刘工程师',
+    regulatoryCategory: RegulatoryCategory.PBOC_FINANCIAL_BASE,
+    reportName: '金融机构基础数据报表',
+    isFavorite: false
+  },
+  {
+    id: '8',
+    type: MetricType.REGULATORY,
+    name: '拨备覆盖率',
+    category: '信贷风险',
+    businessDefinition: '贷款损失准备与不良贷款余额的比率，反映银行抵御信贷风险的能力',
+    code: 'REG_005',
+    statisticalPeriod: '季度',
+    sourceTable: 'reg.provision_coverage_detail',
+    processingLogic: 'SELECT loan_loss_provision / npl_balance * 100 as provision_coverage_ratio\nFROM reg.provision_coverage_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_provision_coverage_ratio',
+    queryCode: 'SELECT provision_coverage_ratio FROM reg.ads_provision_coverage_ratio WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-01-01', description: '监管指标创建' }
+    ],
+    businessOwner: '风险管理部-张总监',
+    technicalOwner: '数据团队-周工程师',
+    regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '银行业审慎监管报表',
+    isFavorite: false
+  },
+  {
+    id: '9',
+    type: MetricType.REGULATORY,
+    name: '净稳定资金比率',
+    category: '流动性管理',
+    businessDefinition: '可用稳定资金与所需稳定资金的比率，衡量银行中长期流动性风险',
+    code: 'REG_006',
+    statisticalPeriod: '季度',
+    sourceTable: 'reg.nsfr_detail',
+    processingLogic: 'SELECT available_stable_funding / required_stable_funding * 100 as nsfr\nFROM reg.nsfr_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_nsfr',
+    queryCode: 'SELECT nsfr FROM reg.ads_nsfr WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-01-01', description: '监管指标创建' }
+    ],
+    businessOwner: '资产负债管理部-王主任',
+    technicalOwner: '数据团队-吴工程师',
+    regulatoryCategory: RegulatoryCategory.PBOC_CENTRALIZED,
+    reportName: '流动性风险监测报表',
+    isFavorite: false
+  },
+  {
+    id: '10',
+    type: MetricType.REGULATORY,
+    name: '利率敏感性缺口',
+    category: '利率风险',
+    businessDefinition: '利率敏感性资产与利率敏感性负债的差额，反映利率变动对银行的影响',
+    code: 'REG_007',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.interest_rate_gap_detail',
+    processingLogic: 'SELECT rate_sensitive_assets - rate_sensitive_liabilities as interest_rate_gap\nFROM reg.interest_rate_gap_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_interest_rate_gap',
+    queryCode: 'SELECT interest_rate_gap FROM reg.ads_interest_rate_gap WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-01-01', description: '监管指标创建' }
+    ],
+    businessOwner: '资产负债管理部-赵经理',
+    technicalOwner: '数据团队-郑工程师',
+    regulatoryCategory: RegulatoryCategory.PBOC_INTEREST_RATE,
+    reportName: '利率风险管理报表',
+    isFavorite: false
+  },
+  {
+    id: '11',
+    type: MetricType.REGULATORY,
+    name: '大额风险暴露',
+    category: '信贷风险',
+    businessDefinition: '对单一客户或关联客户群体的风险暴露总额，用于控制集中度风险',
+    code: 'REG_008',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.large_exposure_detail',
+    processingLogic: 'SELECT SUM(exposure_amount) as total_large_exposure\nFROM reg.large_exposure_detail\nWHERE report_date = ${date} AND exposure_amount > tier1_capital * 0.1',
+    storageLocation: 'reg.ads_large_exposure',
+    queryCode: 'SELECT total_large_exposure FROM reg.ads_large_exposure WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-01-01', description: '监管指标创建' }
+    ],
+    businessOwner: '风险管理部-孙主任',
+    technicalOwner: '数据团队-钱工程师',
+    regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '大额风险暴露报表',
+    isFavorite: false
+  },
+  {
+    id: '12',
+    type: MetricType.REGULATORY,
+    name: '货币供应量M2增长率',
+    category: '货币政策',
+    businessDefinition: '广义货币供应量M2的同比增长率，反映货币政策传导效果',
+    code: 'REG_009',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.money_supply_detail',
+    processingLogic: 'SELECT (current_m2 - previous_year_m2) / previous_year_m2 * 100 as m2_growth_rate\nFROM reg.money_supply_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_m2_growth_rate',
+    queryCode: 'SELECT m2_growth_rate FROM reg.ads_m2_growth_rate WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-01-01', description: '监管指标创建' }
+    ],
+    businessOwner: '货币政策部-何经理',
+    technicalOwner: '数据团队-冯工程师',
+    regulatoryCategory: RegulatoryCategory.PBOC_FINANCIAL_BASE,
+    reportName: '货币供应量统计报表',
+    isFavorite: false
   }
 ]
 
@@ -263,14 +410,39 @@ export default [
   {
     url: '/api/metrics/:id',
     method: 'get',
-    response: ({ url }: { url: string }) => {
+    response: ({ url, query }: { url: string; query: { type?: string } }) => {
       const id = url.split('/').pop()
-      const metric = metrics.find(m => m.id === id)
+      const { type } = query
+      
+      let metric = metrics.find(m => m.id === id)
+      
+      // 如果指定了类型，确保指标类型匹配
+      if (metric && type && metric.type !== type) {
+        return {
+          code: 404,
+          message: '指标不存在或类型不匹配',
+          data: null
+        }
+      }
+      
       if (metric) {
+        // 增强详情数据
+        const enhancedMetric = {
+          ...metric,
+          dataSource: metric.sourceTable || '未知数据源',
+          updateFrequency: metric.statisticalPeriod || '未知',
+          technicalLogic: metric.processingLogic || '暂无技术逻辑说明',
+          resultTable: {
+            tableName: metric.storageLocation || '未知表',
+            fieldName: metric.code?.toLowerCase() || 'metric_value',
+            fieldType: 'DECIMAL(18,4)'
+          }
+        }
+        
         return {
           code: 200,
           message: 'success',
-          data: metric
+          data: enhancedMetric
         }
       } else {
         return {
@@ -366,6 +538,82 @@ export default [
           message: '指标不存在',
           data: null
         }
+      }
+    }
+  },
+  {
+    url: '/api/metrics/:id/related',
+    method: 'get',
+    response: ({ url, query }: { url: string; query: { type?: string; limit?: string } }) => {
+      const id = url.split('/').pop()
+      const { type, limit = '5' } = query
+      
+      const currentMetric = metrics.find(m => m.id === id)
+      if (!currentMetric) {
+        return {
+          code: 404,
+          message: '指标不存在',
+          data: []
+        }
+      }
+      
+      // 获取相关指标：同类型、同分类或同业务域的其他指标
+      let relatedMetrics = metrics.filter(m => {
+        if (m.id === id) return false // 排除自己
+        
+        // 类型匹配
+        if (type && m.type !== type) return false
+        if (!type && m.type !== currentMetric.type) return false
+        
+        // 相关性判断：同分类 > 同业务域 > 同监管大类
+        return (
+          m.category === currentMetric.category ||
+          (m.businessDomain && m.businessDomain === currentMetric.businessDomain) ||
+          (m.regulatoryCategory && m.regulatoryCategory === currentMetric.regulatoryCategory)
+        )
+      })
+      
+      // 按相关性排序（同分类优先）
+      relatedMetrics.sort((a, b) => {
+        const aScore = (
+          (a.category === currentMetric.category ? 3 : 0) +
+          (a.businessDomain === currentMetric.businessDomain ? 2 : 0) +
+          (a.regulatoryCategory === currentMetric.regulatoryCategory ? 1 : 0)
+        )
+        const bScore = (
+          (b.category === currentMetric.category ? 3 : 0) +
+          (b.businessDomain === currentMetric.businessDomain ? 2 : 0) +
+          (b.regulatoryCategory === currentMetric.regulatoryCategory ? 1 : 0)
+        )
+        return bScore - aScore
+      })
+      
+      // 限制返回数量
+      const limitedMetrics = relatedMetrics.slice(0, parseInt(limit))
+      
+      return {
+        code: 200,
+        message: 'success',
+        data: limitedMetrics.map(m => ({
+          id: m.id,
+          name: m.name,
+          category: m.category,
+          businessDomain: m.businessDomain,
+          regulatoryCategory: m.regulatoryCategory,
+          type: m.type
+        }))
+      }
+    }
+  },
+  {
+    url: '/api/metrics/regulatory-categories',
+    method: 'get',
+    response: () => {
+      const categories = Object.values(RegulatoryCategory)
+      return {
+        code: 200,
+        message: 'success',
+        data: categories
       }
     }
   }] as MockMethod[]

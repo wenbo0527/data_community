@@ -106,7 +106,7 @@ export class UnifiedStructuredLayoutEngine {
       parentChildMap: new Map(), // 父子关系
       childParentMap: new Map(), // 子父关系
       layerMetrics: new Map(), // 层级指标
-      endpointNodes: new Map(), // 🗑️ [已删除] endpoint虚拟节点已被新的预览线分层策略替代
+      endpointNodes: new Map(), // 已移除endpoint虚拟节点功能
       mixedLayerNodes: new Map(), // 混合层级节点（普通节点+endpoint）
       nodeToLayer: new Map(), // 节点到层级的映射
       optimizationHistory: [], // 优化历史
@@ -265,7 +265,7 @@ export class UnifiedStructuredLayoutEngine {
     const START_NODE_BASE_Y = 100; // 开始节点的固定基础Y坐标
     
     // 查找开始节点
-    const startNodes = nodes.filter(node => {
+    const startNodes = (nodes || []).filter(node => {
       const nodeId = node.id || node.getId();
       const nodeData = node.getData ? node.getData() : {};
       return nodeData.type === 'start' || nodeId.includes('start') || nodeId.includes('Start');
@@ -665,7 +665,7 @@ export class UnifiedStructuredLayoutEngine {
       );
     });
 
-    // 🗑️ [已删除] 虚拟endpoint节点创建逻辑已被新的预览线分层策略替代
+
 
     console.log('📊 [数据预处理] 数据统计:', {
       普通节点: validNodes.length,
@@ -694,11 +694,11 @@ export class UnifiedStructuredLayoutEngine {
    * 提取预览线endpoint作为虚拟节点
    * @returns {Array} endpoint虚拟节点数组
    */
-  // 🗑️ [已删除] extractPreviewEndpoints 方法已被新的预览线分层策略替代
+  
 
-  // 🗑️ [已删除] hasBranchConnection 和 hasExistingRealConnections 方法已被新的预览线分层策略替代
+  
 
-  // 🗑️ [已删除] createVirtualEndpointsForLeafNodes 方法已被新的预览线分层策略替代
+  
 
   /**
    * 创建endpoint虚拟节点
@@ -708,7 +708,7 @@ export class UnifiedStructuredLayoutEngine {
    * @param {string} branchLabel - 分支标签
    * @returns {Object} 虚拟节点对象
    */
-  // 🗑️ [已删除] createEndpointVirtualNode 方法已被新的预览线分层策略替代
+  
 
   /**
    * 🎯 全局简单层级计算：获取节点的层级Y坐标
@@ -850,41 +850,80 @@ export class UnifiedStructuredLayoutEngine {
   inferNodeTypeFromId(nodeId) {
     console.log(`🔍 [类型推断] 开始推断节点 ${nodeId} 的类型`);
     
-    // 🎯 规则1：开始节点
-    if (nodeId === 'start-node' || nodeId.includes('start') || nodeId.includes('Start') || nodeId.includes('begin')) {
+    if (!nodeId) {
+      console.log(`⚠️ [类型推断] 节点ID为空 -> unknown类型`);
+      return 'unknown';
+    }
+    
+    const lowerNodeId = nodeId.toLowerCase();
+    
+    // 🎯 规则1：开始节点（更精确的识别）
+    if (nodeId === 'start-node' || lowerNodeId.includes('start') || 
+        lowerNodeId.includes('begin') || lowerNodeId.includes('init') || 
+        lowerNodeId.includes('entry') || lowerNodeId.match(/^(start|begin|init|entry)[_-]?\d*$/)) {
       console.log(`🎯 [类型推断] 节点 ${nodeId} -> start类型`);
       return 'start';
     }
     
-    // 🎯 规则2：结束节点
-    if (nodeId.includes('end') || nodeId.includes('End') || nodeId.includes('finish') || nodeId.includes('terminal')) {
+    // 🎯 规则2：结束节点（更精确的识别）
+    if (lowerNodeId.includes('end') || lowerNodeId.includes('finish') || 
+        lowerNodeId.includes('complete') || lowerNodeId.includes('terminal') ||
+        lowerNodeId.includes('exit') || lowerNodeId.includes('final') ||
+        lowerNodeId.match(/^(end|finish|complete|terminal|exit|final)[_-]?\d*$/)) {
       console.log(`🎯 [类型推断] 节点 ${nodeId} -> end类型`);
       return 'end';
     }
     
-    // 🎯 规则3：特定处理节点类型
-    if (nodeId.includes('ai-call')) {
+    // 🎯 规则3：AI调用节点（增强识别）
+    if (lowerNodeId.includes('ai-call') || lowerNodeId.includes('ai_call') ||
+        lowerNodeId.includes('aicall') || lowerNodeId.includes('ai.call') ||
+        lowerNodeId.match(/^ai[_-]?call[_-]?\d*$/)) {
       console.log(`🎯 [类型推断] 节点 ${nodeId} -> ai-call类型`);
       return 'ai-call';
     }
     
-    if (nodeId.includes('manual-call')) {
+    // 🎯 规则4：手动调用节点（增强识别）
+    if (lowerNodeId.includes('manual-call') || lowerNodeId.includes('manual_call') ||
+        lowerNodeId.includes('manualcall') || lowerNodeId.includes('manual.call') ||
+        lowerNodeId.match(/^manual[_-]?call[_-]?\d*$/)) {
       console.log(`🎯 [类型推断] 节点 ${nodeId} -> manual-call类型`);
       return 'manual-call';
     }
     
-    if (nodeId.includes('audience-split')) {
+    // 🎯 规则5：受众分流节点（增强识别）
+    if (lowerNodeId.includes('audience-split') || lowerNodeId.includes('audience_split') ||
+        lowerNodeId.includes('audiencesplit') || lowerNodeId.includes('audience.split') ||
+        lowerNodeId.includes('split') || lowerNodeId.includes('branch') ||
+        lowerNodeId.match(/^(audience[_-]?split|split|branch)[_-]?\d*$/)) {
       console.log(`🎯 [类型推断] 节点 ${nodeId} -> audience-split类型`);
       return 'audience-split';
     }
     
-    // 🎯 规则4：endpoint节点
-    if (nodeId.includes('endpoint') || nodeId.includes('virtual_endpoint')) {
+    // 🎯 规则6：条件判断节点
+    if (lowerNodeId.includes('condition') || lowerNodeId.includes('decision') ||
+        lowerNodeId.includes('judge') || lowerNodeId.includes('if') ||
+        lowerNodeId.match(/^(condition|decision|judge|if)[_-]?\d*$/)) {
+      console.log(`🎯 [类型推断] 节点 ${nodeId} -> condition类型`);
+      return 'condition';
+    }
+    
+    // 🎯 规则7：endpoint节点
+    if (lowerNodeId.includes('endpoint') || lowerNodeId.includes('virtual_endpoint') ||
+        lowerNodeId.includes('end_point') || lowerNodeId.includes('end.point') ||
+        lowerNodeId.match(/^endpoint[_-]?\d*$/)) {
       console.log(`🎯 [类型推断] 节点 ${nodeId} -> endpoint类型`);
       return 'endpoint';
     }
     
-    // 🎯 规则5：基于特定ID模式的节点类型推断
+    // 🎯 规则8：任务节点
+    if (lowerNodeId.includes('task') || lowerNodeId.includes('action') ||
+        lowerNodeId.includes('step') || lowerNodeId.includes('activity') ||
+        lowerNodeId.match(/^(task|action|step|activity)[_-]?\d*$/)) {
+      console.log(`🎯 [类型推断] 节点 ${nodeId} -> task类型`);
+      return 'task';
+    }
+    
+    // 🎯 规则9：基于特定ID模式的节点类型推断（保留原有逻辑）
     if (nodeId.includes('1755503018616')) {
       console.log(`🎯 [类型推断] 节点 ${nodeId} -> audience-split类型（基于ID）`);
       return 'audience-split';
@@ -900,13 +939,15 @@ export class UnifiedStructuredLayoutEngine {
       return 'ai-call';
     }
     
-    // 🎯 规则6：通用节点类型
-    if (nodeId.includes('node_')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> process类型（通用节点）`);
+    // 🎯 规则10：处理节点
+    if (lowerNodeId.includes('process') || lowerNodeId.includes('handle') ||
+        lowerNodeId.includes('execute') || lowerNodeId.includes('run') ||
+        lowerNodeId.includes('node_') || lowerNodeId.match(/^(process|handle|execute|run)[_-]?\d*$/)) {
+      console.log(`🎯 [类型推断] 节点 ${nodeId} -> process类型`);
       return 'process';
     }
     
-    // 🎯 默认：未识别的节点类型
+    // 🎯 默认：返回process类型而不是unknown
     console.log(`⚠️ [类型推断] 节点 ${nodeId} -> process类型（默认）`);
     return 'process';
   }
@@ -1166,7 +1207,99 @@ export class UnifiedStructuredLayoutEngine {
    * @param {string} branchId - 分支ID
    * @param {Object} position - 新位置
    */
+  // 🛡️ 新增：预览线坐标冲突检测和防护机制
+  detectAndPreventCoordinateConflicts(sourceNodeId, branchId, position) {
+    const conflictThreshold = 10; // 坐标冲突阈值（像素）
+    const conflicts = [];
+    
+    // 检查与其他预览线的坐标冲突
+    const previewLineManager = this.previewLineManager || window.unifiedPreviewLineManager || this.graph.previewLineManager;
+    if (previewLineManager && previewLineManager.previewLines) {
+      previewLineManager.previewLines.forEach((instances, nodeId) => {
+        if (nodeId === sourceNodeId) return; // 跳过自己
+        
+        const checkInstance = (instance) => {
+          if (!instance || !instance.endPosition) return;
+          const distance = Math.sqrt(
+            Math.pow(instance.endPosition.x - position.x, 2) + 
+            Math.pow(instance.endPosition.y - position.y, 2)
+          );
+          if (distance < conflictThreshold) {
+            conflicts.push({
+              nodeId,
+              branchId: instance.branchId,
+              position: instance.endPosition,
+              distance
+            });
+          }
+        };
+        
+        if (Array.isArray(instances)) {
+          instances.forEach(checkInstance);
+        } else {
+          checkInstance(instances);
+        }
+      });
+    }
+    
+    // 如果检测到冲突，调整坐标
+    if (conflicts.length > 0) {
+      console.warn(`⚠️ [坐标冲突] 检测到 ${conflicts.length} 个坐标冲突，自动调整位置`);
+      
+      // 简单的冲突解决策略：向右下方偏移
+      let adjustedPosition = { ...position };
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (conflicts.length > 0 && attempts < maxAttempts) {
+        adjustedPosition.x += conflictThreshold + 5;
+        adjustedPosition.y += conflictThreshold + 5;
+        
+        // 重新检查调整后的位置是否还有冲突
+        const remainingConflicts = conflicts.filter(conflict => {
+          const distance = Math.sqrt(
+            Math.pow(conflict.position.x - adjustedPosition.x, 2) + 
+            Math.pow(conflict.position.y - adjustedPosition.y, 2)
+          );
+          return distance < conflictThreshold;
+        });
+        
+        if (remainingConflicts.length === 0) {
+          console.log(`✅ [坐标冲突] 冲突已解决，调整后位置: (${adjustedPosition.x}, ${adjustedPosition.y})`);
+          return adjustedPosition;
+        }
+        
+        attempts++;
+      }
+      
+      if (attempts >= maxAttempts) {
+        console.warn(`⚠️ [坐标冲突] 无法完全解决冲突，使用最后调整的位置`);
+      }
+      
+      return adjustedPosition;
+    }
+    
+    return position;
+  }
+
   updatePreviewEndpointPosition(sourceNodeId, branchId, position) {
+    // 🎯 关键修复：添加坐标验证防护机制
+    if (!position || typeof position.x !== 'number' || typeof position.y !== 'number' || 
+        isNaN(position.x) || isNaN(position.y)) {
+      console.error(`❌ [位置同步] 无效的坐标参数:`, position);
+      return;
+    }
+
+    // 🎯 关键修复：添加坐标范围检查
+    const maxCoordinate = 50000; // 设置合理的坐标上限
+    if (Math.abs(position.x) > maxCoordinate || Math.abs(position.y) > maxCoordinate) {
+      console.error(`❌ [位置同步] 坐标超出合理范围:`, position);
+      return;
+    }
+    
+    // 🛡️ 新增：坐标冲突检测和防护
+    position = this.detectAndPreventCoordinateConflicts(sourceNodeId, branchId, position);
+
     console.log("🔄 [位置同步] 更新endpoint位置:", {
       sourceNodeId,
       branchId,
@@ -1201,6 +1334,12 @@ export class UnifiedStructuredLayoutEngine {
       console.log(
         `🎯 [强制同步] 预览线管理器endPosition已更新: (${oldEndPosition.x}, ${oldEndPosition.y}) → (${position.x}, ${position.y})`,
       );
+    }
+
+    // 🎯 关键修复：添加预览线管理器方法存在性检查
+    if (!previewLineManager.previewLines || typeof previewLineManager.previewLines.get !== 'function') {
+      console.error(`❌ [位置同步] 预览线管理器缺少必要的previewLines属性或方法`);
+      return;
     }
 
     // 🎯 关键修复：直接查找并更新预览线的终点位置
@@ -1356,7 +1495,7 @@ export class UnifiedStructuredLayoutEngine {
 
     const { validNodes, validEdges, endpointNodes } = preprocessResult;
 
-    // 🗑️ [已删除] 不再处理虚拟endpoint节点
+    
     const allNodes = [...validNodes]; // 只使用普通节点
     
     // 保存到layoutModel中，供其他方法使用
@@ -1475,7 +1614,7 @@ export class UnifiedStructuredLayoutEngine {
       }
     });
 
-    // 🗑️ [已删除] 不再建立虚拟endpoint节点的父子关系
+    
 
     console.log('🔗 [关系构建] 父子关系构建完成', {
       节点数: allNodes.length,
@@ -1490,7 +1629,7 @@ export class UnifiedStructuredLayoutEngine {
    */
   identifyLeafNodes(allNodes) {
     // 首先过滤出普通节点（非endpoint节点）
-    const normalNodes = allNodes.filter(
+    const normalNodes = (allNodes || []).filter(
       (node) => !(node.isEndpoint || node.isVirtual),
     );
 
@@ -1517,7 +1656,8 @@ export class UnifiedStructuredLayoutEngine {
       console.warn('⚠️ [叶子识别] 无边连接或所有节点都是叶子节点，启用节点类型分层模式');
       
       // 按节点类型分层：end节点作为叶子节点（最底层）
-      const endNodes = (normalNodes || []).filter((node) => {
+      const safeNormalNodes = normalNodes || [];
+      const endNodes = safeNormalNodes.filter((node) => {
         const nodeType = node.type || node.getType?.() || '';
         return nodeType === 'end';
       });
@@ -1528,7 +1668,7 @@ export class UnifiedStructuredLayoutEngine {
       }
       
       // 如果没有end节点，使用非start节点作为叶子节点
-      const nonStartNodes = (normalNodes || []).filter((node) => {
+      const nonStartNodes = safeNormalNodes.filter((node) => {
         const nodeType = node.type || node.getType?.() || '';
         return nodeType !== 'start';
       });
@@ -1549,8 +1689,8 @@ export class UnifiedStructuredLayoutEngine {
         const parents = this.layoutModel.childParentMap.get(nodeId) || [];
 
         // 过滤出真正的父节点（排除endpoint虚拟节点）
-        const realParents = parents.filter((parentId) => {
-          const parentNode = allNodes.find(
+        const realParents = (parents || []).filter((parentId) => {
+          const parentNode = (allNodes || []).find(
             (n) => (n.id || n.getId()) === parentId,
           );
           return parentNode && !(parentNode.isEndpoint || parentNode.isVirtual);
@@ -1660,8 +1800,10 @@ export class UnifiedStructuredLayoutEngine {
         const children = this.layoutModel.parentChildMap.get(parentId) || [];
 
         // 只考虑非endpoint子节点
-        const realChildren = (children || []).filter((childId) => {
-          const childNode = (allNodes || []).find(
+        const safeChildren = children || [];
+        const safeAllNodesForFind = allNodes || [];
+        const realChildren = safeChildren.filter((childId) => {
+          const childNode = safeAllNodesForFind.find(
             (n) => (n.id || n.getId()) === childId,
           );
           return childNode && !(childNode.isEndpoint || childNode.isVirtual);
@@ -1678,7 +1820,7 @@ export class UnifiedStructuredLayoutEngine {
         );
 
         if (allChildrenProcessed) {
-          const parentNode = allNodes.find(
+          const parentNode = safeAllNodesForFind.find(
             (n) => (n.id || n.getId()) === parentId,
           );
           if (parentNode && !(parentNode.isEndpoint || parentNode.isVirtual)) {
@@ -1703,7 +1845,8 @@ export class UnifiedStructuredLayoutEngine {
     );
 
     // 🔍 检查未处理的节点
-    const allNodeIds = allNodes
+    const safeAllNodes = allNodes || [];
+    const allNodeIds = safeAllNodes
       .filter((node) => !(node.isEndpoint || node.isVirtual))
       .map((node) => node.id || node.getId());
     const unprocessedNodeIds = allNodeIds.filter(
@@ -1717,7 +1860,7 @@ export class UnifiedStructuredLayoutEngine {
       );
 
       // 将未处理的节点添加到最后一层
-      const unprocessedNodes = allNodes.filter((node) =>
+      const unprocessedNodes = safeAllNodes.filter((node) =>
         unprocessedNodeIds.includes(node.id || node.getId()),
       );
 
@@ -1795,6 +1938,7 @@ export class UnifiedStructuredLayoutEngine {
     const layers = [];
     const startNodes = [];
     const endNodes = [];
+    const processNodes = []; // 处理节点
     const otherNodes = [];
 
     // 🎯 关键修复：确保至少有一个有效的节点分类
@@ -1844,10 +1988,13 @@ export class UnifiedStructuredLayoutEngine {
         finalType: nodeType
       });
       
+      // 🎯 修复：更精确的节点分类逻辑
       if (nodeType === 'start') {
         startNodes.push(node);
       } else if (nodeType === 'end') {
         endNodes.push(node);
+      } else if (['ai-call', 'manual-call', 'audience-split', 'condition', 'decision', 'process', 'action', 'task'].includes(nodeType)) {
+        processNodes.push(node);
       } else {
         otherNodes.push(node);
       }
@@ -1857,23 +2004,33 @@ export class UnifiedStructuredLayoutEngine {
 
     console.log('🎯 [类型分层] 节点分类结果:', {
       start: startNodes.length,
-      end: endNodes.length,
+      process: processNodes.length,
       other: otherNodes.length,
-      total: startNodes.length + endNodes.length + otherNodes.length,
+      end: endNodes.length,
+      total: startNodes.length + processNodes.length + otherNodes.length + endNodes.length,
       expected: normalNodes.length
     });
 
-    // 构建垂直分层：start在顶层，end在底层，其他节点在中间
+    // 🎯 修复：构建更合理的垂直分层结构
+    // 第1层：开始节点
     if (startNodes.length > 0) {
       layers.push(startNodes);
       console.log('📊 [类型分层] 第0层(顶层): start节点', startNodes.map(n => n.id || n.getId()));
     }
 
-    if (otherNodes.length > 0) {
-      layers.push(otherNodes);
-      console.log(`📊 [类型分层] 第${layers.length - 1}层(中间层): 其他节点`, otherNodes.map(n => n.id || n.getId()));
+    // 第2层：主要处理节点（ai-call, manual-call, audience-split等）
+    if (processNodes.length > 0) {
+      layers.push(processNodes);
+      console.log(`📊 [类型分层] 第${layers.length - 1}层(处理层): 处理节点`, processNodes.map(n => n.id || n.getId()));
     }
 
+    // 第3层：其他未分类节点
+    if (otherNodes.length > 0) {
+      layers.push(otherNodes);
+      console.log(`📊 [类型分层] 第${layers.length - 1}层(其他层): 其他节点`, otherNodes.map(n => n.id || n.getId()));
+    }
+
+    // 第4层：结束节点
     if (endNodes.length > 0) {
       layers.push(endNodes);
       console.log(`📊 [类型分层] 第${layers.length - 1}层(底层): end节点`, endNodes.map(n => n.id || n.getId()));
@@ -1891,25 +2048,61 @@ export class UnifiedStructuredLayoutEngine {
       
       if (unassignedNodes.length > 0) {
         console.warn('⚠️ [类型分层] 发现未分配的节点:', unassignedNodes.map(n => n.id || n.getId()));
-        // 将未分配的节点添加到最后一层
-        if (layers.length > 0) {
-          layers[layers.length - 1].push(...unassignedNodes);
-        } else {
-          layers.push(unassignedNodes);
-        }
-        console.log('🔧 [类型分层] 已将未分配节点添加到层级中');
+        // 🎯 修复：将未分配的节点按类型智能分配
+        unassignedNodes.forEach(node => {
+          const nodeType = this.inferNodeTypeFromId(node.id || node.getId());
+          if (nodeType === 'start' && startNodes.length === 0) {
+            // 如果是开始节点且还没有开始层，创建开始层
+            layers.unshift([node]);
+          } else if (nodeType === 'end') {
+            // 结束节点放到最后一层
+            layers.push([node]);
+          } else {
+            // 其他节点放到处理层或创建新的处理层
+            if (processNodes.length > 0) {
+              // 找到处理层并添加
+              const processLayerIndex = layers.findIndex(layer => 
+                layer.some(n => processNodes.includes(n))
+              );
+              if (processLayerIndex >= 0) {
+                layers[processLayerIndex].push(node);
+              } else {
+                layers.push([node]);
+              }
+            } else {
+              layers.push([node]);
+            }
+          }
+        });
+        console.log('🔧 [类型分层] 已智能分配未分配节点到相应层级');
       }
     }
 
-    // 🎯 最终保护：确保至少有一层
+    // 🎯 最终保护：确保至少有一层且层级顺序正确
     if (layers.length === 0 && normalNodes.length > 0) {
       console.error('🚨 [类型分层] 严重错误：所有节点都未能分层，强制创建单层结构');
       layers.push([...normalNodes]);
     }
+    
+    // 🎯 修复：确保层级顺序正确（start -> process -> other -> end）
+    layers.sort((layerA, layerB) => {
+      const getLayerPriority = (layer) => {
+        if (layer.some(n => startNodes.includes(n))) return 0; // start层优先级最高
+        if (layer.some(n => processNodes.includes(n))) return 1; // process层次之
+        if (layer.some(n => otherNodes.includes(n))) return 2; // other层再次之
+        if (layer.some(n => endNodes.includes(n))) return 3; // end层优先级最低
+        return 2; // 默认为other层级别
+      };
+      return getLayerPriority(layerA) - getLayerPriority(layerB);
+    });
 
     console.log(`📋 [类型分层] 最终层级结构: ${layers.length}层，总节点数: ${layers.flat().length}`);
     layers.forEach((layer, index) => {
-      console.log(`  第${index}层: ${layer.length}个节点`, layer.map(n => n.id || n.getId()));
+      const layerTypes = layer.map(n => {
+        const nodeType = this.inferNodeTypeFromId(n.id || n.getId());
+        return `${n.id || n.getId()}(${nodeType})`;
+      });
+      console.log(`  第${index}层: ${layer.length}个节点`, layerTypes);
     });
 
     // 更新nodeToLayer映射
@@ -1928,7 +2121,7 @@ export class UnifiedStructuredLayoutEngine {
     const allNodesWithEndpoints = this.layoutModel.allNodes || [];
     if (allNodesWithEndpoints.length > normalNodes.length) {
       console.log('🔧 [类型分层] 开始调整endpoint节点层级');
-      // 🗑️ [已删除] 不再调用adjustEndpointLayers方法
+
       console.log(`📋 [类型分层] 最终nodeToLayer映射完成，共 ${this.layoutModel.nodeToLayer.size} 个节点`);
     }
 
@@ -1948,7 +2141,7 @@ export class UnifiedStructuredLayoutEngine {
    * @param {Array} layers - 分层结果
    * @param {Array} allNodes - 所有节点
    */
-  // 🗑️ [已删除] adjustEndpointLayers 方法已被新的预览线分层策略替代
+  
 
   /**
    * 为每层创建混合节点列表（普通节点+endpoint统一管理）
@@ -1957,13 +2150,13 @@ export class UnifiedStructuredLayoutEngine {
   createMixedLayerNodes(layers) {
     layers.forEach((layer, layerIndex) => {
       const mixedNodes = {
-        normalNodes: layer, // 🗑️ [已删除] 不再区分endpoint节点，所有节点都作为普通节点处理
-        endpointNodes: [], // 🗑️ [已删除] endpoint节点数组已清空
+        normalNodes: layer, // 所有节点都作为普通节点处理
+        endpointNodes: [], // endpoint节点数组已清空
         allNodes: layer,
         layerIndex,
       };
 
-      // 🗑️ [已删除] 不再过滤endpoint节点
+  
 
       this.layoutModel.mixedLayerNodes.set(layerIndex, mixedNodes);
 
@@ -1989,8 +2182,12 @@ export class UnifiedStructuredLayoutEngine {
     console.log('🎯 [主干线识别] 主干线节点:', mainlineNodes.map(n => n.id || n.getId()));
 
     // 计算主干线X坐标（画布中心）
-    const mainlineX = this.options.canvas.width / 2 || 400;
-    console.log(`🎯 [主干线对齐] 主干线X坐标: ${mainlineX}`);
+    // 🔧 修复：添加canvas和width属性的空值保护
+    const canvasWidth = (this.options && this.options.canvas && typeof this.options.canvas.width === 'number') 
+      ? this.options.canvas.width 
+      : 800; // 默认画布宽度
+    const mainlineX = canvasWidth / 2;
+    console.log(`🎯 [主干线对齐] 主干线X坐标: ${mainlineX} (画布宽度: ${canvasWidth})`);
 
     // 🔥 关键调试：详细验证layers数组结构
     console.log(`🔍 [位置计算] layers数组详情:`, {
@@ -2650,7 +2847,11 @@ export class UnifiedStructuredLayoutEngine {
   calculateOptimalChildPosition(parentPositions) {
     if (!parentPositions || parentPositions.length === 0) {
       console.warn('⚠️ [子节点定位] 父节点位置数组为空，返回画布中心位置');
-      return this.options.canvas.width / 2 || 400;
+      // 🔧 修复：添加canvas和width属性的空值保护
+      const canvasWidth = (this.options && this.options.canvas && typeof this.options.canvas.width === 'number') 
+        ? this.options.canvas.width 
+        : 800; // 默认画布宽度
+      return canvasWidth / 2;
     }
 
     const parentXCoords = parentPositions.map((pos) => pos.x);
@@ -2691,7 +2892,11 @@ export class UnifiedStructuredLayoutEngine {
   calculateOptimalParentPosition(childPositions) {
     if (!childPositions || childPositions.length === 0) {
       console.warn('⚠️ [父节点定位] 子节点位置数组为空，返回画布中心位置');
-      return this.options.canvas.width / 2 || 400;
+      // 🔧 修复：添加canvas和width属性的空值保护
+      const canvasWidth = (this.options && this.options.canvas && typeof this.options.canvas.width === 'number') 
+        ? this.options.canvas.width 
+        : 800; // 默认画布宽度
+      return canvasWidth / 2;
     }
 
     const childXCoords = childPositions.map((pos) => pos.x);
@@ -3457,12 +3662,12 @@ export class UnifiedStructuredLayoutEngine {
     const endpointUpdates = [];
 
     // 遍历所有位置，找到虚拟endpoint节点
-    // 🗑️ [已删除] 不再处理endpoint节点的位置重计算
+    
     positions.forEach((position, nodeId) => {
       // 跳过endpoint节点处理
     });
 
-    // 🗑️ [已删除] 不再批量应用endpoint更新
+    
 
     console.log(`🔄 [Endpoint重计算] 完成，共重新计算 ${recalculatedCount} 个虚拟endpoint位置`);
   }
@@ -3728,7 +3933,8 @@ export class UnifiedStructuredLayoutEngine {
     let baseX;
     if (useOptimizedPosition) {
       // 优化阶段：使用更保守的计算，避免过大偏移
-      const nodeWidth = nodeSize.width || 120;
+      // 🔧 修复：添加nodeSize空值保护，防止width属性访问错误
+      const nodeWidth = (nodeSize && typeof nodeSize.width === 'number') ? nodeSize.width : 120;
       const conservativeOffset = Math.min(nodeWidth * 0.4, 40); // 最多40像素偏移
       baseX = correctedNodePosition.x + conservativeOffset;
       console.log(`🎯 [优化计算] 节点宽度: ${nodeWidth}, 保守偏移: ${conservativeOffset}`);
@@ -3737,7 +3943,9 @@ export class UnifiedStructuredLayoutEngine {
       baseX = correctedNodePosition.x + 30; // 减少初始偏移
     }
     
-    const baseY = correctedNodePosition.y + (nodeSize.height || 40) / 2;
+    // 🔧 修复：添加nodeSize空值保护，防止height属性访问错误
+    const nodeHeight = (nodeSize && typeof nodeSize.height === 'number') ? nodeSize.height : 40;
+    const baseY = correctedNodePosition.y + nodeHeight / 2;
 
     // 🎯 关键修复3：验证计算结果的合理性
     if (Math.abs(baseX) > 300) {
@@ -4171,6 +4379,11 @@ export class UnifiedStructuredLayoutEngine {
       const graphNode = this.graph.getCellById(nodeId);
       if (graphNode) {
         const size = graphNode.getSize();
+        // 🔧 修复：添加size空值保护，防止width属性访问错误
+        if (!size || typeof size.width !== 'number' || typeof size.height !== 'number') {
+          console.warn(`⚠️ [位置应用] 节点 ${nodeId} 尺寸信息无效:`, size);
+          return;
+        }
         const topLeftPosition = {
           x: centerPosition.x - size.width / 2,
           y: centerPosition.y - size.height / 2,
@@ -4292,7 +4505,7 @@ export class UnifiedStructuredLayoutEngine {
             console.log(`🔧 [Y坐标修正] 节点 ${nodeId}: ${oldY.toFixed(1)} → ${standardY.toFixed(1)} (修正偏差: ${deviation.toFixed(1)}px)`);
             fixedNodes++;
 
-            // 🗑️ [已删除] 不再同步虚拟endpoint节点的内部位置
+        
           }
         });
         fixedLayers++;
@@ -4304,7 +4517,7 @@ export class UnifiedStructuredLayoutEngine {
 
 
 
-  // 🗑️ [已删除] syncVirtualEndpointPosition 方法已被新的预览线分层策略替代
+
 
   /**
    * 🎯 关键修复：位置应用后Y坐标验证
@@ -4320,6 +4533,12 @@ export class UnifiedStructuredLayoutEngine {
       if (graphNode) {
         const actualPosition = graphNode.getPosition();
         const size = graphNode.getSize();
+        // 🔧 修复：添加size空值保护，防止height属性访问错误
+        if (!size || typeof size.height !== 'number') {
+          console.warn(`⚠️ [后验证] 节点 ${nodeId} 尺寸信息无效:`, size);
+          validationErrors++;
+          return;
+        }
         const actualCenterY = actualPosition.y + size.height / 2;
         const expectedCenterY = position.y;
 
@@ -4351,7 +4570,7 @@ export class UnifiedStructuredLayoutEngine {
         totalLayers: layerStructure.totalLayers,
         totalNodes: finalPositions.size,
         normalNodes: 0,
-        endpointNodes: 0, // 🗑️ [已删除] 不再统计endpoint节点
+        endpointNodes: 0, // 不再统计endpoint节点
         layerDistribution: [],
       },
       performance: {
@@ -4388,9 +4607,105 @@ export class UnifiedStructuredLayoutEngine {
     return report;
   }
 
-  // 🗑️ [已删除] syncAllEndpointPositions 方法已被新的预览线分层策略替代
+  /**
+   * 🎯 关键修复：同步所有endpoint位置到预览线管理器
+   * @param {Map} finalPositions - 最终位置映射
+   */
+  syncAllEndpointPositions(finalPositions) {
+    console.log("🔄 [位置同步] 开始同步所有endpoint位置到预览线管理器");
 
-  // 🗑️ [已删除] validateEndpointPositions 方法已被新的预览线分层策略替代
+    // 🎯 关键修复：添加参数验证
+    if (!finalPositions || !(finalPositions instanceof Map)) {
+      console.error(`❌ [位置同步] 无效的finalPositions参数:`, finalPositions);
+      return;
+    }
+
+    const previewLineManager =
+      this.previewLineManager ||
+      window.unifiedPreviewLineManager ||
+      this.graph?.previewLineManager;
+
+    if (!previewLineManager) {
+      console.warn("⚠️ [位置同步] 预览线管理器不可用，跳过endpoint位置同步");
+      return;
+    }
+
+    // 🎯 关键修复：检查预览线管理器状态
+    if (previewLineManager.isDestroyed || previewLineManager.disposed) {
+      console.warn("⚠️ [位置同步] 预览线管理器已销毁，跳过位置同步");
+      return;
+    }
+
+    let syncCount = 0;
+    let errorCount = 0;
+
+    try {
+      // 遍历所有节点位置，更新对应的预览线endpoint
+      finalPositions.forEach((position, nodeId) => {
+        try {
+          // 🎯 关键修复：添加位置验证
+          if (!position || typeof position.x !== 'number' || typeof position.y !== 'number' ||
+              isNaN(position.x) || isNaN(position.y)) {
+            console.warn(`⚠️ [位置同步] 节点 ${nodeId} 位置无效:`, position);
+            errorCount++;
+            return;
+          }
+
+          // 🎯 关键修复：添加坐标范围检查
+          const maxCoordinate = 50000;
+          if (Math.abs(position.x) > maxCoordinate || Math.abs(position.y) > maxCoordinate) {
+            console.warn(`⚠️ [位置同步] 节点 ${nodeId} 坐标超出范围:`, position);
+            errorCount++;
+            return;
+          }
+
+          // 检查节点是否有预览线
+          if (previewLineManager.previewLines && previewLineManager.previewLines.has(nodeId)) {
+            // 更新预览线endpoint位置
+            this.updatePreviewEndpointPosition(nodeId, null, position);
+            syncCount++;
+          }
+        } catch (error) {
+          console.error(`❌ [位置同步] 同步节点 ${nodeId} 位置时发生错误:`, error);
+          errorCount++;
+        }
+      });
+
+      console.log(`✅ [位置同步] 完成endpoint位置同步: 成功=${syncCount}, 错误=${errorCount}`);
+
+    } catch (error) {
+      console.error(`❌ [位置同步] 同步过程中发生严重错误:`, error);
+    }
+  }
+
+  /**
+   * 🎯 关键修复：验证endpoint位置的有效性
+   * @param {Map} finalPositions - 最终位置映射
+   */
+  validateEndpointPositions(finalPositions) {
+    console.log("🔍 [位置验证] 开始验证endpoint位置");
+
+    if (!finalPositions || !(finalPositions instanceof Map)) {
+      console.error(`❌ [位置验证] 无效的finalPositions参数`);
+      return false;
+    }
+
+    let validCount = 0;
+    let invalidCount = 0;
+
+    finalPositions.forEach((position, nodeId) => {
+      if (!position || typeof position.x !== 'number' || typeof position.y !== 'number' ||
+          isNaN(position.x) || isNaN(position.y)) {
+        console.warn(`⚠️ [位置验证] 节点 ${nodeId} 位置无效:`, position);
+        invalidCount++;
+      } else {
+        validCount++;
+      }
+    });
+
+    console.log(`📊 [位置验证] 验证结果: 有效=${validCount}, 无效=${invalidCount}`);
+    return invalidCount === 0;
+  }
 
   /**
    * 🎯 关键修复：布局完成后执行清理工作
@@ -4418,8 +4733,8 @@ export class UnifiedStructuredLayoutEngine {
     setTimeout(() => {
       try {
         // 🎯 新增：检查虚拟endpoint是否已创建完成
-        const nodes = this.graph.getNodes();
-        const virtualEndpoints = nodes.filter(node => {
+        const nodes = this.graph ? this.graph.getNodes() : [];
+        const virtualEndpoints = (nodes || []).filter(node => {
           const nodeData = node.getData() || {};
           return nodeData.isEndpoint && nodeData.isVirtual;
         });
@@ -4453,8 +4768,11 @@ export class UnifiedStructuredLayoutEngine {
    */
   executeDelayedCleanup(previewLineManager) {
     try {
-      // 执行预览线清理
-      if (typeof previewLineManager.performLoadCompleteCheck === 'function') {
+      // 🎯 优先使用统一布局专用清理方法
+      if (typeof previewLineManager.performUnifiedLayoutCleanup === 'function') {
+        const cleanedCount = previewLineManager.performUnifiedLayoutCleanup();
+        console.log(`✅ [延迟清理] 统一布局清理完成，清理了 ${cleanedCount} 条预览线`);
+      } else if (typeof previewLineManager.performLoadCompleteCheck === 'function') {
         previewLineManager.performLoadCompleteCheck();
         console.log("✅ [延迟清理] 已触发预览线管理器的完整清理检查");
       } else if (typeof previewLineManager.cleanupOrphanedPreviewLines === 'function') {
@@ -4482,8 +4800,8 @@ export class UnifiedStructuredLayoutEngine {
     }
 
     const remainingPreviewLines = previewLineManager.previewLines.size;
-    const totalNodes = this.graph.getNodes().length;
-    const totalEdges = this.graph.getEdges().length;
+    const totalNodes = this.graph ? (this.graph.getNodes() || []).length : 0;
+    const totalEdges = this.graph ? (this.graph.getEdges() || []).length : 0;
 
     console.log("📊 [清理验证] 清理后状态统计:", {
       剩余预览线实例: remainingPreviewLines,
@@ -4514,17 +4832,17 @@ export class UnifiedStructuredLayoutEngine {
     const graph = this.graph;
     if (!graph) return 'no-graph';
     
-    const nodes = graph.getNodes();
-    const edges = graph.getEdges();
+    const nodes = graph.getNodes() || [];
+    const edges = graph.getEdges() || [];
     
     // 基于节点和边的基本信息生成缓存键
-    const nodeInfo = nodes.map(node => ({
+    const nodeInfo = (nodes || []).map(node => ({
       id: node.id,
       position: node.getPosition(),
       size: node.getSize()
     }));
     
-    const edgeInfo = edges.map(edge => ({
+    const edgeInfo = (edges || []).map(edge => ({
       id: edge.id,
       source: edge.getSourceCellId(),
       target: edge.getTargetCellId()

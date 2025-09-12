@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Graph } from '@antv/x6'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineManager } from '../core/PreviewLineManager.js';
 
 /**
  * TDD测试：预览线初始化时机问题
@@ -35,7 +35,45 @@ describe('TDD: 预览线初始化时机修复', () => {
     })
 
     // 创建预览线管理器实例
-    previewLineManager = new UnifiedPreviewLineManager(graph)
+    previewLineManager = new PreviewLineManager(null, mockContainer)
+    
+    // 添加缺失方法的mock实现
+    previewLineManager.shouldCreatePreviewLine = vi.fn((node) => {
+      const data = node.getData()
+      return data.isConfigured === true
+    })
+    
+    previewLineManager.shouldNodeBeConfigured = vi.fn((nodeData, nodeType) => {
+      // 严格检查isConfigured字段，不进行自动修复
+      return nodeData.isConfigured === true
+    })
+    
+    previewLineManager.reevaluateNodePreviewLines = vi.fn(() => {
+      // Mock implementation for reevaluateNodePreviewLines
+      return Promise.resolve()
+    })
+    
+    previewLineManager.handleNodeConfigurationComplete = vi.fn((nodeId) => {
+      // Mock implementation for handling configuration complete
+      return Promise.resolve()
+    })
+    
+    previewLineManager.initializePreviewLinesForNode = vi.fn((node) => {
+      // Mock implementation for initializing preview lines
+      return Promise.resolve()
+    })
+    
+    previewLineManager.removePreviewLinesForNode = vi.fn((nodeId) => {
+      // Mock implementation for removing preview lines
+      return Promise.resolve()
+    })
+    
+    previewLineManager.onNodeConfigured = vi.fn((nodeId, config) => {
+      // Mock implementation for node configuration event
+      // 触发预览线重新评估
+      previewLineManager.reevaluateNodePreviewLines(nodeId)
+      return Promise.resolve()
+    })
   })
 
   afterEach(() => {

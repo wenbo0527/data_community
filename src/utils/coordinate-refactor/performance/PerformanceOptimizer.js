@@ -445,6 +445,51 @@ export class PerformanceOptimizer {
   }
 
   /**
+   * 🛡️ 预览线坐标安全验证
+   * @param {Array} args - 函数参数
+   * @returns {boolean} 是否通过验证
+   */
+  validatePreviewLineCoordinates(args) {
+    if (!args || args.length === 0) return true;
+    
+    // 检查参数中是否包含坐标信息
+    for (const arg of args) {
+      if (arg && typeof arg === 'object') {
+        // 检查位置参数
+        if (arg.position || arg.x !== undefined || arg.y !== undefined) {
+          const position = arg.position || { x: arg.x, y: arg.y };
+          
+          // 坐标有效性检查
+          if (position.x !== undefined && position.y !== undefined) {
+            if (typeof position.x !== 'number' || typeof position.y !== 'number' ||
+                isNaN(position.x) || isNaN(position.y)) {
+              console.error(`❌ [坐标验证] 无效的坐标类型:`, position);
+              return false;
+            }
+            
+            // 坐标范围检查
+            const maxCoordinate = 50000;
+            if (Math.abs(position.x) > maxCoordinate || Math.abs(position.y) > maxCoordinate) {
+              console.error(`❌ [坐标验证] 坐标超出合理范围:`, position);
+              return false;
+            }
+            
+            // 坐标精度检查（避免过于精确的浮点数）
+            if (position.x % 1 !== 0 && position.x.toString().split('.')[1]?.length > 2) {
+              console.warn(`⚠️ [坐标验证] X坐标精度过高，可能存在计算误差: ${position.x}`);
+            }
+            if (position.y % 1 !== 0 && position.y.toString().split('.')[1]?.length > 2) {
+              console.warn(`⚠️ [坐标验证] Y坐标精度过高，可能存在计算误差: ${position.y}`);
+            }
+          }
+        }
+      }
+    }
+    
+    return true;
+  }
+
+  /**
    * 优化预览线更新
    * @param {Function} updateFunction - 更新函数
    * @param {Object} context - 上下文
@@ -452,7 +497,15 @@ export class PerformanceOptimizer {
    */
   optimizePreviewLineUpdates(updateFunction, context = {}) {
     if (!this.config.enablePreviewLineThrottling) {
-      return updateFunction;
+      // 即使不启用节流，也要添加坐标验证
+      return (...args) => {
+        if (!this.validatePreviewLineCoordinates(args)) {
+          console.error(`❌ [预览线更新] 坐标验证失败，跳过更新`);
+          this.state.performanceMetrics.skippedOperations++;
+          return;
+        }
+        return updateFunction.apply(context, args);
+      };
     }
 
     const throttleKey = `previewLine_${context.nodeId || 'global'}`;
@@ -463,9 +516,47 @@ export class PerformanceOptimizer {
 
     let updateCount = 0;
     let lastUpdateTime = 0;
+    const coordinateHistory = new Map(); // 记录坐标历史，检测异常变化
     
     const throttledFunction = (...args) => {
       const now = Date.now();
+      
+      // 🛡️ 坐标安全验证
+      if (!this.validatePreviewLineCoordinates(args)) {
+        console.error(`❌ [预览线更新] 坐标验证失败，跳过更新`);
+        this.state.performanceMetrics.skippedOperations++;
+        return;
+      }
+      
+      // 🛡️ 坐标变化异常检测
+      const nodeId = context.nodeId || 'global';
+      if (args.length > 0 && args[0] && typeof args[0] === 'object') {
+        const currentPos = args[0].position || { x: args[0].x, y: args[0].y };
+        if (currentPos.x !== undefined && currentPos.y !== undefined) {
+          const lastPos = coordinateHistory.get(nodeId);
+          if (lastPos) {
+            const distance = Math.sqrt(
+              Math.pow(currentPos.x - lastPos.x, 2) + 
+              Math.pow(currentPos.y - lastPos.y, 2)
+            );
+            
+            // 检测异常大的坐标变化（可能是计算错误）
+            const maxReasonableMove = 1000; // 单次移动的最大合理距离
+            if (distance > maxReasonableMove) {
+              console.warn(`⚠️ [坐标异常] 检测到异常大的坐标变化: ${distance.toFixed(2)}px，可能存在计算错误`);
+              console.warn(`⚠️ [坐标异常] 从 (${lastPos.x}, ${lastPos.y}) 到 (${currentPos.x}, ${currentPos.y})`);
+              
+              // 可以选择跳过这次更新或使用渐进式更新
+              if (distance > maxReasonableMove * 2) {
+                console.error(`❌ [坐标异常] 坐标变化过大，跳过此次更新`);
+                this.state.performanceMetrics.skippedOperations++;
+                return;
+              }
+            }
+          }
+          coordinateHistory.set(nodeId, { x: currentPos.x, y: currentPos.y, timestamp: now });
+        }
+      }
       
       // 检查更新频率限制
       if (updateCount >= this.config.maxPreviewLineUpdates && 
@@ -484,7 +575,14 @@ export class PerformanceOptimizer {
       lastUpdateTime = now;
       
       console.log(`🔄 [预览线更新] 执行更新 (${updateCount}/${this.config.maxPreviewLineUpdates})`);
-      return updateFunction.apply(context, args);
+      
+      try {
+        return updateFunction.apply(context, args);
+      } catch (error) {
+        console.error(`❌ [预览线更新] 更新执行失败:`, error);
+        this.state.performanceMetrics.skippedOperations++;
+        throw error;
+      }
     };
     
     this.throttledFunctions.set(throttleKey, throttledFunction);
@@ -832,14 +930,20 @@ export class PerformanceOptimizer {
    */
   cleanup() {
     // 清理定时器
-    this.timers.forEach(timer => clearTimeout(timer));
-    this.timers.clear();
+    (this.timers || new Set()).forEach(timer => clearTimeout(timer));
+    if (this.timers) {
+      this.timers.clear();
+    }
     
     // 清理缓存
-    this.cache.clear();
+    if (this.cache) {
+      this.cache.clear();
+    }
     
     // 清理节流函数
-    this.throttledFunctions.clear();
+    if (this.throttledFunctions) {
+      this.throttledFunctions.clear();
+    }
     
     console.log('🧹 [性能优化器] 资源清理完成');
   }

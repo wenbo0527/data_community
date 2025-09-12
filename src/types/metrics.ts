@@ -93,3 +93,55 @@ export interface MetricItem {
   regulatoryCategory?: RegulatoryCategory // 监管指标专用：监管报表大类
   reportName?: string // 监管指标专用：报表名称
 }
+
+// 指标详情增强数据结构
+export interface MetricDetail extends MetricItem {
+  dataSource: string // 数据源
+  updateFrequency: string // 更新频率
+  technicalLogic: string // 技术逻辑
+  resultTable: {
+    tableName: string // 结果表名
+    fieldName: string // 字段名
+    fieldType: string // 字段类型
+  }
+}
+
+// 相关指标推荐项
+export interface RelatedMetric {
+  id: string
+  name: string
+  category: string
+  businessDomain?: string
+  regulatoryCategory?: RegulatoryCategory
+  type: MetricType
+}
+
+// API响应基础结构
+export interface ApiResponse<T = any> {
+  code: number
+  message: string
+  data: T
+}
+
+// 分页响应结构
+export interface PaginatedResponse<T> {
+  code: number
+  message: string
+  data: {
+    list: T[]
+    total: number
+    page: number
+    pageSize: number
+  }
+}
+
+// 搜索参数接口
+export interface MetricSearchParams {
+  page?: number
+  pageSize?: number
+  keyword?: string
+  category?: string
+  businessDomain?: string
+  regulatoryCategory?: RegulatoryCategory
+  type?: MetricType
+}

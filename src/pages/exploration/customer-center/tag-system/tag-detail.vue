@@ -330,7 +330,7 @@ import {
   IconClose
 } from '@arco-design/web-vue/es/icon'
 import ConditionConfig from '@/components/common/ConditionConfig.vue'
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 
 // 血缘数据处理函数
 const processLineageData = (data) => {
@@ -415,6 +415,8 @@ const router = useRouter()
 const activeTab = ref('distribution')
 const lineageChartRef = ref(null)
 const lineageData = ref(null)
+let chart = null
+let resizeHandler = null
 
 const countNodes = (node) => {
   let count = 0;
@@ -447,7 +449,7 @@ const initLineageChart = async () => {
   if (!lineageChartRef.value) return
   
   try {
-    const chart = await safeInitECharts(lineageChartRef.value)
+    chart = await safeInitECharts(lineageChartRef.value)
     
     console.log('[Lineage Debug] ECharts配置:', {
       seriesType: 'tree',
@@ -513,7 +515,10 @@ const initLineageChart = async () => {
       seriesCount: option.series.length,
       nodeTypes: [...new Set(option.series[0].data.flatMap(s => s.children).map(n => n.type))]
     });
-    window.addEventListener('resize', () => chart.resize())
+    
+    // 保存resize处理函数并添加事件监听器
+    resizeHandler = () => chart.resize()
+    window.addEventListener('resize', resizeHandler)
   } catch (error) {
     console.error('❌ 血缘图表初始化失败:', error)
   }
@@ -1209,6 +1214,21 @@ onMounted(() => {
   if (tagId) {
     // 这里可以根据tagId获取具体的标签详情
     console.log('获取标签详情:', tagId)
+  }
+})
+
+// 组件卸载时清理资源
+onUnmounted(() => {
+  // 移除resize事件监听器
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
+  
+  // 销毁图表实例
+  if (chart) {
+    chart.dispose()
+    chart = null
   }
 })
 

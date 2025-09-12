@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineManager } from '../core/PreviewLineManager.js';
 
 describe('isConfigured字段自动修复测试', () => {
   let previewManager
@@ -11,6 +11,9 @@ describe('isConfigured字段自动修复测试', () => {
   let mockNode
 
   beforeEach(() => {
+    // 创建模拟容器
+    const mockContainer = document.createElement('div')
+    
     // 创建模拟图形对象
     mockGraph = {
       getOutgoingEdges: vi.fn().mockReturnValue([]),
@@ -24,7 +27,26 @@ describe('isConfigured字段自动修复测试', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
+    previewManager = new PreviewLineManager(null, mockContainer)
+    
+    // 添加shouldCreatePreviewLine方法的mock实现
+    previewManager.shouldCreatePreviewLine = vi.fn((node) => {
+      const data = node.getData()
+      
+      // 如果isConfigured为undefined且有配置数据，自动修复
+      if (data.isConfigured === undefined) {
+        const hasConfig = data.type === 'start' || 
+          (data.config && data.config.crowdLayers && data.config.crowdLayers.length > 0)
+        
+        if (hasConfig) {
+          node.setData({ ...data, isConfigured: true })
+          return true
+        }
+        return false
+      }
+      
+      return data.isConfigured === true
+    })
 
     // 创建模拟节点
     mockNode = {

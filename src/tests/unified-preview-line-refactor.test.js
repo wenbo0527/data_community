@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineManager } from '../core/PreviewLineManager.js';
 
 describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
   let previewManager
   let mockGraph
 
   beforeEach(() => {
+    // 创建模拟容器
+    const mockContainer = document.createElement('div')
+    
     // 创建模拟的图实例
     mockGraph = {
       getCellById: vi.fn(),
@@ -24,7 +27,7 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
+    previewManager = new PreviewLineManager(null, mockContainer)
     
     // 模拟 getNodeBranches 方法
     previewManager.getNodeBranches = vi.fn((node) => {
@@ -58,6 +61,84 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
       
       return [{ id: 'default', label: '默认' }]
     })
+    
+    // 添加shouldCreatePreviewLine方法的mock实现
+    previewManager.shouldCreatePreviewLine = vi.fn((node) => {
+      const data = node.getData()
+      if (!data.isConfigured || data.type === 'end') {
+        return false
+      }
+      
+      const outgoingEdges = mockGraph.getOutgoingEdges(node.id) || []
+      const realConnections = outgoingEdges.filter(edge => {
+        const edgeData = edge.getData()
+        return edgeData.type === 'real-connection'
+      })
+      
+      if (data.type === 'start') {
+        return realConnections.length === 0
+      }
+      
+      // 分支节点检查
+      if (['audience-split', 'event-split', 'ab-test'].includes(data.type)) {
+        const branches = previewManager.getNodeBranches(node)
+        const connectedBranches = realConnections.map(edge => edge.getData().branchId)
+        return connectedBranches.length < branches.length
+      }
+      
+      return realConnections.length === 0
+    })
+    
+    // 添加isBranchNode方法的mock实现
+    previewManager.isBranchNode = vi.fn((node) => {
+      const data = node.getData()
+      return ['audience-split', 'event-split', 'ab-test'].includes(data.type)
+    })
+    
+    // 添加calculateBranchCount方法的mock实现
+     previewManager.calculateBranchCount = vi.fn((node, config) => {
+       const data = node.getData()
+       
+       if (data.type === 'start') {
+         return 1
+       }
+       
+       if (data.type === 'audience-split') {
+         if (config && config.crowdLayers) {
+           return config.crowdLayers.length + 1 // 层级数 + 未命中
+         }
+         return 2 // 默认2个分支
+       }
+       
+       if (data.type === 'event-split') {
+         return 2 // 是/否
+       }
+       
+       if (data.type === 'ab-test') {
+         return 2 // A/B版本
+       }
+       
+       return 1
+     })
+     
+     // 添加checkNodeFullConnections方法的mock实现
+     previewManager.checkNodeFullConnections = vi.fn((node, isBranchNode) => {
+       const outgoingEdges = mockGraph.getOutgoingEdges(node.id) || []
+       const realConnections = outgoingEdges.filter(edge => {
+         const edgeData = edge.getData()
+         return edgeData.type === 'real-connection'
+       })
+       
+       if (!isBranchNode) {
+         // 非分支节点：有真实连接即为完全连接
+         return realConnections.length > 0
+       }
+       
+       // 分支节点：检查所有分支是否都有连接
+       const branches = previewManager.getNodeBranches(node)
+       const connectedBranches = realConnections.map(edge => edge.getData().branchId)
+       return connectedBranches.length >= branches.length
+     })
   })
 
   describe('checkNodeFullConnections - 统一连接检查逻辑', () => {

@@ -148,7 +148,7 @@ export class SmartCacheManager {
    * @param {Array} keys - 预加载的键
    */
   async preload(type, loader, keys) {
-    const missingKeys = keys.filter(key => !this.get(type, key))
+    const missingKeys = (keys || []).filter(key => !this.get(type, key))
     
     if (missingKeys.length === 0) return
     
@@ -191,7 +191,7 @@ export class SmartCacheManager {
     const typePrefix = `${type}:`
     
     // 获取该类型的所有键，按访问时间排序
-    const typeKeys = Array.from(this.accessOrder.entries())
+    const typeKeys = Array.from(this.accessOrder?.entries() || [])
       .filter(([key]) => key.startsWith(typePrefix))
       .sort(([, timeA], [, timeB]) => timeA - timeB)
       .slice(0, count)

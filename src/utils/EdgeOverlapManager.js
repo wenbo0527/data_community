@@ -643,7 +643,7 @@ export class EdgeOverlapManager {
   getSamePortEdges(nodeId, portId, direction) {
     const allEdges = this.graph.getEdges()
     
-    return allEdges.filter(edge => {
+    return (allEdges || []).filter(edge => {
       // 跳过预览线
       const edgeData = edge.getData() || {}
       if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview) {
@@ -1164,7 +1164,7 @@ export class EdgeOverlapManager {
    */
   getAllSamePairEdges(sourceId, targetId) {
     const allEdges = this.graph.getEdges()
-    return allEdges.filter(edge => {
+    return (allEdges || []).filter(edge => {
       const edgeData = edge.getData() || {}
       
       // 跳过预览线

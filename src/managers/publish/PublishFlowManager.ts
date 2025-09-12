@@ -13,14 +13,51 @@ import { DeletionCascadeHandler } from './DeletionCascadeHandler';
 // 发布状态类型定义
 type PublishState = 'idle' | 'validating' | 'processing' | 'publishing' | 'completed' | 'failed' | 'cancelled' | 'detecting_cycles' | 'generating_end_nodes' | 'generating_config' | 'running';
 
+// 发布结果类型定义
+interface PublishResult {
+  success: boolean;
+  steps: string[];
+  errors: Array<{ type: string; message: string }>;
+  warnings: string[];
+  generatedEndNodes: any[];
+  validationResults: any;
+  cycleDetectionResults: any;
+  publishConfig?: any;
+}
+
+// 发布历史记录类型
+interface PublishHistoryRecord {
+  id: string;
+  timestamp: number;
+  result: any;
+  config: any;
+}
+
+// 发布进度信息类型
+interface PublishProgress {
+  currentStep: number;
+  totalSteps: number;
+  percentage: number;
+  state: PublishState;
+  timestamp: number;
+}
+
+// 分支处理结果类型
+interface BranchProcessResult {
+  success: boolean;
+  processedBranches: number;
+  results: any[];
+  error?: string;
+}
+
 /**
  * 发布流程管理器
  * 作为发布流程的总控制器，协调所有发布相关的组件和流程
  */
 export class PublishFlowManager {
   private canvas: Graph;
-  private previewLineManager: any;
-  private layoutEngine: any;
+  private previewLineManager: any; // 预览线管理器 - 待定义具体类型
+  private layoutEngine: any; // 布局引擎 - 待定义具体类型
   private eventBus: UnifiedEventBus;
   private cacheManager: UnifiedCacheManager;
   private errorHandler: ErrorHandler;
@@ -36,12 +73,7 @@ export class PublishFlowManager {
   
   // 发布状态
   private publishState: PublishState;
-  private publishHistory: Array<{
-    id: string;
-    timestamp: number;
-    result: any;
-    config: any;
-  }>;
+  private publishHistory: PublishHistoryRecord[];
 
   constructor(
     canvas: Graph,
@@ -173,16 +205,7 @@ export class PublishFlowManager {
   /**
    * 执行完整的发布流程
    */
-  async executePublishFlow(): Promise<{
-    success: boolean;
-    steps: string[];
-    errors: string[];
-    warnings: string[];
-    generatedEndNodes: any[];
-    validationResults: any;
-    cycleDetectionResults: any;
-    publishConfig?: any;
-  }> {
+  async executePublishFlow(): Promise<PublishResult> {
     const publishId = `publish_${Date.now()}`;
     const publishResult = {
       success: false,
@@ -445,7 +468,7 @@ export class PublishFlowManager {
   /**
    * 记录发布历史
    */
-  private recordPublishHistory(publishId: string, result: any, config: any): void {
+  private recordPublishHistory(publishId: string, result: PublishResult, config: any): void {
     const historyRecord = {
       publishId,
       timestamp: Date.now(),
@@ -490,7 +513,7 @@ export class PublishFlowManager {
   /**
    * 处理发布状态变化
    */
-  private handlePublishStateChange(data: any): void {
+  private handlePublishStateChange = (data: any): void => {
     // 可以在这里添加状态变化的处理逻辑
     console.log('发布状态变化:', data);
   }
@@ -498,7 +521,7 @@ export class PublishFlowManager {
   /**
    * 处理校验完成
    */
-  private handleValidationCompleted(data: any): void {
+  private handleValidationCompleted = (data: any): void => {
     // 可以在这里添加校验完成的处理逻辑
     console.log('校验完成:', data);
   }
@@ -506,7 +529,7 @@ export class PublishFlowManager {
   /**
    * 处理发布错误
    */
-  private handlePublishError(data: any): void {
+  private handlePublishError = (data: any): void => {
     this.setPublishState('failed');
     this.errorHandler.handleError(new Error(data.message), {
       context: 'PublishFlowManager.handlePublishError',
@@ -517,21 +540,21 @@ export class PublishFlowManager {
   /**
    * 处理发布流程开始
    */
-  private handlePublishFlowStart(data: any): void {
+  private handlePublishFlowStart = (data: any): void => {
     console.log('发布流程开始:', data);
   }
 
   /**
    * 处理发布流程取消
    */
-  private handlePublishFlowCancel(data: any): void {
+  private handlePublishFlowCancel = (data: any): void => {
     this.cancelPublishFlow();
   }
 
   /**
    * 处理校验失败
    */
-  private handleValidationFailed(data: any): void {
+  private handleValidationFailed = (data: any): void => {
     this.setPublishState('failed');
     console.log('校验失败:', data);
   }
@@ -553,7 +576,7 @@ export class PublishFlowManager {
   /**
    * 获取发布历史
    */
-  getPublishHistory(): Array<any> {
+  getPublishHistory(): PublishHistoryRecord[] {
     return [...this.publishHistory];
   }
 
@@ -587,7 +610,7 @@ export class PublishFlowManager {
   /**
    * 获取发布进度信息
    */
-  getPublishProgress(): any {
+  getPublishProgress(): PublishProgress {
     const totalSteps = 5; // 校验、循环检测、结束节点生成、配置生成、发布完成
     let currentStep = 0;
     
@@ -651,7 +674,7 @@ export class PublishFlowManager {
   /**
    * 处理所有决策节点的分支
    */
-  private async processBranchesForAllDecisionNodes(): Promise<any> {
+  private async processBranchesForAllDecisionNodes(): Promise<BranchProcessResult> {
     try {
       const nodes = this.canvas.getNodes();
       const decisionNodes = nodes.filter(node => {
@@ -697,9 +720,35 @@ export class PublishFlowManager {
    * 清理资源
    */
   cleanup(): void {
+    // 🔧 修复：清理所有事件监听器，防止EventEmitter内存泄漏
     this.eventBus.off('publish:flow:start', this.handlePublishFlowStart.bind(this));
     this.eventBus.off('publish:flow:cancel', this.handlePublishFlowCancel.bind(this));
     this.eventBus.off('publish:validation:failed', this.handleValidationFailed.bind(this));
+    this.eventBus.off('publish:state:changed', this.handlePublishStateChange.bind(this));
+    this.eventBus.off('validation:completed', this.handleValidationCompleted.bind(this));
     this.eventBus.off('publish:error', this.handlePublishError.bind(this));
+    
+    // 清理子管理器
+    if (this.branchProcessor) {
+      this.branchProcessor.dispose();
+    }
+    
+    if (this.validationManager && typeof this.validationManager.destroy === 'function') {
+      this.validationManager.destroy();
+    }
+    
+    if (this.endNodeGenerator && typeof this.endNodeGenerator.cleanupAutoGeneratedNodes === 'function') {
+      this.endNodeGenerator.cleanupAutoGeneratedNodes();
+    }
+    
+    if (this.cycleDetector && typeof this.cycleDetector.clearDetectionCache === 'function') {
+      this.cycleDetector.clearDetectionCache();
+    }
+    
+    if (this.labelManager && typeof this.labelManager.dispose === 'function') {
+      this.labelManager.dispose();
+    }
+    
+    // DeletionHandler没有统一的cleanup方法，不需要调用
   }
 }

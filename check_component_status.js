@@ -1,0 +1,1 @@
+console.log("=== 检查TaskFlowCanvas组件状态 ==="); console.log("页面URL:", window.location.href); console.log("TaskFlowCanvas DOM元素:", document.querySelector(".task-flow-canvas")); console.log("Canvas容器:", document.querySelector(".canvas-container")); console.log("画布区域:", document.querySelector(".canvas-area")); console.log("Vue组件实例:", document.querySelector("[data-v-*]"));

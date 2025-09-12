@@ -137,9 +137,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
-import { message as Message } from 'ant-design-vue'
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
-import { RegulatoryCategory, RegulatoryLabels } from '@/types/metrics'
+import { Message } from '@arco-design/web-vue'
+import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
+import { RegulatoryCategory, RegulatoryCategories } from '@/types/metrics'
 
 // 响应式数据
 const loading = ref(false)
@@ -232,7 +232,7 @@ const formRules = {
 // 监管报表大类选项
 const regulatoryCategoryOptions = computed(() => {
   return Object.values(RegulatoryCategory).map(value => ({
-    label: RegulatoryLabels[value],
+    label: RegulatoryCategories[value],
     value
   }))
 })
@@ -250,7 +250,7 @@ const metricCategoryOptions = [
 
 // 获取监管报表大类标签
 const getRegulatoryLabel = (category: string) => {
-  return RegulatoryLabels[category as RegulatoryCategory] || category
+  return RegulatoryCategories[category as RegulatoryCategory] || category
 }
 
 // 显示新增模态框
@@ -361,7 +361,7 @@ const loadConfigList = async () => {
     const mockData = [
       {
         id: '1',
-        regulatoryCategory: RegulatoryCategory.CAPITAL_ADEQUACY,
+        regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
         reportName: '资本充足率报表',
         description: '银行资本充足率相关监管报表',
         metricCategories: ['capital', 'risk'],
@@ -371,7 +371,7 @@ const loadConfigList = async () => {
       },
       {
         id: '2',
-        regulatoryCategory: RegulatoryCategory.LIQUIDITY_RISK,
+        regulatoryCategory: RegulatoryCategory.PBOC_CENTRALIZED,
         reportName: '流动性风险报表',
         description: '银行流动性风险管理相关报表',
         metricCategories: ['liquidity', 'risk'],
@@ -381,7 +381,7 @@ const loadConfigList = async () => {
       },
       {
         id: '3',
-        regulatoryCategory: RegulatoryCategory.CREDIT_RISK,
+        regulatoryCategory: RegulatoryCategory.PBOC_FINANCIAL_BASE,
         reportName: '信用风险报表',
         description: '信用风险管理和监控相关报表',
         metricCategories: ['risk', 'asset_quality'],

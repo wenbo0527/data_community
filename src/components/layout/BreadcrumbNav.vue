@@ -1,5 +1,5 @@
 <template>
-  <a-breadcrumb :style="{ marginLeft: '24px', color: '#666' }" separator="/">
+  <a-breadcrumb v-if="!shouldHideBreadcrumb" :style="{ marginLeft: '24px', color: '#666' }" separator="/">
     <a-breadcrumb-item>
       <router-link to="/">首页</router-link>
     </a-breadcrumb-item>
@@ -14,6 +14,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { getMenuItemByPath, MENU_CONFIG } from '../../config/menuConfig'
 
 const props = defineProps({
@@ -21,6 +22,13 @@ const props = defineProps({
     type: String,
     required: true
   }
+})
+
+const route = useRoute()
+
+// 检查是否应该隐藏面包屑
+const shouldHideBreadcrumb = computed(() => {
+  return route.meta?.hideBreadcrumb === true
 })
 
 // 生成面包屑导航

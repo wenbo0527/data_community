@@ -121,7 +121,7 @@ export class HierarchyAdapter {
       this.nodeMap.set(node.id, hierarchyNode);
     });
 
-    // 🗑️ [已删除] 预览线endpoint处理已被新的预览线分层策略替代
+
 
     this.log('📊 [节点预处理] 完成', {
       普通节点: nodes.length,

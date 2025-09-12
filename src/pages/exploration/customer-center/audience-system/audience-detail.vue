@@ -493,7 +493,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
@@ -813,6 +813,7 @@ const distributionData = reactive({
 // 血缘查询相关
 const lineageChartRef = ref(null)
 let lineageChart = null
+let resizeHandler = null
 
 // 血缘关系数据
 const lineageData = ref({
@@ -1371,11 +1372,12 @@ const initLineageChart = async () => {
     lineageChart.setOption(option)
 
     // 监听窗口大小变化
-    window.addEventListener('resize', () => {
+    resizeHandler = () => {
       if (lineageChart) {
         lineageChart.resize()
       }
-    })
+    }
+    window.addEventListener('resize', resizeHandler)
   } catch (error) {
     console.error('初始化血缘图表失败:', error)
   }
@@ -1819,6 +1821,18 @@ onMounted(() => {
   if (tagId) {
     // 这里可以根据tagId获取具体的标签详情
     console.log('获取标签详情:', tagId)
+  }
+})
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
+  if (lineageChart) {
+    lineageChart.dispose()
+    lineageChart = null
   }
 })
 
