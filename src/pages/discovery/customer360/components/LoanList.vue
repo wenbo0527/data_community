@@ -126,6 +126,10 @@
           <a-table-column title="操作" :width="200">
             <template #cell="{ record }">
               <a-space>
+                <a-button size="mini" type="primary" @click="viewLoanDetail(record)">
+                  <template #icon><icon-eye /></template>
+                  详情
+                </a-button>
                 <a-button size="mini" type="text" @click="viewDisbursementInfo(record)">
                   <template #icon><icon-eye /></template>
                   放款信息
@@ -273,6 +277,15 @@
       :loan-record="currentLoan"
       @close="repaymentDrawerVisible = false"
     />
+    
+    <!-- 完整用信详情抽屉 -->
+    <CompleteLoanDetailDrawer
+      v-model:visible="loanDetailVisible"
+      :loan-data="currentLoanDetail"
+      @viewRepaymentPlan="handleViewRepaymentPlan"
+      @viewRepaymentHistory="handleViewRepaymentHistory"
+      @exportLoanDetail="handleExportLoanDetail"
+    />
   </div>
 </template>
 
@@ -282,6 +295,7 @@ import { Message } from '@arco-design/web-vue'
 import { IconEye, IconList, IconCopy, IconExclamationCircle } from '@arco-design/web-vue/es/icon'
 import DisbursementDrawer from './DisbursementDrawer.vue'
 import RepaymentDrawer from './RepaymentDrawer.vue'
+import CompleteLoanDetailDrawer from './CompleteLoanDetailDrawer.vue'
 import { copyToClipboard } from '../../../../utils/copy'
 import { formatAmount } from '../../../../utils/formatUtils'
 
@@ -347,6 +361,8 @@ const selectedRepaymentRows = ref([])
 // 抽屉组件状态
 const disbursementVisible = ref(false)
 const repaymentDrawerVisible = ref(false)
+const loanDetailVisible = ref(false)
+const currentLoanDetail = ref(null)
 
 // 还款记录分页配置
 const repaymentPagination = {
@@ -504,6 +520,128 @@ const copyRepaymentData = async (type) => {
     Message.success(`已复制 ${dataToCopy.length} 条还款记录`)
   } catch (error) {
     Message.error('复制失败')
+  }
+}
+
+// 查看用信详情
+const viewLoanDetail = (record) => {
+  // 转换数据格式以匹配CompleteLoanDetailDrawer的接口
+  currentLoanDetail.value = {
+    // 基本信息
+    dataDate: new Date().toISOString().split('T')[0], // 当前日期作为数据日期
+    productName: record.productName || '未知产品',
+    loanNo: record.loanNo,
+    loanDate: record.loanDate,
+    bankCard: record.bankCard,
+    loanResult: record.result || '成功',
+    rejectReason: record.rejectReason,
+
+    // 借据信息
+    contractNo: record.contractNo || record.loanNo,
+    disbursementTime: record.loanDate + ' 09:00:00', // 模拟放款时间
+    contractStatus: record.status || '正常',
+    interfaceAmount: record.amount || 0,
+    installments: record.installments || 12,
+    loanRate: (record.interestRate || 0) / 100,
+
+    // 逾期信息
+    overdueDays: record.overdueDays || 0,
+    maxOverdueDays: record.maxOverdueDays || 0,
+    overdueDate: record.overdueDays > 0 ? new Date(Date.now() - record.overdueDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null,
+    settlementDate: record.settlementDate,
+
+    // 还款信息
+    currentPeriod: record.currentPeriod || 1,
+    repaymentDate: record.nextPaymentDate || new Date().toISOString().split('T')[0],
+    actualRepaymentPrincipal: record.actualRepaymentPrincipal || 0,
+    actualRepaymentInterest: record.actualRepaymentInterest || 0,
+    actualRepaymentPenalty: record.actualRepaymentPenalty || 0,
+    actualRepaymentFee: record.actualRepaymentFee || 0,
+
+    // 剩余信息
+    remainingPrincipal: record.remainingPrincipal || 0,
+    remainingInterest: record.remainingInterest || 0,
+    remainingPenalty: record.remainingPenalty || 0,
+    remainingTotal: record.remainingTotal || 0,
+
+    // 风险标识
+    isWriteOff: record.isWriteOff || false,
+    isClaimed: record.isClaimed || false
+  }
+  
+  loanDetailVisible.value = true
+  sendDebugInfo('loan-detail', '打开完整用信详情', {
+    loanId: record.loanNo,
+    productName: record.productName
+  })
+}
+
+// 查看还款计划
+const handleViewRepaymentPlan = (loanData) => {
+  console.log('查看还款计划:', loanData.loanNo)
+  Message.info('还款计划功能开发中...')
+}
+
+// 查看还款历史
+const handleViewRepaymentHistory = (loanData) => {
+  console.log('查看还款历史:', loanData.loanNo)
+  // 可以复用现有的还款记录功能
+  const record = {
+    loanNo: loanData.loanNo,
+    contractNumber: loanData.contractNo,
+    amount: loanData.interfaceAmount,
+    balance: loanData.remainingTotal,
+    installments: loanData.installments,
+    status: loanData.contractStatus
+  }
+  viewRepaymentRecords(record)
+}
+
+// 导出用信详情
+const handleExportLoanDetail = (loanData) => {
+  console.log('导出用信详情:', loanData.loanNo)
+  
+  // 构建导出数据
+  const exportData = [
+    ['字段名称', '字段值'],
+    ['数据日期', loanData.dataDate],
+    ['产品名称', loanData.productName],
+    ['借据号', loanData.contractNo],
+    ['放款时间', loanData.disbursementTime],
+    ['借据状态', loanData.contractStatus],
+    ['接口金额', loanData.interfaceAmount],
+    ['期数', loanData.installments],
+    ['逾期天数', loanData.overdueDays],
+    ['历史最大逾期天数', loanData.maxOverdueDays],
+    ['结清日期', loanData.settlementDate || '-'],
+    ['逾期日期', loanData.overdueDate || '-'],
+    ['当前期次', loanData.currentPeriod],
+    ['还款日', loanData.repaymentDate],
+    ['实际还款本金', loanData.actualRepaymentPrincipal],
+    ['实际还款利息', loanData.actualRepaymentInterest],
+    ['实际还款罚息', loanData.actualRepaymentPenalty],
+    ['实际还款费用', loanData.actualRepaymentFee],
+    ['剩余本金', loanData.remainingPrincipal],
+    ['剩余利息', loanData.remainingInterest],
+    ['剩余罚息', loanData.remainingPenalty],
+    ['剩余应还总额', loanData.remainingTotal],
+    ['借款利率', (loanData.loanRate * 100).toFixed(4) + '%'],
+    ['是否核销', loanData.isWriteOff ? '是' : '否'],
+    ['是否理赔', loanData.isClaimed ? '是' : '否'],
+    ['用信单号', loanData.loanNo],
+    ['用信日期', loanData.loanDate],
+    ['银行卡号', loanData.bankCard],
+    ['用信结果', loanData.loanResult],
+    ['拒绝原因', loanData.rejectReason || '-']
+  ]
+  
+  const csvContent = exportData.map(row => row.join(',')).join('\n')
+  
+  try {
+    copyToClipboard(csvContent)
+    Message.success('用信详情已复制到剪贴板，可粘贴到Excel中')
+  } catch (error) {
+    Message.error('导出失败')
   }
 }
 

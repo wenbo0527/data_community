@@ -4,56 +4,92 @@
   <div class="metrics-map">
     <div class="page-header">
       <h2>指标地图</h2>
-      <a-space>
-        <a-button type="primary" @click="showCreateModal = true">
-          <template #icon>
-            <icon-plus />
-          </template>
-          新建指标
-        </a-button>
-        <a-button @click="exportMetrics">
-          <template #icon>
-            <icon-download />
-          </template>
-          导出
-        </a-button>
-      </a-space>
+      <div class="metric-type-tabs">
+        <a-tabs v-model:active-key="activeMetricType" @change="handleMetricTypeChange">
+          <a-tab-pane key="business" title="业务核心指标" />
+          <a-tab-pane key="regulatory" title="监管指标" />
+        </a-tabs>
+      </div>
     </div>
 
-    <!-- 搜索和筛选 -->
+    <!-- 搜索筛选区域 -->
     <div class="search-section">
       <a-row :gutter="16">
-        <a-col :span="8">
-          <a-input-search
+        <a-col :span="6">
+          <a-input
             v-model="searchKeyword"
-            placeholder="搜索指标名称、描述"
-            @search="handleSearch"
-          />
+            placeholder="搜索指标名称"
+            allow-clear
+            @press-enter="handleSearch"
+          >
+            <template #prefix>
+              <icon-search />
+            </template>
+          </a-input>
         </a-col>
-        <a-col :span="4">
+        <a-col :span="4" v-if="activeMetricType === 'business'">
           <a-select
             v-model="selectedCategory"
             placeholder="选择分类"
             allow-clear
             @change="handleSearch"
           >
-            <a-option value="business">业务指标</a-option>
-            <a-option value="technical">技术指标</a-option>
-            <a-option value="quality">质量指标</a-option>
+            <a-option value="">全部分类</a-option>
+            <a-option value="用户指标">用户指标</a-option>
+            <a-option value="业务域">业务域</a-option>
+            <a-option value="交易指标">交易指标</a-option>
           </a-select>
         </a-col>
-        <a-col :span="4">
+        <a-col :span="4" v-if="activeMetricType === 'business'">
           <a-select
             v-model="selectedDomain"
-            placeholder="业务域"
+            placeholder="选择业务域"
             allow-clear
             @change="handleSearch"
           >
-            <a-option value="user">用户域</a-option>
-            <a-option value="transaction">交易域</a-option>
-            <a-option value="product">产品域</a-option>
+            <a-option value="">全部业务域</a-option>
+            <a-option value="获客域">获客域</a-option>
+            <a-option value="转化域">转化域</a-option>
+            <a-option value="留存域">留存域</a-option>
+            <a-option value="变现域">变现域</a-option>
           </a-select>
         </a-col>
+        <a-col :span="4" v-if="activeMetricType === 'regulatory'">
+          <a-select
+            v-model="selectedRegulatoryCategory"
+            placeholder="选择监管大类"
+            allow-clear
+            @change="handleSearch"
+          >
+            <a-option value="">全部监管大类</a-option>
+            <a-option value="资本监管">资本监管</a-option>
+            <a-option value="流动性监管">流动性监管</a-option>
+            <a-option value="信贷风险监管">信贷风险监管</a-option>
+          </a-select>
+        </a-col>
+        <a-col :span="4" v-if="activeMetricType === 'regulatory'">
+          <a-select
+            v-model="selectedReportName"
+            placeholder="选择报表名称"
+            allow-clear
+            @change="handleSearch"
+          >
+            <a-option value="">全部报表</a-option>
+            <a-option value="银行业监管统计报表">银行业监管统计报表</a-option>
+            <a-option value="人民银行大集中系统报表">人民银行大集中系统报表</a-option>
+            <a-option value="银行业风险监管报表">银行业风险监管报表</a-option>
+            <a-option value="资本充足率报告">资本充足率报告</a-option>
+            <a-option value="流动性风险监管报告">流动性风险监管报告</a-option>
+            <a-option value="信贷资产质量报告">信贷资产质量报告</a-option>
+          </a-select>
+        </a-col>
+        <a-col :span="3">
+          <a-button type="primary" @click="handleSearch">
+            <template #icon><icon-search /></template>
+            搜索
+          </a-button>
+        </a-col>
+
       </a-row>
     </div>
 
@@ -74,175 +110,37 @@
       <a-col :span="18">
         <a-card :bordered="false">
 
-        <!-- 指标列表 -->
-        <a-table :data="tableData" :pagination="pagination" :bordered="false" class="table-borderless table-compact" @page-change="onPageChange" @after-render="handleTableRender">
+        <a-table
+          :data="tableData"
+          :pagination="pagination"
+          @page-change="onPageChange"
+          @table-render="handleTableRender"
+          :scroll="{ x: 1200 }"
+        >
           <template #columns>
-            <a-table-column title="指标名称" dataIndex="name">
-              <template #cell="{ record }: { record: any }">
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <a-link @click="showDetail(record)">{{ record.name }}</a-link>
-                  <a-button
-                    type="text"
-                    size="mini"
-                    @click.stop="toggleFavorite(record)"
-                  >
-                    <template #icon>
-                      <icon-star-fill v-if="record.isFavorite" style="color: #f7ba1e" />
-                      <icon-star v-else />
-                    </template>
-                  </a-button>
-                </div>
+            <a-table-column title="指标名称" data-index="name" :width="200">
+              <template #cell="{ record }">
+                <span class="metric-name" @click="showDetail(record)">{{ record.name }}</span>
               </template>
             </a-table-column>
-            <a-table-column title="指标分类" dataIndex="category" />
-            <a-table-column title="业务域" dataIndex="businessDomain" />
-            <a-table-column title="业务口径" dataIndex="businessDefinition" />
-            <a-table-column title="指标负责人" dataIndex="owner" />
+            <a-table-column v-for="column in dynamicColumns" :key="column.dataIndex" 
+              :title="column.title" :data-index="column.dataIndex" :width="column.width">
+              <template #cell="{ record }" v-if="column.dataIndex === 'businessDefinition'">
+                <a-tooltip :content="record.businessDefinition">
+                  <div style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ record.businessDefinition }}
+                  </div>
+                </a-tooltip>
+              </template>
+            </a-table-column>
+
           </template>
         </a-table>
         </a-card>
       </a-col>
     </a-row>
 
-    <!-- 指标详情抽屉 -->
-    <a-drawer
-      v-model:visible="drawerVisible"
-      :width="800"
-      title="指标详情"
-      @cancel="closeDrawer"
-      placement="right"
-      :mask="false"
-      :wrap-style="{ top: '64px', height: 'calc(100% - 64px)' }"
-    >
-      <template v-if="currentMetric">
-        <a-space direction="vertical" size="small" fill style="padding: 12px 16px">
-          <!-- 分类导航 -->
-          <a-tabs type="rounded" :default-active-key="0" @change="handleTabChange">
-            <a-tab-pane key="0" title="基础信息"></a-tab-pane>
-            <a-tab-pane key="1" title="业务口径"></a-tab-pane>
-            <a-tab-pane key="2" title="技术逻辑"></a-tab-pane>
-            <a-tab-pane key="3" title="报表位置"></a-tab-pane>
-            <a-tab-pane key="4" title="结果表信息"></a-tab-pane>
-            <a-tab-pane key="5" title="查询代码"></a-tab-pane>
-            <a-tab-pane key="6" title="历史版本"></a-tab-pane>
-          </a-tabs>
-          
-          <a-row :gutter="24">
-            <a-col :span="24">
-              <!-- 基础信息 -->
-              <a-card class="detail-card">
-                <template #title>
-                  <span class="card-title" @click="scrollToCard('basic-info')">基础信息</span>
-                </template>
-                <a-descriptions :column="2" :label-style="{ 'font-weight': 600 }">
-                  <a-descriptions-item label="指标名称">
-                    <span class="highlight-text">{{ currentMetric.name }}</span>
-                  </a-descriptions-item>
-                  <a-descriptions-item label="指标编号">{{ currentMetric.code }}</a-descriptions-item>
-                  <a-descriptions-item label="分类/业务域">
-                    <a-tag>{{ currentMetric.category }}</a-tag>
-                    <a-tag color="purple" style="margin-left: 8px">{{ currentMetric.businessDomain }}</a-tag>
-                  </a-descriptions-item>
-                  <a-descriptions-item label="负责人">
-                    <span class="highlight-text">{{ currentMetric.owner }}</span>
-                  </a-descriptions-item>
-                </a-descriptions>
-              </a-card>
-            </a-col>
-          </a-row>
 
-          <!-- 业务口径 -->
-          <a-card class="detail-card">
-            <template #title>
-              <span class="card-title" @click="scrollToCard('business-definition')">业务口径</span>
-            </template>
-            <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="业务定义">
-                <div class="description-content">{{ currentMetric.businessDefinition }}</div>
-              </a-descriptions-item>
-              <a-descriptions-item label="使用场景">
-                <div class="description-content">{{ currentMetric.useCase }}</div>
-              </a-descriptions-item>
-              <a-descriptions-item label="统计周期">
-                <a-tag color="blue">{{ currentMetric.statisticalPeriod }}</a-tag>
-              </a-descriptions-item>
-            </a-descriptions>
-          </a-card>
-
-          <!-- 技术逻辑 -->
-          <a-card class="detail-card">
-            <template #title>
-              <span class="card-title" @click="scrollToCard('technical-logic')">技术逻辑</span>
-            </template>
-            <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="数据来源表">
-                <div class="code-block">{{ currentMetric.sourceTable }}</div>
-              </a-descriptions-item>
-              <a-descriptions-item label="加工逻辑">
-                <a-typography-paragraph code class="code-block">
-                  {{ currentMetric.processingLogic }}
-                </a-typography-paragraph>
-              </a-descriptions-item>
-              <a-descriptions-item label="关联字段说明">
-                <div class="description-content">{{ currentMetric.fieldDescription }}</div>
-              </a-descriptions-item>
-            </a-descriptions>
-          </a-card>
-
-          <!-- 报表位置 -->
-          <a-card class="detail-card">
-            <template #title>
-              <span class="card-title" @click="scrollToCard('report-position')">报表位置</span>
-            </template>
-            <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="报表信息">
-                <div class="description-content">{{ currentMetric.reportInfo }}</div>
-              </a-descriptions-item>
-            </a-descriptions>
-          </a-card>
-
-          <!-- 结果表信息 -->
-          <a-card class="detail-card">
-            <template #title>
-              <span class="card-title" @click="scrollToCard('result-table')">结果表信息</span>
-            </template>
-            <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="存储位置">
-                <div class="code-block">{{ currentMetric.storageLocation }}</div>
-              </a-descriptions-item>
-            </a-descriptions>
-          </a-card>
-
-          <!-- 查询代码 -->
-          <a-card class="detail-card">
-            <template #title>
-              <span class="card-title" @click="scrollToCard('query-code')">查询代码</span>
-            </template>
-            <a-typography-paragraph code class="code-block query-code">
-              {{ currentMetric.queryCode }}
-            </a-typography-paragraph>
-          </a-card>
-
-          <!-- 历史版本 -->
-          <a-card class="detail-card">
-            <template #title>
-              <span class="card-title" @click="scrollToCard('history-version')">历史版本</span>
-            </template>
-            <a-timeline class="version-timeline">
-              <a-timeline-item
-                v-for="(version, index) in currentMetric.versions"
-                :key="index"
-              >
-                <div class="version-item">
-                  <span class="version-date">{{ version.date }}</span>
-                  <span class="version-description">{{ version.description }}</span>
-                </div>
-              </a-timeline-item>
-            </a-timeline>
-          </a-card>
-        </a-space>
-      </template>
-    </a-drawer>
   </div>
 </template>
 
@@ -253,11 +151,13 @@ import * as XLSX from 'xlsx'
 import type { TreeNodeData } from '@arco-design/web-vue'
 import type { RequestOption, UploadRequest, FileItem } from '@arco-design/web-vue/es/upload/interfaces'
 import metricsMock from '@/mock/metrics'
-import { IconUpload, IconStarFill, IconStar, IconDownload, IconPlus } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconDownload, IconPlus } from '@arco-design/web-vue/es/icon'
 import IncrementalImportModal from '@/components/modals/IncrementalImportModal.vue'
 import BatchImportModal from '@/components/modals/BatchImportModal.vue'
 import BusinessProcessFlow from '@/components/BusinessProcessFlow.vue'
 import type { MetricItem } from '@/types/metrics'
+import { MetricType } from '@/types/metrics'
+import { useRouter } from 'vue-router'
 
 interface ApiResponse<T> {
   data: {
@@ -270,21 +170,54 @@ interface SearchForm {
   name: string
   category: string
   businessDomain: string
-  onlyFavorite: boolean
-  isFavorite?: boolean
+  regulatoryCategory: string
+  reportName: string
+  type: string
 }
 
 const searchForm = ref<SearchForm>({
   name: '',
   category: '',
   businessDomain: '',
-  onlyFavorite: false
+  regulatoryCategory: '',
+  reportName: '',
+  type: 'business'
 })
 
+// 计算属性已简化，移除了重复的监管分类筛选条件
+
+// 计算属性 - 动态表格列
+const dynamicColumns = computed(() => {
+  if (activeMetricType.value === 'business') {
+    return [
+      { title: '指标分类', dataIndex: 'category', width: 120 },
+      { title: '业务域', dataIndex: 'businessDomain', width: 120 },
+      { title: '业务定义', dataIndex: 'businessDefinition', width: 300 },
+      { title: '数据源', dataIndex: 'dataSource', width: 120 },
+      { title: '更新频率', dataIndex: 'updateFrequency', width: 100 },
+      { title: '负责人', dataIndex: 'owner', width: 100 }
+    ]
+  } else {
+    return [
+      { title: '监管大类', dataIndex: 'regulatoryCategory', width: 120 },
+      { title: '报表名称', dataIndex: 'reportName', width: 150 },
+      { title: '业务定义', dataIndex: 'businessDefinition', width: 300 },
+      { title: '数据源', dataIndex: 'dataSource', width: 120 },
+      { title: '负责人', dataIndex: 'owner', width: 100 }
+    ]
+  }
+})
+
+// 路由
+const router = useRouter()
+
 // 添加缺失的响应式变量
+const activeMetricType = ref('business')
 const searchKeyword = ref('')
 const selectedCategory = ref('')
 const selectedDomain = ref('')
+const selectedRegulatoryCategory = ref('')
+const selectedReportName = ref('')
 const selectedKeys = ref<(string | number)[]>([])
 const showCreateModal = ref(false)
 
@@ -295,8 +228,6 @@ const pagination = ref({
 })
 
 const tableData = ref<MetricItem[]>([])
-const drawerVisible = ref(false)
-const currentMetric = ref<MetricItem | null>(null)
 const incrementalModalVisible = ref(false)
 const batchModalVisible = ref(false)
 const incrementalFileCount = ref(0)
@@ -310,41 +241,90 @@ const showBatchModal = () => {
   batchModalVisible.value = true
 }
 
-// 树形数据结构
-const treeData = ref([
-  {
-    title: '用户指标',
-    key: '用户指标',
-    children: [
+// 计算属性 - 动态树形数据结构
+const treeData = computed(() => {
+  if (activeMetricType.value === 'business') {
+    return [
       {
-        title: '获客域',
-        key: '用户指标-获客域'
+        title: '用户指标',
+        key: '用户指标',
+        children: [
+          {
+            title: '获客域',
+            key: '用户指标-获客域'
+          },
+          {
+            title: '转化域',
+            key: '用户指标-转化域'
+          },
+          {
+            title: '留存域',
+            key: '用户指标-留存域'
+          }
+        ]
       },
       {
-        title: '转化域',
-        key: '用户指标-转化域'
-      },
-      {
-        title: '留存域',
-        key: '用户指标-留存域'
+        title: '交易指标',
+        key: '交易指标',
+        children: [
+          {
+            title: '变现域',
+            key: '交易指标-变现域'
+          }
+        ]
       }
     ]
-  },
-  {
-    title: '交易指标',
-    key: '交易指标',
-    children: [
+  } else {
+    return [
       {
-        title: '变现域',
-        key: '交易指标-变现域'
+        title: '资本监管',
+        key: '资本监管',
+        children: [
+          {
+            title: '资本充足率报告',
+            key: '资本监管-资本充足率报告'
+          },
+          {
+            title: '杠杆率监管报告',
+            key: '资本监管-杠杆率监管报告'
+          }
+        ]
+      },
+      {
+        title: '流动性监管',
+        key: '流动性监管',
+        children: [
+          {
+            title: '流动性风险监管报告',
+            key: '流动性监管-流动性风险监管报告'
+          },
+          {
+            title: '净稳定资金比例报告',
+            key: '流动性监管-净稳定资金比例报告'
+          }
+        ]
+      },
+      {
+        title: '信贷风险监管',
+        key: '信贷风险监管',
+        children: [
+          {
+            title: '信贷资产质量报告',
+            key: '信贷风险监管-信贷资产质量报告'
+          },
+          {
+            title: '大额风险暴露报告',
+            key: '信贷风险监管-大额风险暴露报告'
+          }
+        ]
       }
     ]
   }
-])
+})
 
 // 处理树节点选择
 const handleTabChange = (key: string | number) => {
-  console.log('切换标签页:', key)
+  // 标签页切换处理逻辑
 }
 
 const onTreeSelect = (selectedKeys: (string | number)[], data: { selected?: boolean, selectedNodes: TreeNodeData[], node?: TreeNodeData, e?: Event }) => {
@@ -353,21 +333,61 @@ const onTreeSelect = (selectedKeys: (string | number)[], data: { selected?: bool
 
 const handleTreeSelect = (selectedKeys: (string | number)[], data: { selected?: boolean, selectedNodes: TreeNodeData[], node?: TreeNodeData, e?: Event }) => {
   if (selectedKeys.length === 0) {
+    // 清空所有筛选条件
     searchForm.value.category = ''
     searchForm.value.businessDomain = ''
+    searchForm.value.regulatoryCategory = ''
+    searchForm.value.reportName = ''
+    selectedCategory.value = ''
+    selectedDomain.value = ''
+    selectedRegulatoryCategory.value = ''
+    selectedReportName.value = ''
     handleSearch()
     return
   }
   
   const selectedKey = String(selectedKeys[0])
-  if (selectedKey.includes('-')) {
-    const [category, domain] = selectedKey.split('-')
-    searchForm.value.category = category
-    searchForm.value.businessDomain = domain
+  
+  if (activeMetricType.value === 'business') {
+    // 业务核心指标处理逻辑
+    if (selectedKey.includes('-')) {
+      const [category, domain] = selectedKey.split('-')
+      searchForm.value.category = category
+      searchForm.value.businessDomain = domain
+      selectedCategory.value = category
+      selectedDomain.value = domain
+    } else {
+      searchForm.value.category = selectedKey
+      searchForm.value.businessDomain = ''
+      selectedCategory.value = selectedKey
+      selectedDomain.value = ''
+    }
+    // 清空监管指标相关筛选
+    searchForm.value.regulatoryCategory = ''
+    searchForm.value.reportName = ''
+    selectedRegulatoryCategory.value = ''
+    selectedReportName.value = ''
   } else {
-    searchForm.value.category = selectedKey
+    // 监管指标处理逻辑 - 只使用监管大类，不使用重复的监管分类
+    if (selectedKey.includes('-')) {
+      const [regulatoryCategory, reportName] = selectedKey.split('-')
+      searchForm.value.regulatoryCategory = regulatoryCategory
+      searchForm.value.reportName = reportName
+      selectedRegulatoryCategory.value = regulatoryCategory
+      selectedReportName.value = reportName
+    } else {
+      searchForm.value.regulatoryCategory = selectedKey
+      searchForm.value.reportName = ''
+      selectedRegulatoryCategory.value = selectedKey
+      selectedReportName.value = ''
+    }
+    // 清空业务指标相关筛选
+    searchForm.value.category = ''
     searchForm.value.businessDomain = ''
+    selectedCategory.value = ''
+    selectedDomain.value = ''
   }
+  
   handleSearch()
 }
 
@@ -383,7 +403,6 @@ const downloadTemplate = (type: string) => {
 const handleFileChange = (type: string, event: any) => {
   const file = event.file
   if (file) {
-    console.log(`[${type}上传] 选择的文件:`, file.name, '大小:', file.size, '类型:', file.type)
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
@@ -391,7 +410,6 @@ const handleFileChange = (type: string, event: any) => {
         const workbook = XLSX.read(data, { type: 'array' })
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
         const jsonData = XLSX.utils.sheet_to_json(firstSheet)
-        console.log(`[${type}上传] 解析成功，共${jsonData.length}条记录`, jsonData.slice(0, 3))
         
         if (type === 'incremental') {
           incrementalFileCount.value = jsonData.length
@@ -408,16 +426,12 @@ const handleFileChange = (type: string, event: any) => {
 
 // 确认增量上传
 const confirmIncrementalUpload = () => {
-  console.log('确认增量上传', incrementalFileCount.value, '条记录')
-  console.log('触发增量上传API请求')
   incrementalFileCount.value = 0
   incrementalModalVisible.value = false
 }
 
 // 确认批量上传
 const confirmBatchUpload = () => {
-  console.log('确认批量上传', batchFileCount.value, '条记录')
-  console.log('触发批量上传API请求')
   batchFileCount.value = 0
   batchModalVisible.value = false
 }
@@ -426,7 +440,6 @@ const confirmBatchUpload = () => {
 const handleBatchUpload = async (option: { fileItem: FileItem }): Promise<UploadRequest> => {
   const formData = new FormData()
   formData.append('file', option.fileItem.file as Blob)
-  console.log('开始批量上传文件:', option.fileItem.name)
   
   try {
     const res = await axios.post<{success: boolean, count: number}>('/api/metrics/batch-import', formData, {
@@ -434,7 +447,6 @@ const handleBatchUpload = async (option: { fileItem: FileItem }): Promise<Upload
         'Content-Type': 'multipart/form-data'
       }
     })
-    console.log('批量上传响应:', res.data)
     
     if (res.data.success) {
       batchFileCount.value = res.data.count
@@ -453,7 +465,6 @@ const handleBatchUpload = async (option: { fileItem: FileItem }): Promise<Upload
 const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<UploadRequest> => {
   const formData = new FormData()
   formData.append('file', option.fileItem.file as Blob)
-  console.log('开始增量上传文件:', option.fileItem.name)
   
   try {
     const res = await axios.post<{success: boolean, count: number}>('/api/metrics/incremental-import', formData, {
@@ -461,7 +472,6 @@ const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<
         'Content-Type': 'multipart/form-data'
       }
     })
-    console.log('增量上传响应:', res.data)
     
     if (res.data.success) {
       incrementalFileCount.value = res.data.count
@@ -479,25 +489,18 @@ const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<
 // 获取指标列表
 const fetchMetrics = async () => {
   try {
-    console.log('请求参数:', {
-      page: pagination.value.current,
-      pageSize: pagination.value.pageSize,
-      ...searchForm.value
-    })
     // 直接使用 mock 数据
-    let queryParams = { ...searchForm.value, page: pagination.value.current + '', pageSize: pagination.value.pageSize + '' }
-    if (searchForm.value.onlyFavorite) {
-      queryParams.isFavorite = true
+    let queryParams = { 
+      ...searchForm.value, 
+      page: pagination.value.current + '', 
+      pageSize: pagination.value.pageSize + '',
+      type: activeMetricType.value
     }
     const mockList = metricsMock[0].response({ query: queryParams })
-    console.log('Mock数据:', mockList)
     if (mockList && mockList.data) {
       tableData.value = mockList.data.list || []
       pagination.value.total = mockList.data.total || 0
-      console.log('更新后的表格数据:', tableData.value)
-      console.log('更新后的分页信息:', pagination.value)
     } else {
-      console.warn('Mock数据格式异常:', mockList)
       tableData.value = []
       pagination.value.total = 0
     }
@@ -508,22 +511,50 @@ const fetchMetrics = async () => {
   }
 }
 
+// 指标类型切换处理
+const handleMetricTypeChange = (type: string) => {
+  activeMetricType.value = type
+  searchForm.value.type = type
+  
+  // 清空筛选条件
+  searchKeyword.value = ''
+  if (type === 'business') {
+    // 业务指标：清空业务相关筛选，保留监管筛选为空
+    selectedCategory.value = ''
+    selectedDomain.value = ''
+    selectedRegulatoryCategory.value = ''
+    selectedReportName.value = ''
+  } else {
+    // 监管指标：清空监管相关筛选，保留业务筛选为空
+    selectedRegulatoryCategory.value = ''
+    selectedReportName.value = ''
+    selectedCategory.value = ''
+    selectedDomain.value = ''
+  }
+  
+  // 重置分页
+  pagination.value.current = 1
+  
+  // 重新获取数据
+  fetchMetrics()
+}
+
 // 搜索处理
 const handleSearch = () => {
   // 同步搜索表单数据
   searchForm.value.name = searchKeyword.value
-  searchForm.value.category = selectedCategory.value
+  // 只有业务指标才使用category筛选
+  searchForm.value.category = activeMetricType.value === 'business' ? selectedCategory.value : ''
   searchForm.value.businessDomain = selectedDomain.value
+  searchForm.value.regulatoryCategory = selectedRegulatoryCategory.value
+  searchForm.value.reportName = selectedReportName.value
+  searchForm.value.type = activeMetricType.value
   
   pagination.value.current = 1
   fetchMetrics()
 }
 
-// 导出指标
-const exportMetrics = () => {
-  console.log('导出指标数据')
-  // 这里可以添加导出逻辑
-}
+
 
 // 分页处理
 const onPageChange = (current: number) => {
@@ -531,48 +562,27 @@ const onPageChange = (current: number) => {
   fetchMetrics()
 }
 
-// 显示详情
+// 显示详情 - 跳转到详情页面
 const showDetail = (record: any) => {
-  currentMetric.value = record
-  drawerVisible.value = true
+  router.push({
+    name: 'MetricsMapDetail',
+    params: { id: record.id },
+    query: { type: activeMetricType.value }
+  })
 }
 
-// 关闭详情抽屉
-const scrollToCard = (id: string) => {
-  const el = document.getElementById(id)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-}
 
-const closeDrawer = () => {
-  drawerVisible.value = false
-  currentMetric.value = null
-}
 
-// 收藏切换
-const toggleFavorite = (record: any) => {
-  record.isFavorite = !record.isFavorite
-}
 
-const toggleFavoriteFilter = () => {
-  searchForm.value.onlyFavorite = !searchForm.value.onlyFavorite
-  handleSearch()
-}
 
 // 表格渲染完成处理
 const handleTableRender = () => {
-  console.log('表格渲染完成，当前容器宽度:', document.querySelector('.metrics-map')?.clientWidth)
-  console.log('表格列宽计算:', document.querySelectorAll('.arco-table-col').forEach((col: any) => {
-    console.log(col.dataset.columnKey, '宽度:', col.clientWidth)
-  }))
+  // 表格渲染完成后的处理逻辑
 }
 
 onMounted(() => {
-    console.log('组件挂载，开始获取数据')
-    console.log('初始容器宽度:', document.querySelector('.metrics-map')?.clientWidth)
-    fetchMetrics()
-  })
+  fetchMetrics();
+})
 </script>
 
 <style scoped>
@@ -631,76 +641,13 @@ onMounted(() => {
   background-color: #f5f5f5;
 }
 
-.metric-detail-drawer {
-  .drawer-content {
-    padding: 0;
-  }
-  
-  .detail-section {
-    margin-bottom: 24px;
-  }
-  
-  .section-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #1d2129;
+.metric-type-tabs {
+  .arco-tabs {
+    .arco-tabs-nav {
+      margin-bottom: 0;
+    }
   }
 }
 
-.detail-card {
-  border-radius: 4px;
-  margin-bottom: 8px;
-  max-width: 100%;
-  overflow: hidden;
-  width: 100%;
-}
 
-.card-title {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.highlight-text {
-  color: #165DFF;
-  font-weight: 600;
-}
-
-.description-content {
-  white-space: pre-wrap;
-  line-height: 1.3;
-  font-size: 13px;
-}
-
-.code-block {
-  background-color: #f5f5f5;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-family: monospace;
-  white-space: pre-wrap;
-  font-size: 13px;
-}
-
-.query-code {
-  margin: 0;
-}
-
-.version-timeline {
-  padding: 8px 0;
-}
-
-.version-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.version-date {
-  color: #86909c;
-  font-size: 12px;
-}
-
-.version-description {
-  color: #1d2129;
-}
 </style>

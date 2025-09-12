@@ -138,7 +138,7 @@
       <!-- 逾期信息 -->
       <div class="detail-section">
         <h3 class="section-title">
-          <AlertTriangle class="section-icon" />
+          <TriangleAlert class="section-icon" />
           逾期信息
         </h3>
         <div class="info-grid">
@@ -186,7 +186,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { FileText, CreditCard, DollarSign, AlertTriangle, AlertCircle, Settings, Copy, Eye } from 'lucide-vue-next'
+import { FileText, CreditCard, DollarSign, TriangleAlert, AlertCircle, Settings, Copy, Eye } from 'lucide-vue-next'
 import { Message } from '@arco-design/web-vue'
 
 interface LoanData {

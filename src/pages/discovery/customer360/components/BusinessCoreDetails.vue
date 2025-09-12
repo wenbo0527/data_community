@@ -25,27 +25,20 @@
         </div>
         
         <div class="table-container">
-          <div class="table-toolbar">
-            <a-input-search 
-              v-model="creditSearchText"
-              placeholder="搜索授信产品..."
-              style="width: 200px;"
-              @search="handleCreditSearch"
-            />
-            <a-button size="small" @click="copyCreditData">
-              <template #icon><icon-copy /></template>
-              复制
-            </a-button>
-          </div>
-          
           <a-table 
             :columns="creditColumns"
-            :data="filteredCreditsList"
+            :data="creditsList"
             :pagination="creditPagination"
             :loading="loading"
             size="small"
             @page-change="handleCreditPageChange"
           >
+            <template #extra>
+              <a-button size="small" @click="copyCreditData">
+                <template #icon><icon-copy /></template>
+                复制
+              </a-button>
+            </template>
             <template #status="{ record }">
               <a-tag :color="getCreditStatusColor(record.status)">
                 {{ record.status }}
@@ -75,68 +68,13 @@
       
       <!-- 用信列表 -->
       <div class="detail-section">
-        <div class="section-header">
-          <IconWechatpay class="section-icon" />
-          <span class="section-title">用信列表</span>
-          <a-badge :count="loansList.length" class="section-badge" />
-        </div>
-        
-        <div class="table-container">
-          <div class="table-toolbar">
-            <a-input-search 
-              v-model="loanSearchText"
-              placeholder="搜索用信记录..."
-              style="width: 200px;"
-              @search="handleLoanSearch"
-            />
-            <a-select 
-              v-model="loanStatusFilter"
-              placeholder="筛选状态"
-              style="width: 120px;"
-              allow-clear
-              @change="handleLoanFilter"
-            >
-              <a-option value="正常">正常</a-option>
-              <a-option value="逾期">逾期</a-option>
-              <a-option value="已结清">已结清</a-option>
-            </a-select>
-          </div>
-          
-          <a-table 
-            :columns="loanColumns"
-            :data="filteredLoansList"
-            :pagination="loanPagination"
-            :loading="loading"
-            size="small"
-            @page-change="handleLoanPageChange"
-          >
-            <template #status="{ record }">
-              <a-tag :color="getLoanStatusColor(record.status)">
-                {{ record.status }}
-              </a-tag>
-            </template>
-            
-            <template #loanAmount="{ record }">
-              <span class="amount-text">{{ formatAmount(record.loanAmount) }}</span>
-            </template>
-            
-            <template #remainingAmount="{ record }">
-              <span class="amount-text">{{ formatAmount(record.remainingAmount) }}</span>
-            </template>
-            
-            <template #actions="{ record }">
-              <a-button size="mini" type="text" @click="viewLoanDetail(record)">
-                查看详情
-              </a-button>
-              <a-button size="mini" type="text" @click="viewDisbursementDetails(record)">
-                放款详情
-              </a-button>
-              <a-button size="mini" type="text" @click="viewRepaymentDetails(record)">
-                还款详情
-              </a-button>
-            </template>
-          </a-table>
-        </div>
+        <LoanRecordTable 
+          :data="loansList"
+          :loading="loading"
+          @view-loan-detail="viewLoanDetail"
+          @view-disbursement-details="handleViewDisbursementDetails"
+          @view-repayment-details="handleViewRepaymentDetails"
+        />
       </div>
       
       <!-- 调额记录 -->
@@ -148,27 +86,9 @@
         </div>
         
         <div class="table-container">
-          <div class="table-toolbar">
-            <a-range-picker 
-              v-model="adjustmentDateRange"
-              style="width: 240px;"
-              @change="handleAdjustmentDateFilter"
-            />
-            <a-select 
-              v-model="adjustmentTypeFilter"
-              placeholder="筛选类型"
-              style="width: 120px;"
-              allow-clear
-              @change="handleAdjustmentFilter"
-            >
-              <a-option value="提额">提额</a-option>
-              <a-option value="降额">降额</a-option>
-            </a-select>
-          </div>
-          
           <a-table 
             :columns="adjustmentColumns"
-            :data="filteredAdjustmentsList"
+            :data="adjustmentsList"
             :pagination="adjustmentPagination"
             :loading="loading"
             size="small"
@@ -212,29 +132,9 @@
         </div>
         
         <div class="table-container">
-          <div class="table-toolbar">
-            <a-input-search 
-              v-model="paymentSearchText"
-              placeholder="搜索支付记录..."
-              style="width: 200px;"
-              @search="handlePaymentSearch"
-            />
-            <a-select 
-              v-model="paymentStatusFilter"
-              placeholder="筛选状态"
-              style="width: 120px;"
-              allow-clear
-              @change="handlePaymentFilter"
-            >
-              <a-option value="成功">成功</a-option>
-              <a-option value="失败">失败</a-option>
-              <a-option value="处理中">处理中</a-option>
-            </a-select>
-          </div>
-          
           <a-table 
             :columns="paymentColumns"
-            :data="filteredPaymentsList"
+            :data="paymentsList"
             :pagination="paymentPagination"
             :loading="loading"
             size="small"
@@ -284,11 +184,23 @@
       v-model:visible="repaymentVisible"
       :loanRecord="currentLoanData"
     />
+
+    <!-- 还款明细抽屉 -->
+    <RepaymentDetailDrawer
+      v-model:visible="repaymentDetailVisible"
+      :loan-data="currentLoanData"
+    />
+
+    <!-- 放款明细抽屉 -->
+    <DisbursementDetailDrawer
+      v-model:visible="disbursementDetailVisible"
+      :loan-data="currentLoanData"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, h } from 'vue'
 import { 
   IconIdcard, 
   IconUser, 
@@ -301,8 +213,11 @@ import {
 import { Message } from '@arco-design/web-vue'
 import CreditDetailDrawer from './CreditDetailDrawer.vue'
 import LoanDetailDrawer from './LoanDetailDrawer.vue'
+import LoanRecordTable from '@/views/customer360/components/LoanRecordTable.vue'
 import DisbursementDrawer from '@/views/customer360/components/DisbursementDrawer.vue'
 import RepaymentDrawer from '@/views/customer360/components/RepaymentDrawer.vue'
+import RepaymentDetailDrawer from '@/views/customer360/components/RepaymentDetailDrawer.vue'
+import DisbursementDetailDrawer from '@/views/customer360/components/DisbursementDetailDrawer.vue'
 
 interface Props {
   productKey: string
@@ -322,18 +237,24 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-// 搜索和筛选状态
-const creditSearchText = ref('')
-const loanSearchText = ref('')
-const paymentSearchText = ref('')
-const loanStatusFilter = ref('')
-const adjustmentTypeFilter = ref('')
-const adjustmentDateRange = ref([])
-const paymentStatusFilter = ref('')
+// 调试props数据传递
+console.log('🔍 [Props调试] userInfo:', props.userInfo)
+console.log('🔍 [Props调试] productKey:', props.productKey)
+console.log('🔍 [Props调试] quotaAdjustHistory:', props.userInfo?.quotaAdjustHistory)
+
+// 分页状态（保留分页功能）
 
 // 分页状态
-const creditPagination = ref({ current: 1, pageSize: 5, total: 0 })
-const loanPagination = ref({ current: 1, pageSize: 5, total: 0 })
+const creditPagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showTotal: true,
+  showPageSize: true
+})
+
+
+
 const adjustmentPagination = ref({ current: 1, pageSize: 5, total: 0 })
 const paymentPagination = ref({ current: 1, pageSize: 5, total: 0 })
 
@@ -343,14 +264,41 @@ const loanDetailVisible = ref(false)
 const disbursementVisible = ref(false)
 const repaymentVisible = ref(false)
 
+// 弹窗状态管理
+const repaymentDetailVisible = ref(false)
+const disbursementDetailVisible = ref(false)
+
 // 当前选中的数据
 const currentCreditData = ref(null)
 const currentLoanData = ref(null)
 
 // 表格列定义
 const creditColumns = [
-  { title: '授信单号', dataIndex: 'productName', width: 120 },
-  { title: '授信状态', dataIndex: 'status', slotName: 'status', width: 80 },
+  { 
+    title: '授信单号', 
+    dataIndex: 'productName', 
+    width: 120,
+    filterable: {
+      filter: (value: string, record: any) => record.productName?.toLowerCase().includes(value.toLowerCase()),
+      slotName: 'productName-filter',
+      icon: () => h('icon-search')
+    }
+  },
+  { 
+    title: '授信状态', 
+    dataIndex: 'status', 
+    slotName: 'status', 
+    width: 80,
+    filterable: {
+      filters: [
+        { text: '正常', value: '正常' },
+        { text: '冻结', value: '冻结' },
+        { text: '已结清', value: '已结清' }
+      ],
+      filter: (value: string[], record: any) => value.includes(record.status),
+      multiple: true
+    }
+  },
   { title: '授信额度', dataIndex: 'currentAmount', slotName: 'currentAmount', width: 100 },
   { title: '已用额度', dataIndex: 'usedAmount', slotName: 'usedAmount', width: 100 },
   { title: '可用额度', dataIndex: 'availableAmount', slotName: 'availableAmount', width: 100 },
@@ -358,18 +306,23 @@ const creditColumns = [
   { title: '操作', slotName: 'actions', width: 80 }
 ]
 
-const loanColumns = [
-  { title: '借款编号', dataIndex: 'loanId', width: 120 },
-  { title: '状态', dataIndex: 'status', slotName: 'status', width: 80 },
-  { title: '借款金额', dataIndex: 'loanAmount', slotName: 'loanAmount', width: 100 },
-  { title: '剩余金额', dataIndex: 'remainingAmount', slotName: 'remainingAmount', width: 100 },
-  { title: '借款时间', dataIndex: 'loanDate', width: 120 },
-  { title: '到期时间', dataIndex: 'dueDate', width: 120 },
-  { title: '操作', slotName: 'actions', width: 200 }
-]
+
 
 const adjustmentColumns = [
-  { title: '授信单号', dataIndex: 'type', slotName: 'type', width: 80 },
+  { 
+    title: '调整类型', 
+    dataIndex: 'type', 
+    slotName: 'type', 
+    width: 80,
+    filterable: {
+      filters: [
+        { text: '提额', value: '提额' },
+        { text: '降额', value: '降额' }
+      ],
+      filter: (value: string[], record: any) => value.includes(record.type),
+      multiple: true
+    }
+  },
   { title: '产品名称', dataIndex: 'productName', width: 120 },
   { title: '原额度', dataIndex: 'previousAmount', slotName: 'previousAmount', width: 100 },
   { title: '新额度', dataIndex: 'newAmount', slotName: 'newAmount', width: 100 },
@@ -379,10 +332,46 @@ const adjustmentColumns = [
 ]
 
 const paymentColumns = [
-  { title: '支付编号', dataIndex: 'paymentId', width: 120 },
-  { title: '状态', dataIndex: 'status', slotName: 'status', width: 80 },
+  { 
+    title: '支付编号', 
+    dataIndex: 'paymentId', 
+    width: 120,
+    filterable: {
+      filter: (value: string, record: any) => record.paymentId?.toLowerCase().includes(value.toLowerCase()),
+      slotName: 'paymentId-filter',
+      icon: () => h('icon-search')
+    }
+  },
+  { 
+    title: '状态', 
+    dataIndex: 'status', 
+    slotName: 'status', 
+    width: 80,
+    filterable: {
+      filters: [
+        { text: '成功', value: '成功' },
+        { text: '失败', value: '失败' },
+        { text: '处理中', value: '处理中' }
+      ],
+      filter: (value: string[], record: any) => value.includes(record.status),
+      multiple: true
+    }
+  },
   { title: '支付金额', dataIndex: 'amount', slotName: 'amount', width: 100 },
-  { title: '支付方式', dataIndex: 'paymentMethod', width: 100 },
+  { 
+    title: '支付方式', 
+    dataIndex: 'paymentMethod', 
+    width: 100,
+    filterable: {
+      filters: [
+        { text: '银行卡', value: '银行卡' },
+        { text: '支付宝', value: '支付宝' },
+        { text: '微信', value: '微信' }
+      ],
+      filter: (value: string[], record: any) => value.includes(record.paymentMethod),
+      multiple: true
+    }
+  },
   { title: '支付时间', dataIndex: 'paymentTime', width: 120 },
   { title: '操作', slotName: 'actions', width: 80 }
 ]
@@ -409,14 +398,31 @@ const loansList = computed(() => {
   return data.filter((item: any) => item.productKey === props.productKey)
 })
 const adjustmentsList = computed(() => {
-  const data = props.userInfo?.quotaAdjustmentHistory
-  if (!Array.isArray(data)) return []
+  const data = props.userInfo?.quotaAdjustHistory
+  console.log('🔍 [调额记录调试] 原始数据:', data)
+  console.log('🔍 [调额记录调试] 数据类型:', typeof data, '是否为数组:', Array.isArray(data))
+  
+  if (!Array.isArray(data)) {
+    console.log('❌ [调额记录调试] 数据不是数组，返回空数组')
+    return []
+  }
   
   // 如果没有productKey，返回所有数据
-  if (!props.productKey) return data
+  if (!props.productKey) {
+    console.log('🔍 [调额记录调试] 无productKey过滤，返回所有数据，数量:', data.length)
+    return data
+  }
   
   // 根据productKey过滤数据
-  return data.filter((item: any) => item.productKey === props.productKey)
+  const filtered = data.filter((item: any) => item.productKey === props.productKey)
+  console.log('🔍 [调额记录调试] productKey过滤:', props.productKey, '过滤后数量:', filtered.length)
+  console.log('🔍 [调额记录调试] 过滤后数据:', filtered)
+  return filtered
+})
+
+// 筛选后的调额记录列表
+const filteredAdjustmentsList = computed(() => {
+  return adjustmentsList.value
 })
 const paymentsList = computed(() => {
   const data = props.userInfo?.paymentProcessRecords
@@ -429,54 +435,20 @@ const paymentsList = computed(() => {
   return data.filter((item: any) => item.productKey === props.productKey)
 })
 
-// 计算属性 - 筛选后的数据
-const filteredCreditsList = computed(() => {
-  let filtered = creditsList.value
-  if (creditSearchText.value) {
-    filtered = filtered.filter((item: any) => 
-      item.productName?.toLowerCase().includes(creditSearchText.value.toLowerCase())
-    )
-  }
-  creditPagination.value.total = filtered.length
-  return filtered
-})
+// 更新分页总数
+watch(creditsList, (newVal) => {
+  creditPagination.total = newVal.length
+}, { immediate: true })
 
-const filteredLoansList = computed(() => {
-  let filtered = loansList.value
-  if (loanSearchText.value) {
-    filtered = filtered.filter((item: any) => 
-      item.loanId?.toLowerCase().includes(loanSearchText.value.toLowerCase())
-    )
-  }
-  if (loanStatusFilter.value) {
-    filtered = filtered.filter((item: any) => item.status === loanStatusFilter.value)
-  }
-  loanPagination.value.total = filtered.length
-  return filtered
-})
 
-const filteredAdjustmentsList = computed(() => {
-  let filtered = adjustmentsList.value
-  if (adjustmentTypeFilter.value) {
-    filtered = filtered.filter((item: any) => item.type === adjustmentTypeFilter.value)
-  }
-  adjustmentPagination.value.total = filtered.length
-  return filtered
-})
 
-const filteredPaymentsList = computed(() => {
-  let filtered = paymentsList.value
-  if (paymentSearchText.value) {
-    filtered = filtered.filter((item: any) => 
-      item.paymentId?.toLowerCase().includes(paymentSearchText.value.toLowerCase())
-    )
-  }
-  if (paymentStatusFilter.value) {
-    filtered = filtered.filter((item: any) => item.status === paymentStatusFilter.value)
-  }
-  paymentPagination.value.total = filtered.length
-  return filtered
-})
+watch(adjustmentsList, (newVal) => {
+  adjustmentPagination.value.total = newVal.length
+}, { immediate: true })
+
+watch(paymentsList, (newVal) => {
+  paymentPagination.value.total = newVal.length
+}, { immediate: true })
 
 // 方法
 const refreshData = () => {
@@ -491,8 +463,28 @@ const refreshData = () => {
 
 
 const copyCreditData = () => {
-  Message.success('授信数据已复制到剪贴板')
+  const headers = ['授信编号', '产品名称', '授信金额', '已用金额', '可用金额', '授信状态', '授信日期', '到期日期']
+  const rows = creditsList.value.map(item => [
+    item.creditNo,
+    item.productName,
+    formatAmount(item.creditAmount),
+    formatAmount(item.usedAmount),
+    formatAmount(item.availableAmount),
+    item.status,
+    item.creditDate,
+    item.expireDate
+  ])
+  
+  const csvContent = [headers, ...rows]
+    .map(row => row.join('\t'))
+    .join('\n')
+  
+  navigator.clipboard.writeText(csvContent).then(() => {
+    Message.success('授信数据已复制到剪贴板')
+  })
 }
+
+
 
 const formatAmount = (amount: number) => {
   if (amount === 0) return '¥0'
@@ -536,43 +528,14 @@ const getPaymentStatusColor = (status: string) => {
   return colorMap[status] || 'default'
 }
 
-// 搜索和筛选处理方法
-const handleCreditSearch = () => {
-  creditPagination.value.current = 1
-}
-
-const handleLoanSearch = () => {
-  loanPagination.value.current = 1
-}
-
-const handlePaymentSearch = () => {
-  paymentPagination.value.current = 1
-}
-
-const handleLoanFilter = () => {
-  loanPagination.value.current = 1
-}
-
-const handleAdjustmentFilter = () => {
-  adjustmentPagination.value.current = 1
-}
-
-const handleAdjustmentDateFilter = () => {
-  adjustmentPagination.value.current = 1
-}
-
-const handlePaymentFilter = () => {
-  paymentPagination.value.current = 1
-}
+// 分页处理方法（保留分页功能）
 
 // 分页处理方法
 const handleCreditPageChange = (page: number) => {
-  creditPagination.value.current = page
+  creditPagination.current = page
 }
 
-const handleLoanPageChange = (page: number) => {
-  loanPagination.value.current = page
-}
+
 
 const handleAdjustmentPageChange = (page: number) => {
   adjustmentPagination.value.current = page
@@ -611,6 +574,28 @@ const viewDisbursementDetails = (record: any) => {
 const viewRepaymentDetails = (record: any) => {
   currentLoanData.value = record
   repaymentVisible.value = true
+}
+
+// 处理LoanRecordTable组件的放款明细事件
+const handleViewDisbursementDetails = (record: any) => {
+  currentLoanData.value = record
+  disbursementDetailVisible.value = true
+}
+
+// 处理LoanRecordTable组件的还款明细事件
+const handleViewRepaymentDetails = (record: any) => {
+  currentLoanData.value = record
+  repaymentDetailVisible.value = true
+}
+
+// 刷新数据
+const handleRefresh = () => {
+  emit('refresh')
+}
+
+// 导出数据
+const handleExport = () => {
+  Message.info('导出功能已触发')
 }
 </script>
 

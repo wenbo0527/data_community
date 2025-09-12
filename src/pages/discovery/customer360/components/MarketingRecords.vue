@@ -299,12 +299,12 @@ const marketingRecords = computed(() => {
     
     // 根据productKey过滤
     const filteredTouch = props.productKey 
-      ? allTouchRecords.filter((item: any) => item.productKey === props.productKey)
-      : allTouchRecords
+      ? (allTouchRecords || []).filter((item: any) => item.productKey === props.productKey)
+      : (allTouchRecords || [])
     
     const filteredBenefit = props.productKey
-      ? allBenefitRecords.filter((item: any) => item.productKey === props.productKey) 
-      : allBenefitRecords
+      ? (allBenefitRecords || []).filter((item: any) => item.productKey === props.productKey) 
+      : (allBenefitRecords || [])
     
     console.log('📊 [MarketingRecords] 过滤后的数据:', {
       filteredTouchCount: filteredTouch.length,
@@ -372,20 +372,20 @@ const marketingRecords = computed(() => {
 
 // 筛选后的记录
 const filteredRecords = computed(() => {
-  let filtered = marketingRecords.value
+  let filtered = marketingRecords.value || []
   
   if (searchText.value) {
-    filtered = filtered.filter(record => 
+    filtered = (filtered || []).filter(record => 
       record.campaignName.toLowerCase().includes(searchText.value.toLowerCase())
     )
   }
   
   if (statusFilter.value) {
-    filtered = filtered.filter(record => record.status === statusFilter.value)
+    filtered = (filtered || []).filter(record => record.status === statusFilter.value)
   }
   
   if (channelFilter.value) {
-    filtered = filtered.filter(record => record.channel === channelFilter.value)
+    filtered = (filtered || []).filter(record => record.channel === channelFilter.value)
   }
   
   pagination.total = filtered.length
