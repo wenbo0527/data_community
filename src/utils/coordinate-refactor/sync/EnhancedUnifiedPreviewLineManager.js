@@ -110,8 +110,8 @@ export class EnhancedUnifiedPreviewLineManager {
       enableCoordinateRefactor: true,
       enablePreviewLineRefresh: true,
       enableBranchFlow: true,
-      enableAutoUpdate: false, // 禁用自动更新防止频繁触发
-      updateInterval: 5000, // 增加到5秒，减少频繁更新
+      enableAutoUpdate: true,
+      updateInterval: 100,
       maxPreviewLines: 1000,
       enableDebug: false,
       enablePerformanceTracking: true,
@@ -192,7 +192,7 @@ export class EnhancedUnifiedPreviewLineManager {
     this.lastSyncTime = 0; // 上次同步时间
     this.syncConflicts = new Map(); // 同步冲突记录
 
-    // console.log(`🎯 [增强版预览线管理器] 初始化完成 - 坐标重构: ${this.options.enableCoordinateRefactor}, 刷新管理: ${this.options.enablePreviewLineRefresh}, 分流管理: ${this.options.enableBranchFlow}`);
+    console.log(`🎯 [增强版预览线管理器] 初始化完成 - 坐标重构: ${this.options.enableCoordinateRefactor}, 刷新管理: ${this.options.enablePreviewLineRefresh}, 分流管理: ${this.options.enableBranchFlow}`);
   }
 
   /**
@@ -278,7 +278,7 @@ export class EnhancedUnifiedPreviewLineManager {
     });
 
     if (this.options.enableDebug) {
-      // console.log(`➕ [增强版预览线管理器] 创建预览线 - ID: ${id}, 源: ${sourceNodeId}, 目标: ${targetNodeId}, 类型: ${type}`);
+      console.log(`➕ [增强版预览线管理器] 创建预览线 - ID: ${id}, 源: ${sourceNodeId}, 目标: ${targetNodeId}, 类型: ${type}`);
     }
 
     return previewLine;
@@ -327,7 +327,7 @@ export class EnhancedUnifiedPreviewLineManager {
 
       previewLine.metadata.branchId = branchId;
     } catch (error) {
-      // console.error(`❌ [增强版预览线管理器] 创建对应分支失败:`, error.message);
+      console.error(`❌ [增强版预览线管理器] 创建对应分支失败:`, error.message);
     }
   }
 
@@ -401,7 +401,7 @@ export class EnhancedUnifiedPreviewLineManager {
       }
 
     } catch (error) {
-      // console.error(`❌ [增强版预览线管理器] 智能状态同步失败:`, error.message);
+      console.error(`❌ [增强版预览线管理器] 智能状态同步失败:`, error.message);
       this.stats.errorCount++;
       return false;
     }
@@ -441,15 +441,9 @@ export class EnhancedUnifiedPreviewLineManager {
   hasSignificantPositionChange(previewLine, newState) {
     if (!newState.position) return false;
     
-    const threshold = 10; // 增加像素阈值到10px，减少微小变化触发更新
+    const threshold = 2; // 像素阈值
     const currentPos = previewLine.position;
     const newPos = newState.position;
-    
-    // 检查坐标是否为NaN
-    if (isNaN(newPos.x1) || isNaN(newPos.y1) || isNaN(newPos.x2) || isNaN(newPos.y2)) {
-      console.warn('⚠️ [增强版预览线管理器] 检测到NaN坐标，跳过更新');
-      return false;
-    }
     
     return Math.abs(currentPos.x1 - newPos.x1) > threshold ||
            Math.abs(currentPos.y1 - newPos.y1) > threshold ||
@@ -461,9 +455,9 @@ export class EnhancedUnifiedPreviewLineManager {
    * 获取同步间隔
    */
   getSyncInterval(previewLine, options) {
-    if (options.highFrequency) return 200; // 5fps - 降低高频更新
-    if (previewLine.state === PreviewLineState.ACTIVE) return 500; // 2fps - 降低活跃线更新频率
-    return 1000; // 1fps for normal lines - 大幅降低普通线更新频率
+    if (options.highFrequency) return 16; // 60fps
+    if (previewLine.state === PreviewLineState.ACTIVE) return 33; // 30fps
+    return 100; // 10fps for normal lines
   }
 
   /**
@@ -571,7 +565,7 @@ export class EnhancedUnifiedPreviewLineManager {
       });
       
       if (this.options.enableDebug) {
-        // console.log(`📦 [增强版预览线管理器] 批量同步完成 - 成功: ${successCount}, 失败: ${failureCount}, 耗时: ${syncTime}ms`);
+        console.log(`📦 [增强版预览线管理器] 批量同步完成 - 成功: ${successCount}, 失败: ${failureCount}, 耗时: ${syncTime}ms`);
       }
       
     } catch (error) {
@@ -1061,25 +1055,14 @@ export class EnhancedUnifiedPreviewLineManager {
    */
   startAutoUpdate() {
     if (this.updateTimer) return;
-    
-    // 增加防抖控制
-    let lastUpdateTime = 0;
-    const minUpdateInterval = Math.max(this.options.updateInterval, 2000); // 最小2秒间隔
 
     const update = () => {
-      const now = Date.now();
-      if (now - lastUpdateTime < minUpdateInterval) {
-        this.updateTimer = setTimeout(update, minUpdateInterval - (now - lastUpdateTime));
-        return;
-      }
-      
-      lastUpdateTime = now;
       this.performAutoUpdate();
-      this.updateTimer = setTimeout(update, minUpdateInterval);
+      this.updateTimer = setTimeout(update, this.options.updateInterval);
     };
 
-    this.updateTimer = setTimeout(update, minUpdateInterval);
-    // console.log(`🔄 [增强版预览线管理器] 启动自动更新 - 间隔: ${minUpdateInterval}ms`);
+    this.updateTimer = setTimeout(update, this.options.updateInterval);
+    console.log(`🔄 [增强版预览线管理器] 启动自动更新 - 间隔: ${this.options.updateInterval}ms`);
   }
 
   /**
@@ -1089,7 +1072,7 @@ export class EnhancedUnifiedPreviewLineManager {
     if (this.updateTimer) {
       clearTimeout(this.updateTimer);
       this.updateTimer = null;
-      // console.log(`⏸️ [增强版预览线管理器] 停止自动更新`);
+      console.log(`⏸️ [增强版预览线管理器] 停止自动更新`);
     }
   }
 
@@ -1110,7 +1093,7 @@ export class EnhancedUnifiedPreviewLineManager {
       }
 
     } catch (error) {
-      // console.error(`❌ [增强版预览线管理器] 自动更新失败:`, error.message);
+      console.error(`❌ [增强版预览线管理器] 自动更新失败:`, error.message);
     }
   }
 
@@ -1235,7 +1218,7 @@ export class EnhancedUnifiedPreviewLineManager {
         try {
           listener(data);
         } catch (error) {
-          // console.error(`❌ [增强版预览线管理器] 事件监听器错误:`, error);
+          console.error(`❌ [增强版预览线管理器] 事件监听器错误:`, error);
         }
       });
     }
@@ -1335,7 +1318,7 @@ export class EnhancedUnifiedPreviewLineManager {
     // 清空事件监听器
     this.eventListeners.clear();
 
-    // console.log(`🗑️ [增强版预览线管理器] 资源清理完成`);
+    console.log(`🗑️ [增强版预览线管理器] 资源清理完成`);
   }
 }
 

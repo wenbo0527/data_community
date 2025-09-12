@@ -733,7 +733,6 @@ class NodeConfigManager {
     this.strategies.set('sms', new SimpleNodeConfigStrategy('sms'))
     this.strategies.set('manual-call', new SimpleNodeConfigStrategy('manual-call'))
     this.strategies.set('wait', new SimpleNodeConfigStrategy('wait'))
-    this.strategies.set('benefit', new SimpleNodeConfigStrategy('benefit'))
     this.strategies.set('end', new SimpleNodeConfigStrategy('end'))
   }
 

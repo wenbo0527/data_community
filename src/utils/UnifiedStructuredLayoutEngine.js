@@ -106,7 +106,7 @@ export class UnifiedStructuredLayoutEngine {
       parentChildMap: new Map(), // 父子关系
       childParentMap: new Map(), // 子父关系
       layerMetrics: new Map(), // 层级指标
-      endpointNodes: new Map(), // 🗑️ [已删除] endpoint虚拟节点已被新的预览线分层策略替代
+      endpointNodes: new Map(), // endpoint虚拟节点
       mixedLayerNodes: new Map(), // 混合层级节点（普通节点+endpoint）
       nodeToLayer: new Map(), // 节点到层级的映射
       optimizationHistory: [], // 优化历史
@@ -193,128 +193,12 @@ export class UnifiedStructuredLayoutEngine {
   }
   
   /**
-   * 🔍 调试用：测试Y坐标计算
-   * @param {Array} testNodes - 测试节点数组
-   * @returns {Object} 调试结果
-   */
-  testYCoordinateCalculation(testNodes = []) {
-    console.log('🔍 [Y坐标调试] 开始测试Y坐标计算');
-    console.log('🔍 [Y坐标调试] 测试节点:', testNodes);
-    
-    try {
-      // 1. 构建测试用的分层结构
-      const testLayers = this.buildTestLayers(testNodes);
-      console.log('🔍 [Y坐标调试] 构建的测试层级:', testLayers);
-      
-      // 2. 测试每个节点的Y坐标计算
-      const results = {};
-      testNodes.forEach((node, index) => {
-        const layerIndex = index; // 简单分层：每个节点一层
-        const yCoordinate = this.calculateLayerY(layerIndex, testLayers);
-        
-        results[node.id] = {
-          nodeType: node.type,
-          layerIndex: layerIndex,
-          yCoordinate: yCoordinate,
-          isValid: !isNaN(yCoordinate)
-        };
-        
-        console.log(`🔍 [Y坐标调试] 节点 ${node.id} (${node.type}): 层级=${layerIndex}, Y坐标=${yCoordinate}`);
-      });
-      
-      // 3. 检查配置参数
-      console.log('🔍 [Y坐标调试] 层级配置:', this.options.layer);
-      console.log('🔍 [Y坐标调试] baseHeight:', this.options.layer.baseHeight);
-      
-      return {
-        success: true,
-        testLayers: testLayers,
-        nodeResults: results,
-        config: this.options.layer
-      };
-    } catch (error) {
-      console.error('❌ [Y坐标调试] 测试失败:', error);
-      return {
-        success: false,
-        error: error.message,
-        stack: error.stack
-      };
-    }
-  }
-  
-  /**
-   * 🔍 构建测试用的分层结构
-   * @param {Array} testNodes - 测试节点
-   * @returns {Array} 测试层级数组
-   */
-  buildTestLayers(testNodes) {
-    const layers = [];
-    testNodes.forEach((node, index) => {
-      layers[index] = [node]; // 每个节点单独一层
-    });
-    return layers;
-  }
-
-  /**
-   * 🎯 新增：确保开始节点有稳定的基础坐标
-   * @param {Array} nodes - 所有节点
-   * @returns {Object} 开始节点坐标信息
-   */
-  ensureStartNodeBaseCoordinates(nodes) {
-    const START_NODE_BASE_X = 200; // 开始节点的固定基础X坐标
-    const START_NODE_BASE_Y = 100; // 开始节点的固定基础Y坐标
-    
-    // 查找开始节点
-    const startNodes = nodes.filter(node => {
-      const nodeId = node.id || node.getId();
-      const nodeData = node.getData ? node.getData() : {};
-      return nodeData.type === 'start' || nodeId.includes('start') || nodeId.includes('Start');
-    });
-    
-    console.log(`🎯 [开始节点基础坐标] 找到 ${startNodes.length} 个开始节点`);
-    
-    if (startNodes.length > 0) {
-      const startNode = startNodes[0]; // 取第一个开始节点
-      const startNodeId = startNode.id || startNode.getId();
-      
-      // 设置开始节点的固定基础坐标
-      const baseCoordinates = {
-        x: START_NODE_BASE_X,
-        y: START_NODE_BASE_Y,
-        nodeId: startNodeId,
-        layerIndex: 0 // 开始节点固定在第0层
-      };
-      
-      console.log(`🎯 [开始节点基础坐标] 节点 ${startNodeId} 设置基础坐标:`, baseCoordinates);
-      
-      // 立即应用到布局模型
-      this.layoutModel.nodePositions.set(startNodeId, {
-        x: START_NODE_BASE_X,
-        y: START_NODE_BASE_Y,
-        layerIndex: 0,
-        nodeType: 'start',
-        isBaseNode: true // 标记为基础节点
-      });
-      
-      return baseCoordinates;
-    }
-    
-    console.warn('⚠️ [开始节点基础坐标] 未找到开始节点，使用默认基础坐标');
-    return {
-      x: START_NODE_BASE_X,
-      y: START_NODE_BASE_Y,
-      nodeId: null,
-      layerIndex: 0
-    };
-  }
-
-  /**
    * 执行统一结构化布局（立即执行版本）
    * @param {Object} options - 布局选项
    * @returns {Object} 布局结果
    */
   async executeLayoutImmediate(options = {}) {
-    const startTime = performance.now();
+    const startTime = Date.now();
     this.isLayouting = true;
     this.performanceMetrics.layoutCount++;
     
@@ -331,52 +215,21 @@ export class UnifiedStructuredLayoutEngine {
             { stage: 'preprocessing' }
           );
 
-          // 🔍 关键调试：详细记录预处理结果
-          console.log('🔍 [节点数量调试] 预处理结果:', preprocessResult);
-          console.log('🔍 [节点数量调试] validNodes数量:', preprocessResult.validNodes?.length);
-          console.log('🔍 [节点数量调试] endpointNodes数量:', preprocessResult.endpointNodes?.length);
-          console.log('🔍 [节点数量调试] totalNodes:', preprocessResult.totalNodes);
-
-          // 🎯 关键修复：节点数量验证，使用validNodes.length而不是totalNodes
+          // 🎯 关键修复：节点数量验证，确保在只有开始节点时正确跳过布局
           const { validNodes, endpointNodes, totalNodes } = preprocessResult;
-          const actualNodeCount = validNodes ? validNodes.length : 0;
           
-          console.error('🔥 [关键调试] 实际节点数量检查:');
-          console.error('🔥 [关键调试] validNodes.length:', actualNodeCount);
-          console.error('🔥 [关键调试] totalNodes:', totalNodes);
-          console.error('🔥 [关键调试] 使用actualNodeCount进行判断');
-          
-          // 检查是否只有一个开始节点（忽略虚拟endpoint）
-          if (actualNodeCount === 1) {
+          // 检查是否只有一个开始节点且没有其他有效节点
+          if (validNodes.length === 1 && endpointNodes.length === 0) {
             const singleNode = validNodes[0];
             const nodeId = singleNode.id || singleNode.getId();
             const nodeData = singleNode.getData() || {};
             
-            // 如果是开始节点，跳过布局（即使有虚拟endpoint）
+            // 如果是开始节点且没有预览线endpoint，跳过布局
             if (nodeData.type === 'start' || nodeId.includes('start')) {
               console.log('⚠️ [统一结构化布局] 检测到只有单个开始节点，无需执行布局');
               this.isLayouting = false;
-              
-              // 更新性能指标
-              const endTime = performance.now();
-              const duration = endTime - startTime;
-              this.updatePerformanceMetrics(duration);
-              
-              // 🎯 关键修复：返回完整的布局报告结构
               return {
-                success: false, // 修改为false，因为实际上没有执行布局
-                timestamp: new Date().toISOString(),
-                statistics: {
-                  totalLayers: 0, // 明确设置为0，表示没有分层
-                  totalNodes: 1,
-                  normalNodes: 1,
-                  endpointNodes: 0,
-                  layerDistribution: [],
-                },
-                performance: {
-                  executionTime: duration,
-                  optimizationIterations: 0,
-                },
+                success: true,
                 message: '只有单个开始节点，无需执行布局',
                 nodeCount: 1,
                 skipped: true
@@ -384,38 +237,17 @@ export class UnifiedStructuredLayoutEngine {
             }
           }
           
-          // 🔥 关键修复：使用actualNodeCount而不是totalNodes进行判断
-          if (actualNodeCount < 2) {
-            console.error(`🔥 [统一结构化布局] 节点数量不足(实际:${actualNodeCount}, 报告:${totalNodes})，无需执行布局`);
+          // 检查总节点数量是否足够执行布局
+          if (totalNodes < 2) {
+            console.log(`⚠️ [统一结构化布局] 节点数量不足(${totalNodes})，无需执行布局`);
             this.isLayouting = false;
-            
-            // 更新性能指标
-            const endTime = performance.now();
-            const duration = endTime - startTime;
-            this.updatePerformanceMetrics(duration);
-            
-            // 🎯 关键修复：返回完整的布局报告结构，避免总层数为0的问题
             return {
-              success: false, // 修改为false，因为实际上没有执行布局
-              timestamp: new Date().toISOString(),
-              statistics: {
-                totalLayers: 0, // 明确设置为0，表示没有分层
-                totalNodes: actualNodeCount,
-                normalNodes: actualNodeCount,
-                endpointNodes: 0,
-                layerDistribution: [],
-              },
-              performance: {
-                executionTime: endTime - startTime,
-                optimizationIterations: 0,
-              },
-              message: `节点数量不足(实际:${actualNodeCount}, 报告:${totalNodes})，无需执行布局`,
-              nodeCount: actualNodeCount,
+              success: true,
+              message: `节点数量不足(${totalNodes})，无需执行布局`,
+              nodeCount: totalNodes,
               skipped: true
             };
           }
-          
-          console.log(`✅ [统一结构化布局] 节点数量检查通过，开始执行布局 (${actualNodeCount}个节点)`);
 
           // 阶段2：分层构建（包含endpoint集成）
           const layerStructure = await this.performanceOptimizer.optimizeLayoutExecution(
@@ -466,37 +298,18 @@ export class UnifiedStructuredLayoutEngine {
           const result = this.generateLayoutReport(layerStructure, finalPositions);
           
           // 更新性能指标
-          const endTime = performance.now();
+          const endTime = Date.now();
           const duration = endTime - startTime;
           this.updatePerformanceMetrics(duration);
-          this.lastLayoutTime = Date.now();
+          this.lastLayoutTime = endTime;
           this.isLayouting = false;
           
           return result;
         } catch (error) {
           console.error("❌ [统一结构化布局] 布局执行失败:", error);
           this.isLayouting = false;
-          
-          // 更新性能指标（即使失败也要记录执行时间）
-          const endTime = performance.now();
-          const duration = endTime - startTime;
-          this.updatePerformanceMetrics(duration);
-          
-          // 🎯 关键修复：错误情况下也返回完整的布局报告结构
           return {
             success: false,
-            timestamp: new Date().toISOString(),
-            statistics: {
-              totalLayers: 0,
-              totalNodes: 0,
-              normalNodes: 0,
-              endpointNodes: 0,
-              layerDistribution: [],
-            },
-            performance: {
-              executionTime: duration,
-              optimizationIterations: 0,
-            },
             error: error.message,
             message: `布局执行失败: ${error.message}`,
           };
@@ -623,38 +436,23 @@ export class UnifiedStructuredLayoutEngine {
   async preprocessLayoutData() {
     console.log("📊 [数据预处理] 开始提取布局数据");
 
-    // 🎯 优先设置开始节点的基础坐标
-    this.ensureStartNodeBaseCoordinates();
-
-    const nodes = this.graph.getNodes() || [];
-    const edges = this.graph.getEdges() || [];
-
-    console.log('🔍 [数据预处理调试] 原始节点数量:', nodes.length);
-    console.log('🔍 [数据预处理调试] 原始节点列表:', nodes.map(node => ({
-      id: node.id || node.getId(),
-      data: node.getData()
-    })));
-    
-    // 🔥 关键调试：详细记录每个节点的过滤情况
-    console.log('🔍 [节点过滤调试] 开始逐个检查节点过滤条件:');
+    const nodes = this.graph.getNodes();
+    const edges = this.graph.getEdges();
 
     // 过滤有效节点（排除拖拽点）
-    const validNodes = (nodes || []).filter((node) => {
+    const validNodes = nodes.filter((node) => {
       const nodeId = node.id || node.getId();
       const nodeData = node.getData() || {};
-      const isValid = (
+      return (
         !nodeId.includes("hint") &&
         !nodeData.isEndpoint &&
         !nodeData.isPreview &&
         !nodeId.startsWith("hint_")
       );
-      
-      console.log(`🔍 [节点过滤] 节点 ${nodeId}: isValid=${isValid}, data:`, nodeData);
-      return isValid;
     });
 
     // 过滤有效边（排除预览线）
-    const validEdges = (edges || []).filter((edge) => {
+    const validEdges = edges.filter((edge) => {
       const edgeId = edge.id || edge.getId();
       const edgeData = edge.getData() || {};
       return (
@@ -665,28 +463,21 @@ export class UnifiedStructuredLayoutEngine {
       );
     });
 
-    // 🗑️ [已删除] 虚拟endpoint节点创建逻辑已被新的预览线分层策略替代
+    // 🎯 关键：提取预览线endpoint作为虚拟节点
+    const endpointNodes = await this.extractPreviewEndpoints();
 
     console.log('📊 [数据预处理] 数据统计:', {
       普通节点: validNodes.length,
       有效连线: validEdges.length,
-      总处理节点: validNodes.length,
+      预览线endpoint: endpointNodes.length,
+      总处理节点: validNodes.length + endpointNodes.length,
     });
-    
-    // 🔥 关键调试：确认最终返回的totalNodes值
-    const finalTotalNodes = validNodes.length;
-    console.log('🔥 [关键调试] preprocessLayoutData最终返回的totalNodes:', finalTotalNodes);
-    console.log('🔥 [关键调试] validNodes详情:', validNodes.map(node => ({
-      id: node.id || node.getId(),
-      type: node.getData()?.type,
-      data: node.getData()
-    })));
 
     return {
       validNodes,
       validEdges,
-      endpointNodes: [], // 🗑️ 不再创建虚拟endpoint节点
-      totalNodes: finalTotalNodes,
+      endpointNodes,
+      totalNodes: validNodes.length + endpointNodes.length,
     };
   }
 
@@ -694,11 +485,367 @@ export class UnifiedStructuredLayoutEngine {
    * 提取预览线endpoint作为虚拟节点
    * @returns {Array} endpoint虚拟节点数组
    */
-  // 🗑️ [已删除] extractPreviewEndpoints 方法已被新的预览线分层策略替代
+  async extractPreviewEndpoints() {
+    const endpointNodes = [];
 
-  // 🗑️ [已删除] hasBranchConnection 和 hasExistingRealConnections 方法已被新的预览线分层策略替代
+    console.log("🔍 [预览线提取] 开始提取预览线endpoint并校验连接状态");
 
-  // 🗑️ [已删除] createVirtualEndpointsForLeafNodes 方法已被新的预览线分层策略替代
+    // 获取预览线管理器（用于获取预览线位置信息）
+    const previewLineManager =
+      this.previewLineManager ||
+      window.unifiedPreviewLineManager ||
+      this.graph.previewLineManager ||
+      null;
+
+    if (
+      !previewLineManager ||
+      !previewLineManager.previewLines ||
+      previewLineManager.previewLines.size === 0
+    ) {
+      console.log(
+        "⚠️ [预览线提取] 预览线管理器不可用，将为所有叶子节点创建默认虚拟endpoint",
+      );
+      return this.createVirtualEndpointsForLeafNodes();
+    }
+
+    const previewLines = previewLineManager.previewLines;
+    console.log(`🔍 [预览线提取] 发现 ${previewLines.size} 个源节点的预览线`);
+
+    // 🎯 关键修复：在创建endpoint前校验分支连接状态
+    previewLines.forEach((previewInstance, sourceNodeId) => {
+      console.log(
+        `🔍 [预览线提取] 处理源节点 ${sourceNodeId} 的预览线:`,
+        previewInstance,
+      );
+
+      // 检查源节点是否存在
+      const sourceNode = this.graph.getCellById(sourceNodeId);
+      if (!sourceNode) {
+        console.warn(`⚠️ [预览线提取] 源节点 ${sourceNodeId} 不存在，跳过`);
+        return;
+      }
+
+      if (Array.isArray(previewInstance)) {
+        // 分支预览线 - 只为未连接的分支创建虚拟endpoint
+        console.log(
+          `📋 [预览线提取] 源节点 ${sourceNodeId} 有 ${previewInstance.length} 个分支预览线`,
+        );
+        previewInstance.forEach((instance, index) => {
+          if (instance.endPosition && !instance.isAttached) {
+            const branchId = instance.branchId || `branch_${index}`;
+
+            // 🎯 关键校验：检查该分支是否已有实际连接
+            const hasConnection = this.hasBranchConnection(
+              sourceNode,
+              branchId,
+              instance,
+            );
+
+            if (!hasConnection) {
+              const endpointNode = this.createEndpointVirtualNode(
+                sourceNodeId,
+                branchId,
+                instance.endPosition,
+                instance.branchLabel,
+              );
+              endpointNodes.push(endpointNode);
+              this.layoutModel.endpointNodes.set(endpointNode.id, endpointNode);
+              console.log(
+                `✅ [预览线提取] 成功创建分支endpoint虚拟节点: ${endpointNode.id}`,
+              );
+            } else {
+              console.log(`⏭️ [预览线提取] 跳过已连接的分支 ${branchId}:`, {
+                sourceNodeId,
+                branchId,
+                branchLabel: instance.branchLabel,
+              });
+            }
+          } else {
+            console.log('⚠️ [预览线提取] 跳过已附着或无端点的分支预览线:', instance)
+          }
+        });
+      } else if (
+        previewInstance &&
+        previewInstance.endPosition &&
+        !previewInstance.isAttached
+      ) {
+        // 单一预览线 - 检查节点是否已有连接
+        console.log(`📋 [预览线提取] 源节点 ${sourceNodeId} 有单一预览线`);
+
+        // 🎯 关键校验：检查节点是否已有实际连接
+        const hasConnection = this.hasExistingRealConnections(sourceNode);
+
+        if (!hasConnection) {
+          const endpointNode = this.createEndpointVirtualNode(
+            sourceNodeId,
+            "single",
+            previewInstance.endPosition,
+            null,
+          );
+          endpointNodes.push(endpointNode);
+          this.layoutModel.endpointNodes.set(endpointNode.id, endpointNode);
+          console.log(
+            `✅ [预览线提取] 成功创建单一endpoint虚拟节点: ${endpointNode.id}`,
+          );
+        } else {
+          console.log(`⏭️ [预览线提取] 跳过已连接的节点 ${sourceNodeId}`);
+        }
+      } else {
+        console.log('⚠️ [预览线提取] 跳过已附着或无端点的预览线:', previewInstance);
+      }
+    });
+
+    console.log(
+      `🎯 [预览线提取] 提取完成，共创建 ${endpointNodes.length} 个endpoint虚拟节点:`,
+      endpointNodes.map((node) => node.id),
+    );
+
+    return endpointNodes;
+  }
+
+  /**
+   * 检查特定分支是否已有实际连接
+   * @param {Object} sourceNode - 源节点对象
+   * @param {string} branchId - 分支ID
+   * @param {Object} previewInstance - 预览线实例
+   * @returns {boolean} 该分支是否已有实际连接
+   */
+  hasBranchConnection(sourceNode, branchId, previewInstance) {
+    if (!sourceNode || !this.graph) return false;
+
+    const outgoingEdges = this.graph.getOutgoingEdges(sourceNode) || [];
+
+    // 过滤掉预览线，只检查实际连接
+    const realConnections = outgoingEdges.filter((edge) => {
+      const edgeData = edge.getData() || {};
+      return (
+        !edgeData.isUnifiedPreview &&
+        !edgeData.isPersistentPreview &&
+        !edgeData.isPreview &&
+        edgeData.type !== "preview-line" &&
+        edgeData.type !== "unified-preview-line" &&
+        edgeData.type !== "draggable-preview"
+      );
+    });
+
+    // 🎯 关键：检查是否有连接与当前分支相关
+    const branchLabel = previewInstance?.branchLabel;
+    const branchConnections = realConnections.filter((edge) => {
+      const edgeData = edge.getData() || {};
+
+      // 方法1：检查边的数据中是否包含分支信息
+      if (
+        edgeData.branchId === branchId ||
+        edgeData.branchLabel === branchLabel
+      ) {
+        return true;
+      }
+
+      // 方法2：检查边的标签是否匹配分支标签
+      const edgeLabels = edge.getLabels() || [];
+      if (
+        branchLabel &&
+        edgeLabels.some(
+          (label) =>
+            label.attrs?.text?.text === branchLabel ||
+            label.attrs?.label?.text === branchLabel,
+        )
+      ) {
+        return true;
+      }
+
+      // 方法3：对于分流节点，检查连接的目标位置是否与分支预览线位置匹配
+      if (previewInstance?.endPosition) {
+        const targetPoint = edge.getTargetPoint();
+        if (targetPoint) {
+          const distance = Math.sqrt(
+            Math.pow(targetPoint.x - previewInstance.endPosition.x, 2) +
+              Math.pow(targetPoint.y - previewInstance.endPosition.y, 2),
+          );
+          // 如果连接的目标位置与预览线端点位置很接近（50像素内），认为是同一分支
+          if (distance < 50) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+
+    // 方法4：对于分流节点的特殊处理 - 检查连接数量与分支数量的关系
+    if (branchConnections.length === 0 && realConnections.length > 0) {
+      const sourceNodeData = sourceNode.getData() || {};
+      const nodeType = sourceNodeData.type || sourceNodeData.nodeType;
+
+      if (nodeType === "crowd-split" || nodeType === "condition") {
+        // 获取预览线管理器中该节点的所有分支
+        const previewLineManager =
+          this.previewLineManager ||
+          window.unifiedPreviewLineManager ||
+          this.graph.previewLineManager;
+
+        if (previewLineManager && previewLineManager.previewLines) {
+          const nodePreviewLines = previewLineManager.previewLines.get(
+            sourceNode.id,
+          );
+          if (Array.isArray(nodePreviewLines)) {
+            const totalBranches = nodePreviewLines.length;
+            // 如果实际连接数等于或超过总分支数，说明所有分支都已连接
+            if (realConnections.length >= totalBranches) {
+              console.log(
+                `🔍 [分支连接检查] 节点 ${sourceNode.id} 所有分支都已连接 (${realConnections.length}/${totalBranches})`,
+              );
+              return true;
+            }
+
+            // 如果当前分支索引小于已连接数量，认为该分支已连接
+            const currentBranchIndex = nodePreviewLines.findIndex(
+              (instance) =>
+                instance.branchId === branchId || instance === previewInstance,
+            );
+            if (
+              currentBranchIndex >= 0 &&
+              currentBranchIndex < realConnections.length
+            ) {
+              console.log(
+                `🔍 [分支连接检查] 分支 ${branchId} 按索引判断已连接 (索引${currentBranchIndex} < 连接数${realConnections.length})`,
+              );
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    const hasConnection = branchConnections.length > 0;
+
+    console.log(`🔍 [分支连接检查] 节点 ${sourceNode.id} 分支 ${branchId}:`, {
+      branchLabel,
+      hasConnection,
+      branchConnections: branchConnections.length,
+      totalRealConnections: realConnections.length,
+      branchConnectionIds: branchConnections.map((edge) => edge.id),
+      previewEndPosition: previewInstance?.endPosition,
+    });
+
+    return hasConnection;
+  }
+
+  /**
+   * 检查节点是否已有实际连接（非预览线）
+   * @param {Object} node - 节点对象
+   * @returns {boolean} 是否有实际连接
+   */
+  hasExistingRealConnections(node) {
+    if (!node || !this.graph) return false;
+
+    const outgoingEdges = this.graph.getOutgoingEdges(node) || [];
+
+    // 过滤掉预览线，只检查实际连接
+    const realConnections = outgoingEdges.filter((edge) => {
+      const edgeData = edge.getData() || {};
+      return (
+        !edgeData.isUnifiedPreview &&
+        !edgeData.isPersistentPreview &&
+        !edgeData.isPreview &&
+        edgeData.type !== "preview-line" &&
+        edgeData.type !== "unified-preview-line"
+      );
+    });
+
+    console.log(
+      `🔍 [连接检查] 节点 ${node.id} 实际连接数: ${realConnections.length}`,
+      {
+        totalEdges: outgoingEdges.length,
+        realConnections: realConnections.length,
+        realConnectionIds: realConnections.map((edge) => edge.id),
+      },
+    );
+
+    return realConnections.length > 0;
+  }
+
+  /**
+   * 为所有叶子节点创建虚拟endpoint节点
+   * @returns {Array} 虚拟endpoint节点数组
+   */
+  createVirtualEndpointsForLeafNodes() {
+    const endpointNodes = [];
+    const nodes = this.graph.getNodes();
+
+    console.log(
+      "🔍 [虚拟endpoint] 开始为叶子节点创建虚拟endpoint（带连接校验）",
+    );
+
+    nodes.forEach((node) => {
+      const nodeData = node.getData() || {};
+      const nodeType = nodeData.type || nodeData.nodeType;
+
+      // 跳过特殊节点
+      if (
+        nodeData.isEndpoint ||
+        nodeType === "endpoint" ||
+        nodeType === "end" ||
+        nodeType === "finish" ||
+        nodeData.isUnifiedPreview ||
+        nodeData.isPersistentPreview ||
+        nodeData.isPreview
+      ) {
+        return;
+      }
+
+      // 🎯 关键校验：检查节点是否已有实际连接
+      const hasRealConnections = this.hasExistingRealConnections(node);
+
+      if (!hasRealConnections) {
+        // 这是一个没有实际连接的叶子节点，为它创建虚拟endpoint
+        const nodePosition = node.getPosition();
+        const nodeSize = node.getSize();
+
+        // 计算虚拟endpoint位置 - 智能分布算法
+        const endPosition = this.calculateIntelligentEndpointPosition(
+          node,
+          nodePosition,
+          nodeSize,
+          endpointNodes.length
+        );
+
+        const virtualNode = this.createEndpointVirtualNode(
+          node.id,
+          'virtual',
+          endPosition,
+          `${node.id}_virtual_endpoint`
+        )
+
+        // 🎯 新增：立即建立位置映射
+        if (this.layoutModel && this.layoutModel.nodePositions) {
+          this.layoutModel.nodePositions.set(virtualNode.id, {
+            x: endPosition.x,
+            y: endPosition.y,
+            nodeType: "endpoint",
+            sourceNodeId: node.id,
+            branchId: "virtual",
+            isVirtual: true,
+          });
+          console.log(
+            `🎯 [位置映射] 虚拟endpoint位置已建立: ${virtualNode.id} -> (${endPosition.x}, ${endPosition.y})`,
+          );
+        }
+
+        endpointNodes.push(virtualNode);
+        console.log(
+          `✅ [虚拟endpoint] 为叶子节点 ${node.id} 创建虚拟endpoint: ${virtualNode.id}`,
+        );
+      } else {
+        console.log(`⏭️ [虚拟endpoint] 跳过已有连接的节点 ${node.id}`);
+      }
+    });
+
+    console.log(
+      `🎯 [虚拟endpoint] 虚拟endpoint创建完成，共创建 ${endpointNodes.length} 个虚拟节点`,
+    );
+    return endpointNodes;
+  }
 
   /**
    * 创建endpoint虚拟节点
@@ -708,7 +855,49 @@ export class UnifiedStructuredLayoutEngine {
    * @param {string} branchLabel - 分支标签
    * @returns {Object} 虚拟节点对象
    */
-  // 🗑️ [已删除] createEndpointVirtualNode 方法已被新的预览线分层策略替代
+  createEndpointVirtualNode(sourceNodeId, branchId, endPosition, branchLabel) {
+    // 🎯 关键：使用与 useStructuredLayout.js 一致的ID格式
+    const originalEndpointId = `endpoint_${sourceNodeId}_${branchId}`;
+    const endpointId = `virtual_endpoint_${originalEndpointId}`;
+
+    console.log(`🎯 [虚拟节点创建] 创建endpoint虚拟节点: ${endpointId}`, {
+      sourceNodeId,
+      branchId,
+      endPosition: { x: endPosition.x, y: endPosition.y },
+    });
+
+    return {
+      id: endpointId,
+      type: "endpoint",
+      sourceNodeId,
+      branchId,
+      branchLabel,
+      isVirtual: true,
+      isEndpoint: true,
+      position: {
+        x: endPosition.x,
+        y: 0, // 🎯 关键修复：初始Y坐标设置为0，确保后续层级计算的一致性
+      },
+      size: this.options.node.endpointSize,
+
+      // 模拟节点接口
+      getId: () => endpointId,
+      getPosition: () => ({ x: endPosition.x, y: 0 }),
+      getSize: () => this.options.node.endpointSize,
+      getData: () => ({
+        type: "endpoint",
+        isEndpoint: true,
+        sourceNodeId,
+        branchId,
+      }),
+      setPosition: (pos) => {
+        endPosition.x = pos.x;
+        endPosition.y = pos.y;
+        // 同步更新预览线管理器中的位置
+        this.updatePreviewEndpointPosition(sourceNodeId, branchId, pos);
+      },
+    };
+  }
 
   /**
    * 🎯 全局简单层级计算：获取节点的层级Y坐标
@@ -719,9 +908,7 @@ export class UnifiedStructuredLayoutEngine {
   getNodeLayerY(nodeId) {
     // 🔧 简化方案：直接使用预定义的层级索引
     const layerIndex = this.getSimpleLayerIndex(nodeId);
-    
-    // 🔥 关键修复：使用calculateLayerY方法确保Y坐标计算的一致性和NaN检查
-    const layerY = this.calculateLayerY(layerIndex);
+    const layerY = layerIndex * this.options.layer.baseHeight;
     
     console.log(
       `📍 [全局简单层级] 节点 ${nodeId} 层级Y坐标: 第${layerIndex}层 -> Y=${layerY}`,
@@ -745,170 +932,56 @@ export class UnifiedStructuredLayoutEngine {
     }
     
     if (this.layerCache.has(nodeId)) {
-      const cachedValue = this.layerCache.get(nodeId);
-      console.log(`🔍 [层级缓存] 节点 ${nodeId} 使用缓存层级: ${cachedValue}`);
-      return cachedValue;
+      return this.layerCache.get(nodeId);
     }
 
-    // 🔥 关键修复：使用非递归的基于节点类型的层级分配
-    console.log(`🔍 [层级计算] 开始为节点 ${nodeId} 计算层级`);
-    let layerIndex = this.getLayerByNodeTypeAndId(nodeId);
-    console.log(`🔍 [层级计算] getLayerByNodeTypeAndId返回: ${layerIndex} (类型: ${typeof layerIndex})`);
-    
-    // 🔥 关键验证：确保返回值是有效数字
-    if (typeof layerIndex !== 'number' || isNaN(layerIndex) || layerIndex < 0) {
-      console.error(`❌ [层级计算] 节点 ${nodeId} 计算出无效层级: ${layerIndex}，使用默认值`);
-      layerIndex = this.getDefaultLayerByNodeId(nodeId);
-      console.log(`🔍 [层级计算] getDefaultLayerByNodeId返回: ${layerIndex}`);
-    }
-    
-    console.log(`🎯 [层级计算] 节点 ${nodeId} -> 第${layerIndex}层 (最终结果)`);
-    
-    // 🔥 关键调试：在浏览器控制台中显示层级计算结果
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.debug(`[层级计算] 节点 ${nodeId} -> 第${layerIndex}层`);
+    let layerIndex = 1;
+
+    try {
+      // 🎯 规则1：开始节点固定为第1层
+      if (nodeId.includes('start') || nodeId.includes('Start') || nodeId.includes('begin')) {
+        layerIndex = 1;
+        console.log(`🎯 [连接层级] 开始节点 ${nodeId} -> 第1层`);
+      }
+      // 🎯 规则2：预览线endpoint = 源节点层级 + 1
+      else if (nodeId.includes('virtual_endpoint') || nodeId.includes('endpoint')) {
+        const sourceNodeId = this.extractSourceNodeFromEndpoint(nodeId);
+        if (sourceNodeId) {
+          const sourceLayer = this.getSimpleLayerIndex(sourceNodeId);
+          layerIndex = sourceLayer + 1;
+          console.log(`🎯 [连接层级] endpoint ${nodeId} 源节点 ${sourceNodeId} 第${sourceLayer}层 -> 第${layerIndex}层`);
+        } else {
+          layerIndex = 4; // 无法确定源节点时的默认层级
+          console.log(`⚠️ [连接层级] endpoint ${nodeId} 无法确定源节点，使用默认第4层`);
+        }
+      }
+      // 🎯 规则3：普通节点 = 父节点最大层级 + 1
+      else {
+        const parentNodes = this.getParentNodes(nodeId);
+        if (parentNodes.length > 0) {
+          const parentLayers = parentNodes.map(parentId => 
+            this.getSimpleLayerIndex(parentId)
+          );
+          layerIndex = Math.max(...parentLayers) + 1;
+          console.log(`🎯 [连接层级] 普通节点 ${nodeId} 父节点层级 [${parentLayers.join(',')}] -> 第${layerIndex}层`);
+        } else {
+          layerIndex = 2; // 无父节点时的默认层级
+          console.log(`⚠️ [连接层级] 普通节点 ${nodeId} 无父节点，使用默认第2层`);
+        }
+      }
+
+    } catch (error) {
+      console.warn(`⚠️ [连接层级] 节点 ${nodeId} 层级计算失败:`, error.message);
+      layerIndex = 2; // 出错时默认第2层
     }
 
     // 缓存结果并同步到布局模型
     this.layerCache.set(nodeId, layerIndex);
     if (this.layoutModel && this.layoutModel.nodeToLayer) {
       this.layoutModel.nodeToLayer.set(nodeId, layerIndex);
-      console.log(`🔍 [层级计算] 已同步到布局模型: ${nodeId} -> ${layerIndex}`);
     }
 
     return layerIndex;
-  }
-  
-  /**
-   * 🔥 新增：基于节点类型和ID的非递归层级分配
-   * @param {string} nodeId - 节点ID
-   * @returns {number} 层级索引
-   */
-  getLayerByNodeTypeAndId(nodeId) {
-    try {
-      // 🎯 规则1：开始节点固定为第1层（与getLayerByNodeType保持一致）
-      if (nodeId.includes('start') || nodeId.includes('Start') || nodeId.includes('begin') || nodeId === 'start-node') {
-        console.log(`🎯 [类型层级] 开始节点 ${nodeId} -> 第1层`);
-        return 1;
-      }
-      
-      // 🎯 规则2：主要处理节点为第2层（与getLayerByNodeType保持一致）
-      if (nodeId.includes('ai-call') || nodeId.includes('manual-call') || nodeId.includes('audience-split')) {
-        console.log(`🎯 [类型层级] 处理节点 ${nodeId} -> 第2层`);
-        return 2;
-      }
-      
-      // 🎯 规则3：其他处理节点为第2层
-      if (nodeId.includes('node_') && !nodeId.includes('endpoint') && !nodeId.includes('virtual')) {
-        console.log(`🎯 [类型层级] 其他节点 ${nodeId} -> 第2层`);
-        return 2;
-      }
-      
-      // 🎯 规则4：endpoint节点为第4层（与getLayerByNodeType保持一致）
-      if (nodeId.includes('endpoint') || nodeId.includes('virtual_endpoint')) {
-        console.log(`🎯 [类型层级] endpoint节点 ${nodeId} -> 第4层`);
-        return 4;
-      }
-      
-      // 🎯 规则5：结束节点为第4层
-      if (nodeId.includes('end') || nodeId.includes('finish') || nodeId.includes('terminal')) {
-        console.log(`🎯 [类型层级] 结束节点 ${nodeId} -> 第4层`);
-        return 4;
-      }
-      
-      // 🎯 默认：未识别的节点类型
-      console.log(`⚠️ [类型层级] 未识别节点 ${nodeId} -> 使用默认第2层`);
-      return 2;
-      
-    } catch (error) {
-      console.error(`❌ [类型层级] 节点 ${nodeId} 类型判断失败:`, error.message);
-      return this.getDefaultLayerByNodeId(nodeId);
-    }
-  }
-  
-  /**
-   * 🔥 新增：获取节点的默认层级（最后的回退方案）
-   * @param {string} nodeId - 节点ID
-   * @returns {number} 默认层级索引
-   */
-  getDefaultLayerByNodeId(nodeId) {
-    // 基于节点ID的简单模式匹配（与统一层级分配保持一致）
-    if (nodeId === 'start-node') return 1; // start节点第1层
-    if (nodeId.includes('1755503018616')) return 2; // audience-split第2层
-    if (nodeId.includes('1756349534104')) return 2; // manual-call第2层
-    if (nodeId.includes('1756349538148')) return 2; // ai-call第2层
-    
-    // 最终默认值
-    return 2;
-  }
-  
-  /**
-   * 🔥 新增：从节点ID推断节点类型
-   * @param {string} nodeId - 节点ID
-   * @returns {string} 节点类型
-   */
-  inferNodeTypeFromId(nodeId) {
-    console.log(`🔍 [类型推断] 开始推断节点 ${nodeId} 的类型`);
-    
-    // 🎯 规则1：开始节点
-    if (nodeId === 'start-node' || nodeId.includes('start') || nodeId.includes('Start') || nodeId.includes('begin')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> start类型`);
-      return 'start';
-    }
-    
-    // 🎯 规则2：结束节点
-    if (nodeId.includes('end') || nodeId.includes('End') || nodeId.includes('finish') || nodeId.includes('terminal')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> end类型`);
-      return 'end';
-    }
-    
-    // 🎯 规则3：特定处理节点类型
-    if (nodeId.includes('ai-call')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> ai-call类型`);
-      return 'ai-call';
-    }
-    
-    if (nodeId.includes('manual-call')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> manual-call类型`);
-      return 'manual-call';
-    }
-    
-    if (nodeId.includes('audience-split')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> audience-split类型`);
-      return 'audience-split';
-    }
-    
-    // 🎯 规则4：endpoint节点
-    if (nodeId.includes('endpoint') || nodeId.includes('virtual_endpoint')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> endpoint类型`);
-      return 'endpoint';
-    }
-    
-    // 🎯 规则5：基于特定ID模式的节点类型推断
-    if (nodeId.includes('1755503018616')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> audience-split类型（基于ID）`);
-      return 'audience-split';
-    }
-    
-    if (nodeId.includes('1756349534104')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> manual-call类型（基于ID）`);
-      return 'manual-call';
-    }
-    
-    if (nodeId.includes('1756349538148')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> ai-call类型（基于ID）`);
-      return 'ai-call';
-    }
-    
-    // 🎯 规则6：通用节点类型
-    if (nodeId.includes('node_')) {
-      console.log(`🎯 [类型推断] 节点 ${nodeId} -> process类型（通用节点）`);
-      return 'process';
-    }
-    
-    // 🎯 默认：未识别的节点类型
-    console.log(`⚠️ [类型推断] 节点 ${nodeId} -> process类型（默认）`);
-    return 'process';
   }
 
   /**
@@ -1356,21 +1429,17 @@ export class UnifiedStructuredLayoutEngine {
 
     const { validNodes, validEdges, endpointNodes } = preprocessResult;
 
-    // 🗑️ [已删除] 不再处理虚拟endpoint节点
-    const allNodes = [...validNodes]; // 只使用普通节点
-    
-    // 保存到layoutModel中，供其他方法使用
-    this.layoutModel.allNodes = allNodes;
+    // 🎯 关键：将普通节点和endpoint节点合并处理
+    const allNodes = [...validNodes, ...endpointNodes];
 
     // 构建父子关系图
-    this.buildParentChildRelationships(allNodes, validEdges, []);
+    this.buildParentChildRelationships(allNodes, validEdges, endpointNodes);
 
     // 识别叶子节点（最底层）
     const leafNodes = this.identifyLeafNodes(allNodes);
 
     // 自底向上分层
-    const layerResult = this.calculateLayersBottomUp(leafNodes, allNodes);
-    const layers = layerResult.layers || layerResult;
+    const layers = this.calculateLayersBottomUp(leafNodes, allNodes);
 
     // 🎯 关键：为每层创建混合节点列表（普通节点+endpoint）
     this.createMixedLayerNodes(layers);
@@ -1386,63 +1455,14 @@ export class UnifiedStructuredLayoutEngine {
         .join(", "),
     });
 
-    const result = {
+    return {
       layers,
-      nodeToLayer: layerResult.nodeToLayer || this.layoutModel.nodeToLayer,
-      parentChildMap: layerResult.parentChildMap || this.layoutModel.parentChildMap,
-      childParentMap: layerResult.childParentMap || this.layoutModel.childParentMap,
-      mixedLayerNodes: layerResult.mixedLayerNodes || this.layoutModel.mixedLayerNodes,
+      nodeToLayer: this.layoutModel.nodeToLayer,
+      parentChildMap: this.layoutModel.parentChildMap,
+      childParentMap: this.layoutModel.childParentMap,
+      mixedLayerNodes: this.layoutModel.mixedLayerNodes,
       totalLayers: layers.length,
     };
-    
-    console.log('🔍 [buildHierarchicalLayers] 返回结果:', {
-      layers: layers ? layers.length : 'undefined',
-      nodeToLayer: result.nodeToLayer ? result.nodeToLayer.size : 'undefined',
-      layerResult: layerResult ? Object.keys(layerResult) : 'undefined'
-    });
-    
-    return result;
-  }
-
-  /**
-   * 测试Y坐标计算功能
-   * @param {Array} testNodes - 测试节点数组
-   */
-  testYCoordinateCalculation(testNodes = []) {
-    console.log('🧪 [Y坐标测试] 开始测试Y坐标计算功能');
-    
-    // 创建测试节点
-    const mockNodes = testNodes.length > 0 ? testNodes : [
-      { id: 'start-node', type: 'start', getData: () => ({ type: 'start' }) },
-      { id: 'node_1755503018616', type: 'audience-split', getData: () => ({ type: 'audience-split' }) },
-      { id: 'node_1756349534104', type: 'manual-call', getData: () => ({ type: 'manual-call' }) },
-      { id: 'node_1756349538148', type: 'ai-call', getData: () => ({ type: 'ai-call' }) }
-    ];
-    
-    console.log('🧪 [Y坐标测试] 测试节点:', mockNodes.map(n => ({ id: n.id, type: n.type })));
-    
-    // 测试buildTypeBasedLayers
-    const layerResult = this.buildTypeBasedLayers(mockNodes);
-    console.log('🧪 [Y坐标测试] 分层结果:', layerResult);
-    
-    // 测试每层的Y坐标计算
-    if (layerResult && layerResult.layers) {
-      layerResult.layers.forEach((layer, layerIndex) => {
-        const y = this.calculateLayerY(layerIndex);
-        console.log(`🧪 [Y坐标测试] 第${layerIndex}层 Y坐标: ${y}`);
-        
-        layer.forEach(node => {
-          console.log(`🧪 [Y坐标测试] 节点 ${node.id} 应该位于 Y=${y}`);
-        });
-      });
-    }
-    
-    // 在浏览器控制台中显示测试结果
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.log('🧪 [Y坐标测试] 测试完成，请检查上方日志');
-    }
-    
-    return layerResult;
   }
 
   /**
@@ -1475,11 +1495,24 @@ export class UnifiedStructuredLayoutEngine {
       }
     });
 
-    // 🗑️ [已删除] 不再建立虚拟endpoint节点的父子关系
+    // 🎯 关键：建立endpoint与源节点的虚拟父子关系
+    endpointNodes.forEach((endpointNode) => {
+      const sourceNodeId = endpointNode.sourceNodeId;
+      const endpointId = endpointNode.id;
+
+      // endpoint作为源节点的子节点
+      if (this.layoutModel.parentChildMap.has(sourceNodeId)) {
+        this.layoutModel.parentChildMap.get(sourceNodeId).push(endpointId);
+      }
+      if (this.layoutModel.childParentMap.has(endpointId)) {
+        this.layoutModel.childParentMap.get(endpointId).push(sourceNodeId);
+      }
+    });
 
     console.log('🔗 [关系构建] 父子关系构建完成', {
       节点数: allNodes.length,
       连接数: validEdges.length,
+      endpoint虚拟关系: endpointNodes.length,
     });
   }
 
@@ -1499,8 +1532,8 @@ export class UnifiedStructuredLayoutEngine {
       const children = this.layoutModel.parentChildMap.get(nodeId) || [];
 
       // 过滤出真正的子节点（排除endpoint虚拟节点）
-      const realChildren = (children || []).filter((childId) => {
-        const childNode = (allNodes || []).find((n) => (n.id || n.getId()) === childId);
+      const realChildren = children.filter((childId) => {
+        const childNode = allNodes.find((n) => (n.id || n.getId()) === childId);
         return childNode && !(childNode.isEndpoint || childNode.isVirtual);
       });
 
@@ -1517,7 +1550,7 @@ export class UnifiedStructuredLayoutEngine {
       console.warn('⚠️ [叶子识别] 无边连接或所有节点都是叶子节点，启用节点类型分层模式');
       
       // 按节点类型分层：end节点作为叶子节点（最底层）
-      const endNodes = (normalNodes || []).filter((node) => {
+      const endNodes = normalNodes.filter((node) => {
         const nodeType = node.type || node.getType?.() || '';
         return nodeType === 'end';
       });
@@ -1528,7 +1561,7 @@ export class UnifiedStructuredLayoutEngine {
       }
       
       // 如果没有end节点，使用非start节点作为叶子节点
-      const nonStartNodes = (normalNodes || []).filter((node) => {
+      const nonStartNodes = normalNodes.filter((node) => {
         const nodeType = node.type || node.getType?.() || '';
         return nodeType !== 'start';
       });
@@ -1598,7 +1631,7 @@ export class UnifiedStructuredLayoutEngine {
     console.log(`🔍 [层级构建] 总节点数: ${allNodes.length}个`);
 
     // 🎯 关键修复：检查是否为无边连接的节点类型分层模式
-    const normalNodes = (allNodes || []).filter(node => !(node.isEndpoint || node.isVirtual));
+    const normalNodes = allNodes.filter(node => !(node.isEndpoint || node.isVirtual));
     
     // 检查图中是否有真实的边连接（从graph.getEdges()获取）
     const edges = this.graph ? this.graph.getEdges() : [];
@@ -1660,8 +1693,8 @@ export class UnifiedStructuredLayoutEngine {
         const children = this.layoutModel.parentChildMap.get(parentId) || [];
 
         // 只考虑非endpoint子节点
-        const realChildren = (children || []).filter((childId) => {
-          const childNode = (allNodes || []).find(
+        const realChildren = children.filter((childId) => {
+          const childNode = allNodes.find(
             (n) => (n.id || n.getId()) === childId,
           );
           return childNode && !(childNode.isEndpoint || childNode.isVirtual);
@@ -1760,22 +1793,9 @@ export class UnifiedStructuredLayoutEngine {
     );
 
     // 🎯 关键修复：重新调整endpoint节点的层级
-    // 🗑️ [已删除] 不再调用adjustEndpointLayers方法
+    this.adjustEndpointLayers(layers, allNodes);
 
-    console.log(
-      `📋 [层级构建] 最终nodeToLayer映射完成，共 ${this.layoutModel.nodeToLayer.size} 个节点`,
-    );
-    console.log('📋 [层级构建] 最终nodeToLayer内容:', Array.from(this.layoutModel.nodeToLayer.entries()));
-
-    // 🎯 关键修复：返回完整的层级结构对象
-    return {
-      layers: layers,
-      nodeToLayer: this.layoutModel.nodeToLayer,
-      parentChildMap: this.layoutModel.parentChildMap,
-      childParentMap: this.layoutModel.childParentMap,
-      mixedLayerNodes: layers.flat(),
-      totalLayers: layers.length
-    };
+    return layers;
   }
 
   /**
@@ -1784,66 +1804,14 @@ export class UnifiedStructuredLayoutEngine {
    * @returns {Array} 分层结果
    */
   buildTypeBasedLayers(normalNodes) {
-    console.log('🔍 [类型分层] 开始构建类型分层，输入节点数:', normalNodes.length);
-    console.log('🔍 [类型分层] 输入节点详情:', normalNodes.map(n => ({
-      id: n.id || n.getId(),
-      type: n.type,
-      hasGetType: !!(n.getType && typeof n.getType === 'function'),
-      hasGetData: !!(n.getData && typeof n.getData === 'function')
-    })));
-    
     const layers = [];
     const startNodes = [];
     const endNodes = [];
     const otherNodes = [];
 
-    // 🎯 关键修复：确保至少有一个有效的节点分类
-    if (!normalNodes || normalNodes.length === 0) {
-      console.warn('⚠️ [类型分层] 没有有效的普通节点，返回空层级结构');
-      return {
-        layers: [],
-        nodeToLayer: new Map(),
-        parentChildMap: this.layoutModel.parentChildMap || new Map(),
-        childParentMap: this.layoutModel.childParentMap || new Map(),
-        mixedLayerNodes: [],
-        totalLayers: 0
-      };
-    }
-
     // 按节点类型分类
     normalNodes.forEach(node => {
-      // 🎯 修复：支持多种方式获取节点类型
-      let nodeType = '';
-      
-      // 方式1：直接属性
-      if (node.type) {
-        nodeType = node.type;
-      } 
-      // 方式2：getType方法
-      else if (node.getType && typeof node.getType === 'function') {
-        nodeType = node.getType();
-      } 
-      // 方式3：getData方法
-      else if (node.getData && typeof node.getData === 'function') {
-        const data = node.getData();
-        nodeType = data?.type || '';
-      }
-      // 方式4：从节点ID推断类型（紧急回退）
-      else {
-        const nodeId = node.id || node.getId();
-        nodeType = this.inferNodeTypeFromId(nodeId);
-      }
-      
-      console.log(`🔍 [类型分类] 节点 ${node.id || node.getId()} 的类型: ${nodeType}`);
-      console.log(`🔍 [类型分类] 节点数据详情:`, {
-        nodeId: node.id || node.getId(),
-        hasType: !!node.type,
-        hasGetType: !!(node.getType && typeof node.getType === 'function'),
-        hasGetData: !!(node.getData && typeof node.getData === 'function'),
-        getData: node.getData ? node.getData() : null,
-        finalType: nodeType
-      });
-      
+      const nodeType = node.type || node.getType?.() || '';
       if (nodeType === 'start') {
         startNodes.push(node);
       } else if (nodeType === 'end') {
@@ -1853,14 +1821,10 @@ export class UnifiedStructuredLayoutEngine {
       }
     });
 
-
-
-    console.log('🎯 [类型分层] 节点分类结果:', {
+    console.log('🎯 [类型分层] 节点分类:', {
       start: startNodes.length,
       end: endNodes.length,
-      other: otherNodes.length,
-      total: startNodes.length + endNodes.length + otherNodes.length,
-      expected: normalNodes.length
+      other: otherNodes.length
     });
 
     // 构建垂直分层：start在顶层，end在底层，其他节点在中间
@@ -1879,38 +1843,11 @@ export class UnifiedStructuredLayoutEngine {
       console.log(`📊 [类型分层] 第${layers.length - 1}层(底层): end节点`, endNodes.map(n => n.id || n.getId()));
     }
 
-    // 🎯 关键修复：确保所有节点都被正确分层
+    // 如果只有一种类型的节点，确保至少有一层
     if (layers.length === 0 && normalNodes.length > 0) {
-      // 如果没有任何分层，将所有节点放在一层
       layers.push(normalNodes);
-      console.log('📊 [类型分层] 紧急回退：单一类型层级:', normalNodes.map(n => n.id || n.getId()));
-    } else if (normalNodes.length > 0) {
-      // 验证所有节点都被分配到层级中
-      const assignedNodes = layers.flat();
-      const unassignedNodes = normalNodes.filter(node => !assignedNodes.includes(node));
-      
-      if (unassignedNodes.length > 0) {
-        console.warn('⚠️ [类型分层] 发现未分配的节点:', unassignedNodes.map(n => n.id || n.getId()));
-        // 将未分配的节点添加到最后一层
-        if (layers.length > 0) {
-          layers[layers.length - 1].push(...unassignedNodes);
-        } else {
-          layers.push(unassignedNodes);
-        }
-        console.log('🔧 [类型分层] 已将未分配节点添加到层级中');
-      }
+      console.log('📊 [类型分层] 单一类型层级:', normalNodes.map(n => n.id || n.getId()));
     }
-
-    // 🎯 最终保护：确保至少有一层
-    if (layers.length === 0 && normalNodes.length > 0) {
-      console.error('🚨 [类型分层] 严重错误：所有节点都未能分层，强制创建单层结构');
-      layers.push([...normalNodes]);
-    }
-
-    console.log(`📋 [类型分层] 最终层级结构: ${layers.length}层，总节点数: ${layers.flat().length}`);
-    layers.forEach((layer, index) => {
-      console.log(`  第${index}层: ${layer.length}个节点`, layer.map(n => n.id || n.getId()));
-    });
 
     // 更新nodeToLayer映射
     this.layoutModel.nodeToLayer = new Map();
@@ -1923,24 +1860,7 @@ export class UnifiedStructuredLayoutEngine {
 
     console.log(`📋 [类型分层] nodeToLayer映射完成，共 ${this.layoutModel.nodeToLayer.size} 个节点`);
 
-    // 🎯 关键修复：在类型分层后也需要调整endpoint节点的层级
-    // 获取所有节点（包括endpoint）
-    const allNodesWithEndpoints = this.layoutModel.allNodes || [];
-    if (allNodesWithEndpoints.length > normalNodes.length) {
-      console.log('🔧 [类型分层] 开始调整endpoint节点层级');
-      // 🗑️ [已删除] 不再调用adjustEndpointLayers方法
-      console.log(`📋 [类型分层] 最终nodeToLayer映射完成，共 ${this.layoutModel.nodeToLayer.size} 个节点`);
-    }
-
-    // 🎯 关键修复：返回完整的层级结构对象，与calculateLayersBottomUp保持一致
-    return {
-      layers: layers,
-      nodeToLayer: this.layoutModel.nodeToLayer,
-      parentChildMap: this.layoutModel.parentChildMap,
-      childParentMap: this.layoutModel.childParentMap,
-      mixedLayerNodes: layers.flat(),
-      totalLayers: layers.length
-    };
+    return layers;
   }
 
   /**
@@ -1948,7 +1868,168 @@ export class UnifiedStructuredLayoutEngine {
    * @param {Array} layers - 分层结果
    * @param {Array} allNodes - 所有节点
    */
-  // 🗑️ [已删除] adjustEndpointLayers 方法已被新的预览线分层策略替代
+  adjustEndpointLayers(layers, allNodes) {
+    console.log("🔧 [层级调整] 开始调整endpoint节点层级（增强版本）");
+
+    // 收集所有endpoint节点
+    const endpointNodes = allNodes.filter(
+      (node) => node.isEndpoint || node.isVirtual,
+    );
+    console.log(`🔍 [层级调整] 发现 ${endpointNodes.length} 个endpoint节点`);
+
+    // 从layers中移除所有endpoint节点
+    layers.forEach((layer, layerIndex) => {
+      for (let i = layer.length - 1; i >= 0; i--) {
+        const node = layer[i];
+        if (node.isEndpoint || node.isVirtual) {
+          console.log(
+            `🗑️ [层级调整] 从第${layerIndex}层移除endpoint ${node.id || node.getId()}`,
+          );
+          layer.splice(i, 1);
+        }
+      }
+    });
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    // 重新分配endpoint节点到正确的层级
+    endpointNodes.forEach((endpointNode) => {
+      const endpointId = endpointNode.id || endpointNode.getId();
+      console.log(`🔍 [层级调整] 处理endpoint: ${endpointId}`);
+
+      // 🎯 增强：多种方式获取源节点ID
+      let sourceNodeId = null;
+
+      // 方式1：直接属性
+      if (endpointNode.sourceNodeId) {
+        sourceNodeId = endpointNode.sourceNodeId;
+        console.log(
+          `✅ [层级调整] 通过sourceNodeId找到源节点: ${sourceNodeId}`,
+        );
+      }
+      // 方式2：sourceId属性
+      else if (endpointNode.sourceId) {
+        sourceNodeId = endpointNode.sourceId;
+        console.log(`✅ [层级调整] 通过sourceId找到源节点: ${sourceNodeId}`);
+      }
+      // 方式3：从ID中解析（针对virtual_endpoint_xxx格式）
+      else if (endpointId.includes("virtual_endpoint_")) {
+        // 🎯 修复：正确解析virtual_endpoint_endpoint_node_xxx_xxx格式的ID
+        if (endpointId.includes("virtual_endpoint_endpoint_")) {
+          // 格式：virtual_endpoint_endpoint_node_1754380100151_unmatch_default
+          const match = endpointId.match(
+            /virtual_endpoint_endpoint_(node_\d+)_/,
+          );
+          if (match) {
+            sourceNodeId = match[1]; // 提取 node_1754380100151
+            console.log(`✅ [层级调整] 从ID解析出源节点: ${sourceNodeId}`);
+          }
+        } else {
+          // 其他格式：virtual_endpoint_xxx
+          const parts = endpointId.split("_");
+          if (parts.length >= 3) {
+            sourceNodeId = parts[2]; // virtual_endpoint_[sourceId]_xxx
+            console.log(`✅ [层级调整] 从ID解析出源节点: ${sourceNodeId}`);
+          }
+        }
+      }
+      // 方式4：从连接关系中查找
+      else {
+        // 查找指向此endpoint的连接
+        const incomingConnections =
+          this.layoutModel.childParentMap.get(endpointId) || [];
+        if (incomingConnections.length > 0) {
+          sourceNodeId = incomingConnections[0]; // 取第一个父节点作为源节点
+          console.log(`✅ [层级调整] 从连接关系找到源节点: ${sourceNodeId}`);
+        }
+      }
+
+      if (sourceNodeId) {
+        // 找到源节点的层级
+        const sourceNodeLayer = this.layoutModel.nodeToLayer.get(sourceNodeId);
+        console.log(
+          `🔍 [层级调整] 源节点 ${sourceNodeId} 的层级: ${sourceNodeLayer}`,
+        );
+
+        if (sourceNodeLayer !== undefined) {
+          const targetLayer = sourceNodeLayer + 1;
+
+          // 确保目标层级存在
+          while (layers.length <= targetLayer) {
+            layers.push([]);
+            console.log(`➕ [层级调整] 创建新层级: 第${layers.length - 1}层`);
+          }
+
+          // 将endpoint节点添加到正确的层级
+          layers[targetLayer].push(endpointNode);
+          this.layoutModel.nodeToLayer.set(endpointId, targetLayer);
+
+          console.log(
+            `🎯 [层级调整] endpoint ${endpointId} 从源节点 ${sourceNodeId}(第${sourceNodeLayer}层) 调整到第${targetLayer}层`,
+          );
+          successCount++;
+        } else {
+          console.warn(
+            `⚠️ [层级调整] endpoint ${endpointId} 的源节点 ${sourceNodeId} 未找到层级信息`,
+          );
+
+          // 🔧 紧急回退：将endpoint放到最后一层
+          const lastLayerIndex = layers.length - 1;
+          if (lastLayerIndex >= 0) {
+            layers[lastLayerIndex].push(endpointNode);
+            this.layoutModel.nodeToLayer.set(endpointId, lastLayerIndex);
+            console.log(
+              `🚨 [层级调整] 紧急回退：将endpoint ${endpointId} 放到最后一层(第${lastLayerIndex}层)`,
+            );
+            successCount++;
+          } else {
+            // 创建新层级
+            layers.push([endpointNode]);
+            this.layoutModel.nodeToLayer.set(endpointId, 0);
+            console.log(
+              `🚨 [层级调整] 紧急回退：为endpoint ${endpointId} 创建新层级(第0层)`,
+            );
+            successCount++;
+          }
+        }
+      } else {
+        console.warn(`⚠️ [层级调整] endpoint ${endpointId} 未找到源节点信息`);
+
+        // 🔧 最终回退：将endpoint放到最后一层
+        const lastLayerIndex = Math.max(0, layers.length - 1);
+        if (layers.length === 0) {
+          layers.push([]);
+        }
+        layers[lastLayerIndex].push(endpointNode);
+        this.layoutModel.nodeToLayer.set(endpointId, lastLayerIndex);
+        console.log(
+          `🚨 [层级调整] 最终回退：将endpoint ${endpointId} 放到第${lastLayerIndex}层`,
+        );
+        failureCount++;
+      }
+    });
+
+    console.log('🔧 [层级调整] endpoint节点层级调整完成');
+    console.log(`  ✅ 成功处理: ${successCount} 个`);
+    console.log(`  ⚠️ 回退处理: ${failureCount} 个`);
+    console.log(`  📊 总计: ${endpointNodes.length} 个endpoint`);
+
+    // 最终验证：确保所有endpoint都有层级信息
+    const unassignedEndpoints = endpointNodes.filter((node) => {
+      const nodeId = node.id || node.getId();
+      return !this.layoutModel.nodeToLayer.has(nodeId);
+    });
+
+    if (unassignedEndpoints.length > 0) {
+      console.error(
+        `❌ [层级调整] 仍有 ${unassignedEndpoints.length} 个endpoint未分配层级:`,
+        unassignedEndpoints.map((n) => n.id || n.getId()),
+      );
+    } else {
+      console.log('✅ [层级调整] 所有endpoint都已正确分配层级');
+    }
+  }
 
   /**
    * 为每层创建混合节点列表（普通节点+endpoint统一管理）
@@ -1957,18 +2038,24 @@ export class UnifiedStructuredLayoutEngine {
   createMixedLayerNodes(layers) {
     layers.forEach((layer, layerIndex) => {
       const mixedNodes = {
-        normalNodes: layer, // 🗑️ [已删除] 不再区分endpoint节点，所有节点都作为普通节点处理
-        endpointNodes: [], // 🗑️ [已删除] endpoint节点数组已清空
+        normalNodes: [],
+        endpointNodes: [],
         allNodes: layer,
         layerIndex,
       };
 
-      // 🗑️ [已删除] 不再过滤endpoint节点
+      layer.forEach((node) => {
+        if (node.isEndpoint) {
+          mixedNodes.endpointNodes.push(node);
+        } else {
+          mixedNodes.normalNodes.push(node);
+        }
+      });
 
       this.layoutModel.mixedLayerNodes.set(layerIndex, mixedNodes);
 
       console.log(
-        `📊 [混合层级] 第${layerIndex}层: ${mixedNodes.normalNodes.length}个节点`,
+        `📊 [混合层级] 第${layerIndex}层: ${mixedNodes.normalNodes.length}普通节点 + ${mixedNodes.endpointNodes.length}endpoint节点`,
       );
     });
   }
@@ -1984,95 +2071,21 @@ export class UnifiedStructuredLayoutEngine {
     const { layers } = layerStructure;
     const positions = new Map();
 
-    // 🎯 关键修复：识别主干线节点（需要X坐标对齐）
-    const mainlineNodes = this.identifyMainlineNodes(layers);
-    console.log('🎯 [主干线识别] 主干线节点:', mainlineNodes.map(n => n.id || n.getId()));
-
-    // 计算主干线X坐标（画布中心）
-    const mainlineX = this.options.canvas.width / 2 || 400;
-    console.log(`🎯 [主干线对齐] 主干线X坐标: ${mainlineX}`);
-
-    // 🔥 关键调试：详细验证layers数组结构
-    console.log(`🔍 [位置计算] layers数组详情:`, {
-      layersType: typeof layers,
-      isArray: Array.isArray(layers),
-      length: layers ? layers.length : 'undefined',
-      layers: layers ? layers.map((layer, idx) => ({
-        index: idx,
-        isArray: Array.isArray(layer),
-        length: layer ? layer.length : 'undefined',
-        nodes: layer ? layer.map(n => n.id || n.getId()) : 'undefined'
-      })) : 'layers is undefined'
-    });
-
-    // 从顶层开始计算
-    for (let layerIndex = 0; layerIndex < layers.length; layerIndex++) {
+    // 从最底层开始计算
+    for (let layerIndex = layers.length - 1; layerIndex >= 0; layerIndex--) {
       const layer = layers[layerIndex];
-      const isTopLayer = layerIndex === 0;
+      const isBottomLayer = layerIndex === layers.length - 1;
 
-      // 🔥 关键调试：详细记录每层的处理过程
-      console.log(`🔍 [位置计算] 处理第${layerIndex}层:`, {
-        layerIndex,
-        layerIndexType: typeof layerIndex,
-        isTopLayer,
-        layer: layer ? {
-          isArray: Array.isArray(layer),
-          length: layer.length,
-          nodes: layer.map(n => ({
-            id: n.id || n.getId(),
-            isEndpoint: n.isEndpoint,
-            type: n.type
-          }))
-        } : 'layer is undefined'
-      });
-
-      // 🔥 关键修复：更严格的layerIndex和layer数据验证
-      if (typeof layerIndex !== 'number') {
-        console.error(`❌ [位置计算] layerIndex不是数字类型: ${layerIndex} (type: ${typeof layerIndex}), 跳过该层`);
-        continue;
-      }
-      
-      if (isNaN(layerIndex)) {
-        console.error(`❌ [位置计算] layerIndex是NaN: ${layerIndex}, 跳过该层`);
-        continue;
-      }
-      
-      if (layerIndex < 0) {
-        console.error(`❌ [位置计算] layerIndex是负数: ${layerIndex}, 跳过该层`);
-        continue;
-      }
-      
-      if (!Number.isFinite(layerIndex)) {
-        console.error(`❌ [位置计算] layerIndex不是有限数: ${layerIndex}, 跳过该层`);
-        continue;
-      }
-      
-      if (!layer || !Array.isArray(layer)) {
-        console.error(`❌ [位置计算] 第${layerIndex}层数据无效:`, layer);
-        continue;
-      }
-      
-      if (layer.length === 0) {
-        console.warn(`⚠️ [位置计算] 第${layerIndex}层为空，跳过`);
-        continue;
-      }
-      
-      console.log(`🎯 [位置计算] 开始计算第${layerIndex}层，节点数: ${layer.length}`);
-
-      if (isTopLayer) {
-        // 顶层：统一排列所有节点（普通+endpoint）
-        console.log(`🔍 [位置计算] 调用calculateTopLayerPositions，layerIndex=${layerIndex}`);
-        this.calculateTopLayerPositions(layer, positions, layerIndex, mainlineNodes, mainlineX);
+      if (isBottomLayer) {
+        // 最底层：统一排列所有节点（普通+endpoint）
+        this.calculateBottomLayerPositions(layer, positions, layerIndex);
       } else {
-        // 下层：基于父节点分布计算，但主干线节点保持X对齐
-        console.log(`🔍 [位置计算] 调用calculateChildLayerPositions，layerIndex=${layerIndex}`);
-        this.calculateChildLayerPositions(
+        // 上层：基于子节点分布计算
+        this.calculateParentLayerPositions(
           layer,
           positions,
           layerIndex,
           layerStructure,
-          mainlineNodes,
-          mainlineX
         );
       }
     }
@@ -2137,67 +2150,23 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 识别主干线节点（需要X坐标对齐的节点）
-   * @param {Array} layers - 所有层级
-   * @returns {Array} 主干线节点数组
-   */
-  identifyMainlineNodes(layers) {
-    const mainlineNodes = [];
-    
-    layers.forEach(layer => {
-      layer.forEach(node => {
-        const nodeId = node.id || node.getId();
-        // 🎯 关键修复：排除endpoint节点，只识别真正的主干线节点
-        if (!node.isEndpoint && !nodeId.includes('endpoint')) {
-          // 识别主干线节点：start、end、split、wait等关键节点
-          if (nodeId.includes('start') || 
-              nodeId.includes('end') || 
-              nodeId.includes('split') || 
-              nodeId.includes('wait') ||
-              nodeId.includes('audience-split')) {
-            mainlineNodes.push(node);
-            console.log(`🎯 [主干线识别] 添加主干线节点: ${nodeId}`);
-          }
-        } else {
-          console.log(`🎯 [主干线识别] 跳过endpoint节点: ${nodeId}`);
-        }
-      });
-    });
-    
-    return mainlineNodes;
-  }
-
-  /**
-   * 计算最顶层位置（垂直分层布局）
-   * @param {Array} topLayer - 最顶层节点
+   * 计算最底层位置（垂直分层布局）
+   * @param {Array} bottomLayer - 最底层节点
    * @param {Map} positions - 位置映射
    * @param {number} layerIndex - 层级索引
-   * @param {Array} mainlineNodes - 主干线节点
-   * @param {number} mainlineX - 主干线X坐标
    */
-  calculateTopLayerPositions(topLayer, positions, layerIndex, mainlineNodes = [], mainlineX = 400) {
+  calculateBottomLayerPositions(bottomLayer, positions, layerIndex) {
     const nodeSpacing = this.options.node.preferredSpacing;
     
-    // 🔥 关键调试：记录方法调用参数
-    console.log(`🔍 [calculateTopLayerPositions] 方法调用参数:`, {
-      layerIndex,
-      layerIndexType: typeof layerIndex,
-      topLayerLength: topLayer ? topLayer.length : 'undefined',
-      mainlineNodesLength: mainlineNodes ? mainlineNodes.length : 'undefined',
-      mainlineX
-    });
-    
     // 🎯 关键修复：垂直分层布局 - 计算Y坐标（层级位置）
-    console.log(`🔍 [calculateTopLayerPositions] 准备调用calculateLayerY，layerIndex=${layerIndex}`);
     const layerY = this.calculateLayerY(layerIndex);
-    console.log(`🔍 [calculateTopLayerPositions] calculateLayerY返回值: ${layerY}`);
     
     console.log(
-      `📊 [垂直分层] 第${layerIndex}层，目标Y坐标: ${layerY}，节点数: ${topLayer.length}`,
+      `📊 [垂直分层] 第${layerIndex}层，目标Y坐标: ${layerY}，节点数: ${bottomLayer.length}`,
     );
 
     // 🎯 关键修复：垂直分层布局 - 按节点类型排序，开始节点在顶层
-    const sortedNodes = topLayer.sort((a, b) => {
+    const sortedNodes = bottomLayer.sort((a, b) => {
       const aId = a.id || a.getId();
       const bId = b.id || b.getId();
       
@@ -2213,34 +2182,27 @@ export class UnifiedStructuredLayoutEngine {
       return aId.localeCompare(bId);
     });
 
-    // 🎯 主干线对齐布局：为每个节点分配位置
-    const mainlineNodeIds = new Set(mainlineNodes.map(n => n.id || n.getId()));
-    
+    // 🎯 垂直分层布局：为每个节点分配位置
     sortedNodes.forEach((node, index) => {
       const nodeId = node.id || node.getId();
       
-      // 🎯 关键修复：主干线节点X坐标对齐，分支节点水平分布
-      let nodeX;
-      if (mainlineNodeIds.has(nodeId)) {
-        // 主干线节点：使用统一的X坐标
-        nodeX = mainlineX;
-        console.log(`🎯 [主干线对齐] 节点 ${nodeId} 使用主干线X坐标: ${nodeX}`);
-      } else {
-        // 分支节点：水平分布
-        const totalWidth = (sortedNodes.length - 1) * nodeSpacing;
-        const startX = mainlineX - totalWidth / 2;
-        nodeX = sortedNodes.length === 1 ? mainlineX : startX + index * nodeSpacing;
-        console.log(`🎯 [分支分布] 节点 ${nodeId} 使用分布X坐标: ${nodeX}`);
-      }
+      // 🎯 关键修复：垂直分层布局 - 所有节点使用相同的X坐标（居中对齐）
+      const centerX = this.options.canvas.width / 2 || 400; // 画布中心X坐标
+      const nodeX = centerX;
       
-      // 🎯 关键修复：使用层级Y坐标
-      const finalY = layerY;
+      // 🎯 关键修复：单节点特殊处理
+      let finalY;
+      if (bottomLayer.length === 1) {
+        finalY = 300; // 单节点使用画布中心Y坐标
+      } else {
+        finalY = layerY; // 多节点使用层级Y坐标
+      }
       
       const positionData = {
         x: nodeX,
         y: finalY,
         layerIndex,
-        isTopLayer: layerIndex === 0,
+        isBottomLayer: true,
         nodeType: node.isEndpoint ? "endpoint" : "normal",
         sortIndex: index
       };
@@ -2248,7 +2210,7 @@ export class UnifiedStructuredLayoutEngine {
       positions.set(nodeId, positionData);
       
       console.log(
-        `📍 [水平分布] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${nodeId}: (${nodeX}, ${finalY}), 层级: ${layerIndex}`,
+        `📍 [垂直分层] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${nodeId}: (${nodeX}, ${finalY}), 层级: ${layerIndex}`,
       );
       
       // 🎯 关键修复：对于虚拟endpoint节点，立即同步其内部位置
@@ -2267,96 +2229,18 @@ export class UnifiedStructuredLayoutEngine {
 
   /**
    * 计算层级Y坐标
-   * @param {number} layerIndex - 层级索引（0为最顶层）
+   * @param {number} layerIndex - 层级索引（0为最底层）
    * @returns {number} Y坐标
    */
   calculateLayerY(layerIndex) {
-    // 🎯 优化：基于开始节点的基础坐标系统
-    const START_NODE_BASE_Y = 100; // 开始节点的固定基础Y坐标
+    const baseY = 300; // 基础Y坐标（画布中心）
     const layerSpacing = 150; // 层级间距
     
-    // 🚀 新增：确保开始节点（第0层或第1层）有稳定的基础坐标
-    const baseY = START_NODE_BASE_Y; // 所有计算都基于开始节点的基础坐标
-    
-    // 🔥 关键调试：详细记录输入参数
-    console.log(`🔍 [Y坐标计算] 输入参数详情:`, {
-      layerIndex,
-      type: typeof layerIndex,
-      isNumber: typeof layerIndex === 'number',
-      isNaN: isNaN(layerIndex),
-      isNegative: layerIndex < 0,
-      baseY,
-      layerSpacing,
-      expectedResult: baseY + (layerIndex * layerSpacing)
-    });
-    
-    // 🔥 关键调试：在浏览器控制台中显示详细计算过程
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.debug(`[Y坐标计算] layerIndex=${layerIndex}, baseY=${baseY}, layerSpacing=${layerSpacing}`);
-    }
-    
-    // 🔥 关键修复：更严格的layerIndex参数验证，防止NaN
-    let validLayerIndex = layerIndex;
-    
-    if (typeof layerIndex !== 'number') {
-      console.error(`❌ [Y坐标计算] layerIndex不是数字类型: ${layerIndex} (type: ${typeof layerIndex})`);
-      validLayerIndex = 0; // 默认为开始节点层级
-    } else if (isNaN(layerIndex)) {
-      console.error(`❌ [Y坐标计算] layerIndex是NaN: ${layerIndex}`);
-      validLayerIndex = 0; // 默认为开始节点层级
-    } else if (layerIndex < 0) {
-      console.error(`❌ [Y坐标计算] layerIndex是负数: ${layerIndex}`);
-      validLayerIndex = 0; // 默认为开始节点层级
-    } else if (!Number.isFinite(layerIndex)) {
-      console.error(`❌ [Y坐标计算] layerIndex不是有限数: ${layerIndex}`);
-      validLayerIndex = 0; // 默认为开始节点层级
-    }
-    
-    // 🎯 新增：开始节点特殊处理 - 确保开始节点始终有稳定的基础坐标
-    if (validLayerIndex === 0 || validLayerIndex === 1) {
-      // 开始节点通常在第0层或第1层，给予固定的基础坐标
-      const startNodeY = START_NODE_BASE_Y + (validLayerIndex * layerSpacing);
-      console.log(`🎯 [开始节点坐标] 开始节点层级=${validLayerIndex} -> 固定Y坐标=${startNodeY}`);
-      return startNodeY;
-    }
-    
-    if (validLayerIndex !== layerIndex) {
-      console.error('❌ [Y坐标计算] 调用堆栈:', new Error().stack);
-      console.error(`❌ [Y坐标计算] 使用修正后的layerIndex=${validLayerIndex}`);
-    }
-    
-    // 🎯 优化：基于开始节点的相对坐标计算
-    // 从开始节点基础坐标开始，向下递增Y坐标（因为Y轴向下为正）
-    // layerIndex=0（开始节点）-> Y=100 (START_NODE_BASE_Y)
-    // layerIndex=1（第二层）-> Y=250 (START_NODE_BASE_Y + 150)
-    // layerIndex=2（第三层）-> Y=400 (START_NODE_BASE_Y + 300)
-    // 所有节点都基于开始节点的基础坐标进行相对计算
-    const result = START_NODE_BASE_Y + (validLayerIndex * layerSpacing);
-    
-    console.log(`🎯 [相对坐标计算] 基于开始节点基础坐标${START_NODE_BASE_Y}，层级${validLayerIndex} -> Y坐标=${result}`);
-    
-    // 🔥 关键调试：验证计算结果
-    if (!Number.isFinite(result) || isNaN(result)) {
-      console.error(`❌ [Y坐标计算] 计算结果无效!`, {
-        baseY,
-        validLayerIndex,
-        layerSpacing,
-        calculation: `${baseY} + (${validLayerIndex} * ${layerSpacing})`,
-        result,
-        isFinite: Number.isFinite(result),
-        isNaN: isNaN(result)
-      });
-      return 100; // 返回默认值
-    }
-    
-    console.log(`🎯 [Y坐标计算] layerIndex=${validLayerIndex} -> Y=${result}`);
-    
-    // 🔥 关键调试：在浏览器控制台中显示Y坐标计算结果
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.debug(`[Y坐标计算] layerIndex=${validLayerIndex} -> Y=${result}`);
-    }
-    
-    return result;
+    // 从底层开始，向上递减Y坐标（因为Y轴向下为正）
+    // layerIndex=0（底层）-> Y=300
+    // layerIndex=1（上一层）-> Y=150
+    // layerIndex=2（再上一层）-> Y=0
+    return baseY - (layerIndex * layerSpacing);
   }
 
   /**
@@ -2372,17 +2256,7 @@ export class UnifiedStructuredLayoutEngine {
     layerIndex,
     layerStructure,
   ) {
-    // 🔥 关键调试：记录方法调用参数
-    console.log(`🔍 [calculateParentLayerPositions] 方法调用参数:`, {
-      layerIndex,
-      layerIndexType: typeof layerIndex,
-      parentLayerLength: parentLayer ? parentLayer.length : 'undefined'
-    });
-    
-    console.log(`🔍 [calculateParentLayerPositions] 准备调用calculateLayerY，layerIndex=${layerIndex}`);
     const layerY = this.calculateLayerY(layerIndex);
-    console.log(`🔍 [calculateParentLayerPositions] calculateLayerY返回值: ${layerY}`);
-    
     console.log(
       `📍 [父层定位] 第${layerIndex}层，目标Y坐标: ${layerY}，父节点数: ${parentLayer.length}`,
     );
@@ -2487,211 +2361,14 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
-   * 计算子层位置（基于父节点分布）
-   * @param {Array} childLayer - 子层节点
-   * @param {Map} positions - 位置映射
-   * @param {number} layerIndex - 层级索引
-   * @param {Object} layerStructure - 层级结构
-   * @param {Array} mainlineNodes - 主干线节点
-   * @param {number} mainlineX - 主干线X坐标
-   */
-  calculateChildLayerPositions(
-    childLayer,
-    positions,
-    layerIndex,
-    layerStructure,
-    mainlineNodes = [],
-    mainlineX = 400
-  ) {
-    // 🔥 关键调试：记录方法调用参数
-    console.log(`🔍 [calculateChildLayerPositions] 方法调用参数:`, {
-      layerIndex,
-      layerIndexType: typeof layerIndex,
-      childLayerLength: childLayer ? childLayer.length : 'undefined',
-      mainlineNodesLength: mainlineNodes ? mainlineNodes.length : 'undefined',
-      mainlineX
-    });
-    
-    console.log(`🔍 [calculateChildLayerPositions] 准备调用calculateLayerY，layerIndex=${layerIndex}`);
-    const layerY = this.calculateLayerY(layerIndex);
-    console.log(`🔍 [calculateChildLayerPositions] calculateLayerY返回值: ${layerY}`);
-    
-    console.log(
-      `📍 [子层定位] 第${layerIndex}层，目标Y坐标: ${layerY}，子节点数: ${childLayer.length}`,
-    );
-
-    // 🔥 关键修复：强制统一同层Y坐标验证
-    console.log(`🎯 [Y坐标统一] 开始强制统一第${layerIndex}层所有节点Y坐标为: ${layerY}`);
-
-    // 🎯 关键修复：分别处理有父节点和无父节点的节点
-    const nodesWithParents = [];
-    const nodesWithoutParents = [];
-
-    childLayer.forEach((childNode) => {
-       const childId = childNode.id || childNode.getId();
-       const parents = this.layoutModel.childParentMap.get(childId) || [];
-
-      // 获取父节点位置
-      const parentPositions = parents
-        .map((parentId) => positions.get(parentId))
-        .filter((pos) => pos !== undefined);
-
-      if (parentPositions.length > 0) {
-        nodesWithParents.push({ node: childNode, parentPositions });
-      } else {
-        nodesWithoutParents.push(childNode);
-      }
-    });
-
-    // 🎯 主干线节点识别
-    const mainlineNodeIds = new Set(mainlineNodes.map(n => n.id || n.getId()));
-
-    // 第一步：处理有父节点的节点
-    nodesWithParents.forEach(({ node, parentPositions }) => {
-      const childId = node.id || node.getId();
-      
-      // 🎯 关键修复：主干线节点使用固定X坐标，其他节点基于父节点计算
-      let childX;
-      if (mainlineNodeIds.has(childId)) {
-        childX = mainlineX; // 主干线节点X坐标对齐
-        console.log(`🎯 [主干线对齐] 子层节点 ${childId} 使用主干线X坐标: ${childX}`);
-      } else {
-        childX = this.calculateOptimalChildPosition(parentPositions);
-        console.log(`🎯 [父节点计算] 子层节点 ${childId} 基于父节点计算X坐标: ${childX}`);
-      }
-
-      const positionData = {
-        x: childX,
-        y: layerY, // 🔥 关键修复：强制使用层级计算的Y坐标，确保同层节点Y坐标一致
-        layerIndex,
-        nodeType: node.isEndpoint ? "endpoint" : "normal",
-        parentsCount: parentPositions.length,
-        parentsSpread: this.calculateParentsSpread(parentPositions),
-        isMainline: mainlineNodeIds.has(childId)
-      };
-
-      positions.set(childId, positionData);
-
-      console.log(
-        `📍 [子层定位] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${childId}: (${childX.toFixed(1)}, ${layerY}), 父节点数: ${parentPositions.length}`,
-      );
-
-      // 🔥 关键修复：Y坐标一致性验证
-      console.log(`🎯 [Y坐标验证] 节点 ${childId} Y坐标已强制设置为: ${layerY}`);
-    });
-
-    // 第二步：处理无父节点的节点（通常是endpoint节点）
-    if (nodesWithoutParents.length > 0) {
-      console.log(
-        `📍 [子层定位] 处理 ${nodesWithoutParents.length} 个无父节点的节点`,
-      );
-
-      // 获取已分配位置的节点X坐标范围
-      const existingPositions = Array.from(positions.values())
-        .filter((pos) => pos.layerIndex === layerIndex)
-        .map((pos) => pos.x);
-
-      let startX = 0;
-      if (existingPositions.length > 0) {
-        const maxX = Math.max(...existingPositions);
-        startX = maxX + this.options.node.preferredSpacing;
-      }
-
-      // 为无父节点的节点分配X坐标
-      nodesWithoutParents.forEach((node, index) => {
-        const childId = node.id || node.getId();
-        
-        // 🎯 关键修复：主干线节点使用固定X坐标，其他节点水平分布
-        let nodeX;
-        if (mainlineNodeIds.has(childId)) {
-          nodeX = mainlineX; // 主干线节点X坐标对齐
-          console.log(`🎯 [主干线对齐] 孤立节点 ${childId} 使用主干线X坐标: ${nodeX}`);
-        } else {
-          nodeX = startX + index * this.options.node.preferredSpacing;
-          console.log(`🎯 [水平分布] 孤立节点 ${childId} 使用分布X坐标: ${nodeX}`);
-        }
-
-        const positionData = {
-          x: nodeX,
-          y: layerY, // 🔥 关键修复：强制使用层级计算的Y坐标，确保同层节点Y坐标一致
-          layerIndex,
-          nodeType: node.isEndpoint ? "endpoint" : "normal",
-          parentsCount: 0,
-          parentsSpread: 0,
-          isOrphanNode: true, // 标记为孤立节点
-          isMainline: mainlineNodeIds.has(childId)
-        };
-
-        positions.set(childId, positionData);
-
-        console.log(
-          `📍 [子层定位] ${node.isEndpoint ? "Endpoint" : "普通节点"} ${childId}: (${nodeX.toFixed(1)}, ${layerY}), 孤立节点`,
-        );
-
-        // 🔥 关键修复：Y坐标一致性验证
-        console.log(`🎯 [Y坐标验证] 孤立节点 ${childId} Y坐标已强制设置为: ${layerY}`);
-
-        // 🎯 关键修复：对于虚拟endpoint节点，立即同步其内部位置
-        if (node.isEndpoint && node.setPosition) {
-          node.setPosition({ x: nodeX, y: layerY });
-          console.log(
-            `🎯 [同步修复] 虚拟endpoint ${childId} 内部位置已同步: (${nodeX.toFixed(1)}, ${layerY})`,
-          );
-        }
-      });
-    }
-  }
-
-  /**
-   * 计算子节点最优位置
-   * @param {Array} parentPositions - 父节点位置数组
-   * @returns {number} 最优X坐标
-   */
-  calculateOptimalChildPosition(parentPositions) {
-    if (!parentPositions || parentPositions.length === 0) {
-      console.warn('⚠️ [子节点定位] 父节点位置数组为空，返回画布中心位置');
-      return this.options.canvas.width / 2 || 400;
-    }
-
-    const parentXCoords = parentPositions.map((pos) => pos.x);
-
-    if (parentXCoords.length === 1) {
-      // 🔥 关键修复：单个父节点，子节点对齐到父节点X坐标
-      const optimalX = parentXCoords[0];
-      console.log(`🎯 [子节点定位] 单父节点对齐: 子节点X = ${optimalX.toFixed(1)}`);
-      return optimalX;
-    } else {
-      // 🔥 关键修复：多个父节点，使用精确的算术平均值作为中点
-      const arithmeticMean = parentXCoords.reduce((sum, x) => sum + x, 0) / parentXCoords.length;
-      
-      console.log(`🎯 [子节点定位] 多父节点中心: 子节点X = ${arithmeticMean.toFixed(1)}`);
-      console.log(`  📊 [计算详情] 算术平均: ${arithmeticMean.toFixed(1)}, 父节点X坐标: [${parentXCoords.map(x => x.toFixed(1)).join(', ')}]`);
-      
-      return arithmeticMean;
-    }
-  }
-
-  /**
-   * 计算父节点分布范围
-   * @param {Array} parentPositions - 父节点位置数组
-   * @returns {number} 分布范围
-   */
-  calculateParentsSpread(parentPositions) {
-    if (parentPositions.length <= 1) return 0;
-
-    const xCoords = parentPositions.map((pos) => pos.x);
-    return Math.max(...xCoords) - Math.min(...xCoords);
-  }
-
-  /**
    * 计算父节点最优位置
    * @param {Array} childPositions - 子节点位置数组
    * @returns {number} 最优X坐标
    */
   calculateOptimalParentPosition(childPositions) {
     if (!childPositions || childPositions.length === 0) {
-      console.warn('⚠️ [父节点定位] 子节点位置数组为空，返回画布中心位置');
-      return this.options.canvas.width / 2 || 400;
+      console.warn('⚠️ [父节点定位] 子节点位置数组为空，返回默认位置0');
+      return 0;
     }
 
     const childXCoords = childPositions.map((pos) => pos.x);
@@ -3457,12 +3134,68 @@ export class UnifiedStructuredLayoutEngine {
     const endpointUpdates = [];
 
     // 遍历所有位置，找到虚拟endpoint节点
-    // 🗑️ [已删除] 不再处理endpoint节点的位置重计算
     positions.forEach((position, nodeId) => {
-      // 跳过endpoint节点处理
+      if (position.nodeType === 'endpoint') {
+        const endpointNode = this.layoutModel.endpointNodes.get(nodeId);
+        if (endpointNode && endpointNode.sourceNodeId) {
+          const sourceNodeId = endpointNode.sourceNodeId;
+          const sourcePosition = positions.get(sourceNodeId);
+          
+          if (sourcePosition) {
+            // 获取源节点信息
+            const sourceNode = this.graph.getCellById(sourceNodeId);
+            if (sourceNode) {
+              const nodeSize = sourceNode.getSize() || { width: 120, height: 40 };
+              
+              // 使用优化后的位置重新计算endpoint位置
+              const newEndpointPosition = this.calculateIntelligentEndpointPosition(
+                sourceNode,
+                sourcePosition,
+                nodeSize,
+                recalculatedCount,
+                true // 🎯 关键：标记使用优化后的位置
+              );
+
+              // 更新位置信息
+              const updatedPosition = {
+                ...position,
+                x: newEndpointPosition.x,
+                y: newEndpointPosition.y,
+                sourceX: sourcePosition.x,
+                sourceY: sourcePosition.y
+              };
+
+              endpointUpdates.push({
+                nodeId,
+                oldPosition: { x: position.x, y: position.y },
+                newPosition: { x: newEndpointPosition.x, y: newEndpointPosition.y },
+                updatedPosition
+              });
+
+              recalculatedCount++;
+            }
+          }
+        }
+      }
     });
 
-    // 🗑️ [已删除] 不再批量应用endpoint更新
+    // 批量应用更新
+    endpointUpdates.forEach(update => {
+      positions.set(update.nodeId, update.updatedPosition);
+      
+      // 同步到虚拟节点对象
+      const endpointNode = this.layoutModel.endpointNodes.get(update.nodeId);
+      if (endpointNode && endpointNode.setPosition) {
+        endpointNode.setPosition({
+          x: update.newPosition.x,
+          y: update.newPosition.y
+        });
+      }
+
+      console.log(
+        `🔄 [Endpoint重计算] ${update.nodeId}: (${update.oldPosition.x.toFixed(1)}, ${update.oldPosition.y.toFixed(1)}) → (${update.newPosition.x.toFixed(1)}, ${update.newPosition.y.toFixed(1)})`
+      );
+    });
 
     console.log(`🔄 [Endpoint重计算] 完成，共重新计算 ${recalculatedCount} 个虚拟endpoint位置`);
   }
@@ -4269,8 +4002,8 @@ export class UnifiedStructuredLayoutEngine {
 
       console.log(`🔍 [层级验证] 检查第 ${layerIndex} 层，共 ${nodes.length} 个节点`);
 
-      // 🔧 关键修复：使用与calculateLayerY相同的公式计算标准Y坐标
-      const standardY = this.calculateLayerY(layerIndex);
+      // 计算层级标准Y坐标（使用理论层级Y坐标）
+      const standardY = layerIndex * this.options.layer.baseHeight;
       let hasInconsistency = false;
 
       // 检查是否有不一致的Y坐标
@@ -4292,7 +4025,8 @@ export class UnifiedStructuredLayoutEngine {
             console.log(`🔧 [Y坐标修正] 节点 ${nodeId}: ${oldY.toFixed(1)} → ${standardY.toFixed(1)} (修正偏差: ${deviation.toFixed(1)}px)`);
             fixedNodes++;
 
-            // 🗑️ [已删除] 不再同步虚拟endpoint节点的内部位置
+            // 🎯 关键修复：同步虚拟endpoint节点的内部位置
+            this.syncVirtualEndpointPosition(nodeId, { x: position.x, y: standardY });
           }
         });
         fixedLayers++;
@@ -4304,7 +4038,18 @@ export class UnifiedStructuredLayoutEngine {
 
 
 
-  // 🗑️ [已删除] syncVirtualEndpointPosition 方法已被新的预览线分层策略替代
+  /**
+   * 🎯 新增：同步虚拟endpoint节点的内部位置
+   * @param {string} nodeId - 节点ID
+   * @param {Object} position - 新位置 {x, y}
+   */
+  syncVirtualEndpointPosition(nodeId, position) {
+    const endpointNode = this.layoutModel.endpointNodes.get(nodeId);
+    if (endpointNode && endpointNode.setPosition) {
+      endpointNode.setPosition(position);
+      console.log(`🎯 [同步修复] 虚拟endpoint ${nodeId} 内部位置已同步: (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+    }
+  }
 
   /**
    * 🎯 关键修复：位置应用后Y坐标验证
@@ -4351,7 +4096,7 @@ export class UnifiedStructuredLayoutEngine {
         totalLayers: layerStructure.totalLayers,
         totalNodes: finalPositions.size,
         normalNodes: 0,
-        endpointNodes: 0, // 🗑️ [已删除] 不再统计endpoint节点
+        endpointNodes: 0,
         layerDistribution: [],
       },
       performance: {
@@ -4363,14 +4108,17 @@ export class UnifiedStructuredLayoutEngine {
 
     // 统计节点类型分布
     finalPositions.forEach((position, nodeId) => {
-      // 🗑️ [已删除] 不再区分endpoint节点类型
-      report.statistics.normalNodes++;
+      if (position.nodeType === "endpoint") {
+        report.statistics.endpointNodes++;
+      } else {
+        report.statistics.normalNodes++;
+      }
     });
 
     // 统计层级分布
     layerStructure.layers.forEach((layer, index) => {
       const normalCount = layer.filter((n) => !n.isEndpoint).length;
-      const endpointCount = 0; // 🗑️ [已删除] 不再统计endpoint节点
+      const endpointCount = layer.filter((n) => n.isEndpoint).length;
 
       report.statistics.layerDistribution.push({
         layer: index,
@@ -4388,9 +4136,138 @@ export class UnifiedStructuredLayoutEngine {
     return report;
   }
 
-  // 🗑️ [已删除] syncAllEndpointPositions 方法已被新的预览线分层策略替代
+  /**
+   * 🎯 关键修复：同步所有endpoint位置到预览线管理器
+   * @param {Map} finalPositions - 最终位置映射
+   */
+  syncAllEndpointPositions(finalPositions) {
+    console.log("🔄 [批量同步] 开始同步所有endpoint位置到预览线管理器");
 
-  // 🗑️ [已删除] validateEndpointPositions 方法已被新的预览线分层策略替代
+    const previewLineManager =
+      this.previewLineManager ||
+      window.unifiedPreviewLineManager ||
+      this.graph.previewLineManager;
+
+    if (!previewLineManager) {
+      console.warn("⚠️ [批量同步] 预览线管理器不可用，跳过同步");
+      return;
+    }
+
+    let syncedCount = 0;
+
+    // 遍历所有endpoint节点
+    this.layoutModel.endpointNodes.forEach((endpointNode, nodeId) => {
+      const position = finalPositions.get(nodeId);
+      if (position) {
+        // 强制更新预览线管理器中的对应endpoint位置
+        this.updatePreviewEndpointPosition(
+          endpointNode.sourceNodeId,
+          endpointNode.branchId,
+          { x: position.x, y: position.y },
+        );
+        syncedCount++;
+
+        console.log(
+          `🔄 [批量同步] Endpoint ${nodeId}: 源节点=${endpointNode.sourceNodeId}, 分支=${endpointNode.branchId}, 位置=(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`,
+        );
+      }
+    });
+
+    // 🎯 关键修复：强制更新预览线管理器的全局endPosition
+    if (
+      previewLineManager.endPosition &&
+      this.layoutModel.endpointNodes.size > 0
+    ) {
+      // 使用最后一个endpoint的位置作为全局endPosition
+      const lastEndpointPosition = Array.from(finalPositions.values())
+        .filter((pos) => pos.nodeType === "endpoint")
+        .pop();
+
+      if (lastEndpointPosition) {
+        previewLineManager.endPosition.x = lastEndpointPosition.x;
+        previewLineManager.endPosition.y = lastEndpointPosition.y;
+        console.log(
+          `🎯 [全局同步] 预览线管理器全局endPosition已更新: (${lastEndpointPosition.x.toFixed(1)}, ${lastEndpointPosition.y.toFixed(1)})`,
+        );
+      }
+    }
+
+    console.log(`🔄 [批量同步] 同步完成，共处理 ${syncedCount} 个endpoint位置`);
+
+    // 🎯 新增：调用预览线管理器的新同步方法
+    if (typeof previewLineManager.syncLayoutEndpointPositions === 'function') {
+      try {
+        previewLineManager.syncLayoutEndpointPositions(finalPositions);
+        console.log("✅ [新同步方法] 已调用预览线管理器的布局endpoint位置同步方法");
+      } catch (error) {
+        console.error("❌ [新同步方法] 调用新同步方法时发生错误:", error);
+      }
+    } else {
+      console.warn("⚠️ [新同步方法] 预览线管理器不支持新的同步方法");
+    }
+  }
+
+  /**
+   * 🎯 新增：验证虚拟endpoint位置映射
+   */
+  validateEndpointPositions() {
+    if (
+      !this.layoutModel ||
+      !this.layoutModel.nodePositions ||
+      !this.layoutModel.endpointNodes
+    ) {
+      console.warn("⚠️ [位置验证] 布局模型未完全初始化，跳过验证");
+      return;
+    }
+
+    let missingCount = 0;
+    let fixedCount = 0;
+
+    console.log("🔍 [位置验证] 开始验证虚拟endpoint位置映射");
+
+    this.layoutModel.endpointNodes.forEach((endpointNode, nodeId) => {
+      if (!this.layoutModel.nodePositions.has(nodeId)) {
+        missingCount++;
+        console.log(`⚠️ [位置验证] 发现缺失位置映射: ${nodeId}`);
+
+        // 自动补全缺失的位置映射
+        const sourcePosition = this.layoutModel.nodePositions.get(
+          endpointNode.sourceNodeId,
+        );
+        if (sourcePosition) {
+          const estimatedPosition = {
+            x: sourcePosition.x + 150, // 默认水平偏移
+            y: sourcePosition.y + 150, // 默认垂直偏移
+            nodeType: "endpoint",
+            sourceNodeId: endpointNode.sourceNodeId,
+            branchId: endpointNode.branchId,
+            isVirtual: true,
+            isAutoFixed: true,
+          };
+
+          this.layoutModel.nodePositions.set(nodeId, estimatedPosition);
+          fixedCount++;
+          console.log(
+            `🔧 [位置修复] 自动补全虚拟endpoint位置: ${nodeId} -> (${estimatedPosition.x}, ${estimatedPosition.y})`,
+          );
+        } else {
+          console.warn(
+            `⚠️ [位置修复] 无法找到源节点位置，跳过修复: ${endpointNode.sourceNodeId}`,
+          );
+        }
+      }
+    });
+
+    if (missingCount > 0) {
+      console.log(
+        `🔧 [位置验证] 验证完成 - 发现 ${missingCount} 个缺失位置，已修复 ${fixedCount} 个`,
+      );
+    } else {
+      console.log("✅ [位置验证] 所有虚拟endpoint位置映射正常");
+    }
+
+    return { missingCount, fixedCount };
+  }
 
   /**
    * 🎯 关键修复：布局完成后执行清理工作
@@ -4611,5 +4488,3 @@ export class UnifiedStructuredLayoutEngine {
 
 
 }
-
-// 导出UnifiedStructuredLayoutEngine类（已在类定义处导出）

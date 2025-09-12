@@ -9,9 +9,8 @@
  * 5. 提供性能优化和缓存机制
  */
 
-import pkg from '@antv/hierarchy';
-const { compactBox } = pkg;
-import { HierarchyAdapter } from './HierarchyAdapter.js';
+import { compactBox } from '@antv/hierarchy';
+import HierarchyAdapter from './HierarchyAdapter.js';
 
 export class HierarchyLayoutEngine {
   constructor(graph, options = {}) {
@@ -172,47 +171,6 @@ export class HierarchyLayoutEngine {
 
       // 2. 执行hierarchy布局
       const layoutResult = this.executeHierarchyLayout(hierarchyData, options);
-      
-      // 🔍 添加详细的@antv/hierarchy布局结果调试日志
-      console.log('🔍 [performLayout] @antv/hierarchy布局算法执行完成，开始分析结果:');
-      console.log('📊 [performLayout] layoutResult类型:', typeof layoutResult);
-      console.log('📊 [performLayout] layoutResult是否为null/undefined:', layoutResult === null || layoutResult === undefined);
-      
-      if (layoutResult) {
-        console.log('📊 [performLayout] layoutResult根节点信息:', {
-          id: layoutResult.id,
-          x: layoutResult.x,
-          y: layoutResult.y,
-          x类型: typeof layoutResult.x,
-          y类型: typeof layoutResult.y,
-          x是否NaN: isNaN(layoutResult.x),
-          y是否NaN: isNaN(layoutResult.y)
-        });
-        
-        // 递归检查所有节点的坐标
-        const checkNodeCoordinates = (node, path = '') => {
-          if (!node) return;
-          
-          const currentPath = path ? `${path}.${node.id}` : node.id;
-          if (isNaN(node.x) || isNaN(node.y)) {
-            console.warn(`⚠️ [performLayout] 发现NaN坐标 - 路径: ${currentPath}, x: ${node.x}, y: ${node.y}`);
-          }
-          
-          if (node.children && Array.isArray(node.children)) {
-            node.children.forEach(child => checkNodeCoordinates(child, currentPath));
-          }
-        };
-        
-        checkNodeCoordinates(layoutResult);
-        
-        // 检查前几个子节点
-        if (layoutResult.children && Array.isArray(layoutResult.children)) {
-          console.log('📊 [performLayout] 前3个子节点坐标:');
-          layoutResult.children.slice(0, 3).forEach((child, index) => {
-            console.log(`  子节点${index + 1}: {id: ${child.id}, x: ${child.x}, y: ${child.y}, x类型: ${typeof child.x}, y类型: ${typeof child.y}, x是否NaN: ${isNaN(child.x)}, y是否NaN: ${isNaN(child.y)}}`);
-          });
-        }
-      }
 
       // 3. 结果转换：hierarchy -> X6位置
       const positionMap = this.adapter.convertFromHierarchyData(layoutResult);
@@ -311,9 +269,6 @@ export class HierarchyLayoutEngine {
         布局边界: this.calculateBounds(result)
       });
       
-      // 🔧 添加坐标验证检查
-      this.validateLayoutResult(result, 'CompactBox布局结果');
-      
       // 详细输出每个节点的位置信息
       this.logNodePositions(result, '原生@antv/hierarchy布局结果');
 
@@ -352,7 +307,31 @@ export class HierarchyLayoutEngine {
     return processedMap;
   }
 
-  // 🗑️ [已删除] adjustEndpointPositions 方法已被新的预览线分层策略替代
+  /**
+   * 调整预览线endpoint位置
+   * @param {Map} positionMap - 位置映射
+   * @param {Array} previewEndpoints - 预览线endpoint数组
+   */
+  adjustEndpointPositions(positionMap, previewEndpoints) {
+    previewEndpoints.forEach(endpoint => {
+      const sourceNodeId = endpoint.sourceNodeId;
+      const sourcePosition = positionMap.get(sourceNodeId);
+      
+      if (sourcePosition && positionMap.has(endpoint.id)) {
+        const endpointPosition = positionMap.get(endpoint.id);
+        
+        // 确保endpoint在源节点下方
+        const adjustedY = sourcePosition.y + this.options.layer.height;
+        
+        positionMap.set(endpoint.id, {
+          ...endpointPosition,
+          y: adjustedY
+        });
+        
+        this.log(`🎯 [Endpoint调整] ${endpoint.id} 位置调整: Y=${adjustedY}`);
+      }
+    });
+  }
 
   /**
    * 应用层级对齐规则
@@ -360,52 +339,11 @@ export class HierarchyLayoutEngine {
    * @param {Object} layoutData - 布局数据
    */
   applyLayerAlignment(positionMap, layoutData) {
-    // 🔍 检查layer.height配置
-    const layerHeight = this.options.layer.height;
-    console.log('🔍 [applyLayerAlignment] layer.height配置检查:', {
-      layerHeight: layerHeight,
-      类型: typeof layerHeight,
-      是否为数字: typeof layerHeight === 'number',
-      是否为0: layerHeight === 0,
-      是否NaN: isNaN(layerHeight),
-      是否有限: isFinite(layerHeight),
-      完整options: this.options.layer
-    });
-    
-    // 🛡️ 防止除零运算导致NaN
-    if (!layerHeight || typeof layerHeight !== 'number' || layerHeight <= 0 || !isFinite(layerHeight)) {
-      console.error('❌ [applyLayerAlignment] layer.height配置无效，跳过层级对齐:', {
-        layerHeight: layerHeight,
-        使用默认值: 200
-      });
-      // 使用默认值或跳过对齐
-      return;
-    }
-    
     // 按Y坐标分组节点到层级
     const layers = new Map();
     
     positionMap.forEach((position, nodeId) => {
-      console.log(`🔍 [applyLayerAlignment] 处理节点 ${nodeId}:`, {
-        原始Y: position.y,
-        layerHeight: layerHeight,
-        除法结果: position.y / layerHeight,
-        Math_round结果: Math.round(position.y / layerHeight),
-        最终layerY: Math.round(position.y / layerHeight) * layerHeight
-      });
-      
-      const layerY = Math.round(position.y / layerHeight) * layerHeight;
-      
-      // 🔍 检查计算结果是否有效
-      if (isNaN(layerY) || !isFinite(layerY)) {
-        console.error(`❌ [applyLayerAlignment] 节点 ${nodeId} 层级Y计算结果无效:`, {
-          原始Y: position.y,
-          layerHeight: layerHeight,
-          计算结果: layerY,
-          跳过该节点: true
-        });
-        return; // 跳过这个节点
-      }
+      const layerY = Math.round(position.y / this.options.layer.height) * this.options.layer.height;
       
       if (!layers.has(layerY)) {
         layers.set(layerY, []);
@@ -413,27 +351,13 @@ export class HierarchyLayoutEngine {
       layers.get(layerY).push({ nodeId, position });
     });
 
-    console.log('📊 [applyLayerAlignment] 层级分组结果:', {
-      层级数量: layers.size,
-      层级详情: Array.from(layers.entries()).map(([y, nodes]) => ({
-        layerY: y,
-        节点数量: nodes.length,
-        节点列表: nodes.map(n => n.nodeId)
-      }))
-    });
-
     // 对每层进行对齐处理
     layers.forEach((layerNodes, layerY) => {
-      console.log(`🔧 [applyLayerAlignment] 对齐层级 Y=${layerY}，包含 ${layerNodes.length} 个节点`);
-      
       layerNodes.forEach(({ nodeId, position }) => {
-        const newPosition = {
+        positionMap.set(nodeId, {
           ...position,
           y: layerY // 确保Y坐标对齐到层级
-        };
-        
-        console.log(`✅ [applyLayerAlignment] 节点 ${nodeId} 对齐: ${position.y} -> ${layerY}`);
-        positionMap.set(nodeId, newPosition);
+        });
       });
     });
   }
@@ -618,340 +542,6 @@ export class HierarchyLayoutEngine {
   }
 
   /**
-   * 执行布局（与UnifiedStructuredLayoutEngine接口保持一致）
-   * @param {Object} options - 布局选项
-   * @returns {Promise<Object>} 布局结果
-   */
-  async executeLayout(options = {}) {
-    const startTime = Date.now();
-    this.log('🚀 [HierarchyLayoutEngine] 开始执行executeLayout');
-    
-    try {
-      // 获取图数据
-      const nodes = this.graph.getNodes();
-      const edges = this.graph.getEdges();
-      
-      // 🔍 调试：检查从X6图实例获取的原始节点数据
-      console.log('🔍 [HierarchyLayoutEngine] 从X6图实例获取的原始节点数据:', {
-        节点总数: nodes.length,
-        边总数: edges.length
-      });
-      
-      // 🔍 调试：检查前几个节点的原始位置信息
-      nodes.slice(0, 3).forEach((node, index) => {
-        const nodeId = node.id || node.getId();
-        const nodeData = node.getData() || {};
-        const hasGetPosition = typeof node.getPosition === 'function';
-        let originalPosition = null;
-        
-        if (hasGetPosition) {
-          try {
-            originalPosition = node.getPosition();
-          } catch (error) {
-            console.error(`❌ [HierarchyLayoutEngine] 节点 ${nodeId} getPosition() 调用失败:`, error);
-          }
-        }
-        
-        console.log(`🔍 [HierarchyLayoutEngine] 原始节点 ${index + 1} (${nodeId}):`, {
-          节点ID: nodeId,
-          节点类型: nodeData.type || nodeData.nodeType || 'unknown',
-          有getPosition方法: hasGetPosition,
-          原始位置: originalPosition,
-          位置x值: originalPosition?.x,
-          位置y值: originalPosition?.y,
-          x类型: typeof originalPosition?.x,
-          y类型: typeof originalPosition?.y,
-          x是否NaN: originalPosition?.x !== undefined ? isNaN(originalPosition.x) : 'undefined',
-          y是否NaN: originalPosition?.y !== undefined ? isNaN(originalPosition.y) : 'undefined',
-          节点数据: nodeData
-        });
-      });
-      
-      // 过滤有效节点（排除拖拽点和预览相关节点）
-      const validNodes = (nodes || []).filter((node) => {
-        const nodeId = node.id || node.getId();
-        const nodeData = node.getData() || {};
-        return (
-          !nodeId.includes("hint") &&
-          !nodeData.isEndpoint &&
-          !nodeData.isPreview &&
-          !nodeId.startsWith("hint_")
-        );
-      });
-      
-      // 过滤有效边（排除预览线）
-      const validEdges = (edges || []).filter((edge) => {
-        const edgeId = edge.id || edge.getId();
-        const edgeData = edge.getData() || {};
-        return (
-          !edgeId.includes("preview") &&
-          !edgeId.includes("unified_preview") &&
-          !edgeData.isPreview &&
-          !edgeData.isPersistentPreview
-        );
-      });
-      
-      // 检查节点数量
-      if (validNodes.length === 0) {
-        this.log('⚠️ [HierarchyLayoutEngine] 没有有效节点，跳过布局');
-        return {
-          success: true,
-          message: '没有有效节点，跳过布局',
-          nodeCount: 0,
-          skipped: true,
-          timestamp: new Date().toISOString(),
-          statistics: {
-            totalLayers: 0,
-            totalNodes: 0,
-            normalNodes: 0,
-            endpointNodes: 0,
-            layerDistribution: []
-          },
-          performance: {
-            executionTime: Date.now() - startTime,
-            optimizationIterations: 0
-          }
-        };
-      }
-      
-      if (validNodes.length === 1) {
-        const singleNode = validNodes[0];
-        const nodeData = singleNode.getData() || {};
-        
-        // 如果是开始节点，跳过布局
-        if (nodeData.type === 'start') {
-          this.log('⚠️ [HierarchyLayoutEngine] 只有单个开始节点，跳过布局');
-          return {
-            success: true,
-            message: '只有单个开始节点，无需执行布局',
-            nodeCount: 1,
-            skipped: true,
-            timestamp: new Date().toISOString(),
-            statistics: {
-              totalLayers: 1,
-              totalNodes: 1,
-              normalNodes: 1,
-              endpointNodes: 0,
-              layerDistribution: [{
-                layer: 0,
-                normalNodes: 1,
-                endpointNodes: 0,
-                total: 1
-              }]
-            },
-            performance: {
-              executionTime: Date.now() - startTime,
-              optimizationIterations: 0
-            }
-          };
-        }
-      }
-      
-      // 执行布局计算
-      const layoutData = {
-        nodes: validNodes,
-        edges: validEdges,
-        previewEndpoints: [] // HierarchyLayoutEngine暂不处理预览线endpoint
-      };
-      
-      const layoutResult = await this.calculateLayout(layoutData, options);
-      
-      if (!layoutResult.success) {
-        return {
-          success: false,
-          error: layoutResult.error,
-          message: `HierarchyLayoutEngine布局执行失败: ${layoutResult.error}`,
-          timestamp: new Date().toISOString(),
-          statistics: {
-            totalLayers: 0,
-            totalNodes: validNodes.length,
-            normalNodes: validNodes.length,
-            endpointNodes: 0,
-            layerDistribution: []
-          },
-          performance: {
-            executionTime: Date.now() - startTime,
-            optimizationIterations: 0
-          }
-        };
-      }
-      
-      // 应用位置到图形
-      const appliedCount = this.applyPositionsToGraph(layoutResult.positions);
-      
-      // 生成布局报告
-      const endTime = Date.now();
-      const executionTime = endTime - startTime;
-      
-      const result = {
-        success: true,
-        message: 'HierarchyLayoutEngine布局执行成功',
-        timestamp: new Date().toISOString(),
-        statistics: {
-          totalLayers: this.calculateLayerCount(layoutResult.positions),
-          totalNodes: layoutResult.positions.size,
-          normalNodes: layoutResult.positions.size,
-          endpointNodes: 0,
-          layerDistribution: this.generateLayerDistribution(layoutResult.positions)
-        },
-        performance: {
-          executionTime: executionTime,
-          optimizationIterations: 0
-        }
-      };
-      
-      this.log('✅ [HierarchyLayoutEngine] executeLayout执行完成', {
-        节点数量: layoutResult.positions.size,
-        应用节点: appliedCount,
-        执行时间: `${executionTime}ms`
-      });
-      
-      return result;
-      
-    } catch (error) {
-      this.log('❌ [HierarchyLayoutEngine] executeLayout执行失败:', error.message);
-      return {
-        success: false,
-        error: error.message,
-        message: `HierarchyLayoutEngine布局执行失败: ${error.message}`,
-        timestamp: new Date().toISOString(),
-        statistics: {
-          totalLayers: 0,
-          totalNodes: 0,
-          normalNodes: 0,
-          endpointNodes: 0,
-          layerDistribution: []
-        },
-        performance: {
-          executionTime: Date.now() - startTime,
-          optimizationIterations: 0
-        }
-      };
-    }
-  }
-  
-  /**
-   * 应用位置到图形
-   * @param {Map} positions - 位置映射
-   * @returns {number} 应用的节点数量
-   */
-  applyPositionsToGraph(positions) {
-    console.log('🔄 [HierarchyLayoutEngine] 开始应用位置到图形');
-    console.log('🔍 [HierarchyLayoutEngine] 输入的positions映射:', Array.from(positions.entries()));
-    
-    let appliedCount = 0;
-    
-    positions.forEach((position, nodeId) => {
-      console.log(`🔍 [HierarchyLayoutEngine] 处理节点 ${nodeId}:`, {
-        原始position对象: position,
-        x值: position.x,
-        y值: position.y,
-        x类型: typeof position.x,
-        y类型: typeof position.y,
-        x是否NaN: isNaN(position.x),
-        y是否NaN: isNaN(position.y),
-        x是否有限: isFinite(position.x),
-        y是否有限: isFinite(position.y)
-      });
-      
-      const node = this.graph.getCellById(nodeId);
-      if (node && node.setPosition) {
-        // 🔧 修复NaN坐标问题：检查并处理无效坐标
-        let x = position.x;
-        let y = position.y;
-        
-        console.log(`📊 [HierarchyLayoutEngine] 节点 ${nodeId} 坐标处理前:`, {
-          原始x: x,
-          原始y: y,
-          x类型: typeof x,
-          y类型: typeof y
-        });
-        
-        // 🛡️ 强化坐标验证和修复机制
-        let validX = x;
-        let validY = y;
-        
-        // 验证X坐标
-        if (typeof x !== 'number' || !isFinite(x) || isNaN(x)) {
-          console.warn('⚠️ [HierarchyLayoutEngine] X坐标无效，使用默认值200:', {
-            nodeId: nodeId,
-            原始X: x,
-            X类型: typeof x,
-            X是否NaN: isNaN(x),
-            X是否有限: isFinite(x),
-            修复后X: 200
-          });
-          validX = 200;
-        }
-
-        // 验证Y坐标
-        if (typeof y !== 'number' || !isFinite(y) || isNaN(y)) {
-          console.warn('⚠️ [HierarchyLayoutEngine] Y坐标无效，使用默认值100:', {
-            nodeId: nodeId,
-            原始Y: y,
-            Y类型: typeof y,
-            Y是否NaN: isNaN(y),
-            Y是否有限: isFinite(y),
-            修复后Y: 100
-          });
-          validY = 100;
-        }
-        
-        // 使用验证后的坐标
-        x = validX;
-        y = validY;
-        
-        console.log(`✅ [HierarchyLayoutEngine] 节点 ${nodeId} 最终应用坐标: (${x}, ${y})`);
-        
-        // 应用有效坐标
-        node.setPosition(x, y);
-        appliedCount++;
-        this.log(`📍 [位置应用] 节点 ${nodeId}: (${x.toFixed(1)}, ${y.toFixed(1)})`);
-      } else {
-        console.warn(`⚠️ [HierarchyLayoutEngine] 节点 ${nodeId} 不存在或无setPosition方法`);
-      }
-    });
-    
-    console.log(`✅ [HierarchyLayoutEngine] 位置应用完成，共处理 ${appliedCount} 个节点`);
-    return appliedCount;
-  }
-  
-  /**
-   * 计算层级数量
-   * @param {Map} positions - 位置映射
-   * @returns {number} 层级数量
-   */
-  calculateLayerCount(positions) {
-    const yPositions = Array.from(positions.values()).map(pos => pos.y);
-    const uniqueYPositions = [...new Set(yPositions.map(y => Math.round(y / this.options.layer.height)))];
-    return uniqueYPositions.length;
-  }
-  
-  /**
-   * 生成层级分布信息
-   * @param {Map} positions - 位置映射
-   * @returns {Array} 层级分布数组
-   */
-  generateLayerDistribution(positions) {
-    const layerMap = new Map();
-    
-    positions.forEach((position, nodeId) => {
-      const layer = Math.round(position.y / this.options.layer.height);
-      if (!layerMap.has(layer)) {
-        layerMap.set(layer, { normalNodes: 0, endpointNodes: 0 });
-      }
-      layerMap.get(layer).normalNodes++;
-    });
-    
-    return Array.from(layerMap.entries()).map(([layer, counts]) => ({
-      layer,
-      normalNodes: counts.normalNodes,
-      endpointNodes: counts.endpointNodes,
-      total: counts.normalNodes + counts.endpointNodes
-    }));
-  }
-
-  /**
    * 销毁布局引擎
    */
   destroy() {
@@ -1036,57 +626,6 @@ export class HierarchyLayoutEngine {
     if (node.children && Array.isArray(node.children)) {
       node.children.forEach(child => this.collectPositions(child, positions));
     }
-  }
-
-  /**
-   * 验证布局结果中的坐标有效性
-   * @param {Object} node - 根节点
-   * @param {string} title - 标题
-   */
-  validateLayoutResult(node, title) {
-    console.log(`🔍 [${title}] 开始验证坐标有效性`);
-    const invalidNodes = [];
-    
-    const validateNode = (currentNode) => {
-      if (!currentNode) return;
-      
-      // 检查当前节点坐标
-      if (typeof currentNode.x !== 'number' || isNaN(currentNode.x) || !isFinite(currentNode.x)) {
-        invalidNodes.push({
-          id: currentNode.id,
-          issue: 'X坐标无效',
-          value: currentNode.x,
-          type: typeof currentNode.x
-        });
-      }
-      
-      if (typeof currentNode.y !== 'number' || isNaN(currentNode.y) || !isFinite(currentNode.y)) {
-        invalidNodes.push({
-          id: currentNode.id,
-          issue: 'Y坐标无效',
-          value: currentNode.y,
-          type: typeof currentNode.y
-        });
-      }
-      
-      // 递归检查子节点
-      if (currentNode.children && Array.isArray(currentNode.children)) {
-        currentNode.children.forEach(child => validateNode(child));
-      }
-    };
-    
-    validateNode(node);
-    
-    if (invalidNodes.length > 0) {
-      console.error(`❌ [${title}] 发现 ${invalidNodes.length} 个坐标问题:`);
-      invalidNodes.forEach((issue, index) => {
-        console.error(`  ${index + 1}. 节点 ${issue.id}: ${issue.issue} (值: ${issue.value}, 类型: ${issue.type})`);
-      });
-    } else {
-      console.log(`✅ [${title}] 所有节点坐标验证通过`);
-    }
-    
-    return invalidNodes.length === 0;
   }
 
   /**

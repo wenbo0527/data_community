@@ -414,10 +414,10 @@ const currentLayoutDirection = computed(() => {
 
 // 布局方向切换处理函数
 const handleLayoutDirectionChange = async (direction) => {
-  // console.log(`[TaskFlowCanvas] 切换布局方向: ${direction}`)
+  console.log(`[TaskFlowCanvas] 切换布局方向: ${direction}`)
   
   if (!configDrawers.value?.structuredLayout?.switchLayoutDirection) {
-    // console.error('[TaskFlowCanvas] 布局方向切换功能不可用')
+    console.error('[TaskFlowCanvas] 布局方向切换功能不可用')
     Message.error('布局方向切换功能不可用')
     return
   }
@@ -427,13 +427,13 @@ const handleLayoutDirectionChange = async (direction) => {
     const result = await configDrawers.value.structuredLayout.switchLayoutDirection(direction)
     
     if (result && result.success) {
-      // console.log(`[TaskFlowCanvas] 布局方向切换成功: ${direction}`)
+      console.log(`[TaskFlowCanvas] 布局方向切换成功: ${direction}`)
       Message.success(`布局方向已切换为${direction === 'TB' ? '从上到下' : '从左到右'}`)
       
       // 更新连线重叠管理器的布局方向
       if (edgeOverlapManager && edgeOverlapManager.updateLayoutDirection) {
         edgeOverlapManager.updateLayoutDirection(direction)
-        // console.log(`[TaskFlowCanvas] 连线重叠管理器布局方向已更新: ${direction}`)
+        console.log(`[TaskFlowCanvas] 连线重叠管理器布局方向已更新: ${direction}`)
       }
       
       // 自动缩放到合适大小
@@ -444,16 +444,16 @@ const handleLayoutDirectionChange = async (direction) => {
         // 检查并限制缩放比例
         const currentZoom = graph.zoom()
         if (currentZoom > 1.2) {
-          // console.log(`[TaskFlowCanvas] 限制缩放比例从 ${currentZoom.toFixed(2)} 到 1.2`)
+          console.log(`[TaskFlowCanvas] 限制缩放比例从 ${currentZoom.toFixed(2)} 到 1.2`)
           graph.zoomTo(1.2, { center: graph.getGraphArea().center })
         }
       }, 300)
     } else {
-      // console.error('[TaskFlowCanvas] 布局方向切换失败')
+      console.error('[TaskFlowCanvas] 布局方向切换失败')
       Message.error('布局方向切换失败')
     }
   } catch (error) {
-    // console.error('[TaskFlowCanvas] 布局方向切换异常:', error)
+    console.error('[TaskFlowCanvas] 布局方向切换异常:', error)
     Message.error('布局方向切换异常: ' + error.message)
   } finally {
     isApplyingLayout.value = false
@@ -463,7 +463,7 @@ const handleLayoutDirectionChange = async (direction) => {
 // 手动更新统计信息的函数
 const updateLayoutStats = () => {
   if (isUpdatingLayout.value) {
-    // console.log('[TaskFlowCanvas] 统计信息更新正在进行中，跳过')
+    console.log('[TaskFlowCanvas] 统计信息更新正在进行中，跳过')
     return // 防止递归更新
   }
 
@@ -478,7 +478,7 @@ const updateLayoutStats = () => {
       layoutStats.value = null
     }
   } catch (error) {
-    // console.warn('[TaskFlowCanvas] 获取布局统计信息失败:', error)
+    console.warn('[TaskFlowCanvas] 获取布局统计信息失败:', error)
     layoutStats.value = null
   } finally {
     // 立即重置状态，不使用异步
@@ -492,11 +492,11 @@ let isCanvasInitialized = false
 
 const initCanvas = async () => {
   if (isCanvasInitialized) {
-    // console.log('[TaskFlowCanvas] 画布已初始化，跳过重复初始化')
+    console.log('[TaskFlowCanvas] 画布已初始化，跳过重复初始化')
     return
   }
 
-  // console.log('[TaskFlowCanvas] 开始初始化画布')
+  console.log('[TaskFlowCanvas] 开始初始化画布')
   isCanvasInitialized = true
 
   await nextTick()
@@ -506,29 +506,10 @@ const initCanvas = async () => {
     return
   }
 
-  const containerWidth = canvasContainer.value.clientWidth
-  const containerHeight = canvasContainer.value.clientHeight
-  
   console.log('[TaskFlowCanvas] 画布容器尺寸:', {
-    width: containerWidth,
-    height: containerHeight,
-    offsetWidth: canvasContainer.value.offsetWidth,
-    offsetHeight: canvasContainer.value.offsetHeight,
-    scrollWidth: canvasContainer.value.scrollWidth,
-    scrollHeight: canvasContainer.value.scrollHeight
+    width: canvasContainer.value.clientWidth,
+    height: canvasContainer.value.clientHeight
   })
-  
-  // 检查容器尺寸是否有效
-  if (containerWidth === 0 || containerHeight === 0) {
-    console.error('[TaskFlowCanvas] 画布容器尺寸无效，宽度或高度为0')
-    // 尝试延迟初始化
-    setTimeout(() => {
-      console.log('[TaskFlowCanvas] 延迟重试初始化画布')
-      isCanvasInitialized = false
-      initCanvas()
-    }, 100)
-    return
-  }
 
   // 创建 X6 图实例
   graph = new Graph({
@@ -748,20 +729,14 @@ const initCanvas = async () => {
     history: true
   })
 
-  // console.log('[TaskFlowCanvas] X6图形实例创建成功')
-  
-  // 🔧 调试用：立即将graph实例暴露到window对象，便于浏览器调试
-  if (typeof window !== 'undefined') {
-    window.graph = graph
-    console.log('🔍 [TaskFlowCanvas] 图形实例已暴露到window.graph，可在浏览器控制台调试')
-  }
+  console.log('[TaskFlowCanvas] X6图形实例创建成功')
 
   // 初始化插件
-  // console.log('[TaskFlowCanvas] 开始初始化插件')
+  console.log('[TaskFlowCanvas] 开始初始化插件')
   
   // 初始化导出插件
   graph.use(new Export())
-  // console.log('[TaskFlowCanvas] 导出插件初始化完成')
+  console.log('[TaskFlowCanvas] 导出插件初始化完成')
   
   // 初始化历史记录插件
   const historyPlugin = new History({
@@ -793,14 +768,14 @@ const initCanvas = async () => {
     }
   })
   graph.use(historyPlugin)
-  // console.log('[TaskFlowCanvas] 历史记录插件初始化完成，已启用操作过滤')
-  // console.log('[TaskFlowCanvas] 历史记录插件配置:', {
-  //   enabled: historyPlugin.options.enabled,
-  //   ignoreAdd: historyPlugin.options.ignoreAdd,
-  //   ignoreRemove: historyPlugin.options.ignoreRemove,
-  //   ignoreChange: historyPlugin.options.ignoreChange,
-  //   hasBeforeAddCommand: !!historyPlugin.options.beforeAddCommand
-  // })
+  console.log('[TaskFlowCanvas] 历史记录插件初始化完成，已启用操作过滤')
+  console.log('[TaskFlowCanvas] 历史记录插件配置:', {
+    enabled: historyPlugin.options.enabled,
+    ignoreAdd: historyPlugin.options.ignoreAdd,
+    ignoreRemove: historyPlugin.options.ignoreRemove,
+    ignoreChange: historyPlugin.options.ignoreChange,
+    hasBeforeAddCommand: !!historyPlugin.options.beforeAddCommand
+  })
   
   // 初始化对齐线插件
   graph.use(new Snapline({
@@ -809,7 +784,7 @@ const initCanvas = async () => {
     resizing: true,
     clean: 1000
   }))
-  // console.log('[TaskFlowCanvas] 对齐线插件初始化完成')
+  console.log('[TaskFlowCanvas] 对齐线插件初始化完成')
 
   // 监听历史记录变化
   graph.on('history:change', () => {
@@ -821,22 +796,22 @@ const initCanvas = async () => {
     // 更新历史栈信息
     updateHistoryStack()
     
-    // console.log('[历史记录] 状态变化:', {
-    //   canUndo: canUndoValue,
-    //   canRedo: canRedoValue,
-    //   undoStackLength: graph.history?.undoStack?.length || 0,
-    //   redoStackLength: graph.history?.redoStack?.length || 0
-    // })
+    console.log('[历史记录] 状态变化:', {
+      canUndo: canUndoValue,
+      canRedo: canRedoValue,
+      undoStackLength: graph.history?.undoStack?.length || 0,
+      redoStackLength: graph.history?.redoStack?.length || 0
+    })
   })
 
   // 监听命令添加事件
   graph.on('history:command:added', (args) => {
     const { command } = args
-    // console.log('[历史记录] 命令添加:', {
-    //   event: command.event,
-    //   cellId: command.data?.cell?.id,
-    //   timestamp: Date.now()
-    // })
+    console.log('[历史记录] 命令添加:', {
+      event: command.event,
+      cellId: command.data?.cell?.id,
+      timestamp: Date.now()
+    })
     updateHistoryStack()
   })
 
@@ -845,7 +820,7 @@ const initCanvas = async () => {
     const { command } = args
     const description = getOperationDescription(command)
     Message.success(`已撤销: ${description}`)
-    // console.log('[历史记录] 撤销操作:', description)
+    console.log('[历史记录] 撤销操作:', description)
     updateHistoryStack()
   })
 
@@ -854,82 +829,74 @@ const initCanvas = async () => {
     const { command } = args
     const description = getOperationDescription(command)
     Message.success(`已重做: ${description}`)
-    // console.log('[历史记录] 重做操作:', description)
+    console.log('[历史记录] 重做操作:', description)
     updateHistoryStack()
   })
 
   // 监听其他可能影响历史记录的事件
   graph.on('cell:added', (args) => {
-    // console.log('[历史记录] 节点/边添加:', args.cell.id)
+    console.log('[历史记录] 节点/边添加:', args.cell.id)
   })
   
   graph.on('cell:removed', (args) => {
-    // console.log('[历史记录] 节点/边删除:', args.cell.id)
+    console.log('[历史记录] 节点/边删除:', args.cell.id)
   })
   
   graph.on('cell:changed', (args) => {
-    // console.log('[历史记录] 节点/边变化:', args.cell.id, args.options)
+    console.log('[历史记录] 节点/边变化:', args.cell.id, args.options)
   })
 
-  // console.log('[TaskFlowCanvas] 所有插件初始化完成')
+  console.log('[TaskFlowCanvas] 所有插件初始化完成')
   
   // 检查历史记录插件状态
   setTimeout(() => {
-    // console.log('[历史记录] 插件状态检查:', {
-    //   historyExists: !!graph.history,
-    //   canUndo: graph.canUndo(),
-    //   canRedo: graph.canRedo(),
-    //   undoStackLength: graph.history?.undoStack?.length || 0,
-    //   redoStackLength: graph.history?.redoStack?.length || 0,
-    //   historyEnabled: graph.history?.options?.enabled
-    // })
+    console.log('[历史记录] 插件状态检查:', {
+      historyExists: !!graph.history,
+      canUndo: graph.canUndo(),
+      canRedo: graph.canRedo(),
+      undoStackLength: graph.history?.undoStack?.length || 0,
+      redoStackLength: graph.history?.redoStack?.length || 0,
+      historyEnabled: graph.history?.options?.enabled
+    })
   }, 1000)
 
   // 输出画布配置调试信息
-  // console.log('⚙️ [TaskFlowCanvas] 画布配置信息:', {
-  //   scroller: {
-  //     enabled: true,
-  //     pannable: false, // 已禁用X6内置拖拽
-  //     modifiers: ['ctrl']
-  //   },
-  //   interacting: {
-  //     nodeMovable: !props.readonly
-  //   },
-  //   readonly: props.readonly
-  // })
+  console.log('⚙️ [TaskFlowCanvas] 画布配置信息:', {
+    scroller: {
+      enabled: true,
+      pannable: false, // 已禁用X6内置拖拽
+      modifiers: ['ctrl']
+    },
+    interacting: {
+      nodeMovable: !props.readonly
+    },
+    readonly: props.readonly
+  })
 
   // 检查scroller是否正确启用
   const scrollerEnabled = graph.scroller && graph.scroller.options.enabled
   const scrollerPannable = graph.scroller && graph.scroller.options.pannable
-  // console.log('🔍 [TaskFlowCanvas] Scroller状态检查:', {
-  //   scrollerExists: !!graph.scroller,
-  //   scrollerEnabled,
-  //   scrollerPannable,
-  //   scrollerOptions: graph.scroller ? graph.scroller.options : null
-  // })
+  console.log('🔍 [TaskFlowCanvas] Scroller状态检查:', {
+    scrollerExists: !!graph.scroller,
+    scrollerEnabled,
+    scrollerPannable,
+    scrollerOptions: graph.scroller ? graph.scroller.options : null
+  })
 
   // 注册自定义边形状
   registerCustomShapes(Graph)
-  // console.log('[TaskFlowCanvas] 自定义边形状注册完成')
+  console.log('[TaskFlowCanvas] 自定义边形状注册完成')
 
   // 🔧 初始化坐标系统管理器
   coordinateManager.setGraph(graph)
   coordinateManager.setDebugMode(process.env.NODE_ENV === 'development')
-  // console.log('[TaskFlowCanvas] 坐标系统管理器初始化完成')
+  console.log('[TaskFlowCanvas] 坐标系统管理器初始化完成')
 
   // 初始化配置抽屉管理器（只初始化一次）
   if (!configDrawers.value) {
     const nodeOperations = {}
     configDrawers.value = useConfigDrawers(() => graph, nodeOperations)
-    // console.log('[TaskFlowCanvas] 配置抽屉管理器初始化完成')
-    
-    // 设置全局预览线管理器引用
-    if (configDrawers.value?.structuredLayout?.unifiedPreviewManager?.value) {
-      window.unifiedPreviewLineManager = configDrawers.value.structuredLayout.unifiedPreviewManager.value
-      console.log('[TaskFlowCanvas] 全局预览线管理器已设置:', !!window.unifiedPreviewLineManager)
-    } else {
-      console.warn('[TaskFlowCanvas] 预览线管理器不可用，将在数据加载后重试设置')
-    }
+    console.log('[TaskFlowCanvas] 配置抽屉管理器初始化完成')
   }
 
   // 初始化自动布局管理器（已废弃，使用原生Dagre布局）
@@ -987,32 +954,10 @@ const initCanvas = async () => {
 
   console.log('[TaskFlowCanvas] 画布初始化完成，当前节点数:', nodes.value.length)
 
-  // 🔧 新增：画布加载后的状态检查
-  performCanvasLoadCheck()
-
   // 设置图形实例就绪状态
   await nextTick()
   isGraphReady.value = true
   console.log('[TaskFlowCanvas] 图形实例已就绪，自动布局已启用')
-
-  // 🔧 新增：画布初始化完成后的详细状态检查日志
-  console.log('✅ [TaskFlowCanvas] 画布初始化完成 - 状态检查:', {
-    timestamp: new Date().toISOString(),
-    canvasInitialized: isCanvasInitialized,
-    graphReady: isGraphReady.value,
-    graphExists: !!graph,
-    configDrawersExists: !!configDrawers.value,
-    panZoomManagerExists: !!panZoomManager,
-    edgeOverlapManagerExists: !!edgeOverlapManager,
-    nodesCount: nodes.value.length,
-    connectionsCount: connections.value.length,
-    containerSize: {
-      width: canvasContainer.value?.clientWidth || 0,
-      height: canvasContainer.value?.clientHeight || 0
-    },
-    layoutEngineInitialized: layoutEngineInitialized,
-    unifiedPreviewManagerExists: !!window.unifiedPreviewLineManager
-  })
 
   // 触发画布就绪事件
   emit('canvas-ready', {
@@ -1061,7 +1006,7 @@ const bindEvents = () => {
       container.addEventListener('mousedown', debugMouseDown, false)
       container.addEventListener('mousemove', debugMouseMove, false)
       
-      // console.log('🎯 [TaskFlowCanvas] 画布容器调试事件监听器已添加（冒泡阶段）')
+      console.log('🎯 [TaskFlowCanvas] 画布容器调试事件监听器已添加（冒泡阶段）')
     }
   }
 
@@ -1069,7 +1014,7 @@ const bindEvents = () => {
   graph.on('node:click', ({ node }) => {
     // 检查是否正在删除节点，如果是则忽略点击事件
     if (isDeletingNode.value) {
-      // console.log('[TaskFlowCanvas] 正在删除节点，忽略点击事件:', node.id)
+      console.log('[TaskFlowCanvas] 正在删除节点，忽略点击事件:', node.id)
       return
     }
     
@@ -1078,11 +1023,11 @@ const bindEvents = () => {
       selectedNodeId.value = node.id
       emit('node-selected', nodeData)
 
-      // console.log('[TaskFlowCanvas] 节点被点击:', nodeData.type, nodeData.id)
+      console.log('[TaskFlowCanvas] 节点被点击:', nodeData.type, nodeData.id)
 
       // 只读模式下不打开配置抽屉
       if (props.readonly) {
-        // console.log('[TaskFlowCanvas] 只读模式，不打开配置抽屉')
+        console.log('[TaskFlowCanvas] 只读模式，不打开配置抽屉')
         return
       }
 
@@ -1090,7 +1035,7 @@ const bindEvents = () => {
       const graphNodeData = node.getData() || {}
       const latestConfig = graphNodeData.config || {}
 
-      // console.log('[TaskFlowCanvas] 从图形节点获取最新配置:', latestConfig)
+      console.log('[TaskFlowCanvas] 从图形节点获取最新配置:', latestConfig)
 
       if (nodeData.type === 'start') {
         // 开始节点打开专用配置抽屉
@@ -1101,10 +1046,10 @@ const bindEvents = () => {
         }
         selectedStartNodeData.value = completeNodeData
         showStartNodeConfigDrawer.value = true
-        // console.log('[TaskFlowCanvas] 打开开始节点配置抽屉，节点数据:', completeNodeData)
+        console.log('[TaskFlowCanvas] 打开开始节点配置抽屉，节点数据:', completeNodeData)
       } else if (['audience-split', 'event-split', 'ai-call', 'sms', 'manual-call', 'ab-test', 'wait'].includes(nodeData.type)) {
         // 使用专门的配置抽屉
-        // console.log('[TaskFlowCanvas] 调用configDrawers.openConfigDrawer:', nodeData.type)
+        console.log('[TaskFlowCanvas] 调用configDrawers.openConfigDrawer:', nodeData.type)
         if (configDrawers.value && typeof configDrawers.value.openConfigDrawer === 'function') {
           // 构造正确的数据结构，包含config属性
           const drawerData = {
@@ -1113,7 +1058,7 @@ const bindEvents = () => {
             nodeId: node.id,
             nodeType: nodeData.type
           }
-          // console.log('[TaskFlowCanvas] 传递给抽屉的数据结构:', drawerData)
+          console.log('[TaskFlowCanvas] 传递给抽屉的数据结构:', drawerData)
           configDrawers.value.openConfigDrawer(nodeData.type, node, drawerData)
         } else {
           console.error('[TaskFlowCanvas] configDrawers.value 或 openConfigDrawer 方法不存在')
@@ -1121,7 +1066,7 @@ const bindEvents = () => {
       } else {
         // 其他节点打开通用配置抽屉
         showConfigDrawer.value = true
-        // console.log('[TaskFlowCanvas] 打开通用配置抽屉')
+        console.log('[TaskFlowCanvas] 打开通用配置抽屉')
       }
     }
   })
@@ -1152,7 +1097,7 @@ const bindEvents = () => {
     // 过滤掉预览线，只处理真正的连接
     const edgeId = edge.id
     if (edgeId.includes('preview') || edgeId.includes('unified_preview')) {
-      // console.log('🔍 [TaskFlowCanvas] 跳过预览线，不添加到连接数组:', edgeId)
+      console.log('🔍 [TaskFlowCanvas] 跳过预览线，不添加到连接数组:', edgeId)
       return
     }
     
@@ -1162,32 +1107,32 @@ const bindEvents = () => {
     
     // 检查是否是临时连线（拖拽过程中的连线，targetId 为 undefined）
     if (!targetId) {
-      // console.log('🔍 [TaskFlowCanvas] 跳过临时连线（拖拽中），不添加到连接数组:', {
-      //   edgeId,
-      //   sourceId,
-      //   targetId
-      // })
+      console.log('🔍 [TaskFlowCanvas] 跳过临时连线（拖拽中），不添加到连接数组:', {
+        edgeId,
+        sourceId,
+        targetId
+      })
       return
     }
     
     if (!sourceId || !targetId) {
-      // console.warn('⚠️ [TaskFlowCanvas] 边缺少有效的源或目标节点ID，跳过添加:', {
-      //   edgeId,
-      //   sourceId,
-      //   targetId
-      // })
+      console.warn('⚠️ [TaskFlowCanvas] 边缺少有效的源或目标节点ID，跳过添加:', {
+        edgeId,
+        sourceId,
+        targetId
+      })
       return
     }
     
     // 验证源和目标是否为字符串类型的节点ID
     if (typeof sourceId !== 'string' || typeof targetId !== 'string') {
-      // console.warn('⚠️ [TaskFlowCanvas] 边的源或目标不是有效的节点ID，跳过添加:', {
-      //   edgeId,
-      //   sourceId,
-      //   targetId,
-      //   sourceType: typeof sourceId,
-      //   targetType: typeof targetId
-      // })
+      console.warn('⚠️ [TaskFlowCanvas] 边的源或目标不是有效的节点ID，跳过添加:', {
+        edgeId,
+        sourceId,
+        targetId,
+        sourceType: typeof sourceId,
+        targetType: typeof targetId
+      })
       return
     }
     
@@ -1230,9 +1175,9 @@ const bindEvents = () => {
     const existingConnection = connections.value.find(conn => conn.id === connectionData.id)
     if (!existingConnection) {
       connections.value.push(connectionData)
-      // console.log('✅ [TaskFlowCanvas] 连接已添加到数据数组:', connectionData)
+      console.log('✅ [TaskFlowCanvas] 连接已添加到数据数组:', connectionData)
     } else {
-      // console.log('🔍 [TaskFlowCanvas] 连接已存在，跳过重复添加:', connectionData.id)
+      console.log('🔍 [TaskFlowCanvas] 连接已存在，跳过重复添加:', connectionData.id)
     }
   })
 
@@ -1242,16 +1187,16 @@ const bindEvents = () => {
     
     // 过滤掉预览线，只处理真正的连接
     if (edgeId.includes('preview') || edgeId.includes('unified_preview')) {
-      // console.log('🔍 [TaskFlowCanvas] 跳过预览线删除，不从连接数组中移除:', edgeId)
+      console.log('🔍 [TaskFlowCanvas] 跳过预览线删除，不从连接数组中移除:', edgeId)
       return
     }
     
     const index = connections.value.findIndex(conn => conn.id === edgeId)
     if (index !== -1) {
       const removedConnection = connections.value.splice(index, 1)[0]
-      // console.log('✅ [TaskFlowCanvas] 连接已从数据数组中移除:', removedConnection)
+      console.log('✅ [TaskFlowCanvas] 连接已从数据数组中移除:', removedConnection)
     } else {
-      // console.log('🔍 [TaskFlowCanvas] 连接不在数据数组中，无需移除:', edgeId)
+      console.log('🔍 [TaskFlowCanvas] 连接不在数据数组中，无需移除:', edgeId)
     }
   })
 
@@ -1288,20 +1233,8 @@ const bindEvents = () => {
           // 立即更新预览线位置，确保拖拽时实时跟随
           unifiedPreviewManager.immediateUpdatePosition(node)
         } catch (error) {
-          console.error('❌ [预览线跟随] 节点移动时预览线更新失败:', {
-            nodeId: node.id,
-            error: error.message,
-            stack: error.stack
-          })
+          // 静默处理错误，避免影响拖拽性能
         }
-      } else {
-        console.warn('⚠️ [预览线跟随] 预览线管理器不可用:', {
-          nodeId: node.id,
-          hasManager: !!unifiedPreviewManager,
-          hasMethod: !!(unifiedPreviewManager && typeof unifiedPreviewManager.immediateUpdatePosition === 'function'),
-          configDrawers: !!configDrawers.value,
-          structuredLayout: !!configDrawers.value?.structuredLayout
-        })
       }
     }
     
@@ -1425,20 +1358,7 @@ const bindEvents = () => {
   })
 
   // 节点位置变化事件（备用方案）
-  graph.on('node:change:position', ({ node, current, previous, options }) => {
-    // 🎯 关键修复：检查是否是系统发起的位置变更
-    if (options && (options.systemInitiated || options.layoutEngine)) {
-      console.log('🤖 [系统位置变化] 检测到系统发起的位置变更，跳过用户拖拽处理:', {
-        nodeId: node.id,
-        source: options.source || 'unknown',
-        systemInitiated: options.systemInitiated,
-        layoutEngine: options.layoutEngine,
-        current,
-        previous
-      })
-      return // 🎯 关键：系统操作直接返回，不执行后续的用户拖拽逻辑
-    }
-    
+  graph.on('node:change:position', ({ node, current, previous }) => {
     if (isDragging.value) {
       // 🔧 使用坐标系统管理器进行坐标转换
       const size = node.getSize()
@@ -1463,24 +1383,15 @@ const bindEvents = () => {
       }
       
       // 在节点位置变化时触发吸附逻辑
-      // 🔧 添加防抖机制，避免频繁调用导致性能问题
       const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
       if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
-        // 清除之前的防抖定时器
-        if (window.highlightNodesTimer) {
-          clearTimeout(window.highlightNodesTimer)
-        }
+        // 调用统一预览线管理器的吸附高亮逻辑
+        unifiedPreviewManager.highlightNearbyNodes(centerX, centerY)
         
-        // 设置防抖延迟，避免频繁调用
-        window.highlightNodesTimer = setTimeout(() => {
-          // 调用统一预览线管理器的吸附高亮逻辑
-          unifiedPreviewManager.highlightNearbyNodes(centerX, centerY)
-          
-          // 🔧 添加预览线终点吸附检查
-          if (typeof unifiedPreviewManager.checkSnapToPreviewLines === 'function') {
-            unifiedPreviewManager.checkSnapToPreviewLines(node, current, size)
-          }
-        }, 50) // 50ms防抖延迟，比node:moved更短因为需要实时反馈
+        // 🔧 添加预览线终点吸附检查
+        if (typeof unifiedPreviewManager.checkSnapToPreviewLines === 'function') {
+          unifiedPreviewManager.checkSnapToPreviewLines(node, current, size)
+        }
       }
     }
   })
@@ -2032,18 +1943,9 @@ const bindEvents = () => {
         }
 
         // 🔧 修复：在自动连接逻辑完成后，刷新所有预览线和拖拽提示点位置
-        // 🔧 添加防抖机制，避免频繁调用导致页面卡死
         if (unifiedPreviewManager && typeof unifiedPreviewManager.refreshAllPreviewLines === 'function') {
           try {
-            // 清除之前的防抖定时器
-            if (window.previewLineRefreshTimer) {
-              clearTimeout(window.previewLineRefreshTimer)
-            }
-            
-            // 设置防抖延迟，避免频繁调用
-            window.previewLineRefreshTimer = setTimeout(() => {
-              unifiedPreviewManager.refreshAllPreviewLines(false, false) // 节点移动时不是智能布局
-            }, 100) // 100ms防抖延迟
+            unifiedPreviewManager.refreshAllPreviewLines(false, false) // 节点移动时不是智能布局
           } catch (error) {
             console.warn('⚠️ [节点移动] 刷新预览线位置失败:', error)
           }
@@ -2181,9 +2083,9 @@ const bindEvents = () => {
               if (currentDragSession.value) {
                 const sessionData = dragSessionData.value.get(currentDragSession.value)
                 if (sessionData) {
-                  // 🗑️ [已删除] endpoint检查已被新的预览线分层策略替代
+                  // 检查是否是拖拽点
                   const sessionNodeData = sessionData.node.getData() || {}
-                  if (false) { // 已禁用endpoint检查
+                  if (sessionNodeData.isEndpoint || sessionNodeData.type === 'endpoint') {
                     const endPosition = sessionData.node.getPosition()
                     
                     // 查找最近的普通节点in端口坐标
@@ -2214,9 +2116,9 @@ const bindEvents = () => {
           if (currentDragSession.value) {
             const sessionData = dragSessionData.value.get(currentDragSession.value)
             if (sessionData) {
-              // 🗑️ [已删除] endpoint检查已被新的预览线分层策略替代
+              // 检查是否是拖拽点
               const sessionNodeData = sessionData.node.getData() || {}
-              if (false) { // 已禁用endpoint检查
+              if (sessionNodeData.isEndpoint || sessionNodeData.type === 'endpoint') {
                 const endPosition = sessionData.node.getPosition()
                 
                 // 查找最近的普通节点in端口坐标
@@ -2281,8 +2183,8 @@ const bindEvents = () => {
     if (cell.isNode()) {
       const cellData = cell.getData() || {}
 
-      // 🗑️ [已删除] endpoint检查已被新的预览线分层策略替代
-      if (cell.id.includes('hint_')) {
+      // 检查是否是拖拽提示点
+      if (cellData.isEndpoint || cellData.type === 'endpoint' || cell.id.includes('hint_')) {
         // 拖拽提示点不在nodes数组中，直接返回
         return
       }
@@ -2560,160 +2462,42 @@ const loadInitialData = () => {
       console.log('[TaskFlowCanvas] 所有初始连接加载完成')
     }
 
-    // 🔧 修复：恢复预览线管理器初始化，确保预览线功能正常工作
-    console.log('[TaskFlowCanvas] 数据加载完成，开始初始化布局引擎和预览线管理器')
-    initializeLayoutEngineAfterDataLoad() // 恢复调用，确保预览线管理器正确初始化
+    // 🔧 关键时序修复：在节点和连接都加载完成后，再初始化布局引擎
+    console.log('[TaskFlowCanvas] 开始初始化布局引擎（节点已加载）')
+    initializeLayoutEngineAfterDataLoad()
   })
 }
 
 // 🔧 新增函数：在数据加载完成后初始化布局引擎
-// 🔧 修复：添加初始化状态检查，避免重复初始化
-let isLayoutEngineInitializing = false
-let layoutEngineInitialized = false
-
 const initializeLayoutEngineAfterDataLoad = async () => {
-  // 🔧 增强防护机制：避免重复初始化和循环调用
-  if (isLayoutEngineInitializing) {
-    console.debug('[TaskFlowCanvas] 布局引擎正在初始化中，跳过重复调用')
-    return { success: false, reason: 'already_initializing' }
-  }
-  
-  if (layoutEngineInitialized) {
-    console.debug('[TaskFlowCanvas] 布局引擎已初始化，跳过重复调用')
-    // 执行状态检查确保组件正常
-    const checkResult = performCanvasLoadCheck()
-    return { success: true, reason: 'already_initialized', statusCheck: checkResult }
-  }
-  
-  // 🔧 新增：检查必要的依赖项
-  if (!graph) {
-    console.error('[TaskFlowCanvas] 图形实例不存在，无法初始化布局引擎')
-    return { success: false, reason: 'missing_graph' }
-  }
-  
-  if (!nodeOperations) {
-    console.error('[TaskFlowCanvas] 节点操作实例不存在，无法初始化布局引擎')
-    return { success: false, reason: 'missing_node_operations' }
-  }
-  
-  isLayoutEngineInitializing = true
-  const initStartTime = Date.now()
-  
-  console.log('🚀 [TaskFlowCanvas] 开始数据加载后的布局引擎初始化')
-  console.log('🔍 [TaskFlowCanvas] 检查依赖状态:', {
-    configDrawers: !!configDrawers.value,
-    structuredLayout: !!configDrawers.value?.structuredLayout,
-    graph: !!graph
-  })
-  
   if (!configDrawers.value?.structuredLayout) {
-    console.warn('⚠️ [TaskFlowCanvas] 结构化布局组件不存在，尝试重新初始化configDrawers')
-    
-    // 🔧 修复：尝试重新初始化configDrawers
-    if (graph && nodeOperations) {
-      try {
-        console.log('🔧 [TaskFlowCanvas] 尝试重新初始化configDrawers')
-        configDrawers.value = useConfigDrawers(graph, nodeOperations)
-        
-        if (configDrawers.value?.structuredLayout) {
-          console.log('✅ [TaskFlowCanvas] configDrawers重新初始化成功')
-        } else {
-          console.error('❌ [TaskFlowCanvas] configDrawers重新初始化失败，structuredLayout仍不可用')
-          return
-        }
-      } catch (error) {
-        console.error('❌ [TaskFlowCanvas] configDrawers重新初始化异常:', error)
-        return
-      }
-    } else {
-      console.error('❌ [TaskFlowCanvas] graph或nodeOperations不可用，无法重新初始化')
-      return
-    }
+    console.warn('[TaskFlowCanvas] 结构化布局组件不存在，跳过布局引擎初始化')
+    return
   }
 
   try {
     // 首先初始化布局引擎
-    console.log('🔧 [TaskFlowCanvas] 调用structuredLayout.initializeLayoutEngine()')
-    const initResult = configDrawers.value.structuredLayout.initializeLayoutEngine()
-    console.log('✅ [TaskFlowCanvas] 布局引擎初始化完成，结果:', initResult)
+    configDrawers.value.structuredLayout.initializeLayoutEngine()
+    console.log('[TaskFlowCanvas] 布局引擎初始化完成')
 
     // 🔧 关键修复：直接创建布局引擎实例，不依赖于布局应用
     // 因为applyUnifiedStructuredLayout要求至少3个节点，但在开始节点配置时可能只有1-2个节点
     if (graph) {
       try {
-        console.log('🏗️ [TaskFlowCanvas] 开始强制创建布局引擎实例')
-        console.log('🔍 [TaskFlowCanvas] createLayoutEngineInstance方法可用性:', {
-          hasMethod: typeof configDrawers.value.structuredLayout.createLayoutEngineInstance === 'function',
-          structuredLayoutKeys: Object.keys(configDrawers.value.structuredLayout || {})
-        })
-        
         // 强制创建布局引擎实例（即使节点数量不足）
-        // 🔧 修复：确保传递正确的graph实例
         const layoutEngineInstance = configDrawers.value.structuredLayout.createLayoutEngineInstance?.(graph)
-        
-        // 🔍 调试：检查graph实例状态
-        console.log('🔍 [TaskFlowCanvas] Graph实例状态检查:', {
-          graphExists: !!graph,
-          graphType: typeof graph,
-          graphConstructor: graph?.constructor?.name,
-          nodeCount: graph?.getNodes?.()?.length || 0,
-          edgeCount: graph?.getEdges?.()?.length || 0
-        })
-        
-        console.log('🔍 [TaskFlowCanvas] 布局引擎实例创建结果:', {
-          instance: !!layoutEngineInstance,
-          type: typeof layoutEngineInstance,
-          isNull: layoutEngineInstance === null,
-          isUndefined: layoutEngineInstance === undefined
-        })
-        
         if (layoutEngineInstance) {
           console.log('✅ [TaskFlowCanvas] 布局引擎实例已强制创建')
-          
-          // 🔧 调试用：将布局引擎暴露到window对象，便于浏览器调试
-          if (typeof window !== 'undefined') {
-            window.layoutEngine = layoutEngineInstance
-            window.graph = graph
-            console.log('🔍 [TaskFlowCanvas] 布局引擎已暴露到window.layoutEngine，图形实例已暴露到window.graph，可在浏览器控制台调试')
-          }
         } else {
-          console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败，返回值为:', layoutEngineInstance)
+          console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败')
         }
       } catch (error) {
-        console.error('❌ [TaskFlowCanvas] 布局引擎实例创建异常:', error)
-        console.error('❌ [TaskFlowCanvas] 错误堆栈:', error.stack)
+        console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败:', error)
       }
-    } else {
-      console.error('❌ [TaskFlowCanvas] graph实例不可用，无法创建布局引擎实例')
     }
 
-    // 🔧 修复：使用更稳定的方式获取统一预览线管理器实例
-    let connectionPreviewManager = null
-    
-    // 首先尝试通过unifiedPreviewManager获取
-    if (configDrawers.value.structuredLayout.unifiedPreviewManager?.value) {
-      connectionPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager.value
-      console.log('[TaskFlowCanvas] 通过unifiedPreviewManager获取预览线管理器成功')
-    } else {
-      // 备用方案：通过getConnectionPreviewManager方法获取
-      connectionPreviewManager = configDrawers.value.structuredLayout.getConnectionPreviewManager()
-      console.log('[TaskFlowCanvas] 通过getConnectionPreviewManager方法获取预览线管理器')
-    }
-    
-    console.log('[TaskFlowCanvas] 获取统一预览线管理器:', {
-      connectionPreviewManager: !!connectionPreviewManager,
-      isInstance: connectionPreviewManager instanceof Object,
-      type: typeof connectionPreviewManager,
-      isNull: connectionPreviewManager === null,
-      isUndefined: connectionPreviewManager === undefined,
-      constructorName: connectionPreviewManager?.constructor?.name
-    })
-    
-    // 🔧 如果预览线管理器不可用，允许布局引擎初始化继续，但记录警告
-    if (!connectionPreviewManager) {
-      console.warn('[TaskFlowCanvas] 预览线管理器暂时不可用，但允许布局引擎初始化继续')
-      console.warn('[TaskFlowCanvas] 这可能是因为组件初始化时序问题，预览线功能可能在后续操作中可用')
-    }
+    // 获取初始化后的管理器实例
+    const connectionPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager
 
     console.log('[TaskFlowCanvas] 结构化布局组件初始化结果:', {
       layoutEngineStatus: configDrawers.value.structuredLayout.getLayoutEngineStatus?.() || 'unknown',
@@ -2723,16 +2507,6 @@ const initializeLayoutEngineAfterDataLoad = async () => {
 
     if (connectionPreviewManager) {
       console.log('[TaskFlowCanvas] 统一预览线管理器已成功初始化并绑定事件监听器')
-      
-      // 🔧 设置全局预览线管理器引用（数据加载后重试）
-      if (connectionPreviewManager) {
-        window.unifiedPreviewLineManager = connectionPreviewManager
-        console.log('[TaskFlowCanvas] 全局预览线管理器已设置（数据加载后）:', !!window.unifiedPreviewLineManager)
-        console.log('[TaskFlowCanvas] 预览线管理器类型:', typeof connectionPreviewManager)
-        console.log('[TaskFlowCanvas] 预览线管理器构造函数:', connectionPreviewManager.constructor.name)
-      } else {
-        console.warn('[TaskFlowCanvas] 预览线管理器不可用')
-      }
       
       // 🔧 修复：设置布局引擎引用到预览线管理器
       const setupLayoutEngineReference = () => {
@@ -2768,15 +2542,6 @@ const initializeLayoutEngineAfterDataLoad = async () => {
         const createdEngine = configDrawers.value.structuredLayout.createLayoutEngineInstance(graph)
         if (createdEngine) {
           console.log('✅ [TaskFlowCanvas] 布局引擎实例创建成功，重新设置引用')
-          
-          // 🔧 调试用：将布局引擎暴露到window对象，便于浏览器调试
-          if (typeof window !== 'undefined') {
-            window.layoutEngine = createdEngine
-            window.graph = graph
-            window.applyUnifiedStructuredLayout = applyUnifiedStructuredLayout
-            console.log('🔍 [TaskFlowCanvas] 布局引擎已暴露到window.layoutEngine，图形实例已暴露到window.graph，布局方法已暴露到window.applyUnifiedStructuredLayout，可在浏览器控制台调试')
-          }
-          
           layoutEngineSet = setupLayoutEngineReference()
         }
       }
@@ -2791,161 +2556,17 @@ const initializeLayoutEngineAfterDataLoad = async () => {
     } else {
       console.error('[TaskFlowCanvas] 统一预览线管理器初始化失败')
     }
-    
-    // 🔧 修复：标记初始化完成
-    layoutEngineInitialized = true
-    const initDuration = Date.now() - initStartTime
-    console.log(`✅ [TaskFlowCanvas] 布局引擎初始化完成，耗时: ${initDuration}ms`)
-    
-    // 🔧 新增：执行初始化后的状态检查
-    const statusCheck = performCanvasLoadCheck()
-    
-    return { 
-      success: true, 
-      reason: 'initialization_completed',
-      duration: initDuration,
-      statusCheck: statusCheck
-    }
-    
   } catch (error) {
     console.error('[TaskFlowCanvas] 布局引擎初始化过程中发生错误:', error)
-    console.error('[TaskFlowCanvas] 错误堆栈:', error.stack)
-    
-    // 🔧 新增：重置初始化状态以允许重试
-    layoutEngineInitialized = false
-    
-    return { 
-      success: false, 
-      reason: 'initialization_error',
-      error: error.message,
-      duration: Date.now() - initStartTime
-    }
-  } finally {
-    // 🔧 修复：重置初始化状态
-    isLayoutEngineInitializing = false
-  }
-}
-
-// 🔧 新增：画布加载后的状态检查
-const performCanvasLoadCheck = () => {
-  console.log('🔍 [TaskFlowCanvas] 开始画布加载后状态检查')
-  
-  try {
-    // 检查图形实例状态
-    if (!graph) {
-      console.error('❌ [TaskFlowCanvas] 图形实例未初始化')
-      return false
-    }
-    console.log('✅ [TaskFlowCanvas] 图形实例状态正常')
-    
-    // 检查布局引擎状态
-    if (!layoutEngineInitialized) {
-      console.warn('⚠️ [TaskFlowCanvas] 布局引擎未完全初始化')
-    } else {
-      console.log('✅ [TaskFlowCanvas] 布局引擎状态正常')
-    }
-    
-    // 检查预览线管理器状态
-    const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
-    if (unifiedPreviewManager) {
-      console.log('✅ [TaskFlowCanvas] 预览线管理器状态正常')
-    } else {
-      console.warn('⚠️ [TaskFlowCanvas] 预览线管理器未初始化')
-    }
-    
-    // 检查数据状态
-    const nodeCount = nodes.value.length
-    const connectionCount = connections.value.length
-    const graphNodeCount = graph.getNodes().length
-    const graphEdgeCount = graph.getEdges().length
-    
-    console.log(`📊 [TaskFlowCanvas] 数据状态检查:`)
-    console.log(`   - 数据数组: nodes(${nodeCount}), connections(${connectionCount})`)
-    console.log(`   - 图形实例: nodes(${graphNodeCount}), edges(${graphEdgeCount})`)
-    
-    // 检查数据一致性
-    if (Math.abs(nodeCount - graphNodeCount) > 1) {
-      console.warn('⚠️ [TaskFlowCanvas] 节点数据可能不一致')
-    }
-    
-    console.log('✅ [TaskFlowCanvas] 画布状态检查完成')
-    return true
-    
-  } catch (error) {
-    console.error('❌ [TaskFlowCanvas] 画布状态检查失败:', error)
-    return false
   }
 }
 
 // 汇总日志 - 统计页面中各种元素的数量（仅在开发环境下执行详细统计）
-// 🔧 修复：添加增强防护机制避免日志循环
-let lastLogTime = 0
-let logCallCount = 0
-let logCallStack = [] // 记录调用堆栈，用于检测循环调用
-let isLogSuppressed = false // 日志抑制标志
-const LOG_THROTTLE_INTERVAL = 3000 // 增加到3秒内最多执行一次
-const MAX_LOG_CALLS_PER_MINUTE = 5 // 减少到每分钟最多5次
-const MAX_CONSECUTIVE_CALLS = 3 // 连续调用最大次数
-const LOG_SUPPRESS_DURATION = 10000 // 日志抑制持续时间（10秒）
-
 const logCanvasSummary = () => {
   if (!graph) {
     console.warn('[TaskFlowCanvas] 图形实例不存在，无法统计汇总信息')
     return
   }
-
-  const now = Date.now()
-  
-  // 🔧 检查日志抑制状态
-  if (isLogSuppressed) {
-    return // 静默跳过，不输出任何日志
-  }
-  
-  // 🔧 增强防护机制：检测连续快速调用
-  logCallStack.push(now)
-  if (logCallStack.length > MAX_CONSECUTIVE_CALLS) {
-    logCallStack.shift() // 保持数组长度
-  }
-  
-  // 检测是否在短时间内有过多连续调用
-  if (logCallStack.length >= MAX_CONSECUTIVE_CALLS) {
-    const timeDiff = logCallStack[logCallStack.length - 1] - logCallStack[0]
-    if (timeDiff < 1000) { // 1秒内连续调用3次
-      console.error('[TaskFlowCanvas] 🚨 检测到日志循环调用，启动抑制模式！调用间隔:', timeDiff + 'ms')
-      isLogSuppressed = true
-      logCallStack = [] // 清空调用栈
-      
-      // 设置定时器恢复日志
-      setTimeout(() => {
-        isLogSuppressed = false
-        logCallCount = 0
-        console.log('[TaskFlowCanvas] 📢 日志抑制模式已解除，恢复正常日志输出')
-      }, LOG_SUPPRESS_DURATION)
-      
-      return
-    }
-  }
-
-  // 🔧 防护机制：限制调用频率
-  if (now - lastLogTime < LOG_THROTTLE_INTERVAL) {
-    console.debug('[TaskFlowCanvas] 日志调用过于频繁，跳过本次统计')
-    return
-  }
-  
-  // 🔧 防护机制：限制每分钟调用次数
-  logCallCount++
-  if (logCallCount > MAX_LOG_CALLS_PER_MINUTE) {
-    console.warn('[TaskFlowCanvas] 日志调用次数超限，可能存在循环调用问题')
-    return
-  }
-  
-  // 重置计数器（每分钟）
-  if (now - lastLogTime > 60000) {
-    logCallCount = 1
-    logCallStack = [] // 同时清空调用栈
-  }
-  
-  lastLogTime = now
 
   // 在生产环境下只输出简要统计
   if (import.meta.env.PROD) {
@@ -4640,16 +4261,14 @@ const loadCanvasData = (data) => {
           const remainingPreviewLines = previewLines.length - previewLinesToRemove.length
           console.log(`✅ [TaskFlowCanvas] 预览线清理完成: 删除 ${previewLinesToRemove.length} 条已连接预览线，保留 ${remainingPreviewLines} 条未连接预览线`)
           
-          // 🔧 注释掉自动布局触发，避免从列表页进入画布时自动重绘
-          // setTimeout(async () => {
-          //   try {
-          //     await applyUnifiedStructuredLayout()
-          //   } catch (error) {
-          //     console.error('❌ [TaskFlowCanvas] 统一布局执行失败:', error)
-          //   }
-          // }, 100)
-          
-          console.log('✅ [TaskFlowCanvas] 数据加载完成，跳过自动布局以避免不必要的重绘')
+          // 🔧 在预览线清理完成后，执行统一布局以确保连线标签正确显示
+          setTimeout(async () => {
+            try {
+              await applyUnifiedStructuredLayout()
+            } catch (error) {
+              console.error('❌ [TaskFlowCanvas] 统一布局执行失败:', error)
+            }
+          }, 100)
           
         }, 100) // 短暂延迟确保预览线生成完成后再清理
         
@@ -5221,17 +4840,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('keydown', handleKeydown)
-
-  // 🔧 修复：清理全局定时器，防止内存泄漏和页面卡死
-  if (window.previewLineRefreshTimer) {
-    clearTimeout(window.previewLineRefreshTimer)
-    window.previewLineRefreshTimer = null
-  }
-  
-  if (window.highlightNodesTimer) {
-    clearTimeout(window.highlightNodesTimer)
-    window.highlightNodesTimer = null
-  }
 
   // 清理小地图
   if (minimap) {

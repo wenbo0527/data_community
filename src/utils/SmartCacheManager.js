@@ -5,42 +5,16 @@
 
 export class SmartCacheManager {
   constructor(options = {}) {
-    this.options = {
-      maxSize: options.maxSize || 1000,
-      ttl: options.ttl || 5 * 60 * 1000, // 5分钟
-      cleanupInterval: options.cleanupInterval || 300 * 1000, // 5分钟清理一次，减少频率
-      enableLRU: options.enableLRU !== false,
-      enableStats: options.enableStats !== false,
-      ...options
-    }
+    this.cache = new Map()
+    this.accessTimes = new Map()
+    this.hitCounts = new Map()
+    this.maxSize = options.maxSize || 1000
+    this.ttl = options.ttl || 5 * 60 * 1000 // 5分钟
+    this.cleanupInterval = options.cleanupInterval || 60 * 1000 // 1分钟
+    this.hitRateThreshold = options.hitRateThreshold || 0.1
     
-    // 初始化缓存存储
-    this.caches = {
-      coordinates: new Map(),
-      previewLines: new Map(),
-      nodePositions: new Map(),
-      edgeRoutes: new Map()
-    }
-    
-    // LRU访问顺序记录
-    this.accessOrder = new Map()
-    
-    // 统计信息
-    this.stats = {
-      hits: 0,
-      misses: 0,
-      evictions: 0,
-      cleanups: 0
-    }
-    
-    this.cleanupTimer = null
-    
-    // 启动定期清理（延迟启动，避免立即执行）
-    if (this.options.cleanupInterval > 0) {
-      setTimeout(() => {
-        this.startCleanupTimer()
-      }, 10000) // 10秒后再启动清理定时器
-    }
+    // 启动定期清理
+    this.startCleanup()
   }
 
   /**
@@ -158,7 +132,7 @@ export class SmartCacheManager {
         this.set(type, key, value)
       })
     } catch (error) {
-      // console.error('[SmartCacheManager] 预加载失败:', error)
+      console.error('[SmartCacheManager] 预加载失败:', error)
     }
   }
 
@@ -244,7 +218,7 @@ export class SmartCacheManager {
     this.stats.cleanups++
     
     if (cleanedCount > 0) {
-      // console.log(`[SmartCacheManager] 清理了 ${cleanedCount} 个过期缓存项`)
+      console.log(`[SmartCacheManager] 清理了 ${cleanedCount} 个过期缓存项`)
     }
   }
 
