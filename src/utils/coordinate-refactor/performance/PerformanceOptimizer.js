@@ -146,6 +146,12 @@ export class PerformanceOptimizer {
   async handleInitialLoadOperation(layoutFunction, context, options, operationId) {
     console.log(`⏳ [初始加载] 延迟执行操作 - ID: ${operationId}`);
     
+    // 验证layoutFunction是否为函数
+    if (typeof layoutFunction !== 'function') {
+      console.error(`❌ [初始加载错误] layoutFunction不是函数类型:`, typeof layoutFunction, layoutFunction);
+      throw new Error(`layoutFunction必须是函数类型，当前类型: ${typeof layoutFunction}`);
+    }
+    
     // 将操作添加到待执行队列
     const operation = {
       id: operationId,
@@ -173,6 +179,12 @@ export class PerformanceOptimizer {
    */
   async handleBatchedExecution(layoutFunction, context, options, operationId) {
     console.log(`📦 [批处理] 添加到批处理队列 - ID: ${operationId}`);
+    
+    // 验证layoutFunction是否为函数
+    if (typeof layoutFunction !== 'function') {
+      console.error(`❌ [批处理错误] layoutFunction不是函数类型:`, typeof layoutFunction, layoutFunction);
+      throw new Error(`layoutFunction必须是函数类型，当前类型: ${typeof layoutFunction}`);
+    }
     
     const operation = {
       id: operationId,
@@ -298,6 +310,12 @@ export class PerformanceOptimizer {
               return null;
             }
             
+            // 验证operation.function是否为函数
+            if (typeof operation.function !== 'function') {
+              console.error(`❌ [批处理错误] operation.function不是函数类型:`, typeof operation.function, operation);
+              throw new Error(`operation.function必须是函数类型，当前类型: ${typeof operation.function}`);
+            }
+            
             try {
               const result = await this.executeWithMonitoring(
                 operation.function,
@@ -375,6 +393,15 @@ export class PerformanceOptimizer {
     
     for (const operation of safeOperations) {
       try {
+        // 验证operation.function是否为函数
+        if (!operation.function || typeof operation.function !== 'function') {
+          console.error(`❌ [待执行错误] operation.function不是函数类型:`, typeof operation.function, operation);
+          if (operation.reject) {
+            operation.reject(new Error(`operation.function必须是函数类型，当前类型: ${typeof operation.function}`));
+          }
+          continue;
+        }
+        
         const result = await this.executeWithMonitoring(
           operation.function,
           operation.context,
@@ -405,7 +432,40 @@ export class PerformanceOptimizer {
     try {
       console.log(`⚡ [执行监控] 开始执行 - ID: ${operationId}`);
       
-      const result = await layoutFunction.call(context, options);
+      // 🔧 修复：检查layoutFunction是否为函数
+      if (typeof layoutFunction !== 'function') {
+        console.error(`❌ [执行监控] layoutFunction不是函数类型:`, typeof layoutFunction, layoutFunction);
+        throw new Error(`layoutFunction必须是一个函数，当前类型: ${typeof layoutFunction}`);
+      }
+      
+      // 🔧 修复：安全调用函数，使用更稳定的调用方式
+      let result;
+      try {
+        // 优先使用直接调用，避免this绑定问题
+        if (context && typeof context === 'object' && context !== null && 
+            typeof layoutFunction === 'function') {
+          // 对于箭头函数和普通函数，直接调用更安全
+          result = await layoutFunction.call(context);
+        } else {
+          result = await layoutFunction();
+        }
+      } catch (callError) {
+        console.error(`❌ [函数调用失败] ID: ${operationId}:`, callError);
+        // 尝试其他调用方式
+        try {
+          // 尝试不绑定this的直接调用
+          result = await layoutFunction();
+        } catch (fallbackError) {
+          console.error(`❌ [备用调用也失败] ID: ${operationId}:`, fallbackError);
+          // 最后尝试传递参数的调用
+          try {
+            result = await layoutFunction(options);
+          } catch (finalError) {
+            console.error(`❌ [最终调用失败] ID: ${operationId}:`, finalError);
+            throw callError; // 抛出原始错误
+          }
+        }
+      }
       
       const endTime = performance.now();
       const executionTime = endTime - startTime;
@@ -427,17 +487,23 @@ export class PerformanceOptimizer {
 
   /**
    * 优化批处理操作 - 主要的批处理优化入口
-   * @param {Function} operation - 要执行的操作
+   * @param {Function} layoutFunction - 要执行的布局函数
    * @param {Object} context - 执行上下文
    * @param {Object} options - 执行选项
    * @returns {Promise} 执行结果
    */
-  async optimizeBatchOperation(operation, context = {}, options = {}) {
+  async optimizeBatchOperation(layoutFunction, context = {}, options = {}) {
     console.log('📦 [批处理优化] 开始优化批处理操作');
     
     try {
+      // 验证layoutFunction是否为函数
+      if (typeof layoutFunction !== 'function') {
+        console.error(`❌ [批处理优化] layoutFunction不是函数类型:`, typeof layoutFunction, layoutFunction);
+        throw new Error(`layoutFunction必须是函数类型，当前类型: ${typeof layoutFunction}`);
+      }
+      
       // 使用现有的优化布局执行方法
-      return await this.optimizeLayoutExecution(operation, context, options);
+      return await this.optimizeLayoutExecution(layoutFunction, context, options);
     } catch (error) {
       console.error('❌ [批处理优化] 批处理操作失败:', error);
       throw error;

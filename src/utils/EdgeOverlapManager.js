@@ -4,50 +4,16 @@
  */
 
 export class EdgeOverlapManager {
-  constructor(graph, layoutDirection = 'TB') {
+  constructor(graph) {
     this.graph = graph
-    this.layoutDirection = layoutDirection
     this.edgeOffsetCache = new Map() // 缓存连线偏移信息
     this.portConnectionCount = new Map() // 记录每个端口的连接数量
     this.setupEventListeners()
     
-    console.log('🎯 [连线重叠管理器] 初始化完成, 布局方向:', layoutDirection)
+    console.log('🎯 [连线重叠管理器] 初始化完成')
   }
 
-  /**
-   * 更新布局方向
-   * @param {string} newDirection - 新的布局方向 ('TB' 或 'LR')
-   */
-  updateLayoutDirection(newDirection) {
-    if (this.layoutDirection !== newDirection) {
-      this.layoutDirection = newDirection
-      console.log('🔄 [连线重叠管理器] 布局方向已更新:', newDirection)
-      
-      // 重新计算所有已缓存的连线偏移
-      this.recalculateAllEdgeOffsets()
-    }
-  }
 
-  /**
-   * 重新计算所有连线偏移
-   */
-  recalculateAllEdgeOffsets() {
-    console.log('🔄 [连线重叠管理器] 重新计算所有连线偏移')
-    
-    // 获取所有有偏移的连线
-    const edgesWithOffset = Array.from(this.edgeOffsetCache.keys())
-    
-    // 清空缓存
-    this.edgeOffsetCache.clear()
-    
-    // 重新处理每条连线
-    edgesWithOffset.forEach(edgeId => {
-      const edge = this.graph.getCellById(edgeId)
-      if (edge) {
-        this.processEdgeOverlap(edge)
-      }
-    })
-  }
 
   /**
    * 设置事件监听器
@@ -90,7 +56,7 @@ export class EdgeOverlapManager {
     
     // 检查是否是预览线，跳过预览线的处理
     const edgeData = edge.getData() || {}
-    if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview) {
+    if (edgeData.isPreview) {
       console.log('⏭️ [连线重叠管理器] 跳过预览线添加处理:', edge.id)
       return
     }
@@ -130,7 +96,7 @@ export class EdgeOverlapManager {
     
     // 检查是否是预览线，跳过预览线的处理
     const edgeData = edge.getData() || {}
-    if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview) {
+    if (edgeData.isPreview) {
       console.log('⏭️ [连线重叠管理器] 跳过预览线移除处理:', edge.id)
       return
     }
@@ -215,18 +181,43 @@ export class EdgeOverlapManager {
       return
     }
 
-    console.log('🔍 [连线重叠管理器] 分析连线重叠:', {
+    // 🆕 优先检查是否需要处理重叠
+    // 获取所有同源同目标的连线（包括当前连线）
+    const allSamePairEdges = this.getAllSamePairEdges(sourceId, targetId)
+    
+    // 检查同端口的其他连线
+    const sameSourcePortEdges = this.getSamePortEdges(sourceId, sourcePort, 'source')
+    const sameTargetPortEdges = this.getSamePortEdges(targetId, targetPort, 'target')
+
+    // 🔍 判断是否需要处理重叠：只有在存在多条连线时才需要处理
+    const needsCrossBranchHandling = allSamePairEdges.length > 1
+    const needsSourcePortHandling = sameSourcePortEdges.length > 1
+    const needsTargetPortHandling = sameTargetPortEdges.length > 1
+    
+    // 如果不需要任何重叠处理，直接返回
+    if (!needsCrossBranchHandling && !needsSourcePortHandling && !needsTargetPortHandling) {
+      console.log('✅ [连线重叠管理器] 无需处理重叠，跳过:', {
+        edgeId: edge.id,
+        sourceId,
+        targetId,
+        samePairCount: allSamePairEdges.length,
+        sameSourcePortCount: sameSourcePortEdges.length,
+        sameTargetPortCount: sameTargetPortEdges.length
+      })
+      return
+    }
+
+    console.log('🔍 [连线重叠管理器] 需要处理连线重叠:', {
       edgeId: edge.id,
       sourceId,
       targetId,
       sourcePort,
-      targetPort
+      targetPort,
+      needsCrossBranchHandling,
+      needsSourcePortHandling,
+      needsTargetPortHandling
     })
 
-    // 🆕 优先检查跨分支路径冲突
-    // 获取所有同源同目标的连线（包括当前连线）
-    const allSamePairEdges = this.getAllSamePairEdges(sourceId, targetId)
-    
     console.log('🔍 [跨分支检测] 同源同目标连线分析:', {
       currentEdgeId: edge.id,
       sourceId,
@@ -234,10 +225,6 @@ export class EdgeOverlapManager {
       totalSamePairEdges: allSamePairEdges.length,
       allEdgeIds: allSamePairEdges.map(e => e.id)
     })
-
-    // 检查同端口的其他连线
-    const sameSourcePortEdges = this.getSamePortEdges(sourceId, sourcePort, 'source')
-    const sameTargetPortEdges = this.getSamePortEdges(targetId, targetPort, 'target')
 
     console.log('📊 [连线重叠管理器] 连线冲突分析:', {
       sameSourcePortCount: sameSourcePortEdges.length,
@@ -247,7 +234,7 @@ export class EdgeOverlapManager {
     })
 
     // 处理跨分支路径冲突（优先级最高）
-    if (allSamePairEdges.length > 1) {
+    if (needsCrossBranchHandling) {
       console.log('🎯 [跨分支冲突] 检测到多条同源同目标连线，应用跨分支偏移策略')
       
       // 为所有同源同目标的连线应用跨分支偏移
@@ -257,19 +244,21 @@ export class EdgeOverlapManager {
     else {
       console.log('📝 [传统重叠] 处理同端口连线重叠')
       
-      // 如果存在多条连线连接到同一端口，应用偏移算法
-      if (sameSourcePortEdges.length > 1) {
+      // 只有在存在多条连线连接到同一端口时，才应用偏移算法
+      if (needsSourcePortHandling) {
         this.applyEdgeOffsets(sameSourcePortEdges, sourceId, sourcePort, 'source')
       }
 
-      if (sameTargetPortEdges.length > 1) {
+      if (needsTargetPortHandling) {
         this.applyEdgeOffsets(sameTargetPortEdges, targetId, targetPort, 'target')
       }
     }
 
-    // 更新端口连接计数
-    this.updatePortConnectionCount(sourceId, sourcePort, 1)
-    this.updatePortConnectionCount(targetId, targetPort, 1)
+    // 只有在实际处理了重叠时才更新端口连接计数
+    if (needsCrossBranchHandling || needsSourcePortHandling || needsTargetPortHandling) {
+      this.updatePortConnectionCount(sourceId, sourcePort, 1)
+      this.updatePortConnectionCount(targetId, targetPort, 1)
+    }
   }
 
   /**
@@ -410,7 +399,6 @@ export class EdgeOverlapManager {
       // 根据布局方向计算偏移策略
       const isVerticalLayout = this.layoutDirection === 'TB' || this.layoutDirection === 'BT'
       const isTopDown = this.layoutDirection === 'TB'
-      const isLeftRight = this.layoutDirection === 'LR'
       
       // 计算分层偏移量
       const layerSpacing = 40 // 增加间距到40px
@@ -430,44 +418,23 @@ export class EdgeOverlapManager {
       
       let branchPoint, turnPoint, startDirection, endDirection
       
-      if (isVerticalLayout) {
-        // 垂直布局：水平分层
-        const horizontalOffset = offsetFromCenter * layerSpacing
-        const verticalExtension = isTopDown ? 60 : -60
-        
-        branchPoint = {
-          x: sourcePoint.x + horizontalOffset,
-          y: sourcePoint.y + verticalExtension
-        }
-        
-        // 让turnPoint也有水平偏移，避免在目标节点附近重叠
-        turnPoint = {
-          x: targetPoint.x + horizontalOffset,
-          y: branchPoint.y
-        }
-        
-        startDirection = isTopDown ? 'bottom' : 'top'
-        endDirection = isTopDown ? 'top' : 'bottom'
-        
-      } else {
-        // 水平布局：垂直分层
-        const verticalOffset = offsetFromCenter * layerSpacing
-        const horizontalExtension = isLeftRight ? 60 : -60
-        
-        branchPoint = {
-          x: sourcePoint.x + horizontalExtension,
-          y: sourcePoint.y + verticalOffset
-        }
-        
-        // 让turnPoint也有垂直偏移，避免在目标节点附近重叠
-        turnPoint = {
-          x: branchPoint.x,
-          y: targetPoint.y + verticalOffset
-        }
-        
-        startDirection = isLeftRight ? 'right' : 'left'
-        endDirection = isLeftRight ? 'left' : 'right'
+      // 垂直布局：水平分层
+      const horizontalOffset = offsetFromCenter * layerSpacing
+      const verticalExtension = isTopDown ? 60 : -60
+      
+      branchPoint = {
+        x: sourcePoint.x + horizontalOffset,
+        y: sourcePoint.y + verticalExtension
       }
+      
+      // 让turnPoint也有水平偏移，避免在目标节点附近重叠
+      turnPoint = {
+        x: targetPoint.x + horizontalOffset,
+        y: branchPoint.y
+      }
+      
+      startDirection = isTopDown ? 'bottom' : 'top'
+      endDirection = isTopDown ? 'top' : 'bottom'
       
       // 设置路径点：源点 -> 分支点 -> 转折点 -> 目标点
       edge.setVertices([branchPoint, turnPoint])
@@ -569,9 +536,7 @@ export class EdgeOverlapManager {
       this.edgeOffsetCache.set(edge.id, {
         type: 'cross-branch-layout',
         layoutDirection: this.layoutDirection,
-        offset: isVerticalLayout ? 
-          { horizontal: offsetFromCenter * layerSpacing, vertical: 0 } :
-          { horizontal: 0, vertical: offsetFromCenter * layerSpacing },
+        offset: { horizontal: offsetFromCenter * layerSpacing, vertical: 0 },
         index,
         totalCount,
         branchPoint,
@@ -603,7 +568,7 @@ export class EdgeOverlapManager {
   /**
    * 计算标签偏移位置，避免重叠
    */
-  calculateLabelOffset(index, totalCount, layoutDirection) {
+  calculateLabelOffset(index, totalCount) {
     const baseOffset = 15
     const spacing = 12 // 增加标签间距
     
@@ -612,7 +577,7 @@ export class EdgeOverlapManager {
     if (totalCount === 1) {
       offsetFromCenter = 0
     } else if (totalCount === 2) {
-      // 两条连线：一条向左/上偏移，一条向右/下偏移
+      // 两条连线：一条向左偏移，一条向右偏移
       offsetFromCenter = index === 0 ? -0.5 : 0.5
     } else {
       // 多条连线：对称分布
@@ -620,20 +585,10 @@ export class EdgeOverlapManager {
       offsetFromCenter = index - centerIndex
     }
     
-    const isVerticalLayout = layoutDirection === 'TB' || layoutDirection === 'BT'
-    
-    if (isVerticalLayout) {
-      // 垂直布局：标签水平偏移
-      return {
-        x: offsetFromCenter * spacing,
-        y: baseOffset
-      }
-    } else {
-      // 水平布局：标签垂直偏移
-      return {
-        x: baseOffset,
-        y: offsetFromCenter * spacing
-      }
+    // 垂直布局：标签水平偏移
+    return {
+      x: offsetFromCenter * spacing,
+      y: baseOffset
     }
   }
 
@@ -646,7 +601,7 @@ export class EdgeOverlapManager {
     return allEdges.filter(edge => {
       // 跳过预览线
       const edgeData = edge.getData() || {}
-      if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview) {
+      if (edgeData.isPreview) {
         return false
       }
 
@@ -680,7 +635,7 @@ export class EdgeOverlapManager {
     if (!node) return
 
     const nodePosition = node.getPosition()
-    const nodeSize = node.getSize()
+    const nodeSize = (node && typeof node.getSize === 'function') ? node.getSize() : { width: 120, height: 40 }
 
     // 计算基础偏移参数
     const baseOffset = 15 // 基础偏移距离
@@ -1025,18 +980,7 @@ export class EdgeOverlapManager {
    * 获取默认连线方向
    */
   getDefaultDirections() {
-    switch (this.layoutDirection) {
-      case 'TB':
-        return { start: 'bottom', end: 'top' }
-      case 'BT':
-        return { start: 'top', end: 'bottom' }
-      case 'LR':
-        return { start: 'right', end: 'left' }
-      case 'RL':
-        return { start: 'left', end: 'right' }
-      default:
-        return { start: 'bottom', end: 'top' } // 默认TB
-    }
+    return { start: 'bottom', end: 'top' }
   }
 
   /**
@@ -1052,7 +996,7 @@ export class EdgeOverlapManager {
     connectedEdges.forEach(edge => {
       const edgeData = edge.getData() || {}
       // 跳过预览线
-      if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview) {
+      if (edgeData.isPreview) {
         return
       }
 
@@ -1168,7 +1112,7 @@ export class EdgeOverlapManager {
       const edgeData = edge.getData() || {}
       
       // 跳过预览线
-      if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview) {
+      if (edgeData.isPreview) {
         return false
       }
       

@@ -269,9 +269,9 @@
 import { ref, computed, onMounted, watch, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
-import { getDataModelsList, executeDataModel } from '@/api/dataModels'
+import { getDataModelsList, executeDataModel } from '@/api/dataModels.js'
 import { IconCopy, IconRefresh, IconDelete, IconEye, IconPlus, IconFilter, IconInfoCircle } from '@arco-design/web-vue/es/icon'
-import { copyToClipboard } from '@/utils/clipboard'
+import { copyToClipboard } from '@/utils/copy.js'
 import QueryResultDetail from './QueryResultDetail.vue'
 
 // 路由实例

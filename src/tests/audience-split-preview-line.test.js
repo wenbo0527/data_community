@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 
 describe('人群分流节点预览线生成', () => {
   let previewManager
@@ -60,7 +60,12 @@ describe('人群分流节点预览线生成', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
+    previewManager = new UnifiedPreviewLineManager(
+      mockGraph,  // graph
+      null,      // branchManager
+      {},        // layoutConfig
+      null       // layoutEngine
+    )
     
     // 🔧 关键修复：设置布局引擎就绪状态，确保预览线能够立即创建
     previewManager.layoutEngineReady = true

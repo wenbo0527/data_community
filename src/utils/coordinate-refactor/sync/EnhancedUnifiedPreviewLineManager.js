@@ -23,7 +23,6 @@ export const PreviewLineType = {
  * 预览线状态枚举
  */
 export const PreviewLineState = {
-  HIDDEN: 'hidden',
   VISIBLE: 'visible',
   ACTIVE: 'active',
   ERROR: 'error',
@@ -39,7 +38,7 @@ class PreviewLineInfo {
     this.sourceNodeId = sourceNodeId;
     this.targetNodeId = targetNodeId;
     this.type = type;
-    this.state = PreviewLineState.HIDDEN;
+    this.state = PreviewLineState.VISIBLE;
     this.position = { x1: 0, y1: 0, x2: 0, y2: 0 };
     this.style = {};
     this.metadata = {};
@@ -118,6 +117,9 @@ export class EnhancedUnifiedPreviewLineManager {
       enableValidation: true,
       ...options
     };
+
+    // 🔒 新增：布局引擎引用（用于检查锁定状态）
+    this.layoutEngine = options.layoutEngine || null;
 
     // 预览线管理
     this.previewLines = new Map(); // id -> PreviewLineInfo
@@ -742,6 +744,17 @@ export class EnhancedUnifiedPreviewLineManager {
    * @returns {Promise<boolean>} 是否成功更新
    */
   async updatePreviewLinePosition(previewLineId, newPosition, options = {}) {
+    // 🔒 检查布局引擎锁定状态
+    if (this.layoutEngine && this.layoutEngine.isPreviewLineRefreshLocked()) {
+      const lockStatus = this.layoutEngine.getPreviewLineLockStatus();
+      console.warn(`[预览线管理器] 预览线位置更新被阻止 - ${lockStatus.reason}`, {
+        previewLineId,
+        lockDuration: Date.now() - lockStatus.startTime,
+        lockReason: lockStatus.reason
+      });
+      return false;
+    }
+
     // 使用智能状态同步机制
     return await this.smartStateSync(previewLineId, {
       position: newPosition,
@@ -829,6 +842,13 @@ export class EnhancedUnifiedPreviewLineManager {
     const previewLine = this.previewLines.get(previewLineId);
     if (!previewLine) {
       throw ErrorFactory.createPreviewLineRefreshError(`预览线不存在: ${previewLineId}`);
+    }
+
+    // 🔒 新增：检查布局引擎的预览线刷新锁定状态
+    if (this.layoutEngine && this.layoutEngine.isPreviewLineRefreshLocked()) {
+      const lockStatus = this.layoutEngine.getPreviewLineLockStatus();
+      console.warn(`⚠️ [预览线管理器] 预览线刷新被锁定，跳过刷新 - 原因: ${lockStatus.reason}, 锁定时长: ${lockStatus.duration}ms`);
+      return false;
     }
 
     try {
@@ -929,6 +949,24 @@ export class EnhancedUnifiedPreviewLineManager {
    * @returns {Promise<Object>} 批量更新结果
    */
   async batchUpdatePreviewLines(updates, options = {}) {
+    // 🔒 检查布局引擎锁定状态
+    if (this.layoutEngine && this.layoutEngine.isPreviewLineRefreshLocked()) {
+      const lockStatus = this.layoutEngine.getPreviewLineLockStatus();
+      console.warn(`[预览线管理器] 批量预览线更新被阻止 - ${lockStatus.reason}`, {
+        updateCount: updates.length,
+        lockDuration: Date.now() - lockStatus.startTime,
+        lockReason: lockStatus.reason
+      });
+      return {
+        successful: 0,
+        failed: updates.length,
+        errors: updates.map(update => ({
+          previewLineId: update.id,
+          error: `预览线刷新被锁定: ${lockStatus.reason}`
+        }))
+      };
+    }
+
     const startTime = Date.now();
     const results = {
       successful: 0,

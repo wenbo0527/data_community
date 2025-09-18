@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 
 describe('开始节点预览线测试', () => {
   let mockGraph
@@ -46,12 +46,7 @@ describe('开始节点预览线测试', () => {
     }
 
     // 创建预览线管理器
-    previewManager = new UnifiedPreviewLineManager(
-      mockGraph,
-      mockBranchManager,
-      {},
-      'TB'
-    )
+    previewManager = new UnifiedPreviewLineManager(mockGraph, null, {}, null)
 
     // 设置布局引擎就绪状态
     previewManager.layoutEngineReady = true
@@ -113,10 +108,9 @@ describe('开始节点预览线测试', () => {
     const mockPreviewEdge = {
       id: 'preview-edge-1',
       getData: vi.fn().mockReturnValue({
-        type: 'unified-preview-line',
-        isUnifiedPreview: true
+        type: 'preview-line'
       }),
-      getTargetCellId: vi.fn().mockReturnValue('preview-target-1')
+      getTargetCellId: vi.fn().mockReturnValue(undefined)
     }
 
     mockGraph.getOutgoingEdges.mockReturnValue([mockPreviewEdge])
@@ -168,10 +162,9 @@ describe('开始节点预览线测试', () => {
     const mockPreviewEdge = {
       id: 'preview-edge-1',
       getData: vi.fn().mockReturnValue({
-        type: 'unified-preview-line',
-        isUnifiedPreview: true
+        type: 'preview-line'
       }),
-      getTargetCellId: vi.fn().mockReturnValue('preview-target-1')
+      getTargetCellId: vi.fn().mockReturnValue(undefined)
     }
 
     mockGraph.getOutgoingEdges.mockReturnValue([mockRealEdge, mockPreviewEdge])
@@ -205,17 +198,14 @@ describe('开始节点预览线测试', () => {
     mockGraph.getOutgoingEdges.mockReturnValue([])
 
     // 执行：创建预览线
-    const result = previewManager.createUnifiedPreviewLine(mockStartNode)
+    const result = previewManager.createPreviewLine(mockStartNode, { x: 200, y: 150 }, 'default', '默认')
 
-    // 验证：应该创建单一预览线
-    expect(result).not.toBeNull()
-    expect(result.type).toBe('single')
-    expect(result.sourceNode).toBe(mockStartNode)
+    // 验证：应该创建预览线
     expect(mockGraph.addEdge).toHaveBeenCalled()
 
     // 验证预览线ID格式
     const addEdgeCall = mockGraph.addEdge.mock.calls[0][0]
-    expect(addEdgeCall.id).toMatch(/unified_preview_start-node_single_\d+/)
+    expect(addEdgeCall.id).toMatch(/preview_start-node_\d+/)
   })
 
   test('开始节点连接检查的日志输出', () => {

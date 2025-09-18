@@ -4,7 +4,7 @@
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { nodeConfigManager } from '../utils/NodeConfigManager.js'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 
 describe('isConfigured字段覆盖问题测试', () => {
   let mockGraph
@@ -47,7 +47,12 @@ describe('isConfigured字段覆盖问题测试', () => {
     mockGraph.getCellById.mockReturnValue(mockNode)
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
+    previewManager = new UnifiedPreviewLineManager(
+      mockGraph,  // graph
+      null,      // branchManager
+      {},        // layoutConfig
+      null       // layoutEngine
+    )
   })
 
   test('NodeConfigManager设置isConfigured后不应被覆盖', async () => {

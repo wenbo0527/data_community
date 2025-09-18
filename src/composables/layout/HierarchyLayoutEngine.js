@@ -9,7 +9,8 @@
  * 5. 提供性能优化和缓存机制
  */
 
-import { compactBox } from '@antv/hierarchy';
+import * as Hierarchy from '@antv/hierarchy';
+const { compactBox } = Hierarchy;
 import HierarchyAdapter from './HierarchyAdapter.js';
 
 export class HierarchyLayoutEngine {

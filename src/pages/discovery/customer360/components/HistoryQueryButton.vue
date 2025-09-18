@@ -82,7 +82,7 @@ import { Message } from '@arco-design/web-vue'
 import { 
   IconHistory
 } from '@arco-design/web-vue/es/icon'
-import { getDataModelsList } from '@/api/dataModels.ts'
+import { getDataModelsList } from '@/api/dataModels.js'
 import HistorySliceQuery from './HistorySliceQuery.vue'
 
 // Props

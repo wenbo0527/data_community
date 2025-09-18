@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 
 describe('人群分流节点预览线生成综合测试', () => {
   let previewManager

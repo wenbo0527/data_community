@@ -141,7 +141,7 @@ export function getVerticalLayoutPosition(node, level, index, totalInLevel) {
 export function calculateBranchPreviewPosition(sourceNode, branches, branchIndex) {
   const config = VERTICAL_LAYOUT_CONFIG
   const nodePosition = sourceNode.getPosition()
-  const nodeSize = sourceNode.getSize()
+  const nodeSize = (sourceNode && typeof sourceNode.getSize === 'function') ? sourceNode.getSize() : { width: 120, height: 40 }
   const nodeData = sourceNode.getData() || {}
   const nodeType = nodeData.type || nodeData.nodeType
   
@@ -211,7 +211,7 @@ export function calculateBranchPreviewPosition(sourceNode, branches, branchIndex
 export function calculateSinglePreviewPosition(sourceNode) {
   const config = VERTICAL_LAYOUT_CONFIG
   const nodePosition = sourceNode.getPosition()
-  const nodeSize = sourceNode.getSize()
+  const nodeSize = (sourceNode && typeof sourceNode.getSize === 'function') ? sourceNode.getSize() : { width: 120, height: 40 }
   
   // 🔧 安全检查：确保nodeSize有效
   const safeWidth = nodeSize?.width || 120; // 默认宽度120px
@@ -266,20 +266,35 @@ export function canConnectVertically(sourceNode, targetNode) {
 
 /**
  * 获取最佳吸附位置（仅支持单节点吸附）
- * @param {Object} dragNode - 被拖拽的节点
+ * @param {Object} dragNode - 被拖拽的节点或坐标对象
  * @param {Array} snapTargets - 吸附目标数组
  * @returns {Object|null} 最近的单个吸附位置
  */
 export function getBestSnapPosition(dragNode, snapTargets) {
   const config = VERTICAL_LAYOUT_CONFIG
-  const dragPos = dragNode.getPosition()
-  const dragSize = dragNode.getSize()
-  // 🔧 安全检查：确保dragSize有效
-  const safeWidth = dragSize?.width || 120; // 默认宽度120px
   
-  const dragCenter = {
-    x: dragPos.x + safeWidth / 2,
-    y: dragPos.y
+  let dragCenter
+  
+  // 🔧 修复：支持两种输入类型 - 节点对象或坐标对象
+  if (dragNode && typeof dragNode.getPosition === 'function') {
+    // X6节点对象
+    const dragPos = dragNode.getPosition()
+    const dragSize = (dragNode && typeof dragNode.getSize === 'function') ? dragNode.getSize() : { width: 120, height: 40 }
+    const safeWidth = dragSize?.width || 120
+    
+    dragCenter = {
+      x: dragPos.x + safeWidth / 2,
+      y: dragPos.y
+    }
+  } else if (dragNode && typeof dragNode.x === 'number' && typeof dragNode.y === 'number') {
+    // 坐标对象
+    dragCenter = {
+      x: dragNode.x,
+      y: dragNode.y
+    }
+  } else {
+    console.error('❌ [getBestSnapPosition] 无效的dragNode参数:', dragNode)
+    return null
   }
   
   let bestSnap = null

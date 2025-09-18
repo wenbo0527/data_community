@@ -86,12 +86,13 @@ export class CanvasPanZoomManager {
     // 设置默认光标
     this.updateCursor()
     
-    // 鼠标事件 - 使用捕获阶段确保优先处理
-    container.addEventListener('mousedown', this.handleMouseDown.bind(this), true)
-    container.addEventListener('mousemove', this.handleMouseMove.bind(this), true)
-    container.addEventListener('mouseup', this.handleMouseUp.bind(this), true)
-    container.addEventListener('mouseleave', this.handleMouseLeave.bind(this), true)
-    container.addEventListener('mouseenter', this.handleMouseEnter.bind(this), true)
+    // 🔧 关键修复：使用冒泡阶段而不是捕获阶段，让X6的节点拖拽事件优先处理
+    // 这样X6可以先处理节点拖拽，如果X6没有处理（如空白区域点击），事件会冒泡到我们的处理器
+    container.addEventListener('mousedown', this.handleMouseDown.bind(this), false)
+    container.addEventListener('mousemove', this.handleMouseMove.bind(this), false)
+    container.addEventListener('mouseup', this.handleMouseUp.bind(this), false)
+    container.addEventListener('mouseleave', this.handleMouseLeave.bind(this), false)
+    container.addEventListener('mouseenter', this.handleMouseEnter.bind(this), false)
     
     // 全局事件监听 - 确保拖拽在容器外也能正常工作
     this.globalMouseMove = this.handleMouseMove.bind(this)
@@ -307,6 +308,19 @@ export class CanvasPanZoomManager {
       // console.log('🎯 [CanvasPanZoomManager] 检测到预览线点击，跳过画布拖拽处理')
       // 确保事件不被阻止，让它继续传播到预览线的事件监听器
       return // 直接返回，不阻止事件传播
+    }
+    
+    // 🔧 关键修复：如果点击的是节点或其他交互元素，跳过画布拖拽处理，让事件传播到X6
+    if (isInteractiveElement && !isPreviewLine) {
+      console.log('🎯 [CanvasPanZoomManager] 检测到交互元素点击，跳过画布拖拽处理，让X6处理节点拖拽:', {
+        targetTagName: target.tagName,
+        targetClasses: target.className,
+        targetId: target.id,
+        isNode: target.classList.contains('x6-node'),
+        isPort: target.classList.contains('x6-port')
+      })
+      // 直接返回，不阻止事件传播，让X6的节点拖拽处理器接管
+      return
     }
     
     // 判断是否可以开始拖拽

@@ -794,6 +794,7 @@ const mockUsers: { [key: string]: UserData } = {
         loanId: '3276555', // 新增字段：用信ID（映射自loanNo）
         loanDate: '2023-08-15 10:30:45',
         dueDate: '2024-02-15', // 新增字段：到期日期（映射自nextPaymentDate）
+        dataDate: '2024-01-15', // 新增字段：数据日期
         bankCard: '6228****9876',
         channel: '手机银行',
         productName: '蚂蚁借呗',
@@ -819,6 +820,7 @@ const mockUsers: { [key: string]: UserData } = {
         remainingPenalty: 0,
         remainingTotal: 32900.00,
         loanRate: 4.35,
+        actualRepaymentFee: 125.50, // 新增字段：实际还款费用
         disbursementRecords: [
           {
             batch: 1,
@@ -920,6 +922,7 @@ const mockUsers: { [key: string]: UserData } = {
         loanId: '3276556', // 新增字段：用信ID（映射自loanNo）
         loanDate: '2023-09-20 14:20:30',
         dueDate: '2024-02-20', // 新增字段：到期日期（映射自nextPaymentDate）
+        dataDate: '2024-01-20', // 新增字段：数据日期
         bankCard: '6228****9876',
         channel: '手机银行',
         productName: '京东白条',
@@ -945,6 +948,7 @@ const mockUsers: { [key: string]: UserData } = {
         remainingPenalty: 0,
         remainingTotal: 25000.00,
         loanRate: 5.2,
+        actualRepaymentFee: 85.30, // 新增字段：实际还款费用
         disbursementRecords: [
           {
             batch: 1,
@@ -1008,6 +1012,7 @@ const mockUsers: { [key: string]: UserData } = {
         loanId: '3276564', // 新增字段：用信ID（映射自loanNo）
         loanDate: '2024-01-15 14:30:20',
         dueDate: '2024-04-15', // 新增字段：到期日期（映射自nextPaymentDate）
+        dataDate: '2024-01-30', // 新增字段：数据日期
         bankCard: '6228****9876',
         channel: 'Su贷APP',
         productName: 'Su贷',
@@ -1033,6 +1038,7 @@ const mockUsers: { [key: string]: UserData } = {
         remainingPenalty: 450.80,
         remainingTotal: 203991.95,
         loanRate: 3.9,
+        actualRepaymentFee: 268.75, // 新增字段：实际还款费用
         disbursementRecords: [
           {
             batch: 1,

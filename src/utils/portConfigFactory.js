@@ -9,33 +9,19 @@
  * @param {string} id - 端口ID
  * @param {Object} position - 位置配置 { dx?: number, dy?: number }
  * @param {Object} options - 可选配置
- * @param {string} layoutDirection - 布局方向 ('TB' | 'LR')
+ * @param {string} layoutDirection - 布局方向 ('TB')
  * @returns {Object} 完整的端口配置
  */
-export const createPortConfig = (group, id, position = {}, options = {}, layoutDirection = 'TB') => {
+export const createPortConfig = (group, id, position = {}, options = {}) => {
   const isInputPort = group === 'in'
   
-  // 根据布局方向确定端口位置
-  let portPosition, portArgs
-  
-  if (layoutDirection === 'LR') {
-    // 从左到右布局：输入端口在左侧，输出端口在右侧
-    portPosition = isInputPort ? 'left' : 'right'
-    portArgs = {
-      x: isInputPort ? 0 : '100%',
-      y: '50%',
-      dx: position.dx || 0,
-      dy: position.dy || 0
-    }
-  } else {
-    // 从上到下布局（默认）：输入端口在顶部，输出端口在底部
-    portPosition = isInputPort ? 'top' : 'bottom'
-    portArgs = {
-      x: '50%',
-      y: isInputPort ? 0 : '100%',
-      dx: position.dx || 0,
-      dy: position.dy || 0
-    }
+  // 确定端口位置（上下布局）
+  const portPosition = isInputPort ? 'top' : 'bottom'
+  const portArgs = {
+    x: '50%',
+    y: isInputPort ? 0 : '100%',
+    dx: position.dx || 0,
+    dy: position.dy || 0
   }
   
   return {
@@ -87,124 +73,81 @@ export const createMultiplePortConfigs = (portDefinitions) => {
  * 为节点类型创建标准端口配置
  * @param {string} nodeType - 节点类型
  * @param {Object} config - 节点配置
- * @param {string} layoutDirection - 布局方向 ('TB' | 'LR')
+ * @param {string} layoutDirection - 布局方向 ('TB')
  * @returns {Object} 端口配置 { groups: Object, items: Array }
  */
-export const createNodePortConfig = (nodeType, config = {}, layoutDirection = 'TB') => {
-  // 根据布局方向创建端口组配置
-  const createPortGroups = (layoutDirection) => {
-    if (layoutDirection === 'LR') {
-      // 从左到右布局
-      return {
-        in: {
-          position: {
-            name: 'left',
-            args: { x: 0, y: '50%', dx: 0, dy: 0 }
-          },
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              strokeWidth: 2,
-              fill: '#fff',
-              style: { visibility: 'visible' }
-            }
-          },
-          markup: [{ tagName: 'circle', selector: 'circle' }]
-        },
-        out: {
-          position: {
-            name: 'right',
-            args: { x: '100%', y: '50%', dx: 0, dy: 0 }
-          },
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              strokeWidth: 2,
-              fill: '#fff',
-              style: { visibility: 'visible' }
-            }
-          },
-          markup: [{ tagName: 'circle', selector: 'circle' }]
+export const createNodePortConfig = (nodeType, config = {}) => {
+  // 创建端口组配置（上下布局）
+  const portGroups = {
+    in: {
+      position: {
+        name: 'top',
+        args: { x: '50%', y: 0, dx: 0, dy: 0 }
+      },
+      attrs: {
+        circle: {
+          r: 4,
+          magnet: true,
+          strokeWidth: 2,
+          fill: '#fff',
+          style: { visibility: 'visible' }
         }
-      }
-    } else {
-      // 从上到下布局（默认）
-      return {
-        in: {
-          position: {
-            name: 'top',
-            args: { x: '50%', y: 0, dx: 0, dy: 0 }
-          },
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              strokeWidth: 2,
-              fill: '#fff',
-              style: { visibility: 'visible' }
-            }
-          },
-          markup: [{ tagName: 'circle', selector: 'circle' }]
-        },
-        out: {
-          position: {
-            name: 'bottom',
-            args: { x: '50%', y: '100%', dx: 0, dy: 0 }
-          },
-          attrs: {
-            circle: {
-              r: 4,
-              magnet: true,
-              strokeWidth: 2,
-              fill: '#fff',
-              style: { visibility: 'visible' }
-            }
-          },
-          markup: [{ tagName: 'circle', selector: 'circle' }]
+      },
+      markup: [{ tagName: 'circle', selector: 'circle' }]
+    },
+    out: {
+      position: {
+        name: 'bottom',
+        args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+      },
+      attrs: {
+        circle: {
+          r: 4,
+          magnet: true,
+          strokeWidth: 2,
+          fill: '#fff',
+          style: { visibility: 'visible' }
         }
-      }
+      },
+      markup: [{ tagName: 'circle', selector: 'circle' }]
     }
   }
-
-  const portGroups = createPortGroups(layoutDirection)
   const items = []
 
   // 根据节点类型添加端口
   switch (nodeType) {
     case 'start':
       // 开始节点只有输出端口
-      items.push(createPortConfig('out', 'out', {}, {}, layoutDirection))
+      items.push(createPortConfig('out', 'out'))
       break
       
     case 'end':
       // 结束节点只有输入端口
-      items.push(createPortConfig('in', 'in', {}, {}, layoutDirection))
+      items.push(createPortConfig('in', 'in'))
       break
       
     case 'event-split':
       // 事件分流节点：1个输入端口 + 1个统一输出端口
-      items.push(createPortConfig('in', 'in', {}, {}, layoutDirection))
-      items.push(createPortConfig('out', 'out', {}, {}, layoutDirection))
+      items.push(createPortConfig('in', 'in'))
+      items.push(createPortConfig('out', 'out'))
       break
       
     case 'audience-split':
       // 人群分流节点：1个输入端口 + 1个统一输出端口
-      items.push(createPortConfig('in', 'in', {}, {}, layoutDirection))
-      items.push(createPortConfig('out', 'out', {}, {}, layoutDirection))
+      items.push(createPortConfig('in', 'in'))
+      items.push(createPortConfig('out', 'out'))
       break
       
     case 'ab-test':
       // AB测试节点：1个输入端口 + 1个统一输出端口
-      items.push(createPortConfig('in', 'in', {}, {}, layoutDirection))
-      items.push(createPortConfig('out', 'out', {}, {}, layoutDirection))
+      items.push(createPortConfig('in', 'in'))
+      items.push(createPortConfig('out', 'out'))
       break
       
     default:
       // 其他节点：1个输入端口 + 1个输出端口
-      items.push(createPortConfig('in', 'in', {}, {}, layoutDirection))
-      items.push(createPortConfig('out', 'out', {}, {}, layoutDirection))
+      items.push(createPortConfig('in', 'in'))
+      items.push(createPortConfig('out', 'out'))
       break
   }
 

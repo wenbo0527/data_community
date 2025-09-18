@@ -509,8 +509,61 @@ export function validateForSave(canvasData) {
     result.warnings.push('画布中暂无节点，已保存为空白草稿')
     return result
   }
-
+  
+  // 🔧 修复：检查节点配置状态，提供更准确的保存反馈
   const { nodes } = canvasData
+  const configuredNodes = nodes.filter(node => {
+    // 开始节点默认已配置
+    if (node.type === 'start') return true
+    
+    // 检查isConfigured标志
+    if (node.isConfigured === true || node.data?.isConfigured === true) return true
+    
+    // 检查是否有配置数据
+    if (node.config && Object.keys(node.config).length > 0) return true
+    if (node.data?.config && Object.keys(node.data.config).length > 0) return true
+    
+    return false
+  })
+  
+  const unconfiguredNodes = nodes.filter(node => {
+    // 开始节点默认已配置
+    if (node.type === 'start') return false
+    
+    // 检查isConfigured标志
+    if (node.isConfigured === true || node.data?.isConfigured === true) return false
+    
+    // 检查是否有配置数据
+    if (node.config && Object.keys(node.config).length > 0) return false
+    if (node.data?.config && Object.keys(node.data.config).length > 0) return false
+    
+    return true
+  })
+  
+  console.log('[validateForSave] 节点配置状态检查:', {
+    totalNodes: nodes.length,
+    configuredNodes: configuredNodes.length,
+    unconfiguredNodes: unconfiguredNodes.length,
+    nodeDetails: nodes.map(n => ({
+      id: n.id,
+      type: n.type,
+      isConfigured: n.isConfigured || n.data?.isConfigured,
+      hasConfig: !!(n.config && Object.keys(n.config).length > 0) || !!(n.data?.config && Object.keys(n.data.config).length > 0)
+    }))
+  })
+  
+  // 如果有已配置的节点，不显示'暂无节点'警告
+  if (configuredNodes.length > 0) {
+    if (unconfiguredNodes.length > 0) {
+      result.warnings.push(`画布中有 ${configuredNodes.length} 个已配置节点和 ${unconfiguredNodes.length} 个未配置节点，已保存当前状态`)
+    } else {
+      // 所有节点都已配置，这是正常情况，不需要警告
+      console.log('[validateForSave] 所有节点都已配置，保存成功')
+    }
+  } else {
+    // 只有在所有节点都未配置时才显示'暂无节点'警告
+    result.warnings.push('画布中的节点尚未配置，已保存为草稿')
+  }
 
   // 检查节点基本数据完整性
   nodes.forEach((node, index) => {

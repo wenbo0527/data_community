@@ -27,8 +27,14 @@ describe('isConfigured字段时序问题测试', () => {
       calculatePosition: vi.fn().mockReturnValue({ x: 100, y: 200 })
     }
 
-    // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph, mockLayoutEngine)
+    // 创建预览线管理器实例 - 修复参数顺序
+    // 正确的参数顺序: (graph, branchManager, layoutConfig, layoutEngine)
+    previewManager = new UnifiedPreviewLineManager(
+      mockGraph,        // graph
+      null,            // branchManager
+      {},              // layoutConfig
+      mockLayoutEngine // layoutEngine
+    )
     previewManager.layoutEngineReady = true
   })
 

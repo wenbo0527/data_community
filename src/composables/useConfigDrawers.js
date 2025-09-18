@@ -217,7 +217,8 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
 
       // 🔧 关键修复：触发统一预览线创建（配置完成后）
       console.log(`[useConfigDrawers] 检查是否需要创建配置后预览线`)
-      const unifiedPreviewManager = structuredLayout.unifiedPreviewManager?.value
+      // 🎯 修复：正确获取computed属性的值
+      const unifiedPreviewManager = structuredLayout.unifiedPreviewManager.value
       console.log(`[useConfigDrawers] 统一预览线管理器实例:`, unifiedPreviewManager)
       console.log(`[useConfigDrawers] 管理器类型:`, unifiedPreviewManager?.constructor?.name)
       
@@ -274,7 +275,7 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
         })
         
         // 检查是否有已配置的源节点需要恢复预览线
-        const unifiedPreviewManager = structuredLayout.unifiedPreviewManager
+        const unifiedPreviewManager = structuredLayout.unifiedPreviewManager.value
         if (unifiedPreviewManager && typeof unifiedPreviewManager.restorePreviewLinesAfterCancel === 'function') {
           console.log(`[useConfigDrawers] 尝试恢复预览线`)
           try {
@@ -388,11 +389,14 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       },
       getConnectionPreviewManager: () => {
         console.log('[useConfigDrawers] 返回统一预览线管理器')
-        return structuredLayout.unifiedPreviewManager?.value
+        const manager = structuredLayout.unifiedPreviewManager.value
+        console.log('[useConfigDrawers] 管理器实例:', manager)
+        console.log('[useConfigDrawers] 管理器类型:', manager?.constructor?.name)
+        return manager
       },
       // 统一预览线管理器 - 添加缺失的属性
       get unifiedPreviewManager() {
-        return structuredLayout.unifiedPreviewManager
+        return structuredLayout.unifiedPreviewManager.value
       },
       // 布局方向相关
       get layoutDirection() {

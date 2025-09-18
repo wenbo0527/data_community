@@ -237,7 +237,7 @@ export class EnhancedPreviewLineRefreshManager {
     // 过滤实际连接线（排除预览线）
     const realConnections = (outgoingEdges || []).filter(edge => {
       const edgeData = edge.getData() || {};
-      return !edgeData.isUnifiedPreview && !edgeData.isPreview;
+      return !edgeData.isPreview;
     });
 
     // 分析每个连接线的状态
@@ -605,7 +605,7 @@ export class EnhancedPreviewLineRefreshManager {
     const outgoingEdges = this.graph.getOutgoingEdges(sourceNode) || [];
     return outgoingEdges.some(edge => {
       const edgeData = edge.getData() || {};
-      return !edgeData.isUnifiedPreview && !edgeData.isPreview;
+      return !edgeData.isPreview;
     });
   }
 
@@ -669,7 +669,7 @@ export class EnhancedPreviewLineRefreshManager {
     // 计算预览线期望位置
     // 这里应该根据布局算法计算
     const sourcePosition = sourceNode.getPosition();
-    const sourceSize = sourceNode.getSize();
+    const sourceSize = (sourceNode && typeof sourceNode.getSize === 'function') ? sourceNode.getSize() : { width: 120, height: 40 };
     
     return {
       x: sourcePosition.x + sourceSize.width + 100,

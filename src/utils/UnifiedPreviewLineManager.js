@@ -6,6 +6,11 @@
 
 // 导入坐标系统管理器
 import { coordinateManager } from './CoordinateSystemManager.js'
+import { GlobalDragStateManager } from './GlobalDragStateManager.js'
+import { 
+  VERTICAL_LAYOUT_CONFIG, 
+  getBestSnapPosition 
+} from './verticalLayoutConfig.js'
 
 // 分支标签生成工具类
 class BranchLabelUtils {
@@ -49,8 +54,8 @@ class BranchLabelUtils {
         branch.label = branch.crowdName
       }
       // 如果是默认分支（未命中人群），确保标签正确
-    else if (branch.id === 'unmatch_default' || branch.id === 'default') {
-      branch.label = '未命中人群'
+      else if (branch.id === 'unmatch_default' || branch.id === 'default') {
+        branch.label = '未命中人群'
       }
       // 如果没有标签，生成默认标签
       else if (!branch.label) {
@@ -117,30 +122,32 @@ class PerformanceUtils {
 
 // 统一预览线状态枚举
 export const UnifiedPreviewStates = {
-  STATIC_DISPLAY: 'static_display',     // 静态显示（替代持久化预览线）
   INTERACTIVE: 'interactive',           // 可交互（节点配置完成后）
   DRAGGING: 'dragging',                // 拖拽中
   CONNECTED: 'connected',              // 已连接
-  HIDDEN: 'hidden'                     // 隐藏状态
+  HOVER: 'hover'                       // 鼠标悬停状态
 }
 
-// 预览线类型枚举
+// 简化预览线类型枚举 - 统一为单一类型
 export const PreviewLineTypes = {
-  SINGLE: 'single',                    // 单一预览线
-  BRANCH: 'branch'                     // 分支预览线
+  PREVIEW: 'preview-line'              // 统一预览线类型
 }
 
 export class UnifiedPreviewLineManager {
-  constructor(graph, branchManager, layoutConfig, layoutDirection = 'TB', layoutEngine = null) {
+  constructor(graph, branchManager, layoutConfig, layoutEngine = null) {
     this.graph = graph
     this.branchManager = branchManager
     this.layoutConfig = layoutConfig
-    this.layoutDirection = layoutDirection
+    this.layoutDirection = 'TB'
     // 🎯 修复循环引用：使用WeakRef来避免强引用
     this._layoutEngineRef = layoutEngine ? new WeakRef(layoutEngine) : null;
     
     // 调试模式开关
     this.debugMode = false
+    
+    // 日志防抖缓存
+    this.logCache = new Map() // key: cacheKey, value: timestamp
+    this.logCacheTimeout = 1000 // 1秒内相同日志只输出一次
     
     // 初始化坐标系统管理器
     this.coordinateManager = coordinateManager
@@ -149,20 +156,49 @@ export class UnifiedPreviewLineManager {
     // 统一存储所有预览线
     this.previewLines = new Map() // key: nodeId, value: PreviewLineInstance
     
-    // endpoint存储
-    this.endpoints = new Map() // key: hintId, value: hintNode
-    
     // 🔧 新增：手工调整的拖拽点位置记录
     this.manuallyAdjustedHints = new Map() // 存储手工调整的拖拽点位置 {hintId: {x, y, timestamp}}
     
     // 节点配置状态管理
     this.nodeStates = new Map() // key: nodeId, value: configState
     
-    // 拖拽相关状态
-    this.isDragging = false
-    this.currentDragLine = null
-    this.dragStartPosition = null
-    this.isEndpointActive = false
+    // 初始化全局拖拽状态管理器
+    this.globalDragStateManager = new GlobalDragStateManager()
+    
+    // 保持向后兼容的拖拽状态属性（通过getter/setter代理到全局状态管理器）
+    Object.defineProperty(this, 'isDragging', {
+      get: () => {
+        const stateInfo = this.globalDragStateManager.getStateInfo()
+        return stateInfo ? stateInfo.isDragging : false
+      },
+      set: (value) => {
+        if (value) {
+          this.globalDragStateManager.startDrag('PREVIEW_LINE', null)
+        } else {
+          this.globalDragStateManager.endDrag()
+        }
+      }
+    })
+    
+    Object.defineProperty(this, 'currentDragLine', {
+      get: () => {
+        const stateInfo = this.globalDragStateManager.getStateInfo()
+        return stateInfo ? stateInfo.currentDrag?.object : null
+      },
+      set: (value) => {
+        if (value) {
+          this.globalDragStateManager.startDrag('PREVIEW_LINE', value)
+        }
+      }
+    })
+    
+    Object.defineProperty(this, 'dragStartPosition', {
+      get: () => {
+        const stateInfo = this.globalDragStateManager.getStateInfo()
+        return stateInfo ? stateInfo.currentDrag?.startPosition : null
+      },
+      set: (value) => this.globalDragStateManager.setDragStartPosition(value)
+    })
     
     // 事件监听器存储
     this.eventListeners = new Map()
@@ -198,40 +234,46 @@ export class UnifiedPreviewLineManager {
     this.pendingCalculations = new Map() // key: nodeId, value: { node, type, timestamp }
     this.layoutEngineReady = false
     
+    // 初始化状态标记
+    this.isInitialized = true
+    
     console.log('🚀 [统一预览线管理器] 初始化完成 - 已启用性能优化、坐标系统管理和待处理计算队列')
   }
 
   /**
    * 获取动态方向配置
-   * 根据当前布局方向返回相应的连接线方向
+   * 返回TB布局的连接线方向
    * @returns {Object} 包含startDirections和endDirections的配置对象
    */
   getDynamicDirectionConfig() {
-    if (this.layoutDirection === 'LR') {
-      return {
-        startDirections: ['right'],
-        endDirections: ['left']
-      }
-    } else {
-      return {
-        startDirections: ['bottom'],
-        endDirections: ['top']
-      }
+    return {
+      startDirections: ['bottom'],
+      endDirections: ['top']
     }
   }
 
   /**
    * 更新布局方向
-   * @param {string} newDirection - 新的布局方向 ('TB' 或 'LR')
+   * @param {string} direction - 新的布局方向 ('TB' | 'LR')
    */
-  updateLayoutDirection(newDirection) {
-    if (this.layoutDirection !== newDirection) {
-      this.layoutDirection = newDirection
-      console.log('🔄 [统一预览线管理器] 布局方向已更新:', newDirection)
-      // 刷新所有预览线以应用新的方向配置
-      this.refreshAllPreviewLines()
+  updateLayoutDirection(direction) {
+    if (!['TB', 'LR'].includes(direction)) {
+      console.warn('⚠️ [统一预览线管理器] 无效的布局方向:', direction)
+      return
+    }
+    
+    const oldDirection = this.layoutDirection
+    this.layoutDirection = direction
+    
+    // 布局方向已更新
+    
+    // 重新计算所有预览线位置
+    if (this.previewLines.size > 0) {
+      this.recalculateAllPreviewPositions()
     }
   }
+
+
 
   /**
    * 设置布局引擎引用
@@ -275,7 +317,7 @@ export class UnifiedPreviewLineManager {
     
     // 🔧 关键修复：重新计算所有预览线位置
     if (layoutEngine && this.previewLines.size > 0) {
-      console.log('🔄 [统一预览线管理器] 开始重新计算所有预览线位置...')
+      // 开始重新计算所有预览线位置
       this.recalculateAllPreviewPositions()
     }
     
@@ -297,7 +339,7 @@ export class UnifiedPreviewLineManager {
     let cleanedCount = 0
     const invalidPreviewLines = []
     
-    console.log('🔄 [统一预览线管理器] 开始重新计算预览线位置，同时检查有效性')
+    // 开始重新计算预览线位置，同时检查有效性
     
     this.previewLines.forEach((previewInstance, nodeId) => {
       try {
@@ -326,18 +368,12 @@ export class UnifiedPreviewLineManager {
         }
         
         const nodePosition = node.getPosition()
-        const nodeSize = node.getSize()
+        const nodeSize = (node && typeof node.getSize === 'function') ? node.getSize() : { width: 120, height: 40 }
         
-        if (previewInstance.type === PreviewLineTypes.SINGLE) {
-          // 重新计算单一预览线位置
-          const newEndPosition = this.calculateSinglePreviewPosition(node, nodePosition, nodeSize)
-          this.updatePreviewLineEndPosition(previewInstance, newEndPosition)
-          recalculatedCount++
-        } else if (previewInstance.type === PreviewLineTypes.BRANCH) {
-          // 重新计算分支预览线位置
-          this.recalculateBranchPreviewPositions(previewInstance, node, nodePosition, nodeSize)
-          recalculatedCount++
-        }
+        // 统一处理预览线位置重新计算
+        const newEndPosition = this.calculatePreviewPosition(node, nodePosition, nodeSize)
+        this.updatePreviewLineEndPosition(previewInstance, newEndPosition)
+        recalculatedCount++
       } catch (error) {
         console.error('❌ [统一预览线管理器] 重新计算预览线位置失败:', nodeId, error)
         errorCount++
@@ -354,14 +390,14 @@ export class UnifiedPreviewLineManager {
         try {
           const previewInstance = this.previewLines.get(nodeId)
           
-          // 🎯 清理相关的endpoints和关联数据
+          // 🎯 清理相关的预览线和关联数据
           if (previewInstance) {
-            // 清理预览线的endpoints
+            // 清理预览线
             if (previewInstance.line && this.graph.hasCell(previewInstance.line.id)) {
               this.graph.removeCell(previewInstance.line)
             }
             
-            // 清理分支预览线的endpoints
+            // 清理分支预览线
             if (previewInstance.branches && Array.isArray(previewInstance.branches)) {
               previewInstance.branches.forEach(branch => {
                 if (branch.line && this.graph.hasCell(branch.line.id)) {
@@ -389,7 +425,7 @@ export class UnifiedPreviewLineManager {
     }
     
     // 🎯 输出详细的统计信息
-    console.log('✅ [统一预览线管理器] 预览线位置重新计算完成:', {
+    console.log('📊 [统一预览线管理器] 预览线位置重新计算完成:', {
       原始总数: this.previewLines.size + cleanedCount,
       当前总数: this.previewLines.size,
       重新计算成功: recalculatedCount,
@@ -406,14 +442,14 @@ export class UnifiedPreviewLineManager {
         this.validatePreviewLineIntegrity()
       }, 100)
     }
-   }
+  }
 
   /**
    * 强制清理所有预览线
    * 用于在画布加载完成后强制清理残留的预览线
    */
   forceCleanupAllPreviewLines() {
-    console.log('🧹 [统一预览线管理器] 开始强制清理所有预览线...')
+    // 开始强制清理所有预览线
     
     let cleanedCount = 0
     const cleanupErrors = []
@@ -443,7 +479,7 @@ export class UnifiedPreviewLineManager {
         this.positionCache.delete(nodeId)
         
       } catch (error) {
-        console.error('❌ [统一预览线管理器] 强制清理预览线失败:', nodeId, error)
+        console.error('强制清理预览线失败:', nodeId, error)
         cleanupErrors.push({ nodeId, error })
       }
     })
@@ -454,14 +490,15 @@ export class UnifiedPreviewLineManager {
     this.branchInfoCache.clear()
     this.positionCache.clear()
     
-    console.log('✅ [统一预览线管理器] 强制清理完成:', {
+    // 强制清理完成
+    console.log('🧹 [统一预览线管理器] 强制清理完成:', {
       清理的预览线数量: cleanedCount,
       清理错误数量: cleanupErrors.length,
       剩余预览线: this.previewLines.size
     })
     
     if (cleanupErrors.length > 0) {
-      console.warn('⚠️ [统一预览线管理器] 强制清理过程中出现错误:', cleanupErrors)
+      console.warn('强制清理过程中出现错误:', cleanupErrors)
     }
   }
 
@@ -473,7 +510,7 @@ export class UnifiedPreviewLineManager {
     console.log('🔍 [统一预览线管理器] 开始验证并清理重复预览线...')
     
     if (!this.graph) {
-      console.warn('⚠️ [统一预览线管理器] Graph未初始化，跳过重复检查')
+      console.warn('Graph未初始化，跳过重复检查')
       return
     }
     
@@ -484,9 +521,7 @@ export class UnifiedPreviewLineManager {
     // 统计每个源节点的预览线数量
     allEdges.forEach(edge => {
       const edgeData = edge.getData() || {}
-      const isPreview = edgeData.isPersistentPreview || 
-                       edgeData.isPreview || 
-                       edgeData.isUnifiedPreview ||
+      const isPreview = edgeData.isPreview ||
                        edgeData.type === 'preview-line' ||
                        edgeData.type === 'unified-preview-line' ||
                        edgeData.type === 'draggable-preview'
@@ -515,12 +550,9 @@ export class UnifiedPreviewLineManager {
           const bData = b.getData() || {}
           
           // 统一预览线优先级最高
-          if (aData.isUnifiedPreview && !bData.isUnifiedPreview) return -1
-          if (!aData.isUnifiedPreview && bData.isUnifiedPreview) return 1
-          
-          // 持久预览线次之
-          if (aData.isPersistentPreview && !bData.isPersistentPreview) return -1
-          if (!aData.isPersistentPreview && bData.isPersistentPreview) return 1
+          // 预览线优先级排序
+          if (aData.isPreview && !bData.isPreview) return -1
+          if (!aData.isPreview && bData.isPreview) return 1
           
           // 其他按创建时间排序（较新的优先）
           return (bData.createdAt || 0) - (aData.createdAt || 0)
@@ -561,6 +593,7 @@ export class UnifiedPreviewLineManager {
       }
     })
     
+    // 重复检查完成
     console.log('✅ [统一预览线管理器] 重复检查完成:', {
       检查的源节点数量: previewEdgesBySource.size,
       清理的重复预览线: duplicateCount,
@@ -604,7 +637,7 @@ export class UnifiedPreviewLineManager {
         
         // 根据任务类型执行相应的计算
         if (type === 'create') {
-          this.createUnifiedPreviewLine(node, UnifiedPreviewStates.STATIC_DISPLAY)
+          this.createUnifiedPreviewLine(node, UnifiedPreviewStates.INTERACTIVE)
         } else if (type === 'update') {
           this.updatePreviewLinePosition(node)
         }
@@ -796,6 +829,8 @@ export class UnifiedPreviewLineManager {
     // 全局鼠标事件（用于拖拽）
     document.addEventListener('mousemove', this.handleGlobalMouseMove.bind(this))
     document.addEventListener('mouseup', this.handleGlobalMouseUp.bind(this))
+    // 右键事件监听（用于取消拖拽）
+    document.addEventListener('contextmenu', this.handleContextMenu.bind(this))
   }
 
   /**
@@ -803,7 +838,8 @@ export class UnifiedPreviewLineManager {
    */
   initializeExistingNodes() {
     const nodes = this.graph.getNodes()
-    console.log('🔄 [统一预览线管理器] 开始初始化现有节点预览线:', {
+    // 开始初始化现有节点预览线
+    console.log('🚀 [统一预览线管理器] 开始初始化现有节点预览线:', {
       totalNodes: nodes.length,
       existingPreviewLines: this.previewLines.size
     })
@@ -818,7 +854,7 @@ export class UnifiedPreviewLineManager {
       
       if (this.shouldCreatePreviewLine(node)) {
         console.log('✅ [统一预览线管理器] 为节点创建预览线:', node.id)
-        this.createUnifiedPreviewLine(node, UnifiedPreviewStates.STATIC_DISPLAY)
+        this.createUnifiedPreviewLine(node, UnifiedPreviewStates.INTERACTIVE)
       }
     })
     
@@ -831,12 +867,24 @@ export class UnifiedPreviewLineManager {
    * @param {string} initialState - 初始状态
    * @param {Object} options - 额外选项
    */
-  createUnifiedPreviewLine(node, initialState = UnifiedPreviewStates.STATIC_DISPLAY, options = {}) {
+  createUnifiedPreviewLine(node, initialState = UnifiedPreviewStates.INTERACTIVE, options = {}) {
     // 🔧 双重验证：检查节点是否存在
     if (!node || !node.id) {
       console.warn('⚠️ [统一预览线管理器] 节点对象无效，跳过预览线创建')
       return null
     }
+    
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.type || nodeData.nodeType
+    
+    console.log('🚀 [统一预览线管理器] 开始创建预览线:', {
+      nodeId: node.id,
+      nodeType: nodeType,
+      isConfigured: nodeData.isConfigured,
+      initialState: initialState,
+      options: options,
+      configKeys: Object.keys(nodeData.config || {})
+    })
     
     // 🎯 防止重复创建检查
     if (this.previewLines.has(node.id)) {
@@ -861,21 +909,29 @@ export class UnifiedPreviewLineManager {
       return null
     }
     
-    if (!this.shouldCreatePreviewLine(node)) {
+    const shouldCreate = this.shouldCreatePreviewLine(node)
+    console.log('🔍 [统一预览线管理器] shouldCreatePreviewLine检查结果:', {
+      nodeId: node.id,
+      nodeType: nodeType,
+      shouldCreate: shouldCreate,
+      reason: shouldCreate ? '满足创建条件' : '不满足创建条件'
+    })
+    
+    if (!shouldCreate) {
       console.log('⏭️ [统一预览线管理器] 跳过预览线创建:', node.id)
       return null
     }
 
     // 🔧 关键修复：重新获取节点数据，确保获取到最新的isConfigured状态
     // 因为shouldCreatePreviewLine可能已经自动修复了isConfigured字段
-    const nodeData = node.getData() || {}
-    const nodeType = nodeData.type || nodeData.nodeType
+    const updatedNodeData = node.getData() || {}
+    const updatedNodeType = updatedNodeData.type || updatedNodeData.nodeType
     
     console.log('📊 [统一预览线管理器] 预览线创建前的节点数据验证:', {
       nodeId: node.id,
-      nodeType: nodeType,
-      isConfigured: nodeData.isConfigured,
-      hasConfig: !!(nodeData.config && Object.keys(nodeData.config).length > 0)
+      nodeType: updatedNodeType,
+      isConfigured: updatedNodeData.isConfigured,
+      hasConfig: !!(updatedNodeData.config && Object.keys(updatedNodeData.config).length > 0)
     })
 
     // 🔧 新增：如果布局引擎未就绪，添加到待处理队列
@@ -905,14 +961,14 @@ export class UnifiedPreviewLineManager {
    */
   createSinglePreviewLine(node, initialState, options = {}) {
     const nodePosition = node.getPosition()
-    const nodeSize = node.getSize()
+    const nodeSize = (node && typeof node.getSize === 'function') ? node.getSize() : { width: 120, height: 40 }
     
     // 计算预览线终点位置
     const endPosition = this.calculateSinglePreviewPosition(node, nodePosition, nodeSize)
     
     // 创建预览线
     const previewLine = this.createBasicPreviewLine(node, endPosition, {
-      type: PreviewLineTypes.SINGLE,
+      type: PreviewLineTypes.PREVIEW,
       ...options
     })
 
@@ -927,7 +983,7 @@ export class UnifiedPreviewLineManager {
       line: previewLine,
       sourceNode: node,
       state: initialState,
-      type: PreviewLineTypes.SINGLE,
+      type: PreviewLineTypes.PREVIEW,
       dragHandler: null,
       hintNode: null,
       endPosition: endPosition
@@ -980,8 +1036,23 @@ export class UnifiedPreviewLineManager {
     const previewInstances = []
 
     branches.forEach((branch, index) => {
+      console.log('🌿 [统一预览线管理器] 处理分支预览线:', {
+        nodeId: nodeId,
+        branchId: branch.id,
+        branchLabel: branch.label,
+        branchIndex: index,
+        totalBranches: branches.length
+      })
+      
       // 🔧 关键修复：检查该分支是否已有真实连接
       const hasRealConnection = this.checkBranchHasRealConnection(node, branch.id)
+      
+      console.log('🔗 [统一预览线管理器] 分支连接检查:', {
+        nodeId: nodeId,
+        branchId: branch.id,
+        branchLabel: branch.label,
+        hasRealConnection: hasRealConnection
+      })
       
       if (hasRealConnection) {
         console.log('⏭️ [统一预览线管理器] 分支已有真实连接，跳过预览线创建:', {
@@ -993,11 +1064,18 @@ export class UnifiedPreviewLineManager {
         return // 跳过已有连接的分支
       }
       
+      console.log('✅ [统一预览线管理器] 分支需要创建预览线:', {
+        nodeId: nodeId,
+        branchId: branch.id,
+        branchLabel: branch.label,
+        branchIndex: index
+      })
+      
       const endPosition = this.calculateBranchPreviewPosition(node, branches, index)
       
       // 创建分支预览线，传递分支标签
       const previewLine = this.createBasicPreviewLine(node, endPosition, {
-        type: PreviewLineTypes.BRANCH,
+        type: PreviewLineTypes.PREVIEW,
         branchId: branch.id,
         branchIndex: index,
         totalBranches: branches.length,
@@ -1020,7 +1098,7 @@ export class UnifiedPreviewLineManager {
         line: previewLine,
         sourceNode: node,
         state: initialState,
-        type: PreviewLineTypes.BRANCH,
+        type: PreviewLineTypes.PREVIEW,
         branchId: branch.id,
         branchLabel: branch.label, // 添加分支标签
         branchIndex: index,
@@ -1091,7 +1169,7 @@ export class UnifiedPreviewLineManager {
     
     // 创建分支预览线，传递分支标签
     const previewLine = this.createBasicPreviewLine(node, endPosition, {
-      type: PreviewLineTypes.BRANCH,
+      type: PreviewLineTypes.PREVIEW,
       branchId: branch.id,
       branchIndex: branchIndex,
       totalBranches: totalBranches,
@@ -1113,7 +1191,7 @@ export class UnifiedPreviewLineManager {
       line: previewLine,
       sourceNode: node,
       state: initialState,
-      type: PreviewLineTypes.BRANCH,
+      type: PreviewLineTypes.PREVIEW,
       branchId: branch.id,
       branchLabel: branch.label,
       branchIndex: branchIndex,
@@ -1168,7 +1246,7 @@ export class UnifiedPreviewLineManager {
     
     // 🔧 关键修复：获取节点的实际DOM中心位置，解决坐标不一致问题
     const actualCenter = this.getActualNodeCenter(sourceNode)
-    const nodeSize = sourceNode.getSize()
+    const nodeSize = (sourceNode && typeof sourceNode.getSize === 'function') ? sourceNode.getSize() : { width: 120, height: 40 }
     
     // 计算预览线的实际起始位置（从节点底部中心开始）
     const actualSourcePosition = {
@@ -1187,7 +1265,7 @@ export class UnifiedPreviewLineManager {
     })
     
     // 生成唯一ID
-    const lineId = `unified_preview_${sourceNode.id}_${branchId || 'single'}_${Date.now()}`
+    const lineId = `preview_${sourceNode.id}_${Date.now()}`
     
     // 🔧 路由器选择逻辑
     const useOrthRouter = totalBranches > 1 && Math.abs(offsetConfig.offset) > 5
@@ -1202,11 +1280,11 @@ export class UnifiedPreviewLineManager {
       reason: useOrthRouter ? '多分支需要偏移路径' : '单分支使用直线路径'
     })
     
-    // 基础预览线配置 - 使用实际DOM坐标确保准确的起始位置
+    // 基础预览线配置 - 🔧 关键修复：使用节点ID而不是坐标，确保getSourceCellId()能正确工作
     const edgeConfig = {
       id: lineId,
       shape: 'edge',
-      source: actualSourcePosition,  // 🔧 使用实际DOM坐标而不是端口连接
+      source: { cell: sourceNode.id },  // 🔧 使用节点ID而不是坐标位置
       target: endPosition,
       router: {
         name: routerName,
@@ -1245,7 +1323,7 @@ export class UnifiedPreviewLineManager {
         branchIndex: branchIndex,
         totalBranches: totalBranches,
         branchLabel: branchLabel, // 🔧 关键修复：添加分支标签到data对象
-        isUnifiedPreview: true,
+        isPreview: true,
         offsetConfig: offsetConfig // 保存偏移配置用于后续调整
       }
     }
@@ -1346,7 +1424,7 @@ export class UnifiedPreviewLineManager {
   getActualNodeCenter(node) {
     try {
       const logicalPosition = node.getPosition()
-      const nodeSize = node.getSize()
+      const nodeSize = (node && typeof node.getSize === 'function') ? node.getSize() : { width: 120, height: 40 }
       
       // 获取DOM元素
       const nodeView = this.graph.findViewByCell(node)
@@ -1406,7 +1484,8 @@ export class UnifiedPreviewLineManager {
     // 🔧 修复：使用端口连接而不是固定坐标
     // 确保预览线正确连接到节点的out端口
     
-    console.log('🔄 [预览线同步] 同步预览线起始位置:', {
+    // 同步预览线起始位置
+    console.log('🔄 [预览线同步] 开始同步预览线位置:', {
       nodeId,
       actualCenter
     })
@@ -1569,18 +1648,32 @@ export class UnifiedPreviewLineManager {
       '#faad14'  // 黄色
     ]
     
-    // 🔧 基础偏移配置
+    // 🔧 获取节点类型，确定预览线颜色
+    const nodeData = sourceNode.getData() || {}
+    const nodeType = nodeData.type || nodeData.nodeType
+    
+    // 🔧 根据节点类型确定默认颜色
+    let defaultColor = '#1890ff' // 默认蓝色
+    if (nodeType === 'sms') {
+      defaultColor = '#52c41a' // 短信节点使用绿色
+    } else if (nodeType === 'ai-call') {
+      defaultColor = '#722ed1' // AI呼叫使用紫色
+    } else if (nodeType === 'manual-call') {
+      defaultColor = '#fa8c16' // 人工呼叫使用橙色
+    }
+    
+    // 🔧 基础偏移配置 - 🔧 关键修复：单线也使用彩色而不是灰色
     const baseConfig = {
       padding: 15,
       step: 15,
       offset: 0,
       excludeEnds: [],
-      strokeColor: '#d9d9d9',
+      strokeColor: defaultColor, // 🔧 使用节点类型对应的颜色而不是灰色
       strokeWidth: 2,
       dashArray: '5,5'
     }
     
-    // 🔧 单线情况：使用默认配置
+    // 🔧 单线情况：使用节点类型对应的彩色配置
     if (totalBranches <= 1) {
       return baseConfig
     }
@@ -1759,16 +1852,13 @@ export class UnifiedPreviewLineManager {
     const { line } = previewInstance
     previewInstance.state = state
 
-    console.log('🔄 [统一预览线管理器] 设置预览线状态:', {
+    // 设置预览线状态
+    console.log('🔧 [统一预览线管理器] 设置预览线状态:', {
       lineId: line.id,
       state: state
     })
 
     switch (state) {
-      case UnifiedPreviewStates.STATIC_DISPLAY:
-        this.configureStaticDisplay(previewInstance)
-        break
-        
       case UnifiedPreviewStates.INTERACTIVE:
         this.configureInteractive(previewInstance)
         break
@@ -1781,42 +1871,13 @@ export class UnifiedPreviewLineManager {
         this.configureConnected(previewInstance)
         break
         
-      case UnifiedPreviewStates.HIDDEN:
-        this.configureHidden(previewInstance)
+      case UnifiedPreviewStates.HOVER:
+        this.configureHover(previewInstance)
         break
     }
   }
 
-  /**
-   * 配置静态显示状态（替代持久化预览线）
-   */
-  configureStaticDisplay(previewInstance) {
-    const { line } = previewInstance
-    
-    line.attr({
-      line: {
-        stroke: '#d9d9d9',
-        strokeWidth: 2,
-        strokeDasharray: '5,5',
-        opacity: 0.6,
-        cursor: 'default',
-        targetMarker: {
-          fill: '#d9d9d9'
-        }
-      }
-    })
-    
-    // 更新标签样式（如果有标签）
-    this.updateLabelStyle(line, {
-      text: { fill: '#999' },
-      rect: { stroke: '#d9d9d9', fill: '#f5f5f5' }
-    })
-    
-    // 移除交互能力
-    this.removeInteractivity(previewInstance)
-    
-    console.log('📊 [统一预览线管理器] 配置为静态显示状态:', line.id)
-  }
+
 
   /**
    * 配置交互状态（替代可拖拽预设线）
@@ -1914,28 +1975,50 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
-   * 配置隐藏状态
+   * 配置鼠标悬停状态
    */
-  configureHidden(previewInstance) {
-    const { line } = previewInstance
+  configureHover(previewInstance) {
+    const { line, sourceNode } = previewInstance
+    const nodeData = sourceNode.getData() || {}
+    const nodeType = nodeData.type || nodeData.nodeType
+    
+    // 根据节点类型确定颜色，悬停时稍微加深
+    let strokeColor, markerColor, labelColor
+    if (nodeType === 'start') {
+      // 开始节点：深蓝色
+      strokeColor = '#0050b3'
+      markerColor = '#0050b3'
+      labelColor = '#0050b3'
+    } else {
+      // 其他节点：深橙色
+      strokeColor = '#d46b08'
+      markerColor = '#d46b08'
+      labelColor = '#d46b08'
+    }
     
     line.attr({
       line: {
-        opacity: 0
+        stroke: strokeColor,
+        strokeWidth: 3,  // 悬停时线条稍微加粗
+        strokeDasharray: '5,5',  // 保持虚线样式
+        opacity: 1.0,  // 悬停时完全不透明
+        cursor: 'grab',
+        targetMarker: {
+          fill: markerColor
+        }
       }
     })
     
-    // 隐藏标签（如果有标签）
+    // 更新标签样式（如果有标签）
     this.updateLabelStyle(line, {
-      text: { opacity: 0 },
-      rect: { opacity: 0 }
+      text: { fill: labelColor },
+      rect: { stroke: strokeColor, fill: '#fff' }
     })
     
-    // 移除交互能力
-    this.removeInteractivity(previewInstance)
-    
-    console.log('👻 [统一预览线管理器] 配置为隐藏状态:', line.id)
+    console.log('🖱️ [统一预览线管理器] 配置为悬停状态:', line.id)
   }
+
+
 
   /**
    * 更新标签样式
@@ -1999,11 +2082,7 @@ export class UnifiedPreviewLineManager {
     // 设置预览线终点拖拽功能
     this.setupPreviewLineEndpointDrag(line)
     
-    // 存储预览线实例以便后续访问
-    if (!this.endpointDragInstances) {
-      this.endpointDragInstances = new Map()
-    }
-    this.endpointDragInstances.set(line.id, previewInstance)
+
     
     console.log('✅ [预览线终点] 添加拖拽功能:', {
       lineId: line.id,
@@ -2018,9 +2097,7 @@ export class UnifiedPreviewLineManager {
   removePreviewLineEndpointDrag(previewInstance) {
     const { line } = previewInstance
     
-    if (this.endpointDragInstances) {
-      this.endpointDragInstances.delete(line.id)
-    }
+
     
     // 重置预览线样式
     this.updatePreviewLineEndpointStyle(previewInstance, false)
@@ -2060,7 +2137,7 @@ export class UnifiedPreviewLineManager {
     console.log('🎯 [预览线终点] 点击检测:', {
       lineId: line.id,
       clickPosition: logicalCoords,
-      endpointPosition: targetPoint,
+      targetPosition: targetPoint,
       distance: distance,
       isNearEndpoint: isNearEndpoint
     })
@@ -2069,7 +2146,7 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
-   * 高亮预览线终点
+   * 高亮预览线终点 (已简化)
    */
   highlightPreviewLineEndpoint(previewInstance, highlight) {
     this.updatePreviewLineEndpointStyle(previewInstance, highlight)
@@ -2077,11 +2154,25 @@ export class UnifiedPreviewLineManager {
 
   /**
    * 更新预览线终点样式
+   * @param {Object} previewInstance - 预览线实例对象（不是line对象）
+   * @param {boolean} highlight - 是否高亮
    */
   updatePreviewLineEndpointStyle(previewInstance, highlight) {
-    // 🔧 添加安全检查，确保previewInstance和line存在
+    // 🔧 增强参数验证：确保传入的是预览线实例而不是line对象
     if (!previewInstance) {
       console.warn('⚠️ [统一预览线管理器] updatePreviewLineEndpointStyle: 预览线实例不存在')
+      return
+    }
+    
+    // 🔧 检查是否错误传入了line对象而不是预览线实例
+    if (previewInstance.id && !previewInstance.line && !previewInstance.sourceNode) {
+      console.error('❌ [统一预览线管理器] updatePreviewLineEndpointStyle: 错误的参数类型，应传入预览线实例而不是line对象', {
+        receivedType: typeof previewInstance,
+        hasId: !!previewInstance.id,
+        hasLine: !!previewInstance.line,
+        hasSourceNode: !!previewInstance.sourceNode,
+        previewInstanceKeys: Object.keys(previewInstance)
+      })
       return
     }
     
@@ -2094,7 +2185,8 @@ export class UnifiedPreviewLineManager {
       
       // 🔧 如果line对象不存在或已被删除，尝试重新创建预览线
       if (previewInstance.sourceNode && previewInstance.branchId) {
-        console.log('🔄 [统一预览线管理器] 尝试重新创建已删除的预览线:', {
+        // 尝试重新创建已删除的预览线
+        console.log('🔄 [预览线重建] 准备重新创建分支预览线:', {
           nodeId: previewInstance.sourceNode.id,
           branchId: previewInstance.branchId,
           branchLabel: previewInstance.branchLabel
@@ -2109,7 +2201,8 @@ export class UnifiedPreviewLineManager {
           'pending'
         )
       } else if (previewInstance.sourceNode) {
-        console.log('🔄 [统一预览线管理器] 尝试重新创建已删除的单一预览线:', {
+        // 尝试重新创建已删除的单一预览线
+        console.log('🔄 [预览线重建] 准备重新创建单一预览线:', {
           nodeId: previewInstance.sourceNode.id
         })
         
@@ -2134,29 +2227,43 @@ export class UnifiedPreviewLineManager {
     
     try {
       if (highlight) {
-        // 高亮状态：增加线宽，改变颜色，添加终点标记
+        // 增强的高亮状态：更明显的视觉效果
         line.setAttrs({
           line: {
-            strokeWidth: 3,
+            strokeWidth: 4,
             stroke: '#4080FF',
-            cursor: 'grab'
+            strokeDasharray: '8,4',
+            cursor: 'grab',
+            filter: 'drop-shadow(0 0 8px rgba(64, 128, 255, 0.6))',
+            opacity: 0.9
           }
         })
         
-        // 在终点添加可视化标记
-        this.addEndpointMarker(previewInstance)
+        // 添加终点标记动画效果
+        const targetPoint = line.getTargetPoint()
+        if (targetPoint) {
+          // 创建临时的终点高亮标记
+          this.createEndpointHighlight(line, targetPoint)
+        }
+        
       } else {
-        // 正常状态：恢复原始样式
+        // 正常状态：恢复原始样式，保持虚线样式
+        const lineData = line.getData() || {}
+        const offsetConfig = lineData.offsetConfig || { dashArray: '5,5', strokeColor: '#1890ff' }
+        
         line.setAttrs({
           line: {
             strokeWidth: 2,
-            stroke: '#1890ff',
-            cursor: 'default'
+            stroke: offsetConfig.strokeColor || '#1890ff',
+            strokeDasharray: offsetConfig.dashArray || '5,5', // 保持虚线样式
+            cursor: 'default',
+            filter: 'none',
+            opacity: 1
           }
         })
         
-        // 移除终点标记
-        this.removeEndpointMarker(previewInstance)
+        // 移除终点高亮标记
+        this.removeEndpointHighlight(line)
       }
     } catch (error) {
       console.error('💥 [统一预览线管理器] updatePreviewLineEndpointStyle 执行失败:', {
@@ -2167,22 +2274,100 @@ export class UnifiedPreviewLineManager {
     }
   }
 
+  /**
+   * 创建终点高亮标记
+   * @param {Object} line - 预览线对象
+   * @param {Object} targetPoint - 目标点坐标
+   */
+  createEndpointHighlight(line, targetPoint) {
+    try {
+      const highlightId = `endpoint-highlight-${line.id}`
+      
+      // 移除已存在的高亮标记
+      this.removeEndpointHighlight(line)
+      
+      // 创建终点高亮圆圈
+      const highlight = this.graph.addNode({
+        id: highlightId,
+        shape: 'circle',
+        x: targetPoint.x - 8,
+        y: targetPoint.y - 8,
+        width: 16,
+        height: 16,
+        attrs: {
+          body: {
+            fill: 'rgba(64, 128, 255, 0.3)',
+            stroke: '#4080FF',
+            strokeWidth: 2,
+            r: 8
+          }
+        },
+        zIndex: 1000
+      })
+      
+      // 保存高亮标记引用
+      if (!this.endpointHighlights) {
+        this.endpointHighlights = new Map()
+      }
+      this.endpointHighlights.set(line.id, highlight)
+      
+      // 添加脉冲动画
+      let scale = 1
+      let growing = true
+      const animate = () => {
+        if (this.endpointHighlights.has(line.id)) {
+          scale += growing ? 0.1 : -0.1
+          if (scale >= 1.3) growing = false
+          if (scale <= 0.8) growing = true
+          
+          highlight.setAttrs({
+            body: {
+              transform: `scale(${scale})`
+            }
+          })
+          
+          setTimeout(animate, 100)
+        }
+      }
+      animate()
+      
+    } catch (error) {
+      console.error('💥 [统一预览线管理器] createEndpointHighlight 执行失败:', error)
+    }
+  }
 
+  /**
+   * 移除终点高亮标记
+   * @param {Object} line - 预览线对象
+   */
+  removeEndpointHighlight(line) {
+    try {
+      if (!this.endpointHighlights || !line) return
+      
+      const highlight = this.endpointHighlights.get(line.id)
+      if (highlight) {
+        this.graph.removeNode(highlight.id)
+        this.endpointHighlights.delete(line.id)
+      }
+    } catch (error) {
+      console.error('💥 [统一预览线管理器] removeEndpointHighlight 执行失败:', error)
+    }
+  }
 
   /**
    * 开始预览线拖拽 - 适配预览线终点拖拽
    */
   startPreviewLineDrag(previewInstance, event) {
-    this.isDragging = true
-    
-    // 设置当前拖拽的预览线实例
-    this.currentDragLine = {
+    // 使用全局状态管理器开始拖拽
+    const dragObject = {
       ...previewInstance,
       // 确保分支信息完整
       branchId: previewInstance.branchId || 'default',
       branchLabel: previewInstance.branchLabel || '',
       sourceNodeId: previewInstance.sourceNode?.id
     }
+    
+    this.globalDragStateManager.startDrag('PREVIEW_LINE', dragObject)
     
     // 获取初始位置 - X6事件对象结构
     const rect = this.graph.container.getBoundingClientRect()
@@ -2200,10 +2385,11 @@ export class UnifiedPreviewLineManager {
       clientY = event.e.clientY || 0
     }
     
-    this.dragStartPosition = {
+    // 使用全局状态管理器设置拖拽开始位置
+    this.globalDragStateManager.setDragStartPosition({
       x: clientX,
       y: clientY
-    }
+    })
     
     // 设置为拖拽状态
     this.setPreviewLineState(previewInstance, UnifiedPreviewStates.DRAGGING)
@@ -2387,6 +2573,130 @@ export class UnifiedPreviewLineManager {
       totalWaitTime: maxRetries * delay
     })
     return false
+  }
+
+  /**
+   * 手动触发预览线生成
+   * 用于调试和手动重新生成预览线
+   * @param {string} nodeId - 节点ID，如果不提供则重新生成所有预览线
+   * @param {Object} options - 生成选项
+   * @returns {Object} 生成结果
+   */
+  triggerPreviewLineGeneration(nodeId = null, options = {}) {
+    console.log('🎯 [统一预览线管理器] 手动触发预览线生成:', {
+      nodeId: nodeId,
+      options: options,
+      totalPreviewLines: this.previewLines.size
+    })
+    
+    const results = {
+      success: [],
+      failed: [],
+      skipped: [],
+      total: 0
+    }
+    
+    try {
+      if (nodeId) {
+        // 为特定节点重新生成预览线
+        const node = this.graph.getCellById(nodeId)
+        if (!node || !node.isNode()) {
+          results.failed.push({ nodeId, reason: '节点不存在或不是有效节点' })
+          return results
+        }
+        
+        results.total = 1
+        const result = this.regeneratePreviewLineForNode(node, options)
+        if (result.success) {
+          results.success.push({ nodeId, ...result })
+        } else {
+          results.failed.push({ nodeId, ...result })
+        }
+      } else {
+        // 重新生成所有预览线
+        const allNodes = this.graph.getNodes()
+        results.total = allNodes.length
+        
+        allNodes.forEach(node => {
+          const nodeData = node.getData() || {}
+          if (nodeData.isConfigured && this.shouldCreatePreviewLine(node)) {
+            const result = this.regeneratePreviewLineForNode(node, options)
+            if (result.success) {
+              results.success.push({ nodeId: node.id, ...result })
+            } else {
+              results.failed.push({ nodeId: node.id, ...result })
+            }
+          } else {
+            results.skipped.push({ 
+              nodeId: node.id, 
+              reason: nodeData.isConfigured ? 'shouldCreatePreviewLine返回false' : '节点未配置'
+            })
+          }
+        })
+      }
+      
+      console.log('✅ [统一预览线管理器] 预览线生成完成:', results)
+      return results
+      
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 预览线生成失败:', error)
+      results.failed.push({ nodeId: nodeId || 'all', reason: error.message })
+      return results
+    }
+  }
+  
+  /**
+   * 为单个节点重新生成预览线
+   * @param {Object} node - 节点对象
+   * @param {Object} options - 生成选项
+   * @returns {Object} 生成结果
+   */
+  regeneratePreviewLineForNode(node, options = {}) {
+    try {
+      const nodeId = node.id
+      const nodeData = node.getData() || {}
+      
+      console.log('🔄 [统一预览线管理器] 重新生成节点预览线:', {
+        nodeId: nodeId,
+        nodeType: nodeData.type || nodeData.nodeType,
+        isConfigured: nodeData.isConfigured
+      })
+      
+      // 先移除现有预览线
+      if (this.previewLines.has(nodeId)) {
+        this.removePreviewLine(nodeId)
+        console.log('🧹 [统一预览线管理器] 已移除现有预览线:', nodeId)
+      }
+      
+      // 重新创建预览线
+      const branchCount = this.calculateBranchCount(node, nodeData.config || {})
+      const previewInstance = this.createUnifiedPreviewLine(node, UnifiedPreviewStates.INTERACTIVE, {
+        branchCount: branchCount,
+        config: nodeData.config || {},
+        ...options
+      })
+      
+      if (previewInstance) {
+        return {
+          success: true,
+          message: '预览线重新生成成功',
+          branchCount: branchCount,
+          previewType: previewInstance.type
+        }
+      } else {
+        return {
+          success: false,
+          reason: '预览线创建返回null'
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 节点预览线重新生成失败:', node.id, error)
+      return {
+        success: false,
+        reason: error.message
+      }
+    }
   }
 
   /**
@@ -2607,7 +2917,7 @@ export class UnifiedPreviewLineManager {
             instance.branchId === branchId
           )
           if (targetInstance) {
-            this.setPreviewLineState(targetInstance, UnifiedPreviewStates.HIDDEN)
+            this.setPreviewLineState(targetInstance, UnifiedPreviewStates.INTERACTIVE)
             
             console.log('🔄 [统一预览线管理器] 特定分支预览线已隐藏:', {
               nodeId: node.id,
@@ -2618,13 +2928,13 @@ export class UnifiedPreviewLineManager {
         } else {
           // 如果没有指定分支ID，隐藏所有分支预览线（向后兼容）
           previewInstance.forEach(instance => {
-            this.setPreviewLineState(instance, UnifiedPreviewStates.HIDDEN)
+            this.setPreviewLineState(instance, UnifiedPreviewStates.INTERACTIVE)
           })
           console.log('🔄 [统一预览线管理器] 所有分支预览线已隐藏:', node.id)
         }
       } else {
         // 单一预览线
-        this.setPreviewLineState(previewInstance, UnifiedPreviewStates.HIDDEN)
+        this.setPreviewLineState(previewInstance, UnifiedPreviewStates.INTERACTIVE)
         
         console.log('🔄 [统一预览线管理器] 单一预览线已隐藏:', {
           nodeId: node.id,
@@ -2902,33 +3212,7 @@ export class UnifiedPreviewLineManager {
     // 清理该节点的缓存（如果存在）
     this.clearNodeCache(node.id)
     
-    // 🎯 关键修复：对于特殊节点类型，延迟预览线创建直到配置完成
-    const delayedPreviewNodeTypes = ['sms', 'manual_call', 'ai_call']
-    if (delayedPreviewNodeTypes.includes(nodeType)) {
-      console.log('⏳ [统一预览线管理器] 特殊节点类型，延迟预览线创建直到配置完成:', {
-        nodeId: node.id,
-        nodeType: nodeType,
-        reason: '等待用户配置完成'
-      })
-      // 不立即创建预览线，等待配置完成事件
-      return
-    }
-    
-    // 🔧 对于其他节点类型，使用原有逻辑
-    if (this.shouldCreatePreviewLine(node)) {
-      console.log('✅ [统一预览线管理器] 创建预览线:', {
-        nodeId: node.id,
-        nodeType: nodeType
-      })
-      // 所有预览线默认为可交互状态，支持移动和吸附
-      this.createUnifiedPreviewLine(node, UnifiedPreviewStates.INTERACTIVE)
-    } else {
-      console.log('⏭️ [统一预览线管理器] 节点不应创建预览线:', {
-        nodeId: node.id,
-        nodeType: nodeType,
-        isConfigured: nodeData.isConfigured
-      })
-    }
+ 
   }
 
   /**
@@ -3032,18 +3316,15 @@ export class UnifiedPreviewLineManager {
   handleNodeRemoved(e, providedIncomingEdges = null) {
     const { node } = e
     
-    // 检查是否是拖拽提示点或预览相关节点
+    // 检查是否是预览相关节点
     const nodeData = node.getData() || {}
     const nodeType = nodeData.type
-    const isEndpoint = nodeData.isEndpoint || nodeType === 'endpoint'
-    const isPreviewRelated = nodeData.isUnifiedPreview || nodeData.isPersistentPreview || 
-                            nodeData.isPreview || nodeType === 'unified-preview-line'
+    const isPreviewRelated = nodeData.isPreview || nodeType === 'unified-preview-line'
     
-    if (isEndpoint || isPreviewRelated) {
-      console.log('🗑️ [统一预览线管理器] 跳过拖拽提示点或预览相关节点的删除处理:', {
+    if (isPreviewRelated) {
+      console.log('🗑️ [统一预览线管理器] 跳过预览相关节点的删除处理:', {
         nodeId: node.id,
         nodeType: nodeType,
-        isEndpoint: isEndpoint,
         isPreviewRelated: isPreviewRelated
       })
       return
@@ -3075,7 +3356,6 @@ export class UnifiedPreviewLineManager {
       nodeType: nodeType,
       timestamp: new Date().toISOString(),
       currentPreviewLines: Array.from(this.previewLines.keys()),
-      currentEndpoints: this.endpoints ? Array.from(this.endpoints.keys()) : [],
       providedIncomingEdges: !!providedIncomingEdges,
       providedIncomingEdgesLength: providedIncomingEdges ? providedIncomingEdges.length : 'null'
     })
@@ -3104,8 +3384,8 @@ export class UnifiedPreviewLineManager {
     // 1. 删除被移除节点的预览线
     this.removePreviewLine(node.id)
     
-    // 2. 清理该节点的缓存
-    this.clearNodeCache(node.id)
+    // 2. 清理该节点的缓存，强制刷新连接状态
+    this.clearNodeCache(node.id, null, true)
     
     // 3. 清理与该节点相关的所有拖拽提示点
     this.cleanupRelatedEndpoints(node.id)
@@ -3116,8 +3396,7 @@ export class UnifiedPreviewLineManager {
     
     console.log('🗑️ [统一预览线管理器] 节点删除事件处理完成:', {
       nodeId: node.id,
-      remainingPreviewLines: Array.from(this.previewLines.keys()),
-      remainingEndpoints: this.endpoints ? Array.from(this.endpoints.keys()) : []
+      remainingPreviewLines: Array.from(this.previewLines.keys())
     })
   }
 
@@ -3163,12 +3442,6 @@ export class UnifiedPreviewLineManager {
       isEndpoint: nodeData.isEndpoint,
       isConfigured: nodeData.isConfigured
     })
-    
-    // 检查是否是拖拽提示点
-    if (nodeData.isEndpoint || nodeData.type === 'endpoint') {
-      console.log('⏭️ [统一预览线管理器] 跳过拖拽提示点的位置更新:', node.id)
-      return
-    }
     
     // 检查节点是否应该有预览线
     if (!this.shouldCreatePreviewLine(node)) {
@@ -3267,39 +3540,7 @@ export class UnifiedPreviewLineManager {
     const { node } = e
     const nodeData = node.getData() || {}
     
-    // 检查是否是拖拽提示点
-    if (nodeData.isEndpoint || nodeData.type === 'endpoint') {
-      // 查找对应的预览线实例
-      const parentLineId = nodeData.parentPreviewLine
-      if (parentLineId) {
-        // 遍历所有预览线实例，找到对应的预览线
-        for (const [nodeId, previewInstance] of this.previewLines) {
-          if (Array.isArray(previewInstance)) {
-            // 分支预览线
-            const targetInstance = previewInstance.find(instance => 
-              instance.line.id === parentLineId
-            )
-            if (targetInstance) {
-              this.startPreviewLineDrag(targetInstance, e)
-              return
-            }
-          } else {
-            // 单一预览线
-            if (previewInstance.line.id === parentLineId) {
-              this.startPreviewLineDrag(previewInstance, e)
-              return
-            }
-          }
-        }
-      }
-      
-      return
-    }
-    
-    // 检查是否是拖拽提示点激活状态
-    if (this.isEndpointActive) {
-      return
-    }
+
   }
 
   /**
@@ -3314,9 +3555,17 @@ export class UnifiedPreviewLineManager {
    */
   handlePreviewLineMouseDown(e) {
     const { edge } = e
+    
+    // 检查是否为右键点击
+    if (e.e && e.e.button === 2) {
+      console.log('🖱️ [统一预览线管理器] 右键点击预览线，忽略拖拽:', edge.id)
+      return
+    }
+    
     console.log('🖱️ [统一预览线管理器] 预览线鼠标按下事件:', {
       edgeId: edge.id,
-      edgeData: edge.getData()
+      edgeData: edge.getData(),
+      button: e.e ? e.e.button : 'unknown'
     })
     
     // 查找对应的预览线实例
@@ -3391,6 +3640,9 @@ export class UnifiedPreviewLineManager {
       const edgeData = edge.getData() || {}
       const branchId = edgeData.branchId
       
+      // 🔧 清理相关缓存
+      this.clearNodeCache(sourceNode.id, branchId)
+      
       console.log('🔗 [统一预览线管理器] 边添加事件:', {
         sourceNodeId: sourceNode.id,
         branchId: branchId,
@@ -3410,12 +3662,12 @@ export class UnifiedPreviewLineManager {
     const edgeData = edge.getData() || {}
 
     // 跳过预览线的删除事件，只处理真实连线的删除
-    if (edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview || 
+    if (edgeData.isPreview || 
         edgeData.type === 'unified-preview-line' || edgeData.type === 'preview-line') {
       console.log('⏭️ [统一预览线管理器] 跳过预览线删除事件:', {
         edgeId: edge.id,
         edgeType: edgeData.type,
-        isPreview: edgeData.isUnifiedPreview || edgeData.isPersistentPreview || edgeData.isPreview
+        isPreview: edgeData.isPreview
       })
       return
     }
@@ -3426,6 +3678,9 @@ export class UnifiedPreviewLineManager {
       // 获取边数据中的分支ID和标签
       const branchId = edgeData.branchId
       const branchLabel = edgeData.branchLabel
+      
+      // 🔧 清理相关缓存
+      this.clearNodeCache(sourceNode.id, branchId)
       
       console.log('🔗 [统一预览线管理器] 真实连线删除，恢复预览线:', {
         sourceNodeId: sourceNode.id,
@@ -3469,6 +3724,41 @@ export class UnifiedPreviewLineManager {
     }
   }
 
+  /**
+   * 处理右键菜单事件
+   */
+  handleContextMenu(e) {
+    // 如果正在拖拽，取消拖拽操作
+    if (this.isDragging) {
+      console.log('🖱️ [统一预览线管理器] 右键取消拖拽操作')
+      e.preventDefault() // 阻止默认右键菜单
+      this.cancelDrag()
+      return false
+    }
+  }
+
+  /**
+   * 取消拖拽操作
+   */
+  cancelDrag() {
+    if (!this.isDragging || !this.currentDragLine) {
+      return
+    }
+
+    console.log('❌ [统一预览线管理器] 取消拖拽操作:', {
+      dragLineId: this.currentDragLine.line ? this.currentDragLine.line.id : 'unknown',
+      sourceNodeId: this.currentDragLine.sourceNode ? this.currentDragLine.sourceNode.id : 'unknown'
+    })
+
+    // 重置拖拽状态
+    this.resetDragState()
+
+    // 清除所有高亮效果
+    this.clearAllHighlights()
+
+    console.log('✅ [统一预览线管理器] 拖拽操作已取消')
+  }
+
   // ==================== 辅助方法 ====================
 
   /**
@@ -3487,19 +3777,13 @@ export class UnifiedPreviewLineManager {
     console.log('🔍 [统一预览线管理器] 检查是否应该创建预览线:', {
       nodeId: node.id,
       nodeType: nodeType,
-      nodeData: nodeData
+      nodeData: nodeData,
+      isConfigured: nodeData.isConfigured
     })
-    
     // 🎯 新增：检查是否为强制更新模式
     if (nodeData._forcePreviewUpdate) {
       console.log('🔄 [统一预览线管理器] 强制更新模式，跳过连接检查:', node.id)
       return true
-    }
-    
-    // 跳过拖拽提示点
-    if (nodeData.isEndpoint || nodeData.type === 'endpoint' || nodeType === 'endpoint') {
-      console.log('⏭️ [统一预览线管理器] 跳过拖拽提示点:', node.id)
-      return false
     }
     
     // 跳过结束节点
@@ -3509,7 +3793,7 @@ export class UnifiedPreviewLineManager {
     }
     
     // 跳过预览线相关的节点
-    if (nodeData.isUnifiedPreview || nodeData.isPersistentPreview || nodeData.isPreview) {
+    if (nodeData.isPreview) {
       console.log('⏭️ [统一预览线管理器] 跳过预览线相关节点:', node.id)
       return false
     }
@@ -3541,60 +3825,16 @@ export class UnifiedPreviewLineManager {
     })
     
     // 🎯 统一规则：所有节点都必须明确标记为已配置才能生成预览线
-    // 🔧 新增：自动修复isConfigured字段的逻辑
-    if (nodeData.isConfigured === undefined) {
-      // 检查节点是否应该被认为是已配置的
-      const shouldBeConfigured = this.shouldNodeBeConfigured(nodeData, nodeType)
-      
-      if (shouldBeConfigured) {
-        console.log('🔧 [统一预览线管理器] 自动修复isConfigured字段:', {
-          nodeId: node.id,
-          nodeType: nodeType,
-          oldValue: nodeData.isConfigured,
-          newValue: true
-        })
-        
-        // 自动修复isConfigured字段
-        const updatedData = {
-          ...nodeData,
-          isConfigured: true
-        }
-        node.setData(updatedData)
-        
-        // 🔧 关键修复：强制刷新节点数据，确保更新立即生效
-        try {
-          // 等待一个微任务周期，确保数据更新完成
-          setTimeout(() => {
-            const refreshedData = node.getData() || {}
-            console.log('🔄 [统一预览线管理器] 节点数据刷新验证:', {
-              nodeId: node.id,
-              oldIsConfigured: nodeData.isConfigured,
-              newIsConfigured: refreshedData.isConfigured,
-              updateSuccess: refreshedData.isConfigured === true
-            })
-          }, 0)
-        } catch (error) {
-          console.warn('⚠️ [统一预览线管理器] 节点数据刷新验证失败:', error)
-        }
-        
-        return true
-      } else {
-        console.log('⏭️ [统一预览线管理器] 节点无配置数据，跳过预览线创建:', {
-          nodeId: node.id,
-          nodeType: nodeType,
-          isConfigured: nodeData.isConfigured
-        })
-        return false
-      }
-    }
+    // 🔧 修复：使用统一的isConfigured检查逻辑
+    const shouldBeConfigured = this.shouldNodeBeConfigured(nodeData, nodeType)
     
-    // 不对任何节点类型进行特殊处理，确保规则的一致性
-    if (nodeData.isConfigured !== true) {
-      console.log('⏭️ [统一预览线管理器] 节点未明确配置，跳过预览线创建:', {
+    if (!shouldBeConfigured) {
+      console.log('⏭️ [统一预览线管理器] 节点未配置，跳过预览线创建:', {
         nodeId: node.id,
         nodeType: nodeType,
-        isConfigured: nodeData.isConfigured,
-        reason: '所有节点都必须明确标记为已配置才能生成预览线'
+        directIsConfigured: nodeData.isConfigured,
+        dataIsConfigured: nodeData.data?.isConfigured,
+        reason: '节点必须明确标记为已配置才能生成预览线'
       })
       return false
     }
@@ -3616,6 +3856,25 @@ export class UnifiedPreviewLineManager {
    * @returns {boolean} 是否应该被认为是已配置的
    */
   shouldNodeBeConfigured(nodeData, nodeType) {
+    // 🔧 修复：增强isConfigured字段检查逻辑
+    let isConfigured = false
+    
+    // 优先检查nodeData.isConfigured
+    if (nodeData.isConfigured !== undefined && nodeData.isConfigured !== null) {
+      isConfigured = Boolean(nodeData.isConfigured)
+    }
+    // 如果nodeData.isConfigured未定义，检查data子对象
+    else if (nodeData.data && nodeData.data.isConfigured !== undefined && nodeData.data.isConfigured !== null) {
+      isConfigured = Boolean(nodeData.data.isConfigured)
+    }
+    
+    console.log('🔍 [统一预览线管理器] isConfigured字段检查:', {
+      nodeType,
+      directIsConfigured: nodeData.isConfigured,
+      dataIsConfigured: nodeData.data?.isConfigured,
+      finalIsConfigured: isConfigured
+    })
+    
     // 开始节点默认为已配置
     if (nodeType === 'start') {
       return true
@@ -3625,10 +3884,10 @@ export class UnifiedPreviewLineManager {
     const strictNodeTypes = ['sms', 'manual_call', 'ai_call']
     if (strictNodeTypes.includes(nodeType)) {
       // 🔧 严格检查：只有明确标记为已配置的节点才创建预览线
-      if (nodeData.isConfigured === true) {
+      if (isConfigured === true) {
         console.log('✅ [统一预览线管理器] 特殊节点已明确配置，允许创建预览线:', {
           nodeType,
-          isConfigured: nodeData.isConfigured
+          isConfigured: isConfigured
         })
         return true
       }
@@ -3638,7 +3897,7 @@ export class UnifiedPreviewLineManager {
         console.log('⚠️ [统一预览线管理器] 特殊节点有配置数据但未明确标记为已配置，不创建预览线:', {
           nodeType,
           hasConfig: true,
-          isConfigured: nodeData.isConfigured,
+          isConfigured: isConfigured,
           configKeys: Object.keys(nodeData.config)
         })
       }
@@ -3646,7 +3905,7 @@ export class UnifiedPreviewLineManager {
       // 🎯 关键修复：对于这些特殊节点，必须明确配置才能创建预览线
       console.log('❌ [统一预览线管理器] 特殊节点未明确配置，跳过预览线创建:', {
         nodeType,
-        isConfigured: nodeData.isConfigured,
+        isConfigured: isConfigured,
         reason: '必须明确标记为已配置才能创建预览线'
       })
       return false
@@ -3654,7 +3913,7 @@ export class UnifiedPreviewLineManager {
     
     // 其他节点类型：严格检查isConfigured字段
     // 只有明确标记为true的节点才被认为是已配置
-    return nodeData.isConfigured === true
+    return isConfigured === true
   }
 
   /**
@@ -3671,9 +3930,7 @@ export class UnifiedPreviewLineManager {
     // 过滤出真实连接（排除预览线）
     const realConnections = outgoingEdges.filter(edge => {
       const edgeData = edge.getData() || {}
-      const isRealConnection = !edgeData.isUnifiedPreview && 
-                              !edgeData.isPersistentPreview && 
-                              !edgeData.isPreview &&
+      const isRealConnection = !edgeData.isPreview &&
                               edgeData.type !== 'unified-preview-line' &&
                               edgeData.type !== 'preview-line' &&
                               (excludeEdgeId ? edge.id !== excludeEdgeId : true)
@@ -3741,9 +3998,7 @@ export class UnifiedPreviewLineManager {
     const outgoingEdges = this.graph.getOutgoingEdges(node) || []
     return outgoingEdges.some(edge => {
       const edgeData = edge.getData() || {}
-      return !edgeData.isUnifiedPreview && 
-             !edgeData.isPersistentPreview && 
-             !edgeData.isPreview &&
+      return !edgeData.isPreview &&
              edgeData.type !== 'unified-preview-line' &&
              (excludeEdgeId ? edge.id !== excludeEdgeId : true) // 排除指定的边
     })
@@ -3760,9 +4015,7 @@ export class UnifiedPreviewLineManager {
     // 过滤掉预览线，只检查真实的业务连接
     const realConnections = edges.filter(edge => {
       const edgeData = edge.getData() || {}
-      return !edgeData.isUnifiedPreview && 
-             !edgeData.isPersistentPreview && 
-             !edgeData.isPreview &&
+      return !edgeData.isPreview &&
              edgeData.type !== 'unified-preview-line' &&
              edgeData.type !== 'preview-line'
     })
@@ -3774,7 +4027,15 @@ export class UnifiedPreviewLineManager {
       hasIncomingConnections: realConnections.length > 0
     })
     
-    return realConnections.length > 0
+    const hasRealConnection = realConnections.length > 0
+    
+    // 🔧 缓存检查结果
+    this.branchInfoCache.set(cacheKey, {
+      hasRealConnection,
+      timestamp: now
+    })
+    
+    return hasRealConnection
   }
 
   /**
@@ -3792,15 +4053,50 @@ export class UnifiedPreviewLineManager {
     const node = this.graph.getCellById(nodeId)
     if (node) {
       const nodeData = node.getData() || {}
-      nodeData.config = { ...nodeData.config, ...config }
-      nodeData.isConfigured = true
-      node.setData(nodeData)
+      
+      // 🔧 关键修复：创建全新的数据对象而不是直接修改现有对象
+      const updatedNodeData = {
+        ...nodeData,
+        config: { ...nodeData.config, ...config },
+        isConfigured: true
+      }
+      
+      // 设置新的数据对象
+      node.setData(updatedNodeData)
+      
+      // 🔧 数据更新验证：确保数据正确持久化
+      const verifyData = node.getData()
+      const isUpdateSuccessful = verifyData && verifyData.isConfigured === true
       
       console.log('✅ [统一预览线管理器] 节点配置状态已更新:', {
         nodeId,
-        isConfigured: nodeData.isConfigured,
-        nodeType: nodeData.type || nodeData.nodeType
+        isConfigured: verifyData?.isConfigured,
+        nodeType: verifyData?.type || verifyData?.nodeType,
+        updateSuccessful: isUpdateSuccessful,
+        configKeys: Object.keys(verifyData?.config || {})
       })
+      
+      // 如果数据更新失败，记录错误并尝试重新设置
+      if (!isUpdateSuccessful) {
+        console.error('❌ [统一预览线管理器] 数据更新验证失败，尝试重新设置:', {
+          nodeId,
+          originalData: nodeData,
+          updatedData: updatedNodeData,
+          verifyData: verifyData
+        })
+        
+        // 尝试重新设置数据
+        try {
+          node.setData(updatedNodeData)
+          const secondVerify = node.getData()
+          console.log('🔄 [统一预览线管理器] 重新设置数据结果:', {
+            nodeId,
+            secondAttemptSuccess: secondVerify?.isConfigured === true
+          })
+        } catch (error) {
+          console.error('❌ [统一预览线管理器] 重新设置数据失败:', error)
+        }
+      }
       
       // 🔧 关键修复：等待节点数据更新完成后再触发预览线重新评估
       setTimeout(async () => {
@@ -3884,26 +4180,62 @@ export class UnifiedPreviewLineManager {
    * @param {Object} config - 节点配置（可选）
    * @returns {Array} 分支数组
    */
-  getNodeBranches(node, config = null) {
+  getNodeBranches(node, config = null, forceRefresh = false) {
     const nodeId = node.id
     const nodeData = node.getData() || {}
     const nodeType = nodeData.type || nodeData.nodeType
+    
+    // 优先使用传入的配置，否则使用节点数据本身作为配置
+    const nodeConfig = config || nodeData || {}
+    
+    // 🔧 修复：生成当前配置的哈希值用于比较
+    const currentConfigHash = this.generateConfigHash(nodeConfig)
+    
+    console.log('🔍 [统一预览线管理器] getNodeBranches 配置检查:', {
+      nodeId: nodeId,
+      nodeType: nodeType,
+      hasConfig: !!config,
+      hasNodeDataConfig: !!nodeData.config,
+      hasCrowdLayers: !!(nodeConfig.crowdLayers && Array.isArray(nodeConfig.crowdLayers)),
+      crowdLayersCount: nodeConfig.crowdLayers ? nodeConfig.crowdLayers.length : 0,
+      hasUnmatchBranch: !!nodeConfig.unmatchBranch,
+      configHash: currentConfigHash
+    })
     
     // 检查缓存
     const cached = this.branchInfoCache.get(nodeId)
     const now = Date.now()
     
-    if (cached && (now - cached.timestamp) < this.cacheTimeout) {
+    // 🔧 修复：检查配置是否发生变化
+    const configChanged = cached && cached.configHash && cached.configHash !== currentConfigHash
+    
+    if (configChanged) {
+      console.log('🔄 [统一预览线管理器] 检测到节点配置变化，清理缓存:', {
+        nodeId: nodeId,
+        nodeType: nodeType,
+        oldConfigHash: cached.configHash,
+        newConfigHash: currentConfigHash
+      })
+      
+      // 清理节点相关的所有缓存
+      this.clearNodeCache(nodeId, null, true)
+    }
+    
+    // 🔧 修复：增强缓存有效性检查
+    const cacheValid = cached && 
+                      (now - cached.timestamp) < this.cacheTimeout &&
+                      !configChanged &&
+                      !forceRefresh
+    
+    if (cacheValid) {
       console.log('📦 [统一预览线管理器] 使用缓存的分支信息:', {
         nodeId: nodeId,
         cacheAge: now - cached.timestamp,
+        configHash: currentConfigHash,
         branches: cached.branches.map(b => ({ id: b.id, label: b.label }))
       })
       return cached.branches
     }
-    
-    // 优先使用传入的配置，否则使用节点数据中的配置
-    const nodeConfig = config || nodeData.config || {}
     
     console.log('🔍 [统一预览线管理器] getNodeBranches 被调用:', {
       nodeId: nodeId,
@@ -3944,10 +4276,12 @@ export class UnifiedPreviewLineManager {
       BranchLabelUtils.validateAndFixBranchLabel(branch, index, nodeType)
     )
     
-    // 缓存结果
+    // 🔧 修复：缓存结果时包含配置哈希值
     this.branchInfoCache.set(nodeId, {
       branches: branches,
-      timestamp: now
+      timestamp: now,
+      configHash: currentConfigHash,
+      nodeType: nodeType
     })
     
     console.log('💾 [统一预览线管理器] 分支信息已缓存:', {
@@ -4456,74 +4790,15 @@ export class UnifiedPreviewLineManager {
       y: baseY  // 使用布局引擎的层级Y坐标或固定偏移
     }
     
-    // 🎯 新增：缓存计算结果
-    if (!this.endpointPositionCache) {
-      this.endpointPositionCache = new Map()
-    }
-    this.endpointPositionCache.set(endpointCacheKey, calculatedPosition)
-    
     return calculatedPosition
   }
 
   /**
-   * 🎯 新增：同步结构化布局后的endpoint位置
+   * 同步布局位置 (已简化)
    * @param {Map<string, any>} layoutPositions - 布局引擎计算的位置映射
    */
   syncLayoutEndpointPositions(layoutPositions) {
-    if (!layoutPositions || layoutPositions.size === 0) {
-      console.warn('⚠️ [Endpoint同步] 布局位置映射为空，跳过同步')
-      return
-    }
-
-    console.log('🔄 [Endpoint同步] 开始同步结构化布局后的endpoint位置')
-    
-    // 清空现有的endpoint位置缓存
-    if (this.endpointPositionCache) {
-      this.endpointPositionCache.clear()
-    } else {
-      this.endpointPositionCache = new Map()
-    }
-
-    let syncedCount = 0
-    
-    // 遍历布局位置，找到endpoint节点
-    layoutPositions.forEach((position, nodeId) => {
-      if (position && position.nodeType === 'endpoint' && position.sourceNodeId) {
-        // 解析endpoint信息
-        const sourceNodeId = position.sourceNodeId
-        const branchId = position.branchId || 'default'
-        
-        // 构建缓存键
-        let cacheKey
-        if (branchId !== 'default') {
-          // 分支预览线endpoint
-          const branchIndex = this.extractBranchIndexFromId(branchId)
-          cacheKey = `${sourceNodeId}_branch_${branchIndex}`
-        } else {
-          // 单一预览线endpoint
-          cacheKey = `${sourceNodeId}_single`
-        }
-        
-        // 缓存endpoint位置
-        this.endpointPositionCache.set(cacheKey, {
-          x: position.x,
-          y: position.y,
-          sourceNodeId,
-          branchId,
-          isLayoutSynced: true
-        })
-        
-        // 立即更新对应的预览线位置
-        this.updatePreviewLineEndpointPosition(sourceNodeId, branchId, position)
-        
-        syncedCount++
-        if (position.x && position.y) {
-          console.log(`🎯 [Endpoint同步] ${cacheKey}: (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`)
-        }
-      }
-    })
-
-    console.log(`✅ [Endpoint同步] 同步完成，共处理 ${syncedCount} 个endpoint位置`)
+    console.log('🔄 [布局同步] 布局位置同步功能已简化')
     
     // 🎯 关键：标记布局同步完成，触发预览线位置更新
     this.layoutSyncCompleted = true
@@ -4573,7 +4848,6 @@ export class UnifiedPreviewLineManager {
         if (instance.line && typeof instance.line.setTarget === 'function') {
           instance.line.setTarget(targetPosition)
           instance.endPosition = targetPosition
-          this.updateEndpointMarker(instance.line, targetPosition)
           console.log(`🔄 [预览线更新] 分支预览线 ${sourceNodeId}[${branchIndex}] 位置已更新`)
         }
       }
@@ -4582,7 +4856,6 @@ export class UnifiedPreviewLineManager {
       if (previewInstance.line && typeof previewInstance.line.setTarget === 'function') {
         previewInstance.line.setTarget(targetPosition)
         previewInstance.endPosition = targetPosition
-        this.updateEndpointMarker(previewInstance.line, targetPosition)
         console.log(`🔄 [预览线更新] 单一预览线 ${sourceNodeId} 位置已更新`)
       }
     }
@@ -4613,93 +4886,68 @@ export class UnifiedPreviewLineManager {
   updatePreviewLinePosition(node) {
     // 🔧 双重验证：检查节点是否存在
     if (!node || !node.id) {
-      console.warn('⚠️ [统一预览线管理器] 节点对象无效，跳过位置更新')
-      return
+      // console.warn('⚠️ [统一预览线管理器] 节点对象无效，跳过位置更新')
+      return false
     }
     
     // 检查节点是否在graph中存在
     if (this.graph && !this.graph.hasCell(node.id)) {
-      console.warn('⚠️ [统一预览线管理器] 节点不在graph中，跳过位置更新:', node.id)
-      return
+      // console.warn('⚠️ [统一预览线管理器] 节点不在graph中，跳过位置更新:', node.id)
+      return false
     }
     
     // 检查节点是否已被移除
     if (node.removed || node.isRemoved?.()) {
       console.warn('⚠️ [统一预览线管理器] 节点已被移除，跳过位置更新:', node.id)
-      return
+      return false
     }
     
     // 检查节点是否应该有预览线
     if (!this.shouldCreatePreviewLine(node)) {
-      return
+      return false
     }
 
     // 🔧 新增：如果布局引擎未就绪，添加到待处理队列
     if (!this.layoutEngineReady) {
       const added = this.addToPendingCalculations(node.id, node, 'update')
       if (added) {
-        console.log('📋 [统一预览线管理器] 预览线更新任务已加入待处理队列:', node.id)
-        return
+        // console.log('📋 [统一预览线管理器] 预览线更新任务已加入待处理队列:', node.id)
+        return true
       }
     }
 
     // 🔧 修复：在更新位置前先清理旧的预览线实例，避免重复预览线
     const existingInstance = this.previewLines.get(node.id)
-    if (existingInstance) {
-      console.log('🧹 [预览线位置更新] 清理旧预览线实例，避免重复:', node.id)
-      
-      // 临时保存预览线状态信息
-      const preservedState = this.preservePreviewLineState(existingInstance)
-      
-      // 清理旧的预览线实例
-      this.removePreviewLine(node.id)
-      
-      // 短暂延迟后重新创建预览线，确保清理完成
-      setTimeout(() => {
-        this.createPreviewLineAfterCleanup(node, preservedState)
-      }, 10)
-      return
-    }
+    // 移除错误的预览线删除逻辑，直接使用现有实例进行位置更新
+    // if (existingInstance) {
+    //   // 这里之前错误地删除了预览线，现在改为直接更新位置
+    //   return
+    // }
 
     const previewInstance = this.previewLines.get(node.id)
     if (!previewInstance) {
       // 如果没有预览线实例，创建新的
-      console.log('ℹ️ [预览线位置更新] 未找到预览线实例，创建新的:', node.id)
+     // console.log('ℹ️ [预览线位置更新] 未找到预览线实例，创建新的:', node.id)
       this.createUnifiedPreviewLine(node)
-      return
+      return true
     }
 
     // 🔧 新增：使用增强版预览线位置更新方法
     try {
       this.updatePreviewLinePositionEnhanced(node)
-      return
+      return true
     } catch (error) {
-      console.warn('⚠️ [预览线位置更新] 增强版更新失败，回退到原有方法:', error)
+    //  console.warn('⚠️ [预览线位置更新] 增强版更新失败，回退到原有方法:', error)
       // 继续执行原有逻辑作为回退方案
     }
 
-    // 检查预览线状态，如果是隐藏状态则跳过更新
-    if (Array.isArray(previewInstance)) {
-      // 分支预览线 - 检查是否所有分支都被隐藏
-      const allHidden = previewInstance.every(instance => instance.state === UnifiedPreviewStates.HIDDEN)
-      if (allHidden) {
-        return
-      }
-    } else {
-      // 单一预览线 - 检查是否被隐藏
-      if (previewInstance.state === UnifiedPreviewStates.HIDDEN) {
-        return
-      }
-    }
+
     
     if (Array.isArray(previewInstance)) {
       // 分支预览线 - 只更新未隐藏的分支
       const branches = this.getNodeBranches(node)
       previewInstance.forEach((instance, index) => {
-        // 跳过已隐藏的分支预览线
-        if (instance.state === UnifiedPreviewStates.HIDDEN) {
-          return
-        }
+
 
         // 计算新的终点位置
         const newEndPosition = this.calculateBranchPreviewPosition(node, branches, index)
@@ -4717,7 +4965,7 @@ export class UnifiedPreviewLineManager {
             node.setPortProp('out', 'position/args/dy', 0)
           }
         } catch (error) {
-          console.warn('⚠️ [预览线位置更新] 端口位置刷新失败:', error)
+        //  console.warn('⚠️ [预览线位置更新] 端口位置刷新失败:', error)
         }
         
         // 🔧 使用X6规范的方式更新分支预览线位置
@@ -4762,7 +5010,7 @@ export class UnifiedPreviewLineManager {
             }
           }
         } catch (error) {
-          console.warn('⚠️ [预览线位置更新] 获取端口位置失败，使用默认位置:', error)
+         // console.warn('⚠️ [预览线位置更新] 获取端口位置失败，使用默认位置:', error)
           // 使用节点底部中心作为默认位置
           const nodePosition = node.getPosition()
           const nodeSize = node.getSize()
@@ -4821,7 +5069,7 @@ export class UnifiedPreviewLineManager {
           node.setPortProp('out', 'position/args/dy', 0)
         }
       } catch (error) {
-        console.warn('⚠️ [预览线位置更新] 端口位置刷新失败:', error)
+      //     console.warn('⚠️ [预览线位置更新] 端口位置刷新失败:', error)
       }
       
       // 🔧 使用X6规范的方式更新预览线位置
@@ -4904,6 +5152,9 @@ export class UnifiedPreviewLineManager {
       // 更新预览线终点标记位置
       this.updateEndpointMarker(previewInstance.line, newEndPosition)
     }
+    
+    // 返回成功状态
+    return true
   }
 
   /**
@@ -4945,33 +5196,13 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
-   * 添加终点标记
+   * 添加终点标记 (已简化，移除endpoint相关逻辑)
    * @param {Object} line - 预览线实例
    * @param {Object} position - 终点位置
    */
   addEndpointMarker(line, position) {
-    if (!line || !position) return
-    
-    try {
-      // 添加终点标记的可视化逻辑
-      // 例如在终点位置添加一个小圆点或其他标记
-      
-      // 查找对应的预览线实例
-      const previewInstance = this.findPreviewInstanceByLine(line)
-      if (previewInstance) {
-        // 如果已有终点标记，先移除
-        if (previewInstance.endpointMarker) {
-          this.removeEndpointMarker(previewInstance)
-        }
-        
-        // 创建新的终点标记（可选实现）
-        // previewInstance.endpointMarker = this.createEndpointMarkerElement(position)
-        
-        console.log('✅ [统一预览线管理器] 终点标记已添加:', line.id)
-      }
-    } catch (error) {
-      console.error('❌ [统一预览线管理器] 添加终点标记失败:', error)
-    }
+    // 注意：endpoint 标记相关逻辑已移除
+    console.log('✅ [统一预览线管理器] 终点标记功能已简化:', line?.id)
   }
 
   /**
@@ -5003,8 +5234,7 @@ export class UnifiedPreviewLineManager {
     }
     
     try {
-      // 移除预览线终点的高亮效果
-      const previewInstance = this.endpointDragInstances?.get(line.id)
+      const previewInstance = this.findPreviewInstanceByLine(line)
       if (previewInstance) {
         this.highlightPreviewLineEndpoint(previewInstance, false)
       }
@@ -5014,41 +5244,22 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
-   * 移除终点标记
+   * 移除终点标记 (已简化，移除endpoint相关逻辑)
    * @param {Object} previewInstance - 预览线实例
    */
   removeEndpointMarker(previewInstance) {
-    if (!previewInstance || !previewInstance.line) return
-    
-    try {
-      // 移除终点标记的可视化逻辑
-      // 例如移除终点位置的小圆点或其他标记
-      const line = previewInstance.line
-      
-      // 如果有存储的终点标记元素，移除它们
-      if (previewInstance.endpointMarker) {
-        if (this.graph && this.graph.hasCell(previewInstance.endpointMarker.id)) {
-          this.graph.removeCell(previewInstance.endpointMarker)
-        }
-        delete previewInstance.endpointMarker
-      }
-      
-      console.log('🗑️ [统一预览线管理器] 终点标记已移除:', line.id)
-    } catch (error) {
-      console.error('❌ [统一预览线管理器] 移除终点标记失败:', error)
-    }
+    // 注意：endpoint 标记相关逻辑已移除
+    console.log('🗑️ [统一预览线管理器] 终点标记功能已简化:', previewInstance?.line?.id)
   }
 
   /**
-   * 更新预览线终点标记位置
+   * 更新预览线终点标记位置 (已简化，移除endpoint相关逻辑)
    * @param {Object} line - 预览线对象
    * @param {Object} position - 新的终点位置
    */
   updateEndpointMarker(line, position) {
-    if (!line || !position) return
-    
-    // 更新预览线终点的可视化标记
-    this.addEndpointMarker(line, position)
+    // 注意：endpoint 标记相关逻辑已移除
+    console.log('🔄 [统一预览线管理器] 终点标记更新功能已简化:', line?.id)
   }
 
   /**
@@ -5098,11 +5309,6 @@ export class UnifiedPreviewLineManager {
     const branches = this.getNodeBranches(node)
     
     previewInstances.forEach((instance, index) => {
-      // 跳过已隐藏的分支预览线
-      if (instance.state === UnifiedPreviewStates.HIDDEN) {
-        return
-      }
-
       // 获取对应的分支信息
       const branchInfo = branchAnalysis.activeBranches && branchAnalysis.activeBranches[index]
       let newEndPosition
@@ -5148,11 +5354,6 @@ export class UnifiedPreviewLineManager {
    * @param {Object} connectionAnalysis - 连接分析结果
    */
   updateSinglePreviewLineEnhanced(node, previewInstance, branchAnalysis, connectionAnalysis) {
-    // 跳过已隐藏的预览线
-    if (previewInstance.state === UnifiedPreviewStates.HIDDEN) {
-      return
-    }
-
     // 计算优化的终点位置
     const nodePosition = node.getPosition()
     const nodeSize = node.getSize()
@@ -5417,19 +5618,57 @@ export class UnifiedPreviewLineManager {
    */
   removePreviewLine(nodeId) {
     const previewInstance = this.previewLines.get(nodeId)
-    if (!previewInstance) return
+    if (!previewInstance) {
+      console.log('🔍 [统一预览线管理器] removePreviewLine: 节点无预览线实例:', nodeId)
+      return false
+    }
+    
+    console.log('🗑️ [统一预览线管理器] 开始删除节点预览线:', {
+      nodeId: nodeId,
+      isArray: Array.isArray(previewInstance),
+      branchCount: Array.isArray(previewInstance) ? previewInstance.length : 1
+    })
     
     // 清理相关的手工调整记录
     const removedHints = []
     
     if (Array.isArray(previewInstance)) {
       // 分支预览线
-      previewInstance.forEach(instance => {
+      previewInstance.forEach((instance, index) => {
+        console.log(`🗑️ [统一预览线管理器] 删除分支预览线 ${index + 1}/${previewInstance.length}:`, {
+          nodeId: nodeId,
+          branchId: instance.branchId,
+          lineId: instance.line?.id
+        })
+        
+        // 🔧 增强清理：移除终点高亮标记
+        if (instance.line) {
+          this.removeEndpointHighlight(instance.line)
+        }
+        
+        // 🔧 增强清理：移除拖拽提示点
+        if (instance.hintNode) {
+          try {
+            this.graph.removeNode(instance.hintNode.id)
+            console.log('🧹 [统一预览线管理器] 已删除分支拖拽提示点:', instance.hintNode.id)
+          } catch (error) {
+            console.warn('⚠️ [统一预览线管理器] 删除分支拖拽提示点失败:', error.message)
+          }
+        }
+        
         this.removePreviewLineEndpointDrag(instance)
-        this.graph.removeEdge(instance.line)
+        
+        // 🔧 安全删除预览线
+        if (instance.line) {
+          try {
+            this.graph.removeEdge(instance.line)
+          } catch (error) {
+            console.warn('⚠️ [统一预览线管理器] 删除分支预览线失败:', error.message)
+          }
+        }
         
         // 清理对应的手工调整记录
-        const hintId = `hint_${instance.line.id}`
+        const hintId = `hint_${instance.line?.id}`
         if (this.manuallyAdjustedHints.has(hintId)) {
           this.manuallyAdjustedHints.delete(hintId)
           removedHints.push(hintId)
@@ -5437,23 +5676,197 @@ export class UnifiedPreviewLineManager {
       })
     } else {
       // 单一预览线
+      console.log('🗑️ [统一预览线管理器] 删除单一预览线:', {
+        nodeId: nodeId,
+        lineId: previewInstance.line?.id
+      })
+      
+      // 🔧 增强清理：移除终点高亮标记
+      if (previewInstance.line) {
+        this.removeEndpointHighlight(previewInstance.line)
+      }
+      
+      // 🔧 增强清理：移除拖拽提示点
+      if (previewInstance.hintNode) {
+        try {
+          this.graph.removeNode(previewInstance.hintNode.id)
+          console.log('🧹 [统一预览线管理器] 已删除单一预览线拖拽提示点:', previewInstance.hintNode.id)
+        } catch (error) {
+          console.warn('⚠️ [统一预览线管理器] 删除单一预览线拖拽提示点失败:', error.message)
+        }
+      }
+      
       this.removePreviewLineEndpointDrag(previewInstance)
-      this.graph.removeEdge(previewInstance.line)
+      
+      // 🔧 安全删除预览线
+      if (previewInstance.line) {
+        try {
+          this.graph.removeEdge(previewInstance.line)
+        } catch (error) {
+          console.warn('⚠️ [统一预览线管理器] 删除单一预览线失败:', error.message)
+        }
+      }
       
       // 清理对应的手工调整记录
-      const hintId = `hint_${previewInstance.line.id}`
+      const hintId = `hint_${previewInstance.line?.id}`
       if (this.manuallyAdjustedHints.has(hintId)) {
         this.manuallyAdjustedHints.delete(hintId)
         removedHints.push(hintId)
       }
     }
     
+    // 🔧 增强清理：清理相关缓存
+    this.clearNodeCache(nodeId, null, true)
+    
+    // 🔧 增强清理：清理位置缓存
+    if (this.positionCache) {
+      this.positionCache.delete(nodeId)
+    }
+    
+    // 🔧 增强清理：清理连接状态缓存
+    if (this.connectionStatusCache) {
+      this.connectionStatusCache.delete(nodeId)
+    }
+    
     this.previewLines.delete(nodeId)
     this.nodeStates.delete(nodeId)
+    
+    console.log('✅ [统一预览线管理器] 节点预览线删除完成:', {
+      nodeId: nodeId,
+      removedHints: removedHints.length,
+      remainingPreviewLines: this.previewLines.size
+    })
+    
+    return true
   }
 
   /**
-   * 移除特定分支的预览线
+   * 强制刷新预览线
+   * @param {string} previewLineId - 预览线ID
+   * @param {Object} options - 刷新选项
+   * @returns {boolean} 是否成功刷新
+   */
+  forceRefreshPreviewLine(previewLineId, options = {}) {
+    // 查找预览线实例
+    let previewInstance = null
+    let nodeId = null
+    
+    for (const [id, instance] of this.previewLines) {
+      if (Array.isArray(instance)) {
+        const found = instance.find(inst => inst.line && inst.line.id === previewLineId)
+        if (found) {
+          previewInstance = found
+          nodeId = id
+          break
+        }
+      } else if (instance.line && instance.line.id === previewLineId) {
+        previewInstance = instance
+        nodeId = id
+        break
+      }
+    }
+    
+    if (!previewInstance) {
+      console.warn('⚠️ [统一预览线管理器] 强制刷新失败: 预览线不存在:', previewLineId)
+      return false
+    }
+    
+    try {
+      // 获取源节点
+      const sourceNode = this.graph.getCell(nodeId)
+      if (!sourceNode) {
+        console.warn('⚠️ [统一预览线管理器] 强制刷新失败: 源节点不存在:', nodeId)
+        return false
+      }
+      
+      // 强制更新预览线位置
+      this.updatePreviewLinePosition(sourceNode)
+      
+      console.log('✅ [统一预览线管理器] 强制刷新预览线成功:', previewLineId)
+      return true
+      
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 强制刷新预览线失败:', error)
+      return false
+    }
+   }
+
+   /**
+    * 批量更新预览线
+    * @param {Array} updates - 更新列表
+    * @param {Object} options - 批量更新选项
+    * @returns {Object} 批量更新结果
+    */
+   batchUpdatePreviewLines(updates, options = {}) {
+     const results = {
+       successful: 0,
+       failed: 0,
+       errors: []
+     }
+     
+     if (!Array.isArray(updates)) {
+       console.warn('⚠️ [统一预览线管理器] 批量更新失败: updates必须是数组')
+       return results
+     }
+     
+     try {
+       for (const update of updates) {
+         try {
+           if (update.nodeId) {
+             // 根据节点ID更新预览线
+             const sourceNode = this.graph.getCell(update.nodeId)
+             if (sourceNode) {
+               this.updatePreviewLinePosition(sourceNode)
+               results.successful++
+             } else {
+               results.failed++
+               results.errors.push({
+                 nodeId: update.nodeId,
+                 error: '节点不存在'
+               })
+             }
+           } else if (update.previewLineId) {
+             // 根据预览线ID强制刷新
+             const refreshResult = this.forceRefreshPreviewLine(update.previewLineId, update.options)
+             if (refreshResult) {
+               results.successful++
+             } else {
+               results.failed++
+               results.errors.push({
+                 previewLineId: update.previewLineId,
+                 error: '强制刷新失败'
+               })
+             }
+           } else {
+             results.failed++
+             results.errors.push({
+               error: '更新项缺少nodeId或previewLineId'
+             })
+           }
+         } catch (error) {
+           results.failed++
+           results.errors.push({
+             error: error.message
+           })
+         }
+       }
+       
+       console.log('📦 [统一预览线管理器] 批量更新完成:', {
+         总数: updates.length,
+         成功: results.successful,
+         失败: results.failed
+       })
+       
+     } catch (error) {
+       console.error('❌ [统一预览线管理器] 批量更新失败:', error)
+       results.errors.push({ error: error.message })
+     }
+     
+     return results
+   }
+ 
+   /**
+    * 移除特定分支的预览线
    * @param {string} nodeId - 节点ID
    * @param {string} branchId - 分支ID
    */
@@ -5581,12 +5994,6 @@ export class UnifiedPreviewLineManager {
       }
     })
     
-    // 更新预览线终点的高亮效果
-    const previewInstance = this.endpointDragInstances?.get(line.id)
-    if (previewInstance) {
-      this.highlightPreviewLineEndpoint(previewInstance, true)
-    }
-    
     // 检测附近的节点并高亮显示（使用逻辑坐标）
     this.highlightNearbyNodes(x, y)
   }
@@ -5595,24 +6002,26 @@ export class UnifiedPreviewLineManager {
    * 高亮附近的节点
    */
   highlightNearbyNodes(x, y) {
-    const tolerance = 80 // 检测范围
+    const tolerance = VERTICAL_LAYOUT_CONFIG.SNAP_CONFIG.DISTANCE // 使用配置的吸附距离
     const nodes = this.graph.getNodes()
     
     // 清除之前的高亮
     this.clearNodeHighlights()
     
     // 如果当前拖拽的是分支预览线，需要智能选择最近的分流端口
-    if (this.currentDragLine && this.currentDragLine.type === PreviewLineTypes.BRANCH) {
+    if (this.currentDragLine && this.currentDragLine.type === PreviewLineTypes.PREVIEW) {
       this.highlightNearestBranchPort(x, y, tolerance)
       return
     }
     
+    let nearestNode = null
+    let nearestDistance = Infinity
+    
     for (const node of nodes) {
       const nodeData = node.getData() || {}
       
-      // 跳过拖拽提示点和预览相关节点
-      if (nodeData.isEndpoint || nodeData.type === 'endpoint' || 
-          nodeData.isUnifiedPreview || nodeData.isPersistentPreview) {
+      // 跳过预览相关节点
+      if (nodeData.isPreview) {
         continue
       }
       
@@ -5633,36 +6042,49 @@ export class UnifiedPreviewLineManager {
         if (coordinateValidation && coordinateValidation.difference) {
           nodeCenterX -= coordinateValidation.difference.x
           nodeCenterY -= coordinateValidation.difference.y
-          
-          // 已禁用坐标修正日志以减少控制台冗余信息
-          // console.log('🔍 [吸附坐标修正] 检测到节点坐标偏差:', {
-          //   nodeId: node.id,
-          //   originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
-          //   correctedCenter: { x: nodeCenterX, y: nodeCenterY },
-          //   coordinateValidation
-          // })
         }
       }
       
-      // 检查是否在检测范围内（使用修正后的坐标）
-      const distance = Math.sqrt(
-        Math.pow(x - nodeCenterX, 2) +
-        Math.pow(y - nodeCenterY, 2)
+      // 优化：使用更精确的边界检测
+      const nodeLeft = nodePosition.x
+      const nodeRight = nodePosition.x + nodeSize.width
+      const nodeTop = nodePosition.y
+      const nodeBottom = nodePosition.y + nodeSize.height
+      
+      // 检查是否在节点边界范围内（包含容差）
+      const withinBounds = (
+        x >= nodeLeft - tolerance &&
+        x <= nodeRight + tolerance &&
+        y >= nodeTop - tolerance &&
+        y <= nodeBottom + tolerance
       )
       
-      if (distance <= tolerance) {
-        // 高亮节点
-        this.highlightNode(node)
+      if (withinBounds) {
+        // 🔧 使用getBestSnapPosition进行精确的吸附检测
+        const dragNodeCenter = { x, y }
+        const snapResult = getBestSnapPosition(dragNodeCenter, [node])
         
-        console.log('🎯 [节点吸附] 高亮附近节点:', {
-          nodeId: node.id,
-          nodeType: nodeData.type,
-          distance: distance.toFixed(2),
-          tolerance,
-          dragPosition: { x, y },
-          nodeCenter: { x: nodeCenterX, y: nodeCenterY }
-        })
+        if (snapResult && snapResult.distance <= tolerance) {
+          // 优化：只高亮最近的节点
+          if (snapResult.distance < nearestDistance) {
+            nearestDistance = snapResult.distance
+            nearestNode = node
+          }
+        }
       }
+    }
+    
+    // 高亮最近的节点
+    if (nearestNode) {
+      this.highlightNode(nearestNode)
+      
+      console.log('🎯 [节点吸附] 高亮最近节点:', {
+        nodeId: nearestNode.id,
+        nodeType: nearestNode.getData()?.type,
+        distance: nearestDistance.toFixed(2),
+        tolerance,
+        dragPosition: { x, y }
+      })
     }
   }
 
@@ -5679,7 +6101,7 @@ export class UnifiedPreviewLineManager {
       
       // 跳过拖拽提示点和预览相关节点
       if (nodeData.isEndpoint || nodeData.type === 'endpoint' || 
-          nodeData.isUnifiedPreview || nodeData.isPersistentPreview) {
+          nodeData.isPreview) {
         continue
       }
       
@@ -5700,26 +6122,34 @@ export class UnifiedPreviewLineManager {
         if (coordinateValidation && coordinateValidation.difference) {
           nodeCenterX -= coordinateValidation.difference.x
           nodeCenterY -= coordinateValidation.difference.y
-          
-          // 已禁用分支吸附坐标修正日志以减少控制台冗余信息
-          // console.log('🔍 [分支吸附坐标修正] 检测到节点坐标偏差:', {
-          //   nodeId: node.id,
-          //   originalCenter: { x: nodePosition.x + nodeSize.width / 2, y: nodePosition.y + nodeSize.height / 2 },
-          //   correctedCenter: { x: nodeCenterX, y: nodeCenterY },
-          //   coordinateValidation
-          // })
         }
       }
       
-      // 检查是否在检测范围内（使用修正后的坐标）
-      const distance = Math.sqrt(
-        Math.pow(x - nodeCenterX, 2) +
-        Math.pow(y - nodeCenterY, 2)
+      // 优化：使用更精确的边界检测
+      const nodeLeft = nodePosition.x
+      const nodeRight = nodePosition.x + nodeSize.width
+      const nodeTop = nodePosition.y
+      const nodeBottom = nodePosition.y + nodeSize.height
+      
+      // 检查是否在节点边界范围内（包含容差）
+      const withinBounds = (
+        x >= nodeLeft - tolerance &&
+        x <= nodeRight + tolerance &&
+        y >= nodeTop - tolerance &&
+        y <= nodeBottom + tolerance
       )
       
-      if (distance <= tolerance && distance < nearestDistance) {
-        nearestDistance = distance
-        nearestNode = node
+      if (withinBounds) {
+        // 🔧 使用getBestSnapPosition进行精确的吸附检测
+        const dragNodeCenter = { x, y }
+        const snapResult = getBestSnapPosition(dragNodeCenter, [node])
+        
+        if (snapResult && snapResult.distance <= tolerance) {
+          if (snapResult.distance < nearestDistance) {
+            nearestDistance = snapResult.distance
+            nearestNode = node
+          }
+        }
       }
     }
     
@@ -5752,19 +6182,49 @@ export class UnifiedPreviewLineManager {
       nodeData.originalAttrs = JSON.parse(JSON.stringify(node.getAttrs()))
     }
     
-    // 应用高亮样式
+    // 应用增强的高亮样式
     node.setAttrs({
       body: {
         ...node.getAttrs().body,
         stroke: '#52c41a',
-        strokeWidth: 3,
-        filter: 'drop-shadow(0 0 10px rgba(82, 196, 26, 0.5))'
+        strokeWidth: 4,
+        strokeDasharray: '5,5',
+        filter: 'drop-shadow(0 0 15px rgba(82, 196, 26, 0.8))',
+        opacity: 0.9
       }
     })
     
-    // 标记为高亮状态
+    // 添加脉冲动画效果
+    const pulseAnimation = () => {
+      if (nodeData.isHighlighted) {
+        node.setAttrs({
+          body: {
+            ...node.getAttrs().body,
+            strokeWidth: nodeData.pulsePhase ? 4 : 6,
+            filter: nodeData.pulsePhase 
+              ? 'drop-shadow(0 0 15px rgba(82, 196, 26, 0.8))' 
+              : 'drop-shadow(0 0 20px rgba(82, 196, 26, 1.0))'
+          }
+        })
+        nodeData.pulsePhase = !nodeData.pulsePhase
+        
+        // 继续动画
+        setTimeout(pulseAnimation, 600)
+      }
+    }
+    
+    // 标记为高亮状态并开始动画
     nodeData.isHighlighted = true
+    nodeData.pulsePhase = false
     node.setData(nodeData)
+    
+    // 开始脉冲动画
+    setTimeout(pulseAnimation, 300)
+    
+    console.log('✨ [统一预览线管理器] 节点高亮已应用:', {
+      nodeId: node.id,
+      hasAnimation: true
+    })
   }
 
   /**
@@ -5789,10 +6249,39 @@ export class UnifiedPreviewLineManager {
   }
 
   /**
+   * 清除所有高亮效果
+   */
+  clearAllHighlights() {
+    // 清除节点高亮
+    this.clearNodeHighlights()
+    
+    // 清除预览线高亮效果
+    this.previewLines.forEach((previewInstance, nodeId) => {
+      if (Array.isArray(previewInstance)) {
+        // 分支预览线
+        previewInstance.forEach(instance => {
+          if (instance && instance.line) {
+            // 🔧 修复：传递预览线实例而不是line对象
+            this.updatePreviewLineEndpointStyle(instance, false)
+          }
+        })
+      } else {
+        // 单一预览线
+        if (previewInstance && previewInstance.line) {
+          // 🔧 修复：传递预览线实例而不是line对象
+          this.updatePreviewLineEndpointStyle(previewInstance, false)
+        }
+      }
+    })
+    
+    console.log('🧹 [统一预览线管理器] 已清除所有高亮效果')
+  }
+
+  /**
    * 处理拖拽结束
    */
   handleDragEnd(e) {
-    if (!this.currentDragLine) return
+    if (!this.globalDragStateManager.isDragging || !this.currentDragLine) return
     
     const { line, sourceNode, branchId, nearestTargetNode, branchLabel } = this.currentDragLine
     const rect = this.graph.container.getBoundingClientRect()
@@ -5874,8 +6363,52 @@ export class UnifiedPreviewLineManager {
     //   providedIncomingEdges: !!incomingEdges
     // })
     
+    // 🔧 修复：在节点删除后强制刷新所有相关节点的连接状态缓存
+    console.log('🧹 [统一预览线管理器] 节点删除后强制刷新连接状态缓存:', {
+      deletedNodeId: deletedNode.id
+    })
+    
     // 获取所有连接到被删除节点的边（如果没有提供则重新获取）
     const edges = incomingEdges || this.graph.getIncomingEdges(deletedNode) || []
+    
+    // 🔧 修复：强制清理被删除节点的所有缓存
+    this.clearNodeCache(deletedNode.id, null, true)
+    
+    // 强制清理所有相关源节点的连接状态缓存
+    edges.forEach(edge => {
+      const sourceNode = edge.getSourceNode()
+      if (sourceNode) {
+        const edgeData = edge.getData() || {}
+        const branchId = edgeData.branchId
+        
+        console.log('🧹 [统一预览线管理器] 清理源节点缓存:', {
+          sourceNodeId: sourceNode.id,
+          branchId: branchId,
+          edgeId: edge.id
+        })
+        
+        // 清理源节点的连接状态缓存，包括分支级别的缓存
+        this.clearNodeCache(sourceNode.id, branchId, true)
+        
+        // 🔧 修复：额外清理该边相关的所有缓存
+        if (branchId) {
+          const additionalCacheKeys = [
+            `branch_${sourceNode.id}_${branchId}`,
+            `branch_${sourceNode.id}_${branchId}_connections`,
+            `${sourceNode.id}_${branchId}_realConnection`
+          ]
+          additionalCacheKeys.forEach(key => {
+            this.branchInfoCache.delete(key)
+          })
+          
+          console.log('🧹 [统一预览线管理器] 额外清理分支缓存:', {
+            sourceNodeId: sourceNode.id,
+            branchId: branchId,
+            clearedKeys: additionalCacheKeys
+          })
+        }
+      }
+    })
     
     // 已禁用边信息日志以减少控制台冗余信息
     // console.log('🔍 [统一预览线管理器] 找到连接到被删除节点的边:', {
@@ -5912,9 +6445,7 @@ export class UnifiedPreviewLineManager {
         const remainingOutgoingEdges = this.graph.getOutgoingEdges(sourceNode) || []
         const realConnections = remainingOutgoingEdges.filter(e => {
           const data = e.getData() || {}
-          return !data.isUnifiedPreview && 
-                 !data.isPersistentPreview && 
-                 !data.isPreview &&
+          return !data.isPreview &&
                  data.type !== 'unified-preview-line' &&
                  e.id !== edge.id // 排除即将被删除的边
         })
@@ -5990,6 +6521,10 @@ export class UnifiedPreviewLineManager {
       }
     })
 
+    // 🎯 新增：在恢复预览线之前，先检查并清理无效预览线
+    console.log('🧹 [统一预览线管理器] 节点删除后检查无效预览线')
+    const cleanedInvalidCount = this.cleanupInvalidPreviewLines()
+    
     // 对所有受影响的源节点进行完整性检查
     console.log('🔍 [统一预览线管理器] 开始对受影响的源节点进行分支完整性检查')
     sourceNodesToCheck.forEach(sourceNode => {
@@ -5999,7 +6534,8 @@ export class UnifiedPreviewLineManager {
     console.log('🔄 [统一预览线管理器] 节点删除后预览线恢复检查完成:', {
       deletedNodeId: deletedNode.id,
       processedEdges: edges.length,
-      checkedSourceNodes: sourceNodesToCheck.size
+      checkedSourceNodes: sourceNodesToCheck.size,
+      cleanedInvalidPreviewLines: cleanedInvalidCount
     })
   }
 
@@ -6012,6 +6548,12 @@ export class UnifiedPreviewLineManager {
     if (!this.isBranchNode(node)) {
       console.log('⏭️ [分支完整性检查] 非分支节点，跳过检查:', node.id)
       return
+    }
+    
+    // 🎯 新增：在分支恢复前检查无效预览线
+    if (isAfterNodeDeletion) {
+      console.log('🧹 [分支完整性检查] 节点删除后检查无效预览线:', node.id)
+      this.cleanupInvalidPreviewLines()
     }
 
     // 获取节点应该有的分支数
@@ -6060,14 +6602,38 @@ export class UnifiedPreviewLineManager {
       if (!existingInstance) {
         // 如果是节点删除后的恢复过程，检查该分支是否有真实连接
         if (isAfterNodeDeletion) {
-          const hasRealConnection = this.checkBranchHasRealConnection(node, expectedBranch.id)
+          // 🔧 修复：在节点删除后跳过缓存，直接获取最新连接状态
+          console.log('🔍 [分支完整性检查] 节点删除后检查分支连接状态:', {
+            nodeId: node.id,
+            branchId: expectedBranch.id,
+            branchLabel: expectedBranch.label,
+            skipCache: true
+          })
+          
+          const hasRealConnection = this.checkBranchHasRealConnection(node, expectedBranch.id, true)
+          
+          console.log('📊 [分支完整性检查] 分支连接检查结果:', {
+            nodeId: node.id,
+            branchId: expectedBranch.id,
+            branchLabel: expectedBranch.label,
+            hasRealConnection: hasRealConnection,
+            skipCache: true
+          })
+          
           if (hasRealConnection) {
             console.log('⏭️ [分支完整性检查] 节点删除后恢复：分支有真实连接，跳过重建:', {
               nodeId: node.id,
               branchId: expectedBranch.id,
-              branchLabel: expectedBranch.label
+              branchLabel: expectedBranch.label,
+              skipCache: true
             })
             return
+          } else {
+            console.log('🔄 [分支完整性检查] 节点删除后恢复：分支无真实连接，需要重建预览线:', {
+              nodeId: node.id,
+              branchId: expectedBranch.id,
+              branchLabel: expectedBranch.label
+            })
           }
         }
         
@@ -6079,30 +6645,6 @@ export class UnifiedPreviewLineManager {
           branchIndex: index,
           isAfterNodeDeletion: isAfterNodeDeletion
         })
-      } else if (existingInstance.state === UnifiedPreviewStates.HIDDEN) {
-        // 检查隐藏的分支是否应该恢复
-        const hasRealConnection = this.checkBranchHasRealConnection(node, expectedBranch.id)
-        if (!hasRealConnection) {
-          console.log('🔄 [分支完整性检查] 恢复隐藏的分支:', {
-            nodeId: node.id,
-            branchId: expectedBranch.id,
-            branchLabel: expectedBranch.label
-          })
-          
-          // 恢复隐藏的分支
-          existingInstance.state = UnifiedPreviewStates.INTERACTIVE
-          this.configureInteractive(existingInstance)
-          
-          // 恢复标签
-          if (!existingInstance.branchLabel && expectedBranch.label) {
-            existingInstance.branchLabel = expectedBranch.label
-          }
-          if (existingInstance.branchLabel) {
-            this.updatePreviewLineLabel(existingInstance.line, existingInstance.branchLabel)
-          }
-          
-          restoredCount++
-        }
       } else {
         console.log('✅ [分支完整性检查] 分支状态正常:', {
           nodeId: node.id,
@@ -6140,7 +6682,6 @@ export class UnifiedPreviewLineManager {
       nodeId: node.id,
       expectedBranchCount: expectedBranchCount,
       missingBranchCount: missingBranches.length,
-      restoredHiddenCount: restoredCount,
       isAfterNodeDeletion: isAfterNodeDeletion
     })
   }
@@ -6232,15 +6773,17 @@ export class UnifiedPreviewLineManager {
   /**
    * 在指定位置查找节点
    */
-  findNodeAtPosition(x, y, tolerance = 50) {
+  findNodeAtPosition(x, y, tolerance = VERTICAL_LAYOUT_CONFIG.SNAP_CONFIG.DISTANCE) {
     const nodes = this.graph.getNodes()
+    let nearestNode = null
+    let nearestDistance = Infinity
     
     for (const node of nodes) {
       const nodeData = node.getData() || {}
       
       // 跳过拖拽提示点和预览相关节点
       if (nodeData.isEndpoint || nodeData.type === 'endpoint' || 
-          nodeData.isUnifiedPreview || nodeData.isPersistentPreview) {
+          nodeData.isPreview) {
         continue
       }
       
@@ -6256,33 +6799,50 @@ export class UnifiedPreviewLineManager {
         if (coordinateValidation && coordinateValidation.difference) {
           correctedX -= coordinateValidation.difference.x
           correctedY -= coordinateValidation.difference.y
-          
-          console.log('🔍 [位置查找坐标修正] 检测到节点坐标偏差:', {
-            nodeId: node.id,
-            originalPosition: { x: nodePosition.x, y: nodePosition.y },
-            correctedPosition: { x: correctedX, y: correctedY },
-            coordinateValidation
-          })
         }
       }
       
-      // 检查点是否在节点范围内（包含容差，使用修正后的坐标）
-      if (x >= correctedX - tolerance && 
-          x <= correctedX + nodeSize.width + tolerance &&
-          y >= correctedY - tolerance && 
-          y <= correctedY + nodeSize.height + tolerance) {
+      // 优化：使用更精确的边界检测和距离计算
+      const nodeLeft = correctedX
+      const nodeRight = correctedX + nodeSize.width
+      const nodeTop = correctedY
+      const nodeBottom = correctedY + nodeSize.height
+      const nodeCenterX = correctedX + nodeSize.width / 2
+      const nodeCenterY = correctedY + nodeSize.height / 2
+      
+      // 检查点是否在节点边界范围内（包含容差）
+      const withinBounds = (
+        x >= nodeLeft - tolerance && 
+        x <= nodeRight + tolerance &&
+        y >= nodeTop - tolerance && 
+        y <= nodeBottom + tolerance
+      )
+      
+      if (withinBounds) {
+        // 🔧 使用getBestSnapPosition进行精确的吸附检测
+        const dragNodeCenter = { x, y }
+        const snapResult = getBestSnapPosition(dragNodeCenter, node)
         
-        console.log('🎯 [位置查找] 在位置找到节点:', {
-          nodeId: node.id,
-          nodeType: nodeData.type,
-          searchPosition: { x, y },
-          nodePosition: { x: correctedX, y: correctedY },
-          nodeSize,
-          tolerance
-        })
-        
-        return node
+        if (snapResult && snapResult.distance <= tolerance) {
+          // 优化：选择最近的节点
+          if (snapResult.distance < nearestDistance) {
+            nearestDistance = snapResult.distance
+            nearestNode = node
+          }
+        }
       }
+    }
+    
+    if (nearestNode) {
+      console.log('🎯 [位置查找] 找到最近节点:', {
+        nodeId: nearestNode.id,
+        nodeType: nearestNode.getData()?.type,
+        searchPosition: { x, y },
+        distance: nearestDistance.toFixed(2),
+        tolerance
+      })
+      
+      return nearestNode
     }
     
     console.log('❌ [位置查找] 在位置未找到节点:', {
@@ -6531,41 +7091,45 @@ export class UnifiedPreviewLineManager {
         }
       }
       
-      // 检查预览线是否已被隐藏（即连接已建立）
-      if (this.currentDragLine.state !== UnifiedPreviewStates.HIDDEN) {
-        // 只有在预览线未被隐藏时才重置为交互状态
-        this.setPreviewLineState(this.currentDragLine, UnifiedPreviewStates.INTERACTIVE)
-        
-        // 移除预览线终点的高亮效果
-        if (this.currentDragLine.line) {
-          this.updatePreviewLineEndpointStyle(this.currentDragLine.line, false)
-        }
-        
-        console.log('🔄 [预览线终点拖拽] 预览线状态重置为交互状态:', {
-          lineId: this.currentDragLine.line.id,
-          state: this.currentDragLine.state
-        })
-      } else {
-        console.log('⏭️ [预览线终点拖拽] 预览线已隐藏，跳过状态重置:', {
-          lineId: this.currentDragLine.line.id,
-          state: this.currentDragLine.state
-        })
+      // 重置预览线为交互状态
+      this.setPreviewLineState(this.currentDragLine, UnifiedPreviewStates.INTERACTIVE)
+      
+      // 移除预览线终点的高亮效果
+      if (this.currentDragLine) {
+        this.updatePreviewLineEndpointStyle(this.currentDragLine, false)
       }
+      
+      console.log('🔄 [预览线终点拖拽] 预览线状态重置为交互状态:', {
+        lineId: this.currentDragLine.line?.id,
+        state: this.currentDragLine.state
+      })
       
       // 清除智能选择的目标节点信息
       delete this.currentDragLine.nearestTargetNode
       delete this.currentDragLine.nearestDistance
+      
+      // 优化：清除当前拖拽线引用
+      this.currentDragLine = null
     }
     
-    // 清除节点高亮
-    this.clearNodeHighlights()
+    // 清除所有高亮效果（包括节点和预览线高亮）
+    this.clearAllHighlights()
     
-    this.isDragging = false
+    // 使用全局状态管理器重置拖拽状态
+    if (this.globalDragStateManager) {
+      this.globalDragStateManager.endDrag()
+    }
+    
+    // 重置拖拽相关标志
     this.isEndpointActive = false
-    this.currentDragLine = null
-    this.dragStartPosition = null
+    this.isDragging = false
     
-    console.log('🔄 [预览线终点拖拽] 拖拽状态已重置')
+    // 优化：清除可能存在的临时状态
+    if (this.tempDragState) {
+      this.tempDragState = null
+    }
+    
+    console.log('🔄 [预览线终点拖拽] 拖拽状态已完全重置')
   }
 
   // ==================== 兼容性API ====================
@@ -6576,6 +7140,22 @@ export class UnifiedPreviewLineManager {
    * @param {boolean} isAfterNodeDeletion - 是否是节点删除后的刷新
    */
   refreshAllPreviewLines(isAfterNodeDeletion = false, isAfterSmartLayout = false) {
+    // 防重复刷新机制
+    const refreshKey = `refresh_${isAfterNodeDeletion}_${isAfterSmartLayout}`
+    const now = Date.now()
+    const lastRefresh = this.logCache.get(refreshKey)
+    
+    if (lastRefresh && (now - lastRefresh) < 100) { // 100ms内不重复刷新
+      console.log('⏭️ [统一预览线管理器] 跳过重复刷新请求', { 
+        isAfterNodeDeletion, 
+        isAfterSmartLayout,
+        timeSinceLastRefresh: now - lastRefresh
+      })
+      return
+    }
+    
+    this.logCache.set(refreshKey, now)
+    
     console.log('🔄 [统一预览线管理器] 开始刷新所有预览线', { 
       isAfterNodeDeletion, 
       isAfterSmartLayout 
@@ -6583,7 +7163,6 @@ export class UnifiedPreviewLineManager {
     
     let refreshedCount = 0
     let totalBranchesRefreshed = 0
-    let restoredHiddenBranches = 0
     let newPreviewLinesCreated = 0
     
     // 🔧 修复：智能布局后特殊处理，避免重新创建已连接的未命中人群预览线
@@ -6604,8 +7183,8 @@ export class UnifiedPreviewLineManager {
           // 如果是分支预览线，为每个分支单独更新位置
           if (Array.isArray(previewInstance)) {
             previewInstance.forEach((instance, branchIndex) => {
-              // 只处理非隐藏状态的分支
-              if (instance.line && instance.state !== UnifiedPreviewStates.HIDDEN) {
+              // 处理分支预览线
+              if (instance.line) {
                 // 为每个分支单独调用位置更新
                 this.updatePreviewLinePosition(node, instance.branchId, branchIndex)
                 totalBranchesRefreshed++
@@ -6665,7 +7244,7 @@ export class UnifiedPreviewLineManager {
         totalPreviewLines: this.previewLines.size,
         refreshedNodes: refreshedCount,
         totalBranchesRefreshed: totalBranchesRefreshed,
-        restoredHiddenBranches: 0,
+
         newPreviewLinesCreated: 0
       })
       
@@ -6686,66 +7265,18 @@ export class UnifiedPreviewLineManager {
         // 如果是分支预览线，为每个分支单独更新位置
         if (Array.isArray(previewInstance)) {
           previewInstance.forEach((instance, branchIndex) => {
-            // 检查分支是否被隐藏，如果是则尝试恢复
-             if (instance.state === UnifiedPreviewStates.HIDDEN) {
-               // 检查该分支是否还有真实连接
-               const hasRealConnection = this.checkBranchHasRealConnection(node, instance.branchId)
-               if (!hasRealConnection) {
-                 // 恢复隐藏的分支预览线
-                 console.log('🔄 [统一预览线管理器] 恢复被隐藏的分支预览线:', {
-                   nodeId: nodeId,
-                   branchId: instance.branchId,
-                   branchIndex: branchIndex
-                 })
-                 
-                 // 恢复状态
-                 instance.state = UnifiedPreviewStates.INTERACTIVE
-                 this.configureInteractive(instance)
-                 
-                 // 恢复分支标签
-                 if (instance.branchLabel) {
-                   console.log('🏷️ [统一预览线管理器] 恢复分支标签:', {
-                     nodeId: nodeId,
-                     branchId: instance.branchId,
-                     branchLabel: instance.branchLabel
-                   })
-                   this.updatePreviewLineLabel(instance.line, instance.branchLabel)
-                 } else {
-                   // 如果实例中没有保存标签，从节点配置中获取
-                   const branches = this.getNodeBranches(node)
-                   const branchConfig = branches.find(branch => branch.id === instance.branchId)
-                   if (branchConfig && branchConfig.label) {
-                     instance.branchLabel = branchConfig.label
-                     console.log('🏷️ [统一预览线管理器] 从节点配置恢复分支标签:', {
-                       nodeId: nodeId,
-                       branchId: instance.branchId,
-                       branchLabel: branchConfig.label
-                     })
-                     this.updatePreviewLineLabel(instance.line, branchConfig.label)
-                   }
-                 }
-                 
-                 restoredHiddenBranches++
-               } else {
-                 console.log('⏭️ [统一预览线管理器] 分支仍有连接，保持隐藏状态:', {
-                   nodeId: nodeId,
-                   branchId: instance.branchId,
-                   branchIndex: branchIndex
-                 })
-                 // 跳过仍有连接的隐藏分支，但继续处理其他分支
-               }
-             }
+
             
-            // 只处理非隐藏状态的分支
-            if (instance.line && instance.state !== UnifiedPreviewStates.HIDDEN) {
+            // 处理分支预览线
+            if (instance.line) {
               // 为每个分支单独调用位置更新
               this.updatePreviewLinePosition(node, instance.branchId, branchIndex)
               totalBranchesRefreshed++
               
               // 更新预览线终点标记位置
               this.updateEndpointMarker(instance.line, instance.endPosition)
-            } else if (instance.state === UnifiedPreviewStates.HIDDEN) {
-              console.log('⏭️ [预览线刷新] 跳过已隐藏的分支预览线:', {
+            } else {
+              console.log('⏭️ [预览线刷新] 跳过无效的分支预览线:', {
                 nodeId: nodeId,
                 branchIndex: branchIndex,
                 branchId: instance.branchId
@@ -6778,7 +7309,7 @@ export class UnifiedPreviewLineManager {
       
       // 跳过拖拽提示点和预览相关节点
       if (nodeData.isEndpoint || nodeData.type === 'endpoint' || 
-          nodeData.isUnifiedPreview || nodeData.isPersistentPreview || nodeData.isPreview) {
+          nodeData.isPreview) {
         return
       }
       
@@ -6847,7 +7378,7 @@ export class UnifiedPreviewLineManager {
               nodeType: nodeType
             })
             
-            const branches = this.getNodeBranches(node)
+            const branches = this.getNodeBranches(node, true) // 强制刷新缓存
             console.log('🔍 [统一预览线管理器] 获取分支信息:', {
               nodeId: nodeId,
               branches: branches.map(b => ({ id: b.id, label: b.label }))
@@ -6877,7 +7408,7 @@ export class UnifiedPreviewLineManager {
       } else {
         // 节点已有预览线实例，检查是否需要补充缺失的分支
         if (this.isBranchNode(node)) {
-          const branches = this.getNodeBranches(node)
+          const branches = this.getNodeBranches(node, true) // 强制刷新缓存以获取最新分支信息
           const currentBranches = Array.isArray(existingPreview) ? existingPreview : [existingPreview]
           
           console.log('🔍 [统一预览线管理器] 检查分支节点是否有缺失的分支:', {
@@ -6887,6 +7418,83 @@ export class UnifiedPreviewLineManager {
             expectedBranchIds: branches.map(b => b.id),
             currentBranchIds: currentBranches.map(b => b.branchId)
           })
+          
+          // 🔧 修复：检查分支ID匹配情况，处理分支ID变化
+          const expectedBranchIds = branches.map(b => b.id)
+          const currentBranchIds = currentBranches.map(b => b.branchId)
+          
+          // 检查是否有分支ID不匹配的情况
+          const hasIdMismatch = expectedBranchIds.some(expectedId => !currentBranchIds.includes(expectedId)) ||
+                               currentBranchIds.some(currentId => !expectedBranchIds.includes(currentId))
+          
+          console.log('🔍 [统一预览线管理器] 分支ID匹配检查:', {
+            nodeId: nodeId,
+            expectedBranchIds,
+            currentBranchIds,
+            hasIdMismatch,
+            needsRecreation: hasIdMismatch
+          })
+          
+          // 如果发现分支ID不匹配，清理所有旧预览线并重新创建
+          if (hasIdMismatch) {
+            console.log('🔧 [统一预览线管理器] 检测到分支ID不匹配，清理旧预览线并重新创建:', {
+              nodeId: nodeId,
+              oldBranchIds: currentBranchIds,
+              newBranchIds: expectedBranchIds
+            })
+            
+            // 清理旧的预览线实例
+            currentBranches.forEach(branchInstance => {
+              if (branchInstance && branchInstance.previewLine) {
+                try {
+                  this.graph.removeEdge(branchInstance.previewLine.id)
+                } catch (error) {
+                  console.warn('⚠️ [统一预览线管理器] 清理旧预览线失败:', error)
+                }
+              }
+            })
+            
+            // 清理节点相关缓存
+            this.clearNodeCache(nodeId, null, true)
+            
+            // 移除旧的预览线实例
+            this.previewLines.delete(nodeId)
+            
+            // 重新创建所有分支预览线
+            const newBranchInstances = []
+            branches.forEach((branch, index) => {
+              const fixedBranch = BranchLabelUtils.validateAndFixBranchLabel(
+                branch, 
+                index, 
+                nodeData.type || nodeData.nodeType
+              )
+              
+              const newBranchInstance = this.createBranchPreviewLine(
+                node, 
+                fixedBranch, 
+                index, 
+                branches.length, 
+                UnifiedPreviewStates.INTERACTIVE
+              )
+              
+              if (newBranchInstance) {
+                newBranchInstances.push(newBranchInstance)
+                newPreviewLinesCreated++
+              }
+            })
+            
+            // 更新预览线实例
+            if (newBranchInstances.length > 0) {
+              this.previewLines.set(nodeId, newBranchInstances)
+              console.log('✅ [统一预览线管理器] 分支预览线已重新创建:', {
+                nodeId: nodeId,
+                recreatedBranches: newBranchInstances.length,
+                branchIds: newBranchInstances.map(b => b.branchId)
+              })
+            }
+            
+            return // 跳过后续的缺失分支检查，因为已经重新创建了所有分支
+          }
           
           // 检查是否有缺失的分支（只考虑没有真实连接的分支）
           const missingBranches = branches.filter(branch => {
@@ -6973,7 +7581,7 @@ export class UnifiedPreviewLineManager {
       totalPreviewLines: this.previewLines.size,
       refreshedNodes: refreshedCount,
       totalBranchesRefreshed: totalBranchesRefreshed,
-      restoredHiddenBranches: restoredHiddenBranches,
+
       newPreviewLinesCreated: newPreviewLinesCreated,
       // 🔍 详细的排查信息
       manuallyAdjustedHints: this.manuallyAdjustedHints.size,
@@ -6994,9 +7602,9 @@ export class UnifiedPreviewLineManager {
       // 🔍 补充更详细的预览线统计
       previewLineStats: (() => {
         let totalLines = 0
-        let hiddenLines = 0
         let interactiveLines = 0
-        let staticLines = 0
+        let draggingLines = 0
+        let connectedLines = 0
         let branchPreviewNodes = 0
         let singlePreviewNodes = 0
         
@@ -7005,24 +7613,24 @@ export class UnifiedPreviewLineManager {
             branchPreviewNodes++
             previewInstance.forEach(instance => {
               totalLines++
-              if (instance.state === UnifiedPreviewStates.HIDDEN) hiddenLines++
-              else if (instance.state === UnifiedPreviewStates.INTERACTIVE) interactiveLines++
-              else if (instance.state === UnifiedPreviewStates.STATIC_DISPLAY) staticLines++
+              if (instance.state === UnifiedPreviewStates.INTERACTIVE) interactiveLines++
+              else if (instance.state === UnifiedPreviewStates.DRAGGING) draggingLines++
+              else if (instance.state === UnifiedPreviewStates.CONNECTED) connectedLines++
             })
           } else {
             singlePreviewNodes++
             totalLines++
-            if (previewInstance.state === UnifiedPreviewStates.HIDDEN) hiddenLines++
-            else if (previewInstance.state === UnifiedPreviewStates.INTERACTIVE) interactiveLines++
-            else if (previewInstance.state === UnifiedPreviewStates.STATIC_DISPLAY) staticLines++
+            if (previewInstance.state === UnifiedPreviewStates.INTERACTIVE) interactiveLines++
+            else if (previewInstance.state === UnifiedPreviewStates.DRAGGING) draggingLines++
+            else if (previewInstance.state === UnifiedPreviewStates.CONNECTED) connectedLines++
           }
         })
         
         return { 
           totalLines, 
-          hiddenLines, 
           interactiveLines, 
-          staticLines,
+          draggingLines,
+          connectedLines,
           branchPreviewNodes,
           singlePreviewNodes,
           averageBranchesPerNode: branchPreviewNodes > 0 ? (totalLines - singlePreviewNodes) / branchPreviewNodes : 0
@@ -7034,11 +7642,7 @@ export class UnifiedPreviewLineManager {
         totalEdges: this.graph.getEdges().length,
         previewEdges: this.graph.getEdges().filter(edge => {
           const data = edge.getData() || {}
-          return data.isUnifiedPreview || data.type === 'unified-preview-line'
-        }).length,
-        endpoints: this.graph.getNodes().filter(node => {
-          const data = node.getData() || {}
-          return data.isEndpoint || data.type === 'endpoint'
+          return data.isPreview || data.type === 'unified-preview-line'
         }).length
       }
     })
@@ -7050,15 +7654,64 @@ export class UnifiedPreviewLineManager {
    * @param {string} branchId - 分支ID
    * @returns {boolean} 是否有真实连接
    */
-  checkBranchHasRealConnection(node, branchId) {
+  checkBranchHasRealConnection(node, branchId, skipCache = false) {
+    // 🔧 新增：分支连接状态缓存机制
+    const cacheKey = `branch_${node.id}_${branchId}`
+    const now = Date.now()
+    const cached = this.branchInfoCache.get(cacheKey)
+    
+    // 🔧 修复：如果skipCache=true，强制清理相关缓存
+    if (skipCache) {
+      // 清理该分支的所有相关缓存
+      const branchCacheKeys = [
+        cacheKey,
+        `branch_${node.id}_${branchId}_connections`,
+        `${node.id}_${branchId}_realConnection`,
+        `node_${node.id}_connections`
+      ]
+      
+      branchCacheKeys.forEach(key => {
+        this.branchInfoCache.delete(key)
+      })
+      
+      // 清理日志缓存
+      const logCacheKeys = [
+        `${node.id}_${branchId}`,
+        `node_${node.id}_connections`,
+        `checkBranchHasRealConnection_${node.id}_${branchId}`
+      ]
+      
+      if (this._branchConnectionLogCache) {
+        logCacheKeys.forEach(key => {
+          this._branchConnectionLogCache.delete(key)
+        })
+      }
+      
+      if (this._nodeConnectionLogCache) {
+        logCacheKeys.forEach(key => {
+          this._nodeConnectionLogCache.delete(key)
+        })
+      }
+      
+      console.log('🧹 [分支连接检查] 跳过缓存模式，彻底清理相关缓存:', {
+        nodeId: node.id,
+        branchId: branchId,
+        clearedCacheKeys: branchCacheKeys,
+        clearedLogKeys: logCacheKeys
+      })
+    }
+    
+    // 如果缓存存在且未过期，且不跳过缓存，直接返回缓存结果
+    if (!skipCache && cached && (now - cached.timestamp) < 500) { // 500ms缓存
+      return cached.hasRealConnection
+    }
+    
     const outgoingEdges = this.graph.getOutgoingEdges(node) || []
     
     const realConnections = outgoingEdges.filter(edge => {
       const edgeData = edge.getData() || {}
       // 排除所有类型的预览线，只检查真实连接
-      const isPreviewLine = edgeData.isUnifiedPreview || 
-                           edgeData.isPersistentPreview || 
-                           edgeData.isPreview ||
+      const isPreviewLine = edgeData.isPreview ||
                            edgeData.type === 'preview-line' ||
                            edgeData.type === 'unified-preview-line' ||
                            edgeData.type === 'draggable-preview'
@@ -7067,24 +7720,45 @@ export class UnifiedPreviewLineManager {
       return !isPreviewLine && edgeData.branchId === branchId
     })
     
-    console.log('🔍 [统一预览线管理器] 检查分支真实连接:', {
-      nodeId: node.id,
-      branchId: branchId,
-      totalOutgoingEdges: outgoingEdges.length,
-      realConnections: realConnections.length,
-      realConnectionDetails: realConnections.map(edge => {
-        const edgeData = edge.getData() || {}
-        return {
-          edgeId: edge.id,
-          branchId: edgeData.branchId,
-          target: edge.getTargetCellId(),
-          type: edgeData.type
-        }
-      }),
-      hasRealConnection: realConnections.length > 0
+    // 🔧 修复：添加日志防抖机制，减少重复日志输出
+    const logCacheKey = `${node.id}_${branchId}`
+    const logNow = Date.now()
+    const lastLogTime = this._branchConnectionLogCache?.get(logCacheKey) || 0
+    const shouldLog = logNow - lastLogTime > 1000 // 1秒内不重复输出相同的日志
+    
+    if (shouldLog || skipCache) { // 如果跳过缓存，也输出日志
+      if (!this._branchConnectionLogCache) {
+        this._branchConnectionLogCache = new Map()
+      }
+      this._branchConnectionLogCache.set(logCacheKey, logNow)
+      
+      // 只在必要时输出详细日志
+      if (this._debugMode || realConnections.length === 0 || skipCache) {
+        console.log('🔍 [统一预览线管理器] 检查分支真实连接:', {
+          nodeId: node.id,
+          branchId: branchId,
+          totalOutgoingEdges: outgoingEdges.length,
+          realConnections: realConnections.length,
+          hasRealConnection: realConnections.length > 0,
+          skipCache: skipCache,
+          edgeDetails: outgoingEdges.map(edge => ({
+            id: edge.id,
+            branchId: edge.getData()?.branchId,
+            isPreview: edge.getData()?.isPreview
+          }))
+        })
+      }
+    }
+    
+    const hasRealConnection = realConnections.length > 0
+    
+    // 🔧 缓存检查结果
+    this.branchInfoCache.set(cacheKey, {
+      hasRealConnection,
+      timestamp: now
     })
     
-    return realConnections.length > 0
+    return hasRealConnection
   }
 
   /**
@@ -7093,14 +7767,22 @@ export class UnifiedPreviewLineManager {
    * @returns {boolean} 是否有真实连接
    */
   nodeHasRealConnections(node) {
+    // 🔧 新增：节点连接状态缓存机制
+    const cacheKey = `node_${node.id}_connections`
+    const now = Date.now()
+    const cached = this.branchInfoCache.get(cacheKey)
+    
+    // 如果缓存存在且未过期，直接返回缓存结果
+    if (cached && (now - cached.timestamp) < 500) { // 500ms缓存
+      return cached.hasRealConnections
+    }
+    
     const outgoingEdges = this.graph.getOutgoingEdges(node) || []
     
     const realConnections = outgoingEdges.filter(edge => {
       const edgeData = edge.getData() || {}
       // 排除所有类型的预览线，只检查真实连接
-      const isPreviewLine = edgeData.isUnifiedPreview || 
-                           edgeData.isPersistentPreview || 
-                           edgeData.isPreview ||
+      const isPreviewLine = edgeData.isPreview ||
                            edgeData.type === 'preview-line' ||
                            edgeData.type === 'unified-preview-line' ||
                            edgeData.type === 'draggable-preview'
@@ -7108,23 +7790,38 @@ export class UnifiedPreviewLineManager {
       return !isPreviewLine
     })
     
-    console.log('🔍 [统一预览线管理器] 检查节点真实连接:', {
-      nodeId: node.id,
-      totalOutgoingEdges: outgoingEdges.length,
-      realConnections: realConnections.length,
-      realConnectionDetails: realConnections.map(edge => {
-        const edgeData = edge.getData() || {}
-        return {
-          edgeId: edge.id,
-          branchId: edgeData.branchId || 'none',
-          target: edge.getTargetCellId(),
-          type: edgeData.type || 'unknown'
-        }
-      }),
-      hasRealConnections: realConnections.length > 0
+    // 🔧 修复：添加日志防抖机制，减少重复日志输出
+    const logCacheKey = `node_${node.id}_connections`
+    const logNow = Date.now()
+    const lastLogTime = this._nodeConnectionLogCache?.get(logCacheKey) || 0
+    const shouldLog = logNow - lastLogTime > 1000 // 1秒内不重复输出相同的日志
+    
+    if (shouldLog) {
+      if (!this._nodeConnectionLogCache) {
+        this._nodeConnectionLogCache = new Map()
+      }
+      this._nodeConnectionLogCache.set(logCacheKey, logNow)
+      
+      // 只在必要时输出详细日志
+      if (this._debugMode || realConnections.length === 0) {
+        console.log('🔍 [统一预览线管理器] 检查节点真实连接:', {
+          nodeId: node.id,
+          totalOutgoingEdges: outgoingEdges.length,
+          realConnections: realConnections.length,
+          hasRealConnections: realConnections.length > 0
+        })
+      }
+    }
+    
+    const hasRealConnections = realConnections.length > 0
+    
+    // 🔧 缓存检查结果
+    this.branchInfoCache.set(cacheKey, {
+      hasRealConnections,
+      timestamp: now
     })
     
-    return realConnections.length > 0
+    return hasRealConnections
   }
 
   /**
@@ -7277,7 +7974,7 @@ export class UnifiedPreviewLineManager {
    * 兼容持久化预览线API
    */
   createPersistentPreview(node) {
-    return this.createUnifiedPreviewLine(node, UnifiedPreviewStates.STATIC_DISPLAY)
+    return this.createUnifiedPreviewLine(node, UnifiedPreviewStates.INTERACTIVE)
   }
 
   /**
@@ -7289,6 +7986,83 @@ export class UnifiedPreviewLineManager {
       branchIndex,
       totalBranches
     })
+  }
+
+  /**
+   * 清除所有预览线
+   * 用于在重新生成预览线前清理现有预览线
+   */
+  clearAllPreviewLines() {
+    try {
+      // 获取所有节点ID
+      const nodeIds = Array.from(this.previewLines.keys())
+      
+      // 逐个删除预览线
+      for (const nodeId of nodeIds) {
+        this.removePreviewLine(nodeId)
+      }
+      
+      // 清理缓存
+      this.manuallyAdjustedHints.clear()
+      if (this.positionCache) {
+        this.positionCache.clear()
+      }
+      if (this.connectionStatusCache) {
+        this.connectionStatusCache.clear()
+      }
+      
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 清除预览线失败:', error)
+    }
+  }
+
+  /**
+   * 生成所有预览线
+   * 遍历所有已配置的节点，为它们生成预览线
+   */
+  generateAllPreviewLines() {
+    try {
+      console.log('🔄 [统一预览线管理器] 开始生成所有预览线')
+      
+      // 获取所有节点
+      const allNodes = this.graph.getNodes()
+      let generatedCount = 0
+      
+      // 遍历所有节点，为已配置的节点生成预览线
+      for (const node of allNodes) {
+        if (this.shouldCreatePreviewLine(node)) {
+          const result = this.regeneratePreviewLineForNode(node)
+          if (result && result.success) {
+            generatedCount++
+          }
+        }
+      }
+      
+      console.log('✅ [统一预览线管理器] 预览线生成完成:', {
+        totalNodes: allNodes.length,
+        generatedCount: generatedCount
+      })
+      
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 生成所有预览线失败:', error)
+    }
+  }
+
+  /**
+   * 强制重新生成所有预览线
+   * 用于在节点配置状态更新后重新生成预览线
+   */
+  forceRegeneratePreviewLines() {
+    try {
+      // 清除现有预览线
+      this.clearAllPreviewLines()
+      
+      // 重新生成预览线
+      this.generateAllPreviewLines()
+      
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 强制重新生成预览线失败:', error)
+    }
   }
 
   /**
@@ -7593,7 +8367,7 @@ export class UnifiedPreviewLineManager {
         const branches = this.getNodeBranches(node)
         
         previewInstance.forEach((instance, branchIndex) => {
-          if (instance.line && instance.state !== UnifiedPreviewStates.HIDDEN) {
+          if (instance.line) {
             // 🔧 获取对应的拖拽点实际位置（布局引擎计算后的位置）
             let actualHintPosition = null
             if (instance.hintNode) {
@@ -7658,7 +8432,7 @@ export class UnifiedPreviewLineManager {
         })
       } else {
         // 单一预览线
-        if (previewInstance.line && previewInstance.state !== UnifiedPreviewStates.HIDDEN) {
+        if (previewInstance.line) {
           // 🔧 获取对应的拖拽点实际位置（布局引擎计算后的位置）
           let actualHintPosition = null
           if (previewInstance.hintNode) {
@@ -7792,7 +8566,7 @@ export class UnifiedPreviewLineManager {
       // 处理分支预览线
       if (Array.isArray(previewInstance)) {
         previewInstance.forEach((instance, branchIndex) => {
-          if (instance.line && instance.state !== UnifiedPreviewStates.HIDDEN && instance.endPosition) {
+          if (instance.line && instance.endPosition) {
             const distance = Math.sqrt(
               Math.pow(dragNodeCenter.x - instance.endPosition.x, 2) + 
               Math.pow(dragNodeCenter.y - instance.endPosition.y, 2)
@@ -7814,7 +8588,7 @@ export class UnifiedPreviewLineManager {
         })
       } else {
         // 处理单一预览线
-        if (previewInstance.line && previewInstance.state !== UnifiedPreviewStates.HIDDEN && previewInstance.endPosition) {
+        if (previewInstance.line && previewInstance.endPosition) {
           const distance = Math.sqrt(
             Math.pow(dragNodeCenter.x - previewInstance.endPosition.x, 2) + 
             Math.pow(dragNodeCenter.y - previewInstance.endPosition.y, 2)
@@ -8171,8 +8945,28 @@ export class UnifiedPreviewLineManager {
     
     // 🎯 关键修复：增加更长的延迟，确保布局和endpoint创建完全完成
     setTimeout(() => {
-      // 🎯 新增：检查是否刚完成布局，如果是则跳过清理
+      // 🎯 新增：检查是否为页面初始加载状态
       const now = Date.now()
+      
+      // 🎯 关键修复：如果没有设置lastLayoutTime，说明是页面初始加载，跳过清理
+      if (!this.lastLayoutTime) {
+        console.log('⏭️ [加载完成检查] 页面初始加载状态，跳过预览线清理，保留初始预览线')
+        
+        // 仅统计状态，不执行清理
+        const totalPreviewLines = this.previewLines.size
+        const totalNodes = this.graph.getNodes().length
+        
+        console.log('📊 [加载完成检查] 状态统计（初始加载跳过清理）:', {
+          总节点数: totalNodes,
+          预览线数量: totalPreviewLines,
+          清理数量: 0,
+          状态: '保留初始预览线',
+          lastLayoutTime: this.lastLayoutTime || 'null'
+        })
+        return
+      }
+      
+      // 🎯 新增：检查是否刚完成布局，如果是则跳过清理
       if (this.lastLayoutTime && (now - this.lastLayoutTime) < 3000) {
         console.log('⏭️ [加载完成检查] 刚完成布局，跳过预览线清理，保留endpoint预览线')
         
@@ -8184,34 +8978,13 @@ export class UnifiedPreviewLineManager {
           总节点数: totalNodes,
           预览线数量: totalPreviewLines,
           清理数量: 0,
-          状态: '保留endpoint预览线'
+          状态: '保留endpoint预览线',
+          timeSinceLayout: now - this.lastLayoutTime
         })
         return
       }
       
-      // 🎯 关键修复：检查是否有虚拟endpoint节点，如果有则延迟清理
-      const nodes = this.graph.getNodes()
-      const hasVirtualEndpoints = nodes.some(node => {
-        const nodeData = node.getData() || {}
-        return nodeData.isEndpoint && nodeData.isVirtual
-      })
-      
-      if (hasVirtualEndpoints) {
-        console.log('⏭️ [加载完成检查] 检测到虚拟endpoint节点，延迟清理以保护endpoint预览线')
-        
-        // 仅统计状态，不执行清理
-        const totalPreviewLines = this.previewLines.size
-        const totalNodes = this.graph.getNodes().length
-        
-        console.log('📊 [加载完成检查] 状态统计（保护endpoint）:', {
-          总节点数: totalNodes,
-          预览线数量: totalPreviewLines,
-          虚拟endpoint数量: nodes.filter(n => n.getData()?.isEndpoint && n.getData()?.isVirtual).length,
-          清理数量: 0,
-          状态: '保护endpoint预览线'
-        })
-        return
-      }
+      // 注意：虚拟 endpoint 检查已移除
       
       const cleanedCount = this.cleanupOrphanedPreviewLines()
       
@@ -8247,8 +9020,6 @@ export class UnifiedPreviewLineManager {
     const realConnections = outgoingEdges.filter((edge) => {
       const edgeData = edge.getData() || {}
       return (
-        !edgeData.isUnifiedPreview &&
-        !edgeData.isPersistentPreview &&
         !edgeData.isPreview &&
         edgeData.type !== "preview-line" &&
         edgeData.type !== "unified-preview-line"
@@ -8265,6 +9036,120 @@ export class UnifiedPreviewLineManager {
     )
 
     return realConnections.length > 0
+  }
+
+  /**
+   * 🎯 新增：清理无效预览线
+   * 检查并删除存在源节点但目标节点不存在的预览线
+   * @returns {number} 清理的无效预览线数量
+   */
+  cleanupInvalidPreviewLines() {
+    console.log('🧹 [无效预览线清理] 开始检查画布上的无效预览线')
+    
+    let cleanedCount = 0
+    const invalidPreviewLines = []
+    
+    // 检查所有预览线实例
+    this.previewLines.forEach((previewInstance, nodeId) => {
+      try {
+        // 获取源节点
+        let sourceNode = null
+        if (previewInstance && previewInstance.sourceNode) {
+          sourceNode = previewInstance.sourceNode
+        } else {
+          sourceNode = this.graph.getCellById(nodeId)
+        }
+        
+        // 如果源节点不存在，跳过（这种情况由cleanupOrphanedPreviewLines处理）
+        if (!sourceNode || !this.graph.hasCell(sourceNode.id)) {
+          return
+        }
+        
+        // 检查预览线实例的有效性
+        let hasInvalidLines = false
+        
+        // 检查单一预览线
+        if (previewInstance.line) {
+          const targetNode = previewInstance.line.getTargetNode()
+          if (targetNode && !this.graph.hasCell(targetNode.id)) {
+            console.log('🗑️ [无效预览线清理] 发现无效预览线（目标节点不存在）:', {
+              sourceNodeId: sourceNode.id,
+              targetNodeId: targetNode.id,
+              previewLineId: previewInstance.line.id
+            })
+            hasInvalidLines = true
+          }
+        }
+        
+        // 检查分支预览线
+        if (previewInstance.branches && Array.isArray(previewInstance.branches)) {
+          previewInstance.branches.forEach(branch => {
+            if (branch.line) {
+              const targetNode = branch.line.getTargetNode()
+              if (targetNode && !this.graph.hasCell(targetNode.id)) {
+                console.log('🗑️ [无效预览线清理] 发现无效分支预览线（目标节点不存在）:', {
+                  sourceNodeId: sourceNode.id,
+                  branchId: branch.branchId,
+                  targetNodeId: targetNode.id,
+                  previewLineId: branch.line.id
+                })
+                hasInvalidLines = true
+              }
+            }
+          })
+        }
+        
+        // 如果发现无效预览线，标记清理
+        if (hasInvalidLines) {
+          invalidPreviewLines.push({
+            nodeId: nodeId,
+            sourceNode: sourceNode,
+            previewInstance: previewInstance
+          })
+        }
+        
+      } catch (error) {
+        console.error(`❌ [无效预览线清理] 检查预览线时出错: ${nodeId}`, error)
+        invalidPreviewLines.push({
+          nodeId: nodeId,
+          error: error.message
+        })
+      }
+    })
+    
+    // 执行清理
+    invalidPreviewLines.forEach(item => {
+      try {
+        console.log('🧹 [无效预览线清理] 清理无效预览线:', {
+          nodeId: item.nodeId,
+          reason: item.error ? '检查出错' : '目标节点不存在'
+        })
+        
+        this.removePreviewLine(item.nodeId)
+        cleanedCount++
+        
+        // 如果源节点仍然存在且需要预览线，重新创建
+        if (item.sourceNode && this.graph.hasCell(item.sourceNode.id)) {
+          if (this.shouldCreatePreviewLine(item.sourceNode)) {
+            console.log('🔄 [无效预览线清理] 重新创建预览线:', {
+              sourceNodeId: item.sourceNode.id
+            })
+            this.createUnifiedPreviewLine(item.sourceNode, UnifiedPreviewStates.INTERACTIVE)
+          }
+        }
+        
+      } catch (error) {
+        console.error(`❌ [无效预览线清理] 清理预览线时出错: ${item.nodeId}`, error)
+      }
+    })
+    
+    if (cleanedCount > 0) {
+      console.log(`🧹 [无效预览线清理] 清理完成，共清理 ${cleanedCount} 条无效预览线`)
+    } else {
+      console.log('✅ [无效预览线清理] 无需清理，所有预览线目标节点都存在')
+    }
+    
+    return cleanedCount
   }
 
   /**
@@ -8512,6 +9397,179 @@ export class UnifiedPreviewLineManager {
   }
   
   /**
+   * 清理节点相关缓存
+   * @param {string} nodeId - 节点ID
+   * @param {string} branchId - 分支ID（可选）
+   * @param {boolean} forceRefreshConnections - 是否强制刷新连接状态缓存
+   */
+  clearNodeCache(nodeId, branchId = null, forceRefreshConnections = false) {
+    const keysToRemove = []
+    
+    // 清理节点连接状态缓存
+    keysToRemove.push(`node_${nodeId}_connections`)
+    
+    // 清理分支连接状态缓存
+    if (branchId) {
+      keysToRemove.push(`branch_${nodeId}_${branchId}`)
+      keysToRemove.push(`branch_${nodeId}_${branchId}_connections`)
+    } else {
+      // 如果没有指定分支ID，清理所有该节点的分支缓存
+      this.branchInfoCache.forEach((value, key) => {
+        if (key.startsWith(`branch_${nodeId}_`)) {
+          keysToRemove.push(key)
+        }
+      })
+      
+      // 清理所有该节点的分支连接状态缓存
+      this.branchInfoCache.forEach((value, key) => {
+        if (key.startsWith(`branch_${nodeId}_`) && key.endsWith('_connections')) {
+          keysToRemove.push(key)
+        }
+      })
+    }
+    
+    // 如果强制刷新连接状态，清理checkBranchHasRealConnection的缓存
+    if (forceRefreshConnections) {
+      // 清理该节点所有分支的连接检查缓存
+      const node = this.graph.getCellById(nodeId)
+      if (node) {
+        const edges = this.graph.getOutgoingEdges(node) || []
+        edges.forEach(edge => {
+          const edgeBranchId = edge.getData()?.branchId
+          if (edgeBranchId) {
+            const cacheKey = `${nodeId}_${edgeBranchId}_realConnection`
+            this.branchInfoCache.delete(cacheKey)
+            keysToRemove.push(cacheKey)
+          }
+        })
+      }
+      
+      // 🔧 修复：清理分支连接日志缓存
+      if (this._branchConnectionLogCache) {
+        const logKeysToRemove = []
+        this._branchConnectionLogCache.forEach((value, key) => {
+          if (key.includes(nodeId)) {
+            logKeysToRemove.push(key)
+          }
+        })
+        logKeysToRemove.forEach(key => {
+          this._branchConnectionLogCache.delete(key)
+        })
+        console.log('🧹 [缓存清理] 已清理分支连接日志缓存:', {
+          nodeId,
+          clearedLogKeys: logKeysToRemove.length
+        })
+      }
+      
+      // 🔧 修复：清理节点连接日志缓存
+      if (this._nodeConnectionLogCache) {
+        const nodeLogKeysToRemove = []
+        this._nodeConnectionLogCache.forEach((value, key) => {
+          if (key.includes(nodeId)) {
+            nodeLogKeysToRemove.push(key)
+          }
+        })
+        nodeLogKeysToRemove.forEach(key => {
+          this._nodeConnectionLogCache.delete(key)
+        })
+        console.log('🧹 [缓存清理] 已清理节点连接日志缓存:', {
+          nodeId,
+          clearedNodeLogKeys: nodeLogKeysToRemove.length
+        })
+      }
+    }
+    
+    // 清理日志缓存
+    this.logCache.forEach((value, key) => {
+      if (key.includes(nodeId)) {
+        keysToRemove.push(key)
+      }
+    })
+    
+    // 执行清理
+    keysToRemove.forEach(key => {
+      this.branchInfoCache.delete(key)
+      this.logCache.delete(key)
+    })
+    
+    console.log('🧹 [缓存清理] 已清理节点缓存:', {
+      nodeId,
+      branchId,
+      forceRefreshConnections,
+      clearedKeys: keysToRemove.length
+    })
+  }
+
+  /**
+   * 检查节点吸附到预览线（别名方法）
+   * 这是checkSnapToPreviewLines方法的别名，用于向后兼容
+   * @param {Object} dragNode - 被拖拽的节点
+   * @param {Object} nodePosition - 节点位置
+   * @param {Object} nodeSize - 节点大小
+   */
+  checkNodeSnapToPreviewLines(dragNode, nodePosition, nodeSize) {
+    return this.checkSnapToPreviewLines(dragNode, nodePosition, nodeSize)
+  }
+
+  /**
+   * 生成配置对象的哈希值
+   * @param {Object} config - 配置对象
+   * @returns {string} 配置哈希值
+   */
+  generateConfigHash(config) {
+    if (!config || typeof config !== 'object') {
+      return 'empty'
+    }
+    
+    try {
+      // 创建一个简化的配置对象，只包含影响分支生成的关键字段
+      const relevantConfig = {
+        // 人群分流相关
+        crowdLayers: config.crowdLayers,
+        unmatchBranch: config.unmatchBranch, // 修正字段名
+        unmatchedBranch: config.unmatchedBranch, // 保持兼容性
+        // 事件分流相关
+        eventConfig: config.eventConfig,
+        // AB测试相关
+        versions: config.versions,
+        abTestConfig: config.abTestConfig,
+        // 通用分支配置
+        branches: config.branches,
+        // 其他可能影响分支的字段
+        type: config.type,
+        nodeType: config.nodeType
+      }
+      
+      // 移除undefined和null值
+      const cleanConfig = Object.fromEntries(
+        Object.entries(relevantConfig).filter(([key, value]) => value !== undefined && value !== null)
+      )
+      
+      // 生成简单的哈希值
+      const configStr = JSON.stringify(cleanConfig, Object.keys(cleanConfig).sort())
+      let hash = 0
+      for (let i = 0; i < configStr.length; i++) {
+        const char = configStr.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & hash // 转换为32位整数
+      }
+      
+      return hash.toString(36) // 转换为36进制字符串
+    } catch (error) {
+      console.warn('⚠️ [统一预览线管理器] 生成配置哈希失败:', error)
+      return 'error_' + Date.now()
+    }
+  }
+
+  /**
+   * 获取当前活跃的预览线数量
+   * @returns {number} 活跃预览线数量
+   */
+  getActivePreviewLinesCount() {
+    return this.previewLines.size
+  }
+
+  /**
    * 销毁管理器
    */
   destroy() {
@@ -8533,6 +9591,19 @@ export class UnifiedPreviewLineManager {
     
     document.removeEventListener('mousemove', this.handleGlobalMouseMove)
     document.removeEventListener('mouseup', this.handleGlobalMouseUp)
+    document.removeEventListener('contextmenu', this.handleContextMenu)
+    
+    // 清理终点高亮标记
+    if (this.endpointHighlights) {
+      this.endpointHighlights.forEach((highlight, lineId) => {
+        try {
+          this.graph.removeNode(highlight.id)
+        } catch (error) {
+          console.warn('⚠️ [统一预览线管理器] 清理终点高亮标记失败:', error)
+        }
+      })
+      this.endpointHighlights.clear()
+    }
     
     // 清理状态
     this.previewLines.clear()
@@ -8559,6 +9630,140 @@ export class UnifiedPreviewLineManager {
     }
     
     console.log('🧹 [统一预览线管理器] 已销毁 - 包括缓存清理和防抖定时器清理')
+  }
+
+  /**
+   * 判断边是否为预览线
+   * 预览线的特征：有源节点但无目标节点
+   * @param {Object} edge - 边对象
+   * @returns {boolean} 是否为预览线
+   */
+  isPreviewLine(edge) {
+    if (!edge) {
+      return false
+    }
+    
+    // 检查边的数据类型
+    const edgeData = edge.getData ? edge.getData() : {}
+    const edgeType = edgeData.type
+    
+    // 如果明确标记为预览线类型
+    if (edgeType === 'preview-line' || edgeType === 'unified-preview-line' || edgeType === 'draggable-preview') {
+      return true
+    }
+    
+    // 如果有isPreview标记
+    if (edgeData.isPreview === true) {
+      return true
+    }
+    
+    // 检查连接状态：有源节点但无目标节点的边为预览线
+    const hasSource = edge.getSourceCellId && edge.getSourceCellId()
+    const hasTarget = edge.getTargetCellId && edge.getTargetCellId()
+    
+    return hasSource && !hasTarget
+   }
+
+  /**
+   * 创建预览线
+   * @param {Object} sourceNode - 源节点
+   * @param {Object} targetNode - 目标节点或目标位置 {x, y}
+   * @param {string} connectionType - 连接类型或分支ID
+   * @param {string} branchLabel - 分支标签
+   * @returns {string|Object} 预览线ID或创建结果
+   */
+  createPreviewLine(sourceNode, targetNode, connectionType = 'connection', branchLabel = '默认') {
+    // 参数验证
+    if (!sourceNode || (!sourceNode.id && !sourceNode.getId)) {
+      throw new Error('节点ID和元素不能为空')
+    }
+    
+    // 兼容不同的调用方式
+    let targetPosition
+    if (targetNode && typeof targetNode === 'object') {
+      if (targetNode.x !== undefined && targetNode.y !== undefined) {
+        // 目标是位置对象
+        targetPosition = targetNode
+      } else if (targetNode.id || targetNode.getId) {
+        // 目标是节点对象，获取其位置
+        targetPosition = targetNode.getPosition ? targetNode.getPosition() : { x: targetNode.x || 0, y: targetNode.y || 0 }
+      } else {
+        targetPosition = { x: 0, y: 0 }
+      }
+    } else {
+      targetPosition = { x: 0, y: 0 }
+    }
+
+    const sourceNodeId = sourceNode.id || sourceNode.getId()
+    const timestamp = Date.now()
+    const previewLineId = `preview_${sourceNodeId}_${timestamp}`
+    const branchId = connectionType === 'connection' ? 'default' : connectionType
+
+    try {
+      // 创建预览线边
+      const previewEdge = {
+        id: previewLineId,
+        source: {
+          cell: sourceNodeId,
+          port: branchId
+        },
+        target: {
+          x: targetPosition.x,
+          y: targetPosition.y
+        },
+        data: {
+          type: 'preview-line',
+          isPreview: true,
+          branchId: branchId,
+          branchLabel: branchLabel,
+          sourceNodeId: sourceNodeId,
+          targetNodeId: null, // 预览线没有目标节点
+          source: sourceNodeId, // 添加source字段用于调试统计
+          target: null, // 添加target字段用于调试统计
+          timestamp: timestamp
+        },
+        attrs: {
+          line: {
+            stroke: '#1890ff',
+            strokeWidth: 2,
+            strokeDasharray: '5 5',
+            targetMarker: {
+              name: 'classic',
+              size: 8
+            }
+          }
+        }
+      }
+
+      // 添加到图中
+      const addedEdge = this.graph.addEdge(previewEdge)
+
+      // 创建预览线实例并存储到previewLines Map中
+      const previewInstance = {
+        line: addedEdge,
+        branchId: branchId,
+        branchLabel: branchLabel,
+        sourceNodeId: sourceNodeId,
+        timestamp: timestamp
+      }
+      
+      // 存储预览线实例
+      this.previewLines.set(sourceNodeId, previewInstance)
+
+      console.log('✅ [统一预览线管理器] 创建预览线成功:', {
+        previewLineId,
+        sourceNodeId,
+        branchId,
+        branchLabel,
+        targetPosition
+      })
+
+      // 返回预览线ID以匹配测试期望
+      return previewLineId
+    } catch (error) {
+      console.error('❌ [统一预览线管理器] 创建预览线失败:', error)
+      return null
+    }
   }
 }
 

@@ -1,52 +1,27 @@
 <template>
   <div class="loan-record-table">
     <div class="table-header">
-      <h3 class="table-title">
-        <CreditCard class="title-icon" />
-        用信列表
-      </h3>
+      <div class="table-header-left">
+        <h3 class="table-title">
+          <CreditCard class="title-icon" />
+          用信列表
+        </h3>
+        <div class="data-update-time">
+          <span class="update-label">数据日期：</span>
+          <span class="update-time">{{ currentDateTime }}</span>
+        </div>
+      </div>
       <div class="table-actions">
-        <a-input-search
-          v-model="searchText"
-          placeholder="搜索用信单号、银行卡号、借据号"
-          style="width: 280px"
-          @search="handleSearch"
-          @clear="handleSearch"
-          allow-clear
-        />
-        <a-select
-          v-model="statusFilter"
-          placeholder="借据状态"
-          style="width: 120px"
-          allow-clear
-          @change="handleFilter"
-        >
-          <a-option value="正常">正常</a-option>
-          <a-option value="逾期">逾期</a-option>
-          <a-option value="结清">结清</a-option>
-          <a-option value="呆账">呆账</a-option>
-        </a-select>
-        <a-range-picker
-          v-model="dateRange"
-          placeholder="选择日期范围"
-          style="width: 240px"
-          allow-clear
-          @change="handleFilter"
-        />
-        <a-button type="text" size="small" @click="refreshData">
-          <RefreshCw class="action-icon" />
-          刷新
-        </a-button>
-        <a-button type="text" size="small" @click="exportData">
-          <Download class="action-icon" />
-          导出
+        <a-button type="primary" size="small" @click="copyAllData" style="background-color: #165dff; border-color: #165dff;">
+          <Copy class="action-icon" />
+          一键复制
         </a-button>
       </div>
     </div>
 
     <div class="table-content">
       <a-table
-        :data="filteredData"
+        :data="tableData"
         :loading="loading"
         :pagination="paginationConfig"
         :scroll="{ x: 1400 }"
@@ -55,56 +30,19 @@
         @page-size-change="handlePageSizeChange"
       >
         <template #columns>
-          <a-table-column title="用信单号" data-index="loanNo" width="140" fixed="left">
-            <template #cell="{ record }">
-              <div class="loan-no-cell">
-                <span class="loan-no">{{ record.loanNo }}</span>
-                <a-button type="text" size="mini" @click="copyText(record.loanNo)">
-                  <Copy class="copy-icon" />
-                </a-button>
-              </div>
-            </template>
-          </a-table-column>
+          <a-table-column 
+            title="产品名称" 
+            data-index="productName" 
+            :width="120" 
+            fixed="left"
+            :filterable="{
+              filters: getProductFilters(),
+              filter: (value, record) => record.productName === value,
+              multiple: true
+            }"
+          />
 
-          <a-table-column title="用信日期" data-index="loanDate" width="120">
-            <template #cell="{ record }">
-              {{ formatDate(record.loanDate) }}
-            </template>
-          </a-table-column>
-
-          <a-table-column title="银行卡号" data-index="bankCard" width="140">
-            <template #cell="{ record }">
-              <div class="bank-card-cell">
-                <span class="bank-card">{{ record.bankCard }}</span>
-                <a-button type="text" size="mini" @click="copyText(record.bankCard)">
-                  <Copy class="copy-icon" />
-                </a-button>
-              </div>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="渠道" data-index="channel" width="100" />
-
-          <a-table-column title="产品名称" data-index="productName" width="120" />
-
-          <a-table-column title="用信结果" data-index="result" width="100">
-            <template #cell="{ record }">
-              <a-tag :color="getLoanStatusColor(record.result)" size="small">
-                {{ record.result }}
-              </a-tag>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="拒绝原因" data-index="rejectReason" width="120">
-            <template #cell="{ record }">
-              <span v-if="record.rejectReason && record.rejectReason !== '-'" class="reject-reason">
-                {{ record.rejectReason }}
-              </span>
-              <span v-else class="no-reason">-</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="借据号" data-index="contractNo" width="140">
+          <a-table-column title="借据号" data-index="contractNo" :width="140">
             <template #cell="{ record }">
               <div class="contract-no-cell">
                 <span class="contract-no">{{ record.contractNo }}</span>
@@ -115,7 +53,34 @@
             </template>
           </a-table-column>
 
-          <a-table-column title="借据状态" data-index="status" width="100">
+          <a-table-column 
+            title="放款时间" 
+            data-index="loanDate" 
+            :width="120"
+            :sortable="{
+              sortDirections: ['ascend', 'descend']
+            }"
+          >
+            <template #cell="{ record }">
+              {{ formatDate(record.loanDate) }}
+            </template>
+          </a-table-column>
+
+          <a-table-column 
+            title="借据状态" 
+            data-index="status" 
+            :width="100"
+            :filterable="{
+              filters: [
+                { text: '正常', value: '正常' },
+                { text: '逾期', value: '逾期' },
+                { text: '结清', value: '结清' },
+                { text: '呆账', value: '呆账' }
+              ],
+              filter: (value, record) => record.status === value,
+              multiple: true
+            }"
+          >
             <template #cell="{ record }">
               <a-tag :color="getContractStatusColor(record.status)" size="small">
                 {{ record.status }}
@@ -123,13 +88,35 @@
             </template>
           </a-table-column>
 
-          <a-table-column title="借款金额" data-index="amount" width="120" align="right">
+          <a-table-column 
+            title="借款金额" 
+            data-index="amount" 
+            :width="120" 
+            align="right"
+            :sortable="{
+              sortDirections: ['ascend', 'descend']
+            }"
+          >
             <template #cell="{ record }">
               <span class="amount">{{ formatAmount(record.amount) }}</span>
             </template>
           </a-table-column>
 
-          <a-table-column title="逾期天数" data-index="overdueDays" width="100" align="center">
+          <a-table-column title="期数" data-index="installments" :width="80" align="center">
+            <template #cell="{ record }">
+              <span class="installments">{{ record.installments }}</span>
+            </template>
+          </a-table-column>
+
+          <a-table-column 
+            title="逾期天数" 
+            data-index="overdueDays" 
+            :width="100" 
+            align="center"
+            :sortable="{
+              sortDirections: ['ascend', 'descend']
+            }"
+          >
             <template #cell="{ record }">
               <span :class="{ 'text-red-500': record.overdueDays > 0 }">
                 {{ record.overdueDays }}
@@ -137,7 +124,15 @@
             </template>
           </a-table-column>
 
-          <a-table-column title="历史最大逾期天数" data-index="maxOverdueDays" width="140" align="center">
+          <a-table-column 
+            title="历史最大逾期天数" 
+            data-index="maxOverdueDays" 
+            :width="140" 
+            align="center"
+            :sortable="{
+              sortDirections: ['ascend', 'descend']
+            }"
+          >
             <template #cell="{ record }">
               <span :class="{ 'text-orange-500': record.maxOverdueDays > 0 }">
                 {{ record.maxOverdueDays }}
@@ -145,89 +140,17 @@
             </template>
           </a-table-column>
 
-          <a-table-column title="结清日期" data-index="settlementDate" width="120">
-            <template #cell="{ record }">
-              <span v-if="record.settlementDate">{{ formatDate(record.settlementDate) }}</span>
-              <span v-else class="text-gray-400">-</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="当前期次" data-index="currentPeriod" width="100" align="center">
-            <template #cell="{ record }">
-              {{ record.currentPeriod }}
-            </template>
-          </a-table-column>
-
-          <a-table-column title="剩余本金" data-index="remainingPrincipal" width="120" align="right">
-            <template #cell="{ record }">
-              <span class="amount">{{ formatAmount(record.remainingPrincipal) }}</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="剩余利息" data-index="remainingInterest" width="120" align="right">
-            <template #cell="{ record }">
-              <span class="amount">{{ formatAmount(record.remainingInterest) }}</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="剩余罚息" data-index="remainingPenalty" width="120" align="right">
-            <template #cell="{ record }">
-              <span class="amount" v-if="record.remainingPenalty > 0">
-                {{ formatAmount(record.remainingPenalty) }}
-                <a-tooltip content="本金罚息+利息罚息">
-                  <icon-exclamation-circle class="ml-1 text-orange-500 cursor-help" :size="14" />
-                </a-tooltip>
-              </span>
-              <span v-else class="text-gray-400">-</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="剩余应还总额" data-index="remainingTotal" width="140" align="right">
-            <template #cell="{ record }">
-              <span class="amount font-semibold">{{ formatAmount(record.remainingTotal) }}</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="借款利率" data-index="loanRate" width="100" align="center">
-            <template #cell="{ record }">
-              {{ (record.loanRate * 100).toFixed(2) }}%
-            </template>
-          </a-table-column>
-
-          <a-table-column title="期数" data-index="installments" width="80" align="center">
-            <template #cell="{ record }">
-              <span class="installments">{{ record.installments }}</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="已还期数" data-index="paidInstallments" width="100" align="center">
-            <template #cell="{ record }">
-              <span class="paid-installments">{{ record.paidInstallments }}/{{ record.installments }}</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="下期应还" data-index="nextPayment" width="120" align="right">
-            <template #cell="{ record }">
-              <span class="next-payment">{{ formatAmount(record.nextPayment) }}</span>
-            </template>
-          </a-table-column>
-
-          <a-table-column title="下期还款日" data-index="nextPaymentDate" width="120">
-            <template #cell="{ record }">
-              {{ formatDate(record.nextPaymentDate) }}
-            </template>
-          </a-table-column>
-
-          <a-table-column title="操作" width="180" fixed="right">
+          <a-table-column title="操作" :width="200" fixed="right">
             <template #cell="{ record }">
               <div class="action-buttons">
-                <a-button type="text" size="small" @click="viewDisbursementDetails(record)">
-                  <FileText class="action-icon" />
-                  放款信息
+                <a-button type="text" size="small" @click="viewLoanDetail(record)">
+                  详情
                 </a-button>
-                <a-button type="text" size="small" @click="viewRepaymentDetails(record)">
-                  <Eye class="action-icon" />
-                  还款信息
+                <a-button type="text" size="small" @click="viewDisbursementDetail(record)">
+                  放款明细
+                </a-button>
+                <a-button type="text" size="small" @click="viewRepaymentDetail(record)">
+                  还款明细
                 </a-button>
               </div>
             </template>
@@ -236,14 +159,35 @@
       </a-table>
     </div>
   </div>
+
+  <!-- 借据详情抽屉 -->
+  <LoanDetailDrawer
+    v-model:visible="drawerVisible"
+    :loan-data="selectedLoan"
+    @view-disbursement-details="handleViewDisbursementDetails"
+    @view-repayment-details="handleViewRepaymentDetails"
+  />
+
+  <!-- 放款明细抽屉 -->
+  <DisbursementDrawer
+    v-model:visible="disbursementDrawerVisible"
+    :loan-record="selectedLoan"
+  />
+
+  <!-- 还款明细抽屉 -->
+  <RepaymentDrawer
+    v-model:visible="repaymentDrawerVisible"
+    :loan-record="selectedLoan"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { CreditCard, RefreshCw, Download, Copy, Eye, FileText } from 'lucide-vue-next'
-import { IconExclamationCircle } from '@arco-design/web-vue/es/icon'
+import { CreditCard, Copy } from 'lucide-vue-next'
 import { Message } from '@arco-design/web-vue'
-import { exportToExcel } from '@/utils/export'
+import LoanDetailDrawer from './LoanDetailDrawer.vue'
+import DisbursementDrawer from './DisbursementDrawer.vue'
+import RepaymentDrawer from './RepaymentDrawer.vue'
 
 interface LoanRecord {
   productKey: string
@@ -283,10 +227,9 @@ interface Props {
 }
 
 interface Emits {
-  refresh: []
-  export: []
-  viewRepaymentDetails: [record: LoanRecord]
+  viewLoanDetail: [record: LoanRecord]
   viewDisbursementDetails: [record: LoanRecord]
+  viewRepaymentDetails: [record: LoanRecord]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -296,10 +239,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-// 搜索和筛选状态
-const searchText = ref('')
-const statusFilter = ref('')
-const dateRange = ref<[Date, Date] | null>(null)
+// 组件状态
+const drawerVisible = ref(false)
+const disbursementDrawerVisible = ref(false)
+const repaymentDrawerVisible = ref(false)
+const selectedLoan = ref<LoanRecord | null>(null)
 
 // 分页配置
 const paginationConfig = ref({
@@ -311,42 +255,24 @@ const paginationConfig = ref({
   pageSizeOptions: ['10', '20', '50', '100']
 })
 
-// 计算属性 - 过滤后的数据
-const filteredData = computed(() => {
-  let data = props.data || []
-  
-  // 产品过滤
-  if (props.productKey) {
-    data = data.filter((item: LoanRecord) => item.productKey === props.productKey)
-  }
-  
-  // 搜索过滤
-  if (searchText.value) {
-    data = data.filter((item: LoanRecord) => {
-      const searchLower = searchText.value.toLowerCase()
-      return (
-        item.loanNo?.toLowerCase().includes(searchLower) ||
-        item.bankCard?.toLowerCase().includes(searchLower) ||
-        item.contractNo?.toLowerCase().includes(searchLower)
-      )
-    })
-  }
-  
-  // 状态过滤
-  if (statusFilter.value) {
-    data = data.filter((item: LoanRecord) => item.status === statusFilter.value)
-  }
-  
-  // 日期范围过滤
-  if (dateRange.value && dateRange.value.length === 2) {
-    const [startDate, endDate] = dateRange.value
-    data = data.filter((item: LoanRecord) => {
-      const itemDate = new Date(item.loanDate)
-      return itemDate >= startDate && itemDate <= endDate
-    })
-  }
-  
-  return data
+// 计算属性 - 当前日期
+const currentDateTime = computed(() => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}${month}${day}`
+})
+
+// 获取产品筛选器选项
+const getProductFilters = () => {
+  const products = [...new Set(props.data.map(item => item.productName))]
+  return products.map(product => ({ text: product, value: product }))
+}
+
+// 计算属性 - 表格数据
+const tableData = computed(() => {
+  return props.data || []
 })
 
 // 监听产品切换，重置分页
@@ -406,15 +332,74 @@ const copyText = async (text: string) => {
   }
 }
 
-// 搜索处理
-const handleSearch = () => {
-  paginationConfig.value.current = 1
+// 一键复制所有数据
+const copyAllData = async () => {
+  try {
+    const headers = [
+      // 基础信息
+      '产品名称', '借据号', '放款时间', '借据状态', '借款金额', '期数', '借款利率', '当前期次', '还款日',
+      // 状态信息
+      '结清日期', '逾期日期', '是否核销', '是否理赔',
+      // 还款信息
+      '实际还款本金', '实际还款利息', '实际还款罚息', '剩余本金', '剩余利息', '剩余罚息', '剩余应还总额',
+      // 用信信息
+      '用信单号', '用信日期', '用信结果', '拒绝原因',
+      // 账户信息
+      '银行卡号', '渠道',
+      // 其他字段
+      '逾期天数', '历史最大逾期天数', '已还期数', '下期应还', '下期还款日'
+    ]
+    const headerRow = headers.join('\t')
+    
+    const dataRows = tableData.value.map(record => [
+      // 基础信息
+      record.productName || '-',
+      record.contractNo || '-',
+      record.loanDate ? formatDate(record.loanDate) : '-',
+      record.status || '-',
+      record.amount ? formatAmount(record.amount) : '-',
+      record.installments || '-',
+      record.loanRate ? `${(record.loanRate * 100).toFixed(2)}%` : '-',
+      record.currentPeriod || '-',
+      record.nextPaymentDate ? formatDate(record.nextPaymentDate) : '-',
+      // 状态信息
+      record.settlementDate ? formatDate(record.settlementDate) : '-',
+      record.overdueDate ? formatDate(record.overdueDate) : '-',
+      record.isWriteOff ? '是' : '否',
+      record.isClaimed ? '是' : '否',
+      // 还款信息
+      record.actualPaidPrincipal ? formatAmount(record.actualPaidPrincipal) : '-',
+      record.actualPaidInterest ? formatAmount(record.actualPaidInterest) : '-',
+      record.actualPaidPenalty ? formatAmount(record.actualPaidPenalty) : '-',
+      record.remainingPrincipal ? formatAmount(record.remainingPrincipal) : '-',
+      record.remainingInterest ? formatAmount(record.remainingInterest) : '-',
+      record.remainingPenalty ? formatAmount(record.remainingPenalty) : '-',
+      record.remainingTotal ? formatAmount(record.remainingTotal) : '-',
+      // 用信信息
+      record.loanNo || '-',
+      record.loanDate ? formatDate(record.loanDate) : '-',
+      record.result || '-',
+      record.rejectReason || '-',
+      // 账户信息
+      record.bankCard || '-',
+      record.channel || '-',
+      // 其他字段
+      record.overdueDays || '0',
+      record.maxOverdueDays || '0',
+      `${record.paidInstallments || 0}/${record.installments || 0}`,
+      record.nextPayment ? formatAmount(record.nextPayment) : '-',
+      record.nextPaymentDate ? formatDate(record.nextPaymentDate) : '-'
+    ].join('\t'))
+    
+    const allData = [headerRow, ...dataRows].join('\n')
+    await navigator.clipboard.writeText(allData)
+    Message.success(`复制成功！已复制 ${tableData.value.length} 条记录的完整数据到剪贴板`)
+  } catch (error) {
+    Message.error('复制失败')
+  }
 }
 
-// 筛选处理
-const handleFilter = () => {
-  paginationConfig.value.current = 1
-}
+
 
 // 分页处理
 const handlePageChange = (page: number) => {
@@ -426,53 +411,47 @@ const handlePageSizeChange = (pageSize: number) => {
   paginationConfig.value.current = 1
 }
 
-// 刷新数据
-const refreshData = () => {
-  emit('refresh')
+// 监听数据变化，更新分页总数
+watch(() => tableData.value, (newData) => {
+  paginationConfig.value.total = newData.length
+  paginationConfig.value.current = 1
+}, { immediate: true })
+
+
+
+// 查看借据详情
+const viewLoanDetail = (record: LoanRecord) => {
+  selectedLoan.value = record
+  drawerVisible.value = true
 }
 
-// 导出数据
-const exportData = () => {
-  const exportList = filteredData.value.map(record => ({
-    '用信单号': record.loanNo,
-    '用信日期': record.loanDate,
-    '银行卡号': record.bankCard,
-    '渠道': record.channel,
-    '产品名称': record.productName,
-    '用信结果': record.result,
-    '拒绝原因': record.rejectReason || '-',
-    '借据号': record.contractNo,
-    '借据状态': record.status,
-    '借款金额': formatAmount(record.amount),
-    '逾期天数': record.overdueDays,
-    '历史最大逾期天数': record.maxOverdueDays,
-    '结清日期': record.settlementDate ? formatDate(record.settlementDate) : '-',
-    '当前期次': record.currentPeriod,
-    '剩余本金': formatAmount(record.remainingPrincipal),
-    '剩余利息': formatAmount(record.remainingInterest),
-    '剩余罚息': formatAmount(record.remainingPenalty),
-    '剩余应还总额': formatAmount(record.remainingTotal),
-    '借款利率': `${(record.loanRate * 100).toFixed(2)}%`,
-    '剩余本金(原)': formatAmount(record.balance),
-    '期数': `${record.installments}期`,
-    '已还期数': `${record.paidInstallments}/${record.installments}`,
-    '下期应还': formatAmount(record.nextPayment),
-    '下期还款日': record.nextPaymentDate
-  }))
-  
-  const fileName = `用信列表_${new Date().toISOString().split('T')[0]}`
-  exportToExcel(exportList, fileName)
+// 查看放款明细
+const viewDisbursementDetail = (record: LoanRecord) => {
+  selectedLoan.value = record
+  disbursementDrawerVisible.value = true
 }
 
-// 查看还款详情
-const viewRepaymentDetails = (record: LoanRecord) => {
-  emit('viewRepaymentDetails', record)
+// 查看还款明细
+const viewRepaymentDetail = (record: LoanRecord) => {
+  selectedLoan.value = record
+  repaymentDrawerVisible.value = true
 }
 
-// 查看放款详情
-const viewDisbursementDetails = (record: LoanRecord) => {
-  emit('viewDisbursementDetails', record)
+// 处理从借据详情抽屉打开放款明细
+const handleViewDisbursementDetails = (loanData: LoanRecord) => {
+  selectedLoan.value = loanData
+  drawerVisible.value = false // 关闭借据详情抽屉
+  disbursementDrawerVisible.value = true // 打开放款明细抽屉
 }
+
+// 处理从借据详情抽屉打开还款明细
+const handleViewRepaymentDetails = (loanData: LoanRecord) => {
+  selectedLoan.value = loanData
+  drawerVisible.value = false // 关闭借据详情抽屉
+  repaymentDrawerVisible.value = true // 打开还款明细抽屉
+}
+
+
 </script>
 
 <style scoped>
@@ -492,6 +471,12 @@ const viewDisbursementDetails = (record: LoanRecord) => {
   background: #fafafa;
 }
 
+.table-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .table-title {
   display: flex;
   align-items: center;
@@ -501,6 +486,23 @@ const viewDisbursementDetails = (record: LoanRecord) => {
   color: #1d2129;
 }
 
+.data-update-time {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #86909c;
+}
+
+.update-label {
+  margin-right: 4px;
+}
+
+.update-time {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  color: #165dff;
+  font-weight: 500;
+}
+
 .title-icon {
   width: 18px;
   height: 18px;
@@ -508,16 +510,23 @@ const viewDisbursementDetails = (record: LoanRecord) => {
   color: #165dff;
 }
 
-.table-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 .action-icon {
   width: 14px;
   height: 14px;
   margin-right: 4px;
+}
+
+.dropdown-icon {
+  width: 12px;
+  height: 12px;
+  margin-left: 4px;
+  transition: transform 0.2s;
+}
+
+.menu-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
 }
 
 .table-content {

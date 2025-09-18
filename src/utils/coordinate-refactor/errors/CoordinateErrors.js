@@ -162,6 +162,13 @@ export class ErrorFactory {
   }
 
   /**
+   * 创建预览线刷新错误 (别名方法，保持向后兼容)
+   */
+  static createPreviewLineRefreshError(message, nodeId, branchId, details) {
+    return new PreviewLineRefreshError(message, nodeId, branchId, details);
+  }
+
+  /**
    * 创建分流管理错误
    */
   static createBranchFlowError(message, sourceNodeId, branchId, endpointNodeId) {

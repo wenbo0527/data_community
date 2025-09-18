@@ -14,6 +14,10 @@
           基本信息
         </h3>
         <div class="info-grid">
+          <div class="info-item highlight-item">
+            <label>数据日期</label>
+            <div class="info-value data-date">{{ formatDate(loanData.dataDate || new Date().toISOString().split('T')[0]) }}</div>
+          </div>
           <div class="info-item">
             <label>用信单号</label>
             <div class="info-value loan-no">
@@ -107,11 +111,11 @@
             <label>剩余本金</label>
             <div class="info-value amount remaining-principal">{{ formatAmount(loanData.remainingPrincipal) }}</div>
           </div>
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>剩余利息</label>
             <div class="info-value amount remaining-interest">{{ formatAmount(loanData.remainingInterest) }}</div>
           </div>
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>剩余罚息</label>
             <div class="info-value amount remaining-penalty">
               {{ formatAmount(loanData.remainingPenalty) }}
@@ -119,6 +123,10 @@
                 <AlertCircle class="penalty-icon" />
               </a-tooltip>
             </div>
+          </div>
+          <div class="info-item highlight-item">
+            <label>实际还款费用</label>
+            <div class="info-value amount actual-fee">{{ formatAmount(loanData.actualRepaymentFee || 0) }}</div>
           </div>
           <div class="info-item">
             <label>剩余应还总额</label>
@@ -148,9 +156,12 @@
               {{ loanData.overdueDays }}天
             </div>
           </div>
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>历史最大逾期天数</label>
-            <div class="info-value max-overdue-days">{{ loanData.maxOverdueDays }}天</div>
+            <div class="info-value max-overdue-days">
+              {{ loanData.maxOverdueDays }}天
+              <AlertCircle v-if="loanData.maxOverdueDays > 0" class="info-icon" />
+            </div>
           </div>
           <div class="info-item" v-if="loanData.settlementDate">
             <label>结清日期</label>
@@ -193,6 +204,7 @@ interface LoanData {
   productKey: string
   loanNo: string
   loanDate: string
+  dataDate?: string
   bankCard: string
   channel: string
   productName: string
@@ -214,6 +226,7 @@ interface LoanData {
   remainingInterest: number
   remainingPenalty: number
   remainingTotal: number
+  actualRepaymentFee?: number
   loanRate: number
   repaymentDetails?: any[]
   repaymentPlan?: any[]
@@ -359,12 +372,41 @@ const viewRepaymentDetails = () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 12px;
+  background: #f7f8fa;
+  border-radius: 6px;
+  border-left: 3px solid #e5e6eb;
+  transition: all 0.3s;
+}
+
+.info-item:hover {
+  border-left-color: #165dff;
+  background: #f0f7ff;
+}
+
+.highlight-item {
+  border-left-color: #ff7d00 !important;
+  background: #fff7e6 !important;
+  box-shadow: 0 2px 8px rgba(255, 125, 0, 0.1);
+}
+
+.highlight-item:hover {
+  border-left-color: #ff7d00 !important;
+  background: #ffe7ba !important;
+  box-shadow: 0 4px 12px rgba(255, 125, 0, 0.15);
+}
+
+.highlight-item label {
+  color: #d25f00 !important;
+  font-weight: 700 !important;
 }
 
 .info-item label {
   font-size: 12px;
   color: #86909c;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .info-value {
@@ -468,6 +510,24 @@ const viewRepaymentDetails = () => {
   height: 14px;
   color: #f53f3f;
   cursor: help;
+}
+
+.info-icon {
+  width: 14px;
+  height: 14px;
+  color: #ff7d00;
+}
+
+.data-date {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  color: #165dff;
+  font-size: 15px;
+}
+
+.actual-fee {
+  color: #722ed1;
+  font-weight: 600;
 }
 
 .action-buttons {

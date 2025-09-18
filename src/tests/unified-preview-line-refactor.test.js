@@ -24,7 +24,7 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
+    previewManager = new UnifiedPreviewLineManager(mockGraph, null, {}, null)
     
     // 模拟 getNodeBranches 方法
     previewManager.getNodeBranches = vi.fn((node) => {
@@ -107,8 +107,8 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
       // 模拟只有预览线连接
       const mockPreviewEdge = {
         id: 'preview-edge-1',
-        getData: () => ({ type: 'unified-preview-line', isUnifiedPreview: true }),
-        getTargetCellId: () => 'preview-target-1'
+        getData: () => ({ type: 'preview-line' }),
+        getTargetCellId: () => undefined
       }
       mockGraph.getOutgoingEdges.mockReturnValue([mockPreviewEdge])
 
@@ -348,30 +348,24 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
       expect(previewManager.isBranchNode(normalNode)).toBe(false)
     })
 
-    it('验证分支数量计算的一致性', () => {
-      // 开始节点 - 单一输出
-      const startNode = {
-        getData: () => ({ type: 'start' })
+    it('验证预览线识别逻辑的一致性', () => {
+      // 预览线识别：有源节点但无目标节点的边
+      const previewEdge = {
+        id: 'preview-1',
+        getData: () => ({ type: 'preview-line' }),
+        getSourceCellId: () => 'source-node-1',
+        getTargetCellId: () => undefined
       }
-      expect(previewManager.calculateBranchCount(startNode)).toBe(1)
+      expect(previewManager.isPreviewLine(previewEdge)).toBe(true)
 
-      // 人群分流节点 - 根据配置
-      const audienceSplitNode = {
-        getData: () => ({ type: 'audience-split' })
+      // 真实连接：有源节点和目标节点的边
+      const realEdge = {
+        id: 'real-1',
+        getData: () => ({ type: 'real-connection' }),
+        getSourceCellId: () => 'source-node-1',
+        getTargetCellId: () => 'target-node-1'
       }
-      const config = {
-        crowdLayers: [
-          { id: 'layer-1', name: '层级1' },
-          { id: 'layer-2', name: '层级2' }
-        ]
-      }
-      expect(previewManager.calculateBranchCount(audienceSplitNode, config)).toBe(3) // 2个层级 + 1个未命中
-
-      // 事件分流节点 - 固定2个分支
-      const eventSplitNode = {
-        getData: () => ({ type: 'event-split' })
-      }
-      expect(previewManager.calculateBranchCount(eventSplitNode)).toBe(2)
+      expect(previewManager.isPreviewLine(realEdge)).toBe(false)
     })
   })
 })

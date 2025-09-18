@@ -6,17 +6,10 @@
 /**
  * 获取动态方向配置
  */
-const getDynamicDirectionConfig = (layoutDirection = 'TB') => {
-  if (layoutDirection === 'LR') {
-    return {
-      startDirections: ['right'],
-      endDirections: ['left']
-    }
-  } else {
-    return {
-      startDirections: ['bottom'],
-      endDirections: ['top']
-    }
+const getDynamicDirectionConfig = () => {
+  return {
+    startDirections: ['bottom'],
+    endDirections: ['top']
   }
 }
 
@@ -25,10 +18,10 @@ const getDynamicDirectionConfig = (layoutDirection = 'TB') => {
  * @param {Object} source - 源节点配置 { cell: string, port: string }
  * @param {Object} target - 目标节点配置 { cell: string, port: string }
  * @param {Object} options - 可选配置
- * @param {string} layoutDirection - 布局方向 ('TB' 或 'LR')
+ * @param {string} layoutDirection - 布局方向 ('TB')
  * @returns {Object} 完整的连接配置
  */
-export const createConnectionConfig = (source, target, options = {}, layoutDirection = 'TB') => {
+export const createConnectionConfig = (source, target, options = {}) => {
   // 当指定了端口时，使用端口连接点；否则使用边界连接点
   const connectionPoint = (source.port && target.port) ? {
     name: 'anchor',
@@ -60,7 +53,7 @@ export const createConnectionConfig = (source, target, options = {}, layoutDirec
       args: {
         padding: 15,
         step: 10,
-        ...getDynamicDirectionConfig(layoutDirection)
+        ...getDynamicDirectionConfig()
         // 🚀 [智能路径] 移除fallbackRoute，完全依赖orth路由器的自动最短路径算法
         // orth路由器内置了最短路径计算，无需手动干预
       }
@@ -104,11 +97,11 @@ export const createConnectionConfig = (source, target, options = {}, layoutDirec
  * @param {Object} target - 目标节点配置
  * @param {string} labelText - 标签文本
  * @param {Object} options - 可选配置
- * @param {string} layoutDirection - 布局方向 ('TB' 或 'LR')
+ * @param {string} layoutDirection - 布局方向 ('TB')
  * @returns {Object} 带标签的连接配置
  */
-export const createLabeledConnectionConfig = (source, target, labelText, options = {}, layoutDirection = 'TB') => {
-  const baseConfig = createConnectionConfig(source, target, options, layoutDirection)
+export const createLabeledConnectionConfig = (source, target, labelText, options = {}) => {
+  const baseConfig = createConnectionConfig(source, target, options)
   
   if (labelText) {
     baseConfig.labels = [{
@@ -137,17 +130,17 @@ export const createLabeledConnectionConfig = (source, target, labelText, options
  * @param {string} branchId - 分支ID
  * @param {string} branchLabel - 分支标签
  * @param {Object} options - 可选配置
- * @param {string} layoutDirection - 布局方向 ('TB' 或 'LR')
+ * @param {string} layoutDirection - 布局方向 ('TB')
  * @returns {Object} 分支连接配置
  */
-export const createBranchConnectionConfig = (source, target, branchId, branchLabel, options = {}, layoutDirection = 'TB') => {
+export const createBranchConnectionConfig = (source, target, branchId, branchLabel, options = {}) => {
   // 确保源端口使用统一的'out'端口，从UI层面的同一个位置出发
   const branchSource = {
     ...source,
     port: 'out'
   }
 
-  const config = createLabeledConnectionConfig(branchSource, target, branchLabel, options, layoutDirection)
+  const config = createLabeledConnectionConfig(branchSource, target, branchLabel, options)
   
   // 添加分支特定的数据
   config.data = {

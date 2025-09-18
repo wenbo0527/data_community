@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 
 describe('isConfigured字段自动修复测试', () => {
   let previewManager
@@ -24,7 +24,12 @@ describe('isConfigured字段自动修复测试', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
+    previewManager = new UnifiedPreviewLineManager(
+      mockGraph,  // graph
+      null,      // branchManager
+      {},        // layoutConfig
+      null       // layoutEngine
+    )
 
     // 创建模拟节点
     mockNode = {

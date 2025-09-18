@@ -187,7 +187,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { IconRefresh, IconUser, IconIdcard } from '@arco-design/web-vue/es/icon'
 
 const props = defineProps({

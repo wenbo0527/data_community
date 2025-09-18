@@ -87,28 +87,21 @@ export const getBaseGraphConfig = (container) => ({
 })
 
 // 连接配置 - 智能最短路径优化
-// 获取动态方向配置
-const getDynamicDirectionConfig = (layoutDirection = 'TB') => {
-  if (layoutDirection === 'LR') {
-    return {
-      startDirections: ['right'],
-      endDirections: ['left']
-    }
-  } else {
-    return {
-      startDirections: ['bottom'],
-      endDirections: ['top']
-    }
+// 获取方向配置（上下布局）
+const getDirectionConfig = () => {
+  return {
+    startDirections: ['bottom'],
+    endDirections: ['top']
   }
 }
 
-export const getConnectingConfig = (layoutDirection = 'TB') => ({
+export const getConnectingConfig = () => ({
   router: {
     name: 'orth',  // 使用orth路由器自动计算最短路径
     args: {
       padding: 15,    // 适中的padding，平衡避障和路径长度
       step: 10,       // 精确的step，确保路径计算准确
-      ...getDynamicDirectionConfig(layoutDirection),
+      ...getDirectionConfig(),
       // 🚀 [智能路径] 移除fallbackRoute，完全依赖orth路由器的自动最短路径算法
       // orth路由器内置了最短路径计算，无需手动干预
     }
@@ -219,123 +212,62 @@ export const getHighlightingConfig = () => ({
   }
 })
 
-// 端口组配置
-export const getPortGroups = (layoutDirection = 'TB') => {
-  if (layoutDirection === 'LR') {
-    // 左右布局：输入端口在左侧，输出端口在右侧
-    return {
-      in: {
-        position: {
-          name: 'left',
-          args: {
-            x: 0,      // 左侧
-            y: '50%',  // 垂直居中
-            dx: 0,
-            dy: 0
-          }
-        },
-        attrs: {
-          circle: {
-            r: 5,
-            magnet: true,
-            stroke: '#5F95FF',
-            strokeWidth: 2,
-            fill: '#fff',
-            style: {
-              visibility: 'visible'
-            }
-          }
-        },
-        markup: [{
-          tagName: 'circle',
-          selector: 'circle'
-        }]
+// 端口组配置（上下布局）
+export const getPortGroups = () => {
+  return {
+    in: {
+      position: {
+        name: 'top',
+        args: {
+          x: '50%',  // 水平居中
+          y: 0,      // 顶部
+          dx: 0,
+          dy: 0
+        }
       },
-      out: {
-        position: {
-          name: 'right',
-          args: {
-            x: '100%', // 右侧
-            y: '50%',  // 垂直居中
-            dx: 0,
-            dy: 0
+      attrs: {
+        circle: {
+          r: 5,
+          magnet: true,
+          stroke: '#5F95FF',
+          strokeWidth: 2,
+          fill: '#fff',
+          style: {
+            visibility: 'visible'
           }
-        },
-        attrs: {
-          circle: {
-            r: 5,
-            magnet: true,
-            stroke: '#5F95FF',
-            strokeWidth: 2,
-            fill: '#fff',
-            style: {
-              visibility: 'visible'
-            }
-          }
-        },
-        markup: [{
-          tagName: 'circle',
-          selector: 'circle'
-        }]
-      }
-    }
-  } else {
-    // 上下布局：输入端口在顶部，输出端口在底部
-    return {
-      in: {
-        position: {
-          name: 'top',
-          args: {
-            x: '50%',  // 水平居中
-            y: 0,      // 顶部
-            dx: 0,
-            dy: 0
-          }
-        },
-        attrs: {
-          circle: {
-            r: 5,
-            magnet: true,
-            stroke: '#5F95FF',
-            strokeWidth: 2,
-            fill: '#fff',
-            style: {
-              visibility: 'visible'
-            }
-          }
-        },
-        markup: [{
-          tagName: 'circle',
-          selector: 'circle'
-        }]
+        }
       },
-      out: {
-        position: {
-          name: 'bottom',
-          args: {
-            x: '50%',    // 水平居中
-            y: '100%',   // 底部
-            dx: 0,
-            dy: 0
+      markup: [{
+        tagName: 'circle',
+        selector: 'circle'
+      }]
+    },
+    out: {
+      position: {
+        name: 'bottom',
+        args: {
+          x: '50%',    // 水平居中
+          y: '100%',   // 底部
+          dx: 0,
+          dy: 0
+        }
+      },
+      attrs: {
+        circle: {
+          r: 5,
+          magnet: true,
+          stroke: '#5F95FF',
+          strokeWidth: 2,
+          fill: '#fff',
+          style: {
+            visibility: 'visible'
           }
-        },
-        attrs: {
-          circle: {
-            r: 5,
-            magnet: true,
-            stroke: '#5F95FF',
-            strokeWidth: 2,
-            fill: '#fff',
-            style: {
-              visibility: 'visible'
-            }
-          }
-        },
-        markup: [{
-          tagName: 'circle',
-          selector: 'circle'
-        }]
-      }
+        }
+      },
+      markup: [{
+        tagName: 'circle',
+        selector: 'circle'
+      }]
     }
   }
 }

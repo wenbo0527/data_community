@@ -174,28 +174,28 @@
     />
 
     <!-- 放款记录抽屉 -->
-    <DisbursementDrawer
+    <!-- <DisbursementDrawer
       v-model:visible="disbursementVisible"
       :loanRecord="currentLoanData"
-    />
+    /> -->
 
     <!-- 还款记录抽屉 -->
-    <RepaymentDrawer
+    <!-- <RepaymentDrawer
       v-model:visible="repaymentVisible"
       :loanRecord="currentLoanData"
-    />
+    /> -->
 
     <!-- 还款明细抽屉 -->
-    <RepaymentDetailDrawer
+    <!-- <RepaymentDetailDrawer
       v-model:visible="repaymentDetailVisible"
       :loan-data="currentLoanData"
-    />
+    /> -->
 
     <!-- 放款明细抽屉 -->
-    <DisbursementDetailDrawer
+    <!-- <DisbursementDetailDrawer
       v-model:visible="disbursementDetailVisible"
       :loan-data="currentLoanData"
-    />
+    /> -->
   </div>
 </template>
 
@@ -214,10 +214,10 @@ import { Message } from '@arco-design/web-vue'
 import CreditDetailDrawer from './CreditDetailDrawer.vue'
 import LoanDetailDrawer from './LoanDetailDrawer.vue'
 import LoanRecordTable from '@/views/customer360/components/LoanRecordTable.vue'
-import DisbursementDrawer from '@/views/customer360/components/DisbursementDrawer.vue'
-import RepaymentDrawer from '@/views/customer360/components/RepaymentDrawer.vue'
-import RepaymentDetailDrawer from '@/views/customer360/components/RepaymentDetailDrawer.vue'
-import DisbursementDetailDrawer from '@/views/customer360/components/DisbursementDetailDrawer.vue'
+// import DisbursementDrawer from './DisbursementDrawer.vue'
+// import RepaymentDrawer from './RepaymentDrawer.vue'
+// import RepaymentDetailDrawer from './RepaymentDetailDrawer.vue'
+// import DisbursementDetailDrawer from './DisbursementDetailDrawer.vue'
 
 interface Props {
   productKey: string

@@ -35,7 +35,12 @@ describe('TDD: 预览线初始化时机修复', () => {
     })
 
     // 创建预览线管理器实例
-    previewLineManager = new UnifiedPreviewLineManager(graph)
+    previewLineManager = new UnifiedPreviewLineManager(
+      graph,  // graph
+      null,  // branchManager
+      {},    // layoutConfig
+      null   // layoutEngine
+    )
   })
 
   afterEach(() => {

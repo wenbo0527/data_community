@@ -87,24 +87,17 @@ export const getBaseConfig = () => ({
 /**
  * 获取动态方向配置
  */
-const getDynamicDirectionConfig = (layoutDirection = 'TB') => {
-  if (layoutDirection === 'LR') {
-    return {
-      startDirections: ['right'],
-      endDirections: ['left']
-    }
-  } else {
-    return {
-      startDirections: ['bottom'],
-      endDirections: ['top']
-    }
+const getDynamicDirectionConfig = () => {
+  return {
+    startDirections: ['bottom'],
+    endDirections: ['top']
   }
 }
 
 /**
  * 获取连接配置
  */
-export const getConnectingConfig = (layoutDirection = 'TB') => ({
+export const getConnectingConfig = () => ({
   autoAnchor: {
     enable: true,
     type: 'grid',
@@ -129,7 +122,7 @@ export const getConnectingConfig = (layoutDirection = 'TB') => ({
     args: {
       padding: 15,
       step: 15,
-      ...getDynamicDirectionConfig(layoutDirection)
+      ...getDynamicDirectionConfig()
       // 🚀 [智能路径] 移除fallbackRoute，完全依赖orth路由器的自动最短路径算法
     }
   },
@@ -173,60 +166,8 @@ export const getEdgeConfig = () => ({
 /**
  * 获取端口组配置
  */
-export const getPortGroups = (layoutDirection = 'TB') => {
-  if (layoutDirection === 'LR') {
-    // 左右布局：输入端口在左侧，输出端口在右侧
-    const inPortConfig = createPortConfig({
-      id: 'in',
-      group: 'in',
-      position: {
-        name: 'left',
-        args: {
-          x: 0,
-          y: '50%',
-          dx: 0,
-          dy: 0
-        }
-      }
-    })
-
-    const outPortConfig = createPortConfig({
-      id: 'out',
-      group: 'out',
-      position: {
-        name: 'right',
-        args: {
-          x: '100%',
-          y: '50%',
-          dx: 0,
-          dy: 0
-        }
-      }
-    })
-
-    // 提取端口组配置（移除id字段）
-    const { id: inId, ...inGroup } = inPortConfig
-    const { id: outId, ...outGroup } = outPortConfig
-
-    return {
-      in: inGroup,
-      out: outGroup,
-      right: {
-        position: { name: 'right' },
-        attrs: {
-          circle: {
-            r: 12,
-            fill: '#66cc67',
-            stroke: '#fff',
-            strokeWidth: 2,
-            visibility: 'visible',
-            magnet: true
-          }
-        }
-      }
-    }
-  } else {
-    // 上下布局：输入端口在顶部，输出端口在底部
+export const getPortGroups = () => {
+  // 上下布局：输入端口在顶部，输出端口在底部
     const inPortConfig = createPortConfig({
       id: 'in',
       group: 'in',
@@ -276,7 +217,6 @@ export const getPortGroups = (layoutDirection = 'TB') => {
         }
       }
     }
-  }
 }
 
 /**

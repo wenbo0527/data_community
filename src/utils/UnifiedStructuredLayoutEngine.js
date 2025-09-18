@@ -15,6 +15,13 @@ export class UnifiedStructuredLayoutEngine {
     // 🎯 修复循环引用：使用WeakRef来避免强引用
     this._previewLineManagerRef = previewLineManager ? new WeakRef(previewLineManager) : null;
     
+    // 🔒 新增：预览线刷新锁定机制
+    this.previewLineRefreshLocked = false;
+    this.lockStartTime = null;
+    this.lockReason = null;
+    this.LOCK_TIMEOUT = 5000; // 5秒超时
+    this.lockTimeoutTimer = null;
+    
     // 🚀 新增：布局计算防抖机制
     this.debounceConfig = {
       delay: 300, // 防抖延迟时间（毫秒）
@@ -204,6 +211,9 @@ export class UnifiedStructuredLayoutEngine {
     
     console.log("🚀 [统一结构化布局] 开始执行布局");
 
+    // 🔒 新增：在布局开始时锁定预览线刷新
+    this.lockPreviewLineRefresh('布局计算中');
+
     // 🚀 使用性能优化器优化布局执行
     return await this.performanceOptimizer.optimizeLayoutExecution(
       async () => {
@@ -304,10 +314,17 @@ export class UnifiedStructuredLayoutEngine {
           this.lastLayoutTime = endTime;
           this.isLayouting = false;
           
+          // 🔒 新增：布局完成后解锁预览线刷新
+          this.unlockPreviewLineRefresh('布局计算完成');
+          
           return result;
         } catch (error) {
           console.error("❌ [统一结构化布局] 布局执行失败:", error);
           this.isLayouting = false;
+          
+          // 🔒 新增：布局失败时也要解锁预览线刷新
+          this.unlockPreviewLineRefresh('布局计算失败');
+          
           return {
             success: false,
             error: error.message,
@@ -458,8 +475,7 @@ export class UnifiedStructuredLayoutEngine {
       return (
         !edgeId.includes("preview") &&
         !edgeId.includes("unified_preview") &&
-        !edgeData.isPreview &&
-        !edgeData.isPersistentPreview
+        !edgeData.isPreview
       );
     });
 
@@ -619,8 +635,6 @@ export class UnifiedStructuredLayoutEngine {
     const realConnections = outgoingEdges.filter((edge) => {
       const edgeData = edge.getData() || {};
       return (
-        !edgeData.isUnifiedPreview &&
-        !edgeData.isPersistentPreview &&
         !edgeData.isPreview &&
         edgeData.type !== "preview-line" &&
         edgeData.type !== "unified-preview-line" &&
@@ -745,8 +759,6 @@ export class UnifiedStructuredLayoutEngine {
     const realConnections = outgoingEdges.filter((edge) => {
       const edgeData = edge.getData() || {};
       return (
-        !edgeData.isUnifiedPreview &&
-        !edgeData.isPersistentPreview &&
         !edgeData.isPreview &&
         edgeData.type !== "preview-line" &&
         edgeData.type !== "unified-preview-line"
@@ -787,8 +799,6 @@ export class UnifiedStructuredLayoutEngine {
         nodeType === "endpoint" ||
         nodeType === "end" ||
         nodeType === "finish" ||
-        nodeData.isUnifiedPreview ||
-        nodeData.isPersistentPreview ||
         nodeData.isPreview
       ) {
         return;
@@ -800,7 +810,7 @@ export class UnifiedStructuredLayoutEngine {
       if (!hasRealConnections) {
         // 这是一个没有实际连接的叶子节点，为它创建虚拟endpoint
         const nodePosition = node.getPosition();
-        const nodeSize = node.getSize();
+        const nodeSize = (node && typeof node.getSize === 'function') ? node.getSize() : { width: 120, height: 40 };
 
         // 计算虚拟endpoint位置 - 智能分布算法
         const endPosition = this.calculateIntelligentEndpointPosition(
@@ -3144,7 +3154,7 @@ export class UnifiedStructuredLayoutEngine {
           if (sourcePosition) {
             // 获取源节点信息
             const sourceNode = this.graph.getCellById(sourceNodeId);
-            if (sourceNode) {
+            if (sourceNode && typeof sourceNode.getSize === 'function') {
               const nodeSize = sourceNode.getSize() || { width: 120, height: 40 };
               
               // 使用优化后的位置重新计算endpoint位置
@@ -4463,6 +4473,77 @@ export class UnifiedStructuredLayoutEngine {
     console.log('🗑️ [布局缓存] 缓存已清除');
   }
   
+  /**
+   * 🔒 新增：锁定预览线刷新
+   * @param {string} reason - 锁定原因
+   */
+  lockPreviewLineRefresh(reason = '布局计算中') {
+    if (this.previewLineRefreshLocked) {
+      console.warn(`⚠️ [预览线锁定] 已处于锁定状态，原因: ${this.lockReason}`);
+      return false;
+    }
+    
+    this.previewLineRefreshLocked = true;
+    this.lockStartTime = Date.now();
+    this.lockReason = reason;
+    
+    // 设置超时自动解锁
+    this.lockTimeoutTimer = setTimeout(() => {
+      console.warn(`⚠️ [预览线锁定] 锁定超时，自动解锁。原因: ${this.lockReason}`);
+      this.unlockPreviewLineRefresh('超时自动解锁');
+    }, this.LOCK_TIMEOUT);
+    
+    console.log(`🔒 [预览线锁定] 已锁定预览线刷新，原因: ${reason}`);
+    return true;
+  }
+  
+  /**
+   * 🔒 新增：解锁预览线刷新
+   * @param {string} reason - 解锁原因
+   */
+  unlockPreviewLineRefresh(reason = '布局计算完成') {
+    if (!this.previewLineRefreshLocked) {
+      console.warn(`⚠️ [预览线锁定] 当前未处于锁定状态`);
+      return false;
+    }
+    
+    const lockDuration = Date.now() - this.lockStartTime;
+    
+    this.previewLineRefreshLocked = false;
+    this.lockStartTime = null;
+    this.lockReason = null;
+    
+    // 清除超时定时器
+    if (this.lockTimeoutTimer) {
+      clearTimeout(this.lockTimeoutTimer);
+      this.lockTimeoutTimer = null;
+    }
+    
+    console.log(`🔓 [预览线锁定] 已解锁预览线刷新，原因: ${reason}，锁定时长: ${lockDuration}ms`);
+    return true;
+  }
+  
+  /**
+   * 🔒 新增：检查预览线刷新是否被锁定
+   * @returns {boolean} 是否被锁定
+   */
+  isPreviewLineRefreshLocked() {
+    return this.previewLineRefreshLocked;
+  }
+  
+  /**
+   * 🔒 新增：获取锁定状态信息
+   * @returns {Object} 锁定状态信息
+   */
+  getPreviewLineLockStatus() {
+    return {
+      locked: this.previewLineRefreshLocked,
+      reason: this.lockReason,
+      startTime: this.lockStartTime,
+      duration: this.lockStartTime ? Date.now() - this.lockStartTime : 0
+    };
+  }
+
   /**
    * 🚀 新增：获取性能报告
    * @returns {Object} 性能报告

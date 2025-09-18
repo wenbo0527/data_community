@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 
 describe('AI外呼节点预览线生成测试', () => {
   let previewManager
@@ -181,9 +181,9 @@ describe('AI外呼节点预览线生成测试', () => {
           getTargetCellId: vi.fn(() => 'some-target'),
           getSourceCellId: vi.fn(() => 'ai-call-connected'),
           getData: vi.fn(() => ({
-            type: 'normal-connection',
-            isUnifiedPreview: false
-          }))
+            type: 'normal-connection'
+          })),
+          getTargetCellId: vi.fn(() => 'some-target')
         }
       ])
 

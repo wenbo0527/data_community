@@ -604,7 +604,8 @@ describe('布局算法坐标处理测试', () => {
     it('应该正确缓存布局计算结果', () => {
       const nodes = [
         { id: 'cache-1', type: 'start', position: { x: 100, y: 200 }, size: { width: 120, height: 80 } },
-        { id: 'cache-2', type: 'end', position: { x: 300, y: 200 }, size: { width: 120, height: 80 } }
+        { id: 'cache-2', type: 'sms', position: { x: 300, y: 200 }, size: { width: 120, height: 80 } },
+        { id: 'cache-3', type: 'end', position: { x: 500, y: 200 }, size: { width: 120, height: 80 } }
       ];
 
       mockGraph.getNodes.mockReturnValue(nodes);
@@ -636,12 +637,16 @@ describe('布局算法坐标处理测试', () => {
 
     it('应该在节点变化时正确更新缓存', () => {
       const initialNodes = [
-        { id: 'update-1', type: 'start', position: { x: 100, y: 200 }, size: { width: 120, height: 80 } }
+        { id: 'update-1', type: 'start', position: { x: 100, y: 200 }, size: { width: 120, height: 80 } },
+        { id: 'update-2', type: 'sms', position: { x: 300, y: 200 }, size: { width: 120, height: 80 } },
+        { id: 'update-3', type: 'end', position: { x: 500, y: 200 }, size: { width: 120, height: 80 } }
       ];
 
       const updatedNodes = [
         { id: 'update-1', type: 'start', position: { x: 100, y: 200 }, size: { width: 120, height: 80 } },
-        { id: 'update-2', type: 'end', position: { x: 300, y: 200 }, size: { width: 120, height: 80 } }
+        { id: 'update-2', type: 'sms', position: { x: 300, y: 200 }, size: { width: 120, height: 80 } },
+        { id: 'update-3', type: 'end', position: { x: 500, y: 200 }, size: { width: 120, height: 80 } },
+        { id: 'update-4', type: 'wait', position: { x: 400, y: 200 }, size: { width: 120, height: 80 } }
       ];
 
       // 初始布局

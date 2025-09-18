@@ -8,7 +8,8 @@ import { businessMessage, warning, error } from '../utils/message'
 import { useUserStore } from '../store/modules/user'
 
 const router = createRouter({
-  history: createWebHistory('/'), routes: [
+  history: createWebHistory('/'),
+  routes: [
     ...managementRoutes,
       {
       path: ROUTE_PATHS.LOGIN,
@@ -100,19 +101,25 @@ const router = createRouter({
           path: 'customer360',
           name: 'Customer360',
           component: () => import('../pages/discovery/customer360/index.vue'),
-          children: [
-            {
-              path: ':userId',
-name: 'Customer360Detail',
-component: () => import('../pages/discovery/customer360/detail.vue'),
-props: true,
-beforeEnter: (to) => {
-  if (!/^\d+$/.test(to.params.userId)) {
-    return '/discovery/customer360';
-  }
-}
+          meta: {
+            title: '客户360',
+            requiresAuth: true
+          }
+        },
+        {
+          path: 'customer360/detail/:userId',
+          name: 'Customer360Detail',
+          component: () => import('../pages/discovery/customer360/detail.vue'),
+          meta: {
+            title: '客户360详情',
+            requiresAuth: true
+          },
+          props: true,
+          beforeEnter: (to) => {
+            if (!/^\d+$/.test(to.params.userId)) {
+              return '/discovery/customer360';
             }
-          ]
+          }
         },
         {
           path: 'external',
@@ -143,6 +150,15 @@ beforeEnter: (to) => {
           path: 'metrics-map',
           name: 'metricsMap',
           component: () => import('../pages/discovery/metrics-map/index.vue')
+        },
+        {
+          path: 'metrics-map/detail/:id',
+          name: 'MetricsMapDetail',
+          component: () => import('../pages/discovery/metrics-map/detail.vue'),
+          meta: {
+            title: '指标详情',
+            hidden: true
+          }
         },
         {
           path: 'unified-metrics',

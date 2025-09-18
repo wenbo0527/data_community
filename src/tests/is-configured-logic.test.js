@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { UnifiedPreviewLineManager } from '../utils/UnifiedPreviewLineManager.js'
+import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 import { nodeConfigManager } from '../utils/NodeConfigManager.js'
 
 describe('isConfigured逻辑测试', () => {
@@ -42,7 +42,12 @@ describe('isConfigured逻辑测试', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph)
+    previewManager = new UnifiedPreviewLineManager(
+      mockGraph,  // graph
+      null,      // branchManager
+      {},        // layoutConfig
+      null       // layoutEngine
+    )
   })
 
   describe('audience-split节点配置状态测试', () => {

@@ -14,9 +14,9 @@
           基本信息
         </h3>
         <div class="info-grid">
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>数据日期</label>
-            <div class="info-value">{{ formatDate(loanData.dataDate) }}</div>
+            <div class="info-value data-date">{{ formatDate(loanData.dataDate) }}</div>
           </div>
           <div class="info-item">
             <label>产品名称</label>
@@ -95,7 +95,7 @@
       <!-- 逾期信息 -->
       <div class="detail-section">
         <h3 class="section-title">
-          <IconAlertTriangle class="section-icon" />
+          <IconExclamationCircle class="section-icon" />
           逾期信息
         </h3>
         <div class="info-grid">
@@ -105,9 +105,12 @@
               {{ loanData.overdueDays }}天
             </div>
           </div>
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>历史最大逾期天数</label>
-            <div class="info-value max-overdue-days">{{ loanData.maxOverdueDays }}天</div>
+            <div class="info-value max-overdue-days">
+              {{ loanData.maxOverdueDays }}天
+              <IconInfoCircle v-if="loanData.maxOverdueDays > 0" class="info-icon" />
+            </div>
           </div>
           <div class="info-item" v-if="loanData.overdueDate">
             <label>逾期日期</label>
@@ -147,7 +150,7 @@
             <label>实际还款罚息</label>
             <div class="info-value amount actual-penalty">{{ formatAmount(loanData.actualRepaymentPenalty) }}</div>
           </div>
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>实际还款费用</label>
             <div class="info-value amount actual-fee">{{ formatAmount(loanData.actualRepaymentFee) }}</div>
           </div>
@@ -157,7 +160,7 @@
       <!-- 剩余信息 -->
       <div class="detail-section">
         <h3 class="section-title">
-          <IconBarChart class="section-icon" />
+          <IconBarChart3 class="section-icon" />
           剩余信息
         </h3>
         <div class="info-grid">
@@ -165,15 +168,15 @@
             <label>剩余本金</label>
             <div class="info-value amount remaining-principal">{{ formatAmount(loanData.remainingPrincipal) }}</div>
           </div>
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>剩余利息</label>
             <div class="info-value amount remaining-interest">{{ formatAmount(loanData.remainingInterest) }}</div>
           </div>
-          <div class="info-item">
+          <div class="info-item highlight-item">
             <label>剩余罚息</label>
             <div class="info-value amount remaining-penalty">
               {{ formatAmount(loanData.remainingPenalty) }}
-              <IconAlertCircle v-if="loanData.remainingPenalty > 0" class="penalty-icon" />
+              <IconInfoCircle v-if="loanData.remainingPenalty > 0" class="penalty-icon" />
             </div>
           </div>
           <div class="info-item">
@@ -186,7 +189,7 @@
       <!-- 风险标识 -->
       <div class="detail-section">
         <h3 class="section-title">
-          <IconShield class="section-icon" />
+          <IconSafe class="section-icon" />
           风险标识
         </h3>
         <div class="info-grid">
@@ -221,7 +224,7 @@
             查看还款计划
           </a-button>
           <a-button type="primary" @click="viewRepaymentHistory">
-            <IconHistory class="action-icon" />
+            <IconClockCircle class="action-icon" />
             查看还款历史
           </a-button>
           <a-button @click="exportLoanDetail">
@@ -241,9 +244,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { 
-  IconFile, IconCreditCard, IconAlertTriangle, IconDollarSign, 
-  IconBarChart, IconShield, IconSettings, IconCopy, IconAlertCircle,
-  IconCalendar, IconHistory, IconDownload
+  IconFile, IconCreditCard, IconExclamationCircle, IconDollarSign, 
+  IconBarChart3, IconSafe, IconSettings, IconCopy, IconInfoCircle,
+  IconCalendar, IconClockCircle, IconDownload
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 
@@ -475,6 +478,23 @@ const exportLoanDetail = () => {
   background: #f0f7ff;
 }
 
+.highlight-item {
+  border-left-color: #ff7d00 !important;
+  background: #fff7e6 !important;
+  box-shadow: 0 2px 8px rgba(255, 125, 0, 0.1);
+}
+
+.highlight-item:hover {
+  border-left-color: #ff7d00 !important;
+  background: #ffe7ba !important;
+  box-shadow: 0 4px 12px rgba(255, 125, 0, 0.15);
+}
+
+.highlight-item label {
+  color: #d25f00 !important;
+  font-weight: 700 !important;
+}
+
 .info-item label {
   font-size: 12px;
   color: #86909c;
@@ -616,6 +636,19 @@ const exportLoanDetail = () => {
   width: 16px;
   height: 16px;
   color: #f53f3f;
+}
+
+.info-icon {
+  width: 14px;
+  height: 14px;
+  color: #ff7d00;
+}
+
+.data-date {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  color: #165dff;
+  font-size: 15px;
 }
 
 .action-buttons {

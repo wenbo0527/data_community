@@ -5,8 +5,10 @@
  */
 
 import { ref, computed, nextTick } from 'vue'
-import { DagreLayout } from '@antv/layout'
-import { Graph } from '@antv/graphlib'
+import * as Layout from '@antv/layout'
+import * as GraphLib from '@antv/graphlib'
+const { DagreLayout } = Layout
+const { Graph } = GraphLib
 import { coordinateManager } from '../utils/CoordinateSystemManager.js'
 import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
 import { UnifiedStructuredLayoutEngine } from '../utils/UnifiedStructuredLayoutEngine.js'
@@ -86,7 +88,7 @@ export function useStructuredLayout(getGraph) {
       // 创建统一预览线管理器
       console.log('🔧 [布局系统] 创建统一预览线管理器')
       try {
-        connectionPreviewManager.value = new UnifiedPreviewLineManager(graph, null, layoutConfig.value, layoutDirection.value)
+        connectionPreviewManager.value = new UnifiedPreviewLineManager(graph, null, layoutConfig.value, null)
         console.log('✅ [布局系统] 预览线管理器创建成功')
       } catch (previewError) {
         console.error('❌ [布局系统] 预览线管理器创建失败:', previewError)
@@ -96,6 +98,8 @@ export function useStructuredLayout(getGraph) {
       // 初始化预览线管理器
       if (connectionPreviewManager.value) {
         try {
+          // 设置布局方向
+          connectionPreviewManager.value.updateLayoutDirection(layoutDirection.value)
           connectionPreviewManager.value.init()
           console.log('✅ [布局系统] 预览线管理器初始化成功')
         } catch (initError) {

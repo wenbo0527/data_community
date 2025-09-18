@@ -220,7 +220,72 @@
             <a-doption value="svg">导出SVG</a-doption>
           </template>
         </a-dropdown>
+        
+        <!-- 调试功能按钮 -->
+        <a-button @click="toggleDebugPanel" size="small" :type="showDebugPanel ? 'primary' : 'secondary'" title="调试功能">
+          <template #icon><icon-bug /></template>
+          调试
+        </a-button>
       </a-button-group>
+    </div>
+  </div>
+
+  <!-- 调试功能悬浮框 -->
+  <div v-if="showDebugPanel" class="debug-panel" :style="{ left: debugPanelPosition.x + 'px', top: debugPanelPosition.y + 'px' }">
+    <div class="debug-header" @mousedown="startDragDebugPanel">
+      <div class="debug-title">
+        <icon-bug />
+        调试面板
+      </div>
+      <a-button @click="closeDebugPanel" size="mini" type="text">
+        <template #icon><icon-close /></template>
+      </a-button>
+    </div>
+    <div class="debug-content">
+      <div class="debug-section">
+        <a-button @click="checkPreviewLineValidity" type="primary" size="small" :loading="debugStats?.loading">
+          <template #icon><icon-check /></template>
+          预览线有效性检查
+        </a-button>
+        <a-button @click="triggerPreviewLineGeneration" type="outline" size="small" :loading="isGeneratingPreviewLines" style="margin-left: 8px;">
+          <template #icon><icon-thunderbolt /></template>
+          触发预览线生成
+        </a-button>
+      </div>
+      <div v-if="debugStats?.data" class="debug-stats">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">节点数</div>
+            <div class="stat-value">{{ debugStats.data.nodeCount }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">配置数</div>
+            <div class="stat-value">{{ debugStats.data.configuredNodeCount }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">应存在预览线数</div>
+            <div class="stat-value">{{ debugStats.data.expectedPreviewLines }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">实际预览线数</div>
+            <div class="stat-value">{{ debugStats.data.actualPreviewLines }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">应存在连接线数</div>
+            <div class="stat-value">{{ debugStats.data.expectedConnections }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">实际连接线数</div>
+            <div class="stat-value">{{ debugStats.data.actualConnections }}</div>
+          </div>
+        </div>
+        <div v-if="debugStats.data.issues && debugStats.data.issues.length > 0" class="debug-issues">
+          <div class="issues-title">发现的问题：</div>
+          <div v-for="(issue, index) in debugStats.data.issues" :key="index" class="issue-item">
+            {{ issue }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -251,6 +316,7 @@ import portConfigFactory from '../../../../utils/portConfigFactory.js'
 import { coordinateManager } from '../../../../utils/CoordinateSystemManager.js'
 import EdgeOverlapManager from '../../../../utils/EdgeOverlapManager.js'
 import { dragSnapLogger, startNodeDragLogging, endNodeDragLogging } from '../../../../utils/DragSnapLogger.js'
+import UnifiedPreviewLineManager from '../../../../utils/UnifiedPreviewLineManager.js'
 import {
   IconPlus,
   IconMinus,
@@ -270,7 +336,9 @@ import {
   IconCheck,
   IconRedo,
   IconSwap,
-  IconRight
+  IconRight,
+  IconBug,
+  IconDragArrow
 } from '@arco-design/web-vue/es/icon'
 import { Modal, Message } from '@arco-design/web-vue'
 
@@ -310,7 +378,9 @@ const emit = defineEmits([
   'node-selected',
   'node-updated',
   'node-deleted',
-  'connection-created'
+  'connection-created',
+  'drop',
+  'dragover'
 ])
 
 // 画布容器引用
@@ -406,6 +476,16 @@ const layoutStats = ref(null)
 
 // 配置抽屉管理器（响应式变量）
 const configDrawers = ref(null)
+
+// 统一预览线管理器
+let unifiedPreviewLineManager = null
+
+// 调试面板相关状态
+const showDebugPanel = ref(false)
+const debugPanelPosition = ref({ x: 100, y: 100 })
+const isDraggingDebugPanel = ref(false)
+const isGeneratingPreviewLines = ref(false)
+const debugStats = ref(null)
 
 // 布局方向状态管理
 const currentLayoutDirection = computed(() => {
@@ -1076,20 +1156,6 @@ const bindEvents = () => {
     isDragging.value = true
     const nodeData = node.getData() || {}
     dragNodeType.value = nodeData.type || 'unknown'
-    
-    // 只对endpoint启动吸附日志记录
-    if (nodeData.isEndpoint || nodeData.type === 'endpoint') {
-      const position = node.getPosition()
-      currentDragSession.value = startNodeDragLogging(node, position)
-      
-      // 记录拖拽会话数据
-      dragSessionData.value.set(currentDragSession.value, {
-        startTime: Date.now(),
-        node: node,
-        startPosition: { ...position },
-        nearestNodes: [] // 将在拖拽过程中收集
-      })
-    }
   })
 
   // 连接添加事件 - 确保连接数据同步到 connections 数组
@@ -1181,6 +1247,8 @@ const bindEvents = () => {
     }
   })
 
+  
+
   // 连接删除事件 - 确保连接数据从 connections 数组中移除
   graph.on('edge:removed', ({ edge }) => {
     const edgeId = edge.id
@@ -1222,41 +1290,29 @@ const bindEvents = () => {
     const size = node.getSize()
     const nodeData = node.getData() || {}
     
-    // 只对endpoint进行坐标修正和吸附相关的日志记录
-    const isEndpoint = nodeData.isEndpoint || nodeData.type === 'endpoint'
+    // 🔧 修复：节点拖拽时不应该触发预览线位置更新
+    // 预览线位置更新应该只在预览线本身被拖拽时触发
+    // 节点拖拽时预览线会通过其他机制自动跟随节点移动
     
-    // 🔧 修复：为普通节点添加预览线实时更新
-    if (!isEndpoint) {
-      const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
-      if (unifiedPreviewManager && typeof unifiedPreviewManager.immediateUpdatePosition === 'function') {
-        try {
-          // 立即更新预览线位置，确保拖拽时实时跟随
-          unifiedPreviewManager.immediateUpdatePosition(node)
-        } catch (error) {
-          // 静默处理错误，避免影响拖拽性能
-        }
-      }
-    }
-    
-    if (isEndpoint) {
-      // 通过坐标管理器验证和修正坐标
-      const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
-      if (coordinateValidation && coordinateValidation.difference && currentDragSession.value) {
-        // 记录坐标修正信息到拖拽会话（不立即输出）
-        dragSnapLogger.logProcess(currentDragSession.value, 'coordinate_correction', {
-          nodeId: node.id,
-          rawPosition,
-          coordinateValidation
-        })
-      }
-    }
+    // 注释掉错误的预览线更新调用
+    // const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
+    // if (unifiedPreviewManager && typeof unifiedPreviewManager.immediateUpdatePosition === 'function') {
+    //   try {
+    //     // 立即更新预览线位置，确保拖拽时实时跟随
+    //     unifiedPreviewManager.immediateUpdatePosition(node)
+    //   } catch (error) {
+    //     // 静默处理错误，避免影响拖拽性能
+    //   }
+    // }
     
     // 计算节点中心点（使用修正后的坐标）
     const centerX = rawPosition.x + size.width / 2
     const centerY = rawPosition.y + size.height / 2
 
-    // 在节点拖拽过程中触发吸附逻辑
+    // 🔧 修复：获取预览线管理器用于吸附逻辑
     const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
+    
+    // 在节点拖拽过程中触发吸附逻辑
     if (unifiedPreviewManager && typeof unifiedPreviewManager.highlightNearbyNodes === 'function') {
       // 调用统一预览线管理器的吸附高亮逻辑
       unifiedPreviewManager.highlightNearbyNodes(centerX, centerY)
@@ -1265,94 +1321,6 @@ const bindEvents = () => {
       if (typeof unifiedPreviewManager.checkSnapToPreviewLines === 'function') {
         unifiedPreviewManager.checkSnapToPreviewLines(node, rawPosition, size)
       }
-
-      // 同时检测是否接近预览线的endpoint
-      const endpoints = graph.getNodes().filter(n => {
-        const data = n.getData() || {}
-        return data.isEndpoint || data.type === 'endpoint'
-      })
-
-      // 只对endpoint收集附近的节点信息（用于最终日志）
-      if (isEndpoint && currentDragSession.value) {
-        const sessionData = dragSessionData.value.get(currentDragSession.value)
-        if (sessionData) {
-          // 更新附近节点信息
-          const nearbyNodes = []
-          
-          // 检查普通节点
-          graph.getNodes().forEach(n => {
-            if (n.id !== node.id) {
-              const nData = n.getData() || {}
-              if (!nData.isEndpoint && nData.type !== 'endpoint') {
-                const nPos = n.getPosition()
-                const nSize = n.getSize()
-                const nCenterX = nPos.x + nSize.width / 2
-                const nCenterY = nPos.y + nSize.height / 2
-                const distance = Math.sqrt(
-                  Math.pow(centerX - nCenterX, 2) +
-                  Math.pow(centerY - nCenterY, 2)
-                )
-                
-                if (distance <= 150) { // 收集150px范围内的节点
-                  nearbyNodes.push({
-                    id: n.id,
-                    type: nData.type,
-                    position: nPos,
-                    size: nSize,
-                    distance: distance
-                  })
-                }
-              }
-            }
-          })
-          
-          // 按距离排序
-          nearbyNodes.sort((a, b) => a.distance - b.distance)
-          sessionData.nearestNodes = nearbyNodes.slice(0, 5) // 只保留最近的5个节点
-        }
-      }
-
-      endpoints.forEach(hint => {
-        const hintPos = hint.getPosition()
-        const hintSize = hint.getSize()
-        
-        // 🔧 使用坐标管理器修正endpoint位置
-        const hintValidation = coordinateManager.validateCoordinateTransform(hint)
-        let hintCenterX = hintPos.x + hintSize.width / 2
-        let hintCenterY = hintPos.y + hintSize.height / 2
-        
-        // 如果检测到坐标偏差，进行修正
-        if (hintValidation && hintValidation.difference) {
-          hintCenterX -= hintValidation.difference.x
-          hintCenterY -= hintValidation.difference.y
-        }
-
-        const distance = Math.sqrt(
-          Math.pow(centerX - hintCenterX, 2) +
-          Math.pow(centerY - hintCenterY, 2)
-        )
-
-        if (distance <= 50) { // 50px 吸附范围
-          // 高亮endpoint
-          hint.setAttrs({
-            body: {
-              ...hint.getAttrs().body,
-              stroke: '#ff4d4f',
-              strokeWidth: 3,
-              fill: 'rgba(255, 77, 79, 0.1)'
-            }
-          })
-          
-          // 只对endpoint记录高亮变化到拖拽会话（不立即输出）
-          if (isEndpoint && currentDragSession.value) {
-            dragSnapLogger.logProcess(currentDragSession.value, 'highlight_change', {
-              hintId: hint.id,
-              distance: distance,
-              highlighted: true
-            })
-          }
-        }
-      })
     }
   
   })
@@ -1444,40 +1412,7 @@ const bindEvents = () => {
       newPosition: node.getPosition()
     })
     
-    // 🔧 修复：检查是否是endpoint移动
-    if (cellData.isEndpoint || cellData.type === 'endpoint') {
-      // console.log('🎯 [endpoint移动] 检测到endpoint移动:', {
-      //   hintId: node.id,
-      //   newPosition: node.getPosition(),
-      //   hintData: cellData
-      // })
-      
-      // 获取统一预览线管理器 - 已改为预览线终点拖拽，不再使用endpoint
-      /*
-      const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
-      if (unifiedPreviewManager && typeof unifiedPreviewManager.updateHintPosition === 'function') {
-        try {
-          // 调用专门的endpoint位置更新方法
-          unifiedPreviewManager.updateHintPosition(node, node.getPosition())
-          
-          // 🔍 添加手工拖拽点移动结束的最终位置日志
-          // console.log('📍 [手工拖拽点移动结束] 最终位置已确定:', {
-          //   hintId: node.id,
-          //   finalPosition: node.getPosition(),
-          //   timestamp: new Date().toLocaleTimeString(),
-          //   sourceNodeId: cellData.sourceNodeId,
-          //   branchId: cellData.branchId,
-          //   branchLabel: cellData.branchLabel
-          // })
-          
-          // console.log('✅ [拖拽提示点移动] 已更新拖拽提示点位置')
-        } catch (error) {
-          console.warn('⚠️ [拖拽提示点移动] 更新拖拽提示点位置失败:', error)
-        }
-      }
-      */
-      return // endpoint移动不需要后续的普通节点处理逻辑
-    }
+
     
     if (nodeData) {
       // 🔧 安全获取节点位置，添加多重检查
@@ -1550,7 +1485,7 @@ const bindEvents = () => {
       // 🔧 修复：先执行吸附和自动连接逻辑，再刷新预览线位置
       // 原问题：之前是先刷新预览线，再执行自动连接，可能导致位置不一致
       // 修复后顺序：节点移动 → 吸附检测 → 自动连接 → 预览线刷新 → 清除高亮
-      // 检测是否需要自动连接到预览线
+      // 使用统一预览线管理器的新吸附检测方法
       if (unifiedPreviewManager) {
         const size = node.getSize()
         
@@ -1572,382 +1507,94 @@ const bindEvents = () => {
           })
           return
         }
+
+        // 使用新的预览线吸附检测方法
+        const snapResult = unifiedPreviewManager.checkNodeSnapToPreviewLines(node, position, size)
         
-        // 🔧 使用坐标系统管理器进行坐标转换
-        const coordinateValidation = coordinateManager.validateCoordinateTransform(node)
-        let centerX = position.x + size.width / 2
-        let centerY = position.y + size.height / 2
-        
-        // 🔧 安全检查：确保计算出的中心坐标是有效数字
-        if (isNaN(centerX) || isNaN(centerY)) {
-          console.error('❌ [节点移动] 计算节点中心坐标失败:', {
-            nodeId: node.id,
-            position: position,
-            size: size,
-            centerX: centerX,
-            centerY: centerY
-          })
-          return
-        }
-        
-        // 如果检测到坐标偏差，进行修正
-        if (coordinateValidation && coordinateValidation.difference) {
-          centerX -= coordinateValidation.difference.x
-          centerY -= coordinateValidation.difference.y
-          
-          console.log('🔍 [节点移动坐标修正] 检测到坐标偏差:', {
-            nodeId: node.id,
-            position,
-            coordinateValidation,
-            correctedCenter: { x: centerX, y: centerY }
-          })
-        }
-
-        // 检测是否接近拖拽提示点，如果是则尝试自动连接
-        const endpoints = graph.getNodes().filter(n => {
-          const data = n.getData() || {}
-          return data.isEndpoint || data.type === 'endpoint'
-        })
-
-        // 🔍 添加详细的拖拽点检测日志
-        // console.log('🔍 [拖拽点检测] 开始检测吸附条件:', {
-        //   timestamp: new Date().toISOString(),
-        //   nodeId: node.id,
-        //   nodeType: nodeData.type,
-        //   nodeCenter: { x: centerX, y: centerY },
-        //   endpointsCount: endpoints.length,
-        //   endpointsInfo: endpoints.map(hint => ({
-        //     id: hint.id,
-        //     position: hint.getPosition(),
-        //     size: hint.getSize(),
-        //     data: hint.getData()
-        //   }))
-        // })
-
-        // 找到最近的拖拽提示点
-        let nearestHint = null
-        let nearestDistance = Infinity
-
-        endpoints.forEach(hint => {
-          const hintPos = hint.getPosition()
-          const hintSize = hint.getSize()
-          
-          // 🔧 安全检查：确保拖拽点位置和尺寸有效
-          if (!hintPos || typeof hintPos.x !== 'number' || typeof hintPos.y !== 'number') {
-            console.warn('⚠️ [拖拽点检测] 拖拽点位置信息无效，跳过:', {
-              hintId: hint.id,
-              hintPos: hintPos
-            })
-            return
-          }
-          
-          if (!hintSize || typeof hintSize.width !== 'number' || typeof hintSize.height !== 'number') {
-            console.warn('⚠️ [拖拽点检测] 拖拽点尺寸信息无效，跳过:', {
-              hintId: hint.id,
-              hintSize: hintSize
-            })
-            return
-          }
-          
-          // 🔧 使用坐标管理器修正拖拽提示点位置
-          const hintValidation = coordinateManager.validateCoordinateTransform(hint)
-          let hintCenterX = hintPos.x + hintSize.width / 2
-          let hintCenterY = hintPos.y + hintSize.height / 2
-          
-          // 🔧 安全检查：确保计算出的拖拽点中心坐标是有效数字
-          if (isNaN(hintCenterX) || isNaN(hintCenterY)) {
-            console.warn('⚠️ [拖拽点检测] 计算拖拽点中心坐标失败，跳过:', {
-              hintId: hint.id,
-              hintPos: hintPos,
-              hintSize: hintSize,
-              hintCenterX: hintCenterX,
-              hintCenterY: hintCenterY
-            })
-            return
-          }
-          
-          // 如果检测到坐标偏差，进行修正
-          if (hintValidation && hintValidation.difference) {
-            hintCenterX -= hintValidation.difference.x
-            hintCenterY -= hintValidation.difference.y
-          }
-
-          const distance = Math.sqrt(
-            Math.pow(centerX - hintCenterX, 2) +
-            Math.pow(centerY - hintCenterY, 2)
-          )
-          
-          // 🔧 安全检查：确保距离计算结果有效
-          if (isNaN(distance)) {
-            console.warn('⚠️ [拖拽点检测] 距离计算失败，跳过:', {
-              hintId: hint.id,
-              nodeCenter: { x: centerX, y: centerY },
-              hintCenter: { x: hintCenterX, y: hintCenterY },
-              distance: distance
-            })
-            return
-          }
-
-          // 🔍 添加每个拖拽点的距离计算日志
-          // console.log('📏 [距离计算] 拖拽点距离检测:', {
-          //   hintId: hint.id,
-          //   hintPosition: hintPos,
-          //   hintSize: hintSize,
-          //   hintCenter: { x: hintCenterX, y: hintCenterY },
-          //   nodeCenter: { x: centerX, y: centerY },
-          //   distance: distance,
-          //   threshold: 80,
-          //   withinRange: distance <= 80,
-          //   coordinateValidation: hintValidation
-          // })
-
-          if (distance <= 80 && distance < nearestDistance) { // 80px 吸附范围（增加范围）
-            nearestDistance = distance
-            nearestHint = hint
-            // console.log('🎯 [最近拖拽点] 更新最近的拖拽点:', {
-            //   hintId: hint.id,
-            //   distance: distance,
-            //   previousNearest: nearestDistance
-            // })
-          }
-        })
-
-        // 🔍 添加吸附检测结果日志
-        if (currentDragSession.value) {
-          // 记录吸附检测结果到拖拽会话
-          dragSnapLogger.logProcess(currentDragSession.value, 'snap_detection', {
-            nearestHintFound: !!nearestHint,
-            nearestHintId: nearestHint?.id,
-            nearestDistance: nearestDistance,
-            threshold: 80,
-            willTriggerSnap: !!nearestHint
-          })
-        }
-
-        // 如果找到最近的拖拽提示点，则进行连接
-        if (nearestHint) {
-          // 🔍 记录吸附前的位置信息（不立即输出）
+        if (snapResult && snapResult.success) {
+          // 记录吸附成功的日志
           if (currentDragSession.value) {
-            dragSnapLogger.logProcess(currentDragSession.value, 'before_snap', {
+            dragSnapLogger.logProcess(currentDragSession.value, 'snap_success', {
               draggedNode: {
                 id: node.id,
                 type: nodeData.type,
-                position: { ...position },
-                center: { x: centerX, y: centerY }
+                position: { ...position }
               },
-              dragHint: {
-                id: nearestHint.id,
-                position: { ...nearestHint.getPosition() },
-                size: { ...nearestHint.getSize() },
-                distance: nearestDistance
-              }
+              connection: snapResult.connection,
+              snapTarget: snapResult.snapTarget
             })
           }
 
-          // 获取拖拽提示点对应的预览线信息
-          const hintData = nearestHint.getData() || {}
-          const parentPreviewLine = hintData.parentPreviewLine
+          // 使用连接配置工厂创建配置
+          const connectionConfig = createBranchConnectionConfig(
+            { cell: snapResult.connection.source, port: snapResult.connection.sourcePort },
+            { cell: snapResult.connection.target, port: snapResult.connection.targetPort },
+            snapResult.connection.branchId,
+            snapResult.connection.branchLabel
+          )
 
-          if (parentPreviewLine) {
-            // 解析预览线ID，格式可能是: unified_preview_sourceNodeId_branchId_timestamp
-            // 或者从hintData中直接获取源节点ID
-            let sourceNodeId = hintData.sourceNodeId
+          // 验证连接配置
+          const validationResult = validateConnectionConfig(connectionConfig)
+          if (!validationResult.valid) {
+            console.error('连接配置验证失败:', { 
+              connectionConfig, 
+              errors: validationResult.errors,
+              snapResult
+            })
+          } else {
+            try {
+              // 创建连接
+              const connectionResult = await connectionErrorHandler.safeCreateConnection(
+                graph,
+                connectionConfig
+              )
 
-            if (!sourceNodeId && parentPreviewLine) {
-              // 尝试从预览线ID中解析
-              const parts = parentPreviewLine.split('_')
-              
-              if (parts.length >= 4 && parts[0] === 'unified' && parts[1] === 'preview') {
-                // 源节点ID通常是 node_timestamp 格式，在第2和第3个位置
-                const lastPart = parts[parts.length - 1]
-                if (/^\d+$/.test(lastPart)) {
-                  // 最后一部分是时间戳，往前找到源节点ID
-                  for (let i = 2; i < parts.length - 1; i++) {
-                    if (/^\d+$/.test(parts[i])) {
-                      sourceNodeId = `${parts[i - 1]}_${parts[i]}`
-                      break
-                    }
-                  }
-                }
-              }
-            }
+              if (connectionResult.success) {
+                const connection = connectionResult.result
+                
+                // 连接创建成功
+                console.log('连接创建成功:', {
+                  edgeId: connection.id,
+                  connection: snapResult.connection
+                })
 
-            if (sourceNodeId) {
-              // 首先尝试直接查找
-              let sourceNode = graph.getCellById(sourceNodeId)
+                // 触发连接创建事件
+                emit('connection-created', {
+                  edge: connection,
+                  source: snapResult.connection.source,
+                  target: snapResult.connection.target,
+                  branchId: snapResult.connection.branchId,
+                  branchLabel: snapResult.connection.branchLabel,
+                  snapResult: snapResult
+                })
 
-              // 如果直接查找失败，尝试模糊匹配（节点ID可能包含分支标识符）
-              if (!sourceNode) {
-                const allNodes = graph.getNodes()
-                sourceNode = allNodes.find(node => node.id.startsWith(sourceNodeId))
-              }
-
-              if (sourceNode && sourceNode.isNode && sourceNode.isNode() && sourceNode.id !== node.id) {
-                // 🔍 记录即将进行吸附的详细信息
-                const snapInfo = {
-                  sourceNode: {
-                    id: sourceNode.id,
-                    type: sourceNode.getData()?.type,
-                    position: sourceNode.getPosition()
-                  },
-                  targetNode: {
-                    id: node.id,
-                    type: nodeData.type,
-                    positionBeforeSnap: { ...position }
-                  },
-                  dragHint: {
-                    id: nearestHint.id,
-                    branchId: hintData.branchId,
-                    branchLabel: hintData.branchLabel,
-                    parentPreviewLine: parentPreviewLine,
-                    position: nearestHint.getPosition()
-                  }
-                }
-
-                // 创建连接
-                try {
-                  const branchId = hintData.branchId || 'default'
-                  const branchLabel = hintData.branchLabel // 获取分支标签
-                  const sourcePort = 'out' // 统一使用'out'端口，从UI层面的同一个位置出发
-                  
-                  // 🔍 记录连接创建前的状态
-                  // console.log('🔗 [拖拽点吸附] 开始创建连接:', {
-                  //   timestamp: new Date().toISOString(),
-                  //   connectionInfo: {
-                  //     source: { nodeId: sourceNode.id, port: sourcePort },
-                  //     target: { nodeId: node.id, port: 'in' },
-                  //     branchId: branchId,
-                  //     branchLabel: branchLabel
-                  //   },
-                  //   snapInfo
-                  // })
-
-                  // 使用连接配置工厂创建配置
-                  const connectionConfig = createBranchConnectionConfig(
-                    { cell: sourceNode.id, port: sourcePort },
-                    { cell: node.id, port: 'in' },
-                    branchId,
-                    branchLabel
-                  )
-
-                  // 验证连接配置
-                  const validationResult = validateConnectionConfig(connectionConfig)
-                  if (!validationResult.valid) {
-                    console.error('❌ [拖拽点吸附] 连接配置验证失败:', { 
-                      connectionConfig, 
-                      errors: validationResult.errors,
-                      snapInfo
-                    })
-                    return
-                  }
-
-                  const connectionResult = await connectionErrorHandler.safeCreateConnection(
-                    graph,
-                    connectionConfig
-                  )
-
-                  if (!connectionResult.success) {
-                    console.error('❌ [拖拽点吸附] 连接创建失败:', { 
-                      errors: connectionResult.errors,
-                      snapInfo
-                    })
-                    return
-                  }
-
-                  const connection = connectionResult.result
-
-                  // 🔍 记录连接创建成功后的状态（不立即输出）
-                  if (currentDragSession.value) {
-                    dragSnapLogger.logProcess(currentDragSession.value, 'connection_created', {
-                      targetNode: {
-                        id: node.id,
-                        positionAfterSnap: node.getPosition()
-                      },
-                      connection: {
-                        id: connection.id,
-                        sourceId: connection.getSourceNode()?.id,
-                        targetId: connection.getTargetNode()?.id,
-                        branchId: connection.getData()?.branchId,
-                        branchLabel: connection.getData()?.branchLabel
-                      }
-                    })
-                  }
-
-                  // 检查拖拽点是否会被删除
-                  let dragHintWillBeDeleted = false
-                  try {
-                    // 通知统一预览线管理器节点已连接，传递标签信息
-                    if (unifiedPreviewManager.onNodeConnected) {
-                      unifiedPreviewManager.onNodeConnected(sourceNode, branchId, branchLabel)
-                      dragHintWillBeDeleted = true // 连接后拖拽点通常会被删除
-                    }
-                  } catch (error) {
-                    console.error('❌ [拖拽点吸附] 通知预览线管理器失败:', error)
-                  }
-
-                } catch (error) {
-                  console.error('💥 [拖拽点吸附] 吸附过程失败:', {
-                    timestamp: new Date().toISOString(),
-                    error: error.message,
-                    stack: error.stack
+                // 记录拖拽吸附成功
+                if (currentDragSession.value) {
+                  dragSnapLogger.logProcess(currentDragSession.value, 'connection_created', {
+                    edgeId: connection.id,
+                    connectionConfig: connectionConfig
                   })
                 }
               } else {
-                // 记录无法找到有效源节点的情况（不立即输出）
-                if (currentDragSession.value) {
-                  dragSnapLogger.logProcess(currentDragSession.value, 'source_node_not_found', {
-                    sourceNodeId,
-                    sourceNodeFound: !!sourceNode,
-                    isValidNode: sourceNode?.isNode?.(),
-                    isSameNode: sourceNode?.id === node.id
-                  })
-                }
+                console.error('连接创建失败:', connectionResult.errors)
               }
-            } else {
-              // 记录无法解析源节点ID的情况（不立即输出）
-              if (currentDragSession.value) {
-                dragSnapLogger.logProcess(currentDragSession.value, 'source_id_parse_failed', {
-                  parentPreviewLine,
-                  hintData
-                })
-              }
-            }
-          } else {
-            // 记录拖拽点缺少父预览线信息的情况（不立即输出）
-            if (currentDragSession.value) {
-              dragSnapLogger.logProcess(currentDragSession.value, 'missing_preview_line', {
-                hintData
-              })
+            } catch (error) {
+              console.error('连接创建异常:', error)
             }
           }
 
           // 清除拖拽过程中的高亮效果
           unifiedPreviewManager.clearNodeHighlights()
-
-          endpoints.forEach(hint => {
-            // 恢复拖拽提示点的原始样式
-            const hintData = hint.getData() || {}
-            if (hintData.originalAttrs) {
-              hint.setAttrs(hintData.originalAttrs)
-            } else {
-              // 如果没有保存原始样式，使用默认样式
-              hint.setAttrs({
-                body: {
-                  fill: '#f0f0f0',
-                  stroke: '#d9d9d9',
-                  strokeWidth: 1
-                }
-              })
-            }
-          })
         }
 
-        // 🔧 修复：在自动连接逻辑完成后，刷新所有预览线和拖拽提示点位置
-        if (unifiedPreviewManager && typeof unifiedPreviewManager.refreshAllPreviewLines === 'function') {
+        // 🔧 优化：节点移动后只刷新该节点为源节点的预览线，而不是所有预览线
+        if (unifiedPreviewManager && typeof unifiedPreviewManager.updatePreviewLinePosition === 'function') {
           try {
-            unifiedPreviewManager.refreshAllPreviewLines(false, false) // 节点移动时不是智能布局
+            // 只更新移动节点的预览线位置，提升性能
+            unifiedPreviewManager.updatePreviewLinePosition(node)
+            // 已刷新节点预览线位置
           } catch (error) {
-            console.warn('⚠️ [节点移动] 刷新预览线位置失败:', error)
+            console.warn('刷新节点预览线位置失败:', error)
           }
 
           // 🔧 清理吸附状态，防止循环连接
@@ -2083,24 +1730,7 @@ const bindEvents = () => {
               if (currentDragSession.value) {
                 const sessionData = dragSessionData.value.get(currentDragSession.value)
                 if (sessionData) {
-                  // 检查是否是拖拽点
-                  const sessionNodeData = sessionData.node.getData() || {}
-                  if (sessionNodeData.isEndpoint || sessionNodeData.type === 'endpoint') {
-                    const endPosition = sessionData.node.getPosition()
-                    
-                    // 查找最近的普通节点in端口坐标
-                    let nearestInPortCoord = null
-                    if (sessionData.nearestNodes && sessionData.nearestNodes.length > 0) {
-                      const nearestNode = sessionData.nearestNodes[0] // 最近的节点
-                      // 计算in端口坐标（通常在节点顶部中央）
-                      nearestInPortCoord = {
-                        x: nearestNode.position.x + nearestNode.size.width / 2,
-                        y: nearestNode.position.y
-                      }
-                    }
-                    
-                    endNodeDragLogging(currentDragSession.value, endPosition, nearestInPortCoord)
-                  }
+                  // 注意：endpoint 相关的拖拽点检查已移除
                 }
                 
                 // 清理拖拽会话数据
@@ -2116,24 +1746,7 @@ const bindEvents = () => {
           if (currentDragSession.value) {
             const sessionData = dragSessionData.value.get(currentDragSession.value)
             if (sessionData) {
-              // 检查是否是拖拽点
-              const sessionNodeData = sessionData.node.getData() || {}
-              if (sessionNodeData.isEndpoint || sessionNodeData.type === 'endpoint') {
-                const endPosition = sessionData.node.getPosition()
-                
-                // 查找最近的普通节点in端口坐标
-                let nearestInPortCoord = null
-                if (sessionData.nearestNodes && sessionData.nearestNodes.length > 0) {
-                  const nearestNode = sessionData.nearestNodes[0] // 最近的节点
-                  // 计算in端口坐标（通常在节点顶部中央）
-                  nearestInPortCoord = {
-                    x: nearestNode.position.x + nearestNode.size.width / 2,
-                    y: nearestNode.position.y
-                  }
-                }
-                
-                endNodeDragLogging(currentDragSession.value, endPosition, nearestInPortCoord)
-              }
+              // 注意：endpoint 相关的拖拽点检查已移除
             }
             
             // 清理拖拽会话数据
@@ -2146,7 +1759,7 @@ const bindEvents = () => {
         }
       }
     }
-  })
+  });
 
   // 连接创建事件
   graph.on('edge:connected', ({ edge }) => {
@@ -2184,7 +1797,7 @@ const bindEvents = () => {
       const cellData = cell.getData() || {}
 
       // 检查是否是拖拽提示点
-      if (cellData.isEndpoint || cellData.type === 'endpoint' || cell.id.includes('hint_')) {
+      if (cell.id.includes('hint_')) {
         // 拖拽提示点不在nodes数组中，直接返回
         return
       }
@@ -2200,7 +1813,7 @@ const bindEvents = () => {
     } else if (cell.isEdge()) {
       // 边删除处理
     }
-  })
+  });
 
   // Vue组件自定义事件监听
   graph.on('vue:delete', ({ node }) => {
@@ -2388,6 +2001,29 @@ const bindEvents = () => {
         dataConsistent: nodeData.data.isConfigured === afterGraphNodeData.isConfigured
       })
 
+      // 🔧 关键修复：手动触发预览线管理器的重新评估
+      if (unifiedPreviewLineManager && typeof unifiedPreviewLineManager.handleNodeConfigUpdated === 'function') {
+        console.log(`[TaskFlowCanvas] 手动触发预览线管理器重新评估:`, {
+          nodeId: node.id,
+          nodeType: nodeType,
+          managerExists: !!unifiedPreviewLineManager
+        })
+        
+        // 手动调用预览线管理器的配置更新处理方法
+        unifiedPreviewLineManager.handleNodeConfigUpdated({ node, nodeType, config: processedConfig })
+        
+        // 延迟执行以确保配置更新完全完成
+        setTimeout(() => {
+          forceRegeneratePreviewLines()
+        }, 100)
+      } else {
+        console.warn(`[TaskFlowCanvas] 预览线管理器不可用或方法不存在:`, {
+          nodeId: node.id,
+          managerExists: !!unifiedPreviewLineManager,
+          hasMethod: unifiedPreviewLineManager ? typeof unifiedPreviewLineManager.handleNodeConfigUpdated : 'manager不存在'
+        })
+      }
+
       emit('node-updated', nodeData)
     }
   })
@@ -2480,28 +2116,24 @@ const initializeLayoutEngineAfterDataLoad = async () => {
     configDrawers.value.structuredLayout.initializeLayoutEngine()
     console.log('[TaskFlowCanvas] 布局引擎初始化完成')
 
-    // 🔧 关键修复：直接创建布局引擎实例，不依赖于布局应用
-    // 因为applyUnifiedStructuredLayout要求至少3个节点，但在开始节点配置时可能只有1-2个节点
-    if (graph) {
-      try {
-        // 强制创建布局引擎实例（即使节点数量不足）
-        const layoutEngineInstance = configDrawers.value.structuredLayout.createLayoutEngineInstance?.(graph)
-        if (layoutEngineInstance) {
-          console.log('✅ [TaskFlowCanvas] 布局引擎实例已强制创建')
-        } else {
-          console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败')
-        }
-      } catch (error) {
-        console.warn('⚠️ [TaskFlowCanvas] 布局引擎实例创建失败:', error)
-      }
-    }
+    // 🔧 统一布局只在用户点击按钮时触发，不在此处自动创建布局引擎实例
+    console.log('✅ [TaskFlowCanvas] 等待用户手动点击统一布局按钮')
 
     // 获取初始化后的管理器实例
     const connectionPreviewManager = configDrawers.value.structuredLayout.unifiedPreviewManager
+    
+    // 初始化全局unifiedPreviewLineManager变量
+    if (connectionPreviewManager) {
+      unifiedPreviewLineManager = new UnifiedPreviewLineManager(graph)
+      // 🔧 关键修复：调用init()方法设置事件监听器
+      unifiedPreviewLineManager.init()
+      console.log('[TaskFlowCanvas] 全局unifiedPreviewLineManager已初始化并设置事件监听器')
+    }
 
     console.log('[TaskFlowCanvas] 结构化布局组件初始化结果:', {
       layoutEngineStatus: configDrawers.value.structuredLayout.getLayoutEngineStatus?.() || 'unknown',
       unifiedPreviewManager: !!connectionPreviewManager,
+      globalUnifiedPreviewLineManager: !!unifiedPreviewLineManager,
       isReady: configDrawers.value.structuredLayout.isReady || false
     })
 
@@ -2516,42 +2148,33 @@ const initializeLayoutEngineAfterDataLoad = async () => {
           isNull: layoutEngine === null,
           isUndefined: layoutEngine === undefined,
           type: typeof layoutEngine,
-          hasSetMethod: typeof connectionPreviewManager.setLayoutEngine === 'function'
+          hasSetMethod: typeof unifiedPreviewLineManager.setLayoutEngine === 'function'
         })
         
-        if (layoutEngine && typeof connectionPreviewManager.setLayoutEngine === 'function') {
-          connectionPreviewManager.setLayoutEngine(layoutEngine)
-          console.log('✅ [TaskFlowCanvas] 布局引擎引用已设置')
+        if (layoutEngine && typeof unifiedPreviewLineManager.setLayoutEngine === 'function') {
+          unifiedPreviewLineManager.setLayoutEngine(layoutEngine)
+          // 布局引擎引用已设置到新的预览线管理器实例
           return true
         } else {
           console.warn('⚠️ [TaskFlowCanvas] 无法设置布局引擎引用:', {
             layoutEngine: !!layoutEngine,
-            setLayoutEngineMethod: typeof connectionPreviewManager.setLayoutEngine,
+            setLayoutEngineMethod: typeof unifiedPreviewLineManager.setLayoutEngine,
             reason: !layoutEngine ? 'layoutEngine不存在' : 
-                    typeof connectionPreviewManager.setLayoutEngine !== 'function' ? 'setLayoutEngine方法不可用' : '未知原因'
+                    typeof unifiedPreviewLineManager.setLayoutEngine !== 'function' ? 'setLayoutEngine方法不可用' : '未知原因'
           })
           return false
         }
       }
       
-      // 🔧 修复：如果布局引擎还未就绪，则创建布局引擎实例
-      let layoutEngineSet = setupLayoutEngineReference()
-      
-      if (!layoutEngineSet && typeof configDrawers.value.structuredLayout.createLayoutEngineInstance === 'function') {
-        console.log('🏗️ [TaskFlowCanvas] 布局引擎未就绪，尝试创建布局引擎实例')
-        const createdEngine = configDrawers.value.structuredLayout.createLayoutEngineInstance(graph)
-        if (createdEngine) {
-          console.log('✅ [TaskFlowCanvas] 布局引擎实例创建成功，重新设置引用')
-          layoutEngineSet = setupLayoutEngineReference()
-        }
-      }
+      // 🔧 统一布局只在用户点击按钮时触发，不在此处自动创建布局引擎实例
+      console.log('✅ [TaskFlowCanvas] 等待用户手动点击统一布局按钮')
 
       // 🔧 新增：执行数据加载完成后的预览线清理检查
-      if (typeof connectionPreviewManager.performLoadCompleteCheck === 'function') {
-        connectionPreviewManager.performLoadCompleteCheck()
-        console.log('✅ [TaskFlowCanvas] 已触发数据加载完成后的预览线清理检查')
+      if (typeof unifiedPreviewLineManager.performLoadCompleteCheck === 'function') {
+        unifiedPreviewLineManager.performLoadCompleteCheck()
+        // 已触发数据加载完成后的预览线清理检查
       } else {
-        console.warn('⚠️ [TaskFlowCanvas] 预览线管理器不支持数据加载完成检查方法')
+        console.warn('预览线管理器不支持数据加载完成检查方法')
       }
     } else {
       console.error('[TaskFlowCanvas] 统一预览线管理器初始化失败')
@@ -2597,19 +2220,21 @@ const logCanvasSummary = () => {
     return nodeData && nodeData.deletable !== false && nodeData.type !== 'start'
   })
 
-  // 统计连接线数量
+  // 统计连接线数量 - 简化逻辑：有源节点和目标节点的边就是连接线
   const allEdges = graph.getEdges()
   const connectionLines = allEdges.filter(edge => {
-    const edgeId = edge.id
-    // 连接线不包含 preview 关键字
-    return !edgeId.includes('preview') && !edgeId.includes('unified_preview')
+    const sourceId = edge.getSourceCellId()
+    const targetId = edge.getTargetCellId()
+    // 连接线：有源节点和目标节点
+    return sourceId && targetId
   })
 
-  // 统计预览线数量
+  // 统计预览线数量 - 简化逻辑：有源节点但没有目标节点的边就是预览线
   const previewLines = allEdges.filter(edge => {
-    const edgeId = edge.id
-    // 预览线包含 preview 关键字
-    return edgeId.includes('preview') || edgeId.includes('unified_preview')
+    const sourceId = edge.getSourceCellId()
+    const targetId = edge.getTargetCellId()
+    // 预览线：有源节点但没有目标节点
+    return sourceId && !targetId
   })
 
   // 从预览线管理器获取更准确的预览线统计
@@ -2622,7 +2247,7 @@ const logCanvasSummary = () => {
         activePreviewLines: 0
       }
       
-      // 统计活跃的预览线
+      // 统计活跃的预览线 - 基于简化逻辑
       unifiedPreviewManager.previewLines.forEach((previewInstance, nodeId) => {
         if (Array.isArray(previewInstance)) {
           previewLineManagerStats.activePreviewLines += previewInstance.length
@@ -2756,12 +2381,11 @@ const addNodeToGraph = (nodeData) => {
     // 对于分流节点，确保branches数据正确传递
     branches: nodeData.branches || (nodeData.config?.branches) || [],
     // 🔧 修复：正确初始化isConfigured字段
-    isConfigured: nodeData.data?.isConfigured || 
-                  nodeData.isConfigured || 
-                  // 如果节点有配置信息，则认为已配置
-                  (nodeData.config && Object.keys(nodeData.config).length > 0) ||
+    isConfigured: nodeData.data?.isConfigured !== undefined ? nodeData.data.isConfigured :
+                  nodeData.isConfigured !== undefined ? nodeData.isConfigured :
                   // 对于开始节点，默认为已配置
-                  nodeData.type === 'start' ||
+                  nodeData.type === 'start' ? true :
+                  // 其他节点默认为未配置，需要用户手动配置
                   false
   }
 
@@ -2813,8 +2437,8 @@ const createNodePorts = (nodeConfig, nodeType) => {
   // 获取当前布局方向
   const layoutDirection = currentLayoutDirection.value || 'TB'
   
-  // 使用专门的端口配置工厂，传递布局方向
-  const portConfig = portConfigFactory.createNodePortConfig(nodeType, nodeConfig, layoutDirection)
+  // 使用专门的端口配置工厂
+  const portConfig = portConfigFactory.createNodePortConfig(nodeType, nodeConfig)
   
   console.log('[TaskFlowCanvas] 端口配置结果:', { portConfig, layoutDirection })
   
@@ -3103,8 +2727,9 @@ const handleNodeTypeSelected = (nodeType) => {
       level: (nodeSelectorSourceNode.value.data?.level || 0) + 1,
       branchIndex,
       totalBranches
-    },
-    config: nodeConfig
+    }
+    // 注意：不设置config字段，让节点保持未配置状态
+    // config字段应该在用户完成配置后才设置
   }
 
   // 添加节点到图中
@@ -3286,13 +2911,9 @@ const cascadeDeleteNode = (nodeId) => {
   //   })
   // }
 
-  // 使用统一结构化布局重新布局
-  if (configDrawers.value?.structuredLayout?.applyUnifiedStructuredLayout && graph) {
-    nextTick(() => {
-      configDrawers.value.structuredLayout.applyUnifiedStructuredLayout(graph)
-      console.log('[TaskFlowCanvas] 级联删除后重新布局完成（统一结构化布局）')
-    })
-  }
+  // 🔧 级联删除完成，不再自动执行统一布局
+  // 统一布局现在只在用户手动点击"统一布局"按钮时触发
+  console.log('[TaskFlowCanvas] 级联删除完成，等待用户手动触发统一布局')
 
   console.log(`[TaskFlowCanvas] 级联删除完成，共删除 ${sortedNodesToDelete.length} 个节点`)
 }
@@ -3465,7 +3086,7 @@ const handleSingleNodeDelete = (data, shouldCascade = true) => {
           remainingNodes.forEach(node => {
             const nodeData = node.getData() || {}
             // 跳过拖拽提示点和预览相关节点
-            if (!nodeData.isEndpoint && !nodeData.isUnifiedPreview && !nodeData.isPersistentPreview) {
+            if (!nodeData.isUnifiedPreview && !nodeData.isPersistentPreview) {
               if (previewManager.previewLines && previewManager.previewLines.has(node.id)) {
                 console.log(`[TaskFlowCanvas] 刷新节点 ${node.id} 的预览线`)
                 previewManager.updatePreviewLinePosition(node)
@@ -3886,7 +3507,7 @@ const generateLayoutSummary = () => {
       const endpoints = businessNodes.filter(node => {
         const nodeData = node.getData()
         const nodeType = nodeData?.type || nodeData?.nodeType
-        return nodeData?.isEndpoint || nodeType === 'endpoint' || node.id.includes('hint_')
+        return node.id.includes('hint_')
       })
       
       const pureBusinessNodes = businessNodes.filter(node => !endpoints.includes(node))
@@ -3997,15 +3618,10 @@ const applySmartLayout = async () => {
     return
   }
   
-  try {
-    isApplyingLayout.value = true
-    await applyUnifiedStructuredLayout()
-  } catch (error) {
-    console.error('[TaskFlowCanvas] 智能布局应用失败:', error)
-    Message.error('智能布局应用失败: ' + error.message)
-  } finally {
-    isApplyingLayout.value = false
-  }
+  // 🔧 智能布局方法已废弃，统一使用手动触发的统一结构化布局
+  console.log('[TaskFlowCanvas] 智能布局方法已废弃，请使用"统一布局"按钮')
+  Message.info('请使用"统一布局"按钮进行布局调整')
+  isApplyingLayout.value = false
 }
 
 const clearCanvas = () => {
@@ -4044,15 +3660,112 @@ const exportData = () => {
     }
   }
 
-  // 注意：预览线不需要保存，它们是动态生成的UI元素
-  // 在任务恢复时，预览线会根据节点配置自动重新创建
-  console.log('[TaskFlowCanvas] 导出画布数据:', {
-    nodeCount: nodes.value.length,
-    connectionCount: connections.value.length
+  // 🔧 修复：同步图形节点的最新配置状态到本地数据
+  const syncedNodes = nodes.value.map(nodeData => {
+    const graphNode = graph ? graph.getCellById(nodeData.id) : null
+    if (graphNode) {
+      const graphData = graphNode.getData() || {}
+      
+      // 确定节点是否已配置
+      let isConfigured = false
+      
+      // 1. 开始节点默认已配置
+      if (nodeData.type === 'start') {
+        isConfigured = true
+      }
+      // 2. 检查图形节点数据中的配置状态
+      else if (graphData.isConfigured === true) {
+        isConfigured = true
+      }
+      // 3. 检查本地节点数据中的配置状态
+      else if (nodeData.data?.isConfigured === true || nodeData.isConfigured === true) {
+        isConfigured = true
+      }
+      // 4. 检查是否有实际配置数据
+      else if (graphData.config && Object.keys(graphData.config).length > 0) {
+        isConfigured = true
+      }
+      else if (nodeData.config && Object.keys(nodeData.config).length > 0) {
+        isConfigured = true
+      }
+      
+      // 合并配置数据
+      const mergedConfig = {
+        ...(nodeData.config || {}),
+        ...(graphData.config || {})
+      }
+      
+      console.log(`[exportData] 同步节点 ${nodeData.id}:`, {
+        type: nodeData.type,
+        isConfigured,
+        hasGraphConfig: !!(graphData.config && Object.keys(graphData.config).length > 0),
+        hasLocalConfig: !!(nodeData.config && Object.keys(nodeData.config).length > 0),
+        graphConfigured: graphData.isConfigured,
+        localConfigured: nodeData.data?.isConfigured || nodeData.isConfigured
+      })
+      
+      return {
+        ...nodeData,
+        data: {
+          ...nodeData.data,
+          isConfigured,
+          config: mergedConfig
+        },
+        config: mergedConfig,
+        isConfigured
+      }
+    }
+    
+    // 如果没有图形节点，使用本地数据
+    const isConfigured = nodeData.type === 'start' || 
+                        nodeData.data?.isConfigured === true || 
+                        nodeData.isConfigured === true ||
+                        (nodeData.config && Object.keys(nodeData.config).length > 0)
+    
+    console.log(`[exportData] 处理本地节点 ${nodeData.id}:`, {
+      type: nodeData.type,
+      isConfigured,
+      hasConfig: !!(nodeData.config && Object.keys(nodeData.config).length > 0)
+    })
+    
+    return {
+      ...nodeData,
+      data: {
+        ...nodeData.data,
+        isConfigured
+      },
+      isConfigured
+    }
   })
 
+  // 注意：预览线不需要保存，它们是动态生成的UI元素
+  // 在任务恢复时，预览线会根据节点配置自动重新创建
+  const configuredNodes = syncedNodes.filter(n => n.isConfigured === true)
+  const unconfiguredNodes = syncedNodes.filter(n => n.isConfigured !== true)
+  
+  console.log('[TaskFlowCanvas] 导出画布数据:', {
+    nodeCount: syncedNodes.length,
+    connectionCount: connections.value.length,
+    configuredNodes: configuredNodes.length,
+    unconfiguredNodes: unconfiguredNodes.length,
+    nodeDetails: syncedNodes.map(n => ({
+      id: n.id,
+      type: n.type,
+      isConfigured: n.isConfigured,
+      hasConfig: !!(n.config && Object.keys(n.config).length > 0)
+    }))
+  })
+  
+  if (unconfiguredNodes.length > 0) {
+    console.warn('[TaskFlowCanvas] 发现未配置的节点:', unconfiguredNodes.map(n => ({
+      id: n.id,
+      type: n.type,
+      isConfigured: n.isConfigured
+    })))
+  }
+
   return {
-    nodes: nodes.value,
+    nodes: syncedNodes,
     connections: connections.value
     // 移除 previewLines 字段 - 预览线应该动态生成，不需要持久化
   }
@@ -4125,14 +3838,10 @@ const loadCanvasData = (data) => {
             // 检查节点是否已有实际连接（从图中检查，更准确）
             const outgoingEdges = graph.getOutgoingEdges(graphNode) || []
             const realConnections = outgoingEdges.filter(edge => {
-              const edgeData = edge.getData() || {}
-              // 排除预览线，只检查真实连接
-              return !edgeData.isPersistentPreview && 
-                     !edgeData.isPreview && 
-                     !edgeData.isUnifiedPreview &&
-                     edgeData.type !== 'preview-line' &&
-                     edgeData.type !== 'unified-preview-line' &&
-                     edgeData.type !== 'draggable-preview'
+              // 排除预览线，只检查真实连接 - 简化逻辑：有源节点和目标节点的边就是真实连接
+              const edgeSource = edge.getSourceCellId()
+              const edgeTarget = edge.getTargetCellId()
+              return edgeSource && edgeTarget
             })
             
             const hasRealConnections = realConnections.length > 0
@@ -4185,38 +3894,41 @@ const loadCanvasData = (data) => {
                              edgeData.type === 'unified-preview-line' ||
                              edgeData.type === 'draggable-preview'
             
-            const sourceId = edge.getSourceCellId()
-            const targetId = edge.getTargetCellId()
+            const edgeSourceId = edge.getSourceCellId()
+            const edgeTargetId = edge.getTargetCellId()
             
-            if (isPreview) {
+            // 简化逻辑：根据是否有目标节点来分类
+            const isPreviewLine = edgeSourceId && !edgeTargetId
+            
+            if (isPreviewLine) {
               previewLines.push({
                 id: edge.id,
-                type: edgeData.type,
-                source: sourceId,
-                target: targetId,
+                type: edgeData.type || 'preview-line',
+                source: edgeSourceId,
+                target: edgeTargetId,
                 branchId: edgeData.branchId,
                 labels: edge.getLabels()?.length || 0
               })
-            } else {
-              // 真实连接
+            } else if (edgeSourceId && edgeTargetId) {
+              // 真实连接：有源节点和目标节点
               realConnections.push({
                 id: edge.id,
-                source: sourceId,
-                target: targetId,
+                source: edgeSourceId,
+                target: edgeTargetId,
                 branchId: edgeData.branchId
               })
               
               // 更新节点连接状态
-              if (nodeConnections.has(sourceId)) {
-                const sourceConn = nodeConnections.get(sourceId)
+              if (nodeConnections.has(edgeSourceId)) {
+                const sourceConn = nodeConnections.get(edgeSourceId)
                 sourceConn.hasOutgoing = true
                 if (edgeData.branchId) {
                   sourceConn.branches.add(edgeData.branchId)
                 }
               }
               
-              if (nodeConnections.has(targetId)) {
-                const targetConn = nodeConnections.get(targetId)
+              if (nodeConnections.has(edgeTargetId)) {
+                const targetConn = nodeConnections.get(edgeTargetId)
                 targetConn.hasIncoming = true
               }
             }
@@ -4259,16 +3971,11 @@ const loadCanvasData = (data) => {
           
           // 5. 保留的预览线统计
           const remainingPreviewLines = previewLines.length - previewLinesToRemove.length
-          console.log(`✅ [TaskFlowCanvas] 预览线清理完成: 删除 ${previewLinesToRemove.length} 条已连接预览线，保留 ${remainingPreviewLines} 条未连接预览线`)
+          // 预览线清理完成
           
-          // 🔧 在预览线清理完成后，执行统一布局以确保连线标签正确显示
-          setTimeout(async () => {
-            try {
-              await applyUnifiedStructuredLayout()
-            } catch (error) {
-              console.error('❌ [TaskFlowCanvas] 统一布局执行失败:', error)
-            }
-          }, 100)
+          // 🔧 预览线清理完成，不再自动执行统一布局
+          // 统一布局现在只在用户手动点击"统一布局"按钮时触发
+          // 预览线清理完成，等待用户手动触发统一布局
           
         }, 100) // 短暂延迟确保预览线生成完成后再清理
         
@@ -4306,31 +4013,49 @@ const loadCanvasData = (data) => {
           
           allEdges.forEach((edge, index) => {
             const edgeData = edge.getData() || {}
-            const sourceId = edge.getSourceCellId()
-            const targetId = edge.getTargetCellId()
+            const edgeSourceId = edge.getSourceCellId()
+            const edgeTargetId = edge.getTargetCellId()
             const labels = edge.getLabels() || []
             
-            // 判断连接类型
-            const isPreview = edgeData.isPersistentPreview || 
-                             edgeData.isPreview || 
-                             edgeData.isUnifiedPreview ||
-                             edgeData.type === 'preview-line' ||
-                             edgeData.type === 'unified-preview-line' ||
-                             edgeData.type === 'draggable-preview'
+            // 🔧 改进显示逻辑：对于预览线，显示更有意义的信息
+            let displaySourceId = edgeSourceId
+            let displayTargetId = edgeTargetId
+            
+            // 如果是预览线且有sourceNodeId信息，使用它
+            if (edgeData.sourceNodeId) {
+              displaySourceId = edgeData.sourceNodeId
+            }
+            
+            // 如果target是坐标对象，显示为"坐标"
+            if (edgeTargetId === undefined) {
+              displayTargetId = '坐标'
+            }
+            
+            // 统一预览线识别逻辑：有源节点但没有目标节点的边就是预览线
+            const isPreview = edgeSourceId && !edgeTargetId
             
             if (isPreview) {
               previewLines++
-              console.log(`  ${index + 1}. [预览线] ${sourceId} -> ${targetId}, 类型: ${edgeData.type || 'unknown'}, 标签数: ${labels.length}`)
+              console.log(`  ${index + 1}. [预览线] ${displaySourceId} -> ${displayTargetId}, 标签数: ${labels.length}`)
             } else {
               realConnections++
-              console.log(`  ${index + 1}. [真实连接] ${sourceId} -> ${targetId}, 分支ID: ${edgeData.branchId || 'none'}, 标签数: ${labels.length}`)
+              console.log(`  ${index + 1}. [连接线] ${displaySourceId} -> ${displayTargetId}, 分支ID: ${edgeData.branchId || 'none'}, 标签数: ${labels.length}`)
             }
             
             // 统计标签
             labelCount += labels.length
             if (labels.length > 0) {
               labels.forEach((label, labelIndex) => {
-                console.log(`    标签 ${labelIndex + 1}: "${label.markup || label.text || 'empty'}", 位置: ${JSON.stringify(label.position || {})}`)
+                // 🔧 改进标签显示逻辑，优先显示attrs.text.text
+                let labelText = 'empty'
+                if (label.attrs && label.attrs.text && label.attrs.text.text) {
+                  labelText = label.attrs.text.text
+                } else if (label.markup) {
+                  labelText = label.markup
+                } else if (label.text) {
+                  labelText = label.text
+                }
+                console.log(`    标签 ${labelIndex + 1}: "${labelText}", 位置: ${label.position || 0.8}`)
               })
             }
           })
@@ -4353,24 +4078,22 @@ const loadCanvasData = (data) => {
           if (previewLines > 0) {
             console.log(`🔍 [TaskFlowCanvas] 加载完成后检测到 ${previewLines} 条预览线，开始智能验证...`)
             
-            // 🎯 智能验证预览线的有效性
+            // 🎯 智能验证预览线的有效性 - 简化逻辑：有源节点但没有目标节点的边就是预览线
             console.log('🔍 [TaskFlowCanvas] 开始智能验证预览线有效性...')
             const previewEdges = allEdges.filter(edge => {
-              const edgeData = edge.getData() || {}
-              return edgeData.isPersistentPreview || 
-                     edgeData.isPreview || 
-                     edgeData.isUnifiedPreview ||
-                     edgeData.type === 'preview-line' ||
-                     edgeData.type === 'unified-preview-line' ||
-                     edgeData.type === 'draggable-preview'
+              const edgeSourceId = edge.getSourceCellId()
+              const edgeTargetId = edge.getTargetCellId()
+              return edgeSourceId && !edgeTargetId
             })
             
             let invalidCount = 0
             let validCount = 0
             
             previewEdges.forEach(edge => {
-              const sourceId = edge.getSourceCellId()
-              const sourceNode = graph.getCellById(sourceId)
+              const edgeData = edge.getData() || {};
+              // 统一获取源节点ID：优先使用sourceNodeId，否则使用getSourceCellId
+              const edgeSourceId = edgeData.sourceNodeId || edge.getSourceCellId();
+              const sourceNode = graph.getCellById(edgeSourceId);
               
               // 检查源节点是否存在且有效
               if (!sourceNode) {
@@ -4379,7 +4102,7 @@ const loadCanvasData = (data) => {
                   graph.removeCell(edge)
                   invalidCount++
                 } catch (error) {
-                  console.error(`❌ [TaskFlowCanvas] 清理预览线失败: ${edge.id}`, error)
+                  console.error(`清理预览线失败: ${edge.id}`, error)
                 }
                 return
               }
@@ -4390,50 +4113,49 @@ const loadCanvasData = (data) => {
               
               // 🎯 区分分流类节点和普通节点的清理标准
               const isSplitNode = ['audience-split', 'event-split', 'ab-test'].includes(nodeType)
+              const isStartNode = nodeType === 'start'
               
-              if (!sourceData.isConfigured) {
+              // 🔧 修复：开始节点特殊处理，开始节点默认为已配置
+              const isNodeConfigured = sourceData.isConfigured || isStartNode
+              
+              if (!isNodeConfigured) {
                 // 对于分流类节点，如果未配置则清理
                 // 对于普通节点，如果未配置也清理
+                // 开始节点不会进入此分支，因为isNodeConfigured已经考虑了开始节点的特殊情况
                 console.log(`🗑️ [TaskFlowCanvas] 清理无效预览线(源节点未配置): ${edge.id}, 节点类型: ${nodeType}`)
                 try {
                   graph.removeCell(edge)
                   invalidCount++
                 } catch (error) {
-                  console.error(`❌ [TaskFlowCanvas] 清理预览线失败: ${edge.id}`, error)
+                  console.error(`清理预览线失败: ${edge.id}`, error)
                 }
                 return
               }
+              
+  
               
               // 🎯 对于已配置的分流类节点，检查是否有分支配置
-              if (isSplitNode && sourceData.isConfigured) {
+              if (isSplitNode && isNodeConfigured) {
                 // 分流类节点已配置，保留其预览线（即使目标节点不存在）
                 validCount++
-                console.log(`✅ [TaskFlowCanvas] 保留分流节点预览线: ${edge.id}, 节点类型: ${nodeType}`)
+                // 保留分流节点预览线
                 return
               }
+              
+              // 🎯 对于开始节点，始终保留预览线
+  
               
               // 🎯 对于普通节点，检查目标节点是否存在
-              const targetId = edge.getTargetCellId()
-              const targetNode = graph.getCellById(targetId)
+              // const targetId = edge.getTargetCellId()
+              // const targetNode = graph.getCellById(targetId)
               
-              if (!targetNode && !isSplitNode) {
-                // 普通节点的预览线如果没有有效目标，则清理
-                console.log(`🗑️ [TaskFlowCanvas] 清理无效预览线(目标节点不存在): ${edge.id}, 源节点类型: ${nodeType}`)
-                try {
-                  graph.removeCell(edge)
-                  invalidCount++
-                } catch (error) {
-                  console.error(`❌ [TaskFlowCanvas] 清理预览线失败: ${edge.id}`, error)
-                }
-                return
-              }
               
               // 🎯 默认情况：普通节点的有效预览线，保留
               validCount++
-              console.log(`✅ [TaskFlowCanvas] 保留有效预览线: ${edge.id}, 节点类型: ${nodeType || 'unknown'}`)
+              // 保留有效预览线
             })
             
-            console.log(`✅ [TaskFlowCanvas] 智能清理完成，清理了 ${invalidCount} 条无效预览线，保留了 ${validCount} 条有效预览线`)
+            // 智能清理完成
             
             // 🎯 如果仍有无效预览线，触发预览线管理器清理
             if (invalidCount > 0 && window.unifiedPreviewLineManager) {
@@ -4457,7 +4179,7 @@ const loadCanvasData = (data) => {
               window.unifiedPreviewLineManager.validateAndCleanupDuplicates()
             }
           } else {
-            console.log(`✅ [TaskFlowCanvas] 预览线数量(${previewLines})在合理范围内，已配置节点数量: ${configuredNodes.length}`)
+            // 预览线数量在合理范围内
           }
           
           if (labelCount > realConnections + previewLines) {
@@ -4999,6 +4721,936 @@ const validateNodeConfiguration = (nodeData, realConnections = []) => {
   return result
 }
 
+// 调试面板相关方法
+const toggleDebugPanel = () => {
+  showDebugPanel.value = !showDebugPanel.value
+  if (showDebugPanel.value) {
+    updateDebugStats()
+  }
+}
+
+const closeDebugPanel = () => {
+  showDebugPanel.value = false
+}
+
+const startDragDebugPanel = (e) => {
+  isDraggingDebugPanel.value = true
+  const rect = e.target.closest('.debug-panel').getBoundingClientRect()
+  const offsetX = e.clientX - rect.left
+  const offsetY = e.clientY - rect.top
+  
+  const handleMouseMove = (moveEvent) => {
+    if (isDraggingDebugPanel.value) {
+      debugPanelPosition.value = {
+        x: moveEvent.clientX - offsetX,
+        y: moveEvent.clientY - offsetY
+      }
+    }
+  }
+  
+  const handleMouseUp = () => {
+    isDraggingDebugPanel.value = false
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }
+  
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+}
+
+const updateDebugStats = () => {
+  if (!graph) {
+    debugStats.value = {
+      loading: false,
+      data: {
+        nodeCount: 0,
+        configuredNodeCount: 0,
+        expectedPreviewLines: 0,
+        actualPreviewLines: 0,
+        expectedConnections: 0,
+        actualConnections: 0,
+        issues: []
+      }
+    }
+    return
+  }
+  
+  // 确保debugStats.value存在，避免null错误
+  if (!debugStats.value) {
+    debugStats.value = { loading: false, data: null }
+  }
+  debugStats.value.loading = true
+  
+  try {
+    const nodes = graph.getNodes()
+    const edges = graph.getEdges()
+    const issues = []
+    
+    console.log('[调试统计] 开始统计画布数据...')
+    console.log('[调试统计] 画布节点数:', nodes.length)
+    console.log('[调试统计] 画布边数:', edges.length)
+    
+    // 统计节点数
+    const nodeCount = nodes.length
+    
+    // 统计已配置的节点数和详细信息
+    let configuredNodeCount = 0
+    const nodeDetails = []
+    
+    nodes.forEach(node => {
+      try {
+        if (!node || typeof node.getData !== 'function') {
+          console.warn('[调试统计] 无效的节点对象:', node)
+          return
+        }
+        
+        const nodeData = node.getData() || {}
+        const configKeys = nodeData.config ? Object.keys(nodeData.config) : []
+        const configSummary = configKeys.length > 0 ? configKeys.slice(0, 3).join(', ') + (configKeys.length > 3 ? '...' : '') : '无配置'
+        
+        const nodeInfo = {
+          id: node.id || 'unknown',
+          type: nodeData.type || 'unknown',
+          isConfigured: nodeData.isConfigured || false,
+          configCount: configKeys.length,
+          configSummary: configSummary,
+          position: typeof node.getPosition === 'function' ? node.getPosition() : { x: 0, y: 0 },
+          size: typeof node.getSize === 'function' ? node.getSize() : { width: 0, height: 0 }
+        }
+        
+        nodeDetails.push(nodeInfo)
+        
+        if (nodeData.isConfigured) {
+          configuredNodeCount++
+        }
+      } catch (error) {
+        console.warn('[调试统计] 处理节点时出错:', error, node)
+        issues.push(`节点处理错误: ${error.message}`)
+      }
+    })
+    
+    console.log('[调试统计] 节点详情:', nodeDetails.map(n => `${n.id}(${n.type}, 配置:${n.isConfigured}[${n.configCount}项], ${n.configSummary})`).join(', '))
+    console.log('[调试统计] 节点详细数据:', nodeDetails)
+    
+    // 统计连接线详情（严格区分连接和预览线）
+    const connectionDetails = []
+    let realConnections = 0
+    let previewConnections = 0
+    let invalidConnections = 0
+    
+    // 统一的预览线识别函数
+    const isPreviewLine = (edge, edgeData, edgeId) => {
+      return (
+        // 1. 通过边数据属性判断（宽松检查，兼容各种情况）
+        edgeData.isPreview || 
+        edgeData.isPersistentPreview || 
+        edgeData.isUnifiedPreview ||
+        // 2. 通过类型判断
+        edgeData.type === 'preview-line' ||
+        edgeData.type === 'unified-preview-line' ||
+        edgeData.type === 'draggable-preview' ||
+        // 3. 通过ID模式判断（最重要的识别方式）
+        edgeId.includes('preview') ||
+        edgeId.includes('unified_preview') ||
+        edgeId.startsWith('preview-') ||
+        edgeId.startsWith('unified-preview-') ||
+        edgeId.startsWith('preview_node_') ||
+        // 4. 通过边的样式属性判断（预览线通常有特殊样式）
+        (edge.attrs && edge.attrs.line && edge.attrs.line.strokeDasharray)
+      )
+    }
+    
+    edges.forEach(edge => {
+      try {
+        if (!edge || typeof edge.getData !== 'function') {
+          console.warn('[调试统计] 无效的边对象:', edge)
+          invalidConnections++
+          return
+        }
+        
+        const edgeData = edge.getData() || {}
+        const edgeId = edge.id || 'unknown'
+        
+        // 使用统一的预览线识别函数
+        const isPreview = isPreviewLine(edge, edgeData, edgeId)
+        
+        // 调试：记录预览线识别过程
+        if (edgeId.includes('unified_preview')) {
+          console.log(`[调试统计] 预览线识别: ${edgeId}`, {
+            edgeData,
+            isPreview,
+            checks: {
+              isPreview: edgeData.isPreview,
+              isPersistentPreview: edgeData.isPersistentPreview,
+              isUnifiedPreview: edgeData.isUnifiedPreview,
+              type: edgeData.type,
+              idIncludes: edgeId.includes('unified_preview')
+            }
+          })
+        }
+        
+        // 获取源节点和目标节点信息
+        const sourceId = typeof edge.getSourceCellId === 'function' ? edge.getSourceCellId() : 'unknown'
+        const targetId = typeof edge.getTargetCellId === 'function' ? edge.getTargetCellId() : 'unknown'
+        
+        // 验证连接的有效性：连接必须有源节点和目标节点
+        const hasValidSource = sourceId && sourceId !== 'unknown'
+        const hasValidTarget = targetId && targetId !== 'unknown'
+        const isValidConnection = hasValidSource && hasValidTarget
+        
+        // 确定连接类别 - 修复无效连接判断逻辑
+        let category = 'invalid'
+        if (isPreview) {
+          // 预览线单独分类，不参与有效性判断
+          category = 'preview'
+          previewConnections++
+        } else if (isValidConnection) {
+          // 真实连接且有效
+          category = 'real'
+          realConnections++
+        } else {
+          // 只有非预览线且无效的连接才算作无效连接
+          category = 'invalid'
+          invalidConnections++
+        }
+        
+        const connectionInfo = {
+          id: edgeId,
+          source: sourceId,
+          target: targetId,
+          type: edgeData.type || 'unknown',
+          isPreview: isPreview,
+          isValidConnection: isValidConnection,
+          category: category,
+          branchId: edgeData.branchId,
+          label: edgeData.label || edge.getLabels()?.[0]?.attrs?.text?.text
+        }
+        
+        connectionDetails.push(connectionInfo)
+        
+        // 记录问题连接 - 只有非预览线且无效的连接才是真正的问题
+        if (!isValidConnection && !isPreview) {
+          console.warn('[调试统计] 发现无效连接:', connectionInfo)
+          issues.push(`无效连接: ${edgeId} (源: ${sourceId}, 目标: ${targetId})`)
+        } else if (isPreview) {
+          console.log('[调试统计] 预览线:', connectionInfo)
+        }
+      } catch (error) {
+        console.warn('[调试统计] 处理边时出错:', error, edge)
+        issues.push(`连接线处理错误: ${error.message}`)
+        invalidConnections++
+      }
+    })
+    
+    // 概念区分说明：
+    // 1. 连接(Connection/Real Connection): 真实的节点间连线，表示实际的业务流程路径
+    // 2. 预览线(Preview Line): 辅助显示的虚拟连线，用于预览可能的连接路径，不代表实际业务流程
+    // 3. 无效连接(Invalid Connection): 缺少源节点或目标节点的连线，通常是数据错误导致
+    
+    console.log('[调试统计] === 连接线统计详情 ===')
+    console.log('[调试统计] 真实连接数(实际业务流程):', realConnections)
+    console.log('[调试统计] 预览线数(辅助显示):', previewConnections) 
+    console.log('[调试统计] 无效连接数(数据错误):', invalidConnections)
+    console.log('[调试统计] 连接分类详情:', connectionDetails.map(c => {
+      const sourceNode = nodes.find(n => n.id === c.source)
+      const targetNode = nodes.find(n => n.id === c.target)
+      const sourceConfigured = sourceNode?.getData()?.isConfigured || false
+      const targetConfigured = targetNode?.getData()?.isConfigured || false
+      return `${c.id}(${c.category === 'real' ? '真实连接' : c.category === 'preview' ? '预览线' : '无效连接'}, 源配置:${sourceConfigured}, 目标配置:${targetConfigured})`
+    }).join(', '))
+    console.log('[调试统计] 连接线详情:', connectionDetails)
+    
+    // 获取预览线统计信息
+    let expectedPreviewLines = 0
+    let actualPreviewLines = 0
+    let expectedConnections = 0
+    let previewLineDetails = {}
+    
+    if (unifiedPreviewLineManager) {
+      try {
+        // 统计应该存在的预览线数（基于已配置的节点，但需要排除已有连接的部分）
+        if (!nodes || !Array.isArray(nodes)) {
+          console.warn('[调试统计] 节点数据无效')
+          issues.push('节点数据无效')
+          return
+        }
+        
+        // 1. 先统计每个节点的真实连接情况
+        const nodeConnections = new Map() // nodeId -> { hasOutgoing: boolean, branches: Set, totalBranches: number }
+        
+        nodes.forEach(node => {
+          try {
+            const nodeData = node.getData() || {}
+            let totalBranches = 1 // 默认单分支
+            
+            // 根据节点类型计算总分支数
+            const isBranchNode = ['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)
+            if (isBranchNode && nodeData.config) {
+              if (nodeData.type === 'audience-split' && nodeData.config.crowdLayers) {
+                totalBranches = nodeData.config.crowdLayers.length + 1
+              } else if (nodeData.type === 'ab-test' && nodeData.config.testGroups) {
+                totalBranches = nodeData.config.testGroups.length
+              } else if (nodeData.branches) {
+                totalBranches = nodeData.branches.length
+              } else {
+                totalBranches = 2 // 默认分支数
+              }
+            }
+            
+            nodeConnections.set(node.id, {
+              hasOutgoing: false,
+              branches: new Set(),
+              totalBranches: totalBranches,
+              nodeType: nodeData.type,
+              isConfigured: nodeData.isConfigured
+            })
+          } catch (error) {
+            console.warn('[调试统计] 初始化节点连接信息时出错:', error, node)
+            nodeConnections.set(node.id, {
+              hasOutgoing: false,
+              branches: new Set(),
+              totalBranches: 1,
+              nodeType: 'unknown',
+              isConfigured: false
+            })
+          }
+        })
+        
+        // 2. 遍历所有边，统计真实连接
+        edges.forEach(edge => {
+          try {
+            if (!edge || typeof edge.getData !== 'function') return
+            
+            const edgeData = edge.getData() || {}
+            const edgeId = edge.id || 'unknown'
+            
+            // 使用统一的预览线识别函数
+            const isPreview = isPreviewLine(edge, edgeData, edgeId)
+            
+            // 获取源节点和目标节点信息
+            let sourceId = null
+            let targetId = null
+            
+            // 优先从边数据中获取源和目标信息
+            if (edgeData.source) {
+              sourceId = edgeData.source
+            } else if (edgeData.sourceNodeId) {
+              sourceId = edgeData.sourceNodeId
+            } else if (typeof edge.getSourceCellId === 'function') {
+              sourceId = edge.getSourceCellId()
+            }
+            
+            if (edgeData.target) {
+              targetId = edgeData.target
+            } else if (edgeData.targetNodeId) {
+              targetId = edgeData.targetNodeId
+            } else if (typeof edge.getTargetCellId === 'function') {
+              targetId = edge.getTargetCellId()
+            }
+            
+            // 调试：记录备用方案中的预览线识别
+            if (edgeId.includes('unified_preview')) {
+              console.log(`[调试统计] 备用方案预览线识别: ${edgeId}`, {
+                isPreview,
+                sourceId,
+                targetId
+              })
+            }
+            
+            // 验证连接的有效性：连接必须有源节点和目标节点
+            const hasValidSource = sourceId && sourceId !== 'unknown'
+            const hasValidTarget = targetId && targetId !== 'unknown'
+            const isValidConnection = hasValidSource && hasValidTarget
+            
+            // 只统计有效的真实连接（非预览线且有效）
+            if (!isPreview && isValidConnection) {
+              if (nodeConnections.has(sourceId)) {
+                const sourceConn = nodeConnections.get(sourceId)
+                sourceConn.hasOutgoing = true
+                
+                // 如果有分支ID，记录该分支已连接
+                if (edgeData.branchId) {
+                  sourceConn.branches.add(edgeData.branchId)
+                }
+                
+                // 获取源节点和目标节点的配置状态
+                const sourceNode = nodes.find(n => n.id === sourceId)
+                const targetNode = nodes.find(n => n.id === targetId)
+                const sourceConfigured = sourceNode?.getData()?.isConfigured || false
+                const targetConfigured = targetNode?.getData()?.isConfigured || false
+                const sourceConfig = sourceNode?.getData()?.config ? Object.keys(sourceNode.getData().config).length : 0
+                const targetConfig = targetNode?.getData()?.config ? Object.keys(targetNode.getData().config).length : 0
+                
+                console.log(`[调试统计] 记录真实连接: ${sourceId} -> ${targetId}, 分支ID: ${edgeData.branchId || 'none'}, 边ID: ${edgeId}, 源配置状态: ${sourceConfigured}(${sourceConfig}项), 目标配置状态: ${targetConfigured}(${targetConfig}项)`)
+              }
+            } else if (!isValidConnection) {
+              // 获取源节点的配置状态信息
+              const sourceNode = nodes.find(n => n.id === sourceId)
+              const sourceConfigured = sourceNode?.getData()?.isConfigured || false
+              const sourceConfig = sourceNode?.getData()?.config ? Object.keys(sourceNode.getData().config).length : 0
+              const sourceType = sourceNode?.getData()?.type || 'unknown'
+              
+              console.warn(`[调试统计] 跳过无效连接: ${edgeId} (源: ${sourceId}, 目标: ${targetId}, 源节点类型: ${sourceType}, 源配置状态: ${sourceConfigured}(${sourceConfig}项))`)
+            }
+          } catch (error) {
+            console.warn('[调试统计] 处理边连接统计时出错:', error, edge)
+          }
+        })
+        
+        // 3. 基于已配置节点和连接状态计算期望预览线数
+        nodes.forEach(node => {
+          try {
+            if (!node || typeof node.getData !== 'function') {
+              console.warn('[调试统计] 跳过无效节点:', node)
+              return
+            }
+            
+            const nodeData = node.getData() || {}
+            if (nodeData.isConfigured) {
+              const nodeConn = nodeConnections.get(node.id)
+              if (!nodeConn) return
+              
+              // 检查节点类型，分支节点可能有多条预览线
+              const isBranchNode = ['audience-split', 'event-split', 'ab-test'].includes(nodeData.type)
+              
+              if (isBranchNode) {
+                // 分支节点根据分支数量计算预览线数，但要排除已连接的分支
+                let branchCount = 2 // 默认分支数
+                if (nodeData.config) {
+                  if (nodeData.type === 'audience-split' && nodeData.config.crowdLayers) {
+                    branchCount = nodeData.config.crowdLayers.length + 1
+                  } else if (nodeData.type === 'ab-test' && nodeData.config.testGroups) {
+                    branchCount = nodeData.config.testGroups.length
+                  } else if (nodeData.branches) {
+                    branchCount = nodeData.branches.length
+                  }
+                }
+                
+                // 减去已连接的分支数
+                const unconnectedBranches = branchCount - nodeConn.branches.size
+                if (unconnectedBranches > 0) {
+                  expectedPreviewLines += unconnectedBranches
+                  const configKeys = nodeData.config ? Object.keys(nodeData.config) : []
+                  const configSummary = configKeys.length > 0 ? `配置项: ${configKeys.join(', ')}` : '无配置数据'
+                  console.log(`[调试统计] 分支节点 ${node.id} (${nodeData.type}) 预期预览线数: ${unconnectedBranches} (总分支: ${branchCount}, 已连接: ${nodeConn.branches.size}), 配置状态: ${nodeData.isConfigured}(${configKeys.length}项), ${configSummary}`)
+                } else {
+                  const configKeys = nodeData.config ? Object.keys(nodeData.config) : []
+                  const configSummary = configKeys.length > 0 ? `配置项: ${configKeys.join(', ')}` : '无配置数据'
+                  console.log(`[调试统计] 分支节点 ${node.id} (${nodeData.type}) 所有分支已连接，无需预览线, 配置状态: ${nodeData.isConfigured}(${configKeys.length}项), ${configSummary}`)
+                }
+              } else {
+                // 普通节点：如果没有出向连接，则需要1条预览线
+                if (!nodeConn.hasOutgoing) {
+                  expectedPreviewLines += 1
+                  const configKeys = nodeData.config ? Object.keys(nodeData.config) : []
+                  const configSummary = configKeys.length > 0 ? `配置项: ${configKeys.join(', ')}` : '无配置数据'
+                  console.log(`[调试统计] 普通节点 ${node.id} (${nodeData.type}) 预期预览线数: 1, 配置状态: ${nodeData.isConfigured}(${configKeys.length}项), ${configSummary}`)
+                } else {
+                  const configKeys = nodeData.config ? Object.keys(nodeData.config) : []
+                  const configSummary = configKeys.length > 0 ? `配置项: ${configKeys.join(', ')}` : '无配置数据'
+                  console.log(`[调试统计] 普通节点 ${node.id} (${nodeData.type}) 已有连接，无需预览线, 配置状态: ${nodeData.isConfigured}(${configKeys.length}项), ${configSummary}`)
+                }
+              }
+            }
+          } catch (error) {
+            console.warn('[调试统计] 处理节点预览线统计时出错:', error, node)
+            issues.push(`节点预览线统计错误: ${error.message}`)
+          }
+        })
+        
+        // 获取实际预览线数和详情 - 优化预览线管理器数据访问方式
+        if (unifiedPreviewLineManager) {
+          try {
+            console.log('[调试统计] 预览线管理器状态:', {
+              exists: !!unifiedPreviewLineManager,
+              hasGetAllMethod: typeof unifiedPreviewLineManager.getAllPreviewLines === 'function',
+              hasGetDataMethod: typeof unifiedPreviewLineManager.getPreviewLineData === 'function',
+              hasGetLinesMethod: typeof unifiedPreviewLineManager.getPreviewLines === 'function',
+              hasGetActiveMethod: typeof unifiedPreviewLineManager.getActivePreviewLines === 'function',
+              hasGetVisibleMethod: typeof unifiedPreviewLineManager.getVisiblePreviewLines === 'function',
+              hasDataProperty: !!unifiedPreviewLineManager.data,
+              hasLinesProperty: !!unifiedPreviewLineManager.lines,
+              hasPreviewLinesProperty: !!unifiedPreviewLineManager.previewLines
+            })
+            
+            let previewLines = null
+            let accessMethod = 'none'
+            
+            // 按优先级尝试多种方法获取预览线数据
+            const accessMethods = [
+              { method: 'getAllPreviewLines', func: () => unifiedPreviewLineManager.getAllPreviewLines?.() },
+              { method: 'getActivePreviewLines', func: () => unifiedPreviewLineManager.getActivePreviewLines?.() },
+              { method: 'getVisiblePreviewLines', func: () => unifiedPreviewLineManager.getVisiblePreviewLines?.() },
+              { method: 'getPreviewLineData', func: () => unifiedPreviewLineManager.getPreviewLineData?.() },
+              { method: 'getPreviewLines', func: () => unifiedPreviewLineManager.getPreviewLines?.() },
+              { method: 'data', func: () => unifiedPreviewLineManager.data },
+              { method: 'lines', func: () => unifiedPreviewLineManager.lines },
+              { method: 'previewLines', func: () => unifiedPreviewLineManager.previewLines }
+            ]
+            
+            for (const { method, func } of accessMethods) {
+              try {
+                const result = func()
+                if (result !== null && result !== undefined) {
+                  previewLines = result
+                  accessMethod = method
+                  console.log(`[调试统计] 通过${method}成功获取数据:`, result)
+                  break
+                }
+              } catch (methodError) {
+                console.warn(`[调试统计] 方法${method}调用失败:`, methodError)
+              }
+            }
+            
+            console.log(`[调试统计] 预览线管理器数据访问结果: 方法=${accessMethod}, 数据=`, previewLines)
+            
+            if (previewLines && typeof previewLines === 'object') {
+              previewLineDetails = { 
+                data: previewLines, 
+                accessMethod: accessMethod,
+                timestamp: Date.now()
+              }
+              
+              // 更准确的预览线数量计算
+              if (Array.isArray(previewLines)) {
+                actualPreviewLines = previewLines.length
+                console.log(`[调试统计] 数组形式预览线数据，长度: ${actualPreviewLines}`)
+              } else if (previewLines && typeof previewLines === 'object') {
+                // 如果是对象，统计有效的预览线条目
+                const validEntries = Object.entries(previewLines).filter(([key, value]) => {
+                  return value && typeof value === 'object' && (value.id || value.nodeId || value.source || value.target)
+                })
+                actualPreviewLines = validEntries.length
+                console.log('[调试统计] 对象形式预览线数据，有效条目:', validEntries.length, '详情:', validEntries)
+              } else {
+                actualPreviewLines = 0
+              }
+              
+              console.log(`[调试统计] 通过${accessMethod}获取到预览线数据，数量: ${actualPreviewLines}`)
+            } else {
+              previewLineDetails = { 
+                accessMethod: accessMethod, 
+                error: '无有效数据',
+                timestamp: Date.now()
+              }
+              actualPreviewLines = 0
+              console.warn(`[调试统计] 预览线管理器通过${accessMethod}返回无效数据:`, previewLines)
+              issues.push(`预览线管理器返回空数据或无效数据 (访问方法: ${accessMethod})`)
+            }
+          } catch (error) {
+            console.error('[调试统计] 获取预览线数据时出错:', error)
+            previewLineDetails = {}
+            actualPreviewLines = 0
+            issues.push(`预览线数据获取失败: ${error.message}`)
+          }
+        } else {
+          // 备用方案：直接从画布边数据中统计预览线
+          console.warn('[调试统计] 预览线管理器不可用，使用备用统计方案')
+          
+          const canvasPreviewLines = []
+          edges.forEach(edge => {
+            try {
+              if (!edge || typeof edge.getData !== 'function') return
+              
+              const edgeData = edge.getData() || {}
+              const edgeId = edge.id || 'unknown'
+              
+              // 使用严格一致的预览线识别逻辑
+              const isPreview = 
+                edgeData.isPreview === true || 
+                edgeData.isPersistentPreview === true || 
+                edgeData.isUnifiedPreview === true ||
+                edgeData.type === 'preview-line' ||
+                edgeData.type === 'unified-preview-line' ||
+                edgeData.type === 'draggable-preview' ||
+                edgeId.includes('preview') ||
+                edgeId.includes('unified_preview') ||
+                edgeId.startsWith('preview-') ||
+                edgeId.startsWith('unified-preview-') ||
+                (edge.attrs && edge.attrs.line && edge.attrs.line.strokeDasharray)
+              
+              if (isPreview) {
+                const sourceId = typeof edge.getSourceCellId === 'function' ? edge.getSourceCellId() : null
+                const targetId = typeof edge.getTargetCellId === 'function' ? edge.getTargetCellId() : null
+                
+                canvasPreviewLines.push({
+                  id: edgeId,
+                  sourceId,
+                  targetId,
+                  type: edgeData.type,
+                  branchId: edgeData.branchId
+                })
+              }
+            } catch (error) {
+              console.warn('[调试统计] 统计画布预览线时出错:', error, edge)
+            }
+          })
+          
+          previewLineDetails = { canvasPreviewLines }
+          actualPreviewLines = canvasPreviewLines.length
+          console.log('[调试统计] 从画布统计到预览线:', canvasPreviewLines, '数量:', actualPreviewLines)
+          
+          if (!unifiedPreviewLineManager) {
+            issues.push('预览线管理器未初始化')
+          } else {
+            issues.push('预览线管理器方法缺失')
+          }
+        }
+        
+        console.log('[调试统计] 预览线管理器数据:', previewLineDetails)
+        console.log('[调试统计] 期望预览线数:', expectedPreviewLines, '实际预览线数:', actualPreviewLines)
+        
+        // 期望连接数 = 总节点数 - 1（连接线应该将所有节点连接成一个连通图）
+        expectedConnections = Math.max(0, nodeCount - 1)
+        
+        console.log('[调试统计] 期望连接数计算: 总节点数', nodeCount, '- 1 =', expectedConnections)
+        
+      } catch (error) {
+        console.error('[调试统计] 获取预览线统计信息失败:', error)
+        issues.push(`预览线统计失败: ${error.message}`)
+        // 设置默认值以防止界面崩溃
+        expectedPreviewLines = 0
+        actualPreviewLines = 0
+        previewLineDetails = {}
+      }
+    } else {
+      issues.push('统一预览线管理器未初始化')
+    }
+    
+    // 检查问题
+    if (actualPreviewLines < expectedPreviewLines) {
+      issues.push(`预览线不完整: 期望${expectedPreviewLines}条，实际${actualPreviewLines}条`)
+    }
+    
+    if (configuredNodeCount === 0 && nodeCount > 0) {
+      issues.push('存在未配置的节点')
+    }
+    
+    debugStats.value = {
+      loading: false,
+      data: {
+        nodeCount,
+        configuredNodeCount,
+        expectedPreviewLines,
+        actualPreviewLines,
+        expectedConnections,
+        actualConnections: realConnections,
+        issues,
+        // 详细信息用于调试
+        nodeDetails,
+        connectionDetails,
+        previewLineDetails
+      }
+    }
+    
+    console.log('[调试统计] 统计完成:', debugStats.value.data)
+    
+  } catch (error) {
+    console.error('[调试统计] 统计失败:', error)
+    debugStats.value = {
+      loading: false,
+      data: {
+        nodeCount: 0,
+        configuredNodeCount: 0,
+        expectedPreviewLines: 0,
+        actualPreviewLines: 0,
+        expectedConnections: 0,
+        actualConnections: 0,
+        issues: [`统计失败: ${error.message}`]
+      }
+    }
+  }
+}
+
+// 预览线有效性检查方法
+const checkPreviewLineValidity = async () => {
+  // 先运行有效性检查
+  runPreviewLineValidityCheck()
+  
+  // 如果发现预览线不完整，提供重新生成选项
+  if (debugStats.value && debugStats.value.data && debugStats.value.data.expectedPreviewLines > debugStats.value.data.actualPreviewLines) {
+    const shouldRegenerate = await new Promise((resolve) => {
+      Modal.confirm({
+        title: '发现预览线不完整',
+        content: `应该存在 ${debugStats.value.data.expectedPreviewLines} 条预览线，但实际只有 ${debugStats.value.data.actualPreviewLines} 条。是否要重新生成预览线？`,
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false)
+      })
+    })
+    
+    if (shouldRegenerate) {
+      await triggerPreviewLineGeneration()
+    }
+  }
+}
+
+// 触发预览线生成方法
+const triggerPreviewLineGeneration = async () => {
+  if (!unifiedPreviewLineManager) {
+    console.error('[预览线生成] 统一预览线管理器未初始化')
+    Message.error('预览线管理器未初始化，无法生成预览线')
+    return
+  }
+  
+  isGeneratingPreviewLines.value = true
+  
+  try {
+    console.log('[预览线生成] 开始触发预览线生成...')
+    
+    // 调用统一预览线管理器的触发方法
+    const result = unifiedPreviewLineManager.triggerPreviewLineGeneration()
+    
+    console.log('[预览线生成] 生成完成:', result)
+    
+    // 更新调试统计信息
+    updateDebugStats()
+    
+    // 显示成功消息
+    const successCount = result.success ? result.success.length : 0
+    const failedCount = result.failed ? result.failed.length : 0
+    const skippedCount = result.skipped ? result.skipped.length : 0
+    
+    Message.success(`预览线生成完成！成功: ${successCount} 条，失败: ${failedCount} 条，跳过: ${skippedCount} 条`)
+    
+    // 在预览线属性中添加触发生成的函数和动作信息
+    if (result && result.success && result.success.length > 0) {
+      try {
+        const allPreviewLines = unifiedPreviewLineManager.getAllPreviewLines()
+        
+        if (!allPreviewLines) {
+          console.warn('[预览线生成] 无法获取预览线列表')
+          return
+        }
+        
+        result.success.forEach(item => {
+          if (!item || !item.nodeId) {
+            console.warn('[预览线生成] 无效的成功项:', item)
+            return
+          }
+          
+          // 查找对应节点的预览线
+          const nodePreviewLines = Array.isArray(allPreviewLines) ? 
+            allPreviewLines.filter(line => 
+              line && line.sourceNode && line.sourceNode.id === item.nodeId
+            ) : []
+          
+          nodePreviewLines.forEach(previewLine => {
+            if (!previewLine) {
+              console.warn('[预览线生成] 无效的预览线对象')
+              return
+            }
+            // 添加触发生成的函数和动作信息到预览线属性中
+            previewLine.triggerInfo = {
+              triggerFunction: 'triggerPreviewLineGeneration',
+              triggerAction: 'manual_generation',
+              triggeredAt: new Date().toISOString(),
+              triggeredBy: 'debug_panel',
+              nodeId: item.nodeId,
+              branchCount: item.branchCount || 0,
+              previewType: item.previewType || 'unknown',
+              branchId: previewLine.branchId || null,
+              branchLabel: previewLine.branchLabel || null
+            }
+          })
+        })
+        
+        console.log(`🎯 [预览线生成] 触发信息添加完成，共处理 ${result.success.length} 个节点的预览线`)
+        
+      } catch (error) {
+        console.error('添加触发信息失败:', error)
+      }
+    }
+    
+  } catch (error) {
+    console.error('[预览线生成] 生成失败:', error)
+    Message.error('预览线生成失败: ' + error.message)
+  } finally {
+    isGeneratingPreviewLines.value = false
+  }
+}
+
+const runPreviewLineValidityCheck = () => {
+  updateDebugStats()
+  
+  if (!debugStats.value?.data) {
+    console.error('[预览线有效性检查] 调试统计数据不可用')
+    return
+  }
+  
+  const data = debugStats.value.data
+  
+  // 输出详细的检查结果到控制台
+  console.group('[预览线有效性检查] 详细统计结果')
+  console.log('节点统计:', {
+    总节点数: data.nodeCount,
+    已配置节点数: data.configuredNodeCount,
+    配置率: data.nodeCount > 0 ? `${((data.configuredNodeCount / data.nodeCount) * 100).toFixed(1)}%` : '0%'
+  })
+  
+  console.log('预览线统计:', {
+    应该存在的预览线数: data.expectedPreviewLines,
+    实际预览线数: data.actualPreviewLines,
+    预览线完整率: data.expectedPreviewLines > 0 ? 
+      `${((data.actualPreviewLines / data.expectedPreviewLines) * 100).toFixed(1)}%` : '0%'
+  })
+  
+  console.log('连接线统计:', {
+      应该存在的总连线数: data.expectedConnections,
+      实际连接线数: data.actualConnections,
+      实际预览线数: data.actualPreviewLines,
+      实际总连线数: data.actualConnections + data.actualPreviewLines,
+      连线完整率: data.expectedConnections > 0 ? 
+        `${(((data.actualConnections + data.actualPreviewLines) / data.expectedConnections) * 100).toFixed(1)}%` : '0%'
+    })
+  
+  // 输出详细的节点信息
+  if (data.nodeDetails && data.nodeDetails.length > 0) {
+    console.log('节点详细信息:')
+    data.nodeDetails.forEach((node, index) => {
+      console.log(`  ${index + 1}. 节点 ${node.id}:`, {
+        类型: node.type,
+        已配置: node.isConfigured ? '是' : '否',
+        位置: `(${node.position.x}, ${node.position.y})`,
+        尺寸: `${node.size.width}x${node.size.height}`
+      })
+    })
+  }
+  
+  // 输出详细的连接线信息
+  if (data.connectionDetails && data.connectionDetails.length > 0) {
+    console.log('连接线详细信息:')
+    data.connectionDetails.forEach((conn, index) => {
+      console.log(`  ${index + 1}. 连接 ${conn.id}:`, {
+        源节点: conn.source,
+        目标节点: conn.target,
+        类型: conn.type,
+        是否预览线: conn.isPreview ? '是' : '否',
+        分支ID: conn.branchId || '无'
+      })
+    })
+  }
+  
+  // 输出预览线管理器详情
+  if (data.previewLineDetails && Object.keys(data.previewLineDetails).length > 0) {
+    console.log('预览线管理器详情:')
+    Object.entries(data.previewLineDetails).forEach(([key, value]) => {
+      console.log(`  预览线 ${key}:`, value)
+    })
+  }
+  
+  // 输出发现的问题
+  if (data.issues && data.issues.length > 0) {
+    console.warn('发现的问题:')
+    data.issues.forEach((issue, index) => {
+      console.warn(`  ${index + 1}. ${issue}`)
+    })
+  } else {
+    console.log('✅ 未发现问题')
+  }
+  
+  console.groupEnd()
+  
+  // 显示检查完成消息
+  Message.success('预览线有效性检查完成，详细结果请查看控制台')
+}
+
+/**
+ * 强制重新生成预览线
+ * 用于在节点配置状态更新后重新生成预览线
+ */
+const forceRegeneratePreviewLines = () => {
+  if (unifiedPreviewLineManager && typeof unifiedPreviewLineManager.forceRegeneratePreviewLines === 'function') {
+    try {
+      console.log('🔄 [调试统计] 开始强制重新生成预览线...')
+      
+      // 在重新生成前检查节点状态
+      const nodes = graph.getNodes()
+      console.log('🔍 [调试统计] 重新生成前节点状态检查:', {
+        totalNodes: nodes.length,
+        configuredNodes: nodes.filter(node => {
+          const nodeData = node.getData() || {}
+          return nodeData.isConfigured === true
+        }).length
+      })
+      
+      // 特别检查分支节点
+      const branchNodes = nodes.filter(node => {
+        const nodeData = node.getData() || {}
+        const nodeType = nodeData.type || nodeData.nodeType
+        return ['audience-split', 'event-split', 'ab-test'].includes(nodeType)
+      })
+      
+      branchNodes.forEach(node => {
+        const nodeData = node.getData() || {}
+        const nodeType = nodeData.type || nodeData.nodeType
+        
+        console.log('🌿 [调试统计] 分支节点重新生成前状态:', {
+          nodeId: node.id,
+          nodeType: nodeType,
+          isConfigured: nodeData.isConfigured,
+          configKeys: Object.keys(nodeData.config || {}),
+          shouldCreate: unifiedPreviewLineManager.shouldCreatePreviewLine(node),
+          hasExistingPreview: unifiedPreviewLineManager.previewLines.has(node.id),
+          existingPreviewType: unifiedPreviewLineManager.previewLines.has(node.id) ? 
+            (Array.isArray(unifiedPreviewLineManager.previewLines.get(node.id)) ? 'branch' : 'single') : 'none'
+        })
+      })
+      
+      // 执行重新生成
+      const result = unifiedPreviewLineManager.forceRegeneratePreviewLines()
+      console.log('🔄 [调试统计] 强制重新生成预览线结果:', result)
+      
+      // 重新生成后再次检查分支节点
+      branchNodes.forEach(node => {
+        const nodeData = node.getData() || {}
+        const nodeType = nodeData.type || nodeData.nodeType
+        
+        console.log('🌿 [调试统计] 分支节点重新生成后状态:', {
+          nodeId: node.id,
+          nodeType: nodeType,
+          hasPreviewAfter: unifiedPreviewLineManager.previewLines.has(node.id),
+          previewTypeAfter: unifiedPreviewLineManager.previewLines.has(node.id) ? 
+            (Array.isArray(unifiedPreviewLineManager.previewLines.get(node.id)) ? 'branch' : 'single') : 'none',
+          previewCountAfter: unifiedPreviewLineManager.previewLines.has(node.id) ? 
+            (Array.isArray(unifiedPreviewLineManager.previewLines.get(node.id)) ? 
+              unifiedPreviewLineManager.previewLines.get(node.id).length : 1) : 0
+        })
+        
+        // 如果分支节点仍然没有预览线，尝试手动创建
+        if (nodeData.isConfigured && !unifiedPreviewLineManager.previewLines.has(node.id)) {
+          console.log('🔧 [调试统计] 尝试手动创建分支节点预览线:', node.id)
+          try {
+            const createResult = unifiedPreviewLineManager.createUnifiedPreviewLine(node)
+            console.log('✅ [调试统计] 手动创建预览线结果:', {
+              nodeId: node.id,
+              success: !!createResult,
+              result: createResult,
+              type: Array.isArray(createResult) ? 'branch' : (createResult ? 'single' : 'null')
+            })
+          } catch (error) {
+            console.error('❌ [调试统计] 手动创建预览线失败:', {
+              nodeId: node.id,
+              error: error.message,
+              stack: error.stack
+            })
+          }
+        }
+      })
+      
+      // 更新调试统计
+      updateDebugStats()
+      
+      Message.success('预览线已重新生成')
+    } catch (error) {
+      console.error('预览线重新生成失败:', error)
+      Message.error('预览线重新生成失败')
+    }
+  } else {
+    console.warn('预览线管理器未初始化或方法不存在')
+    Message.warning('预览线管理器未就绪')
+  }
+}
+
 // 暴露方法
 defineExpose({
   addNode,
@@ -5017,6 +5669,7 @@ defineExpose({
   handleExport,
   applySmartLayout,
   applyUnifiedStructuredLayout, // 🎯 新增：统一结构化布局方法
+  forceRegeneratePreviewLines, // 强制重新生成预览线方法
   // 暴露graph实例用于坐标转换
   graph: computed(() => graph)
 })
@@ -5348,4 +6001,199 @@ defineExpose({
   background: white;
   padding: 0 8px;
 }
+/* 调试面板样式 */
+.debug-panel {
+  position: fixed;
+  z-index: 1000;
+  width: 350px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(95, 149, 255, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.debug-panel:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(95, 149, 255, 0.1), rgba(64, 128, 255, 0.1));
+  border-bottom: 1px solid rgba(95, 149, 255, 0.2);
+  cursor: move;
+  font-weight: 600;
+  color: #333;
+}
+
+.debug-panel-header:hover {
+  background: linear-gradient(135deg, rgba(95, 149, 255, 0.15), rgba(64, 128, 255, 0.15));
+}
+
+.debug-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.debug-panel-title .arco-icon {
+  color: #5F95FF;
+  font-size: 16px;
+}
+
+.debug-panel-close {
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.debug-panel-close:hover {
+  background: rgba(255, 0, 0, 0.1);
+  color: #ff4d4f;
+}
+
+.debug-panel-content {
+  padding: 16px;
+}
+
+.debug-section {
+  margin-bottom: 20px;
+}
+
+.debug-section:last-child {
+  margin-bottom: 0;
+}
+
+.debug-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.debug-section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(135deg, #5F95FF, #4080FF);
+  border-radius: 2px;
+}
+
+.debug-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.debug-stat-item {
+  background: rgba(95, 149, 255, 0.05);
+  border: 1px solid rgba(95, 149, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.debug-stat-item:hover {
+  background: rgba(95, 149, 255, 0.08);
+  border-color: rgba(95, 149, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.debug-stat-label {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.debug-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+.debug-stat-value.highlight {
+  color: #5F95FF;
+}
+
+.debug-stat-value.warning {
+  color: #ff7d00;
+}
+
+.debug-stat-value.error {
+  color: #ff4d4f;
+}
+
+.debug-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.debug-action-btn {
+  flex: 1;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.debug-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(95, 149, 255, 0.3);
+}
+
+.debug-panel.dragging {
+  cursor: move;
+  transform: rotate(1deg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+}
+
+/* 调试面板动画 */
+.debug-panel-enter-active,
+.debug-panel-leave-active {
+  transition: all 0.3s ease;
+}
+
+.debug-panel-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(-20px);
+}
+
+.debug-panel-leave-to {
+  opacity: 0;
+  transform: scale(0.8) translateY(-20px);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .debug-panel {
+    width: 300px;
+    font-size: 12px;
+  }
+  
+  .debug-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .debug-stat-value {
+    font-size: 16px;
+  }
+}
+
 </style>

@@ -107,6 +107,8 @@ export const DEFAULT_CONFIG = {
   }
 };
 
+import { SyncManager, SyncState, SyncEventType } from './sync/SyncManager.js';
+
 /**
  * 坐标重构系统主类
  * 提供简化的API接口

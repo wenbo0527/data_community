@@ -272,11 +272,11 @@
     />
     
     <!-- 还款信息抽屉 -->
-    <RepaymentDrawer 
+    <!-- <RepaymentDrawer
       :visible="repaymentDrawerVisible"
-      :loan-record="currentLoan"
+      :loan-record="selectedLoanRecord"
       @close="repaymentDrawerVisible = false"
-    />
+    /> -->
     
     <!-- 完整用信详情抽屉 -->
     <CompleteLoanDetailDrawer
@@ -294,7 +294,7 @@ import { ref, watch, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconEye, IconList, IconCopy, IconExclamationCircle } from '@arco-design/web-vue/es/icon'
 import DisbursementDrawer from './DisbursementDrawer.vue'
-import RepaymentDrawer from './RepaymentDrawer.vue'
+// import RepaymentDrawer from './RepaymentDrawer.vue'
 import CompleteLoanDetailDrawer from './CompleteLoanDetailDrawer.vue'
 import { copyToClipboard } from '../../../../utils/copy'
 import { formatAmount } from '../../../../utils/formatUtils'
