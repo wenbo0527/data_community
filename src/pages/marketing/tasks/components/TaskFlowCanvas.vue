@@ -230,7 +230,18 @@
     </div>
   </div>
 
-  <!-- 调试功能悬浮框 -->
+  <!-- 连接线右键菜单 -->
+    <ConnectionContextMenu
+      :visible="showConnectionContextMenu"
+      :position="connectionContextMenuPosition"
+      :edge="selectedEdge"
+      :graph="graph"
+      @close="closeConnectionContextMenu"
+      @delete-connection="handleDeleteConnection"
+      @restore-preview-line="handleRestorePreviewLine"
+    />
+
+    <!-- 调试功能悬浮框 -->
   <div v-if="showDebugPanel" class="debug-panel" :style="{ left: debugPanelPosition.x + 'px', top: debugPanelPosition.y + 'px' }">
     <div class="debug-header" @mousedown="startDragDebugPanel">
       <div class="debug-title">
@@ -302,6 +313,7 @@ import NodeTypeSelector from '../../../../components/NodeTypeSelector.vue'
 import NodeConfigDrawer from '../../../../components/NodeConfigDrawer.vue'
 import StartNodeConfigDrawer from './StartNodeConfigDrawer.vue'
 import TaskFlowConfigDrawers from './TaskFlowConfigDrawers.vue'
+import ConnectionContextMenu from './ConnectionContextMenu.vue'
 import FlowNode from '../../../../components/FlowNode.vue'
 import { getNodeConfig } from '../../../../utils/nodeTypes.js'
 import { useConfigDrawers } from '../../../../composables/useConfigDrawers.js'
@@ -486,6 +498,11 @@ const debugPanelPosition = ref({ x: 100, y: 100 })
 const isDraggingDebugPanel = ref(false)
 const isGeneratingPreviewLines = ref(false)
 const debugStats = ref(null)
+
+// 连接线右键菜单相关状态
+const showConnectionContextMenu = ref(false)
+const connectionContextMenuPosition = ref({ x: 0, y: 0 })
+const selectedEdge = ref(null)
 
 // 布局方向状态管理
 const currentLayoutDirection = computed(() => {
@@ -1266,6 +1283,36 @@ const bindEvents = () => {
     } else {
       console.log('🔍 [TaskFlowCanvas] 连接不在数据数组中，无需移除:', edgeId)
     }
+  })
+
+  // 连接线右键菜单事件
+  graph.on('edge:contextmenu', ({ e, edge }) => {
+    // 阻止默认右键菜单
+    e.preventDefault()
+    
+    // 过滤掉预览线，只处理真正的连接
+    const edgeId = edge.id
+    if (edgeId.includes('preview') || edgeId.includes('unified_preview')) {
+      console.log('🔍 [TaskFlowCanvas] 跳过预览线右键菜单:', edgeId)
+      return
+    }
+    
+    // 设置选中的连接线
+    selectedEdge.value = edge
+    
+    // 设置右键菜单位置
+    connectionContextMenuPosition.value = {
+      x: e.clientX,
+      y: e.clientY
+    }
+    
+    // 显示右键菜单
+    showConnectionContextMenu.value = true
+    
+    console.log('🖱️ [TaskFlowCanvas] 连接线右键菜单触发:', {
+      edgeId,
+      position: connectionContextMenuPosition.value
+    })
   })
 
   // 添加画布空白区域点击事件监听
@@ -4339,6 +4386,99 @@ const handleResize = () => {
   }
 };
 
+// 连接线右键菜单事件处理函数
+const closeConnectionContextMenu = () => {
+  showConnectionContextMenu.value = false
+  selectedEdge.value = null
+}
+
+const handleDeleteConnection = (edge) => {
+  if (!edge || !graph) {
+    console.error('[连接线删除] 参数无效')
+    return
+  }
+  
+  try {
+    // 获取连接信息用于预览线恢复
+    const sourceId = edge.getSourceCellId()
+    const targetId = edge.getTargetCellId()
+    const edgeData = edge.getData() || {}
+    
+    console.log('🗑️ [连接线删除] 开始删除连接:', {
+      edgeId: edge.id,
+      sourceId,
+      targetId,
+      branchId: edgeData.branchId
+    })
+    
+    // 删除连接线
+    graph.removeCell(edge)
+    
+    // 关闭右键菜单
+    closeConnectionContextMenu()
+    
+    // 触发预览线恢复
+    handleRestorePreviewLine(sourceId, targetId, edgeData.branchId)
+    
+    Message.success('连接线已删除')
+    console.log('✅ [连接线删除] 连接删除成功')
+    
+  } catch (error) {
+    console.error('[连接线删除] 删除失败:', error)
+    Message.error('删除连接线失败: ' + error.message)
+  }
+}
+
+const handleRestorePreviewLine = (sourceId, targetId, branchId) => {
+  if (!sourceId || !graph) {
+    console.error('[预览线恢复] 参数无效')
+    return
+  }
+  
+  try {
+    // 获取源节点
+    const sourceNode = graph.getCellById(sourceId)
+    if (!sourceNode) {
+      console.error('[预览线恢复] 源节点不存在:', sourceId)
+      return
+    }
+    
+    // 获取统一预览线管理器
+    const unifiedPreviewManager = configDrawers.value?.structuredLayout?.getConnectionPreviewManager()
+    if (!unifiedPreviewManager) {
+      console.error('[预览线恢复] 预览线管理器不可用')
+      return
+    }
+    
+    console.log('🔄 [预览线恢复] 开始恢复预览线:', {
+      sourceId,
+      targetId,
+      branchId
+    })
+    
+    // 检查源节点是否需要预览线
+    const sourceNodeData = sourceNode.getData() || {}
+    if (!sourceNodeData.isConfigured) {
+      console.log('🔍 [预览线恢复] 源节点未配置，无需恢复预览线')
+      return
+    }
+    
+    // 恢复预览线
+    const result = unifiedPreviewManager.createUnifiedPreviewLine(sourceNode)
+    
+    if (result) {
+      console.log('✅ [预览线恢复] 预览线恢复成功:', result)
+      Message.success('预览线已恢复')
+    } else {
+      console.log('🔍 [预览线恢复] 无需恢复预览线或恢复失败')
+    }
+    
+  } catch (error) {
+    console.error('[预览线恢复] 恢复失败:', error)
+    Message.error('预览线恢复失败: ' + error.message)
+  }
+}
+
 // 撤销重做功能
 const undo = () => {
   if (!graph) {
@@ -5670,6 +5810,10 @@ defineExpose({
   applySmartLayout,
   applyUnifiedStructuredLayout, // 🎯 新增：统一结构化布局方法
   forceRegeneratePreviewLines, // 强制重新生成预览线方法
+  // 连接线右键菜单相关方法
+  closeConnectionContextMenu,
+  handleDeleteConnection,
+  handleRestorePreviewLine,
   // 暴露graph实例用于坐标转换
   graph: computed(() => graph)
 })
