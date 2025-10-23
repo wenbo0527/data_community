@@ -23,6 +23,14 @@
             <template #icon><icon-refresh /></template>
             刷新
           </a-button>
+          <a-button
+            v-if="queryDetail.status === 'failed' || queryDetail.status === 'completed'"
+            type="primary"
+            @click="retryQuery"
+          >
+            <template #icon><icon-refresh /></template>
+            重试
+          </a-button>
         </div>
       </div>
 
@@ -100,6 +108,7 @@
         
         <div class="results-table-container">
           <a-table
+            v-if="resultData.length > 0"
             :columns="tableColumns"
             :data="resultData"
             :loading="resultLoading"
@@ -144,6 +153,10 @@
               </template>
             </template>
           </a-table>
+          <div v-else class="no-results">
+            <icon-info-circle />
+            <span>当前查询状态下暂无数据记录</span>
+          </div>
         </div>
       </div>
     </div>
@@ -167,9 +180,9 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  queryId: {
-    type: String,
-    default: ''
+  selectedQueryRecord: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -177,7 +190,7 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'close'])
 
 // 响应式数据
-const queryDetail = ref({})
+const queryDetail = computed(() => ({ ...props.selectedQueryRecord, executionTime: '2.3' }))
 const resultData = ref([])
 const resultLoading = ref(false)
 const selectedRowKeys = ref([])
@@ -347,6 +360,20 @@ const refreshData = async () => {
   Message.success('数据已刷新')
 }
 
+const retryQuery = async () => {
+  // 模拟重试逻辑
+  queryDetail.value.status = 'pending'
+  queryDetail.value.resultCount = 0
+  Message.info('查询已重新提交，请稍候...')
+  // 模拟异步查询过程
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  // 模拟查询完成，更新状态和数据
+  queryDetail.value.status = 'completed'
+  queryDetail.value.resultCount = 1250 // 假设重试成功后有数据
+  await loadResultData()
+  Message.success('查询重试成功！')
+}
+
 
 
 const selectAllRows = () => {
@@ -393,35 +420,11 @@ const handlePageSizeChange = (pageSize) => {
 // 加载查询详情
 const loadQueryDetail = async () => {
   try {
-    const queryId = props.queryId || 'default'
-    const response = await new Promise(resolve => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          data: {
-            id: queryId,
-            name: '客户基础信息查询_2024-01-15',
-            modelName: '客户基础信息',
-            createTime: '2024-01-15 14:30:25',
-            status: 'completed',
-            resultCount: 1250,
-            executionTime: '2.3',
-            conditions: {
-              ageRange: '31-50',
-              gender: 'male',
-              productType: 'credit',
-              minBalance: 10000,
-              isActive: true,
-              startDate: '2024-01-01',
-              endDate: '2024-01-15'
-            }
-          }
-        })
-      }, 300)
-    })
-    
-    if (response.success) {
-      queryDetail.value = response.data
+    // 直接使用父组件传递的查询记录
+    queryDetail.value = {
+      ...props.selectedQueryRecord,
+      // 补充模拟接口返回的额外字段
+      executionTime: '2.3'
     }
   } catch (error) {
     console.error('加载查询详情失败:', error)
@@ -429,54 +432,35 @@ const loadQueryDetail = async () => {
   }
 }
 
+const generateColumns = (data) => {
+  if (data.length === 0) return []
+  return Object.keys(data[0]).map(key => ({
+    title: getConditionLabel(key),
+    dataIndex: key,
+    key: key
+  }))
+}
+
 // 加载结果数据
 const loadResultData = async () => {
   resultLoading.value = true
   try {
-    const response = await new Promise(resolve => {
-      setTimeout(() => {
-        const mockData = []
-        for (let i = 1; i <= 50; i++) {
-          mockData.push({
-            id: `row_${i}`,
-            name: '张伟',
-            phone: '13812345678',
-            age: 34,
-            gender: '男',
-            city: '北京',
-            productType: '信用卡',
-            balance: Math.floor(Math.random() * 500000) + 10000,
-            status: '正常',
-            createTime: new Date().toISOString()
-          })
-        }
-        
-        resolve({
-          success: true,
-          data: mockData,
-          total: 1250
-        })
-      }, 500)
-    })
-    
-    if (response.success) {
-      resultData.value = response.data
-      resultPagination.total = response.total
-      
-      if (response.data.length > 0) {
-        const columns = [
-          { title: '姓名', dataIndex: 'name', key: 'name', width: 100 },
-          { title: '手机号', dataIndex: 'phone', key: 'phone', width: 140 },
-          { title: '年龄', dataIndex: 'age', key: 'age', width: 80 },
-          { title: '性别', dataIndex: 'gender', key: 'gender', width: 80 },
-          { title: '城市', dataIndex: 'city', key: 'city', width: 100 },
-          { title: '产品类型', dataIndex: 'productType', key: 'productType', width: 120 },
-          { title: '余额', dataIndex: 'balance', key: 'balance', width: 120 },
-          { title: '状态', dataIndex: 'status', key: 'status', width: 100 },
-          { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 140 }
-        ]
-        tableColumns.value = columns
-      }
+    // 如果查询状态不是 'completed'，则不加载结果数据
+    if (queryDetail.value.status !== 'completed') {
+      resultData.value = []
+      tableColumns.value = []
+      resultPagination.total = 0
+      return
+    }
+
+    // 直接使用父组件传递的结果数据
+    resultData.value = props.selectedQueryRecord.resultData || []
+    resultPagination.total = resultData.value.length
+
+    if (resultData.value.length > 0) {
+      tableColumns.value = generateColumns(resultData.value)
+    } else {
+      tableColumns.value = []
     }
   } catch (error) {
     console.error('加载结果数据失败:', error)
@@ -494,13 +478,13 @@ watch(() => props.visible, (newVisible) => {
   }
 })
 
-// 监听queryId变化
-watch(() => props.queryId, (newQueryId) => {
-  if (newQueryId && props.visible) {
+// 监听 selectedQueryRecord 变化
+watch(() => props.selectedQueryRecord, (newRecord) => {
+  if (newRecord && props.visible) {
     loadQueryDetail()
     loadResultData()
   }
-})
+}, { deep: true })
 
 // 组件挂载时如果抽屉已显示则加载数据
 onMounted(() => {
@@ -690,44 +674,27 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-.query-result-drawer {
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 0;
+  color: #86909c;
+  font-size: 14px;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid #e5e6eb;
+  height: 100%;
 }
 
-:deep(.arco-table-scroll) {
-  overflow-x: auto;
+.no-results .arco-icon {
+  font-size: 32px;
+  color: #c9cdd4;
 }
 
-@media (max-width: 768px) {
-  .drawer-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .header-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .conditions-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .results-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .results-actions {
-    width: 100%;
-    flex-wrap: wrap;
-  }
+.no-results span {
+  margin-top: 8px;
 }
 </style>

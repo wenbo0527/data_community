@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineSystem } from '../utils/preview-line/PreviewLineSystem.js'
 
 describe('isConfigured字段自动修复测试', () => {
   let previewManager
@@ -24,12 +24,14 @@ describe('isConfigured字段自动修复测试', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(
-      mockGraph,  // graph
-      null,      // branchManager
-      {},        // layoutConfig
-      null       // layoutEngine
-    )
+    previewManager = new PreviewLineSystem({
+      graph: mockGraph,
+      config: {
+        branchManager: null,
+        layoutEngine: null
+      }
+    })
+    previewManager.init()
 
     // 创建模拟节点
     mockNode = {
@@ -57,7 +59,7 @@ describe('isConfigured字段自动修复测试', () => {
     mockNode.getData.mockReturnValue(nodeData)
 
     // 执行：检查是否应该创建预览线
-    const shouldCreate = previewManager.shouldCreatePreviewLine(mockNode)
+    const shouldCreate = previewManager.validator.shouldCreatePreviewLine(mockNode)
 
     // 验证：应该自动修复isConfigured并返回true
     expect(shouldCreate).toBe(true)
@@ -79,7 +81,7 @@ describe('isConfigured字段自动修复测试', () => {
     mockNode.getData.mockReturnValue(nodeData)
 
     // 执行：检查是否应该创建预览线
-    const shouldCreate = previewManager.shouldCreatePreviewLine(mockNode)
+    const shouldCreate = previewManager.validator.shouldCreatePreviewLine(mockNode)
 
     // 验证：应该自动修复isConfigured并返回true
     expect(shouldCreate).toBe(true)
@@ -101,7 +103,7 @@ describe('isConfigured字段自动修复测试', () => {
     mockNode.getData.mockReturnValue(nodeData)
 
     // 执行：检查是否应该创建预览线
-    const shouldCreate = previewManager.shouldCreatePreviewLine(mockNode)
+    const shouldCreate = previewManager.validator.shouldCreatePreviewLine(mockNode)
 
     // 验证：不应该修复isConfigured，返回false
     expect(shouldCreate).toBe(false)
@@ -124,7 +126,7 @@ describe('isConfigured字段自动修复测试', () => {
     mockNode.getData.mockReturnValue(nodeData)
 
     // 执行：检查是否应该创建预览线
-    const shouldCreate = previewManager.shouldCreatePreviewLine(mockNode)
+    const shouldCreate = previewManager.validator.shouldCreatePreviewLine(mockNode)
 
     // 验证：不应该修复isConfigured，返回false
     expect(shouldCreate).toBe(false)
@@ -172,7 +174,7 @@ describe('isConfigured字段自动修复测试', () => {
     mockNode.getData.mockReturnValue(originalNodeData)
 
     // 执行：检查是否应该创建预览线
-    previewManager.shouldCreatePreviewLine(mockNode)
+    previewManager.validator.shouldCreatePreviewLine(mockNode)
 
     // 验证：修复后的数据应保留所有原有字段，只更新isConfigured
     expect(mockNode.setData).toHaveBeenCalledWith({

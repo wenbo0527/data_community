@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试新建节点功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 布局引擎修复验证测试</h1>
+        <p>此页面用于验证布局引擎修复后，新建节点功能是否正常工作。</p>
+        
+        <div id="test-results"></div>
+        
+        <button onclick="testLayoutEngineAccess()">测试布局引擎访问</button>
+        <button onclick="testGlobalReferences()">测试全局引用</button>
+        <button onclick="openMainApp()">打开主应用</button>
+        <button onclick="clearResults()">清除结果</button>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function testLayoutEngineAccess() {
+            addResult('🧪 开始测试布局引擎访问...', 'info');
+            
+            try {
+                // 检查全局构造函数
+                if (typeof window.UnifiedStructuredLayoutEngine === 'function') {
+                    addResult('✅ window.UnifiedStructuredLayoutEngine 构造函数可用', 'success');
+                } else {
+                    addResult('❌ window.UnifiedStructuredLayoutEngine 构造函数不可用', 'error');
+                }
+                
+                // 检查全局实例
+                if (window.layoutEngine) {
+                    addResult('✅ window.layoutEngine 实例存在', 'success');
+                    addResult(`🔍 布局引擎类型: ${window.layoutEngine.constructor.name}`, 'info');
+                } else {
+                    addResult('❌ window.layoutEngine 实例不存在', 'error');
+                }
+                
+                addResult('🏁 布局引擎访问测试完成', 'info');
+                
+            } catch (error) {
+                addResult(`❌ 测试过程中发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        function testGlobalReferences() {
+            addResult('🔍 开始检查全局引用...', 'info');
+            
+            const globalRefs = [
+                'UnifiedStructuredLayoutEngine',
+                'layoutEngine',
+                'UnifiedPreviewLineManager'
+            ];
+            
+            globalRefs.forEach(ref => {
+                if (window[ref]) {
+                    const type = typeof window[ref];
+                    const name = window[ref].constructor ? window[ref].constructor.name : 'Unknown';
+                    addResult(`✅ window.${ref} 存在 (类型: ${type}, 构造函数: ${name})`, 'success');
+                } else {
+                    addResult(`❌ window.${ref} 不存在`, 'error');
+                }
+            });
+            
+            addResult('🏁 全局引用检查完成', 'info');
+        }
+
+        function openMainApp() {
+            addResult('🚀 正在打开主应用...', 'info');
+            window.open('http://localhost:5173', '_blank');
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+
+        // 页面加载时自动运行测试
+        window.addEventListener('load', () => {
+            addResult('📋 页面加载完成，开始自动测试...', 'info');
+            setTimeout(() => {
+                testLayoutEngineAccess();
+                testGlobalReferences();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

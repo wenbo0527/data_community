@@ -215,13 +215,23 @@ const handleStatusChange = (record) => {
 
 // 复制券模版
 const handleCopy = (record) => {
-  const newTemplate = { ...record }
-  newTemplate.id = Date.now().toString() // 临时ID，实际应由后端生成
-  newTemplate.name = `${record.name}_副本`
-  newTemplate.status = '草稿'
-  newTemplate.createTime = new Date().toLocaleString()
-  tableData.value.unshift(newTemplate)
-  Message.success('复制成功')
+  // 准备复制数据，排除不需要复制的字段
+  const copyData = { ...record }
+  delete copyData.id
+  delete copyData.createTime
+  delete copyData.status
+  
+  // 修改名称添加副本后缀
+  copyData.name = `${record.name}_副本`
+  
+  // 跳转到创建页面并传递复制数据
+  router.push({
+    path: '/marketing/coupon/template/create',
+    query: {
+      mode: 'create',
+      copyData: encodeURIComponent(JSON.stringify(copyData))
+    }
+  })
 }
 
 // 删除券模版

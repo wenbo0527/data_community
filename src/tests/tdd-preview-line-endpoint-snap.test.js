@@ -5,8 +5,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// 模拟UnifiedPreviewLineManager
-const mockUnifiedPreviewLineManager = {
+// 模拟PreviewLineSystem
+const mockPreviewLineSystem = {
   // 拖拽状态管理
   isDragging: false,
   dragObject: null,
@@ -84,7 +84,7 @@ describe('预览线终端吸附功能测试', () => {
     vi.clearAllMocks();
     
     // 创建管理器实例
-    manager = { ...mockUnifiedPreviewLineManager };
+    manager = { ...mockPreviewLineSystem };
     
     // 创建测试节点
     mockNodes = [

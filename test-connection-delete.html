@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连接线删除功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-steps {
+            list-style-type: decimal;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .app-link {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .app-link:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>连接线删除功能测试指南</h1>
+        
+        <div class="test-section">
+            <div class="test-title">🎯 测试目标</div>
+            <p>验证画布中连接线的右键删除功能和预览线恢复机制是否正常工作。</p>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">🔧 修复内容</div>
+            <ul>
+                <li><span class="success">✅ 修复了 edge.getSourceCellId() 方法调用问题</span></li>
+                <li><span class="success">✅ 增强了边对象的兼容性处理</span></li>
+                <li><span class="success">✅ 修复了调试统计中的 undefined 警告</span></li>
+                <li><span class="success">✅ 解决了全局拖拽状态管理器的重复方法定义</span></li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">📋 测试步骤</div>
+            <ol class="test-steps">
+                <li>打开应用并进入画布页面</li>
+                <li>创建至少两个节点（例如：开始节点 → 邮件节点）</li>
+                <li>连接这两个节点，形成一条连接线</li>
+                <li><span class="highlight">右键点击连接线</span>，应该出现上下文菜单</li>
+                <li>点击菜单中的<span class="highlight">"删除连接"</span>选项</li>
+                <li>观察连接线是否被成功删除</li>
+                <li>检查源节点是否自动恢复了预览线（虚线）</li>
+                <li>查看浏览器控制台，确认没有错误信息</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">✅ 预期结果</div>
+            <ul>
+                <li><span class="success">连接线被成功删除</span></li>
+                <li><span class="success">源节点自动显示预览线</span></li>
+                <li><span class="success">控制台无错误信息</span></li>
+                <li><span class="success">操作可以撤销/重做</span></li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">🚨 注意事项</div>
+            <ul>
+                <li><span class="warning">如果右键菜单没有出现，请检查连接线是否被正确选中</span></li>
+                <li><span class="warning">删除操作应该有确认提示或可撤销机制</span></li>
+                <li><span class="error">如果出现控制台错误，请记录错误信息</span></li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">🔗 快速访问</div>
+            <a href="http://localhost:5173" class="app-link" target="_blank">打开应用进行测试</a>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                确保开发服务器正在运行（npm run dev）
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // 简单的测试状态跟踪
+        console.log('🧪 连接线删除功能测试页面已加载');
+        console.log('📝 请按照上述步骤进行测试，并观察控制台输出');
+        
+        // 检查开发服务器状态
+        fetch('http://localhost:5173')
+            .then(() => {
+                console.log('✅ 开发服务器运行正常');
+            })
+            .catch(() => {
+                console.warn('⚠️ 无法连接到开发服务器，请确保 npm run dev 正在运行');
+            });
+    </script>
+</body>
+</html>

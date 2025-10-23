@@ -191,11 +191,12 @@
 
             <!-- 画布区域 -->
             <div class="canvas-area" :class="{ 'full-width': mode === 'view' }">
-              <TaskFlowCanvas ref="canvasRef" :auto-add-start-node="mode !== 'view'" :readonly="mode === 'view'"
+              <TaskFlowCanvasRefactored ref="canvasRef" :auto-add-start-node="mode !== 'view'" :readonly="mode === 'view'"
                 :initial-nodes="taskForm.nodes" :initial-connections="taskForm.connections" @drop="handleCanvasDrop"
                 @dragover="handleCanvasDragOver" @canvas-ready="handleCanvasReady" @node-created="handleNodeCreated"
                 @node-moved="handleNodeMoved" @node-selected="handleNodeSelected" @node-updated="handleNodeUpdated"
                 @node-deleted="handleNodeDeleted" @connection-created="handleConnectionCreated" />
+
             </div>
           </div>
         </a-card>
@@ -214,7 +215,7 @@ import {
   IconPhone, IconExperiment, IconSwap, IconSettings, IconClockCircle,
   IconStop, IconCheckCircle, IconArrowLeft
 } from '@arco-design/web-vue/es/icon'
-import TaskFlowCanvas from './components/TaskFlowCanvas.vue'
+import TaskFlowCanvasRefactored from './components/TaskFlowCanvasRefactored.vue'
 import { validateForSave, validateForPublish, formatPublishValidationMessage } from '../../../utils/enhancedCanvasValidation.js'
 import { TaskStorage } from '../../../utils/taskStorage.js'
 
@@ -328,7 +329,7 @@ const loadTaskData = async () => {
               config: {
                 name: '用户筛选',
                 description: '筛选符合条件的目标用户',
-                branchCount: 1,
+                branchCount: 2,
                 branches: [
                   { name: '符合条件', isDefault: false },
                   { name: '不符合条件', isDefault: true }
@@ -421,6 +422,143 @@ const loadTaskData = async () => {
           ]
         }
       }
+    } else if (taskId.value === '3') {
+      // 修复：为ID=3添加完整的测试数据，包含人群分流节点和连接
+      console.log('📋 [TaskEditor] 使用完整测试数据 (ID=3) - 包含人群分流和连接')
+      mockTaskData = {
+        id: taskId.value,
+        name: '人群分流测试任务',
+        description: '测试人群分流分支数和预览线连接区分',
+        type: 'marketing',
+        status: 'draft',
+        createTime: '2024-01-17 15:30:00',
+        version: currentVersion.value,
+        canvasData: {
+          nodes: [
+            {
+              id: 'start-node',
+              type: 'start',
+              x: 400,
+              y: 100,
+              label: '开始',
+              config: {
+                name: '开始节点',
+                description: '人群分流测试开始',
+                isConfigured: true
+              }
+            },
+            {
+              id: 'audience-split-1',
+              type: 'audience-split',
+              x: 400,
+              y: 250,
+              label: '人群分流',
+              config: {
+                name: '人群分流节点',
+                description: '根据用户属性进行分流',
+                isConfigured: true,
+                branchCount: 3,
+                crowdLayers: [
+                  { 
+                    id: 'crowd_1', 
+                    crowdName: '高价值用户', 
+                    crowdId: 'c1',
+                    order: 1
+                  },
+                  { 
+                    id: 'crowd_2', 
+                    crowdName: '普通用户', 
+                    crowdId: 'c2',
+                    order: 2
+                  }
+                ],
+                unmatchBranch: {
+                  id: 'unmatch_default',
+                  crowdName: '未命中人群',
+                  crowdId: null,
+                  order: 3
+                },
+                branches: [
+                  { name: '高价值用户', isDefault: false, crowdId: 'c1' },
+                  { name: '普通用户', isDefault: false, crowdId: 'c2' },
+                  { name: '未命中人群', isDefault: true, crowdId: null }
+                ]
+              }
+            },
+            {
+              id: 'sms-high-value',
+              type: 'sms',
+              x: 200,
+              y: 400,
+              label: '高价值短信',
+              config: {
+                name: '高价值用户短信',
+                description: '发送给高价值用户的专属短信',
+                template: '【专属】尊贵的用户，您有专属优惠待领取',
+                isConfigured: true
+              }
+            },
+            {
+              id: 'sms-normal',
+              type: 'sms',
+              x: 400,
+              y: 400,
+              label: '普通短信',
+              config: {
+                name: '普通用户短信',
+                description: '发送给普通用户的短信',
+                template: '【通知】您有新的优惠信息',
+                isConfigured: true
+              }
+            },
+            {
+              id: 'end-unmatch',
+              type: 'end',
+              x: 600,
+              y: 400,
+              label: '未命中结束',
+              config: {
+                name: '未命中用户结束',
+                description: '未命中人群的用户直接结束',
+                isConfigured: true
+              }
+            }
+          ],
+          connections: [
+            {
+              id: 'conn-start-split',
+              source: 'start-node',
+              target: 'audience-split-1',
+              label: '',
+              isPreview: false
+            },
+            {
+              id: 'conn-split-high',
+              source: 'audience-split-1',
+              target: 'sms-high-value',
+              label: '高价值用户',
+              branchId: 'crowd_1',
+              isPreview: false
+            },
+            {
+              id: 'conn-split-normal',
+              source: 'audience-split-1',
+              target: 'sms-normal',
+              label: '普通用户',
+              branchId: 'crowd_2',
+              isPreview: false
+            },
+            {
+              id: 'conn-split-unmatch',
+              source: 'audience-split-1',
+              target: 'end-unmatch',
+              label: '未命中人群',
+              branchId: 'unmatch_default',
+              isPreview: false
+            }
+          ]
+        }
+      }
     } else {
       // 其他任务的默认数据
       console.log('📋 [TaskEditor] 使用默认空数据')
@@ -465,12 +603,12 @@ const loadTaskData = async () => {
       { version: 2, createTime: '2024-01-16 14:20:00', isActive: true }
     ]
 
-    // 延迟加载画布数据，确保组件已经渲染
+    // 延迟加载画布数据，确保组件已经渲染和初始化完成
     setTimeout(() => {
       if (canvasRef.value && mockTaskData.canvasData) {
         canvasRef.value.loadCanvasData(mockTaskData.canvasData)
       }
-    }, 100)
+    }, 300)
 
   } catch (error) {
     console.error('❌ [TaskEditor] 加载任务数据失败:', error)
@@ -761,7 +899,7 @@ const publishTask = async () => {
       if (previewManager && previewManager.getActivePreviewLines) {
         previewLines = previewManager.getActivePreviewLines()
       } else if (previewManager && previewManager.previewLines) {
-        // 如果是UnifiedPreviewLineManager
+        // 如果是PreviewLineSystem
         previewLines = []
         previewManager.previewLines.forEach((previewInstance, nodeId) => {
           const node = canvasData.nodes.find(n => n.id === nodeId)

@@ -61,36 +61,36 @@
         size="small"
       >
         <template #columns>
-          <a-table-column title="查询名称" data-index="name" :width="200">
+          <a-table-column title="模型名称" data-index="modelName" :width="150" />
+          
+          <a-table-column title="查询参数" data-index="conditions" :width="250">
             <template #cell="{ record }">
-              <div class="record-name">
-                <span>{{ record.name }}</span>
-                <a-tag 
-                  :color="getStatusColor(record.status)" 
-                  size="small"
-                >
-                  {{ record.status }}
-                </a-tag>
-              </div>
+              {{ formatConditions(record.conditions) }}
             </template>
           </a-table-column>
           
-          <a-table-column title="数据模型" data-index="modelName" :width="150" />
-          
-          <a-table-column title="创建时间" data-index="createTime" :width="160">
+          <a-table-column title="最近一次查询时间" data-index="createTime" :width="180">
             <template #cell="{ record }">
               {{ formatDateTime(record.createTime) }}
             </template>
           </a-table-column>
           
+          <a-table-column title="查询状态" data-index="status" :width="120" align="center">
+            <template #cell="{ record }">
+              <a-tag :color="getStatusColor(record.status)" size="small">
+                {{ record.status }}
+              </a-tag>
+            </template>
+          </a-table-column>
+          
           <a-table-column title="结果数量" data-index="resultCount" :width="100" align="center">
             <template #cell="{ record }">
-              <span v-if="record.status === 'completed'">{{ record.resultCount || 0 }}</span>
+              <span v-if="record.status === '成功'">{{ record.resultCount || 0 }}</span>
               <span v-else>-</span>
             </template>
           </a-table-column>
           
-          <a-table-column title="操作" :width="120" align="center">
+          <a-table-column title="操作" :width="200" align="center">
             <template #cell="{ record }">
               <a-space>
                 <a-button 
@@ -101,8 +101,19 @@
                   <template #icon><icon-eye /></template>
                   查看
                 </a-button>
+                <a-button 
+                  v-if="record.status === '失败' || record.status === '成功'"
+                  type="text" 
+                  size="small" 
+                  status="warning"
+                  @click.stop="retryQuery(record)"
+                >
+                  <template #icon><icon-refresh /></template>
+                  重试
+                </a-button>
                 <a-popconfirm
-                  content="确定要删除这个查询记录吗？"
+                  v-if="record.status !== '执行中'"
+                  content="确定要删除这个查询记录吗?"
                   @ok="deleteHistoryRecord(record.id)"
                 >
                   <a-button 
@@ -257,9 +268,10 @@
     </a-modal>
     
     <!-- 查询结果详情抽屉 -->
-    <QueryResultDetail 
+    <QueryResultDetail
       v-model:visible="showQueryResultDrawer"
-      :query-id="selectedQueryRecord?.id"
+      :selected-query-record="selectedQueryRecord"
+      @close="selectedQueryRecord = null"
     />
 
   </div>
@@ -360,19 +372,13 @@ const filteredHistoryRecords = computed(() => {
 // 历史记录表格列定义
 const historyColumns = [
   {
-    title: '查询名称',
-    dataIndex: 'name',
-    key: 'name',
-    width: 200
-  },
-  {
-    title: '数据模型',
+    title: '模型名称',
     dataIndex: 'modelName',
     key: 'modelName',
     width: 150
   },
   {
-    title: '查询条件',
+    title: '查询参数',
     dataIndex: 'conditions',
     key: 'conditions',
     width: 250,
@@ -386,15 +392,25 @@ const historyColumns = [
     render: ({ record }) => formatDateTime(record.createTime)
   },
   {
-    title: '状态',
+    title: '查询状态',
     dataIndex: 'status',
     key: 'status',
-    width: 100
+    width: 120,
+    render: ({ record }) => h('a-tag', { 
+      color: getStatusColor(record.status) 
+    }, record.status)
+  },
+  {
+    title: '结果数量',
+    dataIndex: 'resultCount',
+    key: 'resultCount',
+    width: 100,
+    render: ({ record }) => record.resultCount || '-'
   },
   {
     title: '操作',
     key: 'action',
-    width: 150
+    width: 200
   }
 ]
 
@@ -439,9 +455,9 @@ const formatConditions = (conditions) => {
 // 获取状态颜色
 const getStatusColor = (status) => {
   switch (status) {
-    case '成功': return 'green'
-    case '失败': return 'red'
-    case '执行中': return 'blue'
+    case 'completed': return 'green'
+    case 'failed': return 'red'
+    case 'pending': return 'blue'
     default: return 'gray'
   }
 }
@@ -452,6 +468,62 @@ const viewHistoryDetail = (record) => {
   selectedQueryRecord.value = record
   showQueryResultDrawer.value = true
   console.log('打开查询结果详情抽屉:', record)
+}
+
+// 重试查询
+const retryQuery = async (record) => {
+  try {
+    // 更新状态为执行中
+    record.status = 'pending'
+    Message.info('正在重新执行查询...')
+    
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // 随机成功或失败
+    const isSuccess = Math.random() > 0.3
+    record.status = isSuccess ? 'completed' : 'failed'
+    
+    if (isSuccess) {
+      record.resultCount = Math.floor(Math.random() * 100) + 1
+      Message.success('查询重试成功')
+    } else {
+      record.resultCount = 0
+      Message.error('查询重试失败')
+    }
+  } catch (error) {
+    console.error('重试查询失败:', error)
+    record.status = 'failed'
+    Message.error('查询重试失败')
+  }
+}
+
+// 检查是否存在相同的查询记录
+const checkDuplicateQuery = (modelType, params) => {
+  return historyQueryRecords.value.some(record => {
+    // 检查模型类型是否相同
+    if (record.modelId !== modelType) return false
+    
+    // 检查参数是否相同
+    const recordParams = record.conditions || {}
+    const currentParams = params || {}
+    
+    // 获取所有参数键
+    const recordKeys = Object.keys(recordParams).filter(key => 
+      recordParams[key] !== null && recordParams[key] !== undefined && recordParams[key] !== ''
+    )
+    const currentKeys = Object.keys(currentParams).filter(key => 
+      currentParams[key] !== null && currentParams[key] !== undefined && currentParams[key] !== ''
+    )
+    
+    // 如果参数数量不同，则不重复
+    if (recordKeys.length !== currentKeys.length) return false
+    
+    // 检查每个参数值是否相同
+    return recordKeys.every(key => {
+      return currentKeys.includes(key) && recordParams[key] === currentParams[key]
+    })
+  })
 }
 
 
@@ -726,8 +798,25 @@ const executeQuery = async () => {
     return
   }
   
-
+  // 检查是否存在相同的查询记录
+  if (checkDuplicateQuery(queryForm.value.modelType, queryForm.value.params)) {
+    Modal.warning({
+      title: '重复查询提醒',
+      content: '已存在相同参数的查询记录，是否继续执行？',
+      okText: '继续执行',
+      cancelText: '取消',
+      onOk: async () => {
+        await performQuery()
+      }
+    })
+    return
+  }
   
+  await performQuery()
+}
+
+// 执行查询的具体逻辑
+const performQuery = async () => {
   // 验证必填参数
   for (const param of selectedModelParams.value) {
     if (param.required && !queryForm.value.params[param.name]) {
@@ -789,7 +878,7 @@ const closeNewQueryModal = () => {
 // 加载历史查询记录
 const loadHistoryQueryRecords = async () => {
   try {
-    // 暂时初始化一些示例数据
+    // 暂时初始化一些示例数据，包含不同状态的记录
     historyQueryRecords.value = [
       {
         id: '1',
@@ -797,17 +886,75 @@ const loadHistoryQueryRecords = async () => {
         modelName: '客户基础信息',
         modelId: 'customer_basic',
         createTime: '2024-01-15T10:30:00Z',
-        status: '成功',
-        resultCount: 156
+        status: 'completed',
+        resultCount: 156,
+        conditions: {
+          customerId: '12345',
+          name: '张三',
+          ageRange: '31-50'
+        },
+        resultData: [
+          {
+            id: 'cust_001',
+            customerId: '12345',
+            name: '张三',
+            phone: '13812345678',
+            age: 35,
+            gender: '男',
+            city: '北京',
+            address: '北京市朝阳区xxx街道',
+            createTime: '2024-01-10T08:30:00Z'
+          },
+          {
+            id: 'cust_002',
+            customerId: '12346',
+            name: '李四',
+            phone: '13987654321',
+            age: 28,
+            gender: '女',
+            city: '上海',
+            address: '上海市浦东新区xxx路',
+            createTime: '2024-01-11T09:15:00Z'
+          },
+          {
+            id: 'cust_003',
+            customerId: '12347',
+            name: '王五',
+            phone: '13611112222',
+            age: 42,
+            gender: '男',
+            city: '广州',
+            address: '广州市天河区xxx大道',
+            createTime: '2024-01-12T10:20:00Z'
+          }
+        ]
       },
       {
         id: '2', 
-        name: '订单数据查询_2024-01-14',
-        modelName: '订单数据',
-        modelId: 'order_data',
+        name: '产品信息查询_2024-01-14',
+        modelName: '产品信息',
+        modelId: 'product_info',
         createTime: '2024-01-14T15:20:00Z',
-        status: '成功',
-        resultCount: 89
+        status: 'failed',
+        resultCount: 0,
+        conditions: {
+          productType: 'credit',
+          minBalance: 1000
+        },
+        resultData: []
+      },
+      {
+        id: '3',
+        name: '客户信用评分查询',
+        status: 'pending',
+        modelName: '客户信用',
+        modelId: 'customer_credit',
+        conditions: {
+          score: '>=800'
+        },
+        createTime: '2024-03-10T14:30:00Z',
+        resultCount: 0,
+        resultData: []
       }
     ]
     

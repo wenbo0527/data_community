@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineSystem } from '../utils/preview-line/core/PreviewLineSystem.js'
 import { nodeConfigManager } from '../utils/NodeConfigManager.js'
 
 describe('isConfigured逻辑测试', () => {
@@ -42,12 +42,13 @@ describe('isConfigured逻辑测试', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(
-      mockGraph,  // graph
-      null,      // branchManager
-      {},        // layoutConfig
-      null       // layoutEngine
-    )
+    previewManager = new PreviewLineSystem({
+      graph: mockGraph,
+      branchManager: null,
+      layoutEngine: null,
+      layoutEngineReady: true
+    })
+    previewManager.init()
   })
 
   describe('audience-split节点配置状态测试', () => {
@@ -83,7 +84,7 @@ describe('isConfigured逻辑测试', () => {
     })
 
     test('未配置的audience-split节点应该跳过预览线创建', () => {
-      const shouldCreate = previewManager.shouldCreatePreviewLine(mockNode)
+      const shouldCreate = previewManager.validator.shouldCreatePreviewLine(mockNode)
       expect(shouldCreate).toBe(false)
     })
 
@@ -107,7 +108,7 @@ describe('isConfigured逻辑测试', () => {
         isConfigured: true
       })
 
-      const shouldCreate = previewManager.shouldCreatePreviewLine(mockNode)
+      const shouldCreate = previewManager.validator.shouldCreatePreviewLine(mockNode)
       expect(shouldCreate).toBe(true)
     })
 

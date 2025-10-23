@@ -80,7 +80,6 @@
           <a-descriptions title="任务基本信息" :column="2" style="margin-top: 30px;">
             <a-descriptions-item label="任务名称">{{ taskName }}</a-descriptions-item>
             <a-descriptions-item label="创建时间">{{ createTime }}</a-descriptions-item>
-            <a-descriptions-item label="预计完成时间">{{ estimatedTime }}</a-descriptions-item>
             <a-descriptions-item label="当前状态">
               <a-tag 
                 :color="taskStatus === '进行中' || taskStatus === 'running' ? 'blue' : 
@@ -91,7 +90,6 @@
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="执行时长">{{ executionDuration }}</a-descriptions-item>
-            <a-descriptions-item label="预计剩余时间">{{ estimatedRemainingTime }}</a-descriptions-item>
           </a-descriptions>
         </div>
 

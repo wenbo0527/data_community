@@ -70,10 +70,17 @@ export function useBaseDrawer(options = {}) {
     }
   }
 
-  // 监听 visible 变化
+  // 监听 visible 变化 - 修复只读计算属性问题
   const visible = computed({
     get: () => props.visible,
-    set: (value) => emit('update:visible', value)
+    set: (value) => {
+      // 确保 emit 函数存在且可调用
+      if (emit && typeof emit === 'function') {
+        emit('update:visible', value)
+      } else {
+        console.warn(`[${nodeTypeId}NodeConfigDrawer] emit 函数不可用，无法更新 visible 状态`)
+      }
+    }
   })
 
   // 监听节点数据变化
@@ -119,8 +126,13 @@ export function useBaseDrawer(options = {}) {
       onCancel()
     }
     
-    emit('update:visible', false)
-    emit('cancel')
+    // 确保 emit 函数存在且可调用
+    if (emit && typeof emit === 'function') {
+      emit('update:visible', false)
+      emit('cancel')
+    } else {
+      console.warn(`[${nodeTypeId}NodeConfigDrawer] emit 函数不可用，无法发送取消事件`)
+    }
   }
 
   /**
@@ -170,8 +182,13 @@ export function useBaseDrawer(options = {}) {
 
       console.log(`[${nodeTypeId}NodeConfigDrawer] 提交配置:`, config)
       
-      emit('confirm', config)
-      emit('update:visible', false)
+      // 确保 emit 函数存在且可调用
+      if (emit && typeof emit === 'function') {
+        emit('confirm', config)
+        emit('update:visible', false)
+      } else {
+        console.warn(`[${nodeTypeId}NodeConfigDrawer] emit 函数不可用，无法发送确认事件`)
+      }
       
       console.log(`[${nodeTypeId}NodeConfigDrawer] 提交成功`)
     } catch (error) {
@@ -193,8 +210,13 @@ export function useBaseDrawer(options = {}) {
     
     console.log(`[${nodeTypeId}NodeConfigDrawer] 调试提交配置:`, config)
     
-    emit('confirm', config)
-    emit('update:visible', false)
+    // 确保 emit 函数存在且可调用
+    if (emit && typeof emit === 'function') {
+      emit('confirm', config)
+      emit('update:visible', false)
+    } else {
+      console.warn(`[${nodeTypeId}NodeConfigDrawer] emit 函数不可用，无法发送调试提交事件`)
+    }
   }
 
   // 表单验证状态

@@ -1,0 +1,31 @@
+{
+  "name": "marketing-canvas-node-tests",
+  "version": "1.0.0",
+  "description": "营销画布节点功能自动化测试系统",
+  "type": "module",
+  "scripts": {
+    "test": "node testRunner.js",
+    "test:creation": "node testRunner.js creation",
+    "test:drawer": "node testRunner.js drawer",
+    "test:save": "node testRunner.js save",
+    "test:deletion": "node testRunner.js deletion",
+    "test:error": "node testRunner.js error",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --ui"
+  },
+  "keywords": [
+    "marketing",
+    "canvas",
+    "node",
+    "testing",
+    "automation",
+    "vitest"
+  ],
+  "author": "Marketing Canvas Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "@vue/test-utils": "^2.4.0"
+  }
+}

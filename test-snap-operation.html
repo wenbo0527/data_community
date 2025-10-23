@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吸附操作测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin-top: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 吸附操作测试页面</h1>
+        <p>此页面用于测试修复后的预览线删除功能</p>
+        
+        <div class="test-section">
+            <h3>📋 测试步骤</h3>
+            <ol>
+                <li>打开任务编辑器页面</li>
+                <li>拖拽节点创建预览线</li>
+                <li>将预览线吸附到目标节点</li>
+                <li>检查预览线是否正确删除</li>
+                <li>查看控制台日志验证删除逻辑</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 测试操作</h3>
+            <button class="test-button" onclick="openTaskEditor()">打开任务编辑器</button>
+            <button class="test-button" onclick="checkPreviewLines()">检查预览线状态</button>
+            <button class="test-button" onclick="simulateSnapOperation()">模拟吸附操作</button>
+            <button class="test-button" onclick="clearLogs()">清空日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 测试状态</h3>
+            <div id="status" class="status">等待测试...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 测试日志</h3>
+            <div id="logArea" class="log-area"></div>
+        </div>
+    </div>
+
+    <script>
+        let logArea = null;
+        
+        function log(message, type = 'info') {
+            if (!logArea) {
+                logArea = document.getElementById('logArea');
+            }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logArea.textContent += logEntry;
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            console.log(`[测试页面] ${logEntry.trim()}`);
+        }
+        
+        function updateStatus(message, isSuccess = true) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${isSuccess ? 'success' : 'error'}`;
+        }
+        
+        function openTaskEditor() {
+            log('正在打开任务编辑器页面...');
+            const url = 'http://localhost:5174/marketing/tasks/editor?mode=edit&id=2&version=1';
+            window.open(url, '_blank');
+            updateStatus('任务编辑器已在新窗口打开');
+            log('任务编辑器页面已打开，请在该页面进行吸附测试');
+        }
+        
+        function checkPreviewLines() {
+            log('检查全局预览线管理器状态...');
+            
+            if (typeof window !== 'undefined' && window.unifiedPreviewLineManager) {
+                const manager = window.unifiedPreviewLineManager;
+                
+                if (typeof manager.debugCurrentState === 'function') {
+                    log('调用预览线管理器调试方法...');
+                    manager.debugCurrentState();
+                    updateStatus('预览线状态已输出到控制台');
+                } else {
+                    log('预览线管理器缺少debugCurrentState方法', 'warn');
+                    updateStatus('预览线管理器方法不完整', false);
+                }
+                
+                // 检查预览线数量
+                if (manager.previewLines) {
+                    const count = manager.previewLines.size || 0;
+                    log(`当前预览线数量: ${count}`);
+                }
+            } else {
+                log('全局预览线管理器不存在，请先打开任务编辑器', 'error');
+                updateStatus('需要先打开任务编辑器页面', false);
+            }
+        }
+        
+        function simulateSnapOperation() {
+            log('开始模拟吸附操作测试...');
+            
+            // 这里只是记录测试步骤，实际操作需要在任务编辑器页面进行
+            const steps = [
+                '1. 在任务编辑器中拖拽一个节点',
+                '2. 观察预览线的创建',
+                '3. 将节点拖拽到另一个节点附近',
+                '4. 释放鼠标完成吸附',
+                '5. 检查预览线是否正确删除',
+                '6. 查看控制台日志确认删除逻辑'
+            ];
+            
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    log(step);
+                }, index * 500);
+            });
+            
+            setTimeout(() => {
+                updateStatus('吸附操作测试步骤已列出，请在任务编辑器中执行');
+                log('请按照上述步骤在任务编辑器页面进行实际测试');
+            }, steps.length * 500);
+        }
+        
+        function clearLogs() {
+            if (logArea) {
+                logArea.textContent = '';
+            }
+            updateStatus('日志已清空');
+            log('测试日志已清空，准备新的测试');
+        }
+        
+        // 页面加载完成后的初始化
+        window.addEventListener('load', function() {
+            logArea = document.getElementById('logArea');
+            log('吸附操作测试页面已加载');
+            log('请点击"打开任务编辑器"按钮开始测试');
+            updateStatus('测试页面已准备就绪');
+        });
+        
+        // 监听来自其他窗口的消息（如果需要跨窗口通信）
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'snap-test') {
+                log(`收到测试消息: ${event.data.message}`, event.data.level || 'info');
+            }
+        });
+    </script>
+</body>
+</html>

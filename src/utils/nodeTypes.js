@@ -3,14 +3,14 @@
  * 统一管理所有节点类型的配置信息
  */
 
-import { canvasConfig } from './canvasConfig.js'
+import { canvasConfig } from '../pages/marketing/tasks/utils/canvas/canvasConfig.js'
 
 /**
  * 节点类型配置
  */
 export const nodeTypes = {
   'start': {
-    label: '开始节点',
+    label: '开始',
     color: '#5F95FF',
     shape: 'circle',
     width: 100,
@@ -95,7 +95,41 @@ export const nodeTypes = {
       {
         type: 'single',
         position: { x: 0, y: 150 },        label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
+        allowedTypes:  ['audience-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
+      }
+    ]
+  },
+  'email': {
+    label: '邮件触达',
+    color: '#52C41A',
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
+      }
+    ]
+  },
+  'wechat': {
+    label: '微信触达',
+    color: '#1890FF',
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
       }
     ]
   },
@@ -153,6 +187,16 @@ export const nodeTypes = {
     autoExpand: true,
     nextSlots: [] // 动态生成，基于配置页面结果
   },
+  'condition': {
+    label: '条件判断',
+    color: '#FA8C16',
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 2,
+    autoExpand: true,
+    nextSlots: [] // 动态生成，基于配置页面结果
+  },
   'wait': {
     label: '等待节点',
     color: '#A8A8A8',
@@ -186,6 +230,24 @@ export const nodeTypes = {
         allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
       }
     ]
+  },
+  // 🔧 修复：添加缺失的task类型定义
+  'task': {
+    label: '任务节点',
+    color: '#722ED1',
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'task', 'end']
+      }
+    ]
   }
 }
 
@@ -195,11 +257,31 @@ export const nodeTypes = {
  * @returns {Object|null} 节点配置对象
  */
 export const getNodeConfig = (nodeType) => {
-  const config = nodeTypes[nodeType]
-  if (!config) {
-    console.warn(`Unknown node type: ${nodeType}`)
+  // 🔧 修复：添加类型检查，处理非字符串类型
+  if (typeof nodeType !== 'string') {
+    console.warn(`Invalid node type format: ${typeof nodeType}, value:`, nodeType)
     return null
   }
+  
+  // 🔧 修复：处理空字符串和空值
+  if (!nodeType || nodeType.trim() === '') {
+    console.warn('Empty node type provided')
+    return null
+  }
+  
+  const normalizedType = nodeType.trim()
+  const config = nodeTypes[normalizedType]
+  
+  if (!config) {
+    // 🔧 修复：为常见的错误类型提供更好的错误信息
+    if (normalizedType === 'task') {
+      console.warn(`Unknown node type: "${normalizedType}". Did you mean one of: ${Object.keys(nodeTypes).join(', ')}?`)
+    } else {
+      console.warn(`Unknown node type: "${normalizedType}". Available types: ${Object.keys(nodeTypes).join(', ')}`)
+    }
+    return null
+  }
+  
   return { ...config }
 }
 
@@ -216,7 +298,9 @@ export const getNodeAttrs = (nodeType) => {
     body: {
       fill: config.color,        // 使用实心颜色填充
       stroke: config.color,      // 边框颜色与填充颜色一致
-      strokeWidth: 0,            // 去掉边框，使用纯实心效果
+      strokeWidth: 2,            // 🔧 修复：添加边框宽度，避免黑边问题
+      rx: config.shape === 'circle' ? 50 : 8,  // 🔧 修复：添加圆角配置，圆形节点使用大圆角
+      ry: config.shape === 'circle' ? 50 : 8,  // 🔧 修复：添加圆角配置，圆形节点使用大圆角
     },
     text: {
       fill: '#FFFFFF',
@@ -330,8 +414,24 @@ export const getNodePorts = (nodeType, options = {}) => {
  * 获取所有节点类型列表
  * @returns {Array} 节点类型数组
  */
+/**
+ * 获取所有节点类型
+ * @returns {string[]} 节点类型数组
+ */
 export const getAllNodeTypes = () => {
-  return Object.keys(nodeTypes)
+  const types = Object.keys(nodeTypes)
+  
+  // 🔧 修复：过滤掉无效的键，确保返回的都是有效的字符串
+  const validTypes = types.filter(type => {
+    return type && 
+           typeof type === 'string' && 
+           type.trim() !== '' &&
+           nodeTypes[type] && 
+           typeof nodeTypes[type] === 'object'
+  })
+  
+  console.log('[nodeTypes] 获取所有节点类型:', validTypes)
+  return validTypes
 }
 
 /**
@@ -340,7 +440,17 @@ export const getAllNodeTypes = () => {
  * @returns {boolean} 是否存在
  */
 export const isValidNodeType = (nodeType) => {
-  return nodeTypes.hasOwnProperty(nodeType)
+  // 🔧 修复：添加类型检查，处理非字符串类型
+  if (typeof nodeType !== 'string') {
+    return false
+  }
+  
+  // 🔧 修复：处理空字符串和空值
+  if (!nodeType || nodeType.trim() === '') {
+    return false
+  }
+  
+  return nodeTypes.hasOwnProperty(nodeType.trim())
 }
 
 /**
@@ -349,6 +459,18 @@ export const isValidNodeType = (nodeType) => {
  * @returns {string} 显示标签
  */
 export const getNodeLabel = (nodeType) => {
+  // 🔧 修复：添加类型检查，处理非字符串类型
+  if (typeof nodeType !== 'string') {
+    console.warn(`Invalid node type format: ${typeof nodeType}, value:`, nodeType)
+    return '未知节点'
+  }
+  
+  // 🔧 修复：处理空字符串和空值
+  if (!nodeType || nodeType.trim() === '') {
+    console.warn('Empty node type provided to getNodeLabel')
+    return '未知节点'
+  }
+  
   const config = getNodeConfig(nodeType)
   return config ? config.label : nodeType
 }

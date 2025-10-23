@@ -1,0 +1,74 @@
+{
+  "summary": {
+    "totalTests": 0,
+    "totalPassed": 0,
+    "totalFailed": 0,
+    "successRate": 0,
+    "totalDuration": 6272,
+    "startTime": "2025-10-17T03:14:17.255Z",
+    "endTime": "2025-10-17T03:14:23.527Z"
+  },
+  "testSuites": [
+    {
+      "name": "节点创建测试",
+      "file": "NodeCreationTests.test.js",
+      "description": "测试9种节点类型的创建功能",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "testResults": [],
+      "duration": 1745,
+      "status": "PASSED",
+      "timestamp": "2025-10-17T03:14:17.255Z"
+    },
+    {
+      "name": "配置抽屉测试",
+      "file": "NodeDrawerTests.test.js",
+      "description": "测试节点配置抽屉匹配功能",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "testResults": [],
+      "duration": 1326,
+      "status": "PASSED",
+      "timestamp": "2025-10-17T03:14:19.000Z"
+    },
+    {
+      "name": "配置保存测试",
+      "file": "NodeConfigSaveTests.test.js",
+      "description": "测试节点配置保存和预览线生成功能",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "testResults": [],
+      "duration": 1033,
+      "status": "PASSED",
+      "timestamp": "2025-10-17T03:14:20.327Z"
+    },
+    {
+      "name": "节点删除测试",
+      "file": "NodeDeletionTests.test.js",
+      "description": "测试节点删除和类型识别功能",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "testResults": [],
+      "duration": 1163,
+      "status": "PASSED",
+      "timestamp": "2025-10-17T03:14:21.360Z"
+    },
+    {
+      "name": "错误处理测试",
+      "file": "NodeErrorHandlingTests.test.js",
+      "description": "测试错误处理和边界情况",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "testResults": [],
+      "duration": 1004,
+      "status": "PASSED",
+      "timestamp": "2025-10-17T03:14:22.523Z"
+    }
+  ],
+  "generatedAt": "2025-10-17T03:14:23.527Z"
+}

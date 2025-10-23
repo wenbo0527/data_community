@@ -104,7 +104,7 @@ async function testGlobalDragStateManager() {
 async function testBackwardCompatibility() {
   console.log('\n🔄 开始测试向后兼容性...')
   
-  // 模拟UnifiedPreviewLineManager的使用方式
+  // 模拟PreviewLineSystem的使用方式
   const manager = new GlobalDragStateManager()
   
   // 测试属性代理
@@ -112,7 +112,7 @@ async function testBackwardCompatibility() {
     globalDragStateManager: manager
   }
   
-  // 设置属性代理（模拟UnifiedPreviewLineManager中的实现）
+  // 设置属性代理（模拟PreviewLineSystem中的实现）
   Object.defineProperty(mockPreviewManager, 'isDragging', {
     get() { 
       const stateInfo = this.globalDragStateManager.getStateInfo()

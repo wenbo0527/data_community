@@ -177,7 +177,7 @@ import { Message } from '@arco-design/web-vue'
 import { IconMinus, IconSearch, IconInfoCircle } from '@arco-design/web-vue/es/icon'
 import BaseDrawer from './BaseDrawer.vue'
 import { useBaseDrawer } from '@/composables/useBaseDrawer.js'
-import crowdSplitLogger from '@/utils/crowdSplitLogger.js'
+import crowdSplitLogger from '../utils/canvas/crowdSplitLogger.js'
 
 // Mock数据
 const mockCrowdData = [

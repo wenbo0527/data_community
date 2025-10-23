@@ -1,0 +1,74 @@
+{
+  "summary": {
+    "totalTests": 5,
+    "totalPassed": 0,
+    "totalFailed": 5,
+    "successRate": "0.00",
+    "totalDuration": 5230,
+    "startTime": "2025-10-16T09:26:46.294Z",
+    "endTime": "2025-10-16T09:26:51.524Z"
+  },
+  "testSuites": [
+    {
+      "name": "节点创建测试",
+      "file": "NodeCreationTests.test.js",
+      "description": "测试9种节点类型的创建功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 1578,
+      "status": "ERROR",
+      "error": "Command failed: npx vitest run /Users/mac/nis_mock/data_comunity/data_comunity/src/tests/marketing/canvas/NodeCreationTests.test.js --reporter=json",
+      "timestamp": "2025-10-16T09:26:46.294Z"
+    },
+    {
+      "name": "配置抽屉测试",
+      "file": "NodeDrawerTests.test.js",
+      "description": "测试节点配置抽屉匹配功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 906,
+      "status": "ERROR",
+      "error": "Command failed: npx vitest run /Users/mac/nis_mock/data_comunity/data_comunity/src/tests/marketing/canvas/NodeDrawerTests.test.js --reporter=json",
+      "timestamp": "2025-10-16T09:26:47.873Z"
+    },
+    {
+      "name": "配置保存测试",
+      "file": "NodeConfigSaveTests.test.js",
+      "description": "测试节点配置保存和预览线生成功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 988,
+      "status": "ERROR",
+      "error": "Command failed: npx vitest run /Users/mac/nis_mock/data_comunity/data_comunity/src/tests/marketing/canvas/NodeConfigSaveTests.test.js --reporter=json",
+      "timestamp": "2025-10-16T09:26:48.780Z"
+    },
+    {
+      "name": "节点删除测试",
+      "file": "NodeDeletionTests.test.js",
+      "description": "测试节点删除和类型识别功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 859,
+      "status": "ERROR",
+      "error": "Command failed: npx vitest run /Users/mac/nis_mock/data_comunity/data_comunity/src/tests/marketing/canvas/NodeDeletionTests.test.js --reporter=json",
+      "timestamp": "2025-10-16T09:26:49.768Z"
+    },
+    {
+      "name": "错误处理测试",
+      "file": "NodeErrorHandlingTests.test.js",
+      "description": "测试错误处理和边界情况",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 897,
+      "status": "ERROR",
+      "error": "Command failed: npx vitest run /Users/mac/nis_mock/data_comunity/data_comunity/src/tests/marketing/canvas/NodeErrorHandlingTests.test.js --reporter=json",
+      "timestamp": "2025-10-16T09:26:50.627Z"
+    }
+  ],
+  "generatedAt": "2025-10-16T09:26:51.524Z"
+}

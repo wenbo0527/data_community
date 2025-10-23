@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人群分流节点预览线测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🎯 人群分流节点预览线生成测试</h1>
+    
+    <div class="test-section">
+        <h2>测试控制</h2>
+        <button onclick="runFullTest()">🚀 运行完整测试</button>
+        <button onclick="testGraphInstance()">🔍 测试图实例</button>
+        <button onclick="testPreviewManager()">🔧 测试预览线管理器</button>
+        <button onclick="testAudienceSplitNodes()">🌿 测试人群分流节点</button>
+        <button onclick="testAudienceSplitPreviewLineFix()">🔧 测试预览线修复函数</button>
+        <button onclick="checkScriptStatus()">📋 检查脚本加载状态</button>
+        <button onclick="clearResults()">🧹 清空结果</button>
+        <button onclick="forceReloadScript()">🔄 强制重新加载脚本</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试结果</h2>
+        <div id="test-results"></div>
+    </div>
+    
+    <script>
+        // 日志输出函数
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            resultsDiv.appendChild(logEntry);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+            
+            // 同时输出到控制台
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+        
+        // 获取图实例
+        function getGraphInstance() {
+            log('🔍 开始搜索图实例...');
+            
+            const searchPaths = [
+                () => window.graph,
+                () => window.app?.$refs?.graph?.graph,
+                () => window.app?.$children?.[0]?.graph,
+                () => document.querySelector('.x6-graph')?.graph,
+                () => window.Vue?.prototype?.$graph,
+                () => window.__VUE_APP__?.graph,
+                () => window.vueApp?.config?.globalProperties?.$graph
+            ];
+            
+            for (let i = 0; i < searchPaths.length; i++) {
+                try {
+                    const graph = searchPaths[i]();
+                    if (graph && typeof graph.getCells === 'function') {
+                        log(`✅ 在路径 ${i + 1} 找到图实例`, 'success');
+                        return graph;
+                    }
+                } catch (error) {
+                    log(`❌ 路径 ${i + 1} 搜索失败: ${error.message}`, 'error');
+                }
+            }
+            
+            log('❌ 未找到有效的图实例', 'error');
+            return null;
+        }
+        
+        // 获取预览线管理器
+        function getPreviewLineManager() {
+            log('🔍 搜索预览线管理器实例...');
+            
+            const searchPaths = [
+                () => window.previewLineManager,
+                () => window.app?.$refs?.previewLineManager,
+                () => window.UnifiedPreviewLineManager,
+                () => window.app?.$children?.[0]?.previewLineManager,
+                () => window.vueApp?.config?.globalProperties?.$previewLineManager
+            ];
+            
+            for (let i = 0; i < searchPaths.length; i++) {
+                try {
+                    const manager = searchPaths[i]();
+                    if (manager && typeof manager.shouldCreatePreviewLine === 'function') {
+                        log(`✅ 在路径 ${i + 1} 找到预览线管理器`, 'success');
+                        return manager;
+                    }
+                } catch (error) {
+                    log(`❌ 路径 ${i + 1} 搜索失败: ${error.message}`, 'error');
+                }
+            }
+            
+            log('❌ 未找到预览线管理器实例', 'error');
+            return null;
+        }
+        
+        // 测试图实例
+        function testGraphInstance() {
+            log('='.repeat(50));
+            log('🔍 测试图实例获取');
+            
+            const graph = getGraphInstance();
+            if (graph) {
+                const cells = graph.getCells();
+                const nodes = graph.getNodes();
+                const edges = graph.getEdges();
+                
+                log(`📊 图实例信息:`, 'info');
+                log(`  - 总单元格数: ${cells.length}`);
+                log(`  - 节点数: ${nodes.length}`);
+                log(`  - 边数: ${edges.length}`);
+                
+                // 统计节点类型
+                const nodeTypes = {};
+                nodes.forEach(node => {
+                    const nodeData = node.getData() || {};
+                    const nodeType = nodeData.nodeType || nodeData.type || 'unknown';
+                    nodeTypes[nodeType] = (nodeTypes[nodeType] || 0) + 1;
+                });
+                
+                log('📋 节点类型统计:', 'info');
+                Object.entries(nodeTypes).forEach(([type, count]) => {
+                    log(`  - ${type}: ${count}个`);
+                });
+                
+                return true;
+            }
+            return false;
+        }
+        
+        // 测试预览线管理器
+        function testPreviewManager() {
+            log('='.repeat(50));
+            log('🔧 测试预览线管理器');
+            
+            const manager = getPreviewLineManager();
+            if (manager) {
+                log('✅ 预览线管理器可用', 'success');
+                
+                // 检查关键方法
+                const methods = [
+                    'shouldCreatePreviewLine',
+                    'shouldNodeBeConfigured',
+                    'calculateBranchPreviewPosition',
+                    'createBranchPreviewLines',
+                    'generateBranchesByType'
+                ];
+                
+                methods.forEach(method => {
+                    if (typeof manager[method] === 'function') {
+                        log(`✅ 方法 ${method} 可用`, 'success');
+                    } else {
+                        log(`❌ 方法 ${method} 不可用`, 'error');
+                    }
+                });
+                
+                return true;
+            }
+            return false;
+        }
+        
+        // 测试audience-split节点
+        function testAudienceSplitNodes() {
+            log('='.repeat(50));
+            log('🌿 测试人群分流节点');
+            
+            const graph = getGraphInstance();
+            const manager = getPreviewLineManager();
+            
+            if (!graph || !manager) {
+                log('❌ 缺少必要的实例，测试终止', 'error');
+                return false;
+            }
+            
+            // 查找audience-split节点
+            const nodes = graph.getNodes();
+            const audienceSplitNodes = nodes.filter(node => {
+                const nodeData = node.getData() || {};
+                const nodeType = nodeData.nodeType || nodeData.type;
+                return nodeType === 'audience-split';
+            });
+            
+            log(`📊 找到 ${audienceSplitNodes.length} 个人群分流节点`);
+            
+            if (audienceSplitNodes.length === 0) {
+                log('⚠️ 未找到人群分流节点，创建测试节点...', 'warning');
+                return createTestAudienceSplitNode(graph, manager);
+            }
+            
+            // 测试每个audience-split节点
+            let allTestsPassed = true;
+            audienceSplitNodes.forEach((node, index) => {
+                log(`\n🔍 测试第 ${index + 1} 个人群分流节点: ${node.id}`);
+                const testResult = testSingleAudienceSplitNode(node, manager, graph);
+                if (!testResult) {
+                    allTestsPassed = false;
+                }
+            });
+            
+            return allTestsPassed;
+        }
+        
+        // 测试单个audience-split节点
+        function testSingleAudienceSplitNode(node, manager, graph) {
+            log(`\n📋 测试节点 ${node.id} 的详细信息:`);
+            
+            // 1. 检查节点基本信息
+            const nodeData = node.getData() || {};
+            const nodeType = nodeData.nodeType || nodeData.type;
+            log(`节点类型: ${nodeType}`);
+            log(`节点数据: ${JSON.stringify(nodeData, null, 2)}`);
+            
+            // 2. 检查isConfigured状态
+            const isConfigured = nodeData.isConfigured;
+            log(`配置状态 (isConfigured): ${isConfigured}`);
+            
+            // 3. 检查分支信息
+            const branches = nodeData.branches || [];
+            log(`分支信息: ${JSON.stringify(branches, null, 2)}`);
+            log(`分支数量: ${branches.length}`);
+            
+            // 4. 检查配置信息
+            const config = nodeData.config || {};
+            log(`配置信息: ${JSON.stringify(config, null, 2)}`);
+            
+            // 5. 测试shouldNodeBeConfigured方法
+            let shouldBeConfigured = false;
+            try {
+                shouldBeConfigured = manager.shouldNodeBeConfigured(nodeData, nodeType);
+                log(`shouldNodeBeConfigured 结果: ${shouldBeConfigured}`, shouldBeConfigured ? 'success' : 'warning');
+            } catch (error) {
+                log(`❌ shouldNodeBeConfigured 方法调用失败: ${error.message}`, 'error');
+            }
+            
+            // 6. 测试shouldCreatePreviewLine方法
+            let shouldCreatePreview = false;
+            try {
+                shouldCreatePreview = manager.shouldCreatePreviewLine(node);
+                log(`shouldCreatePreviewLine 结果: ${shouldCreatePreview}`, shouldCreatePreview ? 'success' : 'warning');
+            } catch (error) {
+                log(`❌ shouldCreatePreviewLine 方法调用失败: ${error.message}`, 'error');
+            }
+            
+            // 7. 检查现有连接
+            const outgoingEdges = graph.getOutgoingEdges(node) || [];
+            const incomingEdges = graph.getIncomingEdges(node) || [];
+            log(`出边数量: ${outgoingEdges.length}`);
+            log(`入边数量: ${incomingEdges.length}`);
+            
+            // 8. 测试分支生成
+            try {
+                const generatedBranches = manager.generateBranchesByType(nodeType, config, node.id);
+                log(`生成的分支: ${JSON.stringify(generatedBranches, null, 2)}`);
+                log(`生成的分支数量: ${generatedBranches.length}`);
+            } catch (error) {
+                log(`❌ generateBranchesByType 方法调用失败: ${error.message}`, 'error');
+            }
+            
+            // 9. 分析问题
+            log('\n🔍 问题分析:');
+            if (!isConfigured) {
+                log('⚠️ 节点未配置 (isConfigured = false)', 'warning');
+            }
+            if (branches.length === 0 && Object.keys(config).length === 0) {
+                log('⚠️ 节点没有分支信息和配置信息', 'warning');
+            }
+            if (!shouldBeConfigured) {
+                log('⚠️ shouldNodeBeConfigured 返回 false', 'warning');
+            }
+            if (!shouldCreatePreview) {
+                log('⚠️ shouldCreatePreviewLine 返回 false', 'warning');
+            }
+            
+            return shouldCreatePreview;
+        }
+        
+        // 创建测试用的audience-split节点
+        function createTestAudienceSplitNode(graph, manager) {
+            log('\n🏗️ 创建测试用的人群分流节点...');
+            
+            try {
+                const testNode = graph.addNode({
+                    id: 'test-audience-split-' + Date.now(),
+                    x: 100,
+                    y: 100,
+                    width: 120,
+                    height: 60,
+                    shape: 'rect',
+                    data: {
+                        nodeType: 'audience-split',
+                        type: 'audience-split',
+                        isConfigured: true,
+                        branches: [
+                            { id: 'branch-1', label: '分支1', crowdName: '人群1' },
+                            { id: 'branch-2', label: '分支2', crowdName: '人群2' }
+                        ],
+                        config: {
+                            crowdLayers: [
+                                { id: 'crowd-1', crowdName: '人群1', crowdId: 'c1' },
+                                { id: 'crowd-2', crowdName: '人群2', crowdId: 'c2' }
+                            ],
+                            unmatchBranch: {
+                                id: 'unmatch',
+                                name: '未命中人群',
+                                crowdName: '未命中人群'
+                            }
+                        }
+                    }
+                });
+                
+                log(`✅ 测试节点创建成功: ${testNode.id}`, 'success');
+                
+                // 测试新创建的节点
+                return testSingleAudienceSplitNode(testNode, manager, graph);
+            } catch (error) {
+                log(`❌ 创建测试节点失败: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // 运行完整测试
+        function runFullTest() {
+            clearResults();
+            log('🎯 人群分流节点预览线生成测试开始');
+            log('='.repeat(50));
+            
+            const graphTest = testGraphInstance();
+            const managerTest = testPreviewManager();
+            const nodeTest = testAudienceSplitNodes();
+            
+            log('\n' + '='.repeat(50));
+            if (graphTest && managerTest && nodeTest) {
+                log('✅ 测试完成，预览线生成正常', 'success');
+            } else {
+                log('❌ 测试发现问题，预览线生成异常', 'error');
+                provideFixSuggestions();
+            }
+        }
+        
+        // 提供修复建议
+        function provideFixSuggestions() {
+            log('\n💡 修复建议:', 'info');
+            log('1. 确保audience-split节点的isConfigured字段正确设置为true');
+            log('2. 检查节点的config.crowdLayers数组是否包含有效的人群配置');
+            log('3. 验证shouldNodeBeConfigured方法对audience-split节点的处理逻辑');
+            log('4. 检查generateBranchesByType方法是否正确生成分支信息');
+            log('5. 确保预览线管理器正确识别audience-split为分支节点类型');
+            log('6. 检查节点在图中的位置和尺寸信息是否正确');
+            log('7. 验证分支预览线创建流程中的位置计算逻辑');
+        }
+        
+        // 检查脚本加载状态
+        function checkScriptStatus() {
+            log('='.repeat(50));
+            log('📋 检查脚本加载状态');
+            
+            // 检查函数是否存在
+            const functions = [
+                'testAudienceSplitPreviewLineFix',
+                'runAudienceSplitPreviewTest',
+                'testAudienceSplitPreviewLine'
+            ];
+            
+            functions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    log(`✅ 函数 ${funcName} 已加载`, 'success');
+                } else {
+                    log(`❌ 函数 ${funcName} 未找到`, 'error');
+                }
+            });
+            
+            // 检查脚本标签
+            const scripts = document.querySelectorAll('script[src*="test-audience-split-preview-fix"]');
+            log(`📄 找到 ${scripts.length} 个相关脚本标签`);
+            
+            scripts.forEach((script, index) => {
+                log(`脚本 ${index + 1}: ${script.src}`);
+                log(`加载状态: ${script.readyState || '未知'}`);
+            });
+        }
+        
+        // 强制重新加载脚本
+        function forceReloadScript() {
+            log('🔄 强制重新加载脚本...');
+            
+            // 移除现有脚本
+            const existingScripts = document.querySelectorAll('script[src*="test-audience-split-preview-fix"]');
+            existingScripts.forEach(script => {
+                script.remove();
+                log('🗑️ 移除现有脚本标签');
+            });
+            
+            // 创建新的脚本标签
+            const newScript = document.createElement('script');
+            newScript.src = './test-audience-split-preview-fix.js?t=' + Date.now(); // 添加时间戳防止缓存
+            
+            newScript.onload = function() {
+                log('✅ 脚本重新加载成功', 'success');
+                checkScriptStatus();
+            };
+            
+            newScript.onerror = function() {
+                log('❌ 脚本重新加载失败', 'error');
+            };
+            
+            document.body.appendChild(newScript);
+            log('📄 添加新的脚本标签');
+        }
+        
+        // 测试预览线修复函数
+        function testAudienceSplitPreviewLineFix() {
+            log('='.repeat(50));
+            log('🔧 测试预览线修复函数');
+            
+            try {
+                if (typeof testAudienceSplitPreviewLineFix === 'function') {
+                    log('✅ testAudienceSplitPreviewLineFix 函数存在', 'success');
+                    
+                    // 尝试调用函数
+                    const result = testAudienceSplitPreviewLineFix();
+                    log('✅ 函数调用成功', 'success');
+                    log(`返回结果: ${JSON.stringify(result, null, 2)}`);
+                } else {
+                    log('❌ testAudienceSplitPreviewLineFix 函数不存在', 'error');
+                    log('💡 尝试检查其他可能的函数名...');
+                    
+                    // 检查其他可能的函数
+                    if (typeof runAudienceSplitPreviewTest === 'function') {
+                        log('✅ 找到 runAudienceSplitPreviewTest 函数', 'success');
+                        const result = runAudienceSplitPreviewTest();
+                        log('✅ runAudienceSplitPreviewTest 调用成功', 'success');
+                        log(`返回结果: ${JSON.stringify(result, null, 2)}`);
+                    } else {
+                        log('❌ runAudienceSplitPreviewTest 函数也不存在', 'error');
+                    }
+                }
+            } catch (error) {
+                log(`❌ 函数调用出错: ${error.message}`, 'error');
+                log(`错误堆栈: ${error.stack}`, 'error');
+            }
+        }
+        
+        // 页面加载完成后的初始化
+        window.addEventListener('load', function() {
+            log('📝 人群分流节点预览线测试页面加载完成', 'success');
+            log('点击上方按钮开始测试，或直接运行完整测试');
+            
+            // 延迟检查脚本状态
+            setTimeout(() => {
+                log('\n🔍 自动检查脚本加载状态...');
+                checkScriptStatus();
+            }, 1000);
+        });
+    </script>
+    
+    <!-- 引入人群分流节点预览线测试脚本 -->
+    <script src="./test-audience-split-preview-fix.js"></script>
+</body>
+</html>

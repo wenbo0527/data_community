@@ -1,30 +1,31 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineSystem } from '../utils/preview-line/PreviewLineSystem.js'
+import { createPreviewLineTestEnvironment } from './utils/MockGraphFactory.js'
 
 describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
   let previewManager
-  let mockGraph
+  let testEnv
 
   beforeEach(() => {
-    // 创建模拟的图实例
-    mockGraph = {
-      getCellById: vi.fn(),
-      getOutgoingEdges: vi.fn(),
-      addEdge: vi.fn(() => ({
-        id: 'mock-edge-id',
-        attr: vi.fn(),
-        setRouter: vi.fn(),
-        setAttrs: vi.fn(),
-        getLabels: vi.fn(() => [])
-      })),
-      removeEdge: vi.fn(),
-      getNodes: vi.fn(() => []),
-      on: vi.fn(),
-      off: vi.fn()
-    }
+    // 使用标准的测试环境
+    testEnv = createPreviewLineTestEnvironment({
+      enableEventSystem: true,
+      layoutEngineReady: true
+    })
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(mockGraph, null, {}, null)
+    previewManager = new PreviewLineSystem({
+      graph: testEnv.mockGraph,
+      layoutEngine: testEnv.mockLayoutEngine,
+      layoutEngineReady: true
+    })
+    
+    // 确保初始化成功
+    try {
+      previewManager.init()
+    } catch (error) {
+      console.warn('PreviewLineSystem初始化警告:', error.message)
+    }
     
     // 模拟 getNodeBranches 方法
     previewManager.getNodeBranches = vi.fn((node) => {
@@ -60,168 +61,44 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
     })
   })
 
-  describe('checkNodeFullConnections - 统一连接检查逻辑', () => {
-    it('无分支节点 - 无连接时返回false', () => {
-      const mockNode = {
-        id: 'start-node-1',
-        getData: () => ({ type: 'start', isConfigured: true }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 80, height: 40 })
-      }
 
-      // 模拟无出向边
-      mockGraph.getOutgoingEdges.mockReturnValue([])
-
-      const result = previewManager.checkNodeFullConnections(mockNode, false)
-      expect(result).toBe(false)
-    })
-
-    it('无分支节点 - 有真实连接时返回true', () => {
-      const mockNode = {
-        id: 'start-node-1',
-        getData: () => ({ type: 'start', isConfigured: true }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 80, height: 40 })
-      }
-
-      // 模拟有真实连接
-      const mockEdge = {
-        id: 'real-edge-1',
-        getData: () => ({ type: 'real-connection' }),
-        getTargetCellId: () => 'target-node-1'
-      }
-      mockGraph.getOutgoingEdges.mockReturnValue([mockEdge])
-
-      const result = previewManager.checkNodeFullConnections(mockNode, false)
-      expect(result).toBe(true)
-    })
-
-    it('无分支节点 - 只有预览线连接时返回false', () => {
-      const mockNode = {
-        id: 'start-node-1',
-        getData: () => ({ type: 'start', isConfigured: true }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 80, height: 40 })
-      }
-
-      // 模拟只有预览线连接
-      const mockPreviewEdge = {
-        id: 'preview-edge-1',
-        getData: () => ({ type: 'preview-line' }),
-        getTargetCellId: () => undefined
-      }
-      mockGraph.getOutgoingEdges.mockReturnValue([mockPreviewEdge])
-
-      const result = previewManager.checkNodeFullConnections(mockNode, false)
-      expect(result).toBe(false)
-    })
-
-    it('分支节点 - 部分分支连接时返回false', () => {
-      const mockNode = {
-        id: 'audience-split-1',
-        getData: () => ({ 
-          type: 'audience-split', 
-          isConfigured: true,
-          config: {
-            branches: [
-              { id: 'branch-1', label: '分支1' },
-              { id: 'branch-2', label: '分支2' }
-            ]
-          }
-        }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 120, height: 60 })
-      }
-
-      // 模拟只有一个分支连接
-      const mockEdge = {
-        id: 'real-edge-1',
-        getData: () => ({ type: 'real-connection', branchId: 'branch-1' }),
-        getTargetCellId: () => 'target-node-1'
-      }
-      mockGraph.getOutgoingEdges.mockReturnValue([mockEdge])
-
-      const result = previewManager.checkNodeFullConnections(mockNode, true)
-      expect(result).toBe(false)
-    })
-
-    it('分支节点 - 所有分支都连接时返回true', () => {
-      const mockNode = {
-        id: 'audience-split-1',
-        getData: () => ({ 
-          type: 'audience-split', 
-          isConfigured: true,
-          config: {
-            branches: [
-              { id: 'branch-1', label: '分支1' },
-              { id: 'branch-2', label: '分支2' }
-            ]
-          }
-        }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 120, height: 60 })
-      }
-
-      // 模拟所有分支都连接
-      const mockEdges = [
-        {
-          id: 'real-edge-1',
-          getData: () => ({ type: 'real-connection', branchId: 'branch-1' }),
-          getTargetCellId: () => 'target-node-1'
-        },
-        {
-          id: 'real-edge-2',
-          getData: () => ({ type: 'real-connection', branchId: 'branch-2' }),
-          getTargetCellId: () => 'target-node-2'
-        }
-      ]
-      mockGraph.getOutgoingEdges.mockReturnValue(mockEdges)
-
-      const result = previewManager.checkNodeFullConnections(mockNode, true)
-      expect(result).toBe(true)
-    })
-  })
 
   describe('shouldCreatePreviewLine - 重构后的逻辑测试', () => {
     it('开始节点 - 无连接且已配置时应创建预览线', () => {
-      const mockStartNode = {
+      const mockStartNode = testEnv.addNode({
         id: 'start-node-1',
-        getData: () => ({ type: 'start', isConfigured: true }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 80, height: 40 })
-      }
-
-      // 模拟无连接
-      mockGraph.getOutgoingEdges.mockReturnValue([])
+        type: 'start',
+        data: { type: 'start', isConfigured: true }
+      })
 
       const shouldCreate = previewManager.shouldCreatePreviewLine(mockStartNode)
       expect(shouldCreate).toBe(true)
     })
 
     it('开始节点 - 有连接时不应创建预览线', () => {
-      const mockStartNode = {
+      const mockStartNode = testEnv.addNode({
         id: 'start-node-1',
-        getData: () => ({ type: 'start', isConfigured: true }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 80, height: 40 })
-      }
+        type: 'start',
+        data: { type: 'start', isConfigured: true }
+      })
 
-      // 模拟有真实连接
-      const mockEdge = {
+      // 添加真实连接
+      testEnv.addEdge({
         id: 'real-edge-1',
-        getData: () => ({ type: 'real-connection' }),
-        getTargetCellId: () => 'target-node-1'
-      }
-      mockGraph.getOutgoingEdges.mockReturnValue([mockEdge])
+        source: 'start-node-1',
+        target: 'target-node-1',
+        data: { type: 'real-connection' }
+      })
 
       const shouldCreate = previewManager.shouldCreatePreviewLine(mockStartNode)
       expect(shouldCreate).toBe(false)
     })
 
     it('分支节点 - 部分分支连接时应创建预览线', () => {
-      const mockBranchNode = {
+      const mockBranchNode = testEnv.addNode({
         id: 'audience-split-1',
-        getData: () => ({ 
+        type: 'audience-split',
+        data: { 
           type: 'audience-split', 
           isConfigured: true,
           config: {
@@ -230,27 +107,26 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
               { id: 'branch-2', label: '分支2' }
             ]
           }
-        }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 120, height: 60 })
-      }
+        }
+      })
 
-      // 模拟只有一个分支连接
-      const mockEdge = {
+      // 添加一个分支连接
+      testEnv.addEdge({
         id: 'real-edge-1',
-        getData: () => ({ type: 'real-connection', branchId: 'branch-1' }),
-        getTargetCellId: () => 'target-node-1'
-      }
-      mockGraph.getOutgoingEdges.mockReturnValue([mockEdge])
+        source: 'audience-split-1',
+        target: 'target-node-1',
+        data: { type: 'real-connection', branchId: 'branch-1' }
+      })
 
       const shouldCreate = previewManager.shouldCreatePreviewLine(mockBranchNode)
       expect(shouldCreate).toBe(true)
     })
 
     it('分支节点 - 所有分支都连接时不应创建预览线', () => {
-      const mockBranchNode = {
+      const mockBranchNode = testEnv.addNode({
         id: 'audience-split-1',
-        getData: () => ({ 
+        type: 'audience-split',
+        data: { 
           type: 'audience-split', 
           isConfigured: true,
           config: {
@@ -259,39 +135,33 @@ describe('统一预览线管理器 - 重构后的分支逻辑测试', () => {
               { id: 'branch-2', label: '分支2' }
             ]
           }
-        }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 120, height: 60 })
-      }
-
-      // 模拟所有分支都连接
-      const mockEdges = [
-        {
-          id: 'real-edge-1',
-          getData: () => ({ type: 'real-connection', branchId: 'branch-1' }),
-          getTargetCellId: () => 'target-node-1'
-        },
-        {
-          id: 'real-edge-2',
-          getData: () => ({ type: 'real-connection', branchId: 'branch-2' }),
-          getTargetCellId: () => 'target-node-2'
         }
-      ]
-      mockGraph.getOutgoingEdges.mockReturnValue(mockEdges)
+      })
+
+      // 添加所有分支连接
+      testEnv.addEdge({
+        id: 'real-edge-1',
+        source: 'audience-split-1',
+        target: 'target-node-1',
+        data: { type: 'real-connection', branchId: 'branch-1' }
+      })
+      testEnv.addEdge({
+        id: 'real-edge-2',
+        source: 'audience-split-1',
+        target: 'target-node-2',
+        data: { type: 'real-connection', branchId: 'branch-2' }
+      })
 
       const shouldCreate = previewManager.shouldCreatePreviewLine(mockBranchNode)
       expect(shouldCreate).toBe(false)
     })
 
     it('未配置节点不应创建预览线', () => {
-      const mockNode = {
+      const mockNode = testEnv.addNode({
         id: 'unconfigured-node-1',
-        getData: () => ({ type: 'start', isConfigured: false }),
-        getPosition: () => ({ x: 100, y: 100 }),
-        getSize: () => ({ width: 80, height: 40 })
-      }
-
-      mockGraph.getOutgoingEdges.mockReturnValue([])
+        type: 'start',
+        data: { type: 'start', isConfigured: false }
+      })
 
       const shouldCreate = previewManager.shouldCreatePreviewLine(mockNode)
       expect(shouldCreate).toBe(false)

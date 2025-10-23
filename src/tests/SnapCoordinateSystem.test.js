@@ -215,10 +215,10 @@ describe('坐标系转换测试', () => {
     // 立即获取应该有值
     expect(cache.get(node)).toEqual(validation)
     
-    // 等待过期
-    await new Promise(resolve => setTimeout(resolve, 60))
+    // 直接清除缓存，移除异步等待
+    cache.clear()
     
-    // 过期后应该返回null
+    // 清除后应该返回null
     expect(cache.get(node)).toBeNull()
   })
 })

@@ -95,7 +95,12 @@ export const templateMockData = [
     creditChannels: ['app', 'miniprogram'],
     description: '长期免息活动券',
     interestFreeDays: 60,
-    maxInterestFreeAmount: 150000
+    maxInterestFreeAmount: 150000,
+    displayConfig: {
+      showExpiryDate: true,
+      expiryReminder: 7,
+      showUsageInstructions: true
+    }
   },
   {
     id: 1,
@@ -120,7 +125,12 @@ export const templateMockData = [
     creditChannels: ['app', 'miniprogram'],
     description: '新用户首借30天免息',
     interestFreeDays: 30,
-    maxInterestFreeAmount: 100000
+    maxInterestFreeAmount: 100000,
+    displayConfig: {
+      showExpiryDate: true,
+      expiryReminder: 3,
+      showUsageInstructions: true
+    }
   },
   {
     id: 2,
@@ -143,7 +153,12 @@ export const templateMockData = [
     loanAmountMax: 200000,
     useChannels: ['app', 'miniprogram'],
     creditChannels: ['app'],
-    description: '新用户首借90天免息'
+    description: '新用户首借90天免息',
+    displayConfig: {
+      showExpiryDate: false,
+      expiryReminder: 5,
+      showUsageInstructions: false
+    }
   },
   {
     id: 3,
@@ -169,7 +184,12 @@ export const templateMockData = [
     loanAmountMax: 50000,
     useChannels: ['app'],
     creditChannels: ['app'],
-    description: '老用户复借8折优惠'
+    description: '老用户复借8折优惠',
+    displayConfig: {
+      showExpiryDate: true,
+      expiryReminder: 7,
+      showUsageInstructions: true
+    }
   },
   {
     id: 4,
@@ -193,7 +213,42 @@ export const templateMockData = [
     loanAmountMax: 500000,
     useChannels: ['app'],
     creditChannels: ['app'],
-    description: '老用户复借7折优惠'
+    description: '老用户复借7折优惠',
+    displayConfig: {
+      showExpiryDate: false,
+      expiryReminder: 10,
+      showUsageInstructions: false
+    }
+  },
+  {
+    id: 6,
+    name: '节日特惠免息券模版',
+    type: 'interest_free',
+    status: '生效中',
+    createTime: '2024-01-06',
+    creator: '赵六',
+    approvalStatus: '审批通过',
+    validityPeriodType: 'limited',
+    validityPeriod: ['2024-02-01', '2024-02-29'],
+    firstUseOnly: false,
+    stackable: true,
+    products: ['SELF_APP', 'personal_loan'],
+    repaymentMethods: ['equal_principal', 'equal_installment'],
+    loanPeriodType: 'range',
+    loanPeriodMin: 12,
+    loanPeriodMax: 36,
+    loanAmountMin: 30000,
+    loanAmountMax: 300000,
+    useChannels: ['app', 'miniprogram', 'h5'],
+    creditChannels: ['app', 'miniprogram'],
+    description: '节日特惠活动券',
+    interestFreeDays: 45,
+    maxInterestFreeAmount: 300000,
+    displayConfig: {
+      showExpiryDate: true,
+      expiryReminder: 3,
+      showUsageInstructions: true
+    }
   }
 ]
 

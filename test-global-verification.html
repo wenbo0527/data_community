@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全局预览线系统验证</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 全局预览线系统验证</h1>
+        
+        <div id="results"></div>
+        
+        <div style="margin-top: 20px;">
+            <button onclick="runVerification()">🔄 重新验证</button>
+            <button onclick="navigateToCanvas()">📊 前往Canvas页面</button>
+            <button onclick="checkWindowObject()">🪟 检查Window对象</button>
+        </div>
+        
+        <div id="details" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function addDetails(content) {
+            const detailsDiv = document.getElementById('details');
+            detailsDiv.innerHTML = `<pre>${content}</pre>`;
+        }
+
+        function runVerification() {
+            // 清空之前的结果
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('details').innerHTML = '';
+            
+            console.log('🔍 开始全局预览线系统验证');
+            
+            const results = {
+                timestamp: new Date().toLocaleString(),
+                windowExists: typeof window !== 'undefined',
+                previewLineSystemExists: false,
+                previewLineSystemType: 'undefined',
+                hasInitMethod: false,
+                hasKeyMethods: false,
+                isInitialized: false,
+                errorCount: 0,
+                availableMethods: [],
+                windowProperties: []
+            };
+            
+            // 检查window对象
+            if (typeof window !== 'undefined') {
+                addResult('✅ Window对象存在', 'success');
+                
+                // 检查window.previewLineSystem
+                results.previewLineSystemExists = !!window.previewLineSystem;
+                results.previewLineSystemType = typeof window.previewLineSystem;
+                
+                if (window.previewLineSystem) {
+                    addResult('✅ window.previewLineSystem 存在', 'success');
+                    
+                    // 检查关键方法
+                    results.hasInitMethod = typeof window.previewLineSystem.init === 'function';
+                    results.hasKeyMethods = typeof window.previewLineSystem.checkNodeSnapToPreviewLines === 'function';
+                    results.isInitialized = window.previewLineSystem.initialized || false;
+                    results.errorCount = window.previewLineSystem.errorCount || 0;
+                    
+                    // 获取所有可用方法
+                    try {
+                        results.availableMethods = Object.getOwnPropertyNames(window.previewLineSystem)
+                            .filter(name => typeof window.previewLineSystem[name] === 'function')
+                            .slice(0, 10); // 只显示前10个方法
+                    } catch (e) {
+                        results.availableMethods = ['获取方法列表失败: ' + e.message];
+                    }
+                    
+                    if (results.hasInitMethod) {
+                        addResult('✅ init方法存在', 'success');
+                    } else {
+                        addResult('❌ init方法不存在', 'error');
+                    }
+                    
+                    if (results.hasKeyMethods) {
+                        addResult('✅ checkNodeSnapToPreviewLines方法存在', 'success');
+                    } else {
+                        addResult('❌ checkNodeSnapToPreviewLines方法不存在', 'error');
+                    }
+                    
+                    if (results.isInitialized) {
+                        addResult('✅ PreviewLineSystem已初始化', 'success');
+                    } else {
+                        addResult('⚠️ PreviewLineSystem未初始化', 'warning');
+                    }
+                    
+                    if (results.errorCount > 0) {
+                        addResult(`⚠️ 检测到 ${results.errorCount} 个错误`, 'warning');
+                    } else {
+                        addResult('✅ 无错误记录', 'success');
+                    }
+                    
+                } else {
+                    addResult('❌ window.previewLineSystem 不存在', 'error');
+                }
+                
+                // 检查window对象中的相关属性
+                const windowKeys = Object.keys(window).filter(key => 
+                    key.toLowerCase().includes('preview') || 
+                    key.toLowerCase().includes('line') ||
+                    key.toLowerCase().includes('system')
+                ).slice(0, 5);
+                results.windowProperties = windowKeys;
+                
+            } else {
+                addResult('❌ Window对象不存在', 'error');
+            }
+            
+            // 显示详细信息
+            addDetails(JSON.stringify(results, null, 2));
+            
+            console.log('📊 验证结果:', results);
+            
+            return results;
+        }
+
+        function navigateToCanvas() {
+            window.location.href = '/test/canvas';
+        }
+
+        function checkWindowObject() {
+            const windowInfo = {
+                location: window.location.href,
+                userAgent: navigator.userAgent,
+                windowKeys: Object.keys(window).length,
+                previewRelatedKeys: Object.keys(window).filter(key => 
+                    key.toLowerCase().includes('preview') || 
+                    key.toLowerCase().includes('line') ||
+                    key.toLowerCase().includes('system')
+                )
+            };
+            
+            addDetails('Window对象信息:\n' + JSON.stringify(windowInfo, null, 2));
+        }
+
+        // 页面加载时自动运行验证
+        window.addEventListener('load', () => {
+            setTimeout(runVerification, 1000);
+        });
+    </script>
+</body>
+</html>

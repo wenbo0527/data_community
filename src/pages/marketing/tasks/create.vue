@@ -241,7 +241,7 @@ import {
   IconSave,
   IconGift
 } from '@arco-design/web-vue/es/icon'
-import TaskFlowCanvas from './components/TaskFlowCanvas.vue'
+import TaskFlowCanvas from './components/TaskFlowCanvasRefactored.vue'
 import { validateCanvasData, formatValidationMessage } from '../../../utils/canvasValidation.js'
 import { validateForSave, validateForPublish, formatPublishValidationMessage } from '../../../utils/enhancedCanvasValidation.js'
 
@@ -274,7 +274,6 @@ const handleKeyDown = (event) => {
   // 防止意外的Ctrl+S保存
   if (event.ctrlKey && event.key === 's') {
     event.preventDefault()
-    console.log('[TaskCreate] 阻止了Ctrl+S快捷键保存')
     Message.info('请使用页面底部的"保存任务"按钮')
     return false
   }
@@ -316,7 +315,6 @@ const beforeRouteLeave = async (to, from, next) => {
 
 // 搜索节点
 const handleSearch = (value) => {
-  console.log('搜索节点:', value)
   // 这里可以添加节点搜索逻辑
 }
 
@@ -336,7 +334,6 @@ const handleCanvasDragOver = (event) => {
 const handleCanvasDrop = (event) => {
   event.preventDefault()
   const nodeType = event.dataTransfer.getData('nodeType')
-  console.log('添加节点:', nodeType)
   
   // 获取画布组件的graph实例
   const graph = canvasRef.value?.graph
@@ -403,13 +400,12 @@ const saveDraft = async () => {
       updateTime: new Date().toLocaleString('zh-CN')
     }
     
-    console.log('保存草稿:', draftData)
     Message.success('草稿保存成功')
     
-    // 保存草稿后标记为已保存
+    // 标记为已保存
     hasUnsavedChanges.value = false
+    
   } catch (error) {
-    console.error('保存草稿失败:', error)
     Message.error('保存草稿失败')
   }
 }
@@ -458,8 +454,6 @@ const saveTask = async () => {
       creator: '当前用户'
     }
     
-    console.log('[TaskCreate] 保存任务草稿:', taskData)
-    
     // 模拟保存延迟
     await new Promise(resolve => setTimeout(resolve, 1000))
     
@@ -470,7 +464,6 @@ const saveTask = async () => {
     hasUnsavedChanges.value = false
     
   } catch (error) {
-    console.error('[TaskCreate] 保存任务失败:', error)
     Message.error('保存失败，请重试')
   } finally {
     isSaving.value = false
@@ -509,7 +502,7 @@ const publishTask = async () => {
       if (previewManager && previewManager.getActivePreviewLines) {
         previewLines = previewManager.getActivePreviewLines()
       } else if (previewManager && previewManager.previewLines) {
-        // 如果是UnifiedPreviewLineManager
+        // 如果是PreviewLineSystem
         previewLines = []
         previewManager.previewLines.forEach((previewInstance, nodeId) => {
           const node = canvasData.nodes.find(n => n.id === nodeId)
@@ -542,16 +535,7 @@ const publishTask = async () => {
         })
       }
       
-      console.log('📋 [发布校验] 获取到预览线信息:', {
-        previewLineCount: previewLines.length,
-        previewLines: previewLines.map(line => ({
-          id: line.id,
-          sourceNodeId: line.sourceNodeId,
-          branchId: line.branchId
-        }))
-      })
     } catch (error) {
-      console.warn('⚠️ [发布校验] 获取预览线信息失败:', error)
       previewLines = []
     }
     
@@ -615,9 +599,8 @@ const publishTask = async () => {
             canvasRef.value.triggerLayout()
           }
           
-          console.log('✅ [发布校验] 已应用自动修复并重新布局')
+          Message.success('已自动补充结束节点并优化布局')
         } catch (error) {
-          console.warn('⚠️ [发布校验] 重新布局失败:', error)
         }
         
         Message.success('已自动补充结束节点并优化布局')
@@ -631,8 +614,6 @@ const publishTask = async () => {
       publishTime: new Date().toLocaleString('zh-CN'),
       creator: '当前用户'
     }
-    
-    console.log('[TaskCreate] 发布任务:', taskData)
     
     // 模拟发布延迟
     await new Promise(resolve => setTimeout(resolve, 1500))
@@ -661,7 +642,6 @@ const publishTask = async () => {
     }
     
   } catch (error) {
-    console.error('[TaskCreate] 发布任务失败:', error)
     Message.error('发布失败，请重试')
   } finally {
     isPublishing.value = false
@@ -680,8 +660,6 @@ const handleFormChange = () => {
 
 // 组件挂载
 onMounted(() => {
-  console.log('任务创建页面已挂载')
-  
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown)
   

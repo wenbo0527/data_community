@@ -32,6 +32,44 @@ Object.defineProperty(window, 'matchMedia', {
   }))
 })
 
+// Mock SVG相关功能以支持X6
+global.SVGElement = class SVGElement extends Element {
+  constructor() {
+    super()
+  }
+  
+  getCTM() {
+    return {
+      a: 1, b: 0, c: 0, d: 1, e: 0, f: 0,
+      inverse: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })
+    }
+  }
+  
+  getScreenCTM() {
+    return this.getCTM()
+  }
+  
+  getBBox() {
+    return { x: 0, y: 0, width: 100, height: 100 }
+  }
+  
+  createSVGMatrix() {
+    return this.getCTM()
+  }
+}
+
+// Mock SVGSVGElement
+global.SVGSVGElement = class SVGSVGElement extends global.SVGElement {
+  createSVGMatrix() {
+    return {
+      a: 1, b: 0, c: 0, d: 1, e: 0, f: 0,
+      inverse: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+      multiply: (matrix) => matrix,
+      translate: (x, y) => ({ a: 1, b: 0, c: 0, d: 1, e: x, f: y })
+    }
+  }
+}
+
 // Mock HTMLCanvasElement.getContext
 HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
   fillRect: vi.fn(),
@@ -60,8 +98,8 @@ HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
   clip: vi.fn()
 })
 
-// Mock URL.createObjectURL
-global.URL.createObjectURL = vi.fn(() => 'mocked-url')
+// Mock URL.createObjectURL and revokeObjectURL
+global.URL.createObjectURL = vi.fn()
 global.URL.revokeObjectURL = vi.fn()
 
 // Mock localStorage
@@ -183,6 +221,11 @@ export const createMockGraph = () => {
         // 只有当config没有这些方法时才添加默认方法
         getSourceCellId: config.getSourceCellId || vi.fn(() => config.source?.cell || config.source),
         getTargetCellId: config.getTargetCellId || vi.fn(() => config.target?.cell || config.target),
+        getSourcePortId: config.getSourcePortId || vi.fn(() => config.source?.port || 'out'),
+        getTargetPortId: config.getTargetPortId || vi.fn(() => config.target?.port || 'in'),
+        getLabels: config.getLabels || vi.fn(() => []),
+        isVisible: config.isVisible || vi.fn(() => true),
+        getZIndex: config.getZIndex || vi.fn(() => 1),
         remove: config.remove || vi.fn()
       }
       edges.set(config.id, edge)
@@ -190,11 +233,33 @@ export const createMockGraph = () => {
     }),
     getNodes: vi.fn(() => Array.from(nodes.values())),
     getEdges: vi.fn(() => Array.from(edges.values())),
+    getCellById: vi.fn((id) => {
+      // 先查找节点
+      if (nodes.has(id)) {
+        return nodes.get(id)
+      }
+      // 再查找边
+      if (edges.has(id)) {
+        return edges.get(id)
+      }
+      return null
+    }),
     removeNode: vi.fn((id) => {
       nodes.delete(id)
     }),
     removeEdge: vi.fn((id) => {
       edges.delete(id)
+    }),
+    // 添加PreviewLineSystem需要的方法
+    hasCell: vi.fn((id) => {
+      return nodes.has(id) || edges.has(id)
+    }),
+    removeCell: vi.fn((id) => {
+      if (nodes.has(id)) {
+        nodes.delete(id)
+      } else if (edges.has(id)) {
+        edges.delete(id)
+      }
     }),
     zoom: vi.fn(),
     zoomTo: vi.fn(),

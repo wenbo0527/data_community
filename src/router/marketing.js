@@ -33,9 +33,8 @@ export default [
             meta: { title: '券包管理' }
           }
         ]
-      }
-
-    ,{
+      },
+      {
       path: 'statistics',
       name: 'dataStatistics',
       meta: { title: '数据统计' },
@@ -44,14 +43,16 @@ export default [
           path: 'logs',
           name: 'couponLogs',
           component: () => import('../pages/marketing/coupon/record/index.vue'),
-          meta: { title: '权益日志'   }
-          },
+          meta: { title: '权益日志' }
+        },
           {
             path: 'inventory',
             name: 'inventory',
             component: () => import('../pages/marketing/coupon/inventory/index.vue'),
             meta: { title: '库存查询' }
-          }        ]      },    
+          }
+        ]
+      },    
       {
         path: 'global',
         name: 'globalManagement',
@@ -62,7 +63,9 @@ export default [
             name: 'globalRules',
             component: () => import('../pages/marketing/coupon/rules/index.vue'),
             meta: { title: '全局规则' }
-          }        ]      },    
+          }
+        ]
+      },    
     {
       path: 'coupon/create',
       name: 'MarketingCouponCreate',
@@ -85,6 +88,12 @@ export default [
       name: 'marketing-tasks-editor',
       component: () => import('../pages/marketing/tasks/task-editor.vue'),
       meta: { title: '任务管理' }
+    },
+    {
+      path: 'tasks/test/TaskFlowCanvasTest',
+      name: 'marketing-tasks-test',
+      component: () => import('../pages/marketing/tasks/test/TaskFlowCanvasTest.vue'),
+      meta: { title: 'TaskFlowCanvas测试' }
     }
     ]
   }

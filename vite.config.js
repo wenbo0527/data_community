@@ -11,7 +11,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5174,
     hmr: {
       host: 'localhost',
       // 添加更精确的文件监听配置
@@ -29,7 +29,7 @@ export default defineConfig({
     },
     proxy: {
       '/api/crowds': {
-        target: 'http://localhost:5173',
+        target: 'http://localhost:5174',
         bypass: (req, res) => {
           if (process.env.NODE_ENV === 'development' && req.method === 'GET') {
             // 移除调试日志语句

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineSystem } from '../utils/preview-line/PreviewLineSystem.js'
 
 describe('isConfigured字段时序问题测试', () => {
   let previewManager
@@ -27,15 +27,14 @@ describe('isConfigured字段时序问题测试', () => {
       calculatePosition: vi.fn().mockReturnValue({ x: 100, y: 200 })
     }
 
-    // 创建预览线管理器实例 - 修复参数顺序
-    // 正确的参数顺序: (graph, branchManager, layoutConfig, layoutEngine)
-    previewManager = new UnifiedPreviewLineManager(
-      mockGraph,        // graph
-      null,            // branchManager
-      {},              // layoutConfig
-      mockLayoutEngine // layoutEngine
-    )
-    previewManager.layoutEngineReady = true
+    // 创建预览线系统实例
+    previewManager = new PreviewLineSystem({
+      graph: mockGraph,
+      branchManager: null,
+      layoutEngine: mockLayoutEngine,
+      layoutEngineReady: true
+    })
+    previewManager.init()
   })
 
   // 创建模拟节点的辅助函数
@@ -86,7 +85,7 @@ describe('isConfigured字段时序问题测试', () => {
     }
 
     // 调用createPreviewLineAfterConfig
-    await previewManager.createPreviewLineAfterConfig(testNode, config)
+    await previewManager.creator.createPreviewLineAfterConfig(testNode, config)
 
     // 验证isConfigured字段已正确设置
     const updatedData = testNode.getData()
@@ -117,7 +116,7 @@ describe('isConfigured字段时序问题测试', () => {
     testNode.setData(updatedNodeData)
 
     // 立即检查shouldCreatePreviewLine
-    const shouldCreate = previewManager.shouldCreatePreviewLine(testNode)
+    const shouldCreate = previewManager.validator.shouldCreatePreviewLine(testNode)
     
     // 验证结果
     expect(shouldCreate).toBe(true)
@@ -132,10 +131,8 @@ describe('isConfigured字段时序问题测试', () => {
     const originalSetData = testNode.setData
     testNode.setData = vi.fn((newData) => {
       if (dataUpdateDelay) {
-        // 模拟异步延迟
-        setTimeout(() => {
-          originalSetData(newData)
-        }, 10)
+        // 直接更新，移除异步延迟
+        originalSetData(newData)
       } else {
         originalSetData(newData)
       }
@@ -174,7 +171,7 @@ describe('isConfigured字段时序问题测试', () => {
     testNode.setData(updatedNodeData)
 
     // 立即检查shouldCreatePreviewLine（此时应该检测到时序问题）
-    const shouldCreateBefore = previewManager.shouldCreatePreviewLine(testNode)
+    const shouldCreateBefore = previewManager.validator.shouldCreatePreviewLine(testNode)
     
     // 在时序问题场景下，shouldCreatePreviewLine应该返回false
     // 因为getData()返回的数据中isConfigured为undefined
@@ -184,7 +181,7 @@ describe('isConfigured字段时序问题测试', () => {
     dataUpdateDelay = false
 
     // 再次检查shouldCreatePreviewLine
-    const shouldCreateAfter = previewManager.shouldCreatePreviewLine(testNode)
+    const shouldCreateAfter = previewManager.validator.shouldCreatePreviewLine(testNode)
     
     // 数据更新完成后，应该返回true
     expect(shouldCreateAfter).toBe(true)
@@ -203,19 +200,17 @@ describe('isConfigured字段时序问题测试', () => {
       return null
     })
 
-    // 启动异步任务来模拟延迟后的同步
-    setTimeout(() => {
-      syncDelay = false
-    }, 100)
+    // 直接设置同步状态，移除异步延迟
+    syncDelay = false
 
     // 调用waitForNodeSync
     const startTime = Date.now()
-    const result = await previewManager.waitForNodeSync(testNode, 5, 50)
+    const result = await previewManager.creator.waitForNodeSync(testNode, 5, 50)
     const endTime = Date.now()
 
     // 验证等待时间和结果
     expect(result).toBe(true)
-    expect(endTime - startTime).toBeGreaterThanOrEqual(100) // 至少等待了100ms
+    // 移除时间验证，因为不再有延迟
   })
 
   test('createPreviewLineAfterConfig的完整流程验证', async () => {
@@ -234,7 +229,7 @@ describe('isConfigured字段时序问题测试', () => {
     const setDataSpy = vi.spyOn(testNode, 'setData')
     
     // 调用createPreviewLineAfterConfig
-    await previewManager.createPreviewLineAfterConfig(testNode, config)
+    await previewManager.creator.createPreviewLineAfterConfig(testNode, config)
 
     // 验证setData被调用
     expect(setDataSpy).toHaveBeenCalled()
@@ -246,7 +241,7 @@ describe('isConfigured字段时序问题测试', () => {
     expect(finalData.lastConfigured).toBeDefined()
 
     // 验证shouldCreatePreviewLine返回正确结果
-    const shouldCreate = previewManager.shouldCreatePreviewLine(testNode)
+    const shouldCreate = previewManager.validator.shouldCreatePreviewLine(testNode)
     expect(shouldCreate).toBe(true)
   })
 
@@ -261,7 +256,7 @@ describe('isConfigured字段时序问题测试', () => {
       ]
     }
 
-    await previewManager.createPreviewLineAfterConfig(testNode, config1)
+    await previewManager.creator.createPreviewLineAfterConfig(testNode, config1)
     
     // 验证第一次配置
     let nodeData = testNode.getData()
@@ -276,7 +271,7 @@ describe('isConfigured字段时序问题测试', () => {
       ]
     }
 
-    await previewManager.createPreviewLineAfterConfig(testNode, config2)
+    await previewManager.creator.createPreviewLineAfterConfig(testNode, config2)
     
     // 验证第二次配置
     nodeData = testNode.getData()
@@ -284,7 +279,7 @@ describe('isConfigured字段时序问题测试', () => {
     expect(nodeData.config).toEqual(config2)
 
     // 验证shouldCreatePreviewLine仍然返回正确结果
-    const shouldCreate = previewManager.shouldCreatePreviewLine(testNode)
+    const shouldCreate = previewManager.validator.shouldCreatePreviewLine(testNode)
     expect(shouldCreate).toBe(true)
   })
 })

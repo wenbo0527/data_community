@@ -1,0 +1,1331 @@
+<template>
+  <div class="notification-form-container">
+    <div class="form-header">
+      <a-breadcrumb class="breadcrumb">
+        <a-breadcrumb-item @click="$router.push('/home')">首页</a-breadcrumb-item>
+        <a-breadcrumb-item @click="$router.push('/notification/list')">通知管理</a-breadcrumb-item>
+        <a-breadcrumb-item>{{ isEdit ? '编辑内容' : '新增内容' }}</a-breadcrumb-item>
+      </a-breadcrumb>
+      <div class="header-title-container">
+        <h1 class="page-title">{{ isEdit ? '编辑内容' : '新增内容' }}</h1>
+        <a-tag v-if="!isEdit" color="green" class="new-content-tag">新内容</a-tag>
+      </div>
+    </div>
+
+    <div class="form-layout">
+      <!-- 主要内容编辑区域 -->
+      <div class="main-panel">
+        <a-form
+          ref="formRef"
+          :model="formData"
+          :rules="formRules"
+          layout="vertical"
+          class="main-form"
+          @submit="handleSubmit"
+        >
+          <!-- 合并的基本信息卡片 -->
+          <a-card class="basic-info-card" :bordered="false">
+            <template #title>
+              <div class="card-title">
+                <icon-edit />
+                基本信息
+                <span class="required-mark">*</span>
+              </div>
+            </template>
+            
+            <!-- 内容类型选择 -->
+            <a-form-item 
+              field="contentType" 
+              label="内容类型"
+              :rules="[{ required: true, message: '请选择内容类型' }]"
+              class="content-type-field"
+            >
+              <a-radio-group 
+                v-model="formData.contentType" 
+                type="button"
+                class="content-type-selector"
+                @change="handleContentTypeChange"
+              >
+                <a-radio value="document" class="type-option">
+                  <div class="radio-content">
+                    <icon-file class="radio-icon" />
+                    <div class="radio-text">
+                      <div class="radio-title">仅上传文档</div>
+                      <div class="radio-desc">上传文档到社区资源库</div>
+                    </div>
+                  </div>
+                </a-radio>
+                <a-radio value="notification" class="type-option">
+                  <div class="radio-content">
+                    <icon-notification class="radio-icon" />
+                    <div class="radio-text">
+                      <div class="radio-title">发送通知</div>
+                      <div class="radio-desc">发布通知消息给用户</div>
+                    </div>
+                  </div>
+                </a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <!-- 模式提示 -->
+            <a-alert 
+              v-if="formData.contentType === 'document'"
+              type="info" 
+              class="mode-alert"
+              show-icon
+            >
+              文档模式：专注于文档上传和管理，支持多种文件格式
+            </a-alert>
+            <a-alert 
+              v-else-if="formData.contentType === 'notification'"
+              type="success" 
+              class="mode-alert"
+              show-icon
+            >
+              通知模式：发布重要通知和公告，支持富文本编辑
+            </a-alert>
+
+            <!-- 基本信息表单 -->
+            <div class="form-row">
+              <!-- 标题 -->
+              <a-form-item 
+                field="title" 
+                label="标题"
+                :rules="[{ required: true, message: '请输入标题' }]"
+                class="title-field"
+              >
+                <a-input 
+                  v-model="formData.title" 
+                  :placeholder="formData.contentType === 'document' ? '请输入文档标题' : '请输入通知标题'"
+                  class="title-input"
+                  size="large"
+                />
+              </a-form-item>
+
+              <!-- 归档分类 - 两种模式都显示 -->
+              <a-form-item 
+                field="categoryPath" 
+                label="归档分类"
+                :rules="[{ required: true, message: '请选择归档分类' }]"
+                class="category-field"
+              >
+                <a-cascader
+                  v-model="formData.categoryPath"
+                  :options="categoryOptions"
+                  :placeholder="formData.contentType === 'document' ? '请选择文档分类' : '请选择通知分类'"
+                  class="category-selector"
+                  size="large"
+                  allow-search
+                />
+              </a-form-item>
+            </div>
+          </a-card>
+
+          <!-- 内容编辑卡片 -->
+          <a-card class="content-editor-card" :bordered="false">
+            <template #title>
+              <div class="card-title-with-actions">
+                <div class="card-title">
+                  <icon-edit />
+                  {{ formData.contentType === 'document' ? '文档描述' : '正文' }}
+                  <span v-if="formData.contentType === 'notification'" class="required-mark">*</span>
+                </div>
+                <div class="word-count">
+                  {{ wordCount }} 字
+                </div>
+              </div>
+            </template>
+            
+            <a-form-item 
+              field="content" 
+              class="content-field"
+              :rules="formData.contentType === 'notification' ? [{ required: true, message: '请输入通知内容' }] : []"
+            >
+              <div class="editor-container">
+                <a-textarea
+                  v-model="formData.content"
+                  :placeholder="formData.contentType === 'document' ? '请输入文档描述（可选）' : '请输入通知内容，支持 Markdown 语法'"
+                  class="content-editor"
+                  :auto-size="{ minRows: 12, maxRows: 20 }"
+                  @input="handleContentChange"
+                />
+                
+                <!-- Markdown 工具栏 -->
+                <div v-if="formData.contentType === 'notification'" class="editor-toolbar">
+                  <a-button-group size="mini">
+                    <a-button @click="insertMarkdown('**', '**')" title="粗体">
+                      <icon-bold />
+                    </a-button>
+                    <a-button @click="insertMarkdown('*', '*')" title="斜体">
+                      <icon-italic />
+                    </a-button>
+                    <a-button @click="insertMarkdown('`', '`')" title="代码">
+                      <icon-code />
+                    </a-button>
+                    <a-button @click="insertMarkdown('[', '](url)')" title="链接">
+                      <icon-link />
+                    </a-button>
+                    <a-button @click="insertMarkdown('- ', '')" title="列表">
+                      <icon-list />
+                    </a-button>
+                  </a-button-group>
+                </div>
+              </div>
+            </a-form-item>
+          </a-card>
+
+          <!-- 附件管理卡片 -->
+          <a-card class="attachment-card" :bordered="false">
+            <template #title>
+              <div class="card-title">
+                <icon-attachment />
+                附件管理
+                <span v-if="formData.contentType === 'document'" class="required-mark">*</span>
+              </div>
+            </template>
+            
+            <!-- 文档模式提示 -->
+            <a-alert 
+              v-if="formData.contentType === 'document'"
+              type="warning" 
+              class="mode-alert"
+              show-icon
+            >
+              文档模式下必须上传至少一个文件
+            </a-alert>
+            
+            <a-upload
+              v-model:file-list="fileList"
+              :custom-request="handleUpload"
+              :before-upload="beforeUpload"
+              @remove="handleRemove"
+              multiple
+              draggable
+              :show-upload-list="{ showPreviewIcon: true, showRemoveIcon: true }"
+            >
+              <template #upload-area>
+                <div class="upload-area">
+                  <div class="upload-icon">
+                    <icon-cloud-upload />
+                  </div>
+                  <div class="upload-text">
+                    <div class="upload-title">点击或拖拽文件到此区域上传</div>
+                    <div class="upload-subtitle">
+                      支持 PDF、Word、Excel、PPT、图片等格式，单个文件不超过 50MB
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </a-upload>
+          </a-card>
+
+          <!-- 发布设置卡片 - 仅通知模式显示 -->
+          <a-card v-if="formData.contentType === 'notification'" class="publish-settings-card" :bordered="false">
+            <template #title>
+              <div class="card-title">
+                <icon-settings />
+                发布设置
+              </div>
+            </template>
+            
+            <div class="settings-grid">
+              <a-form-item field="isSticky" label="置顶显示" class="setting-item">
+                <a-switch v-model="formData.isSticky" />
+              </a-form-item>
+              
+              <a-form-item field="isPublic" label="公开可见" class="setting-item">
+                <a-switch v-model="formData.isPublic" />
+              </a-form-item>
+              
+              <a-form-item field="publishTime" label="发布时间" class="setting-item">
+                <a-date-picker
+                  v-model="formData.publishTime"
+                  show-time
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="选择发布时间"
+                />
+              </a-form-item>
+            </div>
+          </a-card>
+
+          <!-- 操作按钮卡片 -->
+          <a-card class="action-card" :bordered="false">
+            <div class="action-buttons">
+              <div class="left-actions">
+                <a-button 
+                  v-if="formData.contentType === 'notification'"
+                  @click="handleSaveDraft"
+                  :loading="isSaving"
+                  size="large"
+                >
+                  <icon-save />
+                  保存草稿
+                </a-button>
+              </div>
+              
+              <div class="right-actions">
+                <a-button @click="handleCancel" size="large">
+                  取消
+                </a-button>
+                <a-button 
+                  type="primary" 
+                  @click="handleSubmit"
+                  :loading="isSubmitting"
+                  size="large"
+                >
+                  <icon-send v-if="formData.contentType === 'notification'" />
+                  <icon-upload v-else />
+                  {{ getSubmitButtonText() }}
+                </a-button>
+              </div>
+            </div>
+          </a-card>
+        </a-form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { Message } from '@arco-design/web-vue'
+import {
+  IconBold,
+  IconItalic,
+  IconCode,
+  IconList,
+  IconUpload,
+  IconFile,
+  IconNotification,
+  IconSettings,
+  IconEdit,
+  IconPen,
+  IconEye,
+  IconCalendar,
+  IconPushpin,
+  IconPlus,
+  IconInfoCircle,
+  IconCheckCircle,
+  IconExclamationCircle,
+} from '@arco-design/web-vue/es/icon'
+import type { 
+  Notification, 
+  NotificationAttachment, 
+  ResourceCategory,
+  NotificationType 
+} from '@/types/community'
+import mockData from '@/mock/community'
+import { marked } from 'marked'
+
+// 路由
+const router = useRouter()
+const route = useRoute()
+
+// 表单引用
+const formRef = ref()
+const contentEditor = ref()
+const uploadRef = ref()
+
+// 响应式数据
+const isEdit = computed(() => !!route.params.id)
+const isSubmitting = ref(false)
+const isSaving = ref(false)
+const fileList = ref<any[]>([])
+const attachmentEnabled = ref(true) // 附件管理开关，默认开启
+const publishSettingsEnabled = ref(true) // 发布设置开关，默认开启
+
+// 表单数据
+const formData = ref<Partial<Notification>>({
+  contentType: 'notification', // 默认为发送通知模式
+  title: '',
+  categoryPath: [], // 级联选择器的值
+  content: '',
+  isSticky: false,
+  isPublic: true,
+  allowComments: false, // 默认关闭评论功能
+  publishTime: null,
+  expireTime: null,
+  attachments: []
+})
+
+// 字数统计
+const contentWordCount = computed(() => {
+  return formData.value.content ? formData.value.content.length : 0
+})
+
+// Markdown 渲染
+const renderedContent = computed(() => {
+  if (!formData.value.content) {
+    return '<div class="empty-preview">开始输入内容以查看预览...</div>'
+  }
+  try {
+    return marked(formData.value.content)
+  } catch (error) {
+    return '<div class="error-preview">预览渲染出错</div>'
+  }
+})
+
+// 动态表单验证规则
+const formRules = computed(() => {
+  const baseRules = {
+    contentType: [
+      { required: true, message: '请选择内容类型' }
+    ],
+    title: [
+      { required: true, message: '请输入标题' },
+      { minLength: 2, message: '标题至少2个字符' },
+      { maxLength: 100, message: '标题不能超过100个字符' }
+    ]
+  }
+
+  // 根据内容类型添加不同的验证规则
+  if (formData.value.contentType === 'notification') {
+    return {
+      ...baseRules,
+      content: [
+        { required: true, message: '请输入正文内容' },
+        { minLength: 10, message: '正文内容至少10个字符' }
+      ],
+      categoryPath: [
+        { required: true, message: '请选择内容分类' },
+        { 
+          validator: (value: any) => {
+            return Array.isArray(value) && value.length === 2
+          }, 
+          message: '请选择完整的分类路径' 
+        }
+      ]
+    }
+  } else if (formData.value.contentType === 'document') {
+    return {
+      ...baseRules,
+      attachments: [
+        { 
+          validator: () => {
+            return fileList.value && fileList.value.length > 0
+          }, 
+          message: '文档模式下至少需要上传一个文件' 
+        }
+      ]
+    }
+  }
+
+  return baseRules
+})
+
+// 级联选择器选项 - 基于数据资源树形结构
+const categoryOptions = [
+  {
+    key: 'policy',
+    title: '政策制度',
+    children: [
+      { key: 'policy-law', title: '法律法规' },
+      { key: 'policy-management', title: '管理办法' },
+      { key: 'policy-standard', title: '标准规范' }
+    ]
+  },
+  {
+    key: 'cases',
+    title: '实践案例',
+    children: [
+      { key: 'cases-analytics', title: '数据分析' },
+      { key: 'cases-ml', title: '机器学习' },
+      { key: 'cases-visualization', title: '数据可视化' }
+    ]
+  },
+  {
+    key: 'guide',
+    title: '操作指南',
+    children: [
+      { key: 'guide-basic', title: '基础操作' },
+      { key: 'guide-advanced', title: '高级功能' },
+      { key: 'guide-troubleshooting', title: '故障排除' }
+    ]
+  },
+  {
+    key: 'news',
+    title: '社区动态',
+    children: [
+      { key: 'news-announcement', title: '公告通知' },
+      { key: 'news-activity', title: '活动资讯' },
+      { key: 'news-update', title: '更新日志' }
+    ]
+  }
+]
+
+// 分类选项
+const categories = computed(() => mockData.categories)
+
+// 方法
+const insertMarkdown = (prefix: string, suffix: string) => {
+  const textarea = contentEditor.value?.$el?.querySelector('textarea')
+  if (!textarea) return
+  
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const content = formData.value.content || ''
+  
+  const before = content.substring(0, start)
+  const selected = content.substring(start, end)
+  const after = content.substring(end)
+  
+  formData.value.content = before + prefix + selected + suffix + after
+  
+  nextTick(() => {
+    textarea.focus()
+    textarea.setSelectionRange(start + prefix.length, end + prefix.length)
+  })
+}
+
+const handleContentChange = () => {
+  // 内容变化时的处理逻辑
+}
+
+// 内容类型切换处理
+const handleContentTypeChange = (value: string) => {
+  console.log('Content type changed to:', value) // 调试信息
+  if (value === 'document') {
+    // 切换到文档模式
+    Message.info('已切换到文档上传模式，请上传至少一个文件')
+    // 确保附件管理开启
+    attachmentEnabled.value = true
+  } else if (value === 'notification') {
+    // 切换到通知模式
+    Message.info('已切换到通知发布模式，请填写正文内容')
+  }
+}
+
+
+
+const insertText = (text: string) => {
+  const textarea = contentEditor.value?.$el?.querySelector('textarea')
+  if (!textarea) return
+  
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const content = formData.value.content || ''
+  
+  formData.value.content = content.substring(0, start) + text + content.substring(end)
+  
+  nextTick(() => {
+    textarea.focus()
+    textarea.setSelectionRange(start + text.length, start + text.length)
+  })
+}
+
+const beforeUpload = (file: File) => {
+  const isValidType = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'text/markdown'
+  ].includes(file.type)
+  
+  if (!isValidType) {
+    Message.error('只支持 PDF、Office文档、文本文件等格式')
+    return false
+  }
+  
+  const isValidSize = file.size / 1024 / 1024 < 10
+  if (!isValidSize) {
+    Message.error('文件大小不能超过10MB')
+    return false
+  }
+  
+  return true
+}
+
+const handleUpload = (option: any) => {
+  const { file } = option
+  
+  // 模拟上传过程
+  setTimeout(() => {
+    const attachment: NotificationAttachment = {
+      id: `att-${Date.now()}`,
+      notificationId: '',
+      fileName: file.name,
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      mimeType: file.type,
+      fileUrl: URL.createObjectURL(file),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'current-user',
+      updatedBy: 'current-user'
+    }
+    
+    formData.value.attachments = formData.value.attachments || []
+    formData.value.attachments.push(attachment)
+    
+    option.onSuccess()
+    Message.success('文件上传成功')
+  }, 1000)
+}
+
+const handleRemove = (file: any) => {
+  const index = fileList.value.findIndex((item: any) => item.uid === file.uid)
+  if (index > -1) {
+    formData.value.attachments?.splice(index, 1)
+  }
+}
+
+const handleSubmit = async () => {
+  try {
+    // 额外的业务逻辑验证
+    if (formData.value.contentType === 'document') {
+      if (!fileList.value || fileList.value.length === 0) {
+        Message.error('文档模式下必须上传至少一个文件')
+        return
+      }
+    } else if (formData.value.contentType === 'notification') {
+      if (!formData.value.content || formData.value.content.trim().length < 10) {
+        Message.error('通知模式下必须填写正文内容（至少10个字符）')
+        return
+      }
+    }
+    
+    const valid = await formRef.value.validate()
+    if (!valid) return
+    
+    isSubmitting.value = true
+    
+    // 根据内容类型处理不同的数据结构
+    let submitData: any = {
+      ...formData.value
+    }
+    
+    if (formData.value.contentType === 'notification') {
+      // 通知模式：处理级联选择器的值，转换为后端需要的格式
+      submitData = {
+        ...submitData,
+        categoryId: formData.value.categoryPath?.[1] || '', // 使用子分类作为categoryId
+        type: formData.value.categoryPath?.[0] || '', // 使用主分类作为type
+      }
+      // 移除级联选择器字段
+      delete submitData.categoryPath
+    } else if (formData.value.contentType === 'document') {
+      // 文档模式：只保留必要字段
+      submitData = {
+        title: formData.value.title,
+        content: formData.value.content,
+        attachments: formData.value.attachments,
+        contentType: formData.value.contentType,
+        isPublic: true, // 文档默认公开
+        publishTime: new Date().toISOString() // 立即发布
+      }
+    }
+    
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    const successMessage = formData.value.contentType === 'document' 
+      ? (isEdit.value ? '文档更新成功' : '文档上传成功')
+      : (isEdit.value ? '通知更新成功' : '通知发布成功')
+    
+    Message.success(successMessage)
+    
+    // 根据内容类型跳转到不同页面
+    if (formData.value.contentType === 'document') {
+      router.push('/community') // 跳转到社区资源页面
+    } else {
+      router.push('/notification/list') // 跳转到通知列表页面
+    }
+  } catch (error) {
+    Message.error('操作失败，请重试')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const handleSaveDraft = async () => {
+  try {
+    isSaving.value = true
+    
+    // 模拟保存草稿
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    Message.success('草稿保存成功')
+  } catch (error) {
+    Message.error('保存失败，请重试')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const handleCancel = () => {
+  router.push('/notification/list')
+}
+
+const loadNotification = async (id: string) => {
+  // 模拟加载通知数据
+  const notification = mockData.notifications.find(n => n.id === id)
+  if (notification) {
+    Object.assign(formData.value, notification)
+    
+    // 加载附件到文件列表
+    if (notification.attachments) {
+      fileList.value = notification.attachments.map((att, index) => ({
+        uid: `${att.id}-${index}`,
+        name: att.fileName,
+        status: 'done',
+        url: att.fileUrl
+      }))
+    }
+  }
+}
+
+// 获取提交按钮文本
+const getSubmitButtonText = () => {
+  if (isEdit.value) {
+    return formData.value.contentType === 'document' ? '更新文档' : '更新内容'
+  } else {
+    return formData.value.contentType === 'document' ? '上传文档' : '发布'
+  }
+}
+
+// 键盘快捷键支持
+const handleKeyDown = (event: KeyboardEvent) => {
+  // Ctrl+S 或 Cmd+S 保存草稿
+  if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+    event.preventDefault()
+    if (formData.value.contentType === 'notification') {
+      handleSaveDraft()
+    }
+  }
+  
+  // Ctrl+Enter 或 Cmd+Enter 提交表单
+  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+    event.preventDefault()
+    handleSubmit()
+  }
+}
+
+// 生命周期
+onMounted(async () => {
+  // 添加键盘事件监听
+  document.addEventListener('keydown', handleKeyDown)
+  
+  if (isEdit.value) {
+    await loadNotification(route.params.id as string)
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown)
+})
+</script>
+
+<style scoped>
+.notification-form-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding: 0;
+}
+
+.form-header {
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e6eb;
+  margin-bottom: 24px;
+}
+
+.breadcrumb {
+  margin-bottom: 12px;
+}
+
+.header-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.new-content-tag {
+  font-size: 12px;
+}
+
+.form-layout {
+  display: flex;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.main-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+.main-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 卡片样式 */
+.content-type-card,
+.basic-info-card,
+.content-editor-card,
+.preview-card,
+.attachment-card,
+.publish-settings-card,
+.action-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e6eb;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.content-type-card:hover,
+.basic-info-card:hover,
+.content-editor-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.card-title-with-switch {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.card-title-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.word-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #86909c;
+  font-weight: normal;
+}
+
+.required-mark {
+  color: #f53f3f;
+  margin-left: 4px;
+}
+
+.mode-alert {
+  margin-bottom: 16px;
+}
+
+/* 表单行布局 */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 内容类型选择器 */
+.content-type-selector {
+  width: 100%;
+}
+
+.type-option {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.type-option:last-child {
+  margin-right: 0;
+}
+
+.content-type-selector :deep(.arco-radio) {
+  width: 100%;
+  height: auto;
+}
+
+.content-type-selector :deep(.arco-radio-button) {
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.radio-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: 100%;
+}
+
+.radio-icon {
+  font-size: 20px;
+  color: #4e5969;
+}
+
+.radio-text {
+  flex: 1;
+}
+
+.radio-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+  margin-bottom: 4px;
+}
+
+.radio-desc {
+  font-size: 12px;
+  color: #86909c;
+}
+
+/* 表单字段 */
+.title-field,
+.category-field,
+.content-field {
+  margin-bottom: 0;
+}
+
+.content-field :deep(.arco-form-item-content) {
+  width: 100%;
+}
+
+.content-field :deep(.arco-textarea-wrapper) {
+  width: 100% !important;
+}
+
+.title-input,
+.category-selector {
+  font-size: 16px;
+}
+
+/* 内容编辑器 */
+.editor-container {
+  position: relative;
+  width: 100%;
+}
+
+.content-editor {
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  resize: vertical;
+  min-height: 300px;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+.editor-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
+  padding: 4px;
+  border: 1px solid #e5e6eb;
+  z-index: 10;
+}
+
+/* 上传区域 */
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  border-color: #165dff;
+  background: #f2f7ff;
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: #86909c;
+  margin-bottom: 16px;
+}
+
+.upload-text {
+  text-align: center;
+}
+
+.upload-title {
+  font-size: 16px;
+  color: #1d2129;
+  margin-bottom: 8px;
+}
+
+.upload-subtitle {
+  font-size: 14px;
+  color: #86909c;
+}
+
+/* 发布设置网格 */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.setting-item {
+  margin-bottom: 0;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.left-actions,
+.right-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.right-actions {
+  margin-left: auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .form-layout {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-layout {
+    padding: 0 12px;
+  }
+  
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .left-actions,
+  .right-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.preview-content {
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 16px;
+  background: #fafbfc;
+  border-radius: 8px;
+  border: 1px solid #e5e6eb;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.empty-preview {
+  color: #86909c;
+  text-align: center;
+  padding: 40px 20px;
+  font-style: italic;
+}
+
+.error-preview {
+  color: #f53f3f;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.preview-content :deep(h1) {
+  font-size: 20px;
+  margin: 16px 0 8px 0;
+  color: #1d2129;
+}
+
+.preview-content :deep(h2) {
+  font-size: 18px;
+  margin: 14px 0 6px 0;
+  color: #1d2129;
+}
+
+.preview-content :deep(h3) {
+  font-size: 16px;
+  margin: 12px 0 4px 0;
+  color: #1d2129;
+}
+
+.preview-content :deep(p) {
+  margin: 8px 0;
+  color: #4e5969;
+}
+
+.preview-content :deep(ul) {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.preview-content :deep(li) {
+  margin: 4px 0;
+  color: #4e5969;
+}
+
+.preview-content :deep(code) {
+  background: #f2f3f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+}
+
+.preview-content :deep(strong) {
+  font-weight: 600;
+  color: #1d2129;
+}
+
+/* 附件上传 */
+.attachment-content {
+  padding-top: 16px;
+}
+
+.attachment-field {
+  margin-bottom: 16px;
+}
+
+.upload-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  border: 2px dashed #c9cdd4;
+  border-radius: 8px;
+  background: #fafbfc;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  border-color: #165dff;
+  background: #f2f7ff;
+}
+
+.upload-icon {
+  font-size: 24px;
+  color: #86909c;
+}
+
+.upload-text {
+  flex: 1;
+}
+
+.upload-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d2129;
+  margin-bottom: 4px;
+}
+
+.upload-desc {
+  font-size: 12px;
+  color: #86909c;
+}
+
+.upload-tips {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: #86909c;
+  background: #f7f8fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.tip-title {
+  font-weight: 500;
+}
+
+/* 发布设置 */
+.publish-settings-content {
+  padding-top: 16px;
+}
+
+.setting-item {
+  margin-bottom: 16px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1d2129;
+}
+
+.time-picker {
+  width: 100%;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancel-btn {
+  min-width: 80px;
+}
+
+.draft-btn {
+  min-width: 100px;
+}
+
+.submit-btn {
+  min-width: 80px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .form-layout {
+    max-width: 100%;
+  }
+  
+  .right-panel {
+    width: 350px;
+  }
+}
+
+@media (max-width: 992px) {
+  .form-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .right-panel {
+    width: 100%;
+  }
+  
+  .content-editor {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-layout {
+    padding: 0 16px;
+  }
+  
+  .form-header {
+    padding: 12px 16px;
+  }
+  
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .radio-content {
+    padding: 12px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .cancel-btn,
+  .draft-btn,
+  .submit-btn {
+    width: 100%;
+  }
+}
+
+/* 动画效果 */
+.content-type-card,
+.basic-info-card,
+.content-editor-card,
+.preview-card,
+.attachment-card,
+.publish-settings-card,
+.action-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 滚动条样式 */
+.preview-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.preview-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.preview-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.preview-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+</style>

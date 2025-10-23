@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import marketingRoutes from './marketing'
 import managementRoutes from './management'
 import explorationRoutes from './exploration'
+import notificationRoutes from './notification'
 import { ROUTE_NAMES, ROUTE_PATHS, ROUTE_GUARD_CONFIG } from './constants'
 import { checkRoutePermission, getBreadcrumb } from './utils'
 import { businessMessage, warning, error } from '../utils/message'
@@ -11,7 +12,8 @@ const router = createRouter({
   history: createWebHistory('/'),
   routes: [
     ...managementRoutes,
-      {
+    ...notificationRoutes,
+    {
       path: ROUTE_PATHS.LOGIN,
       name: ROUTE_NAMES.LOGIN,
       component: () => import('../pages/login/index.vue'),
@@ -28,6 +30,85 @@ const router = createRouter({
       meta: {
         title: '首页',
         icon: 'icon-home'
+      }
+    },
+    // 社区资源路由
+    {
+      path: '/community',
+      name: 'Community',
+      component: () => import('../pages/community/index.vue'),
+      meta: {
+        title: '社区资源'
+      }
+    },
+    {
+      path: '/community/policy',
+      name: 'CommunityPolicy',
+      component: () => import('../pages/community/policy.vue'),
+      meta: {
+        title: '政策制度'
+      }
+    },
+    {
+      path: '/community/cases',
+      name: 'CommunityCases',
+      component: () => import('../pages/community/cases.vue'),
+      meta: {
+        title: '实践案例'
+      }
+    },
+    {
+      path: '/community/guide',
+      name: 'CommunityGuide',
+      component: () => import('../pages/community/guide.vue'),
+      meta: {
+        title: '操作指南'
+      }
+    },
+    {
+      path: '/community/news',
+      name: 'CommunityNews',
+      component: () => import('../pages/community/news.vue'),
+      meta: {
+        title: '社区动态'
+      }
+    },
+    // 通知管理路由
+    {
+      path: '/notification',
+      name: 'NotificationRoot',
+      redirect: '/notification/list'
+    },
+    {
+      path: '/notification/list',
+      name: 'NotificationList',
+      component: () => import('../pages/notification/NotificationList.vue'),
+      meta: {
+        title: '通知管理'
+      }
+    },
+    {
+      path: '/notification/create',
+      name: 'NotificationCreate',
+      component: () => import('../pages/notification/NotificationForm.vue'),
+      meta: {
+        title: '新增内容'
+      }
+    },
+    {
+      path: '/notification/edit/:id',
+      name: 'NotificationEdit',
+      component: () => import('../pages/notification/NotificationForm.vue'),
+      meta: {
+        title: '编辑内容'
+      }
+    },
+    {
+      path: '/notification/detail/:id',
+      name: 'NotificationDetail',
+      component: () => import('../pages/notification/NotificationDetail.vue'),
+      meta: {
+        title: '通知详情'
       }
     },
     {
@@ -220,8 +301,18 @@ const router = createRouter({
           component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue'),
           props: true
         },
-        {          path: 'asset-management/batch-asset-management',          name: 'BatchAssetManagement',          meta: { title: '资产批量管理' },          component: () => import('../pages/discovery/asset-management/batch-asset-management/index.vue')        },
-        {          path: 'asset-management/external-purchase-register',          name: 'ExternalPurchaseRegister',          meta: { title: '外部数据采购登记' },          component: () => import('../pages/discovery/asset-management/external-purchase-register/index.vue')        }
+        {
+          path: 'asset-management/batch-asset-management',
+          name: 'BatchAssetManagement',
+          meta: { title: '资产批量管理' },
+          component: () => import('../pages/discovery/asset-management/batch-asset-management/index.vue')
+        },
+        {
+          path: 'asset-management/external-purchase-register',
+          name: 'ExternalPurchaseRegister',
+          meta: { title: '外部数据采购登记' },
+          component: () => import('../pages/discovery/asset-management/external-purchase-register/index.vue')
+        }
       ]
     },
     {
@@ -314,6 +405,36 @@ const router = createRouter({
             description: 'audience-create页面按钮显示测试',
             layout: 'blank'
           }
+        },
+        {
+          path: 'canvas',
+          name: 'TestCanvas',
+          component: () => import('../pages/test-canvas.vue'),
+          meta: {
+            title: 'TaskFlowCanvas测试',
+            description: 'TaskFlowCanvas组件功能测试页面',
+            layout: 'blank'
+          }
+        },
+        {
+          path: 'preview-system',
+          name: 'TestPreviewSystem',
+          component: () => import('../pages/test-preview-system.vue'),
+          meta: {
+            title: '预览线系统测试',
+            description: 'window.previewLineSystem全局实例测试页面',
+            layout: 'blank'
+          }
+        },
+        {
+          path: 'preview-line',
+          name: 'PreviewLineTest',
+          component: () => import('../pages/preview-line-test.vue'),
+          meta: {
+            title: '预览线功能测试',
+            description: '预览线功能完整性测试页面',
+            layout: 'blank'
+          }
         }
       ]
     },
@@ -388,14 +509,7 @@ router.onError((error) => {
   console.error('页面加载失败，请刷新重试')
 })
 
-// 默认重定向
-router.beforeEach((to, from, next) => {
-  if (to.path === '/') {
-    next('/home')
-  } else {
-    next()
-  }
-})
+// 默认重定向逻辑已在主beforeEach中处理
 
 // 打印完整路由结构
 router.getRoutes().forEach(route => {

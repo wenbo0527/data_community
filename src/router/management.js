@@ -1,4 +1,6 @@
-export default [{  path: '/management',  children: [
+export default [{
+  path: '/management',
+  children: [
     {
       path: 'service',
       name: 'management-service',

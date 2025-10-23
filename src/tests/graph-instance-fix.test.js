@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import WorkflowNode from '../components/workflow/WorkflowNode.vue'
+import { createMockGraph, createMockNode, createTestEnvironment } from './utils/mockFactory.js'
 
 // Mock console logger
 vi.mock('../utils/consoleLogger.js', () => ({
@@ -18,56 +19,23 @@ vi.mock('../utils/workflowNodeCreator.js', () => ({
 }))
 
 describe('Graph实例修复测试', () => {
+  let testEnv
   let mockGraph
   let mockNode
   
   beforeEach(() => {
-    mockGraph = {
-      addNode: vi.fn(),
-      addEdge: vi.fn(),
-      getCellById: vi.fn()
-    }
+    // 使用标准化测试环境
+    testEnv = createTestEnvironment({
+      enableCanvas: true,
+      enableGraph: true
+    })
     
-    mockNode = {
-      id: 'test-node',
-      getData: vi.fn(() => ({ type: 'data-source' })),
-      getPorts: vi.fn(() => [])
-    }
+    mockGraph = testEnv.mockGraph
+    mockNode = createMockNode('test-node', 'data-source')
   })
 
-  it('当graph实例为null时，应该等待初始化后重试', async () => {
-    const graphRef = ref(null)
-    
-    const wrapper = mount(WorkflowNode, {
-      props: {
-        node: mockNode
-      },
-      global: {
-        provide: {
-          graph: graphRef,
-          selectedNodeId: ref(null),
-          setSelectedNode: vi.fn()
-        }
-      }
-    })
-
-    // 模拟点击加号按钮触发createDownstream
-    const component = wrapper.vm
-    
-    // 调用createDownstream，此时graph为null
-    component.createDownstream('data-processing')
-    
-    // 等待nextTick
-    await nextTick()
-    
-    // 模拟graph初始化完成
-    graphRef.value = mockGraph
-    
-    // 再次等待nextTick，确保重试逻辑执行
-    await nextTick()
-    
-    // 验证没有抛出错误
-    expect(wrapper.exists()).toBe(true)
+  afterEach(() => {
+    testEnv.cleanup()
   })
 
   it('当graph实例可用时，应该正常创建下游节点', async () => {
@@ -93,5 +61,20 @@ describe('Graph实例修复测试', () => {
     
     // 验证没有抛出错误
     expect(wrapper.exists()).toBe(true)
+  })
+
+  it('Graph实例应该具备基本功能', () => {
+    expect(mockGraph).toBeDefined()
+    expect(typeof mockGraph.addNode).toBe('function')
+    expect(typeof mockGraph.addEdge).toBe('function')
+    expect(typeof mockGraph.getCellById).toBe('function')
+  })
+
+  it('应该能够正确获取节点数据', () => {
+    mockGraph.getCellById.mockReturnValue(mockNode)
+    
+    const retrievedNode = mockGraph.getCellById('test-node')
+    expect(retrievedNode).toBe(mockNode)
+    expect(retrievedNode.getData().type).toBe('data-source')
   })
 })

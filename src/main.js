@@ -10,6 +10,17 @@ if (import.meta.env.DEV) {
   });
 }
 
+// 加载调试工具
+if (import.meta.env.DEV) {
+  import('./utils/debug-node-config.js')
+    .then(() => {
+      console.info('🔧 节点配置调试工具已加载')
+    })
+    .catch(err => {
+      console.warn('⚠️ 调试工具加载失败:', err)
+    })
+}
+
 // 配置全局事件监听器为被动模式
 const eventOptions = { passive: true };
 document.addEventListener('wheel', () => {}, { passive: true });

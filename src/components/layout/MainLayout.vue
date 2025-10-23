@@ -38,7 +38,7 @@
           </a-space>
         </a-layout-header>
         
-        <a-layout-content class="layout-content">
+        <a-layout-content class="layout-content" :class="{ 'full-screen': isFullScreenLayout }">
           <router-view />
         </a-layout-content>
       </a-layout>
@@ -79,6 +79,13 @@ const isDetailPage = computed(() => {
 const showSideMenu = computed(() => {
   // 首页不显示侧边菜单
   return activeModule.value !== 'home'
+})
+
+// 计算是否需要全屏布局（无内边距）
+const isFullScreenLayout = computed(() => {
+  // 优惠券模板创建页面需要全屏布局
+  return route.path.includes('/marketing/coupon/template/create') ||
+         route.path.includes('/marketing/coupon/create')
 })
 
 // 处理顶部菜单变化
@@ -165,6 +172,12 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+}
+
+/* 全屏布局样式 - 移除内边距 */
+.layout-content.full-screen {
+  padding: 0;
+  background: #fff;
 }
 
 :deep(.arco-layout-sider-trigger) {

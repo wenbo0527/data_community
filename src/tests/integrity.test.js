@@ -35,12 +35,19 @@ function createEnhancedMockEdge(config) {
   return edge
 }
 
-// Mock UnifiedPreviewLineManager
-const mockUnifiedPreviewLineManager = {
-  validatePreviewLineIntegrity: vi.fn(),
-  fixNaNCoordinates: vi.fn(),
-  performComprehensiveIntegrityCheck: vi.fn(),
-  validateEnhancedIntegrity: vi.fn()
+// Mock PreviewLineSystem
+const mockPreviewLineSystem = {
+  init: vi.fn(),
+  validator: {
+    validatePreviewLineIntegrity: vi.fn(),
+    validateEnhancedIntegrity: vi.fn()
+  },
+  creator: {
+    fixNaNCoordinates: vi.fn()
+  },
+  manager: {
+    performComprehensiveIntegrityCheck: vi.fn()
+  }
 }
 
 // Mock 布局引擎
@@ -63,7 +70,7 @@ describe('系统完整性校验', () => {
     global.window = {
       graph: mockGraph,
       layoutEngine: mockLayoutEngine,
-      unifiedPreviewLineManager: mockUnifiedPreviewLineManager
+      previewLineSystem: mockPreviewLineSystem
     }
   })
 
@@ -385,30 +392,30 @@ describe('系统完整性校验', () => {
 
   describe('预览线完整性验证', () => {
     it('应该验证预览线管理器存在', () => {
-      expect(mockUnifiedPreviewLineManager).toBeDefined()
-      expect(typeof mockUnifiedPreviewLineManager.validatePreviewLineIntegrity).toBe('function')
+      expect(mockPreviewLineSystem).toBeDefined()
+      expect(typeof mockPreviewLineSystem.validator.validatePreviewLineIntegrity).toBe('function')
     })
 
     it('应该能够调用预览线完整性校验方法', () => {
       // 模拟返回值
-      mockUnifiedPreviewLineManager.validatePreviewLineIntegrity.mockReturnValue({
+      mockPreviewLineSystem.validator.validatePreviewLineIntegrity.mockReturnValue({
         isValid: true,
         issues: [],
         summary: '预览线完整性校验通过'
       })
       
       // 执行测试
-      const result = mockUnifiedPreviewLineManager.validatePreviewLineIntegrity()
+      const result = mockPreviewLineSystem.validator.validatePreviewLineIntegrity()
       
       // 验证结果
-      expect(mockUnifiedPreviewLineManager.validatePreviewLineIntegrity).toHaveBeenCalled()
+      expect(mockPreviewLineSystem.validator.validatePreviewLineIntegrity).toHaveBeenCalled()
       expect(result.isValid).toBe(true)
       expect(result.issues).toEqual([])
     })
 
     it('应该能够修复NaN坐标', () => {
       // 模拟返回值
-      mockUnifiedPreviewLineManager.fixNaNCoordinates.mockReturnValue({
+      mockPreviewLineSystem.creator.fixNaNCoordinates.mockReturnValue({
         fixed: 3,
         details: [
           { nodeId: 'node1', oldY: NaN, newY: 100 },
@@ -418,17 +425,17 @@ describe('系统完整性校验', () => {
       })
       
       // 执行测试
-      const result = mockUnifiedPreviewLineManager.fixNaNCoordinates()
+      const result = mockPreviewLineSystem.creator.fixNaNCoordinates()
       
       // 验证结果
-      expect(mockUnifiedPreviewLineManager.fixNaNCoordinates).toHaveBeenCalled()
+      expect(mockPreviewLineSystem.creator.fixNaNCoordinates).toHaveBeenCalled()
       expect(result.fixed).toBe(3)
       expect(result.details).toHaveLength(3)
     })
 
     it('应该能够执行全面的完整性检查', () => {
       // 模拟返回值
-      mockUnifiedPreviewLineManager.performComprehensiveIntegrityCheck.mockReturnValue({
+      mockPreviewLineSystem.manager.performComprehensiveIntegrityCheck.mockReturnValue({
         summary: {
           totalChecks: 5,
           passed: 4,
@@ -443,10 +450,10 @@ describe('系统完整性校验', () => {
       })
       
       // 执行测试
-      const result = mockUnifiedPreviewLineManager.performComprehensiveIntegrityCheck()
+      const result = mockPreviewLineSystem.manager.performComprehensiveIntegrityCheck()
       
       // 验证结果
-      expect(mockUnifiedPreviewLineManager.performComprehensiveIntegrityCheck).toHaveBeenCalled()
+      expect(mockPreviewLineSystem.manager.performComprehensiveIntegrityCheck).toHaveBeenCalled()
       expect(result.summary.totalChecks).toBe(5)
       expect(result.summary.passed).toBe(4)
       expect(result.summary.failed).toBe(1)
@@ -467,8 +474,8 @@ describe('系统完整性校验', () => {
     })
 
     it('应该验证PreviewLineManager实例可用', () => {
-      expect(global.window.unifiedPreviewLineManager).toBeDefined()
-      expect(typeof global.window.unifiedPreviewLineManager.validatePreviewLineIntegrity).toBe('function')
+      expect(global.window.previewLineSystem).toBeDefined()
+      expect(typeof global.window.previewLineSystem.validator.validatePreviewLineIntegrity).toBe('function')
     })
   })
 
@@ -889,7 +896,7 @@ describe('系统完整性校验', () => {
       })
       
       // 模拟修复过程
-      mockUnifiedPreviewLineManager.fixNaNCoordinates.mockImplementation(() => {
+      mockPreviewLineSystem.creator.fixNaNCoordinates.mockImplementation(() => {
         // 模拟修复坐标
         invalidNode.getPosition = vi.fn(() => ({ x: 100, y: 200 }))
         return {
@@ -899,7 +906,7 @@ describe('系统完整性校验', () => {
       })
       
       // 执行修复
-      const fixResult = mockUnifiedPreviewLineManager.fixNaNCoordinates()
+      const fixResult = mockPreviewLineSystem.creator.fixNaNCoordinates()
       
       // 验证修复结果
       expect(fixResult.fixed).toBe(1)
@@ -914,13 +921,13 @@ describe('系统完整性校验', () => {
 
     it('应该能够处理修复失败的情况', () => {
       // 模拟修复失败
-      mockUnifiedPreviewLineManager.fixNaNCoordinates.mockImplementation(() => {
+      mockPreviewLineSystem.creator.fixNaNCoordinates.mockImplementation(() => {
         throw new Error('修复失败：无法获取布局引擎')
       })
       
       // 执行测试
       expect(() => {
-        mockUnifiedPreviewLineManager.fixNaNCoordinates()
+        mockPreviewLineSystem.creator.fixNaNCoordinates()
       }).toThrow('修复失败：无法获取布局引擎')
     })
   })

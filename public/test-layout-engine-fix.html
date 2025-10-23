@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>布局引擎修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 布局引擎修复测试</h1>
+        <div id="test-results"></div>
+        <h2>控制台日志</h2>
+        <pre id="console-logs"></pre>
+    </div>
+
+    <script>
+        // 捕获控制台日志
+        const originalLog = console.log;
+        const logs = [];
+        console.log = function(...args) {
+            logs.push(args.join(' '));
+            originalLog.apply(console, args);
+            document.getElementById('console-logs').textContent = logs.join('\n');
+        };
+
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        // 等待页面加载完成后执行测试
+        window.addEventListener('load', function() {
+            setTimeout(runTests, 1000); // 延迟1秒确保所有脚本加载完成
+        });
+
+        function runTests() {
+            console.log('🔧 [测试] 开始验证布局引擎修复效果...');
+            addTestResult('开始验证布局引擎修复效果...', 'info');
+
+            // 1. 检查全局变量设置
+            console.log('\n📋 [测试] 检查全局变量设置:');
+            
+            const hasUnifiedStructuredLayoutEngine = typeof window.UnifiedStructuredLayoutEngine !== 'undefined';
+            const hasUnifiedStructuredLayoutEngineInstance = typeof window.unifiedStructuredLayoutEngine !== 'undefined';
+            const hasLayoutEngine = typeof window.layoutEngine !== 'undefined';
+            
+            console.log('- window.UnifiedStructuredLayoutEngine:', typeof window.UnifiedStructuredLayoutEngine);
+            console.log('- window.unifiedStructuredLayoutEngine:', typeof window.unifiedStructuredLayoutEngine);
+            console.log('- window.layoutEngine:', typeof window.layoutEngine);
+
+            if (hasUnifiedStructuredLayoutEngine) {
+                addTestResult('✅ window.UnifiedStructuredLayoutEngine 可用', 'success');
+            } else {
+                addTestResult('❌ window.UnifiedStructuredLayoutEngine 不可用', 'error');
+            }
+
+            if (hasUnifiedStructuredLayoutEngineInstance) {
+                addTestResult('✅ window.unifiedStructuredLayoutEngine 可用', 'success');
+            } else {
+                addTestResult('❌ window.unifiedStructuredLayoutEngine 不可用', 'error');
+            }
+
+            if (hasLayoutEngine) {
+                addTestResult('✅ window.layoutEngine 可用', 'success');
+            } else {
+                addTestResult('❌ window.layoutEngine 不可用', 'error');
+            }
+
+            // 2. 检查布局引擎构造函数是否可用
+            if (typeof window.UnifiedStructuredLayoutEngine === 'function') {
+                console.log('✅ [测试] UnifiedStructuredLayoutEngine构造函数可用');
+                addTestResult('✅ UnifiedStructuredLayoutEngine构造函数可用', 'success');
+                
+                // 尝试创建实例（需要graph参数，这里只是测试构造函数）
+                try {
+                    const testInstance = new window.UnifiedStructuredLayoutEngine(null);
+                    console.log('✅ [测试] 可以创建UnifiedStructuredLayoutEngine实例');
+                    addTestResult('✅ 可以创建UnifiedStructuredLayoutEngine实例', 'success');
+                } catch (error) {
+                    console.log('⚠️ [测试] 创建实例需要有效的graph参数:', error.message);
+                    addTestResult('⚠️ 创建实例需要有效的graph参数: ' + error.message, 'warning');
+                }
+            } else {
+                console.log('❌ [测试] UnifiedStructuredLayoutEngine构造函数不可用');
+                addTestResult('❌ UnifiedStructuredLayoutEngine构造函数不可用', 'error');
+            }
+
+            // 3. 检查预览线管理器
+            if (typeof window.unifiedPreviewLineManager !== 'undefined') {
+                console.log('✅ [测试] 预览线管理器存在');
+                addTestResult('✅ 预览线管理器存在', 'success');
+                
+                const manager = window.unifiedPreviewLineManager;
+                console.log('- layoutEngineReady:', manager.layoutEngineReady);
+                console.log('- layoutEngine存在:', !!manager.layoutEngine);
+                
+                // 检查关键方法
+                const methods = [
+                    'initializeLayoutEngineIfNeeded',
+                    'createBranchPreviewLines',
+                    'checkBranchHasRealConnection',
+                    'setLayoutEngine'
+                ];
+                
+                methods.forEach(method => {
+                    const methodExists = typeof manager[method] === 'function';
+                    console.log(`- ${method}方法:`, typeof manager[method]);
+                    if (methodExists) {
+                        addTestResult(`✅ ${method}方法可用`, 'success');
+                    } else {
+                        addTestResult(`❌ ${method}方法不可用`, 'error');
+                    }
+                });
+            } else {
+                console.log('❌ [测试] 预览线管理器不存在');
+                addTestResult('❌ 预览线管理器不存在', 'error');
+            }
+
+            // 4. 模拟布局引擎初始化测试
+            console.log('\n🔄 [测试] 模拟布局引擎初始化...');
+
+            if (window.unifiedPreviewLineManager && typeof window.unifiedPreviewLineManager.initializeLayoutEngineIfNeeded === 'function') {
+                try {
+                    window.unifiedPreviewLineManager.initializeLayoutEngineIfNeeded();
+                    console.log('✅ [测试] 布局引擎初始化方法调用成功');
+                    addTestResult('✅ 布局引擎初始化方法调用成功', 'success');
+                } catch (error) {
+                    console.log('❌ [测试] 布局引擎初始化失败:', error.message);
+                    addTestResult('❌ 布局引擎初始化失败: ' + error.message, 'error');
+                }
+            }
+
+            // 5. 检查命名一致性修复
+            console.log('\n🔍 [测试] 验证命名一致性修复:');
+            const hasUpperCase = typeof window.UnifiedStructuredLayoutEngine !== 'undefined';
+            const hasLowerCase = typeof window.unifiedStructuredLayoutEngine !== 'undefined';
+
+            if (hasUpperCase && hasLowerCase) {
+                console.log('✅ [测试] 两种命名方式都可用，兼容性良好');
+                addTestResult('✅ 两种命名方式都可用，兼容性良好', 'success');
+            } else if (hasUpperCase) {
+                console.log('⚠️ [测试] 只有大写命名可用');
+                addTestResult('⚠️ 只有大写命名可用', 'warning');
+            } else if (hasLowerCase) {
+                console.log('⚠️ [测试] 只有小写命名可用');
+                addTestResult('⚠️ 只有小写命名可用', 'warning');
+            } else {
+                console.log('❌ [测试] 两种命名都不可用');
+                addTestResult('❌ 两种命名都不可用', 'error');
+            }
+
+            console.log('\n🏁 [测试] 布局引擎修复效果验证完成');
+            addTestResult('🏁 布局引擎修复效果验证完成', 'info');
+        }
+    </script>
+</body>
+</html>

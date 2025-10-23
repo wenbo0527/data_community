@@ -1,34 +1,58 @@
 <template>
   <div class="coupon-template-create">
-    <a-card class="form-card">
-      <div class="page-header">
-        <h2 class="page-title">{{ mode === 'view' ? '优惠券模板详情' : '创建优惠券模板' }}</h2>
-        <a-button v-if="mode === 'view' && !disableOperations" type="outline" @click="router.back()" style="margin-left: auto">
-          <template #icon><icon-left /></template>
-          返回
-        </a-button>
+    <div class="page-header">
+      <div class="page-container">
+        <div class="header-content">
+          <div class="header-left">
+            <a-button type="text" @click="router.back()" class="back-btn">
+              <icon-left />
+              返回
+            </a-button>
+            <h2 class="page-title">{{ mode === 'view' ? '优惠券模板详情' : '创建优惠券模板' }}</h2>
+          </div>
+          <div class="header-right" v-if="mode === 'view' && !disableOperations">
+            <a-button @click="saveDraft" :loading="saving">保存草稿</a-button>
+            <a-button type="primary" @click="submitTemplate" :loading="submitting">创建模板</a-button>
+          </div>
+        </div>
       </div>
-      <a-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        layout="vertical"
-        :style="{ width: '100%', maxWidth: '800px' }"
-        :disabled="mode === 'view' || readonly"
-      >
-        <a-form-item field="name" label="优惠券名称" required>
-          <a-input v-model="formData.name" placeholder="请输入优惠券名称" />
-        </a-form-item>
+    </div>
+    
+    <div class="content-layout">
+      <div class="page-container">
+        <a-form
+          ref="formRef"
+          :model="formData"
+          :rules="rules"
+          layout="vertical"
+          :disabled="mode === 'view' || readonly"
+        >
+        <!-- 分组表单 -->
+        <a-collapse :default-active-key="['template-config', 'display-config']" :bordered="false">
+          <!-- 券模板配置 -->
+          <a-collapse-item key="template-config" header="券模板配置">
+            <template #extra>
+              <a-tag color="blue">基础配置</a-tag>
+            </template>
+        <!-- 基础信息 -->
+        <a-divider>基础信息</a-divider>
+        
+        <a-grid :cols="{ xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 6 }" :col-gap="16" :row-gap="12">
+          <a-grid-item :span="{ xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 3 }">
+            <a-form-item field="name" label="优惠券名称" required>
+              <a-input v-model="formData.name" placeholder="请输入优惠券名称" />
+            </a-form-item>
+          </a-grid-item>
 
-        <a-form-item field="type" label="优惠券类型" required>
-          <a-radio-group v-model="formData.type">
-            <a-radio value="interest_free">免息券</a-radio>
-            <a-radio value="discount">折扣券</a-radio>
-          </a-radio-group>
-        </a-form-item>
-
-        <interest-free-form v-if="formData.type === 'interest_free'" :form-data="formData" />
-        <discount-form v-if="formData.type === 'discount'" :form-data="formData" />
+          <a-grid-item :span="{ xs: 1, sm: 1, md: 1, lg: 2, xl: 2, xxl: 3 }">
+            <a-form-item field="type" label="优惠券类型" required>
+              <a-radio-group v-model="formData.type">
+                <a-radio value="interest_free">免息券</a-radio>
+                <a-radio value="discount">折扣券</a-radio>
+              </a-radio-group>
+            </a-form-item>
+          </a-grid-item>
+        </a-grid>
 
         <a-form-item field="validityPeriodType" label="有效期" required>
           <a-radio-group v-model="formData.validityPeriodType">
@@ -43,8 +67,20 @@
           </div>
         </a-form-item>
 
-        <a-grid :cols="2" :col-gap="16" :row-gap="16">
-          <a-grid-item>
+        <!-- 优惠券参数配置 -->
+        <a-divider>优惠券参数配置</a-divider>
+        
+        <interest-free-form v-if="formData.type === 'interest_free'" :form-data="formData" />
+        <discount-form v-if="formData.type === 'discount'" :form-data="formData" />
+        
+        <!-- 锁定期配置 -->
+        <lock-form :form-data="formData" />
+
+        <!-- 使用条件配置 -->
+        <a-divider>使用条件配置</a-divider>
+        
+        <a-grid :cols="{ xs: 1, sm: 2, md: 3, lg: 4, xl: 5, xxl: 6 }" :col-gap="16" :row-gap="12">
+          <a-grid-item :span="{ xs: 1, sm: 1, md: 1, lg: 1, xl: 1, xxl: 2 }">
             <a-form-item field="firstUseOnly" label="是否仅限首次支用" required>
               <a-radio-group v-model="formData.firstUseOnly">
                 <a-radio :value="true">是</a-radio>
@@ -53,7 +89,7 @@
             </a-form-item>
           </a-grid-item>
 
-          <a-grid-item>
+          <a-grid-item :span="{ xs: 1, sm: 1, md: 1, lg: 1, xl: 1, xxl: 2 }">
             <a-form-item field="stackable" label="是否支持叠加" required>
               <a-radio-group v-model="formData.stackable">
                 <a-radio :value="true">是</a-radio>
@@ -61,10 +97,8 @@
               </a-radio-group>
             </a-form-item>
           </a-grid-item>
-        </a-grid>
 
-        <a-grid :cols="2" :col-gap="16" :row-gap="16">
-          <a-grid-item>
+          <a-grid-item :span="{ xs: 1, sm: 2, md: 1, lg: 2, xl: 3, xxl: 2 }">
             <a-form-item field="products" label="贷款产品" required>
               <a-select
                 v-model="formData.products"
@@ -83,28 +117,24 @@
           </a-grid-item>
         </a-grid>
 
-        <a-grid :cols="2" :col-gap="16" :row-gap="16">
-          <a-grid-item :span="2">
-            <a-form-item field="repaymentMethods" label="还款方式" required>
-              <a-select
-                v-model="formData.repaymentMethods"
-                placeholder="请选择还款方式"
-                multiple
-                allow-clear
-                style="width: 100%"
-              >
-                <a-option value="unlimited">不限</a-option>
-                <a-option value="equal_principal">等额本金</a-option>
-                <a-option value="equal_installment">等额本息</a-option>
-                <a-option value="interest_first">先息后本</a-option>
-                <a-option value="flexible">随借随还</a-option>
-              </a-select>
-            </a-form-item>
-          </a-grid-item>
-        </a-grid>
+        <a-form-item field="repaymentMethods" label="还款方式" required>
+          <a-select
+            v-model="formData.repaymentMethods"
+            placeholder="请选择还款方式"
+            multiple
+            allow-clear
+            style="width: 100%"
+          >
+            <a-option value="unlimited">不限</a-option>
+            <a-option value="equal_principal">等额本金</a-option>
+            <a-option value="equal_installment">等额本息</a-option>
+            <a-option value="interest_first">先息后本</a-option>
+            <a-option value="flexible">随借随还</a-option>
+          </a-select>
+        </a-form-item>
 
-        <a-grid :cols="2" :col-gap="16" :row-gap="16">
-          <a-grid-item>
+        <a-grid :cols="{ xs: 1, sm: 2, md: 2, lg: 3, xl: 4, xxl: 4 }" :col-gap="16" :row-gap="12">
+          <a-grid-item :span="{ xs: 1, sm: 1, md: 1, lg: 2, xl: 2, xxl: 2 }">
             <a-form-item field="loanPeriod" label="借款期数" required>
               <a-radio-group v-model="formData.loanPeriodType">
                 <a-radio value="unlimited">不限</a-radio>
@@ -140,7 +170,7 @@
             </a-form-item>
           </a-grid-item>
 
-          <a-grid-item>
+          <a-grid-item :span="{ xs: 1, sm: 1, md: 1, lg: 1, xl: 2, xxl: 2 }">
             <a-form-item field="loanAmount" label="适用金额" required>
               <a-space>
                 <a-input-number
@@ -164,7 +194,10 @@
           </a-grid-item>
         </a-grid>
 
-        <a-grid :cols="2" :col-gap="16" :row-gap="16">
+        <!-- 渠道配置 -->
+        <a-divider>渠道配置</a-divider>
+        
+        <a-grid :cols="{ xs: 1, sm: 2, md: 3, lg: 4, xl: 5, xxl: 6 }" :col-gap="16" :row-gap="12">
           <a-grid-item>
             <a-form-item field="useChannels" label="使用渠道" required>
               <a-select
@@ -207,9 +240,134 @@
           </a-grid-item>
         </a-grid>
 
-        <interest-free-form :form-data="formData" />
-        <discount-form :form-data="formData" />
-        <lock-form :form-data="formData" />
+
+
+          </a-collapse-item>
+
+          <!-- 展示配置 -->
+          <a-collapse-item key="display-config" header="展示配置">
+            <template #extra>
+              <a-tag color="green">展示设置</a-tag>
+            </template>
+
+            <!-- 左右布局容器 -->
+            <div class="display-config-layout">
+              <!-- 左侧：优惠券预览 -->
+              <div class="preview-section">
+                <div class="section-header">
+                  <h4>实时预览</h4>
+                  <a-button size="small" @click="refreshPreview">
+                    <template #icon><icon-refresh /></template>
+                    刷新预览
+                  </a-button>
+                </div>
+                <div class="preview-content">
+                  <coupon-preview 
+                    :key="previewKey" 
+                    :coupon-data="previewData"
+                    :usage-description="formData.usageDescription"
+                    :is-rendered="isPreviewRendered"
+                  />
+                </div>
+              </div>
+
+              <!-- 右侧：配置项 -->
+              <div class="config-section">
+                <!-- 展示内容配置 -->
+                <div class="config-group">
+                  <h4 class="config-title">展示内容配置</h4>
+                  
+                  <a-grid :cols="2" :col-gap="16" :row-gap="12">
+                    <a-grid-item>
+                      <a-form-item field="displayName" label="显示名称">
+                        <a-input
+                          v-model="formData.displayName"
+                          placeholder="请输入显示名称"
+                          style="width: 100%"
+                        />
+                      </a-form-item>
+                    </a-grid-item>
+
+                    <a-grid-item>
+                      <a-form-item field="cornerText" label="角标文字">
+                        <a-input
+                          v-model="formData.cornerText"
+                          placeholder="请输入角标文字"
+                          style="width: 100%"
+                        />
+                      </a-form-item>
+                    </a-grid-item>
+
+                    <a-grid-item>
+                      <a-form-item field="categoryText" label="类别">
+                        <a-input
+                          v-model="formData.categoryText"
+                          placeholder="请输入类别（如：免息、折扣）"
+                          style="width: 100%"
+                        />
+                      </a-form-item>
+                    </a-grid-item>
+
+                    <a-grid-item>
+                      <a-form-item field="reductionValue" label="减免值">
+                        <a-input
+                          v-model="formData.reductionValue"
+                          placeholder="请输入减免值（如：3期、100元）"
+                          style="width: 100%"
+                        />
+                      </a-form-item>
+                    </a-grid-item>
+
+                    <a-grid-item>
+                      <a-form-item field="showExpiryDate" label="显示到期日期">
+                        <a-switch v-model="formData.showExpiryDate" />
+                      </a-form-item>
+                    </a-grid-item>
+
+                    <a-grid-item>
+                      <a-form-item field="expiryReminderThreshold" label="到期提醒阈值">
+                        <a-space>
+                          <a-input-number
+                            v-model="formData.expiryReminderThreshold"
+                            :min="1"
+                            :max="30"
+                            placeholder="天数"
+                            style="width: 100px"
+                          />
+                          <span>天</span>
+                        </a-space>
+                      </a-form-item>
+                    </a-grid-item>
+                  </a-grid>
+                </div>
+
+                <!-- 使用说明配置 -->
+                <div class="config-group">
+                  <h4 class="config-title">使用说明配置</h4>
+                  
+                  <a-form-item field="usageDescription" label="使用说明">
+                    <div class="markdown-editor-container" style="width: 100%;">
+                      <a-tabs default-active-key="edit" size="small">
+                        <a-tab-pane key="edit" title="编辑">
+                          <QuillEditor
+                            v-model:content="formData.usageDescription"
+                            content-type="html"
+                            :options="quillOptions"
+                            style="height: 200px; width: 100%;"
+                          />
+                        </a-tab-pane>
+                        <a-tab-pane key="preview" title="预览">
+                          <div class="markdown-preview" v-html="formData.usageDescription" style="width: 100%;"></div>
+                        </a-tab-pane>
+                      </a-tabs>
+                    </div>
+                  </a-form-item>
+                </div>
+              </div>
+            </div>
+
+          </a-collapse-item>
+        </a-collapse>
 
         <div class="footer-actions">
           <a-space>
@@ -218,8 +376,9 @@
             <a-button type="primary" status="success" @click="handleSubmitAndCreate">上线并创建库存</a-button>
           </a-space>
         </div>
-      </a-form>
-    </a-card>
+        </a-form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -238,18 +397,73 @@ const props = defineProps({
     default: false
   }
 })
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconLeft } from '@arco-design/web-vue/es/icon'
+import { IconLeft, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { useRouter, useRoute } from 'vue-router'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import InterestFreeForm from './components/InterestFreeForm.vue'
 import DiscountForm from './components/DiscountForm.vue'
 import LockForm from './components/LockForm.vue'
+import CouponPreview from './components/CouponPreview.vue'
 
 const router = useRouter()
 const route = useRoute()
 const mode = ref(route.query.mode || 'create')
 const readonly = ref(route.query.readonly === 'true')
+
+// 预览刷新key
+const previewKey = ref(0)
+
+// 预览渲染状态
+const isPreviewRendered = computed(() => {
+  // 当有基本信息时认为可以渲染
+  return !!(formData.value.name || formData.value.displayName || formData.value.type)
+})
+
+// Quill编辑器配置
+const quillOptions = {
+  theme: 'snow',
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'size': ['small', false, 'large', 'huge'] }],
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['clean']
+    ]
+  },
+  placeholder: '请输入优惠券使用说明，支持富文本格式...'
+}
+
+// 刷新预览
+const refreshPreview = () => {
+  previewKey.value++
+}
+
+// 预览数据计算属性
+const previewData = computed(() => {
+  return {
+    id: formData.value.id,
+    name: formData.value.displayName || formData.value.name,
+    displayName: formData.value.displayName || formData.value.name,
+    type: formData.value.type,
+    cornerText: formData.value.cornerText,
+    categoryText: formData.value.categoryText,
+    reductionValue: formData.value.reductionValue,
+    showExpiryDate: formData.value.showExpiryDate,
+    validityPeriod: formData.value.validityPeriod,
+    validityPeriodType: formData.value.validityPeriodType,
+    expiryReminderThreshold: formData.value.expiryReminderThreshold,
+    // 添加免息券和折扣券的参数
+    interestFreeDays: formData.value.interestFreeDays,
+    maxInterestFreeAmount: formData.value.maxInterestFreeAmount,
+    uniformDiscount: formData.value.uniformDiscount,
+    usageInstructions: formData.value.usageDescription
+  }
+})
 
 
 const formRef = ref()
@@ -293,10 +507,24 @@ const formData = ref<{
   fixedBackDiscount: number | undefined
   limitMinRate: boolean
   minRate: number | undefined
+  // 锁定期配置
+  hasLockPeriod: boolean
+  lockPeriodType: string
+  lockPeriodValue: number | undefined
+  lockLimitType: string
+  // 展示内容配置
+  displayName: string
+  cornerText: string
+  categoryText: string
+  reductionValue: string
+  showExpiryDate: boolean
+  expiryReminderThreshold: number | undefined
+  // 使用说明配置
+  usageDescription: string
 }>({  
   id: '',
   name: '',
-  type: '',
+  type: 'interest_free',
   description: '',
   validityPeriodType: 'limited',
   validityPeriod: undefined,
@@ -325,7 +553,21 @@ const formData = ref<{
   fixedBackPeriods: undefined,
   fixedBackDiscount: undefined,
   limitMinRate: false,
-  minRate: undefined
+  minRate: undefined,
+  // 锁定期配置
+  hasLockPeriod: false,
+  lockPeriodType: 'period',
+  lockPeriodValue: undefined,
+  lockLimitType: 'restrict_repayment',
+  // 展示内容配置
+  displayName: '',
+  cornerText: '',
+  categoryText: '',
+  reductionValue: '',
+  showExpiryDate: true,
+  expiryReminderThreshold: 3,
+  // 使用说明配置
+  usageDescription: ''
 })
 
 // 表单验证规则
@@ -449,6 +691,35 @@ const rules = {
       if (value === null) return true;
       return value >= 0;
     }
+  }],
+  // 锁定期配置验证
+  lockPeriodValue: [{
+    required: true,
+    message: '请输入锁定期限值',
+    trigger: 'blur',
+    validator: (value: number | null) => {
+      if (value === null) return true;
+      return value >= 1;
+    }
+  }],
+  // 展示内容配置验证
+  displayName: [{ required: false, message: '请输入对客展示名称' }],
+  cornerText: [{ required: false, message: '请输入角标文字' }],
+  categoryText: [{ required: false, message: '请输入类别文字' }],
+  expiryReminderThreshold: [{
+    required: false,
+    message: '请输入到期提醒阈值',
+    trigger: 'blur',
+    validator: (value: number | null) => {
+      if (value === null) return true;
+      return value >= 1 && value <= 30;
+    }
+  }],
+  // 使用说明配置验证
+  usageDescription: [{ 
+    required: false, 
+    maxLength: 500,
+    message: '使用说明不能超过500个字符'
   }]
 }
 
@@ -506,3 +777,565 @@ const handleSubmitAndCreate = async () => {
   }
 }
 </script>
+
+<style scoped>
+.coupon-template-create {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header {
+  background: white;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e6eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  padding: 4px 8px;
+  color: #4e5969;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.header-right {
+  display: flex;
+  gap: 12px;
+}
+
+.content-layout {
+  flex: 1;
+  padding: 16px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 分组表单样式 */
+.content-layout :deep(.arco-collapse) {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e5e6eb;
+  margin-bottom: 16px;
+}
+
+.content-layout :deep(.arco-collapse-item) {
+  border: none;
+}
+
+.content-layout :deep(.arco-collapse-item-header) {
+  padding: 16px 20px;
+  background: #f7f8fa;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1d2129;
+}
+
+.content-layout :deep(.arco-collapse-item-content) {
+  padding: 20px;
+  background: white;
+}
+
+/* 全屏布局优化 */
+.page-container {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* 展示配置全屏布局 */
+.display-config-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  min-height: 600px;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.preview-section {
+  flex: 0 0 min(380px, 35%);
+  min-width: 300px;
+  max-width: 380px;
+  position: sticky;
+  top: 20px;
+}
+
+.config-section {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* 优化表单布局 */
+.config-section .arco-form-item {
+  margin-bottom: 18px;
+}
+
+.config-section .arco-collapse-item-content {
+  padding: 20px 24px;
+}
+
+/* 表单项间距优化 */
+.content-layout .arco-form-item {
+  margin-bottom: 16px;
+}
+
+.content-layout .arco-divider {
+  margin: 24px 0 20px 0;
+}
+
+.content-layout .arco-grid {
+  margin-bottom: 8px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.config-group {
+  margin-bottom: 32px;
+}
+
+.config-group:last-child {
+  margin-bottom: 0;
+}
+
+.config-title {
+  margin: 0 0 20px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d2129;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f2f3f5;
+}
+
+.preview-content {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 优惠券预览区域样式 */
+.coupon-preview-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  border: 1px solid #e5e6eb;
+}
+
+.coupon-preview-section .preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.coupon-preview-section .preview-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.coupon-preview-section .preview-content {
+  display: flex;
+  justify-content: center;
+}
+
+/* Markdown编辑器样式 */
+.markdown-editor-container {
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+.markdown-editor-container :deep(.arco-tabs-nav) {
+  background: #f7f8fa;
+  margin: 0;
+  padding: 0 12px;
+}
+
+.markdown-editor-container :deep(.arco-tabs-content) {
+  padding: 0;
+  width: 100%;
+}
+
+.markdown-editor-container :deep(.arco-tabs-pane) {
+  padding: 0;
+  width: 100%;
+}
+
+.markdown-preview {
+  min-height: 200px;
+  padding: 12px;
+  background: white;
+  border-top: 1px solid #e5e6eb;
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Quill编辑器样式优化 */
+.markdown-editor-container :deep(.ql-toolbar) {
+  border: none;
+  border-bottom: 1px solid #e5e6eb;
+  background: #fafafa;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.markdown-editor-container :deep(.ql-container) {
+  border: none;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.markdown-editor-container :deep(.ql-editor) {
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* 底部操作按钮样式 */
+.footer-actions {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: white;
+  border-top: 1px solid #e5e6eb;
+  border-radius: 0 0 8px 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.preview-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  background: #f7f8fa;
+  border-radius: 6px;
+  border: 1px dashed #c9cdd4;
+}
+
+
+
+/* 表单优化样式 */
+.form-card :deep(.arco-form-item) {
+  margin-bottom: 12px;
+}
+
+.form-card :deep(.arco-form-item-label) {
+  font-weight: 500;
+  color: #1d2129;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.form-card :deep(.arco-divider) {
+  margin: 16px 0 12px 0;
+  font-weight: 600;
+  color: #1d2129;
+  font-size: 14px;
+}
+
+.form-card :deep(.arco-grid) {
+  margin-bottom: 6px;
+}
+
+.form-card :deep(.arco-grid-item) {
+  padding: 0;
+}
+
+.form-card :deep(.arco-input),
+.form-card :deep(.arco-select),
+.form-card :deep(.arco-input-number) {
+  font-size: 13px;
+}
+
+.form-card :deep(.arco-radio-group) {
+  font-size: 13px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1400px) {
+  .page-container {
+    max-width: 1200px;
+    padding: 0 20px;
+    overflow-x: hidden;
+  }
+  
+  .display-config-layout {
+    gap: 20px;
+    overflow-x: hidden;
+  }
+  
+  .preview-section {
+    flex: 0 0 min(350px, 35%);
+    min-width: 280px;
+    max-width: 350px;
+  }
+  
+  .config-section {
+    overflow-x: hidden;
+  }
+}
+
+/* 超宽屏优化 (>2560px) */
+@media (min-width: 2560px) {
+  .page-container {
+    padding: 0 40px;
+  }
+  
+  .display-config-layout {
+    gap: 40px;
+  }
+  
+  .preview-section {
+    flex: 0 0 480px;
+    min-width: 480px;
+  }
+  
+  .content-layout :deep(.arco-collapse-item-content) {
+    padding: 24px 32px;
+  }
+}
+
+/* 大屏优化 (1920px-2560px) */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .page-container {
+    padding: 0 32px;
+    overflow-x: hidden;
+  }
+  
+  .display-config-layout {
+    gap: 32px;
+    overflow-x: hidden;
+  }
+  
+  .preview-section {
+    flex: 0 0 min(420px, 35%);
+    min-width: 350px;
+    max-width: 420px;
+  }
+  
+  .config-section {
+    overflow-x: hidden;
+  }
+}
+
+/* 中等屏幕优化 (1200px-1919px) */
+@media (min-width: 1200px) and (max-width: 1919px) {
+  .page-container {
+    padding: 0 24px;
+    overflow-x: hidden;
+  }
+  
+  .display-config-layout {
+    gap: 20px;
+    overflow-x: hidden;
+  }
+  
+  .preview-section {
+    flex: 0 0 min(360px, 35%);
+    min-width: 300px;
+    max-width: 360px;
+  }
+  
+  .config-section {
+    overflow-x: hidden;
+  }
+}
+
+/* 小屏幕适配 (768px-1199px) */
+@media (max-width: 1199px) {
+  .page-container {
+    overflow-x: hidden;
+  }
+  
+  .content-layout {
+    flex-direction: column;
+    gap: 16px;
+    overflow-x: hidden;
+  }
+  
+  .preview-card {
+    width: 100%;
+    position: static;
+    max-height: none;
+  }
+  
+  .page-header {
+    padding: 12px 16px;
+  }
+  
+  .content-layout {
+    padding: 12px;
+  }
+  
+  /* 在中等屏幕上调整网格布局 */
+  .form-card :deep(.arco-grid[data-cols="4"]) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .form-card :deep(.arco-grid[data-cols="3"]) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* 展示配置响应式 */
+  .display-config-layout {
+    flex-direction: column;
+    gap: 20px;
+    min-height: auto;
+    overflow-x: hidden;
+  }
+  
+  .preview-section {
+    flex: none;
+    width: 100%;
+    position: static;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .config-section {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 0 16px;
+    overflow-x: hidden;
+  }
+  
+  .page-header {
+    padding: 10px 12px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  .content-layout {
+    padding: 8px;
+    gap: 12px;
+    overflow-x: hidden;
+  }
+  
+  .form-card :deep(.arco-card-body) {
+    padding: 12px 16px;
+  }
+  
+  .preview-card :deep(.arco-card-body) {
+    padding: 12px;
+  }
+  
+  /* 在小屏幕上所有网格都变为单列 */
+  .form-card :deep(.arco-grid) {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* 展示配置小屏幕响应式 */
+  .display-config-layout {
+    gap: 16px;
+    overflow-x: hidden;
+  }
+  
+  .preview-content {
+    padding: 16px;
+    min-height: 300px;
+  }
+  
+  .config-group {
+    margin-bottom: 24px;
+  }
+  
+  /* 确保所有表单元素不会溢出 */
+  .config-section * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* 使用说明编辑器在小屏幕上的优化 */
+  .markdown-editor-container {
+    overflow-x: hidden;
+  }
+  
+  .markdown-editor-container :deep(.ql-toolbar) {
+    flex-wrap: wrap;
+  }
+}
+
+/* 滚动条优化 */
+.preview-card::-webkit-scrollbar {
+  width: 4px;
+}
+
+.preview-card::-webkit-scrollbar-track {
+  background: #f7f8fa;
+}
+
+.preview-card::-webkit-scrollbar-thumb {
+  background: #c9cdd4;
+  border-radius: 2px;
+}
+
+.preview-card::-webkit-scrollbar-thumb:hover {
+  background: #a9aeb8;
+}
+</style>

@@ -126,29 +126,21 @@
               </a-modal>
             </a-card>
 
-            <!-- 社区加油站 -->
+            <!-- 社区资源统计 -->
             <a-card class="card-container">
-              <template #title>社区加油站</template>
-              <div class="community-links-compact">
-                <div class="community-row">
-                  <div class="community-item-compact">
-                    <IconBook class="community-icon-compact" />
-                    <span>制度索引</span>
-                  </div>
-                  <div class="community-item-compact">
-                    <IconFile class="community-icon-compact" />
-                    <span>案例库</span>
-                  </div>
-                  <div class="community-item-compact">
-                    <IconNotification class="community-icon-compact" />
-                    <span>社区发布</span>
-                  </div>
-                  <div class="community-item-compact">
-                    <IconBulb class="community-icon-compact" />
-                    <span>使用指南</span>
-                  </div>
+              <template #title>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <span>社区资源</span>
+                  <a-button 
+                    type="text" 
+                    size="small" 
+                    @click="refreshNotificationStats"
+                  >
+                    <template #icon><IconRefresh /></template>
+                  </a-button>
                 </div>
-              </div>
+              </template>
+              <NotificationStats ref="notificationStatsRef" />
             </a-card>
           </a-col>
 
@@ -189,23 +181,57 @@
               </a-col>
               <a-col :span="8" class="notice-column">
                 <a-card title="通知公告" class="card-container">
+                  <template #extra>
+                    <a-button 
+                      type="text" 
+                      size="small" 
+                      @click="$router.push('/admin/notifications')"
+                    >
+                      <template #icon><IconSettings /></template>
+                      管理
+                    </a-button>
+                  </template>
                   <a-tabs>
                     <a-tab-pane key="notice" title="通知">
-                      <a-list :max-height="400">
-                        <a-list-item v-for="notice in notices" :key="notice.id">
+                      <a-list :max-height="300">
+                        <a-list-item 
+                          v-for="(notice, index) in notices.slice(0, 3)" 
+                          :key="notice.id"
+                          @click="viewNotification(notice)"
+                          style="cursor: pointer;"
+                        >
                           <a-space direction="vertical" style="width: 100%">
                             <div class="notice-title">
                               <a-typography-text>{{ notice.title }}</a-typography-text>
-                              <a-tag :color="getNoticeTypeColor(notice.type)">{{ notice.type }}</a-tag>
+                              <a-space>
+                                <a-tag :color="getNoticeTypeColor(notice.type)">{{ notice.type }}</a-tag>
+                                <a-tag v-if="index === 0" color="red" size="small">
+                                  最新
+                                </a-tag>
+                                <a-tag v-if="isNewNotice(notice.publishTime)" color="red" size="small">
+                                  NEW
+                                </a-tag>
+                              </a-space>
                             </div>
                             <a-typography-text type="secondary" class="notice-time">{{ notice.time }}</a-typography-text>
                           </a-space>
                         </a-list-item>
                       </a-list>
+                      <div class="view-more-container">
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          @click="$router.push('/notification/list')"
+                          class="view-more-btn"
+                        >
+                          查看更多通知
+                          <template #icon><IconArrowRise /></template>
+                        </a-button>
+                      </div>
                     </a-tab-pane>
                     <a-tab-pane key="todo" title="待办">
-                      <a-list :max-height="400">
-                        <a-list-item v-for="todo in todos" :key="todo.id">
+                      <a-list :max-height="300">
+                        <a-list-item v-for="todo in todos.slice(0, 3)" :key="todo.id">
                           <a-space direction="vertical" style="width: 100%">
                             <div class="notice-title">
                               <a-typography-text>{{ todo.title }}</a-typography-text>
@@ -215,6 +241,17 @@
                           </a-space>
                         </a-list-item>
                       </a-list>
+                      <div class="view-more-container">
+                        <a-button 
+                          type="text" 
+                          size="small" 
+                          @click="$router.push('/management/tasks')"
+                          class="view-more-btn"
+                        >
+                          查看更多待办
+                          <template #icon><IconArrowRise /></template>
+                        </a-button>
+                      </div>
                     </a-tab-pane>
                   </a-tabs>
                 </a-card>
@@ -230,34 +267,90 @@
       v-model:visible="showWelcomeModal"
       :is-new-user="userStore.isNewUser"
     />
+    
+    <!-- 通知详情弹窗 -->
+    <a-modal
+      v-model:visible="notificationModalVisible"
+      :title="selectedNotification?.title"
+      width="800px"
+      @cancel="handleCloseNotificationModal"
+      :footer="false"
+    >
+      <div v-if="selectedNotification" class="notification-detail">
+        <!-- 通知基本信息 -->
+        <div class="notification-info" style="margin-bottom: 20px;">
+          <div style="display: flex; gap: 24px; align-items: center; padding: 16px; background: #f7f8fa; border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #86909c; font-size: 14px;">发布人：</span>
+              <span style="font-weight: 500;">{{ selectedNotification.author }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #86909c; font-size: 14px;">发布时间：</span>
+              <span style="font-weight: 500;">{{ selectedNotification.time }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 通知内容 -->
+        <div class="notification-content">
+          <h4 style="margin-bottom: 12px; color: #1d2129;">正文</h4>
+          <div class="content-body" style="padding: 16px; background: #f7f8fa; border-radius: 6px; line-height: 1.6; color: #4e5969;">
+            {{ selectedNotification.content }}
+          </div>
+        </div>
+
+        <!-- 附件部分 -->
+        <div class="notification-attachments" style="margin-top: 20px;">
+          <h4 style="margin-bottom: 12px; color: #1d2129;">附件</h4>
+          <div v-if="selectedNotification.attachments && selectedNotification.attachments.length > 0" 
+               style="padding: 16px; background: #f7f8fa; border-radius: 6px;">
+            <div v-for="attachment in selectedNotification.attachments" 
+                 :key="attachment.id" 
+                 style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e5e6eb;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 500; color: #1d2129;">{{ attachment.fileName }}</span>
+                <span style="color: #86909c; font-size: 12px;">{{ attachment.fileSize }}</span>
+              </div>
+              <a-button type="text" size="small" style="color: #165dff;">
+                下载
+              </a-button>
+            </div>
+          </div>
+          <div v-else style="padding: 16px; background: #f7f8fa; border-radius: 6px; color: #86909c; text-align: center;">
+            暂无附件
+          </div>
+        </div>
+      </div>
+    </a-modal>
   </a-layout>
 </template>
 
 <script setup>
-import ArchitectureChart from '../../components/layout/ArchitectureChart.vue';
 import { ref, onMounted, markRaw } from 'vue'
-import HomeWelcomeModal from '../../components/modals/HomeWelcomeModal.vue'
-import { useUserStore } from '../../store/modules/user'
-import { Statistic } from '@arco-design/web-vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../../stores/user'
+import ArchitectureChart from '../../components/layout/ArchitectureChart.vue'
+import NotificationStats from '../../components/NotificationStats.vue'
 import {
   IconUser,
   IconDown,
-  IconApps,
-  IconFile,
   IconNotification,
   IconStorage,
+  IconFile,
+  IconQuestion,
+  IconCompass,
+  IconEye,
+  IconApps,
   IconBook,
   IconBulb,
   IconArrowRise,
   IconArrowFall,
-  IconQuestion,
-  IconCompass,
-  IconEye,
-  IconCloud,
-  IconStar,
-  IconPlus
+  IconSettings,
+  IconSafe,
+  IconRefresh
 } from '@arco-design/web-vue/es/icon'
 
+const router = useRouter()
 const userStore = useUserStore()
 
 const toggleDepartment = () => {
@@ -279,45 +372,168 @@ const toggleUserRole = () => {
 onMounted(async () => {
   const isNewUser = await userStore.checkUserRole()
   showWelcomeModal.value = true
+  // 初始化时获取通知数据
+  await fetchNotices()
 })
 
-// 通知数据
-const notices = ref([
-  {
-    id: 1,
-    title: '数据社区平台使用指南V2.0发布',
-    type: '使用指南',
-    time: '2024-01-15 10:00'
-  },
-  {
-    id: 2,
-    title: '数据接口申请工单已审批通过',
-    type: '工单进度',
-    time: '2024-01-14 15:30'
-  },
-  {
-    id: 3,
-    title: '数据社区2024年度工作规划',
-    type: '社区发布',
-    time: '2024-01-13 09:00'
-  },
-  {
-    id: 4,
-    title: '数据治理最佳实践案例分享',
-    type: '案例',
-    time: '2024-01-12 16:45'
+// 通知数据 - 集成通知管理系统
+const notices = ref([])
+
+// 通知弹窗状态管理
+const notificationModalVisible = ref(false)
+const selectedNotification = ref(null)
+
+// 获取通知数据
+const fetchNotices = async () => {
+  try {
+    // 导入通知API服务
+    const NotificationAPI = (await import('../../api/notification')).default
+    
+    // 获取已发布的通知，限制数量为10条
+    const response = await NotificationAPI.getNotifications({
+      status: 'published',
+      pageSize: 10,
+      page: 1
+    })
+    
+    if (response.success) {
+      // 转换数据格式以适配现有UI
+      const notificationList = response.data.list || response.data
+      notices.value = notificationList.map(notification => ({
+        id: notification.id,
+        title: notification.title,
+        type: notification.category?.name || '通知',
+        publishTime: notification.publishTime || notification.published_at,
+        time: new Date(notification.publishTime || notification.published_at).toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      }))
+    }
+  } catch (error) {
+    console.error('获取通知数据失败:', error)
+    // 使用默认数据作为降级方案
+    notices.value = [
+      {
+        id: 1,
+        title: '数据社区平台使用指南V2.0发布',
+        type: '操作指南',
+        publishTime: '2024-01-15T10:00:00Z',
+        time: '2024-01-15 10:00'
+      },
+      {
+        id: 2,
+        title: '数据接口申请工单已审批通过',
+        type: '工单进度',
+        publishTime: '2024-01-14T15:30:00Z',
+        time: '2024-01-14 15:30'
+      },
+      {
+        id: 3,
+        title: '数据社区2024年度工作规划',
+        type: '社区动态',
+        publishTime: '2024-01-13T09:00:00Z',
+        time: '2024-01-13 09:00'
+      },
+      {
+        id: 4,
+        title: '数据治理最佳实践案例分享',
+        type: '实践案例',
+        publishTime: '2024-01-12T16:45:00Z',
+        time: '2024-01-12 16:45'
+      }
+    ]
   }
-])
+}
 
 // 获取通知类型对应的颜色
 const getNoticeTypeColor = (type) => {
   const colorMap = {
+    '操作指南': 'blue',
+    '工单进度': 'green', 
+    '社区动态': 'purple',
+    '实践案例': 'orange',
+    '政策制度': 'red',
+    // 兼容旧数据
     '使用指南': 'blue',
-    '工单进度': 'green',
     '社区发布': 'purple',
     '案例': 'orange'
   }
   return colorMap[type] || 'blue'
+}
+
+// 判断是否为新发布的通知（7天内）
+const isNewNotice = (publishTime) => {
+  if (!publishTime) return false
+  const publishDate = new Date(publishTime)
+  const now = new Date()
+  const diffTime = Math.abs(now - publishDate)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays <= 7
+}
+
+// 社区资源导航
+const navigateToCommunity = (category) => {
+  const categoryMap = {
+    'policy': '/community/policy',
+    'cases': '/community/cases', 
+    'guide': '/community/guide',
+    'news': '/community/news'
+  }
+  const path = categoryMap[category]
+  if (path) {
+    router.push(path)
+  }
+}
+
+// 通知统计组件引用
+const notificationStatsRef = ref(null)
+
+// 刷新通知统计数据
+const refreshNotificationStats = () => {
+  if (notificationStatsRef.value) {
+    notificationStatsRef.value.refresh()
+  }
+}
+
+// 查看通知详情
+const viewNotification = (notice) => {
+  console.log('点击查看通知详情:', notice)
+  selectedNotification.value = {
+    id: notice.id,
+    title: notice.title,
+    content: `这是通知"${notice.title}"的详细内容。发布时间：${notice.time}，类型：${notice.type}。`,
+    type: notice.type,
+    publishTime: notice.publishTime,
+    time: notice.time,
+    author: '系统管理员',
+    priority: 'normal',
+    isSticky: false,
+    attachments: [
+      {
+        id: 1,
+        fileName: '通知附件1.pdf',
+        fileSize: '2.3MB',
+        downloadUrl: '/files/attachment1.pdf'
+      },
+      {
+        id: 2,
+        fileName: '相关文档.docx',
+        fileSize: '1.8MB',
+        downloadUrl: '/files/attachment2.docx'
+      }
+    ]
+  }
+  notificationModalVisible.value = true
+}
+
+// 关闭通知弹窗
+const handleCloseNotificationModal = () => {
+  notificationModalVisible.value = false
+  selectedNotification.value = null
 }
 
 // 待办数据
@@ -885,6 +1101,27 @@ const metrics = ref([
 
 .community-icon-compact:hover {
   transform: scale(1.1);
+}
+
+/* 查看更多按钮样式 */
+.view-more-container {
+  margin-top: 12px;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+}
+
+.view-more-btn {
+  color: #165dff;
+  font-size: 12px;
+  padding: 4px 8px;
+  height: auto;
+  transition: all 0.2s ease;
+}
+
+.view-more-btn:hover {
+  color: #0e42d2;
+  background-color: rgba(22, 93, 255, 0.05);
 }
 
 .metric-card :deep(.arco-card-body) {

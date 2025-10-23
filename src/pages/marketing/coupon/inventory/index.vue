@@ -67,6 +67,8 @@
             <template #icon><icon-download /></template>
             导出数据
           </a-button>
+          <a-button type="outline" @click="showApprovalModal">申请发券</a-button>
+          <a-button type="text" @click="showApprovalHistory">审批历史</a-button>
         </a-space>
       </template>
       <a-table
@@ -89,8 +91,26 @@
             </a-table-column>
           </template>
         </template>
+
+        <template #approvalStatus="{ record }">
+          <a-tag :color="getApprovalStatusColor(record.approvalStatus)">
+            {{ getApprovalStatusText(record.approvalStatus) }}
+          </a-tag>
+        </template>
       </a-table>
     </a-card>
+
+    <!-- 审批弹窗 -->
+    <ApprovalModal
+      v-model:visible="approvalModalVisible"
+      :template-data="selectedTemplate"
+      @success="handleApprovalSuccess"
+    />
+
+    <!-- 审批历史弹窗 -->
+    <ApprovalHistory
+      v-model:visible="approvalHistoryVisible"
+    />
   </div>
 </template>
 
@@ -98,6 +118,8 @@
 import { ref, reactive, h, computed } from 'vue'
 import { IconDownload, IconDelete } from '@arco-design/web-vue/es/icon'
 import { Message, Modal } from '@arco-design/web-vue'
+import ApprovalModal from './components/ApprovalModal.vue'
+import ApprovalHistory from './components/ApprovalHistory.vue'
 
 // 表格列配置
 const columns = [
@@ -140,6 +162,12 @@ const columns = [
       'expired': '已过期',
       'invalid': '已作废'
     }[record.status])
+  },
+  { 
+    title: '审批状态', 
+    dataIndex: 'approvalStatus', 
+    width: 120,
+    slotName: 'approvalStatus'
   }
 ]
 
@@ -181,68 +209,26 @@ const pagination = reactive({
   showPageSize: true
 })
 
-// 获取库存统计数据
+// 获取库存数据
 const fetchInventoryData = async () => {
   loading.value = true
   try {
-    // TODO: 调用接口获取数据
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    // 模拟数据
-    tableData.value = [
-      {
-        userId: '10001',
-        couponId: 'CP001',
-        templateId: 'TPL001',
-        couponName: '新人专享券',
-        couponType: 'discount',
-        startTime: '2024-01-01',
-        endTime: '2024-12-31',
-        status: 'received'
-      },
-      {
-        userId: '10002',
-        couponId: 'CP002',
-        templateId: 'TPL002',
-        couponName: '满100减10券',
-        couponType: 'reduction',
-        startTime: '2024-01-01',
-        endTime: '2024-12-31',
-        status: 'locked'
-      },
-      {
-        userId: '10003',
-        couponId: 'CP003',
-        templateId: 'TPL003',
-        couponName: '立减50券',
-        couponType: 'instant',
-        startTime: '2024-01-01',
-        endTime: '2024-12-31',
-        status: 'used'
-      },
-      {
-        userId: '10004',
-        couponId: 'CP004',
-        templateId: 'TPL004',
-        couponName: '周年庆券',
-        couponType: 'discount',
-        startTime: '2023-01-01',
-        endTime: '2023-12-31',
-        status: 'expired'
-      },
-      {
-        userId: '10005',
-        couponId: 'CP005',
-        templateId: 'TPL005',
-        couponName: '限时特惠券',
-        couponType: 'reduction',
-        startTime: '2024-01-01',
-        endTime: '2024-12-31',
-        status: 'invalid'
-      }
-    ]
-    pagination.total = 100
+    const { inventoryAPI } = await import('@/api/coupon.js')
+    const response = await inventoryAPI.getInventoryList({
+       page: pagination.current,
+       pageSize: pagination.pageSize,
+       ...searchForm.value
+     })
+    
+    if (response.code === 200) {
+       inventoryData.value = response.data.list
+       pagination.total = response.data.total
+     } else {
+       Message.error(response.message || '获取数据失败')
+     }
   } catch (error) {
-    Message.error('获取库存统计数据失败')
+    console.error('获取库存数据失败:', error)
+    Message.error('获取数据失败，请重试')
   } finally {
     loading.value = false
   }
@@ -257,44 +243,50 @@ const handleSearch = () => {
 // 批量撤回
 const withdrawLoading = ref(false)
 const handleBatchWithdraw = async () => {
-  if (!selectedRows.value.length) {
-    Message.warning('请先选择要撤回的券');
-    return;
+  if (selectedRowKeys.value.length === 0) {
+    Message.warning('请选择要撤回的券')
+    return
   }
-
-  const validStatus = ['received', 'locked'];
-  const withdrawableCoupons = selectedRows.value.filter(item => 
-    validStatus.includes(item.status)
-  );
-
-  if (withdrawableCoupons.length !== selectedRows.value.length) {
-    Modal.confirm({
-      title: '部分券不可撤回',
-      content: `当前选中${selectedRows.value.length}张券，其中${withdrawableCoupons.length}张可撤回`,
-      okText: '继续撤回可操作券',
-      cancelText: '取消操作',
-      onOk: () => executeWithdraw(withdrawableCoupons)
-    });
-  } else {
-    await executeWithdraw(withdrawableCoupons);
+  
+  // 检查选中的券是否都可以撤回
+  const selectedRows = inventoryData.value.filter(item => selectedRowKeys.value.includes(item.id))
+  const canWithdrawRows = selectedRows.filter(item => item.status === 'active')
+  
+  if (canWithdrawRows.length === 0) {
+    Message.warning('选中的券都不能撤回')
+    return
   }
-};
+  
+  if (canWithdrawRows.length < selectedRows.length) {
+    Message.warning(`只有 ${canWithdrawRows.length} 张券可以撤回`)
+  }
+  
+  Modal.confirm({
+    title: '确认撤回',
+    content: `确定要撤回选中的 ${canWithdrawRows.length} 张券吗？`,
+    onOk: () => executeWithdraw(canWithdrawRows.map(item => item.id))
+  })
+}
 
-const executeWithdraw = async (coupons) => {
+const executeWithdraw = async (couponIds) => {
+  withdrawLoading.value = true
   try {
-    withdrawLoading.value = true;
-    // 实际调用API处应替换为真实接口
-    await Promise.all(coupons.map(coupon => 
-      withdrawCouponAPI(coupon.couponId)
-    ));
-    await fetchInventoryData();
-    selectedRowKeys.value = [];
-    selectedRows.value = [];
-    Message.success(`成功撤回${coupons.length}张券`);
+    const { inventoryAPI } = await import('@/api/coupon.js')
+    const response = await inventoryAPI.batchWithdraw(couponIds)
+    
+    if (response.code === 200) {
+      Message.success(`成功撤回 ${couponIds.length} 张券`)
+      selectedRowKeys.value = []
+      // 重新获取数据
+      await fetchInventoryData()
+    } else {
+      Message.error(response.message || '撤回失败')
+    }
   } catch (error) {
-    Message.error(`撤回失败: ${error.message}`);
+    console.error('撤回失败:', error)
+    Message.error('撤回失败，请重试')
   } finally {
-    withdrawLoading.value = false;
+    withdrawLoading.value = false
   }
 }
 
@@ -342,6 +334,56 @@ const handleRowClick = (record) => {
     Message.warning('只能选择状态为"已领取"或"已锁定"的券');
   }
 };
+
+// 审批相关
+const approvalModalVisible = ref(false)
+const approvalHistoryVisible = ref(false)
+const selectedTemplate = ref({})
+
+// 显示审批弹窗
+const showApprovalModal = () => {
+  // 这里可以选择券模板，暂时使用默认模板
+  selectedTemplate.value = {
+    id: 'TPL001',
+    name: '新人专享券'
+  }
+  approvalModalVisible.value = true
+}
+
+// 显示审批历史
+const showApprovalHistory = () => {
+  approvalHistoryVisible.value = true
+}
+
+// 审批成功回调
+const handleApprovalSuccess = async () => {
+  approvalModalVisible.value = false
+  Message.success('审批申请提交成功')
+  // 重新获取数据
+  await fetchInventoryData()
+}
+
+// 获取审批状态颜色
+const getApprovalStatusColor = (status) => {
+  const colorMap = {
+    pending: 'orange',
+    approved: 'green',
+    rejected: 'red',
+    none: 'gray'
+  }
+  return colorMap[status] || 'gray'
+}
+
+// 获取审批状态文本
+const getApprovalStatusText = (status) => {
+  const textMap = {
+    pending: '待审批',
+    approved: '已通过',
+    rejected: '已拒绝',
+    none: '无需审批'
+  }
+  return textMap[status] || '未知'
+}
 
 // 初始化加载数据
 fetchInventoryData()

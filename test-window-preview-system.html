@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 window.previewLineSystem</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 PreviewLineSystem 全局访问测试</h1>
+        
+        <div id="status"></div>
+        
+        <button onclick="testWindowPreviewSystem()">测试 window.previewLineSystem</button>
+        <button onclick="testMethods()">测试方法调用</button>
+        <button onclick="clearResults()">清除结果</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+        
+        function addResult(message) {
+            const resultsDiv = document.getElementById('results');
+            const resultElement = document.createElement('pre');
+            resultElement.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            resultsDiv.appendChild(resultElement);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            updateStatus('结果已清除', 'info');
+        }
+        
+        function testWindowPreviewSystem() {
+            try {
+                addResult('开始测试 window.previewLineSystem...');
+                
+                // 检查 window.previewLineSystem 是否存在
+                if (typeof window.previewLineSystem === 'undefined') {
+                    updateStatus('❌ window.previewLineSystem 未定义', 'error');
+                    addResult('ERROR: window.previewLineSystem 未定义');
+                    return;
+                }
+                
+                if (window.previewLineSystem === null) {
+                    updateStatus('❌ window.previewLineSystem 为 null', 'error');
+                    addResult('ERROR: window.previewLineSystem 为 null');
+                    return;
+                }
+                
+                updateStatus('✅ window.previewLineSystem 已正确设置', 'success');
+                addResult('SUCCESS: window.previewLineSystem 存在');
+                addResult('类型: ' + typeof window.previewLineSystem);
+                addResult('构造函数: ' + (window.previewLineSystem.constructor?.name || '未知'));
+                
+                // 检查常用方法
+                const methods = ['getAllPreviewLines', 'getActivePreviewLines', 'initialize', 'init'];
+                methods.forEach(method => {
+                    if (typeof window.previewLineSystem[method] === 'function') {
+                        addResult(`✅ 方法 ${method} 可用`);
+                    } else {
+                        addResult(`❌ 方法 ${method} 不可用`);
+                    }
+                });
+                
+            } catch (error) {
+                updateStatus('❌ 测试过程中发生错误: ' + error.message, 'error');
+                addResult('ERROR: ' + error.message);
+                addResult('Stack: ' + error.stack);
+            }
+        }
+        
+        function testMethods() {
+            try {
+                addResult('开始测试方法调用...');
+                
+                if (!window.previewLineSystem) {
+                    addResult('ERROR: window.previewLineSystem 不存在，无法测试方法');
+                    return;
+                }
+                
+                // 测试 getAllPreviewLines 方法
+                if (typeof window.previewLineSystem.getAllPreviewLines === 'function') {
+                    try {
+                        const result = window.previewLineSystem.getAllPreviewLines();
+                        addResult('✅ getAllPreviewLines() 调用成功');
+                        addResult('返回结果类型: ' + typeof result);
+                        addResult('返回结果: ' + JSON.stringify(result, null, 2));
+                        updateStatus('✅ 方法调用测试完成', 'success');
+                    } catch (methodError) {
+                        addResult('❌ getAllPreviewLines() 调用失败: ' + methodError.message);
+                        updateStatus('❌ 方法调用失败: ' + methodError.message, 'error');
+                    }
+                } else {
+                    addResult('❌ getAllPreviewLines 方法不存在');
+                }
+                
+            } catch (error) {
+                updateStatus('❌ 方法测试过程中发生错误: ' + error.message, 'error');
+                addResult('ERROR: ' + error.message);
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                addResult('页面加载完成，开始自动测试...');
+                testWindowPreviewSystem();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

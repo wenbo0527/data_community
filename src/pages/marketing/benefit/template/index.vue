@@ -11,6 +11,7 @@
 
 <style scoped>
 .benefit-template-container {
+  width: 100%;
   padding: 20px;
 }
 </style>

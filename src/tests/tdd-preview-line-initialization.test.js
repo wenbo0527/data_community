@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Graph } from '@antv/x6'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import PreviewLineSystem from '../utils/preview-line/PreviewLineSystem.js'
+import { PreviewLineManager } from '../utils/preview-line/core/PreviewLineManager.js'
+import { PreviewLineValidator } from '../utils/preview-line/core/PreviewLineValidator.js'
 
 /**
  * TDD测试：预览线初始化时机问题
@@ -17,10 +19,12 @@ import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
  */
 describe('TDD: 预览线初始化时机修复', () => {
   let graph
+  let previewLineSystem
   let previewLineManager
+  let previewLineValidator
   let mockContainer
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // 创建模拟容器
     mockContainer = document.createElement('div')
     mockContainer.style.width = '800px'
@@ -34,13 +38,18 @@ describe('TDD: 预览线初始化时机修复', () => {
       height: 600
     })
 
-    // 创建预览线管理器实例
-    previewLineManager = new UnifiedPreviewLineManager(
-      graph,  // graph
-      null,  // branchManager
-      {},    // layoutConfig
-      null   // layoutEngine
-    )
+    // 创建预览线系统实例
+    previewLineSystem = new PreviewLineSystem({ graph })
+    await previewLineSystem.init()
+
+    // 创建预览线管理器和验证器实例
+    previewLineManager = new PreviewLineManager({
+      graph,
+      validator: new PreviewLineValidator(),
+      branchManager: null
+    })
+    
+    previewLineValidator = new PreviewLineValidator()
   })
 
   afterEach(() => {
@@ -66,10 +75,11 @@ describe('TDD: 预览线初始化时机修复', () => {
         }
       })
 
-      // 测试：shouldCreatePreviewLine应该返回false
-      const shouldCreate = previewLineManager.shouldCreatePreviewLine(node)
+      // 测试：通过验证器检查预览线创建需求
+      const existingPreviewLines = new Map()
+      const requirement = previewLineValidator.checkPreviewLineRequirement(node, 'default', existingPreviewLines, false)
       
-      expect(shouldCreate).toBe(false)
+      expect(requirement.needsCreation).toBe(false)
       expect(node.getData().isConfigured).toBe(false) // 不应被自动修复
     })
 
@@ -86,10 +96,11 @@ describe('TDD: 预览线初始化时机修复', () => {
         }
       })
 
-      // 测试：shouldCreatePreviewLine应该返回false
-      const shouldCreate = previewLineManager.shouldCreatePreviewLine(node)
+      // 测试：通过验证器检查预览线创建需求
+      const existingPreviewLines = new Map()
+      const requirement = previewLineValidator.checkPreviewLineRequirement(node, 'default', existingPreviewLines, false)
       
-      expect(shouldCreate).toBe(false)
+      expect(requirement.needsCreation).toBe(false)
       expect(node.getData().isConfigured).toBe(false) // 不应被自动修复
     })
 
@@ -106,10 +117,11 @@ describe('TDD: 预览线初始化时机修复', () => {
         }
       })
 
-      // 测试：shouldCreatePreviewLine应该返回false
-      const shouldCreate = previewLineManager.shouldCreatePreviewLine(node)
+      // 测试：通过验证器检查预览线创建需求
+      const existingPreviewLines = new Map()
+      const requirement = previewLineValidator.checkPreviewLineRequirement(node, 'default', existingPreviewLines, false)
       
-      expect(shouldCreate).toBe(false)
+      expect(requirement.needsCreation).toBe(false)
       expect(node.getData().isConfigured).toBe(false) // 不应被自动修复
     })
   })
@@ -127,12 +139,14 @@ describe('TDD: 预览线初始化时机修复', () => {
         }
       }
 
-      // 当前的shouldNodeBeConfigured会自动修复，这是需要修复的问题
-      const shouldBeConfigured = previewLineManager.shouldNodeBeConfigured(nodeData, 'audience-split')
+      // 通过验证器检查节点配置状态
+      const mockNode = { getData: () => nodeData }
+      const existingPreviewLines = new Map()
+      const requirement = previewLineValidator.checkPreviewLineRequirement(mockNode, 'default', existingPreviewLines, false)
       
       // 期望：不应该自动修复，应该严格检查isConfigured字段
-      // 当前会失败，因为存在自动修复逻辑
-      expect(shouldBeConfigured).toBe(false) // 这个测试会失败，证明存在自动修复问题
+      expect(requirement.needsCreation).toBe(false) // 验证不应创建预览线
+      expect(nodeData.isConfigured).toBe(false) // 配置状态不应被修改
     })
 
     it('shouldNodeBeConfigured不应该自动修复sms节点的配置状态', () => {
@@ -146,12 +160,14 @@ describe('TDD: 预览线初始化时机修复', () => {
         }
       }
 
-      // 当前的shouldNodeBeConfigured会自动修复，这是需要修复的问题
-      const shouldBeConfigured = previewLineManager.shouldNodeBeConfigured(nodeData, 'sms')
+      // 通过验证器检查节点配置状态
+      const mockNode = { getData: () => nodeData }
+      const existingPreviewLines = new Map()
+      const requirement = previewLineValidator.checkPreviewLineRequirement(mockNode, 'default', existingPreviewLines, false)
       
       // 期望：不应该自动修复，应该严格检查isConfigured字段
-      // 当前会失败，因为存在自动修复逻辑
-      expect(shouldBeConfigured).toBe(false) // 这个测试会失败，证明存在自动修复问题
+      expect(requirement.needsCreation).toBe(false) // 验证不应创建预览线
+      expect(nodeData.isConfigured).toBe(false) // 配置状态不应被修改
     })
   })
 
@@ -188,11 +204,12 @@ describe('TDD: 预览线初始化时机修复', () => {
       })
 
       // 测试：只有明确配置的节点应该创建预览线
-      const shouldCreateConfigured = previewLineManager.shouldCreatePreviewLine(configuredNode)
-      const shouldCreateUnconfigured = previewLineManager.shouldCreatePreviewLine(unconfiguredNode)
+      const existingPreviewLines = new Map()
+      const configuredRequirement = previewLineValidator.checkPreviewLineRequirement(configuredNode, 'default', existingPreviewLines, false)
+      const unconfiguredRequirement = previewLineValidator.checkPreviewLineRequirement(unconfiguredNode, 'default', existingPreviewLines, false)
       
-      expect(shouldCreateConfigured).toBe(true)
-      expect(shouldCreateUnconfigured).toBe(false)
+      expect(configuredRequirement.needsCreation).toBe(true)
+      expect(unconfiguredRequirement.needsCreation).toBe(false)
     })
 
     it('isConfigured字段缺失时应该视为未配置', () => {
@@ -212,19 +229,21 @@ describe('TDD: 预览线初始化时机修复', () => {
       })
 
       // 测试：isConfigured字段缺失应该视为未配置
-      const shouldCreate = previewLineManager.shouldCreatePreviewLine(node)
+      const existingPreviewLines = new Map()
+      const requirement = previewLineValidator.checkPreviewLineRequirement(node, 'default', existingPreviewLines, false)
       
-      expect(shouldCreate).toBe(false)
+      expect(requirement.needsCreation).toBe(false)
     })
   })
 
   describe('问题4: 配置完成事件监听机制', () => {
     it('应该提供配置完成事件监听接口', () => {
-      // 测试：预览线管理器应该提供配置完成事件监听方法
-      expect(typeof previewLineManager.onNodeConfigured).toBe('function')
+      // 测试：预览线系统应该提供事件监听方法
+      expect(typeof previewLineSystem.on).toBe('function')
+      expect(typeof previewLineSystem.emit).toBe('function')
     })
 
-    it('配置完成后应该触发预览线重新评估', () => {
+    it('配置完成后应该触发预览线重新评估', async () => {
       // 创建未配置的节点
       const node = graph.addNode({
         id: 'sms-to-configure',
@@ -238,16 +257,23 @@ describe('TDD: 预览线初始化时机修复', () => {
       })
 
       // 模拟配置完成事件
-      const mockReevaluate = vi.spyOn(previewLineManager, 'reevaluateNodePreviewLines')
+      const mockCreateUnified = vi.spyOn(previewLineManager, 'createUnifiedPreviewLine')
       
-      // 触发配置完成事件
-      previewLineManager.onNodeConfigured(node.id, {
-        template: '您好，这是一条测试短信',
-        sendTime: '09:00'
+      // 更新节点配置状态
+      node.setData({
+        ...node.getData(),
+        isConfigured: true,
+        config: {
+          template: '您好，这是一条测试短信',
+          sendTime: '09:00'
+        }
       })
+      
+      // 触发预览线创建
+      await previewLineManager.createUnifiedPreviewLine(node)
 
-      // 验证：应该触发预览线重新评估
-      expect(mockReevaluate).toHaveBeenCalledWith(node.id)
+      // 验证：应该调用统一预览线创建方法
+      expect(mockCreateUnified).toHaveBeenCalledWith(node)
     })
   })
 })

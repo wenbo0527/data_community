@@ -67,7 +67,7 @@ export const createNode = (type, graph, position = { x: 100, y: 100 }, data = {}
   try {
     // 获取同类型节点数量，用于生成唯一名称
     const sameTypeNodes = graph.getNodes().filter(node => {
-      const nodeData = node.getData();
+      const nodeData = node.getData() || {};
       return nodeData?.type === type;
     });
 

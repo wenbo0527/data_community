@@ -50,7 +50,7 @@ export function validateCanvasData(canvasData) {
     if (!node.label) {
       warnings.push(`节点${node.id || index + 1}缺少标签`)
     }
-    if (!node.position || typeof node.position.x !== 'number' || typeof node.position.y !== 'number') {
+    if (typeof node.x !== 'number' || typeof node.y !== 'number' || isNaN(node.x) || isNaN(node.y)) {
       errors.push(`节点${node.id || index + 1}位置信息无效`)
     }
   })

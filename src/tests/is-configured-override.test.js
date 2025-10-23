@@ -4,7 +4,7 @@
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { nodeConfigManager } from '../utils/NodeConfigManager.js'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineSystem } from '../utils/preview-line/PreviewLineSystem.js'
 
 describe('isConfigured字段覆盖问题测试', () => {
   let mockGraph
@@ -47,7 +47,7 @@ describe('isConfigured字段覆盖问题测试', () => {
     mockGraph.getCellById.mockReturnValue(mockNode)
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(
+    previewManager = new PreviewLineSystem(
       mockGraph,  // graph
       null,      // branchManager
       {},        // layoutConfig
@@ -83,7 +83,7 @@ describe('isConfigured字段覆盖问题测试', () => {
     console.log('NodeConfigManager setData calls:', nodeConfigManagerCalls)
   })
 
-  test('UnifiedPreviewLineManager不应覆盖已设置的isConfigured', async () => {
+  test('PreviewLineSystem不应覆盖已设置的isConfigured', async () => {
     // 设置节点已经配置的状态
     mockNode.getData.mockReturnValue({
       type: 'audience-split',
@@ -110,7 +110,7 @@ describe('isConfigured字段覆盖问题测试', () => {
 
     // 验证setData调用
     const setDataCalls = mockNode.setData.mock.calls
-    console.log('UnifiedPreviewLineManager setData calls:', setDataCalls)
+    console.log('PreviewLineSystem setData calls:', setDataCalls)
 
     // 如果有setData调用，验证isConfigured没有被覆盖
     if (setDataCalls.length > 0) {
@@ -146,7 +146,7 @@ describe('isConfigured字段覆盖问题测试', () => {
     // 4. 清除之前的setData调用记录
     mockNode.setData.mockClear()
 
-    // 5. 调用UnifiedPreviewLineManager
+    // 5. 调用PreviewLineSystem
     await previewManager.createPreviewLineAfterConfig(mockNode, config)
 
     // 6. 验证最终状态

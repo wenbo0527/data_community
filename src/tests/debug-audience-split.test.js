@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineSystem } from '../utils/preview-line/PreviewLineSystem.js'
 
 describe('调试人群分流节点预览线问题', () => {
   let previewManager
@@ -59,7 +59,7 @@ describe('调试人群分流节点预览线问题', () => {
     }
 
     // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(
+    previewManager = new PreviewLineSystem(
       mockGraph,  // graph
       null,      // branchManager
       {},        // layoutConfig

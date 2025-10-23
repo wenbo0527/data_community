@@ -145,11 +145,14 @@ const emit = defineEmits([
 
 // 处理取消
 const handleCancel = () => {
+  console.log('[BaseDrawer] 处理取消事件')
   emit('cancel')
+  emit('update:visible', false)
 }
 
 // 处理确认
 const handleConfirm = () => {
+  console.log('[BaseDrawer] 处理确认事件')
   emit('confirm')
 }
 

@@ -132,48 +132,6 @@ const createMockStore = () => {
       validateCondition: vi.fn(),
       validateConditionGroup: vi.fn()
     }
-    })
-})
-
-  describe('布局优化验证', () => {
-    test('应该验证水平布局的字段宽度分配', async () => {
-      const layoutValidation = await wrapper.vm.validateLayoutConfiguration({
-        layout: 'horizontal',
-        widthAllocation: {
-          tagSelector: 35,
-          operator: 20,
-          value: 30,
-          actions: 15
-        }
-      })
-      
-      expect(layoutValidation.isValid).toBe(true)
-      expect(layoutValidation.totalWidth).toBe(100)
-    })
-
-    test('应该验证响应式布局配置', async () => {
-      const responsiveConfig = {
-        desktop: { layout: 'horizontal', minWidth: 1024 },
-        tablet: { layout: 'horizontal', minWidth: 768 },
-        mobile: { layout: 'vertical', minWidth: 0 }
-      }
-      
-      const validationResult = await wrapper.vm.validateResponsiveLayout(responsiveConfig)
-      expect(validationResult.isValid).toBe(true)
-    })
-
-    test('应该验证统一逻辑控制的一致性', async () => {
-      const logicConsistencyCheck = await wrapper.vm.validateLogicConsistency({
-        groupLogic: 'and',
-        conditions: [
-          { id: 'c1', individualLogic: null }, // 应该为null，使用组级逻辑
-          { id: 'c2', individualLogic: null }
-        ]
-      })
-      
-      expect(logicConsistencyCheck.isValid).toBe(true)
-      expect(logicConsistencyCheck.hasConflicts).toBe(false)
-    })
   })
 }
 

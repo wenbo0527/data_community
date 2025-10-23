@@ -327,6 +327,25 @@ export const MENU_CONFIG = {
         path: '/management/data-models',
         routeName: 'data-models'
       },
+      'notification-management': {
+        key: 'notification-management',
+        title: '通知管理',
+        type: 'group',
+        children: {
+          'notification-list': {
+            key: 'notification-list',
+            title: '通知列表',
+            path: '/admin/notifications/list',
+            routeName: 'NotificationList'
+          },
+          'notification-categories': {
+            key: 'notification-categories',
+            title: '分类管理',
+            path: '/admin/notifications/categories',
+            routeName: 'NotificationCategories'
+          }
+        }
+      },
       'accompany': {
         key: 'accompany',
         title: '陪跑计划',

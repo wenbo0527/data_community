@@ -67,13 +67,13 @@ validateEndpointPositions() {
 ### 方案二：预览线清理机制优化
 
 **修改文件：** 
-- /Users/mac/nis_mock/data_comunity/data_comunity/src/utils/UnifiedPreviewLineManager.js
+- /Users/mac/nis_mock/data_comunity/data_comunity/src/utils/PreviewLineSystem.js
 - /Users/mac/nis_mock/data_comunity/data_comunity/src/pages/marketing/tasks/components/TaskFlowCanvas.vue
 
 **实施内容：**
 
 1. **增强预览线状态检查**
-   - 在 `UnifiedPreviewLineManager.js` 中新增 `cleanupOrphanedPreviewLines` 方法
+   - 在 `PreviewLineSystem.js` 中新增 `cleanupOrphanedPreviewLines` 方法
    - 智能识别孤立的预览线（源节点不存在或已有真实连接的预览线）
 
 2. **集成数据加载完成检查**
@@ -130,7 +130,7 @@ if (typeof connectionPreviewManager.performLoadCompleteCheck === 'function') {
 - 修复了方法定位和属性名称问题（nodePositions vs positions）
 
 **2025年01月16日 15:00 - 实施预览线清理机制优化**
-- 修改了 UnifiedPreviewLineManager.js 文件
+- 修改了 PreviewLineSystem.js 文件
 - 新增了 cleanupOrphanedPreviewLines、performLoadCompleteCheck 和 hasExistingRealConnections 方法
 - 在 TaskFlowCanvas.vue 的 initializeLayoutEngineAfterDataLoad 方法中集成了清理功能
 

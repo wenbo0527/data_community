@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import { PreviewLineSystem } from '../utils/preview-line/PreviewLineSystem.js'
 
 describe('人群分流节点预览线生成综合测试', () => {
   let previewManager
@@ -73,7 +73,7 @@ describe('人群分流节点预览线生成综合测试', () => {
     }
   })
 
-  test('场景1：新创建的人群分流节点（isConfigured为undefined）', () => {
+  it('场景1：新创建的人群分流节点（isConfigured为undefined）', () => {
     // 模拟新创建的节点，isConfigured为undefined但有配置数据
     const nodeData = {
       type: 'audience-split',
@@ -103,7 +103,7 @@ describe('人群分流节点预览线生成综合测试', () => {
     })
   })
 
-  test('场景2：从保存数据恢复的人群分流节点（已配置）', () => {
+  it('场景2：从保存数据恢复的人群分流节点（已配置）', () => {
     // 模拟从保存数据恢复的节点，已正确配置
     const nodeData = {
       type: 'audience-split',
@@ -129,7 +129,7 @@ describe('人群分流节点预览线生成综合测试', () => {
     expect(mockNode.setData).not.toHaveBeenCalled()
   })
 
-  test('场景3：未配置的人群分流节点', () => {
+  it('场景3：未配置的人群分流节点', () => {
     // 模拟未配置的节点
     const nodeData = {
       type: 'audience-split',
@@ -149,7 +149,7 @@ describe('人群分流节点预览线生成综合测试', () => {
     expect(mockNode.setData).not.toHaveBeenCalled()
   })
 
-  test('场景4：人群分流节点已有部分连接', () => {
+  it('场景4：人群分流节点已有部分连接', () => {
     // 模拟已有部分连接的节点
     const nodeData = {
       type: 'audience-split',
@@ -185,7 +185,7 @@ describe('人群分流节点预览线生成综合测试', () => {
     expect(shouldCreate).toBe(true)
   })
 
-  test('场景5：人群分流节点所有分支已连接', () => {
+  it('场景5：人群分流节点所有分支已连接', () => {
     // 模拟所有分支都已连接的节点
     const nodeData = {
       type: 'audience-split',
@@ -230,7 +230,7 @@ describe('人群分流节点预览线生成综合测试', () => {
     expect(shouldCreate).toBe(false)
   })
 
-  test('场景6：修复逻辑的完整性验证', () => {
+  it('场景6：修复逻辑的完整性验证', () => {
     // 模拟复杂的节点数据结构
     const originalNodeData = {
       type: 'audience-split',
@@ -273,7 +273,7 @@ describe('人群分流节点预览线生成综合测试', () => {
     expect(setDataCall.isConfigured).toBe(true)
   })
 
-  test('场景7：日志中的实际问题重现', () => {
+  it('场景7：日志中的实际问题重现', () => {
     // 重现用户日志中的实际问题
     const nodeData = {
       config: {

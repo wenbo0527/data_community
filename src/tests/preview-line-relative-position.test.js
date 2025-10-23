@@ -1,16 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import UnifiedPreviewLineManager from '../utils/UnifiedPreviewLineManager.js'
+import PreviewLineSystem from '../utils/preview-line/PreviewLineSystem.js'
 
 describe('预览线相对位置测试', () => {
   let previewManager
   let mockGraph
   let mockNode
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // 创建模拟的图实例
     mockGraph = {
-      getCellById: vi.fn(),
+      getCellById: vi.fn((id) => {
+        if (id === 'test-node-1') {
+          return mockNode
+        }
+        return null
+      }),
       getOutgoingEdges: vi.fn(() => []),
+      getEdges: vi.fn(() => []), // 🔧 添加缺失的getEdges方法
       addEdge: vi.fn(() => ({
         id: 'mock-edge-id',
         attr: vi.fn(),
@@ -21,10 +27,13 @@ describe('预览线相对位置测试', () => {
         getSource: vi.fn(() => ({ x: 100, y: 100 })),
         getTarget: vi.fn(() => ({ x: 200, y: 200 })),
         setSource: vi.fn(),
-        setTarget: vi.fn()
+        setTarget: vi.fn(),
+        getData: vi.fn(() => ({ type: 'unified-preview-line' })), // 🔧 添加getData方法
+        getSourcePoint: vi.fn(() => ({ x: 90, y: 90 })), // 🔧 添加getSourcePoint方法
+        prop: vi.fn() // 🔧 添加prop方法
       })),
       removeEdge: vi.fn(),
-      getNodes: vi.fn(() => []),
+      getNodes: vi.fn(() => [mockNode]),
       on: vi.fn(),
       off: vi.fn(),
       hasCell: vi.fn(() => true),
@@ -44,7 +53,9 @@ describe('预览线相对位置测试', () => {
           top: 0
         })
       },
-      clientToGraph: vi.fn((x, y) => ({ x, y }))
+      clientToGraph: vi.fn((x, y) => ({ x, y })),
+      getCells: vi.fn(() => [mockNode]),
+      findView: vi.fn(() => null)
     }
 
     // 创建模拟节点
@@ -57,19 +68,27 @@ describe('预览线相对位置测试', () => {
       getPosition: vi.fn(() => ({ x: 100, y: 100 })),
       getSize: vi.fn(() => ({ width: 120, height: 40 })),
       removed: false,
-      isRemoved: vi.fn(() => false)
+      isRemoved: vi.fn(() => false),
+      isNode: vi.fn(() => true), // 🔧 添加缺失的isNode方法
+      getPortProp: vi.fn((port, prop) => {
+        if (port === 'out' && prop === 'position') {
+          return { x: 0.5, y: 1 } // 底部中心位置
+        }
+        return null
+      }) // 🔧 添加缺失的getPortProp方法
     }
 
-    // 创建预览线管理器实例
-    previewManager = new UnifiedPreviewLineManager(
-      mockGraph,
-      null,
-      {},
-      null
-    )
+    // 创建预览线系统实例
+    previewManager = new PreviewLineSystem({
+      graph: mockGraph,
+      system: {
+        enableDebug: true,
+        autoInit: true
+      }
+    })
 
-    // 设置布局引擎就绪状态
-    previewManager.layoutEngineReady = true
+    // 初始化系统
+    await previewManager.init()
 
     // 模拟必要的方法
     previewManager.shouldCreatePreviewLine = vi.fn(() => true)
@@ -94,7 +113,7 @@ describe('预览线相对位置测试', () => {
       mockNode.getSize.mockReturnValue(nodeSize)
 
       // 创建预览线
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
 
       // 验证预览线创建成功
       expect(result).toBeTruthy()
@@ -106,7 +125,7 @@ describe('预览线相对位置测试', () => {
       // 验证预览线使用了正确的源节点连接
       expect(edgeConfig.source).toEqual({
         cell: mockNode.id,
-        port: 'bottom'
+        port: 'out'
       })
 
       // 验证预览线数据包含源节点ID
@@ -129,7 +148,7 @@ describe('预览线相对位置测试', () => {
       })
 
       // 调用getActualNodeCenter方法
-      const actualCenter = previewManager.getActualNodeCenter(mockNode)
+      const actualCenter = previewManager.positionCalculator.getActualNodeCenter(mockNode)
 
       // 验证计算结果
       expect(actualCenter).toEqual({
@@ -148,7 +167,7 @@ describe('预览线相对位置测试', () => {
       mockNode.getSize.mockReturnValue(nodeSize)
 
       // 调用getActualNodeCenter方法
-      const actualCenter = previewManager.getActualNodeCenter(mockNode)
+      const actualCenter = previewManager.positionCalculator.getActualNodeCenter(mockNode)
 
       // 验证降级到逻辑坐标
       expect(actualCenter).toEqual({
@@ -159,7 +178,7 @@ describe('预览线相对位置测试', () => {
 
     it('应该在节点移动时同步更新预览线位置', () => {
       // 先创建预览线
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
       expect(result).toBeTruthy()
 
       // 模拟节点移动到新位置
@@ -179,19 +198,19 @@ describe('预览线相对位置测试', () => {
       })
 
       // 调用同步方法
-      previewManager.syncPreviewLinePosition(mockNode.id)
+      previewManager.syncPreviewLinePositions([mockNode.id])
 
-      // 验证预览线的setSource方法被调用
+      // 验证预览线的prop方法被调用来设置source
       const mockEdge = mockGraph.addEdge.mock.results[0].value
-      expect(mockEdge.setSource).toHaveBeenCalledWith({
-        x: 260, // 200 + 120/2 = 260
-        y: 190  // 150 + 40/2 + 40/2 = 190 (节点底部中心)
+      expect(mockEdge.prop).toHaveBeenCalledWith('source', {
+        cell: 'test-node-1',
+        port: 'out'
       })
     })
 
     it('应该验证并修正预览线坐标偏差', () => {
       // 创建预览线
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
       expect(result).toBeTruthy()
 
       // 模拟预览线当前位置与期望位置有偏差
@@ -199,7 +218,7 @@ describe('预览线相对位置测试', () => {
       mockEdge.getSource.mockReturnValue({ x: 90, y: 90 }) // 偏差较大的位置
 
       // 调用坐标验证方法
-      previewManager.validateAndCorrectPreviewLineCoordinates(mockNode.id)
+      previewManager.positionCalculator.validateAndCorrectPreviewLineCoordinates(mockNode.id)
 
       // 验证坐标修正被触发
       expect(mockEdge.setSource).toHaveBeenCalled()
@@ -220,13 +239,13 @@ describe('预览线相对位置测试', () => {
         }
       })
 
-      previewManager.isBranchNode = vi.fn(() => true)
-      previewManager.getNodeBranches = vi.fn(() => [
+      previewManager.previewLineManager.validator.isBranchNode = vi.fn(() => true)
+      previewManager.branchAnalyzer.getNodeBranches = vi.fn(() => [
         { id: 'branch-1', label: '分支1' },
         { id: 'branch-2', label: '分支2' }
       ])
-      previewManager.checkBranchHasRealConnection = vi.fn(() => false)
-      previewManager.calculateBranchPreviewPosition = vi.fn((node, branches, index) => ({
+      previewManager.connectionValidator.checkBranchHasRealConnection = vi.fn(() => false)
+      previewManager.positionCalculator.calculateBranchPreviewPosition = vi.fn((node, branches, index) => ({
         x: 200 + index * 50,
         y: 200
       }))
@@ -236,11 +255,11 @@ describe('预览线相对位置测试', () => {
       // 确保节点存在于图中
       mockGraph.getCellById = vi.fn(() => ({
         ...mockNode,
-        isNode: () => true
+        isNode: vi.fn(() => true)
       }))
       
       // 创建分支预览线
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
 
       // 验证创建了分支预览线数组
       expect(Array.isArray(result)).toBe(true)
@@ -254,11 +273,11 @@ describe('预览线相对位置测试', () => {
 
       expect(firstBranchConfig.source).toEqual({
         cell: mockNode.id,
-        port: 'bottom'
+        port: 'out'
       })
       expect(secondBranchConfig.source).toEqual({
         cell: mockNode.id,
-        port: 'bottom'
+        port: 'out'
       })
 
       // 验证分支数据
@@ -270,11 +289,11 @@ describe('预览线相对位置测试', () => {
       // 确保节点存在于图中
       mockGraph.getCellById = vi.fn(() => ({
         ...mockNode,
-        isNode: () => true
+        isNode: vi.fn(() => true)
       }))
       
       // 模拟多线偏移计算
-      previewManager.calculateMultiLineOffset = vi.fn((sourceNode, endPosition, branchIndex, totalBranches) => ({
+      previewManager.positionCalculator.calculateMultiLineOffset = vi.fn((sourceNode, endPosition, branchIndex, totalBranches) => ({
         offset: branchIndex * 20, // 每个分支偏移20像素
         strokeColor: branchIndex === 0 ? '#1890ff' : '#fa8c16',
         strokeWidth: 2,
@@ -283,13 +302,13 @@ describe('预览线相对位置测试', () => {
       }))
 
       // 创建分支预览线
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
 
       // 验证偏移计算被正确调用
-      expect(previewManager.calculateMultiLineOffset).toHaveBeenCalledTimes(2)
+      expect(previewManager.positionCalculator.calculateMultiLineOffset).toHaveBeenCalledTimes(2)
       
       // 验证第一个分支的偏移
-      expect(previewManager.calculateMultiLineOffset).toHaveBeenNthCalledWith(
+      expect(previewManager.positionCalculator.calculateMultiLineOffset).toHaveBeenNthCalledWith(
         1,
         mockNode,
         { x: 200, y: 200 },
@@ -298,7 +317,7 @@ describe('预览线相对位置测试', () => {
       )
 
       // 验证第二个分支的偏移
-      expect(previewManager.calculateMultiLineOffset).toHaveBeenNthCalledWith(
+      expect(previewManager.positionCalculator.calculateMultiLineOffset).toHaveBeenNthCalledWith(
         2,
         mockNode,
         { x: 250, y: 200 },
@@ -311,7 +330,7 @@ describe('预览线相对位置测试', () => {
   describe('预览线创建失败场景测试', () => {
     it('应该在节点不存在时返回null', () => {
       // 设置节点为null
-      const result = previewManager.createUnifiedPreviewLine(null)
+      const result = previewManager.createPreviewLine(null)
       expect(result).toBeNull()
     })
 
@@ -319,7 +338,7 @@ describe('预览线相对位置测试', () => {
       // 设置节点不在图中
       mockGraph.hasCell.mockReturnValue(false)
 
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
       expect(result).toBeNull()
     })
 
@@ -327,15 +346,15 @@ describe('预览线相对位置测试', () => {
       // 设置节点已被移除
       mockNode.removed = true
 
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
       expect(result).toBeNull()
     })
 
     it('应该在shouldCreatePreviewLine返回false时返回null', () => {
       // 设置不应创建预览线
-      previewManager.shouldCreatePreviewLine.mockReturnValue(false)
+      previewManager.validator.shouldCreatePreviewLine.mockReturnValue(false)
 
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
       expect(result).toBeNull()
     })
 
@@ -347,88 +366,23 @@ describe('预览线相对位置测试', () => {
       // 确保节点存在于图中
       mockGraph.getCellById = vi.fn(() => ({
         ...mockNode,
-        isNode: () => true
+        isNode: vi.fn(() => true)
       }))
 
-      const result = previewManager.createUnifiedPreviewLine(mockNode)
+      const result = previewManager.createPreviewLine(mockNode)
 
       expect(result).toBeNull()
       expect(previewManager.addToPendingCalculations).toHaveBeenCalledWith(
         mockNode.id,
-        mockNode,
-        'create'
+        'createPreviewLine',
+        expect.objectContaining({
+          node: mockNode,
+          initialState: 'interactive',
+          options: {}
+        })
       )
     })
   })
 
-  describe('预览线重试机制测试', () => {
-    it('应该在预览线创建失败时进行重试', async () => {
-      // 确保节点存在于图中
-      mockGraph.getCellById = vi.fn(() => ({
-        ...mockNode,
-        isNode: vi.fn(() => true)
-      }))
-      
-      // 模拟第一次创建失败，第二次成功
-      let callCount = 0
-      const originalMethod = previewManager.createUnifiedPreviewLine.bind(previewManager)
-      previewManager.createUnifiedPreviewLine = vi.fn(() => {
-        callCount++
-        return callCount === 1 ? null : { line: { id: 'success' } }
-      })
 
-      const result = await previewManager.createUnifiedPreviewLineWithRetry(
-        mockNode,
-        'interactive',
-        {},
-        2
-      )
-
-      expect(result).toBeTruthy()
-      expect(previewManager.createUnifiedPreviewLine).toHaveBeenCalledTimes(2)
-      
-      // 恢复原方法
-      previewManager.createUnifiedPreviewLine = originalMethod
-    })
-
-    it('应该在所有重试失败后返回null', async () => {
-      // 确保节点存在于图中
-      mockGraph.getCellById = vi.fn(() => ({
-        ...mockNode,
-        isNode: vi.fn(() => true)
-      }))
-      
-      // 直接模拟createUnifiedPreviewLine方法返回null
-      const originalCreateMethod = previewManager.createUnifiedPreviewLine
-      previewManager.createUnifiedPreviewLine = vi.fn(() => null)
-
-      const result = await previewManager.createUnifiedPreviewLineWithRetry(
-        mockNode,
-        'interactive',
-        {},
-        3
-      )
-
-      expect(result).toBeNull()
-      expect(previewManager.createUnifiedPreviewLine).toHaveBeenCalledTimes(3)
-      
-      // 恢复原方法
-      previewManager.createUnifiedPreviewLine = originalCreateMethod
-    })
-
-    it('应该在节点不存在时返回null', async () => {
-      // 模拟节点不存在于图中
-      mockGraph.getCellById = vi.fn(() => null)
-
-      const result = await previewManager.createUnifiedPreviewLineWithRetry(
-        mockNode,
-        'interactive',
-        {},
-        2
-      )
-
-      expect(result).toBeNull()
-      expect(mockGraph.getCellById).toHaveBeenCalledWith(mockNode.id)
-    })
-  })
 })

@@ -25,15 +25,6 @@
             </a-select>
           </a-form-item>
         </a-col>
-        <a-col :span="8">
-          <a-button
-            type="primary"
-            @click="handleCreateTask"
-            style="float: right; margin-top: 24px"
-          >
-            新建任务
-          </a-button>
-        </a-col>
       </a-row>
     </a-card>
 
@@ -151,10 +142,6 @@ const columns = [
   {
     title: '创建时间',
     dataIndex: 'createTime'
-  },
-  {
-    title: '预计完成时间',
-    dataIndex: 'estimatedTime'
   },
   {
     title: '状态',

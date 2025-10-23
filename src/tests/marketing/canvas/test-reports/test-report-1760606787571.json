@@ -1,0 +1,74 @@
+{
+  "summary": {
+    "totalTests": 5,
+    "totalPassed": 0,
+    "totalFailed": 5,
+    "successRate": "0.00",
+    "totalDuration": 1,
+    "startTime": "2025-10-16T09:26:27.570Z",
+    "endTime": "2025-10-16T09:26:27.571Z"
+  },
+  "testSuites": [
+    {
+      "name": "节点创建测试",
+      "file": "NodeCreationTests.test.js",
+      "description": "测试9种节点类型的创建功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 0,
+      "status": "ERROR",
+      "error": "__dirname is not defined",
+      "timestamp": "2025-10-16T09:26:27.570Z"
+    },
+    {
+      "name": "配置抽屉测试",
+      "file": "NodeDrawerTests.test.js",
+      "description": "测试节点配置抽屉匹配功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 0,
+      "status": "ERROR",
+      "error": "__dirname is not defined",
+      "timestamp": "2025-10-16T09:26:27.570Z"
+    },
+    {
+      "name": "配置保存测试",
+      "file": "NodeConfigSaveTests.test.js",
+      "description": "测试节点配置保存和预览线生成功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 0,
+      "status": "ERROR",
+      "error": "__dirname is not defined",
+      "timestamp": "2025-10-16T09:26:27.570Z"
+    },
+    {
+      "name": "节点删除测试",
+      "file": "NodeDeletionTests.test.js",
+      "description": "测试节点删除和类型识别功能",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 0,
+      "status": "ERROR",
+      "error": "__dirname is not defined",
+      "timestamp": "2025-10-16T09:26:27.571Z"
+    },
+    {
+      "name": "错误处理测试",
+      "file": "NodeErrorHandlingTests.test.js",
+      "description": "测试错误处理和边界情况",
+      "passed": 0,
+      "failed": 1,
+      "total": 1,
+      "duration": 0,
+      "status": "ERROR",
+      "error": "__dirname is not defined",
+      "timestamp": "2025-10-16T09:26:27.571Z"
+    }
+  ],
+  "generatedAt": "2025-10-16T09:26:27.571Z"
+}

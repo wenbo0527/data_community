@@ -312,7 +312,7 @@ export class ConnectionErrorHandler {
         sourcePort,
         availablePorts: nodePorts.map(p => p.id || p),
         hasPort: hasPortResult,
-        nodeType: sourceNode.getData ? (sourceNode.getData().type || sourceNode.getData().nodeType) : 'unknown'
+        nodeType: sourceNode.getData ? ((sourceNode.getData() || {}).type || (sourceNode.getData() || {}).nodeType) : 'unknown'
       })
       
       // 详细输出端口信息用于调试
@@ -328,7 +328,7 @@ export class ConnectionErrorHandler {
         searchingFor: sourcePort,
         exactMatch: nodePorts.find(p => (p.id || p) === sourcePort),
         portIds: nodePorts.map(p => p.id || p),
-        nodeData: sourceNode.getData(),
+        nodeData: sourceNode.getData() || {},
         nodeShape: sourceNode.shape
       })
 

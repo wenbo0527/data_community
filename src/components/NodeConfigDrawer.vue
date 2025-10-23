@@ -214,8 +214,28 @@ const emit = defineEmits(['close', 'update'])
 
 // 节点标题
 const nodeTitle = computed(() => {
-  if (!props.node) return '节点配置'
-  return `${getNodeLabel(props.node.type)} 配置`
+  if (!props.node) {
+    console.warn('[NodeConfigDrawer] 节点对象为空')
+    return '节点配置'
+  }
+  
+  // 添加调试日志
+  console.log('[NodeConfigDrawer] 节点数据:', {
+    node: props.node,
+    nodeType: props.node.type,
+    nodeKeys: Object.keys(props.node)
+  })
+  
+  // 确保节点类型存在
+  if (!props.node.type) {
+    console.warn('[NodeConfigDrawer] 节点类型为空')
+    return '节点配置'
+  }
+  
+  const nodeLabel = getNodeLabel(props.node.type)
+  console.log('[NodeConfigDrawer] 获取到的节点标签:', nodeLabel, '节点类型:', props.node.type)
+  
+  return `${nodeLabel} 配置`
 })
 
 // 是否为触达节点
