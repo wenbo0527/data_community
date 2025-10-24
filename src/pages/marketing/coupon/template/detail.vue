@@ -5,6 +5,7 @@
       :id="route.query.id" 
       :readonly="true"
       disable-operations
+      :hide-back-button="false"
     />
   </div>
 </template>

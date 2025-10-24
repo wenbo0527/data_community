@@ -1,16 +1,16 @@
 <template>
-  <div class="coupon-template-create">
+  <div class="coupon-template-create" :data-readonly="mode === 'view' || readonly || props.readonly">
     <div class="page-header">
       <div class="page-container">
         <div class="header-content">
           <div class="header-left">
-            <a-button type="text" @click="router.back()" class="back-btn">
+            <a-button v-if="!props.hideBackButton" type="text" @click="router.back()" class="back-btn">
               <icon-left />
               返回
             </a-button>
             <h2 class="page-title">{{ mode === 'view' ? '优惠券模板详情' : '创建优惠券模板' }}</h2>
           </div>
-          <div class="header-right" v-if="mode === 'view' && !disableOperations">
+          <div class="header-right" v-if="mode !== 'view' && !readonly && !props.disableOperations">
             <a-button @click="saveDraft" :loading="saving">保存草稿</a-button>
             <a-button type="primary" @click="submitTemplate" :loading="submitting">创建模板</a-button>
           </div>
@@ -25,7 +25,7 @@
           :model="formData"
           :rules="rules"
           layout="vertical"
-          :disabled="mode === 'view' || readonly"
+          :disabled="mode === 'view' || readonly || props.readonly"
         >
         <!-- 分组表单 -->
         <a-collapse :default-active-key="['template-config', 'display-config']" :bordered="false">
@@ -256,7 +256,7 @@
               <div class="preview-section">
                 <div class="section-header">
                   <h4>实时预览</h4>
-                  <a-button size="small" @click="refreshPreview">
+                  <a-button size="small" @click="refreshPreview" v-if="!(mode === 'view' || readonly || props.readonly)">
                     <template #icon><icon-refresh /></template>
                     刷新预览
                   </a-button>
@@ -347,8 +347,8 @@
                   
                   <a-form-item field="usageDescription" label="使用说明">
                     <div class="markdown-editor-container" style="width: 100%;">
-                      <a-tabs default-active-key="edit" size="small">
-                        <a-tab-pane key="edit" title="编辑">
+                      <a-tabs :default-active-key="(mode === 'view' || readonly || props.readonly) ? 'preview' : 'edit'" size="small">
+                        <a-tab-pane key="edit" title="编辑" v-if="!(mode === 'view' || readonly || props.readonly)">
                           <QuillEditor
                             v-model:content="formData.usageDescription"
                             content-type="html"
@@ -357,7 +357,7 @@
                           />
                         </a-tab-pane>
                         <a-tab-pane key="preview" title="预览">
-                          <div class="markdown-preview" v-html="formData.usageDescription" style="width: 100%;"></div>
+                          <div class="markdown-preview" v-html="formData.usageDescription" style="width: 100%; min-height: 200px; padding: 12px; border: 1px solid #e5e6eb; border-radius: 6px; background-color: #f7f8fa;"></div>
                         </a-tab-pane>
                       </a-tabs>
                     </div>
@@ -369,7 +369,7 @@
           </a-collapse-item>
         </a-collapse>
 
-        <div class="footer-actions">
+        <div class="footer-actions" v-if="!(mode === 'view' || readonly || props.readonly || props.disableOperations)">
           <a-space>
             <a-button @click="handleCancel">取消</a-button>
             <a-button type="primary" @click="handleSubmit">确定</a-button>
@@ -392,7 +392,15 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  readonly: {
+    type: Boolean,
+    default: false
+  },
   disableOperations: {
+    type: Boolean,
+    default: false
+  },
+  hideBackButton: {
     type: Boolean,
     default: false
   }
@@ -410,8 +418,8 @@ import CouponPreview from './components/CouponPreview.vue'
 
 const router = useRouter()
 const route = useRoute()
-const mode = ref(route.query.mode || 'create')
-const readonly = ref(route.query.readonly === 'true')
+const mode = ref(props.mode || route.query.mode || 'create')
+const readonly = ref(props.readonly || route.query.readonly === 'true')
 
 // 预览刷新key
 const previewKey = ref(0)
@@ -1337,5 +1345,41 @@ const handleSubmitAndCreate = async () => {
 
 .preview-card::-webkit-scrollbar-thumb:hover {
   background: #a9aeb8;
+}
+
+/* 只读模式样式优化 */
+.coupon-template-create[data-readonly="true"] :deep(.arco-input),
+.coupon-template-create[data-readonly="true"] :deep(.arco-select),
+.coupon-template-create[data-readonly="true"] :deep(.arco-textarea),
+.coupon-template-create[data-readonly="true"] :deep(.arco-input-number),
+.coupon-template-create[data-readonly="true"] :deep(.arco-radio),
+.coupon-template-create[data-readonly="true"] :deep(.arco-checkbox),
+.coupon-template-create[data-readonly="true"] :deep(.arco-date-picker),
+.coupon-template-create[data-readonly="true"] :deep(.arco-range-picker) {
+  background-color: #f7f8fa !important;
+  border-color: #e5e6eb !important;
+  color: #86909c !important;
+  cursor: not-allowed !important;
+}
+
+.coupon-template-create[data-readonly="true"] :deep(.arco-input:hover),
+.coupon-template-create[data-readonly="true"] :deep(.arco-select:hover),
+.coupon-template-create[data-readonly="true"] :deep(.arco-textarea:hover),
+.coupon-template-create[data-readonly="true"] :deep(.arco-input-number:hover) {
+  border-color: #e5e6eb !important;
+}
+
+.coupon-template-create[data-readonly="true"] :deep(.arco-form-item-label)::after {
+  content: " (只读)";
+  color: #86909c;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.coupon-template-create[data-readonly="true"] .config-title::after {
+  content: " - 只读模式";
+  color: #86909c;
+  font-size: 12px;
+  font-weight: normal;
 }
 </style>
