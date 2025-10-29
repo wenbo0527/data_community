@@ -99,6 +99,7 @@
       :position="debugPanelPosition"
       :debug-stats="debugStats"
       :is-generating-preview-lines="isGeneratingPreviewLines.value"
+      :graph="graph"
       @close="closeDebugPanel"
       @drag-start="startDragDebugPanel"
       @check-preview-line-validity="checkPreviewLineValidity"
@@ -148,6 +149,7 @@ import { registerCustomShapes } from '../utils/canvas/x6Config.js'
 import { createBranchConnectionConfig, validateConnectionConfig } from '../utils/canvas/connectionConfigFactory.js'
 import { connectionErrorHandler, logger } from '../../../../utils/enhancedErrorHandler.js'
 import portConfigFactory from '../utils/canvas/portConfigFactory.js'
+import { getPortCoordinateDebugger } from '../utils/canvas/PortCoordinateDebugger.js'
 
 // 系统组件导入 - 模块边界清晰化
 import { PreviewLineSystem } from '../../../../utils/preview-line/PreviewLineSystem.js'
@@ -370,28 +372,44 @@ const {
 // 验证解构后的状态
 // 状态解构验证已完成，跳过详细日志
 
-// 确保 nodes.value 存在并且是数组
+// 确保 nodes.value 存在并且是数组 - 修复：使用状态管理方法而不是直接赋值
 if (!nodes.value || !Array.isArray(nodes.value)) {
   try {
     // 增强安全检查 - 确保 nodes 存在且是响应式对象
     if (!nodes || typeof nodes !== 'object' || !('value' in nodes)) {
       throw new Error('nodes 状态异常')
     } else {
-      nodes.value = []
+      // 🔧 修复：使用状态管理的重置方法而不是直接赋值，避免computed readonly警告
+      if (resetAllState && typeof resetAllState === 'function') {
+        resetAllState()
+      } else {
+        // 如果没有重置方法，使用splice清空数组而不是直接赋值
+        if (Array.isArray(nodes.value)) {
+          nodes.value.splice(0, nodes.value.length)
+        }
+      }
     }
   } catch (error) {
     throw new Error('状态管理初始化失败 - nodes.value无法初始化')
   }
 }
 
-// 确保 connections.value 存在并且是数组
+// 确保 connections.value 存在并且是数组 - 修复：使用状态管理方法而不是直接赋值
 if (!connections.value || !Array.isArray(connections.value)) {
   try {
     // 增强安全检查 - 确保 connections 存在且是响应式对象
     if (!connections || typeof connections !== 'object' || !('value' in connections)) {
       throw new Error('connections 状态异常')
     } else {
-      connections.value = []
+      // 🔧 修复：使用状态管理的重置方法而不是直接赋值，避免computed readonly警告
+      if (resetAllState && typeof resetAllState === 'function') {
+        resetAllState()
+      } else {
+        // 如果没有重置方法，使用splice清空数组而不是直接赋值
+        if (Array.isArray(connections.value)) {
+          connections.value.splice(0, connections.value.length)
+        }
+      }
     }
   } catch (error) {
     throw new Error('状态管理初始化失败 - connections.value无法初始化')
@@ -399,14 +417,44 @@ if (!connections.value || !Array.isArray(connections.value)) {
 }
 
 // 核心业务方法 - 提前定义
-const addNodeToGraph = (nodeData) => {
+// 🔧 修复：增强错误处理和恢复机制
+const handleOperationError = (operation, error, context = {}) => {
+  console.error(`[TaskFlowCanvas] ${operation} 操作失败:`, error, context)
+  
+  // 记录错误但不中断整个流程
+  if (typeof window !== 'undefined' && !window.taskFlowErrors) {
+    window.taskFlowErrors = []
+  }
+  
+  if (typeof window !== 'undefined') {
+    window.taskFlowErrors.push({
+      operation,
+      error: error.message || error,
+      context,
+      timestamp: new Date().toISOString()
+    })
+  }
+  
+  // 根据错误类型决定是否需要恢复操作
+  if (operation.includes('节点') && context.nodeId) {
+    console.log(`[TaskFlowCanvas] 尝试恢复节点操作: ${context.nodeId}`)
+  }
+  
+  if (operation.includes('连接') && context.connectionId) {
+    console.log(`[TaskFlowCanvas] 尝试恢复连接操作: ${context.connectionId}`)
+  }
+}
+
+const addNodeToGraph = async (nodeData) => {
   // 首先验证graph实例是否存在且有效 - 增强安全检查，包含 isGraphReady 状态
   if (!graph?.value || typeof graph.value.addNode !== 'function' || !isGraphReady?.value) {
+    handleOperationError('节点添加', new Error('Graph实例无效或未就绪'), { nodeId: nodeData?.id || 'unknown' })
     return null
   }
 
   // 增强参数验证
   if (!nodeData) {
+    handleOperationError('节点添加', new Error('节点数据为空'), { nodeId: 'unknown' })
     return null
   }
 
@@ -414,28 +462,123 @@ const addNodeToGraph = (nodeData) => {
     // 🔧 修复：使用与节点选择器相同的createNodeConfig函数
     // 使用已导入的createNodeConfig函数
     
-    // 确保position对象存在
-    const position = (nodeData && nodeData.position) || { x: 100, y: 100 }
+    // 🔧 关键修复：先提取所有需要的字段，避免循环引用和初始化顺序错误
+    const nodeId = nodeData.id
+    const nodeType = nodeData.type
+    const nodeLabel = nodeData.label
+    const nodeWidth = nodeData.width
+    const nodeHeight = nodeData.height
+    const nodeConfigData = nodeData.config || {}
+    const nodeDataFields = nodeData.data || {}
+    const nodePosition = nodeData.position || { x: 100, y: 100 }
+    const nodeIsConfigured = nodeData.isConfigured || false
     
     // 格式化节点数据，确保包含所有必要字段
     const formattedNodeData = {
-      id: nodeData.id,
-      type: nodeData.type,
-      label: nodeData.label,
-      x: position.x,
-      y: position.y,
-      width: nodeData.width,
-      height: nodeData.height,
-      config: nodeData.config || {},
-      data: nodeData.data || {},
-      ...nodeData
+      id: nodeId,
+      type: nodeType,
+      nodeType: nodeType, // 🔧 修复：确保 nodeType 字段存在，用于预览线系统识别
+      label: nodeLabel,
+      x: nodePosition.x,
+      y: nodePosition.y,
+      width: nodeWidth,
+      height: nodeHeight,
+      config: nodeConfigData,
+      data: {
+        type: nodeType,
+        nodeType: nodeType, // 🔧 修复：在 data 中也设置 nodeType
+        isConfigured: nodeType === 'start' ? true : nodeIsConfigured, // 🔧 修复：start节点默认已配置
+        ...nodeDataFields
+      }
     }
     
     console.log('[TaskFlowCanvas] 格式化的节点数据:', formattedNodeData)
     
     // 🔧 修复：使用createNodeConfig创建正确的节点配置
+    console.log('[TaskFlowCanvas] 🔍 调用 createNodeConfig 前的节点数据:', formattedNodeData)
     const nodeConfig = createNodeConfig(formattedNodeData)
-    console.log('[TaskFlowCanvas] 创建的节点配置:', nodeConfig)
+    console.log('[TaskFlowCanvas] 🔍 createNodeConfig 返回的完整配置:', nodeConfig)
+
+    // 🔧 关键修复：验证并确保端口配置正确传递
+    console.log('[TaskFlowCanvas] 🔍 端口配置传递验证:')
+    console.log('  - nodeConfig.ports 存在性:', !!nodeConfig.ports)
+    console.log('  - nodeConfig.ports 详细内容:', nodeConfig.ports)
+    
+    // 🔧 增强调试：详细记录端口配置创建过程
+    console.log('[TaskFlowCanvas] 🔍 端口配置创建过程追踪:')
+    console.log('  - 节点类型:', formattedNodeData.type)
+    console.log('  - 节点配置:', formattedNodeData.config)
+    console.log('  - createNodeConfig 是否成功创建端口:', !!nodeConfig.ports)
+    
+    if (!nodeConfig.ports) {
+      console.error('[TaskFlowCanvas] ❌ 严重错误：nodeConfig.ports 为空，尝试重新创建端口配置')
+      console.error('[TaskFlowCanvas] 🔍 调试信息 - createNodeConfig 可能的问题:')
+      console.error('  - 传入的节点数据:', formattedNodeData)
+      console.error('  - createNodeConfig 返回的完整配置:', nodeConfig)
+      
+      // 紧急修复：如果端口配置为空，直接调用 createNodePortConfig 重新创建
+      try {
+        console.log('[TaskFlowCanvas] 🔧 尝试紧急修复：直接调用 createNodePortConfig')
+        const portConfigModule = await import('../utils/canvas/portConfigFactory.js')
+        const emergencyPortConfig = portConfigModule.createNodePortConfig(formattedNodeData.type, formattedNodeData.config)
+        
+        console.log('[TaskFlowCanvas] 🔍 紧急修复结果:', {
+          success: !!emergencyPortConfig,
+          config: emergencyPortConfig
+        })
+        
+        if (emergencyPortConfig) {
+          nodeConfig.ports = emergencyPortConfig
+          console.log('[TaskFlowCanvas] ✅ 紧急端口配置创建成功:', emergencyPortConfig)
+        } else {
+          console.error('[TaskFlowCanvas] ❌ 紧急端口配置创建失败 - createNodePortConfig 返回 null')
+        }
+      } catch (importError) {
+        console.error('[TaskFlowCanvas] ❌ 导入端口配置工厂失败:', importError)
+      }
+    }
+
+    // 🔧 关键修复：确保节点数据中包含端口配置信息，以便后续调试和验证
+    if (nodeConfig.ports) {
+      // 将端口配置存储到节点数据中，确保 PortCoordinateDebugger 能够访问
+      formattedNodeData.portConfig = nodeConfig.ports
+      formattedNodeData.portConfigMeta = {
+        source: 'createNodeConfig',
+        timestamp: Date.now(),
+        nodeType: formattedNodeData.type
+      }
+      
+      // 🔧 关键修复：同时确保 nodeConfig.data 中也包含端口配置
+      if (!nodeConfig.data) {
+        nodeConfig.data = {}
+      }
+      nodeConfig.data.portConfig = nodeConfig.ports
+      nodeConfig.data.portConfigMeta = formattedNodeData.portConfigMeta
+      
+      // 🔧 新增：确保 X6 节点的 data 属性包含完整的端口配置信息
+      nodeConfig.data = {
+        ...nodeConfig.data,
+        ...formattedNodeData.data,
+        portConfig: nodeConfig.ports,
+        portConfigMeta: formattedNodeData.portConfigMeta
+      }
+      
+      console.log('[TaskFlowCanvas] ✅ 端口配置已存储到节点数据中:', {
+        hasPortConfig: !!formattedNodeData.portConfig,
+        hasPortConfigMeta: !!formattedNodeData.portConfigMeta,
+        nodeConfigDataHasPortConfig: !!nodeConfig.data.portConfig,
+        nodeConfigDataKeys: Object.keys(nodeConfig.data),
+        portConfigStructure: {
+          hasGroups: !!(nodeConfig.ports && nodeConfig.ports.groups),
+          hasItems: !!(nodeConfig.ports && nodeConfig.ports.items),
+          groupsCount: nodeConfig.ports?.groups ? Object.keys(nodeConfig.ports.groups).length : 0,
+          itemsCount: nodeConfig.ports?.items ? nodeConfig.ports.items.length : 0
+        }
+      })
+    } else {
+      console.error('[TaskFlowCanvas] ❌ 无法存储端口配置到节点数据中，因为端口配置为空')
+      console.error('[TaskFlowCanvas] 🔍 这将导致 PortCoordinateDebugger 报告端口配置为 undefined')
+    }
 
     // 再次验证graph实例，确保在调用addNode前graph仍然有效 - 增强版本
     if (!graph?.value || typeof graph.value.addNode !== 'function' || !isGraphReady?.value) {
@@ -454,13 +597,266 @@ const addNodeToGraph = (nodeData) => {
       position: { x: nodeConfig.x, y: nodeConfig.y },
       size: { width: nodeConfig.width, height: nodeConfig.height },
       attrs: nodeConfig.attrs,
-      portsCount: nodeConfig.ports?.items?.length || 0
+      portsCount: nodeConfig.ports?.items?.length || 0,
+      portGroups: nodeConfig.ports?.groups ? Object.keys(nodeConfig.ports.groups) : [],
+      portItems: nodeConfig.ports?.items || []
     })
     
-    // 🔧 修复：使用createNodeConfig生成的完整配置
+    // 🔧 修复：详细记录端口配置创建过程
+    console.log('[TaskFlowCanvas] 🔍 端口配置详细信息:')
+    console.log('  - nodeConfig.ports 存在性:', !!nodeConfig.ports)
+    console.log('  - nodeConfig.ports 类型:', typeof nodeConfig.ports)
+    console.log('  - nodeConfig.ports 内容:', nodeConfig.ports)
+    
+    if (nodeConfig.ports) {
+      console.log('  - 端口组配置存在性:', !!nodeConfig.ports.groups)
+      console.log('  - 端口组配置:', nodeConfig.ports.groups)
+      console.log('  - 端口项配置存在性:', !!nodeConfig.ports.items)
+      console.log('  - 端口项配置:', nodeConfig.ports.items)
+      console.log('  - 端口项数量:', nodeConfig.ports.items?.length || 0)
+      
+      // 检查端口组的详细配置
+      if (nodeConfig.ports.groups) {
+        Object.keys(nodeConfig.ports.groups).forEach(groupKey => {
+          console.log(`  - 端口组 ${groupKey}:`, nodeConfig.ports.groups[groupKey])
+        })
+      }
+      
+      // 检查端口项的详细配置
+      if (nodeConfig.ports.items && Array.isArray(nodeConfig.ports.items)) {
+        nodeConfig.ports.items.forEach((item, index) => {
+          console.log(`  - 端口项 ${index}:`, item)
+        })
+      }
+    } else {
+      console.error('[TaskFlowCanvas] ❌ nodeConfig.ports 为空或未定义!')
+    }
+    
+    // 🔧 修复：使用createNodeConfig生成的完整配置，并确保端口配置正确传递
+    console.log('[TaskFlowCanvas] 🔍 准备调用 graph.addNode，最终配置:', nodeConfig)
+    
+    // 🔧 关键修复：确保端口配置在 X6 节点创建时正确应用
+    if (nodeConfig.ports && nodeConfig.ports.items && nodeConfig.ports.items.length > 0) {
+      console.log('[TaskFlowCanvas] ✅ 端口配置验证通过，准备创建 X6 节点')
+      console.log('  - 端口组:', Object.keys(nodeConfig.ports.groups || {}))
+      console.log('  - 端口项:', nodeConfig.ports.items.map(item => `${item.group}:${item.id}`))
+    } else {
+      console.error('[TaskFlowCanvas] ❌ 端口配置验证失败，X6 节点可能无法正确创建端口')
+    }
+    
     const node = graph.value.addNode(nodeConfig)
 
     console.log('[TaskFlowCanvas] ✅ 节点添加成功:', nodeData.id)
+    
+    // 🔧 修复：立即验证节点的端口配置是否正确应用
+    console.log('[TaskFlowCanvas] 🔍 验证节点端口配置应用状态:')
+    console.log('  - 传入的节点配置中的端口:', nodeConfig.ports)
+    
+    // 🔧 优化：使用 nextTick 替代 setTimeout，更高效的微任务处理
+    await nextTick()
+    
+    const actualPorts = node.getPorts()
+    const currentNodeData = node.getData()
+    
+    console.log('  - X6节点实例的端口 (getPorts()):', actualPorts)
+    console.log('  - 节点数据中的端口配置 (getData()):', currentNodeData)
+    
+    // 🔧 关键修复：如果端口配置缺失，尝试重新应用
+    if (!actualPorts || actualPorts.length === 0) {
+      console.error('[TaskFlowCanvas] ❌ 端口配置应用失败，尝试重新应用端口配置')
+      
+      if (nodeConfig.ports && nodeConfig.ports.items && nodeConfig.ports.items.length > 0) {
+        try {
+          // 重新设置端口配置
+          node.setPorts(nodeConfig.ports)
+          
+          // 再次验证
+          const reappliedPorts = node.getPorts()
+          console.log('[TaskFlowCanvas] 🔧 重新应用端口配置后的端口:', reappliedPorts)
+          
+          if (reappliedPorts && reappliedPorts.length > 0) {
+            console.log('[TaskFlowCanvas] ✅ 端口配置重新应用成功')
+          } else {
+            console.error('[TaskFlowCanvas] ❌ 端口配置重新应用仍然失败')
+          }
+        } catch (error) {
+          console.error('[TaskFlowCanvas] ❌ 重新应用端口配置时发生错误:', error)
+        }
+      }
+    } else {
+      console.log('[TaskFlowCanvas] ✅ 端口配置应用成功，端口数量:', actualPorts.length)
+    }
+    
+    // 🔧 修复：确保节点数据中包含端口配置
+    if (!nodeData.portConfig && nodeConfig.ports) {
+      console.log('[TaskFlowCanvas] 🔧 补充节点数据中的端口配置')
+      node.setData({
+        ...nodeData,
+        portConfig: nodeConfig.ports
+      })
+    }
+    
+    // 详细检查X6节点的端口状态
+    const x6Ports = node.getPorts()
+    const nodeData_check = node.getData()
+    
+    console.log('[TaskFlowCanvas] 🔍 X6节点端口详细检查:')
+    console.log('  - X6端口数量:', x6Ports ? x6Ports.length : 0)
+    console.log('  - X6端口详情:', x6Ports)
+    console.log('  - 节点数据类型:', typeof nodeData_check)
+    console.log('  - 节点数据内容:', nodeData_check)
+    
+    // 检查节点的原始配置
+    if (node.store && node.store.data) {
+      console.log('[TaskFlowCanvas] 🔍 节点存储数据检查:')
+      console.log('  - node.store.data:', node.store.data)
+      console.log('  - node.store.data.ports:', node.store.data.ports)
+    }
+    
+    // 🔧 关键修复：强化端口配置应用验证和修复机制
+     const nodePorts = node.getPorts()
+     console.log('[TaskFlowCanvas] 🔍 X6 节点端口状态详细检查:', {
+       hasGetPorts: typeof node.getPorts === 'function',
+       portsResult: nodePorts,
+       portsLength: nodePorts ? nodePorts.length : 0,
+       nodeConfigHasPorts: !!(nodeConfig.ports),
+       nodeConfigPortsItems: nodeConfig.ports?.items,
+       expectedPortsCount: nodeConfig.ports?.items?.length || 0
+     })
+     
+     // 🔧 修复：如果 X6 节点端口数量与配置不匹配，进行修复
+     const expectedPortsCount = nodeConfig.ports?.items?.length || 0
+     const actualPortsCount = nodePorts ? nodePorts.length : 0
+     
+     if (actualPortsCount !== expectedPortsCount) {
+       console.warn(`[TaskFlowCanvas] ⚠️ 端口数量不匹配！期望: ${expectedPortsCount}, 实际: ${actualPortsCount}`)
+       
+       if (nodeConfig.ports && nodeConfig.ports.items && nodeConfig.ports.items.length > 0) {
+         try {
+           console.log('[TaskFlowCanvas] 🔧 尝试修复端口配置:', nodeConfig.ports.items)
+           
+           // 🔧 修复：先清除现有端口，再重新添加
+           if (typeof node.removePorts === 'function') {
+             node.removePorts()
+             console.log('[TaskFlowCanvas] 🔧 已清除现有端口')
+           }
+           
+           // 🔧 修复：重新添加端口组配置
+           if (nodeConfig.ports.groups && typeof node.addPortGroup === 'function') {
+             Object.keys(nodeConfig.ports.groups).forEach(groupKey => {
+               node.addPortGroup(groupKey, nodeConfig.ports.groups[groupKey])
+             })
+             console.log('[TaskFlowCanvas] 🔧 已重新添加端口组配置')
+           }
+           
+           // 🔧 修复：重新添加端口项
+           if (typeof node.addPorts === 'function') {
+             node.addPorts(nodeConfig.ports.items)
+             console.log('[TaskFlowCanvas] ✅ 使用addPorts方法重新添加端口成功')
+           } else if (typeof node.addPort === 'function') {
+             // 逐个添加端口
+             nodeConfig.ports.items.forEach(portItem => {
+               node.addPort(portItem)
+             })
+             console.log('[TaskFlowCanvas] ✅ 使用addPort方法逐个重新添加端口成功')
+           } else {
+             console.error('[TaskFlowCanvas] ❌ 节点没有addPorts或addPort方法，尝试其他修复方式')
+             
+             // 🔧 修复：尝试直接设置端口到节点的内部存储
+             if (node.store && node.store.data) {
+               node.store.data.ports = nodeConfig.ports
+               console.log('[TaskFlowCanvas] 🔧 已直接设置端口到节点存储')
+             }
+           }
+           
+           // 验证修复结果
+           const fixedPorts = node.getPorts()
+           console.log('[TaskFlowCanvas] 🔍 端口修复后验证:', {
+             fixedPortsCount: fixedPorts ? fixedPorts.length : 0,
+             fixedPorts: fixedPorts,
+             isFixed: (fixedPorts ? fixedPorts.length : 0) === expectedPortsCount
+           })
+           
+         } catch (portError) {
+           console.error('[TaskFlowCanvas] ❌ 端口修复失败:', portError)
+         }
+       } else {
+         console.warn('[TaskFlowCanvas] ⚠️ 节点配置中没有端口信息，无法修复端口')
+         console.warn('[TaskFlowCanvas] nodeConfig.ports:', nodeConfig.ports)
+       }
+     }
+     
+     // 🔧 修复：确保节点数据中包含端口配置信息，供调试器使用
+     try {
+       const currentNodeData = node.getData() || {}
+       
+       // 🔧 关键修复：无论是否已存在 portConfig，都要确保数据完整性
+       const updatedNodeData = {
+         ...currentNodeData,
+         // 确保基础节点信息完整
+         type: formattedNodeData.type,
+         nodeType: formattedNodeData.type,
+         // 🔧 修复：始终设置端口配置，确保调试器能访问
+         portConfig: nodeConfig.ports || null,
+         // 🔧 修复：添加端口配置的元数据，便于调试器识别
+         portConfigMeta: {
+           source: 'addNodeToGraph',
+           timestamp: Date.now(),
+           nodeType: formattedNodeData.type,
+           expectedPorts: nodeConfig.ports?.items?.length || 0,
+           actualPorts: node.getPorts()?.length || 0,
+           hasPortConfig: !!nodeConfig.ports,
+           portConfigValid: !!(nodeConfig.ports && (nodeConfig.ports.groups || nodeConfig.ports.items))
+         }
+       }
+       
+       node.setData(updatedNodeData)
+       console.log('[TaskFlowCanvas] ✅ 已更新节点数据，包含完整的端口配置信息:', {
+         nodeId: node.id,
+         hasPortConfig: !!updatedNodeData.portConfig,
+         portConfigKeys: updatedNodeData.portConfig ? Object.keys(updatedNodeData.portConfig) : [],
+         meta: updatedNodeData.portConfigMeta
+       })
+     } catch (dataError) {
+       console.error('[TaskFlowCanvas] ❌ 设置节点数据失败:', dataError)
+     }
+     
+     // 🔧 修复：最终验证端口配置状态
+     const finalPorts = node.getPorts()
+     const finalNodeData = node.getData()
+     console.log('[TaskFlowCanvas] 🔍 最终端口配置状态验证:', {
+       nodeId: formattedNodeData.id,
+       nodeType: formattedNodeData.type,
+       finalPortsCount: finalPorts ? finalPorts.length : 0,
+       finalPorts: finalPorts,
+       hasPortConfigInData: !!(finalNodeData && finalNodeData.portConfig),
+       portConfigInData: finalNodeData?.portConfig,
+       portConfigMeta: finalNodeData?.portConfigMeta
+     })
+     console.log('[TaskFlowCanvas] ✅ 已将端口配置添加到节点数据中')
+    
+    // 🔧 修复：调用端口坐标调试器
+    try {
+      const portDebugger = getPortCoordinateDebugger(graph.value)
+      if (portDebugger) {
+        portDebugger.debugNodeCreation(formattedNodeData, nodeConfig)
+        console.log('[TaskFlowCanvas] 🔍 端口坐标调试器已调用')
+        
+        // 🔧 修复：等待DOM渲染完成后调试渲染后的端口坐标
+        setTimeout(() => {
+          try {
+            portDebugger.debugRenderedPortCoordinates(formattedNodeData.id)
+            console.log('[TaskFlowCanvas] 🔍 DOM渲染后端口坐标调试器已调用')
+          } catch (renderDebugError) {
+            console.warn('[TaskFlowCanvas] DOM渲染后端口坐标调试器调用失败:', renderDebugError)
+          }
+        }, 100) // 等待100ms确保DOM渲染完成
+      } else {
+        console.warn('[TaskFlowCanvas] 端口坐标调试器实例获取失败')
+      }
+    } catch (debugError) {
+      console.warn('[TaskFlowCanvas] 端口坐标调试器调用失败:', debugError)
+    }
     
     // 更新状态 - 使用解构后的状态变量，添加更严格的null检查
     console.log('[TaskFlowCanvas] 准备更新状态，nodes:', {
@@ -476,10 +872,13 @@ const addNodeToGraph = (nodeData) => {
       return node
     }
     
-    // 确保 nodes.value 是数组
+    // 确保 nodes.value 是数组 - 修复：避免直接赋值
     if (!Array.isArray(nodes.value)) {
       console.warn('[TaskFlowCanvas] nodes.value 不是数组，重新初始化')
-      nodes.value = []
+      // 🔧 修复：使用splice清空并重新初始化，避免computed readonly警告
+      if (nodes.value && typeof nodes.value.splice === 'function') {
+        nodes.value.splice(0, nodes.value.length)
+      }
     }
 
     // 安全查找现有节点索引
@@ -529,17 +928,28 @@ const addConnectionToGraph = async (connectionData) => {
         hasAddEdgeMethod: !!(graph && graph.value && typeof graph.value.addEdge === 'function'),
         connectionId: connectionData?.id
       })
+      handleOperationError('连接创建', new Error('Graph实例无效'), { 
+        connectionId: connectionData?.id || 'unknown',
+        source: connectionData?.source,
+        target: connectionData?.target
+      })
       return null
     }
     
     // 详细验证连接数据
     if (!connectionData) {
       console.error('❌ [TaskFlowCanvas] 连接数据为空')
+      handleOperationError('连接创建', new Error('连接数据为空'), { connectionId: 'unknown' })
       return null
     }
     
     if (!connectionData.source || !connectionData.target) {
       console.error('❌ [TaskFlowCanvas] 连接数据缺少必要字段:', connectionData)
+      handleOperationError('连接创建', new Error('连接数据缺少必要字段'), { 
+        connectionId: connectionData?.id || 'unknown',
+        source: connectionData?.source,
+        target: connectionData?.target
+      })
       return null
     }
 
@@ -680,6 +1090,11 @@ const addConnectionToGraph = async (connectionData) => {
   }
 } catch (error) {
   console.error('❌ [TaskFlowCanvas] 创建连接失败:', error)
+  handleOperationError('连接创建', error, {
+    connectionId: connectionData?.id || 'unknown',
+    source: connectionData?.source,
+    target: connectionData?.target
+  })
   return null
 }
 }
@@ -815,6 +1230,17 @@ const createNodePorts = (nodeConfig, nodeType) => {
     
     console.log('[TaskFlowCanvas] 端口配置结果:', { portConfig, layoutDirection })
     
+    // 🔧 修复：调用端口配置调试器
+    try {
+      const portDebugger = getPortCoordinateDebugger(graph.value)
+      if (portDebugger && nodeConfig.id) {
+        portDebugger.debugPortConfiguration(nodeConfig.id, portConfig)
+        console.log('[TaskFlowCanvas] 🔍 端口配置调试器已调用')
+      }
+    } catch (debugError) {
+      console.warn('[TaskFlowCanvas] 端口配置调试器调用失败:', debugError)
+    }
+    
     return portConfig
   } catch (error) {
     console.error('[TaskFlowCanvas] 创建端口配置失败:', error)
@@ -830,11 +1256,11 @@ const createNodePorts = (nodeConfig, nodeType) => {
       groups: {
         in: {
           position: { name: 'top', args: { x: '50%', y: 0 } },
-          attrs: { circle: { r: 4, magnet: true, strokeWidth: 2, fill: '#fff' } }
+          attrs: { circle: { r: 4, magnet: false, strokeWidth: 2, fill: '#fff' } }  // 🔧 禁用端口拖拽连接
         },
         out: {
           position: { name: 'bottom', args: { x: '50%', y: '100%' } },
-          attrs: { circle: { r: 4, magnet: true, strokeWidth: 2, fill: '#fff' } }
+          attrs: { circle: { r: 4, magnet: false, strokeWidth: 2, fill: '#fff' } }  // 🔧 禁用端口拖拽连接
         }
       },
       items: [
@@ -1038,19 +1464,30 @@ const initializeGraphDependentSystems = async (graphInstance) => {
                 updatePreviewManager: () => {}
               }
               
-              // 设置临时布局引擎，确保预览线系统可以正常工作
-              if (previewLineSystem.setLayoutEngine) {
-                const setResult = previewLineSystem.setLayoutEngine(tempLayoutEngine)
-                console.log('[TaskFlowCanvas] ✓ 临时布局引擎设置结果:', setResult)
-                console.log('[TaskFlowCanvas] 🔍 布局引擎就绪状态检查:', previewLineSystem.isLayoutEngineReady())
-                
-                // 检查验证器中的布局引擎状态
-                if (previewLineSystem.previewLineManager && previewLineSystem.previewLineManager.validator) {
-                  console.log('[TaskFlowCanvas] 🔍 验证器布局引擎就绪状态:', previewLineSystem.previewLineManager.validator.isLayoutEngineReady())
-                }
-              } else {
-                console.error('[TaskFlowCanvas] ❌ previewLineSystem.setLayoutEngine 方法不存在')
-              }
+              // 🔧 修复：设置临时布局引擎，确保预览线系统可以正常工作
+               if (previewLineSystem.setLayoutEngine) {
+                 const setResult = previewLineSystem.setLayoutEngine(tempLayoutEngine)
+                 console.log('[TaskFlowCanvas] ✓ 临时布局引擎设置结果:', setResult)
+                 
+                 // 🔧 修复：强制设置布局引擎就绪状态
+                 if (previewLineSystem.layoutEngineReady !== undefined) {
+                   previewLineSystem.layoutEngineReady = true
+                   console.log('[TaskFlowCanvas] ✓ 强制设置布局引擎就绪状态为 true')
+                 }
+                 
+                 console.log('[TaskFlowCanvas] 🔍 布局引擎就绪状态检查:', previewLineSystem.isLayoutEngineReady())
+                 
+                 // 🔧 修复：同步设置验证器中的布局引擎状态
+                 if (previewLineSystem.previewLineManager && previewLineSystem.previewLineManager.validator) {
+                   if (previewLineSystem.previewLineManager.validator.setLayoutEngine) {
+                     previewLineSystem.previewLineManager.validator.setLayoutEngine(tempLayoutEngine)
+                     console.log('[TaskFlowCanvas] ✓ 验证器布局引擎已同步设置')
+                   }
+                   console.log('[TaskFlowCanvas] 🔍 验证器布局引擎就绪状态:', previewLineSystem.previewLineManager.validator.isLayoutEngineReady())
+                 }
+               } else {
+                 console.error('[TaskFlowCanvas] ❌ previewLineSystem.setLayoutEngine 方法不存在')
+               }
               
               // 将实例存储到state中
               state.previewLineSystem.value = previewLineSystem
@@ -1146,9 +1583,27 @@ console.log('[TaskFlowCanvasRefactored] configDrawers 初始化完成:', {
 if (configDrawers && configDrawers.setEnhancedPreviewManager) {
   // 等待预览线系统初始化完成后再设置
   nextTick(() => {
-    if (state.previewLineSystem.value && state.unifiedEdgeManager.value) {
-      configDrawers.setEnhancedPreviewManager(state.previewLineSystem.value, state.unifiedEdgeManager.value)
-      console.log('[TaskFlowCanvasRefactored] ✓ 已为 configDrawers 设置预览线管理器实例')
+    try {
+      // 🔧 修复：确保 state.previewLineSystem 和 state.unifiedEdgeManager 不为 undefined
+      const previewSystem = state.previewLineSystem?.value
+      const edgeManager = state.unifiedEdgeManager?.value
+      
+      console.log('[TaskFlowCanvasRefactored] 🔍 检查预览线系统状态:', {
+        previewSystemExists: !!previewSystem,
+        edgeManagerExists: !!edgeManager,
+        configDrawersExists: !!configDrawers,
+        hasSetEnhancedPreviewManager: typeof configDrawers?.setEnhancedPreviewManager === 'function'
+      })
+      
+      if (previewSystem && edgeManager && configDrawers && typeof configDrawers.setEnhancedPreviewManager === 'function') {
+        configDrawers.setEnhancedPreviewManager(previewSystem, edgeManager)
+        console.log('[TaskFlowCanvasRefactored] ✓ 已为 configDrawers 设置预览线管理器实例')
+      } else {
+        console.warn('[TaskFlowCanvasRefactored] ⚠️ 无法设置预览线管理器实例，缺少必要组件')
+      }
+    } catch (error) {
+      console.warn('[TaskFlowCanvasRefactored] ⚠️ 设置预览线管理器实例时出错:', error.message)
+      console.error('[TaskFlowCanvasRefactored] 错误堆栈:', error.stack)
     }
   })
 }
@@ -1485,9 +1940,18 @@ const handleConfigConfirm = (data) => {
   // 🔧 修复：正确处理 TaskFlowConfigDrawers 发送的事件格式 { drawerType, config }
   const { drawerType, config } = data
   
-  // 调用 configDrawers 的 handleConfigConfirm 方法来处理配置确认和预览线创建
+  // 🔧 统一方案：确保 configDrawers 通过 PreviewLineSystem 处理预览线生成
   if (configDrawers && typeof configDrawers.handleConfigConfirm === 'function') {
-    console.log('[TaskFlowCanvas] 调用 configDrawers.handleConfigConfirm:', drawerType, config)
+    console.log('[TaskFlowCanvas] 调用统一配置确认方案 - configDrawers.handleConfigConfirm:', drawerType, config)
+    
+    // 验证 configDrawers 是否已正确配置 PreviewLineSystem
+    if (configDrawers.previewLineSystem !== previewLineSystem) {
+      console.warn('[TaskFlowCanvas] ⚠️ configDrawers 的 PreviewLineSystem 实例不匹配，正在同步')
+      if (configDrawers.setEnhancedPreviewManager) {
+        configDrawers.setEnhancedPreviewManager(previewLineSystem, unifiedEdgeManager)
+      }
+    }
+    
     configDrawers.handleConfigConfirm(drawerType, config)
   } else {
     console.error('[TaskFlowCanvas] configDrawers 或 handleConfigConfirm 方法不存在', {
@@ -1521,6 +1985,19 @@ const handleConfigCancel = (data) => {
 
 const handleDrawerVisibilityChange = (data) => {
   console.log('[TaskFlowCanvas] 抽屉可见性变化:', data)
+  
+  // 🔧 修复：确保正确处理抽屉可见性变化，避免修改只读的computed值
+  if (data && data.drawerType && typeof data.visible === 'boolean') {
+    // 🔧 修复：直接使用 closeConfigDrawer 方法，避免调用不存在的 handleVisibilityChange
+    if (!data.visible && configDrawers && typeof configDrawers.closeConfigDrawer === 'function') {
+      console.log('[TaskFlowCanvas] 🔧 关闭抽屉:', data.drawerType)
+      configDrawers.closeConfigDrawer(data.drawerType)
+    } else if (data.visible) {
+      console.log('[TaskFlowCanvas] 🔧 抽屉已打开，无需处理:', data.drawerType)
+    } else {
+      console.warn('[TaskFlowCanvas] ⚠️ configDrawers 或 closeConfigDrawer 方法不可用')
+    }
+  }
 }
 
 // 已移除 closeConfigDrawer 和 handleNodeDataUpdate，统一使用 TaskFlowConfigDrawers 系统
@@ -1549,51 +2026,69 @@ const handleStartNodeConfigConfirm = async (data) => {
       
       emit('node-config-updated', { nodeId: data.nodeId, config: data.config })
       
-      // 🔧 关键修复：开始节点配置完成后生成预览线
-      console.log('[TaskFlowCanvas] 开始节点配置完成，触发预览线生成')
-      console.log('[TaskFlowCanvas] 🔍 当前预览线系统状态:', {
+      // 🔧 统一预览线生成方案：只使用 PreviewLineSystem 作为唯一入口
+      console.log('[TaskFlowCanvas] 开始节点配置完成，使用统一预览线生成方案')
+      
+      // 🔧 增强调试：详细检查 PreviewLineSystem 状态
+      console.log('[TaskFlowCanvas] 🔍 PreviewLineSystem详细状态检查:', {
         exists: !!previewLineSystem,
         initialized: previewLineSystem?.initialized,
-        layoutEngineReady: previewLineSystem?.isLayoutEngineReady(),
-        hasOnNodeConfigured: typeof previewLineSystem?.onNodeConfigured === 'function'
+        layoutEngineReady: previewLineSystem?.isLayoutEngineReady?.(),
+        hasOnNodeConfigured: typeof previewLineSystem?.onNodeConfigured === 'function',
+        previewLineSystemType: previewLineSystem?.constructor?.name,
+        previewLineSystemMethods: previewLineSystem ? Object.getOwnPropertyNames(Object.getPrototypeOf(previewLineSystem)) : []
       })
       
+      // 🔧 增强调试：检查全局 PreviewLineSystem 实例
+      if (typeof window !== 'undefined' && window.previewLineSystem) {
+        console.log('[TaskFlowCanvas] 🔍 全局PreviewLineSystem状态:', {
+          exists: !!window.previewLineSystem,
+          initialized: window.previewLineSystem?.initialized,
+          layoutEngineReady: window.previewLineSystem?.isLayoutEngineReady?.(),
+          hasOnNodeConfigured: typeof window.previewLineSystem?.onNodeConfigured === 'function'
+        })
+      }
+      
       try {
-        // 方法1：使用预览线系统
-        if (previewLineSystem && typeof previewLineSystem.onNodeConfigured === 'function') {
-          console.log('[TaskFlowCanvas] 使用PreviewLineSystem生成预览线')
-          console.log('[TaskFlowCanvas] 🔍 调用前最终状态检查:', {
-            nodeId: data.nodeId,
-            config: data.config,
-            layoutEngineReady: previewLineSystem.isLayoutEngineReady()
-          })
-          await previewLineSystem.onNodeConfigured(data.nodeId, data.config)
-        } 
-        // 方法2：使用统一边管理器
-        else if (unifiedEdgeManager && typeof unifiedEdgeManager.onNodeConfigured === 'function') {
-          console.log('[TaskFlowCanvas] 使用UnifiedEdgeManager生成预览线')
-          await unifiedEdgeManager.onNodeConfigured(data.nodeId, data.config)
-        }
-        // 方法3：使用配置抽屉系统
-        else if (configDrawers && typeof configDrawers.handleConfigConfirm === 'function') {
-          console.log('[TaskFlowCanvas] 使用ConfigDrawers系统生成预览线')
-          await configDrawers.handleConfigConfirm('start', {
-            nodeId: data.nodeId,
-            config: data.config
-          })
-        }
-        // 方法4：直接调用预览线生成方法
-        else if (typeof triggerPreviewLineGeneration === 'function') {
-          console.log('[TaskFlowCanvas] 直接触发预览线生成')
-          await triggerPreviewLineGeneration()
-        }
-        else {
-          console.warn('[TaskFlowCanvas] 未找到可用的预览线生成方法')
+        // 🔧 统一方案：只使用 PreviewLineSystem.onNodeConfigured 作为唯一预览线生成方法
+        if (!previewLineSystem || !previewLineSystem.initialized) {
+          console.error('[TaskFlowCanvas] ❌ PreviewLineSystem未初始化，尝试从全局获取')
+          if (typeof window !== 'undefined' && window.previewLineSystem && window.previewLineSystem.initialized) {
+            console.log('[TaskFlowCanvas] 🔄 使用全局PreviewLineSystem实例')
+            previewLineSystem = window.previewLineSystem
+          } else {
+            throw new Error('PreviewLineSystem未初始化且全局实例不可用')
+          }
         }
         
-        console.log('[TaskFlowCanvas] 预览线生成完成')
+        if (typeof previewLineSystem.onNodeConfigured !== 'function') {
+          throw new Error('PreviewLineSystem.onNodeConfigured方法不存在')
+        }
+        
+        if (!previewLineSystem.isLayoutEngineReady?.()) {
+          console.warn('[TaskFlowCanvas] ⚠️ 布局引擎未就绪，但继续尝试预览线生成')
+        }
+        
+        console.log('[TaskFlowCanvas] ✅ 使用统一预览线生成方案 - PreviewLineSystem.onNodeConfigured')
+        console.log('[TaskFlowCanvas] 🔍 调用参数:', {
+          nodeId: data.nodeId,
+          config: data.config,
+          nodeType: node.getData()?.type
+        })
+        
+        const result = await previewLineSystem.onNodeConfigured(data.nodeId, data.config)
+        
+        if (result) {
+          console.log('[TaskFlowCanvas] ✅ 统一预览线生成成功:', result)
+        } else {
+          console.warn('[TaskFlowCanvas] ⚠️ 预览线生成返回false，可能未创建预览线')
+        }
+        
       } catch (error) {
-        console.error('[TaskFlowCanvas] 预览线生成失败:', error)
+        console.error('[TaskFlowCanvas] ❌ 统一预览线生成失败:', error)
+        console.error('[TaskFlowCanvas] 错误堆栈:', error.stack)
+        // 统一错误处理，不使用降级方案
+        throw new Error(`预览线生成失败: ${error.message}`)
       }
     }
   }
@@ -2080,16 +2575,18 @@ const triggerPreviewLineGeneration = async () => {
     state.isGeneratingPreviewLines.value = true
     state.debugStats.value.loading = true
     
-    let generationResult = { success: false, count: 0, message: '预览线系统未初始化' }
-    
-    // 🔧 修复：根据重构方案，只使用 PreviewLineSystem 的统一方法
+    // 🔧 统一方案：只使用 PreviewLineSystem 作为唯一预览线生成入口
     if (!previewLineSystem) {
       throw new Error('PreviewLineSystem 未初始化，无法生成预览线')
     }
     
-    console.log('[TaskFlowCanvas] ✅ 使用 PreviewLineSystem 统一预览线生成方法')
+    if (!previewLineSystem.initialized) {
+      throw new Error('PreviewLineSystem 未完成初始化')
+    }
     
-    // 🔧 修复：使用统一的预览线生成方法，消除多重降级逻辑
+    console.log('[TaskFlowCanvas] ✅ 使用统一预览线生成方案 - PreviewLineSystem.forceRegeneratePreviewLines')
+    
+    // 🔧 统一方案：只使用 PreviewLineSystem.forceRegeneratePreviewLines 方法
     const result = await previewLineSystem.forceRegeneratePreviewLines({
       clearExisting: true,
       validateNodes: true,
@@ -2097,11 +2594,13 @@ const triggerPreviewLineGeneration = async () => {
       enablePortValidation: true  // 启用端口验证
     })
     
+    let generationResult
+    
     if (result && result.success) {
       generationResult = {
         success: true,
         count: result.newCount || result.createdCount || 0,
-        message: `预览线重新生成完成，创建了 ${result.newCount || result.createdCount || 0} 条预览线`,
+        message: `统一预览线生成完成，创建了 ${result.newCount || result.createdCount || 0} 条预览线`,
         details: {
           previousCount: result.previousCount || 0,
           newCount: result.newCount || result.createdCount || 0,
@@ -2110,25 +2609,10 @@ const triggerPreviewLineGeneration = async () => {
         }
       }
       
-      console.log('[TaskFlowCanvas] ✅ 预览线生成成功:', generationResult.details)
+      console.log('[TaskFlowCanvas] ✅ 统一预览线生成成功:', generationResult.details)
     } else {
-      // 🔧 修复：如果强制重新生成失败，尝试为现有节点创建预览线
-      console.warn('[TaskFlowCanvas] ⚠️ 强制重新生成失败，尝试为现有节点创建预览线')
-      
-      await previewLineSystem.createPreviewLinesForExistingNodes()
-      
-      // 统计生成的预览线
-      const allEdges = graph.value?.getEdges() || []
-      const previewEdges = allEdges.filter(edge => {
-        const edgeData = edge.getData() || {}
-        return edgeData.isPreview || edge.id.includes('preview')
-      })
-      
-      generationResult = {
-        success: true,
-        count: previewEdges.length,
-        message: `预览线生成完成，当前共有 ${previewEdges.length} 条预览线`
-      }
+      // 统一错误处理，不使用降级方案
+      throw new Error(`预览线生成失败: ${result?.error || '未知错误'}`)
     }
     
     // 更新调试统计
@@ -2161,261 +2645,388 @@ const triggerPreviewLineGeneration = async () => {
   }
 }
 
-// 监听属性变化 - 移除immediate选项，避免在graph实例创建前执行
+// 🔧 修复：移除props监听器，避免与onMounted初始化冲突导致重复加载
+// 所有初始数据加载都在onMounted中完成，不需要额外的监听器
+// 如果需要动态更新数据，应该通过方法调用而不是props监听器
+
+// 注释掉的监听器代码，避免重复加载问题：
+/*
 watch(() => props.initialNodes, (newNodes) => {
-  if (newNodes && newNodes.length > 0 && graph && graph.value) {
-    console.log('[TaskFlowCanvas] 监听到节点变化，开始添加节点:', newNodes.length)
-    
-    // 验证graph实例状态
-    if (!graph.value || typeof graph.value.addNode !== 'function') {
-      console.error('[TaskFlowCanvas] Graph实例无效，跳过节点添加')
-      return
-    }
-    
-    newNodes.forEach(nodeData => {
-      try {
-        addNodeToGraph(nodeData)
-      } catch (error) {
-        console.error('[TaskFlowCanvas] 监听器中添加节点失败:', nodeData.id, error)
-      }
-    })
-  }
+  // 这个监听器会与onMounted中的初始化冲突，导致重复加载
 }, { immediate: false })
 
 watch(() => props.initialConnections, (newConnections) => {
-  if (newConnections && newConnections.length > 0 && graph && graph.value) {
-    console.log('[TaskFlowCanvas] 监听到连接变化，开始添加连接:', newConnections.length)
-    
-    // 验证graph实例状态
-    if (!graph.value || typeof graph.value.addEdge !== 'function') {
-      console.error('[TaskFlowCanvas] Graph实例无效，跳过连接添加')
-      return
-    }
-    
-    newConnections.forEach(async (connectionData) => {
-      try {
-        await addConnectionToGraph(connectionData)
-      } catch (error) {
-        console.error('[TaskFlowCanvas] 监听器中添加连接失败:', connectionData, error)
-      }
-    })
-  }
+  // 这个监听器会与onMounted中的初始化冲突，导致重复加载
 }, { immediate: false })
+*/
 
 // 提供给子组件的数据
 provide('graph', graph)
 provide('canvasState', state)
 
+// 🔧 关键修复：防止重复初始化的全局标志
+let isInitializationInProgress = false
+let initializationPromise = null
+
 // 组件挂载时自动初始化
-// 生命周期钩子 - 同步初始化：组件优先，图形最后
-onMounted(() => {
-  console.log('[TaskFlowCanvas] 组件挂载开始 - 同步初始化')
+// 生命周期钩子 - 完全串行化初始化流程
+onMounted(async () => {
+  console.log('[TaskFlowCanvas] 🚀 组件挂载开始 - 完全串行化初始化')
+  
+  // 🔧 修复：防止重复初始化
+  if (isInitializationInProgress) {
+    console.warn('[TaskFlowCanvas] 初始化已在进行中，等待完成')
+    if (initializationPromise) {
+      await initializationPromise
+    }
+    return
+  }
+  
+  // 🔧 修复：防止重复初始化
+  if (state?.isInitializing?.value) {
+    console.warn('[TaskFlowCanvas] 初始化状态已设置，跳过重复初始化')
+    return
+  }
+  
+  // 设置全局初始化标志
+  isInitializationInProgress = true
+  
+  // 设置初始化状态
+  if (state?.isInitializing) {
+    state.isInitializing.value = true
+  }
+  
+  // 创建初始化Promise，避免重复调用
+  initializationPromise = (async () => {
   
   try {
-    // ========== 第1步：初始化所有基础系统组件 ==========
-    console.log('[TaskFlowCanvas] 第1步：初始化所有基础系统组件')
-    initializeSystems()
+    // ========== 第1步：等待DOM完全准备 ==========
+    console.log('[TaskFlowCanvas] 📋 第1步：等待DOM完全准备')
+    await nextTick()
     
-    // ========== 第2步：等待DOM完全准备 ==========
-    console.log('[TaskFlowCanvas] 第2步：等待DOM完全准备')
-    nextTick(async () => {
-      try {
-        // 验证DOM容器
-        if (!canvasContainer.value) {
-          throw new Error('画布容器DOM未准备就绪')
-        }
-        
-        // 检查容器是否在DOM中且可见
-        console.log('[TaskFlowCanvas] DOM容器状态:', {
-          exists: !!canvasContainer.value,
-          offsetParent: canvasContainer.value.offsetParent,
-          offsetWidth: canvasContainer.value.offsetWidth,
-          offsetHeight: canvasContainer.value.offsetHeight,
-          clientWidth: canvasContainer.value.clientWidth,
-          clientHeight: canvasContainer.value.clientHeight
-        })
-        console.log('[TaskFlowCanvas] ✓ DOM容器验证通过')
-        
-        // ========== 第3步：初始化画布（创建Graph实例） ==========
-        console.log('[TaskFlowCanvas] 第3步：同步初始化画布和Graph实例')
-        initCanvas()
-        
-        // 验证Graph实例
-        if (!graph || !graph.value || typeof graph.value.on !== 'function') {
-          throw new Error('Graph实例创建失败或无效')
-        }
-        console.log('[TaskFlowCanvas] ✓ Graph实例验证通过')
-        
-        // ========== 第4步：初始化依赖Graph的系统组件 ==========
-        console.log('[TaskFlowCanvas] 第4步：初始化依赖Graph的系统组件')
-        await initializeGraphDependentSystems(graph.value)
-        
-        // ========== 第5步：验证所有系统就绪 ==========
-        console.log('[TaskFlowCanvas] 第5步：验证所有系统就绪')
-        const validationResult = validateCanvasState()
-        if (!validationResult.isValid) {
-          console.warn('[TaskFlowCanvas] 系统验证失败:', validationResult.issues)
-          // 不抛出错误，允许继续初始化，但记录问题
-        } else {
-          console.log('[TaskFlowCanvas] ✓ 所有系统验证通过')
-        }
-        
-        // ========== 第6步：加载初始数据（最后执行） ==========
-        console.log('[TaskFlowCanvas] 第6步：加载初始数据')
-        
-        // 先加载所有节点，确保节点存在后再创建连接
-        if (props.initialNodes && props.initialNodes.length > 0) {
-          console.log('[TaskFlowCanvas] 加载初始节点:', props.initialNodes.length)
-          
-          // 验证graph实例是否完全就绪
-          if (!graph?.value || typeof graph.value.addNode !== 'function' || !isGraphReady?.value) {
-            console.error('[TaskFlowCanvas] Graph实例未就绪，跳过节点加载:', {
-              hasGraph: !!graph,
-              hasGraphValue: !!graph?.value,
-              hasAddNodeMethod: !!(graph?.value && typeof graph.value.addNode === 'function'),
-              isGraphReady: isGraphReady?.value
-            })
-            throw new Error('Graph实例未就绪，无法加载初始节点')
-          }
-          
-          for (const nodeData of props.initialNodes) {
-            try {
-              // 在每次添加节点前都验证graph状态
-              if (!graph?.value || typeof graph.value.addNode !== 'function' || !isGraphReady?.value) {
-                console.error('[TaskFlowCanvas] Graph实例在节点添加过程中变为无效:', {
-                  nodeId: nodeData.id,
-                  hasGraph: !!graph,
-                  hasGraphValue: !!graph?.value,
-                  hasAddNodeMethod: !!(graph?.value && typeof graph.value.addNode === 'function'),
-                  isGraphReady: isGraphReady?.value
-                })
-                continue
-              }
-              
-              const addedNode = addNodeToGraph(nodeData)
-              if (!addedNode) {
-                console.error('[TaskFlowCanvas] 节点添加失败:', nodeData.id)
-              } else {
-                console.log('[TaskFlowCanvas] 节点添加成功:', nodeData.id)
-              }
-            } catch (error) {
-              console.error('[TaskFlowCanvas] 添加节点失败:', nodeData.id, error)
-            }
-          }
-          
-          // 验证所有节点是否已成功添加
-          if (graph && graph.value && typeof graph.value.getNodes === 'function') {
-            const graphNodes = graph.value.getNodes()
-            console.log('[TaskFlowCanvas] 图中节点数量验证:', {
-              expectedNodes: props.initialNodes?.length || 0,
-              actualNodes: graphNodes.length,
-              nodeIds: graphNodes.map(n => n.id)
-            })
-          }
-          
-          // 然后加载连接，此时所有节点应该已经存在
-          if (props.initialConnections && props.initialConnections.length > 0) {
-            console.log('[TaskFlowCanvas] 加载初始连接:', props.initialConnections.length)
-            for (const connectionData of props.initialConnections) {
-              try {
-                // 兼容新旧字段名格式
-                const sourceNodeId = connectionData.source || connectionData.sourceNodeId
-                const targetNodeId = connectionData.target || connectionData.targetNodeId
-                
-                // 验证源节点和目标节点是否存在
-                const sourceNode = graph?.value?.getCellById(sourceNodeId)
-                const targetNode = graph?.value?.getCellById(targetNodeId)
-                
-                if (!sourceNode) {
-                  console.error('[TaskFlowCanvas] 源节点不存在:', sourceNodeId)
-                  continue
-                }
-                
-                if (!targetNode) {
-                  console.error('[TaskFlowCanvas] 目标节点不存在:', targetNodeId)
-                  continue
-                }
-                
-                console.log('[TaskFlowCanvas] 节点验证通过，创建连接:', {
-                  source: sourceNodeId,
-                  target: targetNodeId
-                })
-                
-                addConnectionToGraph(connectionData)
-              } catch (error) {
-                console.error('[TaskFlowCanvas] 添加连接失败:', connectionData, error)
-              }
-            }
-          }
-        }
-        
-        // 如果需要自动添加开始节点
-        if (props.autoAddStartNode && nodes && nodes.value && nodes.value.length === 0) {
-          console.log('[TaskFlowCanvas] 添加默认开始节点')
-          const startNodeData = {
-            id: 'start-node',
-            type: 'start',
-            label: '开始',
-            position: { x: 400, y: 100 },
-            data: {
-              isConfigured: true,
-              config: {
-                name: '开始节点',
-                description: '流程开始'
-              }
-            }
-          }
-          try {
-            addNodeToGraph(startNodeData)
-          } catch (error) {
-            console.error('[TaskFlowCanvas] 添加开始节点失败:', error)
-          }
-        }
-        
-        // ========== 第7步：画布居中和适应内容 ==========
-        console.log('[TaskFlowCanvas] 第7步：画布居中和适应内容')
+    // 验证DOM容器
+    if (!canvasContainer.value) {
+      throw new Error('画布容器DOM未准备就绪')
+    }
+    
+    console.log('[TaskFlowCanvas] ✅ 第1步完成：DOM容器验证通过')
+    
+    // ========== 第2步：初始化基础系统组件 ==========
+    console.log('[TaskFlowCanvas] 🔧 第2步：初始化基础系统组件')
+    initializeSystems()
+    console.log('[TaskFlowCanvas] ✅ 第2步完成：基础系统组件初始化完成')
+    
+    // ========== 第3步：初始化画布（创建Graph实例） ==========
+    console.log('[TaskFlowCanvas] 🎨 第3步：初始化画布和Graph实例')
+    
+    // 🔧 关键修复：确保不重复调用initCanvas，直接调用initializeGraph
+    if (!graph.value) {
+      const graphInstance = initializeGraph({
+        container: canvasContainer.value,
+        minimapContainer: null,
+        config: {}
+      })
+      
+      if (!graphInstance || typeof graphInstance.on !== 'function') {
+        throw new Error('Graph实例创建失败或无效')
+      }
+      
+      // 绑定事件监听器
+      bindEvents()
+      
+      // 🔧 关键修复：设置Graph实例就绪状态
+      isGraphReady.value = true
+      
+      console.log('[TaskFlowCanvas] ✅ 第3步完成：Graph实例创建成功，isGraphReady已设置为true')
+    } else {
+      console.log('[TaskFlowCanvas] ⚠️ Graph实例已存在，跳过重复创建')
+    }
+    
+    
+    // ========== 第4步：初始化依赖Graph的系统组件 ==========
+    console.log('[TaskFlowCanvas] 🔧 第4步：初始化依赖Graph的系统组件')
+    
+    // 🔧 关键修复：确保系统组件只初始化一次
+    if (!previewLineSystem && !unifiedEdgeManager) {
+      await initializeGraphDependentSystems(graph.value)
+      console.log('[TaskFlowCanvas] ✅ 第4步完成：依赖Graph的系统组件初始化完成')
+    } else {
+      console.log('[TaskFlowCanvas] ⚠️ 系统组件已存在，跳过重复初始化')
+    }
+    
+    // ========== 第5步：验证所有系统就绪 ==========
+    console.log('[TaskFlowCanvas] 🔍 第5步：验证所有系统就绪')
+    const validationResult = validateCanvasState()
+    if (!validationResult.isValid) {
+      console.warn('[TaskFlowCanvas] 系统验证失败:', validationResult.issues)
+      // 🔧 修复：系统验证失败时抛出错误，确保问题得到解决
+      throw new Error(`系统验证失败: ${validationResult.issues.join(', ')}`)
+    } else {
+      console.log('[TaskFlowCanvas] ✅ 第5步完成：所有系统验证通过')
+    }
+    
+    // ========== 第6步：串行加载初始数据 ==========
+    console.log('[TaskFlowCanvas] 📊 第6步：串行加载初始数据')
+    
+    // 🔧 关键修复：确保PreviewLineSystem完全就绪后再加载数据
+    if (previewLineSystem && typeof previewLineSystem.isReady === 'function') {
+      let retryCount = 0
+      const maxRetries = 10
+      while (!previewLineSystem.isReady() && retryCount < maxRetries) {
+        console.log(`[TaskFlowCanvas] 等待PreviewLineSystem就绪... (${retryCount + 1}/${maxRetries})`)
+        await new Promise(resolve => setTimeout(resolve, 100))
+        retryCount++
+      }
+      
+      if (!previewLineSystem.isReady()) {
+        console.warn('[TaskFlowCanvas] PreviewLineSystem未能在预期时间内就绪，继续初始化')
+      } else {
+        console.log('[TaskFlowCanvas] ✅ PreviewLineSystem已就绪')
+      }
+    }
+    
+    // 先加载所有节点，确保节点存在后再创建连接
+    if (props.initialNodes && props.initialNodes.length > 0) {
+      console.log('[TaskFlowCanvas] 📦 加载初始节点:', props.initialNodes.length)
+      
+      // 🔧 修复：完全串行添加每个节点，确保每个节点都成功添加后再继续
+      for (const nodeData of props.initialNodes) {
         try {
-          if (graph && graph.value && typeof graph.value.centerContent === 'function' && typeof graph.value.zoom === 'function' && typeof graph.value.zoomToFit === 'function') {
-            // 先居中内容
-            graph.value.centerContent()
-            console.log('[TaskFlowCanvas] ✓ 画布内容已居中')
-            
-            // 然后适应缩放，限制最大缩放比例
-            const currentScale = graph.value.zoom()
-            graph.value.zoomToFit({ 
-              padding: 50,
-              maxScale: Math.min(1.2, currentScale * 1.5) // 限制最大缩放比例
-            })
-            console.log('[TaskFlowCanvas] ✓ 画布缩放已适应内容')
-            
-            // 更新缩放显示
-            if (state.updateCurrentZoom) {
-              state.updateCurrentZoom()
-            }
-          }
-        } catch (error) {
-          console.warn('[TaskFlowCanvas] 画布居中和适应失败:', error)
-        }
+          console.log(`[TaskFlowCanvas] 开始添加节点: ${nodeData.id}`)
           
-        // ========== 第8步：触发就绪事件 ==========
-        console.log('[TaskFlowCanvas] 第8步：触发就绪事件')
-        emit('canvas-ready', graph.value)
-        
-        console.log('[TaskFlowCanvas] ✅ 同步初始化完成')
-      } catch (error) {
-        console.error('[TaskFlowCanvas] 组件初始化失败:', error)
-        Message.error(`画布初始化失败: ${error.message}`)
-        
-        // 重置初始化状态
-        if (state && state.isInitializing) {
-          state.isInitializing.value = false
+          // 🔧 关键修复：等待节点添加完成，确保同步操作
+          const addedNode = await addNodeToGraph(nodeData)
+          if (!addedNode) {
+            const errorMsg = `节点添加失败: ${nodeData.id}`
+            console.error('[TaskFlowCanvas]', errorMsg, {
+              nodeData,
+              graphReady: isGraphReady?.value,
+              hasGraph: !!graph?.value
+            })
+            // 🔧 关键修复：节点添加失败时立即抛出错误，中断整个初始化流程
+            throw new Error(errorMsg)
+          }
+          
+          console.log(`[TaskFlowCanvas] ✅ 节点添加成功: ${nodeData.id}`)
+          
+          // 🔧 关键修复：等待DOM更新，确保节点完全渲染
+          await nextTick()
+          
+        } catch (error) {
+          console.error(`[TaskFlowCanvas] ❌ 节点添加失败: ${nodeData.id}`, error)
+          // 🔧 关键修复：重新抛出错误，确保中断整个初始化流程
+          throw error
         }
       }
-    })
+      
+      // 🔧 关键修复：验证所有节点是否已成功添加
+      const expectedNodeCount = props.initialNodes?.length || 0
+      const actualNodeCount = graph?.value?.getNodes()?.length || 0
+      
+      if (actualNodeCount !== expectedNodeCount) {
+        const errorMsg = `节点数量不匹配: 期望 ${expectedNodeCount}, 实际 ${actualNodeCount}`
+        console.error('[TaskFlowCanvas]', errorMsg)
+        throw new Error(errorMsg)
+      }
+      
+      console.log(`[TaskFlowCanvas] ✅ 所有节点加载完成: ${actualNodeCount}个`)
+    }
+    
+    // 然后加载连接，此时所有节点应该已经存在
+    if (props.initialConnections && props.initialConnections.length > 0) {
+      console.log('[TaskFlowCanvas] 🔗 开始加载初始连接:', props.initialConnections.length)
+      
+      try {
+        // 🔧 修复：完全串行添加每个连接，确保每个连接都成功创建后再继续
+        for (const connectionData of props.initialConnections) {
+          try {
+            console.log(`[TaskFlowCanvas] 开始创建连接: ${connectionData.id || 'unknown'}`)
+            
+            // 兼容新旧字段名格式
+            const sourceNodeId = connectionData.source || connectionData.sourceNodeId
+            const targetNodeId = connectionData.target || connectionData.targetNodeId
+            
+            // 🔧 关键修复：严格验证节点存在性
+            const sourceNode = graph?.value?.getCellById(sourceNodeId)
+            const targetNode = graph?.value?.getCellById(targetNodeId)
+            
+            if (!sourceNode) {
+              const errorMsg = `源节点不存在: ${sourceNodeId}`
+              console.error('[TaskFlowCanvas]', errorMsg)
+              throw new Error(errorMsg)
+            }
+            
+            if (!targetNode) {
+              const errorMsg = `目标节点不存在: ${targetNodeId}`
+              console.error('[TaskFlowCanvas]', errorMsg)
+              throw new Error(errorMsg)
+            }
+            
+            // 🔧 关键修复：等待连接创建完成
+            const addedConnection = await addConnectionToGraph(connectionData)
+            if (!addedConnection) {
+              const errorMsg = `连接创建失败: ${connectionData.id || 'unknown'}`
+              console.error('[TaskFlowCanvas]', errorMsg)
+              throw new Error(errorMsg)
+            }
+            
+            console.log(`[TaskFlowCanvas] ✅ 连接创建成功: ${connectionData.id || 'unknown'}`)
+            
+            // 🔧 关键修复：等待DOM更新，确保连接完全渲染
+            await nextTick()
+            
+          } catch (error) {
+            console.error(`[TaskFlowCanvas] ❌ 连接创建失败: ${connectionData.id || 'unknown'}`, error)
+            // 🔧 关键修复：重新抛出错误，确保中断整个初始化流程
+            throw error
+          }
+        }
+        
+        // 🔧 关键修复：验证所有连接是否已成功创建
+        const expectedConnectionCount = props.initialConnections?.length || 0
+        const actualConnectionCount = graph?.value?.getEdges()?.length || 0
+        
+        if (actualConnectionCount !== expectedConnectionCount) {
+          const errorMsg = `连接数量不匹配: 期望 ${expectedConnectionCount}, 实际 ${actualConnectionCount}`
+          console.error('[TaskFlowCanvas]', errorMsg)
+          throw new Error(errorMsg)
+        }
+        
+        console.log(`[TaskFlowCanvas] ✅ 所有连接加载完成: ${actualConnectionCount}个`)
+      } catch (error) {
+        console.error('[TaskFlowCanvas] 数据加载失败:', error)
+        Message.error(`数据加载失败: ${error.message}`)
+      }
+    }
+    
+    // 如果需要自动添加开始节点
+    if (props.autoAddStartNode && nodes && nodes.value && nodes.value.length === 0) {
+      console.log('[TaskFlowCanvas] 🎯 添加默认开始节点')
+      const startNodeData = {
+        id: 'start-node',
+        type: 'start',
+        nodeType: 'start', // 修复：添加 nodeType 字段，确保端口配置能正确创建
+        label: '开始',
+        position: { x: 400, y: 100 },
+        width: 100,
+        height: 60,
+        data: {
+          type: 'start',
+          nodeType: 'start', // 修复：在 data 中也添加 nodeType
+          isConfigured: true,
+          config: {
+            name: '开始节点',
+            description: '流程开始'
+          }
+        }
+      }
+      try {
+        console.log('[TaskFlowCanvas] 开始添加自动开始节点，数据结构:', startNodeData)
+        console.log('[TaskFlowCanvas] 验证节点数据完整性:', {
+          hasId: !!startNodeData.id,
+          hasType: !!startNodeData.type,
+          hasNodeType: !!startNodeData.nodeType,
+          hasPosition: !!startNodeData.position,
+          hasData: !!startNodeData.data,
+          dataHasNodeType: !!startNodeData.data?.nodeType
+        })
+        const addedStartNode = await addNodeToGraph(startNodeData)
+        if (!addedStartNode) {
+          console.error('[TaskFlowCanvas] 自动开始节点添加失败，详细信息:', {
+            startNodeData,
+            graphReady: isGraphReady?.value,
+            hasGraph: !!graph?.value,
+            nodesCount: nodes?.value?.length || 0
+          })
+          throw new Error('自动开始节点添加失败')
+        }
+        console.log('[TaskFlowCanvas] ✅ 自动开始节点添加成功')
+      } catch (error) {
+        console.error('[TaskFlowCanvas] ❌ 添加开始节点失败:', error)
+        // 🔧 关键修复：自动开始节点添加失败时也要中断初始化流程
+        throw error
+      }
+    }
+    
+    console.log('[TaskFlowCanvas] ✅ 第6步完成：初始数据加载完成')
+    
+    // ========== 第7步：画布居中和适应内容 ==========
+    console.log('[TaskFlowCanvas] 🎨 第7步：画布居中和适应内容')
+    try {
+      if (graph && graph.value && typeof graph.value.centerContent === 'function' && typeof graph.value.zoom === 'function' && typeof graph.value.zoomToFit === 'function') {
+        // 先居中内容
+        graph.value.centerContent()
+        console.log('[TaskFlowCanvas] ✓ 画布内容已居中')
+        
+        // 然后适应缩放，限制最大缩放比例
+        const currentScale = graph.value.zoom()
+        graph.value.zoomToFit({ 
+          padding: 50,
+          maxScale: Math.min(1.2, currentScale * 1.5) // 限制最大缩放比例
+        })
+        console.log('[TaskFlowCanvas] ✓ 画布缩放已适应内容')
+        
+        // 更新缩放显示
+        if (state.updateCurrentZoom) {
+          state.updateCurrentZoom()
+        }
+      }
+    } catch (error) {
+      console.warn('[TaskFlowCanvas] 画布居中和适应失败:', error)
+    }
+    
+    console.log('[TaskFlowCanvas] ✅ 第7步完成：画布居中和适应内容完成')
+      
+    // ========== 第8步：触发就绪事件 ==========
+    console.log('[TaskFlowCanvas] 🎉 第8步：触发就绪事件')
+    emit('canvas-ready', graph.value)
+    
+    console.log('[TaskFlowCanvas] ✅ 完全串行化初始化完成')
+    
+    // ========== 第9步：初始化服务层 ==========
+    console.log('[TaskFlowCanvas] 🔧 第9步：初始化服务层')
+    try {
+      await initializeServices()
+      console.log('[TaskFlowCanvas] ✅ 第9步完成：服务层初始化完成')
+    } catch (serviceError) {
+      console.error('[TaskFlowCanvas] 服务层初始化失败:', serviceError)
+      // 服务层初始化失败不应该阻止整个画布的使用
+    }
+    
+    // 重置初始化状态
+    if (state && state.isInitializing) {
+      state.isInitializing.value = false
+    }
   } catch (error) {
-    console.error('[TaskFlowCanvas] 组件挂载失败:', error)
-    Message.error(`画布挂载失败: ${error.message}`)
+    console.error('[TaskFlowCanvas] 组件初始化失败:', error)
+    Message.error(`画布初始化失败: ${error.message}`)
+    
+    // 🔧 关键修复：初始化失败时，确保画布状态被正确重置
+    isGraphReady.value = false
+    
+    // 🔧 关键修复：初始化失败时，清理可能已创建的资源
+    try {
+      if (graph?.value) {
+        graph.value.dispose()
+        graph.value = null
+      }
+    } catch (cleanupError) {
+      console.error('[TaskFlowCanvas] 清理资源失败:', cleanupError)
+    }
+  } finally {
+    // 确保初始化状态被重置
+    if (state && state.isInitializing) {
+      state.isInitializing.value = false
+    }
+    
+    // 重置全局初始化标志
+    isInitializationInProgress = false
+    initializationPromise = null
   }
+  })()
+  
+  // 等待初始化Promise完成
+  await initializationPromise
 })
 
 // 移除重复的initialize函数，统一使用onMounted中的初始化逻辑
@@ -2565,49 +3176,8 @@ const handleNodeDeleteRequest = (data) => {
   }
 }
 
-// 生命周期钩子 - 服务层集成
-onMounted(async () => {
-  try {
-    // 等待图形初始化完成
-    await waitForInitialization()
-    
-    // 初始化服务层
-    await initializeServices()
-    
-    // 监听统一事件总线事件 - 标准化事件处理
-    unifiedEventBus.on(EventTypes.NODE_CREATED, (data) => {
-      emit('node-created', data)
-    })
-    
-    unifiedEventBus.on(EventTypes.NODE_DELETED, (data) => {
-      emit('node-deleted', data)
-    })
-    
-    unifiedEventBus.on(EventTypes.CONNECTION_CREATED, (data) => {
-      emit('connection-created', data)
-    })
-    
-    unifiedEventBus.on(EventTypes.LAYOUT_CHANGED, (data) => {
-      emit('layout-changed', data)
-    })
-    
-    unifiedEventBus.on(EventTypes.NODE_CONFIG_UPDATED, (data) => {
-      emit('node-config-updated', data)
-    })
-    
-    unifiedEventBus.on(EventTypes.CANVAS_READY, (data) => {
-      emit('canvas-ready', data)
-    })
-    
-    // 监听节点删除请求事件 - 通过useCanvasEvents传递的handleNodeDelete已经处理了删除逻辑
-    // 这里我们需要确保useCanvasEvents中的handleNodeDelete能够调用到cascadeDeleteNode
-    // 由于useCanvasEvents已经接收了cascadeDeleteNode作为参数，所以删除逻辑应该已经正确连接
-    
-    console.log('✅ [TaskFlowCanvas] 组件挂载完成，服务层已集成')
-  } catch (error) {
-    console.error('❌ [TaskFlowCanvas] 组件挂载失败:', error)
-  }
-})
+// 🔧 修复：移除重复的 onMounted 钩子，避免重复初始化
+// 原有的 onMounted 钩子已经包含完整的初始化流程，这里的代码应该合并到主要的 onMounted 中
 
 onBeforeUnmount(async () => {
   try {
@@ -2697,11 +3267,14 @@ defineExpose({
     
     if (!graph?.value) {
       console.warn('[TaskFlowCanvas] Graph 未初始化，等待初始化完成...')
-      await waitForInitialization()
+      await waitForInitialization(10000) // 🔧 修复：增加超时时间
     }
     
     if (data && data.nodes && Array.isArray(data.nodes)) {
-      nodes.value = []
+      // 🔧 修复：使用splice清空数组而不是直接赋值，避免computed readonly警告
+      if (Array.isArray(nodes.value)) {
+        nodes.value.splice(0, nodes.value.length)
+      }
       data.nodes.forEach(nodeData => {
         try {
           addNodeToGraph(nodeData)
@@ -2712,7 +3285,10 @@ defineExpose({
     }
     
     if (data && data.connections && Array.isArray(data.connections)) {
-      connections.value = []
+      // 🔧 修复：使用splice清空数组而不是直接赋值，避免computed readonly警告
+      if (Array.isArray(connections.value)) {
+        connections.value.splice(0, connections.value.length)
+      }
       data.connections.forEach(connectionData => {
         try {
           connections.value.push(connectionData)

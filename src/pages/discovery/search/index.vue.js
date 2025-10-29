@@ -260,7 +260,6 @@ const getTypeLabel = (type) => {
             return '未知';
     }
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

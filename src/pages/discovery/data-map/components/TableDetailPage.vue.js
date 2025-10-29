@@ -13,7 +13,6 @@ const tableDetailData = computed(() => {
         { label: '描述', value: props.table.description }
     ];
 });
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

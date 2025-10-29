@@ -225,7 +225,7 @@ export const getPortGroups = () => {
           x: '50%',  // 水平居中
           y: 0,      // 顶部
           dx: 0,
-          dy: 0
+          dy: -15    // 🔧 修复：增加向上偏移到-15，确保端口在圆形节点（半径50）顶部外侧完全可见
         }
       },
       attrs: {
@@ -252,7 +252,7 @@ export const getPortGroups = () => {
           x: '50%',    // 水平居中
           y: '100%',   // 底部
           dx: 0,
-          dy: 0
+          dy: 15       // 🔧 修复：增加偏移量到15，确保端口在圆形节点（半径50）底部外侧完全可见
         }
       },
       attrs: {
@@ -276,27 +276,57 @@ export const getPortGroups = () => {
 }
 
 // 节点样式配置
-export const getNodeStyles = (nodeType, nodeConfig) => ({
-  attrs: {
-    body: {
-      fill: nodeConfig.color,
-      stroke: nodeConfig.color,
-      strokeWidth: 2,
-      rx: nodeConfig.shape === 'circle' ? 50 : 8,
-      ry: nodeConfig.shape === 'circle' ? 50 : 8
-    },
-    label: {
-      text: nodeConfig.label,
-      fill: '#fff',
-      fontSize: 12,
-      fontWeight: 'bold',
-      textAnchor: 'middle',
-      textVerticalAnchor: 'middle'
+export const getNodeStyles = (nodeType, nodeConfig) => {
+  // 🔧 修复：确保nodeConfig存在，避免undefined错误
+  if (!nodeConfig) {
+    console.warn(`[x6Config] nodeConfig为空，使用默认配置: ${nodeType}`)
+    nodeConfig = {
+      color: '#5F95FF',
+      shape: 'circle',
+      width: 100,
+      height: 100,
+      label: nodeType
     }
-  },
-  // 🔧 修复层级遮挡：设置节点默认z-index
-  zIndex: 10
-})
+  }
+
+  // 🔧 修复：确保圆形节点的rx和ry设置正确
+  const isCircle = nodeConfig.shape === 'circle'
+  const rx = isCircle ? Math.min(nodeConfig.width, nodeConfig.height) / 2 : 8
+  const ry = isCircle ? Math.min(nodeConfig.width, nodeConfig.height) / 2 : 8
+
+  console.log(`[x6Config] 节点样式配置: ${nodeType}`, {
+    shape: nodeConfig.shape,
+    color: nodeConfig.color,
+    width: nodeConfig.width,
+    height: nodeConfig.height,
+    rx: rx,
+    ry: ry,
+    isCircle: isCircle
+  })
+
+  return {
+    attrs: {
+      body: {
+        fill: nodeConfig.color,
+        stroke: nodeConfig.color,
+        strokeWidth: 2,
+        // 🔧 修复：根据shape属性和实际尺寸设置正确的圆角
+        rx: rx,
+        ry: ry
+      },
+      label: {
+        text: nodeConfig.label,
+        fill: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+        textAnchor: 'middle',
+        textVerticalAnchor: 'middle'
+      }
+    },
+    // 🔧 修复层级遮挡：设置节点默认z-index
+    zIndex: 10
+  }
+}
 
 // 边样式配置
 export const getEdgeStyles = () => ({

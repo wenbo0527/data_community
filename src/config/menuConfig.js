@@ -441,6 +441,12 @@ export const MENU_CONFIG = {
                 title: '全局规则',
                 path: '/marketing/global/rules',
                 routeName: 'globalRules'
+              },
+              'alert-management': {
+                key: 'alert-management',
+                title: '预警管理',
+                path: '/marketing/alert/management',
+                routeName: 'MarketingAlertManagement'
               }
             }
           }

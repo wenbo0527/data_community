@@ -442,4 +442,4 @@ export class PerformanceMonitor {
     console.log(`💥 [性能监控器] 已销毁`);
   }
 }
-export default PerformanceMonitor;
+// 默认导出已通过 export class 实现

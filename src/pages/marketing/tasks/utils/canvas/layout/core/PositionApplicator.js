@@ -2,7 +2,7 @@
  * 位置应用器
  * 负责将计算出的位置应用到图节点上，并处理位置变化的动画和验证
  */
-class PositionApplicator {
+export class PositionApplicator {
   constructor(config = {}) {
     this.config = {
       enableAnimation: config.enableAnimation !== false,
@@ -608,4 +608,4 @@ class PositionApplicator {
   }
 }
 
-export default PositionApplicator;
+// 默认导出已通过 export class 实现

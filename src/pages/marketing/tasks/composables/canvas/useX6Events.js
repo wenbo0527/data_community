@@ -468,27 +468,37 @@ export function useX6Events(graph, canvasState, emit) {
           // 根据端口配置计算位置
           if (portConfig.name === 'bottom') {
             const args = portConfig.args || {}
+            // 🔧 修复：正确处理百分比坐标
             const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
               parseFloat(args.x) / 100 : 0.5
+            const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+              parseFloat(args.y) / 100 : 1.0
             portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
-            portY = nodePosition.y + nodeSize.height + (args.dy || 0)
+            portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
           } else if (portConfig.name === 'top') {
             const args = portConfig.args || {}
+            // 🔧 修复：正确处理百分比坐标
             const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
               parseFloat(args.x) / 100 : 0.5
+            const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
+              parseFloat(args.y) / 100 : 0.0
             portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
-            portY = nodePosition.y + (args.dy || 0)
+            portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
           } else if (portConfig.name === 'left') {
             const args = portConfig.args || {}
+            const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+              parseFloat(args.x) / 100 : 0.0
             const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
               parseFloat(args.y) / 100 : 0.5
-            portX = nodePosition.x + (args.dx || 0)
+            portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
             portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
           } else if (portConfig.name === 'right') {
             const args = portConfig.args || {}
+            const xPercent = typeof args.x === 'string' && args.x.includes('%') ? 
+              parseFloat(args.x) / 100 : 1.0
             const yPercent = typeof args.y === 'string' && args.y.includes('%') ? 
               parseFloat(args.y) / 100 : 0.5
-            portX = nodePosition.x + nodeSize.width + (args.dx || 0)
+            portX = nodePosition.x + nodeSize.width * xPercent + (args.dx || 0)
             portY = nodePosition.y + nodeSize.height * yPercent + (args.dy || 0)
           }
           

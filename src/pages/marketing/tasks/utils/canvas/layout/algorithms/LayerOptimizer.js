@@ -2,7 +2,7 @@
  * 层级优化器
  * 负责优化层级内节点的排列，减少边交叉，提升布局美观度
  */
-class LayerOptimizer {
+export class LayerOptimizer {
   constructor(config = {}) {
     this.config = {
       maxIterations: config.maxIterations || 10,
@@ -367,4 +367,4 @@ class LayerOptimizer {
   }
 }
 
-export default LayerOptimizer;
+// 默认导出已通过 export class 实现

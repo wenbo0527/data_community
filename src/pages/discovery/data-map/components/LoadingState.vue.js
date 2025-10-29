@@ -4,7 +4,6 @@ const props = defineProps();
 const gridCount = computed(() => props.gridCount || 8);
 const progressPercent = computed(() => props.progressPercent || 0);
 const progressColor = computed(() => props.progressColor || 'rgb(var(--primary-6))');
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

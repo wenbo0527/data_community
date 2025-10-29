@@ -35,7 +35,6 @@ const services = ref([
 const handleApply = (type) => {
     console.log('申请服务类型:', type);
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

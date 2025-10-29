@@ -94,7 +94,8 @@ export const nodeTypes = {
     nextSlots: [
       {
         type: 'single',
-        position: { x: 0, y: 150 },        label: '下一步',
+        position: { x: 0, y: 150 },
+        label: '下一步',
         allowedTypes:  ['audience-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
       }
     ]
@@ -259,25 +260,33 @@ export const nodeTypes = {
 export const getNodeConfig = (nodeType) => {
   // 🔧 修复：添加类型检查，处理非字符串类型
   if (typeof nodeType !== 'string') {
-    console.warn(`Invalid node type format: ${typeof nodeType}, value:`, nodeType)
+    console.warn(`[getNodeConfig] Invalid node type format: ${typeof nodeType}, value:`, nodeType)
     return null
   }
   
   // 🔧 修复：处理空字符串和空值
   if (!nodeType || nodeType.trim() === '') {
-    console.warn('Empty node type provided')
+    console.warn('[getNodeConfig] Empty node type provided')
     return null
   }
   
   const normalizedType = nodeType.trim()
   const config = nodeTypes[normalizedType]
   
+  console.log('[getNodeConfig] 查找节点配置:', {
+    originalType: nodeType,
+    normalizedType: normalizedType,
+    found: !!config,
+    config: config,
+    availableTypes: Object.keys(nodeTypes)
+  })
+  
   if (!config) {
     // 🔧 修复：为常见的错误类型提供更好的错误信息
     if (normalizedType === 'task') {
-      console.warn(`Unknown node type: "${normalizedType}". Did you mean one of: ${Object.keys(nodeTypes).join(', ')}?`)
+      console.warn(`[getNodeConfig] Unknown node type: "${normalizedType}". Did you mean one of: ${Object.keys(nodeTypes).join(', ')}?`)
     } else {
-      console.warn(`Unknown node type: "${normalizedType}". Available types: ${Object.keys(nodeTypes).join(', ')}`)
+      console.warn(`[getNodeConfig] Unknown node type: "${normalizedType}". Available types: ${Object.keys(nodeTypes).join(', ')}`)
     }
     return null
   }
@@ -286,29 +295,35 @@ export const getNodeConfig = (nodeType) => {
 }
 
 /**
- * 获取节点的基础属性配置
+ * 获取节点的X6属性配置
  * @param {string} nodeType - 节点类型
- * @returns {Object} 节点属性配置
+ * @returns {Object} X6节点属性配置
  */
 export const getNodeAttrs = (nodeType) => {
   const config = getNodeConfig(nodeType)
-  if (!config) return {}
+  if (!config) {
+    console.warn(`[nodeTypes] 未找到节点类型配置: ${nodeType}`)
+    return {}
+  }
 
+  // 🔧 修复：返回正确的X6节点样式配置，确保与FlowNode.vue和x6Config.js保持一致
   return {
     body: {
-      fill: config.color,        // 使用实心颜色填充
-      stroke: config.color,      // 边框颜色与填充颜色一致
-      strokeWidth: 2,            // 🔧 修复：添加边框宽度，避免黑边问题
-      rx: config.shape === 'circle' ? 50 : 8,  // 🔧 修复：添加圆角配置，圆形节点使用大圆角
-      ry: config.shape === 'circle' ? 50 : 8,  // 🔧 修复：添加圆角配置，圆形节点使用大圆角
+      fill: config.color,
+      stroke: config.color,
+      strokeWidth: 2,
+      // 🔧 修复：根据shape属性设置正确的圆角
+      rx: config.shape === 'circle' ? config.width / 2 : 8,
+      ry: config.shape === 'circle' ? config.height / 2 : 8
     },
-    text: {
-      fill: '#FFFFFF',
-      fontSize: nodeType === 'start' ? 14 : 12,
+    label: {
+      text: config.label,
+      fill: '#fff',
+      fontSize: 12,
       fontWeight: 'bold',
       textAnchor: 'middle',
-      textVerticalAnchor: 'middle',
-    },
+      textVerticalAnchor: 'middle'
+    }
   }
 }
 
@@ -327,93 +342,11 @@ export const getNodePorts = (nodeType, options = {}) => {
     return config.ports
   }
 
-  // 获取布局方向，默认为TB
-  const layoutDirection = options.layoutDirection || 'TB'
-
-  // 默认端口配置 - 统一为每个节点配置1个输入端口和1个输出端口
-  const portGroups = canvasConfig.getPortGroups(layoutDirection)
-  const baseConfig = {
-    groups: {
-      in: {
-        ...portGroups.in,
-        attrs: {
-          circle: {
-            ...portGroups.in.attrs.circle,
-            stroke: config.color
-          }
-        }
-      },
-      out: {
-        ...portGroups.out,
-        attrs: {
-          circle: {
-            ...portGroups.out.attrs.circle,
-            stroke: config.color
-          }
-        }
-      }
-    },
-    items: []
-  }
-
-  // 根据节点类型添加端口
-  if (nodeType === 'start') {
-    // 开始节点只有输出端口
-    baseConfig.items.push({
-      group: 'out',
-      id: 'out',
-      attrs: {
-        circle: {
-          ...portGroups.out.attrs.circle,
-          stroke: config.color
-        }
-      }
-    })
-  } else if (nodeType === 'end') {
-    // 结束节点只有输入端口
-    baseConfig.items.push({
-      group: 'in',
-      id: 'in',
-      attrs: {
-        circle: {
-          ...portGroups.in.attrs.circle,
-          stroke: config.color
-        }
-      }
-    })
-  } else {
-    // 其他节点都有1个输入端口和1个输出端口
-    baseConfig.items.push(
-      {
-        group: 'in',
-        id: 'in',
-        attrs: {
-          circle: {
-            ...portGroups.in.attrs.circle,
-            stroke: config.color
-          }
-        }
-      },
-      {
-        group: 'out',
-        id: 'out',
-        attrs: {
-          circle: {
-            ...portGroups.out.attrs.circle,
-            stroke: config.color
-          }
-        }
-      }
-    )
-  }
-
-  return baseConfig
+  // 🔧 修复：直接使用portConfigFactory创建端口配置，确保一致性
+  const { createNodePortConfig } = require('../pages/marketing/tasks/utils/canvas/portConfigFactory.js')
+  return createNodePortConfig(nodeType, config)
 }
 
-/**
- * 获取所有节点类型列表
- * @returns {Array} 节点类型数组
- */
 /**
  * 获取所有节点类型
  * @returns {string[]} 节点类型数组
@@ -629,11 +562,13 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
     case 'ab-test':
       // 基于AB实验配置生成版本分支
       if (config.versions && Array.isArray(config.versions)) {
-        const versionSlots = config.versions.map((version, index) => ({
+        // 过滤掉比例为0的版本，支持动态分支数量
+        const activeVersions = config.versions.filter(version => version.ratio > 0)
+        const versionSlots = activeVersions.map((version, index) => ({
           id: `ab-test-version-${index}`,
           type: 'branch',
           position: { 
-            x: (index - (config.versions.length - 1) / 2) * 120, 
+            x: (index - (activeVersions.length - 1) / 2) * 120, 
             y: 150 
           },
           label: version.name || `版本${String.fromCharCode(65 + index)}`,
@@ -643,6 +578,25 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
         }))
         return versionSlots
       }
+      
+      // 基于variants配置生成变体分支
+      if (config.variants && Array.isArray(config.variants)) {
+        const activeVariants = config.variants.filter(variant => variant.percentage > 0)
+        const variantSlots = activeVariants.map((variant, index) => ({
+          id: `ab-test-variant-${index}`,
+          type: 'branch',
+          position: { 
+            x: (index - (activeVariants.length - 1) / 2) * 120, 
+            y: 150 
+          },
+          label: variant.name || `变体${String.fromCharCode(65 + index)}`,
+          allowedTypes,
+          occupied: false,
+          state: 'empty'
+        }))
+        return variantSlots
+      }
+      
       // 默认两个版本
       const defaultAbSlots = [
         {

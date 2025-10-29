@@ -358,7 +358,6 @@ onMounted(() => {
     console.log('统一指标页面挂载，开始获取数据');
     fetchMetrics();
 });
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

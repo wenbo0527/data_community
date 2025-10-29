@@ -70,11 +70,12 @@ export function useBaseDrawer(options = {}) {
     }
   }
 
-  // 监听 visible 变化 - 修复只读计算属性问题
+  // 修复只读计算属性问题 - 使用计算属性的 getter/setter 模式
   const visible = computed({
-    get: () => props.visible,
-    set: (value) => {
-      // 确保 emit 函数存在且可调用
+    get() {
+      return props.visible
+    },
+    set(value) {
       if (emit && typeof emit === 'function') {
         emit('update:visible', value)
       } else {

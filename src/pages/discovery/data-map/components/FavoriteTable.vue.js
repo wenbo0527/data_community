@@ -190,7 +190,6 @@ const handleTransferItemClick = (item) => {
         : [...selectedKeys.value, fullItem.key];
     console.log('更新后的selectedKeys:', selectedKeys.value);
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

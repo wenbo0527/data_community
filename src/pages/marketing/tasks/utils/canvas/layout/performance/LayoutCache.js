@@ -229,4 +229,4 @@ export class LayoutCache {
     return this.cache.has(key);
   }
 }
-export default LayoutCache;
+// 默认导出已通过 export class 实现

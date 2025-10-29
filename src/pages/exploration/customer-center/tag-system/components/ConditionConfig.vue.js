@@ -28,7 +28,6 @@ const toggleConditionLogic = (groupIndex, conditionIndex) => {
         condition.logic = condition.logic === 'and' ? 'or' : 'and';
     }
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_withDefaultsArg = (function (t) { return t; })({
     crossGroupLogic: 'or',
     editable: true,

@@ -692,10 +692,10 @@ export class NodeConnectionOptimizer {
           y: centerY
         }
       } else if (portType === 'output' || portType === 'out') {
-        // 输出端口在节点右侧
+        // 输出端口在节点底部中心
         return {
-          x: position.x + size.width,
-          y: centerY
+          x: position.x + size.width / 2,
+          y: position.y + size.height
         }
       } else {
         // 默认返回节点中心

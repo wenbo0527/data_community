@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestEnvironment } from '../../utils/mockFactory.js'
-import TaskFlowCanvasRefactored from '../../../pages/marketing/tasks/components/canvas/TaskFlowCanvasRefactored.vue'
+import TaskFlowCanvasRefactored from '../../../pages/marketing/tasks/components/TaskFlowCanvasRefactored.vue'
 import NodeConfigDrawer from '../../../pages/marketing/tasks/components/canvas/NodeConfigDrawer.vue'
 import { SUPPORTED_NODE_TYPES, NODE_TYPE_CONFIG } from './nodeTestConfig.js'
 

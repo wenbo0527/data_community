@@ -54,7 +54,11 @@ export class StyleRenderer {
       'audience-split': '#13c2c2',
       'event-split': '#eb2f96',
       'ab-test': '#f5222d',
-      'end': '#8c8c8c'
+      'end': '#8c8c8c',
+      'task': '#13c2c2',
+      'condition': '#fa8c16',
+      'action': '#52c41a',
+      'default': '#1890ff'
     }
     
     console.log('🎨 [样式渲染器] 初始化完成')
@@ -66,9 +70,13 @@ export class StyleRenderer {
    * @param {Object} previewInstance - 预览线实例
    */
   configureInteractive(previewInstance) {
+    if (!this.validatePreviewInstance(previewInstance)) {
+      return
+    }
+    
     const { line, sourceNode } = previewInstance
-    const nodeData = sourceNode?.getData() || {}
-    const nodeType = nodeData.type || nodeData.nodeType
+    const nodeData = this.getNodeData(sourceNode)
+    const nodeType = this.extractNodeType(nodeData)
     
     const baseColor = this.getNodeTypeColor(nodeType)
     const style = {
@@ -92,9 +100,13 @@ export class StyleRenderer {
    * @param {Object} previewInstance - 预览线实例
    */
   configureDragging(previewInstance) {
+    if (!this.validatePreviewInstance(previewInstance)) {
+      return
+    }
+    
     const { line, sourceNode } = previewInstance
-    const nodeData = sourceNode?.getData() || {}
-    const nodeType = nodeData.type || nodeData.nodeType
+    const nodeData = this.getNodeData(sourceNode)
+    const nodeType = this.extractNodeType(nodeData)
     
     const baseColor = this.getNodeTypeColor(nodeType)
     const style = {
@@ -135,9 +147,13 @@ export class StyleRenderer {
    * @param {Object} previewInstance - 预览线实例
    */
   configureHover(previewInstance) {
+    if (!this.validatePreviewInstance(previewInstance)) {
+      return
+    }
+    
     const { line, sourceNode } = previewInstance
-    const nodeData = sourceNode?.getData() || {}
-    const nodeType = nodeData.type || nodeData.nodeType
+    const nodeData = this.getNodeData(sourceNode)
+    const nodeType = this.extractNodeType(nodeData)
     
     const baseColor = this.getNodeTypeColor(nodeType)
     const style = {
@@ -161,12 +177,16 @@ export class StyleRenderer {
    * @param {string} state - 状态
    */
   updateLabelStyle(previewInstance, state) {
+    if (!this.validatePreviewInstance(previewInstance)) {
+      return
+    }
+    
     const { line, branchLabel, sourceNode } = previewInstance
     
     if (!branchLabel) return
     
-    const nodeData = sourceNode?.getData() || {}
-    const nodeType = nodeData.type || nodeData.nodeType
+    const nodeData = this.getNodeData(sourceNode)
+    const nodeType = this.extractNodeType(nodeData)
     const baseColor = this.getNodeTypeColor(nodeType)
     
     // 根据状态调整标签样式
@@ -245,9 +265,13 @@ export class StyleRenderer {
    * @param {boolean} isDragging - 是否正在拖拽
    */
   updatePreviewLineEndpointStyle(previewInstance, isDragging = false) {
+    if (!this.validatePreviewInstance(previewInstance)) {
+      return
+    }
+    
     const { line, sourceNode } = previewInstance
-    const nodeData = sourceNode?.getData() || {}
-    const nodeType = nodeData.type || nodeData.nodeType
+    const nodeData = this.getNodeData(sourceNode)
+    const nodeType = this.extractNodeType(nodeData)
     const baseColor = this.getNodeTypeColor(nodeType)
     
     const endpointStyle = isDragging ? {
@@ -298,9 +322,13 @@ export class StyleRenderer {
    * @param {boolean} highlight - 是否高亮
    */
   highlightPreviewLineEndpoint(previewInstance, highlight = true) {
+    if (!this.validatePreviewInstance(previewInstance)) {
+      return
+    }
+    
     const { line, sourceNode } = previewInstance
-    const nodeData = sourceNode?.getData() || {}
-    const nodeType = nodeData.type || nodeData.nodeType
+    const nodeData = this.getNodeData(sourceNode)
+    const nodeType = this.extractNodeType(nodeData)
     const baseColor = this.getNodeTypeColor(nodeType)
     
     if (highlight) {
@@ -373,7 +401,19 @@ export class StyleRenderer {
    * @returns {string} 颜色值
    */
   getNodeTypeColor(nodeType) {
-    return this.nodeTypeColors[nodeType] || '#1890ff'
+    if (!nodeType || typeof nodeType !== 'string') {
+      console.warn('⚠️ [样式渲染器] 无效的节点类型:', nodeType)
+      return '#1890ff'
+    }
+    
+    const color = this.nodeTypeColors[nodeType] || this.nodeTypeColors['default'] || '#1890ff'
+    
+    console.log('🎨 [样式渲染器] 获取节点颜色:', {
+      nodeType: nodeType,
+      color: color
+    })
+    
+    return color
   }
 
   /**
@@ -660,6 +700,85 @@ export class StyleRenderer {
         this.configureInteractive(previewInstance)
         break
     }
+  }
+
+  /**
+   * 验证预览线实例
+   * @param {Object} previewInstance - 预览线实例
+   * @returns {boolean} 是否有效
+   */
+  validatePreviewInstance(previewInstance) {
+    if (!previewInstance) {
+      console.warn('⚠️ [样式渲染器] 预览线实例为空')
+      return false
+    }
+    
+    if (!previewInstance.line) {
+      console.warn('⚠️ [样式渲染器] 预览线实例缺少line对象')
+      return false
+    }
+    
+    if (!previewInstance.sourceNode) {
+      console.warn('⚠️ [样式渲染器] 预览线实例缺少sourceNode对象')
+      return false
+    }
+    
+    return true
+  }
+
+  /**
+   * 安全获取节点数据
+   * @param {Object} sourceNode - 源节点
+   * @returns {Object} 节点数据
+   */
+  getNodeData(sourceNode) {
+    if (!sourceNode) {
+      console.warn('⚠️ [样式渲染器] 源节点为空')
+      return {}
+    }
+    
+    try {
+      // 尝试多种方式获取节点数据
+      if (typeof sourceNode.getData === 'function') {
+        return sourceNode.getData() || {}
+      } else if (sourceNode.data) {
+        return sourceNode.data || {}
+      } else if (sourceNode.attrs && sourceNode.attrs.data) {
+        return sourceNode.attrs.data || {}
+      } else {
+        return sourceNode || {}
+      }
+    } catch (error) {
+      console.warn('⚠️ [样式渲染器] 获取节点数据失败:', error)
+      return {}
+    }
+  }
+
+  /**
+   * 提取节点类型
+   * @param {Object} nodeData - 节点数据
+   * @returns {string} 节点类型
+   */
+  extractNodeType(nodeData) {
+    if (!nodeData || typeof nodeData !== 'object') {
+      console.warn('⚠️ [样式渲染器] 节点数据无效')
+      return 'default'
+    }
+    
+    // 尝试多种字段获取节点类型
+    const nodeType = nodeData.type || 
+                     nodeData.nodeType || 
+                     nodeData.componentType || 
+                     nodeData.kind || 
+                     nodeData.category ||
+                     'default'
+    
+    if (!nodeType || typeof nodeType !== 'string') {
+      console.warn('⚠️ [样式渲染器] 无法确定节点类型，使用默认类型')
+      return 'default'
+    }
+    
+    return nodeType
   }
 
   /**

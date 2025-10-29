@@ -2,11 +2,17 @@
   <div 
     class="flow-node" 
     :class="[`flow-node--${actualNodeType}`, { 'flow-node--selected': actualSelected }]"
+    :style="{ 
+      borderColor: nodeColor,
+      backgroundColor: nodeColor,
+      // 🔧 修复：根据节点配置设置正确的圆角
+      borderRadius: nodeShape === 'circle' ? '50%' : '8px'
+    }"
     @click="handleClick"
   >
     <div class="flow-node__icon">
       <slot name="icon">
-        <div class="flow-node__default-icon" :style="{ backgroundColor: nodeColor }"></div>
+        <div class="flow-node__default-icon" :style="{ backgroundColor: 'rgba(255,255,255,0.2)' }"></div>
       </slot>
     </div>
     <div class="flow-node__label">{{ actualLabel }}</div>
@@ -102,13 +108,42 @@ const emit = defineEmits(['click', 'delete', 'slot-click'])
 // 从X6节点或props中获取数据
 const nodeData = computed(() => {
   if (props.node && typeof props.node.getData === 'function') {
-    return props.node.getData() || {}
+    try {
+      return props.node.getData() || {}
+    } catch (error) {
+      console.warn('[FlowNode] 获取节点数据失败:', error)
+      return props.node.data || props.node.store?.data?.data || {}
+    }
   }
   return props.data || {}
 })
 
 const actualNodeType = computed(() => {
-  return nodeData.value.nodeType || props.nodeType || 'start'
+  try {
+    const type = nodeData.value.nodeType || props.nodeType || 'start'
+    
+    // 🔧 修复：增强节点类型识别的调试日志
+    console.log('[FlowNode] 节点类型识别:', {
+      nodeDataType: nodeData.value.nodeType,
+      propsType: props.nodeType,
+      finalType: type,
+      nodeData: nodeData.value,
+      nodeId: props.node?.id,
+      hasNodeData: !!nodeData.value,
+      nodeDataKeys: Object.keys(nodeData.value || {})
+    })
+    
+    // 🔧 修复：验证节点类型是否有效
+    if (!type || typeof type !== 'string') {
+      console.warn('[FlowNode] 无效的节点类型，使用默认值:', type)
+      return 'start'
+    }
+    
+    return type
+  } catch (error) {
+    console.error('[FlowNode] 获取节点类型失败:', error)
+    return 'start'
+  }
 })
 
 const actualLabel = computed(() => {
@@ -126,8 +161,43 @@ const actualDeletable = computed(() => {
 
 // 获取节点颜色
 const nodeColor = computed(() => {
-  const config = getNodeConfig(actualNodeType.value)
-  return config ? config.color : '#5F95FF'
+  try {
+    const config = getNodeConfig(actualNodeType.value)
+    const color = config ? config.color : '#5F95FF'
+    
+    // 🔧 修复：增强调试日志，帮助定位样式问题
+    console.log('[FlowNode] 节点颜色计算:', {
+      nodeType: actualNodeType.value,
+      config: config,
+      color: color,
+      hasConfig: !!config,
+      configKeys: config ? Object.keys(config) : []
+    })
+    
+    return color
+  } catch (error) {
+    console.error('[FlowNode] 获取节点颜色失败:', error)
+    return '#5F95FF' // 默认颜色
+  }
+})
+
+// 🔧 新增：获取节点形状
+const nodeShape = computed(() => {
+  try {
+    const config = getNodeConfig(actualNodeType.value)
+    const shape = config ? config.shape : 'rect'
+    
+    console.log('[FlowNode] 节点形状计算:', {
+      nodeType: actualNodeType.value,
+      shape: shape,
+      config: config
+    })
+    
+    return shape
+  } catch (error) {
+    console.error('[FlowNode] 获取节点形状失败:', error)
+    return 'rect' // 默认形状
+  }
 })
 
 // 处理节点点击 - 现在点击节点直接展示配置抽屉
@@ -204,46 +274,46 @@ const getSlotStyle = (slot) => {
   justify-content: center;
   width: 100px;
   height: 100px;
-  border-radius: 50%;
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  /* 🔧 修复：移除固定的border-radius，改为动态设置 */
+  border: 2px solid #5F95FF;
   cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+  /* 🔧 修复：确保文字颜色为白色，与背景色形成对比 */
+  color: #fff;
 }
 
 .flow-node:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .flow-node--selected {
-  box-shadow: 0 0 0 2px #5F95FF, 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 3px rgba(95, 149, 255, 0.3);
 }
 
 .flow-node__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
   margin-bottom: 8px;
 }
 
 .flow-node__default-icon {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
+  /* 🔧 修复：图标背景色已在模板中动态设置 */
 }
 
 .flow-node__label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: bold;
   text-align: center;
-  color: #333;
-  max-width: 90px;
+  line-height: 1.2;
+  max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* 🔧 修复：确保标签文字为白色 */
+  color: #fff;
 }
 
 .flow-node__delete-btn {
@@ -274,7 +344,8 @@ const getSlotStyle = (slot) => {
   opacity: 1;
 }
 
-/* 节点类型特定样式 */
+/* 移除节点类型特定的边框样式，改为使用动态样式绑定 */
+/* 
 .flow-node--start {
   border: 2px solid #5F95FF;
 }
@@ -318,6 +389,7 @@ const getSlotStyle = (slot) => {
 .flow-node--ab-test {
   border: 2px solid #DDA0DD;
 }
+*/
 
 /* 预占位样式 */
 .preset-slots {

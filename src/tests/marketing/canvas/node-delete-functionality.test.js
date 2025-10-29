@@ -17,7 +17,7 @@ import { register } from '@antv/x6-vue-shape'
 
 // 组件导入
 import TaskFlowCanvasRefactored from '../../../pages/marketing/tasks/components/TaskFlowCanvasRefactored.vue'
-import FlowNode from '../../../components/FlowNode.vue'
+import FlowNode from '../../../components/common/FlowNode.vue'
 
 // 测试辅助函数
 import { createMockGraph, createMockNode } from '../../utils/mockFactory.js'

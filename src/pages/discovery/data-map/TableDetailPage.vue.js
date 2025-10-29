@@ -398,7 +398,6 @@ const getRelationDescription = (sourceTable: string, targetTable: string, fieldN
     }
     return '数据关联';
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

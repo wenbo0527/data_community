@@ -945,11 +945,26 @@ export class StateManager {
 
   setupWindowListeners() {
     if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => {
+      // 存储监听器引用以便后续清理
+      this.windowBeforeUnloadHandler = () => {
         if (this.options.enablePersistence) {
           this.persistState();
         }
-      });
+      };
+      
+      window.addEventListener('beforeunload', this.windowBeforeUnloadHandler);
+      console.log('🔗 [StateManager] 已注册 window beforeunload 事件监听器');
+    }
+  }
+
+  /**
+   * 清理 window 事件监听器
+   */
+  cleanupWindowListeners() {
+    if (typeof window !== 'undefined' && this.windowBeforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this.windowBeforeUnloadHandler);
+      this.windowBeforeUnloadHandler = null;
+      console.log('🧹 [StateManager] 已清理 window beforeunload 事件监听器');
     }
   }
 
@@ -1032,25 +1047,47 @@ export class StateManager {
    * 销毁状态管理器
    */
   destroy() {
+    console.log('🗑️ [StateManager] 开始销毁状态管理器...');
+    
     // 持久化最终状态
     if (this.options.enablePersistence) {
       this.persistState();
     }
     
+    // 清理 window 事件监听器 - 防止内存泄漏
+    this.cleanupWindowListeners();
+    
     // 清理订阅者
+    let totalSubscribers = 0;
+    for (const [key, subscribers] of this.subscribers) {
+      totalSubscribers += subscribers.size;
+      subscribers.clear();
+    }
     this.subscribers.clear();
+    console.log(`🧹 [StateManager] 已清理 ${totalSubscribers} 个订阅者`);
     
     // 清理验证器
+    let totalValidators = 0;
+    for (const [key, validators] of this.validators) {
+      totalValidators += validators.length;
+    }
     this.validators.clear();
+    console.log(`🧹 [StateManager] 已清理 ${totalValidators} 个验证器`);
     
     // 清理中间件
+    const middlewareCount = this.middleware.length;
     this.middleware.length = 0;
+    console.log(`🧹 [StateManager] 已清理 ${middlewareCount} 个中间件`);
     
     // 销毁事件管理器
-    this.eventManager.destroy();
+    if (this.eventManager && typeof this.eventManager.destroy === 'function') {
+      this.eventManager.destroy();
+    }
     
     // 重置状态
     this.reset();
+    
+    console.log('✅ [StateManager] 状态管理器已完全销毁');
   }
 }
 

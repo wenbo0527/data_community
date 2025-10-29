@@ -492,11 +492,31 @@ export class StateSynchronizer {
     if (typeof BroadcastChannel !== 'undefined') {
       this.broadcastChannel = new BroadcastChannel(this.options.broadcastChannel);
       
-      this.broadcastChannel.addEventListener('message', (event) => {
+      // 存储监听器引用以便后续清理
+      this.broadcastMessageHandler = (event) => {
         this.handleBroadcastMessage(event.data);
-      });
+      };
+      
+      this.broadcastChannel.addEventListener('message', this.broadcastMessageHandler);
       
       this.log(`广播通道已设置: ${this.options.broadcastChannel}`);
+    }
+  }
+
+  /**
+   * 清理广播通道
+   */
+  cleanupBroadcastChannel() {
+    if (this.broadcastChannel) {
+      if (this.broadcastMessageHandler) {
+        this.broadcastChannel.removeEventListener('message', this.broadcastMessageHandler);
+        this.broadcastMessageHandler = null;
+      }
+      
+      this.broadcastChannel.close();
+      this.broadcastChannel = null;
+      
+      this.log('广播通道已清理');
     }
   }
 
@@ -740,22 +760,23 @@ export class StateSynchronizer {
    * 销毁同步器
    */
   destroy() {
+    this.log('开始销毁同步器...');
+    
     // 停止同步
     this.stopSyncLoop();
     
-    // 关闭广播通道
-    if (this.broadcastChannel) {
-      this.broadcastChannel.close();
-      this.broadcastChannel = null;
-    }
+    // 清理广播通道 - 防止内存泄漏
+    this.cleanupBroadcastChannel();
     
     // 清理资源
     this.reset();
     
     // 销毁事件管理器
-    this.eventManager.destroy();
+    if (this.eventManager && typeof this.eventManager.destroy === 'function') {
+      this.eventManager.destroy();
+    }
     
-    this.log('同步器已销毁');
+    this.log('同步器已完全销毁');
   }
 }
 

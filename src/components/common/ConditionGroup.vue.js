@@ -95,7 +95,6 @@ const cancelEditGroupName = (group) => {
     group.isEditingName = false;
     group.editingName = '';
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_withDefaultsArg = (function (t) { return t; })({
     editable: true,
     dataSourceTypeOptions: () => [

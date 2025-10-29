@@ -64,7 +64,7 @@ export const NODE_TYPE_CONFIG = {
     label: 'AB测试', 
     hasConfig: true,
     color: '#DDA0DD',
-    maxOutputs: 2,
+    maxOutputs: 'dynamic',
     complexity: 'complex'
   },
   'wait': { 
@@ -151,6 +151,11 @@ export const NODE_SPECIFIC_CONFIG = {
     priority: 'high'
   },
   'ab-test': {
+    versions: [
+      { id: 'version_a', name: '版本A', ratio: 50 },
+      { id: 'version_b', name: '版本B', ratio: 50 },
+      { id: 'version_c', name: '版本C', ratio: 0 }
+    ],
     variants: [
       { name: '变体A', percentage: 50 },
       { name: '变体B', percentage: 50 }

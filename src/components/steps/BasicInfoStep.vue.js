@@ -19,7 +19,6 @@ const handlePeriodsChange = (value) => {
 const handleNext = () => {
     emit('next');
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_withDefaultsArg = (function (t) { return t; })({
     modelValue: () => ({
         name: '',

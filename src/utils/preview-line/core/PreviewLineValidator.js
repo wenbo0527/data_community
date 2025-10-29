@@ -40,25 +40,21 @@ export class PreviewLineValidator {
   isLayoutEngineReady() {
     // 🔧 修复：增强布局引擎就绪检查逻辑，支持多种布局引擎状态
     if (!this.layoutEngine) {
-      console.log('🔍 [PreviewLineValidator] 布局引擎不存在，返回false')
       return false
     }
     
     // 检查布局引擎是否有isLayoutEngineReady方法
     if (typeof this.layoutEngine.isLayoutEngineReady === 'function') {
       const isReady = this.layoutEngine.isLayoutEngineReady()
-      console.log('🔍 [PreviewLineValidator] 布局引擎就绪状态:', isReady)
       return isReady
     }
     
     // 检查布局引擎是否有isReady属性
     if (typeof this.layoutEngine.isReady === 'boolean') {
-      console.log('🔍 [PreviewLineValidator] 使用isReady属性:', this.layoutEngine.isReady)
       return this.layoutEngine.isReady
     }
     
     // 如果布局引擎存在但没有状态检查方法，假设已就绪
-    console.log('🔍 [PreviewLineValidator] 布局引擎存在但无状态检查方法，假设已就绪')
     return true
   }
 
@@ -71,7 +67,7 @@ export class PreviewLineValidator {
    * @param {boolean} forceUpdate - 是否强制更新
    * @returns {Object} 创建需求分析结果
    */
-  checkPreviewLineRequirement(node, requestedState, existingPreviewLines, forceUpdate = false) {
+  async checkPreviewLineRequirement(node, requestedState, existingPreviewLines, forceUpdate = false) {
     const startTime = performance.now()
     
     try {
@@ -79,6 +75,185 @@ export class PreviewLineValidator {
       if (!node) {
         this.log('warn', '预览线需求检查: 节点不存在')
         return this.createRequirementResult(false, '节点不存在', CreationRequirementTypes.NO_CREATION)
+      }
+
+      // 1.1 节点类型验证 - 修复节点类型获取逻辑
+      try {
+        // 🔧 修复：正确获取节点类型，支持多种数据结构
+        let nodeType = 'unknown'
+        let nodeTypeSource = 'unknown'
+        
+        // 方法1：从节点数据中获取类型（X6 VueShape 节点的标准方式）
+        if (node && typeof node.getData === 'function') {
+          try {
+            const nodeData = node.getData()
+            if (nodeData && typeof nodeData === 'object') {
+              // 🔧 关键修复：正确处理 nodeType 字段，无论它是字符串还是对象
+              let typeValue = nodeData.type || nodeData.nodeType || nodeData.taskType
+              
+              if (typeof typeValue === 'string' && typeValue !== '') {
+                nodeType = typeValue
+                nodeTypeSource = 'nodeData.type/nodeType'
+              } else if (typeValue && typeof typeValue === 'object') {
+                // 🔧 修复：如果是对象，尝试提取字符串值
+                if (typeof typeValue.type === 'string' && typeValue.type !== '') {
+                  nodeType = typeValue.type
+                  nodeTypeSource = 'nodeData.type.type'
+                } else if (typeof typeValue.name === 'string' && typeValue.name !== '') {
+                  nodeType = typeValue.name
+                  nodeTypeSource = 'nodeData.type.name'
+                } else if (typeof typeValue.nodeType === 'string' && typeValue.nodeType !== '') {
+                  nodeType = typeValue.nodeType
+                  nodeTypeSource = 'nodeData.type.nodeType'
+                } else {
+                  // 🔧 修复：对象无法直接转换为有效类型，记录详细信息
+                  this.log('warn', `节点类型是对象但无法提取有效字符串`, { 
+                    nodeId: this.getNodeId(node),
+                    typeValue: typeValue,
+                    typeKeys: Object.keys(typeValue || {})
+                  })
+                  nodeType = 'unknown'
+                  nodeTypeSource = 'object-invalid'
+                }
+              }
+            }
+          } catch (getDataError) {
+            this.log('warn', 'getData() 调用失败', { error: getDataError.message })
+          }
+        }
+        
+        // 方法2：直接从节点属性获取
+        if (nodeType === 'unknown') {
+          let typeValue = node?.type || node?.nodeType || node?.taskType
+          
+          if (typeof typeValue === 'string' && typeValue !== '') {
+            nodeType = typeValue
+            nodeTypeSource = 'node.type/nodeType'
+          } else if (typeValue && typeof typeValue === 'object') {
+            // 🔧 修复：同样处理对象类型
+            if (typeof typeValue.type === 'string' && typeValue.type !== '') {
+              nodeType = typeValue.type
+              nodeTypeSource = 'node.type.type'
+            } else if (typeof typeValue.name === 'string' && typeValue.name !== '') {
+              nodeType = typeValue.name
+              nodeTypeSource = 'node.type.name'
+            }
+          }
+        }
+        
+        // 方法3：从节点data属性获取
+        if (nodeType === 'unknown' && node?.data && typeof node.data === 'object') {
+          let typeValue = node.data.type || node.data.nodeType || node.data.taskType
+          
+          if (typeof typeValue === 'string' && typeValue !== '') {
+            nodeType = typeValue
+            nodeTypeSource = 'node.data.type'
+          } else if (typeValue && typeof typeValue === 'object') {
+            // 🔧 修复：处理嵌套对象
+            if (typeof typeValue.type === 'string' && typeValue.type !== '') {
+              nodeType = typeValue.type
+              nodeTypeSource = 'node.data.type.type'
+            } else if (typeof typeValue.name === 'string' && typeValue.name !== '') {
+              nodeType = typeValue.name
+              nodeTypeSource = 'node.data.type.name'
+            }
+          }
+        }
+        
+        // 方法4：从节点 shape 属性推断（X6 特有）
+        if (nodeType === 'unknown' && node?.shape && typeof node.shape === 'string') {
+          // 🔧 修复：从 shape 名称推断节点类型
+          const shapeType = node.shape.replace('-node', '').replace('vue-shape-', '')
+          if (shapeType && shapeType !== 'vue-shape' && shapeType !== '') {
+            nodeType = shapeType
+            nodeTypeSource = 'node.shape'
+          }
+        }
+        
+        // 🔧 最终验证：确保返回的是有效的字符串类型
+        if (typeof nodeType !== 'string' || nodeType === '') {
+          nodeType = 'unknown'
+          nodeTypeSource = 'fallback'
+        }
+        
+        // 🔧 调试日志：记录节点类型获取过程
+        this.log('debug', `节点类型获取: ${nodeType} (来源: ${nodeTypeSource})`, {
+          nodeId: this.getNodeId(node),
+          nodeType: nodeType,
+          source: nodeTypeSource
+        })
+        
+        // 方法4：从节点store获取（X6特有）
+        if (nodeType === 'unknown' && node?.store?.data && typeof node.store.data === 'object') {
+          if (typeof node.store.data.type === 'string' && node.store.data.type !== '') {
+            nodeType = node.store.data.type
+            nodeTypeSource = 'node.store.data.type'
+          } else if (typeof node.store.data.nodeType === 'string' && node.store.data.nodeType !== '') {
+            nodeType = node.store.data.nodeType
+            nodeTypeSource = 'node.store.data.nodeType'
+          }
+        }
+        
+        // 🔧 修复：支持带后缀和不带后缀的节点类型验证
+        const validNodeTypes = [
+          'start', 'start-node',
+          'end', 'end-node', 
+          'sms', 'sms-node',
+          'audience-split', 'audience-split-node',
+          'event-split', 'event-split-node',
+          'ab-test', 'ab-test-node',
+          'delay', 'delay-node',
+          'condition', 'condition-node',
+          'email', 'email-node',
+          'wechat', 'wechat-node',
+          'ai-call', 'ai-call-node',
+          'manual-call', 'manual-call-node'
+        ]
+        
+        // 🔧 修复：智能节点类型验证，支持多种匹配方式
+        const isValidNodeType = (nodeType) => {
+          if (!nodeType || typeof nodeType !== 'string') return false
+          
+          // 直接匹配
+          if (validNodeTypes.includes(nodeType)) return true
+          
+          // 去掉 -node 后缀匹配
+          const baseType = nodeType.replace('-node', '')
+          if (validNodeTypes.includes(baseType)) return true
+          
+          // 添加 -node 后缀匹配
+          const nodeTypeWithSuffix = nodeType + '-node'
+          if (validNodeTypes.includes(nodeTypeWithSuffix)) return true
+          
+          return false
+        }
+        
+        // 详细的节点类型调试信息
+        const nodeId = this.getNodeId(node)
+        this.log('debug', `[PreviewLineValidator] 节点类型检查: ${nodeId}`, {
+          nodeType: nodeType,
+          nodeTypeSource: nodeTypeSource,
+          nodeConstructor: node?.constructor?.name,
+          isValidType: isValidNodeType(nodeType)
+        })
+        
+        if (!isValidNodeType(nodeType)) {
+          // 🔧 修复：将警告级别降低为debug，避免控制台错误日志
+          this.log('debug', `[PreviewLineValidator] 未识别的节点类型: ${nodeId}`, {
+            nodeType: nodeType,
+            nodeTypeSource: nodeTypeSource,
+            validTypes: validNodeTypes.slice(0, 12) // 只显示基础类型，避免日志过长
+          })
+          // 不阻止创建，继续执行
+        }
+
+      } catch (nodeTypeError) {
+        this.log('error', '[PreviewLineValidator] 节点类型验证异常', {
+          nodeId: this.getNodeId(node),
+          error: nodeTypeError.message,
+          stack: nodeTypeError.stack
+        })
+        // 继续执行，但记录错误
       }
       
       // 验证节点基本属性 - 支持多种获取ID的方式
@@ -136,8 +311,20 @@ export class PreviewLineValidator {
         return this.createRequirementResult(true, '强制更新', CreationRequirementTypes.NEEDS_UPDATE)
       }
 
-      // 3. 获取现有预览线 - 使用已验证的nodeId
-      const existingLines = existingPreviewLines.get(nodeId) || []
+      // 3. 获取现有预览线 - 兼容不同的数据类型
+      let existingLines = []
+      if (existingPreviewLines) {
+        if (typeof existingPreviewLines.get === 'function') {
+          // 如果是 Map 对象
+          existingLines = existingPreviewLines.get(nodeId) || []
+        } else if (Array.isArray(existingPreviewLines)) {
+          // 如果直接传入的是数组
+          existingLines = existingPreviewLines
+        } else if (typeof existingPreviewLines === 'object') {
+          // 如果是普通对象
+          existingLines = existingPreviewLines[nodeId] || []
+        }
+      }
       
       // 4. 验证现有预览线有效性
       const validationResult = this.validateExistingPreviewLines(existingLines, node)
@@ -148,26 +335,15 @@ export class PreviewLineValidator {
 
       // 5. 根据节点类型进行具体检查
       let requirementResult
-      try {
-        if (this.isBranchNode(node)) {
-          requirementResult = this.checkBranchNodeRequirement(node, requestedState, existingLines)
-        } else {
-          requirementResult = this.checkSingleNodeRequirement(node, requestedState, existingLines)
-        }
-        
-        // 验证返回结果的有效性
-        if (!requirementResult || typeof requirementResult !== 'object') {
-          throw new Error(`节点类型检查返回无效结果: ${typeof requirementResult}`)
-        }
-        
-      } catch (typeCheckError) {
-        this.log('error', `节点类型检查异常: ${nodeId}`, {
-          error: typeCheckError.message,
-          stack: typeCheckError.stack,
-          nodeId: nodeId,
-          isBranchNode: this.isBranchNode(node)
-        })
-        return this.createRequirementResult(true, `节点类型检查异常: ${typeCheckError.message}`, CreationRequirementTypes.NEEDS_CREATION)
+      
+      // 检查节点类型
+      const isBranch = this.isBranchNode(node)
+      
+      // 根据节点类型调用相应的检查方法
+      if (isBranch) {
+        requirementResult = this.checkBranchNodeRequirement(node, requestedState, existingLines)
+      } else {
+        requirementResult = this.checkSingleNodeRequirement(node, requestedState, existingLines)
       }
 
       // 6. 记录性能指标
@@ -177,34 +353,17 @@ export class PreviewLineValidator {
       return requirementResult
 
     } catch (error) {
-      // 获取节点ID用于错误日志 - 增强错误处理
-      let errorNodeId = 'unknown'
-      let errorContext = {}
+      // 获取节点ID用于错误日志
+      const errorNodeId = this.getNodeId(node)
       
-      try {
-        if (node && node.id) {
-          errorNodeId = node.id
-        } else if (node && typeof node.getId === 'function') {
-          errorNodeId = node.getId()
-        }
-        
-        // 收集更多上下文信息
-        errorContext = {
-          nodeType: typeof node,
-          nodeConstructor: node?.constructor?.name,
-          hasId: !!node?.id,
-          hasGetId: typeof node?.getId === 'function',
-          hasStore: !!node?.store,
-          requestedState: requestedState,
-          forceUpdate: forceUpdate,
-          errorMessage: error.message,
-          errorStack: error.stack
-        }
-      } catch (contextError) {
-        errorContext.contextError = contextError.message
-      }
+      this.log('error', `预览线需求检查异常: ${errorNodeId}`, {
+        nodeId: errorNodeId,
+        error: error.message,
+        stack: error.stack,
+        requestedState,
+        forceUpdate
+      })
       
-      this.log('error', `预览线需求检查异常: ${errorNodeId}`, errorContext)
       return this.createRequirementResult(true, `检查异常: ${error.message}`, CreationRequirementTypes.NEEDS_CREATION)
     }
   }
@@ -218,114 +377,24 @@ export class PreviewLineValidator {
    * @returns {Object} 需求分析结果
    */
   checkBranchNodeRequirement(node, requestedState, existingLines) {
-    try {
-      // 获取节点ID用于日志
-      let nodeId = 'unknown'
-      try {
-        nodeId = node?.id || node?.getId?.() || 'unknown'
-      } catch (e) {
-        // 忽略ID获取错误
-      }
+    // 获取节点ID用于日志
+    const nodeId = this.getNodeId(node)
 
-      // 获取分支配置 - 增强安全检查
-      const branchAnalysis = this.analyzeBranchConfiguration(node)
-      
-      // 验证分支分析结果的完整性
-      if (!branchAnalysis || typeof branchAnalysis !== 'object') {
-        this.log('error', `分支分析返回无效结果: ${nodeId}`, {
-          nodeId,
-          branchAnalysis,
-          resultType: typeof branchAnalysis
-        })
-        return this.createRequirementResult(false, '分支分析返回无效结果', CreationRequirementTypes.NO_CREATION)
-      }
-      
-      if (!branchAnalysis.isValid) {
-        this.log('warn', `分支配置无效: ${nodeId} - ${branchAnalysis.reason}`, {
-          nodeId,
-          branchAnalysis
-        })
-        return this.createRequirementResult(false, `分支配置无效: ${branchAnalysis.reason}`, CreationRequirementTypes.NO_CREATION)
-      }
-
-      // 2. 分析现有预览线 - 增强安全检查
-      let existingAnalysis
-      try {
-        existingAnalysis = this.analyzeExistingBranchLines(existingLines, branchAnalysis.requiredBranches)
-        
-        if (!existingAnalysis || typeof existingAnalysis !== 'object') {
-          throw new Error(`现有预览线分析返回无效结果: ${typeof existingAnalysis}`)
-        }
-      } catch (analysisError) {
-        this.log('error', `现有预览线分析异常: ${nodeId}`, {
-          nodeId,
-          error: analysisError.message,
-          stack: analysisError.stack,
-          existingLinesCount: existingLines?.length || 0,
-          requiredBranchesCount: branchAnalysis.requiredBranches?.length || 0
-        })
-        return this.createRequirementResult(true, `现有预览线分析异常: ${analysisError.message}`, CreationRequirementTypes.NEEDS_CREATION)
-      }
-      
-      // 3. 详细的需求判断逻辑 - 增强安全检查
-      let needsCreation
-      try {
-        needsCreation = this.determineBranchCreationNeeds(branchAnalysis, existingAnalysis, requestedState)
-        
-        if (!needsCreation || typeof needsCreation !== 'object') {
-          throw new Error(`需求判断返回无效结果: ${typeof needsCreation}`)
-        }
-      } catch (needsError) {
-        this.log('error', `需求判断异常: ${nodeId}`, {
-          nodeId,
-          error: needsError.message,
-          stack: needsError.stack,
-          branchAnalysis,
-          existingAnalysis
-        })
-        return this.createRequirementResult(true, `需求判断异常: ${needsError.message}`, CreationRequirementTypes.NEEDS_CREATION)
-      }
-      
-      // 4. 生成详细的创建需求结果 - 增强安全检查
-      try {
-        const result = this.createBranchRequirementResult(needsCreation, branchAnalysis, existingAnalysis)
-        
-        if (!result || typeof result !== 'object') {
-          throw new Error(`需求结果生成返回无效结果: ${typeof result}`)
-        }
-        
-        return result
-      } catch (resultError) {
-        this.log('error', `需求结果生成异常: ${nodeId}`, {
-          nodeId,
-          error: resultError.message,
-          stack: resultError.stack,
-          needsCreation,
-          branchAnalysis,
-          existingAnalysis
-        })
-        return this.createRequirementResult(true, `需求结果生成异常: ${resultError.message}`, CreationRequirementTypes.NEEDS_CREATION)
-      }
-      
-    } catch (error) {
-      // 获取节点ID用于错误日志
-      let errorNodeId = 'unknown'
-      try {
-        errorNodeId = node?.id || node?.getId?.() || 'unknown'
-      } catch (e) {
-        // 忽略ID获取错误
-      }
-      
-      this.log('error', `分支节点需求检查异常: ${errorNodeId}`, {
-        nodeId: errorNodeId,
-        error: error.message,
-        stack: error.stack,
-        requestedState,
-        existingLinesCount: existingLines?.length || 0
-      })
-      
-      return this.createRequirementResult(true, `分支节点需求检查异常: ${error.message}`, CreationRequirementTypes.NEEDS_CREATION)
+    // 1. 获取分支配置
+    const branchAnalysis = this.analyzeBranchConfiguration(node)
+    
+    if (!branchAnalysis.isValid) {
+      return this.createRequirementResult(false, `分支配置无效: ${branchAnalysis.reason}`, CreationRequirementTypes.NO_CREATION)
     }
+
+    // 2. 分析现有预览线
+    const existingAnalysis = this.analyzeExistingBranchLines(existingLines, branchAnalysis.requiredBranches)
+    
+    // 3. 判断创建需求
+    const needsCreation = this.determineBranchCreationNeeds(branchAnalysis, existingAnalysis, requestedState)
+    
+    // 4. 生成结果
+    return this.createBranchRequirementResult(needsCreation, branchAnalysis, existingAnalysis)
   }
 
   /**
@@ -336,123 +405,50 @@ export class PreviewLineValidator {
    * @returns {Object} 需求分析结果
    */
   checkSingleNodeRequirement(node, requestedState, existingLines) {
-    try {
-      // 获取节点ID用于日志
-      let nodeId = 'unknown'
-      try {
-        nodeId = node?.id || node?.getId?.() || 'unknown'
-      } catch (e) {
-        // 忽略ID获取错误
-      }
+    // 获取节点ID用于日志
+    const nodeId = this.getNodeId(node)
 
-      // 0. 检查节点配置状态 - 增强安全检查
-      let nodeData
-      try {
-        nodeData = node?.getData ? node.getData() : node?.data || {}
-        
-        if (!nodeData || typeof nodeData !== 'object') {
-          this.log('warn', `节点数据获取失败: ${nodeId}`, {
-            nodeId,
-            nodeData,
-            dataType: typeof nodeData
-          })
-          return this.createRequirementResult(false, '节点数据无效，不创建预览线', CreationRequirementTypes.NO_CREATION, {
-            nodeType: 'single',
-            error: '节点数据无效'
-          })
-        }
-      } catch (dataError) {
-        this.log('error', `节点数据获取异常: ${nodeId}`, {
-          nodeId,
-          error: dataError.message,
-          stack: dataError.stack
-        })
-        return this.createRequirementResult(false, `节点数据获取异常: ${dataError.message}`, CreationRequirementTypes.NO_CREATION, {
-          nodeType: 'single',
-          error: dataError.message
-        })
-      }
-      
-      if (nodeData.isConfigured === false || nodeData.isConfigured === undefined) {
-        this.log('info', `节点未配置，不创建预览线: ${nodeId}`, {
-          nodeId,
-          isConfigured: nodeData.isConfigured
-        })
-        return this.createRequirementResult(false, '节点未配置，不创建预览线', CreationRequirementTypes.NO_CREATION, {
-          nodeType: 'single',
-          isConfigured: nodeData.isConfigured
-        })
-      }
-
-      // 1. 检查是否已有有效预览线 - 增强安全检查
-      if (Array.isArray(existingLines) && existingLines.length > 0) {
-        let validLine
-        try {
-          validLine = existingLines.find(line => {
-            try {
-              return this.isValidPreviewLine(line, node)
-            } catch (validationError) {
-              this.log('warn', `预览线有效性检查异常: ${nodeId}`, {
-                nodeId,
-                lineId: line?.id || 'unknown',
-                error: validationError.message
-              })
-              return false
-            }
-          })
-        } catch (findError) {
-          this.log('error', `查找有效预览线异常: ${nodeId}`, {
-            nodeId,
-            error: findError.message,
-            stack: findError.stack,
-            existingLinesCount: existingLines.length
-          })
-          // 继续执行，假设没有找到有效预览线
-        }
-        
-        if (validLine) {
-          // 检查状态是否需要更新
-          if (validLine.state !== requestedState) {
-            return this.createRequirementResult(true, `状态需要更新: ${validLine.state} -> ${requestedState}`, CreationRequirementTypes.NEEDS_UPDATE, {
-              existingLine: validLine,
-              targetState: requestedState
-            })
-          }
-          
-          return this.createRequirementResult(false, `已存在有效预览线: ${validLine.id}`, CreationRequirementTypes.NO_CREATION, {
-            existingLine: validLine
-          })
-        }
-      }
-
-      // 2. 需要创建新预览线
-      return this.createRequirementResult(true, '需要创建单一预览线', CreationRequirementTypes.NEEDS_CREATION, {
+    // 1. 检查节点配置状态
+    let nodeData
+    if (typeof node.getData === 'function') {
+      nodeData = node.getData()
+    } else if (node.data) {
+      nodeData = node.data
+    } else {
+      nodeData = {}
+    }
+    
+    if (nodeData.isConfigured === false) {
+      return this.createRequirementResult(false, '节点未配置，不创建预览线', CreationRequirementTypes.NO_CREATION, {
         nodeType: 'single',
-        targetState: requestedState
-      })
-      
-    } catch (error) {
-      // 获取节点ID用于错误日志
-      let errorNodeId = 'unknown'
-      try {
-        errorNodeId = node?.id || node?.getId?.() || 'unknown'
-      } catch (e) {
-        // 忽略ID获取错误
-      }
-      
-      this.log('error', `单一节点需求检查异常: ${errorNodeId}`, {
-        nodeId: errorNodeId,
-        error: error.message,
-        stack: error.stack,
-        requestedState,
-        existingLinesCount: existingLines?.length || 0
-      })
-      
-      return this.createRequirementResult(true, `单一节点需求检查异常: ${error.message}`, CreationRequirementTypes.NEEDS_CREATION, {
-        nodeType: 'single',
-        error: error.message
+        isConfigured: nodeData.isConfigured
       })
     }
+
+    // 2. 检查是否已有有效预览线
+    if (Array.isArray(existingLines) && existingLines.length > 0) {
+      const validLine = existingLines.find(line => this.isValidPreviewLine(line, node))
+      
+      if (validLine) {
+        // 检查状态是否需要更新
+        if (validLine.state !== requestedState) {
+          return this.createRequirementResult(true, `状态需要更新: ${validLine.state} -> ${requestedState}`, CreationRequirementTypes.NEEDS_UPDATE, {
+            existingLine: validLine,
+            targetState: requestedState
+          })
+        }
+        
+        return this.createRequirementResult(false, `已存在有效预览线: ${validLine.id}`, CreationRequirementTypes.NO_CREATION, {
+          existingLine: validLine
+        })
+      }
+    }
+
+    // 3. 需要创建新预览线
+    return this.createRequirementResult(true, '需要创建单一预览线', CreationRequirementTypes.NEEDS_CREATION, {
+      nodeType: 'single',
+      targetState: requestedState
+    })
   }
 
   /**
@@ -775,51 +771,51 @@ export class PreviewLineValidator {
    * @returns {boolean} 是否为分支节点
    */
   isBranchNode(node) {
-    try {
-      // 安全获取节点数据
-      let nodeData
-      try {
-        nodeData = node?.getData ? node.getData() : node?.data || {}
-      } catch (dataError) {
-        // 如果获取数据失败，记录日志并返回false
-        this.log('warn', '节点数据获取失败，假设为非分支节点', {
-          error: dataError.message,
-          nodeId: node?.id || 'unknown'
-        })
-        return false
-      }
-      
-      // 安全获取节点类型
-      const nodeType = nodeData?.type || nodeData?.nodeType || node?.type
-      
-      if (!nodeType) {
-        this.log('warn', '节点类型未定义，假设为非分支节点', {
-          nodeId: node?.id || 'unknown',
-          nodeData: nodeData
-        })
-        return false
-      }
-      
-      const branchTypes = [
-        NodeTypes.AUDIENCE_SPLIT,
-        NodeTypes.EVENT_SPLIT,
-        NodeTypes.AB_TEST
-      ]
-      
-      return branchTypes.includes(nodeType)
-      
-    } catch (error) {
-      this.log('error', '分支节点检查异常', {
-        error: error.message,
-        stack: error.stack,
-        nodeId: node?.id || 'unknown'
-      })
+    if (!node) {
       return false
+    }
+
+    // 获取节点数据
+    let nodeData = null
+    if (typeof node.getData === 'function') {
+      nodeData = node.getData()
+    } else if (node.data) {
+      nodeData = node.data
+    } else if (node.store?.data?.data) {
+      nodeData = node.store.data.data
+    }
+
+    if (!nodeData) {
+      return false
+    }
+
+    // 获取节点类型
+    const nodeType = nodeData.type || nodeData.nodeType || node.type || node.nodeType
+
+    if (!nodeType) {
+      return false
+    }
+
+    // 检查是否为分支节点类型
+    const branchNodeTypes = ['audience-split', 'event-split', 'ab-test', 'condition']
+    return branchNodeTypes.includes(nodeType)
+  }
+
+  /**
+   * 获取节点ID的辅助方法
+   * @param {Object} node - 节点对象
+   * @returns {string} 节点ID
+   */
+  getNodeId(node) {
+    try {
+      return node?.id || node?.getId?.() || node?.data?.id || 'unknown'
+    } catch (error) {
+      return 'unknown'
     }
   }
 
   /**
-   * 检查预览线是否有效
+   * 检查预览线是否有效 - 增强版，包含坐标验证
    * @param {Object} line - 预览线
    * @param {Object} node - 节点
    * @returns {boolean} 是否有效
@@ -828,15 +824,27 @@ export class PreviewLineValidator {
     try {
       // 基础null检查
       if (!line || !node) {
+        this.log('warn', '预览线有效性检查: 基础参数缺失', {
+          hasLine: !!line,
+          hasNode: !!node
+        })
         return false
       }
       
       if (!line.id || !line.line) {
+        this.log('warn', '预览线有效性检查: 预览线结构无效', {
+          hasId: !!line.id,
+          hasLine: !!line.line,
+          lineId: line.id
+        })
         return false
       }
 
       // 检查预览线是否仍然存在于图中
       if (line.line.isRemoved && line.line.isRemoved()) {
+        this.log('warn', '预览线有效性检查: 预览线已被移除', {
+          lineId: line.id
+        })
         return false
       }
 
@@ -861,7 +869,39 @@ export class PreviewLineValidator {
 
       // 检查源节点是否匹配
       if (line.sourceNode && line.sourceNode.id !== nodeId) {
+        this.log('warn', '预览线有效性检查: 源节点不匹配', {
+          lineId: line.id,
+          expectedNodeId: nodeId,
+          actualNodeId: line.sourceNode.id
+        })
         return false
+      }
+
+      // 执行坐标验证
+      const coordinateValidation = this.validatePortCoordinates(line, node)
+      
+      // 输出详细的坐标验证日志
+      this.log('info', '预览线坐标验证结果', {
+        lineId: line.id,
+        nodeId: nodeId,
+        coordinateValidation: coordinateValidation,
+        isValid: coordinateValidation.isValid
+      })
+
+      // 如果坐标验证失败，记录但不影响整体有效性（可配置）
+      if (!coordinateValidation.isValid) {
+        this.log('warn', '预览线坐标验证失败', {
+          lineId: line.id,
+          nodeId: nodeId,
+          errors: coordinateValidation.errors,
+          deviations: coordinateValidation.coordinates?.deviations
+        })
+        
+        // 根据配置决定是否因坐标问题判定为无效
+        const strictCoordinateValidation = this.configManager?.getConfig?.()?.validation?.strictCoordinateValidation || false
+        if (strictCoordinateValidation) {
+          return false
+        }
       }
 
       return true
@@ -912,17 +952,6 @@ export class PreviewLineValidator {
     try {
       
       // 调试日志：记录节点数据结构
-      if (this.debugMode) {
-        console.log('[PreviewLineValidator] 分析人群分流节点数据:', {
-          nodeData: nodeData,
-          config: config,
-          hasConfig: !!config,
-          configKeys: config ? Object.keys(config) : [],
-          hasCrowdLayers: !!(nodeData.crowdLayers || config.crowdLayers),
-          isConfigured: nodeData.isConfigured || config.isConfigured
-        })
-      }
-      
       // 支持多种人群配置字段 - 增强容错性
       let audienceData = null
       
@@ -1013,18 +1042,6 @@ export class PreviewLineValidator {
         type: 'audience',
         isUnmatch: true,
         originalData: unmatchBranch
-      })
-    }
-    
-    // 调试日志：记录提取结果
-    if (this.debugMode) {
-      console.log('[PreviewLineValidator] 人群分支提取结果:', {
-        totalBranches: branches.length,
-        branches: branches.map(b => ({ id: b.id, label: b.label, type: b.type, isUnmatch: b.isUnmatch })),
-        hasAudienceData: !!audienceData,
-        audienceDataLength: audienceData ? audienceData.length : 0,
-        hasUnmatchBranch: !!unmatchBranch,
-        depth: depth
       })
     }
     
@@ -1186,6 +1203,119 @@ export class PreviewLineValidator {
       details,
       timestamp: Date.now()
     }
+  }
+
+  /**
+   * 验证端口坐标 - 专门的坐标校验方法
+   * @param {Object} previewLine - 预览线对象
+   * @param {Object} node - 节点对象
+   * @returns {Object} 坐标验证结果
+   */
+  async validatePortCoordinates(previewLine, node) {
+    try {
+      // 动态导入ValidationUtils
+      const { ValidationUtils } = await import('./PreviewLineValidationError.js')
+      
+      // 使用ValidationUtils的增强验证方法，包含坐标转换验证
+      return ValidationUtils.validatePreviewLineConnection(previewLine, node, {
+        thresholds: {
+          position: 5,  // 位置偏差阈值
+          distance: 10, // 距离偏差阈值
+          coordinateTransform: 3 // 坐标转换偏差阈值
+        }
+      })
+    } catch (error) {
+      this.log('error', '端口坐标验证异常', {
+        error: error.message,
+        lineId: previewLine?.id || 'unknown',
+        nodeId: node?.id || 'unknown'
+      })
+      
+      return {
+        isValid: false,
+        errors: [`坐标验证异常: ${error.message}`],
+        warnings: [],
+        coordinates: {},
+        nodeTypeValidation: null,
+        coordinateTransformValidation: null
+      }
+    }
+  }
+
+  /**
+   * 获取节点类型来源信息（用于调试）
+   * @param {Object} node - 节点对象
+   * @param {string} nodeType - 已获取的节点类型
+   * @returns {string} 类型来源描述
+   */
+  getNodeTypeSource(node, nodeType) {
+    if (!node) return 'node_null'
+    
+    if (node && typeof node.getData === 'function') {
+      const nodeData = node.getData()
+      if (nodeData?.type === nodeType) return 'getData().type'
+      if (nodeData?.nodeType === nodeType) return 'getData().nodeType'
+    }
+    
+    if (node?.type === nodeType) return 'node.type'
+    if (node?.nodeType === nodeType) return 'node.nodeType'
+    if (node?.data?.type === nodeType) return 'node.data.type'
+    if (node?.data?.nodeType === nodeType) return 'node.data.nodeType'
+    if (node?.store?.data?.type === nodeType) return 'node.store.data.type'
+    if (node?.store?.data?.nodeType === nodeType) return 'node.store.data.nodeType'
+    
+    return 'unknown_source'
+  }
+
+  /**
+   * 从可能的对象或字符串中提取有效的节点类型字符串
+   * @param {*} typeValue - 可能的类型值
+   * @param {string} source - 来源标识，用于调试
+   * @returns {string} - 提取的节点类型字符串
+   */
+  extractStringType(typeValue, source = 'unknown') {
+    // 如果已经是字符串且不为空，直接返回
+    if (typeof typeValue === 'string' && typeValue.trim() !== '') {
+      return typeValue.trim();
+    }
+    
+    // 如果是对象，尝试从常见属性中提取
+    if (typeValue && typeof typeValue === 'object') {
+      // 尝试常见的类型属性
+      const possibleKeys = ['type', 'nodeType', 'name', 'kind', 'category'];
+      
+      for (const key of possibleKeys) {
+        if (typeValue[key] && typeof typeValue[key] === 'string' && typeValue[key].trim() !== '') {
+          return typeValue[key].trim();
+        }
+      }
+      
+      // 如果对象有 toString 方法且不是默认的 [object Object]
+      if (typeof typeValue.toString === 'function') {
+        const stringValue = typeValue.toString();
+        if (stringValue !== '[object Object]' && stringValue !== 'object') {
+          return stringValue;
+        }
+      }
+      
+      // 最后尝试 JSON.stringify 并提取有用信息
+      try {
+        const jsonStr = JSON.stringify(typeValue);
+        if (jsonStr && jsonStr !== '{}' && jsonStr.length < 100) {
+          // 尝试从 JSON 中提取类型信息
+          const typeMatch = jsonStr.match(/"(?:type|nodeType|name)"\s*:\s*"([^"]+)"/);
+          if (typeMatch && typeMatch[1]) {
+            return typeMatch[1];
+          }
+        }
+      } catch (e) {
+        // JSON.stringify 失败，忽略
+      }
+      
+      return 'unknown-object-type';
+    }
+    
+    return 'unknown';
   }
 
   /**

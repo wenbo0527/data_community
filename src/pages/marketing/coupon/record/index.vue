@@ -3,22 +3,23 @@
         <a-card class="search-card" :bordered="false">
             <a-form :model="searchForm" layout="inline" class="filter-form">
                 <div class="form-content">
-                    <a-form-item field="userId" label="用户ID">
-                        <a-input v-model="searchForm.userId" placeholder="请输入用户ID" allow-clear />
-                    </a-form-item>
-                    <a-form-item field="couponId" label="券实例ID">
-                        <a-input v-model="searchForm.couponId" placeholder="请输入券实例ID" allow-clear />
-                    </a-form-item>
-                    <a-form-item field="packageId" label="券包ID">
-                        <a-input v-model="searchForm.packageId" placeholder="请输入券包ID" allow-clear />
-                    </a-form-item>
-                    <a-form-item field="taskId" label="任务ID">
-                        <a-input v-model="searchForm.taskId" placeholder="请输入任务ID" allow-clear />
-                    </a-form-item>
                     <div class="form-row">
-                        <a-form-item field="time" label="发放时间" class="date-form-item">
-                            <a-range-picker v-model="searchForm.time" show-time
-                                format="YYYY-MM-DD HH:mm:ss" :placeholder="['开始时间', '结束时间']" />
+                        <a-form-item field="userId" label="用户ID">
+                            <a-input v-model="searchForm.userId" placeholder="请输入用户ID" allow-clear />
+                        </a-form-item>
+                        <a-form-item field="couponId" label="券实例ID">
+                            <a-input v-model="searchForm.couponId" placeholder="请输入券实例ID" allow-clear />
+                        </a-form-item>
+                        <a-form-item field="inventoryId" label="券库存ID">
+                            <a-input v-model="searchForm.inventoryId" placeholder="请输入券库存ID" allow-clear />
+                        </a-form-item>
+                        <a-form-item field="packageId" label="券包ID">
+                            <a-input v-model="searchForm.packageId" placeholder="请输入券包ID" allow-clear />
+                        </a-form-item>
+                    </div>
+                    <div class="form-row">
+                        <a-form-item field="taskId" label="任务ID">
+                            <a-input v-model="searchForm.taskId" placeholder="请输入任务ID" allow-clear />
                         </a-form-item>
                         <a-form-item field="status" label="发放状态">
                             <a-select v-model="searchForm.status" placeholder="全部状态" allow-clear>
@@ -35,6 +36,12 @@
                                 <a-option value="过期">过期</a-option>
                                 <a-option value="作废">作废</a-option>
                             </a-select>
+                        </a-form-item>
+                    </div>
+                    <div class="form-row">
+                        <a-form-item field="time" label="发放时间" class="date-form-item">
+                            <a-range-picker v-model="searchForm.time" show-time
+                                format="YYYY-MM-DD HH:mm:ss" :placeholder="['开始时间', '结束时间']" />
                         </a-form-item>
                     </div>
                 </div>
@@ -74,6 +81,7 @@
                 <template #columns>
                     <a-table-column title="用户ID" data-index="userId" :width="120" align="center" />
                     <a-table-column title="券实例ID" data-index="couponId" :width="140" align="center" />
+                    <a-table-column title="券库存ID" data-index="inventoryId" :width="140" align="center" />
                     <a-table-column title="券包ID" data-index="packageId" :width="140" align="center" />
                     <a-table-column title="任务ID" data-index="taskId" :width="140" align="center" />
                     <a-table-column title="流水类型" data-index="operationType" :width="100" align="center">
@@ -127,6 +135,7 @@ const couponId = route.params.id
 const searchForm = reactive({
     userId: '',
     couponId: '',
+    inventoryId: '',
     packageId: '',
     taskId: '',
     count: undefined,
@@ -179,6 +188,7 @@ const handleSearch = () => {
 const handleReset = () => {
     searchForm.userId = ''
     searchForm.couponId = ''
+    searchForm.inventoryId = ''
     searchForm.packageId = ''
     searchForm.taskId = ''
     searchForm.count = undefined

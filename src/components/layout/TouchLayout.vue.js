@@ -6,7 +6,6 @@ const route = useRoute();
 const currentPageTitle = computed(() => {
     return route.meta.title || route.name || '';
 });
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

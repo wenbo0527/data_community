@@ -3,7 +3,7 @@
  * 负责X6图实例的创建、配置和核心插件的初始化
  */
 import { ref, nextTick } from 'vue'
-import { Graph } from '@antv/x6'
+import { Graph, Shape } from '@antv/x6'
 import { Scroller } from '@antv/x6-plugin-scroller'
 import { History } from '@antv/x6-plugin-history'
 import { Snapline } from '@antv/x6-plugin-snapline'
@@ -119,7 +119,8 @@ export function useCanvasCore() {
             })
           },
           validateConnection({ targetMagnet }) {
-            return !!targetMagnet
+            // 🔧 禁用所有端口拖拽连接，连接线应仅通过预览线转换生成
+            return false
           }
         },
         

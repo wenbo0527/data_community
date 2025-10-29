@@ -1,6 +1,4 @@
-import type { DataProduct, CreditConfig } from '../types/accompany'
-
-import { Scene } from '../types/accompany';
+import type { DataProduct, CreditConfig, Scene } from '../types/accompany'
 
 export const calculateAssignedAmount = (scenes: Scene[] = []): number => {
   return scenes.reduce((total: number, scene: Scene) => 

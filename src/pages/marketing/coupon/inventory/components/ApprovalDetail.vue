@@ -1,10 +1,11 @@
 <template>
   <a-modal
-    v-model:visible="visible"
+    :visible="visible"
     title="审批详情"
     width="700px"
     :footer="false"
     @cancel="handleCancel"
+    @update:visible="$emit('update:visible', $event)"
   >
     <div class="approval-detail" v-if="approvalData.id">
       <!-- 基本信息 -->

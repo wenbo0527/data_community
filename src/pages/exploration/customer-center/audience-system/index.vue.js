@@ -5,7 +5,6 @@ const router = useRouter();
 const goToAudienceManagement = () => {
     router.push('/exploration/customer-center/audience-system/audience-management');
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

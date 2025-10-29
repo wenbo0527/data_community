@@ -461,4 +461,4 @@ export class PreviewLineLock {
     console.log(`💥 [预览线锁定] 已销毁`);
   }
 }
-export default PreviewLineLock;
+// 默认导出已通过 export class 实现

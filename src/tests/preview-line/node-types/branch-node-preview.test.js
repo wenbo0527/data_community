@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { PreviewLineSystem } from '../../../utils/preview-line/PreviewLineSystem.js'
+import PreviewLineSystem from '../../../utils/preview-line/PreviewLineSystem.js'
 import { PreviewLineManager } from '../../../utils/preview-line/core/PreviewLineManager.js'
 import { PreviewLineValidator } from '../../../utils/preview-line/core/PreviewLineValidator.js'
 

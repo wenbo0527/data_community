@@ -5,32 +5,32 @@
  */
 
 // 导入配置模块
-import LayoutConfig from './layout/config/LayoutConfig.js';
-import PerformanceConfig from './layout/config/PerformanceConfig.js';
+import { LayoutConfig } from './layout/config/LayoutConfig.js';
+import { PerformanceConfig } from './layout/config/PerformanceConfig.js';
 
 // 导入核心模块
-import DataPreprocessor from './layout/core/DataPreprocessor.js';
-import LayoutExecutor from './layout/core/LayoutExecutor.js';
-import PositionApplicator from './layout/core/PositionApplicator.js';
+import { DataPreprocessor } from './layout/core/DataPreprocessor.js';
+import { LayoutExecutor } from './layout/core/LayoutExecutor.js';
+import { PositionApplicator } from './layout/core/PositionApplicator.js';
 
 // 导入算法模块
-import LayerCalculator from './layout/algorithms/LayerCalculator.js';
-import HierarchicalBuilder from './layout/algorithms/HierarchicalBuilder.js';
-import BottomUpPositioner from './layout/algorithms/BottomUpPositioner.js';
-import LayerOptimizer from './layout/algorithms/LayerOptimizer.js';
-import GlobalOptimizer from './layout/algorithms/GlobalOptimizer.js';
+import { LayerCalculator } from './layout/algorithms/LayerCalculator.js';
+import { HierarchicalBuilder } from './layout/algorithms/HierarchicalBuilder.js';
+import { BottomUpPositioner } from './layout/algorithms/BottomUpPositioner.js';
+import { LayerOptimizer } from './layout/algorithms/LayerOptimizer.js';
+import { GlobalOptimizer } from './layout/algorithms/GlobalOptimizer.js';
 
 // 导入工具模块
-import NodeFilter from './layout/utils/NodeFilter.js';
-import EdgeFilter from './layout/utils/EdgeFilter.js';
-import LayerUtils from './layout/utils/LayerUtils.js';
-import PositionUtils from './layout/utils/PositionUtils.js';
+import { NodeFilter } from './layout/utils/NodeFilter.js';
+import { EdgeFilter } from './layout/utils/EdgeFilter.js';
+import { LayerUtils } from './layout/utils/LayerUtils.js';
+import { PositionUtils } from './layout/utils/PositionUtils.js';
 
 // 导入性能模块
-import LayoutCache from './layout/performance/LayoutCache.js';
-import DebounceManager from './layout/performance/DebounceManager.js';
-import PerformanceMonitor from './layout/performance/PerformanceMonitor.js';
-import PreviewLineLock from './layout/performance/PreviewLineLock.js';
+import { LayoutCache } from './layout/performance/LayoutCache.js';
+import { DebounceManager } from './layout/performance/DebounceManager.js';
+import { PerformanceMonitor } from './layout/performance/PerformanceMonitor.js';
+import { PreviewLineLock } from './layout/performance/PreviewLineLock.js';
 
 /**
  * 统一结构化布局引擎
@@ -203,10 +203,25 @@ export class UnifiedStructuredLayoutEngine {
       }
       
       try {
+        // 获取节点和边数据
+        const nodes = this.graph.getNodes();
+        const edges = this.graph.getEdges();
+        
+        // 检查是否有有效节点
+        if (!nodes || nodes.length === 0) {
+          console.warn('⚠️ [统一布局引擎] 没有有效节点，跳过布局');
+          return {
+            success: false,
+            sessionId,
+            reason: 'no_valid_nodes',
+            timestamp: new Date().toISOString()
+          };
+        }
+        
         // 阶段1: 数据预处理
         const preprocessedData = await this.dataPreprocessor.preprocess(
-          this.graph.getNodes(),
-          this.graph.getEdges(),
+          nodes,
+          edges,
           layoutInput
         );
         
@@ -400,6 +415,30 @@ export class UnifiedStructuredLayoutEngine {
   }
 
   /**
+   * 生成布局缓存键
+   * @returns {string} 缓存键
+   */
+  generateLayoutCacheKey() {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 9);
+    return `layout_${timestamp}_${random}`;
+  }
+
+  /**
+   * 缓存布局结果
+   * @param {string} key - 缓存键
+   * @param {Object} result - 布局结果
+   */
+  cacheLayoutResult(key, result) {
+    if (this.layoutCache) {
+      console.log(`💾 [统一布局引擎] 缓存布局结果: ${key}`);
+      this.layoutCache.set(key, result);
+    } else {
+      console.warn('⚠️ [统一布局引擎] 缓存未初始化，无法缓存结果');
+    }
+  }
+
+  /**
    * 销毁引擎，清理资源
    */
   destroy() {
@@ -441,8 +480,32 @@ export class UnifiedStructuredLayoutEngine {
   async buildHierarchicalLayers(hierarchyData) {
     console.log('🏗️ [统一布局引擎] 构建分层结构（兼容性方法）');
     
-    // 委托给HierarchicalBuilder处理
-    return this.hierarchicalBuilder.buildLayers(hierarchyData);
+    // 验证输入参数
+    if (!hierarchyData || typeof hierarchyData !== 'object') {
+      console.warn('⚠️ [统一布局引擎] hierarchyData 无效，使用默认值');
+      hierarchyData = { validNodes: [], validEdges: [] };
+    }
+    
+    // 从hierarchyData中提取节点和边，确保它们是数组
+    const nodes = Array.isArray(hierarchyData.validNodes) ? hierarchyData.validNodes : [];
+    const edges = Array.isArray(hierarchyData.validEdges) ? hierarchyData.validEdges : [];
+    
+    console.log(`📊 [统一布局引擎] 处理数据 - 节点: ${nodes.length}, 边: ${edges.length}`);
+    
+    // 使用HierarchicalBuilder构建层次结构
+    const hierarchy = this.hierarchicalBuilder.buildHierarchy(nodes, edges);
+    
+    // 返回兼容的结构
+    return {
+      layers: hierarchy.layers,
+      nodeToLayer: new Map(),
+      parentChildMap: new Map(),
+      childParentMap: new Map(),
+      layerMetrics: new Map(),
+      mixedLayerNodes: new Map(),
+      endpointNodes: new Map(),
+      stats: hierarchy.stats
+    };
   }
 
   /**

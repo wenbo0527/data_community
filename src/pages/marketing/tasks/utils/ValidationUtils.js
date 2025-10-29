@@ -552,3 +552,272 @@ export function validationSuccess(message = '验证通过') {
 export function validationFailure(message = '验证失败', errors = []) {
   return new ValidationResult(false, message, errors)
 }
+
+/**
+ * 预览线连接验证工具类
+ */
+export class PreviewLineConnectionValidator {
+  /**
+   * 验证预览线连接 - 增强版，包含节点类型验证
+   * @param {Object} sourceNode - 源节点
+   * @param {Object} targetNode - 目标节点
+   * @param {Object} options - 验证选项
+   * @returns {Object} 验证结果
+   */
+  static async validatePreviewLineConnection(sourceNode, targetNode, options = {}) {
+    const result = {
+      isValid: true,
+      errors: [],
+      warnings: [],
+      details: {
+        sourceNodeValidation: null,
+        targetNodeValidation: null,
+        connectionValidation: null,
+        coordinateValidation: null
+      }
+    }
+
+    try {
+      // 1. 节点类型验证 - 新增
+      const { NodeTypeValidator } = await import('../../../../utils/preview-line/validators/NodeTypeValidator.js')
+      const nodeTypeValidator = new NodeTypeValidator()
+
+      // 1.1 验证源节点类型
+      if (sourceNode) {
+        const sourceValidation = nodeTypeValidator.validateNodeType(sourceNode)
+        result.details.sourceNodeValidation = sourceValidation
+        
+        if (!sourceValidation.isValid) {
+          result.isValid = false
+          result.errors.push(`源节点类型无效: ${sourceValidation.errors.join(', ')}`)
+        } else {
+          // 检查危险节点类型
+          const dangerousTypes = ['email']
+          if (sourceValidation.nodeType && dangerousTypes.includes(sourceValidation.nodeType)) {
+            result.isValid = false
+            result.errors.push(`源节点包含危险类型: "${sourceValidation.nodeType}"`)
+          }
+        }
+      }
+
+      // 1.2 验证目标节点类型
+      if (targetNode) {
+        const targetValidation = nodeTypeValidator.validateNodeType(targetNode)
+        result.details.targetNodeValidation = targetValidation
+        
+        if (!targetValidation.isValid) {
+          result.isValid = false
+          result.errors.push(`目标节点类型无效: ${targetValidation.errors.join(', ')}`)
+        } else {
+          // 检查危险节点类型
+          const dangerousTypes = ['email']
+          if (targetValidation.nodeType && dangerousTypes.includes(targetValidation.nodeType)) {
+            result.isValid = false
+            result.errors.push(`目标节点包含危险类型: "${targetValidation.nodeType}"`)
+          }
+        }
+      }
+
+      // 2. 连接逻辑验证
+      if (sourceNode && targetNode && result.details.sourceNodeValidation?.isValid && result.details.targetNodeValidation?.isValid) {
+        const sourceType = result.details.sourceNodeValidation.nodeType
+        const targetType = result.details.targetNodeValidation.nodeType
+        
+        // 验证连接逻辑是否合理
+        const connectionValidation = await this.validateNodeConnection(sourceType, targetType)
+        result.details.connectionValidation = connectionValidation
+        
+        if (!connectionValidation.isValid) {
+          result.isValid = false
+          result.errors.push(...connectionValidation.errors)
+        }
+        
+        if (connectionValidation.warnings?.length > 0) {
+          result.warnings.push(...connectionValidation.warnings)
+        }
+      }
+
+      // 3. 坐标转换验证（如果需要）
+      if (options.coordinateTransform && sourceNode && targetNode) {
+        const coordinateValidation = await this.validateCoordinateTransform(sourceNode, targetNode, options.coordinateTransform)
+        result.details.coordinateValidation = coordinateValidation
+        
+        if (!coordinateValidation.isValid) {
+          result.warnings.push(...coordinateValidation.errors)
+        }
+      }
+
+      return result
+
+    } catch (error) {
+      console.error('预览线连接验证异常:', error)
+      return {
+        isValid: false,
+        errors: [`验证过程异常: ${error.message}`],
+        warnings: [],
+        details: result.details
+      }
+    }
+  }
+
+  /**
+   * 验证节点连接逻辑
+   * @param {string} sourceType - 源节点类型
+   * @param {string} targetType - 目标节点类型
+   * @returns {Object} 验证结果
+   */
+  static async validateNodeConnection(sourceType, targetType) {
+    const result = {
+      isValid: true,
+      errors: [],
+      warnings: []
+    }
+
+    try {
+      // 导入节点类型配置
+       const { getNodeConfig } = await import('../nodeTypes.js')
+      
+      // 获取源节点配置
+      const sourceConfig = getNodeConfig(sourceType)
+      if (!sourceConfig) {
+        result.isValid = false
+        result.errors.push(`源节点类型 "${sourceType}" 配置不存在`)
+        return result
+      }
+
+      // 检查源节点是否允许连接到目标节点
+      if (sourceConfig.allowedNextNodes && Array.isArray(sourceConfig.allowedNextNodes)) {
+        if (!sourceConfig.allowedNextNodes.includes(targetType)) {
+          result.isValid = false
+          result.errors.push(`节点类型 "${sourceType}" 不允许连接到 "${targetType}"`)
+          result.warnings.push(`允许的目标节点类型: ${sourceConfig.allowedNextNodes.join(', ')}`)
+        }
+      }
+
+      // 特殊规则检查
+      // 1. 结束节点不应该有出口连接
+      if (sourceType === 'end') {
+        result.isValid = false
+        result.errors.push('结束节点不应该有出口连接')
+      }
+
+      // 2. 开始节点不应该有入口连接
+      if (targetType === 'start') {
+        result.isValid = false
+        result.errors.push('开始节点不应该有入口连接')
+      }
+
+      // 3. 分支节点应该有多个出口
+      const branchTypes = ['audience-split', 'event-split', 'ab-test', 'condition']
+      if (branchTypes.includes(sourceType)) {
+        result.warnings.push(`分支节点 "${sourceType}" 通常需要多个出口连接`)
+      }
+
+      return result
+
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [`节点连接验证异常: ${error.message}`],
+        warnings: []
+      }
+    }
+  }
+
+  /**
+   * 验证坐标转换
+   * @param {Object} sourceNode - 源节点
+   * @param {Object} targetNode - 目标节点
+   * @param {Object} thresholds - 阈值配置
+   * @returns {Object} 验证结果
+   */
+  static async validateCoordinateTransform(sourceNode, targetNode, thresholds = {}) {
+    const result = {
+      isValid: true,
+      errors: [],
+      warnings: []
+    }
+
+    try {
+      // 导入坐标转换工具
+       const CoordinateUtils = await import('./CoordinateUtils.js')
+      
+      // 获取节点坐标
+      const sourcePos = this.getNodePosition(sourceNode)
+      const targetPos = this.getNodePosition(targetNode)
+      
+      if (!sourcePos || !targetPos) {
+        result.isValid = false
+        result.errors.push('无法获取节点坐标')
+        return result
+      }
+
+      // 验证坐标有效性
+      if (!CoordinateUtils.isValidPoint(sourcePos)) {
+        result.isValid = false
+        result.errors.push('源节点坐标无效')
+      }
+
+      if (!CoordinateUtils.isValidPoint(targetPos)) {
+        result.isValid = false
+        result.errors.push('目标节点坐标无效')
+      }
+
+      // 计算距离
+      const distance = CoordinateUtils.calculateDistance(sourcePos, targetPos)
+      const minDistance = thresholds.minDistance || 50
+      const maxDistance = thresholds.maxDistance || 1000
+
+      if (distance < minDistance) {
+        result.warnings.push(`节点距离过近: ${distance.toFixed(1)}px < ${minDistance}px`)
+      }
+
+      if (distance > maxDistance) {
+        result.warnings.push(`节点距离过远: ${distance.toFixed(1)}px > ${maxDistance}px`)
+      }
+
+      return result
+
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [`坐标转换验证异常: ${error.message}`],
+        warnings: []
+      }
+    }
+  }
+
+  /**
+   * 获取节点位置
+   * @param {Object} node - 节点对象
+   * @returns {Object|null} 位置坐标
+   */
+  static getNodePosition(node) {
+    if (!node) return null
+
+    try {
+      // 尝试多种方式获取位置
+      if (node.getPosition && typeof node.getPosition === 'function') {
+        return node.getPosition()
+      }
+
+      if (node.position) {
+        return node.position
+      }
+
+      if (node.x !== undefined && node.y !== undefined) {
+        return { x: node.x, y: node.y }
+      }
+
+      if (node.data && node.data.x !== undefined && node.data.y !== undefined) {
+        return { x: node.data.x, y: node.data.y }
+      }
+
+      return null
+
+    } catch (error) {
+      console.error('获取节点位置异常:', error)
+      return null
+    }
+   }
+}

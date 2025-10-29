@@ -2,7 +2,7 @@
  * 数据预处理器
  * 负责处理和验证输入的节点和边数据，为布局算法做准备
  */
-class DataPreprocessor {
+export class DataPreprocessor {
   constructor(config = {}) {
     this.config = {
       enableValidation: config.enableValidation !== false,
@@ -516,4 +516,4 @@ class DataPreprocessor {
   }
 }
 
-export default DataPreprocessor;
+// 默认导出已通过 export class 实现

@@ -429,6 +429,7 @@ export const recordMockData = [
     {
         userId: '10008',
         couponId: 'CP008',
+        inventoryId: 'INV008',
         packageId: 'PKG008',
         taskId: 'TASK008',
         operationType: '撤回',
@@ -443,6 +444,7 @@ export const recordMockData = [
     {
         userId: '10001',
         couponId: 'CP001',
+        inventoryId: 'INV001',
         packageId: 'PKG001',
         taskId: 'TASK001',
         operationType: '发放',
@@ -474,6 +476,7 @@ export const recordMockData = [
     {
         userId: '10002',
         couponId: 'CP002',
+        inventoryId: 'INV002',
         packageId: 'PKG002',
         taskId: 'TASK002',
         operationType: '发放',
@@ -490,6 +493,7 @@ export const recordMockData = [
     {
         userId: '10003',
         couponId: 'CP003',
+        inventoryId: 'INV003',
         packageId: 'PKG003',
         taskId: 'TASK003',
         operationType: '发放',
@@ -505,6 +509,7 @@ export const recordMockData = [
     {
         userId: '10004',
         couponId: 'CP004',
+        inventoryId: 'INV004',
         packageId: 'PKG004',
         taskId: 'TASK004',
         operationType: '发放',
@@ -521,6 +526,7 @@ export const recordMockData = [
     {
         userId: '10005',
         couponId: 'CP005',
+        inventoryId: 'INV005',
         packageId: 'PKG005',
         taskId: 'TASK005',
         operationType: '发放',
@@ -554,6 +560,7 @@ export const recordMockData = [
     {
         userId: '10006',
         couponId: 'CP006',
+        inventoryId: 'INV006',
         packageId: 'PKG006',
         taskId: 'TASK006',
         operationType: '锁定',
@@ -569,6 +576,7 @@ export const recordMockData = [
     {
         userId: '10007',
         couponId: 'CP007',
+        inventoryId: 'INV007',
         packageId: 'PKG007',
         taskId: 'TASK007',
         operationType: '核销',
@@ -597,4 +605,151 @@ export const dashboardStats = {
             severity: 'medium'
         }
     ]
+};
+
+// 预警规则数据
+export const alertRulesMockData = [
+    {
+        id: 1,
+        name: '库存不足预警',
+        type: 'inventory',
+        status: 'enabled',
+        threshold: 100,
+        channels: ['wechat', 'sms'],
+        recipients: ['张三', '李四'],
+        description: '当券库存低于100张时触发预警',
+        createTime: '2024-01-01 10:00:00',
+        updateTime: '2024-01-15 14:30:00',
+        creator: '管理员'
+    },
+    {
+        id: 2,
+        name: '券即将过期预警',
+        type: 'expiry',
+        status: 'enabled',
+        threshold: 7,
+        channels: ['wechat'],
+        recipients: ['王五', '赵六'],
+        description: '券有效期剩余7天时触发预警',
+        createTime: '2024-01-02 09:30:00',
+        updateTime: '2024-01-10 16:20:00',
+        creator: '管理员'
+    },
+    {
+        id: 3,
+        name: '发放失败率预警',
+        type: 'failure',
+        status: 'enabled',
+        threshold: 15,
+        channels: ['wechat', 'sms'],
+        recipients: ['张三', '李四', '王五'],
+        description: '发放失败率超过15%时触发预警',
+        createTime: '2024-01-03 11:15:00',
+        updateTime: '2024-01-12 09:45:00',
+        creator: '管理员'
+    },
+    {
+        id: 4,
+        name: '大额券使用预警',
+        type: 'usage',
+        status: 'disabled',
+        threshold: 50000,
+        channels: ['sms'],
+        recipients: ['赵六'],
+        description: '单笔使用金额超过5万元时触发预警',
+        createTime: '2024-01-04 15:20:00',
+        updateTime: '2024-01-08 13:10:00',
+        creator: '管理员'
+    }
+];
+
+// 预警历史记录数据
+export const alertHistoryMockData = [
+    {
+        id: 1,
+        ruleId: 1,
+        ruleName: '库存不足预警',
+        type: 'inventory',
+        content: '券模板"首借30天免息券"库存仅剩85张，低于预警阈值100张',
+        triggerTime: '2024-01-15 14:30:00',
+        status: 'resolved',
+        handler: '张三',
+        handleTime: '2024-01-15 15:45:00',
+        handleNote: '已补充库存至500张',
+        channels: ['wechat', 'sms'],
+        recipients: ['张三', '李四']
+    },
+    {
+        id: 2,
+        ruleId: 3,
+        ruleName: '发放失败率预警',
+        type: 'failure',
+        content: '券包PKG002发放失败率达到18.75%，超过预警阈值15%',
+        triggerTime: '2024-01-16 11:30:00',
+        status: 'pending',
+        handler: null,
+        handleTime: null,
+        handleNote: null,
+        channels: ['wechat', 'sms'],
+        recipients: ['张三', '李四', '王五']
+    },
+    {
+        id: 3,
+        ruleId: 2,
+        ruleName: '券即将过期预警',
+        type: 'expiry',
+        content: '券模板"复借8折优惠券"将在7天后过期，请及时处理',
+        triggerTime: '2024-01-14 09:00:00',
+        status: 'resolved',
+        handler: '王五',
+        handleTime: '2024-01-14 10:30:00',
+        handleNote: '已延长有效期至2024-03-31',
+        channels: ['wechat'],
+        recipients: ['王五', '赵六']
+    },
+    {
+        id: 4,
+        ruleId: 1,
+        ruleName: '库存不足预警',
+        type: 'inventory',
+        content: '券模板"复借7折优惠券"库存仅剩95张，低于预警阈值100张',
+        triggerTime: '2024-01-13 16:20:00',
+        status: 'resolved',
+        handler: '李四',
+        handleTime: '2024-01-13 17:00:00',
+        handleNote: '已补充库存至300张',
+        channels: ['wechat', 'sms'],
+        recipients: ['张三', '李四']
+    },
+    {
+        id: 5,
+        ruleId: 3,
+        ruleName: '发放失败率预警',
+        type: 'failure',
+        content: '券包PKG004发放失败率达到100%，全部发放失败',
+        triggerTime: '2024-01-18 14:20:00',
+        status: 'pending',
+        handler: null,
+        handleTime: null,
+        handleNote: null,
+        channels: ['wechat', 'sms'],
+        recipients: ['张三', '李四', '王五']
+    }
+];
+
+// 预警统计数据
+export const alertStatsMockData = {
+    total: 5,
+    pending: 2,
+    resolved: 3,
+    resolutionRate: 60,
+    todayAlerts: 1,
+    weekAlerts: 3,
+    monthAlerts: 5,
+    typeStats: {
+        inventory: 2,
+        expiry: 1,
+        failure: 2,
+        usage: 0
+    }
 };

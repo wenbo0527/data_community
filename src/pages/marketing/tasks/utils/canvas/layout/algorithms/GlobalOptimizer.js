@@ -2,7 +2,7 @@
  * 全局优化器
  * 负责整体布局的全局优化，包括整体对齐、间距调整和美观度提升
  */
-class GlobalOptimizer {
+export class GlobalOptimizer {
   constructor(config = {}) {
     this.config = {
       enableGlobalAlignment: config.enableGlobalAlignment !== false,
@@ -574,4 +574,4 @@ class GlobalOptimizer {
   }
 }
 
-export default GlobalOptimizer;
+// 默认导出已通过 export class 实现

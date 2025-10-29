@@ -89,10 +89,16 @@ export class InPortSnapDetector {
       const nodePosition = node.getPosition()
       const nodeSize = node.getSize()
       
-      // in端口通常在节点的左侧中央
+      // 🔧 修复：in端口应该在节点的顶部中心位置，与x6Config保持一致
+      // 使用与x6Config.js中相同的计算逻辑
+      const xPercent = 0.5  // 50%水平居中
+      const yPercent = 0.0  // 0%顶部位置
+      const dx = 0
+      const dy = -2  // 与x6Config中in端口的dy保持一致
+      
       return {
-        x: nodePosition.x,
-        y: nodePosition.y + nodeSize.height / 2
+        x: nodePosition.x + nodeSize.width * xPercent + dx,  // 水平居中
+        y: nodePosition.y + nodeSize.height * yPercent + dy  // 顶部位置，微调向上
       }
     } catch (error) {
       console.warn('计算in端口位置失败:', error)

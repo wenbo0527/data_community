@@ -72,8 +72,12 @@ describe('预览线端口位置验证', () => {
     previewManager.initialized = true
     previewManager.destroyed = false
 
-    // 执行：创建预览线
-    const result = await previewManager.createPreviewLine(mockNode.id, { x: 200, y: 150 }, 'default', '默认')
+    // 执行：创建预览线 - 使用节点对象而不是节点ID
+    const result = await previewManager.createPreviewLine(mockNode, { 
+      targetPosition: { x: 200, y: 150 },
+      branchId: 'default',
+      branchLabel: '默认'
+    })
 
     // 验证：应该创建预览线
     expect(mockGraph.addEdge).toHaveBeenCalled()
@@ -116,8 +120,12 @@ describe('预览线端口位置验证', () => {
       previewManager.initialized = true
       previewManager.destroyed = false
 
-      // 创建预览线
-      const result = await previewManager.createPreviewLine(mockNode.id, { x: 200, y: 150 }, 'default', '默认')
+      // 创建预览线 - 使用节点对象而不是节点ID
+      const result = await previewManager.createPreviewLine(mockNode, { 
+        targetPosition: { x: 200, y: 150 },
+        branchId: 'default',
+        branchLabel: '默认'
+      })
 
       if (mockGraph.addEdge.mock.calls.length > 0) {
         const edgeConfig = mockGraph.addEdge.mock.calls[0][0]
@@ -144,8 +152,12 @@ describe('预览线端口位置验证', () => {
     previewManager.initialized = true
     previewManager.destroyed = false
 
-    // 执行：创建预览线
-    const result = await previewManager.createPreviewLine(mockNode.id, { x: 200, y: 150 }, 'default', '默认')
+    // 执行：创建预览线 - 使用节点对象而不是节点ID
+    const result = await previewManager.createPreviewLine(mockNode, { 
+      targetPosition: { x: 200, y: 150 },
+      branchId: 'default',
+      branchLabel: '默认'
+    })
 
     // 验证：应该创建预览线
     expect(mockGraph.addEdge).toHaveBeenCalled()

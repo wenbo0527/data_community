@@ -6,12 +6,13 @@
 
 /**
  * 布局方向枚举
+ * 🔧 清理：专注于垂直和水平布局，移除不完整的布局类型
  */
 export const LayoutDirection = {
-  HORIZONTAL: 'horizontal',
-  VERTICAL: 'vertical',
-  RADIAL: 'radial',
-  HIERARCHICAL: 'hierarchical'
+  VERTICAL: 'vertical',     // 垂直布局（主要）
+  HORIZONTAL: 'horizontal', // 水平布局
+  HIERARCHICAL: 'hierarchical' // 层次布局（保留，用于内部算法）
+  // 🔧 已移除：径向布局暂不支持
 }
 
 /**
@@ -174,51 +175,8 @@ export class LayoutUtils {
     return this.snapToGrid(layoutedNodes, config)
   }
 
-  /**
-   * 径向布局
-   * @param {Array} nodes - 节点数组
-   * @param {Array} connections - 连接数组
-   * @param {Object} config - 配置
-   * @returns {Array} 布局后的节点数组
-   */
-  static radialLayout(nodes, connections, config) {
-    const { nodeSpacing } = config
-    const layoutedNodes = [...nodes]
-
-    if (nodes.length === 0) return layoutedNodes
-
-    // 找到中心节点（连接最多的节点）
-    const centerNode = this.findCenterNode(nodes, connections)
-    const centerIndex = layoutedNodes.findIndex(node => node.id === centerNode.id)
-
-    if (centerIndex !== -1) {
-      layoutedNodes[centerIndex] = {
-        ...layoutedNodes[centerIndex],
-        x: 0,
-        y: 0
-      }
-    }
-
-    // 其他节点围绕中心节点排列
-    const otherNodes = layoutedNodes.filter(node => node.id !== centerNode.id)
-    const radius = Math.max(150, otherNodes.length * nodeSpacing / (2 * Math.PI))
-    const angleStep = (2 * Math.PI) / otherNodes.length
-
-    otherNodes.forEach((node, index) => {
-      const angle = index * angleStep
-      const nodeIndex = layoutedNodes.findIndex(n => n.id === node.id)
-      
-      if (nodeIndex !== -1) {
-        layoutedNodes[nodeIndex] = {
-          ...layoutedNodes[nodeIndex],
-          x: Math.cos(angle) * radius,
-          y: Math.sin(angle) * radius
-        }
-      }
-    })
-
-    return this.snapToGrid(layoutedNodes, config)
-  }
+  // 🔧 已移除：径向布局的不完整实现
+  // 专注于垂直布局和水平布局的稳定运行
 
   /**
    * 构建层次结构

@@ -343,4 +343,4 @@ class OperationLogAPI {
 export default NotificationAPI;
 
 // 导出所有API类
-export { CategoryAPI, FileUploadAPI, OperationLogAPI };
+export { NotificationAPI, CategoryAPI, FileUploadAPI, OperationLogAPI };

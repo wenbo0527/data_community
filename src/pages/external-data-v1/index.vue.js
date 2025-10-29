@@ -86,7 +86,6 @@ const downloadTemplate = () => {
     document.body.removeChild(link);
     console.log('下载模板文件');
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

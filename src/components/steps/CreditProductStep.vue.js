@@ -264,7 +264,6 @@ watch(selectedCreditProducts, (newValue) => {
     console.log('当前表格数据:', getTableData(props.formData.dataProducts[0]));
     initializeSceneConfig(true);
 }, { deep: true });
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

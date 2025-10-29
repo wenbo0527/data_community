@@ -15,7 +15,7 @@ import { mount } from '@vue/test-utils'
 import TaskFlowCanvasRefactored from '../../../pages/marketing/tasks/components/TaskFlowCanvasRefactored.vue'
 
 // 创建真实的生命周期管理器
-const createLifecycleManager = () => {
+function createLifecycleManager() {
   const phases = []
   const resources = new Set()
   const eventListeners = new Map()

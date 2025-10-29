@@ -372,20 +372,42 @@ export function useCanvasEvents(
             y: e.clientY
           }
           
-          // 显示连接线右键菜单 - 添加安全检查
-          if (state?.connectionContextMenu && typeof state.connectionContextMenu === 'object' && 'value' in state.connectionContextMenu) {
-            state.connectionContextMenu.value = {
+          // 🔧 修复：添加连接线右键删除功能
+          const isPreviewLine = edgeData.isPreview || edge.id.includes('preview')
+          
+          // 创建右键菜单选项
+          const menuOptions = []
+          
+          if (!isPreviewLine) {
+            // 只有真实连接线才显示删除选项
+            menuOptions.push({
+              label: '删除连接',
+              key: 'delete',
+              icon: 'icon-delete',
+              danger: true,
+              onClick: () => {
+                handleDeleteConnection(edge)
+              }
+            })
+          }
+          
+          // 显示连接线右键菜单 - 修复状态名称
+          if (state?.edgeContextMenu && typeof state.edgeContextMenu === 'object' && 'value' in state.edgeContextMenu) {
+            state.edgeContextMenu.value = {
               visible: true,
-              position,
+              x: position.x,
+              y: position.y,
               edge,
-              edgeData
+              edgeData,
+              menuOptions,
+              isPreviewLine
             }
           } else {
-            console.error('[useCanvasEvents] state.connectionContextMenu 未正确初始化')
+            console.error('[useCanvasEvents] state.edgeContextMenu 未正确初始化')
           }
           
           // 触发右键菜单事件
-          emit('edge-context-menu', { edge, edgeData, position })
+          emit('edge-context-menu', { edge, edgeData, position, menuOptions, isPreviewLine })
           
         } catch (error) {
           console.error('[useCanvasEvents] 处理连接线右键菜单事件失败:', error)
@@ -488,9 +510,9 @@ export function useCanvasEvents(
             state.showStartNodeConfigDrawer.value = false
           }
           
-          // 隐藏右键菜单 - 添加安全检查
-          if (state?.connectionContextMenu && 'value' in state.connectionContextMenu && state.connectionContextMenu.value) {
-            state.connectionContextMenu.value.visible = false
+          // 隐藏右键菜单 - 修复状态名称
+          if (state?.edgeContextMenu && 'value' in state.edgeContextMenu && state.edgeContextMenu.value) {
+            state.edgeContextMenu.value.visible = false
           }
           
           // 触发画布点击事件
@@ -627,8 +649,8 @@ export function useCanvasEvents(
               state.showStartNodeConfigDrawer.value = false
             }
             
-            if (state?.connectionContextMenu && 'value' in state.connectionContextMenu && state.connectionContextMenu.value) {
-              state.connectionContextMenu.value.visible = false
+            if (state?.edgeContextMenu && 'value' in state.edgeContextMenu && state.edgeContextMenu.value) {
+              state.edgeContextMenu.value.visible = false
             }
             
             emit('operation-cancelled')

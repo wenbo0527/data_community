@@ -15,7 +15,7 @@ export class LegacyAdapter {
     this.legacyManager = legacyManager
     this.newManager = null
     this.migrationMode = options.migrationMode || 'gradual' // 'gradual' | 'immediate' | 'hybrid'
-    this.enableFallback = options.enableFallback !== false
+    // 移除降级机制，使用统一的错误处理
     this.debugMode = options.debugMode || false
     
     // 迁移状态跟踪
@@ -93,11 +93,8 @@ export class LegacyAdapter {
     } catch (error) {
       this.log('error', `预览线创建失败: ${node.id}`, error)
       
-      // 如果新管理器失败且启用了回退，尝试使用遗留管理器
-      if (this.enableFallback && this.newManager) {
-        this.log('warn', `新管理器失败，回退到遗留管理器: ${node.id}`)
-        return await this.createWithLegacyManager(node, state, forceUpdate)
-      }
+      // 记录错误并抛出异常，不再使用降级机制
+      this.migrationErrors.set(node.id, [...(this.migrationErrors.get(node.id) || []), error])
       
       throw error
     }

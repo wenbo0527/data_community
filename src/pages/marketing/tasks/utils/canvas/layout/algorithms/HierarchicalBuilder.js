@@ -2,7 +2,7 @@
  * 层次结构构建器
  * 负责构建节点的层次结构和依赖关系
  */
-class HierarchicalBuilder {
+export class HierarchicalBuilder {
   constructor(config = {}) {
     this.config = {
       direction: config.direction || 'TB', // TB, BT, LR, RL
@@ -52,6 +52,17 @@ class HierarchicalBuilder {
    * @returns {Object} 图结构
    */
   buildGraph(nodes, edges) {
+    // 验证输入参数
+    if (!Array.isArray(nodes)) {
+      console.warn('⚠️ [层次构建器] 节点数据不是数组，使用空数组');
+      nodes = [];
+    }
+    
+    if (!Array.isArray(edges)) {
+      console.warn('⚠️ [层次构建器] 边数据不是数组，使用空数组');
+      edges = [];
+    }
+    
     const graph = {
       nodes: new Map(),
       edges: [],
@@ -61,22 +72,26 @@ class HierarchicalBuilder {
     
     // 添加节点
     nodes.forEach(node => {
-      graph.nodes.set(node.id, {
-        ...node,
-        rank: -1,
-        layer: -1,
-        position: { x: 0, y: 0 }
-      });
-      graph.inEdges.set(node.id, []);
-      graph.outEdges.set(node.id, []);
+      if (node && node.id) {
+        graph.nodes.set(node.id, {
+          ...node,
+          rank: -1,
+          layer: -1,
+          position: { x: 0, y: 0 }
+        });
+        graph.inEdges.set(node.id, []);
+        graph.outEdges.set(node.id, []);
+      }
     });
     
     // 添加边
     edges.forEach(edge => {
+      if (!edge) return;
+      
       const sourceId = edge.source || edge.sourceNodeId;
       const targetId = edge.target || edge.targetNodeId;
       
-      if (graph.nodes.has(sourceId) && graph.nodes.has(targetId)) {
+      if (sourceId && targetId && graph.nodes.has(sourceId) && graph.nodes.has(targetId)) {
         const edgeObj = {
           id: edge.id || `${sourceId}-${targetId}`,
           source: sourceId,
@@ -135,9 +150,20 @@ class HierarchicalBuilder {
       }
     });
     
-    // 创建新的无环图
-    const acyclicGraph = JSON.parse(JSON.stringify(graph));
-    acyclicGraph.reversedEdges = reversedEdges;
+    // 创建新的无环图 - 正确地复制Map结构
+    const acyclicGraph = {
+      nodes: new Map(graph.nodes),
+      edges: [...graph.edges],
+      inEdges: new Map(),
+      outEdges: new Map(),
+      reversedEdges: reversedEdges
+    };
+    
+    // 重新构建边映射
+    graph.nodes.forEach((node, nodeId) => {
+      acyclicGraph.inEdges.set(nodeId, [...(graph.inEdges.get(nodeId) || [])]);
+      acyclicGraph.outEdges.set(nodeId, [...(graph.outEdges.get(nodeId) || [])]);
+    });
     
     return acyclicGraph;
   }
@@ -150,6 +176,12 @@ class HierarchicalBuilder {
   assignRanks(graph) {
     const inDegree = new Map();
     const queue = [];
+    
+    // 验证图结构
+    if (!graph || !graph.nodes || !(graph.nodes instanceof Map)) {
+      console.error('❌ [层次构建器] 无效的图结构:', graph);
+      return graph;
+    }
     
     // 计算入度
     graph.nodes.forEach((node, nodeId) => {
@@ -354,4 +386,4 @@ class HierarchicalBuilder {
   }
 }
 
-export default HierarchicalBuilder;
+// 默认导出已通过 export class 实现

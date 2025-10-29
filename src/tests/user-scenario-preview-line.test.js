@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { PreviewLineSystem } from '../utils/preview-line/PreviewLineSystem.js'
+import PreviewLineSystem from '../utils/preview-line/PreviewLineSystem.js'
 
 /**
  * 用户场景测试：验证预览线数量匹配问题的修复

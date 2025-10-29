@@ -361,15 +361,10 @@ export class ValidationUtils {
         return result;
       }
 
-      // 计算节点的out端口位置
-      const nodeCenter = {
-        x: nodePosition.x + nodeSize.width / 2,
-        y: nodePosition.y + nodeSize.height / 2
-      };
-      
+      // 计算节点的out端口位置（节点底部中心）
       const expectedOutPort = {
-        x: nodeCenter.x + nodeSize.width / 2,
-        y: nodeCenter.y
+        x: nodePosition.x + nodeSize.width / 2,
+        y: nodePosition.y + nodeSize.height
       };
 
       // 检查预览线起点是否接近节点的out端口

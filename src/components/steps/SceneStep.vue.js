@@ -232,7 +232,6 @@ const updateSceneData = (record, product) => {
 watch(() => props.formData.dataProducts, () => {
     console.log('场景数据更新:', JSON.parse(JSON.stringify(props.formData.dataProducts)));
 }, { deep: true, immediate: true });
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

@@ -15,7 +15,6 @@ const productOptions = [
     { label: '信用卡分期', value: 'CREDIT_CARD_INSTALLMENT' },
     { label: '教育助学贷款', value: 'EDUCATION_LOAN' },
 ];
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

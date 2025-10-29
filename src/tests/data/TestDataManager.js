@@ -314,7 +314,7 @@ export class TestDataManager {
           attrs: {
             circle: {
               r: 4,
-              magnet: true,
+              magnet: false,  // 🔧 禁用端口拖拽连接，连接线应仅通过预览线转换生成
               stroke: '#5F95FF',
               strokeWidth: 1,
               fill: '#fff'
@@ -326,7 +326,7 @@ export class TestDataManager {
           attrs: {
             circle: {
               r: 4,
-              magnet: true,
+              magnet: false,  // 🔧 禁用端口拖拽连接，连接线应仅通过预览线转换生成
               stroke: '#5F95FF',
               strokeWidth: 1,
               fill: '#fff'

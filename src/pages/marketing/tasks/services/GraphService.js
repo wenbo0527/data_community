@@ -4,6 +4,10 @@
  * 基于X6图实例进行封装，提供标准化的服务接口
  */
 
+// 🔧 修复：添加ES6 import导入，消除require降级逻辑
+import { createNodeConfig } from '../composables/canvas/useCanvasNodes.js'
+import { getNodeConfig, getNodeAttrs } from '../../../../utils/nodeTypes.js'
+
 /**
  * 图形操作类型枚举
  */
@@ -158,117 +162,12 @@ export class GraphService {
       throw new Error('节点数据不能为空')
     }
     
-    // 🔧 修复：使用createNodeConfig来创建正确的节点配置
-    try {
-      // 动态导入createNodeConfig函数
-      const { createNodeConfig } = require('../composables/canvas/useCanvasNodes.js')
-      
-      // 使用createNodeConfig创建完整的节点配置
-      const nodeConfig = createNodeConfig(nodeData)
-      console.log('[GraphService] 使用createNodeConfig创建的节点配置:', nodeConfig)
-      
-      return nodeConfig
-    } catch (error) {
-      console.warn('[GraphService] createNodeConfig导入失败，使用回退逻辑:', error)
-      
-      // 回退到原有逻辑
-      // 深拷贝避免修改原始数据
-      const processed = JSON.parse(JSON.stringify(nodeData))
-      
-      // 确保必要字段存在
-      if (!processed.id) {
-        processed.id = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      }
-      
-      // 处理位置信息
-      if (processed.position && !processed.x && !processed.y) {
-        // 确保坐标为有效数字
-        processed.x = isFinite(processed.position.x) ? processed.position.x : 0
-        processed.y = isFinite(processed.position.y) ? processed.position.y : 0
-      }
-      
-      // 设置默认尺寸
-      if (!processed.width) {
-        processed.width = 120
-      }
-      if (!processed.height) {
-        processed.height = 60
-      }
-      
-      // 🔧 修复：使用nodeTypes.js中的配置获取正确的形状和样式
-      try {
-        // 动态导入nodeTypes.js中的配置函数
-        const { getNodeConfig, getNodeAttrs } = require('../../../utils/nodeTypes.js')
-        
-        // 获取节点类型配置
-        const nodeConfig = getNodeConfig(processed.type)
-        if (nodeConfig) {
-          // 使用节点类型配置中的形状
-          if (!processed.shape) {
-            processed.shape = nodeConfig.shape || 'circle'
-          }
-          
-          // 使用节点类型配置中的样式
-          if (!processed.attrs) {
-            processed.attrs = getNodeAttrs(processed.type)
-          }
-        } else {
-          // 如果没有找到节点类型配置，使用默认值
-          if (!processed.shape) {
-            processed.shape = 'circle' // 默认使用圆形，与nodeTypes.js保持一致
-          }
-          
-          if (!processed.attrs) {
-            processed.attrs = getNodeAttrs(processed.type) || {
-              body: {
-                fill: '#2196F3',
-                stroke: '#fff',
-                strokeWidth: 2,
-                rx: 50, // 圆形节点使用大圆角
-                ry: 50
-              },
-              text: {
-                fontSize: 12,
-                fill: '#fff',
-                textAnchor: 'middle',
-                textVerticalAnchor: 'middle'
-              }
-            }
-          }
-        }
-      } catch (importError) {
-        console.warn('[GraphService] 导入nodeTypes.js失败，使用默认配置:', importError)
-        // 回退到默认配置
-        if (!processed.shape) {
-          processed.shape = 'circle'
-        }
-        
-        if (!processed.attrs) {
-          processed.attrs = {
-            body: {
-              fill: '#2196F3',
-              stroke: '#fff',
-              strokeWidth: 2,
-              rx: 50,
-              ry: 50
-            },
-            text: {
-              fontSize: 12,
-              fill: '#fff',
-              textAnchor: 'middle',
-              textVerticalAnchor: 'middle'
-            }
-          }
-        }
-      }
-      
-      // 确保数据字段存在
-      if (!processed.data) {
-        processed.data = {}
-      }
-      
-      return processed
-    }
+    // 🔧 修复：消除智能降级逻辑，实现单一功能实现
+    // 直接使用ES6 import导入的createNodeConfig函数，不再使用回退逻辑
+    const nodeConfig = createNodeConfig(nodeData)
+    console.log('[GraphService] 使用createNodeConfig创建的节点配置:', nodeConfig)
+    
+    return nodeConfig
   }
 
   /**

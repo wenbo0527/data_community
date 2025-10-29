@@ -15,7 +15,9 @@
       </a-button>
     </div>
     <div class="debug-content">
+      <!-- 预览线调试部分 -->
       <div class="debug-section">
+        <h4 class="section-title">预览线调试</h4>
         <a-button 
           @click="checkPreviewLineValidity" 
           type="primary" 
@@ -36,7 +38,95 @@
           触发预览线生成
         </a-button>
       </div>
+
+      <!-- 端口坐标调试部分 -->
+      <div class="debug-section">
+        <h4 class="section-title">端口坐标调试</h4>
+        <div class="port-debug-controls">
+          <a-button 
+            @click="togglePortDebugPanel" 
+            type="primary" 
+            size="small"
+            :type="showPortDebugPanel ? 'primary' : 'outline'"
+          >
+            <template #icon><icon-location /></template>
+            {{ showPortDebugPanel ? '关闭端口调试' : '打开端口调试' }}
+          </a-button>
+          <a-button 
+            @click="debugAllNodePorts" 
+            type="outline" 
+            size="small" 
+            style="margin-left: 8px;"
+          >
+            <template #icon><icon-dashboard /></template>
+            调试所有节点端口
+          </a-button>
+          <!-- 新增：详细日志开关按钮 -->
+          <a-button 
+            @click="toggleDetailedLogs" 
+            size="small" 
+            :type="detailedLogsEnabled ? 'primary' : 'outline'"
+            style="margin-left: 8px;"
+          >
+            <template #icon><icon-settings /></template>
+            {{ detailedLogsEnabled ? '关闭详细日志' : '开启详细日志' }}
+          </a-button>
+        </div>
+        
+        <!-- 端口调试统计信息 -->
+        <div v-if="portDebugStats" class="port-debug-stats">
+          <div class="stats-row">
+            <span class="stat-label">已调试节点:</span>
+            <span class="stat-value">{{ portDebugStats.totalNodes }}</span>
+          </div>
+          <div class="stats-row">
+            <span class="stat-label">发现问题:</span>
+            <span class="stat-value error">{{ portDebugStats.totalIssues }}</span>
+          </div>
+        </div>
+
+        <!-- 当前选中节点的端口信息 -->
+        <div v-if="selectedNodePortInfo" class="selected-node-port-info">
+          <h5>选中节点: {{ selectedNodePortInfo.id }}</h5>
+          <div class="node-port-details">
+            <div class="detail-item">
+              <span class="detail-label">类型:</span>
+              <span class="detail-value">{{ selectedNodePortInfo.type }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">位置:</span>
+              <span class="detail-value">{{ selectedNodePortInfo.position.x }}, {{ selectedNodePortInfo.position.y }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">尺寸:</span>
+              <span class="detail-value">{{ selectedNodePortInfo.size.width }}×{{ selectedNodePortInfo.size.height }}</span>
+            </div>
+          </div>
+          
+          <!-- 端口坐标详情 -->
+          <div v-if="selectedNodePortInfo.portAnalysis" class="port-coordinates">
+            <div v-for="(coords, groupName) in selectedNodePortInfo.portAnalysis.coordinates" :key="groupName" class="port-group-info">
+              <div class="port-group-name">{{ groupName }} 端口</div>
+              <div class="coord-info">
+                <span class="coord-label">最终坐标:</span>
+                <span class="coord-value">{{ coords.final.x.toFixed(1) }}, {{ coords.final.y.toFixed(1) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 问题提示 -->
+          <div v-if="selectedNodePortInfo.portAnalysis && selectedNodePortInfo.portAnalysis.issues.length > 0" class="port-issues">
+            <div class="issues-title">端口问题:</div>
+            <div v-for="(issue, index) in selectedNodePortInfo.portAnalysis.issues" :key="index" class="issue-item">
+              {{ issue }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 预览线统计信息 -->
       <div v-if="debugStats?.data" class="debug-stats">
+        <h4 class="section-title">预览线统计</h4>
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-label">节点数</div>
@@ -71,6 +161,14 @@
         </div>
       </div>
     </div>
+
+    <!-- 端口调试面板 -->
+    <PortDebugPanel
+      v-if="showPortDebugPanel"
+      :graph="graph"
+      :visible="showPortDebugPanel"
+      @close="showPortDebugPanel = false"
+    />
   </div>
 </template>
 
@@ -79,8 +177,13 @@ import {
   IconBug,
   IconClose,
   IconCheck,
-  IconThunderbolt
+  IconThunderbolt,
+  IconLocation,
+  IconDashboard,
+  IconSettings
 } from '@arco-design/web-vue/es/icon'
+import PortDebugPanel from './PortDebugPanel.vue'
+import { getPortCoordinateDebugger } from '../utils/canvas/PortCoordinateDebugger.js'
 
 export default {
   name: 'CanvasDebugPanel',
@@ -88,7 +191,11 @@ export default {
     IconBug,
     IconClose,
     IconCheck,
-    IconThunderbolt
+    IconThunderbolt,
+    IconLocation,
+    IconDashboard,
+    IconSettings,
+    PortDebugPanel
   },
   props: {
     visible: {
@@ -106,6 +213,10 @@ export default {
     isGeneratingPreviewLines: {
       type: Boolean,
       default: false
+    },
+    graph: {
+      type: Object,
+      default: null
     }
   },
   emits: [
@@ -117,16 +228,34 @@ export default {
   data() {
     return {
       isDragging: false,
-      dragOffset: { x: 0, y: 0 }
+      dragOffset: { x: 0, y: 0 },
+      showPortDebugPanel: false,
+      portDebugStats: null,
+      selectedNodePortInfo: null,
+      portDebugger: null,
+      detailedLogsEnabled: false // 新增：详细日志开关
     }
   },
   mounted() {
     document.addEventListener('mousemove', this.handleMouseMove)
     document.addEventListener('mouseup', this.handleMouseUp)
+    
+    // 初始化端口调试器
+    this.initPortDebugger()
+    
+    // 监听节点选择事件
+    if (this.graph) {
+      this.graph.on('selection:changed', this.handleNodeSelection)
+    }
   },
   beforeUnmount() {
     document.removeEventListener('mousemove', this.handleMouseMove)
     document.removeEventListener('mouseup', this.handleMouseUp)
+    
+    // 清理事件监听
+    if (this.graph) {
+      this.graph.off('selection:changed', this.handleNodeSelection)
+    }
   },
   methods: {
     closePanel() {
@@ -157,6 +286,79 @@ export default {
     },
     handleMouseUp() {
       this.isDragging = false
+    },
+    
+    // 端口调试相关方法
+    initPortDebugger() {
+      if (this.graph) {
+        this.portDebugger = getPortCoordinateDebugger(this.graph)
+        if (this.portDebugger) {
+          this.portDebugger.setEnabled(true)
+          this.portDebugger.setDebugMode(this.detailedLogsEnabled) // 设置初始调试模式
+          this.updatePortDebugStats()
+        }
+      }
+    },
+    
+    togglePortDebugPanel() {
+      this.showPortDebugPanel = !this.showPortDebugPanel
+    },
+    
+    // 新增：切换详细日志模式
+    toggleDetailedLogs() {
+      this.detailedLogsEnabled = !this.detailedLogsEnabled
+      if (this.portDebugger) {
+        this.portDebugger.setDebugMode(this.detailedLogsEnabled)
+        this.portDebugger.setLogLevel(this.detailedLogsEnabled ? 'detailed' : 'basic')
+      }
+    },
+    
+    debugAllNodePorts() {
+      if (this.portDebugger) {
+        this.portDebugger.debugAllNodes()
+        this.updatePortDebugStats()
+      }
+    },
+    
+    updatePortDebugStats() {
+      if (!this.portDebugger) return
+      
+      let totalNodes = 0
+      let totalIssues = 0
+      
+      this.portDebugger.debugInfo.forEach((debugData) => {
+        totalNodes++
+        if (debugData.portAnalysis && debugData.portAnalysis.issues) {
+          totalIssues += debugData.portAnalysis.issues.length
+        }
+      })
+      
+      this.portDebugStats = { totalNodes, totalIssues }
+    },
+    
+    handleNodeSelection(args) {
+      if (args.selected && args.selected.length > 0) {
+        const selectedNode = args.selected[0]
+        this.updateSelectedNodePortInfo(selectedNode.id)
+      } else {
+        this.selectedNodePortInfo = null
+      }
+    },
+    
+    updateSelectedNodePortInfo(nodeId) {
+      if (!this.portDebugger) return
+      
+      const report = this.portDebugger.generateDebugReport(nodeId)
+      if (report && !report.error) {
+        this.selectedNodePortInfo = {
+          id: nodeId,
+          type: report.nodeInfo.type,
+          position: report.nodeInfo.position,
+          size: report.nodeInfo.size,
+          shape: report.nodeInfo.shape,
+          portAnalysis: report.portAnalysis
+        }
+      }
     }
   }
 }
@@ -166,7 +368,8 @@ export default {
 .debug-panel {
   position: fixed;
   z-index: 1000;
-  width: 350px;
+  width: 400px;
+  max-height: 80vh;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   border-radius: 12px;
@@ -204,196 +407,214 @@ export default {
   font-size: 14px;
 }
 
-.debug-title .arco-icon {
-  color: #5F95FF;
-  font-size: 16px;
-}
-
-.debug-header .arco-btn {
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-.debug-header .arco-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
 .debug-content {
   padding: 16px;
+  max-height: calc(80vh - 60px);
+  overflow-y: auto;
 }
 
 .debug-section {
   margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .debug-section:last-child {
+  border-bottom: none;
   margin-bottom: 0;
 }
 
-.debug-section-title {
-  font-size: 13px;
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  color: #1890ff;
 }
 
-.debug-section-title::before {
-  content: '';
-  width: 3px;
-  height: 14px;
-  background: linear-gradient(135deg, #5F95FF, #4080FF);
-  border-radius: 2px;
-}
-
-.debug-stats {
-  margin-top: 12px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.port-debug-controls {
   margin-bottom: 12px;
 }
 
-.stat-item {
-  background: rgba(95, 149, 255, 0.05);
-  border: 1px solid rgba(95, 149, 255, 0.1);
-  border-radius: 8px;
+.port-debug-stats {
+  background: #f8f9fa;
   padding: 12px;
-  text-align: center;
-  transition: all 0.2s ease;
+  border-radius: 6px;
+  margin-bottom: 12px;
 }
 
-.stat-item:hover {
-  background: rgba(95, 149, 255, 0.08);
-  border-color: rgba(95, 149, 255, 0.2);
-  transform: translateY(-1px);
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stats-row:last-child {
+  margin-bottom: 0;
 }
 
 .stat-label {
-  font-size: 11px;
   color: #666;
-  margin-bottom: 4px;
-  font-weight: 500;
+  font-size: 12px;
 }
 
 .stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-}
-
-.stat-value.highlight {
-  color: #5F95FF;
-}
-
-.stat-value.warning {
-  color: #ff7d00;
+  font-weight: 600;
+  font-size: 12px;
+  font-family: 'Monaco', 'Menlo', monospace;
 }
 
 .stat-value.error {
   color: #ff4d4f;
 }
 
-.debug-issues {
-  background: rgba(255, 243, 243, 0.8);
-  border: 1px solid rgba(245, 63, 63, 0.2);
-  border-radius: 4px;
-  padding: 8px;
-  margin-top: 16px;
+.selected-node-port-info {
+  background: #f0f8ff;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 12px;
 }
 
-.issues-title {
+.selected-node-port-info h5 {
+  margin: 0 0 8px 0;
   font-size: 13px;
+  color: #1890ff;
   font-weight: 600;
+}
+
+.node-port-details {
+  margin-bottom: 12px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-family: 'Monaco', 'Menlo', monospace;
   color: #333;
+}
+
+.port-coordinates {
+  margin-bottom: 12px;
+}
+
+.port-group-info {
+  background: white;
+  padding: 8px;
+  border-radius: 4px;
   margin-bottom: 8px;
 }
 
+.port-group-name {
+  font-weight: 600;
+  color: #1890ff;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.coord-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.coord-label {
+  color: #666;
+}
+
+.coord-value {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.port-issues {
+  background: #fff2f0;
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ff4d4f;
+}
+
+.issues-title {
+  font-weight: 600;
+  color: #ff4d4f;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
 .issue-item {
-  padding: 8px 12px;
-  background: rgba(255, 77, 79, 0.05);
-  border: 1px solid rgba(255, 77, 79, 0.1);
+  font-size: 11px;
+  color: #ff4d4f;
+  margin-bottom: 2px;
+}
+
+.debug-stats {
+  background: #fafafa;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 8px;
+  background: white;
   border-radius: 6px;
-  margin-bottom: 6px;
+  border: 1px solid #e8e8e8;
+}
+
+.stat-item .stat-label {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.stat-item .stat-value {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1890ff;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.debug-issues {
+  background: #fff2f0;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #ff4d4f;
+}
+
+.debug-issues .issues-title {
+  font-weight: 600;
+  color: #ff4d4f;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.debug-issues .issue-item {
   font-size: 12px;
   color: #ff4d4f;
-}
-
-.debug-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.debug-action-btn {
-  flex: 1;
-  height: 36px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.debug-action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(95, 149, 255, 0.3);
-}
-
-.debug-panel.dragging {
-  cursor: move;
-  transform: rotate(1deg);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+  margin-bottom: 4px;
+  padding-left: 8px;
 }
 
 .dragging {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transform: scale(1.02);
-}
-
-/* 调试面板动画 */
-.debug-panel-enter-active,
-.debug-panel-leave-active {
-  transition: all 0.3s ease;
-}
-
-.debug-panel-enter-from {
-  opacity: 0;
-  transform: scale(0.8) translateY(-20px);
-}
-
-.debug-panel-leave-to {
-  opacity: 0;
-  transform: scale(0.8) translateY(-20px);
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .debug-panel {
-    width: 300px;
-    font-size: 12px;
-    position: relative;
-    margin-bottom: 10px;
-  }
-  
-  .debug-header {
-    cursor: default;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  
-  .stat-value {
-    font-size: 16px;
-  }
+  cursor: move;
+  opacity: 0.9;
 }
 </style>

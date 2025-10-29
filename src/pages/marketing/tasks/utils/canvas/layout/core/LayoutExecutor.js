@@ -2,7 +2,7 @@
  * 布局执行器
  * 负责协调各个算法模块，执行完整的布局计算流程
  */
-class LayoutExecutor {
+export class LayoutExecutor {
   constructor(config = {}) {
     this.config = {
       enableHierarchicalLayout: config.enableHierarchicalLayout !== false,
@@ -382,4 +382,4 @@ class LayoutExecutor {
   }
 }
 
-export default LayoutExecutor;
+// 默认导出已通过 export class 实现

@@ -206,7 +206,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Modal, Message } from '@arco-design/web-vue'
 import {
@@ -381,197 +381,190 @@ const loadTaskData = async () => {
               y: 440,
               label: '短信通知',
               config: {
-                name: '实名认证提醒短信',
+                name: '短信通知',
                 description: '发送实名认证提醒短信',
-                template: '【消费贷】尊敬的用户，请完成实名认证以享受更优惠的贷款利率。',
+                template: '尊敬的用户，请完成实名认证以享受更多服务',
                 sendTime: 'immediate'
+              }
+            },
+            {
+              id: 'push-notification',
+              type: 'push',
+              x: 600,
+              y: 560,
+              label: 'Push通知',
+              config: {
+                name: 'Push通知',
+                description: '发送实名认证提醒推送',
+                title: '实名认证提醒',
+                content: '完成实名认证，享受更多优质服务',
+                sendTime: 'immediate'
+              }
+            },
+            {
+              id: 'wait-action',
+              type: 'wait',
+              x: 400,
+              y: 680,
+              label: '等待用户操作',
+              config: {
+                name: '等待用户操作',
+                description: '等待用户完成实名认证',
+                waitTime: 24,
+                timeUnit: 'hours'
+              }
+            },
+            {
+              id: 'success-end',
+              type: 'end',
+              x: 200,
+              y: 800,
+              label: '认证成功',
+              config: {
+                name: '认证成功结束',
+                description: '用户成功完成实名认证'
+              }
+            },
+            {
+              id: 'timeout-end',
+              type: 'end',
+              x: 600,
+              y: 800,
+              label: '超时结束',
+              config: {
+                name: '超时结束',
+                description: '用户未在规定时间内完成认证'
               }
             }
           ],
           connections: [
             {
-              id: 'conn1',
+              id: 'conn-1',
               source: 'start',
               target: 'user-filter',
-              label: ''
+              sourceNodeId: 'start',
+              targetNodeId: 'user-filter',
+              sourcePortId: 'output',
+              targetPortId: 'input'
             },
             {
-              id: 'conn2',
+              id: 'conn-2',
               source: 'user-filter',
               target: 'filter-end',
+              sourceNodeId: 'user-filter',
+              targetNodeId: 'filter-end',
+              sourcePortId: 'branch-1',
+              targetPortId: 'input',
+              branchId: 'branch-1',
               label: '不符合条件'
             },
             {
-              id: 'conn3',
+              id: 'conn-3',
               source: 'user-filter',
               target: 'blacklist-check',
+              sourceNodeId: 'user-filter',
+              targetNodeId: 'blacklist-check',
+              sourcePortId: 'branch-0',
+              targetPortId: 'input',
+              branchId: 'branch-0',
               label: '符合条件'
             },
             {
-              id: 'conn4',
+              id: 'conn-4',
               source: 'blacklist-check',
               target: 'blacklist-end',
+              sourceNodeId: 'blacklist-check',
+              targetNodeId: 'blacklist-end',
+              sourcePortId: 'branch-1',
+              targetPortId: 'input',
+              branchId: 'branch-1',
               label: '命中黑名单'
             },
             {
-              id: 'conn5',
+              id: 'conn-5',
               source: 'blacklist-check',
               target: 'sms-notification',
+              sourceNodeId: 'blacklist-check',
+              targetNodeId: 'sms-notification',
+              sourcePortId: 'branch-0',
+              targetPortId: 'input',
+              branchId: 'branch-0',
               label: '未命中黑名单'
-            }
-          ]
-        }
-      }
-    } else if (taskId.value === '3') {
-      // 修复：为ID=3添加完整的测试数据，包含人群分流节点和连接
-      console.log('📋 [TaskEditor] 使用完整测试数据 (ID=3) - 包含人群分流和连接')
-      mockTaskData = {
-        id: taskId.value,
-        name: '人群分流测试任务',
-        description: '测试人群分流分支数和预览线连接区分',
-        type: 'marketing',
-        status: 'draft',
-        createTime: '2024-01-17 15:30:00',
-        version: currentVersion.value,
-        canvasData: {
-          nodes: [
-            {
-              id: 'start-node',
-              type: 'start',
-              x: 400,
-              y: 100,
-              label: '开始',
-              config: {
-                name: '开始节点',
-                description: '人群分流测试开始',
-                isConfigured: true
-              }
             },
             {
-              id: 'audience-split-1',
-              type: 'audience-split',
-              x: 400,
-              y: 250,
-              label: '人群分流',
-              config: {
-                name: '人群分流节点',
-                description: '根据用户属性进行分流',
-                isConfigured: true,
-                branchCount: 3,
-                crowdLayers: [
-                  { 
-                    id: 'crowd_1', 
-                    crowdName: '高价值用户', 
-                    crowdId: 'c1',
-                    order: 1
-                  },
-                  { 
-                    id: 'crowd_2', 
-                    crowdName: '普通用户', 
-                    crowdId: 'c2',
-                    order: 2
-                  }
-                ],
-                unmatchBranch: {
-                  id: 'unmatch_default',
-                  crowdName: '未命中人群',
-                  crowdId: null,
-                  order: 3
-                },
-                branches: [
-                  { name: '高价值用户', isDefault: false, crowdId: 'c1' },
-                  { name: '普通用户', isDefault: false, crowdId: 'c2' },
-                  { name: '未命中人群', isDefault: true, crowdId: null }
-                ]
-              }
+              id: 'conn-6',
+              source: 'sms-notification',
+              target: 'push-notification',
+              sourceNodeId: 'sms-notification',
+              targetNodeId: 'push-notification',
+              sourcePortId: 'output',
+              targetPortId: 'input'
             },
             {
-              id: 'sms-high-value',
-              type: 'sms',
-              x: 200,
-              y: 400,
-              label: '高价值短信',
-              config: {
-                name: '高价值用户短信',
-                description: '发送给高价值用户的专属短信',
-                template: '【专属】尊贵的用户，您有专属优惠待领取',
-                isConfigured: true
-              }
+              id: 'conn-7',
+              source: 'push-notification',
+              target: 'wait-action',
+              sourceNodeId: 'push-notification',
+              targetNodeId: 'wait-action',
+              sourcePortId: 'output',
+              targetPortId: 'input'
             },
             {
-              id: 'sms-normal',
-              type: 'sms',
-              x: 400,
-              y: 400,
-              label: '普通短信',
-              config: {
-                name: '普通用户短信',
-                description: '发送给普通用户的短信',
-                template: '【通知】您有新的优惠信息',
-                isConfigured: true
-              }
+              id: 'conn-8',
+              source: 'wait-action',
+              target: 'success-end',
+              sourceNodeId: 'wait-action',
+              targetNodeId: 'success-end',
+              sourcePortId: 'success',
+              targetPortId: 'input',
+              label: '认证成功'
             },
             {
-              id: 'end-unmatch',
-              type: 'end',
-              x: 600,
-              y: 400,
-              label: '未命中结束',
-              config: {
-                name: '未命中用户结束',
-                description: '未命中人群的用户直接结束',
-                isConfigured: true
-              }
-            }
-          ],
-          connections: [
-            {
-              id: 'conn-start-split',
-              source: 'start-node',
-              target: 'audience-split-1',
-              label: '',
-              isPreview: false
-            },
-            {
-              id: 'conn-split-high',
-              source: 'audience-split-1',
-              target: 'sms-high-value',
-              label: '高价值用户',
-              branchId: 'crowd_1',
-              isPreview: false
-            },
-            {
-              id: 'conn-split-normal',
-              source: 'audience-split-1',
-              target: 'sms-normal',
-              label: '普通用户',
-              branchId: 'crowd_2',
-              isPreview: false
-            },
-            {
-              id: 'conn-split-unmatch',
-              source: 'audience-split-1',
-              target: 'end-unmatch',
-              label: '未命中人群',
-              branchId: 'unmatch_default',
-              isPreview: false
+              id: 'conn-9',
+              source: 'wait-action',
+              target: 'timeout-end',
+              sourceNodeId: 'wait-action',
+              targetNodeId: 'timeout-end',
+              sourcePortId: 'timeout',
+              targetPortId: 'input',
+              label: '超时'
             }
           ]
         }
       }
     } else {
-      // 其他任务的默认数据
-      console.log('📋 [TaskEditor] 使用默认空数据')
+      // 🔧 修复：为不存在的任务创建包含开始节点的默认数据
+      console.log('📋 [TaskEditor] 任务不存在，创建包含开始节点的默认数据')
       mockTaskData = {
         id: taskId.value,
-        name: '新建营销任务',
+        name: `营销任务 ${taskId.value}`,
         description: '',
         type: 'marketing',
         status: 'draft',
         createTime: new Date().toLocaleString('zh-CN'),
         version: currentVersion.value,
         canvasData: {
-          nodes: [],
+          nodes: [
+            {
+              id: 'start-node',
+              type: 'start',
+              label: '开始',
+              position: { x: 400, y: 100 },
+              x: 400,
+              y: 100,
+              data: {
+                isConfigured: true,
+                config: {
+                  name: '开始节点',
+                  description: '流程开始'
+                }
+              },
+              config: {
+                name: '开始节点',
+                description: '流程开始'
+              }
+            }
+          ],
           connections: []
         }
       }
@@ -603,12 +596,16 @@ const loadTaskData = async () => {
       { version: 2, createTime: '2024-01-16 14:20:00', isActive: true }
     ]
 
+    // 🔧 修复：使用 nextTick 确保组件完全渲染后再加载数据
+    await nextTick()
+    
     // 延迟加载画布数据，确保组件已经渲染和初始化完成
     setTimeout(() => {
       if (canvasRef.value && mockTaskData.canvasData) {
+        console.log('🎨 [TaskEditor] 开始加载画布数据到组件')
         canvasRef.value.loadCanvasData(mockTaskData.canvasData)
       }
-    }, 300)
+    }, 500) // 增加延迟时间确保画布完全初始化
 
   } catch (error) {
     console.error('❌ [TaskEditor] 加载任务数据失败:', error)

@@ -102,17 +102,30 @@ const emit = defineEmits(['click', 'delete', 'slot-click'])
 // 从X6节点或props中获取数据
 const nodeData = computed(() => {
   if (props.node && typeof props.node.getData === 'function') {
-    return props.node.data || props.node.store?.data?.data || {}
+    try {
+      return props.node.getData() || {}
+    } catch (error) {
+      console.warn('[FlowNode] 获取节点数据失败:', error)
+      return props.node.data || props.node.store?.data?.data || {}
+    }
   }
   return props.data || {}
 })
 
 const actualNodeType = computed(() => {
-  // 安全访问nodeData.value
-  if (nodeData && nodeData.value && nodeData.value.nodeType) {
-    return nodeData.value.nodeType
-  }
-  return props.nodeType || 'start'
+  // 🔧 修复：与TaskFlowCanvasRefactored保持一致的节点类型获取逻辑
+  const data = nodeData.value
+  const actualType = data?.type || data?.nodeType || props.nodeType || 'start'
+  
+  console.log('🔍 [FlowNode] 节点类型确认:', {
+    dataType: data?.type,
+    dataNodeType: data?.nodeType,
+    propsNodeType: props.nodeType,
+    actualType: actualType,
+    nodeId: props.node?.id
+  })
+  
+  return actualType
 })
 
 const actualLabel = computed(() => {
@@ -123,7 +136,7 @@ const actualLabel = computed(() => {
   return props.label || '节点'
 })
 
-const isSelected = computed(() => {
+const actualSelected = computed(() => {
   // 安全访问nodeData.value
   if (nodeData && nodeData.value && nodeData.value.selected !== undefined) {
     return nodeData.value.selected
@@ -131,7 +144,7 @@ const isSelected = computed(() => {
   return props.selected || false
 })
 
-const isDeletable = computed(() => {
+const actualDeletable = computed(() => {
   // 安全访问nodeData.value
   let deletable = props.deletable
   if (nodeData && nodeData.value && nodeData.value.deletable !== undefined) {

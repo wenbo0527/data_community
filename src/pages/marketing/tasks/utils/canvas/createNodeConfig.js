@@ -1,5 +1,5 @@
 import { generateUniqueId } from './idGenerator.js'
-import { createPortConfig } from './portConfigFactory.js'
+import { createNodePortConfig } from './portConfigFactory.js'
 import { getNodeAttrs } from '../../../../../utils/nodeTypes.js'
 
 /**
@@ -85,10 +85,42 @@ export function createNodeConfig(nodeData, options = {}) {
       }
     }
     
-    // 创建端口配置
-    const portConfig = createPortConfig(nodeData.type, nodeData.config)
+    // 创建端口配置 - 使用正确的函数名
+    console.log(`🔍 [createNodeConfig] 开始为节点类型 ${nodeData.type} 创建端口配置`)
+    const portConfig = createNodePortConfig(nodeData.type, nodeData.config)
+    
+    console.log(`🔍 [createNodeConfig] createNodePortConfig 返回结果:`, {
+      exists: !!portConfig,
+      type: typeof portConfig,
+      hasGroups: !!(portConfig && portConfig.groups),
+      hasItems: !!(portConfig && portConfig.items),
+      groupsCount: portConfig?.groups ? Object.keys(portConfig.groups).length : 0,
+      itemsCount: portConfig?.items ? portConfig.items.length : 0,
+      fullConfig: portConfig
+    })
+    
     if (portConfig && (portConfig.groups || portConfig.items)) {
+      // 同时设置到 X6 节点配置和节点数据中
       baseConfig.ports = portConfig
+      baseConfig.data.portConfig = portConfig  // 关键修复：保存到节点数据中
+      
+      console.log(`✅ [createNodeConfig] 为节点 ${nodeData.type} 添加端口配置:`, portConfig)
+      console.log(`✅ [createNodeConfig] 端口配置已保存到 baseConfig.ports 和 baseConfig.data.portConfig`)
+      
+      // 详细验证端口配置结构
+      console.log(`🔍 [createNodeConfig] 端口配置详细验证:`)
+      console.log(`  - groups 存在: ${!!portConfig.groups}`)
+      console.log(`  - items 存在: ${!!portConfig.items}`)
+      if (portConfig.groups) {
+        console.log(`  - groups 内容:`, portConfig.groups)
+      }
+      if (portConfig.items) {
+        console.log(`  - items 内容:`, portConfig.items)
+        console.log(`  - items 数量:`, portConfig.items.length)
+      }
+    } else {
+      console.warn(`⚠️ [createNodeConfig] 节点 ${nodeData.type} 没有端口配置`)
+      console.warn(`⚠️ [createNodeConfig] createNodePortConfig 返回值无效:`, portConfig)
     }
     
     // 应用样式配置

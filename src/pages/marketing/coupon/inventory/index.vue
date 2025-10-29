@@ -1,5 +1,59 @@
 <template>
   <div class="coupon-inventory-container">
+    <!-- 统计卡片区域 -->
+    <div class="statistics-cards">
+      <a-row :gutter="16" style="margin-bottom: 16px">
+        <a-col :span="6">
+          <a-card class="stat-card">
+            <a-statistic 
+              title="总库存数量" 
+              :value="statisticsData.totalInventory"
+              :value-style="{ color: '#1890ff' }">
+              <template #suffix>
+                <icon-check-circle />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        <a-col :span="6">
+          <a-card class="stat-card">
+            <a-statistic 
+              title="待审批数量" 
+              :value="statisticsData.pendingApproval"
+              :value-style="{ color: '#faad14' }">
+              <template #suffix>
+                <icon-clock-circle />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        <a-col :span="6">
+          <a-card class="stat-card">
+            <a-statistic 
+              title="已通过数量" 
+              :value="statisticsData.approvedCount"
+              :value-style="{ color: '#52c41a' }">
+              <template #suffix>
+                <icon-check-circle />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        <a-col :span="6">
+          <a-card class="stat-card">
+            <a-statistic 
+              title="已拒绝数量" 
+              :value="statisticsData.rejectedCount"
+              :value-style="{ color: '#ff4d4f' }">
+              <template #suffix>
+                <icon-close-circle />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+      </a-row>
+    </div>
+
     <!-- 搜索表单 -->
     <a-card class="search-card">
       <a-form :model="formModel" @submit="handleSearch" layout="horizontal" :style="{ width: '100%' }">
@@ -35,6 +89,11 @@
               </a-select>
             </a-form-item>
           </a-col>
+          <a-col :span="8">
+            <a-form-item field="createTime" label="创建时间">
+              <a-range-picker v-model="formModel.createTime" placeholder="请选择创建时间范围" allow-clear />
+            </a-form-item>
+          </a-col>
         </a-row>
         <a-row>
           <a-col :span="24" style="text-align: right">
@@ -53,23 +112,23 @@
         库存统计列表
       </template>
       <template #extra>
-        <a-space>
-          <a-button 
-  type="primary" 
-  status="danger" 
-  :disabled="!selectedRows.length || withdrawLoading"
-  :loading="withdrawLoading"
-  @click="handleBatchWithdraw">
-            <template #icon><icon-delete /></template>
-            批量撤回
-          </a-button>
-          <a-button type="text">
-            <template #icon><icon-download /></template>
-            导出数据
-          </a-button>
-          <a-button type="outline" @click="showApprovalModal">申请发券</a-button>
-          <a-button type="text" @click="showApprovalHistory">审批历史</a-button>
-        </a-space>
+        <div class="table-actions">
+          <!-- 库存操作区域 -->
+          <div class="inventory-actions">
+            <a-button 
+              type="primary" 
+              @click="handleExport">
+              <template #icon><icon-download /></template>
+              导出数据
+            </a-button>
+            <a-button 
+              type="outline" 
+              @click="handleRefresh">
+              <template #icon><icon-refresh /></template>
+              刷新数据
+            </a-button>
+          </div>
+        </div>
       </template>
       <a-table
         :data="tableData"
@@ -97,29 +156,51 @@
             {{ getApprovalStatusText(record.approvalStatus) }}
           </a-tag>
         </template>
+        
+        <template #action="{ record }">
+          <a-space>
+            <template v-if="record.approvalStatus === 'pending'">
+              <a-button 
+                type="text" 
+                size="small" 
+                status="success"
+                @click="handleSingleApprove(record)"
+              >
+                <template #icon>
+                  <icon-check-circle />
+                </template>
+                通过
+              </a-button>
+              <a-button 
+                type="text" 
+                size="small" 
+                status="danger"
+                @click="handleSingleReject(record)"
+              >
+                <template #icon>
+                  <icon-close-circle />
+                </template>
+                拒绝
+              </a-button>
+            </template>
+            <a-button 
+              type="text" 
+              size="small"
+              @click="viewDetail(record)"
+            >
+              查看详情
+            </a-button>
+          </a-space>
+        </template>
       </a-table>
     </a-card>
-
-    <!-- 审批弹窗 -->
-    <ApprovalModal
-      v-model:visible="approvalModalVisible"
-      :template-data="selectedTemplate"
-      @success="handleApprovalSuccess"
-    />
-
-    <!-- 审批历史弹窗 -->
-    <ApprovalHistory
-      v-model:visible="approvalHistoryVisible"
-    />
-  </div>
+   </div>
 </template>
 
 <script setup>
 import { ref, reactive, h, computed } from 'vue'
-import { IconDownload, IconDelete } from '@arco-design/web-vue/es/icon'
+import { IconDownload, IconRefresh, IconCheckCircle, IconCloseCircle, IconClockCircle } from '@arco-design/web-vue/es/icon'
 import { Message, Modal } from '@arco-design/web-vue'
-import ApprovalModal from './components/ApprovalModal.vue'
-import ApprovalHistory from './components/ApprovalHistory.vue'
 
 // 表格列配置
 const columns = [
@@ -164,10 +245,15 @@ const columns = [
     }[record.status])
   },
   { 
-    title: '审批状态', 
-    dataIndex: 'approvalStatus', 
-    width: 120,
-    slotName: 'approvalStatus'
+    title: '创建时间', 
+    dataIndex: 'createTime', 
+    width: 160
+  },
+  {
+    title: '操作',
+    width: 200,
+    align: 'center',
+    slotName: 'action'
   }
 ]
 
@@ -177,7 +263,16 @@ const formModel = reactive({
   templateId: '',
   userId: '',
   packageId: '',
-  status: ''
+  status: '',
+  createTime: []
+})
+
+// 统计数据
+const statisticsData = reactive({
+  totalInventory: 0,
+  pendingApproval: 0,
+  approvedCount: 0,
+  rejectedCount: 0
 })
 
 // 表格数据
@@ -199,11 +294,22 @@ const rowSelection = computed(() => ({
   onlyCurrent: false
 }))
 
+// 导出数据功能
+const handleExport = () => {
+  Message.info('导出功能开发中...')
+}
+
+// 刷新数据功能
+const handleRefresh = () => {
+  fetchInventoryData()
+  fetchStatistics()
+}
+
 // 分页配置
 const pagination = reactive({
   total: 0,
   current: 1,
-  pageSize: 10,
+  pageSize: 50,
   showTotal: true,
   showJumper: true,
   showPageSize: true
@@ -214,14 +320,24 @@ const fetchInventoryData = async () => {
   loading.value = true
   try {
     const { inventoryAPI } = await import('@/api/coupon.js')
-    const response = await inventoryAPI.getInventoryList({
-       page: pagination.current,
-       pageSize: pagination.pageSize,
-       ...searchForm.value
-     })
+    
+    // 构建查询参数，过滤掉空值
+    const queryParams = {
+      page: pagination.current,
+      pageSize: pagination.pageSize
+    }
+    
+    // 只添加非空的搜索条件
+    Object.keys(formModel).forEach(key => {
+      if (formModel[key] && formModel[key] !== '') {
+        queryParams[key] = formModel[key]
+      }
+    })
+    
+    const response = await inventoryAPI.getInventoryList(queryParams)
     
     if (response.code === 200) {
-       inventoryData.value = response.data.list
+       tableData.value = response.data.list
        pagination.total = response.data.total
      } else {
        Message.error(response.message || '获取数据失败')
@@ -231,6 +347,23 @@ const fetchInventoryData = async () => {
     Message.error('获取数据失败，请重试')
   } finally {
     loading.value = false
+  }
+}
+
+// 获取统计数据
+const fetchStatistics = async () => {
+  try {
+    const { inventoryAPI } = await import('@/api/coupon.js')
+    const response = await inventoryAPI.getInventoryList({})
+    if (response.code === 200) {
+      const allData = response.data.list
+      statisticsData.totalInventory = allData.length
+      statisticsData.pendingApproval = allData.filter(item => item.approvalStatus === 'pending').length
+      statisticsData.approvedCount = allData.filter(item => item.approvalStatus === 'approved').length
+      statisticsData.rejectedCount = allData.filter(item => item.approvalStatus === 'rejected').length
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
   }
 }
 
@@ -297,8 +430,11 @@ const resetForm = () => {
   formModel.userId = ''
   formModel.packageId = ''
   formModel.status = ''
+  formModel.createTime = []
   handleSearch()
 }
+
+
 
 // 分页变化
 const onPageChange = (current) => {
@@ -335,24 +471,14 @@ const handleRowClick = (record) => {
   }
 };
 
-// 审批相关
-const approvalModalVisible = ref(false)
-const approvalHistoryVisible = ref(false)
-const selectedTemplate = ref({})
 
-// 显示审批弹窗
-const showApprovalModal = () => {
-  // 这里可以选择券模板，暂时使用默认模板
-  selectedTemplate.value = {
-    id: 'TPL001',
-    name: '新人专享券'
-  }
-  approvalModalVisible.value = true
-}
 
-// 显示审批历史
-const showApprovalHistory = () => {
-  approvalHistoryVisible.value = true
+
+
+// 查看详情
+const viewDetail = (record) => {
+  // 这里可以打开详情弹窗或跳转到详情页面
+  Message.info(`查看券实例 ${record.couponId} 的详情`)
 }
 
 // 审批成功回调
@@ -387,6 +513,7 @@ const getApprovalStatusText = (status) => {
 
 // 初始化加载数据
 fetchInventoryData()
+fetchStatistics()
 </script>
 
 <style scoped>

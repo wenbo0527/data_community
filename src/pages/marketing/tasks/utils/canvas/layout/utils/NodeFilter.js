@@ -309,4 +309,4 @@ export const NodeFilterUtils = {
     return nodeFilter.groupNodesByType(nodes);
   }
 };
-export default NodeFilter;
+// 默认导出已通过 export class 实现

@@ -196,4 +196,4 @@ export class LayerCalculator {
   }
 }
 
-export default LayerCalculator;
+// 默认导出已通过 export class 实现

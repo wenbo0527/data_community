@@ -4,27 +4,47 @@
       <!-- 库存管理指标 -->
       <a-col :span="24">
         <a-card title="平台库存情况" :loading="loading">
+          <template #extra>
+            <a-space>
+              <a-badge :count="alertCount" :offset="[10, 0]">
+                <a-button type="text" @click="handleAlertCenter">
+                  <template #icon><icon-notification /></template>
+                  预警中心
+                </a-button>
+              </a-badge>
+              <a-button type="text" @click="handleRefresh">
+                <template #icon><icon-refresh /></template>
+                刷新数据
+              </a-button>
+            </a-space>
+          </template>
           <a-row :gutter="[16, 16]">
             <a-col :span="6" v-for="(stat, index) in inventoryStats" :key="index">
               <a-card class="stat-card" :bordered="false">
-                <a-statistic
-                  :title="stat.title"
-                  :value="stat.value"
-                  :precision="stat.precision || 0"
-                  :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
-                >
-                  <template #prefix>
-                    <icon-arrow-rise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
-                    <icon-arrow-fall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
-                  </template>
-                  <template #suffix>
-                    <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
-                      {{ stat.percentage }}%
-                    </span>
-                  </template>
-                </a-statistic>
-                
-
+                <div class="stat-header">
+                  <a-badge
+                    :color="getAlertStatusColor(stat.alertStatus)"
+                    :dot="stat.alertStatus !== 'normal'"
+                    :offset="[-5, 5]"
+                  >
+                    <a-statistic
+                      :title="stat.title"
+                      :value="stat.value"
+                      :precision="stat.precision || 0"
+                      :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
+                    >
+                      <template #prefix>
+                        <icon-arrow-rise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
+                        <icon-arrow-fall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
+                      </template>
+                      <template #suffix>
+                        <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
+                          {{ stat.percentage }}%
+                        </span>
+                      </template>
+                    </a-statistic>
+                  </a-badge>
+                </div>
               </a-card>
             </a-col>
           </a-row>
@@ -37,127 +57,169 @@
           <a-row :gutter="[16, 16]">
             <a-col :span="8" v-for="(stat, index) in processStats" :key="index">
               <a-card class="stat-card" :bordered="false">
-                <a-statistic
-                  :title="stat.title"
-                  :value="stat.value"
-                  :precision="stat.precision || 0"
-                  :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
+                <a-badge
+                  :color="getAlertStatusColor(stat.alertStatus)"
+                  :dot="stat.alertStatus !== 'normal'"
+                  :offset="[-5, 5]"
                 >
-                  <template #prefix>
-                    <icon-arrow-rise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
-                    <icon-arrow-fall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
-                  </template>
-                  <template #suffix>
-                    <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
-                      {{ stat.percentage }}%
-                    </span>
-                  </template>
-                </a-statistic>
-                
-
+                  <a-statistic
+                    :title="stat.title"
+                    :value="stat.value"
+                    :precision="stat.precision || 0"
+                    :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
+                  >
+                    <template #prefix>
+                      <icon-arrow-rise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
+                      <icon-arrow-fall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
+                    </template>
+                    <template #suffix>
+                      <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
+                        {{ stat.percentage }}%
+                      </span>
+                    </template>
+                  </a-statistic>
+                </a-badge>
               </a-card>
             </a-col>
           </a-row>
         </a-card>
       </a-col>
 
-
       <!-- 权益平台预警信息与失败原因分析 -->
       <a-col :span="24">
         <a-row :gutter="[16, 16]">
           <a-col :span="12">
             <a-card title="权益平台预警信息" :loading="loading">
-          <a-table :data="warningData" :pagination="false" :scroll="{ y: 240 }">
-            <template #columns>
-              <a-table-column title="预警类型" data-index="type" />
-              <a-table-column title="预警内容" data-index="content" />
-              <a-table-column title="预警时间" data-index="time" />
-              <a-table-column title="状态" data-index="status">
-                <template #cell="{ record }">
-                  <a-tag :color="record.status === '已处理' ? 'green' : 'red'">
-                    {{ record.status }}
-                  </a-tag>
+              <template #extra>
+                <a-space>
+                  <a-button type="text" size="small" @click="handleAlertRules">
+                    预警配置
+                  </a-button>
+                  <a-button type="text" size="small" @click="handleAlertHistory">
+                    历史记录
+                  </a-button>
+                </a-space>
+              </template>
+              <a-table :data="warningData" :pagination="false" :scroll="{ y: 240 }">
+                <template #columns>
+
+                  <a-table-column title="预警类型" data-index="type" />
+                  <a-table-column title="预警内容" data-index="content" />
+                  <a-table-column title="预警时间" data-index="time" />
+                  <a-table-column title="状态" data-index="status" :width="80">
+                    <template #cell="{ record }">
+                      <a-tag :color="record.status === '已处理' ? 'green' : 'red'">
+                        {{ record.status }}
+                      </a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="操作" :width="100">
+                    <template #cell="{ record }">
+                      <a-space>
+                        <a-button
+                          v-if="record.status === '待处理'"
+                          type="text"
+                          size="small"
+                          status="success"
+                          @click="handleProcessAlert(record)"
+                        >
+                          处理
+                        </a-button>
+                        <a-button
+                          type="text"
+                          size="small"
+                          @click="handleViewAlert(record)"
+                        >
+                          详情
+                        </a-button>
+                      </a-space>
+                    </template>
+                  </a-table-column>
                 </template>
-              </a-table-column>
-            </template>
-          </a-table>
-        </a-card>
+              </a-table>
+            </a-card>
           </a-col>
           
           <a-col :span="12">
             <a-card title="领取失败原因分析" :loading="loading">
-          <div ref="failureChartRef" style="width: 100%; height: 300px;"></div>
-        </a-card>
+              <div ref="failureChartRef" style="width: 100%; height: 300px;"></div>
+            </a-card>
+          </a-col>
+        </a-row>
       </a-col>
-
     </a-row>
-  </a-col>
 
-  <!-- 券包使用排行 -->
-  <a-col :span="24">
-    <a-card title="数据统计明细" :loading="loading" class="data-table-card">
-      <template #extra>
-        <a-space>
-          <a-input-search
-            placeholder="搜索批次日期"
-            style="width: 200px"
-            allow-clear
-            @search="handleSearch"
-          />
-          <a-button type="text">
-            <template #icon><icon-download /></template>
-            导出数据
-          </a-button>
-        </a-space>
-      </template>
-      <a-table
-        :data="statisticsData"
-        :pagination="{
-          pageSize: 10,
-          showTotal: true,
-          showJumper: true,
-          showPageSize: true
-        }"
-        :bordered="false"
-        stripe
-      >
-        <template #columns>
-          <a-table-column title="批次日期" data-index="batchDate" align="center" />
-          <a-table-column title="下发量" data-index="sendCount" align="right">
-            <template #cell="{ record }">
-              <span class="highlight-text">{{ record.sendCount.toLocaleString() }}</span>
-            </template>
-          </a-table-column>
-          <a-table-column title="下发成功量" data-index="successCount" align="right">
-            <template #cell="{ record }">
-              <span class="highlight-text">{{ record.successCount.toLocaleString() }}</span>
-            </template>
-          </a-table-column>
-          <a-table-column title="下发成功率" data-index="successRate" align="right">
-            <template #cell="{ record }">
-              <a-badge
-                :color="record.successRate >= 80 ? '#00B42A' : record.successRate >= 60 ? '#FF7D00' : '#F53F3F'"
-                :text="record.successRate.toFixed(1) + '%'"
-              />
-            </template>
-          </a-table-column>
+    <!-- 数据统计明细 -->
+    <a-col :span="24">
+      <a-card title="数据统计明细" :loading="loading" class="data-table-card">
+        <template #extra>
+          <a-space>
+            <a-input-search
+              placeholder="搜索批次日期"
+              style="width: 200px"
+              allow-clear
+              @search="handleSearch"
+            />
+            <a-button type="text">
+              <template #icon><icon-download /></template>
+              导出数据
+            </a-button>
+          </a-space>
         </template>
-      </a-table>
-    </a-card>
-  </a-col>
-</a-row>
+        <a-table
+          :data="statisticsData"
+          :pagination="{
+            pageSize: 10,
+            showTotal: true,
+            showJumper: true,
+            showPageSize: true
+          }"
+          :bordered="false"
+          stripe
+        >
+          <template #columns>
+            <a-table-column title="批次日期" data-index="batchDate" align="center" />
+            <a-table-column title="下发量" data-index="sendCount" align="right">
+              <template #cell="{ record }">
+                <span class="highlight-text">{{ record.sendCount.toLocaleString() }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column title="下发成功量" data-index="successCount" align="right">
+              <template #cell="{ record }">
+                <span class="highlight-text">{{ record.successCount.toLocaleString() }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column title="下发成功率" data-index="successRate" align="right">
+              <template #cell="{ record }">
+                <a-badge
+                  :color="record.successRate >= 80 ? '#00B42A' : record.successRate >= 60 ? '#FF7D00' : '#F53F3F'"
+                  :text="record.successRate.toFixed(1) + '%'"
+                />
+              </template>
+            </a-table-column>
+          </template>
+        </a-table>
+      </a-card>
+    </a-col>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
-import { IconArrowRise, IconArrowFall, IconDownload } from '@arco-design/web-vue/es/icon'
+import { ref, onMounted, watch, onUnmounted, nextTick } from 'vue'
+import { IconArrowRise, IconArrowFall, IconDownload, IconNotification, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import * as echarts from 'echarts'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
+import { useRouter } from 'vue-router'
+
+// 路由
+const router = useRouter()
 
 // 数据加载状态
 const loading = ref(false)
+
+// 预警相关数据
+const alertCount = ref(3)
 
 // 时间范围选择
 const timeRange = ref('week')
@@ -197,35 +259,40 @@ const inventoryStats = ref([
     value: 10000,
     trend: 'up',
     percentage: 10.2,
-    description: '近3月内权益创建的券总库存'
+    description: '近3月内权益创建的券总库存',
+    alertStatus: 'warning'
   },
   {
     title: '未领取量',
     value: 3200,
     trend: 'down',
     percentage: 5.5,
-    description: '状态为未领取券的总量'
+    description: '状态为未领取券的总量',
+    alertStatus: 'normal'
   },
   {
     title: '已领取量',
     value: 4800,
     trend: 'up',
     percentage: 12.3,
-    description: '当前状态为已领取券的总量'
+    description: '当前状态为已领取券的总量',
+    alertStatus: 'normal'
   },
   {
     title: '已锁定量',
     value: 1200,
     trend: 'up',
     percentage: 8.1,
-    description: '当前状态为已锁定券的总量'
+    description: '当前状态为已锁定券的总量',
+    alertStatus: 'normal'
   },
   {
     title: '已核销量',
     value: 800,
     trend: 'up',
     percentage: 6.7,
-    description: '当前状态为已核销券的总量'
+    description: '当前状态为已核销券的总量',
+    alertStatus: 'normal'
   },
   {
     title: '权益领取率',
@@ -233,7 +300,8 @@ const inventoryStats = ref([
     precision: 1,
     trend: 'up',
     percentage: 3.2,
-    description: '统计周期内：(已领取+已锁定+已核销)/库存量'
+    description: '统计周期内：(已领取+已锁定+已核销)/库存量',
+    alertStatus: 'normal'
   },
   {
     title: '权益使用率',
@@ -241,7 +309,8 @@ const inventoryStats = ref([
     precision: 1,
     trend: 'up',
     percentage: 2.8,
-    description: '统计周期内：(已锁定 + 已核销)/已领取'
+    description: '统计周期内：(已锁定 + 已核销)/已领取',
+    alertStatus: 'normal'
   }
 ])
 
@@ -253,7 +322,8 @@ const processStats = ref([
     precision: 1,
     trend: 'up',
     percentage: 4.2,
-    description: '统计周期内：已领取量/策略请求下发量'
+    description: '统计周期内：已领取量/策略请求下发量',
+    alertStatus: 'normal'
   },
   {
     title: '锁定成功率',
@@ -261,7 +331,8 @@ const processStats = ref([
     precision: 2,
     trend: 'up',
     percentage: 0.01,
-    description: '统计周期内：已锁定量/核心请求锁定量'
+    description: '统计周期内：已锁定量/核心请求锁定量',
+    alertStatus: 'normal'
   },
   {
     title: '核销成功率',
@@ -269,7 +340,8 @@ const processStats = ref([
     precision: 2,
     trend: 'up',
     percentage: 0.01,
-    description: '统计周期内：已核销量/核心请求核销量'
+    description: '统计周期内：已核销量/核心请求核销量',
+    alertStatus: 'danger'
   }
 ])
 
@@ -287,24 +359,75 @@ let typeChart = null
 // ==================== 预警数据 ====================
 const warningData = ref([
   {
-    type: '券包发放失败',
-    content: '券包ID: CP20240101发放失败，请检查',
-    time: '2024-01-15 10:30',
-    status: '未处理'
+    level: 'high',
+    type: '库存预警',
+    content: '券模板"首借30天免息券"库存不足，仅剩85张',
+    time: '2024-01-15 14:30:00',
+    status: '待处理'
   },
   {
-    type: '券即将过期',
-    content: '券ID: C20240101即将在3天后过期',
-    time: '2024-01-14 15:20',
+    level: 'medium',
+    type: '发放失败',
+    content: '券包PKG002发放失败率18.75%，超过预警阈值',
+    time: '2024-01-16 11:30:00',
+    status: '待处理'
+  },
+  {
+    level: 'low',
+    type: '过期提醒',
+    content: '券模板"复借8折优惠券"将在7天后过期',
+    time: '2024-01-14 09:00:00',
     status: '已处理'
-  },
-  {
-    type: '券使用异常',
-    content: '券ID: C20240102使用率低于5%，请关注',
-    time: '2024-01-13 09:45',
-    status: '未处理'
   }
 ])
+
+// 获取预警状态颜色
+const getAlertStatusColor = (status) => {
+  const colors = {
+    normal: '#00B42A',
+    warning: '#FF7D00',
+    danger: '#F53F3F'
+  }
+  return colors[status] || '#86909C'
+}
+
+
+
+// 预警中心
+const handleAlertCenter = () => {
+  Message.info('跳转到预警中心')
+}
+
+// 刷新数据
+const handleRefresh = () => {
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+    Message.success('数据刷新成功')
+  }, 1000)
+}
+
+// 预警配置
+const handleAlertRules = () => {
+  router.push('/marketing/alert/rules')
+}
+
+// 预警历史
+const handleAlertHistory = () => {
+  router.push('/marketing/alert/history')
+}
+
+// 处理预警
+const handleProcessAlert = (record) => {
+  Message.success(`开始处理预警：${record.content}`)
+  record.status = '已处理'
+  alertCount.value = Math.max(0, alertCount.value - 1)
+}
+
+// 查看预警详情
+const handleViewAlert = (record) => {
+  Message.info(`查看预警详情：${record.content}`)
+}
 
 // ==================== 失败原因统计数据 ====================
 const failureReasonData = ref([
@@ -329,13 +452,38 @@ const failureChartRef = ref(null)
 let failureChart = null
 
 const initFailureChart = async () => {
-  if (!failureChartRef.value || !failureChartRef.value.clientWidth) {
-    setTimeout(initFailureChart, 100)
+  if (!failureChartRef.value) {
+    console.warn('⚠️ 失败原因图表容器不存在，延迟重试')
+    setTimeout(initFailureChart, 200)
+    return
+  }
+  
+  // 等待DOM完全渲染和容器尺寸确定
+  await nextTick()
+  await new Promise(resolve => requestAnimationFrame(resolve))
+  
+  // 添加null检查，防止getBoundingClientRect错误
+  if (!failureChartRef.value) {
+    console.warn('⚠️ 失败原因图表容器在DOM更新后变为null，延迟重试')
+    setTimeout(initFailureChart, 200)
+    return
+  }
+  
+  const rect = failureChartRef.value.getBoundingClientRect()
+  if (rect.width === 0 || rect.height === 0) {
+    console.warn(`⚠️ 失败原因图表容器尺寸为0 (${rect.width}x${rect.height})，延迟重试`)
+    setTimeout(initFailureChart, 200)
     return
   }
   
   try {
-    failureChart = await safeInitECharts(failureChartRef.value)
+    // 如果已存在图表实例，先销毁
+    if (failureChart) {
+      failureChart.dispose()
+      failureChart = null
+    }
+    
+    failureChart = await safeInitECharts(failureChartRef.value, {}, 10, 100)
   const option = {
     tooltip: {
       trigger: 'item',

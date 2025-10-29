@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { generateUniqueId } from '../../utils/canvas/idGenerator.js'
-import { createPortConfig } from '../../utils/canvas/portConfigFactory.js'
+import { createNodePortConfig } from '../../utils/canvas/portConfigFactory.js'
 import { StyleConfig } from '../../utils/canvas/StyleConfig.js'
 import { validateCanvasData } from '../../utils/canvas/canvasValidation.js'
 import { nodeConfigManager } from '../../utils/canvas/NodeConfigManager.js'
@@ -9,6 +9,153 @@ import { ErrorHandler } from '../../utils/canvas/ErrorHandler.js'
 import { GraphOperationUtils } from '../../utils/canvas/GraphOperationUtils.js'
 // 🔧 修复：导入正确的节点样式方法
 import { getNodeAttrs } from '../../../../../utils/nodeTypes.js'
+
+// 支持的节点类型列表
+const SUPPORTED_NODE_TYPES = [
+  'start', 'end', 'audience-split', 'event-split', 'ab-test',
+  'ai-call', 'manual-call', 'sms', 'wait', 'circle', 'condition', 'action'
+]
+
+// 节点类型验证
+const isValidNodeType = (nodeType) => {
+  return SUPPORTED_NODE_TYPES.includes(nodeType) || nodeConfigManager.isNodeTypeSupported(nodeType)
+}
+
+// 根据节点类型获取形状
+const getNodeShapeByType = (nodeType) => {
+  // 所有节点都使用vue-shape，通过Vue组件来渲染
+  return 'vue-shape'
+}
+
+// 根据节点类型获取标签 - 🔧 修复：统一使用 getNodeLabel 函数
+const getNodeLabelByType = (nodeType) => {
+  // 验证节点类型
+  if (!nodeType || typeof nodeType !== 'string') {
+    console.warn('[useCanvasNodes] 无效的节点类型:', nodeType)
+    return '未知节点'
+  }
+  
+  // 使用本地映射，避免异步导入问题
+  const labelMap = {
+    'start': '开始节点',
+    'end': '结束节点',
+    'audience-split': '人群分流',  // 🔧 修复：使用正确的节点类型
+    'event-split': '事件分流',
+    'sms': '短信触达',
+    'ai-call': 'AI外呼',
+    'manual-call': '人工外呼',    // 🔧 新增：人工外呼节点
+    'ab-test': 'AB实验',
+    'wait': '等待节点',
+    'condition': '条件判断',
+    'action': '执行动作',
+    'benefit': '权益节点',        // 🔧 新增：权益节点
+    'task': '任务节点'            // 🔧 新增：任务节点
+  }
+  return labelMap[nodeType] || nodeType
+}
+
+/**
+ * 创建节点配置
+ * @param {Object} nodeData - 格式化后的节点数据
+ * @param {Object} options - 选项
+ * @returns {Object} X6节点配置
+ */
+export const createNodeConfig = (nodeData, options = {}) => {
+  console.log('⚙️ [useCanvasNodes] 开始创建节点配置:', { nodeData, options })
+  
+  try {
+    // 🔧 修复：确保节点类型信息完整
+    if (!nodeData.type) {
+      throw new Error('节点类型不能为空')
+    }
+    
+    // 🔧 修复：确保节点类型正确传递，避免所有节点显示为start节点
+    const actualNodeType = nodeData.type || nodeData.nodeType
+    if (!actualNodeType) {
+      console.error('[useCanvasNodes] 节点类型缺失:', nodeData)
+      throw new Error('节点类型不能为空')
+    }
+    
+    console.log('🔍 [useCanvasNodes] 节点类型确认:', {
+      originalType: nodeData.type,
+      nodeType: nodeData.nodeType,
+      actualType: actualNodeType,
+      nodeId: nodeData.id
+    })
+    
+    // 基础节点配置
+    const baseConfig = {
+      id: nodeData.id || generateUniqueId(),
+      shape: getNodeShapeByType(actualNodeType),
+      x: nodeData.x || nodeData.position?.x || 0,
+      y: nodeData.y || nodeData.position?.y || 0,
+      width: nodeData.width || 120,
+      height: nodeData.height || 60,
+      label: nodeData.label || getNodeLabelByType(actualNodeType),
+      // 🔧 修复：确保节点数据包含完整的类型信息，解决PreviewLineSystem中的节点类型检查问题
+      data: {
+        // 🔧 关键修复：确保类型信息正确传递，避免所有节点显示为start节点
+        type: actualNodeType,           // 主要类型字段
+        nodeType: actualNodeType,       // 备用类型字段，确保PreviewLineSystem能正确识别
+        label: nodeData.label || getNodeLabelByType(actualNodeType), // 确保标签正确
+        isConfigured: nodeData.isConfigured || actualNodeType === 'start', // start节点默认已配置
+        config: nodeData.config || {},
+        // 🔧 新增：添加节点元数据，便于调试和追踪
+        metadata: {
+          createdAt: new Date().toISOString(),
+          source: 'useCanvasNodes.createNodeConfig',
+          originalNodeType: nodeData.type,
+          actualNodeType: actualNodeType
+        },
+        // 保留原始数据，但确保类型信息不被覆盖
+        ...nodeData.data,
+        // 再次确保类型信息正确
+        type: actualNodeType,
+        nodeType: actualNodeType
+      }
+    }
+    
+    // 创建端口配置
+    const portConfig = createNodePortConfig(actualNodeType, nodeData.config)
+    if (portConfig && (portConfig.groups || portConfig.items)) {
+      baseConfig.ports = portConfig
+      console.log('🔌 [useCanvasNodes] 端口配置已应用:', {
+        nodeType: actualNodeType,
+        portGroups: Object.keys(portConfig.groups || {}),
+        portItems: portConfig.items?.length || 0,
+        portConfig: portConfig
+      })
+    } else {
+      console.warn('⚠️ [useCanvasNodes] 端口配置创建失败:', actualNodeType)
+    }
+    
+    // 🔧 修复：vue-shape不需要attrs样式配置，样式由Vue组件内部处理
+    // Vue组件会通过props接收节点数据，并根据nodeType渲染对应的样式
+    console.log('🎨 [useCanvasNodes] 使用vue-shape，样式由Vue组件处理:', {
+      nodeType: actualNodeType,
+      shape: baseConfig.shape,
+      nodeId: baseConfig.id
+    })
+    
+    // 合并用户提供的选项
+    const finalConfig = {
+      ...baseConfig,
+      ...options
+    }
+    
+    console.log('✅ [useCanvasNodes] 节点配置创建完成:', {
+      id: finalConfig.id,
+      type: finalConfig.data.type,
+      nodeType: finalConfig.data.nodeType,
+      isConfigured: finalConfig.data.isConfigured
+    })
+    return finalConfig
+    
+  } catch (error) {
+    console.error('❌ [useCanvasNodes] 创建节点配置失败:', error)
+    throw new Error(`创建节点配置失败: ${error.message}`)
+  }
+}
 
 /**
  * 节点管理组合式函数
@@ -27,51 +174,7 @@ export function useCanvasNodes(graph, nodeManager, layoutManager, emit) {
     throw new Error('useCanvasNodes: nodeManager 参数是必需的')
   }
 
-  // 支持的节点类型列表
-  const SUPPORTED_NODE_TYPES = [
-    'start', 'end', 'audience-split', 'event-split', 'ab-test',
-    'ai-call', 'manual-call', 'sms', 'wait', 'circle', 'condition', 'action'
-  ]
-
-  // 节点类型验证
-  const isValidNodeType = (nodeType) => {
-    return SUPPORTED_NODE_TYPES.includes(nodeType) || nodeConfigManager.isNodeTypeSupported(nodeType)
-  }
-  
   const nodes = ref([])
-
-  // 根据节点类型获取形状
-  const getNodeShapeByType = (nodeType) => {
-    // X6中只有rect是内置的基础形状，圆形通过rx/ry属性实现
-    return 'rect'
-  }
-
-  // 根据节点类型获取标签 - 🔧 修复：统一使用 getNodeLabel 函数
-  const getNodeLabelByType = (nodeType) => {
-    // 验证节点类型
-    if (!nodeType || typeof nodeType !== 'string') {
-      console.warn('[useCanvasNodes] 无效的节点类型:', nodeType)
-      return '未知节点'
-    }
-    
-    // 使用本地映射，避免异步导入问题
-    const labelMap = {
-      'start': '开始节点',
-      'end': '结束节点',
-      'audience-split': '人群分流',  // 🔧 修复：使用正确的节点类型
-      'event-split': '事件分流',
-      'sms': '短信触达',
-      'ai-call': 'AI外呼',
-      'manual-call': '人工外呼',    // 🔧 新增：人工外呼节点
-      'ab-test': 'AB实验',
-      'wait': '等待节点',
-      'condition': '条件判断',
-      'action': '执行动作',
-      'benefit': '权益节点',        // 🔧 新增：权益节点
-      'task': '任务节点'            // 🔧 新增：任务节点
-    }
-    return labelMap[nodeType] || nodeType
-  }
 
   /**
    * 格式化节点数据
@@ -102,60 +205,13 @@ export function useCanvasNodes(graph, nodeManager, layoutManager, emit) {
   }
 
   /**
-   * 创建节点配置
+   * 创建节点配置（内部使用）
    * @param {Object} nodeData - 格式化后的节点数据
    * @param {Object} options - 选项
    * @returns {Object} X6节点配置
    */
-  const createNodeConfig = (nodeData, options = {}) => {
-    console.log('⚙️ [useCanvasNodes] 开始创建节点配置:', { nodeData, options })
-    
-    try {
-      // 基础节点配置
-      const baseConfig = {
-        id: nodeData.id || generateUniqueId(),
-        shape: getNodeShapeByType(nodeData.type),
-        x: nodeData.x || 0,
-        y: nodeData.y || 0,
-        width: nodeData.width || 120,
-        height: nodeData.height || 60,
-        label: nodeData.label || getNodeLabelByType(nodeData.type),
-        data: {
-          type: nodeData.type,
-          config: nodeData.config || {},
-          ...nodeData.data
-        }
-      }
-      
-      // 创建端口配置
-      const portConfig = createPortConfig(nodeData.type, nodeData.config)
-      if (portConfig && (portConfig.groups || portConfig.items)) {
-        baseConfig.ports = portConfig
-      }
-      
-      // 应用样式配置
-      // 🔧 修复：使用 nodeTypes.js 中的 getNodeAttrs 方法获取正确的节点样式
-      const nodeAttrs = getNodeAttrs(nodeData.type)
-      if (nodeAttrs && Object.keys(nodeAttrs).length > 0) {
-        baseConfig.attrs = {
-          ...nodeAttrs,
-          ...nodeData.attrs
-        }
-      }
-      
-      // 合并用户提供的选项
-      const finalConfig = {
-        ...baseConfig,
-        ...options
-      }
-      
-      console.log('✅ [useCanvasNodes] 节点配置创建完成:', finalConfig)
-      return finalConfig
-      
-    } catch (error) {
-      console.error('❌ [useCanvasNodes] 创建节点配置失败:', error)
-      throw new Error(`创建节点配置失败: ${error.message}`)
-    }
+  const createNodeConfigInternal = (nodeData, options = {}) => {
+    return createNodeConfig(nodeData, options)
   }
 
   /**
@@ -184,7 +240,7 @@ export function useCanvasNodes(graph, nodeManager, layoutManager, emit) {
       }
       
       // 创建节点配置
-      const nodeConfig = createNodeConfig(formattedData, options)
+      const nodeConfig = createNodeConfigInternal(formattedData, options)
       console.log('⚙️ [useCanvasNodes] 创建的节点配置:', nodeConfig)
       
       // 添加节点到X6图中 - 使用正确的X6 API
@@ -371,6 +427,6 @@ export function useCanvasNodes(graph, nodeManager, layoutManager, emit) {
     deleteNode,
     duplicateNode,
     handleNodeUpdated,
-    createNodeConfig
+    createNodeConfig: createNodeConfigInternal
   }
 }

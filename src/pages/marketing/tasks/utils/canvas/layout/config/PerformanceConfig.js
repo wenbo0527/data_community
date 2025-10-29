@@ -1,8 +1,7 @@
 /**
  * 性能配置模块
- * 统一管理所有性能相关的配置参数和监控指标
+ * 管理布局引擎的性能相关配置
  */
-
 export class PerformanceConfig {
   constructor(options = {}) {
     // 性能优化器配置
@@ -357,4 +356,4 @@ export const PerformanceUtils = {
 };
 
 // 默认导出
-export default PerformanceConfig;
+// 默认导出已通过 export class 实现

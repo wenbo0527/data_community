@@ -149,7 +149,6 @@ const outputColumns = [
     { title: '参数类型', dataIndex: 'type' },
     { title: '参数说明', dataIndex: 'description' }
 ];
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

@@ -59,18 +59,25 @@ export class PreviewLineRenderer {
       console.log('✅ [预览线渲染器] graph 实例备份引用已创建');
     }
     
-    // 6. 最后处理 graph 实例设置
+    // 6. 🔧 关键修复：延迟 graph 设置，确保 setGraph 方法已定义
+    // 使用 setTimeout 确保构造函数完成后再调用 setGraph
     if (options.graph) {
-      const success = this.setGraph(options.graph);
-      if (!success) {
-        console.warn('⚠️ [预览线渲染器] 初始 graph 设置失败，将在运行时重试');
-      }
+      setTimeout(() => {
+        if (typeof this.setGraph === 'function') {
+          const success = this.setGraph(options.graph);
+          if (!success) {
+            console.warn('⚠️ [预览线渲染器] 延迟 graph 设置失败，将在运行时重试');
+          }
+        } else {
+          console.error('❌ [预览线渲染器] setGraph 方法未定义，无法设置 graph');
+        }
+      }, 0);
     } else {
       console.warn('⚠️ [预览线渲染器] 初始化时缺少 graph 参数，将在运行时进行验证');
     }
     
     console.log('🎨 [预览线渲染器] 初始化完成', {
-      graphType: this.graph?.constructor?.name,
+      graphType: options.graph?.constructor?.name,
       graphValidated: this.graphValidated,
       hasEventManager: !!this.eventManager,
       hasStateManager: !!this.stateManager,
@@ -542,9 +549,24 @@ export class PreviewLineRenderer {
         line.setAttrByPath('line/strokeWidth', 2)
         line.setAttrByPath('line/strokeDasharray', '5,5') // 虚线样式
         
+        // 🔧 修复：强制设置预览线为可见状态
+        line.attr('line/display', 'block')
+        line.attr('line/visibility', 'visible')
+        
+        // 🔧 修复：确保预览线在DOM中正确渲染
+        if (line.view && line.view.el) {
+          line.view.el.style.display = 'block'
+          line.view.el.style.visibility = 'visible'
+        }
+        
         // 强制刷新视图
         if (this.graph && typeof this.graph.refreshViews === 'function') {
           this.graph.refreshViews()
+        }
+        
+        // 🔧 修复：强制重绘预览线
+        if (line.view && typeof line.view.update === 'function') {
+          line.view.update()
         }
         
         console.log('✅ [预览线渲染器] 强制设置预览线样式完成:', {
@@ -553,7 +575,9 @@ export class PreviewLineRenderer {
           zIndex: line.getZIndex(),
           stroke: line.getAttrByPath('line/stroke'),
           strokeWidth: line.getAttrByPath('line/strokeWidth'),
-          strokeDasharray: line.getAttrByPath('line/strokeDasharray')
+          strokeDasharray: line.getAttrByPath('line/strokeDasharray'),
+          display: line.getAttrByPath('line/display'),
+          visibility: line.getAttrByPath('line/visibility')
         })
       } catch (styleError) {
         console.warn('⚠️ [预览线渲染器] 设置预览线样式时出错:', styleError)
@@ -657,7 +681,7 @@ export class PreviewLineRenderer {
       shape: 'edge',
       source: {
         cell: sourceNode.id,
-        port: 'out'
+        port: 'out'  // 确保使用正确的out端口
       },
       target: config.target || this.calculateDefaultTarget(sourceNode),
       router: {
@@ -684,6 +708,7 @@ export class PreviewLineRenderer {
       data: {
         type: 'preview-line',
         sourceNodeId: sourceNode.id,
+        sourceNodeType: nodeType,  // 添加源节点类型信息
         branchId: config.branchId,
         branchLabel: config.branchLabel,
         isUnifiedPreview: true,

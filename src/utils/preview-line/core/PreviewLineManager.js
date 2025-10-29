@@ -1,157 +1,127 @@
-/**
- * 新架构的预览线管理器主入口
- * 整合各个模块，提供统一的API接口
- */
-
+// PreviewLineManager.js - 统一预览线管理器
+import { PreviewLineSystem } from '../PreviewLineSystem.js'
+import { PreviewLineService } from '../../../pages/marketing/tasks/services/PreviewLineService.js'
 import { PreviewLineValidator } from './PreviewLineValidator.js'
 import { PreviewLineConfigManager, defaultConfigManager } from '../config/PreviewLineConfig.js'
 import { PreviewLineStates, PreviewLineTypes, CreationRequirementTypes } from '../types/PreviewLineTypes.js'
+import { NodePortValidator } from '../../NodePortValidator.js'
 
 /**
- * 预览线管理器主类
- * 作为新架构的统一入口，协调各个模块的工作
- * 支持 Builder 模式构建
+ * 统一预览线管理器
+ * 负责协调预览线的创建、更新、验证和生命周期管理
  */
 export class PreviewLineManager {
   constructor(options = {}) {
-    // 参数验证和规范化
-    this._validateAndNormalizeOptions(options)
+    // 验证和标准化选项
+    this.initOptions = this._validateAndNormalizeOptions(options)
     
-    // 配置管理
-    this.configManager = this._initializeConfigManager(options)
+    // 核心组件
+    this.graph = this.initOptions.graph
+    this.system = null // 🔧 修复：延迟初始化，避免循环依赖
+    this.service = null
+    this.validator = null
+    this.configManager = null
     
-    // 核心属性
-    this.graph = options.graph
-    this.branchManager = options.branchManager
-    this.layoutEngine = options.layoutEngine ? new WeakRef(options.layoutEngine) : null
-    this.renderer = options.renderer // 渲染器实例
-    
-    // 验证器 - 传递布局引擎引用
-    const layoutEngineRef = this.layoutEngine ? this.layoutEngine.deref() : null
-    this.validator = new PreviewLineValidator(
-      this.configManager, 
-      options.graph, 
-      layoutEngineRef,
-      options.validatorOptions || {}
-    )
-    
-    // 确保验证器有图实例的引用
-    if (this.graph && this.validator) {
-      this.validator.setGraph(this.graph)
-    }
-    
-    // 预览线存储
+    // 存储
     this.previewLines = new Map() // nodeId -> [previewLine, ...]
-    this.previewLineInstances = new Map() // lineId -> previewLineInstance
-    
-    // 状态管理
+    this.previewLineInstances = new Map() // previewLineId -> previewLine
     this.nodeStates = new Map() // nodeId -> state
-    this.isDragging = false
-    this.currentDragLine = null
+    this.cache = new Map() // 缓存计算结果
+    this.pendingOperations = new Map() // 待处理操作
+    this.eventListeners = new Map() // 事件监听器
     
-    // 状态管理
-    this.isRemoving = false
+    // 状态
+    this.isInitialized = false
+    this.debugMode = this.initOptions.debug || false
+    this.performanceMetrics = null
     
-    // 性能优化
-    this._initializePerformanceOptions(options)
+    // 初始化配置管理器
+    this._initializeConfigManager(this.initOptions)
     
-    // 事件监听器
-    this.eventListeners = new Map()
+    // 初始化性能选项
+    this._initializePerformanceOptions(this.initOptions)
     
-    // 调试模式
-    this.debugMode = this.configManager.get('debug.enabled', false)
-    
-    // 初始化选项
-    this.initOptions = {
-      autoInitialize: true,
-      createForExistingNodes: false,
-      validateOnInit: true,
-      ...options.initOptions
-    }
-    
-    // 条件初始化
+    // 自动初始化（如果启用）
     if (this.initOptions.autoInitialize) {
       this.initialize()
     }
+    
+    // 初始化端口验证器
+    this.nodePortValidator = new NodePortValidator({
+      enableLogging: options.enablePortValidationLogging !== false,
+      strictMode: options.strictPortValidation || false
+    })
   }
 
   /**
-   * 验证和规范化构造函数选项
-   * @param {Object} options - 构造函数选项
+   * 验证和标准化选项
+   * @param {Object} options - 原始选项
+   * @returns {Object} 标准化后的选项
    * @private
    */
   _validateAndNormalizeOptions(options) {
-    // 必需参数验证
     if (!options.graph) {
-      throw new Error('PreviewLineManager 需要 graph 参数')
+      throw new Error('PreviewLineManager 需要 graph 实例')
     }
 
-    // 类型验证
-    if (options.configManager && !(options.configManager instanceof PreviewLineConfigManager)) {
-      console.warn('configManager 应该是 PreviewLineConfigManager 的实例')
+    return {
+      graph: options.graph,
+      debug: options.debug || false,
+      autoInitialize: options.autoInitialize !== false, // 默认为 true
+      createForExistingNodes: options.createForExistingNodes || false,
+      performance: options.performance || {},
+      config: options.config || {}
     }
-
-    // 设置默认值
-    options.config = options.config || {}
-    options.validatorOptions = options.validatorOptions || {}
-    options.initOptions = options.initOptions || {}
   }
 
   /**
    * 初始化配置管理器
-   * @param {Object} options - 构造函数选项
-   * @returns {PreviewLineConfigManager} 配置管理器实例
+   * @param {Object} options - 初始化选项
    * @private
    */
   _initializeConfigManager(options) {
     if (options.configManager) {
-      return options.configManager
+      this.configManager = options.configManager
+    } else {
+      this.configManager = new PreviewLineConfigManager({
+        debug: {
+          enabled: options.debug || false,
+          logLevel: options.debug ? 'debug' : 'info'
+        },
+        performance: {
+          enableMetrics: options.performance?.enableMetrics || false,
+          metricsInterval: options.performance?.metricsInterval || 1000
+        },
+        validation: {
+          strictMode: options.validation?.strictMode || false,
+          coordinateThreshold: options.validation?.coordinateThreshold || 5
+        }
+      })
     }
-
-    // 合并默认配置和用户配置
-    const mergedConfig = {
-      ...options.config,
-      // 确保调试配置正确合并
-      debug: {
-        enabled: false,
-        logLevel: 'info',
-        enableDetailedLogs: false,
-        ...options.config.debug
-      },
-      // 确保性能配置正确合并
-      performance: {
-        enablePerformanceMonitor: false,
-        cacheEnabled: true,
-        maxCacheSize: 1000,
-        ...options.config.performance
-      }
-    }
-
-    return new PreviewLineConfigManager(mergedConfig)
+    
+    // 监听配置变更
+    this.configManager.onChange((path, newValue, oldValue) => {
+      this.handleConfigChange(path, newValue, oldValue)
+    })
   }
 
   /**
    * 初始化性能选项
-   * @param {Object} options - 构造函数选项
+   * @param {Object} options - 初始化选项
    * @private
    */
   _initializePerformanceOptions(options) {
-    const performanceConfig = this.configManager.get('performance', {})
+    const performanceOptions = options.performance || {}
     
-    // 缓存配置
-    if (performanceConfig.cacheEnabled !== false) {
-      this.cache = new Map()
-      this.maxCacheSize = performanceConfig.maxCacheSize || 1000
-    } else {
-      this.cache = null
+    if (performanceOptions.enableMetrics) {
+      this.setupPerformanceMonitoring()
     }
     
-    // 待处理操作队列
-    this.pendingOperations = new Map()
-    
-    // 性能指标
-    if (performanceConfig.enablePerformanceMonitor) {
-      this.performanceMetrics = new Map()
+    // 设置性能相关配置
+    this.performanceConfig = {
+      enableMetrics: performanceOptions.enableMetrics || false,
+      metricsInterval: performanceOptions.metricsInterval || 1000,
+      maxCacheSize: performanceOptions.maxCacheSize || 1000
     }
   }
 
@@ -159,568 +129,457 @@ export class PreviewLineManager {
    * 初始化管理器
    */
   initialize() {
-    // 🔧 修复：在日志中显示 graph 实例信息而不是 null
-    const graphInfo = this.graph ? {
-      hasGraph: true,
-      nodeCount: this.graph.getNodes ? this.graph.getNodes().length : 'unknown',
-      edgeCount: this.graph.getEdges ? this.graph.getEdges().length : 'unknown'
-    } : null
-    
-    this.log('info', '预览线管理器初始化开始', graphInfo)
-    
-    // 监听配置变更
-    this.configManager.onChange('*', (newValue, oldValue, path) => {
-      this.handleConfigChange(path, newValue, oldValue)
-    })
-    
-    // 设置性能监控
-    if (this.configManager.get('performance.enablePerformanceMonitor')) {
-      this.setupPerformanceMonitoring()
+    if (this.isInitialized) {
+      this.log('warn', '管理器已经初始化')
+      return
     }
+
+    // 🔧 修复：避免循环依赖，不再创建新的PreviewLineSystem实例
+    // 而是直接初始化必要的组件
     
-    this.log('info', '预览线管理器初始化完成', graphInfo)
+    try {
+      // 初始化服务组件（不依赖PreviewLineSystem）
+      this.service = new PreviewLineService(this.graph, { debug: this.debugMode })
+      
+      // 初始化验证器（不依赖PreviewLineSystem）
+      this.validator = new PreviewLineValidator(this.configManager, this.graph)
+      
+      // 设置组件间的引用
+      if (this.service && typeof this.service.setValidator === 'function') {
+        this.service.setValidator(this.validator)
+      }
+      
+      this.isInitialized = true
+      this.log('info', '预览线管理器初始化完成')
+      
+    } catch (error) {
+      console.error('❌ [PreviewLineManager] 初始化失败:', error)
+      this.isInitialized = false
+      throw error
+    }
   }
 
   /**
-   * 创建统一预览线 - 核心方法
-   * 解决用户反馈的重复创建判断问题
+   * 创建统一预览线
    * @param {Object} node - 节点对象
    * @param {string} state - 预览线状态
    * @param {boolean} forceUpdate - 是否强制更新
-   * @returns {Promise<Object>} 创建结果
+   * @returns {Object} 创建结果
    */
   createUnifiedPreviewLine(node, state = PreviewLineStates.INTERACTIVE, forceUpdate = false) {
-    const startTime = performance.now()
+    const startTime = Date.now()
     
     try {
-      this.log('info', `开始创建预览线: nodeId=${node.id}, state=${state}, forceUpdate=${forceUpdate}`)
+      if (!this.isInitialized) {
+        throw new Error('管理器未初始化')
+      }
+
+      if (!node || !node.id) {
+        throw new Error('无效的节点对象')
+      }
+
+      // 检查创建需求
+      const existingLines = this.previewLines.get(node.id) || []
+      const requirement = this.validator.checkPreviewLineRequirement(node, state, existingLines, forceUpdate)
       
-      // 1. 使用新的验证器检查创建需求
-      const requirement = this.validator.checkPreviewLineRequirement(
-        node, 
-        state, 
-        this.previewLines, 
-        forceUpdate
-      )
-      
-      this.log('info', `预览线需求检查结果: ${requirement.reason}`, requirement)
-      
-      // 2. 根据需求类型执行相应操作
-      let result
+      this.log('debug', `节点 ${node.id} 预览线创建需求: ${requirement.type}`, requirement)
+
+      let result = null
+
+      // 根据需求类型执行相应操作
       switch (requirement.type) {
-        case CreationRequirementTypes.NO_CREATION:
+        case CreationRequirementTypes.NO_CREATION_NEEDED:
           result = this.handleNoCreationNeeded(node, requirement)
           break
-          
-        case CreationRequirementTypes.NEEDS_CREATION:
+        case CreationRequirementTypes.CREATE_NEW:
           result = this.handleCreateNewPreviewLine(node, state, requirement)
           break
-          
-        case CreationRequirementTypes.NEEDS_UPDATE:
+        case CreationRequirementTypes.NEEDS_CREATION:
+          // NEEDS_CREATION 使用与 CREATE_NEW 相同的处理逻辑
+          result = this.handleCreateNewPreviewLine(node, state, requirement)
+          break
+        case CreationRequirementTypes.UPDATE_EXISTING:
           result = this.handleUpdatePreviewLine(node, state, requirement)
           break
-          
-        case CreationRequirementTypes.NEEDS_CLEANUP:
+        case CreationRequirementTypes.CLEANUP_AND_RECREATE:
           result = this.handleCleanupAndRecreate(node, state, requirement)
           break
-          
         default:
-          throw new Error(`未知的需求类型: ${requirement.type}`)
+          throw new Error(`未知的创建需求类型: ${requirement.type}`)
       }
-      
-      // 3. 记录性能指标
-      const duration = performance.now() - startTime
+
+      // 记录性能指标
+      const duration = Date.now() - startTime
       this.recordPerformanceMetric('createUnifiedPreviewLine', duration)
-      
-      this.log('info', `预览线创建完成: nodeId=${node.id}, 耗时=${duration.toFixed(2)}ms`, result)
-      
-      return result
-      
+
+      return result || { success: false, error: '未知错误' }
+
     } catch (error) {
-      const nodeId = node?.id || 'unknown'
-      this.log('error', `预览线创建异常: nodeId=${nodeId}`, error)
+      this.log('error', `创建预览线失败: ${node?.id}`, error)
       return {
         success: false,
         error: error.message,
-        nodeId: nodeId
+        nodeId: node?.id
       }
     }
   }
 
   /**
    * 处理无需创建的情况
-   * @param {Object} node - 节点
-   * @param {Object} requirement - 需求分析结果
-   * @returns {null|Object} 处理结果 - 增强布局引擎状态检查，防止null返回
+   * @param {Object} node - 节点对象
+   * @param {Object} requirement - 创建需求
+   * @returns {Object|null} 处理结果
    */
   handleNoCreationNeeded(node, requirement) {
-    const nodeId = node?.id || 'unknown'
-    
-    // 增强布局引擎状态检查 - 如果是因为布局引擎未就绪，返回有意义的结果而不是null
-    if (requirement.reason === '布局引擎未就绪') {
-      this.log('warn', `布局引擎未就绪，预览线创建被延迟: ${nodeId}`, {
-        nodeId,
-        reason: requirement.reason,
+    // 更新节点状态缓存
+    this.nodeStates.set(node.id, {
+      lastChecked: Date.now(),
+      requirement: requirement.type,
+      reason: requirement.reason,
+      metadata: {
         timestamp: Date.now()
-      })
-      
-      return {
-        success: false,
-        action: 'deferred',
-        reason: requirement.reason,
-        nodeId: nodeId,
-        shouldRetry: true,
-        retryAfter: 100 // 建议100ms后重试
+      }
+    })
+
+    // 如果有现有预览线，验证其状态
+    const existingLines = this.previewLines.get(node.id)
+    if (existingLines && existingLines.length > 0) {
+      for (const line of existingLines) {
+        if (this.validator.isValidPreviewLine(line)) {
+          this.log('debug', `节点 ${node.id} 现有预览线有效，无需操作`)
+        } else {
+          this.log('warn', `节点 ${node.id} 现有预览线无效，可能需要重新创建`)
+        }
       }
     }
-    
-    // 如果是因为节点不存在而无需创建，返回null（保持原有逻辑）
-    if (requirement.reason === '节点不存在' || requirement.reason === '节点不在图中') {
-      this.log('warn', `节点不存在，无法创建预览线: ${nodeId}`, {
-        nodeId,
-        reason: requirement.reason,
-        timestamp: Date.now()
-      })
-      return null
-    }
-    
-    const existingLines = this.previewLines.get(nodeId) || []
-    
-    return {
-      success: true,
-      action: 'skipped',
-      reason: requirement.reason,
-      nodeId: nodeId,
-      existingLines: existingLines.map(line => ({
-        id: line.id,
-        type: line.type,
-        state: line.state,
-        branchId: line.branchId
-      }))
-    }
+
+    // 记录到待处理操作（用于批量处理）
+    this.pendingOperations.set(node.id, {
+      type: 'no_action',
+      node,
+      requirement,
+      timestamp: Date.now()
+    })
+    return null
   }
 
   /**
    * 处理创建新预览线
-   * @param {Object} node - 节点
-   * @param {string} state - 状态
-   * @param {Object} requirement - 需求分析结果
-   * @returns {Promise<Object>} 处理结果
+   * @param {Object} node - 节点对象
+   * @param {string} state - 预览线状态
+   * @param {Object} requirement - 创建需求
+   * @returns {Object} 创建结果
    */
   handleCreateNewPreviewLine(node, state, requirement) {
-    const { details } = requirement
-    
-    if (details.nodeType === 'single') {
-      // 创建单一预览线
-      const previewLine = this.createSinglePreviewLine(node, state)
-      return {
-        success: true,
-        action: 'created',
-        type: 'single',
-        nodeId: node?.id || 'unknown',
-        previewLine: {
-          id: previewLine.id,
-          type: previewLine.type,
-          state: previewLine.state
+    try {
+      this.log('debug', `为节点 ${node.id} 创建新预览线`)
+
+      // 检查节点是否为分支节点
+      if (this.isBranchNode(node)) {
+        const branchAnalysis = requirement.branchAnalysis
+        if (branchAnalysis && branchAnalysis.branches.length > 0) {
+          return this.createBranchPreviewLines(node, state, branchAnalysis)
         }
       }
-    } else {
-      // 创建分支预览线
-      // 安全检查 branchAnalysis
-      const branchAnalysis = details.branchAnalysis
-      if (!branchAnalysis || !branchAnalysis.isValid) {
-        this.log('error', '分支分析结果无效，无法创建分支预览线', { 
-          branchAnalysis,
-          nodeId: node?.id || 'unknown',
-          details 
-        })
-        return {
-          success: false,
-          action: 'failed',
-          type: 'branch',
-          nodeId: node?.id || 'unknown',
-          error: '分支分析结果无效'
-        }
-      }
+
+      // 创建单个预览线
+      return this.createSinglePreviewLine(node, state)
+
+    } catch (error) {
+      this.log('error', `创建新预览线失败: ${node.id}`, error)
       
-      const previewLines = this.createBranchPreviewLines(node, state, branchAnalysis)
+      // 记录到待处理操作
+      this.pendingOperations.set(node.id, {
+        type: 'create_failed',
+        node,
+        state,
+        requirement,
+        error: error.message,
+        timestamp: Date.now()
+      })
+      
       return {
-        success: true,
-        action: 'created',
-        type: 'branch',
-        nodeId: node?.id || 'unknown',
-        previewLines: previewLines.map(line => ({
-          id: line.id,
-          type: line.type,
-          state: line.state,
-          branchId: line.branchId,
-          branchLabel: line.branchLabel
-        }))
+        success: false,
+        error: error.message,
+        nodeId: node.id
       }
     }
   }
 
   /**
-   * 处理更新预览线
-   * @param {Object} node - 节点
-   * @param {string} state - 状态
-   * @param {Object} requirement - 需求分析结果
-   * @returns {Promise<Object>} 处理结果
+   * 处理更新现有预览线
+   * @param {Object} node - 节点对象
+   * @param {string} state - 预览线状态
+   * @param {Object} requirement - 创建需求
+   * @returns {Object} 更新结果
    */
   handleUpdatePreviewLine(node, state, requirement) {
-    const { details } = requirement
-    
-    // 安全检查：确保 operations 对象存在且结构正确
-    const operations = details?.operations || {
-      createNew: [],
-      updateExisting: [],
-      removeExtra: [],
-      removeInvalid: []
-    }
-    
-    // 验证 operations 对象结构
-    if (!operations || typeof operations !== 'object') {
-      this.log('error', 'operations 对象无效，使用默认空操作', {
-        nodeId: node?.id || 'unknown',
-        operations: operations,
-        details: details
+    try {
+      const existingLines = this.previewLines.get(node.id) || []
+      const results = []
+
+      for (const previewLine of existingLines) {
+        try {
+          // 更新预览线状态
+          this.updatePreviewLineState(previewLine, state)
+          results.push({ success: true, previewLineId: previewLine.id })
+        } catch (error) {
+          this.log('error', `更新预览线状态失败: ${previewLine.id}`, error)
+          results.push({ 
+            success: false, 
+            previewLineId: previewLine.id, 
+            error: error.message 
+          })
+        }
+      }
+
+      // 记录到待处理操作
+      this.pendingOperations.set(node.id, {
+        type: 'update_completed',
+        node,
+        state,
+        requirement,
+        results,
+        timestamp: Date.now()
       })
+
+      return {
+        success: results.every(r => r.success),
+        results,
+        nodeId: node.id
+      }
+
+    } catch (error) {
+      this.log('error', `更新预览线失败: ${node.id}`, error)
+      
+      // 记录到待处理操作
+      this.pendingOperations.set(node.id, {
+        type: 'update_failed',
+        node,
+        state,
+        requirement,
+        error: error.message,
+        timestamp: Date.now()
+      })
+      
       return {
         success: false,
-        action: 'update_failed',
-        nodeId: node?.id || 'unknown',
-        error: 'operations 对象结构无效'
+        error: error.message,
+        nodeId: node.id
       }
-    }
-    
-    // 确保所有必需的操作数组存在
-    operations.createNew = operations.createNew || []
-    operations.updateExisting = operations.updateExisting || []
-    operations.removeExtra = operations.removeExtra || []
-    operations.removeInvalid = operations.removeInvalid || []
-    
-    const results = []
-    
-    // 创建新的分支预览线
-    if (operations.createNew && operations.createNew.length > 0) {
-      for (const branch of operations.createNew) {
-        const previewLine = this.createBranchPreviewLine(node, state, branch)
-        results.push({ action: 'created', branchId: branch.id, lineId: previewLine.id })
-      }
-    }
-    
-    // 更新现有预览线
-    if (operations.updateExisting && operations.updateExisting.length > 0) {
-      for (const update of operations.updateExisting) {
-        this.updatePreviewLineState(update.line, update.targetState)
-        results.push({ action: 'updated', branchId: update.branch.id, lineId: update.line.id })
-      }
-    }
-    
-    // 移除多余的预览线
-    if (operations.removeExtra && operations.removeExtra.length > 0) {
-      for (const line of operations.removeExtra) {
-        this.removePreviewLine(line)
-        results.push({ action: 'removed', reason: 'extra', lineId: line.id })
-      }
-    }
-    
-    // 清理无效预览线
-    if (operations.removeInvalid && operations.removeInvalid.length > 0) {
-      for (const line of operations.removeInvalid) {
-        this.removePreviewLine(line)
-        results.push({ action: 'removed', reason: 'invalid', lineId: line.id })
-      }
-    }
-    
-    return {
-      success: true,
-      action: 'updated',
-      nodeId: node?.id || 'unknown',
-      operations: results
     }
   }
 
   /**
    * 处理清理并重新创建
-   * @param {Object} node - 节点
-   * @param {string} state - 状态
-   * @param {Object} requirement - 需求分析结果
-   * @returns {Promise<Object>} 处理结果
+   * @param {Object} node - 节点对象
+   * @param {string} state - 预览线状态
+   * @param {Object} requirement - 创建需求
+   * @returns {Object} 处理结果
    */
   handleCleanupAndRecreate(node, state, requirement) {
     try {
-      // 1. 清理现有无效预览线
-      const nodeId = node?.id || 'unknown'
-      const existingLines = this.previewLines.get(nodeId) || []
-      const cleanupResults = []
-      
-      for (const line of existingLines) {
-        this.removePreviewLine(line)
-        cleanupResults.push({ action: 'cleaned', lineId: line.id })
-      }
-      
-      // 2. 准备重新创建预览线的参数
-      let createDetails = { nodeType: 'single' }
-      
-      // 检查是否为分支节点，如果是则获取分支分析
-      if (this.validator.isBranchNode(node)) {
-        this.log('debug', `清理重建：检测到分支节点 ${nodeId}，开始分析分支配置`)
-        
+      this.log('debug', `清理并重新创建节点 ${node.id} 的预览线`)
+
+      // 清理现有预览线
+      const existingLines = this.previewLines.get(node.id) || []
+      for (const previewLine of existingLines) {
         try {
-          const branchAnalysis = this.validator.analyzeBranchConfiguration(node)
-          
-          if (branchAnalysis && branchAnalysis.isValid) {
-            createDetails = {
-              nodeType: 'branch',
-              branchAnalysis: branchAnalysis
-            }
-            this.log('debug', `清理重建：分支分析成功 ${nodeId}`, {
-              branchCount: branchAnalysis.branchCount,
-              requiredBranches: branchAnalysis.requiredBranches?.length || 0
-            })
-          } else {
-            const errorMsg = `清理重建失败：节点 ${nodeId} 分支分析失败，缺失必要的分支配置数据`
-            this.log('error', errorMsg, {
-              branchAnalysis: branchAnalysis,
-              nodeId: nodeId,
-              nodeType: node?.getData?.()?.type || 'unknown'
-            })
-            throw new Error(errorMsg)
-          }
-        } catch (analysisError) {
-          const errorMsg = `清理重建失败：节点 ${nodeId} 分支分析异常，${analysisError.message}`
-          this.log('error', errorMsg, {
-            error: analysisError.message,
-            stack: analysisError.stack,
-            nodeId: nodeId,
-            nodeType: node?.getData?.()?.type || 'unknown'
-          })
-          throw new Error(errorMsg)
+          this.removePreviewLine(previewLine)
+        } catch (error) {
+          this.log('warn', `清理预览线失败: ${previewLine.id}`, error)
         }
       }
-      
-      // 3. 重新创建预览线
+
+      // 清理存储
+      this.previewLines.delete(node.id)
+      this.nodeStates.delete(node.id)
+
+      // 重新创建
       const createResult = this.handleCreateNewPreviewLine(node, state, {
-        details: createDetails
+        ...requirement,
+        type: CreationRequirementTypes.CREATE_NEW
       })
-      
-      return {
-        success: true,
-        action: 'cleanup_and_recreate',
-        nodeId: nodeId,
-        cleanup: cleanupResults,
-        recreation: createResult
-      }
-      
+
+      // 记录到待处理操作
+      this.pendingOperations.set(node.id, {
+        type: 'cleanup_and_recreate_completed',
+        node,
+        state,
+        requirement,
+        createResult,
+        timestamp: Date.now()
+      })
+
+      return createResult
+
     } catch (error) {
-      const nodeId = node?.id || 'unknown'
-      this.log('error', `清理重建失败: ${nodeId}`, {
+      this.log('error', `清理并重新创建失败: ${node.id}`, error)
+      
+      // 记录到待处理操作
+      this.pendingOperations.set(node.id, {
+        type: 'cleanup_and_recreate_failed',
+        node,
+        state,
+        requirement,
         error: error.message,
-        stack: error.stack
+        timestamp: Date.now()
       })
       
       return {
         success: false,
-        action: 'cleanup_and_recreate_failed',
-        nodeId: nodeId,
-        error: error.message
+        error: error.message,
+        nodeId: node.id
       }
     }
   }
 
   /**
-   * 统一渲染预览线
+   * 渲染预览线
    * @param {Object} previewLine - 预览线实例
-   * @returns {Promise<Object>} 渲染结果
+   * @returns {Object} 渲染结果
    */
   renderPreviewLine(previewLine) {
-    // 详细的渲染器验证
-    if (!this.renderer) {
-      this.log('error', `渲染器为 null，无法渲染预览线: ${previewLine?.id || 'unknown'}`, {
-        previewLineId: previewLine?.id,
-        rendererStatus: 'null',
-        managerInstance: !!this,
-        timestamp: new Date().toISOString()
-      });
-      return previewLine;
+    if (!previewLine) {
+      throw new Error('预览线实例为空')
     }
-    
-    if (typeof this.renderer !== 'object') {
-      this.log('error', `渲染器类型错误，期望 object，实际: ${typeof this.renderer}`, {
-        previewLineId: previewLine?.id,
-        rendererType: typeof this.renderer,
-        rendererValue: this.renderer
-      });
-      return previewLine;
-    }
-    
-    if (typeof this.renderer.createPreviewLine !== 'function') {
-      this.log('error', `渲染器缺少 createPreviewLine 方法`, {
-        previewLineId: previewLine?.id,
-        rendererMethods: Object.getOwnPropertyNames(this.renderer),
-        createPreviewLineType: typeof this.renderer.createPreviewLine
-      });
-      return previewLine;
-    }
-    
-    // 验证预览线参数
-    if (!previewLine || typeof previewLine !== 'object') {
-      this.log('error', `预览线参数无效`, {
-        previewLineType: typeof previewLine,
-        previewLineValue: previewLine
-      });
-      return previewLine;
-    }
-    
-    try {
-      const rendererConfig = {
-        id: previewLine.id,
-        sourceNode: previewLine.sourceNode,
-        state: previewLine.state,
-        type: previewLine.type
+
+    // 🔧 修复：检查系统初始化状态，提供降级处理
+    if (!this.system) {
+      console.warn('[PreviewLineManager] 预览线系统未初始化，跳过渲染');
+      return { 
+        success: false, 
+        skipped: true, 
+        reason: '预览线系统未初始化' 
       };
-      
-      // 添加分支相关配置
-      if (previewLine.type === PreviewLineTypes.BRANCH) {
-        rendererConfig.branchId = previewLine.branchId;
-        rendererConfig.branchLabel = previewLine.branchLabel;
-        rendererConfig.branchIndex = previewLine.branchIndex;
-        rendererConfig.metadata = previewLine.metadata;
+    }
+
+    if (previewLine.line) {
+      this.log('debug', `预览线 ${previewLine.id} 已存在图形对象，跳过渲染`)
+      return { success: true, skipped: true }
+    }
+
+    if (!previewLine.sourceNode) {
+      throw new Error(`预览线 ${previewLine.id} 缺少源节点`)
+    }
+
+    try {
+      // 使用系统创建图形对象
+      const lineOptions = {
+        id: previewLine.id,
+        sourceNodeId: previewLine.sourceNode.id,
+        state: previewLine.state,
+        branchIndex: previewLine.branchIndex,
+        metadata: previewLine.metadata
       }
+
+      const graphLine = this.system.createPreviewLine(previewLine.sourceNode, lineOptions)
       
-      this.log('debug', `开始渲染预览线: ${previewLine.id}`, {
-        rendererConfig,
-        rendererAvailable: !!this.renderer,
-        rendererType: typeof this.renderer
-      });
-      
-      const rendererResult = this.renderer.createPreviewLine(previewLine.sourceNode, rendererConfig);
-      
-      if (rendererResult && rendererResult.line) {
-        previewLine.line = rendererResult.line;
-        this.log('debug', `预览线渲染成功: ${previewLine.id}`);
-      } else {
-        this.log('warn', `渲染器返回结果无效: ${previewLine.id}`, {
-          rendererResult,
-          hasLine: !!(rendererResult && rendererResult.line)
+      if (graphLine) {
+        previewLine.line = graphLine
+        previewLine.renderedAt = Date.now()
+        
+        this.log('debug', `预览线 ${previewLine.id} 渲染成功`)
+        
+        // 触发渲染成功事件
+        this._emitEvent('previewLineRendered', {
+          previewLine,
+          graphLine,
+          timestamp: Date.now()
         });
+        
+        return { success: true, graphLine }
+      } else {
+        throw new Error('系统返回空的图形对象')
       }
-      
-      return previewLine;
+
     } catch (error) {
-      this.log('error', `预览线渲染失败: ${previewLine.id}`, {
-        error: error.message,
-        stack: error.stack,
-        rendererAvailable: !!this.renderer,
-        rendererType: typeof this.renderer,
-        previewLineId: previewLine.id
-      });
-      
-      // 严格错误处理，不使用降级方案
-      this.handleRenderFailure(previewLine, error);
+      this.log('error', `渲染预览线失败: ${previewLine.id}`, error)
+      return this.handleRenderFailure(previewLine, error)
     }
   }
   
   /**
-   * 处理渲染失败 - 严格错误处理，不使用降级方案
+   * 处理渲染失败
    * @param {Object} previewLine - 预览线实例
    * @param {Error} error - 错误对象
-   * @throws {Error} 直接抛出渲染错误，阻断执行
+   * @returns {Object} 失败处理结果
+   * @private
    */
   handleRenderFailure(previewLine, error) {
-    const errorMsg = `预览线渲染失败: ${previewLine.id}，错误: ${error.message}`
-    this.log('error', errorMsg, {
-      previewLineId: previewLine.id,
-      errorMessage: error.message,
-      errorStack: error.stack,
-      previewLineType: previewLine.type,
-      sourceNodeId: previewLine.sourceNodeId,
-      timestamp: new Date().toISOString()
-    });
+    previewLine.renderError = error.message
+    previewLine.renderFailedAt = Date.now()
     
-    throw new Error(errorMsg);
+    return {
+      success: false,
+      error: error.message,
+      previewLineId: previewLine.id
+    }
   }
 
   /**
-   * 创建单一预览线
-   * @param {Object} node - 节点
-   * @param {string} state - 状态
-   * @returns {Promise<Object>} 预览线实例
+   * 创建单个预览线
+   * @param {Object} node - 节点对象
+   * @param {string} state - 预览线状态
+   * @returns {Object} 创建结果
    */
   createSinglePreviewLine(node, state) {
-    const nodeId = node?.id || 'unknown'
-    const previewLine = {
-      id: `preview_${nodeId}_${Date.now()}`,
-      type: PreviewLineTypes.SINGLE,
-      state,
-      sourceNode: node,
-      line: null, // 实际的X6图形对象
-      metadata: {},
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+    const previewLine = this.service.createPreviewLine(node, { state })
+    
+    if (previewLine) {
+      this.addPreviewLineToStorage(node.id, previewLine)
+      const renderResult = this.renderPreviewLine(previewLine)
+      return { success: renderResult.success, previewLine, renderResult }
     }
     
-    // 存储预览线
-    this.addPreviewLineToStorage(nodeId, previewLine)
-    
-    // 统一渲染
-    return this.renderPreviewLine(previewLine)
+    return { success: false, error: '创建预览线失败' }
   }
 
   /**
    * 创建分支预览线
-   * @param {Object} node - 节点
-   * @param {string} state - 状态
+   * @param {Object} node - 节点对象
+   * @param {string} state - 预览线状态
    * @param {Object} branchAnalysis - 分支分析结果
-   * @returns {Promise<Array>} 预览线实例数组
+   * @returns {Object} 创建结果
    */
   createBranchPreviewLines(node, state, branchAnalysis) {
-    const previewLines = []
+    const results = []
     
-    // 安全检查branchAnalysis和requiredBranches
-    if (!branchAnalysis || !branchAnalysis.requiredBranches || !Array.isArray(branchAnalysis.requiredBranches)) {
-      this.log('warn', '分支分析结果无效，无法创建分支预览线', { branchAnalysis })
-      return previewLines
+    for (let i = 0; i < branchAnalysis.branches.length; i++) {
+      const branch = branchAnalysis.branches[i]
+      const result = this.createBranchPreviewLine(node, state, branch)
+      results.push(result)
     }
     
-    for (const branch of branchAnalysis.requiredBranches) {
-      const previewLine = this.createBranchPreviewLine(node, state, branch)
-      previewLines.push(previewLine)
-    }
-    
-    return previewLines
+    return { success: results.every(r => r.success), results }
   }
 
   /**
    * 创建单个分支预览线
-   * @param {Object} node - 节点
-   * @param {string} state - 状态
+   * @param {Object} node - 节点对象
+   * @param {string} state - 预览线状态
    * @param {Object} branch - 分支信息
-   * @returns {Promise<Object>} 预览线实例
+   * @returns {Object} 创建结果
    */
   async createBranchPreviewLine(node, state, branch) {
-    const nodeId = node?.id || 'unknown'
-    const branchId = branch?.id || 'unknown'
-    const previewLine = {
-      id: `preview_${nodeId}_${branchId}_${Date.now()}`,
-      type: PreviewLineTypes.BRANCH,
-      state,
-      sourceNode: node,
-      branchId: branch.id,
-      branchLabel: branch.label,
-      branchIndex: branch.index,
-      line: null, // 实际的X6图形对象
-      metadata: { branch },
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+    try {
+      const previewLine = this.service.createPreviewLine(node, {
+        state,
+        branchIndex: branch.index,
+        branchLabel: branch.label,
+        branchCondition: branch.condition
+      })
+      
+      if (previewLine) {
+        this.addPreviewLineToStorage(node.id, previewLine)
+        const renderResult = this.renderPreviewLine(previewLine)
+        return { success: renderResult.success, previewLine, renderResult }
+      }
+      
+      return { success: false, error: '创建分支预览线失败' }
+    } catch (error) {
+      return { success: false, error: error.message }
     }
-    
-    // 存储预览线
-    this.addPreviewLineToStorage(nodeId, previewLine)
-    
-    // 统一渲染
-    return this.renderPreviewLine(previewLine)
   }
 
   /**
@@ -731,6 +590,40 @@ export class PreviewLineManager {
   async updatePreviewLineState(previewLine, newState) {
     previewLine.state = newState
     previewLine.updatedAt = Date.now()
+    
+    // 执行坐标验证 - 在状态更新时验证坐标
+    if (previewLine.sourceNodeId && this.graph) {
+      try {
+        const sourceNode = this.graph.getCellById?.(previewLine.sourceNodeId);
+        if (sourceNode) {
+          console.log('🔍 [PreviewLineManager] 预览线状态更新时进行坐标验证:', {
+            previewLineId: previewLine.id,
+            sourceNodeId: previewLine.sourceNodeId,
+            newState: newState,
+            updateType: 'state_update'
+          });
+          
+          // 使用验证器进行坐标验证
+          if (this.validator && this.validator.validatePortCoordinates) {
+            const coordinateValidation = this.validator.validatePortCoordinates(previewLine, sourceNode);
+            console.log('📊 [PreviewLineManager] 预览线状态更新坐标验证结果:', {
+              previewLineId: previewLine.id,
+              sourceNodeId: previewLine.sourceNodeId,
+              newState: newState,
+              validationResult: coordinateValidation.isValid ? '✅ 通过' : '❌ 失败',
+              coordinates: coordinateValidation.coordinates,
+              errors: coordinateValidation.errors
+            });
+          }
+        }
+      } catch (validationError) {
+        this.log('warn', '预览线状态更新坐标验证异常', {
+          error: validationError.message,
+          previewLineId: previewLine.id,
+          sourceNodeId: previewLine.sourceNodeId
+        });
+      }
+    }
     
     // 更新图形样式
     if (previewLine.line) {
@@ -951,6 +844,8 @@ export class PreviewLineManager {
    * 销毁管理器
    */
   destroy() {
+    console.log('🗑️ [PreviewLineManager] 开始销毁管理器...');
+    
     // 清理所有预览线
     for (const [nodeId, lines] of this.previewLines) {
       for (const line of lines) {
@@ -964,7 +859,9 @@ export class PreviewLineManager {
     this.nodeStates.clear()
     if (this.cache) this.cache.clear()
     this.pendingOperations.clear()
-    this.eventListeners.clear()
+    
+    // 清理事件监听器 - 防止内存泄漏
+    this.clearAllEventListeners()
     
     // 销毁配置管理器
     if (this.configManager) {
@@ -972,6 +869,23 @@ export class PreviewLineManager {
     }
     
     this.log('info', '预览线管理器已销毁')
+  }
+
+  /**
+   * 清理所有事件监听器 - 防止内存泄漏
+   */
+  clearAllEventListeners() {
+    console.log('🧹 [PreviewLineManager] 清理事件监听器...');
+    
+    let totalListeners = 0;
+    for (const [eventName, handlers] of this.eventListeners) {
+      totalListeners += handlers.size;
+      console.log(`  - 清理事件 "${eventName}": ${handlers.size} 个监听器`);
+      handlers.clear();
+    }
+    
+    this.eventListeners.clear();
+    console.log(`✅ [PreviewLineManager] 已清理 ${totalListeners} 个事件监听器`);
   }
 
   /**
@@ -1047,6 +961,447 @@ export class PreviewLineManager {
     if (this.initOptions.createForExistingNodes) {
       this.createPreviewLinesForExistingNodes()
     }
+  }
+   
+  /**
+   * 验证节点连接（增强版）
+   * 支持详细的坐标验证和预览线状态检查
+   * @param {Object} graph - 图形实例
+   * @param {Object} options - 验证选项
+   * @returns {Object} 验证结果
+   */
+  validateNodeConnections(graph, options = {}) {
+    console.log('🔍 [PreviewLineManager] 开始增强的节点连接验证')
+    
+    const {
+      verbose = false,
+      includeCoordinates = true,
+      includePortValidation = true,
+      thresholds = { position: 5, distance: 10 }
+    } = options
+
+    const result = {
+      isValid: true,
+      totalNodes: 0,
+      validNodes: 0,
+      invalidNodes: 0,
+      nodeValidations: [],
+      portValidation: null,
+      statistics: {
+        totalPreviewLines: 0,
+        totalConnections: 0,
+        coordinateValidations: 0,
+        portValidations: 0
+      },
+      errors: [],
+      warnings: []
+    }
+
+    try {
+      const nodes = graph.getNodes()
+      const previewEdges = graph.getEdges().filter(edge => this.isPreviewLine(edge))
+      const connectionEdges = graph.getEdges().filter(edge => !this.isPreviewLine(edge))
+
+      result.totalNodes = nodes.length
+      result.statistics.totalPreviewLines = previewEdges.length
+      result.statistics.totalConnections = connectionEdges.length
+
+      console.log(`📊 [验证统计] 节点: ${nodes.length}, 预览线: ${previewEdges.length}, 连接线: ${connectionEdges.length}`)
+
+      // 🔧 新增：端口位置验证
+      if (includePortValidation) {
+        console.log('🔍 [端口验证] 开始验证所有节点的端口配置')
+        result.portValidation = this.nodePortValidator.validateAllNodes(nodes)
+        result.statistics.portValidations = result.portValidation.nodeResults.length
+        
+        // 将端口验证错误和警告合并到总结果中
+        if (!result.portValidation.isValid) {
+          result.isValid = false
+          result.errors.push(...result.portValidation.errors.map(err => `[端口验证] ${err}`))
+        }
+        result.warnings.push(...result.portValidation.warnings.map(warn => `[端口验证] ${warn}`))
+        
+        console.log('📋 [端口验证结果]:', {
+          总节点数: result.portValidation.totalNodes,
+          有效节点: result.portValidation.validNodes,
+          无效节点: result.portValidation.invalidNodes,
+          开始节点: result.portValidation.summary.startNodes,
+          结束节点: result.portValidation.summary.endNodes,
+          中间节点: result.portValidation.summary.middleNodes
+        })
+      }
+
+      // 验证每个节点的连接
+      for (const node of nodes) {
+        const nodeValidation = this._validateSingleNodeConnection(node, previewEdges, connectionEdges, verbose)
+        result.nodeValidations.push(nodeValidation)
+
+        if (nodeValidation.isValid) {
+          result.validNodes++
+        } else {
+          result.invalidNodes++
+          result.isValid = false
+        }
+
+        result.errors.push(...nodeValidation.errors)
+        result.warnings.push(...nodeValidation.warnings)
+
+        // 统计坐标验证
+        if (nodeValidation.details.coordinates) {
+          result.statistics.coordinateValidations++
+        }
+      }
+
+      // 输出详细的验证结果
+      if (verbose || !result.isValid) {
+        console.log('📊 [节点连接验证总结]:', {
+          整体状态: result.isValid ? '✅ 通过' : '❌ 失败',
+          节点统计: {
+            总数: result.totalNodes,
+            有效: result.validNodes,
+            无效: result.invalidNodes
+          },
+          线条统计: {
+            预览线: result.statistics.totalPreviewLines,
+            连接线: result.statistics.totalConnections
+          },
+          验证统计: {
+            坐标验证: result.statistics.coordinateValidations,
+            端口验证: result.statistics.portValidations
+          },
+          问题统计: {
+            错误: result.errors.length,
+            警告: result.warnings.length
+          }
+        })
+
+        if (result.errors.length > 0) {
+          console.error('❌ [验证错误]:', result.errors)
+        }
+
+        if (result.warnings.length > 0) {
+          console.warn('⚠️ [验证警告]:', result.warnings)
+        }
+
+        // 输出端口验证详情
+        if (includePortValidation && result.portValidation) {
+          console.log('🔍 [端口验证详情]:', {
+            开始节点: `${result.portValidation.summary.startNodes.valid}/${result.portValidation.summary.startNodes.total}`,
+            结束节点: `${result.portValidation.summary.endNodes.valid}/${result.portValidation.summary.endNodes.total}`,
+            中间节点: `${result.portValidation.summary.middleNodes.valid}/${result.portValidation.summary.middleNodes.total}`
+          })
+        }
+      }
+
+      return result
+
+    } catch (error) {
+      console.error('❌ [PreviewLineManager] 节点连接验证异常:', error)
+      return {
+        isValid: false,
+        error: error.message,
+        totalNodes: 0,
+        validNodes: 0,
+        invalidNodes: 0,
+        nodeValidations: [],
+        portValidation: null,
+        statistics: {
+          totalPreviewLines: 0,
+          totalConnections: 0,
+          coordinateValidations: 0,
+          portValidations: 0
+        },
+        errors: [`验证异常: ${error.message}`],
+        warnings: []
+      }
+    }
+  }
+
+  /**
+   * 验证单个节点的连接状态
+   * @param {Object} node - 节点对象
+   * @param {Array} previewEdges - 预览线数组
+   * @param {Array} connectionEdges - 连接线数组
+   * @param {boolean} verbose - 是否详细输出
+   * @returns {Object} 节点验证结果
+   * @private
+   */
+  _validateSingleNodeConnection(node, previewEdges, connectionEdges, verbose = false) {
+    const nodeId = node.id
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.nodeType || nodeData.type || 'unknown'
+    
+    const validation = {
+      nodeId,
+      nodeType,
+      isValid: true,
+      expectedBranches: 0,
+      actualPreviewLines: 0,
+      actualConnections: 0,
+      totalLines: 0,
+      status: 'valid',
+      details: {
+        deficit: 0,
+        surplus: 0,
+        coordinates: null
+      },
+      errors: [],
+      warnings: []
+    }
+
+    try {
+      // 计算该节点的出向边
+      const nodePreviewLines = previewEdges.filter(edge => 
+        edge.getSourceCellId() === nodeId
+      )
+      const nodeConnections = connectionEdges.filter(edge => 
+        edge.getSourceCellId() === nodeId
+      )
+
+      validation.actualPreviewLines = nodePreviewLines.length
+      validation.actualConnections = nodeConnections.length
+      validation.totalLines = validation.actualPreviewLines + validation.actualConnections
+
+      // 计算期望的分支数
+      validation.expectedBranches = this._calculateExpectedBranches(node, nodeData, nodeType)
+
+      // 🔧 新增：坐标验证
+      if (nodePreviewLines.length > 0 || nodeConnections.length > 0) {
+        validation.details.coordinates = this._validateNodeCoordinates(node, nodePreviewLines, nodeConnections, verbose)
+      }
+
+      // 验证逻辑
+      const totalExpected = validation.expectedBranches
+      const totalActual = validation.totalLines
+
+      if (totalActual < totalExpected) {
+        validation.details.deficit = totalExpected - totalActual
+        validation.status = 'deficit'
+        validation.isValid = false
+        validation.errors.push(`节点 ${nodeId} 缺失 ${validation.details.deficit} 条线`)
+      } else if (totalActual > totalExpected) {
+        validation.details.surplus = totalActual - totalExpected
+        validation.status = 'surplus'
+        validation.warnings.push(`节点 ${nodeId} 多余 ${validation.details.surplus} 条线`)
+      }
+
+      if (verbose) {
+        console.log(`[PreviewLineManager] 🔍 节点 ${nodeId} 验证:`, {
+          类型: nodeType,
+          期望: totalExpected,
+          实际: totalActual,
+          预览线: validation.actualPreviewLines,
+          连接线: validation.actualConnections,
+          状态: validation.status,
+          坐标验证: validation.details.coordinates ? '✅' : '⏭️'
+        })
+      }
+
+    } catch (error) {
+      validation.isValid = false
+      validation.status = 'error'
+      validation.errors.push(`节点 ${nodeId} 验证异常: ${error.message}`)
+      console.error(`[PreviewLineManager] ❌ 节点 ${nodeId} 验证异常:`, error)
+    }
+
+    return validation
+  }
+
+  /**
+   * 计算节点期望的分支数
+   * @param {Object} node - 节点对象
+   * @param {Object} nodeData - 节点数据
+   * @param {string} nodeType - 节点类型
+   * @returns {number} 期望分支数
+   * @private
+   */
+  _calculateExpectedBranches(node, nodeData, nodeType) {
+    // 结束节点不需要输出
+    if (nodeType === 'end') {
+      return 0
+    }
+
+    // 未配置的节点不需要输出
+    if (!nodeData.isConfigured && nodeType !== 'start') {
+      return 0
+    }
+
+    // 分支节点的特殊处理
+    const branchNodeTypes = ['audience-split', 'event-split', 'ab-test', 'crowd-split']
+    if (branchNodeTypes.includes(nodeType)) {
+      const config = nodeData.config || {}
+      
+      switch (nodeType) {
+        case 'audience-split':
+          const crowdLayers = config.crowdLayers || []
+          return crowdLayers.length + 1 // 人群层 + 未匹配分支
+          
+        case 'event-split':
+          return 2 // 是/否分支
+          
+        case 'ab-test':
+          return 2 // A/B 分支
+          
+        default:
+          return 2 // 默认分支数
+      }
+    }
+
+    // 普通节点默认1个输出
+    return 1
+  }
+
+  /**
+   * 验证节点坐标位置
+   * @param {Object} node - 节点对象
+   * @param {Array} previewLines - 节点的预览线
+   * @param {Array} connections - 节点的连接线
+   * @param {boolean} verbose - 是否详细输出
+   * @returns {Object|null} 坐标验证结果
+   * @private
+   */
+  _validateNodeCoordinates(node, previewLines, connections, verbose = false) {
+    try {
+      const nodeId = node.id
+      const nodePosition = node.getPosition()
+      const nodeSize = node.getSize()
+      
+      // 计算节点的输出端口坐标（底部中心）
+      const nodeOutPortCoords = {
+        x: nodePosition.x + nodeSize.width / 2,
+        y: nodePosition.y + nodeSize.height
+      }
+
+      const coordinateValidation = {
+        nodeId,
+        nodePosition,
+        nodeSize,
+        nodeOutPortCoords,
+        previewLineCoords: [],
+        connectionCoords: [],
+        validationResults: []
+      }
+
+      // 验证预览线坐标
+      for (const previewLine of previewLines) {
+        const lineCoords = this._extractLineCoordinates(previewLine)
+        coordinateValidation.previewLineCoords.push(lineCoords)
+        
+        const coordValidation = this._validateLineCoordinates(nodeOutPortCoords, lineCoords, 'preview')
+        coordinateValidation.validationResults.push(coordValidation)
+      }
+
+      // 验证连接线坐标
+      for (const connection of connections) {
+        const lineCoords = this._extractLineCoordinates(connection)
+        coordinateValidation.connectionCoords.push(lineCoords)
+        
+        const coordValidation = this._validateLineCoordinates(nodeOutPortCoords, lineCoords, 'connection')
+        coordinateValidation.validationResults.push(coordValidation)
+      }
+
+      if (verbose) {
+        console.log(`[PreviewLineManager] 📍 节点 ${nodeId} 坐标验证:`, {
+          节点位置: nodePosition,
+          节点尺寸: nodeSize,
+          输出端口坐标: nodeOutPortCoords,
+          预览线数量: previewLines.length,
+          连接线数量: connections.length,
+          坐标验证结果: coordinateValidation.validationResults.length
+        })
+
+        // 输出详细的坐标验证信息
+        coordinateValidation.validationResults.forEach((result, index) => {
+          console.log(`  线条 ${index + 1} (${result.lineType}):`, {
+            起点坐标: result.startCoords,
+            期望起点: result.expectedStartCoords,
+            坐标偏差: result.deviation,
+            验证通过: result.isValid ? '✅' : '❌'
+          })
+        })
+      }
+
+      return coordinateValidation
+
+    } catch (error) {
+      console.error(`[PreviewLineManager] ❌ 节点 ${node.id} 坐标验证异常:`, error)
+      return null
+    }
+  }
+
+  /**
+   * 提取线条坐标信息
+   * @param {Object} line - 线条对象（预览线或连接线）
+   * @returns {Object} 坐标信息
+   * @private
+   */
+  _extractLineCoordinates(line) {
+    try {
+      const lineData = line.getData() || {}
+      const source = line.getSourcePoint ? line.getSourcePoint() : null
+      const target = line.getTargetPoint ? line.getTargetPoint() : null
+      
+      return {
+        lineId: line.id,
+        lineType: lineData.isPreview ? 'preview' : 'connection',
+        startPoint: source,
+        endPoint: target,
+        sourceNodeId: line.getSourceCellId ? line.getSourceCellId() : null,
+        targetNodeId: line.getTargetCellId ? line.getTargetCellId() : null
+      }
+    } catch (error) {
+      console.warn(`[PreviewLineManager] ⚠️ 提取线条坐标失败:`, error)
+      return {
+        lineId: line.id || 'unknown',
+        lineType: 'unknown',
+        startPoint: null,
+        endPoint: null,
+        sourceNodeId: null,
+        targetNodeId: null
+      }
+    }
+  }
+
+  /**
+   * 验证线条坐标与节点端口的匹配度
+   * @param {Object} expectedCoords - 期望的端口坐标
+   * @param {Object} lineCoords - 线条坐标信息
+   * @param {string} lineType - 线条类型
+   * @returns {Object} 坐标验证结果
+   * @private
+   */
+  _validateLineCoordinates(expectedCoords, lineCoords, lineType) {
+    const validation = {
+      lineId: lineCoords.lineId,
+      lineType,
+      expectedStartCoords: expectedCoords,
+      startCoords: lineCoords.startPoint,
+      deviation: null,
+      isValid: false,
+      threshold: 5 // 5像素的容差
+    }
+
+    try {
+      if (lineCoords.startPoint && expectedCoords) {
+        // 计算坐标偏差
+        const deltaX = Math.abs(lineCoords.startPoint.x - expectedCoords.x)
+        const deltaY = Math.abs(lineCoords.startPoint.y - expectedCoords.y)
+        const totalDeviation = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+        
+        validation.deviation = {
+          deltaX,
+          deltaY,
+          total: totalDeviation
+        }
+        
+        // 判断是否在容差范围内
+        validation.isValid = totalDeviation <= validation.threshold
+      }
+    } catch (error) {
+      console.warn(`[PreviewLineManager] ⚠️ 坐标验证计算失败:`, error)
+    }
+
+    return validation
   }
 }
 

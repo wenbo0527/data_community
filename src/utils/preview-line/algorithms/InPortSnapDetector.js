@@ -89,25 +89,36 @@ export class InPortSnapDetector {
     try {
       // 基础验证
       if (!this.options.enabled) {
+        console.log('🔧 [InPortSnapDetector] 吸附功能已禁用');
         return this.createSnapResult(false, 'snap_disabled');
       }
       
       if (!nodeId || !nodePosition || !previewLines || !graph) {
+        console.log('🔧 [InPortSnapDetector] 参数无效', { nodeId, nodePosition, previewLines: !!previewLines, graph: !!graph });
         return this.createSnapResult(false, 'invalid_parameters');
       }
       
       if (!Array.isArray(previewLines) || previewLines.length === 0) {
+        console.log('🔧 [InPortSnapDetector] 没有预览线可供吸附', { previewLinesCount: previewLines?.length });
         return this.createSnapResult(false, 'no_preview_lines');
       }
       
       // 获取目标节点
       const targetNode = graph.getCellById(nodeId);
       if (!targetNode) {
+        console.log('🔧 [InPortSnapDetector] 目标节点未找到', { nodeId });
         return this.createSnapResult(false, 'node_not_found');
       }
       
       // 获取目标节点的in端口位置
       const inPortPosition = this.getNodeInPortPosition(targetNode, nodePosition);
+      console.log('🔧 [InPortSnapDetector] 目标节点in端口位置', { nodeId, inPortPosition });
+      
+      // 验证in端口位置是否有效
+      if (!inPortPosition || typeof inPortPosition.x !== 'number' || typeof inPortPosition.y !== 'number') {
+        console.log('🔧 [InPortSnapDetector] in端口位置无效', { nodeId, inPortPosition });
+        return this.createSnapResult(false, 'invalid_in_port_position');
+      }
       
       // 检查缓存
       const cacheKey = this.generateCacheKey(nodeId, nodePosition, previewLines);
@@ -173,15 +184,31 @@ export class InPortSnapDetector {
     let bestSnapTarget = null;
     let minDistance = Infinity;
     
+    console.log('🔧 [InPortSnapDetector] 开始吸附检测', { 
+      inPortPosition, 
+      previewLinesCount: previewLines.length,
+      threshold: this.options.threshold 
+    });
+    
     // 遍历所有预览线
     for (const previewLine of previewLines) {
       try {
         // 获取预览线终点
         const endPoint = this.getPreviewLineEndPoint(previewLine);
-        if (!endPoint) continue;
+        if (!endPoint) {
+          console.log('🔧 [InPortSnapDetector] 预览线终点获取失败', { previewLineId: previewLine.id });
+          continue;
+        }
         
         // 计算到in端口的距离
         const snapDistance = this.calculateSnapDistance(endPoint, inPortPosition);
+        
+        console.log('🔧 [InPortSnapDetector] 预览线距离计算', { 
+          previewLineId: previewLine.id,
+          endPoint,
+          snapDistance: snapDistance.distance,
+          threshold: this.options.threshold
+        });
         
         // 检查是否在吸附阈值内
         if (snapDistance.distance < this.options.threshold && 
@@ -197,6 +224,11 @@ export class InPortSnapDetector {
             endPoint: endPoint,
             inPortPosition: inPortPosition
           };
+          
+          console.log('🔧 [InPortSnapDetector] 找到更好的吸附目标', { 
+            previewLineId: previewLine.id,
+            distance: snapDistance.distance
+          });
         }
         
       } catch (error) {
@@ -204,7 +236,7 @@ export class InPortSnapDetector {
       }
     }
     
-    return this.createSnapResult(
+    const result = this.createSnapResult(
       bestSnapTarget !== null,
       bestSnapTarget ? 'snap_available' : 'no_snap_target',
       {
@@ -214,6 +246,15 @@ export class InPortSnapDetector {
         checkedPreviewLines: previewLines.length
       }
     );
+    
+    console.log('🔧 [InPortSnapDetector] 吸附检测结果', { 
+      canSnap: result.canSnap,
+      reason: result.reason,
+      minDistance,
+      bestTargetId: bestSnapTarget?.previewLineId
+    });
+    
+    return result;
   }
   
   /**
@@ -228,10 +269,10 @@ export class InPortSnapDetector {
       const position = nodePosition || node.getPosition();
       const size = node.getSize();
       
-      // in端口通常位于节点左侧中央
+      // 🔧 修复：in端口位于节点顶部中央（适配垂直布局）
       const inPortPosition = {
-        x: position.x + this.options.portOffset.x,                    // 节点左边缘 + 偏移
-        y: position.y + size.height / 2 + this.options.portOffset.y, // 节点垂直中心 + 偏移
+        x: position.x + size.width / 2 + this.options.portOffset.x,  // 节点水平中心 + 偏移
+        y: position.y + this.options.portOffset.y,                   // 节点顶部 + 偏移
         port: this.options.targetPort,
         nodeId: node.id,
         nodeSize: size,

@@ -5,8 +5,9 @@ import explorationRoutes from './exploration'
 import notificationRoutes from './notification'
 import { ROUTE_NAMES, ROUTE_PATHS, ROUTE_GUARD_CONFIG } from './constants'
 import { checkRoutePermission, getBreadcrumb } from './utils'
-import { businessMessage, warning, error } from '../utils/message'
+import { warning, error } from '../utils/message'
 import { useUserStore } from '../store/modules/user'
+import { loadComponent } from '../utils/componentLoader'
 
 const router = createRouter({
   history: createWebHistory('/'),
@@ -445,24 +446,29 @@ const router = createRouter({
   ]
 })
 
-// 全局前置守卫
+// 增强的全局前置守卫
 router.beforeEach(async (to, from, next) => {
+  console.log(`🚀 [路由导航] ${from.path || '/'} → ${to.path}`)
+  
   try {
     const userStore = useUserStore()
     
     // 设置页面标题
     if (to.meta?.title) {
       document.title = `${to.meta.title} - 数字社区`
+      console.log(`📄 [页面标题] ${to.meta.title}`)
     }
     
     // 白名单路由直接通过
     if (ROUTE_GUARD_CONFIG.whiteList.includes(to.path)) {
+      console.log('✅ [路由导航] 白名单路由，直接通过')
       next()
       return
     }
     
     // 检查用户登录状态
     if (!userStore.userInfo?.token) {
+      console.log('🔒 [权限检查] 用户未登录，重定向到登录页')
       warning('请先登录')
       next({
         path: ROUTE_GUARD_CONFIG.loginPath,
@@ -473,14 +479,30 @@ router.beforeEach(async (to, from, next) => {
     
     // 检查路由权限
     if (!checkRoutePermission(to, userStore.userInfo)) {
+      console.warn('⚠️ [权限检查] 权限不足，无法访问该页面')
       console.error('您没有访问该页面的权限')
       next({ path: ROUTE_GUARD_CONFIG.defaultRedirect })
       return
     }
     
+    // 添加组件加载监控
+    console.log('🔍 Component loading monitor:', {
+      route: to.path,
+      name: to.name,
+      component: to.matched[to.matched.length - 1]?.components?.default?.toString?.() || 'Unknown'
+    })
+    
+    console.log('✅ [路由导航] 权限检查通过')
     next()
   } catch (err) {
-    console.error('Route guard error:', err)
+    console.group('❌ [路由守卫错误]')
+    console.error('错误详情:', err)
+    console.error('目标路由:', to)
+    console.error('来源路由:', from)
+    console.error('错误类型:', err.name)
+    console.error('是否语法错误:', err.name === 'SyntaxError')
+    console.error('是否保留字错误:', err.message && err.message.includes('reserved word'))
+    console.groupEnd()
     console.error('页面访问异常')
     next({ path: ROUTE_GUARD_CONFIG.defaultRedirect })
   }
@@ -498,29 +520,52 @@ router.afterEach((to, from) => {
     
     // 页面访问统计
     console.log(`Navigation: ${from.path} -> ${to.path}`)
-  } catch (error) {
-    console.error('After route error:', error)
+  } catch (err) {
+    console.error('After route error:', err)
   }
 })
 
-// 路由错误处理
-router.onError((error) => {
-  console.error('Router error:', error)
-  console.error('页面加载失败，请刷新重试')
+// 增强的路由错误处理
+router.onError((routerError) => {
+  console.group('🚨 [路由错误详情]')
+  console.error('错误类型:', routerError.name)
+  console.error('错误消息:', routerError.message)
+  console.error('错误堆栈:', routerError.stack)
+  
+  // 检查是否是语法错误
+  if (routerError.name === 'SyntaxError') {
+    console.error('🔍 语法错误详情:')
+    console.error('- 错误位置:', routerError.fileName || '未知文件')
+    console.error('- 行号:', routerError.lineNumber || '未知行号')
+    console.error('- 列号:', routerError.columnNumber || '未知列号')
+  }
+  
+  // 检查是否是组件加载错误
+  if (routerError.message && routerError.message.includes('import')) {
+    console.error('🔍 组件导入错误，可能的原因:')
+    console.error('- 组件文件不存在')
+    console.error('- 组件文件存在语法错误')
+    console.error('- 组件导出格式不正确')
+  }
+  
+  console.groupEnd()
+  
+  // 使用正确的 error 函数调用
+  error(`页面加载失败: ${routerError.message || '未知错误'}，请刷新重试`)
 })
 
 // 默认重定向逻辑已在主beforeEach中处理
 
 // 打印完整路由结构
-router.getRoutes().forEach(route => {
+router.getRoutes().forEach((route) => {
   console.log('Registered route:', {
     path: route.path,
     name: route.name,
-    children: route.children?.map(child => ({
+    children: route.children?.map((child) => ({
       path: child.path,
       name: child.name
     }))
-  });
-});
+  })
+})
 
 export default router

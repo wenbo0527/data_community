@@ -363,7 +363,7 @@ const forceSubmit = () => {
   }
   
   emit('confirm', config)
-  visible.value = false
+  emit('update:visible', false)
 }
 </script>
 

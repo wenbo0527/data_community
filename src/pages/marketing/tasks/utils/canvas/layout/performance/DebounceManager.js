@@ -289,4 +289,4 @@ export function debounced(operationId, delay = 300, manager = null) {
     return descriptor;
   };
 }
-export default DebounceManager;
+// 默认导出已通过 export class 实现

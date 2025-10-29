@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { createGraphService } from '../../../services/marketing/GraphService.js'
-import { createPreviewLineService } from '../../../services/marketing/PreviewLineService.js'
-import { createLayoutService } from '../../../services/marketing/LayoutService.js'
+import { createGraphService } from '../../../pages/marketing/tasks/services/GraphService.js'
+import { createPreviewLineService } from '../../../pages/marketing/tasks/services/PreviewLineService.js'
+import { createLayoutService } from '../../../pages/marketing/tasks/services/LayoutService.js'
 import { createEventService } from '../../../pages/marketing/tasks/services/EventService.js'
 import { createStateService, StateType } from '../../../pages/marketing/tasks/services/StateService.js';
 

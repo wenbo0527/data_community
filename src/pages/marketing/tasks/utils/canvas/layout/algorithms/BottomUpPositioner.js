@@ -344,4 +344,4 @@ export class BottomUpPositioner {
   }
 }
 
-export default BottomUpPositioner;
+// 默认导出已通过 export class 实现

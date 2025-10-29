@@ -8,9 +8,24 @@
           <template #icon>
             <icon-plus />
           </template>
-
-
           新建券
+        </a-button>
+        <a-button type="primary" @click="handleBatchCreate">
+          <template #icon>
+            <icon-plus />
+          </template>
+          批量新建
+        </a-button>
+        <a-button 
+          v-if="pendingApprovalCount > 0"
+          type="primary" 
+          status="success"
+          :loading="quickApprovalLoading"
+          @click="handleQuickApproval">
+          <template #icon>
+            <icon-check />
+          </template>
+          快速审批({{ pendingApprovalCount }})
         </a-button>
       </a-space>
     </div>
@@ -229,7 +244,7 @@
                   <template #help>
                     <span class="help-text">设置券的可用时间范围</span>
                   </template>
-                  <a-range-picker v-model="formData.validity" show-time style="width: 100%" />
+                  <a-range-picker v-model="formData.validity" format="YYYY-MM-DD" style="width: 100%" />
                 </a-form-item>
                 <a-form-item v-if="formData.validityType === 'relative'" field="relativeDays" label="相对有效期" required>
                   <template #help>
@@ -239,13 +254,6 @@
                 </a-form-item>
               </a-grid-item>
             </a-grid>
-
-            <a-form-item field="rules" label="使用规则说明">
-              <template #help>
-                <span class="help-text">详细描述券的使用条件和限制，便于用户理解</span>
-              </template>
-              <a-textarea v-model="formData.rules" placeholder="请输入使用规则说明" :max-length="200" show-word-limit />
-            </a-form-item>
           </a-card>
         </a-form>
 
@@ -266,12 +274,18 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
-import { IconPlus, IconInfoCircle } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconInfoCircle, IconCheck } from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@/store'
 import { couponMockData, templateMockData } from '@/mock/coupon'
+import { inventoryAPI } from '@/api/coupon'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+// 批量创建处理函数
+const handleBatchCreate = () => {
+  router.push('/marketing/benefit/management/batch-create')
+}
 
 // 表格数据
 const tableData = ref([])
@@ -284,6 +298,10 @@ const baseParams = ref([])
 const interestFreeParams = ref([])
 const discountParams = ref([])
 const lockParams = ref([])
+
+// 快速审批相关
+const quickApprovalLoading = ref(false)
+const pendingApprovalCount = ref(0)
 
 // 步骤控制
 const currentStep = ref(1)
@@ -403,7 +421,6 @@ const formData = ref({
   dailyLimit: 100, // 单日发放上限
   weeklyLimit: 500, // 单周发放上限
   monthlyLimit: 2000, // 单月发放上限
-  rules: '',
   validityType: 'absolute', // 有效期类型：absolute-绝对有效期，relative-相对有效期
   validity: [], // 绝对有效期
   relativeDays: 1, // 相对有效期天数
@@ -464,11 +481,26 @@ const fetchData = async () => {
     const data = await Promise.race([dataPromise, timeoutPromise])
     tableData.value = data
     pagination.value.total = 100
+    
+    // 更新待审批数量
+    await updatePendingApprovalCount()
   } catch (error) {
     Message.error(error.message || '获取数据失败')
   } finally {
     loading.value = false
     cleanup() // 请求完成后清理定时器
+  }
+}
+
+// 更新待审批数量
+const updatePendingApprovalCount = async () => {
+  try {
+    const response = await inventoryAPI.getInventoryList({ approvalStatus: 'pending' })
+    if (response.code === 200) {
+      pendingApprovalCount.value = response.data.total
+    }
+  } catch (error) {
+    console.error('获取待审批数量失败:', error)
   }
 }
 
@@ -727,6 +759,40 @@ const handleDelete = (record) => {
       }
     }
   });
+};
+
+// 快速审批功能
+const handleQuickApproval = async () => {
+  if (pendingApprovalCount.value === 0) {
+    Message.warning('当前没有待审批的券库存')
+    return
+  }
+
+  Modal.confirm({
+    title: '确认快速审批',
+    content: `确定要一次性审批通过所有 ${pendingApprovalCount.value} 个待审批的券库存吗？`,
+    okText: '确认审批',
+    cancelText: '取消',
+    onOk: async () => {
+      quickApprovalLoading.value = true
+      try {
+        const response = await inventoryAPI.batchApproveInventory()
+        
+        if (response.code === 200) {
+          Message.success(response.message || '批量审批成功')
+          // 刷新数据
+          await fetchData()
+        } else {
+          Message.error(response.message || '批量审批失败')
+        }
+      } catch (error) {
+        console.error('批量审批失败:', error)
+        Message.error('批量审批失败，请稍后重试')
+      } finally {
+        quickApprovalLoading.value = false
+      }
+    }
+  })
 };
 
 onMounted(() => {

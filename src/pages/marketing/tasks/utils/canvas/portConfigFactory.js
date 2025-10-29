@@ -9,44 +9,53 @@
  * @param {string} id - 端口ID
  * @param {Object} position - 位置配置 { dx?: number, dy?: number }
  * @param {Object} options - 可选配置
- * @param {string} layoutDirection - 布局方向 ('TB')
  * @returns {Object} 完整的端口配置
  */
 export const createPortConfig = (group, id, position = {}, options = {}) => {
   const isInputPort = group === 'in'
   
-  // 确定端口位置（上下布局）
+  // 🔧 修复：使用与x6Config.js完全一致的端口配置
   const portPosition = isInputPort ? 'top' : 'bottom'
-  const portArgs = {
-    x: '50%',
-    y: isInputPort ? 0 : '100%',
-    dx: position.dx || 0,
-    dy: position.dy || 0
-  }
+  const yPosition = isInputPort ? 0 : '100%'
+  const dyOffset = isInputPort ? -15 : 15  // 与x6Config.js保持一致
   
-  return {
-    group,
+  console.log(`[portConfigFactory] 创建端口配置: ${group}`, {
     id,
+    position: portPosition,
+    y: yPosition,
+    dy: dyOffset,
+    isInputPort
+  })
+
+  return {
+    id: id,
+    group: group,
     position: {
       name: portPosition,
-      args: portArgs
-    },
-    attrs: {
-      circle: {
-        r: options.radius || 4,
-        magnet: true,
-        strokeWidth: options.strokeWidth || 2,
-        fill: options.fill || '#fff',
-        stroke: options.stroke || '#5F95FF',
-        style: {
-          visibility: 'visible'
-        }
+      args: {
+        x: '50%',
+        y: yPosition,
+        dx: position.dx || 0,
+        dy: position.dy || dyOffset
       }
     },
+    attrs: {
+        circle: {
+          r: 5,
+          magnet: false,  // 🔧 禁用端口拖拽连接，连接线应仅通过预览线转换生成
+          stroke: options.stroke || '#5F95FF',
+          strokeWidth: 2,
+          fill: '#fff',
+          style: {
+            visibility: 'visible'
+          }
+        }
+      },
     markup: [{
       tagName: 'circle',
       selector: 'circle'
-    }]
+    }],
+    ...options
   }
 }
 
@@ -73,88 +82,150 @@ export const createMultiplePortConfigs = (portDefinitions) => {
  * 为节点类型创建标准端口配置
  * @param {string} nodeType - 节点类型
  * @param {Object} config - 节点配置
- * @param {string} layoutDirection - 布局方向 ('TB')
  * @returns {Object} 端口配置 { groups: Object, items: Array }
  */
 export const createNodePortConfig = (nodeType, config = {}) => {
-  // 创建端口组配置（上下布局）
+  console.log(`🔍 [portConfigFactory] 开始为节点类型 ${nodeType} 创建标准端口配置`)
+  console.log(`🔍 [portConfigFactory] 输入参数:`, { nodeType, config })
+  
+  // 验证输入参数
+  if (!nodeType || typeof nodeType !== 'string') {
+    console.error(`❌ [portConfigFactory] 无效的节点类型:`, nodeType)
+    return null
+  }
+  
+  // 统一端口组配置
   const portGroups = {
     in: {
       position: {
         name: 'top',
-        args: { x: '50%', y: 0, dx: 0, dy: 0 }
+        args: { x: '50%', y: '0%', dx: 0, dy: -15 }  // 修复：统一使用百分比字符串'0%'
       },
       attrs: {
         circle: {
-          r: 4,
-          magnet: true,
+          r: 5,
+          magnet: false,  // 🔧 禁用端口拖拽连接，连接线应仅通过预览线转换生成
+          stroke: config.color || '#5F95FF',
           strokeWidth: 2,
           fill: '#fff',
-          style: { visibility: 'visible' }
+          style: {
+            visibility: 'visible'
+          }
         }
       },
-      markup: [{ tagName: 'circle', selector: 'circle' }]
+      markup: [{
+        tagName: 'circle',
+        selector: 'circle'
+      }]
     },
     out: {
       position: {
         name: 'bottom',
-        args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+        args: { x: '50%', y: '100%', dx: 0, dy: 15 }  // 保持100%用于底部定位
       },
       attrs: {
         circle: {
-          r: 4,
-          magnet: true,
+          r: 5,
+          magnet: false,  // 🔧 禁用端口拖拽连接，连接线应仅通过预览线转换生成
+          stroke: config.color || '#5F95FF',
           strokeWidth: 2,
           fill: '#fff',
-          style: { visibility: 'visible' }
+          style: {
+            visibility: 'visible'
+          }
         }
       },
-      markup: [{ tagName: 'circle', selector: 'circle' }]
+      markup: [{
+        tagName: 'circle',
+        selector: 'circle'
+      }]
     }
   }
-  const items = []
+  
+  console.log(`🔍 [portConfigFactory] 端口组配置创建完成:`, portGroups)
+
+  const portItems = []
+
+  console.log(`🔍 [portConfigFactory] 开始根据节点类型 ${nodeType} 创建端口项`)
 
   // 根据节点类型添加端口
-  switch (nodeType) {
-    case 'start':
-      // 开始节点只有输出端口
-      items.push(createPortConfig('out', 'out'))
-      break
-      
-    case 'end':
-      // 结束节点只有输入端口
-      items.push(createPortConfig('in', 'in'))
-      break
-      
-    case 'event-split':
-      // 事件分流节点：1个输入端口 + 1个统一输出端口
-      items.push(createPortConfig('in', 'in'))
-      items.push(createPortConfig('out', 'out'))
-      break
-      
-    case 'audience-split':
-      // 人群分流节点：1个输入端口 + 1个统一输出端口
-      items.push(createPortConfig('in', 'in'))
-      items.push(createPortConfig('out', 'out'))
-      break
-      
-    case 'ab-test':
-      // AB测试节点：1个输入端口 + 1个统一输出端口
-      items.push(createPortConfig('in', 'in'))
-      items.push(createPortConfig('out', 'out'))
-      break
-      
-    default:
-      // 其他节点：1个输入端口 + 1个输出端口
-      items.push(createPortConfig('in', 'in'))
-      items.push(createPortConfig('out', 'out'))
-      break
+  if (nodeType === 'start') {
+    console.log(`🔍 [portConfigFactory] 为 start 节点创建输出端口`)
+    // 开始节点只有输出端口
+    const outPort = {
+      group: 'out',
+      id: 'out',
+      attrs: {
+        circle: {
+          ...portGroups.out.attrs.circle,
+          stroke: config.color || '#5F95FF'
+        }
+      }
+    }
+    portItems.push(outPort)
+    console.log(`✅ [portConfigFactory] start 节点输出端口创建完成:`, outPort)
+  } else if (nodeType === 'end') {
+    console.log(`🔍 [portConfigFactory] 为 end 节点创建输入端口`)
+    // 结束节点只有输入端口
+    const inPort = {
+      group: 'in',
+      id: 'in',
+      attrs: {
+        circle: {
+          ...portGroups.in.attrs.circle,
+          stroke: config.color || '#5F95FF'
+        }
+      }
+    }
+    portItems.push(inPort)
+    console.log(`✅ [portConfigFactory] end 节点输入端口创建完成:`, inPort)
+  } else {
+    console.log(`🔍 [portConfigFactory] 为 ${nodeType} 节点创建输入和输出端口`)
+    // 其他节点都有1个输入端口和1个输出端口
+    const inPort = {
+      group: 'in',
+      id: 'in',
+      attrs: {
+        circle: {
+          ...portGroups.in.attrs.circle,
+          stroke: config.color || '#5F95FF'
+        }
+      }
+    }
+    const outPort = {
+      group: 'out',
+      id: 'out',
+      attrs: {
+        circle: {
+          ...portGroups.out.attrs.circle,
+          stroke: config.color || '#5F95FF'
+        }
+      }
+    }
+    portItems.push(inPort, outPort)
+    console.log(`✅ [portConfigFactory] ${nodeType} 节点端口创建完成:`, { inPort, outPort })
   }
 
-  return {
+  const finalConfig = {
     groups: portGroups,
-    items
+    items: portItems
   }
+
+  console.log(`✅ [portConfigFactory] 节点端口配置创建完成: ${nodeType}`, {
+    groupsCount: Object.keys(portGroups).length,
+    itemsCount: portItems.length,
+    groups: portGroups,
+    items: portItems,
+    finalConfig
+  })
+
+  // 验证配置完整性
+  if (!finalConfig.groups || !finalConfig.items || finalConfig.items.length === 0) {
+    console.error(`❌ [portConfigFactory] 端口配置创建失败，配置不完整:`, finalConfig)
+    return null
+  }
+
+  return finalConfig
 }
 
 /**

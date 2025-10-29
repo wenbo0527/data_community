@@ -354,10 +354,18 @@ watch(() => props.node, (newNode) => {
         { name: '事件B' }
       ]
     } else if (nodeType === 'ab-test') {
-      formData.value.variants = newNode.data?.variants || [
-        { name: '变体A', percentage: 50 },
-        { name: '变体B', percentage: 50 }
-      ]
+      // 支持versions和variants两种配置格式
+      if (newNode.data?.versions && Array.isArray(newNode.data.versions)) {
+        formData.value.variants = newNode.data.versions.map(version => ({
+          name: version.name || version.label,
+          percentage: version.ratio || version.percentage || 0
+        }))
+      } else {
+        formData.value.variants = newNode.data?.variants || [
+          { name: '变体A', percentage: 50 },
+          { name: '变体B', percentage: 50 }
+        ]
+      }
     } else if (nodeType === 'condition') {
       formData.value.conditionType = newNode.data?.conditionType || 'attribute'
       formData.value.conditionExpression = newNode.data?.conditionExpression || ''
@@ -448,7 +456,15 @@ const handleSave = () => {
   } else if (nodeType === 'event-split') {
     updateData.events = formData.value.events.filter(event => event.name.trim())
   } else if (nodeType === 'ab-test') {
+    // 支持动态多变体配置，同时保存versions和variants格式
     updateData.variants = formData.value.variants.filter(variant => variant.name.trim())
+    updateData.versions = formData.value.variants
+      .filter(variant => variant.name.trim() && variant.percentage > 0)
+      .map((variant, index) => ({
+        id: `version_${index}`,
+        name: variant.name,
+        ratio: variant.percentage
+      }))
   } else if (nodeType === 'condition') {
     updateData.conditionType = formData.value.conditionType
     updateData.conditionExpression = formData.value.conditionExpression

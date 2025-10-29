@@ -230,4 +230,4 @@ export function createLayoutConfig(options = {}) {
 }
 
 // 默认导出
-export default LayoutConfig;
+// 默认导出已通过 export class 实现

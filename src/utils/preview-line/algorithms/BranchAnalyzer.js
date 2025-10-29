@@ -431,12 +431,27 @@ export class BranchAnalyzer {
   generateAbTestBranches(nodeConfig, nodeId) {
     // AB测试：根据配置的版本数生成分支
     if (nodeConfig.versions && Array.isArray(nodeConfig.versions)) {
-      return nodeConfig.versions.map((version, index) => ({
-        id: version.id || `version_${index}`,
-        label: version.name || `版本${index + 1}`,
-        type: 'ab-test',
-        ratio: version.ratio
-      }))
+      // 过滤掉比例为0的版本，支持动态分支数量
+      return nodeConfig.versions
+        .filter(version => version.ratio > 0)
+        .map((version, index) => ({
+          id: version.id || `version_${index}`,
+          label: version.name || `版本${index + 1}`,
+          type: 'ab-test',
+          ratio: version.ratio
+        }))
+    }
+    
+    // 如果有variants配置，支持动态多变体
+    if (nodeConfig.variants && Array.isArray(nodeConfig.variants)) {
+      return nodeConfig.variants
+        .filter(variant => variant.percentage > 0)
+        .map((variant, index) => ({
+          id: variant.id || `variant_${index}`,
+          label: variant.name || `变体${String.fromCharCode(65 + index)}`,
+          type: 'ab-test',
+          ratio: variant.percentage
+        }))
     }
     
     // 如果有AB测试的基本配置，生成默认分支
@@ -501,8 +516,8 @@ export class BranchAnalyzer {
     
     // 对于AB测试节点，检查是否有AB测试配置
     if (nodeType === 'ab-test') {
-      const hasAbConfig = !!(nodeConfig.versions || nodeConfig.groupALabel || nodeConfig.groupBLabel)
-      const hasValidBranches = nodeConfig.branches.some(branch => branch.type === 'ab-test')
+      const hasAbConfig = !!(nodeConfig.versions || nodeConfig.variants || nodeConfig.groupALabel || nodeConfig.groupBLabel)
+      const hasValidBranches = nodeConfig.branches && nodeConfig.branches.some(branch => branch.type === 'ab-test')
       return hasAbConfig || hasValidBranches
     }
     

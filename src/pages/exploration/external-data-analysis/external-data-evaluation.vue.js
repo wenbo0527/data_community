@@ -81,7 +81,6 @@ const showProductDetail = (product) => {
 const exportData = () => {
     // 导出按钮点击事件，仅保留UI功能
 };
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

@@ -1,3 +1,5 @@
+import { loadComponent } from '../utils/componentLoader'
+
 export default [
   {
     path: '/marketing',
@@ -35,16 +37,16 @@ export default [
         ]
       },
       {
-      path: 'statistics',
-      name: 'dataStatistics',
-      meta: { title: '数据统计' },
-      children: [
-        {
-          path: 'logs',
-          name: 'couponLogs',
-          component: () => import('../pages/marketing/coupon/record/index.vue'),
-          meta: { title: '权益日志' }
-        },
+        path: 'statistics',
+        name: 'dataStatistics',
+        meta: { title: '数据统计' },
+        children: [
+          {
+            path: 'logs',
+            name: 'couponLogs',
+            component: () => import('../pages/marketing/coupon/record/index.vue'),
+            meta: { title: '权益日志' }
+          },
           {
             path: 'inventory',
             name: 'inventory',
@@ -55,46 +57,92 @@ export default [
       },    
       {
         path: 'global',
-        name: 'globalManagement',
-        meta: { title: '全局管理' },
+        name: 'MarketingGlobal',
+        component: () => import('../pages/marketing/global/index.vue'),
         children: [
           {
             path: 'rules',
-            name: 'globalRules',
-            component: () => import('../pages/marketing/coupon/rules/index.vue'),
-            meta: { title: '全局规则' }
+            name: 'MarketingGlobalRules',
+            component: () => import('../pages/marketing/global/rules/index.vue')
+          },
+          {
+            path: 'alert',
+            name: 'MarketingGlobalAlert',
+            component: () => import('../pages/marketing/alert/rules/index.vue'),
+            meta: { title: '预警配置' }
           }
         ]
-      },    
-    {
-      path: 'coupon/create',
-      name: 'MarketingCouponCreate',
-      component: () => import('../pages/marketing/coupon/template/create.vue')
-    },
-    {
-      path: 'tasks',
-      name: 'marketing-tasks',
-      component: () => import('../pages/marketing/tasks/index.vue'),
-      meta: { title: '营销任务' }
-    },
-    {
-      path: 'tasks/create',
-      name: 'marketing-tasks-create',
-      component: () => import('../pages/marketing/tasks/create.vue'),
-      meta: { title: '创建营销任务' }
-    },
-    {
-      path: 'tasks/editor',
-      name: 'marketing-tasks-editor',
-      component: () => import('../pages/marketing/tasks/task-editor.vue'),
-      meta: { title: '任务管理' }
-    },
-    {
-      path: 'tasks/test/TaskFlowCanvasTest',
-      name: 'marketing-tasks-test',
-      component: () => import('../pages/marketing/tasks/test/TaskFlowCanvasTest.vue'),
-      meta: { title: 'TaskFlowCanvas测试' }
-    }
+      },
+      {
+        path: 'alert',
+        name: 'MarketingAlert',
+        children: [
+          {
+            path: 'rules',
+            name: 'MarketingAlertRules',
+            component: () => import('../pages/marketing/alert/rules/index.vue')
+          },
+          {
+            path: 'history',
+            name: 'MarketingAlertHistory',
+            component: () => import('../pages/marketing/alert/history/index.vue')
+          },
+          {
+            path: 'management',
+            name: 'MarketingAlertManagement',
+            component: () => import('../pages/marketing/alert/management/index.vue'),
+            meta: { title: '预警管理' }
+          }
+        ]
+      },
+      {
+        path: 'coupon/create',
+        name: 'MarketingCouponCreate',
+        component: () => import('../pages/marketing/coupon/template/create.vue')
+      },
+      // 批量创建券库存相关路由
+      {
+        path: 'benefit/management/batch-create',
+        name: 'batchCreateInventory',
+        component: () => import('../pages/marketing/coupon/inventory/batch-create.vue'),
+        meta: { title: '批量创建券库存' }
+      },
+      {
+        path: 'benefit/management/approval',
+        name: 'approvalManagement',
+        component: () => import('../pages/marketing/coupon/inventory/approval.vue'),
+        meta: { title: '审批管理' }
+      },
+      {
+        path: 'benefit/management/history',
+        name: 'batchCreateHistory',
+        component: () => import('../pages/marketing/coupon/inventory/history.vue'),
+        meta: { title: '批量创建历史' }
+      },
+      {
+        path: 'coupon/management/detail',
+        name: 'couponManagementDetail',
+        component: () => import('../pages/marketing/coupon/management/detail.vue'),
+        meta: { title: '券库存详情' }
+      },
+      {
+          path: 'tasks',
+          name: 'marketing-tasks',
+          component: () => loadComponent('../pages/marketing/tasks/index.vue', 'MarketingTasks'),
+          meta: { title: '营销任务' }
+        },
+        {
+          path: 'tasks/create',
+          name: 'marketing-tasks-create',
+          component: () => loadComponent('../pages/marketing/tasks/create.vue', 'MarketingTasksCreate'),
+          meta: { title: '创建营销任务' }
+        },
+        {
+          path: 'tasks/editor',
+          name: 'marketing-tasks-editor',
+          component: () => loadComponent('../pages/marketing/tasks/task-editor.vue', 'MarketingTasksEditor'),
+          meta: { title: '任务管理' }
+        }
     ]
   }
 ]

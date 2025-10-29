@@ -15,7 +15,7 @@ import { mount } from '@vue/test-utils'
 import TaskFlowCanvasRefactored from '../../../pages/marketing/tasks/components/TaskFlowCanvasRefactored.vue'
 
 // 模拟真实的异步初始化环境 - 提前定义
-const createRealisticAsyncEnvironment = () => {
+function createRealisticAsyncEnvironment() {
   let graphInstance = null
   let isInitializing = false
   let initializationPromise = null

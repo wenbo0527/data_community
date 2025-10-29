@@ -204,7 +204,7 @@ describe('预览线布局引擎就绪状态测试', () => {
       await previewLineSystem.init()
       
       // 模拟用户报告的场景：PreviewLineValidator 显示"布局引擎未就绪"
-      console.log('🧪 [测试] 模拟用户报告的预览线创建失败场景')
+      // console.log('🧪 [测试] 模拟用户报告的预览线创建失败场景')
       
       // 1. 初始状态：布局引擎未设置
       expect(previewLineSystem.isLayoutEngineReady()).toBe(false)
@@ -240,7 +240,7 @@ describe('预览线布局引擎就绪状态测试', () => {
       const successResult = previewLineSystem.createUnifiedPreviewLine(mockNode)
       expect(successResult.reason).not.toBe('布局引擎未就绪')
       
-      console.log('✅ [测试] 用户报告场景修复验证完成')
+      // console.log('✅ [测试] 用户报告场景修复验证完成')
     })
   })
 

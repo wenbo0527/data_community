@@ -7,11 +7,16 @@ import { viteMockServe } from 'vite-plugin-mock'
 // https://vite.dev/config/
 export default defineConfig({
   optimizeDeps: {
-    exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue']
+    exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue', 'fsevents']
+  },
+  build: {
+    rollupOptions: {
+      external: ['fsevents']
+    }
   },
   server: {
     host: '0.0.0.0',
-    port: 5174,
+    port: 5173,
     hmr: {
       host: 'localhost',
       // 添加更精确的文件监听配置
@@ -29,7 +34,7 @@ export default defineConfig({
     },
     proxy: {
       '/api/crowds': {
-        target: 'http://localhost:5174',
+        target: 'http://localhost:5173',
         bypass: (req, res) => {
           if (process.env.NODE_ENV === 'development' && req.method === 'GET') {
             // 移除调试日志语句
@@ -67,6 +72,30 @@ export default defineConfig({
           }
         }
       },
+      '/api/alert': {
+        target: 'http://localhost:5173',
+        bypass: (req, res) => {
+          if (process.env.NODE_ENV === 'development') {
+            const { alertMockData } = require('./src/mock/alert.js');
+            const url = new URL(req.url, 'http://localhost:5173');
+            
+            if (url.pathname === '/api/alert/recent') {
+              const query = Object.fromEntries(url.searchParams);
+              const result = alertMockData.recent(query);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+              return;
+            }
+            
+            if (url.pathname === '/api/alert/overview') {
+              const result = alertMockData.overview();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(result));
+              return;
+            }
+          }
+        }
+      },
 
     }
   },
@@ -76,6 +105,8 @@ export default defineConfig({
     viteMockServe({
       mockPath: 'src/mock',
       enable: true,
+      watchFiles: true,
+      localEnabled: true,
     })
   ],
   resolve: {

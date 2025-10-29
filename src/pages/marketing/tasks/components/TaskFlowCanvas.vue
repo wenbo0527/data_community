@@ -6735,23 +6735,35 @@ const checkPreviewLineValidity = async () => {
   }
 }
 
-// 触发预览线生成方法
+// 🔧 统一预览线生成方法：使用PreviewLineSystem作为唯一入口
 const triggerPreviewLineGeneration = async () => {
+  // 验证PreviewLineSystem实例
   if (!previewLineSystem) {
-    console.error('[预览线生成] 预览线系统未初始化')
-    Message.error('预览线系统未初始化，无法生成预览线')
+    console.error('[统一预览线生成] PreviewLineSystem未初始化')
+    Message.error('PreviewLineSystem未初始化，无法生成预览线')
+    return
+  }
+  
+  // 验证PreviewLineSystem初始化状态
+  const isInitialized = typeof previewLineSystem.isInitialized === 'function' 
+    ? previewLineSystem.isInitialized() 
+    : !!previewLineSystem.graph
+  
+  if (!isInitialized) {
+    console.error('[统一预览线生成] PreviewLineSystem未完成初始化')
+    Message.error('PreviewLineSystem未完成初始化，无法生成预览线')
     return
   }
   
   isGeneratingPreviewLines.value = true
   
   try {
-    console.log('[预览线生成] 开始触发预览线生成...')
+    console.log('[统一预览线生成] 开始使用PreviewLineSystem统一生成预览线...')
     
-    // 调用预览线系统的强制重新生成方法
+    // 🎯 统一使用PreviewLineSystem.forceRegeneratePreviewLines作为唯一入口
     const result = await previewLineSystem.forceRegeneratePreviewLines()
     
-    console.log('[预览线生成] 生成完成:', result)
+    console.log('[统一预览线生成] 生成完成:', result)
     
     // 更新调试统计信息
     await updateDebugStats()
@@ -6761,7 +6773,7 @@ const triggerPreviewLineGeneration = async () => {
     const failedCount = result.failed ? result.failed.length : 0
     const skippedCount = result.skipped ? result.skipped.length : 0
     
-    Message.success(`预览线生成完成！成功: ${successCount} 条，失败: ${failedCount} 条，跳过: ${skippedCount} 条`)
+    Message.success(`预览线统一生成完成！成功: ${successCount} 条，失败: ${failedCount} 条，跳过: ${skippedCount} 条`)
     
     // 在预览线属性中添加触发生成的函数和动作信息
     if (result && result.success && result.success.length > 0) {
@@ -6790,31 +6802,32 @@ const triggerPreviewLineGeneration = async () => {
               console.warn('[预览线生成] 无效的预览线对象')
               return
             }
-            // 添加触发生成的函数和动作信息到预览线属性中
+            // 添加统一预览线生成的触发信息
             previewLine.triggerInfo = {
-              triggerFunction: 'triggerPreviewLineGeneration',
-              triggerAction: 'manual_generation',
+              triggerFunction: 'PreviewLineSystem.forceRegeneratePreviewLines',
+              triggerAction: 'unified_generation',
               triggeredAt: new Date().toISOString(),
-              triggeredBy: 'debug_panel',
+              triggeredBy: 'unified_preview_system',
               nodeId: item.nodeId,
               branchCount: item.branchCount || 0,
               previewType: item.previewType || 'unknown',
               branchId: previewLine.branchId || null,
-              branchLabel: previewLine.branchLabel || null
+              branchLabel: previewLine.branchLabel || null,
+              unifiedEntry: true
             }
           })
         })
         
-        console.log(`🎯 [预览线生成] 触发信息添加完成，共处理 ${result.success.length} 个节点的预览线`)
+        console.log(`🎯 [统一预览线生成] 统一触发信息添加完成，共处理 ${result.success.length} 个节点的预览线`)
         
       } catch (error) {
-        console.error('添加触发信息失败:', error)
+        console.error('[统一预览线生成] 添加触发信息失败:', error)
       }
     }
     
   } catch (error) {
-    console.error('[预览线生成] 生成失败:', error)
-    Message.error('预览线生成失败: ' + error.message)
+    console.error('[统一预览线生成] 生成失败:', error)
+    Message.error('统一预览线生成失败: ' + error.message)
   } finally {
     isGeneratingPreviewLines.value = false
   }

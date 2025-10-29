@@ -544,4 +544,4 @@ export const LayerUtilsHelper = {
     return layerUtils.centerAlignLayer(layerNodes, positions);
   }
 };
-export default LayerUtils;
+// 默认导出已通过 export class 实现

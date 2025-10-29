@@ -368,4 +368,4 @@ export const EdgeFilterUtils = {
     return edgeFilter.validateEdgeConnection(edge);
   }
 };
-export default EdgeFilter;
+// 默认导出已通过 export class 实现

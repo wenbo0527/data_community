@@ -124,17 +124,23 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       isNewNode: isNewNode  // 添加新节点标识
     }
 
-    // 打开指定抽屉
+    // 🔧 修复：使用 nextTick 确保响应式更新的正确性，避免 computed readonly 警告
     console.log(`[useConfigDrawers] 设置抽屉状态为可见...`)
-    drawerStates[drawerType].visible = true
-    drawerStates[drawerType].data = drawerData
-    drawerStates[drawerType].instance = node
+    nextTick(() => {
+      try {
+        drawerStates[drawerType].visible = true
+        drawerStates[drawerType].data = drawerData
+        drawerStates[drawerType].instance = node
 
-    console.log(`[useConfigDrawers] 打开配置抽屉完成: ${drawerType}, 节点ID: ${node.id}, 是否新节点: ${isNewNode}`)
-    console.log(`[useConfigDrawers] 最终抽屉状态:`, {
-      visible: drawerStates[drawerType].visible,
-      dataKeys: Object.keys(drawerStates[drawerType].data),
-      instanceId: drawerStates[drawerType].instance?.id
+        console.log(`[useConfigDrawers] 打开配置抽屉完成: ${drawerType}, 节点ID: ${node.id}, 是否新节点: ${isNewNode}`)
+        console.log(`[useConfigDrawers] 最终抽屉状态:`, {
+          visible: drawerStates[drawerType].visible,
+          dataKeys: Object.keys(drawerStates[drawerType].data),
+          instanceId: drawerStates[drawerType].instance?.id
+        })
+      } catch (error) {
+        console.error(`[useConfigDrawers] 打开抽屉时发生错误: ${drawerType}`, error)
+      }
     })
   }
 
@@ -158,11 +164,17 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       return
     }
     
-    drawerStates[drawerType].visible = false
-    drawerStates[drawerType].data = {}
-    drawerStates[drawerType].instance = null
-
-    console.log(`[useConfigDrawers] 关闭配置抽屉完成: ${drawerType}`)
+    // 🔧 修复：使用 nextTick 确保响应式更新的正确性，避免 computed readonly 警告
+    nextTick(() => {
+      try {
+        drawerStates[drawerType].visible = false
+        drawerStates[drawerType].data = {}
+        drawerStates[drawerType].instance = null
+        console.log(`[useConfigDrawers] 关闭配置抽屉完成: ${drawerType}`)
+      } catch (error) {
+        console.error(`[useConfigDrawers] 关闭抽屉时发生错误: ${drawerType}`, error)
+      }
+    })
   }
 
   /**
@@ -222,265 +234,66 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
         })
       }
 
-      // 🔧 关键修复：触发统一预览线创建（配置完成后）
-      console.log(`[useConfigDrawers] 检查是否需要创建配置后预览线`)
+      // 🔧 统一预览线生成：使用PreviewLineSystem作为唯一入口
+      console.log(`[useConfigDrawers] 开始统一预览线生成流程`)
       
-      // 🎯 修复：正确获取预览线系统实例
-      // 优先从全局window对象获取，确保获取到正确初始化的实例
+      // 获取PreviewLineSystem实例（统一入口）
       let previewLineSystem = null
-      let unifiedPreviewManager = null
       
-      // 方案1：从全局window对象获取PreviewLineSystem（最可靠）
+      // 优先从全局window对象获取PreviewLineSystem
       if (typeof window !== 'undefined' && window.previewLineSystem) {
         previewLineSystem = window.previewLineSystem
-        console.log(`[useConfigDrawers] 从全局window获取预览线系统:`, !!previewLineSystem)
+        console.log(`[useConfigDrawers] 从全局window获取PreviewLineSystem实例`)
       }
       
-      // 方案2：从全局window对象获取UnifiedEdgeManager（最可靠）
-      if (typeof window !== 'undefined' && window.unifiedEdgeManager) {
-        unifiedPreviewManager = window.unifiedEdgeManager
-        console.log(`[useConfigDrawers] 从全局window获取统一边管理器:`, !!unifiedPreviewManager)
-      }
-      
-      // 方案3：从structuredLayout获取previewLineSystem（备用）
+      // 备用方案：从structuredLayout获取
       if (!previewLineSystem && structuredLayout) {
         const previewLineSystemRef = structuredLayout.previewLineSystem?.value || structuredLayout.previewLineSystem
         if (previewLineSystemRef) {
           previewLineSystem = previewLineSystemRef
-          console.log(`[useConfigDrawers] 从structuredLayout获取预览线系统:`, !!previewLineSystem)
+          console.log(`[useConfigDrawers] 从structuredLayout获取PreviewLineSystem实例`)
         }
       }
       
-      // 方案4：从structuredLayout获取unifiedPreviewManager（备用）
-      if (!unifiedPreviewManager && structuredLayout) {
-        const unifiedPreviewManagerRef = structuredLayout.unifiedPreviewManager?.value || structuredLayout.unifiedPreviewManager
-        if (unifiedPreviewManagerRef) {
-          unifiedPreviewManager = unifiedPreviewManagerRef
-          console.log(`[useConfigDrawers] 从structuredLayout获取统一预览管理器:`, !!unifiedPreviewManager)
+      // 验证PreviewLineSystem实例
+      if (!previewLineSystem) {
+        console.error(`[useConfigDrawers] PreviewLineSystem实例不存在，无法生成预览线`)
+        throw new Error('PreviewLineSystem未初始化，无法处理节点配置')
+      }
+      
+      // 验证PreviewLineSystem初始化状态
+      const isInitialized = typeof previewLineSystem.isInitialized === 'function' 
+        ? previewLineSystem.isInitialized() 
+        : !!previewLineSystem.graph
+      
+      if (!isInitialized) {
+        console.error(`[useConfigDrawers] PreviewLineSystem未完成初始化`)
+        throw new Error('PreviewLineSystem未完成初始化，无法处理节点配置')
+      }
+      
+      console.log(`[useConfigDrawers] PreviewLineSystem状态检查:`, {
+        isInitialized: isInitialized,
+        hasGraph: !!previewLineSystem.graph,
+        hasPreviewLineManager: !!previewLineSystem.previewLineManager,
+        nodeId: nodeInstance.id
+      })
+      
+      // 🎯 统一使用PreviewLineSystem.onNodeConfigured作为唯一入口
+      if (typeof previewLineSystem.onNodeConfigured === 'function') {
+        console.log(`[useConfigDrawers] 调用PreviewLineSystem.onNodeConfigured统一处理节点配置`)
+        try {
+          const result = await previewLineSystem.onNodeConfigured(nodeInstance.id, config)
+          console.log(`[useConfigDrawers] 预览线生成成功:`, {
+            nodeId: nodeInstance.id,
+            result: result
+          })
+        } catch (error) {
+          console.error(`[useConfigDrawers] 预览线生成失败:`, error)
+          throw new Error(`预览线生成失败: ${error.message}`)
         }
-      }
-      
-      // 输出详细调试信息
-      console.log(`[useConfigDrawers] 预览线系统实例:`, previewLineSystem ? 'Available' : 'undefined')
-      console.log(`[useConfigDrawers] 统一边管理器实例:`, unifiedPreviewManager ? 'Available' : 'undefined')
-      console.log(`[useConfigDrawers] 预览线系统类型:`, previewLineSystem?.constructor?.name || 'undefined')
-      console.log(`[useConfigDrawers] 统一边管理器类型:`, unifiedPreviewManager?.constructor?.name || 'undefined')
-      
-      // 🔧 增强调试：检查管理器初始化状态
-      if (previewLineSystem) {
-        console.log(`[useConfigDrawers] PreviewLineSystem初始化状态:`, {
-          isInitialized: typeof previewLineSystem.isInitialized === 'function' ? previewLineSystem.isInitialized() : 'unknown',
-          hasGraph: !!previewLineSystem.graph,
-          hasPreviewLineManager: !!previewLineSystem.previewLineManager
-        })
-      }
-      
-      if (unifiedPreviewManager) {
-        console.log(`[useConfigDrawers] UnifiedEdgeManager初始化状态:`, {
-          isInitialized: unifiedPreviewManager.isInitialized?.value || 'unknown',
-          hasGraph: !!unifiedPreviewManager.graph,
-          edgesCount: unifiedPreviewManager.edges?.size || 0,
-          previewLinesCount: unifiedPreviewManager.previewLines?.size || 0
-        })
-      }
-      
-      if (!previewLineSystem && !unifiedPreviewManager) {
-        console.warn(`[useConfigDrawers] 预览线管理器不存在或方法不可用`)
-        console.log(`[useConfigDrawers] 调试信息:`, {
-          structuredLayoutExists: !!structuredLayout,
-          structuredLayoutKeys: structuredLayout ? Object.keys(structuredLayout) : [],
-          windowKeys: typeof window !== 'undefined' ? Object.keys(window).filter(key => key.includes('preview') || key.includes('unified') || key.includes('edge')) : [],
-          windowPreviewLineSystem: !!(typeof window !== 'undefined' && window.previewLineSystem),
-          windowUnifiedEdgeManager: !!(typeof window !== 'undefined' && window.unifiedEdgeManager)
-        })
       } else {
-        // 输出可用方法列表
-        const previewSystemMethods = []
-        const unifiedManagerMethods = []
-        
-        if (previewLineSystem) {
-          const testMethods = ['onNodeConfigured', 'createUnifiedPreviewLine', 'handleNodeConfigured', 'createPreviewLineAfterConfig']
-          for (const method of testMethods) {
-            if (typeof previewLineSystem[method] === 'function') {
-              previewSystemMethods.push(method)
-            }
-          }
-        }
-        
-        if (unifiedPreviewManager) {
-          const testMethods = ['onNodeConfigured', 'createPreviewLineAfterConfig', 'handleNodeConfigured', 'createBranchPreviewLines']
-          for (const method of testMethods) {
-            if (typeof unifiedPreviewManager[method] === 'function') {
-              unifiedManagerMethods.push(method)
-            }
-          }
-        }
-        
-        console.log(`[useConfigDrawers] PreviewLineSystem可用方法:`, previewSystemMethods.join(', ') || 'N/A')
-        console.log(`[useConfigDrawers] UnifiedEdgeManager可用方法:`, unifiedManagerMethods.join(', ') || 'N/A')
-      }
-      
-      // 🎯 优先使用PreviewLineSystem的方法
-      if (previewLineSystem) {
-        console.log(`[useConfigDrawers] 使用PreviewLineSystem处理节点配置完成事件`)
-        
-        // 🔧 增强调试：检查PreviewLineSystem状态
-        console.log(`[useConfigDrawers] PreviewLineSystem详细状态:`, {
-          isInitialized: typeof previewLineSystem.isInitialized === 'function' ? previewLineSystem.isInitialized() : 'unknown',
-          hasGraph: !!previewLineSystem.graph,
-          hasPreviewLineManager: !!previewLineSystem.previewLineManager,
-          graphCellsCount: previewLineSystem.graph?.getCells()?.length || 0,
-          nodeExists: !!previewLineSystem.graph?.getCellById(nodeInstance.id)
-        })
-        
-        // 检查可用的方法
-        const availableMethods = []
-        if (typeof previewLineSystem.onNodeConfigured === 'function') {
-          availableMethods.push('onNodeConfigured')
-        }
-        if (typeof previewLineSystem.createUnifiedPreviewLine === 'function') {
-          availableMethods.push('createUnifiedPreviewLine')
-        }
-        if (typeof previewLineSystem.handleNodeConfigured === 'function') {
-          availableMethods.push('handleNodeConfigured')
-        }
-        if (typeof previewLineSystem.createPreviewLineAfterConfig === 'function') {
-          availableMethods.push('createPreviewLineAfterConfig')
-        }
-        
-        console.log(`[useConfigDrawers] PreviewLineSystem可用方法:`, availableMethods)
-        
-        // 🔧 增强调试：检查节点数据
-        const nodeData = nodeInstance.getData() || {}
-        console.log(`[useConfigDrawers] 节点数据检查:`, {
-          nodeId: nodeInstance.id,
-          nodeType: nodeData.type || nodeData.nodeType,
-          isConfigured: nodeData.isConfigured,
-          configKeys: config ? Object.keys(config) : [],
-          nodeDataKeys: Object.keys(nodeData)
-        })
-        
-        // 尝试调用最合适的方法
-        if (typeof previewLineSystem.onNodeConfigured === 'function') {
-          console.log(`[useConfigDrawers] 调用PreviewLineSystem.onNodeConfigured: ${nodeInstance.id}`)
-          try {
-            const result = await previewLineSystem.onNodeConfigured(nodeInstance.id, config)
-            console.log(`[useConfigDrawers] PreviewLineSystem节点配置完成事件处理结果:`, result)
-            
-            // 🔧 增强调试：检查预览线创建结果
-            if (previewLineSystem.hasNodePreviewLine && typeof previewLineSystem.hasNodePreviewLine === 'function') {
-              const hasPreviewLine = previewLineSystem.hasNodePreviewLine(nodeInstance.id)
-              console.log(`[useConfigDrawers] 预览线创建检查:`, {
-                nodeId: nodeInstance.id,
-                hasPreviewLine: hasPreviewLine,
-                result: result
-              })
-            }
-          } catch (error) {
-            console.error(`[useConfigDrawers] PreviewLineSystem节点配置完成事件处理失败:`, error)
-            console.error(`[useConfigDrawers] 错误堆栈:`, error.stack)
-          }
-        } else if (typeof previewLineSystem.handleNodeConfigured === 'function') {
-          console.log(`[useConfigDrawers] 调用PreviewLineSystem.handleNodeConfigured: ${nodeInstance.id}`)
-          try {
-            const result = await previewLineSystem.handleNodeConfigured(nodeInstance, config)
-            console.log(`[useConfigDrawers] PreviewLineSystem节点配置处理结果:`, result)
-          } catch (error) {
-            console.error(`[useConfigDrawers] PreviewLineSystem节点配置处理失败:`, error)
-            console.error(`[useConfigDrawers] 错误堆栈:`, error.stack)
-          }
-        } else if (typeof previewLineSystem.createUnifiedPreviewLine === 'function') {
-          console.log(`[useConfigDrawers] 调用PreviewLineSystem.createUnifiedPreviewLine: ${nodeInstance.id}`)
-          try {
-            const result = await previewLineSystem.createUnifiedPreviewLine(nodeInstance)
-            console.log(`[useConfigDrawers] PreviewLineSystem统一预览线创建结果:`, result)
-          } catch (error) {
-            console.error(`[useConfigDrawers] PreviewLineSystem统一预览线创建失败:`, error)
-            console.error(`[useConfigDrawers] 错误堆栈:`, error.stack)
-          }
-        }
-      } 
-      // 🔄 备用方案：使用UnifiedEdgeManager
-      else if (unifiedPreviewManager) {
-        console.log(`[useConfigDrawers] 使用UnifiedEdgeManager处理节点配置完成事件`)
-        
-        // 🔧 增强调试：检查UnifiedEdgeManager状态
-        console.log(`[useConfigDrawers] UnifiedEdgeManager详细状态:`, {
-          isInitialized: unifiedPreviewManager.isInitialized?.value || 'unknown',
-          hasGraph: !!unifiedPreviewManager.graph,
-          edgesCount: unifiedPreviewManager.edges?.size || 0,
-          previewLinesCount: unifiedPreviewManager.previewLines?.size || 0,
-          connectionsCount: unifiedPreviewManager.connections?.size || 0,
-          graphCellsCount: unifiedPreviewManager.graph?.getCells()?.length || 0,
-          nodeExists: !!unifiedPreviewManager.graph?.getCellById(nodeInstance.id)
-        })
-        
-        const availableMethods = []
-        if (typeof unifiedPreviewManager.onNodeConfigured === 'function') {
-          availableMethods.push('onNodeConfigured')
-        }
-        if (typeof unifiedPreviewManager.createPreviewLineAfterConfig === 'function') {
-          availableMethods.push('createPreviewLineAfterConfig')
-        }
-        if (typeof unifiedPreviewManager.handleNodeConfigured === 'function') {
-          availableMethods.push('handleNodeConfigured')
-        }
-        if (typeof unifiedPreviewManager.createBranchPreviewLines === 'function') {
-          availableMethods.push('createBranchPreviewLines')
-        }
-        
-        console.log(`[useConfigDrawers] UnifiedEdgeManager可用方法:`, availableMethods)
-        
-        // 🔧 增强调试：检查节点数据和配置
-        const nodeData = nodeInstance.getData() || {}
-        console.log(`[useConfigDrawers] UnifiedEdgeManager节点数据检查:`, {
-          nodeId: nodeInstance.id,
-          nodeType: nodeData.type || nodeData.nodeType,
-          configType: config.type,
-          isConfigured: nodeData.isConfigured,
-          configKeys: config ? Object.keys(config) : [],
-          nodeDataKeys: Object.keys(nodeData),
-          isBranchType: ['crowd-split', 'event-split', 'ab-test', 'audience-split'].includes(config.type || nodeData.type || nodeData.nodeType)
-        })
-        
-        if (typeof unifiedPreviewManager.onNodeConfigured === 'function') {
-          console.log(`[useConfigDrawers] 调用UnifiedEdgeManager.onNodeConfigured: ${nodeInstance.id}`)
-          try {
-            const result = await unifiedPreviewManager.onNodeConfigured(nodeInstance.id, config)
-            console.log(`[useConfigDrawers] UnifiedEdgeManager节点配置完成事件处理结果:`, result)
-            
-            // 🔧 增强调试：检查预览线创建结果
-            if (unifiedPreviewManager.hasPreviewLine && typeof unifiedPreviewManager.hasPreviewLine === 'function') {
-              const hasPreviewLine = unifiedPreviewManager.hasPreviewLine(nodeInstance.id)
-              console.log(`[useConfigDrawers] UnifiedEdgeManager预览线创建检查:`, {
-                nodeId: nodeInstance.id,
-                hasPreviewLine: hasPreviewLine,
-                result: result
-              })
-            }
-          } catch (error) {
-            console.error(`[useConfigDrawers] UnifiedEdgeManager节点配置完成事件处理失败:`, error)
-            console.error(`[useConfigDrawers] 错误堆栈:`, error.stack)
-          }
-        } else if (typeof unifiedPreviewManager.createPreviewLineAfterConfig === 'function') {
-          console.log(`[useConfigDrawers] 调用UnifiedEdgeManager.createPreviewLineAfterConfig: ${nodeInstance.id}`)
-          try {
-            const result = await unifiedPreviewManager.createPreviewLineAfterConfig(nodeInstance, config)
-            console.log(`[useConfigDrawers] UnifiedEdgeManager配置后预览线创建结果:`, result)
-          } catch (error) {
-            console.error(`[useConfigDrawers] UnifiedEdgeManager配置后预览线创建失败:`, error)
-            console.error(`[useConfigDrawers] 错误堆栈:`, error.stack)
-          }
-        } else if (typeof unifiedPreviewManager.handleNodeConfigured === 'function') {
-          console.log(`[useConfigDrawers] 调用UnifiedEdgeManager.handleNodeConfigured: ${nodeInstance.id}`)
-          try {
-            const result = await unifiedPreviewManager.handleNodeConfigured(nodeInstance, config)
-            console.log(`[useConfigDrawers] UnifiedEdgeManager节点配置处理结果:`, result)
-          } catch (error) {
-            console.error(`[useConfigDrawers] UnifiedEdgeManager节点配置处理失败:`, error)
-            console.error(`[useConfigDrawers] 错误堆栈:`, error.stack)
-          }
-        }
+        console.error(`[useConfigDrawers] PreviewLineSystem.onNodeConfigured方法不存在`)
+        throw new Error('PreviewLineSystem.onNodeConfigured方法不可用')
       }
 
       console.log(`[useConfigDrawers] 配置处理完成，准备关闭抽屉: ${drawerType}`)

@@ -406,7 +406,24 @@ export class UnifiedEdgeManager {
       
       // 创建X6图形实例
       const x6EdgeConfig = this.createX6EdgeConfig(edge)
+      
+      // 验证X6配置
+      if (!x6EdgeConfig.source) {
+        throw new Error(`预览线源节点配置无效: ${JSON.stringify(x6EdgeConfig)}`)
+      }
+      
+      console.log('🎨 [统一边管理器] 准备添加预览线到X6图形:', {
+        config: x6EdgeConfig,
+        sourceExists: !!this.graph.getCellById(x6EdgeConfig.source),
+        graphReady: !!this.graph && typeof this.graph.addEdge === 'function'
+      })
+      
       const graphInstance = this.graph.addEdge(x6EdgeConfig)
+      
+      if (!graphInstance) {
+        throw new Error('X6图形实例创建失败，addEdge返回null')
+      }
+      
       edge.setGraphInstance(graphInstance)
       
       // 存储和索引
@@ -490,7 +507,29 @@ export class UnifiedEdgeManager {
       
       // 创建X6图形实例
       const x6EdgeConfig = this.createX6EdgeConfig(edge)
+      
+      // 验证X6配置
+      if (!x6EdgeConfig.source) {
+        throw new Error(`连接线源节点配置无效: ${JSON.stringify(x6EdgeConfig)}`)
+      }
+      
+      if (!x6EdgeConfig.target) {
+        throw new Error(`连接线目标节点配置无效: ${JSON.stringify(x6EdgeConfig)}`)
+      }
+      
+      console.log('🎨 [统一边管理器] 准备添加连接线到X6图形:', {
+        config: x6EdgeConfig,
+        sourceExists: !!this.graph.getCellById(x6EdgeConfig.source),
+        targetExists: !!this.graph.getCellById(x6EdgeConfig.target),
+        graphReady: !!this.graph && typeof this.graph.addEdge === 'function'
+      })
+      
       const graphInstance = this.graph.addEdge(x6EdgeConfig)
+      
+      if (!graphInstance) {
+        throw new Error('X6图形实例创建失败，addEdge返回null')
+      }
+      
       edge.setGraphInstance(graphInstance)
       
       // 存储和索引
@@ -641,7 +680,7 @@ export class UnifiedEdgeManager {
   async createPreviewLine(sourceNodeId, options = {}) {
     const previewData = {
       type: EdgeTypes.PREVIEW,
-      source: { nodeId: sourceNodeId, port: options.sourcePort || 'out' },
+      source: { nodeId: sourceNodeId, port: 'out' }, // 强制设置为 'out'，确保预览线从节点的out端口出发
       target: null,
       state: PreviewStates.INTERACTIVE,
       isPreview: true,
@@ -662,7 +701,7 @@ export class UnifiedEdgeManager {
       },
       ...options
     }
-    
+
     return this.createEdge(previewData)
   }
   
@@ -670,7 +709,7 @@ export class UnifiedEdgeManager {
   async createConnection(sourceNodeId, targetNodeId, options = {}) {
     const connectionData = {
       type: EdgeTypes.CONNECTION,
-      source: { nodeId: sourceNodeId, port: options.sourcePort || 'out' },
+      source: { nodeId: sourceNodeId, port: 'out' }, // 强制设置为 'out'，确保连接线从节点的out端口出发
       target: { nodeId: targetNodeId, port: options.targetPort || 'in' },
       state: ConnectionStates.ACTIVE,
       isPreview: false,
@@ -708,7 +747,7 @@ export class UnifiedEdgeManager {
         type: EdgeTypes.CONNECTION,
         source: { 
           nodeId: edgeData.sourceNodeId, 
-          port: edgeData.sourcePortId || 'out' 
+          port: 'out' // 强制设置为 'out'，确保连接线从节点的out端口出发
         },
         target: { 
           nodeId: edgeData.targetNodeId, 
@@ -1935,8 +1974,28 @@ export class UnifiedEdgeManager {
       
       let cleanedCount = 0
       
+      // 🔧 修复：添加连接线保护逻辑，避免误删真实连接线
+      const protectedConnections = new Set()
+      
+      // 1. 识别并保护真实连接线
+      for (const [id, connection] of this.connections) {
+        if (connection.target && connection.target.nodeId) {
+          protectedConnections.add(id)
+          console.log('🛡️ [统一边管理器] 保护真实连接线:', {
+            id,
+            source: connection.source?.nodeId,
+            target: connection.target?.nodeId
+          })
+        }
+      }
+      
       // 清理无效边
       for (const [id, edge] of this.edges) {
+        // 跳过受保护的连接线
+        if (protectedConnections.has(id)) {
+          continue
+        }
+        
         if (!edge.isValid || !edge.graphInstance) {
           console.log('🧹 [统一边管理器] 清理无效边:', { id, isValid: edge.isValid, hasGraphInstance: !!edge.graphInstance })
           await this.removeEdge(id, { reason: 'auto_cleanup_invalid' })
@@ -1944,9 +2003,14 @@ export class UnifiedEdgeManager {
         }
       }
       
-      // 清理孤立预览线 - 更严格的验证
+      // 清理孤立预览线 - 更严格的验证，但不清理连接线
       for (const [id, preview] of this.previewLines) {
         try {
+          // 跳过受保护的连接线
+          if (protectedConnections.has(id)) {
+            continue
+          }
+          
           // 验证预览线的源节点ID
           const sourceNodeId = preview.source?.nodeId
           if (!sourceNodeId || typeof sourceNodeId !== 'string') {
@@ -1984,15 +2048,28 @@ export class UnifiedEdgeManager {
         }
       }
       
-      // 清理无效连接
+      // 🔧 修复：更谨慎地清理连接线，只清理确实无效的
       for (const [id, connection] of this.connections) {
+        // 跳过受保护的连接线
+        if (protectedConnections.has(id)) {
+          continue
+        }
+        
+        // 只有在源节点和目标节点都不存在时才清理
         const sourceNode = this.graph.getCellById(connection.source.nodeId)
-        const targetNode = this.graph.getCellById(connection.target?.nodeId)
+        const targetNode = connection.target ? this.graph.getCellById(connection.target.nodeId) : null
+        
+        // 如果是预览线（没有目标节点），不在这里清理
+        if (!connection.target) {
+          continue
+        }
+        
         if (!sourceNode || !targetNode) {
           console.log('🧹 [统一边管理器] 清理无效连接:', { 
             connectionId: id, 
             sourceExists: !!sourceNode, 
-            targetExists: !!targetNode 
+            targetExists: !!targetNode,
+            hasTarget: !!connection.target
           })
           await this.removeEdge(id, { reason: 'auto_cleanup_invalid_connection' })
           cleanedCount++
@@ -2259,9 +2336,11 @@ export class UnifiedEdgeManager {
     const config = {
       id: edge.id,
       source: edge.source.nodeId,
-      sourcePort: edge.source.portId || 'out',
+      sourcePort: 'out', // 强制设置为 'out'，确保预览线从节点的out端口出发
       shape: 'edge',
-      zIndex: 1
+      zIndex: 1,
+      // 确保边可见
+      visible: true
     }
     
     // 如果有目标节点，添加目标配置
@@ -2279,7 +2358,10 @@ export class UnifiedEdgeManager {
           strokeWidth: this.options.previewLineStyle.strokeWidth || 2,
           strokeDasharray: this.options.previewLineStyle.strokeDasharray || '5,5',
           opacity: this.options.previewLineStyle.opacity || 0.8,
-          targetMarker: null // 预览线不显示箭头
+          targetMarker: null, // 预览线不显示箭头
+          // 确保线条可见
+          display: 'block',
+          visibility: 'visible'
         }
       }
     } else if (edge.isConnectionLine()) {
@@ -2295,7 +2377,10 @@ export class UnifiedEdgeManager {
             width: 8,
             height: 8,
             fill: this.options.connectionStyle.stroke || '#52c41a'
-          }
+          },
+          // 确保线条可见
+          display: 'block',
+          visibility: 'visible'
         }
       }
     } else {
@@ -2311,7 +2396,10 @@ export class UnifiedEdgeManager {
             width: 8,
             height: 8,
             fill: '#5F95FF'
-          }
+          },
+          // 确保线条可见
+          display: 'block',
+          visibility: 'visible'
         }
       }
     }
@@ -2338,12 +2426,29 @@ export class UnifiedEdgeManager {
       }
     }
     
+    // 添加路由器配置，确保边能正确路由
+    config.router = {
+      name: 'manhattan',
+      args: {
+        padding: 10
+      }
+    }
+    
+    // 添加连接器配置
+    config.connector = {
+      name: 'rounded',
+      args: {
+        radius: 8
+      }
+    }
+    
     console.log('🎨 [统一边管理器] 创建X6边配置:', {
       id: edge.id,
       type: edge.type,
       isPreview: edge.isPreview,
       hasTarget: !!edge.target?.nodeId,
-      style: config.attrs.line
+      style: config.attrs.line,
+      visible: config.visible
     })
     
     return config

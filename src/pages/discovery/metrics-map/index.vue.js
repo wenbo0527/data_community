@@ -274,7 +274,6 @@ onMounted(() => {
     console.log('初始容器宽度:', document.querySelector('.metrics-map')?.clientWidth);
     fetchMetrics();
 });
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

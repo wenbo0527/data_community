@@ -535,4 +535,4 @@ export const PositionUtilsHelper = {
     return positionUtils.centerAlignLayer(layerNodes, positions);
   }
 };
-export default PositionUtils;
+// 默认导出已通过 export class 实现

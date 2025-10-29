@@ -93,7 +93,6 @@ watch(() => modelValueRef.products.map((p) => p.periods), () => {
     console.log('Periods updated:', modelValueRef.products.map((p) => p.periods));
     emit('update:modelValue', modelValueRef);
 }, { deep: true });
-debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;

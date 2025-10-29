@@ -71,14 +71,12 @@
     // 输出配置
     "removeComments": false,
     "preserveConstEnums": true,
-    "preserveValueImports": true,
+    "verbatimModuleSyntax": true,
     
     // 类型定义
     "types": [
       "node",
-      "jsdom",
-      "vitest/globals",
-      "@types/jest"
+      "vitest/globals"
     ],
     
     // 编译器插件

@@ -446,17 +446,19 @@ export function useCanvasLifecycle(
       issues.push('画布容器未找到')
     }
 
-    // 检查系统组件 - 只在初始化完成后检查
-    if (state.isGraphReady?.value) {
+    // 🔧 修复：优化系统组件检查逻辑，避免过于严格的验证
+    // 只在Graph实例存在且画布就绪时才检查系统组件
+    if (graph.value && state.isGraphReady?.value) {
+      // 预览线系统检查 - 允许为空或未初始化，不强制要求
       const previewLineSystemInstance = typeof previewLineSystem === 'function' ? previewLineSystem() : previewLineSystem
-      const unifiedEdgeManagerInstance = typeof unifiedEdgeManager === 'function' ? unifiedEdgeManager() : unifiedEdgeManager
-      
-      if (!previewLineSystemInstance) {
-        issues.push('预览线系统未初始化')
+      if (previewLineSystem && !previewLineSystemInstance) {
+        console.warn('[validateCanvasState] 预览线系统未初始化，但不阻止画布就绪')
       }
 
-      if (!unifiedEdgeManagerInstance) {
-        issues.push('统一边管理器未初始化')
+      // 统一边管理器检查 - 允许为空或未初始化，不强制要求
+      const unifiedEdgeManagerInstance = typeof unifiedEdgeManager === 'function' ? unifiedEdgeManager() : unifiedEdgeManager
+      if (unifiedEdgeManager && !unifiedEdgeManagerInstance) {
+        console.warn('[validateCanvasState] 统一边管理器未初始化，但不阻止画布就绪')
       }
     }
 

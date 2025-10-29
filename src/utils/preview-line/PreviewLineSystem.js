@@ -261,55 +261,51 @@ export class PreviewLineSystem {
         ...this.options.modules.state
       });
       
-      // 预览线管理器（支持 Builder 模式和传统构造函数）
-      this.previewLineManager = this.createPreviewLineManager();
-      
-      // 新增核心模块初始化 - 在测试环境中跳过可选模块
-      if (!this.isTestEnvironment) {
-        console.log('[PreviewLineSystem] 初始化端口配置工厂...');
-        this.portConfigFactory = new PortConfigurationFactory({
-          enforcePortDirection: true,
-          validatePortCompatibility: true,
-          enableDebug: this.options.system.enableDebug,
-          ...this.options.modules.portConfig
-        });
+      // 🔧 关键修复：增强预览线管理器创建的错误处理
+      console.log('[PreviewLineSystem] 开始创建预览线管理器...');
+      try {
+        this.previewLineManager = this.createPreviewLineManager();
+        console.log('✅ [PreviewLineSystem] 预览线管理器创建成功');
+      } catch (managerError) {
+        console.error('❌ [PreviewLineSystem] 预览线管理器创建失败:', managerError);
         
-        console.log('[PreviewLineSystem] 初始化连接创建控制器...');
-        this.connectionController = new ConnectionCreationController({
-          portConfigFactory: this.portConfigFactory,
-          allowDirectConnection: false, // 禁用直接连接创建
-          enableValidation: true,
-          enableDebug: this.options.system.enableDebug,
-          ...this.options.modules.connectionController
-        });
-        
-        console.log('[PreviewLineSystem] 初始化in端口吸附检测器...');
-        this.snapDetector = new InPortSnapDetector({
-          snapThreshold: 20,
-          highlightDistance: 30,
-          enableDebug: this.options.system.enableDebug,
-          ...this.options.modules.snapDetector
-        });
-      } else {
-        // 测试环境中创建简单的模拟对象
-        this.portConfigFactory = { createConfig: () => ({}) };
-        this.connectionController = { createConnection: () => null };
-        this.snapDetector = { detectSnap: () => null };
+        throw new Error(`预览线管理器初始化失败: ${managerError.message}`);
       }
+      
+      // 核心模块初始化 - 严格初始化
+      console.log('[PreviewLineSystem] 初始化端口配置工厂...');
+      this.portConfigFactory = new PortConfigurationFactory({
+        enforcePortDirection: true,
+        validatePortCompatibility: true,
+        enableDebug: this.options.system.enableDebug,
+        ...this.options.modules.portConfig
+      });
+      
+      console.log('[PreviewLineSystem] 初始化连接创建控制器...');
+      this.connectionController = new ConnectionCreationController({
+        portConfigFactory: this.portConfigFactory,
+        allowDirectConnection: false, // 禁用直接连接创建
+        enableValidation: true,
+        enableDebug: this.options.system.enableDebug,
+        ...this.options.modules.connectionController
+      });
+      
+      console.log('[PreviewLineSystem] 初始化in端口吸附检测器...');
+      this.snapDetector = new InPortSnapDetector({
+        snapThreshold: 20,
+        highlightDistance: 30,
+        enableDebug: this.options.system.enableDebug,
+        ...this.options.modules.snapDetector
+      });
       
       console.log('✅ [PreviewLineSystem] 核心模块初始化完成');
     } catch (error) {
-      console.warn(`[PreviewLineSystem] 核心模块初始化警告: ${error.message}`);
-      // 在测试环境中不抛出错误，而是创建模拟对象
-      if (this.isTestEnvironment) {
-        this.portConfigFactory = this.portConfigFactory || { createConfig: () => ({}) };
-        this.connectionController = this.connectionController || { createConnection: () => null };
-        this.snapDetector = this.snapDetector || { detectSnap: () => null };
-      } else {
-        throw new Error(`核心模块初始化失败: ${error.message}`);
-      }
+      console.error('❌ [PreviewLineSystem] 核心模块初始化失败:', error);
+      throw new Error(`核心模块初始化失败: ${error.message}`);
     }
   }
+
+
 
   /**
    * 初始化功能模块
@@ -318,182 +314,108 @@ export class PreviewLineSystem {
     try {
       const { enabledModules, modules } = this.options;
       
-      // 样式渲染器 - 优先初始化，在测试环境中跳过
-      if (enabledModules.renderer && !this.isTestEnvironment) {
-        try {
-          // 🔧 增强 graph 实例状态检查
-          this.ensureGraphReady();
-          
-          // 先创建 StyleRenderer
-          this.styleRenderer = new StyleRenderer({
-            graph: this.graph,
-            eventManager: this.eventManager,
-            configManager: this.configManager,
-            ...modules.renderer
-          });
-          
-          // 再创建 PreviewLineRenderer，使用改进的构造函数
-          this.renderer = new PreviewLineRenderer({
-            graph: this.graph,
-            eventManager: this.eventManager,
-            stateManager: this.stateManager,
-            configManager: this.configManager,
-            styleRenderer: this.styleRenderer,
-            ...modules.renderer
-          });
-          
-          // 验证渲染器创建结果
-          if (this.renderer) {
-            if (!this.renderer.graphValidated && this.graph) {
-              console.log('🔄 [PreviewLineSystem] 渲染器需要重新验证 graph，执行 setGraph');
-              const success = this.renderer.setGraph(this.graph);
-              if (!success) {
-                console.warn('⚠️ [PreviewLineSystem] 渲染器 graph 注入失败，但继续初始化');
-              }
-            } else {
-              console.log('✅ [PreviewLineSystem] 渲染器创建成功，graph 已验证');
+      // 样式渲染器 - 严格初始化，移除测试环境跳过逻辑
+      if (enabledModules.renderer) {
+        console.log('🎨 [PreviewLineSystem] 开始初始化渲染器模块');
+        
+        // 🔧 严格检查 graph 实例
+        this.ensureGraphReady();
+        
+        // 先创建 StyleRenderer
+        this.styleRenderer = new StyleRenderer({
+          graph: this.graph,
+          eventManager: this.eventManager,
+          configManager: this.configManager,
+          ...modules.renderer
+        });
+        
+        // 再创建 PreviewLineRenderer，使用改进的构造函数
+        this.renderer = new PreviewLineRenderer({
+          graph: this.graph,
+          eventManager: this.eventManager,
+          stateManager: this.stateManager,
+          configManager: this.configManager,
+          styleRenderer: this.styleRenderer,
+          ...modules.renderer
+        });
+        
+        // 验证渲染器创建结果
+        if (!this.renderer || !this.styleRenderer) {
+          const error = new Error('PreviewLineSystem: 渲染器创建失败')
+          console.error('❌ [PreviewLineSystem]', error.message)
+          throw error
+        }
+        
+        // 验证 graph 注入
+        if (this.renderer && typeof this.renderer.setGraph === 'function') {
+          if (!this.renderer.graphValidated && this.graph) {
+            console.log('🔄 [PreviewLineSystem] 渲染器需要重新验证 graph，执行 setGraph');
+            const success = this.renderer.setGraph(this.graph);
+            if (!success) {
+              const error = new Error('PreviewLineSystem: 渲染器 graph 注入失败')
+              console.error('❌ [PreviewLineSystem]', error.message)
+              throw error
             }
           }
-          
-          console.log('✅ [PreviewLineSystem] 渲染器模块初始化成功');
-          
-        } catch (error) {
-          console.error('❌ [PreviewLineSystem] 渲染器模块初始化失败:', error);
-          
-          // 创建降级渲染器，不阻止系统初始化
-          this.renderer = this.createFallbackRenderer();
-          this.styleRenderer = this.createFallbackStyleRenderer();
-          
-          console.log('🔄 [PreviewLineSystem] 已创建降级渲染器，系统继续运行');
         }
-      } else if (this.isTestEnvironment) {
-        // 测试环境中创建简单的模拟渲染器
-        this.renderer = this.createFallbackRenderer();
-        this.styleRenderer = this.createFallbackStyleRenderer();
+        
+        console.log('✅ [PreviewLineSystem] 渲染器模块初始化成功');
       }
       
-      // 位置计算器 - 在测试环境中跳过或创建模拟对象
-      if (enabledModules.position && !this.isTestEnvironment) {
-        try {
-          this.positionCalculator = new PositionCalculator(this.graph, {
-            eventManager: this.eventManager,
-            configManager: this.configManager,
-            ...modules.position
-          });
-        } catch (error) {
-          console.warn(`[PreviewLineSystem] 位置计算器初始化失败: ${error.message}`);
-          this.positionCalculator = { calculate: () => ({ x: 0, y: 0 }) };
-        }
-      } else if (this.isTestEnvironment) {
-        this.positionCalculator = { calculate: () => ({ x: 0, y: 0 }) };
+      // 位置计算器 - 严格初始化
+      if (enabledModules.position) {
+        this.positionCalculator = new PositionCalculator(this.graph, {
+          eventManager: this.eventManager,
+          configManager: this.configManager,
+          ...modules.position
+        });
       }
       
-      // 碰撞检测器 - 在测试环境中跳过或创建模拟对象
-      if (enabledModules.collision && !this.isTestEnvironment) {
-        try {
-          this.collisionDetector = new CollisionDetector(this.graph, {
-            eventManager: this.eventManager,
-            configManager: this.configManager,
-            positionCalculator: this.positionCalculator,
-            ...modules.collision
-          });
-        } catch (error) {
-          console.warn(`[PreviewLineSystem] 碰撞检测器初始化失败: ${error.message}`);
-          this.collisionDetector = { detect: () => false };
-        }
-      } else if (this.isTestEnvironment) {
-        this.collisionDetector = { detect: () => false };
+      // 碰撞检测器 - 严格初始化
+      if (enabledModules.collision) {
+        this.collisionDetector = new CollisionDetector(this.graph, {
+          eventManager: this.eventManager,
+          configManager: this.configManager,
+          positionCalculator: this.positionCalculator,
+          ...modules.collision
+        });
       }
       
-      // 分支分析器 - 在测试环境中跳过或创建模拟对象
-      if (enabledModules.branch && !this.isTestEnvironment) {
-        try {
-          this.branchAnalyzer = new BranchAnalyzer({
-            eventManager: this.eventManager,
-            configManager: this.configManager,
-            positionCalculator: this.positionCalculator,
-            collisionDetector: this.collisionDetector,
-            ...modules.branch
-          });
-        } catch (error) {
-          console.warn(`[PreviewLineSystem] 分支分析器初始化失败: ${error.message}`);
-          this.branchAnalyzer = { analyze: () => ({}) };
-        }
-      } else if (this.isTestEnvironment) {
-        this.branchAnalyzer = { analyze: () => ({}) };
+      // 分支分析器 - 严格初始化
+      if (enabledModules.branch) {
+        this.branchAnalyzer = new BranchAnalyzer({
+          eventManager: this.eventManager,
+          configManager: this.configManager,
+          positionCalculator: this.positionCalculator,
+          collisionDetector: this.collisionDetector,
+          ...modules.branch
+        });
       }
       
-      // 性能优化器 - 在测试环境中跳过或创建模拟对象
-      if (enabledModules.performance && !this.isTestEnvironment) {
-        try {
-          this.performanceOptimizer = new PerformanceOptimizer({
-            eventManager: this.eventManager,
-            configManager: this.configManager,
-            ...modules.performance
-          });
-        } catch (error) {
-          console.warn(`[PreviewLineSystem] 性能优化器初始化失败: ${error.message}`);
-          this.performanceOptimizer = { optimize: () => {} };
-        }
-      } else if (this.isTestEnvironment) {
-        this.performanceOptimizer = { optimize: () => {} };
+      // 性能优化器 - 严格初始化
+      if (enabledModules.performance) {
+        this.performanceOptimizer = new PerformanceOptimizer({
+          eventManager: this.eventManager,
+          configManager: this.configManager,
+          ...modules.performance
+        });
       }
       
-      // 缓存管理器 - 在测试环境中跳过或创建模拟对象
-      if (enabledModules.cache && !this.isTestEnvironment) {
-        try {
-          this.cacheManager = new CacheManager({
-            eventManager: this.eventManager,
-            configManager: this.configManager,
-            ...modules.cache
-          });
-        } catch (error) {
-          console.warn(`[PreviewLineSystem] 缓存管理器初始化失败: ${error.message}`);
-          this.cacheManager = { get: () => null, set: () => {}, clear: () => {} };
-        }
-      } else if (this.isTestEnvironment) {
-        this.cacheManager = { get: () => null, set: () => {}, clear: () => {} };
+      // 缓存管理器 - 严格初始化
+      if (enabledModules.cache) {
+        this.cacheManager = new CacheManager({
+          eventManager: this.eventManager,
+          configManager: this.configManager,
+          ...modules.cache
+        });
       }
     } catch (error) {
       console.error('❌ [PreviewLineSystem] 功能模块初始化失败:', error);
-      // 不再直接抛出错误，而是记录并继续，使用降级模式
-      console.log('🔄 [PreviewLineSystem] 切换到降级模式，基本功能仍可用');
+      throw new Error(`功能模块初始化失败: ${error.message}`);
     }
   }
 
-  // 添加降级渲染器创建方法
-  createFallbackRenderer() {
-    return {
-      graph: this.graph,
-      graphValidated: false,
-      setGraph: (graph) => {
-        this.graph = graph;
-        return true;
-      },
-      createPreviewLine: () => {
-        console.warn('⚠️ [降级渲染器] 预览线创建功能不可用');
-        return null;
-      },
-      updatePreviewLine: () => {
-        console.warn('⚠️ [降级渲染器] 预览线更新功能不可用');
-        return false;
-      },
-      removePreviewLine: () => {
-        console.warn('⚠️ [降级渲染器] 预览线删除功能不可用');
-        return false;
-      },
-      stats: { created: 0, updated: 0, removed: 0, stateChanges: 0 }
-    };
-  }
 
-  createFallbackStyleRenderer() {
-    return {
-      graph: this.graph,
-      applyStyle: () => {
-        console.warn('⚠️ [降级样式渲染器] 样式应用功能不可用');
-      }
-    };
-  }
 
   /**
    * 初始化工具类模块
@@ -546,59 +468,53 @@ export class PreviewLineSystem {
       errors.push('PreviewLineManager未正确初始化');
     }
     
-    // 在测试环境中跳过功能模块验证
-    if (!this.isTestEnvironment) {
-      // 验证功能模块
-      if (this.options.enabledModules.renderer && !this.renderer) {
-        errors.push('PreviewLineRenderer未正确初始化');
+    // 验证功能模块 - 严格验证，移除测试环境跳过逻辑
+    if (this.options.enabledModules.renderer && !this.renderer) {
+      errors.push('PreviewLineRenderer未正确初始化');
+    }
+    if (this.options.enabledModules.positionCalculator && !this.positionCalculator) {
+      errors.push('PositionCalculator未正确初始化');
+    }
+    if (this.options.enabledModules.collisionDetector && !this.collisionDetector) {
+      errors.push('CollisionDetector未正确初始化');
+    }
+    if (this.options.enabledModules.branchAnalyzer && !this.branchAnalyzer) {
+      errors.push('BranchAnalyzer未正确初始化');
+    }
+    if (this.options.enabledModules.performanceOptimizer && !this.performanceOptimizer) {
+      errors.push('PerformanceOptimizer未正确初始化');
+    }
+    if (this.options.enabledModules.cacheManager && !this.cacheManager) {
+      errors.push('CacheManager未正确初始化');
+    }
+    
+    // 验证工具类模块
+    if (!this.geometryUtils) {
+      errors.push('GeometryUtils未正确初始化');
+    }
+    if (this.options.enabledModules.validation && !this.validationUtils) {
+      errors.push('ValidationUtils未正确初始化');
+    }
+    if (!this.branchLabelUtils) {
+      errors.push('BranchLabelUtils未正确初始化');
+    }
+    if (!this.routerConfigManager) {
+      errors.push('RouterConfigManager未正确初始化');
+    }
+    
+    // 验证依赖注入
+    if (this.renderer) {
+      if (this.positionCalculator && typeof this.renderer.setPositionCalculator !== 'function') {
+        errors.push('渲染器缺少setPositionCalculator方法');
       }
-      if (this.options.enabledModules.positionCalculator && !this.positionCalculator) {
-        errors.push('PositionCalculator未正确初始化');
-      }
-      if (this.options.enabledModules.collisionDetector && !this.collisionDetector) {
-        errors.push('CollisionDetector未正确初始化');
-      }
-      if (this.options.enabledModules.branchAnalyzer && !this.branchAnalyzer) {
-        errors.push('BranchAnalyzer未正确初始化');
-      }
-      if (this.options.enabledModules.performanceOptimizer && !this.performanceOptimizer) {
-        errors.push('PerformanceOptimizer未正确初始化');
-      }
-      if (this.options.enabledModules.cacheManager && !this.cacheManager) {
-        errors.push('CacheManager未正确初始化');
-      }
-      
-      // 验证工具类模块
-      if (!this.geometryUtils) {
-        errors.push('GeometryUtils未正确初始化');
-      }
-      if (this.options.enabledModules.validation && !this.validationUtils) {
-        errors.push('ValidationUtils未正确初始化');
-      }
-      if (!this.branchLabelUtils) {
-        errors.push('BranchLabelUtils未正确初始化');
-      }
-      if (!this.routerConfigManager) {
-        errors.push('RouterConfigManager未正确初始化');
-      }
-      
-      // 验证依赖注入
-      if (this.renderer) {
-        if (this.positionCalculator && typeof this.renderer.setPositionCalculator !== 'function') {
-          errors.push('渲染器缺少setPositionCalculator方法');
-        }
-        if (this.collisionDetector && typeof this.renderer.setCollisionDetector !== 'function') {
-          errors.push('渲染器缺少setCollisionDetector方法');
-        }
+      if (this.collisionDetector && typeof this.renderer.setCollisionDetector !== 'function') {
+        errors.push('渲染器缺少setCollisionDetector方法');
       }
     }
     
     if (errors.length > 0) {
       console.warn(`[PreviewLineSystem] 初始化验证警告:\n${errors.join('\n')}`);
-      // 在测试环境中不抛出错误
-      if (!this.isTestEnvironment) {
-        throw new Error(`初始化验证失败:\n${errors.join('\n')}`);
-      }
+      throw new Error(`初始化验证失败:\n${errors.join('\n')}`);
     }
     
     console.log('PreviewLineSystem初始化验证通过');
@@ -904,14 +820,33 @@ export class PreviewLineSystem {
     // 图形节点事件监听 - 简化为标记模式，避免递归
     if (this.graph && typeof this.graph.on === 'function') {
       try {
-        // 节点添加事件 - 只标记，不执行复杂操作
+        // 🔧 修复：节点添加事件 - 直接创建预览线，确保节点注册后立即触发预览线生成
         this.graph.on('node:added', (args) => {
           try {
             const node = args?.node || args?.cell;
             const nodeId = node?.id;
             
-            if (node && nodeId && this.shouldCreatePreviewLine(node)) {
-              this.markNodeForUpdate(nodeId);
+            console.log('🔍 [PreviewLineSystem] 检测到节点添加事件:', {
+              nodeId,
+              hasNode: !!node,
+              nodeType: node?.getData?.()?.type || node?.getData?.()?.nodeType
+            });
+            
+            if (node && nodeId) {
+              // 🔧 修复：立即检查并创建预览线，而不是仅仅标记
+              if (this.shouldCreatePreviewLine(node)) {
+                console.log('🔍 [PreviewLineSystem] 节点需要预览线，立即创建:', nodeId);
+                // 使用异步方式避免阻塞
+                setTimeout(() => {
+                  try {
+                    this.createUnifiedPreviewLine(node, 'interactive', false);
+                  } catch (createError) {
+                    console.warn('🔍 [PreviewLineSystem] 创建预览线失败:', createError);
+                  }
+                }, 0);
+              } else {
+                console.log('🔍 [PreviewLineSystem] 节点不需要预览线:', nodeId);
+              }
             }
           } catch (error) {
             console.warn('处理节点添加事件失败:', error);
@@ -1166,6 +1101,22 @@ export class PreviewLineSystem {
         sourceNodeId: previewLine.sourceNode?.id,
         stateKey: `previewLines.${previewLine.id}`
       });
+
+      // 执行坐标验证 - 在预览线创建后立即验证
+      if (sourceNode && this.validationUtils) {
+        try {
+          const coordinateValidation = this.validationUtils.validatePreviewLineConnection(previewLine, sourceNode);
+          console.log('🔍 [PreviewLineSystem] 预览线创建时坐标验证:', {
+            previewLineId: previewLine.id,
+            sourceNodeId: sourceNode.id || sourceNode.getId?.() || 'unknown',
+            validationResult: coordinateValidation.isValid ? '✅ 通过' : '❌ 失败',
+            coordinates: coordinateValidation.coordinates,
+            errors: coordinateValidation.errors
+          });
+        } catch (validationError) {
+          console.warn('🔍 [PreviewLineSystem] 预览线坐标验证异常:', validationError.message);
+        }
+      }
       
       // 更新状态 - 使用预览线ID作为键存储
       this.stateManager.setState(`previewLines.${previewLine.id}`, previewLine);
@@ -1213,6 +1164,34 @@ export class PreviewLineSystem {
       this.stats.operationCount++;
       
       const previewLine = this.renderer.updatePreviewLine(id, updates);
+      
+      // 获取预览线对象进行坐标验证
+      const existingPreviewLine = this.getPreviewLine(id);
+      if (existingPreviewLine && existingPreviewLine.sourceNodeId) {
+        // 获取源节点
+        const sourceNode = this.graph?.getCellById?.(existingPreviewLine.sourceNodeId);
+        if (sourceNode) {
+          // 执行坐标验证
+          console.log('🔍 [PreviewLineSystem] 预览线更新时进行坐标验证:', {
+            previewLineId: id,
+            sourceNodeId: existingPreviewLine.sourceNodeId,
+            updateType: 'update'
+          });
+          
+          try {
+            const validationResult = this.validationUtils.validatePreviewLineConnection(existingPreviewLine, sourceNode);
+            console.log('📊 [PreviewLineSystem] 预览线更新坐标验证结果:', {
+              previewLineId: id,
+              sourceNodeId: existingPreviewLine.sourceNodeId,
+              validationResult: validationResult.isValid,
+              coordinates: validationResult.coordinates,
+              errors: validationResult.errors
+            });
+          } catch (validationError) {
+            console.warn('⚠️ [PreviewLineSystem] 预览线更新坐标验证异常:', validationError.message);
+          }
+        }
+      }
       
       // 更新状态
       this.stateManager.setState(`previewLines.${id}`, previewLine);
@@ -1667,7 +1646,8 @@ export class PreviewLineSystem {
       console.log(`🔍 [PreviewLineSystem] shouldCreatePreviewLine - 配置状态: ${nodeId}`, {
         isConfigured: isConfigured,
         isConfiguredValue: nodeData.isConfigured,
-        isConfiguredType: typeof nodeData.isConfigured
+        isConfiguredType: typeof nodeData.isConfigured,
+        nodeType: nodeType
       });
       
       // 如果节点未配置，不创建预览线
@@ -3122,14 +3102,30 @@ export class PreviewLineSystem {
    */
   checkInitialized() {
     if (!this.initialized) {
-      // 🔧 修复：提供更详细的错误信息和初始化状态
+      // 🔧 修复：改为警告而不是抛出错误，避免阻塞页面渲染
       const errorMsg = `预览线系统未初始化 - 当前状态: initialized=${this.initialized}, destroyed=${this.destroyed}`;
       console.warn('[PreviewLineSystem] checkInitialized失败:', errorMsg);
-      throw new Error(errorMsg);
+      
+      // 🔧 修复：尝试自动初始化
+      console.log('[PreviewLineSystem] 尝试自动初始化...');
+      try {
+        const initSuccess = this.ensureInitialized();
+        if (initSuccess) {
+          console.log('[PreviewLineSystem] 自动初始化成功');
+          return; // 初始化成功，继续执行
+        }
+      } catch (initError) {
+        console.warn('[PreviewLineSystem] 自动初始化失败:', initError);
+      }
+      
+      // 如果自动初始化失败，记录警告但不抛出错误
+      console.warn('[PreviewLineSystem] 系统未初始化，某些功能可能不可用');
+      return; // 不抛出错误，允许系统继续运行
     }
     
     if (this.destroyed) {
-      throw new Error('预览线系统已销毁');
+      console.warn('[PreviewLineSystem] 系统已销毁，某些功能可能不可用');
+      return; // 不抛出错误，允许系统继续运行
     }
   }
 
@@ -3565,11 +3561,28 @@ export class PreviewLineSystem {
       }
 
       if (!this.initialized) {
-        throw new Error('PreviewLineSystem未初始化，请先调用init()方法');
+        console.error('[PreviewLineSystem] ❌ 系统未初始化，无法创建预览线', {
+          nodeId,
+          initialized: this.initialized
+        });
+        return {
+          success: false,
+          error: 'PreviewLineSystem未初始化',
+          nodeId: nodeId
+        };
       }
 
       if (!this.previewLineManager) {
-        throw new Error('PreviewLineManager未初始化');
+        console.error('[PreviewLineSystem] ❌ previewLineManager 未初始化，无法创建预览线', {
+          nodeId,
+          initialized: this.initialized,
+          previewLineManagerExists: !!this.previewLineManager
+        });
+        return {
+          success: false,
+          error: 'PreviewLineManager未初始化',
+          nodeId: nodeId
+        };
       }
 
       // 直接创建预览线，移除锁机制
@@ -3596,6 +3609,16 @@ export class PreviewLineSystem {
     const nodeId = node?.id || 'unknown';
     
     try {
+      // 检查 previewLineManager 是否已初始化
+      if (!this.previewLineManager) {
+        throw new Error(`PreviewLineSystem: previewLineManager 未初始化，无法创建预览线。节点ID: ${nodeId}`);
+      }
+      
+      // 检查 previewLineManager 是否有必要的方法
+      if (typeof this.previewLineManager.createUnifiedPreviewLine !== 'function') {
+        throw new Error(`PreviewLineSystem: previewLineManager 缺少 createUnifiedPreviewLine 方法。节点ID: ${nodeId}`);
+      }
+      
       // 🔧 增强去重逻辑：检查节点配置状态和连接状态
       if (!forceUpdate) {
         // 1. 检查是否已存在预览线
@@ -3631,12 +3654,52 @@ export class PreviewLineSystem {
         const isConfigured = nodeData.isConfigured;
         const nodeType = nodeData.type || nodeData.nodeType;
         
-        // 对于非起始节点，必须已配置才能创建预览线
-        if (nodeType !== 'start' && !isConfigured) {
+        // 🔧 修复：对于所有节点，必须已配置才能创建预览线
+        // 但对于 audience-split 节点，如果有配置数据则视为已配置
+        let shouldSkipForConfig = false;
+        if (!isConfigured) {
+          // 特殊处理 audience-split 节点
+          if (nodeType === 'audience-split') {
+            const hasConfig = nodeData.config && (
+              (nodeData.config.crowdLayers && nodeData.config.crowdLayers.length > 0) ||
+              (nodeData.config.branches && nodeData.config.branches.length > 0)
+            );
+            if (!hasConfig) {
+              shouldSkipForConfig = true;
+            } else {
+              // 🔧 修复：如果有配置数据但isConfigured为false，自动修复
+              console.log('[PreviewLineSystem] 🔧 自动修复audience-split节点配置状态', {
+                nodeId,
+                hasConfig: true,
+                crowdLayers: nodeData.config.crowdLayers?.length || 0,
+                branches: nodeData.config.branches?.length || 0
+              });
+              // 更新节点的isConfigured状态
+              if (typeof node.setData === 'function') {
+                const updatedData = { ...nodeData, isConfigured: true };
+                node.setData(updatedData);
+              }
+            }
+          } else if (nodeType === 'start') {
+            // 开始节点特殊处理：如果有基本配置就可以创建预览线
+            const hasBasicConfig = nodeData.config && Object.keys(nodeData.config).length > 0;
+            if (!hasBasicConfig) {
+              shouldSkipForConfig = true;
+            }
+          } else {
+            shouldSkipForConfig = true;
+          }
+        }
+        
+        if (shouldSkipForConfig) {
           console.log('[PreviewLineSystem] ⚙️ 节点未配置，跳过预览线创建', {
             nodeId,
             nodeType,
-            isConfigured
+            isConfigured,
+            hasConfig: nodeType === 'audience-split' ? !!(nodeData.config && (
+              (nodeData.config.crowdLayers && nodeData.config.crowdLayers.length > 0) ||
+              (nodeData.config.branches && nodeData.config.branches.length > 0)
+            )) : false
           });
           return {
             success: true,
@@ -3656,8 +3719,14 @@ export class PreviewLineSystem {
       return result;
     } catch (error) {
       console.error('[PreviewLineSystem] ❌ createUnifiedPreviewLine 执行失败', error)
-      this.handleError(error, 'createUnifiedPreviewLine');
-      throw error;
+      // 🔧 增强错误处理：返回错误信息而不是抛出异常
+      return {
+        success: false,
+        error: error.message || 'unknown_error',
+        message: `创建预览线失败: ${error.message}`,
+        nodeId: nodeId,
+        stack: error.stack
+      };
     }
   }
   
@@ -4120,6 +4189,11 @@ export class PreviewLineSystem {
     }
     
     try {
+      console.log('🗑️ [PreviewLineSystem] 开始销毁系统...');
+      
+      // 清理图形事件监听器 - 防止内存泄漏
+      this.cleanupGraphEventListeners();
+      
       // 销毁插件
       for (const [name, plugin] of this.plugins) {
         if (typeof plugin.destroy === 'function') {
@@ -4228,19 +4302,52 @@ export class PreviewLineSystem {
       
       // 最后触发销毁事件
       this.emit('system:destroyed');
+      
+      console.log('✅ [PreviewLineSystem] 系统销毁完成');
     } catch (error) {
-      console.error('销毁预览线系统时发生错误:', error);
+      console.error('❌ [PreviewLineSystem] 销毁预览线系统时发生错误:', error);
     }
   }
 
   /**
-   * 创建预览线管理器（支持 Builder 模式和传统构造函数）
+   * 清理图形事件监听器 - 防止内存泄漏
+   */
+  cleanupGraphEventListeners() {
+    if (!this.graph || typeof this.graph.off !== 'function') {
+      console.log('⚠️ [PreviewLineSystem] 图形实例不支持事件清理，跳过');
+      return;
+    }
+
+    try {
+      console.log('🧹 [PreviewLineSystem] 清理图形事件监听器...');
+      
+      // 清理已注册的图形事件监听器
+      const eventTypes = ['node:added', 'node:removed', 'node:moved', 'node:changed'];
+      
+      eventTypes.forEach(eventType => {
+        try {
+          // 移除所有该类型的监听器
+          this.graph.off(eventType);
+          console.log(`  - 已清理事件: ${eventType}`);
+        } catch (error) {
+          console.warn(`  - 清理事件 ${eventType} 失败:`, error.message);
+        }
+      });
+      
+      console.log('✅ [PreviewLineSystem] 图形事件监听器清理完成');
+    } catch (error) {
+      console.warn('⚠️ [PreviewLineSystem] 清理图形事件监听器失败:', error.message);
+    }
+  }
+
+  /**
+   * 创建预览线管理器
    * @returns {PreviewLineManager} 预览线管理器实例
    */
   createPreviewLineManager() {
     const options = this.options.modules.previewLineManager || {};
     
-    // 🔧 关键修复：验证 graph 实例
+    // 验证 graph 实例
     console.log('🔍 [PreviewLineSystem] createPreviewLineManager 开始，验证 graph:', {
       hasGraph: !!this.graph,
       graphType: typeof this.graph,
@@ -4249,91 +4356,36 @@ export class PreviewLineSystem {
     })
     
     if (!this.graph) {
-      console.error('❌ [PreviewLineSystem] createPreviewLineManager: graph 实例为空，无法创建预览线管理器')
-      throw new Error('PreviewLineSystem: graph 实例为空，无法创建预览线管理器')
+      const error = new Error('PreviewLineSystem: graph 实例为空，无法创建预览线管理器')
+      console.error('❌ [PreviewLineSystem]', error.message)
+      throw error
     }
     
-    // 检测测试环境
-    const isTestEnvironment = process.env.NODE_ENV === 'test' || typeof window === 'undefined';
-    
-    // 在测试环境中创建简单的模拟对象
-    if (isTestEnvironment) {
-      return {
-        create: () => null,
-        update: () => null,
-        delete: () => null,
-        get: () => null,
-        getAll: () => [],
-        clear: () => {},
-        getAllPreviewLines: () => [],
-        getPreviewLineData: () => null,
-        isInitialized: () => true
-      };
+    // 检查 configManager
+    if (!this.configManager) {
+      console.warn('⚠️ [PreviewLineSystem] configManager 不存在，创建默认配置');
+      this.configManager = new PreviewLineConfigManager({});
     }
     
-    // 🔧 修复：直接使用传统构造函数方式，避免 Builder 模式的复杂性
+    // 使用传统构造函数方式创建预览线管理器
     console.log('[PreviewLineSystem] 使用传统构造函数创建预览线管理器');
     
-    try {
-      // 传统构造函数方式
-      const manager = new PreviewLineManager({
-        graph: this.graph,
-        configManager: this.configManager,
-        eventManager: this.eventManager,
-        layoutEngine: this.layoutEngine,
-        ...options
-      });
-      console.log('✅ [PreviewLineSystem] 传统构造函数创建预览线管理器成功');
-      return manager;
-    } catch (error) {
-      console.error(`❌ [PreviewLineSystem] 传统构造函数创建失败: ${error.message}`, error);
-      
-      // 🔧 修复：如果传统构造函数失败，尝试 Builder 模式
-      console.log('[PreviewLineSystem] 传统构造函数失败，尝试 Builder 模式...');
-      
-      try {
-        const builder = new PreviewLineManagerBuilder()
-          .withGraph(this.graph);
-        
-        // 只设置必要的配置
-        if (this.configManager) {
-          builder.withConfigManager(this.configManager);
-        }
-        
-        if (this.layoutEngine) {
-          builder.withLayoutEngine(this.layoutEngine);
-        }
-        
-        const manager = builder.build();
-        console.log('✅ [PreviewLineSystem] Builder 模式创建预览线管理器成功');
-        return manager;
-      } catch (builderError) {
-        console.error(`❌ [PreviewLineSystem] Builder 模式也失败: ${builderError.message}`, builderError);
-        
-        // 🔧 最后的降级方案：创建基本的模拟管理器
-        console.warn('⚠️ [PreviewLineSystem] 创建降级预览线管理器');
-        return {
-          create: () => {
-            console.warn('⚠️ [降级管理器] 预览线创建功能不可用');
-            return null;
-          },
-          update: () => {
-            console.warn('⚠️ [降级管理器] 预览线更新功能不可用');
-            return false;
-          },
-          delete: () => {
-            console.warn('⚠️ [降级管理器] 预览线删除功能不可用');
-            return false;
-          },
-          get: () => null,
-          getAll: () => [],
-          clear: () => {},
-          getAllPreviewLines: () => [],
-          getPreviewLineData: () => null,
-          isInitialized: () => false
-        };
-      }
-    }
+    const manager = new PreviewLineManager({
+      graph: this.graph,
+      configManager: this.configManager,
+      eventManager: this.eventManager,
+      layoutEngine: this.layoutEngine,
+      autoInitialize: false, // 手动控制初始化，避免循环依赖
+      debug: this.options.system?.enableDebug || false,
+      ...options
+    });
+    
+    // 手动初始化管理器
+    manager.initialize();
+    console.log('✅ [PreviewLineSystem] 预览线管理器初始化成功');
+    
+    console.log('✅ [PreviewLineSystem] 传统构造函数创建预览线管理器成功');
+    return manager;
   }
 
   /**
