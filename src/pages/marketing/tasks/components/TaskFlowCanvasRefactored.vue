@@ -2181,13 +2181,50 @@ const checkPreviewLineValidity = async () => {
           }
         })
       }
+      
+      // 🔧 使用增强检查结果，直接返回，不再执行传统检查
+      if (state.debugStats) {
+        state.debugStats.totalNodes = validationResult.totalNodes
+        state.debugStats.configuredNodes = validationResult.validNodes
+        state.debugStats.unconfiguredNodes = validationResult.invalidNodes
+        state.debugStats.expectedPreviewLines = validationResult.statistics.totalPreviewLines
+        state.debugStats.actualPreviewLines = validationResult.statistics.totalPreviewLines
+        state.debugStats.missingPreviewLines = invalidNodes
+        state.debugStats.invalidPreviewLines = []
+        state.debugStats.redundantPreviewLines = []
+        state.debugStats.problemNodes = invalidNodes
+        state.debugStats.loading = false
+      }
+      
+      return validationResult // 直接返回增强检查结果
     } else {
-      console.warn('[TaskFlowCanvas] ⚠️ 预览线管理器不支持增强的节点连接线有效性检查，使用传统检查方法')
+      // 🔧 如果不支持增强检查，直接报错
+      const errorMessage = '预览线管理器不支持增强的节点连接线有效性检查，无法继续执行'
+      console.error('[TaskFlowCanvas] ❌', errorMessage)
+      
+      if (state.debugStats) {
+        state.debugStats.loading = false
+        state.debugStats.error = errorMessage
+      }
+      
+      throw new Error(errorMessage)
     }
-    
-    // 获取基础数据
-    const allNodes = graph.value?.getNodes() || []
-    const allEdges = graph.value?.getEdges() || []
+  } catch (error) {
+    console.error('[TaskFlowCanvas] 预览线有效性检验失败:', error)
+    if (state.debugStats) {
+      state.debugStats.loading = false
+      state.debugStats.error = error.message
+    }
+    throw error
+  }
+}
+
+// 🔧 辅助函数：更新调试统计（保留用于其他地方调用）
+const updateDebugStatsLegacy = async () => {
+  if (!state.debugStats) return
+  
+  const allNodes = graph.value?.getNodes() || []
+  const allEdges = graph.value?.getEdges() || []
     const previewEdges = allEdges.filter(edge => {
       const edgeData = edge.getData() || {}
       return edgeData.isPreview || edge.id.includes('preview')
@@ -2560,9 +2597,6 @@ const checkPreviewLineValidity = async () => {
     }
     
     console.log('[TaskFlowCanvas] 预览线有效性检验完成:', validationReport)
-    
-    return validationReport
-    
   } catch (error) {
     console.error('[TaskFlowCanvas] 预览线有效性检验失败:', error)
     Message.error({

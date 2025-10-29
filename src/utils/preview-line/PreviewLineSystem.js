@@ -4067,40 +4067,82 @@ export class PreviewLineSystem {
       return false;
     }
     
+    // 🔧 增强日志：记录边的详细信息用于调试
+    const edgeId = edge.id || 'unknown';
+    
     // 检查边是否有源节点但无目标节点（预览线的特征）
     // 支持不同的边对象结构
     let hasSource = false;
     let hasTarget = false;
+    let sourceId = null;
+    let targetId = null;
     
     // 检查方法形式的源和目标
     if (typeof edge.getSourceCellId === 'function' && typeof edge.getTargetCellId === 'function') {
-      hasSource = !!edge.getSourceCellId();
-      hasTarget = !!edge.getTargetCellId();
+      sourceId = edge.getSourceCellId();
+      targetId = edge.getTargetCellId();
+      hasSource = !!sourceId;
+      hasTarget = !!targetId;
     }
     // 检查属性形式的源和目标
     else if (edge.source !== undefined || edge.target !== undefined) {
-      hasSource = !!edge.source;
-      hasTarget = !!edge.target;
-    }
-    
-    // 预览线的特征：有源节点但无目标节点
-    if (hasSource && !hasTarget) {
-      return true;
+      sourceId = edge.source;
+      targetId = edge.target;
+      hasSource = !!sourceId;
+      hasTarget = !!targetId;
     }
     
     // 检查边的数据属性
     const edgeData = (typeof edge.getData === 'function') ? edge.getData() : (edge.data || {});
     
-    // 通过type属性判断
+    // 🔧 增强日志：记录边的详细信息
+    console.log(`[PreviewLineSystem] isPreviewLine 检查边: ${edgeId}`, {
+      hasSource,
+      hasTarget,
+      sourceId,
+      targetId,
+      edgeType: edgeData.type,
+      isUnifiedPreview: edgeData.isUnifiedPreview,
+      isPreview: edgeData.isPreview
+    });
+    
+    // 预览线的特征1：有源节点但无目标节点
+    if (hasSource && !hasTarget) {
+      console.log(`[PreviewLineSystem] ✅ 边 ${edgeId} 是预览线 (有源无目标)`);
+      return true;
+    }
+    
+    // 预览线的特征2：通过type属性判断
     if (edgeData.type === 'preview' || edgeData.type === 'previewLine' || edgeData.type === 'preview-line') {
+      console.log(`[PreviewLineSystem] ✅ 边 ${edgeId} 是预览线 (type=${edgeData.type})`);
       return true;
     }
     
-    // 通过isUnifiedPreview属性判断
+    // 预览线的特征3：通过isUnifiedPreview属性判断
     if (edgeData.isUnifiedPreview === true) {
+      console.log(`[PreviewLineSystem] ✅ 边 ${edgeId} 是预览线 (isUnifiedPreview=true)`);
       return true;
     }
     
+    // 预览线的特征4：通过isPreview属性判断
+    if (edgeData.isPreview === true) {
+      console.log(`[PreviewLineSystem] ✅ 边 ${edgeId} 是预览线 (isPreview=true)`);
+      return true;
+    }
+    
+    // 预览线的特征5：ID包含preview关键字
+    if (edgeId && (edgeId.includes('preview') || edgeId.includes('unified_preview'))) {
+      console.log(`[PreviewLineSystem] ✅ 边 ${edgeId} 是预览线 (ID包含preview)`);
+      return true;
+    }
+    
+    // 🔧 严格检查：如果有源有目标，但数据标记为预览线，也认为是预览线
+    if (hasSource && hasTarget && (edgeData.isPreview || edgeData.isUnifiedPreview)) {
+      console.log(`[PreviewLineSystem] ✅ 边 ${edgeId} 是预览线 (数据标记为预览线)`);
+      return true;
+    }
+    
+    console.log(`[PreviewLineSystem] ❌ 边 ${edgeId} 不是预览线，是真实连接线`);
     return false;
   }
   
