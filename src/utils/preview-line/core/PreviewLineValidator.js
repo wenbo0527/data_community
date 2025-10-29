@@ -937,7 +937,7 @@ export class PreviewLineValidator {
    * @param {Object} nodeData - 节点数据
    * @returns {Array} 分支列表
    */
-  extractAudienceBranches(nodeData) {
+  extractAudienceBranches(nodeData, depth = 0) {
     const branches = []
     
     // 安全检查：确保 nodeData 存在
@@ -1053,7 +1053,7 @@ export class PreviewLineValidator {
    * @param {Object} nodeData - 节点数据
    * @returns {Array} 分支列表
    */
-  extractEventBranches(nodeData) {
+  extractEventBranches(nodeData, depth = 0) {
     const branches = []
     
     try {
@@ -1117,7 +1117,7 @@ export class PreviewLineValidator {
    * @param {Object} nodeData - 节点数据
    * @returns {Array} 分支列表
    */
-  extractABTestBranches(nodeData) {
+  extractABTestBranches(nodeData, depth = 0) {
     const branches = []
     
     try {
