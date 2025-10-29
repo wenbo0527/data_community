@@ -1593,8 +1593,20 @@ export function useStructuredLayout(getGraph) {
       console.log('✅ [useStructuredLayout] getGraph函数已设置，类型:', typeof getGraph)
     },
     
+    // 🔧 新增：获取连接预览管理器方法
+    getConnectionPreviewManager: () => {
+      console.log('🔍 [获取连接预览管理器] 当前实例:', {
+        存在: !!connectionPreviewManager.value,
+        类型: typeof connectionPreviewManager.value,
+        构造函数: connectionPreviewManager.value?.constructor?.name,
+        有validateNodeConnections方法: typeof connectionPreviewManager.value?.validateNodeConnections === 'function'
+      })
+      return connectionPreviewManager.value
+    },
+
     // 管理器实例
     previewLineSystem: computed(() => connectionPreviewManager.value),
+    connectionPreviewManager: computed(() => connectionPreviewManager.value),
     isReady: computed(() => !!connectionPreviewManager.value)
   }
 }
