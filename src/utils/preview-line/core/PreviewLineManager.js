@@ -212,7 +212,16 @@ export class PreviewLineManager {
       const duration = Date.now() - startTime
       this.recordPerformanceMetric('createUnifiedPreviewLine', duration)
 
-      return result || { success: false, error: '未知错误' }
+      if (!result) {
+        this.log('error', `创建预览线处理方法返回空值: ${node?.id}`, {
+          nodeId: node?.id,
+          requirementType: requirement?.type,
+          state
+        })
+        return { success: false, error: '处理方法返回空值，可能是内部逻辑错误' }
+      }
+      
+      return result
 
     } catch (error) {
       this.log('error', `创建预览线失败: ${node?.id}`, error)
@@ -524,15 +533,39 @@ export class PreviewLineManager {
    * @returns {Object} 创建结果
    */
   createSinglePreviewLine(node, state) {
-    const previewLine = this.service.createPreviewLine(node, { state })
-    
-    if (previewLine) {
-      this.addPreviewLineToStorage(node.id, previewLine)
-      const renderResult = this.renderPreviewLine(previewLine)
-      return { success: renderResult.success, previewLine, renderResult }
+    try {
+      this.log('debug', `开始创建单个预览线: ${node?.id}`, { nodeId: node?.id, state })
+      
+      if (!this.service) {
+        const error = 'PreviewLineService 未初始化'
+        this.log('error', error, { nodeId: node?.id })
+        return { success: false, error }
+      }
+      
+      const previewLine = this.service.createPreviewLine(node, { state })
+      
+      if (previewLine) {
+        this.addPreviewLineToStorage(node.id, previewLine)
+        const renderResult = this.renderPreviewLine(previewLine)
+        this.log('debug', `单个预览线创建成功: ${node?.id}`, { 
+          nodeId: node?.id, 
+          previewLineId: previewLine.id,
+          renderSuccess: renderResult.success 
+        })
+        return { success: renderResult.success, previewLine, renderResult }
+      }
+      
+      const error = 'PreviewLineService.createPreviewLine 返回空值'
+      this.log('error', error, { nodeId: node?.id })
+      return { success: false, error }
+    } catch (error) {
+      this.log('error', `创建单个预览线失败: ${node?.id}`, { 
+        nodeId: node?.id, 
+        error: error.message,
+        stack: error.stack 
+      })
+      return { success: false, error: error.message }
     }
-    
-    return { success: false, error: '创建预览线失败' }
   }
 
   /**
@@ -543,15 +576,43 @@ export class PreviewLineManager {
    * @returns {Object} 创建结果
    */
   createBranchPreviewLines(node, state, branchAnalysis) {
-    const results = []
-    
-    for (let i = 0; i < branchAnalysis.branches.length; i++) {
-      const branch = branchAnalysis.branches[i]
-      const result = this.createBranchPreviewLine(node, state, branch)
-      results.push(result)
+    try {
+      this.log('debug', `开始创建分支预览线: ${node?.id}`, { 
+        nodeId: node?.id, 
+        branchCount: branchAnalysis?.branches?.length || 0 
+      })
+      
+      if (!branchAnalysis || !branchAnalysis.branches || branchAnalysis.branches.length === 0) {
+        const error = '分支分析结果无效或无分支'
+        this.log('error', error, { nodeId: node?.id, branchAnalysis })
+        return { success: false, error }
+      }
+      
+      const results = []
+      
+      for (let i = 0; i < branchAnalysis.branches.length; i++) {
+        const branch = branchAnalysis.branches[i]
+        const result = this.createBranchPreviewLine(node, state, branch)
+        results.push(result)
+      }
+      
+      const success = results.every(r => r.success)
+      this.log('debug', `分支预览线创建完成: ${node?.id}`, { 
+        nodeId: node?.id, 
+        totalBranches: results.length,
+        successCount: results.filter(r => r.success).length,
+        success 
+      })
+      
+      return { success, results }
+    } catch (error) {
+      this.log('error', `创建分支预览线失败: ${node?.id}`, { 
+        nodeId: node?.id, 
+        error: error.message,
+        stack: error.stack 
+      })
+      return { success: false, error: error.message }
     }
-    
-    return { success: results.every(r => r.success), results }
   }
 
   /**

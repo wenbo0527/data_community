@@ -381,7 +381,7 @@ export class PreviewLineValidator {
     const nodeId = this.getNodeId(node)
 
     // 1. 获取分支配置
-    const branchAnalysis = this.analyzeBranchConfiguration(node)
+    const branchAnalysis = this.analyzeBranchConfiguration(node, 0)
     
     if (!branchAnalysis.isValid) {
       return this.createRequirementResult(false, `分支配置无效: ${branchAnalysis.reason}`, CreationRequirementTypes.NO_CREATION)
@@ -456,7 +456,7 @@ export class PreviewLineValidator {
    * @param {Object} node - 分支节点
    * @returns {Object} 分支分析结果
    */
-  analyzeBranchConfiguration(node) {
+  analyzeBranchConfiguration(node, depth = 0) {
     
     // 确保始终返回有效的对象结构
     const createDefaultResult = (isValid = false, reason = '未知错误', nodeType = 'unknown') => ({
