@@ -785,6 +785,16 @@ export class PreviewLineManager {
     }
     this.previewLines.get(nodeId).push(previewLine)
     this.previewLineInstances.set(previewLine.id, previewLine)
+    
+    // 🔍 调试：记录存储操作
+    console.log('🔍 [PreviewLineManager] 预览线存储操作:', {
+      nodeId,
+      previewLineId: previewLine.id,
+      totalNodeLines: this.previewLines.get(nodeId).length,
+      totalInstances: this.previewLineInstances.size,
+      allNodeIds: Array.from(this.previewLines.keys()),
+      allInstanceIds: Array.from(this.previewLineInstances.keys())
+    })
   }
 
   /**

@@ -3766,6 +3766,22 @@ export class PreviewLineSystem {
    * @returns {Array} 预览线数组
    */
   getAllPreviewLines() {
+    console.log('🔍 [getAllPreviewLines] 开始获取预览线数据');
+    
+    // 首先检查状态管理器中的预览线
+    if (this.stateManager && this.stateManager.state && this.stateManager.state.previewLines) {
+      const statePreviewLines = Array.from(this.stateManager.state.previewLines.values()).filter(line => line != null);
+      console.log('🔍 [getAllPreviewLines] 从状态管理器获取预览线:', {
+        count: statePreviewLines.length,
+        mapSize: this.stateManager.state.previewLines.size
+      });
+      
+      if (statePreviewLines.length > 0) {
+        return statePreviewLines;
+      }
+    }
+    
+    // 如果状态管理器中没有，检查预览线管理器
     if (!this.previewLineManager) {
       console.log('🔍 [getAllPreviewLines] previewLineManager不存在');
       return [];
@@ -3773,7 +3789,7 @@ export class PreviewLineSystem {
     
     try {
       const allLines = [];
-      console.log('🔍 [getAllPreviewLines] 开始获取预览线数据:', {
+      console.log('🔍 [getAllPreviewLines] 从预览线管理器获取预览线数据:', {
         previewLinesMapSize: this.previewLineManager.previewLines.size
       });
       
@@ -3784,13 +3800,15 @@ export class PreviewLineSystem {
         });
         
         if (!lines || !Array.isArray(lines)) {
-          throw new Error(`getAllPreviewLines: 节点预览线数据无效，缺失必要的预览线数组。节点ID: ${nodeId}，预览线数据: ${JSON.stringify(lines)}`);
+          console.warn(`getAllPreviewLines: 节点预览线数据无效，跳过。节点ID: ${nodeId}，预览线数据: ${JSON.stringify(lines)}`);
+          continue;
         }
         
         // 确保每个预览线都有正确的points数组
         const processedLines = lines.map((line, index) => {
           if (!line) {
-            throw new Error(`getAllPreviewLines: 检测到空预览线对象，无法处理。节点ID: ${nodeId}，预览线索引: ${index}`);
+            console.warn(`getAllPreviewLines: 检测到空预览线对象，跳过。节点ID: ${nodeId}，预览线索引: ${index}`);
+            return null;
           }
           
           console.log('🔍 [getAllPreviewLines] 处理预览线:', {
