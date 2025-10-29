@@ -59,6 +59,9 @@ export function useCanvasState() {
   // 手动布局状态
   const isManualLayout = ref(false)
   
+  // 预览线生成状态
+  const isGeneratingPreviewLines = ref(false)
+  
   // ==================== 缩放相关状态 ====================
   
   const zoomLevel = ref(1)
@@ -477,6 +480,7 @@ export function useCanvasState() {
     dragMode,
     isDeleting,
     isManualLayout,
+    isGeneratingPreviewLines,
     
     // ==================== 缩放相关状态 ====================
     zoomLevel,

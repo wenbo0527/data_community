@@ -1814,7 +1814,8 @@ const startDragDebugPanel = (e) => {
 
 const updateDebugStats = async (retryCount = 0) => {
   if (!graph || !graph.value) {
-    state.debugStats.value = {
+    // 🔧 修复：debugStats 是 reactive 对象，不需要 .value
+    Object.assign(state.debugStats, {
       loading: false,
       data: {
         nodeCount: 0,
@@ -1825,15 +1826,18 @@ const updateDebugStats = async (retryCount = 0) => {
         actualConnections: 0,
         issues: []
       }
-    }
+    })
     return
   }
   
-  // 确保debugStats.value存在，避免null错误
-  if (!state.debugStats.value) {
-    state.debugStats.value = { loading: false, data: null }
+  // 🔧 修复：确保debugStats存在，避免null错误
+  if (!state.debugStats) {
+    console.error('[TaskFlowCanvas] debugStats 未初始化')
+    return
   }
-  state.debugStats.value.loading = true
+  
+  // 🔧 修复：debugStats 是 reactive 对象，直接设置属性
+  state.debugStats.loading = true
   
   try {
     if (!graph || !graph.value || typeof graph.value.getNodes !== 'function' || typeof graph.value.getEdges !== 'function') {
@@ -1893,7 +1897,8 @@ const updateDebugStats = async (retryCount = 0) => {
       return !edgeData.isPreview && !edge.id.includes('preview')
     })
     
-    state.debugStats.value = {
+    // 🔧 修复：debugStats 是 reactive 对象，直接赋值
+    Object.assign(state.debugStats, {
       loading: false,
       data: {
         nodeCount: nodes.length,
@@ -1915,10 +1920,11 @@ const updateDebugStats = async (retryCount = 0) => {
           target: edge.getTargetCellId()
         }))
       }
-    }
+    })
   } catch (error) {
     console.error('[TaskFlowCanvas] 更新调试统计失败:', error)
-    state.debugStats.value = {
+    // 🔧 修复：debugStats 是 reactive 对象，直接赋值
+    Object.assign(state.debugStats, {
       loading: false,
       data: {
         nodeCount: 0,
@@ -1929,7 +1935,7 @@ const updateDebugStats = async (retryCount = 0) => {
         actualConnections: 0,
         issues: [`更新统计失败: ${error.message}`]
       }
-    }
+    })
   }
 }
 
@@ -2129,8 +2135,10 @@ const checkPreviewLineValidity = async () => {
   console.log('[TaskFlowCanvas] 开始详细的预览线有效性检验')
   
   try {
-    // 更新调试状态
-    state.debugStats.value.loading = true
+    // 🔧 修复：更新调试状态，debugStats 是 reactive 对象
+    if (state.debugStats) {
+      state.debugStats.loading = true
+    }
     
     // 🔧 新增：使用增强的节点连接线有效性检查
     if (configDrawers && configDrawers.value && configDrawers.value.structuredLayout && 
@@ -2563,7 +2571,10 @@ const checkPreviewLineValidity = async () => {
     })
     throw error
   } finally {
-    state.debugStats.value.loading = false
+    // 🔧 修复：debugStats 是 reactive 对象，不需要 .value
+    if (state.debugStats) {
+      state.debugStats.loading = false
+    }
   }
 }
 
@@ -2571,9 +2582,21 @@ const triggerPreviewLineGeneration = async () => {
   console.log('[TaskFlowCanvas] 🔧 触发统一预览线生成方法')
   
   try {
+    // 🔧 修复：添加状态安全检查
+    if (!state.isGeneratingPreviewLines) {
+      console.error('[TaskFlowCanvas] isGeneratingPreviewLines 状态未初始化')
+      return
+    }
+    
+    if (!state.debugStats) {
+      console.error('[TaskFlowCanvas] debugStats 状态未初始化')
+      return
+    }
+    
     // 更新生成状态
     state.isGeneratingPreviewLines.value = true
-    state.debugStats.value.loading = true
+    // 🔧 修复：debugStats 是 reactive 对象，不需要 .value
+    state.debugStats.loading = true
     
     // 🔧 统一方案：只使用 PreviewLineSystem 作为唯一预览线生成入口
     if (!previewLineSystem) {
@@ -2635,13 +2658,20 @@ const triggerPreviewLineGeneration = async () => {
     
   } catch (error) {
     console.error('[TaskFlowCanvas] 预览线生成失败:', error)
+    console.error('[TaskFlowCanvas] 错误堆栈:', error.stack)
     Message.error({
       content: `预览线生成失败: ${error.message}`,
       duration: 3000
     })
   } finally {
-    state.isGeneratingPreviewLines.value = false
-    state.debugStats.value.loading = false
+    // 🔧 修复：添加状态安全检查
+    if (state.isGeneratingPreviewLines) {
+      state.isGeneratingPreviewLines.value = false
+    }
+    if (state.debugStats) {
+      // 🔧 修复：debugStats 是 reactive 对象，不需要 .value
+      state.debugStats.loading = false
+    }
   }
 }
 
