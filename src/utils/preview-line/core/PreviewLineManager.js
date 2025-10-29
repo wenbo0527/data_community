@@ -183,6 +183,14 @@ export class PreviewLineManager {
       const requirement = this.validator.checkPreviewLineRequirement(node, state, existingLines, forceUpdate)
       
       this.log('debug', `节点 ${node.id} 预览线创建需求: ${requirement.type}`, requirement)
+      
+      // 🔧 增强日志：记录处理方法调用前的状态
+      this.log('debug', `[PreviewLineManager] 准备处理节点 ${node.id}`, {
+        requirementType: requirement.type,
+        nodeState: state,
+        forceUpdate,
+        existingLinesCount: existingLines.length
+      })
 
       let result = null
 
@@ -208,6 +216,16 @@ export class PreviewLineManager {
           throw new Error(`未知的创建需求类型: ${requirement.type}`)
       }
 
+      // 🔧 增强日志：记录处理方法返回结果
+      this.log('debug', `[PreviewLineManager] 处理方法返回结果: ${node?.id}`, {
+        requirementType: requirement?.type,
+        resultExists: !!result,
+        resultType: typeof result,
+        resultSuccess: result?.success,
+        resultAction: result?.action,
+        resultError: result?.error
+      })
+
       // 记录性能指标
       const duration = Date.now() - startTime
       this.recordPerformanceMetric('createUnifiedPreviewLine', duration)
@@ -216,9 +234,13 @@ export class PreviewLineManager {
         this.log('error', `创建预览线处理方法返回空值: ${node?.id}`, {
           nodeId: node?.id,
           requirementType: requirement?.type,
-          state
+          state,
+          handlerMethod: this.getHandlerMethodName(requirement?.type)
         })
-        return { success: false, error: '处理方法返回空值，可能是内部逻辑错误' }
+        return {
+          success: false,
+          error: '处理方法返回空值，可能是内部逻辑错误'
+        }
       }
       
       return result
@@ -237,39 +259,75 @@ export class PreviewLineManager {
    * 处理无需创建的情况
    * @param {Object} node - 节点对象
    * @param {Object} requirement - 创建需求
-   * @returns {Object|null} 处理结果
+   * @returns {Object} 处理结果
    */
   handleNoCreationNeeded(node, requirement) {
-    // 更新节点状态缓存
-    this.nodeStates.set(node.id, {
-      lastChecked: Date.now(),
-      requirement: requirement.type,
-      reason: requirement.reason,
-      metadata: {
-        timestamp: Date.now()
-      }
-    })
+    try {
+      // 更新节点状态缓存
+      this.nodeStates.set(node.id, {
+        lastChecked: Date.now(),
+        requirement: requirement.type,
+        reason: requirement.reason,
+        metadata: {
+          timestamp: Date.now()
+        }
+      })
 
-    // 如果有现有预览线，验证其状态
-    const existingLines = this.previewLines.get(node.id)
-    if (existingLines && existingLines.length > 0) {
-      for (const line of existingLines) {
-        if (this.validator.isValidPreviewLine(line)) {
-          this.log('debug', `节点 ${node.id} 现有预览线有效，无需操作`)
-        } else {
-          this.log('warn', `节点 ${node.id} 现有预览线无效，可能需要重新创建`)
+      // 如果有现有预览线，验证其状态
+      const existingLines = this.previewLines.get(node.id)
+      let validLinesCount = 0
+      let invalidLinesCount = 0
+      
+      if (existingLines && existingLines.length > 0) {
+        for (const line of existingLines) {
+          if (this.validator.isValidPreviewLine(line, node)) {
+            validLinesCount++
+            this.log('debug', `节点 ${node.id} 现有预览线有效，无需操作: ${line.id}`)
+          } else {
+            invalidLinesCount++
+            this.log('warn', `节点 ${node.id} 现有预览线无效，可能需要重新创建: ${line.id}`)
+          }
         }
       }
-    }
 
-    // 记录到待处理操作（用于批量处理）
-    this.pendingOperations.set(node.id, {
-      type: 'no_action',
-      node,
-      requirement,
-      timestamp: Date.now()
-    })
-    return null
+      // 记录到待处理操作（用于批量处理）
+      this.pendingOperations.set(node.id, {
+        type: 'no_action',
+        node,
+        requirement,
+        timestamp: Date.now()
+      })
+
+      // 🔧 修复：返回有效的结果对象而不是 null
+      return {
+        success: true,
+        action: 'no_creation_needed',
+        nodeId: node.id,
+        reason: requirement.reason,
+        details: {
+          existingLinesCount: existingLines?.length || 0,
+          validLinesCount,
+          invalidLinesCount,
+          requirementType: requirement.type
+        },
+        timestamp: Date.now()
+      }
+    } catch (error) {
+      this.log('error', `处理无需创建操作时发生异常: ${node?.id}`, {
+        error: error.message,
+        stack: error.stack,
+        nodeId: node?.id,
+        requirementType: requirement?.type
+      })
+      
+      return {
+        success: false,
+        action: 'no_creation_needed',
+        nodeId: node?.id,
+        error: `处理异常: ${error.message}`,
+        timestamp: Date.now()
+      }
+    }
   }
 
   /**
@@ -862,6 +920,22 @@ export class PreviewLineManager {
     // 分支节点类型
     const branchNodeTypes = ['audience-split', 'event-split', 'ab-test']
     return branchNodeTypes.includes(nodeType)
+  }
+
+  /**
+   * 获取处理方法名称
+   * @param {string} requirementType - 需求类型
+   * @returns {string} 处理方法名称
+   */
+  getHandlerMethodName(requirementType) {
+    const handlerMap = {
+      [CreationRequirementTypes.NO_CREATION_NEEDED]: 'handleNoCreationNeeded',
+      [CreationRequirementTypes.CREATE_NEW]: 'handleCreateNewPreviewLine',
+      [CreationRequirementTypes.NEEDS_CREATION]: 'handleCreateNewPreviewLine',
+      [CreationRequirementTypes.UPDATE_EXISTING]: 'handleUpdatePreviewLine',
+      [CreationRequirementTypes.CLEANUP_AND_RECREATE]: 'handleCleanupAndRecreate'
+    }
+    return handlerMap[requirementType] || 'unknown'
   }
 
   /**

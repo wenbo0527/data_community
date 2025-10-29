@@ -3294,17 +3294,46 @@ export class PreviewLineSystem {
         lineIds = previewLines.map(line => line.id);
       }
       
-      // 直接从渲染器删除预览线
+      // 🔧 修复：增强预览线删除逻辑，确保只删除预览线
       let successCount = 0;
       for (const id of lineIds) {
         try {
-          if (this.renderer && typeof this.renderer.removePreviewLine === 'function') {
-            const success = this.renderer.removePreviewLine(id);
-            if (success) {
-              successCount++;
-              // 直接从状态管理器删除
-              this.stateManager.setState(`previewLines.${id}`, undefined);
+          // 首先从图中获取边对象，验证是否为预览线
+          const edge = this.graph.getCellById(id);
+          if (edge) {
+            if (this.isPreviewLine(edge)) {
+              console.log(`[PreviewLineSystem] 删除预览线: ${id}`, {
+                sourceId: edge.getSourceCellId ? edge.getSourceCellId() : edge.source,
+                targetId: edge.getTargetCellId ? edge.getTargetCellId() : edge.target,
+                edgeType: edge.getData ? edge.getData()?.type : edge.data?.type
+              })
+              
+              // 使用渲染器删除
+              if (this.renderer && typeof this.renderer.removePreviewLine === 'function') {
+                const success = this.renderer.removePreviewLine(id);
+                if (success) {
+                  successCount++;
+                  // 直接从状态管理器删除
+                  this.stateManager.setState(`previewLines.${id}`, undefined);
+                }
+              } else {
+                // 直接从图中删除
+                this.graph.removeCell(edge);
+                successCount++;
+                this.stateManager.setState(`previewLines.${id}`, undefined);
+              }
+            } else {
+              console.warn(`[PreviewLineSystem] ⚠️ 跳过删除非预览线: ${id}`, {
+                sourceId: edge.getSourceCellId ? edge.getSourceCellId() : edge.source,
+                targetId: edge.getTargetCellId ? edge.getTargetCellId() : edge.target,
+                edgeType: edge.getData ? edge.getData()?.type : edge.data?.type,
+                reason: '不是预览线，可能是用户创建的真实连接线'
+              })
             }
+          } else {
+            // 边不存在，可能已被删除，从状态中清理
+            this.stateManager.setState(`previewLines.${id}`, undefined);
+            successCount++;
           }
         } catch (error) {
           console.warn(`删除预览线 ${id} 失败:`, error.message);
@@ -4163,8 +4192,23 @@ export class PreviewLineSystem {
           console.log(`[PreviewLineSystem] 🗑️ 源节点 ${sourceId} 有 ${edges.length} 条预览线，将删除 ${toRemove.length} 条重复的`)
           toRemove.forEach(edge => {
             try {
-              this.graph.removeCell(edge)
-              cleanedCount++
+              // 🔧 修复：在删除前验证这确实是预览线，避免误删真实连接线
+              if (this.isPreviewLine(edge)) {
+                console.log(`[PreviewLineSystem] 删除重复预览线: ${edge.id}`, {
+                  sourceId: edge.getSourceCellId ? edge.getSourceCellId() : edge.source,
+                  targetId: edge.getTargetCellId ? edge.getTargetCellId() : edge.target,
+                  edgeType: edge.getData ? edge.getData()?.type : edge.data?.type
+                })
+                this.graph.removeCell(edge)
+                cleanedCount++
+              } else {
+                console.warn(`[PreviewLineSystem] ⚠️ 跳过删除非预览线: ${edge.id}`, {
+                  sourceId: edge.getSourceCellId ? edge.getSourceCellId() : edge.source,
+                  targetId: edge.getTargetCellId ? edge.getTargetCellId() : edge.target,
+                  edgeType: edge.getData ? edge.getData()?.type : edge.data?.type,
+                  reason: '不是预览线，可能是用户创建的真实连接线'
+                })
+              }
             } catch (error) {
               console.error(`清理预览线失败: ${edge.id}`, error)
             }
