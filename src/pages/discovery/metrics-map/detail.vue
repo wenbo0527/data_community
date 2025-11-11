@@ -17,9 +17,31 @@
             <a-tag :color="metricTypeColor" class="metric-type-tag">
               {{ metricTypeText }}
             </a-tag>
-            <span class="asset-id">资产ID: {{ metricDetail?.code }}</span>
           </div>
-          <p class="asset-description">数据资产详情 - 探索指标的业务价值与数据血缘关系</p>
+          <a-descriptions :column="2" class="header-basic-info" :label-style="{ 'font-weight': 600 }">
+            <a-descriptions-item label="指标编码">{{ metricDetail?.code }}</a-descriptions-item>
+            <template v-if="metricDetail?.type === 'business_core'">
+              <a-descriptions-item label="分类">
+                <a-tag>{{ metricDetail?.category }}</a-tag>
+              </a-descriptions-item>
+              <a-descriptions-item label="业务域">
+                <a-tag color="purple">{{ metricDetail?.businessDomain }}</a-tag>
+              </a-descriptions-item>
+            </template>
+            <template v-else-if="metricDetail?.type === 'regulatory'">
+              <a-descriptions-item label="指标域">
+                <a-tag color="orange">{{ metricDetail?.regulatoryCategory }}</a-tag>
+              </a-descriptions-item>
+              <a-descriptions-item label="归属场景">
+                <a-tag color="red">{{ metricDetail?.reportName }}</a-tag>
+              </a-descriptions-item>
+            </template>
+            <a-descriptions-item label="计算时效">
+              <a-tag color="blue">{{ metricDetail?.statisticalPeriod }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="业务负责人">{{ metricDetail?.businessOwner || '未设置' }}</a-descriptions-item>
+            <a-descriptions-item label="技术负责人">{{ metricDetail?.technicalOwner || '未设置' }}</a-descriptions-item>
+          </a-descriptions>
         </div>
         
         <div class="action-buttons">
@@ -48,68 +70,20 @@
     <!-- 详情内容 -->
     <div class="detail-content" v-if="!loading">
       <div class="content-layout">
-        <!-- 左侧快速导航 -->
-        <div class="quick-navigation">
-          <div class="nav-title">快速导航</div>
-          <div class="nav-menu">
-            <a href="#basic-info" class="nav-item">基础信息</a>
-            <a href="#business-definition" class="nav-item">业务定义</a>
-            <a href="#technical-specs" class="nav-item">技术规格</a>
-            <a href="#storage-info" class="nav-item">存储信息</a>
-            <a href="#report-info" class="nav-item" v-if="metricDetail?.reportInfo">报表信息</a>
-            <a href="#version-history" class="nav-item" v-if="metricDetail?.versions?.length">版本历史</a>
-          </div>
-        </div>
+        
         
         <!-- 右侧内容区域 -->
         <div class="main-content">
-          <!-- 基础信息 -->
-          <a-card id="basic-info" class="detail-card">
-            <template #title>
-              <span class="card-title">基础信息</span>
-            </template>
-            <a-descriptions :column="2" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="指标名称">
-                <span class="highlight-text">{{ metricDetail?.name }}</span>
-              </a-descriptions-item>
-              <a-descriptions-item label="指标编号">{{ metricDetail?.code }}</a-descriptions-item>
-              <!-- 业务指标分类 -->
-              <template v-if="metricDetail?.type === 'business'">
-                <a-descriptions-item label="分类">
-                  <a-tag>{{ metricDetail?.category }}</a-tag>
-                </a-descriptions-item>
-                <a-descriptions-item label="业务域">
-                  <a-tag color="purple">{{ metricDetail?.businessDomain }}</a-tag>
-                </a-descriptions-item>
-              </template>
-              
-              <!-- 监管指标分类 -->
-              <template v-else-if="metricDetail?.type === 'regulatory'">
-                <a-descriptions-item label="监管大类">
-                  <a-tag color="orange">{{ metricDetail?.regulatoryCategory }}</a-tag>
-                </a-descriptions-item>
-                <a-descriptions-item label="报表名称">
-                  <a-tag color="red">{{ metricDetail?.reportName }}</a-tag>
-                </a-descriptions-item>
-              </template>
-              <a-descriptions-item label="负责人">
-                <span class="highlight-text">{{ metricDetail?.owner }}</span>
-              </a-descriptions-item>
-              <a-descriptions-item label="统计周期">
-                <a-tag color="blue">{{ metricDetail?.statisticalPeriod }}</a-tag>
-              </a-descriptions-item>
-              <a-descriptions-item label="业务负责人">{{ metricDetail?.businessOwner || '未设置' }}</a-descriptions-item>
-              <a-descriptions-item label="技术负责人">{{ metricDetail?.technicalOwner || '未设置' }}</a-descriptions-item>
-            </a-descriptions>
-          </a-card>
           
+          <a-tabs class="detail-tabs" v-model:active-key="activeTab">
+            <a-tab-pane key="caliber" title="指标口径">
           <!-- 业务定义 -->
           <a-card id="business-definition" class="detail-card">
             <template #title>
-              <span class="card-title">业务定义</span>
+              <span class="card-title">业务口径</span>
             </template>
             <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="业务定义">
+              <a-descriptions-item label="业务口径">
                 <div class="description-content">{{ metricDetail?.businessDefinition || '暂无业务定义' }}</div>
               </a-descriptions-item>
               <a-descriptions-item label="使用场景" v-if="metricDetail?.useCase">
@@ -118,33 +92,55 @@
             </a-descriptions>
           </a-card>
           
-          <!-- 技术规格 -->
-          <a-card id="technical-specs" class="detail-card">
+          <!-- 技术逻辑 -->
+          <a-card id="technical-logic" class="detail-card">
             <template #title>
-              <span class="card-title">技术规格</span>
+              <span class="card-title">技术口径</span>
             </template>
             <a-descriptions :column="2" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="数据源表">
-                {{ metricDetail?.sourceTable || '暂无数据源信息' }}
-              </a-descriptions-item>
-              <a-descriptions-item label="存储位置">
-                {{ metricDetail?.storageLocation || '暂无存储位置信息' }}
-              </a-descriptions-item>
-              <a-descriptions-item label="字段说明" :span="2">
+              <a-descriptions-item label="技术口径使用说明" :span="2">
                 {{ metricDetail?.fieldDescription || '暂无' }}
               </a-descriptions-item>
             </a-descriptions>
+
+            <!-- 加工逻辑展示（不依赖 sqlDetails） -->
+            <div class="sql-block" v-if="metricDetail?.processingLogic">
+              <div class="sql-block-header">
+                <span class="sql-title">加工逻辑</span>
+                <div class="sql-actions">
+                  <a-button 
+                    type="text" 
+                    size="small" 
+                    @click="toggleSqlExpand('processingLogic')"
+                    :icon="sqlExpanded.processingLogic ? 'icon-up' : 'icon-down'"
+                  >
+                    {{ sqlExpanded.processingLogic ? '收起' : '展开' }}
+                  </a-button>
+                  <a-button 
+                    type="text" 
+                    size="small" 
+                    @click="copySql(metricDetail.processingLogic)"
+                    icon="icon-copy"
+                  >
+                    复制
+                  </a-button>
+                </div>
+              </div>
+              <div class="sql-content" v-show="sqlExpanded.processingLogic">
+                <pre class="sql-code"><code>{{ metricDetail.processingLogic }}</code></pre>
+              </div>
+            </div>
             
             <!-- SQL详情展示区域 -->
             <div class="sql-section" v-if="metricDetail?.sqlDetails">
               <div class="sql-header">
-                <h4>SQL详情</h4>
+                <h4>技术口径详情</h4>
               </div>
               
               <!-- 主要SQL -->
               <div class="sql-block">
                 <div class="sql-block-header">
-                  <span class="sql-title">主要计算逻辑</span>
+                  <span class="sql-title">技术口径</span>
                   <div class="sql-actions">
                     <a-button 
                       type="text" 
@@ -169,10 +165,10 @@
                 </div>
               </div>
               
-              <!-- 处理逻辑SQL -->
+              <!-- 加工逻辑SQL -->
               <div class="sql-block" v-if="metricDetail?.processingLogic">
                 <div class="sql-block-header">
-                  <span class="sql-title">处理逻辑</span>
+                  <span class="sql-title">加工逻辑</span>
                   <div class="sql-actions">
                     <a-button 
                       type="text" 
@@ -258,36 +254,55 @@
               </div>
             </div>
           </a-card>
-          
-          <!-- 存储信息 -->
-          <a-card id="storage-info" class="detail-card">
+            </a-tab-pane>
+            <a-tab-pane key="query" title="指标查询">
+          <!-- 查询代码 -->
+          <a-card id="query-code" class="detail-card">
             <template #title>
-              <span class="card-title">存储信息</span>
+              <span class="card-title">查询代码</span>
             </template>
-            <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="存储位置">
-                <div class="code-block">{{ metricDetail?.storageLocation || '暂无存储位置信息' }}</div>
-              </a-descriptions-item>
-              <a-descriptions-item label="查询代码" v-if="metricDetail?.queryCode">
-                <a-typography-paragraph code class="code-block query-code">
-                  {{ metricDetail?.queryCode }}
-                </a-typography-paragraph>
-              </a-descriptions-item>
-            </a-descriptions>
+            <!-- 查询代码展示（不依赖 sqlDetails） -->
+            <div class="sql-block" v-if="metricDetail?.queryCode">
+              <div class="sql-block-header">
+                <span class="sql-title">查询代码</span>
+                <div class="sql-actions">
+                  <a-button 
+                    type="text" 
+                    size="small" 
+                    @click="toggleSqlExpand('queryCode')"
+                    :icon="sqlExpanded.queryCode ? 'icon-up' : 'icon-down'"
+                  >
+                    {{ sqlExpanded.queryCode ? '收起' : '展开' }}
+                  </a-button>
+                  <a-button 
+                    type="text" 
+                    size="small" 
+                    @click="copySql(metricDetail.queryCode)"
+                    icon="icon-copy"
+                  >
+                    复制
+                  </a-button>
+                </div>
+              </div>
+              <div class="sql-content" v-show="sqlExpanded.queryCode">
+                <pre class="sql-code"><code>{{ metricDetail.queryCode }}</code></pre>
+              </div>
+            </div>
           </a-card>
           
-          <!-- 报表信息 -->
+          <!-- 归属场景 -->
           <a-card id="report-info" class="detail-card" v-if="metricDetail?.reportInfo">
             <template #title>
-              <span class="card-title">报表信息</span>
+              <span class="card-title">归属场景</span>
             </template>
             <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
-              <a-descriptions-item label="报表位置">
+              <a-descriptions-item label="报表">
                 <div class="description-content">{{ metricDetail?.reportInfo }}</div>
               </a-descriptions-item>
             </a-descriptions>
           </a-card>
-          
+            </a-tab-pane>
+            <a-tab-pane key="history" title="历史版本" v-if="metricDetail?.versions?.length">
           <!-- 版本历史 -->
           <a-card id="version-history" class="detail-card" v-if="metricDetail?.versions?.length">
             <template #title>
@@ -305,25 +320,12 @@
               </a-timeline-item>
             </a-timeline>
           </a-card>
+            </a-tab-pane>
+          </a-tabs>
         </div>
       </div>
 
-      <!-- 相关指标推荐 -->
-      <a-card class="detail-card related-card" v-if="relatedMetrics?.length">
-        <template #title>
-          <span class="card-title">相关指标推荐</span>
-        </template>
-        <div class="related-metrics">
-          <a-tag
-            v-for="metric in relatedMetrics"
-            :key="metric.id"
-            class="related-tag"
-            @click="handleRelatedMetricClick(metric)"
-          >
-            {{ metric.name }}
-          </a-tag>
-        </div>
-      </a-card>
+      
     </div>
 
     <!-- 加载状态 -->
@@ -342,7 +344,7 @@
         <p class="share-label">分享链接：</p>
         <a-input-group>
           <a-input 
-            :value="`${window.location.origin}/discovery/metrics-map/detail/${metricDetail?.id}?type=${metricDetail?.type}`" 
+            :value="shareLink"
             readonly 
           />
           <a-button type="primary" @click="copyShareLink">复制链接</a-button>
@@ -373,13 +375,19 @@ const loading = ref(true)
 const metricDetail = ref<MetricItem | null>(null)
 const relatedMetrics = ref<MetricItem[]>([])
 const shareVisible = ref(false)
+const activeTab = ref<'caliber' | 'query' | 'history'>('caliber')
 const showShareModal = ref(false)
-const shareUrl = ref('')
+const shareLink = computed(() => {
+  const origin = typeof window !== 'undefined' && window.location ? window.location.origin : ''
+  const id = metricDetail.value?.id || ''
+  const type = metricDetail.value?.type || ''
+  return `${origin}/discovery/metrics-map/detail/${id}?type=${type}`
+})
 
 // SQL展开状态管理
 const sqlExpanded = ref({
-  mainSql: false,
-  processingLogic: false,
+  mainSql: true,
+  processingLogic: true,
   queryCode: false
 })
 
@@ -389,19 +397,21 @@ const metricType = computed(() => {
 })
 
 const metricTypeText = computed(() => {
-  const typeMap = {
-    'business': '业务核心指标',
-    'regulatory': '监管指标'
+  const typeMap: Record<'business_core' | 'regulatory', string> = {
+    business_core: '业务核心指标',
+    regulatory: '监管指标'
   }
-  return typeMap[metricDetail.value?.type] || '未知类型'
+  const type = metricDetail.value?.type as 'business_core' | 'regulatory' | undefined
+  return type ? typeMap[type] : '未知类型'
 })
 
 const metricTypeColor = computed(() => {
-  const colorMap = {
-    'business': 'blue',
-    'regulatory': 'orange'
+  const colorMap: Record<'business_core' | 'regulatory', string> = {
+    business_core: 'blue',
+    regulatory: 'orange'
   }
-  return colorMap[metricDetail.value?.type] || 'gray'
+  const type = metricDetail.value?.type as 'business_core' | 'regulatory' | undefined
+  return type ? colorMap[type] : 'gray'
 })
 
 // 方法
@@ -472,7 +482,9 @@ const fetchMetricDetail = async () => {
         id: '2',
         type: 'regulatory' as MetricType,
         name: '当日风控授信通过笔数',
-        category: '业务域',
+        category: '风险指标',
+        regulatoryCategory: '信贷风险监管',
+        reportName: '信贷资产质量报告',
         businessDomain: '业务规模',
         businessDefinition: '授信申请环节中风控审批结果为通过的笔数',
         owner: '王志雄',
@@ -519,7 +531,11 @@ const fetchMetricDetail = async () => {
     ]
     
     // 根据路由参数获取对应的指标数据
-    const currentMetric = mockMetrics.find(m => m.id === route.params.id) || mockMetrics[0]
+    const currentMetric = mockMetrics.find(m => m.id === route.params.id) ?? mockMetrics[0]
+    if (!currentMetric) {
+      Message.error('未找到指标数据')
+      return
+    }
     
     // 使用真实的mock数据
     const baseData = {
@@ -654,8 +670,7 @@ const confirmShare = () => {
 
 const copyShareLink = async () => {
   try {
-    const shareUrl = `${window.location.origin}/discovery/metrics-map/detail/${metricDetail.value.id}?type=${metricDetail.value.type}`
-    await navigator.clipboard.writeText(shareUrl)
+    await navigator.clipboard.writeText(shareLink.value)
     console.log('链接已复制到剪贴板')
     shareVisible.value = false
   } catch (error) {
@@ -1098,27 +1113,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.related-card {
-  margin-top: 16px;
-  border-radius: 6px;
-  border: 1px solid #e5e6eb;
-}
-
-.related-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.related-tag {
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.related-tag:hover {
-  background: #f2f3ff;
-  color: #165dff;
-}
+/* 已移除相关指标推荐卡片，清理冗余样式 */
 
 .loading-container {
   display: flex;

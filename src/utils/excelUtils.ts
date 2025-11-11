@@ -37,14 +37,13 @@ function createBusinessMetricTemplate(workbook: XLSX.WorkBook) {
       '指标分类': 'user',
       '业务域': 'user',
       '统计周期': '日更新',
-      '负责人': '张三',
+      '业务负责人': '张三',
+      '技术负责人': '李四',
       '业务定义': '每日登录系统的去重用户数',
       '使用场景': '用户活跃度分析',
-      '来源表': 'dwd_user_login_detail',
       '技术逻辑': 'SELECT COUNT(DISTINCT user_id) FROM dwd_user_login_detail WHERE dt = ${bizdate}',
       '字段说明': '整型数值',
       '报表信息': '用户活跃度日报',
-      '存储位置': 'ads_user_metrics',
       '查询代码': 'SELECT * FROM ads_user_metrics WHERE metric_code = \'BIZ_USER_DAU\''
     }
   ]
@@ -59,14 +58,13 @@ function createBusinessMetricTemplate(workbook: XLSX.WorkBook) {
     { wch: 10 }, // 指标分类
     { wch: 10 }, // 业务域
     { wch: 10 }, // 统计周期
-    { wch: 10 }, // 负责人
+    { wch: 12 }, // 业务负责人
+    { wch: 12 }, // 技术负责人
     { wch: 30 }, // 业务定义
     { wch: 20 }, // 使用场景
-    { wch: 20 }, // 来源表
     { wch: 50 }, // 技术逻辑
     { wch: 15 }, // 字段说明
     { wch: 20 }, // 报表信息
-    { wch: 15 }, // 存储位置
     { wch: 40 }  // 查询代码
   ]
   worksheet['!cols'] = colWidths
@@ -167,7 +165,7 @@ function addInstructionSheet(workbook: XLSX.WorkBook, type: MetricType) {
       [''],
       ['业务核心指标特殊说明：'],
       ['1. 业务域必须填写'],
-      ['2. 负责人为必填项']
+      ['2. 业务负责人和技术负责人均为必填项']
     )
   } else {
     instructions.push(
@@ -250,7 +248,8 @@ function processExcelData(data: any[], type: MetricType) {
       return {
         ...baseItem,
         businessDomain: row['业务域'],
-        owner: row['负责人'],
+        businessOwner: row['业务负责人'] || row['负责人'],
+        technicalOwner: row['技术负责人'] || '',
         useCase: row['使用场景'],
         reportInfo: row['报表信息']
       }
@@ -282,21 +281,22 @@ export function exportErrorData(errorData: any[], type: MetricType) {
       '指标分类': item.category,
       '统计周期': item.statisticalPeriod,
       '业务定义': item.businessDefinition,
-      '来源表': item.sourceTable,
       '技术逻辑': item.processingLogic,
       '字段说明': item.fieldDescription,
-      '存储位置': item.storageLocation,
       '查询代码': item.queryCode,
       '错误信息': (item.errors || []).join('\n')
     }
     
     if (type === MetricType.BUSINESS_CORE) {
       baseData['业务域'] = item.businessDomain
-      baseData['负责人'] = item.owner
+      baseData['业务负责人'] = item.businessOwner
+      baseData['技术负责人'] = item.technicalOwner
       baseData['使用场景'] = item.useCase
       baseData['报表信息'] = item.reportInfo
     } else {
       baseData['监管报表大类'] = item.regulatoryCategory
+      baseData['来源表'] = item.sourceTable
+      baseData['存储位置'] = item.storageLocation
       baseData['业务负责人'] = item.businessOwner
       baseData['技术负责人'] = item.technicalOwner
       baseData['报表名称'] = item.reportName

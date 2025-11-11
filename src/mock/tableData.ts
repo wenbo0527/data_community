@@ -1,6 +1,6 @@
 // 从data-map.ts导入mock数据
 import { mockTables } from './data-map';
-import { MockMethod } from 'vite-plugin-mock';
+import type { MockMethod } from 'vite-plugin-mock';
 
 // Hive库名mock数据
 export const hiveDatabases = [

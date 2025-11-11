@@ -132,6 +132,12 @@ export default [
           meta: { title: '营销任务' }
         },
         {
+          path: 'tasks/horizontal',
+          name: 'marketing-tasks-horizontal',
+          component: () => loadComponent('../pages/marketing/tasks/horizontal/index.vue', 'MarketingTasksHorizontal'),
+          meta: { title: '营销任务（横版原型）' }
+        },
+        {
           path: 'tasks/create',
           name: 'marketing-tasks-create',
           component: () => loadComponent('../pages/marketing/tasks/create.vue', 'MarketingTasksCreate'),

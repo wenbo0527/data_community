@@ -62,7 +62,7 @@
                 :key="attachment.id"
                 class="attachment-item"
               >
-                <IconPaperClip />
+                <IconAttachment />
                 <a :href="attachment.url" target="_blank">{{ attachment.name }}</a>
                 <span class="attachment-size">({{ formatFileSize(attachment.size) }})</span>
               </div>
@@ -122,7 +122,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconUser, IconCalendar, IconPaperClip } from '@arco-design/web-vue/es/icon'
+import { IconUser, IconCalendar, IconAttachment } from '@arco-design/web-vue/es/icon'
 import { NotificationAPI } from '@/api/notification'
 import type { Notification } from '@/types/notification'
 

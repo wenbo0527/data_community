@@ -20,7 +20,7 @@
             :value="statistics.totalApplications"
             :value-style="{ color: '#1890ff' }">
             <template #prefix>
-              <icon-file-text />
+              <icon-file />
             </template>
           </a-statistic>
         </a-card>
@@ -357,7 +357,7 @@ import {
   IconSearch, 
   IconRefresh, 
   IconDownload,
-  IconFileText,
+  IconFile,
   IconCheckCircle,
   IconCloseCircle,
   IconGift,

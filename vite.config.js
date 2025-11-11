@@ -5,7 +5,7 @@ import { logServerPlugin } from './vite-plugins/logServerPlugin.js'
 import { viteMockServe } from 'vite-plugin-mock'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   optimizeDeps: {
     exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue', 'fsevents']
   },
@@ -99,19 +99,25 @@ export default defineConfig({
 
     }
   },
-  plugins: [
-    vue(), 
-    logServerPlugin(),
-    viteMockServe({
-      mockPath: 'src/mock',
-      enable: true,
-      watchFiles: true,
-      localEnabled: true,
-    })
-  ],
+  plugins: command === 'serve'
+    ? [
+        vue(),
+        logServerPlugin(),
+        viteMockServe({
+          mockPath: 'src/mock',
+          enable: true,
+          watchFiles: true,
+          localEnabled: true,
+          prodEnabled: false,
+        })
+      ]
+    : [
+        vue(),
+        logServerPlugin()
+      ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
     }
   }
-});
+}));

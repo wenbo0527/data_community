@@ -997,7 +997,6 @@ onMounted(() => {
     flex-direction: column;
     width: 100%;
   }
-}
 
 .success-content {
   text-align: center;
@@ -1017,9 +1016,10 @@ onMounted(() => {
   margin: 8px 0;
   color: var(--color-text-2);
 }
-  
+@media (max-width: 768px) {
   .action-buttons .arco-btn {
     width: 100%;
   }
+}
 }
 </style>

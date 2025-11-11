@@ -1,4 +1,4 @@
-import { MockMethod } from 'vite-plugin-mock'
+import type { MockMethod } from 'vite-plugin-mock'
 import { RegulatoryCategory } from '../types/metrics'
 
 // 监管报表配置数据结构

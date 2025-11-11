@@ -15,6 +15,43 @@ const router = createRouter({
     ...managementRoutes,
     ...notificationRoutes,
     {
+      path: '/external-data-archive',
+      name: 'ExternalDataArchive',
+      component: () => import('../pages/external-data-archive/index.vue'),
+      meta: { title: '外数档案管理' }
+    },
+    {
+      path: '/external-data-lifecycle',
+      name: 'ExternalDataLifecycle',
+      component: () => import('../pages/external-data-lifecycle/index.vue'),
+      meta: { title: '外数生命周期' }
+    },
+    {
+      path: '/external-data-service',
+      name: 'ExternalDataService',
+      component: () => import('../pages/external-data-service/index.vue'),
+      meta: { title: '外数数据服务' }
+    },
+    {
+      path: '/external-data-evaluation',
+      name: 'ExternalDataEvaluation',
+      component: () => import('../pages/external-data-evaluation/index.vue'),
+      meta: { title: '外数评估中心' }
+    },
+    // 顶层别名路由（与探索模块复用组件），用于外数中心完整还原
+    {
+      path: '/external-data-monitor',
+      name: 'ExternalDataMonitorTop',
+      component: () => import('../pages/exploration/external-data-analysis/external-data-monitor.vue'),
+      meta: { title: '外数监控中心' }
+    },
+    {
+      path: '/external-data-budget-management',
+      name: 'ExternalDataBudgetTop',
+      component: () => import('../pages/exploration/external-data-analysis/budget-management.vue'),
+      meta: { title: '外数预算管理' }
+    },
+    {
       path: ROUTE_PATHS.LOGIN,
       name: ROUTE_NAMES.LOGIN,
       component: () => import('../pages/login/index.vue'),
@@ -296,6 +333,19 @@ const router = createRouter({
           component: () => import('../pages/discovery/asset-management/metric-management/index.vue')
         },
         {
+          path: 'asset-management/metric-management/create/edit',
+          name: 'MetricCreate',
+          meta: { title: '新建指标' },
+          component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue')
+        },
+        {
+          path: 'asset-management/metric-management/:id/edit',
+          name: 'MetricEdit',
+          meta: { title: '编辑指标' },
+          component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue'),
+          props: true
+        },
+        {
           path: 'asset-management/metric-management/:id/:mode?',
           name: 'MetricDetail',
           meta: { title: '指标详情' },
@@ -351,6 +401,88 @@ const router = createRouter({
             title: '数字风险',
             icon: 'icon-risk'
           }
+        },
+        {
+          path: 'budget-overview',
+          name: 'BudgetOverview',
+          component: () => import('../pages/budget/BudgetOverview.vue'),
+          meta: {
+            title: '预算总览'
+          }
+        },
+        {
+          path: 'external-data/lifecycle',
+          name: 'RiskExternalDataLifecycle',
+          component: () => import('../pages/risk/external-data-lifecycle/index.vue'),
+          meta: { title: '外数生命周期' }
+        },
+        {
+          path: 'external-data/monitor',
+          name: 'RiskExternalDataMonitor',
+          component: () => import('../pages/exploration/external-data-analysis/external-data-monitor.vue'),
+          meta: { title: '外部数据监控' }
+        },
+        {
+          path: 'external-data/evaluation',
+          name: 'RiskExternalDataEvaluation',
+          component: () => import('../pages/external-data-evaluation/index.vue'),
+          meta: { title: '外部数据评估' }
+        },
+        {
+          path: 'external-data/archive',
+          name: 'RiskExternalDataArchive',
+          component: () => import('../pages/external-data-archive/index.vue'),
+          meta: { title: '外数档案管理' }
+        },
+        {
+          path: 'external-data/service',
+          name: 'RiskExternalDataService',
+          component: () => import('../pages/external-data-service/index.vue'),
+          meta: { title: '外数数据服务' }
+        },
+        {
+          path: 'external-data/budget-management',
+          name: 'RiskBudgetManagement',
+          component: () => import('../pages/exploration/external-data-analysis/budget-management.vue'),
+          meta: { title: '预算管理' }
+        }
+      ]
+    },
+    {
+      path: '/budget',
+      name: 'Budget',
+      redirect: '/budget/index',
+      children: [
+        {
+          path: 'index',
+          name: 'BudgetIndex',
+          component: () => import('../pages/budget/index.vue'),
+          meta: { title: '预算管理中心' }
+        },
+        {
+          path: 'list',
+          name: 'BudgetList',
+          component: () => import('../pages/budget/BudgetList.vue'),
+          meta: { title: '预算列表' }
+        },
+        {
+          path: 'create',
+          name: 'BudgetCreate',
+          component: () => import('../pages/budget/BudgetCreate.vue'),
+          meta: { title: '新建预算' }
+        },
+        {
+          path: 'edit/:id',
+          name: 'BudgetEdit',
+          component: () => import('../pages/budget/BudgetEdit.vue'),
+          meta: { title: '编辑预算' }
+        },
+        {
+          path: 'detail/:id',
+          name: 'BudgetDetail',
+          component: () => import('../pages/budget/BudgetDetail.vue'),
+          meta: { title: '预算详情' },
+          props: true
         }
       ]
     },

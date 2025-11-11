@@ -1,4 +1,4 @@
-import { MockMethod } from 'vite-plugin-mock';
+import type { MockMethod } from 'vite-plugin-mock';
 
 // 生成评估报告列表数据
 const generateEvaluationReports = (count = 20) => {

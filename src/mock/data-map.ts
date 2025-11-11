@@ -1,4 +1,4 @@
-import { MockMethod } from 'vite-plugin-mock';
+import type { MockMethod } from 'vite-plugin-mock';
 
 // 数据地图模拟数据
 

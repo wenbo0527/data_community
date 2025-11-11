@@ -1,4 +1,4 @@
-import { MockMethod } from 'vite-plugin-mock';
+import type { MockMethod } from 'vite-plugin-mock';
 
 // 字段预览数据
 export const fieldPreviewData = {

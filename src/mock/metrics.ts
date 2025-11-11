@@ -1,5 +1,6 @@
-import { MockMethod } from 'vite-plugin-mock'
-import { MetricItem, MetricType, RegulatoryCategory } from '../types/metrics'
+import type { MockMethod } from 'vite-plugin-mock'
+import type { MetricItem } from '../types/metrics'
+import { MetricType, RegulatoryCategory, REGULATORY_CATEGORY_LABELS } from '../types/metrics'
 
 const metrics: MetricItem[] = [
   {
@@ -17,6 +18,7 @@ const metrics: MetricItem[] = [
     processingLogic: 'SELECT dt, COUNT(DISTINCT user_id) as dau\nFROM dwd.user_login_detail\nWHERE dt = ${date}\nGROUP BY dt',
     fieldDescription: 'user_id: 用户唯一标识, dt: 统计日期',
     reportInfo: '用户分析/核心指标',
+    reportName: '用户分析/核心指标',
     storageLocation: 'adm.ads_user_core_metrics',
     queryCode: 'SELECT dau FROM adm.ads_user_core_metrics WHERE dt = ${date}',
     versions: [
@@ -42,6 +44,7 @@ const metrics: MetricItem[] = [
     processingLogic: 'SELECT COUNT(flow_id) FROM a_frms_deparment_sx_his_full WHERE result=\'PA\'',
     fieldDescription: '',
     reportInfo: '发展日测报告\n公司级报表・市场营销报表',
+    reportName: '公司级报表・市场营销报表',
     storageLocation: 'adm.ads_report_index_commonality_info_full',
     queryCode: 'SELECT data_dt=20250401\nFROM adm.ads_report_numbersinfo_free_temporal_code\nWHERE data_dt=20250401\nAND indicator_name=\'风控授信通过量\'\nAND indicator_id=\'A00043\'',
     versions: [
@@ -66,6 +69,7 @@ const metrics: MetricItem[] = [
     processingLogic: 'SELECT dt, COUNT(DISTINCT register_user_id) / COUNT(DISTINCT visit_user_id) as conversion_rate\nFROM dwd.user_register_detail\nWHERE dt = ${date}\nGROUP BY dt',
     fieldDescription: 'register_user_id: 完成注册的用户ID, visit_user_id: 访问用户ID',
     reportInfo: '用户分析/转化分析',
+    reportName: '用户分析/转化分析',
     storageLocation: 'adm.ads_user_conversion_metrics',
     queryCode: 'SELECT conversion_rate FROM adm.ads_user_conversion_metrics WHERE dt = ${date}',
     versions: [
@@ -116,6 +120,90 @@ const metrics: MetricItem[] = [
     technicalOwner: '数据团队-赵工程师',
     regulatoryCategory: RegulatoryCategory.PBOC_CENTRALIZED,
     reportName: '人民银行大集中系统报表',
+    isFavorite: false
+  },
+  {
+    id: '6',
+    type: MetricType.REGULATORY,
+    name: '杠杆率',
+    category: '资本管理',
+    businessDefinition: '一级资本与调整后资产总额的比率，用于衡量银行杠杆水平',
+    code: 'REG_003',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.leverage_ratio_detail',
+    processingLogic: 'SELECT tier1_capital / adjusted_total_assets * 100 as leverage_ratio\nFROM reg.leverage_ratio_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_leverage_ratio',
+    queryCode: 'SELECT leverage_ratio FROM reg.ads_leverage_ratio WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-02-01', description: '新增杠杆率监管指标' }
+    ],
+    businessOwner: '监管合规部-张经理',
+    technicalOwner: '数据团队-李工程师',
+    regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '杠杆率监管报告',
+    isFavorite: false
+  },
+  {
+    id: '7',
+    type: MetricType.REGULATORY,
+    name: '净稳定资金比例',
+    category: '流动性管理',
+    businessDefinition: '可用稳定资金与所需稳定资金的比率，用于衡量长期流动性稳定性',
+    code: 'REG_004',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.net_stable_funding_ratio_detail',
+    processingLogic: 'SELECT available_stable_funding / required_stable_funding * 100 as nsfr\nFROM reg.net_stable_funding_ratio_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_nsfr_ratio',
+    queryCode: 'SELECT nsfr FROM reg.ads_nsfr_ratio WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-03-01', description: '新增净稳定资金比例监管指标' }
+    ],
+    businessOwner: '风险管理部-王总监',
+    technicalOwner: '数据团队-赵工程师',
+    regulatoryCategory: RegulatoryCategory.PBOC_CENTRALIZED,
+    reportName: '净稳定资金比例报告',
+    isFavorite: false
+  },
+  {
+    id: '8',
+    type: MetricType.REGULATORY,
+    name: '信贷资产质量不良率',
+    category: '信贷风险管理',
+    businessDefinition: '不良贷款余额占贷款总额的比率，用于衡量资产质量',
+    code: 'REG_005',
+    statisticalPeriod: '季度',
+    sourceTable: 'reg.credit_asset_quality_detail',
+    processingLogic: 'SELECT non_performing_loans / total_loans * 100 as npl_ratio\nFROM reg.credit_asset_quality_detail\nWHERE report_quarter = ${quarter}',
+    storageLocation: 'reg.ads_npl_ratio',
+    queryCode: 'SELECT npl_ratio FROM reg.ads_npl_ratio WHERE report_quarter = ${quarter}',
+    versions: [
+      { date: '2024-03-31', description: '新增信贷资产质量监管指标' }
+    ],
+    businessOwner: '授信管理部-刘主管',
+    technicalOwner: '数据团队-周工程师',
+    regulatoryCategory: RegulatoryCategory.PBOC_FINANCIAL_BASE,
+    reportName: '信贷资产质量报告',
+    isFavorite: false
+  },
+  {
+    id: '9',
+    type: MetricType.REGULATORY,
+    name: '大额风险暴露集中度',
+    category: '信贷风险管理',
+    businessDefinition: '前若干大客户或集团的风险暴露占资本的比率，用于控制集中度风险',
+    code: 'REG_006',
+    statisticalPeriod: '月度',
+    sourceTable: 'reg.large_exposure_concentration_detail',
+    processingLogic: 'SELECT top_exposures_capital_ratio * 100 as concentration_ratio\nFROM reg.large_exposure_concentration_detail\nWHERE report_date = ${date}',
+    storageLocation: 'reg.ads_large_exposure_concentration',
+    queryCode: 'SELECT concentration_ratio FROM reg.ads_large_exposure_concentration WHERE report_date = ${date}',
+    versions: [
+      { date: '2024-04-01', description: '新增大额风险暴露监管指标' }
+    ],
+    businessOwner: '风险管理部-王总监',
+    technicalOwner: '数据团队-赵工程师',
+    regulatoryCategory: RegulatoryCategory.CBIRC_BANKING,
+    reportName: '大额风险暴露报告',
     isFavorite: false
   }
 ]
@@ -182,10 +270,28 @@ export default [
         filteredMetrics = filteredMetrics.filter(item => item.businessDomain === businessDomain)
       }
 
-      // 按监管报表大类筛选
-      if (regulatoryCategory) {
+  // 按监管报表大类筛选
+  if (regulatoryCategory) {
+    // 支持中文“指标域”映射到内部分类，以及按枚举标签匹配
+    const DOMAIN_TO_CATEGORY: Record<string, string> = {
+      '资本监管': '资本管理',
+      '流动性监管': '流动性管理',
+      '信贷风险监管': '信贷风险管理'
+    }
+    if (DOMAIN_TO_CATEGORY[regulatoryCategory]) {
+      const mappedCategory = DOMAIN_TO_CATEGORY[regulatoryCategory]
+      filteredMetrics = filteredMetrics.filter(item => item.category === mappedCategory)
+    } else {
+      const matchedEnumKey = (Object.keys(REGULATORY_CATEGORY_LABELS)
+        .find(k => REGULATORY_CATEGORY_LABELS[k as keyof typeof REGULATORY_CATEGORY_LABELS] === regulatoryCategory) 
+        || undefined) as keyof typeof REGULATORY_CATEGORY_LABELS | undefined
+      if (matchedEnumKey) {
+        filteredMetrics = filteredMetrics.filter(item => item.regulatoryCategory === matchedEnumKey)
+      } else {
         filteredMetrics = filteredMetrics.filter(item => item.regulatoryCategory === regulatoryCategory)
       }
+    }
+  }
 
       // 按报表名称筛选
       if (reportName) {
@@ -288,7 +394,8 @@ export default [
       const newMetric = {
         ...body,
         id: String(metrics.length + 1),
-        versions: [{ date: new Date().toISOString().split('T')[0], description: '指标创建' }],
+        // 使用 slice(0, 10) 保证生成的日期为严格的 string 类型
+        versions: [{ date: new Date().toISOString().slice(0, 10), description: '指标创建' }],
         isFavorite: false
       }
       metrics.push(newMetric)

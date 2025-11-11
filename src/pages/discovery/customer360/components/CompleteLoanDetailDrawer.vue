@@ -56,7 +56,7 @@
       <!-- 借据信息 -->
       <div class="detail-section">
         <h3 class="section-title">
-          <IconCreditCard class="section-icon" />
+          <IconIdcard class="section-icon" />
           借据信息
         </h3>
         <div class="info-grid">
@@ -126,7 +126,7 @@
       <!-- 还款信息 -->
       <div class="detail-section">
         <h3 class="section-title">
-          <IconDollarSign class="section-icon" />
+          <IconSafe class="section-icon" />
           还款信息
         </h3>
         <div class="info-grid">
@@ -160,7 +160,7 @@
       <!-- 剩余信息 -->
       <div class="detail-section">
         <h3 class="section-title">
-          <IconBarChart3 class="section-icon" />
+          <IconBarChart class="section-icon" />
           剩余信息
         </h3>
         <div class="info-grid">
@@ -244,8 +244,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { 
-  IconFile, IconCreditCard, IconExclamationCircle, IconDollarSign, 
-  IconBarChart3, IconSafe, IconSettings, IconCopy, IconInfoCircle,
+  IconFile, IconIdcard, IconExclamationCircle, IconSafe, 
+  IconBarChart, IconSettings, IconCopy, IconInfoCircle,
   IconCalendar, IconClockCircle, IconDownload
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'

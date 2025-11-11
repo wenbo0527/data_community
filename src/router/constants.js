@@ -81,6 +81,14 @@ export const ROUTE_NAMES = {
     TABLE_DETAIL: 'TableDetail'
   },
   
+  // 外数顶层页面
+  EXTERNAL_DATA: {
+    LIFECYCLE: 'externalDataLifecycle',
+    ARCHIVE: 'externalDataArchive',
+    SERVICE: 'externalDataService',
+    EVALUATION: 'externalDataEvaluation'
+  },
+  
   // 风险模块
   RISK: {
     ROOT: 'risk',
@@ -158,6 +166,14 @@ export const ROUTE_PATHS = {
   
   DISCOVERY: {
     TABLE_DETAIL: '/discovery/data-map/table'
+  },
+  
+  // 外数顶层页面路径
+  EXTERNAL_DATA: {
+    LIFECYCLE: '/external-data-lifecycle',
+    ARCHIVE: '/external-data-archive',
+    SERVICE: '/external-data-service',
+    EVALUATION: '/external-data-evaluation'
   },
   
   // 风险模块
@@ -238,6 +254,22 @@ export const BREADCRUMB_CONFIG = {
     { title: '探索分析', path: ROUTE_PATHS.EXPLORATION.ROOT },
     { title: '外部数据分析', path: ROUTE_PATHS.EXPLORATION.EXTERNAL_DATA_ANALYSIS.ROOT },
     { title: '预算管理', path: ROUTE_PATHS.EXPLORATION.EXTERNAL_DATA_ANALYSIS.BUDGET_MANAGEMENT }
+  ],
+  [ROUTE_NAMES.EXTERNAL_DATA.LIFECYCLE]: [
+    { title: '外数中心', path: '' },
+    { title: '生命周期总览', path: ROUTE_PATHS.EXTERNAL_DATA.LIFECYCLE }
+  ],
+  [ROUTE_NAMES.EXTERNAL_DATA.EVALUATION]: [
+    { title: '外数中心', path: '' },
+    { title: '评估中心', path: ROUTE_PATHS.EXTERNAL_DATA.EVALUATION }
+  ],
+  [ROUTE_NAMES.EXTERNAL_DATA.ARCHIVE]: [
+    { title: '外数中心', path: '' },
+    { title: '档案管理', path: ROUTE_PATHS.EXTERNAL_DATA.ARCHIVE }
+  ],
+  [ROUTE_NAMES.EXTERNAL_DATA.SERVICE]: [
+    { title: '外数中心', path: '' },
+    { title: '数据服务', path: ROUTE_PATHS.EXTERNAL_DATA.SERVICE }
   ]
 }
 

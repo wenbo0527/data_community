@@ -14,7 +14,7 @@
         <a-button type="primary" @click="handleSubmit">
           {{ isEditMode ? '更新指标' : '创建指标' }}
         </a-button>
-        <a-button v-if="formData.versionStatus === 'draft'" type="primary" @click="handleGoOnline" style="margin-left: 12px">
+        <a-button v-if="formData.versionStatus === '草稿'" type="primary" @click="handleGoOnline" style="margin-left: 12px">
           上线
         </a-button>
       </div>
@@ -44,12 +44,12 @@
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="指标名称" field="name">
-                <a-input v-model="formData.name" placeholder="请输入指标名称" />
+                <a-input v-model="formData.name" :max-length="50" show-word-limit placeholder="请输入指标名称（2-50字符）" />
               </a-form-item>
             </a-col>
             <a-col :span="12">
               <a-form-item label="指标编码" field="code">
-                <a-input v-model="formData.code" placeholder="请输入指标编码" />
+                <a-input v-model="formData.code" :max-length="20" show-word-limit placeholder="请输入指标编码（英文数字组合，2-20字符）" />
               </a-form-item>
             </a-col>
           </a-row>
@@ -57,14 +57,19 @@
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="指标类型" field="type">
-                <a-select v-model="formData.type" placeholder="请选择指标类型" @change="handleTypeChange">
-                  <a-option :value="MetricType.BUSINESS_CORE">业务核心指标</a-option>
-                  <a-option :value="MetricType.REGULATORY">监管指标</a-option>
-                </a-select>
+                <template v-if="isEditMode">
+                  <a-select v-model="formData.type" placeholder="请选择指标类型" @change="handleTypeChange">
+                    <a-option :value="MetricType.BUSINESS_CORE">业务核心指标</a-option>
+                    <a-option :value="MetricType.REGULATORY">监管指标</a-option>
+                  </a-select>
+                </template>
+                <template v-else>
+                  <a-tag color="blue">{{ formData.type === MetricType.BUSINESS_CORE ? '业务核心指标' : '监管指标' }}</a-tag>
+                </template>
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="指标分类" field="category">
+              <a-form-item label="指标域" field="category">
                 <a-select v-model="formData.category" placeholder="请选择指标分类">
                   <a-option value="用户指标">用户指标</a-option>
                   <a-option value="业务域">业务域</a-option>
@@ -80,10 +85,10 @@
             <a-col :span="12">
               <a-form-item 
                 v-if="formData.type === MetricType.BUSINESS_CORE" 
-                label="业务域" 
+                label="归属场景" 
                 field="businessDomain"
               >
-                <a-select v-model="formData.businessDomain" placeholder="请选择业务域">
+                <a-select v-model="formData.businessDomain" placeholder="请选择归属场景">
                   <a-option value="留存域">留存域</a-option>
                   <a-option value="转化域">转化域</a-option>
                   <a-option value="业务规模">业务规模</a-option>
@@ -92,25 +97,28 @@
               </a-form-item>
               <a-form-item 
                 v-else-if="formData.type === MetricType.REGULATORY" 
-                label="监管报表大类" 
-                field="regulatoryCategory"
+                :label="isEditMode ? '指标域' : '指标域-归属场景'" 
+                :field="isEditMode ? 'regulatoryCategory' : 'regulatoryCascade'"
               >
-                <a-select v-model="formData.regulatoryCategory" placeholder="请选择监管报表大类">
-                  <a-option :value="RegulatoryCategory.CBIRC_BANKING">银保监会-银监报表</a-option>
-                  <a-option :value="RegulatoryCategory.PBOC_CENTRALIZED">人行-大集中报表</a-option>
-                  <a-option :value="RegulatoryCategory.PBOC_FINANCIAL_BASE">人行-金融基础数据</a-option>
-                  <a-option :value="RegulatoryCategory.PBOC_INTEREST_RATE">人行-利率报备检测分析</a-option>
-                </a-select>
+                <template v-if="isEditMode">
+                  <a-select v-model="formData.regulatoryCategory" placeholder="请选择监管报表大类">
+                    <a-option :value="RegulatoryCategory.CBIRC_BANKING">银保监会-银监报表</a-option>
+                    <a-option :value="RegulatoryCategory.PBOC_CENTRALIZED">人行-大集中报表</a-option>
+                    <a-option :value="RegulatoryCategory.PBOC_FINANCIAL_BASE">人行-金融基础数据</a-option>
+                    <a-option :value="RegulatoryCategory.PBOC_INTEREST_RATE">人行-利率报备检测分析</a-option>
+                  </a-select>
+                </template>
+                <template v-else>
+                  <a-cascader v-model="regulatoryCascade" :options="regulatoryOptions" placeholder="请选择监管指标域与归属场景" allow-search />
+                </template>
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item 
-                v-if="formData.type === MetricType.REGULATORY" 
-                label="报表名称" 
-                field="reportName"
-              >
-                <a-input v-model="formData.reportName" placeholder="请输入报表名称" />
-              </a-form-item>
+              <template v-if="formData.type === MetricType.REGULATORY">
+                <a-form-item v-if="isEditMode" label="归属场景" field="reportName">
+                  <a-input v-model="formData.reportName" placeholder="请输入归属场景" />
+                </a-form-item>
+              </template>
             </a-col>
           </a-row>
 
@@ -121,14 +129,18 @@
                 label="技术负责人" 
                 field="owner"
               >
-                <a-input v-model="formData.owner" placeholder="请输入技术负责人" />
+                <a-select v-model="formData.owner" placeholder="请选择技术负责人" :filter-option="false" @search="(v) => fetchUsers(v)" :loading="loadingUsers">
+                  <a-option v-for="u in usersOptions" :key="u.value" :value="u.value">{{ u.label }}</a-option>
+                </a-select>
               </a-form-item>
               <a-form-item 
                 v-else-if="formData.type === MetricType.REGULATORY" 
                 label="业务负责人" 
                 field="businessOwner"
               >
-                <a-input v-model="formData.businessOwner" placeholder="请输入业务负责人" />
+                <a-select v-model="formData.businessOwner" placeholder="请选择业务负责人" :filter-option="false" @search="(v) => fetchUsers(v)" :loading="loadingUsers">
+                  <a-option v-for="u in usersOptions" :key="u.value" :value="u.value">{{ u.label }}</a-option>
+                </a-select>
               </a-form-item>
             </a-col>
             <a-col :span="12">
@@ -137,7 +149,9 @@
                 label="技术负责人" 
                 field="technicalOwner"
               >
-                <a-input v-model="formData.technicalOwner" placeholder="请输入技术负责人" />
+                <a-select v-model="formData.technicalOwner" placeholder="请选择技术负责人" :filter-option="false" @search="(v) => fetchUsers(v)" :loading="loadingUsers">
+                  <a-option v-for="u in usersOptions" :key="u.value" :value="u.value">{{ u.label }}</a-option>
+                </a-select>
               </a-form-item>
             </a-col>
           </a-row>
@@ -146,10 +160,16 @@
             <a-col :span="24">
               <a-form-item label="业务口径" field="businessDefinition">
                 <a-textarea 
+                  ref="businessDefinitionEditor"
                   v-model="formData.businessDefinition" 
-                  placeholder="请输入业务口径" 
-                  :auto-size="{ minRows: 2, maxRows: 4 }"
+                  :max-length="500"
+                  show-word-limit
+                  placeholder="请输入业务口径（支持 Markdown 富文本，最大500字符）" 
+                  :auto-size="{ minRows: 4, maxRows: 8 }"
                 />
+                <div class="editor-toolbar">
+                  <a-button size="mini" @click="insertMarkdown('business')">粗体/斜体/列表</a-button>
+                </div>
               </a-form-item>
             </a-col>
           </a-row>
@@ -158,10 +178,16 @@
             <a-col :span="24">
               <a-form-item label="使用场景" field="useCase">
                 <a-textarea 
+                  ref="useCaseEditor"
                   v-model="formData.useCase" 
-                  placeholder="请输入使用场景" 
-                  :auto-size="{ minRows: 2, maxRows: 4 }"
+                  :max-length="300"
+                  show-word-limit
+                  placeholder="请输入使用场景（支持 Markdown 富文本，最大300字符）" 
+                  :auto-size="{ minRows: 3, maxRows: 6 }"
                 />
+                <div class="editor-toolbar">
+                  <a-button size="mini" @click="insertMarkdown('use')">粗体/斜体/列表</a-button>
+                </div>
               </a-form-item>
             </a-col>
           </a-row>
@@ -171,41 +197,42 @@
         <a-card title="技术信息" class="form-section">
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="统计周期" field="statisticalPeriod">
-                <a-select v-model="formData.statisticalPeriod" placeholder="请选择统计周期">
+              <a-form-item label="计算时效" field="computeTimeliness">
+                <a-select v-model="formData.computeTimeliness" placeholder="请选择计算时效">
                   <a-option value="实时">实时</a-option>
-                  <a-option value="分钟级">分钟级</a-option>
-                  <a-option value="小时级">小时级</a-option>
-                  <a-option value="日更新">日更新</a-option>
-                  <a-option value="周更新">周更新</a-option>
-                  <a-option value="月更新">月更新</a-option>
-                  <a-option value="季度">季度</a-option>
-                  <a-option value="年度">年度</a-option>
-                  <a-option value="离线T+1">离线T+1</a-option>
-                  <a-option value="离线T+2">离线T+2</a-option>
+                  <a-option value="T+1">T+1</a-option>
+                  <a-option value="T+2">T+2</a-option>
                 </a-select>
               </a-form-item>
             </a-col>
+          </a-row>
+
+          <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="来源表" field="sourceTable">
-                <a-input v-model="formData.sourceTable" placeholder="请输入来源表" />
+                <a-input v-model="formData.sourceTable" :max-length="100" show-word-limit placeholder="请输入来源表（可选，最大100字符）" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="24">
+              {{ formData.technicalCaliber }}
+              <a-form-item label="技术口径" field="technicalCaliber">
+                <MonacoEditor v-model:modelValue="formData.technicalCaliber" language="sql" height="240px" />
               </a-form-item>
             </a-col>
           </a-row>
 
           <a-row :gutter="16">
             <a-col :span="24">
-              <a-form-item label="加工逻辑" field="processingLogic">
+              <a-form-item label="技术口径使用说明" field="technicalUsageNote">
                 <a-textarea 
-                  v-model="formData.processingLogic" 
-                  placeholder="请输入加工逻辑（SQL语句或处理流程）" 
-                  :auto-size="{ minRows: 3, maxRows: 6 }"
+                  v-model="formData.technicalUsageNote" 
+                  :max-length="300"
+                  show-word-limit
+                  placeholder="请输入技术口径使用说明（可选，最大300字符）" 
+                  :auto-size="{ minRows: 2, maxRows: 4 }"
                 />
               </a-form-item>
             </a-col>
-          </a-row>
-
-          <a-row :gutter="16">
             <a-col :span="24">
               <a-form-item label="字段说明" field="fieldDescription">
                 <a-textarea 
@@ -219,13 +246,13 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="结果表" field="storageLocation">
-                <a-input v-model="formData.storageLocation" placeholder="请输入结果表" />
+              <a-form-item label="结果表" field="resultTable">
+                <a-input v-model="formData.resultTable" :max-length="50" show-word-limit placeholder="请输入结果表（50字符以内）" />
               </a-form-item>
             </a-col>
-            <a-col :span="12">
+            <a-col :span="24">
               <a-form-item label="查询代码" field="queryCode">
-                <a-input v-model="formData.queryCode" placeholder="请输入查询代码" />
+                <MonacoEditor v-model:modelValue="formData.queryCode" language="sql" height="180px" />
               </a-form-item>
             </a-col>
           </a-row>
@@ -235,27 +262,27 @@
         <a-card title="版本信息" class="form-section">
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="版本号" field="version">
-                <a-input v-model="formData.version" placeholder="请输入版本号" :disabled="!isCreateMode" />
+              <a-form-item label="版本号（自动）" field="version">
+                <a-input v-model="formData.version" placeholder="自动生成版本号" :disabled="true" />
               </a-form-item>
             </a-col>
             <a-col :span="12">
               <a-form-item label="版本状态" field="versionStatus">
                 <a-select v-model="formData.versionStatus" :disabled="true">
-                  <a-option value="draft">草稿</a-option>
-                  <a-option value="active">生效</a-option>
-                  <a-option value="history">历史</a-option>
+                  <a-option value="草稿">草稿</a-option>
+                  <a-option value="启动">启动</a-option>
+                  <a-option value="归档">归档</a-option>
                 </a-select>
               </a-form-item>
             </a-col>
           </a-row>
           <a-row :gutter="16">
             <a-col :span="24">
-              <a-alert v-if="formData.versionStatus === 'draft'" type="info" style="margin-bottom: 16px">
+              <a-alert v-if="formData.versionStatus === '草稿'" type="info" style="margin-bottom: 16px">
                 当前版本为草稿状态，需要点击"上线"按钮后才能生效
               </a-alert>
-              <a-alert v-else-if="formData.versionStatus === 'active'" type="success" style="margin-bottom: 16px">
-                当前版本已生效
+              <a-alert v-else-if="formData.versionStatus === '启动'" type="success" style="margin-bottom: 16px">
+                当前版本已启动
               </a-alert>
             </a-col>
           </a-row>
@@ -317,6 +344,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconLeft, IconPlus } from '@arco-design/web-vue/es/icon'
 import { MetricType, RegulatoryCategory } from '@/types/metrics'
+import metricsMock from '@/mock/metrics'
+import MonacoEditor from '@/components/MonacoEditor.vue'
+import { userApi } from '@/api/community'
+import type { User, QueryParams } from '@/types/community'
 
 const route = useRoute()
 const router = useRouter()
@@ -325,9 +356,17 @@ const formRef = ref()
 // 页面滚动相关状态
 const enableScroll = ref(true)
 
-// 页面模式判断
-const isEditMode = computed(() => route.params.id && route.params.id !== 'create')
-const isViewMode = computed(() => route.params.mode === 'view')
+// 页面模式判断（兼容 params 与 query 的 mode）
+const isEditMode = computed(() => {
+  return (
+    route.params.mode === 'edit' ||
+    route.query.mode === 'edit' ||
+    (route.params.id && route.params.id !== 'create')
+  )
+})
+const isViewMode = computed(() => {
+  return route.params.mode === 'view' || route.query.mode === 'view'
+})
 const isCreateMode = computed(() => !isEditMode.value && !isViewMode.value)
 
 // 表单数据
@@ -339,49 +378,122 @@ const formData = reactive({
   businessDomain: '',
   regulatoryCategory: '',
   reportName: '',
-  owner: '',
   businessOwner: '',
   technicalOwner: '',
-  version: 'v1.0.0',
+  version: '1',
   versionDescription: '',
-  versionStatus: 'draft',
+  versionStatus: '草稿',
   businessDefinition: '',
   useCase: '',
-  statisticalPeriod: '',
+  computeTimeliness: '',
   sourceTable: '',
-  processingLogic: '',
+  technicalCaliber: '',
+  technicalUsageNote: '',
   fieldDescription: '',
+  resultTable: '',
   reports: [{ name: '', url: '' }],
-  storageLocation: '',
   queryCode: ''
 })
 
 // 表单验证规则
 const getFormRules = (type: MetricType) => {
-  const baseRules = {
-    name: [{ required: true, message: '请输入指标名称' }],
-    code: [{ required: true, message: '请输入指标编码' }],
+  const nameValidator = {
+    validator: (_: any, value: string) => {
+      const len = (value || '').trim().length
+      if (!len) return Promise.reject('请输入指标名称')
+      if (len < 2 || len > 50) return Promise.reject('指标名称需在2-50字符之间')
+      return Promise.resolve()
+    }
+  }
+  const codeValidator = {
+    validator: (_: any, value: string) => {
+      const v = (value || '').trim()
+      if (!v) return Promise.reject('请输入指标编码')
+      if (v.length < 2 || v.length > 20) return Promise.reject('指标编码需在2-20字符之间')
+      if (!/^[A-Za-z0-9_-]+$/.test(v)) return Promise.reject('指标编码仅支持英文、数字、下划线或中划线')
+      return Promise.resolve()
+    }
+  }
+  const businessDefValidator = {
+    validator: (_: any, value: string) => {
+      const len = (value || '').trim().length
+      if (!len) return Promise.reject('请输入业务口径')
+      if (len > 500) return Promise.reject('业务口径最大500字符')
+      return Promise.resolve()
+    }
+  }
+  const useCaseValidator = {
+    validator: (_: any, value: string) => {
+      const len = (value || '').trim().length
+      if (len > 300) return Promise.reject('使用场景最大300字符')
+      return Promise.resolve()
+    }
+  }
+  const technicalCaliberValidator = {
+    validator: (_: any, value: string) => {
+      const len = (value || '').trim().length
+      if (!len) return Promise.reject('请输入技术口径（SQL）')
+      if (len > 1000) return Promise.reject('技术口径最大1000字符')
+      return Promise.resolve()
+    }
+  }
+  const technicalUsageValidator = {
+    validator: (_: any, value: string) => {
+      const len = (value || '').trim().length
+      if (len > 300) return Promise.reject('技术口径使用说明最大300字符')
+      return Promise.resolve()
+    }
+  }
+  const resultTableValidator = {
+    validator: (_: any, value: string) => {
+      const len = (value || '').trim().length
+      if (len > 50) return Promise.reject('结果表最大50字符')
+      return Promise.resolve()
+    }
+  }
+  const queryCodeValidator = {
+    validator: (_: any, value: string) => {
+      const len = (value || '').trim().length
+      if (!len) return Promise.reject('请输入查询代码（SQL）')
+      if (len > 500) return Promise.reject('查询代码最大500字符')
+      return Promise.resolve()
+    }
+  }
+
+  const baseRules: Record<string, any[]> = {
+    name: [nameValidator],
+    code: [codeValidator],
     type: [{ required: true, message: '请选择指标类型' }],
     category: [{ required: true, message: '请选择指标分类' }],
-    version: [{ required: true, message: '请输入版本号' }],
-    businessDefinition: [{ required: true, message: '请输入业务口径' }],
-    statisticalPeriod: [{ required: true, message: '请选择统计周期' }],
-    sourceTable: [{ required: true, message: '请输入来源表' }]
+    version: [{ required: true, message: '版本号自动生成' }],
+    businessDefinition: [businessDefValidator],
+    useCase: [useCaseValidator],
+    computeTimeliness: [{ required: true, message: '请选择计算时效' }],
+    sourceTable: [{
+      validator: (_: any, value: string) => {
+        const len = (value || '').trim().length
+        if (len > 100) return Promise.reject('来源表最大100字符')
+        return Promise.resolve()
+      }
+    }],
+    technicalCaliber: [technicalCaliberValidator],
+    technicalUsageNote: [technicalUsageValidator],
+    resultTable: [resultTableValidator],
+    queryCode: [queryCodeValidator],
+    businessOwner: [{ required: true, message: '请选择业务负责人' }],
+    technicalOwner: [{ required: true, message: '请选择技术负责人' }]
   }
 
   if (type === MetricType.BUSINESS_CORE) {
     return {
       ...baseRules,
-      businessDomain: [{ required: true, message: '请选择业务域' }],
-      owner: [{ required: true, message: '请输入技术负责人' }]
+      businessDomain: [{ required: true, message: '请选择归属场景' }]
     }
   } else if (type === MetricType.REGULATORY) {
     return {
       ...baseRules,
-      regulatoryCategory: [{ required: true, message: '请选择监管报表大类' }],
-      reportName: [{ required: true, message: '请输入报表名称' }],
-      businessOwner: [{ required: true, message: '请输入业务负责人' }],
-      technicalOwner: [{ required: true, message: '请输入技术负责人' }]
+      regulatoryCategory: [{ required: true, message: '请选择指标域' }],
+      reportName: [{ required: true, message: '请输入归属场景' }]
     }
   }
 
@@ -407,11 +519,8 @@ const handleTypeChange = (type: MetricType) => {
   if (type === MetricType.BUSINESS_CORE) {
     formData.regulatoryCategory = ''
     formData.reportName = ''
-    formData.businessOwner = ''
-    formData.technicalOwner = ''
   } else if (type === MetricType.REGULATORY) {
     formData.businessDomain = ''
-    formData.owner = ''
   }
 }
 
@@ -429,7 +538,8 @@ const handleSaveDraft = async () => {
   try {
     const valid = await formRef.value?.validate()
     if (valid) {
-      formData.versionStatus = 'draft'
+      if (!validateReports()) return
+      formData.versionStatus = '草稿'
       // 调用保存草稿API
       console.log('保存草稿:', formData)
       Message.success('草稿保存成功')
@@ -443,9 +553,10 @@ const handleSubmit = async () => {
   try {
     const valid = await formRef.value?.validate()
     if (valid) {
+      if (!validateReports()) return
       // 创建或更新时保持草稿状态
       if (isCreateMode.value) {
-        formData.versionStatus = 'draft'
+        formData.versionStatus = '草稿'
       }
       
       if (isEditMode.value) {
@@ -471,7 +582,8 @@ const handleGoOnline = async () => {
   try {
     const valid = await formRef.value?.validate()
     if (valid) {
-      formData.versionStatus = 'active'
+      if (!validateReports()) return
+      formData.versionStatus = '启动'
       // 调用上线API
       console.log('指标上线:', formData)
       Message.success('指标已成功上线')
@@ -486,40 +598,158 @@ const handleGoOnline = async () => {
 // 加载指标数据
 const loadMetricData = async (id: string) => {
   try {
-    // 模拟API调用
-    const mockData = {
-      id: 1,
-      name: 'DAU',
-      code: 'USER_001',
-      type: MetricType.BUSINESS_CORE,
-      category: '用户指标',
-      businessDomain: '留存域',
-      businessDefinition: '日活跃用户数',
-      owner: '张三',
-      version: 'v1.2.0',
-      versionStatus: isViewMode.value ? 'active' : 'draft',
-      versionDescription: '优化计算逻辑，提升数据准确性',
-      useCase: '用于监控产品的日常活跃情况，是产品健康度的重要指标',
-      statisticalPeriod: '日更新',
-      sourceTable: 'dwd.user_login_detail',
-      processingLogic: 'SELECT dt, COUNT(DISTINCT user_id) as dau FROM dwd.user_login_detail WHERE dt = ${date} GROUP BY dt',
-      fieldDescription: 'user_id: 用户唯一标识, dt: 统计日期',
-      reports: [{ name: '用户分析报表', url: '/reports/user-analysis' }, { name: '核心指标报表', url: '/reports/core-metrics' }],
-      storageLocation: 'adm.ads_user_core_metrics',
-      queryCode: 'SELECT dau FROM adm.ads_user_core_metrics WHERE dt = ${date}'
+    const endpoint = metricsMock.find((m) => m.url === '/api/metrics/:id')
+    if (endpoint) {
+      const res = endpoint.response({ url: `/api/metrics/${id}` })
+      const metric = res.data
+      if (metric) {
+        Object.assign(formData, {
+          name: metric.name,
+          code: metric.code,
+          type: metric.type,
+          category: metric.category,
+          businessDomain: metric.businessDomain || '',
+          regulatoryCategory: metric.regulatoryCategory || '',
+          reportName: metric.reportName || '',
+          businessOwner: metric.businessOwner || '',
+          technicalOwner: metric.technicalOwner || '',
+          businessDefinition: metric.businessDefinition || '',
+          useCase: metric.useCase || '',
+          computeTimeliness: metric.computeTimeliness || '',
+          sourceTable: metric.sourceTable || '',
+          technicalCaliber: metric.processingLogic || '',
+          technicalUsageNote: metric.technicalUsageNote || '',
+          fieldDescription: metric.fieldDescription || '',
+          resultTable: metric.resultTable || '',
+          reports: metric.reports || [{ name: '', url: '' }],
+          queryCode: metric.queryCode || ''
+        })
+        const currentVersion = Array.isArray(metric.versions) ? metric.versions.length : 1
+        formData.version = isViewMode.value ? String(currentVersion) : String(currentVersion + 1)
+        formData.versionStatus = isViewMode.value ? '启动' : '草稿'
+      }
     }
-    
-    Object.assign(formData, mockData)
   } catch (error) {
     console.error('加载指标数据失败:', error)
     Message.error('加载指标数据失败')
   }
 }
 
-onMounted(() => {
-  if (isEditMode.value || isViewMode.value) {
-    loadMetricData(route.params.id as string)
+// 监管域级联选项与选择
+const regulatoryOptions = ref([
+  {
+    value: RegulatoryCategory.CBIRC_BANKING,
+    label: '银保监会-银监报表',
+    children: [
+      { value: '季度报表', label: '季度报表' },
+      { value: '月度报表', label: '月度报表' }
+    ]
+  },
+  {
+    value: RegulatoryCategory.PBOC_CENTRALIZED,
+    label: '人行-大集中报表',
+    children: [
+      { value: '集中报表A', label: '集中报表A' },
+      { value: '集中报表B', label: '集中报表B' }
+    ]
+  },
+  {
+    value: RegulatoryCategory.PBOC_FINANCIAL_BASE,
+    label: '人行-金融基础数据',
+    children: [
+      { value: '基础数据A', label: '基础数据A' },
+      { value: '基础数据B', label: '基础数据B' }
+    ]
+  },
+  {
+    value: RegulatoryCategory.PBOC_INTEREST_RATE,
+    label: '人行-利率报备检测分析',
+    children: [
+      { value: '利率报备A', label: '利率报备A' },
+      { value: '利率报备B', label: '利率报备B' }
+    ]
   }
+])
+const regulatoryCascade = ref<(string | number)[]>([])
+
+// 人员选择器数据源
+const usersOptions = ref<Array<{ label: string; value: string }>>([])
+const loadingUsers = ref(false)
+const fetchUsers = async (keyword?: string) => {
+  try {
+    loadingUsers.value = true
+    const params: QueryParams = {
+      keyword: keyword || '',
+      page: 1,
+      pageSize: 10
+    }
+    const res = await userApi.getUsers(params)
+    const items: User[] = (res?.data?.items) || []
+    usersOptions.value = items.map(u => ({ label: u.displayName || u.username || u.id, value: String(u.id) }))
+  } catch (e) {
+    console.error('获取用户列表失败:', e)
+  } finally {
+    loadingUsers.value = false
+  }
+}
+
+// 富文本插入工具
+const businessDefinitionEditor = ref()
+const useCaseEditor = ref()
+const insertMarkdown = (target: 'business' | 'use') => {
+  const snippet = '**加粗** _斜体_\n- 列表项1\n- 列表项2\n'
+  if (target === 'business') {
+    const next = (formData.businessDefinition || '') + (formData.businessDefinition ? '\n' : '') + snippet
+    formData.businessDefinition = next.slice(0, 500)
+  } else {
+    const next = (formData.useCase || '') + (formData.useCase ? '\n' : '') + snippet
+    formData.useCase = next.slice(0, 300)
+  }
+}
+
+// 报表校验（至少一项、URL校验）
+const validateReports = () => {
+  if (!Array.isArray(formData.reports) || formData.reports.length < 1) {
+    Message.warning('请至少添加一个报表')
+    return false
+  }
+  const urlRegex = /^https?:\/\//i
+  for (const [idx, r] of formData.reports.entries()) {
+    if (!r.name?.trim()) {
+      Message.warning(`请填写报表名称 ${idx + 1}`)
+      return false
+    }
+    if (!r.url?.trim()) {
+      Message.warning(`请填写报表链接 ${idx + 1}`)
+      return false
+    }
+    if (!urlRegex.test(r.url.trim())) {
+      Message.warning(`报表链接 ${idx + 1} 需以 http/https 开头`)
+      return false
+    }
+  }
+  return true
+}
+
+// 初始化类型（根据 ?type=regulatory）与级联显示
+const initByRoute = () => {
+  const qType = String(route.query.type || '')
+  if (qType.toLowerCase() === 'regulatory') {
+    formData.type = MetricType.REGULATORY
+  }
+  // 初始化级联选中用于展示
+  if (formData.type === MetricType.REGULATORY && formData.regulatoryCategory && formData.reportName) {
+    regulatoryCascade.value = [formData.regulatoryCategory, formData.reportName]
+  }
+}
+
+onMounted(async () => {
+  initByRoute()
+  if (isEditMode.value || isViewMode.value) {
+    await loadMetricData(route.params.id as string)
+  }
+  // 预加载一次用户列表（空关键字）
+  fetchUsers('')
 })
 </script>
 
@@ -593,6 +823,13 @@ onMounted(() => {
   width: 100%;
   margin-top: 16px;
   border-style: dashed;
+}
+
+/* 等宽输入样式（用于 SQL / 代码块） */
+.monospace-textarea :deep(textarea) {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  white-space: pre;
+  line-height: 1.6;
 }
 
 
