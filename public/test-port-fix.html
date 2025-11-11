@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>端口连接修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .log-output {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 端口连接修复测试页面</h1>
+        
+        <div class="status info">
+            <strong>测试目的：</strong>验证端口组注册和连接验证修复是否生效
+        </div>
+        
+        <div class="test-section">
+            <h3>📋 修复内容总结</h3>
+            <ul>
+                <li>✅ 在X6图初始化时添加了端口组配置 (portGroups)</li>
+                <li>✅ 修复了validateConnection函数，使用正确的端口连接验证逻辑</li>
+                <li>✅ 将X6图实例暴露到全局变量以便调试</li>
+                <li>✅ 增强了调试脚本的端口检测功能</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 测试步骤</h3>
+            <ol>
+                <li>打开浏览器开发者工具的控制台</li>
+                <li>导航到营销任务页面 (/marketing/tasks)</li>
+                <li>观察控制台输出的诊断信息</li>
+                <li>检查是否显示"✅ 端口组配置找到"</li>
+                <li>检查是否找到X6图实例</li>
+                <li>尝试手动拖拽连接端口</li>
+            </ol>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 手动测试工具</h3>
+            <button onclick="testPortGroups()">测试端口组配置</button>
+            <button onclick="testX6Instance()">测试X6图实例</button>
+            <button onclick="testPortElements()">测试端口DOM元素</button>
+            <button onclick="runFullDiagnostic()">运行完整诊断</button>
+            
+            <div id="testOutput" class="log-output"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 预期结果</h3>
+            <div class="status success">
+                <strong>成功指标：</strong>
+                <ul>
+                    <li>控制台显示"✅ X6图实例找到"</li>
+                    <li>控制台显示"✅ 端口组配置找到"</li>
+                    <li>找到circle元素且具有正确的port属性</li>
+                    <li>端口连接验证逻辑正常工作</li>
+                    <li>可以通过拖拽创建端口到端口的连接</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚨 故障排除</h3>
+            <div class="status warning">
+                <strong>如果仍然有问题：</strong>
+                <ul>
+                    <li>检查是否在正确的页面 (/marketing/tasks)</li>
+                    <li>确保页面完全加载后再测试</li>
+                    <li>检查浏览器控制台是否有JavaScript错误</li>
+                    <li>尝试刷新页面重新加载修复后的代码</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('testOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            output.textContent += logEntry;
+            output.scrollTop = output.scrollHeight;
+            
+            // 同时输出到控制台
+            console.log(`[测试工具] ${message}`);
+        }
+        
+        function testPortGroups() {
+            log('🔍 测试端口组配置...');
+            
+            const graph = window.graph || window.x6Graph;
+            if (!graph) {
+                log('❌ 未找到X6图实例', 'error');
+                return;
+            }
+            
+            log('✅ 找到X6图实例');
+            
+            const options = graph.options;
+            if (options.connecting && options.connecting.portGroups) {
+                log('✅ 端口组配置存在');
+                log(`端口组数量: ${Object.keys(options.connecting.portGroups).length}`);
+                
+                Object.entries(options.connecting.portGroups).forEach(([groupName, config]) => {
+                    log(`端口组 ${groupName}: position=${config.position?.name}, magnet=${config.attrs?.circle?.magnet}`);
+                });
+            } else {
+                log('❌ 端口组配置缺失', 'error');
+            }
+        }
+        
+        function testX6Instance() {
+            log('🔍 测试X6图实例...');
+            
+            const graph = window.graph || window.x6Graph;
+            if (graph) {
+                log('✅ X6图实例存在');
+                log(`图容器: ${graph.container ? '存在' : '不存在'}`);
+                log(`节点数量: ${graph.getNodes().length}`);
+                log(`边数量: ${graph.getEdges().length}`);
+            } else {
+                log('❌ X6图实例不存在', 'error');
+            }
+        }
+        
+        function testPortElements() {
+            log('🔍 测试端口DOM元素...');
+            
+            const portElements = document.querySelectorAll('[port]');
+            const circleElements = document.querySelectorAll('circle');
+            
+            log(`端口元素数量: ${portElements.length}`);
+            log(`Circle元素数量: ${circleElements.length}`);
+            
+            circleElements.forEach((circle, index) => {
+                const port = circle.getAttribute('port');
+                const magnet = circle.getAttribute('magnet');
+                const portGroup = circle.getAttribute('port-group');
+                
+                if (port || magnet || portGroup) {
+                    log(`Circle ${index + 1}: port=${port}, magnet=${magnet}, port-group=${portGroup}`);
+                }
+            });
+        }
+        
+        function runFullDiagnostic() {
+            log('🚀 运行完整诊断...');
+            log('请查看浏览器控制台获取详细诊断信息');
+            
+            // 尝试运行调试脚本
+            if (window.PortDOMDiagnostic) {
+                const diagnostic = new window.PortDOMDiagnostic();
+                diagnostic.runFullDiagnostic();
+                log('✅ 诊断脚本已执行，请查看控制台');
+            } else {
+                log('⚠️ 诊断脚本未加载，请导航到主应用页面');
+            }
+        }
+        
+        // 页面加载时的初始检查
+        window.addEventListener('load', () => {
+            log('📄 测试页面已加载');
+            log('请导航到 /marketing/tasks 页面进行实际测试');
+        });
+    </script>
+</body>
+</html>

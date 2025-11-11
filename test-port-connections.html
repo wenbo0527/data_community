@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>端口连接检查测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .instructions {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 端口连接检查工具测试页面</h1>
+        
+        <div class="instructions">
+            <h3>使用说明：</h3>
+            <p>1. 首先在任务编辑页面 <code>http://localhost:5174/#/marketing/tasks/create</code> 打开开发者工具</p>
+            <p>2. 在控制台中粘贴并运行脚本内容</p>
+            <p>3. 使用以下命令进行检查：</p>
+            <ul>
+                <li><code>checkPortConnections()</code> - 完整检查</li>
+                <li><code>checkPortConnections(true)</code> - 详细检查</li>
+                <li><code>checkPortConnections(false, true)</code> - 快速检查</li>
+                <li><code>quickPortCheck()</code> - 极速检查</li>
+            </ul>
+        </div>
+
+        <div>
+            <h3>测试按钮：</h3>
+            <button class="button" onclick="loadScript()">加载检查脚本</button>
+            <button class="button" onclick="runFullCheck()">运行完整检查</button>
+            <button class="button" onclick="runVerboseCheck()">运行详细检查</button>
+            <button class="button" onclick="runQuickCheck()">运行快速检查</button>
+            <button class="button" onclick="runSpeedCheck()">运行极速检查</button>
+            <button class="button" onclick="clearOutput()">清空输出</button>
+        </div>
+
+        <div id="output" class="output">
+点击"加载检查脚本"开始测试...
+        </div>
+    </div>
+
+    <script>
+        let scriptLoaded = false;
+        
+        function log(message) {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+        
+        async function loadScript() {
+            try {
+                log('正在加载端口连接检查脚本...');
+                
+                const response = await fetch('./check-port-connections.js');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const scriptContent = await response.text();
+                
+                // 创建一个新的script元素来执行脚本
+                const script = document.createElement('script');
+                script.textContent = scriptContent;
+                document.head.appendChild(script);
+                
+                scriptLoaded = true;
+                log('✅ 脚本加载成功！');
+                log('💡 现在可以运行检查功能了');
+                
+                // 测试脚本是否正确加载
+                if (typeof window.checkPortConnections === 'function') {
+                    log('✅ checkPortConnections 函数已可用');
+                }
+                if (typeof window.quickPortCheck === 'function') {
+                    log('✅ quickPortCheck 函数已可用');
+                }
+                
+            } catch (error) {
+                log(`❌ 加载脚本失败: ${error.message}`);
+                log('💡 请确保 check-port-connections.js 文件存在于当前目录');
+            }
+        }
+        
+        function runFullCheck() {
+            if (!scriptLoaded) {
+                log('❌ 请先加载脚本');
+                return;
+            }
+            
+            log('🔍 运行完整检查...');
+            try {
+                // 重定向console.log到我们的输出
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    log(args.join(' '));
+                    originalLog.apply(console, args);
+                };
+                
+                const result = window.checkPortConnections();
+                
+                // 恢复原始console.log
+                console.log = originalLog;
+                
+                log('✅ 完整检查完成');
+            } catch (error) {
+                log(`❌ 检查失败: ${error.message}`);
+            }
+        }
+        
+        function runVerboseCheck() {
+            if (!scriptLoaded) {
+                log('❌ 请先加载脚本');
+                return;
+            }
+            
+            log('🔍 运行详细检查...');
+            try {
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    log(args.join(' '));
+                    originalLog.apply(console, args);
+                };
+                
+                const result = window.checkPortConnections(true);
+                
+                console.log = originalLog;
+                log('✅ 详细检查完成');
+            } catch (error) {
+                log(`❌ 检查失败: ${error.message}`);
+            }
+        }
+        
+        function runQuickCheck() {
+            if (!scriptLoaded) {
+                log('❌ 请先加载脚本');
+                return;
+            }
+            
+            log('⚡ 运行快速检查...');
+            try {
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    log(args.join(' '));
+                    originalLog.apply(console, args);
+                };
+                
+                const result = window.checkPortConnections(false, true);
+                
+                console.log = originalLog;
+                log('✅ 快速检查完成');
+            } catch (error) {
+                log(`❌ 检查失败: ${error.message}`);
+            }
+        }
+        
+        function runSpeedCheck() {
+            if (!scriptLoaded) {
+                log('❌ 请先加载脚本');
+                return;
+            }
+            
+            log('⚡ 运行极速检查...');
+            try {
+                const result = window.quickPortCheck();
+                
+                if (result.success) {
+                    log('✅ 极速检查完成');
+                    log(`📊 统计结果:`);
+                    log(`   总节点数: ${result.summary.totalNodes}`);
+                    log(`   有端口的节点数: ${result.summary.nodesWithPorts}`);
+                    log(`   总边数: ${result.summary.totalEdges}`);
+                    log(`   有端口连接的边数: ${result.summary.edgesWithPortConnections}`);
+                    log(`   端口DOM元素数: ${result.summary.portElements}`);
+                    log(`   节点端口配置率: ${result.summary.nodePortRate}%`);
+                    log(`   边端口连接率: ${result.summary.edgePortRate}%`);
+                } else {
+                    log(`❌ 极速检查失败: ${result.message}`);
+                }
+            } catch (error) {
+                log(`❌ 检查失败: ${error.message}`);
+            }
+        }
+        
+        // 页面加载完成后的提示
+        window.addEventListener('load', function() {
+            log('📄 测试页面已加载');
+            log('💡 请点击"加载检查脚本"开始测试');
+        });
+    </script>
+</body>
+</html>

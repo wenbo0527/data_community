@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连接点调试工具测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ 连接点调试工具测试</h1>
+        
+        <div class="test-section">
+            <h3>1. 检查调试工具状态</h3>
+            <button onclick="checkDebugTool()">检查调试工具是否加载</button>
+            <button onclick="checkGraphInstance()">检查Graph实例</button>
+        </div>
+
+        <div class="test-section">
+            <h3>2. 基础调试功能</h3>
+            <button onclick="testDebugNodePorts()">测试节点端口调试</button>
+            <button onclick="testDebugConnectionPoints()">测试连接点调试</button>
+            <button onclick="testDebugX6Config()">测试X6配置调试</button>
+        </div>
+
+        <div class="test-section">
+            <h3>3. 完整诊断</h3>
+            <button onclick="runFullDiagnosis()">运行完整诊断</button>
+            <button onclick="clearOutput()">清空输出</button>
+        </div>
+
+        <div id="output"></div>
+    </div>
+
+    <script src="/debug-connection-points.js"></script>
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+            console.log(message);
+        }
+
+        function checkDebugTool() {
+            log('=== 检查调试工具状态 ===');
+            log(`debugNodePorts: ${typeof window.debugNodePorts}`);
+            log(`debugConnectionPoints: ${typeof window.debugConnectionPoints}`);
+            log(`debugX6Config: ${typeof window.debugX6Config}`);
+            log(`runFullDiagnosis: ${typeof window.runFullDiagnosis}`);
+            
+            if (typeof window.debugNodePorts === 'function') {
+                log('✅ 调试工具已成功加载');
+            } else {
+                log('❌ 调试工具未加载');
+            }
+        }
+
+        function checkGraphInstance() {
+            log('=== 检查Graph实例 ===');
+            log(`window.graph: ${typeof window.graph}`);
+            log(`window.x6Graph: ${typeof window.x6Graph}`);
+            
+            if (window.graph) {
+                try {
+                    const nodes = window.graph.getNodes();
+                    const edges = window.graph.getEdges();
+                    log(`节点数量: ${nodes.length}`);
+                    log(`连线数量: ${edges.length}`);
+                } catch (error) {
+                    log(`Graph实例访问错误: ${error.message}`);
+                }
+            } else {
+                log('❌ Graph实例不可用');
+            }
+        }
+
+        function testDebugNodePorts() {
+            log('=== 测试节点端口调试 ===');
+            if (typeof window.debugNodePorts === 'function') {
+                try {
+                    window.debugNodePorts();
+                    log('✅ debugNodePorts 执行完成，请查看控制台');
+                } catch (error) {
+                    log(`❌ debugNodePorts 执行错误: ${error.message}`);
+                }
+            } else {
+                log('❌ debugNodePorts 函数不可用');
+            }
+        }
+
+        function testDebugConnectionPoints() {
+            log('=== 测试连接点调试 ===');
+            if (typeof window.debugConnectionPoints === 'function') {
+                try {
+                    window.debugConnectionPoints();
+                    log('✅ debugConnectionPoints 执行完成，请查看控制台');
+                } catch (error) {
+                    log(`❌ debugConnectionPoints 执行错误: ${error.message}`);
+                }
+            } else {
+                log('❌ debugConnectionPoints 函数不可用');
+            }
+        }
+
+        function testDebugX6Config() {
+            log('=== 测试X6配置调试 ===');
+            if (typeof window.debugX6Config === 'function') {
+                try {
+                    window.debugX6Config();
+                    log('✅ debugX6Config 执行完成，请查看控制台');
+                } catch (error) {
+                    log(`❌ debugX6Config 执行错误: ${error.message}`);
+                }
+            } else {
+                log('❌ debugX6Config 函数不可用');
+            }
+        }
+
+        function runFullDiagnosis() {
+            log('=== 运行完整诊断 ===');
+            if (typeof window.runFullDiagnosis === 'function') {
+                try {
+                    window.runFullDiagnosis();
+                    log('✅ runFullDiagnosis 执行完成，请查看控制台');
+                } catch (error) {
+                    log(`❌ runFullDiagnosis 执行错误: ${error.message}`);
+                }
+            } else {
+                log('❌ runFullDiagnosis 函数不可用');
+            }
+        }
+
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+
+        // 页面加载完成后自动检查
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('页面加载完成，开始检查调试工具...');
+                checkDebugTool();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

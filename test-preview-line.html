@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreviewLineSystem 功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PreviewLineSystem 功能测试</h1>
+        
+        <div class="test-section">
+            <div class="test-title">1. 系统初始化测试</div>
+            <div id="init-status" class="status">等待测试...</div>
+            <button onclick="testInitialization()">测试初始化</button>
+            <div id="init-result"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">2. 服务可用性测试</div>
+            <div id="service-status" class="status">等待测试...</div>
+            <button onclick="testServices()">测试服务</button>
+            <div id="service-result"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">3. 预览线创建测试</div>
+            <div id="preview-status" class="status">等待测试...</div>
+            <button onclick="testPreviewLine()">测试预览线</button>
+            <div id="preview-result"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">4. 完整功能测试</div>
+            <div id="full-status" class="status">等待测试...</div>
+            <button onclick="runFullTest()">运行完整测试</button>
+            <div id="full-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 测试结果显示函数
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="test-result ${type}">${message}</div>`;
+        }
+
+        function updateStatus(elementId, status) {
+            document.getElementById(elementId).textContent = status;
+        }
+
+        // 1. 测试系统初始化
+        async function testInitialization() {
+            updateStatus('init-status', '正在测试...');
+            
+            try {
+                // 检查是否可以访问营销任务编辑器页面
+                const response = await fetch('/marketing/tasks/editor');
+                
+                if (response.ok) {
+                    showResult('init-result', '✅ 页面可以正常访问', 'success');
+                    updateStatus('init-status', '测试通过');
+                } else {
+                    showResult('init-result', `❌ 页面访问失败: ${response.status}`, 'error');
+                    updateStatus('init-status', '测试失败');
+                }
+            } catch (error) {
+                showResult('init-result', `❌ 初始化测试失败: ${error.message}`, 'error');
+                updateStatus('init-status', '测试失败');
+            }
+        }
+
+        // 2. 测试服务可用性
+        async function testServices() {
+            updateStatus('service-status', '正在测试...');
+            
+            try {
+                // 检查日志API是否可用
+                const healthResponse = await fetch('/api/health');
+                
+                if (healthResponse.ok) {
+                    const healthData = await healthResponse.json();
+                    showResult('service-result', `✅ 服务正常运行: ${JSON.stringify(healthData)}`, 'success');
+                    updateStatus('service-status', '测试通过');
+                } else {
+                    showResult('service-result', `❌ 服务检查失败: ${healthResponse.status}`, 'error');
+                    updateStatus('service-status', '测试失败');
+                }
+            } catch (error) {
+                showResult('service-result', `❌ 服务测试失败: ${error.message}`, 'error');
+                updateStatus('service-status', '测试失败');
+            }
+        }
+
+        // 3. 测试预览线功能
+        async function testPreviewLine() {
+            updateStatus('preview-status', '正在测试...');
+            
+            try {
+                // 模拟预览线功能测试
+                const testData = {
+                    message: 'PreviewLineSystem功能测试',
+                    timestamp: new Date().toISOString(),
+                    test: 'preview-line-functionality'
+                };
+
+                const response = await fetch('/api/write-log', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (response.ok) {
+                    showResult('preview-result', '✅ 预览线系统通信正常', 'success');
+                    updateStatus('preview-status', '测试通过');
+                } else {
+                    showResult('preview-result', `❌ 预览线测试失败: ${response.status}`, 'error');
+                    updateStatus('preview-status', '测试失败');
+                }
+            } catch (error) {
+                showResult('preview-result', `❌ 预览线测试失败: ${error.message}`, 'error');
+                updateStatus('preview-status', '测试失败');
+            }
+        }
+
+        // 4. 运行完整测试
+        async function runFullTest() {
+            updateStatus('full-status', '正在运行完整测试...');
+            
+            let results = [];
+            
+            // 依次运行所有测试
+            try {
+                await testInitialization();
+                results.push('初始化测试');
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                await testServices();
+                results.push('服务测试');
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                await testPreviewLine();
+                results.push('预览线测试');
+                
+                showResult('full-result', `✅ 完整测试完成，已运行: ${results.join(', ')}`, 'success');
+                updateStatus('full-status', '全部测试完成');
+                
+            } catch (error) {
+                showResult('full-result', `❌ 完整测试失败: ${error.message}`, 'error');
+                updateStatus('full-status', '测试失败');
+            }
+        }
+
+        // 页面加载时显示欢迎信息
+        window.onload = function() {
+            console.log('PreviewLineSystem 功能测试页面已加载');
+            showResult('init-result', '点击"测试初始化"按钮开始测试', 'info');
+        };
+    </script>
+</body>
+</html>

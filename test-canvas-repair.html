@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画布系统修复验证</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .log-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .log-entry.error { color: #dc3545; }
+        .log-entry.success { color: #28a745; }
+        .log-entry.warning { color: #ffc107; }
+        .log-entry.info { color: #17a2b8; }
+        .iframe-container {
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .iframe-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 画布系统修复验证</h1>
+            <p>验证localStorage修复、数据迁移和初始化顺序优化效果</p>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 系统状态检查</h3>
+            <div id="system-status">
+                <p>正在检查系统状态...</p>
+            </div>
+            <button class="button" onclick="checkSystemStatus()">重新检查</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 localStorage环境测试</h3>
+            <div id="storage-status">
+                <p>正在测试localStorage环境...</p>
+            </div>
+            <button class="button" onclick="testStorageEnvironment()">测试存储环境</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 测试日志</h3>
+            <div class="log-container" id="log-container">
+                <div class="log-entry info">系统初始化中...</div>
+            </div>
+            <button class="button" onclick="clearLogs()">清空日志</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 预览线功能测试页面</h3>
+            <p>下面是嵌入的测试页面，可以直接进行功能测试：</p>
+            <div class="iframe-container">
+                <iframe src="http://localhost:5173/test/preview-line" id="test-iframe"></iframe>
+            </div>
+            <button class="button" onclick="reloadTestPage()">重新加载测试页面</button>
+            <button class="button" onclick="openInNewTab()">在新标签页打开</button>
+        </div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('log-container');
+        
+        function addLog(level, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${level}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            logContainer.innerHTML = '<div class="log-entry info">日志已清空</div>';
+        }
+
+        function checkSystemStatus() {
+            addLog('info', '开始检查系统状态...');
+            
+            const statusDiv = document.getElementById('system-status');
+            let statusHTML = '';
+
+            // 检查基础环境
+            const hasWindow = typeof window !== 'undefined';
+            const hasLocalStorage = hasWindow && !!window.localStorage;
+            const hasDocument = typeof document !== 'undefined';
+            
+            statusHTML += `<p>🌐 浏览器环境: <span class="status ${hasWindow ? 'success' : 'error'}">${hasWindow ? '✅ 正常' : '❌ 异常'}</span></p>`;
+            statusHTML += `<p>💾 localStorage支持: <span class="status ${hasLocalStorage ? 'success' : 'error'}">${hasLocalStorage ? '✅ 支持' : '❌ 不支持'}</span></p>`;
+            statusHTML += `<p>📄 DOM环境: <span class="status ${hasDocument ? 'success' : 'error'}">${hasDocument ? '✅ 就绪' : '❌ 未就绪'}</span></p>`;
+
+            // 检查localStorage方法
+            if (hasLocalStorage) {
+                const methods = ['getItem', 'setItem', 'removeItem', 'clear', 'key'];
+                methods.forEach(method => {
+                    const hasMethod = typeof localStorage[method] === 'function';
+                    statusHTML += `<p>🔧 localStorage.${method}: <span class="status ${hasMethod ? 'success' : 'error'}">${hasMethod ? '✅ 可用' : '❌ 不可用'}</span></p>`;
+                    addLog(hasMethod ? 'success' : 'error', `localStorage.${method} ${hasMethod ? '可用' : '不可用'}`);
+                });
+            }
+
+            statusDiv.innerHTML = statusHTML;
+            addLog('info', '系统状态检查完成');
+        }
+
+        function testStorageEnvironment() {
+            addLog('info', '开始测试localStorage环境...');
+            
+            const statusDiv = document.getElementById('storage-status');
+            let results = [];
+
+            try {
+                // 测试基本功能
+                const testKey = '__repair_test__';
+                const testValue = { test: true, timestamp: Date.now() };
+                
+                // 写入测试
+                localStorage.setItem(testKey, JSON.stringify(testValue));
+                results.push({ test: '写入测试', status: 'success', message: '成功' });
+                addLog('success', 'localStorage写入测试通过');
+
+                // 读取测试
+                const retrieved = localStorage.getItem(testKey);
+                if (retrieved) {
+                    const parsed = JSON.parse(retrieved);
+                    if (parsed.test && parsed.timestamp) {
+                        results.push({ test: '读取测试', status: 'success', message: '成功' });
+                        addLog('success', 'localStorage读取测试通过');
+                    } else {
+                        results.push({ test: '读取测试', status: 'error', message: '数据完整性验证失败' });
+                        addLog('error', 'localStorage读取测试失败：数据完整性验证失败');
+                    }
+                } else {
+                    results.push({ test: '读取测试', status: 'error', message: '读取返回null' });
+                    addLog('error', 'localStorage读取测试失败：读取返回null');
+                }
+
+                // 删除测试
+                localStorage.removeItem(testKey);
+                const afterRemoval = localStorage.getItem(testKey);
+                if (afterRemoval === null) {
+                    results.push({ test: '删除测试', status: 'success', message: '成功' });
+                    addLog('success', 'localStorage删除测试通过');
+                } else {
+                    results.push({ test: '删除测试', status: 'error', message: '删除失败' });
+                    addLog('error', 'localStorage删除测试失败');
+                }
+
+                // 容量测试
+                try {
+                    const largeData = 'x'.repeat(1024 * 100); // 100KB
+                    localStorage.setItem('__capacity_test__', largeData);
+                    localStorage.removeItem('__capacity_test__');
+                    results.push({ test: '容量测试', status: 'success', message: '100KB数据写入成功' });
+                    addLog('success', 'localStorage容量测试通过');
+                } catch (e) {
+                    results.push({ test: '容量测试', status: 'warning', message: '可能存在容量限制' });
+                    addLog('warning', 'localStorage容量测试警告：可能存在容量限制');
+                }
+
+            } catch (error) {
+                results.push({ test: '环境测试', status: 'error', message: error.message });
+                addLog('error', `localStorage环境测试失败: ${error.message}`);
+            }
+
+            // 显示结果
+            let resultHTML = '<h4>测试结果:</h4>';
+            results.forEach(result => {
+                resultHTML += `<p>${result.test}: <span class="status ${result.status}">${result.message}</span></p>`;
+            });
+
+            statusDiv.innerHTML = resultHTML;
+            addLog('info', 'localStorage环境测试完成');
+        }
+
+        function reloadTestPage() {
+            const iframe = document.getElementById('test-iframe');
+            iframe.src = iframe.src;
+            addLog('info', '重新加载测试页面');
+        }
+
+        function openInNewTab() {
+            window.open('http://localhost:5173/test/preview-line', '_blank');
+            addLog('info', '在新标签页打开测试页面');
+        }
+
+        // 页面加载完成后自动执行检查
+        window.addEventListener('load', function() {
+            addLog('info', '页面加载完成，开始自动检查...');
+            setTimeout(() => {
+                checkSystemStatus();
+                setTimeout(() => {
+                    testStorageEnvironment();
+                }, 1000);
+            }, 500);
+        });
+
+        // 监听iframe加载事件
+        document.getElementById('test-iframe').addEventListener('load', function() {
+            addLog('success', '测试页面加载完成');
+        });
+
+        // 监听iframe错误事件
+        document.getElementById('test-iframe').addEventListener('error', function() {
+            addLog('error', '测试页面加载失败');
+        });
+    </script>
+</body>
+</html>

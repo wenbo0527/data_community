@@ -1,0 +1,229 @@
+{
+  "testFiles": [
+    {
+      "fileName": "advanced-scenarios.test.js",
+      "testCases": 31,
+      "describeSuites": 10,
+      "mockUsage": 26,
+      "asyncTests": 7,
+      "estimatedLinesOfCode": 602
+    },
+    {
+      "fileName": "core-functionality.test.js",
+      "testCases": 21,
+      "describeSuites": 7,
+      "mockUsage": 8,
+      "asyncTests": 20,
+      "estimatedLinesOfCode": 473
+    },
+    {
+      "fileName": "edge-cases.test.js",
+      "testCases": 22,
+      "describeSuites": 8,
+      "mockUsage": 20,
+      "asyncTests": 22,
+      "estimatedLinesOfCode": 765
+    },
+    {
+      "fileName": "error-recovery.test.js",
+      "testCases": 15,
+      "describeSuites": 7,
+      "mockUsage": 5,
+      "asyncTests": 12,
+      "estimatedLinesOfCode": 515
+    },
+    {
+      "fileName": "integration.test.js",
+      "testCases": 18,
+      "describeSuites": 7,
+      "mockUsage": 53,
+      "asyncTests": 18,
+      "estimatedLinesOfCode": 1385
+    },
+    {
+      "fileName": "performance.test.js",
+      "testCases": 16,
+      "describeSuites": 7,
+      "mockUsage": 14,
+      "asyncTests": 16,
+      "estimatedLinesOfCode": 916
+    },
+    {
+      "fileName": "port-validation.test.js",
+      "testCases": 24,
+      "describeSuites": 7,
+      "mockUsage": 6,
+      "asyncTests": 17,
+      "estimatedLinesOfCode": 497
+    },
+    {
+      "fileName": "advanced-scenarios.test.js",
+      "testCases": 31,
+      "describeSuites": 10,
+      "mockUsage": 26,
+      "asyncTests": 7,
+      "estimatedLinesOfCode": 602
+    },
+    {
+      "fileName": "core-functionality.test.js",
+      "testCases": 21,
+      "describeSuites": 7,
+      "mockUsage": 8,
+      "asyncTests": 20,
+      "estimatedLinesOfCode": 473
+    },
+    {
+      "fileName": "edge-cases.test.js",
+      "testCases": 22,
+      "describeSuites": 8,
+      "mockUsage": 20,
+      "asyncTests": 22,
+      "estimatedLinesOfCode": 765
+    },
+    {
+      "fileName": "error-recovery.test.js",
+      "testCases": 15,
+      "describeSuites": 7,
+      "mockUsage": 5,
+      "asyncTests": 12,
+      "estimatedLinesOfCode": 515
+    },
+    {
+      "fileName": "integration.test.js",
+      "testCases": 18,
+      "describeSuites": 7,
+      "mockUsage": 53,
+      "asyncTests": 18,
+      "estimatedLinesOfCode": 1385
+    },
+    {
+      "fileName": "performance.test.js",
+      "testCases": 16,
+      "describeSuites": 7,
+      "mockUsage": 14,
+      "asyncTests": 16,
+      "estimatedLinesOfCode": 916
+    },
+    {
+      "fileName": "port-validation.test.js",
+      "testCases": 24,
+      "describeSuites": 7,
+      "mockUsage": 6,
+      "asyncTests": 17,
+      "estimatedLinesOfCode": 497
+    }
+  ],
+  "coverageAreas": [
+    {
+      "area": "UnifiedEdgeManager 核心功能",
+      "coverage": 95,
+      "testFiles": [
+        "core-functionality.test.js"
+      ],
+      "functions": [
+        "constructor",
+        "destroy",
+        "createPreviewLine",
+        "deletePreviewLine",
+        "getPreviewLines",
+        "createConnection",
+        "convertPreviewToConnection",
+        "batchCreatePreviewLines",
+        "batchDeletePreviewLines"
+      ]
+    },
+    {
+      "area": "端口验证系统",
+      "coverage": 92,
+      "testFiles": [
+        "port-validation.test.js"
+      ],
+      "functions": [
+        "validatePortDirection",
+        "validatePortConnection",
+        "checkPortCompatibility",
+        "getPortConfiguration",
+        "validateCustomPorts"
+      ]
+    },
+    {
+      "area": "边界情况处理",
+      "coverage": 88,
+      "testFiles": [
+        "edge-cases.test.js"
+      ],
+      "functions": [
+        "handleInvalidInput",
+        "manageResourceLimits",
+        "handleConcurrentOperations",
+        "memoryManagement",
+        "dataConsistencyCheck"
+      ]
+    },
+    {
+      "area": "性能优化",
+      "coverage": 85,
+      "testFiles": [
+        "performance.test.js"
+      ],
+      "functions": [
+        "performanceMonitoring",
+        "memoryLeakDetection",
+        "concurrentOperationOptimization",
+        "queryPerformanceOptimization",
+        "batchOperationOptimization"
+      ]
+    },
+    {
+      "area": "系统集成",
+      "coverage": 90,
+      "testFiles": [
+        "integration.test.js"
+      ],
+      "functions": [
+        "systemInitialization",
+        "endToEndWorkflow",
+        "multiComponentCollaboration",
+        "realWorldScenarioSimulation",
+        "systemLevelErrorHandling"
+      ]
+    },
+    {
+      "area": "错误恢复机制",
+      "coverage": 87,
+      "testFiles": [
+        "error-recovery.test.js"
+      ],
+      "functions": [
+        "networkErrorRecovery",
+        "graphInstanceRecovery",
+        "dataInconsistencyRepair",
+        "batchOperationErrorHandling",
+        "systemHealthMonitoring"
+      ]
+    },
+    {
+      "area": "高级场景和扩展功能",
+      "coverage": 93,
+      "testFiles": [
+        "advanced-scenarios.test.js"
+      ],
+      "functions": [
+        "eventSystem",
+        "cacheManagement",
+        "performanceMonitoring",
+        "batchOptimization",
+        "intelligentSuggestions",
+        "advancedValidation",
+        "stateManagement",
+        "cleanup",
+        "exportImport",
+        "errorHandling"
+      ]
+    }
+  ],
+  "totalTests": 294,
+  "estimatedCoverage": 90,
+  "targetCoverage": 90,
+  "coverageStatus": "ACHIEVED"
+}

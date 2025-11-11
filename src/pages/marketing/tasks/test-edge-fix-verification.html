@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>边创建错误修复验证</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .graph-container {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+        .test-controls {
+            margin: 10px 0;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+        .test-results {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 边创建错误修复验证</h1>
+        <p>此页面用于验证边创建错误修复的效果，包括源节点ID验证、目标节点配置和数据预处理等。</p>
+        
+        <div class="test-section">
+            <h3>📊 测试1: 图形数据加载</h3>
+            <div id="graph1" class="graph-container"></div>
+            <div class="test-controls">
+                <button onclick="runLoadDataTest()">运行数据加载测试</button>
+                <button onclick="clearGraph('graph1')">清空图形</button>
+            </div>
+            <div id="loadTestResults" class="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 测试2: 边创建验证</h3>
+            <div id="graph2" class="graph-container"></div>
+            <div class="test-controls">
+                <button onclick="runEdgeCreationTest()">运行边创建测试</button>
+                <button onclick="testPreviewLine()">测试预览线</button>
+                <button onclick="testErrorHandling()">测试错误处理</button>
+                <button onclick="clearGraph('graph2')">清空图形</button>
+            </div>
+            <div id="edgeTestResults" class="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📈 测试结果汇总</h3>
+            <div id="summaryResults" class="test-results"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 动态导入 X6 库
+        const { Graph } = await import('@antv/x6')
+        
+        // 简化的 GraphService 模拟类
+        class MockGraphService {
+            constructor(graph) {
+                this.graph = graph
+                this.nodes = []
+                this.edges = []
+            }
+            
+            async initialize(graph) {
+                this.graph = graph
+                return Promise.resolve()
+            }
+            
+            async loadGraphData(data) {
+                // 加载节点
+                if (data.nodes) {
+                    for (const nodeData of data.nodes) {
+                        await this.addNode(nodeData)
+                    }
+                }
+                
+                // 加载边
+                if (data.edges) {
+                    for (const edgeData of data.edges) {
+                        try {
+                            await this.addEdge(edgeData)
+                        } catch (error) {
+                            console.warn('边创建失败:', error.message, edgeData)
+                        }
+                    }
+                }
+                
+                return { nodes: this.nodes.length, edges: this.edges.length }
+            }
+            
+            async addNode(nodeData) {
+                // 验证节点数据
+                if (!nodeData.id) {
+                    throw new Error('节点ID不能为空')
+                }
+                
+                const node = this.graph.addNode({
+                    id: nodeData.id,
+                    x: nodeData.x || 0,
+                    y: nodeData.y || 0,
+                    width: nodeData.width || 120,
+                    height: nodeData.height || 60,
+                    label: nodeData.label || nodeData.id,
+                    shape: 'rect',
+                    attrs: {
+                        body: {
+                            stroke: '#5F95FF',
+                            fill: '#EFF4FF',
+                        },
+                        text: {
+                            fontSize: 12,
+                            fill: '#262626',
+                        },
+                    },
+                })
+                
+                this.nodes.push(node)
+                return node
+            }
+            
+            async addEdge(edgeData) {
+                // 边数据预处理和验证
+                const processedEdge = this.preprocessEdgeData(edgeData)
+                
+                if (!processedEdge.source || !processedEdge.source.cell) {
+                    throw new Error('源节点ID不能为空')
+                }
+                
+                if (!processedEdge.target || !processedEdge.target.cell) {
+                    if (!processedEdge.isPreview) {
+                        throw new Error('目标节点ID不能为空')
+                    }
+                    // 预览线可以没有目标节点
+                    processedEdge.target = { cell: 'virtual-target' }
+                }
+                
+                // 检查源节点是否存在
+                const sourceNode = this.graph.getCellById(processedEdge.source.cell)
+                if (!sourceNode) {
+                    throw new Error(`源节点 ${processedEdge.source.cell} 不存在`)
+                }
+                
+                // 检查目标节点是否存在（非预览线）
+                if (!processedEdge.isPreview) {
+                    const targetNode = this.graph.getCellById(processedEdge.target.cell)
+                    if (!targetNode) {
+                        throw new Error(`目标节点 ${processedEdge.target.cell} 不存在`)
+                    }
+                }
+                
+                const edge = this.graph.addEdge({
+                    id: processedEdge.id,
+                    source: processedEdge.source,
+                    target: processedEdge.target,
+                    attrs: {
+                        line: {
+                            stroke: processedEdge.isPreview ? '#ff6b6b' : '#5F95FF',
+                            strokeWidth: processedEdge.isPreview ? 2 : 1,
+                            strokeDasharray: processedEdge.isPreview ? '5 5' : '',
+                        },
+                    },
+                    data: {
+                        isPreview: processedEdge.isPreview || false,
+                        type: processedEdge.type || 'connection'
+                    }
+                })
+                
+                this.edges.push(edge)
+                return edge
+            }
+            
+            preprocessEdgeData(edgeData) {
+                if (!edgeData) {
+                    throw new Error('边数据不能为空')
+                }
+                
+                const processed = { ...edgeData }
+                
+                // 处理旧格式的边数据
+                if (processed.sourceNodeId && !processed.source) {
+                    processed.source = { cell: processed.sourceNodeId }
+                }
+                
+                if (processed.targetNodeId && !processed.target) {
+                    processed.target = { cell: processed.targetNodeId }
+                }
+                
+                // 确保 source 对象存在
+                if (!processed.source) {
+                    processed.source = {}
+                }
+                
+                // 确保 target 对象存在（除非是预览线）
+                if (!processed.target && !processed.isPreview) {
+                    processed.target = {}
+                }
+                
+                return processed
+            }
+            
+            getNodes() {
+                return this.nodes
+            }
+            
+            getEdges() {
+                return this.edges
+            }
+        }
+        
+        // 全局变量
+        let graph1, graph2, graphService1, graphService2
+        let testResults = {
+            loadData: [],
+            edgeCreation: [],
+            errorHandling: []
+        }
+        
+        // 初始化图形
+        function initGraphs() {
+            // 图形1 - 数据加载测试
+            graph1 = new Graph({
+                container: document.getElementById('graph1'),
+                width: 800,
+                height: 400,
+                grid: true,
+                panning: true,
+                mousewheel: {
+                    enabled: true,
+                    zoomAtMousePosition: true,
+                    modifiers: 'ctrl',
+                    minScale: 0.5,
+                    maxScale: 3,
+                },
+            })
+            
+            // 图形2 - 边创建测试
+            graph2 = new Graph({
+                container: document.getElementById('graph2'),
+                width: 800,
+                height: 400,
+                grid: true,
+                panning: true,
+                mousewheel: {
+                    enabled: true,
+                    zoomAtMousePosition: true,
+                    modifiers: 'ctrl',
+                    minScale: 0.5,
+                    maxScale: 3,
+                },
+            })
+            
+            // 初始化MockGraphService
+            graphService1 = new MockGraphService(graph1)
+            graphService2 = new MockGraphService(graph2)
+            
+            Promise.all([
+                graphService1.initialize(graph1),
+                graphService2.initialize(graph2)
+            ]).then(() => {
+                log('✅ 图形初始化完成')
+            }).catch(error => {
+                log(`❌ 图形初始化失败: ${error.message}`, 'error')
+            })
+        }
+        
+        // 日志函数
+        function log(message, type = 'info') {
+            console.log(message)
+            const timestamp = new Date().toLocaleTimeString()
+            const logEntry = `[${timestamp}] ${message}\n`
+            
+            // 更新对应的结果区域
+            const resultElements = document.querySelectorAll('.test-results')
+            resultElements.forEach(el => {
+                if (el.textContent.length > 5000) {
+                    el.textContent = el.textContent.slice(-3000) // 保留最后3000字符
+                }
+            })
+        }
+        
+        // 测试数据
+        const testNodes = [
+            {
+                id: 'node1',
+                x: 100,
+                y: 100,
+                width: 120,
+                height: 60,
+                label: '测试节点1',
+                type: 'task'
+            },
+            {
+                id: 'node2',
+                x: 300,
+                y: 200,
+                width: 120,
+                height: 60,
+                label: '测试节点2',
+                type: 'task'
+            },
+            {
+                id: 'node3',
+                x: 500,
+                y: 100,
+                width: 120,
+                height: 60,
+                label: '测试节点3',
+                type: 'task'
+            }
+        ]
+        
+        const testEdges = [
+            // 正常的连接线
+            {
+                id: 'edge1',
+                source: { cell: 'node1', port: 'out' },
+                target: { cell: 'node2', port: 'in' },
+                type: 'connection'
+            },
+            
+            // 预览线
+            {
+                id: 'preview-line-1',
+                source: { cell: 'node2' },
+                target: { cell: 'virtual-target-1' },
+                isPreview: true,
+                type: 'preview'
+            },
+            
+            // 有问题的边数据
+            {
+                id: 'edge-bad-1',
+                source: {},
+                target: { cell: 'node3', port: 'in' },
+                type: 'connection'
+            },
+            
+            {
+                id: 'edge-bad-2',
+                source: { cell: 'node1', port: 'out' },
+                target: undefined,
+                type: 'connection'
+            }
+        ]
+        
+        // 数据加载测试
+        window.runLoadDataTest = async function() {
+            const resultsEl = document.getElementById('loadTestResults')
+            resultsEl.textContent = '🔄 开始数据加载测试...\n'
+            
+            try {
+                log('📊 开始数据加载测试')
+                
+                const result = await graphService1.loadGraphData({
+                    nodes: testNodes,
+                    edges: testEdges
+                })
+                
+                const finalNodes = graphService1.getNodes()
+                const finalEdges = graphService1.getEdges()
+                
+                const summary = `✅ 数据加载测试完成
+📊 节点加载: ${finalNodes.length}/${testNodes.length}
+📊 边加载: ${finalEdges.length}/${testEdges.length}
+📊 预览线: ${finalEdges.filter(e => e.getData()?.isPreview || e.id.includes('preview')).length}
+📊 连接线: ${finalEdges.filter(e => !e.getData()?.isPreview && !e.id.includes('preview')).length}`
+                
+                resultsEl.textContent += summary
+                testResults.loadData.push({ success: true, summary })
+                
+            } catch (error) {
+                const errorMsg = `❌ 数据加载测试失败: ${error.message}`
+                resultsEl.textContent += errorMsg
+                testResults.loadData.push({ success: false, error: error.message })
+                log(errorMsg, 'error')
+            }
+            
+            updateSummary()
+        }
+        
+        // 边创建测试
+        window.runEdgeCreationTest = async function() {
+            const resultsEl = document.getElementById('edgeTestResults')
+            resultsEl.textContent = '🔄 开始边创建测试...\n'
+            
+            try {
+                // 先添加节点
+                for (const nodeData of testNodes) {
+                    await graphService2.addNode(nodeData)
+                }
+                
+                // 测试正常边创建
+                const normalEdge = await graphService2.addEdge({
+                    id: 'test-normal-edge',
+                    source: { cell: 'node1', port: 'out' },
+                    target: { cell: 'node2', port: 'in' }
+                })
+                
+                resultsEl.textContent += '✅ 正常边创建成功\n'
+                testResults.edgeCreation.push({ test: 'normal', success: true })
+                
+            } catch (error) {
+                const errorMsg = `❌ 边创建测试失败: ${error.message}\n`
+                resultsEl.textContent += errorMsg
+                testResults.edgeCreation.push({ test: 'normal', success: false, error: error.message })
+            }
+            
+            updateSummary()
+        }
+        
+        // 预览线测试
+        window.testPreviewLine = async function() {
+            const resultsEl = document.getElementById('edgeTestResults')
+            
+            try {
+                const previewEdge = await graphService2.addEdge({
+                    id: 'test-preview-edge',
+                    source: { cell: 'node2' },
+                    isPreview: true
+                })
+                
+                resultsEl.textContent += '✅ 预览线创建成功\n'
+                testResults.edgeCreation.push({ test: 'preview', success: true })
+                
+            } catch (error) {
+                const errorMsg = `❌ 预览线创建失败: ${error.message}\n`
+                resultsEl.textContent += errorMsg
+                testResults.edgeCreation.push({ test: 'preview', success: false, error: error.message })
+            }
+            
+            updateSummary()
+        }
+        
+        // 错误处理测试
+        window.testErrorHandling = async function() {
+            const resultsEl = document.getElementById('edgeTestResults')
+            
+            const errorTestCases = [
+                {
+                    name: '空源节点ID',
+                    data: { id: 'test-empty-source', source: { cell: '' }, target: { cell: 'node1' } }
+                },
+                {
+                    name: '未定义目标节点',
+                    data: { id: 'test-undefined-target', source: { cell: 'node1' }, target: undefined }
+                },
+                {
+                    name: '不存在的源节点',
+                    data: { id: 'test-nonexistent-source', source: { cell: 'fake-node' }, target: { cell: 'node1' } }
+                }
+            ]
+            
+            for (const testCase of errorTestCases) {
+                try {
+                    await graphService2.addEdge(testCase.data)
+                    resultsEl.textContent += `⚠️ ${testCase.name}: 应该失败但成功了\n`
+                    testResults.errorHandling.push({ test: testCase.name, success: false, reason: '应该失败但成功了' })
+                } catch (error) {
+                    resultsEl.textContent += `✅ ${testCase.name}: 正确处理错误\n`
+                    testResults.errorHandling.push({ test: testCase.name, success: true, error: error.message })
+                }
+            }
+            
+            updateSummary()
+        }
+        
+        // 清空图形
+        window.clearGraph = function(graphId) {
+            if (graphId === 'graph1') {
+                graph1.clearCells()
+                document.getElementById('loadTestResults').textContent = ''
+            } else if (graphId === 'graph2') {
+                graph2.clearCells()
+                document.getElementById('edgeTestResults').textContent = ''
+            }
+        }
+        
+        // 更新汇总
+        function updateSummary() {
+            const summaryEl = document.getElementById('summaryResults')
+            
+            const loadDataSuccess = testResults.loadData.filter(r => r.success).length
+            const loadDataTotal = testResults.loadData.length
+            
+            const edgeCreationSuccess = testResults.edgeCreation.filter(r => r.success).length
+            const edgeCreationTotal = testResults.edgeCreation.length
+            
+            const errorHandlingSuccess = testResults.errorHandling.filter(r => r.success).length
+            const errorHandlingTotal = testResults.errorHandling.length
+            
+            summaryEl.textContent = `📈 测试结果汇总:
+📊 数据加载测试: ${loadDataSuccess}/${loadDataTotal} 成功
+🔗 边创建测试: ${edgeCreationSuccess}/${edgeCreationTotal} 成功
+⚠️ 错误处理测试: ${errorHandlingSuccess}/${errorHandlingTotal} 成功
+
+总体成功率: ${((loadDataSuccess + edgeCreationSuccess + errorHandlingSuccess) / (loadDataTotal + edgeCreationTotal + errorHandlingTotal) * 100).toFixed(1)}%`
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initGraphs)
+    </script>
+</body>
+</html>

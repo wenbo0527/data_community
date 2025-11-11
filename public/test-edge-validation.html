@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>边创建错误修复验证测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .test-section {
+            margin: 20px;
+            padding: 25px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .test-section:hover {
+            border-color: #4facfe;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.2);
+        }
+        
+        .test-section h3 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .test-section h3::before {
+            content: "🔧";
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .test-controls button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .test-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .test-controls button:active {
+            transform: translateY(0);
+        }
+        
+        .test-results {
+            margin: 20px 0;
+            padding: 20px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .success { color: #2ecc71; font-weight: bold; }
+        .error { color: #e74c3c; font-weight: bold; }
+        .warning { color: #f39c12; font-weight: bold; }
+        .info { color: #3498db; font-weight: bold; }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #2ecc71; }
+        .status-error { background: #e74c3c; }
+        .status-warning { background: #f39c12; }
+        .status-info { background: #3498db; }
+        
+        .summary-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 20px;
+            padding: 25px;
+            border-radius: 10px;
+        }
+        
+        .summary-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.5em;
+        }
+        
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            height: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: #2ecc71;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 边创建错误修复验证</h1>
+            <p>验证源节点ID验证、目标节点配置修复、边数据预处理等功能</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>源节点ID验证测试</h3>
+            <div class="test-controls">
+                <button onclick="runSourceNodeValidationTest()">运行源节点验证测试</button>
+                <button onclick="clearResults('sourceResults')">清空结果</button>
+            </div>
+            <div id="sourceResults" class="test-results">等待测试运行...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>目标节点配置修复测试</h3>
+            <div class="test-controls">
+                <button onclick="runTargetNodeFixTest()">运行目标节点修复测试</button>
+                <button onclick="clearResults('targetResults')">清空结果</button>
+            </div>
+            <div id="targetResults" class="test-results">等待测试运行...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>边数据预处理测试</h3>
+            <div class="test-controls">
+                <button onclick="runEdgePreprocessTest()">运行数据预处理测试</button>
+                <button onclick="clearResults('preprocessResults')">清空结果</button>
+            </div>
+            <div id="preprocessResults" class="test-results">等待测试运行...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>错误处理机制测试</h3>
+            <div class="test-controls">
+                <button onclick="runErrorHandlingTest()">运行错误处理测试</button>
+                <button onclick="runAllTests()">运行所有测试</button>
+                <button onclick="clearResults('errorResults')">清空结果</button>
+            </div>
+            <div id="errorResults" class="test-results">等待测试运行...</div>
+        </div>
+        
+        <div class="summary-section">
+            <h3>📊 测试结果汇总</h3>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="summaryResults" class="test-results">等待测试开始...</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局测试状态
+        var testResults = {
+            sourceValidation: [],
+            targetFix: [],
+            preprocess: [],
+            errorHandling: []
+        };
+        
+        var totalTests = 0;
+        var passedTests = 0;
+        
+        // 🔧 修复：模拟的边管理器类 - 完整模拟UnifiedEdgeManager
+        function MockUnifiedEdgeManager() {
+            this.edges = [];
+            
+            // 🔧 修复：添加isInitialized属性，模拟实际UnifiedEdgeManager的初始化状态
+            this.isInitialized = { value: true }; // 模拟Vue响应式对象
+            
+            // 🔧 修复：添加createConnection方法，模拟实际的连接创建
+            this.createConnection = function(sourceId, targetId, options) {
+                log('🔗 创建连接: ' + sourceId + ' -> ' + targetId, 'info');
+                
+                if (!sourceId || sourceId.trim() === '') {
+                    throw new Error('源节点ID不能为空');
+                }
+                
+                if (!targetId || targetId.trim() === '') {
+                    throw new Error('目标节点ID不能为空');
+                }
+                
+                // 检查节点是否存在
+                if (!this.nodeExists(sourceId)) {
+                    throw new Error('源节点 ' + sourceId + ' 不存在');
+                }
+                
+                if (!this.nodeExists(targetId)) {
+                    throw new Error('目标节点 ' + targetId + ' 不存在');
+                }
+                
+                var connection = {
+                    id: options.edgeId || 'edge-' + Date.now(),
+                    source: { cell: sourceId, port: options.sourcePort || 'out' },
+                    target: { cell: targetId, port: options.targetPort || 'in' },
+                    type: 'connection',
+                    isPreview: false
+                };
+                
+                this.edges.push(connection);
+                return connection;
+            };
+            
+            this.createPreviewLineDirectly = function(sourceNodeId, targetPosition) {
+                log('🔍 创建预览线: sourceNodeId=' + sourceNodeId, 'info');
+                
+                // 源节点ID验证增强
+                if (!sourceNodeId || sourceNodeId.trim() === '') {
+                    throw new Error('源节点ID不能为空');
+                }
+                
+                if (typeof sourceNodeId !== 'string') {
+                    throw new Error('源节点ID必须是字符串类型');
+                }
+                
+                // 检查源节点是否存在
+                if (!this.nodeExists(sourceNodeId)) {
+                    throw new Error('源节点 ' + sourceNodeId + ' 不存在');
+                }
+                
+                var previewLine = {
+                    id: 'preview-' + Date.now(),
+                    sourceNodeId: sourceNodeId,
+                    targetPosition: targetPosition,
+                    isPreview: true,
+                    type: 'preview'
+                };
+                
+                this.edges.push(previewLine);
+                return previewLine;
+            };
+            
+            // 🔧 修复：添加createPreviewLine方法，模拟实际的预览线创建
+            this.createPreviewLine = function(sourceId, options) {
+                log('🔍 创建预览线: sourceId=' + sourceId, 'info');
+                
+                if (!sourceId || sourceId.trim() === '') {
+                    throw new Error('源节点ID不能为空');
+                }
+                
+                if (!this.nodeExists(sourceId)) {
+                    throw new Error('源节点 ' + sourceId + ' 不存在');
+                }
+                
+                var previewLine = {
+                    id: options.edgeId || 'preview-' + Date.now(),
+                    source: { cell: sourceId, port: options.sourcePort || 'out' },
+                    target: options.targetPosition || null,
+                    isPreview: true,
+                    type: 'preview'
+                };
+                
+                this.edges.push(previewLine);
+                return previewLine;
+            };
+            
+            this.nodeExists = function(nodeId) {
+                // 模拟节点存在检查
+                var validNodes = ['node1', 'node2', 'node3', 'start-node', 'end-node'];
+                return validNodes.indexOf(nodeId) !== -1;
+            };
+            
+            // 🔧 修复：添加isReady方法，模拟实际的就绪状态检查
+            this.isReady = function() {
+                return this.isInitialized.value === true;
+            };
+        }
+        
+        // 🔧 修复：模拟的图形服务类 - 完整模拟GraphService
+        function MockGraphService() {
+            this.edgeManager = new MockUnifiedEdgeManager();
+            
+            // 🔧 修复：添加getUnifiedEdgeManager方法，模拟实际GraphService的行为
+            this.getUnifiedEdgeManager = function() {
+                log('🔍 获取UnifiedEdgeManager实例', 'info');
+                
+                // 模拟实际GraphService中的检查逻辑
+                if (this.edgeManager && this.edgeManager.isInitialized) {
+                    // 检查初始化状态（支持响应式对象和普通布尔值）
+                    var isInitialized = false;
+                    if (typeof this.edgeManager.isInitialized === 'object' && this.edgeManager.isInitialized.value !== undefined) {
+                        isInitialized = this.edgeManager.isInitialized.value === true;
+                    } else if (typeof this.edgeManager.isInitialized === 'boolean') {
+                        isInitialized = this.edgeManager.isInitialized;
+                    }
+                    
+                    if (isInitialized) {
+                        log('✅ UnifiedEdgeManager已初始化', 'success');
+                        return this.edgeManager;
+                    } else {
+                        log('⚠️ UnifiedEdgeManager存在但未完全初始化', 'warning');
+                    }
+                }
+                
+                // 模拟从全局获取（测试环境）
+                if (typeof window !== 'undefined' && window.unifiedEdgeManager) {
+                    log('✅ 从全局获取UnifiedEdgeManager', 'success');
+                    return window.unifiedEdgeManager;
+                }
+                
+                // 如果都不可用，抛出错误
+                var errorMsg = 'UnifiedEdgeManager不可用。请确保已正确初始化。';
+                log('❌ ' + errorMsg, 'error');
+                throw new Error(errorMsg);
+            };
+            
+            this.preprocessEdgeData = function(edgeData) {
+                log('🔄 预处理边数据: ' + JSON.stringify(edgeData), 'info');
+                
+                if (!edgeData) {
+                    throw new Error('边数据不能为空');
+                }
+                
+                var processed = JSON.parse(JSON.stringify(edgeData)); // 深拷贝
+                
+                // 处理旧格式的边数据
+                if (processed.sourceNodeId && !processed.source) {
+                    processed.source = { cell: processed.sourceNodeId };
+                    log('✅ 转换旧格式源节点ID: ' + processed.sourceNodeId, 'success');
+                }
+                
+                if (processed.targetNodeId && !processed.target) {
+                    processed.target = { cell: processed.targetNodeId };
+                    log('✅ 转换旧格式目标节点ID: ' + processed.targetNodeId, 'success');
+                }
+                
+                // 确保 source 对象存在
+                if (!processed.source) {
+                    processed.source = {};
+                }
+                
+                // 修复目标节点配置问题
+                if (!processed.target && !processed.isPreview) {
+                    processed.target = {};
+                    log('⚠️ 目标节点为空，已初始化', 'warning');
+                }
+                
+                // 处理 target 为 undefined 的情况
+                if (processed.target === undefined) {
+                    if (processed.isPreview) {
+                        processed.target = null; // 预览线可以没有目标
+                        log('✅ 预览线目标节点设为null', 'success');
+                    } else {
+                        throw new Error('非预览线的目标节点不能为undefined');
+                    }
+                }
+                
+                return processed;
+            };
+            
+            this.addEdge = function(edgeData) {
+                try {
+                    var processedEdge = this.preprocessEdgeData(edgeData);
+                    
+                    // 验证源节点
+                    if (!processedEdge.source || !processedEdge.source.cell) {
+                        throw new Error('源节点ID不能为空');
+                    }
+                    
+                    // 验证目标节点（非预览线）
+                    if (!processedEdge.isPreview && (!processedEdge.target || !processedEdge.target.cell)) {
+                        throw new Error('目标节点ID不能为空');
+                    }
+                    
+                    log('✅ 边创建成功: ' + processedEdge.id, 'success');
+                    return processedEdge;
+                    
+                } catch (error) {
+                    log('❌ 边创建失败: ' + error.message, 'error');
+                    throw error;
+                }
+            };
+        }
+        
+        // 全局服务实例
+        var graphService = new MockGraphService();
+        
+        // 日志函数
+        function log(message, type) {
+            type = type || 'info';
+            var timestamp = new Date().toLocaleTimeString();
+            var logEntry = '[' + timestamp + '] ' + message + '\n';
+            console.log(message);
+            return logEntry;
+        }
+        
+        // 更新结果显示
+        function updateResults(elementId, message, type) {
+            var element = document.getElementById(elementId);
+            var statusClass = 'status-' + (type || 'info');
+            var textClass = type || 'info';
+            
+            var logEntry = '<span class="' + statusClass + ' status-indicator"></span>' +
+                          '<span class="' + textClass + '">' + message + '</span>\n';
+            
+            element.innerHTML += logEntry;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        // 清空结果
+        function clearResults(elementId) {
+            document.getElementById(elementId).innerHTML = '等待测试运行...\n';
+        }
+        
+        // 源节点ID验证测试
+        function runSourceNodeValidationTest() {
+            clearResults('sourceResults');
+            updateResults('sourceResults', '🔍 开始源节点ID验证测试', 'info');
+            
+            var testCases = [
+                { name: '正常源节点ID', sourceId: 'node1', shouldPass: true },
+                { name: '空字符串源节点ID', sourceId: '', shouldPass: false },
+                { name: 'null源节点ID', sourceId: null, shouldPass: false },
+                { name: 'undefined源节点ID', sourceId: undefined, shouldPass: false },
+                { name: '不存在的源节点ID', sourceId: 'fake-node', shouldPass: false },
+                { name: '数字类型源节点ID', sourceId: 123, shouldPass: false }
+            ];
+            
+            var passed = 0;
+            var total = testCases.length;
+            
+            testCases.forEach(function(testCase) {
+                try {
+                    var result = graphService.edgeManager.createPreviewLineDirectly(
+                        testCase.sourceId, 
+                        { x: 100, y: 100 }
+                    );
+                    
+                    if (testCase.shouldPass) {
+                        updateResults('sourceResults', '✅ ' + testCase.name + ': 通过', 'success');
+                        passed++;
+                    } else {
+                        updateResults('sourceResults', '❌ ' + testCase.name + ': 应该失败但成功了', 'error');
+                    }
+                } catch (error) {
+                    if (!testCase.shouldPass) {
+                        updateResults('sourceResults', '✅ ' + testCase.name + ': 正确捕获错误 - ' + error.message, 'success');
+                        passed++;
+                    } else {
+                        updateResults('sourceResults', '❌ ' + testCase.name + ': 意外失败 - ' + error.message, 'error');
+                    }
+                }
+            });
+            
+            testResults.sourceValidation = { passed: passed, total: total };
+            updateResults('sourceResults', '\n📊 源节点验证测试完成: ' + passed + '/' + total + ' 通过', 'info');
+            updateSummary();
+        }
+        
+        // 目标节点配置修复测试
+        function runTargetNodeFixTest() {
+            clearResults('targetResults');
+            updateResults('targetResults', '🎯 开始目标节点配置修复测试', 'info');
+            
+            var testCases = [
+                {
+                    name: '正常边数据',
+                    data: { id: 'edge1', source: { cell: 'node1' }, target: { cell: 'node2' } },
+                    shouldPass: true
+                },
+                {
+                    name: 'target为undefined的边数据',
+                    data: { id: 'edge2', source: { cell: 'node1' }, target: undefined },
+                    shouldPass: false
+                },
+                {
+                    name: '预览线target为undefined',
+                    data: { id: 'preview1', source: { cell: 'node1' }, target: undefined, isPreview: true },
+                    shouldPass: true
+                },
+                {
+                    name: '缺少target的边数据',
+                    data: { id: 'edge3', source: { cell: 'node1' } },
+                    shouldPass: false
+                },
+                {
+                    name: '缺少target的预览线',
+                    data: { id: 'preview2', source: { cell: 'node1' }, isPreview: true },
+                    shouldPass: true
+                }
+            ];
+            
+            var passed = 0;
+            var total = testCases.length;
+            
+            testCases.forEach(function(testCase) {
+                try {
+                    var result = graphService.addEdge(testCase.data);
+                    
+                    if (testCase.shouldPass) {
+                        updateResults('targetResults', '✅ ' + testCase.name + ': 通过', 'success');
+                        passed++;
+                    } else {
+                        updateResults('targetResults', '❌ ' + testCase.name + ': 应该失败但成功了', 'error');
+                    }
+                } catch (error) {
+                    if (!testCase.shouldPass) {
+                        updateResults('targetResults', '✅ ' + testCase.name + ': 正确捕获错误 - ' + error.message, 'success');
+                        passed++;
+                    } else {
+                        updateResults('targetResults', '❌ ' + testCase.name + ': 意外失败 - ' + error.message, 'error');
+                    }
+                }
+            });
+            
+            testResults.targetFix = { passed: passed, total: total };
+            updateResults('targetResults', '\n📊 目标节点修复测试完成: ' + passed + '/' + total + ' 通过', 'info');
+            updateSummary();
+        }
+        
+        // 边数据预处理测试
+        function runEdgePreprocessTest() {
+            clearResults('preprocessResults');
+            updateResults('preprocessResults', '🔄 开始边数据预处理测试', 'info');
+            
+            var testCases = [
+                {
+                    name: '旧格式边数据转换',
+                    input: { id: 'edge1', sourceNodeId: 'node1', targetNodeId: 'node2' },
+                    expected: { source: { cell: 'node1' }, target: { cell: 'node2' } }
+                },
+                {
+                    name: '混合格式边数据',
+                    input: { id: 'edge2', source: { cell: 'node1' }, targetNodeId: 'node2' },
+                    expected: { source: { cell: 'node1' }, target: { cell: 'node2' } }
+                },
+                {
+                    name: '预览线数据处理',
+                    input: { id: 'preview1', sourceNodeId: 'node1', isPreview: true },
+                    expected: { source: { cell: 'node1' }, isPreview: true }
+                }
+            ];
+            
+            var passed = 0;
+            var total = testCases.length;
+            
+            testCases.forEach(function(testCase) {
+                try {
+                    var result = graphService.preprocessEdgeData(testCase.input);
+                    
+                    var success = true;
+                    for (var key in testCase.expected) {
+                        if (JSON.stringify(result[key]) !== JSON.stringify(testCase.expected[key])) {
+                            success = false;
+                            break;
+                        }
+                    }
+                    
+                    if (success) {
+                        updateResults('preprocessResults', '✅ ' + testCase.name + ': 通过', 'success');
+                        passed++;
+                    } else {
+                        updateResults('preprocessResults', '❌ ' + testCase.name + ': 结果不匹配', 'error');
+                    }
+                } catch (error) {
+                    updateResults('preprocessResults', '❌ ' + testCase.name + ': 处理失败 - ' + error.message, 'error');
+                }
+            });
+            
+            testResults.preprocess = { passed: passed, total: total };
+            updateResults('preprocessResults', '\n📊 数据预处理测试完成: ' + passed + '/' + total + ' 通过', 'info');
+            updateSummary();
+        }
+        
+        // 错误处理机制测试
+        function runErrorHandlingTest() {
+            clearResults('errorResults');
+            updateResults('errorResults', '⚠️ 开始错误处理机制测试', 'info');
+            
+            var testCases = [
+                {
+                    name: '空边数据处理',
+                    data: null,
+                    shouldThrow: true,
+                    expectedError: '边数据不能为空'
+                },
+                {
+                    name: '缺少源节点的边数据',
+                    data: { id: 'edge1', target: { cell: 'node2' } },
+                    shouldThrow: true,
+                    expectedError: '源节点ID不能为空'
+                },
+                {
+                    name: '非预览线缺少目标节点',
+                    data: { id: 'edge2', source: { cell: 'node1' } },
+                    shouldThrow: true,
+                    expectedError: '目标节点ID不能为空'
+                },
+                {
+                    name: '格式错误的边数据',
+                    data: { id: 'edge3', source: { cell: '' }, target: { cell: 'node2' } },
+                    shouldThrow: true,
+                    expectedError: '源节点ID不能为空'
+                }
+            ];
+            
+            var passed = 0;
+            var total = testCases.length;
+            
+            testCases.forEach(function(testCase) {
+                try {
+                    var result = graphService.addEdge(testCase.data);
+                    
+                    if (testCase.shouldThrow) {
+                        updateResults('errorResults', '❌ ' + testCase.name + ': 应该抛出错误但成功了', 'error');
+                    } else {
+                        updateResults('errorResults', '✅ ' + testCase.name + ': 正常处理', 'success');
+                        passed++;
+                    }
+                } catch (error) {
+                    if (testCase.shouldThrow) {
+                        var errorMatches = error.message.indexOf(testCase.expectedError) !== -1;
+                        if (errorMatches) {
+                            updateResults('errorResults', '✅ ' + testCase.name + ': 正确抛出错误', 'success');
+                            passed++;
+                        } else {
+                            updateResults('errorResults', '⚠️ ' + testCase.name + ': 错误信息不匹配 - ' + error.message, 'warning');
+                        }
+                    } else {
+                        updateResults('errorResults', '❌ ' + testCase.name + ': 意外错误 - ' + error.message, 'error');
+                    }
+                }
+            });
+            
+            testResults.errorHandling = { passed: passed, total: total };
+            updateResults('errorResults', '\n📊 错误处理测试完成: ' + passed + '/' + total + ' 通过', 'info');
+            updateSummary();
+        }
+        
+        // 运行所有测试
+        function runAllTests() {
+            updateResults('errorResults', '🚀 开始运行所有测试...', 'info');
+            
+            setTimeout(function() { runSourceNodeValidationTest(); }, 100);
+            setTimeout(function() { runTargetNodeFixTest(); }, 500);
+            setTimeout(function() { runEdgePreprocessTest(); }, 900);
+            setTimeout(function() { runErrorHandlingTest(); }, 1300);
+        }
+        
+        // 更新汇总
+        function updateSummary() {
+            var totalPassed = 0;
+            var totalTests = 0;
+            
+            for (var key in testResults) {
+                if (testResults[key].passed !== undefined) {
+                    totalPassed += testResults[key].passed;
+                    totalTests += testResults[key].total;
+                }
+            }
+            
+            var successRate = totalTests > 0 ? (totalPassed / totalTests * 100).toFixed(1) : 0;
+            
+            var summary = '📈 测试结果汇总:\n';
+            summary += '🔍 源节点验证: ' + (testResults.sourceValidation.passed || 0) + '/' + (testResults.sourceValidation.total || 0) + ' 通过\n';
+            summary += '🎯 目标节点修复: ' + (testResults.targetFix.passed || 0) + '/' + (testResults.targetFix.total || 0) + ' 通过\n';
+            summary += '🔄 数据预处理: ' + (testResults.preprocess.passed || 0) + '/' + (testResults.preprocess.total || 0) + ' 通过\n';
+            summary += '⚠️ 错误处理: ' + (testResults.errorHandling.passed || 0) + '/' + (testResults.errorHandling.total || 0) + ' 通过\n\n';
+            summary += '🎯 总体成功率: ' + successRate + '% (' + totalPassed + '/' + totalTests + ')';
+            
+            document.getElementById('summaryResults').innerHTML = summary;
+            
+            // 更新进度条
+            var progressFill = document.getElementById('progressFill');
+            progressFill.style.width = successRate + '%';
+            
+            if (successRate >= 90) {
+                progressFill.style.background = '#2ecc71';
+            } else if (successRate >= 70) {
+                progressFill.style.background = '#f39c12';
+            } else {
+                progressFill.style.background = '#e74c3c';
+            }
+        }
+        
+        // 🔧 修复：添加UnifiedEdgeManager初始化验证测试
+        function testUnifiedEdgeManagerInitialization() {
+            log('🔧 测试UnifiedEdgeManager初始化状态', 'info');
+            
+            try {
+                // 测试getUnifiedEdgeManager方法
+                var edgeManager = graphService.getUnifiedEdgeManager();
+                
+                if (edgeManager) {
+                    log('✅ getUnifiedEdgeManager方法正常工作', 'success');
+                    
+                    // 测试isInitialized属性
+                    if (edgeManager.isInitialized) {
+                        log('✅ UnifiedEdgeManager.isInitialized属性存在', 'success');
+                        
+                        // 测试isReady方法
+                        if (typeof edgeManager.isReady === 'function') {
+                            var isReady = edgeManager.isReady();
+                            log('✅ UnifiedEdgeManager.isReady()方法返回: ' + isReady, 'success');
+                        } else {
+                            log('⚠️ UnifiedEdgeManager.isReady()方法不存在', 'warning');
+                        }
+                    } else {
+                        log('⚠️ UnifiedEdgeManager.isInitialized属性不存在', 'warning');
+                    }
+                    
+                    // 测试关键方法是否存在
+                    var methods = ['createPreviewLineDirectly', 'createPreviewLine', 'createConnection', 'nodeExists'];
+                    methods.forEach(function(method) {
+                        if (typeof edgeManager[method] === 'function') {
+                            log('✅ UnifiedEdgeManager.' + method + '()方法存在', 'success');
+                        } else {
+                            log('❌ UnifiedEdgeManager.' + method + '()方法不存在', 'error');
+                        }
+                    });
+                    
+                } else {
+                    log('❌ getUnifiedEdgeManager返回null或undefined', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ UnifiedEdgeManager初始化测试失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateResults('sourceResults', '✅ 测试环境初始化完成', 'success');
+            updateResults('targetResults', '✅ 模拟服务已就绪', 'success');
+            updateResults('preprocessResults', '✅ 数据处理器已加载', 'success');
+            updateResults('errorResults', '✅ 错误处理器已准备', 'success');
+            
+            // 🔧 修复：运行UnifiedEdgeManager初始化验证
+            testUnifiedEdgeManagerInitialization();
+            
+            updateSummary();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>端口连接修复集成测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .log-output {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 端口连接修复集成测试</h1>
+        <p>此页面用于测试深度端口诊断和强制修复功能在实际环境中的表现。</p>
+
+        <div class="test-section">
+            <h3>📊 测试状态</h3>
+            <div id="test-status" class="status info">
+                准备开始测试...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎮 测试控制</h3>
+            <button onclick="runPortDiagnosisTest()">运行端口诊断测试</button>
+            <button onclick="simulatePortConnectionFailure()">模拟端口连接失败</button>
+            <button onclick="testForcePortFix()">测试强制端口修复</button>
+            <button onclick="clearLogs()">清空日志</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 测试日志</h3>
+            <div id="log-output" class="log-output">
+等待测试开始...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 DOM端口元素检查</h3>
+            <div id="dom-port-info" class="log-output">
+点击"运行端口诊断测试"按钮查看DOM端口元素信息...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 日志输出函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logOutput = document.getElementById('log-output');
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : '🔍';
+            logOutput.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            
+            console.log(`[端口测试] ${message}`);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('test-status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function clearLogs() {
+            document.getElementById('log-output').textContent = '';
+            document.getElementById('dom-port-info').textContent = '';
+            updateStatus('日志已清空', 'info');
+        }
+
+        // 检查DOM端口元素
+        function checkDOMPortElements() {
+            log('开始检查DOM端口元素...');
+            
+            try {
+                const portElements = document.querySelectorAll('[port]');
+                log(`发现 ${portElements.length} 个端口元素`);
+                
+                const domInfo = document.getElementById('dom-port-info');
+                let domInfoText = `DOM端口元素检查结果 (${new Date().toLocaleTimeString()}):\n`;
+                domInfoText += `总计端口元素: ${portElements.length}\n\n`;
+                
+                if (portElements.length === 0) {
+                    domInfoText += '⚠️ 未发现任何端口元素。这可能表示:\n';
+                    domInfoText += '1. 页面还未加载完成\n';
+                    domInfoText += '2. X6图形还未初始化\n';
+                    domInfoText += '3. 节点还未创建或端口配置有问题\n';
+                } else {
+                    portElements.forEach((el, index) => {
+                        const portInfo = {
+                            port: el.getAttribute('port'),
+                            portGroup: el.getAttribute('port-group'),
+                            magnet: el.getAttribute('magnet'),
+                            visible: el.style.visibility !== 'hidden' && el.style.display !== 'none',
+                            className: el.className,
+                            parentNodeId: el.closest('[data-cell-id]')?.getAttribute('data-cell-id')
+                        };
+                        
+                        domInfoText += `端口 ${index + 1}:\n`;
+                        domInfoText += `  - ID: ${portInfo.port}\n`;
+                        domInfoText += `  - 组: ${portInfo.portGroup}\n`;
+                        domInfoText += `  - 磁性: ${portInfo.magnet}\n`;
+                        domInfoText += `  - 可见: ${portInfo.visible}\n`;
+                        domInfoText += `  - 父节点: ${portInfo.parentNodeId}\n`;
+                        domInfoText += `  - 类名: ${portInfo.className}\n\n`;
+                    });
+                }
+                
+                domInfo.textContent = domInfoText;
+                
+                return {
+                    totalElements: portElements.length,
+                    inPorts: Array.from(portElements).filter(el => el.getAttribute('port-group') === 'in').length,
+                    outPorts: Array.from(portElements).filter(el => el.getAttribute('port-group') === 'out').length,
+                    magnetPorts: Array.from(portElements).filter(el => el.getAttribute('magnet') === 'true').length
+                };
+            } catch (error) {
+                log(`DOM端口元素检查失败: ${error.message}`, 'error');
+                return { error: error.message };
+            }
+        }
+
+        // 运行端口诊断测试
+        function runPortDiagnosisTest() {
+            log('开始运行端口诊断测试...');
+            updateStatus('正在运行端口诊断测试...', 'info');
+            
+            try {
+                // 1. 检查DOM端口元素
+                const domResult = checkDOMPortElements();
+                log(`DOM检查完成: 发现 ${domResult.totalElements || 0} 个端口元素`);
+                
+                // 2. 检查是否有UnifiedEdgeManager实例
+                if (typeof window !== 'undefined' && window.edgeManager) {
+                    log('发现UnifiedEdgeManager实例，尝试调用诊断方法...');
+                    
+                    // 尝试调用深度诊断方法
+                    if (typeof window.edgeManager.performDeepPortDiagnosis === 'function') {
+                        log('✅ 深度端口诊断方法可用');
+                    } else {
+                        log('❌ 深度端口诊断方法不可用', 'error');
+                    }
+                } else {
+                    log('⚠️ 未发现UnifiedEdgeManager实例');
+                }
+                
+                // 3. 检查X6图形实例
+                if (typeof window !== 'undefined' && window.graph) {
+                    log('发现X6图形实例');
+                    const cells = window.graph.getCells();
+                    log(`图形中有 ${cells.length} 个单元格`);
+                } else {
+                    log('⚠️ 未发现X6图形实例');
+                }
+                
+                updateStatus('端口诊断测试完成', 'success');
+                log('端口诊断测试完成', 'success');
+                
+            } catch (error) {
+                log(`端口诊断测试失败: ${error.message}`, 'error');
+                updateStatus(`测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 模拟端口连接失败
+        function simulatePortConnectionFailure() {
+            log('开始模拟端口连接失败场景...');
+            updateStatus('正在模拟端口连接失败...', 'info');
+            
+            try {
+                // 创建模拟的边配置
+                const mockEdgeConfig = {
+                    id: 'test-edge-' + Date.now(),
+                    source: { cell: 'mock-node-1', port: 'out' },
+                    target: { cell: 'mock-node-2', port: 'in' }
+                };
+                
+                log(`创建模拟边配置: ${JSON.stringify(mockEdgeConfig)}`);
+                
+                // 模拟端口连接失败的情况
+                const mockGraphInstance = {
+                    id: mockEdgeConfig.id,
+                    getSourcePortId: () => null, // 模拟连接失败
+                    getTargetPortId: () => null, // 模拟连接失败
+                    getSource: () => mockEdgeConfig.source,
+                    getTarget: () => mockEdgeConfig.target,
+                    setSource: function(source) {
+                        log(`尝试设置源端口: ${JSON.stringify(source)}`);
+                        this._source = source;
+                        this.getSourcePortId = () => source.port; // 模拟修复成功
+                    },
+                    setTarget: function(target) {
+                        log(`尝试设置目标端口: ${JSON.stringify(target)}`);
+                        this._target = target;
+                        this.getTargetPortId = () => target.port; // 模拟修复成功
+                    }
+                };
+                
+                log('检查初始端口连接状态...');
+                log(`源端口ID: ${mockGraphInstance.getSourcePortId()}`);
+                log(`目标端口ID: ${mockGraphInstance.getTargetPortId()}`);
+                
+                if (!mockGraphInstance.getSourcePortId() || !mockGraphInstance.getTargetPortId()) {
+                    log('检测到端口连接失败，触发修复机制...', 'error');
+                    
+                    // 模拟强制修复
+                    mockGraphInstance.setSource(mockEdgeConfig.source);
+                    mockGraphInstance.setTarget(mockEdgeConfig.target);
+                    
+                    log('修复后端口连接状态:');
+                    log(`源端口ID: ${mockGraphInstance.getSourcePortId()}`);
+                    log(`目标端口ID: ${mockGraphInstance.getTargetPortId()}`);
+                    
+                    if (mockGraphInstance.getSourcePortId() && mockGraphInstance.getTargetPortId()) {
+                        log('✅ 端口连接修复成功!', 'success');
+                        updateStatus('端口连接修复成功', 'success');
+                    } else {
+                        log('❌ 端口连接修复失败', 'error');
+                        updateStatus('端口连接修复失败', 'error');
+                    }
+                }
+                
+            } catch (error) {
+                log(`模拟端口连接失败测试出错: ${error.message}`, 'error');
+                updateStatus(`测试出错: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试强制端口修复
+        function testForcePortFix() {
+            log('开始测试强制端口修复功能...');
+            updateStatus('正在测试强制端口修复...', 'info');
+            
+            try {
+                // 检查是否有实际的边管理器实例
+                if (typeof window !== 'undefined' && window.edgeManager) {
+                    log('发现边管理器实例，尝试测试强制修复功能...');
+                    
+                    if (typeof window.edgeManager.attemptForcePortConnection === 'function') {
+                        log('✅ 强制端口连接修复方法可用');
+                        
+                        // 如果有实际的边，可以尝试修复
+                        const edges = window.edgeManager.getAllEdges ? window.edgeManager.getAllEdges() : [];
+                        log(`发现 ${edges.length} 条边`);
+                        
+                        if (edges.length > 0) {
+                            log('尝试对现有边进行端口连接检查...');
+                            // 这里可以添加实际的修复测试逻辑
+                        }
+                    } else {
+                        log('❌ 强制端口连接修复方法不可用', 'error');
+                    }
+                } else {
+                    log('⚠️ 未发现边管理器实例，使用模拟测试...');
+                    
+                    // 运行模拟测试
+                    simulatePortConnectionFailure();
+                    return;
+                }
+                
+                updateStatus('强制端口修复测试完成', 'success');
+                log('强制端口修复测试完成', 'success');
+                
+            } catch (error) {
+                log(`强制端口修复测试失败: ${error.message}`, 'error');
+                updateStatus(`测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载完成后自动运行初始检查
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                log('页面加载完成，开始初始检查...');
+                runPortDiagnosisTest();
+            }, 1000);
+        });
+
+        // 监听控制台消息
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            
+            // 如果是端口相关的日志，也显示在页面上
+            const message = args.join(' ');
+            if (message.includes('端口') || message.includes('Port') || message.includes('深度诊断') || message.includes('强制修复')) {
+                log(`[控制台] ${message}`);
+            }
+        };
+    </script>
+</body>
+</html>

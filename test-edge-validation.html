@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>边创建错误修复验证测试</title>
+    <script type="module" src="./test-edge-fix-validation.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e8e8e8;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 5px;
+            border-left: 4px solid #1890ff;
+        }
+        .success { color: #52c41a; }
+        .error { color: #ff4d4f; }
+        .warning { color: #faad14; }
+        .info { color: #1890ff; }
+        
+        .summary-card {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .summary-card h3 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+        }
+        
+        .summary-card p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .test-item {
+            margin: 8px 0;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .test-item.passed {
+            border-left: 4px solid #52c41a;
+        }
+        
+        .test-item.failed {
+            border-left: 4px solid #ff4d4f;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 边创建错误修复验证测试</h1>
+            <p>验证GraphService和UnifiedEdgeManager的修复效果</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 测试控制</h2>
+            <button id="runTestBtn" onclick="runValidationTest()">开始验证测试</button>
+            <button id="clearResultsBtn" onclick="clearResults()">清除结果</button>
+            <div id="testStatus" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 测试总结</h2>
+            <div id="testSummary">
+                <p class="info">点击"开始验证测试"来运行测试...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 详细测试结果</h2>
+            <div id="testDetails">
+                <p class="info">测试结果将在这里显示...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 修复验证点</h2>
+            <ul>
+                <li><strong>源节点ID验证增强</strong> - 验证UnifiedEdgeManager对空或无效源节点ID的处理</li>
+                <li><strong>目标节点配置修复</strong> - 验证GraphService对target.cell为undefined的处理</li>
+                <li><strong>边数据预处理功能</strong> - 验证各种格式边数据的自动修复能力</li>
+                <li><strong>错误处理改进</strong> - 验证错误恢复机制和详细日志记录</li>
+                <li><strong>边界情况处理</strong> - 验证各种异常数据和边界情况的处理</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module">
+        let testRunning = false;
+
+        // 更新测试状态
+        function updateTestStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('testStatus');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            statusDiv.innerHTML = `<span class="${className}">${message}</span>`;
+        }
+
+        // 清除结果
+        window.clearResults = function() {
+            document.getElementById('testSummary').innerHTML = '<p class="info">点击"开始验证测试"来运行测试...</p>';
+            document.getElementById('testDetails').innerHTML = '<p class="info">测试结果将在这里显示...</p>';
+            updateTestStatus('结果已清除');
+        }
+
+        // 运行验证测试
+        window.runValidationTest = async function() {
+            if (testRunning) {
+                updateTestStatus('测试正在运行中...', 'warning');
+                return;
+            }
+
+            testRunning = true;
+            const runBtn = document.getElementById('runTestBtn');
+            runBtn.disabled = true;
+            runBtn.innerHTML = '<span class="loading"></span> 测试运行中...';
+
+            updateTestStatus('正在加载测试模块...', 'info');
+
+            try {
+                // 动态导入测试模块
+                const testModule = await import('./test-edge-fix-validation.js');
+                
+                updateTestStatus('开始执行验证测试...', 'info');
+                
+                // 运行测试
+                const result = await testModule.runEdgeFixValidationTest();
+                
+                // 显示测试总结
+                displayTestSummary(result);
+                
+                // 显示详细结果
+                displayTestDetails(result);
+                
+                updateTestStatus(`测试完成! 通过率: ${result.passRate}%`, result.failed === 0 ? 'success' : 'warning');
+                
+            } catch (error) {
+                console.error('测试运行失败:', error);
+                updateTestStatus(`测试运行失败: ${error.message}`, 'error');
+                
+                document.getElementById('testSummary').innerHTML = `
+                    <div class="error">
+                        <h3>❌ 测试运行失败</h3>
+                        <p>错误信息: ${error.message}</p>
+                        <p>请检查控制台获取详细错误信息</p>
+                    </div>
+                `;
+            } finally {
+                testRunning = false;
+                runBtn.disabled = false;
+                runBtn.innerHTML = '开始验证测试';
+            }
+        }
+
+        // 显示测试总结
+        function displayTestSummary(result) {
+            const summaryDiv = document.getElementById('testSummary');
+            
+            summaryDiv.innerHTML = `
+                <div class="summary-card">
+                    <h3>${result.total}</h3>
+                    <p>总测试数</p>
+                </div>
+                <div class="summary-card">
+                    <h3>${result.passed}</h3>
+                    <p>通过</p>
+                </div>
+                <div class="summary-card">
+                    <h3>${result.failed}</h3>
+                    <p>失败</p>
+                </div>
+                <div class="summary-card">
+                    <h3>${result.passRate}%</h3>
+                    <p>通过率</p>
+                </div>
+            `;
+        }
+
+        // 显示详细测试结果
+        function displayTestDetails(result) {
+            const detailsDiv = document.getElementById('testDetails');
+            
+            let html = '';
+            
+            result.results.forEach(test => {
+                const statusClass = test.passed ? 'passed' : 'failed';
+                const statusIcon = test.passed ? '✅' : '❌';
+                
+                html += `
+                    <div class="test-item ${statusClass}">
+                        <strong>${statusIcon} ${test.testName}</strong>
+                        <p>${test.message}</p>
+                        ${test.details && Object.keys(test.details).length > 0 ? 
+                            `<details>
+                                <summary>详细信息</summary>
+                                <pre>${JSON.stringify(test.details, null, 2)}</pre>
+                            </details>` : ''
+                        }
+                    </div>
+                `;
+            });
+            
+            detailsDiv.innerHTML = html;
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTestStatus('页面已加载，准备运行测试');
+            console.log('🎯 边创建错误修复验证测试页面已准备就绪');
+        });
+    </script>
+</body>
+</html>

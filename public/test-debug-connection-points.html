@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连接点调试工具测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ 连接点调试工具测试页面</h1>
+        
+        <div id="status" class="status warning">
+            正在加载调试工具...
+        </div>
+        
+        <div class="button-group">
+            <button class="button" onclick="testDebugTool()">测试调试工具</button>
+            <button class="button" onclick="runFullDiagnosis()">运行完整诊断</button>
+            <button class="button" onclick="clearConsole()">清空控制台</button>
+        </div>
+        
+        <h3>使用说明：</h3>
+        <ul>
+            <li>这个页面用于测试连接点调试工具是否正确加载</li>
+            <li>打开浏览器开发者工具的控制台查看详细输出</li>
+            <li>在控制台中可以直接调用调试函数：
+                <ul>
+                    <li><code>runFullDiagnosis()</code> - 运行完整诊断</li>
+                    <li><code>debugConnectionPoints.debugNodePorts()</code> - 检查节点端口</li>
+                    <li><code>debugConnectionPoints.debugConnectionPoints()</code> - 检查连接线</li>
+                    <li><code>debugConnectionPoints.debugX6Config()</code> - 检查X6配置</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <div id="console-output" class="console-output">
+            控制台输出将显示在这里...
+        </div>
+    </div>
+
+    <script src="/debug-connection-points.js"></script>
+    <script>
+        // 重写console.log来显示在页面上
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        const consoleOutput = document.getElementById('console-output');
+        const statusDiv = document.getElementById('status');
+        
+        function addToConsole(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.style.marginBottom = '5px';
+            
+            let color = '#d4d4d4';
+            if (type === 'warn') color = '#ffcc02';
+            if (type === 'error') color = '#f14c4c';
+            if (type === 'info') color = '#3794ff';
+            
+            div.innerHTML = `<span style="color: #888">[${timestamp}]</span> <span style="color: ${color}">${message}</span>`;
+            consoleOutput.appendChild(div);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsole(args.join(' '), 'log');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToConsole(args.join(' '), 'warn');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsole(args.join(' '), 'error');
+        };
+        
+        // 检查调试工具是否加载成功
+        function checkDebugToolStatus() {
+            if (typeof window.debugConnectionPoints !== 'undefined') {
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ 调试工具加载成功！可以开始测试。';
+                console.log('🎉 调试工具加载成功！');
+                return true;
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ 调试工具加载失败！请检查网络连接。';
+                console.error('❌ 调试工具加载失败！');
+                return false;
+            }
+        }
+        
+        function testDebugTool() {
+            console.log('🧪 开始测试调试工具...');
+            
+            if (!checkDebugToolStatus()) {
+                return;
+            }
+            
+            // 测试各个调试函数是否存在
+            const functions = [
+                'debugNodePorts',
+                'debugConnectionPoints', 
+                'debugX6Config',
+                'debugPortMagnet',
+                'debugEdgeRendering',
+                'debugPortVisibility',
+                'monitorConnections',
+                'runFullDiagnosis'
+            ];
+            
+            console.log('📋 检查调试函数...');
+            functions.forEach(funcName => {
+                if (typeof window.debugConnectionPoints[funcName] === 'function') {
+                    console.log(`✅ ${funcName} - 可用`);
+                } else {
+                    console.error(`❌ ${funcName} - 不可用`);
+                }
+            });
+            
+            console.log('🎯 测试完成！');
+        }
+        
+        function clearConsole() {
+            consoleOutput.innerHTML = '控制台已清空...';
+        }
+        
+        // 页面加载完成后检查状态
+        window.addEventListener('load', () => {
+            setTimeout(checkDebugToolStatus, 1000);
+        });
+        
+        // 模拟X6 Graph实例（用于测试）
+        window.graph = {
+            getNodes: () => {
+                console.log('📝 模拟：获取节点列表（当前为空）');
+                return [];
+            },
+            getEdges: () => {
+                console.log('📝 模拟：获取连接线列表（当前为空）');
+                return [];
+            }
+        };
+        
+        console.log('🚀 测试页面初始化完成');
+    </script>
+</body>
+</html>
