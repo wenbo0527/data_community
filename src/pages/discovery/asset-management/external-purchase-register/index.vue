@@ -887,6 +887,8 @@ const loadEditData = () => {
           url: file.url
         }))
       }
+      // 编辑模式直接定位到“关联数据产品”步骤
+      currentStep.value = 2
     }
   }
 }

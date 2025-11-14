@@ -1,0 +1,53 @@
+%% CSS Grid 节点组件 - 交互流程与状态（Mermaid 源文件）
+%% 使用方式：
+%% 1) 在 Markdown 中以 ```mermaid 代码块嵌入
+%% 2) 在 Figma 通过 Mermaid/Sequence Diagram 插件导入
+%% 3) 在 Visio 可先渲染为 SVG/PNG 后导入
+
+%% 用户操作流程
+flowchart TD
+  A[悬停节点] --> B{是否可交互}
+  B -- 否 --> C[显示禁用态]
+  B -- 是 --> D[高亮描边/显示菜单]
+  D --> E[点击节点]
+  E --> F[选中态]
+  F --> G[打开更多菜单]
+  F --> H[开始连线]
+  G --> I[执行动作: 重命名/复制/删除]
+  H --> J{连线是否合法}
+  J -- 否 --> K[阻止并提示]
+  J -- 是 --> L[建立连线/刷新端口]
+
+---
+
+%% 节点状态机
+stateDiagram-v2
+  [*] --> default
+  default --> hover: mouseenter
+  hover --> default: mouseleave
+  default --> active: click
+  hover --> active: click
+  active --> default: blur/unselect
+  default --> disabled: prop.disabled=true
+  active --> disabled: prop.disabled=true
+  disabled --> default: prop.disabled=false
+
+---
+
+%% 端口交互（输出端）
+sequenceDiagram
+  participant U as 用户
+  participant N as 节点组件
+  participant X as X6图引擎
+  U->>N: hover 行文本
+  N->>N: 定位行中点/高亮对应端口
+  U->>N: mousedown 端口
+  N->>X: linkStart(portId)
+  U->>X: 拖拽至目标
+  X->>N: 校验连线规则
+  alt 合法
+    X->>N: linkEnd
+    N->>X: 更新端口/重绘
+  else 非法
+    X->>N: 取消/提示
+  end

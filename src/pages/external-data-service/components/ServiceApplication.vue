@@ -35,11 +35,31 @@
 <script setup>
 import { reactive } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import { useExternalDataStore } from '../../../store/modules/external-data'
 
-const form = reactive({ customer: '', type: void 0, desc: '' })
+const store = useExternalDataStore()
+const form = reactive({ customer: '', type: void 0 as undefined | string, desc: '' })
 
-const submit = () => {
-  Message.success('已提交服务申请（模拟）')
+const submit = async () => {
+  if (!form.customer || !form.type) {
+    Message.warning('请填写必填项：客户名称与服务类型')
+    return
+  }
+  const taskName = `${form.customer}-${form.type}-服务任务`
+  const ok = await store.createTaskAction({
+    taskName,
+    config: {
+      productName: form.customer,
+      reportType: '产品级效果评估',
+      analysisPeriod: ''
+    }
+  })
+  if (ok) {
+    Message.success('已提交服务申请并创建任务')
+    reset()
+  } else {
+    Message.error(store.error || '任务创建失败')
+  }
 }
 const reset = () => {
   form.customer = ''

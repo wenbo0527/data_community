@@ -224,6 +224,20 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       // 使用统一的节点配置管理器处理配置
       await nodeConfigManager.processNodeConfig(nodeType, nodeInstance, config, context)
 
+      // 🔧 横版画布同步：如提供了节点更新方法，则按横版规则刷新内容与端口
+      try {
+        const dataAfter = nodeInstance.getData?.() || {}
+        const effectiveType = dataAfter?.type || dataAfter?.nodeType || nodeType
+        if (nodeOperations && typeof nodeOperations.updateNodeFromConfig === 'function') {
+          console.log('[useConfigDrawers] 调用横版更新方法 updateNodeFromConfig', { nodeId: nodeInstance.id, effectiveType })
+          nodeOperations.updateNodeFromConfig(nodeInstance, effectiveType, dataAfter?.config || config)
+        } else {
+          console.log('[useConfigDrawers] 未提供 updateNodeFromConfig，跳过横版内容与端口刷新')
+        }
+      } catch (err) {
+        console.warn('[useConfigDrawers] 横版节点更新异常:', err)
+      }
+
       // 触发节点更新事件，让父组件能够同步本地数据
       const graph = getGraph()
       if (graph && graph.trigger) {

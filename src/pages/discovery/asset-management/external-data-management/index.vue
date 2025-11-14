@@ -207,6 +207,39 @@
           </template>
         </a-table>
       </a-tab-pane>
+
+      <a-tab-pane key="suppliers" title="供应商管理">
+        <a-card class="search-card">
+          <div class="search-section">
+            <a-space>
+              <a-button type="primary" @click="showSupplierModal = true">
+                <template #icon><icon-plus /></template>
+                新增供应商
+              </a-button>
+            </a-space>
+          </div>
+        </a-card>
+
+        <a-table :columns="supplierColumns" :data="supplierTableData" :pagination="supplierPagination">
+          <template #actions="{ record }">
+            <a-space>
+              <a-button type="text" size="small" @click="editSupplier(record)">编辑</a-button>
+              <a-button type="text" size="small" status="danger" @click="deleteSupplier(record)">删除</a-button>
+            </a-space>
+          </template>
+        </a-table>
+
+        <a-modal v-model:visible="showSupplierModal" title="新增供应商" :width="600" @ok="submitSupplier" @cancel="resetSupplierForm">
+          <a-form ref="supplierFormRef" :model="supplierForm" :rules="supplierFormRules" layout="vertical">
+            <a-form-item label="供应商名称" field="name" required>
+              <a-input v-model="supplierForm.name" placeholder="请输入供应商名称" />
+            </a-form-item>
+            <a-form-item label="供应商说明" field="description" required>
+              <a-textarea v-model="supplierForm.description" placeholder="请输入供应商说明" :rows="3" />
+            </a-form-item>
+          </a-form>
+        </a-modal>
+      </a-tab-pane>
     </a-tabs>
 
     <!-- 创建/编辑外数模态框 -->
@@ -1088,6 +1121,57 @@ const formatFileSize = (bytes: number): string => {
 onMounted(() => {
   // 初始化数据
 })
+
+// 供应商管理
+interface SupplierItem { id: string; name: string; description: string; createTime: string }
+const supplierColumns = [
+  { title: '供应商名称', dataIndex: 'name', width: 220 },
+  { title: '供应商说明', dataIndex: 'description' },
+  { title: '创建时间', dataIndex: 'createTime', width: 180 },
+  { title: '操作', slotName: 'actions', width: 160 }
+]
+const supplierTableData = ref<SupplierItem[]>([
+  { id: 'sup-1', name: '数据供应商A', description: '主力数据供应商，提供高质量API', createTime: '2025-01-01 10:00:00' },
+  { id: 'sup-2', name: '数据供应商B', description: '文件型数据供应商，周更', createTime: '2025-01-05 11:30:00' }
+])
+const supplierPagination = reactive({ current: 1, pageSize: 10, total: 2, showTotal: true })
+const showSupplierModal = ref(false)
+const supplierFormRef = ref()
+const supplierForm = reactive({ name: '', description: '' })
+const supplierFormRules = {
+  name: [{ required: true, message: '请输入供应商名称' }],
+  description: [{ required: true, message: '请输入供应商说明' }]
+}
+const submitSupplier = async () => {
+  const valid = await supplierFormRef.value?.validate()
+  if (!valid) return
+  const item: SupplierItem = {
+    id: `sup-${Date.now()}`,
+    name: supplierForm.name,
+    description: supplierForm.description,
+    createTime: new Date().toLocaleString()
+  }
+  supplierTableData.value.unshift(item)
+  supplierPagination.total = supplierTableData.value.length
+  Message.success('新增供应商成功')
+  showSupplierModal.value = false
+  resetSupplierForm()
+}
+const resetSupplierForm = () => {
+  supplierForm.name = ''
+  supplierForm.description = ''
+  supplierFormRef.value?.clearValidate()
+}
+const editSupplier = (record: SupplierItem) => {
+  showSupplierModal.value = true
+  supplierForm.name = record.name
+  supplierForm.description = record.description
+}
+const deleteSupplier = (record: SupplierItem) => {
+  supplierTableData.value = supplierTableData.value.filter(i => i.id !== record.id)
+  supplierPagination.total = supplierTableData.value.length
+  Message.success('已删除供应商')
+}
 </script>
 
 <style scoped>

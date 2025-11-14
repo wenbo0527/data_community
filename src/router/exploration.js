@@ -7,7 +7,7 @@ export default [
       {
         path: 'budget-management',
         name: 'budget-management',
-        component: () => import('../pages/exploration/external-data-analysis/budget-management.vue')
+        redirect: '/risk/budget-overview'
       },
       {
         path: 'external-data-tracking-overview',

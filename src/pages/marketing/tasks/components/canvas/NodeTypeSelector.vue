@@ -1,7 +1,8 @@
 <template>
   <div 
     v-if="visible" 
-    class="node-type-selector" 
+    class="node-type-selector"
+    :class="{ 'node-type-selector--dock': dock }"
     :style="selectorStyle"
   >
     <div class="node-type-selector__header">
@@ -20,6 +21,8 @@
         class="node-type-item"
         :class="{ 'node-type-item--disabled': !isNodeTypeAllowed(type) }"
         @click="handleSelect(type)"
+        draggable="true"
+        @dragstart="handleDragStart(type, $event)"
       >
         <div class="node-type-icon" :style="{ backgroundColor: getNodeColor(type) }"></div>
         <div class="node-type-label">{{ getNodeLabel(type) }}</div>
@@ -53,17 +56,27 @@ const props = defineProps({
   presetSlot: {
     type: Object,
     default: null
+  },
+  // 是否左上角固定停靠显示
+  dock: {
+    type: Boolean,
+    default: false
   }
 })
 
 // 事件
-const emit = defineEmits(['select', 'close'])
+const emit = defineEmits(['select', 'close', 'dragstart'])
 
 // 选择器样式
-const selectorStyle = computed(() => ({
-  left: `${props.position.x}px`,
-  top: `${props.position.y}px`
-}))
+const selectorStyle = computed(() => {
+  if (props.dock) {
+    return { left: '16px', top: '16px' }
+  }
+  return {
+    left: `${props.position.x}px`,
+    top: `${props.position.y}px`
+  }
+})
 
 // 可用节点类型
 const availableNodeTypes = computed(() => {
@@ -130,6 +143,21 @@ const handleSelect = (nodeType) => {
   emit('select', normalizedNodeType)
 }
 
+const handleDragStart = (nodeType, e) => {
+  if (!nodeType || typeof nodeType !== 'string' || nodeType.trim() === '') return
+  const normalizedNodeType = nodeType.trim()
+  if (!isNodeTypeAllowed(normalizedNodeType)) return
+  const nodeConfig = getNodeConfig(normalizedNodeType)
+  if (!nodeConfig) return
+  if (e && e.dataTransfer) {
+    try {
+      e.dataTransfer.setData('nodeType', normalizedNodeType)
+      e.dataTransfer.effectAllowed = 'copy'
+    } catch {}
+  }
+  emit('dragstart', normalizedNodeType)
+}
+
 // 处理关闭
 const handleClose = () => {
   emit('close')
@@ -159,6 +187,15 @@ const handleClose = () => {
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   border-top: 10px solid white;
+}
+
+.node-type-selector--dock {
+  transform: none;
+  margin-top: 0;
+}
+
+.node-type-selector--dock::after {
+  display: none;
 }
 
 .node-type-selector__header {

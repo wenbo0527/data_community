@@ -9,7 +9,7 @@ import { Message } from '@arco-design/web-vue';
  * @property {string} reportType - 报告类型
  * @property {string} analysisPeriod - 分析周期
  */
-interface TaskConfig {
+export interface TaskConfig {
   productName: string;
   reportType: string;
   analysisPeriod: string;
@@ -26,7 +26,7 @@ interface TaskConfig {
  * @property {number} progress - 任务进度
  * @property {TaskConfig} config - 任务配置
  */
-interface Task {
+export interface Task {
   id: number;
   taskName: string;
   createTime: string;

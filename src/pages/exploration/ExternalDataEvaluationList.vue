@@ -66,6 +66,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { Message } from '@arco-design/web-vue';
 import {
   Card as ACard,
   Row as ARow,
@@ -173,16 +174,14 @@ const getStatusColor = (status: string) => {
 
 // 处理日期筛选
 const handleDateChange = (value: string[]) => {
-  console.log('日期筛选:', value);
   if (value && value.length === 2) {
-    loadReportList();
+    loadReportList().then(() => Message.success('筛选已更新'));
   }
 };
 
 // 处理类型筛选
 const handleTypeChange = (value: string) => {
-  console.log('类型筛选:', value);
-  loadReportList();
+  loadReportList().then(() => Message.success('筛选已更新'));
 };
 
 // 处理分页
@@ -200,9 +199,9 @@ const handlePageSizeChange = (pageSize: number) => {
 
 // 跳转到详情页
 const goToDetail = (id: number) => {
-  router.push({ name: 'externalDataEvaluationDetail', params: { id } }).catch(err => {
-    console.error('Navigation error:', err);
-  });
+  router.push({ name: 'externalDataEvaluationDetail', params: { id } }).then(() => {
+    Message.info('已进入评估详情');
+  }).catch(() => { Message.error('跳转失败') });
 };
 
 
@@ -274,8 +273,15 @@ const loadReportList = async () => {
   }
 };
 
-onMounted(() => {
-  loadReportList();
+onMounted(async () => {
+  await loadReportList();
+  const q = router.currentRoute.value.query as any
+  const product = q?.product
+  if (product) {
+    const list = (reportList.value || []) as any[]
+    reportList.value = list.filter(i => String(i.reportName || '').includes(String(product)))
+    Message.info('已根据产品过滤评估列表')
+  }
 });
 </script>
 

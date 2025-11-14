@@ -39,8 +39,8 @@
           </a-select>
         </a-form-item>
         <a-form-item>
-          <a-button type="primary" @click="handleFilter">查询</a-button>
-          <a-button style="margin-left: 8px" @click="resetFilter">重置</a-button>
+          <a-button type="primary" :loading="filtering" @click="handleFilter">查询</a-button>
+          <a-button style="margin-left: 8px" :disabled="filtering" @click="resetFilter">重置</a-button>
         </a-form-item>
       </a-form>
     </a-card>
@@ -167,9 +167,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive, watch, nextTick } from 'vue'
+import { Message } from '@arco-design/web-vue'
 import * as echarts from 'echarts'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
-import { useExternalDataStore, WarningData, BurndownData } from '@/store/modules/external-data'
+import { useExternalDataStore } from '@/store/modules/external-data'
+import type { WarningItem, BurndownPoint } from '@/store/modules/external-data'
 import PlatformProductModal from '@/components/modals/PlatformProductModal.vue'
 import BudgetBurndownTabs from '@/components/modals/BudgetBurndownTabs.vue'
 import { IconArrowRise, IconArrowFall } from '@arco-design/web-vue/es/icon'
@@ -197,9 +199,11 @@ const filterForm = reactive<FilterForm>({
   dateRange: []
 })
 
+const filtering = ref(false)
+
 // 平台产品弹窗
 const platformModalVisible = ref(false)
-const currentPlatform = ref<WarningData>()
+const currentPlatform = ref<WarningItem>()
 
 import { useRouter } from 'vue-router'
 
@@ -210,7 +214,7 @@ const showDebugInfo = ref(false)
 const loadingStatus = ref('')
 const apiResponse = ref<any>(null)
 
-const handlePlatformClick = (record: WarningData) => {
+const handlePlatformClick = (record: WarningItem) => {
   currentPlatform.value = record
   platformModalVisible.value = true
 }
@@ -227,10 +231,10 @@ const burndownChartRef = ref()
 let burndownChart: echarts.ECharts | null = null
 
 // 预警数据
-const warningData = ref<WarningData[]>([])
+const warningData = ref<WarningItem[]>([])
 
 // 燃尽图数据
-const burndownData = ref<BurndownData[]>([])
+const burndownData = ref<BurndownPoint[]>([])
 // 当前图表类型
 const currentChartType = ref<string>('burndown')
 
@@ -271,6 +275,7 @@ const initBurndownChart = async (chartType: string = 'burndown') => {
 
 // 处理筛选
 const handleFilter = async () => {
+  filtering.value = true
   const params = {
     businessType: filterForm.businessType || undefined,
     platform: filterForm.platform || undefined,
@@ -293,6 +298,8 @@ const handleFilter = async () => {
   ])
   updateBurndownChart(store.burndownData, currentChartType.value)
   warningData.value = store.warningData
+  filtering.value = false
+  Message.success('已更新监控')
 }
 
 // 处理图表类型变化

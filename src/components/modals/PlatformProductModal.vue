@@ -39,7 +39,7 @@
 import { ref } from 'vue'
 import BudgetConsumptionTab from './BudgetConsumptionTab.vue'
 import BusinessProcessTab from './BusinessProcessTab.vue'
-import { formatAmount } from '@/utils/calculations'
+import { formatAmount } from '@/utils/formatUtils'
 
 const props = defineProps({
   visible: {
@@ -53,6 +53,12 @@ const props = defineProps({
   businessType: {
     type: String,
     required: true
+  },
+  // 预算监控页面会传入目标贷余，补充声明以消除类型报错
+  targetLoan: {
+    type: Number,
+    required: false,
+    default: 0
   },
   actualLoan: {
     type: Number,

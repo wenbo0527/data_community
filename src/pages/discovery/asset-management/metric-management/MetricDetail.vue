@@ -214,7 +214,6 @@
               </a-form-item>
             </a-col>
             <a-col :span="24">
-              {{ formData.technicalCaliber }}
               <a-form-item label="技术口径" field="technicalCaliber">
                 <MonacoEditor v-model:modelValue="formData.technicalCaliber" language="sql" height="240px" />
               </a-form-item>

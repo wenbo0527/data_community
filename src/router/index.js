@@ -45,12 +45,12 @@ const router = createRouter({
       component: () => import('../pages/exploration/external-data-analysis/external-data-monitor.vue'),
       meta: { title: '外数监控中心' }
     },
-    {
-      path: '/external-data-budget-management',
-      name: 'ExternalDataBudgetTop',
-      component: () => import('../pages/exploration/external-data-analysis/budget-management.vue'),
-      meta: { title: '外数预算管理' }
-    },
+      {
+        path: '/external-data-budget-management',
+        name: 'ExternalDataBudgetTop',
+        redirect: '/risk/budget-overview',
+        meta: { title: '预算管理' }
+      },
     {
       path: ROUTE_PATHS.LOGIN,
       name: ROUTE_NAMES.LOGIN,
@@ -411,6 +411,61 @@ const router = createRouter({
           }
         },
         {
+          path: 'budget',
+          name: 'RiskBudgetRoot',
+          redirect: '/risk/budget-overview'
+        },
+        {
+          path: 'budget/list',
+          name: 'RiskBudgetList',
+          component: () => import('../pages/budget/BudgetList.vue'),
+          meta: { title: '预算列表' }
+        },
+        {
+          path: 'budget/create',
+          name: 'RiskBudgetCreate',
+          component: () => import('../pages/budget/BudgetCreate.vue'),
+          meta: { title: '新建预算' }
+        },
+        {
+          path: 'budget/edit/:id',
+          name: 'RiskBudgetEdit',
+          component: () => import('../pages/budget/BudgetEdit.vue'),
+          meta: { title: '编辑预算' }
+        },
+        {
+          path: 'budget/detail/:id',
+          name: 'RiskBudgetDetail',
+          component: () => import('../pages/budget/BudgetDetail.vue'),
+          meta: { title: '预算详情' },
+          props: true
+        },
+        {
+          path: 'budget/contracts',
+          name: 'RiskBudgetContracts',
+          component: () => import('../pages/budget/components/ContractManagement.vue'),
+          meta: { title: '合同管理' }
+        },
+        {
+          path: 'budget/contracts/:id',
+          name: 'RiskBudgetContractDetail',
+          component: () => import('../pages/budget/ContractDetail.vue'),
+          meta: { title: '合同详情' },
+          props: true
+        },
+        {
+          path: 'budget/monitor',
+          name: 'RiskBudgetMonitorPage',
+          component: () => import('../pages/budget/BudgetMonitor.vue'),
+          meta: { title: '预算监控' }
+        },
+        {
+          path: 'budget/settlement',
+          name: 'RiskBudgetSettlement',
+          component: () => import('../pages/budget/SettlementManagement.vue'),
+          meta: { title: '结算管理' }
+        },
+        {
           path: 'external-data/lifecycle',
           name: 'RiskExternalDataLifecycle',
           component: () => import('../pages/risk/external-data-lifecycle/index.vue'),
@@ -443,7 +498,7 @@ const router = createRouter({
         {
           path: 'external-data/budget-management',
           name: 'RiskBudgetManagement',
-          component: () => import('../pages/exploration/external-data-analysis/budget-management.vue'),
+          redirect: '/risk/budget-overview',
           meta: { title: '预算管理' }
         }
       ]
@@ -456,8 +511,8 @@ const router = createRouter({
         {
           path: 'index',
           name: 'BudgetIndex',
-          component: () => import('../pages/budget/index.vue'),
-          meta: { title: '预算管理中心' }
+          component: () => import('../pages/budget/BudgetOverview.vue'),
+          meta: { title: '预算总览' }
         },
         {
           path: 'list',
@@ -483,6 +538,24 @@ const router = createRouter({
           component: () => import('../pages/budget/BudgetDetail.vue'),
           meta: { title: '预算详情' },
           props: true
+        },
+        {
+          path: 'contracts',
+          name: 'BudgetContracts',
+          component: () => import('../pages/budget/components/ContractManagement.vue'),
+          meta: { title: '合同管理' }
+        },
+        {
+          path: 'monitor',
+          name: 'BudgetMonitorPage',
+          component: () => import('../pages/budget/BudgetMonitor.vue'),
+          meta: { title: '预算监控' }
+        },
+        {
+          path: 'settlement',
+          name: 'BudgetSettlement',
+          component: () => import('../pages/budget/SettlementManagement.vue'),
+          meta: { title: '结算管理' }
         }
       ]
     },

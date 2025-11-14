@@ -84,44 +84,7 @@ export const MENU_CONFIG = {
           }
         }
       },
-      // 顶层外数入口（补充上一版本缺失的全局页面入口）
-      'external-data-hub': {
-        key: 'external-data-hub',
-        title: '外数中心',
-        type: 'group',
-        children: {
-          'external-data-lifecycle-top': {
-            key: 'external-data-lifecycle-top',
-            title: '生命周期总览',
-            path: '/external-data-lifecycle',
-            routeName: 'ExternalDataLifecycle'
-          },
-          'external-data-evaluation-top': {
-            key: 'external-data-evaluation-top',
-            title: '评估中心',
-            path: '/external-data-evaluation',
-            routeName: 'ExternalDataEvaluation'
-          },
-          'external-data-monitor-top': {
-            key: 'external-data-monitor-top',
-            title: '监控中心',
-            path: '/exploration/external-data-analysis/external-data-monitor',
-            routeName: 'external-data-monitor'
-          },
-          'external-data-archive-top': {
-            key: 'external-data-archive-top',
-            title: '档案管理',
-            path: '/external-data-archive',
-            routeName: 'ExternalDataArchive'
-          },
-          'external-data-service-top': {
-            key: 'external-data-service-top',
-            title: '数据服务',
-            path: '/external-data-service',
-            routeName: 'ExternalDataService'
-          }
-        }
-      },
+      
       'data-register': {
         key: 'data-register',
         title: '数据注册',
@@ -184,8 +147,8 @@ export const MENU_CONFIG = {
           'budget-management': {
             key: 'budget-management',
             title: '预算管理',
-            path: '/exploration/external-data-analysis/budget-management',
-            routeName: 'budget-management'
+            path: '/risk/budget-overview',
+            routeName: 'BudgetOverview'
           },
           'external-data-evaluation': {
             key: 'external-data-evaluation',
@@ -332,47 +295,7 @@ export const MENU_CONFIG = {
     }
   },
 
-  // 外数中心（顶层模块）
-  external: {
-    key: 'external',
-    title: '外数中心',
-    icon: 'icon-apps',
-    type: 'module',
-    defaultPath: ROUTE_PATHS.EXTERNAL_DATA.LIFECYCLE,
-    children: {
-      'external-data-lifecycle-top': {
-        key: 'external-data-lifecycle-top',
-        title: '生命周期总览',
-        path: ROUTE_PATHS.EXTERNAL_DATA.LIFECYCLE,
-        routeName: ROUTE_NAMES.EXTERNAL_DATA.LIFECYCLE
-      },
-      'external-data-evaluation-top': {
-        key: 'external-data-evaluation-top',
-        title: '评估中心',
-        path: ROUTE_PATHS.EXTERNAL_DATA.EVALUATION,
-        routeName: ROUTE_NAMES.EXTERNAL_DATA.EVALUATION
-      },
-      'external-data-monitor-top': {
-        key: 'external-data-monitor-top',
-        title: '监控中心',
-        // 顶层路由别名，保持外数中心五页面一致
-        path: ROUTE_PATHS.EXTERNAL_DATA.MONITOR,
-        routeName: ROUTE_NAMES.EXTERNAL_DATA.MONITOR
-      },
-      'external-data-archive-top': {
-        key: 'external-data-archive-top',
-        title: '档案管理',
-        path: ROUTE_PATHS.EXTERNAL_DATA.ARCHIVE,
-        routeName: ROUTE_NAMES.EXTERNAL_DATA.ARCHIVE
-      },
-      'external-data-service-top': {
-        key: 'external-data-service-top',
-        title: '数据服务',
-        path: ROUTE_PATHS.EXTERNAL_DATA.SERVICE,
-        routeName: ROUTE_NAMES.EXTERNAL_DATA.SERVICE
-      }
-    }
-  },
+  
 
   // 数据管理
   management: {
@@ -548,6 +471,12 @@ export const MENU_CONFIG = {
             title: '营销任务',
             path: '/marketing/tasks',
             routeName: 'marketing-tasks'
+          },
+          'marketing-tasks-horizontal': {
+            key: 'marketing-tasks-horizontal',
+            title: '横版营销画布',
+            path: '/marketing/tasks/horizontal',
+            routeName: 'marketing-tasks-horizontal'
           }
         }
       }
@@ -560,7 +489,7 @@ export const MENU_CONFIG = {
     title: '数字风险',
     icon: 'icon-safe',
     type: 'module',
-    defaultPath: '/risk/index',
+    defaultPath: '/risk/budget-overview',
     children: {
       'risk-index': {
         key: 'risk-index',
@@ -568,52 +497,77 @@ export const MENU_CONFIG = {
         path: '/risk/index',
         routeName: 'riskIndex'
       },
-      'risk-budget-overview': {
-        key: 'risk-budget-overview',
-        title: '预算总览',
-        path: '/risk/budget-overview',
-        routeName: 'BudgetOverview'
+      'risk-budget-center': {
+        key: 'risk-budget-center',
+        title: '预算管理',
+        type: 'group',
+        children: {
+          'risk-budget-overview': {
+            key: 'risk-budget-overview',
+            title: '预算总览',
+            path: '/risk/budget-overview',
+            routeName: 'BudgetOverview'
+          },
+          'risk-budget-list': {
+            key: 'risk-budget-list',
+            title: '预算列表',
+            path: '/risk/budget/list',
+            routeName: 'BudgetList'
+          },
+          'risk-contract-management': {
+            key: 'risk-contract-management',
+            title: '合同管理',
+            path: '/risk/budget/contracts',
+            routeName: 'RiskBudgetContracts'
+          },
+          'risk-budget-monitor': {
+            key: 'risk-budget-monitor',
+            title: '预算监控',
+            path: '/risk/budget/monitor',
+            routeName: 'RiskBudgetMonitorPage'
+          },
+          'risk-budget-settlement': {
+            key: 'risk-budget-settlement',
+            title: '结算管理',
+            path: '/risk/budget/settlement',
+            routeName: 'RiskBudgetSettlement'
+          }
+        }
       },
       'risk-external-data-lifecycle': {
         key: 'risk-external-data-lifecycle',
         title: '外数生命周期',
         type: 'group',
         children: {
-          'risk-budget-management': {
-            key: 'risk-budget-management',
-            title: '预算管理',
-            path: '/risk/external-data/budget-management',
-            routeName: 'RiskBudgetManagement'
-          },
-          'risk-external-data-evaluation': {
-            key: 'risk-external-data-evaluation',
-            title: '外部数据评估',
-            path: '/risk/external-data/evaluation',
-            routeName: 'RiskExternalDataEvaluation'
-          },
-          'risk-external-data-monitor': {
-            key: 'risk-external-data-monitor',
-            title: '外部数据监控',
-            path: '/risk/external-data/monitor',
-            routeName: 'RiskExternalDataMonitor'
+          'risk-external-data-lifecycle-index': {
+            key: 'risk-external-data-lifecycle-index',
+            title: '外数生命周期',
+            path: '/risk/external-data/lifecycle',
+            routeName: 'RiskExternalDataLifecycle'
           },
           'risk-external-data-archive': {
             key: 'risk-external-data-archive',
-            title: '档案管理',
+            title: '外数档案',
             path: '/risk/external-data/archive',
             routeName: 'RiskExternalDataArchive'
           },
+          'risk-external-data-evaluation': {
+            key: 'risk-external-data-evaluation',
+            title: '外数评估',
+            path: '/risk/external-data/evaluation',
+            routeName: 'RiskExternalDataEvaluation'
+          },
+          'risk-budget-management': {
+            key: 'risk-budget-management',
+            title: '预算管理',
+            path: '/risk/budget-overview',
+            routeName: 'BudgetOverview'
+          },
           'risk-external-data-service': {
             key: 'risk-external-data-service',
-            title: '数据服务',
+            title: '外数服务',
             path: '/risk/external-data/service',
             routeName: 'RiskExternalDataService'
-          },
-          'risk-external-data-lifecycle-index': {
-            key: 'risk-external-data-lifecycle-index',
-            title: '生命周期总览',
-            path: '/risk/external-data/lifecycle',
-            routeName: 'RiskExternalDataLifecycle'
           }
         }
       }
@@ -672,7 +626,6 @@ export const MENU_CONFIG = {
 export const TOP_MENU_ORDER = [
   'home',
   'discovery', 
-  'external',
   'exploration', 
   'management', 
   'marketing', 

@@ -249,4 +249,18 @@ src/pages/marketing/tasks/
 
 ---
 
+## 横版营销画布（原型）
+
+- 页面入口：`/marketing/tasks/horizontal`，菜单配置见 `src/config/menuConfig.js`（键 `marketing-tasks-horizontal`）。
+- 路由映射：`src/router/marketing.js:136` 指向 `../pages/marketing/tasks/horizontal/index.vue`。
+- 页面路径：`src/pages/marketing/tasks/horizontal/index.vue`。
+- 数据契约：完全兼容原版画布的 `CanvasData = { nodes, connections }`，导入/导出接口与原版一致。
+- 交互规则：仅允许 `out → in`（目标在右侧）、同一端口单连接、连接线右键删除、连接线上“+”插入节点、节点点击打开抽屉。
+- 关键实现：
+  - 连接校验：`src/pages/marketing/tasks/horizontal/index.vue:133`。
+  - 连接线右键删除：`src/pages/marketing/tasks/horizontal/index.vue:202`。
+  - 节点点击打开抽屉：`src/pages/marketing/tasks/horizontal/index.vue:223,226`，抽屉系统：`src/pages/marketing/tasks/composables/canvas/useConfigDrawers.js:84,201,315`。
+  - 横向端口工厂：`src/pages/marketing/tasks/horizontal/utils/portConfigFactoryHorizontal.js:6,21`。
+- 设计文档：`/.trae/documents/营销画布 - 横版工作流版本前端优化需求文档.md`（持续更新版）。
+
 *本文档会随着项目的发展持续更新，请定期查看最新版本。*

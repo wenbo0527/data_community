@@ -575,7 +575,7 @@ const formData = ref<{
   showExpiryDate: true,
   expiryReminderThreshold: 3,
   // 使用说明配置
-  usageDescription: ''
+  usageDescription: 'select \n a from asda'
 })
 
 // 表单验证规则

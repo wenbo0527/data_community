@@ -101,18 +101,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
-import { generateWarningData } from '@/mock/external-data'
-import type { BudgetData } from '@/mock/external-data'
 import type { RequestOption, UploadRequest } from '@arco-design/web-vue/es/upload'
+import { useBudgetStore } from '@/store/modules/budget'
+import type { BudgetData } from '@/store/modules/budget'
 
-// 数据列表
+// 接入统一预算 Store
+const store = useBudgetStore()
+const loading = computed(() => store.loading)
+
+// 页面展示用的预算列表（由 store.list 加筛选/排序得到）
 const budgetList = ref<BudgetData[]>([])
-const loading = ref(false)
 
-// 分页配置
+// 分页配置（本页本地维护，驱动 store.fetchBudgetList）
 const pagination = ref({
   total: 0,
   current: 1,
@@ -129,9 +132,15 @@ const formatPercent = (value: number) => {
   return value ? `${(value * 100).toFixed(2)}%` : '-'
 }
 
-// 处理文件上传
-const handleUpload = (options: RequestOption) => {
-  Message.success('上传弹窗已显示')
+// 处理文件上传（先接入 Mock 追加，后续替换为真实Excel上传解析）
+const handleUpload = async (options: RequestOption) => {
+  const ok = await store.uploadMock()
+  if (ok) {
+    await fetchBudgetList()
+    Message.success('已追加Mock数据')
+  } else {
+    Message.error('追加失败')
+  }
   return { abort: () => {} } as UploadRequest
 }
 
@@ -167,48 +176,21 @@ const resetFilter = () => {
 }
 
 const fetchBudgetList = async () => {
-  loading.value = true
   try {
-    let data = generateWarningData().map(item => {
-      const granularity = ['年', '季', '月'][Math.floor(Math.random() * 3)]
-      let time = ''
-      if (granularity === '年') {
-        time = '2025'
-      } else if (granularity === '季') {
-        time = `Q${Math.floor(Math.random() * 3) + 1}`
-      } else {
-        time = `2025-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}`
-      }
-      return {
-        ...item,
-        budgetGranularity: granularity,
-        budgetTime: time
-      }
-    })
-    
-    // 默认排序：按粒度(年>季>月)和时间升序
-    data.sort((a, b) => {
-      const granularityOrder: Record<string, number> = { '年': 1, '季': 2, '月': 3 }
-      if (granularityOrder[a.budgetGranularity] !== granularityOrder[b.budgetGranularity]) {
-        return granularityOrder[a.budgetGranularity] - granularityOrder[b.budgetGranularity]
-      }
-      return a.budgetTime.localeCompare(b.budgetTime)
-    })
-    
-    // 筛选逻辑
-    if (selectedGranularity.value) {
-      data = data.filter(item => item.budgetGranularity === selectedGranularity.value)
+    await store.fetchBudgetList({ page: pagination.value.current, pageSize: pagination.value.pageSize })
+    // 以 store.list 为基础进行（占位）筛选与排序
+    let data: BudgetData[] = [...store.list]
+    // 保留筛选控件占位（当前数据未提供粒度/时间字段，则不筛选）
+    if (selectedGranularity.value && 'budgetGranularity' in (data[0] || {})) {
+      data = data.filter((item: any) => item.budgetGranularity === selectedGranularity.value)
     }
-    if (selectedTime.value) {
-      data = data.filter(item => item.budgetTime.includes(selectedTime.value))
+    if (selectedTime.value && 'budgetTime' in (data[0] || {})) {
+      data = data.filter((item: any) => String(item.budgetTime).includes(selectedTime.value))
     }
-    
     budgetList.value = data
-    pagination.value.total = data.length
+    pagination.value.total = store.total
   } catch (error: any) {
     Message.error(error.message || '获取数据失败')
-  } finally {
-    loading.value = false
   }
 }
 

@@ -8,11 +8,16 @@ export interface BudgetListParams {
 
 export interface BudgetItem {
   id: string
+  businessType: string
+  platform: string
+  targetLoan: number
+  estimatedLoan: number
+  estimatedCost: number
+  estimatedAnnualCost: number
+  estimatedRiskFreeReturn: number
+  granularity?: 'year' | 'quarter' | 'month'
+  timeLabel?: string
   budgetNo?: string
-  budgetName: string
-  budgetYear: number
-  status?: string
-  totalAmount?: number
   remainingAmount?: number
 }
 
@@ -50,11 +55,24 @@ export const budgetApiService = {
   // 获取预算列表（兼容 mock 返回的 data.data 结构）
   async getBudgets(params: BudgetListParams = {}): Promise<BudgetListResponse> {
     const { page = 1, pageSize = 10 } = params
+    if (typeof window !== 'undefined' && (import.meta as any).env?.DEV) {
+      const list = seedAndGetMemoryBudgets()
+      const total = list.length
+      const start = (page - 1) * pageSize
+      const end = start + pageSize
+      return { list: list.slice(start, end), total, page, pageSize }
+    }
     try {
       const data: any = await request('/api/budget/list' + toQuery({ page, pageSize }))
       const raw = data?.data || {}
       const list: BudgetItem[] = raw.list || raw.data || []
       const total = Number(raw.total || list.length || 0)
+      if (!Array.isArray(list) || list.length === 0) {
+        const mem = seedAndGetMemoryBudgets()
+        const start = (page - 1) * pageSize
+        const end = start + pageSize
+        return { list: mem.slice(start, end), total: mem.length, page, pageSize }
+      }
       return { list, total, page, pageSize }
     } catch (err) {
       // 后备：使用内存数据
@@ -87,13 +105,22 @@ export const budgetApiService = {
       return { success: true }
     } catch {
       const list = seedAndGetMemoryBudgets()
+      const now = new Date()
+      const month = now.getMonth() + 1
+      const quarter = Math.ceil(month / 3)
+      const bt = String(payload.businessType || '助贷')
+      const platform = String(payload.platform || (bt === '直贷' ? '苏贷' : '蚂蚁'))
       const newItem: BudgetItem = {
         id: 'mem_' + Date.now(),
-        budgetName: String(payload.budgetName || '未命名预算'),
-        budgetYear: Number(payload.budgetYear || new Date().getFullYear()),
-        status: 'draft',
-        totalAmount: 500000,
-        remainingAmount: 500000
+        businessType: bt,
+        platform,
+        targetLoan: Number(payload.targetLoan ?? 900000),
+        estimatedLoan: Number(payload.estimatedLoan ?? 700000),
+        estimatedCost: Number(payload.estimatedCost ?? 50000),
+        estimatedAnnualCost: Number(payload.estimatedAnnualCost ?? 0.045),
+        estimatedRiskFreeReturn: Number(payload.estimatedRiskFreeReturn ?? 0.075),
+        granularity: payload.granularity || 'month',
+        timeLabel: payload.timeLabel || `${now.getFullYear()}-${String(month).padStart(2, '0')}`
       }
       list.unshift(newItem)
       return { success: true }
@@ -145,15 +172,43 @@ let memoryBudgets: BudgetItem[] | null = null
 
 function seedAndGetMemoryBudgets(): BudgetItem[] {
   if (!memoryBudgets) {
-    memoryBudgets = Array.from({ length: 24 }).map((_, i) => ({
-      id: 'mem_' + (i + 1),
-      budgetNo: 'B' + String(2024) + '-' + String(i + 1).padStart(3, '0'),
-      budgetName: `演示预算 ${i + 1}`,
-      budgetYear: 2024,
-      status: i % 3 === 0 ? 'active' : i % 3 === 1 ? 'draft' : 'closed',
-      totalAmount: 800000 + i * 10000,
-      remainingAmount: 600000 + i * 5000
-    }))
+    const businessTypes = ['助贷', '融担', '直贷']
+    const platformsMap: Record<string, string[]> = {
+      '助贷': ['蚂蚁', '字节', '京东'],
+      '融担': ['蚂蚁', '字节', '京东'],
+      '直贷': ['苏贷']
+    }
+    const year = new Date().getFullYear()
+    memoryBudgets = Array.from({ length: 36 }).map((_, i) => {
+      const bt = businessTypes[i % businessTypes.length]
+      const plats = platformsMap[bt]
+      const platform = plats[i % plats.length]
+      const month = (i % 12) + 1
+      const quarter = Math.ceil(month / 3)
+      const granularity = (i % 3 === 0 ? 'year' : i % 3 === 1 ? 'quarter' : 'month') as 'year' | 'quarter' | 'month'
+      const timeLabel = granularity === 'year' ? String(year) : granularity === 'quarter' ? `${year}-Q${quarter}` : `${year}-${String(month).padStart(2, '0')}`
+      const targetLoan = 800000 + i * 10000
+      const estimatedLoan = 600000 + i * 8000
+      const estimatedCost = 40000 + i * 500
+      const estimatedAnnualCost = 0.03 + (i % 10) * 0.003
+      const estimatedRiskFreeReturn = 0.06 + (i % 10) * 0.003
+      const budgetNo = `B${year}-${String(i + 1).padStart(3, '0')}`
+      const remainingAmount = Math.max(0, targetLoan - estimatedLoan - estimatedCost)
+      return {
+        id: 'mem_' + (i + 1),
+        businessType: bt,
+        platform,
+        targetLoan,
+        estimatedLoan,
+        estimatedCost,
+        estimatedAnnualCost,
+        estimatedRiskFreeReturn,
+        granularity,
+        timeLabel,
+        budgetNo,
+        remainingAmount
+      }
+    })
   }
   return memoryBudgets
 }

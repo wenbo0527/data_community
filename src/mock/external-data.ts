@@ -56,33 +56,59 @@ export interface BurndownData {
  * 同时计算累积消耗数据，支持燃尽图和累积消耗图两种显示模式
  * @returns {BurndownData[]} 燃尽图数据数组
  */
-export const generateBurndownData = (filter?: {businessType?: string, platform?: string}) => {
-  const months = ['1月', '2月', '3月', '4月', '5月', '6月']
-  const data: BurndownData[] = []
+export const generateBurndownData = (filter?: {businessType?: string, platform?: string, range?: 'month' | 'quarter'}) => {
+  const range = filter?.range || 'month'
   const initialBudget = 1000000 // 初始预算总额
-  let budgetRemaining = initialBudget
-  let actualRemaining = initialBudget
+  const data: BurndownData[] = []
 
-  months.forEach((month, index) => {
-    // 计算累积消耗
-    const cumulativeBudget = initialBudget - budgetRemaining
-    const cumulativeActual = initialBudget - actualRemaining
-    
-    data.push({
-      month,
-      budget: budgetRemaining,
-      actual: actualRemaining,
-      granularity: 'month',
-      initialBudget,
-      cumulativeBudget,
-      cumulativeActual
+  if (range === 'quarter') {
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4']
+    let budgetRemainingQ = initialBudget
+    let actualRemainingQ = initialBudget
+
+    quarters.forEach((q) => {
+      const cumulativeBudget = initialBudget - budgetRemainingQ
+      const cumulativeActual = initialBudget - actualRemainingQ
+
+      data.push({
+        month: q,
+        budget: budgetRemainingQ,
+        actual: actualRemainingQ,
+        granularity: 'quarter',
+        initialBudget,
+        cumulativeBudget,
+        cumulativeActual
+      })
+
+      // 每季度预算线性递减（约25%），实际在20%-35%之间波动
+      budgetRemainingQ = Math.floor(budgetRemainingQ * 0.75)
+      actualRemainingQ = Math.floor(actualRemainingQ * (0.65 + Math.random() * 0.15))
     })
-    
-    // 更新下个月的剩余预算
-    budgetRemaining = Math.floor(budgetRemaining * 0.8)
-    // 随机生成实际剩余值，使其有时高于预算(非预警)，有时低于预算(预警)
-    actualRemaining = Math.floor(actualRemaining * (0.7 + Math.random() * 0.3))
-  })
+  } else {
+    const months = ['1月', '2月', '3月', '4月', '5月', '6月']
+    let budgetRemaining = initialBudget
+    let actualRemaining = initialBudget
+
+    months.forEach((month) => {
+      const cumulativeBudget = initialBudget - budgetRemaining
+      const cumulativeActual = initialBudget - actualRemaining
+      
+      data.push({
+        month,
+        budget: budgetRemaining,
+        actual: actualRemaining,
+        granularity: 'month',
+        initialBudget,
+        cumulativeBudget,
+        cumulativeActual
+      })
+      
+      // 更新下个月的剩余预算
+      budgetRemaining = Math.floor(budgetRemaining * 0.8)
+      // 随机生成实际剩余值，使其有时高于预算(非预警)，有时低于预算(预警)
+      actualRemaining = Math.floor(actualRemaining * (0.7 + Math.random() * 0.3))
+    })
+  }
 
   return data
 }
@@ -173,10 +199,11 @@ Mock.mock(/\/api\/external-data\/burndown/, 'get', (options) => {
   const url = new URL(options.url, 'http://dummy.com')
   const businessType = url.searchParams.get('businessType') || undefined
   const platform = url.searchParams.get('platform') || undefined
+  const range = (url.searchParams.get('range') || 'month') as 'month' | 'quarter'
   
   return {
     code: 200,
-    data: generateBurndownData({businessType, platform})
+    data: generateBurndownData({businessType, platform, range})
   }
 })
 

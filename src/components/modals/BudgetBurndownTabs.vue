@@ -1,26 +1,24 @@
 <template>
-  <a-card :title="chartTitle">
-    <!-- 图表类型切换 -->
-    <template #extra>
-      <a-radio-group v-model="chartType" @change="handleChartTypeChange" size="small">
-        <a-radio value="burndown">燃尽图</a-radio>
-        <a-radio value="cumulative">累积消耗图</a-radio>
-      </a-radio-group>
-    </template>
-    
-    <a-tabs v-model:value="activeTab" @change="handleTabChange">
-      <a-tab-pane key="month" tab="月度" />
-      <a-tab-pane key="quarter" tab="季度" />
-      <a-tab-pane key="year" tab="年度" />
-    </a-tabs>
-    
-    <!-- 单一图表容器 -->
+  <div class="chart-block">
+    <div class="chart-header">
+      <div class="title">{{ chartTitle }}</div>
+      <a-space>
+        <a-radio-group v-model="chartType" @change="handleChartTypeChange" size="small">
+          <a-radio value="burndown">燃尽图</a-radio>
+          <a-radio value="cumulative">累积消耗图</a-radio>
+        </a-radio-group>
+        <a-radio-group v-model="activeTab" @change="handleTabChange" size="small">
+          <a-radio value="month">月度</a-radio>
+          <a-radio value="quarter">季度</a-radio>
+        </a-radio-group>
+      </a-space>
+    </div>
     <div ref="burndownChartRef" class="chart-container" />
-  </a-card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 
@@ -40,6 +38,7 @@ const props = defineProps({
 
 const emit = defineEmits<{
   'chart-type-change': [chartType: string]
+  'granularity-change': [granularity: 'month' | 'quarter']
 }>()
 
 // 图表类型：燃尽图或累积消耗图
@@ -48,6 +47,7 @@ const chartType = ref('burndown')
 const activeTab = ref('month')
 const burndownChartRef = ref()
 let burndownChart: echarts.ECharts | null = null
+let resizeObserver: ResizeObserver | null = null
 
 // 根据图表类型动态计算标题
 const chartTitle = computed(() => {
@@ -62,6 +62,7 @@ const handleChartTypeChange = () => {
 
 // 处理时间粒度切换
 const handleTabChange = (tabKey: string) => {
+  emit('granularity-change', tabKey as 'month' | 'quarter')
   updateChartWithCurrentData()
 }
 
@@ -160,7 +161,7 @@ const updateChart = (data: any[], type: string) => {
       }
     },
     legend: {
-      data: type === 'cumulative' ? ['累积预算消耗', '累积实际消耗'] : ['预算剩余', '实际剩余'],
+      data: type === 'cumulative' ? ['累积预算消耗', '累积实际消耗', '预警线'] : ['预算剩余', '实际剩余', '预警线'],
       top: 10
     },
     grid: {
@@ -202,6 +203,13 @@ const updateChart = (data: any[], type: string) => {
         data: data.map(item => parseFloat((item.actual / 10000).toFixed(2))),
         itemStyle: { color: '#52c41a' },
         areaStyle: { color: 'rgba(82, 196, 26, 0.1)' }
+      },
+      {
+        name: '预警线',
+        type: 'line',
+        data: data.map(item => parseFloat(((item.budget * 1.1) / 10000).toFixed(2))),
+        itemStyle: { color: '#f53f3f' },
+        lineStyle: { type: 'dashed' }
       }
     ]
   } else {
@@ -220,6 +228,13 @@ const updateChart = (data: any[], type: string) => {
          data: data.map(item => parseFloat((item.actual / 10000).toFixed(2))),
          itemStyle: { color: '#52c41a' },
          areaStyle: { color: 'rgba(82, 196, 26, 0.1)' }
+       },
+       {
+         name: '预警线',
+         type: 'line',
+         data: data.map(item => parseFloat(((item.budget * 0.9) / 10000).toFixed(2))),
+         itemStyle: { color: '#f53f3f' },
+         lineStyle: { type: 'dashed' }
        }
     ]
   }
@@ -275,23 +290,45 @@ const initChart = async () => {
     
     burndownChart = await safeInitECharts(burndownChartRef.value, {
       theme: 'default',
-      renderer: 'canvas',
-      width: 800,
-      height: 400
+      renderer: 'canvas'
     })
     
     console.log('燃尽图表初始化成功')
     
+    // 监听容器尺寸，确保全宽覆盖
+    if (burndownChartRef.value) {
+      try {
+        resizeObserver = new ResizeObserver(() => {
+          burndownChart && burndownChart.resize()
+        })
+        resizeObserver.observe(burndownChartRef.value)
+      } catch (e) {
+        console.warn('ResizeObserver 初始化失败，使用窗口resize备选', e)
+        window.addEventListener('resize', () => burndownChart && burndownChart.resize())
+      }
+    }
+
     // 初始化图表数据
     updateChartWithCurrentData()
   } catch (error) {
     console.error('燃尽图表初始化失败:', error)
   }
 }
+onUnmounted(() => {
+  if (resizeObserver && resizeObserver.disconnect) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (burndownChart) {
+    safeDisposeChart(burndownChart, '预算燃尽图')
+    burndownChart = null
+  }
+})
 </script>
 
 <style scoped>
-.chart-container {
-  width: 100%;
-  height: 400px;
-}</style>
+.chart-block { width: 100%; }
+.chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.chart-header .title { font-weight: 600; }
+.chart-container { width: 100%; min-height: 420px; }
+</style>

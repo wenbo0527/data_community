@@ -21,6 +21,20 @@ if (import.meta.env.DEV) {
     })
 }
 
+// 在开发环境加载 Mock 接口
+if (import.meta.env.DEV) {
+  Promise.all([
+    import('./mock/external-data.ts'),
+    import('./mock/budget.ts')
+  ])
+    .then(() => {
+      console.info('🧪 Mock 接口已加载（external-data, budget）')
+    })
+    .catch(err => {
+      console.warn('⚠️ Mock 接口加载失败:', err)
+    })
+}
+
 // 配置全局事件监听器为被动模式
 const eventOptions = { passive: true };
 document.addEventListener('wheel', () => {}, { passive: true });

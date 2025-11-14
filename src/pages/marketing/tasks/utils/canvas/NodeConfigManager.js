@@ -155,9 +155,15 @@ class BaseNodeConfigStrategy {
         }
         
         console.log(`[NodeConfigManager] 节点 ${node.id} 需要 ${requiredOutputs} 个输出端口`)
-        
-        // 更新节点的输出端口
-        this.updateNodeOutputPorts(node, requiredOutputs, config)
+
+        // 在横版画布下（提供了 updateNodeFromConfig）跳过旧的统一底部 out 端口策略
+        const hasHorizontalUpdater = context && context.nodeOperations && typeof context.nodeOperations.updateNodeFromConfig === 'function'
+        if (hasHorizontalUpdater) {
+          console.log(`[NodeConfigManager] 检测到横版更新器，跳过统一底部 out 端口更新`)
+        } else {
+          // 更新节点的输出端口（旧策略）
+          this.updateNodeOutputPorts(node, requiredOutputs, config)
+        }
         
         // 如果有布局管理器，通知其更新分支
         if (context.structuredLayout && context.structuredLayout.updateSplitNodeBranches) {
@@ -742,23 +748,8 @@ class StartNodeConfigStrategy extends BranchNodeConfigStrategy {
       }
     })
 
-    // 更新标签显示配置信息
-    const taskTypeLabels = {
-      marketing: '营销活动',
-      notification: '通知推送',
-      survey: '问卷调研',
-      retention: '用户留存'
-    }
-    
-    const label = config.taskType 
-      ? `开始\n(${taskTypeLabels[config.taskType] || config.taskType})`
-      : '开始'
-    
-    node.attr({
-      text: {
-        text: label
-      }
-    })
+    // 移除默认外置文本写入，避免与自定义标题/内容区重复显示
+    // 标题与内容的展示由各画布实现（如 horizontal/index.vue）负责
   }
 
   validateConfig(config) {
