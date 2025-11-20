@@ -13,7 +13,7 @@ export const NODE_DIMENSIONS = {
   ICON_SIZE: { width: 28, height: 20 },
   ICON_RADIUS: 6,
   MENU_DOT_SIZE: 3,
-  PORT_RADIUS: 4
+  PORT_RADIUS: 6
 }
 
 // 颜色常量
@@ -43,7 +43,13 @@ export const COLORS = {
   PORT_STROKE: '#4C78FF',
   PORT_FILL_IN: '#FFFFFF',
   PORT_FILL_OUT: '#4C78FF',
-  PORT_STROKE_WIDTH: 1.5
+  PORT_STROKE_WIDTH: 1.5,
+  
+  // 端口动画
+  PORT_ANIMATION_DURATION: 300,
+  PORT_HOVER_SCALE: 1.2,
+  PORT_DEFAULT_SCALE: 1.0,
+  PORT_UNSELECTED_SCALE: 0.8
 }
 
 // 字体常量
@@ -82,7 +88,9 @@ export const POSITIONS = {
   // 菜单点位置
   MENU_DOT_BASE_X: -24,
   MENU_DOT_Y: 16, // 保持16，因为菜单点高度只有3px，在36px区域内居中
-  MENU_DOT_SPACING: 6
+  MENU_DOT_SPACING: 6,
+  // 菜单点X偏移数组（消除硬编码）
+  MENU_DOT_OFFSETS: [-24, -18, -12]
 }
 
 // 交互状态样式

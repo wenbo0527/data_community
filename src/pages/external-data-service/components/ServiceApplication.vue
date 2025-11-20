@@ -38,7 +38,7 @@ import { Message } from '@arco-design/web-vue'
 import { useExternalDataStore } from '../../../store/modules/external-data'
 
 const store = useExternalDataStore()
-const form = reactive({ customer: '', type: void 0 as undefined | string, desc: '' })
+const form = reactive({ customer: '', type: undefined, desc: '' })
 
 const submit = async () => {
   if (!form.customer || !form.type) {

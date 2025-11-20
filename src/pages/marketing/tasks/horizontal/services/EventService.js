@@ -1,3 +1,5 @@
+import { NODE_DIMENSIONS, POSITIONS } from '../styles/nodeStyles.js'
+
 export class EventService {
   constructor(deps) {
     this.graph = deps.graph
@@ -34,8 +36,8 @@ export class EventService {
           : { x: e.clientX, y: e.clientY }
         const rx = local.x - bbox.x
         const ry = local.y - bbox.y
-        const HEADER_H = 36 // 与 NODE_DIMENSIONS.HEADER_HEIGHT 对齐
-        const DOT_Y = 16    // 与 POSITIONS.MENU_DOT_Y 对齐
+        const HEADER_H = NODE_DIMENSIONS.HEADER_HEIGHT // 使用常量，消除硬编码
+        const DOT_Y = POSITIONS.MENU_DOT_Y // 使用常量，消除硬编码
         const DOT_PAD_X = 30 // 菜单区域宽度容忍
         const DOT_PAD_Y = 8  // 菜单区域高度容忍
         const inHeader = ry >= 0 && ry <= HEADER_H
@@ -45,41 +47,16 @@ export class EventService {
         return { inHeader: false, inDotArea: false }
       }
     }
-    graph.on('edge:mouseenter', ({ edge }) => {
-      edge.addTools([
-        { name: 'button-remove', args: { distance: -30, offset: { x: 0, y: 0 } } },
-        {
-          name: 'button',
-          args: {
-            markup: [
-              { tagName: 'circle', attrs: { r: 10, fill: '#4C78FF', stroke: '#4C78FF', cursor: 'pointer' } },
-              { tagName: 'text', attrs: { fill: '#fff', fontSize: 12, textAnchor: 'middle', pointerEvents: 'none', y: 4, text: '+' } }
-            ],
-            distance: 0,
-            offset: { x: 0, y: 0 },
-            onClick: () => {
-              const bbox = edge.getBBox()
-              const x = bbox.x + bbox.width / 2
-              const y = bbox.y + bbox.height / 2
-              this.setPendingCreatePoint({ x, y })
-              const uiPos = toContainerCoords({ x, y })
-              this.setNodeSelectorPosition(uiPos)
-              this.setNodeSelectorSourceNode(null)
-              this.setPendingInsertionEdge(edge)
-              this.setShowNodeSelector(true)
-            }
-          }
-        }
-      ])
-    })
+    // 边工具按钮交互改由页面控制，避免重复添加与误删
+    graph.on('edge:mouseenter', () => {})
+    graph.on('edge:mouseleave', () => {})
 
-    graph.on('edge:mouseleave', ({ edge }) => {
-      edge.removeTools()
-    })
-
-    // 右键边保留删除操作
-    graph.on('edge:contextmenu', ({ edge }) => {
-      graph.removeEdge(edge.id)
+    // 右键边：仅弹出菜单，具体删除逻辑由页面处理
+    graph.on('edge:contextmenu', ({ e }) => {
+      try {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault()
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation()
+      } catch {}
     })
 
     // 右键仅在点击“更多”菜单点时展示菜单，取消全节点右键菜单

@@ -58,7 +58,7 @@
           
           <template #actions="{ record }">
             <a-space>
-              <a-button type="text" size="small" @click="editTask(record)" v-if="record.status === 'draft'">编辑</a-button>
+              <a-button type="text" size="small" @click="editTask(record)" v-if="record.status === 'draft' || record.status === 'published'">编辑</a-button>
               <a-dropdown v-if="record.versions && record.versions.length > 1">
                 <a-button type="text" size="small">
                   历史版本
@@ -320,7 +320,8 @@ const getStatusColor = (status) => {
     draft: 'blue',
     running: 'green',
     completed: 'green',
-    disabled: 'red'
+    disabled: 'red',
+    published: 'green'
   }
   return colorMap[status] || 'gray'
 }
@@ -331,14 +332,15 @@ const getStatusText = (status) => {
     draft: '草稿',
     running: '运行中',
     completed: '已完成',
-    disabled: '停用'
+    disabled: '停用',
+    published: '已发布'
   }
   return textMap[status] || '未知'
 }
 
 // 创建任务
 const createTask = () => {
-  router.push('/marketing/tasks/editor?mode=create')
+  router.push('/marketing/tasks/horizontal')
 }
 
 // 查看任务（点击任务名称）
@@ -348,7 +350,7 @@ const viewTask = (record) => {
 
 // 编辑任务
 const editTask = (record) => {
-  router.push(`/marketing/tasks/editor?mode=edit&id=${record.id}&version=${record.version}`)
+  router.push(`/marketing/tasks/horizontal?mode=edit&id=${record.id}&version=${record.version}`)
 }
 
 // 查看历史版本

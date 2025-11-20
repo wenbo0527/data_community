@@ -190,6 +190,338 @@ const props = defineProps({
   }
 })
 
+// 🔧 新增：传统预览线检查函数
+const performLegacyPreviewLineCheck = async () => {
+  console.log('[TaskFlowCanvas] 执行传统预览线检查方法')
+  
+  const allNodes = graph.value?.getNodes() || []
+  const allEdges = graph.value?.getEdges() || []
+  const previewEdges = allEdges.filter(edge => {
+    const edgeData = edge.getData() || {}
+    return edgeData.isPreview || edge.id.includes('preview')
+  })
+  const connectionEdges = allEdges.filter(edge => {
+    const edgeData = edge.getData() || {}
+    return !edgeData.isPreview && !edge.id.includes('preview')
+  })
+  
+  // 计算应有的预览线数量
+  let expectedPreviewLines = 0
+  const configuredNodes = []
+  const unconfiguredNodes = []
+  
+  for (const node of allNodes) {
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.nodeType || nodeData.type
+    const isConfigured = nodeData.isConfigured || nodeType === 'start'
+    
+    if (isConfigured) {
+      configuredNodes.push(node)
+      // 检查节点是否已有连接线，如果没有则应该有预览线
+      const outgoingConnections = connectionEdges.filter(edge => 
+        edge.getSourceCellId() === node.id
+      )
+      
+      if (outgoingConnections.length === 0) {
+        // 分支节点可能需要多条预览线
+        if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
+          // 🔧 修复：更准确地计算分支节点的预览线需求
+          let branchCount = 2 // 默认分支数
+          
+          if (nodeType === 'audience-split') {
+            // 人群分流节点：crowdLayers + unmatchBranch
+            const config = nodeData.config || {}
+            const crowdLayersCount = config.crowdLayers?.length || 0
+            const hasUnmatchBranch = config.unmatchBranch && config.unmatchBranch.id
+            branchCount = crowdLayersCount + (hasUnmatchBranch ? 1 : 0)
+            // 确保至少有2条分支线
+            branchCount = Math.max(branchCount, 2)
+          } else if (nodeType === 'event-split') {
+            // 事件分流节点：events + default
+            const config = nodeData.config || {}
+            const eventsCount = config.events?.length || 0
+            branchCount = eventsCount + 1 // 加上默认分支
+            branchCount = Math.max(branchCount, 2)
+          } else {
+            // 其他分支节点
+            branchCount = nodeData.branches?.length || nodeData.branchCount || 2
+            branchCount = Math.max(branchCount, 2)
+          }
+          
+          expectedPreviewLines += branchCount
+          console.log(`[TaskFlowCanvas] 分支节点 ${node.id} 需要 ${branchCount} 条预览线`, {
+            nodeType,
+            config: nodeData.config,
+            crowdLayersCount: nodeData.config?.crowdLayers?.length || 0,
+            hasUnmatchBranch: !!(nodeData.config?.unmatchBranch?.id),
+            eventsCount: nodeData.config?.events?.length || 0,
+            calculatedBranchCount: branchCount
+          })
+        } else {
+          expectedPreviewLines += 1
+        }
+      }
+    } else {
+      unconfiguredNodes.push(node)
+    }
+  }
+  
+  // 详细分析预览线状态
+  const validPreviewLines = []
+  const invalidPreviewLines = []
+  const missingPreviewLines = []
+  const redundantPreviewLines = []
+  const problemNodes = []
+  
+  // 检查现有预览线的有效性
+  for (const edge of previewEdges) {
+    const sourceId = edge.getSourceCellId()
+    const sourceNode = graph.value?.getCellById(sourceId)
+    const edgeData = edge.getData() || {}
+    
+    if (!sourceNode) {
+      invalidPreviewLines.push({
+        id: edge.id,
+        issue: '源节点不存在',
+        sourceId: sourceId
+      })
+      continue
+    }
+    
+    // 检查源节点是否已配置
+    const sourceData = sourceNode.getData() || {}
+    const sourceType = sourceData.nodeType || sourceData.type
+    const isSourceConfigured = sourceData.isConfigured || sourceType === 'start'
+    
+    if (!isSourceConfigured) {
+      invalidPreviewLines.push({
+        id: edge.id,
+        issue: '源节点未配置',
+        sourceId: sourceId,
+        sourceType: sourceType
+      })
+      continue
+    }
+    
+    // 检查目标节点是否存在
+    const targetId = edge.getTargetCellId()
+    const targetNode = graph.value?.getCellById(targetId)
+    
+    if (!targetNode) {
+      invalidPreviewLines.push({
+        id: edge.id,
+        issue: '目标节点不存在',
+        sourceId: sourceId,
+        targetId: targetId
+      })
+      continue
+    }
+    
+    // 检查是否存在对应的连接线
+    const hasConnection = connectionEdges.some(conn => 
+      conn.getSourceCellId() === sourceId && conn.getTargetCellId() === targetId
+    )
+    
+    if (hasConnection) {
+      redundantPreviewLines.push({
+        id: edge.id,
+        issue: '与连接线重复',
+        sourceId: sourceId,
+        targetId: targetId
+      })
+      continue
+    }
+    
+    validPreviewLines.push({
+      id: edge.id,
+      sourceId: sourceId,
+      nodeType: sourceType,
+      branchId: edgeData.branchId || 'main'
+    })
+  }
+  
+  // 检查缺失的预览线
+  for (const node of configuredNodes) {
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.nodeType || nodeData.type
+    
+    // 检查节点是否已有连接线
+    const outgoingConnections = connectionEdges.filter(edge => 
+      edge.getSourceCellId() === node.id
+    )
+    
+    // 检查节点是否已有预览线
+    const nodePreviewLines = previewEdges.filter(edge => 
+      edge.getSourceCellId() === node.id
+    )
+    
+    if (outgoingConnections.length === 0) {
+      // 没有连接线，应该有预览线
+      let expectedBranches = 1
+      
+      if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
+        // 分支节点：根据配置计算分支数
+        if (nodeType === 'audience-split') {
+          // 人群分流节点：crowdLayers + unmatchBranch
+          const config = nodeData.config || {}
+          const crowdLayersCount = config.crowdLayers?.length || 0
+          const hasUnmatchBranch = !!(config.unmatchBranch?.id)
+          expectedBranches = crowdLayersCount + (hasUnmatchBranch ? 1 : 0)
+          expectedBranches = Math.max(expectedBranches, 2)
+        } else if (nodeType === 'event-split') {
+          // 事件分流节点：events + default
+          const config = nodeData.config || {}
+          const eventsCount = config.events?.length || 0
+          expectedBranches = eventsCount + 1 // 加上默认分支
+          expectedBranches = Math.max(expectedBranches, 2)
+        } else {
+          expectedBranches = nodeData.branches?.length || nodeData.branchCount || 2
+          expectedBranches = Math.max(expectedBranches, 2)
+        }
+      }
+      
+      if (nodePreviewLines.length < expectedBranches) {
+        missingPreviewLines.push({
+          nodeId: node.id,
+          nodeType: nodeType,
+          expectedBranches: expectedBranches,
+          actualPreviewLines: nodePreviewLines.length,
+          issue: `缺少 ${expectedBranches - nodePreviewLines.length} 条预览线`
+        })
+      }
+    } else {
+      // 已有连接线，检查预览线是否多余
+      if (nodePreviewLines.length > 0) {
+        redundantPreviewLines.push(...nodePreviewLines.map(edge => ({
+          id: edge.id,
+          issue: '节点已有连接线，预览线多余',
+          sourceId: node.id,
+          nodeType: nodeType
+        })))
+      }
+    }
+  }
+  
+  // 构建详细的验证报告
+  const validationReport = {
+    // 统计信息
+    statistics: {
+      totalNodes: allNodes.length,
+      configuredNodes: configuredNodes.length,
+      unconfiguredNodes: unconfiguredNodes.length,
+      expectedPreviewLines: expectedPreviewLines,
+      actualPreviewLines: previewEdges.length,
+      validPreviewLines: validPreviewLines.length,
+      invalidPreviewLines: invalidPreviewLines.length,
+      totalConnections: connectionEdges.length,
+      cleanedCount: 0 // 将在清理阶段更新
+    },
+    
+    // 问题分析
+    issues: {
+      missingPreviewLines: missingPreviewLines,
+      invalidPreviewLines: invalidPreviewLines,
+      redundantPreviewLines: redundantPreviewLines,
+      problemNodes: problemNodes
+    },
+    
+    // 验证结果
+    result: {
+      isValid: invalidPreviewLines.length === 0 && redundantPreviewLines.length === 0 && missingPreviewLines.length === 0,
+      totalIssues: invalidPreviewLines.length + redundantPreviewLines.length + missingPreviewLines.length + problemNodes.length
+    }
+  }
+  
+  // 执行清理操作
+  let cleanedCount = 0
+  
+  // 使用 PreviewLineSystem 进行验证和清理
+  if (previewLineSystem && typeof previewLineSystem.validateAndCleanupDuplicates === 'function') {
+    console.log('[TaskFlowCanvas] 使用 PreviewLineSystem.validateAndCleanupDuplicates 进行清理')
+    await previewLineSystem.validateAndCleanupDuplicates()
+  }
+  
+  // 清理无效预览线
+  for (const invalid of invalidPreviewLines) {
+    try {
+      const edge = graph.value?.getCellById(invalid.id)
+      if (edge) {
+        graph.value?.removeCell(edge, { silent: true })
+        cleanedCount++
+      }
+    } catch (error) {
+      console.warn('[TaskFlowCanvas] 清理无效预览线失败:', invalid.id, error)
+    }
+  }
+  
+  // 清理冗余预览线
+  for (const redundant of redundantPreviewLines) {
+    try {
+      const edge = graph.value?.getCellById(redundant.id)
+      if (edge) {
+        graph.value?.removeCell(edge, { silent: true })
+        cleanedCount++
+      }
+    } catch (error) {
+      console.warn('[TaskFlowCanvas] 清理冗余预览线失败:', redundant.id, error)
+    }
+  }
+  
+  // 更新清理计数
+  validationReport.statistics.cleanedCount = cleanedCount
+  
+  // 更新调试统计
+  if (state.debugStats) {
+    state.debugStats.totalNodes = validationReport.statistics.totalNodes
+    state.debugStats.configuredNodes = validationReport.statistics.configuredNodes
+    state.debugStats.unconfiguredNodes = validationReport.statistics.unconfiguredNodes
+    state.debugStats.expectedPreviewLines = validationReport.statistics.expectedPreviewLines
+    state.debugStats.actualPreviewLines = validationReport.statistics.actualPreviewLines
+    state.debugStats.missingPreviewLines = validationReport.issues.missingPreviewLines
+    state.debugStats.invalidPreviewLines = validationReport.issues.invalidPreviewLines
+    state.debugStats.redundantPreviewLines = validationReport.issues.redundantPreviewLines
+    state.debugStats.problemNodes = validationReport.issues.problemNodes
+    state.debugStats.loading = false
+  }
+  
+  // 显示验证结果
+  const stats = validationReport.statistics
+  const issues = validationReport.issues
+  
+  let message = `📊 预览线检验完成\n`
+  message += `节点总数: ${stats.totalNodes} (已配置: ${stats.configuredNodes}, 未配置: ${stats.unconfiguredNodes})\n`
+  message += `预览线: ${stats.actualPreviewLines}/${stats.expectedPreviewLines} (有效: ${stats.validPreviewLines})\n`
+  message += `连接线: ${stats.totalConnections} 条\n`
+  
+  if (stats.cleanedCount > 0) {
+    message += `已清理: ${stats.cleanedCount} 条无效预览线\n`
+  }
+  
+  if (issues.missingPreviewLines.length > 0) {
+    message += `⚠️ 缺失预览线: ${issues.missingPreviewLines.length} 个节点\n`
+  }
+  
+  if (issues.problemNodes.length > 0) {
+    message += `⚠️ 问题节点: ${issues.problemNodes.length} 个\n`
+  }
+  
+  // 显示验证结果
+  if (validationReport.result.isValid) {
+    Message.success({
+      content: message + '✅ 预览线系统状态正常',
+      duration: 5000
+    })
+  } else {
+    Message.warning({
+      content: message + `⚠️ 发现 ${validationReport.result.totalIssues} 个问题`,
+      duration: 5000
+    })
+  }
+  
+  console.log('[TaskFlowCanvas] 预览线有效性检验完成:', validationReport)
+  return validationReport
+}
+
 // 事件
 const emit = defineEmits([
   'canvas-ready',
@@ -2198,16 +2530,9 @@ const checkPreviewLineValidity = async () => {
       
       return validationResult // 直接返回增强检查结果
     } else {
-      // 🔧 如果不支持增强检查，直接报错
-      const errorMessage = '预览线管理器不支持增强的节点连接线有效性检查，无法继续执行'
-      console.error('[TaskFlowCanvas] ❌', errorMessage)
-      
-      if (state.debugStats) {
-        state.debugStats.loading = false
-        state.debugStats.error = errorMessage
-      }
-      
-      throw new Error(errorMessage)
+      // 🔧 如果不支持增强检查，使用传统检查方法
+      console.log('[TaskFlowCanvas] 增强检查不可用，使用传统检查方法')
+      return await performLegacyPreviewLineCheck()
     }
   } catch (error) {
     console.error('[TaskFlowCanvas] 预览线有效性检验失败:', error)
@@ -2298,318 +2623,306 @@ const updateDebugStatsLegacy = async () => {
   // 详细分析预览线状态
   const validPreviewLines = []
   const invalidPreviewLines = []
-    const missingPreviewLines = []
-    const redundantPreviewLines = []
-    const problemNodes = []
+  const missingPreviewLines = []
+  const redundantPreviewLines = []
+  const problemNodes = []
+  
+  // 检查现有预览线的有效性
+  for (const edge of previewEdges) {
+    const sourceId = edge.getSourceCellId()
+    const sourceNode = graph.value?.getCellById(sourceId)
+    const edgeData = edge.getData() || {}
     
-    // 检查现有预览线的有效性
-    for (const edge of previewEdges) {
-      const sourceId = edge.getSourceCellId()
-      const sourceNode = graph.value?.getCellById(sourceId)
-      const edgeData = edge.getData() || {}
-      
-      if (!sourceNode) {
-        invalidPreviewLines.push({
-          id: edge.id,
-          issue: '源节点不存在',
-          sourceId: sourceId
-        })
-        continue
-      }
-      
-      const nodeData = sourceNode.getData() || {}
-      const nodeType = nodeData.nodeType || nodeData.type
-      const isConfigured = nodeData.isConfigured || nodeType === 'start'
-      
-      if (!isConfigured) {
-        invalidPreviewLines.push({
-          id: edge.id,
-          issue: '源节点未配置',
-          sourceId: sourceId,
-          nodeType: nodeType
-        })
-        continue
-      }
-      
-      // 检查是否与连接线重复
-      const duplicateConnection = connectionEdges.find(connEdge => 
-        connEdge.getSourceCellId() === sourceId && 
-        connEdge.getTargetCellId() === edge.getTargetCellId()
-      )
-      
-      if (duplicateConnection) {
-        redundantPreviewLines.push({
-          id: edge.id,
-          issue: '与连接线重复',
-          sourceId: sourceId,
-          duplicateConnectionId: duplicateConnection.id
-        })
-        continue
-      }
-      
-      validPreviewLines.push({
+    if (!sourceNode) {
+      invalidPreviewLines.push({
         id: edge.id,
+        issue: '源节点不存在',
+        sourceId: sourceId
+      })
+      continue
+    }
+    
+    const nodeData = sourceNode.getData() || {}
+    const nodeType = nodeData.nodeType || nodeData.type
+    const isConfigured = nodeData.isConfigured || nodeType === 'start'
+    
+    if (!isConfigured) {
+      invalidPreviewLines.push({
+        id: edge.id,
+        issue: '源节点未配置',
         sourceId: sourceId,
-        nodeType: nodeType,
-        branchId: edgeData.branchId || 'main'
+        nodeType: nodeType
       })
+      continue
     }
     
-    // 检查缺失的预览线
-    for (const node of configuredNodes) {
-      const nodeId = node.id
-      const nodeData = node.getData() || {}
-      const nodeType = nodeData.nodeType || nodeData.type
-      
-      // 检查是否已有连接线
-      const outgoingConnections = connectionEdges.filter(edge => 
-        edge.getSourceCellId() === nodeId
-      )
-      
-      if (outgoingConnections.length === 0) {
-        // 检查是否有预览线
-        const nodePreviewLines = validPreviewLines.filter(preview => 
-          preview.sourceId === nodeId
-        )
-        
-        if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
-          // 使用与上面相同的分支计算逻辑
-          let branchCount = 2 // 默认分支数
-          
-          if (nodeType === 'audience-split') {
-            // 人群分流节点：crowdLayers + unmatchBranch
-            const config = nodeData.config || {}
-            const crowdLayersCount = config.crowdLayers?.length || 0
-            const hasUnmatchBranch = config.unmatchBranch && config.unmatchBranch.id
-            branchCount = crowdLayersCount + (hasUnmatchBranch ? 1 : 0)
-            branchCount = Math.max(branchCount, 2)
-          } else if (nodeType === 'event-split') {
-            // 事件分流节点：events + default
-            const config = nodeData.config || {}
-            const eventsCount = config.events?.length || 0
-            branchCount = eventsCount + 1 // 加上默认分支
-            branchCount = Math.max(branchCount, 2)
-          } else {
-            // 其他分支节点
-            branchCount = nodeData.branches?.length || nodeData.branchCount || 2
-            branchCount = Math.max(branchCount, 2)
-          }
-          
-          if (nodePreviewLines.length < branchCount) {
-            missingPreviewLines.push({
-              nodeId: nodeId,
-              nodeType: nodeType,
-              expected: branchCount,
-              actual: nodePreviewLines.length,
-              missing: branchCount - nodePreviewLines.length
-            })
-          }
-        } else {
-          if (nodePreviewLines.length === 0) {
-            missingPreviewLines.push({
-              nodeId: nodeId,
-              nodeType: nodeType,
-              expected: 1,
-              actual: 0,
-              missing: 1
-            })
-          }
-        }
-      }
-    }
+    // 检查是否与连接线重复
+    const duplicateConnection = connectionEdges.find(connEdge => 
+      connEdge.getSourceCellId() === sourceId && 
+      connEdge.getTargetCellId() === edge.getTargetCellId()
+    )
     
-    // 检查问题节点
-    for (const node of unconfiguredNodes) {
-      const nodeData = node.getData() || {}
-      const nodeType = nodeData.nodeType || nodeData.type
-      
-      // 检查未配置节点是否有预览线
-      const nodePreviewLines = previewEdges.filter(edge => 
-        edge.getSourceCellId() === node.id
-      )
-      
-      if (nodePreviewLines.length > 0) {
-        problemNodes.push({
-          nodeId: node.id,
-          nodeType: nodeType,
-          issue: '未配置节点存在预览线',
-          previewLineCount: nodePreviewLines.length
-        })
-      }
-    }
-    
-    // 执行清理操作
-    let cleanedCount = 0
-    
-    // 使用 PreviewLineSystem 进行验证和清理
-    if (previewLineSystem && typeof previewLineSystem.validateAndCleanupDuplicates === 'function') {
-      console.log('[TaskFlowCanvas] 使用 PreviewLineSystem.validateAndCleanupDuplicates 进行清理')
-      await previewLineSystem.validateAndCleanupDuplicates()
-    }
-    
-    // 清理无效预览线
-    for (const invalid of invalidPreviewLines) {
-      try {
-        const edge = graph.value?.getCellById(invalid.id)
-        if (edge) {
-          graph.value?.removeCell(edge, { silent: true })
-          cleanedCount++
-        }
-      } catch (error) {
-        console.warn('[TaskFlowCanvas] 清理无效预览线失败:', invalid.id, error)
-      }
-    }
-    
-    // 清理冗余预览线
-    for (const redundant of redundantPreviewLines) {
-      try {
-        const edge = graph.value?.getCellById(redundant.id)
-        if (edge) {
-          graph.value?.removeCell(edge, { silent: true })
-          cleanedCount++
-        }
-      } catch (error) {
-        console.warn('[TaskFlowCanvas] 清理冗余预览线失败:', redundant.id, error)
-      }
-    }
-    
-    // 构建详细的验证报告
-    const validationReport = {
-      // 统计信息
-      statistics: {
-        totalNodes: allNodes.length,
-        configuredNodes: configuredNodes.length,
-        unconfiguredNodes: unconfiguredNodes.length,
-        expectedPreviewLines: expectedPreviewLines,
-        actualPreviewLines: previewEdges.length,
-        validPreviewLines: validPreviewLines.length,
-        invalidPreviewLines: invalidPreviewLines.length,
-        totalConnections: connectionEdges.length,
-        cleanedCount: cleanedCount
-      },
-      
-      // 问题分析
-      issues: {
-        missingPreviewLines: missingPreviewLines,
-        invalidPreviewLines: invalidPreviewLines,
-        redundantPreviewLines: redundantPreviewLines,
-        problemNodes: problemNodes
-      },
-      
-      // 节点详细分析
-      nodeDetails: configuredNodes.map(node => {
-        const nodeData = node.getData() || {}
-        const nodeType = nodeData.nodeType || nodeData.type
-        const outgoingConnections = connectionEdges.filter(edge => 
-          edge.getSourceCellId() === node.id
-        )
-        const nodePreviewLines = validPreviewLines.filter(preview => 
-          preview.sourceId === node.id
-        )
-        
-        let expectedBranches = 1
-        if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
-          if (nodeType === 'audience-split') {
-            const config = nodeData.config || {}
-            const crowdLayersCount = config.crowdLayers?.length || 0
-            const hasUnmatchBranch = config.unmatchBranch && config.unmatchBranch.id
-            expectedBranches = crowdLayersCount + (hasUnmatchBranch ? 1 : 0)
-            expectedBranches = Math.max(expectedBranches, 2)
-          } else if (nodeType === 'event-split') {
-            const config = nodeData.config || {}
-            const eventsCount = config.events?.length || 0
-            expectedBranches = eventsCount + 1
-            expectedBranches = Math.max(expectedBranches, 2)
-          } else {
-            expectedBranches = nodeData.branches?.length || nodeData.branchCount || 2
-            expectedBranches = Math.max(expectedBranches, 2)
-          }
-        }
-        
-        return {
-          nodeId: node.id,
-          nodeType: nodeType,
-          isConfigured: nodeData.isConfigured || nodeType === 'start',
-          expectedBranches: expectedBranches,
-          actualConnections: outgoingConnections.length,
-          actualPreviewLines: nodePreviewLines.length,
-          totalLines: outgoingConnections.length + nodePreviewLines.length,
-          needsPreviewLines: outgoingConnections.length < expectedBranches,
-          missingLines: Math.max(0, expectedBranches - outgoingConnections.length - nodePreviewLines.length),
-          config: nodeType === 'audience-split' ? {
-            crowdLayersCount: nodeData.config?.crowdLayers?.length || 0,
-            hasUnmatchBranch: !!(nodeData.config?.unmatchBranch?.id)
-          } : nodeType === 'event-split' ? {
-            eventsCount: nodeData.config?.events?.length || 0
-          } : null
-        }
-      }),
-      
-      // 验证结果
-      result: {
-        isValid: invalidPreviewLines.length === 0 && redundantPreviewLines.length === 0 && missingPreviewLines.length === 0,
-        totalIssues: invalidPreviewLines.length + redundantPreviewLines.length + missingPreviewLines.length + problemNodes.length
-      }
-    }
-    
-    // 更新调试统计
-    await updateDebugStats()
-    
-    // 输出详细报告到控制台
-    console.group('[TaskFlowCanvas] 📊 预览线有效性检验详细报告')
-    console.log('📈 统计信息:', validationReport.statistics)
-    console.log('⚠️ 问题分析:', validationReport.issues)
-    console.log('✅ 验证结果:', validationReport.result)
-    console.groupEnd()
-    
-    // 构建用户友好的消息
-    const stats = validationReport.statistics
-    const issues = validationReport.issues
-    
-    let message = `📊 预览线检验完成\n`
-    message += `节点总数: ${stats.totalNodes} (已配置: ${stats.configuredNodes}, 未配置: ${stats.unconfiguredNodes})\n`
-    message += `预览线: ${stats.actualPreviewLines}/${stats.expectedPreviewLines} (有效: ${stats.validPreviewLines})\n`
-    message += `连接线: ${stats.totalConnections} 条\n`
-    
-    if (stats.cleanedCount > 0) {
-      message += `已清理: ${stats.cleanedCount} 条无效预览线\n`
-    }
-    
-    if (issues.missingPreviewLines.length > 0) {
-      message += `⚠️ 缺失预览线: ${issues.missingPreviewLines.length} 个节点\n`
-    }
-    
-    if (issues.problemNodes.length > 0) {
-      message += `⚠️ 问题节点: ${issues.problemNodes.length} 个\n`
-    }
-    
-    // 显示验证结果
-    if (validationReport.result.isValid) {
-      Message.success({
-        content: message + '✅ 预览线系统状态正常',
-        duration: 5000
+    if (duplicateConnection) {
+      redundantPreviewLines.push({
+        id: edge.id,
+        issue: '与连接线重复',
+        sourceId: sourceId,
+        duplicateConnectionId: duplicateConnection.id
       })
-    } else {
-      Message.warning({
-        content: message + `⚠️ 发现 ${validationReport.result.totalIssues} 个问题`,
-        duration: 5000
-      })
+      continue
     }
     
-    console.log('[TaskFlowCanvas] 预览线有效性检验完成:', validationReport)
-  } catch (error) {
-    console.error('[TaskFlowCanvas] 预览线有效性检验失败:', error)
-    Message.error({
-      content: `预览线验证失败: ${error.message}`,
-      duration: 3000
+    validPreviewLines.push({
+      id: edge.id,
+      sourceId: sourceId,
+      nodeType: nodeType,
+      branchId: edgeData.branchId || 'main'
     })
-    throw error
-  } finally {
-    // 🔧 修复：debugStats 是 reactive 对象，不需要 .value
-    if (state.debugStats) {
-      state.debugStats.loading = false
+  }
+  
+  // 检查缺失的预览线
+  for (const node of configuredNodes) {
+    const nodeId = node.id
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.nodeType || nodeData.type
+    
+    // 检查是否已有连接线
+    const outgoingConnections = connectionEdges.filter(edge => 
+      edge.getSourceCellId() === nodeId
+    )
+    
+    if (outgoingConnections.length === 0) {
+      // 检查是否有预览线
+      const nodePreviewLines = validPreviewLines.filter(preview => 
+        preview.sourceId === nodeId
+      )
+      
+      if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
+        // 使用与上面相同的分支计算逻辑
+        let branchCount = 2 // 默认分支数
+        
+        if (nodeType === 'audience-split') {
+          // 人群分流节点：crowdLayers + unmatchBranch
+          const config = nodeData.config || {}
+          const crowdLayersCount = config.crowdLayers?.length || 0
+          const hasUnmatchBranch = config.unmatchBranch && config.unmatchBranch.id
+          branchCount = crowdLayersCount + (hasUnmatchBranch ? 1 : 0)
+          branchCount = Math.max(branchCount, 2)
+        } else if (nodeType === 'event-split') {
+          // 事件分流节点：events + default
+          const config = nodeData.config || {}
+          const eventsCount = config.events?.length || 0
+          branchCount = eventsCount + 1 // 加上默认分支
+          branchCount = Math.max(branchCount, 2)
+        } else {
+          // 其他分支节点
+          branchCount = nodeData.branches?.length || nodeData.branchCount || 2
+          branchCount = Math.max(branchCount, 2)
+        }
+        
+        if (nodePreviewLines.length < branchCount) {
+          missingPreviewLines.push({
+            nodeId: nodeId,
+            nodeType: nodeType,
+            expected: branchCount,
+            actual: nodePreviewLines.length,
+            missing: branchCount - nodePreviewLines.length
+          })
+        }
+      } else {
+        if (nodePreviewLines.length === 0) {
+          missingPreviewLines.push({
+            nodeId: nodeId,
+            nodeType: nodeType,
+            expected: 1,
+            actual: 0,
+            missing: 1
+          })
+        }
+      }
     }
   }
+  
+  // 检查问题节点
+  for (const node of unconfiguredNodes) {
+    const nodeData = node.getData() || {}
+    const nodeType = nodeData.nodeType || nodeData.type
+    
+    // 检查未配置节点是否有预览线
+    const nodePreviewLines = previewEdges.filter(edge => 
+      edge.getSourceCellId() === node.id
+    )
+    
+    if (nodePreviewLines.length > 0) {
+      problemNodes.push({
+        nodeId: node.id,
+        nodeType: nodeType,
+        issue: '未配置节点存在预览线',
+        previewLineCount: nodePreviewLines.length
+      })
+    }
+  }
+  
+  // 执行清理操作
+  let cleanedCount = 0
+  
+  // 使用 PreviewLineSystem 进行验证和清理
+  if (previewLineSystem && typeof previewLineSystem.validateAndCleanupDuplicates === 'function') {
+    console.log('[TaskFlowCanvas] 使用 PreviewLineSystem.validateAndCleanupDuplicates 进行清理')
+    await previewLineSystem.validateAndCleanupDuplicates()
+  }
+  
+  // 清理无效预览线
+  for (const invalid of invalidPreviewLines) {
+    try {
+      const edge = graph.value?.getCellById(invalid.id)
+      if (edge) {
+        graph.value?.removeCell(edge, { silent: true })
+        cleanedCount++
+      }
+    } catch (error) {
+      console.warn('[TaskFlowCanvas] 清理无效预览线失败:', invalid.id, error)
+    }
+  }
+  
+  // 清理冗余预览线
+  for (const redundant of redundantPreviewLines) {
+    try {
+      const edge = graph.value?.getCellById(redundant.id)
+      if (edge) {
+        graph.value?.removeCell(edge, { silent: true })
+        cleanedCount++
+      }
+    } catch (error) {
+      console.warn('[TaskFlowCanvas] 清理冗余预览线失败:', redundant.id, error)
+    }
+  }
+  
+  // 构建详细的验证报告
+  const validationReport = {
+    // 统计信息
+    statistics: {
+      totalNodes: allNodes.length,
+      configuredNodes: configuredNodes.length,
+      unconfiguredNodes: unconfiguredNodes.length,
+      expectedPreviewLines: expectedPreviewLines,
+      actualPreviewLines: previewEdges.length,
+      validPreviewLines: validPreviewLines.length,
+      invalidPreviewLines: invalidPreviewLines.length,
+      totalConnections: connectionEdges.length,
+      cleanedCount: cleanedCount
+    },
+    
+    // 问题分析
+    issues: {
+      missingPreviewLines: missingPreviewLines,
+      invalidPreviewLines: invalidPreviewLines,
+      redundantPreviewLines: redundantPreviewLines,
+      problemNodes: problemNodes
+    },
+    
+    // 节点详细分析
+    nodeDetails: configuredNodes.map(node => {
+      const nodeData = node.getData() || {}
+      const nodeType = nodeData.nodeType || nodeData.type
+      const outgoingConnections = connectionEdges.filter(edge => 
+        edge.getSourceCellId() === node.id
+      )
+      const nodePreviewLines = validPreviewLines.filter(preview => 
+        preview.sourceId === node.id
+      )
+      
+      let expectedBranches = 1
+      if (['audience-split', 'event-split', 'ab-test'].includes(nodeType)) {
+        if (nodeType === 'audience-split') {
+          const config = nodeData.config || {}
+          const crowdLayersCount = config.crowdLayers?.length || 0
+          const hasUnmatchBranch = config.unmatchBranch && config.unmatchBranch.id
+          expectedBranches = crowdLayersCount + (hasUnmatchBranch ? 1 : 0)
+          expectedBranches = Math.max(expectedBranches, 2)
+        } else if (nodeType === 'event-split') {
+          const config = nodeData.config || {}
+          const eventsCount = config.events?.length || 0
+          expectedBranches = eventsCount + 1
+          expectedBranches = Math.max(expectedBranches, 2)
+        } else {
+          expectedBranches = nodeData.branches?.length || nodeData.branchCount || 2
+          expectedBranches = Math.max(expectedBranches, 2)
+        }
+      }
+      
+      return {
+        nodeId: node.id,
+        nodeType: nodeType,
+        isConfigured: nodeData.isConfigured || nodeType === 'start',
+        expectedBranches: expectedBranches,
+        actualConnections: outgoingConnections.length,
+        actualPreviewLines: nodePreviewLines.length,
+        totalLines: outgoingConnections.length + nodePreviewLines.length,
+        needsPreviewLines: outgoingConnections.length < expectedBranches,
+        missingLines: Math.max(0, expectedBranches - outgoingConnections.length - nodePreviewLines.length),
+        config: nodeType === 'audience-split' ? {
+          crowdLayersCount: nodeData.config?.crowdLayers?.length || 0,
+          hasUnmatchBranch: !!(nodeData.config?.unmatchBranch?.id)
+        } : nodeType === 'event-split' ? {
+          eventsCount: nodeData.config?.events?.length || 0
+        } : null
+      }
+    }),
+    
+    // 验证结果
+    result: {
+      isValid: invalidPreviewLines.length === 0 && redundantPreviewLines.length === 0 && missingPreviewLines.length === 0,
+      totalIssues: invalidPreviewLines.length + redundantPreviewLines.length + missingPreviewLines.length + problemNodes.length
+    }
+  }
+  
+  // 更新调试统计
+  await updateDebugStats()
+  
+  // 输出详细报告到控制台
+  console.group('[TaskFlowCanvas] 📊 预览线有效性检验详细报告')
+  console.log('📈 统计信息:', validationReport.statistics)
+  console.log('⚠️ 问题分析:', validationReport.issues)
+  console.log('✅ 验证结果:', validationReport.result)
+  console.groupEnd()
+  
+  // 构建用户友好的消息
+  const stats = validationReport.statistics
+  const issues = validationReport.issues
+  
+  let message = `📊 预览线检验完成\n`
+  message += `节点总数: ${stats.totalNodes} (已配置: ${stats.configuredNodes}, 未配置: ${stats.unconfiguredNodes})\n`
+  message += `预览线: ${stats.actualPreviewLines}/${stats.expectedPreviewLines} (有效: ${stats.validPreviewLines})\n`
+  message += `连接线: ${stats.totalConnections} 条\n`
+  
+  if (stats.cleanedCount > 0) {
+    message += `已清理: ${stats.cleanedCount} 条无效预览线\n`
+  }
+  
+  if (issues.missingPreviewLines.length > 0) {
+    message += `⚠️ 缺失预览线: ${issues.missingPreviewLines.length} 个节点\n`
+  }
+  
+  if (issues.problemNodes.length > 0) {
+    message += `⚠️ 问题节点: ${issues.problemNodes.length} 个\n`
+  }
+  
+  // 显示验证结果
+  if (validationReport.result.isValid) {
+    Message.success({
+      content: message + '✅ 预览线系统状态正常',
+      duration: 5000
+    })
+  } else {
+    Message.warning({
+      content: message + `⚠️ 发现 ${validationReport.result.totalIssues} 个问题`,
+      duration: 5000
+    })
+  }
+  
+  console.log('[TaskFlowCanvas] 预览线有效性检验完成:', validationReport)
+  return validationReport
 }
 
 const triggerPreviewLineGeneration = async () => {

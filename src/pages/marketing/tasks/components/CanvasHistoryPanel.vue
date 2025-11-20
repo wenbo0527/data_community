@@ -36,7 +36,7 @@
             <icon-history v-else />
           </div>
           <div class="history-item-content">
-            <div class="history-item-title">{{ getOperationDescription(item) }}</div>
+            <div class="history-item-title">{{ item.description || getOperationDescription(item) }}</div>
             <div class="history-item-time">{{ formatTime(item.timestamp) }}</div>
           </div>
         </div>
@@ -53,7 +53,7 @@
             <icon-redo />
           </div>
           <div class="history-item-content">
-            <div class="history-item-title">{{ getOperationDescription(item) }}</div>
+            <div class="history-item-title">{{ item.description || getOperationDescription(item) }}</div>
             <div class="history-item-time">{{ formatTime(item.timestamp) }}</div>
           </div>
         </div>

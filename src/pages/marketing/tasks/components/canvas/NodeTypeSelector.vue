@@ -5,8 +5,17 @@
     :class="{ 'node-type-selector--dock': dock }"
     :style="selectorStyle"
   >
+    <!-- 头部搜索栏 -->
     <div class="node-type-selector__header">
-      <h3>选择节点类型</h3>
+      <div class="search-bar">
+        <i class="icon-search search-icon"></i>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="搜索节点类型"
+          v-model="searchKeyword"
+        />
+      </div>
       <button class="close-btn" @click="handleClose">
         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
           <path d="M18 6L6 18"></path>
@@ -14,26 +23,71 @@
         </svg>
       </button>
     </div>
+    
     <div class="node-type-selector__content">
-      <div 
-        v-for="type in availableNodeTypes" 
-        :key="type"
-        class="node-type-item"
-        :class="{ 'node-type-item--disabled': !isNodeTypeAllowed(type) }"
-        @click="handleSelect(type)"
-        draggable="true"
-        @dragstart="handleDragStart(type, $event)"
-      >
-        <div class="node-type-icon" :style="{ backgroundColor: getNodeColor(type) }"></div>
-        <div class="node-type-label">{{ getNodeLabel(type) }}</div>
+      <!-- 分层节点类型（每行2个节点） -->
+      <div class="node-type-category" v-for="category in filteredCategories" :key="category.key">
+        <div class="category-title">{{ category.title }}</div>
+        <div class="category-content">
+          <div 
+            v-for="type in category.types" 
+            :key="type"
+            class="node-type-item"
+            :class="{ 'node-type-item--disabled': !isNodeTypeAllowed(type) }"
+            @click="handleSelect(type)"
+            draggable="true"
+            @dragstart="handleDragStart(type, $event)"
+          >
+            <div class="node-type-icon" :style="{ backgroundColor: getNodeColor(type) }">
+              <component :is="getNodeIconComponent(type)" class="arco-icon" />
+            </div>
+            <div class="node-type-label">{{ getNodeLabel(type) }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getNodeConfig, getAllNodeTypes, getNodeLabel } from '../../../../../utils/nodeTypes.js'
+import * as ArcoIcons from '@arco-design/web-vue/es/icon'
+
+// 节点类型分层配置
+const NODE_TYPE_CATEGORIES = [
+  {
+    key: 'business',
+    title: '业务逻辑',
+    types: ['crowd-split', 'event-split', 'ab-test', 'wait', 'end']
+  },
+  {
+    key: 'outreach',
+    title: '触达',
+    types: ['sms', 'ai-call', 'manual-call']
+  },
+  {
+    key: 'benefit',
+    title: '权益',
+    types: ['benefit']
+  }
+]
+
+// 节点类型图标映射 - 基于Arco Design图标库
+const ICON_NAME_MAP = {
+  'crowd-split': 'IconUserGroup',
+  'event-split': 'IconThunderbolt',
+  'ab-test': 'IconExperiment',
+  'wait': 'IconClockCircle',
+  'end': 'IconPoweroff',
+  'sms': 'IconMessage',
+  'ai-call': 'IconPhone',
+  'manual-call': 'IconUserAdd',
+  'benefit': 'IconGift'
+}
+
+// 搜索关键词
+const searchKeyword = ref('')
 
 // 组件属性
 const props = defineProps({
@@ -78,22 +132,43 @@ const selectorStyle = computed(() => {
   }
 })
 
-// 可用节点类型
-const availableNodeTypes = computed(() => {
-  // 获取所有节点类型
+// 移除通用节点数据（不再需要）
+const generalNodes = computed(() => [])
+
+// 清理样式 - 移除通用节点相关样式
+
+// 过滤后的分层数据
+const filteredCategories = computed(() => {
   const allTypes = getAllNodeTypes()
   
-  // 🔧 修复：过滤掉无效值，确保不包含 undefined、null 或空字符串
-  const validTypes = allTypes.filter(type => {
+  // 过滤非画布节点类型
+  const canvasTypes = allTypes.filter(type => {
     return type && 
            typeof type === 'string' && 
            type.trim() !== '' && 
-           type !== 'start' // 过滤掉开始节点
+           type !== 'start' && // 过滤掉开始节点
+           !['preview', 'temp', 'ghost'].includes(type) // 过滤非画布节点
   })
   
-  console.log('[NodeTypeSelector] 可用节点类型:', validTypes)
-  return validTypes
+  // 构建分层数据并应用搜索过滤
+  return NODE_TYPE_CATEGORIES.map(category => ({
+    ...category,
+    types: category.types.filter(type => {
+      const isInCanvas = canvasTypes.includes(type)
+      if (!isInCanvas) return false
+      
+      // 应用搜索过滤
+      if (!searchKeyword.value) return true
+      const label = getNodeLabel(type)
+      return label.toLowerCase().includes(searchKeyword.value.toLowerCase())
+    })
+  })).filter(category => category.types.length > 0)
 })
+
+const getNodeIconComponent = (nodeType) => {
+  const name = ICON_NAME_MAP[nodeType] || 'IconApps'
+  return ArcoIcons[name] || ArcoIcons.IconApps || ArcoIcons.IconUserGroup
+}
 
 // 获取节点颜色
 const getNodeColor = (nodeType) => {
@@ -103,6 +178,8 @@ const getNodeColor = (nodeType) => {
 
 // 检查节点类型是否允许
 const isNodeTypeAllowed = (nodeType) => {
+  if (!nodeType || typeof nodeType !== 'string') return false
+  
   if (!props.presetSlot || !props.presetSlot.allowedTypes || props.presetSlot.allowedTypes.length === 0) {
     console.log('预设位没有限制，允许所有节点类型')
     return true
@@ -167,13 +244,14 @@ const handleClose = () => {
 <style scoped>
 .node-type-selector {
   position: absolute;
-  width: 300px;
+  width: 280px;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  transform: translate(-50%, -100%);
+  transform: translate(-50%, 0);
   margin-top: -20px;
+  border: 1px solid #e5e7eb;
 }
 
 .node-type-selector::after {
@@ -204,27 +282,58 @@ const handleClose = () => {
   align-items: center;
   padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+  border-radius: 8px 8px 0 0;
 }
 
-.node-type-selector__header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
+.search-bar {
+  flex: 1;
+  position: relative;
+  margin-right: 12px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #4C78FF;
+}
+
+.search-input::placeholder {
+  color: #999;
 }
 
 .close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: none;
   cursor: pointer;
   color: #999;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 0;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .close-btn:hover {
@@ -232,10 +341,36 @@ const handleClose = () => {
   color: #666;
 }
 
+.close-btn:active {
+  background-color: #e5e7eb;
+}
+
 .node-type-selector__content {
-  padding: 12px;
-  max-height: 300px;
+  padding: 16px;
+  max-height: 400px;
   overflow-y: auto;
+}
+
+/* 分层节点网格样式 */
+.node-type-category {
+  margin-bottom: 16px;
+}
+
+.node-type-category:last-child {
+  margin-bottom: 0;
+}
+
+.category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-left: 4px;
+}
+
+.category-content {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
@@ -243,16 +378,22 @@ const handleClose = () => {
 
 .node-type-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  padding: 12px 8px;
+  padding: 10px 8px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
+  background: white;
+  min-height: 56px;
 }
 
 .node-type-item:hover {
-  background-color: #f5f5f5;
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .node-type-item--disabled {
@@ -261,19 +402,29 @@ const handleClose = () => {
 }
 
 .node-type-item--disabled:hover {
-  background-color: transparent;
+  background-color: white;
+  border-color: #e5e7eb;
+  transform: none;
+  box-shadow: none;
 }
 
 .node-type-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-bottom: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
 }
 
 .node-type-label {
   font-size: 12px;
-  text-align: center;
-  color: #333;
+  text-align: left;
+  color: #374151;
+  font-weight: 500;
+  line-height: 1.2;
 }
 </style>

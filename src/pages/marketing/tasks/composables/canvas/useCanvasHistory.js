@@ -275,6 +275,13 @@ export function useCanvasHistory(graph) {
         updateUndoRedoState()
         updateHistoryStack()
       })
+
+      // 监听命令新增（节点添加、连线连接等）
+      graphInstance.on('history:command:added', (args) => {
+        console.log('[useCanvasHistory] 命令添加:', args?.command?.event)
+        updateUndoRedoState()
+        updateHistoryStack()
+      })
       
       console.log('[useCanvasHistory] 历史记录监听器设置完成')
     } catch (error) {

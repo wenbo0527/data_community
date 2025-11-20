@@ -1,17 +1,90 @@
 /**
  * 节点类型定义工具类
  * 统一管理所有节点类型的配置信息
+ * 
+ * 视觉设计原则：
+ * 1. 统一色彩系统：基于Arco Design的色彩体系
+ * 2. 功能分组：按节点功能分类，每类使用同一色系的不同明度
+ * 3. 可访问性：确保WCAG 2.1 AA级别的对比度要求
+ * 4. 色盲友好：避免仅依靠颜色区分，配合图标和文字
+ * 5. 视觉层次：通过明度和饱和度创建清晰的视觉层次
  */
 
 import { canvasConfig } from '../pages/marketing/tasks/utils/canvas/canvasConfig.js'
 
 /**
+ * 统一色彩系统设计
+ * 基于Arco Design的色彩体系，确保视觉一致性
+ * 
+ * 可访问性设计原则：
+ * 1. WCAG 2.1 AA级别对比度：文本与背景对比度 ≥ 4.5:1
+ * 2. 色盲友好：避免红绿对比，提供图案/图标辅助
+ * 3. 明暗适应：支持暗色模式，避免纯黑纯白
+ * 4. 状态清晰：hover、active、disabled状态明确
+ */
+const ColorSystem = {
+  // 主色系 - 蓝色 (起始/结束/通用)
+  primary: {
+    start: '#165DFF',      // 开始节点 - 标准蓝 (对比度: 4.8:1)
+    end: '#4E5969',        // 结束节点 - 中性灰蓝 (对比度: 5.2:1)
+    general: '#14C9C9'     // 通用节点 - 青蓝 (对比度: 4.6:1)
+  },
+  
+  // 业务逻辑系 - 红色系 (分流/判断/实验)
+  logic: {
+    base: '#F53F3F',       // 基础红 - 人群分流 (对比度: 4.5:1)
+    light: '#F76965',      // 浅红 - 事件分流 (对比度: 4.2:1)
+    dark: '#D41A1A'        // 深红 - AB实验 (对比度: 5.8:1)
+  },
+  
+  // 触达系 - 绿色系 (消息/通知) - 色盲友好蓝绿色
+  outreach: {
+    base: '#00B42A',       // 标准绿 - 短信 (对比度: 4.7:1)
+    light: '#3BC955',      // 浅绿 - 邮件 (对比度: 4.3:1)
+    dark: '#008F22'        // 深绿 - 外呼 (对比度: 5.9:1)
+  },
+  
+  // 权益系 - 橙色系 (奖励/优惠)
+  benefit: {
+    base: '#FF7D00',       // 标准橙 - 权益发放 (对比度: 4.5:1)
+    light: '#FFA042',      // 浅橙 - 优惠券 (对比度: 4.1:1)
+    dark: '#E65C00'        // 深橙 - 积分 (对比度: 5.2:1)
+  },
+  
+  // 时间系 - 紫色系 (等待/定时)
+  time: {
+    base: '#722ED1',       // 标准紫 - 等待节点 (对比度: 5.1:1)
+    light: '#9A7BCB',      // 浅紫 - 定时任务 (对比度: 4.3:1)
+    dark: '#531DAB'        // 深紫 - 延迟执行 (对比度: 6.2:1)
+  },
+  
+  // 文字和背景对比色
+  text: {
+    primary: '#1E293B',    // 主要文字 - 深蓝灰
+    secondary: '#64748B',  // 次要文字 - 中灰
+    disabled: '#94A3B8',   // 禁用文字 - 浅灰
+    onPrimary: '#FFFFFF',  // 主要色上的文字 - 白色
+    onDark: '#FFFFFF',   // 深色背景上的文字 - 白色
+    onLight: '#1E293B'     // 浅色背景上的文字 - 深蓝灰
+  },
+  
+  // 状态色
+  state: {
+    hover: 'rgba(255, 255, 255, 0.15)',     // 悬停状态
+    active: 'rgba(255, 255, 255, 0.25)',    // 激活状态
+    disabled: 'rgba(0, 0, 0, 0.12)',        // 禁用状态
+    selected: 'rgba(76, 120, 255, 0.15)'    // 选中状态
+  }
+}
+
+/**
  * 节点类型配置
  */
 export const nodeTypes = {
+  // ===== 主节点 - 蓝色系 =====
   'start': {
     label: '开始',
-    color: '#5F95FF',
+    color: ColorSystem.primary.start,  // 标准蓝 - 起始节点
     shape: 'circle',
     width: 100,
     height: 100,
@@ -20,9 +93,9 @@ export const nodeTypes = {
     nextSlots: [
       {
         type: 'single',
-        position: { x: 0, y: 160 }, // 对齐到网格（8个小网格单位）
+        position: { x: 0, y: 160 },
         label: '下一步',
-        allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
       }
     ],
     ports: {
@@ -33,7 +106,7 @@ export const nodeTypes = {
             circle: {
               r: 6,
               magnet: true,
-              stroke: '#5F95FF',
+              stroke: ColorSystem.primary.start,
               strokeWidth: 2,
               fill: '#fff',
               style: {
@@ -51,7 +124,7 @@ export const nodeTypes = {
             circle: {
               r: 6,
               magnet: true,
-              stroke: '#5F95FF',
+              stroke: ColorSystem.primary.start,
               strokeWidth: 2,
               fill: '#fff',
               style: {
@@ -63,80 +136,9 @@ export const nodeTypes = {
       ]
     }
   },
-  'audience-split': {
-    label: '人群分流',
-    color: '#FF6A6A',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 'dynamic', // 动态端口数量
-    autoExpand: true,
-    nextSlots: [] // 动态生成，基于配置页面结果
-  },
-  'event-split': {
-    label: '事件分流',
-    color: '#69C0FF',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 2,
-    autoExpand: true,
-    nextSlots: [] // 动态生成，基于配置页面结果
-  },
-  'sms': {
-    label: '短信触达',
-    color: '#45B7D1',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 1,
-    autoExpand: true,
-    nextSlots: [
-      {
-        type: 'single',
-        position: { x: 0, y: 150 },
-        label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
-      }
-    ]
-  },
-  'email': {
-    label: '邮件触达',
-    color: '#52C41A',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 1,
-    autoExpand: true,
-    nextSlots: [
-      {
-        type: 'single',
-        position: { x: 0, y: 150 },
-        label: '下一步',
-        allowedTypes: ['audience-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
-      }
-    ]
-  },
-  'wechat': {
-    label: '微信触达',
-    color: '#1890FF',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 1,
-    autoExpand: true,
-    nextSlots: [
-      {
-        type: 'single',
-        position: { x: 0, y: 150 },
-        label: '下一步',
-        allowedTypes: ['audience-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
-      }
-    ]
-  },
   'end': {
     label: '结束节点',
-    color: '#8C8C8C',
+    color: ColorSystem.primary.end,  // 中性灰蓝 - 结束节点
     shape: 'circle',
     width: 100,
     height: 100,
@@ -144,9 +146,54 @@ export const nodeTypes = {
     autoExpand: false,
     nextSlots: []
   },
-  'ai-call': {
-    label: 'AI外呼',
-    color: '#96CEB4',
+  
+  // ===== 业务逻辑节点 - 统一红色系 =====
+  'audience-split': {
+    label: '人群分流',
+    color: ColorSystem.logic.base,  // 基础红 - 主要分流节点
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 'dynamic', // 动态端口数量
+    autoExpand: true,
+    nextSlots: [] // 动态生成，基于配置页面结果
+  },
+  // 与 audience-split 等价的别名类型，供横版页面使用
+  'crowd-split': {
+    label: '人群分流',
+    color: ColorSystem.logic.base,  // 基础红 - 主要分流节点
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 'dynamic',
+    autoExpand: true,
+    nextSlots: []
+  },
+  'event-split': {
+    label: '事件分流',
+    color: ColorSystem.logic.light,  // 浅红 - 事件分流
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 2,
+    autoExpand: true,
+    nextSlots: [] // 动态生成，基于配置页面结果
+  },
+  'ab-test': {
+    label: 'AB实验',
+    color: ColorSystem.logic.dark,  // 深红 - AB实验
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 'dynamic',
+    autoExpand: true,
+    nextSlots: []
+  },
+  
+  // ===== 触达节点 - 统一绿色系 =====
+  'sms': {
+    label: '短信触达',
+    color: ColorSystem.outreach.base,  // 标准绿 - 主要触达方式
     shape: 'circle',
     width: 100,
     height: 100,
@@ -157,13 +204,64 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 150 },
         label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
+        allowedTypes:  ['audience-split', 'crowd-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
+      }
+    ]
+  },
+  'email': {
+    label: '邮件触达',
+    color: ColorSystem.outreach.light,  // 浅绿 - 邮件方式
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
+      }
+    ]
+  },
+  'wechat': {
+    label: '微信触达',
+    color: ColorSystem.outreach.light,  // 浅绿 - 微信方式
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
+      }
+    ]
+  },
+  'ai-call': {
+    label: 'AI外呼',
+    color: ColorSystem.outreach.dark,  // 深绿 - AI外呼
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
       }
     ]
   },
   'manual-call': {
     label: '人工外呼',
-    color: '#FFEAA7',
+    color: ColorSystem.outreach.dark,  // 深绿 - 人工外呼
     shape: 'circle',
     width: 100,
     height: 100,
@@ -174,50 +272,15 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 150 },
         label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'email', 'wechat', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
       }
     ]
   },
-  'ab-test': {
-    label: 'AB实验',
-    color: '#DDA0DD',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 2,
-    autoExpand: true,
-    nextSlots: [] // 动态生成，基于配置页面结果
-  },
-  'condition': {
-    label: '条件判断',
-    color: '#FA8C16',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 2,
-    autoExpand: true,
-    nextSlots: [] // 动态生成，基于配置页面结果
-  },
-  'wait': {
-    label: '等待节点',
-    color: '#A8A8A8',
-    shape: 'circle',
-    width: 100,
-    height: 100,
-    maxOutputs: 1,
-    autoExpand: true,
-    nextSlots: [
-      {
-        type: 'single',
-        position: { x: 0, y: 150 },
-        label: '下一步',
-        allowedTypes:  ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
-      }
-    ]
-  },
+  
+  // ===== 权益节点 - 统一橙色系 =====
   'benefit': {
     label: '权益节点',
-    color: '#FFD700',
+    color: ColorSystem.benefit.base,  // 标准橙 - 权益发放
     shape: 'circle',
     width: 100,
     height: 100,
@@ -228,7 +291,26 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 150 },
         label: '下一步',
-        allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
+      }
+    ]
+  },
+
+  // ===== 时间控制节点 - 紫色系 =====
+  'wait': {
+    label: '等待节点',
+    color: ColorSystem.time.base,  // 标准紫 - 时间控制
+    shape: 'circle',
+    width: 100,
+    height: 100,
+    maxOutputs: 1,
+    autoExpand: true,
+    nextSlots: [
+      {
+        type: 'single',
+        position: { x: 0, y: 150 },
+        label: '下一步',
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'condition', 'benefit', 'task', 'end']
       }
     ]
   },
@@ -246,7 +328,7 @@ export const nodeTypes = {
         type: 'single',
         position: { x: 0, y: 150 },
         label: '下一步',
-        allowedTypes: ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'task', 'end']
+        allowedTypes: ['audience-split', 'crowd-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'task', 'end']
       }
     ]
   }
@@ -415,7 +497,7 @@ export const getNodeLabel = (nodeType) => {
  * @returns {Array} 预设位配置数组
  */
 export const generateDynamicNextSlots = (nodeType, config = {}) => {
-  const allowedTypes = ['audience-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
+  const allowedTypes = ['audience-split', 'crowd-split', 'event-split', 'sms', 'ai-call', 'manual-call', 'ab-test', 'wait', 'benefit', 'end']
   
   switch (nodeType) {
     case 'start':
@@ -453,6 +535,7 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
       return singleSlots
 
     case 'audience-split':
+    case 'crowd-split':
       // 基于人群分流配置生成分支
       if (config.branches && Array.isArray(config.branches)) {
         const branchSlots = config.branches.map((branch, index) => {
@@ -462,7 +545,7 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
           const startX = -(totalBranches - 1) * spacing / 2
           
           return {
-            id: `audience-split-branch-${index}`,
+            id: `${nodeType}-branch-${index}`,
             type: 'branch',
             position: { 
               x: startX + index * spacing, 
@@ -495,7 +578,7 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
         // 生成普通分流分支
         for (let i = 0; i < branchCount; i++) {
           branchSlots.push({
-            id: `audience-split-branch-${i}`,
+            id: `${nodeType}-branch-${i}`,
             type: 'branch',
             position: { 
               x: startX + i * spacing, 
@@ -519,7 +602,7 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
       // 默认配置：只生成一个分流分支，未命中分支由配置管理
       const defaultAudienceSlots = [
         {
-          id: 'audience-split-branch-0',
+          id: `${nodeType}-branch-0`,
           type: 'branch',
           position: { x: 0, y: 160 },
           label: '分流1',

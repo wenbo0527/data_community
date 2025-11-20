@@ -40,6 +40,7 @@
     "@antv/x6-plugin-transform": "^2.1.8",
     "@antv/x6-vue-shape": "^2.1.2",
     "@arco-design/web-vue": "^2.57.0",
+    "@dagrejs/dagre": "^1.1.8",
     "@monaco-editor/loader": "^1.5.0",
     "@types/xlsx": "^0.0.35",
     "@vueup/vue-quill": "^1.2.0",

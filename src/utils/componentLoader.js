@@ -31,21 +31,37 @@ export function loadComponent(componentPath, componentName = '未知组件') {
       console.log(`✅ [组件加载] 成功: ${componentName} (${loadTime.toFixed(2)}ms)`)
       
       // 验证组件导出
-      if (!module.default && !module[componentName]) {
+      if (!module?.default && !module?.[componentName]) {
         console.warn(`⚠️ [组件验证] ${componentName} 可能缺少默认导出`)
       }
       
-      return module
+      return module?.default || module?.[componentName] || module
     })
     .catch(error => {
       const loadTime = performance.now() - startTime
       loadStats.loading.delete(componentName)
       loadStats.failed++
       
+      // 从错误堆栈中解析可能的文件位置
+      let fileName = null
+      let lineNumber = null
+      let columnNumber = null
+      if (typeof error?.stack === 'string') {
+        const m = error.stack.match(/(https?:\/\/[^\s)]+):(\d+):(\d+)/)
+        if (m) {
+          fileName = m[1]
+          lineNumber = Number(m[2])
+          columnNumber = Number(m[3])
+        }
+      }
       const errorInfo = {
         componentName,
+        componentPath,
         error: error.message,
         stack: error.stack,
+        fileName,
+        lineNumber,
+        columnNumber,
         loadTime,
         timestamp: new Date().toISOString()
       }
@@ -54,8 +70,13 @@ export function loadComponent(componentPath, componentName = '未知组件') {
       
       console.group(`❌ [组件加载失败] ${componentName}`)
       console.error('错误信息:', error.message)
+      console.error('组件路径:', componentPath)
       console.error('加载时间:', `${loadTime.toFixed(2)}ms`)
       console.error('错误堆栈:', error.stack)
+      if (fileName) {
+        console.error('定位文件:', fileName)
+        console.error('定位行列:', `${lineNumber}:${columnNumber}`)
+      }
       
       // 分析错误类型
       if (error.message.includes('SyntaxError')) {

@@ -58,6 +58,12 @@ class BaseNodeConfigStrategy {
       lastUpdated: Date.now()
     }
     
+    // 🔧 修复：确保节点类型正确保存到数据中
+    if (this.nodeType) {
+      updatedData.type = this.nodeType
+      updatedData.nodeType = this.nodeType
+    }
+    
     // 🔧 修复：对于人群分流节点，确保crowdLayers配置正确保存
     if (this.nodeType === 'audience-split' && config.crowdLayers) {
       // 直接保存原始的crowdLayers配置到config中
@@ -88,6 +94,8 @@ class BaseNodeConfigStrategy {
     console.log('🔍 [NodeConfigManager] 验证节点数据保存:', {
       nodeId: node.id,
       nodeType: this.nodeType,
+      savedType: verifyData.type,
+      savedNodeType: verifyData.nodeType,
       savedConfigKeys: Object.keys(verifyData.config || {}),
       hasSavedCrowdLayers: !!(verifyData.config?.crowdLayers && Array.isArray(verifyData.config.crowdLayers)),
       savedCrowdLayersCount: verifyData.config?.crowdLayers ? verifyData.config.crowdLayers.length : 0,
@@ -826,14 +834,22 @@ class NodeConfigManager {
    * @param {Object} node - 节点实例
    * @param {Object} config - 配置数据
    * @param {Object} context - 上下文对象
+   * @returns {Promise<boolean>} 处理结果
    */
   async processNodeConfig(nodeType, node, config, context = {}) {
-    console.log(`[NodeConfigManager] 开始处理节点配置:`, { nodeType, nodeId: node.id })
+    console.log(`[NodeConfigManager] 开始处理节点配置 - 节点类型: ${nodeType}, 节点ID: ${node.id}`)
+    console.log(`[NodeConfigManager] 配置数据:`, config)
+    console.log(`[NodeConfigManager] 上下文对象:`, context)
     
-    const strategy = this.getStrategy(nodeType)
-    await strategy.process(node, config, context)
-    
-    console.log(`[NodeConfigManager] 节点配置处理完成:`, { nodeType, nodeId: node.id })
+    try {
+      const strategy = this.getStrategy(nodeType)
+      await strategy.process(node, config, context)
+      console.log(`[NodeConfigManager] 节点配置处理完成 - 节点类型: ${nodeType}, 节点ID: ${node.id}`)
+      return true
+    } catch (error) {
+      console.error(`[NodeConfigManager] 节点配置处理失败 - 节点类型: ${nodeType}, 节点ID: ${node.id}:`, error)
+      return false
+    }
   }
 
   /**

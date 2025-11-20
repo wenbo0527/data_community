@@ -26,7 +26,7 @@ export function useNodePorts() {
     headerHeight = 36,
     contentPadding = 12
   }) {
-    const isSplit = nodeType === 'crowd-split' || nodeType === 'event-split' || nodeType === 'ab-test'
+    const isSplit = nodeType === 'audience-split' || nodeType === 'crowd-split' || nodeType === 'event-split' || nodeType === 'ab-test'
     const hasInput = nodeType !== 'start' && nodeType !== 'end'
     
     // 计算内容区域高度

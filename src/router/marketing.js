@@ -126,29 +126,29 @@ export default [
         meta: { title: '券库存详情' }
       },
       {
-          path: 'tasks',
-          name: 'marketing-tasks',
-          component: () => loadComponent('../pages/marketing/tasks/index.vue', 'MarketingTasks'),
-          meta: { title: '营销任务' }
-        },
-        {
-          path: 'tasks/horizontal',
-          name: 'marketing-tasks-horizontal',
-          component: () => loadComponent('../pages/marketing/tasks/horizontal/index.vue', 'MarketingTasksHorizontal'),
-          meta: { title: '营销任务（横版原型）' }
-        },
-        {
-          path: 'tasks/create',
-          name: 'marketing-tasks-create',
-          component: () => loadComponent('../pages/marketing/tasks/create.vue', 'MarketingTasksCreate'),
-          meta: { title: '创建营销任务' }
-        },
-        {
-          path: 'tasks/editor',
-          name: 'marketing-tasks-editor',
-          component: () => loadComponent('../pages/marketing/tasks/task-editor.vue', 'MarketingTasksEditor'),
-          meta: { title: '任务管理' }
-        }
+        path: 'tasks',
+        name: 'marketing-tasks',
+        component: () => loadComponent('../pages/marketing/tasks/index.vue', 'MarketingTasks'),
+        meta: { title: '营销任务' }
+      },
+      {
+        path: 'tasks/horizontal',
+        name: 'marketing-tasks-horizontal',
+        component: () => loadComponent('../pages/marketing/tasks/horizontal/index.vue', 'MarketingTasksHorizontal'),
+        meta: { title: '营销任务（横版原型）' }
+      },
+      {
+        path: 'tasks/create',
+        name: 'marketing-tasks-create',
+        component: () => loadComponent('../pages/marketing/tasks/create.vue', 'MarketingTasksCreate'),
+        meta: { title: '创建营销任务' }
+      },
+      {
+        path: 'tasks/editor',
+        name: 'marketing-tasks-editor',
+        component: () => loadComponent('../pages/marketing/tasks/task-editor.vue', 'MarketingTasksEditor'),
+        meta: { title: '任务管理' }
+      }
     ]
   }
 ]

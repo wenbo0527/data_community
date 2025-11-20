@@ -454,7 +454,9 @@ const handleSave = () => {
     updateData.splitCount = formData.value.splitCount
     updateData.splitMethod = formData.value.splitMethod
   } else if (nodeType === 'event-split') {
-    updateData.events = formData.value.events.filter(event => event.name.trim())
+    const events = formData.value.events.filter(event => String(event.name || '').trim())
+    updateData.events = events
+    updateData.eventName = events.length ? events[0].name : ''
   } else if (nodeType === 'ab-test') {
     // 支持动态多变体配置，同时保存versions和variants格式
     updateData.variants = formData.value.variants.filter(variant => variant.name.trim())

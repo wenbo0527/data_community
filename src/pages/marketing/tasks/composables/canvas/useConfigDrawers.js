@@ -1,6 +1,8 @@
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { useStructuredLayout } from './useStructuredLayout.js'
 import { nodeConfigManager } from '../../utils/canvas/NodeConfigManager.js'
+import { buildDisplayLines } from '../../horizontal/createVueShapeNode.js'
+
 
 /**
  * 配置抽屉管理 Composable
@@ -228,11 +230,46 @@ export function useConfigDrawers(getGraph, nodeOperations = {}) {
       try {
         const dataAfter = nodeInstance.getData?.() || {}
         const effectiveType = dataAfter?.type || dataAfter?.nodeType || nodeType
+        console.log('[useConfigDrawers] 横版画布同步准备:', { 
+          nodeId: nodeInstance.id, 
+          originalNodeType: nodeType,
+          effectiveType,
+          dataAfterType: dataAfter?.type,
+          dataAfterNodeType: dataAfter?.nodeType,
+          hasNodeOperations: !!nodeOperations,
+          hasUpdateFunction: typeof nodeOperations?.updateNodeFromConfig === 'function'
+        })
         if (nodeOperations && typeof nodeOperations.updateNodeFromConfig === 'function') {
-          console.log('[useConfigDrawers] 调用横版更新方法 updateNodeFromConfig', { nodeId: nodeInstance.id, effectiveType })
+          console.log('[useConfigDrawers] 调用横版更新方法 updateNodeFromConfig', { 
+            nodeId: nodeInstance.id, 
+            effectiveType,
+            config: dataAfter?.config || config
+          })
           nodeOperations.updateNodeFromConfig(nodeInstance, effectiveType, dataAfter?.config || config)
+          try {
+            const afterData = nodeInstance.getData?.() || {}
+            const afterType = afterData?.type || afterData?.nodeType || effectiveType
+            const afterCfg = afterData?.config || {}
+            const lines = Array.isArray(afterCfg?.displayLines) ? afterCfg.displayLines : []
+            const built = buildDisplayLines(afterType, afterCfg)
+            const needWrite = !Array.isArray(lines) || lines.length === 0
+            console.log('[useConfigDrawers] 更新校验:', {
+              nodeId: nodeInstance.id,
+              displayLinesCount: Array.isArray(lines) ? lines.length : 0,
+              builtCount: built.length
+            })
+            if (needWrite && built.length) {
+              const merged = { ...afterCfg, displayLines: built }
+              const mergedData = { ...afterData, config: merged }
+              nodeInstance.setData && nodeInstance.setData(mergedData)
+              nodeOperations.updateNodeFromConfig(nodeInstance, afterType, merged)
+            }
+          } catch {}
         } else {
-          console.log('[useConfigDrawers] 未提供 updateNodeFromConfig，跳过横版内容与端口刷新')
+          console.log('[useConfigDrawers] 未提供 updateNodeFromConfig，跳过横版内容与端口刷新', {
+            hasNodeOperations: !!nodeOperations,
+            updateFunctionType: typeof nodeOperations?.updateNodeFromConfig
+          })
         }
       } catch (err) {
         console.warn('[useConfigDrawers] 横版节点更新异常:', err)

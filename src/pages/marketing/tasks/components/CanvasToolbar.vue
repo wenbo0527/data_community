@@ -1,50 +1,45 @@
 <template>
   <div v-if="!readonly" class="canvas-toolbar">
-    <!-- 缩放控制工具栏 -->
-    <a-button-group>
-      <a-button @click="zoomIn" size="small" title="放大 (Ctrl++)">
-        <template #icon><icon-plus /></template>
-      </a-button>
-      <a-button @click="zoomOut" size="small" title="缩小 (Ctrl-)">
-        <template #icon><icon-minus /></template>
-      </a-button>
-      <a-button @click="resetZoom" size="small" title="重置缩放 (Ctrl+0)">
-        <template #icon><icon-refresh /></template>
-        {{ scaleDisplayText }}
-      </a-button>
+    <a-button-group v-if="showZoom">
+      <a-dropdown @select="handleZoomSelect" position="bottom">
+        <a-button size="small" title="缩放比例">
+          <template #icon><icon-zoom-in /></template>
+          {{ scaleDisplayText }}
+        </a-button>
+        <template #content>
+          <a-doption value="50">50%</a-doption>
+          <a-doption value="75">75%</a-doption>
+          <a-doption value="100">100%</a-doption>
+          <a-doption value="125">125%</a-doption>
+          <a-doption value="150">150%</a-doption>
+          <a-doption value="200">200%</a-doption>
+          <a-divider />
+          <a-doption value="fit">适应内容</a-doption>
+          <a-doption value="reset">重置缩放</a-doption>
+        </template>
+      </a-dropdown>
       <a-button @click="fitToContent" size="small" title="适应内容 (Ctrl+F)">
         <template #icon><icon-fullscreen /></template>
       </a-button>
     </a-button-group>
 
-    <!-- 拖拽模式控制工具栏 -->
-    <a-button-group style="margin-left: 8px;">
-      <a-button @click="setDragMode('default')" size="small"
-        :type="currentDragMode === 'default' ? 'primary' : 'secondary'" title="默认拖拽模式 (1)">
-        <template #icon><icon-drag-dot /></template>
-        默认
-      </a-button>
-      <a-button @click="setDragMode('precise')" size="small"
-        :type="currentDragMode === 'precise' ? 'primary' : 'secondary'" title="精确拖拽模式 (2)">
-        <template #icon><icon-location /></template>
-        精确
-      </a-button>
-      <a-button @click="setDragMode('fast')" size="small" :type="currentDragMode === 'fast' ? 'primary' : 'secondary'"
-        title="快速拖拽模式 (3)">
-        <template #icon><icon-thunderbolt /></template>
-        快速
+    <a-button-group v-if="showAddNode" style="margin-left: 8px;">
+      <a-button @click="onAddNodeClick($event)" size="small" type="primary">
+        <template #icon><icon-plus /></template>
+        添加节点
       </a-button>
     </a-button-group>
 
-    <a-button-group style="margin-left: 8px;">
-      <!-- 🎯 统一结构化布局按钮 -->
-      <a-button @click="applyUnifiedStructuredLayout" size="small" type="primary" :loading="isApplyingLayout">
-        <template #icon><icon-sort /></template>
-        统一布局
+    <a-button-group v-if="showLayout" style="margin-left: 8px;">
+      <a-button @click="applyQuickLayout" size="small" type="primary" :loading="isApplyingLayout">
+        <template #icon><icon-lightning /></template>
+        快速布局
       </a-button>
-      
-      <!-- 布局方向切换按钮 -->
-      <a-dropdown @select="handleLayoutDirectionChange">
+      <a-button @click="onToggleMinimapClick($event)" size="small" :type="showMinimap ? 'primary' : 'secondary'">
+        <template #icon><icon-eye /></template>
+        小地图
+      </a-button>
+      <a-dropdown v-if="showLayoutDirection" @select="handleLayoutDirectionChange">
         <a-button size="small" :type="currentLayoutDirection === 'TB' ? 'primary' : 'secondary'">
           <template #icon><icon-swap /></template>
           {{ currentLayoutDirection === 'TB' ? '从上到下' : '从左到右' }}
@@ -60,36 +55,33 @@
           </a-doption>
         </template>
       </a-dropdown>
-      
-      <!-- 小地图控制按钮 -->
-      <a-button @click="toggleMinimap" size="small" :type="showMinimap ? 'primary' : 'secondary'">
+    </a-button-group>
+
+    <a-button-group v-if="showMinimapToggle" style="margin-left: 8px;">
+      <a-button @click="onToggleMinimapClick($event)" size="small" :type="showMinimap ? 'primary' : 'secondary'">
         <template #icon><icon-eye /></template>
         预览图
       </a-button>
-      
-      <a-button @click="clearCanvas" size="small" status="danger">
+    </a-button-group>
+
+    <a-button-group v-if="showExtras" style="margin-left: 8px;">
+      <a-button v-if="showClear" @click="clearCanvas" size="small" status="danger">
         <template #icon><icon-delete /></template>
         清空画布
       </a-button>
-      
-      <!-- 撤销重做按钮 -->
-      <a-button @click="undo" size="small" :disabled="!canUndo" title="撤销 (Ctrl+Z)">
+      <a-button v-if="showUndoRedo" @click="undo" size="small" :disabled="!canUndo" title="撤销 (Ctrl+Z)">
         <template #icon><icon-up /></template>
         撤销
       </a-button>
-      <a-button @click="redo" size="small" :disabled="!canRedo" title="重做 (Ctrl+Y)">
+      <a-button v-if="showUndoRedo" @click="redo" size="small" :disabled="!canRedo" title="重做 (Ctrl+Y)">
         <template #icon><icon-down /></template>
         重做
       </a-button>
-      
-      <!-- 历史面板按钮 -->
-      <a-button @click="toggleHistoryPanel" size="small" :type="showHistoryPanel ? 'primary' : 'secondary'" title="操作历史">
+      <a-button v-if="showHistory" @click="toggleHistoryPanel" size="small" :type="showHistoryPanel ? 'primary' : 'secondary'" title="操作历史">
         <template #icon><icon-history /></template>
         历史
       </a-button>
-      
-      <!-- 导出图片按钮 -->
-      <a-dropdown @select="handleExport">
+      <a-dropdown v-if="showExport" @select="handleExport">
         <a-button size="small">
           <template #icon><icon-download /></template>
           导出图片
@@ -100,9 +92,7 @@
           <a-doption value="svg">导出SVG</a-doption>
         </template>
       </a-dropdown>
-      
-      <!-- 调试功能按钮 -->
-      <a-button @click="toggleDebugPanel" size="small" :type="showDebugPanel ? 'primary' : 'secondary'" title="调试功能">
+      <a-button v-if="showDebug" @click="toggleDebugPanel" size="small" :type="showDebugPanel ? 'primary' : 'secondary'" title="调试功能">
         <template #icon><icon-bug /></template>
         调试
       </a-button>
@@ -112,8 +102,7 @@
 
 <script setup>
 import { 
-  IconMinus, 
-  IconPlus, 
+  IconZoomIn,
   IconRefresh, 
   IconFullscreen,
   IconDragDot,
@@ -137,6 +126,17 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  showZoom: { type: Boolean, default: true },
+  showAddNode: { type: Boolean, default: false },
+  showLayout: { type: Boolean, default: true },
+  showLayoutDirection: { type: Boolean, default: true },
+  showMinimapToggle: { type: Boolean, default: true },
+  showExtras: { type: Boolean, default: true },
+  showClear: { type: Boolean, default: true },
+  showUndoRedo: { type: Boolean, default: true },
+  showHistory: { type: Boolean, default: true },
+  showExport: { type: Boolean, default: true },
+  showDebug: { type: Boolean, default: true },
   scaleDisplayText: {
     type: String,
     default: '100%'
@@ -180,9 +180,13 @@ const emit = defineEmits([
   'zoom-in',
   'zoom-out', 
   'reset-zoom',
+  'set-zoom',
   'fit-to-content',
+  'fit-content',
   'set-drag-mode',
+  'apply-quick-layout',
   'apply-unified-structured-layout',
+  'apply-layout',
   'layout-direction-change',
   'toggle-minimap',
   'clear-canvas',
@@ -190,7 +194,8 @@ const emit = defineEmits([
   'redo',
   'toggle-history-panel',
   'export',
-  'toggle-debug-panel'
+  'toggle-debug-panel',
+  'add-node'
 ])
 
 // 事件处理方法
@@ -208,22 +213,33 @@ const resetZoom = () => {
 
 const fitToContent = () => {
   emit('fit-to-content')
+  emit('fit-content')
 }
 
 const setDragMode = (mode) => {
   emit('set-drag-mode', mode)
 }
 
+const applyQuickLayout = () => {
+  emit('apply-quick-layout')
+}
+
 const applyUnifiedStructuredLayout = () => {
   emit('apply-unified-structured-layout')
+  emit('apply-layout')
 }
 
 const handleLayoutDirectionChange = (direction) => {
   emit('layout-direction-change', direction)
 }
 
-const toggleMinimap = () => {
-  emit('toggle-minimap')
+const onToggleMinimapClick = (e) => {
+  try {
+    const rect = e?.currentTarget?.getBoundingClientRect?.()
+    emit('toggle-minimap', { anchorRect: rect })
+  } catch {
+    emit('toggle-minimap')
+  }
 }
 
 const clearCanvas = () => {
@@ -249,58 +265,219 @@ const handleExport = (format) => {
 const toggleDebugPanel = () => {
   emit('toggle-debug-panel')
 }
+
+const handleZoomSelect = (value) => {
+  switch (value) {
+    case '50':
+    case '75':
+    case '100':
+    case '125':
+    case '150':
+    case '200':
+      // 设置具体缩放比例
+      emit('set-zoom', parseInt(value) / 100)
+      break
+    case 'fit':
+      // 适应内容
+      emit('fit-content')
+      break
+    case 'reset':
+      // 重置缩放
+      emit('reset-zoom')
+      break
+  }
+}
+
+const onAddNodeClick = (e) => {
+  try {
+    const rect = e?.currentTarget?.getBoundingClientRect?.()
+    emit('add-node', { anchorRect: rect })
+  } catch {
+    emit('add-node')
+  }
+}
 </script>
 
 <style scoped>
 .canvas-toolbar {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 10;
+  position: relative;
   display: flex;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.canvas-toolbar:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* 按钮组样式 */
+.canvas-toolbar .arco-btn-group {
+  display: flex;
+  gap: 2px;
 }
 
 /* 缩放按钮样式优化 */
 .canvas-toolbar .arco-btn-group .arco-btn {
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  color: #475569;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .canvas-toolbar .arco-btn-group .arco-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 1);
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.canvas-toolbar .arco-btn-group .arco-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 缩放比例显示样式 */
 .canvas-toolbar .arco-btn-group .arco-btn:has(.zoom-percentage) {
   min-width: 80px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #1e293b;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
 }
 
-/* 拖拽模式按钮样式 */
+/* 主要操作按钮样式 */
 .canvas-toolbar .arco-btn-group .arco-btn[type="primary"] {
-  background: linear-gradient(135deg, #5F95FF, #4080FF);
-  border-color: #5F95FF;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #3b82f6;
   color: white;
   font-weight: 600;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .canvas-toolbar .arco-btn-group .arco-btn[type="primary"]:hover {
-  background: linear-gradient(135deg, #4080FF, #3366FF);
-  border-color: #4080FF;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #2563eb;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(95, 149, 255, 0.3);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
 }
 
-/* 拖拽模式按钮图标样式 */
+/* 次要操作按钮样式 */
+.canvas-toolbar .arco-btn-group .arco-btn[type="secondary"] {
+  background: rgba(241, 245, 249, 0.8);
+  border-color: rgba(226, 232, 240, 0.8);
+  color: #64748b;
+}
+
+.canvas-toolbar .arco-btn-group .arco-btn[type="secondary"]:hover {
+  background: rgba(241, 245, 249, 1);
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+/* 危险操作按钮样式 */
+.canvas-toolbar .arco-btn-group .arco-btn[status="danger"] {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.canvas-toolbar .arco-btn-group .arco-btn[status="danger"]:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border-color: #dc2626;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* 禁用状态按钮样式 */
+.canvas-toolbar .arco-btn-group .arco-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 按钮图标样式 */
 .canvas-toolbar .arco-btn-group .arco-btn .arco-icon {
   margin-right: 4px;
   font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.canvas-toolbar .arco-btn-group .arco-btn:hover .arco-icon {
+  transform: scale(1.1);
+}
+
+/* 下拉菜单样式 */
+.canvas-toolbar :deep(.arco-dropdown) {
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.canvas-toolbar :deep(.arco-dropdown-option) {
+  border-radius: 6px;
+  margin: 2px;
+  transition: all 0.2s ease;
+}
+
+.canvas-toolbar :deep(.arco-dropdown-option:hover) {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+.canvas-toolbar :deep(.arco-dropdown-option-selected) {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .canvas-toolbar {
+    flex-wrap: wrap;
+    max-width: 280px;
+    right: 12px;
+    top: 12px;
+  }
+  
+  .canvas-toolbar .arco-btn-group .arco-btn {
+    min-width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+}
+
+/* 动画效果 */
+@keyframes toolbarSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.canvas-toolbar {
+  animation: toolbarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
+const onAddNodeClick = (e) => {
+  const rect = e?.currentTarget?.getBoundingClientRect?.()
+  emit('add-node', { anchorRect: rect })
+}
