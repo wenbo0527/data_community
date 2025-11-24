@@ -13,29 +13,15 @@
       <div class="header-content">
         <div class="title-section">
           <h1 class="metric-title">{{ metricDetail?.name }}</h1>
-          <div class="metric-meta">
-            <a-tag :color="metricTypeColor" class="metric-type-tag">
-              {{ metricTypeText }}
-            </a-tag>
-          </div>
+          <div class="metric-meta"></div>
           <a-descriptions :column="2" class="header-basic-info" :label-style="{ 'font-weight': 600 }">
             <a-descriptions-item label="指标编码">{{ metricDetail?.code }}</a-descriptions-item>
-            <template v-if="metricDetail?.type === 'business_core'">
-              <a-descriptions-item label="分类">
-                <a-tag>{{ metricDetail?.category }}</a-tag>
-              </a-descriptions-item>
-              <a-descriptions-item label="业务域">
-                <a-tag color="purple">{{ metricDetail?.businessDomain }}</a-tag>
-              </a-descriptions-item>
-            </template>
-            <template v-else-if="metricDetail?.type === 'regulatory'">
-              <a-descriptions-item label="指标域">
-                <a-tag color="orange">{{ metricDetail?.regulatoryCategory }}</a-tag>
-              </a-descriptions-item>
-              <a-descriptions-item label="归属场景">
-                <a-tag color="red">{{ metricDetail?.reportName }}</a-tag>
-              </a-descriptions-item>
-            </template>
+            <a-descriptions-item label="指标域">
+              <a-tag>{{ domainLabel || '未设置' }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="归属场景">
+              <a-tag color="purple">{{ sceneLabel || '未设置' }}</a-tag>
+            </a-descriptions-item>
             <a-descriptions-item label="计算时效">
               <a-tag color="blue">{{ metricDetail?.statisticalPeriod }}</a-tag>
             </a-descriptions-item>
@@ -99,7 +85,7 @@
             </template>
             <a-descriptions :column="2" :label-style="{ 'font-weight': 600 }">
               <a-descriptions-item label="技术口径使用说明" :span="2">
-                {{ metricDetail?.fieldDescription || '暂无' }}
+                {{ metricDetail?.technicalUsageNote || metricDetail?.fieldDescription || '暂无' }}
               </a-descriptions-item>
             </a-descriptions>
 
@@ -290,14 +276,15 @@
             </div>
           </a-card>
           
-          <!-- 归属场景 -->
-          <a-card id="report-info" class="detail-card" v-if="metricDetail?.reportInfo">
+          <a-card id="report-info" class="detail-card" v-if="reportsList.length">
             <template #title>
               <span class="card-title">归属场景</span>
             </template>
             <a-descriptions :column="1" :label-style="{ 'font-weight': 600 }">
               <a-descriptions-item label="报表">
-                <div class="description-content">{{ metricDetail?.reportInfo }}</div>
+                <div class="description-content report-links">
+                  <span v-for="r in reportsList" :key="(r.name||'')+(r.url||'')" class="report-link" @click="openReport(r.url)">{{ r.name }}</span>
+                </div>
               </a-descriptions-item>
             </a-descriptions>
           </a-card>
@@ -413,6 +400,34 @@ const metricTypeColor = computed(() => {
   const type = metricDetail.value?.type as 'business_core' | 'regulatory' | undefined
   return type ? colorMap[type] : 'gray'
 })
+
+const domainLabel = computed(() => {
+  return metricDetail.value?.category || metricDetail.value?.regulatoryCategory || ''
+})
+
+const sceneLabel = computed(() => {
+  return metricDetail.value?.scene || metricDetail.value?.businessDomain || metricDetail.value?.reportName || ''
+})
+
+const reportsList = computed(() => {
+  const rawList = metricDetail.value?.reports
+  if (Array.isArray(rawList)) {
+    return rawList.filter((r: any) => (r?.name || '').trim()).map((r: any) => ({ name: String(r.name).trim(), url: String(r.url || '').trim() }))
+  }
+  const raw = String(metricDetail.value?.reportInfo || '').trim()
+  if (!raw) return []
+  return raw.split(/\n|、|・|,|;|，|；/).map(s => ({ name: s.trim(), url: '' })).filter(v => v.name)
+})
+
+const openReport = (url: string) => {
+  const u = String(url || '').trim()
+  if (!u) return
+  if (/^https?:\/\//i.test(u)) {
+    window.open(u, '_blank')
+  } else {
+    router.push(u)
+  }
+}
 
 // 方法
 const goBack = () => {
@@ -1061,6 +1076,17 @@ onMounted(() => {
 
 .lineage-container {
   width: 100%;
+}
+
+.report-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-link {
+  color: #165dff;
+  cursor: pointer;
 }
 
 .lineage-toolbar {

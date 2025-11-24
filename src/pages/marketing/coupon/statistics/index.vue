@@ -450,11 +450,19 @@ const failureDistributionData = ref([
 // 初始化失败原因饼图
 const failureChartRef = ref(null)
 let failureChart = null
+let failureInitAttempts = 0
+let failureInitTimer = null
 
 const initFailureChart = async () => {
   if (!failureChartRef.value) {
-    console.warn('⚠️ 失败原因图表容器不存在，延迟重试')
-    setTimeout(initFailureChart, 200)
+    if (failureInitAttempts < 10) {
+      failureInitAttempts++
+      console.warn('⚠️ 失败原因图表容器不存在，延迟重试', { attempt: failureInitAttempts })
+      clearTimeout(failureInitTimer)
+      failureInitTimer = setTimeout(initFailureChart, 250)
+    } else {
+      console.error('❌ 失败原因图表初始化多次重试仍失败，停止重试')
+    }
     return
   }
   
@@ -464,15 +472,27 @@ const initFailureChart = async () => {
   
   // 添加null检查，防止getBoundingClientRect错误
   if (!failureChartRef.value) {
-    console.warn('⚠️ 失败原因图表容器在DOM更新后变为null，延迟重试')
-    setTimeout(initFailureChart, 200)
+    if (failureInitAttempts < 10) {
+      failureInitAttempts++
+      console.warn('⚠️ 失败原因图表容器在DOM更新后变为null，延迟重试', { attempt: failureInitAttempts })
+      clearTimeout(failureInitTimer)
+      failureInitTimer = setTimeout(initFailureChart, 250)
+    } else {
+      console.error('❌ 失败原因图表初始化多次重试仍失败，停止重试')
+    }
     return
   }
   
   const rect = failureChartRef.value.getBoundingClientRect()
   if (rect.width === 0 || rect.height === 0) {
-    console.warn(`⚠️ 失败原因图表容器尺寸为0 (${rect.width}x${rect.height})，延迟重试`)
-    setTimeout(initFailureChart, 200)
+    if (failureInitAttempts < 10) {
+      failureInitAttempts++
+      console.warn(`⚠️ 失败原因图表容器尺寸为0 (${rect.width}x${rect.height})，延迟重试`, { attempt: failureInitAttempts })
+      clearTimeout(failureInitTimer)
+      failureInitTimer = setTimeout(initFailureChart, 300)
+    } else {
+      console.error('❌ 失败原因图表容器尺寸长期为0，停止重试')
+    }
     return
   }
   
@@ -484,6 +504,7 @@ const initFailureChart = async () => {
     }
     
     failureChart = await safeInitECharts(failureChartRef.value, {}, 10, 100)
+    failureInitAttempts = 0
   const option = {
     tooltip: {
       trigger: 'item',

@@ -81,6 +81,10 @@
         <template #icon><icon-history /></template>
         历史
       </a-button>
+      <a-button v-if="showStatistics" @click="toggleStatisticsPanel" size="small" :type="showStatisticsPanel ? 'primary' : 'secondary'" title="统计信息">
+        <template #icon><icon-bar-chart /></template>
+        统计
+      </a-button>
       <a-dropdown v-if="showExport" @select="handleExport">
         <a-button size="small">
           <template #icon><icon-download /></template>
@@ -117,7 +121,8 @@ import {
   IconUp,
   IconHistory,
   IconDownload,
-  IconBug
+  IconBug,
+  IconBarChart
 } from '@arco-design/web-vue/es/icon'
 
 // Props定义
@@ -169,6 +174,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  showStatisticsPanel: {
+    type: Boolean,
+    default: false
+  },
   showDebugPanel: {
     type: Boolean,
     default: false
@@ -193,6 +202,7 @@ const emit = defineEmits([
   'undo',
   'redo',
   'toggle-history-panel',
+  'toggle-statistics-panel',
   'export',
   'toggle-debug-panel',
   'add-node'
@@ -256,6 +266,10 @@ const redo = () => {
 
 const toggleHistoryPanel = () => {
   emit('toggle-history-panel')
+}
+
+const toggleStatisticsPanel = () => {
+  emit('toggle-statistics-panel')
 }
 
 const handleExport = (format) => {

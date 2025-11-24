@@ -8,20 +8,10 @@ import { MetricType, RegulatoryCategory, RegulatoryCategories } from '@/types/me
  */
 export function generateExcelTemplate(type: MetricType) {
   const workbook = XLSX.utils.book_new()
-  
-  // 根据指标类型创建不同的模板
-  if (type === MetricType.BUSINESS_CORE) {
-    createBusinessMetricTemplate(workbook)
-  } else if (type === MetricType.REGULATORY) {
-    createRegulatoryMetricTemplate(workbook)
-  }
-  
-  // 生成二进制数据
+  createBusinessMetricTemplate(workbook)
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  
-  // 下载文件
-  const fileName = type === MetricType.BUSINESS_CORE ? '业务核心指标批量注册模板.xlsx' : '监管指标批量注册模板.xlsx'
+  const fileName = '指标批量注册模板.xlsx'
   saveAs(blob, fileName)
 }
 
@@ -29,50 +19,47 @@ export function generateExcelTemplate(type: MetricType) {
  * 创建业务核心指标模板
  */
 function createBusinessMetricTemplate(workbook: XLSX.WorkBook) {
-  // 创建示例数据
   const exampleData = [
     {
-      '指标名称': '日活跃用户数',
-      '指标编码': 'BIZ_USER_DAU',
-      '指标分类': 'user',
-      '业务域': 'user',
-      '统计周期': '日更新',
+      '指标名称': 'DAU',
+      '指标编码': 'USER_DAU',
+      '指标域': '业务域\\监管域',
+      '归属场景': '留存域',
+      '计算时效': '日更新',
       '业务负责人': '张三',
       '技术负责人': '李四',
-      '业务定义': '每日登录系统的去重用户数',
+      '业务口径': '每日登录系统的去重用户数',
       '使用场景': '用户活跃度分析',
-      '技术逻辑': 'SELECT COUNT(DISTINCT user_id) FROM dwd_user_login_detail WHERE dt = ${bizdate}',
-      '字段说明': '整型数值',
-      '报表信息': '用户活跃度日报',
-      '查询代码': 'SELECT * FROM ads_user_metrics WHERE metric_code = \'BIZ_USER_DAU\''
+      '技术口径': 'SELECT COUNT(DISTINCT user_id) FROM dwd_user_login_detail WHERE dt = ${bizdate}',
+      '技术口径使用说明': 'bizdate 为业务日期',
+      '结果表': 'ads_user_metrics',
+      '报表': '用户活跃度日报:{https://reports.example.com/user-dau}',
+      '查询代码': 'SELECT dau FROM ads_user_metrics WHERE dt = ${bizdate}',
+      '版本号': 1,
+      '版本说明': '初始版本'
     }
   ]
-  
-  // 创建工作表
   const worksheet = XLSX.utils.json_to_sheet(exampleData)
-  
-  // 设置列宽
   const colWidths = [
-    { wch: 20 }, // 指标名称
-    { wch: 15 }, // 指标编码
-    { wch: 10 }, // 指标分类
-    { wch: 10 }, // 业务域
-    { wch: 10 }, // 统计周期
-    { wch: 12 }, // 业务负责人
-    { wch: 12 }, // 技术负责人
-    { wch: 30 }, // 业务定义
-    { wch: 20 }, // 使用场景
-    { wch: 50 }, // 技术逻辑
-    { wch: 15 }, // 字段说明
-    { wch: 20 }, // 报表信息
-    { wch: 40 }  // 查询代码
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 30 },
+    { wch: 24 },
+    { wch: 50 },
+    { wch: 28 },
+    { wch: 20 },
+    { wch: 40 },
+    { wch: 40 },
+    { wch: 10 },
+    { wch: 20 }
   ]
   worksheet['!cols'] = colWidths
-  
-  // 添加到工作簿
-  XLSX.utils.book_append_sheet(workbook, worksheet, '业务核心指标')
-  
-  // 添加说明页
+  XLSX.utils.book_append_sheet(workbook, worksheet, '指标注册')
   addInstructionSheet(workbook, MetricType.BUSINESS_CORE)
 }
 
@@ -94,8 +81,9 @@ function createRegulatoryMetricTemplate(workbook: XLSX.WorkBook) {
       '业务定义': '核心资本与风险加权资产之比',
       '来源表': 'dwd_capital_adequacy',
       '技术逻辑': 'SELECT core_capital / risk_weighted_assets FROM dwd_capital_adequacy WHERE period = ${quarter}',
+      '技术口径使用说明': 'quarter 为季度末日期',
       '字段说明': '百分比，保留2位小数',
-      '存储位置': 'ads_regulatory_metrics',
+      '报表链接': 'https://reports.example.com/cbirc-capital',
       '查询代码': 'SELECT * FROM ads_regulatory_metrics WHERE metric_code = \'REG_CAPITAL_ADEQUACY_RATIO\''
     }
   ]
@@ -116,8 +104,9 @@ function createRegulatoryMetricTemplate(workbook: XLSX.WorkBook) {
     { wch: 30 }, // 业务定义
     { wch: 20 }, // 来源表
     { wch: 50 }, // 技术逻辑
+    { wch: 28 }, // 技术口径使用说明
     { wch: 20 }, // 字段说明
-    { wch: 15 }, // 存储位置
+    { wch: 40 }, // 报表链接
     { wch: 40 }  // 查询代码
   ]
   worksheet['!cols'] = colWidths
@@ -151,38 +140,20 @@ function addRegulatoryCategories(workbook: XLSX.WorkBook) {
  * 添加说明页
  */
 function addInstructionSheet(workbook: XLSX.WorkBook, type: MetricType) {
-  let instructions: string[][] = [
+  const instructions = [
     ['批量注册指标说明'],
     [''],
     ['1. 请按照模板格式填写指标信息，不要修改表头'],
-    ['2. 带*的字段为必填项'],
+    ['2. 带*的字段为必填项（以平台实际要求为准）'],
     ['3. 指标编码必须唯一，建议使用有意义的前缀'],
-    ['4. 上传前请检查数据的完整性和准确性']
+    ['4. 上传前请检查数据的完整性和准确性'],
+    [''],
+    ['字段统一：指标域、归属场景、计算时效为通用字段'],
+    ['版本信息：版本号为整数，从1开始递增；版本说明建议≤100字符']
   ]
-  
-  if (type === MetricType.BUSINESS_CORE) {
-    instructions.push(
-      [''],
-      ['业务核心指标特殊说明：'],
-      ['1. 业务域必须填写'],
-      ['2. 业务负责人和技术负责人均为必填项']
-    )
-  } else {
-    instructions.push(
-      [''],
-      ['监管指标特殊说明：'],
-      ['1. 监管报表大类必须填写，请参考"监管报表大类"工作表'],
-      ['2. 业务负责人和技术负责人均为必填项'],
-      ['3. 报表名称为必填项']
-    )
-  }
-  
   const worksheet = XLSX.utils.aoa_to_sheet(instructions)
   worksheet['!cols'] = [{ wch: 80 }]
-  
-  // 设置单元格样式（合并单元格等）
   worksheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }]
-  
   XLSX.utils.book_append_sheet(workbook, worksheet, '使用说明')
 }
 
@@ -229,38 +200,38 @@ export function parseExcelFile(file: File, type: MetricType): Promise<any[]> {
  */
 function processExcelData(data: any[], type: MetricType) {
   return data.map((row, index) => {
-    const baseItem = {
-      rowIndex: index + 2, // Excel行号（从2开始，因为1是表头）
+    const reportRaw = String(row['报表'] || '').trim()
+    let reportName = ''
+    let reportUrl = ''
+    if (reportRaw) {
+      const m = reportRaw.match(/^(.+?):\{(https?:\/\/[^}]+)\}$/)
+      if (m) {
+        reportName = m[1]
+        reportUrl = m[2]
+      } else {
+        reportName = reportRaw
+      }
+    }
+    return {
+      rowIndex: index + 2,
       type,
       name: row['指标名称'],
       code: row['指标编码'],
-      category: row['指标分类'],
-      businessDefinition: row['业务定义'],
-      statisticalPeriod: row['统计周期'],
-      sourceTable: row['来源表'],
-      processingLogic: row['技术逻辑'],
-      fieldDescription: row['字段说明'],
-      storageLocation: row['存储位置'],
-      queryCode: row['查询代码']
-    }
-    
-    if (type === MetricType.BUSINESS_CORE) {
-      return {
-        ...baseItem,
-        businessDomain: row['业务域'],
-        businessOwner: row['业务负责人'] || row['负责人'],
-        technicalOwner: row['技术负责人'] || '',
-        useCase: row['使用场景'],
-        reportInfo: row['报表信息']
-      }
-    } else {
-      return {
-        ...baseItem,
-        regulatoryCategory: row['监管报表大类'],
-        businessOwner: row['业务负责人'],
-        technicalOwner: row['技术负责人'],
-        reportName: row['报表名称']
-      }
+      category: row['指标域'],
+      scene: row['归属场景'],
+      businessDefinition: row['业务口径'],
+      useCase: row['使用场景'],
+      statisticalPeriod: row['计算时效'],
+      technicalCaliber: row['技术口径'],
+      technicalUsageNote: row['技术口径使用说明'],
+      resultTable: row['结果表'],
+      reportName,
+      reportUrl,
+      queryCode: row['查询代码'],
+      businessOwner: row['业务负责人'],
+      technicalOwner: row['技术负责人'],
+      version: typeof row['版本号'] === 'number' ? row['版本号'] : parseInt(String(row['版本号'] || '1'), 10),
+      versionDescription: row['版本说明']
     }
   })
 }
@@ -274,36 +245,25 @@ export function exportErrorData(errorData: any[], type: MetricType) {
   const workbook = XLSX.utils.book_new()
   
   // 转换数据格式
-  const formattedData = errorData.map(item => {
-    const baseData: any = {
-      '指标名称': item.name,
-      '指标编码': item.code,
-      '指标分类': item.category,
-      '统计周期': item.statisticalPeriod,
-      '业务定义': item.businessDefinition,
-      '技术逻辑': item.processingLogic,
-      '字段说明': item.fieldDescription,
-      '查询代码': item.queryCode,
-      '错误信息': (item.errors || []).join('\n')
-    }
-    
-    if (type === MetricType.BUSINESS_CORE) {
-      baseData['业务域'] = item.businessDomain
-      baseData['业务负责人'] = item.businessOwner
-      baseData['技术负责人'] = item.technicalOwner
-      baseData['使用场景'] = item.useCase
-      baseData['报表信息'] = item.reportInfo
-    } else {
-      baseData['监管报表大类'] = item.regulatoryCategory
-      baseData['来源表'] = item.sourceTable
-      baseData['存储位置'] = item.storageLocation
-      baseData['业务负责人'] = item.businessOwner
-      baseData['技术负责人'] = item.technicalOwner
-      baseData['报表名称'] = item.reportName
-    }
-    
-    return baseData
-  })
+  const formattedData = errorData.map(item => ({
+    '指标名称': item.name,
+    '指标编码': item.code,
+    '指标域': item.category,
+    '归属场景': item.scene,
+    '计算时效': item.statisticalPeriod,
+    '业务负责人': item.businessOwner,
+    '技术负责人': item.technicalOwner,
+    '业务定义': item.businessDefinition,
+    '使用场景': item.useCase,
+    '结果表': item.resultTable,
+    '技术口径': item.technicalCaliber || item.processingLogic,
+    '技术口径使用说明': item.technicalUsageNote,
+    '报表': (item.reportName && item.reportUrl) ? `${item.reportName}:{${item.reportUrl}}` : (item.reportName || ''),
+    '查询代码': item.queryCode,
+    '版本号': item.version,
+    '版本说明': item.versionDescription,
+    '错误信息': (item.errors || []).join('\n')
+  }))
   
   // 创建工作表
   const worksheet = XLSX.utils.json_to_sheet(formattedData)

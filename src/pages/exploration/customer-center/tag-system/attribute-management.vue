@@ -74,6 +74,13 @@
                 <span>{{ record.dimensionKey }}</span>
               </template>
             </a-table-column>
+            <a-table-column title="IDMapping支持" data-index="mappingSupport" :width="120">
+              <template #cell="{ record }">
+                <a-tag :color="getMappingSupportColor(record.mappingSupport)">
+                  {{ getMappingSupportText(record.mappingSupport) }}
+                </a-tag>
+              </template>
+            </a-table-column>
             <a-table-column title="创建时间" data-index="createTime" :width="180">
               <template #cell="{ record }">
                 {{ formatTime(record.createTime) }}
@@ -188,6 +195,7 @@ interface AttributeItem {
   createUser: string // 创建人
   status: 'active' | 'inactive'
   description?: string
+  mappingSupport?: boolean // 是否支持IDMapping
 }
 
 // 搜索表单
@@ -231,6 +239,7 @@ const generateAttributeData = (count: number): AttributeItem[] => {
   const attributeTypes = ['numeric', 'string']
   const dimensionTypes = ['customer', 'product-customer']
   const statuses: ('active' | 'inactive')[] = ['active', 'inactive']
+  const mappingSupportOptions = [true, false]
   const users = ['张三', '李四', '王五', '赵六', '钱七']
   
   return Array.from({ length: count }, (_, index) => ({
@@ -242,7 +251,8 @@ const generateAttributeData = (count: number): AttributeItem[] => {
     createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
     createUser: users[Math.floor(Math.random() * users.length)],
     status: statuses[Math.floor(Math.random() * statuses.length)],
-    description: `这是属性${index + 1}的描述信息`
+    description: `这是属性${index + 1}的描述信息`,
+    mappingSupport: mappingSupportOptions[Math.floor(Math.random() * mappingSupportOptions.length)]
   }))
 }
 
@@ -421,6 +431,16 @@ const getDimensionTypeText = (type: string) => {
     'product-customer': '产品客户级'
   }
   return texts[type] || type
+}
+
+// 获取IDMapping支持状态颜色
+const getMappingSupportColor = (support?: boolean) => {
+  return support ? 'green' : 'gray'
+}
+
+// 获取IDMapping支持状态文本
+const getMappingSupportText = (support?: boolean) => {
+  return support ? '支持' : '不支持'
 }
 
 // 格式化时间

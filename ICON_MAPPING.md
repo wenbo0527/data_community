@@ -1,0 +1,43 @@
+- 权限服务 ↔ 图标
+  - 页面标题图标：icon-safe（组件 IconSafe）
+    - src/pages/management/permission/index.vue:9（模板）
+    - src/pages/management/permission/index.vue:104（导入）
+  - 首页快速通道默认配置：IconSafe
+    - src/pages/login/home.vue:731（默认配置定义）
+
+- 外数服务 ↔ 图标
+  - 首页快速通道默认配置：IconCloud
+    - src/pages/login/home.vue:732（默认配置定义）
+  - 选择应用弹窗中的“外数管理”选项：IconCloud
+    - src/pages/login/home.vue:701（availableApplications 列表）
+    - src/pages/login/home.vue:789-809（getIconComponent 图标映射）
+
+- 任务管理 ↔ 图标
+  - 离线模型侧边菜单：icon-calendar-clock
+    - src/pages/offlineModel/Layout.vue:47（模板）
+    - src/router/offlineModel.js:67（路由 meta.icon）
+  - 首页快速通道默认配置：IconApps
+    - src/pages/login/home.vue:733（默认配置定义）
+
+- 选择应用（弹窗）中的应用 ↔ 图标
+  - 图标来源：availableApplications 列表 + getIconComponent 映射
+    - 列表位置：src/pages/login/home.vue:694-704
+    - 映射位置：src/pages/login/home.vue:789-809
+  - 具体对应关系：
+    - 模型平台 → IconRobot（src/pages/login/home.vue:695）
+    - 客户360 → IconUserGroup（src/pages/login/home.vue:696）
+    - 数据地图 → IconLocation（src/pages/login/home.vue:697）
+    - 客群中心 → IconUserGroup（src/pages/login/home.vue:698）
+    - 权益中心 → IconHeart（src/pages/login/home.vue:699）
+    - 营销中心 → IconFire（src/pages/login/home.vue:700）
+    - 外数管理 → IconCloud（src/pages/login/home.vue:701）
+    - 服务中心 → IconCustomerService（src/pages/login/home.vue:702）
+    - 洞察中心 → IconBulb（src/pages/login/home.vue:703）
+
+- 首页“快速通道”首行默认功能 ↔ 图标与路径
+  - 权限服务 → IconSafe → /management/permission
+    - src/pages/login/home.vue:731
+  - 外数服务 → IconCloud → /discovery/external
+    - src/pages/login/home.vue:732
+  - 任务管理 → IconApps → /management/tasks
+    - src/pages/login/home.vue:733

@@ -67,35 +67,38 @@ export default [
       {
         path: 'event-center',
         name: 'event-center',
-        component: () => import('../pages/exploration/customer-center/event-center/index.vue'),
-        children: [
-          {
-            path: 'event-management',
-            name: 'event-management',
-            component: () => import('../pages/exploration/customer-center/event-center/event-management.vue')
-          },
-          {
-            path: 'virtual-events',
-            name: 'virtual-events',
-            component: () => import('../pages/exploration/customer-center/event-center/virtual-events.vue')
-          },
-          {
-            path: 'sample-stats',
-            name: 'sample-stats',
-            component: () => import('../pages/exploration/customer-center/event-center/event-sample-stats.vue')
-          },
-          {
-            path: 'kafka-datasource',
-            name: 'kafka-datasource',
-            component: () => import('../pages/exploration/customer-center/event-center/kafka-datasource.vue')
-          }
-        ]
+        component: () => import('../pages/exploration/customer-center/event-center/index.vue')
+      },
+      {
+        path: 'event-center/event-management',
+        name: 'event-management',
+        component: () => import('../pages/exploration/customer-center/event-center/event-management.vue')
+      },
+      {
+        path: 'event-center/virtual-events',
+        name: 'virtual-events',
+        component: () => import('../pages/exploration/customer-center/event-center/virtual-events.vue')
+      },
+      {
+        path: 'event-center/sample-stats',
+        name: 'sample-stats',
+        component: () => import('../pages/exploration/customer-center/event-center/sample-stats.vue')
+      },
+      {
+        path: 'event-center/kafka-datasource',
+        name: 'kafka-datasource',
+        component: () => import('../pages/exploration/customer-center/event-center/kafka-datasource.vue')
       },
       {
         path: 'tag-system',
         name: 'tag-system',
         component: () => import('../pages/exploration/customer-center/tag-system/index.vue'),
         children: [
+          {
+            path: 'table-management',
+            name: 'table-management',
+            component: () => import('../pages/exploration/customer-center/tag-system/table-management.vue')
+          },
           {
             path: 'tag-management',
             name: 'tag-management',
@@ -115,6 +118,11 @@ export default [
             path: 'attribute-management',
             name: 'attribute-management',
             component: () => import('../pages/exploration/customer-center/tag-system/attribute-management.vue')
+          },
+          {
+            path: 'table-registration',
+            name: 'table-registration',
+            component: () => import('../pages/exploration/customer-center/tag-system/table-registration.vue')
           }
         ]
       },

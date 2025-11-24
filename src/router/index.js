@@ -3,6 +3,8 @@ import marketingRoutes from './marketing'
 import managementRoutes from './management'
 import explorationRoutes from './exploration'
 import notificationRoutes from './notification'
+import offlineModelRoutes from './offlineModel'
+import modelOfflineAnalysisRoutes from './model-offline-analysis'
 import { ROUTE_NAMES, ROUTE_PATHS, ROUTE_GUARD_CONFIG } from './constants'
 import { checkRoutePermission, getBreadcrumb } from './utils'
 import { warning, error } from '../utils/message'
@@ -14,6 +16,7 @@ const router = createRouter({
   routes: [
     ...managementRoutes,
     ...notificationRoutes,
+    ...offlineModelRoutes,
     {
       path: '/external-data-archive',
       name: 'ExternalDataArchive',
@@ -500,7 +503,8 @@ const router = createRouter({
           name: 'RiskBudgetManagement',
           redirect: '/risk/budget-overview',
           meta: { title: '预算管理' }
-        }
+        },
+        ...modelOfflineAnalysisRoutes
       ]
     },
     {
@@ -641,8 +645,28 @@ const router = createRouter({
             description: '预览线功能完整性测试页面',
             layout: 'blank'
           }
+        },
+        {
+          path: 'canvas-statistics',
+          name: 'CanvasStatisticsDemo',
+          component: () => import('../pages/canvas-statistics-demo.vue'),
+          meta: {
+            title: '画布统计功能演示',
+            description: '横版画布桌面端统计信息查询功能演示页面',
+            layout: 'blank'
+          }
         }
       ]
+    },
+    {
+      path: '/canvas/:id/statistics',
+      name: 'CanvasStatistics',
+      component: () => import('../pages/canvas-statistics/index.vue'),
+      meta: {
+        title: '画布统计信息',
+        description: '横版画布统计信息查询页面'
+      },
+      props: true
     },
     {
       path: '/',
@@ -772,5 +796,17 @@ router.getRoutes().forEach((route) => {
     }))
   })
 })
+
+const _routeNameCount = {}
+router.getRoutes().forEach((r) => {
+  if (r.name) {
+    _routeNameCount[r.name] = (_routeNameCount[r.name] || 0) + 1
+  }
+})
+Object.keys(_routeNameCount)
+  .filter((n) => _routeNameCount[n] > 1)
+  .forEach((n) => {
+    console.warn('Duplicate route name detected:', n)
+  })
 
 export default router

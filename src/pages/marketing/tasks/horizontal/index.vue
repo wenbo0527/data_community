@@ -71,6 +71,7 @@
           @toggle-minimap="handleToggleMinimap"
           @add-node="handleAddNode"
           @toggle-history-panel="showHistoryPanel = !showHistoryPanel"
+          @toggle-statistics-panel="showStatisticsPanel = !showStatisticsPanel"
           @undo="handleUndo"
           @redo="handleRedo"
           :show-zoom="true"
@@ -82,9 +83,11 @@
           :show-clear="false"
           :show-undo-redo="true"
           :show-history="true"
+          :show-statistics="isViewMode && isPublished"
           :can-undo="canUndo"
           :can-redo="canRedo"
           :show-history-panel="showHistoryPanel"
+          :show-statistics-panel="showStatisticsPanel"
           :show-export="false"
           :show-debug="false"
           :scale-display-text="scaleDisplayText"
@@ -164,6 +167,21 @@
       @update:position="onDebugPanelPositionUpdate"
     />
     
+    <!-- 统计信息面板 - 仅在查看模式且发布状态下显示 -->
+    <div 
+      v-if="showStatisticsPanel && isViewMode && isPublished" 
+      class="statistics-panel-container"
+      :style="{ width: statisticsPanelWidth + 'px' }"
+    >
+      <div class="statistics-panel-resize-handle" @mousedown="startResize"></div>
+      <CanvasStatisticsPanel
+        :canvas-id="editingTaskId || 'default-canvas'"
+        @close="showStatisticsPanel = false"
+        @node-select="handleNodeSelect"
+        @path-highlight="handlePathHighlight"
+      />
+    </div>
+    
   </div>
 </template>
 
@@ -210,6 +228,7 @@ import HorizontalQuickLayout from './utils/quickLayout.js';
 import { useRouter, useRoute } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { TaskStorage } from '../../../../utils/taskStorage.js'
+import CanvasStatisticsPanel from '@/components/canvas-statistics/CanvasStatisticsPanel.vue'
 
 // 任务基础信息变量
 const router = useRouter()
@@ -224,6 +243,11 @@ const createdTime = ref(new Date().toLocaleString('zh-CN'))
 const isEditMode = ref(false)
 const editingTaskId = ref(null)
 const editingTaskVersion = ref(null)
+
+// 统计面板状态
+const showStatisticsPanel = ref(false)
+const isViewMode = computed(() => route.query.mode === 'view')
+const isPublished = computed(() => taskStatus.value === 'published' || taskStatus.value === 'running')
 
 const canvasContainerRef = ref(null)
 const contentRef = ref(null)
@@ -265,6 +289,10 @@ const showSnapline = ref(true)
 
 // 横版专用快速布局实例
 const quickLayout = ref(null)
+
+// 统计面板宽度和拖拽状态
+const statisticsPanelWidth = ref(400)
+const isResizing = ref(false)
 
 // 计算属性：当前节点是否禁用
 const currentNodeDisabled = computed(() => {
@@ -430,6 +458,7 @@ const toggleStartDrawer = () => {
   const g = graph
   if (!g) return
   // 强制打开开始节点抽屉，如果不存在开始节点则创建
+
   let start = g.getNodes().find(n => {
     const d = n.getData?.() || {}
     return d?.type === 'start' || d?.nodeType === 'start'
@@ -439,6 +468,90 @@ const toggleStartDrawer = () => {
     start = g.getNodes().find(n => (n.getData?.() || {}).nodeType === 'start')
   }
   if (start) configDrawers.openConfigDrawer('start', start, start.getData?.() || {})
+}
+  
+function startResize(event) {
+  isResizing.value = true
+  const startX = event.clientX
+  const startWidth = statisticsPanelWidth.value
+  const handleMouseMove = (e) => {
+    const deltaX = e.clientX - startX
+    const newWidth = Math.max(300, Math.min(800, startWidth - deltaX))
+    statisticsPanelWidth.value = newWidth
+  }
+  const handleMouseUp = () => {
+    isResizing.value = false
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+}
+
+
+
+/**
+ * 处理节点选择事件
+ */
+const handleNodeSelect = (nodeIds) => {
+  console.log('📊 [Horizontal] 选中节点:', nodeIds)
+  // 这里可以实现节点高亮或其他交互逻辑
+  if (graph && nodeIds && nodeIds.length > 0) {
+    // 清除之前的选中状态
+    graph.getSelectedCells().forEach(cell => {
+      if (cell.isNode()) {
+        graph.unselect(cell)
+      }
+    })
+    
+    // 选中新节点
+    nodeIds.forEach(nodeId => {
+      const node = graph.getCellById(nodeId)
+      if (node && node.isNode()) {
+        graph.select(node)
+      }
+    })
+  }
+}
+
+/**
+ * 处理路径高亮事件
+ */
+const handlePathHighlight = (pathData) => {
+  console.log('🛤️ [Horizontal] 路径高亮:', pathData)
+  // 这里可以实现路径高亮逻辑
+  if (graph && pathData && pathData.path) {
+    // 清除之前的高亮
+    graph.getEdges().forEach(edge => {
+      edge.setAttrs({
+        line: {
+          stroke: '#94a3b8',
+          strokeWidth: 2
+        }
+      })
+    })
+    
+    // 高亮路径中的边
+    pathData.path.forEach((node, index) => {
+      if (index < pathData.path.length - 1) {
+        const nextNode = pathData.path[index + 1]
+        const edges = graph.getEdges().filter(edge => {
+          const sourceId = edge.getSourceCellId()
+          const targetId = edge.getTargetCellId()
+          return sourceId === node.nodeId && targetId === nextNode.nodeId
+        })
+        
+        edges.forEach(edge => {
+          edge.setAttrs({
+            line: {
+              stroke: '#f59e0b',
+              strokeWidth: 3
+            }
+          })
+        })
+      }
+    })
+  }
 }
 
 // 测试调试功能的函数
@@ -4230,4 +4343,45 @@ const testClick = () => {
  .basic-info-card :deep(.arco-form-item) {
   margin-bottom: 12px;
  }
+
+/* 统计面板容器样式 */
+.statistics-panel-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.statistics-panel-resize-handle {
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  background: transparent;
+  z-index: 1;
+}
+
+.statistics-panel-resize-handle:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* 响应式布局调整 */
+.horizontal-task-flow-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.horizontal-task-flow-page:has(.statistics-panel-container) .content {
+  margin-right: 0;
+}
 </style>

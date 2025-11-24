@@ -34,6 +34,10 @@
               </a-doption>
             </template>
           </a-dropdown>
+          <a-button type="outline" @click="goToTableRegistration">
+            <template #icon><icon-upload /></template>
+            标签表注册
+          </a-button>
         </a-space>
       </div>
     </div>
@@ -93,6 +97,13 @@
             <a-table-column title="维度主键" data-index="dimensionKey" :width="150">
               <template #cell="{ record }">
                 <span>{{ record.dimensionKey }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column title="IDMapping状态" data-index="mappingStatus" :width="120">
+              <template #cell="{ record }">
+                <a-tag :color="getMappingStatusColor(record.mappingStatus)">
+                  {{ getMappingStatusText(record.mappingStatus) }}
+                </a-tag>
               </template>
             </a-table-column>
             <a-table-column title="共享级别" data-index="shareLevel" :width="120">
@@ -555,7 +566,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconSearch, IconRefresh, IconDelete, IconDown, IconSettings, IconImport, IconUpload, IconEdit, IconCheck, IconClose } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconSearch, IconRefresh, IconDelete, IconDown, IconSettings, IconImport, IconUpload, IconEdit, IconCheck, IconClose, IconArrowLeft } from '@arco-design/web-vue/es/icon'
 import ConditionConfig from '@/components/common/ConditionConfig.vue'
 
 const router = useRouter()
@@ -572,6 +583,7 @@ interface TagItem {
   createUser: string // 创建人
   createTime: string
   description?: string
+  mappingStatus?: 'configured' | 'unconfigured' | 'error' // IDMapping状态
 }
 
 // 搜索表单
@@ -671,6 +683,7 @@ const generateTagData = (count: number): TagItem[] => {
   const categories = ['basic', 'behavior', 'preference', 'business']
   const tagTypes = ['static', 'dynamic', 'computed', 'rule']
   const shareLevels = ['public', 'private']
+  const mappingStatuses: ('configured' | 'unconfigured' | 'error')[] = ['configured', 'unconfigured', 'error']
   const users = ['张三', '李四', '王五', '赵六', '钱七']
   
   return Array.from({ length: count }, (_, index) => ({
@@ -683,7 +696,8 @@ const generateTagData = (count: number): TagItem[] => {
     shareLevel: shareLevels[Math.floor(Math.random() * shareLevels.length)],
     createUser: users[Math.floor(Math.random() * users.length)],
     createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    description: `这是标签${index + 1}的描述信息`
+    description: `这是标签${index + 1}的描述信息`,
+    mappingStatus: mappingStatuses[Math.floor(Math.random() * mappingStatuses.length)]
   }))
 }
 
@@ -818,6 +832,13 @@ const goToTagDetail = (record: TagItem) => {
     params: {
       id: record.id
     }
+  })
+}
+
+// 跳转到表注册页面
+const goToTableRegistration = () => {
+  router.push({
+    name: 'table-registration'
   })
 }
 
@@ -1225,6 +1246,26 @@ const getShareLevelText = (level: string) => {
     private: '私有'
   }
   return texts[level] || level
+}
+
+// 获取IDMapping状态颜色
+const getMappingStatusColor = (status?: string) => {
+  const colors: Record<string, string> = {
+    configured: 'green',
+    unconfigured: 'orange',
+    error: 'red'
+  }
+  return colors[status || 'unconfigured'] || 'gray'
+}
+
+// 获取IDMapping状态文本
+const getMappingStatusText = (status?: string) => {
+  const texts: Record<string, string> = {
+    configured: '已配置',
+    unconfigured: '未配置',
+    error: '配置错误'
+  }
+  return texts[status || 'unconfigured'] || '未配置'
 }
 
 // 格式化时间

@@ -294,6 +294,7 @@ import {
   IconDownload
 } from '@arco-design/web-vue/es/icon'
 import { MetricType, RegulatoryCategory } from '@/types/metrics'
+import { generateExcelTemplate } from '@/utils/excelUtils'
 
 type UploadCategory = 'business' | 'regulatory'
 interface SimpleUploadFile {
@@ -780,58 +781,13 @@ const archiveMetric = (record: MetricItem) => {
 
 // 批量上传相关方法
 const downloadTemplate = (type: UploadCategory) => {
-  // 创建模版数据
-  const templateData = {
-    business: {
-      filename: '业务核心指标批量上传模版.xlsx',
-      headers: ['指标名称', '指标编码', '指标描述', '分类', '统计周期', '业务域', '业务负责人', '技术负责人', '业务定义', '使用场景', '加工逻辑', '字段说明'],
-      sampleData: [
-        ['示例指标1', 'METRIC_001', '这是一个示例指标', '财务指标', '月度', '风险管理', '张三', '李四', '业务定义示例', '用于风险评估', 'SELECT * FROM table', '字段1:描述1']
-      ]
-    },
-    regulatory: {
-      filename: '监管指标批量上传模版.xlsx',
-      headers: ['指标名称', '指标编码', '指标描述', '监管报表大类', '报表名称', '统计周期', '业务域', '负责人', '业务负责人', '技术负责人', '业务定义', '使用场景', '加工逻辑', '字段说明', '报表位置'],
-      sampleData: [
-        ['示例监管指标1', 'REG_001', '这是一个示例监管指标', '资本充足率', '资本充足率报表', '季度', '风险管理', '李四', '王五', '赵六', '监管业务定义', '监管合规', 'SELECT * FROM reg_table', '监管字段描述', 'A1']
-      ]
-    }
+  if (type === 'business') {
+    generateExcelTemplate(MetricType.BUSINESS_CORE)
+    Message.success('业务核心指标批量注册模板下载成功')
+  } else {
+    generateExcelTemplate(MetricType.REGULATORY)
+    Message.success('监管指标批量注册模板下载成功')
   }
-
-  const template = templateData[type]
-  
-  // 创建工作簿
-  const wb: any = {
-    SheetNames: ['模版'],
-    Sheets: {
-      '模版': {
-        '!ref': `A1:${String.fromCharCode(65 + template.headers.length - 1)}${template.sampleData.length + 1}`,
-        ...template.headers.reduce((acc: { [key: string]: { v: string; t: string } }, header, index) => {
-          const col = String.fromCharCode(65 + index)
-          acc[`${col}1`] = { v: header, t: 's' }
-          return acc
-        }, {}),
-        ...((template.sampleData && template.sampleData[0]) ? template.sampleData[0].reduce((acc: { [key: string]: { v: string; t: string } }, data, index) => {
-          const col = String.fromCharCode(65 + index)
-          acc[`${col}2`] = { v: data, t: 's' }
-          return acc
-        }, {}) : {})
-      }
-    }
-  }
-
-  // 模拟下载
-  const blob = new Blob([JSON.stringify(wb)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = template.filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-  
-  Message.success(`${template.filename} 下载成功`)
 }
 
 const handleBusinessFileChange = (fileList: SimpleUploadFile[]) => {

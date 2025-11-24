@@ -3,70 +3,83 @@
  * 基于文档规范定义的样式参数
  */
 
-// 基础尺寸常量
+// 基础尺寸常量 - 基于8px网格系统优化
 export const NODE_DIMENSIONS = {
-  WIDTH: 280,
-  MIN_HEIGHT: 96,
-  HEADER_HEIGHT: 36,
-  ROW_HEIGHT: 32,
-  CONTENT_PADDING: 12,
-  ICON_SIZE: { width: 28, height: 20 },
-  ICON_RADIUS: 6,
-  MENU_DOT_SIZE: 3,
-  PORT_RADIUS: 6
+  WIDTH: 260,                    // 从280px优化到260px，提高画布利用率
+  MIN_HEIGHT: 88,                // 从96px优化到88px，更紧凑
+  HEADER_HEIGHT: 32,             // 从36px优化到32px，更精致
+  ROW_HEIGHT: 28,                // 从32px优化到28px，更高密度
+  CONTENT_PADDING: 16,           // 从12px优化到16px，更好呼吸感
+  ICON_SIZE: { width: 24, height: 24 },   // 统一为正方形，更协调
+  ICON_RADIUS: 8,                           // 从6px优化到8px，更现代
+  MENU_DOT_SIZE: 3,                         // 保持菜单点大小
+  PORT_RADIUS: 5,                           // 从6px优化到5px，更精致
+  BORDER_RADIUS: 12,                        // 统一圆角为12px
+  HEADER_RADIUS: '12px 12px 0 0'            // 标题区圆角
 }
 
-// 颜色常量
+// 颜色常量 - 基于现代化色彩系统
 export const COLORS = {
-  // 节点主体
-  BODY_FILL: '#FFFFFF',
-  BODY_STROKE: '#D1D5DB',
+  // 节点主体 - 更简洁的配色
+  BODY_FILL: '#ffffff',
+  BODY_STROKE: '#e2e8f0',        // 从#D1D5DB优化为#e2e8f0，更柔和
   BODY_STROKE_WIDTH: 1,
-  BODY_RADIUS: 8,
+  BODY_RADIUS: 12,                // 从8px优化到12px，更现代
   
-  // 标题区
-  HEADER_FILL: '#F8FAFC',
-  HEADER_STROKE: '#E5E7EB',
+  // 标题区 - 渐变效果
+  HEADER_FILL: 'linear-gradient(135deg, var(--node-color) 0%, var(--node-color-light) 100%)',
+  HEADER_STROKE: 'rgba(255, 255, 255, 0.2)',
   HEADER_STROKE_WIDTH: 1,
   
-  // 图标
-  ICON_FILL: '#14B8A6',
-  ICON_STROKE: '#14B8A6',
-  ICON_TEXT: '#FFFFFF',
+  // 图标 - 更协调的配色
+  ICON_FILL: 'rgba(255, 255, 255, 0.95)',
+  ICON_STROKE: 'var(--node-color)',
+  ICON_TEXT: 'var(--node-color)',
   
-  // 文本
-  TITLE_TEXT: '#111827',
-  CONTENT_TEXT: '#111827',
-  MENU_DOT: '#6B7280',
+  // 文本 - 统一中性色
+  TITLE_TEXT: '#1e293b',         // 从#111827优化为#1e293b
+  CONTENT_TEXT: '#475569',       // 从#111827优化为#475569，降低对比度
+  MENU_DOT: '#64748b',           // 从#6B7280优化为#64748b
   
-  // 端口
-  PORT_STROKE: '#4C78FF',
-  PORT_FILL_IN: '#FFFFFF',
-  PORT_FILL_OUT: '#4C78FF',
+  // 端口 - 更精致的配色
+  PORT_STROKE: '#2563eb',        // 使用主题蓝色
+  PORT_FILL_IN: '#ffffff',
+  PORT_FILL_OUT: '#2563eb',
   PORT_STROKE_WIDTH: 1.5,
   
-  // 端口动画
-  PORT_ANIMATION_DURATION: 300,
-  PORT_HOVER_SCALE: 1.2,
+  // 端口动画 - 优化参数
+  PORT_ANIMATION_DURATION: 200,    // 从300ms优化到200ms，更敏捷
+  PORT_HOVER_SCALE: 1.15,         // 从1.2优化到1.15，更克制
   PORT_DEFAULT_SCALE: 1.0,
-  PORT_UNSELECTED_SCALE: 0.8
+  PORT_UNSELECTED_SCALE: 0.9        // 从0.8优化到0.9，更明显
 }
 
-// 字体常量
+// 字体常量 - 优化排版系统
 export const TYPOGRAPHY = {
-  // 图标文本
-  ICON_FONT_SIZE: 12,
+  // 图标文本 - 增大字号提升可读性
+  ICON_FONT_SIZE: 14,              // 从12px优化到14px
   ICON_TEXT_ANCHOR: 'middle',
   
-  // 标题文本
-  TITLE_FONT_SIZE: 13,
-  TITLE_FONT_WEIGHT: 600,
+  // 标题文本 - 层次分明的标题系统
+  TITLE_FONT_SIZE: 14,             // 从13px优化到14px，更突出
+  TITLE_FONT_WEIGHT: 600,          // 保持半粗体
   TITLE_TEXT_ANCHOR: 'start',
+  TITLE_LINE_HEIGHT: 1.4,          // 新增行高，提升可读性
   
-  // 内容文本
-  CONTENT_FONT_SIZE: 13,
+  // 内容文本 - 更清晰的正文排版
+  CONTENT_FONT_SIZE: 12,           // 从13px优化到12px，更精致
+  CONTENT_FONT_WEIGHT: 400,        // 标准字重
   CONTENT_TEXT_ANCHOR: 'start',
-  CONTENT_BASELINE_ADJUST: 5
+  CONTENT_LINE_HEIGHT: 1.5,        // 新增行高，改善阅读体验
+  CONTENT_BASELINE_ADJUST: 4,        // 从5px优化到4px，更精确
+  
+  // 辅助文本 - 新增辅助信息层级
+  HELPER_FONT_SIZE: 11,              // 最小字号用于辅助信息
+  HELPER_FONT_WEIGHT: 400,
+  HELPER_LINE_HEIGHT: 1.4,
+  
+  // 字体族 - 统一字体系统
+  FONT_FAMILY: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
 }
 
 // 位置常量

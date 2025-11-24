@@ -43,28 +43,32 @@ const emit = defineEmits(['menu', 'hover-change'])
 // 获取节点配置
 const nodeConfig = computed(() => getNodeConfig(props.nodeType))
 
-// 计算标题区样式 - 🎨 参考图片风格，简洁现代渐变
+// 计算标题区样式 - 🎨 现代化设计：更简洁的渐变效果
 const headerStyle = computed(() => {
-  const baseColor = nodeConfig.value?.color || '#4C78FF'
-  // 创建简洁的渐变效果，从纯色到轻微透明
+  const baseColor = nodeConfig.value?.color || '#2563eb'
+  // 创建更细腻的渐变效果，从纯色到轻微透明
   return {
-    background: `linear-gradient(to bottom, 
+    background: `linear-gradient(135deg, 
       ${baseColor} 0%, 
-      ${baseColor} 75%, 
-      rgba(255, 255, 255, 0.1) 100%
+      ${baseColor} 70%, 
+      rgba(255, 255, 255, 0.15) 100%
     )`,
     borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    height: '32px'  // 统一标题区高度
   }
 })
 
-// 计算图标样式 - 🎨 参考图片风格，简洁图标
+// 计算图标样式 - 🎨 现代化设计：更协调的图标比例
 const iconStyle = computed(() => {
-  const baseColor = nodeConfig.value?.color || '#4C78FF'
+  const baseColor = nodeConfig.value?.color || '#2563eb'
   return {
     background: 'rgba(255, 255, 255, 0.95)',
     color: baseColor,
-    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)'
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+    width: '24px',      // 统一图标尺寸
+    height: '24px',     // 统一图标尺寸
+    borderRadius: '8px' // 增加圆角
   }
 })
 
@@ -90,14 +94,17 @@ function onMouseLeave ()  { emit('hover-change', false) }
   width: 100%;
   height: 100%;
   background: #ffffff;
-  border: 1px solid #d1d5db;  /* 🎨 参考图片风格 - 浅灰色边框 */
+  border: 1px solid #e2e8f0;  /* 🎨 现代化设计：更柔和的边框色 */
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);  /* 🎨 更柔和的阴影 */
-  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08), 
+    0 1px 2px rgba(0, 0, 0, 0.06);  /* 🎨 保持柔和的阴影效果 */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: grab;
   overflow: hidden;
+  will-change: transform, box-shadow;  /* 🎨 性能优化：提前告知浏览器优化属性 */
 }
 .base-node:hover          { 
   border-color: #9ca3af;  /* 🎨 悬停时稍深的灰色 */
@@ -113,12 +120,17 @@ function onMouseLeave ()  { emit('hover-change', false) }
 .node-header {
   display: flex;
   align-items: center;
-  height: 40px;
+  height: 32px;
   padding: 0 16px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
   border-radius: 12px 12px 0 0;
   flex-shrink: 0;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.01em;
 }
 .node-icon {
   width: 24px;
@@ -126,11 +138,12 @@ function onMouseLeave ()  { emit('hover-change', false) }
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  margin-right: 10px;
+  border-radius: 8px;
+  margin-right: 12px;
   flex-shrink: 0;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s ease-out;
 }
 .node-icon-text {
   font-size: 12px;

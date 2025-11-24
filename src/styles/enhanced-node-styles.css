@@ -5,29 +5,31 @@
  * 支持现代化的纯色节点设计和流畅的用户交互
  */
 
-/* 基础节点样式 */
+/* 基础节点样式 - 现代化设计 */
 .flow-node {
   position: relative;
   border-radius: 12px;
-  background: white;
+  background: #ffffff;
   box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.12);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    0 1px 3px rgba(0, 0, 0, 0.08),     /* 🎨 更柔和的阴影 */
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);  /* 🎨 更快的过渡 */
   cursor: pointer;
   overflow: hidden;
-  border: 2px solid transparent;
+  border: 1px solid #e2e8f0;           /* 🎨 更细的边框，更柔和的颜色 */
   backdrop-filter: blur(8px);
+  will-change: transform, box-shadow;  /* 🎨 性能优化 */
 }
 
-/* Enhanced Node Styles - 避免直接修改DOM样式导致位置事件触发 */
+/* Enhanced Node Styles - 现代化交互状态 */
 .enhanced-node {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   transform-origin: center center;
+  will-change: transform, opacity, filter;  /* 🎨 性能优化 */
 }
 
-/* 节点状态样式 */
+/* 节点状态样式 - 更克制的变换 */
 .enhanced-node.normal {
   opacity: 1;
   transform: scale(1);
@@ -35,27 +37,27 @@
 
 .enhanced-node--hover {
   opacity: 1;
-  transform: scale(1.05) !important;
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.15)) !important;
+  transform: scale(1.02) !important;        /* 🎨 从1.05降低到1.02，更克制 */
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.12)) !important;  /* 🎨 更柔和的阴影 */
   cursor: pointer !important;
 }
 
 .enhanced-node--selected {
   opacity: 1;
-  transform: scale(1.05) !important;
-  filter: drop-shadow(0 6px 20px rgba(24,144,255,0.3)) !important;
+  transform: scale(1.02) !important;        /* 🎨 从1.05降低到1.02，更克制 */
+  filter: drop-shadow(0 4px 16px rgba(37,99,235,0.25)) !important;  /* 🎨 使用新主题色 */
 }
 
 .enhanced-node--dragging {
-  opacity: 0.8 !important;
-  transform: scale(1.1) rotate(2deg) !important;
-  filter: drop-shadow(0 12px 32px rgba(0,0,0,0.2)) !important;
+  opacity: 0.9 !important;                    /* 🎨 从0.8提升到0.9，更明显 */
+  transform: scale(1.05) rotate(1deg) !important;  /* 🎨 减小旋转角度和缩放 */
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.15)) !important;  /* 🎨 更柔和的阴影 */
   z-index: 1000 !important;
 }
 
 .enhanced-node--disabled {
-  opacity: 0.5 !important;
-  filter: grayscale(100%) !important;
+  opacity: 0.6 !important;                    /* 🎨 从0.5提升到0.6，更明显 */
+  filter: grayscale(80%) !important;        /* 🎨 从100%降低到80%，保留些许色彩 */
   cursor: not-allowed !important;
 }
 

@@ -243,6 +243,12 @@ export const MENU_CONFIG = {
                 path: '/exploration/customer-center/tag-system',
                 routeName: 'tag-system-index'
               },
+              'table-management': {
+                key: 'table-management',
+                title: '标签表管理',
+                path: '/exploration/customer-center/tag-system/table-management',
+                routeName: 'table-management'
+              },
               'tag-management': {
                 key: 'tag-management',
                 title: '标签管理',
@@ -254,6 +260,13 @@ export const MENU_CONFIG = {
                 title: '属性管理',
                 path: '/exploration/customer-center/tag-system/attribute-management',
                 routeName: 'attribute-management'
+              },
+              'table-registration': {
+                key: 'table-registration',
+                title: '标签表注册',
+                path: '/exploration/customer-center/tag-system/table-registration',
+                routeName: 'table-registration',
+                hideInMenu: true // 隐藏在菜单中，通过表管理页面跳转
               }
             }
           }
@@ -568,6 +581,43 @@ export const MENU_CONFIG = {
             title: '外数服务',
             path: '/risk/external-data/service',
             routeName: 'RiskExternalDataService'
+          }
+        }
+      },
+      'risk-model-offline-analysis': {
+        key: 'risk-model-offline-analysis',
+        title: '模型离线分析',
+        type: 'group',
+        children: {
+          'risk-feature-center': {
+            key: 'risk-feature-center',
+            title: '特征中心',
+            path: '/risk/model-offline-analysis/feature-center',
+            routeName: 'RiskFeatureCenter'
+          },
+          'risk-model-register': {
+            key: 'risk-model-register',
+            title: '模型注册',
+            path: '/risk/model-offline-analysis/model-register',
+            routeName: 'RiskModelRegister'
+          },
+          'risk-model-backtrack': {
+            key: 'risk-model-backtrack',
+            title: '模型回溯',
+            path: '/risk/model-offline-analysis/model-backtrack',
+            routeName: 'RiskModelBacktrack'
+          },
+          'risk-task-management': {
+            key: 'risk-task-management',
+            title: '任务管理',
+            path: '/risk/model-offline-analysis/task-management',
+            routeName: 'RiskTaskManagement'
+          },
+          'risk-model-evaluation': {
+            key: 'risk-model-evaluation',
+            title: '模型评估',
+            path: '/risk/model-offline-analysis/model-evaluation',
+            routeName: 'RiskModelEvaluation'
           }
         }
       }

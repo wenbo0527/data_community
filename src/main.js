@@ -25,10 +25,11 @@ if (import.meta.env.DEV) {
 if (import.meta.env.DEV) {
   Promise.all([
     import('./mock/external-data.ts'),
-    import('./mock/budget.ts')
+    import('./mock/budget.ts'),
+    import('./mock/offlineModel/index.js')
   ])
     .then(() => {
-      console.info('🧪 Mock 接口已加载（external-data, budget）')
+      console.info('🧪 Mock 接口已加载（external-data, budget, offlineModel）')
     })
     .catch(err => {
       console.warn('⚠️ Mock 接口加载失败:', err)

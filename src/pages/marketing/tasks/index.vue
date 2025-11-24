@@ -345,7 +345,7 @@ const createTask = () => {
 
 // 查看任务（点击任务名称）
 const viewTask = (record) => {
-  router.push(`/marketing/tasks/editor?mode=view&id=${record.id}&version=${record.version}`)
+  router.push(`/marketing/tasks/horizontal?mode=view&id=${record.id}&version=${record.version}`)
 }
 
 // 编辑任务
