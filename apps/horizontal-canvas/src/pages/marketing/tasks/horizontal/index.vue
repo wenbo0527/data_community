@@ -3,7 +3,7 @@
   <div class="page-header">
     <div class="title">横版任务流</div>
     <a-card title="基础信息" class="basic-info-card">
-      <a-form layout="vertical" @submit.prevent>
+      <a-form :model="formModel" layout="vertical" @submit.prevent>
         <a-row :gutter="16">
           <a-col :span="8">
             <a-form-item label="任务名称" required>
@@ -35,8 +35,8 @@
           <a-col :span="8" style="text-align: right;">
             <a-space>
               <a-button @click="goBack">返回</a-button>
-              <a-button type="primary" @click="saveTask">保存</a-button>
-              <a-button type="primary" status="success" @click="publishTask">发布</a-button>
+              <a-button v-if="!isViewMode" type="primary" @click="saveTask">保存</a-button>
+              <a-button v-if="!isViewMode" type="primary" status="success" @click="publishTask">发布</a-button>
               <!-- 测试按钮 -->
               <a-button @click="testClick" size="small">测试</a-button>
             </a-space>
@@ -46,7 +46,7 @@
     </a-card>
   </div>
 
-  <div class="content" ref="contentRef">
+  <div class="content" ref="contentRef" :style="{ paddingRight: (showStatisticsPanel && isViewMode && isPublished) ? (statisticsPanelWidth + 'px') : '0px' }">
 
     
 
@@ -59,7 +59,7 @@
     />
 
       <!-- 工具栏 - 移动到画布容器外部 -->
-      <div class="canvas-toolbar-wrapper">
+      <div class="canvas-toolbar-wrapper" ref="toolbarWrapperRef">
         <CanvasToolbar
           :show-debug-panel="false"
           @zoom-in="handleZoomIn"
@@ -71,18 +71,18 @@
           @toggle-minimap="handleToggleMinimap"
           @add-node="handleAddNode"
           @toggle-history-panel="showHistoryPanel = !showHistoryPanel"
-          @toggle-statistics-panel="showStatisticsPanel = !showStatisticsPanel"
+          @toggle-statistics-panel="onToggleStatisticsPanel"
           @undo="handleUndo"
           @redo="handleRedo"
           :show-zoom="true"
-          :show-add-node="true"
+          :show-add-node="!isViewMode"
           :show-layout="true"
           :show-layout-direction="false"
-          :show-minimap-toggle="false"
+          :show-minimap-toggle="true"
           :show-extras="true"
-          :show-clear="false"
-          :show-undo-redo="true"
-          :show-history="true"
+          :show-clear="!isViewMode"
+          :show-undo-redo="!isViewMode"
+          :show-history="!isViewMode"
           :show-statistics="isViewMode && isPublished"
           :can-undo="canUndo"
           :can-redo="canRedo"
@@ -152,6 +152,7 @@
     <TaskFlowConfigDrawers
       v-if="configDrawers && configDrawers.drawerStates"
       :drawer-states="configDrawers.drawerStates"
+      :read-only="isViewMode"
       @config-confirm="handleConfigConfirmProxy"
       @config-cancel="handleConfigCancelProxy"
       @visibility-change="handleDrawerVisibilityChange"
@@ -163,6 +164,7 @@
       :visible="showDebugPanel"
       :position="debugPanelPosition"
       :graph="graph"
+      :dock-bounds="debugDockBounds"
       @close="closeDebugPanel"
       @update:position="onDebugPanelPositionUpdate"
     />
@@ -171,13 +173,13 @@
     <div 
       v-if="showStatisticsPanel && isViewMode && isPublished" 
       class="statistics-panel-container"
-      :style="{ width: statisticsPanelWidth + 'px' }"
+      :style="{ left: debugDockBounds.left + 'px', width: debugDockBounds.width + 'px', height: statisticsPanelHeight + 'px' }"
+      ref="statisticsPanelRef"
     >
-      <div class="statistics-panel-resize-handle" @mousedown="startResize"></div>
+      <div class="statistics-panel-resize-handle--top" @mousedown="startVerticalResize"></div>
       <CanvasStatisticsPanel
         :canvas-id="editingTaskId || 'default-canvas'"
         :graph="graph"
-        :focus-node-id="statsFocusNodeId"
         @close="showStatisticsPanel = false"
         @node-select="handleNodeSelect"
         @path-highlight="handlePathHighlight"
@@ -188,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed, nextTick, provide } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, nextTick, provide, reactive, watch } from 'vue';
 import { Graph, Shape } from '@antv/x6';
 import { register } from '@antv/x6-vue-shape';
 import HorizontalNode from './HorizontalNode.vue';
@@ -196,19 +198,19 @@ import { Selection } from '@antv/x6-plugin-selection';
 import { MiniMap } from '@antv/x6-plugin-minimap';
 import { History } from '@antv/x6-plugin-history';
 import { Keyboard } from '@antv/x6-plugin-keyboard';
-import { provideGraphInstance } from '../composables/useGraphInstance.js';
-import TaskFlowConfigDrawers from '../components/TaskFlowConfigDrawers.vue';
-import NodeTypeSelector from '../components/canvas/NodeTypeSelector.vue';
-import CanvasToolbar from '../components/CanvasToolbar.vue';
-import CanvasHistoryPanel from '../components/CanvasHistoryPanel.vue';
-import CanvasDebugPanel from '../components/CanvasDebugPanel.vue';
+import { provideGraphInstance } from '@/composables/useGraphInstance.js';
+import TaskFlowConfigDrawers from '@/components/task/TaskFlowConfigDrawers.vue';
+import NodeTypeSelector from '@/components/canvas/NodeTypeSelector.vue';
+import CanvasToolbar from '@/components/toolbar/CanvasToolbar.vue';
+import CanvasHistoryPanel from '@/components/history/CanvasHistoryPanel.vue';
+import CanvasDebugPanel from '@/components/debug/CanvasDebugPanel.vue';
 import { getNodeLabel } from '@/utils/nodeTypes.js';
 // 水平连接校验：目标在源节点右侧
 import { createHorizontalPortConfig } from './utils/portConfigFactoryHorizontal.js';
 import { createVueShapeNode } from './createVueShapeNode.js';
 import { buildDisplayLines } from './createVueShapeNode.js';
-import { useConfigDrawers } from '../composables/canvas/useConfigDrawers.js';
-import { useCanvasHistory } from '../composables/canvas/useCanvasHistory.js';
+import { useConfigDrawers } from '@/composables/canvas/useConfigDrawers.js';
+import { useCanvasHistory } from '@/composables/canvas/useCanvasHistory.js';
 import { CanvasController } from './services/CanvasController.js';
 // 导入样式常量
 import { 
@@ -230,7 +232,7 @@ import HorizontalQuickLayout from './utils/quickLayout.js';
 import { useRouter, useRoute } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { TaskStorage } from '../../../../utils/taskStorage.js'
-import CanvasStatisticsPanel from '@/components/canvas-statistics/CanvasStatisticsPanel.vue'
+import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
 
 // 任务基础信息变量
 const router = useRouter()
@@ -239,9 +241,12 @@ const taskName = ref('')
 const taskDescription = ref('')
 const taskVersion = ref(1)
 const taskStatus = ref('draft')
-// 统计面板聚焦节点ID（查看模式下用于切换节点统计数据）
-const statsFocusNodeId = ref('')
 const createdTime = ref(new Date().toLocaleString('zh-CN'))
+
+const formModel = reactive({ taskName: '', taskDescription: '', taskVersion: 1 })
+watch(taskName, v => { formModel.taskName = v })
+watch(taskDescription, v => { formModel.taskDescription = v })
+watch(taskVersion, v => { formModel.taskVersion = v })
 
 // 编辑模式相关变量
 const isEditMode = ref(false)
@@ -275,6 +280,7 @@ const activeNodeId = ref(null)
 // 调试面板状态
 const showDebugPanel = ref(false)
 const debugPanelPosition = ref({ x: 120, y: 100 })
+const debugDockBounds = ref({ left: 0, width: 0 })
 
 const canUndo = ref(false)
 const canRedo = ref(false)
@@ -294,9 +300,31 @@ const showSnapline = ref(true)
 // 横版专用快速布局实例
 const quickLayout = ref(null)
 
-// 统计面板宽度和拖拽状态
-const statisticsPanelWidth = ref(400)
+// 统计面板尺寸与拖拽状态
+const statisticsPanelWidth = ref(420)
+const statisticsPanelHeight = ref(300)
+  const statsPanelPosition = ref({ left: 16, top: 64 })
+  const statisticsPanelRef = ref(null)
+  const toolbarWrapperRef = ref(null)
 const isResizing = ref(false)
+const statisticsPanelTop = ref(0)
+
+function updateStatisticsPanelTop() {
+  try {
+    const rect = toolbarWrapperRef.value?.getBoundingClientRect?.()
+    const top = rect ? Math.max(0, Math.round(rect.bottom + 8)) : 0
+    statisticsPanelTop.value = top
+  } catch { statisticsPanelTop.value = 0 }
+}
+
+function updateDebugDockBounds() {
+  try {
+    const rect = contentRef.value?.getBoundingClientRect?.()
+    if (!rect) return
+    const reservedRight = (showStatisticsPanel.value && isViewMode.value && isPublished.value) ? statisticsPanelWidth.value : 0
+    debugDockBounds.value = { left: Math.round(rect.left), width: Math.round(rect.width - reservedRight) }
+  } catch {}
+}
 
 // 计算属性：当前节点是否禁用
 const currentNodeDisabled = computed(() => {
@@ -482,6 +510,24 @@ function startResize(event) {
     const deltaX = e.clientX - startX
     const newWidth = Math.max(300, Math.min(800, startWidth - deltaX))
     statisticsPanelWidth.value = newWidth
+  }
+  const handleMouseUp = () => {
+    isResizing.value = false
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+}
+
+function startVerticalResize(event) {
+  isResizing.value = true
+  const startY = event.clientY
+  const startHeight = statisticsPanelHeight.value
+  const handleMouseMove = (e) => {
+    const deltaY = startY - e.clientY
+    const newHeight = Math.max(180, Math.min(520, startHeight + deltaY))
+    statisticsPanelHeight.value = newHeight
   }
   const handleMouseUp = () => {
     isResizing.value = false
@@ -979,7 +1025,7 @@ onMounted(async () => {
     allowLoop: false,
     router: { name: 'normal' },
     connector: { name: 'smooth' },
-    connectionPoint: { name: 'boundary', args: { anchor: 'center' } },
+    connectionPoint: { name: 'anchor' },
     createEdge() {
       return new Shape.Edge({
           attrs: { 
@@ -1049,8 +1095,14 @@ onMounted(async () => {
                 let pos = null
                 try { pos = n.getPortPosition?.(p.id) || null } catch {}
                 if (pos) candidates.push({ node: n, id: p.id, pos })
-              })
-            })
+  })
+
+  // 初始化统计面板顶部偏移（位于工具栏以下）并监听窗口尺寸变化
+  updateStatisticsPanelTop()
+  try { window.addEventListener('resize', updateStatisticsPanelTop) } catch {}
+  updateDebugDockBounds()
+  try { window.addEventListener('resize', updateDebugDockBounds) } catch {}
+})
             let best = null
             let bestDist = Infinity
             candidates.forEach(c => {
@@ -1075,11 +1127,13 @@ onMounted(async () => {
         }
         return true
       },
-    validateConnection({ sourceMagnet, targetMagnet, sourceView, targetView, edge }) {
-      if (isPanning.value) return false
-      if (!sourceMagnet || !targetMagnet) {
-        console.log('🔎 连接校验: 磁体缺失', { hasSource: !!sourceMagnet, hasTarget: !!targetMagnet })
-        return false
+      // DocRef: 架构文档「关键代码片段/图初始化的连接校验」
+      validateConnection({ sourceMagnet, targetMagnet, sourceView, targetView, edge }) {
+        if (isPanning.value) return false
+        if (isViewMode.value) return false
+        if (!sourceMagnet || !targetMagnet) {
+          console.log('🔎 连接校验: 磁体缺失', { hasSource: !!sourceMagnet, hasTarget: !!targetMagnet })
+          return false
       }
         const sg = sourceMagnet.getAttribute('port-group') || sourceMagnet.getAttribute('data-port-group')
         const tg = targetMagnet.getAttribute('port-group') || targetMagnet.getAttribute('data-port-group')
@@ -1106,10 +1160,26 @@ onMounted(async () => {
           return false
         }
         console.log('✅ 连接校验通过', { sg, tg, sourcePortId, targetPortId, srcNodeId: srcCell?.id, tgtNodeId: tgtCell?.id })
+        try {
+          const srcData = srcCell?.getData?.() || {}
+          const srcType = srcData?.type || srcData?.nodeType
+          if (srcType === 'ab-test' && typeof sourcePortId === 'string') {
+            const match = /^out-(\d+)$/.exec(sourcePortId)
+            const branches = Array.isArray(srcData?.config?.branches) ? srcData.config.branches : []
+            if (match) {
+              const idx = Number(match[1])
+              const b = branches[idx]
+              if (b && b.id) {
+                try { edge.setData({ ...(edge.getData?.() || {}), branchId: b.id }) } catch {}
+              }
+            }
+          }
+        } catch {}
         return true
       },
       validateMagnet({ magnet, view }) {
         if (!magnet) return false
+        if (isViewMode.value) return false
         const g = magnet.getAttribute('port-group') || magnet.getAttribute('data-port-group')
         if (g !== 'out') return false
         const sourcePortId = magnet.getAttribute('port') || magnet.getAttribute('data-port') || magnet.getAttribute('data-port-id')
@@ -1189,6 +1259,7 @@ onMounted(async () => {
   })
 
   graph.bindKey(['delete', 'backspace'], () => {
+    // DocRef: 架构文档「关键代码片段/键盘删除屏蔽（查看模式）」
     try {
       const cells = graph.getSelectedCells?.() || []
       if (!cells.length) return false
@@ -1197,6 +1268,7 @@ onMounted(async () => {
           if (cell.isNode?.()) {
             deleteNodeCascade(cell.id)
           } else if (cell.isEdge?.()) {
+            if (isViewMode.value) return
             graph.removeEdge(cell)
           }
         } catch {}
@@ -1222,6 +1294,37 @@ onMounted(async () => {
     return false
   })
 
+  // 自检：端口配置与原版实现差异点验证（3 行内容）
+  function selfValidatePortConfig() {
+    const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT
+    const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
+    const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
+    const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0
+    const rows = ['A', 'B', 'C']
+    const contentHeight = rows.length * rowHeight
+    const contentStart = headerHeight + contentPadding
+    const contentEnd = contentStart + contentHeight
+    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + rows.length * rowHeight + 12)
+    const verticalOffsets = rows.map((_, i) => headerHeight + contentPadding + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust)
+    const cfg = createHorizontalPortConfig(rows.length, {
+      includeIn: true,
+      includeOut: true,
+      outIds: rows.map((_, i) => `out-${i}`),
+      verticalOffsets,
+      nodeHeight: height,
+      inVerticalOffset: contentStart + Math.floor(contentHeight / 2),
+      contentStart,
+      contentEnd
+    })
+    const inItem = cfg.items.find(i => i.id === 'in')
+    const outs = cfg.items.filter(i => i.group === 'out')
+    const allWithin = outs.every(o => o.args?.y >= contentStart && o.args?.y <= contentEnd)
+    const countOk = outs.length === rows.length
+    const hasAttrs = outs.every(o => !!o.attrs?.circle && (o.attrs.circle['port-group'] === 'out' || o.attrs.circle['data-port-group'] === 'out'))
+    console.log('[SelfTest] portConfig', { inItem, outsCount: outs.length, firstOut: outs[0], allWithin, countOk, hasAttrs, groups: cfg.groups })
+  }
+  selfValidatePortConfig()
+
   // 提供graph实例给子组件使用
   provideGraphInstance(graph)
 
@@ -1235,6 +1338,7 @@ onMounted(async () => {
   setupHistoryListeners()
   updateHistoryStack()
 
+  // DocRef: 架构文档「关键代码片段/历史栈监听与撤销重做」
   graph.on('history:change', () => {
     try {
       canUndo.value = typeof graph.canUndo === 'function' ? graph.canUndo() : false
@@ -1276,9 +1380,6 @@ onMounted(async () => {
         const a = p?.args || {}
         const hasRow = typeof a.rowIndex === 'number'
         const dy = typeof a.dy === 'number' ? a.dy : 0
-        
-        // in端口（没有rowIndex）始终位于节点中心
-        // out端口根据内容区域计算Y坐标
         const baseY = hasRow
           ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
           : (cy + dy)
@@ -1317,17 +1418,14 @@ onMounted(async () => {
       try { graph.enablePanning && graph.enablePanning() } catch {}
     }
   }
-  window.addEventListener('keydown', handleKeyDown)
-  window.addEventListener('keyup', handleKeyUp)
+  let listenersRegistered = false
+  if (!listenersRegistered) {
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    listenersRegistered = true
+  }
 
-  graph.on('node:click', ({ node, e }) => {
-    const add = !!(e && (e.ctrlKey || e.metaKey))
-    if (add) {
-      try { graph.addToSelection(node) } catch {}
-    } else {
-      try { graph.cleanSelection(); graph.select(node) } catch {}
-    }
-  })
+  
 
   graph.on('blank:click', ({ e }) => {
     const add = !!(e && (e.ctrlKey || e.metaKey))
@@ -1347,12 +1445,34 @@ onMounted(async () => {
   graph.on('blank:mouseup', () => {
     try { selectionPlugin.disableRubberband && selectionPlugin.disableRubberband() } catch {}
   })
+  onBeforeUnmount(() => {
+    try {
+      if (listenersRegistered) {
+        window.removeEventListener('keydown', handleKeyDown)
+        window.removeEventListener('keyup', handleKeyUp)
+        listenersRegistered = false
+      }
+    } catch {}
+    try { window.removeEventListener('resize', updateStatisticsPanelTop) } catch {}
+    try { window.removeEventListener('resize', updateDebugDockBounds) } catch {}
+  })
   
+  const statsFocusNodeId = ref('')
   const controller = new CanvasController({
     graph,
+    readOnly: isViewMode.value,
     isStatisticsMode: () => !!showStatisticsPanel.value,
-    onNodeClickForStats: (node) => { try { statsFocusNodeId.value = String(node?.id || '') } catch {} },
-    openConfigDrawer: (type, node, data) => configDrawers.openConfigDrawer(type, node, data),
+    onNodeClickForStats: (node) => { 
+      try { 
+        console.log('[Stats] onNodeClickForStats -> node:', node?.id)
+        const id = String(node?.id || '')
+        statsFocusNodeId.value = id
+        console.log('[Stats] focusNodeId set:', id)
+        try { window.dispatchEvent(new CustomEvent('stats:focus', { detail: { id } })) } catch {}
+        showStatisticsPanel.value = true 
+      } catch {} 
+    },
+    openConfigDrawer: (type, node, data) => configDrawers.openConfigDrawer(type, node, { ...(data || {}), __readOnly: isViewMode.value }),
     setShowNodeSelector: v => { showNodeSelector.value = v },
     setNodeSelectorPosition: v => { nodeSelectorPosition.value = v },
     setNodeSelectorSourceNode: v => { nodeSelectorSourceNode.value = v },
@@ -1362,6 +1482,14 @@ onMounted(async () => {
     getContainerRect: () => canvasContainerRef.value.getBoundingClientRect(),
     setNodeActionsMenu: v => { nodeActionsMenu.value = v }
   })
+
+  // 面板开关时重新计算顶部偏移
+  // DocRef: 架构文档「关键代码片段/统计面板停靠与尺寸更新」
+  watch(showStatisticsPanel, async () => { await nextTick(); updateStatisticsPanelTop() })
+  // 面板与画布宽度变化时更新底部调试面板的停靠范围
+  watch([showStatisticsPanel, statisticsPanelWidth], async () => { await nextTick(); updateDebugDockBounds() })
+
+  // 保留空声明以避免未定义警告（模板已使用内联表达式）
 
   try {
     if (configDrawers && configDrawers.structuredLayout) {
@@ -1416,12 +1544,7 @@ onMounted(async () => {
   })
   
   // 添加节点选择支持
-  graph.on('blank:click', () => {
-    graph.cleanSelection()
-    edgeActionsMenu.value = { visible: false, x: 0, y: 0, edgeId: null }
-    // 禁止在空白区域点击触发添加节点弹窗
-    showNodeSelector.value = false
-  })
+  
 
   // 拖拽期间关闭辅助线，结束后恢复，降低重绘抖动
   graph.on('blank:mousedown', ({ e }) => {
@@ -1497,6 +1620,7 @@ onMounted(async () => {
 
   graph.on('edge:contextmenu', ({ edge, e }) => {
     try {
+      if (isViewMode.value) return
       if (e && typeof e.preventDefault === 'function') e.preventDefault()
       if (e && typeof e.stopPropagation === 'function') e.stopPropagation()
       const rect = canvasContainerRef.value && canvasContainerRef.value.getBoundingClientRect
@@ -1517,6 +1641,7 @@ onMounted(async () => {
 
   graph.on('node:contextmenu', ({ node, e }) => {
     try {
+      if (isViewMode.value) return
       if (e && typeof e.preventDefault === 'function') e.preventDefault()
       if (e && typeof e.stopPropagation === 'function') e.stopPropagation()
       const target = e?.target
@@ -2044,6 +2169,7 @@ function updateNodeFromConfig(node, nodeType, config) {
 }
 
 // 统一更新路径：复用创建逻辑生成规格并应用到现有节点
+// DocRef: 架构文档「关键代码片段/节点统一更新：尺寸、端口映射与数据写回」
 async function updateNodeFromConfigUnified(node, nodeType, config) {
   try {
     const pos = node.getPosition?.() || { x: 0, y: 0 }
@@ -2053,13 +2179,53 @@ async function updateNodeFromConfigUnified(node, nodeType, config) {
       x: pos.x,
       y: pos.y,
       label,
-      data: { type: nodeType, nodeType: nodeType, config }
+      data: { type: nodeType, nodeType: nodeType, config, isConfigured: true }
     })
     node.resize(spec.width, spec.height)
     const existingPorts = node.getPorts ? node.getPorts() : []
     const existingIds = new Set((existingPorts || []).map(p => p.id))
+    const specIds = new Set((spec.ports.items || []).map(p => p.id))
     if (node.setProp) node.setProp('ports/groups', spec.ports.groups)
-    // 端口差异更新：保留已存在且可能已连接的端口，仅更新其属性；新增端口按规格添加
+    // 处理不在规格中的旧端口：优先尝试保留连线并重绑定到最接近的新端口
+    ;(existingPorts || []).forEach(p => {
+      if (!specIds.has(p.id)) {
+        try {
+          const isOut = p.group === 'out'
+          const edges = graph?.getConnectedEdges?.(node) || []
+          const outgoing = edges.filter(e => {
+            try { return e.getSourceCellId?.() === node.id && e.getSourcePortId?.() === p.id } catch { return false }
+          })
+          // 选择映射的新端口：
+          let targetNewPortId = null
+          if (isOut) {
+            // 优先同序号映射，其次回退到 out-0
+            const match = /^out-(\d+)$/.exec(p.id)
+            const newOutIds = Array.from(specIds).filter(id => /^out-\d+$/.test(String(id))).sort((a,b)=>{
+              return Number(a.split('-')[1]) - Number(b.split('-')[1])
+            })
+            if (match) {
+              const num = Number(match[1])
+              const clamped = Math.max(0, Math.min(num, newOutIds.length - 1))
+              targetNewPortId = newOutIds[clamped] || newOutIds[0] || null
+            } else {
+              targetNewPortId = newOutIds[0] || null
+            }
+          } else {
+            // 输入端口统一映射到 'in'（若存在）
+            targetNewPortId = specIds.has('in') ? 'in' : null
+          }
+          // 重绑定边到新端口
+          if (targetNewPortId) {
+            outgoing.forEach(e => {
+              try { e.setSource({ cell: node.id, port: targetNewPortId }) } catch {}
+            })
+          }
+          // 移除旧端口
+          node.removePort?.(p.id)
+        } catch {}
+      }
+    })
+    // 端口差异更新：保留已存在端口并更新属性；新增端口按规格添加
     if (spec.ports.items && spec.ports.items.length) {
       spec.ports.items.forEach(it => {
         if (existingIds.has(it.id)) {
@@ -2176,6 +2342,7 @@ function deleteNodeCascade(nodeId) {
 function deleteCurrentEdge() {
   const id = edgeActionsMenu.value.edgeId
   if (!id || !graph) return
+  if (isViewMode.value) { edgeActionsMenu.value = { visible: false, x: 0, y: 0, edgeId: null }; return }
   try {
     graph.removeEdge(id)
   } catch {}
@@ -2185,6 +2352,7 @@ function deleteCurrentEdge() {
 function deleteCurrentPortEdge() {
   const id = portActionsMenu.value.edgeId
   if (!id || !graph) { portActionsMenu.value.visible = false; return }
+  if (isViewMode.value) { portActionsMenu.value = { visible: false, x: 0, y: 0, nodeId: null, portId: null, edgeId: null }; return }
   try {
     graph.removeEdge(id)
   } catch {}
@@ -2212,13 +2380,10 @@ console.log('✅ [Horizontal] 配置抽屉初始化完成:', {
 const query = route.query
 console.log('[Horizontal] 路由查询参数:', query)
 
-if (query.mode === 'edit' && query.id) {
-  console.log(`[Horizontal] 编辑模式 - 任务ID: ${query.id}, 版本: ${query.version}`)
+if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
+  console.log(`[Horizontal] ${query.mode === 'edit' ? '编辑' : '查看'}模式 - 任务ID: ${query.id}, 版本: ${query.version}`)
   try {
-    // 延迟加载任务数据，确保所有组件都初始化完成
-    setTimeout(() => {
-      loadTaskData()
-    }, 300)
+    setTimeout(() => { loadTaskData() }, 300)
   } catch (error) {
     console.error('[Horizontal] 加载任务数据时发生错误:', error)
     Message.error('加载任务数据失败: ' + error.message)
@@ -2475,16 +2640,8 @@ function debugCurrentNode() {
           const yRel = Math.round(cg.y - (bbox?.y || nodeTopGraph))
           return yRel
         })
-        portIds.forEach((pid, i) => {
-          const yRel = yClients[i]
-          if (yRel == null) return
-          if (node.setPortProp) {
-            node.setPortProp(pid, 'position/name', 'absolute')
-            node.setPortProp(pid, 'position/args/x', NODE_DIMENSIONS.WIDTH)
-            node.setPortProp(pid, 'position/args/y', yRel)
-            node.setPortProp(pid, 'args/y', yRel)
-          }
-        })
+        // 保留布局器控制端口位置，不做DOM绝对位置覆盖
+        
       } catch {}
       const summary = {
         nodeId,
@@ -2624,13 +2781,10 @@ function debugCurrentNode() {
           console.warn('   - 未能获取到节点视图，跳过DOM测量')
         } else {
           // 坐标基准：容器与节点的DOM矩形
-          const containerEl = graph?.container
-          const containerRect = containerEl?.getBoundingClientRect ? containerEl.getBoundingClientRect() : { left: 0, top: 0 }
-          const nodeRect = view.container?.getBoundingClientRect ? view.container.getBoundingClientRect() : { left: 0, top: 0, width: 0, height: 0 }
-          const nodeTopGraph = Math.round(nodeRect.top - containerRect.top)
-          const nodeLeftGraph = Math.round(nodeRect.left - containerRect.left)
-          const nodeCenterGraphY = Math.round(nodeTopGraph + (nodeRect.height / 2))
-          console.log(`   - 坐标基准: containerTop=${Math.round(containerRect.top)} nodeTop=${Math.round(nodeRect.top)} → nodeTopGraph=${nodeTopGraph} nodeCenterGraphY=${nodeCenterGraphY}`)
+          const bbox = node.getBBox ? node.getBBox() : null
+          const nodeTopGraph = Math.round(bbox?.y || 0)
+          const nodeCenterGraphY = Math.round((bbox?.y || 0) + ((bbox?.height || 0) / 2))
+          console.log(`   - 坐标基准: nodeTopGraph=${nodeTopGraph} nodeCenterGraphY=${nodeCenterGraphY}`)
 
           // 文本BBox中心（增强内容行匹配）
           console.log('\n🔍 内容行DOM测量（增强匹配）:')
@@ -3126,63 +3280,47 @@ const scaleDisplayText = ref('100%')
 const handleZoomIn = () => {
   if (!graph) return
   const currentZoom = graph.zoom()
-  graph.zoom(currentZoom + 0.1, { max: 3 })
-  const newZoom = Math.round(graph.zoom() * 100)
+  const next = Math.min(3, currentZoom + 0.1)
+  if (typeof graph.zoomTo === 'function') graph.zoomTo(next)
+  else graph.zoom(next)
+  const newZoom = Math.round((graph.zoom?.() || next) * 100)
   scaleDisplayText.value = `${newZoom}%`
-  console.log('[Toolbar] 放大画布，当前缩放:', graph.zoom())
-  
-  // 同步更新预览图
-  setTimeout(() => {
-    if (minimap && minimap.updateGraph) {
-      minimap.updateGraph()
-    }
-  }, 50)
+  console.log('[Toolbar] 放大画布，当前缩放:', graph.zoom?.())
+  setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
 const handleZoomOut = () => {
   if (!graph) return
   const currentZoom = graph.zoom()
-  graph.zoom(currentZoom - 0.1, { min: 0.1 })
-  const newZoom = Math.round(graph.zoom() * 100)
+  const next = Math.max(0.1, currentZoom - 0.1)
+  if (typeof graph.zoomTo === 'function') graph.zoomTo(next)
+  else graph.zoom(next)
+  const newZoom = Math.round((graph.zoom?.() || next) * 100)
   scaleDisplayText.value = `${newZoom}%`
-  console.log('[Toolbar] 缩小画布，当前缩放:', graph.zoom())
-  
-  // 同步更新预览图
-  setTimeout(() => {
-    if (minimap && minimap.updateGraph) {
-      minimap.updateGraph()
-    }
-  }, 50)
+  console.log('[Toolbar] 缩小画布，当前缩放:', graph.zoom?.())
+  setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
 const handleResetZoom = () => {
   if (!graph) return
-  graph.zoom(1)
-  graph.center()
+  if (typeof graph.zoomTo === 'function') graph.zoomTo(1)
+  else graph.zoom(1)
+  if (typeof graph.centerContent === 'function') graph.centerContent()
+  else graph.center?.()
   scaleDisplayText.value = '100%'
   console.log('[Toolbar] 重置缩放并居中')
-  
-  // 同步更新预览图
-  setTimeout(() => {
-    if (minimap && minimap.updateGraph) {
-      minimap.updateGraph()
-    }
-  }, 50)
+  setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
 const handleSetZoom = (scale) => {
   if (!graph) return
-  graph.zoom(scale, { min: 0.1, max: 3 })
-  const newZoom = Math.round(graph.zoom() * 100)
+  const clamped = Math.max(0.1, Math.min(3, Number(scale) || 1))
+  if (typeof graph.zoomTo === 'function') graph.zoomTo(clamped)
+  else graph.zoom(clamped)
+  const newZoom = Math.round((graph.zoom?.() || clamped) * 100)
   scaleDisplayText.value = `${newZoom}%`
-  console.log(`[Toolbar] 设置缩放比例: ${scale} -> ${newZoom}%`)
-  
-  // 同步更新预览图
-  setTimeout(() => {
-    if (minimap && minimap.updateGraph) {
-      minimap.updateGraph()
-    }
-  }, 50)
+  console.log(`[Toolbar] 设置缩放比例: ${clamped} -> ${newZoom}%`)
+  setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
 const handleUndo = () => {
@@ -3214,10 +3352,10 @@ const handleJumpToHistoryState = (index) => {
     if (typeof graph.centerContent === 'function') {
       graph.centerContent()
     } else {
-      graph.center()
+      graph.center?.()
     }
-    // 恢复原缩放，防止不必要的缩放变化
-    graph.zoom(currentZoom)
+    if (typeof graph.zoomTo === 'function') graph.zoomTo(currentZoom)
+    else graph.zoom(currentZoom)
     console.log('[Toolbar] 仅居中内容，保持缩放不变')
     
     // 显示友好的提示
@@ -3227,6 +3365,48 @@ const handleJumpToHistoryState = (index) => {
     setTimeout(() => {
       try { if (!minimapPaused && minimap && minimap.updateGraph) minimap.updateGraph() } catch {}
     }, 100)
+  }
+  const onToggleStatisticsPanel = (payload) => {
+    showStatisticsPanel.value = !showStatisticsPanel.value
+    try {
+      const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.()
+      const toolbarRect = toolbarWrapperRef.value?.getBoundingClientRect?.()
+      const anchor = payload?.anchorRect || toolbarRect
+      if (anchor && canvasRect) {
+        const offsetY = 8
+        const left = Math.max(16, anchor.left - canvasRect.left)
+        const top = Math.max(16, anchor.bottom - canvasRect.top + offsetY)
+        statsPanelPosition.value = { left, top }
+      } else {
+        statsPanelPosition.value = { left: 16, top: 64 }
+      }
+    } catch { statsPanelPosition.value = { left: 16, top: 64 } }
+
+    nextTick(() => {
+      try {
+        const panel = statisticsPanelRef.value?.getBoundingClientRect?.()
+        const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.()
+        if (panel && canvasRect) {
+          const pad = 16
+          const maxLeft = Math.max(pad, canvasRect.width - panel.width - pad)
+          const maxTop = Math.max(pad, canvasRect.height - panel.height - pad)
+          statsPanelPosition.value = {
+            left: Math.min(statsPanelPosition.value.left, maxLeft),
+            top: Math.min(statsPanelPosition.value.top, maxTop)
+          }
+          console.log('[Stats] panel-position:', statsPanelPosition.value)
+          // 默认聚焦开始节点
+          if (!statsFocusNodeId.value && graph) {
+            const nodes = graph.getNodes?.() || []
+            const start = nodes.find(n => {
+              try { const d = n.getData?.() || {}; return d.type === 'start' || d.nodeType === 'start' } catch { return false }
+            })
+            statsFocusNodeId.value = String((start && start.id) || (nodes[0]?.id) || '')
+            console.log('[Stats] default focusNodeId set:', statsFocusNodeId.value)
+          }
+        }
+      } catch {}
+    })
   }
 
 const handleToggleMinimap = (payload) => {
@@ -3446,7 +3626,9 @@ const getCanvasData = () => {
           x: pos.x,
           y: pos.y,
           label: data.nodeName || data.headerTitle || getNodeLabel(data.nodeType || data.type) || '',
-          config: data.config || {}
+          config: data.config || {},
+          isConfigured: data.isConfigured === true,
+          branches: Array.isArray(data?.config?.branches) ? data.config.branches : []
         }
       } catch (error) {
         console.error(`[getCanvasData] 处理节点 ${n.id} 数据失败:`, error)
@@ -3456,7 +3638,9 @@ const getCanvasData = () => {
           x: 0,
           y: 0,
           label: '未知节点',
-          config: {}
+          config: {},
+          isConfigured: false,
+          branches: []
         }
       }
     })
@@ -3496,7 +3680,7 @@ const getCanvasData = () => {
 const loadTaskData = async () => {
   try {
     const taskId = route.query.id
-    const taskVersion = route.query.version || 1
+    const taskVersionParam = route.query.version || 1
     
     console.log('🔄 [Horizontal] 开始加载任务数据:', { taskId, version: taskVersion })
     
@@ -3519,7 +3703,7 @@ const loadTaskData = async () => {
       // 设置编辑模式
       isEditMode.value = true
       editingTaskId.value = numericTaskId
-      editingTaskVersion.value = parseInt(taskVersion)
+      editingTaskVersion.value = parseInt(taskVersionParam)
       
       // 填充任务基础信息 - 增强错误处理
       try {
@@ -3655,15 +3839,28 @@ const loadCanvasData = (canvasData) => {
       }
     })
     
-    // 创建所有连线 - 兼容原版数据格式
+    // 创建所有连线 - 兼容原版数据格式，并对历史数据进行修复
     canvasData.connections.forEach(connectionData => {
       try {
         const sourceNode = nodeMap.get(connectionData.source)
         const targetNode = nodeMap.get(connectionData.target)
         
         if (sourceNode && targetNode) {
-        const sourcePort = connectionData.sourcePort || connectionData.sourcePortId || 'out'
+        let sourcePort = connectionData.sourcePort || connectionData.sourcePortId || 'out'
         const targetPort = connectionData.targetPort || connectionData.targetPortId || 'in'
+          // 历史数据修复：将未知/旧格式源端口映射到现有端口
+          try {
+            const outPorts = (sourceNode.getPorts?.() || []).filter(p => p?.group === 'out')
+            const outIds = outPorts.map(p => p.id)
+            if (!outIds.includes(sourcePort)) {
+              // 按顺序选择未占用的out端口
+              const used = new Set()
+              const existingEdges = graph.getOutgoingEdges?.(sourceNode) || []
+              existingEdges.forEach(e => { try { const pid = e.getSourcePortId?.(); if (pid) used.add(pid) } catch {} })
+              const firstFree = outIds.find(id => !used.has(id)) || outIds[0] || sourcePort
+              sourcePort = firstFree
+            }
+          } catch {}
           
           const edge = graph.addEdge({
             id: connectionData.id,
@@ -3699,6 +3896,22 @@ const loadCanvasData = (canvasData) => {
               label: connectionData.label || ''
             }
           })
+          // 历史数据修复：AB实验分支ID缺失时按源端口索引补齐
+          try {
+            const srcData = sourceNode.getData?.() || {}
+            const srcType = srcData?.type || srcData?.nodeType
+            if (edge && srcType === 'ab-test' && !edge.getData?.()?.branchId) {
+              const match = /^out-(\d+)$/.exec(sourcePort)
+              const branches = Array.isArray(srcData?.config?.branches) ? srcData.config.branches : []
+              if (match) {
+                const idx = Number(match[1])
+                const b = branches[idx]
+                if (b && b.id) {
+                  try { edge.setData({ ...(edge.getData?.() || {}), branchId: b.id }) } catch {}
+                }
+              }
+            }
+          } catch {}
           console.log(`[loadCanvasData] 创建连线: ${connectionData.id} (${connectionData.source}:${sourcePort} -> ${connectionData.target}:${targetPort})`)
         } else {
           console.warn(`[loadCanvasData] 连线目标节点不存在: ${connectionData.source} -> ${connectionData.target}`)
@@ -4087,7 +4300,7 @@ const testClick = () => {
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 1000;
+  z-index: 1300;
   pointer-events: none; /* 确保不阻止画布交互 */
   /* 调试样式 - 如果工具栏仍不可见，可以临时启用 */
   /* border: 2px solid red; */
@@ -4353,30 +4566,31 @@ const testClick = () => {
 /* 统计面板容器样式 */
 .statistics-panel-container {
   position: fixed;
-  top: 0;
-  right: 0;
+  left: 0;
+  right: auto;
+  top: auto;
   bottom: 0;
   background: #fff;
-  border-left: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 1200;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.statistics-panel-resize-handle {
+.statistics-panel-resize-handle--top {
   position: absolute;
-  left: -4px;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  cursor: ew-resize;
+  left: 0;
+  right: 0;
+  top: -4px;
+  height: 8px;
+  cursor: ns-resize;
   background: transparent;
   z-index: 1;
 }
-
-.statistics-panel-resize-handle:hover {
-  background: rgba(59, 130, 246, 0.2);
+.statistics-panel-resize-handle--top:hover {
+  background: rgba(59, 130, 246, 0.15);
 }
 
 /* 响应式布局调整 */
@@ -4385,6 +4599,7 @@ const testClick = () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow: hidden;
 }
 
 .horizontal-task-flow-page:has(.statistics-panel-container) .content {

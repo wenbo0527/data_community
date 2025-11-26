@@ -5,8 +5,9 @@ export class CanvasController {
     this.graph = opts.graph
     this.eventService = new EventService({
       graph: opts.graph,
-      isStatisticsMode: opts.isStatisticsMode,
-      onNodeClickForStats: opts.onNodeClickForStats,
+      readOnly: !!opts.readOnly,
+      isStatisticsMode: typeof opts.isStatisticsMode === 'function' ? opts.isStatisticsMode : undefined,
+      onNodeClickForStats: typeof opts.onNodeClickForStats === 'function' ? opts.onNodeClickForStats : undefined,
       openConfigDrawer: opts.openConfigDrawer,
       setShowNodeSelector: opts.setShowNodeSelector,
       setNodeSelectorPosition: opts.setNodeSelectorPosition,

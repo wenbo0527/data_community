@@ -495,3 +495,8 @@ const onAddNodeClick = (e) => {
   const rect = e?.currentTarget?.getBoundingClientRect?.()
   emit('add-node', { anchorRect: rect })
 }
+// 兼容宿主与子应用用法：内部模板使用了 showStatistics
+// 增加缺失的 props，避免渲染警告
+const propsCompat = defineProps({
+  showStatistics: { type: Boolean, default: false }
+})

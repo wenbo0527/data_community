@@ -34,7 +34,71 @@ const metrics = [
         useCase: '',
         statisticalPeriod: '离线T+2',
         sourceTable: 'a_frms_deparment_sx_his_full',
-        processingLogic: 'SELECT COUNT(flow_id) FROM a_frms_deparment_sx_his_full WHERE result=\'PA\'',
+        processingLogic: `
+WITH base AS (
+  SELECT
+    flow_id,
+    apply_id,
+    customer_id,
+    product_code,
+    result,
+    decision_stage,
+    decision_time,
+    CASE WHEN remark LIKE '%测试%' OR remark LIKE '%test%' THEN 1 ELSE 0 END AS is_test,
+    data_dt
+  FROM a_frms_deparment_sx_his_full
+  WHERE data_dt = \${date}
+),
+dedup AS (
+  SELECT
+    flow_id,
+    apply_id,
+    customer_id,
+    product_code,
+    result,
+    decision_stage,
+    decision_time,
+    is_test,
+    data_dt,
+    ROW_NUMBER() OVER (PARTITION BY flow_id ORDER BY decision_time DESC) AS rn
+  FROM base
+),
+latest AS (
+  SELECT * FROM dedup WHERE rn = 1
+),
+valid_app AS (
+  SELECT l.*
+  FROM latest l
+  LEFT JOIN dim_customer d ON l.customer_id = d.customer_id
+  LEFT JOIN dim_product p ON l.product_code = p.product_code
+  WHERE COALESCE(l.is_test, 0) = 0
+    AND COALESCE(d.is_blacklist, 0) = 0
+    AND COALESCE(p.status, 'ON') IN ('ON','ACTIVE')
+),
+pass_at_risk AS (
+  SELECT * FROM valid_app WHERE result = 'PA' AND decision_stage = 'RISK'
+),
+exclude_revoke AS (
+  SELECT pr.*
+  FROM pass_at_risk pr
+  LEFT JOIN a_frms_deparment_sx_his_full h2
+    ON pr.flow_id = h2.flow_id
+   AND h2.result IN ('RV','RJ')
+   AND h2.decision_time > pr.decision_time
+   AND h2.data_dt = pr.data_dt
+  WHERE h2.flow_id IS NULL
+),
+final_cnt AS (
+  SELECT
+    data_dt,
+    COUNT(DISTINCT flow_id) AS pass_cnt
+  FROM exclude_revoke
+  GROUP BY data_dt
+)
+SELECT pass_cnt
+FROM final_cnt
+WHERE data_dt = \${date}
+`,
         fieldDescription: '',
         reportInfo: '发展日测报告\n公司级报表・市场营销报表',
         storageLocation: 'adm.ads_report_index_commonality_info_full',

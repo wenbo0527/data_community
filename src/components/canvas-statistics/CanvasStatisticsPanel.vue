@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { IconBarChart, IconMinus, IconPlus } from '@arco-design/web-vue/es/icon'
 import DataFilterControls from './DataFilterControls.vue'
 import StatisticsOverview from './StatisticsOverview.vue'
@@ -83,6 +83,8 @@ import DataExportPanel from './DataExportPanel.vue'
 
 interface Props {
   canvasId: string
+  graph?: any
+  focusNodeId?: string
 }
 
 interface FilterState {
@@ -93,7 +95,7 @@ interface FilterState {
   userGroup?: string[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { focusNodeId: '' })
 
 // 面板状态
 const isCollapsed = ref(false)
@@ -107,7 +109,6 @@ const filters = reactive<FilterState>({
   timeRange: 'day'
 })
 
-// 选中的节点
 const selectedNodes = ref<string[]>([])
 
 // 导出数据
@@ -183,6 +184,11 @@ const loadStatisticsData = async () => {
 
 onMounted(() => {
   loadStatisticsData()
+})
+
+watch(() => props.focusNodeId, (nv) => {
+  const id = String(nv || '')
+  selectedNodes.value = id ? [id] : []
 })
 
 onUnmounted(() => {

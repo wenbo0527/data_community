@@ -41,7 +41,71 @@ const metrics: MetricItem[] = [
     useCase: '',
     statisticalPeriod: '离线T+2',
     sourceTable: 'a_frms_deparment_sx_his_full',
-    processingLogic: 'SELECT COUNT(flow_id) FROM a_frms_deparment_sx_his_full WHERE result=\'PA\'',
+    processingLogic: (
+      'WITH base AS (\n' +
+      '  SELECT\n' +
+      '    flow_id,\n' +
+      '    apply_id,\n' +
+      '    customer_id,\n' +
+      '    product_code,\n' +
+      '    result,\n' +
+      '    decision_stage,\n' +
+      '    decision_time,\n' +
+      "    CASE WHEN remark LIKE '%测试%' OR remark LIKE '%test%' THEN 1 ELSE 0 END AS is_test,\n" +
+      '    data_dt\n' +
+      '  FROM a_frms_deparment_sx_his_full\n' +
+      '  WHERE data_dt = ${date}\n' +
+      '),\n' +
+      'dedup AS (\n' +
+      '  SELECT\n' +
+      '    flow_id,\n' +
+      '    apply_id,\n' +
+      '    customer_id,\n' +
+      '    product_code,\n' +
+      '    result,\n' +
+      '    decision_stage,\n' +
+      '    decision_time,\n' +
+      '    is_test,\n' +
+      '    data_dt,\n' +
+      '    ROW_NUMBER() OVER (PARTITION BY flow_id ORDER BY decision_time DESC) AS rn\n' +
+      '  FROM base\n' +
+      '),\n' +
+      'latest AS (\n' +
+      '  SELECT * FROM dedup WHERE rn = 1\n' +
+      '),\n' +
+      'valid_app AS (\n' +
+      '  SELECT l.*\n' +
+      '  FROM latest l\n' +
+      '  LEFT JOIN dim_customer d ON l.customer_id = d.customer_id\n' +
+      '  LEFT JOIN dim_product p ON l.product_code = p.product_code\n' +
+      '  WHERE COALESCE(l.is_test, 0) = 0\n' +
+      '    AND COALESCE(d.is_blacklist, 0) = 0\n' +
+      "    AND COALESCE(p.status, 'ON') IN ('ON','ACTIVE')\n" +
+      '),\n' +
+      'pass_at_risk AS (\n' +
+      "  SELECT * FROM valid_app WHERE result = 'PA' AND decision_stage = 'RISK'\n" +
+      '),\n' +
+      'exclude_revoke AS (\n' +
+      '  SELECT pr.*\n' +
+      '  FROM pass_at_risk pr\n' +
+      '  LEFT JOIN a_frms_deparment_sx_his_full h2\n' +
+      '    ON pr.flow_id = h2.flow_id\n' +
+      "   AND h2.result IN ('RV','RJ')\n" +
+      '   AND h2.decision_time > pr.decision_time\n' +
+      '   AND h2.data_dt = pr.data_dt\n' +
+      '  WHERE h2.flow_id IS NULL\n' +
+      '),\n' +
+      'final_cnt AS (\n' +
+      '  SELECT\n' +
+      '    data_dt,\n' +
+      '    COUNT(DISTINCT flow_id) AS pass_cnt\n' +
+      '  FROM exclude_revoke\n' +
+      '  GROUP BY data_dt\n' +
+      ')\n' +
+      'SELECT pass_cnt\n' +
+      'FROM final_cnt\n' +
+      'WHERE data_dt = ${date}'
+    ),
     fieldDescription: '',
     reportInfo: '发展日测报告\n公司级报表・市场营销报表',
     reportName: '公司级报表・市场营销报表',

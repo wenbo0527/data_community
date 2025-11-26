@@ -1,5 +1,5 @@
 <template>
-  <div ref="editorContainer" class="monaco-editor-container" :style="{ height: height }"></div>
+  <div ref="editorContainer" class="monaco-editor-container" :style="containerStyle"></div>
 </template>
 
 <script setup lang="ts">
@@ -14,6 +14,9 @@ interface Props {
   height?: string
   readonly?: boolean
   options?: monaco.editor.IStandaloneEditorConstructionOptions
+  autoHeight?: boolean
+  minHeight?: number
+  maxHeight?: number | undefined
 }
 
 interface Emits {
@@ -26,13 +29,17 @@ const props = withDefaults(defineProps<Props>(), {
   theme: 'vs-dark',
   height: '300px',
   readonly: false,
-  options: () => ({})
+  options: () => ({}),
+  autoHeight: true,
+  minHeight: 120,
+  maxHeight: undefined
 })
 
 const emit = defineEmits<Emits>()
 
 const editorContainer = ref<HTMLElement>()
 let editor: monaco.editor.IStandaloneCodeEditor | null = null
+const containerStyle = ref<Record<string, string>>({ height: props.height, width: '100%' })
 
 // 配置Monaco编辑器
 loader.config({
@@ -94,9 +101,12 @@ const initEditor = async () => {
       roundedSelection: false,
       scrollbar: {
         vertical: 'auto',
-        horizontal: 'auto'
+        horizontal: 'hidden'
       },
       wordWrap: 'on',
+      wordWrapColumn: 0,
+      wrappingStrategy: 'advanced',
+      scrollBeyondLastColumn: 0,
       ...props.options
     }
 
@@ -109,6 +119,22 @@ const initEditor = async () => {
       emit('change', value)
     })
 
+    if (props.autoHeight && editor) {
+      const updateHeight = () => {
+        if (!editor) return
+        const h = (editor as any).getContentHeight ? (editor as any).getContentHeight() : 0
+        const min = Math.max(0, props.minHeight || 0)
+        const hasMax = typeof props.maxHeight === 'number' && isFinite(props.maxHeight as number)
+        const final = hasMax
+          ? Math.min(Math.max(min, props.maxHeight as number), Math.max(min, h || min))
+          : Math.max(min, h || min)
+        containerStyle.value.height = `${final}px`
+        editor.layout()
+      }
+      editor.onDidContentSizeChange(() => updateHeight())
+      updateHeight()
+    }
+
   } catch (error) {
     console.error('Monaco编辑器初始化失败:', error)
   }
@@ -118,6 +144,16 @@ const initEditor = async () => {
 watch(() => props.modelValue, (newValue) => {
   if (editor && editor.getValue() !== newValue) {
     editor.setValue(newValue)
+    if (props.autoHeight) {
+      const h = (editor as any)?.getContentHeight?.() || 0
+      const min = Math.max(0, props.minHeight || 0)
+      const hasMax = typeof props.maxHeight === 'number' && isFinite(props.maxHeight as number)
+      const final = hasMax
+        ? Math.min(Math.max(min, props.maxHeight as number), Math.max(min, h || min))
+        : Math.max(min, h || min)
+      containerStyle.value.height = `${final}px`
+      editor.layout()
+    }
   }
 })
 
@@ -145,6 +181,10 @@ watch(() => props.readonly, (readonly) => {
 onMounted(async () => {
   await nextTick()
   await initEditor()
+  if (editorContainer.value && editor) {
+    const ro = new ResizeObserver(() => editor?.layout())
+    ro.observe(editorContainer.value)
+  }
 })
 
 onUnmounted(() => {
@@ -179,8 +219,21 @@ defineExpose({
   width: 100%;
   border: 1px solid var(--color-border-2);
   border-radius: 4px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   /* 确保编辑器内部滚动不与页面滚动冲突 */
   position: relative;
+  box-sizing: border-box;
+  max-width: 100%;
+  contain: strict;
+}
+
+:deep(.monaco-editor),
+:deep(.monaco-editor .overflow-guard),
+:deep(.monaco-scrollable-element),
+:deep(.monaco-editor .lines-content),
+:deep(.monaco-editor .view-lines) {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 </style>

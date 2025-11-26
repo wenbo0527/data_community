@@ -3,7 +3,7 @@ import { loadComponent } from '../utils/componentLoader'
 export default [
   {
     path: '/marketing',
-    redirect: '/marketing/dashboard', // 添加重定向到默认页面
+    redirect: '/marketing/tasks', // 默认进入任务列表页
     children: [
       {
         path: 'dashboard',
@@ -135,7 +135,7 @@ export default [
         path: 'tasks/horizontal',
         name: 'marketing-tasks-horizontal',
         component: () => loadComponent('../pages/marketing/tasks/horizontal/index.vue', 'MarketingTasksHorizontal'),
-        meta: { title: '营销任务（横版原型）' }
+        meta: { title: '营销任务（横版）' }
       },
       {
         path: 'tasks/create',
