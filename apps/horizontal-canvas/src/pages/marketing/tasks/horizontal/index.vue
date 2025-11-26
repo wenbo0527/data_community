@@ -237,6 +237,7 @@ import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel
 import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
 import { bindConnectionPolicies } from './graph/GraphService.ts'
+import { useCanvasState } from './state/useCanvasState.ts'
 
 // 任务基础信息变量
 const router = useRouter()
@@ -257,8 +258,8 @@ const isEditMode = ref(false)
 const editingTaskId = ref(null)
 const editingTaskVersion = ref(null)
 
-// 统计面板状态
-const showStatisticsPanel = ref(false)
+// 统计面板与画布状态
+const { showStatisticsPanel, showMinimap, scaleDisplayText, statisticsPanelWidth, statisticsPanelHeight } = useCanvasState()
 const isViewMode = computed(() => route.query.mode === 'view')
 const isPublished = computed(() => taskStatus.value === 'published' || taskStatus.value === 'running')
 
@@ -291,7 +292,7 @@ const canRedo = ref(false)
 const showHistoryPanel = ref(false)
 
 // 预览图状态
-const showMinimap = ref(false)
+// 由 useCanvasState 提供 showMinimap
 const minimapContainer = ref(null)
 let minimap = null
 const minimapPosition = ref({ left: 0, top: 0 })
@@ -305,8 +306,7 @@ const showSnapline = ref(true)
 const quickLayout = ref(null)
 
 // 统计面板尺寸与拖拽状态
-const statisticsPanelWidth = ref(420)
-const statisticsPanelHeight = ref(300)
+// 由 useCanvasState 提供 statisticsPanelWidth/statisticsPanelHeight
   const statsPanelPosition = ref({ left: 16, top: 64 })
   const statisticsPanelRef = ref(null)
   const toolbarWrapperRef = ref(null)
@@ -3197,7 +3197,7 @@ function onCanvasDrop(e) {
 }
 
 // 缩放比例显示
-const scaleDisplayText = ref('100%')
+// 由 useCanvasState 提供 scaleDisplayText
 
 // 工具栏功能方法
 const handleZoomIn = () => {
