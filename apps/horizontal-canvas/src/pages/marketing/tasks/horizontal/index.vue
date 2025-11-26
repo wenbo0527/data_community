@@ -236,6 +236,7 @@ import { TaskStorage } from '../../../../utils/taskStorage.js'
 import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
 import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
+import { bindConnectionPolicies } from './graph/GraphService.ts'
 
 // 任务基础信息变量
 const router = useRouter()
@@ -1131,77 +1132,13 @@ onMounted(async () => {
         return true
       },
       // DocRef: 架构文档「关键代码片段/图初始化的连接校验」
-      validateConnection({ sourceMagnet, targetMagnet, sourceView, targetView, edge }) {
-        if (isPanning.value) return false
-        if (isViewMode.value) return false
-        if (!sourceMagnet || !targetMagnet) {
-          console.log('🔎 连接校验: 磁体缺失', { hasSource: !!sourceMagnet, hasTarget: !!targetMagnet })
-          return false
-      }
-        const sg = sourceMagnet.getAttribute('port-group') || sourceMagnet.getAttribute('data-port-group')
-        const tg = targetMagnet.getAttribute('port-group') || targetMagnet.getAttribute('data-port-group')
-        if (sg !== 'out' || tg !== 'in') {
-          console.log('🔎 连接校验: 端口组不匹配', { sg, tg })
-          return false
-        }
-        const srcCell = sourceView?.cell
-        const tgtCell = targetView?.cell
-        const sourcePortId = sourceMagnet.getAttribute('port') || sourceMagnet.getAttribute('data-port') || sourceMagnet.getAttribute('data-port-id')
-        const targetPortId = targetMagnet.getAttribute('port') || targetMagnet.getAttribute('data-port') || targetMagnet.getAttribute('data-port-id')
-        const exists = (graph.getOutgoingEdges?.(srcCell) || []).some(e => {
-          try {
-            if (edge && e.id === edge.id) return false
-            const s = e.getSourceCellId?.()
-            const t = e.getTargetCellId?.()
-            if (!s || !t) return false
-            return e.getSourcePortId?.() === sourcePortId
-          } catch { return false }
-        })
-        if (exists) {
-          try { Message.warning('该源端口已存在连接，不能重复连接') } catch {}
-          console.log('🔎 连接校验: 源端口已占用', { sourcePortId, srcNodeId: srcCell?.id })
-          return false
-        }
-        console.log('✅ 连接校验通过', { sg, tg, sourcePortId, targetPortId, srcNodeId: srcCell?.id, tgtNodeId: tgtCell?.id })
-        try {
-          const srcData = srcCell?.getData?.() || {}
-          const srcType = srcData?.type || srcData?.nodeType
-          if (srcType === 'ab-test' && typeof sourcePortId === 'string') {
-            const match = /^out-(\d+)$/.exec(sourcePortId)
-            const branches = Array.isArray(srcData?.config?.branches) ? srcData.config.branches : []
-            if (match) {
-              const idx = Number(match[1])
-              const b = branches[idx]
-              if (b && b.id) {
-                try { edge.setData({ ...(edge.getData?.() || {}), branchId: b.id }) } catch {}
-              }
-            }
-          }
-        } catch {}
-        return true
+      validateConnection(args) {
+        const { validateConnection } = bindConnectionPolicies(graph, { isViewMode: () => isViewMode.value, isPanning: () => isPanning.value, Message })
+        return validateConnection(args)
       },
-      validateMagnet({ magnet, view }) {
-        if (!magnet) return false
-        if (isViewMode.value) return false
-        const g = magnet.getAttribute('port-group') || magnet.getAttribute('data-port-group')
-        if (g !== 'out') return false
-        const sourcePortId = magnet.getAttribute('port') || magnet.getAttribute('data-port') || magnet.getAttribute('data-port-id')
-        const cell = view?.cell
-        if (cell && sourcePortId) {
-          const exists = (graph.getOutgoingEdges?.(cell) || []).some(e => {
-            try {
-              const s = e.getSourceCellId?.()
-              const t = e.getTargetCellId?.()
-              if (!s || !t) return false
-              return e.getSourcePortId?.() === sourcePortId
-            } catch { return false }
-          })
-          if (exists) {
-            try { Message.warning('该源端口已存在连接，不能重复连接') } catch {}
-            return false
-          }
-        }
-        return true
+      validateMagnet(args) {
+        const { validateMagnet } = bindConnectionPolicies(graph, { isViewMode: () => isViewMode.value, isPanning: () => isPanning.value, Message })
+        return validateMagnet(args)
       }
     },
     selecting: {
