@@ -29,5 +29,4 @@
 - 宿主在 iframe 的 `load` 事件发送 `init`/任务数据；子应用“保存”后通过 `postMessage` 回传
 
 ## 注意
-- 预览线拖拽与性能优化模块可在 `src/composables/canvas/usePreviewLine.js` 中扩展绑定
 - 不同模式的数据源：独立模式使用 `src/utils/taskStorage.js`；嵌入模式通过 `postMessage` 由宿主提供

@@ -1,7 +1,6 @@
 <template>
   <div v-if="visible" class="menu" :style="{ left: position.x + 'px', top: position.y + 'px' }">
     <div class="menu-item" @click="$emit('delete-connection')">删除连接</div>
-    <div class="menu-item" @click="$emit('restore-preview-line')">恢复预览线</div>
     <div class="menu-item" @click="$emit('close')">关闭</div>
   </div>
 </template>

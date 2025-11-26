@@ -28,7 +28,7 @@
   - 端口工厂：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/utils/portConfigFactoryHorizontal.js`
   - 样式常量：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/styles/nodeStyles.js`
   - 数据存储/Mock：`apps/horizontal-canvas/src/utils/taskStorage.js`
-  - 预览线系统：`apps/horizontal-canvas/src/utils/preview-line/PreviewLineSystem.js`
+  - （已移除）预览线系统：不再引入
   - 结构化布局：`apps/horizontal-canvas/src/composables/canvas/useStructuredLayout.js`
   - 历史：`apps/horizontal-canvas/src/composables/canvas/useCanvasHistory.js`
 
@@ -53,7 +53,6 @@ graph LR
   EventService --> X6Graph
   X6Graph --> HorizontalNode
 
-  HorizontalIndex --> PreviewLineSystem
 ```
 
 ## 数据流与状态管理
