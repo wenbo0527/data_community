@@ -314,20 +314,11 @@ const isResizing = ref(false)
 const statisticsPanelTop = ref(0)
 
 function updateStatisticsPanelTop() {
-  try {
-    const rect = toolbarWrapperRef.value?.getBoundingClientRect?.()
-    const top = rect ? Math.max(0, Math.round(rect.bottom + 8)) : 0
-    statisticsPanelTop.value = top
-  } catch { statisticsPanelTop.value = 0 }
+  try { useCanvasState().updateStatisticsPanelTop(toolbarWrapperRef.value, statisticsPanelTop) } catch { statisticsPanelTop.value = 0 }
 }
 
 function updateDebugDockBounds() {
-  try {
-    const rect = contentRef.value?.getBoundingClientRect?.()
-    if (!rect) return
-    const reservedRight = (showStatisticsPanel.value && isViewMode.value && isPublished.value) ? statisticsPanelWidth.value : 0
-    debugDockBounds.value = { left: Math.round(rect.left), width: Math.round(rect.width - reservedRight) }
-  } catch {}
+  try { useCanvasState().updateDebugDockBounds(contentRef.value, showStatisticsPanel, isViewMode.value, isPublished.value, statisticsPanelWidth, debugDockBounds) } catch {}
 }
 
 // 计算属性：当前节点是否禁用
