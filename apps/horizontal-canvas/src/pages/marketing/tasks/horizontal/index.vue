@@ -227,6 +227,7 @@ import { performanceMonitor } from './utils/performanceMonitor.js';
 import { usePortValidation } from './composables/usePortValidation.js';
 // 导入横版专用快速布局
 import HorizontalQuickLayout from './utils/quickLayout.js';
+import { cleanupEdgeVertices } from './layout/LayoutService.ts'
 // 导入测试用例
  
 import { useRouter, useRoute } from 'vue-router'
@@ -3506,10 +3507,7 @@ const handleQuickLayout = async () => {
     })
     
     // 布局后清理所有边的手动控制点，避免残留影响展示
-    const edges = graph.getEdges?.() || []
-    edges.forEach(e => {
-      try { if (e && e.setVertices) e.setVertices([]) } catch {}
-    })
+    cleanupEdgeVertices(graph)
     
     // 恢复辅助线显示
     try { graph.setSnaplineEnabled(true) } catch {}
