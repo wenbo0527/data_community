@@ -233,6 +233,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { TaskStorage } from '../../../../utils/taskStorage.js'
 import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
+import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
+import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
 
 // 任务基础信息变量
 const router = useRouter()
@@ -1813,25 +1815,7 @@ onBeforeUnmount(() => {
   }
 })
 
-function ensureStartNode() {
-  const nodes = graph.getNodes()
-  const hasStart = nodes.some(n => {
-    const d = n.getData ? n.getData() : {}
-    return d?.type === 'start' || d?.nodeType === 'start' || String(n.id).includes('start')
-  })
-  if (hasStart) return
-
-  const startNodeId = 'start-node'
-  graph.addNode(createVueShapeNode({
-    id: startNodeId,
-    x: 80,
-    y: 160,
-    label: '开始',
-    outCount: 1,
-    data: { type: 'start', nodeType: 'start', isConfigured: true },
-    portsOptions: { includeIn: false, outIds: ['out'] }
-  }))
-}
+function ensureStartNode() { ensureStartNodeSvc(graph) }
 
 
 
