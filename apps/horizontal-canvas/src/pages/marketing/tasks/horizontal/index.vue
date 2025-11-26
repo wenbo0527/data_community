@@ -3347,20 +3347,10 @@ const handleToggleMinimap = (payload) => {
 
     nextTick(() => {
       if (!minimapContainer.value) return
-      minimap = new MiniMap({
-        container: minimapContainer.value,
-        width: 220,
-        height: 160,
-        padding: 10,
-        scalable: true,
-        graphOptions: {
-          async: true,
-          createCellView(cell) {
-            if (cell.isEdge()) return null
-          }
-        }
-      })
-      graph.use(minimap)
+      try {
+        minimap = toggleMinimap ? toggleMinimap(graph, minimapContainer.value, true, { width: 220, height: 160, padding: 10, scalable: true, graphOptions: { async: true, createCellView(cell) { if (cell.isEdge()) return null } } }) : new MiniMap({ container: minimapContainer.value })
+        if (!toggleMinimap) graph.use(minimap)
+      } catch {}
       setTimeout(() => {
         try {
           if (minimap && minimap.updateGraph) minimap.updateGraph()
@@ -3369,12 +3359,7 @@ const handleToggleMinimap = (payload) => {
       }, 30)
     })
   } else if (!showMinimap.value && graph) {
-    if (minimap) {
-      try { graph.disposePlugin(minimap) } catch {}
-      minimap = null
-    } else {
-      try { graph.disposePlugin('minimap') } catch {}
-    }
+    try { minimap = toggleMinimap ? toggleMinimap(graph, minimapContainer.value, false) : null } catch { minimap = null }
     console.log('[Toolbar] 预览图已移除')
   }
 }

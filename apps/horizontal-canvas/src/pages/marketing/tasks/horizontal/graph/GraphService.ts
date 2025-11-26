@@ -1,4 +1,5 @@
 export type GraphLike = any
+import { MiniMap } from '@antv/x6-plugin-minimap'
 
 export function create(container: HTMLElement, options: any): GraphLike {
   return null
@@ -8,7 +9,18 @@ export function zoomIn(graph: GraphLike): void {}
 export function zoomOut(graph: GraphLike): void {}
 export function zoomTo(graph: GraphLike, scale: number): void {}
 export function centerContent(graph: GraphLike): void {}
-export function toggleMinimap(graph: GraphLike, container: HTMLElement | null, visible: boolean, options: any = {}): void {}
+export function toggleMinimap(graph: GraphLike, container: HTMLElement | null, visible: boolean, options: any = {}): any {
+  if (!graph) return null
+  if (visible) {
+    if (!container) return null
+    const minimap = new MiniMap({ container, ...options })
+    try { graph.use(minimap) } catch {}
+    return minimap
+  } else {
+    try { graph.disposePlugin('minimap') } catch {}
+    return null
+  }
+}
 
 export function addNode(graph: GraphLike, spec: any): any { return null }
 export function removeNode(graph: GraphLike, id: string): void {}
