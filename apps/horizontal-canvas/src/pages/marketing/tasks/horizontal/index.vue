@@ -2172,7 +2172,8 @@ function updateNodeFromConfig(node, nodeType, config) {
 // DocRef: 架构文档「关键代码片段/节点统一更新：尺寸、端口映射与数据写回」
 async function updateNodeFromConfigUnified(node, nodeType, config) {
   try {
-    const pos = node.getPosition?.() || { x: 0, y: 0 }
+    updateNodeUnifiedSvc(graph, node, nodeType, config)
+    return
     const label = config?.nodeName || getNodeLabel(nodeType) || nodeType
     const spec = createVueShapeNode({
       id: node.id,
@@ -3615,65 +3616,7 @@ const getCanvasData = () => {
     return { nodes: [], connections: [] }
   }
   
-  try {
-    const nodes = (graph.getNodes?.() || []).map(n => {
-      try {
-        const pos = n.getPosition?.() || { x: 0, y: 0 }
-        const data = n.getData?.() || {}
-        return {
-          id: n.id,
-          type: data.nodeType || data.type || 'node',
-          x: pos.x,
-          y: pos.y,
-          label: data.nodeName || data.headerTitle || getNodeLabel(data.nodeType || data.type) || '',
-          config: data.config || {},
-          isConfigured: data.isConfigured === true,
-          branches: Array.isArray(data?.config?.branches) ? data.config.branches : []
-        }
-      } catch (error) {
-        console.error(`[getCanvasData] 处理节点 ${n.id} 数据失败:`, error)
-        return {
-          id: n.id,
-          type: 'node',
-          x: 0,
-          y: 0,
-          label: '未知节点',
-          config: {},
-          isConfigured: false,
-          branches: []
-        }
-      }
-    })
-    
-    const connections = (graph.getEdges?.() || []).map(e => {
-      try {
-        const src = e.getSource?.() || {}
-        const tgt = e.getTarget?.() || {}
-        return {
-          id: e.id,
-          source: src.cell || (e.getSourceCell?.() ? e.getSourceCell().id : null),
-          target: tgt.cell || (e.getTargetCell?.() ? e.getTargetCell().id : null),
-          sourcePortId: e.getSourcePortId?.() || null,
-          targetPortId: e.getTargetPortId?.() || null
-        }
-      } catch (error) {
-        console.error(`[getCanvasData] 处理连线 ${e.id} 数据失败:`, error)
-        return {
-          id: e.id,
-          source: null,
-          target: null,
-          sourcePortId: null,
-          targetPortId: null
-        }
-      }
-    })
-    
-    console.log('[getCanvasData] 成功获取数据:', { nodes: nodes.length, connections: connections.length })
-    return { nodes, connections }
-  } catch (error) {
-    console.error('[getCanvasData] 获取画布数据失败:', error)
-    return { nodes: [], connections: [] }
-  }
+  try { return collectCanvasData(graph) } catch (error) { return { nodes: [], connections: [] } }
 }
 
 // 加载任务数据 - 参考原版画布实现
@@ -3777,450 +3720,50 @@ const loadTaskData = async () => {
 
 // 加载画布数据函数 - 参考原版画布实现
 const loadCanvasData = (canvasData) => {
-  console.log('[loadCanvasData] 开始加载画布数据...', {
-    nodesCount: canvasData?.nodes?.length || 0,
-    connectionsCount: canvasData?.connections?.length || 0,
-    data: canvasData
-  })
-  
-  if (!graph) {
-    console.warn('[loadCanvasData] graph实例未初始化')
-    return false
-  }
-  
-  if (!canvasData || !canvasData.nodes || !canvasData.connections) {
-    console.warn('[loadCanvasData] 画布数据格式不正确')
-    return false
-  }
-  
-  try {
-    // 清空当前画布
-    graph.clearCells()
-    
-    // 创建节点映射，用于后续连线
-    const nodeMap = new Map()
-    
-    // 创建所有节点 - 兼容原版数据格式
-    canvasData.nodes.forEach(nodeData => {
-      try {
-        // 兼容原版画布的position字段
-        const position = nodeData.position || { x: nodeData.x || 100, y: nodeData.y || 100 }
-        
-        // 准备节点数据，确保兼容性
-        const nodeDataForGraph = {
-          id: nodeData.id,
-          type: nodeData.type,
-          x: position.x,
-          y: position.y,
-          width: 200,
-          height: 120,
-          data: {
-            nodeType: nodeData.type,
-            nodeName: nodeData.label || nodeData.data?.label || getNodeLabel(nodeData.type) || '',
-            headerTitle: nodeData.label || nodeData.data?.label || getNodeLabel(nodeData.type) || '',
-            config: nodeData.config || nodeData.data?.config || {},
-            // 兼容原版画布的字段
-            level: nodeData.data?.level || 0,
-            levelIndex: nodeData.data?.levelIndex || 0,
-            isConfigured: nodeData.data?.isConfigured !== undefined ? nodeData.data.isConfigured :
-                          nodeData.isConfigured !== undefined ? nodeData.isConfigured :
-                          nodeData.type === 'start' ? true : false,
-            branches: nodeData.branches || nodeData.data?.branches || (nodeData.config?.branches) || []
-          }
-        }
-        
-        const node = createVueShapeNode(nodeDataForGraph)
-        
-        graph.addNode(node)
-        nodeMap.set(nodeData.id, node)
-        console.log(`[loadCanvasData] 创建节点: ${nodeData.id} (${nodeData.type}) 位置: (${position.x}, ${position.y})`)
-      } catch (error) {
-        console.error(`[loadCanvasData] 创建节点 ${nodeData.id} 失败:`, error)
-      }
-    })
-    
-    // 创建所有连线 - 兼容原版数据格式，并对历史数据进行修复
-    canvasData.connections.forEach(connectionData => {
-      try {
-        const sourceNode = nodeMap.get(connectionData.source)
-        const targetNode = nodeMap.get(connectionData.target)
-        
-        if (sourceNode && targetNode) {
-        let sourcePort = connectionData.sourcePort || connectionData.sourcePortId || 'out'
-        const targetPort = connectionData.targetPort || connectionData.targetPortId || 'in'
-          // 历史数据修复：将未知/旧格式源端口映射到现有端口
-          try {
-            const outPorts = (sourceNode.getPorts?.() || []).filter(p => p?.group === 'out')
-            const outIds = outPorts.map(p => p.id)
-            if (!outIds.includes(sourcePort)) {
-              // 按顺序选择未占用的out端口
-              const used = new Set()
-              const existingEdges = graph.getOutgoingEdges?.(sourceNode) || []
-              existingEdges.forEach(e => { try { const pid = e.getSourcePortId?.(); if (pid) used.add(pid) } catch {} })
-              const firstFree = outIds.find(id => !used.has(id)) || outIds[0] || sourcePort
-              sourcePort = firstFree
-            }
-          } catch {}
-          
-          const edge = graph.addEdge({
-            id: connectionData.id,
-            source: { 
-              cell: connectionData.source,
-              port: sourcePort
-            },
-            target: { 
-              cell: connectionData.target,
-              port: targetPort
-            },
-            router: { name: 'normal' },
-            connector: { name: 'smooth' },
-            attrs: {
-              line: {
-                stroke: '#4C78FF',
-                strokeWidth: 2,
-                targetMarker: {
-                  name: 'block',
-                  args: {
-                    size: 6,
-                    fill: '#4C78FF'
-                  }
-                },
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round'
-              }
-            },
-            zIndex: 1,
-            // 兼容原版画布的额外字段
-            data: {
-              branchId: connectionData.branchId || null,
-              label: connectionData.label || ''
-            }
-          })
-          // 历史数据修复：AB实验分支ID缺失时按源端口索引补齐
-          try {
-            const srcData = sourceNode.getData?.() || {}
-            const srcType = srcData?.type || srcData?.nodeType
-            if (edge && srcType === 'ab-test' && !edge.getData?.()?.branchId) {
-              const match = /^out-(\d+)$/.exec(sourcePort)
-              const branches = Array.isArray(srcData?.config?.branches) ? srcData.config.branches : []
-              if (match) {
-                const idx = Number(match[1])
-                const b = branches[idx]
-                if (b && b.id) {
-                  try { edge.setData({ ...(edge.getData?.() || {}), branchId: b.id }) } catch {}
-                }
-              }
-            }
-          } catch {}
-          console.log(`[loadCanvasData] 创建连线: ${connectionData.id} (${connectionData.source}:${sourcePort} -> ${connectionData.target}:${targetPort})`)
-        } else {
-          console.warn(`[loadCanvasData] 连线目标节点不存在: ${connectionData.source} -> ${connectionData.target}`)
-        }
-      } catch (error) {
-        console.error(`[loadCanvasData] 创建连线 ${connectionData.id} 失败:`, error)
-      }
-    })
-    
-    console.log(`[loadCanvasData] 成功加载数据: ${canvasData.nodes.length} 节点, ${canvasData.connections.length} 连线`)
-    
-    // 自动调整视图以显示所有内容
-    setTimeout(() => {
-      if (graph && canvasData.nodes.length > 0) {
-        graph.centerContent({ padding: 50 })
-        console.log('[loadCanvasData] 自动调整视图居中')
-      }
-    }, 300)
-    
-    return true
-  } catch (error) {
-    console.error('[loadCanvasData] 加载画布数据失败:', error)
-    return false
-  }
+  if (!graph) return false
+  return loadCanvasDataSvc(graph, canvasData)
 }
 
 // 保存任务函数 - 参考原版画布实现
 const saveTask = async () => {
-  console.log('[saveTask] 保存按钮被点击了！')
-  
-  if (!taskName.value) {
-    Message.error('请输入任务名称')
-    return
-  }
-  
+  if (!taskName.value) { Message.error('请输入任务名称'); return }
   try {
     const canvasData = getCanvasData()
-    // 计算版本：已发布的任务编辑保存为新版本（草稿）
     let versionToUse = taskVersion.value || 1
-    if (isEditMode.value && editingTaskId.value) {
-      const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value))
-      if (existing && existing.status === 'published') {
-        versionToUse = (existing.version || 1) + 1
-        taskVersion.value = versionToUse
-      }
-    }
+    if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
     const name = taskName.value || '未命名任务'
-    
-    console.log('💾 [Horizontal] 开始保存任务:', { 
-      id: editingTaskId.value, 
-      name: name,
-      mode: isEditMode.value ? 'edit' : 'create',
-      nodesCount: canvasData?.nodes?.length || 0,
-      connectionsCount: canvasData?.connections?.length || 0
-    })
-    
-    // 准备保存的数据 - 兼容原版格式
-    const saveData = {
-      name: name,
-      description: taskDescription.value || '',
-      version: versionToUse,
-      type: 'marketing',
-      status: 'draft',
-      canvasData: canvasData,
-      updateTime: new Date().toLocaleString('zh-CN'),
-      creator: '当前用户'
-    }
-    
+    const saveMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'draft', updateTime: new Date().toLocaleString('zh-CN'), creator: '当前用户' }
     let saved
-    if (isEditMode.value && editingTaskId.value) {
-      // 编辑模式：更新现有任务
-      console.log(`[saveTask] 编辑模式 - 更新任务ID: ${editingTaskId.value}`)
-      saved = TaskStorage.updateTask(editingTaskId.value, saveData)
-      Message.success('更新成功')
-    } else {
-      // 新建模式：创建新任务
-      console.log('[saveTask] 新建模式 - 创建新任务')
-      saved = TaskStorage.createTask(saveData)
-      Message.success('保存成功')
-      
-      // 更新到编辑模式
-      if (saved && saved.id) {
-        isEditMode.value = true
-        editingTaskId.value = saved.id
-        // 更新URL到编辑模式
-        router.replace({
-          path: '/marketing/tasks/horizontal',
-          query: { mode: 'edit', id: saved.id, version: saved.version }
-        })
-      }
-    }
-    
+    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...saveMeta, canvasData }); Message.success('更新成功') }
+    else { saved = saveTaskSvc(saveMeta, canvasData); Message.success('保存成功'); if (saved && saved.id) { isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) } }
     taskStatus.value = 'draft'
-    
-    // 显示存储统计
-    const stats = TaskStorage.getStorageStats()
-    console.log('📈 [Horizontal] 存储统计:', stats)
-    
-    // 延迟跳转，让用户看到成功消息
-    setTimeout(() => {
-      router.push('/marketing/tasks')
-    }, 1000)
-    
+    setTimeout(() => { router.push('/marketing/tasks') }, 1000)
     return saved
-  } catch (e) {
-    console.error('[saveTask] 保存失败:', e)
-    Message.error(`保存失败: ${e.message || '未知错误'}`)
-  }
+  } catch (e) { Message.error(`保存失败: ${e.message || '未知错误'}`) }
 }
 
 // 发布任务函数 - 参考原版画布实现
 const publishTask = async () => {
-  console.log('[publishTask] 发布按钮被点击了！')
-  
-  if (!taskName.value) {
-    Message.error('请输入任务名称')
-    return
-  }
-  
+  if (!taskName.value) { Message.error('请输入任务名称'); return }
   try {
     const canvasData = getCanvasData()
-    const validation = validateCanvasForPublish(canvasData)
-    if (!validation.pass) {
-      const detail = validation.messages.join('\n')
-      Modal.warning({ title: '发布校验未通过', content: `请修复以下问题:\n${detail}` })
-      return
-    }
+    const validation = validateForPublish(graph, canvasData)
+    if (!validation.pass) { const detail = validation.messages.join('\n'); Modal.warning({ title: '发布校验未通过', content: `请修复以下问题:\n${detail}` }); return }
     const name = taskName.value || '未命名任务'
-    // 计算版本：已发布的任务再次发布为新版本（已发布）
     let versionToUse = taskVersion.value || 1
-    if (isEditMode.value && editingTaskId.value) {
-      const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value))
-      if (existing && existing.status === 'published') {
-        versionToUse = (existing.version || 1) + 1
-        taskVersion.value = versionToUse
-      }
-    }
-    
-    console.log('🚀 [Horizontal] 开始发布任务:', { 
-      id: editingTaskId.value, 
-      name: name,
-      mode: isEditMode.value ? 'edit' : 'create',
-      nodesCount: canvasData?.nodes?.length || 0,
-      connectionsCount: canvasData?.connections?.length || 0
-    })
-    
-    const publishData = {
-      name: name,
-      description: taskDescription.value || '',
-      version: versionToUse,
-      type: 'marketing',
-      status: 'published',
-      canvasData: canvasData,
-      publishTime: new Date().toLocaleString('zh-CN'),
-      updateTime: new Date().toLocaleString('zh-CN'),
-      creator: '当前用户'
-    }
-    
+    if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
+    const publishMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'published', publishTime: new Date().toLocaleString('zh-CN'), updateTime: new Date().toLocaleString('zh-CN'), creator: '当前用户' }
     let saved
-    if (isEditMode.value && editingTaskId.value) {
-      // 编辑模式：更新现有任务
-      console.log(`[publishTask] 编辑模式 - 更新任务ID: ${editingTaskId.value}`)
-      saved = TaskStorage.updateTask(editingTaskId.value, publishData)
-      Message.success('发布成功')
-    } else {
-      // 新建模式：创建新任务
-      console.log('[publishTask] 新建模式 - 创建新任务')
-      saved = TaskStorage.createTask(publishData)
-      Message.success('发布成功')
-      
-      // 更新到编辑模式
-      if (saved && saved.id) {
-        isEditMode.value = true
-        editingTaskId.value = saved.id
-        // 更新URL到编辑模式
-        router.replace({
-          path: '/marketing/tasks/horizontal',
-          query: { mode: 'edit', id: saved.id, version: saved.version }
-        })
-      }
-    }
-    
+    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...publishMeta, canvasData }); Message.success('发布成功') }
+    else { saved = publishTaskSvc(publishMeta, canvasData); Message.success('发布成功'); if (saved && saved.id) { isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) } }
     taskStatus.value = 'published'
-    
-    // 显示存储统计
-    const stats = TaskStorage.getStorageStats()
-    console.log('📈 [Horizontal] 存储统计:', stats)
-    
-    // 延迟跳转，让用户看到成功消息
-    setTimeout(() => {
-      router.push('/marketing/tasks')
-    }, 1000)
-    
+    setTimeout(() => { router.push('/marketing/tasks') }, 1000)
     return saved
-  } catch (e) {
-    console.error('[publishTask] 发布失败:', e)
-    Message.error(`发布失败: ${e.message || '未知错误'}`)
-  }
+  } catch (e) { Message.error(`发布失败: ${e.message || '未知错误'}`) }
 }
 
 // 画布发布前校验
-const validateCanvasForPublish = (canvasData) => {
-  const messages = []
-  if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) {
-    messages.push('画布数据格式不正确')
-    return { pass: false, messages }
-  }
-  if (canvasData.nodes.length === 0) {
-    messages.push('画布中没有任何节点')
-  }
-  const byId = new Map()
-  canvasData.nodes.forEach(n => byId.set(n.id, n))
-  const outgoing = new Map()
-  const incoming = new Map()
-  canvasData.connections.forEach(e => {
-    if (!e.source || !e.target) return
-    outgoing.set(e.source, (outgoing.get(e.source) || 0) + 1)
-    incoming.set(e.target, (incoming.get(e.target) || 0) + 1)
-  })
-  // 必须有开始节点
-  const hasStart = canvasData.nodes.some(n => n.type === 'start')
-  if (!hasStart) messages.push('缺少开始节点')
-  // 节点配置校验：除开始/结束外，必须有非空 config；或显式 isConfigured === true
-  const unconfiguredByConfig = []
-  const unconfiguredByFlag = []
-  canvasData.nodes.forEach(n => {
-    if (n.type === 'start' || n.type === 'end') return
-    const cfg = n.config || (n.data && n.data.config) || {}
-    const configuredFlag = (n.isConfigured === true) || (n.data && n.data.isConfigured === true)
-    if (!cfg || Object.keys(cfg).length === 0) {
-      unconfiguredByConfig.push(n)
-    }
-    if (!configuredFlag) {
-      unconfiguredByFlag.push(n)
-    }
-  })
-  // 合并未配置节点列表并去重
-  if (unconfiguredByConfig.length > 0 || unconfiguredByFlag.length > 0) {
-    const idSet = new Set()
-    const merged = [...unconfiguredByConfig, ...unconfiguredByFlag].filter(n => {
-      if (idSet.has(n.id)) return false
-      idSet.add(n.id)
-      return true
-    })
-    messages.push(`存在未完成配置的节点: ${merged.map(n => `${n.label || n.id}`).join(', ')}`)
-  }
-  // 连通性基础校验：除结束外，至少有一条出边
-  const noOut = canvasData.nodes.filter(n => n.type !== 'end' && (outgoing.get(n.id) || 0) === 0)
-  if (noOut.length > 0) {
-    messages.push(`存在未连接后续节点的节点: ${noOut.map(n => `${n.label || n.id}`).join(', ')}`)
-  }
-  // 进一步校验：所有 out 端口都已完成连接；分流节点每个分支都有连接（使用图实例更精确）
-  try {
-    if (graph) {
-      const missingPortConnections = []
-      const missingBranchConnections = []
-      const x6Nodes = graph.getNodes?.() || []
-      x6Nodes.forEach(node => {
-        const nodeId = node.id
-        const nodeData = node.getData?.() || {}
-        const nodeType = nodeData.type || nodeData.nodeType || byId.get(nodeId)?.type
-        // 检查 out 端口
-        const ports = (node.getPorts?.() || []).filter(p => p?.group === 'out')
-        if (ports.length > 0 && nodeType !== 'end') {
-          const outs = graph.getOutgoingEdges?.(node) || []
-          const realOuts = outs.filter(e => {
-            try {
-              const s = e.getSourceCellId?.()
-              const t = e.getTargetCellId?.()
-              return !!s && !!t
-            } catch { return false }
-          })
-          const connectedPortIds = new Set()
-          realOuts.forEach(e => { try { const pid = e.getSourcePortId?.(); if (pid) connectedPortIds.add(pid) } catch {} })
-          ports.forEach(p => {
-            if (!connectedPortIds.has(p.id)) {
-              missingPortConnections.push(`${byId.get(nodeId)?.label || nodeId}#${p.id}`)
-            }
-          })
-        }
-        // 分流节点分支校验
-        if (['audience-split','event-split','ab-test'].includes(nodeType)) {
-          const branches = nodeData.branches || byId.get(nodeId)?.data?.branches || []
-          if (Array.isArray(branches) && branches.length > 0) {
-            const outs = graph.getOutgoingEdges?.(node) || []
-            const realOuts = outs.filter(e => {
-              try { return !!e.getSourceCellId?.() && !!e.getTargetCellId?.() } catch { return false }
-            })
-            branches.forEach(b => {
-              const ok = realOuts.some(e => {
-                try { const bd = e.getData?.() || {}; return bd.branchId === b.id } catch { return false }
-              })
-              if (!ok) missingBranchConnections.push(`${byId.get(nodeId)?.label || nodeId}:${b.label || b.id}`)
-            })
-          }
-        }
-      })
-      if (missingPortConnections.length > 0) {
-        messages.push(`以下节点的出端口未连接: ${missingPortConnections.join(', ')}`)
-      }
-      if (missingBranchConnections.length > 0) {
-        messages.push(`以下分流分支未连接: ${missingBranchConnections.join(', ')}`)
-      }
-    }
-  } catch (err) {
-    console.warn('[PublishValidation] 端口/分支连接校验失败:', err)
-  }
-  return { pass: messages.length === 0, messages }
-}
+const validateCanvasForPublish = (canvasData) => validateForPublish(graph, canvasData)
 
 // 测试函数
 const testClick = () => {

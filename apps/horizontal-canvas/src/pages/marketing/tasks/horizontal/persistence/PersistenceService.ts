@@ -1,0 +1,139 @@
+import { TaskStorage } from '@/utils/taskStorage.js'
+import { getNodeLabel } from '@/utils/nodeTypes.js'
+import { createVueShapeNode } from '../createVueShapeNode.js'
+
+export type GraphLike = any
+
+export function collectCanvasData(graph: GraphLike): { nodes: any[]; connections: any[] } {
+  const nodes = (graph.getNodes?.() || []).map((n: any) => {
+    try {
+      const pos = n.getPosition?.() || { x: 0, y: 0 }
+      const data = n.getData?.() || {}
+      return { id: n.id, type: data.nodeType || data.type || 'node', x: pos.x, y: pos.y, label: data.nodeName || data.headerTitle || getNodeLabel(data.nodeType || data.type) || '', config: data.config || {}, isConfigured: data.isConfigured === true, branches: Array.isArray(data?.config?.branches) ? data.config.branches : [] }
+    } catch {
+      return { id: n.id, type: 'node', x: 0, y: 0, label: '未知节点', config: {}, isConfigured: false, branches: [] }
+    }
+  })
+  const connections = (graph.getEdges?.() || []).map((e: any) => {
+    try {
+      const src = e.getSource?.() || {}
+      const tgt = e.getTarget?.() || {}
+      return { id: e.id, source: src.cell || (e.getSourceCell?.() ? e.getSourceCell().id : null), target: tgt.cell || (e.getTargetCell?.() ? e.getTargetCell().id : null), sourcePortId: e.getSourcePortId?.() || null, targetPortId: e.getTargetPortId?.() || null }
+    } catch {
+      return { id: e.id, source: null, target: null, sourcePortId: null, targetPortId: null }
+    }
+  })
+  return { nodes, connections }
+}
+
+export function loadCanvasData(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): boolean {
+  if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return false
+  try {
+    graph.clearCells()
+    const nodeMap = new Map<string, any>()
+    canvasData.nodes.forEach((nodeData: any) => {
+      try {
+        const position = nodeData.position || { x: nodeData.x || 100, y: nodeData.y || 100 }
+        const nodeDataForGraph = { id: nodeData.id, type: nodeData.type, x: position.x, y: position.y, width: 200, height: 120, data: { nodeType: nodeData.type, nodeName: nodeData.label || nodeData.data?.label || getNodeLabel(nodeData.type) || '', headerTitle: nodeData.label || nodeData.data?.label || getNodeLabel(nodeData.type) || '', config: nodeData.config || nodeData.data?.config || {}, level: nodeData.data?.level || 0, levelIndex: nodeData.data?.levelIndex || 0, isConfigured: nodeData.data?.isConfigured !== undefined ? nodeData.data.isConfigured : nodeData.isConfigured !== undefined ? nodeData.isConfigured : nodeData.type === 'start' ? true : false, branches: nodeData.branches || nodeData.data?.branches || (nodeData.config?.branches) || [] } }
+        const node = createVueShapeNode(nodeDataForGraph)
+        graph.addNode(node)
+        nodeMap.set(nodeData.id, node)
+      } catch {}
+    })
+    canvasData.connections.forEach((connectionData: any) => {
+      try {
+        const sourceNode = nodeMap.get(connectionData.source)
+        const targetNode = nodeMap.get(connectionData.target)
+        if (sourceNode && targetNode) {
+          let sourcePort = connectionData.sourcePort || connectionData.sourcePortId || 'out'
+          const targetPort = connectionData.targetPort || connectionData.targetPortId || 'in'
+          try {
+            const outPorts = (sourceNode.getPorts?.() || []).filter((p: any) => p?.group === 'out')
+            const outIds = outPorts.map((p: any) => p.id)
+            if (!outIds.includes(sourcePort)) {
+              const used = new Set<string>()
+              const existingEdges = graph.getOutgoingEdges?.(sourceNode) || []
+              existingEdges.forEach((ed: any) => { try { const pid = ed.getSourcePortId?.(); if (pid) used.add(pid) } catch {} })
+              const firstFree = outIds.find((id: string) => !used.has(id)) || outIds[0] || sourcePort
+              sourcePort = firstFree
+            }
+          } catch {}
+          const edge = graph.addEdge({ id: connectionData.id, source: { cell: connectionData.source, port: sourcePort }, target: { cell: connectionData.target, port: targetPort }, router: { name: 'normal' }, connector: { name: 'smooth' }, attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, targetMarker: { name: 'block', args: { size: 6, fill: '#4C78FF' } }, strokeLinecap: 'round', strokeLinejoin: 'round' } }, zIndex: 1, data: { branchId: connectionData.branchId || null, label: connectionData.label || '' } })
+          try {
+            const srcData = sourceNode.getData?.() || {}
+            const srcType = srcData?.type || srcData?.nodeType
+            if (edge && srcType === 'ab-test' && !edge.getData?.()?.branchId) {
+              const match = /^out-(\d+)$/.exec(sourcePort)
+              const branches = Array.isArray(srcData?.config?.branches) ? srcData.config.branches : []
+              if (match) {
+                const idx = Number(match[1])
+                const b = branches[idx]
+                if (b && b.id) { try { edge.setData({ ...(edge.getData?.() || {}), branchId: b.id }) } catch {} }
+              }
+            }
+          } catch {}
+        }
+      } catch {}
+    })
+    setTimeout(() => { try { if (graph && canvasData.nodes.length > 0) graph.centerContent({ padding: 50 }) } catch {} }, 300)
+    return true
+  } catch { return false }
+}
+
+export function saveTask(meta: any, canvasData: any): any {
+  return TaskStorage.createTask({ ...meta, canvasData })
+}
+
+export function publishTask(meta: any, canvasData: any): any {
+  return TaskStorage.createTask({ ...meta, canvasData, status: 'published' })
+}
+
+export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): { pass: boolean; messages: string[] } {
+  const messages: string[] = []
+  if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return { pass: false, messages: ['画布数据格式不正确'] }
+  if (canvasData.nodes.length === 0) messages.push('画布中没有任何节点')
+  const byId = new Map<string, any>()
+  canvasData.nodes.forEach((n: any) => byId.set(n.id, n))
+  const outgoing = new Map<string, number>()
+  const incoming = new Map<string, number>()
+  canvasData.connections.forEach((e: any) => { if (!e.source || !e.target) return; outgoing.set(e.source, (outgoing.get(e.source) || 0) + 1); incoming.set(e.target, (incoming.get(e.target) || 0) + 1) })
+  const hasStart = canvasData.nodes.some((n: any) => n.type === 'start')
+  if (!hasStart) messages.push('缺少开始节点')
+  const unconfiguredByConfig: any[] = []
+  const unconfiguredByFlag: any[] = []
+  canvasData.nodes.forEach((n: any) => { if (n.type === 'start' || n.type === 'end') return; const cfg = n.config || {}; const configuredFlag = n.isConfigured === true; if (!cfg || Object.keys(cfg).length === 0) unconfiguredByConfig.push(n); if (!configuredFlag) unconfiguredByFlag.push(n) })
+  if (unconfiguredByConfig.length > 0 || unconfiguredByFlag.length > 0) { const idSet = new Set<string>(); const merged = [...unconfiguredByConfig, ...unconfiguredByFlag].filter((n: any) => { if (idSet.has(n.id)) return false; idSet.add(n.id); return true }); messages.push(`存在未完成配置的节点: ${merged.map((n: any) => `${n.label || n.id}`).join(', ')}`) }
+  const noOut = canvasData.nodes.filter((n: any) => n.type !== 'end' && (outgoing.get(n.id) || 0) === 0)
+  if (noOut.length > 0) messages.push(`存在未连接后续节点的节点: ${noOut.map((n: any) => `${n.label || n.id}`).join(', ')}`)
+  try {
+    if (graph) {
+      const missingPortConnections: string[] = []
+      const missingBranchConnections: string[] = []
+      const x6Nodes = graph.getNodes?.() || []
+      x6Nodes.forEach((node: any) => {
+        const nodeId = node.id
+        const nodeData = node.getData?.() || {}
+        const nodeType = nodeData.type || nodeData.nodeType || byId.get(nodeId)?.type
+        const ports = (node.getPorts?.() || []).filter((p: any) => p?.group === 'out')
+        if (ports.length > 0 && nodeType !== 'end') {
+          const outs = graph.getOutgoingEdges?.(node) || []
+          const realOuts = outs.filter((e: any) => { try { const s = e.getSourceCellId?.(); const t = e.getTargetCellId?.(); return !!s && !!t } catch { return false } })
+          const connectedPortIds = new Set<string>()
+          realOuts.forEach((e: any) => { try { const pid = e.getSourcePortId?.(); if (pid) connectedPortIds.add(pid) } catch {} })
+          ports.forEach((p: any) => { if (!connectedPortIds.has(p.id)) missingPortConnections.push(`${byId.get(nodeId)?.label || nodeId}#${p.id}`) })
+        }
+        if (['audience-split', 'event-split', 'ab-test'].includes(String(nodeType))) {
+          const branches = nodeData.branches || byId.get(nodeId)?.data?.branches || []
+          if (Array.isArray(branches) && branches.length > 0) {
+            const outs = graph.getOutgoingEdges?.(node) || []
+            const realOuts = outs.filter((e: any) => { try { return !!e.getSourceCellId?.() && !!e.getTargetCellId?.() } catch { return false } })
+            branches.forEach((b: any) => { const ok = realOuts.some((e: any) => { try { const bd = e.getData?.() || {}; return bd.branchId === b.id } catch { return false } }); if (!ok) missingBranchConnections.push(`${byId.get(nodeId)?.label || nodeId}:${b.label || b.id}`) })
+          }
+        }
+      })
+      if (missingPortConnections.length > 0) messages.push(`以下节点的出端口未连接: ${missingPortConnections.join(', ')}`)
+      if (missingBranchConnections.length > 0) messages.push(`以下分流分支未连接: ${missingBranchConnections.join(', ')}`)
+    }
+  } catch {}
+  return { pass: messages.length === 0, messages }
+}
