@@ -15,5 +15,40 @@ export function removeNode(graph: GraphLike, id: string): void {}
 export function addEdge(graph: GraphLike, spec: any): any { return null }
 export function removeEdge(graph: GraphLike, id: string): void {}
 export function deleteNodeCascade(graph: GraphLike, id: string): void {}
-export function bindConnectionPolicies(graph: GraphLike, policies: any): void {}
 
+export function bindConnectionPolicies(graph: GraphLike, ctx: { isViewMode: () => boolean; isPanning: () => boolean; Message?: { warning: (msg: string) => void } }) {
+  function validateConnection({ sourceMagnet, targetMagnet, sourceView, targetView, edge }: any) {
+    if (ctx.isPanning?.()) return false
+    if (ctx.isViewMode?.()) return false
+    if (!sourceMagnet || !targetMagnet) return false
+    const sg = sourceMagnet.getAttribute('port-group') || sourceMagnet.getAttribute('data-port-group')
+    const tg = targetMagnet.getAttribute('port-group') || targetMagnet.getAttribute('data-port-group')
+    if (sg !== 'out' || tg !== 'in') return false
+    const srcCell = sourceView?.cell
+    const sourcePortId = sourceMagnet.getAttribute('port') || sourceMagnet.getAttribute('data-port') || sourceMagnet.getAttribute('data-port-id')
+    const exists = (graph.getOutgoingEdges?.(srcCell) || []).some((e: any) => {
+      try {
+        if (edge && e.id === edge.id) return false
+        return e.getSourcePortId?.() === sourcePortId
+      } catch { return false }
+    })
+    if (exists) { try { ctx.Message?.warning?.('该源端口已存在连接，不能重复连接') } catch {}; return false }
+    return true
+  }
+  function validateMagnet({ magnet, view }: any) {
+    if (!magnet) return false
+    if (ctx.isViewMode?.()) return false
+    const g = magnet.getAttribute('port-group') || magnet.getAttribute('data-port-group')
+    if (g !== 'out') return false
+    const sourcePortId = magnet.getAttribute('port') || magnet.getAttribute('data-port') || magnet.getAttribute('data-port-id')
+    const cell = view?.cell
+    if (cell && sourcePortId) {
+      const exists = (graph.getOutgoingEdges?.(cell) || []).some((e: any) => {
+        try { return e.getSourcePortId?.() === sourcePortId } catch { return false }
+      })
+      if (exists) { try { ctx.Message?.warning?.('该源端口已存在连接，不能重复连接') } catch {}; return false }
+    }
+    return true
+  }
+  return { validateConnection, validateMagnet }
+}
