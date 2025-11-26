@@ -1148,19 +1148,8 @@ onMounted(async () => {
     }
   })
 
-  graph.use(new History({
-    enabled: true,
-    ignoreAdd: false,
-    ignoreRemove: false,
-    ignoreChange: ['tools'],
-    beforeAddCommand: (event, args) => {
-      try {
-        if (args?.key === 'tools') return false
-      } catch {}
-      return true
-    }
-  }))
-  graph.use(new Keyboard({ enabled: true }))
+  useHistory(graph, { enabled: true, ignoreAdd: false, ignoreRemove: false, ignoreChange: ['tools'], beforeAddCommand: (event, args) => { try { if (args?.key === 'tools') return false } catch {} return true } })
+  useKeyboard(graph, { enabled: true })
   
   // 添加键盘快捷键支持
   graph.bindKey(['ctrl+z', 'cmd+z'], () => {
@@ -1321,7 +1310,7 @@ onMounted(async () => {
   } catch {}
   
   // 使用Selection插件（支持橡皮框），在事件中按Ctrl/Command进行门控
-  const selectionPlugin = new Selection({
+  const selectionPlugin = useSelection(graph, {
     enabled: true,
     multiple: true,
     rubberband: true,
@@ -1329,7 +1318,6 @@ onMounted(async () => {
     movable: true,
     selectNodeOnClick: false
   })
-  graph.use(selectionPlugin)
   try { selectionPlugin.disableRubberband && selectionPlugin.disableRubberband() } catch {}
 
   const modifierPressed = ref(false)

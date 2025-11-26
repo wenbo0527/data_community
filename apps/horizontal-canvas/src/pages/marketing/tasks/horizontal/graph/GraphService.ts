@@ -1,5 +1,8 @@
 export type GraphLike = any
 import { MiniMap } from '@antv/x6-plugin-minimap'
+import { History } from '@antv/x6-plugin-history'
+import { Keyboard } from '@antv/x6-plugin-keyboard'
+import { Selection } from '@antv/x6-plugin-selection'
 
 export function create(container: HTMLElement, options: any): GraphLike {
   return null
@@ -20,6 +23,24 @@ export function toggleMinimap(graph: GraphLike, container: HTMLElement | null, v
     try { graph.disposePlugin('minimap') } catch {}
     return null
   }
+}
+
+export function useHistory(graph: GraphLike, options: any = {}): any {
+  const plugin = new History(options)
+  try { graph.use(plugin) } catch {}
+  return plugin
+}
+
+export function useKeyboard(graph: GraphLike, options: any = {}): any {
+  const plugin = new Keyboard(options)
+  try { graph.use(plugin) } catch {}
+  return plugin
+}
+
+export function useSelection(graph: GraphLike, options: any = {}): any {
+  const plugin = new Selection(options)
+  try { graph.use(plugin) } catch {}
+  return plugin
 }
 
 export function addNode(graph: GraphLike, spec: any): any { return null }
