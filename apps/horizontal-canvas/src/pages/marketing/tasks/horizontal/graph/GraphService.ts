@@ -3,6 +3,7 @@ import { MiniMap } from '@antv/x6-plugin-minimap'
 import { History } from '@antv/x6-plugin-history'
 import { Keyboard } from '@antv/x6-plugin-keyboard'
 import { Selection } from '@antv/x6-plugin-selection'
+import { Graph } from '@antv/x6'
 
 export function create(container: HTMLElement, options: any): GraphLike {
   return null
@@ -41,6 +42,20 @@ export function useSelection(graph: GraphLike, options: any = {}): any {
   const plugin = new Selection(options)
   try { graph.use(plugin) } catch {}
   return plugin
+}
+
+export function createGraph(container: HTMLElement, options: any = {}): any {
+  return new Graph({
+    container,
+    background: { color: '#ffffff', opacity: 0.8 },
+    grid: { size: 20, visible: true, type: 'dot', color: '#e2e8f0', thickness: 1, opacity: 0.6 },
+    snapline: { enabled: true, tolerance: 8, sharp: true, stroke: '#3b82f6', strokeWidth: 1.5, strokeDasharray: '6,4', opacity: 0.8 },
+    panning: { enabled: true, eventTypes: ['leftMouseDown'] },
+    mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'], factor: 1.15, maxScale: 3, minScale: 0.1 },
+    history: { enabled: false },
+    highlighting: { magnetAvailable: { name: 'stroke', args: { padding: 8, attrs: { stroke: '#3b82f6', 'stroke-width': 2, 'stroke-dasharray': '4,4' } } }, magnetAdsorbed: { name: 'stroke', args: { padding: 10, attrs: { stroke: '#2563eb', 'stroke-width': 2.5, 'stroke-dasharray': 'none' } } } },
+    ...options
+  })
 }
 
 export function addNode(graph: GraphLike, spec: any): any { return null }

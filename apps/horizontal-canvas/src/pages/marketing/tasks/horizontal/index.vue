@@ -236,7 +236,7 @@ import { TaskStorage } from '../../../../utils/taskStorage.js'
 import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
 import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
-import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection } from './graph/GraphService.ts'
+import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph } from './graph/GraphService.ts'
 import { useCanvasState } from './state/useCanvasState.ts'
 
 // 任务基础信息变量
@@ -944,7 +944,7 @@ onMounted(async () => {
     component: HorizontalNode
   })
 
-  graph = new Graph({
+  graph = createGraph(canvasContainerRef.value, {
     container: canvasContainerRef.value,
     background: { 
       color: '#ffffff',
