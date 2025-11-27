@@ -21,5 +21,15 @@ export function useCanvasState() {
     if (debugDockBoundsRef && typeof debugDockBoundsRef === 'object') debugDockBoundsRef.value = result
     return result
   }
-  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop }
+  function computeMinimapPosition(anchorRect: { left: number; bottom: number } | null, canvasRect: { left: number; top: number } | null) {
+    const offsetY = 8
+    if (anchorRect && canvasRect) {
+      return {
+        left: Math.max(16, Math.round(anchorRect.left - canvasRect.left)),
+        top: Math.max(16, Math.round(anchorRect.bottom - canvasRect.top + offsetY))
+      }
+    }
+    return { left: 16, top: 64 }
+  }
+  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition }
 }

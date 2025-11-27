@@ -49,6 +49,7 @@ export function createGraph(container: HTMLElement, options: any = {}): any {
     container,
     background: { color: '#ffffff', opacity: 0.8 },
     grid: { size: 20, visible: true, type: 'dot', color: '#e2e8f0', thickness: 1, opacity: 0.6 },
+    scroller: { enabled: true, pannable: false, cursor: 'grab' },
     snapline: { enabled: true, tolerance: 8, sharp: true, stroke: '#3b82f6', strokeWidth: 1.5, strokeDasharray: '6,4', opacity: 0.8 },
     panning: { enabled: true, eventTypes: ['leftMouseDown'] },
     mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'], factor: 1.15, maxScale: 3, minScale: 0.1 },

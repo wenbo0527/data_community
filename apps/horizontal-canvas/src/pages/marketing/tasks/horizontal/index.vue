@@ -3272,20 +3272,10 @@ const handleToggleMinimap = (payload) => {
   if (showMinimap.value && graph) {
     // 计算悬浮位置：预览图按钮下方
     try {
-      const anchor = payload?.anchorRect
-      const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.()
-      if (anchor && canvasRect) {
-        const offsetY = 8
-        minimapPosition.value = {
-          left: Math.max(16, anchor.left - canvasRect.left),
-          top: Math.max(16, anchor.bottom - canvasRect.top + offsetY)
-        }
-      } else {
-        minimapPosition.value = { left: 16, top: 64 }
-      }
-    } catch {
-      minimapPosition.value = { left: 16, top: 64 }
-    }
+      const anchor = payload?.anchorRect || null
+      const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.() || null
+      minimapPosition.value = useCanvasState().computeMinimapPosition(anchor, canvasRect)
+    } catch { minimapPosition.value = { left: 16, top: 64 } }
 
     nextTick(() => {
       if (!minimapContainer.value) return
