@@ -31,6 +31,12 @@ export function useCanvasState() {
     }
     return { left: 16, top: 64 }
   }
+  function toggleMinimapUI(showMinimapRef: { value: boolean }, anchorRect: any, canvasRect: any, minimapPositionRef: { value: { left: number; top: number } }) {
+    showMinimapRef.value = !showMinimapRef.value
+    const pos = computeMinimapPosition(anchorRect, canvasRect)
+    minimapPositionRef.value = pos
+    return pos
+  }
   function setupPanelResizeListeners(toolbarWrapperEl: HTMLElement | null, contentEl: HTMLElement | null, showStatisticsPanelRef: { value: boolean }, isViewMode: boolean, isPublished: boolean, statisticsPanelWidthRef: { value: number }, debugDockBoundsRef: { value: { left: number; width: number } }, statisticsPanelTopRef: { value: number }) {
     const onResizeTop = () => updateStatisticsPanelTop(toolbarWrapperEl, statisticsPanelTopRef)
     const onResizeDock = () => updateDebugDockBounds(contentEl, showStatisticsPanelRef, isViewMode, isPublished, statisticsPanelWidthRef, debugDockBoundsRef)
@@ -53,5 +59,5 @@ export function useCanvasState() {
     const newZoom = Math.round((Number(scale) || 1) * 100)
     scaleDisplayTextRef.value = `${newZoom}%`
   }
-  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners, setupPanelWatchers, updateScaleDisplay }
+  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners, setupPanelWatchers, updateScaleDisplay, toggleMinimapUI }
 }

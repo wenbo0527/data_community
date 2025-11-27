@@ -3260,14 +3260,14 @@ const handleJumpToHistoryState = (index) => {
 
 const handleToggleMinimap = (payload) => {
   console.log('[Toolbar] 切换预览图')
-  showMinimap.value = !showMinimap.value
+  const anchor = payload?.anchorRect || null
+  const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.() || null
+  useCanvasState().toggleMinimapUI(showMinimap, anchor, canvasRect, minimapPosition)
 
   if (showMinimap.value && graph) {
     // 计算悬浮位置：预览图按钮下方
     try {
-      const anchor = payload?.anchorRect || null
-      const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.() || null
-      minimapPosition.value = useCanvasState().computeMinimapPosition(anchor, canvasRect)
+      useCanvasState().toggleMinimapUI(showMinimap, anchor, canvasRect, minimapPosition)
     } catch { minimapPosition.value = { left: 16, top: 64 } }
 
     nextTick(() => {
