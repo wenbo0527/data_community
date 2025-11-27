@@ -37,6 +37,21 @@ export function useCanvasState() {
     minimapPositionRef.value = pos
     return pos
   }
+  function computeStatsPanelPosition(anchorRect: { left: number; bottom: number } | null, canvasRect: { left: number; top: number } | null) {
+    const offsetY = 8
+    if (anchorRect && canvasRect) {
+      return {
+        left: Math.max(16, Math.round(anchorRect.left - canvasRect.left)),
+        top: Math.max(16, Math.round(anchorRect.bottom - canvasRect.top + offsetY))
+      }
+    }
+    return { left: 16, top: 64 }
+  }
+  function clampPanelPosition(statsPos: { left: number; top: number }, canvasRect: { width: number; height: number }, panelRect: { width: number; height: number }, pad = 16) {
+    const maxLeft = Math.max(pad, canvasRect.width - panelRect.width - pad)
+    const maxTop = Math.max(pad, canvasRect.height - panelRect.height - pad)
+    return { left: Math.min(statsPos.left, maxLeft), top: Math.min(statsPos.top, maxTop) }
+  }
   function setupPanelResizeListeners(toolbarWrapperEl: HTMLElement | null, contentEl: HTMLElement | null, showStatisticsPanelRef: { value: boolean }, isViewMode: boolean, isPublished: boolean, statisticsPanelWidthRef: { value: number }, debugDockBoundsRef: { value: { left: number; width: number } }, statisticsPanelTopRef: { value: number }) {
     const onResizeTop = () => updateStatisticsPanelTop(toolbarWrapperEl, statisticsPanelTopRef)
     const onResizeDock = () => updateDebugDockBounds(contentEl, showStatisticsPanelRef, isViewMode, isPublished, statisticsPanelWidthRef, debugDockBoundsRef)
@@ -59,5 +74,5 @@ export function useCanvasState() {
     const newZoom = Math.round((Number(scale) || 1) * 100)
     scaleDisplayTextRef.value = `${newZoom}%`
   }
-  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners, setupPanelWatchers, updateScaleDisplay, toggleMinimapUI }
+  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners, setupPanelWatchers, updateScaleDisplay, toggleMinimapUI, computeStatsPanelPosition, clampPanelPosition }
 }

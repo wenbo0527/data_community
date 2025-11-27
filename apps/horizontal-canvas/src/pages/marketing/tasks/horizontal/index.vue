@@ -3236,14 +3236,7 @@ const handleJumpToHistoryState = (index) => {
         const panel = statisticsPanelRef.value?.getBoundingClientRect?.()
         const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.()
         if (panel && canvasRect) {
-          const pad = 16
-          const maxLeft = Math.max(pad, canvasRect.width - panel.width - pad)
-          const maxTop = Math.max(pad, canvasRect.height - panel.height - pad)
-          statsPanelPosition.value = {
-            left: Math.min(statsPanelPosition.value.left, maxLeft),
-            top: Math.min(statsPanelPosition.value.top, maxTop)
-          }
-          console.log('[Stats] panel-position:', statsPanelPosition.value)
+        statsPanelPosition.value = useCanvasState().clampPanelPosition(statsPanelPosition.value, canvasRect, panel, 16)
           // 默认聚焦开始节点
           if (!statsFocusNodeId.value && graph) {
             const nodes = graph.getNodes?.() || []
@@ -3251,7 +3244,6 @@ const handleJumpToHistoryState = (index) => {
               try { const d = n.getData?.() || {}; return d.type === 'start' || d.nodeType === 'start' } catch { return false }
             })
             statsFocusNodeId.value = String((start && start.id) || (nodes[0]?.id) || '')
-            console.log('[Stats] default focusNodeId set:', statsFocusNodeId.value)
           }
         }
       } catch {}
