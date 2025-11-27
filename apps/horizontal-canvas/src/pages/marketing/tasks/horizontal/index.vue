@@ -3135,8 +3135,7 @@ const handleZoomIn = () => {
   const next = Math.min(3, currentZoom + 0.1)
   if (typeof graph.zoomTo === 'function') graph.zoomTo(next)
   else graph.zoom(next)
-  const newZoom = Math.round((graph.zoom?.() || next) * 100)
-  scaleDisplayText.value = `${newZoom}%`
+  useCanvasState().updateScaleDisplay(scaleDisplayText, graph.zoom?.() || next)
   console.log('[Toolbar] 放大画布，当前缩放:', graph.zoom?.())
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
@@ -3147,8 +3146,7 @@ const handleZoomOut = () => {
   const next = Math.max(0.1, currentZoom - 0.1)
   if (typeof graph.zoomTo === 'function') graph.zoomTo(next)
   else graph.zoom(next)
-  const newZoom = Math.round((graph.zoom?.() || next) * 100)
-  scaleDisplayText.value = `${newZoom}%`
+  useCanvasState().updateScaleDisplay(scaleDisplayText, graph.zoom?.() || next)
   console.log('[Toolbar] 缩小画布，当前缩放:', graph.zoom?.())
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
@@ -3159,7 +3157,7 @@ const handleResetZoom = () => {
   else graph.zoom(1)
   if (typeof graph.centerContent === 'function') graph.centerContent()
   else graph.center?.()
-  scaleDisplayText.value = '100%'
+  useCanvasState().updateScaleDisplay(scaleDisplayText, 1)
   console.log('[Toolbar] 重置缩放并居中')
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
@@ -3169,8 +3167,7 @@ const handleSetZoom = (scale) => {
   const clamped = Math.max(0.1, Math.min(3, Number(scale) || 1))
   if (typeof graph.zoomTo === 'function') graph.zoomTo(clamped)
   else graph.zoom(clamped)
-  const newZoom = Math.round((graph.zoom?.() || clamped) * 100)
-  scaleDisplayText.value = `${newZoom}%`
+  useCanvasState().updateScaleDisplay(scaleDisplayText, graph.zoom?.() || clamped)
   console.log(`[Toolbar] 设置缩放比例: ${clamped} -> ${newZoom}%`)
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }

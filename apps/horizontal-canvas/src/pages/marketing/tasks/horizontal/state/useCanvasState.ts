@@ -49,5 +49,9 @@ export function useCanvasState() {
     watch(showStatisticsPanelRef as any, async () => { await nextTick(); await updateTopFn() })
     watch([showStatisticsPanelRef as any, statisticsPanelWidthRef as any], async () => { await nextTick(); await updateDockFn() })
   }
-  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners, setupPanelWatchers }
+  function updateScaleDisplay(scaleDisplayTextRef: { value: string }, scale: number) {
+    const newZoom = Math.round((Number(scale) || 1) * 100)
+    scaleDisplayTextRef.value = `${newZoom}%`
+  }
+  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners, setupPanelWatchers, updateScaleDisplay }
 }
