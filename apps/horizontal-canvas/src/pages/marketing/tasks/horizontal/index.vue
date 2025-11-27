@@ -1094,9 +1094,8 @@ onMounted(async () => {
 
   // 初始化统计面板顶部偏移（位于工具栏以下）并监听窗口尺寸变化
   updateStatisticsPanelTop()
-  try { window.addEventListener('resize', updateStatisticsPanelTop) } catch {}
   updateDebugDockBounds()
-  try { window.addEventListener('resize', updateDebugDockBounds) } catch {}
+  const resizeHandlers = useCanvasState().setupPanelResizeListeners(toolbarWrapperRef.value, contentRef.value, showStatisticsPanel, isViewMode.value, isPublished.value, statisticsPanelWidth, debugDockBounds, statisticsPanelTop)
 })
             let best = null
             let bestDist = Infinity
@@ -1326,8 +1325,7 @@ onMounted(async () => {
         listenersRegistered = false
       }
     } catch {}
-    try { window.removeEventListener('resize', updateStatisticsPanelTop) } catch {}
-    try { window.removeEventListener('resize', updateDebugDockBounds) } catch {}
+    try { resizeHandlers?.detach && resizeHandlers.detach() } catch {}
   })
   
   const statsFocusNodeId = ref('')

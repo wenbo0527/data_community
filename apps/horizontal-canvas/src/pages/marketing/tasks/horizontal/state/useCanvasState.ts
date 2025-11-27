@@ -31,5 +31,19 @@ export function useCanvasState() {
     }
     return { left: 16, top: 64 }
   }
-  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition }
+  function setupPanelResizeListeners(toolbarWrapperEl: HTMLElement | null, contentEl: HTMLElement | null, showStatisticsPanelRef: { value: boolean }, isViewMode: boolean, isPublished: boolean, statisticsPanelWidthRef: { value: number }, debugDockBoundsRef: { value: { left: number; width: number } }, statisticsPanelTopRef: { value: number }) {
+    const onResizeTop = () => updateStatisticsPanelTop(toolbarWrapperEl, statisticsPanelTopRef)
+    const onResizeDock = () => updateDebugDockBounds(contentEl, showStatisticsPanelRef, isViewMode, isPublished, statisticsPanelWidthRef, debugDockBoundsRef)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', onResizeTop)
+      window.addEventListener('resize', onResizeDock)
+    }
+    return {
+      detach() {
+        try { window.removeEventListener('resize', onResizeTop) } catch {}
+        try { window.removeEventListener('resize', onResizeDock) } catch {}
+      }
+    }
+  }
+  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners }
 }
