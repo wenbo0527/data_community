@@ -58,6 +58,39 @@ export function createGraph(container: HTMLElement, options: any = {}): any {
   })
 }
 
+export function bindDefaultShortcuts(graph: GraphLike, handlers: { handleUndo?: () => void; handleRedo?: () => void; handleZoomIn?: () => void; handleZoomOut?: () => void }) {
+  if (!graph || !graph.bindKey) return
+  graph.bindKey(['ctrl+z', 'cmd+z'], () => { try { if (graph.canUndo?.()) handlers.handleUndo?.() } catch {} return false })
+  graph.bindKey(['ctrl+y', 'cmd+y', 'ctrl+shift+z', 'cmd+shift+z'], () => { try { if (graph.canRedo?.()) handlers.handleRedo?.() } catch {} return false })
+  graph.bindKey(['ctrl+plus', 'cmd+plus', 'ctrl+=', 'cmd+='], () => { handlers.handleZoomIn?.(); return false })
+  graph.bindKey(['ctrl+-', 'cmd+-'], () => { handlers.handleZoomOut?.(); return false })
+}
+
+export function configureSelectionRubberbandGate(selectionPlugin: any, graph: GraphLike) {
+  const modifierPressed = { value: false }
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const pressed = !!(e && (e.ctrlKey || (e as any).metaKey))
+    if (pressed && !modifierPressed.value) {
+      modifierPressed.value = true
+      try { selectionPlugin?.enableRubberband && selectionPlugin.enableRubberband() } catch {}
+      try { graph?.disablePanning && graph.disablePanning() } catch {}
+    }
+  }
+  const handleKeyUp = (e: KeyboardEvent) => {
+    const pressed = !!(e && (e.ctrlKey || (e as any).metaKey))
+    if (!pressed && modifierPressed.value) {
+      modifierPressed.value = false
+      try { selectionPlugin?.disableRubberband && selectionPlugin.disableRubberband() } catch {}
+      try { graph?.enablePanning && graph.enablePanning() } catch {}
+    }
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+  }
+  return { handleKeyDown, handleKeyUp }
+}
+
 export function addNode(graph: GraphLike, spec: any): any { return null }
 export function removeNode(graph: GraphLike, id: string): void {}
 export function addEdge(graph: GraphLike, spec: any): any { return null }

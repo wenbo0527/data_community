@@ -236,7 +236,7 @@ import { TaskStorage } from '../../../../utils/taskStorage.js'
 import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
 import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
-import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph } from './graph/GraphService.ts'
+import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph, bindDefaultShortcuts, configureSelectionRubberbandGate } from './graph/GraphService.ts'
 import { useCanvasState } from './state/useCanvasState.ts'
 
 // 任务基础信息变量
@@ -1152,31 +1152,7 @@ onMounted(async () => {
   useKeyboard(graph, { enabled: true })
   
   // 添加键盘快捷键支持
-  graph.bindKey(['ctrl+z', 'cmd+z'], () => {
-    if (graph.canUndo()) {
-      handleUndo()
-      Message.success('已撤销')
-    }
-    return false
-  })
-  
-  graph.bindKey(['ctrl+y', 'cmd+y', 'ctrl+shift+z', 'cmd+shift+z'], () => {
-    if (graph.canRedo()) {
-      handleRedo()
-      Message.success('已重做')
-    }
-    return false
-  })
-  
-  graph.bindKey(['ctrl+plus', 'cmd+plus', 'ctrl+=', 'cmd+='], () => {
-    handleZoomIn()
-    return false
-  })
-  
-  graph.bindKey(['ctrl+-', 'cmd+-'], () => {
-    handleZoomOut()
-    return false
-  })
+  bindDefaultShortcuts(graph, { handleUndo, handleRedo, handleZoomIn, handleZoomOut })
 
   graph.bindKey(['delete', 'backspace'], () => {
     // DocRef: 架构文档「关键代码片段/键盘删除屏蔽（查看模式）」
@@ -1320,29 +1296,7 @@ onMounted(async () => {
   })
   try { selectionPlugin.disableRubberband && selectionPlugin.disableRubberband() } catch {}
 
-  const modifierPressed = ref(false)
-  const handleKeyDown = (e) => {
-    const pressed = !!(e && (e.ctrlKey || e.metaKey))
-    if (pressed && !modifierPressed.value) {
-      modifierPressed.value = true
-      try { selectionPlugin.enableRubberband && selectionPlugin.enableRubberband() } catch {}
-      try { graph.disablePanning && graph.disablePanning() } catch {}
-    }
-  }
-  const handleKeyUp = (e) => {
-    const pressed = !!(e && (e.ctrlKey || e.metaKey))
-    if (!pressed && modifierPressed.value) {
-      modifierPressed.value = false
-      try { selectionPlugin.disableRubberband && selectionPlugin.disableRubberband() } catch {}
-      try { graph.enablePanning && graph.enablePanning() } catch {}
-    }
-  }
-  let listenersRegistered = false
-  if (!listenersRegistered) {
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    listenersRegistered = true
-  }
+  configureSelectionRubberbandGate(selectionPlugin, graph)
 
   
 
