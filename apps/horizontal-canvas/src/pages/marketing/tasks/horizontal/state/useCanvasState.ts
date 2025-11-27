@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 
 export function useCanvasState() {
   const showHistoryPanel = ref(false)
@@ -45,5 +45,9 @@ export function useCanvasState() {
       }
     }
   }
-  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners }
+  function setupPanelWatchers(showStatisticsPanelRef: { value: boolean }, statisticsPanelWidthRef: { value: number }, updateTopFn: () => Promise<void> | void, updateDockFn: () => Promise<void> | void) {
+    watch(showStatisticsPanelRef as any, async () => { await nextTick(); await updateTopFn() })
+    watch([showStatisticsPanelRef as any, statisticsPanelWidthRef as any], async () => { await nextTick(); await updateDockFn() })
+  }
+  return { showHistoryPanel, showStatisticsPanel, scaleDisplayText, showMinimap, statisticsPanelWidth, statisticsPanelHeight, updateDebugDockBounds, updateStatisticsPanelTop, computeMinimapPosition, setupPanelResizeListeners, setupPanelWatchers }
 }

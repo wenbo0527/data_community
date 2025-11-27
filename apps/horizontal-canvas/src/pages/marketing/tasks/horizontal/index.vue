@@ -1356,9 +1356,7 @@ onMounted(async () => {
 
   // 面板开关时重新计算顶部偏移
   // DocRef: 架构文档「关键代码片段/统计面板停靠与尺寸更新」
-  watch(showStatisticsPanel, async () => { await nextTick(); updateStatisticsPanelTop() })
-  // 面板与画布宽度变化时更新底部调试面板的停靠范围
-  watch([showStatisticsPanel, statisticsPanelWidth], async () => { await nextTick(); updateDebugDockBounds() })
+  useCanvasState().setupPanelWatchers(showStatisticsPanel, statisticsPanelWidth, async () => { await nextTick(); updateStatisticsPanelTop() }, async () => { await nextTick(); updateDebugDockBounds() })
 
   // 保留空声明以避免未定义警告（模板已使用内联表达式）
 
