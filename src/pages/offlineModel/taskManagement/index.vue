@@ -6,22 +6,7 @@
         <h2>任务管理</h2>
         <span class="page-subtitle">管理和监控所有模型任务</span>
       </div>
-      <div class="page-actions">
-        <a-space>
-          <a-button type="primary" @click="handleCreateTask">
-            <template #icon>
-              <icon-plus />
-            </template>
-            新建任务
-          </a-button>
-          <a-button @click="handleBatchOperation">
-            <template #icon>
-              <icon-settings />
-            </template>
-            批量操作
-          </a-button>
-        </a-space>
-      </div>
+      <div class="page-actions"></div>
     </div>
 
     <!-- 任务统计 -->
@@ -269,6 +254,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOfflineModelStore } from '@/stores/offlineModel'
+import { taskAPI } from '@/api/offlineModel'
 import { Message } from '@arco-design/web-vue'
 
 const router = useRouter()
@@ -389,43 +375,10 @@ onUnmounted(() => {
 const loadData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // await store.fetchTasks({
-    //   ...filterForm,
-    //   page: pagination.current,
-    //   pageSize: pagination.pageSize
-    // })
-    
-    // 模拟数据
-    const mockData = [
-      {
-        id: 1,
-        name: '信用评分模型训练',
-        type: 'training',
-        status: 'running',
-        priority: 'high',
-        progress: 75,
-        startTime: '2024-01-15 10:30:00',
-        estimatedEndTime: '2024-01-15 12:30:00',
-        creator: '张三',
-        createTime: '2024-01-15 10:30:00'
-      },
-      {
-        id: 2,
-        name: '风险预测模型评估',
-        type: 'evaluation',
-        status: 'completed',
-        priority: 'medium',
-        progress: 100,
-        startTime: '2024-01-16 14:20:00',
-        estimatedEndTime: '2024-01-16 15:20:00',
-        creator: '李四',
-        createTime: '2024-01-16 14:20:00'
-      }
-    ]
-    
-    store.setTasks(mockData)
-    pagination.total = mockData.length
+    const res = await taskAPI.getTasks({ type: filterForm.type || '', status: filterForm.status || '', page: pagination.current, pageSize: pagination.pageSize })
+    const list = (res.data && res.data.data) ? res.data.data : []
+    store.setTasks(list)
+    pagination.total = (res.data && res.data.total) ? res.data.total : list.length
   } catch (error) {
     Message.error('加载数据失败')
   } finally {
@@ -459,9 +412,7 @@ const handleSelectionChange = (rows) => {
   selectedRows.value = rows
 }
 
-const handleCreateTask = () => {
-  router.push('/offline-model/task-management/create')
-}
+// 不支持新建任务，入口移除
 
 const handleBatchOperation = () => {
   if (selectedRows.value.length === 0) {

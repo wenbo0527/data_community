@@ -27,6 +27,9 @@ const mockFeatures = [
     code: 'user_age',
     type: FEATURE_TYPES.NUMERICAL,
     description: '用户的年龄信息',
+    majorCategory: 'credit',
+    level1: 'credit_report',
+    level2: 'query_count',
     status: FEATURE_STATUS.ACTIVE,
     createTime: '2024-01-15 10:30:00',
     creator: '张三',
@@ -42,6 +45,9 @@ const mockFeatures = [
     code: 'user_gender',
     type: FEATURE_TYPES.CATEGORICAL,
     description: '用户的性别信息',
+    majorCategory: 'credit',
+    level1: 'credit_report',
+    level2: 'overdue_count',
     status: FEATURE_STATUS.ACTIVE,
     createTime: '2024-01-16 14:20:00',
     creator: '李四',
@@ -57,6 +63,9 @@ const mockFeatures = [
     code: 'user_income',
     type: FEATURE_TYPES.NUMERICAL,
     description: '用户的月收入信息',
+    majorCategory: 'credit',
+    level1: 'credit_history',
+    level2: 'loan_times',
     status: FEATURE_STATUS.PENDING,
     createTime: '2024-01-17 09:15:00',
     creator: '王五',
@@ -72,6 +81,9 @@ const mockFeatures = [
     code: 'user_occupation',
     type: FEATURE_TYPES.CATEGORICAL,
     description: '用户的职业类别',
+    majorCategory: 'behavior',
+    level1: 'activity',
+    level2: 'session_count',
     status: FEATURE_STATUS.ACTIVE,
     createTime: '2024-01-18 16:45:00',
     creator: '赵六',
@@ -87,6 +99,9 @@ const mockFeatures = [
     code: 'user_review_text',
     type: FEATURE_TYPES.TEXT,
     description: '用户的产品评论内容',
+    majorCategory: 'behavior',
+    level1: 'transaction_behavior',
+    level2: 'frequency',
     status: FEATURE_STATUS.DRAFT,
     createTime: '2024-01-19 11:30:00',
     creator: '钱七',
@@ -95,6 +110,176 @@ const mockFeatures = [
     dataQuality: 88.9,
     missingRate: 25.6,
     uniqueValueCount: 15000
+  }
+  ,
+  {
+    id: 6,
+    name: '模型分',
+    code: 'score',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '模型输出风险评分（模型分）',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-01 09:00:00',
+    creator: '系统',
+    dataSource: '平台模型输出',
+    updateFrequency: '按需',
+    dataQuality: 99.0,
+    missingRate: 0.0,
+    uniqueValueCount: 10000,
+    level1: 'model_outputs',
+    level2: 'credit_score_service'
+  }
+  ,
+  {
+    id: 7,
+    name: '征信查询次数',
+    code: 'credit_query_count',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '征信报告中的近半年征信查询次数',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-10 10:00:00',
+    creator: '风控',
+    dataSource: '征信报告',
+    updateFrequency: '月度',
+    dataQuality: 96.5,
+    missingRate: 1.2,
+    uniqueValueCount: 300,
+    majorCategory: 'credit',
+    level1: 'credit_report',
+    level2: 'query_count'
+  }
+  ,
+  {
+    id: 8,
+    name: '征信逾期次数',
+    code: 'credit_overdue_count',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '征信报告中的历史逾期次数',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-11 10:00:00',
+    creator: '风控',
+    dataSource: '征信报告',
+    updateFrequency: '月度',
+    dataQuality: 93.2,
+    missingRate: 2.8,
+    uniqueValueCount: 200,
+    majorCategory: 'credit',
+    level1: 'credit_report',
+    level2: 'overdue_count'
+  }
+  ,
+  {
+    id: 9,
+    name: '贷款次数',
+    code: 'loan_times',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '信贷记录中的贷款次数',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-12 11:00:00',
+    creator: '风控',
+    dataSource: '信贷记录',
+    updateFrequency: '月度',
+    dataQuality: 95.1,
+    missingRate: 1.1,
+    uniqueValueCount: 150,
+    majorCategory: 'credit',
+    level1: 'credit_history',
+    level2: 'loan_times'
+  }
+  ,
+  {
+    id: 10,
+    name: '还款比率',
+    code: 'repay_ratio',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '信贷记录中的还款比率',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-12 11:10:00',
+    creator: '风控',
+    dataSource: '信贷记录',
+    updateFrequency: '月度',
+    dataQuality: 94.3,
+    missingRate: 1.5,
+    uniqueValueCount: 120,
+    majorCategory: 'credit',
+    level1: 'credit_history',
+    level2: 'repay_ratio'
+  }
+  ,
+  {
+    id: 11,
+    name: '平均交易额',
+    code: 'avg_amount',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '用户近三个月的平均交易金额',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-13 09:30:00',
+    creator: '数据',
+    dataSource: '交易行为',
+    updateFrequency: '日度',
+    dataQuality: 97.8,
+    missingRate: 0.5,
+    uniqueValueCount: 5000,
+    majorCategory: 'behavior',
+    level1: 'transaction_behavior',
+    level2: 'avg_amount'
+  }
+  ,
+  {
+    id: 12,
+    name: '交易频次',
+    code: 'frequency',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '用户近一周的交易次数',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-13 10:00:00',
+    creator: '数据',
+    dataSource: '交易行为',
+    updateFrequency: '日度',
+    dataQuality: 98.2,
+    missingRate: 0.3,
+    uniqueValueCount: 800,
+    majorCategory: 'behavior',
+    level1: 'transaction_behavior',
+    level2: 'frequency'
+  }
+  ,
+  {
+    id: 13,
+    name: '登录天数',
+    code: 'login_days',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '用户近一月登录天数',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-14 08:20:00',
+    creator: '产品',
+    dataSource: '活跃度',
+    updateFrequency: '日度',
+    dataQuality: 96.9,
+    missingRate: 0.7,
+    uniqueValueCount: 31,
+    majorCategory: 'behavior',
+    level1: 'activity',
+    level2: 'login_days'
+  }
+  ,
+  {
+    id: 14,
+    name: '会话次数',
+    code: 'session_count',
+    type: FEATURE_TYPES.NUMERICAL,
+    description: '近一周会话次数',
+    status: FEATURE_STATUS.ACTIVE,
+    createTime: '2024-02-14 09:00:00',
+    creator: '产品',
+    dataSource: '活跃度',
+    updateFrequency: '日度',
+    dataQuality: 97.3,
+    missingRate: 0.6,
+    uniqueValueCount: 500,
+    majorCategory: 'behavior',
+    level1: 'activity',
+    level2: 'session_count'
   }
 ]
 
@@ -116,7 +301,7 @@ const featureStats = {
  * 获取特征列表
  */
 export function getFeatures(params = {}) {
-  const { name = '', type = '', status = '', page = 1, pageSize = 10 } = params
+  const { name = '', type = '', status = '', majorCategory = '', level1 = '', level2 = '', page = 1, pageSize = 10 } = params
   
   let filteredFeatures = [...mockFeatures]
   
@@ -131,6 +316,18 @@ export function getFeatures(params = {}) {
   // 按类型筛选
   if (type) {
     filteredFeatures = filteredFeatures.filter(f => f.type === type)
+  }
+  // 按业务大类筛选
+  if (majorCategory) {
+    filteredFeatures = filteredFeatures.filter(f => f.majorCategory === majorCategory)
+  }
+  // 按一级分类筛选
+  if (level1) {
+    filteredFeatures = filteredFeatures.filter(f => f.level1 === level1)
+  }
+  // 按二级分类筛选
+  if (level2) {
+    filteredFeatures = filteredFeatures.filter(f => f.level2 === level2)
   }
   
   // 按状态筛选
@@ -166,7 +363,7 @@ export function createFeature(featureData) {
     id: mockFeatures.length + 1,
     ...featureData,
     createTime: new Date().toLocaleString('zh-CN'),
-    creator: '当前用户',
+    creator: featureData.creator || '当前用户',
     status: FEATURE_STATUS.DRAFT
   }
   mockFeatures.push(newFeature)
@@ -276,5 +473,228 @@ export default {
   importFeatures,
   exportFeatures,
   getFeatureTypes,
-  getFeatureStatus
+  getFeatureStatus,
+  listTables,
+  getTableColumns,
+  getTableMeta,
+  setTableMeta,
+  getRegisteredFields,
+  getUnregisteredFields,
+  batchRegisterFields,
+  listDatabases,
+  listTablesByDb
+}
+
+const mockTables = [
+  {
+    name: 'user_profile',
+    type: 'snapshot',
+    primaryKey: 'user_id',
+    partitionFields: ['update_time'],
+    description: '用户画像快照表',
+    columns: [
+      { name: 'user_id', type: 'string' },
+      { name: 'cert_no', type: 'string' },
+      { name: 'flow_id', type: 'string' },
+      { name: 'report_id', type: 'string' },
+      { name: 'age', type: 'int' },
+      { name: 'gender', type: 'string' },
+      { name: 'income', type: 'double' },
+      { name: 'credit_history', type: 'int' },
+      { name: 'credit_score', type: 'double' },
+      { name: 'score', type: 'double' },
+      { name: 'risk_value', type: 'double' },
+      { name: 'purchase_frequency', type: 'int' },
+      { name: 'avg_order_value', type: 'double' },
+      { name: 'update_time', type: 'timestamp' }
+    ],
+    registered: ['age', 'gender'],
+    registeredDetails: [
+      {
+        name: 'age',
+        type: 'int',
+        level1: 'credit_report',
+        level2: 'query_count',
+        cnName: '年龄',
+        onlineTime: '2024-01-15',
+        dataType: 'int',
+        defaultValue: '0',
+        processingLogic: '取用户基础信息年龄',
+        batch: '20240115',
+        remark: '基础属性'
+      },
+      {
+        name: 'gender',
+        type: 'string',
+        level1: 'credit_report',
+        level2: 'overdue_count',
+        cnName: '性别',
+        onlineTime: '2024-01-15',
+        dataType: 'string',
+        defaultValue: '',
+        processingLogic: '取用户基础信息性别',
+        batch: '20240115',
+        remark: ''
+      }
+      ,
+      {
+        name: 'score',
+        type: 'double',
+        level1: 'model_outputs',
+        level2: 'credit_score_service',
+        cnName: '信用评分输出',
+        onlineTime: '2024-02-01',
+        dataType: 'double',
+        defaultValue: '0.0',
+        processingLogic: '来自信用评分模型服务的风险评分输出沉淀',
+        batch: '20240201',
+        remark: '模型输出沉淀'
+      },
+      {
+        name: 'risk_value',
+        type: 'double',
+        level1: 'model_outputs',
+        level2: 'risk_regression_service',
+        cnName: '风险值输出',
+        onlineTime: '2024-02-01',
+        dataType: 'double',
+        defaultValue: '0.0',
+        processingLogic: '来自风险回归模型服务的连续风险值输出沉淀',
+        batch: '20240201',
+        remark: '模型输出沉淀'
+      }
+    ]
+  },
+  {
+    name: 'transactions',
+    type: 'stream',
+    primaryKey: 'tx_id',
+    partitionFields: [],
+    description: '交易流水表',
+    columns: [
+      { name: 'tx_id', type: 'string' },
+      { name: 'user_id', type: 'string' },
+      { name: 'loan_amount', type: 'double' },
+      { name: 'amount', type: 'double' },
+      { name: 'channel', type: 'string' },
+      { name: 'tx_time', type: 'timestamp' }
+    ],
+    registered: ['amount', 'channel']
+  },
+  {
+    name: 'user_status_hist',
+    type: 'slow_change',
+    primaryKey: 'user_id',
+    partitionFields: ['start_date'],
+    description: '用户状态拉链表',
+    columns: [
+      { name: 'user_id', type: 'string' },
+      { name: 'status', type: 'string' },
+      { name: 'start_date', type: 'date' },
+      { name: 'end_date', type: 'date' }
+    ],
+    registered: ['status']
+  }
+]
+
+export function listTables() {
+  return mockTables.map(t => ({ name: t.name, type: t.type, description: t.description }))
+}
+
+export function getTableColumns(tableName) {
+  const t = mockTables.find(x => x.name === tableName)
+  return t ? t.columns : []
+}
+
+export function getTableMeta(tableName) {
+  const t = mockTables.find(x => x.name === tableName)
+  if (!t) return null
+  return { name: t.name, type: t.type, primaryKey: t.primaryKey, description: t.description, partitionFields: t.partitionFields || [] }
+}
+
+export function setTableMeta(tableName, meta) {
+  const t = mockTables.find(x => x.name === tableName)
+  if (!t) return null
+  t.type = meta.type || t.type
+  t.primaryKey = meta.primaryKey || t.primaryKey
+  t.description = meta.description || t.description
+  t.partitionFields = Array.isArray(meta.partitionFields) ? meta.partitionFields : (t.partitionFields || [])
+  return { name: t.name, type: t.type, primaryKey: t.primaryKey, description: t.description, partitionFields: t.partitionFields }
+}
+
+export function getRegisteredFields(tableName) {
+  const t = mockTables.find(x => x.name === tableName)
+  if (!t) return []
+  if (t.registeredDetails && t.registeredDetails.length) {
+    return t.registeredDetails
+  }
+  return t.registered.map(name => {
+    const c = t.columns.find(col => col.name === name) || { name, type: '' }
+    return c
+  })
+}
+
+export function getUnregisteredFields(tableName) {
+  const t = mockTables.find(x => x.name === tableName)
+  if (!t) return []
+  const set = new Set(t.registered || [])
+  return t.columns.filter(c => !set.has(c.name))
+}
+
+export function batchRegisterFields(tableName, fields) {
+  const t = mockTables.find(x => x.name === tableName)
+  if (!t) return []
+  const names = fields.map(f => (typeof f === 'string' ? f : f.name)).filter(Boolean)
+  const set = new Set(t.registered || [])
+  names.forEach(n => set.add(n))
+  t.registered = Array.from(set)
+  // 保存注册详情（增强字段信息）
+  const details = fields.map(f => {
+    if (typeof f === 'string') {
+      const c = t.columns.find(col => col.name === f) || { name: f, type: '' }
+      return { ...c, code: c.name, level1: '', level2: '', cnName: f, onlineTime: '', dataType: c.type || '', defaultValue: '', processingLogic: '', batch: '', remark: '', sourceType: '', sourceRefId: '', lineage: null }
+    }
+    const c = t.columns.find(col => col.name === f.name) || { name: f.name, type: f.type || '' }
+    return {
+      name: c.name,
+      type: c.type,
+      code: f.code || c.name,
+      level1: f.level1 || '',
+      level2: f.level2 || '',
+      cnName: f.cnName || c.name,
+      onlineTime: f.onlineTime || '',
+      dataType: f.dataType || c.type || '',
+      defaultValue: f.defaultValue || '',
+      processingLogic: f.processingLogic || '',
+      batch: f.batch || '',
+      remark: f.remark || '',
+      sourceType: f.sourceType || '',
+      sourceRefId: f.sourceRefId || '',
+      lineage: f.lineage || null
+    }
+  })
+  t.registeredDetails = Array.isArray(t.registeredDetails) ? [...t.registeredDetails, ...details] : details
+  return getRegisteredFields(tableName)
+}
+
+// 数据源库与表
+const databasesBySource = {
+  doris: ['risk_dw', 'risk_ods'],
+  hive: ['risk_dm', 'risk_raw']
+}
+const tablesByDb = {
+  risk_dw: ['user_profile', 'transactions'],
+  risk_ods: ['user_status_hist'],
+  risk_dm: ['user_profile'],
+  risk_raw: ['transactions']
+}
+
+export function listDatabases(sourceType) {
+  const list = databasesBySource[sourceType] || []
+  return list.map(name => ({ name }))
+}
+
+export function listTablesByDb(sourceType, dbName) {
+  const list = tablesByDb[dbName] || []
+  return list.map(name => ({ name }))
 }

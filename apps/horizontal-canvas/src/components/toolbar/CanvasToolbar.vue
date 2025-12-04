@@ -65,22 +65,6 @@
     </a-button-group>
 
     <a-button-group v-if="showExtras" style="margin-left: 8px;">
-      <a-button v-if="showClear" @click="clearCanvas" size="small" status="danger">
-        <template #icon><icon-delete /></template>
-        清空画布
-      </a-button>
-      <a-button v-if="showUndoRedo" @click="undo" size="small" :disabled="!canUndo" title="撤销 (Ctrl+Z)">
-        <template #icon><icon-up /></template>
-        撤销
-      </a-button>
-      <a-button v-if="showUndoRedo" @click="redo" size="small" :disabled="!canRedo" title="重做 (Ctrl+Y)">
-        <template #icon><icon-down /></template>
-        重做
-      </a-button>
-      <a-button v-if="showHistory" @click="toggleHistoryPanel" size="small" :type="showHistoryPanel ? 'primary' : 'secondary'" title="操作历史">
-        <template #icon><icon-history /></template>
-        历史
-      </a-button>
       <a-button v-if="showStatistics" @click="toggleStatisticsPanel" size="small" :type="showStatisticsPanel ? 'primary' : 'secondary'" title="统计信息">
         <template #icon><icon-bar-chart /></template>
         统计
@@ -105,6 +89,11 @@
 </template>
 
 <script setup>
+/*
+用途：画布工具栏（触发装配页的委托事件）
+说明：统一提供缩放、适配、布局、小地图、历史、统计、调试、导出与添加节点入口；事件通过 emit 回传给页面。
+边界：不直接操作图实例与布局；禁用/显示由父组件传入；坐标依赖 DOM 的 anchorRect。
+*/
 import { 
   IconZoomIn,
   IconRefresh, 
@@ -189,6 +178,10 @@ const handleZoomSelect = (v) => {
       break
   }
 }
+// 用途：添加节点入口，回传锚点矩形用于选择器定位
+// 入参：e 鼠标事件（可选）
+// 返回：无
+// 边界：DOM 可能不存在；降级为不带锚点的触发
 const onAddNodeClick = (e) => { try { const rect = e?.currentTarget?.getBoundingClientRect?.(); emit('add-node', { anchorRect: rect }) } catch { emit('add-node') } }
 </script>
 

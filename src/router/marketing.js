@@ -3,8 +3,14 @@ import { loadComponent } from '../utils/componentLoader'
 export default [
   {
     path: '/marketing',
-    redirect: '/marketing/tasks', // 默认进入任务列表页
+    redirect: '/marketing/canvas',
     children: [
+      {
+        path: 'canvas',
+        name: 'marketing-canvas-standalone',
+        component: () => import('../pages/marketing/canvas/index.vue'),
+        meta: { title: '营销画布（独立）' }
+      },
       {
         path: 'dashboard',
         name: 'couponDashboard',
@@ -83,6 +89,12 @@ export default [
             component: () => import('../pages/marketing/alert/rules/index.vue')
           },
           {
+            path: 'rules/create',
+            name: 'MarketingAlertRuleCreate',
+            component: () => import('../pages/marketing/alert/rules/create.vue'),
+            meta: { title: '新建预警规则' }
+          },
+          {
             path: 'history',
             name: 'MarketingAlertHistory',
             component: () => import('../pages/marketing/alert/history/index.vue')
@@ -131,6 +143,7 @@ export default [
         component: () => loadComponent('../pages/marketing/tasks/index.vue', 'MarketingTasks'),
         meta: { title: '营销任务' }
       },
+      // 横版任务编辑入口保留（可选）
       {
         path: 'tasks/horizontal',
         name: 'marketing-tasks-horizontal',

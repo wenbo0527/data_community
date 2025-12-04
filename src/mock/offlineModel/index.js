@@ -4,6 +4,8 @@
 
 import featureMock from './feature'
 import modelMock from './model'
+import backtrackMock from './backtrack'
+import taskMock from './task'
 
 // 统一的API响应格式
 function createResponse(data, success = true, message = '') {
@@ -153,6 +155,96 @@ export const featureAPI = {
       return createResponse(result)
     } catch (error) {
       return createErrorResponse('获取特征状态列表失败: ' + error.message)
+    }
+  },
+  // 列出数据表
+  async listTables() {
+    await simulateDelay()
+    try {
+      const result = featureMock.listTables()
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取数据表列表失败: ' + error.message)
+    }
+  },
+  // 获取数据表列信息
+  async getTableColumns(tableName) {
+    await simulateDelay()
+    try {
+      const result = featureMock.getTableColumns(tableName)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取数据表字段失败: ' + error.message)
+    }
+  },
+  // 获取数据表元信息
+  async getTableMeta(tableName) {
+    await simulateDelay()
+    try {
+      const result = featureMock.getTableMeta(tableName)
+      if (!result) return createErrorResponse('数据表不存在', 404)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取数据表元信息失败: ' + error.message)
+    }
+  },
+  // 设置数据表元信息
+  async setTableMeta(tableName, meta) {
+    await simulateDelay(500, 1200)
+    try {
+      const result = featureMock.setTableMeta(tableName, meta)
+      if (!result) return createErrorResponse('数据表不存在', 404)
+      return createResponse(result, true, '数据表元信息已更新')
+    } catch (error) {
+      return createErrorResponse('设置数据表元信息失败: ' + error.message)
+    }
+  },
+  // 获取已注册字段
+  async getRegisteredFields(tableName) {
+    await simulateDelay()
+    try {
+      const result = featureMock.getRegisteredFields(tableName)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取已注册字段失败: ' + error.message)
+    }
+  },
+  // 获取未注册字段
+  async getUnregisteredFields(tableName) {
+    await simulateDelay()
+    try {
+      const result = featureMock.getUnregisteredFields(tableName)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取未注册字段失败: ' + error.message)
+    }
+  },
+  // 批量注册字段
+  async batchRegisterFields(tableName, fields) {
+    await simulateDelay(500, 1500)
+    try {
+      const result = featureMock.batchRegisterFields(tableName, fields)
+      return createResponse(result, true, '字段批量注册成功')
+    } catch (error) {
+      return createErrorResponse('批量注册字段失败: ' + error.message)
+    }
+  },
+  async listDatabases(sourceType) {
+    await simulateDelay()
+    try {
+      const result = featureMock.listDatabases(sourceType)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取数据库列表失败: ' + error.message)
+    }
+  },
+  async listTablesByDb(sourceType, dbName) {
+    await simulateDelay()
+    try {
+      const result = featureMock.listTablesByDb(sourceType, dbName)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取库下表失败: ' + error.message)
     }
   }
 }
@@ -304,12 +396,44 @@ export const modelAPI = {
       return createErrorResponse('重新训练模型失败: ' + error.message)
     }
   }
+  ,
+  async listPlatformModels() {
+    await simulateDelay()
+    try {
+      const result = modelMock.listPlatformModels()
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取平台模型列表失败: ' + error.message)
+    }
+  },
+  async getPlatformModel(serviceName) {
+    await simulateDelay()
+    try {
+      const result = modelMock.getPlatformModel(serviceName)
+      if (!result) return createErrorResponse('平台模型不存在', 404)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取平台模型详情失败: ' + error.message)
+    }
+  },
+  async downloadPlatformModelFile(serviceName) {
+    await simulateDelay(500, 1200)
+    try {
+      const result = modelMock.downloadPlatformModelFile(serviceName)
+      if (!result) return createErrorResponse('模型文件不存在', 404)
+      return createResponse(result, true, '模型文件拉取成功')
+    } catch (error) {
+      return createErrorResponse('拉取模型文件失败: ' + error.message)
+    }
+  }
 }
 
 // 统一的API导出
 export default {
   feature: featureAPI,
   model: modelAPI,
+  backtrack: backtrackMock,
+  task: taskMock,
   
   // 工具方法
   createResponse,

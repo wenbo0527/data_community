@@ -18,12 +18,12 @@ export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
   })
 
   const normalizeType = (type) => {
-    if (!type) return 'sms'
+    if (!type) return  
     const t = String(type)
     if (SUPPORTED_TYPES.includes(t)) return t
     // 简单映射
     if (t === 'audience-split') return 'crowd-split'
-    return 'sms'
+    return 
   }
 
   const closeAllDrawers = (exclude) => {
@@ -77,3 +77,8 @@ export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
 
   return { drawerStates, openConfigDrawer, closeConfigDrawer, handleConfigConfirm, handleConfigCancel, handleDrawerVisibilityChange, structuredLayout }
 }
+/*
+用途：配置抽屉组合式（打开/关闭/写回）
+说明：管理各类型抽屉的可见性与数据载荷，写回统一委托 `updateNodeFromConfig`，并与结构化布局组合式协同。
+边界：不直接持久化；类型规范化（audience-split→crowd-split）；抽屉关闭时清理实例与数据。
+*/

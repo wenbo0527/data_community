@@ -64,6 +64,12 @@ export const MENU_CONFIG = {
             path: '/discovery/metrics-map',
             routeName: 'metricsMap'
           },
+          'variable-map': {
+            key: 'variable-map',
+            title: '变量地图',
+            path: '/discovery/variable-map',
+            routeName: 'VariableMapDiscovery'
+          },
           'credit-variables': {
             key: 'credit-variables',
             title: '征信变量',
@@ -75,6 +81,18 @@ export const MENU_CONFIG = {
             title: '外部数据',
             path: '/external-data-v1/list',
             routeName: 'external'
+          },
+          'external-data-center': {
+            key: 'external-data-center',
+            title: '外数中心',
+            path: '/external-data/archive',
+            routeName: 'ExternalDataArchive'
+          },
+          'budget-center': {
+            key: 'budget-center',
+            title: '预算中心',
+            path: '/budget/overview',
+            routeName: 'BudgetOverviewModule'
           },
           'external-data-evaluation-entry': {
             key: 'external-data-evaluation-entry',
@@ -107,6 +125,12 @@ export const MENU_CONFIG = {
             title: '指标管理',
             path: '/discovery/asset-management/metric-management',
             routeName: 'MetricManagement'
+          },
+          'variable-management': {
+            key: 'variable-management',
+            title: '变量注册',
+            path: '/discovery/asset-management/variable-management',
+            routeName: 'VariableManagementDiscovery'
           },
           'batch-asset-management': {
             key: 'batch-asset-management',

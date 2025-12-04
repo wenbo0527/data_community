@@ -1,5 +1,8 @@
 # 横版画布架构说明
 
+> 版本记录
+> - 2025-11-27：更新为最新服务化架构，替换 CanvasController/EventService；增加 GraphService/LayoutService/useCanvasState/useNodeInsertion/DebugHelpers 描述；统一术语与示例代码；移除预览线。
+
 ## 技术栈与约定
 - 前端：Vue 3（Composition API）+ Vite
 - 图形引擎：AntV X6（横向布局规则）
@@ -23,14 +26,24 @@
   - 节点类型选择器：`apps/horizontal-canvas/src/components/canvas/NodeTypeSelector.vue`
   - 连线右键菜单：`apps/horizontal-canvas/src/components/canvas/ConnectionContextMenu.vue`
 - 服务与工具
-  - 控制器：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/services/CanvasController.js`
-  - 事件绑定：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/services/EventService.js`
+  - 图服务：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/graph/GraphService.ts`
+  - 布局服务：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/layout/LayoutService.ts`
+  - 状态服务：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/state/useCanvasState.ts`
+  - 节点插入：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/composables/useNodeInsertion.ts`
+  - 调试辅助：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/debug/DebugHelpers.ts`
+  - 节点服务：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/node/NodeService.ts`
+  - 持久化服务：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/persistence/PersistenceService.ts`
+  - 事件服务：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/services/EventService.js`
+  - 画布控制器：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/services/CanvasController.js`
   - 端口工厂：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/utils/portConfigFactoryHorizontal.js`
   - 样式常量：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/styles/nodeStyles.js`
   - 数据存储/Mock：`apps/horizontal-canvas/src/utils/taskStorage.js`
   - （已移除）预览线系统：不再引入
-  - 结构化布局：`apps/horizontal-canvas/src/composables/canvas/useStructuredLayout.js`
   - 历史：`apps/horizontal-canvas/src/composables/canvas/useCanvasHistory.js`
+  - 快速布局引擎：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/utils/quickLayout.js`
+  - 性能监控：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/utils/performanceMonitor.js`
+  - 端口验证组合式：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/composables/usePortValidation.js`
+  - 抽屉组合式：`apps/horizontal-canvas/src/composables/canvas/useConfigDrawers.js`
 
 ## 组件关系（Mermaid）
 ```mermaid
@@ -48,15 +61,26 @@ graph LR
   HorizontalIndex --> TaskDrawers
   HorizontalIndex --> ConnectionMenu
 
+  HorizontalIndex --> GraphService
+  GraphService --> X6Graph
+  GraphService --> MiniMap
+  GraphService --> Selection
+  GraphService --> Keyboard
+  GraphService --> History
+  HorizontalIndex --> LayoutService
+  HorizontalIndex --> CanvasState
+  HorizontalIndex --> NodeInsertion
+  HorizontalIndex --> NodeService
+  HorizontalIndex --> PersistenceService
+  HorizontalIndex --> ConfigDrawers
   HorizontalIndex --> CanvasController
   CanvasController --> EventService
-  EventService --> X6Graph
   X6Graph --> HorizontalNode
 
 ```
 
 ## 数据流与状态管理
-- 画布事件：X6 触发 → `EventService` 解析 → 回调到 `CanvasController`/页面状态。
+- 画布事件：X6 触发 → 页面监听与服务方法处理（`GraphService`/`LayoutService`/`useCanvasState`） → 状态更新与 UI 联动。
 - 节点点击：
   - 编辑模式：打开抽屉（`openConfigDrawer`）。
   - 查看模式统计：设置统计面板焦点并保持抽屉可打开（已取消互斥）。
@@ -82,12 +106,11 @@ graph LR
   - `'/tasks'` → `apps/horizontal-canvas/src/pages/tasks/TasksList.vue`
 
 ## 重要代码参考
-- 查看模式禁止删除连线：
-  - 右键菜单入口屏蔽：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:1616–1634`
-  - 端口菜单删除屏蔽：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:2346–2353`
-  - 键盘删除屏蔽：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:1260–1275`
-- 统计面板底部停靠与自适应：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:171–186, 4505–4533`
-- 分支统计整合：`apps/horizontal-canvas/src/components/statistics/CanvasStatisticsPanel.vue:122–213`
+- 查看模式删除屏蔽：右键菜单删除、端口菜单删除、快捷键删除统一屏蔽（`horizontal/index.vue`）。
+- 统计面板停靠与自适应：`useCanvasState.updateStatisticsPanelTop/updateDebugDockBounds` 与 `setupPanelResizeListeners/setupPanelWatchers`。
+- 分支统计：`CanvasStatisticsPanel.vue` 提供路径构建与高亮触发，按分支列展示。
+- 插件管理：`GraphService.useHistory/useKeyboard/useSelection/toggleMinimap`；快捷键：`GraphService.bindDefaultShortcuts`；选择门控：`GraphService.configureSelectionRubberbandGate`。
+- 布局：`LayoutService.applyQuickLayout/applyStructuredLayout` 与 `cleanupEdgeVertices`。
 
 ## 关键代码片段
 
@@ -112,120 +135,43 @@ export const router = createRouter({
 })
 ```
 
-### 图初始化的连接校验
-`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:1130–1201`
-```js
-validateConnection({ sourceMagnet, targetMagnet, sourceView, targetView, edge }) {
-  if (isPanning.value) return false
-  if (isViewMode.value) return false
-  if (!sourceMagnet || !targetMagnet) {
-    return false
-  }
-  const sg = sourceMagnet.getAttribute('port-group') || sourceMagnet.getAttribute('data-port-group')
-  const tg = targetMagnet.getAttribute('port-group') || targetMagnet.getAttribute('data-port-group')
-  if (sg !== 'out' || tg !== 'in') {
-    return false
-  }
-  const srcCell = sourceView?.cell
-  const sourcePortId = sourceMagnet.getAttribute('port') || sourceMagnet.getAttribute('data-port') || sourceMagnet.getAttribute('data-port-id')
-  const exists = (graph.getOutgoingEdges?.(srcCell) || []).some(e => {
-    try {
-      if (edge && e.id === edge.id) return false
-      return e.getSourcePortId?.() === sourcePortId
-    } catch { return false }
-  })
-  if (exists) {
-    return false
-  }
-  return true
+### 图初始化与插件注册
+`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/graph/GraphService.ts`
+```ts
+export function createGraph(container: HTMLElement, options: any = {}) { /* 背景/网格/滚轮/高亮等默认配置 */ }
+export function useHistory(graph: any, options: any = {}) { /* 注册 History */ }
+export function useKeyboard(graph: any, options: any = {}) { /* 注册 Keyboard */ }
+export function useSelection(graph: any, options: any = {}) { /* 注册 Selection */ }
+export function toggleMinimap(graph: any, container: HTMLElement | null, visible: boolean) { /* 小地图显隐 */ }
+export function bindDefaultShortcuts(graph: any, handlers: any) { /* 撤销/重做/缩放/删除/适配/快速布局 */ }
+export function configureSelectionRubberbandGate(selectionPlugin: any, graph: any) { /* Ctrl/Meta 橡皮框门控 */ }
+```
+
+### 节点插入流程（收尾）
+`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/composables/useNodeInsertion.ts`
+```ts
+export function insertNodeAndFinalize(graph, nodeType, pendingPoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode, finalize?) {
+  // 插入节点、修正端口、历史入栈与持久化回调
 }
 ```
 
-### 键盘删除屏蔽（查看模式）
-`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:1260–1275`
-```js
-graph.bindKey(['delete', 'backspace'], () => {
-  try {
-    const cells = graph.getSelectedCells?.() || []
-    if (!cells.length) return false
-    cells.forEach(cell => {
-      try {
-        if (cell.isNode?.()) {
-          deleteNodeCascade(cell.id)
-        } else if (cell.isEdge?.()) {
-          if (isViewMode.value) return
-          graph.removeEdge(cell)
-        }
-      } catch {}
-    })
-    try { graph.cleanSelection && graph.cleanSelection() } catch {}
-  } catch {}
-  return false
-})
-```
-
 ### 统计面板停靠与尺寸更新
-`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:1484–1487`
-```js
-watch(showStatisticsPanel, async () => { await nextTick(); updateStatisticsPanelTop() })
-watch([showStatisticsPanel, statisticsPanelWidth], async () => { await nextTick(); updateDebugDockBounds() })
+`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/state/useCanvasState.ts`
+```ts
+function setupPanelResizeListeners(/* ... */) { /* 绑定 window.resize 并返回 detach */ }
+function setupPanelWatchers(/* ... */) { /* 侦听显隐与宽度联动更新 */ }
 ```
 
 ### 历史栈监听与撤销重做
-`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:1329–1346`
+`apps/horizontal-canvas/src/composables/canvas/useCanvasHistory.js`
 ```js
-const {
-  historyStack,
-  jumpToHistoryState,
-  setupHistoryListeners,
-  updateHistoryStack
-} = useCanvasHistory(graph)
-
-setupHistoryListeners()
-updateHistoryStack()
-
-graph.on('history:change', () => {
-  try {
-    canUndo.value = typeof graph.canUndo === 'function' ? graph.canUndo() : false
-    canRedo.value = typeof graph.canRedo === 'function' ? graph.canRedo() : false
-    updateHistoryStack()
-  } catch {}
-})
+export function useCanvasHistory(graph) { /* 提供历史栈/监听/跳转 */ }
 ```
 
-### 事件服务：节点点击与菜单区域识别
-`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/services/EventService.js:88–139`
+### 调试辅助：保留入口与常用方法
+`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/debug/DebugHelpers.ts`
 ```js
-graph.on('node:click', ({ e, node }) => {
-  const target = e?.target || null
-  const selector = target && target.getAttribute 
-    ? (target.getAttribute('selector') || target.getAttribute('data-selector'))
-    : null
-  const region = getClickRegion(e, node)
-  const isMenuIcon = selector && (selector === 'menu-dot-0' || selector === 'menu-dot-1' || selector === 'menu-dot-2')
-  if (!readOnly && !this.isStatisticsMode() && (isMenuIcon || region.inDotArea)) {
-    const bbox = node.getBBox()
-    const uiPos = toContainerCoords({ x: bbox.x + bbox.width - 28, y: bbox.y + 12 })
-    this.setNodeActionsMenu({ visible: true, x: uiPos.x, y: uiPos.y, nodeId: node.id })
-    return
-  }
-  this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
-  const isHeader = selector && (
-    selector === 'header' || selector === 'header-icon' || selector === 'header-icon-text' || selector === 'header-title'
-  ) || region.inHeader
-  if (isHeader) {
-    if (this.isStatisticsMode()) { this.onNodeClickForStats(node) }
-    try { if (!(node.isSelected && node.isSelected())) { graph.select(node) } } catch {}
-    return
-  }
-  const isContent = selector && (selector === 'content-area' || /^row-\d+$/.test(selector)) || (!region.inHeader)
-  if (isContent) {
-    if (this.isStatisticsMode()) { this.onNodeClickForStats(node) }
-    const d = node.getData ? node.getData() : {}
-    const t = d?.type || d?.nodeType
-    if (t) this.openConfigDrawer(t, node, d)
-  }
-})
+// testQuickLayout/testConnectionRules/runTestDebugFunction/runSimpleDebugNode 等入口
 ```
 
 ### 端口工厂：绝对定位右侧输出端口
@@ -354,3 +300,39 @@ function highlightFromNode(id) {
   emit('path-highlight', { canvasId: props.canvasId, path })
 }
 ```
+### 快速布局引擎集成
+`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/layout/LayoutService.ts`
+```ts
+export async function applyQuickLayout(graph: GraphLike, options: any = {}) {
+  const instance = options.quickLayout || new HorizontalQuickLayout({})
+  const result = await instance.executeHierarchyTreeLayout(graph, {/* 省略参数 */})
+  cleanupEdgeVertices(graph)
+}
+```
+
+### 性能监控测量闭包
+`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/utils/performanceMonitor.js`
+```js
+const endMeasure = performanceMonitor.measure('updateNodeFromConfig')
+// ... 执行更新逻辑
+endMeasure()
+```
+### 端口验证（使能与结果）
+`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/utils/portConfigFactoryHorizontal.js`
+```js
+const portConfig = createHorizontalPortConfig(outCount, {
+  includeIn: true,
+  includeOut: true,
+  outIds,
+  contentStart, contentEnd,
+  contentLines,
+  evenDistribution: true,
+  enableValidation: true // 使能位置与ID校验
+})
+// 校验结果附加在 portConfig._validation
+```
+
+## Utils 目录说明
+- `quickLayout.js`：提供横向层次布局引擎（executeHierarchyTreeLayout），由 `LayoutService.applyQuickLayout` 统一调用。
+- `performanceMonitor.js`：性能测量与统计工具，开发/测试环境默认开启，支持同步/异步与装饰器式测量。
+- `portConfigFactoryHorizontal.js`：生成左进右出端口配置，支持行中点或均匀分布定位，并附加端口位置与ID校验。

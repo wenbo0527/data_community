@@ -170,14 +170,14 @@ import { Message } from '@arco-design/web-vue'
 import { IconUpload, IconArrowRise, IconArrowFall } from '@arco-design/web-vue/es/icon'
 import BudgetBurndownTabs from '../../components/modals/BudgetBurndownTabs.vue'
 import PlatformProductModal from '../../components/modals/PlatformProductModal.vue'
-import { useExternalDataStore } from '../../store/modules/external-data'
-import type { WarningItem, BurndownPoint } from '../../store/modules/external-data'
+import { useBudgetMonitorStore } from '../../store/modules/budget-monitor'
+import type { WarningItem, BurndownPoint } from '../../api/budget-monitor'
 import { useBudgetStore } from '../../store/modules/budget'
 import { useBudgetStatsAggregator, buildMonthlyBurndown } from '../../composables/useBudgetCalculations'
 
 // Store 实例
 const budgetStore = useBudgetStore()
-const externalStore = useExternalDataStore()
+const monitorStore = useBudgetMonitorStore()
 
 // 过滤表单（新增业务类型/平台/目标贷余/年份）
 interface FilterForm {
@@ -217,13 +217,13 @@ const warningStats = computed(() => {
   return { normal, overCost, slowConsume, total: rows.length }
 })
 const burndownChartData = computed<BurndownPoint[]>(() => {
-  if (externalStore.burndown?.length) return externalStore.burndown
+  if (monitorStore.burndown?.length) return monitorStore.burndown
   return buildMonthlyBurndown(totalBudget.value, usedBudget.value)
 })
 const onChartModeChange = (mode: 'burndown' | 'cumulative') => { chartMode.value = mode }
 const onGranularityChange = async (key: 'month' | 'quarter') => {
   currentChartType.value = key
-  await externalStore.fetchBurndown({
+  await monitorStore.fetchBurndown({
     range: key,
     businessType: filterForm.businessType || undefined,
     platform: filterForm.platform || undefined,
@@ -294,21 +294,21 @@ const refresh = async () => {
   try {
     await Promise.all([
       budgetStore.fetchBudgetList({ page: 1, pageSize: 10 }),
-      externalStore.fetchBurndown({
+      monitorStore.fetchBurndown({
         range: currentChartType.value,
         businessType: filterForm.businessType || undefined,
         platform: filterForm.platform || undefined,
         targetLoan: typeof filterForm.targetLoan === 'number' ? filterForm.targetLoan : undefined,
         year: filterForm.year || undefined,
       } as any),
-      externalStore.fetchWarnings({
+      monitorStore.fetchWarnings({
         businessType: filterForm.businessType || undefined,
         platform: filterForm.platform || undefined,
         targetLoan: typeof filterForm.targetLoan === 'number' ? filterForm.targetLoan : undefined,
         year: filterForm.year || undefined,
       } as any)
     ])
-    warningData.value = externalStore.warnings
+    warningData.value = monitorStore.warnings
     Message.success('数据已刷新')
   } catch (e) {
     Message.error('刷新失败')

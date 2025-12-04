@@ -6,6 +6,14 @@
           <a-button
             type="text"
             size="small"
+            status="success"
+            @click="handleClearProcessing"
+          >
+            一键标记已处理
+          </a-button>
+          <a-button
+            type="text"
+            size="small"
             @click="handleViewAllHistory"
           >
             查看全部
@@ -31,8 +39,8 @@
             @change="handleStatusFilter"
           >
             <a-option value="pending">待处理</a-option>
-            <a-option value="processing">处理中</a-option>
-            <a-option value="resolved">已解决</a-option>
+            <a-option value="completed">已完成</a-option>
+            <a-option value="notified">仅通知</a-option>
           </a-select>
         </a-space>
       </template>
@@ -105,16 +113,7 @@
 
                   <div class="alert-timeline-card__actions">
                     <a-space size="mini">
-                      <!-- 失败类预警显示处理按钮 -->
-                      <a-button
-                        v-if="alert.type === 'failure' && alert.status === 'pending'"
-                        type="primary"
-                        size="mini"
-                        @click.stop="handleProcessAlert(alert)"
-                      >
-                        处理
-                      </a-button>
-                      <!-- 库存和过期预警只显示查看详情 -->
+                      <!-- 待处理显示标记按钮，其他仅显示详情 -->
                       <a-button
                         type="text"
                         size="mini"
@@ -122,15 +121,14 @@
                       >
                         详情
                       </a-button>
-                      <!-- 所有类型都可以标记已知 -->
                       <a-button
-                        v-if="alert.status !== 'resolved'"
+                        v-if="alert.status === 'pending'"
                         type="text"
                         size="mini"
                         status="success"
                         @click.stop="handleResolveAlert(alert)"
                       >
-                        {{ alert.type === 'failure' ? '标记解决' : '标记已知' }}
+                        标记已处理
                       </a-button>
                     </a-space>
                   </div>
@@ -184,7 +182,8 @@ const emit = defineEmits([
   'load-more',
   'view-all-history',
   'type-filter',
-  'status-filter'
+  'status-filter',
+  'clear-processing'
 ])
 
 // 响应式数据
@@ -268,9 +267,9 @@ const getTypeText = (type) => {
 // 获取预警状态颜色
 const getStatusColor = (status) => {
   const colors = {
-    pending: '#F53F3F',
-    processing: '#FA8C16',
-    resolved: '#52C41A'
+    pending: '#FA8C16',
+    completed: '#52C41A',
+    notified: '#1890FF'
   }
   return colors[status] || '#86909C'
 }
@@ -279,8 +278,8 @@ const getStatusColor = (status) => {
 const getStatusText = (status) => {
   const texts = {
     pending: '待处理',
-    processing: '处理中',
-    resolved: '已解决'
+    completed: '已完成',
+    notified: '仅通知'
   }
   return texts[status] || '未知状态'
 }
@@ -343,6 +342,10 @@ const handleResolveAlert = (alert) => {
 
 const handleViewAllHistory = () => {
   emit('view-all-history')
+}
+
+const handleClearProcessing = () => {
+  emit('clear-processing')
 }
 
 const handleShowMoreType = (type) => {

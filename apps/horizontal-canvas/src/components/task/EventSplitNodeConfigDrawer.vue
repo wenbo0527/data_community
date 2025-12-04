@@ -50,8 +50,15 @@
         </div>
       </a-form-item>
       <a-form-item label="超时设置" field="timeout">
-        <a-input-number v-model="formData.timeout" placeholder="事件等待超时时间（分钟）" :min="1" :max="1440" style="width: 100%" />
-        <div class="form-item-tip">设置等待事件的最长时间，超时后走"否"分支</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <a-input-number v-model="formData.timeout" placeholder="事件等待超时时间" :min="1" style="width: 160px" />
+          <a-select v-model="formData.unit" style="width: 120px">
+            <a-option value="分钟">分钟</a-option>
+            <a-option value="小时">小时</a-option>
+            <a-option value="天">天</a-option>
+          </a-select>
+        </div>
+        <div class="form-item-tip">根据超时设置，未发生事件将进入“否”分支</div>
       </a-form-item>
     </template>
   </BaseDrawer>
@@ -63,10 +70,11 @@ import { useBaseDrawer } from '@/composables/useBaseDrawer.js'
 const props = defineProps({ visible: { type: Boolean, default: false }, nodeData: { type: Object, default: () => ({}) }, readOnly: { type: Boolean, default: false } })
 const emit = defineEmits(['update:visible', 'confirm', 'cancel'])
 const formRules = { eventType: [{ required: true, message: '请选择事件类型' }], customEventName: [{ required: true, message: '请输入自定义事件名称', trigger: 'blur' }] }
-const getInitialFormData = () => ({ nodeName: props.nodeData?.nodeName || '事件分流', eventType: '', customEventName: '', eventCondition: '', yesLabel: '', noLabel: '', timeout: 60 })
+const getInitialFormData = () => ({ nodeName: props.nodeData?.nodeName || '事件分流', eventType: '', customEventName: '', eventCondition: '', yesLabel: '', noLabel: '', timeout: 60, unit: '分钟' })
 const customValidation = (formData) => { const errors = []; if (!formData) return errors; if (!formData.eventType) errors.push('请选择事件类型'); if (formData.eventType === 'custom' && !formData.customEventName) errors.push('请输入自定义事件名称'); return errors }
 const { formData, formRef, isValid, visible, isSubmitting, handleSubmit: baseHandleSubmit, handleCancel } = useBaseDrawer({ props, emit, formRules, getInitialFormData, customValidation, nodeType: 'event-split' })
-const handleSubmit = async () => { const config = { nodeName: formData.nodeName || '事件分流', eventType: formData.eventType, customEventName: formData.customEventName, eventCondition: formData.eventCondition, yesLabel: formData.yesLabel || '是', noLabel: formData.noLabel || '否', timeout: formData.timeout, nodeType: 'event-split' }; await baseHandleSubmit(config) }
+const LABEL_MAP = { sms_success: '短信发送成功事件', app_hot_scene: 'APP热场景事件', click: '点击事件', view: '浏览事件', purchase: '购买事件', register: '注册事件', login: '登录事件' }
+const handleSubmit = async () => { const typeLabel = formData.eventType === 'custom' ? (formData.customEventName || '') : (LABEL_MAP[formData.eventType] || formData.eventType || ''); const config = { nodeName: formData.nodeName || '事件分流', eventType: formData.eventType, eventTypeLabel: typeLabel, customEventName: formData.customEventName, eventCondition: formData.eventCondition, yesLabel: formData.yesLabel || '是', noLabel: formData.noLabel || '否', timeout: formData.timeout, unit: formData.unit || '分钟', nodeType: 'event-split' }; await baseHandleSubmit(config) }
 </script>
 <style scoped>
 .branch-labels { border: 1px solid var(--color-border-2); border-radius: 6px; padding: 16px; background-color: var(--color-fill-1) }

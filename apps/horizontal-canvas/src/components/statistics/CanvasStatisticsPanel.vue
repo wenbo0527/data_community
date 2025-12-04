@@ -101,6 +101,11 @@
 </template>
 
 <script setup>
+/*
+用途：统计面板（KPI/趋势/明细/分支）
+说明：从 Graph 实例读取节点与边数据，支持节点选择与路径高亮事件；查询用户路径时优先后端/Mock 数据。
+边界：不修改图结构；高亮路径通过事件交由页面处理；防止空图/空焦点异常。
+*/
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RuntimeStatsMock } from '@/utils/taskStorage.js'
 const props = defineProps({ canvasId: { type: [String, Number], default: 'default-canvas' }, graph: { type: Object, default: null }, focusNodeId: { type: String, default: '' } })

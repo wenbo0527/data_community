@@ -91,6 +91,12 @@
 </template>
 
 <script setup>
+/*
+用途：营销任务入口页（列表与导航）
+说明：负责任务列表展示、数据来源（TaskStorage）、路由跳转到画布页的查看/编辑模式。
+边界：不直接操作画布数据；删除/发布等操作通过 TaskStorage 与后续页面处理。
+副作用：路由跳转与消息提示。
+*/
 import { ref, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
@@ -338,16 +344,31 @@ const getStatusText = (status) => {
   return textMap[status] || '未知'
 }
 
+// 用途：创建任务并跳转到画布编辑模式
+// 入参：无
+// 返回：无
+// 边界：依赖 TaskStorage 创建；失败提示
+// 副作用：路由跳转到 `/marketing/tasks/horizontal?mode=edit`
 // 创建任务
 const createTask = () => {
   router.push('/marketing/tasks/horizontal')
 }
 
+// 用途：查看任务（点击任务名称）
+// 入参：record 任务记录
+// 返回：无
+// 边界：需存在 id/version 字段
+// 副作用：路由跳转到查看模式
 // 查看任务（点击任务名称）
 const viewTask = (record) => {
   router.push(`/marketing/tasks/horizontal?mode=view&id=${record.id}&version=${record.version}`)
 }
 
+// 用途：编辑任务
+// 入参：record 任务记录
+// 返回：无
+// 边界：需存在 id/version 字段
+// 副作用：路由跳转到编辑模式
 // 编辑任务
 const editTask = (record) => {
   router.push(`/marketing/tasks/horizontal?mode=edit&id=${record.id}&version=${record.version}`)

@@ -52,8 +52,8 @@
             @change="handleFilter"
           >
             <a-option value="pending">待处理</a-option>
-            <a-option value="processing">处理中</a-option>
-            <a-option value="resolved">已解决</a-option>
+            <a-option value="completed">已完成</a-option>
+            <a-option value="notified">仅通知</a-option>
           </a-select>
         </a-col>
       </a-row>
@@ -109,13 +109,13 @@
                 </a-button>
                 <!-- 所有类型都可以标记已知 -->
                 <a-button
-                  v-if="alert.status !== 'resolved'"
+                  v-if="alert.status !== 'completed'"
                   type="text"
                   size="mini"
                   status="success"
                   @click.stop="handleResolveAlert(alert)"
                 >
-                  {{ alert.type === 'failure' ? '标记解决' : '标记已知' }}
+                  {{ alert.type === 'failure' ? '标记已完成' : '标记已知' }}
                 </a-button>
               </a-space>
             </div>
@@ -136,7 +136,8 @@
         :total="filteredAlerts.length"
         :show-size-changer="true"
         :show-quick-jumper="true"
-        :show-total="(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`"
+        :show-total="true"
+        :render-total="(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`"
         @change="handlePageChange"
         @page-size-change="handlePageSizeChange"
       />
@@ -303,8 +304,8 @@ const getTypeText = (type) => {
 const getStatusColor = (status) => {
   const colorMap = {
     pending: 'orange',
-    processing: 'blue',
-    resolved: 'green'
+    completed: 'green',
+    notified: 'blue'
   }
   return colorMap[status] || 'gray'
 }
@@ -312,8 +313,8 @@ const getStatusColor = (status) => {
 const getStatusText = (status) => {
   const textMap = {
     pending: '待处理',
-    processing: '处理中',
-    resolved: '已解决'
+    completed: '已完成',
+    notified: '仅通知'
   }
   return textMap[status] || '未知'
 }

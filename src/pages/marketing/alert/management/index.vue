@@ -22,11 +22,12 @@
         <RecentAlertTimeline
           :alerts="recentAlerts"
           :loading="timelineLoading"
-          @process-alert="handleProcessAlert"
+          @process-alert="handleMarkProcessed"
           @view-detail="handleViewAlertDetail"
-          @resolve-alert="handleResolveAlert"
+          @resolve-alert="handleMarkProcessed"
           @load-more="handleLoadMoreAlerts"
           @view-all-history="handleViewAllHistory"
+          @clear-processing="handleClearProcessingAlerts"
         />
       </div>
 
@@ -40,9 +41,6 @@
           @delete-rule="handleDeleteRule"
           @toggle-rule="handleToggleRule"
           @copy-rule="handleCopyRule"
-          @batch-enable="handleBatchEnable"
-          @batch-disable="handleBatchDisable"
-          @batch-delete="handleBatchDelete"
           @rule-click="handleRuleClick"
         />
       </div>
@@ -52,9 +50,9 @@
     <AlertHistoryDrawer
       v-model:visible="historyDrawerVisible"
       @alert-click="handleViewAlertDetail"
-      @process-alert="handleProcessAlert"
+      @process-alert="handleMarkProcessed"
       @view-detail="handleViewAlertDetail"
-      @resolve-alert="handleResolveAlert"
+      @resolve-alert="handleMarkProcessed"
     />
 
     <!-- 预警详情模态框 -->
@@ -91,110 +89,27 @@
                 {{ currentAlertDetail.message }}
               </div>
             </a-descriptions-item>
+            <a-descriptions-item label="预警对象" :span="2">
+              <template v-if="currentAlertDetail.targetType === 'template'">
+                券模板：
+                <a-button type="text" size="mini" @click="navigateToTemplate(currentAlertDetail.targetId)">
+                  {{ currentAlertDetail.targetName }}
+                </a-button>
+              </template>
+              <template v-else-if="currentAlertDetail.targetType === 'package'">
+                券包：
+                <a-button type="text" size="mini" @click="navigateToPackage(currentAlertDetail.targetId)">
+                  {{ currentAlertDetail.targetName }}
+                </a-button>
+              </template>
+              <template v-else>
+                暂无关联对象
+              </template>
+            </a-descriptions-item>
           </a-descriptions>
         </div>
 
-        <!-- 通知渠道 -->
-        <div class="detail-section">
-          <h4>通知渠道</h4>
-          <a-descriptions :column="2" bordered>
-            <a-descriptions-item label="规则名称">
-              {{ currentAlertDetail.rule_name }}
-            </a-descriptions-item>
-            <a-descriptions-item label="监控类型">
-              <a-tag :color="currentAlertDetail.alert_type === 'inventory' ? 'blue' : currentAlertDetail.alert_type === 'expiry' ? 'orange' : 'red'">
-                {{ currentAlertDetail.alert_type === 'inventory' ? '库存预警' : currentAlertDetail.alert_type === 'expiry' ? '过期预警' : '失败率预警' }}
-              </a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="状态">
-              <a-tag color="green">已发送</a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="创建时间">
-              {{ currentAlertDetail.alert_time }}
-            </a-descriptions-item>
-            <a-descriptions-item label="规则描述" :span="2">
-              {{ currentAlertDetail.description || '暂无描述' }}
-            </a-descriptions-item>
-          </a-descriptions>
-
-          <!-- 条件详情 -->
-          <div v-if="currentAlertDetail.alert_type === 'inventory'" class="condition-detail">
-            <h5>库存监控条件</h5>
-            <a-descriptions :column="2" bordered>
-              <a-descriptions-item label="库存阈值">
-                {{ currentAlertDetail.threshold || '100' }}
-                {{ currentAlertDetail.thresholdType === 'percentage' ? '%' : '张' }}
-              </a-descriptions-item>
-              <a-descriptions-item label="阈值类型">
-                {{ currentAlertDetail.thresholdType === 'percentage' ? '百分比' : '绝对数量' }}
-              </a-descriptions-item>
-              <a-descriptions-item label="触发条件" :span="2">
-                当库存低于设定阈值时触发预警
-              </a-descriptions-item>
-            </a-descriptions>
-          </div>
-
-          <div v-else-if="currentAlertDetail.alert_type === 'expiry'" class="condition-detail">
-            <h5>过期监控条件</h5>
-            <a-descriptions :column="2" bordered>
-              <a-descriptions-item label="提前预警天数">
-                {{ currentAlertDetail.advanceDays || '7' }} 天
-              </a-descriptions-item>
-              <a-descriptions-item label="触发条件" :span="2">
-                优惠券即将在指定天数内过期时触发预警
-              </a-descriptions-item>
-            </a-descriptions>
-          </div>
-
-          <div v-else-if="currentAlertDetail.alert_type === 'failure'" class="condition-detail">
-            <h5>失败率监控条件</h5>
-            <a-descriptions :column="2" bordered>
-              <a-descriptions-item label="失败率阈值">
-                {{ currentAlertDetail.failureRate || '10' }}%
-              </a-descriptions-item>
-              <a-descriptions-item label="时间窗口">
-                {{ currentAlertDetail.timeWindow || '30' }} 分钟
-              </a-descriptions-item>
-              <a-descriptions-item label="触发条件" :span="2">
-                在指定时间窗口内失败率超过阈值时触发预警
-              </a-descriptions-item>
-            </a-descriptions>
-          </div>
-
-          <!-- 通知渠道信息 -->
-          <div class="channels-section">
-            <h5>通知渠道</h5>
-            <div class="channels-list">
-              <div
-                v-for="channel in currentAlertDetail.channels || ['email', 'sms']"
-                :key="channel"
-                class="channel-item"
-              >
-                <a-tag :color="channel === 'email' ? 'blue' : channel === 'sms' ? 'green' : 'orange'" size="large">
-                  {{ channel === 'email' ? '邮件' : channel === 'sms' ? '短信' : '微信' }}
-                </a-tag>
-              </div>
-            </div>
-            <div class="channels-description">
-              <p>预警信息已通过以上渠道发送给相关人员</p>
-            </div>
-          </div>
-
-          <!-- 触发原因分析 -->
-          <div class="analysis-section">
-            <h5>触发原因分析</h5>
-            <a-alert
-              type="warning"
-              title="预警触发分析"
-              show-icon
-            >
-              <div class="analysis-description">{{ currentAlertDetail.message }}</div>
-              <div class="analysis-suggestion">
-                <strong>建议：</strong>请及时处理相关问题，避免影响业务正常运行
-              </div>
-            </a-alert>
-          </div>
-        </div>
+        
       </div>
     </a-modal>
 
@@ -235,42 +150,38 @@
         <!-- 监控条件 -->
         <div class="detail-section">
           <h4>监控条件</h4>
-          <div v-if="currentRuleDetail.type === 'inventory'" class="condition-detail">
+          <div class="condition-detail">
             <a-descriptions :column="2" bordered>
-              <a-descriptions-item label="库存阈值">
-                {{ currentRuleDetail.conditions?.threshold }}
-                {{ currentRuleDetail.conditions?.thresholdType === 'percentage' ? '%' : '张' }}
+              <a-descriptions-item label="监控粒度">
+                {{ getGranularityLabel(currentRuleDetail?.conditions?.granularity) || '未设置' }}
               </a-descriptions-item>
-              <a-descriptions-item label="阈值类型">
-                {{ currentRuleDetail.conditions?.thresholdType === 'percentage' ? '百分比' : '绝对数量' }}
+              <a-descriptions-item label="监控范围">
+                <template v-if="currentRuleDetail?.conditions?.granularity === 'coupon_stock'">
+                  <span v-if="(currentRuleDetail?.conditions?.selectedInventories || []).length > 0">
+                    指定券库存 {{ (currentRuleDetail.conditions.selectedInventories || []).length }} 项
+                  </span>
+                  <span v-else>全部券库存</span>
+                </template>
+                <template v-else-if="currentRuleDetail?.conditions?.granularity === 'coupon_package'">
+                  <span v-if="(currentRuleDetail?.conditions?.selectedPackages || []).length > 0">
+                    指定券包 {{ (currentRuleDetail.conditions.selectedPackages || []).length }} 项
+                  </span>
+                  <span v-else>全部券包</span>
+                </template>
+                <template v-else>
+                  全部实例
+                </template>
               </a-descriptions-item>
-              <a-descriptions-item label="触发条件" :span="2">
-                当库存低于设定阈值时触发预警
-              </a-descriptions-item>
-            </a-descriptions>
-          </div>
-
-          <div v-else-if="currentRuleDetail.type === 'expiry'" class="condition-detail">
-            <a-descriptions :column="2" bordered>
-              <a-descriptions-item label="提前预警天数">
-                {{ currentRuleDetail.conditions?.advanceDays }} 天
-              </a-descriptions-item>
-              <a-descriptions-item label="触发条件" :span="2">
-                优惠券即将在指定天数内过期时触发预警
-              </a-descriptions-item>
-            </a-descriptions>
-          </div>
-
-          <div v-else-if="currentRuleDetail.type === 'failure'" class="condition-detail">
-            <a-descriptions :column="2" bordered>
-              <a-descriptions-item label="失败率阈值">
-                {{ currentRuleDetail.conditions?.failureRate }}%
-              </a-descriptions-item>
-              <a-descriptions-item label="时间窗口">
-                {{ currentRuleDetail.conditions?.timeWindow }} 分钟
-              </a-descriptions-item>
-              <a-descriptions-item label="触发条件" :span="2">
-                在指定时间窗口内失败率超过阈值时触发预警
+              <a-descriptions-item label="指标与阈值" :span="2">
+                <div>
+                  <div v-for="(cfg, i) in (currentRuleDetail?.conditions?.metricConfigs || [])" :key="i" style="margin-bottom:6px;">
+                    <span>
+                      {{ operatorText(cfg.operator) }} {{ cfg.threshold }}{{ cfg.metric?.includes('ratio') || cfg.metric?.includes('rate') ? '%' : '' }}
+                      <span v-if="cfg.window">（窗口：{{ cfg.window }}）</span>
+                    </span>
+                  </div>
+                  <div v-if="!(currentRuleDetail?.conditions?.metricConfigs || []).length">暂无指标</div>
+                </div>
               </a-descriptions-item>
             </a-descriptions>
           </div>
@@ -313,325 +224,23 @@
     <a-modal
       v-model:visible="ruleModalVisible"
       :title="isEditingRule ? '编辑规则' : '新建规则'"
-      :width="700"
+      :width="720"
       @ok="handleRuleSubmit"
       @cancel="handleRuleCancel"
     >
-      <a-form :model="ruleFormData" layout="vertical">
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="规则名称" required>
-              <a-input
-                v-model="ruleFormData.name"
-                placeholder="请输入规则名称"
-                style="width: 100%"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="监控类型" required>
-              <a-select
-                v-model="ruleFormData.type"
-                placeholder="请选择监控类型"
-                style="width: 100%"
-                @change="handleRuleTypeChange"
-              >
-                <a-option
-                  v-for="option in monitoringTypeOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  <div class="option-content">
-                    <div class="option-label">{{ option.label }}</div>
-                    <div class="option-description">{{ option.description }}</div>
-                  </div>
-                </a-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <!-- 监控配置 -->
-        <div v-if="ruleFormData.type" class="condition-form">
-          <h4>监控配置</h4>
-          
-          <!-- 监控粒度 -->
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="监控粒度" required>
-                <a-select
-                  v-model="ruleFormData.conditions.granularity"
-                  placeholder="请选择监控粒度"
-                  style="width: 100%"
-                  @change="handleGranularityChange"
-                >
-                  <a-option
-                    v-for="granularity in availableGranularities"
-                    :key="granularity.value"
-                    :value="granularity.value"
-                  >
-                    {{ granularity.label }}
-                  </a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <!-- 监控指标 -->
-          <a-row :gutter="16" v-if="ruleFormData.conditions.granularity">
-            <a-col :span="24">
-              <a-form-item label="监控指标" required>
-                <a-select
-                  v-model="ruleFormData.conditions.metric"
-                  placeholder="请选择监控指标"
-                  style="width: 100%"
-                  @change="handleMetricChange"
-                >
-                  <a-option
-                    v-for="metric in availableMetrics"
-                    :key="metric.value"
-                    :value="metric.value"
-                  >
-                    <div class="option-content">
-                      <div class="option-label">{{ metric.label }}</div>
-                      <div class="option-description">{{ metric.description }}</div>
-                    </div>
-                  </a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <!-- 阈值配置 - 优化为包含默认建议和业务含义 -->
-          <a-row :gutter="16" v-if="ruleFormData.conditions.metric">
-            <a-col :span="24">
-              <a-form-item label="阈值配置" required>
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                  <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                    <a-tag color="blue" style="margin-right: 8px;">默认建议</a-tag>
-                    <span style="font-weight: 500;">{{ getSelectedMetricInfo()?.defaultThreshold || '请选择指标' }}</span>
-                  </div>
-                  <div style="color: #666; font-size: 13px; line-height: 1.4;">
-                    <strong>业务含义：</strong>{{ getSelectedMetricInfo()?.businessMeaning || '请先选择监控指标以查看业务含义' }}
-                  </div>
-                </div>
-                <a-row :gutter="12">
-                  <a-col :span="8">
-                    <a-input-number
-                      v-model="ruleFormData.conditions.threshold"
-                      :placeholder="getSelectedMetricInfo()?.defaultThreshold || '请输入阈值'"
-                      style="width: 100%"
-                      :min="0"
-                    />
-                  </a-col>
-                  <a-col :span="8">
-                    <a-select
-                      v-model="ruleFormData.conditions.operator"
-                      placeholder="请选择操作"
-                      style="width: 100%"
-                    >
-                      <a-option value="greater_than">大于</a-option>
-                      <a-option value="less_than">小于</a-option>
-                      <a-option value="equal">等于</a-option>
-                      <a-option value="greater_equal">大于等于</a-option>
-                      <a-option value="less_equal">小于等于</a-option>
-                    </a-select>
-                  </a-col>
-                  <a-col :span="8">
-                    <a-select
-                      v-model="ruleFormData.conditions.unit"
-                      placeholder="请选择单位"
-                      style="width: 100%"
-                    >
-                      <a-option value="count">个数</a-option>
-                      <a-option value="percentage">百分比(%)</a-option>
-                      <a-option value="amount">金额(元)</a-option>
-                      <a-option value="time">时间(分钟)</a-option>
-                      <a-option value="days">天数</a-option>
-                      <a-option value="hours">小时</a-option>
-                    </a-select>
-                  </a-col>
-                </a-row>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <!-- 监控范围 -->
-          <a-row :gutter="16" v-if="ruleFormData.conditions.metric">
-            <a-col :span="24">
-              <a-form-item label="监控范围" required>
-                <!-- 券库存粒度选择 -->
-                <div v-if="ruleFormData.type === 'coupon_stock_granularity' && ruleFormData.conditions.granularity === 'coupon_type'">
-                  <a-select
-                    v-model="ruleFormData.conditions.selectedInventories"
-                    placeholder="请选择要监控的券库存"
-                    style="width: 100%"
-                    mode="multiple"
-                    :loading="loadingInventory"
-                    allow-search
-                  >
-                    <a-option
-                      v-for="inventory in couponInventoryList"
-                      :key="inventory.id"
-                      :value="inventory.id"
-                    >
-                      <div class="option-content">
-                        <div class="option-label">{{ inventory.couponName }}</div>
-                        <div class="option-description">
-                          类型: {{ inventory.couponType }} | 状态: {{ inventory.status }} | 模板ID: {{ inventory.templateId }}
-                        </div>
-                      </div>
-                    </a-option>
-                  </a-select>
-                  <div class="form-tip">
-                    <icon-info-circle />
-                    选择要监控的具体券库存，支持多选
-                  </div>
-                </div>
-                
-                <!-- 券包粒度选择 -->
-                <div v-else-if="ruleFormData.type === 'coupon_package_granularity' && ruleFormData.conditions.granularity === 'package'">
-                  <a-select
-                    v-model="ruleFormData.conditions.selectedPackages"
-                    placeholder="请选择要监控的券包"
-                    style="width: 100%"
-                    mode="multiple"
-                    :loading="loadingPackages"
-                    allow-search
-                  >
-                    <a-option
-                      v-for="pkg in couponPackageList"
-                      :key="pkg.id"
-                      :value="pkg.id"
-                    >
-                      <div class="option-content">
-                        <div class="option-label">{{ pkg.name }}</div>
-                        <div class="option-description">
-                          类型: {{ pkg.type }} | 状态: {{ pkg.status }} | 总数: {{ pkg.totalCount }} | 库存: {{ pkg.stock }}
-                        </div>
-                      </div>
-                    </a-option>
-                  </a-select>
-                  <div class="form-tip">
-                    <icon-info-circle />
-                    选择要监控的具体券包，支持多选
-                  </div>
-                </div>
-                
-                <!-- 券实例生命周期通用配置 -->
-                <div v-else-if="ruleFormData.type === 'coupon_instance_lifecycle'">
-                  <a-select
-                    v-model="ruleFormData.conditions.instanceConfig"
-                    placeholder="券实例生命周期配置"
-                    style="width: 100%"
-                    disabled
-                  >
-                    <a-option value="general">
-                      <div class="option-content">
-                        <div class="option-label">通用配置</div>
-                        <div class="option-description">适用于所有券实例的生命周期监控</div>
-                      </div>
-                    </a-option>
-                  </a-select>
-                  <div class="form-tip">
-                    <icon-info-circle />
-                    券实例生命周期使用通用配置，无需选择具体实例
-                  </div>
-                </div>
-                
-                <!-- 其他监控类型的范围选择 -->
-                <div v-else>
-                  <a-select
-                    v-model="ruleFormData.conditions.scope"
-                    placeholder="请选择监控范围"
-                    style="width: 100%"
-                    mode="multiple"
-                  >
-                    <a-option
-                      v-for="scope in availableScopes"
-                      :key="scope.value"
-                      :value="scope.value"
-                    >
-                      <div class="option-content" v-if="scope.description">
-                        <div class="option-label">{{ scope.label }}</div>
-                        <div class="option-description">{{ scope.description }}</div>
-                      </div>
-                      <span v-else>{{ scope.label }}</span>
-                    </a-option>
-                  </a-select>
-                </div>
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </div>
-
-        <!-- 过期监控条件 -->
-        <div v-else-if="ruleFormData.type === 'expiry'" class="condition-form">
-          <h4>过期监控条件</h4>
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="提前预警天数" required>
-                <a-input-number
-                  v-model="ruleFormData.conditions.advanceDays"
-                  placeholder="请输入天数"
-                  style="width: 100%"
-                  :min="1"
-                />
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </div>
-
-        <!-- 失败率监控条件 -->
-        <div v-else-if="ruleFormData.type === 'failure'" class="condition-form">
-          <h4>失败率监控条件</h4>
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="失败率阈值(%)" required>
-                <a-input-number
-                  v-model="ruleFormData.conditions.failureRate"
-                  placeholder="请输入失败率"
-                  style="width: 100%"
-                  :min="0"
-                  :max="100"
-                />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="时间窗口(分钟)" required>
-                <a-input-number
-                  v-model="ruleFormData.conditions.timeWindow"
-                  placeholder="请输入时间窗口"
-                  style="width: 100%"
-                  :min="1"
-                />
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </div>
-
-        <!-- 通知渠道 -->
-        <a-form-item label="通知渠道" required>
-          <a-checkbox-group v-model="ruleFormData.channels">
-            <a-checkbox value="wechat">企业微信</a-checkbox>
-            <a-checkbox value="sms">短信</a-checkbox>
-          </a-checkbox-group>
-        </a-form-item>
-
-        <!-- 规则描述 -->
-        <a-form-item label="规则描述">
-          <a-textarea
-            v-model="ruleFormData.description"
-            placeholder="请输入规则描述"
-            :rows="3"
-          />
-        </a-form-item>
-      </a-form>
+      <RuleForm
+        ref="ruleFormRef"
+        v-model="ruleFormData"
+        :inventory-list="couponInventoryList"
+        :package-list="couponPackageList"
+        :loading-inventory="loadingInventory"
+        :loading-packages="loadingPackages"
+        :on-load-inventories="loadCouponInventories"
+        :on-load-packages="loadCouponPackages"
+      />
       <template #footer>
         <a-button @click="handleRuleCancel">取消</a-button>
-        <a-button type="primary" @click="handleRuleSubmit" :loading="false">
-          {{ isEditingRule ? '更新' : '创建' }}
-        </a-button>
+        <a-button type="primary" @click="handleRuleSubmit">{{ isEditingRule ? '更新' : '创建' }}</a-button>
       </template>
     </a-modal>
   </div>
@@ -641,6 +250,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconInfoCircle } from '@arco-design/web-vue/es/icon'
+import RuleForm from '@/components/marketing/alert/RuleForm.vue'
 import OverviewDashboard from '@/components/marketing/alert/OverviewDashboard.vue'
 import RecentAlertTimeline from '@/components/marketing/alert/RecentAlertTimeline.vue'
 import RuleManagement from '@/components/marketing/alert/RuleManagement.vue'
@@ -674,16 +284,14 @@ const ruleFormData = ref({
   description: '',
   conditions: {
     granularity: '',
-    metric: '',
-    threshold: null,
-    operator: '',
-    unit: '',
+    metricConfigs: [],
     scope: [],
     selectedInventories: [],
     selectedPackages: [],
     instanceConfig: 'general'
   },
-  channels: []
+  channels: [],
+  content: { wechat: '', sms: '' }
 })
 
 // 券库存和券包数据
@@ -748,15 +356,15 @@ const availableGranularities = computed(() => {
   const granularityMap = {
     'inventory': [
       { value: 'coupon_stock', label: '券库存粒度', description: '支持选择不同券库存配置，支持全部或指定券库存独立配置' },
-      { value: 'coupon_package', label: '券包粒度', description: '支持选择不同券包配置，支持全部或指定券包独立配置' },
-      { value: 'coupon_instance_lifecycle', label: '券实例生命周期粒度', description: '监控券从发放到核销的完整生命周期' }
+      { value: 'coupon_package', label: '券包粒度', description: '支持选择不同券包配置，支持全部或指定券包独立配置' }
     ],
     'expiry': [
       { value: 'coupon_stock', label: '券库存粒度', description: '监控券库存中未发放券的剩余有效期' },
       { value: 'coupon_package', label: '券包粒度', description: '监控整个券包的有效期状态' }
     ],
     'failure': [
-      { value: 'coupon_instance_lifecycle', label: '券实例生命周期粒度', description: '监控券核销失败和转化漏斗' }
+      { value: 'coupon_package', label: '券包粒度', description: '监控券包当日下发成功率' },
+      { value: 'coupon_instance_lifecycle', label: '券实例生命周期粒度', description: '监控券核销失败与下发失败率' }
     ]
   }
   return granularityMap[ruleFormData.value?.type] || []
@@ -1163,7 +771,13 @@ const fetchRecentAlerts = async () => {
   try {
     const response = await alertAPI.getRecentAlerts({ pageSize: 10 })
     if (response.success) {
-      recentAlerts.value = response.data.list
+      recentAlerts.value = (response.data.list || []).map(a => {
+        let status = a.status
+        if (status === 'processing') status = 'pending'
+        if (status === 'resolved') status = 'completed'
+        if (!status) status = 'notified'
+        return { ...a, status }
+      })
     }
   } catch (error) {
     console.error('获取最近预警失败:', error)
@@ -1208,20 +822,18 @@ const handleRefreshOverview = async () => {
   }
 }
 
-const handleProcessAlert = (alert) => {
+const handleMarkProcessed = (alert) => {
   const index = recentAlerts.value.findIndex(a => a.id === alert.id)
   if (index > -1) {
-    recentAlerts.value[index].status = 'processing'
-    Message.success('预警已标记为处理中')
+    recentAlerts.value[index].status = 'notified'
+    Message.success('已标记为仅通知')
   }
 }
 
-const handleResolveAlert = (alert) => {
-  const index = recentAlerts.value.findIndex(a => a.id === alert.id)
-  if (index > -1) {
-    recentAlerts.value[index].status = 'resolved'
-    Message.success('预警已解决')
-  }
+const handleClearProcessingAlerts = () => {
+  const before = recentAlerts.value.filter(a => a.status === 'pending' || a.status === 'processing').length
+  recentAlerts.value = recentAlerts.value.map(a => (a.status === 'pending' || a.status === 'processing') ? { ...a, status: 'notified' } : a)
+  Message.success(`已标记已处理 ${before} 条`)
 }
 
 const handleLoadMoreAlerts = async () => {
@@ -1237,7 +849,7 @@ const handleLoadMoreAlerts = async () => {
         type: 'inventory',
         message: '优惠券"限时特惠"库存充足',
         time: '2024-01-13 18:30:00',
-        status: 'resolved',
+        status: 'completed',
         channels: ['email']
       }
     ]
@@ -1257,8 +869,7 @@ const handleViewAlertDetail = (alert) => {
 }
 
 const handleViewRuleDetail = (rule) => {
-  currentRuleDetail.value = rule
-  ruleDetailVisible.value = true
+  router.push(`/marketing/alert/rules/create?id=${rule.id}`)
 }
 
 // 获取当前选中指标的详细信息（包含默认阈值和业务含义）
@@ -1275,92 +886,29 @@ const getSelectedMetricInfo = () => {
   return metrics.find(m => m.value === metric) || null
 }
 
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const handleAddRule = () => {
-  isEditingRule.value = false
-  ruleFormData.value = {
-    name: '',
-    type: '',
-    description: '',
-    conditions: {
-      granularity: '',
-      metric: '',
-      threshold: null,
-      operator: '',
-      unit: '',
-      scope: [],
-      // 新增券相关配置
-      selectedInventories: [], // 选择的券库存
-      selectedPackages: [], // 选择的券包
-      instanceConfig: 'general' // 券实例配置，默认为通用配置
-    },
-    channels: [],
-    enabled: true
-  }
-  ruleModalVisible.value = true
+  router.push('/marketing/alert/rules/create')
 }
 
 const handleEditRule = (rule) => {
-  isEditingRule.value = true
-  ruleFormData.value = {
-    ...rule,
-    conditions: { 
-      ...rule.conditions,
-      // 确保券相关配置字段存在
-      selectedInventories: rule.conditions?.selectedInventories || [],
-      selectedPackages: rule.conditions?.selectedPackages || [],
-      instanceConfig: rule.conditions?.instanceConfig || 'general'
-    }
-  }
-  ruleModalVisible.value = true
+  router.push(`/marketing/alert/rules/create?id=${rule.id}`)
 }
 
 // 规则提交处理
+const ruleFormRef = ref(null)
 const handleRuleSubmit = async () => {
   try {
-    // 表单验证
-    if (!ruleFormData.value.name) {
-      Message.error('请输入规则名称')
-      return
-    }
-    if (!ruleFormData.value.type) {
-      Message.error('请选择监控类型')
-      return
-    }
-    if (!ruleFormData.value.conditions.granularity) {
-      Message.error('请选择监控粒度')
-      return
-    }
-    if (!ruleFormData.value.conditions.metric) {
-      Message.error('请选择监控指标')
-      return
-    }
-    if (ruleFormData.value.channels.length === 0) {
-      Message.error('请选择至少一个通知渠道')
-      return
-    }
-
-    // 券库存粒度验证
-    if (ruleFormData.value.type === 'coupon_stock_granularity' && 
-        ruleFormData.value.conditions.granularity === 'coupon_type' &&
-        ruleFormData.value.conditions.selectedInventories.length === 0) {
-      Message.error('请选择要监控的券库存')
-      return
-    }
-
-    // 券包粒度验证
-    if (ruleFormData.value.type === 'coupon_package_granularity' && 
-        ruleFormData.value.conditions.granularity === 'package' &&
-        ruleFormData.value.conditions.selectedPackages.length === 0) {
-      Message.error('请选择要监控的券包')
-      return
-    }
+    const validated = await ruleFormRef.value?.validate()
+    if (!validated) return
 
     if (isEditingRule.value) {
-      await updateAlertRule(ruleFormData.value.id, ruleFormData.value)
+      await updateAlertRule(validated.id || ruleFormData.value.id, validated)
       Message.success('规则更新成功')
     } else {
       const newRule = {
-        ...ruleFormData.value,
+        ...validated,
         id: Date.now(),
         createdAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
         triggerCount: 0,
@@ -1412,68 +960,63 @@ const handleToggleRule = async (rule) => {
   }
 }
 
-const handleBatchEnable = async (ruleIds) => {
-  try {
-    for (const id of ruleIds) {
-      const rule = alertRules.value.find(r => r.id === id)
-      if (rule && !rule.enabled) {
-        await toggleAlertRuleStatus(id)
-      }
-    }
-    await fetchAlertRules()
-    Message.success('批量启用成功')
-  } catch (error) {
-    console.error('批量启用失败:', error)
-    Message.error('批量启用失败')
-  }
-}
-
-const handleBatchDisable = async (ruleIds) => {
-  try {
-    for (const id of ruleIds) {
-      const rule = alertRules.value.find(r => r.id === id)
-      if (rule && rule.enabled) {
-        await toggleAlertRuleStatus(id)
-      }
-    }
-    await fetchAlertRules()
-    Message.success('批量禁用成功')
-  } catch (error) {
-    console.error('批量禁用失败:', error)
-    Message.error('批量禁用失败')
-  }
-}
-
-const handleBatchDelete = async (ruleIds) => {
-  try {
-    for (const id of ruleIds) {
-      await deleteAlertRule(id)
-    }
-    await fetchAlertRules()
-    Message.success('批量删除成功')
-  } catch (error) {
-    console.error('批量删除失败:', error)
-    Message.error('批量删除失败')
-  }
-}
+ 
 
 const handleRuleClick = (rule) => {
-  handleViewRuleDetail(rule)
+  router.push(`/marketing/alert/rules/create?id=${rule.id}`)
 }
 
+const navigateToTemplate = (templateId) => {
+  if (!templateId) return
+  router.push(`/marketing/coupon/template/detail?id=${templateId}&mode=view`)
+}
+
+const navigateToPackage = (packageId) => {
+  router.push(`/marketing/benefit/package?id=${packageId || ''}`)
+}
+
+// 条件展示辅助
+const operatorText = (op) => ({
+  greater_than: '大于',
+  less_than: '小于',
+  equal: '等于',
+  greater_equal: '大于等于',
+  less_equal: '小于等于'
+})[op] || ''
+
+const getGranularityLabel = (g) => ({
+  coupon_stock: '券库存粒度',
+  coupon_package: '券包粒度',
+  coupon_instance_lifecycle: '券实例生命周期粒度'
+})[g] || ''
+
+// 渠道展示辅助函数
+const getChannelColor = (channel) => ({
+  wechat: 'cyan',
+  sms: 'green',
+  email: 'blue'
+})[channel] || 'gray'
+
+const getChannelIcon = (channel) => null
+
+const getChannelText = (channel) => ({
+  wechat: '企业微信',
+  sms: '短信',
+  email: '邮件'
+})[channel] || channel
+
 const handleCopyRule = (rule) => {
-  // 复制规则逻辑
   const copiedRule = {
     ...rule,
-    id: Date.now(),
+    id: undefined,
     name: `${rule.name} - 副本`,
     createdAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
     triggerCount: 0,
-    lastTriggerTime: null
+    lastTriggerTime: null,
+    groupId: `group_${Date.now()}`
   }
-  
-  // 添加到规则列表
-  alertRules.value.push(copiedRule)
+  addAlertRule(copiedRule)
+  fetchAlertRules()
   Message.success('规则复制成功')
 }
 </script>

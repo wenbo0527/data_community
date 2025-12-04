@@ -26,6 +26,15 @@ export function collectCanvasData(graph: GraphLike): { nodes: any[]; connections
   return { nodes, connections }
 }
 
+/**
+ * 加载画布数据到 Graph
+ * 入参：graph(GraphLike), canvasData({ nodes: any[]; connections: any[] })
+ * 返回：boolean（加载是否成功）
+ * 细节：
+ * - 清空现有 cells 并逐个创建节点与连接
+ * - 出端口不存在时按未占用 out-N 回填
+ * - AB 分支按 out-N 与节点 config.branches 的 id 进行 branchId 修复
+ */
 export function loadCanvasData(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): boolean {
   if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return false
   try {
@@ -80,14 +89,33 @@ export function loadCanvasData(graph: GraphLike, canvasData: { nodes: any[]; con
   } catch { return false }
 }
 
+/**
+ * 保存任务（草稿）
+ * 入参：meta(any 任务元信息), canvasData(any 画布数据)
+ * 返回：Task 对象
+ */
 export function saveTask(meta: any, canvasData: any): any {
   return TaskStorage.createTask({ ...meta, canvasData })
 }
 
+/**
+ * 发布任务（状态置为 published）
+ * 入参：meta(any 任务元信息), canvasData(any 画布数据)
+ * 返回：Task 对象
+ */
 export function publishTask(meta: any, canvasData: any): any {
   return TaskStorage.createTask({ ...meta, canvasData, status: 'published' })
 }
 
+/**
+ * 发布校验（结构/配置/连通性/端口与分支完整性）
+ * 入参：graph(GraphLike), canvasData({ nodes: any[]; connections: any[] })
+ * 返回：{ pass: boolean; messages: string[] }
+ * 细节：
+ * - 缺少开始节点/空画布/未配置节点/无出边节点
+ * - 端口完整性：每个节点的 out 端口需有连接
+ * - 分支完整性：分流/AB 节点每个分支需存在连线（按 edge.data.branchId 对齐）
+ */
 export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): { pass: boolean; messages: string[] } {
   const messages: string[] = []
   if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return { pass: false, messages: ['画布数据格式不正确'] }
@@ -137,3 +165,8 @@ export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[];
   } catch {}
   return { pass: messages.length === 0, messages }
 }
+/*
+用途：持久化服务（采集/加载/保存/发布/发布校验）
+说明：集中管理画布数据流转与校验逻辑，提供页面调用的统一入口；与 TaskStorage 集成。
+边界：不负责 UI；加载时做端口回填与分支标识修复；发布校验覆盖结构/配置/连通性/端口与分支完整性。
+*/

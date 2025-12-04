@@ -1,28 +1,33 @@
 <template>
   <div class="model-backtrack-page">
     <!-- 页面标题和操作区 -->
-    <div class="page-header">
-      <div class="page-title">
-        <h2>模型回溯</h2>
-        <span class="page-subtitle">查看模型的历史版本和回溯分析</span>
-      </div>
-      <div class="page-actions">
-        <a-space>
-          <a-button type="primary" @click="handleCreateBacktrack">
-            <template #icon>
-              <icon-plus />
-            </template>
+    <PageHeader title="模型回溯">
+      <template #actions>
+        <a-dropdown>
+          <a-button type="primary">
+            <template #icon><icon-plus /></template>
             新建回溯
+            <template #suffix><icon-down /></template>
           </a-button>
-          <a-button @click="handleExport">
-            <template #icon>
-              <icon-download />
-            </template>
-            导出报告
-          </a-button>
-        </a-space>
-      </div>
-    </div>
+          <template #content>
+            <a-doption @click="handleCreateBacktrack('single')">
+              <template #icon><icon-plus /></template>
+              单次回溯
+            </a-doption>
+            <a-doption @click="handleCreateBacktrack('periodic')">
+              <template #icon><icon-plus /></template>
+              周期回溯
+            </a-doption>
+          </template>
+        </a-dropdown>
+        <a-button @click="handleExport">
+          <template #icon>
+            <icon-download />
+          </template>
+          导出报告
+        </a-button>
+      </template>
+    </PageHeader>
 
     <!-- 搜索和筛选区 -->
     <div class="filter-section">
@@ -156,10 +161,17 @@
 </template>
 
 <script setup>
+import PageHeader from '../components/PageHeader.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/store/modules/model-offline'
 import { Message } from '@arco-design/web-vue'
+import { 
+  navigateToBacktrackCreate, 
+  navigateToBacktrackDetail, 
+  navigateToBacktrackReport,
+  CREATE_MODES 
+} from '@/utils/model-backtrack-router'
 
 const router = useRouter()
 const store = useTaskStore()
@@ -318,8 +330,11 @@ const handleSelectionChange = (rows) => {
   selectedRows.value = rows
 }
 
-const handleCreateBacktrack = () => {
-  router.push('/offline-model/model-backtrack/create')
+const handleCreateBacktrack = (mode) => {
+  navigateToBacktrackCreate(router, { 
+    mode,
+    source: 'risk'
+  })
 }
 
 const handleExport = () => {
@@ -339,15 +354,21 @@ const handleTableSetting = () => {
 }
 
 const handleViewModel = (record) => {
-  router.push(`/offline-model/model-register/detail/${record.modelId}`)
+  // 使用统一的路由跳转，保持来源信息
+  router.push({
+    path: `/offline-model/model-register/detail/${record.modelId}`,
+    query: {
+      source: 'risk'
+    }
+  })
 }
 
 const handleViewDetail = (record) => {
-  router.push(`/offline-model/model-backtrack/detail/${record.id}`)
+  navigateToBacktrackDetail(router, record.id, { source: 'risk' })
 }
 
 const handleViewReport = (record) => {
-  router.push(`/offline-model/model-backtrack/report/${record.id}`)
+  navigateToBacktrackReport(router, record.id, { source: 'risk' })
 }
 
 const handleStop = (record) => {
@@ -413,10 +434,7 @@ const formatDate = (date) => {
         font-weight: 500;
       }
       
-      .page-subtitle {
-        color: #666;
-        font-size: 14px;
-      }
+      
     }
   }
   

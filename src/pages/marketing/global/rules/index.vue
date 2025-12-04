@@ -206,55 +206,20 @@
     <a-modal
       v-model:visible="modalVisible"
       :title="modalTitle"
-      width="600px"
+      width="720px"
       @ok="handleSubmit"
       @cancel="handleCancel"
     >
-      <a-form :model="formData" :rules="rules" ref="formRef">
-        <a-form-item label="规则名称" field="name">
-          <a-input v-model="formData.name" placeholder="请输入规则名称" />
-        </a-form-item>
-        
-        <a-form-item label="规则类型" field="type">
-          <a-select v-model="formData.type" placeholder="请选择规则类型">
-            <a-option value="business">业务规则</a-option>
-            <a-option value="system">系统规则</a-option>
-            <a-option value="security">安全规则</a-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item label="规则描述" field="description">
-          <a-textarea 
-            v-model="formData.description" 
-            placeholder="请输入规则描述"
-            :rows="3"
-          />
-        </a-form-item>
-        
-        <a-form-item label="规则内容" field="content">
-          <a-textarea 
-            v-model="formData.content" 
-            placeholder="请输入规则内容（JSON格式）"
-            :rows="5"
-          />
-        </a-form-item>
-        
-        <a-form-item label="优先级" field="priority">
-          <a-input-number 
-            v-model="formData.priority" 
-            :min="1" 
-            :max="100"
-            placeholder="请输入优先级"
-          />
-        </a-form-item>
-        
-        <a-form-item label="状态" field="status">
-          <a-radio-group v-model="formData.status">
-            <a-radio value="active">启用</a-radio>
-            <a-radio value="inactive">禁用</a-radio>
-          </a-radio-group>
-        </a-form-item>
-      </a-form>
+      <RuleForm
+        ref="ruleFormRef"
+        v-model="alertRuleForm"
+        :inventory-list="couponInventoryList"
+        :package-list="couponPackageList"
+        :loading-inventory="loadingInventory"
+        :loading-packages="loadingPackages"
+        :on-load-inventories="loadCouponInventories"
+        :on-load-packages="loadCouponPackages"
+      />
     </a-modal>
   </div>
 </template>
@@ -262,9 +227,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconSearch, IconEye } from '@arco-design/web-vue/es/icon'
+import RuleForm from '@/components/marketing/alert/RuleForm.vue'
 import { useRouter } from 'vue-router'
 import { getAllAlertRules, getActiveAlertRules, updateAlertRule, deleteAlertRule, toggleAlertRuleStatus } from '@/api/alertRules'
+import { IconPlus, IconSearch, IconEye } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
 
@@ -389,25 +355,25 @@ const alertColumns = [
 // 弹窗相关
 const modalVisible = ref(false)
 const modalTitle = ref('')
-const formRef = ref()
-const formData = reactive({
-  id: null,
+const ruleFormRef = ref(null)
+const alertRuleForm = ref({
   name: '',
   type: '',
   description: '',
-  content: '',
-  priority: 1,
-  status: 'active'
+  conditions: {
+    granularity: '',
+    metricConfigs: [],
+    scope: [],
+    selectedInventories: [],
+    selectedPackages: [],
+    instanceConfig: 'general'
+  },
+  channels: [],
+  content: { wechat: '', sms: '' }
 })
 
 // 表单验证规则
-const rules = {
-  name: [{ required: true, message: '请输入规则名称' }],
-  type: [{ required: true, message: '请选择规则类型' }],
-  description: [{ required: true, message: '请输入规则描述' }],
-  content: [{ required: true, message: '请输入规则内容' }],
-  priority: [{ required: true, message: '请输入优先级' }]
-}
+// 使用共享规则表单内部校验
 
 // 频控规则Mock数据
 const mockFrequencyData = ref([
@@ -634,16 +600,23 @@ const handleAlertReset = () => {
 
 // 创建
 const handleCreate = () => {
-  modalTitle.value = '新增规则'
-  modalVisible.value = true
-  resetForm()
+  router.push('/marketing/alert/rules/create')
 }
 
 // 编辑
 const handleEdit = (record) => {
-  modalTitle.value = '编辑规则'
+  modalTitle.value = '编辑预警规则'
   modalVisible.value = true
-  Object.assign(formData, record)
+  alertRuleForm.value = {
+    name: record.name || '',
+    type: record.type || '',
+    description: record.description || '',
+    conditions: record.conditions || {
+      granularity: '', metricConfigs: [], scope: [], selectedInventories: [], selectedPackages: [], instanceConfig: 'general'
+    },
+    channels: record.channels || [],
+    content: record.content || { wechat: '', sms: '' }
+  }
 }
 
 // 查看
@@ -663,10 +636,11 @@ const handleStatusChange = (record) => {
 // 提交表单
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate()
-    Message.success(formData.id ? '更新成功' : '创建成功')
+    const validated = await ruleFormRef.value?.validate()
+    if (!validated) return
+    Message.success(validated.id ? '更新成功' : '创建成功')
     modalVisible.value = false
-    fetchTableData()
+    fetchAlertTableData()
   } catch (error) {
     console.error('表单验证失败:', error)
   }
@@ -680,15 +654,16 @@ const handleCancel = () => {
 
 // 重置表单
 const resetForm = () => {
-  Object.assign(formData, {
-    id: null,
+  alertRuleForm.value = {
     name: '',
     type: '',
     description: '',
-    content: '',
-    priority: 1,
-    status: 'active'
-  })
+    conditions: {
+      granularity: '', metricConfigs: [], scope: [], selectedInventories: [], selectedPackages: [], instanceConfig: 'general'
+    },
+    channels: [],
+    content: { wechat: '', sms: '' }
+  }
 }
 
 // 预警规则相关方法

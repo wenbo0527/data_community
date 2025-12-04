@@ -235,7 +235,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
-import { useContractStore } from '@/store/modules/contract'
+import { useContractStore } from '@/modules/budget/stores/contract'
 
 type Granularity = 'year'|'quarter'|'month'
 type TaskStatus = 'pending'|'running'|'succeeded'|'failed'|'canceled'

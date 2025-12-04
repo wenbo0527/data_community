@@ -10,6 +10,11 @@
 </template>
 
 <script setup>
+/*
+用途：历史面板（展示与跳转）
+说明：接收历史堆栈并提供点击跳转事件；具体跳转逻辑由父组件处理。
+边界：仅渲染与发出事件，不持有图实例；描述缺省为“变更”。
+*/
 defineProps({
   visible: { type: Boolean, default: false },
   historyStack: { type: Array, default: () => [] }

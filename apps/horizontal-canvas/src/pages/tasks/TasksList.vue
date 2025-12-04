@@ -56,6 +56,12 @@
 </template>
 
 <script setup>
+/*
+用途：通用任务列表页（数据展示与基础操作）
+说明：负责从 TaskStorage 读取与展示任务，提供创建/编辑/查看/发布等入口，导航到横版画布页。
+边界：不直接修改画布结构；发布/取消发布通过 TaskStorage 或后端接口（当前为 mock）。
+副作用：窗口跳转（iframe/窗口两种场景）、消息提示。
+*/
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { TaskStorage } from '@/utils/taskStorage.js'
@@ -113,6 +119,11 @@ function refresh() {
   } catch {}
 }
 
+// 用途：创建任务并跳转到横版画布编辑模式
+// 入参：无
+// 返回：无
+// 边界：依赖 TaskStorage.createTask；失败提示
+// 副作用：window.location 跳转至 `/marketing/tasks/horizontal?mode=edit`
 function createTask() {
   try {
     const newTask = TaskStorage.createTask ? TaskStorage.createTask({ name: '未命名任务', description: '', version: 1, status: 'draft' }) : null
@@ -125,6 +136,11 @@ function createTask() {
   } catch { Message.error('创建失败') }
 }
 
+// 用途：编辑任务（支持 iframe/窗口两种场景）
+// 入参：record 任务记录
+// 返回：无
+// 边界：需存在 id/version 字段
+// 副作用：跳转至编辑模式
 function edit(record) {
   const qs = new URLSearchParams({ mode: 'edit', id: record.id, version: String(record.version || 1) })
   if (inIframe) {
@@ -133,6 +149,11 @@ function edit(record) {
     window.location.assign(`/marketing/tasks/horizontal?${qs.toString()}`)
   }
 }
+// 用途：查看任务（支持 iframe/窗口两种场景）
+// 入参：record 任务记录
+// 返回：无
+// 边界：需存在 id/version 字段
+// 副作用：跳转至查看模式
 function view(record) {
   const qs = new URLSearchParams({ mode: 'view', id: record.id, version: String(record.version || 1) })
   if (inIframe) {

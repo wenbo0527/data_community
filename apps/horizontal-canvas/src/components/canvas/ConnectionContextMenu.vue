@@ -6,6 +6,11 @@
 </template>
 
 <script setup>
+/*
+用途：连接右键菜单（删除/关闭）
+说明：仅发出删除与关闭事件；查看模式由父组件控制屏蔽删除行为。
+边界：不直接移除边；位置与当前选中边由父组件传入。
+*/
 defineProps({
   visible: { type: Boolean, default: false },
   position: { type: Object, default: () => ({ x: 0, y: 0 }) },

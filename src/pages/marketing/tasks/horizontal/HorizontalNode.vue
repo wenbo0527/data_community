@@ -113,7 +113,8 @@ const contentHeight = computed(() => {
   const isStart = nodeType.value === 'start'
   const rowsCount = Array.isArray(outRows.value) ? outRows.value.length : 0
   const baseCount = isStart ? Math.max(1, rawLinesCount.value) : Math.max(1, rowsCount)
-  return baseCount * NODE_DIMENSIONS.ROW_HEIGHT
+  const gap = NODE_DIMENSIONS.ROW_GAP || 0
+  return baseCount * NODE_DIMENSIONS.ROW_HEIGHT + Math.max(0, baseCount - 1) * gap
 })
 
 const contentContainerStyle = computed(() => ({
@@ -128,30 +129,12 @@ const contentContainerStyle = computed(() => ({
 
 function rowEvenStyle(idx) {
   const isStart = nodeType.value === 'start'
+  const gap = NODE_DIMENSIONS.ROW_GAP || 0
   if (isStart) {
-    return {
-      position: 'absolute',
-      top: '0px',
-      height: contentHeight.value + 'px',
-      lineHeight: '20px',
-      whiteSpace: 'pre-line',
-      left: '0',
-      right: '0'
-    }
+    return { position: 'absolute', top: '0px', height: contentHeight.value + 'px', lineHeight: '20px', whiteSpace: 'pre-line', left: '0', right: '0' }
   }
-  const n = Array.isArray(outRows.value) ? outRows.value.length : 0
-  const contentH = contentHeight.value
-  const step = n > 0 ? contentH / n : 0
-  const centerY = step > 0 ? (idx + 0.5) * step : 0
-  const top = Math.max(0, Math.round(centerY - NODE_DIMENSIONS.ROW_HEIGHT / 2))
-  return {
-    position: 'absolute',
-    top: top + 'px',
-    height: NODE_DIMENSIONS.ROW_HEIGHT + 'px',
-    lineHeight: NODE_DIMENSIONS.ROW_HEIGHT + 'px',
-    left: '0',
-    right: '0'
-  }
+  const top = idx * (NODE_DIMENSIONS.ROW_HEIGHT + gap)
+  return { position: 'absolute', top: top + 'px', height: NODE_DIMENSIONS.ROW_HEIGHT + 'px', lineHeight: NODE_DIMENSIONS.ROW_HEIGHT + 'px', left: '0', right: '0' }
 }
 
 // 监听节点数据变化，确保组件响应更新

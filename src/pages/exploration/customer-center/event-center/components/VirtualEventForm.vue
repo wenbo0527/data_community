@@ -56,22 +56,13 @@
           <a-row :gutter="24">
             <a-col :span="12">
               <a-form-item label="应用场景" field="scenario">
-                <a-select v-model="formData.scenario" placeholder="请选择应用场景">
-                  <a-option value="营销触达">营销触达</a-option>
-                  <a-option value="风险控制">风险控制</a-option>
-                  <a-option value="用户分析">用户分析</a-option>
-                  <a-option value="行为监控">行为监控</a-option>
+                <a-select v-model="formData.scenario" multiple placeholder="请选择应用场景">
+                  <a-option value="营销通知">营销通知</a-option>
+                  <a-option value="电销出池">电销出池</a-option>
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="12">
-              <a-form-item label="逻辑关系" field="logicRelation">
-                <a-radio-group v-model="formData.logicRelation">
-                  <a-radio value="AND">与 (AND)</a-radio>
-                  <a-radio value="OR">或 (OR)</a-radio>
-                </a-radio-group>
-              </a-form-item>
-            </a-col>
+            
           </a-row>
 
           <a-form-item label="描述" field="description">
@@ -85,100 +76,7 @@
           </a-form-item>
         </div>
 
-        <!-- 步骤2: 条件配置 -->
-        <div v-show="currentStep === 1" class="step-panel">
-          <a-divider orientation="left">条件配置</a-divider>
-          
-          <div class="condition-groups">
-            <div 
-              v-for="(group, groupIndex) in formData.conditionGroups" 
-              :key="group.id"
-              class="condition-group"
-            >
-              <div class="group-header">
-                <div class="group-title">条件组 {{ groupIndex + 1 }}</div>
-                <div class="group-actions">
-                  <a-button 
-                    type="text" 
-                    size="small" 
-                    @click="addCondition(groupIndex)"
-                  >
-                    <template #icon><icon-plus /></template>
-                    添加条件
-                  </a-button>
-                  <a-popconfirm
-                    v-if="formData.conditionGroups.length > 1"
-                    content="确定要删除此条件组吗？"
-                    @ok="removeConditionGroup(groupIndex)"
-                  >
-                    <a-button type="text" size="small" status="danger">
-                      <template #icon><icon-delete /></template>
-                      删除组
-                    </a-button>
-                  </a-popconfirm>
-                </div>
-              </div>
-              
-              <div class="conditions">
-                <div 
-                  v-for="(condition, conditionIndex) in group.conditions" 
-                  :key="conditionIndex"
-                  class="condition-item"
-                >
-                  <div class="condition-fields">
-                    <a-select 
-                      v-model="condition.field" 
-                      placeholder="字段"
-                      style="width: 120px"
-                    >
-                      <a-option value="user_id">用户ID</a-option>
-                      <a-option value="event_type">事件类型</a-option>
-                      <a-option value="source_ip">来源IP</a-option>
-                      <a-option value="device_type">设备类型</a-option>
-                      <a-option value="location">地理位置</a-option>
-                      <a-option value="timestamp">时间戳</a-option>
-                    </a-select>
-                    
-                    <a-select 
-                      v-model="condition.logic" 
-                      placeholder="逻辑"
-                      style="width: 100px"
-                    >
-                      <a-option value="等于">等于</a-option>
-                      <a-option value="不等于">不等于</a-option>
-                      <a-option value="包含">包含</a-option>
-                      <a-option value="大于">大于</a-option>
-                      <a-option value="小于">小于</a-option>
-                    </a-select>
-                    
-                    <a-input 
-                      v-model="condition.value" 
-                      placeholder="值"
-                      style="flex: 1"
-                    />
-                    
-                    <a-button 
-                      v-if="group.conditions.length > 1"
-                      type="text" 
-                      size="small" 
-                      status="danger"
-                      @click="removeCondition(groupIndex, conditionIndex)"
-                    >
-                      <template #icon><icon-minus /></template>
-                    </a-button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="add-group-action">
-            <a-button type="dashed" long @click="addConditionGroup">
-              <template #icon><icon-plus /></template>
-              添加条件组
-            </a-button>
-          </div>
-        </div>
+        
 
         <!-- 步骤3: 输出配置 -->
         <div v-show="currentStep === 2" class="step-panel">
@@ -315,10 +213,6 @@ const steps = [
     description: '配置虚拟事件的基本属性'
   },
   {
-    title: '条件配置',
-    description: '设置虚拟事件的触发条件'
-  },
-  {
     title: '输出配置',
     description: '配置输出字段和权限'
   }
@@ -328,10 +222,8 @@ const steps = [
 const formData = reactive({
   eventName: '',
   eventId: '',
-  scenario: '',
-  logicRelation: 'AND',
+  scenario: [],
   description: '',
-  conditionGroups: [],
   permissions: ['read']
 })
 
@@ -352,9 +244,7 @@ const formRules = {
   scenario: [
     { required: true, message: '请选择应用场景' }
   ],
-  logicRelation: [
-    { required: true, message: '请选择逻辑关系' }
-  ],
+  
   description: [
     { max: 200, message: '描述长度不能超过200个字符' }
   ]
@@ -384,17 +274,7 @@ const resetForm = () => {
   formData.eventName = ''
   formData.eventId = ''
   formData.scenario = ''
-  formData.logicRelation = 'AND'
   formData.description = ''
-  formData.conditionGroups = [{
-    id: 1,
-    conditions: [{
-      field: '',
-      operator: '',
-      value: '',
-      logic: '等于'
-    }]
-  }]
   formData.permissions = ['read']
   
   outputFields.value = [
@@ -433,67 +313,16 @@ const previousStep = () => {
 const validateCurrentStep = async () => {
   if (currentStep.value === 0) {
     // 验证基本信息
-    return await formRef.value.validate(['eventName', 'eventId', 'scenario', 'logicRelation'])
+    return await formRef.value.validate(['eventName', 'eventId', 'scenario'])
   }
   
-  if (currentStep.value === 1) {
-    // 验证条件配置
-    if (formData.conditionGroups.length === 0) {
-      Message.warning('请至少添加一个条件组')
-      return false
-    }
-    
-    for (const group of formData.conditionGroups) {
-      if (group.conditions.length === 0) {
-        Message.warning('每个条件组至少需要一个条件')
-        return false
-      }
-      
-      for (const condition of group.conditions) {
-        if (!condition.field || !condition.logic || !condition.value) {
-          Message.warning('请完善所有条件信息')
-          return false
-        }
-      }
-    }
-    
-    return true
-  }
+  
   
   return true
 }
 
 // 条件组操作
-const addConditionGroup = () => {
-  const newGroup = {
-    id: Date.now(),
-    conditions: [{
-      field: '',
-      operator: '',
-      value: '',
-      logic: '等于'
-    }]
-  }
-  formData.conditionGroups.push(newGroup)
-}
-
-const removeConditionGroup = (index) => {
-  formData.conditionGroups.splice(index, 1)
-}
-
-const addCondition = (groupIndex) => {
-  const newCondition = {
-    field: '',
-    operator: '',
-    value: '',
-    logic: '等于'
-  }
-  formData.conditionGroups[groupIndex].conditions.push(newCondition)
-}
-
-const removeCondition = (groupIndex, conditionIndex) => {
-  formData.conditionGroups[groupIndex].conditions.splice(conditionIndex, 1)
-}
+ 
 
 // 输出字段操作
 const addOutputField = () => {
@@ -534,8 +363,10 @@ const handleSubmit = async () => {
       if (!props.eventData) {
         submitData.createTime = new Date().toISOString()
         submitData.updater = '当前用户'
-        submitData.status = '草稿'
-        submitData.syncStatus = 'pending'
+        submitData.status = '已上线'
+        submitData.version = 1
+        submitData.versions = [{ version: 1, updatedAt: new Date().toISOString(), updater: '当前用户', description: '初始版本' }]
+        submitData.expireAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString()
       }
       
       emit('submit', submitData)

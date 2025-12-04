@@ -344,28 +344,30 @@ function buildDisplayLines(nodeType, config = {}) {
       break
       
     case 'crowd-split':
-      const layers = config?.crowdLayers || []
-      const branches = config?.branches || []
-      const splitCount = config?.splitCount || 0
-      
-      if (layers.length) {
-        layers.forEach(l => lines.push(`命中：${l.crowdName}`))
-        lines.push(`否则：${config.unmatchBranch?.name || '未命中人群'}`)
-      } else if (branches.length) {
-        branches.forEach(b => lines.push(`命中：${b.name}`))
-        lines.push(`否则：${config.unmatchBranch?.name || '未命中人群'}`)
-      } else if (splitCount > 0) {
-        for (let i = 0; i < splitCount; i++) {
-          lines.push(`分支${i + 1}`)
+      {
+        const layers = Array.isArray(config?.crowdLayers) ? config.crowdLayers : []
+        const branches = Array.isArray(config?.branches) ? config.branches : []
+        if (layers.length) {
+          layers.forEach((l, i) => { const name = l?.crowdName || l?.name || `分群${i + 1}`; lines.push(name) })
+          lines.push('其他')
+        } else if (branches.length) {
+          branches.forEach((b, i) => { const name = b?.name || `分群${i + 1}`; lines.push(name) })
+          lines.push('其他')
+        } else if (typeof config?.splitCount === 'number' && config.splitCount > 0) {
+          for (let i = 0; i < config.splitCount; i++) lines.push(`分群${i + 1}`)
+          lines.push('其他')
         }
-        lines.push('未命中')
       }
       break
       
     case 'event-split':
-      lines.push(`命中：${config?.yesLabel || '是'}`)
-      if (config?.timeout != null) {
-        lines.push(`等待 ${config.timeout} 分钟未命中`)
+      {
+        const typeLabel = config?.eventTypeLabel || config?.eventType || config?.customEventName || '事件'
+        const timeoutVal = config?.timeout != null ? String(config.timeout) : ''
+        const unit = config?.unit || '分钟'
+        lines.push(`发生【${typeLabel}】`)
+        if (timeoutVal) lines.push(`【${timeoutVal}${unit}】未发生事件`)
+        else lines.push('【未设置超时】未发生事件')
       }
       break
       
@@ -392,9 +394,7 @@ function buildDisplayLines(nodeType, config = {}) {
       break
       
     case 'wait':
-      if (config?.value != null && config?.unit) {
-        lines.push(`等待 ${config.value} ${config.unit}`)
-      }
+      if (config?.value != null) lines.push(`等待：${config.value}${config.unit || ''}`)
       break
       
     case 'benefit':

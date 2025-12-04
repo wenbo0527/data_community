@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useContractStore } from '@/store/modules/contract'
+import { useContractStore } from '@/modules/budget/stores/contract'
 
 interface DataProduct {
   id: string

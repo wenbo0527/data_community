@@ -7,102 +7,64 @@ export const alertRulesData = [
     id: 'alert_1',
     name: '库存不足预警',
     type: 'inventory',
-    description: '监控优惠券库存，低于阈值时发送预警',
+    description: '监控券库存，低于阈值时发送预警',
     conditions: {
-      threshold: 10,
-      thresholdType: 'absolute'
+      granularity: 'coupon_stock',
+      metricConfigs: [
+        { metric: 'remaining_stock_count', operator: 'less_than', threshold: 100, content: '券库存：{{券库存名称}}剩余不足{{指标值}}张，请关注' }
+      ]
     },
-    channels: ['email', 'sms'],
-    status: 'active', // 统一使用 status 字段
+    channels: ['wechat'],
+    needProcessing: true,
+    status: 'active',
     enabled: true,
     created_at: '2024-01-10 09:00:00',
-    createTime: '2024-01-10 09:00:00', // 兼容全局规则页面
+    createdAt: '2024-01-10 09:00:00',
+    createTime: '2024-01-10 09:00:00',
     triggerCount: 15,
     lastTriggerTime: '2024-01-15 14:30:00'
   },
   {
     id: 'alert_2',
-    name: '即将过期预警',
+    name: '券包到期预警',
     type: 'expiry',
-    description: '监控优惠券过期时间，提前预警',
+    description: '监控券包有效期，提前预警',
     conditions: {
-      advanceDays: 3
+      granularity: 'coupon_package',
+      metricConfigs: [
+        { metric: 'package_remaining_days', operator: 'less_than', threshold: 3, content: '券包：{{券包名称}}有效期不足{{指标值}}日，请关注' }
+      ]
     },
-    channels: ['email'],
+    channels: ['wechat'],
+    needProcessing: false,
     status: 'active',
     enabled: true,
     created_at: '2024-01-10 09:30:00',
+    createdAt: '2024-01-10 09:30:00',
     createTime: '2024-01-10 09:30:00',
     triggerCount: 8,
     lastTriggerTime: '2024-01-15 10:15:00'
   },
   {
     id: 'alert_3',
-    name: '系统失败率预警',
+    name: '失败率监控',
     type: 'failure',
-    description: '监控系统失败率，超过阈值时预警',
+    description: '监控失败率，超过阈值时预警',
     conditions: {
-      failureRate: 10,
-      timeWindow: 60
+      granularity: 'coupon_instance_lifecycle',
+      metricConfigs: [
+        { metric: 'redemption_failure_ratio', operator: 'greater_than', threshold: 5, window: '24h', content: '今日{{券库存名称}}核销失败超过{{指标值}}，请关注' }
+      ]
     },
-    channels: ['email', 'webhook'],
+    channels: ['wechat'],
+    needProcessing: true,
     status: 'active',
     enabled: true,
     created_at: '2024-01-10 10:00:00',
+    createdAt: '2024-01-10 10:00:00',
     createTime: '2024-01-10 10:00:00',
     triggerCount: 3,
     lastTriggerTime: '2024-01-14 16:45:00'
-  },
-  {
-    id: 'alert_4',
-    name: '券库存粒度预警',
-    type: 'coupon_inventory',
-    description: '监控券库存粒度，库存不足时预警',
-    conditions: {
-      inventoryThreshold: 50,
-      thresholdType: 'absolute',
-      metricType: 'remaining_stock'
-    },
-    channels: ['email'],
-    status: 'active',
-    enabled: true,
-    created_at: '2024-01-12 10:00:00',
-    createTime: '2024-01-12 10:00:00',
-    triggerCount: 5,
-    lastTriggerTime: '2024-01-14 12:30:00'
-  },
-  {
-    id: 'alert_5',
-    name: '券包粒度预警',
-    type: 'coupon_package',
-    description: '监控券包粒度，剩余天数不足时预警',
-    conditions: {
-      daysThreshold: 5,
-      metricType: 'package_expiry_days'
-    },
-    channels: ['email', 'sms'],
-    status: 'active',
-    enabled: true,
-    created_at: '2024-01-12 11:00:00',
-    createTime: '2024-01-12 11:00:00',
-    triggerCount: 3,
-    lastTriggerTime: '2024-01-13 15:20:00'
-  },
-  {
-    id: 'alert_6',
-    name: '券实例生命周期预警',
-    type: 'coupon_lifecycle',
-    description: '监控券实例生命周期状态变化',
-    conditions: {
-      statusChange: 'expiring'
-    },
-    channels: ['email'],
-    status: 'inactive',
-    enabled: false,
-    created_at: '2024-01-13 14:00:00',
-    createTime: '2024-01-13 14:00:00',
-    triggerCount: 0,
-    lastTriggerTime: null
   }
 ]
 
@@ -128,13 +90,19 @@ export const addAlertRule = (rule) => {
     ...rule,
     id: `alert_${Date.now()}`,
     created_at: new Date().toLocaleString('zh-CN'),
+    createdAt: new Date().toLocaleString('zh-CN'),
     createTime: new Date().toLocaleString('zh-CN'),
     triggerCount: 0,
     lastTriggerTime: null,
-    enabled: rule.status === 'active'
+    status: rule.status || 'active',
+    enabled: (rule.status || 'active') === 'active'
   }
   alertRulesData.push(newRule)
   return newRule
+}
+
+export const getRuleById = (id) => {
+  return alertRulesData.find(r => r.id === id)
 }
 
 // 更新预警规则

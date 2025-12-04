@@ -12,7 +12,7 @@
           保存草稿
         </a-button>
         <a-button type="primary" @click="handleSubmit">
-          {{ isEditMode ? '更新指标' : '创建指标' }}
+          {{ isEditMode ? '更新指标' : '上线' }}
         </a-button>
         <a-button v-if="isEditMode && formData.versionStatus === '草稿'" type="primary" @click="handleGoOnline" style="margin-left: 12px">
           上线

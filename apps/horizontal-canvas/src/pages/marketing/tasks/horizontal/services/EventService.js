@@ -20,6 +20,11 @@ export class EventService {
 
   bindGraphEvents(graph) {
     const readOnly = this.readOnly
+    /**
+     * 坐标转换到容器坐标系
+     * 入参：point({x;y}) 局部/客户端坐标
+     * 返回：{x;y} 相对于容器左上角的坐标
+     */
     const toContainerCoords = (point) => {
       try {
         const clientPos = this.graph.localToClient ? this.graph.localToClient(point) : point
@@ -30,6 +35,11 @@ export class EventService {
       }
     }
 
+    /**
+     * 点击区域识别（标题区/菜单点区域）
+     * 入参：e(MouseEvent)、node(Cell)
+     * 返回：{ inHeader:boolean, inDotArea:boolean }
+     */
     const getClickRegion = (e, node) => {
       try {
         const bbox = node.getBBox()
@@ -144,3 +154,8 @@ export class EventService {
 }
 
 export default EventService
+/*
+用途：事件服务（Graph 事件绑定与区域识别）
+说明：统一处理节点菜单图标/标题/内容区域的交互行为，结合只读/统计模式进行分支；页面注入依赖以打开抽屉与定位菜单。
+边界：不直接持久化；查看模式屏蔽编辑操作；坐标转换依赖容器与 Graph 提供的方法。
+*/

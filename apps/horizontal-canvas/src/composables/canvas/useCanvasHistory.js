@@ -19,3 +19,8 @@ export const useCanvasHistory = (graph) => {
   }
   return { historyStack, updateHistoryStack, setupHistoryListeners, jumpToHistoryState, handleKeydown }
 }
+/*
+用途：画布历史组合式（堆栈展示与撤销/重做）
+说明：提供历史栈更新与事件监听、键盘快捷支持；实际历史由 X6 History 插件管理。
+边界：跳转历史状态需结合插件快照；此处仅示例接口与撤销/重做键盘支持。
+*/

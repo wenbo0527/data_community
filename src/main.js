@@ -26,10 +26,14 @@ if (import.meta.env.DEV) {
   Promise.all([
     import('./mock/external-data.ts'),
     import('./mock/budget.ts'),
-    import('./mock/offlineModel/index.js')
+    import('./mock/offlineModel/index.js'),
+    import('./mock/index.js').then(({ initMockService }) => {
+      initMockService()
+      console.info('🧪 变量管理Mock接口已加载')
+    })
   ])
     .then(() => {
-      console.info('🧪 Mock 接口已加载（external-data, budget, offlineModel）')
+      console.info('🧪 Mock 接口已加载（external-data, budget, offlineModel, variable-management）')
     })
     .catch(err => {
       console.warn('⚠️ Mock 接口加载失败:', err)
@@ -45,6 +49,7 @@ import router from './router';
 import pinia from './store';
 import ArcoVue from '@arco-design/web-vue';
 import '@arco-design/web-vue/dist/arco.css';
+import * as ArcoIcons from '@arco-design/web-vue/es/icon';
 
 const app = createApp(App);
 
@@ -85,6 +90,17 @@ if (import.meta.env.DEV) {
     // 其他警告正常显示
     console.warn(`[Vue warn]: ${msg}`, instance, trace);
   };
+  // 进一步过滤控制台输出中的 toRefs 警告
+  const __origConsoleWarn = console.warn.bind(console);
+  console.warn = (...args) => {
+    try {
+      const [first] = args;
+      if (typeof first === 'string' && first.includes('toRefs() expects a reactive object but received a plain one')) {
+        return;
+      }
+    } catch (_) {}
+    __origConsoleWarn(...args);
+  };
   
   // 配置全局错误处理器
   app.config.errorHandler = (err, instance, info) => {
@@ -102,5 +118,11 @@ if (import.meta.env.DEV) {
 app.use(router);
 app.use(pinia);
 app.use(ArcoVue);
+Object.keys(ArcoIcons).forEach((key) => {
+  const comp = ArcoIcons[key];
+  if (comp && comp.name) {
+    app.component(comp.name, comp);
+  }
+});
 
 app.mount('#app');

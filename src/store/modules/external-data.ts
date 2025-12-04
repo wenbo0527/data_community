@@ -20,6 +20,7 @@ import {
   updateTaskProgress,
 } from '../../api/external/task'
 import type { Task, TaskConfig } from '../../api/external/task'
+import { getBurndown, getWarnings } from '@/modules/external-data/api/monitor'
 
 // --------------------
 // 类型定义
@@ -111,6 +112,16 @@ export const useExternalDataStore = defineStore('externalData', {
     burndownLoading: false as boolean,
     warnings: [] as WarningItem[],
     warningsLoading: false as boolean,
+
+    // 监控筛选选项
+    targetLoanOptions: [] as number[],
+
+    // 生命周期
+    lifecycleStages: [] as any[],
+    lifecycle: {} as any,
+
+    // 服务列表
+    services: [] as any[],
 
     // 任务中心
     tasks: [] as Task[],
@@ -260,10 +271,7 @@ export const useExternalDataStore = defineStore('externalData', {
       this.burndownLoading = true
       this.error = null
       try {
-        const res = await axios.get('/api/external-data/burndown', { params })
-        // 兼容 mock 返回 { code, data } 与真实接口直接返回数组
-        const payload = res?.data
-        const list = Array.isArray(payload) ? payload : (payload?.data ?? [])
+        const list = await getBurndown(params)
         this.burndown = (list ?? []) as BurndownPoint[]
       } catch (e: any) {
         this.error = e?.message ?? '获取燃尽数据失败'
@@ -283,14 +291,57 @@ export const useExternalDataStore = defineStore('externalData', {
       this.warningsLoading = true
       this.error = null
       try {
-        const res = await axios.get('/api/external-data/warning', { params })
-        const payload = res?.data
-        const list = Array.isArray(payload) ? payload : (payload?.data ?? [])
+        const list = await getWarnings(params)
         this.warnings = (list ?? []) as WarningItem[]
       } catch (e: any) {
         this.error = e?.message ?? '获取预警数据失败'
       } finally {
         this.warningsLoading = false
+      }
+    },
+
+    async fetchTargetLoanOptions() {
+      const set = new Set<number>()
+      ;(this.burndown || []).forEach((p: any) => { if (typeof p.targetLoan === 'number') set.add(p.targetLoan) })
+      ;(this.warnings || []).forEach((w: any) => { if (typeof w.targetLoan === 'number') set.add(w.targetLoan) })
+      this.targetLoanOptions = Array.from(set).sort((a, b) => a - b)
+    },
+
+    async fetchLifecycleData(_params?: any) {
+      this.error = null
+      try {
+        // 占位：使用 mock 数据结构，兼容页面展示
+        const now = new Date()
+        const fmt = (d: Date) => d.toISOString().slice(0, 10)
+        this.lifecycleStages = [
+          { stage: 'registration', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 2)), endDate: fmt(new Date(now.getFullYear(), 0, 5)), description: '完成注册与资产归档' },
+          { stage: 'evaluation', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 6)), endDate: fmt(new Date(now.getFullYear(), 0, 18)), description: '完成质量与性能评估' },
+          { stage: 'approval', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 19)), endDate: fmt(new Date(now.getFullYear(), 0, 22)), description: '审批通过' },
+          { stage: 'deployment', status: 'in_progress', startDate: fmt(new Date(now.getFullYear(), 0, 23)), description: '上线发布中' },
+          { stage: 'operation', status: 'pending', description: '运维监控准备' }
+        ]
+        this.lifecycle = { currentStage: 'deployment', currentStatus: 'in_progress', stages: this.lifecycleStages }
+      } catch (e: any) {
+        this.error = e?.message ?? '获取生命周期数据失败'
+      }
+    },
+
+    async fetchServices() {
+      this.error = null
+      try {
+        // 占位：服务列表从 products 映射生成
+        const base = (this.products || []).map((p: any, idx: number) => ({
+          id: String(p.id ?? idx + 1),
+          name: p.name || `外数服务-${idx + 1}`,
+          supplier: p.supplier || p.provider || '—',
+          serviceType: ['API','文件','数据库','平台工具'][idx % 4],
+          billingMode: p.billingMode || 'per_call',
+          unitPrice: typeof p.unitPrice === 'number' ? p.unitPrice : (idx + 1) * 1.5,
+          status: p.status === 'online' ? 'online' : p.status === 'maintaining' ? 'maintaining' : 'pending'
+        }))
+        this.services = base
+      } catch (e: any) {
+        this.error = e?.message ?? '获取服务列表失败'
       }
     },
 

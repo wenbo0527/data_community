@@ -1,28 +1,7 @@
 <template>
   <div class="task-management-page">
     <!-- 页面标题和操作区 -->
-    <div class="page-header">
-      <div class="page-title">
-        <h2>任务管理</h2>
-        <span class="page-subtitle">管理和监控所有模型任务</span>
-      </div>
-      <div class="page-actions">
-        <a-space>
-          <a-button type="primary" @click="handleCreateTask">
-            <template #icon>
-              <icon-plus />
-            </template>
-            新建任务
-          </a-button>
-          <a-button @click="handleBatchOperation">
-            <template #icon>
-              <icon-settings />
-            </template>
-            批量操作
-          </a-button>
-        </a-space>
-      </div>
-    </div>
+    <PageHeader title="任务管理" />
 
     <!-- 任务统计 -->
     <div class="stats-section">
@@ -165,12 +144,6 @@
                 </template>
                 刷新
               </a-button>
-              <a-button size="small" @click="handleTableSetting">
-                <template #icon>
-                  <icon-tool />
-                </template>
-                表格设置
-              </a-button>
             </a-space>
           </div>
         </template>
@@ -266,9 +239,11 @@
 </template>
 
 <script setup>
+import PageHeader from '../components/PageHeader.vue'
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/store/modules/model-offline'
+import { taskAPI } from '@/api/offlineModel'
 import { Message } from '@arco-design/web-vue'
 import { logger } from '@/utils/enhancedErrorHandler.js'
 
@@ -395,46 +370,11 @@ const loadData = async () => {
       page: pagination.current,
       pageSize: pagination.pageSize
     })
-    // TODO: 调用API获取数据
-    // await store.fetchTasks({
-    //   ...filterForm,
-    //   page: pagination.current,
-    //   pageSize: pagination.pageSize
-    // })
-    
-    // 模拟数据
-    const mockData = [
-      {
-        id: 1,
-        name: '信用评分模型训练',
-        type: 'training',
-        status: 'running',
-        priority: 'high',
-        progress: 75,
-        startTime: '2024-01-15 10:30:00',
-        estimatedEndTime: '2024-01-15 12:30:00',
-        creator: '张三',
-        createTime: '2024-01-15 10:30:00'
-      },
-      {
-        id: 2,
-        name: '风险预测模型评估',
-        type: 'evaluation',
-        status: 'completed',
-        priority: 'medium',
-        progress: 100,
-        startTime: '2024-01-16 14:20:00',
-        estimatedEndTime: '2024-01-16 15:20:00',
-        creator: '李四',
-        createTime: '2024-01-16 14:20:00'
-      }
-    ]
-    
-    store.setTasks(mockData)
-    pagination.total = mockData.length
-    logger.info('TaskManagement loadData success', {
-      total: pagination.total
-    })
+    const res = await taskAPI.getTasks({ type: filterForm.type || '', status: filterForm.status || '', page: pagination.current, pageSize: pagination.pageSize })
+    const list = (res.data && res.data.data) ? res.data.data : []
+    store.setTasks(list)
+    pagination.total = (res.data && res.data.total) ? res.data.total : list.length
+    logger.info('TaskManagement loadData success', { total: pagination.total })
   } catch (error) {
     logger.error('TaskManagement loadData error', error)
     Message.error('加载数据失败')
@@ -473,19 +413,7 @@ const handleSelectionChange = (rows) => {
   selectedRows.value = rows
 }
 
-const handleCreateTask = () => {
-  logger.info('TaskManagement create task click')
-  router.push('/offline-model/task-management/create')
-}
-
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  logger.info('TaskManagement batch operation', { count: selectedRows.value.length })
-  Message.info('批量操作功能开发中')
-}
+// 不支持新建与批量操作，入口移除
 
 const handleRefresh = () => {
   logger.info('TaskManagement manual refresh')
@@ -493,10 +421,7 @@ const handleRefresh = () => {
   Message.success('已刷新')
 }
 
-const handleTableSetting = () => {
-  logger.info('TaskManagement table setting click')
-  Message.info('表格设置功能开发中')
-}
+// 表格设置入口移除
 
 const handleViewDetail = (record) => {
   logger.info('TaskManagement view detail', { id: record?.id })
@@ -615,10 +540,7 @@ const formatDate = (date) => {
         font-weight: 500;
       }
       
-      .page-subtitle {
-        color: #666;
-        font-size: 14px;
-      }
+      
     }
   }
   

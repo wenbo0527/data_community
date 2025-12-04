@@ -588,6 +588,23 @@
             <a-checkbox value="sms">短信</a-checkbox>
           </a-checkbox-group>
         </a-form-item>
+        <a-form-item label="文案配置" field="content">
+          <a-card :bordered="false" class="content-card">
+            <div v-if="formData.channels.includes('wechat')">
+              <a-form-item label="企业微信文案" field="content.wechat">
+                <a-textarea v-model="formData.content.wechat" placeholder="请输入企业微信通知文案" :rows="3" />
+              </a-form-item>
+            </div>
+            <div v-if="formData.channels.includes('sms')" :style="formData.channels.includes('wechat') ? 'margin-top: 12px;' : ''">
+              <a-form-item label="短信文案" field="content.sms">
+                <a-textarea v-model="formData.content.sms" placeholder="请输入短信通知文案" :rows="3" />
+              </a-form-item>
+            </div>
+            <div v-if="formData.channels.length === 0" class="no-channel-selected">
+              <a-empty description="请选择通知渠道以配置文案" />
+            </div>
+          </a-card>
+        </a-form-item>
 
         <a-form-item label="接收人配置" field="recipients">
           <a-card :bordered="false" class="recipients-card">
@@ -813,6 +830,10 @@ const formData = reactive({
   recipients: {
     wechatUsers: [],
     smsContacts: []
+  },
+  content: {
+    wechat: '',
+    sms: ''
   },
   description: '',
   status: 'active'
@@ -1174,6 +1195,10 @@ const handleEdit = (record) => {
     recipients: {
       wechatUsers: [...(record.recipients.wechatUsers || [])],
       smsContacts: [...(record.recipients.smsContacts || [])]
+    },
+    content: {
+      wechat: record.content && record.content.wechat ? record.content.wechat : '',
+      sms: record.content && record.content.sms ? record.content.sms : ''
     }
   })
   modalVisible.value = true
@@ -1281,6 +1306,10 @@ const resetForm = () => {
       wechatUsers: [],
       smsContacts: []
     },
+    content: {
+      wechat: '',
+      sms: ''
+    },
     description: '',
     status: 'active'
   })
@@ -1320,6 +1349,14 @@ const validateForm = () => {
       return false
     }
   }
+  if (formData.channels.includes('wechat') && !formData.content.wechat.trim()) {
+    Message.error('请输入企业微信通知文案')
+    return false
+  }
+  if (formData.channels.includes('sms') && !formData.content.sms.trim()) {
+    Message.error('请输入短信通知文案')
+    return false
+  }
   
   return true
 }
@@ -1343,6 +1380,10 @@ const handleSubmit = async () => {
             wechatUsers: [...formData.recipients.wechatUsers],
             smsContacts: [...formData.recipients.smsContacts]
           },
+          content: {
+            wechat: formData.content.wechat,
+            sms: formData.content.sms
+          },
           updated_at: new Date().toLocaleString()
         }
         Message.success('规则更新成功')
@@ -1355,6 +1396,10 @@ const handleSubmit = async () => {
         recipients: {
           wechatUsers: [...formData.recipients.wechatUsers],
           smsContacts: [...formData.recipients.smsContacts]
+        },
+        content: {
+          wechat: formData.content.wechat,
+          sms: formData.content.sms
         },
         created_at: new Date().toLocaleString(),
         switching: false
@@ -1452,7 +1497,8 @@ onMounted(() => {
 }
 
 .condition-card,
-.recipients-card {
+.recipients-card,
+.content-card {
   background-color: #f7f8fa;
   margin-top: 8px;
 }

@@ -35,6 +35,17 @@ export const featureAPI = {
   
   // 获取特征状态列表
   getFeatureStatus: () => mockAPI.feature.getFeatureStatus()
+  ,
+  listTables: () => mockAPI.feature.listTables(),
+  getTableColumns: (tableName) => mockAPI.feature.getTableColumns(tableName),
+  getTableMeta: (tableName) => mockAPI.feature.getTableMeta(tableName),
+  setTableMeta: (tableName, meta) => mockAPI.feature.setTableMeta(tableName, meta),
+  getRegisteredFields: (tableName) => mockAPI.feature.getRegisteredFields(tableName),
+  getUnregisteredFields: (tableName) => mockAPI.feature.getUnregisteredFields(tableName),
+  batchRegisterFields: (tableName, fields) => mockAPI.feature.batchRegisterFields(tableName, fields)
+  ,
+  listDatabases: (sourceType) => mockAPI.feature.listDatabases(sourceType),
+  listTablesByDb: (sourceType, dbName) => mockAPI.feature.listTablesByDb(sourceType, dbName)
 }
 
 // 模型注册相关API
@@ -74,32 +85,38 @@ export const modelAPI = {
   
   // 重新训练模型
   retrainModel: (id) => mockAPI.model.retrainModel(id)
+  ,
+  listPlatformModels: () => mockAPI.model.listPlatformModels(),
+  getPlatformModel: (serviceName) => mockAPI.model.getPlatformModel(serviceName),
+  downloadPlatformModelFile: (serviceName) => mockAPI.model.downloadPlatformModelFile(serviceName)
+  ,
+  createModelVersion: (id) => mockAPI.model.createModelVersion(id)
 }
 
 // 模型回溯相关API（待实现）
 export const backtrackAPI = {
   // 获取回溯列表
   getBacktracks: (params) => {
-    console.log('获取回溯列表:', params)
-    return Promise.resolve(mockAPI.createResponse([]))
+    const result = mockAPI.backtrack.getBacktracks(params)
+    return Promise.resolve(mockAPI.createResponse(result))
   },
   
   // 创建回溯任务
   createBacktrack: (data) => {
-    console.log('创建回溯任务:', data)
-    return Promise.resolve(mockAPI.createResponse({ id: 1 }))
+    const result = mockAPI.backtrack.createBacktrack(data)
+    return Promise.resolve(mockAPI.createResponse({ id: result.id }))
   },
   
   // 获取回溯详情
   getBacktrackDetail: (id) => {
-    console.log('获取回溯详情:', id)
-    return Promise.resolve(mockAPI.createResponse({}))
+    const result = mockAPI.backtrack.getBacktrackDetail(id)
+    return Promise.resolve(mockAPI.createResponse(result))
   },
   
   // 停止回溯任务
   stopBacktrack: (id) => {
-    console.log('停止回溯任务:', id)
-    return Promise.resolve(mockAPI.createResponse(null))
+    const result = mockAPI.backtrack.updateBacktrackProgress(id, { status: 'stopped' })
+    return Promise.resolve(mockAPI.createResponse(result))
   }
 }
 
@@ -107,8 +124,8 @@ export const backtrackAPI = {
 export const taskAPI = {
   // 获取任务列表
   getTasks: (params) => {
-    console.log('获取任务列表:', params)
-    return Promise.resolve(mockAPI.createResponse([]))
+    const result = mockAPI.task.getTasks(params)
+    return Promise.resolve(mockAPI.createResponse(result))
   },
   
   // 创建任务
@@ -119,8 +136,8 @@ export const taskAPI = {
   
   // 获取任务详情
   getTaskDetail: (id) => {
-    console.log('获取任务详情:', id)
-    return Promise.resolve(mockAPI.createResponse({}))
+    const result = mockAPI.task.getTaskDetail(id)
+    return Promise.resolve(mockAPI.createResponse(result))
   },
   
   // 暂停任务
@@ -145,6 +162,11 @@ export const taskAPI = {
   deleteTask: (id) => {
     console.log('删除任务:', id)
     return Promise.resolve(mockAPI.createResponse(null))
+  },
+  // 重试子任务
+  retrySubtask: (taskId, subtaskId) => {
+    const result = mockAPI.task.retrySubtask(taskId, subtaskId)
+    return Promise.resolve(mockAPI.createResponse(result))
   }
 }
 

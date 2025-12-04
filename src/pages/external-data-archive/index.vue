@@ -157,7 +157,7 @@ import { reactive, onMounted, computed, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
 import { useExternalDataStore } from '../../store/modules/external-data'
-import { useContractStore } from '@/store/modules/contract'
+import { useContractStore } from '@/modules/budget/stores/contract'
 import { IconDownload } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()

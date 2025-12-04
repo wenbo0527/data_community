@@ -1,7 +1,8 @@
-/**
- * 端口验证组合式函数
- * 用于验证端口位置与内容行的对齐精度
- */
+/*
+用途：端口验证组合式（位置与ID校验）
+说明：校验输出端口与内容行的几何对齐、端口ID格式一致性，并提供统计与清理接口。
+边界：仅生成校验结果与统计，不修改端口；容差可配置；依赖样式常量。
+*/
 
 import { ref, computed } from 'vue'
 import { NODE_DIMENSIONS, TYPOGRAPHY } from '../styles/nodeStyles.js'
@@ -10,6 +11,11 @@ export function usePortValidation() {
   const validationErrors = ref([])
   const validationWarnings = ref([])
   
+  /**
+   * 校验输出端口位置与内容行对齐
+   * 入参：portConfig(any X6 端口配置)、contentLines(string[])、tolerance(number 容差像素)
+   * 返回：{ isValid:boolean, errors:[], warnings:[], details:{} }
+   */
   function validatePortPositions(portConfig, contentLines, tolerance = 2) {
     validationErrors.value = []
     validationWarnings.value = []
@@ -43,6 +49,10 @@ export function usePortValidation() {
     return results
   }
   
+  /**
+   * 校验输入端口对齐（内部）
+   * 入参：inGroup(any)、results(聚合结果)
+   */
   function validateInputPort(inGroup, results) {
     if (!inGroup.items || inGroup.items.length === 0) {
       return
@@ -68,6 +78,10 @@ export function usePortValidation() {
     }
   }
   
+  /**
+   * 校验输出端口对齐（内部）
+   * 入参：outGroup(any)、contentLines(string[])、tolerance(number)、results(聚合结果)
+   */
   function validateOutputPorts(outGroup, contentLines, tolerance, results) {
     if (!outGroup.items || outGroup.items.length === 0) {
       return
@@ -135,6 +149,11 @@ export function usePortValidation() {
     results.details.outputPorts = outputPortDetails
   }
   
+  /**
+   * 计算期望输出端口 dy（内部）
+   * 入参：lineIndex(number)、totalLines(number)
+   * 返回：number dy
+   */
   function getExpectedOutputPortDy(lineIndex, totalLines) {
     const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT
     const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
@@ -142,16 +161,21 @@ export function usePortValidation() {
     const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST
     const minHeight = NODE_DIMENSIONS.MIN_HEIGHT
     
-    const contentHeight = Math.max(1, totalLines) * rowHeight
+    const contentHeight = Math.max(1, totalLines) * rowHeight + Math.max(0, totalLines - 1) * (NODE_DIMENSIONS.ROW_GAP || 0)
     const calculatedHeight = headerHeight + contentPadding + contentHeight + 12
     const height = Math.max(minHeight, calculatedHeight)
     
-    const verticalOffset = headerHeight + contentPadding + (lineIndex * rowHeight) + Math.floor(rowHeight / 2) + baselineAdjust
+    const verticalOffset = headerHeight + contentPadding + (lineIndex * rowHeight) + (lineIndex * (NODE_DIMENSIONS.ROW_GAP || 0)) + Math.floor(rowHeight / 2) + baselineAdjust
     const expectedDy = verticalOffset - (height / 2)
     
     return expectedDy
   }
   
+  /**
+   * 校验端口ID格式（前缀-序号）
+   * 入参：ports(Port[])、expectedPrefix(string)
+   * 返回：{ isValid:boolean, errors:[], details:[] }
+   */
   function validatePortIds(ports, expectedPrefix) {
     const results = {
       isValid: true,
@@ -186,6 +210,11 @@ export function usePortValidation() {
     return results
   }
   
+  /**
+   * 获取校验统计（计算属性）
+   * 入参：无
+   * 返回：{ totalErrors,totalWarnings,hasErrors,hasWarnings }
+   */
   function getValidationStats() {
     return computed(() => ({
       totalErrors: validationErrors.value.length,
@@ -195,6 +224,11 @@ export function usePortValidation() {
     }))
   }
   
+  /**
+   * 清理校验结果
+   * 入参：无
+   * 返回：void
+   */
   function clearValidation() {
     validationErrors.value = []
     validationWarnings.value = []

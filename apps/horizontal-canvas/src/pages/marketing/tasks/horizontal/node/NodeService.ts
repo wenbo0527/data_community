@@ -3,11 +3,23 @@ import { createVueShapeNode } from '../createVueShapeNode.js'
 
 export type GraphLike = any
 
+/**
+ * 创建节点规格
+ * 入参：nodeType(string)、config(any)、pos({ x:number; y:number })
+ * 返回：Vue Shape 节点规格对象
+ * 边界：标记 isConfigured=true；label 优先使用 config.nodeName 其后回退到类型标签
+ */
 export function createNodeSpec(nodeType: string, config: any, pos: { x: number; y: number }): any {
   const label = config?.nodeName || getNodeLabel(nodeType) || nodeType
   return createVueShapeNode({ id: `${nodeType}-${Date.now()}`, x: pos.x, y: pos.y, label, data: { type: nodeType, nodeType, config, isConfigured: true } })
 }
 
+/**
+ * 统一更新节点（尺寸、端口映射、数据写回）
+ * 入参：graph(GraphLike)、node(Cell)、nodeType(string)、config(any)
+ * 返回：void
+ * 边界：按 out-N 规则重映射出端口；移除旧端口并保持连接；写回 data/props 并触发 change:data
+ */
 export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string, config: any): void {
   const pos = node.getPosition?.() || { x: 0, y: 0 }
   const label = config?.nodeName || getNodeLabel(nodeType) || nodeType
@@ -21,26 +33,11 @@ export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string,
     if (!specIds.has(p.id)) {
       try {
         const isOut = p.group === 'out'
-        const edges = graph?.getConnectedEdges?.(node) || []
-        const outgoing = edges.filter((e: any) => {
-          try { return e.getSourceCellId?.() === node.id && e.getSourcePortId?.() === p.id } catch { return false }
-        })
-        let targetNewPortId: string | null = null
         if (isOut) {
-          const match = /^out-(\d+)$/.exec(p.id)
-          const newOutIds = Array.from(specIds).filter((id: any) => /^out-\d+$/.test(String(id))).sort((a: any, b: any) => Number(String(a).split('-')[1]) - Number(String(b).split('-')[1]))
-          if (match) {
-            const num = Number(match[1])
-            const clamped = Math.max(0, Math.min(num, newOutIds.length - 1))
-            targetNewPortId = (newOutIds as string[])[clamped] || (newOutIds as string[])[0] || null
-          } else {
-            targetNewPortId = (newOutIds as string[])[0] || null
-          }
-        } else {
-          targetNewPortId = specIds.has('in') ? 'in' : null
-        }
-        if (targetNewPortId) {
-          outgoing.forEach((e: any) => { try { e.setSource({ cell: node.id, port: targetNewPortId }) } catch {} })
+          const edges = (graph?.getOutgoingEdges?.(node) || []).filter((e: any) => {
+            try { return e.getSourcePortId?.() === p.id } catch { return false }
+          })
+          edges.forEach((e: any) => { try { graph.removeEdge?.(e) } catch {} })
         }
         node.removePort?.(p.id)
       } catch {}
@@ -64,6 +61,22 @@ export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string,
       }
     })
   }
+  try {
+    const outgoing = graph?.getOutgoingEdges?.(node) || []
+    const byPort: Record<string, any[]> = {}
+    outgoing.forEach((e: any) => {
+      const pid = (() => { try { return e.getSourcePortId?.() } catch { return null } })()
+      if (!pid) return
+      if (!byPort[pid]) byPort[pid] = []
+      byPort[pid].push(e)
+    })
+    Object.keys(byPort).forEach((pid) => {
+      const list = byPort[pid]
+      if (Array.isArray(list) && list.length > 1) {
+        list.slice(1).forEach((e: any) => { try { graph.removeEdge?.(e) } catch {} })
+      }
+    })
+  } catch {}
   if (node.setProp) {
     if (node.setData) node.setData(spec.data)
     node.prop('data', spec.data)
@@ -74,10 +87,30 @@ export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string,
   }
 }
 
+/**
+ * 保障开始节点存在
+ * 入参：graph(GraphLike)
+ * 返回：void
+ * 场景：空画布或缺少 start 节点时自动补齐一个开始节点
+ */
 export function ensureStartNode(graph: GraphLike): void {
   const nodes = graph.getNodes()
   const hasStart = nodes.some((n: any) => { const d = n.getData ? n.getData() : {}; return d?.type === 'start' || d?.nodeType === 'start' || String(n.id).includes('start') })
   if (hasStart) return
   const startNodeId = 'start-node'
-  graph.addNode(createVueShapeNode({ id: startNodeId, x: 80, y: 160, label: '开始', outCount: 1, data: { type: 'start', nodeType: 'start', isConfigured: true }, portsOptions: { includeIn: false, outIds: ['out'] } }))
+  try {
+    const rect = graph?.container?.getBoundingClientRect?.() || { width: 800, height: 600 }
+    // 先创建规格以获取高度，再按容器垂直居中计算 y
+    const draft = createVueShapeNode({ id: startNodeId, x: 60, y: 0, label: '开始', outCount: 1, data: { type: 'start', nodeType: 'start', isConfigured: true }, portsOptions: { includeIn: false, outIds: ['out'] } })
+    const y = Math.max(20, Math.round(((rect.height || 600) - (draft?.height || 120)) / 2))
+    const spec = { ...draft, y }
+    graph.addNode(spec)
+  } catch {
+    graph.addNode(createVueShapeNode({ id: startNodeId, x: 60, y: 160, label: '开始', outCount: 1, data: { type: 'start', nodeType: 'start', isConfigured: true }, portsOptions: { includeIn: false, outIds: ['out'] } }))
+  }
 }
+/*
+用途：节点服务（创建规格、统一更新、起始节点保障）
+说明：集中封装节点尺寸/端口映射/数据写回的统一路径，减少页面更新分散；必要时保障开始节点存在。
+边界：不负责发布校验；端口映射遵循 out-N 规则与 in 端口回填；避免直接持久化。
+*/

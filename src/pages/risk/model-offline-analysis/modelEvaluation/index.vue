@@ -1,34 +1,28 @@
 <template>
   <div class="model-evaluation-page">
     <!-- 页面标题和操作区 -->
-    <div class="page-header">
-      <div class="page-title">
-        <h2>模型评估</h2>
-        <span class="page-subtitle">评估和分析模型性能</span>
-      </div>
-      <div class="page-actions">
-        <a-space>
-          <a-button type="primary" @click="handleCreateEvaluation">
-            <template #icon>
-              <icon-plus />
-            </template>
-            新建评估
-          </a-button>
-          <a-button @click="handleBatchOperation">
-            <template #icon>
-              <icon-settings />
-            </template>
-            批量操作
-          </a-button>
-          <a-button @click="handleExportReport">
-            <template #icon>
-              <icon-download />
-            </template>
-            导出报告
-          </a-button>
-        </a-space>
-      </div>
-    </div>
+    <PageHeader title="模型评估">
+      <template #actions>
+        <a-button type="primary" @click="handleCreateEvaluation">
+          <template #icon>
+            <icon-plus />
+          </template>
+          新建评估
+        </a-button>
+        <a-button @click="handleBatchOperation">
+          <template #icon>
+            <icon-settings />
+          </template>
+          批量操作
+        </a-button>
+        <a-button @click="handleExportReport">
+          <template #icon>
+            <icon-download />
+          </template>
+          导出报告
+        </a-button>
+      </template>
+    </PageHeader>
 
     <!-- 评估概览 -->
     <div class="overview-section">
@@ -217,6 +211,7 @@
 </template>
 
 <script setup>
+import PageHeader from '../components/PageHeader.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEvaluationStore } from '@/store/modules/model-offline'
@@ -475,10 +470,7 @@ const formatDate = (date) => {
         font-weight: 500;
       }
       
-      .page-subtitle {
-        color: #666;
-        font-size: 14px;
-      }
+      
     }
   }
   

@@ -1,5 +1,7 @@
 // 预警管理API模拟服务
 import { Message } from '@arco-design/web-vue'
+import { alertRulesData } from '@/api/alertRules'
+import { renderAlertPreview } from '@/utils/notificationRenderer'
 
 // 模拟延迟
 const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms))
@@ -174,6 +176,9 @@ const generateAlerts = (count = 10) => {
     const now = new Date()
     const alertTime = new Date(now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000)
     
+    const targetType = type === 'inventory' || type === 'expiry' ? 'template' : 'package'
+    const targetId = targetType === 'template' ? `TPL${String(index + 1).padStart(3, '0')}` : `PKG${String(index + 1).padStart(3, '0')}`
+    const targetName = targetType === 'template' ? `券模板-${index + 1}` : `券包-${index + 1}`
     return {
       id: index + 1,
       title: ruleNames[type][Math.floor(Math.random() * ruleNames[type].length)],
@@ -183,7 +188,10 @@ const generateAlerts = (count = 10) => {
       time: alertTime.toISOString().replace('T', ' ').substring(0, 19),
       createTime: alertTime.toISOString(),
       status,
-      channels: channels.slice(0, Math.floor(Math.random() * 3) + 1)
+      channels: channels.slice(0, Math.floor(Math.random() * 3) + 1),
+      targetType,
+      targetId,
+      targetName
     }
   })
 }
@@ -316,7 +324,39 @@ export const alertAPI = {
     // 分页
     const start = (page - 1) * pageSize
     const end = start + pageSize
-    const paginatedAlerts = alerts.slice(start, end)
+    let paginatedAlerts = alerts.slice(start, end)
+
+    // 将预警详情与预警配置同步：渠道仅为企业微信与短信，内容来自规则模板渲染
+    paginatedAlerts = paginatedAlerts.map(a => {
+      const candidates = alertRulesData.filter(r => r.type === a.type)
+      const rule = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : (alertRulesData[0] || null)
+      let message = a.message
+      if (rule) {
+        try {
+          const preview = renderAlertPreview({
+            name: rule.name,
+            metricConfigs: rule.conditions?.metricConfigs || [],
+            granularity: rule.conditions?.granularity || 'coupon_stock',
+            contentUnified: rule.contentUnified || '',
+            selectedInventories: [],
+            selectedPackages: []
+          })
+          message = preview
+        } catch (e) {
+          // 渲染失败时保留原消息
+          message = a.message
+        }
+      }
+      return {
+        ...a,
+        message,
+        channels: ['wechat', 'sms'],
+        rule_id: rule?.id || null,
+        rule_name: rule?.name || a.ruleName,
+        alert_time: a.time,
+        alert_type: a.type
+      }
+    })
     
     return {
       success: true,
@@ -564,9 +604,16 @@ export const alertAPI = {
       alerts = alerts.filter(alert => alert.type === type)
     }
     
-
+    // 统一状态映射到：pending、notified、completed
+    alerts = alerts.map(a => {
+      let s = a.status
+      if (s === 'processing') s = 'pending'
+      if (s === 'resolved') s = 'completed'
+      if (!s) s = 'notified'
+      return { ...a, status: s }
+    })
     
-    // 按状态筛选
+    // 按状态筛选（使用统一后的状态值）
     if (status) {
       alerts = alerts.filter(alert => alert.status === status)
     }

@@ -26,15 +26,13 @@
           <a-select 
             v-model="scenarioFilter" 
             placeholder="应用场景"
-            style="width: 140px"
+            style="width: 200px"
+            multiple
             allow-clear
             @change="handleFilter"
           >
-            <a-option value="">全部场景</a-option>
-            <a-option value="营销触达">营销触达</a-option>
-            <a-option value="风险控制">风险控制</a-option>
-            <a-option value="用户分析">用户分析</a-option>
-            <a-option value="行为监控">行为监控</a-option>
+            <a-option value="营销通知">营销通知</a-option>
+            <a-option value="电销出池">电销出池</a-option>
           </a-select>
           <a-select 
             v-model="statusFilter" 
@@ -46,7 +44,6 @@
             <a-option value="">全部状态</a-option>
             <a-option value="已上线">已上线</a-option>
             <a-option value="已下线">已下线</a-option>
-            <a-option value="草稿">草稿</a-option>
           </a-select>
         </div>
         <div class="button-area">
@@ -91,47 +88,34 @@
           </a-table-column>
           
           <!-- 应用场景 -->
-          <a-table-column title="应用场景" width="120">
+          <a-table-column title="应用场景" width="160">
             <template #cell="{ record }">
-              <a-tag :color="getScenarioColor(record.scenario)">
-                {{ record.scenario }}
-              </a-tag>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                <a-tag v-for="sc in record.scenario" :key="sc" :color="getScenarioColor(sc)">{{ sc }}</a-tag>
+              </div>
             </template>
           </a-table-column>
           
           <!-- 状态 -->
           <a-table-column title="状态" width="100">
             <template #cell="{ record }">
-              <div class="status-container">
-                <a-switch
-                  :model-value="record.status === '已上线'"
-                  @change="(value) => handleStatusChange(record, value)"
-                />
-                <a-tag :color="getStatusColor(record.status)" size="small">
-                  {{ record.status }}
-                </a-tag>
-              </div>
-            </template>
-          </a-table-column>
-          
-          <!-- 逻辑关系 -->
-          <a-table-column title="逻辑关系" width="100">
-            <template #cell="{ record }">
-              <a-tag size="small">
-                {{ record.logicRelation }}
+              <a-tag :color="getStatusColor(record.status)" size="small">
+                {{ record.status }}
               </a-tag>
             </template>
           </a-table-column>
           
-          <!-- 条件组 -->
-          <a-table-column title="条件配置" width="200">
+          <!-- 版本信息 -->
+          <a-table-column title="版本" width="120">
             <template #cell="{ record }">
-              <div class="condition-summary">
-                <div class="condition-count">{{ record.conditionGroups.length }} 个条件组</div>
-                <div class="condition-detail">
-                  共 {{ getTotalConditions(record) }} 个条件
-                </div>
-              </div>
+              <a-tag color="blue" size="small">v{{ record.version }}</a-tag>
+            </template>
+          </a-table-column>
+
+          <!-- 有效期 -->
+          <a-table-column title="有效期" width="180">
+            <template #cell="{ record }">
+              {{ formatDate(record.expireAt) }}
             </template>
           </a-table-column>
           
@@ -145,27 +129,10 @@
             </template>
           </a-table-column>
           
-          <!-- 同步状态 -->
-          <a-table-column title="同步状态" width="100">
-            <template #cell="{ record }">
-              <div class="sync-status">
-                <a-tag :color="getSyncStatusColor(record.syncStatus)" size="small">
-                  {{ getSyncStatusText(record.syncStatus) }}
-                </a-tag>
-                <a-button 
-                  type="text" 
-                  size="mini" 
-                  @click="handleSync(record)"
-                  :loading="syncLoading[record.id]"
-                >
-                  <template #icon><icon-refresh /></template>
-                </a-button>
-              </div>
-            </template>
-          </a-table-column>
+
           
           <!-- 操作 -->
-          <a-table-column title="操作" fixed="right" width="200">
+          <a-table-column title="操作" fixed="right" width="220">
             <template #cell="{ record }">
               <div class="action-buttons">
                 <a-button type="text" size="small" @click="handleEdit(record)">
@@ -176,14 +143,15 @@
                   <template #icon><icon-play-circle /></template>
                   测试
                 </a-button>
+                <a-button v-if="record.status !== '已下线'" type="text" size="small" @click="handleOffline(record)" status="danger">
+                  下线
+                </a-button>
                 <a-popconfirm
-                  content="确定要删除此虚拟事件吗？"
-                  @ok="handleDelete(record)"
+                  v-if="record.status === '已下线' && !record.archived"
+                  content="归档后不可编辑，确认归档？"
+                  @ok="handleArchive(record)"
                 >
-                  <a-button type="text" size="small" status="danger">
-                    <template #icon><icon-delete /></template>
-                    删除
-                  </a-button>
+                  <a-button type="text" size="small" status="danger">归档</a-button>
                 </a-popconfirm>
               </div>
             </template>
@@ -233,7 +201,7 @@ const loading = ref(false)
 const virtualEvents = ref([])
 const realEvents = ref([])
 const searchKeyword = ref('')
-const scenarioFilter = ref('')
+const scenarioFilter = ref([])
 const statusFilter = ref('')
 const selectedRows = ref([])
 const modalVisible = ref(false)
@@ -265,8 +233,8 @@ const filteredVirtualEvents = computed(() => {
   }
 
   // 场景过滤
-  if (scenarioFilter.value) {
-    filtered = filtered.filter(event => event.scenario === scenarioFilter.value)
+  if (Array.isArray(scenarioFilter.value) && scenarioFilter.value.length > 0) {
+    filtered = filtered.filter(event => Array.isArray(event.scenario) && event.scenario.some(sc => scenarioFilter.value.includes(sc)))
   }
 
   // 状态过滤
@@ -291,7 +259,12 @@ const loadData = async () => {
     
     // 加载虚拟事件列表
     const virtualData = await mockEventAPI.getVirtualEvents(events)
-    virtualEvents.value = virtualData
+    const now = Date.now()
+    virtualEvents.value = virtualData.map(v => {
+      const exp = v.expireAt ? new Date(v.expireAt).getTime() : 0
+      const expired = exp > 0 && exp < now
+      return { ...v, status: expired ? '已下线' : v.status }
+    })
     
     paginationConfig.total = virtualData.length
     Message.success('虚拟事件数据加载成功')
@@ -335,19 +308,17 @@ const handleTest = (record) => {
   })
 }
 
-const handleDelete = async (record) => {
+const handleArchive = async (record) => {
   loading.value = true
   try {
-    // 模拟删除操作
     await new Promise(resolve => setTimeout(resolve, 500))
-    const index = virtualEvents.value.findIndex(e => e.id === record.id)
-    if (index > -1) {
-      virtualEvents.value.splice(index, 1)
-    }
-    Message.success('虚拟事件删除成功')
+    record.archived = true
+    record.updateTime = new Date().toISOString()
+    record.updater = '当前用户'
+    Message.success('归档成功')
   } catch (error) {
-    Message.error('虚拟事件删除失败')
-    console.error('删除虚拟事件失败:', error)
+    Message.error('归档失败')
+    console.error('归档虚拟事件失败:', error)
   } finally {
     loading.value = false
   }
@@ -366,19 +337,20 @@ const handleStatusChange = async (record, value) => {
   }
 }
 
-const handleSync = async (record) => {
-  syncLoading[record.id] = true
+const handleCreateVersion = async (record) => {
   try {
-    // 模拟同步操作
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    record.syncStatus = 'synced'
-    Message.success('同步成功')
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const nextVersion = (record.version || 1) + 1
+    record.version = nextVersion
+    const history = record.versions || []
+    history.push({ version: nextVersion, updatedAt: new Date().toISOString(), updater: '当前用户', description: '版本更新' })
+    record.versions = history
+    record.updateTime = new Date().toISOString()
+    record.updater = '当前用户'
+    Message.success('已创建新版本')
   } catch (error) {
-    record.syncStatus = 'failed'
-    Message.error('同步失败')
-    console.error('同步虚拟事件失败:', error)
-  } finally {
-    syncLoading[record.id] = false
+    Message.error('创建版本失败')
+    console.error('创建版本失败:', error)
   }
 }
 
@@ -427,7 +399,8 @@ const handleFormSubmit = async (formData) => {
         id: `VIRT${Date.now()}`,
         createTime: new Date().toISOString(),
         updateTime: new Date().toISOString(),
-        syncStatus: 'pending'
+        version: 1,
+        versions: [{ version: 1, updatedAt: new Date().toISOString(), updater: '当前用户', description: '初始版本' }]
       }
       virtualEvents.value.unshift(newEvent)
       Message.success('虚拟事件创建成功')
@@ -465,27 +438,7 @@ const getStatusColor = (status) => {
   return colorMap[status] || 'gray'
 }
 
-const getSyncStatusColor = (status) => {
-  const colorMap = {
-    'pending': 'orange',
-    'synced': 'green',
-    'failed': 'red'
-  }
-  return colorMap[status] || 'gray'
-}
-
-const getSyncStatusText = (status) => {
-  const textMap = {
-    'pending': '待同步',
-    'synced': '已同步',
-    'failed': '同步失败'
-  }
-  return textMap[status] || status
-}
-
-const getTotalConditions = (record) => {
-  return record.conditionGroups.reduce((total, group) => total + group.conditions.length, 0)
-}
+ 
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString('zh-CN')

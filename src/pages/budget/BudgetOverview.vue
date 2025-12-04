@@ -7,10 +7,10 @@
 
     <a-card class="nav-card" :bordered="true" title="功能导航">
       <a-space>
-        <a-button type="primary" @click="goTo('/risk/budget/list')">预算列表</a-button>
-        <a-button type="primary" @click="goTo('/risk/budget/monitor')">预算监控</a-button>
-        <a-button type="primary" @click="goTo('/risk/budget/contracts')">合同管理</a-button>
-        <a-button type="primary" @click="goTo('/risk/budget/settlement')">结算管理</a-button>
+        <a-button type="primary" @click="goTo('/budget/list')">预算列表</a-button>
+        <a-button type="primary" @click="goTo('/budget/monitor')">预算监控</a-button>
+        <a-button type="primary" @click="goTo('/budget/contracts')">合同管理</a-button>
+        <a-button type="primary" @click="goTo('/budget/settlement')">结算管理</a-button>
       </a-space>
     </a-card>
 
@@ -54,7 +54,7 @@
     <!-- 预算燃尽图 -->
     <a-card title="预算监控">
       <template #extra>
-        <a-button type="text" @click="goTo('/risk/budget/monitor')">前往预算监控</a-button>
+        <a-button type="text" @click="goTo('/budget/monitor')">前往预算监控</a-button>
       </template>
       <BudgetBurndownTabs
         :chart-data="burndownChartData"
@@ -70,7 +70,7 @@
         <a-card title="预算消耗预警">
           <a-list :data="warningsTop" :bordered="false" :pagination="false">
             <template #item="{ item }">
-              <div class="list-row" @click="goTo('/risk/budget/monitor')">
+              <div class="list-row" @click="goTo('/budget/monitor')">
                 <div class="list-main">
                   <div class="list-title">{{ item.businessType }} · {{ item.platform }}</div>
                   <div class="list-sub">偏离率 {{ formatPercent(costDeviation(item)) }}</div>
@@ -101,18 +101,20 @@
               </template>
             </a-list>
             <div style="text-align: right; margin-top: 8px">
-              <a-button type="text" @click="goTo('/risk/budget/contracts')">前往合同管理</a-button>
+              <a-button type="text" @click="goTo('/budget/contracts')">前往合同管理</a-button>
             </div>
           </a-card>
           <a-card title="结算概览">
             <div class="stat-inline">
               <a-statistic title="待结算合同数" :value="pendingSettlementCount" />
               <a-statistic title="待结算总额" :value="pendingSettlementAmount" />
-              <a-statistic title="平均剩余比例" :value="avgRemainingRateDisplay" />
+              <a-statistic title="平均剩余比例" :value="Number((avgRemainingRate * 100).toFixed(2))" :precision="2">
+                <template #suffix>%</template>
+              </a-statistic>
             </div>
             <a-list :data="topPendingSettlementContracts" :bordered="false" :pagination="false" style="margin-top: 12px">
               <template #item="{ item }">
-                <div class="list-row" @click="goTo('/risk/budget/settlement')">
+              <div class="list-row" @click="goTo('/budget/settlement')">
                   <div class="list-main">
                     <div class="list-title">{{ item.supplier || '—' }} · {{ item.contractName || '合同' }}</div>
                     <div class="list-sub">剩余结算 {{ formatNumber(remainingAmount(item)) }} 元</div>
@@ -122,7 +124,7 @@
               </template>
             </a-list>
             <div style="text-align: right; margin-top: 8px">
-              <a-button type="text" @click="goTo('/risk/budget/settlement')">前往结算管理</a-button>
+              <a-button type="text" @click="goTo('/budget/settlement')">前往结算管理</a-button>
             </div>
           </a-card>
         </a-space>
@@ -175,7 +177,7 @@
           </a-select>
         </a-space>
         <a-space>
-          <a-button type="text" @click="goTo('/risk/budget/monitor')">前往监控</a-button>
+          <a-button type="text" @click="goTo('/budget/monitor')">前往监控</a-button>
           <a-button type="primary" @click="exportWarningData">导出数据</a-button>
         </a-space>
       </div>
@@ -204,7 +206,7 @@
                     </span>
                     <span class="deviation-value" :class="{ 'warning-text': (record.actualCost - record.estimatedCost) > record.estimatedCost * 0.1 }">
                       ({{ formatPercent((record.actualCost - record.estimatedCost) / record.estimatedCost) }})
-                      <icon-arrow-rise v-if="(record.actualCost - record.estimatedCost) > record.estimatedCost * 0.1" class="trend-icon warning-text" />
+                      <IconArrowRise v-if="(record.actualCost - record.estimatedCost) > record.estimatedCost * 0.1" class="trend-icon warning-text" />
                     </span>
                   </div>
                 </a-tooltip>
@@ -221,7 +223,7 @@
                     </span>
                     <span class="deviation-value" :class="{ 'warning-text': (record.actualAnnualCost - record.estimatedAnnualCost) > record.estimatedAnnualCost * 0.1 }">
                       ({{ formatPercent((record.actualAnnualCost - record.estimatedAnnualCost) / record.estimatedAnnualCost) }})
-                      <icon-arrow-rise v-if="(record.actualAnnualCost - record.estimatedAnnualCost) > record.estimatedAnnualCost * 0.1" class="trend-icon warning-text" />
+                      <IconArrowRise v-if="(record.actualAnnualCost - record.estimatedAnnualCost) > record.estimatedAnnualCost * 0.1" class="trend-icon warning-text" />
                     </span>
                   </div>
                 </a-tooltip>
@@ -238,7 +240,7 @@
                     </span>
                     <span class="deviation-value" :class="{ 'warning-text': (record.actualRiskFreeReturn - record.estimatedRiskFreeReturn) < record.estimatedRiskFreeReturn * -0.1 }">
                       ({{ formatPercent((record.actualRiskFreeReturn - record.estimatedRiskFreeReturn) / record.estimatedRiskFreeReturn) }})
-                      <icon-arrow-fall v-if="(record.actualRiskFreeReturn - record.estimatedRiskFreeReturn) < record.estimatedRiskFreeReturn * -0.1" class="trend-icon warning-text" />
+                      <IconArrowFall v-if="(record.actualRiskFreeReturn - record.estimatedRiskFreeReturn) < record.estimatedRiskFreeReturn * -0.1" class="trend-icon warning-text" />
                     </span>
                   </div>
                 </a-tooltip>
@@ -256,18 +258,18 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useBudgetStore } from '@/store/modules/budget'
-import type { BudgetData } from '@/store/modules/budget'
+import { useBudgetStore } from '@/modules/budget/stores/budget'
+import type { BudgetData } from '@/modules/budget/stores/budget'
 import { Message } from '@arco-design/web-vue'
-import { IconRefresh } from '@arco-design/web-vue/es/icon'
+import { IconRefresh, IconArrowRise, IconArrowFall } from '@arco-design/web-vue/es/icon'
 import BudgetBurndownTabs from '@/components/modals/BudgetBurndownTabs.vue'
 import { useBudgetStatsAggregator, buildMonthlyBurndown, useBudgetCalculations } from '@/composables/useBudgetCalculations'
-import { useExternalDataStore } from '@/store/modules/external-data'
-import type { WarningItem, BurndownPoint } from '@/store/modules/external-data'
-import { useContractStore } from '@/store/modules/contract'
+import { useBudgetMonitorStore } from '@/modules/budget/stores/budget-monitor'
+import type { WarningItem, BurndownPoint } from '@/modules/budget/api/monitor'
+import { useContractStore } from '@/modules/budget/stores/contract'
 
 const store = useBudgetStore()
-const externalStore = useExternalDataStore()
+const monitorStore = useBudgetMonitorStore()
 const contractStore = useContractStore()
 const pageSize = ref(10)
 const current = ref(1)
@@ -295,7 +297,7 @@ const healthScoreDisplay = computed(() => `${healthScore.value}`)
 const currentChartType = ref<'month' | 'quarter'>('month')
 const chartMode = ref<'burndown' | 'cumulative'>('burndown')
 const burndownChartData = computed<BurndownPoint[]>(() => {
-  if (externalStore.burndown?.length) return externalStore.burndown
+  if (monitorStore.burndown?.length) return monitorStore.burndown
   return buildMonthlyBurndown(totalBudget.value, usedBudget.value)
 })
 const onChartModeChange = (mode: 'burndown' | 'cumulative') => {
@@ -303,16 +305,16 @@ const onChartModeChange = (mode: 'burndown' | 'cumulative') => {
 }
 const onGranularityChange = async (key: 'month' | 'quarter') => {
   currentChartType.value = key
-  await externalStore.fetchBurndown({ range: key })
+  await monitorStore.fetchBurndown({ range: key })
 }
 
 const yearOptions = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString())
 
 const load = async () => {
   await store.fetchBudgetList({ page: current.value, pageSize: pageSize.value })
-  await externalStore.fetchBurndown({ range: currentChartType.value })
+  await monitorStore.fetchBurndown({ range: currentChartType.value })
   await contractStore.fetchContractList({ page: 1, pageSize: 100 })
-  await externalStore.fetchWarnings({})
+  await monitorStore.fetchWarnings({})
 }
 
 const reload = () => {
@@ -362,7 +364,7 @@ const statusTag = (w: any) => {
   return 'success'
 }
 const warningsTop = computed(() => {
-  const arr = (externalStore.warnings || []).slice()
+  const arr = (monitorStore.warnings || []).slice()
   arr.sort((a: any, b: any) => costDeviation(b) - costDeviation(a))
   return arr.slice(0, 5)
 })
@@ -401,7 +403,7 @@ const avgRemainingRate = computed(() => {
 })
 const avgRemainingRateDisplay = computed(() => `${(avgRemainingRate.value * 100).toFixed(2)}%`)
 const topPendingSettlementContracts = computed(() => pendingSettlementContracts.value.slice().sort((a: any, b: any) => remainingAmount(b) - remainingAmount(a)).slice(0, 5))
-const openContract = (id: string) => router.push(`/risk/budget/contracts/${id}`)
+const openContract = (id: string) => router.push(`/budget/contracts/${id}`)
 </script>
 
 <style scoped>

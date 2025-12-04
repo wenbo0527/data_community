@@ -3,6 +3,8 @@ export const NODE_DIMENSIONS = {
   MIN_HEIGHT: 88,
   HEADER_HEIGHT: 32,
   ROW_HEIGHT: 28,
+  ROW_GAP: 4,
+  CONTENT_VERTICAL_MARGIN: 4,
   CONTENT_PADDING: 16,
   ICON_SIZE: { width: 24, height: 24 },
   ICON_RADIUS: 8,
@@ -170,3 +172,8 @@ export function getPortStyles(portType) {
   }
   return baseStyle
 }
+/*
+用途：节点样式常量（几何/颜色/文本/交互）
+说明：定义横版节点渲染所需的常量与基础样式生成函数；影响端口布局与显示行基线。
+边界：不直接操作 Graph；常量调整需同步端口工厂与视图工厂。
+*/

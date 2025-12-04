@@ -10,24 +10,26 @@ export function buildDisplayLines(nodeType, config = {}) {
     if (Array.isArray(config?.targetAudience) && config.targetAudience.length) lines.push(`目标人群：${config.targetAudience.join('、')}`)
   } else if (nodeType === 'crowd-split' || nodeType === 'audience-split') {
     const layers = Array.isArray(config?.crowdLayers) ? config.crowdLayers : []
+    const branches = Array.isArray(config?.branches) ? config.branches : []
     if (layers.length) {
-      layers.forEach(l => { const name = l?.crowdName || l?.name || '分流'; lines.push(`命中：${name}`) })
-      const un = config?.unmatchBranch?.name || '未命中人群'; lines.push(`否则：${un}`)
+      layers.forEach((l, i) => { const name = l?.crowdName || l?.name || `分群${i + 1}`; lines.push(name) })
+      lines.push('其他')
+    } else if (branches.length) {
+      branches.forEach((b, i) => { const name = b?.name || `分群${i + 1}`; lines.push(name) })
+      lines.push('其他')
     } else if (typeof config?.splitCount === 'number' && config.splitCount > 0) {
-      for (let i = 0; i < config.splitCount; i++) lines.push(`命中：分流${i + 1}`)
-      lines.push('否则：未命中人群')
-    } else if (Array.isArray(config?.branches) && config.branches.length) {
-      config.branches.forEach((b, i) => { const name = b?.name || `分流${i + 1}`; lines.push(`命中：${name}`) })
-      lines.push('否则：未命中人群')
+      for (let i = 0; i < config.splitCount; i++) lines.push(`分群${i + 1}`)
+      lines.push('其他')
     }
   } else if (nodeType === 'event-split') {
-    const firstEventName = Array.isArray(config?.events) && config.events.length ? (config.events[0]?.name || '事件') : (config?.eventName || '事件')
-    const timeout = config?.timeout != null ? String(config.timeout) : ''
-    lines.push(`命中：${firstEventName}`)
-    if (timeout) {
-      lines.push(`等待 ${timeout} 分钟未命中`)
+    const eventType = config?.eventTypeLabel || (Array.isArray(config?.events) && config.events.length ? (config.events[0]?.type || config.events[0]?.name || '事件') : (config?.eventType || config?.eventName || '事件'))
+    const timeoutVal = config?.timeout != null ? String(config.timeout) : ''
+    const timeoutUnit = config?.unit || '分钟'
+    lines.push(`发生【${eventType}】`)
+    if (timeoutVal) {
+      lines.push(`【${timeoutVal}${timeoutUnit}】未发生事件`)
     } else {
-      lines.push('未命中')
+      lines.push('【未设置超时】未发生事件')
     }
   } else if (nodeType === 'ab-test') {
     const branches = Array.isArray(config?.branches) ? config.branches : []
@@ -43,7 +45,7 @@ export function buildDisplayLines(nodeType, config = {}) {
     if (config?.configId) lines.push(`配置ID：${config.configId}`)
     if (config?.description) lines.push(config.description)
   } else if (nodeType === 'wait') {
-    if (config?.value) lines.push(`等待：${config.value} ${config.unit || ''}`)
+    if (config?.value) lines.push(`等待：${config.value}${config.unit || ''}`)
   } else if (nodeType === 'benefit') {
     if (config?.benefitName) lines.push(`权益包名称：${config.benefitName}`)
   }
@@ -62,7 +64,7 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
   const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
   const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
   const width = NODE_DIMENSIONS.WIDTH
-  const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + 12)
+  const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0) + 12)
 
   const componentData = { id, nodeType, headerTitle, displayLines: rows, disabled: data?.disabled || false, selected: false, hover: false, config: { ...data?.config, displayLines: rows } }
   const isStart = nodeType === 'start'
@@ -84,10 +86,15 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
       nodeHeight: height,
       nodeWidth: width,
       contentStart: headerHeight + contentPadding,
-      contentEnd: headerHeight + contentPadding + Math.max(1, (hasConfigLines ? rows.length : 1)) * rowHeight,
+      contentEnd: headerHeight + contentPadding + Math.max(1, (hasConfigLines ? rows.length : 1)) * rowHeight + Math.max(0, (hasConfigLines ? rows.length : 1) - 1) * (NODE_DIMENSIONS.ROW_GAP || 0),
       contentLines: hasConfigLines ? rows : null,
       enableValidation: hasConfigLines
     }),
     zIndex: 1
   }
 }
+/*
+用途：节点视图规格工厂（横版 Vue Shape）
+说明：根据节点类型与配置生成渲染规格（尺寸/端口/显示行），与 `HorizontalNode.vue` 配合；端口按内容行中点对齐。
+边界：不做持久化；类型显示行按业务规则生成；起始节点仅出端口、结束节点无出端口。
+*/

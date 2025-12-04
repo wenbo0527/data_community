@@ -18,12 +18,10 @@ const FRAMEWORKS = {
   XGBOOST: 'xgboost'
 }
 
-// 模型状态定义
+// 模型状态定义（仅：上线、归档）
 const MODEL_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  TRAINING: 'training',
-  FAILED: 'failed'
+  ONLINE: 'online',
+  ARCHIVED: 'archived'
 }
 
 // 模拟模型数据
@@ -34,13 +32,11 @@ const mockModels = [
     code: 'credit_score_model',
     type: MODEL_TYPES.CLASSIFICATION,
     framework: FRAMEWORKS.XGBOOST,
-    accuracy: 85.6,
-    precision: 82.3,
-    recall: 78.9,
-    f1Score: 80.5,
-    version: 'v1.0.0',
+    version: 1,
+    versionNumber: 1,
+    versions: [1],
     description: '基于用户行为数据的信用评分预测模型',
-    status: MODEL_STATUS.ACTIVE,
+    status: MODEL_STATUS.ONLINE,
     createTime: '2024-01-15 10:30:00',
     creator: '张三',
     trainingDataSize: 50000,
@@ -61,13 +57,11 @@ const mockModels = [
     code: 'risk_prediction_model',
     type: MODEL_TYPES.REGRESSION,
     framework: FRAMEWORKS.SKLEARN,
-    accuracy: 78.9,
-    precision: 76.2,
-    recall: 81.4,
-    f1Score: 78.7,
-    version: 'v1.0.1',
+    version: 1,
+    versionNumber: 1,
+    versions: [1],
     description: '用户违约风险预测模型',
-    status: MODEL_STATUS.TRAINING,
+    status: MODEL_STATUS.ONLINE,
     createTime: '2024-01-16 14:20:00',
     creator: '李四',
     trainingDataSize: 35000,
@@ -88,13 +82,11 @@ const mockModels = [
     code: 'customer_clustering_model',
     type: MODEL_TYPES.CLUSTERING,
     framework: FRAMEWORKS.SKLEARN,
-    accuracy: 92.1,
-    precision: 89.7,
-    recall: 91.3,
-    f1Score: 90.5,
-    version: 'v1.0.0',
+    version: 1,
+    versionNumber: 1,
+    versions: [1],
     description: '基于用户行为的客户分群模型',
-    status: MODEL_STATUS.ACTIVE,
+    status: MODEL_STATUS.ARCHIVED,
     createTime: '2024-01-17 09:15:00',
     creator: '王五',
     trainingDataSize: 80000,
@@ -115,13 +107,11 @@ const mockModels = [
     code: 'image_recognition_model',
     type: MODEL_TYPES.DEEP_LEARNING,
     framework: FRAMEWORKS.TENSORFLOW,
-    accuracy: 94.7,
-    precision: 93.2,
-    recall: 95.1,
-    f1Score: 94.1,
-    version: 'v1.0.0',
+    version: 1,
+    versionNumber: 1,
+    versions: [1],
     description: '基于深度学习的图像识别模型',
-    status: MODEL_STATUS.FAILED,
+    status: MODEL_STATUS.ARCHIVED,
     createTime: '2024-01-18 16:45:00',
     creator: '赵六',
     trainingDataSize: 120000,
@@ -136,7 +126,7 @@ const mockModels = [
     features: ['image_pixels', 'image_channels', 'image_size'],
     modelPath: '/models/image_recognition_model.h5',
     lastUpdateTime: '2024-01-18 16:45:00',
-    errorMessage: '训练过程中出现内存不足错误'
+    errorMessage: ''
   },
   {
     id: 5,
@@ -144,13 +134,11 @@ const mockModels = [
     code: 'text_classification_model',
     type: MODEL_TYPES.CLASSIFICATION,
     framework: FRAMEWORKS.PYTORCH,
-    accuracy: 88.3,
-    precision: 86.9,
-    recall: 89.7,
-    f1Score: 88.3,
-    version: 'v1.0.2',
+    version: 1,
+    versionNumber: 1,
+    versions: [1],
     description: '基于BERT的文本分类模型',
-    status: MODEL_STATUS.ACTIVE,
+    status: MODEL_STATUS.ONLINE,
     createTime: '2024-01-19 11:30:00',
     creator: '钱七',
     trainingDataSize: 25000,
@@ -171,9 +159,8 @@ const mockModels = [
 // 模型统计信息
 const modelStats = {
   totalModels: mockModels.length,
-  activeModels: mockModels.filter(m => m.status === MODEL_STATUS.ACTIVE).length,
-  trainingModels: mockModels.filter(m => m.status === MODEL_STATUS.TRAINING).length,
-  failedModels: mockModels.filter(m => m.status === MODEL_STATUS.FAILED).length,
+  onlineModels: mockModels.filter(m => m.status === MODEL_STATUS.ONLINE).length,
+  archivedModels: mockModels.filter(m => m.status === MODEL_STATUS.ARCHIVED).length,
   byType: {
     classification: mockModels.filter(m => m.type === MODEL_TYPES.CLASSIFICATION).length,
     regression: mockModels.filter(m => m.type === MODEL_TYPES.REGRESSION).length,
@@ -245,11 +232,30 @@ export function getModelDetail(id) {
 export function createModel(modelData) {
   const newModel = {
     id: mockModels.length + 1,
-    ...modelData,
+    name: modelData.name,
+    code: modelData.code,
+    type: modelData.type || MODEL_TYPES.CLASSIFICATION,
+    framework: modelData.framework || FRAMEWORKS.SKLEARN,
+    versionNumber: 1,
+    version: 1,
+    versions: [1],
+    description: modelData.description || '',
+    status: MODEL_STATUS.ONLINE,
     createTime: new Date().toLocaleString('zh-CN'),
     creator: '当前用户',
-    status: MODEL_STATUS.DRAFT,
-    version: 'v1.0.0',
+    trainingDataSize: modelData.trainingDataSize || 0,
+    modelSize: modelData.modelFile?.size || '—',
+    trainingTime: modelData.trainingTime || '—',
+    hyperparameters: modelData.parameters || {},
+    // 入参/出参与特征绑定
+    inputs: modelData.inputParams || [],
+    outputs: modelData.outputParams || [],
+    features: (modelData.inputParams || [])
+      .filter(i => i.featureId)
+      .map(i => i.featureId),
+    // UDF 定义与模型文件
+    udfDefinition: modelData.udfDefinition || null,
+    modelPath: modelData.modelFile?.url || '',
     lastUpdateTime: new Date().toLocaleString('zh-CN')
   }
   mockModels.push(newModel)
@@ -300,8 +306,8 @@ export function importModels(modelsData) {
     ...model,
     createTime: new Date().toLocaleString('zh-CN'),
     creator: '批量导入',
-    status: MODEL_STATUS.DRAFT,
-    version: 'v1.0.0',
+    status: MODEL_STATUS.ONLINE,
+    version: 1,
     lastUpdateTime: new Date().toLocaleString('zh-CN')
   }))
   
@@ -318,8 +324,6 @@ export function exportModels(params = {}) {
     模型名称: model.name,
     模型编码: model.code,
     模型类型: model.type,
-    算法框架: model.framework,
-    准确率: model.accuracy + '%',
     版本: model.version,
     描述: model.description,
     状态: model.status,
@@ -360,10 +364,8 @@ export function getFrameworks() {
  */
 export function getModelStatus() {
   return [
-    { value: MODEL_STATUS.ACTIVE, label: '有效' },
-    { value: MODEL_STATUS.INACTIVE, label: '无效' },
-    { value: MODEL_STATUS.TRAINING, label: '训练中' },
-    { value: MODEL_STATUS.FAILED, label: '训练失败' }
+    { value: MODEL_STATUS.ONLINE, label: '上线' },
+    { value: MODEL_STATUS.ARCHIVED, label: '归档' }
   ]
 }
 
@@ -373,22 +375,8 @@ export function getModelStatus() {
 export function retrainModel(id) {
   const model = mockModels.find(m => m.id === parseInt(id))
   if (model) {
-    model.status = MODEL_STATUS.TRAINING
+    // 简化：仅更新时间，不变更状态
     model.lastUpdateTime = new Date().toLocaleString('zh-CN')
-    
-    // 模拟训练过程
-    setTimeout(() => {
-      // 随机决定训练结果
-      const success = Math.random() > 0.2 // 80%成功率
-      model.status = success ? MODEL_STATUS.ACTIVE : MODEL_STATUS.FAILED
-      if (success) {
-        // 随机提升准确率
-        model.accuracy = Math.min(99.9, model.accuracy + (Math.random() * 2 - 0.5))
-      } else {
-        model.errorMessage = '重新训练过程中出现错误'
-      }
-    }, 5000) // 5秒后完成
-    
     return model
   }
   return null
@@ -406,5 +394,149 @@ export default {
   getModelTypes,
   getFrameworks,
   getModelStatus,
-  retrainModel
+  retrainModel,
+  // 平台模型相关（供统一mock入口调用）
+  listPlatformModels,
+  getPlatformModel,
+  downloadPlatformModelFile,
+  createModelVersion
+}
+
+// 模型平台同步相关 Mock
+const platformModels = [
+  {
+    serviceName: 'credit_score_service',
+    name: '信用评分模型服务',
+    code: 'credit_score_model',
+    version: 'v1.0.0',
+    framework: FRAMEWORKS.XGBOOST,
+    type: MODEL_TYPES.CLASSIFICATION,
+    description: '来自平台的信用评分服务，提供风险评分与标签输出',
+    pkFields: ['cert_no', 'flow_id', 'report_id'],
+    inputs: [
+      { name: 'age', type: 'number', description: '用户年龄' },
+      { name: 'income', type: 'number', description: '用户收入' },
+      { name: 'credit_history', type: 'number', description: '信用历史分' }
+    ],
+    outputs: [
+      { name: 'score', type: 'number', description: '风险评分' },
+      { name: 'label', type: 'number', description: '预测标签' }
+    ],
+    fileUrl: '/platform/models/credit_score_model_v1.pkl'
+  },
+  {
+    serviceName: 'risk_regression_service',
+    name: '风险回归模型服务',
+    code: 'risk_prediction_model',
+    version: 'v1.0.1',
+    framework: FRAMEWORKS.SKLEARN,
+    type: MODEL_TYPES.REGRESSION,
+    description: '来自平台的风险回归服务，输出连续风险值',
+    pkFields: ['cert_no', 'flow_id'],
+    inputs: [
+      { name: 'age', type: 'number' },
+      { name: 'loan_amount', type: 'number' },
+      { name: 'credit_score', type: 'number' }
+    ],
+    outputs: [
+      { name: 'risk_value', type: 'number' }
+    ],
+    fileUrl: '/platform/models/risk_prediction_model_v1.pkl'
+  }
+  ,
+  {
+    serviceName: 'customer_segmentation_service',
+    name: '客户分群模型服务',
+    code: 'customer_clustering_model',
+    version: 'v1.0.0',
+    framework: FRAMEWORKS.SKLEARN,
+    type: MODEL_TYPES.CLUSTERING,
+    description: '来自平台的客户分群服务，输出群组标签',
+    pkFields: ['cert_no', 'flow_id'],
+    inputs: [
+      { name: 'purchase_frequency', type: 'number', description: '购买频次' },
+      { name: 'avg_order_value', type: 'number', description: '平均订单金额' }
+    ],
+    outputs: [
+      { name: 'cluster_label', type: 'number', description: '分群标签' }
+    ],
+    fileUrl: '/platform/models/customer_clustering_model_v1.pkl'
+  }
+  ,
+  {
+    serviceName: 'ensemble_decision_service',
+    name: '集成决策模型服务',
+    code: 'ensemble_decision_model',
+    version: 'v1.0.0',
+    framework: FRAMEWORKS.SKLEARN,
+    type: MODEL_TYPES.CLASSIFICATION,
+    description: '集成上游模型输出进行最终决策',
+    pkFields: ['cert_no', 'flow_id'],
+    dependsOn: [
+      { serviceName: 'credit_score_service', outputs: ['score'] },
+      { serviceName: 'risk_regression_service', outputs: ['risk_value'] }
+    ],
+    inputs: [
+      { name: 'score', type: 'number', description: '信用评分模型输出' },
+      { name: 'risk_value', type: 'number', description: '风险回归模型输出' },
+      { name: 'age', type: 'number', description: '用户年龄' }
+    ],
+    outputs: [
+      { name: 'final_decision', type: 'number', description: '最终决策标签' }
+    ],
+    fileUrl: '/platform/models/ensemble_decision_model_v1.pkl'
+  }
+  ,
+  {
+    serviceName: 'model_score_service',
+    name: '模型分输出服务',
+    code: 'model_score_model',
+    version: 'v1.0.0',
+    framework: FRAMEWORKS.SKLEARN,
+    type: MODEL_TYPES.CLASSIFICATION,
+    description: '输出统一的模型分（风险评分）',
+    pkFields: ['cert_no', 'flow_id'],
+    inputs: [
+      { name: 'age', type: 'number', description: '用户年龄' },
+      { name: 'income', type: 'number', description: '用户收入' }
+    ],
+    outputs: [
+      { name: 'model_score', type: 'number', description: '模型分' }
+    ],
+    fileUrl: '/platform/models/model_score_model_v1.pkl'
+  }
+]
+
+export function listPlatformModels() {
+  return platformModels.map(p => ({ serviceName: p.serviceName, name: p.name, version: p.version }))
+}
+
+export function getPlatformModel(serviceName) {
+  const p = platformModels.find(x => x.serviceName === serviceName)
+  if (!p) return null
+  const udfName = `${p.code}_udf`
+  const code = `from pyspark.sql.functions import udf\n\ndef ${udfName}(${p.inputs.map(i => i.name).join(', ')}):\n    return 0\n`
+  return { ...p, udfDefinition: { udfName, language: 'python', code } }
+}
+
+export function downloadPlatformModelFile(serviceName) {
+  const p = platformModels.find(x => x.serviceName === serviceName)
+  if (!p) return null
+  return { url: p.fileUrl, size: '25MB', fileName: p.fileUrl.split('/').pop() }
+}
+
+export const platformAPI = {
+  listPlatformModels,
+  getPlatformModel,
+  downloadPlatformModelFile
+}
+export function createModelVersion(id) {
+  const model = mockModels.find(m => m.id === parseInt(id))
+  if (!model) return null
+  const next = (model.versionNumber || 1) + 1
+  model.versionNumber = next
+  model.version = next
+  model.versions = Array.isArray(model.versions) ? [...model.versions, next] : [next]
+  model.lastUpdateTime = new Date().toLocaleString('zh-CN')
+  return model
 }

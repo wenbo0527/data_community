@@ -1263,7 +1263,7 @@ onMounted(async () => {
         const hasRow = typeof a.rowIndex === 'number'
         const dy = typeof a.dy === 'number' ? a.dy : 0
         const baseY = hasRow
-          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
+          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
           : (cy + dy)
         const y = baseY
         return { position: { x: w, y } }
@@ -1280,7 +1280,7 @@ onMounted(async () => {
         // in端口（没有rowIndex）始终位于节点中心
         // out端口根据内容区域计算Y坐标
         const baseY = hasRow
-          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
+          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
           : (cy + dy)
         const y = baseY
         return { position: { x: 0, y } }
@@ -1850,9 +1850,9 @@ function updateNodeFromConfig(node, nodeType, config) {
     const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
     const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0
     const width = NODE_DIMENSIONS.WIDTH
-    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + 12)
+    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0) + 12)
     const isSplit = nodeType === 'audience-split' || nodeType === 'crowd-split' || nodeType === 'event-split' || nodeType === 'ab-test'
-    const contentHeight = Math.max(1, rows.length) * rowHeight
+    const contentHeight = Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0)
     const contentStart = headerHeight + contentPadding
     const contentEnd = contentStart + contentHeight
     const contentCenter = contentStart + (contentHeight / 2) // 🔧 修复：计算内容区中心
@@ -1861,7 +1861,7 @@ function updateNodeFromConfig(node, nodeType, config) {
     // 注意：这里计算的是相对于节点中心的dy偏移，不是绝对Y坐标
     const verticalOffsets = isSplit
       ? rows.map((_, i) => {
-          const absoluteY = headerHeight + contentPadding + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust
+          const absoluteY = headerHeight + contentPadding + i * rowHeight + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(rowHeight / 2) + baselineAdjust
           return absoluteY
         })
       : [contentCenter]
@@ -2325,9 +2325,9 @@ function debugCurrentNode() {
     const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
     const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
     const width = NODE_DIMENSIONS.WIDTH
-    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + 12)
+    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0) + 12)
   const isSplit = nodeType === 'audience-split' || nodeType === 'crowd-split' || nodeType === 'event-split' || nodeType === 'ab-test'
-    const contentHeight = Math.max(1, rows.length) * rowHeight
+    const contentHeight = Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0)
     const contentCenter = headerHeight + contentPadding + Math.floor(contentHeight / 2)
     const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST
     
@@ -2378,13 +2378,13 @@ function debugCurrentNode() {
       const bbox = node.getBBox ? node.getBBox() : null
       const nodeTopGraph = Math.round(bbox?.y || position.y)
       const layoutCenterGraphY = nodeTopGraph + Math.round((bbox?.height || nodeRect?.height || height) / 2)
-      const expectedRowYsGraph = rows.map((_, i) => nodeTopGraph + (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)))
+      const expectedRowYsGraph = rows.map((_, i) => nodeTopGraph + (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)))
       const outPorts = node.getPorts ? node.getPorts().filter(p => p.group === 'out') : []
       const outComputed = outPorts.map(p => {
         const a = p?.args || {}
         const hasRow = typeof a.rowIndex === 'number'
         const yRel = hasRow
-          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2))
+          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2))
           : (typeof a.y === 'number'
             ? Number(a.y)
             : ((layoutCenterGraphY - nodeTopGraph) + (a.dy ?? 0)))
@@ -2437,7 +2437,7 @@ function debugCurrentNode() {
         outDomInfos = circleInfos.slice().sort((a, b) => a.cyGraph - b.cyGraph)
       }
       const domCoordValidations = rows.map((_, i) => {
-        const relY = NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)
+        const relY = NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)
         const expectedGraphY = nodeTopGraph + relY
         const expectedClientPt = graph?.graphToClientPoint ? graph.graphToClientPoint({ x: 0, y: expectedGraphY }) : { x: 0, y: Math.round(containerRect.top + expectedGraphY) }
         const expectedYClient = Math.round(expectedClientPt.y)
@@ -2990,7 +2990,7 @@ function debugCurrentNode() {
       const modelHeight = height
       const domHeight = Math.round(nodeRect?.height || 0)
       const bboxHeight = Math.round(bbox?.height || 0)
-      const expectedRowYsGraph = rows.map((_, i) => (bbox?.y || position.y) + contentStart + i * rowHeight + Math.floor(rowHeight / 2))
+      const expectedRowYsGraph = rows.map((_, i) => (bbox?.y || position.y) + contentStart + i * rowHeight + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(rowHeight / 2))
       const groupsConf = node.getProp ? (node.getProp('ports/groups') || {}) : {}
       const outLayoutName = groupsConf?.out?.portLayout?.name || groupsConf?.out?.portLayout || '(未知)'
       console.log('\n🧭 高度/基准与布局信息:')
@@ -3001,7 +3001,7 @@ function debugCurrentNode() {
         const a = p?.args || {}
         const hasRow = typeof a.rowIndex === 'number'
         const yRel = hasRow
-          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
+          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
           : (typeof a.y === 'number'
             ? Number(a.y)
             : ((layoutCenterGraphY - nodeTopGraph) + (a.dy ?? 0)))
@@ -3014,7 +3014,7 @@ function debugCurrentNode() {
       console.log('   - 端口Y步进(布局):', steps)
       console.log('   - 行中心Y步进(期望):', rowSteps)
       console.log('\n🔎 端口-内容行对齐检测:')
-      console.log('   - 期望行Y(画布):', rows.map((_, i) => nodeTopGraph + contentStart + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust))
+      console.log('   - 期望行Y(画布):', rows.map((_, i) => nodeTopGraph + contentStart + i * rowHeight + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(rowHeight / 2) + baselineAdjust))
       if (!outPorts.length) {
         console.log('   - 未发现输出端口')
       } else {
@@ -3022,7 +3022,7 @@ function debugCurrentNode() {
           const a = p?.args || {}
           const hasRow = typeof a.rowIndex === 'number'
           const yRel = hasRow
-            ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
+            ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
             : (typeof a.y === 'number'
               ? Number(a.y)
               : ((layoutCenterGraphY - nodeTopGraph) + (a.dy ?? 0)))

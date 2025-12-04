@@ -1,5 +1,8 @@
-// 横版端口配置工厂：左进右出，出端口数量可配置（与原版一致）
-// 修复：补齐 data-* 属性与端口验证（usePortValidation），对齐原版行为
+/*
+用途：横版端口配置工厂（左进右出）
+说明：生成输入/输出端口分组与项配置，右侧输出端口按内容行中点或均匀分布定位；支持端口位置验证。
+边界：不直接改动 Graph；data-* 属性与验证对齐原版行为；入/出端口数量与分布可参数化。
+*/
 import { COLORS, NODE_DIMENSIONS, TYPOGRAPHY } from '../styles/nodeStyles.js'
 import { usePortValidation } from '../composables/usePortValidation.js'
 

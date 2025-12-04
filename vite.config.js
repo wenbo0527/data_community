@@ -17,11 +17,7 @@ export default defineConfig(({ command }) => ({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    hmr: {
-      host: 'localhost',
-      // 添加更精确的文件监听配置
-      overlay: true
-    },
+    // 让 Vite 自动选择 HMR 客户端端口与主机，避免端口变更后 ping 失败
     watch: {
       // 排除可能导致无限重载的文件
       ignored: [
@@ -99,22 +95,14 @@ export default defineConfig(({ command }) => ({
 
     }
   },
-  plugins: command === 'serve'
-    ? [
-        vue(),
-        logServerPlugin(),
-        viteMockServe({
-          mockPath: 'src/mock',
-          enable: true,
-          watchFiles: true,
-          localEnabled: true,
-          prodEnabled: false,
-        })
-      ]
-    : [
-        vue(),
-        logServerPlugin()
-      ],
+  plugins: [
+    vue(),
+    viteMockServe({
+      localEnabled: false,
+      prodEnabled: false
+    }),
+    logServerPlugin()
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')

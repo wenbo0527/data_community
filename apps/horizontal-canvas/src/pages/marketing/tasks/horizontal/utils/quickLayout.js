@@ -12,6 +12,12 @@ export class HorizontalQuickLayout {
     }
   }
 
+  /**
+   * 执行层次树快速布局（横向）
+   * 入参：graph(Graph 实例)、options({ startX,startY,colSpacing,laneGapY,colScale,laneScale,spreadX,spreadY,expandX })
+   * 返回：{ bounds:{ minX,minY,maxX,maxY } } 或 undefined
+   * 边界：无节点时返回；根据端口顺序与主父节点计算树结构；支持扩展/拉伸；对首个子节点做微调
+   */
   async executeHierarchyTreeLayout(graph, options = {}) {
     const container = graph?.container
     const containerRect = container?.getBoundingClientRect ? container.getBoundingClientRect() : { width: 1200, height: 800 }
@@ -212,7 +218,17 @@ export class HorizontalQuickLayout {
     return { bounds: (() => { let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; posMap.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y) }); return { minX, minY, maxX, maxY } })() }
   }
 
+  /**
+   * 安全获取节点列表
+   * 入参：graph
+   * 返回：Node[]
+   */
   safeGetNodes(graph) { try { return graph.getNodes?.() || [] } catch { return [] } }
+  /**
+   * 安全获取边列表
+   * 入参：graph
+   * 返回：Edge[]
+   */
   safeGetEdges(graph) { try { return graph.getEdges?.() || [] } catch { return [] } }
 }
 

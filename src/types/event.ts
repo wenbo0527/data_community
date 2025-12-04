@@ -18,16 +18,24 @@ export interface VirtualEventData {
   id: string;
   eventName: string;
   eventId: string;
-  scenario: '营销触达' | '风险控制' | '用户分析' | '行为监控';
+  scenario: string[];
   status: '已上线' | '已下线' | '草稿';
   updater: string;
   updateTime: string;
   createTime: string;
   description: string;
-  logicRelation: 'AND' | 'OR';
-  conditionGroups: ConditionGroup[];
   realEventId: string | null;
-  syncStatus: 'pending' | 'synced' | 'failed';
+  version: number;
+  versions: VirtualEventVersion[];
+  expireAt?: string;
+  archived?: boolean;
+}
+
+export interface VirtualEventVersion {
+  version: number;
+  updatedAt: string;
+  updater: string;
+  description?: string;
 }
 
 export interface ConditionGroup {
@@ -205,7 +213,7 @@ export interface MessageDetail {
   messageType: string;
   size: number; // 消息大小（字节）
   content: Record<string, any>; // 消息内容
-  properties: MessageProperty[]; // 消息属性
+  properties?: MessageProperty[]; // 消息属性（可选）
   format: 'json' | 'xml' | 'text' | 'binary'; // 消息格式
 }
 

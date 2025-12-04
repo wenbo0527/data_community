@@ -93,11 +93,7 @@
         </a-tag>
       </template>
       
-      <template #type="{ record }">
-        <a-tag :color="record.type === MetricType.BUSINESS_CORE ? 'blue' : 'orange'">
-          {{ METRIC_TYPE_LABELS[record.type] }}
-        </a-tag>
-      </template>
+      
       
       <template #domain="{ record }">
         <template v-if="record.type === MetricType.BUSINESS_CORE">
@@ -407,12 +403,7 @@ const columns: Array<{
     ellipsis: true,
     tooltip: true
   },
-  {
-    title: '指标类型',
-    dataIndex: 'type',
-    width: 120,
-    slotName: 'type'
-  },
+  
   {
     title: '状态',
     dataIndex: 'status',

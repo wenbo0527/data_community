@@ -41,6 +41,24 @@ export const offlineModelRoutes = [
         }
       },
       {
+        path: 'feature-center/detail/:id',
+        name: 'FeatureCenterDetail',
+        component: () => import('../pages/offlineModel/featureCenter/detail.vue'),
+        meta: {
+          title: '特征详情'
+        },
+        props: true
+      },
+      {
+        path: 'feature-center/edit/:id',
+        name: 'FeatureCenterEdit',
+        component: () => import('../pages/offlineModel/featureCenter/edit.vue'),
+        meta: {
+          title: '编辑特征'
+        },
+        props: true
+      },
+      {
         path: 'model-register',
         name: 'ModelRegister',
         component: () => import('../pages/offlineModel/modelRegister/index.vue'),
@@ -48,6 +66,32 @@ export const offlineModelRoutes = [
           title: '模型注册',
           icon: 'icon-upload'
         }
+      },
+      {
+        path: 'model-register/create',
+        name: 'ModelRegisterCreate',
+        component: () => import('../pages/offlineModel/modelRegister/create.vue'),
+        meta: {
+          title: '新建模型'
+        }
+      },
+      {
+        path: 'model-register/edit/:id',
+        name: 'ModelRegisterEdit',
+        component: () => import('../pages/offlineModel/modelRegister/edit.vue'),
+        meta: {
+          title: '编辑模型'
+        },
+        props: true
+      },
+      {
+        path: 'model-register/detail/:id',
+        name: 'ModelRegisterDetail',
+        component: () => import('../pages/offlineModel/modelRegister/detail.vue'),
+        meta: {
+          title: '模型详情'
+        },
+        props: true
       },
       {
         path: 'model-backtrack',
@@ -59,6 +103,23 @@ export const offlineModelRoutes = [
         }
       },
       {
+        path: 'model-backtrack/create',
+        name: 'ModelBacktrackCreate',
+        component: () => import('../pages/offlineModel/modelBacktrack/create.vue'),
+        meta: {
+          title: '新建回溯'
+        }
+      },
+      {
+        path: 'model-backtrack/detail/:id',
+        name: 'ModelBacktrackDetail',
+        component: () => import('../pages/offlineModel/modelBacktrack/detail.vue'),
+        meta: {
+          title: '回溯详情'
+        },
+        props: true
+      },
+      {
         path: 'task-management',
         name: 'TaskManagement',
         component: () => import('../pages/offlineModel/taskManagement/index.vue'),
@@ -66,6 +127,15 @@ export const offlineModelRoutes = [
           title: '任务管理',
           icon: 'icon-calendar-clock'
         }
+      },
+      {
+        path: 'task-management/detail/:id',
+        name: 'TaskManagementDetail',
+        component: () => import('../pages/offlineModel/taskManagement/detail.vue'),
+        meta: {
+          title: '任务详情'
+        },
+        props: true
       },
       {
         path: 'model-evaluation',

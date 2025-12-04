@@ -119,8 +119,8 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconUpload } from '@arco-design/web-vue/es/icon'
-import { useContractStore } from '@/store/modules/contract'
-import type { ContractItem } from '@/store/modules/contract'
+import { useContractStore } from '@/modules/budget/stores/contract'
+import type { ContractItem } from '@/modules/budget/stores/contract'
 
 const store = useContractStore()
 const router = useRouter()
@@ -208,7 +208,7 @@ const onPageChange = async (page: number) => {
 }
 
 const openContractDetail = (record: ContractItem) => {
-  router.push(`/risk/budget/contracts/${record.id}`)
+  router.push(`/budget/contracts/${record.id}`)
 }
 
 // 供应商汇总

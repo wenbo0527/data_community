@@ -36,9 +36,9 @@
       <div class="unmatch-branch-section">
         <div class="section-title"><span>未命中分支配置</span><a-tooltip content="未命中分支用于处理不满足上述任何人群条件的用户，此分支不可删除"><icon-info-circle class="info-icon" /></a-tooltip></div>
         <div class="crowd-layer unmatch-layer">
-          <div class="layer-header"><span class="layer-title">未命中人群：</span><span class="layer-label fixed-label">固定分支</span></div>
+          <div class="layer-header"><span class="layer-title">其他：</span><span class="layer-label fixed-label">固定分支</span></div>
           <div class="layer-content">
-            <a-input v-model="formData.unmatchBranch.name" placeholder="请输入未命中分支名称" class="branch-name-input" @change="handleUnmatchBranchNameChange" />
+            <a-input v-model="formData.unmatchBranch.name" placeholder="请输入其他分支名称" class="branch-name-input" @change="handleUnmatchBranchNameChange" />
             <a-button type="text" size="small" class="search-btn" disabled><icon-search /></a-button>
           </div>
         </div>
@@ -71,8 +71,8 @@ const emit = defineEmits(['update:visible','confirm','cancel'])
 const crowdList = ref([])
 const formRules = { crowdLayers: [ { required: true, message: '请配置人群分层' } ] }
 const generateId = () => Date.now() + Math.random().toString(36).substr(2,9)
-const getInitialFormData = () => ({ nodeName: props.nodeData?.nodeName || '人群分流', crowdLayers: [ { id: generateId(), crowdId: null, crowdName: '' }, { id: generateId(), crowdId: null, crowdName: '' } ], unmatchBranch: { id: 'unmatch_default', name: '未命中人群', isDefault: true, crowdId: null, crowdName: '未命中人群' } })
-const customValidation = (formData) => { const errors = []; if (!formData) { return errors } if (!formData.crowdLayers || formData.crowdLayers.length === 0) { errors.push('请配置人群分层'); return errors } const emptyLayers = formData.crowdLayers.filter(layer => !layer.crowdId); if (emptyLayers.length > 0) { errors.push(`请为所有人群层级选择对应的人群`) } const validCrowdIds = formData.crowdLayers.map(layer => layer.crowdId).filter(id => id); const uniqueCrowdIds = [...new Set(validCrowdIds)]; if (validCrowdIds.length !== uniqueCrowdIds.length) { errors.push('不能选择重复的人群') } if (!formData.unmatchBranch || !formData.unmatchBranch.name || formData.unmatchBranch.name.trim() === '') { errors.push('请输入未命中分支名称') } return errors }
+const getInitialFormData = () => ({ nodeName: props.nodeData?.nodeName || '人群分流', crowdLayers: [ { id: generateId(), crowdId: null, crowdName: '' }, { id: generateId(), crowdId: null, crowdName: '' } ], unmatchBranch: { id: 'unmatch_default', name: '其他', isDefault: true, crowdId: null, crowdName: '其他' } })
+const customValidation = (formData) => { const errors = []; if (!formData) { return errors } if (!formData.crowdLayers || formData.crowdLayers.length === 0) { errors.push('请配置人群分层'); return errors } const emptyLayers = formData.crowdLayers.filter(layer => !layer.crowdId); if (emptyLayers.length > 0) { errors.push(`请为所有人群层级选择对应的人群`) } const validCrowdIds = formData.crowdLayers.map(layer => layer.crowdId).filter(id => id); const uniqueCrowdIds = [...new Set(validCrowdIds)]; if (validCrowdIds.length !== uniqueCrowdIds.length) { errors.push('不能选择重复的人群') } if (!formData.unmatchBranch || !formData.unmatchBranch.name || formData.unmatchBranch.name.trim() === '') { errors.push('请输入其他分支名称') } return errors }
 const { formData, visible, isSubmitting, isFormValid, handleSubmit: baseHandleSubmit, handleCancel } = useBaseDrawer({ props, emit, formRules, getInitialFormData, customValidation, nodeType: 'crowd-split' })
 const fetchCrowdList = async () => { crowdList.value = mockCrowdData }
 onMounted(() => { fetchCrowdList() })
@@ -81,7 +81,7 @@ const handleCrowdChange = (index, crowdId) => { if (!formData || !formData.crowd
 const addCrowdLayer = () => { if (!formData || !formData.crowdLayers) return; const newLayer = { id: generateId(), crowdId: null, crowdName: '' }; formData.crowdLayers.push(newLayer) }
 const addHitCrowdLayer = () => { addCrowdLayer() }
 const handleNodeNameChange = (value) => { if (!formData) return; const oldName = formData.nodeName; formData.nodeName = value || '人群分流'; crowdSplitLogger.logFormDataChange('节点名称变化', { oldName, newName: formData.nodeName }) }
-const handleUnmatchBranchNameChange = (value) => { if (!formData || !formData.unmatchBranch) return; const oldName = formData.unmatchBranch.name; formData.unmatchBranch.name = value || '未命中人群'; formData.unmatchBranch.crowdName = formData.unmatchBranch.name; crowdSplitLogger.logFormDataChange('未命中分支名称变化', { oldName, newName: formData.unmatchBranch.name }) }
+const handleUnmatchBranchNameChange = (value) => { if (!formData || !formData.unmatchBranch) return; const oldName = formData.unmatchBranch.name; formData.unmatchBranch.name = value || '其他'; formData.unmatchBranch.crowdName = formData.unmatchBranch.name; crowdSplitLogger.logFormDataChange('其他分支名称变化', { oldName, newName: formData.unmatchBranch.name }) }
 const removeCrowdLayer = (index) => { if (!formData || !formData.crowdLayers || formData.crowdLayers.length <= 1) return; const removedLayer = formData.crowdLayers[index]; formData.crowdLayers.splice(index, 1); crowdSplitLogger.logLayerOperation('移除层级', index, { removedLayerId: removedLayer?.id }) }
 const handleSubmit = async () => { if (!formData || !formData.crowdLayers) { Message.error('表单数据不完整'); return } const hasEmptyLayers = formData.crowdLayers.some(layer => !layer.crowdId); if (hasEmptyLayers) { Message.error('请为所有人群层级选择对应的人群'); return } const crowdIds = formData.crowdLayers.map(layer => layer.crowdId); const uniqueCrowdIds = [...new Set(crowdIds)]; if (crowdIds.length !== uniqueCrowdIds.length) { Message.error('不能选择重复的人群'); return } if (!formData.unmatchBranch || !formData.unmatchBranch.name || formData.unmatchBranch.name.trim() === '') { Message.error('请输入未命中分支名称'); return } const configData = { type: 'crowd-split', crowdLayers: formData.crowdLayers.map((layer, index) => ({ id: layer.id, order: index + 1, crowdId: layer.crowdId, crowdName: layer.crowdName })), unmatchBranch: { id: formData.unmatchBranch.id, name: formData.unmatchBranch.name, isDefault: true, crowdId: null, crowdName: formData.unmatchBranch.name, order: formData.crowdLayers.length + 1 }, nodeType: 'crowd-split' }; await baseHandleSubmit(configData); Message.success('配置保存成功') }
 </script>

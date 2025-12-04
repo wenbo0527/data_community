@@ -24,6 +24,12 @@
 
     <!-- 内容区：纯展示，端口由X6系统管理 -->
     <div class="horizontal-node__content" :style="contentContainerStyle">
+      <div 
+        v-if="nodeType === 'ab-test' && config?.experimentName"
+        class="ab-test__experiment"
+      >
+        实验：{{ config.experimentName }}
+      </div>
       <!-- 输出端口指示器（每行内容对应一个） -->
       <div 
         v-for="(text, idx) in outRows" 
@@ -65,34 +71,16 @@ const nodeIconComponent = computed(() => { const iconName = ICON_NAME_MAP[nodeTy
 const iconText = computed(() => getNodeIconText(nodeType.value))
 const headerTitle = computed(() => { const title = config.value?.nodeName || getNodeLabel(nodeType.value) || '节点'; console.log('📝 [HorizontalNode] 标题计算:', { configNodeName: config.value?.nodeName, nodeType: nodeType.value, getNodeLabel: getNodeLabel(nodeType.value), finalTitle: title, config: config.value }); return title })
 const rawLinesCount = computed(() => Array.isArray(config.value?.displayLines) ? config.value.displayLines.length : 0)
-const contentHeight = computed(() => { const isStart = nodeType.value === 'start'; const rowsCount = Array.isArray(outRows.value) ? outRows.value.length : 0; const baseCount = isStart ? Math.max(1, rawLinesCount.value) : Math.max(1, rowsCount); return baseCount * NODE_DIMENSIONS.ROW_HEIGHT })
+const contentHeight = computed(() => { const isStart = nodeType.value === 'start'; const rowsCount = Array.isArray(outRows.value) ? outRows.value.length : 0; const baseCount = isStart ? Math.max(1, rawLinesCount.value) : Math.max(1, rowsCount); const gap = NODE_DIMENSIONS.ROW_GAP || 0; return baseCount * NODE_DIMENSIONS.ROW_HEIGHT + Math.max(0, baseCount - 1) * gap })
 const contentContainerStyle = computed(() => ({ position: 'relative', height: contentHeight.value + 'px', padding: '0px', gap: '0px' }))
 function rowEvenStyle(idx) {
   const isStart = nodeType.value === 'start'
+  const gap = NODE_DIMENSIONS.ROW_GAP || 0
   if (isStart) {
-    return {
-      position: 'absolute',
-      top: '0px',
-      height: contentHeight.value + 'px',
-      lineHeight: '20px',
-      whiteSpace: 'pre-line',
-      left: '0',
-      right: '0'
-    }
+    return { position: 'absolute', top: '0px', height: contentHeight.value + 'px', lineHeight: '20px', whiteSpace: 'pre-line', left: '0', right: '0' }
   }
-  const n = Array.isArray(outRows.value) ? outRows.value.length : 0
-  const contentH = contentHeight.value
-  const step = n > 0 ? contentH / n : NODE_DIMENSIONS.ROW_HEIGHT
-  const centerY = (idx + 0.5) * step
-  const top = Math.max(0, Math.round(centerY - NODE_DIMENSIONS.ROW_HEIGHT / 2))
-  return {
-    position: 'absolute',
-    top: top + 'px',
-    height: NODE_DIMENSIONS.ROW_HEIGHT + 'px',
-    lineHeight: NODE_DIMENSIONS.ROW_HEIGHT + 'px',
-    left: '0',
-    right: '0'
-  }
+  const top = idx * (NODE_DIMENSIONS.ROW_HEIGHT + gap)
+  return { position: 'absolute', top: top + 'px', height: NODE_DIMENSIONS.ROW_HEIGHT + 'px', lineHeight: NODE_DIMENSIONS.ROW_HEIGHT + 'px', left: '0', right: '0' }
 }
 const outRows = computed(() => {
   console.log('📝 [HorizontalNode] 开始生成显示行:', { hasDisplayLines: !!config.value?.displayLines?.length, displayLines: config.value?.displayLines, nodeType: nodeType.value, config: config.value, nodeData: nodeData.value, timestamp: Date.now() })
@@ -273,3 +261,16 @@ onUnmounted(() => { console.log('❌ [HorizontalNode] 组件卸载:', { nodeId: 
   }
 }
 </style>
+.ab-test__experiment {
+  position: absolute;
+  top: 2px;
+  left: 8px;
+  font-size: 11px;
+  line-height: 16px;
+  color: #334155;
+  background: rgba(241, 245, 249, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0 6px;
+  pointer-events: none;
+}

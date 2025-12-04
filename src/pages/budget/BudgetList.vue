@@ -57,9 +57,6 @@
     </a-card>
     <a-table :data="displayedList" :loading="loading" :pagination="pagination" @page-change="onPageChange" row-key="id">
       <template #columns>
-        <a-table-column title="预算编号" :width="140">
-          <template #cell="{ record }">{{ record.budgetNo || '—' }}</template>
-        </a-table-column>
         <a-table-column title="业务类型" :width="120">
           <template #cell="{ record }">{{ record.businessType }}</template>
         </a-table-column>
@@ -407,8 +404,12 @@ const handleUpload = async (options: RequestOption): Promise<UploadRequest> => {
 }
 
 const downloadTemplate = () => {
-  const templateUrl = '/templates/budget-template.xlsx'
-  window.open(templateUrl, '_blank')
+  const headers = ['业务类型','平台','预算粒度','对应时间','目标贷余','预估放款','预估费用','年化数据成本','无风险收益']
+  const sample = ['助贷','蚂蚁','month',`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`,900000,700000,50000,0.045,0.075]
+  const ws = XLSX.utils.aoa_to_sheet([headers, sample])
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '预算模板')
+  XLSX.writeFile(wb, 'budget-template.xlsx')
 }
 
 const handleViewDetail = (record: BudgetItem) => {

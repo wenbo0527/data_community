@@ -105,8 +105,8 @@ import { ref, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
 import type { RequestOption, UploadRequest } from '@arco-design/web-vue/es/upload'
-import { useBudgetStore } from '@/store/modules/budget'
-import type { BudgetData } from '@/store/modules/budget'
+import { useBudgetStore } from '@/modules/budget/stores/budget'
+import type { BudgetData } from '@/modules/budget/stores/budget'
 
 // 接入统一预算 Store
 const store = useBudgetStore()

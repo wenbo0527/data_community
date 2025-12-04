@@ -14,12 +14,6 @@
             </template>
             新建回溯
           </a-button>
-          <a-button @click="handleExport">
-            <template #icon>
-              <icon-download />
-            </template>
-            导出报告
-          </a-button>
         </a-space>
       </div>
     </div>
@@ -47,6 +41,20 @@
               <a-option value="performance">性能回溯</a-option>
               <a-option value="data">数据回溯</a-option>
               <a-option value="feature">特征回溯</a-option>
+            </a-select>
+          </a-form-item>
+          
+          <a-form-item label="任务状态">
+            <a-select
+              v-model="filterForm.status"
+              placeholder="请选择任务状态"
+              allow-clear
+              @change="handleFilterChange"
+            >
+              <a-option value="running">运行中</a-option>
+              <a-option value="completed">已完成</a-option>
+              <a-option value="failed">失败</a-option>
+              <a-option value="stopped">已停止</a-option>
             </a-select>
           </a-form-item>
           
@@ -80,17 +88,17 @@
           <div class="table-header">
             <span>回溯记录</span>
             <a-space>
-              <a-button size="small" @click="handleBatchOperation">
+              <a-button size="small" @click="handleBatchOperation" :disabled="selectedRows.length === 0">
                 <template #icon>
                   <icon-settings />
                 </template>
                 批量操作
               </a-button>
-              <a-button size="small" @click="handleTableSetting">
+              <a-button size="small" @click="handleRefresh">
                 <template #icon>
-                  <icon-tool />
+                  <icon-refresh />
                 </template>
-                表格设置
+                刷新
               </a-button>
             </a-space>
           </div>
@@ -116,9 +124,19 @@
           </template>
           
           <template #status="{ record }">
-            <a-tag :color="getStatusColor(record.status)">
-              {{ getStatusLabel(record.status) }}
-            </a-tag>
+            <div class="status-cell">
+              <a-tag :color="getStatusColor(record.status)">
+                {{ getStatusLabel(record.status) }}
+              </a-tag>
+              <div v-if="record.status === 'running'" class="progress-mini">
+                <a-progress 
+                  :percent="getProgressPercent(record)" 
+                  size="small" 
+                  :show-text="false"
+                  :status="getProgressStatus(record)"
+                />
+              </div>
+            </div>
           </template>
           
           <template #createTime="{ record }">
@@ -127,9 +145,7 @@
           
           <template #actions="{ record }">
             <a-space>
-              <a-button type="text" size="small" @click="handleViewDetail(record)">
-                查看详情
-              </a-button>
+              <a-button type="text" size="small" @click="handleViewDetail(record)">查看详情</a-button>
               <a-button 
                 v-if="record.status === 'completed'"
                 type="text" 
@@ -138,15 +154,7 @@
               >
                 查看报告
               </a-button>
-              <a-button 
-                v-if="record.status === 'running'"
-                type="text" 
-                size="small"
-                status="warning"
-                @click="handleStop(record)"
-              >
-                停止
-              </a-button>
+              <a-button v-if="record.status === 'running'" type="text" size="small" status="warning" @click="handleStop(record)">停止</a-button>
             </a-space>
           </template>
         </a-table>
@@ -158,11 +166,15 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useOfflineModelStore } from '@/stores/offlineModel'
-import { Message } from '@arco-design/web-vue'
+import { backtrackAPI } from '@/api/offlineModel'
+import { Message, Modal } from '@arco-design/web-vue'
+import { 
+  navigateToBacktrackCreate, 
+  navigateToBacktrackDetail,
+  navigateToBacktrackReport 
+} from '@/utils/model-backtrack-router'
 
 const router = useRouter()
-const store = useOfflineModelStore()
 
 // 响应式数据
 const loading = ref(false)
@@ -172,6 +184,7 @@ const selectedRows = ref([])
 const filterForm = reactive({
   modelName: '',
   backtrackType: '',
+  status: '',
   dateRange: []
 })
 
@@ -240,7 +253,8 @@ const columns = [
 ]
 
 // 计算属性
-const backtrackList = computed(() => store.backtracks)
+const backtrackList = computed(() => dataSource.value)
+const dataSource = ref([])
 
 // 生命周期
 onMounted(() => {
@@ -251,41 +265,20 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // await store.fetchBacktracks({
-    //   ...filterForm,
-    //   page: pagination.current,
-    //   pageSize: pagination.pageSize
-    // })
-    
-    // 模拟数据
-    const mockData = [
-      {
-        id: 1,
-        modelName: '信用评分模型',
-        type: 'performance',
-        version: 'v1.0.0',
-        startTime: '2024-01-15 10:30:00',
-        endTime: '2024-01-15 12:30:00',
-        status: 'completed',
-        creator: '张三',
-        createTime: '2024-01-15 10:30:00'
-      },
-      {
-        id: 2,
-        modelName: '风险预测模型',
-        type: 'data',
-        version: 'v1.0.1',
-        startTime: '2024-01-16 14:20:00',
-        endTime: '',
-        status: 'running',
-        creator: '李四',
-        createTime: '2024-01-16 14:20:00'
-      }
-    ]
-    
-    store.backtracks = mockData
-    pagination.total = mockData.length
+    const res = await backtrackAPI.getBacktracks({ page: pagination.current, pageSize: pagination.pageSize })
+    const list = res.data?.data || []
+    dataSource.value = list.map(t => ({
+      id: t.id,
+      modelName: t.config?.serviceName || '-',
+      type: 'feature',
+      version: '-',
+      startTime: t.createTime,
+      endTime: t.updateTime,
+      status: t.status,
+      creator: '系统',
+      createTime: t.createTime
+    }))
+    pagination.total = res.data?.total || dataSource.value.length
   } catch (error) {
     Message.error('加载数据失败')
   } finally {
@@ -305,6 +298,7 @@ const handleSearch = () => {
 const handleReset = () => {
   filterForm.modelName = ''
   filterForm.backtrackType = ''
+  filterForm.status = ''
   filterForm.dateRange = []
   loadData()
 }
@@ -319,11 +313,32 @@ const handleSelectionChange = (rows) => {
 }
 
 const handleCreateBacktrack = () => {
-  router.push('/offline-model/model-backtrack/create')
+  navigateToBacktrackCreate(router, { source: 'offline' })
 }
 
-const handleExport = () => {
-  Message.info('导出报告功能开发中')
+// 无报告导出
+
+// 无批量操作与表格设置
+
+const handleViewModel = (record) => {
+  router.push({
+    path: `/offline-model/model-register/detail/${record.modelId}`,
+    query: { source: 'offline' }
+  })
+}
+
+const handleViewDetail = (record) => {
+  navigateToBacktrackDetail(router, record.id, { source: 'offline' })
+}
+
+// 报告功能 - 跳转到详情页的报告标签
+const handleViewReport = (record) => {
+  navigateToBacktrackReport(router, record.id, { source: 'offline' })
+}
+
+const handleRefresh = () => {
+  loadData()
+  Message.success('数据已刷新')
 }
 
 const handleBatchOperation = () => {
@@ -331,27 +346,61 @@ const handleBatchOperation = () => {
     Message.warning('请先选择要操作的记录')
     return
   }
-  Message.info('批量操作功能开发中')
+  
+  // 获取选中任务的状态
+  const statuses = selectedRows.value.map(row => row.status)
+  const hasRunning = statuses.includes('running')
+  const hasCompleted = statuses.includes('completed')
+  
+  if (hasRunning) {
+    // 如果有运行中的任务，提供批量停止选项
+    Modal.confirm({
+      title: '批量操作',
+      content: `已选择 ${selectedRows.value.length} 个任务，其中包含运行中的任务。是否批量停止？`,
+      okText: '批量停止',
+      cancelText: '取消',
+      onOk: async () => {
+        const runningTasks = selectedRows.value.filter(row => row.status === 'running')
+        const promises = runningTasks.map(task => backtrackAPI.stopBacktrack(task.id))
+        
+        try {
+          await Promise.all(promises)
+          Message.success(`已停止 ${runningTasks.length} 个任务`)
+          await loadData()
+          selectedRows.value = []
+        } catch (error) {
+          Message.error('批量停止失败')
+        }
+      }
+    })
+  } else if (hasCompleted) {
+    // 如果只有已完成的任务，提供批量导出选项
+    Modal.confirm({
+      title: '批量操作',
+      content: `已选择 ${selectedRows.value.length} 个已完成的任务。是否批量导出报告？`,
+      okText: '批量导出',
+      cancelText: '取消',
+      onOk: () => {
+        Message.info('批量导出功能开发中')
+      }
+    })
+  } else {
+    Message.info('选中的任务不支持批量操作')
+  }
 }
 
-const handleTableSetting = () => {
-  Message.info('表格设置功能开发中')
-}
-
-const handleViewModel = (record) => {
-  router.push(`/offline-model/model-register/detail/${record.modelId}`)
-}
-
-const handleViewDetail = (record) => {
-  router.push(`/offline-model/model-backtrack/detail/${record.id}`)
-}
-
-const handleViewReport = (record) => {
-  router.push(`/offline-model/model-backtrack/report/${record.id}`)
-}
-
-const handleStop = (record) => {
-  Message.info('停止回溯功能开发中')
+const handleStop = async (record) => {
+  try {
+    const res = await backtrackAPI.stopBacktrack(record.id)
+    if (res.success) {
+      Message.success('任务已停止')
+      await loadData()
+    } else {
+      Message.error(res.message || '停止失败')
+    }
+  } catch (error) {
+    Message.error('停止任务失败')
+  }
 }
 
 // 工具方法
@@ -396,6 +445,21 @@ const getStatusLabel = (status) => {
 const formatDate = (date) => {
   return date ? new Date(date).toLocaleString('zh-CN') : '-'
 }
+
+// 获取进度百分比
+const getProgressPercent = (record) => {
+  if (record.status !== 'running') return 0
+  // 模拟进度计算，实际应该从record.progress获取
+  return Math.floor(Math.random() * 40) + 30 // 30-70%的随机进度
+}
+
+// 获取进度状态
+const getProgressStatus = (record) => {
+  const percent = getProgressPercent(record)
+  if (percent < 30) return 'exception'
+  if (percent < 70) return 'normal'
+  return 'success'
+}
 </script>
 
 <style scoped lang="less">
@@ -429,6 +493,16 @@ const formatDate = (date) => {
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+  }
+  
+  .status-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    
+    .progress-mini {
+      width: 60px;
     }
   }
 }

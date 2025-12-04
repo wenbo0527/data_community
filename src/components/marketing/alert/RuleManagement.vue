@@ -43,16 +43,7 @@
         </a-space>
       </template>
 
-      <!-- 批量操作工具栏 -->
-      <div v-if="selectedRules.length > 0" class="batch-actions">
-        <a-space>
-          <span class="selected-count">已选择 {{ selectedRules.length }} 项</span>
-          <a-button size="small" @click="handleBatchEnable">批量启用</a-button>
-          <a-button size="small" @click="handleBatchDisable">批量禁用</a-button>
-          <a-button size="small" status="danger" @click="handleBatchDelete">批量删除</a-button>
-          <a-button size="small" type="text" @click="handleClearSelection">清除选择</a-button>
-        </a-space>
-      </div>
+      
 
       <!-- 规则卡片网格 -->
       <div class="rules-grid">
@@ -63,13 +54,7 @@
           :class="{ 'rule-card--selected': selectedRules.includes(rule.id) }"
           @click="handleRuleClick(rule)"
         >
-          <!-- 选择框 -->
-          <div class="rule-card__checkbox" @click.stop>
-            <a-checkbox
-              :model-value="selectedRules.includes(rule.id)"
-              @change="handleRuleSelect(rule.id, $event)"
-            />
-          </div>
+          
 
           <!-- 规则状态指示器 -->
           <div class="rule-card__status" :class="`rule-card__status--${rule.enabled ? 'active' : 'inactive'}`">
@@ -93,6 +78,7 @@
               <a-tag :color="getTypeColor(rule.type)" size="small">
                 {{ getTypeText(rule.type) }}
               </a-tag>
+              <a-tag v-if="rule.needProcessing" color="orange" size="small">需处理</a-tag>
               <span class="rule-created">{{ formatDate(rule.createdAt) }}</span>
             </div>
 
@@ -103,6 +89,13 @@
             <div class="rule-card__conditions">
               <div class="conditions-title">触发条件：</div>
               <div class="conditions-text">{{ formatConditions(rule.conditions) }}</div>
+            </div>
+
+            <div class="rule-card__notices" v-if="(rule.conditions?.metricConfigs || []).length">
+              <div class="notice-title">文案摘要：</div>
+              <div class="notice-text">
+                <div v-for="(cfg, i) in rule.conditions.metricConfigs" :key="i">{{ summarizeContent(cfg.content) }}</div>
+              </div>
             </div>
 
             <!-- 规则统计 -->
@@ -202,9 +195,6 @@ const emit = defineEmits([
   'delete-rule',
   'toggle-rule',
   'copy-rule',
-  'batch-enable',
-  'batch-disable',
-  'batch-delete',
   'rule-click'
 ])
 
@@ -286,44 +276,7 @@ const handleRuleClick = (rule) => {
   emit('rule-click', rule)
 }
 
-const handleRuleSelect = (ruleId, checked) => {
-  if (checked) {
-    selectedRules.value.push(ruleId)
-  } else {
-    const index = selectedRules.value.indexOf(ruleId)
-    if (index > -1) {
-      selectedRules.value.splice(index, 1)
-    }
-  }
-}
-
-const handleBatchEnable = () => {
-  emit('batch-enable', selectedRules.value)
-  selectedRules.value = []
-  Message.success('批量启用成功')
-}
-
-const handleBatchDisable = () => {
-  emit('batch-disable', selectedRules.value)
-  selectedRules.value = []
-  Message.success('批量禁用成功')
-}
-
-const handleBatchDelete = () => {
-  Modal.confirm({
-    title: '确认批量删除',
-    content: `确定要删除选中的 ${selectedRules.value.length} 个规则吗？此操作不可恢复。`,
-    onOk: () => {
-      emit('batch-delete', selectedRules.value)
-      selectedRules.value = []
-      Message.success('批量删除成功')
-    }
-  })
-}
-
-const handleClearSelection = () => {
-  selectedRules.value = []
-}
+ 
 
 // 工具方法
 const getTypeColor = (type) => {
@@ -354,22 +307,36 @@ const formatDate = (dateString) => {
 
 const formatConditions = (conditions) => {
   if (!conditions) return '暂无条件'
-  
-  // 根据不同类型格式化条件
-  if (conditions.threshold !== undefined) {
-    return `阈值: ${conditions.threshold}${conditions.thresholdType === 'percentage' ? '%' : '张'}`
-  }
-  
-  if (conditions.advanceDays !== undefined) {
-    return `提前 ${conditions.advanceDays} 天预警`
-  }
-  
-  if (conditions.failureRate !== undefined) {
-    return `失败率超过 ${conditions.failureRate}%`
-  }
-  
-  return '自定义条件'
+  const granularityLabel = getGranularityLabel(conditions.granularity)
+  const metrics = conditions.metricConfigs || []
+  if (metrics.length === 0) return granularityLabel ? `粒度：${granularityLabel}` : '暂无条件'
+  const lines = metrics.map(cfg => {
+    const unit = cfg.metric?.includes('ratio') || cfg.metric?.includes('rate') ? '%' : ''
+    const opText = operatorText(cfg.operator)
+    return `${opText} ${cfg.threshold}${unit}`
+  })
+  return `${granularityLabel}｜` + lines.join('；')
 }
+
+const summarizeContent = (content) => {
+  if (!content) return '（未填写文案）'
+  const s = String(content).replace(/\s+/g, ' ').trim()
+  return s.length > 50 ? s.slice(0, 50) + '...' : s
+}
+
+const operatorText = (op) => ({
+  greater_than: '大于',
+  less_than: '小于',
+  equal: '等于',
+  greater_equal: '大于等于',
+  less_equal: '小于等于'
+})[op] || ''
+
+const getGranularityLabel = (g) => ({
+  coupon_stock: '券库存粒度',
+  coupon_package: '券包粒度',
+  coupon_instance_lifecycle: '券实例生命周期粒度'
+})[g] || ''
 
 const formatLastTrigger = (time) => {
   if (!time) return '从未'
@@ -391,10 +358,7 @@ const formatLastTrigger = (time) => {
 }
 
 // 监听规则变化，清除无效选择
-watch(() => props.rules, () => {
-  const validIds = props.rules.map(rule => rule.id)
-  selectedRules.value = selectedRules.value.filter(id => validIds.includes(id))
-}, { deep: true })
+ 
 </script>
 
 <style scoped>

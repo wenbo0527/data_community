@@ -64,8 +64,8 @@ export const generateEventData = (count: number): EventData[] => {
 
 // 生成虚拟事件数据
 export const generateVirtualEventData = (count: number, realEvents: EventData[]): VirtualEventData[] => {
-  const scenarios = ['营销触达', '风险控制', '用户分析', '行为监控'];
-  const statuses = ['已上线', '已下线', '草稿'];
+  const scenarioPool = ['营销通知', '电销出池'];
+  const statuses = ['已上线', '已下线'];
   const updaters = ['张三', '李四', '王五', '赵六'];
   
   return Array.from({ length: count }, (_, i) => {
@@ -75,32 +75,32 @@ export const generateVirtualEventData = (count: number, realEvents: EventData[])
         id: `VIRT${Mock.Random.string('number', 6)}`,
         eventName: `虚拟${Mock.Random.ctitle(3, 6)}`,
         eventId: '',
-        scenario: Mock.Random.pick(scenarios) as VirtualEventData['scenario'],
+        scenario: Mock.Random.shuffle(scenarioPool).slice(0, Mock.Random.integer(1, scenarioPool.length)),
         status: Mock.Random.pick(statuses) as VirtualEventData['status'],
         updater: Mock.Random.pick(updaters),
         updateTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
         createTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
         description: Mock.Random.sentence(10, 20),
-        logicRelation: Mock.Random.pick(['AND', 'OR']) as VirtualEventData['logicRelation'],
-        conditionGroups: generateConditionGroups(Mock.Random.integer(1, 3)),
         realEventId: null,
-        syncStatus: Mock.Random.pick(['pending', 'synced', 'failed']) as VirtualEventData['syncStatus']
+        version: 1,
+        versions: [{ version: 1, updatedAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'), updater: Mock.Random.pick(updaters), description: '初始版本' }],
+        expireAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss')
       };
     }
     return {
       id: `VIRT${Mock.Random.string('number', 6)}`,
       eventName: `虚拟${Mock.Random.ctitle(3, 6)}`,
       eventId: realEvent.id,
-      scenario: Mock.Random.pick(scenarios) as VirtualEventData['scenario'],
+      scenario: Mock.Random.shuffle(scenarioPool).slice(0, Mock.Random.integer(1, scenarioPool.length)),
       status: Mock.Random.pick(statuses) as VirtualEventData['status'],
       updater: Mock.Random.pick(updaters),
       updateTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
       createTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
       description: Mock.Random.sentence(10, 20),
-      logicRelation: Mock.Random.pick(['AND', 'OR']) as VirtualEventData['logicRelation'],
-      conditionGroups: generateConditionGroups(Mock.Random.integer(1, 3)),
       realEventId: realEvent.id,
-      syncStatus: Mock.Random.pick(['pending', 'synced', 'failed']) as VirtualEventData['syncStatus']
+      version: 1,
+      versions: [{ version: 1, updatedAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'), updater: Mock.Random.pick(updaters), description: '初始版本' }],
+      expireAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss')
     };
   });
 };
@@ -367,18 +367,14 @@ const generateMessageDetails = (eventId: string): MessageDetail[] => {
     // 生成消息内容
     const content = generateMessageContent(messageType, format);
     
-    // 生成消息属性
-    const properties = generateMessageProperties(content);
-    
-    return {
-      id: `msg_${eventId}_${Date.now()}_${i}`,
-      timestamp: new Date(Date.now() - Mock.Random.integer(0, 86400000)).toISOString(),
-      messageType,
-      size,
-      content,
-      properties,
-      format
-    };
+  return {
+    id: `msg_${eventId}_${Date.now()}_${i}`,
+    timestamp: new Date(Date.now() - Mock.Random.integer(0, 86400000)).toISOString(),
+    messageType,
+    size,
+    content,
+    format
+  };
   });
 };
 

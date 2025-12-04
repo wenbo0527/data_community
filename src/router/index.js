@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import marketingRoutes from './marketing'
+import { externalDataRoutes } from '@/modules/external-data/router'
+import { budgetRoutes } from '@/modules/budget/router'
 import managementRoutes from './management'
 import explorationRoutes from './exploration'
 import notificationRoutes from './notification'
@@ -17,29 +19,22 @@ const router = createRouter({
     ...managementRoutes,
     ...notificationRoutes,
     ...offlineModelRoutes,
+    ...externalDataRoutes,
     {
       path: '/external-data-archive',
-      name: 'ExternalDataArchive',
-      component: () => import('../pages/external-data-archive/index.vue'),
-      meta: { title: '外数档案管理' }
+      redirect: '/external-data/archive'
     },
     {
       path: '/external-data-lifecycle',
-      name: 'ExternalDataLifecycle',
-      component: () => import('../pages/external-data-lifecycle/index.vue'),
-      meta: { title: '外数生命周期' }
+      redirect: '/external-data/lifecycle'
     },
     {
       path: '/external-data-service',
-      name: 'ExternalDataService',
-      component: () => import('../pages/external-data-service/index.vue'),
-      meta: { title: '外数数据服务' }
+      redirect: '/external-data/service'
     },
     {
       path: '/external-data-evaluation',
-      name: 'ExternalDataEvaluation',
-      component: () => import('../pages/external-data-evaluation/index.vue'),
-      meta: { title: '外数评估中心' }
+      redirect: '/external-data/evaluation'
     },
     // 顶层别名路由（与探索模块复用组件），用于外数中心完整还原
     {
@@ -274,6 +269,12 @@ const router = createRouter({
           component: () => import('../pages/discovery/metrics-map/index.vue')
         },
         {
+          path: 'variable-map',
+          name: 'VariableMapDiscovery',
+          meta: { title: '变量地图' },
+          component: () => import('../pages/variable-map/index.vue')
+        },
+        {
           path: 'metrics-map/detail/:id',
           name: 'MetricsMapDetail',
           component: () => import('../pages/discovery/metrics-map/detail.vue'),
@@ -334,6 +335,39 @@ const router = createRouter({
           name: 'MetricManagement',
           meta: { title: '指标管理' },
           component: () => import('../pages/discovery/asset-management/metric-management/index.vue')
+        },
+        {
+          path: 'asset-management/variable-management',
+          name: 'VariableManagementDiscovery',
+          meta: { title: '变量注册' },
+          component: () => import('../pages/variable-management/index.vue')
+        },
+        {
+          path: 'asset-management/variable-management/create/edit',
+          name: 'VariableAssetCreate',
+          meta: { title: '新建变量' },
+          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue')
+        },
+        {
+          path: 'asset-management/variable-management/:id/edit',
+          name: 'VariableAssetEdit',
+          meta: { title: '编辑变量' },
+          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue'),
+          props: true
+        },
+        {
+          path: 'asset-management/variable-management/:id/:mode?',
+          name: 'VariableAssetDetail',
+          meta: { title: '变量详情' },
+          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue'),
+          props: true
+        },
+        {
+          path: 'variable-map/detail/:id',
+          name: 'VariableMapDetail',
+          meta: { title: '变量详情' },
+          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue'),
+          props: true
         },
         {
           path: 'asset-management/metric-management/create/edit',
@@ -408,7 +442,7 @@ const router = createRouter({
         {
           path: 'budget-overview',
           name: 'BudgetOverview',
-          component: () => import('../pages/budget/BudgetOverview.vue'),
+          component: () => import('@/modules/budget/pages/Overview.vue'),
           meta: {
             title: '预算总览'
           }
@@ -421,32 +455,32 @@ const router = createRouter({
         {
           path: 'budget/list',
           name: 'RiskBudgetList',
-          component: () => import('../pages/budget/BudgetList.vue'),
+          component: () => import('@/modules/budget/pages/List.vue'),
           meta: { title: '预算列表' }
         },
         {
           path: 'budget/create',
           name: 'RiskBudgetCreate',
-          component: () => import('../pages/budget/BudgetCreate.vue'),
+          component: () => import('@/modules/budget/pages/Create.vue'),
           meta: { title: '新建预算' }
         },
         {
           path: 'budget/edit/:id',
           name: 'RiskBudgetEdit',
-          component: () => import('../pages/budget/BudgetEdit.vue'),
+          component: () => import('@/modules/budget/pages/Edit.vue'),
           meta: { title: '编辑预算' }
         },
         {
           path: 'budget/detail/:id',
           name: 'RiskBudgetDetail',
-          component: () => import('../pages/budget/BudgetDetail.vue'),
+          component: () => import('@/modules/budget/pages/Detail.vue'),
           meta: { title: '预算详情' },
           props: true
         },
         {
           path: 'budget/contracts',
           name: 'RiskBudgetContracts',
-          component: () => import('../pages/budget/components/ContractManagement.vue'),
+          component: () => import('@/modules/budget/pages/Contracts.vue'),
           meta: { title: '合同管理' }
         },
         {
@@ -459,19 +493,19 @@ const router = createRouter({
         {
           path: 'budget/monitor',
           name: 'RiskBudgetMonitorPage',
-          component: () => import('../pages/budget/BudgetMonitor.vue'),
+          component: () => import('@/modules/budget/pages/Monitor.vue'),
           meta: { title: '预算监控' }
         },
         {
           path: 'budget/settlement',
           name: 'RiskBudgetSettlement',
-          component: () => import('../pages/budget/SettlementManagement.vue'),
+          component: () => import('@/modules/budget/pages/Settlement.vue'),
           meta: { title: '结算管理' }
         },
         {
           path: 'external-data/lifecycle',
           name: 'RiskExternalDataLifecycle',
-          component: () => import('../pages/risk/external-data-lifecycle/index.vue'),
+          component: () => import('@/modules/external-data/pages/Lifecycle.vue'),
           meta: { title: '外数生命周期' }
         },
         {
@@ -483,19 +517,19 @@ const router = createRouter({
         {
           path: 'external-data/evaluation',
           name: 'RiskExternalDataEvaluation',
-          component: () => import('../pages/external-data-evaluation/index.vue'),
+          component: () => import('@/modules/external-data/pages/Evaluation.vue'),
           meta: { title: '外部数据评估' }
         },
         {
           path: 'external-data/archive',
           name: 'RiskExternalDataArchive',
-          component: () => import('../pages/external-data-archive/index.vue'),
+          component: () => import('@/modules/external-data/pages/Archive.vue'),
           meta: { title: '外数档案管理' }
         },
         {
           path: 'external-data/service',
           name: 'RiskExternalDataService',
-          component: () => import('../pages/external-data-service/index.vue'),
+          component: () => import('@/modules/external-data/pages/Service.vue'),
           meta: { title: '外数数据服务' }
         },
         {
@@ -507,62 +541,7 @@ const router = createRouter({
         ...modelOfflineAnalysisRoutes
       ]
     },
-    {
-      path: '/budget',
-      name: 'Budget',
-      redirect: '/budget/index',
-      children: [
-        {
-          path: 'index',
-          name: 'BudgetIndex',
-          component: () => import('../pages/budget/BudgetOverview.vue'),
-          meta: { title: '预算总览' }
-        },
-        {
-          path: 'list',
-          name: 'BudgetList',
-          component: () => import('../pages/budget/BudgetList.vue'),
-          meta: { title: '预算列表' }
-        },
-        {
-          path: 'create',
-          name: 'BudgetCreate',
-          component: () => import('../pages/budget/BudgetCreate.vue'),
-          meta: { title: '新建预算' }
-        },
-        {
-          path: 'edit/:id',
-          name: 'BudgetEdit',
-          component: () => import('../pages/budget/BudgetEdit.vue'),
-          meta: { title: '编辑预算' }
-        },
-        {
-          path: 'detail/:id',
-          name: 'BudgetDetail',
-          component: () => import('../pages/budget/BudgetDetail.vue'),
-          meta: { title: '预算详情' },
-          props: true
-        },
-        {
-          path: 'contracts',
-          name: 'BudgetContracts',
-          component: () => import('../pages/budget/components/ContractManagement.vue'),
-          meta: { title: '合同管理' }
-        },
-        {
-          path: 'monitor',
-          name: 'BudgetMonitorPage',
-          component: () => import('../pages/budget/BudgetMonitor.vue'),
-          meta: { title: '预算监控' }
-        },
-        {
-          path: 'settlement',
-          name: 'BudgetSettlement',
-          component: () => import('../pages/budget/SettlementManagement.vue'),
-          meta: { title: '结算管理' }
-        }
-      ]
-    },
+    ...budgetRoutes,
     {
       path: '/digital-marketing',
       name: 'digitalMarketing',
@@ -667,6 +646,44 @@ const router = createRouter({
         description: '横版画布统计信息查询页面'
       },
       props: true
+    },
+    // 变量管理路由
+    {
+      path: '/variables',
+      name: 'VariableManagement',
+      redirect: '/variables/list',
+      meta: {
+        title: '变量管理',
+        icon: 'icon-storage'
+      },
+      children: [
+        {
+          path: 'list',
+          name: 'VariableList',
+          component: () => import('../pages/variable-management/index.vue'),
+          meta: {
+            title: '变量列表'
+          }
+        },
+        {
+          path: 'map',
+          name: 'VariableMap',
+          component: () => import('../pages/variable-map/index.vue'),
+          meta: {
+            title: '变量地图'
+          }
+        },
+        {
+          path: ':id',
+          name: 'VariableDetail',
+          component: () => import('../pages/variable-management/detail.vue'),
+          meta: {
+            title: '变量详情',
+            hidden: true
+          },
+          props: true
+        }
+      ]
     },
     {
       path: '/',

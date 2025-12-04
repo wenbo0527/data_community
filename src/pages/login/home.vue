@@ -406,6 +406,7 @@ import { ref, onMounted, markRaw, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import ArchitectureChart from '../../components/layout/ArchitectureChart.vue'
+import HomeWelcomeModal from '../../components/home-welcome-modal.vue'
 import NotificationStats from '../../components/NotificationStats.vue'
 import {
   IconUser,

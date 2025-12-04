@@ -14,18 +14,6 @@
             </template>
             新建模型
           </a-button>
-          <a-button @click="handleImport">
-            <template #icon>
-              <icon-upload />
-            </template>
-            批量导入
-          </a-button>
-          <a-button @click="handleTemplateDownload">
-            <template #icon>
-              <icon-download />
-            </template>
-            模板下载
-          </a-button>
         </a-space>
       </div>
     </div>
@@ -43,47 +31,7 @@
             />
           </a-form-item>
           
-          <a-form-item label="模型类型">
-            <a-select
-              v-model="filterForm.type"
-              placeholder="请选择模型类型"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="classification">分类模型</a-option>
-              <a-option value="regression">回归模型</a-option>
-              <a-option value="clustering">聚类模型</a-option>
-              <a-option value="deep_learning">深度学习</a-option>
-            </a-select>
-          </a-form-item>
           
-          <a-form-item label="算法框架">
-            <a-select
-              v-model="filterForm.framework"
-              placeholder="请选择算法框架"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="sklearn">Scikit-learn</a-option>
-              <a-option value="tensorflow">TensorFlow</a-option>
-              <a-option value="pytorch">PyTorch</a-option>
-              <a-option value="xgboost">XGBoost</a-option>
-            </a-select>
-          </a-form-item>
-          
-          <a-form-item label="状态">
-            <a-select
-              v-model="filterForm.status"
-              placeholder="请选择状态"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="active">有效</a-option>
-              <a-option value="inactive">无效</a-option>
-              <a-option value="training">训练中</a-option>
-              <a-option value="failed">训练失败</a-option>
-            </a-select>
-          </a-form-item>
           
           <a-form-item>
             <a-space>
@@ -100,63 +48,7 @@
       </a-card>
     </div>
 
-    <!-- 统计卡片 -->
-    <div class="stats-section">
-      <a-row :gutter="16">
-        <a-col :span="6">
-          <a-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <icon-storage />
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ stats.totalModels }}</div>
-                <div class="stat-label">总模型数</div>
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <icon-check-circle />
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ stats.activeModels }}</div>
-                <div class="stat-label">有效模型</div>
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <icon-loading />
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ stats.trainingModels }}</div>
-                <div class="stat-label">训练中</div>
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <icon-close-circle />
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ stats.failedModels }}</div>
-                <div class="stat-label">训练失败</div>
-              </div>
-            </div>
-          </a-card>
-        </a-col>
-      </a-row>
-    </div>
+    
 
     <!-- 数据表格 -->
     <div class="table-section">
@@ -164,20 +56,7 @@
         <template #title>
           <div class="table-header">
             <span>模型列表</span>
-            <a-space>
-              <a-button size="small" @click="handleBatchOperation">
-                <template #icon>
-                  <icon-settings />
-                </template>
-                批量操作
-              </a-button>
-              <a-button size="small" @click="handleTableSetting">
-                <template #icon>
-                  <icon-tool />
-                </template>
-                表格设置
-              </a-button>
-            </a-space>
+            <a-space></a-space>
           </div>
         </template>
         
@@ -200,22 +79,10 @@
             </a-tag>
           </template>
           
-          <template #framework="{ record }">
-            <a-tag :color="getFrameworkColor(record.framework)">
-              {{ getFrameworkLabel(record.framework) }}
-            </a-tag>
-          </template>
-          
           <template #status="{ record }">
             <a-tag :color="getStatusColor(record.status)">
               {{ getStatusLabel(record.status) }}
             </a-tag>
-          </template>
-          
-          <template #accuracy="{ record }">
-            <span :style="{ color: getAccuracyColor(record.accuracy) }">
-              {{ record.accuracy }}%
-            </span>
           </template>
           
           <template #createTime="{ record }">
@@ -230,15 +97,10 @@
               <a-button type="text" size="small" @click="handleEdit(record)">
                 编辑
               </a-button>
-              <a-button 
-                v-if="record.status === 'failed'"
-                type="text" 
-                size="small" 
-                status="warning"
-                @click="handleRetrain(record)"
-              >
-                重训练
+              <a-button type="text" size="small" @click="handleCreateVersion(record)">
+                新建版本
               </a-button>
+              
               <a-button 
                 type="text" 
                 size="small" 
@@ -271,10 +133,7 @@ const selectedRows = ref([])
 
 // 筛选表单
 const filterForm = reactive({
-  name: '',
-  type: '',
-  framework: '',
-  status: ''
+  name: ''
 })
 
 // 分页配置
@@ -306,18 +165,7 @@ const columns = [
     slotName: 'type',
     width: 120
   },
-  {
-    title: '算法框架',
-    dataIndex: 'framework',
-    slotName: 'framework',
-    width: 120
-  },
-  {
-    title: '准确率',
-    dataIndex: 'accuracy',
-    slotName: 'accuracy',
-    width: 100
-  },
+  
   {
     title: '版本',
     dataIndex: 'version',
@@ -350,12 +198,6 @@ const columns = [
 
 // 计算属性
 const modelList = computed(() => store.getModels)
-const stats = computed(() => ({
-  totalModels: modelList.value.length,
-  activeModels: modelList.value.filter(item => item.status === 'active').length,
-  trainingModels: modelList.value.filter(item => item.status === 'training').length,
-  failedModels: modelList.value.filter(item => item.status === 'failed').length
-}))
 
 // 生命周期
 onMounted(() => {
@@ -367,7 +209,7 @@ const loadData = async () => {
   loading.value = true
   try {
     const response = await modelAPI.getModels({
-      ...filterForm,
+      name: filterForm.name,
       page: pagination.current,
       pageSize: pagination.pageSize
     })
@@ -396,9 +238,6 @@ const handleSearch = () => {
 
 const handleReset = () => {
   filterForm.name = ''
-  filterForm.type = ''
-  filterForm.framework = ''
-  filterForm.status = ''
   loadData()
 }
 
@@ -415,25 +254,7 @@ const handleCreate = () => {
   router.push('/offline-model/model-register/create')
 }
 
-const handleImport = () => {
-  Message.info('批量导入功能开发中')
-}
-
-const handleTemplateDownload = () => {
-  Message.info('模板下载功能开发中')
-}
-
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  Message.info('批量操作功能开发中')
-}
-
-const handleTableSetting = () => {
-  Message.info('表格设置功能开发中')
-}
+ 
 
 const handleViewDetail = (record) => {
   router.push(`/offline-model/model-register/detail/${record.id}`)
@@ -443,9 +264,21 @@ const handleEdit = (record) => {
   router.push(`/offline-model/model-register/edit/${record.id}`)
 }
 
-const handleRetrain = (record) => {
-  Message.info('重训练功能开发中')
+const handleCreateVersion = async (record) => {
+  try {
+    const res = await modelAPI.createModelVersion(record.id)
+    if (res.success) {
+      Message.success('新版本已创建')
+      loadData()
+    } else {
+      Message.error(res.message || '新建版本失败')
+    }
+  } catch (e) {
+    Message.error('新建版本失败')
+  }
 }
+
+
 
 const handleDelete = (record) => {
   Message.info('删除功能开发中')
@@ -472,51 +305,23 @@ const getTypeLabel = (type) => {
   return labels[type] || type
 }
 
-const getFrameworkColor = (framework) => {
-  const colors = {
-    sklearn: 'blue',
-    tensorflow: 'orange',
-    pytorch: 'red',
-    xgboost: 'green'
-  }
-  return colors[framework] || 'gray'
-}
-
-const getFrameworkLabel = (framework) => {
-  const labels = {
-    sklearn: 'Scikit-learn',
-    tensorflow: 'TensorFlow',
-    pytorch: 'PyTorch',
-    xgboost: 'XGBoost'
-  }
-  return labels[framework] || framework
-}
 
 const getStatusColor = (status) => {
   const colors = {
-    active: 'green',
-    inactive: 'red',
-    training: 'blue',
-    failed: 'red'
+    online: 'green',
+    archived: 'gray'
   }
   return colors[status] || 'gray'
 }
 
 const getStatusLabel = (status) => {
   const labels = {
-    active: '有效',
-    inactive: '无效',
-    training: '训练中',
-    failed: '训练失败'
+    online: '上线',
+    archived: '归档'
   }
   return labels[status] || status
 }
 
-const getAccuracyColor = (accuracy) => {
-  if (accuracy >= 90) return '#52c41a'
-  if (accuracy >= 80) return '#faad14'
-  return '#ff4d4f'
-}
 
 const formatDate = (date) => {
   return new Date(date).toLocaleString('zh-CN')

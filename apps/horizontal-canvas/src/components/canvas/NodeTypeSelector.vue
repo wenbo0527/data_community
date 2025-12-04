@@ -29,6 +29,11 @@
 </template>
 
 <script setup>
+/*
+用途：节点类型选择器（弹层/停靠两种形态）
+说明：提供类别过滤、搜索、点击与拖拽选择；事件交由画布页处理并结合 `useNodeInsertion` 完成插入与收尾。
+边界：不直接接触 Graph；位置由父组件传入；类型允许性由 `presetSlot.allowedTypes` 控制。
+*/
 import { computed, ref } from 'vue'
 import { getNodeConfig, getAllNodeTypes, getNodeLabel } from '@/utils/nodeTypes.js'
 import * as ArcoIcons from '@arco-design/web-vue/es/icon'

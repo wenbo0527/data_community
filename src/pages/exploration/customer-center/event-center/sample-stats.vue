@@ -72,8 +72,6 @@
               <div class="chart-controls">
                 <a-radio-group v-model="chartType" type="button" size="small">
                   <a-radio value="messages">消息数量</a-radio>
-                  <a-radio value="size">总大小</a-radio>
-                  <a-radio value="avgSize">平均大小</a-radio>
                 </a-radio-group>
                 <a-button type="text" size="small" @click="handleChartExport">
                   <template #icon><icon-download /></template>
@@ -128,39 +126,7 @@
       </a-row>
     </div>
 
-    <!-- 最近17条日志 -->
-    <div class="logs-section">
-      <div class="table-card logs-card">
-        <div class="table-header">
-          <h3 class="table-title">最近17条日志</h3>
-          <div class="table-controls">
-            <a-button size="small" @click="handleRefresh">
-              <template #icon><icon-refresh /></template>
-              刷新
-            </a-button>
-          </div>
-        </div>
-        <div class="logs-container">
-          <div class="logs-list">
-            <div
-              v-for="log in recentLogs"
-              :key="log.id"
-              class="log-item"
-            >
-              <div class="log-time">{{ formatEventTime(log.timestamp) }}</div>
-              <div class="log-type">
-                <a-tag color="blue" size="small">{{ log.messageType }}</a-tag>
-              </div>
-              <div class="log-id">{{ log.id }}</div>
-              <div class="log-size">{{ formatBytes(log.size) }}</div>
-              <div class="log-format">
-                <a-tag :color="getFormatColor(log.format)" size="small">{{ log.format }}</a-tag>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- 消息详情表格 -->
     <div class="data-table-section">
@@ -203,34 +169,13 @@
                   {{ formatEventTime(record.timestamp) }}
                 </template>
               </a-table-column>
-              <a-table-column title="消息类型" width="100">
+              <a-table-column title="客户号" width="120">
                 <template #cell="{ record }">
-                  <a-tag color="blue">{{ record.messageType }}</a-tag>
+                  {{ extractCustomerId(record) }}
                 </template>
               </a-table-column>
-              <a-table-column title="大小" width="80">
-                <template #cell="{ record }">
-                  {{ formatBytes(record.size) }}
-                </template>
-              </a-table-column>
-              <a-table-column title="格式" width="70">
-                <template #cell="{ record }">
-                  <a-tag :color="getFormatColor(record.format)">{{ record.format }}</a-tag>
-                </template>
-              </a-table-column>
-              <a-table-column title="消息属性" width="150">
-                <template #cell="{ record }">
-                  <div class="message-properties">
-                    <div v-for="prop in record.properties.slice(0, 3)" :key="prop.key" class="property-item">
-                      <span class="prop-key">{{ prop.key }}:</span>
-                      <span class="prop-value">{{ prop.value }}</span>
-                    </div>
-                    <div v-if="record.properties.length > 3" class="more-props">
-                      +{{ record.properties.length - 3 }} 更多
-                    </div>
-                  </div>
-                </template>
-              </a-table-column>
+
+              
               <a-table-column title="消息内容" width="200">
                 <template #cell="{ record }">
                   <a-popover title="消息内容详情">
@@ -280,6 +225,7 @@ const timeRangeText = computed(() => {
   return textMap[timeRange.value] || '近1天'
 })
 const chartType = ref('messages')
+const MESSAGE_DETAILS_LIMIT = 5
 const messageTypeFilter = ref('all')
 const formatFilter = ref('all')
 const tableLoading = ref(false)
@@ -322,8 +268,14 @@ const filteredMessages = computed(() => {
   if (formatFilter.value !== 'all') {
     messages = messages.filter(msg => msg.format === formatFilter.value)
   }
-  
-  return messages
+  // 近5条（按时间倒序）
+  return [...messages]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, MESSAGE_DETAILS_LIMIT)
+    .map(m => ({
+      ...m,
+      properties: Array.isArray(m.properties) ? m.properties : []
+    }))
 })
 
 // 展示的总消息数（基于选择的时间范围）
@@ -348,12 +300,7 @@ const displayTotalMessages = computed(() => {
   return stats.totalMessages || 0
 })
 
-const recentLogs = computed(() => {
-  const list = sampleStats.value?.messageDetails || []
-  return [...list]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 17)
-})
+
 
 // 响应式引用
 const trendChartRef = ref(null)
@@ -363,10 +310,10 @@ let trendChart = null
 
 // 表格分页
 const tablePagination = reactive({
-  total: 0,
+  total: 5,
   current: 1,
-  pageSize: 10,
-  showTotal: true
+  pageSize: 5,
+  showTotal: false
 })
 
 // 计算属性 - 已移除旧的tableData，使用filteredUserEvents
@@ -457,15 +404,18 @@ const formatBytes = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-// 获取格式颜色
-const getFormatColor = (format) => {
-  const colors = {
-    json: 'green',
-    xml: 'blue',
-    text: 'gray',
-    binary: 'orange'
+
+
+// 提取客户号
+const extractCustomerId = (record) => {
+  if (!record) return '-'
+  const content = record.content || {}
+  let cid = record.customerId || content.customerId || content.userId
+  if (!cid && Array.isArray(record.properties)) {
+    const found = record.properties.find(p => p && (p.key === 'customerId' || p.key === 'userId'))
+    cid = found?.value
   }
-  return colors[format] || 'gray'
+  return cid || '-'
 }
 
 // 初始化趋势图
@@ -948,75 +898,7 @@ onUnmounted(() => {
   height: 250px;
 }
 
-/* 最近日志 */
-.logs-section {
-  margin-bottom: 24px;
-}
 
-.logs-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e8e9eb;
-}
-
-.logs-container {
-  max-height: 400px;
-  overflow-y: auto;
-  padding: 0 20px;
-}
-
-.logs-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.log-item {
-  display: grid;
-  grid-template-columns: 160px 100px 1fr 80px 60px;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f5f5f5;
-  transition: background-color 0.2s ease;
-}
-
-.log-item:hover {
-  background-color: #fafafa;
-}
-
-.log-item:last-child {
-  border-bottom: none;
-}
-
-.log-time {
-  color: #86909c;
-  font-size: 12px;
-  font-family: monospace;
-}
-
-.log-type {
-  text-align: center;
-}
-
-.log-id {
-  color: #1d2129;
-  font-family: monospace;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.log-size {
-  color: #4e5969;
-  font-size: 12px;
-  text-align: right;
-}
-
-.log-format {
-  text-align: center;
-}
 
 /* 异常检测 */
 .anomaly-list {

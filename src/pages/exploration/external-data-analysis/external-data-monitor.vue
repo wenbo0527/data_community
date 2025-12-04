@@ -170,8 +170,8 @@ import { ref, onMounted, reactive, watch, nextTick } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import * as echarts from 'echarts'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
-import { useExternalDataStore } from '@/store/modules/external-data'
-import type { WarningItem, BurndownPoint } from '@/store/modules/external-data'
+import { useExternalDataStore } from '@/modules/external-data/stores/external-data'
+import type { WarningItem, BurndownPoint } from '@/modules/external-data/stores/external-data'
 import PlatformProductModal from '@/components/modals/PlatformProductModal.vue'
 import BudgetBurndownTabs from '@/components/modals/BudgetBurndownTabs.vue'
 import { IconArrowRise, IconArrowFall } from '@arco-design/web-vue/es/icon'
@@ -293,11 +293,11 @@ const handleFilter = async () => {
       null
   }
   await Promise.all([
-    store.fetchBurndownData(params),
-    store.fetchWarningData(params)
+    store.fetchBurndown(params as any),
+    store.fetchWarnings(params as any)
   ])
-  updateBurndownChart(store.burndownData, currentChartType.value)
-  warningData.value = store.warningData
+  updateBurndownChart(store.burndown, currentChartType.value)
+  warningData.value = store.warnings
   filtering.value = false
   Message.success('已更新监控')
 }
@@ -332,14 +332,14 @@ onMounted(async () => {
     
     // 先获取数据
     await Promise.all([
-      store.fetchBurndownData(),
-      store.fetchWarningData(),
+      store.fetchBurndown(),
+      store.fetchWarnings(),
       store.fetchTargetLoanOptions()
     ])
     
     console.log('数据获取完成:', {
-      burndownData: store.burndownData,
-      warningData: store.warningData,
+      burndownData: store.burndown,
+      warningData: store.warnings,
       targetLoanOptions: store.targetLoanOptions
     })
     
@@ -351,8 +351,8 @@ onMounted(async () => {
     }
     
     // 更新本地数据
-    burndownData.value = store.burndownData
-    warningData.value = store.warningData
+    burndownData.value = store.burndown
+    warningData.value = store.warnings
     
     // 确保DOM已经挂载
     await nextTick()
