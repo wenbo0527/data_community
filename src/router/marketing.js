@@ -153,7 +153,7 @@ export default [
       {
         path: 'tasks/create',
         name: 'marketing-tasks-create',
-        component: () => loadComponent('../pages/marketing/tasks/create.vue', 'MarketingTasksCreate'),
+        component: () => import('../pages/marketing/tasks/horizontal/index.vue'),
         meta: { title: '创建营销任务' }
       },
       {
