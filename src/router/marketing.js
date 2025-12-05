@@ -140,14 +140,14 @@ export default [
       {
         path: 'tasks',
         name: 'marketing-tasks',
-        component: () => loadComponent('../pages/marketing/tasks/index.vue', 'MarketingTasks'),
+        component: () => import('../pages/marketing/tasks/index.vue'),
         meta: { title: '营销任务' }
       },
       // 横版任务编辑入口保留（可选）
       {
         path: 'tasks/horizontal',
         name: 'marketing-tasks-horizontal',
-        component: () => loadComponent('../pages/marketing/tasks/horizontal/index.vue', 'MarketingTasksHorizontal'),
+        component: () => import('../pages/marketing/tasks/horizontal/index.vue'),
         meta: { title: '营销任务（横版）' }
       },
       {
@@ -159,7 +159,7 @@ export default [
       {
         path: 'tasks/editor',
         name: 'marketing-tasks-editor',
-        component: () => loadComponent('../pages/marketing/tasks/task-editor.vue', 'MarketingTasksEditor'),
+        component: () => import('../pages/marketing/tasks/horizontal/index.vue'),
         meta: { title: '任务管理' }
       }
     ]
