@@ -595,36 +595,7 @@ const router = createRouter({
             layout: 'blank'
           }
         },
-        {
-          path: 'canvas',
-          name: 'TestCanvas',
-          component: () => import('../pages/test-canvas.vue'),
-          meta: {
-            title: 'TaskFlowCanvas测试',
-            description: 'TaskFlowCanvas组件功能测试页面',
-            layout: 'blank'
-          }
-        },
-        {
-          path: 'preview-system',
-          name: 'TestPreviewSystem',
-          component: () => import('../pages/test-preview-system.vue'),
-          meta: {
-            title: '预览线系统测试',
-            description: 'window.previewLineSystem全局实例测试页面',
-            layout: 'blank'
-          }
-        },
-        {
-          path: 'preview-line',
-          name: 'PreviewLineTest',
-          component: () => import('../pages/preview-line-test.vue'),
-          meta: {
-            title: '预览线功能测试',
-            description: '预览线功能完整性测试页面',
-            layout: 'blank'
-          }
-        },
+        
         {
           path: 'canvas-statistics',
           name: 'CanvasStatisticsDemo',
