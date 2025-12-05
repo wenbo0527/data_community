@@ -147,19 +147,34 @@ export default [
       {
         path: 'tasks/horizontal',
         name: 'marketing-tasks-horizontal',
-        component: () => import('../pages/marketing/tasks/horizontal/index.vue'),
+        beforeEnter: (to) => {
+          const base = 'http://localhost:5180/marketing/tasks/horizontal'
+          const qs = new URLSearchParams(to.query || {}).toString()
+          const url = qs ? `${base}?${qs}` : base
+          window.location.href = url
+          return false
+        },
         meta: { title: '营销任务（横版）' }
       },
       {
         path: 'tasks/create',
         name: 'marketing-tasks-create',
-        component: () => import('../pages/marketing/tasks/horizontal/index.vue'),
+        beforeEnter: () => {
+          window.location.href = 'http://localhost:5180/marketing/tasks/horizontal?mode=create'
+          return false
+        },
         meta: { title: '创建营销任务' }
       },
       {
         path: 'tasks/editor',
         name: 'marketing-tasks-editor',
-        component: () => import('../pages/marketing/tasks/horizontal/index.vue'),
+        beforeEnter: (to) => {
+          const base = 'http://localhost:5180/marketing/tasks/horizontal'
+          const qs = new URLSearchParams(to.query || {}).toString()
+          const url = qs ? `${base}?${qs}` : base
+          window.location.href = url
+          return false
+        },
         meta: { title: '任务管理' }
       }
     ]
