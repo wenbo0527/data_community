@@ -332,7 +332,11 @@ export function getFeatures(params = {}) {
   
   // 按状态筛选
   if (status) {
-    filteredFeatures = filteredFeatures.filter(f => f.status === status)
+    if (status === 'inactive') {
+      filteredFeatures = filteredFeatures.filter(f => f.status !== 'active')
+    } else {
+      filteredFeatures = filteredFeatures.filter(f => f.status === status)
+    }
   }
   
   // 分页

@@ -9,6 +9,7 @@
     :selected="selected"
     :hover="hover"
     :disabled="disabled"
+    @menu="handleMenuClick"
   >
     <template #icon>
       <component 
@@ -24,12 +25,6 @@
 
     <!-- 内容区：纯展示，端口由X6系统管理 -->
     <div class="horizontal-node__content" :style="contentContainerStyle">
-      <div 
-        v-if="nodeType === 'ab-test' && config?.experimentName"
-        class="ab-test__experiment"
-      >
-        实验：{{ config.experimentName }}
-      </div>
       <!-- 输出端口指示器（每行内容对应一个） -->
       <div 
         v-for="(text, idx) in outRows" 
@@ -50,7 +45,9 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { getNodeLabel } from '@/utils/nodeTypes.js'
 import { buildDisplayLines } from './createVueShapeNode.js'
-import { NODE_DIMENSIONS } from './styles/nodeStyles.js'
+import { NODE_DIMENSIONS, getNodeIconText } from './styles/nodeStyles.js'
+import { createVueShapeNode } from './createVueShapeNode.js'
+import { runTestDebugFunction, runSimpleDebugNode } from './debug/DebugHelpers.ts'
 import * as ArcoIcons from '@arco-design/web-vue/es/icon'
 
 const props = defineProps({ node: { type: Object, required: true }, graph: { type: Object, default: null } })
@@ -70,10 +67,29 @@ const ICON_NAME_MAP = { 'crowd-split': 'IconUserGroup', 'event-split': 'IconThun
 const nodeIconComponent = computed(() => { const iconName = ICON_NAME_MAP[nodeType.value] || 'IconApps'; return ArcoIcons[iconName] || ArcoIcons.IconApps })
 const iconText = computed(() => getNodeIconText(nodeType.value))
 const headerTitle = computed(() => { const title = config.value?.nodeName || getNodeLabel(nodeType.value) || '节点'; console.log('📝 [HorizontalNode] 标题计算:', { configNodeName: config.value?.nodeName, nodeType: nodeType.value, getNodeLabel: getNodeLabel(nodeType.value), finalTitle: title, config: config.value }); return title })
+const adaptive = computed(() => {
+  const flag = NODE_DIMENSIONS.ADAPTIVE_CONTENT_LAYOUT
+  const cfgFlag = nodeData.value?.adaptiveContentLayout
+  return typeof cfgFlag === 'boolean' ? cfgFlag : !!flag
+})
 const rawLinesCount = computed(() => Array.isArray(config.value?.displayLines) ? config.value.displayLines.length : 0)
-const contentHeight = computed(() => { const isStart = nodeType.value === 'start'; const rowsCount = Array.isArray(outRows.value) ? outRows.value.length : 0; const baseCount = isStart ? Math.max(1, rawLinesCount.value) : Math.max(1, rowsCount); const gap = NODE_DIMENSIONS.ROW_GAP || 0; return baseCount * NODE_DIMENSIONS.ROW_HEIGHT + Math.max(0, baseCount - 1) * gap })
-const contentContainerStyle = computed(() => ({ position: 'relative', height: contentHeight.value + 'px', padding: '0px', gap: '0px' }))
+const contentHeight = computed(() => {
+  if (adaptive.value) return undefined
+  const isStart = nodeType.value === 'start'
+  const rowsCount = Array.isArray(outRows.value) ? outRows.value.length : 0
+  const baseCount = isStart ? Math.max(1, rawLinesCount.value) : Math.max(1, rowsCount)
+  const gap = NODE_DIMENSIONS.ROW_GAP || 0
+  return baseCount * NODE_DIMENSIONS.ROW_HEIGHT + Math.max(0, baseCount - 1) * gap
+})
+const contentContainerStyle = computed(() => {
+  if (adaptive.value) {
+    const sp = NODE_DIMENSIONS.CONTENT_SPACING || { top: 12, gap: 8, bottom: 12 }
+    return { position: 'relative', display: 'flex', flexDirection: 'column', gap: (sp.gap || 8) + 'px', paddingTop: (sp.top || 12) + 'px', paddingBottom: (sp.bottom || 12) + 'px', paddingLeft: '12px', paddingRight: '12px' }
+  }
+  return { position: 'relative', height: (contentHeight.value || 0) + 'px', padding: '0px', gap: '0px' }
+})
 function rowEvenStyle(idx) {
+  if (adaptive.value) return {}
   const isStart = nodeType.value === 'start'
   const gap = NODE_DIMENSIONS.ROW_GAP || 0
   if (isStart) {
@@ -81,6 +97,66 @@ function rowEvenStyle(idx) {
   }
   const top = idx * (NODE_DIMENSIONS.ROW_HEIGHT + gap)
   return { position: 'absolute', top: top + 'px', height: NODE_DIMENSIONS.ROW_HEIGHT + 'px', lineHeight: NODE_DIMENSIONS.ROW_HEIGHT + 'px', left: '0', right: '0' }
+}
+
+function measureAndUpdatePorts() {
+  if (!adaptive.value) return
+  try {
+    const view = props.graph?.findViewByCell ? props.graph.findViewByCell(props.node) : null
+    const containerRect = props.graph?.container?.getBoundingClientRect ? props.graph.container.getBoundingClientRect() : { top: 0 }
+    const bbox = props.node?.getBBox ? props.node.getBBox() : null
+    const contentEl = view?.container?.querySelector ? view.container.querySelector('.horizontal-node__content') : null
+    const rowsEls = contentEl ? Array.from(contentEl.querySelectorAll('.port-indicator')) : []
+    const offsets = rowsEls.map(el => {
+      const r = el.getBoundingClientRect()
+      const cyClient = Math.round(r.top + r.height / 2)
+      const cg = props.graph?.clientToGraphPoint ? props.graph.clientToGraphPoint({ x: 0, y: cyClient }) : { x: 0, y: cyClient - containerRect.top }
+      const yRel = Math.round(cg.y - (bbox?.y || 0))
+      return yRel
+    })
+    const data = props.node?.getData?.() || {}
+    const updated = { ...data, verticalOffsets: offsets }
+    props.node?.setData && props.node.setData(updated)
+    props.node?.prop && props.node.prop('data', updated)
+    props.node?.trigger && props.node.trigger('change:data', { current: updated, previous: data })
+    // 直接更新端口位置，避免删除重建
+    const ports = props.node?.getPorts ? props.node.getPorts().filter(p => p.group === 'out') : []
+    const size = props.node?.getSize ? props.node.getSize() : null
+    const xRight = Math.round((size?.width || bbox?.width || NODE_DIMENSIONS.WIDTH))
+    ports.forEach((p, i) => {
+      const yRel = offsets[i] != null ? offsets[i] : null
+      if (yRel != null && props.node?.setPortProp) {
+        try { props.node.setPortProp(p.id, 'position', { name: 'absolute', args: { x: xRight, y: yRel } }) } catch {}
+      }
+    })
+  } catch (e) {
+    console.warn('[HorizontalNode] 自适应测量失败:', e)
+  }
+}
+
+const nodeActionsMenuRef = ref({ visible: false, x: 0, y: 0, nodeId: '' })
+function validateLayoutCoordinates() {
+  try {
+    const bbox = props.node?.getBBox ? props.node.getBBox() : null
+    const nodeTop = bbox?.y || 0
+    const ports = props.node?.getPorts ? props.node.getPorts().filter(p => p.group === 'out') : []
+    const data = props.node?.getData?.() || {}
+    const offs = Array.isArray(data.verticalOffsets) ? data.verticalOffsets : []
+    const ys = ports.map(p => {
+      const a = p?.position?.args || p?.args || {}
+      const yRel = typeof a.y === 'number' ? Number(a.y) : null
+      return { id: p.id, yGraph: yRel != null ? nodeTop + yRel : null, yRel }
+    })
+    console.log('[Debug] 端口坐标检查:', { nodeTop, verticalOffsets: offs, ports: ys })
+  } catch {}
+}
+
+function handleMenuClick() {
+  try {
+    runTestDebugFunction(props.graph, nodeActionsMenuRef, createVueShapeNode, NODE_DIMENSIONS, (id) => runSimpleDebugNode(props.graph, id, getNodeLabel, getNodeIconText, validateLayoutCoordinates))
+  } catch (e) {
+    console.warn('[HorizontalNode] 调试入口失败:', e)
+  }
 }
 const outRows = computed(() => {
   console.log('📝 [HorizontalNode] 开始生成显示行:', { hasDisplayLines: !!config.value?.displayLines?.length, displayLines: config.value?.displayLines, nodeType: nodeType.value, config: config.value, nodeData: nodeData.value, timestamp: Date.now() })
@@ -137,6 +213,7 @@ onMounted(() => {
     console.log('🔍 [HorizontalNode] DOM检查:', { nodeId: props.node?.id, elementFound: !!element, contentElementsCount: contentElements?.length || 0, timestamp: Date.now() })
     setTimeout(() => {
       console.log('🔍 [HorizontalNode] outRows检查:', { nodeId: props.node?.id, outRowsLength: outRows.value.length, firstOutRow: outRows.value[0], timestamp: Date.now() })
+      measureAndUpdatePorts()
     }, 0)
   }, 100)
 })
@@ -145,6 +222,7 @@ watch(nodeData, (newData, oldData) => {
   console.log('👀 [HorizontalNode] 节点数据变化:', { newNodeType: newData?.nodeType || newData?.type, oldNodeType: oldData?.nodeType || oldData?.type, newConfig: newData?.config, oldConfig: oldData?.config, newDisplayLines: newData?.config?.displayLines, oldDisplayLines: oldData?.config?.displayLines, newDisplayLinesCount: newData?.config?.displayLines?.length, oldDisplayLinesCount: oldData?.config?.displayLines?.length, timestamp: Date.now() })
   setTimeout(() => {
     console.log('🔍 [HorizontalNode] 数据变化后outRows检查:', { outRowsLength: outRows.value.length, firstOutRow: outRows.value[0], timestamp: Date.now() })
+    measureAndUpdatePorts()
   }, 0)
 }, { deep: true, immediate: true })
 
@@ -261,16 +339,3 @@ onUnmounted(() => { console.log('❌ [HorizontalNode] 组件卸载:', { nodeId: 
   }
 }
 </style>
-.ab-test__experiment {
-  position: absolute;
-  top: 2px;
-  left: 8px;
-  font-size: 11px;
-  line-height: 16px;
-  color: #334155;
-  background: rgba(241, 245, 249, 0.9);
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0 6px;
-  pointer-events: none;
-}

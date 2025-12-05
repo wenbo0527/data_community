@@ -20,6 +20,8 @@ export const featureAPI = {
   
   // 删除特征
   deleteFeature: (id) => mockAPI.feature.deleteFeature(id),
+  // 归档特征
+  archiveFeature: (id) => mockAPI.feature.archiveFeature(id),
   
   // 获取特征统计信息
   getFeatureStats: () => mockAPI.feature.getFeatureStats(),
@@ -64,6 +66,11 @@ export const modelAPI = {
   
   // 删除模型
   deleteModel: (id) => mockAPI.model.deleteModel(id),
+  // 归档模型
+  archiveModel: (id) => mockAPI.model.archiveModel(id),
+  // 历史版本
+  getModelVersions: (id) => mockAPI.model.getModelVersions(id),
+  getModelVersionDetail: (id, version) => mockAPI.model.getModelVersionDetail(id, version),
   
   // 获取模型统计信息
   getModelStats: () => mockAPI.model.getModelStats(),

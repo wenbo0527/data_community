@@ -76,8 +76,8 @@
               <a-table :data="form.inputParams" :columns="inputColumns" row-key="__key" :pagination="false">
                 <template #paramKind="{ record }">
                   <a-select v-model="record.paramKind" placeholder="参数类型">
+                    <a-option value="sample">样本表</a-option>
                     <a-option value="feature">离线特征</a-option>
-                    <a-option value="sample">样本表补充</a-option>
                   </a-select>
                 </template>
                 <template #type="{ record }">
@@ -89,7 +89,8 @@
                   </a-select>
                 </template>
                 <template #featureId="{ record }">
-                  <a-select v-model="record.featureId" :disabled="record.paramKind==='sample'" placeholder="绑定离线特征" allow-search>
+                  <a-select v-model="record.featureId" placeholder="绑定来源" allow-search @change="val => onFeatureBindChange(record, val)">
+                    <a-option value="__SAMPLE__">样本表提供</a-option>
                     <a-option v-for="f in featureOptions" :key="f.id" :value="f.id">{{ f.name }} ({{ f.code }})</a-option>
                   </a-select>
                 </template>
@@ -188,6 +189,7 @@
     <div class="actions-bar">
       <div class="actions-inner">
         <a-button @click="handleCancel">返回</a-button>
+        <a-button :loading="saving" @click="handleSave">保存</a-button>
         <a-button type="primary" :loading="submitting" @click="handleSubmit">创建</a-button>
       </div>
     </div>
@@ -204,6 +206,7 @@ import { featureAPI } from '@/api/offlineModel'
 const router = useRouter()
 const formRef = ref()
 const submitting = ref(false)
+const saving = ref(false)
 const form = ref({
   name: '',
   code: '',
@@ -417,6 +420,40 @@ const handleSubmit = async () => {
     if (e?.message) Message.error(e.message)
   } finally {
     submitting.value = false
+  }
+}
+
+const handleSave = async () => {
+  try {
+    await formRef.value.validate()
+    saving.value = true
+    const payload = { ...form.value }
+    if (payload.parameters) {
+      try { payload.parameters = JSON.parse(payload.parameters) } catch { }
+    }
+    if (udfDefinition.value) {
+      payload.udfDefinition = udfDefinition.value
+    }
+    const res = await modelAPI.createModel(payload)
+    if (res.success) {
+      Message.success('已保存')
+    } else {
+      Message.error(res.message || '保存失败')
+    }
+  } catch (e) {
+    if (e?.message) Message.error(e.message)
+  } finally {
+    saving.value = false
+  }
+}
+
+const onFeatureBindChange = (record, value) => {
+  if (value === '__SAMPLE__') {
+    record.paramKind = 'sample'
+    record.featureId = null
+  } else {
+    record.paramKind = 'feature'
+    record.featureId = value
   }
 }
 

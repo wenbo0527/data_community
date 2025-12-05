@@ -13,6 +13,7 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
     outIds = null,
     verticalOffsets = null,
     nodeHeight = null,
+    nodeWidth = null,
     inVerticalOffset = null,
     contentStart = null,
     contentEnd = null,
@@ -50,8 +51,10 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
       ? Array.from({ length: Math.max(1, outCount) }, (_, i) => `out-${i}`)
       : []
 
-  const start = typeof contentStart === 'number' ? contentStart : (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING)
-  const end = typeof contentEnd === 'number' ? contentEnd : (start + Math.max(1, outCount) * NODE_DIMENSIONS.ROW_HEIGHT)
+  const spTop = (NODE_DIMENSIONS.CONTENT_SPACING && NODE_DIMENSIONS.CONTENT_SPACING.top) || 0
+  const gap = NODE_DIMENSIONS.ROW_GAP || 0
+  const start = typeof contentStart === 'number' ? contentStart : (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + spTop)
+  const end = typeof contentEnd === 'number' ? contentEnd : (start + Math.max(1, outCount) * NODE_DIMENSIONS.ROW_HEIGHT + Math.max(0, outCount - 1) * gap)
   const contentH = end - start
 
   // DocRef: 架构文档「关键代码片段/端口工厂：绝对定位右侧输出端口」
@@ -59,13 +62,16 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
     const n = Math.max(1, ids.length)
     const contentH = end - start
     let yRel
-    if (evenDistribution && contentH > 0) {
+    if (Array.isArray(verticalOffsets) && verticalOffsets[idx] != null) {
+      yRel = Number(verticalOffsets[idx])
+    } else if (evenDistribution && contentH > 0) {
       const step = contentH / n
       yRel = start + (idx + 0.5) * step
     } else {
-      yRel = start + idx * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)
+      yRel = start + idx * NODE_DIMENSIONS.ROW_HEIGHT + idx * gap + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)
     }
-    const args = { x: NODE_DIMENSIONS.WIDTH, y: yRel }
+    const xRight = typeof nodeWidth === 'number' ? nodeWidth : NODE_DIMENSIONS.WIDTH
+    const args = { x: xRight, y: yRel }
     items.push({ id, group: 'out', args, attrs: { circle: { 'data-port': id, 'data-port-group': 'out', 'port': id, 'port-group': 'out', class: 'x6-port-body' } }, markup: [{ tagName: 'circle', selector: 'circle' }] })
   })
 

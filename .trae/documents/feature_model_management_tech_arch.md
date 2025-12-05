@@ -42,46 +42,58 @@ graph TD
 
 ## 2. 技术描述
 
-- **前端框架**: Vue 3 (Composition API) + TypeScript
-- **构建工具**: Vite
-- **图形引擎**: AntV X6
-- **状态管理**: Vuex 4
-- **路由管理**: Vue Router 4
-- **UI组件**: Arco Design Vue
-- **后端服务**: Node.js + Express
-- **数据库**: Supabase (PostgreSQL)
-- **对象存储**: Supabase Storage
-- **初始化工具**: vite-init
+* **前端框架**: Vue 3 (Composition API) + TypeScript
+
+* **构建工具**: Vite
+
+* **图形引擎**: AntV X6
+
+* **状态管理**: Vuex 4
+
+* **路由管理**: Vue Router 4
+
+* **UI组件**: Arco Design Vue
+
+* **后端服务**: Node.js + Express
+
+* **数据库**: Supabase (PostgreSQL)
+
+* **对象存储**: Supabase Storage
+
+* **初始化工具**: vite-init
 
 ## 3. 路由定义
 
-| 路由 | 用途 |
-|------|------|
-| / | 登录页，用户身份验证 |
-| /features | 特征中心页，特征管理和依赖关系展示 |
-| /features/:id | 特征详情页，单个特征的详细配置 |
-| /models | 模型注册页，模型信息录入和版本管理 |
-| /models/:id | 模型详情页，特定模型的详细信息 |
-| /backtrack | 模型回溯页，回溯任务管理 |
-| /backtrack/:taskId | 回溯结果页，特定任务的执行结果 |
+| 路由                 | 用途                |
+| ------------------ | ----------------- |
+| /                  | 登录页，用户身份验证        |
+| /features          | 特征中心页，特征管理和依赖关系展示 |
+| /features/:id      | 特征详情页，单个特征的详细配置   |
+| /models            | 模型注册页，模型信息录入和版本管理 |
+| /models/:id        | 模型详情页，特定模型的详细信息   |
+| /backtrack         | 模型回溯页，回溯任务管理      |
+| /backtrack/:taskId | 回溯结果页，特定任务的执行结果   |
 
 ## 4. API定义
 
 ### 4.1 特征管理API
 
 **获取特征列表**
+
 ```
 GET /api/features
 ```
 
 请求参数：
-| 参数名 | 参数类型 | 是否必需 | 描述 |
-|--------|----------|----------|------|
-| page | number | false | 页码，默认为1 |
+
+| 参数名      | 参数类型   | 是否必需  | 描述         |
+| -------- | ------ | ----- | ---------- |
+| page     | number | false | 页码，默认为1    |
 | pageSize | number | false | 每页条数，默认为20 |
-| keyword | string | false | 搜索关键词 |
+| keyword  | string | false | 搜索关键词      |
 
 响应：
+
 ```json
 {
   "code": 200,
@@ -103,11 +115,13 @@ GET /api/features
 ```
 
 **创建特征**
+
 ```
 POST /api/features
 ```
 
 请求体：
+
 ```json
 {
   "name": "user_age",
@@ -122,11 +136,13 @@ POST /api/features
 ### 4.2 模型管理API
 
 **注册模型**
+
 ```
 POST /api/models
 ```
 
 请求体：
+
 ```json
 {
   "name": "credit_score_model",
@@ -152,6 +168,7 @@ POST /api/models
 ```
 
 **创建模型版本**
+
 ```
 POST /api/models/:id/versions
 ```
@@ -159,11 +176,13 @@ POST /api/models/:id/versions
 ### 4.3 回溯任务API
 
 **创建回溯任务**
+
 ```
 POST /api/backtrack/tasks
 ```
 
 请求体：
+
 ```json
 {
   "modelId": "model_001",
@@ -178,6 +197,7 @@ POST /api/backtrack/tasks
 ```
 
 **获取任务进度**
+
 ```
 GET /api/backtrack/tasks/:taskId/progress
 ```
@@ -317,6 +337,7 @@ erDiagram
 ### 6.2 数据定义语言
 
 **特征表 (features)**
+
 ```sql
 -- 创建特征表
 CREATE TABLE features (
@@ -341,7 +362,8 @@ GRANT SELECT ON features TO anon;
 GRANT ALL PRIVILEGES ON features TO authenticated;
 ```
 
-**特征依赖表 (feature_dependencies)**
+**特征依赖表 (feature\_dependencies)**
+
 ```sql
 -- 创建特征依赖表
 CREATE TABLE feature_dependencies (
@@ -362,6 +384,7 @@ GRANT ALL PRIVILEGES ON feature_dependencies TO authenticated;
 ```
 
 **模型表 (models)**
+
 ```sql
 -- 创建模型表
 CREATE TABLE models (
@@ -379,7 +402,8 @@ GRANT SELECT ON models TO anon;
 GRANT ALL PRIVILEGES ON models TO authenticated;
 ```
 
-**模型版本表 (model_versions)**
+**模型版本表 (model\_versions)**
+
 ```sql
 -- 创建模型版本表
 CREATE TABLE model_versions (
@@ -402,7 +426,8 @@ GRANT SELECT ON model_versions TO anon;
 GRANT ALL PRIVILEGES ON model_versions TO authenticated;
 ```
 
-**参数映射表 (parameter_mappings)**
+**参数映射表 (parameter\_mappings)**
+
 ```sql
 -- 创建参数映射表
 CREATE TABLE parameter_mappings (
@@ -424,7 +449,8 @@ GRANT SELECT ON parameter_mappings TO anon;
 GRANT ALL PRIVILEGES ON parameter_mappings TO authenticated;
 ```
 
-**回溯任务表 (backtrack_tasks)**
+**回溯任务表 (backtrack\_tasks)**
+
 ```sql
 -- 创建回溯任务表
 CREATE TABLE backtrack_tasks (
@@ -449,3 +475,4 @@ CREATE INDEX idx_backtrack_tasks_created_at ON backtrack_tasks(created_at DESC);
 GRANT SELECT ON backtrack_tasks TO anon;
 GRANT ALL PRIVILEGES ON backtrack_tasks TO authenticated;
 ```
+

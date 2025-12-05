@@ -34,7 +34,7 @@ const mockModels = [
     framework: FRAMEWORKS.XGBOOST,
     version: 1,
     versionNumber: 1,
-    versions: [1],
+    versions: [1,2],
     description: '基于用户行为数据的信用评分预测模型',
     status: MODEL_STATUS.ONLINE,
     createTime: '2024-01-15 10:30:00',
@@ -59,7 +59,7 @@ const mockModels = [
     framework: FRAMEWORKS.SKLEARN,
     version: 1,
     versionNumber: 1,
-    versions: [1],
+    versions: [1,2],
     description: '用户违约风险预测模型',
     status: MODEL_STATUS.ONLINE,
     createTime: '2024-01-16 14:20:00',
@@ -395,6 +395,8 @@ export default {
   getFrameworks,
   getModelStatus,
   retrainModel,
+  getModelVersions,
+  getModelVersionDetail,
   // 平台模型相关（供统一mock入口调用）
   listPlatformModels,
   getPlatformModel,
@@ -539,4 +541,47 @@ export function createModelVersion(id) {
   model.versions = Array.isArray(model.versions) ? [...model.versions, next] : [next]
   model.lastUpdateTime = new Date().toLocaleString('zh-CN')
   return model
+}
+
+// 版本存储
+const modelVersionsStore = new Map()
+function snapshotModel(m) {
+  return {
+    id: m.id,
+    name: m.name,
+    code: m.code,
+    type: m.type,
+    framework: m.framework,
+    version: m.version,
+    description: m.description,
+    hyperparameters: m.hyperparameters,
+    features: m.features,
+    modelPath: m.modelPath,
+    lastUpdateTime: m.lastUpdateTime
+  }
+}
+// 初始化版本数据
+mockModels.forEach(m => {
+  const list = []
+  const v1 = { ...snapshotModel(m), version: 1 }
+  list.push({ version: 1, detail: v1 })
+  if (Array.isArray(m.versions) && m.versions.includes(2)) {
+    const v2 = { ...snapshotModel(m), version: 2, description: (m.description || '') + '（v2调整）' }
+    if (v2.hyperparameters && typeof v2.hyperparameters === 'object') {
+      v2.hyperparameters = { ...v2.hyperparameters, max_depth: (v2.hyperparameters.max_depth || 5) + 1 }
+    }
+    list.push({ version: 2, detail: v2 })
+  }
+  modelVersionsStore.set(m.id, list)
+})
+
+export function getModelVersions(id) {
+  const list = modelVersionsStore.get(parseInt(id)) || []
+  return list.map(x => x.version)
+}
+
+export function getModelVersionDetail(id, version) {
+  const list = modelVersionsStore.get(parseInt(id)) || []
+  const item = list.find(x => x.version === parseInt(version))
+  return item ? item.detail : null
 }

@@ -124,8 +124,8 @@
         @select="handleNodeTypeSelected"
         @close="closeNodeSelector"
       />
-      <div
-        v-if="nodeActionsMenu.visible"
+      <div 
+        v-if="nodeActionsMenu.visible" 
         class="node-actions-menu"
         :style="{ left: nodeActionsMenu.x + 'px', top: nodeActionsMenu.y + 'px' }"
       >
@@ -133,6 +133,11 @@
         <button class="menu-item" @click="copyCurrentNode">复制</button>
         <button class="menu-item danger" @click="deleteCurrentNode">删除</button>
       </div>
+      <div
+        v-if="nodeActionsMenu.visible"
+        class="node-actions-menu__backdrop"
+        @click="closeNodeMenu"
+      ></div>
       <div
         v-if="edgeActionsMenu.visible"
         class="edge-actions-menu"
@@ -303,6 +308,29 @@ const minimapContainer = ref(null)
 let minimap = null
 const minimapPosition = ref({ left: 0, top: 0 })
 const isPanning = ref(false)
+function recalcNodeActionsMenuPosition() {
+  if (!graph || !nodeActionsMenu.value.nodeId) return
+  try {
+    const node = graph.getCellById(nodeActionsMenu.value.nodeId)
+    if (!node) return
+    const bbox = node.getBBox()
+    let x = bbox.x + bbox.width
+    let y = bbox.y
+    try {
+      const pt = graph.graphToClientPoint({ x, y })
+      x = pt.x
+      y = pt.y
+    } catch {}
+    try {
+      const rect = canvasContainerRef.value?.getBoundingClientRect?.()
+      if (rect) {
+        x += rect.left
+        y += rect.top
+      }
+    } catch {}
+    nodeActionsMenu.value = { ...nodeActionsMenu.value, x, y }
+  } catch {}
+}
 let minimapPaused = false
 let clipboardNodes = []
 
@@ -882,13 +910,14 @@ onMounted(async () => {
     const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
     const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
     const gap = NODE_DIMENSIONS.ROW_GAP || 0
+    const sp = NODE_DIMENSIONS.CONTENT_SPACING || { top: 0, bottom: 0 }
     const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0
     const rows = ['A', 'B', 'C']
-    const contentHeight = rows.length * rowHeight
-    const contentStart = headerHeight + contentPadding
+    const contentHeight = rows.length * rowHeight + Math.max(0, rows.length - 1) * gap
+    const contentStart = headerHeight + contentPadding + (sp.top || 0)
     const contentEnd = contentStart + contentHeight
-    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + rows.length * rowHeight + 12)
-    const verticalOffsets = rows.map((_, i) => headerHeight + contentPadding + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust)
+    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + (sp.top || 0) + rows.length * rowHeight + Math.max(0, rows.length - 1) * gap + (sp.bottom || 0))
+    const verticalOffsets = rows.map((_, i) => contentStart + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust)
     const cfg = createHorizontalPortConfig(rows.length, {
       includeIn: true,
       includeOut: true,
@@ -1066,6 +1095,18 @@ onMounted(async () => {
     getContainerRect: () => canvasContainerRef.value.getBoundingClientRect(),
     setNodeActionsMenu: v => { nodeActionsMenu.value = v }
   })
+  graph?.on('blank:click', () => { closeNodeMenu() })
+  graph?.on('node:moved', ({ node }) => {
+    if (nodeActionsMenu.value.visible && node?.id === nodeActionsMenu.value.nodeId) {
+      try { recalcNodeActionsMenuPosition() } catch {}
+    }
+  })
+  window.addEventListener('click', (e) => {
+    if (!nodeActionsMenu.value.visible) return
+    const el = document.querySelector('.node-actions-menu')
+    if (el && el.contains(e.target)) return
+    closeNodeMenu()
+  }, { passive: true })
 
   // 面板开关时重新计算顶部偏移
   // DocRef: 架构文档「关键代码片段/统计面板停靠与尺寸更新」
@@ -1455,211 +1496,6 @@ function getOutCountByType(nodeType, lines) {
   return 1
 }
 
-function updateNodeFromConfig(node, nodeType, config) {
-  
-  // 性能监控：开始测量
-  const endMeasure = performanceMonitor.measure('updateNodeFromConfig')
-  
-  try {
-    const rows = buildDisplayLines(nodeType, config)
-    const headerTitle = config?.nodeName || getNodeLabel(nodeType)
-    const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT
-    const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
-    const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
-    const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0
-    const width = NODE_DIMENSIONS.WIDTH
-    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * gap + 12)
-    const isSplit = nodeType === 'audience-split' || nodeType === 'crowd-split' || nodeType === 'event-split' || nodeType === 'ab-test'
-    const contentHeight = Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * gap
-    const contentStart = headerHeight + contentPadding
-    const contentEnd = contentStart + contentHeight
-    const contentCenter = contentStart + (contentHeight / 2) // 🔧 修复：计算内容区中心
-    
-    // 输出端口对齐内容区每行的几何中点（与文本 dominantBaseline: middle 对齐）
-    // 注意：这里计算的是相对于节点中心的dy偏移，不是绝对Y坐标
-    const verticalOffsets = isSplit
-      ? rows.map((_, i) => {
-          const absoluteY = headerHeight + contentPadding + i * rowHeight + i * gap + Math.floor(rowHeight / 2) + baselineAdjust
-          return absoluteY
-        })
-      : [contentCenter]
-    const outIds = isSplit && rows.length > 0 ? rows.map((_, i) => `out-${i}`) : ['out']
-    
-    // 性能监控：端口配置计算
-    const endPortConfigMeasure = performanceMonitor.measure('portConfigCalculation')
-    const includeOut = nodeType !== 'end'
-    
-    // 先调整节点大小，获取实际高度
-    node.resize(width, height)
-    const bbox = node.getBBox ? node.getBBox() : null
-    const realH = Math.round(bbox?.height || height)
-    
-    console.log('📐 [updateNodeFromConfig] 端口配置完成:', {
-      nodeType,
-      isSplit,
-      rowsCount: rows.length,
-      outIds,
-      verticalOffsets,
-      hasInPort: nodeType !== 'start',
-      hasOutPort: includeOut,
-      nodeHeight: realH,
-      // 🔧 增强调试：显示详细的计算参数
-      headerHeight,
-      contentPadding,
-      rowHeight,
-      baselineAdjust,
-      height,
-      contentCenter,
-      contentHeight,
-      contentStart,
-      contentEnd
-    })
-    
-    // 性能监控：节点更新操作
-    const endNodeUpdateMeasure = performanceMonitor.measure('nodeUpdateOperation')
-    
-    const ports = createHorizontalPortConfig(isSplit ? Math.max(1, rows.length) : 1, {
-      includeIn: nodeType !== 'start', // 开始节点不需要输入端口
-      includeOut,
-      outIds,
-      verticalOffsets,
-      nodeHeight: realH,
-      // in端口不需要偏移，始终位于节点中心
-      contentStart,
-      contentEnd,
-      contentLines: rows,
-      enableValidation: true,
-      tolerance: 2
-    })
-    endPortConfigMeasure()
-    console.log('📐 [updateNodeFromConfig] 端口配置完成:', {
-      nodeType,
-      isSplit,
-      rowsCount: rows.length,
-      outIds,
-      verticalOffsets,
-      portItemsCount: ports.items?.length || 0,
-      validationEnabled: !!ports._validation
-    })
-    
-    try {
-      // 更新Vue组件数据
-      const componentData = {
-        id: node.id,
-        nodeType,
-        headerTitle,
-        displayLines: rows,
-        disabled: node.getData?.()?.disabled || false,
-        selected: node.isSelected?.() || false,
-        hover: false
-      }
-      
-      // 设置节点数据（包括配置和组件数据）
-      let updatedData = null
-      if (node.setData) {
-        updatedData = {
-          ...node.getData?.(),
-          config: {
-            ...config,
-            nodeName: headerTitle,
-            displayLines: rows // 添加显示行数据
-          },
-          nodeType,
-          ...componentData
-        }
-        console.log('📊 [updateNodeFromConfig] 设置节点数据:', {
-          nodeId: node.id,
-          config: updatedData.config,
-          hasDisplayLines: !!updatedData.config?.displayLines,
-          displayLinesLength: updatedData.config?.displayLines?.length,
-          displayLines: updatedData.config?.displayLines,
-          nodeType: updatedData.nodeType,
-          headerTitle: updatedData.headerTitle
-        })
-        
-        // 🔧 触发Vue组件更新
-        console.log('🔄 [updateNodeFromConfig] 触发组件更新:', {
-          nodeId: node.id,
-          triggerUpdate: true,
-          timestamp: Date.now()
-        })
-        node.setData(updatedData)
-        
-        // 🔧 验证数据是否正确保存
-        const verifyData = node.getData?.()
-        console.log('🔍 [updateNodeFromConfig] 验证节点数据保存:', {
-          nodeId: node.id,
-          savedNodeType: verifyData?.nodeType,
-          savedType: verifyData?.type,
-          savedConfig: verifyData?.config,
-          savedDisplayLines: verifyData?.config?.displayLines,
-          hasSavedDisplayLines: !!verifyData?.config?.displayLines?.length
-        })
-      }
-      
-      // 覆盖式端口重建：先移除所有现有端口
-      const existingPorts = node.getPorts ? node.getPorts() : []
-      existingPorts.forEach(p => node.removePort && node.removePort(p.id))
-      
-      // 设置新的端口组配置
-      if (node.setProp) node.setProp('ports/groups', ports.groups)
-      
-      // 添加新的端口（覆盖式重建）
-      if (ports.items && ports.items.length) {
-        ports.items.forEach(it => node.addPort && node.addPort(it))
-      }
-      
-      // 🔧 关键：强制触发Vue组件重新渲染
-      console.log('🔄 [updateNodeFromConfig] 强制触发Vue组件更新:', {
-        nodeId: node.id,
-        nodeType,
-        hasDisplayLines: !!rows?.length,
-        displayLinesCount: rows?.length
-      })
-      
-      // 🔧 X6 vue-shape系统：正确更新组件数据
-      if (node.setProp && updatedData) {
-        console.log('🔄 [updateNodeFromConfig] 更新X6 vue-shape组件数据')
-        
-        // 关键：使用node.prop()方法更新数据，这会触发vue-shape重新渲染
-        node.prop('data', updatedData)
-        node.prop('nodeType', nodeType)
-        node.prop('headerTitle', headerTitle)
-        node.prop('displayLines', rows)
-        
-        // 🔧 触发change:data事件 - X6 vue-shape系统的标准做法
-        console.log('🔄 [updateNodeFromConfig] 触发change:data事件')
-        node.trigger('change:data', { 
-          current: updatedData, 
-          previous: node.getData() 
-        })
-      }
-      
-      // 🔧 X6 vue-shape系统：数据更新完成，不需要额外触发机制
-      console.log('✅ [updateNodeFromConfig] X6 vue-shape数据更新完成')
-      
-    } catch (e) {
-      console.warn('[Horizontal] updateNodeFromConfig 异常:', e)
-      throw e // 重新抛出异常，让上层处理
-    } finally {
-      endNodeUpdateMeasure()
-    }
-    
-  } catch (error) {
-    console.error('[Horizontal] updateNodeFromConfig 配置更新失败:', error)
-    throw error
-  } finally {
-    // 性能监控：结束测量
-    const metric = endMeasure()
-    
-    // 检查性能是否达标
-    if (metric.exceeded) {
-      console.warn(`[Performance] updateNodeFromConfig 性能警告: ${metric.duration.toFixed(2)}ms (阈值: ${metric.threshold}ms)`)
-    } else {
-      console.log(`[Performance] updateNodeFromConfig 完成: ${metric.duration.toFixed(2)}ms`)
-    }
-  }
-}
 
 // 统一更新路径：复用创建逻辑生成规格并应用到现有节点
 // DocRef: 架构文档「关键代码片段/节点统一更新：尺寸、端口映射与数据写回」
@@ -1812,6 +1648,7 @@ function deleteCurrentNode() {
     }
   })
 }
+function closeNodeMenu() { nodeActionsMenu.value.visible = false }
 
 function deleteNodeCascade(nodeId) {
   if (!graph || !nodeId) return
@@ -1869,7 +1706,6 @@ function closeEdgeMenu() {
   edgeActionsMenu.value = { visible: false, x: 0, y: 0, edgeId: null }
 }
 
-// 在updateNodeFromConfig函数定义后初始化配置抽屉
 configDrawers = useConfigDrawers(() => graph, { updateNodeFromConfig: updateNodeFromConfigUnified })
 console.log('✅ [Horizontal] 配置抽屉初始化完成:', {
   hasConfigDrawers: !!configDrawers,
@@ -3330,6 +3166,15 @@ const testClick = () => {
   padding: 4px 0;
   z-index: 1000;
   min-width: 120px;
+}
+.node-actions-menu__backdrop {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 998;
 }
 
 .edge-actions-menu {

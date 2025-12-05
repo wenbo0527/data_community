@@ -63,8 +63,9 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
   const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT
   const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
   const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
+  const sp = NODE_DIMENSIONS.CONTENT_SPACING || { top: 0, bottom: 0 }
   const width = NODE_DIMENSIONS.WIDTH
-  const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0) + 12)
+  const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + (sp.top || 0) + Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0) + (sp.bottom || 0))
 
   const componentData = { id, nodeType, headerTitle, displayLines: rows, disabled: data?.disabled || false, selected: false, hover: false, config: { ...data?.config, displayLines: rows } }
   const isStart = nodeType === 'start'
@@ -85,8 +86,8 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
       evenDistribution: true,
       nodeHeight: height,
       nodeWidth: width,
-      contentStart: headerHeight + contentPadding,
-      contentEnd: headerHeight + contentPadding + Math.max(1, (hasConfigLines ? rows.length : 1)) * rowHeight + Math.max(0, (hasConfigLines ? rows.length : 1) - 1) * (NODE_DIMENSIONS.ROW_GAP || 0),
+      contentStart: headerHeight + contentPadding + (sp.top || 0),
+      contentEnd: headerHeight + contentPadding + (sp.top || 0) + Math.max(1, (hasConfigLines ? rows.length : 1)) * rowHeight + Math.max(0, (hasConfigLines ? rows.length : 1) - 1) * (NODE_DIMENSIONS.ROW_GAP || 0),
       contentLines: hasConfigLines ? rows : null,
       enableValidation: hasConfigLines
     }),

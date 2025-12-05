@@ -14,18 +14,6 @@
             </template>
             新建特征
           </a-button>
-          <a-button @click="handleImport">
-            <template #icon>
-              <icon-upload />
-            </template>
-            批量导入
-          </a-button>
-          <a-button @click="handleExport">
-            <template #icon>
-              <icon-download />
-            </template>
-            导出
-          </a-button>
         </a-space>
       </div>
     </div>
@@ -64,8 +52,8 @@
               allow-clear
               @change="handleFilterChange"
             >
-              <a-option value="active">有效</a-option>
-              <a-option value="inactive">无效</a-option>
+              <a-option value="active">上线</a-option>
+              <a-option value="inactive">归档</a-option>
               <a-option value="draft">草稿</a-option>
             </a-select>
           </a-form-item>

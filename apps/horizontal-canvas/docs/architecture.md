@@ -193,84 +193,23 @@ ids.forEach((id, idx) => {
 ```
 
 ### 节点统一更新：尺寸、端口映射与数据写回
-`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:2167–2251`
-```js
-async function updateNodeFromConfigUnified(node, nodeType, config) {
-  try {
-    const pos = node.getPosition?.() || { x: 0, y: 0 }
-    const label = config?.nodeName || getNodeLabel(nodeType) || nodeType
-    const spec = createVueShapeNode({
-      id: node.id,
-      x: pos.x,
-      y: pos.y,
-      label,
-      data: { type: nodeType, nodeType: nodeType, config, isConfigured: true }
-    })
-    node.resize(spec.width, spec.height)
-    const existingPorts = node.getPorts ? node.getPorts() : []
-    const existingIds = new Set((existingPorts || []).map(p => p.id))
-    const specIds = new Set((spec.ports.items || []).map(p => p.id))
-    if (node.setProp) node.setProp('ports/groups', spec.ports.groups)
-    ;(existingPorts || []).forEach(p => {
-      if (!specIds.has(p.id)) {
-        try {
-          const isOut = p.group === 'out'
-          const edges = graph?.getConnectedEdges?.(node) || []
-          const outgoing = edges.filter(e => {
-            try { return e.getSourceCellId?.() === node.id && e.getSourcePortId?.() === p.id } catch { return false }
-          })
-          let targetNewPortId = null
-          if (isOut) {
-            const match = /^out-(\d+)$/.exec(p.id)
-            const newOutIds = Array.from(specIds).filter(id => /^out-\d+$/.test(String(id))).sort((a,b)=>{
-              return Number(a.split('-')[1]) - Number(b.split('-')[1])
-            })
-            if (match) {
-              const num = Number(match[1])
-              const clamped = Math.max(0, Math.min(num, newOutIds.length - 1))
-              targetNewPortId = newOutIds[clamped] || newOutIds[0] || null
-            } else {
-              targetNewPortId = newOutIds[0] || null
-            }
-          } else {
-            targetNewPortId = specIds.has('in') ? 'in' : null
-          }
-          if (targetNewPortId) {
-            outgoing.forEach(e => { try { e.setSource({ cell: node.id, port: targetNewPortId }) } catch {} })
-          }
-          node.removePort?.(p.id)
-        } catch {}
-      }
-    })
-    if (spec.ports.items && spec.ports.items.length) {
-      spec.ports.items.forEach(it => {
-        if (existingIds.has(it.id)) {
-          try {
-            node.setPortProp?.(it.id, 'group', it.group)
-            if (it.args != null) node.setPortProp?.(it.id, 'args', it.args)
-            if (it.attrs?.circle) {
-              const c = it.attrs.circle
-              if (c['data-port'] != null) node.setPortProp?.(it.id, 'attrs/circle/data-port', c['data-port'])
-              if (c['data-port-group'] != null) node.setPortProp?.(it.id, 'attrs/circle/data-port-group', c['data-port-group'])
-              if (c['data-port-type'] != null) node.setPortProp?.(it.id, 'attrs/circle/data-port-type', c['data-port-type'])
-            }
-          } catch {}
-        } else {
-          node.addPort && node.addPort(it)
-        }
-      })
-    }
-    if (node.setProp) {
-      if (node.setData) { node.setData(spec.data) }
-      node.prop('data', spec.data)
-      node.prop('nodeType', spec.data.nodeType)
-      node.prop('headerTitle', spec.data.headerTitle)
-      node.prop('displayLines', spec.data.displayLines)
-      node.trigger('change:data', { current: spec.data, previous: node.getData?.() })
-    }
-  } catch (e) {}
-}
-```
+- 页面统一函数：`horizontal/index.vue` 中的 `updateNodeFromConfigUnified`
+- 服务层实现：`node/NodeService.ts` 中的 `updateNodeUnified`
+- 要点：根据 `displayLines` 重建或差异更新 `out-N` 端口；写回 `data/nodeType/headerTitle/displayLines` 并触发 `change:data`
+
+### 节点样式与渲染（当前实现）
+- 样式常量来源：`styles/nodeStyles.js`（`WIDTH/MIN_HEIGHT/HEADER_HEIGHT/ROW_HEIGHT/CONTENT_PADDING/ROW_GAP/CONTENT_SPACING/TYPOGRAPHY.CONTENT_BASELINE_ADJUST`）
+- Vue Shape 组件：`HorizontalNode.vue`
+- 内容容器：`horizontal-node__content`，自适应模式使用 `flex` 布局（`ADAPTIVE_CONTENT_LAYOUT`），非自适应按绝对定位行高渲染
+- 行定位：`rowEvenStyle(idx)` 非自适应时按 `top = idx * (ROW_HEIGHT + ROW_GAP)` 定位；`start` 节点将所有行合并显示
+- 端口位置：自适应模式下通过 DOM 测量行几何中心，写回 `verticalOffsets` 并以 `{ x: WIDTH, y: yRel }` 绝对定位右侧端口
+- 图标：使用 Arco Icons 映射，类名 `arco-icon--node`
+- AB 实验标签：已移除 `.ab-test__experiment` 与对应内容展示
+- 行样式：`port-indicator/port-indicator--out/port-indicator__label` 渐变背景与细边框、悬停轻微提升
+
+### 菜单行为（当前实现）
+- 节点菜单跟随：监听 `node:moved` 并重算 `node-actions-menu` 的 `left/top`
+- 空白关闭：监听 `blank:click` 与 `window.click`，非菜单区域点击关闭；模板增加透明遮罩 `node-actions-menu__backdrop`
 
 ### 本地任务存储：创建与更新
 `apps/horizontal-canvas/src/utils/taskStorage.js:23–38`
@@ -313,8 +252,8 @@ export async function applyQuickLayout(graph: GraphLike, options: any = {}) {
 ### 性能监控测量闭包
 `apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/utils/performanceMonitor.js`
 ```js
-const endMeasure = performanceMonitor.measure('updateNodeFromConfig')
-// ... 执行更新逻辑
+const endMeasure = performanceMonitor.measure('updateNodeFromConfigUnified')
+// ... 执行节点统一更新逻辑
 endMeasure()
 ```
 ### 端口验证（使能与结果）

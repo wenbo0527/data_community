@@ -24,18 +24,6 @@
             </a-doption>
           </template>
         </a-dropdown>
-        <a-button @click="handleExport">
-          <template #icon>
-            <icon-download />
-          </template>
-          导出
-        </a-button>
-        <a-button @click="loadData">
-          <template #icon>
-            <icon-refresh />
-          </template>
-          刷新
-        </a-button>
       </template>
     </PageHeader>
 
@@ -77,10 +65,8 @@
               @change="handleSearch"
             >
               <a-option value="">全部</a-option>
-              <a-option value="active">有效</a-option>
-              <a-option value="inactive">无效</a-option>
-              <a-option value="pending">待审核</a-option>
-              <a-option value="expired">已过期</a-option>
+              <a-option value="active">上线</a-option>
+              <a-option value="inactive">归档</a-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -107,7 +93,7 @@
 
     <!-- 统计卡片 -->
     <a-row :gutter="16" class="stats-row">
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card hoverable>
           <template #title>
             <icon-apps />
@@ -116,31 +102,22 @@
           <div class="stat-value">{{ stats.totalFeatures }}</div>
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card hoverable>
           <template #title>
             <icon-check-circle />
-            有效特征
+            上线
           </template>
           <div class="stat-value">{{ stats.activeFeatures }}</div>
         </a-card>
       </a-col>
-      <a-col :span="6">
-        <a-card hoverable>
-          <template #title>
-            <icon-clock-circle />
-            待审核
-          </template>
-          <div class="stat-value">{{ stats.pendingFeatures }}</div>
-        </a-card>
-      </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card hoverable>
           <template #title>
             <icon-close-circle />
-            已过期
+            归档
           </template>
-          <div class="stat-value">{{ stats.expiredFeatures }}</div>
+          <div class="stat-value">{{ stats.archivedFeatures }}</div>
         </a-card>
       </a-col>
     </a-row>
@@ -190,11 +167,11 @@
           
           <template #actions="{ record }">
             <a-space>
-              <a-button type="text" size="small" @click="handleViewDetail(record)">
-                查看
-              </a-button>
               <a-button type="text" size="small" @click="handleEdit(record)">
                 编辑
+              </a-button>
+              <a-button type="text" size="small" @click="handleArchive(record)">
+                归档
               </a-button>
               <a-button 
                 type="text" 
@@ -258,34 +235,37 @@
               <a-table :data="registeredFields" :columns="registeredColumns" :pagination="false" row-key="name" size="small" />
             </a-card>
           </a-collapse-item>
-          <a-collapse-item key="unregistered" :header="`未注册字段（${unregisteredCount}）`">
-            <a-card :bordered="false">
-              <a-table :data="unregisteredFields" :columns="unregisteredColumns" :pagination="false" row-key="name" size="small">
-                <template #codeCell="{ record }">
-                  <a-input v-model="record.code" placeholder="特征编码" />
-                </template>
-                <template #cnNameCell="{ record }">
-                  <a-input v-model="record.cnName" placeholder="中文名" />
-                </template>
-                <template #dataTypeCell="{ record }">
-                  <a-select v-model="record.dataType" placeholder="数据类型">
-                    <a-option value="int">int</a-option>
-                    <a-option value="double">double</a-option>
-                    <a-option value="string">string</a-option>
-                    <a-option value="timestamp">timestamp</a-option>
-                  </a-select>
-                </template>
-                <template #defaultValueCell="{ record }">
-                  <a-input v-model="record.defaultValue" placeholder="默认值" />
-                </template>
-              </a-table>
-              <a-space style="margin-top: 8px">
-                <a-button type="primary" size="small" :disabled="unregisteredFields.length===0" @click="registerAll">全部注册</a-button>
-                <a-button size="small" @click="runFieldValidate">执行校验</a-button>
-                <a-tag v-if="fieldMsg" color="green">{{ fieldMsg }}</a-tag>
-              </a-space>
-            </a-card>
-          </a-collapse-item>
+      <a-collapse-item key="unregistered" :header="`未注册字段（${unregisteredCount}）`">
+        <a-card :bordered="false">
+          <a-table :data="unregisteredFields" :columns="unregisteredColumns" :pagination="false" row-key="name" size="small">
+            <template #selectedCell="{ record }">
+              <a-switch v-model="record.selected" size="small" />
+            </template>
+            <template #codeCell="{ record }">
+              <a-input v-model="record.code" placeholder="特征编码" />
+            </template>
+            <template #cnNameCell="{ record }">
+              <a-input v-model="record.cnName" placeholder="中文名" />
+            </template>
+            <template #dataTypeCell="{ record }">
+              <a-select v-model="record.dataType" placeholder="数据类型">
+                <a-option value="int">int</a-option>
+                <a-option value="double">double</a-option>
+                <a-option value="string">string</a-option>
+                <a-option value="timestamp">timestamp</a-option>
+              </a-select>
+            </template>
+            <template #defaultValueCell="{ record }">
+              <a-input v-model="record.defaultValue" placeholder="默认值" />
+            </template>
+          </a-table>
+          <a-space style="margin-top: 8px">
+            <a-button type="primary" size="small" :disabled="unregisteredFields.length===0" @click="registerAll">注册选中</a-button>
+            <a-button size="small" @click="runFieldValidate">执行校验</a-button>
+            <a-tag v-if="fieldMsg" color="green">{{ fieldMsg }}</a-tag>
+          </a-space>
+        </a-card>
+      </a-collapse-item>
         </a-collapse>
       </a-collapse-item>
       <a-collapse-item key="confirm" header="3. 确认提交">
@@ -295,7 +275,7 @@
           <a-descriptions-item label="主键字段">{{ createForm.primaryKey }}</a-descriptions-item>
           <a-descriptions-item label="分区字段">{{ (createForm.partitionFields || []).join(', ') || '-' }}</a-descriptions-item>
           <a-descriptions-item label="特征描述">{{ createForm.description || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="已注册字段">{{ registeredFields.map(f=>f.name).join(', ') || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="本次注册字段">{{ (unregisteredFields.filter(f=>f.selected).map(f=>f.name)).join(', ') || '-' }}</a-descriptions-item>
         </a-descriptions>
       </a-collapse-item>
     </a-collapse>
@@ -506,10 +486,8 @@ import {
   IconRefresh,
   IconPlus,
   IconUpload,
-  IconDownload,
   IconApps,
   IconCheckCircle,
-  IconClockCircle,
   IconCloseCircle
 } from '@arco-design/web-vue/es/icon'
 import { featureAPI } from '@/api/offlineModel'
@@ -594,8 +572,7 @@ const featureList = computed(() => store.getFeatures)
 const stats = computed(() => ({
   totalFeatures: featureList.value.length,
   activeFeatures: featureList.value.filter(item => item.status === 'active').length,
-  pendingFeatures: featureList.value.filter(item => item.status === 'pending').length,
-  expiredFeatures: featureList.value.filter(item => item.status === 'expired').length
+  archivedFeatures: featureList.value.filter(item => item.status !== 'active').length
 }))
 
 // 生命周期
@@ -675,6 +652,7 @@ const registeredColumns = [
   { title: '来源标识', dataIndex: 'sourceRefId', width: 180 }
 ]
 const unregisteredColumns = [
+  { title: '是否注册', dataIndex: 'selected', slotName: 'selectedCell', width: 100 },
   { title: '原表字段名', dataIndex: 'name', width: 160 },
   { title: '特征编码', dataIndex: 'code', slotName: 'codeCell', width: 160 },
   { title: '类型', dataIndex: 'type', width: 140 },
@@ -746,7 +724,8 @@ const onTableChange = async (name) => {
     batch: '',
     remark: '',
     level1: '',
-    level2: ''
+    level2: '',
+    selected: true
   }))
 }
 const metaMsg = ref('')
@@ -757,8 +736,10 @@ const saveMeta = async () => {
   if (res.success) metaMsg.value = '元信息已保存'
 }
 const registerAll = async () => {
-  if (!createForm.table || unregisteredFields.value.length === 0) return
-  const res = await featureAPI.batchRegisterFields(createForm.table, unregisteredFields.value)
+  if (!createForm.table) return
+  const selected = unregisteredFields.value.filter(f => f.selected)
+  if (selected.length === 0) { Message.warning('请在未注册字段中选择要注册的字段'); return }
+  const res = await featureAPI.batchRegisterFields(createForm.table, selected)
   registeredFields.value = Array.isArray(res) ? res : (Array.isArray(res.data) ? res.data : (res.data?.data || []))
   const unregRes = await featureAPI.getUnregisteredFields(createForm.table)
   const newUnreg = Array.isArray(unregRes) ? unregRes : (Array.isArray(unregRes.data) ? unregRes.data : (unregRes.data?.data || []))
@@ -774,26 +755,32 @@ const registerAll = async () => {
     batch: '',
     remark: '',
     level1: '',
-    level2: ''
+    level2: '',
+    selected: true
   }))
 }
 const runFieldValidate = () => {
-  const ok = registeredFields.value.length > 0
-  fieldMsg.value = ok ? '校验通过' : '校验不通过，请先注册字段'
+  const ok = unregisteredFields.value.filter(f => f.selected).length > 0
+  fieldMsg.value = ok ? '校验通过' : '校验不通过，请选择需注册字段'
 }
 const submitCreate = async () => {
-  Message.success('特征注册完成')
-  createVisible.value = false
-  loadData()
+  if (!createForm.table) { Message.warning('请选择数据表'); return }
+  const selected = unregisteredFields.value.filter(f => f.selected)
+  if (selected.length === 0) { Message.warning('请在未注册字段中选择要注册的字段'); return }
+  const res = await featureAPI.batchRegisterFields(createForm.table, selected)
+  if (Array.isArray(res?.data) || Array.isArray(res)) {
+    Message.success('特征注册完成')
+    createVisible.value = false
+    loadData()
+  } else {
+    Message.error(res?.message || '注册失败')
+  }
 }
 
 const handleImport = () => {
   Message.info('批量导入功能开发中')
 }
 
-const handleExport = () => {
-  Message.info('导出功能开发中')
-}
 
 const handleBatchOperation = () => {
   if (selectedRows.value.length === 0) {
@@ -819,6 +806,16 @@ const handleDelete = (record) => {
   Message.info('删除功能开发中')
 }
 
+const handleArchive = async (record) => {
+  const res = await featureAPI.archiveFeature(record.id)
+  if (res.success) {
+    Message.success(res.message || '已归档')
+    loadData()
+  } else {
+    Message.error(res.message || '归档失败')
+  }
+}
+
 // 工具方法
 const getBizTypeLabel = (record) => {
   if (record?.majorCategory === 'model_output') return '模型分'
@@ -842,23 +839,11 @@ const getBizTypeColor = (record) => {
 }
 
 const getStatusColor = (status) => {
-  const colors = {
-    active: 'green',
-    inactive: 'red',
-    draft: 'orange',
-    pending: 'blue'
-  }
-  return colors[status] || 'gray'
+  return status === 'active' ? 'green' : 'gray'
 }
 
 const getStatusLabel = (status) => {
-  const labels = {
-    active: '有效',
-    inactive: '无效',
-    draft: '草稿',
-    pending: '待审核'
-  }
-  return labels[status] || status
+  return status === 'active' ? '上线' : '归档'
 }
 
 const formatDate = (date) => {

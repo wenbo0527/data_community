@@ -103,34 +103,48 @@
           
           <template #actions="{ record }">
             <a-space>
-              <a-button type="text" size="small" @click="handleViewDetail(record)">
-                查看
-              </a-button>
               <a-button type="text" size="small" @click="handleEdit(record)">
                 编辑
               </a-button>
-              <a-button 
-                v-if="record.status === 'failed'"
-                type="text" 
-                size="small" 
-                status="warning"
-                @click="handleRetrain(record)"
-              >
-                重训练
+              <a-button type="text" size="small" @click="openHistory(record)">
+                历史版本
               </a-button>
               <a-button 
                 type="text" 
                 size="small" 
                 status="danger"
-                @click="handleDelete(record)"
+                @click="handleArchive(record)"
               >
-                删除
+                归档
               </a-button>
             </a-space>
           </template>
         </a-table>
       </a-card>
     </div>
+    <a-drawer v-model:visible="historyVisible" width="720" title="历史版本对比">
+      <a-space direction="vertical" style="width: 100%">
+        <a-space>
+          <a-select v-model="baseVersion" placeholder="选择基准版本" style="width: 200px" @change="onVersionChange">
+            <a-option v-for="v in versionList" :key="v" :value="v">版本 {{ v }}</a-option>
+          </a-select>
+          <a-select v-model="compareVersion" placeholder="选择对比版本" style="width: 200px" @change="onVersionChange">
+            <a-option v-for="v in versionList" :key="v" :value="v">版本 {{ v }}</a-option>
+          </a-select>
+        </a-space>
+        <a-table :data="diffEntries" :pagination="false" row-key="field">
+          <a-table-column title="字段" data-index="field" width="160" />
+          <a-table-column title="基准版本" data-index="before" />
+          <a-table-column title="对比版本" data-index="after" />
+          <a-table-column title="是否变化" data-index="changed" width="120" />
+        </a-table>
+      </a-space>
+      <template #footer>
+        <a-space>
+          <a-button @click="closeHistory">关闭</a-button>
+        </a-space>
+      </template>
+    </a-drawer>
   </div>
 </template>
 
@@ -286,13 +300,59 @@ const handleEdit = (record) => {
   router.push(`/offline-model/model-register/edit/${record.id}`)
 }
 
-const handleRetrain = (record) => {
-  Message.info('重训练功能开发中')
+const handleArchive = async (record) => {
+  const res = await modelAPI.archiveModel(record.id)
+  if (res.success) {
+    Message.success(res.message || '模型已归档')
+    loadData()
+  } else {
+    Message.error(res.message || '归档失败')
+  }
 }
 
-const handleDelete = (record) => {
-  Message.info('删除功能开发中')
+const historyVisible = ref(false)
+const historyModelId = ref(null)
+const versionList = ref([])
+const baseVersion = ref()
+const compareVersion = ref()
+const baseDetail = ref(null)
+const compareDetail = ref(null)
+const openHistory = async (record) => {
+  historyModelId.value = record.id
+  const res = await modelAPI.getModelVersions(record.id)
+  versionList.value = Array.isArray(res.data) ? res.data : (res.data?.data || [])
+  if (versionList.value.length > 0) {
+    baseVersion.value = versionList.value[0]
+    compareVersion.value = versionList.value[versionList.value.length - 1]
+    await fetchVersionDetails()
+  }
+  historyVisible.value = true
 }
+const closeHistory = () => { historyVisible.value = false }
+const fetchVersionDetails = async () => {
+  if (!historyModelId.value || !baseVersion.value || !compareVersion.value) return
+  const b = await modelAPI.getModelVersionDetail(historyModelId.value, baseVersion.value)
+  const c = await modelAPI.getModelVersionDetail(historyModelId.value, compareVersion.value)
+  baseDetail.value = b.data?.data || b.data || null
+  compareDetail.value = c.data?.data || c.data || null
+}
+const onVersionChange = async () => { await fetchVersionDetails() }
+const toView = (val) => {
+  if (val == null) return '-'
+  if (Array.isArray(val)) return val.join(', ')
+  if (typeof val === 'object') return JSON.stringify(val)
+  return String(val)
+}
+const diffFields = ['name','code','type','framework','version','description','hyperparameters','features','modelPath','lastUpdateTime']
+const diffEntries = computed(() => {
+  if (!baseDetail.value || !compareDetail.value) return []
+  return diffFields.map(f => {
+    const before = baseDetail.value[f]
+    const after = compareDetail.value[f]
+    const changed = JSON.stringify(before) !== JSON.stringify(after)
+    return { field: f, before: toView(before), after: toView(after), changed: changed ? '是' : '否' }
+  })
+})
 
 // 工具方法
 const getTypeColor = (type) => {
@@ -318,23 +378,11 @@ const getTypeLabel = (type) => {
 // 框架展示移除
 
 const getStatusColor = (status) => {
-  const colors = {
-    active: 'green',
-    inactive: 'red',
-    training: 'blue',
-    failed: 'red'
-  }
-  return colors[status] || 'gray'
+  return status === 'online' ? 'green' : 'gray'
 }
 
 const getStatusLabel = (status) => {
-  const labels = {
-    active: '有效',
-    inactive: '无效',
-    training: '训练中',
-    failed: '训练失败'
-  }
-  return labels[status] || status
+  return status === 'online' ? '上线' : '归档'
 }
 
 // 准确率展示移除

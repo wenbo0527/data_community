@@ -143,6 +143,12 @@ const { getAvailableActions, handleNodeAction } = useNodeActions()
 
 // 状态管理
 const showActionsMenu = ref(false)
+function onGlobalClick(e) {
+  if (!showActionsMenu.value) return
+  const menuEl = document.querySelector('.node-actions-menu')
+  if (menuEl && menuEl.contains(e.target)) return
+  showActionsMenu.value = false
+}
 const hoveredPort = ref(null)
 const portHoverIndex = ref(null)
 
@@ -465,11 +471,13 @@ function onPortLeave(portType, index = null) {
 onMounted(() => {
   // 初始化端口位置
   calculatePortPositions(props.nodeType, contentLines.value)
+  window.addEventListener('click', onGlobalClick, { passive: true })
 })
 
 onUnmounted(() => {
   // 清理事件监听
   showActionsMenu.value = false
+  window.removeEventListener('click', onGlobalClick)
 })
 </script>
 

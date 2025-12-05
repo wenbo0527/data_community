@@ -102,6 +102,19 @@ export const featureAPI = {
       return createErrorResponse('删除特征失败: ' + error.message)
     }
   },
+  // 归档特征
+  async archiveFeature(id) {
+    await simulateDelay(300, 800)
+    try {
+      const result = featureMock.updateFeature(id, { status: 'inactive' })
+      if (!result) {
+        return createErrorResponse('特征不存在', 404)
+      }
+      return createResponse(result, true, '特征已归档')
+    } catch (error) {
+      return createErrorResponse('归档失败: ' + error.message)
+    }
+  },
 
   // 获取特征统计信息
   async getFeatureStats() {
@@ -316,6 +329,19 @@ export const modelAPI = {
       return createErrorResponse('删除模型失败: ' + error.message)
     }
   },
+  // 归档模型
+  async archiveModel(id) {
+    await simulateDelay(300, 800)
+    try {
+      const result = modelMock.updateModel(id, { status: 'archived' })
+      if (!result) {
+        return createErrorResponse('模型不存在', 404)
+      }
+      return createResponse(result, true, '模型已归档')
+    } catch (error) {
+      return createErrorResponse('归档失败: ' + error.message)
+    }
+  },
 
   // 获取模型统计信息
   async getModelStats() {
@@ -397,6 +423,25 @@ export const modelAPI = {
     }
   }
   ,
+  async getModelVersions(id) {
+    await simulateDelay()
+    try {
+      const result = modelMock.getModelVersions(id)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取模型版本列表失败: ' + error.message)
+    }
+  },
+  async getModelVersionDetail(id, version) {
+    await simulateDelay()
+    try {
+      const result = modelMock.getModelVersionDetail(id, version)
+      if (!result) return createErrorResponse('版本不存在', 404)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('获取模型版本详情失败: ' + error.message)
+    }
+  },
   async listPlatformModels() {
     await simulateDelay()
     try {

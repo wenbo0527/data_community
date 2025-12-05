@@ -47,6 +47,14 @@
 - 布局注册：`fixed-left-y`、`fixed-right-y`（行中点 + 基线调整）
 - 输入端口：居中对齐；输出端口：按内容行中点对齐
 
+### 节点统一更新与样式要点（当前实现）
+- 统一更新：页面 `updateNodeFromConfigUnified` 与服务层 `updateNodeUnified`
+- 差异更新端口：保留已连接端口并更新属性，新增端口按 `out-N` 规则添加
+- 样式渲染：`HorizontalNode.vue` 支持自适应布局（`flex`）与非自适应绝对定位行渲染
+- 行定位：非自适应 `top = idx * (ROW_HEIGHT + ROW_GAP)`；自适应通过 DOM 测量写回 `verticalOffsets`
+- 端口对齐：右侧 `out` 端口按内容行几何中点对齐（考虑 `CONTENT_BASELINE_ADJUST`）
+- AB 实验标签：已删除 `.ab-test__experiment` 与对应内容展示
+
 ## 组件与服务
 - 组件：`HorizontalNode.vue`、`CanvasToolbar.vue`、`CanvasHistoryPanel.vue`、`CanvasDebugPanel.vue`、`NodeTypeSelector.vue`、`CanvasStatisticsPanel.vue`
 - 服务：`graph/GraphService.ts`、`layout/LayoutService.ts`、`debug/DebugHelpers.ts`
