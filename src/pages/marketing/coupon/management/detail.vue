@@ -3,7 +3,7 @@
     <a-card class="form-card">
       <div class="page-header">
         <h2 class="page-title">优惠券详情</h2>
-        <a-button type="outline" @click="router.back()" style="margin-left: auto">
+        <a-button type="outline" @click="goBackAction" style="margin-left: auto">
           <template #icon><icon-left /></template>
           返回
         </a-button>
@@ -123,6 +123,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { IconLeft, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import TemplateDetail from '../template/detail.vue'
@@ -131,6 +132,7 @@ import CouponPreview from '../template/components/CouponPreview.vue'
 
 const route = useRoute()
 const router = useRouter()
+const goBackAction = () => goBack(router, '/marketing/coupon/management')
 
 const loading = ref(false)
 const templateId = ref('')

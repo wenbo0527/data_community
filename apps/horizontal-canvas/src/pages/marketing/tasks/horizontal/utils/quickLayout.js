@@ -77,6 +77,24 @@ export class HorizontalQuickLayout {
       } catch {}
     })
 
+    const depth = new Map()
+    nodeMap.forEach((_, id) => depth.set(id, 0))
+    const indegCopy = new Map()
+    nodeMap.forEach((_, id) => indegCopy.set(id, indeg.get(id) || 0))
+    const q = []
+    nodeMap.forEach((_, id) => { if ((indegCopy.get(id) || 0) === 0) q.push(id) })
+    while (q.length) {
+      const u = q.shift()
+      const du = depth.get(u) || 0
+      const children = outAdj.get(u) || []
+      children.forEach(v => {
+        const dv = depth.get(v) || 0
+        if (du + 1 > dv) depth.set(v, du + 1)
+        indegCopy.set(v, (indegCopy.get(v) || 0) - 1)
+        if ((indegCopy.get(v) || 0) === 0) q.push(v)
+      })
+    }
+
     const getOutPorts = (id) => {
       const n = nodeMap.get(id)
       const ports = n?.getPorts?.() || []
@@ -110,13 +128,20 @@ export class HorizontalQuickLayout {
     nodes.forEach(n => {
       const pidList = inAdj.get(n.id) || []
       if (pidList.length <= 1) { if (pidList.length === 1) mainParentOf.set(n.id, pidList[0]); return }
-      let best = pidList[0]
-      let bestIdx = Number.POSITIVE_INFINITY
-      pidList.forEach(pid => {
+      const getPortIdx = (pid) => {
         const order = portOrderMap.get(pid) || new Map()
         const entry = (sourceEdges.get(pid) || []).find(x => x.target === n.id)
-        const idx = entry ? (order.has(entry.port) ? order.get(entry.port) : (() => { const m = String(entry.port || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : 0 })()) : Number.POSITIVE_INFINITY
-        if (idx < bestIdx || (idx === bestIdx && String(pid).localeCompare(String(best), undefined, { numeric: true }) < 0)) { best = pid; bestIdx = idx }
+        return entry ? (order.has(entry.port) ? order.get(entry.port) : (() => { const m = String(entry.port || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : 0 })()) : Number.POSITIVE_INFINITY
+      }
+      let best = pidList[0]
+      let bestDepth = depth.get(best) || 0
+      let bestIdx = getPortIdx(best)
+      pidList.forEach(pid => {
+        const d = depth.get(pid) || 0
+        const idx = getPortIdx(pid)
+        if (d > bestDepth || (d === bestDepth && idx < bestIdx) || (d === bestDepth && idx === bestIdx && String(pid).localeCompare(String(best), undefined, { numeric: true }) < 0)) {
+          best = pid; bestDepth = d; bestIdx = idx
+        }
       })
       mainParentOf.set(n.id, best)
     })

@@ -9,18 +9,6 @@
           </template>
           新建评估
         </a-button>
-        <a-button @click="handleBatchOperation">
-          <template #icon>
-            <icon-settings />
-          </template>
-          批量操作
-        </a-button>
-        <a-button @click="handleExportReport">
-          <template #icon>
-            <icon-download />
-          </template>
-          导出报告
-        </a-button>
       </template>
     </PageHeader>
 
@@ -134,20 +122,6 @@
         <template #title>
           <div class="table-header">
             <span>评估记录</span>
-            <a-space>
-              <a-button size="small" @click="handleBatchOperation">
-                <template #icon>
-                  <icon-settings />
-                </template>
-                批量操作
-              </a-button>
-              <a-button size="small" @click="handleTableSetting">
-                <template #icon>
-                  <icon-tool />
-                </template>
-                表格设置
-              </a-button>
-            </a-space>
           </div>
         </template>
         
@@ -190,9 +164,6 @@
             <a-space>
               <a-button type="text" size="small" @click="handleViewDetail(record)">
                 查看详情
-              </a-button>
-              <a-button type="text" size="small" @click="handleViewReport(record)">
-                查看报告
               </a-button>
               <a-button 
                 type="text" 
@@ -373,21 +344,7 @@ const handleCreateEvaluation = () => {
   router.push('/offline-model/model-evaluation/create')
 }
 
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  Message.info('批量操作功能开发中')
-}
-
-const handleExportReport = () => {
-  Message.info('导出报告功能开发中')
-}
-
-const handleTableSetting = () => {
-  Message.info('表格设置功能开发中')
-}
+ 
 
 const handleViewModel = (record) => {
   router.push(`/offline-model/model-register/detail/${record.modelId}`)
@@ -397,9 +354,7 @@ const handleViewDetail = (record) => {
   router.push(`/offline-model/model-evaluation/detail/${record.id}`)
 }
 
-const handleViewReport = (record) => {
-  router.push(`/offline-model/model-evaluation/report/${record.id}`)
-}
+ 
 
 const handleDelete = (record) => {
   Message.info('删除功能开发中')

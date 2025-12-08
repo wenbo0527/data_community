@@ -20,12 +20,6 @@
             </a-doption>
           </template>
         </a-dropdown>
-        <a-button @click="handleExport">
-          <template #icon>
-            <icon-download />
-          </template>
-          导出报告
-        </a-button>
       </template>
     </PageHeader>
 
@@ -49,9 +43,8 @@
               allow-clear
               @change="handleFilterChange"
             >
-              <a-option value="performance">性能回溯</a-option>
-              <a-option value="data">数据回溯</a-option>
-              <a-option value="feature">特征回溯</a-option>
+              <a-option value="single">单次回溯</a-option>
+              <a-option value="periodic">周期回溯</a-option>
             </a-select>
           </a-form-item>
           
@@ -84,20 +77,6 @@
         <template #title>
           <div class="table-header">
             <span>回溯记录</span>
-            <a-space>
-              <a-button size="small" @click="handleBatchOperation">
-                <template #icon>
-                  <icon-settings />
-                </template>
-                批量操作
-              </a-button>
-              <a-button size="small" @click="handleTableSetting">
-                <template #icon>
-                  <icon-tool />
-                </template>
-                表格设置
-              </a-button>
-            </a-space>
           </div>
         </template>
         
@@ -134,14 +113,6 @@
             <a-space>
               <a-button type="text" size="small" @click="handleViewDetail(record)">
                 查看详情
-              </a-button>
-              <a-button 
-                v-if="record.status === 'completed'"
-                type="text" 
-                size="small"
-                @click="handleViewReport(record)"
-              >
-                查看报告
               </a-button>
               <a-button 
                 v-if="record.status === 'running'"
@@ -275,7 +246,7 @@ const loadData = async () => {
       {
         id: 1,
         modelName: '信用评分模型',
-        type: 'performance',
+        type: 'single',
         version: 'v1.0.0',
         startTime: '2024-01-15 10:30:00',
         endTime: '2024-01-15 12:30:00',
@@ -286,7 +257,7 @@ const loadData = async () => {
       {
         id: 2,
         modelName: '风险预测模型',
-        type: 'data',
+        type: 'periodic',
         version: 'v1.0.1',
         startTime: '2024-01-16 14:20:00',
         endTime: '',
@@ -337,21 +308,7 @@ const handleCreateBacktrack = (mode) => {
   })
 }
 
-const handleExport = () => {
-  Message.info('导出报告功能开发中')
-}
-
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  Message.info('批量操作功能开发中')
-}
-
-const handleTableSetting = () => {
-  Message.info('表格设置功能开发中')
-}
+ 
 
 const handleViewModel = (record) => {
   // 使用统一的路由跳转，保持来源信息
@@ -367,9 +324,7 @@ const handleViewDetail = (record) => {
   navigateToBacktrackDetail(router, record.id, { source: 'risk' })
 }
 
-const handleViewReport = (record) => {
-  navigateToBacktrackReport(router, record.id, { source: 'risk' })
-}
+ 
 
 const handleStop = (record) => {
   Message.info('停止回溯功能开发中')
@@ -378,18 +333,16 @@ const handleStop = (record) => {
 // 工具方法
 const getTypeColor = (type) => {
   const colors = {
-    performance: 'blue',
-    data: 'green',
-    feature: 'orange'
+    single: 'blue',
+    periodic: 'purple'
   }
   return colors[type] || 'gray'
 }
 
 const getTypeLabel = (type) => {
   const labels = {
-    performance: '性能回溯',
-    data: '数据回溯',
-    feature: '特征回溯'
+    single: '单次回溯',
+    periodic: '周期回溯'
   }
   return labels[type] || type
 }

@@ -2,7 +2,7 @@
   <div class="table-detail-page">
     <a-page-header 
       :title="tableData?.name || '未命名表'" 
-      @back="router.go(-1)"
+      @back="onBack"
       class="page-header"
     >
       <template #extra>
@@ -180,6 +180,7 @@ import {
 import { Modal } from '@arco-design/web-vue'
 import { mockTables } from '@/mock/data-map'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'
 import AddToCollectionModal from './components/AddToCollectionModal.vue'
 import * as echarts from 'echarts/core'
@@ -1015,3 +1016,4 @@ onMounted(() => {
   text-decoration: underline;
 }
 </style>
+const onBack = () => goBack(router, '/discovery/data-map/table-list')

@@ -76,7 +76,8 @@ const handleRetry = async (record) => {
   }
 }
 
-const handleBack = () => router.back()
+import { goBack } from '@/router/utils'
+const handleBack = () => goBack(router, '/offline-model/task-management')
 
 onMounted(loadDetail)
 
@@ -93,4 +94,3 @@ const formatDate = (date) => (date ? new Date(date).toLocaleString('zh-CN') : '-
 .page-title { margin: 0; font-size: 18px; font-weight: 600; }
 .actions-bar { margin-top: 16px; }
 </style>
-

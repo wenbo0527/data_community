@@ -150,12 +150,6 @@
                 </template>
                 刷新
               </a-button>
-              <a-button size="small" @click="handleTableSetting">
-                <template #icon>
-                  <icon-tool />
-                </template>
-                表格设置
-              </a-button>
             </a-space>
           </div>
         </template>
@@ -414,21 +408,9 @@ const handleSelectionChange = (rows) => {
 
 // 不支持新建任务，入口移除
 
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  Message.info('批量操作功能开发中')
-}
-
 const handleRefresh = () => {
   loadData()
   Message.success('已刷新')
-}
-
-const handleTableSetting = () => {
-  Message.info('表格设置功能开发中')
 }
 
 const handleViewDetail = (record) => {

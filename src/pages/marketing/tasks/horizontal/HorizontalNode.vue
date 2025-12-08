@@ -177,28 +177,20 @@ onMounted(() => {
   }
 })
 
-watch(nodeData, (newData, oldData) => {
-  console.log('👀 [HorizontalNode] 节点数据变化:', {
-    newNodeType: newData?.nodeType || newData?.type,
-    oldNodeType: oldData?.nodeType || oldData?.type,
-    newConfig: newData?.config,
-    oldConfig: oldData?.config,
-    newDisplayLines: newData?.config?.displayLines,
-    oldDisplayLines: oldData?.config?.displayLines,
-    newDisplayLinesCount: newData?.config?.displayLines?.length,
-    oldDisplayLinesCount: oldData?.config?.displayLines?.length,
-    timestamp: Date.now()
-  })
-  
-  // 延迟检查outRows，确保计算属性已更新
-  setTimeout(() => {
-    console.log('🔍 [HorizontalNode] 数据变化后outRows检查:', {
-      outRowsLength: outRows.value.length,
-      firstOutRow: outRows.value[0],
-      timestamp: Date.now()
-    })
-  }, 0)
-}, { deep: true, immediate: true })
+const lastOutRowsSig = ref('')
+const lastOutRowsLogTime = ref(0)
+watch(outRows, (newRows) => {
+  const sig = JSON.stringify(newRows)
+  const now = Date.now()
+  if (
+    newRows.length > 0 &&
+    sig !== lastOutRowsSig.value &&
+    now - lastOutRowsLogTime.value > 500
+  ) {
+    lastOutRowsSig.value = sig
+    lastOutRowsLogTime.value = now
+  }
+}, { immediate: false })
 
 onMounted(() => {
   console.log('✅ [HorizontalNode] 组件挂载完成:', {
@@ -220,13 +212,10 @@ onMounted(() => {
     })
     
     // 延迟访问outRows，确保计算属性已初始化
-    setTimeout(() => {
-      console.log('🔍 [HorizontalNode] outRows检查:', {
-        nodeId: props.node?.id,
-        outRowsLength: outRows.value.length,
-        firstOutRow: outRows.value[0],
-        timestamp: Date.now()
-      })
+  setTimeout(() => {
+      if (outRows.value.length > 0) {
+        void 0
+      }
     }, 0)
   }, 100)
 })
@@ -239,38 +228,9 @@ onUnmounted(() => {
 
 // 由 buildDisplayLines 提供的分支文字数组
 const outRows = computed(() => {
-  console.log('📝 [HorizontalNode] 开始生成显示行:', {
-    hasDisplayLines: !!config.value?.displayLines?.length,
-    displayLines: config.value?.displayLines,
-    nodeType: nodeType.value,
-    config: config.value,
-    nodeData: nodeData.value,
-    timestamp: Date.now()
-  })
-  
-  // 🔧 增强调试：详细检查displayLines数据
-  if (config.value?.displayLines) {
-    console.log('📝 [HorizontalNode] displayLines详细检查:', {
-      displayLines: config.value.displayLines,
-      type: typeof config.value.displayLines,
-      isArray: Array.isArray(config.value.displayLines),
-      length: config.value.displayLines.length,
-      firstItem: config.value.displayLines[0],
-      nodeType: nodeType.value,
-      configKeys: Object.keys(config.value || {})
-    })
-  }
-  
-  // 🔧 简化：只使用config中的displayLines，不自动生成内容
   if (config.value?.displayLines?.length) {
-    console.log('📝 [HorizontalNode] 使用displayLines:', {
-      lines: config.value.displayLines,
-      count: config.value.displayLines.length,
-      firstLine: config.value.displayLines[0]
-    })
     const labelFallback = getNodeLabel(nodeType.value) || '节点'
     if (config.value.displayLines.length === 1 && config.value.displayLines[0] === labelFallback) {
-      console.log('🧹 [HorizontalNode] 清理兜底展示(标签作为内容行)，返回空')
       return []
     }
     if (nodeType.value === 'start') {
@@ -278,32 +238,17 @@ const outRows = computed(() => {
     }
     return config.value.displayLines
   }
-  
-  // 基于当前节点类型与配置，使用统一逻辑生成显示行
   const topLevelLines = nodeData.value?.displayLines
   if (Array.isArray(topLevelLines) && topLevelLines.length) {
     const labelFallback = getNodeLabel(nodeType.value) || '节点'
     if (topLevelLines.length === 1 && topLevelLines[0] === labelFallback) {
-      console.log('🧹 [HorizontalNode] 清理兜底展示(顶层displayLines)，返回空')
       return []
     }
-    console.log('📝 [HorizontalNode] 使用顶层displayLines:', {
-      lines: topLevelLines,
-      count: topLevelLines.length,
-      firstLine: topLevelLines[0]
-    })
     return topLevelLines
   }
-
   const lines = buildDisplayLines(nodeType.value, config.value || {})
-  console.log('📝 [HorizontalNode] 通过buildDisplayLines生成显示行:', {
-    nodeType: nodeType.value,
-    lines,
-    count: lines.length
-  })
   const labelFallback = getNodeLabel(nodeType.value) || '节点'
   if (lines.length === 1 && lines[0] === labelFallback) {
-    console.log('🧹 [HorizontalNode] 清理兜底展示(标签作为内容行)，返回空')
     return []
   }
   return lines

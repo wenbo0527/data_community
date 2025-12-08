@@ -4,7 +4,7 @@
       <a-page-header
         :title="collection.name"
         :subtitle="collection.description"
-        @back="() => router.back()"
+        @back="onBack"
       />
       <a-space align="center" style="margin: 16px 0;">
         <icon-user />
@@ -55,6 +55,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { IconFile, IconUser } from '@arco-design/web-vue/es/icon'
 import mockData from '@/mock/data-map'
 
@@ -116,7 +117,7 @@ const fetchCollection = async () => {
       collection.value = found
     } else {
       Message.error('未找到该场景')
-      router.back()
+      goBack(router, '/discovery/data-map/collections')
     }
   } catch (error) {
     Message.error('获取数据失败')
@@ -188,3 +189,4 @@ onMounted(() => {
   color: var(--color-text-3);
 }
 </style>
+const onBack = () => goBack(router, '/discovery/data-map/collections')

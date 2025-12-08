@@ -13,7 +13,7 @@
       </div>
       <div class="header-right">
         <a-space>
-          <a-button @click="$router.back()">返回</a-button>
+          <a-button @click="goBackAction">返回</a-button>
           <a-button @click="handleEdit" v-if="notificationData.id">编辑</a-button>
           <a-dropdown v-if="notificationData.id">
             <a-button>
@@ -237,6 +237,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message, Modal } from '@arco-design/web-vue'
 import {
   IconDown,
@@ -246,8 +247,9 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { NotificationAPI } from '../../../api/notification'
 
-const router = useRouter()
 const route = useRoute()
+const router = useRouter()
+const goBackAction = () => goBack(router, '/admin/notifications')
 const notificationAPI = new NotificationAPI()
 
 // 响应式数据

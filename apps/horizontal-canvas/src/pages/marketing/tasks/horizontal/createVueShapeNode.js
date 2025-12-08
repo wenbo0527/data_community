@@ -6,7 +6,7 @@ import HorizontalNode from './HorizontalNode.vue'
 export function buildDisplayLines(nodeType, config = {}) {
   const lines = []
   if (nodeType === 'start') {
-    if (config?.taskType) lines.push(`任务类型：${config.taskType}`)
+    if (config?.taskType) lines.push(`任务类型222：${config.taskType}`)
     if (Array.isArray(config?.targetAudience) && config.targetAudience.length) lines.push(`目标人群：${config.targetAudience.join('、')}`)
   } else if (nodeType === 'crowd-split' || nodeType === 'audience-split') {
     const layers = Array.isArray(config?.crowdLayers) ? config.crowdLayers : []
@@ -59,14 +59,12 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
   const labelFallback = getNodeLabel(nodeType) || '节点'
   const rows = (rowsRaw.length === 1 && rowsRaw[0] === labelFallback) ? [] : rowsRaw
   const headerTitle = (cfg?.nodeName) || getNodeLabel(nodeType) || label || '节点'
-
   const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT
   const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
   const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
-  const sp = NODE_DIMENSIONS.CONTENT_SPACING || { top: 0, bottom: 0 }
+  const rowGapHeight= (Math.max(1, rows.length) -1) * NODE_DIMENSIONS.ROW_GAP
   const width = NODE_DIMENSIONS.WIDTH
-  const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + (sp.top || 0) + Math.max(1, rows.length) * rowHeight + Math.max(0, rows.length - 1) * (NODE_DIMENSIONS.ROW_GAP || 0) + (sp.bottom || 0))
-
+  const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + rowGapHeight + Math.max(1, rows.length) * rowHeight)
   const componentData = { id, nodeType, headerTitle, displayLines: rows, disabled: data?.disabled || false, selected: false, hover: false, config: { ...data?.config, displayLines: rows } }
   const isStart = nodeType === 'start'
   const hasConfigLines = rows.length > 0
@@ -86,8 +84,10 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
       evenDistribution: true,
       nodeHeight: height,
       nodeWidth: width,
-      contentStart: headerHeight + contentPadding + (sp.top || 0),
-      contentEnd: headerHeight + contentPadding + (sp.top || 0) + Math.max(1, (hasConfigLines ? rows.length : 1)) * rowHeight + Math.max(0, (hasConfigLines ? rows.length : 1) - 1) * (NODE_DIMENSIONS.ROW_GAP || 0),
+      // contentStart: headerHeight + contentPadding,
+      // contentEnd: headerHeight + contentPadding + Math.max(1, (hasConfigLines ? rows.length : 1)) * rowHeight ,
+      contentStart: headerHeight + (contentPadding / 2),
+      contentEnd: headerHeight +  (contentPadding / 2) + rowGapHeight + Math.max(1, (hasConfigLines ? rows.length : 1)) * rowHeight,
       contentLines: hasConfigLines ? rows : null,
       enableValidation: hasConfigLines
     }),

@@ -498,6 +498,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { templateAPI, inventoryAPI } from '@/api/coupon.js'
 import { useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 
 const router = useRouter()
 
@@ -636,7 +637,7 @@ const handleValidityTypeChange = () => {
 }
 
 const handleBack = () => {
-  router.back()
+  goBack(router, '/marketing/coupon/inventory')
 }
 
 const showTemplateSelector = () => {

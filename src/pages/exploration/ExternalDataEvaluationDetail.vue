@@ -12,10 +12,7 @@
           </div>
         </div>
         <div class="action-section">
-          <a-button type="primary" @click="exportReport" :loading="exporting" v-if="!isEditMode">
-            <template #icon><icon-download /></template>
-            导出报告
-          </a-button>
+          
           <a-button @click="toggleEditMode" v-if="reportData.editable && !isEditMode">
             <template #icon><icon-edit /></template>
             编辑报告
@@ -544,19 +541,7 @@ const handleImageError = (event: Event) => {
   Message.warning('图片加载失败，显示占位符');
 };
 
-// 导出报告
-const exportReport = async () => {
-  exporting.value = true;
-  try {
-    // 模拟PDF导出
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    Message.success('报告导出成功');
-  } catch (error) {
-    Message.error('报告导出失败');
-  } finally {
-    exporting.value = false;
-  }
-};
+ 
 
 // 编辑模式切换
 const toggleEditMode = () => {

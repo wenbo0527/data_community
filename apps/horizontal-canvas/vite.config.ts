@@ -5,5 +5,5 @@ import path from 'path'
 export default defineConfig({
   plugins: [vue()],
   server: { port: 5175 },
-  resolve: { alias: { '@': '/src' } }
+  resolve: { alias: { '@': path.resolve(__dirname, 'src') } }
 })

@@ -94,7 +94,9 @@ export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string,
  * 场景：空画布或缺少 start 节点时自动补齐一个开始节点
  */
 export function ensureStartNode(graph: GraphLike): void {
+  console.log('initStart1111',graph)
   const nodes = graph.getNodes()
+  console.log('nodes1111',nodes)
   const hasStart = nodes.some((n: any) => { const d = n.getData ? n.getData() : {}; return d?.type === 'start' || d?.nodeType === 'start' || String(n.id).includes('start') })
   if (hasStart) return
   const startNodeId = 'start-node'

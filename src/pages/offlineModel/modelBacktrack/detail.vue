@@ -166,14 +166,12 @@ const loadDetail = async () => {
   }
 }
 
+import { goBack } from '@/router/utils'
 const handleBack = () => {
-  // 如果有来源信息，返回对应模块；否则返回列表页
   if (isFromRisk.value) {
-    router.push('/risk/model-offline-analysis/model-backtrack')
-  } else if (isFromOffline.value) {
-    router.push('/offline-model/model-backtrack')
+    goBack(router, '/risk/model-offline-analysis/model-backtrack')
   } else {
-    router.back()
+    goBack(router, '/offline-model/model-backtrack')
   }
 }
 const handleStop = async () => {
@@ -202,4 +200,3 @@ onMounted(loadDetail)
   min-height: 300px; 
 }
 </style>
-

@@ -82,24 +82,7 @@ export const MENU_CONFIG = {
             path: '/external-data-v1/list',
             routeName: 'external'
           },
-          'external-data-center': {
-            key: 'external-data-center',
-            title: '外数中心',
-            path: '/external-data/archive',
-            routeName: 'ExternalDataArchive'
-          },
-          'budget-center': {
-            key: 'budget-center',
-            title: '预算中心',
-            path: '/budget/overview',
-            routeName: 'BudgetOverviewModule'
-          },
-          'external-data-evaluation-entry': {
-            key: 'external-data-evaluation-entry',
-            title: '外数效果评估',
-            path: '/exploration/external-data-evaluation/list',
-            routeName: 'externalDataEvaluationList'
-          }
+          
         }
       },
       

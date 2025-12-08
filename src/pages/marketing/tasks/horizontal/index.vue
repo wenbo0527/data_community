@@ -94,7 +94,7 @@
         />
       </div>
       
-      <div ref="canvasContainerRef" class="canvas-container" :class="{ 'is-panning': isPanning }">
+      <div ref="canvasContainerRef" class="canvas-container" :class="{ 'is-panning': isPanning }" :style="{ visibility: initializing ? 'hidden' : 'visible' }">
         <!-- 预览图容器 -->
         <div 
           v-if="showMinimap" 
@@ -287,6 +287,35 @@ let minimap = null
 const minimapPosition = ref({ left: 0, top: 0 })
 const isPanning = ref(false)
 let minimapPaused = false
+
+let centerTaskId = 0
+let centerTimer = null
+function scheduleCenterContent(options = {}) {
+  if (!graph) return
+  centerTaskId++
+  const id = centerTaskId
+  const padding = options.padding
+  const preserveZoom = options.preserveZoom !== false
+  const onDone = typeof options.onDone === 'function' ? options.onDone : null
+  clearTimeout(centerTimer)
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      centerTimer = setTimeout(() => {
+        if (!graph) return
+        if (centerTaskId !== id) return
+        const z = typeof graph.zoom === 'function' ? graph.zoom() : 1
+        if (typeof graph.centerContent === 'function') {
+          if (padding != null) graph.centerContent({ padding })
+          else graph.centerContent()
+        } else if (typeof graph.center === 'function') {
+          graph.center()
+        }
+        if (preserveZoom && typeof graph.zoom === 'function') graph.zoom(z)
+        if (onDone) onDone()
+      }, 120)
+    })
+  })
+}
 
 // 辅助线状态
 const showSnapline = ref(true)
@@ -842,7 +871,9 @@ const handleDrawerVisibilityChange = ({ drawerType, visible }) => {
 const resetCanvas = () => {
   if (!graph) return
   graph.clearCells()
-  ensureStartNode()
+  if (!(route.query && route.query.mode === 'edit' && route.query.id)) {
+    ensureStartNode()
+  }
 }
 
 // 调试面板控制
@@ -1986,10 +2017,9 @@ console.log('[Horizontal] 路由查询参数:', query)
 if (query.mode === 'edit' && query.id) {
   console.log(`[Horizontal] 编辑模式 - 任务ID: ${query.id}, 版本: ${query.version}`)
   try {
-    // 延迟加载任务数据，确保所有组件都初始化完成
-    setTimeout(() => {
+    nextTick(() => {
       loadTaskData()
-    }, 300)
+    })
   } catch (error) {
     console.error('[Horizontal] 加载任务数据时发生错误:', error)
     Message.error('加载任务数据失败: ' + error.message)
@@ -2979,22 +3009,8 @@ const handleJumpToHistoryState = (index) => {
 }
 
   const handleFitContent = () => {
-    if (!graph) return
-    // 优化适配：保留当前缩放，仅居中内容，避免画布缩小
-    const currentZoom = graph.zoom()
-    if (typeof graph.centerContent === 'function') {
-      graph.centerContent()
-    } else {
-      graph.center()
-    }
-    // 恢复原缩放，防止不必要的缩放变化
-    graph.zoom(currentZoom)
-    console.log('[Toolbar] 仅居中内容，保持缩放不变')
-    
-    // 显示友好的提示
+    scheduleCenterContent()
     Message.success('画布已居中显示')
-    
-    // 同步更新预览图
     setTimeout(() => {
       try { if (!minimapPaused && minimap && minimap.updateGraph) minimap.updateGraph() } catch {}
     }, 100)
@@ -3130,20 +3146,12 @@ const handleQuickLayout = async () => {
       const containerRect = canvasContainerRef.value?.getBoundingClientRect?.()
       const layoutWidth = result?.bounds ? (result.bounds.maxX - result.bounds.minX) : undefined
       const containerWidth = containerRect?.width || 0
-      // 当布局宽度未溢出容器时才居中，避免视图频繁跳变造成闪屏
       if (graph && containerWidth && layoutWidth && layoutWidth <= containerWidth) {
-        const currentZoom = graph.zoom()
-        if (typeof graph.centerContent === 'function') {
-          graph.centerContent()
-        } else if (typeof graph.center === 'function') {
-          graph.center()
-        }
-        graph.zoom(currentZoom)
+        scheduleCenterContent()
         console.log('[Toolbar] 画布居中（布局未溢出容器）')
       } else {
         console.log('[Toolbar] 跳过居中（布局宽度溢出容器，避免闪屏）')
       }
-      // 拖拽恢复后更新最小地图
       try { if (!minimapPaused && minimap && minimap.updateGraph) minimap.updateGraph() } catch {}
     } catch {}
   }, 80)
@@ -3318,24 +3326,14 @@ const loadTaskData = async () => {
       if (storedTask.canvasData && storedTask.canvasData.nodes && storedTask.canvasData.nodes.length > 0) {
         console.log('[Horizontal] 开始加载画布数据，节点数量:', storedTask.canvasData.nodes.length)
         
-        // 延迟加载画布数据，确保画布完全初始化
-        setTimeout(() => {
+        nextTick(() => {
           if (graph) {
             console.log('🎨 [Horizontal] 图形实例已准备好，开始加载画布数据')
             loadCanvasData(storedTask.canvasData)
           } else {
-            console.warn('[Horizontal] 图形实例未准备好，延迟加载画布数据')
-            // 如果graph还未初始化，再次延迟尝试
-            setTimeout(() => {
-              if (graph) {
-                console.log('🎨 [Horizontal] 延迟后图形实例已准备好，开始加载画布数据')
-                loadCanvasData(storedTask.canvasData)
-              } else {
-                console.error('❌ [Horizontal] 图形实例始终未准备好，无法加载画布数据')
-              }
-            }, 1000)
+            console.error('❌ [Horizontal] 图形实例未准备好，无法加载画布数据')
           }
-        }, 500)
+        })
       } else {
         console.log('[Horizontal] 任务没有画布数据或数据格式不正确:', {
           hasCanvasData: !!storedTask.canvasData,
@@ -3355,6 +3353,7 @@ const loadTaskData = async () => {
       })))
       
       Message.warning('未找到指定的任务数据，将创建新任务')
+      initializing.value = false
     }
   } catch (error) {
     console.error('❌ [Horizontal] 加载任务数据失败:', error)
@@ -3381,6 +3380,7 @@ const loadCanvasData = (canvasData) => {
   }
   
   try {
+    if (graph && typeof graph.freeze === 'function') graph.freeze()
     // 清空当前画布
     graph.clearCells()
     
@@ -3480,14 +3480,15 @@ const loadCanvasData = (canvasData) => {
     })
     
     console.log(`[loadCanvasData] 成功加载数据: ${canvasData.nodes.length} 节点, ${canvasData.connections.length} 连线`)
-    
-    // 自动调整视图以显示所有内容
-    setTimeout(() => {
+    if (graph && typeof graph.unfreeze === 'function') graph.unfreeze()
+
+    nextTick(() => {
       if (graph && canvasData.nodes.length > 0) {
-        graph.centerContent({ padding: 50 })
-        console.log('[loadCanvasData] 自动调整视图居中')
+        scheduleCenterContent({ padding: 50, onDone: () => { initializing.value = false } })
+      } else {
+        initializing.value = false
       }
-    }, 300)
+    })
     
     return true
   } catch (error) {
@@ -4162,3 +4163,4 @@ const testClick = () => {
   margin-right: 0;
 }
 </style>
+const initializing = ref(route.query.mode === 'edit' && !!route.query.id)

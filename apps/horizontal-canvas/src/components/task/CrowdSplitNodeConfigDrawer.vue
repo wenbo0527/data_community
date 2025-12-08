@@ -65,7 +65,7 @@ import { IconMinus, IconSearch, IconInfoCircle } from '@arco-design/web-vue/es/i
 import BaseDrawer from './BaseDrawer.vue'
 import { useBaseDrawer } from '@/composables/useBaseDrawer.js'
 import crowdSplitLogger from '../utils/canvas/crowdSplitLogger.js'
-const mockCrowdData = [ { id: 1, name: '黑名单' }, { id: 2, name: '高响应客群' }, { id: 3, name: '中响应客群' } ]
+const mockCrowdData = [ { id: 1, name: '黑名单' }, { id: 2, name: '高响应客群高响应客群高响应客群高响应客群高响应客群高响应客群高响应客群' }, { id: 3, name: '中响应客群' } ]
 const props = defineProps({ visible: { type: Boolean, default: false }, nodeData: { type: Object, default: () => ({}) }, readOnly: { type: Boolean, default: false } })
 const emit = defineEmits(['update:visible','confirm','cancel'])
 const crowdList = ref([])

@@ -23,7 +23,9 @@ export function insertNodeFromSelector(graph: any, nodeType: string, pendingPoin
   const fourOutTypes = ['audience-split', 'crowd-split', 'event-split', 'ab-test']
   const outCount = fourOutTypes.includes(nodeType) ? 4 : 1
   const newNodeId = `${nodeType}-${Date.now()}`
+  console.log('insertNodeFromSelector11111',{ id: newNodeId, x: pendingPoint.x, y: pendingPoint.y, label, outCount, data: { type: nodeType, nodeType, isConfigured: false } })
   const node = graph.addNode(createVueShapeNode({ id: newNodeId, x: pendingPoint.x, y: pendingPoint.y, label, outCount, data: { type: nodeType, nodeType, isConfigured: false } }))
+  console.log('addNode11111',node);
   if (pendingInsertionEdge) {
     try {
       const source = pendingInsertionEdge.getSource?.()

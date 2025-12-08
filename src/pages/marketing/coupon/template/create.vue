@@ -4,7 +4,7 @@
       <div class="page-container">
         <div class="header-content">
           <div class="header-left">
-            <a-button v-if="!props.hideBackButton" type="text" @click="router.back()" class="back-btn">
+            <a-button v-if="!props.hideBackButton" type="text" @click="goBackAction" class="back-btn">
               <icon-left />
               返回
             </a-button>
@@ -409,6 +409,7 @@ import { ref, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconLeft, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { useRouter, useRoute } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import InterestFreeForm from './components/InterestFreeForm.vue'
@@ -732,8 +733,11 @@ const rules = {
 }
 
 // 取消创建
+const goBackAction = () => {
+  goBack(router, '/marketing/coupon/template')
+}
 const handleCancel = () => {
-  router.back()
+  goBack(router, '/marketing/coupon/template')
 }
 
 

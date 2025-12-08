@@ -14,7 +14,7 @@
 
       <template #extra>
         <a-space>
-          <a-button @click="$router.back()">
+          <a-button @click="handleGoBack">
             返回
           </a-button>
           <a-button type="primary" @click="handleEdit" v-if="notification">
@@ -121,6 +121,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message } from '@arco-design/web-vue'
 import { IconUser, IconCalendar, IconAttachment } from '@arco-design/web-vue/es/icon'
 import { NotificationAPI } from '@/api/notification'
@@ -218,6 +219,8 @@ const formatFileSize = (size: number) => {
 onMounted(() => {
   fetchNotificationDetail()
 })
+
+const handleGoBack = () => goBack(router, '/notification/list')
 </script>
 
 <style scoped>

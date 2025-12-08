@@ -69,7 +69,7 @@
 
         <a-space>
           <a-button type="primary" html-type="submit">保存</a-button>
-          <a-button @click="goBack">返回</a-button>
+          <a-button @click="handleGoBack">返回</a-button>
         </a-space>
       </a-form>
     </a-card>
@@ -79,6 +79,7 @@
 <script setup lang="ts">
 import { reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message } from '@arco-design/web-vue'
 import { budgetApiService } from '../../api/budget'
 
@@ -131,14 +132,14 @@ const handleSubmit = async () => {
       timeLabel: form.timeLabel
     })
     Message.success('保存成功')
-    router.back()
+    goBack(router, '/risk/budget/list')
   } catch (err) {
     console.error('保存失败', err)
     Message.error('保存失败')
   }
 }
 
-const goBack = () => router.back()
+const handleGoBack = () => goBack(router, '/risk/budget/list')
 </script>
 
 <style scoped>

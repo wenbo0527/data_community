@@ -38,6 +38,7 @@ export function collectCanvasData(graph: GraphLike): { nodes: any[]; connections
 export function loadCanvasData(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): boolean {
   if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return false
   try {
+    try { graph.freeze?.() } catch {}
     graph.clearCells()
     const nodeMap = new Map<string, any>()
     canvasData.nodes.forEach((nodeData: any) => {
@@ -84,7 +85,7 @@ export function loadCanvasData(graph: GraphLike, canvasData: { nodes: any[]; con
         }
       } catch {}
     })
-    setTimeout(() => { try { if (graph && canvasData.nodes.length > 0) graph.centerContent({ padding: 50 }) } catch {} }, 300)
+    try { graph.unfreeze?.() } catch {}
     return true
   } catch { return false }
 }
@@ -133,6 +134,41 @@ export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[];
   if (unconfiguredByConfig.length > 0 || unconfiguredByFlag.length > 0) { const idSet = new Set<string>(); const merged = [...unconfiguredByConfig, ...unconfiguredByFlag].filter((n: any) => { if (idSet.has(n.id)) return false; idSet.add(n.id); return true }); messages.push(`存在未完成配置的节点: ${merged.map((n: any) => `${n.label || n.id}`).join(', ')}`) }
   const noOut = canvasData.nodes.filter((n: any) => n.type !== 'end' && (outgoing.get(n.id) || 0) === 0)
   if (noOut.length > 0) messages.push(`存在未连接后续节点的节点: ${noOut.map((n: any) => `${n.label || n.id}`).join(', ')}`)
+  try {
+    const ids = new Set<string>(canvasData.nodes.map(n => String(n.id)))
+    const adj = new Map<string, string[]>()
+    ids.forEach(id => adj.set(id, []))
+    canvasData.connections.forEach((e: any) => { const s = String(e.source || ''); const t = String(e.target || ''); if (ids.has(s) && ids.has(t)) (adj.get(s) || []).push(t) })
+    const WHITE = 0, GRAY = 1, BLACK = 2
+    const color = new Map<string, number>()
+    ids.forEach(id => color.set(id, WHITE))
+    let cyclePath: string[] = []
+    let hasCycle = false
+    const stack: string[] = []
+    const dfs = (u: string): boolean => {
+      color.set(u, GRAY)
+      stack.push(u)
+      const ns = adj.get(u) || []
+      for (let i = 0; i < ns.length; i++) {
+        const v = ns[i]
+        const c = color.get(v) || WHITE
+        if (c === WHITE) { if (dfs(v)) return true }
+        else if (c === GRAY) { const idx = stack.lastIndexOf(v); cyclePath = stack.slice(idx); hasCycle = true; return true }
+      }
+      stack.pop()
+      color.set(u, BLACK)
+      return false
+    }
+    for (const id of ids) { if ((color.get(id) || WHITE) === WHITE) { if (dfs(id)) break } }
+    if (hasCycle) {
+      const cycleLabels = cyclePath.map(id => {
+        const n = byId.get(id)
+        const label = (n && (n.label || (n.data && n.data.label))) || String(id)
+        return `${label}(${id})`
+      })
+      messages.push(`存在环路: ${cycleLabels.join(' -> ')}`)
+    }
+  } catch {}
   try {
     if (graph) {
       const missingPortConnections: string[] = []

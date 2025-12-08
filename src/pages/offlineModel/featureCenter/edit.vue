@@ -197,7 +197,8 @@ onMounted(async () => {
   }
 })
 
-const goBack = () => router.back()
+import { goBack as goBackUtil } from '@/router/utils'
+const goBack = () => goBackUtil(router, '/offline-model/feature-center')
 const handleSubmit = async () => {
   if (isModelScore.value) return
   const typeMap = (dt) => {

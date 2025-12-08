@@ -199,6 +199,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message } from '@arco-design/web-vue'
 import { modelAPI } from '@/api/offlineModel'
 import { featureAPI } from '@/api/offlineModel'
@@ -487,7 +488,7 @@ const runTest = () => {
 }
 
 const handleCancel = () => {
-  router.back()
+  goBack(router, '/offline-model/model-register')
 }
 </script>
 

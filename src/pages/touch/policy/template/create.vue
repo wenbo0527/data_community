@@ -39,6 +39,7 @@
 import { ref, h } from 'vue'
 import { Button as AButton } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 
 const router = useRouter()
 const formState = ref({ title: '', messageType: '' })
@@ -46,11 +47,11 @@ const formState = ref({ title: '', messageType: '' })
 const handleSubmit = () => {
   // 提交逻辑
   console.log('提交数据:', formState.value)
-  router.back()
+  goBack(router, '/touch/policy/template')
 }
 
 const handleBack = () => {
-  router.back()
+  goBack(router, '/touch/policy/template')
 }
 </script>
 

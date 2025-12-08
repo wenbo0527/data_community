@@ -38,9 +38,8 @@
               allow-clear
               @change="handleFilterChange"
             >
-              <a-option value="performance">性能回溯</a-option>
-              <a-option value="data">数据回溯</a-option>
-              <a-option value="feature">特征回溯</a-option>
+              <a-option value="single">单次回溯</a-option>
+              <a-option value="periodic">周期回溯</a-option>
             </a-select>
           </a-form-item>
           
@@ -88,12 +87,6 @@
           <div class="table-header">
             <span>回溯记录</span>
             <a-space>
-              <a-button size="small" @click="handleBatchOperation" :disabled="selectedRows.length === 0">
-                <template #icon>
-                  <icon-settings />
-                </template>
-                批量操作
-              </a-button>
               <a-button size="small" @click="handleRefresh">
                 <template #icon>
                   <icon-refresh />
@@ -146,14 +139,6 @@
           <template #actions="{ record }">
             <a-space>
               <a-button type="text" size="small" @click="handleViewDetail(record)">查看详情</a-button>
-              <a-button 
-                v-if="record.status === 'completed'"
-                type="text" 
-                size="small"
-                @click="handleViewReport(record)"
-              >
-                查看报告
-              </a-button>
               <a-button v-if="record.status === 'running'" type="text" size="small" status="warning" @click="handleStop(record)">停止</a-button>
             </a-space>
           </template>
@@ -270,7 +255,7 @@ const loadData = async () => {
     dataSource.value = list.map(t => ({
       id: t.id,
       modelName: t.config?.serviceName || '-',
-      type: 'feature',
+      type: 'periodic',
       version: '-',
       startTime: t.createTime,
       endTime: t.updateTime,
@@ -332,62 +317,14 @@ const handleViewDetail = (record) => {
 }
 
 // 报告功能 - 跳转到详情页的报告标签
-const handleViewReport = (record) => {
-  navigateToBacktrackReport(router, record.id, { source: 'offline' })
-}
+ 
 
 const handleRefresh = () => {
   loadData()
   Message.success('数据已刷新')
 }
 
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  
-  // 获取选中任务的状态
-  const statuses = selectedRows.value.map(row => row.status)
-  const hasRunning = statuses.includes('running')
-  const hasCompleted = statuses.includes('completed')
-  
-  if (hasRunning) {
-    // 如果有运行中的任务，提供批量停止选项
-    Modal.confirm({
-      title: '批量操作',
-      content: `已选择 ${selectedRows.value.length} 个任务，其中包含运行中的任务。是否批量停止？`,
-      okText: '批量停止',
-      cancelText: '取消',
-      onOk: async () => {
-        const runningTasks = selectedRows.value.filter(row => row.status === 'running')
-        const promises = runningTasks.map(task => backtrackAPI.stopBacktrack(task.id))
-        
-        try {
-          await Promise.all(promises)
-          Message.success(`已停止 ${runningTasks.length} 个任务`)
-          await loadData()
-          selectedRows.value = []
-        } catch (error) {
-          Message.error('批量停止失败')
-        }
-      }
-    })
-  } else if (hasCompleted) {
-    // 如果只有已完成的任务，提供批量导出选项
-    Modal.confirm({
-      title: '批量操作',
-      content: `已选择 ${selectedRows.value.length} 个已完成的任务。是否批量导出报告？`,
-      okText: '批量导出',
-      cancelText: '取消',
-      onOk: () => {
-        Message.info('批量导出功能开发中')
-      }
-    })
-  } else {
-    Message.info('选中的任务不支持批量操作')
-  }
-}
+ 
 
 const handleStop = async (record) => {
   try {
@@ -406,18 +343,16 @@ const handleStop = async (record) => {
 // 工具方法
 const getTypeColor = (type) => {
   const colors = {
-    performance: 'blue',
-    data: 'green',
-    feature: 'orange'
+    single: 'blue',
+    periodic: 'purple'
   }
   return colors[type] || 'gray'
 }
 
 const getTypeLabel = (type) => {
   const labels = {
-    performance: '性能回溯',
-    data: '数据回溯',
-    feature: '特征回溯'
+    single: '单次回溯',
+    periodic: '周期回溯'
   }
   return labels[type] || type
 }

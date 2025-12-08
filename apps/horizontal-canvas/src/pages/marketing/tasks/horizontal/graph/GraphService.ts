@@ -42,7 +42,24 @@ export function zoomTo(graph: GraphLike, scale: number): void {}
  * 返回：void
  * 场景：快速布局/加载完成后适配视图
  */
-export function centerContent(graph: GraphLike): void {}
+export function centerContent(graph: GraphLike, options: { padding?: number; preserveZoom?: boolean } = {}): void {
+  if (!graph) return
+  const z = typeof graph.zoom === 'function' ? graph.zoom() : 1
+  const padding = options.padding
+  const preserve = options.preserveZoom !== false
+  try {
+    if (typeof graph.centerContent === 'function') {
+      if (padding != null) graph.centerContent({ padding })
+      else graph.centerContent()
+    } else if (typeof graph.center === 'function') {
+      graph.center()
+    }
+    if (preserve && typeof graph.zoom === 'function') {
+      if (typeof graph.zoomTo === 'function') graph.zoomTo(z)
+      else graph.zoom(z)
+    }
+  } catch {}
+}
 /**
  * 小地图显隐与生命周期管理
  * 入参：graph(GraphLike), container(HTMLElement|null), visible(boolean), options(any)

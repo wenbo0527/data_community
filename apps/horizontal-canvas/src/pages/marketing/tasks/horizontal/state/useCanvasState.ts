@@ -28,8 +28,7 @@ export function useCanvasState() {
   function updateDebugDockBounds(contentEl?: HTMLElement | null, showStatisticsPanelRef?: { value: boolean }, isViewMode?: boolean, isPublished?: boolean, statisticsPanelWidthRef?: { value: number }, debugDockBoundsRef?: { value: { left: number; width: number } }) {
     const rect = contentEl && (contentEl as any).getBoundingClientRect ? (contentEl as any).getBoundingClientRect() : null
     if (!rect) return { left: 0, width: 0 }
-    const reservedRight = (showStatisticsPanelRef?.value && !!isViewMode && !!isPublished) ? (statisticsPanelWidthRef?.value || 0) : 0
-    const result = { left: Math.round(rect.left), width: Math.round(rect.width - reservedRight) }
+    const result = { left: Math.round(rect.left), width: Math.round(rect.width) }
     if (debugDockBoundsRef && typeof debugDockBoundsRef === 'object') debugDockBoundsRef.value = result
     return result
   }

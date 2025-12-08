@@ -84,7 +84,7 @@
             <a-space direction="vertical" fill>
               <div class="title-section">
                 <a-space align="center">
-                  <a-button type="text" @click="$router.back()">
+                  <a-button type="text" @click="handleGoBack">
                     <template #icon><icon-left /></template>
                   </a-button>
                   <h2 class="data-title">{{ dataDetail.dataName }}</h2>
@@ -182,6 +182,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { IconLeft, IconEdit, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
 import { Statistic } from '@arco-design/web-vue'
 
@@ -336,6 +337,8 @@ onMounted(() => {
   usageInfo.value = dataDetail.value.usageInfo || []
   evaluationInfo.value = dataDetail.value.evaluationInfo || []
 })
+
+const handleGoBack = () => goBack(router, '/external-data-v1/list')
 
 const metadataColumns = [
   { title: '字段名称', dataIndex: 'field' },

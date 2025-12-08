@@ -16,6 +16,8 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
     evenDistribution = false
   } = options
 
+  console.log('includeIn111',includeIn)
+
   const groups = {
     in: {
       position: { name: 'fixed-left-y' },

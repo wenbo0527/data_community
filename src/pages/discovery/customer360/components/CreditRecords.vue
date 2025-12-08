@@ -49,15 +49,7 @@
         <a-table-column title="征信报告" data-index="reportUrl" :width="200">
           <template #cell="{ record }">
             <div class="report-actions">
-              <a-button 
-                type="text" 
-                size="small" 
-                @click="viewReport(record.reportUrl)"
-                :disabled="!record.reportUrl"
-              >
-                <template #icon><icon-eye /></template>
-                查看报告
-              </a-button>
+              
               <a-button 
                 type="text" 
                 size="small" 
@@ -228,15 +220,7 @@ const getStatusColor = (status) => {
   return colorMap[status] || 'default'
 }
 
-// 查看征信报告
-const viewReport = (reportUrl) => {
-  if (!reportUrl) {
-    Message.warning('征信报告链接不存在')
-    return
-  }
-  currentReportUrl.value = reportUrl
-  previewVisible.value = true
-}
+ 
 
 // 新窗口打开报告
 const openReport = () => {

@@ -65,6 +65,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { useContractStore } from '@/modules/budget/stores/contract'
 
 interface DataProduct {
@@ -137,7 +138,7 @@ const formatAmount = (n?: number) => { if (!n && n !== 0) return '—'; return N
 const formatPrice = (n?: number) => { if (!n && n !== 0) return '—'; return Number(n).toFixed(2) }
 const formatDate = (d?: string) => { try { return new Date(d || '').toLocaleDateString() } catch { return '—' } }
 
-const goBack = () => { router.back() }
+const goBack = () => { goBack(router, '/risk/budget/list') }
 const goToPurchaseRegister = () => {
   const record = contract.value
   if (!record) return

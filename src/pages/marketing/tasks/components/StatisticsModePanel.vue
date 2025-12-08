@@ -109,9 +109,6 @@
         <a-button type="primary" @click="refreshStats">
           <icon-refresh />刷新统计
         </a-button>
-        <a-button @click="exportStats">
-          <icon-download />导出报告
-        </a-button>
       </div>
     </div>
   </div>
@@ -347,36 +344,7 @@ const refreshStats = () => {
   console.log('刷新统计数据')
 }
 
-// 导出统计报告
-const exportStats = () => {
-  const report = {
-    基础统计: basicStats.value,
-    节点类型分布: nodeTypeStats.value,
-    连接度分析: {
-      最高连接度节点: highestConnectedNode.value,
-      孤立节点数量: isolatedNodesCount.value,
-      关键路径长度: criticalPathLength.value
-    },
-    流程健康度: {
-      评分: healthScore.value,
-      检查项: {
-        开始节点: hasStartNode.value,
-        结束节点: hasEndNode.value,
-        无孤立节点: noIsolatedNodes.value,
-        流程完整: hasValidFlow.value
-      }
-    },
-    生成时间: new Date().toLocaleString()
-  }
-  
-  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `canvas-statistics-${Date.now()}.json`
-  a.click()
-  URL.revokeObjectURL(url)
-}
+ 
 
 // 监听画布数据变化
 watch(() => props.canvasData, () => {

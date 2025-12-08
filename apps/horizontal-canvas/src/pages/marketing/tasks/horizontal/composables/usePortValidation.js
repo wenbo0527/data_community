@@ -161,11 +161,11 @@ export function usePortValidation() {
     const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST
     const minHeight = NODE_DIMENSIONS.MIN_HEIGHT
     
-    const contentHeight = Math.max(1, totalLines) * rowHeight + Math.max(0, totalLines - 1) * (NODE_DIMENSIONS.ROW_GAP || 0)
+    const contentHeight = Math.max(1, totalLines) * rowHeight
     const calculatedHeight = headerHeight + contentPadding + contentHeight + 12
     const height = Math.max(minHeight, calculatedHeight)
     
-    const verticalOffset = headerHeight + contentPadding + (lineIndex * rowHeight) + (lineIndex * (NODE_DIMENSIONS.ROW_GAP || 0)) + Math.floor(rowHeight / 2) + baselineAdjust
+    const verticalOffset = headerHeight + contentPadding + (lineIndex * rowHeight) + Math.floor(rowHeight / 2) + baselineAdjust
     const expectedDy = verticalOffset - (height / 2)
     
     return expectedDy

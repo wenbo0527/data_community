@@ -80,7 +80,7 @@ insertNodeAndFinalize(graph, 'my-node', { x: 200, y: 120 }, null, getNodeLabel, 
 .canvas-container :deep(.x6-node.x6-node-selected) { filter: drop-shadow(0 4px 12px rgba(76,120,255,.15)); }
 ```
 
-### 代码入口与修改范式（详细说明，已与现状同步）
+### 代码入口与修改范式（详细说明）
 - 样式常量与基础样式
   - 尺寸常量：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/styles/nodeStyles.js:1`
   - 颜色常量：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/styles/nodeStyles.js:15`
@@ -90,10 +90,9 @@ insertNodeAndFinalize(graph, 'my-node', { x: 200, y: 120 }, null, getNodeLabel, 
   - 交互态样式：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/styles/nodeStyles.js:153`
   - 端口样式：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/styles/nodeStyles.js:158`
 - Vue Shape 组件渲染（内容与行样式）
-  - 组件：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/HorizontalNode.vue`（内容容器与每行 `port-indicator`）
-  - 行定位算法：非自适应模式按 `top = idx * (ROW_HEIGHT + ROW_GAP)` 绝对定位；`start` 节点合并行展示
-  - 自适应模式：内容容器使用 `flex` 布局，渲染后通过 DOM 测量写回 `verticalOffsets` 并调用 `setPortProp` 以绝对坐标对齐右侧端口
-  - 行样式（CSS）：`port-indicator/port-indicator--out/port-indicator__label` 渐变与轻边框，悬停轻微提升
+  - 组件：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/HorizontalNode.vue:26`（内容容器与每行 `port-indicator`）
+  - 行定位算法：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/HorizontalNode.vue:76`（按行几何中心绝对定位）
+  - 行样式（CSS）：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/HorizontalNode.vue:172`
 - 视图工厂与尺寸/端口对齐（与常量联动）
   - 尺寸计算：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/createVueShapeNode.js:63`
   - 端口对齐（内容区起止与行中点）：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/createVueShapeNode.js:80`
@@ -107,79 +106,8 @@ insertNodeAndFinalize(graph, 'my-node', { x: 200, y: 120 }, null, getNodeLabel, 
   - 基础样式引用：`getBaseNodeStyles` 设置到 `header/header-icon/header-icon-text/header-title`：`nodeStyles.js:96`
 - 调整端口外观
   - 修改端口半径/颜色：`getPortStyles`：`nodeStyles.js:158`
-  - 行对齐与端口位置由端口工厂与行定位共同决定：`createVueShapeNode.js:80`、`HorizontalNode.vue`
+  - 行对齐与端口位置由端口工厂与行定位共同决定：`createVueShapeNode.js:80`、`HorizontalNode.vue:76`
 
-### 当前改动摘要（样式相关）
-- AB 实验节点内容展示：已移除 `HorizontalNode.vue` 的 `.ab-test__experiment` 与对应内容，不再显示 “实验：{experimentName}”
-- 节点菜单交互：增加透明遮罩与全局点击关闭；菜单随节点移动实时重算位置
-
-### 节点样式详解（结构/高度/对齐）
-- 几何分区
-  - Header：标题与图标区域，高度由 `NODE_DIMENSIONS.HEADER_HEIGHT` 控制（`styles/nodeStyles.js:4`）。
-  - Content：内容行区域，起止由 `CONTENT_PADDING` 与 `CONTENT_SPACING.top/bottom/gap` 控制（`styles/nodeStyles.js:8,9`）。
-  - Ports：端口半径与颜色由 `PORT_RADIUS/PORT_FILL_*` 等控制（`styles/nodeStyles.js:13,32–39`）。
-- 非自适应渲染（绝对定位）
-  - 行定位：`top = idx * (ROW_HEIGHT + ROW_GAP)`（`HorizontalNode.vue:104–106`）。
-  - 节点高度：`height = HEADER_HEIGHT + CONTENT_PADDING + top + rows*ROW_HEIGHT + gaps*ROW_GAP + bottom`（`createVueShapeNode.js:63–69`）。
-  - 端口位置：右侧绝对坐标 `{ x: WIDTH, y: yRel }`，`yRel` 按内容行几何中点计算（`portConfigFactoryHorizontal.js:54–75`）。
-- 自适应渲染（flex + 测量）
-  - 开关：`NODE_DIMENSIONS.ADAPTIVE_CONTENT_LAYOUT`（`styles/nodeStyles.js:7`）。
-  - 内容容器：`flex` 列布局，使用 `CONTENT_SPACING` 的 `gap/top/bottom`（`HorizontalNode.vue:91–95`）。
-  - 行中点测量并写回端口：渲染后通过 DOM `getBoundingClientRect()` 计算行中点，更新 `verticalOffsets` 并 `setPortProp`（`HorizontalNode.vue:108–137`）。
-
-### 高度修改指南（Header/Content/Row）
-- 修改 Header 高度
-  - 更新 `NODE_DIMENSIONS.HEADER_HEIGHT`（`styles/nodeStyles.js:4`）。
-  - 同步影响：标题与图标的 `refY` 对齐（`styles/nodeStyles.js:131–151`）、内容起点 `contentStart`（`createVueShapeNode.js:89`）。
-- 修改行高与行距
-  - 更新 `NODE_DIMENSIONS.ROW_HEIGHT` 与 `NODE_DIMENSIONS.ROW_GAP`（`styles/nodeStyles.js:5–6`）。
-  - 同步影响：节点高度计算（`createVueShapeNode.js:68–69`）、端口 `yRel` 计算（`portConfigFactoryHorizontal.js:71`）。
-- 修改内容区内边距与上下间距
-  - `CONTENT_PADDING` 控制 header 与内容之间的固定间距（`styles/nodeStyles.js:9`）；
-  - `CONTENT_SPACING.top/bottom/gap` 控制内容区上下与各行的额外间距（`styles/nodeStyles.js:8`）。
-  - 同步影响：`contentStart/contentEnd`（`createVueShapeNode.js:89–91`）、端口工厂 `start/end`（`portConfigFactoryHorizontal.js:54–58`）。
-
-### 添加新的内容（显示行）
-- 通过配置直接注入
-  - 在节点 `data.config.displayLines` 中传入字符串数组，即可作为显示行渲染（`HorizontalNode.vue:167–183`）。
-  - 注意：如果仅为类型标签的兜底行，将被清理为空（`HorizontalNode.vue:175–201`）。
-- 通过视图工厂生成
-  - 在 `buildDisplayLines(nodeType, config)` 中为你的节点类型追加业务行（`createVueShapeNode.js:6–53`）。
-  - 示例：为 `manual-call` 增加一行“坐席：{name}”。
-  ```js
-  // apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/createVueShapeNode.js
-  } else if (nodeType === 'manual-call') {
-    if (config?.agentName) lines.push(`坐席：${config.agentName}`)
-  }
-  ```
-- 通过顶层数据注入
-  - 在节点 `data.displayLines` 顶层提供显示行（`HorizontalNode.vue:184–193`）。
-  - 仍遵循兜底清理逻辑，避免仅显示类型标签。
-
-### 实操示例（调整高度并新增一行）
-```diff
-// apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/styles/nodeStyles.js
- export const NODE_DIMENSIONS = {
--  HEADER_HEIGHT: 32,
--  ROW_HEIGHT: 28,
--  ROW_GAP: 4,
--  CONTENT_SPACING: { top: 12, gap: 8, bottom: 12 },
-+  HEADER_HEIGHT: 36,
-+  ROW_HEIGHT: 32,
-+  ROW_GAP: 6,
-+  CONTENT_SPACING: { top: 16, gap: 10, bottom: 16 },
- }
-
-// apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/createVueShapeNode.js
- } else if (nodeType === 'sms') {
-   if (config?.smsTemplate) lines.push(`短信模板：${config.smsTemplate}`)
-+  if (config?.channel) lines.push(`渠道：${config.channel}`)
- }
-```
-
-### 校验与可视化对齐（推荐）
-- 端口位置验证：启用 `enableValidation`，查看 `portConfig._validation`（`portConfigFactoryHorizontal.js:80–87`）。
-- 行中点对齐原则：确保“内容行几何中点 = 输出端口 Y”，必要时校准 `TYPOGRAPHY.CONTENT_BASELINE_ADJUST`（`styles/nodeStyles.js:53`）。
 ### 修改建议
 - 先在 `nodeStyles.js` 调整常量，再通过 `HorizontalNode.vue` 的行定位观察实际对齐；必要时校准 `CONTENT_BASELINE_ADJUST`（`nodeStyles.js:39`）。
 - 保持“内容行几何中点 = 输出端口 Y”的一致性，避免出现端口与文本不对齐。
@@ -189,9 +117,9 @@ insertNodeAndFinalize(graph, 'my-node', { x: 200, y: 120 }, null, getNodeLabel, 
 - 汇总抽屉：`apps/horizontal-canvas/src/components/task/TaskFlowConfigDrawers.vue`
 - 单节点抽屉：`apps/horizontal-canvas/src/components/task/*NodeConfigDrawer.vue`
 
-### 事件与绑定（统一更新路径）
+### 事件与绑定
 - 统一事件：`@config-confirm`、`@config-cancel`、`@visibility-change`
-- 页面代理写回：通过 `updateNodeFromConfigUnified`（页面）与 `updateNodeUnified`（服务层）统一更新节点
+- 页面代理写回：`apps/horizontal-canvas/src/pages/marketing/tasks/horizontal/index.vue:1903–1924`
 ```vue
 <TaskFlowConfigDrawers
   :drawer-states="configDrawers.drawerStates"
@@ -321,6 +249,3 @@ const validateCanvasForPublish = (canvasData) => {
   - 检查是否调用了 `useCanvasState.computeMinimapPosition/toggleMinimapUI` 并在容器 resize 后执行 `setupPanelResizeListeners`。
 - 节点插入后连线错位？
   - 使用 `insertNodeAndFinalize`，其会自动修正端口映射并重连两段边，同时将操作入栈并支持持久化回调。
-## 节点菜单行为（当前实现）
-- 菜单跟随移动：监听 `node:moved`，根据节点 `BBox` + 图容器位置重算菜单坐标
-- 空白处关闭：监听 `blank:click` 与 `window.click`，添加透明遮罩 `node-actions-menu__backdrop`，非菜单区域点击关闭

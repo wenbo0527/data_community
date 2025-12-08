@@ -184,7 +184,7 @@ function onMouseLeave ()  { emit('hover-change', false) }
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 0;
   gap: 0;
   overflow: hidden;
 }

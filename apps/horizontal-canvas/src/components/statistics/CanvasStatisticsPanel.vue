@@ -16,7 +16,7 @@
           v-model="enterDateRange"
           size="small"
           style="width: 220px"
-          placeholder="进入日期范围"
+          :placeholder="['开始日期','结束日期']"
           value-format="YYYY-MM-DD"
           aria-label="时间范围"
         />

@@ -138,14 +138,7 @@
           >
             重试任务
           </a-button>
-          <a-button 
-            v-if="taskStatus === '已完成' || taskStatus === 'completed'"
-            type="outline"
-            status="success"
-            @click="viewReport"
-          >
-            查看报告
-          </a-button>
+          
         </div>
       </div>
     </a-card>
@@ -438,11 +431,7 @@ const retryTask = async () => {
   }
 };
 
-// 查看报告
-const viewReport = () => {
-  // 跳转到报告详情页
-  router.push(`/exploration/external-data-evaluation/report/${taskId.value}`);
-};
+ 
 
 // 返回任务列表
 const goToList = () => {

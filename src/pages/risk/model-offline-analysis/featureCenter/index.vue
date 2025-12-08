@@ -782,17 +782,7 @@ const handleImport = () => {
 }
 
 
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  Message.info('批量操作功能开发中')
-}
-
-const handleTableSetting = () => {
-  Message.info('表格设置功能开发中')
-}
+ 
 
 const handleViewDetail = (record) => {
   router.push(`/offline-model/feature-center/detail/${record.id}`)

@@ -1,6 +1,6 @@
 <template>
   <div class="budget-detail">
-    <a-page-header title="预算详情" @back="goBack" />
+    <a-page-header title="预算详情" @back="handleGoBack" />
     <a-card>
       <a-descriptions :data="descData" :column="2" />
     </a-card>
@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message } from '@arco-design/web-vue'
 import { budgetApiService } from '../../api/budget'
 
@@ -41,7 +42,7 @@ const formatAmount = (val?: number) => {
   return `¥${Number(val).toLocaleString()}`
 }
 
-const goBack = () => router.back()
+const handleGoBack = () => goBack(router, '/risk/budget/list')
 </script>
 
 <style scoped>

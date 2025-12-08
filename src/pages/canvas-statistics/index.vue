@@ -16,10 +16,6 @@
             <icon-refresh />
             刷新
           </a-button>
-          <a-button type="primary" @click="exportReport">
-            <icon-download />
-            导出报告
-          </a-button>
         </a-space>
       </div>
     </div>
@@ -66,8 +62,9 @@ const router = useRouter()
 const canvasId = ref(route.params.id)
 
 // 返回上一页
+import { goBack as goBackUtil } from '@/router/utils'
 const goBack = () => {
-  router.back()
+  goBackUtil(router, '/canvas')
 }
 
 // 刷新数据
@@ -75,10 +72,7 @@ const refreshData = () => {
   console.log('刷新统计数据')
 }
 
-// 导出报告
-const exportReport = () => {
-  console.log('导出统计报告')
-}
+ 
 
 // 处理节点选择
 const handleNodeSelect = (nodeIds) => {

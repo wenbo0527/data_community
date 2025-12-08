@@ -409,8 +409,9 @@ const getExecutionStatusText = (status) => {
 }
 
 // 事件处理函数
+import { goBack } from '@/router/utils'
 const handleBack = () => {
-  router.back()
+  goBack(router, '/management/data-models')
 }
 
 const handleCopy = async () => {
@@ -532,12 +533,12 @@ const loadModelData = async () => {
       await loadExecutionHistory()
     } else {
       Message.error(response.message || '加载模型数据失败')
-      router.back()
+      goBack(router, '/management/data-models')
     }
   } catch (error) {
     console.error('加载模型数据失败:', error)
     Message.error('加载模型数据失败')
-    router.back()
+    goBack(router, '/management/data-models')
   }
 }
 

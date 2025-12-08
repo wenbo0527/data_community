@@ -7,7 +7,7 @@
             <a-space direction="vertical" fill>
               <div class="title-section">
                 <a-space align="center">
-                  <a-button type="text" @click="$router.back()">
+                  <a-button type="text" @click="handleGoBack">
                     <template #icon><icon-left /></template>
                   </a-button>
                   <h2 class="data-title">{{ dataDetail.dataName }}</h2>
@@ -217,7 +217,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message } from '@arco-design/web-vue'
 import { IconLeft, IconEdit, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
 
@@ -229,6 +230,7 @@ const registeredInterfaces = ref([
 ])
 
 const route = useRoute()
+const router = useRouter()
 
 // 备用接口表格列配置
 const backupInterfaceColumns = [
@@ -644,4 +646,6 @@ onMounted(async () => {
     Message.error('获取数据详情失败')
   }
 })
+
+const handleGoBack = () => goBack(router, '/discovery/external')
 </script>

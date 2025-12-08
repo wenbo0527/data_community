@@ -325,6 +325,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message } from '@arco-design/web-vue'
 import {
   IconArrowLeft,
@@ -477,7 +478,7 @@ const formRules = {
 
 // 事件处理函数
 const handleBack = () => {
-  router.back()
+  goBack(router, '/management/data-models')
 }
 
 const handleLanguageChange = (language) => {
@@ -695,12 +696,12 @@ const loadModelData = async () => {
       Object.assign(formData, response.data)
     } else {
       Message.error(response.message || '加载模型数据失败')
-      router.back()
+      goBack(router, '/management/data-models')
     }
   } catch (error) {
     console.error('加载模型数据失败:', error)
     Message.error('加载模型数据失败')
-    router.back()
+    goBack(router, '/management/data-models')
   }
 }
 

@@ -137,20 +137,6 @@
         <template #title>
           <div class="table-header">
             <span>特征列表</span>
-            <a-space>
-              <a-button size="small" @click="handleBatchOperation">
-                <template #icon>
-                  <icon-settings />
-                </template>
-                批量操作
-              </a-button>
-              <a-button size="small" @click="handleTableSetting">
-                <template #icon>
-                  <icon-tool />
-                </template>
-                表格设置
-              </a-button>
-            </a-space>
           </div>
         </template>
         
@@ -362,17 +348,7 @@ const handleExport = () => {
   Message.info('导出功能开发中')
 }
 
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要操作的记录')
-    return
-  }
-  Message.info('批量操作功能开发中')
-}
-
-const handleTableSetting = () => {
-  Message.info('表格设置功能开发中')
-}
+ 
 
 const handleViewDetail = (record) => {
   router.push(`/offline-model/feature-center/detail/${record.id}`)

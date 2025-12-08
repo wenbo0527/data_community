@@ -70,6 +70,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import { Message } from '@arco-design/web-vue'
 import { modelAPI } from '@/api/offlineModel'
 
@@ -129,7 +130,7 @@ const handleSubmit = async () => {
 }
 
 const handleCancel = () => {
-  router.back()
+  goBack(router, '/offline-model/model-register')
 }
 </script>
 

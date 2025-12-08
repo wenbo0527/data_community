@@ -190,6 +190,7 @@
 import { ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
+import { goBack } from '@/router/utils'
 import AdmissionForm from './AdmissionForm.vue'
 import InterestFreeForm from './InterestFreeForm.vue'
 import DiscountForm from './DiscountForm.vue'
@@ -279,6 +280,6 @@ const handleNext = async () => {
 // 取消处理
 const handleCancel = () => {
   emit('cancel')
-  router.back()
+  goBack(router, '/marketing/coupon/template')
 }
 </script>

@@ -261,6 +261,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
+import { goBack } from '@/router/utils';
 import {
   PageHeader as APageHeader,
   Card as ACard,
@@ -295,7 +296,7 @@ const formRef = ref();
 
 // 返回上一页
 const handleBack = () => {
-  router.push('/exploration/external-data-evaluation/list');
+  goBack(router, '/exploration/external-data-evaluation/list');
 };
 
 // 当前步骤

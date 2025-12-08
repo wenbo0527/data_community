@@ -11,13 +11,14 @@
         <span class="dot" data-selector="menu-dot-0"></span><span class="dot" data-selector="menu-dot-1"></span><span class="dot" data-selector="menu-dot-2"></span>
       </div>
     </header>
-    <main class="node-content" data-selector="content-area"><slot /></main>
+    <main class="node-content" data-selector="content-area" :style="{padding:(NODE_DIMENSIONS.CONTENT_PADDING/2)+'px'}"><slot /></main>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { getNodeConfig } from '@/utils/nodeTypes.js'
+import { NODE_DIMENSIONS } from '@/pages/marketing/tasks/horizontal/styles/nodeStyles.js'
 
 const props = defineProps({
   nodeType:   { type: String, required: true },
@@ -38,7 +39,7 @@ const headerStyle = computed(() => {
     background: `linear-gradient(135deg, ${baseColor} 0%, ${baseColor} 70%, rgba(255,255,255,0.15) 100%)`,
     borderBottom: '1px solid rgba(255,255,255,0.2)',
     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-    height: '36px'
+    height: NODE_DIMENSIONS.HEADER_HEIGHT + 'px'
   }
 })
 const iconStyle = computed(() => {
@@ -65,5 +66,5 @@ function onMouseLeave ()  { emit('hover-change', false) }
 .node-title { flex: 1; font-size: 14px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 1px rgba(0,0,0,.15) }
 .node-menu { display: flex; gap: 2px; cursor: pointer; padding: 4px; margin-left: 8px }
 .node-menu .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.9) }
-.node-content { flex: 1; display: flex; flex-direction: column; padding: 12px; gap: 0; overflow: hidden }
+.node-content { flex: 1; display: flex; flex-direction: column; gap: 0; overflow: hidden }
 </style>

@@ -46,7 +46,7 @@
     </a-card>
   </div>
 
-  <div class="content" ref="contentRef" :style="{ paddingRight: (showStatisticsPanel && isViewMode && isPublished) ? (statisticsPanelWidth + 'px') : '0px' }">
+  <div class="content" ref="contentRef" :style="{ paddingBottom: (showStatisticsPanel && isViewMode && isPublished) ? (statisticsPanelHeight + 'px') : '0px' }">
 
     
 
@@ -99,7 +99,7 @@
         />
       </div>
       
-      <div ref="canvasContainerRef" class="canvas-container" :class="{ 'is-panning': isPanning }">
+      <div ref="canvasContainerRef" class="canvas-container" :class="{ 'is-panning': isPanning }" :style="{ visibility: initializing ? 'hidden' : 'visible' }">
         <!-- 预览图容器 -->
         <div 
           v-if="showMinimap" 
@@ -124,8 +124,8 @@
         @select="handleNodeTypeSelected"
         @close="closeNodeSelector"
       />
-      <div 
-        v-if="nodeActionsMenu.visible" 
+      <div
+        v-if="nodeActionsMenu.visible"
         class="node-actions-menu"
         :style="{ left: nodeActionsMenu.x + 'px', top: nodeActionsMenu.y + 'px' }"
       >
@@ -133,11 +133,6 @@
         <button class="menu-item" @click="copyCurrentNode">复制</button>
         <button class="menu-item danger" @click="deleteCurrentNode">删除</button>
       </div>
-      <div
-        v-if="nodeActionsMenu.visible"
-        class="node-actions-menu__backdrop"
-        @click="closeNodeMenu"
-      ></div>
       <div
         v-if="edgeActionsMenu.visible"
         class="edge-actions-menu"
@@ -273,6 +268,7 @@ const editingTaskVersion = ref(null)
 const { showStatisticsPanel, showMinimap, scaleDisplayText, statisticsPanelWidth, statisticsPanelHeight } = useCanvasState()
 const isViewMode = computed(() => route.query.mode === 'view')
 const isPublished = computed(() => taskStatus.value === 'published' || taskStatus.value === 'running')
+const initializing = ref(route.query.mode === 'edit' && !!route.query.id)
 
 const canvasContainerRef = ref(null)
 const contentRef = ref(null)
@@ -308,30 +304,38 @@ const minimapContainer = ref(null)
 let minimap = null
 const minimapPosition = ref({ left: 0, top: 0 })
 const isPanning = ref(false)
-function recalcNodeActionsMenuPosition() {
-  if (!graph || !nodeActionsMenu.value.nodeId) return
-  try {
-    const node = graph.getCellById(nodeActionsMenu.value.nodeId)
-    if (!node) return
-    const bbox = node.getBBox()
-    let x = bbox.x + bbox.width
-    let y = bbox.y
-    try {
-      const pt = graph.graphToClientPoint({ x, y })
-      x = pt.x
-      y = pt.y
-    } catch {}
-    try {
-      const rect = canvasContainerRef.value?.getBoundingClientRect?.()
-      if (rect) {
-        x += rect.left
-        y += rect.top
-      }
-    } catch {}
-    nodeActionsMenu.value = { ...nodeActionsMenu.value, x, y }
-  } catch {}
-}
 let minimapPaused = false
+let centerTaskId = 0
+let centerTimer = null
+function scheduleCenterContent(options = {}) {
+  if (!graph) return
+  centerTaskId++
+  const id = centerTaskId
+  const padding = options.padding
+  const preserveZoom = options.preserveZoom !== false
+  const onDone = typeof options.onDone === 'function' ? options.onDone : null
+  clearTimeout(centerTimer)
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      centerTimer = setTimeout(() => {
+        if (!graph) return
+        if (centerTaskId !== id) return
+        const z = typeof graph.zoom === 'function' ? graph.zoom() : 1
+        if (typeof graph.centerContent === 'function') {
+          if (padding != null) graph.centerContent({ padding })
+          else graph.centerContent()
+        } else if (typeof graph.center === 'function') {
+          graph.center()
+        }
+        if (preserveZoom && typeof graph.zoom === 'function') {
+          if (typeof graph.zoomTo === 'function') graph.zoomTo(z)
+          else graph.zoom(z)
+        }
+        if (onDone) onDone()
+      }, 120)
+    })
+  })
+}
 let clipboardNodes = []
 
 // 辅助线状态
@@ -909,15 +913,13 @@ onMounted(async () => {
     const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT
     const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
     const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
-    const gap = NODE_DIMENSIONS.ROW_GAP || 0
-    const sp = NODE_DIMENSIONS.CONTENT_SPACING || { top: 0, bottom: 0 }
     const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0
     const rows = ['A', 'B', 'C']
-    const contentHeight = rows.length * rowHeight + Math.max(0, rows.length - 1) * gap
-    const contentStart = headerHeight + contentPadding + (sp.top || 0)
+    const contentHeight = rows.length * rowHeight
+    const contentStart = headerHeight + contentPadding
     const contentEnd = contentStart + contentHeight
-    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + (sp.top || 0) + rows.length * rowHeight + Math.max(0, rows.length - 1) * gap + (sp.bottom || 0))
-    const verticalOffsets = rows.map((_, i) => contentStart + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust)
+    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + rows.length * rowHeight + 12)
+    const verticalOffsets = rows.map((_, i) => headerHeight + contentPadding + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust)
     const cfg = createHorizontalPortConfig(rows.length, {
       includeIn: true,
       includeOut: true,
@@ -978,9 +980,8 @@ onMounted(async () => {
         const a = p?.args || {}
         const hasRow = typeof a.rowIndex === 'number'
         const dy = typeof a.dy === 'number' ? a.dy : 0
-        const gap = NODE_DIMENSIONS.ROW_GAP || 0
         const baseY = hasRow
-          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * gap + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
+          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
           : (cy + dy)
         const y = baseY
         return { position: { x: w, y } }
@@ -993,9 +994,8 @@ onMounted(async () => {
         const a = p?.args || {}
         const hasRow = typeof a.rowIndex === 'number'
         const dy = typeof a.dy === 'number' ? a.dy : 0
-        const gap = NODE_DIMENSIONS.ROW_GAP || 0
         const baseY = hasRow
-          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * gap + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
+          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
           : (cy + dy)
         const y = baseY
         return { position: { x: 0, y } }
@@ -1085,7 +1085,10 @@ onMounted(async () => {
         showStatisticsPanel.value = true 
       } catch {} 
     },
-    openConfigDrawer: (type, node, data) => configDrawers.openConfigDrawer(type, node, { ...(data || {}), __readOnly: isViewMode.value }),
+    openConfigDrawer: (type, node, data) => {
+      console.log('openConfigDrawer111', type, node, data);
+      configDrawers.openConfigDrawer(type, node, { ...(data || {}), __readOnly: isViewMode.value });
+    },
     setShowNodeSelector: v => { showNodeSelector.value = v },
     setNodeSelectorPosition: v => { nodeSelectorPosition.value = v },
     setNodeSelectorSourceNode: v => { nodeSelectorSourceNode.value = v },
@@ -1095,18 +1098,6 @@ onMounted(async () => {
     getContainerRect: () => canvasContainerRef.value.getBoundingClientRect(),
     setNodeActionsMenu: v => { nodeActionsMenu.value = v }
   })
-  graph?.on('blank:click', () => { closeNodeMenu() })
-  graph?.on('node:moved', ({ node }) => {
-    if (nodeActionsMenu.value.visible && node?.id === nodeActionsMenu.value.nodeId) {
-      try { recalcNodeActionsMenuPosition() } catch {}
-    }
-  })
-  window.addEventListener('click', (e) => {
-    if (!nodeActionsMenu.value.visible) return
-    const el = document.querySelector('.node-actions-menu')
-    if (el && el.contains(e.target)) return
-    closeNodeMenu()
-  }, { passive: true })
 
   // 面板开关时重新计算顶部偏移
   // DocRef: 架构文档「关键代码片段/统计面板停靠与尺寸更新」
@@ -1281,6 +1272,7 @@ onMounted(async () => {
   // 悬停时显示插入按钮，默认纯线样式
   graph.on('edge:mouseenter', ({ edge }) => {
     try {
+      if (isViewMode.value) return
       if (isPanning.value) return
       const sp = edge.getSourcePoint?.() || { x: 0, y: 0 }
       const tp = edge.getTargetPoint?.() || { x: 0, y: 0 }
@@ -1393,6 +1385,7 @@ onMounted(async () => {
     }
   })
   
+  // 初始化开始节点
   ensureStartNode()
   try {
     if (showMinimap.value && minimap) {
@@ -1447,7 +1440,8 @@ function setNodeDisabled(nodeId, disabled = true) {
 // 返回：创建的节点对象或 null
 // 边界：查看模式不允许；需存在待创建坐标 pendingCreatePoint；可能存在边插入来源 pendingInsertionEdge
 // 副作用：端口修正与两段边重连、历史入栈、TaskStorage 持久化写入、关闭节点选择器
-function handleNodeTypeSelected(nodeType) {
+  function handleNodeTypeSelected(nodeType) {
+  if (isViewMode.value) return null
   const node = insertNodeAndFinalize(graph, nodeType, pendingCreatePoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode, {
     onPersist: (g) => {
       try {
@@ -1460,6 +1454,7 @@ function handleNodeTypeSelected(nodeType) {
     onAfter: () => { try { useCanvasState().hideNodeSelector(showNodeSelector) } catch {} }
   })
   pendingInsertionEdge = null
+  console.log('handleNodeTypeSelected111',nodeType,node);
   return node
 }
 
@@ -1472,9 +1467,11 @@ function handleConfigConfirmProxy({ drawerType, config }) {
     hasConfig: !!config,
     configKeys: config ? Object.keys(config) : [],
     hasConfigDrawers: !!configDrawers,
-    hasHandleConfigConfirm: !!configDrawers?.handleConfigConfirm
+    hasHandleConfigConfirm: !!configDrawers?.handleConfigConfirm,
+    config,
   })
   try {
+    // 点抽屉确认按钮后处理的事件，
     configDrawers.handleConfigConfirm(drawerType, config)
   } catch (e) {
     console.warn('[Horizontal] 配置确认处理异常:', e)
@@ -1499,7 +1496,9 @@ function getOutCountByType(nodeType, lines) {
 
 // 统一更新路径：复用创建逻辑生成规格并应用到现有节点
 // DocRef: 架构文档「关键代码片段/节点统一更新：尺寸、端口映射与数据写回」
+// 点击抽屉确认后，更新节点内容
 async function updateNodeFromConfigUnified(node, nodeType, config) {
+  console.log('updateNodeFromConfigUnified1111',node,config)
   try {
     updateNodeUnifiedSvc(graph, node, nodeType, config)
     return
@@ -1618,6 +1617,7 @@ function copyCurrentNode() {
   if (!nodeType) return
   const label = getNodeLabel(nodeType) || nodeType
   const fourOutTypes = ['crowd-split', 'event-split', 'ab-test']
+  // 输出端口数量
   const outCount = fourOutTypes.includes(nodeType) ? 4 : 1
   const newNodeId = `${nodeType}-copy-${Date.now()}`
   graph.addNode(createVueShapeNode({
@@ -1648,7 +1648,6 @@ function deleteCurrentNode() {
     }
   })
 }
-function closeNodeMenu() { nodeActionsMenu.value.visible = false }
 
 function deleteNodeCascade(nodeId) {
   if (!graph || !nodeId) return
@@ -1706,6 +1705,7 @@ function closeEdgeMenu() {
   edgeActionsMenu.value = { visible: false, x: 0, y: 0, edgeId: null }
 }
 
+// 在updateNodeFromConfig函数定义后初始化配置抽屉
 configDrawers = useConfigDrawers(() => graph, { updateNodeFromConfig: updateNodeFromConfigUnified })
 console.log('✅ [Horizontal] 配置抽屉初始化完成:', {
   hasConfigDrawers: !!configDrawers,
@@ -1881,13 +1881,13 @@ function debugCurrentNode() {
       const bbox = node.getBBox ? node.getBBox() : null
       const nodeTopGraph = Math.round(bbox?.y || position.y)
       const layoutCenterGraphY = nodeTopGraph + Math.round((bbox?.height || nodeRect?.height || height) / 2)
-      const expectedRowYsGraph = rows.map((_, i) => nodeTopGraph + (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)))
+      const expectedRowYsGraph = rows.map((_, i) => nodeTopGraph + (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)))
       const outPorts = node.getPorts ? node.getPorts().filter(p => p.group === 'out') : []
       const outComputed = outPorts.map(p => {
         const a = p?.args || {}
         const hasRow = typeof a.rowIndex === 'number'
         const yRel = hasRow
-          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2))
+          ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2))
           : (typeof a.y === 'number'
             ? Number(a.y)
             : ((layoutCenterGraphY - nodeTopGraph) + (a.dy ?? 0)))
@@ -1940,7 +1940,7 @@ function debugCurrentNode() {
         outDomInfos = circleInfos.slice().sort((a, b) => a.cyGraph - b.cyGraph)
       }
       const domCoordValidations = rows.map((_, i) => {
-        const relY = NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)
+        const relY = NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + i * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)
         const expectedGraphY = nodeTopGraph + relY
         const expectedClientPt = graph?.graphToClientPoint ? graph.graphToClientPoint({ x: 0, y: expectedGraphY }) : { x: 0, y: Math.round(containerRect.top + expectedGraphY) }
         const expectedYClient = Math.round(expectedClientPt.y)
@@ -2471,7 +2471,7 @@ function debugCurrentNode() {
       const ports = node.getPorts ? node.getPorts() : []
       const outPorts = ports.filter(p => p.group === 'out')
       const contentStart = headerHeight + contentPadding
-      const rowYs = rows.map((_, i) => contentStart + i * rowHeight + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(rowHeight / 2) + baselineAdjust)
+      const rowYs = rows.map((_, i) => contentStart + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust)
       // 统一以DOM节点中心为基准
       const view = graph?.findViewByCell ? graph.findViewByCell(node) : null
       const containerRect = graph?.container?.getBoundingClientRect ? graph.container.getBoundingClientRect() : { top: 0, left: 0 }
@@ -2482,7 +2482,7 @@ function debugCurrentNode() {
       const modelHeight = height
       const domHeight = Math.round(nodeRect?.height || 0)
       const bboxHeight = Math.round(bbox?.height || 0)
-      const expectedRowYsGraph = rows.map((_, i) => (bbox?.y || position.y) + contentStart + i * rowHeight + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(rowHeight / 2))
+      const expectedRowYsGraph = rows.map((_, i) => (bbox?.y || position.y) + contentStart + i * rowHeight + Math.floor(rowHeight / 2))
       const groupsConf = node.getProp ? (node.getProp('ports/groups') || {}) : {}
       const outLayoutName = groupsConf?.out?.portLayout?.name || groupsConf?.out?.portLayout || '(未知)'
       console.log('\n🧭 高度/基准与布局信息:')
@@ -2506,7 +2506,7 @@ function debugCurrentNode() {
       console.log('   - 端口Y步进(布局):', steps)
       console.log('   - 行中心Y步进(期望):', rowSteps)
       console.log('\n🔎 端口-内容行对齐检测:')
-      console.log('   - 期望行Y(画布):', rows.map((_, i) => nodeTopGraph + contentStart + i * rowHeight + i * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(rowHeight / 2) + baselineAdjust))
+      console.log('   - 期望行Y(画布):', rows.map((_, i) => nodeTopGraph + contentStart + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust))
       if (!outPorts.length) {
         console.log('   - 未发现输出端口')
       } else {
@@ -2514,7 +2514,7 @@ function debugCurrentNode() {
           const a = p?.args || {}
           const hasRow = typeof a.rowIndex === 'number'
           const yRel = hasRow
-            ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + a.rowIndex * (NODE_DIMENSIONS.ROW_GAP || 0) + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
+            ? (NODE_DIMENSIONS.HEADER_HEIGHT + NODE_DIMENSIONS.CONTENT_PADDING + a.rowIndex * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2) + (TYPOGRAPHY.CONTENT_BASELINE_ADJUST || 0))
             : (typeof a.y === 'number'
               ? Number(a.y)
               : ((layoutCenterGraphY - nodeTopGraph) + (a.dy ?? 0)))
@@ -2588,6 +2588,7 @@ function onCanvasDragOver(e) {
 
 function onCanvasDrop(e) {
   e.preventDefault()
+  if (isViewMode.value) return
   try {
     const local = graph?.pageToLocal ? graph.pageToLocal(e.pageX, e.pageY) : { x: e.offsetX, y: e.offsetY }
     const x = local.x
@@ -2641,8 +2642,7 @@ const handleResetZoom = () => {
   if (!graph) return
   if (typeof graph.zoomTo === 'function') graph.zoomTo(1)
   else graph.zoom(1)
-  if (typeof graph.centerContent === 'function') graph.centerContent()
-  else graph.center?.()
+  scheduleCenterContent({ preserveZoom: false })
   useCanvasState().updateScaleDisplay(scaleDisplayText, 1)
   console.log('[Toolbar] 重置缩放并居中')
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
@@ -2682,21 +2682,8 @@ const handleJumpToHistoryState = (index) => {
 
   const handleFitContent = () => {
     if (!graph) return
-    // 优化适配：保留当前缩放，仅居中内容，避免画布缩小
-    const currentZoom = graph.zoom()
-    if (typeof graph.centerContent === 'function') {
-      graph.centerContent()
-    } else {
-      graph.center?.()
-    }
-    if (typeof graph.zoomTo === 'function') graph.zoomTo(currentZoom)
-    else graph.zoom(currentZoom)
-    console.log('[Toolbar] 仅居中内容，保持缩放不变')
-    
-    // 显示友好的提示
+    scheduleCenterContent()
     Message.success('画布已居中显示')
-    
-    // 同步更新预览图
     setTimeout(() => {
       try { if (!minimapPaused && minimap && minimap.updateGraph) minimap.updateGraph() } catch {}
     }, 100)
@@ -2810,6 +2797,7 @@ const handleQuickLayout = async () => {
 
 
 const handleAddNode = (payload) => {
+  if (isViewMode.value) return
   const anchorRect = payload?.anchorRect
   const contentRect = contentRef.value?.getBoundingClientRect()
   if (anchorRect && contentRect && graph) {
@@ -2889,36 +2877,29 @@ const loadTaskData = async () => {
       if (storedTask.canvasData && storedTask.canvasData.nodes && storedTask.canvasData.nodes.length > 0) {
         console.log('[Horizontal] 开始加载画布数据，节点数量:', storedTask.canvasData.nodes.length)
         
-        // 延迟加载画布数据，确保画布完全初始化
-        setTimeout(() => {
+        nextTick(() => {
           if (graph) {
-            console.log('🎨 [Horizontal] 图形实例已准备好，开始加载画布数据')
-            loadCanvasData(storedTask.canvasData)
+            const ok = loadCanvasData(storedTask.canvasData)
+            scheduleCenterContent({ padding: 50, onDone: () => { initializing.value = false } })
           } else {
-            console.warn('[Horizontal] 图形实例未准备好，延迟加载画布数据')
-            // 如果graph还未初始化，再次延迟尝试
-            setTimeout(() => {
-              if (graph) {
-                console.log('🎨 [Horizontal] 延迟后图形实例已准备好，开始加载画布数据')
-                loadCanvasData(storedTask.canvasData)
-              } else {
-                console.error('❌ [Horizontal] 图形实例始终未准备好，无法加载画布数据')
-              }
-            }, 1000)
+            console.error('❌ [Horizontal] 图形实例未准备好，无法加载画布数据')
+            initializing.value = false
           }
-        }, 500)
+        })
       } else {
         console.log('[Horizontal] 任务没有画布数据或数据格式不正确:', {
           hasCanvasData: !!storedTask.canvasData,
           hasNodes: !!storedTask.canvasData?.nodes,
           nodeCount: storedTask.canvasData?.nodes?.length
         })
+        initializing.value = false
       }
     } else {
       console.warn('[Horizontal] 未找到指定的任务数据，ID:', numericTaskId)
       
       
       Message.warning('未找到指定的任务数据，将创建新任务')
+      initializing.value = false
     }
   } catch (error) {
     console.error('❌ [Horizontal] 加载任务数据失败:', error)
@@ -3110,8 +3091,8 @@ const testClick = () => {
 }
 
 .canvas-container {
-  width: 100%;
-  height: 100%;
+  width: 100%!important;
+  height: 100%!important;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   position: relative;
   border-radius: 0 0 12px 12px;
@@ -3166,15 +3147,6 @@ const testClick = () => {
   padding: 4px 0;
   z-index: 1000;
   min-width: 120px;
-}
-.node-actions-menu__backdrop {
-  position: fixed;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: transparent;
-  z-index: 998;
 }
 
 .edge-actions-menu {

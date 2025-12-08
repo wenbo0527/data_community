@@ -1,18 +1,16 @@
 export const NODE_DIMENSIONS = {
   WIDTH: 260,
   MIN_HEIGHT: 88,
-  HEADER_HEIGHT: 32,
+  HEADER_HEIGHT: 36,
   ROW_HEIGHT: 28,
-  ROW_GAP: 4,
-  ADAPTIVE_CONTENT_LAYOUT: true,
-  CONTENT_SPACING: { top: 12, gap: 8, bottom: 12 },
-  CONTENT_PADDING: 16,
+  CONTENT_PADDING: 24,
   ICON_SIZE: { width: 24, height: 24 },
   ICON_RADIUS: 8,
   MENU_DOT_SIZE: 3,
   PORT_RADIUS: 5,
   BORDER_RADIUS: 12,
-  HEADER_RADIUS: '12px 12px 0 0'
+  HEADER_RADIUS: '12px 12px 0 0',
+  ROW_GAP: 4
 }
 
 export const COLORS = {
