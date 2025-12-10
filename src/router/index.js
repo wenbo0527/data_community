@@ -212,7 +212,7 @@ const router = createRouter({
     {
       path: '/discovery',
       name: 'discovery',
-      redirect: '/discovery/external',
+      redirect: '/discovery/asset-overview',
       children: [
         {
           path: 'customer360',
@@ -509,6 +509,12 @@ const router = createRouter({
           meta: { title: '外数生命周期' }
         },
         {
+          path: 'external-data/lifecycle/:id',
+          name: 'RiskExternalDataLifecycleDetail',
+          component: () => import('@/modules/external-data/pages/Lifecycle.vue'),
+          meta: { title: '外数生命周期详情' }
+        },
+        {
           path: 'external-data/monitor',
           name: 'RiskExternalDataMonitor',
           component: () => import('../pages/exploration/external-data-analysis/external-data-monitor.vue'),
@@ -537,6 +543,12 @@ const router = createRouter({
           name: 'RiskBudgetManagement',
           redirect: '/risk/budget-overview',
           meta: { title: '预算管理' }
+        },
+        {
+          path: 'budget/contracts/create',
+          name: 'RiskBudgetContractCreate',
+          component: () => import('@/modules/budget/pages/ContractCreate.vue'),
+          meta: { title: '新建合同' }
         },
         ...modelOfflineAnalysisRoutes
       ]

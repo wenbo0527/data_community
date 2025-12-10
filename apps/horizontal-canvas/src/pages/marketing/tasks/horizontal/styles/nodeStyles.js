@@ -10,7 +10,7 @@ export const NODE_DIMENSIONS = {
   PORT_RADIUS: 5,
   BORDER_RADIUS: 12,
   HEADER_RADIUS: '12px 12px 0 0',
-  ROW_GAP: 4
+  ROW_GAP: 6
 }
 
 export const COLORS = {

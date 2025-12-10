@@ -11,6 +11,12 @@
             <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
           </a-select>
         </a-form-item>
+        <a-form-item field="contractType" label="合同类型">
+          <a-select v-model="filters.contractType" placeholder="全部类型" allow-clear style="width: 160px">
+            <a-option value="framework">框架协议</a-option>
+            <a-option value="supplement">补充合同</a-option>
+          </a-select>
+        </a-form-item>
         <a-form-item field="status" label="状态">
           <a-select v-model="filters.status" placeholder="选择状态" allow-clear style="width: 160px">
             <a-option value="active">进行中</a-option>
@@ -23,7 +29,7 @@
           <a-button style="margin-left: 8px" @click="resetFilter">重置</a-button>
         </a-form-item>
         <a-form-item>
-          <a-button type="primary" @click="goToExternalPurchaseRegister">
+          <a-button type="primary" @click="goCreatePage">
             <template #icon><IconUpload /></template>
             合同上传
           </a-button>
@@ -74,9 +80,18 @@
       </a-table>
     </a-card>
     <a-card title="合同列表" :loading="loading">
-      <a-table :data="list" row-key="id" :pagination="pagination" @page-change="onPageChange" @row-click="openContractDetail">
+      <a-table :data="tableData" row-key="id" :pagination="pagination" @page-change="onPageChange" @row-click="openContractDetail">
         <template #columns>
           <a-table-column title="合同名称" data-index="contractName" :width="240" />
+          <a-table-column title="类型" :width="120">
+            <template #cell="{ record }">{{ record.contractType === 'supplement' ? '补充合同' : '框架协议' }}</template>
+          </a-table-column>
+          <a-table-column title="关联框架协议" :width="240">
+            <template #cell="{ record }">
+              <span v-if="record.contractType === 'supplement'">{{ frameworkLabel(record.frameworkId) }}</span>
+              <span v-else>—</span>
+            </template>
+          </a-table-column>
           <a-table-column title="合同总金额" :width="160">
             <template #cell="{ record }">{{ formatAmount(record.amount) }}</template>
           </a-table-column>
@@ -102,6 +117,7 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
   </div>
 </template>
 
@@ -117,13 +133,18 @@ const store = useContractStore()
 const router = useRouter()
 const loading = computed(() => store.loading)
 const list = computed(() => store.list)
+const tableData = computed(() => {
+  const base = list.value
+  if (!filters.contractType) return base
+  return base.filter((i: any) => i.contractType === filters.contractType)
+})
 const stats = computed(() => store.stats)
 
 const current = ref(1)
 const pageSize = ref(10)
 const pagination = reactive({ total: 0, pageSize: pageSize.value, current: current.value, showTotal: true })
 
-const filters = reactive<{ supplier?: string; status?: string }>({ supplier: undefined, status: undefined })
+const filters = reactive<{ supplier?: string; status?: string; contractType?: 'framework' | 'supplement' | undefined }>({ supplier: undefined, status: undefined, contractType: undefined })
 
 const supplierRegistry = ref<{ name: string; description: string }[]>([])
 const supplierOptions = computed(() => Array.from(new Set([...
@@ -131,9 +152,9 @@ const supplierOptions = computed(() => Array.from(new Set([...
 ].filter(Boolean))))
 
 const applyFilter = async () => { await store.fetchContractList({ page: 1, pageSize: pageSize.value, supplier: filters.supplier, status: filters.status }); pagination.total = store.total }
-const resetFilter = async () => { filters.supplier = undefined; filters.status = undefined; await applyFilter() }
+const resetFilter = async () => { filters.supplier = undefined; filters.status = undefined; filters.contractType = undefined; await applyFilter() }
 const filterBySupplier = async (supplier: string) => { filters.supplier = supplier; await applyFilter() }
-const goToExternalPurchaseRegister = () => { router.push('/discovery/asset-management/external-purchase-register') }
+const goCreatePage = () => { router.push('/risk/budget/contracts/create') }
 
 const showSupplierModal = ref(false)
 const supplierFormRef = ref()
@@ -149,6 +170,7 @@ const expireTagStatus = (endDate?: string) => { const days = daysToExpire(endDat
 
 const onPageChange = async (page: number) => { current.value = page; await applyFilter() }
 const openContractDetail = (record: ContractItem) => { router.push(`/budget/contracts/${record.id}`) }
+const frameworkLabel = (id?: string | null) => { if (!id) return '—'; const m = store.list.find(i => i.id === id); return m ? `${m.contractName}（${m.contractNo}）` : id }
 
 const supplierSummary = computed(() => { const map = new Map<string, { supplier: string; count: number; totalAmount: number; expiringCount: number }>(); list.value.forEach((i: ContractItem) => { const key = i.supplier || '—'; const days = daysToExpire(i.endDate); const bucket = map.get(key) || { supplier: key, count: 0, totalAmount: 0, expiringCount: 0 }; bucket.count += 1; bucket.totalAmount += Number(i.amount) || 0; if (!isNaN(days) && days <= 30 && days >= 0) bucket.expiringCount += 1; map.set(key, bucket) }); return Array.from(map.values()) })
 

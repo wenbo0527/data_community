@@ -127,6 +127,11 @@ export default [
         ]
       },
       {
+        path: 'datasource-management',
+        name: 'datasource-management',
+        component: () => import('../pages/exploration/customer-center/datasource/index.vue')
+      },
+      {
         path: 'audience-system',
         name: 'audience-system',
         component: () => import('../pages/exploration/customer-center/audience-system/index.vue'),

@@ -146,51 +146,6 @@ export const MENU_CONFIG = {
         path: '/exploration/index',
         routeName: 'explorationIndex'
       },
-      'external-data-lifecycle': {
-        key: 'external-data-lifecycle',
-        title: '外数生命周期',
-        type: 'group',
-        children: {
-          'budget-management': {
-            key: 'budget-management',
-            title: '预算管理',
-            path: '/risk/budget-overview',
-            routeName: 'BudgetOverview'
-          },
-          'external-data-evaluation': {
-            key: 'external-data-evaluation',
-            title: '外部数据评估',
-            path: '/exploration/external-data-evaluation/list',
-            routeName: 'externalDataEvaluationList',
-            children: {
-              'external-data-evaluation-list': {
-                key: 'external-data-evaluation-list',
-                title: '效果查询',
-                path: '/exploration/external-data-evaluation/list',
-                routeName: 'externalDataEvaluationList'
-              },
-              'external-data-evaluation-progress': {
-                key: 'external-data-evaluation-progress',
-                title: '任务进度',
-                path: '/exploration/external-data-evaluation/progress',
-                routeName: 'externalDataEvaluationProgress'
-              },
-              'external-data-tracking-overview': {
-                key: 'external-data-tracking-overview',
-                title: '外数效果追踪总览',
-                path: '/exploration/external-data-analysis/external-data-tracking-overview',
-                routeName: 'externalDataTrackingOverview'
-              }
-            }
-          },
-          'external-data-monitor': {
-            key: 'external-data-monitor',
-            title: '外部数据监控',
-            path: '/exploration/external-data-analysis/external-data-monitor',
-            routeName: 'external-data-monitor'
-          }
-        }
-      },
       'customer-center': {
         key: 'customer-center',
         title: '客群中心',
@@ -274,6 +229,13 @@ export const MENU_CONFIG = {
                 path: '/exploration/customer-center/tag-system/table-registration',
                 routeName: 'table-registration',
                 hideInMenu: true // 隐藏在菜单中，通过表管理页面跳转
+              }
+              ,
+              'datasource-management': {
+                key: 'datasource-management',
+                title: '数据源管理',
+                path: '/exploration/customer-center/datasource-management',
+                routeName: 'datasource-management'
               }
             }
           }
@@ -509,7 +471,7 @@ export const MENU_CONFIG = {
     title: '数字风险',
     icon: 'icon-safe',
     type: 'module',
-    defaultPath: '/risk/budget-overview',
+    defaultPath: '/risk/index',
     children: {
       'risk-index': {
         key: 'risk-index',

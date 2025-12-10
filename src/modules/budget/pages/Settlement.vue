@@ -196,7 +196,9 @@
       <a-card title="子任务进度" :bordered="true" style="margin-bottom: 12px">
         <a-table :data="subtasks" :pagination="false">
           <template #columns>
-            <a-table-column title="供应商" data-index="supplierId" />
+            <a-table-column title="供应商" :width="120">
+              <template #cell="{ record }">{{ getExternalSupplierName(record.supplierId) }}</template>
+            </a-table-column>
             <a-table-column title="合同数" :width="100">
               <template #cell="{ record }">{{ record.contracts.length }}</template>
             </a-table-column>
@@ -228,11 +230,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '@/modules/budget/stores/contract'
+import { useSettlementSupplier } from '@/modules/budget/composables/useSettlementSupplier'
 import { getSettlementTasks, createSettlementTask, cancelSettlementTask } from '@/modules/budget/api/settlement'
+import { settlementSystemListener, supplierChangeNotifier } from '@/modules/external-data/utils/supplierChangeNotifier'
 
 type Granularity = 'year'|'quarter'|'month'
 type TaskStatus = 'pending'|'running'|'succeeded'|'failed'|'canceled'
@@ -242,6 +246,13 @@ interface SettlementSubTask { id: string; taskId: string; supplierId: string; st
 interface SettlementTask { id: string; supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; status: TaskStatus; progress: number; createdBy: string; createdAt: string; summary: SettlementSummary }
 
 const store = useContractStore()
+const { 
+  supplierOptions: externalSupplierOptions, 
+  loadSuppliers: loadExternalSuppliers,
+  getSupplierName: getExternalSupplierName,
+  validateSuppliers,
+  extractSuppliersFromContracts 
+} = useSettlementSupplier()
 
 const loading = ref(false)
 const tasks = ref<SettlementTask[]>([])
@@ -249,7 +260,7 @@ const pagination = reactive({ total: 0, pageSize: 10, current: 1, showTotal: tru
 
 const filters = reactive<{ suppliers: string[]; contracts: string[]; granularity?: Granularity; timeLabel?: string; status?: TaskStatus }>({ suppliers: [], contracts: [] })
 
-const supplierOptions = computed(() => Array.from(new Set(store.list.map((i: any) => i.supplier).filter(Boolean))))
+const supplierOptions = computed(() => externalSupplierOptions.value.map(option => option.label))
 const contractOptions = computed(() => store.list.map((i: any) => ({ id: String(i.id), contractName: String(i.contractName || i.id), supplier: i.supplier || '—', amount: Number(i.amount) || 0, writtenOffAmount: Number(i.writtenOffAmount) || 0 })))
 const filteredContractOptions = computed(() => { if (!createForm.supplierIds?.length) return contractOptions.value; return contractOptions.value.filter(c => createForm.supplierIds.includes(c.supplier)) })
 
@@ -275,6 +286,15 @@ const calcSummaryForContracts = (ids: string[]) => { const items = contractOptio
 
 const submitCreate = async () => {
   if (!createForm.supplierIds.length || !createForm.contractIds.length) { Message.error('请选择供应商与合同'); return }
+  
+  // 验证供应商可用性
+  const validation = await validateSuppliers(createForm.supplierIds)
+  if (!validation.valid) {
+    const invalidNames = validation.details.filter(d => !d.available).map(d => d.name)
+    Message.error(`以下供应商不可用：${invalidNames.join(', ')}`)
+    return
+  }
+  
   const summary = calcSummaryForContracts(createForm.contractIds)
   const task = await createSettlementTask({
     supplierIds: [...createForm.supplierIds],
@@ -291,7 +311,62 @@ const submitCreate = async () => {
   Message.success('结算任务已创建')
 }
 
-const startTask = (task: SettlementTask) => { const suppliers = Array.from(new Set(contractOptions.value.filter(c => task.contractIds.includes(c.id)).map(c => c.supplier))); subtasks.value = suppliers.map((s, idx) => ({ id: `${task.id}-S${idx+1}`, taskId: task.id, supplierId: s, status: 'running', progress: 0, contracts: contractOptions.value.filter(c => c.supplier === s && task.contractIds.includes(c.id)).map(c => c.id), summary: calcSummaryForContracts(contractOptions.value.filter(c => c.supplier === s && task.contractIds.includes(c.id)).map(c => c.id)) })); detailVisible.value = true; currentTask.value = task; currentStep.value = 1; const t = window.setInterval(async () => { let done = 0; subtasks.value = subtasks.value.map(st => { if (st.status === 'running') { const p = Math.min(100, st.progress + Math.floor(10 + Math.random() * 20)); const status: TaskStatus = p >= 100 ? 'succeeded' : 'running'; if (status === 'succeeded') done += 1; return { ...st, progress: p, status } } if (st.status === 'succeeded') done += 1; return st }); const percent = Math.floor((done / subtasks.value.length) * 100); task.progress = percent; if (percent >= 100) { task.status = 'succeeded'; currentStep.value = 4; window.clearInterval(t); delete timers.value[task.id]; await completeSettlementTask(task.id); Message.success('结算任务已完成，可生成报告') } }, 1000); timers.value[task.id] = t }
+const startTask = async (task: SettlementTask) => {
+  // 从合同中提取供应商信息
+  const contracts = contractOptions.value.filter(c => task.contractIds.includes(c.id))
+  const suppliers = extractSuppliersFromContracts(contracts)
+  
+  // 创建按供应商分组的子任务
+  subtasks.value = suppliers.map((supplier, idx) => {
+    const supplierContracts = contracts.filter(c => {
+      // 匹配供应商，支持编码和名称匹配
+      return c.supplier === supplier.name || c.supplier === supplier.code || c.supplier === supplier.id
+    })
+    
+    return {
+      id: `${task.id}-S${idx+1}`,
+      taskId: task.id,
+      supplierId: supplier.id,
+      status: 'running',
+      progress: 0,
+      contracts: supplierContracts.map(c => c.id),
+      summary: calcSummaryForContracts(supplierContracts.map(c => c.id))
+    }
+  })
+  
+  detailVisible.value = true
+  currentTask.value = task
+  currentStep.value = 1
+  
+  // 模拟任务执行进度
+  const t = window.setInterval(async () => {
+    let done = 0
+    subtasks.value = subtasks.value.map(st => {
+      if (st.status === 'running') {
+        const p = Math.min(100, st.progress + Math.floor(10 + Math.random() * 20))
+        const status: TaskStatus = p >= 100 ? 'succeeded' : 'running'
+        if (status === 'succeeded') done += 1
+        return { ...st, progress: p, status }
+      }
+      if (st.status === 'succeeded') done += 1
+      return st
+    })
+    
+    const percent = Math.floor((done / subtasks.value.length) * 100)
+    task.progress = percent
+    
+    if (percent >= 100) {
+      task.status = 'succeeded'
+      currentStep.value = 4
+      window.clearInterval(t)
+      delete timers.value[task.id]
+      await completeSettlementTask(task.id)
+      Message.success('结算任务已完成，可生成报告')
+    }
+  }, 1000)
+  
+  timers.value[task.id] = t
+}
 
 const openDetail = (task: SettlementTask) => { currentTask.value = task; detailVisible.value = true; currentStep.value = task.status === 'succeeded' ? 4 : task.status === 'running' ? 2 : 0 }
 const retrySubtask = (st: SettlementSubTask) => { st.status = 'running'; st.progress = 0 }
@@ -319,6 +394,16 @@ const refresh = async () => { await store.fetchContractList({ page: 1, pageSize:
 const exportList = () => { const header = ['任务编号','供应商数','合同数','结算粒度','结算时间','预算金额','实际金额','差异金额','差异率','状态','进度','创建人','创建时间']; const rows = displayedTasks.value.map(t => [t.id, t.supplierIds.length, t.contractIds.length, granularityLabel(t.granularity), t.timeLabel, t.summary.budgetAmount, t.summary.actualAmount, t.summary.diffAmount, t.summary.diffRate, statusLabel(t.status), t.progress, t.createdBy, formatDate(t.createdAt)]); const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `settlement-tasks-${Date.now()}.csv`; a.click(); URL.revokeObjectURL(url) }
 const onPageChange = (page: number) => { pagination.current = page }
 onMounted(async () => {
+  // 注册供应商变更监听器
+  const unregisterListener = supplierChangeNotifier.registerListener(settlementSystemListener)
+  
+  // 组件卸载时注销监听器
+  onUnmounted(() => {
+    unregisterListener()
+  })
+  
+  // 加载外部供应商数据
+  await loadExternalSuppliers()
   await store.fetchContractList({ page: 1, pageSize: 100 })
   const resp = await getSettlementTasks()
   tasks.value = resp.list

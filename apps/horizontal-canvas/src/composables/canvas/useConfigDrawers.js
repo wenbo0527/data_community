@@ -80,7 +80,7 @@ export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
     if (!visible) closeConfigDrawer(key)
   }
 
-  return { drawerStates, openConfigDrawer, closeConfigDrawer, handleConfigConfirm, handleConfigCancel, handleDrawerVisibilityChange, structuredLayout }
+  return { drawerStates, openConfigDrawer, closeConfigDrawer, handleConfigConfirm, handleConfigCancel, handleDrawerVisibilityChange, structuredLayout, closeAllDrawers }
 }
 /*
 用途：配置抽屉组合式（打开/关闭/写回）

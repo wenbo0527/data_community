@@ -66,24 +66,16 @@ const handleTabChange = (tabKey: string) => {
   updateChartWithCurrentData()
 }
 
-// 根据当前选择更新图表数据
+// 根据当前选择更新图表数据（以百分比展示）
 const updateChartWithCurrentData = () => {
-  // 如果数据中没有granularity字段，直接使用所有数据
   const filteredData = props.chartData.length > 0 && props.chartData[0].granularity 
     ? props.chartData.filter(item => item.granularity === activeTab.value)
     : props.chartData
-  
-  console.log('过滤后的数据:', filteredData)
-  
-  // 根据图表类型处理数据
+
   if (chartType.value === 'burndown') {
-    // 燃尽图：直接使用原始数据
-    console.log('更新燃尽图:', filteredData, chartType.value)
     updateChart(filteredData, chartType.value)
   } else {
-    // 累积消耗图：计算每月消耗量
     const cumulativeData = calculateCumulativeData(filteredData)
-    console.log('更新累积图:', cumulativeData, chartType.value)
     updateChart(cumulativeData, chartType.value)
   }
 }
@@ -112,7 +104,46 @@ const calculateCumulativeData = (data: BurndownItem[]) => {
   })
 }
 
-// 更新图表
+// 将数据归一化为百分比
+const normalizeToPercent = (data: any[], type: 'burndown' | 'cumulative') => {
+  const initialBudget = (data?.[0]?.initialBudget !== undefined)
+    ? Number(data[0].initialBudget)
+    : Number(data?.[0]?.budget || 0)
+
+  const safeInitial = initialBudget > 0 ? initialBudget : (data.reduce((max, i) => Math.max(max, Number(i.budget || 0)), 0) || 1)
+
+  if (type === 'burndown') {
+    const budgetPct = data.map(item => {
+      const ib = Number(item.initialBudget ?? safeInitial)
+      const b = Number(item.budget || 0)
+      return Number(((b / (ib || 1)) * 100).toFixed(2))
+    })
+    const actualPct = data.map(item => {
+      const ib = Number(item.initialBudget ?? safeInitial)
+      const a = Number(item.actual || 0)
+      return Number(((a / (ib || 1)) * 100).toFixed(2))
+    })
+    // 预警线：剩余低于20%
+    const warnPct = data.map(() => 20)
+    return { budgetPct, actualPct, warnPct }
+  } else {
+    const budgetPct = data.map(item => {
+      const ib = Number(item.initialBudget ?? safeInitial)
+      const b = Number(item.budget || 0) // 此处为累积消耗
+      return Number(((b / (ib || 1)) * 100).toFixed(2))
+    })
+    const actualPct = data.map(item => {
+      const ib = Number(item.initialBudget ?? safeInitial)
+      const a = Number(item.actual || 0) // 累积实际消耗
+      return Number(((a / (ib || 1)) * 100).toFixed(2))
+    })
+    // 预警线：消耗高于80%
+    const warnPct = data.map(() => 80)
+    return { budgetPct, actualPct, warnPct }
+  }
+}
+
+// 更新图表（以百分比展示）
 const updateChart = (data: any[], type: string) => {
   console.log('updateChart被调用:', {
     hasChartRef: !!burndownChartRef.value,
@@ -141,7 +172,9 @@ const updateChart = (data: any[], type: string) => {
   const rect = chartDom.getBoundingClientRect()
   console.log('图表容器尺寸:', { width: rect.width, height: rect.height })
 
-  // 基础配置
+  const percentData = normalizeToPercent(data, type as 'burndown' | 'cumulative')
+
+  // 基础配置（百分比坐标轴）
   const option: any = {
     tooltip: {
       trigger: 'axis',
@@ -155,13 +188,13 @@ const updateChart = (data: any[], type: string) => {
         let result = params[0].name + '<br/>'
         params.forEach((param: any) => {
           const value = typeof param.value === 'number' ? param.value.toFixed(2) : param.value
-          result += param.marker + param.seriesName + ': ' + value + ' 万元<br/>'
+          result += param.marker + param.seriesName + ': ' + value + ' %<br/>'
         })
         return result
       }
     },
     legend: {
-      data: type === 'cumulative' ? ['累积预算消耗', '累积实际消耗', '预警线'] : ['预算剩余', '实际剩余', '预警线'],
+      data: type === 'cumulative' ? ['累积预算消耗(%)', '累积实际消耗(%)', '预警线'] : ['预算剩余(%)', '实际剩余(%)', '预警线'],
       top: 10
     },
     grid: {
@@ -177,9 +210,11 @@ const updateChart = (data: any[], type: string) => {
     },
     yAxis: {
       type: 'value',
-      name: '金额(万元)',
+      name: '进度(%)',
+      min: 0,
+      max: 100,
       axisLabel: {
-        formatter: '{value}'
+        formatter: '{value}%'
       }
     }
   }
@@ -189,25 +224,25 @@ const updateChart = (data: any[], type: string) => {
     // 累积消耗图
     option.series = [
       {
-        name: '累积预算消耗',
+        name: '累积预算消耗(%)',
         type: 'line',
         stack: 'Total',
-        data: data.map(item => parseFloat((item.budget / 10000).toFixed(2))),
+        data: percentData.budgetPct,
         itemStyle: { color: '#1890ff' },
         areaStyle: { color: 'rgba(24, 144, 255, 0.1)' }
       },
       {
-        name: '累积实际消耗',
+        name: '累积实际消耗(%)',
         type: 'line',
         stack: 'Total',
-        data: data.map(item => parseFloat((item.actual / 10000).toFixed(2))),
+        data: percentData.actualPct,
         itemStyle: { color: '#52c41a' },
         areaStyle: { color: 'rgba(82, 196, 26, 0.1)' }
       },
       {
         name: '预警线',
         type: 'line',
-        data: data.map(item => parseFloat(((item.budget * 1.1) / 10000).toFixed(2))),
+        data: percentData.warnPct,
         itemStyle: { color: '#f53f3f' },
         lineStyle: { type: 'dashed' }
       }
@@ -216,23 +251,23 @@ const updateChart = (data: any[], type: string) => {
     // 燃尽图
     option.series = [
       {
-         name: '预算剩余',
+         name: '预算剩余(%)',
          type: 'line',
-         data: data.map(item => parseFloat((item.budget / 10000).toFixed(2))),
+         data: percentData.budgetPct,
          itemStyle: { color: '#1890ff' },
          areaStyle: { color: 'rgba(24, 144, 255, 0.1)' }
        },
        {
-         name: '实际剩余',
+         name: '实际剩余(%)',
          type: 'line',
-         data: data.map(item => parseFloat((item.actual / 10000).toFixed(2))),
+         data: percentData.actualPct,
          itemStyle: { color: '#52c41a' },
          areaStyle: { color: 'rgba(82, 196, 26, 0.1)' }
        },
        {
          name: '预警线',
          type: 'line',
-         data: data.map(item => parseFloat(((item.budget * 0.9) / 10000).toFixed(2))),
+         data: percentData.warnPct,
          itemStyle: { color: '#f53f3f' },
          lineStyle: { type: 'dashed' }
        }

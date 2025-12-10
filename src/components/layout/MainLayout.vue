@@ -52,7 +52,7 @@ import { useRouter, useRoute } from 'vue-router'
 import TopMenu from './TopMenu.vue'
 import SideMenu from './SideMenu.vue'
 import BreadcrumbNav from './BreadcrumbNav.vue'
-import { getMenuItemByPath } from '../../config/menuConfig'
+import { getMenuItemByPath, getMenuItemByRouteName } from '../../config/menuConfig'
 import {
   IconMenuFold,
   IconMenuUnfold
@@ -111,13 +111,22 @@ const toggleCollapse = () => {
 
 // 根据路由更新活动模块
 const updateActiveModuleFromRoute = () => {
-  const menuInfo = getMenuItemByPath(route.path)
-  if (menuInfo && menuInfo.module !== activeModule.value) {
-    activeModule.value = menuInfo.module
-    
-    // 只在需要时更新顶部菜单选中状态，避免重复调用
-    if (topMenuRef.value && !topMenuRef.value.selectedKeys?.includes(menuInfo.module)) {
-      topMenuRef.value.setActiveMenu(menuInfo.module)
+  const infoByName = getMenuItemByRouteName(route.name)
+  let moduleKey = infoByName?.module
+  if (!moduleKey) {
+    const p = route.path || ''
+    if (p.startsWith('/home')) moduleKey = 'home'
+    else if (p.startsWith('/discovery')) moduleKey = 'discovery'
+    else if (p.startsWith('/exploration')) moduleKey = 'exploration'
+    else if (p.startsWith('/management')) moduleKey = 'management'
+    else if (p.startsWith('/marketing')) moduleKey = 'marketing'
+    else if (p.startsWith('/risk')) moduleKey = 'risk'
+    else if (p.startsWith('/touch')) moduleKey = 'touch'
+  }
+  if (moduleKey && moduleKey !== activeModule.value) {
+    activeModule.value = moduleKey
+    if (topMenuRef.value && !topMenuRef.value.selectedKeys?.includes(moduleKey)) {
+      topMenuRef.value.setActiveMenu(moduleKey)
     }
   }
 }

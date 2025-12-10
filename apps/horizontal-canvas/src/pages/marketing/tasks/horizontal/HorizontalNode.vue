@@ -9,6 +9,7 @@
     :selected="selected"
     :hover="hover"
     :disabled="disabled"
+    :data-node-id="id"
   >
     <template #icon>
       <component 

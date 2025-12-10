@@ -125,7 +125,7 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
     let yRel
     if (evenDistribution && contentH > 0) {
       const step = contentH / n
-      yRel = start + (idx + 0.5) * step
+      yRel = includeIn ? start + (idx + 1) * (NODE_DIMENSIONS.ROW_HEIGHT) + (idx * NODE_DIMENSIONS.ROW_GAP) - NODE_DIMENSIONS.ROW_HEIGHT / 2 : start + (idx + 0.5) * step
     } else {
       yRel = start + idx * NODE_DIMENSIONS.ROW_HEIGHT + Math.floor(NODE_DIMENSIONS.ROW_HEIGHT / 2)
     }

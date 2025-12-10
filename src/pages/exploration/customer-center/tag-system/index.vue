@@ -1,5 +1,5 @@
 <template>
-  <div class="tag-system-index">
+  <div v-if="$route.name === 'tag-system'" class="tag-system-index">
     <a-card title="标签系统" :bordered="false">
       <a-row :gutter="[24, 24]">
         <a-col :span="8">
@@ -151,6 +151,7 @@
       </div>
     </a-modal>
   </div>
+  <router-view v-else />
 </template>
 
 <script setup>

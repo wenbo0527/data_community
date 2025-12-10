@@ -568,6 +568,7 @@ import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconSearch, IconRefresh, IconDelete, IconDown, IconSettings, IconImport, IconUpload, IconEdit, IconCheck, IconClose, IconArrowLeft } from '@arco-design/web-vue/es/icon'
 import ConditionConfig from '@/components/common/ConditionConfig.vue'
+import { useTagManagement } from '@/composables/useTagManagement'
 
 const router = useRouter()
 
@@ -676,58 +677,23 @@ const importForm = ref({
   batchSize: 1000,
   duplicateHandling: 'skip'
 })
-
-// 生成模拟数据
-const generateTagData = (count: number): TagItem[] => {
-  const dataTypes = ['string', 'number']
-  const categories = ['basic', 'behavior', 'preference', 'business']
-  const tagTypes = ['static', 'dynamic', 'computed', 'rule']
-  const shareLevels = ['public', 'private']
-  const mappingStatuses: ('configured' | 'unconfigured' | 'error')[] = ['configured', 'unconfigured', 'error']
-  const users = ['张三', '李四', '王五', '赵六', '钱七']
-  
-  return Array.from({ length: count }, (_, index) => ({
-    id: `TAG_${String(index + 1).padStart(3, '0')}`,
-    name: `标签${index + 1}`,
-    dataType: dataTypes[Math.floor(Math.random() * dataTypes.length)],
-    category: categories[Math.floor(Math.random() * categories.length)],
-    tagType: tagTypes[Math.floor(Math.random() * tagTypes.length)],
-    dimensionKey: `dim_key_${index + 1}`,
-    shareLevel: shareLevels[Math.floor(Math.random() * shareLevels.length)],
-    createUser: users[Math.floor(Math.random() * users.length)],
-    createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    description: `这是标签${index + 1}的描述信息`,
-    mappingStatus: mappingStatuses[Math.floor(Math.random() * mappingStatuses.length)]
-  }))
-}
+const { tags: storeTags, fetchTags, deleteTags: storeDeleteTags, createTag: storeCreateTag, updateTag: storeUpdateTag } = useTagManagement()
 
 // 获取数据
 const fetchData = async () => {
   loading.value = true
   try {
-    // 模拟API请求
-    setTimeout(() => {
-      const data = generateTagData(50)
-      
-      // 根据搜索条件筛选
-      let filteredData = data
-      if (searchForm.tagName) {
-        filteredData = filteredData.filter(item => 
-          item.name.includes(searchForm.tagName) ||
-          item.id.includes(searchForm.tagName)
-        )
-      }
-      
-      // 更新表格数据和分页信息
-      pagination.total = filteredData.length
-      const start = (pagination.current - 1) * pagination.pageSize
-      const end = start + pagination.pageSize
-      tableData.value = filteredData.slice(start, end)
-      
-      loading.value = false
-    }, 500)
-  } catch (error) {
-    console.error('获取标签数据失败:', error)
+    await fetchTags({ searchText: searchForm.tagName })
+    const list = storeTags.value
+    let filtered = list
+    if (searchForm.tagName) {
+      filtered = list.filter(item => item.name.includes(searchForm.tagName) || item.id.includes(searchForm.tagName))
+    }
+    pagination.total = filtered.length
+    const start = (pagination.current - 1) * pagination.pageSize
+    const end = start + pagination.pageSize
+    tableData.value = filtered.slice(start, end)
+  } finally {
     loading.value = false
   }
 }
@@ -812,8 +778,11 @@ const addTagByImport = () => {
 }
 
 // 删除标签
-const removeTag = (index: number) => {
-  tableData.value.splice(index, 1)
+const removeTag = async (index: number) => {
+  const target = tableData.value[index]
+  if (!target) return
+  await storeDeleteTags([target.id])
+  await fetchData()
   Message.success('删除成功')
 }
 
@@ -843,28 +812,25 @@ const goToTableRegistration = () => {
 }
 
 // 更新标签
-const updateTag = (record: TagItem) => {
-  Message.info('标签更新功能开发中...')
+const updateTag = async (record: TagItem) => {
+  await storeUpdateTag(record.id, { ...record })
+  await fetchData()
+  Message.success('标签已更新')
 }
 
 // 保存标签
-const saveTag = () => {
+const saveTag = async () => {
   if (createMode.value === 'edit') {
     if (editIndex.value >= 0) {
-      // 编辑现有标签
-      tableData.value[editIndex.value] = { ...editForm.value }
+      await storeUpdateTag(editForm.value.id, { ...editForm.value })
       Message.success('标签更新成功')
     } else {
-      // 新增标签
-      const newTag = {
-        ...editForm.value,
-        createTime: new Date().toISOString()
-      }
-      tableData.value.unshift(newTag)
+      const newTag = { ...editForm.value, createTime: new Date().toISOString() }
+      await storeCreateTag(newTag)
       Message.success('标签创建成功')
     }
+    await fetchData()
   } else if (createMode.value === 'rule') {
-    // 自定义规则创建标签
     const newTag: TagItem = {
       id: ruleForm.value.basic.id,
       name: ruleForm.value.basic.name,
@@ -877,10 +843,10 @@ const saveTag = () => {
       createTime: new Date().toISOString(),
       description: ruleForm.value.basic.description
     }
-    tableData.value.unshift(newTag)
+    await storeCreateTag(newTag)
+    await fetchData()
     Message.success('规则标签创建成功')
   } else if (createMode.value === 'import') {
-    // 数据导入创建标签
     Message.success('数据导入任务已提交，请稍后查看结果')
   }
   editModalVisible.value = false

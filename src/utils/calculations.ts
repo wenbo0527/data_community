@@ -79,3 +79,31 @@ export const formatAmount = (value: number): string => {
 export const formatPercent = (value: number): string => {
   return value ? `${(value * 100).toFixed(2)}%` : '-';
 }
+
+export const calculateBudgetRemaining = (budgetAmount: number, writeOffAmount: number): number => {
+  return Number(((budgetAmount || 0) - (writeOffAmount || 0)).toFixed(2))
+}
+
+export const calculateBudgetUsageRate = (budgetAmount: number, writeOffAmount: number): number => {
+  if (!budgetAmount) return 0
+  return Number((writeOffAmount / budgetAmount).toFixed(4))
+}
+
+export const calculateContractCoverage = (contractAmount: number, budgetAmount: number): number => {
+  if (!budgetAmount) return 0
+  return Number((contractAmount / budgetAmount).toFixed(4))
+}
+
+export const calculateContractExecution = (writeOffAmount: number, contractAmount: number): number => {
+  if (!contractAmount) return 0
+  return Number((writeOffAmount / contractAmount).toFixed(4))
+}
+
+export const calculateSettlementDifference = (actualAmount: number, settlementAmount: number): number => {
+  return Number(((actualAmount || 0) - (settlementAmount || 0)).toFixed(2))
+}
+
+export const calculateSettlementDifferenceRate = (actualAmount: number, differenceAmount: number): number => {
+  if (!actualAmount) return 0
+  return Number((differenceAmount / actualAmount).toFixed(4))
+}

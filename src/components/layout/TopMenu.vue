@@ -18,7 +18,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { MENU_CONFIG, TOP_MENU_ORDER, getMenuItemByPath, getModuleDefaultPath } from '../../config/menuConfig'
+import { MENU_CONFIG, TOP_MENU_ORDER, getMenuItemByPath, getModuleDefaultPath, getMenuItemByRouteName } from '../../config/menuConfig'
 import { navigateTo } from '../../router/utils'
 
 const router = useRouter()
@@ -36,23 +36,30 @@ const emit = defineEmits(['menu-change'])
 
 // 根据当前路由更新选中状态
 const updateSelectedFromRoute = (shouldEmit = true) => {
-  const menuInfo = getMenuItemByPath(route.path)
-  if (menuInfo) {
-    const newSelectedKeys = [menuInfo.module]
+  const byName = getMenuItemByRouteName(route.name)
+  if (byName) {
+    const newSelectedKeys = [byName.module]
     if (JSON.stringify(selectedKeys.value) !== JSON.stringify(newSelectedKeys)) {
       selectedKeys.value = newSelectedKeys
       if (shouldEmit) {
-        emit('menu-change', menuInfo.module)
+        emit('menu-change', byName.module)
       }
     }
-  } else {
-    // 默认选中首页或第一个菜单
-    const defaultKey = route.path === '/' ? 'home' : topMenuOrder[1] // discovery
-    if (!selectedKeys.value.includes(defaultKey)) {
-      selectedKeys.value = [defaultKey]
-      if (shouldEmit) {
-        emit('menu-change', defaultKey)
-      }
+    return
+  }
+  const p = route.path || ''
+  let defaultKey = 'home'
+  if (p.startsWith('/home')) defaultKey = 'home'
+  else if (p.startsWith('/discovery')) defaultKey = 'discovery'
+  else if (p.startsWith('/exploration')) defaultKey = 'exploration'
+  else if (p.startsWith('/management')) defaultKey = 'management'
+  else if (p.startsWith('/marketing')) defaultKey = 'marketing'
+  else if (p.startsWith('/risk')) defaultKey = 'risk'
+  else if (p.startsWith('/touch')) defaultKey = 'touch'
+  if (!selectedKeys.value.includes(defaultKey)) {
+    selectedKeys.value = [defaultKey]
+    if (shouldEmit) {
+      emit('menu-change', defaultKey)
     }
   }
 }

@@ -31,6 +31,8 @@ export const useExternalDataStore = defineStore('externalData', {
     targetLoanOptions: [] as number[],
     lifecycleStages: [] as any[],
     lifecycle: {} as any,
+    lifecycleList: [] as any[],
+    currentProductId: null as string | number | null,
     services: [] as any[],
   }),
 
@@ -63,7 +65,54 @@ export const useExternalDataStore = defineStore('externalData', {
     async createTaskAction(payload: { taskName: string; config?: Partial<TaskConfig> }) { this.creatingTask = true; this.error = null; try { await createTask(payload); await this.fetchTasks(); return true } catch (e: any) { this.error = e?.message ?? '创建任务失败'; return false } finally { this.creatingTask = false } },
     async updateTaskProgressAction(id: string | number, progress: number) { this.tasksLoading = true; this.error = null; try { await updateTaskProgress(Number(id), progress); await this.fetchTaskDetail(Number(id)); return true } catch (e: any) { this.error = e?.message ?? '更新任务进度失败'; return false } finally { this.tasksLoading = false } },
     async fetchTargetLoanOptions() { const set = new Set<number>(); (this.burndown || []).forEach((p: any) => { if (typeof p.targetLoan === 'number') set.add(p.targetLoan) }); (this.warnings || []).forEach((w: any) => { if (typeof w.targetLoan === 'number') set.add(w.targetLoan) }); this.targetLoanOptions = Array.from(set).sort((a, b) => a - b) },
-    async fetchLifecycleData(_params?: any) { this.error = null; try { const now = new Date(); const fmt = (d: Date) => d.toISOString().slice(0, 10); this.lifecycleStages = [ { stage: 'registration', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 2)), endDate: fmt(new Date(now.getFullYear(), 0, 5)), description: '完成注册与资产归档' }, { stage: 'evaluation', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 6)), endDate: fmt(new Date(now.getFullYear(), 0, 18)), description: '完成质量与性能评估' }, { stage: 'approval', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 19)), endDate: fmt(new Date(now.getFullYear(), 0, 22)), description: '审批通过' }, { stage: 'deployment', status: 'in_progress', startDate: fmt(new Date(now.getFullYear(), 0, 23)), description: '上线发布中' }, { stage: 'operation', status: 'pending', description: '运维监控准备' } ]; this.lifecycle = { currentStage: 'deployment', currentStatus: 'in_progress', stages: this.lifecycleStages } } catch (e: any) { this.error = e?.message ?? '获取生命周期数据失败' } },
+    async fetchLifecycleData(params?: { productId?: string | number }) {
+      this.error = null
+      try {
+        const now = new Date()
+        const fmt = (d: Date) => d.toISOString().slice(0, 10)
+        if (params?.productId != null) {
+          const s = [
+            { stage: 'registration', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 2)), endDate: fmt(new Date(now.getFullYear(), 0, 5)), description: '完成注册与资产归档' },
+            { stage: 'evaluation', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 6)), endDate: fmt(new Date(now.getFullYear(), 0, 18)), description: '完成质量与性能评估' },
+            { stage: 'approval', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 19)), endDate: fmt(new Date(now.getFullYear(), 0, 22)), description: '审批通过' },
+            { stage: 'deployment', status: 'in_progress', startDate: fmt(new Date(now.getFullYear(), 0, 23)), description: '上线发布中' },
+            { stage: 'operation', status: 'pending', description: '运维监控准备' }
+          ]
+          this.lifecycleStages = s
+          this.lifecycle = { currentStage: 'deployment', currentStatus: 'in_progress', stages: s }
+          this.currentProductId = params.productId as any
+          const p = (this.products || []).find((x: any) => String(x.id) === String(params.productId))
+          const name = p?.name || `外数-${params.productId}`
+          const supplier = p?.supplier || p?.provider || '—'
+          const item = { productId: params.productId, name, supplier, stages: s, currentStage: 'deployment', currentStatus: 'in_progress' }
+          const idx = (this.lifecycleList || []).findIndex((x: any) => String(x.productId) === String(params.productId))
+          if (idx >= 0) this.lifecycleList.splice(idx, 1, item)
+          else this.lifecycleList = [...(this.lifecycleList || []), item]
+        } else {
+          const base = (this.products && this.products.length > 0 ? this.products : [
+            { id: 1, name: '外数-1', supplier: '供应商A' },
+            { id: 2, name: '外数-2', supplier: '供应商B' },
+            { id: 3, name: '外数-3', supplier: '供应商C' },
+            { id: 4, name: '外数-4', supplier: '供应商D' }
+          ]) as any[]
+          this.lifecycleList = base.map((p: any, i: number) => {
+            const s = [
+              { stage: 'registration', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 2)), endDate: fmt(new Date(now.getFullYear(), 0, 5)) },
+              { stage: 'evaluation', status: 'completed', startDate: fmt(new Date(now.getFullYear(), 0, 6)), endDate: fmt(new Date(now.getFullYear(), 0, 18)) },
+              { stage: 'approval', status: i % 3 === 0 ? 'completed' : 'in_progress', startDate: fmt(new Date(now.getFullYear(), 0, 19)) },
+              { stage: 'deployment', status: i % 3 === 0 ? 'in_progress' : 'pending', startDate: fmt(new Date(now.getFullYear(), 0, 23)) },
+              { stage: 'operation', status: 'pending' }
+            ]
+            const current = s.find((x: any) => x.status === 'in_progress')?.stage || 'approval'
+            const status = s.find((x: any) => x.status === 'in_progress')?.status || 'completed'
+            return { productId: p.id, name: p.name, supplier: p.supplier || p.provider || '—', stages: s, currentStage: current, currentStatus: status }
+          })
+          this.lifecycleStages = []
+          this.lifecycle = {}
+          this.currentProductId = null
+        }
+      } catch (e: any) { this.error = e?.message ?? '获取生命周期数据失败' }
+    },
     async fetchServices() { this.error = null; try { const base = (this.products || []).map((p: any, idx: number) => ({ id: String(p.id ?? idx + 1), name: p.name || `外数服务-${idx + 1}`, supplier: p.supplier || p.provider || '—', serviceType: ['API','文件','数据库','平台工具'][idx % 4], billingMode: p.billingMode || 'per_call', unitPrice: typeof p.unitPrice === 'number' ? p.unitPrice : (idx + 1) * 1.5, status: p.status === 'online' ? 'online' : p.status === 'maintaining' ? 'maintaining' : 'pending' })); this.services = base } catch (e: any) { this.error = e?.message ?? '获取服务列表失败' } },
   },
 })

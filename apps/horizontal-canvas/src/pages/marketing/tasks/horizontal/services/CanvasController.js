@@ -17,7 +17,10 @@ export class CanvasController {
       deleteNodeCascade: opts.deleteNodeCascade,
       getContainerRect: opts.getContainerRect,
       setNodeMenuButton: opts.setNodeMenuButton,
-      setNodeActionsMenu: opts.setNodeActionsMenu
+      setNodeActionsMenu: opts.setNodeActionsMenu,
+      getNodeActionsMenuRect: opts.getNodeActionsMenuRect,
+      isMenuHovering: opts.isMenuHovering,
+      closeAllDrawers: opts.closeAllDrawers
     })
     this.eventService.bindGraphEvents(this.graph)
   }

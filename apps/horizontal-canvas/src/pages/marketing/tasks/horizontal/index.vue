@@ -46,7 +46,7 @@
     </a-card>
   </div>
 
-  <div class="content" ref="contentRef" :style="{ paddingBottom: (showStatisticsPanel && isViewMode && isPublished) ? (statisticsPanelHeight + 'px') : '0px' }">
+  <div class="content" ref="contentRef" :style="{ paddingRight: (showStatisticsPanel && isViewMode && isPublished) ? (statisticsPanelWidth + 'px') : '0px' }" @mousedown="onContentMouseDown">
 
     
 
@@ -65,6 +65,7 @@
         :style="{ top: toolbarPosition.top + 'px', right: toolbarPosition.right + 'px', zIndex: toolbarPosition.zIndex }"
       >
         <CanvasToolbar
+          ref="toolbarRef"
           :show-debug-panel="false"
           @zoom-in="handleZoomIn"
           @zoom-out="handleZoomOut"
@@ -109,11 +110,8 @@
         ></div>
       </div>
       <div 
-        v-if="showNodeSelector" 
-        class="selector-backdrop" 
-        @click="closeNodeSelector"
-        @dragover.prevent
-        @drop="onCanvasDrop"
+        v-if="showNodeSelector && nodeSelectorMode !== 'toolbar'" 
+        class="selector-backdrop"
       ></div>
       <!-- 节点类型选择器（左上角固定显示） -->
       <NodeTypeSelector
@@ -128,6 +126,9 @@
         v-if="nodeActionsMenu.visible"
         class="node-actions-menu"
         :style="{ left: nodeActionsMenu.x + 'px', top: nodeActionsMenu.y + 'px' }"
+        ref="nodeActionsMenuEl"
+        @mouseenter="nodeActionsMenuHovering = true"
+        @mouseleave="nodeActionsMenuHovering = false; nodeActionsMenu.visible = false"
       >
         <button class="menu-item" @click="renameCurrentNode">重命名</button>
         <button class="menu-item" @click="copyCurrentNode">复制</button>
@@ -268,7 +269,7 @@ const editingTaskVersion = ref(null)
 const { showStatisticsPanel, showMinimap, scaleDisplayText, statisticsPanelWidth, statisticsPanelHeight } = useCanvasState()
 const isViewMode = computed(() => route.query.mode === 'view')
 const isPublished = computed(() => taskStatus.value === 'published' || taskStatus.value === 'running')
-const initializing = ref(route.query.mode === 'edit' && !!route.query.id)
+const initializing = ref(((route.query.mode === 'edit') || (route.query.mode === 'view')) && !!route.query.id)
 
 const canvasContainerRef = ref(null)
 const contentRef = ref(null)
@@ -283,7 +284,22 @@ const nodeSelectorPosition = ref({ x: 0, y: 0 })
 const nodeSelectorSourceNode = ref(null)
 let pendingCreatePoint = { x: 0, y: 0 }
 let pendingInsertionEdge = null
+const nodeSelectorMode = ref(null)
 const nodeActionsMenu = ref({ visible: false, x: 0, y: 0, nodeId: null })
+const nodeActionsMenuHovering = ref(false)
+const nodeActionsMenuEl = ref(null)
+const getNodeActionsMenuRect = () => {
+  try { return nodeActionsMenuEl.value?.getBoundingClientRect?.() || null } catch { return null }
+}
+function onContentMouseDown(e) {
+  try {
+    if (!showNodeSelector.value) return
+    if (nodeSelectorMode.value !== 'toolbar') return
+    const el = document.querySelector('.node-type-selector')
+    if (el && el.contains(e.target)) return
+    closeNodeSelector()
+  } catch {}
+}
 const edgeActionsMenu = ref({ visible: false, x: 0, y: 0, edgeId: null })
 const portActionsMenu = ref({ visible: false, x: 0, y: 0, nodeId: null, portId: null, edgeId: null })
 // 当前正在配置的抽屉与节点
@@ -305,10 +321,39 @@ let minimap = null
 const minimapPosition = ref({ left: 0, top: 0 })
 const isPanning = ref(false)
 let minimapPaused = false
+// 工具栏组件引用（用于获取小地图按钮的当前位置）
+const toolbarRef = ref(null)
+const clickAddNodeType = ref('');
+
+// 窗口大小变化时，若小地图已显示，则根据按钮位置重新计算弹框位置
+function updateMinimapPositionOnResize() {
+  if(showMinimap.value){
+    try {
+      const anchorRect = toolbarRef.value?.getMinimapAnchorRect?.() || null
+      const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.() || null
+      const basePos = useCanvasState().computeMinimapPosition(anchorRect, canvasRect)
+      const desired = { left: Math.max(16, basePos.left - 120), top: basePos.top }
+      const panelRect = minimapContainer.value?.getBoundingClientRect?.() || null
+      if (canvasRect && panelRect) {
+        const clamped = useCanvasState().clampPanelPosition(desired, { width: canvasRect.width, height: canvasRect.height }, { width: panelRect.width, height: panelRect.height }, 16)
+        minimapPosition.value = clamped
+      } else {
+        minimapPosition.value = desired
+      }
+      setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
+    } catch {}
+  };
+  (showNodeSelector.value && clickAddNodeType.value) &&  toolbarRef.value?.getAddNodeAnchorRect?.();
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', updateMinimapPositionOnResize)
+}
 let centerTaskId = 0
 let centerTimer = null
+let firstCenterDone = false
 function scheduleCenterContent(options = {}) {
   if (!graph) return
+  if (isViewMode.value && firstCenterDone) return
   centerTaskId++
   const id = centerTaskId
   const padding = options.padding
@@ -331,6 +376,7 @@ function scheduleCenterContent(options = {}) {
           if (typeof graph.zoomTo === 'function') graph.zoomTo(z)
           else graph.zoom(z)
         }
+        if (isViewMode.value) firstCenterDone = true
         if (onDone) onDone()
       }, 120)
     })
@@ -810,6 +856,10 @@ onMounted(async () => {
   updateDebugDockBounds()
   const resizeHandlers = useCanvasState().setupPanelResizeListeners(toolbarWrapperRef.value, contentRef.value, showStatisticsPanel, isViewMode.value, isPublished.value, statisticsPanelWidth, debugDockBounds, statisticsPanelTop)
 })
+
+onBeforeUnmount(() => {
+  try { window.removeEventListener('resize', updateMinimapPositionOnResize) } catch {}
+})
             let best = null
             let bestDist = Infinity
             candidates.forEach(c => {
@@ -1095,8 +1145,11 @@ onMounted(async () => {
     setPendingCreatePoint: p => { pendingCreatePoint = p },
     setPendingInsertionEdge: e => { pendingInsertionEdge = e },
     deleteNodeCascade: id => deleteNodeCascade(id),
-    getContainerRect: () => canvasContainerRef.value.getBoundingClientRect(),
-    setNodeActionsMenu: v => { nodeActionsMenu.value = v }
+    getContainerRect: () => contentRef.value.getBoundingClientRect(),
+    setNodeActionsMenu: v => { nodeActionsMenu.value = v },
+    getNodeActionsMenuRect,
+    isMenuHovering: () => nodeActionsMenuHovering.value,
+    closeAllDrawers: () => { try { configDrawers.closeAllDrawers() } catch {} }
   })
 
   // 面板开关时重新计算顶部偏移
@@ -1397,10 +1450,7 @@ onMounted(async () => {
       }, 30)
     }
   } catch {}
-  if (canvasContainerRef.value) {
-    canvasContainerRef.value.addEventListener('dragover', onCanvasDragOver)
-    canvasContainerRef.value.addEventListener('drop', onCanvasDrop)
-  }
+  // 移除拖拽创建节点的交互：仅支持点击选择器新增
 })
 
 onBeforeUnmount(() => {
@@ -1408,10 +1458,7 @@ onBeforeUnmount(() => {
     graph.dispose()
     graph = null
   }
-  if (canvasContainerRef.value) {
-    canvasContainerRef.value.removeEventListener('dragover', onCanvasDragOver)
-    canvasContainerRef.value.removeEventListener('drop', onCanvasDrop)
-  }
+  // 未再绑定拖拽相关事件，无需移除
 })
 
 function ensureStartNode() { ensureStartNodeSvc(graph) }
@@ -1442,23 +1489,24 @@ function setNodeDisabled(nodeId, disabled = true) {
 // 副作用：端口修正与两段边重连、历史入栈、TaskStorage 持久化写入、关闭节点选择器
   function handleNodeTypeSelected(nodeType) {
   if (isViewMode.value) return null
-  const node = insertNodeAndFinalize(graph, nodeType, pendingCreatePoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode, {
-    onPersist: (g) => {
-      try {
-        const data = collectCanvasData(g)
-        if (isEditMode.value && editingTaskId.value) {
-          TaskStorage.updateTask(editingTaskId.value, { canvasData: data, updateTime: new Date().toLocaleString('zh-CN') })
-        }
-      } catch {}
-    },
-    onAfter: () => { try { useCanvasState().hideNodeSelector(showNodeSelector) } catch {} }
-  })
+  const node = insertNodeAndFinalize(graph, nodeType, pendingCreatePoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode)
+  try { closeNodeSelector() } catch {}
   pendingInsertionEdge = null
   console.log('handleNodeTypeSelected111',nodeType,node);
   return node
 }
 
-function closeNodeSelector() { useCanvasState().hideNodeSelector(showNodeSelector); nodeSelectorSourceNode.value = null }
+function closeNodeSelector() { 
+  useCanvasState().hideNodeSelector(showNodeSelector); 
+  nodeSelectorSourceNode.value = null 
+  try {
+    if (nodeSelectorMode.value === 'toolbar' && canvasContainerRef.value) {
+      canvasContainerRef.value.removeEventListener('dragover', onCanvasDragOver)
+      canvasContainerRef.value.removeEventListener('drop', onCanvasDrop)
+    }
+  } catch {}
+  nodeSelectorMode.value = null
+}
 
 // 处理抽屉事件：写回节点数据并标记已配置
 function handleConfigConfirmProxy({ drawerType, config }) {
@@ -2798,6 +2846,7 @@ const handleQuickLayout = async () => {
 
 const handleAddNode = (payload) => {
   if (isViewMode.value) return
+  nodeSelectorMode.value = 'toolbar'
   const anchorRect = payload?.anchorRect
   const contentRect = contentRef.value?.getBoundingClientRect()
   if (anchorRect && contentRect && graph) {
@@ -2814,6 +2863,12 @@ const handleAddNode = (payload) => {
   }
   showNodeSelector.value = true
   nodeSelectorSourceNode.value = null
+  try {
+    if (canvasContainerRef.value) {
+      canvasContainerRef.value.addEventListener('dragover', onCanvasDragOver)
+      canvasContainerRef.value.addEventListener('drop', onCanvasDrop)
+    }
+  } catch {}
 }
 // ===== 关键函数定义 - 确保模板可以访问 =====
 // 这些函数必须在graph变量定义之后定义
@@ -3103,6 +3158,17 @@ const testClick = () => {
   transform: translateZ(0);
 }
 
+.canvas-container :deep(.x6-selection-box) {
+  pointer-events: none;
+}
+
+.canvas-container :deep(.x6-node),
+.canvas-container :deep(.x6-node-selected),
+.canvas-container :deep(.x6-selection-box),
+.canvas-container :deep(.x6-transform) {
+  cursor: default !important;
+}
+
 .canvas-container.is-panning :deep(.x6-node),
 .canvas-container.is-panning :deep(.x6-edge) {
   transition: none !important;
@@ -3328,3 +3394,4 @@ const testClick = () => {
   margin-right: 0;
 }
 </style>
+  

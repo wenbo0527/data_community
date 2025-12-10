@@ -3,7 +3,7 @@ import { loadComponent } from '../utils/componentLoader'
 export default [
   {
     path: '/marketing',
-    redirect: '/marketing/canvas',
+    redirect: '/marketing/dashboard',
     children: [
       {
         path: 'canvas',

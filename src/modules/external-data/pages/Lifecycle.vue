@@ -1,59 +1,102 @@
 <template>
   <div class="external-data-lifecycle">
-    <a-page-header title="外数生命周期" />
-    <a-card class="toolbar" :bordered="true" style="margin-bottom: 12px">
-      <a-form :model="filters" layout="inline">
-        <a-form-item field="stage" label="阶段">
-          <a-select v-model="filters.stage" allow-clear placeholder="选择阶段" style="width: 180px">
-            <a-option value="registration">注册</a-option>
-            <a-option value="evaluation">评估</a-option>
-            <a-option value="approval">审批</a-option>
-            <a-option value="deployment">上线</a-option>
-            <a-option value="operation">运维</a-option>
-            <a-option value="deprecation">下线</a-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item field="status" label="状态">
-          <a-select v-model="filters.status" allow-clear placeholder="选择状态" style="width: 180px">
-            <a-option value="pending">待处理</a-option>
-            <a-option value="in_progress">进行中</a-option>
-            <a-option value="completed">已完成</a-option>
-            <a-option value="failed">失败</a-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" @click="applyFilter">查询</a-button>
-          <a-button style="margin-left: 8px" @click="resetFilter">重置</a-button>
-        </a-form-item>
-      </a-form>
-    </a-card>
-    <a-grid :cols="2" :col-gap="12" :row-gap="12">
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-info">
+          <h2>外数生命周期</h2>
+          <p class="page-description">统一查看外数引入、上线、评估与归档状态，联动档案与预算监控</p>
+        </div>
+        <div class="header-actions">
+          <a-space>
+            <a-button type="outline" @click="$router.push('/risk/budget/monitor')">预算监控</a-button>
+            <a-button type="primary" @click="$router.push('/risk/external-data/archive')">外数档案</a-button>
+          </a-space>
+        </div>
+      </div>
+    </div>
+    <a-grid :cols="4" :col-gap="12" :row-gap="12" class="section-grid nav-grid">
       <a-grid-item>
-        <a-card title="阶段时间线">
-          <a-steps status="process" :current="currentIndex">
-            <a-step v-for="(s, idx) in stages" :key="idx" :title="stageLabel(s.stage)" :description="statusLabel(s.status)" />
-          </a-steps>
+        <a-card hoverable class="nav-card" @click="goNav('/risk/budget-overview')">
+          <div class="nav-title">预算管理</div>
+          <div class="nav-sub">总览与监控</div>
         </a-card>
       </a-grid-item>
       <a-grid-item>
-        <a-card title="阶段列表">
-          <a-table :data="displayedStages" :pagination="false">
+        <a-card hoverable class="nav-card" @click="goNav('/risk/external-data/archive')">
+          <div class="nav-title">档案管理</div>
+          <div class="nav-sub">档案与状态</div>
+        </a-card>
+      </a-grid-item>
+      <a-grid-item>
+        <a-card hoverable class="nav-card" @click="goNav('/risk/external-data/evaluation')">
+          <div class="nav-title">评估中心</div>
+          <div class="nav-sub">报告与结论</div>
+        </a-card>
+      </a-grid-item>
+      <a-grid-item>
+        <a-card hoverable class="nav-card" @click="goNav('/risk/external-data/service')">
+          <div class="nav-title">服务管理</div>
+          <div class="nav-sub">配置与使用</div>
+        </a-card>
+      </a-grid-item>
+    </a-grid>
+    <a-grid :cols="4" :col-gap="12" :row-gap="12" class="section-grid">
+      <a-grid-item>
+        <a-card hoverable @click="goArchive('importing')" class="metric-card importing">
+          <div class="metric-title">引入中</div>
+          <div class="metric-value">{{ statusCounts.importing }}</div>
+          <div class="metric-sub">点击查看对应档案</div>
+        </a-card>
+      </a-grid-item>
+      <a-grid-item>
+        <a-card hoverable @click="goArchive('online')" class="metric-card online">
+          <div class="metric-title">已上线</div>
+          <div class="metric-value">{{ statusCounts.online }}</div>
+          <div class="metric-sub">点击查看对应档案</div>
+        </a-card>
+      </a-grid-item>
+      <a-grid-item>
+        <a-card hoverable @click="goArchive('pending_evaluation')" class="metric-card pending">
+          <div class="metric-title">待评估</div>
+          <div class="metric-value">{{ statusCounts.pending_evaluation }}</div>
+          <div class="metric-sub">点击查看对应档案</div>
+        </a-card>
+      </a-grid-item>
+      <a-grid-item>
+        <a-card hoverable @click="goArchive('archived')" class="metric-card archived">
+          <div class="metric-title">已归档</div>
+          <div class="metric-value">{{ statusCounts.archived }}</div>
+          <div class="metric-sub">点击查看对应档案</div>
+        </a-card>
+      </a-grid-item>
+    </a-grid>
+
+    <a-grid :cols="2" :col-gap="12" :row-gap="12" class="section-grid">
+      <a-grid-item>
+        <a-card title="预算燃尽图">
+          <a-skeleton :loading="burndownLoading" animation>
+            <BudgetBurndownTabs :chart-data="burndownChartData" @granularity-change="onGranularityChange" />
+          </a-skeleton>
+        </a-card>
+      </a-grid-item>
+      <a-grid-item>
+        <a-card title="待办项">
+          <a-skeleton :loading="tasksLoading" animation>
+          <a-table :data="todoList" :pagination="false">
             <template #columns>
-              <a-table-column title="阶段" :width="160">
-                <template #cell="{ record }">{{ stageLabel(record.stage) }}</template>
+              <a-table-column title="任务" data-index="taskName" :width="200" />
+              <a-table-column title="进度" :width="160">
+                <template #cell="{ record }"><a-progress :percent="Number(record.progress||0)" size="small" /></template>
               </a-table-column>
               <a-table-column title="状态" :width="120">
-                <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
+                <template #cell="{ record }"><a-tag :status="taskTag(record.status)">{{ taskStatusLabel(record.status) }}</a-tag></template>
               </a-table-column>
-              <a-table-column title="开始日期" :width="160">
-                <template #cell="{ record }">{{ formatDate(record.startDate) }}</template>
-              </a-table-column>
-              <a-table-column title="结束日期" :width="160">
-                <template #cell="{ record }">{{ formatDate(record.endDate) }}</template>
-              </a-table-column>
-              <a-table-column title="描述" data-index="description" />
+            </template>
+            <template #empty>
+              <a-empty description="暂无待办项" />
             </template>
           </a-table>
+          </a-skeleton>
         </a-card>
       </a-grid-item>
     </a-grid>
@@ -64,27 +107,56 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useExternalDataStore } from '@/modules/external-data/stores/external-data'
+import { useRouter } from 'vue-router'
+import BudgetBurndownTabs from '@/components/modals/BudgetBurndownTabs.vue'
 const store = useExternalDataStore()
+const router = useRouter()
 
 interface Stage { stage: string; status: string; startDate?: string; endDate?: string; description?: string }
 
-const filters = reactive<{ stage?: string; status?: string }>({})
-const stages = ref<Stage[]>([])
-const lifecycleData = ref<any>({})
-const currentIndex = computed(() => Math.max(0, stages.value.findIndex(s => s.status === 'in_progress')))
-const displayedStages = computed(() => stages.value.filter(s => { if (filters.stage && s.stage !== filters.stage) return false; if (filters.status && s.status !== filters.status) return false; return true }))
+const mapStatus = (s?: string) => { if (s === 'active') return 'online'; if (s === 'inactive') return 'archived'; if (s === 'pending_evaluation') return 'pending_evaluation'; if (s === 'importing') return 'importing'; return (s || 'online') }
+const statusCounts = computed(() => {
+  const list = Array.isArray(store.products) ? store.products : []
+  const counts = { importing: 0, online: 0, pending_evaluation: 0, archived: 0 }
+  list.forEach((p: any) => { const st = mapStatus(p.status); if (st in counts) (counts as any)[st]++ })
+  return counts
+})
+const burndownChartData = computed(() => store.burndown || [])
+const todoList = computed(() => store.tasks || [])
+const burndownLoading = computed(() => store.burndownLoading)
+const tasksLoading = computed(() => store.tasksLoading)
 
 const stageLabel = (s?: string) => s === 'registration' ? '注册' : s === 'evaluation' ? '评估' : s === 'approval' ? '审批' : s === 'deployment' ? '上线' : s === 'operation' ? '运维' : s === 'deprecation' ? '下线' : '—'
 const statusLabel = (s?: string) => s === 'pending' ? '待处理' : s === 'in_progress' ? '进行中' : s === 'completed' ? '已完成' : s === 'failed' ? '失败' : '—'
 const statusTag = (s?: string) => s === 'pending' ? 'default' : s === 'in_progress' ? 'warning' : s === 'completed' ? 'success' : s === 'failed' ? 'danger' : 'default'
 const formatDate = (d?: string) => { try { return new Date(d || '').toLocaleDateString() } catch { return '—' } }
 
-const load = async () => { try { await store.fetchLifecycleData({}); stages.value = store.lifecycleStages || []; lifecycleData.value = store.lifecycle || {}; Message.success('已加载生命周期数据') } catch { Message.error('加载失败') } }
-const applyFilter = () => { Message.success('筛选已更新') }
-const resetFilter = () => { filters.stage = undefined; filters.status = undefined }
+const load = async () => { try { await store.fetchProducts(); await store.fetchLifecycleData({}); await store.fetchBurndown({ range: 'month' }); await store.fetchTasks(); Message.success('已加载生命周期数据') } catch { Message.error('加载失败') } }
 onMounted(load)
+const goArchive = (status: string) => { router.push({ path: '/risk/external-data/archive', query: { status } }) }
+const goNav = (path: string) => { router.push(path) }
+const onGranularityChange = async (g: 'month' | 'quarter') => { await store.fetchBurndown({ range: g }) }
+const taskTag = (s?: string) => s === 'pending' ? 'default' : s === 'in_progress' ? 'warning' : s === 'completed' ? 'success' : 'default'
+const taskStatusLabel = (s?: string) => s === 'pending' ? '待处理' : s === 'in_progress' ? '进行中' : s === 'completed' ? '已完成' : '—'
 </script>
 
 <style scoped>
 .toolbar { margin-bottom: 12px; }
+.metric-value { font-size: 28px; font-weight: 600; }
+.metric-sub { color: var(--color-text-2); margin-top: 4px; }
+.metric-title { font-weight: 600; margin-bottom: 6px; }
+.metric-card { border: none; }
+.metric-card.importing { background: linear-gradient(180deg, rgba(250, 219, 120, 0.25), rgba(250, 219, 120, 0.15)); }
+.metric-card.online { background: linear-gradient(180deg, rgba(82, 196, 26, 0.20), rgba(82, 196, 26, 0.10)); }
+.metric-card.pending { background: linear-gradient(180deg, rgba(24, 144, 255, 0.20), rgba(24, 144, 255, 0.10)); }
+.metric-card.archived { background: linear-gradient(180deg, rgba(132, 133, 141, 0.20), rgba(132, 133, 141, 0.10)); }
+.page-header { margin-bottom: 12px; }
+.header-content { display: flex; align-items: center; justify-content: space-between; }
+.header-info h2 { margin: 0 0 4px; }
+.page-description { color: var(--color-text-2); }
+.section-grid { margin-top: 12px; }
 </style>
+.nav-grid { margin-top: 12px; }
+.nav-card { cursor: pointer; border: none; }
+.nav-title { font-weight: 600; margin-bottom: 4px; }
+.nav-sub { color: var(--color-text-2); }

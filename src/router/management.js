@@ -1,5 +1,6 @@
 export default [{
   path: '/management',
+  redirect: '/management/service',
   children: [
     {
       path: 'service',

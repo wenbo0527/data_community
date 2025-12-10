@@ -16,10 +16,15 @@ export class EventService {
     this.getContainerRect = deps.getContainerRect
     this.setNodeMenuButton = deps.setNodeMenuButton
     this.setNodeActionsMenu = deps.setNodeActionsMenu
+    this.getNodeActionsMenuRect = deps.getNodeActionsMenuRect || (() => null)
+    this.isMenuHovering = deps.isMenuHovering || (() => false)
+    this.closeAllDrawers = deps.closeAllDrawers || (() => {})
   }
 
   bindGraphEvents(graph) {
     const readOnly = this.readOnly
+    let lastMenuNodeId = null
+    let hideTimer = null
     /**
      * 坐标转换到容器坐标系
      * 入参：point({x;y}) 局部/客户端坐标
@@ -27,9 +32,9 @@ export class EventService {
      */
     const toContainerCoords = (point) => {
       try {
-        const clientPos = this.graph.localToClient ? this.graph.localToClient(point) : point
+        const pagePos = this.graph.localToPage ? this.graph.localToPage(point) : point
         const rect = this.getContainerRect ? this.getContainerRect() : { left: 0, top: 0 }
-        return { x: clientPos.x - rect.left, y: clientPos.y - rect.top }
+        return { x: pagePos.x - rect.left, y: pagePos.y - rect.top }
       } catch (e) {
         return point
       }
@@ -44,21 +49,55 @@ export class EventService {
       try {
         const bbox = node.getBBox()
         const width = bbox.width
-        const local = this.graph.clientToLocal 
-          ? this.graph.clientToLocal({ x: e.clientX, y: e.clientY }) 
-          : { x: e.clientX, y: e.clientY }
+        const local = this.graph.pageToLocal 
+          ? this.graph.pageToLocal({ x: e.pageX, y: e.pageY }) 
+          : (this.graph.clientToLocal ? this.graph.clientToLocal({ x: e.clientX, y: e.clientY }) : { x: e.clientX, y: e.clientY })
         const rx = local.x - bbox.x
         const ry = local.y - bbox.y
         const HEADER_H = NODE_DIMENSIONS.HEADER_HEIGHT
         const DOT_Y = POSITIONS.MENU_DOT_Y
-        const DOT_PAD_X = 30
-        const DOT_PAD_Y = 8
+        const DOT_PAD_X = 64
+        const DOT_PAD_Y = 16
         const inHeader = ry >= 0 && ry <= HEADER_H
         const inDotArea = inHeader && (rx >= width - DOT_PAD_X && rx <= width - 8) && (ry >= DOT_Y - DOT_PAD_Y && ry <= DOT_Y + DOT_PAD_Y)
         return { inHeader, inDotArea }
       } catch (_) {
         return { inHeader: false, inDotArea: false }
       }
+    }
+    const isMenuHot = (e, node) => {
+      const target = e?.target || null
+      const selector = target && target.getAttribute 
+        ? (target.getAttribute('selector') || target.getAttribute('data-selector'))
+        : null
+      const isMenuIcon = selector && /^(menu-dot|header-menu)/.test(String(selector))
+      const { inDotArea } = getClickRegion(e, node)
+      return !!(isMenuIcon || inDotArea)
+    }
+    const showMenuForNode = (node) => {
+      const data = node.getData ? node.getData() : {}
+      const t = data?.type || data?.nodeType
+      if (t === 'start' || t === 'end') return
+      const bbox = node.getBBox()
+      const uiPos = toContainerCoords({ x: bbox.x + bbox.width - 28, y: bbox.y + 12 })
+      lastMenuNodeId = node.id
+      this.setNodeActionsMenu({ visible: true, x: uiPos.x, y: uiPos.y, nodeId: node.id })
+    }
+    const scheduleHideMenu = (e) => {
+      if (readOnly) return
+      try { clearTimeout(hideTimer) } catch {}
+      hideTimer = setTimeout(() => {
+        try {
+          if (this.isMenuHovering && this.isMenuHovering()) return
+          const rect = this.getNodeActionsMenuRect ? this.getNodeActionsMenuRect() : null
+          if (rect && e && typeof e.pageX === 'number' && typeof e.pageY === 'number') {
+            const x = e.pageX, y = e.pageY
+            const inside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+            if (inside) return
+          }
+        } catch {}
+        this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
+      }, 120)
     }
     graph.on('edge:mouseenter', () => {})
     graph.on('edge:mouseleave', () => {})
@@ -68,88 +107,70 @@ export class EventService {
 
     graph.on('node:contextmenu', ({ e, node }) => {
       if (readOnly) return
-      const target = e?.target || null
-      const selector = target && target.getAttribute 
-        ? (target.getAttribute('selector') || target.getAttribute('data-selector'))
-        : null
-      const isMenuIcon = selector && (selector === 'menu-dot-0' || selector === 'menu-dot-1' || selector === 'menu-dot-2')
-      const { inDotArea } = getClickRegion(e, node)
-      if (!(isMenuIcon || inDotArea)) return
-      const data = node.getData ? node.getData() : {}
-      const t = data?.type || data?.nodeType
-      if (t === 'start' || t === 'end') return
-      const bbox = node.getBBox()
-      const uiPos = toContainerCoords({ x: bbox.x + bbox.width - 28, y: bbox.y + 12 })
-      this.setNodeActionsMenu({ visible: true, x: uiPos.x, y: uiPos.y, nodeId: node.id })
+      try { e?.preventDefault?.(); e?.stopPropagation?.() } catch {}
+      if (isMenuHot(e, node)) showMenuForNode(node)
     })
-    graph.on('node:mouseleave', () => {})
+    graph.on('node:mouseleave', ({ e }) => { 
+      if (readOnly) return
+      try {
+        if (this.isMenuHovering && this.isMenuHovering()) return
+        const rect = this.getNodeActionsMenuRect ? this.getNodeActionsMenuRect() : null
+        if (rect && e && typeof e.pageX === 'number' && typeof e.pageY === 'number') {
+          const x = e.pageX, y = e.pageY
+          const inside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+          if (inside) return
+        }
+      } catch {}
+      this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null }) 
+    })
     graph.on('node:mousedown', ({ e, node }) => {
       if (readOnly) return
-      const target = e?.target || null
-      const selector = target && target.getAttribute 
-        ? (target.getAttribute('selector') || target.getAttribute('data-selector'))
-        : null
-      const isMenuIcon = selector && (selector === 'menu-dot-0' || selector === 'menu-dot-1' || selector === 'menu-dot-2')
-      const { inDotArea } = getClickRegion(e, node)
-      if (!(isMenuIcon || inDotArea)) {
-        this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
-      }
+      if (!isMenuHot(e, node)) scheduleHideMenu(e)
     })
     // DocRef: 架构文档「关键代码片段/事件服务：节点点击与菜单区域识别」
     graph.on('node:click', ({ e, node }) => {
-      const target = e?.target || null
-      const selector = target && target.getAttribute 
-        ? (target.getAttribute('selector') || target.getAttribute('data-selector'))
-        : null
-      const region = getClickRegion(e, node)
-      const isMenuIcon = selector && (selector === 'menu-dot-0' || selector === 'menu-dot-1' || selector === 'menu-dot-2')
-      if (!readOnly && !this.isStatisticsMode() && (isMenuIcon || region.inDotArea)) {
-        const data = node.getData ? node.getData() : {}
-        const t = data?.type || data?.nodeType
-        if (t === 'start' || t === 'end') return
-        const bbox = node.getBBox()
-        const uiPos = toContainerCoords({ x: bbox.x + bbox.width - 28, y: bbox.y + 12 })
-        this.setNodeActionsMenu({ visible: true, x: uiPos.x, y: uiPos.y, nodeId: node.id })
+      if (!readOnly && !this.isStatisticsMode() && isMenuHot(e, node)) {
+        showMenuForNode(node)
         return
       }
-      this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
-      const isHeader = selector && (
-        selector === 'header' || selector === 'header-icon' || selector === 'header-icon-text' || selector === 'header-title'
-      ) || region.inHeader
-      if (isHeader) {
-        if (this.isStatisticsMode()) { 
-          try { 
-            console.log('[Stats] header-click -> node:', node?.id)
-            this.onNodeClickForStats(node)
-          } catch {}
-        }
-        try { if (!(node.isSelected && node.isSelected())) { graph.select(node) } } catch {}
-        return
-      }
-      const isContent = selector && (selector === 'content-area' || /^row-\d+$/.test(selector)) || (!region.inHeader)
-      if (isContent) {
-        if (this.isStatisticsMode()) {
-          try { 
-            console.log('[Stats] content-click -> node:', node?.id)
-            this.onNodeClickForStats(node) 
-          } catch {}
-        }
-        try {
-          if (!readOnly) {
-            if (node.isSelected && node.isSelected()) {
-              graph.unselect(node)
-            } else {
-              graph.select(node)
-            }
-          }
-        } catch {}
+      scheduleHideMenu(e)
+      if (!readOnly && !this.isStatisticsMode()) {
         const d = node.getData ? node.getData() : {}
         const t = d?.type || d?.nodeType
         if (t) this.openConfigDrawer(t, node, d)
       }
     })
+    // 鼠标移动到菜单点区域时显示，移出时关闭
+    graph.on('node:mouseenter', ({ e, node }) => {
+      if (readOnly) return
+      if (isMenuHot(e, node)) showMenuForNode(node)
+    })
+    graph.on('node:mousemove', ({ e, node }) => {
+      if (readOnly) return
+      if (isMenuHot(e, node)) {
+        showMenuForNode(node)
+      } else {
+        scheduleHideMenu(e)
+      }
+    })
     graph.on('blank:click', ({ x, y }) => { if (readOnly) return })
-    
+
+    const refreshMenuPosition = () => {
+      try {
+        if (!lastMenuNodeId) return
+        const node = this.graph.getCellById?.(lastMenuNodeId)
+        if (!node) { this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null }); return }
+        const bbox = node.getBBox?.() || null
+        if (!bbox) return
+        const uiPos = toContainerCoords({ x: bbox.x + bbox.width - 28, y: bbox.y + 12 })
+        this.setNodeActionsMenu({ visible: true, x: uiPos.x, y: uiPos.y, nodeId: node.id })
+      } catch {}
+    }
+
+    // 视口变化或节点移动时，菜单跟随
+    this.graph.on('scale', refreshMenuPosition)
+    this.graph.on('translate', refreshMenuPosition)
+    this.graph.on('node:moved', ({ node }) => { if (node?.id === lastMenuNodeId) refreshMenuPosition() })
   }
 }
 
