@@ -4,6 +4,18 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern',
+        silenceDeprecations: ['legacy-js-api']
+      },
+      sass: {
+        api: 'modern',
+        silenceDeprecations: ['legacy-js-api']
+      }
+    }
+  },
   server: { port: 5175 },
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } }
 })

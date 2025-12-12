@@ -75,6 +75,11 @@ export default [
         component: () => import('../pages/exploration/customer-center/event-center/event-management.vue')
       },
       {
+        path: 'event-center/event-create',
+        name: 'event-create',
+        component: () => import('../pages/exploration/customer-center/event-center/event-create.vue')
+      },
+      {
         path: 'event-center/virtual-events',
         name: 'virtual-events',
         component: () => import('../pages/exploration/customer-center/event-center/virtual-events.vue')
@@ -123,6 +128,11 @@ export default [
             path: 'table-registration',
             name: 'table-registration',
             component: () => import('../pages/exploration/customer-center/tag-system/table-registration.vue')
+          },
+          {
+            path: 'tag-center',
+            name: 'tag-center',
+            component: () => import('../pages/exploration/customer-center/tag-system/tag-center.vue')
           }
         ]
       },

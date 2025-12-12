@@ -4,11 +4,13 @@ export interface EventData {
   id: string;
   eventName: string;
   eventType: '系统事件' | '业务事件' | '用户事件' | '营销事件' | '风控事件';
-  eventSource: '系统' | '用户操作' | '定时任务' | '外部触发' | 'API调用';
+  eventSource: '核心事件' | 'APP埋点事件';
+  acquireMethod: '采样' | '上传';
   triggerCondition: string;
-  status: '上线' | '下线';
+  status: '草稿' | '上线' | '下线';
   createTime: string;
   updateTime: string;
+  updatedBy?: string;
   owner: string;
   description: string;
   registryKey: string;

@@ -19,7 +19,17 @@ export const router = createRouter({
     { path: '/tasks', name: 'tasks-list', component: TasksList },
     { path: '/editor', name: 'editor', component: MarketingHorizontal },
     { path: '/marketing/tasks', name: 'marketing-tasks', component: MarketingTasks },
-    { path: '/marketing/tasks/horizontal', name: 'marketing-horizontal', component: MarketingHorizontal },
+    { 
+      path: '/marketing/tasks/horizontal', 
+      name: 'marketing-horizontal', 
+      component: MarketingHorizontal,
+      beforeEnter: (to) => {
+        if (!to.query || !to.query.id) {
+          return { path: '/marketing/tasks' }
+        }
+        return true
+      }
+    },
     
     // 通知规则路由
     { 

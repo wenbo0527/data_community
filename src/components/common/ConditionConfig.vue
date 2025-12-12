@@ -7,6 +7,13 @@
           <h4>条件配置</h4>
           <span class="condition-count">共 {{ regularGroups.length + excludeGroups.length }} 个条件组</span>
         </div>
+        <div class="cross-logic-controls" v-if="regularGroups.length > 1">
+          <span class="cross-logic-label">包含组跨组逻辑</span>
+          <a-radio-group size="small" :model-value="crossGroupLogic" @change="onSetCrossGroupLogic">
+            <a-radio value="and">且</a-radio>
+            <a-radio value="or">或</a-radio>
+          </a-radio-group>
+        </div>
       </div>
       
       <!-- 空状态 -->
@@ -109,7 +116,16 @@
           
           <!-- 排除条件组区域 -->
           <div v-if="enableExcludeGroups && excludeGroups.length > 0" class="exclude-groups-section">
-            <div class="section-title exclude-title">排除条件组</div>
+            <div class="section-title exclude-title">
+              排除条件组
+              <span class="exclude-logic">
+                <span class="cross-logic-label">聚合逻辑</span>
+                <a-radio-group size="small" :model-value="excludeCrossGroupLogicLocal" @change="onSetExcludeCrossGroupLogic">
+                  <a-radio value="and">且</a-radio>
+                  <a-radio value="or">或</a-radio>
+                </a-radio-group>
+              </span>
+            </div>
             
             <!-- 排除条件组列表 -->
             <div class="condition-groups-list">
@@ -216,6 +232,7 @@ interface Option {
 const props = withDefaults(defineProps<{
   conditionGroups: ConditionGroup[]
   crossGroupLogic?: string
+  excludeCrossGroupLogic?: string
   editable?: boolean
   dataSourceTypeOptions?: Option[]
   dateTypeOptions?: Option[]
@@ -238,6 +255,7 @@ const props = withDefaults(defineProps<{
   getPropertyOperatorOptions?: (() => Option[]) | null
 }>(), {
   crossGroupLogic: 'or',
+  excludeCrossGroupLogic: 'or',
   editable: true,
   dataSourceTypeOptions: () => [
     { label: '明细数据', value: 'detail' },
@@ -279,6 +297,8 @@ const emit = defineEmits<{
   deleteExcludeConditionGroup: [groupIndex: number]
   toggleGroupLogic: [group: ConditionGroup]
   toggleCrossGroupLogic: []
+  setCrossGroupLogic: [value: string]
+  setExcludeCrossGroupLogic: [value: string]
   addConditionByType: [group: ConditionGroup, type: string]
   removeCondition: [group: ConditionGroup, conditionIndex: number]
   addTagToCondition: [group: ConditionGroup, conditionIndex: number]
@@ -291,6 +311,7 @@ const emit = defineEmits<{
 
 // 响应式数据
 const enableExcludeGroups = ref(false)
+const excludeCrossGroupLogicLocal = ref(props.excludeCrossGroupLogic || 'or')
 
 // 响应式状态
 const collapsedSections = ref({
@@ -435,6 +456,19 @@ const onExcludeGroupsToggle = (value: string | number | boolean) => {
   }
 }
 
+// 设置跨组逻辑（包含）
+const onSetCrossGroupLogic = (value: string | number | boolean) => {
+  const v = String(value)
+  emit('setCrossGroupLogic', v)
+}
+
+// 设置跨组逻辑（排除）
+const onSetExcludeCrossGroupLogic = (value: string | number | boolean) => {
+  const v = String(value)
+  excludeCrossGroupLogicLocal.value = v
+  emit('setExcludeCrossGroupLogic', v)
+}
+
 // 条件组名称编辑相关方法
 const startEditGroupName = (group: ConditionGroup) => {
   if (!props.editable) return
@@ -492,6 +526,9 @@ const handleUpdateCondition = (condition: Condition) => {
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .section-info {
@@ -513,6 +550,17 @@ const handleUpdateCondition = (condition: Condition) => {
   background: #f5f5f5;
   padding: 2px 6px;
   border-radius: 8px;
+}
+
+.cross-logic-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cross-logic-label {
+  font-size: 12px;
+  color: #86909c;
 }
 
 .empty-condition-state {
@@ -616,6 +664,13 @@ const handleUpdateCondition = (condition: Condition) => {
 
 .section-title.exclude-title {
   color: #f53f3f;
+}
+
+.exclude-logic {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
 }
 
 .exclude-control-section {

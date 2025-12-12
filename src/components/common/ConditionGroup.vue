@@ -1,13 +1,9 @@
 <template>
-  <div class="condition-group-card">
-    <!-- 条件组头部 -->
-    <div class="condition-group-header">
-      <!-- 树状结构连接线 -->
+  <div class="condition-group-card" :class="{ embedded }">
+    <div v-if="!embedded" class="condition-group-header">
       <div class="tree-connector">
         <div class="connector-line"></div>
       </div>
-      
-      <!-- 条件组名称 -->
       <div class="group-name-wrapper">
         <div v-if="!group.isEditingName" class="group-name" @click="startEditGroupName(group)">
           {{ group.name || '条件组' }}
@@ -23,10 +19,7 @@
           @keyup.esc="cancelEditGroupName(group)"
         />
       </div>
-      
-      <!-- 全局逻辑控制 -->
       <div class="global-logic-control">
-        <!-- 统一逻辑切换器 -->
         <div class="unified-logic-switcher">
           <a-button 
             type="text" 
@@ -39,8 +32,6 @@
             </template>
           </a-button>
         </div>
-        
-        <!-- 条件组操作按钮 -->
         <div class="condition-group-actions">
           <a-button 
             v-if="editable"
@@ -56,102 +47,124 @@
         </div>
       </div>
     </div>
-
-    <!-- 条件列表 -->
-    <div class="conditions-list">
-      <!-- 按类型聚合展示条件 -->
-      <div v-if="group.conditions && group.conditions.length > 0" class="grouped-conditions-list">
-        <!-- 标签条件组 -->
-        <div v-if="tagConditions.length > 0" class="condition-type-group">
-          <div class="type-group-header">
-            <div class="type-badge type-tag">
-              <IconTag class="type-icon" />
-              <span class="type-text">标签条件 ({{ tagConditions.length }})</span>
+    <div class="conditions-list" :class="{ embedded, flat }">
+      <!-- 扁平模式：直接按原顺序渲染所有条件，无类型分组容器 -->
+      <template v-if="flat">
+        <div v-for="(condition, index) in group.conditions" :key="condition.id || `c-${index}`" class="condition-item-wrapper flat-item">
+          <component
+            :is="getConditionComponent(condition)"
+            :condition="condition"
+            :editable="editable"
+            :tag-options="getTagOptions?.()"
+            :operator-options="isTagCondition(condition) ? getTagOperatorOptions?.() : getPropertyOperatorOptions?.()"
+            :event-options="getEventOptions?.()"
+            :property-options="getEventPropertyOptions"
+            :data-source-type-options="dataSourceTypeOptions"
+            :field-options="getFieldOptions"
+            :aggregation-options="getAggregationOptions"
+            :date-type-options="dateTypeOptions"
+            :dynamic-unit-options="dynamicUnitOptions"
+            :need-value-input="needValueInput"
+            :value-placeholder="getValuePlaceholder"
+            @update-condition="updateCondition"
+            @remove-condition="removeConditionByIndex(condition)"
+            @add-event-property="emit('addEventProperty', condition)"
+            @remove-event-property="(propertyIndex: number) => emit('removeEventProperty', condition, propertyIndex)"
+          />
+        </div>
+      </template>
+      <!-- 分组模式：原有按类型分组的渲染 -->
+      <template v-else>
+        <div v-if="group.conditions && group.conditions.length > 0" class="grouped-conditions-list">
+          <div v-if="tagConditions.length > 0" class="condition-type-group">
+            <div class="type-group-header">
+              <div class="type-badge type-tag">
+                <IconTag class="type-icon" />
+                <span class="type-text">标签条件 ({{ tagConditions.length }})</span>
+              </div>
+            </div>
+            <div class="type-group-content">
+              <div 
+                v-for="(condition, index) in tagConditions" 
+                :key="condition.id || `tag-${index}`"
+                class="condition-item-wrapper"
+              >
+                <TagConditionForm
+                  :condition="condition"
+                  :editable="editable"
+                  :tag-options="getTagOptions?.()"
+                  :operator-options="getTagOperatorOptions?.()"
+                  :need-value-input="needTagValueInput"
+                  :value-placeholder="getTagValuePlaceholder"
+                  @update-condition="updateCondition"
+                  @remove-condition="removeConditionByIndex(condition)"
+                />
+              </div>
             </div>
           </div>
-          <div class="type-group-content">
-            <div 
-              v-for="(condition, index) in tagConditions" 
-              :key="condition.id || `tag-${index}`"
-              class="condition-item-wrapper"
-            >
-              <TagConditionForm
-                :condition="condition"
-                :editable="editable"
-                :tag-options="getTagOptions?.()"
-                :operator-options="getTagOperatorOptions?.()"
-                :need-value-input="needTagValueInput"
-                :value-placeholder="getTagValuePlaceholder"
-                @update-condition="updateCondition"
-                @remove-condition="removeConditionByIndex(condition)"
-              />
+          
+          <div v-if="behaviorConditions.length > 0" class="condition-type-group">
+            <div class="type-group-header">
+              <div class="type-badge type-behavior">
+                <IconInteraction class="type-icon" />
+                <span class="type-text">行为条件 ({{ behaviorConditions.length }})</span>
+              </div>
+            </div>
+            <div class="type-group-content">
+              <div 
+                v-for="(condition, index) in behaviorConditions" 
+                :key="condition.id || `behavior-${index}`"
+                class="condition-item-wrapper"
+              >
+                <BehaviorConditionForm
+                  :condition="condition"
+                  :editable="editable"
+                  :event-options="getEventOptions?.()"
+                  :property-options="getEventPropertyOptions"
+                  :operator-options="getPropertyOperatorOptions?.()"
+                  :date-type-options="dateTypeOptions"
+                  :dynamic-unit-options="dynamicUnitOptions"
+                  @update-condition="updateCondition"
+                  @remove-condition="removeConditionByIndex(condition)"
+                  @add-event-property="emit('addEventProperty', condition)"
+                  @remove-event-property="(propertyIndex: number) => emit('removeEventProperty', condition, propertyIndex)"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="detailConditions.length > 0" class="condition-type-group">
+            <div class="type-group-header">
+              <div class="type-badge type-detail">
+                <IconStorage class="type-icon" />
+                <span class="type-text">明细数据条件 ({{ detailConditions.length }})</span>
+              </div>
+            </div>
+            <div class="type-group-content">
+              <div 
+                v-for="(condition, index) in detailConditions" 
+                :key="condition.id || `detail-${index}`"
+                class="condition-item-wrapper"
+              >
+                <DetailConditionForm
+                  :condition="condition"
+                  :editable="editable"
+                  :data-source-type-options="dataSourceTypeOptions"
+                  :field-options="getFieldOptions"
+                  :aggregation-options="getAggregationOptions"
+                  :operator-options="getOperatorOptions"
+                  :date-type-options="dateTypeOptions"
+                  :dynamic-unit-options="dynamicUnitOptions"
+                  :need-value-input="needValueInput"
+                  :value-placeholder="getValuePlaceholder"
+                  @update-condition="updateCondition"
+                  @remove-condition="removeConditionByIndex(condition)"
+                />
+              </div>
             </div>
           </div>
         </div>
-        
-        <!-- 行为条件组 -->
-        <div v-if="behaviorConditions.length > 0" class="condition-type-group">
-          <div class="type-group-header">
-            <div class="type-badge type-behavior">
-              <IconInteraction class="type-icon" />
-              <span class="type-text">行为条件 ({{ behaviorConditions.length }})</span>
-            </div>
-          </div>
-          <div class="type-group-content">
-            <div 
-              v-for="(condition, index) in behaviorConditions" 
-              :key="condition.id || `behavior-${index}`"
-              class="condition-item-wrapper"
-            >
-              <BehaviorConditionForm
-                :condition="condition"
-                :editable="editable"
-                :event-options="getEventOptions?.()"
-                :property-options="getEventPropertyOptions"
-                :operator-options="getPropertyOperatorOptions?.()"
-                :date-type-options="dateTypeOptions"
-                :dynamic-unit-options="dynamicUnitOptions"
-                @update-condition="updateCondition"
-                @remove-condition="removeConditionByIndex(condition)"
-                @add-event-property="emit('addEventProperty', condition)"
-                @remove-event-property="(propertyIndex) => emit('removeEventProperty', condition, propertyIndex)"
-              />
-            </div>
-          </div>
-        </div>
-        
-        <!-- 明细数据条件组 -->
-        <div v-if="detailConditions.length > 0" class="condition-type-group">
-          <div class="type-group-header">
-            <div class="type-badge type-detail">
-              <IconStorage class="type-icon" />
-              <span class="type-text">明细数据条件 ({{ detailConditions.length }})</span>
-            </div>
-          </div>
-          <div class="type-group-content">
-            <div 
-              v-for="(condition, index) in detailConditions" 
-              :key="condition.id || `detail-${index}`"
-              class="condition-item-wrapper"
-            >
-              <DetailConditionForm
-                :condition="condition"
-                :editable="editable"
-                :data-source-type-options="dataSourceTypeOptions"
-                :field-options="getFieldOptions"
-                :aggregation-options="getAggregationOptions"
-                :operator-options="getOperatorOptions"
-                :date-type-options="dateTypeOptions"
-                :dynamic-unit-options="dynamicUnitOptions"
-                :need-value-input="needValueInput"
-                :value-placeholder="getValuePlaceholder"
-                @update-condition="updateCondition"
-                @remove-condition="removeConditionByIndex(condition)"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      </template>
       
       <!-- 空状态 -->
       <div v-if="(!group.conditions || group.conditions.length === 0) && editable" class="empty-condition-state">
@@ -279,6 +292,8 @@ interface Option {
 const props = withDefaults(defineProps<{
   group: ConditionGroup
   editable?: boolean
+  embedded?: boolean
+  flat?: boolean
   dataSourceTypeOptions?: Option[]
   dateTypeOptions?: Option[]
   dynamicUnitOptions?: Option[]
@@ -300,6 +315,8 @@ const props = withDefaults(defineProps<{
   getPropertyOperatorOptions?: (() => Option[]) | null
 }>(), {
   editable: true,
+  embedded: false,
+  flat: false,
   dataSourceTypeOptions: () => [
     { label: '明细数据', value: 'detail' },
     { label: '行为数据', value: 'behavior' },
@@ -439,6 +456,14 @@ const getLogicDescription = (logic: string) => {
 const updateCondition = (updatedCondition: Condition) => {
   emit('updateCondition', updatedCondition)
 }
+
+// 根据条件返回对应表单组件
+const getConditionComponent = (condition: Condition) => {
+  if (isTagCondition(condition)) return TagConditionForm
+  if (isBehaviorCondition(condition)) return BehaviorConditionForm
+  if (isDetailCondition(condition)) return DetailConditionForm
+  return TagConditionForm
+}
 </script>
 
 <style scoped>
@@ -448,6 +473,12 @@ const updateCondition = (updatedCondition: Condition) => {
   background: #ffffff;
   margin-bottom: 16px;
   overflow: hidden;
+}
+.condition-group-card.embedded {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  margin-bottom: 0;
 }
 
 .condition-group-header {
@@ -459,10 +490,16 @@ const updateCondition = (updatedCondition: Condition) => {
   gap: 12px;
 }
 
-.tree-connector {
-  width: 20px;
-  height: 20px;
-  position: relative;
+.conditions-list {
+  padding: 16px;
+}
+.conditions-list.embedded {
+  padding: 0;
+}
+.conditions-list.flat .condition-item-wrapper {
+  border: none;
+  padding: 0;
+  margin: 8px 0;
 }
 
 .connector-line {

@@ -24,18 +24,15 @@
         </div>
         <div class="filter-area">
           <a-select 
-            v-model="eventTypeFilter" 
-            placeholder="事件类型"
-            style="width: 120px"
+            v-model="eventSourceFilter" 
+            placeholder="事件来源"
+            style="width: 140px"
             allow-clear
             @change="handleFilter"
           >
-            <a-option value="">全部类型</a-option>
-            <a-option value="系统事件">系统事件</a-option>
-            <a-option value="业务事件">业务事件</a-option>
-            <a-option value="用户事件">用户事件</a-option>
-            <a-option value="营销事件">营销事件</a-option>
-            <a-option value="风控事件">风控事件</a-option>
+            <a-option value="">全部来源</a-option>
+            <a-option value="核心事件">核心事件</a-option>
+            <a-option value="APP埋点事件">APP埋点事件</a-option>
           </a-select>
           <a-select 
             v-model="statusFilter" 
@@ -45,6 +42,7 @@
             @change="handleFilter"
           >
             <a-option value="">全部状态</a-option>
+            <a-option value="草稿">草稿</a-option>
             <a-option value="上线">上线</a-option>
             <a-option value="下线">下线</a-option>
           </a-select>
@@ -53,14 +51,6 @@
           <a-button type="primary" @click="handleCreate">
             <template #icon><icon-plus /></template>
             新建事件
-          </a-button>
-          <a-button @click="handleRefresh">
-            <template #icon><icon-refresh /></template>
-            刷新
-          </a-button>
-          <a-button @click="handleBatchOperation">
-            <template #icon><icon-download /></template>
-            批量导出
           </a-button>
         </div>
       </div>
@@ -79,10 +69,8 @@
       >
         <!-- 选择列 -->
         <template #columns>
-          <a-table-column type="selection" width="50" />
-          
-          <!-- 事件信息列 -->
-          <a-table-column title="事件信息" data-index="eventName" width="200">
+          <!-- 事件名称（名称+ID） -->
+          <a-table-column title="事件名称" data-index="eventName" width="220">
             <template #cell="{ record }">
               <div class="event-info">
                 <div class="event-name">{{ record.eventName }}</div>
@@ -91,43 +79,29 @@
             </template>
           </a-table-column>
           
-          <!-- 事件类型列 -->
-          <a-table-column title="事件类型" data-index="eventType" width="120">
-            <template #cell="{ record }">
-              <a-tag :color="getEventTypeColor(record.eventType)">
-                {{ record.eventType }}
-              </a-tag>
-            </template>
-          </a-table-column>
-          
           <!-- 事件来源列 -->
-          <a-table-column title="事件来源" data-index="eventSource" width="100">
+          <a-table-column title="事件来源" data-index="eventSource" width="120">
             <template #cell="{ record }">
               <span class="event-source">{{ record.eventSource }}</span>
             </template>
           </a-table-column>
-          
-          <!-- 触发条件列 -->
-          <a-table-column title="触发条件" data-index="triggerCondition" width="200">
+
+          <!-- 获取方式 -->
+          <a-table-column title="获取方式" data-index="acquireMethod" width="100">
             <template #cell="{ record }">
-              <div class="trigger-condition" :title="record.triggerCondition">
-                {{ record.triggerCondition }}
-              </div>
+              <span>{{ record.acquireMethod }}</span>
             </template>
           </a-table-column>
           
           <!-- 状态列 -->
-          <a-table-column title="状态" data-index="status" width="80">
+          <a-table-column title="状态" data-index="status" width="100">
             <template #cell="{ record }">
-              <a-switch
-                :model-value="record.status === '上线'"
-                @change="(value) => handleStatusChange(record, value)"
-              />
+              <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
             </template>
           </a-table-column>
           
-          <!-- 所有者列 -->
-          <a-table-column title="所有者" data-index="owner" width="100">
+          <!-- 事件负责人 -->
+          <a-table-column title="事件负责人" data-index="owner" width="120">
             <template #cell="{ record }">
               <div class="owner-info">
                 <a-avatar :size="24">
@@ -138,11 +112,18 @@
             </template>
           </a-table-column>
           
-          <!-- 创建时间列 -->
-          <a-table-column title="创建时间" data-index="createTime" width="160">
+          <!-- 更新人 -->
+          <a-table-column title="更新人" data-index="updatedBy" width="120">
+            <template #cell="{ record }">
+              <span class="owner-name">{{ record.updatedBy || '-' }}</span>
+            </template>
+          </a-table-column>
+
+          <!-- 更新时间 -->
+          <a-table-column title="更新时间" data-index="updateTime" width="160">
             <template #cell="{ record }">
               <div class="create-time">
-                {{ formatDate(record.createTime) }}
+                {{ formatDate(record.updateTime) }}
               </div>
             </template>
           </a-table-column>
@@ -160,6 +141,7 @@
                   测试
                 </a-button>
                 <a-popconfirm
+                  v-if="record.status === '草稿'"
                   content="确定要删除此事件吗？"
                   @ok="handleDelete(record)"
                 >
@@ -176,20 +158,7 @@
     </div>
 
     <!-- 创建/编辑事件模态框 -->
-    <a-modal
-      v-model:visible="modalVisible"
-      :title="modalTitle"
-      width="800px"
-      @ok="handleModalOk"
-      @cancel="handleModalCancel"
-    >
-      <event-form
-        v-if="modalVisible"
-        :event-data="currentEvent"
-        @submit="handleFormSubmit"
-        @cancel="handleModalCancel"
-      />
-    </a-modal>
+    
   </div>
 </template>
 
@@ -207,7 +176,6 @@ import {
   IconPlayCircle
 } from '@arco-design/web-vue/es/icon'
 import { mockEventAPI } from '@/mock/event'
-import EventForm from './components/EventForm.vue'
 
 const router = useRouter()
 
@@ -215,11 +183,9 @@ const router = useRouter()
 const loading = ref(false)
 const events = ref([])
 const searchKeyword = ref('')
-const eventTypeFilter = ref('')
+const eventSourceFilter = ref('')
 const statusFilter = ref('')
 const selectedRows = ref([])
-const modalVisible = ref(false)
-const modalTitle = ref('')
 const currentEvent = ref(null)
 
 // 分页配置
@@ -246,9 +212,9 @@ const filteredEvents = computed(() => {
     )
   }
 
-  // 事件类型过滤
-  if (eventTypeFilter.value) {
-    filtered = filtered.filter(event => event.eventType === eventTypeFilter.value)
+  // 事件来源过滤
+  if (eventSourceFilter.value) {
+    filtered = filtered.filter(event => event.eventSource === eventSourceFilter.value)
   }
 
   // 状态过滤
@@ -288,15 +254,11 @@ const handleFilter = () => {
 }
 
 const handleCreate = () => {
-  currentEvent.value = null
-  modalTitle.value = '创建事件'
-  modalVisible.value = true
+  router.push('/exploration/customer-center/event-center/event-create')
 }
 
 const handleEdit = (record) => {
-  currentEvent.value = { ...record }
-  modalTitle.value = '编辑事件'
-  modalVisible.value = true
+  router.push({ path: '/exploration/customer-center/event-center/event-create', query: { id: record.id } })
 }
 
 const handleTest = (record) => {
@@ -321,29 +283,12 @@ const handleDelete = async (record) => {
   }
 }
 
-const handleStatusChange = async (record, value) => {
-  const newStatus = value ? '上线' : '下线'
-  try {
-    await mockEventAPI.updateEvent(record.id, { status: newStatus })
-    record.status = newStatus
-    Message.success(`事件已${newStatus}`)
-  } catch (error) {
-    Message.error('状态更新失败')
-    console.error('更新事件状态失败:', error)
-  }
+const getStatusColor = (s) => {
+  const map = { '草稿': 'gray', '上线': 'green', '下线': 'red' }
+  return map[s] || 'gray'
 }
 
-const handleRefresh = () => {
-  loadEvents()
-}
-
-const handleBatchOperation = () => {
-  if (selectedRows.value.length === 0) {
-    Message.warning('请先选择要导出的数据')
-    return
-  }
-  Message.info('批量导出功能开发中...')
-}
+ 
 
 const handleSelectionChange = (rows) => {
   selectedRows.value = rows
@@ -424,13 +369,13 @@ export default {
 
 /* 操作栏样式 */
 .action-bar {
-  background: white;
-  padding: 20px 24px;
+  background: #fff;
+  padding: 16px 20px;
   border-bottom: 1px solid #E5E6EB;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
 }
 
 .action-left {
@@ -469,12 +414,12 @@ export default {
 
 .filter-area {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .button-area {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* 表格容器 */

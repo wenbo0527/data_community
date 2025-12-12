@@ -27,8 +27,8 @@
     <div class="panel-content" v-show="!isCollapsed">
       <!-- 数据筛选控制 -->
       <data-filter-controls 
-        v-model:filters="filters"
-        @update:filters="handleFiltersUpdate"
+        v-model="filters"
+        @change="handleFiltersUpdate"
       />
 
       <!-- 统计概览 -->
@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { IconBarChart, IconMinus, IconPlus } from '@arco-design/web-vue/es/icon'
 import DataFilterControls from './DataFilterControls.vue'
 import StatisticsOverview from './StatisticsOverview.vue'
@@ -105,7 +105,7 @@ const maxWidth = 800
 const loading = ref(false)
 
 // 筛选条件
-const filters = reactive<FilterState>({
+const filters = ref<FilterState>({
   timeRange: 'day'
 })
 
@@ -152,7 +152,7 @@ const toggleCollapse = () => {
 
 // 处理筛选条件更新
 const handleFiltersUpdate = (newFilters: FilterState) => {
-  Object.assign(filters, newFilters)
+  Object.assign(filters.value, newFilters)
   // 触发数据重新加载
   loadStatisticsData()
 }
@@ -173,7 +173,7 @@ const loadStatisticsData = async () => {
   loading.value = true
   try {
     // 这里调用API获取统计数据
-    console.log('Loading statistics data with filters:', filters)
+    console.log('Loading statistics data with filters:', filters.value)
     // TODO: 实现API调用
   } catch (error) {
     console.error('Failed to load statistics data:', error)
@@ -186,7 +186,7 @@ onMounted(() => {
   loadStatisticsData()
 })
 
-watch(() => props.focusNodeId, (nv) => {
+watch(() => props.focusNodeId, (nv: string | undefined) => {
   const id = String(nv || '')
   selectedNodes.value = id ? [id] : []
 })

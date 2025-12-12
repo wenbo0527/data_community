@@ -43,8 +43,9 @@ interface ConsumerGroup {
 // 生成事件数据
 export const generateEventData = (count: number): EventData[] => {
   const eventTypes = ['系统事件', '业务事件', '用户事件', '营销事件', '风控事件'];
-  const eventSources = ['系统', '用户操作', '定时任务', '外部触发', 'API调用'];
-  const statusOptions = ['上线', '下线'];
+  const eventSources = ['核心事件', 'APP埋点事件'];
+  const acquireMethods = ['采样', '上传'];
+  const statusOptions = ['草稿', '上线', '下线'];
   const owners = ['张三', '李四', '王五', '赵六', '系统管理员'];
   
   return Array.from({ length: count }, (_, i) => ({
@@ -52,10 +53,12 @@ export const generateEventData = (count: number): EventData[] => {
     eventName: `${Mock.Random.pick(eventTypes)}${Mock.Random.ctitle(3, 8)}`,
     eventType: Mock.Random.pick(eventTypes) as EventData['eventType'],
     eventSource: Mock.Random.pick(eventSources) as EventData['eventSource'],
+    acquireMethod: Mock.Random.pick(acquireMethods) as any,
     triggerCondition: Mock.Random.sentence(5, 10),
     status: Mock.Random.pick(statusOptions) as EventData['status'],
     createTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
     updateTime: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
+    updatedBy: Mock.Random.pick(owners),
     owner: Mock.Random.pick(owners),
     description: Mock.Random.sentence(10, 20),
     registryKey: Mock.Random.pick(['user_id', 'order_id', 'transaction_id', 'event_id', 'session_id'])
@@ -648,11 +651,13 @@ const mockEventAPI = {
           id: `EVT${Mock.Random.string('number', 6)}`,
           eventName: eventData.eventName || '',
           eventType: eventData.eventType || '系统事件',
-          eventSource: eventData.eventSource || '系统',
+          eventSource: eventData.eventSource || '核心事件',
+          acquireMethod: eventData.acquireMethod || '采样',
           triggerCondition: eventData.triggerCondition || '',
           status: eventData.status || '下线',
           createTime: new Date().toISOString(),
           updateTime: new Date().toISOString(),
+          updatedBy: eventData.updatedBy || eventData.owner || '系统管理员',
           owner: eventData.owner || '系统管理员',
           description: eventData.description || '',
           registryKey: eventData.registryKey || 'event_id'

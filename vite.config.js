@@ -6,6 +6,18 @@ import { viteMockServe } from 'vite-plugin-mock'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => ({
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern',
+        silenceDeprecations: ['legacy-js-api']
+      },
+      sass: {
+        api: 'modern',
+        silenceDeprecations: ['legacy-js-api']
+      }
+    }
+  },
   optimizeDeps: {
     exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue', 'fsevents']
   },

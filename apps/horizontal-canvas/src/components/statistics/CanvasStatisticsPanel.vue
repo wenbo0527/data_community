@@ -116,6 +116,7 @@ const nodes = ref([])
 const edges = ref([])
 const selectedNodeId = ref('')
 const enterDateRange = ref([])
+const activeTab = ref('overview')
 
 const nodeStats = computed(() => {
   const stats = []

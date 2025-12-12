@@ -9,20 +9,30 @@
       <div class="task-section">
         <div class="section-header">
           <h2>任务列表</h2>
-          <a-space>
-            <a-button @click="refreshTaskList">
-              <template #icon>
-                <icon-refresh />
-              </template>
-              刷新
-            </a-button>
-            <a-button type="primary" @click="createTask">
-              <template #icon>
-                <icon-plus />
-              </template>
-              新建任务
-            </a-button>
-          </a-space>
+      <a-space>
+        <a-button @click="refreshTaskList">
+          <template #icon>
+            <IconRefresh />
+          </template>
+          刷新
+        </a-button>
+        <a-button type="primary" @click="openCreateModal">
+          <template #icon>
+            <IconPlus />
+          </template>
+          新建任务
+        </a-button>
+        <template v-if="canBatchSubmitApproval">
+          <a-button type="primary" @click="batchSubmitApproval">批量提交审批</a-button>
+        </template>
+        <template v-else>
+          <a-tooltip content="请选择草稿且发布校验通过的任务">
+            <a-button type="primary" disabled>批量提交审批</a-button>
+          </a-tooltip>
+        </template>
+        <a-button type="primary" status="success" :disabled="!canBatchApprove" @click="batchApprove('approve')">批量审批通过</a-button>
+        <a-button status="warning" :disabled="!canBatchApprove" @click="batchApprove('reject')">批量驳回</a-button>
+      </a-space>
         </div>
         
         <div class="task-filters">
@@ -49,20 +59,33 @@
           :columns="columns" 
           :data="taskData" 
           :pagination="pagination"
+          :row-selection="rowSelection"
           @page-change="onPageChange"
           @page-size-change="onPageSizeChange"
         >
           <template #status="{ record }">
-            <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+            <a-tag :color="getStatusColor(displayStatus(record))">{{ getStatusText(displayStatus(record)) }}</a-tag>
+          </template>
+          <template #publishCheck="{ record }">
+            <a-tooltip v-if="Array.isArray(record.publishMessages) && record.publishMessages.length" :content="record.publishMessages.join('\n')">
+              <a-tag :color="record.publishReady ? 'green' : 'red'">{{ record.publishReady ? '通过' : '未通过' }}</a-tag>
+            </a-tooltip>
+            <a-tag v-else :color="record.publishReady ? 'green' : 'red'">{{ record.publishReady ? '通过' : '未通过' }}</a-tag>
           </template>
           
           <template #actions="{ record }">
             <a-space>
               <a-button type="text" size="small" @click="editTask(record)" v-if="record.status === 'draft' || record.status === 'published'">编辑</a-button>
+              <a-button type="text" size="small" v-if="record.status === 'draft' && record.publishReady === true" @click="openSubmitApprovalModal(record)">提交审批</a-button>
+              <a-tooltip v-else-if="record.status === 'draft'" content="发布校验未通过，请在画布保存并修复问题">
+                <a-button type="text" size="small" disabled>提交审批</a-button>
+              </a-tooltip>
+              <a-button type="text" size="small" v-if="record.status === 'pending_approval'" @click="approveOne(record)">审批通过</a-button>
+              <a-button type="text" size="small" v-if="record.status === 'pending_approval'" @click="rejectOne(record)">驳回</a-button>
               <a-dropdown v-if="record.versions && record.versions.length > 1">
                 <a-button type="text" size="small">
                   历史版本
-                  <icon-down />
+                  <IconDown />
                 </a-button>
                 <template #content>
                   <a-doption 
@@ -85,9 +108,33 @@
             </a-space>
           </template>
         </a-table>
-      </div>
     </div>
   </div>
+  <a-modal v-model:visible="createModalVisible" title="新建画布" ok-text="确认" cancel-text="取消" @ok="confirmCreateTask">
+    <a-form :model="createForm" layout="vertical">
+      <a-form-item label="画布名称" field="name" required>
+        <a-input v-model="createForm.name" placeholder="请输入画布名称" />
+      </a-form-item>
+      <a-form-item label="画布说明" field="description">
+        <a-input v-model="createForm.description" placeholder="请输入画布说明" />
+      </a-form-item>
+    </a-form>
+  </a-modal>
+  <a-modal v-model:visible="approvalModalVisible" title="提交审批" ok-text="确认提交" cancel-text="取消" @ok="confirmSubmitApproval">
+    <a-form :model="approvalForm" layout="vertical">
+      <a-form-item label="版本说明" field="remark">
+        <a-textarea v-model="approvalForm.remark" placeholder="请输入版本说明" :max-length="300" allow-clear />
+      </a-form-item>
+    </a-form>
+  </a-modal>
+  <a-modal v-model:visible="batchApprovalModalVisible" title="批量提交审批" ok-text="提交" cancel-text="取消" @ok="confirmBatchSubmitApproval">
+    <a-form :model="batchApprovalForm" layout="vertical">
+      <a-form-item label="统一版本说明" field="remark">
+        <a-textarea v-model="batchApprovalForm.remark" placeholder="请输入统一版本说明（应用于所有选中项）" :max-length="300" allow-clear />
+      </a-form-item>
+    </a-form>
+  </a-modal>
+</div>
 </template>
 
 <script setup>
@@ -97,13 +144,16 @@
 边界：不直接操作画布数据；删除/发布等操作通过 TaskStorage 与后续页面处理。
 副作用：路由跳转与消息提示。
 */
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, h, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconDown, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { TaskStorage } from '../../../utils/taskStorage.js'
+import { validateForPublish } from './horizontal/persistence/PersistenceService.ts'
 
 const router = useRouter()
+const createModalVisible = ref(false)
+const createForm = reactive({ name: '', description: '' })
 
 // 表格列定义
 const columns = [
@@ -134,6 +184,12 @@ const columns = [
     dataIndex: 'version',
     width: 100,
     render: ({ record }) => `v${record.version || 1}`
+  },
+  {
+    title: '发布校验',
+    dataIndex: 'publishReady',
+    slotName: 'publishCheck',
+    width: 140
   },
   {
     title: '创建时间',
@@ -178,112 +234,6 @@ const initData = () => {
   const storedTasks = TaskStorage.getAllTasks()
   console.log('📦 [TaskList] 从本地存储加载的任务:', storedTasks)
   
-  // 模拟任务数据（作为示例数据）
-  const mockTasks = [
-    {
-      id: 1,
-      taskName: '消费贷促实名认证活动',
-      taskType: '促实名',
-      status: 'running',
-      version: 2,
-      createTime: '2024-01-15 10:30:00',
-      executeTime: '2024-01-15 14:00:00',
-      creator: '张三',
-      versions: [
-        { version: 1, createTime: '2024-01-15 10:30:00', isActive: false },
-        { version: 2, createTime: '2024-01-16 14:20:00', isActive: true }
-      ],
-      canvasData: {
-        nodes: [
-          { id: 'start', type: 'start', x: 100, y: 100, label: '开始' },
-          { id: 'crowd-split', type: 'crowd-split', x: 100, y: 200, label: '人群分流' },
-          { id: 'blacklist-end', type: 'end', x: 50, y: 300, label: '黑名单结束' },
-          { id: 'sms-send', type: 'sms', x: 150, y: 300, label: '短信发送' },
-          { id: 'event-split', type: 'event-split', x: 150, y: 400, label: '短信发送成功事件分流' },
-          { id: 'high-response', type: 'manual-call', x: 100, y: 500, label: '高响应客群电销' },
-          { id: 'medium-response', type: 'push', x: 200, y: 500, label: '中响应客群推送' },
-          { id: 'low-response', type: 'email', x: 300, y: 500, label: '低响应客群邮件' },
-          { id: 'end', type: 'end', x: 200, y: 600, label: '结束' }
-        ],
-        connections: [
-          { source: 'start', target: 'crowd-split' },
-          { source: 'crowd-split', target: 'blacklist-end', label: '黑名单' },
-          { source: 'crowd-split', target: 'sms-send', label: '高响应客群' },
-          { source: 'crowd-split', target: 'sms-send', label: '中响应客群' },
-          { source: 'crowd-split', target: 'sms-send', label: '低响应客群' },
-          { source: 'sms-send', target: 'event-split' },
-          { source: 'event-split', target: 'high-response', label: '短信发送成功' },
-          { source: 'event-split', target: 'medium-response', label: '短信发送失败' },
-          { source: 'high-response', target: 'end' },
-          { source: 'medium-response', target: 'end' },
-          { source: 'low-response', target: 'end' }
-        ]
-      }
-    },
-    {
-      id: 2,
-      taskName: '消费贷促授信额度提升',
-      taskType: '促授信',
-      status: 'running',
-      version: 1,
-      createTime: '2024-01-14 09:15:00',
-      executeTime: '2024-01-14 10:00:00',
-      creator: '李四',
-      versions: [
-        { version: 1, createTime: '2024-01-14 09:15:00', isActive: true }
-      ],
-      canvasData: {
-        nodes: [
-          { id: 'start', type: 'start', x: 100, y: 100, label: '开始' },
-          { id: 'crowd-split', type: 'crowd-split', x: 100, y: 200, label: '人群分流' },
-          { id: 'blacklist-end', type: 'end', x: 50, y: 300, label: '黑名单结束' },
-          { id: 'app-push', type: 'push', x: 150, y: 300, label: 'APP推送' },
-          { id: 'event-split', type: 'event-split', x: 150, y: 400, label: 'APP热场景事件分流' },
-          { id: 'hot-scene-follow', type: 'manual-call', x: 100, y: 500, label: '热场景跟进' },
-          { id: 'normal-follow', type: 'email', x: 200, y: 500, label: '常规跟进' },
-          { id: 'end', type: 'end', x: 150, y: 600, label: '结束' }
-        ],
-        connections: [
-          { source: 'start', target: 'crowd-split' },
-          { source: 'crowd-split', target: 'blacklist-end', label: '黑名单' },
-          { source: 'crowd-split', target: 'app-push', label: '高响应客群' },
-          { source: 'crowd-split', target: 'app-push', label: '中响应客群' },
-          { source: 'app-push', target: 'event-split' },
-          { source: 'event-split', target: 'hot-scene-follow', label: 'APP热场景触发' },
-          { source: 'event-split', target: 'normal-follow', label: '未触发热场景' },
-          { source: 'hot-scene-follow', target: 'end' },
-          { source: 'normal-follow', target: 'end' }
-        ]
-      }
-    },
-    {
-      id: 3,
-      taskName: '消费贷促支用激活推广',
-      taskType: '促支用',
-      status: 'draft',
-      version: 1,
-      createTime: '2024-01-16 16:20:00',
-      executeTime: '-',
-      creator: '王五',
-      versions: [
-        { version: 1, createTime: '2024-01-16 16:20:00', isActive: false }
-      ]
-    },
-    {
-      id: 4,
-      taskName: '消费贷促实名用户回访',
-      taskType: '促实名',
-      status: 'disabled',
-      version: 1,
-      createTime: '2024-01-13 08:45:00',
-      executeTime: '2024-01-13 12:00:00',
-      creator: '赵六',
-      versions: [
-        { version: 1, createTime: '2024-01-13 08:45:00', isActive: false }
-      ]
-    }
-  ]
-  
   // 转换本地存储的任务格式以匹配列表显示
   const convertedStoredTasks = storedTasks.map(task => ({
     id: task.id,
@@ -294,21 +244,22 @@ const initData = () => {
     createTime: task.createTime || new Date().toLocaleString('zh-CN'),
     executeTime: task.executeTime || '-',
     creator: task.creator || '当前用户',
+    description: task.description || '',
     versions: task.versions || [
       { version: task.version || 1, createTime: task.createTime || new Date().toLocaleString('zh-CN'), isActive: task.status === 'running' }
     ],
-    canvasData: task.canvasData || { nodes: [], connections: [] }
+    canvasData: task.canvasData || { nodes: [], connections: [] },
+    publishReady: (() => { try { const v = (task.versions || []).find(x => Number(x.version) === Number(task.version || 1)); return !!(v && v.publishReady === true) } catch { return false } })(),
+    publishMessages: (() => { try { const v = (task.versions || []).find(x => Number(x.version) === Number(task.version || 1)); return Array.isArray(v?.publishMessages) ? v.publishMessages : [] } catch { return [] } })(),
+    approvalStatus: (() => { try { const v = (task.versions || []).find(x => Number(x.version) === Number(task.version || 1)); return v?.approvalStatus || null } catch { return null } })()
   }))
   
-  // 合并数据：本地存储的任务优先，避免ID冲突
-  const existingIds = new Set(convertedStoredTasks.map(task => task.id))
-  const filteredMockTasks = mockTasks.filter(task => !existingIds.has(task.id))
-  
-  const allTasks = [...convertedStoredTasks, ...filteredMockTasks]
+  // 仅使用本地存储任务数据
+  const allTasks = convertedStoredTasks
   
   console.log('✅ [TaskList] 任务列表数据加载完成:', {
     storedTasksCount: convertedStoredTasks.length,
-    mockTasksCount: filteredMockTasks.length,
+    mockTasksCount: 0,
     totalTasksCount: allTasks.length
   })
   
@@ -327,7 +278,10 @@ const getStatusColor = (status) => {
     running: 'green',
     completed: 'green',
     disabled: 'red',
-    published: 'green'
+    published: 'green',
+    pending_approval: 'orange',
+    approved: 'green',
+    rejected: 'red'
   }
   return colorMap[status] || 'gray'
 }
@@ -339,21 +293,161 @@ const getStatusText = (status) => {
     running: '运行中',
     completed: '已完成',
     disabled: '停用',
-    published: '已发布'
+    published: '已发布',
+    pending_approval: '待审批',
+    approved: '已审批',
+    rejected: '已驳回'
   }
   return textMap[status] || '未知'
 }
 
-// 用途：创建任务并跳转到画布编辑模式
-// 入参：无
-// 返回：无
-// 边界：依赖 TaskStorage 创建；失败提示
-// 副作用：路由跳转到 `/marketing/tasks/horizontal?mode=edit`
-// 创建任务
-const createTask = () => {
-  router.push('/marketing/tasks/horizontal')
+function displayStatus(record) {
+  // 业务优先：published/running/disabled/completed
+  if (['published','running','disabled','completed'].includes(String(record.status))) return record.status
+  // 草稿态根据审批状态覆盖显示
+  const a = String(record.approvalStatus || '')
+  if (a === 'pending_approval') return 'pending_approval'
+  if (a === 'approved') return 'approved'
+  if (a === 'rejected') return 'rejected'
+  return record.status || 'draft'
 }
 
+function openCreateModal() {
+  createModalVisible.value = true
+}
+
+function confirmCreateTask() {
+  const name = (createForm.name || '').trim()
+  if (!name) { Message.error('请输入画布名称'); return }
+  try {
+    const saved = TaskStorage.createTask({
+      name,
+      description: (createForm.description || '').trim(),
+      version: 1,
+      type: 'marketing',
+      status: 'draft',
+      canvasData: { nodes: [], connections: [] },
+      createTime: new Date().toLocaleString('zh-CN'),
+      creator: '当前用户'
+    })
+    createModalVisible.value = false
+    createForm.name = ''
+    createForm.description = ''
+    if (saved && saved.id) {
+      router.push(`/marketing/tasks/horizontal?mode=edit&id=${saved.id}&version=${saved.version || 1}`)
+    } else {
+      router.push('/marketing/tasks/horizontal')
+    }
+  } catch (e) {
+    Message.error('创建任务失败')
+  }
+}
+
+const selectedRowKeys = ref([])
+const rowSelection = reactive({ type: 'checkbox', selectedRowKeys, onChange: (keys) => { selectedRowKeys.value = keys } })
+const canBatchApprove = computed(() => {
+  const ids = new Set(selectedRowKeys.value)
+  const rows = taskData.value.filter(r => ids.has(r.id))
+  return rows.some(r => r.status === 'pending_approval')
+})
+
+const canBatchSubmitApproval = computed(() => {
+  const ids = new Set(selectedRowKeys.value)
+  const rows = taskData.value.filter(r => ids.has(r.id))
+  return rows.some(r => r.status === 'draft' && r.publishReady === true)
+})
+
+const approvalModalVisible = ref(false)
+const approvalForm = reactive({ remark: '' })
+let approvalTarget = { id: null, version: null }
+function openSubmitApprovalModal(record) {
+  if (record.publishReady !== true) { Message.warning('当前版本未通过发布校验'); return }
+  try {
+    const canvas = TaskStorage.getTaskVersionCanvas(record.id, record.version)
+    const v = validateForPublish(null, canvas)
+    if (!v.pass) { Message.warning('数据校验未通过，请前往画布修复'); return }
+  } catch {}
+  approvalTarget = { id: record.id, version: record.version }
+  approvalForm.remark = record.description || ''
+  approvalModalVisible.value = true
+}
+function confirmSubmitApproval() {
+  try {
+    const { id, version } = approvalTarget
+    if (!id || !version) return
+    if (!approvalForm.remark || !approvalForm.remark.trim()) { Message.warning('请输入版本说明'); return }
+    TaskStorage.updateTask(id, { version, description: approvalForm.remark, updateTime: new Date().toLocaleString('zh-CN') })
+    TaskStorage.submitApproval(id, version, '当前用户', approvalForm.remark)
+    approvalModalVisible.value = false
+    refreshTaskList()
+    Message.success('已提交审批')
+  } catch { Message.error('提交审批失败') }
+}
+
+function approveOne(record) {
+  try {
+    TaskStorage.approveVersions([{ id: record.id, version: record.version }], 'approve', '当前用户', '')
+    refreshTaskList()
+    Message.success('已审批通过')
+  } catch { Message.error('审批失败') }
+}
+
+function rejectOne(record) {
+  try {
+    TaskStorage.approveVersions([{ id: record.id, version: record.version }], 'reject', '当前用户', '')
+    refreshTaskList()
+    Message.success('已驳回')
+  } catch { Message.error('驳回失败') }
+}
+
+function batchApprove(decision) {
+  try {
+    const ids = new Set(selectedRowKeys.value)
+    const rows = taskData.value.filter(r => ids.has(r.id) && r.status === 'pending_approval')
+    const items = rows.map(r => ({ id: r.id, version: r.version }))
+    const res = TaskStorage.approveVersions(items, decision, '当前用户', '')
+    const ok = res.filter(x => x.status === 'success').length
+    const fail = res.length - ok
+    refreshTaskList()
+    selectedRowKeys.value = []
+    if (fail === 0) Message.success(`成功${ok}条`)
+    else Message.info(`成功${ok}条，失败${fail}条`)
+  } catch { Message.error('批量审批失败') }
+}
+
+function batchSubmitApproval() {
+  const ids = new Set(selectedRowKeys.value)
+  const rows = taskData.value.filter(r => ids.has(r.id) && r.status === 'draft' && r.publishReady === true)
+  if (!rows.length) { Message.info('未选择可提交审批的任务'); return }
+  batchApprovalForm.remark = ''
+  batchApprovalModalVisible.value = true
+}
+
+const batchApprovalModalVisible = ref(false)
+const batchApprovalForm = reactive({ remark: '' })
+function confirmBatchSubmitApproval() {
+  try {
+    if (!batchApprovalForm.remark || !batchApprovalForm.remark.trim()) { Message.warning('请输入统一版本说明'); return }
+    const ids = new Set(selectedRowKeys.value)
+    const rows = taskData.value.filter(r => ids.has(r.id) && r.status === 'draft' && r.publishReady === true).filter(r => {
+      try {
+        const canvas = TaskStorage.getTaskVersionCanvas(r.id, r.version)
+        const v = validateForPublish(null, canvas)
+        return v.pass
+      } catch { return false }
+    })
+    rows.forEach(r => {
+      try {
+        TaskStorage.updateTask(r.id, { version: r.version, description: batchApprovalForm.remark, updateTime: new Date().toLocaleString('zh-CN') })
+        TaskStorage.submitApproval(r.id, r.version, '当前用户', batchApprovalForm.remark)
+      } catch {}
+    })
+    batchApprovalModalVisible.value = false
+    refreshTaskList()
+    selectedRowKeys.value = []
+    Message.success(`已提交审批：${rows.length}条`)
+  } catch { Message.error('批量提交审批失败') }
+}
 // 用途：查看任务（点击任务名称）
 // 入参：record 任务记录
 // 返回：无
@@ -371,7 +465,19 @@ const viewTask = (record) => {
 // 副作用：路由跳转到编辑模式
 // 编辑任务
 const editTask = (record) => {
-  router.push(`/marketing/tasks/horizontal?mode=edit&id=${record.id}&version=${record.version}`)
+  try {
+    if (record.status === 'published') {
+      const baseVer = Number(record.version || 1)
+      const newVer = baseVer + 1
+      const canvas = TaskStorage.getTaskVersionCanvas(record.id, baseVer) || record.canvasData || { nodes: [], connections: [] }
+      TaskStorage.updateTask(record.id, { version: newVer, status: 'draft', canvasData: canvas, updateTime: new Date().toLocaleString('zh-CN') })
+      router.push(`/marketing/tasks/horizontal?mode=edit&id=${record.id}&version=${newVer}`)
+    } else {
+      router.push(`/marketing/tasks/horizontal?mode=edit&id=${record.id}&version=${record.version}`)
+    }
+  } catch {
+    router.push(`/marketing/tasks/horizontal?mode=edit&id=${record.id}&version=${record.version}`)
+  }
 }
 
 // 查看历史版本

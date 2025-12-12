@@ -66,7 +66,12 @@ const filteredCategories = computed(() => {
 
 const getNodeIconComponent = (nodeType) => { const name = ICON_NAME_MAP[nodeType] || 'IconApps'; return ArcoIcons[name] || ArcoIcons.IconApps || ArcoIcons.IconUserGroup }
 const getNodeColor = (nodeType) => { const config = getNodeConfig(nodeType); return config ? config.color : '#5F95FF' }
-const isNodeTypeAllowed = (nodeType) => { if (!nodeType || typeof nodeType !== 'string') return false; if (!props.presetSlot || !props.presetSlot.allowedTypes || props.presetSlot.allowedTypes.length === 0) return true; return props.presetSlot.allowedTypes.includes(nodeType) }
+const isNodeTypeAllowed = (nodeType) => {
+  if (!nodeType || typeof nodeType !== 'string') return false
+  const allowed = Array.isArray(props.presetSlot?.allowedTypes) ? props.presetSlot.allowedTypes : null
+  if (!allowed || allowed.length === 0) return true
+  return allowed.includes(nodeType)
+}
 const handleSelect = (nodeType) => { if (!nodeType || typeof nodeType !== 'string' || nodeType.trim() === '') return; const normalized = nodeType.trim(); if (!isNodeTypeAllowed(normalized)) return; const nodeConfig = getNodeConfig(normalized); if (!nodeConfig) return; emit('select', normalized) }
 const handleDragStart = (nodeType, e) => { if (!nodeType || typeof nodeType !== 'string' || nodeType.trim() === '') return; const normalized = nodeType.trim(); if (!isNodeTypeAllowed(normalized)) return; const nodeConfig = getNodeConfig(normalized); if (!nodeConfig) return; if (e && e.dataTransfer) { try { e.dataTransfer.setData('nodeType', normalized); e.dataTransfer.effectAllowed = 'copy' } catch {} } emit('dragstart', normalized) }
 const handleClose = () => { emit('close') }

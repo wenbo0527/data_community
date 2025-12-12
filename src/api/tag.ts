@@ -1,180 +1,268 @@
-import request from './request'
-import type { TagItem } from '@/types/tag'
-import type { TableField, ValidationResult } from '@/types/table'
+import request from '@/utils/request'
+import type { 
+  TagTable, 
+  CreateTagTableDTO, 
+  UpdateTagTableDTO, 
+  GetTagTablesParams,
+  TableField,
+  DataSource,
+  UniquenessCheckResult,
+  BatchCreateResult
+} from '@/types/tag'
 
-const mockUsers = ['张三', '李四', '王五', '赵六', '钱七']
-
-const genTags = (count: number): TagItem[] => {
-  const dataTypes = ['string', 'number']
-  const categories = ['basic', 'behavior', 'preference', 'business']
-  const tagTypes = ['static', 'dynamic', 'computed', 'rule']
-  const shareLevels = ['public', 'private']
-  const mappingStatuses: Array<'configured' | 'unconfigured' | 'error'> = ['configured', 'unconfigured', 'error']
-  return Array.from({ length: count }, (_, i) => ({
-    id: `TAG_${String(i + 1).padStart(3, '0')}`,
-    name: `标签${i + 1}`,
-    dataType: dataTypes[Math.floor(Math.random() * dataTypes.length)],
-    category: categories[Math.floor(Math.random() * categories.length)],
-    tagType: tagTypes[Math.floor(Math.random() * tagTypes.length)],
-    dimensionKey: `dim_key_${i + 1}`,
-    shareLevel: shareLevels[Math.floor(Math.random() * shareLevels.length)],
-    createUser: mockUsers[Math.floor(Math.random() * mockUsers.length)],
-    createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    description: `这是标签${i + 1}的描述信息`,
-    mappingStatus: mappingStatuses[Math.floor(Math.random() * mappingStatuses.length)]
-  }))
+// 统一响应格式
+interface ApiResponse<T> {
+  success: boolean
+  code: number
+  message: string
+  data: T
+  timestamp: number
 }
 
-export const listTags = async (params?: any): Promise<{ list: TagItem[]; total: number }> => {
-  try {
-    const res: any = await request.get('/tag/list', { params })
-    if (res && res.data) return { list: res.data.list || [], total: res.data.total || 0 }
-    if (Array.isArray(res)) return { list: res as TagItem[], total: (res as TagItem[]).length }
-    return { list: [], total: 0 }
-  } catch {
-    const list = genTags(50)
-    return { list, total: list.length }
-  }
+// 分页响应格式
+interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  current: number
+  pageSize: number
+  pages: number
 }
 
-export const getTag = async (id: string): Promise<TagItem | null> => {
-  try {
-    const res: any = await request.get(`/tag/${id}`)
-    return res?.data || null
-  } catch {
-    const list = genTags(50)
-    return list.find(x => x.id === id) || null
-  }
-}
+/**
+ * 标签表管理API
+ */
+export const tagAPI = {
+  /**
+   * 获取标签表列表
+   */
+  getTagTables: (params?: GetTagTablesParams): Promise<ApiResponse<PaginatedResponse<TagTable>>> => {
+    return request.get('/api/v1/tag-tables', { params })
+  },
 
-export const createTag = async (data: Partial<TagItem>): Promise<TagItem> => {
-  try {
-    const res: any = await request.post('/tag', data)
-    return res?.data || (data as TagItem)
-  } catch {
-    return {
-      id: data.id || `TAG_${Date.now()}`,
-      name: data.name || '新标签',
-      dataType: data.dataType || 'string',
-      category: data.category || 'basic',
-      tagType: data.tagType || 'static',
-      dimensionKey: data.dimensionKey || 'dim_key',
-      shareLevel: data.shareLevel || 'public',
-      createUser: data.createUser || '当前用户',
-      createTime: new Date().toISOString(),
-      description: data.description || ''
+  /**
+   * 创建标签表
+   */
+  createTagTable: (data: CreateTagTableDTO): Promise<ApiResponse<TagTable>> => {
+    return request.post('/api/v1/tag-tables', data)
+  },
+
+  /**
+   * 更新标签表
+   */
+  updateTagTable: (id: string, data: UpdateTagTableDTO): Promise<ApiResponse<TagTable>> => {
+    return request.put(`/api/v1/tag-tables/${id}`, data)
+  },
+
+  /**
+   * 删除标签表
+   */
+  deleteTagTable: (id: string): Promise<ApiResponse<void>> => {
+    return request.delete(`/api/v1/tag-tables/${id}`)
+  },
+
+  /**
+   * 批量创建标签表
+   */
+  batchCreateTagTables: (data: CreateTagTableDTO[]): Promise<ApiResponse<BatchCreateResult>> => {
+    return request.post('/api/v1/tag-tables/batch', data)
+  },
+
+  /**
+   * 获取数据源列表
+   */
+  getDataSources: (): Promise<ApiResponse<DataSource[]>> => {
+    return request.get('/api/v1/data-sources')
+  },
+
+  /**
+   * 获取数据表列表
+   */
+  getTables: (dataSourceId: string): Promise<ApiResponse<string[]>> => {
+    return request.get(`/api/v1/data-sources/${dataSourceId}/tables`)
+  },
+
+  /**
+   * 获取表字段信息
+   */
+  getTableFields: (dataSourceId: string, tableName: string): Promise<ApiResponse<TableField[]>> => {
+    return request.get(`/api/v1/data-sources/${dataSourceId}/tables/${tableName}/fields`)
+  },
+
+  /**
+   * 检查主键唯一性
+   */
+  checkPrimaryKeyUniqueness: (dataSourceId: string, tableName: string, fields: string[]): Promise<ApiResponse<UniquenessCheckResult>> => {
+    return request.post('/api/v1/tag-tables/check-uniqueness', {
+      dataSourceId,
+      tableName,
+      fields
+    })
+  },
+
+  /**
+   * 获取标签表详情
+   */
+  getTagTableDetail: (id: string): Promise<ApiResponse<TagTable>> => {
+    return request.get(`/api/v1/tag-tables/${id}`)
+  },
+
+  /**
+   * 归档/激活标签表
+   */
+  archiveTagTable: (id: string, archived: boolean): Promise<ApiResponse<TagTable>> => {
+    return request.put(`/api/v1/tag-tables/${id}/archive`, { archived })
+  },
+
+  /**
+   * 获取标签表统计信息
+   */
+  getTagTableStats: (): Promise<ApiResponse<{
+    total: number
+    active: number
+    archived: number
+    trend: {
+      total: number
+      active: number
+      archived: number
     }
+  }>> => {
+    return request.get('/api/v1/tag-tables/stats')
+  },
+
+  /**
+   * 批量导入标签
+   */
+  batchImportTags: (data: CreateTagTableDTO[]): Promise<ApiResponse<BatchCreateResult>> => {
+    return request.post('/api/v1/tag-tables/import', data)
   }
 }
 
-export const updateTag = async (id: string, data: Partial<TagItem>): Promise<boolean> => {
-  try {
-    await request.put(`/tag/${id}`, data)
-    return true
-  } catch {
-    return true
+/**
+ * 标签分类API
+ */
+export const categoryAPI = {
+  /**
+   * 获取标签分类列表
+   */
+  getCategories: (): Promise<ApiResponse<string[]>> => {
+    return request.get('/api/v1/tag-categories')
+  },
+
+  /**
+   * 创建标签分类
+   */
+  createCategory: (name: string): Promise<ApiResponse<string>> => {
+    return request.post('/api/v1/tag-categories', { name })
   }
+}
+
+/**
+ * IDMapping规则API
+ */
+export const mappingAPI = {
+  /**
+   * 获取IDMapping规则列表
+   */
+  getMappingRules: (tagTableId: string): Promise<ApiResponse<any[]>> => {
+    return request.get(`/api/v1/tag-tables/${tagTableId}/mapping-rules`)
+  },
+
+  /**
+   * 创建IDMapping规则
+   */
+  createMappingRule: (tagTableId: string, data: any): Promise<ApiResponse<any>> => {
+    return request.post(`/api/v1/tag-tables/${tagTableId}/mapping-rules`, data)
+  },
+
+  /**
+   * 更新IDMapping规则
+   */
+  updateMappingRule: (tagTableId: string, ruleId: string, data: any): Promise<ApiResponse<any>> => {
+    return request.put(`/api/v1/tag-tables/${tagTableId}/mapping-rules/${ruleId}`, data)
+  },
+
+  /**
+   * 删除IDMapping规则
+   */
+  deleteMappingRule: (tagTableId: string, ruleId: string): Promise<ApiResponse<void>> => {
+    return request.delete(`/api/v1/tag-tables/${tagTableId}/mapping-rules/${ruleId}`)
+  }
+}
+
+/**
+ * 数据源API
+ */
+export const datasourceAPI = {
+  /**
+   * 获取数据源列表
+   */
+  getDataSources: (): Promise<ApiResponse<DataSource[]>> => {
+    return request.get('/api/v1/data-sources')
+  },
+
+  /**
+   * 获取数据表列表
+   */
+  getTables: (dataSourceId: string): Promise<ApiResponse<string[]>> => {
+    return request.get(`/api/v1/data-sources/${dataSourceId}/tables`)
+  },
+  /**
+   * 获取表字段信息
+   */
+  getTableFields: (dataSourceId: string, tableName: string): Promise<ApiResponse<TableField[]>> => {
+    return request.get(`/api/v1/data-sources/${dataSourceId}/tables/${tableName}/fields`)
+  }
+}
+
+export const listTags = async (params?: GetTagTablesParams): Promise<{ list: TagTable[]; total: number }> => {
+  const res = await tagAPI.getTagTables(params)
+  return { list: res.data.data, total: res.data.total }
+}
+
+export const getTag = async (id: string): Promise<TagTable> => {
+  const res = await tagAPI.getTagTableDetail(id)
+  return res.data
+}
+
+export const createTag = async (data: CreateTagTableDTO): Promise<TagTable> => {
+  const res = await tagAPI.createTagTable(data)
+  return res.data
+}
+
+export const updateTag = async (id: string, data: UpdateTagTableDTO): Promise<boolean> => {
+  const res = await tagAPI.updateTagTable(id, data)
+  return !!res.success
 }
 
 export const deleteTags = async (ids: string[]): Promise<boolean> => {
-  try {
-    await request.delete('/tag', { data: { ids } })
-    return true
-  } catch {
-    return true
-  }
-}
-
-const mockSchemaByTable = (tableName: string): TableField[] => {
-  const t = (tableName || '').toLowerCase()
-  if (t.includes('tag_user')) {
-    return [
-      { name: 'user_id', type: 'string', description: '用户唯一标识' },
-      { name: 'tag_code', type: 'string', description: '标签编码' },
-      { name: 'tag_value', type: 'string', description: '标签值' },
-      { name: 'dt', type: 'string', description: '分区-日期(yyyyMMdd)' },
-      { name: 'hour', type: 'string', description: '分区-小时(HH)' },
-      { name: 'import_ts', type: 'timestamp', description: '导入时间戳' }
-    ]
-  }
-  if (t.includes('user_profile') || t.includes('user') || t.includes('users')) {
-    return [
-      { name: 'id', type: 'string', description: '用户ID' },
-      { name: 'name', type: 'string', description: '姓名' },
-      { name: 'gender', type: 'string', description: '性别' },
-      { name: 'age', type: 'number', description: '年龄' },
-      { name: 'mobile', type: 'string', description: '手机号码' },
-      { name: 'email', type: 'string', description: '邮箱' },
-      { name: 'city', type: 'string', description: '城市' },
-      { name: 'updated_at', type: 'timestamp', description: '更新时间' }
-    ]
-  }
-  if (t.includes('events')) {
-    return [
-      { name: 'event_id', type: 'string', description: '事件ID' },
-      { name: 'user_id', type: 'string', description: '用户ID' },
-      { name: 'event_name', type: 'string', description: '事件名称' },
-      { name: 'ts', type: 'timestamp', description: '事件时间' },
-      { name: 'properties', type: 'json', description: '事件属性' }
-    ]
-  }
-  return [
-    { name: 'id', type: 'string', description: '主键ID' },
-    { name: 'created_at', type: 'timestamp', description: '创建时间' },
-    { name: 'updated_at', type: 'timestamp', description: '更新时间' }
-  ]
+  const results = await Promise.all(ids.map((id) => tagAPI.deleteTagTable(id)))
+  return results.every((r) => !!r.success)
 }
 
 export const fetchTableSchema = async (dataSourceId: string, tableName: string): Promise<TableField[]> => {
-  try {
-    const res: any = await request.get('/tag/table/schema', { params: { dataSourceId, tableName } })
-    if (res?.data && Array.isArray(res.data)) return res.data
-    // 如果服务端未返回结构，走本地mock
-    return mockSchemaByTable(tableName)
-  } catch {
-    // 本地mock：根据表名返回更贴近真实的字段集合
-    return mockSchemaByTable(tableName)
-  }
+  const res = await datasourceAPI.getTableFields(dataSourceId, tableName)
+  return res.data
 }
 
-export const validatePrimaryKey = async (fields: string[]): Promise<ValidationResult> => {
-  try {
-    const res: any = await request.post('/tag/table/validate-primary-key', { fields })
-    return res?.data
-  } catch {
-    const items = fields.map(f => ({ field: f, uniqueness: Math.floor(85 + Math.random() * 15), duplicates: Math.floor(Math.random() * 10) }))
-    const score = Math.round(items.reduce((s, i) => s + i.uniqueness, 0) / items.length)
-    return { isValid: score >= 95, items, score }
-  }
+export const validatePrimaryKey = async (
+  dataSourceId: string,
+  tableName: string,
+  fields: string[]
+): Promise<UniquenessCheckResult> => {
+  const res = await tagAPI.checkPrimaryKeyUniqueness(dataSourceId, tableName, fields)
+  return res.data
 }
 
-export const registerTagTable = async (payload: any): Promise<{ status: 'SUCCESS' | 'FAILED'; tableId?: string; qualityScore?: number }> => {
-  try {
-    const res: any = await request.post('/tag/table/register', payload)
-    return res?.data
-  } catch {
-    const ok = Math.random() > 0.2
-    return ok
-      ? { status: 'SUCCESS', tableId: `TBL_${Date.now()}`, qualityScore: Math.floor(90 + Math.random() * 10) }
-      : { status: 'FAILED' }
-  }
+export const registerTagTable = async (data: CreateTagTableDTO): Promise<TagTable> => {
+  const res = await tagAPI.createTagTable(data)
+  return res.data
 }
 
-export const getTagLineage = async (tagId: string): Promise<{ nodes: any[]; links: any[] }> => {
+export const getTagLineage = async (id: string): Promise<any> => {
   try {
-    const res: any = await request.get(`/tag/${tagId}/lineage`)
-    return res?.data || { nodes: [], links: [] }
+    const res = await request.get(`/api/v1/tag-tables/${id}/lineage`)
+    return res.data
   } catch {
-    return {
-      nodes: [
-        { id: 1, name: '标签节点', type: 'tag', updatedAt: Date.now() },
-        { id: 2, name: '人群节点', type: 'audience', lastUpdateTime: Date.now() - 86400000 },
-        { id: 3, name: '数据表节点', type: 'table', lastSyncTime: Date.now() - 172800000 }
-      ],
-      links: [
-        { source: 1, target: 2 },
-        { source: 2, target: 3 }
-      ]
-    }
+    return { nodes: [], edges: [] }
   }
 }

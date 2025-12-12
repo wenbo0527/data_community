@@ -25,6 +25,7 @@ export class EventService {
     const readOnly = this.readOnly
     let lastMenuNodeId = null
     let hideTimer = null
+    let lastShowTs = 0
     /**
      * 坐标转换到容器坐标系
      * 入参：point({x;y}) 局部/客户端坐标
@@ -40,39 +41,14 @@ export class EventService {
       }
     }
 
-    /**
-     * 点击区域识别（标题区/菜单点区域）
-     * 入参：e(MouseEvent)、node(Cell)
-     * 返回：{ inHeader:boolean, inDotArea:boolean }
-     */
-    const getClickRegion = (e, node) => {
-      try {
-        const bbox = node.getBBox()
-        const width = bbox.width
-        const local = this.graph.pageToLocal 
-          ? this.graph.pageToLocal({ x: e.pageX, y: e.pageY }) 
-          : (this.graph.clientToLocal ? this.graph.clientToLocal({ x: e.clientX, y: e.clientY }) : { x: e.clientX, y: e.clientY })
-        const rx = local.x - bbox.x
-        const ry = local.y - bbox.y
-        const HEADER_H = NODE_DIMENSIONS.HEADER_HEIGHT
-        const DOT_Y = POSITIONS.MENU_DOT_Y
-        const DOT_PAD_X = 64
-        const DOT_PAD_Y = 16
-        const inHeader = ry >= 0 && ry <= HEADER_H
-        const inDotArea = inHeader && (rx >= width - DOT_PAD_X && rx <= width - 8) && (ry >= DOT_Y - DOT_PAD_Y && ry <= DOT_Y + DOT_PAD_Y)
-        return { inHeader, inDotArea }
-      } catch (_) {
-        return { inHeader: false, inDotArea: false }
-      }
-    }
     const isMenuHot = (e, node) => {
       const target = e?.target || null
       const selector = target && target.getAttribute 
         ? (target.getAttribute('selector') || target.getAttribute('data-selector'))
         : null
+      const inHeaderMenuDom = !!(target && target.closest && (target.closest('[data-selector="header-menu"]') || target.closest('.node-menu') || target.closest('.node-menu__icon')))
       const isMenuIcon = selector && /^(menu-dot|header-menu)/.test(String(selector))
-      const { inDotArea } = getClickRegion(e, node)
-      return !!(isMenuIcon || inDotArea)
+      return !!(isMenuIcon || inHeaderMenuDom)
     }
     const showMenuForNode = (node) => {
       const data = node.getData ? node.getData() : {}
@@ -80,6 +56,11 @@ export class EventService {
       if (t === 'start' || t === 'end') return
       const bbox = node.getBBox()
       const uiPos = toContainerCoords({ x: bbox.x + bbox.width - 28, y: bbox.y + 12 })
+      const now = Date.now()
+      const tooSoon = now - lastShowTs < 60
+      const sameNode = lastMenuNodeId === node.id
+      if (tooSoon && sameNode) return
+      lastShowTs = now
       lastMenuNodeId = node.id
       this.setNodeActionsMenu({ visible: true, x: uiPos.x, y: uiPos.y, nodeId: node.id })
     }
@@ -88,6 +69,10 @@ export class EventService {
       try { clearTimeout(hideTimer) } catch {}
       hideTimer = setTimeout(() => {
         try {
+          const t = e?.target || null
+          if (t && t.closest && t.closest('[data-selector="header-menu"]')) return
+          // 选中状态下保持菜单，不进行自动关闭
+          try { if (this.graph && lastMenuNodeId) { const n = this.graph.getCellById?.(lastMenuNodeId); if (n?.isSelected && n.isSelected()) return } } catch {}
           if (this.isMenuHovering && this.isMenuHovering()) return
           const rect = this.getNodeActionsMenuRect ? this.getNodeActionsMenuRect() : null
           if (rect && e && typeof e.pageX === 'number' && typeof e.pageY === 'number') {
@@ -97,7 +82,7 @@ export class EventService {
           }
         } catch {}
         this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
-      }, 120)
+      }, 200)
     }
     graph.on('edge:mouseenter', () => {})
     graph.on('edge:mouseleave', () => {})
@@ -134,11 +119,9 @@ export class EventService {
         return
       }
       scheduleHideMenu(e)
-      if (!readOnly && !this.isStatisticsMode()) {
-        const d = node.getData ? node.getData() : {}
-        const t = d?.type || d?.nodeType
-        if (t) this.openConfigDrawer(t, node, d)
-      }
+      const d = node.getData ? node.getData() : {}
+      const t = d?.type || d?.nodeType
+      if (t && typeof this.openConfigDrawer === 'function') this.openConfigDrawer(t, node, d)
     })
     // 鼠标移动到菜单点区域时显示，移出时关闭
     graph.on('node:mouseenter', ({ e, node }) => {
@@ -171,6 +154,22 @@ export class EventService {
     this.graph.on('scale', refreshMenuPosition)
     this.graph.on('translate', refreshMenuPosition)
     this.graph.on('node:moved', ({ node }) => { if (node?.id === lastMenuNodeId) refreshMenuPosition() })
+    this.graph.on('node:selected', ({ node }) => {
+      if (readOnly) return
+      try { node.addClass && node.addClass('menu-active') } catch {}
+      showMenuForNode(node)
+    })
+    this.graph.on('node:unselected', ({ node }) => {
+      if (readOnly) return
+      try { node.removeClass && node.removeClass('menu-active') } catch {}
+      this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
+    })
+    this.graph.on('node:mouseenter', ({ e, node }) => {
+      if (readOnly) return
+      // 选中状态下，进入节点时始终展示菜单，提升可靠性
+      try { if (node?.isSelected && node.isSelected()) { showMenuForNode(node); return } } catch {}
+      if (isMenuHot(e, node)) showMenuForNode(node)
+    })
   }
 }
 

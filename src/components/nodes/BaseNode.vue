@@ -1,14 +1,14 @@
 <template>
-  <div class="base-node" :class="[nodeType, { disabled, selected, hover }]" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
+  <div ref="rootEl" class="base-node" :class="[nodeType, { disabled, selected, hover }]" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
     <!-- 标题区 -->
-    <header class="node-header" :style="headerStyle">
+    <header ref="headerRef" class="node-header" :style="headerStyle">
       <div class="node-icon" :style="iconStyle">
         <slot name="icon">
           <span class="node-icon-text">{{ iconText }}</span>
         </slot>
       </div>
       <span class="node-title">{{ title }}</span>
-      <div class="node-menu" v-if="showMenu" @click.stop="$emit('menu')">
+      <div ref="menuRef" class="node-menu" v-if="showMenu" @click.stop="$emit('menu')" @mouseenter.stop="onMenuMouseEnter" @mouseleave.stop="onMenuMouseLeave">
         <span class="dot"></span><span class="dot"></span><span class="dot"></span>
       </div>
     </header>
@@ -25,7 +25,7 @@
  * 统一外壳样式、交互态、菜单入口
  * 内容区由父组件通过插槽动态渲染 InPort / OutPort
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getNodeConfig } from '../../utils/nodeTypes.js'
 
 const props = defineProps({
@@ -39,6 +39,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['menu', 'hover-change'])
+const rootEl = ref(null)
+const headerRef = ref(null)
+const menuRef = ref(null)
 
 // 获取节点配置
 const nodeConfig = computed(() => getNodeConfig(props.nodeType))
@@ -86,6 +89,23 @@ function lightenColor(color, percent) {
 
 function onMouseEnter ()  { emit('hover-change', true)  }
 function onMouseLeave ()  { emit('hover-change', false) }
+function onMenuMouseEnter () {
+  try {
+    const root = rootEl.value
+    const header = headerRef.value
+    if (!root || !header) return
+    const nid = root.getAttribute('data-node-id') || ''
+    const headerRect = header.getBoundingClientRect()
+    window.dispatchEvent(new CustomEvent('node-header-menu-hover', { detail: { nodeId: nid, headerRect } }))
+  } catch {}
+}
+function onMenuMouseLeave () {
+  try {
+    const root = rootEl.value
+    const nid = root ? (root.getAttribute('data-node-id') || '') : ''
+    window.dispatchEvent(new CustomEvent('node-header-menu-leave', { detail: { nodeId: nid } }))
+  } catch {}
+}
 </script>
 
 <style scoped>

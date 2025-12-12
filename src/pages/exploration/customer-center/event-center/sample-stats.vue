@@ -3,11 +3,10 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1 class="page-title">样本统计分析</h1>
-        <a-tag color="green">单事件视图</a-tag>
+        <h1 class="page-title">{{ currentEvent.eventName }}<</h1>
+
         <div class="event-info" v-if="currentEvent">
           <a-tag color="blue">{{ currentEvent.eventType }}</a-tag>
-          <span class="event-name">{{ currentEvent.eventName }}</span>
           <span class="event-id">({{ currentEvent.id }})</span>
         </div>
       </div>
@@ -25,40 +24,8 @@
             <template #icon><icon-refresh /></template>
             刷新
           </a-button>
-          <a-button @click="handleExport">
-            <template #icon><icon-download /></template>
-            导出
-          </a-button>
-          <a-button type="primary" @click="handleBack">
-            <template #icon><icon-arrow-left /></template>
-            返回
-          </a-button>
         </div>
       </div>
-    </div>
-
-    <!-- 核心指标卡片 -->
-    <div class="metrics-cards">
-      <a-row :gutter="24">
-        <a-col :span="24">
-          <div class="metric-card primary-metric">
-            <div class="metric-header">
-              <div class="metric-title">总消息数</div>
-              <a-tooltip content="事件消息总数量">
-                <icon-info-circle />
-              </a-tooltip>
-            </div>
-            <div class="metric-value-large">{{ formatNumber(displayTotalMessages) }}</div>
-            <div class="metric-change">
-              <span class="change-up">+{{ getTrendChange('messages') }}%</span>
-              <span class="change-label">较上期</span>
-            </div>
-            <div class="time-range-indicator">
-              <a-tag color="blue" size="small">{{ timeRangeText }}</a-tag>
-            </div>
-          </div>
-        </a-col>
-      </a-row>
     </div>
 
     <!-- 图表区域 -->
@@ -73,9 +40,6 @@
                 <a-radio-group v-model="chartType" type="button" size="small">
                   <a-radio value="messages">消息数量</a-radio>
                 </a-radio-group>
-                <a-button type="text" size="small" @click="handleChartExport">
-                  <template #icon><icon-download /></template>
-                </a-button>
               </div>
             </div>
             <div class="chart-content">
@@ -149,10 +113,6 @@
               <a-option value="text">文本</a-option>
               <a-option value="binary">二进制</a-option>
             </a-select>
-            <a-button size="small" @click="handleTableExport">
-              <template #icon><icon-download /></template>
-              导出
-            </a-button>
           </div>
         </div>
         <div class="table-content">

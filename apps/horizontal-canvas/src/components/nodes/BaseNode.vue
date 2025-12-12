@@ -7,8 +7,12 @@
         </slot>
       </div>
       <span class="node-title" data-selector="header-title">{{ title }}</span>
-      <div class="node-menu" v-if="showMenu" @click.stop="$emit('menu')" data-selector="header-menu">
-        <span class="dot" data-selector="menu-dot-0"></span><span class="dot" data-selector="menu-dot-1"></span><span class="dot" data-selector="menu-dot-2"></span>
+      <div class="node-menu" v-if="showMenu" @click.stop="$emit('menu')" data-selector="header-menu" role="button" aria-label="更多">
+        <svg viewBox="0 0 48 48" width="18" height="18" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="node-menu__icon">
+          <circle cx="12" cy="24" r="2.5"></circle>
+          <circle cx="24" cy="24" r="2.5"></circle>
+          <circle cx="36" cy="24" r="2.5"></circle>
+        </svg>
       </div>
     </header>
     <main class="node-content" data-selector="content-area" :style="{padding:(NODE_DIMENSIONS.CONTENT_PADDING/2)+'px'}"><slot /></main>
@@ -64,7 +68,10 @@ function onMouseLeave ()  { emit('hover-change', false) }
 .node-header { display: flex; align-items: center; height: 32px; padding: 0 16px; color: #fff; font-size: 14px; font-weight: 600; border-radius: 12px 12px 0 0; flex-shrink: 0 }
 .node-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px }
 .node-title { flex: 1; font-size: 14px; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 1px rgba(0,0,0,.15) }
-.node-menu { display: flex; gap: 2px; cursor: pointer; padding: 4px; margin-left: 8px }
-.node-menu .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.9) }
+.node-menu { display: flex; align-items: center; justify-content: center; cursor: pointer; width: 28px; height: 28px; margin-left: 8px; border-radius: 10px; position: relative; background: transparent; box-shadow: none; transition: transform .15s ease, box-shadow .15s ease, background .15s ease }
+.node-menu::before { content: ''; position: absolute; inset: -6px; border-radius: 12px; }
+.node-menu__icon { color: rgba(55,65,81,.9) }
+.node-menu:hover { transform: scale(1.06); background: rgba(0,0,0,.08) }
+.base-node.menu-active .node-menu { transform: scale(1.12); box-shadow: 0 0 0 6px rgba(76,120,255,.12) }
 .node-content { flex: 1; display: flex; flex-direction: column; gap: 0; overflow: hidden }
 </style>

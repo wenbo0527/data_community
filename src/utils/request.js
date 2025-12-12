@@ -44,6 +44,9 @@ export default async function request(config) {
     if (url.includes('/api/variable-map')) {
       return handleVariableMapAPI(url, method, params, data)
     }
+    if (url.includes('/api/v1/')) {
+      return handleV1TagAndDatasourceAPI(url, method, params, data)
+    }
     
     // 默认返回成功响应
     return {
@@ -247,6 +250,220 @@ function handleDataModelsAPI(url, method, params, data) {
   }
   
   throw new Error('API 接口不存在')
+}
+
+/**
+ * 处理 /api/v1 数据源与标签相关 API（供标签表注册使用）
+ */
+function handleV1TagAndDatasourceAPI(url, method, params, data) {
+  const upperMethod = method.toUpperCase()
+  // 简易数据源与字段库（与前端本地 DataSourceStore 保持风格一致）
+  const __v1DataSources = [
+    { id: 'ds-1001', type: 'doris', host: 'doris-fe.local:8030', database: 'cdp_dw' },
+    { id: 'ds-1002', type: 'mysql', host: 'mysql.prod:3306', database: 'user_center' },
+    { id: 'ds-1003', type: 'postgresql', host: 'pg.behavior:5432', database: 'behavior' }
+  ]
+  // 标签表内存数据
+  if (!handleV1TagAndDatasourceAPI.__v1TagTables) {
+    handleV1TagAndDatasourceAPI.__v1TagTables = [
+      {
+        id: 'tt_001',
+        tableName: 'tag_user_daily',
+        tableDesc: '用户日颗粒标签明细',
+        dataSource: 'ds-1001',
+        recordCount: 120000,
+        status: 'active',
+        mappingStatus: 'configured',
+        identityType: 'mobile',
+        primaryKey: 'mobile',
+        createTime: '2024-11-01 10:00:00',
+        updateTime: '2025-01-10 09:00:00'
+      },
+      {
+        id: 'tt_002',
+        tableName: 'user_profile',
+        tableDesc: '用户画像主表',
+        dataSource: 'ds-1002',
+        recordCount: 56000,
+        status: 'active',
+        mappingStatus: 'partial',
+        identityType: 'mobile',
+        primaryKey: 'mobile',
+        createTime: '2024-10-21 09:00:00',
+        updateTime: '2025-01-08 12:00:00'
+      }
+    ]
+  }
+  const __v1TagTables = handleV1TagAndDatasourceAPI.__v1TagTables
+  const __tableFields = {
+    // doris
+    'ds-1001/tag_user_daily': [
+      { name: 'user_id', type: 'string' },
+      { name: 'mobile', type: 'string' },
+      { name: 'email', type: 'string' },
+      { name: 'device_id', type: 'string' },
+      { name: 'gender', type: 'string' },
+      { name: 'age', type: 'number' },
+      { name: 'city', type: 'string' },
+      { name: 'tag_code', type: 'string' },
+      { name: 'tag_value', type: 'string' },
+      { name: 'stat_date', type: 'date' }
+    ],
+    'ds-1001/tag_user_snapshot': [
+      { name: 'user_id', type: 'string' },
+      { name: 'mobile', type: 'string' },
+      { name: 'union_id', type: 'string' },
+      { name: 'open_id', type: 'string' },
+      { name: 'update_time', type: 'date' }
+    ],
+    'ds-1001/tag_user_monthly': [
+      { name: 'user_id', type: 'string' },
+      { name: 'card_no', type: 'string' },
+      { name: 'month', type: 'string' },
+      { name: 'amount', type: 'number' }
+    ],
+    // mysql
+    'ds-1002/user_profile': [
+      { name: 'id', type: 'string' },
+      { name: 'mobile', type: 'string' },
+      { name: 'email', type: 'string' },
+      { name: 'name', type: 'string' },
+      { name: 'birthday', type: 'date' },
+      { name: 'city', type: 'string' },
+      { name: 'register_time', type: 'date' }
+    ],
+    'ds-1002/user_ext': [
+      { name: 'id', type: 'string' },
+      { name: 'device_id', type: 'string' },
+      { name: 'open_id', type: 'string' },
+      { name: 'union_id', type: 'string' },
+      { name: 'last_login', type: 'date' }
+    ],
+    'ds-1002/user_tag': [
+      { name: 'id', type: 'string' },
+      { name: 'tag_code', type: 'string' },
+      { name: 'tag_value', type: 'string' },
+      { name: 'update_time', type: 'date' }
+    ],
+    // postgresql
+    'ds-1003/events': [
+      { name: 'event_id', type: 'string' },
+      { name: 'user_id', type: 'string' },
+      { name: 'device_id', type: 'string' },
+      { name: 'event_name', type: 'string' },
+      { name: 'event_time', type: 'date' },
+      { name: 'properties', type: 'string' }
+    ],
+    'ds-1003/events_archive': [
+      { name: 'event_id', type: 'string' },
+      { name: 'user_id', type: 'string' },
+      { name: 'event_name', type: 'string' },
+      { name: 'event_date', type: 'date' }
+    ]
+  }
+
+  // GET /api/v1/data-sources
+  if (url === '/api/v1/data-sources' && upperMethod === 'GET') {
+    return { code: 200, message: 'success', data: __v1DataSources }
+  }
+  // GET /api/v1/tag-tables
+  if (url === '/api/v1/tag-tables' && upperMethod === 'GET') {
+    const page = parseInt(params?.current || params?.page || 1)
+    const pageSize = parseInt(params?.pageSize || 10)
+    let list = [...__v1TagTables]
+    // 简易筛选
+    if (params?.search) {
+      const s = String(params.search).toLowerCase()
+      list = list.filter(t => (t.tableName || '').toLowerCase().includes(s) || (t.tableDesc || '').toLowerCase().includes(s))
+    }
+    const total = list.length
+    const start = (page - 1) * pageSize
+    const end = start + pageSize
+    const pageList = list.slice(start, end)
+    return {
+      code: 200,
+      message: 'success',
+      data: {
+        data: pageList,
+        total,
+        current: page,
+        pageSize,
+        pages: Math.ceil(total / pageSize)
+      }
+    }
+  }
+  // POST /api/v1/tag-tables
+  if (url === '/api/v1/tag-tables' && upperMethod === 'POST') {
+    const id = `tt_${Date.now()}`
+    const newItem = {
+      id,
+      tableName: data?.basic?.tableAlias || data?.tableName || `table_${id}`,
+      tableDesc: data?.basic?.description || '',
+      dataSource: data?.dataSource || '',
+      recordCount: 0,
+      status: 'active',
+      mappingStatus: (data?.mappingRules || []).length ? 'configured' : 'none',
+      identityType: (data?.mappingRules || [])[0]?.identityType || '',
+      primaryKey: (data?.primaryKeys || [])[0] || '',
+      createTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    }
+    __v1TagTables.unshift(newItem)
+    return { code: 200, message: 'created', data: newItem }
+  }
+  // PUT /api/v1/tag-tables/:id
+  if (url.match(/\/api\/v1\/tag-tables\/[^/]+$/) && upperMethod === 'PUT') {
+    const id = url.split('/').pop()
+    const idx = __v1TagTables.findIndex(t => t.id === id)
+    if (idx === -1) return { code: 404, message: 'not_found', data: null }
+    __v1TagTables[idx] = { ...__v1TagTables[idx], ...data, updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19) }
+    return { code: 200, message: 'updated', data: __v1TagTables[idx] }
+  }
+  // DELETE /api/v1/tag-tables/:id
+  if (url.match(/\/api\/v1\/tag-tables\/[^/]+$/) && upperMethod === 'DELETE') {
+    const id = url.split('/').pop()
+    const before = __v1TagTables.length
+    const next = __v1TagTables.filter(t => t.id !== id)
+    handleV1TagAndDatasourceAPI.__v1TagTables = next
+    const success = next.length < before
+    return { code: success ? 200 : 404, message: success ? 'deleted' : 'not_found', data: null }
+  }
+  // GET /api/v1/data-sources/:id/tables
+  if (url.match(/\/api\/v1\/data-sources\/[^/]+\/tables$/) && upperMethod === 'GET') {
+    const id = url.split('/')[4]
+    switch (id) {
+      case 'ds-1001': return { code: 200, message: 'success', data: ['tag_user_daily','tag_user_snapshot','tag_user_monthly'] }
+      case 'ds-1002': return { code: 200, message: 'success', data: ['user_profile','user_ext','user_tag'] }
+      case 'ds-1003': return { code: 200, message: 'success', data: ['events','events_archive'] }
+      default: return { code: 200, message: 'success', data: [] }
+    }
+  }
+  // GET /api/v1/data-sources/:id/tables/:table/fields
+  if (url.match(/\/api\/v1\/data-sources\/[^/]+\/tables\/[^/]+\/fields$/) && upperMethod === 'GET') {
+    const parts = url.split('/')
+    const id = parts[4]
+    const table = parts[6]
+    const key = `${id}/${table}`
+    const fields = __tableFields[key] || []
+    return { code: 200, message: 'success', data: fields }
+  }
+  // POST /api/v1/tag-tables/check-uniqueness
+  if (url === '/api/v1/tag-tables/check-uniqueness' && upperMethod === 'POST') {
+    const { dataSourceId, tableName, fields = [] } = data || {}
+    const key = `${dataSourceId}/${tableName}`
+    const sampleLen = (__tableFields[key] || []).length || 10
+    // 简单评分：身份证/手机号优先得分高
+    const f = String(fields[0] || '').toLowerCase()
+    let score = 70
+    if (/id_card|idcard/.test(f)) score = 98
+    else if (/mobile|phone|msisdn/.test(f)) score = 95
+    else if (/device_id|imei|idfa/.test(f)) score = 90
+    else if (/email/.test(f)) score = 85
+    else score = 75
+    return { code: 200, message: 'success', data: { score, sampleSize: sampleLen, field: fields[0] || '' } }
+  }
+  // 默认
+  return { code: 404, message: 'not_found', data: null }
 }
 
 /**
@@ -630,4 +847,26 @@ function handleVariableMapAPI(url, method, params, data) {
   }
 
   throw new Error('API 接口不存在')
+}
+
+// 为兼容 axios 风格的调用，提供 request.get/post/put/delete/patch 方法
+request.get = (url, options = {}) => {
+  const { params = {}, headers = {} } = options
+  return request({ url, method: 'GET', params, headers })
+}
+request.post = (url, data = {}, options = {}) => {
+  const { params = {}, headers = {} } = options
+  return request({ url, method: 'POST', params, data, headers })
+}
+request.put = (url, data = {}, options = {}) => {
+  const { params = {}, headers = {} } = options
+  return request({ url, method: 'PUT', params, data, headers })
+}
+request.delete = (url, options = {}) => {
+  const { params = {}, headers = {} } = options
+  return request({ url, method: 'DELETE', params, headers })
+}
+request.patch = (url, data = {}, options = {}) => {
+  const { params = {}, headers = {} } = options
+  return request({ url, method: 'PATCH', params, data, headers })
 }

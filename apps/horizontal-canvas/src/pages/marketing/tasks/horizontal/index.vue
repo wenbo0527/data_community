@@ -1,54 +1,57 @@
 <template>
   <div class="horizontal-task-flow-page">
-  <div class="page-header">
-    <div class="title">横版任务流</div>
-    <a-card title="基础信息" class="basic-info-card">
-      <a-form :model="formModel" layout="vertical" @submit.prevent>
-        <a-row :gutter="16">
-          <a-col :span="8">
-            <a-form-item label="任务名称" required>
-              <a-input v-model="taskName" placeholder="请输入任务名称" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="任务说明">
-              <a-input v-model="taskDescription" placeholder="请输入任务说明" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="当前版本">
-              <a-input-number v-model="taskVersion" :min="1" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16" style="margin-top: 4px;">
-          <a-col :span="8">
-            <a-form-item label="任务状态">
-              <a-tag :color="taskStatus === 'published' ? 'green' : 'blue'">{{ taskStatus === 'published' ? '已发布' : '草稿' }}</a-tag>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="创建时间">
-              <span>{{ createdTime }}</span>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8" style="text-align: right;">
-            <a-space>
-              <a-button @click="goBack">返回</a-button>
-              <a-button v-if="!isViewMode" type="primary" @click="saveTask">保存</a-button>
-              <a-button v-if="!isViewMode" type="primary" status="success" @click="publishTask">发布</a-button>
-              <!-- 测试按钮 -->
-              <a-button @click="testClick" size="small">测试</a-button>
-            </a-space>
-          </a-col>
-        </a-row>
-      </a-form>
-    </a-card>
+  <div class="page-header page-header--compact">
+    <div class="header-left">
+      <div class="title">{{ taskName || '未命名画布' }}</div>
+      <a-button size="small" type="text" @click="isNameEditing = !isNameEditing">
+        <template #icon>
+          <IconEdit />
+        </template>
+      </a-button>
+      <template v-if="isNameEditing">
+        <a-input v-model="taskName" placeholder="请输入画布名称" size="small" style="width: 220px;" />
+        <a-button size="small" type="primary" @click="isNameEditing = false">
+          <template #icon>
+            <IconCheck />
+          </template>
+        </a-button>
+      </template>
+      
+      <div class="header-item">
+        <span class="label">当前版本</span>
+        <a-select v-if="isViewMode" v-model="selectedVersionId" :options="versionOptions" placeholder="选择版本" style="width: 180px" />
+        <span v-else class="version-text">v{{ editingTaskVersion || taskVersion }}</span>
+      </div>
+      <div class="header-item">
+        <span class="label">状态</span>
+        <a-tag :color="taskStatus === 'published' ? 'green' : taskStatus === 'running' ? 'green' : 'blue'">{{ taskStatus === 'published' || taskStatus === 'running' ? '已发布' : '草稿' }}</a-tag>
+        <a-tag v-if="approvalStatus" :color="approvalStatus === 'pending_approval' ? 'orange' : approvalStatus === 'approved' ? 'green' : 'red'">
+          {{ approvalStatus === 'pending_approval' ? '待审批' : approvalStatus === 'approved' ? '已审批' : '已驳回' }}
+        </a-tag>
+        <a-tooltip v-if="publishReady === false" :content="(publishMessages || []).join('\n') || '发布校验未通过'">
+          <a-tag color="red">校验未通过</a-tag>
+        </a-tooltip>
+      </div>
+    </div>
+    <div class="header-right">
+      <a-space>
+        <a-button @click="goBack">返回</a-button>
+        <a-button v-if="!isViewMode" type="primary" @click="submitApprovalOnly">提交审批</a-button>
+        <a-button v-if="!isViewMode && approvalStatus !== 'pending_approval'" type="primary" @click="saveTask">保存</a-button>
+        <a-button v-if="!isViewMode && approvalStatus === 'approved'" type="primary" status="success" @click="publishTask">发布</a-button>
+      </a-space>
+    </div>
   </div>
 
-  <div class="content" ref="contentRef" :style="{ paddingRight: (showStatisticsPanel && isViewMode && isPublished) ? (statisticsPanelWidth + 'px') : '0px' }" @mousedown="onContentMouseDown">
+  <a-modal v-model:visible="publishModalVisible" title="发布说明" ok-text="确认发布" cancel-text="取消" @ok="confirmPublish">
+    <a-form layout="vertical">
+      <a-form-item label="画布说明">
+        <a-textarea v-model="publishDescription" placeholder="请输入发布说明" :max-length="300" allow-clear />
+      </a-form-item>
+    </a-form>
+  </a-modal>
 
-    
+      <div class="content" ref="contentRef" @mousedown="onContentMouseDown" @mouseover="onContentMouseOver" @mouseout="onContentMouseOut">
 
     <CanvasHistoryPanel
       v-if="showHistoryPanel"
@@ -80,15 +83,15 @@
           @undo="handleUndo"
           @redo="handleRedo"
           :show-zoom="true"
-          :show-add-node="!isViewMode"
+          :show-add-node="!isViewMode && approvalStatus !== 'pending_approval'"
           :show-layout="true"
           :show-layout-direction="false"
           :show-minimap-toggle="false"
           :show-minimap="showMinimap"
           :show-extras="true"
-          :show-clear="!isViewMode"
-          :show-undo-redo="!isViewMode"
-          :show-history="!isViewMode"
+          :show-clear="!isViewMode && approvalStatus !== 'pending_approval'"
+          :show-undo-redo="!isViewMode && approvalStatus !== 'pending_approval'"
+          :show-history="!isViewMode && approvalStatus !== 'pending_approval'"
           :show-statistics="isViewMode && isPublished"
           :can-undo="canUndo"
           :can-redo="canRedo"
@@ -131,8 +134,8 @@
         @mouseleave="nodeActionsMenuHovering = false; nodeActionsMenu.visible = false"
       >
         <button class="menu-item" @click="renameCurrentNode">重命名</button>
-        <button class="menu-item" @click="copyCurrentNode">复制</button>
-        <button class="menu-item danger" @click="deleteCurrentNode">删除</button>
+        <button v-if="!isStartNodeMenu" class="menu-item" @click="copyCurrentNode">复制</button>
+        <button v-if="!isStartNodeMenu" class="menu-item danger" @click="deleteCurrentNode">删除</button>
       </div>
       <div
         v-if="edgeActionsMenu.visible"
@@ -175,7 +178,7 @@
     
     <!-- 统计信息面板 - 仅在查看模式且发布状态下显示 -->
     <div 
-      v-if="showStatisticsPanel && isViewMode && isPublished" 
+      v-if="hasStatsPanelActive" 
       class="statistics-panel-container"
       :style="{ left: debugDockBounds.left + 'px', width: debugDockBounds.width + 'px', height: statisticsPanelHeight + 'px' }"
       ref="statisticsPanelRef"
@@ -184,7 +187,7 @@
       <CanvasStatisticsPanel
         :canvas-id="editingTaskId || 'default-canvas'"
         :graph="graph"
-        @close="showStatisticsPanel = false"
+        @close="closeStatisticsPanel"
         @node-select="handleNodeSelect"
         @path-highlight="handlePathHighlight"
       />
@@ -201,7 +204,7 @@
 边界：查看模式屏蔽删除与编辑；发布前进行端口与分支完整性校验；避免在页面层直接操作底层图逻辑。
 副作用：页面层仅进行路由跳转、消息提示与 TaskStorage 写入。
 */
-import { ref, onMounted, onBeforeUnmount, computed, nextTick, provide, reactive, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, nextTick, reactive, watch } from 'vue';
 import { Modal, Message } from '@arco-design/web-vue'
 import { Graph, Shape } from '@antv/x6';
 import { register } from '@antv/x6-vue-shape';
@@ -227,13 +230,11 @@ import {
   TYPOGRAPHY, 
   POSITIONS, 
   getNodeIconText,
-  getBaseNodeStyles,
-  INTERACTION_STATES
+  
 } from './styles/nodeStyles.js';
 // 导入性能监控和端口验证
-import { performanceMonitor } from './utils/performanceMonitor.js';
-import { usePortValidation } from './composables/usePortValidation.js';
-import { cleanupEdgeVertices, applyQuickLayout as applyQuickLayoutSvc, applyStructuredLayout as applyStructuredLayoutSvc } from './layout/LayoutService.ts'
+import { applyQuickLayout as applyQuickLayoutSvc, applyStructuredLayout as applyStructuredLayoutSvc } from './layout/LayoutService.ts'
+import { IconEdit, IconCheck } from '@arco-design/web-vue/es/icon'
 // 导入测试用例
  
 import { useRouter, useRoute } from 'vue-router'
@@ -241,10 +242,10 @@ import { TaskStorage } from '../../../../utils/taskStorage.js'
 import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
 import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
-import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph, bindDefaultShortcuts, configureSelectionRubberbandGate } from './graph/GraphService.ts'
+import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph, bindDefaultShortcuts } from './graph/GraphService.ts'
 import { useCanvasState } from './state/useCanvasState.ts'
-import { computeSelectorFromAnchor, computeSelectorCenter, insertNodeFromSelector, insertNodeAndFinalize } from './composables/useNodeInsertion.ts'
-import { testQuickLayout as runTestQuickLayout, testConnectionRules as runTestConnectionRules, runTestDebugFunction, runSimpleDebugNode, runTestNodeStyleValidation, runTestPortRegistration } from './debug/DebugHelpers.ts'
+import { computeSelectorFromAnchor, computeSelectorCenter, insertNodeAndFinalize } from './composables/useNodeInsertion.ts'
+
 
 // 任务基础信息变量
 const router = useRouter()
@@ -254,6 +255,10 @@ const taskDescription = ref('')
 const taskVersion = ref(1)
 const taskStatus = ref('draft')
 const createdTime = ref(new Date().toLocaleString('zh-CN'))
+const isNameEditing = ref(false)
+const approvalStatus = ref(null)
+const publishReady = ref(false)
+const publishMessages = ref([])
 
 const formModel = reactive({ taskName: '', taskDescription: '', taskVersion: 1 })
 watch(taskName, v => { formModel.taskName = v })
@@ -264,12 +269,25 @@ watch(taskVersion, v => { formModel.taskVersion = v })
 const isEditMode = ref(false)
 const editingTaskId = ref(null)
 const editingTaskVersion = ref(null)
+const isLoadingTask = ref(false)
 
 // 统计面板与画布状态
 const { showStatisticsPanel, showMinimap, scaleDisplayText, statisticsPanelWidth, statisticsPanelHeight } = useCanvasState()
 const isViewMode = computed(() => route.query.mode === 'view')
+const selectedVersionId = ref('')
+const versionOptions = computed(() => {
+  try {
+    if (!editingTaskId.value) return []
+    const versions = TaskStorage.getTaskVersions(editingTaskId.value)
+    return versions.map(v => ({ label: `v${v.version}${v.status === 'published' ? '（发布）' : ''}`, value: String(v.version) }))
+  } catch { return [] }
+})
 const isPublished = computed(() => taskStatus.value === 'published' || taskStatus.value === 'running')
 const initializing = ref(((route.query.mode === 'edit') || (route.query.mode === 'view')) && !!route.query.id)
+
+// 统计面板激活态：仅在有焦点节点时预留空间与展示
+const statsFocusNodeId = ref('')
+const hasStatsPanelActive = computed(() => showStatisticsPanel.value && isViewMode.value && isPublished.value && !!statsFocusNodeId.value)
 
 const canvasContainerRef = ref(null)
 const contentRef = ref(null)
@@ -286,25 +304,75 @@ let pendingCreatePoint = { x: 0, y: 0 }
 let pendingInsertionEdge = null
 const nodeSelectorMode = ref(null)
 const nodeActionsMenu = ref({ visible: false, x: 0, y: 0, nodeId: null })
+const isStartNodeMenu = computed(() => {
+  try {
+    const nid = nodeActionsMenu.value.nodeId
+    if (!nid || !graph) return false
+    const node = graph.getCellById(nid)
+    const data = node?.getData?.() || {}
+    const t = data?.type || data?.nodeType
+    return t === 'start'
+  } catch { return false }
+})
 const nodeActionsMenuHovering = ref(false)
 const nodeActionsMenuEl = ref(null)
 const getNodeActionsMenuRect = () => {
   try { return nodeActionsMenuEl.value?.getBoundingClientRect?.() || null } catch { return null }
 }
+let nodeMenuCloseTimer = null
+let headerMenuCooldownUntil = 0
 function onContentMouseDown(e) {
   try {
     if (!showNodeSelector.value) return
-    if (nodeSelectorMode.value !== 'toolbar') return
     const el = document.querySelector('.node-type-selector')
     if (el && el.contains(e.target)) return
     closeNodeSelector()
   } catch {}
 }
+
+function onContentMouseOver(e) {
+  try {
+    const t = e.target
+    if (!t || !t.closest) return
+    if (isViewMode.value) { if (nodeActionsMenu.value.visible) nodeActionsMenu.value.visible = false; return }
+    if (Date.now() < headerMenuCooldownUntil) return
+    const menuEl = t.closest('[data-selector="header-menu"]')
+    if (!menuEl) {
+      if (nodeActionsMenu.value.visible && !nodeActionsMenuHovering.value) {
+        nodeActionsMenu.value.visible = false
+      }
+      return
+    }
+    const root = menuEl.closest('[data-node-id]')
+    const nid = root?.getAttribute?.('data-node-id')
+    if (!nid || !graph) return
+    const headerEl = root?.querySelector?.('[data-selector="header"]')
+    const headerRect = headerEl?.getBoundingClientRect?.()
+    const contentRect = contentRef.value?.getBoundingClientRect?.()
+    if (!headerRect || !contentRect) return
+    const x = Math.round(headerRect.left + headerRect.width - 28 - contentRect.left)
+    const y = Math.round(headerRect.top + 12 - contentRect.top)
+    nodeActionsMenu.value = { visible: true, x, y, nodeId: nid }
+    if (nodeMenuCloseTimer) clearTimeout(nodeMenuCloseTimer)
+  } catch {}
+}
+function onContentMouseOut(e) {
+  try {
+    const rel = e.relatedTarget
+    const inHeaderMenu = !!(rel && rel.closest && rel.closest('[data-selector="header-menu"]'))
+    const menuEl = nodeActionsMenuEl.value
+    const inActionsMenu = !!(menuEl && rel && menuEl.contains(rel))
+    if (inHeaderMenu || inActionsMenu) return
+    if (nodeMenuCloseTimer) clearTimeout(nodeMenuCloseTimer)
+    nodeMenuCloseTimer = setTimeout(() => {
+      if (!nodeActionsMenuHovering.value) nodeActionsMenu.value.visible = false
+    }, 150)
+  } catch {}
+}
 const edgeActionsMenu = ref({ visible: false, x: 0, y: 0, edgeId: null })
 const portActionsMenu = ref({ visible: false, x: 0, y: 0, nodeId: null, portId: null, edgeId: null })
 // 当前正在配置的抽屉与节点
-const activeDrawerKey = ref(null)
-const activeNodeId = ref(null)
+ 
 // 调试面板状态
 const showDebugPanel = ref(false)
 const debugPanelPosition = ref({ x: 120, y: 100 })
@@ -324,30 +392,62 @@ let minimapPaused = false
 // 工具栏组件引用（用于获取小地图按钮的当前位置）
 const toolbarRef = ref(null)
 const clickAddNodeType = ref('');
+watch(selectedVersionId, async (val) => {
+  try {
+    if (!isViewMode.value) return
+    if (!val) return
+    const id = route.query.id
+    const versions = TaskStorage.getTaskVersions(id) || []
+    const vEntry = versions.find(v => String(v.version) === String(val))
+    router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'view', id, version: val } })
+    await nextTick()
+    await loadTaskData()
+    try { taskStatus.value = vEntry ? (vEntry.status || 'draft') : taskStatus.value } catch {}
+    try { showStatisticsPanel.value = false; statsFocusNodeId.value = '' } catch {}
+  } catch {}
+})
+
+// 编辑模式版本由系统生成，禁用手动编辑，不监听版本变化以避免二次加载
+
+watch(() => route.query.version, async (val, oldVal) => {
+  if (val === oldVal) return
+  try {
+    const id = route.query.id
+    if (!id) return
+    await nextTick()
+    await loadTaskData()
+  } catch {}
+})
 
 // 窗口大小变化时，若小地图已显示，则根据按钮位置重新计算弹框位置
 function updateMinimapPositionOnResize() {
-  if(showMinimap.value){
-    try {
-      const anchorRect = toolbarRef.value?.getMinimapAnchorRect?.() || null
-      const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.() || null
-      const basePos = useCanvasState().computeMinimapPosition(anchorRect, canvasRect)
-      const desired = { left: Math.max(16, basePos.left - 120), top: basePos.top }
-      const panelRect = minimapContainer.value?.getBoundingClientRect?.() || null
-      if (canvasRect && panelRect) {
-        const clamped = useCanvasState().clampPanelPosition(desired, { width: canvasRect.width, height: canvasRect.height }, { width: panelRect.width, height: panelRect.height }, 16)
-        minimapPosition.value = clamped
-      } else {
-        minimapPosition.value = desired
-      }
-      setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
-    } catch {}
+   if(showNodeSelector.value && clickAddNodeType.value){
+       toolbarRef.value?.getAddNodeAnchorRect?.();
+   }
+   if(showMinimap.value){
+     try {
+       const anchorRect = toolbarRef.value?.getMinimapAnchorRect?.() || null
+       const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.() || null
+       const basePos = useCanvasState().computeMinimapPosition(anchorRect, canvasRect)
+       const desired = { left: Math.max(16, basePos.left - 120), top: basePos.top }
+       const panelRect = minimapContainer.value?.getBoundingClientRect?.() || null
+       if (canvasRect && panelRect) {
+         const clamped = useCanvasState().clampPanelPosition(desired, { width: canvasRect.width, height: canvasRect.height }, { width: panelRect.width, height: panelRect.height }, 16)
+         minimapPosition.value = clamped
+       } else {
+         minimapPosition.value = desired
+       }
+       setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
+     } catch {}
+   }
   };
-  (showNodeSelector.value && clickAddNodeType.value) &&  toolbarRef.value?.getAddNodeAnchorRect?.();
-}
-if (typeof window !== 'undefined') {
-  window.addEventListener('resize', updateMinimapPositionOnResize)
-}
+
+onMounted(() => {
+   window.addEventListener('resize', updateMinimapPositionOnResize);
+   if (isViewMode.value) {
+     try { selectedVersionId.value = String(route.query.version || '') } catch {}
+   }
+});
 let centerTaskId = 0
 let centerTimer = null
 let firstCenterDone = false
@@ -405,59 +505,14 @@ function updateDebugDockBounds() {
   try { useCanvasState().updateDebugDockBounds(contentRef.value, showStatisticsPanel, isViewMode.value, isPublished.value, statisticsPanelWidth, debugDockBounds) } catch {}
 }
 
-// 计算属性：当前节点是否禁用
-const currentNodeDisabled = computed(() => {
-  if (!nodeActionsMenu.value.nodeId || !graph) return false
-  try {
-    const node = graph.getCellById(nodeActionsMenu.value.nodeId)
-    if (!node) return false
-    const data = node.getData?.() || {}
-    return data.disabled === true
-  } catch (e) {
-    return false
-  }
-})
+// 移除未使用的禁用态计算属性
 
 /**
  * 测试横版快速布局功能
  */
-const testQuickLayout = async () => { if (!graph) return; await runTestQuickLayout(graph, handleQuickLayout) }
-
-const testConnectionRules = () => { if (!graph) return; runTestConnectionRules(graph, createVueShapeNode) }
-
-const toggleStartDrawer = () => {
-  const g = graph
-  if (!g) return
-  // 强制打开开始节点抽屉，如果不存在开始节点则创建
-
-  let start = g.getNodes().find(n => {
-    const d = n.getData?.() || {}
-    return d?.type === 'start' || d?.nodeType === 'start'
-  })
-  if (!start) {
-    ensureStartNode()
-    start = g.getNodes().find(n => (n.getData?.() || {}).nodeType === 'start')
-  }
-  if (start) configDrawers.openConfigDrawer('start', start, start.getData?.() || {})
-}
+// 移除未使用的测试与抽屉控制函数
   
-function startResize(event) {
-  isResizing.value = true
-  const startX = event.clientX
-  const startWidth = statisticsPanelWidth.value
-  const handleMouseMove = (e) => {
-    const deltaX = e.clientX - startX
-    const newWidth = Math.max(300, Math.min(800, startWidth - deltaX))
-    statisticsPanelWidth.value = newWidth
-  }
-  const handleMouseUp = () => {
-    isResizing.value = false
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
-}
+// 移除未使用的统计面板宽度拖拽函数（已使用顶部拖拽）
 
 function startVerticalResize(event) {
   isResizing.value = true
@@ -480,7 +535,9 @@ function startVerticalResize(event) {
 function performCopyFromSelection() {
   if (!graph) return
   const cells = graph.getSelectedCells?.() || []
-  const nodes = cells.filter(c => c.isNode?.())
+  const nodes = cells.filter(c => c.isNode?.()).filter(n => {
+    try { const d = n.getData?.() || {}; const t = d?.nodeType || d?.type; return t !== 'start' } catch { return true }
+  })
   if (!nodes.length) return
   clipboardNodes = nodes.map(n => {
     const d = n.getData?.() || {}
@@ -493,7 +550,10 @@ function performCopyFromSelection() {
 
 function performPasteFromClipboard() {
   if (!graph) return
-  const items = clipboardNodes || []
+  const items = (clipboardNodes || []).filter(info => {
+    const type = info?.nodeType || (info?.data?.nodeType || info?.data?.type) || 'node'
+    return type !== 'start'
+  })
   if (!items.length) return
   const offset = 40
   const created = []
@@ -578,61 +638,15 @@ const handlePathHighlight = (pathData) => {
   }
 }
 
+function closeStatisticsPanel() {
+  try { showStatisticsPanel.value = false; statsFocusNodeId.value = '' } catch {}
+}
+
 // 测试调试功能的函数
-function testDebugFunction() { if (!graph) return; runTestDebugFunction(graph, nodeActionsMenu, createVueShapeNode, NODE_DIMENSIONS, (id) => simpleDebugNode(id)) }
-
-// 简化的调试函数，用于快速测试
-function simpleDebugNode(nodeId) { if (!graph) return; runSimpleDebugNode(graph, nodeId, getNodeLabel, getNodeIconText, () => validateLayoutCoordinates()) }
-
-// 测试节点样式验证功能
-function testNodeStyleValidation() { if (!graph) return; runTestNodeStyleValidation(graph, createVueShapeNode, NODE_DIMENSIONS, POSITIONS) }
-
-function testPortRegistration() { if (!graph) return; runTestPortRegistration(graph, createVueShapeNode) }
+// 移除未使用的调试与验证函数
 
 // 布局验证函数
-function validateLayoutCoordinates() {
-  console.log('📐 [Horizontal] 布局坐标验证开始...')
-  
-  const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT // 36
-  const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT // 32
-  const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING // 12
-  const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST // 5
-  
-  console.log('📏 基础尺寸:')
-  console.log(`   - headerHeight: ${headerHeight}`)
-  console.log(`   - rowHeight: ${rowHeight}`)
-  console.log(`   - contentPadding: ${contentPadding}`)
-  console.log(`   - baselineAdjust: ${baselineAdjust}`)
-  
-  console.log('\n🎯 标题区域验证 (36px高度):')
-  console.log(`   - header-icon Y: 8 (合理，距离顶部8px)`)
-  console.log(`   - header-icon-text Y: ${POSITIONS.ICON_TEXT_Y} (文字基线)`)
-  console.log(`   - header-title Y: ${POSITIONS.TITLE_Y} (文字基线)`)
-  console.log(`   - menu-dots Y: ${POSITIONS.MENU_DOT_Y} (菜单点中心)`)
-  console.log(`   - 垂直中心: ${headerHeight / 2} = 18px`)
-  
-  console.log('\n📋 内容区域验证:')
-  const contentStartY = headerHeight + contentPadding
-  console.log(`   - 内容起始Y: ${contentStartY} (${headerHeight} + ${contentPadding})`)
-  
-  const row0Y = contentStartY + Math.floor(rowHeight / 2) + baselineAdjust
-  console.log(`   - 第0行Y坐标: ${row0Y} (${contentStartY} + ${Math.floor(rowHeight / 2)} + ${baselineAdjust})`)
-  
-  const row1Y = contentStartY + rowHeight + Math.floor(rowHeight / 2) + baselineAdjust
-  console.log(`   - 第1行Y坐标: ${row1Y} (${contentStartY} + ${rowHeight} + ${Math.floor(rowHeight / 2)} + ${baselineAdjust})`)
-  
-  console.log('\n✅ 验证结果:')
-  console.log(`   - 第0行Y坐标应为: 69 (当前计算: ${row0Y})`)
-  console.log(`   - 第1行Y坐标应为: 101 (当前计算: ${row1Y})`)
-  
-  if (row0Y === 69) {
-    console.log('✅ 第0行Y坐标计算正确！')
-  } else {
-    console.log(`❌ 第0行Y坐标计算错误: 期望69，实际${row0Y}`)
-  }
-  
-  console.log('\n📐 布局对齐验证完成')
-}
+ 
 
 const handleDrawerVisibilityChange = ({ drawerType, visible }) => {
   if (!visible) configDrawers.closeConfigDrawer(drawerType)
@@ -646,17 +660,10 @@ watch(() => (configDrawers ? configDrawers.drawerStates : null), () => nextTick(
 window.addEventListener('resize', () => updateToolbarPosition())
 onMounted(() => nextTick(() => updateToolbarPosition()))
 
-const resetCanvas = () => {
-  if (!graph) return
-  graph.clearCells()
-  ensureStartNode()
-}
+// 移除未使用的画布重置函数
 
 // 调试面板控制
-const toggleDebugPanel = () => {
-  showDebugPanel.value = !showDebugPanel.value
-  try { localStorage.setItem('horizontal:debug:visible', showDebugPanel.value ? '1' : '0') } catch {}
-}
+// 移除未使用的调试面板切换函数
 const closeDebugPanel = () => {
   showDebugPanel.value = false
   try { localStorage.setItem('horizontal:debug:visible', '0') } catch {}
@@ -854,7 +861,7 @@ onMounted(async () => {
   // 初始化统计面板顶部偏移（位于工具栏以下）并监听窗口尺寸变化
   updateStatisticsPanelTop()
   updateDebugDockBounds()
-  const resizeHandlers = useCanvasState().setupPanelResizeListeners(toolbarWrapperRef.value, contentRef.value, showStatisticsPanel, isViewMode.value, isPublished.value, statisticsPanelWidth, debugDockBounds, statisticsPanelTop)
+  const panelResizeHandlers = useCanvasState().setupPanelResizeListeners(toolbarWrapperRef.value, contentRef.value, showStatisticsPanel, isViewMode.value, isPublished.value, statisticsPanelWidth, debugDockBounds, statisticsPanelTop)
 })
 
 onBeforeUnmount(() => {
@@ -925,6 +932,7 @@ onBeforeUnmount(() => {
   graph.bindKey(['delete', 'backspace'], () => {
     // DocRef: 架构文档「关键代码片段/键盘删除屏蔽（查看模式）」
     try {
+      if (approvalStatus.value === 'pending_approval') return false
       const cells = graph.getSelectedCells?.() || []
       if (!cells.length) return false
       cells.forEach(cell => {
@@ -1082,7 +1090,7 @@ onBeforeUnmount(() => {
     }
   }
   let listenersRegistered = false
-  if (typeof window !== 'undefined') {
+  if (!isViewMode.value && typeof window !== 'undefined') {
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
     listenersRegistered = true
@@ -1117,11 +1125,10 @@ onBeforeUnmount(() => {
         listenersRegistered = false
       }
     } catch {}
-    try { resizeHandlers?.detach && resizeHandlers.detach() } catch {}
+    try { panelResizeHandlers?.detach && panelResizeHandlers.detach() } catch {}
   })
   
-  const statsFocusNodeId = ref('')
-  const controller = new CanvasController({
+  new CanvasController({
     graph,
     readOnly: isViewMode.value,
     isStatisticsMode: () => !!showStatisticsPanel.value,
@@ -1132,9 +1139,9 @@ onBeforeUnmount(() => {
         statsFocusNodeId.value = id
         console.log('[Stats] focusNodeId set:', id)
         try { window.dispatchEvent(new CustomEvent('stats:focus', { detail: { id } })) } catch {}
-        showStatisticsPanel.value = true 
-      } catch {} 
-    },
+    showStatisticsPanel.value = true 
+    } catch {} 
+  },
     openConfigDrawer: (type, node, data) => {
       console.log('openConfigDrawer111', type, node, data);
       configDrawers.openConfigDrawer(type, node, { ...(data || {}), __readOnly: isViewMode.value });
@@ -1438,8 +1445,12 @@ onBeforeUnmount(() => {
     }
   })
   
-  // 初始化开始节点
-  ensureStartNode()
+  // 初始化开始节点（仅在新建模式且无ID时）
+  try {
+    const q = route.query
+    const isNewMode = !q || (!q.id && q.mode !== 'view' && q.mode !== 'edit')
+    if (isNewMode) ensureStartNode()
+  } catch {}
   try {
     if (showMinimap.value && minimap) {
       setTimeout(() => {
@@ -1461,27 +1472,14 @@ onBeforeUnmount(() => {
   // 未再绑定拖拽相关事件，无需移除
 })
 
-function ensureStartNode() { ensureStartNodeSvc(graph) }
+function ensureStartNode() {
+  try { ensureStartNodeSvc(graph) } catch {}
+}
 
 
 
 // 节点禁用/启用功能（简化版，使用Vue组件状态）
-function setNodeDisabled(nodeId, disabled = true) {
-  if (!graph || !nodeId) return
-  try {
-    const node = graph.getCellById(nodeId)
-    if (!node) return
-    
-    const data = node.getData?.() || {}
-    const newData = { ...data, disabled }
-    
-    if (node.setData) {
-      node.setData(newData)
-    }
-  } catch (e) {
-    console.warn('[Horizontal] setNodeDisabled 异常:', e)
-  }
-}
+ 
 // 用途：节点选择器确认类型后插入节点并完成端到端收尾
 // 入参：nodeType 节点类型字符串
 // 返回：创建的节点对象或 null
@@ -1497,6 +1495,7 @@ function setNodeDisabled(nodeId, disabled = true) {
 }
 
 function closeNodeSelector() { 
+  clickAddNodeType.value ='';
   useCanvasState().hideNodeSelector(showNodeSelector); 
   nodeSelectorSourceNode.value = null 
   try {
@@ -1536,103 +1535,15 @@ function handleConfigCancelProxy({ drawerType }) {
 
 
 
-function getOutCountByType(nodeType, lines) {
-  if (nodeType === 'crowd-split' || nodeType === 'event-split' || nodeType === 'ab-test') return Math.max(1, lines.length)
-  return 1
-}
+ 
 
 
 // 统一更新路径：复用创建逻辑生成规格并应用到现有节点
 // DocRef: 架构文档「关键代码片段/节点统一更新：尺寸、端口映射与数据写回」
 // 点击抽屉确认后，更新节点内容
 async function updateNodeFromConfigUnified(node, nodeType, config) {
-  console.log('updateNodeFromConfigUnified1111',node,config)
   try {
     updateNodeUnifiedSvc(graph, node, nodeType, config)
-    return
-    const label = config?.nodeName || getNodeLabel(nodeType) || nodeType
-    const spec = createVueShapeNode({
-      id: node.id,
-      x: pos.x,
-      y: pos.y,
-      label,
-      data: { type: nodeType, nodeType: nodeType, config, isConfigured: true }
-    })
-    node.resize(spec.width, spec.height)
-    const existingPorts = node.getPorts ? node.getPorts() : []
-    const existingIds = new Set((existingPorts || []).map(p => p.id))
-    const specIds = new Set((spec.ports.items || []).map(p => p.id))
-    if (node.setProp) node.setProp('ports/groups', spec.ports.groups)
-    // 处理不在规格中的旧端口：优先尝试保留连线并重绑定到最接近的新端口
-    ;(existingPorts || []).forEach(p => {
-      if (!specIds.has(p.id)) {
-        try {
-          const isOut = p.group === 'out'
-          const edges = graph?.getConnectedEdges?.(node) || []
-          const outgoing = edges.filter(e => {
-            try { return e.getSourceCellId?.() === node.id && e.getSourcePortId?.() === p.id } catch { return false }
-          })
-          // 选择映射的新端口：
-          let targetNewPortId = null
-          if (isOut) {
-            // 优先同序号映射，其次回退到 out-0
-            const match = /^out-(\d+)$/.exec(p.id)
-            const newOutIds = Array.from(specIds).filter(id => /^out-\d+$/.test(String(id))).sort((a,b)=>{
-              return Number(a.split('-')[1]) - Number(b.split('-')[1])
-            })
-            if (match) {
-              const num = Number(match[1])
-              const clamped = Math.max(0, Math.min(num, newOutIds.length - 1))
-              targetNewPortId = newOutIds[clamped] || newOutIds[0] || null
-            } else {
-              targetNewPortId = newOutIds[0] || null
-            }
-          } else {
-            // 输入端口统一映射到 'in'（若存在）
-            targetNewPortId = specIds.has('in') ? 'in' : null
-          }
-          // 重绑定边到新端口
-          if (targetNewPortId) {
-            outgoing.forEach(e => {
-              try { e.setSource({ cell: node.id, port: targetNewPortId }) } catch {}
-            })
-          }
-          // 移除旧端口
-          node.removePort?.(p.id)
-        } catch {}
-      }
-    })
-    // 端口差异更新：保留已存在端口并更新属性；新增端口按规格添加
-    if (spec.ports.items && spec.ports.items.length) {
-      spec.ports.items.forEach(it => {
-        if (existingIds.has(it.id)) {
-          try {
-            node.setPortProp?.(it.id, 'group', it.group)
-            if (it.args != null) node.setPortProp?.(it.id, 'args', it.args)
-            if (it.attrs?.circle) {
-              const c = it.attrs.circle
-              if (c['data-port'] != null) node.setPortProp?.(it.id, 'attrs/circle/data-port', c['data-port'])
-              if (c['data-port-group'] != null) node.setPortProp?.(it.id, 'attrs/circle/data-port-group', c['data-port-group'])
-              if (c['data-port-type'] != null) node.setPortProp?.(it.id, 'attrs/circle/data-port-type', c['data-port-type'])
-            }
-          } catch {}
-        } else {
-          node.addPort && node.addPort(it)
-        }
-      })
-    }
-    if (node.setProp) {
-      if (node.setData) {
-        node.setData(spec.data)
-      }
-      node.prop('data', spec.data)
-      node.prop('nodeType', spec.data.nodeType)
-      node.prop('headerTitle', spec.data.headerTitle)
-      node.prop('displayLines', spec.data.displayLines)
-      node.trigger('change:data', { current: spec.data, previous: node.getData?.() })
-    }
-    
-    const verify = node.getData?.() || {}
   } catch (e) {
     console.error('[Horizontal] updateNodeFromConfigUnified 失败:', e)
   }
@@ -1662,6 +1573,7 @@ function copyCurrentNode() {
   const data = node.getData?.() || {}
   const pos = node.getPosition?.() || { x: 0, y: 0 }
   const nodeType = data?.type || data?.nodeType
+  if (nodeType === 'start') { try { Message.warning('开始节点不支持复制') } catch {}; nodeActionsMenu.value.visible = false; return }
   if (!nodeType) return
   const label = getNodeLabel(nodeType) || nodeType
   const fourOutTypes = ['crowd-split', 'event-split', 'ab-test']
@@ -1676,12 +1588,19 @@ function copyCurrentNode() {
     outCount,
     data: { ...data, nodeName: `${data?.nodeName || label}_副本` }
   }))
+  headerMenuCooldownUntil = Date.now() + 600
   nodeActionsMenu.value.visible = false
 }
 
 function deleteCurrentNode() {
   const nodeId = nodeActionsMenu.value.nodeId
   if (!nodeId || !graph) return
+  try {
+    const node = graph.getCellById(nodeId)
+    const data = node?.getData?.() || {}
+    const nodeType = data?.type || data?.nodeType
+    if (nodeType === 'start') { try { Message.warning('开始节点不支持删除') } catch {}; nodeActionsMenu.value.visible = false; return }
+  } catch {}
   Modal.confirm({
     title: '删除节点确认',
     content: '删除该节点将移除与其相关的连接线，且不可恢复，是否继续？',
@@ -1702,6 +1621,11 @@ function deleteNodeCascade(nodeId) {
   try {
     const node = graph.getCellById(nodeId)
     if (!node) return
+    try {
+      const d = node.getData?.() || {}
+      const t = d?.type || d?.nodeType
+      if (String(t) === 'start') { Message.warning('开始节点不可删除'); return }
+    } catch {}
     const edges = graph.getConnectedEdges(node)
     edges.forEach(e => { try { graph.removeEdge(e); console.info('[Horizontal] 连接删除(节点级)', { edgeId: e?.id, nodeId }) } catch {} })
     graph.removeNode(nodeId)
@@ -1762,6 +1686,90 @@ console.log('✅ [Horizontal] 配置抽屉初始化完成:', {
   hasHandleConfigConfirm: !!configDrawers?.handleConfigConfirm
 })
 
+try {
+  if (graph) {
+    graph.on('node:click', ({ node }) => {
+      try {
+        if (!isViewMode.value) return
+        const data = node?.getData?.() || {}
+        const type = data?.type || data?.nodeType
+        if (!type) return
+        configDrawers.openConfigDrawer(type, node, { ...(data || {}), __readOnly: true })
+      } catch {}
+    })
+    graph.on('cell:click', ({ cell }) => {
+      try {
+        if (!isViewMode.value) return
+        if (!cell || !cell.isNode || !cell.isNode()) return
+        const data = cell?.getData?.() || {}
+        const type = data?.type || data?.nodeType
+        if (!type) return
+        configDrawers.openConfigDrawer(type, cell, { ...(data || {}), __readOnly: true })
+      } catch {}
+    })
+    graph.on('node:selected', ({ node }) => {
+      try {
+        if (!isViewMode.value) return
+        const data = node?.getData?.() || {}
+        const type = data?.type || data?.nodeType
+        if (!type) return
+        configDrawers.openConfigDrawer(type, node, { ...(data || {}), __readOnly: true })
+      } catch {}
+      })
+  }
+} catch {}
+
+// 加载任务数据 - 提前声明为函数以避免TDZ
+async function loadTaskData() {
+  if (isLoadingTask.value) return
+  isLoadingTask.value = true
+  try {
+    const taskId = route.query.id
+    const taskVersionParam = route.query.version || 1
+    if (!taskId) { try { router.replace('/marketing/tasks') } catch {}; initializing.value = false; return false }
+    const numericTaskId = parseInt(taskId)
+    const storedTask = TaskStorage.getTaskById(numericTaskId)
+    if (storedTask) {
+      isEditMode.value = route.query.mode === 'edit'
+      editingTaskId.value = numericTaskId
+      editingTaskVersion.value = parseInt(taskVersionParam)
+      try {
+        taskName.value = storedTask.name || storedTask.taskName || ''
+        taskDescription.value = storedTask.description || storedTask.taskDescription || ''
+        const baseVersion = storedTask.version || storedTask.taskVersion || 1
+        const isPub = (storedTask.status || '') === 'published'
+        taskVersion.value = isPub ? (parseInt(baseVersion) + 1) : baseVersion
+        const versions = TaskStorage.getTaskVersions(numericTaskId) || []
+        const vEntry = versions.find(v => Number(v.version) === Number(editingTaskVersion.value)) || null
+        taskStatus.value = vEntry ? (vEntry.status || 'draft') : (storedTask.status || 'draft')
+        approvalStatus.value = vEntry ? (vEntry.approvalStatus || null) : null
+        publishReady.value = vEntry ? !!vEntry.publishReady : false
+        publishMessages.value = vEntry && Array.isArray(vEntry.publishMessages) ? vEntry.publishMessages : []
+        createdTime.value = storedTask.createTime || storedTask.createdAt || new Date().toLocaleString('zh-CN')
+      } catch {}
+    const canvasForVersion = TaskStorage.getTaskVersionCanvas(numericTaskId, editingTaskVersion.value) || storedTask.canvasData
+    if (canvasForVersion && canvasForVersion.nodes && canvasForVersion.nodes.length > 0) {
+      nextTick(() => {
+        if (graph) {
+          const ok = loadCanvasData(canvasForVersion)
+          scheduleCenterContent({ padding: 50, onDone: () => { initializing.value = false } })
+        } else {
+          initializing.value = false
+        }
+      })
+    } else {
+      try { ensureStartNode() } catch {}
+      initializing.value = false
+    }
+    } else {
+      Message.warning('未找到指定的任务数据，将创建新任务')
+      initializing.value = false
+    }
+  } catch (error) {
+    console.warn('[Horizontal] 加载任务数据失败:', error)
+  } finally { isLoadingTask.value = false }
+}
+
 // 处理编辑模式的参数 - 在graph完全初始化后
 const query = route.query
 console.log('[Horizontal] 路由查询参数:', query)
@@ -1778,134 +1786,10 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
   console.log('[Horizontal] 新建任务模式')
 }
 
-// 切换节点禁用状态
-function toggleNodeDisabled() {
-  const nodeId = nodeActionsMenu.value.nodeId
-  if (!nodeId || !graph) return
-  
-  try {
-    const node = graph.getCellById(nodeId)
-    if (!node) return
+ if (false) {
     
-    const data = node.getData?.() || {}
-    const currentDisabled = data.disabled === true
-    const newDisabled = !currentDisabled
     
-    // 使用setNodeDisabled函数来切换状态
-    setNodeDisabled(nodeId, newDisabled)
     
-  } catch (e) {
-    console.warn('[Horizontal] toggleNodeDisabled 异常:', e)
-  }
-  
-  nodeActionsMenu.value.visible = false
-}
-
-function debugCurrentNode() {
-  // 立即输出点击确认，确保函数被调用
-  console.log('🎯 [Horizontal] 调试按钮被点击，开始处理...')
-  
-  const nodeId = nodeActionsMenu.value.nodeId
-  if (!nodeId) {
-    console.warn('❌ [Horizontal] 未获取到节点ID')
-    return
-  }
-  
-  if (!graph) {
-    console.warn('❌ [Horizontal] 图形实例未初始化')
-    return
-  }
-  
-  try {
-    const node = graph.getCellById(nodeId)
-    if (!node) {
-      console.warn(`❌ [Horizontal] 未找到节点: ${nodeId}`)
-      return
-    }
-    
-    console.log(`✅ [Horizontal] 成功获取节点: ${nodeId}`)
-    
-    // 获取节点数据用于调试
-    const data = node.getData?.() || {}
-    const nodeType = data?.nodeType || data?.type
-    const cfg = data?.config || {}
-    const nodeName = data?.nodeName || cfg?.nodeName || '未命名节点'
-    
-    // 获取节点位置信息
-    const position = node.position?.() || node.getPosition?.() || { x: 0, y: 0 }
-    const bbox = node.getBBox?.() || { x: position.x, y: position.y, width: 0, height: 0 }
-    
-    console.log(`📋 [Horizontal] 节点基本信息:`, {
-      nodeId,
-      nodeType,
-      nodeName,
-      configKeys: Object.keys(cfg),
-      dataKeys: Object.keys(data),
-      position,
-      bbox: {
-        x: bbox.x,
-        y: bbox.y,
-        width: bbox.width || 0,
-        height: bbox.height || 0
-      }
-    })
-    
-    // 获取设计规范中的标准文字内容
-    const standardLabel = getNodeLabel(nodeType) || '未知节点类型'
-    const standardIconText = getNodeIconText(nodeType)
-    
-    const rows = buildDisplayLines(nodeType, cfg)
-    
-    console.log(`📝 [Horizontal] 文字内容分析:`, {
-      standardLabel,
-      standardIconText,
-      configContent: cfg,
-      displayRows: rows,
-      rowCount: rows.length
-    })
-    
-    const ports = node.getPorts?.() || []
-    console.log('🔌 [Horizontal] 端口信息:')
-    console.log(`   - 端口总数: ${ports.length}`)
-    ports.forEach(port => {
-      console.log(`   - 端口: ${port.id} (组: ${port.group})`)
-    })
-    
-    // 节点基础尺寸
-    const headerHeight = NODE_DIMENSIONS.HEADER_HEIGHT
-    const rowHeight = NODE_DIMENSIONS.ROW_HEIGHT
-    const contentPadding = NODE_DIMENSIONS.CONTENT_PADDING
-    const width = NODE_DIMENSIONS.WIDTH
-    const height = Math.max(NODE_DIMENSIONS.MIN_HEIGHT, headerHeight + contentPadding + Math.max(1, rows.length) * rowHeight + 12)
-  const isSplit = nodeType === 'audience-split' || nodeType === 'crowd-split' || nodeType === 'event-split' || nodeType === 'ab-test'
-    const contentHeight = Math.max(1, rows.length) * rowHeight
-    const contentCenter = headerHeight + contentPadding + Math.floor(contentHeight / 2)
-    const baselineAdjust = TYPOGRAPHY.CONTENT_BASELINE_ADJUST
-    
-    console.log('==========================================')
-    console.log(`🎯 [Horizontal] 节点元素位置调试信息 - ${nodeName}`)
-    console.log('==========================================')
-    
-    // 节点基础信息区域
-    console.log('📍 节点基础信息:')
-    console.log(`   - 节点ID: ${nodeId}`)
-    console.log(`   - 节点类型: ${nodeType}`)
-    console.log(`   - 节点名称: ${nodeName}`)
-    console.log(`   - 节点位置: (${position.x}, ${position.y})`)
-    console.log(`   - 节点尺寸: ${width} × ${height}`)
-    console.log(`   - 是否分流节点: ${isSplit}`)
-    console.log(`   - 内容行数: ${rows.length}`)
-    
-    // 文字内容对比展示
-    console.log('\n📝 文字内容详细对比:')
-    console.log(`   - 标准标签: "${standardLabel}"`)
-    console.log(`   - 配置名称: "${nodeName}"`)
-    console.log(`   - 图标文字: "${standardIconText}"`)
-    console.log(`   - 实际显示行数: ${rows.length}`)
-    
-    // 预先声明分流节点的垂直偏移数组，避免作用域问题
-    let computedVerticalOffsets = []
-    const compactMode = true
     try {
       const view = graph?.findViewByCell ? graph.findViewByCell(node) : null
       const contentEl = view?.container?.querySelector ? view.container.querySelector('.horizontal-node__content') : null
@@ -1915,6 +1799,7 @@ function debugCurrentNode() {
       const outPortsCount = ports.filter(p => p.group === 'out').length
       const inPortsCount = ports.filter(p => p.group === 'in').length
       const problems = []
+      const rows = []
       if (!contentEl) problems.push('NO_CONTENT_DOM')
       if (textElements.length === 0) problems.push('NO_CONTENT_ROWS')
       if (rows.length !== textElements.length) problems.push('ROW_COUNT_MISMATCH')
@@ -2029,36 +1914,10 @@ function debugCurrentNode() {
         // 保留布局器控制端口位置，不做DOM绝对位置覆盖
         
       } catch {}
-      const summary = {
-        nodeId,
-        nodeType,
-        displayLinesCount: rows.length,
-        domContentCount: textElements.length,
-        outPortsCount,
-        inPortsCount,
-        cfgDisplayLinesCount: Array.isArray(cfgLines) ? cfgLines.length : 0,
-        topLevelDisplayLinesCount: Array.isArray(topLines) ? topLines.length : 0,
-        firstExpected: rows[0] || '',
-        firstActual: textElements[0]?.textContent?.trim() || '',
-        firstMismatch,
-        problems,
-        coordValidations,
-        firstCoordIssue,
-        domCoordValidations,
-        firstDomIssue
-      }
-      if (problems.length) {
-        console.error('🔴 [Horizontal] 节点诊断失败', summary)
-      } else {
-        console.info('🟢 [Horizontal] 节点诊断通过', summary)
-      }
-      if (compactMode) {
-        console.log('==========================================')
-        nodeActionsMenu.value.visible = false
-        return
-      }
+      
     } catch {}
 
+    const rows = []
     if (rows.length > 0) {
       console.log('   - 显示内容详情:')
       rows.forEach((text, index) => {
@@ -2070,7 +1929,6 @@ function debugCurrentNode() {
     console.log('\n🎯 标题区域 (header):')
     console.log(`   - 选择器: [selector="header"]`)
     console.log(`   - 位置: (0, 0) [相对节点]`)
-    console.log(`   - 尺寸: ${width} × ${headerHeight}`)
     console.log(`   - 背景色: #F2F3F5`)
     console.log(`   - 边框: 1px solid #E5E6EB`)
     console.log(`   - 垂直对齐: 所有标题元素应在36px高度内垂直居中`)
@@ -2616,20 +2474,7 @@ function debugCurrentNode() {
     console.log(`   - 内容字体大小: ${TYPOGRAPHY.CONTENT_FONT_SIZE}px`)
     console.log(`   - 标题字体大小: ${TYPOGRAPHY.TITLE_FONT_SIZE}px`)
     console.log(`   - 图标字体大小: ${TYPOGRAPHY.ICON_FONT_SIZE}px`)
-    
-    console.log('\n✅ [Horizontal] 节点调试信息输出完成！')
-    console.log('==========================================')
-    
-  } catch (e) {
-    console.error('❌ [Horizontal] debugCurrentNode 异常:', e)
-    console.error('异常堆栈:', e.stack)
-  }
-  
-  // 确保关闭菜单
-  nodeActionsMenu.value.visible = false
-  console.log('🔄 [Horizontal] 已关闭节点操作菜单')
 }
- 
 function onCanvasDragOver(e) {
   e.preventDefault()
 }
@@ -2752,21 +2597,39 @@ const handleJumpToHistoryState = (index) => {
       }
     } catch { statsPanelPosition.value = { left: 16, top: 64 } }
 
+    try {
+      if (showStatisticsPanel.value && graph) {
+        const nodes = graph.getNodes?.() || []
+        const start = nodes.find(n => { try { const d = n.getData?.() || {}; return d.type === 'start' || d.nodeType === 'start' } catch { return false } })
+        statsFocusNodeId.value = String((start && start.id) || (nodes[0]?.id) || statsFocusNodeId.value || '')
+      }
+    } catch {}
+
     nextTick(() => {
       try {
         const panel = statisticsPanelRef.value?.getBoundingClientRect?.()
         const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.()
         if (panel && canvasRect) {
         statsPanelPosition.value = useCanvasState().clampPanelPosition(statsPanelPosition.value, canvasRect, panel, 16)
-          // 默认聚焦开始节点
-          if (!statsFocusNodeId.value && graph) {
-            const nodes = graph.getNodes?.() || []
-            const start = nodes.find(n => {
-              try { const d = n.getData?.() || {}; return d.type === 'start' || d.nodeType === 'start' } catch { return false }
-            })
-            statsFocusNodeId.value = String((start && start.id) || (nodes[0]?.id) || '')
-          }
         }
+      } catch {}
+      try {
+        const contentRect = contentRef.value?.getBoundingClientRect?.()
+        const canvasRectNow = canvasContainerRef.value?.getBoundingClientRect?.()
+        const cs = window.getComputedStyle ? window.getComputedStyle(contentRef.value) : null
+        const pr = cs ? parseInt(cs.paddingRight || '0', 10) : 0
+        const statsW = Number(statisticsPanelWidth.value || 0)
+        console.log('[Stats] 面板切换', {
+          showStatisticsPanel: showStatisticsPanel.value,
+          hasFocusNode: !!statsFocusNodeId.value,
+          contentWidth: contentRect ? Math.round(contentRect.width) : null,
+          contentHeight: contentRect ? Math.round(contentRect.height) : null,
+          contentPaddingRight: pr,
+          statisticsPanelWidth: statsW,
+          canvasWidth: canvasRectNow ? Math.round(canvasRectNow.width) : null,
+          canvasHeight: canvasRectNow ? Math.round(canvasRectNow.height) : null,
+          availableWidth: contentRect ? Math.round(contentRect.width - pr) : null
+        })
       } catch {}
     })
   }
@@ -2846,8 +2709,9 @@ const handleQuickLayout = async () => {
 
 const handleAddNode = (payload) => {
   if (isViewMode.value) return
-  nodeSelectorMode.value = 'toolbar'
-  const anchorRect = payload?.anchorRect
+  nodeSelectorMode.value = 'toolbar';
+  const anchorRect = payload?.anchorRect;
+  clickAddNodeType.value = payload?.clickType || '';
   const contentRect = contentRef.value?.getBoundingClientRect()
   if (anchorRect && contentRect && graph) {
     const r = computeSelectorFromAnchor(anchorRect, contentRect, graph)
@@ -2881,86 +2745,7 @@ const goBack = () => {
 
 // 获取画布数据函数
 
-// 加载任务数据 - 参考原版画布实现
-const loadTaskData = async () => {
-  try {
-    const taskId = route.query.id
-    const taskVersionParam = route.query.version || 1
-    
-    
-    // 参数验证
-    if (!taskId) {
-      throw new Error('任务ID不能为空')
-    }
-    
-    // 首先尝试从本地存储加载
-    const numericTaskId = parseInt(taskId)
-    
-    const storedTask = TaskStorage.getTaskById(numericTaskId)
-    
-  if (storedTask) {
-      // 使用本地存储的数据
-      
-      // 设置编辑模式
-      isEditMode.value = true
-      editingTaskId.value = numericTaskId
-      editingTaskVersion.value = parseInt(taskVersionParam)
-      
-      // 填充任务基础信息 - 增强错误处理
-      try {
-        taskName.value = storedTask.name || storedTask.taskName || ''
-        taskDescription.value = storedTask.description || storedTask.taskDescription || ''
-        // 已发布版本进入编辑时，预览下一个版本号
-        const baseVersion = storedTask.version || storedTask.taskVersion || 1
-        const isPublished = (storedTask.status || '') === 'published'
-        taskVersion.value = isPublished ? (parseInt(baseVersion) + 1) : baseVersion
-        taskStatus.value = storedTask.status || 'draft'
-        createdTime.value = storedTask.createTime || storedTask.createdAt || new Date().toLocaleString('zh-CN')
-        
-        console.log('📝 [Horizontal] 任务基础信息设置完成:', {
-          name: taskName.value,
-          description: taskDescription.value,
-          version: taskVersion.value,
-          status: taskStatus.value,
-          createTime: createdTime.value
-        })
-      } catch (infoError) {
-        console.error('❌ [Horizontal] 设置任务基础信息失败:', infoError)
-      }
-      
-      // 如果有画布数据，稍后加载到画布中
-      if (storedTask.canvasData && storedTask.canvasData.nodes && storedTask.canvasData.nodes.length > 0) {
-        console.log('[Horizontal] 开始加载画布数据，节点数量:', storedTask.canvasData.nodes.length)
-        
-        nextTick(() => {
-          if (graph) {
-            const ok = loadCanvasData(storedTask.canvasData)
-            scheduleCenterContent({ padding: 50, onDone: () => { initializing.value = false } })
-          } else {
-            console.error('❌ [Horizontal] 图形实例未准备好，无法加载画布数据')
-            initializing.value = false
-          }
-        })
-      } else {
-        console.log('[Horizontal] 任务没有画布数据或数据格式不正确:', {
-          hasCanvasData: !!storedTask.canvasData,
-          hasNodes: !!storedTask.canvasData?.nodes,
-          nodeCount: storedTask.canvasData?.nodes?.length
-        })
-        initializing.value = false
-      }
-    } else {
-      console.warn('[Horizontal] 未找到指定的任务数据，ID:', numericTaskId)
-      
-      
-      Message.warning('未找到指定的任务数据，将创建新任务')
-      initializing.value = false
-    }
-  } catch (error) {
-    console.error('❌ [Horizontal] 加载任务数据失败:', error)
-    Message.error('加载任务数据失败: ' + error.message)
-  }
-}
+ 
 
 // 加载画布数据函数 - 参考原版画布实现
 const loadCanvasData = (canvasData) => {
@@ -2973,10 +2758,11 @@ const saveTask = async () => {
   if (!taskName.value) { Message.error('请输入任务名称'); return }
   try {
     const canvasData = collectCanvasData(graph)
+    const validation = validateForPublish(graph, canvasData)
     let versionToUse = taskVersion.value || 1
     if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
     const name = taskName.value || '未命名任务'
-    const saveMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'draft', updateTime: new Date().toLocaleString('zh-CN'), creator: '当前用户' }
+    const saveMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'draft', publishReady: validation.pass, publishMessages: validation.messages || [], lastValidatedAt: new Date().toISOString(), updateTime: new Date().toLocaleString('zh-CN'), creator: '当前用户' }
     let saved
     if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...saveMeta, canvasData }); Message.success('更新成功') }
     else { saved = saveTaskSvc(saveMeta, canvasData); Message.success('保存成功'); if (saved && saved.id) { isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) } }
@@ -3004,6 +2790,25 @@ const publishTask = async () => {
     setTimeout(() => { router.push('/marketing/tasks') }, 1000)
     return saved
   } catch (e) { Message.error(`发布失败: ${e.message || '未知错误'}`) }
+}
+
+function submitApprovalOnly() {
+  try {
+    if (!taskName.value) { Message.error('请输入任务名称'); return }
+    const canvasData = collectCanvasData(graph)
+    const validation = validateForPublish(graph, canvasData)
+    if (!validation.pass) {
+      const detail = validation.messages.join('\n')
+      Modal.warning({ title: '发布校验未通过', content: `请修复以下问题:\n${detail}` })
+      publishReady.value = false
+      publishMessages.value = validation.messages || []
+      return
+    }
+    TaskStorage.updateTask(editingTaskId.value, { version: editingTaskVersion.value, description: taskDescription.value || '', updateTime: new Date().toLocaleString('zh-CN'), publishReady: true, publishMessages: [], lastValidatedAt: new Date().toISOString() })
+    TaskStorage.submitApproval(editingTaskId.value, editingTaskVersion.value, '当前用户', taskDescription.value || '')
+    approvalStatus.value = 'pending_approval'
+    Message.success('已提交审批')
+  } catch (e) { Message.error(`提交审批失败: ${e?.message || '未知错误'}`) }
 }
 
 // 画布发布前校验
@@ -3040,15 +2845,20 @@ const testClick = () => {
 
 .page-header {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-  padding: 20px 24px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+.page-header--compact .header-left { display: flex; align-items: center; gap: 12px; }
+.page-header--compact .header-item { display: flex; align-items: center; gap: 8px; }
+.page-header--compact .header-item .label { color: #64748b; font-size: 12px; }
+.version-text { font-weight: 500; color: #1f2937; }
+.canvas-name-text { font-weight: 500; color: #1f2937; margin-right: 4px; }
+.page-header--compact .header-right { display: flex; align-items: center; }
 
 .page-header .title {
   font-size: 20px;
@@ -3094,56 +2904,7 @@ const testClick = () => {
   overflow: hidden;
 }
 
-.basic-info-card {
-  margin: 0;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-}
-
-.basic-info-card:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
-}
-
-.basic-info-card :deep(.arco-card-header) {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  padding: 16px 20px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.basic-info-card :deep(.arco-card-body) {
-  padding: 20px;
-}
-
-.basic-info-card :deep(.arco-form-item) {
-  margin-bottom: 16px;
-}
-
-.basic-info-card :deep(.arco-input-wrapper) {
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
-}
-
-.basic-info-card :deep(.arco-input-wrapper:hover) {
-  border-color: #94a3b8;
-}
-
-.basic-info-card :deep(.arco-input-wrapper:focus-within) {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.basic-info-card :deep(.arco-btn) {
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
+/* 移除基础信息卡片相关样式 */
 
 .canvas-container {
   width: 100%!important;

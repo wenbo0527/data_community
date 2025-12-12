@@ -3,21 +3,21 @@
     <!-- 演示页面标题 -->
     <div class="demo-header">
       <div class="demo-title">
-        <icon-chart-line />
+        <icon-line-chart />
         <span>横版画布统计信息查询功能演示</span>
       </div>
       <div class="demo-controls">
         <a-space>
           <a-button @click="toggleStatisticsPanel">
-            <icon-statistics />
+        <span class="icon-placeholder" />
             {{ showStatistics ? '隐藏统计面板' : '显示统计面板' }}
           </a-button>
           <a-button @click="simulateDataUpdate">
-            <icon-refresh />
+            <span class="icon-placeholder" />
             模拟数据更新
           </a-button>
           <a-button @click="resetDemo">
-            <icon-undo />
+            <span class="icon-placeholder" />
             重置演示
           </a-button>
         </a-space>
@@ -29,7 +29,7 @@
       <div class="canvas-area">
         <div class="canvas-placeholder">
           <div class="placeholder-content">
-            <icon-picture />
+            <span class="icon-placeholder" />
             <h3>横版画布区域</h3>
             <p>这里显示实际的横版画布内容</p>
             <p>包含节点、连接线、用户路径等</p>
@@ -53,7 +53,7 @@
         <a-space direction="vertical" :size="16" fill>
           <div class="feature-item">
             <div class="feature-title">
-              <icon-dashboard />
+              <span class="icon-placeholder" />
               <span>统计概览</span>
             </div>
             <div class="feature-desc">
@@ -63,7 +63,7 @@
 
           <div class="feature-item">
             <div class="feature-title">
-              <icon-filter />
+              <span class="icon-placeholder" />
               <span>数据筛选</span>
             </div>
             <div class="feature-desc">
@@ -73,7 +73,7 @@
 
           <div class="feature-item">
             <div class="feature-title">
-              <icon-user-group />
+              <span class="icon-placeholder" />
               <span>用户路径分析</span>
             </div>
             <div class="feature-desc">
@@ -83,7 +83,7 @@
 
           <div class="feature-item">
             <div class="feature-title">
-              <icon-bar-chart />
+              <span class="icon-placeholder" />
               <span>数据可视化</span>
             </div>
             <div class="feature-desc">
@@ -93,7 +93,7 @@
 
           <div class="feature-item">
             <div class="feature-title">
-              <icon-download />
+              <span class="icon-placeholder" />
               <span>数据导出</span>
             </div>
             <div class="feature-desc">
@@ -103,7 +103,7 @@
 
           <div class="feature-item">
             <div class="feature-title">
-              <icon-desktop />
+              <span class="icon-placeholder" />
               <span>桌面端优化</span>
             </div>
             <div class="feature-desc">
@@ -121,7 +121,7 @@
           <a-col :span="8">
             <div class="tech-item">
               <div class="tech-icon">
-                <icon-thunderbolt />
+                <icon-dashboard />
               </div>
               <div class="tech-content">
                 <div class="tech-title">实时数据更新</div>
@@ -132,7 +132,7 @@
           <a-col :span="8">
             <div class="tech-item">
               <div class="tech-icon">
-                <icon-safe />
+                <icon-dashboard />
               </div>
               <div class="tech-content">
                 <div class="tech-title">数据安全</div>
@@ -143,7 +143,7 @@
           <a-col :span="8">
             <div class="tech-item">
               <div class="tech-icon">
-                <icon-performance />
+                <icon-dashboard />
               </div>
               <div class="tech-content">
                 <div class="tech-title">高性能</div>
@@ -159,22 +159,6 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { 
-  IconChartLine, 
-  IconStatistics, 
-  IconRefresh, 
-  IconUndo,
-  IconPicture,
-  IconDashboard,
-  IconFilter,
-  IconUserGroup,
-  IconBarChart,
-  IconDownload,
-  IconDesktop,
-  IconThunderbolt,
-  IconSafe,
-  IconPerformance
-} from '@arco-design/web-vue/es/icon'
 import CanvasStatisticsPanel from '@/components/canvas-statistics/CanvasStatisticsPanel.vue'
 
 // 演示状态

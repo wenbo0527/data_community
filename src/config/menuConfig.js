@@ -229,6 +229,12 @@ export const MENU_CONFIG = {
                 path: '/exploration/customer-center/tag-system/table-registration',
                 routeName: 'table-registration',
                 hideInMenu: true // 隐藏在菜单中，通过表管理页面跳转
+              },
+              'tag-center': {
+                key: 'tag-center',
+                title: '标签特征中心',
+                path: '/exploration/customer-center/tag-system/tag-center',
+                routeName: 'tag-center'
               }
               ,
               'datasource-management': {
@@ -511,8 +517,33 @@ export const MENU_CONFIG = {
           'risk-budget-settlement': {
             key: 'risk-budget-settlement',
             title: '结算管理',
-            path: '/risk/budget/settlement',
-            routeName: 'RiskBudgetSettlement'
+            type: 'group',
+            children: {
+              'risk-budget-settlement-index': {
+                key: 'risk-budget-settlement-index',
+                title: '结算首页',
+                path: '/risk/budget/settlement',
+                routeName: 'RiskBudgetSettlement'
+              },
+              'risk-budget-settlement-costing': {
+                key: 'risk-budget-settlement-costing',
+                title: '费用核算',
+                path: '/risk/budget/settlement?stage=costing',
+                routeName: 'RiskBudgetSettlement'
+              },
+              'risk-budget-settlement-reconcile': {
+                key: 'risk-budget-settlement-reconcile',
+                title: '外部对账',
+                path: '/risk/budget/settlement?stage=reconcile',
+                routeName: 'RiskBudgetSettlement'
+              },
+              'risk-budget-settlement-writeoff': {
+                key: 'risk-budget-settlement-writeoff',
+                title: '确认核销',
+                path: '/risk/budget/settlement?stage=writeoff',
+                routeName: 'RiskBudgetSettlement'
+              }
+            }
           }
         }
       },

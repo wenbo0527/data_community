@@ -235,7 +235,7 @@ import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '@/modules/budget/stores/contract'
 import { useSettlementSupplier } from '@/modules/budget/composables/useSettlementSupplier'
-import { getSettlementTasks, createSettlementTask, cancelSettlementTask } from '@/modules/budget/api/settlement'
+import { getSettlementTasks, createSettlementTask, cancelSettlementTask, completeSettlementTask } from '@/modules/budget/api/settlement'
 import { settlementSystemListener, supplierChangeNotifier } from '@/modules/external-data/utils/supplierChangeNotifier'
 
 type Granularity = 'year'|'quarter'|'month'

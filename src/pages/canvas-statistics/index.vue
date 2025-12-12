@@ -3,17 +3,17 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="page-title">
-        <icon-chart-line />
+        <span class="icon-placeholder" />
         <span>画布统计信息</span>
       </div>
       <div class="page-actions">
         <a-space>
           <a-button @click="goBack">
-            <icon-arrow-left />
+            <span class="icon-placeholder" />
             返回
           </a-button>
           <a-button @click="refreshData">
-            <icon-refresh />
+            <span class="icon-placeholder" />
             刷新
           </a-button>
         </a-space>
@@ -25,7 +25,7 @@
       <div class="canvas-viewer">
         <div class="canvas-placeholder">
           <div class="placeholder-content">
-            <icon-picture />
+            <span class="icon-placeholder" />
             <h3>画布内容区域</h3>
             <p>这里显示实际的横版画布内容</p>
             <p>画布ID: {{ canvasId }}</p>
@@ -46,13 +46,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { 
-  IconChartLine, 
-  IconArrowLeft, 
-  IconRefresh, 
-  IconDownload,
-  IconPicture
-} from '@arco-design/web-vue/es/icon'
 import CanvasStatisticsPanel from '@/components/canvas-statistics/CanvasStatisticsPanel.vue'
 
 const route = useRoute()

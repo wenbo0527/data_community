@@ -72,8 +72,12 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
   const outIds = isStart 
     ? ['out-0'] 
     : Array.from({ length: Math.max(1, rows.length || 1) }, (_, i) => `out-${i}`)
+  // 复制节点偏移：避免新节点的头部菜单落在当前鼠标位置
+  let nx = x
+  let ny = y
+  try { if (typeof id === 'string' && id.includes('-copy-')) { nx = x + 160; ny = y + 200 } } catch {}
   return {
-    id, x, y, width, height,
+    id, x: nx, y: ny, width, height,
     shape: 'horizontal-node',
     data: { ...data, ...componentData },
     ports: createHorizontalPortConfig(computedOutCount, {

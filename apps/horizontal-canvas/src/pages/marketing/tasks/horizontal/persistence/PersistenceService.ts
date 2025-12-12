@@ -41,16 +41,37 @@ export function loadCanvasData(graph: GraphLike, canvasData: { nodes: any[]; con
     try { graph.freeze?.() } catch {}
     graph.clearCells()
     const nodeMap = new Map<string, any>()
-    canvasData.nodes.forEach((nodeData: any) => {
+    const seenNodeIds = new Set<string>()
+    const nodes = canvasData.nodes.filter((n: any) => {
+      const id = String(n?.id || '')
+      if (!id) return false
+      if (seenNodeIds.has(id)) return false
+      seenNodeIds.add(id)
+      return true
+    })
+    nodes.forEach((nodeData: any) => {
       try {
         const position = nodeData.position || { x: nodeData.x || 100, y: nodeData.y || 100 }
-        const nodeDataForGraph = { id: nodeData.id, type: nodeData.type, x: position.x, y: position.y, width: 200, height: 120, data: { nodeType: nodeData.type, nodeName: nodeData.label || nodeData.data?.label || getNodeLabel(nodeData.type) || '', headerTitle: nodeData.label || nodeData.data?.label || getNodeLabel(nodeData.type) || '', config: nodeData.config || nodeData.data?.config || {}, level: nodeData.data?.level || 0, levelIndex: nodeData.data?.levelIndex || 0, isConfigured: nodeData.data?.isConfigured !== undefined ? nodeData.data.isConfigured : nodeData.isConfigured !== undefined ? nodeData.isConfigured : nodeData.type === 'start' ? true : false, branches: nodeData.branches || nodeData.data?.branches || (nodeData.config?.branches) || [] } }
+        const labelText = nodeData.label || nodeData.data?.label || getNodeLabel(nodeData.type) || ''
+        const nodeDataForGraph = { id: nodeData.id, x: position.x, y: position.y, label: labelText, data: { nodeType: nodeData.type, nodeName: labelText, headerTitle: labelText, config: nodeData.config || nodeData.data?.config || {}, level: nodeData.data?.level || 0, levelIndex: nodeData.data?.levelIndex || 0, isConfigured: nodeData.data?.isConfigured !== undefined ? nodeData.data.isConfigured : nodeData.isConfigured !== undefined ? nodeData.isConfigured : nodeData.type === 'start' ? true : false, branches: nodeData.branches || nodeData.data?.branches || (nodeData.config?.branches) || [] } }
+        try {
+          const existing = graph.getCellById?.(nodeData.id)
+          if (existing) graph.removeNode?.(nodeData.id)
+        } catch {}
         const node = createVueShapeNode(nodeDataForGraph)
         graph.addNode(node)
         nodeMap.set(nodeData.id, node)
       } catch {}
     })
-    canvasData.connections.forEach((connectionData: any) => {
+    const seenConnKeys = new Set<string>()
+    const connections = canvasData.connections.filter((e: any) => {
+      const id = String(e?.id || '')
+      const key = id || `${String(e.source)}->${String(e.target)}:${String(e.sourcePort || e.sourcePortId || '')}|${String(e.targetPort || e.targetPortId || '')}`
+      if (seenConnKeys.has(key)) return false
+      seenConnKeys.add(key)
+      return true
+    })
+    connections.forEach((connectionData: any) => {
       try {
         const sourceNode = nodeMap.get(connectionData.source)
         const targetNode = nodeMap.get(connectionData.target)

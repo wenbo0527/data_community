@@ -3,15 +3,41 @@ export const TaskStorage = {
   getAllTasks() {
     try { 
       const raw = JSON.parse(localStorage.getItem(KEY) || '[]')
-      return Array.isArray(raw) ? raw.map(t => ({ ...t, canvasData: migrateCanvasData(t.canvasData) })) : []
+      return Array.isArray(raw) ? raw.map(t => ({
+        ...t,
+        canvasData: migrateCanvasData(t.canvasData),
+        versions: Array.isArray(t.versions)
+          ? t.versions.map(v => ({ ...v, canvasData: migrateCanvasData(v.canvasData) }))
+          : []
+      })) : []
     } catch { return [] }
   },
   getTaskById(id) { return this.getAllTasks().find(t => String(t.id) === String(id)) || null },
   saveTask(task) {
     const list = this.getAllTasks()
     const idx = list.findIndex(t => String(t.id) === String(task.id))
-    if (idx >= 0) list[idx] = { ...list[idx], ...task, canvasData: migrateCanvasData(task.canvasData || list[idx].canvasData) }
-    else list.push({ ...task, createdAt: task.createdAt || new Date().toISOString() })
+    if (idx >= 0) {
+      const base = list[idx]
+      const next = { ...base, ...task, id: base.id, canvasData: migrateCanvasData(task.canvasData || base.canvasData) }
+      next.versions = Array.isArray(base.versions) ? base.versions.slice() : []
+      // 版本快照：保存当前版本的画布
+      if (task.version != null && task.canvasData) {
+        const vNum = Number(task.version)
+        const vIdx = next.versions.findIndex(v => Number(v.version) === vNum)
+        const vEntry = { version: vNum, status: task.status || base.status || 'draft', approvalStatus: task.approvalStatus || null, approvalFlow: Array.isArray(task.approvalFlow) ? task.approvalFlow.slice() : (next.versions[vIdx]?.approvalFlow || [] || []), publishReady: !!task.publishReady, publishMessages: Array.isArray(task.publishMessages) ? task.publishMessages.slice() : (next.versions[vIdx]?.publishMessages || []), lastValidatedAt: task.lastValidatedAt || new Date().toISOString(), canvasData: migrateCanvasData(task.canvasData), updateTime: task.updateTime || new Date().toISOString(), publishTime: task.publishTime || null }
+        if (vIdx >= 0) next.versions[vIdx] = { ...next.versions[vIdx], ...vEntry }
+        else next.versions.push(vEntry)
+      }
+      list[idx] = next
+    } else {
+      const created = { ...task, createdAt: task.createdAt || new Date().toISOString() }
+      // 初始化版本快照
+      created.versions = Array.isArray(created.versions) ? created.versions : []
+      if (created.version != null && created.canvasData) {
+        created.versions.push({ version: Number(created.version), status: created.status || 'draft', approvalStatus: created.approvalStatus || null, approvalFlow: Array.isArray(created.approvalFlow) ? created.approvalFlow.slice() : [], publishReady: !!created.publishReady, publishMessages: Array.isArray(created.publishMessages) ? created.publishMessages.slice() : [], lastValidatedAt: created.lastValidatedAt || null, canvasData: migrateCanvasData(created.canvasData), updateTime: created.updateTime || new Date().toISOString(), publishTime: created.publishTime || null })
+      }
+      list.push(created)
+    }
     localStorage.setItem(KEY, JSON.stringify(list))
     return task
   },
@@ -25,12 +51,25 @@ export const TaskStorage = {
     const list = this.getAllTasks()
     const idx = list.findIndex(t => String(t.id) === String(id))
     if (idx >= 0) {
-      const merged = { ...list[idx], ...data, id: list[idx].id, canvasData: migrateCanvasData(data.canvasData || list[idx].canvasData) }
+      const base = list[idx]
+      const merged = { ...base, ...data, id: base.id, canvasData: migrateCanvasData(data.canvasData || base.canvasData) }
+      merged.versions = Array.isArray(base.versions) ? base.versions.slice() : []
+      if (data.version != null && data.canvasData) {
+        const vNum = Number(data.version)
+        const vIdx = merged.versions.findIndex(v => Number(v.version) === vNum)
+        const vEntry = { version: vNum, status: data.status || base.status || 'draft', approvalStatus: data.approvalStatus ?? merged.versions[vIdx]?.approvalStatus ?? null, approvalFlow: Array.isArray(data.approvalFlow) ? data.approvalFlow.slice() : (merged.versions[vIdx]?.approvalFlow || []), publishReady: data.publishReady ?? merged.versions[vIdx]?.publishReady ?? false, publishMessages: Array.isArray(data.publishMessages) ? data.publishMessages.slice() : (merged.versions[vIdx]?.publishMessages || []), lastValidatedAt: data.lastValidatedAt || new Date().toISOString(), canvasData: migrateCanvasData(data.canvasData), updateTime: data.updateTime || new Date().toISOString(), publishTime: data.publishTime || null }
+        if (vIdx >= 0) merged.versions[vIdx] = { ...merged.versions[vIdx], ...vEntry }
+        else merged.versions.push(vEntry)
+      }
       list[idx] = merged
       localStorage.setItem(KEY, JSON.stringify(list))
       return merged
     }
     const created = { id: String(id), ...data, canvasData: migrateCanvasData(data.canvasData) }
+    created.versions = Array.isArray(created.versions) ? created.versions : []
+    if (created.version != null && created.canvasData) {
+      created.versions.push({ version: Number(created.version), status: created.status || 'draft', canvasData: migrateCanvasData(created.canvasData), updateTime: created.updateTime || new Date().toISOString(), publishTime: created.publishTime || null })
+    }
     list.push(created)
     localStorage.setItem(KEY, JSON.stringify(list))
     return created
@@ -39,6 +78,69 @@ export const TaskStorage = {
   createTask(task) { const t = { id: String(Date.now()), ...task }; this.saveTask(t); return t },
   getStorageStats() { const list = this.getAllTasks(); return { totalTasks: list.length } }
   ,
+  // 版本读取
+  getTaskVersions(id) {
+    const t = this.getTaskById(id)
+    return (t && Array.isArray(t.versions)) ? t.versions : []
+  },
+  getTaskVersionCanvas(id, version) {
+    try {
+      const vNum = Number(version)
+      const t = this.getTaskById(id)
+      const entry = (t && Array.isArray(t.versions)) ? t.versions.find(v => Number(v.version) === vNum) : null
+      return entry && entry.canvasData ? migrateCanvasData(entry.canvasData) : null
+    } catch { return null }
+  },
+  submitApproval(id, version, user, remark) {
+    const list = this.getAllTasks()
+    const idx = list.findIndex(t => String(t.id) === String(id))
+    if (idx < 0) return false
+    const t = list[idx]
+    const vIdx = (t.versions || []).findIndex(v => Number(v.version) === Number(version))
+    if (vIdx < 0) return false
+    const v = t.versions[vIdx]
+    const flow = Array.isArray(v.approvalFlow) ? v.approvalFlow.slice() : []
+    flow.push({ action: 'submit', by: String(user || ''), at: new Date().toISOString(), remark: String(remark || '') })
+    t.versions[vIdx] = { ...v, approvalStatus: 'pending_approval', approvalFlow: flow }
+    t.status = 'pending_approval'
+    localStorage.setItem(KEY, JSON.stringify(list))
+    return true
+  },
+  approveVersions(items, decision, user, remark) {
+    const list = this.getAllTasks()
+    const dec = decision === 'reject' ? 'rejected' : 'approved'
+    const res = []
+    items.forEach(it => {
+      const idx = list.findIndex(t => String(t.id) === String(it.id))
+      if (idx < 0) { res.push({ id: it.id, version: it.version, status: 'error', message: 'not_found' }); return }
+      const t = list[idx]
+      const vIdx = (t.versions || []).findIndex(v => Number(v.version) === Number(it.version))
+      if (vIdx < 0) { res.push({ id: it.id, version: it.version, status: 'error', message: 'version_not_found' }); return }
+      const v = t.versions[vIdx]
+      if (v.approvalStatus !== 'pending_approval') { res.push({ id: it.id, version: it.version, status: 'error', message: 'not_pending' }); return }
+      const flow = Array.isArray(v.approvalFlow) ? v.approvalFlow.slice() : []
+      flow.push({ action: dec === 'approved' ? 'approve' : 'reject', by: String(user || ''), at: new Date().toISOString(), remark: String(remark || '') })
+      t.versions[vIdx] = { ...v, approvalStatus: dec, approvalFlow: flow }
+      t.status = dec
+      localStorage.setItem(KEY, JSON.stringify(list))
+      res.push({ id: it.id, version: it.version, status: 'success' })
+    })
+    return res
+  },
+  withdrawApproval(id, version, user, remark) {
+    const list = this.getAllTasks()
+    const idx = list.findIndex(t => String(t.id) === String(id))
+    if (idx < 0) return false
+    const t = list[idx]
+    const vIdx = (t.versions || []).findIndex(v => Number(v.version) === Number(version))
+    if (vIdx < 0) return false
+    const v = t.versions[vIdx]
+    const flow = Array.isArray(v.approvalFlow) ? v.approvalFlow.slice() : []
+    flow.push({ action: 'withdraw', by: String(user || ''), at: new Date().toISOString(), remark: String(remark || '') })
+    t.versions[vIdx] = { ...v, approvalStatus: null, approvalFlow: flow }
+    localStorage.setItem(KEY, JSON.stringify(list))
+    return true
+  },
   seedIfEmpty() {
     const list = this.getAllTasks()
     if (Array.isArray(list) && list.length) return

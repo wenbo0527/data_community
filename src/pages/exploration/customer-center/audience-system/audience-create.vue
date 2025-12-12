@@ -92,12 +92,16 @@
           <span class="card-title">人群圈选规则</span>
         </template>
         <template #extra>
-          <span class="card-description">通过设置条件规则来定义人群范围，支持标签、事件、明细数据三种类型</span>
+          <a-button size="small" type="primary" @click="addConditionGroup">
+            <template #icon><IconPlus /></template>
+            添加条件组
+          </a-button>
         </template>
         <div class="rules-config-section">
-          <ConditionConfig
+          <LogicTreeConfig
             :condition-groups="audienceForm.conditionGroups"
             :cross-group-logic="audienceForm.crossGroupLogic || 'or'"
+            :exclude-cross-group-logic="audienceForm.excludeCrossGroupLogic || 'or'"
             :editable="true"
             :data-source-type-options="dataSourceTypeOptions"
             :date-type-options="dateTypeOptions"
@@ -121,7 +125,8 @@
             @delete-exclude-condition-group="deleteExcludeConditionGroup"
             @delete-condition-group="deleteConditionGroup"
             @toggle-group-logic="toggleGroupLogic"
-            @toggle-cross-group-logic="toggleCrossGroupLogic"
+            @set-cross-group-logic="setCrossGroupLogic"
+            @set-exclude-cross-group-logic="setExcludeCrossGroupLogic"
             @add-condition-by-type="addConditionByType"
             @remove-condition="removeCondition"
           />
@@ -231,7 +236,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconDelete, IconSettings, IconTags, IconUpload } from '@arco-design/web-vue/es/icon'
-import ConditionConfig from '@/components/common/ConditionConfig.vue'
+import LogicTreeConfig from '@/components/common/LogicTreeConfig.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -273,6 +278,7 @@ const audienceForm = reactive({
     }>
   }>,
   crossGroupLogic: 'or',
+  excludeCrossGroupLogic: 'or',
   import: {
     method: 'file',
     fileList: [] as any[]
@@ -324,6 +330,7 @@ const canPreCalculate = computed(() => {
   return true
 })
 
+
 // 条件配置相关函数
 const addConditionGroup = () => {
   audienceForm.conditionGroups.push({
@@ -370,7 +377,7 @@ const addExcludeConditionGroup = () => {
 
 const deleteConditionGroup = (groupIndex: number) => {
   // 找到常规条件组中的索引
-  const regularGroups = audienceForm.conditionGroups.filter(group => !group.isExclude)
+  const regularGroups = audienceForm.conditionGroups.filter((group: any) => !group.isExclude)
   if (groupIndex >= 0 && groupIndex < regularGroups.length) {
     const targetGroup = regularGroups[groupIndex]
     const actualIndex = audienceForm.conditionGroups.indexOf(targetGroup)
@@ -380,7 +387,7 @@ const deleteConditionGroup = (groupIndex: number) => {
 
 const deleteExcludeConditionGroup = (groupIndex: number) => {
   // 找到排除条件组中的索引
-  const excludeGroups = audienceForm.conditionGroups.filter(group => group.isExclude)
+  const excludeGroups = audienceForm.conditionGroups.filter((group: any) => group.isExclude)
   if (groupIndex >= 0 && groupIndex < excludeGroups.length) {
     const targetGroup = excludeGroups[groupIndex]
     const actualIndex = audienceForm.conditionGroups.indexOf(targetGroup)
@@ -400,9 +407,9 @@ const addConditionByType = (group: any, type: string) => {
   // 映射类型到正确的dataSourceType
   let dataSourceType = type
   if (type === 'tag') {
-    dataSourceType = 'attribute'
+    dataSourceType = 'tag'
   } else if (type === 'behavior') {
-    dataSourceType = 'behavior'
+    dataSourceType = 'event'
   } else if (type === 'detail') {
     dataSourceType = 'detail'
   }
@@ -595,26 +602,53 @@ const getAggregationOptions = (dataSourceType: string) => {
 
 // 获取操作符选项
 const getOperatorOptions = (condition: any) => {
+  const vt = getConditionValueType(condition)
+  if (vt === 'number') {
+    return [
+      { label: '等于', value: 'eq' },
+      { label: '不等于', value: 'ne' },
+      { label: '大于', value: 'gt' },
+      { label: '小于', value: 'lt' },
+      { label: '大于等于', value: 'gte' },
+      { label: '小于等于', value: 'lte' },
+      { label: '区间', value: 'between' }
+    ]
+  }
+  if (vt === 'enum') {
+    return [
+      { label: '等于', value: 'eq' },
+      { label: '不等于', value: 'ne' },
+      { label: '包含', value: 'in' },
+      { label: '不包含', value: 'not_in' }
+    ]
+  }
+  if (vt === 'date') {
+    return [
+      { label: '在时间范围内', value: 'in_range' },
+      { label: '早于', value: 'before' },
+      { label: '晚于', value: 'after' }
+    ]
+  }
   return [
     { label: '等于', value: 'eq' },
     { label: '不等于', value: 'ne' },
-    { label: '大于', value: 'gt' },
-    { label: '小于', value: 'lt' },
-    { label: '大于等于', value: 'gte' },
-    { label: '小于等于', value: 'lte' },
-    { label: '包含', value: 'in' },
-    { label: '不包含', value: 'not_in' },
-    { label: '模糊匹配', value: 'like' }
+    { label: '模糊匹配', value: 'like' },
+    { label: '不包含', value: 'not_in' }
   ]
 }
 
 // 判断是否需要值输入
 const needValueInput = (condition: any) => {
-  return true
+  const vt = getConditionValueType(condition)
+  return vt !== 'none'
 }
 
 // 获取值输入占位符
 const getValuePlaceholder = (condition: any) => {
+  const vt = getConditionValueType(condition)
+  if (vt === 'number') return '请输入数值或区间'
+  if (vt === 'enum') return '请选择或输入枚举值'
+  if (vt === 'date') return '请选择时间范围'
   return '请输入值'
 }
 
@@ -635,6 +669,24 @@ const onDateTypeChange = (condition: any) => {
     condition.dynamicUnit = undefined
     condition.dateRange = ['', ''] as [string, string]
   }
+}
+
+// 根据字段判断值类型
+const getConditionValueType = (condition: any): 'number' | 'enum' | 'text' | 'date' | 'none' => {
+  const field = condition.fieldName || ''
+  const ds = condition.dataSourceType || ''
+  const numberFields = new Set([
+    'age','income','credit_score','monthly_income','debt_ratio','loan_amount','repayment_amount','overdue_days','asset_scale','transaction_amount','order_amount','interest_rate'
+  ])
+  const enumFields = new Set([
+    'gender','city','occupation','education','credit_rating','income_level','occupation_type','marital_status','age_group','risk_level','residence_status','payment_method','product_category','loan_purpose','repayment_method'
+  ])
+  const dateFields = new Set(['order_time'])
+  if (dateFields.has(field)) return 'date'
+  if (numberFields.has(field)) return 'number'
+  if (enumFields.has(field)) return 'enum'
+  if (ds === 'event') return 'text'
+  return 'text'
 }
 
 // 获取标签选项
@@ -728,35 +780,82 @@ const getEventOptions = () => {
 // 获取事件属性选项
 const getEventPropertyOptions = (eventName: string) => {
   const propertyMap: Record<string, Array<{label: string, value: string}>> = {
-    loan_events: [
+    loan_application: [
       { label: '贷款金额', value: 'loan_amount' },
       { label: '贷款期限', value: 'loan_term' },
       { label: '利率', value: 'interest_rate' },
       { label: '贷款用途', value: 'loan_purpose' }
     ],
-    risk_events: [
+    loan_approval: [
+      { label: '审批结果', value: 'approval_result' },
+      { label: '审批时长', value: 'approval_duration' }
+    ],
+    loan_disbursement: [
+      { label: '放款金额', value: 'disbursement_amount' },
+      { label: '放款渠道', value: 'disbursement_channel' }
+    ],
+    repayment: [
+      { label: '还款金额', value: 'repayment_amount' },
+      { label: '还款方式', value: 'repayment_method' }
+    ],
+    early_repayment: [
+      { label: '提前天数', value: 'early_days' }
+    ],
+    overdue_repayment: [
+      { label: '逾期天数', value: 'overdue_days' }
+    ],
+    loan_settlement: [
+      { label: '结清状态', value: 'settlement_status' }
+    ],
+    risk_assessment: [
       { label: '风险等级', value: 'risk_level' },
-      { label: '信用分数', value: 'credit_score' },
-      { label: '逾期天数', value: 'overdue_days' },
-      { label: '违约概率', value: 'default_probability' }
+      { label: '信用分数', value: 'credit_score' }
     ],
-    business_events: [
-      { label: '产品类型', value: 'product_type' },
-      { label: '渠道来源', value: 'channel_source' },
-      { label: '业务状态', value: 'business_status' },
-      { label: '处理结果', value: 'process_result' }
+    credit_inquiry: [
+      { label: '查询渠道', value: 'inquiry_channel' }
     ],
-    user_behavior_events: [
-      { label: '访问页面', value: 'page_visit' },
-      { label: '点击按钮', value: 'button_click' },
-      { label: '停留时长', value: 'stay_duration' },
-      { label: '操作类型', value: 'operation_type' }
+    risk_warning: [
+      { label: '预警级别', value: 'warning_level' }
     ],
-    system_events: [
-      { label: '系统模块', value: 'system_module' },
-      { label: '操作类型', value: 'operation_type' },
-      { label: '执行状态', value: 'execution_status' },
-      { label: '响应时间', value: 'response_time' }
+    overdue_reminder: [
+      { label: '提醒方式', value: 'reminder_method' }
+    ],
+    collection_record: [
+      { label: '催收结果', value: 'collection_result' }
+    ],
+    product_consultation: [
+      { label: '咨询渠道', value: 'consultation_channel' }
+    ],
+    contract_signing: [
+      { label: '签署渠道', value: 'sign_channel' }
+    ],
+    account_opening: [
+      { label: '账户类型', value: 'account_type' }
+    ],
+    credit_limit_adjustment: [
+      { label: '调整幅度', value: 'adjustment_amount' }
+    ],
+    product_upgrade: [
+      { label: '升级类型', value: 'upgrade_type' }
+    ],
+    service_application: [
+      { label: '服务类型', value: 'service_type' }
+    ],
+    login: [
+      { label: '登录渠道', value: 'login_channel' }
+    ],
+    page_visit: [
+      { label: '页面URL', value: 'page_url' },
+      { label: '停留时长', value: 'stay_duration' }
+    ],
+    feature_usage: [
+      { label: '功能名称', value: 'feature_name' }
+    ],
+    document_download: [
+      { label: '文档名称', value: 'document_name' }
+    ],
+    customer_service_inquiry: [
+      { label: '问题类型', value: 'issue_type' }
     ]
   }
   return propertyMap[eventName] || []
@@ -856,6 +955,15 @@ const saveAudience = async () => {
 // 返回人群管理页面
 const goBack = () => {
   router.push({ name: 'audience-management' })
+}
+
+// 逻辑设置
+const setCrossGroupLogic = (value: string) => {
+  audienceForm.crossGroupLogic = value === 'and' ? 'and' : 'or'
+}
+
+const setExcludeCrossGroupLogic = (value: string) => {
+  audienceForm.excludeCrossGroupLogic = value === 'and' ? 'and' : 'or'
 }
 </script>
 

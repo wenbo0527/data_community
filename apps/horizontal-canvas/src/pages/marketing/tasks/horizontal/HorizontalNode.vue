@@ -116,9 +116,9 @@ const outRows = computed(() => {
       console.log('🧹 [HorizontalNode] 清理兜底展示(标签作为内容行)，返回空')
       return []
     }
-    if (nodeType.value === 'start') {
-      return [config.value.displayLines.join('\n')]
-    }
+    // if (nodeType.value === 'start') {
+    //   return [config.value.displayLines.join('\n')]
+    // }
     return config.value.displayLines
   }
   const topLevelLines = nodeData.value?.displayLines

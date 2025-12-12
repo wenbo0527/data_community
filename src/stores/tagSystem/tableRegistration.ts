@@ -7,10 +7,14 @@ export const useTableRegistrationStore = defineStore('tableRegistration', () => 
   const tableSchema = ref<TableField[]>([])
   const validation = ref<ValidationResult | null>(null)
   const loading = ref(false)
+  const currentDataSourceId = ref<string>('')
+  const currentTableName = ref<string>('')
 
   const loadTableSchema = async (dataSourceId: string, tableName: string) => {
     loading.value = true
     try {
+      currentDataSourceId.value = dataSourceId
+      currentTableName.value = tableName
       tableSchema.value = await fetchTableSchema(dataSourceId, tableName)
     } finally {
       loading.value = false
@@ -18,7 +22,7 @@ export const useTableRegistrationStore = defineStore('tableRegistration', () => 
   }
 
   const checkPrimaryKey = async (fields: string[]) => {
-    validation.value = await validatePrimaryKey(fields)
+    validation.value = await validatePrimaryKey(currentDataSourceId.value, currentTableName.value, fields)
     return validation.value
   }
 
@@ -33,4 +37,3 @@ export const useTableRegistrationStore = defineStore('tableRegistration', () => 
 
   return { tableSchema, validation, loading, loadTableSchema, checkPrimaryKey, registerTable }
 })
-

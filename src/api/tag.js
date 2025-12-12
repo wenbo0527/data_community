@@ -1,4 +1,8 @@
 import {
+  tagAPI,
+  categoryAPI,
+  mappingAPI,
+  datasourceAPI,
   listTags,
   getTag,
   createTag,
@@ -11,6 +15,10 @@ import {
 } from './tag.ts'
 
 export {
+  tagAPI,
+  categoryAPI,
+  mappingAPI,
+  datasourceAPI,
   listTags,
   getTag,
   createTag,

@@ -16,238 +16,116 @@
       </div>
     </div>
 
-    <!-- 注册向导 -->
+    <!-- 单页注册 -->
     <div class="registration-wizard">
-      <a-card>
-        <a-steps v-model:current="currentStep" type="dot" class="wizard-steps">
-          <a-step title="导入与主键" description="选择数据源并配置主键" />
-          <a-step title="IDMapping规则" description="配置身份映射规则" />
-          <a-step title="完成注册" description="确认并完成注册" />
-        </a-steps>
-
-        <!-- 步骤内容 -->
-        <div class="step-content">
-          <!-- 步骤1: 导入与主键 -->
-          <div v-if="currentStep === 0" class="step-panel">
-            <div class="import-methods">
-              <a-tag color="blue">数据库连接</a-tag>
-            </div>
-
-            <!-- 数据库连接 -->
-            <div class="import-content">
-              <a-alert type="info" content="请先在数据源管理中注册数据库连接，然后在此选择数据源进行标签表注册" style="margin-bottom:8px" />
-              <a-form :model="dsForm" layout="vertical">
+      <div class="card-block">
+        <a-card title="数据源与基础信息">
+          <a-form :model="dsForm" layout="vertical">
+            <a-row :gutter="16">
+              <a-col :span="12">
                 <a-form-item label="选择数据源" field="dataSourceId" required>
                   <a-select v-model="dsForm.dataSourceId" placeholder="请选择已注册的数据源" allow-search>
                     <a-option v-for="ds in dataSources" :key="ds.id" :value="ds.id">{{ ds.name }}（{{ ds.type }}）- {{ ds.database }}/{{ ds.table }}</a-option>
                   </a-select>
                 </a-form-item>
+              </a-col>
+              <a-col :span="12">
                 <a-form-item label="选择数据表" field="tableName" required>
                   <a-select v-model="dsForm.tableName" :disabled="!dsForm.dataSourceId" placeholder="请选择数据表">
                     <a-option v-for="t in tableOptions" :key="t" :value="t">{{ t }}</a-option>
                   </a-select>
                 </a-form-item>
-                <a-divider />
-                <a-card title="基础信息">
-                  <a-row :gutter="16">
-                    <a-col :span="12"><a-form-item label="表名称" field="basic.tableAlias" required><a-input v-model="basicForm.tableAlias" placeholder="显示名称（可与实际表名不同）" /></a-form-item></a-col>
-                    <a-col :span="12"><a-form-item label="表分类标签" field="basic.categories"><a-select v-model="basicForm.categories" multiple allow-search :options="categoryOptions" placeholder="选择或输入分类标签" /></a-form-item></a-col>
-                  </a-row>
-                  <a-form-item label="表描述" field="basic.description"><a-textarea v-model="basicForm.description" :rows="3" placeholder="用于说明该标签表的用途、来源与维护人" /></a-form-item>
-                </a-card>
-              </a-form>
-              
-            </div>
-            <!-- API 接入已移除，仅支持数据库连接 -->
+              </a-col>
+            </a-row>
+            <!-- 已移除表类型选择，统一按标签表注册 -->
+          </a-form>
+          <a-divider style="margin: 8px 0" />
+          <a-form :model="basicForm" layout="vertical">
+            <a-row :gutter="16">
+              <a-col :span="12">
+                <a-form-item label="表名称" field="tableAlias" required>
+                  <a-input v-model="basicForm.tableAlias" placeholder="显示名称（可与实际表名不同）" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="表分类标签" field="categories">
+                  <a-select v-model="basicForm.categories" multiple allow-search :options="categoryOptions" placeholder="选择或输入分类标签" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="24">
+                <a-form-item label="表描述" field="description">
+                  <a-textarea v-model="basicForm.description" :rows="3" placeholder="用于说明该标签表的用途、来源与维护人" />
+                </a-form-item>
+              </a-col>
+            </a-row>
+          </a-form>
+        </a-card>
+      </div>
 
-            <!-- 主键配置（合并到第1步） -->
-            <div class="primary-key-config" v-if="availableFields.length > 0">
-              <div class="config-header">
-                <h3>选择身份标识字段</h3>
-                <p class="config-desc">请选择用于身份识别的字段，支持选择多个字段组合作为主键</p>
-              </div>
-
-              <div class="field-selection">
-                <a-card title="身份标识字段" size="small">
-                  <a-form-item label="选择身份标识字段">
-                    <a-select v-model="selectedIdentityField" allow-search placeholder="请选择身份标识字段">
+      <div class="card-block">
+        <a-card title="身份标识与主键">
+          <a-form :model="identityUi" layout="vertical">
+            <a-space style="margin-bottom: 12px;">
+              <a-button type="primary" @click="addIdentityRow">
+                <template #icon><icon-plus /></template>
+                添加标识字段
+              </a-button>
+            </a-space>
+            <div v-if="identityRows.length" class="identity-config">
+              <div class="detail-condition-row" v-for="row in identityRows" :key="row.id">
+                <div class="detail-config">
+                  <div class="form-group">
+                    <label class="form-label">标识字段名</label>
+                    <a-select v-model="row.field" allow-search size="small" placeholder="选择表字段" class="form-control">
                       <a-option v-for="field in availableFields" :key="field.name" :value="field.name">
                         {{ field.name }}（{{ field.type }}）
                       </a-option>
                     </a-select>
-                  </a-form-item>
-                  <div class="candidate-keys" v-if="candidateKeys.length">
-                    <h4>推荐字段</h4>
-                    <a-space wrap>
-                      <a-tag v-for="k in candidateKeys" :key="k" @click="toggleKey(k)" :color="selectedIdentityField===k?'blue':'gray'">{{ k }}</a-tag>
-                    </a-space>
                   </div>
-                </a-card>
-              </div>
-
-              <div v-if="selectedIdentityField" class="key-preview">
-                <a-card title="主键配置预览" size="small">
-                  <div class="preview-content">
-                    <div class="selected-fields">
-                      <h4>已选择的字段：</h4>
-                      <div class="field-tags">
-                        <a-tag>{{ selectedIdentityField }}</a-tag>
-                      </div>
-                    </div>
-                    <div class="key-format">
-                      <h4>主键格式：</h4>
-                      <a-input
-                        v-model="primaryKeyFormat"
-                        placeholder="例如: {field1}_{field2}"
-                        class="format-input"
-                      />
-                      <div class="format-preview">
-                        预览: {{ generateKeyPreview() }}
-                      </div>
-                      <div class="uniqueness-bar" v-if="uniquenessScore>=0">
-                        唯一性评分：<a-progress :percent="uniquenessScore" />
-                      </div>
-                    </div>
-                    <div class="identity-type">
-                      <h4>身份类型：</h4>
-                      <a-radio-group v-model="identityType">
-                        <a-radio value="mobile">手机号</a-radio>
-                        <a-radio value="device_id">设备号</a-radio>
-                        <a-radio value="id_card">身份证号</a-radio>
-                        <a-radio value="card_no">卡号</a-radio>
-                      </a-radio-group>
-                    </div>
+                  <div class="form-group">
+                    <label class="form-label">对应身份类型</label>
+                    <a-select v-model="row.type" :options="identityTypeOptions" size="small" placeholder="选择身份类型" class="form-control" />
                   </div>
-                </a-card>
+                  <div class="form-group">
+                    <label class="form-label">对应关系</label>
+                    <a-select v-model="row.relation" :options="relationOptions" size="small" placeholder="选择匹配关系" class="form-control" />
+                  </div>
+                </div>
+                <div class="detail-actions">
+                  <a-button type="text" class="action-btn delete-btn" status="danger" size="mini" @click="removeIdentityRowById(row.id)">
+                    <template #icon><icon-minus /></template>
+                  </a-button>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- 步骤2: IDMapping规则（基础模式） -->
-          <div v-if="currentStep === 1" class="step-panel">
-            <div class="mapping-rules-config">
-              <div class="config-header">
-                <h3>配置IDMapping规则</h3>
-                <p class="config-desc">规则固定为精确匹配，源/目标均为所选身份字段</p>
-              </div>
-              <a-card size="small">
-                <a-descriptions :column="2" bordered>
-                  <a-descriptions-item label="源字段">{{ selectedIdentityField || '-' }}</a-descriptions-item>
-                  <a-descriptions-item label="目标字段">{{ selectedIdentityField || '-' }}</a-descriptions-item>
-                  <a-descriptions-item label="匹配算法">精确匹配</a-descriptions-item>
-                  <a-descriptions-item label="启用">
-                    <a-switch v-model="enableMapping" />
-                  </a-descriptions-item>
-                </a-descriptions>
-              </a-card>
+            <div v-else style="padding: 12px 0;">
+              <a-empty description="暂无标识字段，请点击上方按钮添加" />
             </div>
-          </div>
+          </a-form>
+        </a-card>
+      </div>
 
-          <!-- 步骤3: 完成注册 -->
-          <div v-if="currentStep === 2" class="step-panel">
-            <div class="registration-summary">
-              <div class="summary-header">
-                <h3>注册信息确认</h3>
-                <p class="summary-desc">请确认以下配置信息，确认无误后提交注册</p>
-              </div>
+      
 
-              <!-- 配置摘要 -->
-              <div class="config-summary">
-                <a-card title="数据源信息" size="small">
-                  <a-descriptions :column="2" bordered>
-                    <a-descriptions-item label="导入方式">
-                      {{ getImportMethodText() }}
-                    </a-descriptions-item>
-                    <a-descriptions-item label="数据源">
-                      {{ getDataSourceSummary() }}
-                    </a-descriptions-item>
-                    <a-descriptions-item label="字段数量">
-                      {{ availableFields.length }} 个
-                    </a-descriptions-item>
-                    <a-descriptions-item label="预估数据量">
-                      {{ estimatedRecords }} 条
-                    </a-descriptions-item>
-                  </a-descriptions>
-                </a-card>
-
-                <a-card title="主键配置" size="small" style="margin-top: 16px;">
-                  <a-descriptions :column="2" bordered>
-                    <a-descriptions-item label="主键字段">
-                      {{ selectedIdentityField || '-' }}
-                    </a-descriptions-item>
-                    <a-descriptions-item label="身份类型">
-                      {{ getIdentityTypeText() }}
-                    </a-descriptions-item>
-                    <a-descriptions-item label="主键格式">
-                      {{ primaryKeyFormat || selectedIdentityField || '默认格式' }}
-                    </a-descriptions-item>
-                    <a-descriptions-item label="唯一性检查">
-                      已启用
-                    </a-descriptions-item>
-                  </a-descriptions>
-                </a-card>
-
-            <a-card title="IDMapping配置" size="small" style="margin-top: 16px;">
-              <a-descriptions :column="2" bordered>
-                <a-descriptions-item label="算法">精确匹配</a-descriptions-item>
-                <a-descriptions-item label="启用规则数">{{ enabledRulesCount }} 条</a-descriptions-item>
-                <a-descriptions-item label="源字段">{{ selectedIdentityField || '-' }}</a-descriptions-item>
-                <a-descriptions-item label="目标字段">{{ selectedIdentityField || '-' }}</a-descriptions-item>
-              </a-descriptions>
-            </a-card>
-              </div>
-
-              <!-- 注册结果 -->
-              <div v-if="registrationResult" class="registration-result">
-                <a-result
-                  :status="registrationResult.status"
-                  :title="registrationResult.title"
-                  :sub-title="registrationResult.subTitle"
-                >
-                  <template #extra v-if="registrationResult.status === 'success'">
-                    <a-space>
-                      <a-button type="primary" @click="viewRegisteredTable">
-                        查看注册的表
-                      </a-button>
-                      <a-button @click="registerAnother">
-                        注册新表
-                      </a-button>
-                    </a-space>
-                  </template>
-                </a-result>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 导航按钮 -->
-        <div class="step-navigation" v-if="!registrationResult">
-          <a-space>
-            <a-button
-              v-if="currentStep > 0"
-              @click="previousStep"
-            >
-              上一步
-            </a-button>
-            <a-button
-              v-if="currentStep < 2"
-              type="primary"
-              :disabled="!canProceed"
-              @click="nextStep"
-            >
-              下一步
-            </a-button>
-            <a-button
-              v-if="currentStep === 2"
-              type="primary"
-              :loading="submitting"
-              @click="submitRegistration"
-            >
-              提交注册
-            </a-button>
-          </a-space>
-        </div>
-      </a-card>
+      <div class="step-navigation" v-if="!registrationResult">
+        <a-space>
+          <a-button type="primary" :loading="submitting" :disabled="!canSubmit" @click="submitRegistration">提交注册</a-button>
+        </a-space>
+      </div>
+      <div v-if="registrationResult" class="registration-result">
+        <a-result
+          :status="registrationResult.status"
+          :title="registrationResult.title"
+          :sub-title="registrationResult.subTitle"
+        >
+          <template #extra v-if="registrationResult.status === 'success'">
+            <a-space>
+              <a-button type="primary" @click="viewRegisteredTable">查看注册的表</a-button>
+              <a-button @click="registerAnother">注册新表</a-button>
+            </a-space>
+          </template>
+        </a-result>
+      </div>
     </div>
   </div>
 </template>
@@ -260,7 +138,8 @@ import {
   IconPlus,
   IconDelete,
   IconArrowLeft,
-  IconCheck
+  IconCheck,
+  IconMinus
 } from '@arco-design/web-vue/es/icon'
 import { useTableRegistration } from '@/composables/useTableRegistration'
 import { useDataSourceStore } from '@/stores/datasource'
@@ -268,7 +147,6 @@ import { usePrimaryKeyAnalysis } from '@/composables/usePrimaryKeyAnalysis'
 
 const router = useRouter()
 
-// 步骤控制
 const currentStep = ref(0)
 
 // 导入方式
@@ -278,7 +156,7 @@ const dataSources = dsStore.list
 const dsForm = reactive<{ dataSourceId: string; tableName: string }>({ dataSourceId: '', tableName: '' })
 const tableOptions = computed(() => dsForm.dataSourceId ? dsStore.getTables(dsForm.dataSourceId) : [])
 const basicForm = reactive<{ tableAlias: string; categories: string[]; description: string }>({ tableAlias: '', categories: [], description: '' })
-const categoryOptions = computed(() => ['行为', '画像', '交易', '风险', '会员', '营销'])
+const categoryOptions = computed(() => ['标签表', '流水表'])
 
 // API配置
 // API 接入已移除
@@ -292,6 +170,22 @@ const candidateKeys = computed(() => suggestCandidateKeys(availableFields.value)
 const uniquenessScore = ref<number>(-1)
 const primaryKeyFormat = ref('')
 const identityType = ref<'mobile' | 'device_id' | 'id_card' | 'card_no'>('mobile')
+const identityUi = reactive<Record<string, any>>({})
+const identityRows = ref<Array<{ id: string; field: string; type: string; relation: string }>>([])
+const identityTypeOptions = [
+  { label: '手机号', value: 'mobile' },
+  { label: '设备号', value: 'device_id' },
+  { label: '身份证号', value: 'id_card' },
+  { label: '卡号', value: 'card_no' },
+  { label: '邮箱', value: 'email' },
+  { label: 'OpenID', value: 'open_id' },
+  { label: 'UnionID', value: 'union_id' }
+]
+const relationOptions = [
+  { label: '精确匹配', value: 'exact' },
+  { label: '规范化后精确匹配', value: 'normalized_exact' },
+  { label: '模糊匹配', value: 'fuzzy' }
+]
 
 // IDMapping规则
 const mappingRules = ref<any[]>([])
@@ -305,18 +199,9 @@ const maxErrorRate = ref(5)
 const registrationResult = ref<any>(null)
 const submitting = ref(false)
 
-// 计算属性
-const canProceed = computed(() => {
-  switch (currentStep.value) {
-    case 0: // 导入与主键
-      return !!dsForm.dataSourceId && availableFields.value.length > 0 && !!selectedIdentityField.value
-    case 1: // IDMapping规则
-      return true
-    case 2: // 完成注册
-      return true
-    default:
-      return false
-  }
+const canSubmit = computed(() => {
+  const keys = identityRows.value.map((r: { field: string }) => r.field).filter(Boolean)
+  return !!dsForm.dataSourceId && !!dsForm.tableName && !!basicForm.tableAlias && keys.length > 0
 })
 
 const enableMapping = ref(true)
@@ -332,15 +217,9 @@ const goBack = () => {
   router.push({ name: 'tag-management' })
 }
 
-const previousStep = () => {
-  if (currentStep.value > 0) {
-    currentStep.value--
-  }
-}
-
 const { tableSchema, checkPrimaryKey, registerTable, loadTableSchema } = useTableRegistration()
 const goManage = () => { router.push({ name: 'datasource-management' }) }
-watch([() => dsForm.dataSourceId, () => dsForm.tableName], async ([dsId, tbl]) => {
+watch([() => dsForm.dataSourceId, () => dsForm.tableName], async ([dsId, tbl]: [string, string]) => {
   if (dsId && tbl) {
     const ds = dataSources.find((x: any) => x.id === dsId)
     try {
@@ -355,19 +234,22 @@ watch([() => dsForm.dataSourceId, () => dsForm.tableName], async ([dsId, tbl]) =
     availableFields.value = []
   }
 })
-const nextStep = async () => {
-  if (currentStep.value < 2) {
-    if (currentStep.value === 0) {
-      const res = await checkPrimaryKey(selectedIdentityField.value ? [selectedIdentityField.value] : [])
-      if (res) {
-        Message.info(`唯一性评分 ${res.score}%`)
-        uniquenessScore.value = Number(res.score || 0)
-      }
-      loadMappingRules()
-    }
-    currentStep.value++
+watch(() => dsForm.tableName, (tbl: string) => {
+  if (tbl && !basicForm.tableAlias) {
+    basicForm.tableAlias = tbl
   }
-}
+})
+watch(identityRows, async (rows: Array<{ field: string }>) => {
+  const first = rows[0]?.field as string
+  if (first) {
+    const res = await checkPrimaryKey([first])
+    if (res) {
+      uniquenessScore.value = Number(res.score || 0)
+    }
+  } else {
+    uniquenessScore.value = -1
+  }
+}, { deep: true })
 
 // 文件上传相关逻辑已移除
 
@@ -387,17 +269,31 @@ const suggestCandidateKeys = (fields: Array<any>): string[] => {
   return picks.slice(0,5)
 }
 
-const toggleKey = (k: string) => { selectedIdentityField.value = k }
+const toggleKey = (k: string) => {
+  if (!identityRows.value.length) identityRows.value.push({ id: `${Date.now()}`, field: '', type: 'mobile', relation: 'exact' })
+  identityRows.value[0].field = k
+}
+const addIdentityRow = () => {
+  identityRows.value.push({ id: `${Date.now()}_${identityRows.value.length}`, field: '', type: 'mobile', relation: 'exact' })
+}
+const removeIdentityRow = (index: number) => {
+  identityRows.value.splice(index, 1)
+}
+const removeIdentityRowById = (id: string) => {
+  const idx = identityRows.value.findIndex((r: { id: string }) => r.id === id)
+  if (idx >= 0) identityRows.value.splice(idx, 1)
+}
 
 const loadMappingRules = () => {}
 
 // 已不支持多选主键，移除字段删除逻辑
 
 const generateKeyPreview = () => {
-  if (!selectedIdentityField.value) return ''
+  const keys = identityRows.value.map((r: { field: string }) => r.field).filter(Boolean)
+  if (!keys.length) return ''
   let format = primaryKeyFormat.value
   if (!format) {
-    format = selectedIdentityField.value
+    format = keys.join('_')
   }
   const sampleValues: Record<string, string> = {
     'user_id': 'user123',
@@ -410,7 +306,11 @@ const generateKeyPreview = () => {
     'gender': 'male',
     'city': '北京'
   }
-  return format.replace(new RegExp(`{${selectedIdentityField.value}}`, 'g'), sampleValues[selectedIdentityField.value] || selectedIdentityField.value)
+  let preview = format
+  keys.forEach((k: string) => {
+    preview = preview.replace(new RegExp(`{${k}}`, 'g'), sampleValues[k] || k)
+  })
+  return preview
 }
 
 const addMappingRule = () => {}
@@ -438,10 +338,14 @@ const getIdentityTypeText = () => {
     mobile: '手机号',
     device_id: '设备号',
     id_card: '身份证号',
-    card_no: '卡号'
+    card_no: '卡号',
+    email: '邮箱',
+    open_id: 'OpenID',
+    union_id: 'UnionID'
   }
-  return texts[identityType.value]
+  return texts[identityType.value as keyof typeof texts]
 }
+
 
 const getConflictResolutionText = () => '优先保留'
 
@@ -449,14 +353,14 @@ const submitRegistration = async () => {
   submitting.value = true
   
   try {
+    const keys = identityRows.value.map((r: { field: string }) => r.field).filter(Boolean)
     const payload = {
       importMethod: 'database',
       dataSource: getDataSourceSummary(),
       fields: availableFields.value,
-      primaryKeys: selectedIdentityField.value ? [selectedIdentityField.value] : [],
-      identityType: identityType.value,
+      primaryKeys: keys,
       primaryKeyFormat: primaryKeyFormat.value,
-      mappingRules: enableMapping.value && selectedIdentityField.value ? [{ sourceField: selectedIdentityField.value, targetField: selectedIdentityField.value, algorithm: 'exact', enabled: true }] : [],
+      mappingRules: enableMapping.value ? identityRows.value.filter((r: { field: string }) => r.field).map((r: { field: string; relation: string; type: string }) => ({ sourceField: r.field, targetField: r.field, algorithm: r.relation, enabled: true, identityType: r.type })) : [],
       conflictResolution: 'first',
       matchTimeout: 30,
       quality: { enableQualityCheck: false, minMatchRate: 0, maxErrorRate: 100 },
@@ -508,8 +412,7 @@ const registerAnother = () => {
 
 <style scoped lang="less">
 .table-registration {
-  padding: 20px;
-  background: #f5f5f5;
+  padding: 24px;
   min-height: 100vh;
 }
 
@@ -517,11 +420,7 @@ const registerAnother = () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
 }
 
 .header-content {
@@ -546,14 +445,13 @@ const registerAnother = () => {
   margin: 0 auto;
 }
 
+.card-block { margin-bottom: 16px; }
+
 .wizard-steps {
   margin-bottom: 32px;
 }
 
-.step-content {
-  min-height: 500px;
-  padding: 24px 0;
-}
+.step-content { padding: 0; }
 
 .step-panel {
   animation: fadeIn 0.3s ease-in-out;
@@ -640,15 +538,9 @@ const registerAnother = () => {
   color: #f53f3f;
 }
 
-.primary-key-config {
-  max-width: 800px;
-  margin: 0 auto;
-}
+.primary-key-config { max-width: 1200px; margin: 0 auto; }
 
-.config-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
+.config-header { display: none; }
 
 .config-header h3 {
   margin: 0 0 8px 0;
@@ -822,10 +714,7 @@ const registerAnother = () => {
   margin: 0 auto;
 }
 
-.summary-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
+.summary-header { display: none; }
 
 .summary-header h3 {
   margin: 0 0 8px 0;
@@ -843,15 +732,48 @@ const registerAnother = () => {
   margin-bottom: 24px;
 }
 
-.step-navigation {
-  margin-top: 32px;
-  text-align: center;
-  padding-top: 24px;
-  border-top: 1px solid #e5e6eb;
-}
+.step-navigation { margin-top: 16px; text-align: right; }
 
 .registration-result {
   margin-top: 32px;
+}
+
+/* Identity config rows mimic ConditionConfig style */
+.identity-config {
+  padding: 8px 0;
+}
+.detail-condition-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  background: #fff;
+  margin-bottom: 8px;
+}
+.detail-config {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.form-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.form-label {
+  font-size: 12px;
+  color: #4e5969;
+  min-width: 84px;
+}
+.form-control {
+  min-width: 200px;
+}
+.detail-actions .action-btn {
+  color: #f53f3f;
 }
 
 // 响应式设计
