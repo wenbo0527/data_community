@@ -25,8 +25,8 @@
             <a-col :span="24">
               <a-form-item field="contractType" label="合同类型" required>
                 <a-select v-model="form.contractType" placeholder="选择类型">
-                  <a-option value="framework">框架协议</a-option>
-                  <a-option value="supplement">补充合同</a-option>
+                  <a-option value="framework">框架合同</a-option>
+                  <a-option value="supplement">补充协议</a-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -59,7 +59,7 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item field="contractNo" label="合同编号" required>
+              <a-form-item field="contractNo" label="合同编号">
                 <a-input v-model="form.contractNo" placeholder="HT-2025-001" />
               </a-form-item>
             </a-col>
@@ -90,13 +90,13 @@
           </a-row>
           <a-row :gutter="12">
             <a-col :span="12">
-              <a-form-item field="supplier" label="供应商" required>
+              <a-form-item field="supplier" label="对接渠道" required>
                 <a-input v-model="form.supplier" placeholder="例如：美团 / 蚂蚁" />
               </a-form-item>
             </a-col>
             <a-col :span="12" v-if="form.contractType === 'supplement'">
-              <a-form-item field="frameworkIds" label="关联框架协议" required>
-                <a-select v-model="form.frameworkIds" multiple placeholder="选择一个或多个框架协议">
+              <a-form-item field="frameworkIds" label="关联框架合同" required>
+                <a-select v-model="form.frameworkIds" multiple placeholder="选择一个或多个框架合同">
                   <a-option v-for="f in frameworkOptions" :key="f.value" :value="f.value">{{ f.label }}</a-option>
                 </a-select>
               </a-form-item>
@@ -110,10 +110,10 @@
           <a-collapse-item key="external" header="外数信息配置">
           <a-alert type="info" content="选择或新建外数，并维护价格体系与备注。以上信息均归属单一外数。" style="margin-bottom:8px" />
           <a-card class="filter-card" title="选择已有外数">
-            <a-form :model="externalFilter" layout="inline">
-              <a-form-item field="keyword" label="关键词">
-                <a-input v-model="externalFilter.keyword" allow-clear placeholder="名称/供应商" />
-              </a-form-item>
+          <a-form :model="externalFilter" layout="inline">
+            <a-form-item field="keyword" label="关键词">
+                <a-input v-model="externalFilter.keyword" allow-clear placeholder="名称/对接渠道" />
+            </a-form-item>
               <a-form-item>
                 <a-button type="primary" @click="filterProducts">筛选</a-button>
                 <a-button style="margin-left:8px" @click="resetProducts">重置</a-button>
@@ -156,6 +156,18 @@
                 <a-col :span="12">
                   <a-form-item label="基础单价" v-if="externalConfigs[String(extId)].billingType === 'fixed'" required>
                     <a-input-number v-model="externalConfigs[String(extId)].basePrice" :min="0" :precision="4" style="width:100%" />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="12">
+                <a-col :span="12">
+                  <a-form-item label="免费调用次数">
+                    <a-input-number v-model="externalConfigs[String(extId)].freeQuotaValue" :min="0" style="width:100%" />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="免费量有效期">
+                    <a-range-picker v-model="externalConfigs[String(extId)].freeQuotaRange" style="width:100%" />
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -282,6 +294,7 @@ const formRef = ref()
 const acceptTypes = 'application/pdf,application/msword,.doc,.docx'
 const uploadProgress = ref(0)
 const skipUploadSelected = ref(false)
+const newExternalList: any[] = []
 
 const frameworkOptions = computed(() => store.frameworkOptions)
 const products = computed(() => externalStore.products || [])
@@ -298,10 +311,10 @@ const externalConfigs = reactive<Record<string, any>>({})
 // 仅支持选择已有外数
 const filterProducts = () => {}
 const resetProducts = () => { externalFilter.keyword = '' }
-watch(selectedExternalIds, (ids) => { if (ids.length && !activeExternalId.value) activeExternalId.value = String(ids[0]); ids.forEach((id) => { const key = String(id); if (!externalConfigs[key]) externalConfigs[key] = { billingMode: '', billingType: '', basePrice: undefined, tiers: [] as Array<{ lower: number; upper: number; price: number }>, remark: '' } }) })
+  watch(selectedExternalIds, (ids: Array<string | number>) => { if (ids.length && !activeExternalId.value) activeExternalId.value = String(ids[0]); ids.forEach((id: string | number) => { const key = String(id); if (!externalConfigs[key]) externalConfigs[key] = { billingMode: '', billingType: '', basePrice: undefined, tiers: [] as Array<{ lower: number; upper: number; price: number }>, remark: '', freeQuotaValue: undefined, freeQuotaRange: [] as Array<string | Date> } }) })
 const externalLabel = (id: string | number) => { const p = products.value.find((x: any) => String(x.id) === String(id)); return p ? `${p.name}（${p.supplier || p.provider || '—'}）` : String(id) }
-// 标签标题直接使用已有外数信息
-// 右侧进度与检查清单已移除
+  // 标签标题直接使用已有外数信息
+  // 右侧进度与检查清单已移除
 
 const form = reactive<any>({
   contractType: 'framework',
@@ -335,11 +348,11 @@ const rules = {
   fileList: [{ validator: (_: any, val: any, cb: any) => { if (!Array.isArray(val) || !val.length) return cb('请上传合同文件'); cb() } }],
   shortName: [{ required: true, message: '请输入合同简称' }],
   fullName: [{ required: true, message: '请输入合同全称' }],
-  contractNo: [{ required: true, message: '请输入合同编号' }],
+  contractNo: [],
   amount: [{ required: true, message: '请输入合同总金额' }],
   signDate: [{ required: true, message: '请选择签订日期' }],
-  supplier: [{ required: true, message: '请输入供应商' }],
-  frameworkIds: [{ validator: (_: any, val: any, cb: any) => { if (form.contractType === 'supplement' && (!Array.isArray(val) || val.length === 0)) return cb('请选择关联框架协议'); cb() } }],
+  supplier: [{ required: true, message: '请输入对接渠道' }],
+  frameworkIds: [{ validator: (_: any, val: any, cb: any) => { if (form.contractType === 'supplement' && (!Array.isArray(val) || val.length === 0)) return cb('请选择关联框架合同'); cb() } }],
   'external.name': [{ required: true, message: '请输入外数协议名称' }],
   'external.billingMode': [{ required: true, message: '请选择计费方式' }],
   'external.billingType': [{ required: true, message: '请选择计费类型' }],
@@ -360,7 +373,7 @@ const validateCurrentStep = async () => {
     if (!(skipUploadSelected && Array.isArray(form.fileList))) {
       try { await formRef.value?.validateField(['fileList'] as any) } catch { return false }
     }
-    try { await formRef.value?.validateField(['shortName','fullName','contractNo','amount','signDate','supplier', ...(form.contractType === 'supplement' ? ['frameworkId'] : [])] as any) } catch { return false }
+    try { await formRef.value?.validateField(['shortName','fullName','amount','signDate','supplier', ...(form.contractType === 'supplement' ? ['frameworkId'] : [])] as any) } catch { return false }
     return true
   }
   if (currentStep.value === 1) {
@@ -388,6 +401,10 @@ const validateCurrentStep = async () => {
         }
         if (c.billingType === 'special') {
           if (!String(c.remark || '').length) return false
+        }
+        const range = c.freeQuotaRange
+        if (Array.isArray(range) && range.length === 2 && range[0] && range[1]) {
+          if (new Date(range[1]).getTime() <= new Date(range[0]).getTime()) return false
         }
         return true
       })
@@ -426,7 +443,7 @@ const addTier = (extKey: string) => { const cfg = externalConfigs[extKey] || (ex
 const removeTier = (extKey: string, idx: number) => { const cfg = externalConfigs[extKey]; if (cfg && Array.isArray(cfg.tiers)) cfg.tiers.splice(idx, 1) }
 const moveTier = (extKey: string, idx: number, delta: number) => { const t = externalConfigs[extKey]?.tiers; if (!Array.isArray(t)) return; const ni = idx + delta; if (ni < 0 || ni >= t.length) return; const tmp = t[idx]; t[idx] = t[ni]; t[ni] = tmp }
 const onTierMenuSelect = (extKey: string, key: string | number) => { const t = externalConfigs[extKey]?.tiers || (externalConfigs[extKey].tiers = []); if (key === 'copyPrev') { const last = t[t.length - 1]; const lower = last ? Number(last.upper) : 0; const upper = lower + 1000; const price = last ? Number(last.price) : 0; t.push({ lower, upper, price }) } else if (key === 'batch') { batchTargetExt.value = extKey; batchVisible.value = true } else if (key === 'clear') { externalConfigs[extKey].tiers = [] } }
-const tierValid = (tiers: Array<any>) => Array.isArray(tiers) && tiers.length > 0 && tiers.every((r) => typeof r.lower === 'number' && typeof r.upper === 'number' && typeof r.price === 'number' && r.upper > r.lower)
+const tierValid = (tiers: Array<any>) => Array.isArray(tiers) && tiers.length > 0 && tiers.every((r: any) => typeof r.lower === 'number' && typeof r.upper === 'number' && typeof r.price === 'number' && r.upper > r.lower)
 const batchVisible = ref(false)
 const batchTargetExt = ref<string>('')
 const batchParams = reactive<{ startLower: number; width: number; count: number; basePrice: number; priceDelta: number }>({ startLower: 0, width: 1000, count: 3, basePrice: 0, priceDelta: 0 })
@@ -455,14 +472,16 @@ const submit = async () => {
     return
   }
   // 提交前对各外数的阶梯区间做规范化处理
-  selectedExternalIds.value.forEach((id) => normalizeTiers(String(id)))
+  selectedExternalIds.value.forEach((id: string | number) => normalizeTiers(String(id)))
   const okCreate = await store.createContract(payload)
   if (okCreate) {
     const assoc = [] as Array<{ id: string }>
-    selectedExternalIds.value.forEach((id) => {
+    selectedExternalIds.value.forEach((id: string | number) => {
       assoc.push({ id: String(id) })
       const cfg = externalConfigs[String(id)] || {}
-      contractStore.updatePricing(String(id), { billingMode: cfg.billingMode, billingType: cfg.billingType, basePrice: cfg.basePrice, tiers: cfg.tiers, remark: cfg.remark })
+      const start = Array.isArray(cfg.freeQuotaRange) && cfg.freeQuotaRange[0] ? new Date(cfg.freeQuotaRange[0]).toISOString() : undefined
+      const end = Array.isArray(cfg.freeQuotaRange) && cfg.freeQuotaRange[1] ? new Date(cfg.freeQuotaRange[1]).toISOString() : undefined
+      store.updatePricing(String(id), { billingMode: cfg.billingMode, billingType: cfg.billingType, basePrice: cfg.basePrice, tiers: cfg.tiers, remark: cfg.remark, freeQuotaValue: cfg.freeQuotaValue, freeQuotaStart: start, freeQuotaEnd: end })
     })
     if (!assoc.length) {
       Message.error('外数关联缺失，请选择或新增外数后再保存')

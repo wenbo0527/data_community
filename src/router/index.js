@@ -503,6 +503,12 @@ const router = createRouter({
           meta: { title: '结算管理' }
         },
         {
+          path: 'budget/accounting',
+          name: 'RiskBudgetAccounting',
+          component: () => import('@/modules/budget/pages/Accounting.vue'),
+          meta: { title: '核算流程' }
+        },
+        {
           path: 'external-data/lifecycle',
           name: 'RiskExternalDataLifecycle',
           component: () => import('@/modules/external-data/pages/Lifecycle.vue'),
@@ -531,6 +537,13 @@ const router = createRouter({
           name: 'RiskExternalDataArchive',
           component: () => import('@/modules/external-data/pages/Archive.vue'),
           meta: { title: '外数档案管理' }
+        },
+        {
+          path: 'external-data/archive/:id',
+          name: 'RiskExternalDataArchiveDetail',
+          component: () => import('@/modules/external-data/pages/ArchiveDetail.vue'),
+          meta: { title: '外数档案详情' },
+          props: true
         },
         {
           path: 'external-data/service',

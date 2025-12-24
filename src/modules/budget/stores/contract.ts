@@ -35,7 +35,7 @@ export const useContractStore = defineStore('contract', {
     total: 0,
     loading: false,
     error: null as ErrorType | null,
-    pricingMap: {} as Record<string, { billingMode?: string; billingType?: 'fixed' | 'tiered' | 'special'; basePrice?: number; tiers?: Array<{ lower: number; upper: number; price: number }>; remark?: string }>
+    pricingMap: {} as Record<string, { billingMode?: string; billingType?: 'fixed' | 'tiered' | 'special'; basePrice?: number; tiers?: Array<{ lower: number; upper: number; price: number }>; remark?: string; freeQuotaValue?: number; freeQuotaStart?: string; freeQuotaEnd?: string }>
   }),
 
   getters: {
@@ -152,7 +152,7 @@ export const useContractStore = defineStore('contract', {
         this.total = this.list.length
       }
     }
-    ,updatePricing(productId: string, pricing: { billingMode?: string; billingType?: 'fixed' | 'tiered' | 'special'; basePrice?: number; tiers?: Array<{ lower: number; upper: number; price: number }>; remark?: string }) {
+    ,updatePricing(productId: string, pricing: { billingMode?: string; billingType?: 'fixed' | 'tiered' | 'special'; basePrice?: number; tiers?: Array<{ lower: number; upper: number; price: number }>; remark?: string; freeQuotaValue?: number; freeQuotaStart?: string; freeQuotaEnd?: string }) {
       this.pricingMap[productId] = { ...pricing }
     }
   }

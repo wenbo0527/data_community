@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import legacy from '@vitejs/plugin-legacy'
 import { resolve } from 'path'
 import { logServerPlugin } from './vite-plugins/logServerPlugin.js'
 import { viteMockServe } from 'vite-plugin-mock'
@@ -22,6 +23,7 @@ export default defineConfig(({ command }) => ({
     exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue', 'fsevents']
   },
   build: {
+    target: 'es2015',
     rollupOptions: {
       external: ['fsevents']
     }
@@ -109,6 +111,9 @@ export default defineConfig(({ command }) => ({
   },
   plugins: [
     vue(),
+    legacy({
+      targets: ['chrome >= 49']
+    }),
     viteMockServe({
       localEnabled: false,
       prodEnabled: false

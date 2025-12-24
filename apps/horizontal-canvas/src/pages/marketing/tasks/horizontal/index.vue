@@ -209,6 +209,7 @@ import { Modal, Message } from '@arco-design/web-vue'
 import { Graph, Shape } from '@antv/x6';
 import { register } from '@antv/x6-vue-shape';
 import HorizontalNode from './HorizontalNode.vue';
+import { PerformanceUtils } from '@/utils/performanceUtils.js';
 import { provideGraphInstance } from '@/composables/useGraphInstance.js';
 import TaskFlowConfigDrawers from '@/components/task/TaskFlowConfigDrawers.vue';
 import NodeTypeSelector from '@/components/canvas/NodeTypeSelector.vue';
@@ -319,20 +320,11 @@ const nodeActionsMenuEl = ref(null)
 const getNodeActionsMenuRect = () => {
   try { return nodeActionsMenuEl.value?.getBoundingClientRect?.() || null } catch { return null }
 }
-let nodeMenuCloseTimer = null
 let headerMenuCooldownUntil = 0
-function onContentMouseDown(e) {
+const getHeaderMenuCooldownUntil = () => headerMenuCooldownUntil
+const showNodeMenuDebounced = PerformanceUtils.debounce((evt) => {
   try {
-    if (!showNodeSelector.value) return
-    const el = document.querySelector('.node-type-selector')
-    if (el && el.contains(e.target)) return
-    closeNodeSelector()
-  } catch {}
-}
-
-function onContentMouseOver(e) {
-  try {
-    const t = e.target
+    const t = evt?.target
     if (!t || !t.closest) return
     if (isViewMode.value) { if (nodeActionsMenu.value.visible) nodeActionsMenu.value.visible = false; return }
     if (Date.now() < headerMenuCooldownUntil) return
@@ -353,8 +345,22 @@ function onContentMouseOver(e) {
     const x = Math.round(headerRect.left + headerRect.width - 28 - contentRect.left)
     const y = Math.round(headerRect.top + 12 - contentRect.top)
     nodeActionsMenu.value = { visible: true, x, y, nodeId: nid }
-    if (nodeMenuCloseTimer) clearTimeout(nodeMenuCloseTimer)
   } catch {}
+}, 120)
+const hideNodeMenuDebounced = PerformanceUtils.debounce(() => {
+  try { if (!nodeActionsMenuHovering.value) nodeActionsMenu.value.visible = false } catch {}
+}, 150)
+function onContentMouseDown(e) {
+  try {
+    if (!showNodeSelector.value) return
+    const el = document.querySelector('.node-type-selector')
+    if (el && el.contains(e.target)) return
+    closeNodeSelector()
+  } catch {}
+}
+
+function onContentMouseOver(e) {
+  try { showNodeMenuDebounced(e) } catch {}
 }
 function onContentMouseOut(e) {
   try {
@@ -363,10 +369,7 @@ function onContentMouseOut(e) {
     const menuEl = nodeActionsMenuEl.value
     const inActionsMenu = !!(menuEl && rel && menuEl.contains(rel))
     if (inHeaderMenu || inActionsMenu) return
-    if (nodeMenuCloseTimer) clearTimeout(nodeMenuCloseTimer)
-    nodeMenuCloseTimer = setTimeout(() => {
-      if (!nodeActionsMenuHovering.value) nodeActionsMenu.value.visible = false
-    }, 150)
+    hideNodeMenuDebounced()
   } catch {}
 }
 const edgeActionsMenu = ref({ visible: false, x: 0, y: 0, edgeId: null })
@@ -567,6 +570,8 @@ function performPasteFromClipboard() {
     try { graph.addNode(spec) } catch {}
     try { const node = graph.getCellById(id); if (node) created.push(node) } catch {}
   })
+  headerMenuCooldownUntil = Date.now() + 600
+  nodeActionsMenu.value.visible = false
   try { graph.cleanSelection && graph.cleanSelection() } catch {}
   try { if (created.length) graph.select(created) } catch {}
   try { Message.success('已粘贴') } catch {}
@@ -1156,6 +1161,7 @@ onBeforeUnmount(() => {
     setNodeActionsMenu: v => { nodeActionsMenu.value = v },
     getNodeActionsMenuRect,
     isMenuHovering: () => nodeActionsMenuHovering.value,
+    getMenuCooldownUntil: getHeaderMenuCooldownUntil,
     closeAllDrawers: () => { try { configDrawers.closeAllDrawers() } catch {} }
   })
 

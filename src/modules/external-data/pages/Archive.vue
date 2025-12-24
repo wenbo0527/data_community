@@ -8,6 +8,11 @@
         </div>
       <div class="header-actions">
         <a-space>
+          <a-button type="outline" @click="goWithQuery('/external-data-v1/list')">技术详情</a-button>
+          <a-button type="outline" @click="goWithQuery('/discovery/asset-management/external-data-management')">元数据管理</a-button>
+          <a-button type="outline" @click="goWithQuery('/risk/external-data/evaluation')">查看评估</a-button>
+          <a-button type="outline" @click="goWithQuery('/risk/budget-overview')">预算信息</a-button>
+          <a-button type="outline" @click="goWithQuery('/risk/external-data/service')">服务状态</a-button>
           <a-button type="outline">
             <template #icon><IconDownload /></template>
             导出数据
@@ -65,7 +70,10 @@
         <template #columns>
           <a-table-column title="产品名称" :width="220">
             <template #cell="{ record }">
-              <a-button type="text" @click="openDetail(record)">{{ record.name }}</a-button>
+              <a-space>
+                <a-button type="text" @click="openDetail(record)">{{ record.name }}</a-button>
+                <a-button type="text" @click="goDetailPage(record)">打开详情页</a-button>
+              </a-space>
             </template>
           </a-table-column>
           <a-table-column title="供应商" data-index="supplier" :width="160" />
@@ -129,6 +137,20 @@
           <div v-else>
             <a-descriptions :column="2" :data="[{label:'档案单价',value: formatCurrency(detailTarget?.unitPrice)},{label:'计费模式',value: billingModeLabel(detailTarget?.billingMode)}]" bordered />
           </div>
+        </a-card>
+        <a-card title="月度计价快照" style="margin-top:12px">
+          <a-table :data="monthlySnapshots" :pagination="false">
+            <template #columns>
+              <a-table-column title="月份" data-index="month" :width="120" />
+              <a-table-column title="供应商" data-index="supplier" :width="160" />
+              <a-table-column title="合同编号" data-index="contractNo" :width="140" />
+              <a-table-column title="月度金额" :width="140">
+                <template #cell="{ record }">{{ formatCurrency(record.monthlyAmount) }}</template>
+              </a-table-column>
+              <a-table-column title="状态" data-index="status" :width="120" />
+            </template>
+            <template #empty><a-empty description="暂无月度快照" /></template>
+          </a-table>
         </a-card>
         <a-card title="关联采购项目">
           <a-table :data="relatedContracts" :pagination="false">
@@ -210,10 +232,10 @@ const products = computed(() => store.products)
 const loading = ref(false)
 const productsView = ref<any[]>([])
 const saving = ref(false)
-const supplierOptions = computed(() => Array.from(new Set(productsView.value.map(p => p.supplier).filter(Boolean))))
+const supplierOptions = computed(() => Array.from(new Set(productsView.value.map((p: any) => p.supplier).filter(Boolean))))
 const filters = reactive<{ suppliers: string[]; status?: string; statusQuick?: string; usageScene?: string; keyword?: string }>({ suppliers: [], statusQuick: '' })
 const pagination = reactive({ total: 0, pageSize: 10, current: 1, showTotal: true })
-const displayedList = computed(() => productsView.value.filter(p => { if (filters.statusQuick && !filters.status) filters.status = filters.statusQuick; if (filters.suppliers.length && !filters.suppliers.includes(p.supplier)) return false; if (filters.status && p.status !== filters.status) return false; if (filters.usageScene && !String(p.usageScene || '').includes(filters.usageScene)) return false; if (filters.keyword) { const k = filters.keyword.toLowerCase(); const name = String(p.name || '').toLowerCase(); const code = String(p.code || '').toLowerCase(); if (!name.includes(k) && !code.includes(k)) return false } return true }))
+const displayedList = computed(() => productsView.value.filter((p: any) => { if (filters.statusQuick && !filters.status) filters.status = filters.statusQuick; if (filters.suppliers.length && !filters.suppliers.includes(p.supplier)) return false; if (filters.status && p.status !== filters.status) return false; if (filters.usageScene && !String(p.usageScene || '').includes(filters.usageScene)) return false; if (filters.keyword) { const k = filters.keyword.toLowerCase(); const name = String(p.name || '').toLowerCase(); const code = String(p.code || '').toLowerCase(); if (!name.includes(k) && !code.includes(k)) return false } return true }))
 const applyFilter = () => { pagination.current = 1; Message.success('筛选已更新') }
 const resetFilter = () => { filters.suppliers = []; filters.status = undefined; filters.usageScene = undefined; filters.keyword = undefined }
 const onPageChange = (page: number) => { pagination.current = page }
@@ -250,7 +272,7 @@ const buildProductsView = () => {
 }
 const refreshProducts = async () => { loading.value = true; await store.fetchProducts().catch(() => { Message.error('刷新失败') }); buildProductsView(); loading.value = false; Message.success('已刷新档案数据') }
 onMounted(async () => { await store.fetchProducts(); await contractStore.fetchContractList({ page: 1, pageSize: 50 }); sessionStorage.setItem('archiveId', archiveId.value); const listRaw = products.value; const list = Array.isArray(listRaw) ? listRaw : []; stats.archive.products = list.length; stats.archive.interfaces = list.reduce((sum, p) => { const interfaces = typeof p.interfaces === 'number' ? p.interfaces : 1; return sum + interfaces }, 0); const suppliers = new Set(list.map((p) => p?.supplier).filter(Boolean)); stats.archive.suppliers = suppliers.size; const onlineCount = list.filter((p) => p?.status === 'online').length; const maintainingCount = list.filter((p) => p?.status === 'maintaining').length; const pendingEvalCount = list.filter((p) => p?.status === 'pending_evaluation').length; if (onlineCount || maintainingCount || pendingEvalCount) { overview[0].value = onlineCount; overview[1].value = maintainingCount; overview[2].value = pendingEvalCount } buildProductsView(); const q = router.currentRoute.value.query as any; const product = q?.product; const status = q?.status; const supplier = q?.supplier; if (product) { filters.keyword = String(product) } if (status) { filters.status = String(status) } if (supplier) { filters.suppliers = [String(supplier)] } if (product || status || supplier) applyFilter() })
-const goWithQuery = (path, extra = {}) => { router.push({ path, query: { archiveId: archiveId.value, from: 'archive', ...extra } }).then(() => { Message.info('已跳转') }).catch(() => { Message.error('跳转失败') }) }
+const goWithQuery = (path: string, extra: Record<string, any> = {}) => { router.push({ path, query: { archiveId: archiveId.value, from: 'archive', ...extra } }).then(() => { Message.info('已跳转') }).catch(() => { Message.error('跳转失败') }) }
 const businessValue = reactive({ businessGoal: '提升风控命中与转化', expectedBenefit: '年化ROI 120%', useScenario: '贷前评分、贷中监控、贷后资产管理', businessImpact: '提升通过率并降低坏账率', alternativeSolution: '内部风控模型与三方替代接口', businessRisk: '数据时效与合规风险' })
 const businessValueData = computed(() => [{ label: '业务目标', value: businessValue.businessGoal },{ label: '预期收益', value: businessValue.expectedBenefit },{ label: '使用场景', value: businessValue.useScenario },{ label: '业务影响', value: businessValue.businessImpact },{ label: '替代方案', value: businessValue.alternativeSolution },{ label: '业务风险', value: businessValue.businessRisk }])
 const usageGuidanceList = reactive([{ title: '快速入门', desc: '统一接入流程与样例' },{ title: '最佳实践', desc: '高效调用与参数选择策略' },{ title: 'FAQ', desc: '常见问题与解法' },{ title: '成功案例', desc: '应用场景与效果对比' }])
@@ -272,10 +294,13 @@ const detailTarget = ref<any>(null)
 const editForm = reactive({ businessGoal: '', expectedBenefit: '', usageScene: '', billingMode: 'per_call', unitPrice: 0, billingCycle: 'month', currency: 'CNY', effectiveDate: '', expireDate: '', tags: [] as string[], businessImpact: '', alternativeSolution: '', businessRisk: '', remark: '' })
 const openEdit = (record: any) => { editTarget.value = record; editForm.businessGoal = businessValue.businessGoal; editForm.expectedBenefit = businessValue.expectedBenefit; editForm.usageScene = record.usageScene; editForm.billingMode = record.billingMode; editForm.unitPrice = record.unitPrice; editForm.billingCycle = record.billingCycle; editForm.currency = record.currency; editForm.effectiveDate = record.effectiveDate; editForm.expireDate = record.expireDate; editForm.tags = Array.isArray(record.tags) ? [...record.tags] : []; editForm.businessImpact = businessValue.businessImpact; editForm.alternativeSolution = businessValue.alternativeSolution; editForm.businessRisk = businessValue.businessRisk; editForm.remark = ''; editVisible.value = true }
 const openDetail = (record: any) => { detailTarget.value = record; detailVisible.value = true }
+const goDetailPage = (record: any) => { router.push({ path: `/risk/external-data/archive/${String(record.id)}`, query: { from: 'archive', archiveId: archiveId.value } }) }
 const saveEdit = async () => { if (!editForm.usageScene) { Message.error('请填写使用场景'); return } saving.value = true; try { if (editTarget.value) { editTarget.value.usageScene = editForm.usageScene; editTarget.value.billingMode = editForm.billingMode; editTarget.value.unitPrice = editForm.unitPrice; editTarget.value.billingCycle = editForm.billingCycle; editTarget.value.currency = editForm.currency; editTarget.value.effectiveDate = editForm.effectiveDate; editTarget.value.expireDate = editForm.expireDate; editTarget.value.tags = Array.isArray(editForm.tags) ? [...editForm.tags] : []; editVisible.value = false; Message.success('保存成功') } } finally { saving.value = false } }
 const handleImportChange = () => {}
+const importing = ref(false)
+const importVisible = ref(false)
 const confirmImport = async () => { importing.value = true; setTimeout(() => { importing.value = false; importVisible.value = false; Message.success('导入完成'); refreshProducts() }, 1000) }
-const exportList = () => { const headers = ['产品名称','编码','供应商','状态','计费模式','单价','接入时间','使用场景','评估得分','监控状态']; const rows = productsView.value.map(p => [p.name,p.code,p.supplier,p.status,(p.billingMode||''),p.unitPrice,p.createdAt,p.usageScene,p.evaluationScore,p.monitorStatus]); const csv = [headers.join(','), ...rows.map(r => r.map(v => String(v ?? '')).join(','))].join('\n'); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'external-data-archive.csv'; a.click(); URL.revokeObjectURL(url); Message.success('已导出') }
+const exportList = () => { const headers = ['产品名称','编码','供应商','状态','计费模式','单价','接入时间','使用场景','评估得分','监控状态']; const rows = productsView.value.map((p: any) => [p.name,p.code,p.supplier,p.status,(p.billingMode||''),p.unitPrice,p.createdAt,p.usageScene,p.evaluationScore,p.monitorStatus]); const csv = [headers.join(','), ...rows.map((r: any) => r.map((v: any) => String(v ?? '')).join(','))].join('\n'); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'external-data-archive.csv'; a.click(); URL.revokeObjectURL(url); Message.success('已导出') }
 const formatDate = (d?: string | Date) => { try { return new Date(d || '').toLocaleString() } catch { return '—' } }
 const formatCurrency = (n?: number) => { try { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) } catch { return '—' } }
 const billingModeLabel = (m?: string) => m === 'per_call' ? '按次' : m === 'monthly' ? '按月' : m === 'tier' ? '阶梯' : '—'
@@ -306,6 +331,43 @@ const pricingSummary = computed(() => {
     { label: '计费方式', value: p.billingMode || '—' },
     { label: '计费类型', value: p.billingType === 'fixed' ? '固定单价' : p.billingType === 'tiered' ? '阶梯条件' : p.billingType === 'special' ? '特殊计费' : '—' }
   ]
+})
+
+const monthlySnapshots = computed(() => {
+  const supplier = detailTarget.value?.supplier
+  if (!supplier) return []
+  const contracts = contractStore.list.filter((c: any) => c.supplier === supplier)
+  const genMonths = (start: string, end: string) => {
+    try {
+      const s = new Date(start)
+      const e = new Date(end)
+      const arr: string[] = []
+      const cur = new Date(s.getFullYear(), s.getMonth(), 1)
+      const last = new Date(e.getFullYear(), e.getMonth(), 1)
+      while (cur <= last) {
+        const m = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`
+        arr.push(m)
+        cur.setMonth(cur.getMonth() + 1)
+      }
+      return arr
+    } catch { return [] }
+  }
+  const rows: any[] = []
+  contracts.forEach((c: any) => {
+    const months = genMonths(c.startDate, c.endDate)
+    const monthlyAmount = (() => {
+      try {
+        const s = new Date(c.startDate)
+        const e = new Date(c.endDate)
+        const monthsCount = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth() + 1)
+        return monthsCount > 0 ? Math.round(Number(c.amount || 0) / monthsCount) : Number(c.amount || 0)
+      } catch { return Number(c.amount || 0) }
+    })()
+    months.slice(-6).forEach((m) => {
+      rows.push({ month: m, supplier: c.supplier, contractNo: c.contractNo, monthlyAmount, status: c.status })
+    })
+  })
+  return rows.sort((a, b) => a.month.localeCompare(b.month))
 })
 
 // 关联采购项目：按供应商匹配

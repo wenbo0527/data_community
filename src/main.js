@@ -1,3 +1,6 @@
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
+import 'whatwg-fetch'
 import { createApp } from 'vue';
 import App from './App.vue';
 

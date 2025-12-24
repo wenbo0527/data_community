@@ -5,13 +5,20 @@ import Mock from 'mockjs'
  */
 export interface ExternalDataDetail {
   interfaceId: string
+  archiveId?: string
   dataName: string
+  productCode?: string
+  productUnit?: 'record' | 'query'
   dataType: string
   subType?: string
   supplier: string
+  channelId?: string
+  channelName?: string
   description: string
   manager: string
   price: number
+  currency?: string
+  includeTax?: boolean
   isFavorite: boolean
   apiUrl: string
   targetTable: string
@@ -24,6 +31,14 @@ export interface ExternalDataDetail {
   headers: string
   timeout: number
   qpsLimit: number
+  billingType?: 'fixed' | 'tiered' | 'special'
+  basePrice?: number
+  tiers?: Array<{ lower: number; upper: number; price: number }>
+  aliases?: string[]
+  settlementCycle?: 'month'
+  pricingSnapshotId?: string
+  contractLinks?: Array<{ id: string; name: string; type: 'framework' | 'supplement' }>
+  statementFieldMap?: Record<string, string>
   storageInfo: Array<{ label: string; value: string }>
   metadataData: Array<{ field: string; type: string; comment: string }>
   inputParams: Array<{ name: string; type: string; required: boolean; description: string }>
@@ -51,13 +66,20 @@ export const generateExternalDataDetail = (id: string): ExternalDataDetail => {
   const mockData: Record<string, ExternalDataDetail> = {
     'EXT001': {
       interfaceId: 'EXT001',
+      archiveId: 'ARCH-EXT001',
       dataName: '个人身份核验服务',
+      productCode: 'PID-IDENTITY-VERIFY',
+      productUnit: 'record',
       dataType: '核验类',
       subType: '身份核验',
       supplier: '某某科技有限公司',
+      channelId: 'CH-001',
+      channelName: '某某科技有限公司',
       description: '提供实时身份信息核验服务，支持姓名、身份证号、手机号三要素或二要素的核验，适用于注册、实名认证等场景',
       manager: '张三',
       price: 0.5,
+      currency: 'CNY',
+      includeTax: true,
       isFavorite: true,
       apiUrl: 'https://api.example.com/v1/identity/verify',
       targetTable: 'dwd_identity_verify_detail',
@@ -70,6 +92,29 @@ export const generateExternalDataDetail = (id: string): ExternalDataDetail => {
       headers: 'Content-Type: application/json\nAuthorization: Bearer {token}',
       timeout: 3,
       qpsLimit: 1000,
+      billingType: 'fixed',
+      basePrice: 0.5,
+      tiers: [
+        { lower: 0, upper: 100000, price: 0.5 },
+        { lower: 100000, upper: 1000000, price: 0.3 }
+      ],
+      aliases: ['身份核验', '三要素核验', '实名认证核验'],
+      settlementCycle: 'month',
+      pricingSnapshotId: 'PS-EXT001-2025-01',
+      contractLinks: [
+        { id: 'C-20240104', name: '外数采购-美团2024Q4', type: 'framework' },
+        { id: 'C-20240105', name: '外数采购-美团补充协议-接口扩展', type: 'supplement' }
+      ],
+      statementFieldMap: {
+        账单周期: 'period',
+        朴道产品代码: 'productCode',
+        产品名称: 'productName',
+        计费方式: 'billingType',
+        最终计费次数: 'finalCount',
+        最终付费次数: 'finalPaidCount',
+        单价: 'unitPrice',
+        金额: 'amount'
+      },
       
       storageInfo: [
         { label: '落库表名', value: 'dwd_identity_verify_detail' },
@@ -128,13 +173,20 @@ export const generateExternalDataDetail = (id: string): ExternalDataDetail => {
     },
     'EXT002': {
       interfaceId: 'EXT002',
+      archiveId: 'ARCH-EXT002',
       dataName: '企业信用评分服务',
+      productCode: 'PID-ENTERPRISE-CREDIT',
+      productUnit: 'query',
       dataType: '评分类',
       subType: '信用评分',
       supplier: '某某征信科技公司',
+      channelId: 'CH-002',
+      channelName: '某某征信科技公司',
       description: '基于企业工商、司法、税务、舆情等多维度数据，提供企业信用风险评分服务，适用于企业授信、贷前审查等场景',
       manager: '李四',
       price: 20,
+      currency: 'CNY',
+      includeTax: true,
       isFavorite: false,
       apiUrl: 'https://api.example.com/v1/enterprise/credit-score',
       targetTable: 'dwd_enterprise_credit_detail',
@@ -147,6 +199,28 @@ export const generateExternalDataDetail = (id: string): ExternalDataDetail => {
       headers: 'Content-Type: application/json\nX-Api-Key: {apikey}',
       timeout: 5,
       qpsLimit: 500,
+      billingType: 'tiered',
+      basePrice: 20,
+      tiers: [
+        { lower: 0, upper: 1000, price: 20 },
+        { lower: 1000, upper: 10000, price: 15 }
+      ],
+      aliases: ['信用评分', '企业评分', '风险评分'],
+      settlementCycle: 'month',
+      pricingSnapshotId: 'PS-EXT002-2025-01',
+      contractLinks: [
+        { id: 'C-20240102', name: '外数采购-阿里2024Q4', type: 'framework' }
+      ],
+      statementFieldMap: {
+        账单周期: 'period',
+        朴道产品代码: 'productCode',
+        产品名称: 'productName',
+        计费方式: 'billingType',
+        最终计费次数: 'finalCount',
+        最终付费次数: 'finalPaidCount',
+        单价: 'unitPrice',
+        金额: 'amount'
+      },
       
       storageInfo: [
         { label: '落库表名', value: 'dwd_enterprise_credit_detail' },
@@ -205,12 +279,19 @@ export const generateExternalDataDetail = (id: string): ExternalDataDetail => {
 
   return mockData[id] || {
     interfaceId: id,
+    archiveId: `ARCH-${id}`,
     dataName: '未知数据',
+    productCode: undefined,
+    productUnit: undefined,
     dataType: '未知类型',
     supplier: '未知供应商',
+    channelId: undefined,
+    channelName: undefined,
     description: '',
     manager: '',
     price: 0,
+    currency: 'CNY',
+    includeTax: true,
     isFavorite: false,
     apiUrl: '',
     targetTable: '',
@@ -223,6 +304,14 @@ export const generateExternalDataDetail = (id: string): ExternalDataDetail => {
     headers: '',
     timeout: 0,
     qpsLimit: 0,
+    billingType: 'fixed',
+    basePrice: 0,
+    tiers: [],
+    aliases: [],
+    settlementCycle: 'month',
+    pricingSnapshotId: '',
+    contractLinks: [],
+    statementFieldMap: {},
     storageInfo: [],
     metadataData: [],
     inputParams: [],

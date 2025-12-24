@@ -77,6 +77,32 @@ export default [{
           component: () => import('../pages/management/accompany/result.vue')
         }
       ]
+    },
+    {
+      path: 'permission',
+      name: 'management-permission',
+      component: () => import('../pages/management/permission/index.vue'),
+      meta: { title: '权限服务' }
+    },
+    {
+      path: 'permission/apply/application',
+      name: 'management-permission-apply-application',
+      component: () => import('../views/management/permission/PermissionApply.vue'),
+      meta: { title: '应用权限申请' },
+      props: { defaultCategory: 'application' }
+    },
+    {
+      path: 'permission/apply/data',
+      name: 'management-permission-apply-data',
+      component: () => import('../views/management/permission/PermissionApply.vue'),
+      meta: { title: '数据权限申请' },
+      props: { defaultCategory: 'data' }
+    },
+    {
+      path: 'permission/bulk',
+      name: 'management-permission-bulk',
+      component: () => import('../views/management/permission/BatchPermissionApply.vue'),
+      meta: { title: '批量权限申请' }
     }
   ]
 }]

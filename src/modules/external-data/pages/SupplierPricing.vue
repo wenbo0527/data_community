@@ -55,7 +55,7 @@
             v-model="filters.billingType"
             allow-clear
             placeholder="选择类型"
-            style="width="140px"
+            style="width: 140px"
           >
             <a-option value="fixed">固定单价</a-option>
             <a-option value="tiered">阶梯定价</a-option>

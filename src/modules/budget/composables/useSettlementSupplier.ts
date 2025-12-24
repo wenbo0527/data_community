@@ -15,10 +15,10 @@ export function useSettlementSupplier() {
   // 计算属性
   const activeSuppliers = computed(() => suppliers.value.filter(s => s.status === 'active'))
   const supplierOptions = computed(() => activeSuppliers.value.map(s => ({
-    label: s.name,
+    label: s.supplierName,
     value: s.id,
-    code: s.code,
-    category: s.category
+    code: s.supplierCode,
+    category: s.supplierType
   })))
 
   const supplierMap = computed(() => {
@@ -29,7 +29,7 @@ export function useSettlementSupplier() {
 
   const supplierCodeMap = computed(() => {
     const map = new Map<string, Supplier>()
-    suppliers.value.forEach(s => map.set(s.code, s))
+    suppliers.value.forEach(s => map.set(s.supplierCode, s))
     return map
   })
 
@@ -84,7 +84,7 @@ export function useSettlementSupplier() {
    * 根据分类筛选供应商
    */
   const getSuppliersByCategory = (category: string): Supplier[] => {
-    return activeSuppliers.value.filter(s => s.category === category)
+    return activeSuppliers.value.filter(s => s.supplierType === category)
   }
 
   /**
@@ -92,7 +92,7 @@ export function useSettlementSupplier() {
    */
   const getSupplierName = (id: string): string => {
     const supplier = getSupplier(id)
-    return supplier?.name || '未知供应商'
+    return supplier?.supplierName || '未知供应商'
   }
 
   /**
@@ -100,7 +100,7 @@ export function useSettlementSupplier() {
    */
   const getSupplierCode = (id: string): string => {
     const supplier = getSupplier(id)
-    return supplier?.code || 'UNKNOWN'
+    return supplier?.supplierCode || 'UNKNOWN'
   }
 
   /**
@@ -122,7 +122,7 @@ export function useSettlementSupplier() {
         const available = await checkSupplierAvailability(id)
         return {
           id,
-          name: supplier.name,
+          name: supplier.supplierName,
           available,
           reason: available ? undefined : '供应商不可用'
         }
@@ -156,7 +156,7 @@ export function useSettlementSupplier() {
         // 如果编码找不到，尝试通过名称查找
         if (!supplier) {
           supplier = activeSuppliers.value.find(s => 
-            s.name === contract.supplier || s.code === contract.supplier
+            s.supplierName === contract.supplier || s.supplierCode === contract.supplier
           )
         }
         

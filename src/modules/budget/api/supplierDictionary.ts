@@ -15,83 +15,79 @@ export async function getAvailableSuppliers(): Promise<Supplier[]> {
   return Promise.resolve([
     {
       id: 'SUP-001',
-      code: 'MEITUAN',
-      name: '美团',
-      category: 'LBS',
+      supplierCode: 'BAIHANG',
+      supplierName: '百行',
+      supplierType: 'data_provider',
       status: 'active',
-      contactInfo: {
-        person: '张经理',
-        phone: '13800138000',
-        email: 'zhang@meituan.com'
-      },
-      billingInfo: {
-        bankName: '中国银行北京分行',
-        bankAccount: '1234567890123456789',
-        taxNo: '91110000777648852X'
-      },
-      description: '美团位置服务数据供应商',
+      creditRating: 4,
+      registrationDate: '2022-05-01T00:00:00Z',
+      contactInfo: { company: '百行科技', contactPerson: '张经理', email: 'zhang@baihang.com', phone: '13800138000', address: '北京朝阳' },
+      businessLicense: '91110000777648852X',
+      taxId: '91110000777648852X',
+      bankInfo: { bankName: '中国银行北京分行', bankAccount: '1234567890123456789', bankCode: 'BOC-BJ' },
+      tags: ['LBS','DATA'],
+      description: '百行数据供应商',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
+      updatedAt: '2024-01-01T00:00:00Z',
+      createdBy: 'system',
+      updatedBy: 'system'
     },
     {
       id: 'SUP-002',
-      code: 'DIDI',
-      name: '滴滴',
-      category: 'LBS',
+      supplierCode: 'PUDAO',
+      supplierName: '朴道',
+      supplierType: 'data_provider',
       status: 'active',
-      contactInfo: {
-        person: '李经理',
-        phone: '13900139000',
-        email: 'li@didiglobal.com'
-      },
-      billingInfo: {
-        bankName: '工商银行上海分行',
-        bankAccount: '9876543210987654321',
-        taxNo: '91310000777648852Y'
-      },
-      description: '滴滴出行数据供应商',
+      creditRating: 4,
+      registrationDate: '2022-08-10T00:00:00Z',
+      contactInfo: { company: '朴道科技', contactPerson: '李经理', email: 'li@pudao.com', phone: '13900139000', address: '上海浦东' },
+      businessLicense: '91310000777648852Y',
+      taxId: '91310000777648852Y',
+      bankInfo: { bankName: '工商银行上海分行', bankAccount: '9876543210987654321', bankCode: 'ICBC-SH' },
+      tags: ['LBS','DATA'],
+      description: '朴道数据供应商',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
+      updatedAt: '2024-01-01T00:00:00Z',
+      createdBy: 'system',
+      updatedBy: 'system'
     },
     {
       id: 'SUP-003',
-      code: 'BAIDU',
-      name: '百度',
-      category: 'MAP',
+      supplierCode: 'BAIDU',
+      supplierName: '百度',
+      supplierType: 'platform_provider',
       status: 'active',
-      contactInfo: {
-        person: '王经理',
-        phone: '13700137000',
-        email: 'wang@baidu.com'
-      },
-      billingInfo: {
-        bankName: '建设银行深圳分行',
-        bankAccount: '5555555555555555555',
-        taxNo: '91440000777648852Z'
-      },
+      creditRating: 5,
+      registrationDate: '2020-03-01T00:00:00Z',
+      contactInfo: { company: '百度在线', contactPerson: '王经理', email: 'wang@baidu.com', phone: '13700137000', address: '深圳南山' },
+      businessLicense: '91440000777648852Z',
+      taxId: '91440000777648852Z',
+      bankInfo: { bankName: '建设银行深圳分行', bankAccount: '5555555555555555555', bankCode: 'CCB-SZ' },
+      tags: ['MAP'],
       description: '百度地图数据供应商',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
+      updatedAt: '2024-01-01T00:00:00Z',
+      createdBy: 'system',
+      updatedBy: 'system'
     },
     {
       id: 'SUP-004',
-      code: 'GAODE',
-      name: '高德',
-      category: 'MAP',
+      supplierCode: 'GAODE',
+      supplierName: '高德',
+      supplierType: 'platform_provider',
       status: 'active',
-      contactInfo: {
-        person: '赵经理',
-        phone: '13600136000',
-        email: 'zhao@autonavi.com'
-      },
-      billingInfo: {
-        bankName: '农业银行杭州分行',
-        bankAccount: '6666666666666666666',
-        taxNo: '91510000777648852A'
-      },
+      creditRating: 5,
+      registrationDate: '2020-06-01T00:00:00Z',
+      contactInfo: { company: '高德软件', contactPerson: '赵经理', email: 'zhao@autonavi.com', phone: '13600136000', address: '杭州西湖' },
+      businessLicense: '91510000777648852A',
+      taxId: '91510000777648852A',
+      bankInfo: { bankName: '农业银行杭州分行', bankAccount: '6666666666666666666', bankCode: 'ABC-HZ' },
+      tags: ['MAP'],
       description: '高德地图数据供应商',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
+      updatedAt: '2024-01-01T00:00:00Z',
+      createdBy: 'system',
+      updatedBy: 'system'
     }
   ])
 }
@@ -111,7 +107,7 @@ export async function getSupplierById(supplierId: string): Promise<Supplier | nu
  */
 export async function getSupplierByCode(supplierCode: string): Promise<Supplier | null> {
   const suppliers = await getAvailableSuppliers()
-  return suppliers.find(s => s.code === supplierCode) || null
+  return suppliers.find(s => s.supplierCode === supplierCode) || null
 }
 
 /**
@@ -129,7 +125,7 @@ export async function getSuppliersByIds(supplierIds: string[]): Promise<Supplier
  */
 export async function getSuppliersByCategory(category: string): Promise<Supplier[]> {
   const suppliers = await getAvailableSuppliers()
-  return suppliers.filter(s => s.category === category)
+  return suppliers.filter(s => s.supplierType === category)
 }
 
 /**

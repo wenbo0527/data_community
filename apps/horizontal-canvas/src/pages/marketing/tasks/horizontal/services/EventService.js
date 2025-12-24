@@ -1,4 +1,5 @@
 import { NODE_DIMENSIONS, POSITIONS } from '../styles/nodeStyles.js'
+import { PerformanceUtils } from '@/utils/performanceUtils.js'
 
 export class EventService {
   constructor(deps) {
@@ -18,13 +19,13 @@ export class EventService {
     this.setNodeActionsMenu = deps.setNodeActionsMenu
     this.getNodeActionsMenuRect = deps.getNodeActionsMenuRect || (() => null)
     this.isMenuHovering = deps.isMenuHovering || (() => false)
+    this.getMenuCooldownUntil = deps.getMenuCooldownUntil || (() => 0)
     this.closeAllDrawers = deps.closeAllDrawers || (() => {})
   }
 
   bindGraphEvents(graph) {
     const readOnly = this.readOnly
     let lastMenuNodeId = null
-    let hideTimer = null
     let lastShowTs = 0
     /**
      * 坐标转换到容器坐标系
@@ -50,40 +51,37 @@ export class EventService {
       const isMenuIcon = selector && /^(menu-dot|header-menu)/.test(String(selector))
       return !!(isMenuIcon || inHeaderMenuDom)
     }
-    const showMenuForNode = (node) => {
+    const showMenuThrottled = PerformanceUtils.throttle((node) => {
       const data = node.getData ? node.getData() : {}
       const t = data?.type || data?.nodeType
       if (t === 'start' || t === 'end') return
+      if (data?.dragging) return
+      try { if (Date.now() < (typeof this.getMenuCooldownUntil === 'function' ? this.getMenuCooldownUntil() : 0)) return } catch {}
       const bbox = node.getBBox()
       const uiPos = toContainerCoords({ x: bbox.x + bbox.width - 28, y: bbox.y + 12 })
       const now = Date.now()
-      const tooSoon = now - lastShowTs < 60
-      const sameNode = lastMenuNodeId === node.id
-      if (tooSoon && sameNode) return
       lastShowTs = now
       lastMenuNodeId = node.id
       this.setNodeActionsMenu({ visible: true, x: uiPos.x, y: uiPos.y, nodeId: node.id })
-    }
-    const scheduleHideMenu = (e) => {
+    }, 100)
+    const showMenuForNode = (node) => showMenuThrottled(node)
+    const hideMenuDebounced = PerformanceUtils.debounce((e) => {
       if (readOnly) return
-      try { clearTimeout(hideTimer) } catch {}
-      hideTimer = setTimeout(() => {
-        try {
-          const t = e?.target || null
-          if (t && t.closest && t.closest('[data-selector="header-menu"]')) return
-          // 选中状态下保持菜单，不进行自动关闭
-          try { if (this.graph && lastMenuNodeId) { const n = this.graph.getCellById?.(lastMenuNodeId); if (n?.isSelected && n.isSelected()) return } } catch {}
-          if (this.isMenuHovering && this.isMenuHovering()) return
-          const rect = this.getNodeActionsMenuRect ? this.getNodeActionsMenuRect() : null
-          if (rect && e && typeof e.pageX === 'number' && typeof e.pageY === 'number') {
-            const x = e.pageX, y = e.pageY
-            const inside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
-            if (inside) return
-          }
-        } catch {}
-        this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
-      }, 200)
-    }
+      try {
+        const t = e?.target || null
+        if (t && t.closest && t.closest('[data-selector="header-menu"]')) return
+        try { if (this.graph && lastMenuNodeId) { const n = this.graph.getCellById?.(lastMenuNodeId); if (n?.isSelected && n.isSelected()) return } } catch {}
+        if (this.isMenuHovering && this.isMenuHovering()) return
+        const rect = this.getNodeActionsMenuRect ? this.getNodeActionsMenuRect() : null
+        if (rect && e && typeof e.pageX === 'number' && typeof e.pageY === 'number') {
+          const x = e.pageX, y = e.pageY
+          const inside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+          if (inside) return
+        }
+      } catch {}
+      this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null })
+    }, 200)
+    const scheduleHideMenu = (e) => hideMenuDebounced(e)
     graph.on('edge:mouseenter', () => {})
     graph.on('edge:mouseleave', () => {})
     graph.on('edge:contextmenu', ({ e }) => {
@@ -93,7 +91,7 @@ export class EventService {
     graph.on('node:contextmenu', ({ e, node }) => {
       if (readOnly) return
       try { e?.preventDefault?.(); e?.stopPropagation?.() } catch {}
-      if (isMenuHot(e, node)) showMenuForNode(node)
+      if (isMenuHot(e, node)) return
     })
     graph.on('node:mouseleave', ({ e }) => { 
       if (readOnly) return
@@ -114,10 +112,7 @@ export class EventService {
     })
     // DocRef: 架构文档「关键代码片段/事件服务：节点点击与菜单区域识别」
     graph.on('node:click', ({ e, node }) => {
-      if (!readOnly && !this.isStatisticsMode() && isMenuHot(e, node)) {
-        showMenuForNode(node)
-        return
-      }
+      if (!readOnly && !this.isStatisticsMode() && isMenuHot(e, node)) { return }
       scheduleHideMenu(e)
       const d = node.getData ? node.getData() : {}
       const t = d?.type || d?.nodeType
@@ -150,14 +145,11 @@ export class EventService {
       } catch {}
     }
 
-    // 视口变化或节点移动时，菜单跟随
-    this.graph.on('scale', refreshMenuPosition)
-    this.graph.on('translate', refreshMenuPosition)
-    this.graph.on('node:moved', ({ node }) => { if (node?.id === lastMenuNodeId) refreshMenuPosition() })
+    this.graph.on('node:moving', ({ node }) => { this.setNodeActionsMenu({ visible: false, x: 0, y: 0, nodeId: null }) })
     this.graph.on('node:selected', ({ node }) => {
       if (readOnly) return
       try { node.addClass && node.addClass('menu-active') } catch {}
-      showMenuForNode(node)
+      try { const d = node.getData ? node.getData() : {}; if (d?.dragging) return } catch {}
     })
     this.graph.on('node:unselected', ({ node }) => {
       if (readOnly) return
@@ -166,8 +158,6 @@ export class EventService {
     })
     this.graph.on('node:mouseenter', ({ e, node }) => {
       if (readOnly) return
-      // 选中状态下，进入节点时始终展示菜单，提升可靠性
-      try { if (node?.isSelected && node.isSelected()) { showMenuForNode(node); return } } catch {}
       if (isMenuHot(e, node)) showMenuForNode(node)
     })
   }

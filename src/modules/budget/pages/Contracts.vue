@@ -30,31 +30,44 @@
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="goCreatePage">
-            <template #icon><IconUpload /></template>
+            <template #icon>
+              <IconUpload />
+            </template>
             合同上传
           </a-button>
         </a-form-item>
         <a-form-item>
           <a-button @click="showSupplierModal = true">新增供应商</a-button>
         </a-form-item>
+        <a-form-item>
+          <a-dropdown @select="handleSettlementSelect">
+            <a-button type="primary">
+              结算 <IconDown />
+            </a-button>
+            <template #content>
+              <a-doption value="initiate">发起结算</a-doption>
+              <a-doption value="list">进入结算列表页</a-doption>
+            </template>
+          </a-dropdown>
+        </a-form-item>
       </a-form>
     </a-card>
     <a-grid :cols="4" :col-gap="12" :row-gap="12" class="stats">
       <a-grid-item>
         <a-card hoverable>
-          <a-statistic title="合同数量" :value="stats.count" />
+          <a-statistic title="生效合同数" :value="stats.count" />
         </a-card>
       </a-grid-item>
       <a-grid-item>
         <a-card hoverable>
-          <a-statistic title="合同总额" :value="stats.totalAmount">
+          <a-statistic title="合同剩余总金额" :value="stats.totalAmount">
             <template #suffix>元</template>
           </a-statistic>
         </a-card>
       </a-grid-item>
       <a-grid-item>
         <a-card hoverable>
-          <a-statistic title="近30天到期" :value="stats.expiringCount" />
+          <a-statistic title="产品覆盖率" :value="stats.productCoverage" />
         </a-card>
       </a-grid-item>
       <a-grid-item>
@@ -72,15 +85,19 @@
             </template>
           </a-table-column>
           <a-table-column title="合同数" data-index="count" />
-          <a-table-column title="总额" :width="180">
+          <a-table-column title="关联外数产品" :width="180">
+            <template #cell="{ record }">{{ record.productCount ?? '—' }}</template>
+          </a-table-column>
+          <a-table-column title="剩余总额" :width="180">
             <template #cell="{ record }">{{ formatAmount(record.totalAmount) }}</template>
           </a-table-column>
-          <a-table-column title="即将到期(≤30天)" data-index="expiringCount" />
+
         </template>
       </a-table>
     </a-card>
     <a-card title="合同列表" :loading="loading">
-      <a-table :data="tableData" row-key="id" :pagination="pagination" @page-change="onPageChange" @row-click="openContractDetail">
+      <a-table :data="tableData" row-key="id" :pagination="pagination" @page-change="onPageChange"
+        @row-click="openContractDetail">
         <template #columns>
           <a-table-column title="合同名称" data-index="contractName" :width="240" />
           <a-table-column title="类型" :width="120">
@@ -107,7 +124,8 @@
         </template>
       </a-table>
     </a-card>
-    <a-modal v-model:visible="showSupplierModal" title="新增供应商" :width="600" @ok="submitSupplier" @cancel="resetSupplierForm">
+    <a-modal v-model:visible="showSupplierModal" title="新增供应商" :width="600" @ok="submitSupplier"
+      @cancel="resetSupplierForm">
       <a-form ref="supplierFormRef" :model="supplierForm" :rules="supplierFormRules" layout="vertical">
         <a-form-item label="供应商名称" field="name" required>
           <a-input v-model="supplierForm.name" placeholder="请输入供应商名称" />
@@ -125,7 +143,7 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconUpload } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconDown } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '@/modules/budget/stores/contract'
 import type { ContractItem } from '@/modules/budget/stores/contract'
 
@@ -148,7 +166,7 @@ const filters = reactive<{ supplier?: string; status?: string; contractType?: 'f
 
 const supplierRegistry = ref<{ name: string; description: string }[]>([])
 const supplierOptions = computed(() => Array.from(new Set([...
-  list.value.map(i => i.supplier), ...supplierRegistry.value.map(s => s.name)
+  list.value.map((i: ContractItem) => i.supplier), ...supplierRegistry.value.map((s: { name: string; description: string }) => s.name)
 ].filter(Boolean))))
 
 const applyFilter = async () => { await store.fetchContractList({ page: 1, pageSize: pageSize.value, supplier: filters.supplier, status: filters.status }); pagination.total = store.total }
@@ -172,14 +190,33 @@ const onPageChange = async (page: number) => { current.value = page; await apply
 const openContractDetail = (record: ContractItem) => { router.push(`/budget/contracts/${record.id}`) }
 const frameworkLabel = (id?: string | null) => { if (!id) return '—'; const m = store.list.find(i => i.id === id); return m ? `${m.contractName}（${m.contractNo}）` : id }
 
-const supplierSummary = computed(() => { const map = new Map<string, { supplier: string; count: number; totalAmount: number; expiringCount: number }>(); list.value.forEach((i: ContractItem) => { const key = i.supplier || '—'; const days = daysToExpire(i.endDate); const bucket = map.get(key) || { supplier: key, count: 0, totalAmount: 0, expiringCount: 0 }; bucket.count += 1; bucket.totalAmount += Number(i.amount) || 0; if (!isNaN(days) && days <= 30 && days >= 0) bucket.expiringCount += 1; map.set(key, bucket) }); return Array.from(map.values()) })
+const supplierSummary = computed(() => { const map = new Map<string, { supplier: string; count: number; totalAmount: number; expiringCount: number; productCount: number }>(); list.value.forEach((i: ContractItem) => { const key = i.supplier || '—'; const days = daysToExpire(i.endDate); const bucket = map.get(key) || { supplier: key, count: 0, totalAmount: 0, expiringCount: 0, productCount: 0 }; bucket.count += 1; bucket.totalAmount += Number(i.amount) || 0; bucket.productCount += Number(i.productCount) || 0; if (!isNaN(days) && days <= 30 && days >= 0) bucket.expiringCount += 1; map.set(key, bucket) }); return Array.from(map.values()) })
+
+const handleSettlementSelect = (value: string | number | Record<string, any> | undefined) => {
+  if (value === 'list') {
+    router.push('/risk/budget/settlement')
+  } else if (value === 'initiate') {
+    Message.info('发起结算功能待实现')
+  }
+}
 
 onMounted(async () => { await store.fetchContractList({ page: current.value, pageSize: pageSize.value }); pagination.total = store.total })
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 12px; }
-.desc { color: var(--color-text-2); }
-.toolbar { margin-bottom: 12px; }
-.stats { margin-bottom: 12px; }
+.page-header {
+  margin-bottom: 12px;
+}
+
+.desc {
+  color: var(--color-text-2);
+}
+
+.toolbar {
+  margin-bottom: 12px;
+}
+
+.stats {
+  margin-bottom: 12px;
+}
 </style>

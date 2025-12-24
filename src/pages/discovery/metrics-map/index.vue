@@ -64,9 +64,12 @@
             <a-table-column v-for="column in dynamicColumns" :key="column.dataIndex" 
               :title="column.title" :data-index="column.dataIndex" :width="column.width">
               <template #cell="{ record }" v-if="column.dataIndex === 'businessDefinition'">
-                <a-tooltip :content="record.businessDefinition">
-                  <div style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    {{ record.businessDefinition }}
+                <a-tooltip>
+                  <template #content>
+                    <div class="metrics-rich-tooltip" v-html="record.businessDefinition"></div>
+                  </template>
+                  <div class="metrics-rich-ellipsis">
+                    {{ getPlainText(record.businessDefinition) }}
                   </div>
                 </a-tooltip>
               </template>
@@ -415,6 +418,14 @@ const getSceneDisplay = (record: MetricItem) => {
   return record.reportName || record.reportInfo || ''
 }
 
+const getPlainText = (html?: string) => {
+  if (!html) return ''
+  const div = document.createElement('div')
+  div.innerHTML = html
+  const text = div.textContent || div.innerText || ''
+  return text.trim()
+}
+
 
 
 // 分页处理
@@ -489,6 +500,20 @@ onMounted(() => {
 
 .metric-name:hover {
   text-decoration: underline;
+}
+
+.metrics-rich-ellipsis {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metrics-rich-tooltip {
+  max-width: 480px;
+  max-height: 300px;
+  overflow: auto;
+  padding: 8px;
 }
 
 .favorite-btn {

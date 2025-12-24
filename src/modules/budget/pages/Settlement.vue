@@ -2,12 +2,17 @@
   <div class="settlement-management">
     <div class="page-header">
       <h3>结算管理</h3>
-      <p class="desc">支持多供应商、多合同的批量结算任务管理</p>
+      <p class="desc">支持多供应商、多合同的批量结算任务管理（可按对接渠道查看）</p>
     </div>
     <a-card class="toolbar" :bordered="true">
       <a-form :model="filters" layout="inline">
         <a-form-item field="suppliers" label="供应商">
           <a-select v-model="filters.suppliers" multiple allow-clear placeholder="选择供应商" style="width: 260px">
+            <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item field="channels" label="对接渠道">
+          <a-select v-model="filters.channels" multiple allow-clear placeholder="选择对接渠道" style="width: 260px">
             <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
           </a-select>
         </a-form-item>
@@ -18,13 +23,11 @@
         </a-form-item>
         <a-form-item field="granularity" label="粒度">
           <a-select v-model="filters.granularity" allow-clear placeholder="选择" style="width: 120px">
-            <a-option value="year">年</a-option>
-            <a-option value="quarter">季</a-option>
             <a-option value="month">月</a-option>
           </a-select>
         </a-form-item>
         <a-form-item field="timeLabel" label="时间">
-          <a-input v-model="filters.timeLabel" allow-clear placeholder="如 2025 / 2025-Q2 / 2025-01" style="width: 160px" />
+          <a-input v-model="filters.timeLabel" allow-clear placeholder="如 2025-01" style="width: 160px" />
         </a-form-item>
         <a-form-item field="status" label="状态">
           <a-select v-model="filters.status" allow-clear placeholder="选择状态" style="width: 140px">
@@ -41,7 +44,7 @@
         </a-form-item>
         <a-form-item style="margin-left: auto">
           <a-space>
-            <a-button type="primary" @click="showCreate = true">
+            <a-button type="primary" @click="() => router.push('/risk/budget/accounting?stage=costing')">
               <template #icon><icon-plus /></template>
               发起结算
             </a-button>
@@ -54,14 +57,20 @@
         </a-form-item>
       </a-form>
     </a-card>
+    
     <a-card title="结算任务列表" :bordered="true" :loading="loading">
       <a-table :data="displayedTasks" row-key="id" :pagination="pagination" @page-change="onPageChange">
         <template #columns>
-          <a-table-column title="任务编号" :width="140">
-            <template #cell="{ record }">{{ record.id }}</template>
+          <a-table-column title="任务名称" :width="160">
+            <template #cell="{ record }">
+              <a-button size="small" type="text" @click="handleAction(record)">{{ record.taskName || '—' }}</a-button>
+            </template>
           </a-table-column>
-          <a-table-column title="供应商数" :width="100">
-            <template #cell="{ record }">{{ record.supplierIds.length }}</template>
+          <a-table-column title="供应商" :width="160">
+            <template #cell="{ record }">{{ getExternalSupplierName(record.supplierIds[0] || '') || (record.supplierIds[0] || '—') }}</template>
+          </a-table-column>
+          <a-table-column title="对接渠道" :width="160">
+            <template #cell="{ record }">{{ getExternalSupplierName(record.supplierIds[0] || '') || (record.supplierIds[0] || '—') }}</template>
           </a-table-column>
           <a-table-column title="合同数" :width="100">
             <template #cell="{ record }">{{ record.contractIds.length }}</template>
@@ -69,9 +78,7 @@
           <a-table-column title="结算周期" :width="160">
             <template #cell="{ record }">{{ granularityLabel(record.granularity) }} · {{ record.timeLabel }}</template>
           </a-table-column>
-          <a-table-column title="预算金额" :width="140">
-            <template #cell="{ record }">{{ formatAmount(record.summary.budgetAmount) }}</template>
-          </a-table-column>
+
           <a-table-column title="实际金额" :width="140">
             <template #cell="{ record }">{{ formatAmount(record.summary.actualAmount) }}</template>
           </a-table-column>
@@ -79,11 +86,10 @@
             <template #cell="{ record }">{{ formatAmount(record.summary.diffAmount) }}（{{ formatPercent(record.summary.diffRate) }}）</template>
           </a-table-column>
           <a-table-column title="状态" :width="120">
-            <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
+            <template #cell="{ record }"><a-tag :status="statusTag(record.status, record.stage)">{{ statusLabel(record.status, record.stage) }}</a-tag></template>
           </a-table-column>
-          <a-table-column title="进度" :width="180">
-            <template #cell="{ record }"><a-progress :percent="record.progress" /></template>
-          </a-table-column>
+          
+          
           <a-table-column title="创建人" :width="120">
             <template #cell="{ record }">{{ record.createdBy }}</template>
           </a-table-column>
@@ -93,13 +99,19 @@
           <a-table-column title="操作" :width="260" fixed="right">
             <template #cell="{ record }">
               <a-space>
-                <a-button size="small" type="text" @click="openDetail(record)">查看</a-button>
-                <a-button size="small" type="text" @click="generateReport(record)">生成报告</a-button>
-                <a-button size="small" type="text" @click="updateData(record)">更新数据</a-button>
-                <a-popconfirm content="确认取消该任务？" @ok="() => cancelTask(record)">
-                  <a-button size="小" type="text">取消</a-button>
+                <a-button size="small" type="text" @click="handleAction(record)">{{ actionLabel(record) }}</a-button>
+                <a-popconfirm v-if="record.status !== 'succeeded'" content="确认删除该任务？" @ok="() => deleteTask(record)">
+                  <a-button size="small" type="text">删除</a-button>
                 </a-popconfirm>
-                <a-button size="small" type="text" @click="downloadReport(record)">下载报告</a-button>
+                <a-space v-else>
+                  <a-popconfirm content="确认撤销该任务到待核算？" @ok="() => revertTask(record)">
+                    <a-button size="small" type="text">撤销</a-button>
+                  </a-popconfirm>
+                  <a-popconfirm content="确认归档该任务？" @ok="() => archiveTask(record)">
+                    <a-button size="small" type="text">归档</a-button>
+                  </a-popconfirm>
+                </a-space>
+                <a-button size="small" type="text" @click="downloadReport(record)">下载</a-button>
               </a-space>
             </template>
           </a-table-column>
@@ -110,8 +122,15 @@
       <a-form :model="createForm" layout="vertical">
         <a-row :gutter="12">
           <a-col :span="12">
-            <a-form-item field="supplierIds" label="供应商" required>
-              <a-select v-model="createForm.supplierIds" multiple allow-clear placeholder="选择供应商">
+            <a-form-item field="supplierId" label="供应商" required>
+              <a-select v-model="createForm.supplierId" allow-clear placeholder="选择供应商">
+                <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item field="channelId" label="对接渠道">
+              <a-select v-model="createForm.channelId" allow-clear placeholder="选择对接渠道">
                 <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
               </a-select>
             </a-form-item>
@@ -128,15 +147,13 @@
           <a-col :span="8">
             <a-form-item field="granularity" label="结算粒度" required>
               <a-select v-model="createForm.granularity" placeholder="选择">
-                <a-option value="year">年</a-option>
-                <a-option value="quarter">季</a-option>
                 <a-option value="month">月</a-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="8">
             <a-form-item field="timeLabel" label="结算时间" required>
-              <a-input v-model="createForm.timeLabel" placeholder="如 2025 / 2025-Q2 / 2025-01" />
+              <a-input v-model="createForm.timeLabel" placeholder="如 2025-01" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
@@ -185,110 +202,86 @@
         </a-form-item>
       </a-form>
     </a-modal>
-    <a-drawer v-model:visible="detailVisible" :width="720" title="任务详情">
-      <a-steps :current="currentStep" style="margin-bottom: 12px">
-        <a-step title="数据锁定" />
-        <a-step title="差异计算" />
-        <a-step title="规则校验" />
-        <a-step title="报告生成" />
-        <a-step title="数据更新" />
-      </a-steps>
-      <a-card title="子任务进度" :bordered="true" style="margin-bottom: 12px">
-        <a-table :data="subtasks" :pagination="false">
-          <template #columns>
-            <a-table-column title="供应商" :width="120">
-              <template #cell="{ record }">{{ getExternalSupplierName(record.supplierId) }}</template>
-            </a-table-column>
-            <a-table-column title="合同数" :width="100">
-              <template #cell="{ record }">{{ record.contracts.length }}</template>
-            </a-table-column>
-            <a-table-column title="状态" :width="120">
-              <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
-            </a-table-column>
-            <a-table-column title="进度" :width="160">
-              <template #cell="{ record }"><a-progress :percent="record.progress" /></template>
-            </a-table-column>
-            <a-table-column title="操作" :width="200">
-              <template #cell="{ record }">
-                <a-space>
-                  <a-button size="small" type="text" @click="retrySubtask(record)">重试</a-button>
-                  <a-button size="small" type="text" @click="skipSubtask(record)">跳过</a-button>
-                </a-space>
-              </template>
-            </a-table-column>
-          </template>
-        </a-table>
-      </a-card>
-      <div style="text-align: right">
-        <a-space>
-          <a-button type="primary" @click="generateReport(currentTask!)">生成报告</a-button>
-          <a-button type="outline" @click="detailVisible = false">关闭</a-button>
-        </a-space>
-      </div>
-    </a-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '@/modules/budget/stores/contract'
 import { useSettlementSupplier } from '@/modules/budget/composables/useSettlementSupplier'
-import { getSettlementTasks, createSettlementTask, cancelSettlementTask, completeSettlementTask } from '@/modules/budget/api/settlement'
+import { getSettlementTasks, createSettlementTask, updateSettlementTask, deleteSettlementTask } from '@/modules/budget/api/settlement'
 import { settlementSystemListener, supplierChangeNotifier } from '@/modules/external-data/utils/supplierChangeNotifier'
+import { useSettlementFlowStore } from '@/modules/budget/stores/settlementFlow'
+import { getActivePricingMap } from '@/modules/budget/api/pricingArchive'
+import { generateBillLines } from '@/modules/budget/utils/costing'
 
 type Granularity = 'year'|'quarter'|'month'
 type TaskStatus = 'pending'|'running'|'succeeded'|'failed'|'canceled'
 
 interface SettlementSummary { budgetAmount: number; actualAmount: number; diffAmount: number; diffRate: number }
-interface SettlementSubTask { id: string; taskId: string; supplierId: string; status: TaskStatus; progress: number; contracts: string[]; summary: SettlementSummary }
-interface SettlementTask { id: string; supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; status: TaskStatus; progress: number; createdBy: string; createdAt: string; summary: SettlementSummary }
+interface SettlementTask { id: string; supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; status: TaskStatus; progress: number; createdBy: string; createdAt: string; summary: SettlementSummary; stage?: 'costing'|'reconcile'|'writeoff'; taskName?: string }
 
 const store = useContractStore()
 const { 
   supplierOptions: externalSupplierOptions, 
   loadSuppliers: loadExternalSuppliers,
   getSupplierName: getExternalSupplierName,
-  validateSuppliers,
-  extractSuppliersFromContracts 
+  validateSuppliers
 } = useSettlementSupplier()
+
+const route = useRoute()
+const router = useRouter()
 
 const loading = ref(false)
 const tasks = ref<SettlementTask[]>([])
 const pagination = reactive({ total: 0, pageSize: 10, current: 1, showTotal: true })
 
-const filters = reactive<{ suppliers: string[]; contracts: string[]; granularity?: Granularity; timeLabel?: string; status?: TaskStatus }>({ suppliers: [], contracts: [] })
+const filters = reactive<{ suppliers: string[]; channels: string[]; contracts: string[]; granularity?: Granularity; timeLabel?: string; status?: TaskStatus }>({ suppliers: [], channels: [], contracts: [] })
 
-const supplierOptions = computed(() => externalSupplierOptions.value.map(option => option.label))
+const supplierOptions = computed(() => externalSupplierOptions.value.map((option: { label: string }) => option.label))
 const contractOptions = computed(() => store.list.map((i: any) => ({ id: String(i.id), contractName: String(i.contractName || i.id), supplier: i.supplier || '—', amount: Number(i.amount) || 0, writtenOffAmount: Number(i.writtenOffAmount) || 0 })))
-const filteredContractOptions = computed(() => { if (!createForm.supplierIds?.length) return contractOptions.value; return contractOptions.value.filter(c => createForm.supplierIds.includes(c.supplier)) })
+const filteredContractOptions = computed(() => { 
+  const sid = createForm.supplierId
+  if (!sid) return contractOptions.value
+  const name = getExternalSupplierName(sid)
+  return contractOptions.value.filter((c: { supplier: string }) => c.supplier === name || c.supplier === sid)
+})
 
-const displayedTasks = computed(() => tasks.value.filter(t => { if (filters.suppliers.length && !filters.suppliers.some(s => t.supplierIds.includes(s))) return false; if (filters.contracts.length && !filters.contracts.some(c => t.contractIds.includes(c))) return false; if (filters.granularity && t.granularity !== filters.granularity) return false; if (filters.timeLabel && t.timeLabel !== filters.timeLabel) return false; if (filters.status && t.status !== filters.status) return false; return true }))
+const displayedTasks = computed(() => tasks.value.filter((t: SettlementTask) => { if (filters.suppliers.length && !filters.suppliers.some((s: string) => t.supplierIds.includes(s))) return false; if (filters.contracts.length && !filters.contracts.some((c: string) => t.contractIds.includes(c))) return false; if (filters.granularity && t.granularity !== filters.granularity) return false; if (filters.timeLabel && t.timeLabel !== filters.timeLabel) return false; if (filters.status && t.status !== filters.status) return false; return true }))
 
 const showCreate = ref(false)
-const createForm = reactive<{ supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; strict: boolean; includeTax: boolean; tolerance: number; createdBy: string; budgetSnapshotId?: string; actualSnapshotId?: string; remark?: string }>({ supplierIds: [], contractIds: [], granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, strict: false, includeTax: true, tolerance: 0, createdBy: '管理员' })
+const createForm = reactive<{ supplierId: string; channelId?: string; contractIds: string[]; granularity: Granularity; timeLabel: string; strict: boolean; includeTax: boolean; tolerance: number; createdBy: string; budgetSnapshotId?: string; actualSnapshotId?: string; remark?: string }>({ supplierId: '', channelId: '', contractIds: [], granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, strict: false, includeTax: true, tolerance: 0, createdBy: '管理员' })
 
-const currentTask = ref<SettlementTask | null>(null)
-const detailVisible = ref(false)
-const subtasks = ref<SettlementSubTask[]>([])
-const currentStep = ref(0)
-const timers = ref<Record<string, number>>({})
+// 抽屉版流程已移除
 
 const formatAmount = (n?: number) => { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) }
 const formatPercent = (n?: number) => { if (n === undefined || n === null) return '—'; return `${(n * 100).toFixed(2)}%` }
 const formatDate = (d?: string | Date) => { try { return new Date(d || '').toLocaleString() } catch { return '—' } }
 const granularityLabel = (g?: Granularity) => g === 'year' ? '年' : g === 'quarter' ? '季' : g === 'month' ? '月' : '—'
-const statusLabel = (s: TaskStatus) => s === 'pending' ? '待执行' : s === 'running' ? '执行中' : s === 'succeeded' ? '已完成' : s === 'failed' ? '失败' : '已取消'
-const statusTag = (s: TaskStatus) => s === 'pending' ? 'default' : s === 'running' ? 'warning' : s === 'succeeded' ? 'success' : s === 'failed' ? 'danger' : 'default'
+const statusLabel = (s: TaskStatus, stage?: string) => {
+  if (s === 'pending') {
+    if (stage === 'costing') return '待核算'
+    if (stage === 'reconcile') return '待对账'
+    if (stage === 'writeoff') return '待核销'
+    return '待执行'
+  }
+  return s === 'running' ? '执行中' : s === 'succeeded' ? '已完成' : s === 'failed' ? '失败' : '已取消'
+}
+const statusTag = (s: TaskStatus, stage?: string) => {
+  if (s === 'pending') return 'default'
+  return s === 'running' ? 'warning' : s === 'succeeded' ? 'success' : s === 'failed' ? 'danger' : 'default'
+}
 
-const calcSummaryForContracts = (ids: string[]) => { const items = contractOptions.value.filter(c => ids.includes(c.id)); const budgetAmount = items.reduce((sum, i) => sum + i.amount, 0); const actualAmount = items.reduce((sum, i) => sum + i.writtenOffAmount, 0); const diffAmount = actualAmount - budgetAmount; const diffRate = budgetAmount > 0 ? diffAmount / budgetAmount : 0; return { budgetAmount, actualAmount, diffAmount, diffRate } }
+const calcSummaryForContracts = (ids: string[]) => { const items = contractOptions.value.filter((c: { id: string }) => ids.includes(c.id)); const budgetAmount = items.reduce((sum: number, i: { amount: number }) => sum + i.amount, 0); const actualAmount = items.reduce((sum: number, i: { writtenOffAmount: number }) => sum + i.writtenOffAmount, 0); const diffAmount = actualAmount - budgetAmount; const diffRate = budgetAmount > 0 ? diffAmount / budgetAmount : 0; return { budgetAmount, actualAmount, diffAmount, diffRate } }
 
 const submitCreate = async () => {
-  if (!createForm.supplierIds.length || !createForm.contractIds.length) { Message.error('请选择供应商与合同'); return }
+  if (!createForm.supplierId || !createForm.contractIds.length) { Message.error('请选择供应商与合同'); return }
   
   // 验证供应商可用性
-  const validation = await validateSuppliers(createForm.supplierIds)
+  const validation = await validateSuppliers([createForm.supplierId])
   if (!validation.valid) {
     const invalidNames = validation.details.filter(d => !d.available).map(d => d.name)
     Message.error(`以下供应商不可用：${invalidNames.join(', ')}`)
@@ -297,7 +290,7 @@ const submitCreate = async () => {
   
   const summary = calcSummaryForContracts(createForm.contractIds)
   const task = await createSettlementTask({
-    supplierIds: [...createForm.supplierIds],
+    supplierIds: [createForm.supplierId],
     contractIds: [...createForm.contractIds],
     granularity: createForm.granularity,
     timeLabel: createForm.timeLabel,
@@ -307,91 +300,130 @@ const submitCreate = async () => {
   tasks.value.unshift(task)
   pagination.total = tasks.value.length
   showCreate.value = false
-  startTask(task)
   Message.success('结算任务已创建')
 }
 
-const startTask = async (task: SettlementTask) => {
-  // 从合同中提取供应商信息
-  const contracts = contractOptions.value.filter(c => task.contractIds.includes(c.id))
-  const suppliers = extractSuppliersFromContracts(contracts)
-  
-  // 创建按供应商分组的子任务
-  subtasks.value = suppliers.map((supplier, idx) => {
-    const supplierContracts = contracts.filter(c => {
-      // 匹配供应商，支持编码和名称匹配
-      return c.supplier === supplier.name || c.supplier === supplier.code || c.supplier === supplier.id
-    })
-    
-    return {
-      id: `${task.id}-S${idx+1}`,
-      taskId: task.id,
-      supplierId: supplier.id,
-      status: 'running',
-      progress: 0,
-      contracts: supplierContracts.map(c => c.id),
-      summary: calcSummaryForContracts(supplierContracts.map(c => c.id))
-    }
-  })
-  
-  detailVisible.value = true
-  currentTask.value = task
-  currentStep.value = 1
-  
-  // 模拟任务执行进度
-  const t = window.setInterval(async () => {
-    let done = 0
-    subtasks.value = subtasks.value.map(st => {
-      if (st.status === 'running') {
-        const p = Math.min(100, st.progress + Math.floor(10 + Math.random() * 20))
-        const status: TaskStatus = p >= 100 ? 'succeeded' : 'running'
-        if (status === 'succeeded') done += 1
-        return { ...st, progress: p, status }
-      }
-      if (st.status === 'succeeded') done += 1
-      return st
-    })
-    
-    const percent = Math.floor((done / subtasks.value.length) * 100)
-    task.progress = percent
-    
-    if (percent >= 100) {
-      task.status = 'succeeded'
-      currentStep.value = 4
-      window.clearInterval(t)
-      delete timers.value[task.id]
-      await completeSettlementTask(task.id)
-      Message.success('结算任务已完成，可生成报告')
-    }
-  }, 1000)
-  
-  timers.value[task.id] = t
-}
-
-const openDetail = (task: SettlementTask) => { currentTask.value = task; detailVisible.value = true; currentStep.value = task.status === 'succeeded' ? 4 : task.status === 'running' ? 2 : 0 }
-const retrySubtask = (st: SettlementSubTask) => { st.status = 'running'; st.progress = 0 }
-const skipSubtask = (st: SettlementSubTask) => { st.status = 'succeeded'; st.progress = 100 }
-
-const generateReport = (task: SettlementTask) => { const merged = { id: `SR-${Date.now()}`, taskId: task.id, type: 'merged', summary: task.summary, suppliers: subtasks.value.map(st => ({ supplierId: st.supplierId, summary: st.summary })) }; const blob = new Blob([JSON.stringify(merged, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${merged.id}.json`; a.click(); URL.revokeObjectURL(url); Message.success('结算报告已生成并下载') }
-const downloadReport = (task: SettlementTask) => generateReport(task)
-const updateData = (task: SettlementTask) => { Message.info('数据更新为占位行为，待后端联调后写回合同域与预算域') }
-const cancelTask = async (task: SettlementTask) => {
-  const ok = await cancelSettlementTask(task.id)
-  if (ok) {
-    task.status = 'canceled'
-    task.progress = 0
-    const t = timers.value[task.id]
-    if (t) { window.clearInterval(t); delete timers.value[task.id] }
-    Message.success('任务已取消')
-  } else {
-    Message.error('取消任务失败')
+const editTaskName = async (record: SettlementTask) => {
+  const next = window.prompt('输入任务名称', record.taskName || '')
+  if (next && next.trim()) {
+    record.taskName = next.trim()
+    await updateSettlementTask(record.id, { taskName: record.taskName } as any)
+    Message.success('任务名称已更新')
   }
 }
+const actionLabel = (record: SettlementTask) => {
+  if (record.status === 'pending') {
+    if (record.stage === 'costing') return '发起核算'
+    if (record.stage === 'reconcile') return '发起对账'
+    if (record.stage === 'writeoff') return '发起核销'
+    return '处理'
+  }
+  if (record.status === 'succeeded') return '查看'
+  return '处理'
+}
+const handleAction = (record: SettlementTask) => {
+  const supplierId = record.supplierIds[0] || ''
+  const month = record.granularity === 'month' ? record.timeLabel : `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+  const stage = record.stage || (record.status === 'succeeded' ? 'writeoff' : 'costing')
+  router.push(`/risk/budget/accounting?stage=${stage}&supplierId=${encodeURIComponent(supplierId)}&month=${encodeURIComponent(month)}`)
+}
+const deleteTask = async (record: SettlementTask) => {
+  const ok = await deleteSettlementTask(record.id)
+  if (ok) {
+    tasks.value = tasks.value.filter((t: SettlementTask) => t.id !== record.id)
+    pagination.total = tasks.value.length
+    Message.success('任务已删除')
+  } else {
+    Message.error('删除任务失败')
+  }
+}
+const revertTask = async (record: SettlementTask) => {
+  record.status = 'pending'
+  record.stage = 'costing'
+  await updateSettlementTask(record.id, { status: 'pending', stage: 'costing' } as any)
+  Message.success('已撤销至待核算')
+}
+const archiveTask = async (record: SettlementTask) => {
+  await updateSettlementTask(record.id, { archived: true } as any)
+  Message.success('任务已归档')
+}
+
+const flowStore = useSettlementFlowStore()
+const generateReport = async (task: SettlementTask) => {
+  const rows: Array<{ supplierName: string; productName: string; productCode: string; usageQty: number; billingType: string; billingRule: string; actualAmount: number }> = []
+  for (const sid of task.supplierIds) {
+    const supplierName = getExternalSupplierName(sid)
+    const pricingMap = await getActivePricingMap(sid)
+    const month = task.granularity === 'month' ? task.timeLabel : `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+    const costing = flowStore.getCosting(sid, month)
+    const reconcile = flowStore.getReconcile(sid, month)
+    const usageByProduct: Record<string, number> = {}
+    const nameByProduct: Record<string, string> = {}
+    if (costing) {
+      for (const l of costing.lines) {
+        if (costing.excluded[l.lineId]) continue
+        usageByProduct[l.productCode] = (usageByProduct[l.productCode] || 0) + (Number(l.usageQty) || 0)
+        nameByProduct[l.productCode] = l.productName
+      }
+    }
+    const items = reconcile?.items || []
+    for (const it of items) {
+      const btype = pricingMap[it.productCode]?.billingType
+      const billingType = btype === 'fixed' ? '固定' : btype === 'tiered' ? '阶梯' : btype === 'special' ? '特殊' : '按量'
+      const tiers = pricingMap[it.productCode]?.tiers || []
+      const billingRule = btype === 'tiered' && tiers.length ? tiers.map((t: any) => `${t.lower}-${t.upper ?? '∞'}次：${Number(t.price).toFixed(4)}元/次`).join('；') : (pricingMap[it.productCode]?.remark || (btype === 'fixed' ? `单价：${Number(pricingMap[it.productCode]?.unitPrice || 0).toFixed(4)}元` : '—'))
+      rows.push({
+        supplierName,
+        productName: nameByProduct[it.productCode] || it.productCode,
+        productCode: it.productCode,
+        usageQty: usageByProduct[it.productCode] || 0,
+        billingType,
+        billingRule,
+        actualAmount: Number((it.finalAmount || 0).toFixed(2))
+      })
+    }
+  }
+  const report = { id: `SR-${Date.now()}`, taskId: task.id, granularity: task.granularity, timeLabel: task.timeLabel, rows }
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${report.id}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+  Message.success('费用报告（JSON）已生成并下载')
+}
+const downloadReport = (task: SettlementTask) => generateReport(task)
+const updateData = (task: SettlementTask) => { Message.info('数据更新为占位行为，待后端联调后写回合同域与预算域') }
 
 const applyFilter = () => {}
 const resetFilter = () => { filters.suppliers = []; filters.contracts = []; filters.granularity = undefined; filters.timeLabel = undefined; filters.status = undefined }
 const refresh = async () => { await store.fetchContractList({ page: 1, pageSize: 100 }); Message.success('已刷新合同数据') }
-const exportList = () => { const header = ['任务编号','供应商数','合同数','结算粒度','结算时间','预算金额','实际金额','差异金额','差异率','状态','进度','创建人','创建时间']; const rows = displayedTasks.value.map(t => [t.id, t.supplierIds.length, t.contractIds.length, granularityLabel(t.granularity), t.timeLabel, t.summary.budgetAmount, t.summary.actualAmount, t.summary.diffAmount, t.summary.diffRate, statusLabel(t.status), t.progress, t.createdBy, formatDate(t.createdAt)]); const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `settlement-tasks-${Date.now()}.csv`; a.click(); URL.revokeObjectURL(url) }
+const exportList = () => {
+  const header = ['任务名称','供应商','合同数','结算粒度','结算时间','预算金额','实际金额','差异金额','差异率','状态','创建人','创建时间']
+  const rows = displayedTasks.value.map((t: SettlementTask) => [
+    t.taskName || '—',
+    getExternalSupplierName(t.supplierIds[0] || '') || (t.supplierIds[0] || '—'),
+    t.contractIds.length,
+    granularityLabel(t.granularity),
+    t.timeLabel,
+    t.summary.budgetAmount,
+    t.summary.actualAmount,
+    t.summary.diffAmount,
+    t.summary.diffRate,
+    statusLabel(t.status, t.stage),
+    t.createdBy,
+    formatDate(t.createdAt)
+  ])
+  const csv = [header.join(','), ...rows.map((r: any[]) => r.join(','))].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `settlement-tasks-${Date.now()}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 const onPageChange = (page: number) => { pagination.current = page }
 onMounted(async () => {
   // 注册供应商变更监听器
@@ -407,9 +439,106 @@ onMounted(async () => {
   await store.fetchContractList({ page: 1, pageSize: 100 })
   const resp = await getSettlementTasks()
   tasks.value = resp.list
-  if (!tasks.value.length) seedMockTasks()
+  if (!tasks.value.length) await seedMockTasks()
 })
-const seedMockTasks = () => { const allContracts = contractOptions.value; if (!allContracts.length) return; const sampleContracts = allContracts.slice(0, Math.min(5, allContracts.length)).map(c => c.id); const sampleSuppliers = Array.from(new Set(allContracts.slice(0, 5).map(c => c.supplier))).filter(Boolean); const t1: SettlementTask = { id: `ST-${Date.now()-1}`, supplierIds: sampleSuppliers, contractIds: sampleContracts, granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, status: 'pending', progress: 0, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts) }; const t2: SettlementTask = { id: `ST-${Date.now()-2}`, supplierIds: sampleSuppliers.slice(0,2), contractIds: sampleContracts.slice(0,3), granularity: 'quarter', timeLabel: `${new Date().getFullYear()}-Q${Math.ceil((new Date().getMonth()+1)/3)}`, status: 'running', progress: 45, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,3)) }; const t3: SettlementTask = { id: `ST-${Date.now()-3}`, supplierIds: sampleSuppliers.slice(0,1), contractIds: sampleContracts.slice(0,2), granularity: 'year', timeLabel: `${new Date().getFullYear()}`, status: 'succeeded', progress: 100, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,2)) }; tasks.value = [t2, t3, t1]; pagination.total = tasks.value.length }
+const seedMockTasks = async () => {
+  const allContracts = contractOptions.value
+  if (!allContracts.length) return
+  const sampleContracts = allContracts.slice(0, Math.min(5, allContracts.length)).map((c: { id: string }) => c.id)
+  const supplierOpts = externalSupplierOptions.value.slice(0, 3)
+  if (!supplierOpts.length) return
+  const t1: SettlementTask = {
+    id: `ST-${Date.now()-1}`,
+    supplierIds: [supplierOpts[0].value],
+    contractIds: sampleContracts,
+    granularity: 'month',
+    timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`,
+    status: 'pending',
+    stage: 'costing',
+    progress: 0,
+    createdBy: '系统',
+    createdAt: new Date().toISOString(),
+    taskName: `核算-${supplierOpts[0].label}`,
+    summary: calcSummaryForContracts(sampleContracts)
+  }
+  const t2: SettlementTask = {
+    id: `ST-${Date.now()-2}`,
+    supplierIds: [supplierOpts[1].value],
+    contractIds: sampleContracts.slice(0,3),
+    granularity: 'month',
+    timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`,
+    status: 'pending',
+    stage: 'reconcile',
+    progress: 0,
+    createdBy: '系统',
+    createdAt: new Date().toISOString(),
+    taskName: `对账-${supplierOpts[1].label}`,
+    summary: calcSummaryForContracts(sampleContracts.slice(0,3))
+  }
+  const t3: SettlementTask = {
+    id: `ST-${Date.now()-3}`,
+    supplierIds: [supplierOpts[2].value],
+    contractIds: sampleContracts.slice(0,2),
+    granularity: 'month',
+    timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`,
+    status: 'succeeded',
+    stage: 'writeoff',
+    progress: 100,
+    createdBy: '系统',
+    createdAt: new Date().toISOString(),
+    taskName: `核销-${supplierOpts[2].label}`,
+    summary: calcSummaryForContracts(sampleContracts.slice(0,2))
+  }
+  const monNow = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+  const t4: SettlementTask = {
+    id: `ST-${Date.now()-4}`,
+    supplierIds: [supplierOpts[0].value],
+    contractIds: sampleContracts.slice(0,4),
+    granularity: 'month',
+    timeLabel: monNow,
+    status: 'pending',
+    stage: 'writeoff',
+    progress: 90,
+    createdBy: '系统',
+    createdAt: new Date().toISOString(),
+    taskName: `核销-${supplierOpts[0].label}-待核销`,
+    summary: calcSummaryForContracts(sampleContracts.slice(0,4))
+  }
+  tasks.value = [t2, t3, t4, t1]
+  pagination.total = tasks.value.length
+  
+  // 为mock任务生成对应的费用核算快照，确保可直接进入对账
+  try {
+    const ensureCosting = async (sid: string, mon: string) => {
+      const lines = await generateBillLines(sid, mon)
+      const confirmed: Record<string, boolean> = {}
+      const excluded: Record<string, boolean> = {}
+      flowStore.setCostingSnapshot(sid, mon, lines, confirmed, excluded)
+    }
+    // 对账阶段任务优先生成快照
+    await ensureCosting(supplierOpts[1].value, monNow)
+    // 其他示例供应商也生成，便于切换演示
+    await ensureCosting(supplierOpts[0].value, monNow)
+    await ensureCosting(supplierOpts[2].value, monNow)
+    const costingForT4 = flowStore.getCosting(supplierOpts[0].value, monNow)
+    if (costingForT4) {
+      const lines = costingForT4.lines.filter((l: any) => !costingForT4.excluded[l.lineId]).slice(0, Math.min(6, costingForT4.lines.length))
+      const items = lines.map((l: any) => {
+        const sysAmt = Number(l.amountInclTax || 0)
+        const extAmt = Number((sysAmt * 1.02).toFixed(2))
+        return { productCode: l.productCode, systemAmount: Number(sysAmt.toFixed(2)), externalAmount: extAmt, finalAmount: extAmt, reason: '' }
+      })
+      flowStore.setReconcileSnapshot(supplierOpts[0].value, monNow, items)
+      const recordsCount = Math.min(2, items.length)
+      for (let i = 0; i < recordsCount; i++) {
+        const it = items[i]
+        const writeAmt = Number((it.finalAmount * 0.5).toFixed(2))
+        const remainingAfter = Number((it.finalAmount - writeAmt).toFixed(2))
+        flowStore.addWriteoffRecord(supplierOpts[0].value, monNow, { productCode: it.productCode, contractId: t4.contractIds[0] || '—', amount: writeAmt, remainingAfter, createdAt: new Date().toISOString() })
+      }
+    }
+  } catch {}
+}
 </script>
 
 <style scoped>

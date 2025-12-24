@@ -20,6 +20,7 @@ export class CanvasController {
       setNodeActionsMenu: opts.setNodeActionsMenu,
       getNodeActionsMenuRect: opts.getNodeActionsMenuRect,
       isMenuHovering: opts.isMenuHovering,
+      getMenuCooldownUntil: opts.getMenuCooldownUntil,
       closeAllDrawers: opts.closeAllDrawers
     })
     this.eventService.bindGraphEvents(this.graph)

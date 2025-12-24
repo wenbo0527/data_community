@@ -632,6 +632,54 @@ const generateConsumerGroups = (count: number): ConsumerGroup[] => {
   }));
 };
 
+// 从指定数据源与Topic生成一条样本记录
+const generateTopicSampleRecord = (datasourceId: string, topic: string): Record<string, any> => {
+  const baseTopic = (topic || '').toLowerCase();
+  const eventType = baseTopic.replace(/[^a-z0-9]+/g, '_') || 'event';
+  return {
+    user_id: `U${Mock.Random.string('number', 8)}`,
+    event_type: eventType,
+    timestamp: new Date().toISOString(),
+    amount: Mock.Random.float(0, 1000, 0, 2),
+    success: Mock.Random.boolean(),
+    metadata: {
+      source: datasourceId,
+      ip: Mock.Random.ip(),
+      device: Mock.Random.pick(['ios', 'android', 'web']),
+      app_version: `${Mock.Random.integer(1, 5)}.${Mock.Random.integer(0, 9)}.${Mock.Random.integer(0, 9)}`
+    }
+  };
+};
+
+// 推断字段类型
+const inferFieldType = (v: any): 'string' | 'number' | 'boolean' | 'datetime' | 'json' => {
+  if (typeof v === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}T/.test(v)) return 'datetime';
+    return 'string';
+  }
+  if (typeof v === 'number') return 'number';
+  if (typeof v === 'boolean') return 'boolean';
+  if (v && typeof v === 'object') return 'json';
+  return 'string';
+};
+
+// 从样本记录推断Schema
+const inferSchemaFromRecord = (record: Record<string, any>): { fields: Array<{ name: string; type: string; example?: any }> } => {
+  const fields = Object.keys(record).map(name => {
+    const value = (record as any)[name];
+    const type = inferFieldType(value);
+    return { name, type, example: value };
+  });
+  return { fields };
+};
+
+// 生成Topic样本与Schema
+const generateTopicSampleSchema = (datasourceId: string, topic: string) => {
+  const sample = generateTopicSampleRecord(datasourceId, topic);
+  const schema = inferSchemaFromRecord(sample);
+  return { datasourceId, topic, sample, schema };
+};
+
 // Mock API接口
 const mockEventAPI = {
   // 获取事件列表
@@ -713,6 +761,24 @@ const mockEventAPI = {
       setTimeout(() => {
         resolve(generateKafkaDatasources(5));
       }, 400);
+    });
+  },
+
+  // 采样：获取指定数据源与Topic的一条样本及推断Schema
+  getTopicSampleSchema: (datasourceId: string, topic: string) => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(generateTopicSampleSchema(datasourceId, topic));
+      }, 400);
+    });
+  },
+
+  // 仅获取样本记录
+  sampleTopicRecord: (datasourceId: string, topic: string) => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(generateTopicSampleRecord(datasourceId, topic));
+      }, 300);
     });
   }
 };

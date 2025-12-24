@@ -52,7 +52,7 @@
       </a-grid-item>
       <a-grid-item>
         <a-card hoverable>
-          <a-statistic title="近30天到期" :value="stats.expiringCount" />
+          <a-statistic title="产品覆盖率" :value="stats.productCoverage" />
         </a-card>
       </a-grid-item>
       <a-grid-item>
@@ -75,7 +75,9 @@
           <a-table-column title="总额" :width="180">
             <template #cell="{ record }">{{ formatAmount(record.totalAmount) }}</template>
           </a-table-column>
-          <a-table-column title="即将到期(≤30天)" data-index="expiringCount" />
+          <a-table-column title="剩余总额" :width="180">
+            <template #cell="{ record }">{{ formatAmount(record.remainingAmount) }}</template>
+          </a-table-column>
         </template>
       </a-table>
     </a-card>

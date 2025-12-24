@@ -169,7 +169,7 @@ const budgetStore = useBudgetStore()
 const monitorStore = useBudgetMonitorStore()
 
 interface FilterForm { businessType: string; platform: string; targetLoan?: number | undefined; year?: string | undefined }
-const filterForm = reactive<FilterForm>({ businessType: '', platform: '', targetLoan: undefined, year: undefined })
+const filterForm = reactive<FilterForm>({ businessType: '', platform: '', targetLoan: undefined, year: String(new Date().getFullYear()) })
 
 const currentChartType = ref<'month' | 'quarter'>('month')
 const chartMode = ref<'burndown' | 'cumulative'>('burndown')
@@ -226,6 +226,15 @@ const refresh = async () => {
       monitorStore.fetchWarnings({ businessType: filterForm.businessType || undefined, platform: filterForm.platform || undefined, targetLoan: typeof filterForm.targetLoan === 'number' ? filterForm.targetLoan : undefined, year: filterForm.year || undefined } as any)
     ])
     warningData.value = monitorStore.warnings
+    const platformsFromWarnings = Array.from(new Set((warningData.value || []).map((w: any) => w.platform).filter(Boolean)))
+    if (!filterForm.platform && platformsFromWarnings.length) {
+      filterForm.platform = platformsFromWarnings[0] as string
+    }
+    const filtered = (warningData.value || []).filter((r: any) => (filterForm.platform ? r.platform === filterForm.platform : true) && (filterForm.businessType ? r.businessType === filterForm.businessType : true) && (filterForm.year ? String(r.year) === String(filterForm.year) : true) && (typeof filterForm.targetLoan === 'number' ? Number(r.targetLoan) === Number(filterForm.targetLoan) : true))
+    if (filtered.length === 0 && (warningData.value || []).length > 0) {
+      filterForm.platform = ''
+      filterForm.targetLoan = undefined
+    }
     Message.success('数据已刷新')
   } catch (e) { Message.error('刷新失败') }
 }

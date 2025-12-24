@@ -5,6 +5,7 @@ import discoveryRoutes from './modules/discovery';
 import touchRoutes from './modules/touch';
 import externalDataRoutes from './modules/external-data';
 import managementRoutes from './modules/management';
+import permissionRoutes from './modules/permission';
 
 const routes = [
   {
@@ -26,7 +27,8 @@ const routes = [
   ...discoveryRoutes,
   ...touchRoutes,
   ...externalDataRoutes,
-  ...managementRoutes
+  ...managementRoutes,
+  ...permissionRoutes
 ];
 
 const router = createRouter({

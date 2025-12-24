@@ -82,12 +82,15 @@
             <a-col :span="24">
               <a-card title="外部数据v1" :bordered="false">
                 <template #extra>
-                  <a-space>
-                    <a-button type="primary" @click="showEditModal = true">
-                      <template #icon>
-                        <icon-plus />
-                      </template>
-                      新增产品
+                <a-space>
+                    <a-button v-if="fromArchive" type="outline" @click="goBackArchive">
+                      返回档案
+                    </a-button>
+                  <a-button type="primary" @click="showEditModal = true">
+                    <template #icon>
+                      <icon-plus />
+                    </template>
+                    新增产品
                     </a-button>
                     <a-button type="primary" @click="showBatchModal = true">
                       <template #icon>
@@ -206,10 +209,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { IconStar, IconStarFill, IconPlus, IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
+import { useRouter, useRoute } from 'vue-router'
+import { IconPlus, IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
+const route = useRoute()
 const searchText = ref('')
 const showEditModal = ref(false)
 const showBatchModal = ref(false)
@@ -307,6 +311,12 @@ const downloadTemplate = () => {
   link.click()
   document.body.removeChild(link)
   console.log('下载模板文件')
+}
+
+const fromArchive = computed(() => route.query?.from === 'archive')
+const archiveId = computed(() => String(route.query?.archiveId || ''))
+const goBackArchive = () => {
+  router.push({ path: '/risk/external-data/archive', query: { archiveId: archiveId.value, from: 'archive' } })
 }
 </script>
 

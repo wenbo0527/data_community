@@ -514,36 +514,11 @@ export const MENU_CONFIG = {
             path: '/risk/budget/monitor',
             routeName: 'RiskBudgetMonitorPage'
           },
-          'risk-budget-settlement': {
-            key: 'risk-budget-settlement',
+          'risk-budget-settlement-index': {
+            key: 'risk-budget-settlement-index',
             title: '结算管理',
-            type: 'group',
-            children: {
-              'risk-budget-settlement-index': {
-                key: 'risk-budget-settlement-index',
-                title: '结算首页',
-                path: '/risk/budget/settlement',
-                routeName: 'RiskBudgetSettlement'
-              },
-              'risk-budget-settlement-costing': {
-                key: 'risk-budget-settlement-costing',
-                title: '费用核算',
-                path: '/risk/budget/settlement?stage=costing',
-                routeName: 'RiskBudgetSettlement'
-              },
-              'risk-budget-settlement-reconcile': {
-                key: 'risk-budget-settlement-reconcile',
-                title: '外部对账',
-                path: '/risk/budget/settlement?stage=reconcile',
-                routeName: 'RiskBudgetSettlement'
-              },
-              'risk-budget-settlement-writeoff': {
-                key: 'risk-budget-settlement-writeoff',
-                title: '确认核销',
-                path: '/risk/budget/settlement?stage=writeoff',
-                routeName: 'RiskBudgetSettlement'
-              }
-            }
+            path: '/risk/budget/settlement',
+            routeName: 'RiskBudgetSettlement'
           }
         }
       },

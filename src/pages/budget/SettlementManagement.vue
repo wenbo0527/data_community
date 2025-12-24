@@ -2,13 +2,18 @@
   <div class="settlement-management">
     <div class="page-header">
       <h3>结算管理</h3>
-      <p class="desc">支持多供应商、多合同的批量结算任务管理</p>
+      <p class="desc">支持多供应商、多合同的批量结算任务管理（可按对接渠道查看）</p>
     </div>
 
     <a-card class="toolbar" :bordered="true">
       <a-form :model="filters" layout="inline">
         <a-form-item field="suppliers" label="供应商">
           <a-select v-model="filters.suppliers" multiple allow-clear placeholder="选择供应商" style="width: 260px">
+            <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item field="channels" label="对接渠道">
+          <a-select v-model="filters.channels" multiple allow-clear placeholder="选择对接渠道" style="width: 260px">
             <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
           </a-select>
         </a-form-item>
@@ -19,13 +24,11 @@
         </a-form-item>
         <a-form-item field="granularity" label="粒度">
           <a-select v-model="filters.granularity" allow-clear placeholder="选择" style="width: 120px">
-            <a-option value="year">年</a-option>
-            <a-option value="quarter">季</a-option>
             <a-option value="month">月</a-option>
           </a-select>
         </a-form-item>
         <a-form-item field="timeLabel" label="时间">
-          <a-input v-model="filters.timeLabel" allow-clear placeholder="如 2025 / 2025-Q2 / 2025-01" style="width: 160px" />
+          <a-input v-model="filters.timeLabel" allow-clear placeholder="如 2025-01" style="width: 160px" />
         </a-form-item>
         <a-form-item field="status" label="状态">
           <a-select v-model="filters.status" allow-clear placeholder="选择状态" style="width: 140px">
@@ -120,6 +123,13 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
+            <a-form-item field="channelIds" label="对接渠道">
+              <a-select v-model="createForm.channelIds" multiple allow-clear placeholder="选择对接渠道">
+                <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
             <a-form-item field="contractIds" label="合同" required>
               <a-select v-model="createForm.contractIds" multiple allow-clear placeholder="选择合同">
                 <a-option v-for="c in filteredContractOptions" :key="c.id" :value="c.id">{{ c.contractName }}</a-option>
@@ -131,15 +141,13 @@
           <a-col :span="8">
             <a-form-item field="granularity" label="结算粒度" required>
               <a-select v-model="createForm.granularity" placeholder="选择">
-                <a-option value="year">年</a-option>
-                <a-option value="quarter">季</a-option>
                 <a-option value="month">月</a-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="8">
             <a-form-item field="timeLabel" label="结算时间" required>
-              <a-input v-model="createForm.timeLabel" placeholder="如 2025 / 2025-Q2 / 2025-01" />
+              <a-input v-model="createForm.timeLabel" placeholder="如 2025-01" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
@@ -200,7 +208,7 @@
       <a-card title="子任务进度" :bordered="true" style="margin-bottom: 12px">
         <a-table :data="subtasks" :pagination="false">
           <template #columns>
-            <a-table-column title="供应商" data-index="supplierId" />
+            <a-table-column title="对接渠道" data-index="supplierId" />
             <a-table-column title="合同数" :width="100">
               <template #cell="{ record }">{{ record.contracts.length }}</template>
             </a-table-column>
@@ -250,7 +258,7 @@ const loading = ref(false)
 const tasks = ref<SettlementTask[]>([])
 const pagination = reactive({ total: 0, pageSize: 10, current: 1, showTotal: true })
 
-const filters = reactive<{ suppliers: string[]; contracts: string[]; granularity?: Granularity; timeLabel?: string; status?: TaskStatus }>({ suppliers: [], contracts: [] })
+const filters = reactive<{ suppliers: string[]; channels: string[]; contracts: string[]; granularity?: Granularity; timeLabel?: string; status?: TaskStatus }>({ suppliers: [], channels: [], contracts: [] })
 
 const supplierOptions = computed(() => Array.from(new Set(store.list.map((i: any) => i.supplier).filter(Boolean))))
 const contractOptions = computed(() => store.list.map((i: any) => ({ id: String(i.id), contractName: String(i.contractName || i.id), supplier: i.supplier || '—', amount: Number(i.amount) || 0, writtenOffAmount: Number(i.writtenOffAmount) || 0 })))
@@ -261,6 +269,8 @@ const filteredContractOptions = computed(() => {
 
 const displayedTasks = computed(() => tasks.value.filter(t => {
   if (filters.suppliers.length && !filters.suppliers.some(s => t.supplierIds.includes(s))) return false
+  // 目前对接渠道与供应商同源，保留筛选占位（可与供应商一致过滤）
+  if (filters.channels.length && !filters.channels.some(s => t.supplierIds.includes(s))) return false
   if (filters.contracts.length && !filters.contracts.some(c => t.contractIds.includes(c))) return false
   if (filters.granularity && t.granularity !== filters.granularity) return false
   if (filters.timeLabel && t.timeLabel !== filters.timeLabel) return false
@@ -269,7 +279,7 @@ const displayedTasks = computed(() => tasks.value.filter(t => {
 }))
 
 const showCreate = ref(false)
-const createForm = reactive<{ supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; strict: boolean; includeTax: boolean; tolerance: number; createdBy: string; budgetSnapshotId?: string; actualSnapshotId?: string; remark?: string }>({ supplierIds: [], contractIds: [], granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, strict: false, includeTax: true, tolerance: 0, createdBy: '管理员' })
+const createForm = reactive<{ supplierIds: string[]; channelIds?: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; strict: boolean; includeTax: boolean; tolerance: number; createdBy: string; budgetSnapshotId?: string; actualSnapshotId?: string; remark?: string }>({ supplierIds: [], channelIds: [], contractIds: [], granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, strict: false, includeTax: true, tolerance: 0, createdBy: '管理员' })
 
 const currentTask = ref<SettlementTask | null>(null)
 const detailVisible = ref(false)
