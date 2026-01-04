@@ -275,6 +275,13 @@ const router = createRouter({
           component: () => import('../pages/variable-map/index.vue')
         },
         {
+          path: 'variable-map/detail/:id',
+          name: 'VariableMapDetail',
+          meta: { title: '变量详情' },
+          component: () => import('../pages/management/asset-management/listing-management/variable-management/VariableDetail.vue'),
+          props: true
+        },
+        {
           path: 'metrics-map/detail/:id',
           name: 'MetricsMapDetail',
           component: () => import('../pages/discovery/metrics-map/detail.vue'),
@@ -301,6 +308,18 @@ const router = createRouter({
           component: () => import('../pages/discovery/data-map/CollectionDetail.vue')
         },
         {
+          path: 'api-market',
+          name: 'ApiMarket',
+          component: () => import('../pages/discovery/api-market/index.vue'),
+          meta: { title: 'API集市' }
+        },
+        {
+          path: 'api-market/detail/:id',
+          name: 'ApiDetail',
+          component: () => import('../pages/discovery/api-market/ApiDetail.vue'),
+          meta: { title: 'API详情' }
+        },
+        {
           path: 'asset-overview',
           name: 'AssetOverview',
           meta: { title: '资产总览' },
@@ -311,83 +330,6 @@ const router = createRouter({
           name: 'UnifiedSearch',
           meta: { title: '统一搜索' },
           component: () => import('../pages/discovery/search/index.vue')
-        },
-        {
-          path: 'asset-management/table-management',
-          name: 'TableManagement',
-          meta: { title: '表管理' },
-          component: () => import('../pages/discovery/asset-management/table-management/index.vue')
-        },
-        {
-          path: 'asset-management/table-management/register',
-          name: 'TableRegister',
-          meta: { title: '注册表单' },
-          component: () => import('../pages/discovery/asset-management/table-management/RegisterTableForm.vue')
-        },
-        {
-          path: 'asset-management/external-data-management',
-          name: 'ExternalDataManagement',
-          meta: { title: '外数管理' },
-          component: () => import('../pages/discovery/asset-management/external-data-management/index.vue')
-        },
-        {
-          path: 'asset-management/metric-management',
-          name: 'MetricManagement',
-          meta: { title: '指标管理' },
-          component: () => import('../pages/discovery/asset-management/metric-management/index.vue')
-        },
-        {
-          path: 'asset-management/variable-management',
-          name: 'VariableManagementDiscovery',
-          meta: { title: '变量注册' },
-          component: () => import('../pages/variable-management/index.vue')
-        },
-        {
-          path: 'asset-management/variable-management/create/edit',
-          name: 'VariableAssetCreate',
-          meta: { title: '新建变量' },
-          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue')
-        },
-        {
-          path: 'asset-management/variable-management/:id/edit',
-          name: 'VariableAssetEdit',
-          meta: { title: '编辑变量' },
-          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue'),
-          props: true
-        },
-        {
-          path: 'asset-management/variable-management/:id/:mode?',
-          name: 'VariableAssetDetail',
-          meta: { title: '变量详情' },
-          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue'),
-          props: true
-        },
-        {
-          path: 'variable-map/detail/:id',
-          name: 'VariableMapDetail',
-          meta: { title: '变量详情' },
-          component: () => import('../pages/discovery/asset-management/variable-management/VariableDetail.vue'),
-          props: true
-        },
-        {
-          path: 'asset-management/metric-management/create/edit',
-          name: 'MetricCreate',
-          meta: { title: '新建指标' },
-          component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue')
-        },
-        {
-          path: 'asset-management/metric-management/:id/edit',
-          name: 'MetricEdit',
-          meta: { title: '编辑指标' },
-          component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue'),
-          props: true
-        },
-        {
-          path: 'asset-management/metric-management/:id/:mode?',
-          name: 'MetricDetail',
-          meta: { title: '指标详情' },
-          component: () => import('../pages/discovery/asset-management/metric-management/MetricDetail.vue'),
-          props: true
         },
         {
           path: 'asset-management/batch-asset-management',

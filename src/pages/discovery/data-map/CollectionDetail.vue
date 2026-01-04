@@ -5,7 +5,23 @@
         :title="collection.name"
         :subtitle="collection.description"
         @back="onBack"
-      />
+      >
+        <template #extra>
+          <a-space>
+            <a-button type="outline" @click="handleRequestPermission">
+              <template #icon><icon-lock /></template>
+              权限申请
+            </a-button>
+            <a-button :type="collection.isFavorite ? 'primary' : 'outline'" @click="toggleFavorite">
+              <template #icon>
+                <icon-star-fill v-if="collection.isFavorite" />
+                <icon-star v-else />
+              </template>
+              {{ collection.isFavorite ? '已收藏' : '收藏' }}
+            </a-button>
+          </a-space>
+        </template>
+      </a-page-header>
       <a-space align="center" style="margin: 16px 0;">
         <icon-user />
         <span>集合负责人: </span>
@@ -53,10 +69,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Message } from '@arco-design/web-vue'
+import { Message, Modal } from '@arco-design/web-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
-import { IconFile, IconUser } from '@arco-design/web-vue/es/icon'
+import { IconFile, IconUser, IconLock, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
 import mockData from '@/mock/data-map'
 
 interface TableField {
@@ -83,6 +99,7 @@ interface TableCollection {
   description: string
   owner?: string
   tables: TableItem[]
+  isFavorite?: boolean
 }
 
 const route = useRoute()
@@ -142,6 +159,46 @@ const showDetail = (table: TableItem) => {
   }).catch(err => {
     console.error('路由跳转失败:', err)
     Message.error('无法打开表详情')
+  })
+}
+
+// 切换收藏状态
+const toggleFavorite = () => {
+  collection.value.isFavorite = !collection.value.isFavorite
+  
+  if (collection.value.isFavorite) {
+    Message.success('已添加到收藏')
+    // 用户需求：点击收藏后，支持一键权限申请
+    Modal.confirm({
+      title: '权限申请',
+      content: `已收藏集合 "${collection.value.name}"，是否同步申请该集合下所有表的访问权限？`,
+      okText: '立即申请',
+      cancelText: '稍后处理',
+      onOk: () => {
+        handleRequestPermission()
+      }
+    })
+  } else {
+    Message.success('已取消收藏')
+  }
+}
+
+// 申请权限
+const handleRequestPermission = () => {
+  Modal.confirm({
+    title: '确认申请权限',
+    content: `确定要申请集合 "${collection.value.name}" 的访问权限吗？申请将发送至数据负责人 ${collection.value.owner || '管理员'}。`,
+    okText: '确定申请',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        // 模拟 API 调用
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        Message.success(`集合 "${collection.value.name}" 的权限申请已提交`)
+      } catch (error) {
+        Message.error('申请失败，请重试')
+      }
+    }
   })
 }
 

@@ -104,35 +104,53 @@
         <div class="relation-info">
           <a-space direction="vertical" style="width: 100%">
             <a-card>
-              <a-tabs v-model:activeKey="relationViewMode" type="rounded" @change="onRelationViewModeChange">
-                <a-tab-pane key="graph" title="可视化">
-                  <div ref="relationTreeRef" class="relation-tree-container"></div>
+              <a-tabs v-model:active-key="relationCategory" type="rounded">
+                <a-tab-pane key="association" title="关联关系">
+                  <a-tabs v-model:active-key="relationViewMode" type="rounded" @change="onRelationViewModeChange">
+                    <a-tab-pane key="graph" title="关联关系可视化">
+                      <div ref="relationTreeRef" class="relation-tree-container"></div>
+                    </a-tab-pane>
+                    <a-tab-pane key="list" title="关联关系列表">
+                      <a-table
+                        :data="allRelations"
+                        :pagination="false"
+                        :scroll="{ x: '100%' }"
+                        :bordered="false"
+                        class="table-borderless table-compact"
+                      >
+                        <template #columns>
+                          <a-table-column title="关联表" data-index="targetTable">
+                            <template #cell="{ record }">
+                              <a-link @click="goToTableByRelation(record)">
+                                {{ record.targetTable }}
+                              </a-link>
+                            </template>
+                          </a-table-column>
+                          <a-table-column title="关联字段">
+                            <template #cell="{ record }">
+                              {{ formatRelationFields(record.relationFields) }}
+                            </template>
+                          </a-table-column>
+                          <a-table-column title="关联类型" data-index="relationType" />
+                          <a-table-column title="业务模块">
+                            <template #cell="{ record }">
+                              <a-tag>{{ getModuleByTable(record.targetTable) }}</a-tag>
+                            </template>
+                          </a-table-column>
+                          <a-table-column title="关联说明" data-index="relationDescription" />
+                        </template>
+                      </a-table>
+                    </a-tab-pane>
+                  </a-tabs>
                 </a-tab-pane>
-                <a-tab-pane key="list" title="列表">
-                  <a-table
-                    :data="allRelations"
-                    :pagination="false"
-                    :scroll="{ x: '100%' }"
-                    :bordered="false"
-                    class="table-borderless table-compact"
-                  >
-                    <template #columns>
-                      <a-table-column title="关联表" data-index="targetTable">
-                        <template #cell="{ record }">
-                          <a-link @click="goToTableByRelation(record)">
-                            {{ record.targetTable }}
-                          </a-link>
-                        </template>
-                      </a-table-column>
-                      <a-table-column title="关联字段">
-                        <template #cell="{ record }">
-                          {{ record.relationFields.map((f) => `${f.sourceField}=${f.targetField}`).join(', ') }}
-                        </template>
-                      </a-table-column>
-                      <a-table-column title="关联类型" data-index="relationType" />
-                      <a-table-column title="关联说明" data-index="relationDescription" />
-                    </template>
-                  </a-table>
+                <a-tab-pane key="lineage" title="血缘关系">
+                  <!-- <div ref="lineageTreeRef" class="relation-tree-container"></div> -->
+                   <LineageGraph 
+                    v-if="tableData?.name"
+                    :table-name="tableData.name" 
+                    :layers="1" 
+                    style="height: 600px; width: 100%" 
+                   />
                 </a-tab-pane>
               </a-tabs>
             </a-card>
@@ -152,6 +170,27 @@
               <p>4. 数据每日更新</p>
             </div>
           </a-alert>
+        </a-card>
+      </a-tab-pane>
+      <a-tab-pane key="logic" title="加工逻辑">
+        <a-card class="table-info">
+          <template #title>
+            <div style="font-size: 16px; font-weight: 500">加工逻辑</div>
+          </template>
+          <div style="margin-top: 12px">
+            <div class="logic-content" style="white-space: pre-wrap; line-height: 1.6; color: var(--color-text-2)">
+              {{ tableData?.processingLogic || '暂无加工逻辑说明' }}
+            </div>
+            
+            <a-divider v-if="tableData?.sql" />
+            
+            <div v-if="tableData?.sql" class="sql-section">
+              <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px">SQL 代码</div>
+              <div class="sql-code-block">
+                <pre><code>{{ tableData.sql }}</code></pre>
+              </div>
+            </div>
+          </div>
         </a-card>
       </a-tab-pane>
     </a-tabs>
@@ -178,7 +217,7 @@ import {
   IconEdit
 } from '@arco-design/web-vue/es/icon'
 import { Modal } from '@arco-design/web-vue'
-import { mockTables } from '@/mock/data-map'
+import { mockTables } from '@/mock/data-map.ts'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'
@@ -189,6 +228,8 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { TitleComponent, TooltipComponent } from 'echarts/components'
 import type { EChartsType, CallbackDataParams } from 'echarts/types/dist/shared'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
+import dataMapMock from '@/mock/data-map.ts'
+import LineageGraph from '@/pages/management/service/components/LineageGraph.vue'
 
 // 注册必须的组件
 echarts.use([TreeChart, CanvasRenderer, TitleComponent, TooltipComponent])
@@ -228,6 +269,8 @@ interface TableItem {
   relationType?: string
   relationField?: string
   relationDescription?: string
+  processingLogic?: string
+  sql?: string
 }
 
 interface Relation {
@@ -248,6 +291,29 @@ const allRelations = ref<Relation[]>([])
 const relationTreeRef = ref<HTMLElement | null>(null)
 const relationViewMode = ref<'graph' | 'list'>('list') // 默认展示列表视图
 let relationChart: any = null
+// 关系类别：关联关系 / 血缘关系
+const relationCategory = ref<'association' | 'lineage'>('association')
+// 血缘图相关
+const lineageTreeRef = ref<HTMLElement | null>(null)
+let lineageChart: any = null
+const relationViewModeLineage = ref<'graph' | 'list'>('graph')
+
+interface LineageItem {
+  sourceTable: string
+  targetTable: string
+  relationFields: string[]
+  relationType: 'one_to_one' | 'one_to_many' | 'many_to_many' | string
+  dataFlow: 'upstream' | 'downstream' | 'bidirectional' | string
+  transformationLogic?: string
+  updateFrequency?: string
+}
+
+const lineageAll = computed<LineageItem[]>(() => {
+  const dl = (dataMapMock as any)?.dataLineage || []
+  return dl as LineageItem[]
+})
+
+const expandedNodes = ref<Set<string>>(new Set())
 
 const goToTableDetail = (table: TableItem) => {
   router.push(`/discovery/data-map/table/${encodeURIComponent(table.name)}`)
@@ -257,6 +323,11 @@ const goToTableDetail = (table: TableItem) => {
 const goToTableByRelation = (relation: Relation) => {
   router.push(`/discovery/data-map/table/${encodeURIComponent(relation.targetTable)}`)
 }
+const onBack = () => goBack(router, '/discovery/data-map/table-list')
+const formatRelationFields = (pairs: { sourceField: string; targetField: string }[]) => {
+  if (!pairs || pairs.length === 0) return ''
+  return pairs.map(p => `${p.sourceField}=${p.targetField}`).join(', ')
+}
 const isFavorite = ref(false)
 const sampleData = ref<any[]>([])
 const currentField = ref<TableField>()
@@ -264,6 +335,14 @@ const activeModalTab = ref('structure') // 控制关联弹窗内的标签页
 const activeMainTab = ref('details') // 控制主标签页
 const relatedTables = ref<TableItem[]>([])
 const currentTableName = ref<string>('')
+
+const getModuleByTable = (tableName: string) => {
+  // 简单映射：根据常见表名返回业务模块/场景
+  if (tableName === 'dim_user' || tableName === 'dim_user_profile') return '业务核心数据/用户画像'
+  if (tableName === 'fact_loan_apply') return '授信场景'
+  if (tableName === 'dws_risk_score') return '风控评分'
+  return '数据部'
+}
 
 // 监听主标签页切换
 const handleMainTabChange = (key: string) => {
@@ -313,7 +392,7 @@ const tableBasicInfo = computed(() => {
     { label: '更新频率', value: data.updateFrequency },
     { label: '负责人', value: data.owner },
     { label: '创建时间', value: data.createTime || 'N/A' },
-    { label: '最后更新时间', value: data.lastUpdateTime || 'N/A' },
+    { label: '数据更新时间', value: data.lastUpdateTime || 'N/A' },
   ]
 })
 
@@ -448,21 +527,49 @@ function parseTableData(tableStr: string): TableItem | undefined {
       if (mockTable) {
         // 为dim_user表添加特殊属性
         if (decoded === 'dim_user') {
-          return createSafeTableData({
-            ...mockTable,
-            rowCount: 1000000,
-            createTime: '2023-01-01',
-            lastUpdateTime: '2024-01-15',
-            storageSize: '500MB',
-            collectionOwner: '数据治理组',
-            type: 'dimension',
-            category: '用户数据',
-            domain: '用户域',
-            updateFrequency: '每日更新',
-            owner: '张三'
-          })
-        }
-        return createSafeTableData(mockTable)
+            return createSafeTableData({
+              ...mockTable,
+              rowCount: 1000000,
+              createTime: '2023-01-01',
+              lastUpdateTime: '2024-01-15',
+              storageSize: '500MB',
+              collectionOwner: '数据治理组',
+              type: 'dimension',
+              category: '用户数据',
+              domain: '用户域',
+              updateFrequency: '每日更新',
+              owner: '张三',
+              processingLogic: `1. 数据来源：
+   - ODS层 user_info 表
+   - ODS层 user_extra 表
+
+2. 清洗规则：
+   - 过滤 user_id 为空的记录
+   - 手机号格式标准化
+   - 注册时间转换为标准时间戳
+
+3. 聚合逻辑：
+    - 每日全量覆盖
+    - 根据 user_id 关联扩展信息`,
+               sql: `-- 每日全量覆盖
+INSERT OVERWRITE TABLE dim_user
+SELECT 
+  t1.user_id,
+  t1.mobile,
+  t1.register_time,
+  t2.age,
+  t2.gender,
+  t2.city,
+  t2.vip_level
+FROM 
+  (SELECT * FROM ods_user_info WHERE user_id IS NOT NULL) t1
+LEFT JOIN 
+  ods_user_extra t2
+ON 
+  t1.user_id = t2.user_id;`
+             })
+           }
+           return createSafeTableData(mockTable)
       }
       return undefined
     }
@@ -481,6 +588,8 @@ function createSafeTableData(source: Partial<TableItem>): TableItem {
     updateFrequency: '',
     owner: '',
     description: '',
+    processingLogic: '',
+    sql: '',
     fields: [],
     ...source,
   }
@@ -753,6 +862,8 @@ const option = {
               return `{field|${params.name}}`;
             } else if (nodeData.nodeType === 'type') {
               return `{type|${params.name}}`;
+            } else if (nodeData.nodeType === 'task') {
+              return `{task|${params.name}}`;
             }
             return params.name;
           },
@@ -766,6 +877,11 @@ const option = {
             type: {
               color: '#52c41a',
               fontSize: 13,
+              fontStyle: 'italic'
+            },
+            task: {
+              color: '#722ed1',
+              fontSize: 12,
               fontStyle: 'italic'
             },
             description: {
@@ -834,7 +950,7 @@ const option = {
   
   // 监听节点点击事件
   try {
-    relationChart.on('click', (params: CallbackDataParams) => {
+  relationChart.on('click', (params: CallbackDataParams) => {
       const data = params.data as { name?: string; relationId?: string; nodeType?: string; description?: string };
       
       // 只有点击目标表节点时才跳转
@@ -853,6 +969,200 @@ const option = {
     logger.error('设置节点点击事件监听器失败', error);
   }
 }
+
+const renderLineageTree = async () => {
+  if (!lineageTreeRef.value) return
+  if (lineageChart) lineageChart.dispose()
+  try {
+    lineageChart = await safeInitECharts(lineageTreeRef.value, {
+      theme: 'default',
+      width: 800,
+      height: 600,
+      renderer: 'canvas'
+    })
+  } catch {
+    return
+  }
+  const tableName = tableData.value?.name || '当前表'
+  const getUpChildren = (name: string) =>
+    lineageAll.value.filter((i: LineageItem) => i.targetTable?.toLowerCase() === name.toLowerCase()).map((i: LineageItem) => ({ name: i.sourceTable, task: i.transformationLogic }))
+  const getDownChildren = (name: string) =>
+    lineageAll.value.filter((i: LineageItem) => i.sourceTable?.toLowerCase() === name.toLowerCase()).map((i: LineageItem) => ({ name: i.targetTable, task: i.transformationLogic }))
+  const buildNode = (name: string, direction: 'upstream' | 'downstream' | 'both' = 'both', visited: Set<string> = new Set()) => {
+    const key = name.toLowerCase()
+    if (visited.has(key)) {
+      return {
+        name,
+        itemStyle: { color: name === tableName ? '#1890ff' : '#8c8c8c' },
+        label: { fontWeight: 'bold' },
+        children: []
+      }
+    }
+    visited.add(key)
+    const node: any = {
+      name,
+      itemStyle: { color: name === tableName ? '#1890ff' : '#8c8c8c' },
+      label: { fontWeight: 'bold' }
+    }
+    
+    let upChildren: { name: string; task: string }[] = []
+    let downChildren: { name: string; task: string }[] = []
+    
+    // 根据方向获取子节点
+    if (direction === 'upstream' || direction === 'both') {
+      upChildren = getUpChildren(name)
+    }
+    if (direction === 'downstream' || direction === 'both') {
+      downChildren = getDownChildren(name)
+    }
+
+    // 处理向上游展开的节点
+    const upNodes = upChildren.map(child => {
+      const childNode: any = {
+        name: child.name,
+        itemStyle: { color: '#fa8c16' }, // 上游颜色
+        label: { fontWeight: 'bold' },
+        nodeType: 'table',
+        direction: 'upstream',
+        edgeLabel: {
+          show: true,
+          formatter: child.task || '加工任务',
+          fontSize: 10,
+          color: '#666',
+          backgroundColor: '#fff',
+          padding: [2, 4]
+        }
+      }
+      if (expandedNodes.value.has(child.name.toLowerCase())) {
+        const nextVisited = new Set(visited)
+        childNode.children = buildNode(child.name, 'upstream', nextVisited).children || []
+      }
+      return childNode
+    })
+
+    // 处理向下游展开的节点
+    const downNodes = downChildren.map(child => {
+      const childNode: any = {
+        name: child.name,
+        itemStyle: { color: '#13c2c2' }, // 下游颜色
+        label: { fontWeight: 'bold' },
+        nodeType: 'table',
+        direction: 'downstream',
+        edgeLabel: {
+          show: true,
+          formatter: child.task || '加工任务',
+          fontSize: 10,
+          color: '#666',
+          backgroundColor: '#fff',
+          padding: [2, 4]
+        }
+      }
+      if (expandedNodes.value.has(child.name.toLowerCase())) {
+        const nextVisited = new Set(visited)
+        childNode.children = buildNode(child.name, 'downstream', nextVisited).children || []
+      }
+      return childNode
+    })
+
+    node.children = [...upNodes, ...downNodes]
+    return node
+  }
+  const nodes = [buildNode(tableName, 'both', new Set())]
+  const option = {
+    title: { text: '数据血缘关系图' },
+    tooltip: {
+      show: true,
+      trigger: 'item',
+      position: 'top',
+      formatter: (params: CallbackDataParams) => {
+        const nodeData = params.data as { name?: string }
+        return nodeData.name || ''
+      }
+    },
+    series: [
+      {
+        type: 'tree',
+        layout: 'orthogonal',
+        orient: 'LR',
+        symbolSize: 10,
+        roam: true,
+        label: {
+          show: true,
+          position: 'left',
+          verticalAlign: 'middle',
+          align: 'right',
+          fontSize: 14,
+          color: '#333',
+          backgroundColor: '#fff',
+          borderColor: '#eee',
+          borderWidth: 1,
+          borderRadius: 4,
+          padding: [4, 8],
+          formatter: (p: { name: string }) => p.name
+        },
+        leaves: {
+          label: {
+            position: 'right',
+            verticalAlign: 'middle',
+            align: 'left',
+            fontSize: 14,
+            color: '#333',
+            backgroundColor: '#fff',
+            borderColor: '#eee',
+            borderWidth: 1,
+            borderRadius: 4,
+            padding: [4, 8],
+            formatter: (p: { name: string }) => p.name
+          }
+        },
+        data: [nodes[0]],
+        lineStyle: { color: '#ccc', width: 1, curveness: 0 }
+      }
+    ]
+  }
+  try {
+    lineageChart.setOption(option)
+  } catch {
+    return
+  }
+  try {
+    lineageChart.on('click', (params: CallbackDataParams) => {
+      const data = params.data as { name?: string }
+      if (!data || !data.name) return
+      const name = String(data.name).toLowerCase()
+      if (expandedNodes.value.has(name)) {
+        expandedNodes.value.delete(name)
+      } else {
+        expandedNodes.value.add(name)
+      }
+      renderLineageTree()
+    })
+  } catch {}
+}
+
+const onLineageViewModeChange = (value: string) => {
+  if (value === 'graph' && activeMainTab.value === 'relations' && relationCategory.value === 'lineage') {
+    nextTick(() => {
+      renderLineageTree()
+    })
+  }
+}
+
+watch(relationCategory, (cat: 'association' | 'lineage') => {
+  if (cat === 'lineage' && activeMainTab.value === 'relations' && relationViewModeLineage.value === 'graph') {
+    nextTick(() => {
+      renderLineageTree()
+    })
+  }
+})
+
+watch(relationViewModeLineage, (newMode: 'graph' | 'list') => {
+  if (newMode === 'graph' && activeMainTab.value === 'relations' && relationCategory.value === 'lineage') {
+    nextTick(() => {
+      renderLineageTree()
+    })
+  }
+})
 
 const editTable = () => {
   // 重定向到注册表单页面，并传递编辑模式和数据
@@ -1015,5 +1325,21 @@ onMounted(() => {
   color: #1890ff;
   text-decoration: underline;
 }
+
+.sql-code-block {
+  background-color: #f5f7fa;
+  padding: 16px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+  overflow-x: auto;
+  border: 1px solid var(--color-border-2);
+}
+
+.sql-code-block pre {
+  margin: 0;
+  padding: 0;
+}
 </style>
-const onBack = () => goBack(router, '/discovery/data-map/table-list')

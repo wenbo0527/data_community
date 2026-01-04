@@ -145,6 +145,28 @@
           </a-card>
         </a-col>
       </a-row>
+
+      <a-row :gutter="24" style="margin-top: 24px;">
+        <a-col :span="12">
+          <a-card class="module-card" hoverable @click="navigateTo('module-management')">
+            <div class="module-header">
+              <div class="module-icon batch-icon">
+                <IconApps />
+              </div>
+              <div class="module-title">
+                <h3>业务模块管理</h3>
+                <p>按组织+场景创建多级模块与虚拟组，统一关联资产与资源</p>
+              </div>
+            </div>
+            <div class="module-features">
+              <a-tag>组织/场景分层</a-tag>
+              <a-tag>虚拟组</a-tag>
+              <a-tag>跨库关联</a-tag>
+              <a-tag>权限联动</a-tag>
+            </div>
+          </a-card>
+        </a-col>
+      </a-row>
     </div>
 
     <!-- 最近活动 -->
@@ -187,13 +209,20 @@ import {
   IconStorage, 
   IconLink, 
   IconBarChart, 
-  IconSettings 
+  IconSettings,
+  IconApps
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
 
 const navigateTo = (path: string) => {
-  router.push(`/discovery/asset-management/${path}`)
+  if (path === 'module-management') {
+    router.push('/management/asset-management/basic-management/module-management')
+  } else if (['table-management', 'external-data-management', 'metric-management', 'variable-management'].includes(path)) {
+    router.push(`/management/asset-management/listing-management/${path}`)
+  } else {
+    router.push(`/discovery/asset-management/${path}`)
+  }
 }
 </script>
 

@@ -57,6 +57,16 @@ const serviceList = ref([
     id: 6,
     title: '风险合规外数查询',
     description: '查询客户风险合规相关外部数据，支持身份证号查询和批量回溯两种模式，可按时间筛选并生成查询确认列表。'
+  },
+  {
+    id: 7,
+    title: '血缘应用',
+    description: '按表名和层数筛选血缘信息，支持主节点、上游和下游节点的区分展示。'
+  },
+  {
+    id: 8,
+    title: 'API管理',
+    description: '支持向导式创建API：逻辑表选择、参数设置、高级配置，自动生成SQL。'
   }
 ])
 
@@ -67,6 +77,12 @@ const handleApply = (service) => {
   } else if (service.id === 6) {
     // 客户资金用途外数查询，跳转到专门的查询页面
     router.push('/management/service/fund-usage-query')
+  } else if (service.id === 7) {
+    // 血缘应用
+    router.push('/management/service/lineage')
+  } else if (service.id === 8) {
+    // API管理
+    router.push('/management/service/api-management')
   } else {
     Message.success(`已提交${service.title}申请`)
   }

@@ -9,11 +9,11 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <a-button type="primary" @click="showAddModal">
-        <template #icon><PlusOutlined /></template>
+        <template #icon><icon-plus /></template>
         新增配置
       </a-button>
       <a-button @click="refreshData">
-        <template #icon><ReloadOutlined /></template>
+        <template #icon><icon-refresh /></template>
         刷新
       </a-button>
     </div>
@@ -137,8 +137,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
-import { message as Message } from 'ant-design-vue'
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { Message } from '@arco-design/web-vue'
+import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { RegulatoryCategory, RegulatoryLabels } from '@/types/metrics'
 
 // 响应式数据

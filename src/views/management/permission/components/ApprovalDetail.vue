@@ -198,7 +198,7 @@
 
 <script>
 import { ref, reactive, computed, watch } from 'vue';
-import { message, Modal } from 'ant-design-vue';
+import { Message, Modal } from '@arco-design/web-vue';
 import SensitivityLabel from './SensitivityLabel.vue';
 import StatusLabel from './StatusLabel.vue';
 import { 
@@ -294,7 +294,7 @@ export default {
             };
             
             emit('approve', approvalData);
-            message.success(`申请已${action === 'approved' ? '通过' : '拒绝'}`);
+            Message.success(`申请已${action === 'approved' ? '通过' : '拒绝'}`);
             
             // 重置表单
             approvalForm.comment = '';
@@ -303,7 +303,7 @@ export default {
             
           } catch (error) {
             console.error('审批失败:', error);
-            message.error('审批失败，请重试');
+            Message.error('审批失败，请重试');
           } finally {
             approving.value = false;
           }

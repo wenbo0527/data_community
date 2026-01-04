@@ -69,6 +69,12 @@ export interface DataLineage {
   id: string;
   sourceTable: string;
   targetTable: string;
+  // 关系字段（用于前端展示）
+  relationFields?: string[];
+  // 关系类型（用于前端展示）
+  relationType?: 'one_to_one' | 'one_to_many' | 'many_to_one' | 'many_to_many' | string;
+  // 数据流向（用于前端展示：相对当前表的方向）
+  dataFlow?: 'upstream' | 'downstream' | 'bidirectional' | string;
   transformationLogic: string;
   dependencies: string[];
   updateFrequency: string;
@@ -709,7 +715,10 @@ const dataLineageConfig: DataLineage[] = [
     id: 'lineage-001',
     sourceTable: 'dim_user',
     targetTable: 'fact_loan_apply',
-    transformationLogic: '通过user_id字段进行一对多关联，为贷款申请提供用户基础信息',
+    relationFields: ['user_id'],
+    relationType: 'one_to_many',
+    dataFlow: 'downstream',
+    transformationLogic: '贷款申请加工任务',
     dependencies: ['dim_user.user_id'],
     updateFrequency: '实时',
     lastExecuted: '2025-01-27T10:30:00Z'
@@ -718,19 +727,61 @@ const dataLineageConfig: DataLineage[] = [
     id: 'lineage-002',
     sourceTable: 'dim_user',
     targetTable: 'dws_risk_score',
-    transformationLogic: '通过user_id字段进行一对一关联，为风控评分提供用户画像数据',
+    relationFields: ['user_id'],
+    relationType: 'one_to_one',
+    dataFlow: 'downstream',
+    transformationLogic: '风险评分计算任务',
     dependencies: ['dim_user.user_id', 'dim_user.age', 'dim_user.education'],
     updateFrequency: '每日',
     lastExecuted: '2025-01-27T08:00:00Z'
   },
   {
     id: 'lineage-003',
-    sourceTable: 'dws_risk_score',
-    targetTable: 'fact_loan_apply',
-    transformationLogic: '通过user_id字段关联，为贷款申请决策提供风控评分支持',
-    dependencies: ['dws_risk_score.credit_score', 'dws_risk_score.anti_fraud_score'],
+    sourceTable: 'dim_user',
+    targetTable: 'ads_user_portrait',
+    relationFields: ['user_id'],
+    relationType: 'one_to_one',
+    dataFlow: 'downstream',
+    transformationLogic: '用户画像聚合任务',
+    dependencies: ['dim_user.*'],
+    updateFrequency: '每日',
+    lastExecuted: '2025-01-27T09:00:00Z'
+  },
+  {
+    id: 'lineage-004',
+    sourceTable: 'ods_user_info',
+    targetTable: 'dim_user',
+    relationFields: ['user_id', 'mobile', 'id_card'],
+    relationType: 'many_to_one',
+    dataFlow: 'upstream',
+    transformationLogic: '用户基础信息同步任务',
+    dependencies: ['ods_user_info.user_id', 'ods_user_info.mobile', 'ods_user_info.id_card'],
+    updateFrequency: '每日',
+    lastExecuted: '2025-01-27T06:00:00Z'
+  },
+  {
+    id: 'lineage-005',
+    sourceTable: 'ods_customer_profile',
+    targetTable: 'dim_user',
+    relationFields: ['user_id'],
+    relationType: 'many_to_one',
+    dataFlow: 'upstream',
+    transformationLogic: '客户画像集成任务',
+    dependencies: ['ods_customer_profile.user_id', 'ods_customer_profile.education', 'ods_customer_profile.occupation'],
+    updateFrequency: '每日',
+    lastExecuted: '2025-01-27T06:30:00Z'
+  },
+  {
+    id: 'lineage-006',
+    sourceTable: 'log_user_behavior',
+    targetTable: 'dim_user',
+    relationFields: ['user_id'],
+    relationType: 'many_to_one',
+    dataFlow: 'upstream',
+    transformationLogic: '用户行为日志清洗任务',
+    dependencies: ['log_user_behavior.user_id', 'log_user_behavior.action_type'],
     updateFrequency: '实时',
-    lastExecuted: '2025-01-27T10:30:00Z'
+    lastExecuted: '2025-01-27T07:00:00Z'
   }
 ];
 

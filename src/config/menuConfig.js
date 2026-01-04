@@ -82,39 +82,26 @@ export const MENU_CONFIG = {
             path: '/external-data-v1/list',
             routeName: 'external'
           },
-          
         }
       },
-      
+      'data-elements': {
+        key: 'data-elements',
+        title: '数据要素',
+        type: 'group',
+        children: {
+          'api-market': {
+            key: 'api-market',
+            title: 'API集市',
+            path: '/discovery/api-market',
+            routeName: 'ApiMarket'
+          }
+        }
+      },
       'data-register': {
         key: 'data-register',
         title: '数据注册',
         type: 'group',
         children: {
-          'table-management': {
-            key: 'table-management',
-            title: '表管理',
-            path: '/discovery/asset-management/table-management',
-            routeName: 'TableManagement'
-          },
-          'external-data-management': {
-            key: 'external-data-management',
-            title: '外部数据管理',
-            path: '/discovery/asset-management/external-data-management',
-            routeName: 'ExternalDataManagement'
-          },
-          'metric-management': {
-            key: 'metric-management',
-            title: '指标管理',
-            path: '/discovery/asset-management/metric-management',
-            routeName: 'MetricManagement'
-          },
-          'variable-management': {
-            key: 'variable-management',
-            title: '变量注册',
-            path: '/discovery/asset-management/variable-management',
-            routeName: 'VariableManagementDiscovery'
-          },
           'batch-asset-management': {
             key: 'batch-asset-management',
             title: '批量资产管理',
@@ -309,14 +296,109 @@ export const MENU_CONFIG = {
             title: '明细数据查询服务',
             path: '/management/service/detail-data-query',
             routeName: 'detail-data-query'
+          },
+          'api-management': {
+            key: 'api-management',
+            title: 'API管理',
+            path: '/management/service/api-management',
+            routeName: 'management-service-api-list'
+          }
+        }
+      },
+      'asset-management': {
+        key: 'asset-management',
+        title: '资产管理',
+        type: 'group',
+        children: {
+          'listing-management': {
+            key: 'listing-management',
+            title: '上下架管理',
+            type: 'group',
+            children: {
+              'table-management': {
+                key: 'table-management',
+                title: '表管理',
+                path: '/management/asset-management/listing-management/table-management',
+                routeName: 'TableManagement'
+              },
+              'external-data-management': {
+                key: 'external-data-management',
+                title: '外部数据管理',
+                path: '/management/asset-management/listing-management/external-data-management',
+                routeName: 'ExternalDataManagement'
+              },
+              'metric-management': {
+                key: 'metric-management',
+                title: '指标管理',
+                path: '/management/asset-management/listing-management/metric-management',
+                routeName: 'MetricManagement'
+              },
+              'variable-management': {
+                key: 'variable-management',
+                title: '变量注册',
+                path: '/management/asset-management/listing-management/variable-management',
+                routeName: 'VariableManagementDiscovery'
+              }
+            }
+          },
+          'basic-management': {
+            key: 'basic-management',
+            title: '基础管理',
+            type: 'group',
+            children: {
+
+              'tag-management': {
+                key: 'tag-management',
+                title: '标签管理',
+                path: '/management/asset-management/basic-management/tag-management',
+                routeName: 'TagManagement'
+              }
+            }
           }
         }
       },
       'permission': {
         key: 'permission',
         title: '权限管理',
-        path: '/management/permission',
-        routeName: 'permission'
+        type: 'group',
+        children: {
+          'permission-apply': {
+            key: 'permission-apply',
+            title: '权限服务',
+            path: '/management/permission',
+            routeName: 'management-permission'
+          },
+          'business-module': {
+            key: 'business-module',
+            title: '业务模块管理',
+            path: '/management/permission/business-module',
+            routeName: 'BusinessModuleManagement'
+          },
+          'role-management': {
+            key: 'role-management',
+            title: '角色管理',
+            path: '/management/permission/role-management',
+            routeName: 'RoleManagement'
+          },
+          'user-management': {
+            key: 'user-management',
+            title: '用户管理',
+            path: '/management/permission/user-management',
+            routeName: 'UserManagement'
+          },
+          'data-permission': {
+            key: 'data-permission',
+            title: '数据权限',
+            path: '/management/permission/data-permission',
+            routeName: 'DataPermission'
+          },
+          'app-permission': {
+            key: 'app-permission',
+            title: '应用权限',
+            path: '/management/permission/app-permission',
+            routeName: 'AppPermission'
+          }
+        }
       },
       'data-models': {
         key: 'data-models',

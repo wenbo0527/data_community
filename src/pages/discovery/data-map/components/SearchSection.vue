@@ -58,43 +58,37 @@
       <div v-if="props.showAdvancedFilter" class="advanced-filter">
         <a-row :gutter="16">
           <a-col :span="6">
-            <a-select 
-              v-model="filters.type" 
-              placeholder="表类型" 
+            <a-input
+              v-model="filters.includeKeyword"
+              placeholder="包含以下关键词"
               allow-clear
-              @change="handleFilterChange"
+              @input="handleFilterChange"
             >
-              <a-option value="维度表">维度表</a-option>
-              <a-option value="事实表">事实表</a-option>
-              <a-option value="明细表">明细表</a-option>
-              <a-option value="汇总表">汇总表</a-option>
-            </a-select>
+              <template #prefix>
+                <icon-plus-circle />
+              </template>
+            </a-input>
           </a-col>
           <a-col :span="6">
-            <a-select 
-              v-model="filters.domain" 
-              placeholder="业务域" 
+            <a-input
+              v-model="filters.excludeKeyword"
+              placeholder="不包含以下关键词"
               allow-clear
-              @change="handleFilterChange"
+              @input="handleFilterChange"
             >
-              <a-option value="用户域">用户域</a-option>
-              <a-option value="交易域">交易域</a-option>
-              <a-option value="产品域">产品域</a-option>
-              <a-option value="风控域">风控域</a-option>
-            </a-select>
+              <template #prefix>
+                <icon-minus-circle />
+              </template>
+            </a-input>
           </a-col>
           <a-col :span="6">
-            <a-select 
-              v-model="filters.updateFrequency" 
-              placeholder="更新频率" 
+            <a-tree-select
+              v-model="filters.module"
+              placeholder="归属业务模块"
+              :data="moduleOptions"
               allow-clear
               @change="handleFilterChange"
-            >
-              <a-option value="实时">实时</a-option>
-              <a-option value="日更新">日更新</a-option>
-              <a-option value="周更新">周更新</a-option>
-              <a-option value="月更新">月更新</a-option>
-            </a-select>
+            />
           </a-col>
           <a-col :span="6">
             <a-button type="outline" @click="resetFilters">
@@ -113,12 +107,17 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
-import { IconSearch, IconDelete } from '@arco-design/web-vue/es/icon'
+import { 
+  IconSearch, 
+  IconDelete, 
+  IconPlusCircle, 
+  IconMinusCircle 
+} from '@arco-design/web-vue/es/icon'
 
 interface SearchFilters {
-  type?: string
-  domain?: string
-  updateFrequency?: string
+  includeKeyword?: string
+  excludeKeyword?: string
+  module?: string
 }
 
 interface SearchSectionEmits {
@@ -142,7 +141,34 @@ const searchValue = ref(props.modelValue || '')
 const showSuggestions = ref(false)
 const suggestions = ref<string[]>([])
 const searchHistory = ref<string[]>([])
-const filters = ref<SearchFilters>({})
+const filters = ref<SearchFilters>({
+  includeKeyword: '',
+  excludeKeyword: '',
+  module: ''
+})
+
+const moduleOptions = ref([
+  {
+    key: 'm-100',
+    title: '数据部',
+    children: [
+      {
+        key: 'm-101',
+        title: '业务核心数据',
+        children: [
+          { key: 'm-102', title: '授信场景' }
+        ]
+      }
+    ]
+  },
+  {
+    key: 'm-200',
+    title: '业务部',
+    children: [
+      { key: 'm-201', title: '营销场景' }
+    ]
+  }
+])
 
 // 防抖搜索
 const debouncedSearch = useDebounceFn((value: string) => {
@@ -242,12 +268,15 @@ const handleFilterChange = () => {
 }
 
 const resetFilters = () => {
-  filters.value = {}
+  filters.value = {
+    includeKeyword: '',
+    excludeKeyword: '',
+    module: ''
+  }
   emit('filter-change', filters.value)
 }
 
-// 监听外部值变化
-watch(() => props.modelValue, (newValue) => {
+watch(() => props.modelValue, (newValue: string | undefined) => {
   searchValue.value = newValue || ''
 })
 

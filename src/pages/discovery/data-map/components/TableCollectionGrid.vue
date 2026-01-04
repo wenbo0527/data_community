@@ -48,6 +48,16 @@
                   </span>
                 </h4>
                 <div class="title-actions">
+                  <a-tooltip content="申请权限">
+                    <a-button 
+                      type="text" 
+                      size="mini" 
+                      @click.stop="handleRequestPermission(collection)"
+                      class="permission-btn"
+                    >
+                      <icon-lock />
+                    </a-button>
+                  </a-tooltip>
                   <a-button 
                     type="text" 
                     size="mini" 
@@ -124,7 +134,7 @@
 import { ref, computed, watch } from 'vue'
 import { 
   IconStar, IconStarFill, IconMore, IconEdit, 
-  IconDelete, IconPlus, IconThumbUpFill 
+  IconDelete, IconPlus, IconThumbUpFill, IconLock 
 } from '@arco-design/web-vue/es/icon'
 import { Message, Modal } from '@arco-design/web-vue'
 import { formatDistanceToNow } from 'date-fns'
@@ -230,7 +240,40 @@ const toggleFavorite = (collection: TableCollection) => {
   const newFavoriteState = !collection.isFavorite
   emit('favorite-change', collection, newFavoriteState)
   
-  Message.success(newFavoriteState ? '已添加到收藏' : '已取消收藏')
+  if (newFavoriteState) {
+    Message.success('已添加到收藏')
+    // 用户需求：点击收藏后，支持一键权限申请
+    Modal.confirm({
+      title: '权限申请',
+      content: `已收藏集合 "${collection.name}"，是否同步申请该集合下所有表的访问权限？`,
+      okText: '立即申请',
+      cancelText: '稍后处理',
+      onOk: () => {
+        handleRequestPermission(collection)
+      }
+    })
+  } else {
+    Message.success('已取消收藏')
+  }
+}
+
+// 申请权限
+const handleRequestPermission = (collection: TableCollection) => {
+  Modal.confirm({
+    title: '确认申请权限',
+    content: `确定要申请集合 "${collection.name}" 的访问权限吗？申请将发送至数据负责人 ${collection.owner || '管理员'}。`,
+    okText: '确定申请',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        // 模拟 API 调用
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        Message.success(`集合 "${collection.name}" 的权限申请已提交`)
+      } catch (error) {
+        Message.error('申请失败，请重试')
+      }
+    }
+  })
 }
 
 // 处理操作选择
@@ -440,6 +483,26 @@ watch(() => props.collections.length, () => {
   align-items: flex-start;
   margin-bottom: 16px;
   gap: 12px;
+}
+
+.title-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.permission-btn {
+  color: var(--color-text-3);
+  transition: all 0.2s;
+}
+
+.permission-btn:hover {
+  color: #165dff;
+  background-color: rgba(22, 93, 255, 0.1);
+}
+
+.favorited {
+  color: #ffb400 !important;
 }
 
 .title-text {

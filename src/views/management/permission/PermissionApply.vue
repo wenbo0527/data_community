@@ -204,9 +204,7 @@ export default {
     };
 
     // 跳转到批量申请
-    const goToBatchApply = () => {
-      router.push('/management/permission/bulk');
-    };
+    const goToBatchApply = () => {};
 
     // 跳转到进度页面
     const goToProgressPage = () => {

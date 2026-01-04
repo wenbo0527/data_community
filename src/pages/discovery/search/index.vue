@@ -130,13 +130,12 @@
         </div>
       </div>
       
-      <!-- 结果展示区域 -->
+        <!-- 结果展示区域 -->
       <div class="results-section">
         <!-- 结果统计 -->
         <div class="results-header">
           <div class="results-count">
-            <span>找到 {{ totalResults }} 个结果</span>
-            <span v-if="searchQuery" class="search-term">"{{ searchQuery }}"</span>
+            <span>为您找到 {{ totalResults }} 个搜索结果</span>
           </div>
           
           <!-- 结果类型切换 -->
@@ -164,6 +163,18 @@
               </a-tab-pane>
             </a-tabs>
           </div>
+          <div class="results-tools">
+            <div class="sort-controls">
+              <span>排序：</span>
+              <a-select v-model="sortKey" style="width: 140px">
+                <a-option value="heat">查询热度</a-option>
+                <a-option value="updateTime">更新时间</a-option>
+              </a-select>
+              <a-button type="text" @click="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'">
+                {{ sortOrder === 'desc' ? '降序' : '升序' }}
+              </a-button>
+            </div>
+          </div>
         </div>
         
         <!-- 结果列表 -->
@@ -178,7 +189,7 @@
           
           <div v-else class="results-grid">
             <div 
-              v-for="item in currentResults" 
+              v-for="item in sortedResults" 
               :key="item.id"
               class="result-item"
               @click="handleItemClick(item)"
@@ -314,6 +325,24 @@ const currentResults = computed(() => {
 })
 
 const totalResults = computed(() => currentResults.value.length)
+const sortKey = ref<'heat' | 'updateTime'>('heat')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortedResults = computed(() => {
+  const data = [...currentResults.value]
+  data.sort((a, b) => {
+    let av = 0
+    let bv = 0
+    if (sortKey.value === 'heat') {
+      av = (a as any).heat ?? 0
+      bv = (b as any).heat ?? 0
+    } else {
+      av = a.updateTime ? new Date(a.updateTime).getTime() : 0
+      bv = b.updateTime ? new Date(b.updateTime).getTime() : 0
+    }
+    return sortOrder.value === 'desc' ? bv - av : av - bv
+  })
+  return data
+})
 
 // 防抖搜索
 const debouncedSearch = useDebounceFn(async () => {
@@ -384,7 +413,14 @@ const performSearch = async (query?: string) => {
     owner: metric.owner || '系统管理员',
     updateTime: metric.updateTime || '2024-01-15',
     domain: metric.category,
-    isFavorite: false
+    isFavorite: false,
+    heat: (() => {
+      const t = searchTerm?.toLowerCase() || ''
+      let s = 0
+      if (t && metric.name?.toLowerCase().includes(t)) s += 80
+      if (t && metric.description?.toLowerCase().includes(t)) s += 20
+      return s
+    })()
   })) || []
   
   // 搜索外部数据
@@ -397,7 +433,14 @@ const performSearch = async (query?: string) => {
       owner: '系统管理员',
       updateTime: '2024-01-15',
       domain: '金融',
-      isFavorite: false
+      isFavorite: false,
+      heat: (() => {
+        const t = searchTerm?.toLowerCase() || ''
+        let s = 0
+        if (t && '外部数据源A'.toLowerCase().includes(t)) s += 80
+        if (t && '来自第三方的数据源'.toLowerCase().includes(t)) s += 20
+        return s
+      })()
     },
     {
       id: 'external_2',
@@ -407,7 +450,14 @@ const performSearch = async (query?: string) => {
       owner: '数据管理员',
       updateTime: '2024-01-10',
       domain: '营销',
-      isFavorite: false
+      isFavorite: false,
+      heat: (() => {
+        const t = searchTerm?.toLowerCase() || ''
+        let s = 0
+        if (t && '外部数据源B'.toLowerCase().includes(t)) s += 80
+        if (t && '合作伙伴提供的数据'.toLowerCase().includes(t)) s += 20
+        return s
+      })()
     }
   ]
   
@@ -425,7 +475,13 @@ const performSearch = async (query?: string) => {
     })
   }
   
-  tableResults.value = filterResults(tables)
+  tableResults.value = filterResults(tables).map(r => {
+    const t = searchTerm?.toLowerCase() || ''
+    const name = r.name?.toLowerCase() || ''
+    const desc = r.description?.toLowerCase() || ''
+    const heat = (t && name.includes(t) ? 80 : 0) + (t && desc.includes(t) ? 20 : 0)
+    return { ...r, heat }
+  })
   metricResults.value = filterResults(metrics)
   externalResults.value = filterResults(external)
   allResults.value = [...tableResults.value, ...metricResults.value, ...externalResults.value]
@@ -750,6 +806,19 @@ const getTypeLabel = (type: string) => {
 .result-type-tabs :deep(.arco-tabs-tab) {
   padding: 8px 16px;
   font-size: 14px;
+}
+
+.results-tools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sort-controls span {
+  color: #4e5969;
+  margin-right: 8px;
 }
 
 .results-content {

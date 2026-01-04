@@ -14,13 +14,6 @@ export default [
         }
       },
       {
-        path: 'batch-apply',
-        name: 'permission-batch-apply',
-        component: () => import('@/views/management/permission/BatchPermissionApply.vue'),
-        meta: {
-          title: '批量权限申请',
-          breadcrumb: ['管理', '权限管理', '批量权限申请']
-        }
       },
       {
         path: 'approval',
