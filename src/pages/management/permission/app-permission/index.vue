@@ -6,7 +6,7 @@
           <a-space>
             <a-button type="primary" @click="handleGrant">
               <template #icon><icon-plus /></template>
-              授予应用权限
+              新增
             </a-button>
           </a-space>
         </a-col>
@@ -23,7 +23,12 @@
 
       <a-table :data="tableData" :pagination="pagination" @page-change="handlePageChange">
         <template #columns>
-          <a-table-column title="权限" data-index="name" />
+          <a-table-column title="权限名称" data-index="name" />
+          <a-table-column title="类型" data-index="type">
+            <template #cell="{ record }">
+              <a-tag :color="getTypeColor(record.type)">{{ record.type }}</a-tag>
+            </template>
+          </a-table-column>
           <a-table-column title="描述" data-index="description" />
           <a-table-column title="授予角色" data-index="roles">
             <template #cell="{ record }">
@@ -54,65 +59,109 @@
     <!-- 配置资源抽屉 -->
     <a-drawer
       v-model:visible="drawerVisible"
-      title="配置资源"
+      :title="isNew ? '新增应用权限' : '编辑应用权限'"
       width="1000px"
       @ok="handleSave"
       @cancel="drawerVisible = false"
       unmount-on-close
     >
       <div class="drawer-content">
-        <div class="config-header">
-          <div class="header-item">
-            权限名称：
-            <a-select v-if="isNew" v-model="currentConfig.appName" placeholder="选择权限" style="width: 200px">
-              <a-option>统一查询</a-option>
-              <a-option>报表中心</a-option>
-              <a-option>系统管理</a-option>
-            </a-select>
-            <span v-else>{{ currentConfig.appName }}</span>
+        <a-form :model="currentConfig" layout="vertical">
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="所属应用" required>
+                <a-select v-model="currentConfig.appName" placeholder="请选择应用">
+                  <a-option>统一查询</a-option>
+                  <a-option>报表中心</a-option>
+                  <a-option>数据地图</a-option>
+                  <a-option>系统管理</a-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="角色名称" required>
+                <a-input v-model="currentConfig.roleName" placeholder="请输入角色名称" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          
+          <a-form-item label="角色描述">
+            <a-textarea v-model="currentConfig.description" placeholder="请输入角色描述" :rows="2" />
+          </a-form-item>
+
+          <a-row :gutter="16">
+            <a-col :span="8">
+              <a-form-item label="赋予全员">
+                <a-switch v-model="currentConfig.isAllUser" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item label="是否可申请">
+                <a-switch v-model="currentConfig.canApply" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item label="角色状态">
+                <a-radio-group v-model="currentConfig.status" type="button">
+                  <a-radio value="active">启用</a-radio>
+                  <a-radio value="inactive">停用</a-radio>
+                </a-radio-group>
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-divider orientation="left">授予对象</a-divider>
+          <a-row :gutter="16">
+            <a-col :span="8">
+              <a-form-item label="对象类型">
+                <a-radio-group v-model="grantSubject.type" type="button">
+                  <a-radio value="role">角色</a-radio>
+                  <a-radio value="user">用户</a-radio>
+                  <a-radio value="department">部门</a-radio>
+                </a-radio-group>
+              </a-form-item>
+            </a-col>
+            <a-col :span="16">
+              <a-form-item :label="grantSubjectLabel">
+                <a-select v-model="grantSubject.value" :options="grantSubjectOptions" allow-search placeholder="请选择" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-divider orientation="left">资源权限配置</a-divider>
+          
+          <div class="resource-table-wrapper">
+            <a-table
+              :data="resourceData"
+              :pagination="false"
+              :show-header="true"
+              row-key="id"
+              :indent-size="20"
+              default-expand-all-rows
+            >
+              <template #columns>
+                <a-table-column title="页面路由" data-index="name">
+                  <template #cell="{ record }">
+                    <a-checkbox v-model="record.selected">{{ record.name }}</a-checkbox>
+                  </template>
+                </a-table-column>
+                <a-table-column title="页面操作">
+                  <template #cell="{ record }">
+                    <a-space v-if="record.actions && record.actions.length">
+                      <a-checkbox 
+                        v-for="action in record.actions" 
+                        :key="action.id"
+                        v-model="action.selected"
+                      >
+                        {{ action.name }}
+                      </a-checkbox>
+                    </a-space>
+                  </template>
+                </a-table-column>
+              </template>
+            </a-table>
           </div>
-          <div class="header-item">
-            角色名称：
-            <a-select v-if="isNew" v-model="currentConfig.roleName" placeholder="选择角色" style="width: 200px">
-              <a-option>业务人员</a-option>
-              <a-option>数据分析师</a-option>
-              <a-option>管理层</a-option>
-            </a-select>
-            <span v-else>{{ currentConfig.roleName }}</span>
-          </div>
-        </div>
-        
-        <div class="resource-table-wrapper">
-          <a-table
-            :data="resourceData"
-            :pagination="false"
-            :show-header="true"
-            row-key="id"
-            :indent-size="20"
-            default-expand-all-rows
-          >
-            <template #columns>
-              <a-table-column title="页面路由" data-index="name">
-                <template #cell="{ record }">
-                  <a-checkbox v-model="record.selected">{{ record.name }}</a-checkbox>
-                </template>
-              </a-table-column>
-              <a-table-column title="页面操作">
-                <template #cell="{ record }">
-                  <a-space v-if="record.actions && record.actions.length">
-                    <a-checkbox 
-                      v-for="action in record.actions" 
-                      :key="action.id"
-                      v-model="action.selected"
-                    >
-                      {{ action.name }}
-                    </a-checkbox>
-                  </a-space>
-                </template>
-              </a-table-column>
-            </template>
-          </a-table>
-        </div>
+        </a-form>
       </div>
       <template #footer>
         <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -125,8 +174,10 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import { useUserStore } from '@/stores/user.js'
+const userStore = useUserStore()
 
 const searchKey = ref('')
 const pagination = reactive({
@@ -135,10 +186,38 @@ const pagination = reactive({
   total: 30
 })
 
+const grantSubject = reactive({
+  type: 'department',
+  value: ''
+})
+const grantSubjectLabel = computed(() => {
+  if (grantSubject.type === 'role') return '选择角色'
+  if (grantSubject.type === 'user') return '选择用户'
+  return '选择部门'
+})
+const grantSubjectOptions = computed(() => {
+  if (grantSubject.type === 'role') return [
+    { label: '业务人员', value: '业务人员' },
+    { label: '数据分析师', value: '数据分析师' },
+    { label: '系统管理员', value: '系统管理员' }
+  ]
+  if (grantSubject.type === 'user') return [
+    { label: '张三', value: 'zhangsan' },
+    { label: '李四', value: 'lisi' },
+    { label: '王五', value: 'wangwu' }
+  ]
+  return [
+    { label: '风险管理部', value: 'risk' },
+    { label: '市场营销部', value: 'marketing' },
+    { label: '数据分析部', value: 'data' }
+  ]
+})
+
 const tableData = ref([
   {
     id: 1,
     name: '统一查询',
+    type: '核心功能',
     description: '提供统一的数据查询和导出功能',
     roles: ['业务人员', '数据分析师'],
     users: ['张三', '李四']
@@ -146,6 +225,7 @@ const tableData = ref([
   {
     id: 2,
     name: '报表中心',
+    type: '核心功能',
     description: '企业级报表展示与管理',
     roles: ['管理层', '运营人员'],
     users: ['王五']
@@ -153,9 +233,18 @@ const tableData = ref([
   {
     id: 3,
     name: '系统管理',
+    type: '系统管理',
     description: '系统基础配置与权限控制',
     roles: ['系统管理员'],
     users: ['Admin']
+  },
+  {
+    id: 4,
+    name: '操作手册',
+    type: '辅助功能',
+    description: '提供平台使用指南和操作说明',
+    roles: ['所有角色'],
+    users: ['全体用户']
   }
 ])
 
@@ -164,7 +253,11 @@ const drawerVisible = ref(false)
 const isNew = ref(false)
 const currentConfig = reactive({
   appName: '',
-  roleName: ''
+  roleName: '',
+  description: '',
+  isAllUser: false,
+  canApply: true,
+  status: 'active'
 })
 
 const resourceData = ref([
@@ -231,6 +324,10 @@ const handleGrant = () => {
   isNew.value = true
   currentConfig.appName = ''
   currentConfig.roleName = ''
+  currentConfig.description = ''
+  currentConfig.isAllUser = false
+  currentConfig.canApply = true
+  currentConfig.status = 'active'
   drawerVisible.value = true
 }
 
@@ -238,6 +335,10 @@ const handleEdit = (record) => {
   isNew.value = false
   currentConfig.appName = record.name
   currentConfig.roleName = record.roles[0] || '默认角色'
+  currentConfig.description = record.description || ''
+  currentConfig.isAllUser = record.isAllUser || false
+  currentConfig.canApply = record.canApply !== undefined ? record.canApply : true
+  currentConfig.status = record.status || 'active'
   drawerVisible.value = true
 }
 
@@ -245,8 +346,33 @@ const handleRevoke = (record) => {
   Message.success(`已回收权限: ${record.name}`)
 }
 
+const getTypeColor = (type) => {
+  switch (type) {
+    case '核心功能':
+      return 'blue'
+    case '辅助功能':
+      return 'green'
+    case '系统管理':
+      return 'orange'
+    default:
+      return 'gray'
+  }
+}
+
 const handleSave = () => {
   Message.success('保存成功')
+  try {
+    const existing = JSON.parse(localStorage.getItem('grants:app') || '[]')
+    const record = {
+      subjectType: grantSubject.type,
+      subject: grantSubject.value,
+      appName: currentConfig.appName,
+      roleName: currentConfig.roleName,
+      resources: resourceData.value
+    }
+    localStorage.setItem('grants:app', JSON.stringify([record, ...existing]))
+  } catch (e) {}
+  userStore.computeEffectivePermissions()
   drawerVisible.value = false
 }
 </script>

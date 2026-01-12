@@ -457,12 +457,9 @@ const renderContent = (content: string): string => {
 }
 
 const viewItem = (item: Document | Notification) => {
-  if ('type' in item && item.type) {
-    selectedNotification.value = item as Notification
-    notificationModalVisible.value = true
-  } else {
-    selectedDocument.value = item as Document
-  }
+  const raw = (item as any)?.title || (item as any)?.id || 'doc'
+  const slug = encodeURIComponent(String(raw))
+  router.push(`/docs/${slug}`)
   emit('view', item)
 }
 

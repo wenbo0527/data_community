@@ -1,0 +1,31 @@
+%% 社区产品文档中心线框（对标火山引擎）
+flowchart LR
+  subgraph 左侧导航（Sider）
+    A[搜索框]
+    B[导航树\n分组/文档]
+    C[展开状态记忆]
+  end
+
+  subgraph 中间内容（Content）
+    D[面包屑\n社区资源/操作指南/文档标题]
+    E[Markdown渲染\n代码高亮/图片/表格/提示块]
+    F[操作按钮\n复制链接/反馈]
+    G[底部信息\n最后更新于/相关推荐]
+  end
+
+  subgraph 右侧目录（TOC）
+    H[标题目录\nH2/H3]
+    I[滚动同步高亮]
+    J[标题锚点复制]
+    K[Affix固定定位]
+  end
+
+  A --> B
+  B --> D
+  D --> E
+  E --> G
+  E --> H
+  H --> I
+  I --> J
+  J --> K
+

@@ -25,6 +25,12 @@ const router = createRouter({
       redirect: '/external-data/archive'
     },
     {
+      path: '/docs/:slug',
+      name: 'DocViewer',
+      component: () => import('../pages/community/docs/DocViewer.vue'),
+      meta: { title: '文档详情' }
+    },
+    {
       path: '/external-data-lifecycle',
       redirect: '/external-data/lifecycle'
     },
@@ -259,6 +265,12 @@ const router = createRouter({
           component: () => import('../pages/discovery/data-map/TableList.vue')
         },
         {
+          path: 'lineage',
+          name: ROUTE_NAMES.DISCOVERY.LINEAGE,
+          component: () => import('../pages/discovery/lineage/index.vue'),
+          meta: { title: '血缘分析' }
+        },
+        {
           path: 'credit/detail/:id',
           name: 'creditDetail',
           component: () => import('../pages/discovery/credit/detail.vue')
@@ -303,6 +315,12 @@ const router = createRouter({
           component: () => import('../pages/discovery/data-map/index.vue')
         },
         {
+          path: 'data-map/collections',
+          name: 'CollectionsManagement',
+          meta: { title: '常用表管理' },
+          component: () => import('../pages/discovery/data-map/CollectionsManagement.vue')
+        },
+        {
           path: 'data-map/collection/:id',
           name: 'CollectionDetail',
           component: () => import('../pages/discovery/data-map/CollectionDetail.vue')
@@ -326,6 +344,12 @@ const router = createRouter({
           component: () => import('../pages/discovery/asset-overview/index.vue')
         },
         {
+          path: 'favorites',
+          name: 'Favorites',
+          meta: { title: '我的收藏' },
+          component: () => import('../pages/discovery/favorites/index.vue')
+        },
+        {
           path: 'search',
           name: 'UnifiedSearch',
           meta: { title: '统一搜索' },
@@ -342,6 +366,12 @@ const router = createRouter({
           name: 'ExternalPurchaseRegister',
           meta: { title: '外部数据采购登记' },
           component: () => import('../pages/discovery/asset-management/external-purchase-register/index.vue')
+        },
+        {
+          path: 'asset-management/table-management/register',
+          name: 'TableRegisterDiscovery',
+          meta: { title: '注册表单' },
+          component: () => import('../pages/management/asset-management/listing-management/table-management/RegisterTableForm.vue')
         }
       ]
     },
@@ -443,6 +473,24 @@ const router = createRouter({
           name: 'RiskBudgetSettlement',
           component: () => import('@/modules/budget/pages/Settlement.vue'),
           meta: { title: '结算管理' }
+        },
+        {
+          path: 'accompany',
+          name: 'RiskAccompanyRoot',
+          redirect: '/risk/accompany/create',
+          meta: { title: '陪跑计划' }
+        },
+        {
+          path: 'accompany/create',
+          name: 'RiskAccompanyCreate',
+          component: () => import('../pages/management/accompany/create.vue'),
+          meta: { title: '创建陪跑' }
+        },
+        {
+          path: 'accompany/result',
+          name: 'RiskAccompanyResult',
+          component: () => import('../pages/management/accompany/result.vue'),
+          meta: { title: '陪跑结果' }
         },
         {
           path: 'budget/accounting',

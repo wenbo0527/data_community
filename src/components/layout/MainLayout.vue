@@ -5,7 +5,7 @@
       <TopMenu @menu-change="handleTopMenuChange" ref="topMenuRef" />
     </a-layout-header>
 
-    <a-layout>
+    <a-layout class="layout-body">
       <!-- 侧边菜单栏 -->
       <a-layout-sider 
         :collapsed="collapsed" 
@@ -25,13 +25,13 @@
       </a-layout-sider>
 
       <!-- 主内容区 -->
-      <a-layout>
+      <a-layout class="layout-main">
         <a-layout-header class="layout-header">
           <a-space>
             <a-button type="text" @click="toggleCollapse">
               <template #icon>
-                <icon-menu-fold v-if="!collapsed" />
-                <icon-menu-unfold v-else />
+                <IconMenuFold v-if="!collapsed" />
+                <IconMenuUnfold v-else />
               </template>
             </a-button>
             <BreadcrumbNav :current-path="route.path" />
@@ -48,17 +48,16 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import TopMenu from './TopMenu.vue'
 import SideMenu from './SideMenu.vue'
 import BreadcrumbNav from './BreadcrumbNav.vue'
-import { getMenuItemByPath, getMenuItemByRouteName } from '../../config/menuConfig'
+import { getMenuItemByRouteName } from '../../config/menuConfig'
 import {
   IconMenuFold,
   IconMenuUnfold
 } from '@arco-design/web-vue/es/icon'
 
-const router = useRouter()
 const route = useRoute()
 
 // 组件引用
@@ -149,7 +148,20 @@ onMounted(() => {
 
 <style scoped>
 .layout-container {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.layout-main {
+  flex: 1;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -160,11 +172,14 @@ onMounted(() => {
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   height: 48px;
   line-height: 48px;
+  position: relative;
+  z-index: 100;
 }
 
 .layout-sider {
   background: #fff;
   box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+  z-index: 50;
 }
 
 .layout-header {
@@ -173,6 +188,8 @@ onMounted(() => {
   border-bottom: 1px solid var(--color-border-2);
   height: 48px;
   line-height: 48px;
+  position: relative;
+  z-index: 80;
 }
 
 .layout-content {
@@ -181,6 +198,7 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  z-index: 1;
 }
 
 /* 全屏布局样式 - 移除内边距 */

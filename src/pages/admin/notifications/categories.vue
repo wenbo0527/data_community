@@ -156,10 +156,9 @@ import {
   IconPlus,
   IconRefresh
 } from '@arco-design/web-vue/es/icon'
-import { NotificationAPI } from '../../../api/notification'
+import { NotificationAPI, CategoryAPI } from '../../../api/notification'
 
 const router = useRouter()
-const notificationAPI = new NotificationAPI()
 
 // 响应式数据
 const loading = ref(false)
@@ -243,14 +242,14 @@ const columns = [
 const fetchData = async () => {
   loading.value = true
   try {
-    const response = await notificationAPI.getCategories()
+    const response = await CategoryAPI.getCategories()
     if (response.success) {
       // 获取每个分类的通知数量
       const categoriesWithCount = await Promise.all(
         response.data.map(async (category) => {
           try {
-            const notificationResponse = await notificationAPI.getNotifications({
-              categoryId: category.id,
+            const notificationResponse = await NotificationAPI.getNotifications({
+              category: category.id,
               pageSize: 1
             })
             return {
@@ -303,7 +302,7 @@ const handleDelete = (record) => {
     content: `确定要删除分类"${record.name}"吗？此操作不可恢复。`,
     onOk: async () => {
       try {
-        const response = await notificationAPI.deleteCategory(record.id)
+        const response = await CategoryAPI.deleteCategory(record.id)
         if (response.success) {
           Message.success('删除成功')
           fetchData()
@@ -335,9 +334,9 @@ const handleSubmit = async () => {
 
     let response
     if (isEdit.value) {
-      response = await notificationAPI.updateCategory(formData.id, submitData)
+      response = await CategoryAPI.updateCategory(formData.id, submitData)
     } else {
-      response = await notificationAPI.createCategory(submitData)
+      response = await CategoryAPI.createCategory(submitData)
     }
 
     if (response.success) {
@@ -369,7 +368,7 @@ const resetForm = () => {
 
 const viewCategoryNotifications = (categoryId) => {
   router.push({
-    path: '/admin/notifications',
+    path: '/admin/notifications/list',
     query: { categoryId }
   })
 }

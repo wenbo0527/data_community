@@ -9,12 +9,6 @@ export default [{
       meta: { title: '服务管理' }
     },
     {
-      path: 'service/lineage',
-      name: 'management-service-lineage',
-      component: () => import('../pages/management/service/lineage-application.vue'),
-      meta: { title: '血缘应用' }
-    },
-    {
       path: 'service/backtrack',
       name: 'management-service-backtrack',
       component: () => import('../pages/management/service/backtrack.vue'),
@@ -115,6 +109,25 @@ export default [{
           component: () => import('../pages/management/asset-management/basic-management/tag-management/index.vue')
         },
         {
+          path: 'basic-management/metadata-collection',
+          name: 'MetadataCollectionList',
+          meta: { title: '元数据采集' },
+          component: () => import('../pages/management/asset-management/basic-management/metadata-collection/List.vue')
+        },
+        {
+          path: 'basic-management/metadata-collection/create',
+          name: 'MetadataCollectionCreate',
+          meta: { title: '创建采集任务' },
+          component: () => import('../pages/management/asset-management/basic-management/metadata-collection/index.vue')
+        },
+        {
+          path: 'basic-management/metadata-collection/:id',
+          name: 'MetadataCollectionDetail',
+          meta: { title: '采集任务详情' },
+          component: () => import('../pages/management/asset-management/basic-management/metadata-collection/index.vue'),
+          props: true
+        },
+        {
           path: 'listing-management/table-management',
           name: 'TableManagement',
           meta: { title: '表管理' },
@@ -213,13 +226,13 @@ export default [{
     {
       path: 'permission/data-permission',
       name: 'DataPermission',
-      meta: { title: '数据权限' },
+      meta: { title: '数据权限', permission: 'perm.data.manage' },
       component: () => import('../pages/management/permission/data-permission/index.vue')
     },
     {
       path: 'permission/app-permission',
       name: 'AppPermission',
-      meta: { title: '应用权限' },
+      meta: { title: '应用权限', permission: 'perm.app.manage' },
       component: () => import('../pages/management/permission/app-permission/index.vue')
     },
     {

@@ -87,14 +87,15 @@
           <a-radio-group v-model="grantForm.subjectType">
             <a-radio value="role">角色</a-radio>
             <a-radio value="user">用户</a-radio>
+            <a-radio value="department">部门</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item :label="grantForm.subjectType==='role' ? '选择角色' : '选择用户'">
+        <a-form-item :label="subjectLabel">
           <a-select
             v-model="grantForm.subject"
             allow-search
             placeholder="请选择"
-            :options="grantForm.subjectType==='role' ? roleOptions : userOptions"
+            :options="subjectOptions"
             style="width: 100%"
           />
         </a-form-item>
@@ -160,6 +161,8 @@
 import { ref, reactive, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconFolder, IconStorage } from '@arco-design/web-vue/es/icon'
+import { useUserStore } from '@/stores/user.js'
+const userStore = useUserStore()
 
 const searchKey = ref('')
 const selectedKeys = ref(['default'])
@@ -278,6 +281,17 @@ const grantForm = reactive({
   permissions: []
 })
 
+const subjectLabel = computed(() => {
+  if (grantForm.subjectType === 'role') return '选择角色'
+  if (grantForm.subjectType === 'user') return '选择用户'
+  return '选择部门'
+})
+const subjectOptions = computed(() => {
+  if (grantForm.subjectType === 'role') return roleOptions
+  if (grantForm.subjectType === 'user') return userOptions
+  return departmentOptions
+})
+
 const roleOptions = [
   { label: 'AccountAdmin', value: 'AccountAdmin' },
   { label: 'SystemAdmin', value: 'SystemAdmin' },
@@ -288,6 +302,11 @@ const userOptions = [
   { label: '张三', value: 'zhangsan' },
   { label: '李四', value: 'lisi' },
   { label: '王五', value: 'wangwu' }
+]
+const departmentOptions = [
+  { label: '风险管理部', value: 'risk' },
+  { label: '市场营销部', value: 'marketing' },
+  { label: '数据分析部', value: 'data' }
 ]
 
 const databaseOptions = [
@@ -477,6 +496,19 @@ const submitGrant = () => {
     })
     Message.success('已授予数据权限')
   }
+  try {
+    const existing = JSON.parse(localStorage.getItem('grants:data') || '[]')
+    const record = {
+      subjectType: grantForm.subjectType,
+      subject: grantForm.subject,
+      objectType: grantForm.objectType,
+      database: grantForm.database,
+      objectName: objName,
+      permissions: [...grantForm.permissions]
+    }
+    localStorage.setItem('grants:data', JSON.stringify([record, ...existing]))
+  } catch (e) {}
+  userStore.computeEffectivePermissions()
   grantVisible.value = false
 }
 

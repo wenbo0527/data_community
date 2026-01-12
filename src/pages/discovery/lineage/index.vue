@@ -1,11 +1,18 @@
 <template>
   <div class="lineage-application">
     <div class="page-header">
-      <div class="title">血缘应用</div>
+      <div class="title">血缘分析</div>
       <div class="actions">
         <a-space>
           <a-input v-model="form.tableName" placeholder="请输入表名" style="width: 200px" />
+          <a-select v-model="form.dataTypes" placeholder="数据类型" multiple style="width: 200px">
+            <a-option value="Table">数据表</a-option>
+            <a-option value="Metric">指标</a-option>
+            <a-option value="API">API</a-option>
+            <a-option value="Variable">变量</a-option>
+          </a-select>
           <a-input-number v-model="form.layers" placeholder="层数" :min="1" :max="3" style="width: 100px" />
+          <a-checkbox v-model="form.onlyFailed">仅显示异常</a-checkbox>
           <a-button type="primary" @click="handleSearch">
             <template #icon><icon-search /></template>
             查询
@@ -16,7 +23,12 @@
     </div>
 
     <div class="graph-wrapper">
-      <LineageGraph :table-name="currentTableName" :layers="currentLayers" />
+      <LineageGraph 
+        :table-name="currentTableName" 
+        :layers="currentLayers" 
+        :data-types="currentDataTypes"
+        :only-failed="currentOnlyFailed"
+      />
     </div>
   </div>
 </template>
@@ -31,25 +43,31 @@ const router = useRouter()
 
 const form = reactive({
   tableName: 'dim_user',
-  layers: 1
+  layers: 1,
+  dataTypes: [],
+  onlyFailed: false
 })
 
 const currentTableName = ref(form.tableName)
 const currentLayers = ref(form.layers)
+const currentDataTypes = ref(form.dataTypes)
+const currentOnlyFailed = ref(form.onlyFailed)
 
 const goBack = () => {
-  router.push('/management/service')
+  router.push('/discovery')
 }
 
 const handleSearch = () => {
   currentTableName.value = form.tableName
   currentLayers.value = form.layers
+  currentDataTypes.value = form.dataTypes
+  currentOnlyFailed.value = form.onlyFailed
 }
 </script>
 
 <style scoped>
 .lineage-application {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }

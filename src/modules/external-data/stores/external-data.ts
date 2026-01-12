@@ -42,7 +42,7 @@ export const useExternalDataStore = defineStore('externalData', {
       this.error = null
       try {
         const query = { page: params?.page ?? this.evaluationPagination.page, pageSize: params?.pageSize ?? this.evaluationPagination.pageSize, reportType: params?.reportType, keyword: params?.keyword, status: params?.status, startDate: params?.startDate, endDate: params?.endDate }
-        const res = await getEvaluationReports(query)
+        const res = await getEvaluationReports(query as any)
         const list: EvaluationReport[] = (res?.list ?? []) as EvaluationReport[]
         const total: number = Number(res?.total ?? list.length)
         this.evaluationList = list
@@ -114,5 +114,50 @@ export const useExternalDataStore = defineStore('externalData', {
       } catch (e: any) { this.error = e?.message ?? '获取生命周期数据失败' }
     },
     async fetchServices() { this.error = null; try { const base = (this.products || []).map((p: any, idx: number) => ({ id: String(p.id ?? idx + 1), name: p.name || `外数服务-${idx + 1}`, supplier: p.supplier || p.provider || '—', serviceType: ['API','文件','数据库','平台工具'][idx % 4], billingMode: p.billingMode || 'per_call', unitPrice: typeof p.unitPrice === 'number' ? p.unitPrice : (idx + 1) * 1.5, status: p.status === 'online' ? 'online' : p.status === 'maintaining' ? 'maintaining' : 'pending' })); this.services = base } catch (e: any) { this.error = e?.message ?? '获取服务列表失败' } },
+    async createService(payload: { name: string; supplier?: string; serviceType?: string; billingMode?: string; unitPrice?: number; status?: string; description?: string; accompanyPlan?: any; workflow?: any; templateKey?: string; templateTitle?: string; applyData?: any }) {
+      this.error = null
+      try {
+        const id = Date.now().toString()
+        const item = {
+          id,
+          name: payload.name,
+          supplier: payload.supplier || '—',
+          serviceType: payload.serviceType || 'API',
+          billingMode: payload.billingMode || 'per_call',
+          unitPrice: typeof payload.unitPrice === 'number' ? payload.unitPrice : 0,
+          status: payload.status || 'pending',
+          description: payload.description || '',
+          accompanyPlan: payload.accompanyPlan || {},
+          workflow: Array.isArray(payload.workflow) ? payload.workflow : [],
+          templateKey: payload.templateKey,
+          templateTitle: payload.templateTitle,
+          applyData: payload.applyData || {}
+        }
+        this.services = [item, ...(this.services || [])]
+        return true
+      } catch (e: any) {
+        this.error = e?.message ?? '创建服务失败'
+        return false
+      }
+    },
+    async updateService(id: string, payload: Partial<{ name: string; supplier?: string; serviceType?: string; billingMode?: string; unitPrice?: number; status?: string; description?: string; accompanyPlan?: any; workflow?: any; templateKey?: string; templateTitle?: string; applyData?: any }>) {
+      this.error = null
+      try {
+        const idx = (this.services || []).findIndex((x: any) => String(x.id) === String(id))
+        if (idx < 0) { this.error = '未找到服务'; return false }
+        const prev = (this.services as any[])[idx] || {}
+        const next = {
+          ...prev,
+          ...payload,
+          unitPrice: payload?.unitPrice != null ? Number(payload.unitPrice) : prev.unitPrice,
+          workflow: Array.isArray(payload?.workflow) ? payload?.workflow : (prev.workflow || [])
+        }
+        ;(this.services as any[]).splice(idx, 1, next)
+        return true
+      } catch (e: any) {
+        this.error = e?.message ?? '更新服务失败'
+        return false
+      }
+    },
   },
 })

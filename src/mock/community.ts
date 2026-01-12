@@ -6,13 +6,53 @@ import type {
   ResourceCategoryModel,
   TreeNode,
   Document,
-  Notification,
-  NotificationAttachment,
   User,
   CategoryStats,
-  HomeStats
+  HomeStats,
+  UserGroup
 } from '@/types/community'
 import { ResourceCategory, NotificationType, DocumentStatus, UserRole } from '@/types/community'
+import { mockNotifications } from './notification'
+
+// Mock 用户组数据
+export const mockUserGroups: UserGroup[] = [
+  {
+    id: 'group-1',
+    name: '全体用户',
+    notificationTypes: [NotificationType.ANNOUNCEMENT, NotificationType.ACTIVITY, NotificationType.UPDATE, NotificationType.POLICY_NOTICE, NotificationType.DATA_SERVICE, NotificationType.GENERAL],
+    creatorId: 'user-1',
+    creatorName: '系统管理员',
+    memberCount: 150,
+    members: [],
+    remark: '系统预置组，包含所有注册用户',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'group-2',
+    name: '数据分析师',
+    notificationTypes: [NotificationType.DATA_SERVICE, NotificationType.UPDATE],
+    creatorId: 'user-1',
+    creatorName: '系统管理员',
+    memberCount: 15,
+    members: ['user-3'],
+    remark: '专门负责数据分析的人员',
+    createdAt: '2024-01-05T10:00:00Z',
+    updatedAt: '2024-01-05T10:00:00Z'
+  },
+  {
+    id: 'group-3',
+    name: '核心开发组',
+    notificationTypes: [NotificationType.UPDATE, NotificationType.GENERAL],
+    creatorId: 'user-1',
+    creatorName: '系统管理员',
+    memberCount: 8,
+    members: ['user-1'],
+    remark: '负责平台核心功能开发的人员',
+    createdAt: '2024-01-10T14:30:00Z',
+    updatedAt: '2024-01-10T14:30:00Z'
+  }
+]
 
 // Mock 用户数据
 export const mockUsers: User[] = [
@@ -375,50 +415,6 @@ export const mockDocuments: Document[] = [
     tags: ['客户画像', '数据分析', '大数据'],
     createdAt: '2024-01-12T14:30:00Z',
     updatedAt: '2024-01-12T14:30:00Z',
-    createdBy: 'user-2'
-  }
-]
-
-// Mock 通知数据
-export const mockNotifications: Notification[] = [
-  {
-    id: 'notif-1',
-    title: '系统维护通知',
-    content: '为了提升系统性能和稳定性，我们将于本周六（1月20日）凌晨2:00-6:00进行系统维护。维护期间系统将暂停服务，请各位用户提前做好相关准备。',
-    summary: '系统将于1月20日凌晨进行维护，预计4小时',
-    categoryId: 'cat-4',
-    type: NotificationType.ANNOUNCEMENT,
-    priority: 'high',
-    status: DocumentStatus.PUBLISHED,
-    publishTime: '2024-01-15T09:00:00Z',
-    author: '系统管理员',
-    views: 2150,
-    isSticky: true,
-    attachments: [],
-    targetAudience: ['all'],
-    tags: ['系统维护', '公告'],
-    createdAt: '2024-01-15T09:00:00Z',
-    updatedAt: '2024-01-15T09:00:00Z',
-    createdBy: 'user-1'
-  },
-  {
-    id: 'notif-2',
-    title: '数据治理培训活动',
-    content: '为提升团队数据治理能力，我们将举办数据治理专题培训。培训内容包括数据质量管理、数据标准化、数据安全等方面。',
-    summary: '数据治理专题培训，提升团队能力',
-    categoryId: 'cat-4',
-    type: NotificationType.ACTIVITY,
-    priority: 'medium',
-    status: DocumentStatus.PUBLISHED,
-    publishTime: '2024-01-14T16:00:00Z',
-    author: '培训部',
-    views: 856,
-    isSticky: false,
-    attachments: [],
-    targetAudience: ['all'],
-    tags: ['培训', '数据治理'],
-    createdAt: '2024-01-14T16:00:00Z',
-    updatedAt: '2024-01-14T16:00:00Z',
     createdBy: 'user-2'
   }
 ]

@@ -229,7 +229,7 @@ import { TitleComponent, TooltipComponent } from 'echarts/components'
 import type { EChartsType, CallbackDataParams } from 'echarts/types/dist/shared'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 import dataMapMock from '@/mock/data-map.ts'
-import LineageGraph from '@/pages/management/service/components/LineageGraph.vue'
+import LineageGraph from '@/pages/discovery/lineage/components/LineageGraph.vue'
 
 // 注册必须的组件
 echarts.use([TreeChart, CanvasRenderer, TitleComponent, TooltipComponent])

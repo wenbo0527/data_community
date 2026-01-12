@@ -26,35 +26,35 @@
         <a-row :gutter="16">
           <a-col :span="6">
             <a-select 
-              v-model="filters.type" 
-              placeholder="通知类型" 
+              v-model="filters.categoryId" 
+              placeholder="一级分类" 
               allow-clear
-              @change="handleFilterChange"
+              @change="() => { filters.type = ''; handleFilterChange(); }"
             >
-              <a-option value="">全部类型</a-option>
+              <a-option value="">全部一级分类</a-option>
               <a-option 
-                v-for="type in notificationTypes" 
-                :key="type.value" 
-                :value="type.value"
+                v-for="category in firstLevelCategories" 
+                :key="category.id" 
+                :value="category.id"
               >
-                {{ type.label }}
+                {{ category.name }}
               </a-option>
             </a-select>
           </a-col>
           <a-col :span="6">
             <a-select 
-              v-model="filters.categoryId" 
-              placeholder="所属分类" 
+              v-model="filters.type" 
+              placeholder="二级分类" 
               allow-clear
               @change="handleFilterChange"
             >
-              <a-option value="">全部分类</a-option>
+              <a-option value="">全部二级分类</a-option>
               <a-option 
-                v-for="category in categories" 
-                :key="category.id" 
-                :value="category.id"
+                v-for="type in secondLevelTypes" 
+                :key="type.value" 
+                :value="type.value"
               >
-                {{ category.name }}
+                {{ type.label }}
               </a-option>
             </a-select>
           </a-col>
@@ -97,7 +97,7 @@
         <template #title="{ record }">
           <div class="notification-title">
             <a-space>
-              <component :is="getTypeIcon(record.type)" />
+              <component :is="getNoticeTypeIcon(record.type)" />
               <span>{{ record.title }}</span>
               <a-tag 
                 v-if="record.isSticky" 
@@ -106,25 +106,18 @@
               >
                 置顶
               </a-tag>
-              <a-tag 
-                v-if="record.priority && record.priority !== 'medium'" 
-                :color="getPriorityColor(record.priority)" 
-                size="small"
-              >
-                {{ getPriorityName(record.priority) }}
-              </a-tag>
             </a-space>
           </div>
         </template>
 
         <template #type="{ record }">
-          <a-tag :color="getTypeColor(record.type)" size="small">
-            {{ getTypeName(record.type) }}
+          <a-tag :color="getNoticeTypeColor(record.type)" size="small">
+            {{ getNoticeTypeLabel(record.type) }}
           </a-tag>
         </template>
 
         <template #category="{ record }">
-          <span>{{ getCategoryName(record.categoryId) }}</span>
+          {{ getCategoryLabel(record.categoryId) }}
         </template>
 
         <template #status="{ record }">
@@ -234,11 +227,11 @@
         <div class="detail-header">
           <h3>{{ selectedNotification.title }}</h3>
           <a-space>
-            <a-tag :color="getTypeColor(selectedNotification.type)">
-              {{ getTypeName(selectedNotification.type) }}
-            </a-tag>
             <a-tag color="blue">
-              {{ getCategoryName(selectedNotification.categoryId) }}
+              {{ getCategoryLabel(selectedNotification.categoryId) }}
+            </a-tag>
+            <a-tag :color="getNoticeTypeColor(selectedNotification.type)">
+              {{ getNoticeTypeLabel(selectedNotification.type) }}
             </a-tag>
           </a-space>
         </div>
@@ -253,9 +246,6 @@
             </a-descriptions-item>
             <a-descriptions-item label="查看次数">
               {{ selectedNotification.views }}
-            </a-descriptions-item>
-            <a-descriptions-item label="优先级">
-              {{ getPriorityName(selectedNotification.priority) }}
             </a-descriptions-item>
           </a-descriptions>
         </div>
@@ -316,12 +306,22 @@ import {
   IconBook,
   IconFile
 } from '@arco-design/web-vue/es/icon'
-import type { Notification, NotificationType } from '@/types/community'
-import mockData from '@/mock/community'
+import { NotificationAPI, CategoryAPI } from '@/api/notification'
+import type { Notification, NotificationType, Category } from '@/types/notification'
+
+import { 
+  getNoticeTypeLabel, 
+  getNoticeTypeColor, 
+  getNoticeTypeIcon,
+  NOTICE_TYPE_OPTIONS,
+  ARCHIVE_CATEGORY_TREE,
+  getCategoryLabel
+} from '@/constants/notification'
 
 const router = useRouter()
 
 // 响应式数据
+const notificationList = ref<Notification[]>([])
 const loading = ref(false)
 const viewModalVisible = ref(false)
 const selectedNotification = ref<Notification | null>(null)
@@ -343,170 +343,109 @@ const pagination = reactive({
   showPageSize: true
 })
 
-// 通知类型选项
-const notificationTypes = [
-  { value: 'announcement', label: '公告通知' },
-  { value: 'activity', label: '活动通知' },
-  { value: 'update', label: '更新通知' },
-  { value: 'policy_notice', label: '政策通知' }
-]
+// 归档分类数据
+const categoryOptions = ARCHIVE_CATEGORY_TREE
 
-// 分类选项
-const categories = computed(() => mockData.categories)
-
-
-
-// 筛选后的通知列表
-const filteredNotifications = computed(() => {
-  let result = [...mockData.notifications]
-
-  // 类型筛选
-  if (filters.type) {
-    result = result.filter(n => n.type === filters.type)
-  }
-
-  // 分类筛选
-  if (filters.categoryId) {
-    result = result.filter(n => n.categoryId === filters.categoryId)
-  }
-
-  // 状态筛选
-  if (filters.status) {
-    result = result.filter(n => {
-      const status = getStatusName(n)
-      return (
-        (filters.status === 'draft' && status === '草稿') ||
-        (filters.status === 'published' && status === '已发布') ||
-        (filters.status === 'expired' && status === '已过期')
-      )
-    })
-  }
-
-  // 关键词搜索
-  if (filters.keyword) {
-    const keyword = filters.keyword.toLowerCase()
-    result = result.filter(n => 
-      n.title.toLowerCase().includes(keyword) ||
-      (n.summary || '').toLowerCase().includes(keyword) ||
-      n.content.toLowerCase().includes(keyword)
-    )
-  }
-
-  // 更新分页总数
-  pagination.total = result.length
-
-  // 分页
-  const start = (pagination.current - 1) * pagination.pageSize
-  const end = start + pagination.pageSize
-  return result.slice(start, end)
+// 一级分类选项
+const firstLevelCategories = computed(() => {
+  return categoryOptions.map(cat => ({
+    id: cat.value,
+    name: cat.label
+  }))
 })
+
+// 二级分类选项 (根据所选的一级分类动态变化)
+const secondLevelTypes = computed(() => {
+  if (!filters.categoryId) {
+    // 如果没选一级分类，显示所有二级分类
+    const allTypes: any[] = []
+    categoryOptions.forEach(cat => {
+      cat.children.forEach(child => {
+        allTypes.push({
+          value: child.value,
+          label: child.label
+        })
+      })
+    })
+    return allTypes
+  }
+  
+  const selectedCat = categoryOptions.find(cat => cat.value === filters.categoryId)
+  return selectedCat ? selectedCat.children.map(child => ({
+    value: child.value,
+    label: child.label
+  })) : []
+})
+
+// 获取数据
+const fetchData = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: pagination.current,
+      pageSize: pagination.pageSize,
+      category: filters.categoryId || undefined,
+      type: filters.type || undefined,
+      status: (filters.status as any) || undefined,
+      keyword: filters.keyword || undefined
+    }
+    const response = await NotificationAPI.getNotifications(params)
+    if (response.success) {
+      notificationList.value = response.data.list
+      pagination.total = response.data.total
+    }
+  } catch (error) {
+    console.error('获取通知列表失败:', error)
+    Message.error('获取通知列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 筛选后的通知列表 (不再需要 computed，改为 fetchData)
+const filteredNotifications = computed(() => notificationList.value)
 
 // 表格列定义
 const columns = [
   { title: '通知标题', dataIndex: 'title', slotName: 'title', width: 300 },
-  { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
-  { title: '所属分类', dataIndex: 'categoryId', slotName: 'category', width: 120 },
+  { title: '一级分类', dataIndex: 'categoryId', slotName: 'category', width: 120 },
+  { title: '二级分类', dataIndex: 'type', slotName: 'type', width: 120 },
   { title: '状态', dataIndex: 'status', slotName: 'status', width: 100 },
-  { title: '发布信息', dataIndex: 'publishTime', slotName: 'publishTime', width: 150 },
+  { title: '发布信息', dataIndex: 'createdAt', slotName: 'publishTime', width: 150 },
   { title: '操作', dataIndex: 'actions', slotName: 'actions', width: 200, fixed: 'right' }
 ]
 
 // 方法
-const getTypeIcon = (type: NotificationType) => {
-  const iconMap = {
-    announcement: IconNotification,
-    activity: IconBulb,
-    update: IconBook,
-    policy_notice: IconSafe
-  }
-  return iconMap[type] || IconNotification
-}
-
-const getTypeColor = (type: NotificationType): string => {
-  const colorMap = {
-    announcement: 'red',
-    activity: 'blue',
-    update: 'green',
-    policy_notice: 'orange'
-  }
-  return colorMap[type] || 'gray'
-}
-
-const getTypeName = (type: NotificationType): string => {
-  const nameMap = {
-    announcement: '公告',
-    activity: '活动',
-    update: '更新',
-    policy_notice: '政策通知'
-  }
-  return nameMap[type] || '通知'
-}
-
-const getCategoryName = (categoryId: string): string => {
-  const category = categories.value.find((c: any) => c.id === categoryId)
-  return category?.name || '未知分类'
-}
-
 const getStatusName = (notification: Notification): string => {
-  const now = new Date()
-  const publishTime = notification.publishTime ? new Date(notification.publishTime) : new Date(notification.createdAt)
-  const expireTime = notification.expireTime ? new Date(notification.expireTime) : null
-
-  if (!notification.publishTime && notification.status === 'draft') {
-    return '草稿'
+  const statusMap: Record<string, string> = {
+    draft: '草稿',
+    published: '已发布',
+    archived: '已归档'
   }
-  
-  if (expireTime && now > expireTime) {
-    return '已过期'
-  }
-  
-  if (publishTime > now) {
-    return '待发布'
-  }
-  
-  return '已发布'
+  return statusMap[notification.status] || '未知'
 }
 
 const getStatusColor = (notification: Notification): string => {
-  const status = getStatusName(notification)
   const colorMap: Record<string, string> = {
-    '草稿': 'orange',
-    '待发布': 'blue',
-    '已发布': 'green',
-    '已过期': 'red'
+    draft: 'orange',
+    published: 'green',
+    archived: 'blue'
   }
-  return colorMap[status] || 'gray'
-}
-
-const getPriorityColor = (priority: string): string => {
-  const colorMap: Record<string, string> = {
-    urgent: 'red',
-    high: 'orange',
-    medium: 'blue',
-    low: 'gray'
-  }
-  return colorMap[priority] || 'gray'
-}
-
-const getPriorityName = (priority: string): string => {
-  const nameMap: Record<string, string> = {
-    urgent: '紧急',
-    high: '重要',
-    medium: '普通',
-    low: '一般'
-  }
-  return nameMap[priority] || priority
+  return colorMap[notification.status] || 'gray'
 }
 
 const formatDate = (dateStr: string): string => {
+  if (!dateStr) return '-'
   return new Date(dateStr).toLocaleDateString('zh-CN')
 }
 
 const formatDateTime = (dateStr: string): string => {
+  if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
 const renderContent = (content: string): string => {
+  if (!content) return ''
   return content
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -524,7 +463,8 @@ const handleCreate = () => {
 }
 
 const handleView = (notification: Notification) => {
-  router.push(`/notification/detail/${notification.id}`)
+  selectedNotification.value = notification
+  viewModalVisible.value = true
 }
 
 const handleEdit = (notification: Notification) => {
@@ -538,29 +478,59 @@ const handleAction = async (action: string, notification: Notification) => {
       break
     case 'stick':
     case 'unstick':
-      Message.success(action === 'stick' ? '置顶成功' : '取消置顶成功')
+      try {
+        await NotificationAPI.updateNotification(notification.id, { isTop: action === 'stick' } as any)
+        Message.success(action === 'stick' ? '置顶成功' : '取消置顶成功')
+        fetchData()
+      } catch (error) {
+        Message.error('操作失败')
+      }
       break
     case 'publish':
-      Message.success('发布成功')
+      try {
+        await NotificationAPI.publishNotification(notification.id)
+        Message.success('发布成功')
+        fetchData()
+      } catch (error) {
+        Message.error('发布失败')
+      }
       break
     case 'recall':
       Modal.confirm({
         title: '确认撤回',
         content: `确定要撤回通知"${notification.title}"吗？撤回后通知将不再对用户可见。`,
-        onOk: () => {
-          Message.success('撤回成功')
+        onOk: async () => {
+          try {
+            await NotificationAPI.updateNotification(notification.id, { status: 'draft' })
+            Message.success('撤回成功')
+            fetchData()
+          } catch (error) {
+            Message.error('撤回失败')
+          }
         }
       })
       break
     case 'unpublish':
-      Message.success('取消发布成功')
+      try {
+        await NotificationAPI.updateNotification(notification.id, { status: 'draft' })
+        Message.success('取消发布成功')
+        fetchData()
+      } catch (error) {
+        Message.error('操作失败')
+      }
       break
     case 'delete':
       Modal.confirm({
         title: '确认删除',
         content: `确定要删除通知"${notification.title}"吗？此操作不可恢复。`,
-        onOk: () => {
-          Message.success('删除成功')
+        onOk: async () => {
+          try {
+            await NotificationAPI.deleteNotification(notification.id)
+            Message.success('删除成功')
+            fetchData()
+          } catch (error) {
+            Message.error('删除失败')
+          }
         }
       })
       break
@@ -569,24 +539,28 @@ const handleAction = async (action: string, notification: Notification) => {
 
 const handleFilterChange = () => {
   pagination.current = 1
+  fetchData()
 }
 
 const handleSearch = () => {
   pagination.current = 1
+  fetchData()
 }
 
 const handlePageChange = (page: number) => {
   pagination.current = page
+  fetchData()
 }
 
 const handlePageSizeChange = (pageSize: number) => {
   pagination.pageSize = pageSize
   pagination.current = 1
+  fetchData()
 }
 
 // 生命周期
 onMounted(() => {
-  // 初始化数据
+  fetchData()
 })
 </script>
 

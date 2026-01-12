@@ -177,6 +177,16 @@
             :rows="8"
           />
         </a-form-item>
+        <a-form-item label="加工逻辑说明" field="processingLogic">
+          <a-textarea
+            v-model="formData.step4.processingLogic"
+            placeholder="请输入加工逻辑说明，支持Markdown格式"
+            :rows="6"
+          />
+        </a-form-item>
+        <a-form-item label="加工SQL代码" field="processingSql">
+          <MonacoEditor v-model:modelValue="formData.step4.processingSql" language="sql" height="240px" />
+        </a-form-item>
       </a-form>
     </div>
 
@@ -238,7 +248,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { mockTables as tableManagementData } from '@/mock/data-map.ts'
 import { hiveDatabases, dorisDatabases, hiveTables, dorisTables } from '@/mock/tableData.ts'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
-import RelationEditorPanel from '../../data-map/components/RelationEditorPanel.vue'
+import RelationEditorPanel from '@/pages/discovery/data-map/components/RelationEditorPanel.vue'
+import MonacoEditor from '@/components/MonacoEditor.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -267,6 +278,14 @@ onMounted(() => {
       // 加载字段关联关系数据
       if ((tableData as any).fieldRelations && Array.isArray((tableData as any).fieldRelations)) {
         formData.step3.fieldRelations = [...(tableData as any).fieldRelations]
+      }
+      
+      // 加载加工逻辑与加工SQL
+      if ((tableData as any).processingLogic) {
+        formData.step4.processingLogic = (tableData as any).processingLogic
+      }
+      if ((tableData as any).processingSql) {
+        formData.step4.processingSql = (tableData as any).processingSql
       }
       
       // 设置页面标题
@@ -304,7 +323,9 @@ const formData = reactive({
     fieldRelations: [] as FieldRelation[]
   },
   step4: {
-    usageInstructions: ''
+    usageInstructions: '',
+    processingLogic: '',
+    processingSql: ''
   }
 })
 
@@ -498,6 +519,8 @@ const submitForm = async () => {
           domain: formData.step2.topicDomain,
           owner: formData.step2.manager,
           fieldRelations: formData.step3.fieldRelations,
+          processingLogic: formData.step4.processingLogic,
+          processingSql: formData.step4.processingSql,
           // 保留其他字段不变
           type: tableManagementData[index]!.type,
           category: tableManagementData[index]!.category,
@@ -523,6 +546,8 @@ const submitForm = async () => {
         owner: formData.step2.manager,
         description: formData.step1.description,
         fieldRelations: formData.step3.fieldRelations,
+        processingLogic: formData.step4.processingLogic,
+        processingSql: formData.step4.processingSql,
         fields: [] // 默认空字段数组
       } as any)
       

@@ -59,9 +59,6 @@
                                             <span class="ticket-title">{{ item.title }}</span>
                                             <a-space>
                                                 <a-tag>{{ item.type }}</a-tag>
-                                                <a-tag :color="item.priority === '高' ? 'red' : item.priority === '中' ? 'orange' : 'blue'">
-                                                    {{ item.priority }}
-                                                </a-tag>
                                                 <a-tag :color="item.status === '待处理' ? 'orange' : item.status === '待评审' ? 'blue' : 'cyan'">
                                                     {{ item.status }}
                                                 </a-tag>
@@ -253,17 +250,14 @@ const nextStep = () => {
 const todoList = ref([
     {
         title: '陪跑计划审批',
-        priority: '高',
         deadline: '2024-01-16 18:00'
     },
     {
         title: '数据表权限申请',
-        priority: '中',
         deadline: '2024-01-17 12:00'
     },
     {
         title: '监控指标X异常',
-        priority: '低',
         deadline: '2024-01-18 15:00'
     }
 ])

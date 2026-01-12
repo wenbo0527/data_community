@@ -277,6 +277,7 @@ import {
 import { Message } from '@arco-design/web-vue';
 import { processSteps, tableColumns } from '@/mock/businessProcessData'
 import BusinessProcessDrawer from './business-process/BusinessProcessDrawer.vue'
+import { domainTree, buildCascaderOptions, findDomainNameById, findScenarioNameById } from '@/mock/businessModuleData'
 
 interface TableField {
   name: string
@@ -313,42 +314,11 @@ const emit = defineEmits<{
 }>()
 
 const activeStep = ref<number>(0)
-const businessType = ref<string>('self') // 默认自营
-const productType = ref<string>('general') // 默认通用
-const cascaderValue = ref<string[]>(['self', 'general']) // 级联选择器值
+const businessType = ref<string>(domainTree[0]?.id || '')
+const productType = ref<string>(domainTree[0]?.children?.[0]?.id || '')
+const cascaderValue = ref<string[]>([businessType.value, productType.value])
 
-// 级联选择器选项
-const cascaderOptions = ref([
-  {
-    value: 'self',
-    label: '自营',
-    children: [
-      { value: 'general', label: '通用' },
-      { value: 'personal', label: '个人贷' },
-      { value: 'business', label: '企业贷' },
-      { value: 'mortgage', label: '房贷' },
-      { value: 'car', label: '车贷' }
-    ]
-  },
-  {
-    value: 'supermarket',
-    label: '贷超',
-    children: [
-      { value: 'general', label: '通用' },
-      { value: 'personal', label: '个人贷' },
-      { value: 'business', label: '企业贷' }
-    ]
-  },
-  {
-    value: 'assist',
-    label: '助贷',
-    children: [
-      { value: 'general', label: '通用' },
-      { value: 'personal', label: '个人贷' },
-      { value: 'business', label: '企业贷' }
-    ]
-  }
-])
+const cascaderOptions = ref(buildCascaderOptions(domainTree))
 
 // 视图模式和加载状态
 const tableViewMode = ref<string>('grid')
@@ -490,47 +460,25 @@ const onCascaderChange = (value: string[]) => {
   if (value && value.length === 2) {
     businessType.value = value[0]
     productType.value = value[1]
-    console.log('业务类型变化:', value[0], '产品类型变化:', value[1])
-    Message.info(`已切换到${getBusinessTypeName(value[0])}模式 - ${getProductTypeName(value[1])}产品`)
-    // 这里可以根据业务类型和产品类型重新加载对应的流程数据
+    Message.info(`已切换到${getBusinessTypeName(value[0])} - ${getProductTypeName(value[1])}`)
   }
 }
 
 // 业务类型变更处理
 const onBusinessTypeChange = (value: string) => {
-  console.log('业务类型变更:', value)
-  Message.info(`已切换到${getBusinessTypeName(value)}模式`)
-  // 这里可以根据业务类型调整流程步骤或数据
+  Message.info(`已切换到${getBusinessTypeName(value)}`)
 }
 
 // 产品类型变更处理
 const onProductTypeChange = (value: string) => {
-  console.log('产品类型变更:', value)
-  Message.info(`已切换到${getProductTypeName(value)}产品`)
-  // 这里可以根据产品类型调整相关数据
+  Message.info(`已切换到${getProductTypeName(value)}`)
 }
 
 // 获取业务类型名称
-const getBusinessTypeName = (type: string) => {
-  const typeMap: Record<string, string> = {
-    'self': '自营',
-    'supermarket': '贷超',
-    'assist': '助贷'
-  }
-  return typeMap[type] || '未知'
-}
+const getBusinessTypeName = (type: string) => findDomainNameById(type) || '未知'
 
 // 获取产品类型名称
-const getProductTypeName = (type: string) => {
-  const typeMap: Record<string, string> = {
-    'general': '通用',
-    'personal': '个人贷',
-    'business': '企业贷',
-    'mortgage': '房贷',
-    'car': '车贷'
-  }
-  return typeMap[type] || '未知'
-}
+const getProductTypeName = (type: string) => findScenarioNameById(type) || '未知'
 
 // 当前步骤的业务指标
 const currentMetrics = computed(() => {

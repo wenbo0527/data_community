@@ -97,6 +97,44 @@ export const useUserStore = defineStore('user', () => {
     permissions.value = newPermissions
   }
 
+  const computeEffectivePermissions = () => {
+    const result = new Set(permissions.value || [])
+    try {
+      const dataGrants = JSON.parse(localStorage.getItem('grants:data') || '[]')
+      const appGrants = JSON.parse(localStorage.getItem('grants:app') || '[]')
+      const roleDeptBindings = JSON.parse(localStorage.getItem('roles:deptBindings') || '{}')
+      const roleDeptAssignments = JSON.parse(localStorage.getItem('roles:deptAssignments') || '{}')
+      const dept = userInfo.value.department
+      dataGrants.forEach(g => {
+        if (g.subjectType === 'department' && g.subject === dept) {
+          result.add('perm.data.manage')
+        }
+        if (g.subjectType === 'user' && (g.subject === 'zhangsan' && userInfo.value.name === '张三')) {
+          result.add('perm.data.manage')
+        }
+        const assignList = roleDeptAssignments[g.subject] || []
+        const mergedDept = Array.from(new Set([...(bound || []), ...(assignList || [])]))
+        if (mergedDept.includes(dept)) {
+          result.add('perm.data.manage')
+        }
+      })
+      appGrants.forEach(g => {
+        if (g.subjectType === 'department' && g.subject === dept) {
+          result.add('perm.app.manage')
+        }
+        if (g.subjectType === 'user' && (g.subject === 'zhangsan' && userInfo.value.name === '张三')) {
+          result.add('perm.app.manage')
+        }
+        const assignList = roleDeptAssignments[g.subject] || []
+        const mergedDept = Array.from(new Set([...(bound || []), ...(assignList || [])]))
+        if (mergedDept.includes(dept)) {
+          result.add('perm.app.manage')
+        }
+      })
+    } catch (e) {}
+    permissions.value = Array.from(result)
+  }
+
   // 检查用户是否有特定权限
   const hasPermission = (permission) => {
     return permissions.value.includes(permission)
@@ -175,6 +213,7 @@ export const useUserStore = defineStore('user', () => {
       if (isLoggedIn === 'true') {
         await checkUserRole()
       }
+      computeEffectivePermissions()
     } catch (error) {
       console.error('初始化用户数据失败:', error)
     }
@@ -197,6 +236,7 @@ export const useUserStore = defineStore('user', () => {
     checkUserRole,
     setNewUserStatus,
     setPermissions,
+    computeEffectivePermissions,
     hasPermission,
     updatePreferences,
     login,

@@ -15,8 +15,22 @@ export enum NotificationType {
   ANNOUNCEMENT = 'announcement',  // 公告通知
   ACTIVITY = 'activity',         // 活动资讯
   UPDATE = 'update',             // 更新日志
-  POLICY_NOTICE = 'policy_notice' // 政策通知
+  POLICY_NOTICE = 'policy_notice', // 政策通知
+  DATA_SERVICE = 'data_service',  // 数据服务
+  GENERAL = 'general',            // 普通通知
+  PRODUCT_NEWS = 'product_news',  // 产品消息
+  TENCENT_CLOUD_DYNAMIC = 'tencent_cloud_dynamic', // 腾讯云动态
+  PERSONNEL_DYNAMIC = 'personnel_dynamic' // 人事动态
 }
+
+// 数据资产选项
+export const DATA_ASSET_OPTIONS = [
+  { label: '用户行为表 (ods_user_action)', value: 'table_users' },
+  { label: '订单明细表 (dwd_order_detail)', value: 'table_orders' },
+  { label: '用户画像 API', value: 'api_user_profile' },
+  { label: '销售实时大屏', value: 'dashboard_sales' },
+  { label: '用户流失预测模型', value: 'model_churn' }
+]
 
 // 文档状态枚举
 export enum DocumentStatus {
@@ -30,6 +44,20 @@ export enum UserRole {
   ADMIN = 'admin',           // 系统管理员
   CONTENT_EDITOR = 'content_editor', // 内容编辑员
   USER = 'user'              // 普通用户
+}
+
+// 用户组接口
+export interface UserGroup {
+  id: string
+  name: string
+  notificationTypes: NotificationType[] // 适用通知类型
+  creatorId: string
+  creatorName: string
+  memberCount: number
+  members: string[] // 用户 ID 列表
+  remark: string
+  createdAt: string
+  updatedAt: string
 }
 
 // 基础实体接口
@@ -92,7 +120,6 @@ export interface Notification extends BaseEntity {
   summary?: string
   categoryId: string
   type: NotificationType
-  priority: 'low' | 'medium' | 'high' | 'urgent'
   status: DocumentStatus
   publishTime?: string
   expireTime?: string
@@ -102,6 +129,9 @@ export interface Notification extends BaseEntity {
   attachments?: NotificationAttachment[]
   targetAudience?: string[]
   tags?: string[]
+  dataAssets?: string[]
+  serviceType?: string
+  targetTable?: string
 }
 
 // 通知附件接口

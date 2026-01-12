@@ -33,11 +33,10 @@
           </a-table-column>
           <a-table-column title="描述" data-index="description" />
           <a-table-column title="创建时间" data-index="createTime" />
-          <a-table-column title="操作" :width="260" align="center">
+          <a-table-column title="操作" :width="180" align="center">
             <template #cell="{ record }">
               <a-space>
                 <a-button type="text" size="small" @click="openEditRole(record)">编辑配置</a-button>
-                <a-button type="text" size="small" @click="openGrantUser(record)">授予用户</a-button>
                 <a-button type="text" status="danger" size="small" :disabled="record.builtin" @click="handleDelete(record)">删除</a-button>
               </a-space>
             </template>
@@ -65,6 +64,11 @@
               </a-form-item>
               <a-form-item label="角色描述">
                 <a-textarea v-model="roleForm.description" :max-length="150" show-word-limit />
+              </a-form-item>
+              <a-form-item label="绑定部门成员">
+                <a-select v-model="roleForm.boundDepartments" multiple allow-search placeholder="选择部门">
+                  <a-option v-for="d in departmentOptions" :key="d.value" :value="d.value">{{ d.label }}</a-option>
+                </a-select>
               </a-form-item>
             </a-form>
           </a-tab-pane>
@@ -176,6 +180,27 @@
               </template>
             </a-table>
           </a-tab-pane>
+          
+          <a-tab-pane key="departments" title="已授予部门">
+            <a-space style="margin-bottom: 12px">
+              <a-button type="primary" @click="openGrantDepartment(currentRole)">授予部门</a-button>
+            </a-space>
+            <a-table :data="departmentsGranted" :pagination="false">
+              <template #columns>
+                <a-table-column title="部门名称">
+                  <template #cell="{ record }">
+                    {{ getDepartmentLabel(record) }}
+                  </template>
+                </a-table-column>
+                <a-table-column title="部门编码" data-index="code" />
+                <a-table-column title="操作" :width="140">
+                  <template #cell="{ record }">
+                    <a-button type="text" status="danger" size="small" @click="revokeDepartment(record)">回收绑定</a-button>
+                  </template>
+                </a-table-column>
+              </template>
+            </a-table>
+          </a-tab-pane>
         </a-tabs>
       </div>
       <template #footer>
@@ -222,6 +247,11 @@
           </a-table-column>
         </template>
       </a-table>
+    </a-modal>
+    <a-modal v-model:visible="grantDeptVisible" title="授予部门" ok-text="授予" @ok="grantDepartmentsToRole">
+      <a-select v-model="selectedDeptCodes" multiple allow-search style="width: 100%" placeholder="选择部门">
+        <a-option v-for="d in departmentOptions" :key="d.value" :value="d.value">{{ d.label }}</a-option>
+      </a-select>
     </a-modal>
   </div>
 </template>
@@ -283,6 +313,7 @@ const currentRole = ref(null)
 const roleForm = reactive({
   name: '',
   description: '',
+  boundDepartments: [],
   dataPermissions: {
     global: [],
     database: [],
@@ -307,6 +338,7 @@ const grantedUsers = ref([
   { id: 'u_001', name: '张三' },
   { id: 'u_002', name: '李四' }
 ])
+const departmentsGranted = ref([])
 
 const allUsers = ref([
   { id: 'u_001', name: '张三' },
@@ -315,6 +347,17 @@ const allUsers = ref([
   { id: 'u_004', name: '赵六' }
 ])
 const selectedUserIds = ref([])
+const departmentOptions = [
+  { label: '风险管理部', value: 'risk' },
+  { label: '市场营销部', value: 'marketing' },
+  { label: '数据分析部', value: 'data' }
+]
+const grantDeptVisible = ref(false)
+const selectedDeptCodes = ref([])
+const getDepartmentLabel = (code) => {
+  const found = departmentOptions.find(d => d.value === code?.code || d.value === code)
+  return found ? found.label : (code?.code || code || '')
+}
 
 const openEditRole = (record) => {
   currentRole.value = record
@@ -325,10 +368,24 @@ const openEditRole = (record) => {
   }
   activeTab.value = 'resource'
   editVisible.value = true
+  try {
+    const raw = localStorage.getItem('roles:deptAssignments')
+    const map = raw ? JSON.parse(raw) : {}
+    const list = map[roleForm.name] || []
+    departmentsGranted.value = list.map(code => ({ code }))
+  } catch (e) {
+    departmentsGranted.value = []
+  }
 }
 
 const saveRoleConfig = () => {
   Message.success('角色配置已保存')
+  try {
+    const raw = localStorage.getItem('roles:deptBindings')
+    const map = raw ? JSON.parse(raw) : {}
+    map[roleForm.name || currentRole.value?.name] = Array.isArray(roleForm.boundDepartments) ? roleForm.boundDepartments : []
+    localStorage.setItem('roles:deptBindings', JSON.stringify(map))
+  } catch (e) {}
   editVisible.value = false
 }
 
@@ -352,6 +409,35 @@ const grantUsersToRole = () => {
   selectedUserIds.value = []
   Message.success('已授予用户')
   grantVisible.value = false
+}
+const openGrantDepartment = (record) => {
+  currentRole.value = record
+  selectedDeptCodes.value = []
+  grantDeptVisible.value = true
+}
+const grantDepartmentsToRole = () => {
+  const existed = new Set(departmentsGranted.value.map(d => d.code))
+  const merged = [...departmentsGranted.value]
+  selectedDeptCodes.value.forEach(code => { if (!existed.has(code)) merged.push({ code }) })
+  departmentsGranted.value = merged
+  try {
+    const raw = localStorage.getItem('roles:deptAssignments')
+    const map = raw ? JSON.parse(raw) : {}
+    map[roleForm.name || currentRole.value?.name] = departmentsGranted.value.map(d => d.code)
+    localStorage.setItem('roles:deptAssignments', JSON.stringify(map))
+  } catch (e) {}
+  Message.success('已授予部门')
+  grantDeptVisible.value = false
+}
+const revokeDepartment = (record) => {
+  departmentsGranted.value = departmentsGranted.value.filter(d => d.code !== record.code)
+  try {
+    const raw = localStorage.getItem('roles:deptAssignments')
+    const map = raw ? JSON.parse(raw) : {}
+    map[roleForm.name || currentRole.value?.name] = departmentsGranted.value.map(d => d.code)
+    localStorage.setItem('roles:deptAssignments', JSON.stringify(map))
+  } catch (e) {}
+  Message.success('已回收部门绑定')
 }
 
 const createVisible = ref(false)

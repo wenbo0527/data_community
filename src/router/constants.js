@@ -78,7 +78,8 @@ export const ROUTE_NAMES = {
   
   // 发现模块
   DISCOVERY: {
-    TABLE_DETAIL: 'TableDetail'
+    TABLE_DETAIL: 'TableDetail',
+    LINEAGE: 'discovery-lineage'
   },
   
   // 外数顶层页面
@@ -165,7 +166,8 @@ export const ROUTE_PATHS = {
   },
   
   DISCOVERY: {
-    TABLE_DETAIL: '/discovery/data-map/table'
+    TABLE_DETAIL: '/discovery/data-map/table',
+    LINEAGE: '/discovery/lineage'
   },
   
   // 外数顶层页面路径
@@ -270,6 +272,10 @@ export const BREADCRUMB_CONFIG = {
   [ROUTE_NAMES.EXTERNAL_DATA.SERVICE]: [
     { title: '外数中心', path: '' },
     { title: '数据服务', path: ROUTE_PATHS.EXTERNAL_DATA.SERVICE }
+  ],
+  [ROUTE_NAMES.DISCOVERY.LINEAGE]: [
+    { title: '数据发现', path: '/discovery' },
+    { title: '血缘分析', path: ROUTE_PATHS.DISCOVERY.LINEAGE }
   ]
 }
 

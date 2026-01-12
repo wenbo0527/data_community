@@ -58,98 +58,8 @@
       <a-row :gutter="16">
         <!-- 主要内容区 -->
         <a-col :span="18">
-          <!-- 通知信息 -->
           <a-card class="detail-card">
-            <div class="notification-header">
-              <div class="title-section">
-                <h1 class="notification-title">
-                  {{ notificationData.title }}
-                  <a-tag v-if="notificationData.isTop" color="red" size="small">
-                    置顶
-                  </a-tag>
-                </h1>
-                <div class="meta-info">
-                  <a-space>
-                    <a-tag
-                      :color="notificationData.category?.color || 'blue'"
-                      size="small"
-                    >
-                      {{ notificationData.category?.name || '未分类' }}
-                    </a-tag>
-                    <a-tag
-                      :color="getStatusColor(notificationData.status)"
-                      size="small"
-                    >
-                      {{ getStatusText(notificationData.status) }}
-                    </a-tag>
-                    <a-tag
-                      :color="getPriorityColor(notificationData.priority)"
-                      size="small"
-                    >
-                      {{ getPriorityText(notificationData.priority) }}
-                    </a-tag>
-                  </a-space>
-                </div>
-              </div>
-              <div class="action-section">
-                <a-space>
-                  <div class="view-count">
-                    <icon-eye />
-                    <span>{{ notificationData.viewCount || 0 }}</span>
-                  </div>
-                </a-space>
-              </div>
-            </div>
-
-            <!-- 摘要 -->
-            <div v-if="notificationData.summary" class="summary-section">
-              <h3>摘要</h3>
-              <p class="summary-text">{{ notificationData.summary }}</p>
-            </div>
-
-            <!-- 正文内容 -->
-            <div class="content-section">
-              <h3>正文</h3>
-              <div class="content-text" v-html="formatContent(notificationData.content)"></div>
-            </div>
-
-            <!-- 标签 -->
-            <div v-if="notificationData.tags && notificationData.tags.length > 0" class="tags-section">
-              <h3>标签</h3>
-              <a-space wrap>
-                <a-tag
-                  v-for="tag in notificationData.tags"
-                  :key="tag"
-                  color="arcoblue"
-                >
-                  {{ tag }}
-                </a-tag>
-              </a-space>
-            </div>
-
-            <!-- 附件 -->
-            <div v-if="notificationData.attachments && notificationData.attachments.length > 0" class="attachments-section">
-              <h3>附件</h3>
-              <div class="attachment-list">
-                <div
-                  v-for="attachment in notificationData.attachments"
-                  :key="attachment.id"
-                  class="attachment-item"
-                  @click="downloadAttachment(attachment)"
-                >
-                  <div class="attachment-icon">
-                    <icon-file />
-                  </div>
-                  <div class="attachment-info">
-                    <div class="attachment-name">{{ attachment.name }}</div>
-                    <div class="attachment-size">{{ formatFileSize(attachment.size) }}</div>
-                  </div>
-                  <div class="attachment-action">
-                    <icon-download />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <NotificationDetailContent :notification="notificationData" />
           </a-card>
         </a-col>
 
@@ -245,12 +155,12 @@ import {
   IconFile,
   IconDownload
 } from '@arco-design/web-vue/es/icon'
-import { NotificationAPI } from '../../../api/notification'
+import { NotificationAPI, OperationLogAPI } from '../../../api/notification'
+import NotificationDetailContent from '../../../components/community/NotificationDetailContent.vue'
 
 const route = useRoute()
 const router = useRouter()
 const goBackAction = () => goBack(router, '/admin/notifications')
-const notificationAPI = new NotificationAPI()
 
 // 响应式数据
 const loading = ref(true)
@@ -262,7 +172,7 @@ const relatedNotifications = ref([])
 const fetchNotificationData = async () => {
   loading.value = true
   try {
-    const response = await notificationAPI.getNotificationById(route.params.id)
+    const response = await NotificationAPI.getNotification(route.params.id)
     if (response.success) {
       notificationData.value = response.data
       await fetchOperationLogs()
@@ -280,12 +190,9 @@ const fetchNotificationData = async () => {
 
 const fetchOperationLogs = async () => {
   try {
-    const response = await notificationAPI.getOperationLogs({
-      targetType: 'notification',
-      targetId: route.params.id
-    })
+    const response = await OperationLogAPI.getOperationLogs(route.params.id)
     if (response.success) {
-      operationLogs.value = response.data.list
+      operationLogs.value = response.data.list || response.data
     }
   } catch (error) {
     console.error('获取操作日志失败:', error)
@@ -294,8 +201,8 @@ const fetchOperationLogs = async () => {
 
 const fetchRelatedNotifications = async () => {
   try {
-    const response = await notificationAPI.getNotifications({
-      categoryId: notificationData.value.categoryId,
+    const response = await NotificationAPI.getNotifications({
+      category: notificationData.value.categoryId,
       pageSize: 5
     })
     if (response.success) {
@@ -318,7 +225,7 @@ const handleDelete = () => {
     content: `确定要删除通知"${notificationData.value.title}"吗？此操作不可恢复。`,
     onOk: async () => {
       try {
-        const response = await notificationAPI.deleteNotification(route.params.id)
+        const response = await NotificationAPI.deleteNotification(route.params.id)
         if (response.success) {
           Message.success('删除成功')
           router.push('/admin/notifications')
@@ -335,7 +242,7 @@ const handleDelete = () => {
 
 const handleToggleTop = async () => {
   try {
-    const response = await notificationAPI.updateNotification(route.params.id, {
+    const response = await NotificationAPI.updateNotification(route.params.id, {
       isTop: !notificationData.value.isTop
     })
     if (response.success) {
@@ -352,7 +259,7 @@ const handleToggleTop = async () => {
 
 const handlePublish = async () => {
   try {
-    const response = await notificationAPI.updateNotification(route.params.id, {
+    const response = await NotificationAPI.updateNotification(route.params.id, {
       status: 'published'
     })
     if (response.success) {
@@ -370,7 +277,7 @@ const handlePublish = async () => {
 
 const handleArchive = async () => {
   try {
-    const response = await notificationAPI.updateNotification(route.params.id, {
+    const response = await NotificationAPI.updateNotification(route.params.id, {
       status: 'archived'
     })
     if (response.success) {
@@ -460,24 +367,6 @@ const getStatusText = (status) => {
     archived: '已归档'
   }
   return textMap[status] || '未知'
-}
-
-const getPriorityColor = (priority) => {
-  const colorMap = {
-    low: 'blue',
-    medium: 'orange',
-    high: 'red'
-  }
-  return colorMap[priority] || 'blue'
-}
-
-const getPriorityText = (priority) => {
-  const textMap = {
-    low: '低',
-    medium: '中',
-    high: '高'
-  }
-  return textMap[priority] || '低'
 }
 
 const getLogColor = (action) => {

@@ -259,8 +259,8 @@
         <div class="notification-header">
           <a-descriptions :column="2" bordered>
             <a-descriptions-item label="通知类型">
-              <a-tag :color="getNotificationTypeColor('notification')">
-                {{ getNotificationTypeLabel('notification') }}
+              <a-tag :color="getNoticeTypeColor(selectedNotification.type)">
+                {{ getNoticeTypeLabel(selectedNotification.type) }}
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="所属分类">
@@ -271,11 +271,6 @@
             </a-descriptions-item>
             <a-descriptions-item label="作者">
               {{ selectedNotification.createdBy }}
-            </a-descriptions-item>
-            <a-descriptions-item label="优先级">
-              <a-tag :color="getPriorityColor(selectedNotification.priority)">
-                {{ getPriorityLabel(selectedNotification.priority) }}
-              </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="是否置顶">
               {{ selectedNotification.isSticky ? '是' : '否' }}
@@ -341,6 +336,7 @@ import {
 import NotificationAPI from '@/api/notification'
 import { NotificationMockService } from '@/mock/notification'
 import PDFViewer from '@/components/common/PDFViewer.vue'
+import { getNoticeTypeLabel, getNoticeTypeColor } from '@/constants/notification'
 
 const route = useRoute()
 const router = useRouter()
@@ -350,7 +346,7 @@ const searchKeyword = ref('')
 // 选中的树节点
 const selectedKeys = ref(['policy'])
 // 展开的树节点
-const expandedKeys = ref(['policy', 'cases', 'guide', 'news', 'notifications'])
+const expandedKeys = ref(['policy', 'cases', 'guide', 'news', 'notification'])
 // 排序方式
 const sortBy = ref('publishTime')
 
@@ -464,19 +460,19 @@ children: [
 }
 ]
 
-// 如果有通知分类数据，添加通知管理节点
-if (notificationCategories.value && notificationCategories.value.length > 0) {
-baseTreeData.push({
-key: 'notifications',
-title: '通知管理',
-count: notifications.value?.length || 0,
-children: notificationCategories.value.map(category => ({
-key: `notification-${category.id}`,
-title: category.name,
-count: getNotificationCountByCategory(category.id)
-}))
-})
-}
+    // 如果有通知分类数据，添加通知管理节点
+    if (notificationCategories.value && notificationCategories.value.length > 0) {
+      baseTreeData.push({
+        key: 'notification',
+        title: '通知管理',
+        count: notifications.value?.length || 0,
+        children: notificationCategories.value.map(category => ({
+          key: `notification-${category.id}`,
+          title: category.name,
+          count: getNotificationCountByCategory(category.id)
+        }))
+      })
+    }
 
 return baseTreeData
 })
@@ -797,18 +793,10 @@ const viewDocument = (document) => {
       console.log('  弹窗是否可见:', document.querySelector('.notification-modal')?.style.display)
     })
   } else {
-    console.log('❌ 非通知类型，document.type:', document.type)
-    // 如果是文档，显示PDF查看器
-    if (document.fileName && document.fileName.endsWith('.pdf')) {
-      currentPDFUrl.value = document.fileUrl || `/documents/${document.fileName}`
-      currentPDFTitle.value = document.fileName
-      currentPDFSize.value = document.fileSize
-      currentPDFUpdateTime.value = document.updateTime
-      pdfModalVisible.value = true
-    } else {
-      // 如果没有PDF文件，显示文档详情
-      console.log('查看文档详情:', document)
-    }
+    console.log('✓ 文档类型，跳转至详情页')
+    const raw = document.title || document.id || 'doc'
+    const slug = encodeURIComponent(String(raw))
+    router.push(`/docs/${slug}`)
   }
   console.log('=== viewDocument 详细调试信息结束 ===')
 }
@@ -835,7 +823,7 @@ const updateCurrentPageInfo = (key, node) => {
     'cases': '数据应用优秀实践案例',
     'guide': '平台功能操作指导手册',
     'news': '最新的社区公告、活动和技术分享',
-    'notifications': '系统通知和公告信息管理'
+    'notification': '系统通知和公告信息管理'
   }
   
   const mainKey = key.split('-')[0]
@@ -1060,50 +1048,6 @@ const onPDFError = (error) => {
 const handleCloseNotificationModal = () => {
   notificationModalVisible.value = false
   selectedNotification.value = null
-}
-
-// 获取通知类型标签
-const getNotificationTypeLabel = (type) => {
-  const typeMap = {
-    'system': '系统通知',
-    'announcement': '公告',
-    'activity': '活动通知',
-    'update': '更新通知',
-    'policy_notice': '政策通知'
-  }
-  return typeMap[type] || type
-}
-
-// 获取通知类型颜色
-const getNotificationTypeColor = (type) => {
-  const colorMap = {
-    'system': 'blue',
-    'announcement': 'red',
-    'activity': 'green',
-    'update': 'orange',
-    'policy_notice': 'purple'
-  }
-  return colorMap[type] || 'gray'
-}
-
-// 获取优先级标签
-const getPriorityLabel = (priority) => {
-  const priorityMap = {
-    'high': '高',
-    'medium': '中',
-    'low': '低'
-  }
-  return priorityMap[priority] || priority
-}
-
-// 获取优先级颜色
-const getPriorityColor = (priority) => {
-  const colorMap = {
-    'high': 'red',
-    'medium': 'orange',
-    'low': 'green'
-  }
-  return colorMap[priority] || 'gray'
 }
 
 // 获取通知分类名称

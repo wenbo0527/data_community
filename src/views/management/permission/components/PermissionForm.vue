@@ -1,7 +1,7 @@
 <template>
   <div class="permission-form">
     <div class="form-header">
-      <h3>数据权限申请</h3>
+      <h3>{{ formData.permissionCategory === 'application' ? '应用权限申请' : '数据权限申请' }}</h3>
       <p class="sub">请填写申请主体、资源配置、操作类型与期限理由</p>
     </div>
     <a-form
@@ -44,17 +44,17 @@
       </a-card>
       <a-card class="section-card">
           <div class="section-title">资源选择</div>
-          <a-form-item label="资源层级选择" name="resourceLevel">
+          <a-form-item v-if="formData.permissionCategory !== 'application'" :label="formData.permissionCategory === 'application' ? '权限层级选择' : '资源层级选择'" name="resourceLevel">
           <a-radio-group v-model="formData.resourceLevel">
-            <a-radio value="database">库级申请</a-radio>
-            <a-radio value="table">表级申请</a-radio>
+            <a-radio value="database">{{ formData.permissionCategory === 'application' ? '应用级申请' : '库级申请' }}</a-radio>
+            <a-radio value="table">{{ formData.permissionCategory === 'application' ? '模块级申请' : '表级申请' }}</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="资源浏览与选择" name="resourceTree">
+        <a-form-item :label="formData.permissionCategory === 'application' ? '权限浏览与选择' : '资源浏览与选择'" name="resourceTree">
           <div class="resource-tree-section">
             <div class="tree-toolbar">
               <a-space>
-                <a-input-search v-model="treeSearch" placeholder="模糊搜索库 / schema / 表" allow-clear />
+                <a-input-search v-model="treeSearch" :placeholder="formData.permissionCategory === 'application' ? '模糊搜索应用 / 模块' : '模糊搜索库 / schema / 表'" allow-clear />
                 <a-select v-model="statusFilter" :options="statusOptions" placeholder="筛选状态" style="width: 140px" />
                 <a-button @click="expandAll">展开全部</a-button>
                 <a-button @click="collapseAll">折叠全部</a-button>
@@ -72,10 +72,26 @@
                 v-model:expanded-keys="treeExpandedKeys"
               />
             </a-spin>
-            <div class="helper-text">库级：选择 schema 节点；表级：选择表节点。支持模糊搜索与状态筛选。</div>
-            <div class="global-selected-summary" v-if="(formData.resourceLevel === 'database' && totalSelectedSchemas > 0) || (formData.resourceLevel === 'table' && totalSelectedTables > 0)">
-              <div v-if="formData.resourceLevel === 'database'">库 {{ formData.selectedDatabases.length }} 个；schema {{ totalSelectedSchemas }}</div>
-              <div v-else>库 {{ formData.selectedDatabases.length }} 个；表 {{ totalSelectedTables }} / 200</div>
+            <div class="helper-text">
+              {{ formData.permissionCategory === 'application' ? '支持模糊搜索与状态筛选。' : '库级：选择 schema 节点；表级：选择表节点。支持模糊搜索与状态筛选。' }}
+            </div>
+            <div class="global-selected-summary" v-if="formData.permissionCategory === 'application' || (formData.resourceLevel === 'database' && totalSelectedSchemas > 0) || (formData.resourceLevel === 'table' && totalSelectedTables > 0)">
+              <template v-if="formData.permissionCategory === 'application'">
+                <div v-if="totalSelectedSchemas > 0 || totalSelectedTables > 0">
+                  已选应用 {{ formData.selectedDatabases.length }} 个；
+                  模块/功能 {{ totalSelectedSchemas + totalSelectedTables }} 个
+                </div>
+              </template>
+              <template v-else>
+                <div v-if="formData.resourceLevel === 'database'">
+                  库 {{ formData.selectedDatabases.length }} 个；
+                  schema {{ totalSelectedSchemas }}
+                </div>
+                <div v-else>
+                  库 {{ formData.selectedDatabases.length }} 个；
+                  表 {{ totalSelectedTables }} / 200
+                </div>
+              </template>
               <div class="section-actions">
                 <a-button type="text" status="danger" @click="clearAllSelection">清空选择</a-button>
               </div>
@@ -87,7 +103,7 @@
                   <a-list size="small" :bordered="false">
                     <a-list-item v-for="sch in (formData.schemasByDb[db] || [])" v-if="formData.resourceLevel === 'database'" :key="db + ':schema:' + sch">
                       <a-space>
-                        <a-tag color="blue">schema</a-tag>
+                        <a-tag color="blue">{{ formData.permissionCategory === 'application' ? '模块' : 'schema' }}</a-tag>
                         <span>{{ sch }}</span>
                       </a-space>
                     </a-list-item>
@@ -108,8 +124,8 @@
           <div class="ops-section">
             <div class="ops-title">选择模式</div>
             <a-radio-group v-model="formData.operationMode">
-              <a-radio value="analysis">数据分析</a-radio>
-              <a-radio value="dev">数据开发</a-radio>
+              <a-radio value="analysis">{{ formData.permissionCategory === 'application' ? '基础使用' : '数据分析' }}</a-radio>
+              <a-radio value="dev">{{ formData.permissionCategory === 'application' ? '管理配置' : '数据开发' }}</a-radio>
               <a-radio value="custom">自定义</a-radio>
             </a-radio-group>
             <div v-if="formData.operationMode !== 'custom'" style="margin-top:12px">
@@ -118,18 +134,27 @@
               </a-space>
             </div>
             <template v-else>
-              <div class="ops-title">通用操作类型</div>
+              <div class="ops-title">{{ formData.permissionCategory === 'application' ? '通用权限类型' : '通用操作类型' }}</div>
               <a-checkbox-group v-model:value="formData.operationTypes.generic">
-                <a-checkbox value="SELECT">SELECT</a-checkbox>
-                <a-checkbox value="DESCRIBE">DESCRIBE</a-checkbox>
-                <a-checkbox value="INSERT">INSERT</a-checkbox>
-                <a-checkbox value="UPDATE">UPDATE</a-checkbox>
-                <a-checkbox value="DELETE">DELETE</a-checkbox>
-                <a-checkbox value="ALTER">ALTER</a-checkbox>
-                <a-checkbox value="DROP">DROP</a-checkbox>
-                <a-checkbox value="CREATE">CREATE</a-checkbox>
+                <template v-if="formData.permissionCategory === 'application'">
+                  <a-checkbox value="VIEW">查看</a-checkbox>
+                  <a-checkbox value="USE">使用</a-checkbox>
+                  <a-checkbox value="EDIT">编辑</a-checkbox>
+                  <a-checkbox value="MANAGE">管理</a-checkbox>
+                  <a-checkbox value="GRANT">授权</a-checkbox>
+                </template>
+                <template v-else>
+                  <a-checkbox value="SELECT">SELECT</a-checkbox>
+                  <a-checkbox value="DESCRIBE">DESCRIBE</a-checkbox>
+                  <a-checkbox value="INSERT">INSERT</a-checkbox>
+                  <a-checkbox value="UPDATE">UPDATE</a-checkbox>
+                  <a-checkbox value="DELETE">DELETE</a-checkbox>
+                  <a-checkbox value="ALTER">ALTER</a-checkbox>
+                  <a-checkbox value="DROP">DROP</a-checkbox>
+                  <a-checkbox value="CREATE">CREATE</a-checkbox>
+                </template>
               </a-checkbox-group>
-              <div class="ops-title">数据库专属操作</div>
+              <div class="ops-title">{{ formData.permissionCategory === 'application' ? '应用专属权限' : '数据库专属操作' }}</div>
               <a-checkbox-group v-model:value="formData.operationTypes.specific">
                 <a-checkbox v-for="op in dbSpecificOps" :key="op" :value="op">{{ op }}</a-checkbox>
               </a-checkbox-group>
@@ -138,7 +163,9 @@
               <a-checkbox v-model:checked="formData.sensitiveRequested">申请敏感权限</a-checkbox>
               <a-input v-if="formData.sensitiveRequested" v-model="formData.sensitiveReason" placeholder="填写敏感权限说明" style="margin-top:8px" />
             </div>
-            <div class="helper-text">数据分析默认仅包含 SELECT 与 DESCRIBE；数据开发包含常用写入与DDL操作；自定义可自由勾选。</div>
+            <div class="helper-text">
+              {{ formData.permissionCategory === 'application' ? '基础使用包含 查看 与 使用；管理配置包含 编辑 与 管理；自定义可自由勾选。' : '数据分析默认仅包含 SELECT 与 DESCRIBE；数据开发包含常用写入与DDL操作；自定义可自由勾选。' }}
+            </div>
           </div>
         </a-form-item>
       </a-card>
@@ -366,10 +393,18 @@ export default {
       return [...(formData.operationTypes.generic || []), ...(formData.operationTypes.specific || [])];
     });
     watch(() => formData.operationMode, (mode) => {
-      if (mode === 'analysis') {
-        formData.operationTypes = { generic: ['SELECT','DESCRIBE'], specific: [] };
-      } else if (mode === 'dev') {
-        formData.operationTypes = { generic: ['SELECT','DESCRIBE','INSERT','UPDATE','DELETE','CREATE','ALTER','DROP'], specific: dbSpecificOps.value };
+      if (formData.permissionCategory === 'application') {
+        if (mode === 'analysis') {
+          formData.operationTypes = { generic: ['VIEW', 'USE'], specific: [] };
+        } else if (mode === 'dev') {
+          formData.operationTypes = { generic: ['VIEW', 'USE', 'EDIT', 'MANAGE'], specific: [] };
+        }
+      } else {
+        if (mode === 'analysis') {
+          formData.operationTypes = { generic: ['SELECT','DESCRIBE'], specific: [] };
+        } else if (mode === 'dev') {
+          formData.operationTypes = { generic: ['SELECT','DESCRIBE','INSERT','UPDATE','DELETE','CREATE','ALTER','DROP'], specific: dbSpecificOps.value };
+        }
       }
     }, { immediate: true });
     const visibleGroups = ref([
@@ -402,6 +437,7 @@ export default {
     const dbTypeByName = computed(() => {
       const map = {};
       dbCatalog.value.forEach(d => { map[d.name] = d.type; });
+      appCatalog.value.forEach(a => { map[a.name] = a.type; });
       return map;
     });
     const mockTables = {
@@ -447,7 +483,44 @@ export default {
       { label: '废弃', value: 'discard' }
     ];
     const statusFilter = ref('online');
+    const appCatalog = ref([
+      { name: '统一查询平台', type: 'App' },
+      { name: '指标管理系统', type: 'App' },
+      { name: '数据地图', type: 'App' },
+      { name: '大屏可视化', type: 'App' }
+    ]);
+
+    const mockModules = {
+      App: [
+        { id: 'm_query', name: 'SQL查询模块', sensitivityLevel: 'normal', owner: '平台组' },
+        { id: 'm_save', name: '查询保存功能', sensitivityLevel: 'normal', owner: '平台组' },
+        { id: 'm_export', name: '结果导出功能', sensitivityLevel: 'sensitive', owner: '安全组' },
+        { id: 'm_admin', name: '管理后台', sensitivityLevel: 'core', owner: '管理员' }
+      ]
+    };
+
     const buildTreeData = computed(() => {
+      if (formData.permissionCategory === 'application') {
+        return appCatalog.value.map(app => {
+          const modules = ['核心功能', '辅助功能', '系统管理'];
+          return {
+            key: `db:${app.name}`,
+            title: app.name,
+            status: 'online',
+            children: modules.map(m => ({
+              key: `db:${app.name}|schema:${m}`,
+              title: m,
+              status: 'online',
+              children: (mockModules[app.type] || []).map(t => ({
+                key: `db:${app.name}|schema:${m}|table:${t.id}`,
+                title: t.name,
+                status: t.sensitivityLevel === 'sensitive' ? 'test' : 'online',
+                tmeta: { id: t.id, name: t.name, sensitivityLevel: t.sensitivityLevel, owner: t.owner, db: app.name, dbType: app.type, schema: m }
+              }))
+            }))
+          };
+        });
+      }
       const schemasByType = {
         Hive: ['ods', 'dwd', 'dim'],
         Doris: ['ods', 'dwd'],
@@ -560,7 +633,10 @@ export default {
       });
       const dbList = Array.from(dbs);
       formData.selectedDatabases = dbList;
-      if (formData.resourceLevel === 'database') {
+      if (formData.permissionCategory === 'application') {
+        formData.schemasByDb = schemasByDb;
+        formData.tablesByDb = tablesByDb;
+      } else if (formData.resourceLevel === 'database') {
         formData.schemasByDb = schemasByDb;
       } else {
         formData.tablesByDb = tablesByDb;
@@ -585,7 +661,12 @@ export default {
       return 0;
     });
     const isBatchApplication = computed(() => {
-      const resourceCount = formData.resourceLevel === 'database' ? totalSelectedSchemas.value : totalSelectedTables.value;
+      let resourceCount = 0;
+      if (formData.permissionCategory === 'application') {
+        resourceCount = totalSelectedSchemas.value + totalSelectedTables.value;
+      } else {
+        resourceCount = formData.resourceLevel === 'database' ? totalSelectedSchemas.value : totalSelectedTables.value;
+      }
       return subjectCount.value > 1 || resourceCount > 1;
     });
     const subjectTypeLabel = computed(() => {
@@ -593,7 +674,11 @@ export default {
       return map[formData.subjectType] || '主体';
     });
     const operationModeLabel = computed(() => {
-      const map = { analysis: '数据分析', dev: '数据开发', custom: '自定义' };
+      const map = { 
+        analysis: formData.permissionCategory === 'application' ? '基础使用' : '数据分析', 
+        dev: formData.permissionCategory === 'application' ? '管理配置' : '数据开发', 
+        custom: '自定义' 
+      };
       return map[formData.operationMode] || '自定义';
     });
     const openBatchModal = () => {

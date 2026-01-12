@@ -236,6 +236,7 @@ defineExpose({
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: #fff;
 }
 
 .menu-search {
@@ -246,11 +247,20 @@ defineExpose({
 :deep(.arco-menu) {
   flex: 1;
   overflow-y: auto;
+  scrollbar-width: none;
+  border-right: 1px solid var(--color-border-2);
+}
+
+:deep(.arco-menu)::-webkit-scrollbar {
+  display: none;
 }
 
 :deep(.arco-menu-item) {
   margin: 4px 8px;
   border-radius: 6px;
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
 }
 
 :deep(.arco-menu-sub) {
@@ -263,6 +273,10 @@ defineExpose({
 }
 
 :deep(.arco-menu-sub-menu-title:hover) {
+  background-color: var(--color-fill-2);
+}
+
+:deep(.arco-menu-item.arco-menu-selected) {
   background-color: var(--color-fill-2);
 }
 </style>

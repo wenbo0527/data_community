@@ -3,7 +3,7 @@
     <div class="form-header">
       <a-breadcrumb class="breadcrumb">
         <a-breadcrumb-item @click="$router.push('/home')">首页</a-breadcrumb-item>
-        <a-breadcrumb-item @click="$router.push('/notification/list')">通知管理</a-breadcrumb-item>
+        <a-breadcrumb-item @click="$router.push('/admin/notifications')">通知管理</a-breadcrumb-item>
         <a-breadcrumb-item>{{ isEdit ? '编辑内容' : '新增内容' }}</a-breadcrumb-item>
       </a-breadcrumb>
       <div class="header-title-container">
@@ -116,7 +116,53 @@
                   class="category-selector"
                   size="large"
                   allow-search
+                  path-mode
                 />
+              </a-form-item>
+
+              <!-- 通知对象 - 发送通知模式下所有分类都显示 -->
+              <a-form-item v-if="formData.contentType === 'notification'" field="target" label="通知对象" required>
+                <template #extra>
+                  <a-link @click="goToUserGroupManagement">
+                    <icon-user-group /> 维护用户组
+                  </a-link>
+                </template>
+                <a-select
+                  v-model="formData.target"
+                  placeholder="请选择通知对象"
+                  multiple
+                  allow-clear
+                  size="large"
+                >
+                  <a-option 
+                    v-for="group in userGroups" 
+                    :key="group.value" 
+                    :value="group.value"
+                  >
+                    {{ group.label }}
+                  </a-option>
+                </a-select>
+              </a-form-item>
+
+              <!-- 数据服务特有字段 -->
+              <a-form-item v-if="showDataServiceFields" field="dataAssets" label="变更数据资产" required>
+                <a-select
+                  v-model="formData.dataAssets"
+                  placeholder="请选择或输入变更的数据资产"
+                  multiple
+                  allow-clear
+                  allow-search
+                  allow-create
+                  size="large"
+                >
+                  <a-option 
+                    v-for="asset in DATA_ASSET_OPTIONS" 
+                    :key="asset.value" 
+                    :value="asset.value"
+                  >
+                    {{ asset.label }}
+                  </a-option>
+                </a-select>
               </a-form-item>
             </div>
           </a-card>
@@ -264,6 +310,15 @@
               </div>
               
               <div class="right-actions">
+                <a-button 
+                  v-if="formData.contentType === 'notification'"
+                  type="outline"
+                  size="large"
+                  @click="handlePreview"
+                >
+                  <icon-eye />
+                  预览
+                </a-button>
                 <a-button @click="handleCancel" size="large">
                   取消
                 </a-button>
@@ -281,15 +336,94 @@
             </div>
           </a-card>
         </a-form>
+        <a-modal
+          v-model:visible="previewVisible"
+          :footer="false"
+          :title="null"
+          width="800px"
+          class="notification-detail-modal"
+        >
+          <div v-if="previewNotification" class="home-notification-detail">
+            <NotificationDetailContent :notification="previewNotification" variant="home" />
+          </div>
+        </a-modal>
       </div>
     </div>
+    <!-- 用户组管理弹窗 -->
+    <a-modal
+      v-model:visible="groupModalVisible"
+      title="用户组管理"
+      width="600px"
+      :footer="false"
+    >
+      <div class="group-management">
+        <div class="group-list">
+          <a-list>
+            <template #header>
+              <div class="list-header">
+                <span>现有用户组</span>
+                <a-button type="text" size="small" @click="resetGroupForm">
+                  <icon-plus /> 新增
+                </a-button>
+              </div>
+            </template>
+            <a-list-item v-for="group in userGroups" :key="group.value">
+              <div class="group-item">
+                <span class="group-name">{{ group.label }}</span>
+                <div class="group-actions">
+                  <a-button type="text" size="small" @click="handleEditGroup(group)">
+                    <icon-edit /> 编辑
+                  </a-button>
+                  <a-popconfirm content="确定删除该用户组吗？" @ok="handleDeleteGroup(group.value)">
+                    <a-button type="text" status="danger" size="small">
+                      <icon-delete /> 删除
+                    </a-button>
+                  </a-popconfirm>
+                </div>
+              </div>
+            </a-list-item>
+          </a-list>
+        </div>
+        
+        <div class="group-form">
+          <div class="form-title">{{ editingGroup ? '编辑用户组' : '新增用户组' }}</div>
+          <a-form :model="newGroupForm" layout="vertical">
+            <a-form-item field="name" label="用户组名称" required>
+              <a-input v-model="newGroupForm.name" placeholder="请输入用户组名称" />
+            </a-form-item>
+            <a-form-item field="members" label="组成员" required>
+              <a-select
+                v-model="newGroupForm.members"
+                placeholder="请选择成员"
+                multiple
+                allow-search
+              >
+                <a-option 
+                  v-for="user in mockUserList" 
+                  :key="user.id" 
+                  :value="user.id"
+                >
+                  {{ user.name }} ({{ user.department }})
+                </a-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item>
+              <a-space>
+                <a-button type="primary" @click="handleSaveGroup">保存</a-button>
+                <a-button @click="resetGroupForm">重置</a-button>
+              </a-space>
+            </a-form-item>
+          </a-form>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Message } from '@arco-design/web-vue'
+import { Message, Modal } from '@arco-design/web-vue'
 import {
   IconBold,
   IconItalic,
@@ -308,15 +442,27 @@ import {
   IconInfoCircle,
   IconCheckCircle,
   IconExclamationCircle,
+  IconStorage,
+  IconUserGroup,
+  IconSave,
+  IconDelete
 } from '@arco-design/web-vue/es/icon'
 import type { 
   Notification, 
   NotificationAttachment, 
   ResourceCategory,
-  NotificationType 
 } from '@/types/community'
-import mockData from '@/mock/community'
+import { NotificationType, DATA_ASSET_OPTIONS } from '@/types/community'
+import { 
+  getNoticeTypeLabel, 
+  getNoticeTypeColor, 
+  getNoticeTypeIcon,
+  NOTICE_TYPE_OPTIONS,
+  ARCHIVE_CATEGORY_TREE
+} from '@/constants/notification'
+import NotificationAPI from '@/api/notification'
 import { marked } from 'marked'
+import NotificationDetailContent from '@/components/community/NotificationDetailContent.vue'
 
 // 路由
 const router = useRouter()
@@ -335,18 +481,51 @@ const fileList = ref<any[]>([])
 const attachmentEnabled = ref(true) // 附件管理开关，默认开启
 const publishSettingsEnabled = ref(true) // 发布设置开关，默认开启
 
+// 模拟用户数据
+const mockUserList = [
+  { id: 'user-1', name: '系统管理员', department: '技术部' },
+  { id: 'user-2', name: '内容编辑员', department: '运营部' },
+  { id: 'user-3', name: '张三', department: '数据部' },
+  { id: 'user-4', name: '李四', department: '产品部' },
+  { id: 'user-5', name: '王五', department: '销售部' },
+  { id: 'user-6', name: '赵六', department: '客服部' },
+  { id: 'user-7', name: '钱七', department: '财务部' }
+]
+
+// 用户组管理
+const userGroups = ref([
+  { label: '全体用户', value: 'all', members: [] as string[] },
+  { label: '数据分析师', value: 'analysts', members: ['user-3'] },
+  { label: '开发人员', value: 'developers', members: ['user-1'] },
+  { label: '产品经理', value: 'managers', members: ['user-4'] }
+])
+
+const goToUserGroupManagement = () => {
+  router.push({ name: 'AdminUserGroups' })
+}
+
 // 表单数据
-const formData = ref<Partial<Notification>>({
+const formData = ref<Partial<Notification> & { 
+  contentType: string, 
+  categoryPath: string[],
+  notificationType?: string,
+  target?: string[] 
+}>({
   contentType: 'notification', // 默认为发送通知模式
+  notificationType: 'general',
   title: '',
   categoryPath: [], // 级联选择器的值
   content: '',
   isSticky: false,
   isPublic: true,
   allowComments: false, // 默认关闭评论功能
-  publishTime: null,
-  expireTime: null,
-  attachments: []
+  publishTime: undefined,
+  expireTime: undefined,
+  attachments: [],
+  serviceType: '',
+  targetTable: '',
+  dataAssets: [],
+  target: []
 })
 
 // 字数统计
@@ -366,6 +545,39 @@ const renderedContent = computed(() => {
   }
 })
 
+// 是否显示数据服务特有字段
+const showDataServiceFields = computed(() => {
+  const path = formData.value.categoryPath
+  const isDataAssetChange = Array.isArray(path) && 
+         path.length >= 2 && 
+         path[0] === 'data_service' && 
+         path[1] === 'data_asset_change'
+  return formData.value.contentType === 'notification' && isDataAssetChange
+})
+
+const previewVisible = ref(false)
+const previewNotification = computed(() => {
+  if (formData.value.contentType !== 'notification') return null
+  const now = new Date().toISOString()
+  return {
+    id: 'preview',
+    title: formData.value.title || '（未填写标题）',
+    content: renderedContent.value,
+    type: formData.value.categoryPath?.[1] || '',
+    categoryId: formData.value.categoryPath?.[0] || '',
+    author: '数据社区运营团队',
+    sender: '数据社区运营团队',
+    publishTime: formData.value.publishTime || now,
+    createdAt: now,
+    updatedAt: now,
+    attachments: (formData.value as any).attachments || []
+  }
+})
+
+const handlePreview = () => {
+  previewVisible.value = true
+}
+
 // 动态表单验证规则
 const formRules = computed(() => {
   const baseRules = {
@@ -381,7 +593,7 @@ const formRules = computed(() => {
 
   // 根据内容类型添加不同的验证规则
   if (formData.value.contentType === 'notification') {
-    return {
+    const rules: any = {
       ...baseRules,
       content: [
         { required: true, message: '请输入正文内容' },
@@ -395,8 +607,18 @@ const formRules = computed(() => {
           }, 
           message: '请选择完整的分类路径' 
         }
+      ],
+      target: [
+        { required: true, message: '请选择通知对象' }
       ]
     }
+
+    // Data Service Validation
+    if (showDataServiceFields.value) {
+      rules.dataAssets = [{ required: true, message: '请选择或输入变更的数据资产' }]
+    }
+
+    return rules
   } else if (formData.value.contentType === 'document') {
     return {
       ...baseRules,
@@ -414,48 +636,8 @@ const formRules = computed(() => {
   return baseRules
 })
 
-// 级联选择器选项 - 基于数据资源树形结构
-const categoryOptions = [
-  {
-    key: 'policy',
-    title: '政策制度',
-    children: [
-      { key: 'policy-law', title: '法律法规' },
-      { key: 'policy-management', title: '管理办法' },
-      { key: 'policy-standard', title: '标准规范' }
-    ]
-  },
-  {
-    key: 'cases',
-    title: '实践案例',
-    children: [
-      { key: 'cases-analytics', title: '数据分析' },
-      { key: 'cases-ml', title: '机器学习' },
-      { key: 'cases-visualization', title: '数据可视化' }
-    ]
-  },
-  {
-    key: 'guide',
-    title: '操作指南',
-    children: [
-      { key: 'guide-basic', title: '基础操作' },
-      { key: 'guide-advanced', title: '高级功能' },
-      { key: 'guide-troubleshooting', title: '故障排除' }
-    ]
-  },
-  {
-    key: 'news',
-    title: '社区动态',
-    children: [
-      { key: 'news-announcement', title: '公告通知' },
-      { key: 'news-activity', title: '活动资讯' },
-      { key: 'news-update', title: '更新日志' }
-    ]
-  }
-]
-
-// 分类选项
-const categories = computed(() => mockData.categories)
+// 级联选择器选项 - 基于归档分类树形结构
+const categoryOptions = ARCHIVE_CATEGORY_TREE
 
 // 方法
 const insertMarkdown = (prefix: string, suffix: string) => {
@@ -603,8 +785,8 @@ const handleSubmit = async () => {
       // 通知模式：处理级联选择器的值，转换为后端需要的格式
       submitData = {
         ...submitData,
-        categoryId: formData.value.categoryPath?.[1] || '', // 使用子分类作为categoryId
-        type: formData.value.categoryPath?.[0] || '', // 使用主分类作为type
+        categoryId: formData.value.categoryPath?.[0] || '', // 一级分类
+        type: formData.value.categoryPath?.[1] || '', // 二级分类
       }
       // 移除级联选择器字段
       delete submitData.categoryPath
@@ -629,12 +811,8 @@ const handleSubmit = async () => {
     
     Message.success(successMessage)
     
-    // 根据内容类型跳转到不同页面
-    if (formData.value.contentType === 'document') {
-      router.push('/community') // 跳转到社区资源页面
-    } else {
-      router.push('/notification/list') // 跳转到通知列表页面
-    }
+    // 统一跳转到通知列表页面
+    router.push('/admin/notifications')
   } catch (error) {
     Message.error('操作失败，请重试')
   } finally {
@@ -658,24 +836,46 @@ const handleSaveDraft = async () => {
 }
 
 const handleCancel = () => {
-  router.push('/notification/list')
+  router.push('/admin/notifications')
 }
 
 const loadNotification = async (id: string) => {
-  // 模拟加载通知数据
-  const notification = mockData.notifications.find(n => n.id === id)
-  if (notification) {
-    Object.assign(formData.value, notification)
-    
-    // 加载附件到文件列表
-    if (notification.attachments) {
-      fileList.value = notification.attachments.map((att, index) => ({
-        uid: `${att.id}-${index}`,
-        name: att.fileName,
-        status: 'done',
-        url: att.fileUrl
-      }))
+  try {
+    // 获取通知详情
+    const response = await NotificationAPI.getNotification(id)
+    if (response.success && response.data) {
+      const notification = response.data
+      Object.assign(formData.value, notification)
+      
+      // 处理分类路径转换逻辑 (categoryId -> categoryPath)
+      if (notification.categoryId && (!formData.value.categoryPath || formData.value.categoryPath.length === 0)) {
+        const categoryMap: Record<string, string[]> = {
+          '1': ['notification', 'notification-1'],
+          '2': ['notification', 'notification-2'],
+          '3': ['notification', 'notification-3'],
+          '4': ['notification', 'notification-4'],
+          '5': ['notification', 'notification-5'],
+          '6': ['notification', 'notification-6']
+        }
+        const mappedPath = categoryMap[notification.categoryId]
+        if (mappedPath) {
+          formData.value.categoryPath = [...mappedPath]
+        }
+      }
+      
+      // 加载附件到文件列表
+      if (notification.documents) {
+        fileList.value = notification.documents.map((att) => ({
+          uid: att.id,
+          name: att.fileName,
+          status: 'done',
+          url: att.filePath
+        }))
+      }
     }
+  } catch (error) {
+    console.error('加载通知失败:', error)
+    Message.error('获取通知详情失败')
   }
 }
 
@@ -1327,5 +1527,44 @@ onUnmounted(() => {
 
 .preview-content::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+.group-management {
+  display: flex;
+  gap: 20px;
+  height: 400px;
+}
+
+.group-list {
+  flex: 1;
+  border-right: 1px solid var(--color-border);
+  padding-right: 20px;
+  overflow-y: auto;
+}
+
+.group-form {
+  flex: 1;
+  padding-left: 20px;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.form-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: var(--color-text-1);
 }
 </style>

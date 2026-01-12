@@ -20,7 +20,7 @@ export default [
         children: [
           {
             path: 'list',
-            name: 'NotificationList',
+            name: 'AdminNotificationList',
             component: () => import('../pages/admin/notifications/index.vue'),
             meta: {
               title: '通知列表',
@@ -29,17 +29,18 @@ export default [
           },
           {
             path: 'create',
-            name: 'NotificationCreate',
-            component: () => import('../pages/admin/notifications/create.vue'),
+            name: 'AdminNotificationCreate',
+            component: () => import('../pages/notification/NotificationForm.vue'),
             meta: {
               title: '新建通知',
-              activeMenu: '/admin/notifications/list'
+              activeMenu: '/admin/notifications/list',
+              hidden: true
             }
           },
           {
             path: 'edit/:id',
-            name: 'NotificationEdit',
-            component: () => import('../pages/admin/notifications/edit.vue'),
+            name: 'AdminNotificationEdit',
+            component: () => import('../pages/notification/NotificationForm.vue'),
             meta: {
               title: '编辑通知',
               activeMenu: '/admin/notifications/list',
@@ -49,7 +50,7 @@ export default [
           },
           {
             path: 'detail/:id',
-            name: 'NotificationDetail',
+            name: 'AdminNotificationDetail',
             component: () => import('../pages/admin/notifications/detail.vue'),
             meta: {
               title: '通知详情',
@@ -60,10 +61,18 @@ export default [
           },
           {
             path: 'categories',
-            name: 'NotificationCategories',
+            name: 'AdminNotificationCategories',
             component: () => import('../pages/admin/notifications/categories.vue'),
             meta: {
               title: '分类管理'
+            }
+          },
+          {
+            path: 'user-groups',
+            name: 'AdminUserGroups',
+            component: () => import('../pages/admin/user-groups/index.vue'),
+            meta: {
+              title: '用户组管理'
             }
           }
         ]

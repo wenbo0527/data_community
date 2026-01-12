@@ -1,13 +1,20 @@
 <template>
   <div class="lineage-node" :class="nodeClass">
     <div class="node-header">
-      <component :is="iconComponent" class="node-icon" />
+      <div class="status-indicator" :class="statusClass" :title="statusText"></div>
+      <component :is="iconComponent" class="node-icon" :style="{ color: typeColor }" />
       <span class="node-title" :title="nodeData.label">{{ nodeData.label }}</span>
+      <span class="node-type-tag" :style="{ backgroundColor: typeColor }">{{ nodeData.dataType }}</span>
     </div>
     <div class="node-content">
-      <div v-if="nodeData.type === 'main'" class="node-tag main-tag">主节点</div>
-      <div v-else-if="nodeData.type === 'upstream'" class="node-tag upstream-tag">上游</div>
-      <div v-else-if="nodeData.type === 'downstream'" class="node-tag downstream-tag">下游</div>
+      <div class="content-top">
+        <div v-if="nodeData.type === 'main'" class="node-tag main-tag">主节点</div>
+        <div v-else-if="nodeData.type === 'upstream'" class="node-tag upstream-tag">上游</div>
+        <div v-else-if="nodeData.type === 'downstream'" class="node-tag downstream-tag">下游</div>
+        <div class="node-metrics" v-if="nodeData.rowCount">
+          <span class="metric-item" title="数据量">{{ formatNumber(nodeData.rowCount) }} 行</span>
+        </div>
+      </div>
       
       <div class="node-info">
         <div class="info-row" v-if="nodeData.dbName">
@@ -43,7 +50,7 @@
 
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue'
-import { IconApps, IconArrowLeft, IconArrowRight, IconStorage, IconPlus } from '@arco-design/web-vue/es/icon'
+import { IconApps, IconArrowLeft, IconArrowRight, IconStorage, IconPlus, IconCode, IconDashboard, IconFile } from '@arco-design/web-vue/es/icon'
 
 const props = defineProps({
   node: {
@@ -79,13 +86,52 @@ const nodeClass = computed(() => {
 })
 
 const iconComponent = computed(() => {
-  switch (nodeData.value.type) {
-    case 'upstream': return IconArrowLeft
-    case 'downstream': return IconArrowRight
-    case 'main': return IconStorage
-    default: return IconApps
+  // 根据数据类型返回不同的图标
+  const type = nodeData.value.dataType
+  switch (type) {
+    case 'Table': return IconStorage
+    case 'Metric': return IconDashboard
+    case 'API': return IconApps
+    case 'Variable': return IconCode
+    default: return IconFile
   }
 })
+
+const typeColor = computed(() => {
+  const type = nodeData.value.dataType
+  switch (type) {
+    case 'Table': return '#165DFF' // 蓝色
+    case 'Metric': return '#00B42A' // 绿色
+    case 'API': return '#FF7D00' // 橙色
+    case 'Variable': return '#722ED1' // 紫色
+    default: return '#86909C'
+  }
+})
+
+const statusClass = computed(() => {
+  const status = nodeData.value.taskStatus
+  return {
+    'status-success': status === 'success',
+    'status-running': status === 'running',
+    'status-failed': status === 'failed'
+  }
+})
+
+const statusText = computed(() => {
+  const status = nodeData.value.taskStatus
+  switch (status) {
+    case 'success': return '运行成功'
+    case 'running': return '运行中'
+    case 'failed': return '运行失败'
+    default: return '未知状态'
+  }
+})
+
+const formatNumber = (num) => {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+  return num
+}
 
 // 按钮显示逻辑
 const showLeftExpand = computed(() => {
@@ -174,6 +220,35 @@ const handleExpand = (direction) => {
   gap: 8px;
 }
 
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-success {
+  background-color: #00b42a;
+  box-shadow: 0 0 4px #00b42a;
+}
+
+.status-running {
+  background-color: #165dff;
+  box-shadow: 0 0 4px #165dff;
+  animation: pulse 2s infinite;
+}
+
+.status-failed {
+  background-color: #f53f3f;
+  box-shadow: 0 0 4px #f53f3f;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 .node-icon {
   font-size: 16px;
   color: #86909c;
@@ -189,12 +264,40 @@ const handleExpand = (direction) => {
   flex: 1;
 }
 
+.node-type-tag {
+  font-size: 10px;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 .node-content {
-  padding: 12px;
   flex: 1;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.content-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.node-metrics {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: #86909c;
+}
+
+.metric-item {
+  background: #f2f3f5;
+  padding: 1px 4px;
+  border-radius: 2px;
 }
 
 .node-tag {

@@ -253,7 +253,7 @@
                                 <div class="notice-title-text">{{ notice.title }}</div>
                               </div>
                               <div class="notice-info-row">
-                                <a-tag size="small" :color="getNoticeTypeColor(notice.type)" bordered class="notice-tag">{{ notice.type }}</a-tag>
+                                <a-tag size="small" :color="getNoticeTypeColor(notice.type)" bordered class="notice-tag">{{ getNoticeTypeLabel(notice.type) }}</a-tag>
                                 <span class="notice-time">{{ notice.time }}</span>
                               </div>
                             </div>
@@ -278,7 +278,6 @@
                           <a-space direction="vertical" style="width: 100%">
                             <div class="notice-title compact">
                               <a-typography-text class="compact-text">{{ todo.title }}</a-typography-text>
-                              <a-tag :color="todo.priority === '高' ? 'red' : todo.priority === '中' ? 'orange' : 'blue'" class="compact-tag">{{ todo.priority }}</a-tag>
                             </div>
                             <a-typography-text type="secondary" class="notice-time compact">截止时间：{{ todo.deadline }}</a-typography-text>
                           </a-space>
@@ -321,57 +320,14 @@
       @cancel="handleCloseNotificationModal"
       class="notification-detail-modal"
     >
-      <div v-if="selectedNotification" class="notification-detail-wrapper">
+      <div v-if="selectedNotification" class="home-notification-detail">
         <!-- 自定义关闭按钮 -->
         <div class="modal-close-btn" @click="handleCloseNotificationModal">
           <icon-close />
         </div>
 
-        <!-- 头部信息 -->
-        <div class="detail-header">
-          <h2 class="detail-title">{{ selectedNotification.title }}</h2>
-          <div class="detail-meta">
-            <a-tag size="small" :color="getNoticeTypeColor(selectedNotification.type)" bordered class="meta-tag">
-              {{ selectedNotification.type }}
-            </a-tag>
-            <span class="meta-item">
-              <icon-user style="margin-right: 4px;" />
-              {{ selectedNotification.author }}
-            </span>
-            <span class="meta-item">
-              <icon-clock-circle style="margin-right: 4px;" />
-              {{ selectedNotification.time }}
-            </span>
-          </div>
-        </div>
-
-        <a-divider style="margin: 24px 0; border-color: #f2f3f5;" />
-
-        <!-- 正文内容 -->
-        <div class="detail-content notification-article" v-html="selectedNotification.content">
-        </div>
-
-        <!-- 附件部分 -->
-        <div v-if="selectedNotification.attachments && selectedNotification.attachments.length > 0" class="detail-attachments">
-          <div class="attachment-title">相关附件</div>
-          <div class="attachment-list">
-            <div v-for="attachment in selectedNotification.attachments" 
-                 :key="attachment.id" 
-                 class="attachment-item">
-              <div class="attachment-icon">
-                <icon-file />
-              </div>
-              <div class="attachment-info">
-                <div class="attachment-name">{{ attachment.fileName }}</div>
-                <div class="attachment-size">{{ attachment.fileSize }}</div>
-              </div>
-              <a-button type="text" size="small" class="download-btn">
-                <template #icon><icon-download /></template>
-                下载
-              </a-button>
-            </div>
-          </div>
-        </div>
+        <!-- 使用统一的通知详情组件 -->
+        <NotificationDetailContent :notification="selectedNotification" variant="home" />
       </div>
     </a-modal>
     
@@ -414,6 +370,9 @@ import { useUserStore } from '../../stores/user'
 import ArchitectureChart from '../../components/layout/ArchitectureChart.vue'
 import HomeWelcomeModal from '../../components/home-welcome-modal.vue'
 import NotificationStats from '../../components/NotificationStats.vue'
+import NotificationDetailContent from '../../components/community/NotificationDetailContent.vue'
+import { NotificationAPI } from '../../api/notification'
+import { getNoticeTypeLabel, getNoticeTypeColor } from '@/constants/notification'
 import {
   IconUser,
   IconDown,
@@ -450,9 +409,12 @@ import {
   IconCalendar,
   IconStar,
   IconClockCircle,
-  IconDownload
+  IconDownload,
+  IconTags,
+  IconCommon
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
+import { DATA_ASSET_OPTIONS } from '../../types/community'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -507,93 +469,36 @@ const selectedNotification = ref(null)
 // 获取通知数据
 const fetchNotices = async () => {
   try {
-    // 导入通知API服务
-    const NotificationAPI = (await import('../../api/notification')).default
-    
-    // 尝试获取数据，但为了演示效果，我们主要使用模拟数据来匹配用户要求的样式
-    // 实际项目中应优先使用 API 返回的数据
-    /*
+    // 调用通知API获取已发布的通知
     const response = await NotificationAPI.getNotifications({
       status: 'published',
       pageSize: 10,
       page: 1
     })
-    */
     
-    // 使用模拟数据以匹配"腾讯云"风格的截图要求
-    notices.value = [
-      {
-        id: 1,
-        title: '【腾讯云智能体】关于 DeepSeek-V3 和 DeepSeek-R1 模型上线的通知',
-        type: '产品消息',
-        publishTime: '2025-11-21T18:27:22',
-        time: '2025-11-21 18:27:22',
-        isNew: true
-      },
-      {
-        id: 2,
-        title: 'BI基础版新客特惠活动，限时抢购中',
-        type: '腾讯云动态',
-        publishTime: '2024-12-30T11:41:12',
-        time: '2024-12-30 11:41:12',
-        isHot: true
-      },
-      {
-        id: 3,
-        title: '【重要通知】腾讯云将对您的账号启用登录保护MFA多因素认证',
-        type: '产品消息',
-        publishTime: '2024-12-03T16:29:06',
-        time: '2024-12-03 16:29:06'
-      },
-      {
-        id: 4,
-        title: '恭喜您！成功获得微信同款研发管理工具免费资格！',
-        type: '产品消息',
-        publishTime: '2024-11-04T10:56:04',
-        time: '2024-11-04 10:56:04'
-      },
-      {
-        id: 5,
-        title: '【腾讯云渠道】解除委托服务的提醒',
-        type: '产品消息',
-        publishTime: '2024-09-24T12:38:19',
-        time: '2024-09-24 12:38:19'
-      },
-      {
-        id: 6,
-        title: '腾讯云BI新客户首年9.9元！',
-        type: '腾讯云动态',
-        publishTime: '2024-06-07T11:28:44',
-        time: '2024-06-07 11:28:44'
-      },
-      {
-        id: 7,
-        title: '【腾讯云】轻量应用服务器释放通知',
-        type: '产品消息',
-        publishTime: '2024-05-09T11:04:05',
-        time: '2024-05-09 11:04:05'
-      }
-    ]
-
+    if (response.success && response.data.list) {
+      // 同步数据格式
+      notices.value = response.data.list.map(notice => {
+        return {
+          ...notice,
+          // 格式化时间显示
+          time: notice.publishedAt ? new Date(notice.publishedAt).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          }).replace(/\//g, '-') : (notice.createdAt ? new Date(notice.createdAt).toLocaleString('zh-CN').replace(/\//g, '-') : ''),
+          isNew: isNewNotice(notice.publishedAt || notice.createdAt)
+        }
+      })
+    }
   } catch (error) {
     console.error('获取通知数据失败:', error)
     notices.value = []
   }
-}
-
-// 获取通知类型对应的颜色
-const getNoticeTypeColor = (type) => {
-  const colorMap = {
-    '产品消息': 'gray', // 截图上看起来是灰色或浅蓝
-    '腾讯云动态': 'orange',
-    '运维消息': 'blue',
-    '操作指南': 'blue',
-    '工单进度': 'green', 
-    '社区动态': 'purple',
-    '实践案例': 'orange',
-    '政策制度': 'red'
-  }
-  return colorMap[type] || 'gray'
 }
 
 // 判断是否为新发布的通知（7天内）
@@ -634,7 +539,17 @@ const refreshNotificationStats = () => {
 const viewNotification = (notice) => {
   console.log('点击查看通知详情:', notice)
   
-  // 模拟丰富的详情内容
+  // 如果通知对象中已有完整信息（来自API或Mock数据），直接使用
+  if (notice.content) {
+    selectedNotification.value = {
+      ...notice,
+      time: notice.publishTime || notice.time // 确保时间字段存在
+    }
+    notificationModalVisible.value = true
+    return
+  }
+  
+  // 模拟丰富的详情内容 (用于演示列表中的静态数据)
   const detailContent = `
     <div class="notification-article">
       <div class="article-section">
@@ -678,7 +593,6 @@ const viewNotification = (notice) => {
     publishTime: notice.publishTime,
     time: notice.time,
     author: '数据社区运营团队',
-    priority: 'normal',
     isSticky: false,
     attachments: [
       {
@@ -709,25 +623,21 @@ const todos = ref([
   {
     id: 1,
     title: '数据质量周报审核',
-    priority: '高',
     deadline: '2024-01-16 18:00'
   },
   {
     id: 2,
     title: '新增数据接口评审',
-    priority: '中',
     deadline: '2024-01-17 12:00'
   },
   {
     id: 3,
     title: '数据安全培训',
-    priority: '低',
     deadline: '2024-01-18 15:00'
   },
   {
     id: 4,
     title: '月度数据统计报告',
-    priority: '高',
     deadline: '2024-01-19 17:00'
   }
 ])
@@ -1904,10 +1814,11 @@ const metrics = ref([
 /* 通知详情优化样式 */
 .notification-detail-modal :deep(.arco-modal-body) {
   padding: 0;
+  background: #f7f8fa;
 }
 
-.notification-detail-wrapper {
-  padding: 32px 40px;
+.home-notification-detail {
+  padding: 0;
   position: relative;
 }
 
@@ -2238,6 +2149,93 @@ const metrics = ref([
   transform: scale(1.05);
   color: #722ed1;
   background: linear-gradient(135deg, rgba(22, 93, 255, 0.12) 0%, rgba(114, 46, 209, 0.12) 100%);
+}
+
+.btn-text {
+  font-size: 10px;
+  color: #4e5969;
+  font-weight: 500;
+  line-height: 1.1;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.gas-station-btn:hover .btn-text {
+  color: #165dff;
+}
+
+/* 通知详情弹窗样式 */
+.notification-detail-modal :deep(.arco-modal-body) {
+  padding: 0;
+  background: #f7f8fa;
+}
+
+.home-notification-detail {
+  padding: 0;
+  position: relative;
+}
+
+.detail-summary {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background-color: #f7f8fa;
+  border-left: 4px solid #165dff;
+  border-radius: 4px;
+  color: #4e5969;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.detail-assets {
+  margin: 16px 0;
+  padding: 16px;
+  background-color: #e8f3ff;
+  border-radius: 8px;
+  border: 1px dashed #165dff;
+}
+
+.assets-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #165dff;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.assets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-tags {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f2f3f5;
+}
+
+.notification-article {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1d2129;
+}
+
+.notification-article p {
+  margin-bottom: 16px;
+}
+
+.notification-article img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 12px 0;
+}
+
+.detail-attachments {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #f2f3f5;
 }
 
 .btn-text {
@@ -2738,6 +2736,46 @@ const metrics = ref([
 .notice-time {
   font-size: 12px;
   color: #86909c;
+}
+
+.detail-summary {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background-color: #f7f8fa;
+  border-left: 4px solid #165dff;
+  border-radius: 4px;
+  color: #4e5969;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.detail-assets {
+  margin: 16px 0;
+  padding: 16px;
+  background-color: #e8f3ff;
+  border-radius: 8px;
+  border: 1px dashed #165dff;
+}
+
+.assets-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1d2129;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-tags {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f2f3f5;
 }
 
 /* 详情弹窗样式 */

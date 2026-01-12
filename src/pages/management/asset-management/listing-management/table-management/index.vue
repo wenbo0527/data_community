@@ -286,7 +286,7 @@ const viewTable = (record: any) => {
 const editTable = (record: any) => {
   // 重定向到注册表单页面，并传递编辑模式和数据
   router.push({
-    path: '/discovery/asset-management/table-management/register',
+    path: '/management/asset-management/listing-management/table-management/register',
     query: { 
       mode: 'edit',
       id: record.tableName // 使用表名作为ID
@@ -329,7 +329,7 @@ const resetForm = () => {
 
 // 跳转到注册表单页面
 const goToRegisterForm = () => {
-  router.push('/discovery/asset-management/table-management/register')
+  router.push('/management/asset-management/listing-management/table-management/register')
 }
 
 onMounted(() => {

@@ -53,6 +53,24 @@ export const MENU_CONFIG = {
         path: '/discovery/data-map/table-list',
         routeName: 'TableList'
       },
+      'collections-management': {
+        key: 'collections-management',
+        title: '常用表管理',
+        path: '/discovery/data-map/collections',
+        routeName: 'CollectionsManagement'
+      },
+      'favorites': {
+        key: 'favorites',
+        title: '我的收藏',
+        path: '/discovery/favorites',
+        routeName: 'Favorites'
+      },
+      'lineage': {
+        key: 'lineage',
+        title: '血缘分析',
+        path: ROUTE_PATHS.DISCOVERY.LINEAGE,
+        routeName: ROUTE_NAMES.DISCOVERY.LINEAGE
+      },
       'data-asset': {
         key: 'data-asset',
         title: '数据资产',
@@ -302,6 +320,12 @@ export const MENU_CONFIG = {
             title: 'API管理',
             path: '/management/service/api-management',
             routeName: 'management-service-api-list'
+          },
+          'data-models': {
+            key: 'data-models',
+            title: '数据查询&管理模型',
+            path: '/management/data-models',
+            routeName: 'data-models'
           }
         }
       },
@@ -347,6 +371,12 @@ export const MENU_CONFIG = {
             type: 'group',
             children: {
 
+              'metadata-collection': {
+                key: 'metadata-collection',
+                title: '元数据采集',
+                path: '/management/asset-management/basic-management/metadata-collection',
+                routeName: 'MetadataCollectionList'
+              },
               'tag-management': {
                 key: 'tag-management',
                 title: '标签管理',
@@ -400,12 +430,7 @@ export const MENU_CONFIG = {
           }
         }
       },
-      'data-models': {
-        key: 'data-models',
-        title: '数据查询&管理模型',
-        path: '/management/data-models',
-        routeName: 'data-models'
-      },
+      
       'notification-management': {
         key: 'notification-management',
         title: '通知管理',
@@ -422,25 +447,6 @@ export const MENU_CONFIG = {
             title: '分类管理',
             path: '/admin/notifications/categories',
             routeName: 'NotificationCategories'
-          }
-        }
-      },
-      'accompany': {
-        key: 'accompany',
-        title: '陪跑计划',
-        type: 'group',
-        children: {
-          'management-accompany-create': {
-            key: 'management-accompany-create',
-            title: '创建陪跑',
-            path: '/management/accompany/create',
-            routeName: 'management-accompany-create'
-          },
-          'management-accompany-result': {
-            key: 'management-accompany-result',
-            title: '陪跑结果',
-            path: '/management/accompany/result',
-            routeName: 'management-accompany-result'
           }
         }
       }
@@ -566,6 +572,25 @@ export const MENU_CONFIG = {
         title: '风险首页',
         path: '/risk/index',
         routeName: 'riskIndex'
+      },
+      'accompany': {
+        key: 'accompany',
+        title: '陪跑计划',
+        type: 'group',
+        children: {
+          'management-accompany-create': {
+            key: 'management-accompany-create',
+            title: '创建陪跑',
+            path: '/management/accompany/create',
+            routeName: 'management-accompany-create'
+          },
+          'management-accompany-result': {
+            key: 'management-accompany-result',
+            title: '陪跑结果',
+            path: '/management/accompany/result',
+            routeName: 'management-accompany-result'
+          }
+        }
       },
       'risk-budget-center': {
         key: 'risk-budget-center',

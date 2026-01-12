@@ -3,16 +3,25 @@
 export interface Notification {
   id: string;
   title: string;
+  type: string; // 二级分类
+  target?: string[];
+  dataAssets?: string[];
   content: string;
-  categoryId: string;
-  category?: Category;
+  categoryId: string; // 一级分类
   status: NotificationStatus;
-  priority: number;
-  createdBy: string;
+  author?: string;
+  views?: number;
+  isSticky?: boolean;
+  isPublic?: boolean;
+  allowComments?: boolean;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
   documents?: NotificationDocument[];
+  serviceType?: string;
+  targetTable?: string;
+  summary?: string;
+  tags?: string[];
 }
 
 export interface Category {
@@ -50,6 +59,7 @@ export interface NotificationListParams {
   page?: number;
   pageSize?: number;
   category?: string;
+  type?: string;
   status?: NotificationStatus;
   keyword?: string;
 }
@@ -66,7 +76,6 @@ export interface CreateNotificationRequest {
   title: string;
   content: string;
   categoryId: string;
-  priority?: number;
   publishAt?: string;
 }
 
@@ -75,7 +84,6 @@ export interface UpdateNotificationRequest {
   content?: string;
   categoryId?: string;
   status?: NotificationStatus;
-  priority?: number;
   publishAt?: string;
 }
 

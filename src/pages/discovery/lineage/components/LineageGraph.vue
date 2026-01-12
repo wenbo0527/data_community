@@ -2,6 +2,19 @@
   <div class="lineage-graph-container" ref="graphContainer">
     <div class="floating-toolbar">
       <div class="toolbar-group action-controls">
+        <button class="toolbar-btn" @click="zoomIn">
+          <IconZoomIn class="toolbar-icon" />
+          <span class="toolbar-text">放大</span>
+        </button>
+        <button class="toolbar-btn" @click="zoomOut">
+          <IconZoomOut class="toolbar-icon" />
+          <span class="toolbar-text">缩小</span>
+        </button>
+        <button class="toolbar-btn" @click="fitView">
+          <IconExpand class="toolbar-icon" />
+          <span class="toolbar-text">自适应</span>
+        </button>
+        <div class="toolbar-divider"></div>
         <button class="toolbar-btn" @click="refreshGraph">
           <IconRefresh class="toolbar-icon" />
           <span class="toolbar-text">刷新</span>
@@ -16,18 +29,40 @@
 
     <a-drawer
       v-model:visible="drawerVisible"
-      title="加工任务详情"
+      title="资产详情"
       :width="500"
       :footer="false"
       :popup-container="popupContainer"
     >
       <div v-if="selectedNodeData" class="drawer-content">
-        <a-descriptions :column="1" bordered>
+        <div class="drawer-header-actions">
+           <a-button type="primary" size="small" @click="jumpToDetail">
+             <template #icon><IconLaunch /></template>
+             查看资产详情
+           </a-button>
+        </div>
+
+        <a-descriptions title="基本信息" :column="1" bordered>
+          <a-descriptions-item label="名称">
+            {{ selectedNodeData.label }}
+          </a-descriptions-item>
+          <a-descriptions-item label="类型">
+            <a-tag>{{ selectedNodeData.dataType }}</a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="负责人">
+            {{ selectedNodeData.owner }}
+          </a-descriptions-item>
+          <a-descriptions-item label="存储库">
+            {{ selectedNodeData.dbName }}
+          </a-descriptions-item>
+          <a-descriptions-item label="数据量" v-if="selectedNodeData.rowCount">
+             {{ selectedNodeData.rowCount.toLocaleString() }} 行 ({{ selectedNodeData.dataSize }})
+          </a-descriptions-item>
+        </a-descriptions>
+
+        <a-descriptions title="加工任务" :column="1" bordered style="margin-top: 20px;">
           <a-descriptions-item label="任务名称">
             {{ selectedNodeData.taskName }}
-          </a-descriptions-item>
-          <a-descriptions-item label="任务ID">
-            {{ selectedNodeData.taskId }}
           </a-descriptions-item>
           <a-descriptions-item label="状态">
             <a-tag :color="selectedNodeData.taskStatus === 'success' ? 'green' : selectedNodeData.taskStatus === 'running' ? 'blue' : 'red'">
@@ -40,7 +75,13 @@
         </a-descriptions>
         
         <div class="sql-section">
-          <div class="section-title">SQL语句</div>
+          <div class="section-title">
+            <span>SQL语句</span>
+            <a-button type="text" size="mini" @click="copySQL">
+               <template #icon><IconCopy /></template>
+               复制
+            </a-button>
+          </div>
           <div class="sql-block">
             <pre>{{ selectedNodeData.sql }}</pre>
           </div>
@@ -56,7 +97,8 @@ import { Graph, Shape } from '@antv/x6'
 import { register } from '@antv/x6-vue-shape'
 import dagre from '@dagrejs/dagre'
 import LineageNode from './LineageNode.vue'
-import { IconRefresh, IconFullscreen } from '@arco-design/web-vue/es/icon'
+import { IconRefresh, IconFullscreen, IconCopy, IconLaunch, IconZoomIn, IconZoomOut, IconExpand } from '@arco-design/web-vue/es/icon'
+import { Message } from '@arco-design/web-vue'
 
 const props = defineProps({
   tableName: {
@@ -66,6 +108,14 @@ const props = defineProps({
   layers: {
     type: Number,
     default: 1
+  },
+  dataTypes: {
+    type: Array,
+    default: () => []
+  },
+  onlyFailed: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -87,20 +137,33 @@ register({
 })
 
 // 辅助函数：生成节点数据
-const createNodeData = (id, label, type, dbName, owner) => {
+const createNodeData = (id, label, type, dbName, owner, dataType = 'Table') => {
+  const status = Math.random() > 0.8 ? 'failed' : (Math.random() > 0.5 ? 'running' : 'success')
+  const rowCount = Math.floor(Math.random() * 1000000)
+  const dataSize = (Math.random() * 100).toFixed(2) + ' GB'
+  
   return {
       label,
       type,
+      dataType, // 新增数据类型字段
       dbName,
       owner,
+      rowCount, // 新增行数
+      dataSize, // 新增数据大小
       taskName: `任务_${label}`,
       taskId: `task-${type}-${Math.random().toString(36).substr(2, 5)}`,
-      taskStatus: Math.random() > 0.8 ? 'failed' : (Math.random() > 0.5 ? 'running' : 'success'),
+      taskStatus: status,
       lastRunTime: new Date(Date.now() - Math.random() * 86400000).toLocaleString(),
       sql: `SELECT * FROM ${label} \nWHERE dt = '${new Date().toISOString().slice(0, 10)}'`,
       upstreamExpanded: false,
       downstreamExpanded: false
   }
+}
+
+// 辅助函数：随机获取数据类型
+const getRandomDataType = () => {
+  const types = ['Table', 'Metric', 'API', 'Variable']
+  return types[Math.floor(Math.random() * types.length)]
 }
 
 // 辅助函数：生成指定方向的节点
@@ -112,10 +175,25 @@ const createNodeData = (id, label, type, dbName, owner) => {
           const id = `${direction}-${Date.now()}-${i}`
           const label = direction === 'upstream' ? `ods_source_${i}` : `ads_app_${i}`
           
+          // 如果没有筛选，随机生成类型；如果有筛选，从筛选中随机选一个
+          let dataType = 'Table'
+          if (props.dataTypes && props.dataTypes.length > 0) {
+             dataType = props.dataTypes[Math.floor(Math.random() * props.dataTypes.length)]
+          } else {
+             dataType = getRandomDataType()
+          }
+
+          const nodeData = createNodeData(id, label, direction, direction === 'upstream' ? 'ods' : 'ads', 'User', dataType)
+          
+          // 如果开启了“仅显示异常”，则强制设置为 failed
+          if (props.onlyFailed) {
+            nodeData.taskStatus = 'failed'
+          }
+
           newNodes.push({
               id,
               shape: 'lineage-node',
-              data: createNodeData(id, label, direction, direction === 'upstream' ? 'ods' : 'ads', 'User'),
+              data: nodeData,
               ports: {
                 groups: {
                   left: {
@@ -182,6 +260,14 @@ const expandNode = (nodeId, direction) => {
     render()
 }
 
+// 监听筛选条件变化
+watch(() => [props.tableName, props.layers, props.dataTypes, props.onlyFailed], () => {
+  if (graph.value) {
+    initData()
+    render()
+  }
+})
+
 // 提供给子组件
 provide('expandNode', expandNode)
 
@@ -189,6 +275,12 @@ provide('expandNode', expandNode)
 const initData = () => {
   const nodes = []
   const edges = []
+  // 假设主节点类型是筛选的第一项，或者默认为 Table
+  let mainType = 'Table'
+  if (props.dataTypes && props.dataTypes.length > 0) {
+    mainType = props.dataTypes[0]
+  }
+
   const mainNodeId = `main-${props.tableName}`
   
   // 主节点
@@ -196,7 +288,7 @@ const initData = () => {
     id: mainNodeId,
     shape: 'lineage-node',
     data: {
-      ...createNodeData(mainNodeId, props.tableName, 'main', 'dw', '张三'),
+      ...createNodeData(mainNodeId, props.tableName, 'main', 'dw', '张三', mainType),
       taskStatus: 'success',
       upstreamExpanded: true, // 初始默认展开一层
       downstreamExpanded: true // 初始默认展开一层
@@ -383,6 +475,33 @@ const toggleFullscreen = async () => {
     await document.exitFullscreen()
   }
 }
+
+const zoomIn = () => {
+  graph.value?.zoom(0.2)
+}
+
+const zoomOut = () => {
+  graph.value?.zoom(-0.2)
+}
+
+const fitView = () => {
+  graph.value?.zoomToFit({ padding: 40 })
+  graph.value?.centerContent()
+}
+
+const copySQL = () => {
+  if (selectedNodeData.value?.sql) {
+    navigator.clipboard.writeText(selectedNodeData.value.sql)
+    Message.success('SQL已复制到剪贴板')
+  }
+}
+
+const jumpToDetail = () => {
+  if (selectedNodeData.value) {
+    // 模拟跳转
+    Message.info(`跳转到 ${selectedNodeData.value.label} 的详情页面`)
+  }
+}
 </script>
 
 <style scoped>
@@ -415,6 +534,12 @@ const toggleFullscreen = async () => {
   padding: 0 4px;
 }
 
+.drawer-header-actions {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .sql-section {
   margin-top: 24px;
 }
@@ -424,6 +549,9 @@ const toggleFullscreen = async () => {
   font-weight: 600;
   color: #1d2129;
   margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .sql-block {

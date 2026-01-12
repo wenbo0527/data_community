@@ -52,6 +52,7 @@ import router from './router';
 import pinia from './store';
 import ArcoVue from '@arco-design/web-vue';
 import '@arco-design/web-vue/dist/arco.css';
+import './style.css';
 import * as ArcoIcons from '@arco-design/web-vue/es/icon';
 
 const app = createApp(App);

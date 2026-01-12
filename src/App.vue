@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import MainLayout from './components/layout/MainLayout.vue'
 
@@ -29,9 +29,9 @@ const layoutType = computed(() => {
 </script>
 
 <template>
-  <main-layout v-if="layoutType === 'main'">
+  <MainLayout v-if="layoutType === 'main'">
     <router-view />
-  </main-layout>
+  </MainLayout>
   <router-view v-else />
 </template>
 

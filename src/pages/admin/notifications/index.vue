@@ -8,6 +8,16 @@
       </div>
       <div class="header-right">
         <a-space>
+          <a-radio-group v-model="viewMode" type="button">
+            <a-radio value="table">
+              <template #icon><icon-list /></template>
+              表格
+            </a-radio>
+            <a-radio value="list">
+              <template #icon><icon-apps /></template>
+              卡片
+            </a-radio>
+          </a-radio-group>
           <a-button type="primary" @click="handleCreate">
             <template #icon><icon-plus /></template>
             新建通知
@@ -60,6 +70,22 @@
             </a-option>
           </a-select>
         </a-form-item>
+        <a-form-item field="type" label="类型">
+          <a-select
+            v-model="searchForm.type"
+            placeholder="全部类型"
+            style="width: 120px"
+            allow-clear
+          >
+            <a-option
+              v-for="(label, value) in NOTICE_TYPE_MAP"
+              :key="value"
+              :value="value"
+            >
+              {{ label }}
+            </a-option>
+          </a-select>
+        </a-form-item>
 
         <a-form-item>
           <a-space>
@@ -70,12 +96,12 @@
       </a-form>
     </a-card>
 
-    <!-- 数据表格 -->
+    <!-- 数据内容 -->
     <a-card class="table-card">
       <template #title>
         <div class="table-header">
           <span>通知列表</span>
-          <a-space v-if="selectedRowKeys.length > 0">
+          <a-space v-if="selectedRowKeys.length > 0 && viewMode === 'table'">
             <span class="selected-info">已选择 {{ selectedRowKeys.length }} 项</span>
             <a-button size="small" status="danger" @click="handleBatchDelete">
               批量删除
@@ -84,7 +110,9 @@
         </div>
       </template>
 
+      <!-- 表格视图 -->
       <a-table
+        v-if="viewMode === 'table'"
         :columns="columns"
         :data="tableData"
         :loading="loading"
@@ -108,6 +136,12 @@
           </a-tag>
         </template>
 
+        <template #type="{ record }">
+          <a-tag :color="getNoticeTypeColor(record.type)" bordered>
+            {{ getNoticeTypeLabel(record.type) }}
+          </a-tag>
+        </template>
+
         <template #status="{ record }">
           <a-tag
             :color="getStatusColor(record.status)"
@@ -116,8 +150,6 @@
             {{ getStatusText(record.status) }}
           </a-tag>
         </template>
-
-
 
         <template #publishTime="{ record }">
           <span v-if="record.publishTime">
@@ -178,6 +210,80 @@
           </a-space>
         </template>
       </a-table>
+
+      <!-- 列表视图 (对齐首页样式) -->
+      <div v-else class="list-view-container">
+        <a-list :loading="loading" :bordered="false">
+          <a-list-item 
+            v-for="item in tableData" 
+            :key="item.id"
+            class="admin-notice-list-item"
+          >
+            <div class="notice-item-inner" @click="handleView(item.id)">
+              <div class="notice-left-bar" :style="{ backgroundColor: getStatusColor(item.status) === 'gray' ? '#86909c' : (getStatusColor(item.status) === 'green' ? '#00b42a' : '#165dff') }"></div>
+              <div class="notice-content-wrapper">
+                <div class="notice-header-row">
+                  <div class="notice-title-text">
+                    {{ item.title }}
+                    <a-tag v-if="item.isTop" color="red" size="small" style="margin-left: 8px">置顶</a-tag>
+                  </div>
+                  <div class="notice-actions" @click.stop>
+                    <a-space>
+                      <a-button type="text" size="small" @click="handleEdit(item.id)">
+                        <template #icon><icon-edit /></template>
+                        编辑
+                      </a-button>
+                      <a-dropdown>
+                        <a-button type="text" size="small">
+                          更多 <icon-down />
+                        </a-button>
+                        <template #content>
+                          <a-doption @click="handleToggleTop(item)">{{ item.isTop ? '取消置顶' : '设为置顶' }}</a-doption>
+                          <a-doption v-if="item.status === 'draft'" @click="handlePublish(item)">发布</a-doption>
+                          <a-doption v-if="item.status === 'published'" @click="handleArchive(item)">归档</a-doption>
+                          <a-doption @click="handleCopy(item)">复制</a-doption>
+                          <a-doption class="danger" @click="handleDelete(item)">删除</a-doption>
+                        </template>
+                      </a-dropdown>
+                    </a-space>
+                  </div>
+                </div>
+                <div class="notice-info-row">
+                  <a-space size="medium">
+                    <a-tag size="small" :color="item.category?.color || 'blue'" bordered class="notice-tag">
+                      <template #icon><icon-tag /></template>
+                      {{ item.category?.name || '未分类' }}
+                    </a-tag>
+                    <a-tag size="small" :color="getStatusColor(item.status)" bordered class="notice-tag">
+                      {{ getStatusText(item.status) }}
+                    </a-tag>
+                    <span class="notice-meta-item">
+                      <icon-eye /> {{ item.viewCount || 0 }}
+                    </span>
+                    <span class="notice-meta-item">
+                      <icon-clock-circle /> {{ formatDateTime(item.publishTime || item.createdAt) }}
+                    </span>
+                    <span class="notice-meta-item">
+                      创建人: {{ item.createdBy }}
+                    </span>
+                  </a-space>
+                </div>
+              </div>
+            </div>
+          </a-list-item>
+        </a-list>
+        
+        <div class="pagination-wrapper">
+          <a-pagination
+            :current="pagination.current"
+            :page-size="pagination.pageSize"
+            :total="pagination.total"
+            show-total
+            show-jumper
+            @change="handlePageChange"
+          />
+        </div>
+      </div>
     </a-card>
   </div>
 </template>
@@ -190,12 +296,25 @@ import {
   IconPlus,
   IconRefresh,
   IconEye,
-  IconDown
+  IconDown,
+  IconList,
+  IconApps,
+  IconEdit,
+  IconDelete,
+  IconClockCircle,
+  IconTag
 } from '@arco-design/web-vue/es/icon'
-import { NotificationAPI } from '../../../api/notification'
+import { NotificationAPI, CategoryAPI } from '../../../api/notification'
+import { 
+  NOTICE_TYPE_MAP, 
+  getNoticeTypeLabel, 
+  getNoticeTypeColor 
+} from '@/constants/notification'
 
 const router = useRouter()
-const notificationAPI = new NotificationAPI()
+
+// 视图模式：table (表格), list (列表)
+const viewMode = ref('table')
 
 // 响应式数据
 const loading = ref(false)
@@ -207,7 +326,8 @@ const selectedRowKeys = ref([])
 const searchForm = reactive({
   keyword: '',
   status: '',
-  categoryId: ''
+  categoryId: '',
+  type: ''
 })
 
 // 分页配置
@@ -235,6 +355,12 @@ const columns = [
     dataIndex: 'category',
     slotName: 'category',
     width: 100
+  },
+  {
+    title: '类型',
+    dataIndex: 'type',
+    slotName: 'type',
+    width: 120
   },
   {
     title: '状态',
@@ -283,13 +409,17 @@ const rowSelection = reactive({
 const fetchData = async () => {
   loading.value = true
   try {
+    const { keyword, status, categoryId, type } = searchForm
     const params = {
       page: pagination.current,
       pageSize: pagination.pageSize,
-      ...searchForm
+      keyword,
+      status,
+      category: categoryId || undefined,
+      type: type || undefined
     }
     
-    const response = await notificationAPI.getNotifications(params)
+    const response = await NotificationAPI.getNotifications(params)
     
     if (response.success) {
       tableData.value = response.data.list
@@ -305,7 +435,7 @@ const fetchData = async () => {
 
 const fetchCategories = async () => {
   try {
-    const response = await notificationAPI.getCategories()
+    const response = await CategoryAPI.getCategories()
     if (response.success) {
       categories.value = response.data
     }
@@ -360,7 +490,7 @@ const handleDelete = (record) => {
     content: `确定要删除通知"${record.title}"吗？此操作不可恢复。`,
     onOk: async () => {
       try {
-        const response = await notificationAPI.deleteNotification(record.id)
+        const response = await NotificationAPI.deleteNotification(record.id)
         if (response.success) {
           Message.success('删除成功')
           fetchData()
@@ -386,7 +516,7 @@ const handleBatchDelete = () => {
     content: `确定要删除选中的 ${selectedRowKeys.value.length} 条通知吗？此操作不可恢复。`,
     onOk: async () => {
       try {
-        const response = await notificationAPI.batchDeleteNotifications(selectedRowKeys.value)
+        const response = await NotificationAPI.batchDeleteNotifications(selectedRowKeys.value)
         if (response.success) {
           Message.success(response.message)
           selectedRowKeys.value = []
@@ -404,7 +534,7 @@ const handleBatchDelete = () => {
 
 const handleToggleTop = async (record) => {
   try {
-    const response = await notificationAPI.updateNotification(record.id, {
+    const response = await NotificationAPI.updateNotification(record.id, {
       isTop: !record.isTop
     })
     if (response.success) {
@@ -421,7 +551,7 @@ const handleToggleTop = async (record) => {
 
 const handlePublish = async (record) => {
   try {
-    const response = await notificationAPI.updateNotification(record.id, {
+    const response = await NotificationAPI.updateNotification(record.id, {
       status: 'published'
     })
     if (response.success) {
@@ -438,7 +568,7 @@ const handlePublish = async (record) => {
 
 const handleArchive = async (record) => {
   try {
-    const response = await notificationAPI.updateNotification(record.id, {
+    const response = await NotificationAPI.updateNotification(record.id, {
       status: 'archived'
     })
     if (response.success) {
@@ -601,5 +731,91 @@ onMounted(() => {
 
 :deep(.arco-form-item) {
   margin-bottom: 0;
+}
+
+/* 列表视图样式 - 对齐首页 */
+.list-view-container {
+  padding: 8px 0;
+}
+
+.admin-notice-list-item {
+  padding: 0 !important;
+  border-bottom: 1px solid #f2f3f5 !important;
+  transition: all 0.2s;
+}
+
+.admin-notice-list-item:hover {
+  background-color: #f7f8fa;
+}
+
+.notice-item-inner {
+  display: flex;
+  padding: 16px 20px;
+  cursor: pointer;
+  position: relative;
+}
+
+.notice-left-bar {
+  width: 4px;
+  height: 40px;
+  background-color: #165dff;
+  border-radius: 2px;
+  margin-right: 16px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.notice-content-wrapper {
+  flex: 1;
+  overflow: hidden;
+}
+
+.notice-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notice-title-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1d2129;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-info-row {
+  display: flex;
+  align-items: center;
+}
+
+.notice-tag {
+  border-radius: 2px;
+}
+
+.notice-meta-item {
+  font-size: 13px;
+  color: #86909c;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notice-actions {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.admin-notice-list-item:hover .notice-actions {
+  opacity: 1;
+}
+
+.pagination-wrapper {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 20px 10px;
 }
 </style>

@@ -28,8 +28,8 @@
           <h1 class="notification-title">{{ notification.title }}</h1>
           <div class="notification-meta">
             <a-space>
-              <a-tag :color="getTypeColor(notification.type)">
-                {{ getTypeLabel(notification.type) }}
+              <a-tag :color="getNoticeTypeColor(notification.type)">
+                {{ getNoticeTypeLabel(notification.type) }}
               </a-tag>
               <a-tag :color="notification.status === 'published' ? 'green' : 'orange'">
                 {{ notification.status === 'published' ? '已发布' : '草稿' }}
@@ -78,11 +78,6 @@
               <a-descriptions-item label="分类">
                 {{ notification.categoryName || '未分类' }}
               </a-descriptions-item>
-              <a-descriptions-item label="优先级">
-                <a-tag :color="getPriorityColor(notification.priority)">
-                  {{ getPriorityLabel(notification.priority) }}
-                </a-tag>
-              </a-descriptions-item>
               <a-descriptions-item label="是否置顶">
                 {{ notification.isSticky ? '是' : '否' }}
               </a-descriptions-item>
@@ -126,6 +121,7 @@ import { Message } from '@arco-design/web-vue'
 import { IconUser, IconCalendar, IconAttachment } from '@arco-design/web-vue/es/icon'
 import { NotificationAPI } from '@/api/notification'
 import type { Notification } from '@/types/notification'
+import { getNoticeTypeLabel, getNoticeTypeColor } from '@/constants/notification'
 
 const route = useRoute()
 const router = useRouter()
@@ -153,50 +149,6 @@ const handleEdit = () => {
   if (notification.value) {
     router.push(`/notification/edit/${notification.value.id}`)
   }
-}
-
-// 获取类型颜色
-const getTypeColor = (type: string) => {
-  const colors = {
-    system: 'blue',
-    announcement: 'green',
-    maintenance: 'orange',
-    urgent: 'red'
-  }
-  return colors[type] || 'gray'
-}
-
-// 获取类型标签
-const getTypeLabel = (type: string) => {
-  const labels = {
-    system: '系统通知',
-    announcement: '公告',
-    maintenance: '维护通知',
-    urgent: '紧急通知'
-  }
-  return labels[type] || type
-}
-
-// 获取优先级颜色
-const getPriorityColor = (priority: string) => {
-  const colors = {
-    low: 'gray',
-    medium: 'blue',
-    high: 'orange',
-    urgent: 'red'
-  }
-  return colors[priority] || 'gray'
-}
-
-// 获取优先级标签
-const getPriorityLabel = (priority: string) => {
-  const labels = {
-    low: '低',
-    medium: '中',
-    high: '高',
-    urgent: '紧急'
-  }
-  return labels[priority] || priority
 }
 
 // 格式化日期
