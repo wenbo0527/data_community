@@ -46,9 +46,9 @@
           </div>
         </div>
         
-        <a-row :gutter="12" class="main-content-row">
+        <a-row :gutter="20" class="main-content-row">
           <!-- 左侧区域 -->
-          <a-col :span="6" class="left-column">
+          <a-col :xs="24" :sm="24" :md="24" :lg="6" class="left-column">
             <!-- 身份卡区 -->
             <a-card class="card-container compact-card">
               <template #title>身份信息</template>
@@ -64,8 +64,8 @@
                     <div class="online-indicator compact"></div>
                   </div>
                   <div class="user-details compact">
-                    <h3 class="user-name">张珊</h3>
-                    <p class="department">数学部 · 数据应用团队</p>
+                    <h3 class="user-name">{{ userStore?.userInfo?.username || username }}</h3>
+                    <p class="department">{{ userStore?.userInfo?.department || department }} · 数据应用团队</p>
                   </div>
                 </div>
                 <div class="quick-actions compact">
@@ -103,27 +103,30 @@
               
               <!-- 3x3网格布局 -->
               <div class="quick-channel-grid compact" :class="{ 'edit-mode': editMode }">
-                <div class="channel-grid-row compact" v-for="row in 3" :key="row">
-                  <div 
-                    v-for="col in 3" 
-                    :key="`${row}-${col}`"
-                    class="channel-grid-item compact"
-                    :class="{ 
-                      'fixed-item': isFixedPosition(row, col),
-                      'draggable': editMode && !isFixedPosition(row, col),
-                      'drag-over': dragOverPosition === `${row}-${col}`
-                    }"
-                    :draggable="editMode && !isFixedPosition(row, col)"
-                    @dragstart="handleDragStart(row, col, $event)"
-                    @dragover.prevent="handleDragOver(row, col, $event)"
-                    @drop="handleDrop(row, col, $event)"
-                    @dragend="handleDragEnd"
-                    @click="!editMode && handleChannelClick(getChannelAtPosition(row, col), row, col)"
-                  >
-                    <div class="channel-item-content compact">
-                      <component 
-                        :is="getChannelAtPosition(row, col)?.icon" 
-                        class="channel-icon compact"
+                    <div class="channel-grid-row compact" v-for="row in 3" :key="row">
+                      <div 
+                        v-for="col in 3" 
+                        :key="`${row}-${col}`"
+                        class="channel-grid-item compact"
+                        :class="{ 
+                          'fixed-item': isFixedPosition(row, col),
+                          'draggable': editMode && !isFixedPosition(row, col),
+                          'drag-over': dragOverPosition === `${row}-${col}`
+                        }"
+                        :draggable="editMode && !isFixedPosition(row, col)"
+                        @dragstart="handleDragStart(row, col, $event)"
+                        @dragover.prevent="handleDragOver(row, col, $event)"
+                        @drop="handleDrop(row, col, $event)"
+                        @dragend="handleDragEnd"
+                        @click="!editMode && handleChannelClick(getChannelAtPosition(row, col), row, col)"
+                        :tabindex="0"
+                        @keydown.enter="!editMode && handleChannelClick(getChannelAtPosition(row, col), row, col)"
+                        @keydown.space.prevent="!editMode && handleChannelClick(getChannelAtPosition(row, col), row, col)"
+                      >
+                        <div class="channel-item-content compact">
+                          <component 
+                            :is="getChannelAtPosition(row, col)?.icon" 
+                            class="channel-icon compact"
                       />
                       <span class="channel-name compact">{{ getChannelAtPosition(row, col)?.name || '未配置' }}</span>
                       <div v-if="editMode && !isFixedPosition(row, col) && !getChannelAtPosition(row, col)" class="add-channel-placeholder compact">
@@ -142,8 +145,8 @@
               </div>
               
               <!-- 应用配置弹窗 -->
-              <a-modal v-model:visible="configModalVisible" title="配置应用" @ok="handleConfigConfirm" @cancel="configModalVisible = false">
-                <a-form :model="configForm">
+    <a-modal v-model:visible="configModalVisible" title="配置应用" @ok="handleConfigConfirm" @cancel="configModalVisible = false" :ok-button-props="{ disabled: !configForm.position || !configForm.application }">
+                <a-form :model="configForm" :rules="configRules">
                   <a-form-item field="position" label="选择位置">
                     <a-select v-model="configForm.position" placeholder="请选择要配置的位置">
                       <a-option v-for="pos in availablePositions" :key="pos.value" :value="pos.value">{{ pos.label }}</a-option>
@@ -166,7 +169,7 @@
                   <a-button 
                     type="text" 
                     size="small" 
-                    @click="refreshNotificationStats"
+                    @click="refreshHomeData"
                   >
                     <template #icon><IconRefresh /></template>
                   </a-button>
@@ -191,42 +194,61 @@
           </a-col>
 
           <!-- 右侧区域 -->
-          <a-col :span="18" class="right-column">
+          <a-col :xs="24" :sm="24" :md="24" :lg="18" class="right-column">
             <!-- 指标卡片区 -->
-            <a-card title="社区数据站" class="card-container compact-card">
-              <a-row :gutter="8" class="metric-cards compact">
-              <a-col :span="6" v-for="metric in metrics" :key="metric.title">
-                <a-card class="metric-card compact">
-                  <div class="metric-content compact">
-                    <a-statistic
-                      :title="metric.title"
-                      :value="metric.value"
-                      :precision="2"
-                      show-group-separator
-                      suffix="亿元"
-                      :value-style="{ color: metric.color }"
-                    >
-                      <template #prefix>
-                        <icon-arrow-rise v-if="metric.trend === 'up'" style="color: #0fbf60" />
-                        <icon-arrow-fall v-else style="color: #f53f3f" />
-                      </template>
-                    </a-statistic>
-                    <div class="comparison-data compact"><span class="comparison-item">较前一日：<span :style="{ color: metric.dayOverDay >= 0 ? '#0fbf60' : '#f53f3f' }">{{ metric.dayOverDay >= 0 ? '+' : '' }}{{ metric.dayOverDay }}%</span></span></div>
-                  </div>
-                </a-card>
-              </a-col>
-            </a-row>
+            <a-card class="card-container compact-card">
+              <template #title>
+                <span>社区数据站（{{ metrics.length }} 条）</span>
+              </template>
+              <a-skeleton v-if="loadingMetrics" :animation="true" :rows="3" />
+              <template v-else>
+                <a-row v-if="metrics.length > 0" :gutter="8" class="metric-cards compact">
+                  <a-col :span="6" v-for="metric in metrics" :key="metric.id">
+                    <a-popover trigger="hover" content="点击查看近 7 日趋势">
+                      <a-card class="metric-card compact" @click="openMetricTrend(metric)">
+                        <div class="metric-content compact">
+                          <a-statistic
+                            :title="metric.title"
+                            :value="metric.value"
+                            :precision="2"
+                            show-group-separator
+                            suffix="亿元"
+                            :value-style="{ color: metric.color }"
+                          >
+                            <template #prefix>
+                              <IconArrowRise v-if="metric.trend === 'up'" style="color: #0fbf60" />
+                              <IconArrowFall v-else style="color: #f53f3f" />
+                            </template>
+                          </a-statistic>
+                          <div class="comparison-data compact">
+                            <span class="comparison-item">
+                              较前一日：
+                              <span :style="{ color: metric.dayOverDay >= 0 ? '#0fbf60' : '#f53f3f' }">
+                                {{ metric.dayOverDay >= 0 ? '+' : '' }}{{ metric.dayOverDay }}%
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                      </a-card>
+                    </a-popover>
+                  </a-col>
+                </a-row>
+                <a-empty v-else description="暂无数据指标" style="padding: 20px 0" />
+              </template>
             </a-card>
 
             <!-- 数据架构图和通知栏 -->
             <a-row :gutter="8" class="bottom-row compact">
-              <a-col :span="16" class="architecture-column">
+              <a-col :xs="24" :sm="24" :md="24" :lg="16" class="architecture-column">
                 <a-card title="社区架构图" class="card-container compact-card">
                   <ArchitectureChart />
                 </a-card>
               </a-col>
-              <a-col :span="8" class="notice-column">
-                <a-card title="通知公告" class="card-container compact-card">
+              <a-col :xs="24" :sm="24" :md="24" :lg="8" class="notice-column">
+                <a-card class="card-container compact-card">
+                  <template #title>
+                    <span>通知公告（{{ notices.length }} 条）</span>
+                  </template>
                   <template #extra>
                     <a-button 
                       type="text" 
@@ -239,27 +261,40 @@
                   </template>
                   <a-tabs class="compact-tabs">
                     <a-tab-pane key="notice" title="通知">
-                      <a-list :max-height="500" class="compact-list notice-list-custom">
-                        <a-list-item 
-                          v-for="(notice, index) in notices" 
-                          :key="notice.id"
-                          @click="viewNotification(notice)"
-                          class="notice-list-item"
-                        >
-                          <div class="notice-item-inner">
-                            <div class="notice-left-bar"></div>
-                            <div class="notice-content-wrapper">
-                              <div class="notice-header-row">
-                                <div class="notice-title-text">{{ notice.title }}</div>
-                              </div>
-                              <div class="notice-info-row">
-                                <a-tag size="small" :color="getNoticeTypeColor(notice.type)" bordered class="notice-tag">{{ getNoticeTypeLabel(notice.type) }}</a-tag>
-                                <span class="notice-time">{{ notice.time }}</span>
+                      <a-skeleton v-if="loadingNotices" :animation="true" :rows="5" />
+                      <template v-else>
+                        <a-list v-if="notices.length > 0" :max-height="500" class="compact-list notice-list-custom">
+                          <a-list-item 
+                            v-for="notice in notices" 
+                            :key="notice.id"
+                            class="notice-list-item"
+                          >
+                            <div 
+                              class="notice-item-inner"
+                              @click="viewNotification(notice)"
+                              :tabindex="0"
+                              role="button"
+                              @keydown.enter="viewNotification(notice)"
+                              @keydown.space.prevent="viewNotification(notice)"
+                              aria-label="查看通知详情"
+                            >
+                              <div class="notice-left-bar"></div>
+                              <div class="notice-content-wrapper">
+                                <div class="notice-header-row">
+                                  <a-typography-text copyable class="notice-title-text">{{ notice.title }}</a-typography-text>
+                                </div>
+                                <div class="notice-info-row">
+                                  <a-tag size="small" :color="getNoticeTypeColor(notice.type)" bordered class="notice-tag">
+                                    {{ getNoticeTypeLabel(notice.type) }}
+                                  </a-tag>
+                                  <span class="notice-time">{{ notice.time }}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </a-list-item>
-                      </a-list>
+                          </a-list-item>
+                        </a-list>
+                        <a-empty v-else description="暂无通知公告" style="padding: 40px 0" />
+                      </template>
                       <div class="view-more-container compact">
                         <a-button 
                           type="text" 
@@ -304,6 +339,15 @@
       </a-layout-content>
     </a-layout>
     
+    <a-drawer v-model:visible="trendDrawerVisible" width="640px" :mask-closable="true" :closable="true" :style="{ maxWidth: '90vw' }">
+      <template #title>{{ currentMetric?.title }} - 近7日趋势</template>
+      <div class="sparkline-container">
+        <svg :width="sparkWidth" :height="sparkHeight">
+          <polyline :points="sparkPoints" fill="none" stroke="#165DFF" stroke-width="2" />
+        </svg>
+      </div>
+    </a-drawer>
+
     <!-- 欢迎弹窗 -->
     <home-welcome-modal
       v-model:visible="showWelcomeModal"
@@ -315,7 +359,8 @@
       v-model:visible="notificationModalVisible"
       :footer="false"
       :title="null"
-      :closable="false"
+      :closable="true"
+      :mask-closable="true"
       width="800px"
       @cancel="handleCloseNotificationModal"
       class="notification-detail-modal"
@@ -364,12 +409,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, markRaw, computed } from 'vue'
+import { ref, onMounted, markRaw, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import ArchitectureChart from '../../components/layout/ArchitectureChart.vue'
 import HomeWelcomeModal from '../../components/home-welcome-modal.vue'
-import NotificationStats from '../../components/NotificationStats.vue'
 import NotificationDetailContent from '../../components/community/NotificationDetailContent.vue'
 import { NotificationAPI } from '../../api/notification'
 import { getNoticeTypeLabel, getNoticeTypeColor } from '@/constants/notification'
@@ -379,9 +423,7 @@ import {
   IconNotification,
   IconStorage,
   IconFile,
-  IconQuestion,
   IconCompass,
-  IconEye,
   IconApps,
   IconBook,
   IconBulb,
@@ -398,7 +440,6 @@ import {
   IconCloud,
   IconUserGroup,
   IconGift,
-  IconLink,
   IconCustomerService,
   IconRobot,
   IconExperiment,
@@ -407,132 +448,235 @@ import {
   IconFire,
   IconBug,
   IconCalendar,
-  IconStar,
-  IconClockCircle,
-  IconDownload,
-  IconTags,
-  IconCommon
+  IconStar
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
-import { DATA_ASSET_OPTIONS } from '../../types/community'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-const toggleDepartment = () => {
-  if (userStore && userStore.userInfo && typeof userStore.setUserDepartment === 'function') {
-    const departments = ['risk', 'marketing', 'data']
-    const currentIndex = departments.indexOf(userStore.userInfo.department)
-    const nextIndex = (currentIndex + 1) % departments.length
-    userStore.setUserDepartment(departments[nextIndex])
-  }
-}
-
-// 控制欢迎弹窗
+// --- 状态定义 ---
+const username = ref('张珊')
+const department = ref('数学部')
+const activeMenu = ref('home')
 const showWelcomeModal = ref(false)
-
-// 切换用户角色
-const toggleUserRole = () => {
-  if (userStore && typeof userStore.setUserRole === 'function') {
-    userStore.setUserRole(!userStore.isNewUser)
-  } else if (userStore) {
-    userStore.isNewUser = !userStore.isNewUser
-  }
+const notices = ref([])
+const metrics = ref([])
+const loadingNotices = ref(true)
+const loadingMetrics = ref(true)
+const notificationModalVisible = ref(false)
+const selectedNotification = ref(null)
+const trendDrawerVisible = ref(false)
+const currentMetric = ref(null)
+const quickChannels = ref([])
+const editMode = ref(false)
+const configModalVisible = ref(false)
+const dragOverPosition = ref('')
+const draggedChannel = ref(null)
+const showAppSelectModal = ref(false)
+const selectedPosition = ref({ row: 0, col: 0 })
+const configForm = ref({ position: '', application: '' })
+const configRules = {
+  position: [{ required: true, message: '请选择位置', trigger: 'blur' }],
+  application: [{ required: true, message: '请选择应用', trigger: 'blur' }]
 }
 
-// 初始化用户角色和欢迎弹窗
-onMounted(async () => {
+// --- 方法定义 ---
+
+watch(metrics, (newVal, oldVal) => {
+  console.log('[home] metrics 变更', {
+    oldLength: Array.isArray(oldVal) ? oldVal.length : 0,
+    newLength: Array.isArray(newVal) ? newVal.length : 0
+  })
+})
+
+watch(notices, (newVal, oldVal) => {
+  console.log('[home] notices 变更', {
+    oldLength: Array.isArray(oldVal) ? oldVal.length : 0,
+    newLength: Array.isArray(newVal) ? newVal.length : 0
+  })
+})
+
+watch([loadingMetrics, loadingNotices], ([lm, ln]) => {
+  console.log('[home] loading 状态变更', {
+    loadingMetrics: lm,
+    loadingNotices: ln
+  })
+})
+
+// 初始化数据
+const initData = async (source = 'mounted') => {
+  const ts = new Date().toISOString()
+  console.log('[home] 开始初始化首页数据', {
+    source,
+    ts,
+    metricsLengthBefore: metrics.value.length,
+    noticesLengthBefore: notices.value.length
+  })
+  
+  // 1. 检查用户角色
   try {
     if (userStore && typeof userStore.checkUserRole === 'function') {
       const isNewUser = await userStore.checkUserRole()
       showWelcomeModal.value = isNewUser !== undefined ? isNewUser : true
-    } else {
-      showWelcomeModal.value = false
     }
   } catch (error) {
     console.warn('用户角色检查失败:', error)
-    showWelcomeModal.value = false
   }
-  // 初始化时获取通知数据
-  await fetchNotices()
-  // 初始化快速通道配置
-  initQuickChannelConfig()
-})
 
-// 通知数据 - 集成通知管理系统
-const notices = ref([])
+  // 2. 加载指标和通知
+  loadingMetrics.value = true
+  loadingNotices.value = true
+  
+  console.log('[home] 开始并行加载指标和通知', {
+    source,
+    ts
+  })
 
-// 通知弹窗状态管理
-const notificationModalVisible = ref(false)
-const selectedNotification = ref(null)
+  Promise.allSettled([
+    fetchMetrics(),
+    fetchNotices()
+  ]).then((results) => {
+    loadingMetrics.value = false
+    loadingNotices.value = false
+    console.log('[home] 数据加载任务结束', {
+      source,
+      ts,
+      results: results.map(r => r.status),
+      metricsLengthAfter: metrics.value.length,
+      noticesLengthAfter: notices.value.length
+    })
+    
+    results.forEach((result, index) => {
+      const taskName = index === 0 ? '指标数据' : '通知数据'
+      if (result.status === 'rejected') {
+        console.error(`[home] ${taskName}加载失败`, result.reason)
+      }
+    })
+  })
+
+  // 3. 初始化快速通道
+  try {
+    initQuickChannelConfig()
+  } catch (error) {
+    console.error('初始化快速通道失败:', error)
+  }
+}
+
+// 获取指标数据
+const fetchMetrics = async () => {
+  console.log('[home] 开始加载指标数据', {
+    metricsLengthBefore: metrics.value.length
+  })
+  try {
+    // 模拟API延迟
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    const data = [
+      {
+        id: 'metric-ontu',
+        title: '上日在途余额',
+        value: 1234.56,
+        trend: 'up',
+        color: '#0fbf60',
+        dayOverDay: 2.3,
+        trendSeries: [1200, 1210, 1190, 1220, 1230, 1225, 1234.56]
+      },
+      {
+        id: 'metric-fangkan',
+        title: '上日放款金额',
+        value: 987.65,
+        trend: 'down',
+        color: '#f53f3f',
+        dayOverDay: -1.5,
+        trendSeries: [1050, 1020, 1010, 990, 1000, 995, 987.65]
+      },
+      {
+        id: 'metric-huankuan',
+        title: '上日还款金额',
+        value: 876.54,
+        trend: 'up',
+        color: '#0fbf60',
+        dayOverDay: 3.2,
+        trendSeries: [800, 820, 810, 840, 850, 860, 876.54]
+      },
+      {
+        id: 'metric-dingjia',
+        title: '上日在途加权定价',
+        value: 765.43,
+        trend: 'up',
+        color: '#0fbf60',
+        dayOverDay: 1.8,
+        trendSeries: [700, 710, 720, 730, 740, 750, 765.43]
+      }
+    ]
+    metrics.value = data
+    console.log('[home] 指标数据加载成功', {
+      metricsLengthAfter: metrics.value.length,
+      titles: metrics.value.map(m => m.title)
+    })
+  } catch (error) {
+    console.error('[home] 获取指标失败', error)
+    metrics.value = []
+  }
+}
 
 // 获取通知数据
 const fetchNotices = async () => {
+  console.log('[home] 开始加载通知数据', {
+    noticesLengthBefore: notices.value.length
+  })
   try {
-    // 调用通知API获取已发布的通知
     const response = await NotificationAPI.getNotifications({
       status: 'published',
       pageSize: 10,
       page: 1
     })
     
-    if (response.success && response.data.list) {
-      // 同步数据格式
-      notices.value = response.data.list.map(notice => {
-        return {
-          ...notice,
-          // 格式化时间显示
-          time: notice.publishedAt ? new Date(notice.publishedAt).toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          }).replace(/\//g, '-') : (notice.createdAt ? new Date(notice.createdAt).toLocaleString('zh-CN').replace(/\//g, '-') : ''),
-          isNew: isNewNotice(notice.publishedAt || notice.createdAt)
-        }
+    if (response.success && response.data && response.data.list) {
+      const list = response.data.list.map(notice => ({
+        ...notice,
+        time: notice.publishedAt ? new Date(notice.publishedAt).toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).replace(/\//g, '-') : (notice.createdAt ? new Date(notice.createdAt).toLocaleString('zh-CN').replace(/\//g, '-') : '刚刚'),
+        isNew: isNewNotice(notice.publishedAt || notice.createdAt)
+      }))
+      notices.value = list
+      console.log('[home] 通知数据加载成功', {
+        noticesLengthAfter: notices.value.length,
+        ids: notices.value.map(n => n.id)
       })
+    } else {
+      console.warn('[home] 通知数据格式异常', response)
+      notices.value = []
     }
   } catch (error) {
-    console.error('获取通知数据失败:', error)
+    console.error('[home] 获取通知失败', error)
     notices.value = []
   }
 }
 
-// 判断是否为新发布的通知（7天内）
 const isNewNotice = (publishTime) => {
-  // 模拟数据里直接用 isNew 字段，或者保留此逻辑
   if (!publishTime) return false
   const publishDate = new Date(publishTime)
   const now = new Date()
-  // 这里为了演示效果，只要是 2025 年的都算新
-  return publishDate.getFullYear() >= 2025
+  // 7天内算新
+  return (now.getTime() - publishDate.getTime()) < 7 * 24 * 60 * 60 * 1000
 }
 
-// 社区资源导航
-const navigateToCommunity = (category) => {
-  const categoryMap = {
-    'policy': '/community/policy',
-    'cases': '/community/cases', 
-    'guide': '/community/guide',
-    'news': '/community/news'
-  }
-  const path = categoryMap[category]
-  if (path) {
-    router.push(path)
-  }
-}
+onMounted(() => {
+  initData('mounted')
+})
 
-// 通知统计组件引用
-const notificationStatsRef = ref(null)
-
-// 刷新通知统计数据
-const refreshNotificationStats = () => {
-  if (notificationStatsRef.value) {
-    notificationStatsRef.value.refresh()
-  }
+// 刷新首页数据
+const refreshHomeData = () => {
+  console.log('[home] 用户手动刷新首页数据')
+  initData('manual-refresh')
+  Message.success({ content: '数据已刷新', duration: 3000 })
 }
 
 // 查看通知详情
@@ -642,20 +786,6 @@ const todos = ref([
   }
 ])
 
-// 快速通道配置
-const editMode = ref(false)
-const configModalVisible = ref(false)
-const dragOverPosition = ref('')
-const draggedChannel = ref(null)
-const showAppSelectModal = ref(false)
-const selectedPosition = ref({ row: 0, col: 0 })
-
-// 配置表单
-const configForm = ref({
-  position: '',
-  application: ''
-})
-
 // 可用应用列表
 const availableApplications = [
   { label: '模型平台', value: 'model-platform', icon: 'IconRobot' },
@@ -702,7 +832,7 @@ const initQuickChannelConfig = () => {
 }
 
 // 判断是否为固定位置（首行）
-const isFixedPosition = (row, col) => {
+const isFixedPosition = (row, _col) => {
   return row === 1
 }
 
@@ -941,59 +1071,21 @@ const communityItems = ref([
   }
 ])
 
-// 使用markRaw包装图标组件
-const icons = {
-  IconQuestion: markRaw(IconQuestion),
-  IconCompass: markRaw(IconCompass),
-  IconEye: markRaw(IconEye),
-  IconApps: markRaw(IconApps)
+const sparkWidth = 600
+const sparkHeight = 120
+const sparkPoints = computed(() => {
+  const data = (currentMetric.value?.trendSeries || [1,2,3,2,4,3,5])
+  const step = sparkWidth / (data.length - 1)
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const scaleY = (v) => sparkHeight - ((v - min) / (max - min + 1e-6)) * (sparkHeight - 10)
+  return data.map((v, i) => `${i * step},${scaleY(v)}`).join(' ')
+})
+
+const openMetricTrend = (metric) => {
+  currentMetric.value = metric
+  trendDrawerVisible.value = true
 }
-
-const username = ref('张珊')
-const department = ref('数学部')
-const activeMenu = ref('home')
-
-// 快速通道数据
-const quickChannels = ref([])
-
-// 跳转到对应页面
-const navigateToPath = (path) => {
-  if (path) {
-    router.push(path)
-  }
-}
-
-// 指标卡片数据
-const metrics = ref([
-  {
-    title: '上日在途余额',
-    value: 1234.56,
-    trend: 'up',
-    color: '#0fbf60',
-    dayOverDay: 2.3 // 较前一日
-  },
-  {
-    title: '上日放款金额',
-    value: 987.65,
-    trend: 'down',
-    color: '#f53f3f',
-    dayOverDay: -1.5
-  },
-  {
-    title: '上日还款金额',
-    value: 876.54,
-    trend: 'up',
-    color: '#0fbf60',
-    dayOverDay: 3.2
-  },
-  {
-    title: '上日在途加权定价',
-    value: 765.43,
-    trend: 'down',
-    color: '#f53f3f',
-    dayOverDay: -0.8
-  }
-])
 </script>
 
 <style scoped>
@@ -1017,106 +1109,28 @@ const metrics = ref([
   gap: 12px;
 }
 
-/* 紧凑欢迎横幅 */
+/* 优化欢迎横幅 */
 .welcome-banner {
-  margin-bottom: 12px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, rgba(22, 93, 255, 0.1) 0%, rgba(114, 46, 209, 0.1) 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(20px);
-  position: relative;
-  overflow: hidden;
-}
-
-.welcome-text h1 {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0;
-  background: linear-gradient(135deg, #165dff 0%, #722ed1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* 优化主内容区域 */
-.main-content-row {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: stretch;
-}
-
-.left-column,
-.right-column {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.left-column .card-container:last-child {
-  margin-bottom: 0;
-  flex: 1;
-}
-
-.right-column > .card-container {
-  margin-bottom: 16px;
-}
-
-.right-column > .card-container:last-child {
-  margin-bottom: 0;
-  flex: 1;
-}
-
-.right-column > .card-container:first-child {
-  flex: 0 0 auto;
-}
-
-.right-column > .bottom-row {
-  flex: 1;
-  min-height: 0;
-}
-
-/* 紧凑卡片样式 */
-.card-container {
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
-  margin-bottom: 10px;
-  overflow: hidden;
-}
-
-.card-container:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
-  border-color: rgba(255, 255, 255, 0.7);
-}
-
-/* 欢迎横幅样式 */
-.welcome-banner {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   padding: 16px 24px;
-  background: linear-gradient(135deg, rgba(22, 93, 255, 0.1) 0%, rgba(114, 46, 209, 0.1) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.08) 0%, rgba(114, 46, 209, 0.08) 100%);
+  border-radius: 12px;
+  border: 1px solid var(--color-border-1);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .banner-content {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
-  position: relative;
   z-index: 2;
 }
 
 .welcome-text h1 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   margin: 0;
   background: linear-gradient(135deg, #165dff 0%, #722ed1 100%);
@@ -1125,13 +1139,11 @@ const metrics = ref([
   background-clip: text;
 }
 
-
-
-
-
-/* 主要内容区域布局 */
+/* 主内容布局优化 */
 .main-content-row {
-  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 
 .left-column,
@@ -1146,19 +1158,18 @@ const metrics = ref([
 }
 
 .right-column > .card-container {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .right-column > .card-container:last-child {
   margin-bottom: 0;
 }
 
-/* 底部行布局 */
 .bottom-row {
-  align-items: stretch;
-  margin-top: 0;
   flex: 1;
   min-height: 0;
+  display: flex;
+  margin-top: 0;
 }
 
 .architecture-column,
@@ -1168,12 +1179,43 @@ const metrics = ref([
   height: 100%;
 }
 
+/* 统一卡片样式 */
+.card-container {
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--color-border-2);
+  background: var(--color-bg-2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.card-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-container :deep(.arco-card-header) {
+  min-height: 48px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--color-border-1);
+  background: var(--color-bg-2);
+}
+
+.card-container :deep(.arco-card-header-title) {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.card-container :deep(.arco-card-body) {
+  padding: 20px;
+}
+
 .architecture-column .card-container,
 .notice-column .card-container {
   height: 100%;
   margin-bottom: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .architecture-column :deep(.arco-card-body),
@@ -1187,7 +1229,6 @@ const metrics = ref([
 .architecture-chart {
   flex: 1;
   min-height: 0;
-  height: auto !important;
 }
 
 .compact-tabs {
@@ -1300,17 +1341,29 @@ const metrics = ref([
 
 .metric-card {
   height: 140px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-1);
+  background: var(--color-fill-1);
+  cursor: pointer;
 }
 
 .metric-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--color-fill-2);
+  border-color: var(--color-primary-light-3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.metric-card :deep(.arco-statistic-title) {
+  font-size: 13px;
+  color: #4E5969;
+  margin-bottom: 8px;
+}
+
+.metric-card :deep(.arco-statistic-value) {
+  font-weight: 700;
+  color: #1D2129;
 }
 
 .header {
@@ -1348,43 +1401,6 @@ const metrics = ref([
   color: #165dff;
 }
 
-.content {
-  padding: 32px;
-  background: transparent;
-  height: calc(100vh - 72px);
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.card-container {
-  margin-bottom: 24px;
-  border-radius: 20px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(15px);
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.card-container:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.card-container :deep(.arco-card-header) {
-  min-height: 56px;
-  padding: 0 24px;
-  border-bottom: 1px solid rgba(229, 230, 235, 0.6);
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 20px 20px 0 0;
-}
-
-.card-container :deep(.arco-card-body) {
-  padding: 24px;
-}
 
 .identity-info {
   padding: 20px;

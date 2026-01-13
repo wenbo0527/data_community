@@ -76,6 +76,36 @@ export default [
             }
           }
         ]
+      },
+      {
+        path: 'docs',
+        name: 'DocManagement',
+        redirect: '/admin/docs/list',
+        meta: {
+          title: '文档管理',
+          icon: 'icon-file'
+        },
+        children: [
+          {
+            path: 'list',
+            name: 'AdminDocList',
+            component: () => import('../pages/admin/docs/index.vue'),
+            meta: { title: '文档列表' }
+          },
+          {
+            path: 'create',
+            name: 'AdminDocCreate',
+            component: () => import('../pages/admin/docs/edit.vue'),
+            meta: { title: '新建文档', activeMenu: '/admin/docs/list' }
+          },
+          {
+            path: 'edit/:slug',
+            name: 'AdminDocEdit',
+            component: () => import('../pages/admin/docs/edit.vue'),
+            meta: { title: '编辑文档', activeMenu: '/admin/docs/list' },
+            props: true
+          }
+        ]
       }
     ]
   }

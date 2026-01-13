@@ -67,6 +67,19 @@
               </a-radio-group>
             </a-form-item>
 
+            <!-- 文档来源选择 (仅文档模式显示) -->
+            <a-form-item
+              v-if="formData.contentType === 'document'"
+              field="docSource"
+              label="文档来源"
+              class="doc-source-field"
+            >
+              <a-radio-group v-model="formData.docSource" type="button">
+                <a-radio value="upload">本地上传</a-radio>
+                <a-radio value="system">关联系统文档</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
             <!-- 模式提示 -->
             <a-alert 
               v-if="formData.contentType === 'document'"
@@ -109,16 +122,37 @@
                 :rules="[{ required: true, message: '请选择归档分类' }]"
                 class="category-field"
               >
-                <a-cascader
-                  v-model="formData.categoryPath"
-                  :options="categoryOptions"
-                  :placeholder="formData.contentType === 'document' ? '请选择文档分类' : '请选择通知分类'"
-                  class="category-selector"
-                  size="large"
-                  allow-search
-                  path-mode
-                />
-              </a-form-item>
+              <a-cascader
+                v-model="formData.categoryPath"
+                :options="categoryOptions"
+                :placeholder="formData.contentType === 'document' ? '请选择文档分类' : '请选择通知分类'"
+                class="category-selector"
+                size="large"
+                allow-search
+                path-mode
+              />
+            </a-form-item>
+
+            <!-- 关联文档（通知模式 或 文档模式且选择系统文档） -->
+            <a-form-item 
+              v-if="formData.contentType === 'notification' || (formData.contentType === 'document' && formData.docSource === 'system')" 
+              field="associatedDocSlug" 
+              :label="formData.contentType === 'document' ? '选择文档' : '关联文档'"
+              :rules="(formData.contentType === 'document' && formData.docSource === 'system') ? [{ required: true, message: '请选择系统文档' }] : []"
+            >
+              <template #extra>
+                <a-link v-if="formData.associatedDocSlug" @click="$router.push('/docs/' + encodeURIComponent(formData.associatedDocSlug!))">预览</a-link>
+              </template>
+              <a-select
+                v-model="formData.associatedDocSlug"
+                :placeholder="formData.contentType === 'document' ? '请选择一个系统文档' : '选择一个已存在的文档进行关联'"
+                allow-clear
+                allow-search
+                size="large"
+              >
+                <a-option v-for="doc in docIndex" :key="doc.slug" :value="doc.slug">{{ doc.title }}</a-option>
+              </a-select>
+            </a-form-item>
 
               <!-- 通知对象 - 发送通知模式下所有分类都显示 -->
               <a-form-item v-if="formData.contentType === 'notification'" field="target" label="通知对象" required>
@@ -221,7 +255,7 @@
           </a-card>
 
           <!-- 附件管理卡片 -->
-          <a-card class="attachment-card" :bordered="false">
+          <a-card v-if="formData.contentType === 'document' && formData.docSource === 'upload'" class="attachment-card" :bordered="false">
             <template #title>
               <div class="card-title">
                 <icon-attachment />
@@ -463,6 +497,7 @@ import {
 import NotificationAPI from '@/api/notification'
 import { marked } from 'marked'
 import NotificationDetailContent from '@/components/community/NotificationDetailContent.vue'
+import { listDocs } from '@/api/docsLocal'
 
 // 路由
 const router = useRouter()
@@ -480,6 +515,7 @@ const isSaving = ref(false)
 const fileList = ref<any[]>([])
 const attachmentEnabled = ref(true) // 附件管理开关，默认开启
 const publishSettingsEnabled = ref(true) // 发布设置开关，默认开启
+const docIndex = ref<{ slug: string; title: string }[]>([])
 
 // 模拟用户数据
 const mockUserList = [
@@ -507,11 +543,14 @@ const goToUserGroupManagement = () => {
 // 表单数据
 const formData = ref<Partial<Notification> & { 
   contentType: string, 
+  docSource: string,
   categoryPath: string[],
   notificationType?: string,
-  target?: string[] 
+  target?: string[],
+  associatedDocSlug?: string 
 }>({
   contentType: 'notification', // 默认为发送通知模式
+  docSource: 'upload', // 默认为本地上传
   notificationType: 'general',
   title: '',
   categoryPath: [], // 级联选择器的值
@@ -620,9 +659,10 @@ const formRules = computed(() => {
 
     return rules
   } else if (formData.value.contentType === 'document') {
-    return {
-      ...baseRules,
-      attachments: [
+    const rules: any = { ...baseRules }
+    
+    if (formData.value.docSource === 'upload') {
+      rules.attachments = [
         { 
           validator: () => {
             return fileList.value && fileList.value.length > 0
@@ -631,6 +671,8 @@ const formRules = computed(() => {
         }
       ]
     }
+    
+    return rules
   }
 
   return baseRules
@@ -669,7 +711,7 @@ const handleContentTypeChange = (value: string) => {
   console.log('Content type changed to:', value) // 调试信息
   if (value === 'document') {
     // 切换到文档模式
-    Message.info('已切换到文档上传模式，请上传至少一个文件')
+    Message.info('已切换到文档模式')
     // 确保附件管理开启
     attachmentEnabled.value = true
   } else if (value === 'notification') {
@@ -760,9 +802,16 @@ const handleSubmit = async () => {
   try {
     // 额外的业务逻辑验证
     if (formData.value.contentType === 'document') {
-      if (!fileList.value || fileList.value.length === 0) {
-        Message.error('文档模式下必须上传至少一个文件')
-        return
+      if (formData.value.docSource === 'upload') {
+        if (!fileList.value || fileList.value.length === 0) {
+          Message.error('文档模式下必须上传至少一个文件')
+          return
+        }
+      } else if (formData.value.docSource === 'system') {
+        if (!formData.value.associatedDocSlug) {
+          Message.error('请选择关联的系统文档')
+          return
+        }
       }
     } else if (formData.value.contentType === 'notification') {
       if (!formData.value.content || formData.value.content.trim().length < 10) {
@@ -909,6 +958,10 @@ const handleKeyDown = (event: KeyboardEvent) => {
 onMounted(async () => {
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown)
+  
+  try {
+    docIndex.value = await listDocs()
+  } catch {}
   
   if (isEdit.value) {
     await loadNotification(route.params.id as string)

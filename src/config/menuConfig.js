@@ -430,6 +430,37 @@ export const MENU_CONFIG = {
           }
         }
       },
+      'data-standard': {
+        key: 'data-standard',
+        title: '数据标准',
+        type: 'group',
+        children: {
+          'standards': {
+            key: 'standards',
+            title: '数据标准管理',
+            path: '/management/data-standard/standards',
+            routeName: 'Standards'
+          },
+          'domains': {
+            key: 'domains',
+            title: '数据域管理',
+            path: '/management/data-standard/domains',
+            routeName: 'DataDomains'
+          },
+          'codes': {
+            key: 'codes',
+            title: '标准代码管理',
+            path: '/management/data-standard/codes',
+            routeName: 'StandardCodes'
+          },
+          'words': {
+            key: 'words',
+            title: '标准单词管理',
+            path: '/management/data-standard/words',
+            routeName: 'StandardWords'
+          }
+        }
+      },
       
       'notification-management': {
         key: 'notification-management',
@@ -447,6 +478,20 @@ export const MENU_CONFIG = {
             title: '分类管理',
             path: '/admin/notifications/categories',
             routeName: 'NotificationCategories'
+          }
+        }
+      },
+
+      'doc-management': {
+        key: 'doc-management',
+        title: '文档管理',
+        type: 'group',
+        children: {
+          'doc-list': {
+            key: 'doc-list',
+            title: '文档列表',
+            path: '/admin/docs/list',
+            routeName: 'AdminDocList'
           }
         }
       }

@@ -249,5 +249,76 @@ export default [{
       meta: { title: '数据权限申请' },
       props: { defaultCategory: 'data' }
     },
+    {
+      path: 'data-standard',
+      name: 'DataStandard',
+      meta: { title: '数据标准' },
+      children: [
+        {
+          path: 'standards',
+          name: 'Standards',
+          component: () => import('../pages/management/data-standard/standards/index.vue'),
+          meta: { title: '数据标准管理' }
+        },
+        {
+          path: 'standards/create',
+          name: 'StandardCreate',
+          component: () => import('../pages/management/data-standard/standards/edit.vue'),
+          meta: { title: '新建数据标准' }
+        },
+        {
+          path: 'standards/:id/edit',
+          name: 'StandardEdit',
+          component: () => import('../pages/management/data-standard/standards/edit.vue'),
+          meta: { title: '编辑数据标准' },
+          props: true
+        },
+        {
+          path: 'standards/:id',
+          name: 'StandardDetail',
+          component: () => import('../pages/management/data-standard/standards/detail.vue'),
+          meta: { title: '标准详情' },
+          props: true
+        },
+        {
+          path: 'domains',
+          name: 'DataDomains',
+          component: () => import('../pages/management/data-standard/domains/index.vue'),
+          meta: { title: '数据域管理' }
+        },
+        {
+          path: 'domains/create',
+          name: 'DataDomainCreate',
+          component: () => import('../pages/management/data-standard/domains/edit.vue'),
+          meta: { title: '新建数据域' }
+        },
+        {
+          path: 'domains/:id/edit',
+          name: 'DataDomainEdit',
+          component: () => import('../pages/management/data-standard/domains/edit.vue'),
+          meta: { title: '编辑数据域' },
+          props: true
+        },
+        {
+          path: 'domains/:id',
+          name: 'DataDomainDetail',
+          component: () => import('../pages/management/data-standard/domains/detail.vue'),
+          meta: { title: '数据域详情' },
+          props: true
+        },
+        {
+          path: 'codes',
+          name: 'StandardCodes',
+          component: () => import('../pages/management/data-standard/codes/index.vue'),
+          meta: { title: '标准代码管理' }
+        },
+        {
+          path: 'words',
+          name: 'StandardWords',
+          component: () => import('../pages/management/data-standard/words/index.vue'),
+          meta: { title: '标准单词管理' }
+        }
+      ]
+    },
   ]
 }]

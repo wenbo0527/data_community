@@ -2,6 +2,32 @@
   <div class="doc-viewer">
     <a-page-header :title="pageTitle" />
     <a-row :gutter="12">
+      <a-col :span="6">
+        <a-card :bordered="true" title="文档列表" class="doc-sidebar">
+          <template #extra>
+            <a-badge :count="docList.length" />
+          </template>
+          <a-input-search v-model="fileSearch" placeholder="搜索文档标题" allow-clear class="file-search" />
+          <div class="file-list">
+            <a-tree
+              :data="docTree"
+              block-node
+              @select="onTreeSelect"
+              v-model:selected-keys="selectedDocKeys"
+              :default-expand-all="true"
+            >
+              <template #icon="{ node }">
+                <icon-folder v-if="node.isFolder" />
+                <icon-file v-else />
+              </template>
+            </a-tree>
+          </div>
+          <a-divider>当前章节</a-divider>
+          <a-anchor :scroll-container="'#doc-scroll-container'">
+            <a-anchor-link v-for="h in toc" :key="h.id" :href="'#'+h.id" :title="h.text" />
+          </a-anchor>
+        </a-card>
+      </a-col>
       <a-col :span="18">
         <a-card :bordered="true">
           <div class="doc-ops">
@@ -13,34 +39,103 @@
           <div class="doc-content" v-html="renderedHtml"></div>
         </a-card>
       </a-col>
-      <a-col :span="6">
-        <a-card :bordered="true" title="目录">
-          <a-anchor :scroll-container="'#doc-scroll-container'">
-            <a-anchor-link v-for="h in toc" :key="h.id" :href="'#'+h.id" :title="h.text" />
-          </a-anchor>
-        </a-card>
-      </a-col>
     </a-row>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
+import { IconFile, IconFilePdf, IconFolder } from '@arco-design/web-vue/es/icon'
 import { marked } from 'marked'
+import { listDocs, getDocBySlug } from '@/api/docsLocal'
+import type { DocSummary } from '@/api/docsLocal'
 
 type HeadingItem = { id: string; text: string; level: number }
 type Frontmatter = { title?: string; description?: string; [k: string]: any }
 
 const route = useRoute()
-const slug = computed(() => String(route.params.slug || ''))
+const router = useRouter()
+const slug = computed(() => decodeURIComponent(String(route.params.slug || '')))
 const keyword = ref('')
+const fileSearch = ref('')
 const sourceMd = ref<string>('')
+const contentHtml = ref<string>('')
+const contentFormat = ref<'markdown' | 'html'>('markdown')
 const toc = ref<HeadingItem[]>([])
-const files = (import.meta as any).glob('../../../../.trae/documents/**/*.md', { as: 'raw', eager: true }) as Record<string, string>
-const index = ref<Record<string, string>>({})
+const docList = ref<DocSummary[]>([])
 const meta = ref<Frontmatter>({})
+const selectedDocKeys = ref<string[]>([])
+
+watch(slug, (s: string) => {
+  if (s) selectedDocKeys.value = [s]
+}, { immediate: true })
+
+const docTree = computed(() => {
+  const root: any[] = []
+  
+  const search = fileSearch.value.toLowerCase()
+  const filtered = search 
+    ? docList.value.filter((d: DocSummary) => d.title.toLowerCase().includes(search) || d.slug.toLowerCase().includes(search))
+    : docList.value
+
+  filtered.forEach((doc: DocSummary) => {
+    let currentLevel = root
+    const path = doc.categoryPath || []
+    
+    path.forEach((folderName: string, index: number) => {
+      let folder = currentLevel.find((item: any) => item.title === folderName && item.isFolder)
+      if (!folder) {
+        folder = {
+          key: `folder-${path.slice(0, index + 1).join('/')}`,
+          title: folderName,
+          isFolder: true,
+          children: []
+        }
+        currentLevel.push(folder)
+      }
+      currentLevel = folder.children
+    })
+    
+    currentLevel.push({
+      key: doc.slug,
+      title: doc.title,
+      isFolder: false
+    })
+  })
+
+  const sortItems = (items: any[]) => {
+    items.sort((a, b) => {
+      if (a.isFolder && !b.isFolder) return -1
+      if (!a.isFolder && b.isFolder) return 1
+      return a.title.localeCompare(b.title)
+    })
+    items.forEach((item: any) => {
+      if (item.children) sortItems(item.children)
+    })
+  }
+  sortItems(root)
+  
+  return root
+})
+
+const onTreeSelect = (keys: string[], data: any) => {
+  if (data.node.isFolder) return
+  if (keys.length > 0) {
+    navigateTo(keys[0])
+  }
+}
+
+const filteredFiles = computed<DocSummary[]>(() => {
+  if (!fileSearch.value) return docList.value
+  const search = fileSearch.value.toLowerCase()
+  return docList.value.filter((item: DocSummary) => item.title.toLowerCase().includes(search) || item.slug.toLowerCase().includes(search))
+})
+
+const navigateTo = (name: string) => {
+  router.push(`/docs/${encodeURIComponent(name)}`)
+}
 
 const slugify = (s: string) => {
   return s.toLowerCase().replace(/[^a-z0-9\s\-]/g, '').trim().replace(/\s+/g, '-')
@@ -86,7 +181,7 @@ const pageTitle = computed(() => {
 })
 
 const renderedHtml = computed(() => {
-  const html = marked.parse(sourceMd.value) as unknown as string
+  const html = contentFormat.value === 'html' ? contentHtml.value : marked.parse(sourceMd.value) as unknown as string
   let out = html
   toc.value.forEach((h: HeadingItem) => {
     const pattern = new RegExp(`<h${h.level}>\\s*${escapeRegExp(h.text)}\\s*</h${h.level}>`, 'i')
@@ -100,64 +195,62 @@ const renderedHtml = computed(() => {
   return `<div id="doc-scroll-container">${out}</div>`
 })
 
-const buildIndex = () => {
-  const map: Record<string, string> = {}
-  Object.keys(files).forEach((p) => {
-    const name = (p.split('/').pop() || '').replace(/\.md$/i, '')
-    if (name) {
-      const content = (files[p] as unknown as string) || ''
-      map[name] = content
-    }
-  })
-  index.value = map
+const buildIndex = async () => {
+  const list = await listDocs()
+  docList.value = list
 }
 
-const parseFrontmatter = (md: string): { fm: Frontmatter; body: string } => {
-  if (md.startsWith('---')) {
-    const end = md.indexOf('\n---', 3)
-    if (end !== -1) {
-      const raw = md.slice(3, end).trim()
-      const body = md.slice(end + 4)
-      const fm: Frontmatter = {}
-      raw.split('\n').forEach((line) => {
-        const idx = line.indexOf(':')
-        if (idx > 0) {
-          const key = line.slice(0, idx).trim()
-          const val = line.slice(idx + 1).trim().replace(/^["']|["']$/g, '')
-          fm[key] = val
-        }
-      })
-      return { fm, body }
-    }
-  }
-  return { fm: {}, body: md }
-}
+// 解析由服务返回的 md 构建目录
 
-const loadBySlug = (s: string) => {
+const loadBySlug = async (s: string) => {
   const key = decodeURIComponent(s || '')
-  let md = (key && index.value[key]) || ''
-  if (!md) {
-    const preferred = '社区产品文档中心重构方案'
-    md = index.value[preferred] || Object.values(index.value)[0] || '# 文档详情'
+  let targetSlug = key
+  if (!targetSlug && docList.value.length > 0) {
+    targetSlug = docList.value[0].slug
   }
-  const { fm, body } = parseFrontmatter(md)
-  meta.value = fm
-  sourceMd.value = body
-  buildToc(body)
+  const data = await getDocBySlug(targetSlug)
+  meta.value = data.fm
+  sourceMd.value = data.md
+  contentHtml.value = data.html
+  contentFormat.value = data.contentFormat || 'markdown'
+  buildToc(data.md)
 }
 
-onMounted(() => {
-  buildIndex()
-  loadBySlug(slug.value)
+onMounted(async () => {
+  await buildIndex()
+  await loadBySlug(slug.value)
 })
 
-watch(slug, (s: string) => {
-  loadBySlug(s)
+watch(slug, async (s: string) => {
+  await loadBySlug(s)
 })
 </script>
 
 <style scoped>
-.doc-ops { margin-bottom: 12px; }
-.doc-content :deep(pre) { background: #f7f8fa; padding: 12px; border-radius: 6px; }
-.doc-content :deep(.doc-highlight) { background: #ffe58f; }
+.doc-viewer { padding: 20px; background: #f0f2f5; min-height: 100vh; }
+.doc-sidebar { max-height: calc(100vh - 120px); overflow-y: auto; position: sticky; top: 20px; }
+.file-search { margin-bottom: 12px; }
+.file-list { margin-bottom: 16px; }
+.file-item { 
+  padding: 8px 12px; 
+  cursor: pointer; 
+  border-radius: 4px; 
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-2);
+}
+.file-item:hover { background: var(--color-fill-2); color: var(--color-text-1); }
+.file-item.active { background: var(--color-primary-light-1); color: var(--color-primary-light-4); font-weight: 500; }
+.file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+
+.doc-ops { margin-bottom: 20px; display: flex; justify-content: flex-end; }
+.doc-content { line-height: 1.8; color: #333; }
+.doc-content :deep(h1) { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
+.doc-content :deep(h2) { margin-top: 24px; border-left: 4px solid var(--color-primary-light-4); padding-left: 12px; }
+.doc-content :deep(pre) { background: #f7f8fa; padding: 16px; border-radius: 8px; overflow-x: auto; border: 1px solid #e5e6eb; }
+.doc-content :deep(code) { font-family: 'Fira Code', monospace; background: #f2f3f5; padding: 2px 4px; border-radius: 4px; }
+.doc-content :deep(img) { max-width: 100%; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.doc-content :deep(.doc-highlight) { background: #ffe58f; padding: 0 2px; border-radius: 2px; }
 </style>
