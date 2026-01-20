@@ -7,7 +7,7 @@
       <a-tab-pane key="credit" title="征信">
         <CreditProfile :user-info="userInfo" :credit-info="creditInfo" />
       </a-tab-pane>
-      <a-tab-pane key="postloan" title="贷后画像">
+      <a-tab-pane key="postloan" title="贷后管理">
         <PostLoanProfile :user-info="userInfo" :collection-records="collectionRecords" />
       </a-tab-pane>
     </a-tabs>

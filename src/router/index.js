@@ -163,57 +163,17 @@ const router = createRouter({
       }
     },
     {
-      path: ROUTE_PATHS.TOUCH.ROOT,
-      children: [
-        {
-          path: '',
-          name: ROUTE_NAMES.TOUCH.INDEX,
-          component: () => import('../pages/touch/index.vue'),
-          meta: {
-            title: '触达首页'
-          }
-        },
-        {
-          path: 'channel/blacklist',
-          name: ROUTE_NAMES.TOUCH.CHANNEL_BLACKLIST,
-          component: () => import('../pages/touch/channel/blacklist.vue'),
-          meta: {
-            title: '渠道黑名单'
-          }
-        },
-        {
-          path: 'manual-sms',
-          name: ROUTE_NAMES.TOUCH.MANUAL_SMS,
-          component: () => import('../pages/touch/manual-sms/index.vue'),
-          meta: {
-            title: '手动短信'
-          }
-        },
-        {
-          path: 'manual-sms/list',
-          name: ROUTE_NAMES.TOUCH.MANUAL_SMS_LIST,
-          component: () => import('../pages/touch/manual-sms/list.vue'),
-          meta: {
-            title: '手动短信列表'
-          }
-        },
-        {
-          path: 'policy/template',
-          name: ROUTE_NAMES.TOUCH.POLICY_TEMPLATE,
-          component: () => import('../pages/touch/policy/template/index.vue'),
-          meta: {
-            title: '策略模板'
-          }
-        },
-        {
-          path: 'query',
-          name: 'TouchQuery',
-          component: () => import('../pages/touch/query/index.vue'),
-          meta: {
-            title: '触达查询'
-          }
-        }
-      ]
+      path: '/touch/:subPath(.*)*',
+      name: 'TouchStandalone',
+      beforeEnter: (to) => {
+        const base = 'http://localhost:5181/touch'
+        const sub = to.params.subPath ? `/${to.params.subPath}` : ''
+        const qs = new URLSearchParams(to.query || {}).toString()
+        const url = qs ? `${base}${sub}?${qs}` : `${base}${sub}`
+        window.location.href = url
+        return false
+      },
+      meta: { title: '触达管理（独立）' }
     },
     {
       path: '/discovery',

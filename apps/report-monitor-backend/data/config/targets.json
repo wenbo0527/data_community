@@ -1,0 +1,11 @@
+[
+  {
+    "id": "83fb2de8-dae8-4cd4-babb-f22c5772caf8",
+    "name": "测试报表",
+    "url": "https://example.com/report",
+    "authType": "password",
+    "active": true,
+    "createdAt": "2026-01-20T03:17:17.243Z",
+    "updatedAt": "2026-01-20T03:17:17.243Z"
+  }
+]

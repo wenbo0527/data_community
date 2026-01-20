@@ -2,12 +2,7 @@
   <div class="postloan-profile">
     <div class="profile-section">
       <h3 class="section-title">催收记录</h3>
-      <div class="tags-container">
-        <a-tag color="green">{{ collectionTags.collectionCount }}</a-tag>
-        <a-tag color="blue">{{ collectionTags.collectionMethod }}</a-tag>
-        <a-tag color="green">{{ collectionTags.collectionEffect }}</a-tag>
-        <a-tag color="orange">{{ collectionTags.collectionCycle }}</a-tag>
-      </div>
+      
       
       <!-- 催收记录详情表格 -->
       <div class="collection-records-section" v-if="collectionRecords?.length">
@@ -177,33 +172,26 @@
       </div>
     </div>
 
-    <div class="profile-section">
-      <h3 class="section-title">难易度标签</h3>
-      <div class="tags-container">
-        <a-tag color="green">{{ difficultyTags.collectionDifficulty }}</a-tag>
-        <a-tag color="blue">{{ difficultyTags.communicationDifficulty }}</a-tag>
-        <a-tag color="orange">{{ difficultyTags.repaymentWillingness }}</a-tag>
-        <a-tag color="red">{{ difficultyTags.repaymentAbility }}</a-tag>
-      </div>
+    <div class="profile-section" v-if="badNotifications && badNotifications.length">
+      <h3 class="section-title">不良通知</h3>
+      <a-table
+        :data="badNotifications"
+        row-key="id"
+        size="small"
+        :pagination="{ pageSize: 5, showSizeChanger: true, showQuickJumper: true }"
+      >
+        <template #columns>
+          <a-table-column title="通知类型" data-index="noticeType" :width="100" />
+          <a-table-column title="产品编号" data-index="productKey" :width="120" />
+          <a-table-column title="授信编号" data-index="creditNo" :width="120" />
+          <a-table-column title="短信发送时间" data-index="smsTime" :width="180" />
+          <a-table-column title="短信状态" data-index="smsStatus" :width="100" />
+          <a-table-column title="短信内容" data-index="smsContent" :ellipsis="true" />
+        </template>
+      </a-table>
     </div>
 
-    <div class="profile-section">
-      <h3 class="section-title">催收册类</h3>
-      <div class="tags-container">
-        <a-tag color="blue">{{ portfolioTags.currentPortfolio }}</a-tag>
-        <a-tag color="cyan">{{ portfolioTags.portfolioHistory }}</a-tag>
-      </div>
-    </div>
-
-    <div class="profile-section">
-      <h3 class="section-title">投诉类标签</h3>
-      <div class="tags-container">
-        <a-tag color="green">{{ complaintTags.complaintFrequency }}</a-tag>
-        <a-tag color="blue">{{ complaintTags.complaintType }}</a-tag>
-        <a-tag color="green">{{ complaintTags.complaintHandling }}</a-tag>
-        <a-tag color="green">{{ complaintTags.complaintImpact }}</a-tag>
-      </div>
-    </div>
+    
   </div>
 </template>
 
@@ -298,32 +286,10 @@ const props = withDefaults(defineProps<Props>(), {
   ]
 })
 
+const badNotifications = computed(() => props.userInfo?.badNotifications || [])
+
 // 模拟数据
-const collectionTags = computed(() => ({
-  collectionCount: '1-3次',
-  collectionMethod: '电话催收',
-  collectionEffect: '配合良好',
-  collectionCycle: '短期催收(<30天)'
-}))
-
-const difficultyTags = computed(() => ({
-  collectionDifficulty: '容易',
-  communicationDifficulty: '配合',
-  repaymentWillingness: '强烈',
-  repaymentAbility: '能力不足'
-}))
-
-const portfolioTags = computed(() => ({
-  currentPortfolio: 'M2册',
-  portfolioHistory: '从M1册转入'
-}))
-
-const complaintTags = computed(() => ({
-  complaintFrequency: '无投诉',
-  complaintType: '无投诉记录',
-  complaintHandling: '无需处理',
-  complaintImpact: '无影响'
-}))
+// 已移除下方标签类信息的计算属性，保留核心数据视图
 
 const collectionColumns = [
   {

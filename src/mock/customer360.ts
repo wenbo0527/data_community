@@ -395,6 +395,15 @@ interface UserData {
       };
     };
   }>;
+  badNotifications?: Array<{
+    id: string;
+    noticeType: string;
+    productKey: string;
+    creditNo: string;
+    smsTime: string;
+    smsStatus: string;
+    smsContent: string;
+  }>;
 }
 
 const mockUsers: { [key: string]: UserData } = {
@@ -463,7 +472,27 @@ const mockUsers: { [key: string]: UserData } = {
     similarity: 9.876543,
     threshold: 60.00,
     errorMsg: '当日已核查通过',
-    
+    badNotifications: [
+      {
+        id: 'BN001',
+        noticeType: '逾期提醒',
+        productKey: 'LN-2024-002',
+        creditNo: '20701555',
+        smsTime: '2024-01-16 09:30:00',
+        smsStatus: '发送成功',
+        smsContent: '您在本行的贷款已逾期，请尽快还款。'
+      },
+      {
+        id: 'BN002',
+        noticeType: '强制催收',
+        productKey: 'LN-2024-009',
+        creditNo: '20701564',
+        smsTime: '2024-02-02 18:20:00',
+        smsStatus: '发送成功',
+        smsContent: '您长期未按时还款，将影响个人信用记录，请立即处理。'
+      }
+    ],
+
     // 删除自营产品列表，统一使用products数组
     
     // 催收记录

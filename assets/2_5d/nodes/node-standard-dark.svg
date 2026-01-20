@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140">
+  <defs>
+    <linearGradient id="cardTopDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#1A87B5"/>
+    </linearGradient>
+    <linearGradient id="cardSideDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#14506B"/>
+      <stop offset="100%" stop-color="#0E394C"/>
+    </linearGradient>
+    <filter id="cardShadowDark" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="8"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g id="g-top" filter="url(#cardShadowDark)">
+    <path d="M20 30 L220 30 L210 70 L30 70 Z" fill="url(#cardTopDark)"/>
+  </g>
+  <g id="g-side">
+    <path d="M30 70 L210 70 L210 90 L30 90 Z" fill="url(#cardSideDark)"/>
+  </g>
+  <g id="g-shadow">
+    <rect x="30" y="90" width="180" height="14" fill="#000" opacity="0.2"/>
+  </g>
+</svg>

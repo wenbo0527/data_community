@@ -13,6 +13,10 @@
           <span class="value">{{ customerInfo.customerNo || '-' }}</span>
         </div>
         <div class="info-item">
+          <span class="label">统一客户号：</span>
+          <span class="value">{{ customerInfo.unifiedCustomerId || '-' }}</span>
+        </div>
+        <div class="info-item">
           <span class="label">身份证号：</span>
           <span class="value">{{ customerInfo.idCard || '-' }}</span>
         </div>
@@ -295,6 +299,7 @@ const customerInfo = computed(() => {
   return {
     name: basicInfo.name || props.userInfo?.name,
     customerNo: basicInfo.customerNo || props.userInfo?.customerNo,
+    unifiedCustomerId: basicInfo.unifiedCustomerId || props.userInfo?.userId,
     idCard: basicInfo.idCard || props.userInfo?.idCard,
     phone: basicInfo.phone || props.userInfo?.phone,
     age: basicInfo.age || props.userInfo?.age,

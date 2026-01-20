@@ -240,8 +240,27 @@
             <!-- 数据架构图和通知栏 -->
             <a-row :gutter="8" class="bottom-row compact">
               <a-col :xs="24" :sm="24" :md="24" :lg="16" class="architecture-column">
-                <a-card title="社区架构图" class="card-container compact-card">
-                  <ArchitectureChart />
+                <a-card class="card-container compact-card">
+                  <template #title>社区架构图</template>
+                  <template #extra>
+                    <a-space>
+                      <a-button type="text" size="small" @click="toggleCoord">
+                        坐标拾取：{{ coordEnabled ? '开' : '关' }}
+                      </a-button>
+                      <a-button type="text" size="small" @click="toggleNodes">
+                        {{ hideNodes ? '显示节点' : '隐藏节点' }}
+                      </a-button>
+                      <a-button type="text" size="small" @click="toggleHideBg">
+                        {{ hideBg ? '显示底图' : '屏蔽底图' }}
+                      </a-button>
+                      <a-button type="text" size="small" @click="enterFullscreen">
+                        全屏
+                      </a-button>
+                    </a-space>
+                  </template>
+                  <div :ref="setArchRef" :key="archKey" class="arch-wrapper">
+                    <ArchitectureChart :opts="{ hideNodes, coord: coordEnabled, hideBg }" />
+                  </div>
                 </a-card>
               </a-col>
               <a-col :xs="24" :sm="24" :md="24" :lg="8" class="notice-column">
@@ -454,6 +473,28 @@ import { Message } from '@arco-design/web-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+const archRef = ref(null)
+const hideNodes = ref(false)
+const coordEnabled = ref(false)
+const hideBg = ref(false)
+const setArchRef = (el) => { archRef.value = el }
+const archKey = computed(() => `${hideNodes.value}-${coordEnabled.value}-${hideBg.value}`)
+
+const enterFullscreen = () => {
+  const el = archRef.value
+  if (el && el.requestFullscreen) el.requestFullscreen()
+}
+const toggleNodes = () => { hideNodes.value = !hideNodes.value }
+const toggleCoord = () => { coordEnabled.value = !coordEnabled.value }
+const toggleHideBg = () => { hideBg.value = !hideBg.value }
+
+const toggleUserRole = () => {}
+const toggleDepartment = () => {}
+
+watch([hideNodes, coordEnabled, hideBg], ([hn, ce, hb]) => {
+  console.log('[Home] toggles changed', { hideNodes: hn, coord: ce, hideBg: hb })
+})
 
 // --- 状态定义 ---
 const username = ref('张珊')
@@ -1229,6 +1270,10 @@ const openMetricTrend = (metric) => {
 .architecture-chart {
   flex: 1;
   min-height: 0;
+}
+.arch-wrapper {
+  position: relative;
+  overflow: visible;
 }
 
 .compact-tabs {

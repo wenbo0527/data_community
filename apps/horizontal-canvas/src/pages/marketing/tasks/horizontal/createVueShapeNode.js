@@ -95,7 +95,7 @@ export function createVueShapeNode({ id, x, y, label, data = {}, portsOptions = 
       contentLines: hasConfigLines ? rows : null,
       enableValidation: hasConfigLines
     }),
-    zIndex: 1
+    zIndex: 10
   }
 }
 /*
