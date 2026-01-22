@@ -4,7 +4,8 @@ import { ref, reactive, computed } from 'vue'
 const formModel = reactive({
   maId: '',
   taskId: '',
-  executeDate: null
+  executeDate: null,
+  reachType: ''
 })
 
 const tableData = ref([
@@ -13,21 +14,24 @@ const tableData = ref([
     taskName: '风控策略A-实时任务',
     maId: 'MA001',
     executeTime: '2023-05-15',
-    status: '成功'
+    status: '成功',
+    reachType: '实时'
   },
   {
     taskId: 'STR20230515002',
     taskName: '风控策略B-批量任务',
     maId: 'MA002',
     executeTime: '2023-05-15',
-    status: '失败'
+    status: '失败',
+    reachType: '离线'
   },
   {
     taskId: 'STR20230515003',
     taskName: '风控策略C-实时任务',
     maId: 'MA003',
     executeTime: '2023-05-15',
-    status: '处理中'
+    status: '处理中',
+    reachType: '实时'
   }
 ])
 
@@ -35,6 +39,12 @@ const pagination = reactive({
   total: 100,
   current: 1,
   pageSize: 10
+})
+
+const filteredData = computed(() => {
+  const type = formModel.reachType
+  if (!type) return tableData.value
+  return tableData.value.filter(item => item.reachType === type)
 })
 
 const getStatusColor = (status) => {
@@ -100,18 +110,25 @@ const showFailDetail = (record) => {
           <a-form-item field="executeDate" label="选择执行日期">
             <a-date-picker v-model="formModel.executeDate" allow-clear />
           </a-form-item>
+          <a-form-item field="reachType" label="触达类型">
+            <a-select v-model="formModel.reachType" allow-clear placeholder="请选择触达类型" style="width: 120px">
+              <a-option value="实时">实时</a-option>
+              <a-option value="离线">离线</a-option>
+            </a-select>
+          </a-form-item>
           <a-form-item>
             <a-button type="primary" @click="handleSearch">查询</a-button>
           </a-form-item>
         </a-form>
       </div>
 
-      <a-table :data="tableData" :pagination="pagination" @page-change="onPageChange">
+      <a-table :data="filteredData" :pagination="pagination" @page-change="onPageChange">
         <template #columns>
           <a-table-column title="策略ID" dataIndex="taskId" :width="150" />
           <a-table-column title="MA任务名称" dataIndex="taskName" :width="200" />
           <a-table-column title="MA任务ID" dataIndex="maId" :width="120" />
           <a-table-column title="任务执行批次" dataIndex="executeTime" :width="150" />
+          <a-table-column title="触达类型" dataIndex="reachType" :width="120" />
           <a-table-column title="状态" dataIndex="status" :width="100">
             <template #cell="{ record }">
               <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
