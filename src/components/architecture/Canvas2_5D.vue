@@ -1,7 +1,7 @@
 <template>
   <div class="canvas-wrapper" :class="{ 'is-dev': showCoordPicker }">
     <div class="canvas" ref="root" @click="onPick" @wheel="onWheel" @mousemove="onMouseMove">
-      <div class="content" :style="contentStyle">
+    <div class="content" :style="autoStyle">
         <img v-if="!flags.hideBg" class="bg-image" src="/2.5d.svg" alt="" />
         <BaseOverlay :polygons="layerPolygons" />
         <svg class="flow" ref="flowEl" v-if="!flags.hideNodes" width="100%" height="100%" preserveAspectRatio="none">
@@ -11,24 +11,24 @@
         <!-- Debug/Assist Layer (Visible when ruler is active or showGuides is on) -->
         <svg v-if="ruler.active || flags.showGuides" class="debug-layer" width="100%" height="100%" style="pointer-events: none; position: absolute; inset: 0; z-index: 25;">
           <g v-for="(pos, id) in nodesPx" :key="id">
-            <!-- Bounding Box -->
-            <rect 
-              :x="pos.x - iconSize/2" :y="pos.y - iconSize/2" 
-              :width="iconSize" :height="iconSize" 
-              fill="none" stroke="rgba(255, 0, 0, 0.5)" stroke-width="1" stroke-dasharray="4 4"
-            />
-            <!-- Center Point -->
-            <circle :cx="pos.x" :cy="pos.y" r="3" fill="red" />
-            <!-- Connection Point (Visual Center) -->
-            <circle v-if="nodesContactPx[id]" :cx="nodesContactPx[id].x" :cy="nodesContactPx[id].y" r="4" fill="#52c41a" stroke="white" stroke-width="1" />
-            <!-- Edge Midpoints -->
-            <circle :cx="pos.x" :cy="pos.y - iconSize/2" r="2" fill="#1890ff" /> <!-- Top -->
-            <circle :cx="pos.x" :cy="pos.y + iconSize/2" r="2" fill="#1890ff" /> <!-- Bottom -->
-            <circle :cx="pos.x - iconSize/2" :cy="pos.y" r="2" fill="#1890ff" /> <!-- Left -->
-            <circle :cx="pos.x + iconSize/2" :cy="pos.y" r="2" fill="#1890ff" /> <!-- Right -->
-            <!-- Label for ID (Optional, small) -->
-            <text :x="pos.x - iconSize/2 + 5" :y="pos.y - iconSize/2 + 15" fill="rgba(255,0,0,0.7)" font-size="10" font-family="monospace">{{ id }}</text>
-          </g>
+          <!-- Bounding Box -->
+          <rect 
+            :x="pos.x - metrics.icon/2" :y="pos.y - metrics.icon/2" 
+            :width="metrics.icon" :height="metrics.icon" 
+            fill="none" stroke="rgba(255, 0, 0, 0.5)" :stroke-width="metrics.style.edgeStroke" stroke-dasharray="4 4"
+          />
+          <!-- Center Point -->
+          <circle :cx="pos.x" :cy="pos.y" :r="metrics.icon * 0.03" fill="red" />
+          <!-- Connection Point (Visual Center) -->
+          <circle v-if="nodesContactPx[id]" :cx="nodesContactPx[id].x" :cy="nodesContactPx[id].y" :r="metrics.icon * 0.04" fill="#52c41a" stroke="white" :stroke-width="metrics.style.edgeStroke" />
+          <!-- Edge Midpoints -->
+          <circle :cx="pos.x" :cy="pos.y - metrics.icon/2" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Top -->
+          <circle :cx="pos.x" :cy="pos.y + metrics.icon/2" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Bottom -->
+          <circle :cx="pos.x - metrics.icon/2" :cy="pos.y" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Left -->
+          <circle :cx="pos.x + metrics.icon/2" :cy="pos.y" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Right -->
+          <!-- Label for ID (Optional, small) -->
+          <text :x="pos.x - metrics.icon/2 + 5" :y="pos.y - metrics.icon/2 + 15" fill="rgba(255,0,0,0.7)" :font-size="metrics.icon * 0.1" font-family="monospace">{{ id }}</text>
+        </g>
         </svg>
 
         <!-- Ruler Overlay -->
@@ -42,10 +42,10 @@
             v-if="ruler.step > 0"
             :x1="ruler.p1.x" :y1="ruler.p1.y" 
             :x2="ruler.p2.x" :y2="ruler.p2.y" 
-            stroke="red" stroke-width="2" stroke-dasharray="5,5"
+            stroke="red" :stroke-width="metrics.edgeStroke * 1.5" stroke-dasharray="5,5"
             marker-start="url(#rulerArrow)" marker-end="url(#rulerArrow)"
           />
-          <text v-if="rulerStats" :x="rulerStats.cx" :y="rulerStats.cy - 10" fill="red" font-size="14" font-weight="bold" text-anchor="middle" style="text-shadow: 0 1px 2px white">
+          <text v-if="rulerStats" :x="rulerStats.cx" :y="rulerStats.cy - 10" fill="red" :font-size="metrics.icon * 0.15" font-weight="bold" text-anchor="middle" style="text-shadow: 0 1px 2px white">
             {{ rulerStats.angle.toFixed(1) }}° / {{ rulerStats.len.toFixed(0) }}px
           </text>
         </svg>
@@ -56,7 +56,7 @@
             :key="n.id"
             :node="n"
             :positionPx="nodesPx[n.id]"
-            :size="iconSize"
+            :size="metrics.icon"
             :active="activeNodeId===n.id"
             :hovered="hoveredNodeId===n.id"
             @mouseenter="onHover(n.id)"
@@ -120,16 +120,12 @@ const props = defineProps<{ layers: Layer[]; nodes: Node[]; opts?: { hideNodes?:
 const root = ref<HTMLElement|null>(null)
 const size = ref({ width: 0, height: 0 })
 const scale = ref(1)
-const minScale = 0.5
-const maxScale = 2.5
-const zoomStep = 0.1
 const contentStyle = computed(() => ({
   transform: `scale(${scale.value})`,
   transformOrigin: 'center center'
 }))
 const hoveredNodeId = ref<string|null>(null)
 const activeNodeId = ref<string|null>(null)
-const originNodeId = 'platform'
 const flags = ref({ hideNodes: false, hideBg: false, showGuides: false })
 function toBool(input: any) {
   if (typeof input === 'boolean') return input
@@ -143,13 +139,58 @@ const showCoordPicker = computed(() => toBool(props.opts?.coord))
  
 const autoLayout = computed(() => false)
 
-const iconSize = computed(() => {
-  const w = size.value.width || 1200
-  const h = size.value.height || 800
-  const minDim = Math.min(w, h)
-  // Base size: 15% of min dimension, clamped between 80px and 240px
-  const raw = minDim * 0.15
-  return Math.min(240, Math.max(80, raw))
+const metrics = computed(() => {
+  // 1. 基础尺寸锚点
+  const unit = Math.max(1, Math.min(size.value.width || 0, size.value.height || 0))
+  
+  // 2. 图标尺寸计算 (原 iconSize 逻辑)
+  const rawIcon = unit * 0.12
+  const icon = Math.min(160, Math.max(64, rawIcon))
+  const iconDiag = icon * Math.SQRT2
+
+  // 3. 2.5D 几何投影参数
+  const projectionAngle = -148
+  const projectionRad = (projectionAngle * Math.PI) / 180
+
+  // 4. 布局与轮廓参数
+  const layer = {
+    widthV: Math.min(iconDiag * 1.0, unit * 0.25),
+    lenMin: iconDiag * 2,
+    lenMax: iconDiag * 6,
+    padding: Math.round(icon * 1.2),
+    cornerRadius: Math.max(12, Math.round(icon * 0.15)),
+    labelInset: Math.max(12, Math.round(icon * 0.1)),
+    titleLeftMax: Math.round(icon * 1.5),
+    titleExtraMin: Math.round(icon * 0.6),
+    titleCharWidthRatio: 0.08, // 标题字符宽度比例
+    labelOffsetRatio: 0.2      // 标签偏移比例
+  }
+
+  // 5. 视觉样式参数
+  const style = {
+    margin: Math.round(unit * 0.03),
+    edgeStroke: Math.max(1, Math.round(icon * 0.015)),
+    busStroke: Math.max(2, Math.round(icon * 0.03)),
+    edgeDash: Math.max(4, Math.round(icon * 0.05)),
+    busDashA: Math.max(8, Math.round(icon * 0.08)),
+    busDashB: Math.max(4, Math.round(icon * 0.04)),
+    contactCap: Math.round(icon * 0.1)
+  }
+
+  // 6. 交互与工具参数
+  const config = {
+    zoom: { min: 0.25, max: 2.5, step: 0.1 },
+    originNodeId: 'platform',
+    refLayerIndex: 1,
+    uDefault: { x: 1, y: -0.85 },
+    coord: { offset: 12, shiftPct: -105 }
+  }
+
+  return { 
+    unit, icon, iconDiag, 
+    projectionAngle, projectionRad,
+    layer, style, config
+  }
 })
 
 const nodesPx = computed<Record<string,{x:number;y:number}>>(() => {
@@ -203,7 +244,7 @@ const nodesPx = computed<Record<string,{x:number;y:number}>>(() => {
 const nodesContactPx = computed(() => {
   // Adjust this offset to match the visual center of the 2.5D icons
   // Downward offset (positive Y) based on icon size
-  const offset = { x: 0, y: iconSize.value * 0.1 } 
+  const offset = { x: 0, y: metrics.value.style.contactCap } 
   const m: Record<string, {x:number;y:number}> = {}
   const source = nodesPx.value
   for (const k in source) {
@@ -221,24 +262,36 @@ const layoutParams = computed(() => {
     byLayerIds.set(n.layerIndex, arr)
   })
   
-  // Calculate global unified main axis direction (U axis)
-  let globalUX = 1, globalUY = -0.85 // Default initial value
-  let maxSpan = 0
-  
-  byLayerIds.forEach((ids) => {
-    const pts = ids.map(id => nodesContactPx.value[id]).filter(Boolean) as {x:number;y:number}[]
-    if (pts.length > 1) {
-      const sorted = [...pts].sort((a, b) => a.x - b.x)
-      const start = sorted[0]!, end = sorted[sorted.length - 1]!
-      const dx = end.x - start.x, dy = end.y - start.y
-      const dist = Math.hypot(dx, dy)
-      if (dist > maxSpan) {
-        maxSpan = dist
-        globalUX = dx / dist
-        globalUY = dy / dist
-      }
+  let globalUX = metrics.value.config.uDefault.x, globalUY = metrics.value.config.uDefault.y
+  const refLayerIndex = metrics.value.config.refLayerIndex
+  const refIds = byLayerIds.get(refLayerIndex)
+  if (refIds && refIds.length > 1) {
+    const pts = refIds.map(id => nodesContactPx.value[id]).filter(Boolean) as {x:number;y:number}[]
+    const sorted = [...pts].sort((a, b) => a.x - b.x)
+    const start = sorted[0]!, end = sorted[sorted.length - 1]!
+    const dx = end.x - start.x, dy = end.y - start.y
+    const dist = Math.hypot(dx, dy)
+    if (dist > 0) {
+      globalUX = dx / dist
+      globalUY = dy / dist
     }
-  })
+  } else {
+    let maxSpan = 0
+    byLayerIds.forEach((ids) => {
+      const pts = ids.map(id => nodesContactPx.value[id]).filter(Boolean) as {x:number;y:number}[]
+      if (pts.length > 1) {
+        const sorted = [...pts].sort((a, b) => a.x - b.x)
+        const start = sorted[0]!, end = sorted[sorted.length - 1]!
+        const dx = end.x - start.x, dy = end.y - start.y
+        const dist = Math.hypot(dx, dy)
+        if (dist > maxSpan) {
+          maxSpan = dist
+          globalUX = dx / dist
+          globalUY = dy / dist
+        }
+      }
+    })
+  }
   
   const u = { x: globalUX, y: globalUY }
   const v = { x: -u.y, y: u.x }
@@ -341,10 +394,8 @@ const edgeLines = computed<Array<{ id: string; a: { x: number; y: number }; b: {
         const param = busParams.get(keyOut)
         if (param) {
           const { C, u } = param
-          // Calculate intersection by projecting p onto line (C, u) along a fixed -148 degree direction
-          // Connection line vector d = (cos(-148°), sin(-148°))
-          // -148 degrees is roughly equivalent to 212 degrees, pointing bottom-left
-          const angleRad = -148 * Math.PI / 180
+          // Calculate intersection by projecting p onto line (C, u) along a fixed projection angle
+          const angleRad = metrics.value.projectionRad
           const d = { x: Math.cos(angleRad), y: Math.sin(angleRad) }
           
           // Intersection logic: proj = C + t*u. We want (proj - p) parallel to d.
@@ -367,8 +418,8 @@ const edgeLines = computed<Array<{ id: string; a: { x: number; y: number }; b: {
         const paramIn = busParams.get(keyIn)
         if (paramIn) {
           const { C, u } = paramIn
-          // Same -148 degree projection for incoming edges
-          const angleRad = -148 * Math.PI / 180
+          // Same projection for incoming edges
+          const angleRad = metrics.value.projectionRad
           const d = { x: Math.cos(angleRad), y: Math.sin(angleRad) }
           
           const w = { x: p.x - C.x, y: p.y - C.y }
@@ -391,7 +442,7 @@ const layerPolygons = computed(() => {
   const r: Array<{ layerIndex: number; points?: {x:number;y:number}[]; pathD?: string; title?: string; label: {x:number;y:number}; labelRotate: number }> = []
   
   // 轮廓相对于节点中心的扩展半径 (像素)
-  const paddingPx = 150 
+  const paddingPx = metrics.value.layer.padding
 
   byLayerIds.forEach((ids: string[], L0: number) => {
       const ptsPx: Array<{x:number;y:number}> = ids.map((id: string) => {
@@ -429,7 +480,7 @@ const layerPolygons = computed(() => {
     // vectorU = u (总线方向)
     // vectorSide = dSide (连接线方向 -148°)
     
-    const angleRad = -148 * Math.PI / 180
+    const angleRad = metrics.value.projectionRad
     const vectorSide = { x: Math.cos(angleRad), y: Math.sin(angleRad) }
     
     // 重新计算边界：
@@ -468,13 +519,19 @@ const layerPolygons = computed(() => {
       vProjMin = Math.min(vProjMin, dv); vProjMax = Math.max(vProjMax, dv)
     })
     
-    // 应用 Padding
-    const pU_Min = uProjMin - paddingPx * 0.8 // 稍微调整 padding 比例以适应斜切
-    const pU_Max = uProjMax + paddingPx * 0.8
+    // 控制同层范围的“长度”（沿着与连接线平行的边界线间距）
+    // 以点集的跨度为基础，并结合 icon 对角线设定上下限
+    const uCenter = (uProjMin + uProjMax) / 2
+    const baseSpan = (uProjMax - uProjMin) + paddingPx * 1.6
+    const minSpan = metrics.value.layer.lenMin
+    const maxSpan = metrics.value.layer.lenMax
+    const span = Math.min(maxSpan, Math.max(minSpan, baseSpan))
+    const pU_Min = uCenter - span / 2
+    const pU_Max = uCenter + span / 2
     
-    // 固定宽度 180px (围绕中心)
+    // 宽度基于图标宽度的百分比计算
     const vCenter = (vProjMin + vProjMax) / 2
-    const fixedWidth = 180
+    const fixedWidth = metrics.value.layer.widthV
     const pV_Min = vCenter - fixedWidth / 2
     const pV_Max = vCenter + fixedWidth / 2
     
@@ -504,15 +561,15 @@ const layerPolygons = computed(() => {
     const D = intersect(normalSide, pU_Min, v, pV_Max)
 
     // 根据层标题长度水平扩展左侧轮廓 (沿着 U 轴反方向)
-    // 注意：在斜切坐标系下，简单的沿着 U 轴移动依然有效
     const titleText = props.layers.find(ll => ll.index === L0)?.title || ''
-    const extraLeftPx = Math.max(titleText.length * 14 + 40, 60)
+    const { titleCharWidthRatio, titleExtraMin, titleLeftMax } = metrics.value.layer
+    const extraLeftPx = Math.min(Math.max(titleText.length * (metrics.value.icon * titleCharWidthRatio), titleExtraMin), titleLeftMax)
     
     const finalA = { x: A.x - u.x * extraLeftPx, y: A.y - u.y * extraLeftPx }
     const finalD = { x: D.x - u.x * extraLeftPx, y: D.y - u.y * extraLeftPx }
 
     // 生成圆角路径
-    const points = [finalA, B, C, finalD]
+    let points = [finalA, B, C, finalD]
     const edges = [
       { a: points[0], b: points[1] },
       { a: points[1], b: points[2] },
@@ -520,7 +577,7 @@ const layerPolygons = computed(() => {
       { a: points[3], b: points[0] }
     ]
     
-    const rPx = 24 // 圆角半径
+    const rPx = metrics.value.layer.cornerRadius
     const dParts: string[] = []
     
     edges.forEach((edge, i) => {
@@ -545,20 +602,22 @@ const layerPolygons = computed(() => {
     const dPath = dParts.join(' ') + ' Z'
 
     // 标签位置计算
-    const labelInset = 16
+    const labelInset = metrics.value.layer.labelInset
     const bottomEdgeVec = { x: C.x - finalD.x, y: C.y - finalD.y }
     const bottomEdgeLen = Math.hypot(bottomEdgeVec.x, bottomEdgeVec.y) || 1
     const bottomEdgeUnit = { x: bottomEdgeVec.x / bottomEdgeLen, y: bottomEdgeVec.y / bottomEdgeLen }
     
+    const labelOffset = Math.round(metrics.value.icon * metrics.value.layer.labelOffsetRatio)
     const label = { 
-      x: finalD.x + v.x * (-labelInset) + bottomEdgeUnit.x * 20, 
-      y: finalD.y + v.y * (-labelInset) + bottomEdgeUnit.y * 20 
+      x: finalD.x + v.x * (-labelInset) + bottomEdgeUnit.x * labelOffset, 
+      y: finalD.y + v.y * (-labelInset) + bottomEdgeUnit.y * labelOffset 
     }
     const labelRotate = Math.atan2(bottomEdgeVec.y, bottomEdgeVec.x) * 180 / Math.PI
     
     r.push({ 
       layerIndex: L0, 
       pathD: dPath, 
+      points,
       label, 
       labelRotate,
       title: titleText
@@ -567,16 +626,65 @@ const layerPolygons = computed(() => {
 
   return r.sort((a, b) => a.layerIndex - b.layerIndex)
 })
+const contentBBox = computed(() => {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  const acc = (p: {x:number;y:number}) => {
+    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y)
+    maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y)
+  }
+  const nodeVals = Object.values(nodesPx.value) as Array<{x:number;y:number}>
+  nodeVals.forEach((p) => {
+    acc({ x: p.x - metrics.value.icon / 2, y: p.y - metrics.value.icon / 2 })
+    acc({ x: p.x + metrics.value.icon / 2, y: p.y + metrics.value.icon / 2 })
+  })
+  busLines.value.forEach((bl: { a: {x:number;y:number}; b: {x:number;y:number} }) => { acc(bl.a); acc(bl.b) })
+  edgeLines.value.forEach((el: { a: {x:number;y:number}; b: {x:number;y:number} }) => { acc(el.a); acc(el.b) })
+  layerPolygons.value.forEach((poly: { points?: Array<{x:number;y:number}> }) => { (poly.points || []).forEach(acc) })
+  const empty = !isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)
+  return { minX, minY, maxX, maxY, empty }
+})
+const effectiveScale = computed(() => {
+  const baseScale = scale.value
+  const bbox = contentBBox.value
+  if (bbox.empty) return baseScale
+  const margin = metrics.value.margin
+  const bw = Math.max(1, bbox.maxX - bbox.minX)
+  const bh = Math.max(1, bbox.maxY - bbox.minY)
+  const cw = Math.max(1, size.value.width)
+  const ch = Math.max(1, size.value.height)
+  const sFit = Math.min(1, Math.min((cw - margin * 2) / bw, (ch - margin * 2) / bh))
+  const s = Math.min(metrics.value.config.zoom.max, Math.max(metrics.value.config.zoom.min, Math.min(baseScale, sFit)))
+  return s
+})
+const autoStyle = computed(() => {
+  const bbox = contentBBox.value
+  const s = effectiveScale.value
+  if (bbox.empty) return { transform: `scale(${s})`, transformOrigin: 'top left' }
+  const margin = metrics.value.margin
+  const bw = Math.max(1, bbox.maxX - bbox.minX)
+  const bh = Math.max(1, bbox.maxY - bbox.minY)
+  const cw = Math.max(1, size.value.width)
+  const ch = Math.max(1, size.value.height)
+  const cx = (bbox.minX + bbox.maxX) / 2
+  const cy = (bbox.minY + bbox.maxY) / 2
+  const tx = cw / 2 - cx * s
+  const ty = ch / 2 - cy * s
+  return { transform: `translate(${tx}px, ${ty}px) scale(${s})`, transformOrigin: 'top left', 
+    '--edge-stroke': `${metrics.value.edgeStroke}px`,
+    '--bus-stroke': `${metrics.value.busStroke}px`,
+    '--edge-dash-a': `${metrics.value.edgeDash}px`,
+    '--edge-dash-b': `${metrics.value.edgeDash}px`,
+    '--bus-dash-a': `${metrics.value.busDashA}px`,
+    '--bus-dash-b': `${metrics.value.busDashB}px`
+  }
+})
 const activeNode = computed(() => props.nodes.find(n => n.id===activeNodeId.value) || null)
 const activeRect = computed(() => {
-  const an = activeNode.value
-  if (!an) return null as any
-  const p = nodesPx.value[an.id]
-  if (!p) return null as any
-  // 居中 240x240
-  const x = (p?.x ?? 0) - 120
-  const y = (p?.y ?? 0) - 120
-  return { x, y, width: 240, height: 240 }
+  if (!activeNodeId.value) return null
+  const p = nodesPx.value[activeNodeId.value]
+  if (!p) return null
+  const s = metrics.value.icon
+  return { x: p.x - s / 2, y: p.y - s / 2, width: s, height: s }
 })
 function onHover(id: string|null) { hoveredNodeId.value = id }
 function onActive(id: string) { activeNodeId.value = id }
@@ -630,7 +738,7 @@ function onMouseMove(e: MouseEvent) {
   
   const xPx = e.clientX - rect.left
   const yPx = e.clientY - rect.top
-  const s = scale.value
+  const s = effectiveScale.value
   
   ruler.value.p2 = { x: xPx / s, y: yPx / s }
 }
@@ -639,9 +747,9 @@ function onWheel(e: WheelEvent) {
   if (!(e.ctrlKey || e.metaKey)) return
   e.preventDefault()
   e.stopPropagation()
-  const delta = e.deltaY > 0 ? -zoomStep : zoomStep
-  const next = Math.min(maxScale, Math.max(minScale, scale.value + delta))
-  scale.value = next
+  const { step, min, max } = metrics.value.config.zoom
+  const delta = e.deltaY > 0 ? -step : step
+  scale.value = Math.min(max, Math.max(min, scale.value + delta))
 }
 
 function onPick(e: MouseEvent) {
@@ -651,7 +759,7 @@ function onPick(e: MouseEvent) {
   const yPx = e.clientY - rect.top
   
   if (ruler.value.active) {
-    const s = scale.value
+    const s = effectiveScale.value
     const p = { x: xPx / s, y: yPx / s }
     if (ruler.value.step === 0 || ruler.value.step === 2) {
       ruler.value.p1 = p
@@ -670,7 +778,7 @@ function onPick(e: MouseEvent) {
   const absX = (xPx / rect.width) * 100
   const absY = (yPx / rect.height) * 100
   
-  const o = nodesPx.value[originNodeId]
+  const o = nodesPx.value[metrics.value.config.originNodeId]
   const relX = o ? ((xPx - o.x) / rect.width) * 100 : absX
   const relY = o ? ((yPx - o.y) / rect.height) * 100 : absY
   

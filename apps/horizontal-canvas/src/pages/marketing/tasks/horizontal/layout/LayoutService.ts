@@ -13,19 +13,29 @@ export async function applyQuickLayout(graph: GraphLike, options: any = {}): Pro
     containerEl,
     minimap,
     minimapPaused,
-    startX = 200,
-    startY = 0,
-    colSpacing = 250,
-    laneGapY = 200,
-    colScale = 1,
-    laneScale = 1,
-    spreadX = 1.5,
-    spreadY = 1.5,
-    expandX = 0
+    startX,
+    startY,
+    colSpacing,
+    laneGapY,
+    colScale,
+    laneScale,
+    spreadX,
+    spreadY,
+    expandX
   } = options || {}
   try { graph.setSnaplineEnabled && graph.setSnaplineEnabled(false) } catch {}
   const instance = options.quickLayout || new HorizontalQuickLayout({})
-  const result = await instance.executeHierarchyTreeLayout(graph, { startX, startY, colSpacing, laneGapY, colScale, laneScale, spreadX, spreadY, expandX })
+  const result = await instance.executeHierarchyTreeLayout(graph, {
+    startX,
+    startY,
+    colSpacing,
+    laneGapY,
+    colScale,
+    laneScale,
+    spreadX,
+    spreadY,
+    expandX
+  })
   cleanupEdgeVertices(graph)
   try { graph.setSnaplineEnabled && graph.setSnaplineEnabled(true) } catch {}
   setTimeout(() => {

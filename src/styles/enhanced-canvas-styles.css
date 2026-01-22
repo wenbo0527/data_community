@@ -153,6 +153,14 @@
   animation: pulse-port 1s infinite;
 }
 
+/* Safari/WebKit 特定修复：避免 backdrop-filter 导致的层级覆盖端口 */
+@supports (-webkit-backdrop-filter: blur(0)) {
+  .port-indicator {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
 /* 拖拽预览 */
 .canvas-drag-preview {
   position: absolute;

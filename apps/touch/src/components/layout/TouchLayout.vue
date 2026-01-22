@@ -8,12 +8,48 @@
         @menu-item-click="onMenuClick"
       >
         <a-menu-item key="/touch">触达首页</a-menu-item>
-        <a-menu-item key="/touch/channel/blacklist">渠道黑名单</a-menu-item>
-        <a-menu-item key="/touch/manual-sms">手动短信</a-menu-item>
-        <a-menu-item key="/touch/manual-sms/list">手动短信列表</a-menu-item>
-        <a-menu-item key="/touch/policy/template">策略模板</a-menu-item>
-        <a-menu-item key="/touch/query">触达查询</a-menu-item>
-        <a-menu-item key="/touch/system">系统管理</a-menu-item>
+        <a-sub-menu key="/touch/system">
+          <template #title>系统管理</template>
+          <a-menu-item key="/touch/system">系统概览</a-menu-item>
+          <a-menu-item key="/touch/system/dictionary">字典管理</a-menu-item>
+        </a-sub-menu>
+        <a-sub-menu key="/touch/policy">
+          <template #title>策略管理</template>
+          <a-menu-item key="/touch/policy/template">策略模板</a-menu-item>
+          <a-menu-item key="/touch/policy/overview">数据概览</a-menu-item>
+        </a-sub-menu>
+        <a-sub-menu key="/touch/channel">
+          <template #title>渠道管理</template>
+          <a-menu-item key="/touch/channel/manual-call-template">人工外呼模板</a-menu-item>
+          <a-menu-item key="/touch/channel/sms-template">短信模板</a-menu-item>
+          <a-menu-item key="/touch/channel/ai-call-template">AI外呼模板</a-menu-item>
+          <a-menu-item key="/touch/channel/alert">预警管理</a-menu-item>
+          <a-menu-item key="/touch/channel/rate-limit">全局频控</a-menu-item>
+          <a-menu-item key="/touch/channel/blacklist">黑名单管理</a-menu-item>
+          <a-sub-menu key="/touch/channel/vendors">
+            <template #title>供应商管理</template>
+            <a-menu-item key="/touch/channel/vendors">总览</a-menu-item>
+            <a-menu-item key="/touch/channel/vendors/ai">AI供应商</a-menu-item>
+            <a-menu-item key="/touch/channel/vendors/sms">短信供应商</a-menu-item>
+          </a-sub-menu>
+        </a-sub-menu>
+        <a-sub-menu key="/touch/query">
+          <template #title>触达查询</template>
+          <a-menu-item key="/touch/query">总览</a-menu-item>
+          <a-menu-item key="/touch/query/detail">触达查询明细</a-menu-item>
+          <a-menu-item key="/touch/query/sms-records">短信发送记录</a-menu-item>
+          <a-menu-item key="/touch/query/ai-call-records">AI外呼记录</a-menu-item>
+          <a-menu-item key="/touch/query/ai-sms-vendor-records">AI厂商短信记录</a-menu-item>
+          <a-menu-item key="/touch/query/manual-call-records">人工外呼记录</a-menu-item>
+          <a-menu-item key="/touch/query/manual-sms-vendor-records">人工厂商短信记录</a-menu-item>
+          <a-menu-item key="/touch/query/marketing-search">营销记录查询</a-menu-item>
+          <a-menu-item key="/touch/query/marketing-list">营销记录列表</a-menu-item>
+        </a-sub-menu>
+        <a-sub-menu key="/touch/manual-sms">
+          <template #title>手工短信</template>
+          <a-menu-item key="/touch/manual-sms">新建手工短信</a-menu-item>
+          <a-menu-item key="/touch/manual-sms/list">手工短信列表</a-menu-item>
+        </a-sub-menu>
       </a-menu>
     </a-layout-sider>
     <a-layout>

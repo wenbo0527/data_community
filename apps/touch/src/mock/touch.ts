@@ -14,5 +14,179 @@ export default {
   channels: [
     { id: 1, name: "短信渠道", status: "启用", quota: 1000, used: 350 },
     { id: 2, name: "邮件渠道", status: "启用", quota: 500, used: 120 }
+  ],
+  dictionaries: [
+    { category: "模板标签", key: "priority", value: "高", desc: "高优先级" },
+    { category: "渠道", key: "sms", value: "短信", desc: "短信渠道" }
+  ],
+  rateLimit: { perMinute: 1000, perHour: 30000, perDay: 500000 },
+  alerts: [
+    { id: 1, name: "短信失败率升高", level: "高", status: "进行中" },
+    { id: 2, name: "AI外呼通话时长异常", level: "中", status: "已处理" }
+  ],
+  vendors: {
+    ai: [
+      { id: 1, name: "百应", status: "启用" },
+      { id: 2, name: "九四", status: "停用" }
+    ],
+    sms: [
+      { id: 10, name: "阿里云短信", status: "启用" },
+      { id: 11, name: "腾讯云短信", status: "启用" }
+    ]
+  },
+  manualCallTemplates: [
+    { id: 1, name: "人工外呼脚本A", status: "启用" }
+  ],
+  smsTemplates: [
+    { id: 101, title: "短信模板A", scene: "营销" }
+  ],
+  aiCallTemplates: [
+    { id: 201, name: "AI外呼话术A", vendor: "百应" }
+  ],
+  templateStats: {
+    total: 5,
+    byScene: [
+      { scene: "营销", count: 3 },
+      { scene: "风控", count: 2 }
+    ]
+  },
+  queryDetails: [
+    { id: 1, channel: "sms", status: "success", time: "2024-01-01 10:00:00" }
+  ],
+  smsRecords: [
+    { id: 1, phone: "13800000000", status: "success", time: "2024-01-01 10:00:00" }
+  ],
+  aiCallRecords: [
+    { id: 1, user: "用户1", vendor: "百应", time: "2024-01-01 10:00:00" }
+  ],
+  aiSmsVendorRecords: [
+    { id: 1, vendor: "百应", phone: "13800000000", time: "2024-01-01 10:00:00" }
+  ],
+  manualCallRecords: [
+    { id: 1, agent: "坐席A", user: "用户1", time: "2024-01-01 10:00:00" }
+  ],
+  manualSmsVendorRecords: [
+    { id: 1, vendor: "阿里云短信", phone: "13800000000", time: "2024-01-01 10:00:00" }
+  ],
+  marketingQuery: [
+    { id: 1, title: "活动A", channel: "sms", time: "2024-01-01 10:00:00" }
+  ],
+  marketingList: [
+    { id: 1, title: "活动A", channel: "sms", time: "2024-01-01 10:00:00" }
+  ],
+  overviewData: [
+    {
+      id: 'type_sms',
+      type: '短信',
+      vendor: '-',
+      taskId: '-',
+      batchId: '-',
+      sendRate: 92.3,
+      success: 6029,
+      successRate: 78.2,
+      fail: 1700,
+      children: [
+        {
+          id: 'vendor_aliyun',
+          type: '短信',
+          vendor: '阿里云短信',
+          taskId: '-',
+          batchId: '-',
+          sendRate: 94.1,
+          success: 288,
+          successRate: 73.6,
+          fail: 236,
+          children: [
+            { id: 'task_1001', type: '短信', vendor: '阿里云短信', taskId: '1001', batchId: 'B001', sendRate: 100, success: 142, successRate: 81.2, fail: 9, time: '2026-01-01 10:00:00' },
+            { id: 'task_1002', type: '短信', vendor: '阿里云短信', taskId: '1002', batchId: 'B002', sendRate: 100, success: 146, successRate: 78.8, fail: 12, time: '2026-01-02 10:00:00' }
+          ]
+        },
+        {
+          id: 'vendor_tencent',
+          type: '短信',
+          vendor: '腾讯云短信',
+          taskId: '-',
+          batchId: '-',
+          sendRate: 90.4,
+          success: 705,
+          successRate: 74.5,
+          fail: 96,
+          children: [
+            { id: 'task_2001', type: '短信', vendor: '腾讯云短信', taskId: '2001', batchId: 'B101', sendRate: 100, success: 382, successRate: 77.1, fail: 113, time: '2026-01-03 10:00:00' },
+            { id: 'task_2002', type: '短信', vendor: '腾讯云短信', taskId: '2002', batchId: 'B102', sendRate: 100, success: 323, successRate: 73.8, fail: 96, time: '2026-01-04 10:00:00' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'type_ai',
+      type: 'AI外呼',
+      vendor: '-',
+      taskId: '-',
+      batchId: '-',
+      sendRate: 88.7,
+      success: 2288,
+      successRate: 79.3,
+      fail: 588,
+      children: [
+        {
+          id: 'vendor_baiying',
+          type: 'AI外呼',
+          vendor: '百应',
+          taskId: '-',
+          batchId: '-',
+          sendRate: 91.2,
+          success: 1200,
+          successRate: 80.1,
+          fail: 280,
+          children: [
+            { id: 'task_3001', type: 'AI外呼', vendor: '百应', taskId: '3001', batchId: 'C001', sendRate: 100, success: 600, successRate: 82.1, fail: 50, time: '2026-01-05 10:00:00' },
+            { id: 'task_3002', type: 'AI外呼', vendor: '百应', taskId: '3002', batchId: 'C002', sendRate: 100, success: 600, successRate: 78.1, fail: 80, time: '2026-01-06 10:00:00' }
+          ]
+        },
+        {
+          id: 'vendor_jiusi',
+          type: 'AI外呼',
+          vendor: '九四',
+          taskId: '-',
+          batchId: '-',
+          sendRate: 86.5,
+          success: 1088,
+          successRate: 78.2,
+          fail: 308,
+          children: [
+            { id: 'task_4001', type: 'AI外呼', vendor: '九四', taskId: '4001', batchId: 'C101', sendRate: 100, success: 540, successRate: 76.2, fail: 120, time: '2026-01-07 10:00:00' },
+            { id: 'task_4002', type: 'AI外呼', vendor: '九四', taskId: '4002', batchId: 'C102', sendRate: 100, success: 548, successRate: 80.2, fail: 98, time: '2026-01-08 10:00:00' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'type_manual',
+      type: '人工外呼',
+      vendor: '-',
+      taskId: '-',
+      batchId: '-',
+      sendRate: 90.0,
+      success: 6029,
+      successRate: 73.8,
+      fail: 1703,
+      children: [
+        {
+          id: 'vendor_manual',
+          type: '人工外呼',
+          vendor: '人工电销',
+          taskId: '-',
+          batchId: '-',
+          sendRate: 90.0,
+          success: 6029,
+          successRate: 73.8,
+          fail: 1703,
+          children: [
+            { id: 'task_5001', type: '人工外呼', vendor: '人工电销', taskId: '5001', batchId: 'D001', sendRate: 100, success: 507, successRate: 79.3, fail: 58, time: '2026-01-09 10:00:00' }
+          ]
+        }
+      ]
+    }
   ]
 }

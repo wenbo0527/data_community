@@ -15,7 +15,7 @@
       :d="pathDAnchor(bl.a, bl.b)" 
       stroke="rgba(99,102,241,0.6)" 
       fill="none" 
-      :stroke-width="4" 
+      :style="{ strokeWidth: 'var(--bus-stroke)', strokeDasharray: `var(--bus-dash-a) var(--bus-dash-b)` }"
       class="bus-line"
     />
     <path 
@@ -24,7 +24,7 @@
       :d="pathDAnchor(el.a, el.b)" 
       :stroke="el.color || (el.type==='in' ? 'rgba(16,185,129,0.5)' : 'rgba(234,88,12,0.5)')" 
       fill="none" 
-      :stroke-width="1.5"
+      :style="{ strokeWidth: 'var(--edge-stroke)', strokeDasharray: `var(--edge-dash-a) var(--edge-dash-b)` }"
       class="edge-line"
     />
   </g>
@@ -43,11 +43,17 @@ function pathDAnchor(a: { x: number; y: number }, b: { x: number; y: number }) {
 
 <style scoped>
 .bus-line {
-  stroke-dasharray: 12 12;
-  opacity: 1;
+  opacity: 0.8;
+  animation: flow 3s linear infinite;
 }
 .edge-line {
-  stroke-dasharray: none;
   opacity: 1;
+  animation: flow 1s linear infinite;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -24;
+  }
 }
 </style>

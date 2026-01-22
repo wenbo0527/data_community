@@ -44,7 +44,7 @@
         </a-form-item>
         <a-form-item style="margin-left: auto">
           <a-space>
-            <a-button type="primary" @click="() => router.push('/risk/budget/accounting?stage=costing')">
+            <a-button type="primary" @click="goAccounting">
               <template #icon><icon-plus /></template>
               发起结算
             </a-button>
@@ -253,7 +253,7 @@ const filteredContractOptions = computed(() => {
 const displayedTasks = computed(() => tasks.value.filter((t: SettlementTask) => { if (filters.suppliers.length && !filters.suppliers.some((s: string) => t.supplierIds.includes(s))) return false; if (filters.contracts.length && !filters.contracts.some((c: string) => t.contractIds.includes(c))) return false; if (filters.granularity && t.granularity !== filters.granularity) return false; if (filters.timeLabel && t.timeLabel !== filters.timeLabel) return false; if (filters.status && t.status !== filters.status) return false; return true }))
 
 const showCreate = ref(false)
-const createForm = reactive<{ supplierId: string; channelId?: string; contractIds: string[]; granularity: Granularity; timeLabel: string; strict: boolean; includeTax: boolean; tolerance: number; createdBy: string; budgetSnapshotId?: string; actualSnapshotId?: string; remark?: string }>({ supplierId: '', channelId: '', contractIds: [], granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, strict: false, includeTax: true, tolerance: 0, createdBy: '管理员' })
+const createForm = reactive<{ supplierId: string; channelId?: string; contractIds: string[]; granularity: Granularity; timeLabel: string; strict: boolean; includeTax: boolean; tolerance: number; createdBy: string; budgetSnapshotId?: string; actualSnapshotId?: string; remark?: string }>({ supplierId: '', channelId: '', contractIds: [], granularity: 'month', timeLabel: '2025-12', strict: false, includeTax: true, tolerance: 0, createdBy: '管理员' })
 
 // 抽屉版流程已移除
 
@@ -326,6 +326,11 @@ const handleAction = (record: SettlementTask) => {
   const month = record.granularity === 'month' ? record.timeLabel : `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
   const stage = record.stage || (record.status === 'succeeded' ? 'writeoff' : 'costing')
   router.push(`/risk/budget/accounting?stage=${stage}&supplierId=${encodeURIComponent(supplierId)}&month=${encodeURIComponent(month)}`)
+}
+const goAccounting = () => {
+  const sid = createForm.supplierId || (externalSupplierOptions.value[0]?.value || '')
+  const mon = createForm.timeLabel || '2025-12'
+  router.push(`/risk/budget/accounting?stage=costing&supplierId=${encodeURIComponent(sid)}&month=${encodeURIComponent(mon)}`)
 }
 const deleteTask = async (record: SettlementTask) => {
   const ok = await deleteSettlementTask(record.id)
@@ -489,7 +494,7 @@ const seedMockTasks = async () => {
     taskName: `核销-${supplierOpts[2].label}`,
     summary: calcSummaryForContracts(sampleContracts.slice(0,2))
   }
-  const monNow = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+  const monNow = '2025-12'
   const t4: SettlementTask = {
     id: `ST-${Date.now()-4}`,
     supplierIds: [supplierOpts[0].value],

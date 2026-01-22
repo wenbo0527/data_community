@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:main\" \"npm run dev:canvas\"",
+    "dev": "concurrently \"npm run dev:main\" \"npm run dev:canvas\" \"npm run dev:touch\"",
     "dev:main": "vite",
-    "dev:canvas": "npm --prefix apps/horizontal-canvas run dev -- --port 5180",
+    "dev:canvas": "npm --prefix apps/horizontal-canvas run dev",
+    "dev:touch": "npm --prefix apps/touch run dev -- --port 5181",
     "build": "vite build",
     "build:check": "vue-tsc && vite build",
     "preview": "vite preview",

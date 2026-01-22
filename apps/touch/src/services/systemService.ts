@@ -1,4 +1,5 @@
-import type { GlobalConfig } from '@/types'
+import type { GlobalConfig, DictionaryItem } from '@/types'
+import mock from '@/mock/touch'
 
 export async function getGlobalConfig(): Promise<GlobalConfig> {
   return {
@@ -6,4 +7,10 @@ export async function getGlobalConfig(): Promise<GlobalConfig> {
     signatures: ['【XX银行】', '【XX商城】'],
     approval: { enabled: true, levels: 2 }
   }
+}
+export async function getDictionaries(): Promise<DictionaryItem[]> {
+  return mock.dictionaries
+}
+export async function updateDictionary(item: Partial<DictionaryItem>): Promise<boolean> {
+  return true
 }

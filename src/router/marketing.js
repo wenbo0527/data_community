@@ -148,7 +148,7 @@ export default [
         path: 'tasks/horizontal',
         name: 'marketing-tasks-horizontal',
         beforeEnter: (to) => {
-          const base = 'http://localhost:5180/marketing/tasks/horizontal'
+          const base = 'http://localhost:5175/marketing/tasks/horizontal'
           const qs = new URLSearchParams(to.query || {}).toString()
           const url = qs ? `${base}?${qs}` : base
           window.location.href = url
@@ -160,7 +160,7 @@ export default [
         path: 'tasks/create',
         name: 'marketing-tasks-create',
         beforeEnter: () => {
-          window.location.href = 'http://localhost:5180/marketing/tasks/horizontal?mode=create'
+          window.location.href = 'http://localhost:5175/marketing/tasks/horizontal?mode=create'
           return false
         },
         meta: { title: '创建营销任务' }
@@ -169,7 +169,7 @@ export default [
         path: 'tasks/editor',
         name: 'marketing-tasks-editor',
         beforeEnter: (to) => {
-          const base = 'http://localhost:5180/marketing/tasks/horizontal'
+          const base = 'http://localhost:5175/marketing/tasks/horizontal'
           const qs = new URLSearchParams(to.query || {}).toString()
           const url = qs ? `${base}?${qs}` : base
           window.location.href = url

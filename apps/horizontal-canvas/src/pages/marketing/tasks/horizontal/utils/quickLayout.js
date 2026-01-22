@@ -3,10 +3,10 @@ import * as Hierarchy from '@antv/hierarchy'
 export class HorizontalQuickLayout {
   constructor(options = {}) {
     this.config = {
-      columnSpacing: options.columnSpacing || 250,
-      rowHeight: options.rowHeight || 150,
-      startX: options.startX || 100,
-      startY: options.startY || 100,
+      colSpacing: options.colSpacing ?? 250,
+      laneGapY: options.laneGapY ?? 150,
+      startX: options.startX ?? 100,
+      startY: options.startY ?? 100,
       centerAlign: options.centerAlign !== false,
       ...options
     }
@@ -24,12 +24,16 @@ export class HorizontalQuickLayout {
     const canvasWidth = containerRect.width || 1200
     const canvasHeight = containerRect.height || 800
 
-    const defaultStartX = 120
-    const defaultStartY = Math.max(120, canvasHeight * 0.3)
-    const startX = options.startX != null ? options.startX : defaultStartX
-    const startY = options.startY != null ? options.startY : defaultStartY
-    const colSpacing = options.colSpacing != null ? options.colSpacing : 280
-    const laneGapY = options.laneGapY != null ? options.laneGapY : 240
+    // 优先使用 options，其次使用构造函数传入的 this.config，最后使用默认值
+    const startX = options.startX ?? this.config.startX ?? 120
+    const startY = options.startY ?? this.config.startY ?? Math.max(120, canvasHeight * 0.3)
+    const colSpacing = options.colSpacing ?? this.config.colSpacing ?? 280
+    const laneGapY = options.laneGapY ?? this.config.laneGapY ?? 240
+    const colScale = options.colScale ?? this.config.colScale ?? 1
+    const laneScale = options.laneScale ?? this.config.laneScale ?? 1
+    const spreadX = options.spreadX ?? this.config.spreadX ?? 1
+    const spreadY = options.spreadY ?? this.config.spreadY ?? 1
+    const expandX = options.expandX ?? this.config.expandX ?? 0
 
     const nodes = this.safeGetNodes(graph)
     const edges = this.safeGetEdges(graph)
@@ -49,12 +53,10 @@ export class HorizontalQuickLayout {
       maxW = Math.max(maxW, w)
       maxH = Math.max(maxH, h)
     })
-    const baseCol = Math.max(colSpacing, maxW + 160)
-    const baseLane = Math.max(laneGapY, maxH + 120)
-    const colScale = options.colScale != null ? options.colScale : 6
-    const laneScale = options.laneScale != null ? options.laneScale : 6
-    const effCol = baseCol * colScale
-    const effLane = baseLane * laneScale
+
+    // 移除硬编码的 +160/+120，完全信任外部传入的 colSpacing 和 laneGapY
+    const effCol = colSpacing * colScale
+    const effLane = laneGapY * laneScale
 
     const outAdj = new Map()
     const inAdj = new Map()
@@ -197,8 +199,7 @@ export class HorizontalQuickLayout {
     }
     collect(result)
 
-    const spreadX = options.spreadX != null ? options.spreadX : 1
-    const spreadY = options.spreadY != null ? options.spreadY : 1
+    // 使用前面已声明的 spreadX/spreadY
     if (spreadX !== 1 || spreadY !== 1) {
       let minX = Infinity
       let minY = Infinity
@@ -210,7 +211,7 @@ export class HorizontalQuickLayout {
       })
     }
 
-    const expandX = options.expandX != null ? options.expandX : 0
+    // 使用前面已声明的 expandX
     if (expandX) {
       const depthMap = new Map()
       const assignDepth = (node, d) => {
@@ -230,7 +231,8 @@ export class HorizontalQuickLayout {
     const firstHead = (childrenByPort.get(startNode) || [])[0]
     if (startNode && firstHead) {
       const p = posMap.get(firstHead)
-      if (p) posMap.set(firstHead, { x: p.x + 80, y: p.y })
+      // 移除硬编码的 +80 偏移
+      if (p) posMap.set(firstHead, { x: p.x, y: p.y })
     }
 
     nodes.forEach(n => {

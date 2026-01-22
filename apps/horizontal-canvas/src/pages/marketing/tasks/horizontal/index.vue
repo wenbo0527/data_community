@@ -2694,6 +2694,19 @@ const toggleSnapline = () => {
 
 const handleApplyLayout = () => { if (!graph) return; applyStructuredLayoutSvc(graph) }
 
+// 布局参数配置
+const layoutOptions = {
+  startX: 200,
+  startY: undefined,
+  colSpacing: 500,
+  laneGapY: 200,
+  colScale: 1,
+  laneScale: 1,
+  spreadX: 1.7,
+  spreadY: 1.5,
+  expandX: 0
+}
+
 /**
  * 横版专用快速布局
  * 特点：仅重新排列节点位置，不改变端口和连线绑定
@@ -2702,7 +2715,12 @@ const handleQuickLayout = async () => {
   if (!graph) { Message.warning('画布未初始化，请稍后再试'); return }
   const loadingMessage = Message.loading('正在应用智能布局...')
   try {
-    await applyQuickLayoutSvc(graph, { containerEl: canvasContainerRef.value, minimap, minimapPaused, startX: 200, startY: undefined, colSpacing: 250, laneGapY: 200, colScale: 1, laneScale: 1, spreadX: 1.5, spreadY: 1.5, expandX: 0 })
+    await applyQuickLayoutSvc(graph, { 
+      containerEl: canvasContainerRef.value, 
+      minimap, 
+      minimapPaused, 
+      ...layoutOptions 
+    })
     loadingMessage.close()
     Message.success('智能布局应用成功！')
     handleFitContent()
@@ -2923,6 +2941,13 @@ const testClick = () => {
 .canvas-container :deep(.x6-graph) {
   will-change: transform;
   transform: translateZ(0);
+}
+
+/* Safari/WebKit 特定修复：关闭 3D 合成以避免 foreignObject 覆盖端口 */
+@supports (-webkit-backdrop-filter: blur(0)) {
+  .canvas-container :deep(.x6-graph) {
+    transform: none;
+  }
 }
 
 .canvas-container :deep(.x6-selection-box) {

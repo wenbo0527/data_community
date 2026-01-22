@@ -1,4 +1,5 @@
 import type { TemplateItem } from '@/types'
+import mock from '@/mock/touch'
 
 export async function listTemplates(): Promise<TemplateItem[]> {
   return Array.from({ length: 5 }, (_, i) => ({
@@ -23,4 +24,10 @@ export async function renderTemplate(content: string, params: Record<string, str
   let c = content
   Object.keys(params).forEach(k => { c = c.replace(new RegExp(`\\$\\{${k}\\}`, 'g'), params[k]) })
   return c
+}
+export async function getTemplateStats(): Promise<any> {
+  return mock.templateStats
+}
+export async function listScenes(): Promise<string[]> {
+  return ['营销', '风控', '通知']
 }

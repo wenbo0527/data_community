@@ -181,11 +181,9 @@
         :pagination="{ pageSize: 5, showSizeChanger: true, showQuickJumper: true }"
       >
         <template #columns>
-          <a-table-column title="通知类型" data-index="noticeType" :width="100" />
-          <a-table-column title="产品编号" data-index="productKey" :width="120" />
-          <a-table-column title="授信编号" data-index="creditNo" :width="120" />
           <a-table-column title="短信发送时间" data-index="smsTime" :width="180" />
-          <a-table-column title="短信状态" data-index="smsStatus" :width="100" />
+          <a-table-column title="产品编号" data-index="productKey" :width="120" />
+          <a-table-column title="短信发送状态" data-index="smsStatus" :width="120" />
           <a-table-column title="短信内容" data-index="smsContent" :ellipsis="true" />
         </template>
       </a-table>
