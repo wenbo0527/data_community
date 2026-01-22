@@ -33,7 +33,6 @@
         </a-form-item>
       </a-form>
       <a-table
-        :columns="columns"
         :data="list"
         row-key="id"
         :pagination="pagination"
@@ -42,7 +41,19 @@
         @expand="onExpand"
       >
         <template #columns>
-          <a-table-column title="分组" data-index="vendor" :width="180" />
+          <a-table-column title="分组" :width="220">
+            <template #cell="{ record }">
+              <span v-if="record.taskId && record.taskId !== '-'">
+                {{ record.taskName }}（{{ record.taskId }}）
+              </span>
+              <span v-else-if="record.vendor && record.vendor !== '-'">
+                {{ record.vendor }}
+              </span>
+              <span v-else>
+                {{ record.type }}
+              </span>
+            </template>
+          </a-table-column>
           <a-table-column title="触达类型" data-index="type" :width="120" />
           <a-table-column title="任务ID" data-index="taskId" :width="120" />
           <a-table-column title="批次ID" data-index="batchId" :width="120" />
@@ -67,7 +78,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getOverviewData } from '@/services/queryService'
+import { getOverviewData } from '../../../services/queryService'
 const router = useRouter()
 const query = reactive<{ type?: string, vendor?: string, taskId?: string, batchId?: string, dateRange?: any[] }>({})
 const list = ref<any[]>([])

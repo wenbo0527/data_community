@@ -97,8 +97,8 @@ export default {
           successRate: 73.6,
           fail: 236,
           children: [
-            { id: 'task_1001', type: '短信', vendor: '阿里云短信', taskId: '1001', batchId: 'B001', sendRate: 100, success: 142, successRate: 81.2, fail: 9, time: '2026-01-01 10:00:00' },
-            { id: 'task_1002', type: '短信', vendor: '阿里云短信', taskId: '1002', batchId: 'B002', sendRate: 100, success: 146, successRate: 78.8, fail: 12, time: '2026-01-02 10:00:00' }
+            { id: 'task_1001', taskName: '双11营销通知', type: '短信', vendor: '阿里云短信', taskId: '1001', batchId: 'B001', sendRate: 100, success: 142, successRate: 81.2, fail: 9, time: '2026-01-01 10:00:00' },
+            { id: 'task_1002', taskName: '双12回访短信', type: '短信', vendor: '阿里云短信', taskId: '1002', batchId: 'B002', sendRate: 100, success: 146, successRate: 78.8, fail: 12, time: '2026-01-02 10:00:00' }
           ]
         },
         {
@@ -112,8 +112,8 @@ export default {
           successRate: 74.5,
           fail: 96,
           children: [
-            { id: 'task_2001', type: '短信', vendor: '腾讯云短信', taskId: '2001', batchId: 'B101', sendRate: 100, success: 382, successRate: 77.1, fail: 113, time: '2026-01-03 10:00:00' },
-            { id: 'task_2002', type: '短信', vendor: '腾讯云短信', taskId: '2002', batchId: 'B102', sendRate: 100, success: 323, successRate: 73.8, fail: 96, time: '2026-01-04 10:00:00' }
+            { id: 'task_2001', taskName: '新春大礼包', type: '短信', vendor: '腾讯云短信', taskId: '2001', batchId: 'B101', sendRate: 100, success: 382, successRate: 77.1, fail: 113, time: '2026-01-03 10:00:00' },
+            { id: 'task_2002', taskName: '元旦促销', type: '短信', vendor: '腾讯云短信', taskId: '2002', batchId: 'B102', sendRate: 100, success: 323, successRate: 73.8, fail: 96, time: '2026-01-04 10:00:00' }
           ]
         }
       ]
@@ -140,8 +140,8 @@ export default {
           successRate: 80.1,
           fail: 280,
           children: [
-            { id: 'task_3001', type: 'AI外呼', vendor: '百应', taskId: '3001', batchId: 'C001', sendRate: 100, success: 600, successRate: 82.1, fail: 50, time: '2026-01-05 10:00:00' },
-            { id: 'task_3002', type: 'AI外呼', vendor: '百应', taskId: '3002', batchId: 'C002', sendRate: 100, success: 600, successRate: 78.1, fail: 80, time: '2026-01-06 10:00:00' }
+            { id: 'task_3001', taskName: '分期邀约', type: 'AI外呼', vendor: '百应', taskId: '3001', batchId: 'C001', sendRate: 100, success: 600, successRate: 82.1, fail: 50, time: '2026-01-05 10:00:00' },
+            { id: 'task_3002', taskName: '逾期提醒', type: 'AI外呼', vendor: '百应', taskId: '3002', batchId: 'C002', sendRate: 100, success: 600, successRate: 78.1, fail: 80, time: '2026-01-06 10:00:00' }
           ]
         },
         {
@@ -155,8 +155,8 @@ export default {
           successRate: 78.2,
           fail: 308,
           children: [
-            { id: 'task_4001', type: 'AI外呼', vendor: '九四', taskId: '4001', batchId: 'C101', sendRate: 100, success: 540, successRate: 76.2, fail: 120, time: '2026-01-07 10:00:00' },
-            { id: 'task_4002', type: 'AI外呼', vendor: '九四', taskId: '4002', batchId: 'C102', sendRate: 100, success: 548, successRate: 80.2, fail: 98, time: '2026-01-08 10:00:00' }
+            { id: 'task_4001', taskName: '意向确认', type: 'AI外呼', vendor: '九四', taskId: '4001', batchId: 'C101', sendRate: 100, success: 540, successRate: 76.2, fail: 120, time: '2026-01-07 10:00:00' },
+            { id: 'task_4002', taskName: '满意度调查', type: 'AI外呼', vendor: '九四', taskId: '4002', batchId: 'C102', sendRate: 100, success: 548, successRate: 80.2, fail: 98, time: '2026-01-08 10:00:00' }
           ]
         }
       ]
@@ -183,7 +183,7 @@ export default {
           successRate: 73.8,
           fail: 1703,
           children: [
-            { id: 'task_5001', type: '人工外呼', vendor: '人工电销', taskId: '5001', batchId: 'D001', sendRate: 100, success: 507, successRate: 79.3, fail: 58, time: '2026-01-09 10:00:00' }
+            { id: 'task_5001', taskName: '高端客户回访', type: '人工外呼', vendor: '人工电销', taskId: '5001', batchId: 'D001', sendRate: 100, success: 507, successRate: 79.3, fail: 58, time: '2026-01-09 10:00:00' }
           ]
         }
       ]
