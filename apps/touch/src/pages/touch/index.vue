@@ -23,7 +23,7 @@ const tableData = ref([
     maId: 'MA002',
     executeTime: '2023-05-15',
     status: '失败',
-    reachType: '离线'
+    reachType: '批量'
   },
   {
     taskId: 'STR20230515003',
@@ -111,9 +111,9 @@ const showFailDetail = (record) => {
             <a-date-picker v-model="formModel.executeDate" allow-clear />
           </a-form-item>
           <a-form-item field="reachType" label="触达类型">
-            <a-select v-model="formModel.reachType" allow-clear placeholder="请选择触达类型" style="width: 120px">
+            <a-select v-model="formModel.reachType" placeholder="请选择触达类型" allow-clear>
               <a-option value="实时">实时</a-option>
-              <a-option value="离线">离线</a-option>
+              <a-option value="批量">批量</a-option>
             </a-select>
           </a-form-item>
           <a-form-item>
