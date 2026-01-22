@@ -1,10 +1,12 @@
 <template>
   <a-card title="全局频控">
-    <a-space direction="vertical" style="width:100%">
-      <a-space>
-        <a-button type="primary">新建</a-button>
-      </a-space>
-      <a-form :model="query" layout="inline">
+    <a-space direction="vertical" style="width:100%" size="large">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <a-button type="primary">
+          <template #icon><icon-plus /></template>
+          新建
+        </a-button>
+        <a-form :model="query" layout="inline" style="flex: 1; justify-content: flex-end;">
         <a-form-item field="channel" label="控制渠道">
           <a-select v-model="query.channel" allow-clear placeholder="选择渠道">
             <a-option value="AI外呼">AI外呼</a-option>
@@ -36,7 +38,8 @@
           <a-button style="margin-left:8px" @click="reset">重置</a-button>
         </a-form-item>
       </a-form>
-      <a-table :data="list" row-key="id" :pagination="pagination">
+    </div>
+    <a-table :data="list" row-key="id" :pagination="pagination">
         <template #columns>
           <a-table-column title="控制渠道" data-index="channel" :width="120" />
           <a-table-column title="控制场景" data-index="scene" :width="120" />
@@ -61,6 +64,7 @@
 </template>
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { IconPlus } from '@arco-design/web-vue/es/icon'
 import { listGlobalRateLimits } from '@/services/channelService'
 const query = reactive<{ channel?: string, scene?: string, line?: string, status?: string }>({})
 const list = ref<any[]>([])
