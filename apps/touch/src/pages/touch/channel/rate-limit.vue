@@ -17,8 +17,8 @@
             <a-option value="营销类">营销类</a-option>
           </a-select>
         </a-form-item>
-        <a-form-item field="line" label="一级线条">
-          <a-select v-model="query.line" allow-clear placeholder="选择线条">
+        <a-form-item field="line" label="一级场景">
+          <a-select v-model="query.line" allow-clear placeholder="选择场景">
             <a-option value="经审冷-停催">经审冷-停催</a-option>
             <a-option value="经审冷-黑催">经审冷-黑催</a-option>
             <a-option value="经催热-意向">经催热-意向</a-option>
@@ -40,8 +40,8 @@
         <template #columns>
           <a-table-column title="控制渠道" data-index="channel" :width="120" />
           <a-table-column title="控制场景" data-index="scene" :width="120" />
-          <a-table-column title="一级线条" data-index="line" :width="160" />
-          <a-table-column title="控制规则限" data-index="rule" :width="160" />
+          <a-table-column title="一级场景" data-index="line" :width="160" />
+          <a-table-column title="控制规则" data-index="rule" :width="160" />
           <a-table-column title="状态" data-index="status" :width="100" />
           <a-table-column title="最近" data-index="updatedAt" :width="180" />
           <a-table-column title="备注" data-index="remark" :width="100" />
