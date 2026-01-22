@@ -20,6 +20,14 @@ export default {
     { category: "渠道", key: "sms", value: "短信", desc: "短信渠道" }
   ],
   rateLimit: { perMinute: 1000, perHour: 30000, perDay: 500000 },
+  globalRateLimits: [
+    { id: 1, channel: 'AI外呼', scene: '营销类', line: '经审冷-停催', rule: '7天内下发1次', status: '使用中', remark: '—', updatedAt: '2025-12-31 10:00:00' },
+    { id: 2, channel: '短信', scene: '营销类', line: '经审冷-黑催', rule: '7天内下发2次', status: '使用中', remark: '—', updatedAt: '2025-12-31 10:00:00' },
+    { id: 3, channel: 'AI外呼', scene: '营销类', line: '经催热-意向', rule: '7天内下发1次', status: '使用中', remark: '—', updatedAt: '2025-12-31 10:00:00' },
+    { id: 4, channel: '短信', scene: '营销类', line: '经催热-激活', rule: '7天内下发2次', status: '使用中', remark: '—', updatedAt: '2025-12-31 10:00:00' },
+    { id: 5, channel: 'AI外呼', scene: '营销类', line: '历史客户', rule: '7天内下发1次', status: '使用中', remark: '—', updatedAt: '2025-12-31 10:00:00' },
+    { id: 6, channel: '人工外呼', scene: '营销类', line: '历史客户', rule: '7天内下发1次', status: '使用中', remark: '—', updatedAt: '2025-12-31 10:00:00' }
+  ],
   alerts: [
     { id: 1, name: "短信失败率升高", level: "高", status: "进行中" },
     { id: 2, name: "AI外呼通话时长异常", level: "中", status: "已处理" }

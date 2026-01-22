@@ -52,6 +52,16 @@ export interface RateLimit {
   perHour: number
   perDay: number
 }
+export interface GlobalRateLimitItem {
+  id: number
+  channel: string
+  scene: string
+  line: string
+  rule: string
+  status: string
+  remark?: string
+  updatedAt?: string
+}
 export interface Alert {
   id: number
   name: string

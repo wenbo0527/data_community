@@ -1,4 +1,4 @@
-import type { BlacklistItem, Channel, RateLimit, Alert, Vendor } from '@/types'
+import type { BlacklistItem, Channel, RateLimit, Alert, Vendor, GlobalRateLimitItem } from '@/types'
 import mock from '@/mock/touch'
 
 export async function getChannels(): Promise<Channel[]> {
@@ -19,6 +19,17 @@ export async function importBlacklist(file: File): Promise<boolean> {
 }
 export async function getRateLimit(): Promise<RateLimit> {
   return mock.rateLimit
+}
+export async function listGlobalRateLimits(params?: Partial<GlobalRateLimitItem>): Promise<GlobalRateLimitItem[]> {
+  const src = (mock as any).globalRateLimits as GlobalRateLimitItem[]
+  if (!params) return src
+  return src.filter(item => {
+    const channelOk = !params.channel || item.channel === params.channel
+    const sceneOk = !params.scene || item.scene === params.scene
+    const lineOk = !params.line || item.line === params.line
+    const statusOk = !params.status || item.status === params.status
+    return channelOk && sceneOk && lineOk && statusOk
+  })
 }
 export async function getAlerts(): Promise<Alert[]> {
   return mock.alerts
