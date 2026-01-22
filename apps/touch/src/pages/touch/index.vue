@@ -15,7 +15,10 @@ const tableData = ref([
     maId: 'MA001',
     executeTime: '2023-05-15',
     status: '成功',
-    reachType: '实时'
+    reachType: '实时',
+    successRate: '79.0%',
+    count: 150,
+    warning: true
   },
   {
     taskId: 'STR20230515002',
@@ -23,7 +26,10 @@ const tableData = ref([
     maId: 'MA002',
     executeTime: '2023-05-15',
     status: '失败',
-    reachType: '批量'
+    reachType: '批量',
+    successRate: '-',
+    count: 50,
+    warning: false
   },
   {
     taskId: 'STR20230515003',
@@ -31,7 +37,10 @@ const tableData = ref([
     maId: 'MA003',
     executeTime: '2023-05-15',
     status: '处理中',
-    reachType: '实时'
+    reachType: '实时',
+    successRate: '95.0%',
+    count: 200,
+    warning: false
   }
 ])
 
@@ -129,6 +138,15 @@ const showFailDetail = (record) => {
           <a-table-column title="MA任务ID" dataIndex="maId" :width="120" />
           <a-table-column title="任务执行批次" dataIndex="executeTime" :width="150" />
           <a-table-column title="触达类型" dataIndex="reachType" :width="120" />
+          <a-table-column title="成功率（小于100条不统计）" :width="180">
+            <template #cell="{ record }">
+              <span v-if="record.count < 100">-</span>
+              <span v-else :style="{ color: record.warning ? 'red' : 'inherit' }">
+                {{ record.successRate }}
+                <span v-if="record.warning" style="margin-left: 4px; font-size: 12px;">(已预警)</span>
+              </span>
+            </template>
+          </a-table-column>
           <a-table-column title="状态" dataIndex="status" :width="100">
             <template #cell="{ record }">
               <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
