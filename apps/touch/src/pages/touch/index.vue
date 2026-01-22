@@ -5,7 +5,8 @@ const formModel = reactive({
   maId: '',
   taskId: '',
   executeDate: null,
-  reachType: ''
+  reachType: '',
+  status: ''
 })
 
 const tableData = ref([
@@ -14,7 +15,7 @@ const tableData = ref([
     taskName: '风控策略A-实时任务',
     maId: 'MA001',
     executeTime: '2023-05-15',
-    status: '成功',
+    status: '策略执行完成',
     reachType: '实时',
     successRate: '79.0%',
     count: 150,
@@ -25,7 +26,7 @@ const tableData = ref([
     taskName: '风控策略B-批量任务',
     maId: 'MA002',
     executeTime: '2023-05-15',
-    status: '失败',
+    status: '策略执行失败',
     reachType: '批量',
     successRate: '-',
     count: 50,
@@ -36,10 +37,32 @@ const tableData = ref([
     taskName: '风控策略C-实时任务',
     maId: 'MA003',
     executeTime: '2023-05-15',
-    status: '处理中',
+    status: '策略执行中',
     reachType: '实时',
     successRate: '95.0%',
     count: 200,
+    warning: false
+  },
+  {
+    taskId: 'STR20230515004',
+    taskName: '风控策略D-批量任务',
+    maId: 'MA004',
+    executeTime: '2023-05-15',
+    status: '数据准备中',
+    reachType: '批量',
+    successRate: '-',
+    count: 0,
+    warning: false
+  },
+  {
+    taskId: 'STR20230515005',
+    taskName: '风控策略E-批量任务',
+    maId: 'MA005',
+    executeTime: '2023-05-15',
+    status: '批量任务执行取消',
+    reachType: '批量',
+    successRate: '-',
+    count: 0,
     warning: false
   }
 ])
@@ -51,16 +74,21 @@ const pagination = reactive({
 })
 
 const filteredData = computed(() => {
-  const type = formModel.reachType
-  if (!type) return tableData.value
-  return tableData.value.filter(item => item.reachType === type)
+  return tableData.value.filter(item => {
+    const typeOk = !formModel.reachType || item.reachType === formModel.reachType
+    const statusOk = !formModel.status || item.status === formModel.status
+    return typeOk && statusOk
+  })
 })
 
 const getStatusColor = (status) => {
   const colorMap = {
-    '成功': 'green',
-    '失败': 'red',
-    '处理中': 'blue'
+    '策略执行完成': 'green',
+    '数据准备完成': 'green',
+    '策略执行失败': 'red',
+    '批量任务执行取消': 'gray',
+    '策略执行中': 'blue',
+    '数据准备中': 'arcoblue'
   }
   return colorMap[status] || 'gray'
 }
@@ -123,6 +151,16 @@ const showFailDetail = (record) => {
             <a-select v-model="formModel.reachType" placeholder="请选择触达类型" allow-clear>
               <a-option value="实时">实时</a-option>
               <a-option value="批量">批量</a-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item field="status" label="状态">
+            <a-select v-model="formModel.status" placeholder="请选择状态" allow-clear>
+              <a-option value="数据准备中">数据准备中</a-option>
+              <a-option value="策略执行失败">策略执行失败</a-option>
+              <a-option value="批量任务执行取消">批量任务执行取消</a-option>
+              <a-option value="数据准备完成">数据准备完成</a-option>
+              <a-option value="策略执行完成">策略执行完成</a-option>
+              <a-option value="策略执行中">策略执行中</a-option>
             </a-select>
           </a-form-item>
           <a-form-item>
