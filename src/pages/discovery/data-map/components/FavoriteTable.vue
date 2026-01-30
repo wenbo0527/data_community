@@ -2,14 +2,14 @@
   <a-card class="favorite-tables">
     <template #title>
       <a-space>
-        <icon-star />
+        <IconStar />
         常用表
       </a-space>
     </template>
     <template #extra>
       <a-button type="primary" size="small" @click="showCreateCollectionDialog">
         <template #icon>
-          <icon-plus />
+          <IconPlus />
         </template>
         创建场景集合
       </a-button>
@@ -19,7 +19,7 @@
         <a-card class="scene-card" hoverable @click="showCollectionDetail(collection)">
           <template #title>
             <a-space align="center">
-              <icon-star-fill style="color: #ffb400" />
+              <IconStarFill style="color: #ffb400" />
               <a-typography-title :heading="6">
                 {{ collection.name }}
               </a-typography-title>
@@ -30,7 +30,7 @@
           </a-typography-paragraph>
           <div class="scene-footer">
             <a-space align="center" style="margin-bottom: 8px;">
-              <icon-file />
+              <IconFile />
               <span>总表数: </span>
               <a-typography-text strong>{{ collection.tables.length }}</a-typography-text>
             </a-space>

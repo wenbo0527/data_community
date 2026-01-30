@@ -8,7 +8,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "alert-management" },
 });
 const __VLS_0 = {}.APageHeader;
-/** @type {[typeof __VLS_components.APageHeader, typeof __VLS_components.aPageHeader, ]} */ ;
+/** @type {[typeof __VLS_components.APageHeader, typeof __VLS_components.aPageHeader, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     title: "预警管理",
@@ -20,9 +20,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "alert-content" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-/** @type {__VLS_StyleScopedClasses['alert-management']} */ ;
-/** @type {__VLS_StyleScopedClasses['alert-content']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['alert-management']} */ 
+/** @type {__VLS_StyleScopedClasses['alert-content']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {};
@@ -33,4 +33,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

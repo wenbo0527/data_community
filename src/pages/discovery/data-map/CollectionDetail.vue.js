@@ -64,14 +64,14 @@ onMounted(() => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['table-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['table-card']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "collection-detail" },
 });
 const __VLS_0 = {}.ASpin;
-/** @type {[typeof __VLS_components.ASpin, typeof __VLS_components.aSpin, typeof __VLS_components.ASpin, typeof __VLS_components.aSpin, ]} */ ;
+/** @type {[typeof __VLS_components.ASpin, typeof __VLS_components.aSpin, typeof __VLS_components.ASpin, typeof __VLS_components.aSpin, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     loading: (__VLS_ctx.loading),
@@ -83,7 +83,7 @@ const __VLS_2 = __VLS_1({
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 __VLS_3.slots.default;
 const __VLS_4 = {}.APageHeader;
-/** @type {[typeof __VLS_components.APageHeader, typeof __VLS_components.aPageHeader, ]} */ ;
+/** @type {[typeof __VLS_components.APageHeader, typeof __VLS_components.aPageHeader, ]} */ 
 // @ts-ignore
 const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
     ...{ 'onBack': {} },
@@ -101,9 +101,9 @@ let __VLS_10;
 const __VLS_11 = {
     onBack: (() => __VLS_ctx.router.back())
 };
-var __VLS_7;
+let __VLS_7;
 const __VLS_12 = {}.ASpace;
-/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
 // @ts-ignore
 const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
     align: "center",
@@ -115,31 +115,31 @@ const __VLS_14 = __VLS_13({
 }, ...__VLS_functionalComponentArgsRest(__VLS_13));
 __VLS_15.slots.default;
 const __VLS_16 = {}.IconUser;
-/** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ ;
+/** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ 
 // @ts-ignore
 const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({}));
 const __VLS_18 = __VLS_17({}, ...__VLS_functionalComponentArgsRest(__VLS_17));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
 const __VLS_20 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({}));
 const __VLS_22 = __VLS_21({}, ...__VLS_functionalComponentArgsRest(__VLS_21));
 __VLS_23.slots.default;
 (__VLS_ctx.collection.owner || '未指定');
-var __VLS_23;
+let __VLS_23;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ style: {} },
 });
 (__VLS_ctx.collection.tables.length);
-var __VLS_15;
+let __VLS_15;
 const __VLS_24 = {}.ADivider;
-/** @type {[typeof __VLS_components.ADivider, typeof __VLS_components.aDivider, ]} */ ;
+/** @type {[typeof __VLS_components.ADivider, typeof __VLS_components.aDivider, ]} */ 
 // @ts-ignore
 const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({}));
 const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
 const __VLS_28 = {}.APagination;
-/** @type {[typeof __VLS_components.APagination, typeof __VLS_components.aPagination, ]} */ ;
+/** @type {[typeof __VLS_components.APagination, typeof __VLS_components.aPagination, ]} */ 
 // @ts-ignore
 const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
     current: (__VLS_ctx.currentPage),
@@ -156,7 +156,7 @@ const __VLS_30 = __VLS_29({
     ...{ style: {} },
 }, ...__VLS_functionalComponentArgsRest(__VLS_29));
 const __VLS_32 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
     gutter: ([16, 16]),
@@ -167,7 +167,7 @@ const __VLS_34 = __VLS_33({
 __VLS_35.slots.default;
 for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     const __VLS_36 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
         key: (table.name),
@@ -179,7 +179,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_37));
     __VLS_39.slots.default;
     const __VLS_40 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
         ...{ 'onClick': {} },
@@ -203,7 +203,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     {
         const { title: __VLS_thisSlot } = __VLS_43.slots;
         const __VLS_48 = {}.ASpace;
-        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
         // @ts-ignore
         const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
             align: "center",
@@ -213,7 +213,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
         }, ...__VLS_functionalComponentArgsRest(__VLS_49));
         __VLS_51.slots.default;
         const __VLS_52 = {}.IconFile;
-        /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ ;
+        /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ 
         // @ts-ignore
         const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({}));
         const __VLS_54 = __VLS_53({}, ...__VLS_functionalComponentArgsRest(__VLS_53));
@@ -230,7 +230,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
         ...{ class: "table-meta" },
     });
     const __VLS_56 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({}));
     const __VLS_58 = __VLS_57({}, ...__VLS_functionalComponentArgsRest(__VLS_57));
@@ -238,7 +238,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     (table.type);
     var __VLS_59;
     const __VLS_60 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({}));
     const __VLS_62 = __VLS_61({}, ...__VLS_functionalComponentArgsRest(__VLS_61));
@@ -246,7 +246,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     (table.category);
     var __VLS_63;
     const __VLS_64 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({}));
     const __VLS_66 = __VLS_65({}, ...__VLS_functionalComponentArgsRest(__VLS_65));
@@ -254,7 +254,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     (table.domain);
     var __VLS_67;
     const __VLS_68 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({}));
     const __VLS_70 = __VLS_69({}, ...__VLS_functionalComponentArgsRest(__VLS_69));
@@ -262,7 +262,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     (table.owner);
     var __VLS_71;
     const __VLS_72 = {}.ATypographyParagraph;
-    /** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ ;
+    /** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ 
     // @ts-ignore
     const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({
         ellipsis: ({ rows: 2 }),
@@ -280,15 +280,15 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.paginatedTables))) {
     var __VLS_43;
     var __VLS_39;
 }
-var __VLS_35;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['collection-detail']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-meta']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-description']} */ ;
-var __VLS_dollars;
+let __VLS_35;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['collection-detail']} */ 
+/** @type {__VLS_StyleScopedClasses['table-card']} */ 
+/** @type {__VLS_StyleScopedClasses['table-name']} */ 
+/** @type {__VLS_StyleScopedClasses['table-info']} */ 
+/** @type {__VLS_StyleScopedClasses['table-meta']} */ 
+/** @type {__VLS_StyleScopedClasses['table-description']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -309,4 +309,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

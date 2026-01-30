@@ -1,7 +1,0 @@
-- **前端框架**: Vue 3 (Composition API)
-- **构建工具**: Vite
-- **图形引擎**: AntV X6
-- **状态管理**: Vuex
-- **路由管理**: Vue Router
-- **UI组件**: Arco Design
-- **开发语言**: JavaScript + TypeScript

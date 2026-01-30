@@ -4,14 +4,14 @@
       <a-card hoverable class="stat-card">
         <div class="stat-content">
           <div class="stat-icon">
-            <icon-apps />
+            <IconApps />
           </div>
           <div class="stat-info">
             <div class="stat-title">总标签表数</div>
             <div class="stat-value">{{ formatNumber(stats.total) }}</div>
             <div class="stat-trend" :class="{ positive: stats.trend.total > 0, negative: stats.trend.total < 0 }">
-              <icon-arrow-rise v-if="stats.trend.total > 0" />
-              <icon-arrow-fall v-if="stats.trend.total < 0" />
+              <IconArrowRise v-if="stats.trend.total > 0" />
+              <IconArrowFall v-if="stats.trend.total < 0" />
               {{ Math.abs(stats.trend.total).toFixed(1) }}%
             </div>
           </div>
@@ -22,14 +22,14 @@
       <a-card hoverable class="stat-card">
         <div class="stat-content">
           <div class="stat-icon active">
-            <icon-check-circle />
+            <IconCheckCircle />
           </div>
           <div class="stat-info">
             <div class="stat-title">已激活</div>
             <div class="stat-value">{{ formatNumber(stats.active) }}</div>
             <div class="stat-trend" :class="{ positive: stats.trend.active > 0, negative: stats.trend.active < 0 }">
-              <icon-arrow-rise v-if="stats.trend.active > 0" />
-              <icon-arrow-fall v-if="stats.trend.active < 0" />
+              <IconArrowRise v-if="stats.trend.active > 0" />
+              <IconArrowFall v-if="stats.trend.active < 0" />
               {{ Math.abs(stats.trend.active).toFixed(1) }}%
             </div>
           </div>
@@ -40,14 +40,14 @@
       <a-card hoverable class="stat-card">
         <div class="stat-content">
           <div class="stat-icon archived">
-            <icon-archive />
+            <IconArchive />
           </div>
           <div class="stat-info">
             <div class="stat-title">已归档</div>
             <div class="stat-value">{{ formatNumber(stats.archived) }}</div>
             <div class="stat-trend" :class="{ positive: stats.trend.archived > 0, negative: stats.trend.archived < 0 }">
-              <icon-arrow-rise v-if="stats.trend.archived > 0" />
-              <icon-arrow-fall v-if="stats.trend.archived < 0" />
+              <IconArrowRise v-if="stats.trend.archived > 0" />
+              <IconArrowFall v-if="stats.trend.archived < 0" />
               {{ Math.abs(stats.trend.archived).toFixed(1) }}%
             </div>
           </div>

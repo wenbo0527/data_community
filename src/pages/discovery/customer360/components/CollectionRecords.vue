@@ -56,7 +56,7 @@
 
     <div class="section-header">
       <h3 class="section-title">
-        <icon-exclamation-circle class="title-icon" />
+        <IconExclamationCircle class="title-icon" />
         催收记录详情
       </h3>
       <div class="section-controls">
@@ -159,7 +159,7 @@
     </div>
 
     <div v-if="!records || records.length === 0" class="empty-state">
-      <icon-folder class="empty-icon" />
+      <IconFolder class="empty-icon" />
       <p class="empty-text">暂无催收记录</p>
     </div>
 
@@ -264,10 +264,10 @@
             @click="showTimelineFilters = !showTimelineFilters"
             :class="{ active: showTimelineFilters }"
           >
-            <icon-filter /> 筛选
+            <IconFilter /> 筛选
           </a-button>
           <a-button type="text" size="small" @click="resetTimelineFilters">
-            <icon-refresh /> 重置
+            <IconRefresh /> 重置
           </a-button>
         </div>
         <div class="timeline-zoom">
@@ -389,7 +389,7 @@
                     @click.stop
                   />
                   <span class="title-text">{{ record.collectionDate }} {{ record.collectionTime }}</span>
-                  <icon-down 
+                  <IconDown 
                     class="expand-icon" 
                     :class="{ expanded: expandedItems.has(record.id) }"
                   />
@@ -431,16 +431,16 @@
                 </div>
                 <div class="timeline-actions">
                   <a-button type="text" size="small" @click="viewDetails(record)">
-                    <icon-eye /> 查看详情
+                    <IconEye /> 查看详情
                   </a-button>
                   <a-button type="text" size="small" @click="copyRecord(record)">
-                    <icon-copy /> 复制
+                    <IconCopy /> 复制
                   </a-button>
                   <a-button type="text" size="small" @click="markAsImportant(record)">
-                    <icon-star /> 标记重要
+                    <IconStar /> 标记重要
                   </a-button>
                   <a-button type="text" size="small" @click="addFollowUp(record)">
-                    <icon-plus /> 添加跟进
+                    <IconPlus /> 添加跟进
                   </a-button>
                 </div>
               </div>
@@ -449,17 +449,17 @@
               <div v-if="hoveredItem === record.id" class="timeline-quick-actions">
                 <a-tooltip content="快速复制">
                   <a-button type="text" size="mini" @click="copyRecord(record)">
-                    <icon-copy />
+                    <IconCopy />
                   </a-button>
                 </a-tooltip>
                 <a-tooltip content="标记重要">
                   <a-button type="text" size="mini" @click="markAsImportant(record)">
-                    <icon-star />
+                    <IconStar />
                   </a-button>
                 </a-tooltip>
                 <a-tooltip content="添加跟进">
                   <a-button type="text" size="mini" @click="addFollowUp(record)">
-                    <icon-plus />
+                    <IconPlus />
                   </a-button>
                 </a-tooltip>
               </div>

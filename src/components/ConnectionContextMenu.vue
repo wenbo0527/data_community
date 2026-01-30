@@ -6,16 +6,16 @@
     @click.stop
   >
     <div class="menu-item" @click="handleDeleteConnection">
-      <icon-delete class="menu-icon" />
+      <IconDelete class="menu-icon" />
       <span>删除连接线</span>
     </div>
     <div class="menu-item" @click="handleEditConnection">
-      <icon-edit class="menu-icon" />
+      <IconEdit class="menu-icon" />
       <span>编辑连接</span>
     </div>
     <div class="menu-divider"></div>
     <div class="menu-item" @click="handleViewDetails">
-      <icon-eye class="menu-icon" />
+      <IconEye class="menu-icon" />
       <span>查看详情</span>
     </div>
   </div>

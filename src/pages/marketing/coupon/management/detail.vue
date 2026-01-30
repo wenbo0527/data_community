@@ -4,7 +4,7 @@
       <div class="page-header">
         <h2 class="page-title">优惠券详情</h2>
         <a-button type="outline" @click="goBackAction" style="margin-left: auto">
-          <template #icon><icon-left /></template>
+          <template #icon><IconLeft /></template>
           返回
         </a-button>
       </div>
@@ -27,7 +27,7 @@
 
       <a-tabs>
         <a-tab-pane key="template" title="模板参数">
-          <template-detail :id="templateId" :readonly="true" disable-operations :hide-back-button="true" />
+          <TemplateDetail :id="templateId" :readonly="true" disable-operations :hide-back-button="true" />
         </a-tab-pane>
         
         <a-tab-pane key="instance" title="库存参数">
@@ -99,13 +99,13 @@
                   <a-option value="desktop">桌面端</a-option>
                 </a-select>
                 <a-button @click="refreshPreview">
-                  <template #icon><icon-refresh /></template>
+                  <template #icon><IconRefresh /></template>
                   刷新预览
                 </a-button>
               </a-space>
             </div>
             <div class="preview-content">
-              <coupon-preview 
+              <CouponPreview 
                 :key="previewKey"
                 :coupon-data="previewData"
                 :usage-description="templateData.usageDescription"

@@ -1,6 +1,6 @@
 <template>
   <div class="coupon-template-detail">
-    <coupon-template-create 
+    <CouponTemplateCreate 
       :mode="'view'" 
       :id="route.query.id" 
       :readonly="true"

@@ -146,12 +146,12 @@
           @click="handleTestConnection"
           :loading="testingConnection"
         >
-          <template #icon><icon-play-circle /></template>
+          <template #icon><IconPlayCircle /></template>
           测试连接
         </a-button>
         <div v-if="testResult" class="test-result" :class="testResult.status">
-          <icon-check-circle v-if="testResult.status === 'success'" />
-          <icon-close-circle v-if="testResult.status === 'error'" />
+          <IconCheckCircle v-if="testResult.status === 'success'" />
+          <IconCloseCircle v-if="testResult.status === 'error'" />
           {{ testResult.message }}
         </div>
       </div>

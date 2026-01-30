@@ -9,7 +9,7 @@
       <div class="header-actions">
         <a-space>
           <a-button @click="goBack">
-            <template #icon><icon-arrow-left /></template>
+            <template #icon><IconArrowLeft /></template>
             返回
           </a-button>
         </a-space>
@@ -67,7 +67,7 @@
           <a-form :model="identityUi" layout="vertical">
             <a-space style="margin-bottom: 12px;">
               <a-button type="primary" @click="addIdentityRow">
-                <template #icon><icon-plus /></template>
+                <template #icon><IconPlus /></template>
                 添加标识字段
               </a-button>
             </a-space>
@@ -93,7 +93,7 @@
                 </div>
                 <div class="detail-actions">
                   <a-button type="text" class="action-btn delete-btn" status="danger" size="mini" @click="removeIdentityRowById(row.id)">
-                    <template #icon><icon-minus /></template>
+                    <template #icon><IconMinus /></template>
                   </a-button>
                 </div>
               </div>
@@ -261,7 +261,7 @@ const suggestCandidateKeys = (fields: Array<any>): string[] => {
   const priority = ['id_card','mobile','device_id','card_no']
   priority.forEach(p => { const hit = fields.find(f => String(f.name).toLowerCase() === p); if (hit) picks.push(hit.name) })
   // 追加包含关键字的字段
-  names.forEach((n,i)=>{
+  names.forEach((n,i) => {
     if ((/mobile|phone/.test(n) || /id_card|idcard/.test(n) || /device_id|imei|idfa/.test(n) || /card_no|bank_card|card/.test(n)) && !picks.includes(fields[i].name)) {
       picks.push(fields[i].name)
     }

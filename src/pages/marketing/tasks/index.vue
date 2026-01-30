@@ -12,13 +12,13 @@
           <a-space>
             <a-button @click="refreshTaskList">
               <template #icon>
-                <icon-refresh />
+                <IconRefresh />
               </template>
               刷新
             </a-button>
             <a-button type="primary" @click="createTask">
               <template #icon>
-                <icon-plus />
+                <IconPlus />
               </template>
               新建任务
             </a-button>
@@ -53,7 +53,13 @@
           @page-size-change="onPageSizeChange"
         >
           <template #status="{ record }">
-            <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+            <StatusTag :status="record.status" dictKey="marketingTask" />
+          </template>
+          <template #createTime="{ record }">
+            {{ DateUtils.formatDateTime(record.createTime) }}
+          </template>
+          <template #executeTime="{ record }">
+            {{ record.executeTime && record.executeTime !== '-' ? DateUtils.formatDateTime(record.executeTime) : '-' }}
           </template>
           
           <template #actions="{ record }">
@@ -62,7 +68,7 @@
               <a-dropdown v-if="record.versions && record.versions.length > 1">
                 <a-button type="text" size="small">
                   历史版本
-                  <icon-down />
+                  <IconDown />
                 </a-button>
                 <template #content>
                   <a-doption 
@@ -96,6 +102,8 @@ import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconDown, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { TaskStorage } from '../../../utils/taskStorage.js'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -314,29 +322,7 @@ const initData = () => {
   console.log('📈 [TaskList] 存储统计:', stats)
 }
 
-// 获取状态颜色
-const getStatusColor = (status) => {
-  const colorMap = {
-    draft: 'blue',
-    running: 'green',
-    completed: 'green',
-    disabled: 'red',
-    published: 'green'
-  }
-  return colorMap[status] || 'gray'
-}
-
-// 获取状态文本
-const getStatusText = (status) => {
-  const textMap = {
-    draft: '草稿',
-    running: '运行中',
-    completed: '已完成',
-    disabled: '停用',
-    published: '已发布'
-  }
-  return textMap[status] || '未知'
-}
+ 
 
 // 创建任务
 const createTask = () => {

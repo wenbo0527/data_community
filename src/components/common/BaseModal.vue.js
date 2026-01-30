@@ -286,36 +286,36 @@ const __VLS_componentsOption = {
 };
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['modal-large']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['modal-fullscreen']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn-primary']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ ;
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-header']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-title']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['modal-large']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['modal-fullscreen']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn-primary']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-header']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-body']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-modal-footer']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onOk': {} },
@@ -400,7 +400,7 @@ const __VLS_11 = {
 const __VLS_12 = {
     onBeforeCancel: (__VLS_ctx.handleBeforeCancel)
 };
-var __VLS_13 = {};
+const __VLS_13 = {};
 __VLS_3.slots.default;
 if (__VLS_ctx.$slots.title) {
     {
@@ -420,10 +420,10 @@ if (__VLS_ctx.description) {
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "modal-body" },
 });
-var __VLS_16 = {};
+const __VLS_16 = {};
 if (__VLS_ctx.formItems && __VLS_ctx.formItems.length > 0) {
     const __VLS_18 = {}.BaseForm;
-    /** @type {[typeof __VLS_components.BaseForm, typeof __VLS_components.BaseForm, ]} */ ;
+    /** @type {[typeof __VLS_components.BaseForm, typeof __VLS_components.BaseForm, ]} */ 
     // @ts-ignore
     const __VLS_19 = __VLS_asFunctionalComponent(__VLS_18, new __VLS_18({
         ...{ 'onSubmit': {} },
@@ -459,7 +459,7 @@ if (__VLS_ctx.formItems && __VLS_ctx.formItems.length > 0) {
     const __VLS_25 = {
         onSubmit: (__VLS_ctx.handleFormSubmit)
     };
-    /** @type {typeof __VLS_ctx.formRef} */ ;
+    /** @type {typeof __VLS_ctx.formRef} */ 
     var __VLS_26 = {};
     __VLS_21.slots.default;
     for (const [_, name] of __VLS_getVForSourceType((__VLS_ctx.formSlots))) {
@@ -472,7 +472,7 @@ if (__VLS_ctx.formItems && __VLS_ctx.formItems.length > 0) {
             var __VLS_29 = __VLS_tryAsConstant(name);
         }
     }
-    var __VLS_21;
+    let __VLS_21;
 }
 if (__VLS_ctx.$slots.footer) {
     {
@@ -483,11 +483,11 @@ if (__VLS_ctx.$slots.footer) {
         };
     }
 }
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['modal-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['modal-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['modal-body']} */ ;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['modal-content']} */ 
+/** @type {__VLS_StyleScopedClasses['modal-description']} */ 
+/** @type {__VLS_StyleScopedClasses['modal-body']} */ 
 // @ts-ignore
-var __VLS_15 = __VLS_14, __VLS_17 = __VLS_16, __VLS_27 = __VLS_26, __VLS_30 = __VLS_29, __VLS_31 = __VLS_28, __VLS_33 = __VLS_32;
-var __VLS_dollars;
+const __VLS_15 = __VLS_14, __VLS_17 = __VLS_16, __VLS_27 = __VLS_26, __VLS_30 = __VLS_29, __VLS_31 = __VLS_28, __VLS_33 = __VLS_32;
+let __VLS_dollars;
 let __VLS_self;

@@ -10,20 +10,20 @@
         <a-space>
           <a-radio-group v-model="viewMode" type="button">
             <a-radio value="table">
-              <template #icon><icon-list /></template>
+              <template #icon><IconList /></template>
               表格
             </a-radio>
             <a-radio value="list">
-              <template #icon><icon-apps /></template>
+              <template #icon><IconApps /></template>
               卡片
             </a-radio>
           </a-radio-group>
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建通知
           </a-button>
           <a-button @click="handleRefresh">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
         </a-space>
@@ -143,24 +143,19 @@
         </template>
 
         <template #status="{ record }">
-          <a-tag
-            :color="getStatusColor(record.status)"
-            :style="{ borderRadius: '12px' }"
-          >
-            {{ getStatusText(record.status) }}
-          </a-tag>
+          <StatusTag :status="record.status" dictKey="notification" />
         </template>
 
         <template #publishTime="{ record }">
           <span v-if="record.publishTime">
-            {{ formatDateTime(record.publishTime) }}
+            {{ DateUtils.formatDateTime(record.publishTime) }}
           </span>
           <span v-else class="text-gray">未发布</span>
         </template>
 
         <template #viewCount="{ record }">
           <a-space>
-            <icon-eye />
+            <IconEye />
             <span>{{ record.viewCount || 0 }}</span>
           </a-space>
         </template>
@@ -181,7 +176,7 @@
             <a-dropdown>
               <a-button type="text" size="small">
                 更多
-                <icon-down />
+                <IconDown />
               </a-button>
               <template #content>
                 <a-doption @click="handleToggleTop(record)">
@@ -230,12 +225,12 @@
                   <div class="notice-actions" @click.stop>
                     <a-space>
                       <a-button type="text" size="small" @click="handleEdit(item.id)">
-                        <template #icon><icon-edit /></template>
+                        <template #icon><IconEdit /></template>
                         编辑
                       </a-button>
                       <a-dropdown>
                         <a-button type="text" size="small">
-                          更多 <icon-down />
+                          更多 <IconDown />
                         </a-button>
                         <template #content>
                           <a-doption @click="handleToggleTop(item)">{{ item.isTop ? '取消置顶' : '设为置顶' }}</a-doption>
@@ -251,17 +246,15 @@
                 <div class="notice-info-row">
                   <a-space size="medium">
                     <a-tag size="small" :color="item.category?.color || 'blue'" bordered class="notice-tag">
-                      <template #icon><icon-tag /></template>
+                      <template #icon><IconTag /></template>
                       {{ item.category?.name || '未分类' }}
                     </a-tag>
-                    <a-tag size="small" :color="getStatusColor(item.status)" bordered class="notice-tag">
-                      {{ getStatusText(item.status) }}
-                    </a-tag>
+                    <StatusTag :status="item.status" dictKey="notification" />
                     <span class="notice-meta-item">
-                      <icon-eye /> {{ item.viewCount || 0 }}
+                      <IconEye /> {{ item.viewCount || 0 }}
                     </span>
                     <span class="notice-meta-item">
-                      <icon-clock-circle /> {{ formatDateTime(item.publishTime || item.createdAt) }}
+                      <IconClockCircle /> {{ DateUtils.formatDateTime(item.publishTime || item.createdAt) }}
                     </span>
                     <span class="notice-meta-item">
                       创建人: {{ item.createdBy }}
@@ -310,6 +303,8 @@ import {
   getNoticeTypeLabel, 
   getNoticeTypeColor 
 } from '@/constants/notification'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -603,28 +598,7 @@ const getStatusColor = (status) => {
   return colorMap[status] || 'gray'
 }
 
-const getStatusText = (status) => {
-  const textMap = {
-    draft: '草稿',
-    pending: '待审批',
-    published: '已发布',
-    archived: '已归档'
-  }
-  return textMap[status] || '未知'
-}
-
-
-
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return ''
-  return new Date(dateTime).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+ 
 
 // 生命周期
 onMounted(() => {

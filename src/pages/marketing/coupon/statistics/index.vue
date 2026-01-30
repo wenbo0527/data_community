@@ -8,12 +8,12 @@
             <a-space>
               <a-badge :count="alertCount" :offset="[10, 0]">
                 <a-button type="text" @click="handleAlertCenter">
-                  <template #icon><icon-notification /></template>
+                  <template #icon><IconNotification /></template>
                   预警中心
                 </a-button>
               </a-badge>
               <a-button type="text" @click="handleRefresh">
-                <template #icon><icon-refresh /></template>
+                <template #icon><IconRefresh /></template>
                 刷新数据
               </a-button>
             </a-space>
@@ -34,8 +34,8 @@
                       :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
                     >
                       <template #prefix>
-                        <icon-arrow-rise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
-                        <icon-arrow-fall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
+                        <IconArrowRise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
+                        <IconArrowFall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
                       </template>
                       <template #suffix>
                         <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
@@ -69,8 +69,8 @@
                     :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
                   >
                     <template #prefix>
-                      <icon-arrow-rise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
-                      <icon-arrow-fall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
+                      <IconArrowRise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
+                      <IconArrowFall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
                     </template>
                     <template #suffix>
                       <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
@@ -161,7 +161,7 @@
               @search="handleSearch"
             />
             <a-button type="text">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               导出数据
             </a-button>
           </a-space>
@@ -350,11 +350,11 @@ const selectedDimension = ref('ma')
 
 // 趋势图表
 const trendChartRef = ref(null)
-let trendChart = null
+const trendChart = null
 
 // 类型分布图表
 const typeChartRef = ref(null)
-let typeChart = null
+const typeChart = null
 
 // ==================== 预警数据 ====================
 const warningData = ref([

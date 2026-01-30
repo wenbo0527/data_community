@@ -4,7 +4,7 @@
       <h2>元数据采集任务列表</h2>
       <a-space>
         <a-button type="primary" @click="goCreate">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           新建采集任务
         </a-button>
         <a-button @click="fetchList" :loading="loading">

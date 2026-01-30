@@ -25,10 +25,10 @@
               @click="toggleAdvancedFilter"
               :class="{ active: showAdvancedFilter }"
             >
-              <icon-filter />高级搜索
+              <IconFilter />高级搜索
             </a-button>
             <a-button type="text" @click="toggleHistory">
-              <icon-history />搜索历史
+              <IconHistory />搜索历史
             </a-button>
           </div>
         </div>

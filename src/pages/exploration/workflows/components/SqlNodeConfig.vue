@@ -8,26 +8,26 @@
             <a-button-group size="mini">
               <a-button @click="formatSql">
                 <template #icon>
-                  <icon-code />
+                  <IconCode />
                 </template>
                 格式化
               </a-button>
               <a-button @click="validateSql">
                 <template #icon>
-                  <icon-check-circle />
+                  <IconCheckCircle />
                 </template>
                 验证
               </a-button>
               <a-button @click="showSqlTemplates">
                 <template #icon>
-                  <icon-file />
+                  <IconFile />
                 </template>
                 模板
               </a-button>
             </a-button-group>
             <a-button type="primary" size="mini" @click="testSqlQuery">
               <template #icon>
-                <icon-play-arrow />
+                <IconPlayArrow />
               </template>
               测试运行
             </a-button>
@@ -40,7 +40,7 @@
             @change="handleConfigChange"
           />
           <div v-if="sqlValidation.error" class="sql-error">
-            <icon-exclamation-circle-fill />
+            <IconExclamationCircleFill />
             <span>{{ sqlValidation.error }}</span>
           </div>
         </div>
@@ -53,7 +53,7 @@
             <span>参数列表</span>
             <a-button type="text" size="mini" @click="addParameter">
               <template #icon>
-                <icon-plus />
+                <IconPlus />
               </template>
               添加参数
             </a-button>
@@ -94,7 +94,7 @@
                 @click="removeParameter(index)"
               >
                 <template #icon>
-                  <icon-delete />
+                  <IconDelete />
                 </template>
               </a-button>
             </div>
@@ -359,7 +359,7 @@ const formatSql = () => {
   }
   
   // 简单的SQL格式化
-  let formatted = localConfig.value.query
+  const formatted = localConfig.value.query
     .replace(/\s+/g, ' ')
     .replace(/,/g, ',\n  ')
     .replace(/\bFROM\b/gi, '\nFROM')

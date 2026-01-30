@@ -11,7 +11,7 @@ let __VLS_components;
 let __VLS_directives;
 if (__VLS_ctx.formData.type === 'discount') {
     const __VLS_0 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         ...{ class: "section-card" },
@@ -19,7 +19,7 @@ if (__VLS_ctx.formData.type === 'discount') {
     const __VLS_2 = __VLS_1({
         ...{ class: "section-card" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-    var __VLS_4 = {};
+    const __VLS_4 = {};
     __VLS_3.slots.default;
     {
         const { title: __VLS_thisSlot } = __VLS_3.slots;
@@ -33,7 +33,7 @@ if (__VLS_ctx.formData.type === 'discount') {
             ...{ class: "title-text" },
         });
         const __VLS_5 = {}.ATooltip;
-        /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
+        /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ 
         // @ts-ignore
         const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({
             position: "right",
@@ -48,13 +48,13 @@ if (__VLS_ctx.formData.type === 'discount') {
         {
             const { content: __VLS_thisSlot } = __VLS_8.slots;
         }
-        var __VLS_8;
+        let __VLS_8;
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "section-desc" },
     });
     const __VLS_9 = {}.AFormItem;
-    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
     // @ts-ignore
     const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
         field: "discountType",
@@ -68,7 +68,7 @@ if (__VLS_ctx.formData.type === 'discount') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_10));
     __VLS_12.slots.default;
     const __VLS_13 = {}.ARadioGroup;
-    /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ 
     // @ts-ignore
     const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
         modelValue: (__VLS_ctx.formData.discountType),
@@ -78,7 +78,7 @@ if (__VLS_ctx.formData.type === 'discount') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_14));
     __VLS_16.slots.default;
     const __VLS_17 = {}.ARadio;
-    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
     // @ts-ignore
     const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
         value: "uniform",
@@ -87,9 +87,9 @@ if (__VLS_ctx.formData.type === 'discount') {
         value: "uniform",
     }, ...__VLS_functionalComponentArgsRest(__VLS_18));
     __VLS_20.slots.default;
-    var __VLS_20;
+    let __VLS_20;
     const __VLS_21 = {}.ARadio;
-    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
     // @ts-ignore
     const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
         value: "different",
@@ -98,9 +98,9 @@ if (__VLS_ctx.formData.type === 'discount') {
         value: "different",
     }, ...__VLS_functionalComponentArgsRest(__VLS_22));
     __VLS_24.slots.default;
-    var __VLS_24;
+    let __VLS_24;
     const __VLS_25 = {}.ARadio;
-    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
     // @ts-ignore
     const __VLS_26 = __VLS_asFunctionalComponent(__VLS_25, new __VLS_25({
         value: "fixed",
@@ -109,14 +109,14 @@ if (__VLS_ctx.formData.type === 'discount') {
         value: "fixed",
     }, ...__VLS_functionalComponentArgsRest(__VLS_26));
     __VLS_28.slots.default;
-    var __VLS_28;
-    var __VLS_16;
+    let __VLS_28;
+    let __VLS_16;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ style: {} },
     });
     if (__VLS_ctx.formData.discountType === 'uniform') {
         const __VLS_29 = {}.AInputNumber;
-        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
         // @ts-ignore
         const __VLS_30 = __VLS_asFunctionalComponent(__VLS_29, new __VLS_29({
             modelValue: (__VLS_ctx.formData.uniformDiscount),
@@ -137,13 +137,13 @@ if (__VLS_ctx.formData.type === 'discount') {
     }
     if (__VLS_ctx.formData.discountType === 'different') {
         const __VLS_33 = {}.ASpace;
-        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
         // @ts-ignore
         const __VLS_34 = __VLS_asFunctionalComponent(__VLS_33, new __VLS_33({}));
         const __VLS_35 = __VLS_34({}, ...__VLS_functionalComponentArgsRest(__VLS_34));
         __VLS_36.slots.default;
         const __VLS_37 = {}.AInputNumber;
-        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
         // @ts-ignore
         const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
             modelValue: (__VLS_ctx.formData.frontPeriods),
@@ -158,7 +158,7 @@ if (__VLS_ctx.formData.type === 'discount') {
             ...{ style: {} },
         }, ...__VLS_functionalComponentArgsRest(__VLS_38));
         const __VLS_41 = {}.AInputNumber;
-        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
         // @ts-ignore
         const __VLS_42 = __VLS_asFunctionalComponent(__VLS_41, new __VLS_41({
             modelValue: (__VLS_ctx.formData.frontDiscount),
@@ -174,17 +174,17 @@ if (__VLS_ctx.formData.type === 'discount') {
             precision: (2),
             ...{ style: {} },
         }, ...__VLS_functionalComponentArgsRest(__VLS_42));
-        var __VLS_36;
+        let __VLS_36;
     }
     if (__VLS_ctx.formData.discountType === 'fixed') {
         const __VLS_45 = {}.ASpace;
-        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
         // @ts-ignore
         const __VLS_46 = __VLS_asFunctionalComponent(__VLS_45, new __VLS_45({}));
         const __VLS_47 = __VLS_46({}, ...__VLS_functionalComponentArgsRest(__VLS_46));
         __VLS_48.slots.default;
         const __VLS_49 = {}.AInputNumber;
-        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
         // @ts-ignore
         const __VLS_50 = __VLS_asFunctionalComponent(__VLS_49, new __VLS_49({
             modelValue: (__VLS_ctx.formData.fixedBackPeriods),
@@ -199,7 +199,7 @@ if (__VLS_ctx.formData.type === 'discount') {
             ...{ style: {} },
         }, ...__VLS_functionalComponentArgsRest(__VLS_50));
         const __VLS_53 = {}.AInputNumber;
-        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
         // @ts-ignore
         const __VLS_54 = __VLS_asFunctionalComponent(__VLS_53, new __VLS_53({
             modelValue: (__VLS_ctx.formData.fixedBackDiscount),
@@ -215,11 +215,11 @@ if (__VLS_ctx.formData.type === 'discount') {
             precision: (2),
             ...{ style: {} },
         }, ...__VLS_functionalComponentArgsRest(__VLS_54));
-        var __VLS_48;
+        let __VLS_48;
     }
-    var __VLS_12;
+    let __VLS_12;
     const __VLS_57 = {}.AFormItem;
-    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
     // @ts-ignore
     const __VLS_58 = __VLS_asFunctionalComponent(__VLS_57, new __VLS_57({
         field: "limitMinRate",
@@ -233,7 +233,7 @@ if (__VLS_ctx.formData.type === 'discount') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_58));
     __VLS_60.slots.default;
     const __VLS_61 = {}.ARadioGroup;
-    /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ 
     // @ts-ignore
     const __VLS_62 = __VLS_asFunctionalComponent(__VLS_61, new __VLS_61({
         modelValue: (__VLS_ctx.formData.limitMinRate),
@@ -243,7 +243,7 @@ if (__VLS_ctx.formData.type === 'discount') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_62));
     __VLS_64.slots.default;
     const __VLS_65 = {}.ARadio;
-    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
     // @ts-ignore
     const __VLS_66 = __VLS_asFunctionalComponent(__VLS_65, new __VLS_65({
         value: (true),
@@ -252,9 +252,9 @@ if (__VLS_ctx.formData.type === 'discount') {
         value: (true),
     }, ...__VLS_functionalComponentArgsRest(__VLS_66));
     __VLS_68.slots.default;
-    var __VLS_68;
+    let __VLS_68;
     const __VLS_69 = {}.ARadio;
-    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
     // @ts-ignore
     const __VLS_70 = __VLS_asFunctionalComponent(__VLS_69, new __VLS_69({
         value: (false),
@@ -263,12 +263,12 @@ if (__VLS_ctx.formData.type === 'discount') {
         value: (false),
     }, ...__VLS_functionalComponentArgsRest(__VLS_70));
     __VLS_72.slots.default;
-    var __VLS_72;
-    var __VLS_64;
-    var __VLS_60;
+    let __VLS_72;
+    let __VLS_64;
+    let __VLS_60;
     if (__VLS_ctx.formData.limitMinRate) {
         const __VLS_73 = {}.AFormItem;
-        /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+        /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
         // @ts-ignore
         const __VLS_74 = __VLS_asFunctionalComponent(__VLS_73, new __VLS_73({
             field: "minRate",
@@ -282,7 +282,7 @@ if (__VLS_ctx.formData.type === 'discount') {
         }, ...__VLS_functionalComponentArgsRest(__VLS_74));
         __VLS_76.slots.default;
         const __VLS_77 = {}.AInputNumber;
-        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
         // @ts-ignore
         const __VLS_78 = __VLS_asFunctionalComponent(__VLS_77, new __VLS_77({
             modelValue: (__VLS_ctx.formData.minRate),
@@ -301,18 +301,18 @@ if (__VLS_ctx.formData.type === 'discount') {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ style: {} },
         });
-        var __VLS_76;
+        let __VLS_76;
     }
-    var __VLS_3;
+    let __VLS_3;
 }
-/** @type {__VLS_StyleScopedClasses['section-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['discount-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-help']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-desc']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['section-card']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['title-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['discount-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['title-text']} */ 
+/** @type {__VLS_StyleScopedClasses['title-help']} */ 
+/** @type {__VLS_StyleScopedClasses['section-desc']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -329,4 +329,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

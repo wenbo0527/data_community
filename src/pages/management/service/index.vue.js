@@ -51,9 +51,9 @@ const handleApply = (service) => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['page-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['service-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['service-footer']} */ ;
+/** @type {__VLS_StyleScopedClasses['page-header']} */ 
+/** @type {__VLS_StyleScopedClasses['service-card']} */ 
+/** @type {__VLS_StyleScopedClasses['service-footer']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -64,7 +64,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
 const __VLS_0 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     gutter: ([24, 24]),
@@ -75,7 +75,7 @@ const __VLS_2 = __VLS_1({
 __VLS_3.slots.default;
 for (const [service] of __VLS_getVForSourceType((__VLS_ctx.serviceList))) {
     const __VLS_4 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         span: (6),
@@ -87,7 +87,7 @@ for (const [service] of __VLS_getVForSourceType((__VLS_ctx.serviceList))) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_5));
     __VLS_7.slots.default;
     const __VLS_8 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
         ...{ class: "service-card" },
@@ -113,7 +113,7 @@ for (const [service] of __VLS_getVForSourceType((__VLS_ctx.serviceList))) {
         ...{ class: "service-footer" },
     });
     const __VLS_12 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
         ...{ 'onClick': {} },
@@ -136,15 +136,15 @@ for (const [service] of __VLS_getVForSourceType((__VLS_ctx.serviceList))) {
     var __VLS_11;
     var __VLS_7;
 }
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['content']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['service-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['service-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['service-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['service-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['service-footer']} */ ;
-var __VLS_dollars;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['content']} */ 
+/** @type {__VLS_StyleScopedClasses['page-header']} */ 
+/** @type {__VLS_StyleScopedClasses['service-card']} */ 
+/** @type {__VLS_StyleScopedClasses['service-content']} */ 
+/** @type {__VLS_StyleScopedClasses['service-title']} */ 
+/** @type {__VLS_StyleScopedClasses['service-description']} */ 
+/** @type {__VLS_StyleScopedClasses['service-footer']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -158,4 +158,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

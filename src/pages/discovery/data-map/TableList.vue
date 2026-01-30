@@ -62,7 +62,7 @@
             :bordered="false"
           >
             <div class="card-header">
-              <icon-file style="margin-right: 8px" />
+              <IconFile style="margin-right: 8px" />
               <span class="table-name">{{ record.name }}</span>
               <a-tag 
                 v-if="record.type" 
@@ -83,22 +83,22 @@
               <a-space>
                 <a-tooltip content="收藏" position="bottom">
                   <a-button type="text" @click.stop="addToFavorite(record)">
-                    <template #icon><icon-star /></template>
+                    <template #icon><IconStar /></template>
                   </a-button>
                 </a-tooltip>
                 <a-tooltip content="申请权限" position="bottom">
                   <a-button type="text" @click.stop="requestPermission(record)">
-                    <template #icon><icon-lock /></template>
+                    <template #icon><IconLock /></template>
                   </a-button>
                 </a-tooltip>
                 <a-tooltip content="复制表名" position="bottom">
                   <a-button type="text" @click.stop="copyTableName(record)">
-                    <template #icon><icon-copy /></template>
+                    <template #icon><IconCopy /></template>
                   </a-button>
                 </a-tooltip>
                 <a-tooltip content="添加到集合" position="bottom">
                   <a-button type="text" @click.stop="addToCollection(record)">
-                    <template #icon><icon-folder-add /></template>
+                    <template #icon><IconFolderAdd /></template>
                   </a-button>
                 </a-tooltip>
               </a-space>
@@ -126,6 +126,7 @@ import {
 
 
 import { tableMockData } from '@/mock/tableData.ts'
+import DateUtils from '@/utils/dateUtils'
 
 interface TableItem {
   name: string
@@ -170,7 +171,7 @@ onMounted(() => {
 const updateTableData = () => {
   return tableMockData.map(item => ({
     ...item,
-    updateTime: new Date().toLocaleDateString()
+    updateTime: DateUtils.smartFormat(item.updateTime || new Date())
   }))
 }
 
@@ -316,7 +317,7 @@ const addToCollection = async (record: TableItem) => {
     const { Modal, Select, Option } = await import('@arco-design/web-vue')
     const { h } = await import('vue')
     
-    let selectedCollection = ref('')
+    const selectedCollection = ref('')
     
     Modal.confirm({
       title: '添加到常用表集合',

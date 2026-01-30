@@ -5,7 +5,7 @@
       <div class="header-left">
         <a-button type="text" @click="handleBack">
           <template #icon>
-            <icon-arrow-left />
+            <IconArrowLeft />
           </template>
           返回
         </a-button>

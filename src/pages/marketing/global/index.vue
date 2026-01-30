@@ -9,7 +9,7 @@
         >
           <template #cover>
             <div class="item-icon">
-              <icon-settings />
+              <IconSettings />
             </div>
           </template>
           <a-card-meta
@@ -25,7 +25,7 @@
         >
           <template #cover>
             <div class="item-icon">
-              <icon-notification />
+              <IconNotification />
             </div>
           </template>
           <a-card-meta

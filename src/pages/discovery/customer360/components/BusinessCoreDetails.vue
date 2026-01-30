@@ -4,7 +4,7 @@
       <h4>业务核心明细</h4>
       <div class="header-actions">
         <a-button size="small" @click="refreshData">
-          <template #icon><icon-refresh /></template>
+          <template #icon><IconRefresh /></template>
           刷新
         </a-button>
       </div>
@@ -35,7 +35,7 @@
           >
             <template #extra>
               <a-button size="small" @click="copyCreditData">
-                <template #icon><icon-copy /></template>
+                <template #icon><IconCopy /></template>
                 复制
               </a-button>
             </template>

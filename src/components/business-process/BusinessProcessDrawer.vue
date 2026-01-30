@@ -31,11 +31,11 @@
         </div>
         <div class="header-right">
           <a-button v-if="currentPhase === 'editing'" type="text" @click="handleBackToSelection">
-            <template #icon><icon-arrow-left /></template>
+            <template #icon><IconArrowLeft /></template>
             返回
           </a-button>
           <a-button type="text" @click="handleClose">
-            <template #icon><icon-close /></template>
+            <template #icon><IconClose /></template>
           </a-button>
         </div>
       </div>
@@ -46,7 +46,7 @@
       <!-- 增强的错误边界 -->
       <div v-if="hasError" class="error-boundary">
         <div class="error-content">
-          <icon-exclamation-circle class="error-icon" />
+          <IconExclamationCircle class="error-icon" />
           <h4 class="error-title">组件运行异常</h4>
           <p class="error-message">{{ errorMessage }}</p>
           
@@ -175,7 +175,7 @@
         <template v-else>
           <div class="footer-left">
             <span v-if="autoSaveStatus === 'saving'" class="auto-save-status">
-              <icon-loading class="loading-icon" />
+              <IconLoading class="loading-icon" />
               自动保存中...
             </span>
             <span v-else-if="autoSaveStatus === 'saved'" class="auto-save-status saved">
@@ -183,7 +183,7 @@
               已自动保存
             </span>
             <span v-else-if="autoSaveStatus === 'error'" class="auto-save-status error">
-              <icon-exclamation class="error-icon" />
+              <IconExclamation class="error-icon" />
               保存失败
             </span>
           </div>

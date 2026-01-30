@@ -9,11 +9,11 @@
         <div class="header-actions">
           <a-space>
             <a-button type="primary" @click="showCreateSupplier = true">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               新增供应商
             </a-button>
             <a-button type="outline" @click="exportSuppliers">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               导出数据
             </a-button>
           </a-space>
@@ -31,7 +31,7 @@
             :precision="0"
             show-group-separator
           >
-            <template #prefix><icon-user /></template>
+            <template #prefix><IconUser /></template>
           </a-statistic>
         </a-card>
       </a-col>
@@ -43,7 +43,7 @@
             :precision="0"
             show-group-separator
           >
-            <template #prefix><icon-check-circle /></template>
+            <template #prefix><IconCheckCircle /></template>
           </a-statistic>
         </a-card>
       </a-col>
@@ -55,7 +55,7 @@
             :precision="0"
             show-group-separator
           >
-            <template #prefix><icon-storage /></template>
+            <template #prefix><IconStorage /></template>
           </a-statistic>
         </a-card>
       </a-col>
@@ -66,7 +66,7 @@
             :value="stats.avgCreditRating"
             :precision="1"
           >
-            <template #prefix><icon-star /></template>
+            <template #prefix><IconStar /></template>
           </a-statistic>
         </a-card>
       </a-col>
@@ -124,7 +124,7 @@
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="applyFilter">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             查询
           </a-button>
           <a-button style="margin-left: 8px" @click="resetFilter">
@@ -429,6 +429,7 @@ import {
   IconStar,
   IconSearch
 } from '@arco-design/web-vue/es/icon'
+import DateUtils from '@/utils/dateUtils'
 
 // 响应式数据
 const loading = ref(false)
@@ -804,7 +805,7 @@ const getStatusStatus = (status: string) => {
 
 const formatDate = (date: string) => {
   try {
-    return new Date(date).toLocaleDateString('zh-CN')
+    return DateUtils.formatDate(date)
   } catch {
     return '-'
   }
@@ -812,7 +813,7 @@ const formatDate = (date: string) => {
 
 const formatDateTime = (date: string) => {
   try {
-    return new Date(date).toLocaleString('zh-CN')
+    return DateUtils.formatDateTime(date)
   } catch {
     return '-'
   }

@@ -2,7 +2,7 @@
   <div class="chart-display-area">
     <div class="section-header">
       <div class="section-title">
-        <icon-bar-chart />
+        <IconBarChart />
         <span>数据可视化</span>
       </div>
       <div class="section-actions">
@@ -25,7 +25,7 @@
             size="mini"
             @click="toggleFullscreen"
           >
-            <icon-fullscreen />
+            <IconFullscreen />
           </a-button>
           <a-button 
             type="text" 
@@ -33,7 +33,7 @@
             @click="refreshChart"
             :loading="loading"
           >
-            <icon-refresh />
+            <IconRefresh />
           </a-button>
         </a-space>
       </div>
@@ -45,7 +45,7 @@
       <div class="chart-section">
         <div class="chart-header">
           <div class="chart-title">
-            <icon-bar-chart />
+            <IconBarChart />
             <span>节点访问量排行</span>
           </div>
           <div class="chart-actions">
@@ -67,7 +67,7 @@
       <div class="chart-section">
         <div class="chart-header">
           <div class="chart-title">
-            <icon-bar-chart />
+            <IconBarChart />
             <span>转化率趋势</span>
           </div>
           <div class="chart-actions">
@@ -111,7 +111,7 @@
       <div class="chart-section">
         <div class="chart-header">
           <div class="chart-title">
-            <icon-bar-chart />
+            <IconBarChart />
             <span>节点类型分布</span>
           </div>
           <div class="chart-actions">
@@ -167,7 +167,7 @@
                 size="mini"
                 @click="toggleFullscreen"
               >
-                <icon-close />
+                <IconClose />
               </a-button>
             </a-space>
           </div>

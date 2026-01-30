@@ -29,14 +29,14 @@
             
             <a-button type="primary" @click="executeQuery" :loading="queryLoading">
               <template #icon>
-                <icon-search />
+                <IconSearch />
               </template>
               查询
             </a-button>
             
             <a-button @click="resetQuery">
               <template #icon>
-                <icon-refresh />
+                <IconRefresh />
               </template>
               重置
             </a-button>

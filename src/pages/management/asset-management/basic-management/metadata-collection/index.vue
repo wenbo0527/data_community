@@ -4,7 +4,7 @@
       <h2>元数据采集</h2>
       <a-space>
         <a-button type="primary" @click="submitTask" :loading="submitting">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           创建采集任务
         </a-button>
         <a-button @click="resetForm">重置</a-button>

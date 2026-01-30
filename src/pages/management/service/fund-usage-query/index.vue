@@ -8,51 +8,51 @@
 
     <!-- 查询步骤 -->
     <div class="query-steps">
-      <a-steps :current="currentStep" size="small">
-        <a-step v-if="queryType === 'idQuery'" title="输入查询条件" description="选择查询类型并输入查询条件" />
-        <a-step v-if="queryType === 'idQuery'" title="选择借据" description="从查询结果中选择需要查询的借据" />
-        <a-step v-if="queryType === 'idQuery'" title="确认查询" description="确认查询信息并提交申请" />
+      <ASteps :current="currentStep" size="small">
+        <AStep v-if="queryType === 'idQuery'" title="输入查询条件" description="选择查询类型并输入查询条件" />
+        <AStep v-if="queryType === 'idQuery'" title="选择借据" description="从查询结果中选择需要查询的借据" />
+        <AStep v-if="queryType === 'idQuery'" title="确认查询" description="确认查询信息并提交申请" />
         
-        <a-step v-if="queryType === 'batchBacktrack'" title="选择查询类型" description="选择查询类型和外部数据选项" />
-        <a-step v-if="queryType === 'batchBacktrack'" title="添加样本" description="输入样本数据库和样本表信息" />
-        <a-step v-if="queryType === 'batchBacktrack'" title="绑定参数列" description="配置参数列映射关系" />
-      </a-steps>
+        <AStep v-if="queryType === 'batchBacktrack'" title="选择查询类型" description="选择查询类型和外部数据选项" />
+        <AStep v-if="queryType === 'batchBacktrack'" title="添加样本" description="输入样本数据库和样本表信息" />
+        <AStep v-if="queryType === 'batchBacktrack'" title="绑定参数列" description="配置参数列映射关系" />
+      </ASteps>
     </div>
 
     <!-- 步骤内容 -->
-    <a-card class="step-content">
+    <ACard class="step-content">
       <!-- 步骤1: 选择查询类型和条件 -->
       <div v-if="currentStep === 0" class="step-container">
         <h3>选择查询类型</h3>
         <p class="step-description">请选择查询类型和外部数据选项</p>
         
         <!-- 查询类型选择 -->
-        <a-form :model="queryForm" layout="vertical">
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="外部数据选项" required>
-                <a-select v-model="queryForm.externalDataOption" placeholder="请选择外部数据选项">
-                  <a-option value="fundUsage">资金用途</a-option>
-                </a-select>
+        <AForm :model="queryForm" layout="vertical">
+          <ARow :gutter="16">
+            <ACol :span="12">
+              <AFormItem label="外部数据选项" required>
+                <ASelect v-model="queryForm.externalDataOption" placeholder="请选择外部数据选项">
+                  <AOption value="fundUsage">资金用途</AOption>
+                </ASelect>
                 <div class="form-tip">默认为资金用途，暂无其他选项</div>
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="查询类型" field="queryType">
-                <a-radio-group v-model="queryType" type="button" @change="handleQueryTypeChange">
-                  <a-radio value="idQuery">身份证号查询</a-radio>
-                  <a-radio value="batchBacktrack">批量回溯</a-radio>
-                </a-radio-group>
-              </a-form-item>
-            </a-col>
-          </a-row>
+              </AFormItem>
+            </ACol>
+            <ACol :span="12">
+              <AFormItem label="查询类型" field="queryType">
+                <ARadioGroup v-model="queryType" type="button" @change="handleQueryTypeChange">
+                  <ARadio value="idQuery">身份证号查询</ARadio>
+                  <ARadio value="batchBacktrack">批量回溯</ARadio>
+                </ARadioGroup>
+              </AFormItem>
+            </ACol>
+          </ARow>
           
           <!-- 身份证号查询条件 -->
           <div v-if="queryType === 'idQuery'">
-            <a-row :gutter="16">
-              <a-col :span="12">
-                <a-form-item label="客户身份证号" required>
-                  <a-textarea 
+            <ARow :gutter="16">
+              <ACol :span="12">
+                <AFormItem label="客户身份证号" required>
+                  <ATextarea 
                     v-model="queryForm.idNumbers" 
                     placeholder="请输入客户身份证号，多个身份证号请换行输入"
                     :auto-size="{ minRows: 4, maxRows: 6 }"
@@ -60,55 +60,55 @@
                     show-word-limit
                   />
                   <div class="form-tip">支持批量输入，每行一个身份证号</div>
-                </a-form-item>
-              </a-col>
-              <a-col :span="12">
-                <a-form-item label="支用时间范围">
-                  <a-range-picker 
+                </AFormItem>
+              </ACol>
+              <ACol :span="12">
+                <AFormItem label="支用时间范围">
+                  <ARangePicker 
                     v-model="queryForm.usageTimeRange" 
                     style="width: 100%"
                     :placeholder="['开始时间', '结束时间']"
                   />
-                </a-form-item>
-                <a-form-item label="借据状态">
-                  <a-select v-model="queryForm.loanStatus" placeholder="请选择借据状态" allow-clear>
-                    <a-option value="active">正常</a-option>
-                    <a-option value="overdue">逾期</a-option>
-                    <a-option value="settled">已结清</a-option>
-                    <a-option value="written-off">已核销</a-option>
-                  </a-select>
-                </a-form-item>
-              </a-col>
-            </a-row>
-            <a-form-item>
-              <a-button type="primary" @click="searchLoans" :loading="loanLoading">
+                </AFormItem>
+                <AFormItem label="借据状态">
+                  <ASelect v-model="queryForm.loanStatus" placeholder="请选择借据状态" allow-clear>
+                    <AOption value="active">正常</AOption>
+                    <AOption value="overdue">逾期</AOption>
+                    <AOption value="settled">已结清</AOption>
+                    <AOption value="written-off">已核销</AOption>
+                  </ASelect>
+                </AFormItem>
+              </ACol>
+            </ARow>
+            <AFormItem>
+              <AButton type="primary" @click="searchLoans" :loading="loanLoading">
                 查询借据
-              </a-button>
-            </a-form-item>
+              </AButton>
+            </AFormItem>
           </div>
           
           <!-- 批量回溯直接进入下一步 -->
           <div v-if="queryType === 'batchBacktrack'">
-            <a-form-item>
-              <a-button type="primary" @click="nextStep">
+            <AFormItem>
+              <AButton type="primary" @click="nextStep">
                 下一步
-              </a-button>
-            </a-form-item>
+              </AButton>
+            </AFormItem>
           </div>
-        </a-form>
+        </AForm>
 
         <div class="step-actions" v-if="queryType === 'idQuery' && loanData.length > 0">
-          <a-button @click="prevStep" :disabled="currentStep === 0">
+          <AButton @click="prevStep" :disabled="currentStep === 0">
             上一步
-          </a-button>
-          <a-button 
+          </AButton>
+          <AButton 
             type="primary" 
             @click="nextStep" 
             :disabled="loanData.length === 0"
             style="margin-left: 8px"
           >
             下一步
-          </a-button>
+          </AButton>
         </div>
       </div>
 
@@ -119,36 +119,36 @@
         
         <!-- 借据筛选 -->
         <div class="filter-section" v-if="loanData.length > 0">
-          <a-row :gutter="16">
-            <a-col :span="8">
-              <a-input 
+          <ARow :gutter="16">
+            <ACol :span="8">
+              <AInput 
                 v-model="loanFilter.keyword" 
                 placeholder="搜索客户姓名或身份证号"
                 @input="handleLoanFilter"
                 allow-clear
               />
-            </a-col>
-            <a-col :span="6">
-              <a-select 
+            </ACol>
+            <ACol :span="6">
+              <ASelect 
                 v-model="loanFilter.status" 
                 placeholder="筛选状态"
                 @change="handleLoanFilter"
                 allow-clear
               >
-                <a-option value="active">正常</a-option>
-                <a-option value="overdue">逾期</a-option>
-                <a-option value="settled">已结清</a-option>
-                <a-option value="written-off">已核销</a-option>
-              </a-select>
-            </a-col>
-            <a-col :span="6">
-              <a-button @click="resetLoanFilter">重置筛选</a-button>
-            </a-col>
-          </a-row>
+                <AOption value="active">正常</AOption>
+                <AOption value="overdue">逾期</AOption>
+                <AOption value="settled">已结清</AOption>
+                <AOption value="written-off">已核销</AOption>
+              </ASelect>
+            </ACol>
+            <ACol :span="6">
+              <AButton @click="resetLoanFilter">重置筛选</AButton>
+            </ACol>
+          </ARow>
         </div>
 
         <!-- 借据列表 -->
-        <a-table
+        <ATable
           :data="filteredLoanData"
           :columns="loanColumns"
           :loading="loanLoading"
@@ -208,19 +208,19 @@
           </template>
           
           <template #status="{ record }">
-            <a-tag :color="getLoanStatusColor(record.status)">
+            <ATag :color="getLoanStatusColor(record.status)">
               {{ getLoanStatusText(record.status) }}
-            </a-tag>
+            </ATag>
           </template>
-        </a-table>
+        </ATable>
 
 
         
         <div class="step-actions">
-          <a-button style="margin-right: 8px" @click="prevStep">上一步</a-button>
-          <a-button type="primary" :disabled="isNextButtonDisabled" @click="nextStep">
+          <AButton style="margin-right: 8px" @click="prevStep">上一步</AButton>
+          <AButton type="primary" :disabled="isNextButtonDisabled" @click="nextStep">
             下一步 (已选择{{ selectedLoanKeys.length || 0 }}条)
-          </a-button>
+          </AButton>
         </div>
       </div>
 
@@ -229,42 +229,42 @@
         <h3>添加样本</h3>
         <p class="step-description">请输入样本数据库和样本表信息</p>
         
-        <a-form :model="sampleForm" layout="vertical">
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="样本数据库" required>
-                <a-input v-model="sampleForm.database" placeholder="请输入样本数据库名称" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="样本表" required>
-                <a-input v-model="sampleForm.table" placeholder="请输入样本表名称" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="样本描述">
-                <a-textarea 
+        <AForm :model="sampleForm" layout="vertical">
+          <ARow :gutter="16">
+            <ACol :span="12">
+              <AFormItem label="样本数据库" required>
+                <AInput v-model="sampleForm.database" placeholder="请输入样本数据库名称" />
+              </AFormItem>
+            </ACol>
+            <ACol :span="12">
+              <AFormItem label="样本表" required>
+                <AInput v-model="sampleForm.table" placeholder="请输入样本表名称" />
+              </AFormItem>
+            </ACol>
+          </ARow>
+          <ARow :gutter="16">
+            <ACol :span="24">
+              <AFormItem label="样本描述">
+                <ATextarea 
                   v-model="sampleForm.description" 
                   placeholder="请输入样本描述信息（可选）"
                   :auto-size="{ minRows: 3, maxRows: 5 }"
                 />
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
+              </AFormItem>
+            </ACol>
+          </ARow>
+        </AForm>
         
         <div class="step-actions">
-          <a-button @click="prevStep">上一步</a-button>
-          <a-button 
+          <AButton @click="prevStep">上一步</AButton>
+          <AButton 
             type="primary" 
             @click="nextStep" 
             :disabled="!sampleForm.database || !sampleForm.table"
             style="margin-left: 8px"
           >
             下一步
-          </a-button>
+          </AButton>
         </div>
       </div>
       
@@ -274,36 +274,36 @@
         <p class="step-description">请配置参数列映射关系</p>
         
         <div class="parameter-mapping">
-          <a-table
+          <ATable
             :columns="parameterColumns"
             :data="parameterMappings"
             :pagination="false"
             size="small"
           >
             <template #targetColumn="{ record, rowIndex }">
-              <a-select 
+              <ASelect 
                 v-model="parameterMappings[rowIndex].targetColumn"
                 placeholder="选择目标列"
                 style="width: 100%"
               >
-                <a-option value="customer_id">客户ID</a-option>
-                <a-option value="loan_id">借据ID</a-option>
-                <a-option value="amount">金额</a-option>
-                <a-option value="date">日期</a-option>
-                <a-option value="status">状态</a-option>
-              </a-select>
+                <AOption value="customer_id">客户ID</AOption>
+                <AOption value="loan_id">借据ID</AOption>
+                <AOption value="amount">金额</AOption>
+                <AOption value="date">日期</AOption>
+                <AOption value="status">状态</AOption>
+              </ASelect>
             </template>
             <template #required="{ record }">
-              <a-tag :color="record.required ? 'red' : 'blue'">
+              <ATag :color="record.required ? 'red' : 'blue'">
                 {{ record.required ? '必填' : '可选' }}
-              </a-tag>
+              </ATag>
             </template>
-          </a-table>
+          </ATable>
         </div>
         
         <div class="step-actions">
-          <a-button @click="prevStep">上一步</a-button>
-          <a-button type="primary" @click="confirmBatchQuery">确认发起审批</a-button>
+          <AButton @click="prevStep">上一步</AButton>
+          <AButton type="primary" @click="confirmBatchQuery">确认发起审批</AButton>
         </div>
       </div>
 
@@ -314,25 +314,25 @@
         
         <!-- 查询摘要 -->
         <div class="query-summary">
-          <a-descriptions :column="2" bordered>
-            <a-descriptions-item label="查询客户数">{{ uniqueCustomers.length || 0 }}人</a-descriptions-item>
-            <a-descriptions-item label="查询借据数">{{ selectedLoans.length || 0 }}笔</a-descriptions-item>
-            <a-descriptions-item label="查询时间范围">
+          <ADescriptions :column="2" bordered>
+            <ADescriptionsItem label="查询客户数">{{ uniqueCustomers.length || 0 }}人</ADescriptionsItem>
+            <ADescriptionsItem label="查询借据数">{{ selectedLoans.length || 0 }}笔</ADescriptionsItem>
+            <ADescriptionsItem label="查询时间范围">
               {{ queryForm.usageTimeRange ? 
                 `${queryForm.usageTimeRange[0]} 至 ${queryForm.usageTimeRange[1]}` : 
                 '不限制' 
               }}
-            </a-descriptions-item>
-            <a-descriptions-item label="借据状态筛选">
+            </ADescriptionsItem>
+            <ADescriptionsItem label="借据状态筛选">
               {{ queryForm.loanStatus ? getLoanStatusText(queryForm.loanStatus) : '不限制' }}
-            </a-descriptions-item>
-          </a-descriptions>
+            </ADescriptionsItem>
+          </ADescriptions>
         </div>
 
         <!-- 选中的借据列表 -->
         <div class="selected-loans">
           <h4>选中的借据列表</h4>
-          <a-table
+          <ATable
             :columns="summaryColumns"
             :data="selectedLoans"
             :pagination="false"
@@ -350,19 +350,19 @@
             </template>
             
             <template #status="{ record }">
-              <a-tag :color="getLoanStatusColor(record.status)" size="small">
+              <ATag :color="getLoanStatusColor(record.status)" size="small">
                 {{ getLoanStatusText(record.status) }}
-              </a-tag>
+              </ATag>
             </template>
-          </a-table>
+          </ATable>
         </div>
 
         <div class="step-actions">
-          <a-button style="margin-right: 8px" @click="prevStep">上一步</a-button>
-          <a-button type="primary" @click="confirmQuery">确认发起审批</a-button>
+          <AButton style="margin-right: 8px" @click="prevStep">上一步</AButton>
+          <AButton type="primary" @click="confirmQuery">确认发起审批</AButton>
         </div>
       </div>
-    </a-card>
+    </ACard>
   </div>
 </template>
 

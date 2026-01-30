@@ -15,21 +15,21 @@
             style="width: 250px"
             @input="handleSearch"
           >
-            <template #prefix><icon-search /></template>
+            <template #prefix><IconSearch /></template>
           </a-input>
           <a-dropdown>
             <a-button type="primary">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               新增人群
-              <template #suffix><icon-down /></template>
+              <template #suffix><IconDown /></template>
             </a-button>
             <template #content>
               <a-doption @click="addAudienceByRule">
-                <template #icon><icon-settings /></template>
+                <template #icon><IconSettings /></template>
                 自定义规则创建
               </a-doption>
               <a-doption @click="addAudienceByImport">
-                <template #icon><icon-import /></template>
+                <template #icon><IconImport /></template>
                 数据导入
               </a-doption>
             </template>

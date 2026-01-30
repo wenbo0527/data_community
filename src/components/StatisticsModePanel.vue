@@ -27,14 +27,14 @@
             
             <a-button type="primary" @click="refreshStatistics" :loading="statsLoading">
               <template #icon>
-                <icon-refresh />
+                <IconRefresh />
               </template>
               刷新统计
             </a-button>
             
             <a-button @click="exportStatistics">
               <template #icon>
-                <icon-download />
+                <IconDownload />
               </template>
               导出数据
             </a-button>
@@ -52,7 +52,7 @@
             :value-style="{ color: '#1890ff' }"
           >
             <template #suffix>
-              <icon-file />
+              <IconFile />
             </template>
           </a-statistic>
         </a-card>
@@ -64,7 +64,7 @@
             :value-style="{ color: '#52c41a' }"
           >
             <template #suffix>
-              <icon-play-arrow />
+              <IconPlayArrow />
             </template>
           </a-statistic>
         </a-card>
@@ -76,7 +76,7 @@
             :value-style="{ color: '#722ed1' }"
           >
             <template #suffix>
-              <icon-apps />
+              <IconApps />
             </template>
           </a-statistic>
         </a-card>
@@ -88,7 +88,7 @@
             :value-style="{ color: '#fa8c16' }"
           >
             <template #suffix>
-              <icon-link />
+              <IconLink />
             </template>
           </a-statistic>
         </a-card>

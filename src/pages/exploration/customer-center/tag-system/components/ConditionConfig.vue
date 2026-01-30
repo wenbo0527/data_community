@@ -2,10 +2,10 @@
   <div class="condition-config">
     <!-- 空状态 -->
     <div v-if="conditionGroups.length === 0" class="empty-condition-state">
-      <icon-plus style="font-size: 32px; color: #c9cdd4;" />
+      <IconPlus style="font-size: 32px; color: #c9cdd4;" />
       <p>暂无条件组，请创建第一个条件组</p>
       <a-button type="primary" @click="$emit('add-condition-group')">
-        <template #icon><icon-plus /></template>
+        <template #icon><IconPlus /></template>
         创建第一个条件组
       </a-button>
     </div>
@@ -47,12 +47,12 @@
           <div class="group-actions" v-if="editable">
             <a-button type="text" size="small" @click="toggleGroupCollapse(groupIndex)">
               <template #icon>
-                <icon-down v-if="!group.collapsed" />
-                <icon-right v-else />
+                <IconDown v-if="!group.collapsed" />
+                <IconRight v-else />
               </template>
             </a-button>
             <a-button type="text" size="small" status="danger" @click="$emit('delete-condition-group', groupIndex)">
-              <template #icon><icon-delete /></template>
+              <template #icon><IconDelete /></template>
             </a-button>
           </div>
         </div>
@@ -145,7 +145,7 @@
                 </div>
                 <div class="tag-actions">
                   <a-button type="text" size="mini" status="danger" @click="$emit('remove-condition', groupIndex, conditionIndex)">
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                   </a-button>
                 </div>
               </div>
@@ -212,7 +212,7 @@
             <!-- 条件操作按钮 -->
             <div class="condition-actions" v-if="editable">
               <a-button type="text" size="small" status="danger" @click="$emit('remove-condition', groupIndex, conditionIndex)">
-                <template #icon><icon-delete /></template>
+                <template #icon><IconDelete /></template>
               </a-button>
             </div>
           </div>
@@ -220,15 +220,15 @@
           <!-- 添加条件按钮组 -->
           <div v-if="editable" class="add-condition-buttons">
             <a-button type="dashed" size="small" @click="$emit('add-condition-by-type', groupIndex, 'property')">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               添加属性
             </a-button>
             <a-button type="dashed" size="small" @click="$emit('add-condition-by-type', groupIndex, 'behavior')">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               添加行为
             </a-button>
             <a-button type="dashed" size="small" @click="$emit('add-condition-by-type', groupIndex, 'detail')">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               添加明细数据
             </a-button>
           </div>
@@ -247,7 +247,7 @@
       <!-- 添加条件组按钮 -->
       <div v-if="editable" class="add-condition-group">
         <a-button type="dashed" @click="$emit('add-condition-group')" style="width: 100%;">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           添加条件组
         </a-button>
       </div>

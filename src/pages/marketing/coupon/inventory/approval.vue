@@ -79,11 +79,11 @@
         <a-form-item>
           <a-space>
             <a-button type="primary" html-type="submit">
-              <template #icon><icon-search /></template>
+              <template #icon><IconSearch /></template>
               搜索
             </a-button>
             <a-button @click="resetFilter">
-              <template #icon><icon-refresh /></template>
+              <template #icon><IconRefresh /></template>
               重置
             </a-button>
           </a-space>
@@ -109,7 +109,7 @@
               type="primary" 
               size="small"
               @click="handleBatchApprove('approved')">
-              <template #icon><icon-check /></template>
+              <template #icon><IconCheck /></template>
               批量通过
             </a-button>
             <a-button 
@@ -117,7 +117,7 @@
               status="danger"
               size="small"
               @click="handleBatchApprove('rejected')">
-              <template #icon><icon-close /></template>
+              <template #icon><IconClose /></template>
               批量拒绝
             </a-button>
           </a-space>
@@ -188,7 +188,7 @@
                   status="success"
                   @click="quickApprove(record, 'approved')"
                   title="快速通过 (Ctrl+Y)">
-                  <template #icon><icon-check /></template>
+                  <template #icon><IconCheck /></template>
                   通过
                 </a-button>
                 <a-button 
@@ -198,7 +198,7 @@
                   status="danger"
                   @click="quickApprove(record, 'rejected')"
                   title="快速拒绝 (Ctrl+N)">
-                  <template #icon><icon-close /></template>
+                  <template #icon><IconClose /></template>
                   拒绝
                 </a-button>
                 <a-button 
@@ -342,8 +342,8 @@
           :type="batchApprovalAction === 'approved' ? 'success' : 'warning'"
           show-icon>
           <template #icon>
-            <icon-check v-if="batchApprovalAction === 'approved'" />
-            <icon-close v-else />
+            <IconCheck v-if="batchApprovalAction === 'approved'" />
+            <IconClose v-else />
           </template>
           即将{{ batchApprovalAction === 'approved' ? '通过' : '拒绝' }} {{ selectedRows.filter(r => r.status === 'pending').length }} 条待审批记录
         </a-alert>

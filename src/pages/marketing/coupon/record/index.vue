@@ -48,11 +48,11 @@
                 <div class="form-actions">
                     <a-space>
                         <a-button type="primary" @click="handleSearch">
-                            <template #icon><icon-search /></template>
+                            <template #icon><IconSearch /></template>
                             搜索
                         </a-button>
                         <a-button @click="handleReset">
-                            <template #icon><icon-refresh /></template>
+                            <template #icon><IconRefresh /></template>
                             重置
                         </a-button>
                     </a-space>
@@ -70,7 +70,7 @@
                 <a-tooltip content="下载流水记录">
                     <a-button type="primary" size="small">
                         <template #icon>
-                            <icon-download />
+                            <IconDownload />
                         </template>
                         下载记录
                     </a-button>

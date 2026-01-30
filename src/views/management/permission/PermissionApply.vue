@@ -4,7 +4,7 @@
 
       <div class="step-content">
         <div class="step-panel">
-          <permission-form
+          <PermissionForm
             :selected-resources="selectedResources"
             :submitting="submitting"
             :default-category="defaultCategory"

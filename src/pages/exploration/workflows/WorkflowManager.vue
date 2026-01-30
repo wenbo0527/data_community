@@ -9,7 +9,7 @@
       <div class="header-right">
         <a-button type="primary" @click="createWorkflow">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           创建流程
         </a-button>
@@ -40,7 +40,7 @@
         </a-select>
         <a-button @click="resetFilters">
           <template #icon>
-            <icon-refresh />
+            <IconRefresh />
           </template>
           重置
         </a-button>
@@ -75,31 +75,31 @@
               <a-dropdown>
                 <a-button type="text" size="small">
                   <template #icon>
-                    <icon-more />
+                    <IconMore />
                   </template>
                 </a-button>
                 <template #content>
                   <a-doption @click="editWorkflow(workflow.id)">
                     <template #icon>
-                      <icon-edit />
+                      <IconEdit />
                     </template>
                     编辑
                   </a-doption>
                   <a-doption @click="duplicateWorkflow(workflow)">
                     <template #icon>
-                      <icon-copy />
+                      <IconCopy />
                     </template>
                     复制
                   </a-doption>
                   <a-doption @click="exportWorkflow(workflow)">
                     <template #icon>
-                      <icon-download />
+                      <IconDownload />
                     </template>
                     导出
                   </a-doption>
                   <a-doption @click="deleteWorkflow(workflow.id)" class="danger-option">
                     <template #icon>
-                      <icon-delete />
+                      <IconDelete />
                     </template>
                     删除
                   </a-doption>
@@ -133,7 +133,7 @@
           <div class="card-footer">
             <div class="workflow-meta">
               <span class="meta-item">
-                <icon-clock-circle />
+                <IconClockCircle />
                 更新于 {{ formatDate(workflow.updatedAt) }}
               </span>
             </div>

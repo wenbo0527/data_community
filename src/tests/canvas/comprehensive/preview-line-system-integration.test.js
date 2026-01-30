@@ -56,12 +56,12 @@ const createRealisticPreviewLineSystem = () => {
     }),
 
     // 保持向后兼容性，添加 initialize 方法作为 init 的别名
-    initialize: vi.fn().mockImplementation(async function(graph) {
+    initialize: vi.fn().mockImplementation(async (graph) => {
       return system.init(graph)
     }),
 
     // 创建预览线
-    createPreviewLine: vi.fn().mockImplementation(async function(sourceId, targetId, options = {}) {
+    createPreviewLine: vi.fn().mockImplementation(async (sourceId, targetId, options = {}) => {
       if (!isInitialized || !graphInstance) {
         throw new Error('PreviewLineSystem not initialized')
       }
@@ -114,7 +114,7 @@ const createRealisticPreviewLineSystem = () => {
     }),
 
     // 更新预览线
-    updatePreviewLine: vi.fn().mockImplementation(async function(lineId, updates) {
+    updatePreviewLine: vi.fn().mockImplementation(async (lineId, updates) => {
       if (!isInitialized || !graphInstance) {
         throw new Error('PreviewLineSystem not initialized')
       }
@@ -147,7 +147,7 @@ const createRealisticPreviewLineSystem = () => {
     }),
 
     // 删除预览线
-    deletePreviewLine: vi.fn().mockImplementation(async function(lineId) {
+    deletePreviewLine: vi.fn().mockImplementation(async (lineId) => {
       if (!isInitialized || !graphInstance) {
         throw new Error('PreviewLineSystem not initialized')
       }
@@ -202,7 +202,7 @@ const createRealisticPreviewLineSystem = () => {
     }),
 
     // 刷新所有预览线
-    refreshAllPreviewLines: vi.fn().mockImplementation(async function(force = false) {
+    refreshAllPreviewLines: vi.fn().mockImplementation(async (force = false) => {
       if (!isInitialized || !graphInstance) {
         return
       }
@@ -228,7 +228,7 @@ const createRealisticPreviewLineSystem = () => {
     }),
 
     // 销毁预览线系统
-    destroy: vi.fn().mockImplementation(async function() {
+    destroy: vi.fn().mockImplementation(async () => {
       if (!isInitialized) {
         return
       }

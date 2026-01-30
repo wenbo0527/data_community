@@ -76,10 +76,12 @@
         </a-table-column>
         <a-table-column title="供应商" data-index="supplier" :width="160" />
         <a-table-column title="状态" :width="120">
-          <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
+          <template #cell="{ record }">
+            <StatusTag :status="record.status" dictKey="externalDataStatus" />
+          </template>
         </a-table-column>
         <a-table-column title="接入时间" :width="180">
-          <template #cell="{ record }">{{ formatDate(record.createdAt) }}</template>
+          <template #cell="{ record }">{{ DateUtils.formatDateTime(record.createdAt) }}</template>
         </a-table-column>
         <a-table-column title="使用场景" :width="240">
           <template #cell="{ record }">{{ record.usageScene || '—' }}</template>
@@ -159,6 +161,8 @@ import { useRouter } from 'vue-router'
 import { useExternalDataStore } from '../../store/modules/external-data'
 import { useContractStore } from '@/modules/budget/stores/contract'
 import { IconDownload } from '@arco-design/web-vue/es/icon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -436,7 +440,7 @@ const exportList = () => {
 }
 
 // 状态标签统一为 引入中/已上线/待评估/已归档
-  const formatDate = (d?: string | Date) => { try { return new Date(d || '').toLocaleString() } catch { return '—' } }
+  const formatDate = (d?: string | Date) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }
   const formatCurrency = (n?: number) => { try { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) } catch { return '—' } }
   const billingModeLabel = (m?: string) => m === 'per_call' ? '按次' : m === 'monthly' ? '按月' : m === 'tier' ? '阶梯' : '—'
   const statusLabel = (s?: string) => s === 'importing' ? '引入中' : s === 'online' ? '已上线' : s === 'pending_evaluation' ? '待评估' : s === 'archived' ? '已归档' : '—'

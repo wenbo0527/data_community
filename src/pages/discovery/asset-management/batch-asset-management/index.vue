@@ -5,13 +5,13 @@
       <a-space>
         <a-button @click="showImportModal = true">
           <template #icon>
-            <icon-upload />
+            <IconUpload />
           </template>
           批量导入
         </a-button>
         <a-button type="primary" @click="showBatchModal = true">
           <template #icon>
-            <icon-settings />
+            <IconSettings />
           </template>
           批量操作
         </a-button>
@@ -195,7 +195,7 @@
           >
             <template #upload-button>
               <div class="upload-area">
-                <icon-upload style="font-size: 24px; color: #c9cdd4; margin-bottom: 8px;" />
+                <IconUpload style="font-size: 24px; color: #c9cdd4; margin-bottom: 8px;" />
                 <div>点击上传Excel文件</div>
                 <div style="font-size: 12px; color: #86909c; margin-top: 4px;">
                   仅支持 .xlsx, .xls 格式，文件大小不超过10MB
@@ -209,7 +209,7 @@
           <a-space>
             <a-button type="outline" @click="downloadTemplate">
               <template #icon>
-                <icon-info-circle />
+                <IconInfoCircle />
               </template>
               下载{{ getDataTypeText(importConfig.dataType) }}模板
             </a-button>

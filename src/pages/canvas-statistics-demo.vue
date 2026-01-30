@@ -39,7 +39,7 @@
 
       <!-- 统计信息面板 -->
       <transition name="slide-right">
-        <canvas-statistics-panel
+        <CanvasStatisticsPanel
           v-if="showStatistics"
           :canvas-id="demoCanvasId"
           @close="showStatistics = false"

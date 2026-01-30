@@ -2,25 +2,25 @@
   <div class="credit-reports">
     <div class="section-header">
       <h3 class="section-title">
-        <icon-file class="title-icon" />
+        <IconFile class="title-icon" />
         征信记录
       </h3>
       <div class="section-meta">
         <span class="record-count">共 {{ reports.length }} 条记录</span>
-        <a-button 
+        <AButton 
           v-if="reports.length > 0"
           type="text" 
           size="small"
           @click="refreshReports"
         >
-          <icon-refresh class="refresh-icon" />
+          <IconRefresh class="refresh-icon" />
           刷新
-        </a-button>
+        </AButton>
       </div>
     </div>
 
     <div v-if="reports.length === 0" class="empty-state">
-      <icon-file class="empty-icon" />
+      <IconFile class="empty-icon" />
       <p class="empty-text">暂无征信记录</p>
     </div>
 
@@ -51,12 +51,12 @@
           <div class="credit-overview">
             <div class="overview-item">
               <span class="overview-label">信用等级：</span>
-              <a-tag 
+              <ATag 
                 :color="getCreditLevelColor(report.creditLevel)"
                 class="credit-level-tag"
               >
                 {{ report.creditLevel }}
-              </a-tag>
+              </ATag>
             </div>
             <div class="overview-item">
               <span class="overview-label">查询原因：</span>
@@ -135,7 +135,7 @@
           </div>
 
           <div v-if="report.riskWarning" class="risk-warning">
-            <icon-exclamation-circle class="warning-icon" />
+            <IconExclamationCircle class="warning-icon" />
             <span class="warning-text">{{ report.riskWarning }}</span>
           </div>
         </div>

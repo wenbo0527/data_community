@@ -61,75 +61,15 @@
       </a-row>
     </div>
 
-    <!-- 搜索和筛选区 -->
-    <div class="filter-section">
-      <a-card>
-        <a-form :model="filterForm" layout="inline">
-          <a-form-item label="任务名称">
-            <a-input
-              v-model="filterForm.name"
-              placeholder="请输入任务名称"
-              allow-clear
-              @change="handleFilterChange"
-            />
-          </a-form-item>
-          
-          <a-form-item label="任务类型">
-            <a-select
-              v-model="filterForm.type"
-              placeholder="请选择任务类型"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="training">模型训练</a-option>
-              <a-option value="evaluation">模型评估</a-option>
-              <a-option value="prediction">模型预测</a-option>
-              <a-option value="backtrack">模型回溯</a-option>
-            </a-select>
-          </a-form-item>
-          
-          <a-form-item label="状态">
-            <a-select
-              v-model="filterForm.status"
-              placeholder="请选择状态"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="pending">待执行</a-option>
-              <a-option value="running">运行中</a-option>
-              <a-option value="completed">已完成</a-option>
-              <a-option value="failed">失败</a-option>
-              <a-option value="paused">暂停</a-option>
-            </a-select>
-          </a-form-item>
-          
-          <a-form-item label="优先级">
-            <a-select
-              v-model="filterForm.priority"
-              placeholder="请选择优先级"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="high">高</a-option>
-              <a-option value="medium">中</a-option>
-              <a-option value="low">低</a-option>
-            </a-select>
-          </a-form-item>
-          
-          <a-form-item>
-            <a-space>
-              <a-button type="primary" @click="handleSearch">
-                <template #icon>
-                  <icon-search />
-                </template>
-                搜索
-              </a-button>
-              <a-button @click="handleReset">重置</a-button>
-            </a-space>
-          </a-form-item>
-        </a-form>
-      </a-card>
-    </div>
+    <FilterBar
+      v-model="filterForm"
+      :fields="filterFields"
+      search-text="搜索"
+      reset-text="重置"
+      @search="handleSearch"
+      @reset="handleReset"
+      @change="handleFilterChange"
+    />
 
     <!-- 数据表格 -->
     <div class="table-section">
@@ -162,21 +102,15 @@
           </template>
           
           <template #type="{ record }">
-            <a-tag :color="getTypeColor(record.type)">
-              {{ getTypeLabel(record.type) }}
-            </a-tag>
+            <StatusTag :status="record.type" dictKey="riskTaskType" />
           </template>
           
           <template #status="{ record }">
-            <a-tag :color="getStatusColor(record.status)">
-              {{ getStatusLabel(record.status) }}
-            </a-tag>
+            <StatusTag :status="record.status" dictKey="riskTaskStatus" />
           </template>
           
           <template #priority="{ record }">
-            <a-tag :color="getPriorityColor(record.priority)">
-              {{ getPriorityLabel(record.priority) }}
-            </a-tag>
+            <StatusTag :status="record.priority" dictKey="riskTaskPriority" />
           </template>
           
           <template #progress="{ record }">
@@ -188,7 +122,7 @@
           </template>
           
           <template #createTime="{ record }">
-            {{ formatDate(record.createTime) }}
+            {{ DateUtils.formatDateTime(record.createTime) }}
           </template>
           
           <template #actions="{ record }">
@@ -240,12 +174,16 @@
 
 <script setup>
 import PageHeader from '../components/PageHeader.vue'
+import FilterBar from '../components/FilterBar.vue'
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/store/modules/model-offline'
 import { taskAPI } from '@/api/offlineModel'
 import { Message } from '@arco-design/web-vue'
 import { logger } from '@/utils/enhancedErrorHandler.js'
+import { getCommonColumns } from '../components/table-columns'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 const store = useTaskStore()
@@ -262,6 +200,27 @@ const filterForm = reactive({
   status: '',
   priority: ''
 })
+const filterFields = [
+  { type: 'input', key: 'name', label: '任务名称', placeholder: '请输入任务名称' },
+  { type: 'select', key: 'type', label: '任务类型', options: [
+    { label: '模型训练', value: 'training' },
+    { label: '模型评估', value: 'evaluation' },
+    { label: '模型预测', value: 'prediction' },
+    { label: '模型回溯', value: 'backtrack' }
+  ] },
+  { type: 'select', key: 'status', label: '状态', options: [
+    { label: '待执行', value: 'pending' },
+    { label: '运行中', value: 'running' },
+    { label: '已完成', value: 'completed' },
+    { label: '失败', value: 'failed' },
+    { label: '暂停', value: 'paused' }
+  ] },
+  { type: 'select', key: 'priority', label: '优先级', options: [
+    { label: '高', value: 'high' },
+    { label: '中', value: 'medium' },
+    { label: '低', value: 'low' }
+  ] }
+]
 
 // 分页配置
 const pagination = reactive({
@@ -273,65 +232,31 @@ const pagination = reactive({
   showPageSize: true
 })
 
-// 表格列配置
+const baseColumns = getCommonColumns({
+  nameTitle: '任务名称',
+  nameKey: 'name',
+  nameSlot: 'name',
+  typeTitle: '任务类型',
+  typeKey: 'type',
+  typeSlot: 'type',
+  statusTitle: '状态',
+  statusKey: 'status',
+  statusSlot: 'status',
+  createTimeTitle: '创建时间',
+  createTimeKey: 'createTime',
+  createTimeSlot: 'createTime'
+})
 const columns = [
-  {
-    title: '任务名称',
-    dataIndex: 'name',
-    slotName: 'name',
-    width: 200
-  },
-  {
-    title: '任务类型',
-    dataIndex: 'type',
-    slotName: 'type',
-    width: 120
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    slotName: 'status',
-    width: 100
-  },
-  {
-    title: '优先级',
-    dataIndex: 'priority',
-    slotName: 'priority',
-    width: 80
-  },
-  {
-    title: '进度',
-    dataIndex: 'progress',
-    slotName: 'progress',
-    width: 150
-  },
-  {
-    title: '开始时间',
-    dataIndex: 'startTime',
-    width: 180
-  },
-  {
-    title: '预计完成时间',
-    dataIndex: 'estimatedEndTime',
-    width: 180
-  },
-  {
-    title: '创建人',
-    dataIndex: 'creator',
-    width: 120
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    slotName: 'createTime',
-    width: 180
-  },
-  {
-    title: '操作',
-    slotName: 'actions',
-    width: 200,
-    fixed: 'right'
-  }
+  baseColumns[0],
+  baseColumns[1],
+  baseColumns[2],
+  { title: '优先级', dataIndex: 'priority', slotName: 'priority', width: 80 },
+  { title: '进度', dataIndex: 'progress', slotName: 'progress', width: 150 },
+  { title: '开始时间', dataIndex: 'startTime', width: 180 },
+  { title: '预计完成时间', dataIndex: 'estimatedEndTime', width: 180 },
+  { title: '创建人', dataIndex: 'creator', width: 120 },
+  baseColumns[3],
+  baseColumns[4]
 ]
 
 // 计算属性
@@ -449,65 +374,7 @@ const handleDelete = (record) => {
 }
 
 // 工具方法
-const getTypeColor = (type) => {
-  const colors = {
-    training: 'blue',
-    evaluation: 'green',
-    prediction: 'orange',
-    backtrack: 'purple'
-  }
-  return colors[type] || 'gray'
-}
-
-const getTypeLabel = (type) => {
-  const labels = {
-    training: '模型训练',
-    evaluation: '模型评估',
-    prediction: '模型预测',
-    backtrack: '模型回溯'
-  }
-  return labels[type] || type
-}
-
-const getStatusColor = (status) => {
-  const colors = {
-    pending: 'gray',
-    running: 'blue',
-    completed: 'green',
-    failed: 'red',
-    paused: 'orange'
-  }
-  return colors[status] || 'gray'
-}
-
-const getStatusLabel = (status) => {
-  const labels = {
-    pending: '待执行',
-    running: '运行中',
-    completed: '已完成',
-    failed: '失败',
-    paused: '暂停'
-  }
-  return labels[status] || status
-}
-
-const getPriorityColor = (priority) => {
-  const colors = {
-    high: 'red',
-    medium: 'orange',
-    low: 'green'
-  }
-  return colors[priority] || 'gray'
-}
-
-const getPriorityLabel = (priority) => {
-  const labels = {
-    high: '高',
-    medium: '中',
-    low: '低'
-  }
-  return labels[priority] || priority
-}
+ 
 
 const getProgressStatus = (status) => {
   const statusMap = {
@@ -520,9 +387,7 @@ const getProgressStatus = (status) => {
   return statusMap[status] || 'normal'
 }
 
-const formatDate = (date) => {
-  return date ? new Date(date).toLocaleString('zh-CN') : '-'
-}
+ 
 </script>
 
 <style scoped lang="less">

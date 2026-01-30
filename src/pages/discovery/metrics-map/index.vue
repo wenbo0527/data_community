@@ -357,7 +357,7 @@ const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<
 const fetchMetrics = async () => {
   try {
     // 直接使用 mock 数据
-    let queryParams = { 
+    const queryParams = { 
       ...searchForm.value, 
       page: pagination.value.current + '', 
       pageSize: pagination.value.pageSize + ''

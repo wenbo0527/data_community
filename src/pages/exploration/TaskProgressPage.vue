@@ -5,7 +5,7 @@
       <p class="task-id">任务ID: {{ taskId }}</p>
       
       <!-- 状态提示 -->
-      <a-alert 
+      <AAlert 
         v-if="taskStatus === '进行中' || taskStatus === 'running'"
         type="info"
         :message="`任务正在执行中，当前进度 ${progressPercent}%`"
@@ -14,7 +14,7 @@
         style="margin-bottom: 16px;"
       />
       
-      <a-alert 
+      <AAlert 
         v-else-if="taskStatus === '已完成' || taskStatus === 'completed'"
         type="success"
         message="任务执行完成"
@@ -23,7 +23,7 @@
         style="margin-bottom: 16px;"
       />
       
-      <a-alert 
+      <AAlert 
         v-else-if="taskStatus === '已失败' || taskStatus === 'failed'"
         type="error"
         message="任务执行失败"
@@ -33,17 +33,17 @@
       />
     </div>
     
-    <a-card class="progress-card" title="任务执行进度">
-      <a-steps :current="currentStep" style="margin-bottom: 30px;">
-        <a-step>任务创建</a-step>
-        <a-step>数据处理</a-step>
-        <a-step>模型分析</a-step>
-        <a-step>报告生成</a-step>
-        <a-step>完成</a-step>
-      </a-steps>
+    <ACard class="progress-card" title="任务执行进度">
+      <ASteps :current="currentStep" style="margin-bottom: 30px;">
+        <AStep>任务创建</AStep>
+        <AStep>数据处理</AStep>
+        <AStep>模型分析</AStep>
+        <AStep>报告生成</AStep>
+        <AStep>完成</AStep>
+      </ASteps>
       
       <div class="progress-details">
-        <a-progress 
+        <AProgress 
           :percent="progressPercent" 
           :status="progressStatus" 
           :show-text="true" 
@@ -51,7 +51,7 @@
         />
         
         <!-- 实时状态显示 -->
-        <a-alert 
+        <AAlert 
           v-if="taskStatus === '进行中'" 
           type="info" 
           :message="statusMessage" 
@@ -59,7 +59,7 @@
           show-icon 
           style="margin-bottom: 20px;"
         />
-        <a-alert 
+        <AAlert 
           v-else-if="taskStatus === '已完成'" 
           type="success" 
           message="任务执行完成" 
@@ -67,7 +67,7 @@
           show-icon 
           style="margin-bottom: 20px;"
         />
-        <a-alert 
+        <AAlert 
           v-else-if="taskStatus === '已失败'" 
           type="error" 
           message="任务执行失败" 
@@ -77,32 +77,32 @@
         />
         
         <div class="task-info">
-          <a-descriptions title="任务基本信息" :column="2" style="margin-top: 30px;">
-            <a-descriptions-item label="任务名称">{{ taskName }}</a-descriptions-item>
-            <a-descriptions-item label="创建时间">{{ createTime }}</a-descriptions-item>
-            <a-descriptions-item label="当前状态">
-              <a-tag 
+          <ADescriptions title="任务基本信息" :column="2" style="margin-top: 30px;">
+            <ADescriptionsItem label="任务名称">{{ taskName }}</ADescriptionsItem>
+            <ADescriptionsItem label="创建时间">{{ createTime }}</ADescriptionsItem>
+            <ADescriptionsItem label="当前状态">
+              <ATag 
                 :color="taskStatus === '进行中' || taskStatus === 'running' ? 'blue' : 
                        taskStatus === '已完成' || taskStatus === 'completed' ? 'green' : 
                        taskStatus === '已失败' || taskStatus === 'failed' ? 'red' : 'gray'"
               >
                 {{ taskStatus }}
-              </a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="执行时长">{{ executionDuration }}</a-descriptions-item>
-          </a-descriptions>
+              </ATag>
+            </ADescriptionsItem>
+            <ADescriptionsItem label="执行时长">{{ executionDuration }}</ADescriptionsItem>
+          </ADescriptions>
         </div>
 
         <div class="task-config" style="margin-top: 20px;">
-          <a-descriptions title="任务配置信息" :column="1" bordered>
-            <a-descriptions-item label="产品名称">{{ taskConfig.productName }}</a-descriptions-item>
-            <a-descriptions-item label="报告类型">{{ taskConfig.reportType }}</a-descriptions-item>
-            <a-descriptions-item label="分析周期">{{ taskConfig.analysisPeriod }}</a-descriptions-item>
-          </a-descriptions>
+          <ADescriptions title="任务配置信息" :column="1" bordered>
+            <ADescriptionsItem label="产品名称">{{ taskConfig.productName }}</ADescriptionsItem>
+            <ADescriptionsItem label="报告类型">{{ taskConfig.reportType }}</ADescriptionsItem>
+            <ADescriptionsItem label="分析周期">{{ taskConfig.analysisPeriod }}</ADescriptionsItem>
+          </ADescriptions>
         </div>
         
         <!-- 执行日志 -->
-        <a-card title="执行日志" style="margin-top: 20px;">
+        <ACard title="执行日志" style="margin-top: 20px;">
           <div class="execution-logs">
             <div 
               v-for="(log, index) in executionLogs" 
@@ -118,18 +118,18 @@
               暂无执行日志
             </div>
           </div>
-        </a-card>
+        </ACard>
         
         <div class="action-buttons">
-          <a-button @click="goToList">返回任务列表</a-button>
-          <a-button 
+          <AButton @click="goToList">返回任务列表</AButton>
+          <AButton 
             type="primary" 
             @click="refreshProgress" 
             :loading="refreshing"
           >
             刷新进度
-          </a-button>
-          <a-button 
+          </AButton>
+          <AButton 
             v-if="taskStatus === '已失败' || taskStatus === 'failed'"
             type="outline"
             status="warning"
@@ -137,11 +137,11 @@
             :loading="retrying"
           >
             重试任务
-          </a-button>
+          </AButton>
           
         </div>
       </div>
-    </a-card>
+    </ACard>
   </div>
 </template>
 

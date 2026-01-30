@@ -7,26 +7,26 @@
     <div class="header-actions">
       <a-space>
         <a-button @click="$emit('refresh')">
-          <template #icon><icon-refresh /></template>
+          <template #icon><IconRefresh /></template>
           刷新
         </a-button>
         <a-dropdown @select="handleCreateSelect">
           <a-button type="primary">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建
-            <template #suffix><icon-down /></template>
+            <template #suffix><IconDown /></template>
           </a-button>
           <template #content>
             <a-doption value="quick">
-              <template #icon><icon-thunderbolt /></template>
+              <template #icon><IconThunderbolt /></template>
               快速注册
             </a-doption>
             <a-doption value="form">
-              <template #icon><icon-edit /></template>
+              <template #icon><IconEdit /></template>
               表单注册
             </a-doption>
             <a-doption value="import">
-              <template #icon><icon-upload /></template>
+              <template #icon><IconUpload /></template>
               批量导入
             </a-doption>
           </template>

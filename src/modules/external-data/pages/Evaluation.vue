@@ -52,6 +52,7 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useExternalDataStore } from '@/modules/external-data/stores/external-data'
 const store = useExternalDataStore()
+import DateUtils from '@/utils/dateUtils'
 
 type EvaluationType = 'quality'|'performance'|'cost_effectiveness'|'comprehensive'
 
@@ -62,7 +63,7 @@ const displayedEvaluations = computed(() => evaluations.value.filter(e => { if (
 const typeLabel = (t?: string) => t === 'quality' ? '质量' : t === 'performance' ? '性能' : t === 'cost_effectiveness' ? '性价比' : t === 'comprehensive' ? '综合' : '—'
 const statusLabel = (s?: string) => s === 'draft' ? '草稿' : s === 'in_progress' ? '进行中' : s === 'completed' ? '已完成' : s === 'archived' ? '已归档' : '—'
 const statusTag = (s?: string) => s === 'completed' ? 'success' : s === 'in_progress' ? 'warning' : s === 'draft' ? 'default' : 'default'
-const formatDate = (d?: string) => { try { return new Date(d || '').toLocaleString() } catch { return '—' } }
+const formatDate = (d?: string) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }
 
 const applyFilter = () => { Message.success('筛选已更新') }
 const resetFilter = () => { filters.type = undefined; filters.status = undefined }

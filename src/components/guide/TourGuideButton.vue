@@ -7,11 +7,11 @@
       @click="startTour"
     >
       <template #icon>
-        <icon-question-circle />
+        <IconQuestionCircle />
       </template>
     </a-button>
 
-    <tour-guide
+    <TourGuide
       v-model:visible="tourVisible"
       :steps="tourSteps"
       @finish="handleTourFinish"

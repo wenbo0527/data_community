@@ -8,11 +8,11 @@
             {{ getNoticeTypeLabel(notification.type) }}
           </a-tag>
           <span class="meta-item">
-            <icon-user style="margin-right: 4px;" />
+            <IconUser style="margin-right: 4px;" />
             {{ senderName }}
           </span>
           <span class="meta-item">
-            <icon-clock-circle style="margin-right: 4px;" />
+            <IconClockCircle style="margin-right: 4px;" />
             {{ formatDateOnly(notification.publishTime || notification.createdAt) }}
           </span>
         </div>
@@ -40,14 +40,14 @@
             class="home-attachment-item"
           >
             <div class="home-attachment-icon">
-              <icon-file />
+              <IconFile />
             </div>
             <div class="home-attachment-info">
               <div class="home-attachment-name">{{ attachment.fileName || attachment.name }}</div>
               <div class="home-attachment-size">{{ getAttachmentSizeText(attachment) }}</div>
             </div>
             <a-button type="text" size="small" class="home-download-btn" @click="handleDownload(attachment)">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               下载
             </a-button>
           </div>
@@ -66,11 +66,11 @@
             {{ getNoticeTypeLabel(notification.type) }}
           </a-tag>
           <span class="meta-item">
-            <icon-user style="margin-right: 4px;" />
+            <IconUser style="margin-right: 4px;" />
             {{ notification.author }}
           </span>
           <span class="meta-item">
-            <icon-clock-circle style="margin-right: 4px;" />
+            <IconClockCircle style="margin-right: 4px;" />
             {{ formatTime(notification.publishTime || notification.createdAt) }}
           </span>
         </div>
@@ -82,7 +82,7 @@
 
       <!-- 通知对象 -->
       <div v-if="shouldShowTarget && notification.target && notification.target.length > 0" class="detail-assets">
-        <div class="assets-title"><icon-user-group /> 通知对象</div>
+        <div class="assets-title"><IconUserGroup /> 通知对象</div>
         <div class="assets-list">
           <a-tag v-for="target in notification.target" :key="target" color="purple" bordered>
             {{ getTargetLabel(target) }}
@@ -92,7 +92,7 @@
 
       <!-- 目标关系表 (仅数据资产变更类型显示) -->
       <div v-if="notification.serviceType === 'data_asset_change' && notification.targetTable" class="detail-assets">
-        <div class="assets-title"><icon-storage /> 目标关系表</div>
+        <div class="assets-title"><IconStorage /> 目标关系表</div>
         <div class="assets-content" style="font-size: 14px; color: #1d2129; padding: 4px 0;">
           {{ notification.targetTable }}
         </div>
@@ -100,7 +100,7 @@
 
       <!-- 变更数据资产 (仅数据服务类型显示) -->
       <div v-if="notification.dataAssets && notification.dataAssets.length > 0" class="detail-assets">
-        <div class="assets-title"><icon-common /> 变更数据资产</div>
+        <div class="assets-title"><IconCommon /> 变更数据资产</div>
         <div class="assets-list">
           <a-tag v-for="asset in notification.dataAssets" :key="asset" color="arcoblue" bordered>
             {{ getAssetLabel(asset) }}
@@ -117,7 +117,7 @@
       <!-- 标签 -->
       <div v-if="notification.tags && notification.tags.length > 0" class="detail-tags">
         <a-space>
-          <icon-tags style="color: #86909c;" />
+          <IconTags style="color: #86909c;" />
           <a-tag v-for="tag in notification.tags" :key="tag" size="small" style="color: #86909c;">
             {{ tag }}
           </a-tag>
@@ -132,14 +132,14 @@
                :key="attachment.id || attachment.fileName || attachment.name" 
                class="attachment-item">
             <div class="attachment-icon">
-              <icon-file />
+              <IconFile />
             </div>
             <div class="attachment-info">
               <div class="attachment-name">{{ attachment.fileName || attachment.name }}</div>
               <div class="attachment-size">{{ getAttachmentSizeText(attachment) }}</div>
             </div>
             <a-button type="text" size="small" class="download-btn" @click="handleDownload(attachment)">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               下载
             </a-button>
           </div>

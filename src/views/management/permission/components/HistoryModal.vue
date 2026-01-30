@@ -12,7 +12,7 @@
         <a-descriptions :column="2" size="small">
           <a-descriptions-item label="申请编号">{{ applicationInfo?.id }}</a-descriptions-item>
           <a-descriptions-item label="申请人">{{ applicationInfo?.applicantName }}</a-descriptions-item>
-          <a-descriptions-item label="申请时间">{{ formatTime(applicationInfo?.applyTime) }}</a-descriptions-item>
+          <a-descriptions-item label="申请时间">{{ DateUtils.formatDateTime(applicationInfo?.applyTime) }}</a-descriptions-item>
           <a-descriptions-item label="资源名称">{{ applicationInfo?.resourceName }}</a-descriptions-item>
           <a-descriptions-item label="申请权限">{{ getPermissionTypeText(applicationInfo?.permissionType) }}</a-descriptions-item>
           <a-descriptions-item label="当前状态">
@@ -31,7 +31,7 @@
           <a-timeline-item
             v-for="(record, index) in approvalHistory"
             :key="record.id"
-            :label="formatTime(record.createTime)"
+            :label="DateUtils.formatDateTime(record.createTime)"
             :dot-color="getTimelineDotColor(record.action)"
           >
             <!-- 时间线内容 -->
@@ -50,7 +50,7 @@
                 
                 <div v-if="record.expiryDate" class="expiry">
                   <span class="label">有效期至：</span>
-                  <span class="value">{{ formatTime(record.expiryDate) }}</span>
+                  <span class="value">{{ DateUtils.formatDateTime(record.expiryDate) }}</span>
                 </div>
                 
                 <div v-if="record.forwardTo" class="forward-info">
@@ -68,7 +68,7 @@
                       @click="downloadFile(file)"
                       style="cursor: pointer; margin-right: 8px;"
                     >
-                      <template #icon><icon-paper-clip /></template>
+                      <template #icon><IconPaperClip /></template>
                       {{ file.name }}
                     </a-tag>
                   </div>
@@ -110,15 +110,15 @@
       <div class="export-actions">
         <a-space>
           <a-button @click="exportHistory('pdf')">
-            <template #icon><icon-download /></template>
+            <template #icon><IconDownload /></template>
             导出PDF
           </a-button>
           <a-button @click="exportHistory('excel')">
-            <template #icon><icon-download /></template>
+            <template #icon><IconDownload /></template>
             导出Excel
           </a-button>
           <a-button @click="printHistory">
-            <template #icon><icon-printer /></template>
+            <template #icon><IconPrinter /></template>
             打印
           </a-button>
         </a-space>
@@ -138,6 +138,7 @@ import {
 import StatusLabel from './StatusLabel.vue'
 import { getPermissionTypeText } from '../utils'
 import { getApplicationHistory } from '@/api/permission'
+import DateUtils from '@/utils/dateUtils'
 
 // Props
 const props = defineProps({
@@ -210,10 +211,7 @@ const getActionTypeText = (action) => {
   return textMap[action] || action
 }
 
-const formatTime = (time) => {
-  if (!time) return '-'
-  return new Date(time).toLocaleString()
-}
+ 
 
 const downloadFile = (file) => {
   // 实现文件下载逻辑

@@ -165,7 +165,7 @@
                 >
                   <template #upload-button>
                     <div class="upload-area">
-                      <icon-upload style="font-size: 48px; color: #c9cdd4;" />
+                      <IconUpload style="font-size: 48px; color: #c9cdd4;" />
                       <div style="margin-top: 8px;">点击或拖拽文件到此处上传</div>
                       <div style="color: #86909c; font-size: 12px; margin-top: 4px;">支持 CSV、Excel、JSON 格式</div>
                     </div>

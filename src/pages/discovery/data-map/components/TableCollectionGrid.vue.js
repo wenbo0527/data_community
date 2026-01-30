@@ -113,48 +113,48 @@ watch(() => props.collections.length, () => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['collection-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-stats']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['favorited']} */ ;
-/** @type {__VLS_StyleScopedClasses['danger-option']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-tag']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-cover']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-cover']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-tags']} */ ;
-/** @type {__VLS_StyleScopedClasses['footer-meta']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-description']} */ ;
+/** @type {__VLS_StyleScopedClasses['collection-card']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-card']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-stats']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-card']} */ 
+/** @type {__VLS_StyleScopedClasses['title-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['title-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['title-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['title-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['title-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['favorited']} */ 
+/** @type {__VLS_StyleScopedClasses['danger-option']} */ 
+/** @type {__VLS_StyleScopedClasses['table-tag']} */ 
+/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-card']} */ 
+/** @type {__VLS_StyleScopedClasses['card-content']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-cover']} */ 
+/** @type {__VLS_StyleScopedClasses['card-content']} */ 
+/** @type {__VLS_StyleScopedClasses['title-text']} */ 
+/** @type {__VLS_StyleScopedClasses['card-description']} */ 
+/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-col']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-card']} */ 
+/** @type {__VLS_StyleScopedClasses['title-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-state']} */ 
+/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ 
+/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-col']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-cover']} */ 
+/** @type {__VLS_StyleScopedClasses['card-content']} */ 
+/** @type {__VLS_StyleScopedClasses['title-text']} */ 
+/** @type {__VLS_StyleScopedClasses['card-description']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-card']} */ 
+/** @type {__VLS_StyleScopedClasses['card-title']} */ 
+/** @type {__VLS_StyleScopedClasses['table-tags']} */ 
+/** @type {__VLS_StyleScopedClasses['footer-meta']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-state']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-text']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-description']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -175,7 +175,7 @@ if (!__VLS_ctx.loading) {
         ...{ class: "header-right" },
     });
     const __VLS_0 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         ...{ 'onClick': {} },
@@ -195,16 +195,16 @@ if (!__VLS_ctx.loading) {
     {
         const { icon: __VLS_thisSlot } = __VLS_3.slots;
         const __VLS_8 = {}.IconPlus;
-        /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ ;
+        /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ 
         // @ts-ignore
         const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({}));
         const __VLS_10 = __VLS_9({}, ...__VLS_functionalComponentArgsRest(__VLS_9));
     }
-    var __VLS_3;
+    let __VLS_3;
 }
 if (__VLS_ctx.loading) {
     const __VLS_12 = {}.ARow;
-    /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+    /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
         gutter: ([16, 16]),
@@ -215,7 +215,7 @@ if (__VLS_ctx.loading) {
     __VLS_15.slots.default;
     for (const [i] of __VLS_getVForSourceType((6))) {
         const __VLS_16 = {}.ACol;
-        /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+        /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
         // @ts-ignore
         const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
             key: (i),
@@ -227,13 +227,13 @@ if (__VLS_ctx.loading) {
         }, ...__VLS_functionalComponentArgsRest(__VLS_17));
         __VLS_19.slots.default;
         const __VLS_20 = {}.ASkeleton;
-        /** @type {[typeof __VLS_components.ASkeleton, typeof __VLS_components.aSkeleton, typeof __VLS_components.ASkeleton, typeof __VLS_components.aSkeleton, ]} */ ;
+        /** @type {[typeof __VLS_components.ASkeleton, typeof __VLS_components.aSkeleton, typeof __VLS_components.ASkeleton, typeof __VLS_components.aSkeleton, ]} */ 
         // @ts-ignore
         const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({}));
         const __VLS_22 = __VLS_21({}, ...__VLS_functionalComponentArgsRest(__VLS_21));
         __VLS_23.slots.default;
         const __VLS_24 = {}.ASkeletonShape;
-        /** @type {[typeof __VLS_components.ASkeletonShape, typeof __VLS_components.aSkeletonShape, ]} */ ;
+        /** @type {[typeof __VLS_components.ASkeletonShape, typeof __VLS_components.aSkeletonShape, ]} */ 
         // @ts-ignore
         const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
             shape: "square",
@@ -246,12 +246,12 @@ if (__VLS_ctx.loading) {
         var __VLS_23;
         var __VLS_19;
     }
-    var __VLS_15;
+    let __VLS_15;
 }
 else {
     if (__VLS_ctx.displayCollections.length > 0) {
         const __VLS_28 = {}.ARow;
-        /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+        /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
         // @ts-ignore
         const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
             gutter: ([16, 16]),
@@ -262,7 +262,7 @@ else {
         __VLS_31.slots.default;
         for (const [collection] of __VLS_getVForSourceType((__VLS_ctx.displayCollections))) {
             const __VLS_32 = {}.ACol;
-            /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+            /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
             // @ts-ignore
             const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
                 key: (collection.id),
@@ -282,7 +282,7 @@ else {
             }, ...__VLS_functionalComponentArgsRest(__VLS_33));
             __VLS_35.slots.default;
             const __VLS_36 = {}.ACard;
-            /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+            /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
             // @ts-ignore
             const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
                 ...{ 'onClick': {} },
@@ -299,7 +299,7 @@ else {
             let __VLS_42;
             const __VLS_43 = {
                 onClick: (...[$event]) => {
-                    if (!!(__VLS_ctx.loading))
+                    if (__VLS_ctx.loading)
                         return;
                     if (!(__VLS_ctx.displayCollections.length > 0))
                         return;
@@ -322,7 +322,7 @@ else {
                 ...{ class: "title-actions" },
             });
             const __VLS_44 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
                 ...{ 'onClick': {} },
@@ -341,7 +341,7 @@ else {
             let __VLS_50;
             const __VLS_51 = {
                 onClick: (...[$event]) => {
-                    if (!!(__VLS_ctx.loading))
+                    if (__VLS_ctx.loading)
                         return;
                     if (!(__VLS_ctx.displayCollections.length > 0))
                         return;
@@ -351,21 +351,21 @@ else {
             __VLS_47.slots.default;
             if (collection.isFavorite) {
                 const __VLS_52 = {}.IconStarFill;
-                /** @type {[typeof __VLS_components.IconStarFill, typeof __VLS_components.iconStarFill, ]} */ ;
+                /** @type {[typeof __VLS_components.IconStarFill, typeof __VLS_components.iconStarFill, ]} */ 
                 // @ts-ignore
                 const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({}));
                 const __VLS_54 = __VLS_53({}, ...__VLS_functionalComponentArgsRest(__VLS_53));
             }
             else {
                 const __VLS_56 = {}.IconStar;
-                /** @type {[typeof __VLS_components.IconStar, typeof __VLS_components.iconStar, ]} */ ;
+                /** @type {[typeof __VLS_components.IconStar, typeof __VLS_components.iconStar, ]} */ 
                 // @ts-ignore
                 const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({}));
                 const __VLS_58 = __VLS_57({}, ...__VLS_functionalComponentArgsRest(__VLS_57));
             }
             var __VLS_47;
             const __VLS_60 = {}.ADropdown;
-            /** @type {[typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, ]} */ ;
+            /** @type {[typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, ]} */ 
             // @ts-ignore
             const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
                 ...{ 'onSelect': {} },
@@ -381,7 +381,7 @@ else {
             };
             __VLS_63.slots.default;
             const __VLS_68 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
                 ...{ 'onClick': {} },
@@ -401,7 +401,7 @@ else {
             };
             __VLS_71.slots.default;
             const __VLS_76 = {}.IconMore;
-            /** @type {[typeof __VLS_components.IconMore, typeof __VLS_components.iconMore, ]} */ ;
+            /** @type {[typeof __VLS_components.IconMore, typeof __VLS_components.iconMore, ]} */ 
             // @ts-ignore
             const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({}));
             const __VLS_78 = __VLS_77({}, ...__VLS_functionalComponentArgsRest(__VLS_77));
@@ -409,7 +409,7 @@ else {
             {
                 const { content: __VLS_thisSlot } = __VLS_63.slots;
                 const __VLS_80 = {}.ADoption;
-                /** @type {[typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, ]} */ ;
+                /** @type {[typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, ]} */ 
                 // @ts-ignore
                 const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
                     value: (`edit-${collection.id}`),
@@ -419,13 +419,13 @@ else {
                 }, ...__VLS_functionalComponentArgsRest(__VLS_81));
                 __VLS_83.slots.default;
                 const __VLS_84 = {}.IconEdit;
-                /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ ;
+                /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ 
                 // @ts-ignore
                 const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({}));
                 const __VLS_86 = __VLS_85({}, ...__VLS_functionalComponentArgsRest(__VLS_85));
                 var __VLS_83;
                 const __VLS_88 = {}.ADoption;
-                /** @type {[typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, ]} */ ;
+                /** @type {[typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, ]} */ 
                 // @ts-ignore
                 const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({
                     value: (`delete-${collection.id}`),
@@ -437,7 +437,7 @@ else {
                 }, ...__VLS_functionalComponentArgsRest(__VLS_89));
                 __VLS_91.slots.default;
                 const __VLS_92 = {}.IconDelete;
-                /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ ;
+                /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ 
                 // @ts-ignore
                 const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({}));
                 const __VLS_94 = __VLS_93({}, ...__VLS_functionalComponentArgsRest(__VLS_93));
@@ -448,7 +448,7 @@ else {
                 ...{ class: "collection-stats" },
             });
             const __VLS_96 = {}.ATag;
-            /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+            /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
             // @ts-ignore
             const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
                 size: "small",
@@ -478,7 +478,7 @@ else {
             });
             for (const [table] of __VLS_getVForSourceType((collection.tables.slice(0, 3)))) {
                 const __VLS_100 = {}.ATag;
-                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
                 // @ts-ignore
                 const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({
                     key: (table.name),
@@ -514,11 +514,11 @@ else {
             var __VLS_39;
             var __VLS_35;
         }
-        var __VLS_31;
+        let __VLS_31;
     }
     else {
         const __VLS_104 = {}.AEmpty;
-        /** @type {[typeof __VLS_components.AEmpty, typeof __VLS_components.aEmpty, typeof __VLS_components.AEmpty, typeof __VLS_components.aEmpty, ]} */ ;
+        /** @type {[typeof __VLS_components.AEmpty, typeof __VLS_components.aEmpty, typeof __VLS_components.AEmpty, typeof __VLS_components.aEmpty, ]} */ 
         // @ts-ignore
         const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
             ...{ class: "empty-state" },
@@ -534,7 +534,7 @@ else {
         {
             const { footer: __VLS_thisSlot } = __VLS_107.slots;
             const __VLS_108 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_109 = __VLS_asFunctionalComponent(__VLS_108, new __VLS_108({
                 ...{ 'onClick': {} },
@@ -549,17 +549,17 @@ else {
             let __VLS_114;
             const __VLS_115 = {
                 onClick: (...[$event]) => {
-                    if (!!(__VLS_ctx.loading))
+                    if (__VLS_ctx.loading)
                         return;
-                    if (!!(__VLS_ctx.displayCollections.length > 0))
+                    if (__VLS_ctx.displayCollections.length > 0)
                         return;
                     __VLS_ctx.$emit('create-collection');
                 }
             };
             __VLS_111.slots.default;
-            var __VLS_111;
+            let __VLS_111;
         }
-        var __VLS_107;
+        let __VLS_107;
     }
 }
 if (!__VLS_ctx.loading && __VLS_ctx.totalCount > __VLS_ctx.pageSize) {
@@ -567,7 +567,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.totalCount > __VLS_ctx.pageSize) {
         ...{ class: "pagination-wrapper" },
     });
     const __VLS_116 = {}.APagination;
-    /** @type {[typeof __VLS_components.APagination, typeof __VLS_components.aPagination, ]} */ ;
+    /** @type {[typeof __VLS_components.APagination, typeof __VLS_components.aPagination, ]} */ 
     // @ts-ignore
     const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({
         ...{ 'onChange': {} },
@@ -598,33 +598,33 @@ if (!__VLS_ctx.loading && __VLS_ctx.totalCount > __VLS_ctx.pageSize) {
     const __VLS_124 = {
         onPageSizeChange: (__VLS_ctx.handlePageSizeChange)
     };
-    var __VLS_119;
+    let __VLS_119;
 }
-/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['grid-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-left']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-right']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['favorited']} */ ;
-/** @type {__VLS_StyleScopedClasses['danger-option']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-stats']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-tags']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-tag']} */ ;
-/** @type {__VLS_StyleScopedClasses['more-tables']} */ ;
-/** @type {__VLS_StyleScopedClasses['footer-meta']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['pagination-wrapper']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['table-collection-grid']} */ 
+/** @type {__VLS_StyleScopedClasses['grid-header']} */ 
+/** @type {__VLS_StyleScopedClasses['header-left']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-count']} */ 
+/** @type {__VLS_StyleScopedClasses['header-right']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-card']} */ 
+/** @type {__VLS_StyleScopedClasses['card-content']} */ 
+/** @type {__VLS_StyleScopedClasses['card-title']} */ 
+/** @type {__VLS_StyleScopedClasses['title-text']} */ 
+/** @type {__VLS_StyleScopedClasses['title-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['favorited']} */ 
+/** @type {__VLS_StyleScopedClasses['danger-option']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-stats']} */ 
+/** @type {__VLS_StyleScopedClasses['table-count']} */ 
+/** @type {__VLS_StyleScopedClasses['card-description']} */ 
+/** @type {__VLS_StyleScopedClasses['card-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['table-tags']} */ 
+/** @type {__VLS_StyleScopedClasses['table-tag']} */ 
+/** @type {__VLS_StyleScopedClasses['more-tables']} */ 
+/** @type {__VLS_StyleScopedClasses['footer-meta']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-item']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-item']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-state']} */ 
+/** @type {__VLS_StyleScopedClasses['pagination-wrapper']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -658,4 +658,4 @@ export default (await import('vue')).defineComponent({
     __typeEmits: {},
     __typeProps: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

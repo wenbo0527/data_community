@@ -60,7 +60,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2
     ...{ class: "welcome" },
 });
 const __VLS_0 = {}.AForm;
-/** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ ;
+/** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onSubmit': {} },
@@ -80,7 +80,7 @@ const __VLS_7 = {
 };
 __VLS_3.slots.default;
 const __VLS_8 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
     field: "username",
@@ -94,7 +94,7 @@ const __VLS_10 = __VLS_9({
 }, ...__VLS_functionalComponentArgsRest(__VLS_9));
 __VLS_11.slots.default;
 const __VLS_12 = {}.AInput;
-/** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+/** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
 // @ts-ignore
 const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
     modelValue: (__VLS_ctx.form.username),
@@ -110,15 +110,15 @@ __VLS_15.slots.default;
 {
     const { prefix: __VLS_thisSlot } = __VLS_15.slots;
     const __VLS_16 = {}.IconUser;
-    /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ ;
+    /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ 
     // @ts-ignore
     const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({}));
     const __VLS_18 = __VLS_17({}, ...__VLS_functionalComponentArgsRest(__VLS_17));
 }
-var __VLS_15;
-var __VLS_11;
+let __VLS_15;
+let __VLS_11;
 const __VLS_20 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
     field: "password",
@@ -132,7 +132,7 @@ const __VLS_22 = __VLS_21({
 }, ...__VLS_functionalComponentArgsRest(__VLS_21));
 __VLS_23.slots.default;
 const __VLS_24 = {}.AInputPassword;
-/** @type {[typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, ]} */ ;
+/** @type {[typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, ]} */ 
 // @ts-ignore
 const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
     modelValue: (__VLS_ctx.form.password),
@@ -148,18 +148,18 @@ __VLS_27.slots.default;
 {
     const { prefix: __VLS_thisSlot } = __VLS_27.slots;
     const __VLS_28 = {}.IconLock;
-    /** @type {[typeof __VLS_components.IconLock, typeof __VLS_components.iconLock, ]} */ ;
+    /** @type {[typeof __VLS_components.IconLock, typeof __VLS_components.iconLock, ]} */ 
     // @ts-ignore
     const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({}));
     const __VLS_30 = __VLS_29({}, ...__VLS_functionalComponentArgsRest(__VLS_29));
 }
-var __VLS_27;
-var __VLS_23;
+let __VLS_27;
+let __VLS_23;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "form-extra" },
 });
 const __VLS_32 = {}.ACheckbox;
-/** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ ;
+/** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ 
 // @ts-ignore
 const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
     modelValue: (__VLS_ctx.form.remember),
@@ -168,16 +168,16 @@ const __VLS_34 = __VLS_33({
     modelValue: (__VLS_ctx.form.remember),
 }, ...__VLS_functionalComponentArgsRest(__VLS_33));
 __VLS_35.slots.default;
-var __VLS_35;
+let __VLS_35;
 const __VLS_36 = {}.ALink;
-/** @type {[typeof __VLS_components.ALink, typeof __VLS_components.aLink, typeof __VLS_components.ALink, typeof __VLS_components.aLink, ]} */ ;
+/** @type {[typeof __VLS_components.ALink, typeof __VLS_components.aLink, typeof __VLS_components.ALink, typeof __VLS_components.aLink, ]} */ 
 // @ts-ignore
 const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({}));
 const __VLS_38 = __VLS_37({}, ...__VLS_functionalComponentArgsRest(__VLS_37));
 __VLS_39.slots.default;
-var __VLS_39;
+let __VLS_39;
 const __VLS_40 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
     type: "primary",
@@ -192,19 +192,19 @@ const __VLS_42 = __VLS_41({
     loading: (__VLS_ctx.loading),
 }, ...__VLS_functionalComponentArgsRest(__VLS_41));
 __VLS_43.slots.default;
-var __VLS_43;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['login-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['login-banner']} */ ;
-/** @type {__VLS_StyleScopedClasses['banner-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['logo']} */ ;
-/** @type {__VLS_StyleScopedClasses['title']} */ ;
-/** @type {__VLS_StyleScopedClasses['subtitle']} */ ;
-/** @type {__VLS_StyleScopedClasses['login-form']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['welcome']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-extra']} */ ;
-var __VLS_dollars;
+let __VLS_43;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['login-container']} */ 
+/** @type {__VLS_StyleScopedClasses['login-banner']} */ 
+/** @type {__VLS_StyleScopedClasses['banner-content']} */ 
+/** @type {__VLS_StyleScopedClasses['logo']} */ 
+/** @type {__VLS_StyleScopedClasses['title']} */ 
+/** @type {__VLS_StyleScopedClasses['subtitle']} */ 
+/** @type {__VLS_StyleScopedClasses['login-form']} */ 
+/** @type {__VLS_StyleScopedClasses['form-container']} */ 
+/** @type {__VLS_StyleScopedClasses['welcome']} */ 
+/** @type {__VLS_StyleScopedClasses['form-extra']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -221,4 +221,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

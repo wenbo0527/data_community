@@ -17,11 +17,11 @@
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="handleSearch">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             搜索
           </a-button>
           <a-button @click="resetSearch">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             重置
           </a-button>
         </a-form-item>
@@ -123,11 +123,11 @@
         <template #operations="{ record }">
           <a-space>
             <a-button type="text" size="small" @click="viewDetail(record)">
-              <template #icon><icon-eye /></template>
+              <template #icon><IconEye /></template>
               查看
             </a-button>
             <a-button type="text" size="small" @click="testTemplate(record)">
-              <template #icon><icon-experiment /></template>
+              <template #icon><IconExperiment /></template>
               测试
             </a-button>
           </a-space>

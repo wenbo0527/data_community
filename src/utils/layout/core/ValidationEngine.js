@@ -282,7 +282,7 @@ export class ValidationEngine {
       }
     }
     
-    let result = { errors: [], warnings: [], isValid: true };
+    const result = { errors: [], warnings: [], isValid: true };
     
     try {
       if (this.rules.has(type)) {

@@ -13,7 +13,7 @@
       <div style="margin-bottom: 16px; text-align: right;">
         <a-button type="primary" @click="showFormView">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           新增关联关系
         </a-button>
@@ -95,13 +95,13 @@
               class="remove-btn"
             >
               <template #icon>
-                <icon-delete />
+                <IconDelete />
               </template>
             </a-button>
           </div>
           <a-button type="dashed" size="mini" @click="addFieldPair" style="width: 100%">
             <template #icon>
-              <icon-plus />
+              <IconPlus />
             </template>
             添加字段对
           </a-button>

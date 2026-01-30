@@ -1,6 +1,6 @@
 <template>
   <div class="base-form-container">
-    <a-form
+    <AForm
       ref="formRef"
       v-bind="formProps"
       :model="formData"
@@ -23,12 +23,12 @@
         </div>
         
         <!-- 分割线 -->
-        <a-divider v-else-if="item.type === 'divider'" :orientation="item.orientation || 'left'">
+        <ADivider v-else-if="item.type === 'divider'" :orientation="item.orientation || 'left'">
           {{ item.title }}
-        </a-divider>
+        </ADivider>
         
         <!-- 表单项 -->
-        <a-form-item
+        <AFormItem
           v-else
           :field="item.field"
           :label="item.label"
@@ -46,7 +46,7 @@
           :class="item.className"
         >
           <!-- 输入框 -->
-          <a-input
+          <AInput
             v-if="item.type === 'input'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请输入${item.label}`"
@@ -58,7 +58,7 @@
           />
           
           <!-- 密码输入框 -->
-          <a-input-password
+          <AInputPassword
             v-else-if="item.type === 'password'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请输入${item.label}`"
@@ -68,7 +68,7 @@
           />
           
           <!-- 文本域 -->
-          <a-textarea
+          <ATextarea
             v-else-if="item.type === 'textarea'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请输入${item.label}`"
@@ -81,7 +81,7 @@
           />
           
           <!-- 数字输入框 -->
-          <a-input-number
+          <AInputNumber
             v-else-if="item.type === 'number'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请输入${item.label}`"
@@ -94,7 +94,7 @@
           />
           
           <!-- 选择器 -->
-          <a-select
+          <ASelect
             v-else-if="item.type === 'select'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请选择${item.label}`"
@@ -108,7 +108,7 @@
           />
           
           <!-- 级联选择器 -->
-          <a-cascader
+          <ACascader
             v-else-if="item.type === 'cascader'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请选择${item.label}`"
@@ -122,7 +122,7 @@
           />
           
           <!-- 日期选择器 -->
-          <a-date-picker
+          <ADatePicker
             v-else-if="item.type === 'date'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请选择${item.label}`"
@@ -133,7 +133,7 @@
           />
           
           <!-- 时间选择器 -->
-          <a-time-picker
+          <ATimePicker
             v-else-if="item.type === 'time'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请选择${item.label}`"
@@ -144,7 +144,7 @@
           />
           
           <!-- 日期时间选择器 -->
-          <a-date-picker
+          <ADatePicker
             v-else-if="item.type === 'datetime'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || `请选择${item.label}`"
@@ -156,7 +156,7 @@
           />
           
           <!-- 日期范围选择器 -->
-          <a-range-picker
+          <ARangePicker
             v-else-if="item.type === 'daterange'"
             v-model="formData[item.field]"
             :placeholder="item.placeholder || ['开始日期', '结束日期']"
@@ -167,7 +167,7 @@
           />
           
           <!-- 单选框组 -->
-          <a-radio-group
+          <ARadioGroup
             v-else-if="item.type === 'radio'"
             v-model="formData[item.field]"
             :options="item.options"
@@ -177,7 +177,7 @@
           />
           
           <!-- 复选框组 -->
-          <a-checkbox-group
+          <ACheckboxGroup
             v-else-if="item.type === 'checkbox'"
             v-model="formData[item.field]"
             :options="item.options"
@@ -187,7 +187,7 @@
           />
           
           <!-- 开关 -->
-          <a-switch
+          <ASwitch
             v-else-if="item.type === 'switch'"
             v-model="formData[item.field]"
             :disabled="item.disabled || disabled"
@@ -195,7 +195,7 @@
           />
           
           <!-- 滑块 -->
-          <a-slider
+          <ASlider
             v-else-if="item.type === 'slider'"
             v-model="formData[item.field]"
             :min="item.min"
@@ -207,7 +207,7 @@
           />
           
           <!-- 评分 -->
-          <a-rate
+          <ARate
             v-else-if="item.type === 'rate'"
             v-model="formData[item.field]"
             :count="item.count"
@@ -217,7 +217,7 @@
           />
           
           <!-- 上传 -->
-          <a-upload
+          <AUpload
             v-else-if="item.type === 'upload'"
             v-model:file-list="formData[item.field]"
             :action="item.action"
@@ -243,13 +243,13 @@
             :item="item"
             :form-data="formData"
           />
-        </a-form-item>
+        </AFormItem>
       </template>
       
       <!-- 表单操作按钮 -->
-      <a-form-item v-if="showActions" :wrapper-col-props="actionWrapperColProps">
-        <a-space :size="16">
-          <a-button
+      <AFormItem v-if="showActions" :wrapper-col-props="actionWrapperColProps">
+        <ASpace :size="16">
+          <AButton
             v-if="showSubmit"
             type="primary"
             html-type="submit"
@@ -257,25 +257,25 @@
             :disabled="disabled"
           >
             {{ submitText }}
-          </a-button>
-          <a-button
+          </AButton>
+          <AButton
             v-if="showReset"
             @click="handleReset"
             :disabled="disabled"
           >
             {{ resetText }}
-          </a-button>
-          <a-button
+          </AButton>
+          <AButton
             v-if="showCancel"
             @click="handleCancel"
             :disabled="disabled"
           >
             {{ cancelText }}
-          </a-button>
+          </AButton>
           <slot name="actions" :form-data="formData"></slot>
-        </a-space>
-      </a-form-item>
-    </a-form>
+        </ASpace>
+      </AFormItem>
+    </AForm>
   </div>
 </template>
 

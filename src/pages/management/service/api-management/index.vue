@@ -4,7 +4,7 @@
       <h2>API管理</h2>
       <a-space>
         <a-button type="primary" @click="goCreate">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           新建API
         </a-button>
       </a-space>

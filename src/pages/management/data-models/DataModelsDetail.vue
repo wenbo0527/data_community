@@ -5,37 +5,32 @@
       <div class="header-left">
         <a-button type="text" @click="handleBack">
           <template #icon>
-            <icon-arrow-left />
+            <IconArrowLeft />
           </template>
           返回
         </a-button>
         <div class="title-section">
           <h2 class="page-title">{{ modelData.name }}</h2>
-          <a-tag
-            :color="getStatusColor(modelData.status)"
-            class="status-tag"
-          >
-            {{ getStatusText(modelData.status) }}
-          </a-tag>
+          <StatusTag :status="modelData.status" dictKey="dataModelStatus" class="status-tag" />
         </div>
       </div>
       <div class="header-right">
         <a-space>
           <a-button @click="handleCopy">
             <template #icon>
-              <icon-copy />
+              <IconCopy />
             </template>
             复制
           </a-button>
           <a-button @click="handleEdit">
             <template #icon>
-              <icon-edit />
+              <IconEdit />
             </template>
             编辑
           </a-button>
           <a-button type="primary" @click="handleExecute" :loading="executing">
             <template #icon>
-              <icon-play-arrow />
+              <IconPlayArrow />
             </template>
             执行
           </a-button>
@@ -55,14 +50,10 @@
                 {{ modelData.name }}
               </a-descriptions-item>
               <a-descriptions-item label="使用场景">
-                <a-tag :color="getUseCaseColor(modelData.useCase)">
-                  {{ getUseCaseText(modelData.useCase) }}
-                </a-tag>
+                <StatusTag :status="modelData.useCase" dictKey="dataModelUseCase" />
               </a-descriptions-item>
               <a-descriptions-item label="语言类型">
-                <a-tag :color="modelData.language === 'sql' ? 'orange' : 'purple'">
-                  {{ modelData.language?.toUpperCase() }}
-                </a-tag>
+                <StatusTag :status="modelData.language" dictKey="dataModelLanguage" />
               </a-descriptions-item>
               <a-descriptions-item label="管理人">
                 {{ modelData.manager }}
@@ -71,7 +62,7 @@
                 v{{ modelData.version }}
               </a-descriptions-item>
               <a-descriptions-item label="更新时间">
-                {{ modelData.updatedAt }}
+                {{ DateUtils.formatDateTime(modelData.updatedAt) }}
               </a-descriptions-item>
               <a-descriptions-item label="模型描述" :span="2">
                 {{ modelData.description || '暂无描述' }}
@@ -83,21 +74,19 @@
           <a-card title="代码内容" class="code-card">
             <div class="code-header">
               <a-space>
-                <a-tag :color="modelData.language === 'sql' ? 'orange' : 'purple'">
-                  {{ modelData.language?.toUpperCase() }}
-                </a-tag>
+                <StatusTag :status="modelData.language" dictKey="dataModelLanguage" />
                 <span class="code-lines">{{ getCodeLines() }} 行</span>
               </a-space>
               <a-space>
                 <a-button size="small" @click="handleCopyCode">
                   <template #icon>
-                    <icon-copy />
+                    <IconCopy />
                   </template>
                   复制代码
                 </a-button>
                 <a-button size="small" @click="handleDownloadCode">
                   <template #icon>
-                    <icon-download />
+                    <IconDownload />
                   </template>
                   下载
                 </a-button>
@@ -161,13 +150,8 @@
                 class="execution-item"
               >
                 <div class="execution-header">
-                  <a-tag
-                    :color="getExecutionStatusColor(execution.status)"
-                    size="small"
-                  >
-                    {{ getExecutionStatusText(execution.status) }}
-                  </a-tag>
-                  <span class="execution-time">{{ execution.createdAt }}</span>
+                  <StatusTag :status="execution.status" dictKey="dataModelExecutionStatus" />
+                  <span class="execution-time">{{ DateUtils.smartFormat(execution.createdAt) }}</span>
                 </div>
                 <div class="execution-info">
                   <div class="execution-duration">
@@ -189,7 +173,7 @@
               </div>
               
               <div v-if="recentExecutions.length === 0" class="empty-executions">
-                <icon-info-circle />
+                <IconInfoCircle />
                 <span>暂无执行记录</span>
               </div>
             </div>
@@ -198,7 +182,7 @@
               <a-button type="text" @click="viewAllExecutions">
                 查看全部执行记录
                 <template #icon>
-                  <icon-arrow-right />
+                  <IconArrowRight />
                 </template>
               </a-button>
             </div>
@@ -214,7 +198,7 @@
                 {{ modelData.maxMemory || 1024 }}MB
               </a-descriptions-item>
               <a-descriptions-item label="创建时间">
-                {{ modelData.createdAt }}
+                {{ DateUtils.formatDateTime(modelData.createdAt) }}
               </a-descriptions-item>
               <a-descriptions-item label="创建人">
                 {{ modelData.creator }}
@@ -234,11 +218,7 @@
     >
       <div class="execution-result">
         <div class="result-header">
-          <a-tag
-            :color="getExecutionStatusColor(currentExecution.status)"
-          >
-            {{ getExecutionStatusText(currentExecution.status) }}
-          </a-tag>
+          <StatusTag :status="currentExecution.status" dictKey="dataModelExecutionStatus" />
           <span class="result-time">执行时间: {{ currentExecution.duration }}ms</span>
         </div>
         
@@ -279,6 +259,8 @@ import {
   IconInfoCircle,
   IconArrowRight
 } from '@arco-design/web-vue/es/icon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 const route = useRoute()
@@ -349,37 +331,6 @@ const getCodeLines = () => {
   return modelData.code ? modelData.code.split('\n').length : 0
 }
 
-// 工具函数
-const getStatusColor = (status) => {
-  const colors = {
-    draft: 'gray',
-    published: 'green',
-    archived: 'red'
-  }
-  return colors[status] || 'gray'
-}
-
-const getStatusText = (status) => {
-  const texts = {
-    draft: '草稿',
-    published: '已发布',
-    archived: '已归档'
-  }
-  return texts[status] || '未知'
-}
-
-const getUseCaseColor = (useCase) => {
-  return useCase === 'download' ? 'blue' : 'cyan'
-}
-
-const getUseCaseText = (useCase) => {
-  const texts = {
-    download: '明细数据下载',
-    report: '分析报告模板'
-  }
-  return texts[useCase] || '未知'
-}
-
 const getParamTypeText = (type) => {
   const texts = {
     string: '字符串',
@@ -390,23 +341,7 @@ const getParamTypeText = (type) => {
   return texts[type] || type
 }
 
-const getExecutionStatusColor = (status) => {
-  const colors = {
-    success: 'green',
-    failed: 'red',
-    running: 'blue'
-  }
-  return colors[status] || 'gray'
-}
-
-const getExecutionStatusText = (status) => {
-  const texts = {
-    success: '成功',
-    failed: '失败',
-    running: '运行中'
-  }
-  return texts[status] || '未知'
-}
+ 
 
 // 事件处理函数
 import { goBack } from '@/router/utils'

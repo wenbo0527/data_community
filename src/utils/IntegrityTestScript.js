@@ -106,7 +106,7 @@
                     return;
                 }
 
-                let invalidNodes = [];
+                const invalidNodes = [];
                 nodes.forEach(node => {
                     const position = node.getPosition();
                     const { x, y } = position;
@@ -147,7 +147,7 @@
                     return;
                 }
 
-                let issues = [];
+                const issues = [];
                 audienceSplitNodes.forEach(node => {
                     const position = node.getPosition();
                     const { x, y } = position;
@@ -211,7 +211,7 @@
                     return;
                 }
 
-                let issues = [];
+                const issues = [];
                 previewLines.forEach((previewLine, index) => {
                     if (!previewLine.sourceNode) {
                         issues.push({
@@ -255,7 +255,7 @@
                     return;
                 }
 
-                let issues = [];
+                const issues = [];
                 edges.forEach(edge => {
                     const sourceNode = edge.getSourceNode();
                     const targetNode = edge.getTargetNode();

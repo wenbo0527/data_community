@@ -343,7 +343,7 @@ const formatCode = () => {
   }
   
   // 简单的代码格式化（实际项目中可以使用专业的格式化工具）
-  let formatted = formData.value.pythonCode
+  const formatted = formData.value.pythonCode
     .split('\n')
     .map(line => line.trim())
     .join('\n')

@@ -5,21 +5,21 @@
       <template #actions>
         <a-dropdown>
           <a-button type="primary">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建
             <template #suffix><icon-down /></template>
           </a-button>
           <template #content>
             <a-doption @click="openRegister">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               注册特征
             </a-doption>
             <a-doption @click="openQuickRegister">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               快速注册
             </a-doption>
             <a-doption @click="openImport">
-              <template #icon><icon-upload /></template>
+              <template #icon><IconUpload /></template>
               批量导入
             </a-doption>
           </template>
@@ -75,13 +75,13 @@
             <a-space>
               <a-button type="primary" @click="handleSearch">
                 <template #icon>
-                  <icon-search />
+                  <IconSearch />
                 </template>
                 搜索
               </a-button>
               <a-button @click="handleReset">
                 <template #icon>
-                  <icon-refresh />
+                  <IconRefresh />
                 </template>
                 重置
               </a-button>
@@ -96,7 +96,7 @@
       <a-col :span="8">
         <a-card hoverable>
           <template #title>
-            <icon-apps />
+            <IconApps />
             总特征数
           </template>
           <div class="stat-value">{{ stats.totalFeatures }}</div>
@@ -105,7 +105,7 @@
       <a-col :span="8">
         <a-card hoverable>
           <template #title>
-            <icon-check-circle />
+            <IconCheckCircle />
             上线
           </template>
           <div class="stat-value">{{ stats.activeFeatures }}</div>
@@ -114,7 +114,7 @@
       <a-col :span="8">
         <a-card hoverable>
           <template #title>
-            <icon-close-circle />
+            <IconCloseCircle />
             归档
           </template>
           <div class="stat-value">{{ stats.archivedFeatures }}</div>
@@ -490,8 +490,7 @@ import {
   IconCheckCircle,
   IconCloseCircle
 } from '@arco-design/web-vue/es/icon'
-import { featureAPI } from '@/api/offlineModel'
-import { modelAPI } from '@/api/offlineModel'
+import { featureAPI, modelAPI } from '@/api/offlineModel'
 
 const router = useRouter()
 const store = useFeatureStore()
@@ -603,11 +602,6 @@ const loadData = async () => {
   }
 }
 
-const handleFilterChange = () => {
-  pagination.current = 1
-  loadData()
-}
-
 const handleSearch = () => {
   loadData()
 }
@@ -628,9 +622,6 @@ const handleSelectionChange = (rows) => {
   selectedRows.value = rows
 }
 
-const handleCreate = () => {
-  router.push('/offline-model/feature-center/create')
-}
 const createVisible = ref(false)
 const registerVisible = ref(false)
 const importVisible = ref(false)
@@ -777,13 +768,6 @@ const submitCreate = async () => {
   }
 }
 
-const handleImport = () => {
-  Message.info('批量导入功能开发中')
-}
-
-
- 
-
 const handleViewDetail = (record) => {
   router.push(`/offline-model/feature-center/detail/${record.id}`)
 }
@@ -792,7 +776,7 @@ const handleEdit = (record) => {
   router.push(`/offline-model/feature-center/edit/${record.id}`)
 }
 
-const handleDelete = (record) => {
+const handleDelete = () => {
   Message.info('删除功能开发中')
 }
 
@@ -923,9 +907,11 @@ const modelList = ref([])
 const openRegister = async () => {
   registerVisible.value = true
   try {
-    const res = await modelAPI.getModels({ page: 1, pageSize: 200 })
-    modelList.value = Array.isArray(res.data) ? res.data : (res.data?.data || [])
-  } catch {}
+      const res = await modelAPI.getModels({ page: 1, pageSize: 200 })
+      modelList.value = Array.isArray(res.data) ? res.data : (res.data?.data || [])
+    } catch (err) {
+      console.error('获取模型列表失败:', err)
+    }
 }
 const closeRegister = () => { registerVisible.value = false }
 const registerForm = reactive({

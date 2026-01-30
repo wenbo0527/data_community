@@ -6,7 +6,7 @@
     <div class="table-container">
       <div class="toolbar">
         <a-button type="primary" size="mini" @click="addRelationForField">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           为当前字段新增关联
         </a-button>
       </div>
@@ -79,13 +79,13 @@
                 class="remove-btn"
               >
                 <template #icon>
-                  <icon-delete />
+                  <IconDelete />
                 </template>
               </a-button>
             </div>
             <a-button type="dashed" size="mini" @click="addFieldPair(record)" style="width: 100%">
               <template #icon>
-                <icon-plus />
+                <IconPlus />
               </template>
               添加字段对
             </a-button>

@@ -18,7 +18,7 @@ let __VLS_directives;
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 const __VLS_0 = {}.ASelect;
-/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.ASelect, ]} */ ;
+/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.ASelect, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onChange': {} },
@@ -43,7 +43,7 @@ const __VLS_7 = {
 __VLS_3.slots.default;
 for (const [item] of __VLS_getVForSourceType((__VLS_ctx.collections))) {
     const __VLS_8 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.AOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.AOption, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
         key: (item.value),
@@ -59,8 +59,8 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.collections))) {
     (item.label);
     var __VLS_11;
 }
-var __VLS_3;
-var __VLS_dollars;
+let __VLS_3;
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -80,4 +80,4 @@ export default (await import('vue')).defineComponent({
     emits: {},
     __typeProps: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

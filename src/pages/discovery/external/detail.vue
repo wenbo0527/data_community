@@ -8,7 +8,7 @@
               <div class="title-section">
                 <a-space align="center">
                   <a-button type="text" @click="handleGoBack">
-                    <template #icon><icon-left /></template>
+                    <template #icon><IconLeft /></template>
                   </a-button>
                   <h2 class="data-title">{{ dataDetail.dataName }}</h2>
                   <div class="tag-group">
@@ -33,7 +33,7 @@
           <a-col :span="6" class="action-panel">
             <a-space>
               <a-button type="primary" @click="handleEdit">
-                <template #icon><icon-edit /></template>
+                <template #icon><IconEdit /></template>
                 编辑信息
               </a-button>
               <a-button
@@ -42,8 +42,8 @@
                 @click="toggleFavorite"
               >
                 <template #icon>
-                  <icon-star-fill v-if="dataDetail.isFavorite" />
-                  <icon-star v-else />
+                  <IconStarFill v-if="dataDetail.isFavorite" />
+                  <IconStar v-else />
                 </template>
                 {{ dataDetail.isFavorite ? '取消收藏' : '收藏' }}
               </a-button>

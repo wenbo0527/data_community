@@ -223,15 +223,15 @@ const __VLS_componentsOption = {
 };
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['form-group-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-form-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['form-group-title']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-form-item']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "base-form-container" },
 });
 const __VLS_0 = {}.AForm;
-/** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ ;
+/** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onSubmit': {} },
@@ -275,8 +275,8 @@ const __VLS_8 = {
 const __VLS_9 = {
     onSubmitFailed: (__VLS_ctx.handleSubmitFailed)
 };
-/** @type {typeof __VLS_ctx.formRef} */ ;
-var __VLS_10 = {};
+/** @type {typeof __VLS_ctx.formRef} */ 
+const __VLS_10 = {};
 __VLS_3.slots.default;
 for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
     (item.field);
@@ -288,7 +288,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
     }
     else if (item.type === 'divider') {
         const __VLS_12 = {}.ADivider;
-        /** @type {[typeof __VLS_components.ADivider, typeof __VLS_components.aDivider, typeof __VLS_components.ADivider, typeof __VLS_components.aDivider, ]} */ ;
+        /** @type {[typeof __VLS_components.ADivider, typeof __VLS_components.aDivider, typeof __VLS_components.ADivider, typeof __VLS_components.aDivider, ]} */ 
         // @ts-ignore
         const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
             orientation: (item.orientation || 'left'),
@@ -302,7 +302,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
     }
     else {
         const __VLS_16 = {}.AFormItem;
-        /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+        /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
         // @ts-ignore
         const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
             field: (item.field),
@@ -339,7 +339,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         __VLS_19.slots.default;
         if (item.type === 'input') {
             const __VLS_20 = {}.AInput;
-            /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+            /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
             // @ts-ignore
             const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -362,7 +362,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'password') {
             const __VLS_24 = {}.AInputPassword;
-            /** @type {[typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, ]} */ ;
+            /** @type {[typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, ]} */ 
             // @ts-ignore
             const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -381,7 +381,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'textarea') {
             const __VLS_28 = {}.ATextarea;
-            /** @type {[typeof __VLS_components.ATextarea, typeof __VLS_components.aTextarea, ]} */ ;
+            /** @type {[typeof __VLS_components.ATextarea, typeof __VLS_components.aTextarea, ]} */ 
             // @ts-ignore
             const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -406,7 +406,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'number') {
             const __VLS_32 = {}.AInputNumber;
-            /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+            /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
             // @ts-ignore
             const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -431,7 +431,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'select') {
             const __VLS_36 = {}.ASelect;
-            /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+            /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
             // @ts-ignore
             const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -458,7 +458,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'cascader') {
             const __VLS_40 = {}.ACascader;
-            /** @type {[typeof __VLS_components.ACascader, typeof __VLS_components.aCascader, ]} */ ;
+            /** @type {[typeof __VLS_components.ACascader, typeof __VLS_components.aCascader, ]} */ 
             // @ts-ignore
             const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -485,7 +485,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'date') {
             const __VLS_44 = {}.ADatePicker;
-            /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+            /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
             // @ts-ignore
             const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -506,7 +506,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'time') {
             const __VLS_48 = {}.ATimePicker;
-            /** @type {[typeof __VLS_components.ATimePicker, typeof __VLS_components.aTimePicker, ]} */ ;
+            /** @type {[typeof __VLS_components.ATimePicker, typeof __VLS_components.aTimePicker, ]} */ 
             // @ts-ignore
             const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -527,7 +527,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'datetime') {
             const __VLS_52 = {}.ADatePicker;
-            /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+            /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
             // @ts-ignore
             const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -550,7 +550,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'daterange') {
             const __VLS_56 = {}.ARangePicker;
-            /** @type {[typeof __VLS_components.ARangePicker, typeof __VLS_components.aRangePicker, ]} */ ;
+            /** @type {[typeof __VLS_components.ARangePicker, typeof __VLS_components.aRangePicker, ]} */ 
             // @ts-ignore
             const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -571,7 +571,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'radio') {
             const __VLS_60 = {}.ARadioGroup;
-            /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+            /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ 
             // @ts-ignore
             const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -590,7 +590,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'checkbox') {
             const __VLS_64 = {}.ACheckboxGroup;
-            /** @type {[typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, ]} */ ;
+            /** @type {[typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, ]} */ 
             // @ts-ignore
             const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -609,7 +609,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'switch') {
             const __VLS_68 = {}.ASwitch;
-            /** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ ;
+            /** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ 
             // @ts-ignore
             const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -624,7 +624,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'slider') {
             const __VLS_72 = {}.ASlider;
-            /** @type {[typeof __VLS_components.ASlider, typeof __VLS_components.aSlider, ]} */ ;
+            /** @type {[typeof __VLS_components.ASlider, typeof __VLS_components.aSlider, ]} */ 
             // @ts-ignore
             const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -647,7 +647,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'rate') {
             const __VLS_76 = {}.ARate;
-            /** @type {[typeof __VLS_components.ARate, typeof __VLS_components.aRate, ]} */ ;
+            /** @type {[typeof __VLS_components.ARate, typeof __VLS_components.aRate, ]} */ 
             // @ts-ignore
             const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({
                 modelValue: (__VLS_ctx.formData[item.field]),
@@ -666,7 +666,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
         }
         else if (item.type === 'upload') {
             const __VLS_80 = {}.AUpload;
-            /** @type {[typeof __VLS_components.AUpload, typeof __VLS_components.aUpload, ]} */ ;
+            /** @type {[typeof __VLS_components.AUpload, typeof __VLS_components.aUpload, ]} */ 
             // @ts-ignore
             const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
                 fileList: (__VLS_ctx.formData[item.field]),
@@ -711,7 +711,7 @@ for (const [item] of __VLS_getVForSourceType((__VLS_ctx.formItems))) {
 }
 if (__VLS_ctx.showActions) {
     const __VLS_92 = {}.AFormItem;
-    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
     // @ts-ignore
     const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({
         wrapperColProps: (__VLS_ctx.actionWrapperColProps),
@@ -721,7 +721,7 @@ if (__VLS_ctx.showActions) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_93));
     __VLS_95.slots.default;
     const __VLS_96 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
         size: (16),
@@ -732,7 +732,7 @@ if (__VLS_ctx.showActions) {
     __VLS_99.slots.default;
     if (__VLS_ctx.showSubmit) {
         const __VLS_100 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({
             type: "primary",
@@ -748,11 +748,11 @@ if (__VLS_ctx.showActions) {
         }, ...__VLS_functionalComponentArgsRest(__VLS_101));
         __VLS_103.slots.default;
         (__VLS_ctx.submitText);
-        var __VLS_103;
+        let __VLS_103;
     }
     if (__VLS_ctx.showReset) {
         const __VLS_104 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
             ...{ 'onClick': {} },
@@ -770,11 +770,11 @@ if (__VLS_ctx.showActions) {
         };
         __VLS_107.slots.default;
         (__VLS_ctx.resetText);
-        var __VLS_107;
+        let __VLS_107;
     }
     if (__VLS_ctx.showCancel) {
         const __VLS_112 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({
             ...{ 'onClick': {} },
@@ -792,18 +792,18 @@ if (__VLS_ctx.showActions) {
         };
         __VLS_115.slots.default;
         (__VLS_ctx.cancelText);
-        var __VLS_115;
+        let __VLS_115;
     }
     var __VLS_120 = {
         formData: (__VLS_ctx.formData),
     };
-    var __VLS_99;
-    var __VLS_95;
+    let __VLS_99;
+    let __VLS_95;
 }
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['base-form-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-group-title']} */ ;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['base-form-container']} */ 
+/** @type {__VLS_StyleScopedClasses['form-group-title']} */ 
 // @ts-ignore
-var __VLS_11 = __VLS_10, __VLS_86 = __VLS_85, __VLS_87 = __VLS_84, __VLS_121 = __VLS_120;
-var __VLS_dollars;
+const __VLS_11 = __VLS_10, __VLS_86 = __VLS_85, __VLS_87 = __VLS_84, __VLS_121 = __VLS_120;
+let __VLS_dollars;
 let __VLS_self;

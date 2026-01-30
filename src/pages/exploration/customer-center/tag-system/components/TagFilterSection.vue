@@ -57,11 +57,11 @@
       <a-col :span="24">
         <a-space>
           <a-button type="primary" @click="handleSearch">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             搜索
           </a-button>
           <a-button @click="handleReset">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             重置
           </a-button>
         </a-space>

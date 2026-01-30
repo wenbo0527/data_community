@@ -114,7 +114,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "preview-step" },
 });
 const __VLS_0 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ class: "preview-card" },
@@ -135,7 +135,7 @@ __VLS_3.slots.default;
         ...{ class: "title-text" },
     });
     const __VLS_4 = {}.ATooltip;
-    /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
+    /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         position: "right",
@@ -150,13 +150,13 @@ __VLS_3.slots.default;
     {
         const { content: __VLS_thisSlot } = __VLS_7.slots;
     }
-    var __VLS_7;
+    let __VLS_7;
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "preview-content" },
 });
 const __VLS_8 = {}.ADescriptions;
-/** @type {[typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, ]} */ ;
+/** @type {[typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, ]} */ 
 // @ts-ignore
 const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
     data: (__VLS_ctx.previewData),
@@ -172,13 +172,13 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "footer-actions" },
 });
 const __VLS_12 = {}.ASpace;
-/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
 // @ts-ignore
 const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({}));
 const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
 __VLS_15.slots.default;
 const __VLS_16 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
     ...{ 'onClick': {} },
@@ -193,9 +193,9 @@ const __VLS_23 = {
     onClick: (__VLS_ctx.handlePrev)
 };
 __VLS_19.slots.default;
-var __VLS_19;
+let __VLS_19;
 const __VLS_24 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
     ...{ 'onClick': {} },
@@ -212,19 +212,19 @@ const __VLS_31 = {
     onClick: (__VLS_ctx.handleSubmit)
 };
 __VLS_27.slots.default;
-var __VLS_27;
-var __VLS_15;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['preview-step']} */ ;
-/** @type {__VLS_StyleScopedClasses['preview-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['preview-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-help']} */ ;
-/** @type {__VLS_StyleScopedClasses['preview-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['footer-actions']} */ ;
-var __VLS_dollars;
+let __VLS_27;
+let __VLS_15;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['preview-step']} */ 
+/** @type {__VLS_StyleScopedClasses['preview-card']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['title-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['preview-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['title-text']} */ 
+/** @type {__VLS_StyleScopedClasses['title-help']} */ 
+/** @type {__VLS_StyleScopedClasses['preview-content']} */ 
+/** @type {__VLS_StyleScopedClasses['footer-actions']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -246,4 +246,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

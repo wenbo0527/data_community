@@ -23,7 +23,7 @@
               :value="file.id"
             >
               <div class="file-option">
-                <icon-file :style="{ color: getFileTypeColor(file.fileType) }" />
+                <IconFile :style="{ color: getFileTypeColor(file.fileType) }" />
                 <span class="file-name">{{ file.fileName }}</span>
                 <span class="file-size">({{ formatFileSize(file.size) }})</span>
               </div>
@@ -36,7 +36,7 @@
             <span class="preview-title">文件信息</span>
             <a-button type="text" size="small" @click="testFileData">
               <template #icon>
-                <icon-play-arrow />
+                <IconPlayArrow />
               </template>
               测试数据
             </a-button>
@@ -84,7 +84,7 @@
               :value="db.id"
             >
               <div class="db-option">
-                <icon-storage :style="{ color: getDatabaseTypeColor(db.type) }" />
+                <IconStorage :style="{ color: getDatabaseTypeColor(db.type) }" />
                 <span class="db-name">{{ db.name }}</span>
                 <span class="db-type">({{ db.type.toUpperCase() }})</span>
                 <a-tag
@@ -104,7 +104,7 @@
             <span class="preview-title">连接信息</span>
             <a-button type="text" size="small" @click="testDatabaseConnection">
               <template #icon>
-                <icon-wifi />
+                <IconWifi />
               </template>
               测试连接
             </a-button>

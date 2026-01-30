@@ -17,7 +17,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "product-tabs" },
 });
 const __VLS_0 = {}.ATabs;
-/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ ;
+/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     activeKey: (__VLS_ctx.activeKey),
@@ -28,7 +28,7 @@ const __VLS_2 = __VLS_1({
 __VLS_3.slots.default;
 for (const [product] of __VLS_getVForSourceType((__VLS_ctx.products))) {
     const __VLS_4 = {}.ATabPane;
-    /** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+    /** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         key: (product.key),
@@ -40,7 +40,7 @@ for (const [product] of __VLS_getVForSourceType((__VLS_ctx.products))) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_5));
     __VLS_7.slots.default;
     const __VLS_8 = {}.AList;
-    /** @type {[typeof __VLS_components.AList, typeof __VLS_components.aList, typeof __VLS_components.AList, typeof __VLS_components.aList, ]} */ ;
+    /** @type {[typeof __VLS_components.AList, typeof __VLS_components.aList, typeof __VLS_components.AList, typeof __VLS_components.aList, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
         itemLayout: "horizontal",
@@ -55,13 +55,13 @@ for (const [product] of __VLS_getVForSourceType((__VLS_ctx.products))) {
         const { renderItem: __VLS_thisSlot } = __VLS_11.slots;
         const [{ item }] = __VLS_getSlotParams(__VLS_thisSlot);
         const __VLS_12 = {}.AListItem;
-        /** @type {[typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, ]} */ ;
+        /** @type {[typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, ]} */ 
         // @ts-ignore
         const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({}));
         const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
         __VLS_15.slots.default;
         const __VLS_16 = {}.AListItemMeta;
-        /** @type {[typeof __VLS_components.AListItemMeta, typeof __VLS_components.aListItemMeta, ]} */ ;
+        /** @type {[typeof __VLS_components.AListItemMeta, typeof __VLS_components.aListItemMeta, ]} */ 
         // @ts-ignore
         const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
             description: (item.description),
@@ -74,9 +74,9 @@ for (const [product] of __VLS_getVForSourceType((__VLS_ctx.products))) {
     var __VLS_11;
     var __VLS_7;
 }
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['product-tabs']} */ ;
-var __VLS_dollars;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['product-tabs']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -94,4 +94,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

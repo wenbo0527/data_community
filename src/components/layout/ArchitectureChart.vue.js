@@ -3,7 +3,7 @@
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['architecture-image']} */ ;
+/** @type {__VLS_StyleScopedClasses['architecture-image']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -14,9 +14,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
     alt: "社区架构图",
     ...{ class: "architecture-image" },
 });
-/** @type {__VLS_StyleScopedClasses['architecture-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['architecture-image']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['architecture-container']} */ 
+/** @type {__VLS_StyleScopedClasses['architecture-image']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {};
@@ -27,4 +27,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

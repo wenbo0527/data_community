@@ -3,7 +3,7 @@
     <div v-for="(product, index) in modelValue.products" :key="index" class="product-section">
       <div class="product-header">
         <a-button v-if="modelValueRef.products.length > 1" type="text" status="danger" @click="removeProduct(index)">
-          <icon-delete />
+          <IconDelete />
         </a-button>
       </div>
       <a-row :gutter="24">

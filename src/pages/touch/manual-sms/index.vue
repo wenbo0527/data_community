@@ -4,7 +4,7 @@
     <a-card class="header-card" :bordered="false">
       <template #title>
         <div class="card-title">
-          <icon-send />
+          <IconSend />
           新建手工短信
         </div>
       </template>
@@ -12,7 +12,7 @@
       <!-- 返回按钮 -->
       <div class="header-actions">
         <a-button @click="backToList">
-          <template #icon><icon-left /></template>
+          <template #icon><IconLeft /></template>
           返回列表
         </a-button>
       </div>
@@ -71,7 +71,7 @@
     <a-card class="recipient-card" :bordered="false">
       <template #title>
         <div class="card-title">
-          <icon-user />
+          <IconUser />
           接收人配置
         </div>
       </template>
@@ -128,7 +128,7 @@
             :auto-size="{ minRows: 4, maxRows: 8 }"
           />
           <div class="input-tips">
-            <icon-info-circle />
+            <IconInfoCircle />
             <span class="tip-text">每行一个手机号码，最多支持1000个号码</span>
           </div>
         </div>
@@ -142,7 +142,7 @@
           >
             <template #upload-button>
               <div class="upload-button">
-                <icon-upload />
+                <IconUpload />
                 <div class="upload-text">点击上传文件</div>
                 <div class="upload-hint">支持 Excel、CSV 格式，最大10MB</div>
               </div>
@@ -150,7 +150,7 @@
           </a-upload>
           <div class="upload-tips">
             <a-button type="text" size="small">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               下载模板文件
             </a-button>
           </div>
@@ -162,7 +162,7 @@
     <a-card class="template-select-card" :bordered="false">
       <template #title>
          <div class="card-title">
-           <icon-file />
+           <IconFile />
            短信模板
          </div>
        </template>
@@ -216,7 +216,7 @@
     <a-card v-if="formData.templateMode === 'create'" class="template-edit-card" :bordered="false">
       <template #title>
         <div class="card-title">
-          <icon-edit />
+          <IconEdit />
           模板内容编辑
         </div>
       </template>
@@ -289,7 +289,7 @@
     <a-card class="preview-card" :bordered="false">
       <template #title>
         <div class="card-title">
-          <icon-eye />
+          <IconEye />
           模板预览
         </div>
       </template>
@@ -307,11 +307,11 @@
     <div class="bottom-action-bar">
       <a-space>
         <a-button type="primary" @click="showTestModal">
-          <template #icon><icon-experiment /></template>
+          <template #icon><IconExperiment /></template>
           测试发送
         </a-button>
         <a-button type="primary" status="success" @click="handleSubmit">
-          <template #icon><icon-send /></template>
+          <template #icon><IconSend /></template>
           确认下发
         </a-button>
       </a-space>
@@ -384,7 +384,7 @@
     >
       <div class="test-complete-content">
         <div class="success-message">
-          <icon-check-circle style="color: #00b42a; font-size: 48px;" />
+          <IconCheckCircle style="color: #00b42a; font-size: 48px;" />
           <p>测试短信发送成功！</p>
           <p>请检查手机 {{ testPhone }} 是否收到短信</p>
         </div>

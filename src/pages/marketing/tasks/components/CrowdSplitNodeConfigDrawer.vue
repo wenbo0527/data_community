@@ -48,7 +48,7 @@
               class="remove-btn"
               @click="removeCrowdLayer(index)"
             >
-              <icon-minus />
+              <IconMinus />
             </a-button>
           </div>
           
@@ -73,7 +73,7 @@
               size="small"
               class="search-btn"
             >
-              <icon-search />
+              <IconSearch />
             </a-button>
           </div>
         </div>
@@ -84,7 +84,7 @@
         <div class="section-title">
           <span>未命中分支配置</span>
           <a-tooltip content="未命中分支用于处理不满足上述任何人群条件的用户，此分支不可删除">
-            <icon-info-circle class="info-icon" />
+            <IconInfoCircle class="info-icon" />
           </a-tooltip>
         </div>
         
@@ -108,7 +108,7 @@
               class="search-btn"
               disabled
             >
-              <icon-search />
+              <IconSearch />
             </a-button>
           </div>
         </div>

@@ -2,7 +2,7 @@
   <div class="statistics-overview">
     <div class="section-header">
       <div class="section-title">
-        <icon-dashboard />
+        <IconDashboard />
         <span>统计概览</span>
       </div>
       <div class="section-actions">
@@ -12,7 +12,7 @@
           @click="refreshData"
           :loading="loading"
         >
-          <icon-refresh />
+          <IconRefresh />
         </a-button>
         <span class="update-time">{{ lastUpdatedText }}</span>
       </div>
@@ -24,15 +24,15 @@
         <a-col :span="12">
           <div class="stat-card primary">
             <div class="stat-icon">
-              <icon-eye />
+              <IconEye />
             </div>
             <div class="stat-content">
               <div class="stat-label">总访问量</div>
               <div class="stat-value">{{ formatNumber(stats.totalVisits) }}</div>
               <div class="stat-trend" :class="getTrendClass(stats.visitsTrend)">
-                <icon-arrow-rise v-if="stats.visitsTrend > 0" />
-                <icon-arrow-fall v-else-if="stats.visitsTrend < 0" />
-                <icon-minus v-else />
+                <IconArrowRise v-if="stats.visitsTrend > 0" />
+                <IconArrowFall v-else-if="stats.visitsTrend < 0" />
+                <IconMinus v-else />
                 <span>{{ Math.abs(stats.visitsTrend) }}%</span>
               </div>
             </div>
@@ -42,15 +42,15 @@
         <a-col :span="12">
           <div class="stat-card success">
             <div class="stat-icon">
-              <icon-check-circle />
+              <IconCheckCircle />
             </div>
             <div class="stat-content">
               <div class="stat-label">总转化数</div>
               <div class="stat-value">{{ formatNumber(stats.totalConversions) }}</div>
               <div class="stat-trend" :class="getTrendClass(stats.conversionsTrend)">
-                <icon-arrow-rise v-if="stats.conversionsTrend > 0" />
-                <icon-arrow-fall v-else-if="stats.conversionsTrend < 0" />
-                <icon-minus v-else />
+                <IconArrowRise v-if="stats.conversionsTrend > 0" />
+                <IconArrowFall v-else-if="stats.conversionsTrend < 0" />
+                <IconMinus v-else />
                 <span>{{ Math.abs(stats.conversionsTrend) }}%</span>
               </div>
             </div>
@@ -60,15 +60,15 @@
         <a-col :span="12">
           <div class="stat-card warning">
             <div class="stat-icon">
-              <icon-user />
+              <IconUser />
             </div>
             <div class="stat-content">
               <div class="stat-label">活跃用户</div>
               <div class="stat-value">{{ formatNumber(stats.activeUsers) }}</div>
               <div class="stat-trend" :class="getTrendClass(stats.usersTrend)">
-                <icon-arrow-rise v-if="stats.usersTrend > 0" />
-                <icon-arrow-fall v-else-if="stats.usersTrend < 0" />
-                <icon-minus v-else />
+                <IconArrowRise v-if="stats.usersTrend > 0" />
+                <IconArrowFall v-else-if="stats.usersTrend < 0" />
+                <IconMinus v-else />
                 <span>{{ Math.abs(stats.usersTrend) }}%</span>
               </div>
             </div>
@@ -78,15 +78,15 @@
         <a-col :span="12">
           <div class="stat-card info">
             <div class="stat-icon">
-              <icon-clock-circle />
+              <IconClockCircle />
             </div>
             <div class="stat-content">
               <div class="stat-label">平均停留</div>
               <div class="stat-value">{{ formatDuration(stats.avgStayTime) }}</div>
               <div class="stat-trend" :class="getTrendClass(stats.stayTimeTrend)">
-                <icon-arrow-rise v-if="stats.stayTimeTrend > 0" />
-                <icon-arrow-fall v-else-if="stats.stayTimeTrend < 0" />
-                <icon-minus v-else />
+                <IconArrowRise v-if="stats.stayTimeTrend > 0" />
+                <IconArrowFall v-else-if="stats.stayTimeTrend < 0" />
+                <IconMinus v-else />
                 <span>{{ Math.abs(stats.stayTimeTrend) }}%</span>
               </div>
             </div>
@@ -99,7 +99,7 @@
     <div class="trend-chart-section">
       <div class="chart-header">
         <div class="chart-title">
-          <icon-bar-chart />
+          <IconBarChart />
           <span>转化率趋势</span>
         </div>
         <div class="chart-actions">
@@ -108,7 +108,7 @@
             size="mini"
             @click="toggleChartFullscreen"
           >
-            <icon-expand />
+            <IconExpand />
           </a-button>
         </div>
       </div>
@@ -122,7 +122,7 @@
     <div class="top-nodes-section">
       <div class="section-subheader">
         <div class="section-title">
-          <icon-fire />
+          <IconFire />
           <span>热门节点</span>
         </div>
         <a-link @click="viewAllNodes">查看全部</a-link>

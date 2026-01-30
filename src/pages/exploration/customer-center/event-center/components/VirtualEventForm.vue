@@ -121,13 +121,13 @@
                   status="danger"
                   @click="removeOutputField(index)"
                 >
-                  <template #icon><icon-delete /></template>
+                  <template #icon><IconDelete /></template>
                 </a-button>
               </div>
             </div>
             <div class="add-field-action">
               <a-button type="dashed" long @click="addOutputField">
-                <template #icon><icon-plus /></template>
+                <template #icon><IconPlus /></template>
                 添加输出字段
               </a-button>
             </div>

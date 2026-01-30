@@ -11,7 +11,7 @@
         @click="closePanel"
         title="关闭历史面板"
       >
-        <template #icon><icon-close /></template>
+        <template #icon><IconClose /></template>
       </a-button>
     </div>
     <div class="history-content">
@@ -32,8 +32,8 @@
           @click="jumpToHistoryState(historyStack.undoStack.length - 1 - index)"
         >
           <div class="history-item-icon">
-            <icon-check v-if="index === 0" />
-            <icon-history v-else />
+            <IconCheck v-if="index === 0" />
+            <IconHistory v-else />
           </div>
           <div class="history-item-content">
             <div class="history-item-title">{{ item.description || getOperationDescription(item) }}</div>
@@ -50,7 +50,7 @@
           @click="jumpToHistoryState(historyStack.undoStack.length + index + 1)"
         >
           <div class="history-item-icon">
-            <icon-redo />
+            <IconRedo />
           </div>
           <div class="history-item-content">
             <div class="history-item-title">{{ item.description || getOperationDescription(item) }}</div>

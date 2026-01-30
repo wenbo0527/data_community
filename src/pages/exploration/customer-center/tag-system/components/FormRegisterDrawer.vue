@@ -12,7 +12,7 @@
         <!-- 基础配置 -->
         <a-collapse-item key="basic" header="基础配置">
           <template #extra>
-            <icon-check-circle v-if="basicCompleted" style="color: #00b42a" />
+            <IconCheckCircle v-if="basicCompleted" style="color: #00b42a" />
           </template>
           <a-form :model="formData" layout="vertical">
             <a-form-item label="选择数据源" field="dataSourceId" required>
@@ -103,7 +103,7 @@
         <!-- 字段配置 -->
         <a-collapse-item key="fields" header="字段配置">
           <template #extra>
-            <icon-check-circle v-if="fieldsCompleted" style="color: #00b42a" />
+            <IconCheckCircle v-if="fieldsCompleted" style="color: #00b42a" />
           </template>
           <div class="field-config">
             <a-form :model="formData" layout="vertical">
@@ -143,7 +143,7 @@
               
               <div v-if="formData.primaryKey" class="uniqueness-check">
                 <a-button type="outline" @click="checkUniqueness">
-                  <template #icon><icon-search /></template>
+                  <template #icon><IconSearch /></template>
                   检查唯一性
                 </a-button>
                 <div v-if="uniquenessScore >= 0" class="uniqueness-result">
@@ -157,7 +157,7 @@
         <!-- IDMapping配置 -->
         <a-collapse-item key="mapping" header="IDMapping配置">
           <template #extra>
-            <icon-check-circle v-if="mappingCompleted" style="color: #00b42a" />
+            <IconCheckCircle v-if="mappingCompleted" style="color: #00b42a" />
           </template>
           <div class="mapping-config">
             <a-form :model="formData" layout="vertical">

@@ -5,7 +5,7 @@
         <div class="header-content">
           <div class="header-left">
             <a-button v-if="!props.hideBackButton" type="text" @click="goBackAction" class="back-btn">
-              <icon-left />
+              <IconLeft />
               返回
             </a-button>
             <h2 class="page-title">{{ mode === 'view' ? '优惠券模板详情' : '创建优惠券模板' }}</h2>
@@ -70,11 +70,11 @@
         <!-- 优惠券参数配置 -->
         <a-divider>优惠券参数配置</a-divider>
         
-        <interest-free-form v-if="formData.type === 'interest_free'" :form-data="formData" />
-        <discount-form v-if="formData.type === 'discount'" :form-data="formData" />
+        <InterestFreeForm v-if="formData.type === 'interest_free'" :form-data="formData" />
+        <DiscountForm v-if="formData.type === 'discount'" :form-data="formData" />
         
         <!-- 锁定期配置 -->
-        <lock-form :form-data="formData" />
+        <LockForm :form-data="formData" />
 
         <!-- 使用条件配置 -->
         <a-divider>使用条件配置</a-divider>
@@ -257,12 +257,12 @@
                 <div class="section-header">
                   <h4>实时预览</h4>
                   <a-button size="small" @click="refreshPreview" v-if="!(mode === 'view' || readonly || props.readonly)">
-                    <template #icon><icon-refresh /></template>
+                    <template #icon><IconRefresh /></template>
                     刷新预览
                   </a-button>
                 </div>
                 <div class="preview-content">
-                  <coupon-preview 
+                  <CouponPreview 
                     :key="previewKey" 
                     :coupon-data="previewData"
                     :usage-description="formData.usageDescription"

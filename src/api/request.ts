@@ -12,7 +12,7 @@ request.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token')
     if (token) {
-      ;(config.headers as any).Authorization = `Bearer ${token}`
+      (config.headers as any).Authorization = `Bearer ${token}`
     }
     if ((config.method || 'get').toLowerCase() === 'get') {
       config.params = { ...(config.params || {}), _t: Date.now() }

@@ -4,7 +4,7 @@
       <!-- 时间范围选择 -->
       <div class="filter-section">
         <div class="filter-label">
-          <icon-calendar />
+          <IconCalendar />
           <span>时间范围</span>
         </div>
         <a-radio-group 
@@ -34,7 +34,7 @@
       <!-- 节点类型筛选 -->
       <div class="filter-section">
         <div class="filter-label">
-          <icon-apps />
+          <IconApps />
           <span>节点类型</span>
         </div>
         <a-select
@@ -60,7 +60,7 @@
       <!-- 用户群体筛选 -->
       <div class="filter-section">
         <div class="filter-label">
-          <icon-user-group />
+          <IconUserGroup />
           <span>用户群体</span>
         </div>
         <a-select
@@ -87,14 +87,14 @@
             size="small"
             @click="applyFilters"
           >
-            <icon-refresh />
+            <IconRefresh />
             应用筛选
           </a-button>
           <a-button 
             size="small"
             @click="resetFilters"
           >
-            <icon-undo />
+            <IconUndo />
             重置
           </a-button>
         </a-space>
@@ -110,7 +110,7 @@
             @close="removeFilterTag(tag.key)"
             size="small"
           >
-            <icon-close v-if="tag.key === 'clearAll'" />
+            <IconClose v-if="tag.key === 'clearAll'" />
             {{ tag.label }}
           </a-tag>
         </div>

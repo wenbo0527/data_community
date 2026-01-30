@@ -306,7 +306,8 @@
                                   <a-tag size="small" :color="getNoticeTypeColor(notice.type)" bordered class="notice-tag">
                                     {{ getNoticeTypeLabel(notice.type) }}
                                   </a-tag>
-                                  <span class="notice-time">{{ notice.time }}</span>
+                                  <StatusTag :status="notice.status" dictKey="notification" />
+                                  <span class="notice-time">{{ DateUtils.smartFormat(notice.publishedAt || notice.createdAt) }}</span>
                                 </div>
                               </div>
                             </div>
@@ -333,7 +334,7 @@
                             <div class="notice-title compact">
                               <a-typography-text class="compact-text">{{ todo.title }}</a-typography-text>
                             </div>
-                            <a-typography-text type="secondary" class="notice-time compact">截止时间：{{ todo.deadline }}</a-typography-text>
+                            <a-typography-text type="secondary" class="notice-time compact">截止时间：{{ DateUtils.formatDateTime(todo.deadline) }}</a-typography-text>
                           </a-space>
                         </a-list-item>
                       </a-list>
@@ -368,7 +369,7 @@
     </a-drawer>
 
     <!-- 欢迎弹窗 -->
-    <home-welcome-modal
+    <HomeWelcomeModal
       v-model:visible="showWelcomeModal"
       :is-new-user="userStore?.isNewUser || false"
     />
@@ -387,7 +388,7 @@
       <div v-if="selectedNotification" class="home-notification-detail">
         <!-- 自定义关闭按钮 -->
         <div class="modal-close-btn" @click="handleCloseNotificationModal">
-          <icon-close />
+          <IconClose />
         </div>
 
         <!-- 使用统一的通知详情组件 -->
@@ -436,6 +437,8 @@ import HomeWelcomeModal from '../../components/home-welcome-modal.vue'
 import NotificationDetailContent from '../../components/community/NotificationDetailContent.vue'
 import { NotificationAPI } from '../../api/notification'
 import { getNoticeTypeLabel, getNoticeTypeColor } from '@/constants/notification'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 import {
   IconUser,
   IconDown,
@@ -676,14 +679,7 @@ const fetchNotices = async () => {
     if (response.success && response.data && response.data.list) {
       const list = response.data.list.map(notice => ({
         ...notice,
-        time: notice.publishedAt ? new Date(notice.publishedAt).toLocaleString('zh-CN', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }).replace(/\//g, '-') : (notice.createdAt ? new Date(notice.createdAt).toLocaleString('zh-CN').replace(/\//g, '-') : '刚刚'),
+        time: DateUtils.formatDateTime(notice.publishedAt || notice.createdAt),
         isNew: isNewNotice(notice.publishedAt || notice.createdAt)
       }))
       notices.value = list

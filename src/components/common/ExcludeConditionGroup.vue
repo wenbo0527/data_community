@@ -41,8 +41,8 @@
           @click="toggleCollapse"
           data-testid="collapse-toggle"
         >
-          <icon-down v-if="!collapsed" />
-          <icon-right v-else />
+          <IconDown v-if="!collapsed" />
+          <IconRight v-else />
         </a-button>
         <a-button 
           type="text" 
@@ -52,7 +52,7 @@
           data-testid="delete-exclude-group"
           title="删除剔除条件组"
         >
-          <icon-delete />
+          <IconDelete />
         </a-button>
       </div>
     </div>
@@ -87,7 +87,7 @@
             data-testid="add-tag-condition"
             :disabled="!editable"
           >
-            <icon-plus /> 添加标签条件
+            <IconPlus /> 添加标签条件
           </a-button>
           <a-button 
             type="dashed" 
@@ -96,7 +96,7 @@
             data-testid="add-behavior-condition"
             :disabled="!editable"
           >
-            <icon-plus /> 添加行为条件
+            <IconPlus /> 添加行为条件
           </a-button>
           <a-button 
             type="dashed" 
@@ -105,7 +105,7 @@
             data-testid="add-detail-condition"
             :disabled="!editable"
           >
-            <icon-plus /> 添加明细数据条件
+            <IconPlus /> 添加明细数据条件
           </a-button>
         </a-space>
       </div>

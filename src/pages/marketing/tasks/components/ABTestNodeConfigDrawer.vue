@@ -58,7 +58,7 @@
                 @click="removeBranch(index)"
               >
                 <template #icon>
-                  <icon-delete />
+                  <IconDelete />
                 </template>
                 删除
               </a-button>
@@ -131,7 +131,7 @@
             @click="addBranch"
           >
             <template #icon>
-              <icon-plus />
+              <IconPlus />
             </template>
             新增分支
           </a-button>

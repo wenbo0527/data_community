@@ -31,13 +31,13 @@
               @click="toggleAdvancedFilter"
               :class="{ active: showAdvancedFilter }"
             >
-              <icon-filter />高级搜索
+              <IconFilter />高级搜索
             </a-button>
             <a-button type="text" @click="showMissingTicket">
-              <icon-plus />缺失工单
+              <IconPlus />缺失工单
             </a-button>
             <a-button type="text" @click="toggleHistory">
-              <icon-history />搜索历史
+              <IconHistory />搜索历史
             </a-button>
           </div>
         </div>
@@ -55,7 +55,7 @@
             size="large"
           >
             <template #prefix>
-              <icon-search style="color: var(--color-text-3)" />
+              <IconSearch style="color: var(--color-text-3)" />
             </template>
           </a-input-search>
         </div>
@@ -114,7 +114,7 @@
           <div class="history-header">
             <span>最近搜索</span>
             <a-button type="text" size="mini" @click="clearHistory">
-              <icon-delete />清空
+              <IconDelete />清空
             </a-button>
           </div>
           <div class="history-list">
@@ -182,7 +182,7 @@
           <div v-if="currentResults.length === 0 && !searchLoading" class="empty-results">
             <a-empty description="暂无搜索结果">
               <template #image>
-                <icon-search style="font-size: 64px; color: var(--color-text-4)" />
+                <IconSearch style="font-size: 64px; color: var(--color-text-4)" />
               </template>
             </a-empty>
           </div>
@@ -200,7 +200,7 @@
                 </div>
                 <div class="item-actions">
                   <a-button type="text" size="mini" @click.stop="toggleFavorite(item)">
-                    <icon-heart :style="{ color: item.isFavorite ? '#f53f3f' : '#86909c' }" />
+                    <IconHeart :style="{ color: item.isFavorite ? '#f53f3f' : '#86909c' }" />
                   </a-button>
                 </div>
               </div>
@@ -211,13 +211,13 @@
                 
                 <div class="item-meta">
                   <span class="meta-item">
-                    <icon-user />{{ item.owner }}
+                    <IconUser />{{ item.owner }}
                   </span>
                   <span class="meta-item">
-                    <icon-clock-circle />{{ item.updateTime }}
+                    <IconClockCircle />{{ item.updateTime }}
                   </span>
                   <span v-if="item.domain" class="meta-item">
-                    <icon-apps />{{ item.domain }}
+                    <IconApps />{{ item.domain }}
                   </span>
                 </div>
               </div>

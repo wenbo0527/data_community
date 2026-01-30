@@ -1,6 +1,6 @@
 <template>
   <div class="component-demo">
-    <a-card title="基础组件使用示例" class="demo-card">
+    <ACard title="基础组件使用示例" class="demo-card">
       <!-- 表格示例 -->
       <div class="demo-section">
         <h3>BaseTable 组件示例</h3>
@@ -17,31 +17,31 @@
           @selection-change="handleSelectionChange"
         >
           <template #toolbar-buttons>
-            <a-button type="primary" @click="showAddModal = true">
-              <template #icon><icon-plus /></template>
+            <AButton type="primary" @click="showAddModal = true">
+              <template #icon><IconPlus /></template>
               新增
-            </a-button>
-            <a-button @click="handleBatchDelete" :disabled="selectedRows.length === 0">
-              <template #icon><icon-delete /></template>
+            </AButton>
+            <AButton @click="handleBatchDelete" :disabled="selectedRows.length === 0">
+              <template #icon><IconDelete /></template>
               批量删除
-            </a-button>
+            </AButton>
           </template>
           
           <template #status="{ record }">
-            <a-tag :color="getStatusColor(record.status)">
+            <ATag :color="getStatusColor(record.status)">
               {{ getStatusText(record.status) }}
-            </a-tag>
+            </ATag>
           </template>
           
           <template #action="{ record }">
-            <a-space>
-              <a-button type="text" size="small" @click="handleEdit(record)">
+            <ASpace>
+              <AButton type="text" size="small" @click="handleEdit(record)">
                 编辑
-              </a-button>
-              <a-button type="text" size="small" status="danger" @click="handleDelete(record)">
+              </AButton>
+              <AButton type="text" size="small" status="danger" @click="handleDelete(record)">
                 删除
-              </a-button>
-            </a-space>
+              </AButton>
+            </ASpace>
           </template>
         </BaseTable>
       </div>
@@ -77,7 +77,7 @@
           @reset="handleReset"
         />
       </div>
-    </a-card>
+    </ACard>
   </div>
 </template>
 

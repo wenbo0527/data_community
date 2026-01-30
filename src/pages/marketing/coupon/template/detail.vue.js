@@ -5,13 +5,13 @@ const route = useRoute();
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['back-icon']} */ ;
+/** @type {__VLS_StyleScopedClasses['back-icon']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "coupon-template-detail" },
 });
-/** @type {[typeof CouponTemplateCreate, ]} */ ;
+/** @type {[typeof CouponTemplateCreate, ]} */ 
 // @ts-ignore
 const __VLS_0 = __VLS_asFunctionalComponent(CouponTemplateCreate, new CouponTemplateCreate({
     mode: ('view'),
@@ -25,8 +25,8 @@ const __VLS_1 = __VLS_0({
     readonly: (true),
     disableOperations: true,
 }, ...__VLS_functionalComponentArgsRest(__VLS_0));
-/** @type {__VLS_StyleScopedClasses['coupon-template-detail']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['coupon-template-detail']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -40,4 +40,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

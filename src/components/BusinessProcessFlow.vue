@@ -28,7 +28,7 @@
             <div class="steps-stats">
               <span class="step-count">共 {{ currentProcessSteps.length }} 个步骤</span>
               <a-button type="primary" size="small" @click="openEditModal">
-                <template #icon><icon-edit /></template>
+                <template #icon><IconEdit /></template>
                 编辑流程
               </a-button>
             </div>
@@ -65,11 +65,11 @@
             <p class="step-description">{{ currentProcessSteps[activeStep]?.description }}</p>
             <div class="step-stats">
               <span class="stat-item">
-                <icon-file class="stat-icon" />
+                <IconFile class="stat-icon" />
                 {{ currentTables.length }} 个数据表
               </span>
               <span class="stat-item">
-                <icon-bar-chart class="stat-icon" />
+                <IconBarChart class="stat-icon" />
                 {{ currentMetrics.length }} 个指标
               </span>
             </div>
@@ -86,7 +86,7 @@
         <template #extra>
           <div class="tab-extra-actions">
             <a-button type="text" size="small" @click="activeTab === 'tables' ? editTableBinding() : editMetricBinding()">
-              <template #icon><icon-edit /></template>
+              <template #icon><IconEdit /></template>
               编辑绑定
             </a-button>
             <a-select 
@@ -110,7 +110,7 @@
           <a-tab-pane key="tables" title="核心底表">
             <template #title>
               <div class="tab-title">
-                <icon-file class="tab-icon" />
+                <IconFile class="tab-icon" />
                 <span>核心底表</span>
               </div>
             </template>
@@ -135,11 +135,11 @@
                       <p class="table-desc">{{ table.description }}</p>
                       <div class="table-footer">
                         <span class="table-owner">
-                          <icon-user class="owner-icon" />
+                          <IconUser class="owner-icon" />
                           {{ table.owner || '未指定' }}
                         </span>
                         <a-button type="text" size="mini">
-                          <template #icon><icon-eye /></template>
+                          <template #icon><IconEye /></template>
                         </a-button>
                       </div>
                     </div>
@@ -162,11 +162,11 @@
                 <!-- 无数据表时的空状态 -->
                 <div v-else class="empty-tables-state">
                   <div class="empty-content">
-                    <icon-file class="empty-icon" />
+                    <IconFile class="empty-icon" />
                     <h4 class="empty-title">当前步骤暂无关联数据表</h4>
                     <p class="empty-description">该业务步骤尚未配置相关的数据表，您可以通过编辑流程来添加数据表关联。</p>
                     <a-button type="primary" @click="openEditModal">
-                      <template #icon><icon-edit /></template>
+                      <template #icon><IconEdit /></template>
                       配置数据表
                     </a-button>
                   </div>
@@ -179,7 +179,7 @@
           <a-tab-pane key="metrics" title="业务指标">
             <template #title>
               <div class="tab-title">
-                <icon-bar-chart class="tab-icon" />
+                <IconBarChart class="tab-icon" />
                 <span>业务指标</span>
               </div>
             </template>
@@ -204,11 +204,11 @@
                       <p class="metric-desc">{{ metric.description }}</p>
                       <div class="metric-footer">
                         <span class="metric-owner">
-                          <icon-user class="owner-icon" />
+                          <IconUser class="owner-icon" />
                           {{ metric.owner || '未指定' }}
                         </span>
                         <a-button type="text" size="mini">
-                          <template #icon><icon-eye /></template>
+                          <template #icon><IconEye /></template>
                         </a-button>
                       </div>
                     </div>
@@ -230,11 +230,11 @@
                 <!-- 无指标时的空状态 -->
                 <div v-else class="empty-metrics-state">
                   <div class="empty-content">
-                    <icon-bar-chart class="empty-icon" />
+                    <IconBarChart class="empty-icon" />
                     <h4 class="empty-title">当前步骤暂无关联指标</h4>
                     <p class="empty-description">该业务步骤尚未配置相关的业务指标，您可以通过编辑流程来添加指标关联。</p>
                     <a-button type="primary" @click="openEditModal">
-                      <template #icon><icon-edit /></template>
+                      <template #icon><IconEdit /></template>
                       配置指标
                     </a-button>
                   </div>

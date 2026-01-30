@@ -220,53 +220,53 @@ onMounted(async () => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['search-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-tabs-tab']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-map-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-map-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-top-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-tabs-nav']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-tabs-tab']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-map-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-top-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-tabs-nav']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-tabs-tab']} */ ;
+/** @type {__VLS_StyleScopedClasses['search-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['search-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['search-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-tabs-tab']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['data-map-container']} */ 
+/** @type {__VLS_StyleScopedClasses['header-section']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ 
+/** @type {__VLS_StyleScopedClasses['data-map-container']} */ 
+/** @type {__VLS_StyleScopedClasses['header-section']} */ 
+/** @type {__VLS_StyleScopedClasses['header-top-row']} */ 
+/** @type {__VLS_StyleScopedClasses['title-area']} */ 
+/** @type {__VLS_StyleScopedClasses['page-title']} */ 
+/** @type {__VLS_StyleScopedClasses['search-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-tabs-nav']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-tabs-tab']} */ 
+/** @type {__VLS_StyleScopedClasses['data-map-container']} */ 
+/** @type {__VLS_StyleScopedClasses['header-section']} */ 
+/** @type {__VLS_StyleScopedClasses['header-top-row']} */ 
+/** @type {__VLS_StyleScopedClasses['title-area']} */ 
+/** @type {__VLS_StyleScopedClasses['page-title']} */ 
+/** @type {__VLS_StyleScopedClasses['page-description']} */ 
+/** @type {__VLS_StyleScopedClasses['search-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['search-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-tabs-nav']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-tabs-tab']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "data-map-container" },
 });
 if (__VLS_ctx.loading) {
-    /** @type {[typeof LoadingState, ]} */ ;
+    /** @type {[typeof LoadingState, ]} */ 
     // @ts-ignore
     const __VLS_0 = __VLS_asFunctionalComponent(LoadingState, new LoadingState({
         type: "skeleton",
@@ -303,7 +303,7 @@ else {
         ...{ class: "search-actions" },
     });
     const __VLS_3 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_4 = __VLS_asFunctionalComponent(__VLS_3, new __VLS_3({
         ...{ 'onClick': {} },
@@ -323,13 +323,13 @@ else {
     };
     __VLS_6.slots.default;
     const __VLS_11 = {}.IconFilter;
-    /** @type {[typeof __VLS_components.IconFilter, typeof __VLS_components.iconFilter, ]} */ ;
+    /** @type {[typeof __VLS_components.IconFilter, typeof __VLS_components.iconFilter, ]} */ 
     // @ts-ignore
     const __VLS_12 = __VLS_asFunctionalComponent(__VLS_11, new __VLS_11({}));
     const __VLS_13 = __VLS_12({}, ...__VLS_functionalComponentArgsRest(__VLS_12));
-    var __VLS_6;
+    let __VLS_6;
     const __VLS_15 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_16 = __VLS_asFunctionalComponent(__VLS_15, new __VLS_15({
         ...{ 'onClick': {} },
@@ -347,12 +347,12 @@ else {
     };
     __VLS_18.slots.default;
     const __VLS_23 = {}.IconHistory;
-    /** @type {[typeof __VLS_components.IconHistory, typeof __VLS_components.iconHistory, ]} */ ;
+    /** @type {[typeof __VLS_components.IconHistory, typeof __VLS_components.iconHistory, ]} */ 
     // @ts-ignore
     const __VLS_24 = __VLS_asFunctionalComponent(__VLS_23, new __VLS_23({}));
     const __VLS_25 = __VLS_24({}, ...__VLS_functionalComponentArgsRest(__VLS_24));
-    var __VLS_18;
-    /** @type {[typeof SearchSection, ]} */ ;
+    let __VLS_18;
+    /** @type {[typeof SearchSection, ]} */ 
     // @ts-ignore
     const __VLS_27 = __VLS_asFunctionalComponent(SearchSection, new SearchSection({
         ...{ 'onSearch': {} },
@@ -386,12 +386,12 @@ else {
     const __VLS_35 = {
         onFilterChange: (__VLS_ctx.handleFilterChange)
     };
-    var __VLS_29;
+    let __VLS_29;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "tabs-section" },
     });
     const __VLS_36 = {}.ATabs;
-    /** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ ;
+    /** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ 
     // @ts-ignore
     const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
         ...{ 'onChange': {} },
@@ -411,7 +411,7 @@ else {
     };
     __VLS_39.slots.default;
     const __VLS_44 = {}.ATabPane;
-    /** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+    /** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
     // @ts-ignore
     const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
         key: "1",
@@ -425,7 +425,7 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "tab-content-wrapper" },
     });
-    /** @type {[typeof TableCollectionGrid, ]} */ ;
+    /** @type {[typeof TableCollectionGrid, ]} */ 
     // @ts-ignore
     const __VLS_48 = __VLS_asFunctionalComponent(TableCollectionGrid, new TableCollectionGrid({
         ...{ 'onCollectionClick': {} },
@@ -465,10 +465,10 @@ else {
     const __VLS_58 = {
         onFavoriteChange: (__VLS_ctx.handleFavoriteChange)
     };
-    var __VLS_50;
-    var __VLS_47;
+    let __VLS_50;
+    let __VLS_47;
     const __VLS_59 = {}.ATabPane;
-    /** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+    /** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
     // @ts-ignore
     const __VLS_60 = __VLS_asFunctionalComponent(__VLS_59, new __VLS_59({
         key: "2",
@@ -482,15 +482,15 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "tab-content-wrapper business-process" },
     });
-    /** @type {[typeof BusinessProcessFlow, ]} */ ;
+    /** @type {[typeof BusinessProcessFlow, ]} */ 
     // @ts-ignore
     const __VLS_63 = __VLS_asFunctionalComponent(BusinessProcessFlow, new BusinessProcessFlow({}));
     const __VLS_64 = __VLS_63({}, ...__VLS_functionalComponentArgsRest(__VLS_63));
-    var __VLS_62;
-    var __VLS_39;
+    let __VLS_62;
+    let __VLS_39;
     if (__VLS_ctx.currentTable) {
         const __VLS_66 = {}.RouterLink;
-        /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ]} */ ;
+        /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.routerLink, ]} */ 
         // @ts-ignore
         const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
             to: (`/discovery/data-map/${encodeURIComponent(JSON.stringify(__VLS_ctx.currentTable))}`),
@@ -501,7 +501,7 @@ else {
             ...{ class: "hidden-link" },
         }, ...__VLS_functionalComponentArgsRest(__VLS_67));
     }
-    /** @type {[typeof CreateCollectionModal, ]} */ ;
+    /** @type {[typeof CreateCollectionModal, ]} */ 
     // @ts-ignore
     const __VLS_70 = __VLS_asFunctionalComponent(CreateCollectionModal, new CreateCollectionModal({
         ...{ 'onCreate': {} },
@@ -524,22 +524,22 @@ else {
     const __VLS_77 = {
         onUpdate: (__VLS_ctx.handleUpdateCollectionSubmit)
     };
-    var __VLS_72;
+    let __VLS_72;
 }
-/** @type {__VLS_StyleScopedClasses['data-map-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-top-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['active']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ ;
-/** @type {__VLS_StyleScopedClasses['business-process']} */ ;
-/** @type {__VLS_StyleScopedClasses['hidden-link']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['data-map-container']} */ 
+/** @type {__VLS_StyleScopedClasses['header-section']} */ 
+/** @type {__VLS_StyleScopedClasses['header-top-row']} */ 
+/** @type {__VLS_StyleScopedClasses['title-area']} */ 
+/** @type {__VLS_StyleScopedClasses['page-title']} */ 
+/** @type {__VLS_StyleScopedClasses['page-description']} */ 
+/** @type {__VLS_StyleScopedClasses['search-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['active']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-content-wrapper']} */ 
+/** @type {__VLS_StyleScopedClasses['business-process']} */ 
+/** @type {__VLS_StyleScopedClasses['hidden-link']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -582,4 +582,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

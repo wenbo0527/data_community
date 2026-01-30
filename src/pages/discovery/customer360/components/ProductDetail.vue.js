@@ -30,10 +30,10 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
     ...{ class: ('status-' + __VLS_ctx.product.status.toLowerCase()) },
 });
 (__VLS_ctx.product.status);
-/** @type {__VLS_StyleScopedClasses['product-detail']} */ ;
-/** @type {__VLS_StyleScopedClasses['detail-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['detail-row']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['product-detail']} */ 
+/** @type {__VLS_StyleScopedClasses['detail-row']} */ 
+/** @type {__VLS_StyleScopedClasses['detail-row']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -50,4 +50,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

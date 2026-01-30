@@ -19,7 +19,7 @@
             style="width: 280px"
             @change="handleSearch"
           >
-            <template #prefix><icon-search /></template>
+            <template #prefix><IconSearch /></template>
           </a-input>
         </div>
         <div class="filter-area">
@@ -48,11 +48,11 @@
         </div>
         <div class="button-area">
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             创建虚拟事件
           </a-button>
           <a-button @click="handleRefresh">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
         </div>
@@ -136,11 +136,11 @@
             <template #cell="{ record }">
               <div class="action-buttons">
                 <a-button type="text" size="small" @click="handleEdit(record)">
-                  <template #icon><icon-edit /></template>
+                  <template #icon><IconEdit /></template>
                   编辑
                 </a-button>
                 <a-button type="text" size="small" @click="handleTest(record)">
-                  <template #icon><icon-play-circle /></template>
+                  <template #icon><IconPlayCircle /></template>
                   测试
                 </a-button>
                 <a-button v-if="record.status !== '已下线'" type="text" size="small" @click="handleOffline(record)" status="danger">
@@ -168,7 +168,7 @@
       @ok="handleModalOk"
       @cancel="handleModalCancel"
     >
-      <virtual-event-form
+      <VirtualEventForm
         v-if="modalVisible"
         :event-data="currentEvent"
         :real-events="realEvents"

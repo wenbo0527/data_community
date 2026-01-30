@@ -129,7 +129,7 @@ export class PortCoordinateDebugger {
       this.log('warn', `⚠️ [端口配置调试] 节点 ${nodeId} 端口配置为 null - 节点没有端口`)
       
       // 仍然需要更新调试信息
-      let nodeDebugData = this.debugInfo.get(nodeId)
+      const nodeDebugData = this.debugInfo.get(nodeId)
       if (nodeDebugData) {
         nodeDebugData.portConfig = null
         this.debugInfo.set(nodeId, nodeDebugData)
@@ -629,7 +629,7 @@ export class PortCoordinateDebugger {
       })
 
       // 更新调试信息中的渲染数据
-      let debugData = this.debugInfo.get(nodeId)
+      const debugData = this.debugInfo.get(nodeId)
       if (debugData) {
         debugData.renderedPosition = position
         debugData.renderedSize = size

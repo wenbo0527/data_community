@@ -235,11 +235,11 @@ watch(() => props.formData.dataProducts, () => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['value-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['value-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['amount-range-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['allocation-progress']} */ ;
+/** @type {__VLS_StyleScopedClasses['value-input']} */ 
+/** @type {__VLS_StyleScopedClasses['value-input']} */ 
+/** @type {__VLS_StyleScopedClasses['amount-range-input']} */ 
+/** @type {__VLS_StyleScopedClasses['form-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['allocation-progress']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -252,7 +252,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3
     ...{ class: "section-title" },
 });
 const __VLS_0 = {}.ASelect;
-/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     modelValue: (__VLS_ctx.selectedScenes),
@@ -269,7 +269,7 @@ const __VLS_2 = __VLS_1({
 __VLS_3.slots.default;
 for (const [scene] of __VLS_getVForSourceType((__VLS_ctx.sceneOptions))) {
     const __VLS_4 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         key: (scene.value),
@@ -283,7 +283,7 @@ for (const [scene] of __VLS_getVForSourceType((__VLS_ctx.sceneOptions))) {
     (scene.label);
     var __VLS_7;
 }
-var __VLS_3;
+let __VLS_3;
 for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formData.dataProducts))) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         key: (productIndex),
@@ -304,7 +304,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
     });
     (product.totalAmount);
     const __VLS_8 = {}.ATable;
-    /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+    /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
         data: (__VLS_ctx.getProductSceneData(product)),
@@ -328,7 +328,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
         const { amount: __VLS_thisSlot } = __VLS_11.slots;
         const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
         const __VLS_12 = {}.AInputNumber;
-        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+        /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
         // @ts-ignore
         const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
             ...{ 'onChange': {} },
@@ -370,7 +370,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
             ...{ class: "condition-selects" },
         });
         const __VLS_20 = {}.ASelect;
-        /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+        /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
         // @ts-ignore
         const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
             modelValue: (record.selectedCondition),
@@ -386,7 +386,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
         }, ...__VLS_functionalComponentArgsRest(__VLS_21));
         __VLS_23.slots.default;
         const __VLS_24 = {}.AOption;
-        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
         // @ts-ignore
         const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
             value: "amount",
@@ -397,7 +397,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
         __VLS_27.slots.default;
         var __VLS_27;
         const __VLS_28 = {}.AOption;
-        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
         // @ts-ignore
         const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
             value: "period",
@@ -408,7 +408,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
         __VLS_31.slots.default;
         var __VLS_31;
         const __VLS_32 = {}.AOption;
-        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
         // @ts-ignore
         const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
             value: "riskLevel",
@@ -420,7 +420,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
         var __VLS_35;
         var __VLS_23;
         const __VLS_36 = {}.ASelect;
-        /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+        /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
         // @ts-ignore
         const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
             ...{ 'onChange': {} },
@@ -443,7 +443,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
         __VLS_39.slots.default;
         for (const [option] of __VLS_getVForSourceType((__VLS_ctx.amountConditionOptions))) {
             const __VLS_44 = {}.AOption;
-            /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+            /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
             // @ts-ignore
             const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
                 key: (option.value),
@@ -464,7 +464,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
             });
             if (record.amountCondition === 'range') {
                 const __VLS_48 = {}.AInput;
-                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
                 // @ts-ignore
                 const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
                     ...{ 'onChange': {} },
@@ -500,7 +500,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
                     ...{ class: "separator" },
                 });
                 const __VLS_57 = {}.AInput;
-                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
                 // @ts-ignore
                 const __VLS_58 = __VLS_asFunctionalComponent(__VLS_57, new __VLS_57({
                     ...{ 'onChange': {} },
@@ -535,7 +535,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
             }
             else {
                 const __VLS_66 = {}.AInput;
-                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
                 // @ts-ignore
                 const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
                     ...{ 'onChange': {} },
@@ -558,7 +558,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
                     onChange: (...[$event]) => {
                         if (!(record.amountCondition))
                             return;
-                        if (!!(record.amountCondition === 'range'))
+                        if (record.amountCondition === 'range')
                             return;
                         __VLS_ctx.updateAmountValue(record, product);
                     }
@@ -579,7 +579,7 @@ for (const [product, productIndex] of __VLS_getVForSourceType((__VLS_ctx.formDat
     });
     (__VLS_ctx.calculateProgress(product));
     const __VLS_75 = {}.AProgress;
-    /** @type {[typeof __VLS_components.AProgress, typeof __VLS_components.aProgress, ]} */ ;
+    /** @type {[typeof __VLS_components.AProgress, typeof __VLS_components.aProgress, ]} */ 
     // @ts-ignore
     const __VLS_76 = __VLS_asFunctionalComponent(__VLS_75, new __VLS_75({
         percent: (__VLS_ctx.calculateProgress(product)),
@@ -596,13 +596,13 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "form-footer" },
 });
 const __VLS_79 = {}.ASpace;
-/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
 // @ts-ignore
 const __VLS_80 = __VLS_asFunctionalComponent(__VLS_79, new __VLS_79({}));
 const __VLS_81 = __VLS_80({}, ...__VLS_functionalComponentArgsRest(__VLS_80));
 __VLS_82.slots.default;
 const __VLS_83 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_84 = __VLS_asFunctionalComponent(__VLS_83, new __VLS_83({
     ...{ 'onClick': {} },
@@ -619,9 +619,9 @@ const __VLS_90 = {
     onClick: (__VLS_ctx.handlePrev)
 };
 __VLS_86.slots.default;
-var __VLS_86;
+let __VLS_86;
 const __VLS_91 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_92 = __VLS_asFunctionalComponent(__VLS_91, new __VLS_91({
     ...{ 'onClick': {} },
@@ -640,31 +640,31 @@ const __VLS_98 = {
     onClick: (__VLS_ctx.handleNext)
 };
 __VLS_94.slots.default;
-var __VLS_94;
-var __VLS_82;
-/** @type {__VLS_StyleScopedClasses['scene-step']} */ ;
-/** @type {__VLS_StyleScopedClasses['scene-selection']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['scene-select']} */ ;
-/** @type {__VLS_StyleScopedClasses['product-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['product-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['product-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['info-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['info-value']} */ ;
-/** @type {__VLS_StyleScopedClasses['scene-table']} */ ;
-/** @type {__VLS_StyleScopedClasses['amount-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-selects']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-type-select']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-select']} */ ;
-/** @type {__VLS_StyleScopedClasses['value-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['separator']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['allocation-progress']} */ ;
-/** @type {__VLS_StyleScopedClasses['progress-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-footer']} */ ;
-var __VLS_dollars;
+let __VLS_94;
+let __VLS_82;
+/** @type {__VLS_StyleScopedClasses['scene-step']} */ 
+/** @type {__VLS_StyleScopedClasses['scene-selection']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['scene-select']} */ 
+/** @type {__VLS_StyleScopedClasses['product-section']} */ 
+/** @type {__VLS_StyleScopedClasses['product-title']} */ 
+/** @type {__VLS_StyleScopedClasses['product-info']} */ 
+/** @type {__VLS_StyleScopedClasses['info-label']} */ 
+/** @type {__VLS_StyleScopedClasses['info-value']} */ 
+/** @type {__VLS_StyleScopedClasses['scene-table']} */ 
+/** @type {__VLS_StyleScopedClasses['amount-input']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-selects']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-type-select']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-select']} */ 
+/** @type {__VLS_StyleScopedClasses['value-input']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-input']} */ 
+/** @type {__VLS_StyleScopedClasses['separator']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-input']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-input']} */ 
+/** @type {__VLS_StyleScopedClasses['allocation-progress']} */ 
+/** @type {__VLS_StyleScopedClasses['progress-text']} */ 
+/** @type {__VLS_StyleScopedClasses['form-footer']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -694,4 +694,4 @@ export default (await import('vue')).defineComponent({
     emits: {},
     __typeProps: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

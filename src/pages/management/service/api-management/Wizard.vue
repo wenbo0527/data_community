@@ -4,22 +4,22 @@
     <div class="api-header">
       <div class="header-left">
         <a-button type="text" @click="goBack" class="back-btn">
-          <template #icon><icon-left /></template>
+          <template #icon><IconLeft /></template>
         </a-button>
         <div class="api-title">
-          <icon-storage class="title-icon" />
+          <IconStorage class="title-icon" />
           <span class="title-text">向导式{{ form.dbType || 'mysql' }}</span>
-          <icon-edit class="edit-icon" />
+          <IconEdit class="edit-icon" />
         </div>
         <div class="api-meta">
           <div class="meta-item">
             <span class="label">API ID:</span>
             <span class="value">{{ form.id || '-' }}</span>
-            <icon-copy class="copy-icon" />
+            <IconCopy class="copy-icon" />
           </div>
           <div class="meta-item">
             <span class="label">数据源类型:</span>
-            <span class="value"><icon-apps /> MySQL</span>
+            <span class="value"><IconApps /> MySQL</span>
           </div>
           <div class="meta-item">
             <span class="label">版本:</span>
@@ -50,7 +50,7 @@
           </a-dropdown-button>
           <a-button type="primary" status="success" @click="testApi">测试</a-button>
           <a-button type="primary" status="success" @click="publishApi">发布</a-button>
-          <a-button type="text"><icon-more-vertical /></a-button>
+          <a-button type="text"><IconMoreVertical /></a-button>
         </a-space>
       </div>
     </div>
@@ -87,13 +87,13 @@
                 <div class="param-toolbar">
                   <a-space>
                     <a-button type="primary" size="small" @click="addRequestParam">
-                      <template #icon><icon-plus /></template>添加
+                      <template #icon><IconPlus /></template>添加
                     </a-button>
                     <a-button type="outline" size="small" @click="batchAddRequest">
-                      <template #icon><icon-plus-circle /></template>批量添加
+                      <template #icon><IconPlusCircle /></template>批量添加
                     </a-button>
                     <a-button type="text" size="small" @click="clearRequestParams">
-                      <template #icon><icon-delete /></template>清空参数
+                      <template #icon><IconDelete /></template>清空参数
                     </a-button>
                   </a-space>
                 </div>
@@ -162,8 +162,8 @@
                     <a-table-column title="操作" :width="80" align="center">
                       <template #cell="{ rowIndex }">
                         <a-space>
-                          <icon-copy class="action-icon" />
-                          <icon-delete class="action-icon danger" @click="removeRequestParam(rowIndex)" />
+                          <IconCopy class="action-icon" />
+                          <IconDelete class="action-icon danger" @click="removeRequestParam(rowIndex)" />
                         </a-space>
                       </template>
                     </a-table-column>
@@ -174,10 +174,10 @@
                 <div class="param-toolbar">
                   <a-space>
                     <a-button type="primary" size="small" @click="addResponseParam">
-                      <template #icon><icon-plus /></template>添加
+                      <template #icon><IconPlus /></template>添加
                     </a-button>
                     <a-button type="outline" size="small" @click="batchAddResponse">
-                      <template #icon><icon-plus-circle /></template>批量添加
+                      <template #icon><IconPlusCircle /></template>批量添加
                     </a-button>
                   </a-space>
                 </div>
@@ -255,8 +255,8 @@
                     <a-table-column title="操作" :width="80" align="center">
                       <template #cell="{ rowIndex }">
                         <a-space>
-                          <icon-copy class="action-icon" @click="copyResponseParam(rowIndex)" />
-                          <icon-delete class="action-icon danger" @click="removeResponseParam(rowIndex)" />
+                          <IconCopy class="action-icon" @click="copyResponseParam(rowIndex)" />
+                          <IconDelete class="action-icon danger" @click="removeResponseParam(rowIndex)" />
                         </a-space>
                       </template>
                     </a-table-column>
@@ -313,7 +313,7 @@
             <div class="sql-code-wrapper">
               <pre><code>{{ sqlPreview || '请先配置参数...' }}</code></pre>
               <a-button type="text" size="small" class="copy-sql-btn" @click="generateSql">
-                <template #icon><icon-refresh /></template>更新预览
+                <template #icon><IconRefresh /></template>更新预览
               </a-button>
             </div>
           </div>
@@ -397,7 +397,7 @@
         <!-- 测试执行按钮 -->
         <div class="test-actions">
           <a-button type="primary" :loading="testing" @click="runApiTest">
-            <template #icon><icon-play-arrow /></template>开始测试
+            <template #icon><IconPlayArrow /></template>开始测试
           </a-button>
         </div>
 
@@ -421,7 +421,7 @@
                   <a-radio value="json">JSON</a-radio>
                 </a-radio-group>
                 <a-space v-if="resultViewMode === 'table'">
-                  <a-button size="mini"><template #icon><icon-download /></template>导出 Excel</a-button>
+                  <a-button size="mini"><template #icon><IconDownload /></template>导出 Excel</a-button>
                   <a-input-search size="mini" placeholder="搜索结果" style="width: 160px" />
                 </a-space>
               </div>
@@ -440,7 +440,7 @@
             <a-tab-pane key="log" title="请求日志">
               <div class="log-content">
                 <pre><code>{{ testResult.log }}</code></pre>
-                <a-button type="text" size="mini" class="full-log-btn"><icon-fullscreen /></a-button>
+                <a-button type="text" size="mini" class="full-log-btn"><IconFullscreen /></a-button>
               </div>
             </a-tab-pane>
             <a-tab-pane key="body" title="请求参数体">
@@ -775,7 +775,7 @@ const saveApi = () => {
   
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    let list = raw ? JSON.parse(raw) : []
+    const list = raw ? JSON.parse(raw) : []
     
     const apiData = {
       ...form,

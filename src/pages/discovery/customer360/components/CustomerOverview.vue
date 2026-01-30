@@ -4,13 +4,13 @@
       <h4>客户概览</h4>
       <div class="header-actions">
         <a-button size="small" @click="refreshData">
-          <template #icon><icon-refresh /></template>
+          <template #icon><IconRefresh /></template>
           刷新
         </a-button>
 
         <!-- 查看联系人按钮 -->
         <a-button size="small" @click="showContacts">
-          <template #icon><icon-user-group /></template>
+          <template #icon><IconUserGroup /></template>
           查看联系人
         </a-button>
       </div>
@@ -29,7 +29,7 @@
       <!-- 客户基本信息卡片 -->
       <div class="info-card">
         <div class="card-header">
-          <icon-user class="card-icon" />
+          <IconUser class="card-icon" />
           <span class="card-title">客户基本信息</span>
         </div>
         <div class="card-content">
@@ -85,7 +85,7 @@
       <!-- 账户状态卡片 -->
       <div class="info-card">
         <div class="card-header">
-          <icon-safe class="card-icon" />
+          <IconSafe class="card-icon" />
           <span class="card-title">账户状态</span>
         </div>
         <div class="card-content">
@@ -141,7 +141,7 @@
       <!-- 风险情况卡片 -->
       <div class="info-card">
         <div class="card-header">
-          <icon-exclamation-circle class="card-icon risk-icon" />
+          <IconExclamationCircle class="card-icon risk-icon" />
           <span class="card-title">风险情况</span>
         </div>
         <div class="card-content">

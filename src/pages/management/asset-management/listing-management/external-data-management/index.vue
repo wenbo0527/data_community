@@ -10,13 +10,13 @@
           <a-space>
             <a-button type="primary" @click="showCreateModal = true">
               <template #icon>
-                <icon-plus />
+                <IconPlus />
               </template>
               新增外部数据
             </a-button>
             <a-button type="outline" @click="handleCreatePurchaseProject">
               <template #icon>
-                <icon-plus />
+                <IconPlus />
               </template>
               新增采购项目
             </a-button>
@@ -69,7 +69,7 @@
               <a-col :span="4">
                 <a-button type="primary" @click="handleSearch">
                   <template #icon>
-                    <icon-search />
+                    <IconSearch />
                   </template>
                   搜索
                 </a-button>
@@ -94,11 +94,7 @@
           </template>
           
           <template #status="{ record }">
-            <a-tag
-              :color="getStatusColor(record.status)"
-            >
-              {{ getStatusText(record.status) }}
-            </a-tag>
+            <StatusTag :status="record.status" dictKey="externalDataMgmtStatus" />
           </template>
           
           <template #actions="{ record }">
@@ -160,7 +156,7 @@
               <a-col :span="4">
                 <a-button type="primary" @click="handleProjectSearch">
                   <template #icon>
-                    <icon-search />
+                    <IconSearch />
                   </template>
                   搜索
                 </a-button>
@@ -185,11 +181,13 @@
           </template>
           
           <template #projectStatus="{ record }">
-            <a-tag
-              :color="getProjectStatusColor(record.status)"
-            >
-              {{ getProjectStatusText(record.status) }}
-            </a-tag>
+            <StatusTag :status="record.status" dictKey="purchaseProjectStatus" />
+          </template>
+          <template #purchaseDate="{ record }">
+            {{ DateUtils.formatDate(record.purchaseDate) }}
+          </template>
+          <template #createTime="{ record }">
+            {{ DateUtils.formatDateTime(record.createTime) }}
           </template>
           
           <template #projectActions="{ record }">
@@ -213,7 +211,7 @@
           <div class="search-section">
             <a-space>
               <a-button type="primary" @click="showSupplierModal = true">
-                <template #icon><icon-plus /></template>
+                <template #icon><IconPlus /></template>
                 新增供应商
               </a-button>
             </a-space>
@@ -221,6 +219,9 @@
         </a-card>
 
         <a-table :columns="supplierColumns" :data="supplierTableData" :pagination="supplierPagination">
+          <template #createTime="{ record }">
+            {{ DateUtils.formatDateTime(record.createTime) }}
+          </template>
           <template #actions="{ record }">
             <a-space>
               <a-button type="text" size="small" @click="editSupplier(record)">编辑</a-button>
@@ -451,7 +452,7 @@
                 <template #upload-button>
                   <a-button type="outline">
                     <template #icon>
-                      <icon-upload />
+                      <IconUpload />
                     </template>
                     {{ editingExternalData ? '追加文件' : '上传文件' }}
                   </a-button>
@@ -477,6 +478,8 @@ import { ref, reactive, onMounted, h, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconFile, IconUpload, IconSearch } from '@arco-design/web-vue/es/icon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 // 路由
 const router = useRouter()
@@ -603,7 +606,8 @@ const columns = [
   {
     title: '最后更新',
     dataIndex: 'updateTime',
-    width: 160
+    width: 160,
+    render: ({ record }) => DateUtils.smartFormat(record.updateTime)
   },
   {
     title: '操作',
@@ -916,23 +920,7 @@ const handlePageSizeChange = (pageSize: number) => {
   pagination.current = 1
 }
 
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    active: 'green',
-    inactive: 'orange',
-    draft: 'gray'
-  }
-  return colorMap[status] || 'gray'
-}
-
-const getStatusText = (status: string) => {
-  const textMap: Record<string, string> = {
-    active: '启用',
-    inactive: '停用',
-    draft: '草稿'
-  }
-  return textMap[status] || '未知'
-}
+ 
 
 // 采购项目相关方法
 const handleProjectSearch = () => {
@@ -951,27 +939,7 @@ const handleProjectPageSizeChange = (pageSize: number) => {
   projectPagination.current = 1
 }
 
-const getProjectStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    pending: 'orange',
-    approved: 'blue',
-    'in-progress': 'cyan',
-    completed: 'green',
-    cancelled: 'red'
-  }
-  return colorMap[status] || 'gray'
-}
-
-const getProjectStatusText = (status: string) => {
-  const textMap: Record<string, string> = {
-    pending: '待审核',
-    approved: '已审核',
-    'in-progress': '进行中',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return textMap[status] || '未知'
-}
+ 
 
 const viewProjectDetail = (record: any) => {
   console.log('查看项目详情:', record)
@@ -1127,7 +1095,7 @@ interface SupplierItem { id: string; name: string; description: string; createTi
 const supplierColumns = [
   { title: '供应商名称', dataIndex: 'name', width: 220 },
   { title: '供应商说明', dataIndex: 'description' },
-  { title: '创建时间', dataIndex: 'createTime', width: 180 },
+  { title: '创建时间', dataIndex: 'createTime', slotName: 'createTime', width: 180 },
   { title: '操作', slotName: 'actions', width: 160 }
 ]
 const supplierTableData = ref<SupplierItem[]>([

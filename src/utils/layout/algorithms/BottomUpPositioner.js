@@ -496,7 +496,7 @@ export class BottomUpPositioner {
     );
 
     // 增强修复：多轮重叠检测，确保彻底解决重叠
-    let maxIterations = 3;
+    const maxIterations = 3;
     let iteration = 0;
     
     while (iteration < maxIterations) {
@@ -511,7 +511,7 @@ export class BottomUpPositioner {
         const prevPos = positions.get(prevNode.id || prevNode.getId());
 
         // 增强修复：使用统一间距
-        let requiredSpacing = enhancedMinSpacing;
+        const requiredSpacing = enhancedMinSpacing;
         // 使用统一间距，不再区分节点类型
 
         const actualSpacing = currentPos.x - prevPos.x;

@@ -248,7 +248,7 @@ export async function exportStatisticsData(
 }> {
   try {
     // 根据请求参数获取数据
-    let exportData: any = {}
+    const exportData: any = {}
 
     if (request.dataType === 'overview' || request.dataType === 'all') {
       const overviewStats = await getCanvasOverviewStats(canvasId, request.filters)

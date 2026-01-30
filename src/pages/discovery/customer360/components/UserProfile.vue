@@ -3,7 +3,7 @@
     <!-- 用户画像标题 -->
     <div class="profile-header">
       <div class="header-left">
-        <icon-user class="header-icon" />
+        <IconUser class="header-icon" />
         <h3 class="header-title">用户画像</h3>
       </div>
       <div class="header-right">
@@ -27,7 +27,7 @@
       <!-- 人口统计特征 -->
       <div class="profile-section">
         <div class="section-header">
-          <icon-user-group class="section-icon" />
+          <IconUserGroup class="section-icon" />
           <h4 class="section-title">人口统计特征</h4>
         </div>
         <div class="feature-grid">
@@ -65,13 +65,13 @@
       <!-- 行为特征 -->
       <div class="profile-section">
         <div class="section-header">
-          <icon-desktop class="section-icon" />
+          <IconDesktop class="section-icon" />
           <h4 class="section-title">行为特征</h4>
         </div>
         <div class="behavior-metrics">
           <div class="metric-card">
             <div class="metric-header">
-              <icon-clock-circle class="metric-icon" />
+              <IconClockCircle class="metric-icon" />
               <span class="metric-title">活跃度</span>
             </div>
             <div class="metric-value">{{ userProfile.productPreference.activityLevel }}</div>
@@ -79,7 +79,7 @@
           </div>
           <div class="metric-card">
             <div class="metric-header">
-              <icon-mobile class="metric-icon" />
+              <IconMobile class="metric-icon" />
               <span class="metric-title">使用习惯</span>
             </div>
             <div class="metric-value">{{ userProfile.behavior.usageHabits }}</div>
@@ -87,7 +87,7 @@
           </div>
           <div class="metric-card">
             <div class="metric-header">
-              <icon-calendar class="metric-icon" />
+              <IconCalendar class="metric-icon" />
               <span class="metric-title">操作模式</span>
             </div>
             <div class="metric-value">{{ userProfile.behavior.operationPattern }}</div>
@@ -99,7 +99,7 @@
       <!-- 消费特征 -->
       <div class="profile-section">
         <div class="section-header">
-          <icon-apps class="section-icon" />
+          <IconApps class="section-icon" />
           <h4 class="section-title">消费特征</h4>
         </div>
         <div class="consumption-grid">
@@ -131,7 +131,7 @@
       <!-- 风险特征 -->
       <div class="profile-section">
         <div class="section-header">
-          <icon-safe class="section-icon" />
+          <IconSafe class="section-icon" />
           <h4 class="section-title">风险特征</h4>
         </div>
         <div class="risk-assessment">
@@ -163,7 +163,7 @@
       <!-- 产品偏好 -->
       <div class="profile-section">
         <div class="section-header">
-          <icon-star class="section-icon" />
+          <IconStar class="section-icon" />
           <h4 class="section-title">产品偏好</h4>
         </div>
         <div class="preference-grid">
@@ -193,7 +193,7 @@
       <!-- 营销响应 -->
       <div class="profile-section">
         <div class="section-header">
-          <icon-notification class="section-icon" />
+          <IconNotification class="section-icon" />
           <h4 class="section-title">营销响应</h4>
         </div>
         <div class="marketing-metrics">
@@ -232,7 +232,7 @@
     <!-- 调试信息 -->
     <div v-if="showDebugPanel" class="debug-panel">
       <div class="debug-header">
-        <icon-bug class="debug-icon" />
+        <IconBug class="debug-icon" />
         <span class="debug-title">UserProfile组件调试</span>
       </div>
       <div class="debug-content">

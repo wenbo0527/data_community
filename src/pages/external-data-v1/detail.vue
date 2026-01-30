@@ -5,22 +5,22 @@
       <a-row :gutter="16" class="status-cards">
         <a-col :span="6">
           <a-card class="status-card">
-            <statistic title="注册中" :value="statistics.registering" />
+            <Statistic title="注册中" :value="statistics.registering" />
           </a-card>
         </a-col>
         <a-col :span="6">
           <a-card class="status-card">
-            <statistic title="待上线" :value="statistics.pending" />
+            <Statistic title="待上线" :value="statistics.pending" />
           </a-card>
         </a-col>
         <a-col :span="6">
           <a-card class="status-card">
-            <statistic title="已上线" :value="statistics.online" />
+            <Statistic title="已上线" :value="statistics.online" />
           </a-card>
         </a-col>
         <a-col :span="6">
           <a-card class="status-card">
-            <statistic title="已下线" :value="statistics.offline" />
+            <Statistic title="已下线" :value="statistics.offline" />
           </a-card>
         </a-col>
       </a-row>
@@ -85,7 +85,7 @@
               <div class="title-section">
                 <a-space align="center">
                   <a-button type="text" @click="handleGoBack">
-                    <template #icon><icon-left /></template>
+                    <template #icon><IconLeft /></template>
                   </a-button>
                   <h2 class="data-title">{{ dataDetail.dataName }}</h2>
                   <div class="tag-group">
@@ -110,7 +110,7 @@
           <a-col :span="6" class="action-panel">
             <a-space>
               <a-button type="primary" @click="handleEdit">
-                <template #icon><icon-edit /></template>
+                <template #icon><IconEdit /></template>
                 编辑信息
               </a-button>
               <a-button
@@ -119,8 +119,8 @@
                 @click="toggleFavorite"
               >
                 <template #icon>
-                  <icon-star-fill v-if="dataDetail.isFavorite" />
-                  <icon-star v-else />
+                  <IconStarFill v-if="dataDetail.isFavorite" />
+                  <IconStar v-else />
                 </template>
                 {{ dataDetail.isFavorite ? '取消收藏' : '收藏' }}
               </a-button>

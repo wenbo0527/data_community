@@ -34,7 +34,7 @@
       </div>
 
       <!-- 统计信息面板 -->
-      <canvas-statistics-panel
+      <CanvasStatisticsPanel
         :canvas-id="canvasId"
         @node-select="handleNodeSelect"
         @path-highlight="handlePathHighlight"

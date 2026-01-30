@@ -31,7 +31,7 @@
             <template #upload-button>
               <a-button type="primary">
                 <template #icon>
-                  <icon-upload />
+                  <IconUpload />
                 </template>
                 上传预算数据
               </a-button>
@@ -43,7 +43,7 @@
             @click="downloadTemplate"
           >
             <template #icon>
-              <icon-download />
+              <IconDownload />
             </template>
             下载模板
           </a-button>

@@ -220,87 +220,87 @@ const __VLS_withDefaultsArg = (function (t) { return t; })({
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['section-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-condition-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['clickable']} */ ;
-/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['regular-groups-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-groups-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-exclude-group-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-group-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['delete-group-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['clickable']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['clickable']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['and']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['or']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['excluded']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-config']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-config']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-control']} */ ;
-/** @type {__VLS_StyleScopedClasses['wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-condition-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-condition-type-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-group-buttons']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-group-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-exclude-group-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['add']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['remove']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-group-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['editable']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['event-property-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['event-property-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['event-property-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['remove-property-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-type-add-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-item-wrapper']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-remove-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['collapse-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-type-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-type-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['remove-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['section-info']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-condition-state']} */ 
+/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['clickable']} */ 
+/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['regular-groups-section']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-groups-section']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ 
+/** @type {__VLS_StyleScopedClasses['add-exclude-group-area']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-group']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-group-card']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-group']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-group-header']} */ 
+/** @type {__VLS_StyleScopedClasses['delete-group-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['clickable']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['clickable']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['and']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['or']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-item']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-item']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-item']} */ 
+/** @type {__VLS_StyleScopedClasses['excluded']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-config']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-config']} */ 
+/** @type {__VLS_StyleScopedClasses['form-row']} */ 
+/** @type {__VLS_StyleScopedClasses['form-row']} */ 
+/** @type {__VLS_StyleScopedClasses['form-group']} */ 
+/** @type {__VLS_StyleScopedClasses['form-group']} */ 
+/** @type {__VLS_StyleScopedClasses['form-control']} */ 
+/** @type {__VLS_StyleScopedClasses['wide']} */ 
+/** @type {__VLS_StyleScopedClasses['action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['add-condition-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['add-condition-type-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['add-group-buttons']} */ 
+/** @type {__VLS_StyleScopedClasses['add-group-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['add-exclude-group-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['add']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['remove']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-group-header']} */ 
+/** @type {__VLS_StyleScopedClasses['group-name']} */ 
+/** @type {__VLS_StyleScopedClasses['group-name']} */ 
+/** @type {__VLS_StyleScopedClasses['group-name']} */ 
+/** @type {__VLS_StyleScopedClasses['editable']} */ 
+/** @type {__VLS_StyleScopedClasses['form-label']} */ 
+/** @type {__VLS_StyleScopedClasses['event-property-item']} */ 
+/** @type {__VLS_StyleScopedClasses['form-group']} */ 
+/** @type {__VLS_StyleScopedClasses['event-property-item']} */ 
+/** @type {__VLS_StyleScopedClasses['form-group']} */ 
+/** @type {__VLS_StyleScopedClasses['event-property-item']} */ 
+/** @type {__VLS_StyleScopedClasses['form-group']} */ 
+/** @type {__VLS_StyleScopedClasses['remove-property-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-type-add-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-item-wrapper']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-remove-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['collapse-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-type-header']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-type-header']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['add-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['tag-action-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['remove-btn']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -325,7 +325,7 @@ if (__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0
         ...{ class: "empty-condition-state" },
     });
     const __VLS_0 = {}.IconPlus;
-    /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
+    /** @type {[typeof __VLS_components.IconPlus, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         ...{ style: {} },
@@ -335,7 +335,7 @@ if (__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0
     }, ...__VLS_functionalComponentArgsRest(__VLS_1));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     const __VLS_4 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         ...{ 'onClick': {} },
@@ -357,12 +357,12 @@ if (__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0
     {
         const { icon: __VLS_thisSlot } = __VLS_7.slots;
         const __VLS_12 = {}.IconPlus;
-        /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
+        /** @type {[typeof __VLS_components.IconPlus, ]} */ 
         // @ts-ignore
         const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({}));
         const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
     }
-    var __VLS_7;
+    let __VLS_7;
 }
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -387,7 +387,7 @@ else {
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ onClick: (...[$event]) => {
-                        if (!!(__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0))
+                        if (__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0)
                             return;
                         if (!(__VLS_ctx.regularGroups.length > 0))
                             return;
@@ -408,7 +408,7 @@ else {
             (__VLS_ctx.crossGroupLogic === 'and' ? '且' : '或');
         }
         for (const [group, groupIndex] of __VLS_getVForSourceType((__VLS_ctx.regularGroups))) {
-            /** @type {[typeof ConditionGroup, ]} */ ;
+            /** @type {[typeof ConditionGroup, ]} */ 
             // @ts-ignore
             const __VLS_16 = __VLS_asFunctionalComponent(ConditionGroup, new ConditionGroup({
                 ...{ 'onDeleteConditionGroup': {} },
@@ -481,7 +481,7 @@ else {
             let __VLS_21;
             const __VLS_22 = {
                 onDeleteConditionGroup: (...[$event]) => {
-                    if (!!(__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0))
+                    if (__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0)
                         return;
                     if (!(__VLS_ctx.regularGroups.length > 0))
                         return;
@@ -522,7 +522,7 @@ else {
                 ...{ class: "add-group-buttons" },
             });
             const __VLS_31 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_32 = __VLS_asFunctionalComponent(__VLS_31, new __VLS_31({
                 ...{ 'onClick': {} },
@@ -544,12 +544,12 @@ else {
             {
                 const { icon: __VLS_thisSlot } = __VLS_34.slots;
                 const __VLS_39 = {}.IconPlus;
-                /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
+                /** @type {[typeof __VLS_components.IconPlus, ]} */ 
                 // @ts-ignore
                 const __VLS_40 = __VLS_asFunctionalComponent(__VLS_39, new __VLS_39({}));
                 const __VLS_41 = __VLS_40({}, ...__VLS_functionalComponentArgsRest(__VLS_40));
             }
-            var __VLS_34;
+            let __VLS_34;
         }
     }
     if (__VLS_ctx.editable) {
@@ -563,7 +563,7 @@ else {
             ...{ class: "exclude-control-label" },
         });
         const __VLS_43 = {}.ASwitch;
-        /** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ ;
+        /** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ 
         // @ts-ignore
         const __VLS_44 = __VLS_asFunctionalComponent(__VLS_43, new __VLS_43({
             ...{ 'onChange': {} },
@@ -581,7 +581,7 @@ else {
         const __VLS_50 = {
             onChange: (__VLS_ctx.onExcludeGroupsToggle)
         };
-        var __VLS_46;
+        let __VLS_46;
         if (__VLS_ctx.enableExcludeGroups) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "exclude-control-description" },
@@ -599,7 +599,7 @@ else {
             ...{ class: "condition-groups-list" },
         });
         for (const [group, groupIndex] of __VLS_getVForSourceType((__VLS_ctx.excludeGroups))) {
-            /** @type {[typeof ConditionGroup, ]} */ ;
+            /** @type {[typeof ConditionGroup, ]} */ 
             // @ts-ignore
             const __VLS_51 = __VLS_asFunctionalComponent(ConditionGroup, new ConditionGroup({
                 ...{ 'onDeleteConditionGroup': {} },
@@ -672,7 +672,7 @@ else {
             let __VLS_56;
             const __VLS_57 = {
                 onDeleteConditionGroup: (...[$event]) => {
-                    if (!!(__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0))
+                    if (__VLS_ctx.regularGroups.length === 0 && __VLS_ctx.excludeGroups.length === 0)
                         return;
                     if (!(__VLS_ctx.enableExcludeGroups && __VLS_ctx.excludeGroups.length > 0))
                         return;
@@ -714,7 +714,7 @@ else {
             ...{ class: "add-group-buttons" },
         });
         const __VLS_66 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
             ...{ 'onClick': {} },
@@ -736,46 +736,46 @@ else {
         {
             const { icon: __VLS_thisSlot } = __VLS_69.slots;
             const __VLS_74 = {}.IconPlus;
-            /** @type {[typeof __VLS_components.IconPlus, ]} */ ;
+            /** @type {[typeof __VLS_components.IconPlus, ]} */ 
             // @ts-ignore
             const __VLS_75 = __VLS_asFunctionalComponent(__VLS_74, new __VLS_74({}));
             const __VLS_76 = __VLS_75({}, ...__VLS_functionalComponentArgsRest(__VLS_75));
         }
-        var __VLS_69;
+        let __VLS_69;
     }
 }
-/** @type {__VLS_StyleScopedClasses['condition-config-component']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-condition-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-groups-workspace']} */ ;
-/** @type {__VLS_StyleScopedClasses['regular-groups-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['vertical-logic-line']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-line-vertical']} */ ;
-/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['and']} */ ;
-/** @type {__VLS_StyleScopedClasses['or']} */ ;
-/** @type {__VLS_StyleScopedClasses['clickable']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-condition-group-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-group-buttons']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-group-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-control-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-control-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-control-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-control-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-groups-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-exclude-group-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-group-buttons']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-exclude-group-btn']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['condition-config-component']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-groups-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-header']} */ 
+/** @type {__VLS_StyleScopedClasses['section-info']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-count']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-condition-state']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-groups-workspace']} */ 
+/** @type {__VLS_StyleScopedClasses['regular-groups-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ 
+/** @type {__VLS_StyleScopedClasses['vertical-logic-line']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-line-vertical']} */ 
+/** @type {__VLS_StyleScopedClasses['cross-group-logic-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['and']} */ 
+/** @type {__VLS_StyleScopedClasses['or']} */ 
+/** @type {__VLS_StyleScopedClasses['clickable']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-text']} */ 
+/** @type {__VLS_StyleScopedClasses['add-condition-group-area']} */ 
+/** @type {__VLS_StyleScopedClasses['add-group-buttons']} */ 
+/** @type {__VLS_StyleScopedClasses['add-group-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-control-section']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-control-header']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-control-label']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-control-description']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-groups-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-title']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-groups-list']} */ 
+/** @type {__VLS_StyleScopedClasses['add-exclude-group-area']} */ 
+/** @type {__VLS_StyleScopedClasses['add-group-buttons']} */ 
+/** @type {__VLS_StyleScopedClasses['add-exclude-group-btn']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -812,4 +812,4 @@ export default (await import('vue')).defineComponent({
     __typeProps: {},
     props: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

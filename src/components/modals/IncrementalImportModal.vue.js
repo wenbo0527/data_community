@@ -20,7 +20,7 @@ const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
 const __VLS_0 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     visible: (__VLS_ctx.incrementalModalVisible),
@@ -34,10 +34,10 @@ const __VLS_2 = __VLS_1({
     footer: (false),
     width: "600px",
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-var __VLS_4 = {};
+const __VLS_4 = {};
 __VLS_3.slots.default;
 const __VLS_5 = {}.ASpace;
-/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
 // @ts-ignore
 const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({
     direction: "vertical",
@@ -58,7 +58,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
     ...{ style: {} },
 });
 const __VLS_9 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
     ...{ 'onClick': {} },
@@ -82,14 +82,14 @@ __VLS_12.slots.default;
 {
     const { icon: __VLS_thisSlot } = __VLS_12.slots;
     const __VLS_17 = {}.IconDownload;
-    /** @type {[typeof __VLS_components.IconDownload, typeof __VLS_components.iconDownload, ]} */ ;
+    /** @type {[typeof __VLS_components.IconDownload, typeof __VLS_components.iconDownload, ]} */ 
     // @ts-ignore
     const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({}));
     const __VLS_19 = __VLS_18({}, ...__VLS_functionalComponentArgsRest(__VLS_18));
 }
-var __VLS_12;
+let __VLS_12;
 const __VLS_21 = {}.AUploadDragger;
-/** @type {[typeof __VLS_components.AUploadDragger, typeof __VLS_components.aUploadDragger, typeof __VLS_components.AUploadDragger, typeof __VLS_components.aUploadDragger, ]} */ ;
+/** @type {[typeof __VLS_components.AUploadDragger, typeof __VLS_components.aUploadDragger, typeof __VLS_components.AUploadDragger, typeof __VLS_components.aUploadDragger, ]} */ 
 // @ts-ignore
 const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
     ...{ 'onChange': {} },
@@ -139,7 +139,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "upload-content" },
 });
 const __VLS_32 = {}.IconUpload;
-/** @type {[typeof __VLS_components.IconUpload, typeof __VLS_components.iconUpload, ]} */ ;
+/** @type {[typeof __VLS_components.IconUpload, typeof __VLS_components.iconUpload, ]} */ 
 // @ts-ignore
 const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
     ...{ class: "upload-icon" },
@@ -162,7 +162,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
 });
 if (__VLS_ctx.uploadProgress > 0) {
     const __VLS_36 = {}.AProgress;
-    /** @type {[typeof __VLS_components.AProgress, typeof __VLS_components.aProgress, ]} */ ;
+    /** @type {[typeof __VLS_components.AProgress, typeof __VLS_components.aProgress, ]} */ 
     // @ts-ignore
     const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
         percent: (__VLS_ctx.uploadProgress),
@@ -178,7 +178,7 @@ if (__VLS_ctx.currentFile) {
         ...{ class: "file-preview" },
     });
     const __VLS_40 = {}.IconFile;
-    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ ;
+    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ 
     // @ts-ignore
     const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
         ...{ style: {} },
@@ -193,10 +193,10 @@ if (__VLS_ctx.currentFile) {
     });
     (__VLS_ctx.formatFileSize(__VLS_ctx.currentFile.size));
 }
-var __VLS_24;
+let __VLS_24;
 if (__VLS_ctx.incrementalFileCount > 0) {
     const __VLS_44 = {}.AAlert;
-    /** @type {[typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, ]} */ ;
+    /** @type {[typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, typeof __VLS_components.AAlert, typeof __VLS_components.aAlert, ]} */ 
     // @ts-ignore
     const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
         type: "info",
@@ -209,7 +209,7 @@ if (__VLS_ctx.incrementalFileCount > 0) {
     __VLS_47.slots.default;
     (__VLS_ctx.incrementalFileCount);
     const __VLS_48 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
         ...{ style: {} },
@@ -219,7 +219,7 @@ if (__VLS_ctx.incrementalFileCount > 0) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_49));
     __VLS_51.slots.default;
     const __VLS_52 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
         ...{ 'onClick': {} },
@@ -238,9 +238,9 @@ if (__VLS_ctx.incrementalFileCount > 0) {
         onClick: (__VLS_ctx.confirmIncrementalUpload)
     };
     __VLS_55.slots.default;
-    var __VLS_55;
+    let __VLS_55;
     const __VLS_60 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
         ...{ 'onClick': {} },
@@ -261,21 +261,21 @@ if (__VLS_ctx.incrementalFileCount > 0) {
         }
     };
     __VLS_63.slots.default;
-    var __VLS_63;
-    var __VLS_51;
-    var __VLS_47;
+    let __VLS_63;
+    let __VLS_51;
+    let __VLS_47;
 }
-var __VLS_8;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['upload-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['upload-area--dragover']} */ ;
-/** @type {__VLS_StyleScopedClasses['upload-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['upload-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['upload-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['upload-highlight']} */ ;
-/** @type {__VLS_StyleScopedClasses['upload-hint']} */ ;
-/** @type {__VLS_StyleScopedClasses['file-preview']} */ ;
-var __VLS_dollars;
+let __VLS_8;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['upload-area']} */ 
+/** @type {__VLS_StyleScopedClasses['upload-area--dragover']} */ 
+/** @type {__VLS_StyleScopedClasses['upload-content']} */ 
+/** @type {__VLS_StyleScopedClasses['upload-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['upload-text']} */ 
+/** @type {__VLS_StyleScopedClasses['upload-highlight']} */ 
+/** @type {__VLS_StyleScopedClasses['upload-hint']} */ 
+/** @type {__VLS_StyleScopedClasses['file-preview']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -302,4 +302,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

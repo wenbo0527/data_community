@@ -1,46 +1,46 @@
 <template>
   <div class="external-data-evaluation-list">
-    <a-card class="filter-card">
-      <a-row :gutter="24">
-        <a-col :span="8">
-          <a-form-item label="报告生成日期">
-            <a-range-picker
+    <ACard class="filter-card">
+      <ARow :gutter="24">
+        <ACol :span="8">
+          <AFormItem label="报告生成日期">
+            <ARangePicker
               v-model="dateRange"
               style="width: 100%"
               @change="handleDateChange"
             />
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-form-item label="报告类型">
-            <a-select
+          </AFormItem>
+        </ACol>
+        <ACol :span="8">
+          <AFormItem label="报告类型">
+            <ASelect
               v-model="reportType"
               @change="handleTypeChange"
               :default-value="'产品级效果评估'"
             >
-              <a-option value="产品级效果评估">产品级效果评估</a-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-button
+              <AOption value="产品级效果评估">产品级效果评估</AOption>
+            </ASelect>
+          </AFormItem>
+        </ACol>
+        <ACol :span="8">
+          <AButton
             type="primary"
             @click="handleCreateReport"
             style="float: right"
           >
             新建产品级效果评估
-          </a-button>
-        </a-col>
-      </a-row>
-    </a-card>
+          </AButton>
+        </ACol>
+      </ARow>
+    </ACard>
 
     <!-- 新建评估表单 -->
-    <a-card v-if="showCreateForm" title="新建产品级效果评估" style="margin-bottom: 20px">
+    <ACard v-if="showCreateForm" title="新建产品级效果评估" style="margin-bottom: 20px">
       <CreateExternalDataEvaluation @cancel="handleCancelCreate" @submit="handleSubmitCreate" />
-    </a-card>
+    </ACard>
 
-    <a-card>
-      <a-table
+    <ACard>
+      <ATable
         :columns="columns"
         :data="reportList"
         :pagination="pagination"
@@ -48,18 +48,18 @@
         @page-size-change="handlePageSizeChange"
       >
         <template #status="{ record }">
-          <a-tag
+          <ATag
             :color="getStatusColor(record.status)"
             size="small"
           >
             {{ record.status }}
-          </a-tag>
+          </ATag>
         </template>
         <template #reportName="{ record }">
           <a @click="goToDetail(record.id)">{{ record.reportName }}</a>
         </template>
-      </a-table>
-    </a-card>
+      </ATable>
+    </ACard>
   </div>
 </template>
 

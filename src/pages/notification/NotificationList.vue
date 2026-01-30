@@ -121,14 +121,12 @@
         </template>
 
         <template #status="{ record }">
-          <a-tag :color="getStatusColor(record)" size="small">
-            {{ getStatusName(record) }}
-          </a-tag>
+          <StatusTag :status="record.status" dictKey="notification" />
         </template>
 
         <template #publishTime="{ record }">
           <div>
-            <div>{{ formatDate(record.publishTime || record.createdAt) }}</div>
+            <div>{{ DateUtils.formatDate(record.publishTime || record.createdAt) }}</div>
             <div class="meta-info">{{ record.author }}</div>
           </div>
         </template>
@@ -144,22 +142,14 @@
 
         <template #actions="{ record }">
           <a-space>
-            <a-button 
-              type="text" 
-              size="small" 
-              @click="handleView(record)"
-            >
-              <template #icon><IconEye /></template>
-              查看
-            </a-button>
-            <a-button 
-              type="text" 
-              size="small" 
-              @click="handleEdit(record)"
-            >
-              <template #icon><IconEdit /></template>
-              编辑
-            </a-button>
+            <TableActions
+              :actions="[
+                { key: 'view', label: '查看', icon: IconEye },
+                { key: 'edit', label: '编辑', icon: IconEdit }
+              ]"
+              :row="record"
+              @action="onRowAction"
+            />
             <a-dropdown @select="(value: string) => handleAction(value, record)">
               <a-button type="text" size="small">
                 <template #icon><IconMore /></template>
@@ -170,38 +160,23 @@
                   <template #icon><IconCopy /></template>
                   复制
                 </a-doption>
-                <a-doption 
-                  v-if="!record.isSticky" 
-                  value="stick"
-                >
+                <a-doption v-if="!record.isSticky" value="stick">
                   <template #icon><IconPushpin /></template>
                   置顶
                 </a-doption>
-                <a-doption 
-                  v-else 
-                  value="unstick"
-                >
+                <a-doption v-else value="unstick">
                   <template #icon><IconPushpin /></template>
                   取消置顶
                 </a-doption>
-                <a-doption 
-                  v-if="getStatusName(record) === '已发布'" 
-                  value="recall"
-                >
+                <a-doption v-if="record.status === 'published'" value="recall">
                   <template #icon><IconStop /></template>
                   撤回通知
                 </a-doption>
-                <a-doption 
-                  v-if="getStatusName(record) === '已发布'" 
-                  value="unpublish"
-                >
+                <a-doption v-if="record.status === 'published'" value="unpublish">
                   <template #icon><IconStop /></template>
                   取消发布
                 </a-doption>
-                <a-doption 
-                  v-else-if="getStatusName(record) === '草稿'" 
-                  value="publish"
-                >
+                <a-doption v-else-if="record.status === 'draft'" value="publish">
                   <template #icon><IconSend /></template>
                   立即发布
                 </a-doption>
@@ -239,7 +214,7 @@
         <div class="detail-meta">
           <a-descriptions :column="2" size="small">
             <a-descriptions-item label="发布时间">
-              {{ formatDateTime(selectedNotification.publishTime || selectedNotification.createdAt) }}
+              {{ DateUtils.formatDateTime(selectedNotification.publishTime || selectedNotification.createdAt) }}
             </a-descriptions-item>
             <a-descriptions-item label="作者">
               {{ selectedNotification.author }}
@@ -273,7 +248,7 @@
                     <a :href="item.fileUrl" target="_blank">{{ item.fileName }}</a>
                   </template>
                   <template #description>
-                    {{ item.fileSize }} • {{ formatDate(item.uploadTime) }}
+                    {{ item.fileSize }} • {{ DateUtils.formatDate(item.uploadTime) }}
                   </template>
                 </a-list-item-meta>
               </a-list-item>
@@ -317,6 +292,9 @@ import {
   ARCHIVE_CATEGORY_TREE,
   getCategoryLabel
 } from '@/constants/notification'
+import StatusTag from '@/components/common/StatusTag.vue'
+import TableActions from '@/components/common/TableActions.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -425,23 +403,9 @@ const getStatusName = (notification: Notification): string => {
   return statusMap[notification.status] || '未知'
 }
 
-const getStatusColor = (notification: Notification): string => {
-  const colorMap: Record<string, string> = {
-    draft: 'orange',
-    published: 'green',
-    archived: 'blue'
-  }
-  return colorMap[notification.status] || 'gray'
-}
-
-const formatDate = (dateStr: string): string => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('zh-CN')
-}
-
-const formatDateTime = (dateStr: string): string => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString('zh-CN')
+const onRowAction = (e: { key: string, row: Notification }) => {
+  if (e.key === 'view') handleView(e.row)
+  else if (e.key === 'edit') handleEdit(e.row)
 }
 
 const renderContent = (content: string): string => {

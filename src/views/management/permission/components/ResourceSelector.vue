@@ -52,7 +52,7 @@
             <div class="resource-header">
               <div class="resource-title">
                 <h4>{{ resource.name }}</h4>
-                <sensitivity-label :level="resource.sensitivityLevel" />
+                <SensitivityLabel :level="resource.sensitivityLevel" />
               </div>
               <a-checkbox
                 :checked="isSelected(resource)"

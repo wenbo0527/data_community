@@ -137,19 +137,19 @@ const getStatusColor = (status) => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['card-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['card-container']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-card']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.ALayout;
-/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ ;
+/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({}));
 const __VLS_2 = __VLS_1({}, ...__VLS_functionalComponentArgsRest(__VLS_1));
-var __VLS_4 = {};
+const __VLS_4 = {};
 __VLS_3.slots.default;
 const __VLS_5 = {}.ALayoutContent;
-/** @type {[typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, ]} */ ;
+/** @type {[typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, ]} */ 
 // @ts-ignore
 const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({
     ...{ class: "content" },
@@ -159,7 +159,7 @@ const __VLS_7 = __VLS_6({
 }, ...__VLS_functionalComponentArgsRest(__VLS_6));
 __VLS_8.slots.default;
 const __VLS_9 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
     title: "营销数据概览",
@@ -171,7 +171,7 @@ const __VLS_11 = __VLS_10({
 }, ...__VLS_functionalComponentArgsRest(__VLS_10));
 __VLS_12.slots.default;
 const __VLS_13 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
     gutter: (16),
@@ -184,7 +184,7 @@ const __VLS_15 = __VLS_14({
 __VLS_16.slots.default;
 for (const [metric] of __VLS_getVForSourceType((__VLS_ctx.metrics))) {
     const __VLS_17 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
         span: (6),
@@ -196,7 +196,7 @@ for (const [metric] of __VLS_getVForSourceType((__VLS_ctx.metrics))) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_18));
     __VLS_20.slots.default;
     const __VLS_21 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
         ...{ class: "metric-card" },
@@ -209,7 +209,7 @@ for (const [metric] of __VLS_getVForSourceType((__VLS_ctx.metrics))) {
         ...{ class: "metric-content" },
     });
     const __VLS_25 = {}.AStatistic;
-    /** @type {[typeof __VLS_components.AStatistic, typeof __VLS_components.aStatistic, typeof __VLS_components.AStatistic, typeof __VLS_components.aStatistic, ]} */ ;
+    /** @type {[typeof __VLS_components.AStatistic, typeof __VLS_components.aStatistic, typeof __VLS_components.AStatistic, typeof __VLS_components.aStatistic, ]} */ 
     // @ts-ignore
     const __VLS_26 = __VLS_asFunctionalComponent(__VLS_25, new __VLS_25({
         title: (metric.title),
@@ -230,7 +230,7 @@ for (const [metric] of __VLS_getVForSourceType((__VLS_ctx.metrics))) {
         const { prefix: __VLS_thisSlot } = __VLS_28.slots;
         if (metric.trend === 'up') {
             const __VLS_29 = {}.IconArrowRise;
-            /** @type {[typeof __VLS_components.IconArrowRise, typeof __VLS_components.iconArrowRise, ]} */ ;
+            /** @type {[typeof __VLS_components.IconArrowRise, typeof __VLS_components.iconArrowRise, ]} */ 
             // @ts-ignore
             const __VLS_30 = __VLS_asFunctionalComponent(__VLS_29, new __VLS_29({
                 ...{ style: {} },
@@ -241,7 +241,7 @@ for (const [metric] of __VLS_getVForSourceType((__VLS_ctx.metrics))) {
         }
         else {
             const __VLS_33 = {}.IconArrowFall;
-            /** @type {[typeof __VLS_components.IconArrowFall, typeof __VLS_components.iconArrowFall, ]} */ ;
+            /** @type {[typeof __VLS_components.IconArrowFall, typeof __VLS_components.iconArrowFall, ]} */ 
             // @ts-ignore
             const __VLS_34 = __VLS_asFunctionalComponent(__VLS_33, new __VLS_33({
                 ...{ style: {} },
@@ -274,10 +274,10 @@ for (const [metric] of __VLS_getVForSourceType((__VLS_ctx.metrics))) {
     var __VLS_24;
     var __VLS_20;
 }
-var __VLS_16;
-var __VLS_12;
+let __VLS_16;
+let __VLS_12;
 const __VLS_37 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
     gutter: (16),
@@ -287,7 +287,7 @@ const __VLS_39 = __VLS_38({
 }, ...__VLS_functionalComponentArgsRest(__VLS_38));
 __VLS_40.slots.default;
 const __VLS_41 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_42 = __VLS_asFunctionalComponent(__VLS_41, new __VLS_41({
     span: (12),
@@ -297,7 +297,7 @@ const __VLS_43 = __VLS_42({
 }, ...__VLS_functionalComponentArgsRest(__VLS_42));
 __VLS_44.slots.default;
 const __VLS_45 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_46 = __VLS_asFunctionalComponent(__VLS_45, new __VLS_45({
     title: "营销转化漏斗",
@@ -311,10 +311,10 @@ __VLS_48.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "chart-container" },
 });
-var __VLS_48;
-var __VLS_44;
+let __VLS_48;
+let __VLS_44;
 const __VLS_49 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_50 = __VLS_asFunctionalComponent(__VLS_49, new __VLS_49({
     span: (12),
@@ -324,7 +324,7 @@ const __VLS_51 = __VLS_50({
 }, ...__VLS_functionalComponentArgsRest(__VLS_50));
 __VLS_52.slots.default;
 const __VLS_53 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_54 = __VLS_asFunctionalComponent(__VLS_53, new __VLS_53({
     title: "营销效果趋势",
@@ -338,11 +338,11 @@ __VLS_56.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "chart-container" },
 });
-var __VLS_56;
-var __VLS_52;
-var __VLS_40;
+let __VLS_56;
+let __VLS_52;
+let __VLS_40;
 const __VLS_57 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_58 = __VLS_asFunctionalComponent(__VLS_57, new __VLS_57({
     title: "营销活动列表",
@@ -354,7 +354,7 @@ const __VLS_59 = __VLS_58({
 }, ...__VLS_functionalComponentArgsRest(__VLS_58));
 __VLS_60.slots.default;
 const __VLS_61 = {}.ATable;
-/** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+/** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
 // @ts-ignore
 const __VLS_62 = __VLS_asFunctionalComponent(__VLS_61, new __VLS_61({
     data: (__VLS_ctx.campaignList),
@@ -371,7 +371,7 @@ __VLS_64.slots.default;
     const { status: __VLS_thisSlot } = __VLS_64.slots;
     const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
     const __VLS_65 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_66 = __VLS_asFunctionalComponent(__VLS_65, new __VLS_65({
         color: (__VLS_ctx.getStatusColor(record.status)),
@@ -381,19 +381,19 @@ __VLS_64.slots.default;
     }, ...__VLS_functionalComponentArgsRest(__VLS_66));
     __VLS_68.slots.default;
     (record.status);
-    var __VLS_68;
+    let __VLS_68;
 }
 {
     const { operations: __VLS_thisSlot } = __VLS_64.slots;
     const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
     const __VLS_69 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_70 = __VLS_asFunctionalComponent(__VLS_69, new __VLS_69({}));
     const __VLS_71 = __VLS_70({}, ...__VLS_functionalComponentArgsRest(__VLS_70));
     __VLS_72.slots.default;
     const __VLS_73 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_74 = __VLS_asFunctionalComponent(__VLS_73, new __VLS_73({
         type: "text",
@@ -404,9 +404,9 @@ __VLS_64.slots.default;
         size: "small",
     }, ...__VLS_functionalComponentArgsRest(__VLS_74));
     __VLS_76.slots.default;
-    var __VLS_76;
+    let __VLS_76;
     const __VLS_77 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_78 = __VLS_asFunctionalComponent(__VLS_77, new __VLS_77({
         type: "text",
@@ -417,27 +417,27 @@ __VLS_64.slots.default;
         size: "small",
     }, ...__VLS_functionalComponentArgsRest(__VLS_78));
     __VLS_80.slots.default;
-    var __VLS_80;
-    var __VLS_72;
+    let __VLS_80;
+    let __VLS_72;
 }
-var __VLS_64;
-var __VLS_60;
-var __VLS_8;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['content']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-cards']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['comparison-data']} */ ;
-/** @type {__VLS_StyleScopedClasses['comparison-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['comparison-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['chart-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['chart-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-container']} */ ;
-var __VLS_dollars;
+let __VLS_64;
+let __VLS_60;
+let __VLS_8;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['content']} */ 
+/** @type {__VLS_StyleScopedClasses['card-container']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-cards']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-card']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-content']} */ 
+/** @type {__VLS_StyleScopedClasses['comparison-data']} */ 
+/** @type {__VLS_StyleScopedClasses['comparison-item']} */ 
+/** @type {__VLS_StyleScopedClasses['comparison-item']} */ 
+/** @type {__VLS_StyleScopedClasses['card-container']} */ 
+/** @type {__VLS_StyleScopedClasses['chart-container']} */ 
+/** @type {__VLS_StyleScopedClasses['card-container']} */ 
+/** @type {__VLS_StyleScopedClasses['chart-container']} */ 
+/** @type {__VLS_StyleScopedClasses['card-container']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -456,4 +456,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

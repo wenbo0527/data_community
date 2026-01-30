@@ -9,7 +9,7 @@
     <div class="batch-approval-modal">
       <!-- 统计信息 -->
       <a-alert class="mb-4">
-        <template #icon><icon-info-circle /></template>
+        <template #icon><IconInfoCircle /></template>
         本次将批量处理 <strong>{{ selectedApplications.length }}</strong> 个权限申请
       </a-alert>
 

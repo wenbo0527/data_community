@@ -15,8 +15,8 @@
           :title="collapsed ? '展开预览图' : '收起预览图'"
         >
           <template #icon>
-            <icon-up v-if="!collapsed" />
-            <icon-down v-else />
+            <IconUp v-if="!collapsed" />
+            <IconDown v-else />
           </template>
         </a-button>
         <a-button 
@@ -25,7 +25,7 @@
           @click="closeMinimap"
           title="关闭预览图"
         >
-          <template #icon><icon-close /></template>
+          <template #icon><IconClose /></template>
         </a-button>
       </div>
     </div>

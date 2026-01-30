@@ -10,7 +10,7 @@
           >
             <div class="nav-card-content">
               <div class="nav-icon">
-                <icon-storage style="font-size: 48px; color: #165dff" />
+                <IconStorage style="font-size: 48px; color: #165dff" />
               </div>
               <div class="nav-info">
                 <h3>标签表管理</h3>
@@ -32,7 +32,7 @@
           >
             <div class="nav-card-content">
               <div class="nav-icon">
-                <icon-tags style="font-size: 48px; color: #14c9c9" />
+                <IconTags style="font-size: 48px; color: #14c9c9" />
               </div>
               <div class="nav-info">
                 <h3>标签管理</h3>
@@ -54,7 +54,7 @@
           >
             <div class="nav-card-content">
               <div class="nav-icon">
-                <icon-list style="font-size: 48px; color: #ff7d00" />
+                <IconList style="font-size: 48px; color: #ff7d00" />
               </div>
               <div class="nav-info">
                 <h3>属性管理</h3>
@@ -74,15 +74,15 @@
         <h3>快速操作</h3>
         <a-space>
           <a-button type="primary" @click="navigateTo('table-management')">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             注册新表
           </a-button>
           <a-button @click="navigateTo('tag-management')">
-            <template #icon><icon-tag /></template>
+            <template #icon><IconTag /></template>
             创建标签
           </a-button>
           <a-button @click="showImportDialog = true">
-            <template #icon><icon-upload /></template>
+            <template #icon><IconUpload /></template>
             批量导入
           </a-button>
         </a-space>
@@ -94,7 +94,7 @@
         <a-timeline>
           <a-timeline-item>
             <template #dot>
-              <icon-check-circle style="color: #00b42a" />
+              <IconCheckCircle style="color: #00b42a" />
             </template>
             <div class="activity-content">
               <div class="activity-title">成功注册标签表</div>
@@ -104,7 +104,7 @@
           </a-timeline-item>
           <a-timeline-item>
             <template #dot>
-              <icon-edit style="color: #165dff" />
+              <IconEdit style="color: #165dff" />
             </template>
             <div class="activity-content">
               <div class="activity-title">更新标签属性</div>
@@ -114,7 +114,7 @@
           </a-timeline-item>
           <a-timeline-item>
             <template #dot>
-              <icon-settings style="color: #ff7d00" />
+              <IconSettings style="color: #ff7d00" />
             </template>
             <div class="activity-content">
               <div class="activity-title">配置ID映射</div>
@@ -142,7 +142,7 @@
         >
           <template #upload-button>
             <div class="upload-content">
-              <icon-plus style="font-size: 32px; color: #165dff" />
+              <IconPlus style="font-size: 32px; color: #165dff" />
               <p>点击或拖拽文件到此处上传</p>
               <p class="upload-tip">支持 .xlsx, .csv 格式，最大 10MB</p>
             </div>

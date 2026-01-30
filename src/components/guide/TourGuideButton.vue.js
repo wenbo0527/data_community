@@ -49,14 +49,14 @@ const handleTourFinish = () => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['tour-guide-button']} */ ;
+/** @type {__VLS_StyleScopedClasses['tour-guide-button']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "tour-guide-button-container" },
 });
 const __VLS_0 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onClick': {} },
@@ -80,13 +80,13 @@ __VLS_3.slots.default;
 {
     const { icon: __VLS_thisSlot } = __VLS_3.slots;
     const __VLS_8 = {}.IconQuestionCircle;
-    /** @type {[typeof __VLS_components.IconQuestionCircle, typeof __VLS_components.iconQuestionCircle, ]} */ ;
+    /** @type {[typeof __VLS_components.IconQuestionCircle, typeof __VLS_components.iconQuestionCircle, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({}));
     const __VLS_10 = __VLS_9({}, ...__VLS_functionalComponentArgsRest(__VLS_9));
 }
-var __VLS_3;
-/** @type {[typeof TourGuide, ]} */ ;
+let __VLS_3;
+/** @type {[typeof TourGuide, ]} */ 
 // @ts-ignore
 const __VLS_12 = __VLS_asFunctionalComponent(TourGuide, new TourGuide({
     ...{ 'onFinish': {} },
@@ -104,10 +104,10 @@ let __VLS_17;
 const __VLS_18 = {
     onFinish: (__VLS_ctx.handleTourFinish)
 };
-var __VLS_14;
-/** @type {__VLS_StyleScopedClasses['tour-guide-button-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['tour-guide-button']} */ ;
-var __VLS_dollars;
+let __VLS_14;
+/** @type {__VLS_StyleScopedClasses['tour-guide-button-container']} */ 
+/** @type {__VLS_StyleScopedClasses['tour-guide-button']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -125,4 +125,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

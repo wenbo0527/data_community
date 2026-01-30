@@ -10,7 +10,7 @@
             @search="handleSearch"
           />
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建规则
           </a-button>
         </a-space>
@@ -52,14 +52,14 @@
           </a-table-column>
           <a-table-column title="状态" data-index="status" align="center">
             <template #cell="{ record }">
-              <a-switch
-                :model-value="record.status === 'active'"
-                @change="(value) => handleStatusChange(record, value)"
-                :loading="record.switching"
-              />
+              <StatusTag :status="record.status" dictKey="alertRuleStatus" />
             </template>
           </a-table-column>
-          <a-table-column title="创建时间" data-index="created_at" align="center" />
+          <a-table-column title="创建时间" data-index="created_at" align="center">
+            <template #cell="{ record }">
+              {{ DateUtils.formatDateTime(record.created_at) }}
+            </template>
+          </a-table-column>
           <a-table-column title="操作" align="center" :width="150">
             <template #cell="{ record }">
               <a-space>
@@ -612,7 +612,7 @@
             <div v-if="formData.channels.includes('wechat')">
               <div class="recipient-section">
                 <h4>
-                  <icon-wechat />
+                  <IconWechat />
                   企业微信接收人
                 </h4>
                 <div class="recipient-list">
@@ -654,7 +654,7 @@
                           size="small"
                           @click="removeWechatUser(index)"
                         >
-                          <template #icon><icon-delete /></template>
+                          <template #icon><IconDelete /></template>
                         </a-button>
                       </a-col>
                     </a-row>
@@ -664,7 +664,7 @@
                     @click="addWechatUser"
                     style="width: 100%; margin-top: 8px;"
                   >
-                    <template #icon><icon-plus /></template>
+                    <template #icon><IconPlus /></template>
                     添加企业微信用户
                   </a-button>
                 </div>
@@ -686,7 +686,7 @@
             <div v-if="formData.channels.includes('sms')" :style="formData.channels.includes('wechat') ? 'margin-top: 24px;' : ''">
               <div class="recipient-section">
                 <h4>
-                  <icon-mobile />
+                  <IconMobile />
                   短信接收人
                 </h4>
                 <div class="recipient-list">
@@ -729,7 +729,7 @@
                           size="small"
                           @click="removeSmsContact(index)"
                         >
-                          <template #icon><icon-delete /></template>
+                          <template #icon><IconDelete /></template>
                         </a-button>
                       </a-col>
                     </a-row>
@@ -739,7 +739,7 @@
                     @click="addSmsContact"
                     style="width: 100%; margin-top: 8px;"
                   >
-                    <template #icon><icon-plus /></template>
+                    <template #icon><IconPlus /></template>
                     添加短信联系人
                   </a-button>
                 </div>
@@ -768,11 +768,11 @@
               <div class="summary-content">
                 <h5>接收人配置总结</h5>
                 <div v-if="formData.channels.includes('wechat')" class="summary-item">
-                  <icon-wechat />
+                  <IconWechat />
                   企业微信: {{ formData.recipients.wechatUsers.length }} 人
                 </div>
                 <div v-if="formData.channels.includes('sms')" class="summary-item">
-                  <icon-mobile />
+                  <IconMobile />
                   短信: {{ formData.recipients.smsContacts.length }} 人
                 </div>
               </div>
@@ -796,6 +796,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { IconPlus, IconDelete, IconWechat, IconMobile } from '@arco-design/web-vue/es/icon'
 import { Message, Modal } from '@arco-design/web-vue'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 // 数据加载状态
 const loading = ref(false)

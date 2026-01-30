@@ -67,7 +67,7 @@ let __VLS_directives;
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.ALayout;
-/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ ;
+/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ class: "layout-container" },
@@ -75,10 +75,10 @@ const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
 const __VLS_2 = __VLS_1({
     ...{ class: "layout-container" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-var __VLS_4 = {};
+const __VLS_4 = {};
 __VLS_3.slots.default;
 const __VLS_5 = {}.ALayoutHeader;
-/** @type {[typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, ]} */ ;
+/** @type {[typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, ]} */ 
 // @ts-ignore
 const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({
     ...{ class: "top-menu-header" },
@@ -87,7 +87,7 @@ const __VLS_7 = __VLS_6({
     ...{ class: "top-menu-header" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_6));
 __VLS_8.slots.default;
-/** @type {[typeof TopMenu, ]} */ ;
+/** @type {[typeof TopMenu, ]} */ 
 // @ts-ignore
 const __VLS_9 = __VLS_asFunctionalComponent(TopMenu, new TopMenu({
     ...{ 'onMenuChange': {} },
@@ -103,18 +103,18 @@ let __VLS_14;
 const __VLS_15 = {
     onMenuChange: (__VLS_ctx.handleTopMenuChange)
 };
-/** @type {typeof __VLS_ctx.topMenuRef} */ ;
-var __VLS_16 = {};
-var __VLS_11;
-var __VLS_8;
+/** @type {typeof __VLS_ctx.topMenuRef} */ 
+const __VLS_16 = {};
+let __VLS_11;
+let __VLS_8;
 const __VLS_18 = {}.ALayout;
-/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ ;
+/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ 
 // @ts-ignore
 const __VLS_19 = __VLS_asFunctionalComponent(__VLS_18, new __VLS_18({}));
 const __VLS_20 = __VLS_19({}, ...__VLS_functionalComponentArgsRest(__VLS_19));
 __VLS_21.slots.default;
 const __VLS_22 = {}.ALayoutSider;
-/** @type {[typeof __VLS_components.ALayoutSider, typeof __VLS_components.aLayoutSider, typeof __VLS_components.ALayoutSider, typeof __VLS_components.aLayoutSider, ]} */ ;
+/** @type {[typeof __VLS_components.ALayoutSider, typeof __VLS_components.aLayoutSider, typeof __VLS_components.ALayoutSider, typeof __VLS_components.aLayoutSider, ]} */ 
 // @ts-ignore
 const __VLS_23 = __VLS_asFunctionalComponent(__VLS_22, new __VLS_22({
     ...{ 'onCollapse': {} },
@@ -140,7 +140,7 @@ const __VLS_29 = {
 };
 __VLS_asFunctionalDirective(__VLS_directives.vShow)(null, { ...__VLS_directiveBindingRestFields, value: (__VLS_ctx.showSideMenu) }, null, null);
 __VLS_25.slots.default;
-/** @type {[typeof SideMenu, ]} */ ;
+/** @type {[typeof SideMenu, ]} */ 
 // @ts-ignore
 const __VLS_30 = __VLS_asFunctionalComponent(SideMenu, new SideMenu({
     activeModule: (__VLS_ctx.activeModule),
@@ -154,18 +154,18 @@ const __VLS_31 = __VLS_30({
     isDetailPage: (__VLS_ctx.isDetailPage),
     ref: "sideMenuRef",
 }, ...__VLS_functionalComponentArgsRest(__VLS_30));
-/** @type {typeof __VLS_ctx.sideMenuRef} */ ;
-var __VLS_33 = {};
-var __VLS_32;
-var __VLS_25;
+/** @type {typeof __VLS_ctx.sideMenuRef} */ 
+const __VLS_33 = {};
+let __VLS_32;
+let __VLS_25;
 const __VLS_35 = {}.ALayout;
-/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ ;
+/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ 
 // @ts-ignore
 const __VLS_36 = __VLS_asFunctionalComponent(__VLS_35, new __VLS_35({}));
 const __VLS_37 = __VLS_36({}, ...__VLS_functionalComponentArgsRest(__VLS_36));
 __VLS_38.slots.default;
 const __VLS_39 = {}.ALayoutHeader;
-/** @type {[typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, ]} */ ;
+/** @type {[typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, typeof __VLS_components.ALayoutHeader, typeof __VLS_components.aLayoutHeader, ]} */ 
 // @ts-ignore
 const __VLS_40 = __VLS_asFunctionalComponent(__VLS_39, new __VLS_39({
     ...{ class: "layout-header" },
@@ -175,13 +175,13 @@ const __VLS_41 = __VLS_40({
 }, ...__VLS_functionalComponentArgsRest(__VLS_40));
 __VLS_42.slots.default;
 const __VLS_43 = {}.ASpace;
-/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
 // @ts-ignore
 const __VLS_44 = __VLS_asFunctionalComponent(__VLS_43, new __VLS_43({}));
 const __VLS_45 = __VLS_44({}, ...__VLS_functionalComponentArgsRest(__VLS_44));
 __VLS_46.slots.default;
 const __VLS_47 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_48 = __VLS_asFunctionalComponent(__VLS_47, new __VLS_47({
     ...{ 'onClick': {} },
@@ -202,21 +202,21 @@ __VLS_50.slots.default;
     const { icon: __VLS_thisSlot } = __VLS_50.slots;
     if (!__VLS_ctx.collapsed) {
         const __VLS_55 = {}.IconMenuFold;
-        /** @type {[typeof __VLS_components.IconMenuFold, typeof __VLS_components.iconMenuFold, ]} */ ;
+        /** @type {[typeof __VLS_components.IconMenuFold, typeof __VLS_components.iconMenuFold, ]} */ 
         // @ts-ignore
         const __VLS_56 = __VLS_asFunctionalComponent(__VLS_55, new __VLS_55({}));
         const __VLS_57 = __VLS_56({}, ...__VLS_functionalComponentArgsRest(__VLS_56));
     }
     else {
         const __VLS_59 = {}.IconMenuUnfold;
-        /** @type {[typeof __VLS_components.IconMenuUnfold, typeof __VLS_components.iconMenuUnfold, ]} */ ;
+        /** @type {[typeof __VLS_components.IconMenuUnfold, typeof __VLS_components.iconMenuUnfold, ]} */ 
         // @ts-ignore
         const __VLS_60 = __VLS_asFunctionalComponent(__VLS_59, new __VLS_59({}));
         const __VLS_61 = __VLS_60({}, ...__VLS_functionalComponentArgsRest(__VLS_60));
     }
 }
-var __VLS_50;
-/** @type {[typeof BreadcrumbNav, ]} */ ;
+let __VLS_50;
+/** @type {[typeof BreadcrumbNav, ]} */ 
 // @ts-ignore
 const __VLS_63 = __VLS_asFunctionalComponent(BreadcrumbNav, new BreadcrumbNav({
     currentPath: (__VLS_ctx.route.path),
@@ -224,10 +224,10 @@ const __VLS_63 = __VLS_asFunctionalComponent(BreadcrumbNav, new BreadcrumbNav({
 const __VLS_64 = __VLS_63({
     currentPath: (__VLS_ctx.route.path),
 }, ...__VLS_functionalComponentArgsRest(__VLS_63));
-var __VLS_46;
-var __VLS_42;
+let __VLS_46;
+let __VLS_42;
 const __VLS_66 = {}.ALayoutContent;
-/** @type {[typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, ]} */ ;
+/** @type {[typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, ]} */ 
 // @ts-ignore
 const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
     ...{ class: "layout-content" },
@@ -237,22 +237,22 @@ const __VLS_68 = __VLS_67({
 }, ...__VLS_functionalComponentArgsRest(__VLS_67));
 __VLS_69.slots.default;
 const __VLS_70 = {}.RouterView;
-/** @type {[typeof __VLS_components.RouterView, typeof __VLS_components.routerView, ]} */ ;
+/** @type {[typeof __VLS_components.RouterView, typeof __VLS_components.routerView, ]} */ 
 // @ts-ignore
 const __VLS_71 = __VLS_asFunctionalComponent(__VLS_70, new __VLS_70({}));
 const __VLS_72 = __VLS_71({}, ...__VLS_functionalComponentArgsRest(__VLS_71));
-var __VLS_69;
-var __VLS_38;
-var __VLS_21;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['layout-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['top-menu-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['layout-sider']} */ ;
-/** @type {__VLS_StyleScopedClasses['layout-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['layout-content']} */ ;
+let __VLS_69;
+let __VLS_38;
+let __VLS_21;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['layout-container']} */ 
+/** @type {__VLS_StyleScopedClasses['top-menu-header']} */ 
+/** @type {__VLS_StyleScopedClasses['layout-sider']} */ 
+/** @type {__VLS_StyleScopedClasses['layout-header']} */ 
+/** @type {__VLS_StyleScopedClasses['layout-content']} */ 
 // @ts-ignore
-var __VLS_17 = __VLS_16, __VLS_34 = __VLS_33;
-var __VLS_dollars;
+const __VLS_17 = __VLS_16, __VLS_34 = __VLS_33;
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -280,4 +280,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

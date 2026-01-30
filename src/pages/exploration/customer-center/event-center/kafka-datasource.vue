@@ -19,7 +19,7 @@
             style="width: 280px"
             @change="handleSearch"
           >
-            <template #prefix><icon-search /></template>
+            <template #prefix><IconSearch /></template>
           </a-input>
         </div>
         <div class="filter-area">
@@ -38,11 +38,11 @@
         </div>
         <div class="button-area">
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建数据源
           </a-button>
           <a-button @click="handleRefresh">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
         </div>
@@ -80,11 +80,8 @@
           <a-table-column title="连接状态" width="120">
             <template #cell="{ record }">
               <div class="connection-status">
-                <div class="status-indicator" :class="record.status">
-                  <span class="status-dot"></span>
-                  <span class="status-text">{{ getStatusText(record.status) }}</span>
-                </div>
-                <div class="status-time">{{ formatTime(record.updatedAt) }}</div>
+                <StatusTag :status="record.status" dictKey="kafkaConnection" />
+                <div class="status-time">{{ DateUtils.formatDateTime(record.updatedAt) }}</div>
               </div>
             </template>
           </a-table-column>
@@ -131,8 +128,8 @@
           <a-table-column title="创建信息" width="160">
             <template #cell="{ record }">
               <div class="create-info">
-                <div class="create-time">{{ formatTime(record.createdAt) }}</div>
-                <div class="update-time">{{ formatTime(record.updatedAt) }}</div>
+                <div class="create-time">{{ DateUtils.formatDateTime(record.createdAt) }}</div>
+                <div class="update-time">{{ DateUtils.formatDateTime(record.updatedAt) }}</div>
               </div>
             </template>
           </a-table-column>
@@ -142,15 +139,15 @@
             <template #cell="{ record }">
               <div class="action-buttons">
                 <a-button type="text" size="small" @click="handleEdit(record)">
-                  <template #icon><icon-edit /></template>
+                  <template #icon><IconEdit /></template>
                   编辑
                 </a-button>
                 <a-button type="text" size="small" @click="handleTestConnection(record)">
-                  <template #icon><icon-play-circle /></template>
+                  <template #icon><IconPlayCircle /></template>
                   测试
                 </a-button>
                 <a-button type="text" size="small" @click="handleMonitor(record)">
-                  <template #icon><icon-bar-chart /></template>
+                  <template #icon><IconBarChart /></template>
                   监控
                 </a-button>
                 <a-popconfirm
@@ -158,7 +155,7 @@
                   @ok="handleDelete(record)"
                 >
                   <a-button type="text" size="small" status="danger">
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                     删除
                   </a-button>
                 </a-popconfirm>
@@ -177,7 +174,7 @@
       @ok="handleModalOk"
       @cancel="handleModalCancel"
     >
-      <kafka-config-form
+      <KafkaConfigForm
         v-if="modalVisible"
         :datasource-data="currentDatasource"
         @submit="handleFormSubmit"
@@ -203,7 +200,7 @@
               <a-radio value="24h">近24小时</a-radio>
             </a-radio-group>
             <a-button size="small" @click="refreshMonitor">
-              <template #icon><icon-refresh /></template>
+              <template #icon><IconRefresh /></template>
               刷新
             </a-button>
           </div>
@@ -276,6 +273,8 @@ import {
   IconPlayCircle,
   IconBarChart
 } from '@arco-design/web-vue/es/icon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -533,14 +532,7 @@ const viewTopicDetails = (topic) => {
 }
 
 // 工具函数
-const getStatusText = (status) => {
-  const statusMap = {
-    'connected': '已连接',
-    'disconnected': '未连接',
-    'error': '连接异常'
-  }
-  return statusMap[status] || status
-}
+ 
 
 const getTotalPartitions = (datasource) => {
   return datasource.topics.reduce((total, topic) => total + topic.partitions, 0)
@@ -565,9 +557,7 @@ const formatNumber = (num) => {
   return num.toString()
 }
 
-const formatTime = (timeString) => {
-  return new Date(timeString).toLocaleString('zh-CN')
-}
+ 
 
 const generateTimeLabels = () => {
   const labels = []

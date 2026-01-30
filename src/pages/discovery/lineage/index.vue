@@ -14,7 +14,7 @@
           <a-input-number v-model="form.layers" placeholder="层数" :min="1" :max="3" style="width: 100px" />
           <a-checkbox v-model="form.onlyFailed">仅显示异常</a-checkbox>
           <a-button type="primary" @click="handleSearch">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             查询
           </a-button>
           <a-button @click="goBack">返回</a-button>

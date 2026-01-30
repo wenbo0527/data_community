@@ -45,11 +45,11 @@
         <h4>信贷产品列表</h4>
         <div class="copy-actions">
           <a-button size="small" @click="copyData('selected')" :disabled="selectedRows.length === 0">
-            <template #icon><icon-copy /></template>
+            <template #icon><IconCopy /></template>
             复制选中
           </a-button>
           <a-button size="small" @click="copyData('all')">
-            <template #icon><icon-copy /></template>
+            <template #icon><IconCopy /></template>
             复制全部
           </a-button>
         </div>
@@ -67,7 +67,7 @@
         <template #productKey="{ record }">
           <div class="flex items-center gap-2">
             <span>{{ record.productKey }}</span>
-            <icon-copy 
+            <IconCopy 
               class="cursor-pointer text-gray-400 hover:text-blue-500" 
               @click="copyText(record.productKey)"
             />

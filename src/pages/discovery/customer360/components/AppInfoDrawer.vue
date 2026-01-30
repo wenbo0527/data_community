@@ -20,7 +20,7 @@
                 class="app-item"
               >
                 <div class="app-header">
-                  <icon-apps :size="20" />
+                  <IconApps :size="20" />
                   <span class="app-name">{{ getAppName(app.packageName) }}</span>
                   <a-tag :color="getAppStatusColor(app.status)">{{ app.status }}</a-tag>
                 </div>
@@ -28,7 +28,7 @@
                 <!-- 设备信息 -->
                 <div class="info-section">
                   <h5 class="section-subtitle">
-                    <icon-mobile :size="14" />
+                    <IconMobile :size="14" />
                     设备信息
                   </h5>
                   <div class="info-grid">
@@ -46,7 +46,7 @@
                 <!-- WIFI信息 -->
                 <div class="info-section">
                   <h5 class="section-subtitle">
-                    <icon-wifi :size="14" />
+                    <IconWifi :size="14" />
                     WIFI信息
                   </h5>
                   <div class="info-grid">
@@ -64,7 +64,7 @@
                 <!-- 位置信息 -->
                 <div class="info-section">
                   <h5 class="section-subtitle">
-                    <icon-location :size="14" />
+                    <IconLocation :size="14" />
                     位置信息
                   </h5>
                   <div class="info-grid">
@@ -90,7 +90,7 @@
                 <!-- 应用信息 -->
                 <div class="info-section">
                   <h5 class="section-subtitle">
-                    <icon-code :size="14" />
+                    <IconCode :size="14" />
                     应用信息
                   </h5>
                   <div class="info-grid">
@@ -116,7 +116,7 @@
                 <!-- 备注信息 -->
                 <div class="info-section" v-if="app.extraParams">
                   <h5 class="section-subtitle">
-                    <icon-user :size="14" />
+                    <IconUser :size="14" />
                     备注信息
                   </h5>
                   <div class="info-grid">
@@ -149,7 +149,7 @@
           
           <!-- APP信息空状态 -->
           <div v-else class="empty-state">
-            <icon-apps :size="48" style="color: #c9cdd4;" />
+            <IconApps :size="48" style="color: #c9cdd4;" />
             <h3>暂无APP信息</h3>
             <p>该产品暂未提供APP相关信息</p>
           </div>
@@ -166,7 +166,7 @@
                 class="contact-item"
               >
                 <div class="contact-header">
-                  <icon-user :size="20" />
+                  <IconUser :size="20" />
                   <span class="contact-name">{{ contact.name || '未知联系人' }}</span>
                   <a-tag v-if="contact.relationship" color="blue">{{ contact.relationship }}</a-tag>
                 </div>
@@ -212,7 +212,7 @@
           
           <!-- 通讯录空状态 -->
           <div v-else class="empty-state">
-            <icon-user :size="48" style="color: #c9cdd4;" />
+            <IconUser :size="48" style="color: #c9cdd4;" />
             <h3>暂无通讯录信息</h3>
             <p>该产品暂未提供通讯录相关信息</p>
           </div>

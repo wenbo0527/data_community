@@ -7,7 +7,7 @@
     <!-- 面板头部 -->
     <div class="panel-header">
       <div class="panel-title">
-        <icon-bar-chart class="title-icon" />
+        <IconBarChart class="title-icon" />
         <span>统计信息</span>
       </div>
       <div class="panel-controls">
@@ -16,8 +16,8 @@
           size="mini"
           @click="toggleCollapse"
         >
-          <icon-minus v-if="!isCollapsed" />
-          <icon-plus v-else />
+          <IconMinus v-if="!isCollapsed" />
+          <IconPlus v-else />
         </a-button>
         <div class="resize-handle" @mousedown="startResize"></div>
       </div>
@@ -26,27 +26,27 @@
     <!-- 面板内容 -->
     <div class="panel-content" v-show="!isCollapsed">
       <!-- 数据筛选控制 -->
-      <data-filter-controls 
+      <DataFilterControls 
         v-model="filters"
         @change="handleFiltersUpdate"
       />
 
       <!-- 统计概览 -->
-      <statistics-overview 
+      <StatisticsOverview 
         :canvas-id="canvasId"
         :filters="filters"
         :loading="loading"
       />
 
       <!-- 用户路径分析 -->
-      <user-path-analyzer
+      <UserPathAnalyzer
         :canvas-id="canvasId"
         :filters="filters"
         @path-highlight="handlePathHighlight"
       />
 
       <!-- 节点统计列表 -->
-      <node-statistics-list
+      <NodeStatisticsList
         :canvas-id="canvasId"
         :filters="filters"
         :loading="loading"
@@ -54,7 +54,7 @@
       />
 
       <!-- 图表展示区域 -->
-      <chart-display-area
+      <ChartDisplayArea
         :canvas-id="canvasId"
         :filters="filters"
         :selected-nodes="selectedNodes"
@@ -62,7 +62,7 @@
       />
 
       <!-- 数据导出面板 -->
-      <data-export-panel
+      <DataExportPanel
         :canvas-id="canvasId"
         :filters="filters"
         :export-data="exportData"

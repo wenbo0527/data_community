@@ -18,7 +18,7 @@
           <a-dropdown v-if="notificationData.id">
             <a-button>
               更多操作
-              <icon-down />
+              <IconDown />
             </a-button>
             <template #content>
               <a-doption @click="handleToggleTop">
@@ -74,15 +74,15 @@
               </div>
               <div class="info-item">
                 <span class="info-label">创建时间：</span>
-                <span class="info-value">{{ formatDateTime(notificationData.createdAt) }}</span>
+                <span class="info-value">{{ DateUtils.formatDateTime(notificationData.createdAt) }}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">更新时间：</span>
-                <span class="info-value">{{ formatDateTime(notificationData.updatedAt) }}</span>
+                <span class="info-value">{{ DateUtils.formatDateTime(notificationData.updatedAt) }}</span>
               </div>
               <div class="info-item" v-if="notificationData.publishTime">
                 <span class="info-label">发布时间：</span>
-                <span class="info-value">{{ formatDateTime(notificationData.publishTime) }}</span>
+                <span class="info-value">{{ DateUtils.formatDateTime(notificationData.publishTime) }}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">浏览次数：</span>
@@ -102,7 +102,7 @@
                 <div class="log-content">
                   <div class="log-action">{{ getLogActionText(log.action) }}</div>
                   <div class="log-operator">{{ log.operator }}</div>
-                  <div class="log-time">{{ formatDateTime(log.operatedAt) }}</div>
+                  <div class="log-time">{{ DateUtils.formatDateTime(log.operatedAt) }}</div>
                 </div>
               </a-timeline-item>
             </a-timeline>
@@ -122,7 +122,7 @@
                   <a-tag :color="item.category?.color || 'blue'" size="mini">
                     {{ item.category?.name || '未分类' }}
                   </a-tag>
-                  <span class="related-time">{{ formatDate(item.publishTime) }}</span>
+                  <span class="related-time">{{ DateUtils.formatDate(item.publishTime) }}</span>
                 </div>
               </div>
             </div>
@@ -157,6 +157,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { NotificationAPI, OperationLogAPI } from '../../../api/notification'
 import NotificationDetailContent from '../../../components/community/NotificationDetailContent.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -320,25 +321,7 @@ const formatContent = (content) => {
     .replace(/\n/g, '<br>')
 }
 
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return ''
-  return new Date(dateTime).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
-
-const formatDate = (dateTime) => {
-  if (!dateTime) return ''
-  return new Date(dateTime).toLocaleDateString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit'
-  })
-}
+ 
 
 const formatFileSize = (size) => {
   if (!size) return '0 B'

@@ -21,7 +21,7 @@
         </a-col>
         <a-col :span="4">
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建集合
           </a-button>
         </a-col>

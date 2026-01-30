@@ -1,20 +1,17 @@
 <template>
   <div class="detail-data-query-container">
     <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">明细数据查询服务</h1>
+    <DetailHeader title="明细数据查询服务" :backEnabled="true">
+      <template #extra-actions>
         <a-button type="primary" @click="showAddModal = true">
-          <template #icon>
-            <icon-plus />
-          </template>
+          <template #icon><IconPlus /></template>
           添加申请
         </a-button>
-      </div>
-      <div class="page-description">
-        基于数据查询管理模型，选择明细数据下载模板，配置查询参数并获取结构化数据结果。
-      </div>
-    </div>
+      </template>
+      <template #extra-title>
+        <span class="page-description">基于数据查询管理模型，选择明细数据下载模板，配置查询参数并获取结构化数据结果。</span>
+      </template>
+    </DetailHeader>
 
     <!-- 搜索和筛选 -->
     <div class="search-filter-section">
@@ -28,7 +25,7 @@
               @input="handleSearch"
             >
               <template #prefix>
-                <icon-search />
+                <IconSearch />
               </template>
             </a-input>
           </a-col>
@@ -90,11 +87,11 @@
         @sorter-change="handleSorterChange"
       >
         <template #status="{ record }">
-          <a-tag :color="getStatusColor(record.status)">{{ getStatusText(record.status) }}</a-tag>
+          <StatusTag :status="record.status" dictKey="dataQueryStatus" />
         </template>
         
         <template #applyTime="{ record }">
-          {{ formatDate(record.applyTime) }}
+          {{ DateUtils.formatDateTime(record.applyTime) }}
         </template>
         
         <template #resultCount="{ record }">
@@ -111,7 +108,7 @@
               @click="downloadResult(record.id)"
             >
               <template #icon>
-                <icon-download />
+                <IconDownload />
               </template>
               下载
             </a-button>
@@ -123,7 +120,7 @@
               @click="cancelApplication(record.id)"
             >
               <template #icon>
-                <icon-close />
+                <IconClose />
               </template>
               取消
             </a-button>
@@ -133,7 +130,7 @@
               @click="viewApplicationDetail(record.id)"
             >
               <template #icon>
-                <icon-eye />
+                <IconEye />
               </template>
               详情
             </a-button>
@@ -225,7 +222,7 @@
                       <span>{{ param.name }}</span>
                       <span v-if="param.required" class="required-star">*</span>
                       <a-tooltip :content="param.description">
-                        <icon-info-circle class="param-info" />
+                        <IconInfoCircle class="param-info" />
                       </a-tooltip>
                     </div>
                   </template>
@@ -413,7 +410,7 @@
         <div v-if="currentApplication.status === 'completed'" class="download-section">
           <a-button type="primary" @click="downloadResult(currentApplication.id)">
             <template #icon>
-              <icon-download />
+              <IconDownload />
             </template>
             下载结果文件
           </a-button>
@@ -910,30 +907,9 @@ const cancelApplication = async (applicationId) => {
   }
 }
 
-const getStatusColor = (status) => {
-  const colorMap = {
-    pending: 'orange',
-    processing: 'blue',
-    completed: 'green',
-    failed: 'red',
-    cancelled: 'gray'
-  }
-  return colorMap[status] || 'gray'
-}
-
-const getStatusText = (status) => {
-  const textMap = {
-    pending: '待处理',
-    processing: '处理中',
-    completed: '已完成',
-    failed: '失败',
-    cancelled: '已取消'
-  }
-  return textMap[status] || '未知'
-}
 
 const formatDate = (dateStr) => {
-  return dayjs(dateStr).format('YYYY-MM-DD HH:mm')
+  return DateUtils.formatDateTime(dateStr)
 }
 
 const formatFileSize = (bytes) => {

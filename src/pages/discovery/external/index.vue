@@ -9,7 +9,7 @@
               <a-space>
                 <a-button type="primary" @click="showEditModal = true">
                   <template #icon>
-                    <icon-plus />
+                    <IconPlus />
                   </template>
                   新增产品
                 </a-button>
@@ -73,12 +73,12 @@
                         <a-tag :color="getTagColor(item.subType)" v-if="item.subType">
                           {{ item.subType }}
                         </a-tag>
-                        <icon-star-fill
+                        <IconStarFill
                           v-if="item.isFavorite"
                           :style="{ color: '#FFD700', cursor: 'pointer' }"
                           @click="toggleFavorite(item)"
                         />
-                        <icon-star
+                        <IconStar
                           v-else
                           :style="{ cursor: 'pointer' }"
                           @click="toggleFavorite(item)"
@@ -148,7 +148,7 @@
               <a-space>
                 <a-button type="primary" @click="showEditModal = true">
                   <template #icon>
-                    <icon-plus />
+                    <IconPlus />
                   </template>
                   新增产品
                 </a-button>
@@ -261,10 +261,10 @@
           </template>
           <template #operations="{ record, rowIndex }">
             <a-button type="text" @click="addBackupInterface">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
             </a-button>
             <a-button v-if="rowIndex > 0" type="text" status="danger" @click="removeInterface(rowIndex)">
-              <template #icon><icon-delete /></template>
+              <template #icon><IconDelete /></template>
             </a-button>
           </template>
         </a-table>

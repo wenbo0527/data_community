@@ -44,7 +44,7 @@
           style="height: 180px; margin: 16px 0"
         >
           <div class="upload-content">
-            <icon-upload class="upload-icon" style="font-size: 32px; margin-bottom: 16px" />
+            <IconUpload class="upload-icon" style="font-size: 32px; margin-bottom: 16px" />
             <p class="upload-text" style="font-size: 16px; margin-bottom: 8px">拖拽文件到此处或<span class="upload-highlight"> 点击上传</span></p>
             <p class="upload-hint" style="color: var(--color-text-3)">支持PDF、Word、Excel格式文件，文件大小不超过10MB</p>
             <a-progress v-if="uploadProgress > 0" :percent="uploadProgress" :show-text="false" />
@@ -156,7 +156,7 @@
                 <a-button @click="resetFilter">重置</a-button>
                 <a-button type="outline" @click="showNewDataModal = true">
                   <template #icon>
-                    <icon-plus />
+                    <IconPlus />
                   </template>
                   新增外数注册
                 </a-button>
@@ -200,7 +200,7 @@
       <!-- 步骤4: 完成 -->
       <div v-if="currentStep === 3" class="step-container">
         <div class="success-content">
-          <icon-check-circle style="font-size: 64px; color: #00b42a; margin-bottom: 16px" />
+          <IconCheckCircle style="font-size: 64px; color: #00b42a; margin-bottom: 16px" />
           <h3>{{ isEditMode ? '采购项目更新成功' : '采购项目注册成功' }}</h3>
           <p>{{ isEditMode ? '您已成功更新外数采购项目信息，可以在外数管理页面查看详情' : '您已成功注册外数采购项目，可以在外数管理页面查看详情' }}</p>
           
@@ -423,7 +423,7 @@
                 <template #upload-button>
                   <a-button type="outline">
                     <template #icon>
-                      <icon-upload />
+                      <IconUpload />
                     </template>
                     上传文件
                   </a-button>

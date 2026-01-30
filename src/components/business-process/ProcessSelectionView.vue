@@ -8,7 +8,7 @@
       </div>
       <div class="header-actions">
         <a-button type="primary" @click="handleCreateProcess">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           新增流程
         </a-button>
       </div>
@@ -66,19 +66,19 @@
             <div class="process-actions" @click.stop>
               <a-dropdown>
                 <a-button type="text" size="small">
-                  <template #icon><icon-more /></template>
+                  <template #icon><IconMore /></template>
                 </a-button>
                 <template #content>
                   <a-doption @click="handleEditProcess(process)">
-                    <template #icon><icon-edit /></template>
+                    <template #icon><IconEdit /></template>
                     编辑
                   </a-doption>
                   <a-doption @click="handleDuplicateProcess(process)">
-                    <template #icon><icon-copy /></template>
+                    <template #icon><IconCopy /></template>
                     复制
                   </a-doption>
                   <a-doption @click="handleDeleteProcess(process.id)" class="danger">
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                     删除
                   </a-doption>
                 </template>
@@ -89,11 +89,11 @@
           <div class="card-content">
             <div class="process-stats">
               <span class="stat-item">
-                <icon-layers />
+                <IconLayers />
                 {{ process.steps?.length || 0 }} 个步骤
               </span>
               <span class="stat-item">
-                <icon-calendar />
+                <IconCalendar />
                 {{ formatDate(process.updatedAt) }}
               </span>
             </div>

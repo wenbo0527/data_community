@@ -162,17 +162,17 @@ defineExpose(__VLS_exposed);
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['steps-nav']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-nav']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-nav']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-steps-item-title']} */ ;
+/** @type {__VLS_StyleScopedClasses['steps-nav']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-nav']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-nav']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-steps-item-title']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "content" },
 });
 const __VLS_0 = {}.ASteps;
-/** @type {[typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, ]} */ ;
+/** @type {[typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     current: (__VLS_ctx.currentStep),
@@ -185,7 +185,7 @@ const __VLS_2 = __VLS_1({
 __VLS_3.slots.default;
 for (const [step] of __VLS_getVForSourceType((__VLS_ctx.steps))) {
     const __VLS_4 = {}.AStep;
-    /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ ;
+    /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         key: (step.key),
@@ -196,7 +196,7 @@ for (const [step] of __VLS_getVForSourceType((__VLS_ctx.steps))) {
         title: (step.title),
     }, ...__VLS_functionalComponentArgsRest(__VLS_5));
 }
-var __VLS_3;
+let __VLS_3;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "step-content" },
 });
@@ -221,11 +221,11 @@ const __VLS_15 = {
 const __VLS_16 = {
     onPrev: (__VLS_ctx.goToPreviousStep)
 };
-var __VLS_11;
-/** @type {__VLS_StyleScopedClasses['content']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-nav']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-content']} */ ;
-var __VLS_dollars;
+let __VLS_11;
+/** @type {__VLS_StyleScopedClasses['content']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-nav']} */ 
+/** @type {__VLS_StyleScopedClasses['step-content']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -245,4 +245,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

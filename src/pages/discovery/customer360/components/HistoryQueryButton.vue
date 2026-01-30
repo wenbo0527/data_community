@@ -7,7 +7,7 @@
       :loading="loading"
       class="query-button"
     >
-      <template #icon><icon-history /></template>
+      <template #icon><IconHistory /></template>
       历史切片数据查询
     </a-button>
 

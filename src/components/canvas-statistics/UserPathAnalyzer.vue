@@ -2,7 +2,7 @@
   <div class="user-path-analyzer">
     <div class="section-header">
       <div class="section-title">
-        <icon-history />
+        <IconHistory />
         <span>用户路径分析</span>
       </div>
       <div class="section-actions">
@@ -12,14 +12,14 @@
             size="mini"
             @click="clearPath"
           >
-            <icon-undo />
+            <IconUndo />
           </a-button>
           <a-button 
             type="text" 
             size="mini"
             @click="toggleHistory"
           >
-            <icon-history />
+            <IconHistory />
           </a-button>
         </a-space>
       </div>
@@ -37,7 +37,7 @@
           @press-enter="analyzeUserPath"
         >
           <template #prefix>
-            <icon-user />
+            <IconUser />
           </template>
           <template #suffix>
             <a-button 
@@ -46,7 +46,7 @@
               @click="analyzeUserPath"
               :loading="loading"
             >
-              <icon-search />
+              <IconSearch />
               分析
             </a-button>
           </template>
@@ -110,15 +110,15 @@
               size="mini"
               @click="toggleAnimation"
             >
-              <icon-play-arrow v-if="!isAnimating" />
-              <icon-pause v-else />
+              <IconPlayArrow v-if="!isAnimating" />
+              <IconPause v-else />
             </a-button>
             <a-button 
               type="text" 
               size="mini"
               @click="resetAnimation"
             >
-              <icon-stop />
+              <IconStop />
             </a-button>
             <a-slider
               v-model="playbackSpeed"
@@ -138,14 +138,14 @@
               size="mini"
               @click="togglePathStyle"
             >
-              <icon-palette />
+              <IconPalette />
             </a-button>
             <a-button 
               type="text" 
               size="mini"
               @click="exportPath"
             >
-              <icon-download />
+              <IconDownload />
             </a-button>
           </div>
         </div>
@@ -244,7 +244,7 @@
     <!-- 分析中状态 -->
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner">
-        <icon-loading />
+        <IconLoading />
       </div>
       <div class="loading-text">正在分析用户路径...</div>
     </div>

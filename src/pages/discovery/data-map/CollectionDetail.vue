@@ -9,13 +9,13 @@
         <template #extra>
           <a-space>
             <a-button type="outline" @click="handleRequestPermission">
-              <template #icon><icon-lock /></template>
+              <template #icon><IconLock /></template>
               权限申请
             </a-button>
             <a-button :type="collection.isFavorite ? 'primary' : 'outline'" @click="toggleFavorite">
               <template #icon>
-                <icon-star-fill v-if="collection.isFavorite" />
-                <icon-star v-else />
+                <IconStarFill v-if="collection.isFavorite" />
+                <IconStar v-else />
               </template>
               {{ collection.isFavorite ? '已收藏' : '收藏' }}
             </a-button>
@@ -23,7 +23,7 @@
         </template>
       </a-page-header>
       <a-space align="center" style="margin: 16px 0;">
-        <icon-user />
+        <IconUser />
         <span>集合负责人: </span>
         <a-tag>{{ collection.owner || '未指定' }}</a-tag>
         <span style="margin-left: 16px;">总表数: {{ collection.tables.length }}</span>
@@ -43,7 +43,7 @@
           <a-card class="table-card" hoverable @click="showDetail(table)">
             <template #title>
               <a-space align="center">
-                <icon-file />
+                <IconFile />
                 <span class="table-name">{{ table.name }}</span>
               </a-space>
             </template>

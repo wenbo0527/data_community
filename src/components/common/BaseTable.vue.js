@@ -203,9 +203,9 @@ const __VLS_componentsOption = {
 };
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['column-setting']} */ ;
-/** @type {__VLS_StyleScopedClasses['column-setting']} */ ;
-/** @type {__VLS_StyleScopedClasses['density-setting']} */ ;
+/** @type {__VLS_StyleScopedClasses['column-setting']} */ 
+/** @type {__VLS_StyleScopedClasses['column-setting']} */ 
+/** @type {__VLS_StyleScopedClasses['density-setting']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -220,14 +220,14 @@ if (__VLS_ctx.showToolbar) {
     });
     var __VLS_0 = {};
     const __VLS_2 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_3 = __VLS_asFunctionalComponent(__VLS_2, new __VLS_2({}));
     const __VLS_4 = __VLS_3({}, ...__VLS_functionalComponentArgsRest(__VLS_3));
     __VLS_5.slots.default;
     if (__VLS_ctx.showRefresh) {
         const __VLS_6 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_7 = __VLS_asFunctionalComponent(__VLS_6, new __VLS_6({
             ...{ 'onClick': {} },
@@ -247,28 +247,28 @@ if (__VLS_ctx.showToolbar) {
         {
             const { icon: __VLS_thisSlot } = __VLS_9.slots;
             const __VLS_14 = {}.IconRefresh;
-            /** @type {[typeof __VLS_components.IconRefresh, typeof __VLS_components.iconRefresh, ]} */ ;
+            /** @type {[typeof __VLS_components.IconRefresh, typeof __VLS_components.iconRefresh, ]} */ 
             // @ts-ignore
             const __VLS_15 = __VLS_asFunctionalComponent(__VLS_14, new __VLS_14({}));
             const __VLS_16 = __VLS_15({}, ...__VLS_functionalComponentArgsRest(__VLS_15));
         }
-        var __VLS_9;
+        let __VLS_9;
     }
     var __VLS_18 = {};
-    var __VLS_5;
+    let __VLS_5;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "toolbar-right" },
     });
     var __VLS_20 = {};
     const __VLS_22 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_23 = __VLS_asFunctionalComponent(__VLS_22, new __VLS_22({}));
     const __VLS_24 = __VLS_23({}, ...__VLS_functionalComponentArgsRest(__VLS_23));
     __VLS_25.slots.default;
     if (__VLS_ctx.showColumnSetting) {
         const __VLS_26 = {}.APopover;
-        /** @type {[typeof __VLS_components.APopover, typeof __VLS_components.aPopover, typeof __VLS_components.APopover, typeof __VLS_components.aPopover, ]} */ ;
+        /** @type {[typeof __VLS_components.APopover, typeof __VLS_components.aPopover, typeof __VLS_components.APopover, typeof __VLS_components.aPopover, ]} */ 
         // @ts-ignore
         const __VLS_27 = __VLS_asFunctionalComponent(__VLS_26, new __VLS_26({
             trigger: "click",
@@ -280,7 +280,7 @@ if (__VLS_ctx.showToolbar) {
         }, ...__VLS_functionalComponentArgsRest(__VLS_27));
         __VLS_29.slots.default;
         const __VLS_30 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_31 = __VLS_asFunctionalComponent(__VLS_30, new __VLS_30({}));
         const __VLS_32 = __VLS_31({}, ...__VLS_functionalComponentArgsRest(__VLS_31));
@@ -288,12 +288,12 @@ if (__VLS_ctx.showToolbar) {
         {
             const { icon: __VLS_thisSlot } = __VLS_33.slots;
             const __VLS_34 = {}.IconSettings;
-            /** @type {[typeof __VLS_components.IconSettings, typeof __VLS_components.iconSettings, ]} */ ;
+            /** @type {[typeof __VLS_components.IconSettings, typeof __VLS_components.iconSettings, ]} */ 
             // @ts-ignore
             const __VLS_35 = __VLS_asFunctionalComponent(__VLS_34, new __VLS_34({}));
             const __VLS_36 = __VLS_35({}, ...__VLS_functionalComponentArgsRest(__VLS_35));
         }
-        var __VLS_33;
+        let __VLS_33;
         {
             const { content: __VLS_thisSlot } = __VLS_29.slots;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -303,7 +303,7 @@ if (__VLS_ctx.showToolbar) {
                 ...{ class: "setting-title" },
             });
             const __VLS_38 = {}.ACheckboxGroup;
-            /** @type {[typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, ]} */ ;
+            /** @type {[typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, typeof __VLS_components.ACheckboxGroup, typeof __VLS_components.aCheckboxGroup, ]} */ 
             // @ts-ignore
             const __VLS_39 = __VLS_asFunctionalComponent(__VLS_38, new __VLS_38({
                 modelValue: (__VLS_ctx.visibleColumns),
@@ -316,7 +316,7 @@ if (__VLS_ctx.showToolbar) {
             __VLS_41.slots.default;
             for (const [col] of __VLS_getVForSourceType((__VLS_ctx.settableColumns))) {
                 const __VLS_42 = {}.ACheckbox;
-                /** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ ;
+                /** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ 
                 // @ts-ignore
                 const __VLS_43 = __VLS_asFunctionalComponent(__VLS_42, new __VLS_42({
                     key: (col.dataIndex || col.key),
@@ -330,13 +330,13 @@ if (__VLS_ctx.showToolbar) {
                 (col.title);
                 var __VLS_45;
             }
-            var __VLS_41;
+            let __VLS_41;
         }
-        var __VLS_29;
+        let __VLS_29;
     }
     if (__VLS_ctx.showDensitySetting) {
         const __VLS_46 = {}.APopover;
-        /** @type {[typeof __VLS_components.APopover, typeof __VLS_components.aPopover, typeof __VLS_components.APopover, typeof __VLS_components.aPopover, ]} */ ;
+        /** @type {[typeof __VLS_components.APopover, typeof __VLS_components.aPopover, typeof __VLS_components.APopover, typeof __VLS_components.aPopover, ]} */ 
         // @ts-ignore
         const __VLS_47 = __VLS_asFunctionalComponent(__VLS_46, new __VLS_46({
             trigger: "click",
@@ -348,7 +348,7 @@ if (__VLS_ctx.showToolbar) {
         }, ...__VLS_functionalComponentArgsRest(__VLS_47));
         __VLS_49.slots.default;
         const __VLS_50 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_51 = __VLS_asFunctionalComponent(__VLS_50, new __VLS_50({}));
         const __VLS_52 = __VLS_51({}, ...__VLS_functionalComponentArgsRest(__VLS_51));
@@ -356,12 +356,12 @@ if (__VLS_ctx.showToolbar) {
         {
             const { icon: __VLS_thisSlot } = __VLS_53.slots;
             const __VLS_54 = {}.IconMenu;
-            /** @type {[typeof __VLS_components.IconMenu, typeof __VLS_components.iconMenu, ]} */ ;
+            /** @type {[typeof __VLS_components.IconMenu, typeof __VLS_components.iconMenu, ]} */ 
             // @ts-ignore
             const __VLS_55 = __VLS_asFunctionalComponent(__VLS_54, new __VLS_54({}));
             const __VLS_56 = __VLS_55({}, ...__VLS_functionalComponentArgsRest(__VLS_55));
         }
-        var __VLS_53;
+        let __VLS_53;
         {
             const { content: __VLS_thisSlot } = __VLS_49.slots;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -371,7 +371,7 @@ if (__VLS_ctx.showToolbar) {
                 ...{ class: "setting-title" },
             });
             const __VLS_58 = {}.ARadioGroup;
-            /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+            /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ 
             // @ts-ignore
             const __VLS_59 = __VLS_asFunctionalComponent(__VLS_58, new __VLS_58({
                 modelValue: (__VLS_ctx.currentSize),
@@ -383,7 +383,7 @@ if (__VLS_ctx.showToolbar) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_59));
             __VLS_61.slots.default;
             const __VLS_62 = {}.ARadio;
-            /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+            /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
             // @ts-ignore
             const __VLS_63 = __VLS_asFunctionalComponent(__VLS_62, new __VLS_62({
                 value: "small",
@@ -392,9 +392,9 @@ if (__VLS_ctx.showToolbar) {
                 value: "small",
             }, ...__VLS_functionalComponentArgsRest(__VLS_63));
             __VLS_65.slots.default;
-            var __VLS_65;
+            let __VLS_65;
             const __VLS_66 = {}.ARadio;
-            /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+            /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
             // @ts-ignore
             const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
                 value: "medium",
@@ -403,9 +403,9 @@ if (__VLS_ctx.showToolbar) {
                 value: "medium",
             }, ...__VLS_functionalComponentArgsRest(__VLS_67));
             __VLS_69.slots.default;
-            var __VLS_69;
+            let __VLS_69;
             const __VLS_70 = {}.ARadio;
-            /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+            /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
             // @ts-ignore
             const __VLS_71 = __VLS_asFunctionalComponent(__VLS_70, new __VLS_70({
                 value: "large",
@@ -414,15 +414,15 @@ if (__VLS_ctx.showToolbar) {
                 value: "large",
             }, ...__VLS_functionalComponentArgsRest(__VLS_71));
             __VLS_73.slots.default;
-            var __VLS_73;
-            var __VLS_61;
+            let __VLS_73;
+            let __VLS_61;
         }
-        var __VLS_49;
+        let __VLS_49;
     }
-    var __VLS_25;
+    let __VLS_25;
 }
 const __VLS_74 = {}.ATable;
-/** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+/** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
 // @ts-ignore
 const __VLS_75 = __VLS_asFunctionalComponent(__VLS_74, new __VLS_74({
     ...{ 'onPageChange': {} },
@@ -505,16 +505,16 @@ for (const [_, name] of __VLS_getVForSourceType((__VLS_ctx.$slots))) {
         var __VLS_91 = __VLS_tryAsConstant(name);
     }
 }
-var __VLS_77;
-/** @type {__VLS_StyleScopedClasses['base-table-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-toolbar']} */ ;
-/** @type {__VLS_StyleScopedClasses['toolbar-left']} */ ;
-/** @type {__VLS_StyleScopedClasses['toolbar-right']} */ ;
-/** @type {__VLS_StyleScopedClasses['column-setting']} */ ;
-/** @type {__VLS_StyleScopedClasses['setting-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['density-setting']} */ ;
-/** @type {__VLS_StyleScopedClasses['setting-title']} */ ;
+let __VLS_77;
+/** @type {__VLS_StyleScopedClasses['base-table-container']} */ 
+/** @type {__VLS_StyleScopedClasses['table-toolbar']} */ 
+/** @type {__VLS_StyleScopedClasses['toolbar-left']} */ 
+/** @type {__VLS_StyleScopedClasses['toolbar-right']} */ 
+/** @type {__VLS_StyleScopedClasses['column-setting']} */ 
+/** @type {__VLS_StyleScopedClasses['setting-title']} */ 
+/** @type {__VLS_StyleScopedClasses['density-setting']} */ 
+/** @type {__VLS_StyleScopedClasses['setting-title']} */ 
 // @ts-ignore
-var __VLS_1 = __VLS_0, __VLS_19 = __VLS_18, __VLS_21 = __VLS_20, __VLS_92 = __VLS_91, __VLS_93 = __VLS_90;
-var __VLS_dollars;
+const __VLS_1 = __VLS_0, __VLS_19 = __VLS_18, __VLS_21 = __VLS_20, __VLS_92 = __VLS_91, __VLS_93 = __VLS_90;
+let __VLS_dollars;
 let __VLS_self;

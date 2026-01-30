@@ -20,7 +20,7 @@
             :value="statistics.totalApplications"
             :value-style="{ color: '#1890ff' }">
             <template #prefix>
-              <icon-file />
+              <IconFile />
             </template>
           </a-statistic>
         </a-card>
@@ -32,7 +32,7 @@
             :value="statistics.approvedCount"
             :value-style="{ color: '#52c41a' }">
             <template #prefix>
-              <icon-check-circle />
+              <IconCheckCircle />
             </template>
           </a-statistic>
         </a-card>
@@ -44,7 +44,7 @@
             :value="statistics.rejectedCount"
             :value-style="{ color: '#ff4d4f' }">
             <template #prefix>
-              <icon-close-circle />
+              <IconCloseCircle />
             </template>
           </a-statistic>
         </a-card>
@@ -56,7 +56,7 @@
             :value="statistics.totalInventory"
             :value-style="{ color: '#722ed1' }">
             <template #prefix>
-              <icon-gift />
+              <IconGift />
             </template>
             <template #suffix>
               <span style="font-size: 14px;">张</span>
@@ -122,15 +122,15 @@
         <a-form-item>
           <a-space>
             <a-button type="primary" html-type="submit">
-              <template #icon><icon-search /></template>
+              <template #icon><IconSearch /></template>
               搜索
             </a-button>
             <a-button @click="resetFilter">
-              <template #icon><icon-refresh /></template>
+              <template #icon><IconRefresh /></template>
               重置
             </a-button>
             <a-button @click="exportHistory">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               导出
             </a-button>
           </a-space>
@@ -334,10 +334,10 @@
             :key="log.id"
             :dot-color="getLogDotColor(log.level)">
             <template #dot>
-              <icon-info-circle v-if="log.level === 'info'" />
-              <icon-check-circle v-else-if="log.level === 'success'" />
-              <icon-exclamation-circle v-else-if="log.level === 'warning'" />
-              <icon-close-circle v-else-if="log.level === 'error'" />
+              <IconInfoCircle v-if="log.level === 'info'" />
+              <IconCheckCircle v-else-if="log.level === 'success'" />
+              <IconExclamationCircle v-else-if="log.level === 'warning'" />
+              <IconCloseCircle v-else-if="log.level === 'error'" />
             </template>
             <div class="log-item">
               <div class="log-time">{{ log.timestamp }}</div>

@@ -149,19 +149,19 @@
           </template>
           <a-space>
             <a-button type="primary" @click="navigateToReport">
-              <template #icon><icon-bar-chart /></template>
+              <template #icon><IconBarChart /></template>
               查看报表
             </a-button>
             <a-button @click="copySQL">
-              <template #icon><icon-code /></template>
+              <template #icon><IconCode /></template>
               复制SQL
             </a-button>
             <a-button @click="addToFavorites">
-              <template #icon><icon-heart /></template>
+              <template #icon><IconHeart /></template>
               收藏
             </a-button>
             <a-button @click="subscribe">
-              <template #icon><icon-notification /></template>
+              <template #icon><IconNotification /></template>
               订阅
             </a-button>
           </a-space>

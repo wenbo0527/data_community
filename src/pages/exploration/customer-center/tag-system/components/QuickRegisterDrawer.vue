@@ -95,7 +95,7 @@
                     <a-tag size="mini" :color="getFieldTypeColor(field.type)">
                       {{ field.type }}
                     </a-tag>
-                    <icon-check-circle style="color: #00b42a; margin-left: 8px" />
+                    <IconCheckCircle style="color: #00b42a; margin-left: 8px" />
                   </div>
                 </div>
               </a-col>

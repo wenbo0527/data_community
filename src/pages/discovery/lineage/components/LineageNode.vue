@@ -35,7 +35,7 @@
       @click.stop="handleExpand('left')"
       title="展开上游"
     >
-      <icon-plus />
+      <IconPlus />
     </div>
     <div 
       v-if="showRightExpand" 
@@ -43,7 +43,7 @@
       @click.stop="handleExpand('right')"
       title="展开下游"
     >
-      <icon-plus />
+      <IconPlus />
     </div>
   </div>
 </template>

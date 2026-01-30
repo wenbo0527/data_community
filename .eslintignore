@@ -24,6 +24,7 @@ src/examples/
 
 # Generated files
 *.generated.*
+*.vue.js
 *.min.js
 *.min.css
 

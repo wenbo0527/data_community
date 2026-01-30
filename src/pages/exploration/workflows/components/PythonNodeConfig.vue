@@ -8,32 +8,32 @@
             <a-button-group size="mini">
               <a-button @click="formatCode">
                 <template #icon>
-                  <icon-code />
+                  <IconCode />
                 </template>
                 格式化
               </a-button>
               <a-button @click="validateCode">
                 <template #icon>
-                  <icon-check-circle />
+                  <IconCheckCircle />
                 </template>
                 语法检查
               </a-button>
               <a-button @click="showCodeTemplates">
                 <template #icon>
-                  <icon-file />
+                  <IconFile />
                 </template>
                 代码模板
               </a-button>
               <a-button @click="showPackageManager">
                 <template #icon>
-                  <icon-folder />
+                  <IconFolder />
                 </template>
                 包管理
               </a-button>
             </a-button-group>
             <a-button type="primary" size="mini" @click="testPythonCode">
               <template #icon>
-                <icon-play-arrow />
+                <IconPlayArrow />
               </template>
               测试运行
             </a-button>
@@ -46,7 +46,7 @@
             @change="handleConfigChange"
           />
           <div v-if="codeValidation.error" class="code-error">
-            <icon-exclamation-circle-fill />
+            <IconExclamationCircleFill />
             <span>{{ codeValidation.error }}</span>
           </div>
         </div>
@@ -59,7 +59,7 @@
             <span>参数列表</span>
             <a-button type="text" size="mini" @click="addParameter">
               <template #icon>
-                <icon-plus />
+                <IconPlus />
               </template>
               添加参数
             </a-button>
@@ -107,7 +107,7 @@
                 @click="removeParameter(index)"
               >
                 <template #icon>
-                  <icon-delete />
+                  <IconDelete />
                 </template>
               </a-button>
             </div>
@@ -125,7 +125,7 @@
             <span>已安装的包</span>
             <a-button type="text" size="mini" @click="addPackage">
               <template #icon>
-                <icon-plus />
+                <IconPlus />
               </template>
               添加包
             </a-button>
@@ -602,7 +602,7 @@ const formatCode = () => {
   }
   
   // 简单的代码格式化（实际项目中可以使用更专业的格式化工具）
-  let formatted = localConfig.value.code
+  const formatted = localConfig.value.code
     .split('\n')
     .map(line => line.trimRight())
     .join('\n')
@@ -626,7 +626,7 @@ const validateCode = () => {
   
   // 检查缩进
   const lines = code.split('\n');
-  let indentLevel = 0;
+  const indentLevel = 0;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (line.trim() === '') continue;

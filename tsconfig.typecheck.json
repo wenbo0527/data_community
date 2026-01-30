@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/pages/risk/**/*",
+    "src/router/**/*",
+    "src/store/modules/model-offline.js",
+    "src/api/offlineModel/**/*"
+  ],
+  "exclude": [
+    "tests/**/*",
+    "src/**/__tests__/**/*",
+    "src/**/*.spec.*",
+    "src/views/**/*",
+    "node_modules",
+    "dist"
+  ]
+}

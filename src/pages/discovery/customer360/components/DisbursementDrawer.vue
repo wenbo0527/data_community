@@ -23,7 +23,7 @@
       <!-- 借据基本信息 -->
       <div class="info-section">
         <div class="section-title">
-          <icon-user class="section-icon" />
+          <IconUser class="section-icon" />
           借据基本信息
         </div>
         <div class="info-grid">
@@ -31,14 +31,14 @@
             <span class="label">借据编号</span>
             <span class="value copyable" @click="copyText(loanRecord?.loanNo)">
               {{ loanRecord?.loanNo || '--' }}
-              <icon-copy class="copy-icon" />
+              <IconCopy class="copy-icon" />
             </span>
           </div>
           <div class="info-item">
             <span class="label">合同编号</span>
             <span class="value copyable" @click="copyText(loanRecord?.contractNumber)">
               {{ loanRecord?.contractNumber || '--' }}
-              <icon-copy class="copy-icon" />
+              <IconCopy class="copy-icon" />
             </span>
           </div>
           <div class="info-item">
@@ -91,7 +91,7 @@
             <div class="stat-label">
               剩余罚息
               <a-tooltip content="本金罚息+利息罚息">
-                <icon-exclamation-circle class="penalty-tip" />
+                <IconExclamationCircle class="penalty-tip" />
               </a-tooltip>
             </div>
             <div class="stat-value amount penalty">{{ formatAmount(loanRecord?.remainingPenalty) }}</div>
@@ -106,7 +106,7 @@
       <!-- 放款记录 -->
       <div class="records-section">
         <div class="section-title">
-          <icon-history class="section-icon" />
+          <IconHistory class="section-icon" />
           放款记录
         </div>
         <div class="records-list">
@@ -124,7 +124,7 @@
                 <span class="detail-label">银行卡号:</span>
                 <span class="detail-value copyable" @click="copyText(record.bankCard)">
                   {{ record.bankCard }}
-                  <icon-copy class="copy-icon" />
+                  <IconCopy class="copy-icon" />
                 </span>
               </div>
               <div class="detail-row">
@@ -141,7 +141,7 @@
       <!-- 审批信息 -->
       <div class="approval-section">
         <div class="section-title">
-          <icon-file class="section-icon" />
+          <IconFile class="section-icon" />
           审批信息
         </div>
         <div class="approval-timeline">

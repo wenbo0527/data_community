@@ -15,27 +15,27 @@
             style="width: 250px"
             @input="handleSearch"
           >
-            <template #prefix><icon-search /></template>
+            <template #prefix><IconSearch /></template>
           </a-input>
           <a-dropdown>
             <a-button type="primary">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               新增标签
-              <template #suffix><icon-down /></template>
+              <template #suffix><IconDown /></template>
             </a-button>
             <template #content>
               <a-doption @click="addTagByRule">
-                <template #icon><icon-settings /></template>
+                <template #icon><IconSettings /></template>
                 自定义规则创建
               </a-doption>
               <a-doption @click="addTagByImport">
-                <template #icon><icon-import /></template>
+                <template #icon><IconImport /></template>
                 数据导入
               </a-doption>
             </template>
           </a-dropdown>
           <a-button type="outline" @click="goToTableRegistration">
-            <template #icon><icon-upload /></template>
+            <template #icon><IconUpload /></template>
             标签表注册
           </a-button>
         </a-space>
@@ -335,7 +335,7 @@
                 <div class="section-header">
                   <h3>标签值管理</h3>
                   <a-button type="primary" @click="addTagValue">
-                    <template #icon><icon-plus /></template>
+                    <template #icon><IconPlus /></template>
                     添加标签值
                   </a-button>
                 </div>
@@ -349,14 +349,14 @@
                       </div>
                       <div class="tag-value-actions" @click.stop>
                         <a-button type="text" size="small" status="danger" @click="removeTagValue(index)">
-                          <template #icon><icon-delete /></template>
+                          <template #icon><IconDelete /></template>
                         </a-button>
                       </div>
                     </div>
                   </div>
                   
                   <div v-if="ruleForm.tagValues.length === 0" class="empty-state">
-                    <icon-plus style="font-size: 48px; color: #c9cdd4;" />
+                    <IconPlus style="font-size: 48px; color: #c9cdd4;" />
                     <p>暂无标签值，请添加第一个标签值</p>
                   </div>
                 </div>
@@ -447,7 +447,7 @@
               >
                 <template #upload-button>
                   <div class="upload-area">
-                    <icon-upload style="font-size: 48px; color: #c9cdd4;" />
+                    <IconUpload style="font-size: 48px; color: #c9cdd4;" />
                     <div style="margin-top: 8px;">点击或拖拽文件到此处上传</div>
                     <div style="color: #86909c; font-size: 12px; margin-top: 4px;">支持 CSV、Excel、JSON 格式</div>
                   </div>

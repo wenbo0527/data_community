@@ -4,7 +4,7 @@
       <h2>全量变量回溯申请</h2>
       <a-button type="primary" @click="showAddModal">
         <template #icon>
-          <icon-plus />
+          <IconPlus />
         </template>
         添加
       </a-button>
@@ -21,7 +21,7 @@
           @click="showAddModal"
         >
           <div class="add-icon">
-            <icon-plus />
+            <IconPlus />
           </div>
           <div class="add-text">添加申请</div>
         </div>
@@ -147,7 +147,7 @@
               :disabled-date="disabledEndDate"
             />
             <a-button type="text" @click="openDateModal">
-              <icon-calendar />
+              <IconCalendar />
             </a-button>
           </div>
         </div>

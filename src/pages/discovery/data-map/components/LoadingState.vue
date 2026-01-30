@@ -96,7 +96,7 @@
       <div class="progress-container">
         <div class="progress-content">
           <div class="progress-icon">
-            <icon-loading class="rotating-icon" />
+            <IconLoading class="rotating-icon" />
           </div>
           <div class="progress-info">
             <p class="progress-title">{{ loadingText || '正在加载数据...' }}</p>

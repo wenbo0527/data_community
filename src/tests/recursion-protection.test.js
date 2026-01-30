@@ -346,7 +346,7 @@ describe('同步预览线处理测试', () => {
 
     it('应该正确处理删除时的同步错误', () => {
       const mockPreviewLineManager = {
-        removePreviewLine: vi.fn().mockImplementation(function(previewLine) {
+        removePreviewLine: vi.fn().mockImplementation((previewLine) => {
           if (previewLine.id === 'error-line') {
             throw new Error('删除失败')
           }

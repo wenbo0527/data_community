@@ -23,53 +23,15 @@
       </template>
     </PageHeader>
 
-    <!-- 搜索和筛选区 -->
-    <div class="filter-section">
-      <a-card>
-        <a-form :model="filterForm" layout="inline">
-          <a-form-item label="模型名称">
-            <a-input
-              v-model="filterForm.modelName"
-              placeholder="请输入模型名称"
-              allow-clear
-              @change="handleFilterChange"
-            />
-          </a-form-item>
-          
-          <a-form-item label="回溯类型">
-            <a-select
-              v-model="filterForm.backtrackType"
-              placeholder="请选择回溯类型"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="single">单次回溯</a-option>
-              <a-option value="periodic">周期回溯</a-option>
-            </a-select>
-          </a-form-item>
-          
-          <a-form-item label="时间范围">
-            <a-range-picker
-              v-model="filterForm.dateRange"
-              style="width: 240px"
-              @change="handleFilterChange"
-            />
-          </a-form-item>
-          
-          <a-form-item>
-            <a-space>
-              <a-button type="primary" @click="handleSearch">
-                <template #icon>
-                  <icon-search />
-                </template>
-                搜索
-              </a-button>
-              <a-button @click="handleReset">重置</a-button>
-            </a-space>
-          </a-form-item>
-        </a-form>
-      </a-card>
-    </div>
+    <FilterBar
+      v-model="filterForm"
+      :fields="filterFields"
+      search-text="搜索"
+      reset-text="重置"
+      @search="handleSearch"
+      @reset="handleReset"
+      @change="handleFilterChange"
+    />
 
     <!-- 数据表格 -->
     <div class="table-section">
@@ -133,16 +95,16 @@
 
 <script setup>
 import PageHeader from '../components/PageHeader.vue'
+import FilterBar from '../components/FilterBar.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/store/modules/model-offline'
 import { Message } from '@arco-design/web-vue'
 import { 
   navigateToBacktrackCreate, 
-  navigateToBacktrackDetail, 
-  navigateToBacktrackReport,
-  CREATE_MODES 
+  navigateToBacktrackDetail
 } from '@/utils/model-backtrack-router'
+import { getCommonColumns } from '../components/table-columns'
 
 const router = useRouter()
 const store = useTaskStore()
@@ -157,6 +119,14 @@ const filterForm = reactive({
   backtrackType: '',
   dateRange: []
 })
+const filterFields = [
+  { type: 'input', key: 'modelName', label: '模型名称', placeholder: '请输入模型名称' },
+  { type: 'select', key: 'backtrackType', label: '回溯类型', options: [
+    { label: '单次回溯', value: 'single' },
+    { label: '周期回溯', value: 'periodic' }
+  ] },
+  { type: 'range', key: 'dateRange', label: '时间范围' }
+]
 
 // 分页配置
 const pagination = reactive({
@@ -168,58 +138,26 @@ const pagination = reactive({
   showPageSize: true
 })
 
-// 表格列配置
+const baseColumns = getCommonColumns({
+  nameTitle: '模型名称',
+  nameKey: 'modelName',
+  nameSlot: 'modelName',
+  typeTitle: '回溯类型',
+  typeKey: 'type',
+  typeSlot: 'type',
+  statusTitle: '状态',
+  statusKey: 'status',
+  statusSlot: 'status',
+  createTimeTitle: '创建时间',
+  createTimeKey: 'createTime',
+  createTimeSlot: 'createTime'
+})
 const columns = [
-  {
-    title: '模型名称',
-    dataIndex: 'modelName',
-    slotName: 'modelName',
-    width: 200
-  },
-  {
-    title: '回溯类型',
-    dataIndex: 'type',
-    slotName: 'type',
-    width: 120
-  },
-  {
-    title: '回溯版本',
-    dataIndex: 'version',
-    width: 100
-  },
-  {
-    title: '开始时间',
-    dataIndex: 'startTime',
-    width: 180
-  },
-  {
-    title: '结束时间',
-    dataIndex: 'endTime',
-    width: 180
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    slotName: 'status',
-    width: 100
-  },
-  {
-    title: '创建人',
-    dataIndex: 'creator',
-    width: 120
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    slotName: 'createTime',
-    width: 180
-  },
-  {
-    title: '操作',
-    slotName: 'actions',
-    width: 200,
-    fixed: 'right'
-  }
+  ...baseColumns.slice(0, 2),
+  { title: '回溯版本', dataIndex: 'version', width: 100 },
+  { title: '开始时间', dataIndex: 'startTime', width: 180 },
+  { title: '结束时间', dataIndex: 'endTime', width: 180 },
+  ...baseColumns.slice(2)
 ]
 
 // 计算属性
@@ -326,7 +264,7 @@ const handleViewDetail = (record) => {
 
  
 
-const handleStop = (record) => {
+const handleStop = () => {
   Message.info('停止回溯功能开发中')
 }
 

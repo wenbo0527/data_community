@@ -8,8 +8,7 @@
   "parser": "vue-eslint-parser",
   "extends": [
     "eslint:recommended",
-    "@vue/eslint-config-typescript",
-    "@vue/eslint-config-prettier"
+    "@vue/eslint-config-typescript"
   ],
   "parserOptions": {
     "ecmaVersion": "latest",
@@ -47,12 +46,12 @@
     "no-unused-expressions": "error",
     
     // 代码风格规则 (简化以提升性能)
-    "indent": ["warn", 2],
-    "quotes": ["warn", "single"],
-    "semi": ["warn", "never"],
-    "comma-dangle": ["warn", "never"],
-    "object-curly-spacing": ["warn", "always"],
-    "array-bracket-spacing": ["warn", "never"],
+    "indent": "off",
+    "quotes": "off",
+    "semi": "off",
+    "comma-dangle": "off",
+    "object-curly-spacing": "off",
+    "array-bracket-spacing": "off",
     
     // 函数复杂度控制 (优化性能，降低检查频率)
     "complexity": ["warn", 15],

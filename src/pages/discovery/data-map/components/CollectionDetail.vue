@@ -9,7 +9,7 @@
           </a-typography-title>
           <a-button type="outline" size="small" @click="handleEditCollection">
             <template #icon>
-              <icon-edit />
+              <IconEdit />
             </template>
             编辑
           </a-button>
@@ -24,7 +24,7 @@
     <a-card class="table-list">
       <template #title>
         <a-space>
-          <icon-table />
+          <IconTable />
           常用表列表 (共{{ collection.tables.length }}个)
         </a-space>
       </template>
@@ -33,7 +33,7 @@
           <a-card class="table-card" hoverable @click="showTableDetail(table)">
             <template #title>
               <a-space align="center">
-                <icon-table />
+                <IconTable />
                 <a-typography-title :heading="6" style="margin: 0">
                   {{ table.name }}
                 </a-typography-title>

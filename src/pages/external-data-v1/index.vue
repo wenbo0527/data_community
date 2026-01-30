@@ -28,7 +28,7 @@
                   <template #upload-button>
                     <a-button type="outline">
                       <template #icon>
-                        <icon-upload />
+                        <IconUpload />
                       </template>
                       点击上传
                     </a-button>
@@ -41,7 +41,7 @@
               <a-form-item label="模板下载">
                 <a-button type="text" @click="downloadTemplate">
                   <template #icon>
-                    <icon-download />
+                    <IconDownload />
                   </template>
                   下载模板
                 </a-button>
@@ -88,13 +88,13 @@
                     </a-button>
                   <a-button type="primary" @click="showEditModal = true">
                     <template #icon>
-                      <icon-plus />
+                      <IconPlus />
                     </template>
                     新增产品
                     </a-button>
                     <a-button type="primary" @click="showBatchModal = true">
                       <template #icon>
-                        <icon-upload />
+                        <IconUpload />
                       </template>
                       批量变更
                     </a-button>

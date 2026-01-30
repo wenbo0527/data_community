@@ -6,11 +6,11 @@
         <h4>关系查询</h4>
         <div class="query-actions">
           <a-button type="primary" @click="executeQuery" :loading="loading">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             查询关系
           </a-button>
           <a-button @click="resetQuery">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             重置
           </a-button>
 
@@ -117,20 +117,20 @@
               :type="viewMode === 'tree' ? 'primary' : 'default'"
               @click="viewMode = 'tree'"
             >
-              <template #icon><icon-branch /></template>
+              <template #icon><IconBranch /></template>
               树形视图
             </a-button>
             <a-button 
               :type="viewMode === 'table' ? 'primary' : 'default'"
               @click="viewMode = 'table'"
             >
-              <template #icon><icon-list /></template>
+              <template #icon><IconList /></template>
               表格视图
             </a-button>
           </a-button-group>
           
           <a-button @click="fitToScreen">
-            <template #icon><icon-fullscreen /></template>
+            <template #icon><IconFullscreen /></template>
             适应屏幕
           </a-button>
         </div>
@@ -238,7 +238,7 @@
       <div class="analysis-header">
         <h5>关系路径分析</h5>
         <a-button @click="selectedPath = null">
-          <template #icon><icon-close /></template>
+          <template #icon><IconClose /></template>
           关闭
         </a-button>
       </div>
@@ -253,7 +253,7 @@
             >
               <div class="step-node">
                 <div class="node-avatar">
-                  <icon-user />
+                  <IconUser />
                 </div>
                 <div class="node-info">
                   <div class="node-name">{{ step.name }}</div>
@@ -262,7 +262,7 @@
               </div>
               
               <div v-if="index < selectedPath.steps.length - 1" class="step-arrow">
-                <icon-arrow-right />
+                <IconArrowRight />
                 <div class="relationship-info">
                   <span class="relationship-type">{{ step.relationshipType }}</span>
                   <span class="relationship-strength">强度: {{ step.strength }}</span>

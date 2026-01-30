@@ -8,8 +8,8 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "exploration-container" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({});
-/** @type {__VLS_StyleScopedClasses['exploration-container']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['exploration-container']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {};
@@ -20,4 +20,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

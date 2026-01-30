@@ -6,7 +6,7 @@
         <p style="color: var(--color-text-3); margin-top: 8px">按照模板格式填写指标数据，系统将自动检测：存在则更新，不存在则插入</p>
       </div>
       <a-button type="primary" @click="downloadTemplate('batch')" long>
-        <template #icon><icon-download /></template>
+        <template #icon><IconDownload /></template>
         下载批量导入模板
       </a-button>
       <a-upload-dragger
@@ -23,7 +23,7 @@
         style="height: 180px; margin: 16px 0"
       >
         <div class="upload-content">
-          <icon-upload class="upload-icon" style="font-size: 32px; margin-bottom: 16px" />
+          <IconUpload class="upload-icon" style="font-size: 32px; margin-bottom: 16px" />
           <p class="upload-text" style="font-size: 16px; margin-bottom: 8px">拖拽文件到此处或<span class="upload-highlight"> 点击上传</span></p>
           <p class="upload-hint" style="color: var(--color-text-3)">支持.xlsx和.xls格式文件，文件大小不超过5MB</p>
           <a-progress v-if="uploadProgress > 0" :percent="uploadProgress" :show-text="false" />

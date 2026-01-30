@@ -410,84 +410,84 @@ const saveBusinessProcess = (data) => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['arco-steps-item-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-steps-item-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-steps-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-steps-item-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-steps-item-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['active']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['completed']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['completed']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-connector']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-circle']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-total']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-stats']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['active']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['completed']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['active']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-meta']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-table-cell']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['current-step-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-circle']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-total']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-stats']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['action-buttons']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-icon']} */ ;
+/** @type {__VLS_StyleScopedClasses['arco-steps-item-title']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-steps-item-description']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-steps-item']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-steps-item-title']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-steps-item-description']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-card']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-card']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-card']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['step-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['step-number']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['active']} */ 
+/** @type {__VLS_StyleScopedClasses['step-number']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['completed']} */ 
+/** @type {__VLS_StyleScopedClasses['step-number']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['completed']} */ 
+/** @type {__VLS_StyleScopedClasses['step-connector']} */ 
+/** @type {__VLS_StyleScopedClasses['step-content']} */ 
+/** @type {__VLS_StyleScopedClasses['step-overview']} */ 
+/** @type {__VLS_StyleScopedClasses['step-overview']} */ 
+/** @type {__VLS_StyleScopedClasses['step-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['step-circle']} */ 
+/** @type {__VLS_StyleScopedClasses['step-total']} */ 
+/** @type {__VLS_StyleScopedClasses['step-overview']} */ 
+/** @type {__VLS_StyleScopedClasses['step-content']} */ 
+/** @type {__VLS_StyleScopedClasses['step-name']} */ 
+/** @type {__VLS_StyleScopedClasses['step-description']} */ 
+/** @type {__VLS_StyleScopedClasses['step-stats']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-item']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['active']} */ 
+/** @type {__VLS_StyleScopedClasses['step-title']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['completed']} */ 
+/** @type {__VLS_StyleScopedClasses['step-title']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['active']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-item']} */ 
+/** @type {__VLS_StyleScopedClasses['data-section']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-card']} */ 
+/** @type {__VLS_StyleScopedClasses['step-title']} */ 
+/** @type {__VLS_StyleScopedClasses['step-description']} */ 
+/** @type {__VLS_StyleScopedClasses['step-meta']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-table-cell']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-name']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-name']} */ 
+/** @type {__VLS_StyleScopedClasses['table-name']} */ 
+/** @type {__VLS_StyleScopedClasses['current-step-info']} */ 
+/** @type {__VLS_StyleScopedClasses['step-overview']} */ 
+/** @type {__VLS_StyleScopedClasses['step-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['step-circle']} */ 
+/** @type {__VLS_StyleScopedClasses['step-total']} */ 
+/** @type {__VLS_StyleScopedClasses['step-content']} */ 
+/** @type {__VLS_StyleScopedClasses['step-name']} */ 
+/** @type {__VLS_StyleScopedClasses['step-description']} */ 
+/** @type {__VLS_StyleScopedClasses['step-stats']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-item']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-title']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['search-input']} */ 
+/** @type {__VLS_StyleScopedClasses['action-buttons']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-item']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-icon']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "business-process-flow" },
 });
 const __VLS_0 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ class: "steps-card" },
@@ -522,7 +522,7 @@ __VLS_3.slots.default;
         ...{ class: "filter-label" },
     });
     const __VLS_4 = {}.ACascader;
-    /** @type {[typeof __VLS_components.ACascader, typeof __VLS_components.aCascader, ]} */ ;
+    /** @type {[typeof __VLS_components.ACascader, typeof __VLS_components.aCascader, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         ...{ 'onChange': {} },
@@ -550,7 +550,7 @@ __VLS_3.slots.default;
     const __VLS_11 = {
         onChange: (__VLS_ctx.onCascaderChange)
     };
-    var __VLS_7;
+    let __VLS_7;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "steps-stats" },
     });
@@ -559,7 +559,7 @@ __VLS_3.slots.default;
     });
     (__VLS_ctx.currentProcessSteps.length);
     const __VLS_12 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
         ...{ 'onClick': {} },
@@ -581,12 +581,12 @@ __VLS_3.slots.default;
     {
         const { icon: __VLS_thisSlot } = __VLS_15.slots;
         const __VLS_20 = {}.IconEdit;
-        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ ;
+        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ 
         // @ts-ignore
         const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({}));
         const __VLS_22 = __VLS_21({}, ...__VLS_functionalComponentArgsRest(__VLS_21));
     }
-    var __VLS_15;
+    let __VLS_15;
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "enhanced-steps" },
@@ -654,7 +654,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
     ...{ class: "stat-item" },
 });
 const __VLS_24 = {}.IconFile;
-/** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ ;
+/** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ 
 // @ts-ignore
 const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
     ...{ class: "stat-icon" },
@@ -667,7 +667,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
     ...{ class: "stat-item" },
 });
 const __VLS_28 = {}.IconBarChart;
-/** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ ;
+/** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ 
 // @ts-ignore
 const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
     ...{ class: "stat-icon" },
@@ -676,12 +676,12 @@ const __VLS_30 = __VLS_29({
     ...{ class: "stat-icon" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_29));
 (__VLS_ctx.currentMetrics.length);
-var __VLS_3;
+let __VLS_3;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "main-content" },
 });
 const __VLS_32 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
     ...{ class: "data-content-card" },
@@ -698,7 +698,7 @@ __VLS_35.slots.default;
         ...{ class: "tab-extra-actions" },
     });
     const __VLS_36 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
         ...{ 'onClick': {} },
@@ -722,14 +722,14 @@ __VLS_35.slots.default;
     {
         const { icon: __VLS_thisSlot } = __VLS_39.slots;
         const __VLS_44 = {}.IconEdit;
-        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ ;
+        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ 
         // @ts-ignore
         const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({}));
         const __VLS_46 = __VLS_45({}, ...__VLS_functionalComponentArgsRest(__VLS_45));
     }
-    var __VLS_39;
+    let __VLS_39;
     const __VLS_48 = {}.ASelect;
-    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
     // @ts-ignore
     const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
         ...{ 'onUpdate:modelValue': {} },
@@ -751,7 +751,7 @@ __VLS_35.slots.default;
     };
     __VLS_51.slots.default;
     const __VLS_56 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
         value: "grid",
@@ -760,9 +760,9 @@ __VLS_35.slots.default;
         value: "grid",
     }, ...__VLS_functionalComponentArgsRest(__VLS_57));
     __VLS_59.slots.default;
-    var __VLS_59;
+    let __VLS_59;
     const __VLS_60 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
         value: "list",
@@ -771,11 +771,11 @@ __VLS_35.slots.default;
         value: "list",
     }, ...__VLS_functionalComponentArgsRest(__VLS_61));
     __VLS_63.slots.default;
-    var __VLS_63;
-    var __VLS_51;
+    let __VLS_63;
+    let __VLS_51;
 }
 const __VLS_64 = {}.ATabs;
-/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ ;
+/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ 
 // @ts-ignore
 const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({
     activeKey: (__VLS_ctx.activeTab),
@@ -791,7 +791,7 @@ const __VLS_66 = __VLS_65({
 }, ...__VLS_functionalComponentArgsRest(__VLS_65));
 __VLS_67.slots.default;
 const __VLS_68 = {}.ATabPane;
-/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
 // @ts-ignore
 const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
     key: "tables",
@@ -808,7 +808,7 @@ __VLS_71.slots.default;
         ...{ class: "tab-title" },
     });
     const __VLS_72 = {}.IconFile;
-    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ ;
+    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ 
     // @ts-ignore
     const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({
         ...{ class: "tab-icon" },
@@ -851,7 +851,7 @@ if (__VLS_ctx.currentTables.length > 0) {
             (table.name);
             if (table.type) {
                 const __VLS_76 = {}.ATag;
-                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
                 // @ts-ignore
                 const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({
                     size: "small",
@@ -876,7 +876,7 @@ if (__VLS_ctx.currentTables.length > 0) {
                 ...{ class: "table-owner" },
             });
             const __VLS_80 = {}.IconUser;
-            /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ ;
+            /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ 
             // @ts-ignore
             const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
                 ...{ class: "owner-icon" },
@@ -886,7 +886,7 @@ if (__VLS_ctx.currentTables.length > 0) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_81));
             (table.owner || '未指定');
             const __VLS_84 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({
                 type: "text",
@@ -900,7 +900,7 @@ if (__VLS_ctx.currentTables.length > 0) {
             {
                 const { icon: __VLS_thisSlot } = __VLS_87.slots;
                 const __VLS_88 = {}.IconEye;
-                /** @type {[typeof __VLS_components.IconEye, typeof __VLS_components.iconEye, ]} */ ;
+                /** @type {[typeof __VLS_components.IconEye, typeof __VLS_components.iconEye, ]} */ 
                 // @ts-ignore
                 const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({}));
                 const __VLS_90 = __VLS_89({}, ...__VLS_functionalComponentArgsRest(__VLS_89));
@@ -913,7 +913,7 @@ if (__VLS_ctx.currentTables.length > 0) {
             ...{ class: "tables-list-view" },
         });
         const __VLS_92 = {}.ATable;
-        /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+        /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
         // @ts-ignore
         const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({
             ...{ 'onRowClick': {} },
@@ -939,7 +939,7 @@ if (__VLS_ctx.currentTables.length > 0) {
         const __VLS_99 = {
             onRowClick: (__VLS_ctx.showTableDetail)
         };
-        var __VLS_95;
+        let __VLS_95;
     }
 }
 else {
@@ -950,7 +950,7 @@ else {
         ...{ class: "empty-content" },
     });
     const __VLS_100 = {}.IconFile;
-    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ ;
+    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ 
     // @ts-ignore
     const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({
         ...{ class: "empty-icon" },
@@ -965,7 +965,7 @@ else {
         ...{ class: "empty-description" },
     });
     const __VLS_104 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
         ...{ 'onClick': {} },
@@ -985,16 +985,16 @@ else {
     {
         const { icon: __VLS_thisSlot } = __VLS_107.slots;
         const __VLS_112 = {}.IconEdit;
-        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ ;
+        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ 
         // @ts-ignore
         const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({}));
         const __VLS_114 = __VLS_113({}, ...__VLS_functionalComponentArgsRest(__VLS_113));
     }
-    var __VLS_107;
+    let __VLS_107;
 }
-var __VLS_71;
+let __VLS_71;
 const __VLS_116 = {}.ATabPane;
-/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
 // @ts-ignore
 const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({
     key: "metrics",
@@ -1011,7 +1011,7 @@ __VLS_119.slots.default;
         ...{ class: "tab-title" },
     });
     const __VLS_120 = {}.IconBarChart;
-    /** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ ;
+    /** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ 
     // @ts-ignore
     const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
         ...{ class: "tab-icon" },
@@ -1054,7 +1054,7 @@ if (__VLS_ctx.currentMetrics.length > 0) {
             (metric.name);
             if (metric.unit) {
                 const __VLS_124 = {}.ATag;
-                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
                 // @ts-ignore
                 const __VLS_125 = __VLS_asFunctionalComponent(__VLS_124, new __VLS_124({
                     size: "small",
@@ -1079,7 +1079,7 @@ if (__VLS_ctx.currentMetrics.length > 0) {
                 ...{ class: "metric-owner" },
             });
             const __VLS_128 = {}.IconUser;
-            /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ ;
+            /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ 
             // @ts-ignore
             const __VLS_129 = __VLS_asFunctionalComponent(__VLS_128, new __VLS_128({
                 ...{ class: "owner-icon" },
@@ -1089,7 +1089,7 @@ if (__VLS_ctx.currentMetrics.length > 0) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_129));
             (metric.owner || '未指定');
             const __VLS_132 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_133 = __VLS_asFunctionalComponent(__VLS_132, new __VLS_132({
                 type: "text",
@@ -1103,7 +1103,7 @@ if (__VLS_ctx.currentMetrics.length > 0) {
             {
                 const { icon: __VLS_thisSlot } = __VLS_135.slots;
                 const __VLS_136 = {}.IconEye;
-                /** @type {[typeof __VLS_components.IconEye, typeof __VLS_components.iconEye, ]} */ ;
+                /** @type {[typeof __VLS_components.IconEye, typeof __VLS_components.iconEye, ]} */ 
                 // @ts-ignore
                 const __VLS_137 = __VLS_asFunctionalComponent(__VLS_136, new __VLS_136({}));
                 const __VLS_138 = __VLS_137({}, ...__VLS_functionalComponentArgsRest(__VLS_137));
@@ -1116,7 +1116,7 @@ if (__VLS_ctx.currentMetrics.length > 0) {
             ...{ class: "metrics-list-view" },
         });
         const __VLS_140 = {}.ATable;
-        /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+        /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
         // @ts-ignore
         const __VLS_141 = __VLS_asFunctionalComponent(__VLS_140, new __VLS_140({
             ...{ 'onRowClick': {} },
@@ -1140,7 +1140,7 @@ if (__VLS_ctx.currentMetrics.length > 0) {
         const __VLS_147 = {
             onRowClick: (__VLS_ctx.showMetricDetail)
         };
-        var __VLS_143;
+        let __VLS_143;
     }
 }
 else {
@@ -1151,7 +1151,7 @@ else {
         ...{ class: "empty-content" },
     });
     const __VLS_148 = {}.IconBarChart;
-    /** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ ;
+    /** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ 
     // @ts-ignore
     const __VLS_149 = __VLS_asFunctionalComponent(__VLS_148, new __VLS_148({
         ...{ class: "empty-icon" },
@@ -1166,7 +1166,7 @@ else {
         ...{ class: "empty-description" },
     });
     const __VLS_152 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_153 = __VLS_asFunctionalComponent(__VLS_152, new __VLS_152({
         ...{ 'onClick': {} },
@@ -1186,18 +1186,18 @@ else {
     {
         const { icon: __VLS_thisSlot } = __VLS_155.slots;
         const __VLS_160 = {}.IconEdit;
-        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ ;
+        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ 
         // @ts-ignore
         const __VLS_161 = __VLS_asFunctionalComponent(__VLS_160, new __VLS_160({}));
         const __VLS_162 = __VLS_161({}, ...__VLS_functionalComponentArgsRest(__VLS_161));
     }
-    var __VLS_155;
+    let __VLS_155;
 }
-var __VLS_119;
-var __VLS_67;
-var __VLS_35;
+let __VLS_119;
+let __VLS_67;
+let __VLS_35;
 const __VLS_164 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_165 = __VLS_asFunctionalComponent(__VLS_164, new __VLS_164({
     visible: (__VLS_ctx.processListModalVisible),
@@ -1224,7 +1224,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "header-actions" },
 });
 const __VLS_168 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_169 = __VLS_asFunctionalComponent(__VLS_168, new __VLS_168({
     ...{ 'onClick': {} },
@@ -1244,12 +1244,12 @@ __VLS_171.slots.default;
 {
     const { icon: __VLS_thisSlot } = __VLS_171.slots;
     const __VLS_176 = {}.IconPlus;
-    /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ ;
+    /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ 
     // @ts-ignore
     const __VLS_177 = __VLS_asFunctionalComponent(__VLS_176, new __VLS_176({}));
     const __VLS_178 = __VLS_177({}, ...__VLS_functionalComponentArgsRest(__VLS_177));
 }
-var __VLS_171;
+let __VLS_171;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "process-list" },
 });
@@ -1272,7 +1272,7 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
         ...{ class: "process-tags" },
     });
     const __VLS_180 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_181 = __VLS_asFunctionalComponent(__VLS_180, new __VLS_180({
         size: "small",
@@ -1286,7 +1286,7 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
     (__VLS_ctx.getBusinessTypeText(process.businessType));
     var __VLS_183;
     const __VLS_184 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_185 = __VLS_asFunctionalComponent(__VLS_184, new __VLS_184({
         size: "small",
@@ -1310,7 +1310,7 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
         ...{ class: "meta-item" },
     });
     const __VLS_188 = {}.IconFile;
-    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ ;
+    /** @type {[typeof __VLS_components.IconFile, typeof __VLS_components.iconFile, ]} */ 
     // @ts-ignore
     const __VLS_189 = __VLS_asFunctionalComponent(__VLS_188, new __VLS_188({
         ...{ class: "meta-icon" },
@@ -1323,7 +1323,7 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
         ...{ class: "meta-item" },
     });
     const __VLS_192 = {}.IconUser;
-    /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ ;
+    /** @type {[typeof __VLS_components.IconUser, typeof __VLS_components.iconUser, ]} */ 
     // @ts-ignore
     const __VLS_193 = __VLS_asFunctionalComponent(__VLS_192, new __VLS_192({
         ...{ class: "meta-icon" },
@@ -1336,7 +1336,7 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
         ...{ class: "meta-item" },
     });
     const __VLS_196 = {}.IconClockCircle;
-    /** @type {[typeof __VLS_components.IconClockCircle, typeof __VLS_components.iconClockCircle, ]} */ ;
+    /** @type {[typeof __VLS_components.IconClockCircle, typeof __VLS_components.iconClockCircle, ]} */ 
     // @ts-ignore
     const __VLS_197 = __VLS_asFunctionalComponent(__VLS_196, new __VLS_196({
         ...{ class: "meta-icon" },
@@ -1349,7 +1349,7 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
         ...{ class: "process-actions" },
     });
     const __VLS_200 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_201 = __VLS_asFunctionalComponent(__VLS_200, new __VLS_200({
         ...{ 'onClick': {} },
@@ -1373,14 +1373,14 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
     {
         const { icon: __VLS_thisSlot } = __VLS_203.slots;
         const __VLS_208 = {}.IconEdit;
-        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ ;
+        /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ 
         // @ts-ignore
         const __VLS_209 = __VLS_asFunctionalComponent(__VLS_208, new __VLS_208({}));
         const __VLS_210 = __VLS_209({}, ...__VLS_functionalComponentArgsRest(__VLS_209));
     }
     var __VLS_203;
     const __VLS_212 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_213 = __VLS_asFunctionalComponent(__VLS_212, new __VLS_212({
         ...{ 'onClick': {} },
@@ -1406,15 +1406,15 @@ for (const [process] of __VLS_getVForSourceType((__VLS_ctx.processList))) {
     {
         const { icon: __VLS_thisSlot } = __VLS_215.slots;
         const __VLS_220 = {}.IconDelete;
-        /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ ;
+        /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ 
         // @ts-ignore
         const __VLS_221 = __VLS_asFunctionalComponent(__VLS_220, new __VLS_220({}));
         const __VLS_222 = __VLS_221({}, ...__VLS_functionalComponentArgsRest(__VLS_221));
     }
     var __VLS_215;
 }
-var __VLS_167;
-/** @type {[typeof BusinessProcessEditModal, ]} */ ;
+let __VLS_167;
+/** @type {[typeof BusinessProcessEditModal, ]} */ 
 // @ts-ignore
 const __VLS_224 = __VLS_asFunctionalComponent(BusinessProcessEditModal, new BusinessProcessEditModal({
     ...{ 'onSave': {} },
@@ -1432,99 +1432,99 @@ let __VLS_229;
 const __VLS_230 = {
     onSave: (__VLS_ctx.saveBusinessProcess)
 };
-var __VLS_226;
-/** @type {__VLS_StyleScopedClasses['business-process-flow']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-title-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-filters']} */ ;
-/** @type {__VLS_StyleScopedClasses['filter-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['filter-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['steps-stats']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['enhanced-steps']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['active']} */ ;
-/** @type {__VLS_StyleScopedClasses['completed']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-connector']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['current-step-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-indicator']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-circle']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-total']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-stats']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['main-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-content-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-extra-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-tabs']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['tables-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['tables-grid-view']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-desc']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-owner']} */ ;
-/** @type {__VLS_StyleScopedClasses['owner-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['tables-list-view']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-tables-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['tab-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['metrics-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['metrics-grid-view']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-desc']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-owner']} */ ;
-/** @type {__VLS_StyleScopedClasses['owner-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['metrics-list-view']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-metrics-state']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['empty-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-list-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['modal-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-tags']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-meta']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['meta-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['process-actions']} */ ;
-var __VLS_dollars;
+let __VLS_226;
+/** @type {__VLS_StyleScopedClasses['business-process-flow']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-card']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-header']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-title-group']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-title']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-filters']} */ 
+/** @type {__VLS_StyleScopedClasses['filter-group']} */ 
+/** @type {__VLS_StyleScopedClasses['filter-label']} */ 
+/** @type {__VLS_StyleScopedClasses['steps-stats']} */ 
+/** @type {__VLS_StyleScopedClasses['step-count']} */ 
+/** @type {__VLS_StyleScopedClasses['enhanced-steps']} */ 
+/** @type {__VLS_StyleScopedClasses['step-item']} */ 
+/** @type {__VLS_StyleScopedClasses['active']} */ 
+/** @type {__VLS_StyleScopedClasses['completed']} */ 
+/** @type {__VLS_StyleScopedClasses['step-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['step-number']} */ 
+/** @type {__VLS_StyleScopedClasses['step-connector']} */ 
+/** @type {__VLS_StyleScopedClasses['step-content']} */ 
+/** @type {__VLS_StyleScopedClasses['step-title']} */ 
+/** @type {__VLS_StyleScopedClasses['current-step-overview']} */ 
+/** @type {__VLS_StyleScopedClasses['step-overview']} */ 
+/** @type {__VLS_StyleScopedClasses['step-indicator']} */ 
+/** @type {__VLS_StyleScopedClasses['step-circle']} */ 
+/** @type {__VLS_StyleScopedClasses['step-total']} */ 
+/** @type {__VLS_StyleScopedClasses['step-content']} */ 
+/** @type {__VLS_StyleScopedClasses['step-name']} */ 
+/** @type {__VLS_StyleScopedClasses['step-description']} */ 
+/** @type {__VLS_StyleScopedClasses['step-stats']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-item']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-item']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['main-content']} */ 
+/** @type {__VLS_StyleScopedClasses['data-content-card']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-extra-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['data-tabs']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-title']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-content']} */ 
+/** @type {__VLS_StyleScopedClasses['tables-container']} */ 
+/** @type {__VLS_StyleScopedClasses['tables-grid-view']} */ 
+/** @type {__VLS_StyleScopedClasses['table-card']} */ 
+/** @type {__VLS_StyleScopedClasses['table-header']} */ 
+/** @type {__VLS_StyleScopedClasses['table-name']} */ 
+/** @type {__VLS_StyleScopedClasses['table-desc']} */ 
+/** @type {__VLS_StyleScopedClasses['table-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['table-owner']} */ 
+/** @type {__VLS_StyleScopedClasses['owner-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['tables-list-view']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-tables-state']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-content']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-title']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-description']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-title']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['tab-content']} */ 
+/** @type {__VLS_StyleScopedClasses['metrics-container']} */ 
+/** @type {__VLS_StyleScopedClasses['metrics-grid-view']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-card']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-header']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-name']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-desc']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-owner']} */ 
+/** @type {__VLS_StyleScopedClasses['owner-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['metrics-list-view']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-metrics-state']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-content']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-title']} */ 
+/** @type {__VLS_StyleScopedClasses['empty-description']} */ 
+/** @type {__VLS_StyleScopedClasses['process-list-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['modal-header']} */ 
+/** @type {__VLS_StyleScopedClasses['header-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['process-list']} */ 
+/** @type {__VLS_StyleScopedClasses['process-item']} */ 
+/** @type {__VLS_StyleScopedClasses['process-info']} */ 
+/** @type {__VLS_StyleScopedClasses['process-header']} */ 
+/** @type {__VLS_StyleScopedClasses['process-name']} */ 
+/** @type {__VLS_StyleScopedClasses['process-tags']} */ 
+/** @type {__VLS_StyleScopedClasses['process-description']} */ 
+/** @type {__VLS_StyleScopedClasses['process-meta']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-item']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-item']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-item']} */ 
+/** @type {__VLS_StyleScopedClasses['meta-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['process-actions']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -1577,4 +1577,4 @@ export default (await import('vue')).defineComponent({
     },
     __typeEmits: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

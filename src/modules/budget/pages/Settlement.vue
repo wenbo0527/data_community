@@ -2,7 +2,7 @@
   <div class="settlement-management">
     <div class="page-header">
       <h3>结算管理</h3>
-      <p class="desc">支持多供应商、多合同的批量结算任务管理（可按对接渠道查看）</p>
+      <p class="desc"></p>
     </div>
     <a-card class="toolbar" :bordered="true">
       <a-form :model="filters" layout="inline">
@@ -45,11 +45,11 @@
         <a-form-item style="margin-left: auto">
           <a-space>
             <a-button type="primary" @click="goAccounting">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               发起结算
             </a-button>
             <a-button @click="refresh">
-              <template #icon><icon-refresh /></template>
+              <template #icon><IconRefresh /></template>
               刷新
             </a-button>
             <a-button type="outline" @click="exportList">导出列表</a-button>

@@ -164,14 +164,14 @@ if (__VLS_ctx.visible) {
             ...{ class: "guide-actions" },
         });
         const __VLS_0 = {}.ASpace;
-        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
         // @ts-ignore
         const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({}));
         const __VLS_2 = __VLS_1({}, ...__VLS_functionalComponentArgsRest(__VLS_1));
         __VLS_3.slots.default;
         if (__VLS_ctx.currentStepIndex > 0) {
             const __VLS_4 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
                 ...{ 'onClick': {} },
@@ -186,10 +186,10 @@ if (__VLS_ctx.visible) {
                 onClick: (__VLS_ctx.prevStep)
             };
             __VLS_7.slots.default;
-            var __VLS_7;
+            let __VLS_7;
         }
         const __VLS_12 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
             ...{ 'onClick': {} },
@@ -207,19 +207,19 @@ if (__VLS_ctx.visible) {
         };
         __VLS_15.slots.default;
         (__VLS_ctx.isLastStep ? '完成' : '下一步');
-        var __VLS_15;
-        var __VLS_3;
+        let __VLS_15;
+        let __VLS_3;
     }
 }
-/** @type {__VLS_StyleScopedClasses['tour-guide-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['tour-mask']} */ ;
-/** @type {__VLS_StyleScopedClasses['highlight-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-actions']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['tour-guide-container']} */ 
+/** @type {__VLS_StyleScopedClasses['tour-mask']} */ 
+/** @type {__VLS_StyleScopedClasses['highlight-area']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-card']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-content']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-title']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-description']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-actions']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -246,4 +246,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

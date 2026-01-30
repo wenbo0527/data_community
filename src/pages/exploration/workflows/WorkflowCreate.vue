@@ -5,7 +5,7 @@
       <div class="header-left">
         <a-button type="text" @click="goBack">
           <template #icon>
-            <icon-arrow-left />
+            <IconArrowLeft />
           </template>
           返回
         </a-button>
@@ -87,7 +87,7 @@
                     <p>{{ template.description }}</p>
                   </div>
                   <div class="template-check">
-                    <icon-check v-if="selectedTemplate === template.id" />
+                    <IconCheck v-if="selectedTemplate === template.id" />
                   </div>
                 </div>
               </div>

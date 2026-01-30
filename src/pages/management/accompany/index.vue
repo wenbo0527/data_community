@@ -13,7 +13,7 @@
                   @search="handleSearch"
                 />
                 <a-button type="primary" @click="handleCreate">
-                  <template #icon><icon-plus /></template>
+                  <template #icon><IconPlus /></template>
                   新建计划
                 </a-button>
               </a-space>

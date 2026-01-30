@@ -6,13 +6,13 @@
         <a-input-search v-model="searchKeyword" placeholder="搜索券名称" style="width: 300px" @search="handleSearch" />
         <a-button type="primary" @click="showCreateModal = true">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           新建券
         </a-button>
         <a-button type="primary" @click="handleBatchCreate">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           批量新建
         </a-button>
@@ -23,7 +23,7 @@
           :loading="quickApprovalLoading"
           @click="handleQuickApproval">
           <template #icon>
-            <icon-check />
+            <IconCheck />
           </template>
           快速审批({{ pendingApprovalCount }})
         </a-button>
@@ -56,9 +56,7 @@
             { text: '已失效', value: '已失效' }
           ] }">
           <template #cell="{ record }">
-            <a-tag :color="getStatusColor(record.status)">
-              {{ record.status }}
-            </a-tag>
+            <StatusTag :status="record.status" dictKey="couponStatus" />
           </template>
         </a-table-column>
         
@@ -76,9 +74,9 @@
         </a-table-column>
         <a-table-column title="有效期" data-index="validity" :width="220">
           <template #cell="{ record }">
-            <a-tooltip :content="`${new Date(record.startTime).toISOString().split('T')[0]} - ${new Date(record.endTime).toISOString().split('T')[0]}`" position="top">
+            <a-tooltip :content="`${DateUtils.formatDate(record.startTime)} - ${DateUtils.formatDate(record.endTime)}`" position="top">
               <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">
-                {{ new Date(record.startTime).toISOString().split('T')[0] }} - {{ new Date(record.endTime).toISOString().split('T')[0] }}
+                {{ DateUtils.formatDate(record.startTime) }} - {{ DateUtils.formatDate(record.endTime) }}
               </span>
             </a-tooltip>
           </template>
@@ -223,7 +221,7 @@
               <a-grid-item :span="24">
                 <a-alert type="info">
                   <template #icon>
-                    <icon-info-circle />
+                    <IconInfoCircle />
                     【规则提示】相同名称的优惠券每个用户仅可领取一次
                   </template>
                   {{ formData.userLimitDesc }}
@@ -278,6 +276,8 @@ import { IconPlus, IconInfoCircle, IconCheck } from '@arco-design/web-vue/es/ico
 import { useUserStore } from '@/store'
 import { couponMockData, templateMockData } from '@/mock/coupon'
 import { inventoryAPI } from '@/api/coupon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -544,17 +544,6 @@ const onPageSizeChange = (pageSize) => {
   fetchData()
 }
 
-// 获取状态颜色
-const getStatusColor = (status) => {
-  const colorMap = {
-    '草稿': 'gray',
-    '待审核': 'blue',
-    '生效中': 'green',
-    '票劵停发': 'orange',
-    '票劵失效': 'gray'
-  }
-  return colorMap[status] || 'blue'
-}
 
 // 获取券模版选项
 const fetchTemplateOptions = async () => {

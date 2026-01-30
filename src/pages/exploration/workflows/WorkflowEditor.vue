@@ -4,7 +4,7 @@
     <div class="editor-header">
       <div class="header-left">
         <a-button type="text" @click="goBack">
-          <template #icon><icon-arrow-left /></template>
+          <template #icon><IconArrowLeft /></template>
           返回
         </a-button>
         <div class="workflow-info">
@@ -16,10 +16,10 @@
       <div class="header-center">
         <div class="editor-actions">
           <a-button type="text" :disabled="!canUndo" @click="undo">
-            <template #icon><icon-undo /></template>
+            <template #icon><IconUndo /></template>
           </a-button>
           <a-button type="text" :disabled="!canRedo" @click="redo">
-            <template #icon><icon-redo /></template>
+            <template #icon><IconRedo /></template>
           </a-button>
         </div>
       </div>
@@ -27,38 +27,38 @@
       <div class="header-right">
         <a-space>
           <a-button type="outline" @click="toggleDebugPanel">
-            <template #icon><icon-play-arrow /></template>
+            <template #icon><IconPlayArrow /></template>
             调试运行
           </a-button>
           <a-button type="primary" :loading="saving" @click="saveWorkflow">
-            <template #icon><icon-save /></template>
+            <template #icon><IconSave /></template>
             保存
           </a-button>
           <a-dropdown>
             <a-button type="primary">
-              发布 <icon-down />
+              发布 <IconDown />
             </a-button>
             <template #content>
               <a-doption @click="showPublishDialog">
-                <template #icon><icon-check /></template>
+                <template #icon><IconCheck /></template>
                 发布流程
               </a-doption>
               <a-doption @click="archiveWorkflow">
-                <template #icon><icon-archive /></template>
+                <template #icon><IconArchive /></template>
                 归档流程
               </a-doption>
               <a-doption @click="showVersionHistory">
-                <template #icon><icon-history /></template>
+                <template #icon><IconHistory /></template>
                 版本历史
               </a-doption>
               <a-doption @click="createNewVersion">
-                <template #icon><icon-branch /></template>
+                <template #icon><IconBranch /></template>
                 创建新版本
               </a-doption>
             </template>
           </a-dropdown>
           <a-button type="outline" @click="showPublishDialog">
-            <template #icon><icon-settings /></template>
+            <template #icon><IconSettings /></template>
             发布设置
           </a-button>
         </a-space>
@@ -118,12 +118,12 @@
         <div class="panel-header">
           <span class="panel-title">属性配置</span>
           <a-button type="text" size="small" @click="showPropertyPanel = false">
-            <template #icon><icon-close /></template>
+            <template #icon><IconClose /></template>
           </a-button>
         </div>
         <div class="panel-content">
           <div v-if="!selectedNode" class="no-selection">
-            <icon-info-circle :size="32" style="color: #86909c;" />
+            <IconInfoCircle :size="32" style="color: #86909c;" />
             <p>请选择一个节点进行配置</p>
           </div>
           <div v-else class="node-properties">
@@ -150,7 +150,7 @@
       <div class="debug-header">
         <span class="debug-title">调试面板</span>
         <a-button type="text" size="small" @click="showDebugPanel = false">
-          <template #icon><icon-close /></template>
+          <template #icon><IconClose /></template>
         </a-button>
       </div>
       <div class="debug-content">

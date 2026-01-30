@@ -1,6 +1,6 @@
 <template>
   <div class="create-external-data-evaluation-page">
-    <a-page-header
+    <APageHeader
       title="新建分析报告"
       @back="handleBack"
       style="background: var(--color-bg-2); border-radius: 4px; margin-bottom: 16px;"
@@ -8,33 +8,33 @@
     
     <div class="content-wrapper">
       <!-- 步骤条 -->
-      <a-steps :current="currentStep" style="margin-bottom: 30px">
-        <a-step>选择模板和上传样本数据</a-step>
-        <a-step>字段映射</a-step>
-        <a-step>配置分析详情</a-step>
-        <a-step>提交任务</a-step>
-      </a-steps>
+      <ASteps :current="currentStep" style="margin-bottom: 30px">
+        <AStep>选择模板和上传样本数据</AStep>
+        <AStep>字段映射</AStep>
+        <AStep>配置分析详情</AStep>
+        <AStep>提交任务</AStep>
+      </ASteps>
 
       <!-- 步骤内容 -->
       <div class="step-content">
         <!-- 第一步：选择模板和上传样本数据 -->
         <div v-show="currentStep === 0">
-          <a-card :bordered="false">
-            <a-form :model="form" :rules="rules" ref="formRef">
-              <a-form-item field="templateType" label="展示配置模板">
-                <a-select
+          <ACard :bordered="false">
+            <AForm :model="form" :rules="rules" ref="formRef">
+              <AFormItem field="templateType" label="展示配置模板">
+                <ASelect
                   v-model="form.templateType"
                   :style="{ width: '320px' }"
                   placeholder="请选择模板类型"
                   disabled
                 >
-                  <a-option value="风险外数效果评估模板">风险外数效果评估模板</a-option>
-                </a-select>
+                  <AOption value="风险外数效果评估模板">风险外数效果评估模板</AOption>
+                </ASelect>
                 <div class="template-note">当前仅支持风险外数效果评估模板</div>
-              </a-form-item>
+              </AFormItem>
 
-              <a-form-item field="sampleFile" label="样本文件">
-                <a-upload
+              <AFormItem field="sampleFile" label="样本文件">
+                <AUpload
                   :custom-request="customUpload"
                   :limit="1"
                   :auto-upload="false"
@@ -55,22 +55,22 @@
                       "
                     >
                       <div>
-                        <icon-upload />
+                        <IconUpload />
                         <div style="margin-top: 10px">点击上传样本文件</div>
                       </div>
                     </div>
                   </template>
-                </a-upload>
+                </AUpload>
                 <div class="file-note">支持.csv/.xlsx/.xls格式，最大100MB</div>
                 <div class="file-note" style="color: #165DFF; margin-top: 8px;">Demo模式：您可以跳过文件上传，直接点击下一步</div>
-              </a-form-item>
-            </a-form>
-          </a-card>
+              </AFormItem>
+            </AForm>
+          </ACard>
         </div>
 
         <!-- 第二步：字段映射 -->
         <div v-show="currentStep === 1">
-          <a-alert
+          <AAlert
             type="info"
             message="字段映射说明"
             description="请为上传的样本文件定义字段类型。样本日期字段用于确定分析时间跨度，平台产品字段用于识别数据来源，变量字段用于后续的分析计算。在Demo模式下，您可以跳过文件上传直接进入此步骤。"
@@ -93,62 +93,62 @@
               <div class="required-fields">
                 <h5>必填字段配置</h5>
                 
-                <a-row :gutter="16" style="margin-bottom: 16px">
-                  <a-col :span="12">
-                    <a-form-item label="样本日期字段" required>
-                      <a-select
+                <ARow :gutter="16" style="margin-bottom: 16px">
+                  <ACol :span="12">
+                    <AFormItem label="样本日期字段" required>
+                      <ASelect
                         v-model="fieldMapping.dateField"
                         placeholder="请选择样本日期字段"
                         :allow-clear="true"
                       >
-                        <a-option v-for="field in detectedFields" :key="field" :value="field">
+                        <AOption v-for="field in detectedFields" :key="field" :value="field">
                           {{ field }}
-                        </a-option>
-                      </a-select>
-                    </a-form-item>
-                  </a-col>
+                        </AOption>
+                      </ASelect>
+                    </AFormItem>
+                  </ACol>
                   
-                  <a-col :span="12">
-                    <a-form-item label="平台产品字段" required>
-                      <a-select
+                  <ACol :span="12">
+                    <AFormItem label="平台产品字段" required>
+                      <ASelect
                         v-model="fieldMapping.platformField"
                         placeholder="请选择平台产品字段"
                         :allow-clear="true"
                       >
-                        <a-option v-for="field in detectedFields" :key="field" :value="field">
+                        <AOption v-for="field in detectedFields" :key="field" :value="field">
                           {{ field }}
-                        </a-option>
-                      </a-select>
-                    </a-form-item>
-                  </a-col>
-                </a-row>
+                        </AOption>
+                      </ASelect>
+                    </AFormItem>
+                  </ACol>
+                </ARow>
               </div>
 
               <!-- 变量字段配置 -->
               <div class="variable-fields">
                 <h5>变量字段配置</h5>
                 <div class="field-selection">
-                  <a-select
+                  <ASelect
                     v-model="fieldMapping.variableFields"
                     placeholder="请选择变量字段"
                     multiple
                     :max-tag-count="3"
                   >
-                    <a-option 
+                    <AOption 
                       v-for="field in availableVariableFields" 
                       :key="field" 
                       :value="field"
                     >
                       {{ field }}
-                    </a-option>
-                  </a-select>
+                    </AOption>
+                  </ASelect>
                 </div>
               </div>
 
               <!-- 字段预览 -->
               <div class="field-preview">
                 <h5>字段预览 (currentStep: {{ currentStep }}, detectedFields.length: {{ detectedFields.length }})</h5>
-                <a-table
+                <ATable
                   :data="previewData"
                   :columns="tableColumns"
                   :pagination="false"
@@ -161,29 +161,29 @@
               <!-- 映射结果预览 -->
               <div class="mapping-result" v-if="hasValidMapping">
                 <h5>映射结果预览</h5>
-                <a-descriptions :column="2" size="small" bordered>
-                  <a-descriptions-item label="样本日期字段">
-                    <a-tag color="blue">{{ fieldMapping.dateField || '未设置' }}</a-tag>
-                  </a-descriptions-item>
-                  <a-descriptions-item label="平台产品字段">
-                    <a-tag color="green">{{ fieldMapping.platformField || '未设置' }}</a-tag>
-                  </a-descriptions-item>
-                  <a-descriptions-item label="变量字段数量">
-                    <a-tag color="orange">{{ fieldMapping.variableFields.length }} 个</a-tag>
-                  </a-descriptions-item>
-                  <a-descriptions-item label="变量字段列表">
+                <ADescriptions :column="2" size="small" bordered>
+                  <ADescriptionsItem label="样本日期字段">
+                    <ATag color="blue">{{ fieldMapping.dateField || '未设置' }}</ATag>
+                  </ADescriptionsItem>
+                  <ADescriptionsItem label="平台产品字段">
+                    <ATag color="green">{{ fieldMapping.platformField || '未设置' }}</ATag>
+                  </ADescriptionsItem>
+                  <ADescriptionsItem label="变量字段数量">
+                    <ATag color="orange">{{ fieldMapping.variableFields.length }} 个</ATag>
+                  </ADescriptionsItem>
+                  <ADescriptionsItem label="变量字段列表">
                     <div class="variable-fields-list">
-                      <a-tag 
+                      <ATag 
                         v-for="field in fieldMapping.variableFields" 
                         :key="field" 
                         size="small"
                         style="margin: 2px"
                       >
                         {{ field }}
-                      </a-tag>
+                      </ATag>
                     </div>
-                  </a-descriptions-item>
-                </a-descriptions>
+                  </ADescriptionsItem>
+                </ADescriptions>
               </div>
             </div>
           </div>
@@ -191,30 +191,30 @@
 
         <!-- 第三步：配置分析详情 -->
         <div v-show="currentStep === 2">
-          <a-card :bordered="false">
-            <a-form :model="form" :rules="rules" ref="formRef">
+          <ACard :bordered="false">
+            <AForm :model="form" :rules="rules" ref="formRef">
 
 
-              <a-form-item field="analysisPeriod" label="分析时间跨度">
-                <a-range-picker
+              <AFormItem field="analysisPeriod" label="分析时间跨度">
+                <ARangePicker
                   v-model="form.analysisPeriod"
                   :style="{ width: '320px' }"
                   format="YYYYMMDD"
                   value-format="YYYYMMDD"
                 />
-              </a-form-item>
+              </AFormItem>
 
-              <a-form-item field="reportName" label="报告名称">
-                <a-input
+              <AFormItem field="reportName" label="报告名称">
+                <AInput
                   v-model="form.reportName"
                   :style="{ width: '320px' }"
                   placeholder="请输入报告名称"
                 />
                 <div class="report-name-note">请输入自定义报告名称</div>
-              </a-form-item>
+              </AFormItem>
 
-              <a-form-item field="description" label="分析说明">
-                <a-textarea
+              <AFormItem field="description" label="分析说明">
+                <ATextarea
                   v-model="form.description"
                   :style="{ width: '320px' }"
                   placeholder="请输入分析说明（可选）"
@@ -222,38 +222,38 @@
                   allow-clear
                   show-word-limit
                 />
-              </a-form-item>
-            </a-form>
-          </a-card>
+              </AFormItem>
+            </AForm>
+          </ACard>
         </div>
 
         <!-- 第四步：提交任务 -->
         <div v-show="currentStep === 3">
-          <a-card :bordered="false">
-            <a-descriptions :column="1" bordered>
-              <a-descriptions-item label="模板类型">{{ form.templateType }}</a-descriptions-item>
-              <a-descriptions-item label="样本文件">{{ currentFileInfo.name }}</a-descriptions-item>
-              <a-descriptions-item label="分析时间跨度">{{ form.analysisPeriod[0] }} 至 {{ form.analysisPeriod[1] }}</a-descriptions-item>
-              <a-descriptions-item label="报告名称">{{ form.reportName }}</a-descriptions-item>
-              <a-descriptions-item label="分析说明">{{ form.description || '无' }}</a-descriptions-item>
-              <a-descriptions-item label="字段映射">
+          <ACard :bordered="false">
+            <ADescriptions :column="1" bordered>
+              <ADescriptionsItem label="模板类型">{{ form.templateType }}</ADescriptionsItem>
+              <ADescriptionsItem label="样本文件">{{ currentFileInfo.name }}</ADescriptionsItem>
+              <ADescriptionsItem label="分析时间跨度">{{ form.analysisPeriod[0] }} 至 {{ form.analysisPeriod[1] }}</ADescriptionsItem>
+              <ADescriptionsItem label="报告名称">{{ form.reportName }}</ADescriptionsItem>
+              <ADescriptionsItem label="分析说明">{{ form.description || '无' }}</ADescriptionsItem>
+              <ADescriptionsItem label="字段映射">
                 <div v-if="fieldMapping">
                   <p>样本日期字段: {{ fieldMapping.dateField }}</p>
                   <p>平台产品字段: {{ fieldMapping.platformField }}</p>
                   <p>变量字段: {{ fieldMapping.variableFields.join(', ') }}</p>
                 </div>
                 <div v-else>未配置</div>
-              </a-descriptions-item>
-            </a-descriptions>
-          </a-card>
+              </ADescriptionsItem>
+            </ADescriptions>
+          </ACard>
         </div>
       </div>
     </div>
     
     <div class="step-navigation">
-      <a-button v-if="currentStep > 0" @click="prevStep" style="margin-right: 10px">上一步</a-button>
-      <a-button v-if="currentStep < 3" type="primary" @click="nextStep">下一步</a-button>
-      <a-button v-if="currentStep === 3" type="primary" @click="handleSubmit">提交任务</a-button>
+      <AButton v-if="currentStep > 0" @click="prevStep" style="margin-right: 10px">上一步</AButton>
+      <AButton v-if="currentStep < 3" type="primary" @click="nextStep">下一步</AButton>
+      <AButton v-if="currentStep === 3" type="primary" @click="handleSubmit">提交任务</AButton>
     </div>
   </div>
 </template>

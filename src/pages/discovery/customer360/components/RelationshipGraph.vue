@@ -17,16 +17,16 @@
       <div class="control-group">
         <a-button-group size="small">
           <a-button @click="zoomIn">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
           </a-button>
           <a-button @click="zoomOut">
-            <template #icon><icon-minus /></template>
+            <template #icon><IconMinus /></template>
           </a-button>
           <a-button @click="fitView">
-            <template #icon><icon-fullscreen /></template>
+            <template #icon><IconFullscreen /></template>
           </a-button>
           <a-button @click="resetView">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
           </a-button>
         </a-button-group>
       </div>
@@ -64,7 +64,7 @@
           size="small" 
           @click="selectedNodeInfo = null"
         >
-          <template #icon><icon-close /></template>
+          <template #icon><IconClose /></template>
         </a-button>
       </div>
       

@@ -8,7 +8,7 @@
               <div class="title-section">
                 <a-space align="center">
                   <a-button type="text" @click="handleGoBack">
-                    <template #icon><icon-left /></template>
+                    <template #icon><IconLeft /></template>
                   </a-button>
                   <h2 class="data-title">{{ variableDetail.name }}</h2>
                   <div class="tag-group">
@@ -30,7 +30,7 @@
           <a-col :span="6" class="action-panel">
             <a-space>
               <a-button type="primary" @click="handleEdit">
-                <template #icon><icon-edit /></template>
+                <template #icon><IconEdit /></template>
                 编辑信息
               </a-button>
             </a-space>

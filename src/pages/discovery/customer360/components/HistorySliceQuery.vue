@@ -37,15 +37,15 @@
             allow-clear
           />
           <a-button @click="clearFilters" size="small" style="margin-right: 8px">
-            <template #icon><icon-filter /></template>
+            <template #icon><IconFilter /></template>
             清空筛选
           </a-button>
           <a-button @click="refreshHistoryRecords" size="small">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
           <a-button type="primary" size="small" @click="createNewQuery">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建查询
           </a-button>
         </div>
@@ -98,7 +98,7 @@
                   size="small" 
                   @click.stop="viewHistoryDetail(record)"
                 >
-                  <template #icon><icon-eye /></template>
+                  <template #icon><IconEye /></template>
                   查看
                 </a-button>
                 <a-button 
@@ -108,7 +108,7 @@
                   status="warning"
                   @click.stop="retryQuery(record)"
                 >
-                  <template #icon><icon-refresh /></template>
+                  <template #icon><IconRefresh /></template>
                   重试
                 </a-button>
                 <a-popconfirm
@@ -122,7 +122,7 @@
                     status="danger"
                     @click.stop
                   >
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                     删除
                   </a-button>
                 </a-popconfirm>
@@ -172,7 +172,7 @@
             >
               <template #suffix>
                 <a-tooltip content="查询名称将自动生成为：数据模型名称_当前日期">
-                  <icon-info-circle style="color: #86909c" />
+                  <IconInfoCircle style="color: #86909c" />
                 </a-tooltip>
               </template>
             </a-input>
@@ -257,7 +257,7 @@
       <div class="sql-preview">
         <div class="sql-actions">
           <a-button size="small" @click="copyText(generatedSQL)">
-            <template #icon><icon-copy /></template>
+            <template #icon><IconCopy /></template>
             复制SQL
           </a-button>
         </div>

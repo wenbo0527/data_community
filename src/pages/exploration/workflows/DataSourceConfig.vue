@@ -5,7 +5,7 @@
       <div class="header-left">
         <a-button type="text" @click="goBack">
           <template #icon>
-            <icon-arrow-left />
+            <IconArrowLeft />
           </template>
           返回
         </a-button>
@@ -17,7 +17,7 @@
       <div class="header-right">
         <a-button type="primary" @click="showAddModal = true">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           添加数据源
         </a-button>
@@ -46,7 +46,7 @@
               >
                 <div class="card-header">
                   <div class="file-icon">
-                    <icon-file :style="{ color: getFileTypeColor(file.fileType) }" />
+                    <IconFile :style="{ color: getFileTypeColor(file.fileType) }" />
                   </div>
                   <div class="file-info">
                     <h4 class="file-name">{{ file.fileName }}</h4>
@@ -58,25 +58,25 @@
                     <a-dropdown>
                       <a-button type="text" size="small">
                         <template #icon>
-                          <icon-more />
+                          <IconMore />
                         </template>
                       </a-button>
                       <template #content>
                         <a-doption @click="previewFileData(file)">
                           <template #icon>
-                            <icon-eye />
+                            <IconEye />
                           </template>
                           预览
                         </a-doption>
                         <a-doption @click="downloadFile(file)">
                           <template #icon>
-                            <icon-download />
+                            <IconDownload />
                           </template>
                           下载
                         </a-doption>
                         <a-doption @click="deleteDataSource(file.id, 'file')" class="danger-option">
                           <template #icon>
-                            <icon-delete />
+                            <IconDelete />
                           </template>
                           删除
                         </a-doption>
@@ -123,7 +123,7 @@
               >
                 <div class="card-header">
                   <div class="db-icon">
-                    <icon-storage :style="{ color: getDatabaseTypeColor(db.type) }" />
+                    <IconStorage :style="{ color: getDatabaseTypeColor(db.type) }" />
                   </div>
                   <div class="db-info">
                     <h4 class="db-name">{{ db.name }}</h4>
@@ -135,25 +135,25 @@
                     <a-dropdown>
                       <a-button type="text" size="small">
                         <template #icon>
-                          <icon-more />
+                          <IconMore />
                         </template>
                       </a-button>
                       <template #content>
                         <a-doption @click="testConnection(db)">
                           <template #icon>
-                            <icon-wifi />
+                            <IconWifi />
                           </template>
                           测试连接
                         </a-doption>
                         <a-doption @click="editDatabase(db)">
                           <template #icon>
-                            <icon-edit />
+                            <IconEdit />
                           </template>
                           编辑
                         </a-doption>
                         <a-doption @click="deleteDataSource(db.id, 'database')" class="danger-option">
                           <template #icon>
-                            <icon-delete />
+                            <IconDelete />
                           </template>
                           删除
                         </a-doption>
@@ -204,7 +204,7 @@
             >
               <template #upload-button>
                 <div class="upload-area">
-                  <icon-upload class="upload-icon" />
+                  <IconUpload class="upload-icon" />
                   <div class="upload-text">
                     <p>点击或拖拽文件到此区域上传</p>
                     <p class="upload-hint">支持 CSV、Excel、JSON、TXT 格式</p>

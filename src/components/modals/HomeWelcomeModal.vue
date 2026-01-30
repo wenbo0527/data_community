@@ -28,7 +28,7 @@
                             <div class="step-features">
                                 <div v-for="(feature, index) in currentStepContent.features" :key="index"
                                     class="feature-item">
-                                    <icon-check-circle class="feature-icon" />
+                                    <IconCheckCircle class="feature-icon" />
                                     <span>{{ feature }}</span>
                                 </div>
                             </div>

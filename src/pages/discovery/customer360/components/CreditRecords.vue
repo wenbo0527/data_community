@@ -4,11 +4,11 @@
       <h4>信贷产品征信记录</h4>
       <div class="copy-actions">
         <a-button size="small" @click="copyData('selected')" :disabled="selectedRows.length === 0">
-          <template #icon><icon-copy /></template>
+          <template #icon><IconCopy /></template>
           复制选中
         </a-button>
         <a-button size="small" @click="copyData('all')">
-          <template #icon><icon-copy /></template>
+          <template #icon><IconCopy /></template>
           复制全部
         </a-button>
       </div>
@@ -27,7 +27,7 @@
           <template #cell="{ record }">
             <div class="flex items-center gap-2">
               <span>{{ record.id }}</span>
-              <icon-copy 
+              <IconCopy 
                 class="cursor-pointer text-gray-400 hover:text-blue-500" 
                 @click="copyToClipboard(record.id)"
               />
@@ -56,7 +56,7 @@
                 @click="copyText(record.reportUrl)"
                 :disabled="!record.reportUrl"
               >
-                <template #icon><icon-copy /></template>
+                <template #icon><IconCopy /></template>
                 复制链接
               </a-button>
             </div>
@@ -98,11 +98,11 @@
           </div>
           <div class="preview-actions">
             <a-button size="small" @click="copyText(currentReportUrl)">
-              <template #icon><icon-copy /></template>
+              <template #icon><IconCopy /></template>
               复制链接
             </a-button>
             <a-button size="small" type="primary" @click="openReport">
-              <template #icon><icon-link /></template>
+              <template #icon><IconLink /></template>
               新窗口打开
             </a-button>
           </div>

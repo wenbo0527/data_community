@@ -15,10 +15,10 @@
             style="width: 250px"
             @input="handleSearch"
           >
-            <template #prefix><icon-search /></template>
+            <template #prefix><IconSearch /></template>
           </a-input>
           <a-button type="primary" @click="addAttribute">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新增属性
           </a-button>
         </a-space>
@@ -57,16 +57,12 @@
             </a-table-column>
             <a-table-column title="属性类型" data-index="attributeType" :width="120">
               <template #cell="{ record }">
-                <a-tag :color="getAttributeTypeColor(record.attributeType)">
-                  {{ getAttributeTypeText(record.attributeType) }}
-                </a-tag>
+                <StatusTag :status="record.attributeType" dictKey="attributeType" />
               </template>
             </a-table-column>
             <a-table-column title="维度类型" data-index="dimensionType" :width="120">
               <template #cell="{ record }">
-                <a-tag :color="getDimensionTypeColor(record.dimensionType)">
-                  {{ getDimensionTypeText(record.dimensionType) }}
-                </a-tag>
+                <StatusTag :status="record.dimensionType" dictKey="dimensionType" />
               </template>
             </a-table-column>
             <a-table-column title="维度主键" data-index="dimensionKey" :width="150">
@@ -76,14 +72,12 @@
             </a-table-column>
             <a-table-column title="IDMapping支持" data-index="mappingSupport" :width="120">
               <template #cell="{ record }">
-                <a-tag :color="getMappingSupportColor(record.mappingSupport)">
-                  {{ getMappingSupportText(record.mappingSupport) }}
-                </a-tag>
+                <StatusTag :status="record.mappingSupport ? '支持' : '不支持'" dictKey="mappingSupport" />
               </template>
             </a-table-column>
             <a-table-column title="创建时间" data-index="createTime" :width="180">
               <template #cell="{ record }">
-                {{ formatTime(record.createTime) }}
+                {{ DateUtils.formatDateTime(record.createTime) }}
               </template>
             </a-table-column>
             <a-table-column title="创建人" data-index="createUser" :width="120">
@@ -183,6 +177,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconSearch, IconRefresh, IconDelete } from '@arco-design/web-vue/es/icon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 // 属性数据接口
 interface AttributeItem {
@@ -397,56 +393,7 @@ const getStatusText = (status: string) => {
   return status === 'active' ? '启用' : '禁用'
 }
 
-// 获取属性类型颜色
-const getAttributeTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    numeric: 'blue',
-    string: 'green'
-  }
-  return colors[type] || 'gray'
-}
-
-// 获取属性类型文本
-const getAttributeTypeText = (type: string) => {
-  const texts: Record<string, string> = {
-    numeric: '数值型',
-    string: '字符型'
-  }
-  return texts[type] || type
-}
-
-// 获取维度类型颜色
-const getDimensionTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    customer: 'blue',
-    'product-customer': 'green'
-  }
-  return colors[type] || 'gray'
-}
-
-// 获取维度类型文本
-const getDimensionTypeText = (type: string) => {
-  const texts: Record<string, string> = {
-    customer: '客户级',
-    'product-customer': '产品客户级'
-  }
-  return texts[type] || type
-}
-
-// 获取IDMapping支持状态颜色
-const getMappingSupportColor = (support?: boolean) => {
-  return support ? 'green' : 'gray'
-}
-
-// 获取IDMapping支持状态文本
-const getMappingSupportText = (support?: boolean) => {
-  return support ? '支持' : '不支持'
-}
-
-// 格式化时间
-const formatTime = (time: string) => {
-  return new Date(time).toLocaleString('zh-CN')
-}
+ 
 
 // 初始化
 onMounted(() => {

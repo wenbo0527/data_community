@@ -1,0 +1,929 @@
+{
+  "statistics": {
+    "detectionDate": "2026-01-23T05:55:31.579Z",
+    "formats": {
+      "typescript": {
+        "sources": {
+          "src/pages/risk/model-offline-analysis/taskManagement/__tests__/taskManagement.spec.ts": {
+            "lines": 70,
+            "tokens": 841,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/components/table-columns.ts": {
+            "lines": 31,
+            "tokens": 330,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 101,
+          "tokens": 1171,
+          "sources": 2,
+          "clones": 0,
+          "duplicatedLines": 0,
+          "duplicatedTokens": 0,
+          "percentage": 0,
+          "percentageTokens": 0,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      },
+      "markup": {
+        "sources": {
+          "src/pages/risk/model-offline-analysis/taskManagement/index.vue": {
+            "lines": 517,
+            "tokens": 3390,
+            "sources": 1,
+            "clones": 10,
+            "duplicatedLines": 148,
+            "duplicatedTokens": 956,
+            "percentage": 28.63,
+            "percentageTokens": 28.2,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/taskManagement/detail.vue": {
+            "lines": 205,
+            "tokens": 1549,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 7,
+            "duplicatedTokens": 68,
+            "percentage": 3.41,
+            "percentageTokens": 4.39,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelRegister/index.vue": {
+            "lines": 455,
+            "tokens": 2874,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 35,
+            "duplicatedTokens": 244,
+            "percentage": 7.69,
+            "percentageTokens": 8.49,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelRegister/edit.vue": {
+            "lines": 145,
+            "tokens": 1472,
+            "sources": 1,
+            "clones": 3,
+            "duplicatedLines": 63,
+            "duplicatedTokens": 742,
+            "percentage": 43.45,
+            "percentageTokens": 50.41,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelRegister/detail.vue": {
+            "lines": 175,
+            "tokens": 1676,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 5,
+            "duplicatedTokens": 82,
+            "percentage": 2.86,
+            "percentageTokens": 4.89,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelRegister/create.vue": {
+            "lines": 507,
+            "tokens": 5154,
+            "sources": 1,
+            "clones": 4,
+            "duplicatedLines": 72,
+            "duplicatedTokens": 879,
+            "percentage": 14.2,
+            "percentageTokens": 17.05,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelEvaluation/index.vue": {
+            "lines": 416,
+            "tokens": 2630,
+            "sources": 1,
+            "clones": 4,
+            "duplicatedLines": 69,
+            "duplicatedTokens": 404,
+            "percentage": 16.59,
+            "percentageTokens": 15.36,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelBacktrack/index.vue": {
+            "lines": 343,
+            "tokens": 1988,
+            "sources": 1,
+            "clones": 5,
+            "duplicatedLines": 79,
+            "duplicatedTokens": 535,
+            "percentage": 23.03,
+            "percentageTokens": 26.91,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelBacktrack/detail.vue": {
+            "lines": 338,
+            "tokens": 2679,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 7,
+            "duplicatedTokens": 68,
+            "percentage": 2.07,
+            "percentageTokens": 2.54,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/modelBacktrack/create.vue": {
+            "lines": 436,
+            "tokens": 4341,
+            "sources": 1,
+            "clones": 3,
+            "duplicatedLines": 19,
+            "duplicatedTokens": 214,
+            "percentage": 4.36,
+            "percentageTokens": 4.93,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/featureCenter/edit.vue": {
+            "lines": 240,
+            "tokens": 2174,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 121,
+            "percentage": 6.67,
+            "percentageTokens": 5.57,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/featureCenter/detail.vue": {
+            "lines": 111,
+            "tokens": 1473,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 16,
+            "duplicatedTokens": 121,
+            "percentage": 14.41,
+            "percentageTokens": 8.21,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/components/PageHeader.vue": {
+            "lines": 35,
+            "tokens": 197,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/components/FilterBar.vue": {
+            "lines": 79,
+            "tokens": 548,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/test.vue": {
+            "lines": 271,
+            "tokens": 1883,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/demo.vue": {
+            "lines": 370,
+            "tokens": 2602,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/risk/model-offline-analysis/Layout.vue": {
+            "lines": 62,
+            "tokens": 347,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 4705,
+          "tokens": 36977,
+          "sources": 17,
+          "clones": 18,
+          "duplicatedLines": 268,
+          "duplicatedTokens": 2217,
+          "percentage": 5.7,
+          "percentageTokens": 6,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      }
+    },
+    "total": {
+      "lines": 4806,
+      "tokens": 38148,
+      "sources": 19,
+      "clones": 18,
+      "duplicatedLines": 268,
+      "duplicatedTokens": 2217,
+      "percentage": 5.58,
+      "percentageTokens": 5.81,
+      "newDuplicatedLines": 0,
+      "newClones": 0
+    }
+  },
+  "duplicates": [
+    {
+      "format": "markup",
+      "lines": 10,
+      "fragment": "</div>\n              </div>\n            </div>\n          </a-card>\n        </a-col>\n        <a-col :span=\"6\">\n          <a-card class=\"stat-card\">\n            <div class=\"stat-content\">\n              <div class=\"stat-icon\">\n                <icon-exclamation-circle",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 30,
+        "end": 39,
+        "startLoc": {
+          "line": 30,
+          "column": 4,
+          "position": 272
+        },
+        "endLoc": {
+          "line": 39,
+          "column": 24,
+          "position": 342
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 17,
+        "end": 26,
+        "startLoc": {
+          "line": 17,
+          "column": 4,
+          "position": 152
+        },
+        "endLoc": {
+          "line": 26,
+          "column": 18,
+          "position": 222
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 10,
+      "fragment": "</div>\n              </div>\n            </div>\n          </a-card>\n        </a-col>\n        <a-col :span=\"6\">\n          <a-card class=\"stat-card\">\n            <div class=\"stat-content\">\n              <div class=\"stat-icon\">\n                <icon-pause-circle",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 43,
+        "end": 52,
+        "startLoc": {
+          "line": 43,
+          "column": 3,
+          "position": 392
+        },
+        "endLoc": {
+          "line": 52,
+          "column": 18,
+          "position": 462
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 17,
+        "end": 26,
+        "startLoc": {
+          "line": 17,
+          "column": 4,
+          "position": 152
+        },
+        "endLoc": {
+          "line": 26,
+          "column": 18,
+          "position": 222
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 29,
+      "fragment": "\"\n          :columns=\"columns\"\n          :loading=\"loading\"\n          :pagination=\"pagination\"\n          row-key=\"id\"\n          @page-change=\"handlePageChange\"\n          @selection-change=\"handleSelectionChange\"\n        >\n          <template #name=\"{ record }\">\n            <a-link @click=\"handleViewDetail(record)\">{{ record.name }}</a-link>\n          </template>\n          \n          <template #type=\"{ record }\">\n            <a-tag :color=\"getTypeColor(record.type)\">\n              {{ getTypeLabel(record.type) }}\n            </a-tag>\n          </template>\n          \n          \n          \n          <template #status=\"{ record }\">\n            <a-tag :color=\"getStatusColor(record.status)\">\n              {{ getStatusLabel(record.status) }}\n            </a-tag>\n          </template>\n          \n          \n          \n          <template #createTime",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/index.vue",
+        "start": 72,
+        "end": 100,
+        "startLoc": {
+          "line": 72,
+          "column": 10,
+          "position": 454
+        },
+        "endLoc": {
+          "line": 100,
+          "column": 12,
+          "position": 625
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 92,
+        "end": 116,
+        "startLoc": {
+          "line": 92,
+          "column": 9,
+          "position": 715
+        },
+        "endLoc": {
+          "line": 116,
+          "column": 10,
+          "position": 878
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 8,
+      "fragment": ">\n                    <a-option value=\"classification\">分类模型</a-option>\n                    <a-option value=\"regression\">回归模型</a-option>\n                    <a-option value=\"clustering\">聚类模型</a-option>\n                    <a-option value=\"deep_learning\">深度学习</a-option>\n                  </a-select>\n                </a-form-item>\n              </",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/edit.vue",
+        "start": 23,
+        "end": 30,
+        "startLoc": {
+          "line": 23,
+          "column": 2,
+          "position": 298
+        },
+        "endLoc": {
+          "line": 30,
+          "column": 3,
+          "position": 371
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/index.vue",
+        "start": 34,
+        "end": 44,
+        "startLoc": {
+          "line": 34,
+          "column": 13,
+          "position": 205
+        },
+        "endLoc": {
+          "line": 44,
+          "column": 2,
+          "position": 284
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 50,
+      "fragment": "']\" :bordered=\"false\">\n        <a-collapse-item key=\"basic\" header=\"1. 模型基础信息\">\n          <a-form :model=\"form\" :rules=\"rules\" layout=\"vertical\" ref=\"formRef\">\n            <a-form-item field=\"name\" label=\"模型名称\" required>\n              <a-input v-model=\"form.name\" placeholder=\"请输入模型名称\" />\n            </a-form-item>\n            <a-form-item field=\"code\" label=\"模型编码\" required>\n              <a-input v-model=\"form.code\" placeholder=\"请输入模型编码\" />\n            </a-form-item>\n            <a-row :gutter=\"16\">\n              <a-col :span=\"12\">\n                <a-form-item field=\"type\" label=\"模型类型\" required>\n                  <a-select v-model=\"form.type\" placeholder=\"请选择模型类型\">\n                    <a-option value=\"classification\">分类模型</a-option>\n                    <a-option value=\"regression\">回归模型</a-option>\n                    <a-option value=\"clustering\">聚类模型</a-option>\n                    <a-option value=\"deep_learning\">深度学习</a-option>\n                  </a-select>\n                </a-form-item>\n              </a-col>\n              <a-col :span=\"12\">\n                <a-form-item field=\"framework\" label=\"算法框架\" required>\n                  <a-select v-model=\"form.framework\" placeholder=\"请选择算法框架\">\n                    <a-option value=\"sklearn\">Scikit-learn</a-option>\n                    <a-option value=\"tensorflow\">TensorFlow</a-option>\n                    <a-option value=\"pytorch\">PyTorch</a-option>\n                    <a-option value=\"xgboost\">XGBoost</a-option>\n                  </a-select>\n                </a-form-item>\n              </a-col>\n            </a-row>\n            <a-row :gutter=\"16\">\n              <a-col :span=\"12\">\n                <a-form-item field=\"version\" label=\"版本\" required>\n                  <a-input v-model=\"form.version\" placeholder=\"例如 1\" />\n                </a-form-item>\n              </a-col>\n              <a-col :span=\"12\">\n                <a-form-item field=\"parameters\" label=\"超参数(JSON)\">\n                  <a-input v-model=\"form.parameters\" placeholder='{\"n_estimators\":100}' />\n                </a-form-item>\n              </a-col>\n            </a-row>\n            <a-form-item field=\"description\" label=\"描述\">\n              <a-textarea v-model=\"form.description\" placeholder=\"请输入模型描述\" :max-length=\"300\" show-word-limit />\n            </a-form-item>\n          </a-form>\n        </a-collapse-item>\n\n        <",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/create.vue",
+        "start": 24,
+        "end": 73,
+        "startLoc": {
+          "line": 24,
+          "column": 5,
+          "position": 288
+        },
+        "endLoc": {
+          "line": 73,
+          "column": 2,
+          "position": 883
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/edit.vue",
+        "start": 11,
+        "end": 59,
+        "startLoc": {
+          "line": 11,
+          "column": 6,
+          "position": 101
+        },
+        "endLoc": {
+          "line": 59,
+          "column": 3,
+          "position": 695
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 10,
+      "fragment": ">\n                <template #type=\"{ record }\">\n                  <a-select v-model=\"record.type\" placeholder=\"类型\">\n                    <a-option value=\"number\">number</a-option>\n                    <a-option value=\"string\">string</a-option>\n                    <a-option value=\"boolean\">boolean</a-option>\n                    <a-option value=\"array\">array</a-option>\n                  </a-select>\n                </template>\n              </",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/create.vue",
+        "start": 100,
+        "end": 109,
+        "startLoc": {
+          "line": 100,
+          "column": 2,
+          "position": 1268
+        },
+        "endLoc": {
+          "line": 109,
+          "column": 3,
+          "position": 1369
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/create.vue",
+        "start": 82,
+        "end": 91,
+        "startLoc": {
+          "line": 82,
+          "column": 9,
+          "position": 1022
+        },
+        "endLoc": {
+          "line": 91,
+          "column": 2,
+          "position": 1123
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 6,
+      "fragment": ">\n              <template #statusCell=\"{ record }\">\n                <a-tag :color=\"record.registered ? 'green' : 'gray'\">{{ record.registered ? '已注册' : '未注册' }}</a-tag>\n              </template>\n              <template #actionCell=\"{ record }\">\n                <a-button type=\"primary\" size=\"small\" :disabled=\"record.registered",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/create.vue",
+        "start": 150,
+        "end": 155,
+        "startLoc": {
+          "line": 150,
+          "column": 9,
+          "position": 1876
+        },
+        "endLoc": {
+          "line": 155,
+          "column": 18,
+          "position": 1958
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/detail.vue",
+        "start": 36,
+        "end": 41,
+        "startLoc": {
+          "line": 36,
+          "column": 2,
+          "position": 484
+        },
+        "endLoc": {
+          "line": 41,
+          "column": 46,
+          "position": 566
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 18,
+      "fragment": ">\n            </div>\n          </a-card>\n        </a-col>\n      </a-row>\n    </div>\n\n    <FilterBar\n      v-model=\"filterForm\"\n      :fields=\"filterFields\"\n      search-text=\"搜索\"\n      reset-text=\"重置\"\n      @search=\"handleSearch\"\n      @reset=\"handleReset\"\n      @change=\"handleFilterChange\"\n    />\n\n    <!-- 评估结果表格 -->",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelEvaluation/index.vue",
+        "start": 62,
+        "end": 79,
+        "startLoc": {
+          "line": 62,
+          "column": 5,
+          "position": 626
+        },
+        "endLoc": {
+          "line": 79,
+          "column": 16,
+          "position": 704
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 57,
+        "end": 74,
+        "startLoc": {
+          "line": 57,
+          "column": 4,
+          "position": 519
+        },
+        "endLoc": {
+          "line": 74,
+          "column": 14,
+          "position": 597
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 21,
+      "fragment": "</a-button>\n              <a-button \n                type=\"text\" \n                size=\"small\" \n                status=\"danger\"\n                @click=\"handleDelete(record)\"\n              >\n                删除\n              </a-button>\n            </a-space>\n          </template>\n        </a-table>\n      </a-card>\n    </div>\n  </div>\n</template>\n\n<script setup>\nimport PageHeader from '../components/PageHeader.vue'\nimport FilterBar from '../components/FilterBar.vue'\nimport { ref, reactive, computed, onMounted",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelEvaluation/index.vue",
+        "start": 127,
+        "end": 147,
+        "startLoc": {
+          "line": 127,
+          "column": 15,
+          "position": 1037
+        },
+        "endLoc": {
+          "line": 147,
+          "column": 10,
+          "position": 1146
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 164,
+        "end": 184,
+        "startLoc": {
+          "line": 164,
+          "column": 15,
+          "position": 1165
+        },
+        "endLoc": {
+          "line": 184,
+          "column": 11,
+          "position": 1274
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 18,
+      "fragment": ">\n\n    <FilterBar\n      v-model=\"filterForm\"\n      :fields=\"filterFields\"\n      search-text=\"搜索\"\n      reset-text=\"重置\"\n      @search=\"handleSearch\"\n      @reset=\"handleReset\"\n      @change=\"handleFilterChange\"\n    />\n\n    <!-- 数据表格 -->\n    <div class=\"table-section\">\n      <a-card>\n        <template #title>\n          <div class=\"table-header\">\n            <span>回溯记录",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/index.vue",
+        "start": 24,
+        "end": 41,
+        "startLoc": {
+          "line": 24,
+          "column": 11,
+          "position": 187
+        },
+        "endLoc": {
+          "line": 41,
+          "column": 5,
+          "position": 280
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 62,
+        "end": 79,
+        "startLoc": {
+          "line": 62,
+          "column": 4,
+          "position": 544
+        },
+        "endLoc": {
+          "line": 79,
+          "column": 5,
+          "position": 637
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 19,
+      "fragment": "\"\n          :columns=\"columns\"\n          :loading=\"loading\"\n          :pagination=\"pagination\"\n          row-key=\"id\"\n          @page-change=\"handlePageChange\"\n          @selection-change=\"handleSelectionChange\"\n        >\n          <template #modelName=\"{ record }\">\n            <a-link @click=\"handleViewModel(record)\">{{ record.modelName }}</a-link>\n          </template>\n          \n          <template #type=\"{ record }\">\n            <a-tag :color=\"getTypeColor(record.type)\">\n              {{ getTypeLabel(record.type) }}\n            </a-tag>\n          </template>\n          \n          <template #status",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/index.vue",
+        "start": 46,
+        "end": 64,
+        "startLoc": {
+          "line": 46,
+          "column": 14,
+          "position": 305
+        },
+        "endLoc": {
+          "line": 64,
+          "column": 8,
+          "position": 427
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelEvaluation/index.vue",
+        "start": 89,
+        "end": 107,
+        "startLoc": {
+          "line": 89,
+          "column": 15,
+          "position": 769
+        },
+        "endLoc": {
+          "line": 107,
+          "column": 7,
+          "position": 891
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 22,
+      "fragment": "}}</a-link>\n          </template>\n          \n          <template #type=\"{ record }\">\n            <a-tag :color=\"getTypeColor(record.type)\">\n              {{ getTypeLabel(record.type) }}\n            </a-tag>\n          </template>\n          \n          <template #status=\"{ record }\">\n            <a-tag :color=\"getStatusColor(record.status)\">\n              {{ getStatusLabel(record.status) }}\n            </a-tag>\n          </template>\n          \n          <template #createTime=\"{ record }\">\n            {{ formatDate(record.createTime) }}\n          </template>\n          \n          <template #actions=\"{ record }\">\n            <a-space>\n              <a-button type=\"text\" size=\"small\" @click=\"handleViewDetail(record)",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/index.vue",
+        "start": 55,
+        "end": 76,
+        "startLoc": {
+          "line": 55,
+          "column": 2,
+          "position": 370
+        },
+        "endLoc": {
+          "line": 76,
+          "column": 25,
+          "position": 524
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 101,
+        "end": 106,
+        "startLoc": {
+          "line": 101,
+          "column": 2,
+          "position": 780
+        },
+        "endLoc": {
+          "line": 106,
+          "column": 19,
+          "position": 681
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 10,
+      "fragment": "</template>\n          \n          <template #createTime=\"{ record }\">\n            {{ formatDate(record.createTime) }}\n          </template>\n          \n          <template #actions=\"{ record }\">\n            <a-space>\n              <a-button type=\"text\" size=\"small\" @click=\"handleViewDetail(record)\">\n                查看详情",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/index.vue",
+        "start": 68,
+        "end": 77,
+        "startLoc": {
+          "line": 68,
+          "column": 11,
+          "position": 458
+        },
+        "endLoc": {
+          "line": 77,
+          "column": 5,
+          "position": 529
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/index.vue",
+        "start": 128,
+        "end": 137,
+        "startLoc": {
+          "line": 128,
+          "column": 11,
+          "position": 951
+        },
+        "endLoc": {
+          "line": 137,
+          "column": 3,
+          "position": 1022
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 15,
+      "fragment": "</a-button>\n            </a-space>\n          </template>\n        </a-table>\n      </a-card>\n    </div>\n  </div>\n</template>\n\n<script setup>\nimport PageHeader from '../components/PageHeader.vue'\nimport FilterBar from '../components/FilterBar.vue'\nimport { ref, reactive, computed, onMounted } from 'vue'\nimport { useRouter } from 'vue-router'\nimport { useTaskStore",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/index.vue",
+        "start": 87,
+        "end": 101,
+        "startLoc": {
+          "line": 87,
+          "column": 15,
+          "position": 579
+        },
+        "endLoc": {
+          "line": 101,
+          "column": 13,
+          "position": 674
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelEvaluation/index.vue",
+        "start": 135,
+        "end": 149,
+        "startLoc": {
+          "line": 135,
+          "column": 15,
+          "position": 1075
+        },
+        "endLoc": {
+          "line": 149,
+          "column": 19,
+          "position": 1170
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 8,
+      "fragment": "}}</a-tag>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"page-content\">\n      <a-tabs type=\"card\" :active-key=\"activeTab\" @change=\"activeTab=$event\">\n        <a-tab-pane key=\"config\" title=\"配置信息",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/detail.vue",
+        "start": 11,
+        "end": 18,
+        "startLoc": {
+          "line": 11,
+          "column": 2,
+          "position": 117
+        },
+        "endLoc": {
+          "line": 18,
+          "column": 5,
+          "position": 185
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/taskManagement/detail.vue",
+        "start": 11,
+        "end": 18,
+        "startLoc": {
+          "line": 11,
+          "column": 2,
+          "position": 117
+        },
+        "endLoc": {
+          "line": 18,
+          "column": 5,
+          "position": 185
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 7,
+      "fragment": "}})</a-option>\n              </a-select>\n            </template>\n            <template #statusCell=\"{ record }\">\n              <a-tag :color=\"record.status==='matched' ? 'green' : 'red'\">{{ record.status==='matched' ? '已匹配' : '未匹配' }}</a-tag>\n            </template>\n            <",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/create.vue",
+        "start": 96,
+        "end": 102,
+        "startLoc": {
+          "line": 96,
+          "column": 2,
+          "position": 1197
+        },
+        "endLoc": {
+          "line": 102,
+          "column": 2,
+          "position": 1267
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/create.vue",
+        "start": 83,
+        "end": 89,
+        "startLoc": {
+          "line": 83,
+          "column": 2,
+          "position": 985
+        },
+        "endLoc": {
+          "line": 89,
+          "column": 3,
+          "position": 1055
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 8,
+      "fragment": "</a-collapse-item>\n      </a-collapse>\n    </div>\n\n    <div class=\"actions-bar\">\n      <div class=\"actions-inner\">\n        <a-button @click=\"handleCancel\">返回</a-button>\n        <a-button type=\"primary\" :loading=\"submitting\" @click=\"handleSubmit\">创建回溯",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelBacktrack/create.vue",
+        "start": 111,
+        "end": 118,
+        "startLoc": {
+          "line": 111,
+          "column": 9,
+          "position": 1403
+        },
+        "endLoc": {
+          "line": 118,
+          "column": 5,
+          "position": 1477
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/modelRegister/edit.vue",
+        "start": 58,
+        "end": 64,
+        "startLoc": {
+          "line": 58,
+          "column": 9,
+          "position": 690
+        },
+        "endLoc": {
+          "line": 64,
+          "column": 3,
+          "position": 763
+        }
+      }
+    },
+    {
+      "format": "markup",
+      "lines": 17,
+      "fragment": "</a-button>\n      </a-space>\n    </div>\n  </div>\n</template>\n\n<script setup>\nimport { ref, onMounted, computed } from 'vue'\nimport { useRoute, useRouter } from 'vue-router'\nimport { Message } from '@arco-design/web-vue'\nimport { featureAPI, modelAPI } from '@/api/offlineModel'\n\nconst route = useRoute()\nconst router = useRouter()\nconst id = route.params.id\nconst detail = ref(null)\nconst platformModel",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src/pages/risk/model-offline-analysis/featureCenter/detail.vue",
+        "start": 51,
+        "end": 67,
+        "startLoc": {
+          "line": 51,
+          "column": 3,
+          "position": 824
+        },
+        "endLoc": {
+          "line": 67,
+          "column": 14,
+          "position": 945
+        }
+      },
+      "secondFile": {
+        "name": "src/pages/risk/model-offline-analysis/featureCenter/edit.vue",
+        "start": 111,
+        "end": 127,
+        "startLoc": {
+          "line": 111,
+          "column": 3,
+          "position": 1130
+        },
+        "endLoc": {
+          "line": 127,
+          "column": 5,
+          "position": 1251
+        }
+      }
+    }
+  ]
+}

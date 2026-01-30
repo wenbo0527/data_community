@@ -36,7 +36,7 @@
         @click.stop="onDeleteNode"
         title="删除节点"
       >
-        <icon-close />
+        <IconClose />
       </div>
     </div>
     
@@ -45,7 +45,7 @@
       v-if="canAddDownstream && (isHover || plusMenuVisible)"
       class="plus-button-container"
     >
-      <a-dropdown 
+      <ADropdown 
         v-model:popup-visible="plusMenuVisible"
         trigger="click"
         position="bottom"
@@ -56,7 +56,7 @@
           @click.stop="onPlusButtonClick"
           :class="{ 'plus-button-active': plusMenuVisible }"
         >
-          <icon-plus />
+          <IconPlus />
         </div>
         <template #content>
           <div class="plus-menu">
@@ -80,7 +80,7 @@
             </div>
           </div>
         </template>
-      </a-dropdown>
+      </ADropdown>
     </div>
     
     <!-- 连接桩 -->

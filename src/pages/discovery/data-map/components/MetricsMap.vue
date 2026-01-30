@@ -20,11 +20,11 @@
       <div class="nav-right">
         <a-space>
           <a-button @click="resetView">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             重置视图
           </a-button>
           <a-button type="primary" @click="toggleFullscreen">
-            <template #icon><icon-fullscreen /></template>
+            <template #icon><IconFullscreen /></template>
             全屏
           </a-button>
         </a-space>

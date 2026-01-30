@@ -3,7 +3,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <a-button type="text" @click="goBack">
-        <template #icon><icon-left /></template>
+        <template #icon><IconLeft /></template>
         返回
       </a-button>
       <h2>{{ isEditMode ? '编辑指标' : (isViewMode ? '指标详情' : '新建指标') }}</h2>
@@ -266,7 +266,7 @@
           </div>
           
           <a-button type="outline" @click="addReport" class="add-report-btn">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             添加报表
           </a-button>
         </a-card>

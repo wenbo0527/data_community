@@ -67,7 +67,7 @@ export const useContractStore = defineStore('contract', {
       this.loading = true
       try {
         const res = await getContracts({ supplier: params.supplier, status: params.status })
-        let list = res.list.map((i) => {
+        const list = res.list.map((i) => {
           const numId = Number(String(i.id || '').replace(/\D/g, '')) || 1
           const defaultDataCount = i.dataCount ?? (numId * 1000 + 500)
           const defaultProductCount = i.productCount ?? (numId % 5) + 1

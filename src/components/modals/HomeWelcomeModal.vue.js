@@ -170,17 +170,17 @@ const todoList = ref([
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['feature-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['feature-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-detail']} */ ;
-/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-list-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['feature-list']} */ 
+/** @type {__VLS_StyleScopedClasses['feature-list']} */ 
+/** @type {__VLS_StyleScopedClasses['step-detail']} */ 
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-list-item']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onUpdate:visible': {} },
@@ -206,7 +206,7 @@ let __VLS_6;
 const __VLS_7 = {
     'onUpdate:visible': ((val) => __VLS_ctx.$emit('update:visible', val))
 };
-var __VLS_8 = {};
+const __VLS_8 = {};
 __VLS_3.slots.default;
 if (__VLS_ctx.isNewUser) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -226,7 +226,7 @@ if (__VLS_ctx.isNewUser) {
             ...{ class: "welcome-desc" },
         });
         const __VLS_9 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
             ...{ 'onClick': {} },
@@ -245,14 +245,14 @@ if (__VLS_ctx.isNewUser) {
             onClick: (__VLS_ctx.startGuide)
         };
         __VLS_12.slots.default;
-        var __VLS_12;
+        let __VLS_12;
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "guide-steps-container" },
         });
         const __VLS_17 = {}.ASteps;
-        /** @type {[typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, ]} */ ;
+        /** @type {[typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, typeof __VLS_components.ASteps, typeof __VLS_components.aSteps, ]} */ 
         // @ts-ignore
         const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
             current: (__VLS_ctx.currentStep),
@@ -264,7 +264,7 @@ if (__VLS_ctx.isNewUser) {
         }, ...__VLS_functionalComponentArgsRest(__VLS_18));
         __VLS_20.slots.default;
         const __VLS_21 = {}.AStep;
-        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ ;
+        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ 
         // @ts-ignore
         const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
             title: "认识数字社区",
@@ -273,7 +273,7 @@ if (__VLS_ctx.isNewUser) {
             title: "认识数字社区",
         }, ...__VLS_functionalComponentArgsRest(__VLS_22));
         const __VLS_25 = {}.AStep;
-        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ ;
+        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ 
         // @ts-ignore
         const __VLS_26 = __VLS_asFunctionalComponent(__VLS_25, new __VLS_25({
             title: "如何找数",
@@ -282,7 +282,7 @@ if (__VLS_ctx.isNewUser) {
             title: "如何找数",
         }, ...__VLS_functionalComponentArgsRest(__VLS_26));
         const __VLS_29 = {}.AStep;
-        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ ;
+        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ 
         // @ts-ignore
         const __VLS_30 = __VLS_asFunctionalComponent(__VLS_29, new __VLS_29({
             title: "如何看数",
@@ -291,7 +291,7 @@ if (__VLS_ctx.isNewUser) {
             title: "如何看数",
         }, ...__VLS_functionalComponentArgsRest(__VLS_30));
         const __VLS_33 = {}.AStep;
-        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ ;
+        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ 
         // @ts-ignore
         const __VLS_34 = __VLS_asFunctionalComponent(__VLS_33, new __VLS_33({
             title: "用数指引",
@@ -300,7 +300,7 @@ if (__VLS_ctx.isNewUser) {
             title: "用数指引",
         }, ...__VLS_functionalComponentArgsRest(__VLS_34));
         const __VLS_37 = {}.AStep;
-        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ ;
+        /** @type {[typeof __VLS_components.AStep, typeof __VLS_components.aStep, ]} */ 
         // @ts-ignore
         const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
             title: "常见问题",
@@ -308,7 +308,7 @@ if (__VLS_ctx.isNewUser) {
         const __VLS_39 = __VLS_38({
             title: "常见问题",
         }, ...__VLS_functionalComponentArgsRest(__VLS_38));
-        var __VLS_20;
+        let __VLS_20;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "guide-content" },
         });
@@ -333,7 +333,7 @@ if (__VLS_ctx.isNewUser) {
                 ...{ class: "feature-item" },
             });
             const __VLS_41 = {}.IconCheckCircle;
-            /** @type {[typeof __VLS_components.IconCheckCircle, typeof __VLS_components.iconCheckCircle, ]} */ ;
+            /** @type {[typeof __VLS_components.IconCheckCircle, typeof __VLS_components.iconCheckCircle, ]} */ 
             // @ts-ignore
             const __VLS_42 = __VLS_asFunctionalComponent(__VLS_41, new __VLS_41({
                 ...{ class: "feature-icon" },
@@ -349,7 +349,7 @@ if (__VLS_ctx.isNewUser) {
         });
         if (__VLS_ctx.currentStep > 0) {
             const __VLS_45 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_46 = __VLS_asFunctionalComponent(__VLS_45, new __VLS_45({
                 ...{ 'onClick': {} },
@@ -364,10 +364,10 @@ if (__VLS_ctx.isNewUser) {
                 onClick: (__VLS_ctx.prevStep)
             };
             __VLS_48.slots.default;
-            var __VLS_48;
+            let __VLS_48;
         }
         const __VLS_53 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_54 = __VLS_asFunctionalComponent(__VLS_53, new __VLS_53({
             ...{ 'onClick': {} },
@@ -384,7 +384,7 @@ if (__VLS_ctx.isNewUser) {
             onClick: (__VLS_ctx.nextStep)
         };
         __VLS_56.slots.default;
-        var __VLS_56;
+        let __VLS_56;
     }
 }
 else {
@@ -392,13 +392,13 @@ else {
         ...{ class: "regular-user-content" },
     });
     const __VLS_61 = {}.ARow;
-    /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+    /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
     // @ts-ignore
     const __VLS_62 = __VLS_asFunctionalComponent(__VLS_61, new __VLS_61({}));
     const __VLS_63 = __VLS_62({}, ...__VLS_functionalComponentArgsRest(__VLS_62));
     __VLS_64.slots.default;
     const __VLS_65 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_66 = __VLS_asFunctionalComponent(__VLS_65, new __VLS_65({
         span: (24),
@@ -408,7 +408,7 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_66));
     __VLS_68.slots.default;
     const __VLS_69 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_70 = __VLS_asFunctionalComponent(__VLS_69, new __VLS_69({
         title: "待办提醒",
@@ -420,7 +420,7 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_70));
     __VLS_72.slots.default;
     const __VLS_73 = {}.AList;
-    /** @type {[typeof __VLS_components.AList, typeof __VLS_components.aList, typeof __VLS_components.AList, typeof __VLS_components.aList, ]} */ ;
+    /** @type {[typeof __VLS_components.AList, typeof __VLS_components.aList, typeof __VLS_components.AList, typeof __VLS_components.aList, ]} */ 
     // @ts-ignore
     const __VLS_74 = __VLS_asFunctionalComponent(__VLS_73, new __VLS_73({
         data: (__VLS_ctx.todoList),
@@ -435,13 +435,13 @@ else {
         const { item: __VLS_thisSlot } = __VLS_76.slots;
         const [{ item }] = __VLS_getSlotParams(__VLS_thisSlot);
         const __VLS_77 = {}.AListItem;
-        /** @type {[typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, ]} */ ;
+        /** @type {[typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, typeof __VLS_components.AListItem, typeof __VLS_components.aListItem, ]} */ 
         // @ts-ignore
         const __VLS_78 = __VLS_asFunctionalComponent(__VLS_77, new __VLS_77({}));
         const __VLS_79 = __VLS_78({}, ...__VLS_functionalComponentArgsRest(__VLS_78));
         __VLS_80.slots.default;
         const __VLS_81 = {}.ASpace;
-        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
         // @ts-ignore
         const __VLS_82 = __VLS_asFunctionalComponent(__VLS_81, new __VLS_81({
             direction: "vertical",
@@ -464,21 +464,21 @@ else {
         });
         (item.title);
         const __VLS_85 = {}.ASpace;
-        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
         // @ts-ignore
         const __VLS_86 = __VLS_asFunctionalComponent(__VLS_85, new __VLS_85({}));
         const __VLS_87 = __VLS_86({}, ...__VLS_functionalComponentArgsRest(__VLS_86));
         __VLS_88.slots.default;
         const __VLS_89 = {}.ATag;
-        /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+        /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
         // @ts-ignore
         const __VLS_90 = __VLS_asFunctionalComponent(__VLS_89, new __VLS_89({}));
         const __VLS_91 = __VLS_90({}, ...__VLS_functionalComponentArgsRest(__VLS_90));
         __VLS_92.slots.default;
         (item.type);
-        var __VLS_92;
+        let __VLS_92;
         const __VLS_93 = {}.ATag;
-        /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+        /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
         // @ts-ignore
         const __VLS_94 = __VLS_asFunctionalComponent(__VLS_93, new __VLS_93({
             color: (item.priority === '高' ? 'red' : item.priority === '中' ? 'orange' : 'blue'),
@@ -488,9 +488,9 @@ else {
         }, ...__VLS_functionalComponentArgsRest(__VLS_94));
         __VLS_96.slots.default;
         (item.priority);
-        var __VLS_96;
+        let __VLS_96;
         const __VLS_97 = {}.ATag;
-        /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+        /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
         // @ts-ignore
         const __VLS_98 = __VLS_asFunctionalComponent(__VLS_97, new __VLS_97({
             color: (item.status === '待处理' ? 'orange' : item.status === '待评审' ? 'blue' : 'cyan'),
@@ -500,13 +500,13 @@ else {
         }, ...__VLS_functionalComponentArgsRest(__VLS_98));
         __VLS_100.slots.default;
         (item.status);
-        var __VLS_100;
-        var __VLS_88;
+        let __VLS_100;
+        let __VLS_88;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "todo-item-content" },
         });
         const __VLS_101 = {}.ATypographyParagraph;
-        /** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ ;
+        /** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ 
         // @ts-ignore
         const __VLS_102 = __VLS_asFunctionalComponent(__VLS_101, new __VLS_101({
             type: "secondary",
@@ -518,9 +518,9 @@ else {
         }, ...__VLS_functionalComponentArgsRest(__VLS_102));
         __VLS_104.slots.default;
         (item.description);
-        var __VLS_104;
+        let __VLS_104;
         const __VLS_105 = {}.ATypographyText;
-        /** @type {[typeof __VLS_components.ATypographyText, typeof __VLS_components.aTypographyText, typeof __VLS_components.ATypographyText, typeof __VLS_components.aTypographyText, ]} */ ;
+        /** @type {[typeof __VLS_components.ATypographyText, typeof __VLS_components.aTypographyText, typeof __VLS_components.ATypographyText, typeof __VLS_components.aTypographyText, ]} */ 
         // @ts-ignore
         const __VLS_106 = __VLS_asFunctionalComponent(__VLS_105, new __VLS_105({
             type: "secondary",
@@ -530,38 +530,38 @@ else {
         }, ...__VLS_functionalComponentArgsRest(__VLS_106));
         __VLS_108.slots.default;
         (item.deadline);
-        var __VLS_108;
-        var __VLS_84;
-        var __VLS_80;
+        let __VLS_108;
+        let __VLS_84;
+        let __VLS_80;
     }
-    var __VLS_76;
-    var __VLS_72;
-    var __VLS_68;
-    var __VLS_64;
+    let __VLS_76;
+    let __VLS_72;
+    let __VLS_68;
+    let __VLS_64;
 }
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ ;
-/** @type {__VLS_StyleScopedClasses['quick-start-guide']} */ ;
-/** @type {__VLS_StyleScopedClasses['welcome-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['welcome-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['quick-start-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['welcome-desc']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-steps-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-steps']} */ ;
-/** @type {__VLS_StyleScopedClasses['guide-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-detail']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-features']} */ ;
-/** @type {__VLS_StyleScopedClasses['feature-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['feature-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['step-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['regular-user-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['todo-item-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['ticket-id']} */ ;
-/** @type {__VLS_StyleScopedClasses['ticket-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['todo-item-content']} */ ;
-var __VLS_dollars;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['welcome-modal']} */ 
+/** @type {__VLS_StyleScopedClasses['quick-start-guide']} */ 
+/** @type {__VLS_StyleScopedClasses['welcome-section']} */ 
+/** @type {__VLS_StyleScopedClasses['welcome-title']} */ 
+/** @type {__VLS_StyleScopedClasses['quick-start-card']} */ 
+/** @type {__VLS_StyleScopedClasses['welcome-desc']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-steps-container']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-steps']} */ 
+/** @type {__VLS_StyleScopedClasses['guide-content']} */ 
+/** @type {__VLS_StyleScopedClasses['step-content']} */ 
+/** @type {__VLS_StyleScopedClasses['step-detail']} */ 
+/** @type {__VLS_StyleScopedClasses['step-description']} */ 
+/** @type {__VLS_StyleScopedClasses['step-features']} */ 
+/** @type {__VLS_StyleScopedClasses['feature-item']} */ 
+/** @type {__VLS_StyleScopedClasses['feature-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['step-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['regular-user-content']} */ 
+/** @type {__VLS_StyleScopedClasses['todo-item-header']} */ 
+/** @type {__VLS_StyleScopedClasses['ticket-id']} */ 
+/** @type {__VLS_StyleScopedClasses['ticket-title']} */ 
+/** @type {__VLS_StyleScopedClasses['todo-item-content']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -589,4 +589,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

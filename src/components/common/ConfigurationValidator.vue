@@ -16,7 +16,7 @@
           :loading="isValidating"
           @click="validateConfiguration"
         >
-          <icon-refresh /> 重新验证
+          <IconRefresh /> 重新验证
         </a-button>
         
         <a-button 
@@ -25,7 +25,7 @@
           type="text"
           @click="toggleAutoValidate"
         >
-          <icon-eye /> 自动验证
+          <IconEye /> 自动验证
         </a-button>
         <a-button 
           v-else
@@ -33,7 +33,7 @@
           type="text"
           @click="toggleAutoValidate"
         >
-          <icon-eye-invisible /> 手动验证
+          <IconEyeInvisible /> 手动验证
         </a-button>
       </div>
     </div>
@@ -67,7 +67,7 @@
         </div>
         
         <div class="summary-time">
-          <icon-clock-circle />
+          <IconClockCircle />
           <span>验证时间: {{ formatTime(validationResult.timestamp) }}</span>
         </div>
       </div>
@@ -82,8 +82,8 @@
             @click="toggleErrorsExpanded"
           >
             {{ errorsExpanded ? '收起' : '展开' }}
-            <icon-down v-if="!errorsExpanded" />
-            <icon-up v-else />
+            <IconDown v-if="!errorsExpanded" />
+            <IconUp v-else />
           </a-button>
         </div>
         
@@ -172,7 +172,7 @@
       
       <!-- 空状态 -->
       <div v-if="!validationResult && !isValidating" class="validation-empty">
-        <icon-info-circle />
+        <IconInfoCircle />
         <div class="empty-text">点击"重新验证"开始配置验证</div>
       </div>
     </div>

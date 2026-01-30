@@ -28,8 +28,8 @@
       <!-- ... 省略其他表单字段，保持与原模态框一致 ... -->
 
       <a-form-item>
-        <a-button type="primary" html-type="submit">提交</a-button>
-        <a-button style="margin-left: 16px" @click="handleBack">取消</a-button>
+        <AButton type="primary" html-type="submit">提交</AButton>
+        <AButton style="margin-left: 16px" @click="handleBack">取消</AButton>
       </a-form-item>
     </a-form>
   </div>

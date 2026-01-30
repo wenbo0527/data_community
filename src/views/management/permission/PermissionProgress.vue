@@ -37,7 +37,7 @@
           </a-col>
           <a-col :span="4">
             <a-button type="primary" @click="handleSearch">
-              <template #icon><icon-search /></template>
+              <template #icon><IconSearch /></template>
               查询
             </a-button>
             <a-button @click="handleReset" style="margin-left: 8px;">
@@ -51,15 +51,15 @@
           <a-col :span="24">
             <a-space>
               <a-button size="mini" @click="handleNewApplication">
-                <template #icon><icon-plus /></template>
+                <template #icon><IconPlus /></template>
                 新建申请
               </a-button>
               <a-button size="mini" @click="handleBatchApply">
-                <template #icon><icon-upload /></template>
+                <template #icon><IconUpload /></template>
                 批量申请
               </a-button>
               <a-button size="mini" @click="handleExport">
-                <template #icon><icon-download /></template>
+                <template #icon><IconDownload /></template>
                 导出记录
               </a-button>
             </a-space>

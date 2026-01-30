@@ -43,7 +43,7 @@
                   class="upload-area"
                 >
                   <div class="upload-content">
-                    <icon-upload class="upload-icon" />
+                    <IconUpload class="upload-icon" />
                     <p class="upload-text">拖拽文件到此处或<span class="upload-highlight"> 点击上传</span></p>
                     <p class="upload-hint">支持PDF、Word格式，单个文件不超过10MB</p>
                     <a-progress v-if="uploadProgress > 0" :percent="uploadProgress" :show-text="false" />

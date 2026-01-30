@@ -233,11 +233,11 @@ onMounted(() => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['arco-table-td']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-textarea']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-btn-primary']} */ ;
-/** @type {__VLS_StyleScopedClasses['danger-option']} */ ;
+/** @type {__VLS_StyleScopedClasses['arco-table-td']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-input']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-textarea']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-btn-primary']} */ 
+/** @type {__VLS_StyleScopedClasses['danger-option']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -266,7 +266,7 @@ if (!__VLS_ctx.showCreateForm) {
         ...{ class: "header-actions" },
     });
     const __VLS_0 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         size: "small",
@@ -276,7 +276,7 @@ if (!__VLS_ctx.showCreateForm) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_1));
     __VLS_3.slots.default;
     const __VLS_4 = {}.AInput;
-    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         ...{ 'onPressEnter': {} },
@@ -302,7 +302,7 @@ if (!__VLS_ctx.showCreateForm) {
     {
         const { prefix: __VLS_thisSlot } = __VLS_7.slots;
         const __VLS_12 = {}.IconSearch;
-        /** @type {[typeof __VLS_components.IconSearch, typeof __VLS_components.iconSearch, ]} */ ;
+        /** @type {[typeof __VLS_components.IconSearch, typeof __VLS_components.iconSearch, ]} */ 
         // @ts-ignore
         const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
             ...{ style: {} },
@@ -311,9 +311,9 @@ if (!__VLS_ctx.showCreateForm) {
             ...{ style: {} },
         }, ...__VLS_functionalComponentArgsRest(__VLS_13));
     }
-    var __VLS_7;
+    let __VLS_7;
     const __VLS_16 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
         ...{ 'onClick': {} },
@@ -335,15 +335,15 @@ if (!__VLS_ctx.showCreateForm) {
     {
         const { icon: __VLS_thisSlot } = __VLS_19.slots;
         const __VLS_24 = {}.IconPlus;
-        /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ ;
+        /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ 
         // @ts-ignore
         const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({}));
         const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
     }
-    var __VLS_19;
-    var __VLS_3;
+    let __VLS_19;
+    let __VLS_3;
     const __VLS_28 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
         ...{ class: "content-card" },
@@ -358,7 +358,7 @@ if (!__VLS_ctx.showCreateForm) {
         ...{ class: "table-section" },
     });
     const __VLS_32 = {}.ATable;
-    /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+    /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
     // @ts-ignore
     const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
         ...{ 'onPageChange': {} },
@@ -405,7 +405,7 @@ if (!__VLS_ctx.showCreateForm) {
     {
         const { columns: __VLS_thisSlot } = __VLS_35.slots;
         const __VLS_41 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_42 = __VLS_asFunctionalComponent(__VLS_41, new __VLS_41({
             title: "ID",
@@ -420,7 +420,7 @@ if (!__VLS_ctx.showCreateForm) {
             fixed: "left",
         }, ...__VLS_functionalComponentArgsRest(__VLS_42));
         const __VLS_45 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_46 = __VLS_asFunctionalComponent(__VLS_45, new __VLS_45({
             title: "数据源名称",
@@ -437,7 +437,7 @@ if (!__VLS_ctx.showCreateForm) {
             const { cell: __VLS_thisSlot } = __VLS_48.slots;
             const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
             const __VLS_49 = {}.ALink;
-            /** @type {[typeof __VLS_components.ALink, typeof __VLS_components.aLink, typeof __VLS_components.ALink, typeof __VLS_components.aLink, ]} */ ;
+            /** @type {[typeof __VLS_components.ALink, typeof __VLS_components.aLink, typeof __VLS_components.ALink, typeof __VLS_components.aLink, ]} */ 
             // @ts-ignore
             const __VLS_50 = __VLS_asFunctionalComponent(__VLS_49, new __VLS_49({
                 ...{ 'onClick': {} },
@@ -450,18 +450,18 @@ if (!__VLS_ctx.showCreateForm) {
             let __VLS_55;
             const __VLS_56 = {
                 onClick: (...[$event]) => {
-                    if (!(!__VLS_ctx.showCreateForm))
+                    if (__VLS_ctx.showCreateForm)
                         return;
                     __VLS_ctx.viewDatasourceDetail(record);
                 }
             };
             __VLS_52.slots.default;
             (record.datasourceName);
-            var __VLS_52;
+            let __VLS_52;
         }
-        var __VLS_48;
+        let __VLS_48;
         const __VLS_57 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_58 = __VLS_asFunctionalComponent(__VLS_57, new __VLS_57({
             title: "Broker地址",
@@ -474,7 +474,7 @@ if (!__VLS_ctx.showCreateForm) {
             width: (200),
         }, ...__VLS_functionalComponentArgsRest(__VLS_58));
         const __VLS_61 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_62 = __VLS_asFunctionalComponent(__VLS_61, new __VLS_61({
             title: "端口",
@@ -487,7 +487,7 @@ if (!__VLS_ctx.showCreateForm) {
             width: (80),
         }, ...__VLS_functionalComponentArgsRest(__VLS_62));
         const __VLS_65 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_66 = __VLS_asFunctionalComponent(__VLS_65, new __VLS_65({
             title: "认证方式",
@@ -504,7 +504,7 @@ if (!__VLS_ctx.showCreateForm) {
             const { cell: __VLS_thisSlot } = __VLS_68.slots;
             const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
             const __VLS_69 = {}.ATag;
-            /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+            /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
             // @ts-ignore
             const __VLS_70 = __VLS_asFunctionalComponent(__VLS_69, new __VLS_69({
                 size: "small",
@@ -514,11 +514,11 @@ if (!__VLS_ctx.showCreateForm) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_70));
             __VLS_72.slots.default;
             (record.authType);
-            var __VLS_72;
+            let __VLS_72;
         }
-        var __VLS_68;
+        let __VLS_68;
         const __VLS_73 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_74 = __VLS_asFunctionalComponent(__VLS_73, new __VLS_73({
             title: "状态",
@@ -535,7 +535,7 @@ if (!__VLS_ctx.showCreateForm) {
             const { cell: __VLS_thisSlot } = __VLS_76.slots;
             const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
             const __VLS_77 = {}.ATag;
-            /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+            /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
             // @ts-ignore
             const __VLS_78 = __VLS_asFunctionalComponent(__VLS_77, new __VLS_77({
                 color: (__VLS_ctx.getStatusColor(record.status)),
@@ -547,11 +547,11 @@ if (!__VLS_ctx.showCreateForm) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_78));
             __VLS_80.slots.default;
             (record.status);
-            var __VLS_80;
+            let __VLS_80;
         }
-        var __VLS_76;
+        let __VLS_76;
         const __VLS_81 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_82 = __VLS_asFunctionalComponent(__VLS_81, new __VLS_81({
             title: "创建时间",
@@ -572,9 +572,9 @@ if (!__VLS_ctx.showCreateForm) {
             });
             (record.createTime);
         }
-        var __VLS_84;
+        let __VLS_84;
         const __VLS_85 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_86 = __VLS_asFunctionalComponent(__VLS_85, new __VLS_85({
             title: "负责人",
@@ -587,7 +587,7 @@ if (!__VLS_ctx.showCreateForm) {
             width: (80),
         }, ...__VLS_functionalComponentArgsRest(__VLS_86));
         const __VLS_89 = {}.ATableColumn;
-        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+        /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
         // @ts-ignore
         const __VLS_90 = __VLS_asFunctionalComponent(__VLS_89, new __VLS_89({
             title: "操作",
@@ -604,7 +604,7 @@ if (!__VLS_ctx.showCreateForm) {
             const { cell: __VLS_thisSlot } = __VLS_92.slots;
             const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
             const __VLS_93 = {}.ASpace;
-            /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+            /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
             // @ts-ignore
             const __VLS_94 = __VLS_asFunctionalComponent(__VLS_93, new __VLS_93({
                 size: "mini",
@@ -614,7 +614,7 @@ if (!__VLS_ctx.showCreateForm) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_94));
             __VLS_96.slots.default;
             const __VLS_97 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_98 = __VLS_asFunctionalComponent(__VLS_97, new __VLS_97({
                 ...{ 'onClick': {} },
@@ -631,20 +631,20 @@ if (!__VLS_ctx.showCreateForm) {
             let __VLS_103;
             const __VLS_104 = {
                 onClick: (...[$event]) => {
-                    if (!(!__VLS_ctx.showCreateForm))
+                    if (__VLS_ctx.showCreateForm)
                         return;
                     __VLS_ctx.editDatasource(record);
                 }
             };
             __VLS_100.slots.default;
             const __VLS_105 = {}.IconEdit;
-            /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ ;
+            /** @type {[typeof __VLS_components.IconEdit, typeof __VLS_components.iconEdit, ]} */ 
             // @ts-ignore
             const __VLS_106 = __VLS_asFunctionalComponent(__VLS_105, new __VLS_105({}));
             const __VLS_107 = __VLS_106({}, ...__VLS_functionalComponentArgsRest(__VLS_106));
-            var __VLS_100;
+            let __VLS_100;
             const __VLS_109 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_110 = __VLS_asFunctionalComponent(__VLS_109, new __VLS_109({
                 ...{ 'onClick': {} },
@@ -661,20 +661,20 @@ if (!__VLS_ctx.showCreateForm) {
             let __VLS_115;
             const __VLS_116 = {
                 onClick: (...[$event]) => {
-                    if (!(!__VLS_ctx.showCreateForm))
+                    if (__VLS_ctx.showCreateForm)
                         return;
                     __VLS_ctx.testConnection(record);
                 }
             };
             __VLS_112.slots.default;
             const __VLS_117 = {}.IconLink;
-            /** @type {[typeof __VLS_components.IconLink, typeof __VLS_components.iconLink, ]} */ ;
+            /** @type {[typeof __VLS_components.IconLink, typeof __VLS_components.iconLink, ]} */ 
             // @ts-ignore
             const __VLS_118 = __VLS_asFunctionalComponent(__VLS_117, new __VLS_117({}));
             const __VLS_119 = __VLS_118({}, ...__VLS_functionalComponentArgsRest(__VLS_118));
-            var __VLS_112;
+            let __VLS_112;
             const __VLS_121 = {}.ADropdown;
-            /** @type {[typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, ]} */ ;
+            /** @type {[typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, typeof __VLS_components.ADropdown, typeof __VLS_components.aDropdown, ]} */ 
             // @ts-ignore
             const __VLS_122 = __VLS_asFunctionalComponent(__VLS_121, new __VLS_121({
                 trigger: "click",
@@ -684,7 +684,7 @@ if (!__VLS_ctx.showCreateForm) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_122));
             __VLS_124.slots.default;
             const __VLS_125 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_126 = __VLS_asFunctionalComponent(__VLS_125, new __VLS_125({
                 type: "text",
@@ -696,15 +696,15 @@ if (!__VLS_ctx.showCreateForm) {
             }, ...__VLS_functionalComponentArgsRest(__VLS_126));
             __VLS_128.slots.default;
             const __VLS_129 = {}.IconMore;
-            /** @type {[typeof __VLS_components.IconMore, typeof __VLS_components.iconMore, ]} */ ;
+            /** @type {[typeof __VLS_components.IconMore, typeof __VLS_components.iconMore, ]} */ 
             // @ts-ignore
             const __VLS_130 = __VLS_asFunctionalComponent(__VLS_129, new __VLS_129({}));
             const __VLS_131 = __VLS_130({}, ...__VLS_functionalComponentArgsRest(__VLS_130));
-            var __VLS_128;
+            let __VLS_128;
             {
                 const { content: __VLS_thisSlot } = __VLS_124.slots;
                 const __VLS_133 = {}.ADoption;
-                /** @type {[typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, ]} */ ;
+                /** @type {[typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, typeof __VLS_components.ADoption, typeof __VLS_components.aDoption, ]} */ 
                 // @ts-ignore
                 const __VLS_134 = __VLS_asFunctionalComponent(__VLS_133, new __VLS_133({
                     ...{ 'onClick': {} },
@@ -719,29 +719,29 @@ if (!__VLS_ctx.showCreateForm) {
                 let __VLS_139;
                 const __VLS_140 = {
                     onClick: (...[$event]) => {
-                        if (!(!__VLS_ctx.showCreateForm))
+                        if (__VLS_ctx.showCreateForm)
                             return;
                         __VLS_ctx.deleteDatasource(record);
                     }
                 };
                 __VLS_136.slots.default;
                 const __VLS_141 = {}.IconDelete;
-                /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ ;
+                /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ 
                 // @ts-ignore
                 const __VLS_142 = __VLS_asFunctionalComponent(__VLS_141, new __VLS_141({}));
                 const __VLS_143 = __VLS_142({}, ...__VLS_functionalComponentArgsRest(__VLS_142));
-                var __VLS_136;
+                let __VLS_136;
             }
-            var __VLS_124;
-            var __VLS_96;
+            let __VLS_124;
+            let __VLS_96;
         }
-        var __VLS_92;
+        let __VLS_92;
     }
-    var __VLS_35;
-    var __VLS_31;
+    let __VLS_35;
+    let __VLS_31;
 }
 const __VLS_145 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_146 = __VLS_asFunctionalComponent(__VLS_145, new __VLS_145({
     ...{ 'onOk': {} },
@@ -770,7 +770,7 @@ const __VLS_153 = {
 };
 __VLS_148.slots.default;
 const __VLS_154 = {}.AForm;
-/** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ ;
+/** @type {[typeof __VLS_components.AForm, typeof __VLS_components.aForm, typeof __VLS_components.AForm, typeof __VLS_components.aForm, ]} */ 
 // @ts-ignore
 const __VLS_155 = __VLS_asFunctionalComponent(__VLS_154, new __VLS_154({
     model: (__VLS_ctx.datasourceForm),
@@ -784,11 +784,11 @@ const __VLS_156 = __VLS_155({
     ref: "datasourceFormRef",
     layout: "vertical",
 }, ...__VLS_functionalComponentArgsRest(__VLS_155));
-/** @type {typeof __VLS_ctx.datasourceFormRef} */ ;
-var __VLS_158 = {};
+/** @type {typeof __VLS_ctx.datasourceFormRef} */ 
+const __VLS_158 = {};
 __VLS_157.slots.default;
 const __VLS_160 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_161 = __VLS_asFunctionalComponent(__VLS_160, new __VLS_160({
     gutter: (16),
@@ -798,7 +798,7 @@ const __VLS_162 = __VLS_161({
 }, ...__VLS_functionalComponentArgsRest(__VLS_161));
 __VLS_163.slots.default;
 const __VLS_164 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_165 = __VLS_asFunctionalComponent(__VLS_164, new __VLS_164({
     span: (12),
@@ -808,7 +808,7 @@ const __VLS_166 = __VLS_165({
 }, ...__VLS_functionalComponentArgsRest(__VLS_165));
 __VLS_167.slots.default;
 const __VLS_168 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_169 = __VLS_asFunctionalComponent(__VLS_168, new __VLS_168({
     field: "datasourceName",
@@ -822,7 +822,7 @@ const __VLS_170 = __VLS_169({
 }, ...__VLS_functionalComponentArgsRest(__VLS_169));
 __VLS_171.slots.default;
 const __VLS_172 = {}.AInput;
-/** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+/** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
 // @ts-ignore
 const __VLS_173 = __VLS_asFunctionalComponent(__VLS_172, new __VLS_172({
     modelValue: (__VLS_ctx.datasourceForm.datasourceName),
@@ -834,10 +834,10 @@ const __VLS_174 = __VLS_173({
     placeholder: "请输入数据源名称",
     allowClear: true,
 }, ...__VLS_functionalComponentArgsRest(__VLS_173));
-var __VLS_171;
-var __VLS_167;
+let __VLS_171;
+let __VLS_167;
 const __VLS_176 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_177 = __VLS_asFunctionalComponent(__VLS_176, new __VLS_176({
     span: (12),
@@ -847,7 +847,7 @@ const __VLS_178 = __VLS_177({
 }, ...__VLS_functionalComponentArgsRest(__VLS_177));
 __VLS_179.slots.default;
 const __VLS_180 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_181 = __VLS_asFunctionalComponent(__VLS_180, new __VLS_180({
     field: "owner",
@@ -861,7 +861,7 @@ const __VLS_182 = __VLS_181({
 }, ...__VLS_functionalComponentArgsRest(__VLS_181));
 __VLS_183.slots.default;
 const __VLS_184 = {}.ASelect;
-/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
 // @ts-ignore
 const __VLS_185 = __VLS_asFunctionalComponent(__VLS_184, new __VLS_184({
     modelValue: (__VLS_ctx.datasourceForm.owner),
@@ -878,7 +878,7 @@ const __VLS_186 = __VLS_185({
 __VLS_187.slots.default;
 for (const [owner] of __VLS_getVForSourceType((__VLS_ctx.owners))) {
     const __VLS_188 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_189 = __VLS_asFunctionalComponent(__VLS_188, new __VLS_188({
         key: (owner.id),
@@ -892,12 +892,12 @@ for (const [owner] of __VLS_getVForSourceType((__VLS_ctx.owners))) {
     (owner.name);
     var __VLS_191;
 }
-var __VLS_187;
-var __VLS_183;
-var __VLS_179;
-var __VLS_163;
+let __VLS_187;
+let __VLS_183;
+let __VLS_179;
+let __VLS_163;
 const __VLS_192 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_193 = __VLS_asFunctionalComponent(__VLS_192, new __VLS_192({
     gutter: (16),
@@ -907,7 +907,7 @@ const __VLS_194 = __VLS_193({
 }, ...__VLS_functionalComponentArgsRest(__VLS_193));
 __VLS_195.slots.default;
 const __VLS_196 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_197 = __VLS_asFunctionalComponent(__VLS_196, new __VLS_196({
     span: (16),
@@ -917,7 +917,7 @@ const __VLS_198 = __VLS_197({
 }, ...__VLS_functionalComponentArgsRest(__VLS_197));
 __VLS_199.slots.default;
 const __VLS_200 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_201 = __VLS_asFunctionalComponent(__VLS_200, new __VLS_200({
     field: "brokerAddress",
@@ -931,7 +931,7 @@ const __VLS_202 = __VLS_201({
 }, ...__VLS_functionalComponentArgsRest(__VLS_201));
 __VLS_203.slots.default;
 const __VLS_204 = {}.AInput;
-/** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+/** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
 // @ts-ignore
 const __VLS_205 = __VLS_asFunctionalComponent(__VLS_204, new __VLS_204({
     modelValue: (__VLS_ctx.datasourceForm.brokerAddress),
@@ -943,10 +943,10 @@ const __VLS_206 = __VLS_205({
     placeholder: "请输入Kafka Broker地址",
     allowClear: true,
 }, ...__VLS_functionalComponentArgsRest(__VLS_205));
-var __VLS_203;
-var __VLS_199;
+let __VLS_203;
+let __VLS_199;
 const __VLS_208 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_209 = __VLS_asFunctionalComponent(__VLS_208, new __VLS_208({
     span: (8),
@@ -956,7 +956,7 @@ const __VLS_210 = __VLS_209({
 }, ...__VLS_functionalComponentArgsRest(__VLS_209));
 __VLS_211.slots.default;
 const __VLS_212 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_213 = __VLS_asFunctionalComponent(__VLS_212, new __VLS_212({
     field: "port",
@@ -970,7 +970,7 @@ const __VLS_214 = __VLS_213({
 }, ...__VLS_functionalComponentArgsRest(__VLS_213));
 __VLS_215.slots.default;
 const __VLS_216 = {}.AInputNumber;
-/** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+/** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
 // @ts-ignore
 const __VLS_217 = __VLS_asFunctionalComponent(__VLS_216, new __VLS_216({
     modelValue: (__VLS_ctx.datasourceForm.port),
@@ -986,11 +986,11 @@ const __VLS_218 = __VLS_217({
     max: (65535),
     ...{ style: {} },
 }, ...__VLS_functionalComponentArgsRest(__VLS_217));
-var __VLS_215;
-var __VLS_211;
-var __VLS_195;
+let __VLS_215;
+let __VLS_211;
+let __VLS_195;
 const __VLS_220 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_221 = __VLS_asFunctionalComponent(__VLS_220, new __VLS_220({
     gutter: (16),
@@ -1000,7 +1000,7 @@ const __VLS_222 = __VLS_221({
 }, ...__VLS_functionalComponentArgsRest(__VLS_221));
 __VLS_223.slots.default;
 const __VLS_224 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_225 = __VLS_asFunctionalComponent(__VLS_224, new __VLS_224({
     span: (12),
@@ -1010,7 +1010,7 @@ const __VLS_226 = __VLS_225({
 }, ...__VLS_functionalComponentArgsRest(__VLS_225));
 __VLS_227.slots.default;
 const __VLS_228 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_229 = __VLS_asFunctionalComponent(__VLS_228, new __VLS_228({
     field: "authType",
@@ -1024,7 +1024,7 @@ const __VLS_230 = __VLS_229({
 }, ...__VLS_functionalComponentArgsRest(__VLS_229));
 __VLS_231.slots.default;
 const __VLS_232 = {}.ASelect;
-/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
 // @ts-ignore
 const __VLS_233 = __VLS_asFunctionalComponent(__VLS_232, new __VLS_232({
     modelValue: (__VLS_ctx.datasourceForm.authType),
@@ -1036,7 +1036,7 @@ const __VLS_234 = __VLS_233({
 }, ...__VLS_functionalComponentArgsRest(__VLS_233));
 __VLS_235.slots.default;
 const __VLS_236 = {}.AOption;
-/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
 // @ts-ignore
 const __VLS_237 = __VLS_asFunctionalComponent(__VLS_236, new __VLS_236({
     value: "NONE",
@@ -1045,9 +1045,9 @@ const __VLS_238 = __VLS_237({
     value: "NONE",
 }, ...__VLS_functionalComponentArgsRest(__VLS_237));
 __VLS_239.slots.default;
-var __VLS_239;
+let __VLS_239;
 const __VLS_240 = {}.AOption;
-/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
 // @ts-ignore
 const __VLS_241 = __VLS_asFunctionalComponent(__VLS_240, new __VLS_240({
     value: "SASL_PLAINTEXT",
@@ -1056,9 +1056,9 @@ const __VLS_242 = __VLS_241({
     value: "SASL_PLAINTEXT",
 }, ...__VLS_functionalComponentArgsRest(__VLS_241));
 __VLS_243.slots.default;
-var __VLS_243;
+let __VLS_243;
 const __VLS_244 = {}.AOption;
-/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
 // @ts-ignore
 const __VLS_245 = __VLS_asFunctionalComponent(__VLS_244, new __VLS_244({
     value: "SASL_SSL",
@@ -1067,9 +1067,9 @@ const __VLS_246 = __VLS_245({
     value: "SASL_SSL",
 }, ...__VLS_functionalComponentArgsRest(__VLS_245));
 __VLS_247.slots.default;
-var __VLS_247;
+let __VLS_247;
 const __VLS_248 = {}.AOption;
-/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+/** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
 // @ts-ignore
 const __VLS_249 = __VLS_asFunctionalComponent(__VLS_248, new __VLS_248({
     value: "SSL",
@@ -1078,12 +1078,12 @@ const __VLS_250 = __VLS_249({
     value: "SSL",
 }, ...__VLS_functionalComponentArgsRest(__VLS_249));
 __VLS_251.slots.default;
-var __VLS_251;
-var __VLS_235;
-var __VLS_231;
-var __VLS_227;
+let __VLS_251;
+let __VLS_235;
+let __VLS_231;
+let __VLS_227;
 const __VLS_252 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_253 = __VLS_asFunctionalComponent(__VLS_252, new __VLS_252({
     span: (12),
@@ -1094,7 +1094,7 @@ const __VLS_254 = __VLS_253({
 __VLS_255.slots.default;
 if (__VLS_ctx.datasourceForm.authType.includes('SASL')) {
     const __VLS_256 = {}.AFormItem;
-    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
     // @ts-ignore
     const __VLS_257 = __VLS_asFunctionalComponent(__VLS_256, new __VLS_256({
         field: "saslMechanism",
@@ -1106,7 +1106,7 @@ if (__VLS_ctx.datasourceForm.authType.includes('SASL')) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_257));
     __VLS_259.slots.default;
     const __VLS_260 = {}.ASelect;
-    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
     // @ts-ignore
     const __VLS_261 = __VLS_asFunctionalComponent(__VLS_260, new __VLS_260({
         modelValue: (__VLS_ctx.datasourceForm.saslMechanism),
@@ -1118,7 +1118,7 @@ if (__VLS_ctx.datasourceForm.authType.includes('SASL')) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_261));
     __VLS_263.slots.default;
     const __VLS_264 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_265 = __VLS_asFunctionalComponent(__VLS_264, new __VLS_264({
         value: "PLAIN",
@@ -1127,9 +1127,9 @@ if (__VLS_ctx.datasourceForm.authType.includes('SASL')) {
         value: "PLAIN",
     }, ...__VLS_functionalComponentArgsRest(__VLS_265));
     __VLS_267.slots.default;
-    var __VLS_267;
+    let __VLS_267;
     const __VLS_268 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_269 = __VLS_asFunctionalComponent(__VLS_268, new __VLS_268({
         value: "SCRAM-SHA-256",
@@ -1138,9 +1138,9 @@ if (__VLS_ctx.datasourceForm.authType.includes('SASL')) {
         value: "SCRAM-SHA-256",
     }, ...__VLS_functionalComponentArgsRest(__VLS_269));
     __VLS_271.slots.default;
-    var __VLS_271;
+    let __VLS_271;
     const __VLS_272 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_273 = __VLS_asFunctionalComponent(__VLS_272, new __VLS_272({
         value: "SCRAM-SHA-512",
@@ -1149,15 +1149,15 @@ if (__VLS_ctx.datasourceForm.authType.includes('SASL')) {
         value: "SCRAM-SHA-512",
     }, ...__VLS_functionalComponentArgsRest(__VLS_273));
     __VLS_275.slots.default;
-    var __VLS_275;
-    var __VLS_263;
-    var __VLS_259;
+    let __VLS_275;
+    let __VLS_263;
+    let __VLS_259;
 }
-var __VLS_255;
-var __VLS_223;
+let __VLS_255;
+let __VLS_223;
 if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
     const __VLS_276 = {}.ARow;
-    /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+    /** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
     // @ts-ignore
     const __VLS_277 = __VLS_asFunctionalComponent(__VLS_276, new __VLS_276({
         gutter: (16),
@@ -1167,7 +1167,7 @@ if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_277));
     __VLS_279.slots.default;
     const __VLS_280 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_281 = __VLS_asFunctionalComponent(__VLS_280, new __VLS_280({
         span: (12),
@@ -1177,7 +1177,7 @@ if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_281));
     __VLS_283.slots.default;
     const __VLS_284 = {}.AFormItem;
-    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
     // @ts-ignore
     const __VLS_285 = __VLS_asFunctionalComponent(__VLS_284, new __VLS_284({
         field: "username",
@@ -1189,7 +1189,7 @@ if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_285));
     __VLS_287.slots.default;
     const __VLS_288 = {}.AInput;
-    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
     // @ts-ignore
     const __VLS_289 = __VLS_asFunctionalComponent(__VLS_288, new __VLS_288({
         modelValue: (__VLS_ctx.datasourceForm.username),
@@ -1201,10 +1201,10 @@ if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
         placeholder: "请输入用户名",
         allowClear: true,
     }, ...__VLS_functionalComponentArgsRest(__VLS_289));
-    var __VLS_287;
-    var __VLS_283;
+    let __VLS_287;
+    let __VLS_283;
     const __VLS_292 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_293 = __VLS_asFunctionalComponent(__VLS_292, new __VLS_292({
         span: (12),
@@ -1214,7 +1214,7 @@ if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_293));
     __VLS_295.slots.default;
     const __VLS_296 = {}.AFormItem;
-    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+    /** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
     // @ts-ignore
     const __VLS_297 = __VLS_asFunctionalComponent(__VLS_296, new __VLS_296({
         field: "password",
@@ -1226,7 +1226,7 @@ if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
     }, ...__VLS_functionalComponentArgsRest(__VLS_297));
     __VLS_299.slots.default;
     const __VLS_300 = {}.AInputPassword;
-    /** @type {[typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, ]} */ ;
+    /** @type {[typeof __VLS_components.AInputPassword, typeof __VLS_components.aInputPassword, ]} */ 
     // @ts-ignore
     const __VLS_301 = __VLS_asFunctionalComponent(__VLS_300, new __VLS_300({
         modelValue: (__VLS_ctx.datasourceForm.password),
@@ -1238,12 +1238,12 @@ if (__VLS_ctx.datasourceForm.authType !== 'NONE') {
         placeholder: "请输入密码",
         allowClear: true,
     }, ...__VLS_functionalComponentArgsRest(__VLS_301));
-    var __VLS_299;
-    var __VLS_295;
-    var __VLS_279;
+    let __VLS_299;
+    let __VLS_295;
+    let __VLS_279;
 }
 const __VLS_304 = {}.AFormItem;
-/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ ;
+/** @type {[typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, typeof __VLS_components.AFormItem, typeof __VLS_components.aFormItem, ]} */ 
 // @ts-ignore
 const __VLS_305 = __VLS_asFunctionalComponent(__VLS_304, new __VLS_304({
     field: "description",
@@ -1255,7 +1255,7 @@ const __VLS_306 = __VLS_305({
 }, ...__VLS_functionalComponentArgsRest(__VLS_305));
 __VLS_307.slots.default;
 const __VLS_308 = {}.ATextarea;
-/** @type {[typeof __VLS_components.ATextarea, typeof __VLS_components.aTextarea, ]} */ ;
+/** @type {[typeof __VLS_components.ATextarea, typeof __VLS_components.aTextarea, ]} */ 
 // @ts-ignore
 const __VLS_309 = __VLS_asFunctionalComponent(__VLS_308, new __VLS_308({
     modelValue: (__VLS_ctx.datasourceForm.description),
@@ -1271,11 +1271,11 @@ const __VLS_310 = __VLS_309({
     showWordLimit: true,
     autoSize: ({ minRows: 3, maxRows: 5 }),
 }, ...__VLS_functionalComponentArgsRest(__VLS_309));
-var __VLS_307;
-var __VLS_157;
-var __VLS_148;
+let __VLS_307;
+let __VLS_157;
+let __VLS_148;
 const __VLS_312 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_313 = __VLS_asFunctionalComponent(__VLS_312, new __VLS_312({
     visible: (__VLS_ctx.showTestResult),
@@ -1298,7 +1298,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 if (__VLS_ctx.testSuccess) {
     const __VLS_316 = {}.IconCheckCircle;
-    /** @type {[typeof __VLS_components.IconCheckCircle, typeof __VLS_components.iconCheckCircle, ]} */ ;
+    /** @type {[typeof __VLS_components.IconCheckCircle, typeof __VLS_components.iconCheckCircle, ]} */ 
     // @ts-ignore
     const __VLS_317 = __VLS_asFunctionalComponent(__VLS_316, new __VLS_316({
         ...{ style: {} },
@@ -1309,7 +1309,7 @@ if (__VLS_ctx.testSuccess) {
 }
 else {
     const __VLS_320 = {}.IconCloseCircle;
-    /** @type {[typeof __VLS_components.IconCloseCircle, typeof __VLS_components.iconCloseCircle, ]} */ ;
+    /** @type {[typeof __VLS_components.IconCloseCircle, typeof __VLS_components.iconCloseCircle, ]} */ 
     // @ts-ignore
     const __VLS_321 = __VLS_asFunctionalComponent(__VLS_320, new __VLS_320({
         ...{ style: {} },
@@ -1325,25 +1325,25 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3
 (__VLS_ctx.testSuccess ? '连接成功' : '连接失败');
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
 (__VLS_ctx.testMessage);
-var __VLS_315;
-/** @type {__VLS_StyleScopedClasses['kafka-datasource']} */ ;
-/** @type {__VLS_StyleScopedClasses['datasource-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['header-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['content-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['datasource-table']} */ ;
-/** @type {__VLS_StyleScopedClasses['danger-option']} */ ;
-/** @type {__VLS_StyleScopedClasses['test-result']} */ ;
-/** @type {__VLS_StyleScopedClasses['result-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['result-text']} */ ;
+let __VLS_315;
+/** @type {__VLS_StyleScopedClasses['kafka-datasource']} */ 
+/** @type {__VLS_StyleScopedClasses['datasource-list']} */ 
+/** @type {__VLS_StyleScopedClasses['page-header']} */ 
+/** @type {__VLS_StyleScopedClasses['header-content']} */ 
+/** @type {__VLS_StyleScopedClasses['title-area']} */ 
+/** @type {__VLS_StyleScopedClasses['page-title']} */ 
+/** @type {__VLS_StyleScopedClasses['page-description']} */ 
+/** @type {__VLS_StyleScopedClasses['header-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['content-card']} */ 
+/** @type {__VLS_StyleScopedClasses['table-section']} */ 
+/** @type {__VLS_StyleScopedClasses['datasource-table']} */ 
+/** @type {__VLS_StyleScopedClasses['danger-option']} */ 
+/** @type {__VLS_StyleScopedClasses['test-result']} */ 
+/** @type {__VLS_StyleScopedClasses['result-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['result-text']} */ 
 // @ts-ignore
-var __VLS_159 = __VLS_158;
-var __VLS_dollars;
+const __VLS_159 = __VLS_158;
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -1388,4 +1388,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

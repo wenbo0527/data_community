@@ -1,4 +1,5 @@
 <template>
+  <a-spin :loading="loading" tip="数据加载中..." class="full-loading">
   <div class="budget-monitor">
     <div class="page-header">
       <h2>预算监控</h2>
@@ -23,7 +24,7 @@
     </a-card>
     <a-affix :offset-top="0">
       <a-card class="toolbar" :bordered="true" title="筛选与操作">
-      <a-form :model="filterForm" layout="inline">
+      <a-form :model="filterForm" layout="inline" @keydown.enter.prevent="handleFilter">
         <a-form-item label="业务类型">
           <a-select v-model="filterForm.businessType" placeholder="请选择业务类型" style="width: 160px" allow-clear>
             <a-option value="助贷业务">助贷业务</a-option>
@@ -68,7 +69,25 @@
           导出预警数据
         </a-button>
       </template>
-      <a-table :data="filteredWarningData" row-key="id" :scroll="{ y: 420 }" :pagination="false" :bordered="{ wrapper: true, cell: true }">
+      <div class="table-operations" style="margin-bottom: 8px">
+        <a-button :disabled="selectedKeys.length === 0" @click="handleBatchExport">批量导出</a-button>
+      </div>
+      <a-table
+        :data="filteredWarningData"
+        row-key="id"
+        v-model:selectedKeys="selectedKeys"
+        :row-selection="{ type: 'checkbox', showCheckedAll: true }"
+        :scroll="{ y: 420 }"
+        :pagination="{
+          showTotal: true,
+          showPageSize: true,
+          total: filteredWarningData.length,
+          current: pagination.current,
+          pageSize: pagination.pageSize
+        }"
+        @page-change="handlePageChange"
+        @page-size-change="handlePageSizeChange"
+        :bordered="{ wrapper: true, cell: true }">
         <template #columns>
           <a-table-column title="业务类型" data-index="businessType" :width="120" />
           <a-table-column title="平台产品" data-index="platform" :width="120">
@@ -152,10 +171,11 @@
       :budgetStatus="currentPlatform?.budgetStatus || '超支'"
     />
   </div>
+  </a-spin>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconUpload, IconArrowRise, IconArrowFall } from '@arco-design/web-vue/es/icon'
 import BudgetBurndownTabs from '@/components/modals/BudgetBurndownTabs.vue'
@@ -170,6 +190,13 @@ const monitorStore = useBudgetMonitorStore()
 
 interface FilterForm { businessType: string; platform: string; targetLoan?: number | undefined; year?: string | undefined }
 const filterForm = reactive<FilterForm>({ businessType: '', platform: '', targetLoan: undefined, year: String(new Date().getFullYear()) })
+const STORAGE_KEY = 'budget_monitor_filter_pref'
+const initFilters = () => {
+  try {
+    const cached = localStorage.getItem(STORAGE_KEY)
+    if (cached) Object.assign(filterForm, JSON.parse(cached))
+  } catch {}
+}
 
 const currentChartType = ref<'month' | 'quarter'>('month')
 const chartMode = ref<'burndown' | 'cumulative'>('burndown')
@@ -196,7 +223,11 @@ const warningStats = computed(() => {
   })
   return { normal, overCost, slowConsume, total: rows.length }
 })
-const burndownChartData = computed<BurndownPoint[]>(() => { if (monitorStore.burndown?.length) return monitorStore.burndown; return buildMonthlyBurndown(totalBudget.value, usedBudget.value) })
+const burndownChartData = computed<BurndownPoint[]>(() => {
+  const data: any = (monitorStore as any)?.burndown
+  if (Array.isArray(data) && data.length > 0) return data as BurndownPoint[]
+  return buildMonthlyBurndown(Number(totalBudget.value) || 0, Number(usedBudget.value) || 0)
+})
 const onChartModeChange = (mode: 'burndown' | 'cumulative') => { chartMode.value = mode }
 const onGranularityChange = async (key: 'month' | 'quarter') => {
   currentChartType.value = key
@@ -218,8 +249,25 @@ const handlePlatformClick = (record: any) => { currentPlatform.value = record; p
 
 const exportWarningData = () => { const blob = new Blob([JSON.stringify(filteredWarningData.value, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `budget-warnings-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url) }
 
+const selectedKeys = ref<Array<string | number>>([])
+const pagination = reactive({ current: 1, pageSize: 10 })
+const handlePageChange = (page: number) => { pagination.current = page }
+const handlePageSizeChange = (size: number) => { pagination.pageSize = size }
+const handleBatchExport = () => {
+  const rows = filteredWarningData.value.filter((r: any) => selectedKeys.value.includes(r.id))
+  const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `budget-warnings-selected-${Date.now()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const loading = ref(false)
 const refresh = async () => {
   try {
+    loading.value = true
     await Promise.all([
       budgetStore.fetchBudgetList({ page: 1, pageSize: 10 }),
       monitorStore.fetchBurndown({ range: currentChartType.value, businessType: filterForm.businessType || undefined, platform: filterForm.platform || undefined, targetLoan: typeof filterForm.targetLoan === 'number' ? filterForm.targetLoan : undefined, year: filterForm.year || undefined } as any),
@@ -237,15 +285,20 @@ const refresh = async () => {
     }
     Message.success('数据已刷新')
   } catch (e) { Message.error('刷新失败') }
+  finally { loading.value = false }
 }
 const handleFilter = async () => { await refresh() }
 const resetFilter = async () => { filterForm.businessType = ''; filterForm.platform = ''; filterForm.targetLoan = undefined; filterForm.year = undefined; await refresh() }
 const formatNumber = (n: number) => { if (n === null || n === undefined) return '—'; return Number(n).toLocaleString() }
 const formatPercent = (n: number) => { if (n === null || n === undefined) return '—'; return `${(n * 100).toFixed(2)}%` }
-onMounted(refresh)
+onMounted(() => { initFilters(); refresh() })
+watch(filterForm, (nv: FilterForm) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(nv)) } catch {}
+}, { deep: true })
 </script>
 
 <style scoped>
+.full-loading { width: 100%; display: block; }
 .budget-monitor { padding: 16px; }
 .page-header { margin-bottom: 16px; }
 .desc { color: var(--color-text-2); }

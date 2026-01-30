@@ -17,6 +17,7 @@ const ManualSMS = () => import('./pages/touch/manual-sms/index.vue')
 const ManualSMSList = () => import('./pages/touch/manual-sms/list.vue')
 const PolicyTemplate = () => import('./pages/touch/policy/template/index.vue')
 const PolicyOverview = () => import('./pages/touch/policy/overview.vue')
+const PolicyTemplateCreate = () => import('./pages/touch/policy/template/create.vue')
 const TouchQuery = () => import('./pages/touch/query/index.vue')
 const QueryDetail = () => import('./pages/touch/query/detail.vue')
 const QuerySmsRecords = () => import('./pages/touch/query/sms-records.vue')
@@ -114,6 +115,12 @@ const routes: RouteRecordRaw[] = [
         name: 'PolicyTemplate',
         component: PolicyTemplate,
         meta: { title: '策略模板' }
+      },
+      {
+        path: 'policy/template/create',
+        name: 'PolicyTemplateCreate',
+        component: PolicyTemplateCreate,
+        meta: { title: '新建策略模板' }
       },
       {
         path: 'policy/overview',

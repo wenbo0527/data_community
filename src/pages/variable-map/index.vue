@@ -146,7 +146,7 @@
               </a-form-item>
               <a-form-item>
                 <a-button type="primary" @click="fetchFeatureRows">
-                  <template #icon><icon-search /></template>
+                  <template #icon><IconSearch /></template>
                   搜索
                 </a-button>
               </a-form-item>

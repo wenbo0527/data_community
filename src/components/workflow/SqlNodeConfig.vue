@@ -228,7 +228,7 @@ const formatSql = () => {
   }
   
   // 简单的SQL格式化
-  let formatted = formData.value.sqlQuery
+  const formatted = formData.value.sqlQuery
     .replace(/\s+/g, ' ')
     .replace(/,/g, ',\n  ')
     .replace(/\bFROM\b/gi, '\nFROM')

@@ -3,7 +3,7 @@
     <!-- 顶部标题 -->
     <div class="market-header">
       <div class="market-title">
-        <icon-apps /> API集市
+        <IconApps /> API集市
       </div>
     </div>
 
@@ -66,7 +66,7 @@
               <a-table-column title="API名称" data-index="name">
                 <template #cell="{ record }">
                   <div class="api-name-cell" @click="goToDetail(record.id)">
-                    <icon-common style="margin-right: 8px; color: #165dff;" />
+                    <IconCommon style="margin-right: 8px; color: #165dff;" />
                     <span class="name-text">{{ record.name }}</span>
                   </div>
                 </template>

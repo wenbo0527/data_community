@@ -256,21 +256,21 @@ export class StorageUtils {
 
       switch (type) {
         case StorageType.LOCAL:
-          for (let key in localStorage) {
+          for (const key in localStorage) {
             if (localStorage.hasOwnProperty(key)) {
               size += localStorage[key].length + key.length
             }
           }
           break
         case StorageType.SESSION:
-          for (let key in sessionStorage) {
+          for (const key in sessionStorage) {
             if (sessionStorage.hasOwnProperty(key)) {
               size += sessionStorage[key].length + key.length
             }
           }
           break
         case StorageType.MEMORY:
-          for (let [key, value] of this.memoryCache) {
+          for (const [key, value] of this.memoryCache) {
             size += JSON.stringify(value).length + key.length
           }
           break

@@ -12,7 +12,7 @@ if (!(window as any).SVGSVGElement.prototype.createSVGMatrix) {
 }
 
 // getCTM polyfill
-;(window as any).SVGGraphicsElement = (window as any).SVGGraphicsElement || (window as any).SVGElement || (window as any).Element
+(window as any).SVGGraphicsElement = (window as any).SVGGraphicsElement || (window as any).SVGElement || (window as any).Element
 if (!(window as any).SVGGraphicsElement.prototype.getCTM) {
   (window as any).SVGGraphicsElement.prototype.getCTM = function () {
     return { ...identityMatrix }
@@ -20,7 +20,7 @@ if (!(window as any).SVGGraphicsElement.prototype.getCTM) {
 }
 
 // 兼容直接访问 viewport.getCTM 的场景
-;(window as any).SVGElement = (window as any).SVGElement || (window as any).Element
+(window as any).SVGElement = (window as any).SVGElement || (window as any).Element
 if (!(window as any).SVGElement.prototype.getCTM) {
   (window as any).SVGElement.prototype.getCTM = function () {
     return { ...identityMatrix }

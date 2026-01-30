@@ -12,7 +12,7 @@
           <a-card class="stat-card" hoverable @click="navigateTo('table-management')">
             <div class="stat-content">
               <div class="stat-icon table-icon">
-                <icon-storage />
+                <IconStorage />
               </div>
               <div class="stat-info">
                 <div class="stat-number">89</div>
@@ -25,7 +25,7 @@
           <a-card class="stat-card" hoverable @click="navigateTo('external-data-management')">
             <div class="stat-content">
               <div class="stat-icon external-icon">
-                <icon-link />
+                <IconLink />
               </div>
               <div class="stat-info">
                 <div class="stat-number">22</div>
@@ -51,7 +51,7 @@
           <a-card class="stat-card" hoverable @click="navigateTo('batch-asset-management')">
             <div class="stat-content">
               <div class="stat-icon batch-icon">
-                <icon-settings />
+                <IconSettings />
               </div>
               <div class="stat-info">
                 <div class="stat-number">156</div>
@@ -70,7 +70,7 @@
           <a-card class="module-card" hoverable @click="navigateTo('table-management')">
             <div class="module-header">
               <div class="module-icon table-icon">
-                <icon-storage />
+                <IconStorage />
               </div>
               <div class="module-title">
                 <h3>表管理</h3>
@@ -89,7 +89,7 @@
           <a-card class="module-card" hoverable @click="navigateTo('external-data-management')">
             <div class="module-header">
               <div class="module-icon external-icon">
-                <icon-link />
+                <IconLink />
               </div>
               <div class="module-title">
                 <h3>外数管理</h3>
@@ -130,7 +130,7 @@
           <a-card class="module-card" hoverable @click="navigateTo('batch-asset-management')">
             <div class="module-header">
               <div class="module-icon batch-icon">
-                <icon-settings />
+                <IconSettings />
               </div>
               <div class="module-title">
                 <h3>资产批量管理</h3>

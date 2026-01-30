@@ -4,7 +4,7 @@
       <h4>产品信息</h4>
       <div class="header-actions">
         <a-button size="small" @click="refreshData">
-          <template #icon><icon-refresh /></template>
+          <template #icon><IconRefresh /></template>
           刷新
         </a-button>
       </div>
@@ -23,7 +23,7 @@
       <!-- 产品级客户信息总览 -->
       <div class="info-card">
         <div class="card-header">
-          <icon-user class="card-icon" />
+          <IconUser class="card-icon" />
           <span class="card-title">产品级客户信息总览</span>
         </div>
         <div class="card-content">

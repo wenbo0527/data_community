@@ -267,10 +267,10 @@ watch(selectedCreditProducts, (newValue) => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['form-footer']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-table']} */ ;
-/** @type {__VLS_StyleScopedClasses['arco-table-th']} */ ;
+/** @type {__VLS_StyleScopedClasses['form-footer']} */ 
+/** @type {__VLS_StyleScopedClasses['summary-info']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-table']} */ 
+/** @type {__VLS_StyleScopedClasses['arco-table-th']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -286,7 +286,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "selection-controls" },
 });
 const __VLS_0 = {}.ASelect;
-/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     modelValue: (__VLS_ctx.selectedCreditProducts),
@@ -303,7 +303,7 @@ const __VLS_2 = __VLS_1({
 __VLS_3.slots.default;
 for (const [product] of __VLS_getVForSourceType((__VLS_ctx.creditProductOptions))) {
     const __VLS_4 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         key: (product.value),
@@ -317,9 +317,9 @@ for (const [product] of __VLS_getVForSourceType((__VLS_ctx.creditProductOptions)
     (product.label);
     var __VLS_7;
 }
-var __VLS_3;
+let __VLS_3;
 const __VLS_8 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
     ...{ 'onClick': {} },
@@ -338,7 +338,7 @@ const __VLS_15 = {
     onClick: (__VLS_ctx.handleAutoAllocation)
 };
 __VLS_11.slots.default;
-var __VLS_11;
+let __VLS_11;
 if (__VLS_ctx.selectedCreditProducts.length > 0) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "configuration-details" },
@@ -379,7 +379,7 @@ if (__VLS_ctx.selectedCreditProducts.length > 0) {
             });
             (scene.sceneName);
             const __VLS_16 = {}.ATable;
-            /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+            /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
             // @ts-ignore
             const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
                 data: (__VLS_ctx.getTableData(dataProduct)),
@@ -410,7 +410,7 @@ if (__VLS_ctx.selectedCreditProducts.length > 0) {
                 const { amount: __VLS_thisSlot } = __VLS_19.slots;
                 const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
                 const __VLS_20 = {}.AInputNumber;
-                /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+                /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
                 // @ts-ignore
                 const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
                     ...{ 'onChange': {} },
@@ -466,13 +466,13 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "form-footer" },
 });
 const __VLS_28 = {}.ASpace;
-/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+/** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
 // @ts-ignore
 const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({}));
 const __VLS_30 = __VLS_29({}, ...__VLS_functionalComponentArgsRest(__VLS_29));
 __VLS_31.slots.default;
 const __VLS_32 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
     ...{ 'onClick': {} },
@@ -489,9 +489,9 @@ const __VLS_39 = {
     onClick: (__VLS_ctx.handlePrev)
 };
 __VLS_35.slots.default;
-var __VLS_35;
+let __VLS_35;
 const __VLS_40 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
     ...{ 'onClick': {} },
@@ -510,26 +510,26 @@ const __VLS_47 = {
     onClick: (__VLS_ctx.handleNext)
 };
 __VLS_43.slots.default;
-var __VLS_43;
-var __VLS_31;
-/** @type {__VLS_StyleScopedClasses['credit-product-step']} */ ;
-/** @type {__VLS_StyleScopedClasses['credit-product-selection']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['selection-controls']} */ ;
-/** @type {__VLS_StyleScopedClasses['credit-product-select']} */ ;
-/** @type {__VLS_StyleScopedClasses['auto-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['configuration-details']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-product-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-product-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['data-product-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['scene-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['scene-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['scene-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['credit-product-table']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-footer']} */ ;
-var __VLS_dollars;
+let __VLS_43;
+let __VLS_31;
+/** @type {__VLS_StyleScopedClasses['credit-product-step']} */ 
+/** @type {__VLS_StyleScopedClasses['credit-product-selection']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['selection-controls']} */ 
+/** @type {__VLS_StyleScopedClasses['credit-product-select']} */ 
+/** @type {__VLS_StyleScopedClasses['auto-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['configuration-details']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['data-product-section']} */ 
+/** @type {__VLS_StyleScopedClasses['data-product-header']} */ 
+/** @type {__VLS_StyleScopedClasses['data-product-name']} */ 
+/** @type {__VLS_StyleScopedClasses['summary-info']} */ 
+/** @type {__VLS_StyleScopedClasses['scene-section']} */ 
+/** @type {__VLS_StyleScopedClasses['scene-header']} */ 
+/** @type {__VLS_StyleScopedClasses['scene-name']} */ 
+/** @type {__VLS_StyleScopedClasses['credit-product-table']} */ 
+/** @type {__VLS_StyleScopedClasses['form-footer']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -560,4 +560,4 @@ export default (await import('vue')).defineComponent({
     emits: {},
     __typeProps: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

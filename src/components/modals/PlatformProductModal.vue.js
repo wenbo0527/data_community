@@ -40,7 +40,7 @@ let __VLS_directives;
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onUpdate:visible': {} },
@@ -62,7 +62,7 @@ let __VLS_6;
 const __VLS_7 = {
     'onUpdate:visible': ((val) => __VLS_ctx.emit('update:visible', val))
 };
-var __VLS_8 = {};
+const __VLS_8 = {};
 __VLS_3.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "modal-container" },
@@ -71,7 +71,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "summary-section" },
 });
 const __VLS_9 = {}.ADescriptions;
-/** @type {[typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, ]} */ ;
+/** @type {[typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, ]} */ 
 // @ts-ignore
 const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
     column: (4),
@@ -83,7 +83,7 @@ const __VLS_11 = __VLS_10({
 }, ...__VLS_functionalComponentArgsRest(__VLS_10));
 __VLS_12.slots.default;
 const __VLS_13 = {}.ADescriptionsItem;
-/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
 // @ts-ignore
 const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
     label: "业务类型",
@@ -93,9 +93,9 @@ const __VLS_15 = __VLS_14({
 }, ...__VLS_functionalComponentArgsRest(__VLS_14));
 __VLS_16.slots.default;
 (__VLS_ctx.businessType);
-var __VLS_16;
+let __VLS_16;
 const __VLS_17 = {}.ADescriptionsItem;
-/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
 // @ts-ignore
 const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
     label: "平台产品",
@@ -105,9 +105,9 @@ const __VLS_19 = __VLS_18({
 }, ...__VLS_functionalComponentArgsRest(__VLS_18));
 __VLS_20.slots.default;
 (__VLS_ctx.platform);
-var __VLS_20;
+let __VLS_20;
 const __VLS_21 = {}.ADescriptionsItem;
-/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
 // @ts-ignore
 const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
     label: "实际放款",
@@ -117,9 +117,9 @@ const __VLS_23 = __VLS_22({
 }, ...__VLS_functionalComponentArgsRest(__VLS_22));
 __VLS_24.slots.default;
 (__VLS_ctx.formatAmount(__VLS_ctx.actualLoan));
-var __VLS_24;
+let __VLS_24;
 const __VLS_25 = {}.ADescriptionsItem;
-/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
 // @ts-ignore
 const __VLS_26 = __VLS_asFunctionalComponent(__VLS_25, new __VLS_25({
     label: "实际费用",
@@ -129,9 +129,9 @@ const __VLS_27 = __VLS_26({
 }, ...__VLS_functionalComponentArgsRest(__VLS_26));
 __VLS_28.slots.default;
 (__VLS_ctx.formatAmount(__VLS_ctx.externalDataCost));
-var __VLS_28;
+let __VLS_28;
 const __VLS_29 = {}.ADescriptionsItem;
-/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+/** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
 // @ts-ignore
 const __VLS_30 = __VLS_asFunctionalComponent(__VLS_29, new __VLS_29({
     label: "预算状态",
@@ -141,10 +141,10 @@ const __VLS_31 = __VLS_30({
 }, ...__VLS_functionalComponentArgsRest(__VLS_30));
 __VLS_32.slots.default;
 (__VLS_ctx.budgetStatus);
-var __VLS_32;
-var __VLS_12;
+let __VLS_32;
+let __VLS_12;
 const __VLS_33 = {}.ATabs;
-/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ ;
+/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ 
 // @ts-ignore
 const __VLS_34 = __VLS_asFunctionalComponent(__VLS_33, new __VLS_33({
     type: "rounded",
@@ -156,7 +156,7 @@ const __VLS_35 = __VLS_34({
 }, ...__VLS_functionalComponentArgsRest(__VLS_34));
 __VLS_36.slots.default;
 const __VLS_37 = {}.ATabPane;
-/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
 // @ts-ignore
 const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
     key: "budget",
@@ -167,7 +167,7 @@ const __VLS_39 = __VLS_38({
     title: "预算消耗对比",
 }, ...__VLS_functionalComponentArgsRest(__VLS_38));
 __VLS_40.slots.default;
-/** @type {[typeof BudgetConsumptionTab, ]} */ ;
+/** @type {[typeof BudgetConsumptionTab, ]} */ 
 // @ts-ignore
 const __VLS_41 = __VLS_asFunctionalComponent(BudgetConsumptionTab, new BudgetConsumptionTab({
     ...{ 'onTimeRangeChange': {} },
@@ -187,10 +187,10 @@ let __VLS_46;
 const __VLS_47 = {
     onTimeRangeChange: (__VLS_ctx.handleTimeRangeChange)
 };
-var __VLS_43;
-var __VLS_40;
+let __VLS_43;
+let __VLS_40;
 const __VLS_48 = {}.ATabPane;
-/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
 // @ts-ignore
 const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
     key: "process",
@@ -201,7 +201,7 @@ const __VLS_50 = __VLS_49({
     title: "业务过程比对",
 }, ...__VLS_functionalComponentArgsRest(__VLS_49));
 __VLS_51.slots.default;
-/** @type {[typeof BusinessProcessTab, ]} */ ;
+/** @type {[typeof BusinessProcessTab, ]} */ 
 // @ts-ignore
 const __VLS_52 = __VLS_asFunctionalComponent(BusinessProcessTab, new BusinessProcessTab({
     ...{ 'onTimeRangeChange': {} },
@@ -221,14 +221,14 @@ let __VLS_57;
 const __VLS_58 = {
     onTimeRangeChange: (__VLS_ctx.handleTimeRangeChange)
 };
-var __VLS_54;
-var __VLS_51;
-var __VLS_36;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['modal-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['summary-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['tabs-section']} */ ;
-var __VLS_dollars;
+let __VLS_54;
+let __VLS_51;
+let __VLS_36;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['modal-container']} */ 
+/** @type {__VLS_StyleScopedClasses['summary-section']} */ 
+/** @type {__VLS_StyleScopedClasses['tabs-section']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -302,4 +302,4 @@ export default (await import('vue')).defineComponent({
         }
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

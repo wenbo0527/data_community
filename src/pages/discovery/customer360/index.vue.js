@@ -46,14 +46,14 @@ const handleSearch = async () => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['search-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-tips']} */ ;
-/** @type {__VLS_StyleScopedClasses['customer-360-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-form']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-button']} */ ;
+/** @type {__VLS_StyleScopedClasses['search-header']} */ 
+/** @type {__VLS_StyleScopedClasses['search-header']} */ 
+/** @type {__VLS_StyleScopedClasses['search-tips']} */ 
+/** @type {__VLS_StyleScopedClasses['customer-360-container']} */ 
+/** @type {__VLS_StyleScopedClasses['search-section']} */ 
+/** @type {__VLS_StyleScopedClasses['search-form']} */ 
+/** @type {__VLS_StyleScopedClasses['search-input']} */ 
+/** @type {__VLS_StyleScopedClasses['search-button']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -72,7 +72,7 @@ if (!__VLS_ctx.$route.params.userId) {
         ...{ class: "search-form" },
     });
     const __VLS_0 = {}.AInput;
-    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+    /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         ...{ 'onKeyup': {} },
@@ -96,9 +96,9 @@ if (!__VLS_ctx.$route.params.userId) {
     const __VLS_7 = {
         onKeyup: (__VLS_ctx.handleSearch)
     };
-    var __VLS_3;
+    let __VLS_3;
     const __VLS_8 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
         ...{ 'onClick': {} },
@@ -122,29 +122,29 @@ if (!__VLS_ctx.$route.params.userId) {
     };
     __VLS_11.slots.default;
     const __VLS_16 = {}.IconSearch;
-    /** @type {[typeof __VLS_components.IconSearch, ]} */ ;
+    /** @type {[typeof __VLS_components.IconSearch, ]} */ 
     // @ts-ignore
     const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({}));
     const __VLS_18 = __VLS_17({}, ...__VLS_functionalComponentArgsRest(__VLS_17));
-    var __VLS_11;
+    let __VLS_11;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "search-tips" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
 }
 const __VLS_20 = {}.RouterView;
-/** @type {[typeof __VLS_components.RouterView, typeof __VLS_components.routerView, ]} */ ;
+/** @type {[typeof __VLS_components.RouterView, typeof __VLS_components.routerView, ]} */ 
 // @ts-ignore
 const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({}));
 const __VLS_22 = __VLS_21({}, ...__VLS_functionalComponentArgsRest(__VLS_21));
-/** @type {__VLS_StyleScopedClasses['customer-360-container']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-form']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-input']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-button']} */ ;
-/** @type {__VLS_StyleScopedClasses['search-tips']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['customer-360-container']} */ 
+/** @type {__VLS_StyleScopedClasses['search-section']} */ 
+/** @type {__VLS_StyleScopedClasses['search-header']} */ 
+/** @type {__VLS_StyleScopedClasses['search-form']} */ 
+/** @type {__VLS_StyleScopedClasses['search-input']} */ 
+/** @type {__VLS_StyleScopedClasses['search-button']} */ 
+/** @type {__VLS_StyleScopedClasses['search-tips']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -160,4 +160,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

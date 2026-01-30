@@ -49,7 +49,7 @@
               </div>
               <div class="item-actions">
                 <a-button type="text" size="mini" @click.stop="toggleMetricFavorite(m)">
-                  <icon-heart :style="{ color: m.isFavorite ? '#f53f3f' : '#86909c' }" />
+                  <IconHeart :style="{ color: m.isFavorite ? '#f53f3f' : '#86909c' }" />
                 </a-button>
               </div>
             </div>
@@ -57,9 +57,9 @@
               <h3 class="item-title">{{ m.name }}</h3>
               <p class="item-description">{{ m.description }}</p>
               <div class="item-meta">
-                <span class="meta-item"><icon-user />{{ m.owner || '系统管理员' }}</span>
-                <span class="meta-item"><icon-clock-circle />{{ m.updateTime || '2025-01-01' }}</span>
-                <span class="meta-item" v-if="m.category"><icon-apps />{{ m.category }}</span>
+                <span class="meta-item"><IconUser />{{ m.owner || '系统管理员' }}</span>
+                <span class="meta-item"><IconClockCircle />{{ m.updateTime || '2025-01-01' }}</span>
+                <span class="meta-item" v-if="m.category"><IconApps />{{ m.category }}</span>
               </div>
             </div>
           </div>
@@ -80,7 +80,7 @@
               </div>
               <div class="item-actions">
                 <a-button type="text" size="mini" @click.stop="toggleExternalFavorite(e)">
-                  <icon-heart :style="{ color: e.isFavorite ? '#f53f3f' : '#86909c' }" />
+                  <IconHeart :style="{ color: e.isFavorite ? '#f53f3f' : '#86909c' }" />
                 </a-button>
               </div>
             </div>
@@ -88,9 +88,9 @@
               <h3 class="item-title">{{ e.name }}</h3>
               <p class="item-description">{{ e.description }}</p>
               <div class="item-meta">
-                <span class="meta-item"><icon-user />{{ e.owner || '系统管理员' }}</span>
-                <span class="meta-item"><icon-clock-circle />{{ e.updateTime || '2025-01-01' }}</span>
-                <span class="meta-item" v-if="e.domain"><icon-apps />{{ e.domain }}</span>
+                <span class="meta-item"><IconUser />{{ e.owner || '系统管理员' }}</span>
+                <span class="meta-item"><IconClockCircle />{{ e.updateTime || '2025-01-01' }}</span>
+                <span class="meta-item" v-if="e.domain"><IconApps />{{ e.domain }}</span>
               </div>
             </div>
           </div>
@@ -111,7 +111,7 @@
               </div>
               <div class="item-actions">
                 <a-button type="text" size="mini" @click.stop="toggleVariableFavorite(v)">
-                  <icon-heart :style="{ color: v.isFavorite ? '#f53f3f' : '#86909c' }" />
+                  <IconHeart :style="{ color: v.isFavorite ? '#f53f3f' : '#86909c' }" />
                 </a-button>
               </div>
             </div>
@@ -119,9 +119,9 @@
               <h3 class="item-title">{{ v.name }}</h3>
               <p class="item-description">{{ v.description }}</p>
               <div class="item-meta">
-                <span class="meta-item"><icon-user />{{ v.owner || '系统管理员' }}</span>
-                <span class="meta-item"><icon-clock-circle />{{ v.updateTime || '2025-01-01' }}</span>
-                <span class="meta-item" v-if="v.domain"><icon-apps />{{ v.domain }}</span>
+                <span class="meta-item"><IconUser />{{ v.owner || '系统管理员' }}</span>
+                <span class="meta-item"><IconClockCircle />{{ v.updateTime || '2025-01-01' }}</span>
+                <span class="meta-item" v-if="v.domain"><IconApps />{{ v.domain }}</span>
               </div>
             </div>
           </div>

@@ -5,7 +5,7 @@
       <h2>批量注册指标</h2>
       <div class="header-actions">
         <a-button type="outline" @click="downloadTemplate">
-          <template #icon><icon-download /></template>
+          <template #icon><IconDownload /></template>
           下载模板
         </a-button>
       </div>
@@ -38,7 +38,7 @@
         <template #upload-button>
           <div class="upload-area">
             <div class="upload-icon">
-              <icon-upload />
+              <IconUpload />
             </div>
             <div class="upload-text">
               <div class="upload-title">点击上传或拖拽文件到此区域</div>

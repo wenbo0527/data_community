@@ -19,14 +19,14 @@ const showTableDetail = (table) => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['table-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['table-card']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "collection-detail" },
 });
 const __VLS_0 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ class: "collection-info" },
@@ -36,7 +36,7 @@ const __VLS_2 = __VLS_1({
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 __VLS_3.slots.default;
 const __VLS_4 = {}.ATypographyTitle;
-/** @type {[typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, ]} */ ;
+/** @type {[typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, ]} */ 
 // @ts-ignore
 const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
     heading: (4),
@@ -46,18 +46,18 @@ const __VLS_6 = __VLS_5({
 }, ...__VLS_functionalComponentArgsRest(__VLS_5));
 __VLS_7.slots.default;
 (__VLS_ctx.collection.name);
-var __VLS_7;
+let __VLS_7;
 const __VLS_8 = {}.ATypographyParagraph;
-/** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ ;
+/** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ 
 // @ts-ignore
 const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({}));
 const __VLS_10 = __VLS_9({}, ...__VLS_functionalComponentArgsRest(__VLS_9));
 __VLS_11.slots.default;
 (__VLS_ctx.collection.description);
-var __VLS_11;
-var __VLS_3;
+let __VLS_11;
+let __VLS_3;
 const __VLS_12 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
     ...{ class: "table-list" },
@@ -69,21 +69,21 @@ __VLS_15.slots.default;
 {
     const { title: __VLS_thisSlot } = __VLS_15.slots;
     const __VLS_16 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({}));
     const __VLS_18 = __VLS_17({}, ...__VLS_functionalComponentArgsRest(__VLS_17));
     __VLS_19.slots.default;
     const __VLS_20 = {}.IconTable;
-    /** @type {[typeof __VLS_components.IconTable, typeof __VLS_components.iconTable, ]} */ ;
+    /** @type {[typeof __VLS_components.IconTable, typeof __VLS_components.iconTable, ]} */ 
     // @ts-ignore
     const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({}));
     const __VLS_22 = __VLS_21({}, ...__VLS_functionalComponentArgsRest(__VLS_21));
     (__VLS_ctx.collection.tables.length);
-    var __VLS_19;
+    let __VLS_19;
 }
 const __VLS_24 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
     gutter: ([16, 16]),
@@ -94,7 +94,7 @@ const __VLS_26 = __VLS_25({
 __VLS_27.slots.default;
 for (const [table] of __VLS_getVForSourceType((__VLS_ctx.collection.tables))) {
     const __VLS_28 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
         key: (table.name),
@@ -106,7 +106,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.collection.tables))) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_29));
     __VLS_31.slots.default;
     const __VLS_32 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
         ...{ 'onClick': {} },
@@ -130,7 +130,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.collection.tables))) {
     {
         const { title: __VLS_thisSlot } = __VLS_35.slots;
         const __VLS_40 = {}.ASpace;
-        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+        /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
         // @ts-ignore
         const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
             align: "center",
@@ -140,12 +140,12 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.collection.tables))) {
         }, ...__VLS_functionalComponentArgsRest(__VLS_41));
         __VLS_43.slots.default;
         const __VLS_44 = {}.IconTable;
-        /** @type {[typeof __VLS_components.IconTable, typeof __VLS_components.iconTable, ]} */ ;
+        /** @type {[typeof __VLS_components.IconTable, typeof __VLS_components.iconTable, ]} */ 
         // @ts-ignore
         const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({}));
         const __VLS_46 = __VLS_45({}, ...__VLS_functionalComponentArgsRest(__VLS_45));
         const __VLS_48 = {}.ATypographyTitle;
-        /** @type {[typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, ]} */ ;
+        /** @type {[typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, typeof __VLS_components.ATypographyTitle, typeof __VLS_components.aTypographyTitle, ]} */ 
         // @ts-ignore
         const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
             heading: (6),
@@ -164,7 +164,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.collection.tables))) {
         ...{ class: "table-info" },
     });
     const __VLS_52 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
         color: (__VLS_ctx.getTypeColor(table.type)),
@@ -176,7 +176,7 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.collection.tables))) {
     (table.type);
     var __VLS_55;
     const __VLS_56 = {}.ATypographyParagraph;
-    /** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ ;
+    /** @type {[typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, typeof __VLS_components.ATypographyParagraph, typeof __VLS_components.aTypographyParagraph, ]} */ 
     // @ts-ignore
     const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
         ellipsis: ({ rows: 2 }),
@@ -194,15 +194,15 @@ for (const [table] of __VLS_getVForSourceType((__VLS_ctx.collection.tables))) {
     var __VLS_35;
     var __VLS_31;
 }
-var __VLS_27;
-var __VLS_15;
-/** @type {__VLS_StyleScopedClasses['collection-detail']} */ ;
-/** @type {__VLS_StyleScopedClasses['collection-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-description']} */ ;
-var __VLS_dollars;
+let __VLS_27;
+let __VLS_15;
+/** @type {__VLS_StyleScopedClasses['collection-detail']} */ 
+/** @type {__VLS_StyleScopedClasses['collection-info']} */ 
+/** @type {__VLS_StyleScopedClasses['table-list']} */ 
+/** @type {__VLS_StyleScopedClasses['table-card']} */ 
+/** @type {__VLS_StyleScopedClasses['table-info']} */ 
+/** @type {__VLS_StyleScopedClasses['table-description']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -221,4 +221,4 @@ export default (await import('vue')).defineComponent({
     __typeEmits: {},
     __typeProps: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

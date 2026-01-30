@@ -3,7 +3,7 @@
     <!-- 基本信息预览 -->
     <div class="preview-section">
       <div class="section-header">
-        <icon-info-circle class="section-icon" />
+        <IconInfoCircle class="section-icon" />
         <h3 class="section-title">基本信息</h3>
       </div>
       <div class="section-content">
@@ -45,7 +45,7 @@
     <!-- 流程步骤预览 -->
     <div class="preview-section">
       <div class="section-header">
-        <icon-list class="section-icon" />
+        <IconList class="section-icon" />
         <h3 class="section-title">流程步骤</h3>
         <div class="section-summary">
           共 {{ processData.steps?.length || 0 }} 个步骤
@@ -53,7 +53,7 @@
       </div>
       <div class="section-content">
         <div v-if="!processData.steps || processData.steps.length === 0" class="empty-state">
-          <icon-empty class="empty-icon" />
+          <IconEmpty class="empty-icon" />
           <p class="empty-text">暂无步骤配置</p>
         </div>
         <div v-else class="steps-container">
@@ -77,7 +77,7 @@
               <div class="step-stats">
                 <div class="stat-row">
                   <div class="stat-item-inline">
-                    <icon-storage class="stat-icon" />
+                    <IconStorage class="stat-icon" />
                     <span class="stat-label">关联数据表：</span>
                     <span class="stat-value">{{ step.tables?.length || 0 }} 个</span>
                   </div>
@@ -97,7 +97,7 @@
     <!-- 统计信息 -->
     <div class="preview-section">
       <div class="section-header">
-        <icon-bar-chart class="section-icon" />
+        <IconBarChart class="section-icon" />
         <h3 class="section-title">统计信息</h3>
       </div>
       <div class="section-content">

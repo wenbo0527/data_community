@@ -1,41 +1,41 @@
 <template>
   <div class="external-data-evaluation-edit">
     <!-- 编辑头部 -->
-    <a-card class="edit-header" :bordered="false">
+    <ACard class="edit-header" :bordered="false">
       <div class="header-content">
         <div class="title-section">
           <h1>编辑报告：{{ reportData.reportName }}</h1>
           <div class="meta-info">
-            <a-tag :color="getStatusColor(reportData.status)">{{ reportData.status }}</a-tag>
+            <ATag :color="getStatusColor(reportData.status)">{{ reportData.status }}</ATag>
             <span class="product-info">产品：{{ reportData.productName }}</span>
             <span class="date-info">分析周期：{{ reportData.sampleTimeSpan }}</span>
           </div>
         </div>
         <div class="action-section">
-          <a-button type="primary" @click="saveReport" :loading="saving">
-            <template #icon><icon-save /></template>
+          <AButton type="primary" @click="saveReport" :loading="saving">
+            <template #icon><IconSave /></template>
             保存报告
-          </a-button>
-          <a-button @click="publishReport" :loading="publishing" v-if="reportData.status === '草稿'">
-            <template #icon><icon-send /></template>
+          </AButton>
+          <AButton @click="publishReport" :loading="publishing" v-if="reportData.status === '草稿'">
+            <template #icon><IconSend /></template>
             发布报告
-          </a-button>
-          <a-button @click="previewReport">
-            <template #icon><icon-eye /></template>
+          </AButton>
+          <AButton @click="previewReport">
+            <template #icon><IconEye /></template>
             预览报告
-          </a-button>
-          <a-button @click="goBack">
-            <template #icon><icon-left /></template>
+          </AButton>
+          <AButton @click="goBack">
+            <template #icon><IconLeft /></template>
             返回详情
-          </a-button>
+          </AButton>
         </div>
       </div>
-    </a-card>
+    </ACard>
 
-    <a-row :gutter="24">
+    <ARow :gutter="24">
       <!-- 左侧模块导航 -->
-      <a-col :span="6">
-        <a-card class="nav-card">
+      <ACol :span="6">
+        <ACard class="nav-card">
           <div class="nav-title">编辑模块</div>
           <div class="nav-menu">
             <div 
@@ -51,10 +51,10 @@
               <span class="edit-type">{{ getEditTypeLabel(module) }}</span>
             </div>
           </div>
-        </a-card>
+        </ACard>
 
         <!-- 编辑说明 -->
-        <a-card class="tips-card" title="编辑说明">
+        <ACard class="tips-card" title="编辑说明">
           <div class="tips-content">
             <div class="tip-item">
               <span class="tip-label">文字编辑：</span>
@@ -73,20 +73,20 @@
               <span class="tip-desc">内容完全可编辑</span>
             </div>
           </div>
-        </a-card>
-      </a-col>
+        </ACard>
+      </ACol>
 
       <!-- 右侧编辑内容 -->
-      <a-col :span="18">
-        <a-card class="edit-content-card">
+      <ACol :span="18">
+        <ACard class="edit-content-card">
           <div class="edit-sections-container">
             <!-- 根据导航切换模块显示 -->
             <div v-for="module in reportData.modules" :key="module.id" class="edit-section" v-show="activeModule === module.id">
               <div class="module-header">
                 <h3>{{ module.name }}</h3>
-                <a-tag size="small" :color="getEditPermissionColor(module)">
+                <ATag size="small" :color="getEditPermissionColor(module)">
                   {{ getEditPermissionText(module) }}
-                </a-tag>
+                </ATag>
               </div>
               
               <!-- 测试背景及目的 - 固定模板文本，仅可修改文字内容 -->
@@ -95,7 +95,7 @@
                   <h4>文字描述</h4>
                   <span class="edit-limit">仅可修改文字内容</span>
                 </div>
-                <a-textarea
+                <ATextarea
                   v-model="module.content"
                   :rows="6"
                   :max-length="module.wordLimit || 500"
@@ -104,7 +104,7 @@
                   @input="markChanged(module.id)"
                 />
                 <div class="template-notice">
-                  <a-alert
+                  <AAlert
                     message="模板说明"
                     description="此模块使用固定模板格式，您只能修改文字内容，不能调整结构。"
                     type="info"
@@ -120,7 +120,7 @@
                   <h4>产品基本信息</h4>
                   <span class="edit-limit">仅可修改文字内容</span>
                 </div>
-                <a-textarea
+                <ATextarea
                   v-model="module.content"
                   :rows="5"
                   :max-length="module.wordLimit || 300"
@@ -136,7 +136,7 @@
                   <h4>文字描述</h4>
                   <span class="edit-limit">文字可编辑，表格自动生成</span>
                 </div>
-                <a-textarea
+                <ATextarea
                   v-model="module.textContent"
                   :rows="4"
                   :max-length="500"
@@ -147,7 +147,7 @@
                 
                 <div class="table-preview">
                   <h4>数据表格 <span class="auto-label">(自动生成)</span></h4>
-                  <a-table
+                  <ATable
                     :columns="getSampleTableColumns()"
                     :data="module.tableData?.rows || []"
                     :pagination="false"
@@ -155,7 +155,7 @@
                     class="readonly-table"
                   />
                   <div class="table-notice">
-                    <a-alert
+                    <AAlert
                       message="表格说明"
                       description="此表格根据上传的样本数据自动生成，无法手动编辑。如需修改，请重新上传样本文件。"
                       type="info"
@@ -172,7 +172,7 @@
                   <h4>文字描述</h4>
                   <span class="edit-limit">文字可编辑，表格自动生成</span>
                 </div>
-                <a-textarea
+                <ATextarea
                   v-model="module.textContent"
                   :rows="4"
                   :max-length="500"
@@ -184,7 +184,7 @@
                 <div class="dual-table-preview">
                   <div class="table-group">
                     <h4>样本饱和度表 <span class="auto-label">(自动生成)</span></h4>
-                    <a-table
+                    <ATable
                       :columns="getSaturationTableColumns()"
                       :data="module.tableData?.saturationTable?.rows || []"
                       :pagination="false"
@@ -195,7 +195,7 @@
                   
                   <div class="table-group">
                     <h4>相关性数据表 <span class="auto-label">(自动生成)</span></h4>
-                    <a-table
+                    <ATable
                       :columns="getCorrelationTableColumns()"
                       :data="module.tableData?.correlationTable?.rows || []"
                       :pagination="false"
@@ -212,7 +212,7 @@
                   <h4>文字描述</h4>
                   <span class="edit-limit">文字可编辑，选择展示图片</span>
                 </div>
-                <a-textarea
+                <ATextarea
                   v-model="module.textContent"
                   :rows="5"
                   :max-length="800"
@@ -223,8 +223,8 @@
                 
                 <div class="chart-selection">
                   <h4>图表展示选择</h4>
-                  <a-row :gutter="16">
-                    <a-col :span="12">
+                  <ARow :gutter="16">
+                    <ACol :span="12">
                       <div class="chart-option">
                         <div 
                           class="chart-thumbnail" 
@@ -243,8 +243,8 @@
                           <div class="chart-thumbnail-label">转化漏斗图</div>
                         </div>
                       </div>
-                    </a-col>
-                    <a-col :span="12">
+                    </ACol>
+                    <ACol :span="12">
                       <div class="chart-option">
                         <div 
                           class="chart-thumbnail" 
@@ -263,12 +263,12 @@
                           <div class="chart-thumbnail-label">时间趋势图</div>
                         </div>
                       </div>
-                    </a-col>
-                  </a-row>
+                    </ACol>
+                  </ARow>
                 </div>
                 
                 <!-- 图表预览模态框 -->
-                <a-modal 
+                <AModal 
                   v-model:visible="imagePreviewVisible" 
                   :title="previewImageTitle"
                   :footer="false"
@@ -283,7 +283,7 @@
                       @error="handleImageError"
                     />
                   </div>
-                </a-modal>
+                </AModal>
               </div>
 
               <!-- 效果分析-分平台 - 文字+图片，文字可编辑，选择展示图片 -->
@@ -292,7 +292,7 @@
                   <h4>文字描述</h4>
                   <span class="edit-limit">文字可编辑，选择展示图片</span>
                 </div>
-                <a-textarea
+                <ATextarea
                   v-model="module.textContent"
                   :rows="5"
                   :max-length="800"
@@ -303,8 +303,8 @@
                 
                 <div class="chart-selection">
                   <h4>图表展示选择</h4>
-                  <a-row :gutter="16">
-                    <a-col :span="12">
+                  <ARow :gutter="16">
+                    <ACol :span="12">
                       <div class="chart-option">
                         <div 
                           class="chart-thumbnail" 
@@ -323,8 +323,8 @@
                           <div class="chart-thumbnail-label">平台对比图</div>
                         </div>
                       </div>
-                    </a-col>
-                    <a-col :span="12">
+                    </ACol>
+                    <ACol :span="12">
                       <div class="chart-option">
                         <div 
                           class="chart-thumbnail" 
@@ -343,12 +343,12 @@
                           <div class="chart-thumbnail-label">稳定性雷达图</div>
                         </div>
                       </div>
-                    </a-col>
-                  </a-row>
+                    </ACol>
+                  </ARow>
                 </div>
                 
                 <!-- 图表预览模态框 -->
-                <a-modal 
+                <AModal 
                   v-model:visible="imagePreviewVisible" 
                   :title="previewImageTitle"
                   :footer="false"
@@ -363,7 +363,7 @@
                       @error="handleImageError"
                     />
                   </div>
-                </a-modal>
+                </AModal>
               </div>
 
               <!-- 数据结论 - 文字总结，完全可编辑 -->
@@ -372,7 +372,7 @@
                   <h4>结论与建议</h4>
                   <span class="edit-limit">完全可编辑</span>
                 </div>
-                <a-textarea
+                <ATextarea
                   v-model="module.content"
                   :rows="8"
                   :max-length="module.wordLimit || 5000"
@@ -383,36 +383,36 @@
                 
                 <div class="conclusion-tools">
                   <h4>快速建议模板</h4>
-                  <a-space wrap>
-                    <a-button 
+                  <ASpace wrap>
+                    <AButton 
                       size="small" 
                       type="outline"
                       @click="insertTemplate('platform')"
                     >
                       插入平台建议
-                    </a-button>
-                    <a-button 
+                    </AButton>
+                    <AButton 
                       size="small" 
                       type="outline"
                       @click="insertTemplate('optimization')"
                     >
                       插入优化建议
-                    </a-button>
-                    <a-button 
+                    </AButton>
+                    <AButton 
                       size="small" 
                       type="outline"
                       @click="insertTemplate('future')"
                     >
                       插入未来规划
-                    </a-button>
-                  </a-space>
+                    </AButton>
+                  </ASpace>
                 </div>
               </div>
             </div>
           </div>
-        </a-card>
-      </a-col>
-    </a-row>
+        </ACard>
+      </ACol>
+    </ARow>
   </div>
 </template>
 

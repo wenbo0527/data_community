@@ -108,7 +108,7 @@
               <div class="flex items-center">
                 <span class="font-medium text-red-600">{{ formatAmount(record.remainingPenalty) }}</span>
                 <a-tooltip content="本金罚息+利息罚息" v-if="Number(record.remainingPenalty || 0) > 0">
-                  <icon-exclamation-circle class="ml-1 text-red-500 cursor-help" :size="14" />
+                  <IconExclamationCircle class="ml-1 text-red-500 cursor-help" :size="14" />
                 </a-tooltip>
               </div>
             </template>
@@ -127,15 +127,15 @@
             <template #cell="{ record }">
               <a-space>
                 <a-button size="mini" type="primary" @click="viewLoanDetail(record)">
-                  <template #icon><icon-eye /></template>
+                  <template #icon><IconEye /></template>
                   详情
                 </a-button>
                 <a-button size="mini" type="text" @click="viewDisbursementInfo(record)">
-                  <template #icon><icon-eye /></template>
+                  <template #icon><IconEye /></template>
                   放款信息
                 </a-button>
                 <a-button size="mini" type="text" @click="viewRepaymentInfo(record)">
-                  <template #icon><icon-list /></template>
+                  <template #icon><IconList /></template>
                   还款信息
                 </a-button>
               </a-space>
@@ -170,11 +170,11 @@
           </div>
           <div class="repayment-actions">
             <a-button size="small" @click="copyRepaymentData('selected')" :disabled="selectedRepaymentRows.length === 0">
-              <template #icon><icon-copy /></template>
+              <template #icon><IconCopy /></template>
               复制选中
             </a-button>
             <a-button size="small" @click="copyRepaymentData('all')">
-              <template #icon><icon-copy /></template>
+              <template #icon><IconCopy /></template>
               复制全部
             </a-button>
           </div>

@@ -3,7 +3,7 @@
     <a-button-group v-if="showZoom">
       <a-dropdown @select="handleZoomSelect" position="bottom">
         <a-button size="small" title="缩放比例">
-          <template #icon><icon-zoom-in /></template>
+          <template #icon><IconZoomIn /></template>
           {{ scaleDisplayText }}
         </a-button>
         <template #content>
@@ -19,7 +19,7 @@
         </template>
       </a-dropdown>
       <a-button @click="fitToContent" size="small" title="适应内容 (Ctrl+F)">
-        <template #icon><icon-fullscreen /></template>
+        <template #icon><IconFullscreen /></template>
       </a-button>
     </a-button-group>
 
@@ -36,21 +36,21 @@
         快速布局
       </a-button>
       <a-button @click="onToggleMinimapClick($event)" size="small" :type="showMinimap ? 'primary' : 'secondary'">
-        <template #icon><icon-eye /></template>
+        <template #icon><IconEye /></template>
         小地图
       </a-button>
       <a-dropdown v-if="showLayoutDirection" @select="handleLayoutDirectionChange">
         <a-button size="small" :type="currentLayoutDirection === 'TB' ? 'primary' : 'secondary'">
-          <template #icon><icon-swap /></template>
+          <template #icon><IconSwap /></template>
           {{ currentLayoutDirection === 'TB' ? '从上到下' : '从左到右' }}
         </a-button>
         <template #content>
           <a-doption value="TB" :class="{ 'arco-dropdown-option-selected': currentLayoutDirection === 'TB' }">
-            <icon-down style="margin-right: 8px;" />
+            <IconDown style="margin-right: 8px;" />
             从上到下
           </a-doption>
           <a-doption value="LR" :class="{ 'arco-dropdown-option-selected': currentLayoutDirection === 'LR' }">
-            <icon-right style="margin-right: 8px;" />
+            <IconRight style="margin-right: 8px;" />
             从左到右
           </a-doption>
         </template>
@@ -59,35 +59,35 @@
 
     <a-button-group v-if="showMinimapToggle" style="margin-left: 8px;">
       <a-button @click="onToggleMinimapClick($event)" size="small" :type="showMinimap ? 'primary' : 'secondary'">
-        <template #icon><icon-eye /></template>
+        <template #icon><IconEye /></template>
         预览图
       </a-button>
     </a-button-group>
 
     <a-button-group v-if="showExtras" style="margin-left: 8px;">
       <a-button v-if="showClear" @click="clearCanvas" size="small" status="danger">
-        <template #icon><icon-delete /></template>
+        <template #icon><IconDelete /></template>
         清空画布
       </a-button>
       <a-button v-if="showUndoRedo" @click="undo" size="small" :disabled="!canUndo" title="撤销 (Ctrl+Z)">
-        <template #icon><icon-up /></template>
+        <template #icon><IconUp /></template>
         撤销
       </a-button>
       <a-button v-if="showUndoRedo" @click="redo" size="small" :disabled="!canRedo" title="重做 (Ctrl+Y)">
-        <template #icon><icon-down /></template>
+        <template #icon><IconDown /></template>
         重做
       </a-button>
       <a-button v-if="showHistory" @click="toggleHistoryPanel" size="small" :type="showHistoryPanel ? 'primary' : 'secondary'" title="操作历史">
-        <template #icon><icon-history /></template>
+        <template #icon><IconHistory /></template>
         历史
       </a-button>
       <a-button v-if="showStatistics" @click="toggleStatisticsPanel" size="small" :type="showStatisticsPanel ? 'primary' : 'secondary'" title="统计信息">
-        <template #icon><icon-bar-chart /></template>
+        <template #icon><IconBarChart /></template>
         统计
       </a-button>
       <a-dropdown v-if="showExport" @select="handleExport">
         <a-button size="small">
-          <template #icon><icon-download /></template>
+          <template #icon><IconDownload /></template>
           导出图片
         </a-button>
         <template #content>
@@ -97,7 +97,7 @@
         </template>
       </a-dropdown>
       <a-button v-if="showDebug" @click="toggleDebugPanel" size="small" :type="showDebugPanel ? 'primary' : 'secondary'" title="调试功能">
-        <template #icon><icon-bug /></template>
+        <template #icon><IconBug /></template>
         调试
       </a-button>
     </a-button-group>

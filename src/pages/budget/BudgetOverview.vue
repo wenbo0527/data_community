@@ -94,7 +94,7 @@
                 <div class="list-row" @click="openContract(item.id)">
                   <div class="list-main">
                     <div class="list-title">{{ item.supplier || '—' }} · {{ item.contractName || '合同' }}</div>
-                    <div class="list-sub">到期 {{ formatDate(item.endDate as any) }}</div>
+                    <div class="list-sub">到期 {{ DateUtils.formatDateTime(item.endDate as any) }}</div>
                   </div>
                   <a-tag :status="expireTagStatus(item.endDate)">到期</a-tag>
                 </div>
@@ -267,6 +267,7 @@ import { useBudgetStatsAggregator, buildMonthlyBurndown, useBudgetCalculations }
 import { useBudgetMonitorStore } from '@/modules/budget/stores/budget-monitor'
 import type { WarningItem, BurndownPoint } from '@/modules/budget/api/monitor'
 import { useContractStore } from '@/modules/budget/stores/contract'
+import DateUtils from '@/utils/dateUtils'
 
 const store = useBudgetStore()
 const monitorStore = useBudgetMonitorStore()
@@ -338,7 +339,7 @@ const formatPercent = (n: number) => {
 }
 
 const formatDate = (d: Date) => {
-  try { return new Date(d).toLocaleString() } catch { return '—' }
+  try { return DateUtils.formatDateTime(d) } catch { return '—' }
 }
 
 onMounted(load)

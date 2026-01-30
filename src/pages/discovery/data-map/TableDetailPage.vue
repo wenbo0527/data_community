@@ -1,39 +1,31 @@
 <template>
   <div class="table-detail-page">
-    <a-page-header 
-      :title="tableData?.name || '未命名表'" 
+    <DetailHeader
+      :title="tableData?.name || '未命名表'"
+      :backEnabled="true"
       @back="onBack"
-      class="page-header"
     >
-      <template #extra>
+      <template #extra-actions>
         <a-space>
           <a-button type="outline" size="mini" @click="editTable">
-            <template #icon>
-              <icon-edit />
-            </template>
+            <template #icon><IconEdit /></template>
             编辑
           </a-button>
           <a-button type="outline" size="mini" @click="toggleFavorite">
-            <template #icon>
-              <icon-star :fill="isFavorite ? '#ffb400' : 'none'" />
-            </template>
+            <template #icon><IconStar :fill="isFavorite ? '#ffb400' : 'none'" /></template>
             收藏
           </a-button>
           <a-button type="outline" size="mini" @click="showAddToCollection">
-            <template #icon>
-              <icon-folder-add />
-            </template>
+            <template #icon><IconFolderAdd /></template>
             添加到集合
           </a-button>
           <a-button type="primary" size="mini" @click="applyPermission">
-            <template #icon>
-              <icon-safe />
-            </template>
+            <template #icon><IconSafe /></template>
             申请权限
           </a-button>
         </a-space>
       </template>
-    </a-page-header>
+    </DetailHeader>
     
     <div v-if="tableData" class="table-content">
       <!-- 基本信息卡片 -->
@@ -218,6 +210,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { Modal } from '@arco-design/web-vue'
 import { mockTables } from '@/mock/data-map.ts'
+import DetailHeader from '@/components/common/DetailHeader.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'

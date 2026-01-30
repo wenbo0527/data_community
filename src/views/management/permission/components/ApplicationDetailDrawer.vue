@@ -11,7 +11,7 @@
       <a-card title="基本信息" size="small" class="mb-4">
         <a-descriptions :column="2" size="small">
           <a-descriptions-item label="申请编号">{{ application?.applicationNo }}</a-descriptions-item>
-          <a-descriptions-item label="申请时间">{{ formatTime(application?.applyTime) }}</a-descriptions-item>
+          <a-descriptions-item label="申请时间">{{ DateUtils.formatDateTime(application?.applyTime) }}</a-descriptions-item>
           <a-descriptions-item label="申请人">{{ application?.applicantName }}</a-descriptions-item>
           <a-descriptions-item label="所属部门">{{ application?.department }}</a-descriptions-item>
           <a-descriptions-item label="资源名称">{{ application?.resourceName }}</a-descriptions-item>
@@ -59,10 +59,10 @@
                 <span class="approver-dept">{{ step.approver.department }}</span>
               </div>
               
-              <div v-if="step.action" class="step-action">
+                <div v-if="step.action" class="step-action">
                 <div class="action-type">{{ getActionTypeText(step.action) }}</div>
                 <div v-if="step.reason" class="action-reason">{{ step.reason }}</div>
-                <div v-if="step.time" class="action-time">{{ formatTime(step.time) }}</div>
+                  <div v-if="step.time" class="action-time">{{ DateUtils.formatDateTime(step.time) }}</div>
               </div>
             </div>
           </a-timeline-item>
@@ -86,7 +86,7 @@
               当前步骤：{{ currentStep.name }}
             </div>
             <div v-if="estimatedTime" class="estimated-time">
-              预计完成时间：{{ formatTime(estimatedTime) }}
+              预计完成时间：{{ DateUtils.formatDateTime(estimatedTime) }}
             </div>
           </div>
         </div>
@@ -102,7 +102,7 @@
           <a-timeline-item
             v-for="(op, index) in operationHistory"
             :key="op.id"
-            :label="formatTime(op.createTime)"
+            :label="DateUtils.formatDateTime(op.createTime)"
             :dot-color="getOperationColor(op.type)"
           >
             <div class="operation-item">
@@ -120,15 +120,15 @@
       <div class="drawer-footer">
         <a-space>
           <a-button @click="viewFullHistory">
-            <template #icon><icon-history /></template>
+            <template #icon><IconHistory /></template>
             查看完整历史
           </a-button>
           <a-button @click="printApplication">
-            <template #icon><icon-printer /></template>
+            <template #icon><IconPrinter /></template>
             打印申请
           </a-button>
           <a-button @click="exportApplication">
-            <template #icon><icon-download /></template>
+            <template #icon><IconDownload /></template>
             导出详情
           </a-button>
         </a-space>
@@ -149,6 +149,7 @@ import StatusLabel from './StatusLabel.vue'
 import SensitivityLabel from './SensitivityLabel.vue'
 import { getPermissionTypeText, getResourceTypeText } from '../utils'
 import { getApplicationDetail, getApplicationFlow, getApplicationHistory } from '@/api/permission'
+import DateUtils from '@/utils/dateUtils'
 
 // Props
 const props = defineProps({

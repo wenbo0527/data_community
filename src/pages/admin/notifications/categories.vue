@@ -15,11 +15,11 @@
       <div class="header-right">
         <a-space>
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建分类
           </a-button>
           <a-button @click="handleRefresh">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
         </a-space>

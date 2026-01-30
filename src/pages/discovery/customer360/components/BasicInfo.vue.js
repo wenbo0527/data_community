@@ -56,7 +56,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 if (!__VLS_ctx.userInfo) {
     const __VLS_0 = {}.ASkeleton;
-    /** @type {[typeof __VLS_components.ASkeleton, typeof __VLS_components.aSkeleton, ]} */ ;
+    /** @type {[typeof __VLS_components.ASkeleton, typeof __VLS_components.aSkeleton, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         loading: (true),
@@ -67,7 +67,7 @@ if (!__VLS_ctx.userInfo) {
 }
 else {
     const __VLS_4 = {}.ADescriptions;
-    /** @type {[typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, typeof __VLS_components.ADescriptions, typeof __VLS_components.aDescriptions, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         column: ({ xs: 1, sm: 2, md: 3 }),
@@ -79,7 +79,7 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_5));
     __VLS_7.slots.default;
     const __VLS_8 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
         label: "姓名",
@@ -89,9 +89,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_9));
     __VLS_11.slots.default;
     (__VLS_ctx.userInfo.name);
-    var __VLS_11;
+    let __VLS_11;
     const __VLS_12 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
         label: "年龄",
@@ -101,9 +101,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_13));
     __VLS_15.slots.default;
     (__VLS_ctx.userInfo.age);
-    var __VLS_15;
+    let __VLS_15;
     const __VLS_16 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
         label: "性别",
@@ -113,9 +113,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_17));
     __VLS_19.slots.default;
     (__VLS_ctx.userInfo.gender);
-    var __VLS_19;
+    let __VLS_19;
     const __VLS_20 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
         label: "手机号码",
@@ -125,9 +125,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_21));
     __VLS_23.slots.default;
     (__VLS_ctx.userInfo.mobile);
-    var __VLS_23;
+    let __VLS_23;
     const __VLS_24 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
         label: "客户号",
@@ -137,9 +137,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_25));
     __VLS_27.slots.default;
     (__VLS_ctx.userInfo.customerNo);
-    var __VLS_27;
+    let __VLS_27;
     const __VLS_28 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
         label: "户籍",
@@ -149,9 +149,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_29));
     __VLS_31.slots.default;
     (__VLS_ctx.userInfo.address);
-    var __VLS_31;
+    let __VLS_31;
     const __VLS_32 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
         label: "身份证号",
@@ -161,9 +161,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_33));
     __VLS_35.slots.default;
     (__VLS_ctx.userInfo.idCard);
-    var __VLS_35;
+    let __VLS_35;
     const __VLS_36 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
         label: "身份证有效期",
@@ -173,9 +173,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_37));
     __VLS_39.slots.default;
     (__VLS_ctx.userInfo.idExpiry);
-    var __VLS_39;
+    let __VLS_39;
     const __VLS_40 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
         label: "用户状态",
@@ -185,9 +185,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_41));
     __VLS_43.slots.default;
     (__VLS_ctx.userInfo.status);
-    var __VLS_43;
+    let __VLS_43;
     const __VLS_44 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
         label: "活体相似度",
@@ -197,9 +197,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_45));
     __VLS_47.slots.default;
     (__VLS_ctx.userInfo.similarity);
-    var __VLS_47;
+    let __VLS_47;
     const __VLS_48 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
         label: "相似度阈值",
@@ -209,9 +209,9 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_49));
     __VLS_51.slots.default;
     (__VLS_ctx.userInfo.threshold);
-    var __VLS_51;
+    let __VLS_51;
     const __VLS_52 = {}.ADescriptionsItem;
-    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ ;
+    /** @type {[typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, typeof __VLS_components.ADescriptionsItem, typeof __VLS_components.aDescriptionsItem, ]} */ 
     // @ts-ignore
     const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
         label: "错误信息",
@@ -221,11 +221,11 @@ else {
     }, ...__VLS_functionalComponentArgsRest(__VLS_53));
     __VLS_55.slots.default;
     (__VLS_ctx.userInfo.errorMsg);
-    var __VLS_55;
-    var __VLS_7;
+    let __VLS_55;
+    let __VLS_7;
 }
-/** @type {__VLS_StyleScopedClasses['basic-info']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['basic-info']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -242,4 +242,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

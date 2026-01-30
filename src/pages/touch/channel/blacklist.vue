@@ -39,11 +39,11 @@
             <a-button type="primary" @click="handleSearch">查询</a-button>
             <a-button @click="handleReset">重置</a-button>
             <a-button v-show="activeTab === 'blacklist'" type="primary" @click="handleCreate">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               新建
             </a-button>
             <a-button v-show="activeTab === 'blacklist'" type="outline" @click="handleImport">
-              <template #icon><icon-upload /></template>
+              <template #icon><IconUpload /></template>
               批量导入
             </a-button>
           </a-space>
@@ -66,7 +66,7 @@
               <a-space>
                 <a-tooltip content="解禁用户" mini>
                   <a-button type="outline" status="warning" size="small" @click="handleUnban(record)">
-                    <template #icon><icon-undo /></template>
+                    <template #icon><IconUndo /></template>
                   </a-button>
                 </a-tooltip>
               </a-space>

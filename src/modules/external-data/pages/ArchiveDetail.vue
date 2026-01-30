@@ -128,6 +128,7 @@ import { useContractStore } from '@/modules/budget/stores/contract'
 import { IconArrowLeft, IconEdit, IconStorage, IconShareAlt } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { generateExternalDataDetail } from '@/mock/external-data-v1'
+import DateUtils from '@/utils/dateUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -146,8 +147,8 @@ const goMetadata = () => { router.push({ path: '/discovery/asset-management/exte
 
 const statusLabel = (s?: string) => s === 'importing' ? '引入中' : s === 'online' ? '已上线' : s === 'pending_evaluation' ? '待评估' : s === 'archived' ? '已归档' : '—'
 const statusTag = (s?: string) => s === 'online' ? 'success' : s === 'pending_evaluation' ? 'warning' : s === 'importing' ? 'warning' : 'default'
-const formatDate = (d?: string | Date) => { try { return new Date(d || '').toLocaleDateString() } catch { return '—' } }
-const formatDateTime = (d?: string | Date) => { try { return new Date(d || '').toLocaleString() } catch { return '—' } }
+const formatDate = (d?: string | Date) => { try { return DateUtils.formatDate(d || '') } catch { return '—' } }
+const formatDateTime = (d?: string | Date) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }
 const formatCurrency = (n?: number) => { try { if (n == null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) } catch { return '—' } }
 
 const productBasic = computed(() => [

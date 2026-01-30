@@ -42,7 +42,7 @@
     <!-- 空状态 -->
     <div v-else class="empty-state">
       <div class="empty-icon">
-        <icon-storage :size="48" />
+        <IconStorage :size="48" />
       </div>
       <h3>暂无产品</h3>
       <p>该用户暂未持有任何产品</p>

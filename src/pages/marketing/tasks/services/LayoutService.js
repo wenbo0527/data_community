@@ -474,7 +474,7 @@ export class LayoutService {
     const alignment = options.alignment || 'center'
 
     const positions = new Map()
-    let currentPos = 0
+    const currentPos = 0
 
     // 计算起始位置
     const canvasCenter = this.calculateCanvasCenter()

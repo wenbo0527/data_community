@@ -189,7 +189,7 @@ const updateSelectedFromRoute = () => {
     // 自动展开父级菜单
     if (menuInfo.parent) {
       const parentKeys = []
-      let currentParent = menuInfo.parent
+      const currentParent = menuInfo.parent
       while (currentParent) {
         parentKeys.unshift(currentParent)
         // 这里可以扩展为查找更深层的父级关系

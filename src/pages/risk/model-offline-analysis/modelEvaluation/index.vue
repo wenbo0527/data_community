@@ -66,55 +66,15 @@
       </a-row>
     </div>
 
-    <!-- 搜索和筛选区 -->
-    <div class="filter-section">
-      <a-card>
-        <a-form :model="filterForm" layout="inline">
-          <a-form-item label="模型名称">
-            <a-input
-              v-model="filterForm.modelName"
-              placeholder="请输入模型名称"
-              allow-clear
-              @change="handleFilterChange"
-            />
-          </a-form-item>
-          
-          <a-form-item label="评估类型">
-            <a-select
-              v-model="filterForm.evaluationType"
-              placeholder="请选择评估类型"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="performance">性能评估</a-option>
-              <a-option value="stability">稳定性评估</a-option>
-              <a-option value="fairness">公平性评估</a-option>
-              <a-option value="business">业务评估</a-option>
-            </a-select>
-          </a-form-item>
-          
-          <a-form-item label="评估时间">
-            <a-range-picker
-              v-model="filterForm.dateRange"
-              style="width: 240px"
-              @change="handleFilterChange"
-            />
-          </a-form-item>
-          
-          <a-form-item>
-            <a-space>
-              <a-button type="primary" @click="handleSearch">
-                <template #icon>
-                  <icon-search />
-                </template>
-                搜索
-              </a-button>
-              <a-button @click="handleReset">重置</a-button>
-            </a-space>
-          </a-form-item>
-        </a-form>
-      </a-card>
-    </div>
+    <FilterBar
+      v-model="filterForm"
+      :fields="filterFields"
+      search-text="搜索"
+      reset-text="重置"
+      @search="handleSearch"
+      @reset="handleReset"
+      @change="handleFilterChange"
+    />
 
     <!-- 评估结果表格 -->
     <div class="table-section">
@@ -183,10 +143,12 @@
 
 <script setup>
 import PageHeader from '../components/PageHeader.vue'
+import FilterBar from '../components/FilterBar.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEvaluationStore } from '@/store/modules/model-offline'
 import { Message } from '@arco-design/web-vue'
+import { getCommonColumns } from '../components/table-columns'
 
 const router = useRouter()
 const store = useEvaluationStore()
@@ -201,6 +163,16 @@ const filterForm = reactive({
   evaluationType: '',
   dateRange: []
 })
+const filterFields = [
+  { type: 'input', key: 'modelName', label: '模型名称', placeholder: '请输入模型名称' },
+  { type: 'select', key: 'evaluationType', label: '评估类型', options: [
+    { label: '性能评估', value: 'performance' },
+    { label: '稳定性评估', value: 'stability' },
+    { label: '公平性评估', value: 'fairness' },
+    { label: '业务评估', value: 'business' }
+  ] },
+  { type: 'range', key: 'dateRange', label: '评估时间' }
+]
 
 // 分页配置
 const pagination = reactive({
@@ -212,55 +184,29 @@ const pagination = reactive({
   showPageSize: true
 })
 
-// 表格列配置
+const baseColumns = getCommonColumns({
+  nameTitle: '模型名称',
+  nameKey: 'modelName',
+  nameSlot: 'modelName',
+  typeTitle: '评估类型',
+  typeKey: 'type',
+  typeSlot: 'type',
+  statusTitle: '状态',
+  statusKey: 'status',
+  statusSlot: 'status',
+  createTimeTitle: '评估时间',
+  createTimeKey: 'evaluationTime',
+  createTimeSlot: 'evaluationTime'
+})
 const columns = [
-  {
-    title: '模型名称',
-    dataIndex: 'modelName',
-    slotName: 'modelName',
-    width: 200
-  },
-  {
-    title: '评估类型',
-    dataIndex: 'type',
-    slotName: 'type',
-    width: 120
-  },
-  {
-    title: '评估得分',
-    dataIndex: 'score',
-    slotName: 'score',
-    width: 100
-  },
-  {
-    title: '评估指标',
-    dataIndex: 'metrics',
-    ellipsis: true,
-    tooltip: true
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    slotName: 'status',
-    width: 100
-  },
-  {
-    title: '评估时间',
-    dataIndex: 'evaluationTime',
-    slotName: 'evaluationTime',
-    width: 180
-  },
-  {
-    title: '评估人',
-    dataIndex: 'evaluator',
-    width: 120
-  },
-  {
-    title: '操作',
-    slotName: 'actions',
-    width: 200,
-    fixed: 'right'
-  }
+  baseColumns[0],
+  baseColumns[1],
+  { title: '评估得分', dataIndex: 'score', slotName: 'score', width: 100 },
+  { title: '评估指标', dataIndex: 'metrics', ellipsis: true, tooltip: true },
+  baseColumns[2],
+  baseColumns[3],
+  { title: '评估人', dataIndex: 'evaluator', width: 120 },
+  baseColumns[4]
 ]
 
 // 计算属性
@@ -341,22 +287,20 @@ const handleSelectionChange = (rows) => {
 }
 
 const handleCreateEvaluation = () => {
-  router.push('/offline-model/model-evaluation/create')
+  router.push('/risk/model-offline-analysis/model-evaluation/create')
 }
 
- 
-
 const handleViewModel = (record) => {
-  router.push(`/offline-model/model-register/detail/${record.modelId}`)
+  router.push(`/risk/model-offline-analysis/model-register/detail/${record.modelId}`)
 }
 
 const handleViewDetail = (record) => {
-  router.push(`/offline-model/model-evaluation/detail/${record.id}`)
+  router.push(`/risk/model-offline-analysis/model-evaluation/detail/${record.id}`)
 }
 
  
 
-const handleDelete = (record) => {
+const handleDelete = () => {
   Message.info('删除功能开发中')
 }
 

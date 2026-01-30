@@ -16,7 +16,7 @@
               {{ formatTime(application.createdAt) }}
             </a-descriptions-item>
             <a-descriptions-item label="申请状态">
-              <status-label :status="application.status" />
+              <StatusLabel :status="application.status" />
             </a-descriptions-item>
             <a-descriptions-item label="权限类型">
               <a-space>
@@ -48,7 +48,7 @@
             >
               <div class="resource-header">
                 <h4>{{ resource.name }}</h4>
-                <sensitivity-label :level="resource.sensitivityLevel" />
+                <SensitivityLabel :level="resource.sensitivityLevel" />
               </div>
               <div class="resource-info">
                 <div class="info-item">
@@ -98,7 +98,7 @@
                 <span class="tree-node">
                   <span class="node-name">{{ name }}</span>
                   <a-tag size="small" class="node-type">{{ getResourceTypeText(type) }}</a-tag>
-                  <sensitivity-label :level="sensitivityLevel" />
+                  <SensitivityLabel :level="sensitivityLevel" />
                 </span>
               </template>
             </a-tree>

@@ -4,61 +4,61 @@
     <div v-if="showToolbar" :class="toolbarClasses">
       <div class="toolbar-left">
         <slot name="toolbar-left">
-          <a-space>
-            <a-button v-if="showRefresh" @click="handleRefresh" :loading="loading">
-              <template #icon><icon-refresh /></template>
+          <ASpace>
+            <AButton v-if="showRefresh" @click="handleRefresh" :loading="loading">
+              <template #icon><IconRefresh /></template>
               刷新
-            </a-button>
+            </AButton>
             <slot name="toolbar-buttons"></slot>
-          </a-space>
+          </ASpace>
         </slot>
       </div>
       <div class="toolbar-right">
         <slot name="toolbar-right">
-          <a-space>
+          <ASpace>
             <!-- 列设置 -->
-            <a-popover v-if="showColumnSetting" trigger="click" position="bottom">
-              <a-button>
-                <template #icon><icon-settings /></template>
-              </a-button>
+            <APopover v-if="showColumnSetting" trigger="click" position="bottom">
+              <AButton>
+                <template #icon><IconSettings /></template>
+              </AButton>
               <template #content>
                 <div class="column-setting">
                   <div class="setting-title">列设置</div>
-                  <a-checkbox-group v-model="visibleColumns" direction="vertical">
-                    <a-checkbox 
+                  <ACheckboxGroup v-model="visibleColumns" direction="vertical">
+                    <ACheckbox 
                       v-for="col in settableColumns" 
                       :key="col.dataIndex || col.key"
                       :value="col.dataIndex || col.key"
                     >
                       {{ col.title }}
-                    </a-checkbox>
-                  </a-checkbox-group>
+                    </ACheckbox>
+                  </ACheckboxGroup>
                 </div>
               </template>
-            </a-popover>
+            </APopover>
             <!-- 密度设置 -->
-            <a-popover v-if="showDensitySetting" trigger="click" position="bottom">
-              <a-button>
-                <template #icon><icon-menu /></template>
-              </a-button>
+            <APopover v-if="showDensitySetting" trigger="click" position="bottom">
+              <AButton>
+                <template #icon><IconMenu /></template>
+              </AButton>
               <template #content>
                 <div class="density-setting">
                   <div class="setting-title">表格密度</div>
-                  <a-radio-group v-model="currentSize" direction="vertical">
-                    <a-radio value="small">紧凑</a-radio>
-                    <a-radio value="medium">默认</a-radio>
-                    <a-radio value="large">宽松</a-radio>
-                  </a-radio-group>
+                  <ARadioGroup v-model="currentSize" direction="vertical">
+                    <ARadio value="small">紧凑</ARadio>
+                    <ARadio value="medium">默认</ARadio>
+                    <ARadio value="large">宽松</ARadio>
+                  </ARadioGroup>
                 </div>
               </template>
-            </a-popover>
-          </a-space>
+            </APopover>
+          </ASpace>
         </slot>
       </div>
     </div>
 
     <!-- 表格主体 -->
-    <a-table
+    <ATable
       v-bind="tableProps"
       :class="tableClasses"
       :columns="computedColumns"
@@ -84,7 +84,7 @@
       <template v-for="(_, name) in $slots" #[name]="slotData">
         <slot :name="name" v-bind="slotData"></slot>
       </template>
-    </a-table>
+    </ATable>
   </div>
 </template>
 

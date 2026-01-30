@@ -6,7 +6,7 @@
         <h1 class="page-title">{{ currentEvent.eventName }}<</h1>
 
         <div class="event-info" v-if="currentEvent">
-          <a-tag color="blue">{{ currentEvent.eventType }}</a-tag>
+          <StatusTag :status="currentEvent.eventType" dictKey="eventType" />
           <span class="event-id">({{ currentEvent.id }})</span>
         </div>
       </div>
@@ -21,7 +21,7 @@
         </div>
         <div class="action-buttons">
           <a-button @click="handleRefresh">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
         </div>
@@ -56,7 +56,7 @@
             <div class="chart-header">
               <h3 class="chart-title">异常检测</h3>
               <a-button type="text" size="small" @click="handleAnomalyRefresh">
-                <template #icon><icon-refresh /></template>
+                <template #icon><IconRefresh /></template>
               </a-button>
             </div>
             <div class="anomaly-list">
@@ -78,10 +78,10 @@
                   <span class="anomaly-threshold">阈值: {{ anomaly.threshold }}</span>
                   <span class="affected-users">影响用户: {{ anomaly.affectedUsers }}</span>
                 </div>
-                <div class="anomaly-time">{{ formatTime(anomaly.detectedAt) }}</div>
+                <div class="anomaly-time">{{ DateUtils.formatDateTime(anomaly.detectedAt) }}</div>
               </div>
               <div v-if="sampleStats.anomalies.length === 0" class="no-anomaly">
-                <icon-check-circle class="no-anomaly-icon" />
+                <IconCheckCircle class="no-anomaly-icon" />
                 <div class="no-anomaly-text">暂无异常检测</div>
               </div>
             </div>
@@ -126,7 +126,7 @@
               <a-table-column title="消息ID" data-index="id" width="120" />
               <a-table-column title="时间戳" width="160">
                 <template #cell="{ record }">
-                  {{ formatEventTime(record.timestamp) }}
+                  {{ DateUtils.formatDateTime(record.timestamp) }}
                 </template>
               </a-table-column>
               <a-table-column title="客户号" width="120">
@@ -167,6 +167,8 @@ import {
   IconInfoCircle,
   IconCheckCircle
 } from '@arco-design/web-vue/es/icon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 const route = useRoute()
@@ -337,23 +339,9 @@ const getEventAnomalyTypeText = (type) => {
   return texts[type] || '未知异常'
 }
 
-const formatEventTime = (eventTime) => {
-  if (!eventTime) return '-'
-  try {
-    return new Date(eventTime).toLocaleString('zh-CN')
-  } catch (error) {
-    return eventTime
-  }
-}
+ 
 
-const formatDate = (timestamp) => {
-  if (!timestamp) return '-'
-  try {
-    return new Date(timestamp).toLocaleDateString('zh-CN')
-  } catch (error) {
-    return timestamp
-  }
-}
+ 
 
 // 格式化字节大小
 const formatBytes = (bytes) => {
@@ -461,13 +449,13 @@ const getChartData = () => {
   
   if (chartType.value === 'messages') {
     values = trends.map(item => item.messageCount || 0)
-    labels = trends.map(item => formatDate(item.timestamp))
+    labels = trends.map(item => DateUtils.formatDate(item.timestamp))
   } else if (chartType.value === 'size') {
     values = trends.map(item => item.totalSize || 0)
-    labels = trends.map(item => formatDate(item.timestamp))
+    labels = trends.map(item => DateUtils.formatDate(item.timestamp))
   } else if (chartType.value === 'avgSize') {
     values = trends.map(item => item.avgSize || 0)
-    labels = trends.map(item => formatDate(item.timestamp))
+    labels = trends.map(item => DateUtils.formatDate(item.timestamp))
   }
   
   return { values, labels }
@@ -534,9 +522,7 @@ const formatNumber = (num) => {
 }
 
 // 格式化时间
-const formatTime = (timeString) => {
-  return new Date(timeString).toLocaleString('zh-CN')
-}
+ 
 
 // 计算转化率
 const calculateConversionRate = (conversions, clicks) => {

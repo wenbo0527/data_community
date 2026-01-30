@@ -77,7 +77,7 @@ const pagination = computed(() => tagCenterStore.pagination)
 const stats = computed(() => tagCenterStore.stats)
 
 // 筛选表单
-let filterForm = ref({
+const filterForm = ref({
   name: '',
   status: '',
   category: '',

@@ -14,14 +14,14 @@
           <a-form-item field="username" label="用户名" :rules="[{ required: true, message: '请输入用户名' }]">
             <a-input v-model="form.username" placeholder="请输入用户名" allow-clear>
               <template #prefix>
-                <icon-user />
+                <IconUser />
               </template>
             </a-input>
           </a-form-item>
           <a-form-item field="password" label="密码" :rules="[{ required: true, message: '请输入密码' }]">
             <a-input-password v-model="form.password" placeholder="请输入密码" allow-clear>
               <template #prefix>
-                <icon-lock />
+                <IconLock />
               </template>
             </a-input-password>
           </a-form-item>

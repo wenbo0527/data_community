@@ -17,8 +17,8 @@
               :default-expand-all="true"
             >
               <template #icon="{ node }">
-                <icon-folder v-if="node.isFolder" />
-                <icon-file v-else />
+                <IconFolder v-if="node.isFolder" />
+                <IconFile v-else />
               </template>
             </a-tree>
           </div>

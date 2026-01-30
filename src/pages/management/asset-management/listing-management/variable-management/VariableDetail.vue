@@ -2,7 +2,7 @@
   <div class="variable-detail-page">
     <div class="page-header">
       <a-button type="text" @click="goBack">
-        <template #icon><icon-left /></template>
+        <template #icon><IconLeft /></template>
         返回
       </a-button>
       <h2>{{ isEditMode ? '编辑变量' : (isViewMode ? '变量详情' : '新建变量') }}</h2>

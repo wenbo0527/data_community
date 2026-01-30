@@ -65,7 +65,7 @@
       
       <!-- 空状态 -->
       <div class="empty-state" v-else-if="hasExecutedQuery">
-        <icon-search />
+        <IconSearch />
         <p>未找到符合条件的节点</p>
       </div>
     </div>

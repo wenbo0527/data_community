@@ -5,11 +5,15 @@
       <div class="header-left">
         <a-button type="text" @click="handleBack">
           <template #icon>
-            <icon-arrow-left />
+            <IconArrowLeft />
           </template>
           返回
         </a-button>
         <h2 class="page-title">{{ isEdit ? '编辑数据模型' : '新增数据模型' }}</h2>
+        <a-space v-if="isEdit">
+          <StatusTag :status="formData.status" dictKey="dataModelStatus" />
+          <span class="meta-text">更新时间：{{ formData.updatedAt ? DateUtils.formatDateTime(formData.updatedAt) : '-' }}</span>
+        </a-space>
       </div>
       <div class="header-right">
         <a-space>
@@ -265,7 +269,7 @@
                 <span>参数列表</span>
                 <a-button size="small" @click="addParameter">
                   <template #icon>
-                    <icon-plus />
+                    <IconPlus />
                   </template>
                   添加参数
                 </a-button>
@@ -304,13 +308,13 @@
                     style="margin-left: 8px"
                   >
                     <template #icon>
-                      <icon-delete />
+                      <IconDelete />
                     </template>
                   </a-button>
                 </div>
                 
                 <div v-if="formData.parameters.length === 0" class="empty-params">
-                  <icon-info-circle />
+                  <IconInfoCircle />
                   <span>暂无参数配置</span>
                 </div>
               </div>
@@ -339,6 +343,8 @@ import {
   IconInfoCircle
 } from '@arco-design/web-vue/es/icon'
 import MonacoEditor from '@/components/MonacoEditor.vue'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 import { 
   getDataModelDetail, 
   createDataModel, 
@@ -633,12 +639,12 @@ const handleSave = async () => {
     if (isEdit.value) {
       response = await updateDataModel(route.params.id, {
         ...formData,
-        status: 'active'
+        status: 'published'
       })
     } else {
       response = await createDataModel({
         ...formData,
-        status: 'active'
+        status: 'published'
       })
     }
     

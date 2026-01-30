@@ -23,9 +23,9 @@
       </a-descriptions-item>
       <a-descriptions-item label="ID映射状态">
         <a-space>
-          <icon-check-circle v-if="tableData.mappingStatus === 'configured'" style="color: #00b42a" />
-          <icon-close-circle v-else-if="tableData.mappingStatus === 'not_configured'" style="color: #f53f3f" />
-          <icon-minus-circle v-else style="color: #c9cdd4" />
+          <IconCheckCircle v-if="tableData.mappingStatus === 'configured'" style="color: #00b42a" />
+          <IconCloseCircle v-else-if="tableData.mappingStatus === 'not_configured'" style="color: #f53f3f" />
+          <IconMinusCircle v-else style="color: #c9cdd4" />
           <span>{{ getMappingStatusText(tableData.mappingStatus) }}</span>
         </a-space>
       </a-descriptions-item>
@@ -73,12 +73,12 @@
           </a-tag>
         </template>
         <template #isPrimaryKey="{ record }">
-          <icon-check-circle v-if="record.isPrimaryKey" style="color: #00b42a" />
-          <icon-close-circle v-else style="color: #c9cdd4" />
+          <IconCheckCircle v-if="record.isPrimaryKey" style="color: #00b42a" />
+          <IconCloseCircle v-else style="color: #c9cdd4" />
         </template>
         <template #isMappingField="{ record }">
-          <icon-check-circle v-if="record.isMappingField" style="color: #00b42a" />
-          <icon-close-circle v-else style="color: #c9cdd4" />
+          <IconCheckCircle v-if="record.isMappingField" style="color: #00b42a" />
+          <IconCloseCircle v-else style="color: #c9cdd4" />
         </template>
       </a-table>
     </div>

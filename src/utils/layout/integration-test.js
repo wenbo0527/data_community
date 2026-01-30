@@ -351,7 +351,7 @@ async function testEventIntegration() {
     nodes.forEach(nodeData => graph.addNode(nodeData));
     edges.forEach(edgeData => graph.addEdge(edgeData));
     
-    let eventsFired = [];
+    const eventsFired = [];
     
     // 监听事件
     engine.on('layout:start', () => {

@@ -60,12 +60,12 @@ import Component from '../index.vue'
 
 describe('TaskManagement', () => {
   it('触发加载并记录日志', async () => {
-    const wrapper = mount(Component, { global: { stubs } })
+    mount(Component, { global: { stubs } })
     await new Promise((r) => setTimeout(r, 10))
-    const { logger } = await import('@/utils/enhancedErrorHandler.js')
+    const { logger } = await import('@/utils/enhancedErrorHandler.js') as any
     expect(logger.info).toHaveBeenCalled()
     const calls = (logger.info as any).mock.calls.map((c: any[]) => String(c[0]))
-    expect(calls.some((msg) => msg.includes('TaskManagement loadData start'))).toBe(true)
-    expect(calls.some((msg) => msg.includes('TaskManagement loadData success'))).toBe(true)
+    expect(calls.some((msg: string) => msg.includes('TaskManagement loadData start'))).toBe(true)
+    expect(calls.some((msg: string) => msg.includes('TaskManagement loadData success'))).toBe(true)
   })
 })

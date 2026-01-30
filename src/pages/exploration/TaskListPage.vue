@@ -1,36 +1,36 @@
 <template>
   <div class="task-list-page">
-    <a-card class="filter-card">
-      <a-row :gutter="24">
-        <a-col :span="8">
-          <a-form-item label="任务创建日期">
-            <a-range-picker
+    <ACard class="filter-card">
+      <ARow :gutter="24">
+        <ACol :span="8">
+          <AFormItem label="任务创建日期">
+            <ARangePicker
               v-model="dateRange"
               style="width: 100%"
               @change="handleDateChange"
             />
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-form-item label="任务状态">
-            <a-select
+          </AFormItem>
+        </ACol>
+        <ACol :span="8">
+          <AFormItem label="任务状态">
+            <ASelect
               v-model="statusFilter"
               @change="handleStatusChange"
               placeholder="请选择状态"
               allow-clear
             >
-              <a-option value="进行中">进行中</a-option>
-              <a-option value="已完成">已完成</a-option>
-              <a-option value="已失败">已失败</a-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-      </a-row>
-    </a-card>
+              <AOption value="进行中">进行中</AOption>
+              <AOption value="已完成">已完成</AOption>
+              <AOption value="已失败">已失败</AOption>
+            </ASelect>
+          </AFormItem>
+        </ACol>
+      </ARow>
+    </ACard>
 
 
-    <a-card>
-      <a-table
+    <ACard>
+      <ATable
         :columns="columns"
         :data="taskList"
         :pagination="pagination"
@@ -40,18 +40,18 @@
         @page-size-change="handlePageSizeChange"
       >
         <template #status="{ record }">
-          <a-tag
+          <ATag
             :color="getStatusColor(record.status)"
             size="small"
           >
             {{ record.status }}
-          </a-tag>
+          </ATag>
         </template>
         <template #action="{ record }">
-          <a-button @click="viewTask(record.id, record.taskName)">查看详情</a-button>
+          <AButton @click="viewTask(record.id, record.taskName)">查看详情</AButton>
         </template>
-      </a-table>
-    </a-card>
+      </ATable>
+    </ACard>
   </div>
 </template>
 

@@ -15,8 +15,8 @@
                   :value-style="{ color: metric.color }"
                 >
                   <template #prefix>
-                    <icon-arrow-rise v-if="metric.trend === 'up'" style="color: #0fbf60" />
-                    <icon-arrow-fall v-else style="color: #f53f3f" />
+                    <IconArrowRise v-if="metric.trend === 'up'" style="color: #0fbf60" />
+                    <IconArrowFall v-else style="color: #f53f3f" />
                   </template>
                 </a-statistic>
                 <div class="comparison-data">

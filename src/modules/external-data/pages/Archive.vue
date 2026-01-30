@@ -220,6 +220,7 @@ import { useRouter } from 'vue-router'
 import { useExternalDataStore } from '@/modules/external-data/stores/external-data'
 import { useContractStore } from '@/modules/budget/stores/contract'
 import { IconDownload } from '@arco-design/web-vue/es/icon'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 const store = useExternalDataStore()
@@ -301,7 +302,7 @@ const importing = ref(false)
 const importVisible = ref(false)
 const confirmImport = async () => { importing.value = true; setTimeout(() => { importing.value = false; importVisible.value = false; Message.success('导入完成'); refreshProducts() }, 1000) }
 const exportList = () => { const headers = ['产品名称','编码','供应商','状态','计费模式','单价','接入时间','使用场景','评估得分','监控状态']; const rows = productsView.value.map((p: any) => [p.name,p.code,p.supplier,p.status,(p.billingMode||''),p.unitPrice,p.createdAt,p.usageScene,p.evaluationScore,p.monitorStatus]); const csv = [headers.join(','), ...rows.map((r: any) => r.map((v: any) => String(v ?? '')).join(','))].join('\n'); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'external-data-archive.csv'; a.click(); URL.revokeObjectURL(url); Message.success('已导出') }
-const formatDate = (d?: string | Date) => { try { return new Date(d || '').toLocaleString() } catch { return '—' } }
+const formatDate = (d?: string | Date) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }
 const formatCurrency = (n?: number) => { try { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) } catch { return '—' } }
 const billingModeLabel = (m?: string) => m === 'per_call' ? '按次' : m === 'monthly' ? '按月' : m === 'tier' ? '阶梯' : '—'
 const statusLabel = (s?: string) => s === 'importing' ? '引入中' : s === 'online' ? '已上线' : s === 'pending_evaluation' ? '待评估' : s === 'archived' ? '已归档' : '—'

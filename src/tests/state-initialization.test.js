@@ -185,7 +185,7 @@ describe('状态管理初始化测试', () => {
     it('nodes 状态应该是响应式的', () => {
       state = useCanvasState()
       
-      let changeCount = 0
+      const changeCount = 0
       
       // 监听变化（简单模拟）
       const originalValue = state.nodes.value

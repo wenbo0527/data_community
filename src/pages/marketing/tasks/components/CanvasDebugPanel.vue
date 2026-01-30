@@ -7,11 +7,11 @@
   >
     <div class="debug-header" @mousedown="startDrag">
       <div class="debug-title">
-        <icon-bug />
+        <IconBug />
         调试面板
       </div>
       <a-button @click="closePanel" size="mini" type="text">
-        <template #icon><icon-close /></template>
+        <template #icon><IconClose /></template>
       </a-button>
     </div>
     <div class="debug-content">
@@ -24,7 +24,7 @@
           size="small" 
           :loading="debugStats?.loading"
         >
-          <template #icon><icon-check /></template>
+          <template #icon><IconCheck /></template>
           预览线有效性检查
         </a-button>
         <a-button 
@@ -34,7 +34,7 @@
           :loading="isGeneratingPreviewLines" 
           style="margin-left: 8px;"
         >
-          <template #icon><icon-thunderbolt /></template>
+          <template #icon><IconThunderbolt /></template>
           触发预览线生成
         </a-button>
       </div>
@@ -49,7 +49,7 @@
             size="small"
             :type="showPortDebugPanel ? 'primary' : 'outline'"
           >
-            <template #icon><icon-location /></template>
+            <template #icon><IconLocation /></template>
             {{ showPortDebugPanel ? '关闭端口调试' : '打开端口调试' }}
           </a-button>
           <a-button 
@@ -58,7 +58,7 @@
             size="small" 
             style="margin-left: 8px;"
           >
-            <template #icon><icon-dashboard /></template>
+            <template #icon><IconDashboard /></template>
             调试所有节点端口
           </a-button>
           <!-- 新增：详细日志开关按钮 -->
@@ -68,7 +68,7 @@
             :type="detailedLogsEnabled ? 'primary' : 'outline'"
             style="margin-left: 8px;"
           >
-            <template #icon><icon-settings /></template>
+            <template #icon><IconSettings /></template>
             {{ detailedLogsEnabled ? '关闭详细日志' : '开启详细日志' }}
           </a-button>
         </div>

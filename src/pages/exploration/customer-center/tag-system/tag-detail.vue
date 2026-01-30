@@ -3,7 +3,7 @@
     <!-- 面包屑导航 -->
     <a-breadcrumb class="breadcrumb">
       <a-breadcrumb-item>
-        <icon-home />
+        <IconHome />
       </a-breadcrumb-item>
       <a-breadcrumb-item>可信数据</a-breadcrumb-item>
       <a-breadcrumb-item>标签管理</a-breadcrumb-item>

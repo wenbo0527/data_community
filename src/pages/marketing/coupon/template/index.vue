@@ -15,7 +15,7 @@
           </a-select>
           <a-button type="primary" @click="handleCreate">
             <template #icon>
-              <icon-plus />
+              <IconPlus />
             </template>
             新建券模版
           </a-button>

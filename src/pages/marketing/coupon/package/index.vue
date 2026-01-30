@@ -10,7 +10,7 @@
         />
         <a-button type="primary" @click="openCreateModal">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           新建券包
         </a-button>

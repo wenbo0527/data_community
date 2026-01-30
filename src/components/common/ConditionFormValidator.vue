@@ -16,10 +16,10 @@
           <div class="field-header">
             <span class="field-name">{{ field.label }}</span>
             <div class="field-status">
-              <icon-check-circle v-if="field.isValid && field.touched" class="status-icon valid" />
-              <icon-close-circle v-else-if="!field.isValid && field.touched" class="status-icon invalid" />
-              <icon-loading v-else-if="field.isValidating" class="status-icon validating" />
-              <icon-minus-circle v-else class="status-icon untouched" />
+              <IconCheckCircle v-if="field.isValid && field.touched" class="status-icon valid" />
+              <IconCloseCircle v-else-if="!field.isValid && field.touched" class="status-icon invalid" />
+              <IconLoading v-else-if="field.isValidating" class="status-icon validating" />
+              <IconMinusCircle v-else class="status-icon untouched" />
             </div>
           </div>
           
@@ -30,7 +30,7 @@
               class="field-error"
               :class="error.type"
             >
-              <icon-exclamation-circle-fill class="error-icon" />
+              <IconExclamationCircleFill class="error-icon" />
               <span class="error-message">{{ error.message }}</span>
             </div>
           </div>
@@ -41,7 +41,7 @@
               :key="warning.id"
               class="field-warning"
             >
-              <icon-exclamation-circle-fill class="warning-icon" />
+              <IconExclamationCircleFill class="warning-icon" />
               <span class="warning-message">{{ warning.message }}</span>
             </div>
           </div>
@@ -125,8 +125,8 @@
             @click="toggleRulesExpanded"
           >
             {{ rulesExpanded ? '收起' : '展开' }}
-            <icon-down v-if="!rulesExpanded" />
-            <icon-up v-else />
+            <IconDown v-if="!rulesExpanded" />
+            <IconUp v-else />
           </a-button>
         </div>
         
@@ -143,19 +143,19 @@
                 <span>必填字段</span>
               </div>
               <div v-if="rule.minLength" class="rule-item">
-                <icon-edit class="rule-icon" />
+                <IconEdit class="rule-icon" />
                 <span>最小长度: {{ rule.minLength }} 字符</span>
               </div>
               <div v-if="rule.maxLength" class="rule-item">
-                <icon-edit class="rule-icon" />
+                <IconEdit class="rule-icon" />
                 <span>最大长度: {{ rule.maxLength }} 字符</span>
               </div>
               <div v-if="rule.pattern" class="rule-item">
-                <icon-code class="rule-icon" />
+                <IconCode class="rule-icon" />
                 <span>格式要求: {{ rule.patternDescription }}</span>
               </div>
               <div v-if="rule.dependencies?.length" class="rule-item">
-                <icon-relation class="rule-icon" />
+                <IconRelation class="rule-icon" />
                 <span>依赖字段: {{ rule.dependencies.join(', ') }}</span>
               </div>
             </div>

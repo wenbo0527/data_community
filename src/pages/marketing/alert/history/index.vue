@@ -31,7 +31,7 @@
             <a-option value="failure">发放失败</a-option>
           </a-select>
           <a-button type="primary" @click="handleExport">
-            <template #icon><icon-download /></template>
+            <template #icon><IconDownload /></template>
             导出记录
           </a-button>
         </a-space>
@@ -91,12 +91,14 @@
         stripe
       >
         <template #columns>
-          <a-table-column title="预警时间" data-index="triggered_at" align="center" :width="160" />
+          <a-table-column title="预警时间" data-index="triggered_at" align="center" :width="160">
+            <template #cell="{ record }">
+              {{ DateUtils.formatDateTime(record.triggered_at) }}
+            </template>
+          </a-table-column>
           <a-table-column title="预警类型" data-index="alert_type" align="center" :width="120">
             <template #cell="{ record }">
-              <a-tag :color="getTypeColor(record.alert_type)">
-                {{ getTypeText(record.alert_type) }}
-              </a-tag>
+              <StatusTag :status="record.alert_type" dictKey="alertType" />
             </template>
           </a-table-column>
 
@@ -104,13 +106,15 @@
           <a-table-column title="触发规则" data-index="rule_name" align="left" :width="150" />
           <a-table-column title="处理状态" data-index="status" align="center" :width="100">
             <template #cell="{ record }">
-              <a-tag :color="getStatusColor(record.status)">
-                {{ getStatusText(record.status) }}
-              </a-tag>
+              <StatusTag :status="record.status" dictKey="alertHistoryStatus" />
             </template>
           </a-table-column>
           <a-table-column title="处理人" data-index="resolved_by" align="center" :width="100" />
-          <a-table-column title="处理时间" data-index="resolved_at" align="center" :width="160" />
+          <a-table-column title="处理时间" data-index="resolved_at" align="center" :width="160">
+            <template #cell="{ record }">
+              {{ record.resolved_at ? DateUtils.formatDateTime(record.resolved_at) : '-' }}
+            </template>
+          </a-table-column>
           <a-table-column title="操作" align="center" :width="120">
             <template #cell="{ record }">
               <a-space>
@@ -200,6 +204,8 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { IconDownload } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import * as echarts from 'echarts'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 // 数据加载状态
 const loading = ref(false)
@@ -359,33 +365,15 @@ const detailData = computed(() => {
   return [
     { label: '预警ID', value: selectedRecord.value.id },
     { label: '触发规则', value: selectedRecord.value.rule_name },
-    { label: '预警类型', value: getTypeText(selectedRecord.value.alert_type) },
-    { label: '触发时间', value: selectedRecord.value.triggered_at },
-    { label: '处理状态', value: getStatusText(selectedRecord.value.status) },
+    { label: '预警类型', value: selectedRecord.value.alert_type },
+    { label: '触发时间', value: DateUtils.formatDateTime(selectedRecord.value.triggered_at) },
+    { label: '处理状态', value: selectedRecord.value.status },
     { label: '处理人', value: selectedRecord.value.resolved_by || '-' },
-    { label: '处理时间', value: selectedRecord.value.resolved_at || '-' }
+    { label: '处理时间', value: selectedRecord.value.resolved_at ? DateUtils.formatDateTime(selectedRecord.value.resolved_at) : '-' }
   ]
 })
 
-// 获取类型颜色
-const getTypeColor = (type) => {
-  const colors = {
-    inventory: 'blue',
-    expiry: 'orange',
-    failure: 'red'
-  }
-  return colors[type] || 'gray'
-}
-
-// 获取类型文本
-const getTypeText = (type) => {
-  const texts = {
-    inventory: '库存监控',
-    expiry: '过期监控',
-    failure: '发放失败'
-  }
-  return texts[type] || '未知类型'
-}
+ 
 
 
 

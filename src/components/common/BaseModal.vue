@@ -1,5 +1,5 @@
 <template>
-  <a-modal
+  <AModal
     v-bind="modalProps"
     :visible="visible"
     :title="title"
@@ -74,7 +74,7 @@
     <template v-if="$slots.footer" #footer>
       <slot name="footer" :ok="handleOk" :cancel="handleCancel"></slot>
     </template>
-  </a-modal>
+  </AModal>
 </template>
 
 <script>

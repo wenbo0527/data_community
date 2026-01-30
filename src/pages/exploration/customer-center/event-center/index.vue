@@ -8,11 +8,11 @@
       </div>
       <div class="header-actions">
         <a-button type="primary" @click="handleQuickCreate">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           快速创建
         </a-button>
         <a-button @click="handleRefresh">
-          <template #icon><icon-refresh /></template>
+          <template #icon><IconRefresh /></template>
           刷新数据
         </a-button>
         <a-range-picker 
@@ -29,7 +29,7 @@
         <a-col :span="6">
           <div class="stat-card primary">
             <div class="card-icon">
-              <icon-calendar />
+              <IconCalendar />
             </div>
             <div class="card-content">
               <div class="card-number">{{ stats.totalEvents }}</div>
@@ -44,7 +44,7 @@
         <a-col :span="6">
           <div class="stat-card success">
             <div class="card-icon">
-              <icon-check-circle />
+              <IconCheckCircle />
             </div>
             <div class="card-content">
               <div class="card-number">{{ stats.onlineEvents }}</div>
@@ -59,7 +59,7 @@
         <a-col :span="6">
           <div class="stat-card warning">
             <div class="card-icon">
-              <icon-thunderbolt />
+              <IconThunderbolt />
             </div>
             <div class="card-content">
               <div class="card-number">{{ stats.virtualEvents }}</div>
@@ -74,7 +74,7 @@
         <a-col :span="6">
           <div class="stat-card info">
             <div class="card-icon">
-              <icon-bar-chart />
+              <IconBarChart />
             </div>
             <div class="card-content">
               <div class="card-number">{{ stats.avgResponseTime }}ms</div>
@@ -104,7 +104,7 @@
                   <a-radio value="week">周</a-radio>
                 </a-radio-group>
                 <a-button type="text" size="small" @click="handleExportTrend">
-                  <template #icon><icon-download /></template>
+                  <template #icon><IconDownload /></template>
                 </a-button>
               </div>
             </div>
@@ -120,7 +120,7 @@
             <div class="chart-header">
               <h3 class="chart-title">事件类型分布</h3>
               <a-button type="text" size="small" @click="handleExportType">
-                <template #icon><icon-download /></template>
+                <template #icon><IconDownload /></template>
               </a-button>
             </div>
             <div class="chart-content">
@@ -152,9 +152,9 @@
                   <span class="event-name">{{ event.eventName }}</span>
                 </div>
                 <div class="event-right">
-                  <span class="event-time">{{ formatTime(event.createTime) }}</span>
+                  <span class="event-time">{{ DateUtils.smartFormat(event.createTime) }}</span>
                   <a-button type="text" size="mini" @click.stop="handleTestEvent(event)">
-                    <template #icon><icon-play-circle /></template>
+                    <template #icon><IconPlayCircle /></template>
                   </a-button>
                 </div>
               </div>
@@ -168,7 +168,7 @@
             <div class="chart-header">
               <h3 class="chart-title">性能指标</h3>
               <a-button type="text" size="small" @click="handleRefreshMetrics">
-                <template #icon><icon-refresh /></template>
+                <template #icon><IconRefresh /></template>
               </a-button>
             </div>
             <div class="chart-content">
@@ -186,7 +186,7 @@
         <a-col :span="6">
           <div class="quick-card" @click="handleQuickCreate">
             <div class="quick-icon">
-              <icon-plus />
+              <IconPlus />
             </div>
             <div class="quick-content">
               <div class="quick-title">创建事件</div>
@@ -197,7 +197,7 @@
         <a-col :span="6">
           <div class="quick-card" @click="handleImportEvents">
             <div class="quick-icon">
-              <icon-upload />
+              <IconUpload />
             </div>
             <div class="quick-content">
               <div class="quick-title">批量导入</div>
@@ -208,7 +208,7 @@
         <a-col :span="6">
           <div class="quick-card" @click="handleExportReport">
             <div class="quick-icon">
-              <icon-download />
+              <IconDownload />
             </div>
             <div class="quick-content">
               <div class="quick-title">导出报表</div>
@@ -219,7 +219,7 @@
         <a-col :span="6">
           <div class="quick-card" @click="handleSystemSettings">
             <div class="quick-icon">
-              <icon-settings />
+              <IconSettings />
             </div>
             <div class="quick-content">
               <div class="quick-title">系统设置</div>
@@ -250,6 +250,7 @@ import {
   IconSettings,
   IconPlayCircle
 } from '@arco-design/web-vue/es/icon'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -493,21 +494,7 @@ const getEventTypeColor = (type) => {
 }
 
 // 格式化时间
-const formatTime = (timeString) => {
-  const date = new Date(timeString)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  
-  if (diff < 60 * 1000) {
-    return '刚刚'
-  } else if (diff < 60 * 60 * 1000) {
-    return Math.floor(diff / (60 * 1000)) + '分钟前'
-  } else if (diff < 24 * 60 * 60 * 1000) {
-    return Math.floor(diff / (60 * 60 * 1000)) + '小时前'
-  } else {
-    return date.toLocaleDateString('zh-CN')
-  }
-}
+ 
 
 // 事件处理函数
 const handleQuickCreate = () => {

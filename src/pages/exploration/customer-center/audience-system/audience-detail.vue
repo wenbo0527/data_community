@@ -3,7 +3,7 @@
     <!-- 面包屑导航 -->
     <a-breadcrumb class="breadcrumb">
       <a-breadcrumb-item>
-        <icon-home />
+        <IconHome />
       </a-breadcrumb-item>
       <a-breadcrumb-item>客户中心</a-breadcrumb-item>
       <a-breadcrumb-item>人群管理</a-breadcrumb-item>

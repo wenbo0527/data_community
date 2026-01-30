@@ -7,7 +7,7 @@
       layout="vertical"
       :style="{ width: '100%' }"
     >
-      <admission-form :form-data="formData" />
+      <AdmissionForm :form-data="formData" />
 
       <a-grid :cols="2" :col-gap="16" :row-gap="16">
         <a-grid-item>
@@ -172,9 +172,9 @@
         </a-grid-item>
       </a-grid>
 
-      <interest-free-form :form-data="formData" />
-      <discount-form :form-data="formData" />
-      <lock-form :form-data="formData" />
+      <InterestFreeForm :form-data="formData" />
+      <DiscountForm :form-data="formData" />
+      <LockForm :form-data="formData" />
 
       <div class="footer-actions">
         <a-space>

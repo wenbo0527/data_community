@@ -9,11 +9,11 @@
         <div class="header-actions">
           <a-space>
             <a-button type="primary" @click="showCreatePricing = true">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               新增定价档案
             </a-button>
             <a-button type="outline" @click="exportPricings">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               导出数据
             </a-button>
           </a-space>
@@ -77,7 +77,7 @@
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="applyFilter">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             查询
           </a-button>
           <a-button style="margin-left: 8px" @click="resetFilter">
@@ -457,7 +457,7 @@
             style="margin-top: 8px"
             @click="addTier"
           >
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             添加阶梯
           </a-button>
         </div>
@@ -529,7 +529,7 @@
             style="margin-top: 8px"
             @click="addVolumeDiscount"
           >
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             添加折扣
           </a-button>
         </div>

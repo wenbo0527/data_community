@@ -5,7 +5,7 @@
       <div class="header-actions">
 
         <a-button size="small" @click="refreshData">
-          <template #icon><icon-refresh /></template>
+          <template #icon><IconRefresh /></template>
           刷新
         </a-button>
       </div>
@@ -88,10 +88,10 @@
           
           <template #channel="{ record }">
             <div class="channel-cell">
-              <icon-message v-if="record.channel === '短信'" class="channel-icon" />
-              <icon-email v-else-if="record.channel === '邮件'" class="channel-icon" />
-              <icon-phone v-else-if="record.channel === '电话'" class="channel-icon" />
-              <icon-notification v-else class="channel-icon" />
+              <IconMessage v-if="record.channel === '短信'" class="channel-icon" />
+              <IconEmail v-else-if="record.channel === '邮件'" class="channel-icon" />
+              <IconPhone v-else-if="record.channel === '电话'" class="channel-icon" />
+              <IconNotification v-else class="channel-icon" />
               <span>{{ record.channel }}</span>
             </div>
           </template>

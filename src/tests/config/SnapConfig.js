@@ -132,7 +132,7 @@ export function adjustConfigForContext(context) {
     canvasSize = { width: 1920, height: 1080 }
   } = context
 
-  let adjustedConfig = { ...SNAP_DISTANCES }
+  const adjustedConfig = { ...SNAP_DISTANCES }
 
   // 根据节点数量调整
   if (nodeCount > 100) {

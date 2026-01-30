@@ -6,19 +6,19 @@
         <div class="hero-subtitle">统一入口，快速抵达关键业务模块</div>
         <a-space>
           <a-button type="primary" size="large" @click="goDiscovery">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             探索数据
           </a-button>
           <a-button status="success" size="large" @click="goMarketing">
-            <template #icon><icon-dashboard /></template>
+            <template #icon><IconDashboard /></template>
             营销画布
           </a-button>
           <a-button size="large" @click="goExternal">
-            <template #icon><icon-unordered-list /></template>
+            <template #icon><IconUnorderedList /></template>
             外部数据
           </a-button>
           <a-button size="large" @click="goManagement">
-            <template #icon><icon-apps /></template>
+            <template #icon><IconApps /></template>
             资源管理
           </a-button>
         </a-space>
@@ -32,7 +32,7 @@
             <div class="card-desc">{{ card.desc }}</div>
             <a-space style="margin-top: 8px">
               <a-button type="text" @click.stop="navigate(card.path)">
-                <template #icon><icon-right /></template>
+                <template #icon><IconRight /></template>
                 进入
               </a-button>
             </a-space>

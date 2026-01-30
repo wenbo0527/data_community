@@ -9,11 +9,11 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <a-button type="primary" @click="showAddModal">
-        <template #icon><icon-plus /></template>
+        <template #icon><IconPlus /></template>
         新增配置
       </a-button>
       <a-button @click="refreshData">
-        <template #icon><icon-refresh /></template>
+        <template #icon><IconRefresh /></template>
         刷新
       </a-button>
     </div>

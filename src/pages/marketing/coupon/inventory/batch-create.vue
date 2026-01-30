@@ -35,11 +35,11 @@
       <a-card class="form-card config-card" title="统一配置">
         <template #extra>
           <a-tag v-if="isUnifiedConfigComplete" color="green" size="small">
-            <template #icon><icon-check /></template>
+            <template #icon><IconCheck /></template>
             配置完成
           </a-tag>
           <a-tag v-else color="orange" size="small">
-            <template #icon><icon-exclamation /></template>
+            <template #icon><IconExclamation /></template>
             待配置
           </a-tag>
         </template>
@@ -135,7 +135,7 @@
               status="danger"
               size="small"
               @click="clearAllInventories">
-              <template #icon><icon-delete /></template>
+              <template #icon><IconDelete /></template>
               清空列表
             </a-button>
             <a-button 
@@ -143,7 +143,7 @@
               size="small"
               :disabled="!isUnifiedConfigComplete"
               @click="showTemplateSelector">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               添加券库存
             </a-button>
           </a-space>
@@ -163,7 +163,7 @@
               type="primary" 
               :disabled="!isUnifiedConfigComplete"
               @click="showTemplateSelector">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               添加券库存
             </a-button>
           </a-empty>
@@ -266,14 +266,14 @@
                     type="text" 
                     size="small"
                     @click="duplicateInventory(record)">
-                    <template #icon><icon-copy /></template>
+                    <template #icon><IconCopy /></template>
                   </a-button>
                   <a-button 
                     type="text" 
                     status="danger" 
                     size="small"
                     @click="removeInventory(rowIndex)">
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                   </a-button>
                 </a-space>
               </template>
@@ -286,11 +286,11 @@
           <a-space>
             <span class="batch-label">批量操作：</span>
             <a-button size="small" @click="batchSetDistributionQuantity">
-              <template #icon><icon-edit /></template>
+              <template #icon><IconEdit /></template>
               批量设置发放数量
             </a-button>
             <a-button size="small" @click="batchSetLimits">
-              <template #icon><icon-edit /></template>
+              <template #icon><IconEdit /></template>
               批量设置上限
             </a-button>
           </a-space>
@@ -319,11 +319,11 @@
               :loading="submitLoading"
               @click="handleSubmit"
               :disabled="!canSubmit">
-              <template #icon><icon-check /></template>
+              <template #icon><IconCheck /></template>
               提交审批申请
             </a-button>
             <a-button size="large" @click="handleBack">
-              <template #icon><icon-close /></template>
+              <template #icon><IconClose /></template>
               取消
             </a-button>
           </a-space>
@@ -332,19 +332,19 @@
         <!-- 提交前检查 -->
         <div v-if="!canSubmit" class="submit-check">
           <a-alert type="warning" show-icon>
-            <template #icon><icon-exclamation-circle /></template>
+            <template #icon><IconExclamationCircle /></template>
             <div>
               <div>提交前请检查以下项目：</div>
               <ul class="check-list">
                 <li v-if="!isUnifiedConfigComplete">
-                  <icon-close-circle style="color: #f53f3f" /> 统一配置未完成
+                  <IconCloseCircle style="color: #f53f3f" /> 统一配置未完成
                 </li>
                 <li v-if="incompleteInventories.length > 0">
-                  <icon-close-circle style="color: #f53f3f" /> 
+                  <IconCloseCircle style="color: #f53f3f" /> 
                   {{ incompleteInventories.length }} 个券库存配置不完整
                 </li>
                 <li v-if="!formData.approvalReason">
-                  <icon-close-circle style="color: #f53f3f" /> 申请理由未填写
+                  <IconCloseCircle style="color: #f53f3f" /> 申请理由未填写
                 </li>
               </ul>
             </div>
@@ -404,7 +404,7 @@
             @search="fetchAvailableTemplates"
             @clear="fetchAvailableTemplates">
             <template #prefix>
-              <icon-search />
+              <IconSearch />
             </template>
           </a-input-search>
         </div>
@@ -433,7 +433,7 @@
               </div>
             </div>
             <a-button type="primary" size="small">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               添加
             </a-button>
           </div>

@@ -32,11 +32,10 @@
         </a-form-item>
         <a-form-item field="status" label="状态">
           <a-select v-model="filters.status" allow-clear placeholder="选择状态" style="width: 140px">
-            <a-option value="pending">待执行</a-option>
-            <a-option value="running">执行中</a-option>
-            <a-option value="succeeded">已完成</a-option>
-            <a-option value="failed">失败</a-option>
-            <a-option value="canceled">已取消</a-option>
+            <a-option value="costing">待核算</a-option>
+            <a-option value="reconcile">待对账</a-option>
+            <a-option value="writeoff">待核销</a-option>
+            <a-option value="done">已完成</a-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -46,11 +45,11 @@
         <a-form-item style="margin-left: auto">
           <a-space>
             <a-button type="primary" @click="showCreate = true">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               发起结算
             </a-button>
             <a-button @click="refresh">
-              <template #icon><icon-refresh /></template>
+              <template #icon><IconRefresh /></template>
               刷新
             </a-button>
             <a-button type="outline" @click="exportList">导出列表</a-button>
@@ -64,6 +63,9 @@
         <template #columns>
           <a-table-column title="任务编号" :width="140">
             <template #cell="{ record }">{{ record.id }}</template>
+          </a-table-column>
+          <a-table-column title="任务名称" :width="220">
+            <template #cell="{ record }">{{ record.taskName || `结算任务-${(record.supplierIds && record.supplierIds.length ? record.supplierIds[0] : '未知供应商')}-${record.timeLabel}` }}</template>
           </a-table-column>
           <a-table-column title="供应商数" :width="100">
             <template #cell="{ record }">{{ record.supplierIds.length }}</template>
@@ -84,7 +86,9 @@
             <template #cell="{ record }">{{ formatAmount(record.summary.diffAmount) }}（{{ formatPercent(record.summary.diffRate) }}）</template>
           </a-table-column>
           <a-table-column title="状态" :width="120">
-            <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
+            <template #cell="{ record }">
+              <StatusTag :status="record.status" dictKey="budgetTask" />
+            </template>
           </a-table-column>
           <a-table-column title="进度" :width="180">
             <template #cell="{ record }"><a-progress :percent="record.progress" /></template>
@@ -93,7 +97,7 @@
             <template #cell="{ record }">{{ record.createdBy }}</template>
           </a-table-column>
           <a-table-column title="创建时间" :width="180">
-            <template #cell="{ record }">{{ formatDate(record.createdAt) }}</template>
+            <template #cell="{ record }">{{ DateUtils.formatDateTime(record.createdAt) }}</template>
           </a-table-column>
           <a-table-column title="操作" :width="260" fixed="right">
             <template #cell="{ record }">
@@ -244,13 +248,15 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '@/modules/budget/stores/contract'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 type Granularity = 'year'|'quarter'|'month'
-type TaskStatus = 'pending'|'running'|'succeeded'|'failed'|'canceled'
+type TaskStatus = 'costing'|'reconcile'|'writeoff'|'done'|'failed'|'canceled'
 
 interface SettlementSummary { budgetAmount: number; actualAmount: number; diffAmount: number; diffRate: number }
 interface SettlementSubTask { id: string; taskId: string; supplierId: string; status: TaskStatus; progress: number; contracts: string[]; summary: SettlementSummary }
-interface SettlementTask { id: string; supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; status: TaskStatus; progress: number; createdBy: string; createdAt: string; summary: SettlementSummary }
+interface SettlementTask { id: string; supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; status: TaskStatus; progress: number; createdBy: string; createdAt: string; summary: SettlementSummary; taskName?: string }
 
 const store = useContractStore()
 
@@ -296,11 +302,17 @@ const formatPercent = (n?: number) => {
   return `${(n * 100).toFixed(2)}%`
 }
 const formatDate = (d?: string | Date) => {
-  try { return new Date(d || '').toLocaleString() } catch { return '—' }
+  try { return DateUtils.formatDateTime(d || '') } catch { return '—' }
 }
 const granularityLabel = (g?: Granularity) => g === 'year' ? '年' : g === 'quarter' ? '季' : g === 'month' ? '月' : '—'
-const statusLabel = (s: TaskStatus) => s === 'pending' ? '待执行' : s === 'running' ? '执行中' : s === 'succeeded' ? '已完成' : s === 'failed' ? '失败' : '已取消'
-const statusTag = (s: TaskStatus) => s === 'pending' ? 'default' : s === 'running' ? 'warning' : s === 'succeeded' ? 'success' : s === 'failed' ? 'danger' : 'default'
+const statusLabel = (s: TaskStatus) => {
+  const map: Record<string, string> = { costing: '待核算', reconcile: '待对账', writeoff: '待核销', done: '已完成', failed: '失败', canceled: '已取消' }
+  return map[s] || s
+}
+const statusTag = (s: TaskStatus) => {
+  const map: Record<string, string> = { costing: 'warning', reconcile: 'primary', writeoff: 'purple', done: 'success', failed: 'danger', canceled: 'gray' }
+  return map[s] || 'gray'
+}
 
 const calcSummaryForContracts = (ids: string[]) => {
   const items = contractOptions.value.filter(c => ids.includes(c.id))
@@ -318,7 +330,8 @@ const submitCreate = async () => {
   }
   const id = `ST-${Date.now()}`
   const summary = calcSummaryForContracts(createForm.contractIds)
-  const task: SettlementTask = { id, supplierIds: [...createForm.supplierIds], contractIds: [...createForm.contractIds], granularity: createForm.granularity, timeLabel: createForm.timeLabel, status: 'running', progress: 0, createdBy: createForm.createdBy, createdAt: new Date().toISOString(), summary }
+  const nameSupplier = createForm.supplierIds.length > 1 ? `${createForm.supplierIds[0]}等${createForm.supplierIds.length}家` : (createForm.supplierIds[0] || '未知供应商')
+  const task: SettlementTask = { id, supplierIds: [...createForm.supplierIds], contractIds: [...createForm.contractIds], granularity: createForm.granularity, timeLabel: createForm.timeLabel, status: 'costing', progress: 0, createdBy: createForm.createdBy, createdAt: new Date().toISOString(), summary, taskName: `结算任务-${nameSupplier}-${createForm.timeLabel}` }
   tasks.value.unshift(task)
   pagination.total = tasks.value.length
   showCreate.value = false
@@ -328,30 +341,41 @@ const submitCreate = async () => {
 
 const startTask = (task: SettlementTask) => {
   const suppliers = Array.from(new Set(contractOptions.value.filter(c => task.contractIds.includes(c.id)).map(c => c.supplier)))
-  subtasks.value = suppliers.map((s, idx) => ({ id: `${task.id}-S${idx+1}`, taskId: task.id, supplierId: s, status: 'running', progress: 0, contracts: contractOptions.value.filter(c => c.supplier === s && task.contractIds.includes(c.id)).map(c => c.id), summary: calcSummaryForContracts(contractOptions.value.filter(c => c.supplier === s && task.contractIds.includes(c.id)).map(c => c.id)) }))
+  subtasks.value = suppliers.map((s, idx) => ({ id: `${task.id}-S${idx+1}`, taskId: task.id, supplierId: s, status: 'costing', progress: 0, contracts: contractOptions.value.filter(c => c.supplier === s && task.contractIds.includes(c.id)).map(c => c.id), summary: calcSummaryForContracts(contractOptions.value.filter(c => c.supplier === s && task.contractIds.includes(c.id)).map(c => c.id)) }))
   detailVisible.value = true
   currentTask.value = task
   currentStep.value = 1
   const t = window.setInterval(() => {
     let done = 0
     subtasks.value = subtasks.value.map(st => {
-      if (st.status === 'running') {
+      if (st.status !== 'done') {
         const p = Math.min(100, st.progress + Math.floor(10 + Math.random() * 20))
-        const status: TaskStatus = p >= 100 ? 'succeeded' : 'running'
-        if (status === 'succeeded') done += 1
+        let status: TaskStatus = st.status
+        if (p >= 100) {
+          status = 'done'
+          done += 1
+        } else if (p >= 66) {
+          status = 'writeoff'
+        } else if (p >= 33) {
+          status = 'reconcile'
+        }
         return { ...st, progress: p, status }
       }
-      if (st.status === 'succeeded') done += 1
+      done += 1
       return st
     })
     const percent = Math.floor((done / subtasks.value.length) * 100)
     task.progress = percent
     if (percent >= 100) {
-      task.status = 'succeeded'
+      task.status = 'done'
       currentStep.value = 4
       window.clearInterval(t)
       delete timers.value[task.id]
       Message.success('结算任务已完成，可生成报告')
+    } else if (percent >= 66) {
+      task.status = 'writeoff'
+    } else if (percent >= 33) {
+      task.status = 'reconcile'
     }
   }, 1000)
   timers.value[task.id] = t
@@ -360,15 +384,15 @@ const startTask = (task: SettlementTask) => {
 const openDetail = (task: SettlementTask) => {
   currentTask.value = task
   detailVisible.value = true
-  currentStep.value = task.status === 'succeeded' ? 4 : task.status === 'running' ? 2 : 0
+  currentStep.value = task.status === 'done' ? 4 : task.status !== 'costing' ? 2 : 0
 }
 
 const retrySubtask = (st: SettlementSubTask) => {
-  st.status = 'running'
+  st.status = 'costing'
   st.progress = 0
 }
 const skipSubtask = (st: SettlementSubTask) => {
-  st.status = 'succeeded'
+  st.status = 'done'
   st.progress = 100
 }
 
@@ -408,8 +432,23 @@ const applyFilter = () => {}
 const resetFilter = () => { filters.suppliers = []; filters.contracts = []; filters.granularity = undefined; filters.timeLabel = undefined; filters.status = undefined }
 const refresh = async () => { await store.fetchContractList({ page: 1, pageSize: 100 }); Message.success('已刷新合同数据') }
 const exportList = () => {
-  const header = ['任务编号','供应商数','合同数','结算粒度','结算时间','预算金额','实际金额','差异金额','差异率','状态','进度','创建人','创建时间']
-  const rows = displayedTasks.value.map(t => [t.id, t.supplierIds.length, t.contractIds.length, granularityLabel(t.granularity), t.timeLabel, t.summary.budgetAmount, t.summary.actualAmount, t.summary.diffAmount, t.summary.diffRate, statusLabel(t.status), t.progress, t.createdBy, formatDate(t.createdAt)])
+  const header = ['任务编号','任务名称','供应商数','合同数','结算粒度','结算时间','预算金额','实际金额','差异金额','差异率','状态','进度','创建人','创建时间']
+  const rows = displayedTasks.value.map(t => [
+    t.id,
+    t.taskName || `结算任务-${(t.supplierIds && t.supplierIds.length ? t.supplierIds[0] : '未知供应商')}-${t.timeLabel}`,
+    t.supplierIds.length,
+    t.contractIds.length,
+    granularityLabel(t.granularity),
+    t.timeLabel,
+    t.summary.budgetAmount,
+    t.summary.actualAmount,
+    t.summary.diffAmount,
+    t.summary.diffRate,
+    statusLabel(t.status),
+    t.progress,
+    t.createdBy,
+    formatDate(t.createdAt)
+  ])
   const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
@@ -432,10 +471,16 @@ const seedMockTasks = () => {
   if (!allContracts.length) return
   const sampleContracts = allContracts.slice(0, Math.min(5, allContracts.length)).map(c => c.id)
   const sampleSuppliers = Array.from(new Set(allContracts.slice(0, 5).map(c => c.supplier))).filter(Boolean)
-  const t1: SettlementTask = { id: `ST-${Date.now()-1}`, supplierIds: sampleSuppliers, contractIds: sampleContracts, granularity: 'month', timeLabel: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, status: 'pending', progress: 0, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts) }
-  const t2: SettlementTask = { id: `ST-${Date.now()-2}`, supplierIds: sampleSuppliers.slice(0,2), contractIds: sampleContracts.slice(0,3), granularity: 'quarter', timeLabel: `${new Date().getFullYear()}-Q${Math.ceil((new Date().getMonth()+1)/3)}`, status: 'running', progress: 45, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,3)) }
-  const t3: SettlementTask = { id: `ST-${Date.now()-3}`, supplierIds: sampleSuppliers.slice(0,1), contractIds: sampleContracts.slice(0,2), granularity: 'year', timeLabel: `${new Date().getFullYear()}`, status: 'succeeded', progress: 100, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,2)) }
-  tasks.value = [t2, t3, t1]
+  const ym = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+  const q = `Q${Math.ceil((new Date().getMonth()+1)/3)}`
+  const nameFor = (arr: string[]) => arr.length > 1 ? `${arr[0]}等${arr.length}家` : (arr[0] || '未知供应商')
+  const t1: SettlementTask = { id: `ST-${Date.now()-1}`, supplierIds: sampleSuppliers, contractIds: sampleContracts, granularity: 'month', timeLabel: ym, status: 'costing', progress: 0, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts), taskName: `结算任务-${nameFor(sampleSuppliers)}-${ym}` }
+  const t2: SettlementTask = { id: `ST-${Date.now()-2}`, supplierIds: sampleSuppliers.slice(0,2), contractIds: sampleContracts.slice(0,3), granularity: 'quarter', timeLabel: `${new Date().getFullYear()}-${q}`, status: 'reconcile', progress: 45, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,3)), taskName: `结算任务-${nameFor(sampleSuppliers.slice(0,2))}-${new Date().getFullYear()}-${q}` }
+  const t3: SettlementTask = { id: `ST-${Date.now()-3}`, supplierIds: sampleSuppliers.slice(0,1), contractIds: sampleContracts.slice(0,2), granularity: 'year', timeLabel: `${new Date().getFullYear()}`, status: 'writeoff', progress: 75, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,2)), taskName: `结算任务-${nameFor(sampleSuppliers.slice(0,1))}-${new Date().getFullYear()}` }
+  const t4: SettlementTask = { id: `ST-${Date.now()-4}`, supplierIds: sampleSuppliers.slice(1,3), contractIds: sampleContracts.slice(1,4), granularity: 'month', timeLabel: ym, status: 'done', progress: 100, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(1,4)), taskName: `结算任务-${nameFor(sampleSuppliers.slice(1,3))}-${ym}` }
+  const t5: SettlementTask = { id: `ST-${Date.now()-5}`, supplierIds: sampleSuppliers.slice(2,4), contractIds: sampleContracts.slice(2,5), granularity: 'month', timeLabel: ym, status: 'failed', progress: 30, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(2,5)), taskName: `结算任务-${nameFor(sampleSuppliers.slice(2,4))}-${ym}` }
+  const t6: SettlementTask = { id: `ST-${Date.now()-6}`, supplierIds: sampleSuppliers.slice(3,5), contractIds: sampleContracts.slice(0,2), granularity: 'quarter', timeLabel: `${new Date().getFullYear()}-${q}`, status: 'canceled', progress: 0, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,2)), taskName: `结算任务-${nameFor(sampleSuppliers.slice(3,5))}-${new Date().getFullYear()}-${q}` }
+  tasks.value = [t2, t3, t4, t5, t6, t1]
   pagination.total = tasks.value.length
 }
 </script>

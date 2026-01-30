@@ -284,15 +284,15 @@ const __VLS_componentsOption = {
 };
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['demo-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['demo-section']} */ ;
+/** @type {__VLS_StyleScopedClasses['demo-section']} */ 
+/** @type {__VLS_StyleScopedClasses['demo-section']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "component-demo" },
 });
 const __VLS_0 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     title: "基础组件使用示例",
@@ -308,7 +308,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
 const __VLS_4 = {}.BaseTable;
-/** @type {[typeof __VLS_components.BaseTable, typeof __VLS_components.BaseTable, ]} */ ;
+/** @type {[typeof __VLS_components.BaseTable, typeof __VLS_components.BaseTable, ]} */ 
 // @ts-ignore
 const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
     ...{ 'onRefresh': {} },
@@ -344,7 +344,7 @@ __VLS_7.slots.default;
 {
     const { 'toolbar-buttons': __VLS_thisSlot } = __VLS_7.slots;
     const __VLS_14 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_15 = __VLS_asFunctionalComponent(__VLS_14, new __VLS_14({
         ...{ 'onClick': {} },
@@ -366,14 +366,14 @@ __VLS_7.slots.default;
     {
         const { icon: __VLS_thisSlot } = __VLS_17.slots;
         const __VLS_22 = {}.IconPlus;
-        /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ ;
+        /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ 
         // @ts-ignore
         const __VLS_23 = __VLS_asFunctionalComponent(__VLS_22, new __VLS_22({}));
         const __VLS_24 = __VLS_23({}, ...__VLS_functionalComponentArgsRest(__VLS_23));
     }
-    var __VLS_17;
+    let __VLS_17;
     const __VLS_26 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_27 = __VLS_asFunctionalComponent(__VLS_26, new __VLS_26({
         ...{ 'onClick': {} },
@@ -393,18 +393,18 @@ __VLS_7.slots.default;
     {
         const { icon: __VLS_thisSlot } = __VLS_29.slots;
         const __VLS_34 = {}.IconDelete;
-        /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ ;
+        /** @type {[typeof __VLS_components.IconDelete, typeof __VLS_components.iconDelete, ]} */ 
         // @ts-ignore
         const __VLS_35 = __VLS_asFunctionalComponent(__VLS_34, new __VLS_34({}));
         const __VLS_36 = __VLS_35({}, ...__VLS_functionalComponentArgsRest(__VLS_35));
     }
-    var __VLS_29;
+    let __VLS_29;
 }
 {
     const { status: __VLS_thisSlot } = __VLS_7.slots;
     const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
     const __VLS_38 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_39 = __VLS_asFunctionalComponent(__VLS_38, new __VLS_38({
         color: (__VLS_ctx.getStatusColor(record.status)),
@@ -414,19 +414,19 @@ __VLS_7.slots.default;
     }, ...__VLS_functionalComponentArgsRest(__VLS_39));
     __VLS_41.slots.default;
     (__VLS_ctx.getStatusText(record.status));
-    var __VLS_41;
+    let __VLS_41;
 }
 {
     const { action: __VLS_thisSlot } = __VLS_7.slots;
     const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
     const __VLS_42 = {}.ASpace;
-    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ ;
+    /** @type {[typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, typeof __VLS_components.ASpace, typeof __VLS_components.aSpace, ]} */ 
     // @ts-ignore
     const __VLS_43 = __VLS_asFunctionalComponent(__VLS_42, new __VLS_42({}));
     const __VLS_44 = __VLS_43({}, ...__VLS_functionalComponentArgsRest(__VLS_43));
     __VLS_45.slots.default;
     const __VLS_46 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_47 = __VLS_asFunctionalComponent(__VLS_46, new __VLS_46({
         ...{ 'onClick': {} },
@@ -447,9 +447,9 @@ __VLS_7.slots.default;
         }
     };
     __VLS_49.slots.default;
-    var __VLS_49;
+    let __VLS_49;
     const __VLS_54 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_55 = __VLS_asFunctionalComponent(__VLS_54, new __VLS_54({
         ...{ 'onClick': {} },
@@ -472,12 +472,12 @@ __VLS_7.slots.default;
         }
     };
     __VLS_57.slots.default;
-    var __VLS_57;
-    var __VLS_45;
+    let __VLS_57;
+    let __VLS_45;
 }
-var __VLS_7;
+let __VLS_7;
 const __VLS_62 = {}.BaseModal;
-/** @type {[typeof __VLS_components.BaseModal, typeof __VLS_components.BaseModal, ]} */ ;
+/** @type {[typeof __VLS_components.BaseModal, typeof __VLS_components.BaseModal, ]} */ 
 // @ts-ignore
 const __VLS_63 = __VLS_asFunctionalComponent(__VLS_62, new __VLS_62({
     ...{ 'onOk': {} },
@@ -506,7 +506,7 @@ const __VLS_70 = {
 };
 __VLS_65.slots.default;
 const __VLS_71 = {}.BaseForm;
-/** @type {[typeof __VLS_components.BaseForm, ]} */ ;
+/** @type {[typeof __VLS_components.BaseForm, ]} */ 
 // @ts-ignore
 const __VLS_72 = __VLS_asFunctionalComponent(__VLS_71, new __VLS_71({
     ref: "formRef",
@@ -520,16 +520,16 @@ const __VLS_73 = __VLS_72({
     formItems: (__VLS_ctx.formItems),
     rules: (__VLS_ctx.formRules),
 }, ...__VLS_functionalComponentArgsRest(__VLS_72));
-/** @type {typeof __VLS_ctx.formRef} */ ;
-var __VLS_75 = {};
-var __VLS_74;
-var __VLS_65;
+/** @type {typeof __VLS_ctx.formRef} */ 
+const __VLS_75 = {};
+let __VLS_74;
+let __VLS_65;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "demo-section" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
 const __VLS_77 = {}.BaseForm;
-/** @type {[typeof __VLS_components.BaseForm, ]} */ ;
+/** @type {[typeof __VLS_components.BaseForm, ]} */ 
 // @ts-ignore
 const __VLS_78 = __VLS_asFunctionalComponent(__VLS_77, new __VLS_77({
     ...{ 'onSubmit': {} },
@@ -560,13 +560,13 @@ const __VLS_84 = {
 const __VLS_85 = {
     onReset: (__VLS_ctx.handleReset)
 };
-var __VLS_80;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['component-demo']} */ ;
-/** @type {__VLS_StyleScopedClasses['demo-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['demo-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['demo-section']} */ ;
+let __VLS_80;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['component-demo']} */ 
+/** @type {__VLS_StyleScopedClasses['demo-card']} */ 
+/** @type {__VLS_StyleScopedClasses['demo-section']} */ 
+/** @type {__VLS_StyleScopedClasses['demo-section']} */ 
 // @ts-ignore
-var __VLS_76 = __VLS_75;
-var __VLS_dollars;
+const __VLS_76 = __VLS_75;
+let __VLS_dollars;
 let __VLS_self;

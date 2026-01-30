@@ -4,7 +4,7 @@ export type TaskStatus = 'pending'|'running'|'succeeded'|'failed'|'canceled'
 export interface SettlementSummary { budgetAmount: number; actualAmount: number; diffAmount: number; diffRate: number }
 export interface SettlementTask { id: string; supplierIds: string[]; contractIds: string[]; granularity: Granularity; timeLabel: string; status: TaskStatus; progress: number; createdBy: string; createdAt: string; summary: SettlementSummary; stage?: 'costing'|'reconcile'|'writeoff'; taskName?: string; archived?: boolean }
 
-let tasks: SettlementTask[] = []
+const tasks: SettlementTask[] = []
 
 export async function getSettlementTasks(): Promise<{ list: SettlementTask[] }> {
   return { list: tasks.slice() }

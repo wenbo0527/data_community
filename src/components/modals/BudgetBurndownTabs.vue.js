@@ -224,7 +224,7 @@ let __VLS_directives;
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     title: (__VLS_ctx.chartTitle),
@@ -232,12 +232,12 @@ const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
 const __VLS_2 = __VLS_1({
     title: (__VLS_ctx.chartTitle),
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-var __VLS_4 = {};
+const __VLS_4 = {};
 __VLS_3.slots.default;
 {
     const { extra: __VLS_thisSlot } = __VLS_3.slots;
     const __VLS_5 = {}.ARadioGroup;
-    /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ 
     // @ts-ignore
     const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({
         ...{ 'onChange': {} },
@@ -257,7 +257,7 @@ __VLS_3.slots.default;
     };
     __VLS_8.slots.default;
     const __VLS_13 = {}.ARadio;
-    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
     // @ts-ignore
     const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
         value: "burndown",
@@ -266,9 +266,9 @@ __VLS_3.slots.default;
         value: "burndown",
     }, ...__VLS_functionalComponentArgsRest(__VLS_14));
     __VLS_16.slots.default;
-    var __VLS_16;
+    let __VLS_16;
     const __VLS_17 = {}.ARadio;
-    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+    /** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
     // @ts-ignore
     const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
         value: "cumulative",
@@ -277,11 +277,11 @@ __VLS_3.slots.default;
         value: "cumulative",
     }, ...__VLS_functionalComponentArgsRest(__VLS_18));
     __VLS_20.slots.default;
-    var __VLS_20;
-    var __VLS_8;
+    let __VLS_20;
+    let __VLS_8;
 }
 const __VLS_21 = {}.ATabs;
-/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ ;
+/** @type {[typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, typeof __VLS_components.ATabs, typeof __VLS_components.aTabs, ]} */ 
 // @ts-ignore
 const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
     ...{ 'onChange': {} },
@@ -299,7 +299,7 @@ const __VLS_28 = {
 };
 __VLS_24.slots.default;
 const __VLS_29 = {}.ATabPane;
-/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
 // @ts-ignore
 const __VLS_30 = __VLS_asFunctionalComponent(__VLS_29, new __VLS_29({
     key: "month",
@@ -310,7 +310,7 @@ const __VLS_31 = __VLS_30({
     tab: "月度",
 }, ...__VLS_functionalComponentArgsRest(__VLS_30));
 const __VLS_33 = {}.ATabPane;
-/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
 // @ts-ignore
 const __VLS_34 = __VLS_asFunctionalComponent(__VLS_33, new __VLS_33({
     key: "quarter",
@@ -321,7 +321,7 @@ const __VLS_35 = __VLS_34({
     tab: "季度",
 }, ...__VLS_functionalComponentArgsRest(__VLS_34));
 const __VLS_37 = {}.ATabPane;
-/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ ;
+/** @type {[typeof __VLS_components.ATabPane, typeof __VLS_components.aTabPane, ]} */ 
 // @ts-ignore
 const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
     key: "year",
@@ -331,15 +331,15 @@ const __VLS_39 = __VLS_38({
     key: "year",
     tab: "年度",
 }, ...__VLS_functionalComponentArgsRest(__VLS_38));
-var __VLS_24;
+let __VLS_24;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div)({
     ref: "burndownChartRef",
     ...{ class: "chart-container" },
 });
-/** @type {typeof __VLS_ctx.burndownChartRef} */ ;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['chart-container']} */ ;
-var __VLS_dollars;
+/** @type {typeof __VLS_ctx.burndownChartRef} */ 
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['chart-container']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -365,4 +365,4 @@ export default (await import('vue')).defineComponent({
         chartData: { type: Array, default: () => [] }
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

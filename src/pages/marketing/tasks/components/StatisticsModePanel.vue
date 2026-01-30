@@ -81,23 +81,23 @@
           </div>
           <div class="health-details">
             <div class="health-item" :class="{ 'health-good': hasStartNode, 'health-bad': !hasStartNode }">
-              <icon-check-circle v-if="hasStartNode" />
-              <icon-close-circle v-else />
+              <IconCheckCircle v-if="hasStartNode" />
+              <IconCloseCircle v-else />
               <span>开始节点</span>
             </div>
             <div class="health-item" :class="{ 'health-good': hasEndNode, 'health-bad': !hasEndNode }">
-              <icon-check-circle v-if="hasEndNode" />
-              <icon-close-circle v-else />
+              <IconCheckCircle v-if="hasEndNode" />
+              <IconCloseCircle v-else />
               <span>结束节点</span>
             </div>
             <div class="health-item" :class="{ 'health-good': noIsolatedNodes, 'health-bad': !noIsolatedNodes }">
-              <icon-check-circle v-if="noIsolatedNodes" />
-              <icon-close-circle v-else />
+              <IconCheckCircle v-if="noIsolatedNodes" />
+              <IconCloseCircle v-else />
               <span>无孤立节点</span>
             </div>
             <div class="health-item" :class="{ 'health-good': hasValidFlow, 'health-bad': !hasValidFlow }">
-              <icon-check-circle v-if="hasValidFlow" />
-              <icon-close-circle v-else />
+              <IconCheckCircle v-if="hasValidFlow" />
+              <IconCloseCircle v-else />
               <span>流程完整</span>
             </div>
           </div>
@@ -107,7 +107,7 @@
       <!-- 操作按钮 -->
       <div class="panel-actions">
         <a-button type="primary" @click="refreshStats">
-          <icon-refresh />刷新统计
+          <IconRefresh />刷新统计
         </a-button>
       </div>
     </div>

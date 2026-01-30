@@ -215,7 +215,7 @@ class LayerUtils {
       if (nodes.length > maxNodesPerLayer) {
         // 将过多的节点分散到相邻层级
         const excessNodes = nodes.slice(maxNodesPerLayer);
-        let targetLayer = layer + minLayerSpacing;
+        const targetLayer = layer + minLayerSpacing;
         
         excessNodes.forEach((node, index) => {
           const newLayer = targetLayer + Math.floor(index / maxNodesPerLayer) * minLayerSpacing;

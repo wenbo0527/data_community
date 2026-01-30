@@ -226,7 +226,7 @@ const sampleAndUpdateAttributes = async () => {
     consoleLogger.group('采样并更新事件属性')
     consoleLogger.info('采样请求参数', { datasourceId: form.datasourceId, topic: form.topic })
     const res: any = await mockEventAPI.getTopicSampleSchema(form.datasourceId as any, form.topic as any)
-    let flat: Record<string, any> = flattenObject(res?.sample || {})
+    const flat: Record<string, any> = flattenObject(res?.sample || {})
     let fields: Array<{ name: string; type: string; example?: any }> = Object.keys(flat).map((k: string) => ({ name: k, type: mapValueType(flat[k]), example: flat[k] }))
     if (!fields.length && Array.isArray(res?.schema?.fields)) {
       fields = (res.schema.fields as Array<{ name: string; type: string; example?: any }>).map((f) => ({ name: String(f.name || ''), type: String(f.type || 'string'), example: f.example }))

@@ -2,18 +2,18 @@
   <div class="product-modules-complete">
     <!-- 错误状态 -->
     <div v-if="hasError" class="error-state">
-      <a-result status="error" title="加载失败" :sub-title="errorMessage">
+      <AResult status="error" title="加载失败" :sub-title="errorMessage">
         <template #extra>
-          <a-button type="primary" @click="$emit('retry')">
+          <AButton type="primary" @click="$emit('retry')">
             重新加载
-          </a-button>
+          </AButton>
         </template>
-      </a-result>
+      </AResult>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="isEmpty" class="empty-state">
-      <a-empty description="暂无产品数据" />
+      <AEmpty description="暂无产品数据" />
     </div>
 
     <!-- 正常状态 -->
@@ -34,7 +34,7 @@
         <!-- 基本信息 -->
         <div class="info-module">
           <div class="module-header">
-            <h4><icon-user /> 基本信息</h4>
+            <h4><IconUser /> 基本信息</h4>
           </div>
           <div class="module-content">
             <ProductBasicInfo 
@@ -48,7 +48,7 @@
         <!-- 授信记录 -->
         <div class="info-module">
           <div class="module-header">
-            <h4><icon-safe /> 授信记录</h4>
+            <h4><IconSafe /> 授信记录</h4>
           </div>
           <div class="module-content">
             <CreditList 
@@ -62,7 +62,7 @@
         <!-- 用信记录 -->
         <div class="info-module">
           <div class="module-header">
-            <h4><icon-storage /> 用信记录</h4>
+            <h4><IconStorage /> 用信记录</h4>
           </div>
           <div class="module-content">
             <LoanList 
@@ -76,7 +76,7 @@
         <!-- 调额历史 -->
         <div class="info-module">
           <div class="module-header">
-            <h4><icon-history /> 调额历史</h4>
+            <h4><IconHistory /> 调额历史</h4>
           </div>
           <div class="module-content">
             <AdjustmentHistory 

@@ -13,19 +13,19 @@
       <a-button-group size="small">
         <a-button @click="handleEdit">
           <template #icon>
-            <icon-edit />
+            <IconEdit />
           </template>
           编辑
         </a-button>
         <a-button @click="handleCopy">
           <template #icon>
-            <icon-copy />
+            <IconCopy />
           </template>
           复制
         </a-button>
         <a-button @click="handleDelete" status="danger">
           <template #icon>
-            <icon-delete />
+            <IconDelete />
           </template>
           删除
         </a-button>

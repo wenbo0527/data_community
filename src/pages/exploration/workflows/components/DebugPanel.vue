@@ -11,8 +11,8 @@
             @click="startDebug"
           >
             <template #icon>
-              <icon-play-arrow v-if="!isRunning" />
-              <icon-loading v-else />
+              <IconPlayArrow v-if="!isRunning" />
+              <IconLoading v-else />
             </template>
             {{ isRunning ? '运行中' : '开始调试' }}
           </a-button>
@@ -22,7 +22,7 @@
             @click="stepNext"
           >
             <template #icon>
-              <icon-forward />
+              <IconForward />
             </template>
             单步执行
           </a-button>
@@ -32,7 +32,7 @@
             @click="continueExecution"
           >
             <template #icon>
-              <icon-play-circle />
+              <IconPlayCircle />
             </template>
             继续
           </a-button>
@@ -43,7 +43,7 @@
             @click="stopDebug"
           >
             <template #icon>
-              <icon-pause-circle />
+              <IconPauseCircle />
             </template>
             停止
           </a-button>
@@ -77,7 +77,7 @@
             @click="clearLogs"
           >
             <template #icon>
-              <icon-delete />
+              <IconDelete />
             </template>
             清空日志
           </a-button>
@@ -196,7 +196,7 @@
                       @click="previewOutputData(result)"
                     >
                       <template #icon>
-                        <icon-eye />
+                        <IconEye />
                       </template>
                       预览数据
                     </a-button>
@@ -245,7 +245,7 @@
                 class="breakpoint-item"
               >
                 <div class="breakpoint-info">
-                  <icon-record-stop class="breakpoint-icon" />
+                  <IconRecordStop class="breakpoint-icon" />
                   <span class="breakpoint-label">{{ getNodeLabel(nodeId) }}</span>
                 </div>
                 <a-button
@@ -255,7 +255,7 @@
                   @click="removeBreakpoint(nodeId)"
                 >
                   <template #icon>
-                    <icon-close />
+                    <IconClose />
                   </template>
                 </a-button>
               </div>

@@ -20,7 +20,7 @@
         </div>
         <div class="header-actions">
           <a-button @click="refreshData">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
           <a-button
@@ -28,7 +28,7 @@
             type="primary"
             @click="retryQuery"
           >
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             重试
           </a-button>
         </div>
@@ -76,7 +76,7 @@
             </div>
           </div>
           <div v-else class="no-conditions">
-            <icon-info-circle />
+            <IconInfoCircle />
             <span>未设置查询条件</span>
           </div>
         </div>
@@ -88,19 +88,19 @@
           <h4>查询结果</h4>
           <div class="results-actions">
             <a-button @click="selectAllRows" :disabled="!resultData.length">
-              <template #icon><icon-check-square /></template>
+              <template #icon><IconCheckSquare /></template>
               全选
             </a-button>
             <a-button @click="clearSelection" :disabled="!selectedRowKeys.length">
-              <template #icon><icon-close /></template>
+              <template #icon><IconClose /></template>
               取消选择
             </a-button>
             <a-button type="primary" @click="copySelectedData" :disabled="!selectedRowKeys.length">
-              <template #icon><icon-copy /></template>
+              <template #icon><IconCopy /></template>
               复制选中 ({{ selectedRowKeys.length }})
             </a-button>
             <a-button @click="copyAllData" :disabled="!resultData.length">
-              <template #icon><icon-copy /></template>
+              <template #icon><IconCopy /></template>
               复制全部
             </a-button>
           </div>
@@ -154,7 +154,7 @@
             </template>
           </a-table>
           <div v-else class="no-results">
-            <icon-info-circle />
+            <IconInfoCircle />
             <span>当前查询状态下暂无数据记录</span>
           </div>
         </div>

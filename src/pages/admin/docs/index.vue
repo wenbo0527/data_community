@@ -8,11 +8,11 @@
       <div class="header-right">
         <a-space>
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建文档
           </a-button>
           <a-button @click="handleRefresh">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             刷新
           </a-button>
         </a-space>
@@ -73,12 +73,12 @@
             <template #operations="{ record }">
               <a-space>
                 <a-button type="text" size="small" @click="handleEdit(record)">
-                  <template #icon><icon-edit /></template>
+                  <template #icon><IconEdit /></template>
                   编辑
                 </a-button>
                 <a-popconfirm content="确定删除该文档吗？此操作不可恢复。" type="warning" @ok="handleDelete(record)">
                   <a-button type="text" status="danger" size="small">
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                     删除
                   </a-button>
                 </a-popconfirm>

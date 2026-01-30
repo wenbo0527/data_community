@@ -1,0 +1,47 @@
+{
+  "codeQuality": {
+    "eslint": {
+      "status": "passed",
+      "details": "ESLint检查通过"
+    },
+    "typescript": {
+      "status": "passed",
+      "details": "TypeScript检查通过"
+    },
+    "duplication": {
+      "status": "failed",
+      "details": "代码重复率: 10.77%"
+    }
+  },
+  "performance": {
+    "buildTime": {
+      "status": "failed",
+      "details": "构建时间: 65.326s"
+    },
+    "bundleSize": {
+      "status": "failed",
+      "details": "包体积: 62504.75KB"
+    }
+  },
+  "compatibility": {
+    "browserslist": {
+      "status": "passed",
+      "details": "已配置浏览器兼容性列表"
+    },
+    "mobile": {
+      "status": "passed",
+      "details": "已配置viewport meta标签"
+    }
+  },
+  "security": {
+    "dependencies": {
+      "status": "warning",
+      "details": "安全审计失败"
+    }
+  },
+  "overall": {
+    "passed": 0,
+    "failed": 0,
+    "warnings": 0
+  }
+}

@@ -10,6 +10,7 @@ import {
   ApplicationDuration,
   ConflictType
 } from './types';
+import DateUtils from '@/utils/dateUtils';
 
 /**
  * 根据敏感等级确定审批级别
@@ -173,8 +174,7 @@ export function formatDuration(duration, expireDate) {
   }
   
   if (expireDate) {
-    const date = new Date(expireDate);
-    return `临时（至 ${date.toLocaleDateString('zh-CN')}）`;
+    return `临时（至 ${DateUtils.formatDate(expireDate)}）`;
   }
   
   return '临时';

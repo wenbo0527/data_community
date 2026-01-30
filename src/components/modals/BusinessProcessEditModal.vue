@@ -32,7 +32,7 @@
         <div class="steps-header">
           <h3>业务步骤配置</h3>
           <a-button type="primary" @click="addStep">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             添加步骤
           </a-button>
         </div>
@@ -53,7 +53,7 @@
                     size="mini" 
                     @click="moveStep(index, 'up')"
                   >
-                    <template #icon><icon-up /></template>
+                    <template #icon><IconUp /></template>
                   </a-button>
                   <a-button 
                     v-if="index < formData.steps.length - 1" 
@@ -61,7 +61,7 @@
                     size="mini" 
                     @click="moveStep(index, 'down')"
                   >
-                    <template #icon><icon-down /></template>
+                    <template #icon><IconDown /></template>
                   </a-button>
                   <a-button 
                     type="text" 
@@ -69,7 +69,7 @@
                     status="danger" 
                     @click="removeStep(index)"
                   >
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                   </a-button>
                 </div>
               </div>
@@ -101,7 +101,7 @@
                     <div class="section-header">
                       <span>已关联数据表 ({{ step.tables.length }})</span>
                       <a-button type="text" size="small" @click="selectTables(index)">
-                        <template #icon><icon-plus /></template>
+                        <template #icon><IconPlus /></template>
                         选择数据表
                       </a-button>
                     </div>
@@ -121,11 +121,11 @@
                           status="danger" 
                           @click="removeTable(index, table.name)"
                         >
-                          <template #icon><icon-close /></template>
+                          <template #icon><IconClose /></template>
                         </a-button>
                       </div>
                       <div v-if="step.tables.length === 0" class="empty-state">
-                        <icon-file class="empty-icon" />
+                        <IconFile class="empty-icon" />
                         <span>暂无关联数据表</span>
                       </div>
                     </div>
@@ -138,7 +138,7 @@
                     <div class="section-header">
                       <span>已关联指标 ({{ step.metrics.length }})</span>
                       <a-button type="text" size="small" @click="selectMetrics(index)">
-                        <template #icon><icon-plus /></template>
+                        <template #icon><IconPlus /></template>
                         选择指标
                       </a-button>
                     </div>
@@ -158,11 +158,11 @@
                           status="danger" 
                           @click="removeMetric(index, metric.name)"
                         >
-                          <template #icon><icon-close /></template>
+                          <template #icon><IconClose /></template>
                         </a-button>
                       </div>
                       <div v-if="step.metrics.length === 0" class="empty-state">
-                        <icon-bar-chart class="empty-icon" />
+                        <IconBarChart class="empty-icon" />
                         <span>暂无关联指标</span>
                       </div>
                     </div>
@@ -173,7 +173,7 @@
           </div>
 
           <div v-if="formData.steps.length === 0" class="empty-steps">
-            <icon-plus class="empty-icon" />
+            <IconPlus class="empty-icon" />
             <span>暂无业务步骤，请点击上方按钮添加</span>
           </div>
         </div>

@@ -19,7 +19,7 @@
             style="width: 300px"
             @change="handleSearch"
           >
-            <template #prefix><icon-search /></template>
+            <template #prefix><IconSearch /></template>
           </a-input>
         </div>
         <div class="filter-area">
@@ -49,7 +49,7 @@
         </div>
         <div class="button-area">
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建事件
           </a-button>
         </div>
@@ -96,7 +96,7 @@
           <!-- 状态列 -->
           <a-table-column title="状态" data-index="status" width="100">
             <template #cell="{ record }">
-              <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
+              <StatusTag :status="record.status" dictKey="eventStatus" />
             </template>
           </a-table-column>
           
@@ -123,7 +123,7 @@
           <a-table-column title="更新时间" data-index="updateTime" width="160">
             <template #cell="{ record }">
               <div class="create-time">
-                {{ formatDate(record.updateTime) }}
+                {{ DateUtils.formatDateTime(record.updateTime) }}
               </div>
             </template>
           </a-table-column>
@@ -133,11 +133,11 @@
             <template #cell="{ record }">
               <div class="action-buttons">
                 <a-button type="text" size="small" @click="handleEdit(record)">
-                  <template #icon><icon-edit /></template>
+                  <template #icon><IconEdit /></template>
                   编辑
                 </a-button>
                 <a-button type="text" size="small" @click="handleTest(record)">
-                  <template #icon><icon-play-circle /></template>
+                  <template #icon><IconPlayCircle /></template>
                   测试
                 </a-button>
                 <a-popconfirm
@@ -146,7 +146,7 @@
                   @ok="handleDelete(record)"
                 >
                   <a-button type="text" size="small" status="danger">
-                    <template #icon><icon-delete /></template>
+                    <template #icon><IconDelete /></template>
                     删除
                   </a-button>
                 </a-popconfirm>
@@ -176,6 +176,8 @@ import {
   IconPlayCircle
 } from '@arco-design/web-vue/es/icon'
 import { mockEventAPI } from '@/mock/event'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -283,11 +285,6 @@ const handleDelete = async (record) => {
   }
 }
 
-const getStatusColor = (s) => {
-  const map = { '草稿': 'gray', '上线': 'green', '下线': 'red' }
-  return map[s] || 'gray'
-}
-
  
 
 const handleSelectionChange = (rows) => {
@@ -343,9 +340,7 @@ const getEventTypeColor = (type) => {
   return colorMap[type] || 'gray'
 }
 
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString('zh-CN')
-}
+ 
 
 // 生命周期
 onMounted(() => {

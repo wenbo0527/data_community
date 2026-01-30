@@ -4,7 +4,7 @@
       <a-space>
         <a-button type="primary" @click="showCreateModal = true">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           新建规则
         </a-button>

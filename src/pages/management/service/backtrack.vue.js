@@ -117,14 +117,14 @@ const showAddModal = () => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['page-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-product-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-product-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-product-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['custom-products']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
+/** @type {__VLS_StyleScopedClasses['page-header']} */ 
+/** @type {__VLS_StyleScopedClasses['add-product-item']} */ 
+/** @type {__VLS_StyleScopedClasses['add-product-item']} */ 
+/** @type {__VLS_StyleScopedClasses['add-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['add-product-item']} */ 
+/** @type {__VLS_StyleScopedClasses['add-text']} */ 
+/** @type {__VLS_StyleScopedClasses['custom-products']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -135,7 +135,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
 const __VLS_0 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onClick': {} },
@@ -155,12 +155,12 @@ __VLS_3.slots.default;
 {
     const { icon: __VLS_thisSlot } = __VLS_3.slots;
     const __VLS_8 = {}.IconPlus;
-    /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ ;
+    /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ 
     // @ts-ignore
     const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({}));
     const __VLS_10 = __VLS_9({}, ...__VLS_functionalComponentArgsRest(__VLS_9));
 }
-var __VLS_3;
+let __VLS_3;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "application-list" },
 });
@@ -177,7 +177,7 @@ for (const [n] of __VLS_getVForSourceType((4))) {
         ...{ class: "add-icon" },
     });
     const __VLS_12 = {}.IconPlus;
-    /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ ;
+    /** @type {[typeof __VLS_components.IconPlus, typeof __VLS_components.iconPlus, ]} */ 
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({}));
     const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
@@ -199,7 +199,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 });
 (__VLS_ctx.applicationDescription.length);
 const __VLS_16 = {}.ATextarea;
-/** @type {[typeof __VLS_components.ATextarea, typeof __VLS_components.aTextarea, ]} */ ;
+/** @type {[typeof __VLS_components.ATextarea, typeof __VLS_components.aTextarea, ]} */ 
 // @ts-ignore
 const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
     modelValue: (__VLS_ctx.applicationDescription),
@@ -221,7 +221,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "confirm-section" },
 });
 const __VLS_20 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
     ...{ 'onClick': {} },
@@ -240,9 +240,9 @@ const __VLS_27 = {
     onClick: (__VLS_ctx.handleSubmitApplication)
 };
 __VLS_23.slots.default;
-var __VLS_23;
+let __VLS_23;
 const __VLS_28 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
     ...{ 'onOk': {} },
@@ -280,7 +280,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "section-title" },
 });
 const __VLS_37 = {}.ARadioGroup;
-/** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+/** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ 
 // @ts-ignore
 const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
     modelValue: (__VLS_ctx.formData.variableScope),
@@ -292,7 +292,7 @@ const __VLS_39 = __VLS_38({
 }, ...__VLS_functionalComponentArgsRest(__VLS_38));
 __VLS_40.slots.default;
 const __VLS_41 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
 // @ts-ignore
 const __VLS_42 = __VLS_asFunctionalComponent(__VLS_41, new __VLS_41({
     value: "all",
@@ -301,9 +301,9 @@ const __VLS_43 = __VLS_42({
     value: "all",
 }, ...__VLS_functionalComponentArgsRest(__VLS_42));
 __VLS_44.slots.default;
-var __VLS_44;
+let __VLS_44;
 const __VLS_45 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
 // @ts-ignore
 const __VLS_46 = __VLS_asFunctionalComponent(__VLS_45, new __VLS_45({
     value: "custom",
@@ -312,8 +312,8 @@ const __VLS_47 = __VLS_46({
     value: "custom",
 }, ...__VLS_functionalComponentArgsRest(__VLS_46));
 __VLS_48.slots.default;
-var __VLS_48;
-var __VLS_40;
+let __VLS_48;
+let __VLS_40;
 if (__VLS_ctx.formData.variableScope === 'custom') {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "custom-products" },
@@ -322,7 +322,7 @@ if (__VLS_ctx.formData.variableScope === 'custom') {
         ...{ class: "section-title" },
     });
     const __VLS_49 = {}.ASelect;
-    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
     // @ts-ignore
     const __VLS_50 = __VLS_asFunctionalComponent(__VLS_49, new __VLS_49({
         modelValue: (__VLS_ctx.formData.selectedProducts),
@@ -341,7 +341,7 @@ if (__VLS_ctx.formData.variableScope === 'custom') {
     __VLS_52.slots.default;
     for (const [product] of __VLS_getVForSourceType((__VLS_ctx.dataProducts))) {
         const __VLS_53 = {}.AOption;
-        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+        /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
         // @ts-ignore
         const __VLS_54 = __VLS_asFunctionalComponent(__VLS_53, new __VLS_53({
             key: (product.value),
@@ -355,7 +355,7 @@ if (__VLS_ctx.formData.variableScope === 'custom') {
         (product.label);
         var __VLS_56;
     }
-    var __VLS_52;
+    let __VLS_52;
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "form-section" },
@@ -364,7 +364,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "section-title" },
 });
 const __VLS_57 = {}.ASwitch;
-/** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ ;
+/** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ 
 // @ts-ignore
 const __VLS_58 = __VLS_asFunctionalComponent(__VLS_57, new __VLS_57({
     modelValue: (__VLS_ctx.formData.isDailyFollow),
@@ -383,7 +383,7 @@ if (__VLS_ctx.formData.isDailyFollow) {
         ...{ class: "date-label" },
     });
     const __VLS_61 = {}.ADatePicker;
-    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
     // @ts-ignore
     const __VLS_62 = __VLS_asFunctionalComponent(__VLS_61, new __VLS_61({
         modelValue: (__VLS_ctx.formData.endDate),
@@ -403,7 +403,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "section-title" },
 });
 const __VLS_65 = {}.ASwitch;
-/** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ ;
+/** @type {[typeof __VLS_components.ASwitch, typeof __VLS_components.aSwitch, ]} */ 
 // @ts-ignore
 const __VLS_66 = __VLS_asFunctionalComponent(__VLS_65, new __VLS_65({
     modelValue: (__VLS_ctx.formData.enableHistoryBacktrack),
@@ -419,7 +419,7 @@ if (__VLS_ctx.formData.enableHistoryBacktrack) {
         ...{ class: "date-range" },
     });
     const __VLS_69 = {}.ADatePicker;
-    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
     // @ts-ignore
     const __VLS_70 = __VLS_asFunctionalComponent(__VLS_69, new __VLS_69({
         modelValue: (__VLS_ctx.formData.historyStartDate),
@@ -433,7 +433,7 @@ if (__VLS_ctx.formData.enableHistoryBacktrack) {
         ...{ class: "date-separator" },
     });
     const __VLS_73 = {}.ADatePicker;
-    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
     // @ts-ignore
     const __VLS_74 = __VLS_asFunctionalComponent(__VLS_73, new __VLS_73({
         modelValue: (__VLS_ctx.formData.historyEndDate),
@@ -460,7 +460,7 @@ if (__VLS_ctx.formData.executionCycle) {
         ...{ class: "date-label" },
     });
     const __VLS_77 = {}.ADatePicker;
-    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
     // @ts-ignore
     const __VLS_78 = __VLS_asFunctionalComponent(__VLS_77, new __VLS_77({
         modelValue: (__VLS_ctx.formData.startDate),
@@ -479,7 +479,7 @@ if (__VLS_ctx.formData.executionCycle) {
         ...{ class: "date-label" },
     });
     const __VLS_81 = {}.ADatePicker;
-    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
     // @ts-ignore
     const __VLS_82 = __VLS_asFunctionalComponent(__VLS_81, new __VLS_81({
         modelValue: (__VLS_ctx.formData.endDate),
@@ -492,7 +492,7 @@ if (__VLS_ctx.formData.executionCycle) {
         disabledDate: (__VLS_ctx.disabledEndDate),
     }, ...__VLS_functionalComponentArgsRest(__VLS_82));
     const __VLS_85 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_86 = __VLS_asFunctionalComponent(__VLS_85, new __VLS_85({
         ...{ 'onClick': {} },
@@ -510,15 +510,15 @@ if (__VLS_ctx.formData.executionCycle) {
     };
     __VLS_88.slots.default;
     const __VLS_93 = {}.IconCalendar;
-    /** @type {[typeof __VLS_components.IconCalendar, typeof __VLS_components.iconCalendar, ]} */ ;
+    /** @type {[typeof __VLS_components.IconCalendar, typeof __VLS_components.iconCalendar, ]} */ 
     // @ts-ignore
     const __VLS_94 = __VLS_asFunctionalComponent(__VLS_93, new __VLS_93({}));
     const __VLS_95 = __VLS_94({}, ...__VLS_functionalComponentArgsRest(__VLS_94));
-    var __VLS_88;
+    let __VLS_88;
 }
-var __VLS_31;
+let __VLS_31;
 const __VLS_97 = {}.AModal;
-/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ ;
+/** @type {[typeof __VLS_components.AModal, typeof __VLS_components.aModal, typeof __VLS_components.AModal, typeof __VLS_components.aModal, ]} */ 
 // @ts-ignore
 const __VLS_98 = __VLS_asFunctionalComponent(__VLS_97, new __VLS_97({
     ...{ 'onOk': {} },
@@ -553,7 +553,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "date-option" },
 });
 const __VLS_106 = {}.ARadioGroup;
-/** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ ;
+/** @type {[typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, typeof __VLS_components.ARadioGroup, typeof __VLS_components.aRadioGroup, ]} */ 
 // @ts-ignore
 const __VLS_107 = __VLS_asFunctionalComponent(__VLS_106, new __VLS_106({
     modelValue: (__VLS_ctx.dateOption),
@@ -565,7 +565,7 @@ const __VLS_108 = __VLS_107({
 }, ...__VLS_functionalComponentArgsRest(__VLS_107));
 __VLS_109.slots.default;
 const __VLS_110 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
 // @ts-ignore
 const __VLS_111 = __VLS_asFunctionalComponent(__VLS_110, new __VLS_110({
     value: "all",
@@ -574,9 +574,9 @@ const __VLS_112 = __VLS_111({
     value: "all",
 }, ...__VLS_functionalComponentArgsRest(__VLS_111));
 __VLS_113.slots.default;
-var __VLS_113;
+let __VLS_113;
 const __VLS_114 = {}.ARadio;
-/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ ;
+/** @type {[typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, typeof __VLS_components.ARadio, typeof __VLS_components.aRadio, ]} */ 
 // @ts-ignore
 const __VLS_115 = __VLS_asFunctionalComponent(__VLS_114, new __VLS_114({
     value: "custom",
@@ -585,8 +585,8 @@ const __VLS_116 = __VLS_115({
     value: "custom",
 }, ...__VLS_functionalComponentArgsRest(__VLS_115));
 __VLS_117.slots.default;
-var __VLS_117;
-var __VLS_109;
+let __VLS_117;
+let __VLS_109;
 if (__VLS_ctx.dateOption === 'custom') {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "custom-date" },
@@ -598,7 +598,7 @@ if (__VLS_ctx.dateOption === 'custom') {
         ...{ class: "date-label" },
     });
     const __VLS_118 = {}.ADatePicker;
-    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
     // @ts-ignore
     const __VLS_119 = __VLS_asFunctionalComponent(__VLS_118, new __VLS_118({
         modelValue: (__VLS_ctx.customStartDate),
@@ -612,7 +612,7 @@ if (__VLS_ctx.dateOption === 'custom') {
         ...{ class: "date-separator" },
     });
     const __VLS_122 = {}.ADatePicker;
-    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
     // @ts-ignore
     const __VLS_123 = __VLS_asFunctionalComponent(__VLS_122, new __VLS_122({
         modelValue: (__VLS_ctx.customEndDate),
@@ -623,50 +623,50 @@ if (__VLS_ctx.dateOption === 'custom') {
         placeholder: "结束日期",
     }, ...__VLS_functionalComponentArgsRest(__VLS_123));
 }
-var __VLS_100;
-/** @type {__VLS_StyleScopedClasses['content']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['application-list']} */ ;
-/** @type {__VLS_StyleScopedClasses['products-grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-product-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['add-text']} */ ;
-/** @type {__VLS_StyleScopedClasses['application-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['description-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['description-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['character-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['description-textarea']} */ ;
-/** @type {__VLS_StyleScopedClasses['confirm-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['modal-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['radio-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['custom-products']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['daily-follow-settings']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-range']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['history-backtrack-settings']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-range']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-separator']} */ ;
-/** @type {__VLS_StyleScopedClasses['form-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-range']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-separator']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-modal-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-option']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-radio-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['custom-date']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-range-picker']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-separator']} */ ;
-var __VLS_dollars;
+let __VLS_100;
+/** @type {__VLS_StyleScopedClasses['content']} */ 
+/** @type {__VLS_StyleScopedClasses['page-header']} */ 
+/** @type {__VLS_StyleScopedClasses['application-list']} */ 
+/** @type {__VLS_StyleScopedClasses['products-grid']} */ 
+/** @type {__VLS_StyleScopedClasses['add-product-item']} */ 
+/** @type {__VLS_StyleScopedClasses['add-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['add-text']} */ 
+/** @type {__VLS_StyleScopedClasses['application-description']} */ 
+/** @type {__VLS_StyleScopedClasses['description-header']} */ 
+/** @type {__VLS_StyleScopedClasses['description-title']} */ 
+/** @type {__VLS_StyleScopedClasses['character-count']} */ 
+/** @type {__VLS_StyleScopedClasses['description-textarea']} */ 
+/** @type {__VLS_StyleScopedClasses['confirm-section']} */ 
+/** @type {__VLS_StyleScopedClasses['modal-content']} */ 
+/** @type {__VLS_StyleScopedClasses['form-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['radio-group']} */ 
+/** @type {__VLS_StyleScopedClasses['custom-products']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['form-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['daily-follow-settings']} */ 
+/** @type {__VLS_StyleScopedClasses['date-range']} */ 
+/** @type {__VLS_StyleScopedClasses['date-label']} */ 
+/** @type {__VLS_StyleScopedClasses['form-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['history-backtrack-settings']} */ 
+/** @type {__VLS_StyleScopedClasses['date-range']} */ 
+/** @type {__VLS_StyleScopedClasses['date-separator']} */ 
+/** @type {__VLS_StyleScopedClasses['form-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['date-range']} */ 
+/** @type {__VLS_StyleScopedClasses['date-label']} */ 
+/** @type {__VLS_StyleScopedClasses['date-separator']} */ 
+/** @type {__VLS_StyleScopedClasses['date-label']} */ 
+/** @type {__VLS_StyleScopedClasses['date-modal-content']} */ 
+/** @type {__VLS_StyleScopedClasses['date-option']} */ 
+/** @type {__VLS_StyleScopedClasses['date-radio-group']} */ 
+/** @type {__VLS_StyleScopedClasses['custom-date']} */ 
+/** @type {__VLS_StyleScopedClasses['date-range-picker']} */ 
+/** @type {__VLS_StyleScopedClasses['date-label']} */ 
+/** @type {__VLS_StyleScopedClasses['date-separator']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -694,4 +694,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

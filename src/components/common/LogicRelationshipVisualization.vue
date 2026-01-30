@@ -4,10 +4,10 @@
       <h3>逻辑关系图</h3>
       <div class="controls">
         <a-button size="small" @click="autoLayout">
-          <icon-refresh /> 自动布局
+          <IconRefresh /> 自动布局
         </a-button>
         <a-button size="small" @click="zoomToFit">
-          <icon-fullscreen /> 适应画布
+          <IconFullscreen /> 适应画布
         </a-button>
       </div>
     </div>

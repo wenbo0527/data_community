@@ -33,7 +33,7 @@
           @click="exportResults"
           data-testid="export-results"
         >
-          <icon-download /> 导出结果
+          <IconDownload /> 导出结果
         </a-button>
         <a-button 
           type="text"
@@ -41,7 +41,7 @@
           @click="copyResults"
           data-testid="copy-results"
         >
-          <icon-copy /> 复制结果
+          <IconCopy /> 复制结果
         </a-button>
         <a-button
           type="text"
@@ -80,10 +80,10 @@
     
     <div v-if="showValidation" class="validation-section">
       <div v-if="validationResult.isValid" class="validation-success">
-        <icon-check-circle /> 配置验证通过
+        <IconCheckCircle /> 配置验证通过
       </div>
       <div v-else class="validation-error">
-        <icon-exclamation-circle /> 配置验证失败
+        <IconExclamationCircle /> 配置验证失败
         <ul class="error-list">
           <li v-for="error in validationResult.errors" :key="error.field">
             {{ error.message }}

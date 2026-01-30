@@ -23,7 +23,7 @@ export class LayerOptimizer {
     console.log(`🎯 [层级优化器] 开始优化层级排列 - 层数: ${hierarchy.layers.length}`);
     
     const startTime = Date.now();
-    let currentHierarchy = JSON.parse(JSON.stringify(hierarchy));
+    const currentHierarchy = JSON.parse(JSON.stringify(hierarchy));
     let bestCrossings = this.countTotalCrossings(currentHierarchy);
     let bestHierarchy = JSON.parse(JSON.stringify(currentHierarchy));
     

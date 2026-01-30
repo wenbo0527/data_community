@@ -38,18 +38,18 @@ const handleApply = (type) => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['logo']} */ ;
+/** @type {__VLS_StyleScopedClasses['logo']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 const __VLS_0 = {}.ALayout;
-/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ ;
+/** @type {[typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, typeof __VLS_components.ALayout, typeof __VLS_components.aLayout, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({}));
 const __VLS_2 = __VLS_1({}, ...__VLS_functionalComponentArgsRest(__VLS_1));
-var __VLS_4 = {};
+const __VLS_4 = {};
 __VLS_3.slots.default;
 const __VLS_5 = {}.ALayoutContent;
-/** @type {[typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, ]} */ ;
+/** @type {[typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, typeof __VLS_components.ALayoutContent, typeof __VLS_components.aLayoutContent, ]} */ 
 // @ts-ignore
 const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({
     ...{ class: "content" },
@@ -59,7 +59,7 @@ const __VLS_7 = __VLS_6({
 }, ...__VLS_functionalComponentArgsRest(__VLS_6));
 __VLS_8.slots.default;
 const __VLS_9 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
     gutter: ([24, 24]),
@@ -70,7 +70,7 @@ const __VLS_11 = __VLS_10({
 __VLS_12.slots.default;
 for (const [service, index] of __VLS_getVForSourceType((__VLS_ctx.services))) {
     const __VLS_13 = {}.ACol;
-    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+    /** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
     // @ts-ignore
     const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
         span: (6),
@@ -82,7 +82,7 @@ for (const [service, index] of __VLS_getVForSourceType((__VLS_ctx.services))) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_14));
     __VLS_16.slots.default;
     const __VLS_17 = {}.ACard;
-    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+    /** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
     // @ts-ignore
     const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
         hoverable: true,
@@ -92,7 +92,7 @@ for (const [service, index] of __VLS_getVForSourceType((__VLS_ctx.services))) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_18));
     __VLS_20.slots.default;
     const __VLS_21 = {}.ACardMeta;
-    /** @type {[typeof __VLS_components.ACardMeta, typeof __VLS_components.aCardMeta, ]} */ ;
+    /** @type {[typeof __VLS_components.ACardMeta, typeof __VLS_components.aCardMeta, ]} */ 
     // @ts-ignore
     const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
         title: (service.title),
@@ -106,7 +106,7 @@ for (const [service, index] of __VLS_getVForSourceType((__VLS_ctx.services))) {
         ...{ class: "card-actions" },
     });
     const __VLS_25 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_26 = __VLS_asFunctionalComponent(__VLS_25, new __VLS_25({
         ...{ 'onClick': {} },
@@ -129,12 +129,12 @@ for (const [service, index] of __VLS_getVForSourceType((__VLS_ctx.services))) {
     var __VLS_20;
     var __VLS_16;
 }
-var __VLS_12;
-var __VLS_8;
-var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['content']} */ ;
-/** @type {__VLS_StyleScopedClasses['card-actions']} */ ;
-var __VLS_dollars;
+let __VLS_12;
+let __VLS_8;
+let __VLS_3;
+/** @type {__VLS_StyleScopedClasses['content']} */ 
+/** @type {__VLS_StyleScopedClasses['card-actions']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -148,4 +148,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

@@ -61,7 +61,7 @@
         </a-table>
       </a-card>
     </div>
-    <user-detail v-else :user="currentUser" @back="viewMode = 'list'" />
+    <UserDetail v-else :user="currentUser" @back="viewMode = 'list'" />
   </div>
 </template>
 

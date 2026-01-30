@@ -2,7 +2,7 @@
   <div class="node-statistics-list">
     <div class="section-header">
       <div class="section-title">
-        <icon-unordered-list />
+        <IconUnorderedList />
         <span>节点统计</span>
       </div>
       <div class="section-actions">
@@ -31,8 +31,8 @@
             size="mini"
             @click="toggleViewMode"
           >
-            <icon-apps v-if="viewMode === 'list'" />
-            <icon-unordered-list v-else />
+            <IconApps v-if="viewMode === 'list'" />
+            <IconUnorderedList v-else />
           </a-button>
         </a-space>
       </div>
@@ -172,7 +172,7 @@
             size="mini"
             @click="hideNodeTooltip"
           >
-            <icon-close />
+            <IconClose />
           </a-button>
         </div>
         

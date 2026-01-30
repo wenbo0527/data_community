@@ -12,7 +12,7 @@
         @input="handleInput"
       >
         <template #prefix>
-          <icon-search style="color: var(--color-text-3)" />
+          <IconSearch style="color: var(--color-text-3)" />
         </template>
       </a-input-search>
       
@@ -28,7 +28,7 @@
             class="suggestion-item"
             @click="selectSuggestion(suggestion)"
           >
-            <icon-search class="suggestion-icon" />
+            <IconSearch class="suggestion-icon" />
             <span class="suggestion-text">{{ suggestion }}</span>
           </div>
         </div>
@@ -39,7 +39,7 @@
         <div class="history-header">
           <span>最近搜索</span>
           <a-button type="text" size="mini" @click="clearHistory">
-            <icon-delete />清空
+            <IconDelete />清空
           </a-button>
         </div>
         <div class="history-list">
@@ -65,7 +65,7 @@
               @input="handleFilterChange"
             >
               <template #prefix>
-                <icon-plus-circle />
+                <IconPlusCircle />
               </template>
             </a-input>
           </a-col>
@@ -77,7 +77,7 @@
               @input="handleFilterChange"
             >
               <template #prefix>
-                <icon-minus-circle />
+                <IconMinusCircle />
               </template>
             </a-input>
           </a-col>

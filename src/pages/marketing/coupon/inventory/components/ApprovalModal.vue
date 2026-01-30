@@ -32,7 +32,7 @@
           <template #extra>
             <a-tag color="blue">
               <template #icon>
-                <icon-info-circle />
+                <IconInfoCircle />
               </template>
               步骤 1/4
             </a-tag>
@@ -47,7 +47,7 @@
                   class="readonly-input"
                 >
                   <template #prefix>
-                    <icon-gift />
+                    <IconGift />
                   </template>
                 </a-input>
               </a-form-item>
@@ -62,7 +62,7 @@
                   style="width: 100%"
                 >
                   <template #prefix>
-                     <icon-user />
+                     <IconUser />
                    </template>
                 </a-input-number>
               </a-form-item>
@@ -85,7 +85,7 @@
                   style="width: 100%"
                 >
                   <template #prefix>
-                    <icon-calendar />
+                    <IconCalendar />
                   </template>
                 </a-date-picker>
               </a-form-item>
@@ -99,7 +99,7 @@
                   :disabled-date="(date: any) => date <= formData.effectiveDate"
                 >
                   <template #prefix>
-                    <icon-calendar />
+                    <IconCalendar />
                   </template>
                 </a-date-picker>
               </a-form-item>
@@ -114,7 +114,7 @@
           <template #extra>
             <a-tag color="orange">
               <template #icon>
-                <icon-user />
+                <IconUser />
               </template>
               步骤 2/4
             </a-tag>
@@ -129,7 +129,7 @@
                   allow-search
                 >
                   <template #prefix>
-                    <icon-user />
+                    <IconUser />
                   </template>
                   <a-option
                     v-for="user in approverList"
@@ -149,7 +149,7 @@
               <a-form-item field="priority" label="审批优先级" required>
                 <a-select v-model="formData.priority" placeholder="请选择优先级">
                   <template #prefix>
-                    <icon-exclamation-circle />
+                    <IconExclamationCircle />
                   </template>
                   <a-option value="high">
                     <a-tag color="red">高优先级</a-tag>
@@ -187,7 +187,7 @@
           <template #extra>
             <a-tag color="purple">
               <template #icon>
-                <icon-settings />
+                <IconSettings />
               </template>
               步骤 3/4
             </a-tag>
@@ -199,14 +199,14 @@
                 <a-radio-group v-model="formData.distributionType" class="distribution-radio">
                    <a-radio value="manual">
                      <div class="radio-option">
-                       <icon-user />
+                       <IconUser />
                        <span>手动发放</span>
                        <div class="radio-desc">审批通过后手动触发发放</div>
                      </div>
                    </a-radio>
                   <a-radio value="auto">
                     <div class="radio-option">
-                      <icon-robot />
+                      <IconRobot />
                       <span>自动发放</span>
                       <div class="radio-desc">按设定时间自动发放</div>
                     </div>
@@ -223,7 +223,7 @@
                   placeholder="请选择自动发放时间"
                 >
                   <template #prefix>
-                    <icon-clock-circle />
+                    <IconClockCircle />
                   </template>
                 </a-date-picker>
               </a-form-item>
@@ -239,29 +239,29 @@
                   multiple
                 >
                   <template #prefix>
-                    <icon-user-group />
+                    <IconUserGroup />
                   </template>
                   <a-option value="new_users">
                     <div class="user-option">
-                      <icon-user-add />
+                      <IconUserAdd />
                       <span>新用户</span>
                     </div>
                   </a-option>
                   <a-option value="active_users">
                     <div class="user-option">
-                      <icon-fire />
+                      <IconFire />
                       <span>活跃用户</span>
                     </div>
                   </a-option>
                   <a-option value="vip_users">
                     <div class="user-option">
-                      <icon-fire />
+                      <IconFire />
                       <span>VIP用户</span>
                     </div>
                   </a-option>
                   <a-option value="custom">
                     <div class="user-option">
-                      <icon-settings />
+                      <IconSettings />
                       <span>自定义用户群</span>
                     </div>
                   </a-option>
@@ -293,7 +293,7 @@
           <template #extra>
             <a-tag color="green">
               <template #icon>
-                <icon-notification />
+                <IconNotification />
               </template>
               步骤 4/4
             </a-tag>
@@ -305,7 +305,7 @@
                 <a-checkbox-group v-model="formData.notificationSettings" class="notification-group">
                   <a-checkbox value="email">
                     <div class="notification-option">
-                      <icon-email />
+                      <IconEmail />
                       <div class="notification-content">
                         <div class="notification-title">邮件通知</div>
                         <div class="notification-desc">发送邮件到审批人邮箱</div>
@@ -314,7 +314,7 @@
                   </a-checkbox>
                   <a-checkbox value="sms">
                     <div class="notification-option">
-                      <icon-phone />
+                      <IconPhone />
                       <div class="notification-content">
                         <div class="notification-title">短信通知</div>
                         <div class="notification-desc">发送短信到审批人手机</div>
@@ -323,7 +323,7 @@
                   </a-checkbox>
                   <a-checkbox value="app_push">
                     <div class="notification-option">
-                      <icon-mobile />
+                      <IconMobile />
                       <div class="notification-content">
                         <div class="notification-title">APP推送</div>
                         <div class="notification-desc">推送消息到移动端APP</div>
@@ -332,7 +332,7 @@
                   </a-checkbox>
                   <a-checkbox value="wechat">
                     <div class="notification-option">
-                      <icon-notification />
+                      <IconNotification />
                       <div class="notification-content">
                         <div class="notification-title">微信通知</div>
                         <div class="notification-desc">发送消息到企业微信</div>
@@ -418,7 +418,7 @@
               :loading="submitLoading"
             >
               <template #icon>
-                <icon-check />
+                <IconCheck />
               </template>
               提交审批
             </a-button>

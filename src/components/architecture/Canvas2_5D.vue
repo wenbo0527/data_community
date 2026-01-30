@@ -308,7 +308,7 @@ const busLines = computed<Array<{ id: string; a: { x: number; y: number }; b: { 
       byLayerPx.set(n.layerIndex, arr)
     }
   })
-  const layerKeys = Array.from(byLayerPx.keys()).sort((a,b)=>a-b)
+  const layerKeys = Array.from(byLayerPx.keys()).sort((a,b) => a-b)
   const stats = new Map<number, { len: number; center: { x: number; y: number } }>()
   
   const globalU = layoutParams.value.u
@@ -361,7 +361,7 @@ const edgeLines = computed<Array<{ id: string; a: { x: number; y: number }; b: {
       byLayerPx.set(n.layerIndex, arr)
     }
   })
-  const layerKeys = Array.from(byLayerPx.keys()).sort((a,b)=>a-b)
+  const layerKeys = Array.from(byLayerPx.keys()).sort((a,b) => a-b)
   const busParams = new Map<string, { C: { x: number; y: number }; u: { x: number; y: number } }>()
   const globalU = layoutParams.value.u
 
@@ -569,7 +569,7 @@ const layerPolygons = computed(() => {
     const finalD = { x: D.x - u.x * extraLeftPx, y: D.y - u.y * extraLeftPx }
 
     // 生成圆角路径
-    let points = [finalA, B, C, finalD]
+    const points = [finalA, B, C, finalD]
     const edges = [
       { a: points[0], b: points[1] },
       { a: points[1], b: points[2] },

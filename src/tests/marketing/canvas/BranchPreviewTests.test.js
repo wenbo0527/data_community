@@ -713,7 +713,7 @@ describe('分流节点预览线测试', () => {
       await nextTick()
       
       // 验证初始状态
-      let initialStats = branchComponent.getPreviewLineStats()
+      const initialStats = branchComponent.getPreviewLineStats()
       expect(initialStats.totalLines).toBe(0)
       
       // 测试无效的主预览线创建

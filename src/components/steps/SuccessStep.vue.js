@@ -6,8 +6,8 @@ let __VLS_directives;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "success-step" },
 });
-/** @type {__VLS_StyleScopedClasses['success-step']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['success-step']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {};
@@ -20,4 +20,4 @@ export default (await import('vue')).defineComponent({
     },
     __typeProps: {},
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

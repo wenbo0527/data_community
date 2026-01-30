@@ -60,14 +60,14 @@
           <a-col :span="6">
             <a-space>
               <a-button type="primary" @click="handleSearch">
-                <template #icon><icon-search /></template>
+                <template #icon><IconSearch /></template>
                 查询
               </a-button>
               <a-button @click="handleReset">
                 重置
               </a-button>
               <a-button @click="handleExport">
-                <template #icon><icon-download /></template>
+                <template #icon><IconDownload /></template>
                 导出
               </a-button>
             </a-space>

@@ -9,7 +9,7 @@
       <div class="header-right">
         <a-button type="primary" @click="handleCreate">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           新增模型
         </a-button>
@@ -27,7 +27,7 @@
             @input="handleSearch"
           >
             <template #prefix>
-              <icon-search />
+              <IconSearch />
             </template>
           </a-input>
         </a-col>
@@ -90,29 +90,17 @@
 
         <!-- 使用场景 -->
         <template #useCase="{ record }">
-          <a-tag
-            :color="record.useCase === 'download' ? 'blue' : 'green'"
-          >
-            {{ record.useCase === 'download' ? '明细数据下载' : '分析报告模板' }}
-          </a-tag>
+          <StatusTag :status="record.useCase" dictKey="dataModelUseCase" />
         </template>
 
         <!-- 语言类型 -->
         <template #language="{ record }">
-          <a-tag
-            :color="record.language === 'sql' ? 'orange' : 'purple'"
-          >
-            {{ record.language.toUpperCase() }}
-          </a-tag>
+          <StatusTag :status="record.language" dictKey="dataModelLanguage" />
         </template>
 
         <!-- 状态 -->
         <template #status="{ record }">
-          <a-tag
-            :color="getStatusColor(record.status)"
-          >
-            {{ getStatusText(record.status) }}
-          </a-tag>
+          <StatusTag :status="record.status" dictKey="dataModelStatus" />
         </template>
 
         <!-- 管理人 -->
@@ -181,6 +169,8 @@ import {
   deleteDataModel, 
   copyDataModel 
 } from '@/api/dataModels'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -246,7 +236,8 @@ const columns = [
   {
     title: '更新时间',
     dataIndex: 'updatedAt',
-    width: 150
+    width: 150,
+    render: ({ record }) => DateUtils.smartFormat(record.updatedAt)
   },
   {
     title: '操作',

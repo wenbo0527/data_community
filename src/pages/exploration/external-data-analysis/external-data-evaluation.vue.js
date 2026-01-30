@@ -93,7 +93,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "filter-section" },
 });
 const __VLS_0 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ 'onClick': {} },
@@ -112,9 +112,9 @@ const __VLS_7 = {
     onClick: (__VLS_ctx.exportData)
 };
 __VLS_3.slots.default;
-var __VLS_3;
+let __VLS_3;
 const __VLS_8 = {}.ASelect;
-/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
 // @ts-ignore
 const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
     placeholder: "选择外数产品",
@@ -133,7 +133,7 @@ const __VLS_10 = __VLS_9({
 __VLS_11.slots.default;
 for (const [product] of __VLS_getVForSourceType((__VLS_ctx.products))) {
     const __VLS_12 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
         key: (product),
@@ -147,9 +147,9 @@ for (const [product] of __VLS_getVForSourceType((__VLS_ctx.products))) {
     (product);
     var __VLS_15;
 }
-var __VLS_11;
+let __VLS_11;
 const __VLS_16 = {}.ASelect;
-/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+/** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
 // @ts-ignore
 const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
     placeholder: "选择使用平台",
@@ -166,7 +166,7 @@ const __VLS_18 = __VLS_17({
 __VLS_19.slots.default;
 for (const [platform] of __VLS_getVForSourceType((__VLS_ctx.platforms))) {
     const __VLS_20 = {}.AOption;
-    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ ;
+    /** @type {[typeof __VLS_components.AOption, typeof __VLS_components.aOption, typeof __VLS_components.AOption, typeof __VLS_components.aOption, ]} */ 
     // @ts-ignore
     const __VLS_21 = __VLS_asFunctionalComponent(__VLS_20, new __VLS_20({
         key: (platform),
@@ -180,9 +180,9 @@ for (const [platform] of __VLS_getVForSourceType((__VLS_ctx.platforms))) {
     (platform);
     var __VLS_23;
 }
-var __VLS_19;
+let __VLS_19;
 const __VLS_24 = {}.AMonthPicker;
-/** @type {[typeof __VLS_components.AMonthPicker, typeof __VLS_components.aMonthPicker, ]} */ ;
+/** @type {[typeof __VLS_components.AMonthPicker, typeof __VLS_components.aMonthPicker, ]} */ 
 // @ts-ignore
 const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
     placeholder: "选择数据月份",
@@ -195,7 +195,7 @@ const __VLS_26 = __VLS_25({
     modelValue: (__VLS_ctx.selectedMonth),
 }, ...__VLS_functionalComponentArgsRest(__VLS_25));
 const __VLS_28 = {}.ATable;
-/** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+/** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
 // @ts-ignore
 const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
     data: (__VLS_ctx.tableData),
@@ -213,7 +213,7 @@ __VLS_31.slots.default;
 {
     const { columns: __VLS_thisSlot } = __VLS_31.slots;
     const __VLS_32 = {}.ATableColumn;
-    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
     // @ts-ignore
     const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
         title: "外数产品",
@@ -230,7 +230,7 @@ __VLS_31.slots.default;
         const { cell: __VLS_thisSlot } = __VLS_35.slots;
         const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
         const __VLS_36 = {}.ALink;
-        /** @type {[typeof __VLS_components.ALink, typeof __VLS_components.aLink, typeof __VLS_components.ALink, typeof __VLS_components.aLink, ]} */ ;
+        /** @type {[typeof __VLS_components.ALink, typeof __VLS_components.aLink, typeof __VLS_components.ALink, typeof __VLS_components.aLink, ]} */ 
         // @ts-ignore
         const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
             ...{ 'onClick': {} },
@@ -248,11 +248,11 @@ __VLS_31.slots.default;
         };
         __VLS_39.slots.default;
         (record.product);
-        var __VLS_39;
+        let __VLS_39;
     }
-    var __VLS_35;
+    let __VLS_35;
     const __VLS_44 = {}.ATableColumn;
-    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
     // @ts-ignore
     const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({
         title: "单价",
@@ -269,7 +269,7 @@ __VLS_31.slots.default;
         const { cell: __VLS_thisSlot } = __VLS_47.slots;
         const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
         const __VLS_48 = {}.ATooltip;
-        /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
+        /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ 
         // @ts-ignore
         const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
             content: (`单价: ${record.price}`),
@@ -280,11 +280,11 @@ __VLS_31.slots.default;
         __VLS_51.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         (record.price);
-        var __VLS_51;
+        let __VLS_51;
     }
-    var __VLS_47;
+    let __VLS_47;
     const __VLS_52 = {}.ATableColumn;
-    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
     // @ts-ignore
     const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
         title: "当年实际消耗",
@@ -301,7 +301,7 @@ __VLS_31.slots.default;
         const { cell: __VLS_thisSlot } = __VLS_55.slots;
         const [{ record }] = __VLS_getSlotParams(__VLS_thisSlot);
         const __VLS_56 = {}.ATooltip;
-        /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ ;
+        /** @type {[typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, typeof __VLS_components.ATooltip, typeof __VLS_components.aTooltip, ]} */ 
         // @ts-ignore
         const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
             content: (`当年实际消耗: ${record.cost}`),
@@ -312,11 +312,11 @@ __VLS_31.slots.default;
         __VLS_59.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         (record.cost);
-        var __VLS_59;
+        let __VLS_59;
     }
-    var __VLS_55;
+    let __VLS_55;
     const __VLS_60 = {}.ATableColumn;
-    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
     // @ts-ignore
     const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({
         title: "性能",
@@ -342,9 +342,9 @@ __VLS_31.slots.default;
         });
         (record.ks.toFixed(2));
     }
-    var __VLS_63;
+    let __VLS_63;
     const __VLS_64 = {}.ATableColumn;
-    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
     // @ts-ignore
     const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({
         title: "价格",
@@ -370,9 +370,9 @@ __VLS_31.slots.default;
         });
         (record.price);
     }
-    var __VLS_67;
+    let __VLS_67;
     const __VLS_68 = {}.ATableColumn;
-    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
     // @ts-ignore
     const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
         title: "调用量",
@@ -398,9 +398,9 @@ __VLS_31.slots.default;
         });
         (record.cost);
     }
-    var __VLS_71;
+    let __VLS_71;
     const __VLS_72 = {}.ATableColumn;
-    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ ;
+    /** @type {[typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, typeof __VLS_components.ATableColumn, typeof __VLS_components.aTableColumn, ]} */ 
     // @ts-ignore
     const __VLS_73 = __VLS_asFunctionalComponent(__VLS_72, new __VLS_72({
         title: "稳定性",
@@ -426,10 +426,10 @@ __VLS_31.slots.default;
         });
         (record.stability === '稳定' ? '99.9%' : record.stability === '较稳定' ? '95%' : '90%');
     }
-    var __VLS_75;
+    let __VLS_75;
 }
-var __VLS_31;
-/** @type {[typeof ExternalProductModal, ]} */ ;
+let __VLS_31;
+/** @type {[typeof ExternalProductModal, ]} */ 
 // @ts-ignore
 const __VLS_76 = __VLS_asFunctionalComponent(ExternalProductModal, new ExternalProductModal({
     visible: (__VLS_ctx.modalVisible),
@@ -439,10 +439,10 @@ const __VLS_77 = __VLS_76({
     visible: (__VLS_ctx.modalVisible),
     productData: (__VLS_ctx.currentProduct),
 }, ...__VLS_functionalComponentArgsRest(__VLS_76));
-/** @type {__VLS_StyleScopedClasses['external-data-evaluation']} */ ;
-/** @type {__VLS_StyleScopedClasses['filter-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['evaluation-table']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['external-data-evaluation']} */ 
+/** @type {__VLS_StyleScopedClasses['filter-section']} */ 
+/** @type {__VLS_StyleScopedClasses['evaluation-table']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -466,4 +466,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

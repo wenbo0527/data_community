@@ -1,41 +1,42 @@
 <template>
   <div class="unified-metrics">
-    <div class="page-header">
-      <h2>指标中心</h2>
-      <a-space>
+    <DetailHeader title="指标中心" :backEnabled="false">
+      <template #extra-actions>
+        <a-space>
         <a-button type="primary" @click="showCreateModal = true">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           新建指标
         </a-button>
         <a-button @click="goToBatchRegistration">
           <template #icon>
-            <icon-upload />
+            <IconUpload />
           </template>
           批量注册
         </a-button>
         <a-button @click="goToRegulatoryConfig" v-if="currentMetricType === MetricType.REGULATORY">
           <template #icon>
-            <icon-settings />
+            <IconSettings />
           </template>
           监管配置
         </a-button>
         <a-button @click="exportMetrics">
           <template #icon>
-            <icon-download />
+            <IconDownload />
           </template>
           导出
         </a-button>
         <a-button @click="toggleFavoriteFilter" :type="searchForm.onlyFavorite ? 'primary' : 'secondary'">
           <template #icon>
-            <icon-star-fill v-if="searchForm.onlyFavorite" />
-            <icon-star v-else />
+            <IconStarFill v-if="searchForm.onlyFavorite" />
+            <IconStar v-else />
           </template>
           {{ searchForm.onlyFavorite ? '显示全部' : '仅看收藏' }}
         </a-button>
       </a-space>
-    </div>
+      </template>
+    </DetailHeader>
 
     <!-- 指标类型切换Tab -->
     <a-tabs 
@@ -179,8 +180,8 @@
                       @click.stop="toggleFavorite(record)"
                     >
                       <template #icon>
-                        <icon-star-fill v-if="record.isFavorite" style="color: #f7ba1e" />
-                        <icon-star v-else />
+                        <IconStarFill v-if="record.isFavorite" style="color: #f7ba1e" />
+                        <IconStar v-else />
                       </template>
                     </a-button>
                   </div>
@@ -201,13 +202,15 @@
               </a-table-column>
               <a-table-column title="状态" dataIndex="status" :width="100">
                 <template #cell="{ record }">
-                  <a-tag :color="getStatusColor(record.status)">
-                    {{ getStatusText(record.status) }}
-                  </a-tag>
+                  <StatusTag :status="record.status" dictKey="metricStatus" />
                 </template>
               </a-table-column>
               <a-table-column title="负责人" dataIndex="owner" :width="120" />
-              <a-table-column title="更新时间" dataIndex="updateTime" :width="150" />
+              <a-table-column title="更新时间" dataIndex="updateTime" :width="150">
+                <template #cell="{ record }">
+                  {{ DateUtils.smartFormat(record.updateTime) }}
+                </template>
+              </a-table-column>
               <a-table-column title="操作" :width="200" fixed="right">
                 <template #cell="{ record }">
                   <a-space>
@@ -597,6 +600,9 @@ import { useRouter } from 'vue-router'
 import metricsMock from '@/mock/metrics'
 import type { MetricItem } from '@/types/metrics'
 import { MetricType, RegulatoryCategory, METRIC_TYPE_LABELS, REGULATORY_CATEGORY_LABELS } from '@/types/metrics'
+import DetailHeader from '@/components/common/DetailHeader.vue'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 // 当前选中的指标类型
 const currentMetricType = ref<MetricType>(MetricType.BUSINESS_CORE)
 
@@ -760,7 +766,7 @@ const fetchMetrics = async () => {
     })
     
     // 使用 mock 数据
-    let queryParams = { 
+    const queryParams = { 
       ...searchForm.value, 
       page: pagination.value.current + '', 
       pageSize: pagination.value.pageSize + '' 

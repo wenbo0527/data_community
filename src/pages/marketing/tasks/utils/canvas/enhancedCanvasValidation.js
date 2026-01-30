@@ -26,7 +26,7 @@ export function validateForPublish(canvasData, options = {}) {
     return result
   }
 
-  let { nodes, connections = [] } = canvasData
+  const { nodes, connections = [] } = canvasData
   let fixedNodes = [...nodes]
   let fixedConnections = [...connections]
   let hasAutoFix = false

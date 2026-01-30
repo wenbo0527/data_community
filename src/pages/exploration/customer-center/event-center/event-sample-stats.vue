@@ -9,7 +9,7 @@
         </div>
         <div class="header-actions">
           <a-button size="small" @click="goBack">
-            <template #icon><icon-arrow-left /></template>
+            <template #icon><IconArrowLeft /></template>
             返回
           </a-button>
         </div>
@@ -28,7 +28,7 @@
               @press-enter="handleSearch"
             >
               <template #prefix>
-                <icon-search style="color: var(--color-text-3)" />
+                <IconSearch style="color: var(--color-text-3)" />
               </template>
             </a-input>
           </a-col>
@@ -44,11 +44,11 @@
           <a-col :span="8">
             <a-space>
               <a-button type="primary" @click="handleSearch">
-                <template #icon><icon-search /></template>
+                <template #icon><IconSearch /></template>
                 搜索
               </a-button>
               <a-button @click="resetSearch">
-                <template #icon><icon-refresh /></template>
+                <template #icon><IconRefresh /></template>
                 重置
               </a-button>
             </a-space>
@@ -84,7 +84,7 @@
             <template #columns>
               <a-table-column title="时间" data-index="timestamp" :width="160">
                 <template #cell="{ record }">
-                  <span style="font-size: 12px;">{{ record.timestamp }}</span>
+                  <span style="font-size: 12px;">{{ DateUtils.formatDateTime(record.timestamp) }}</span>
                 </template>
               </a-table-column>
               <a-table-column title="用户ID" data-index="userId" :width="120">
@@ -94,18 +94,18 @@
               </a-table-column>
               <a-table-column title="事件类型" data-index="eventType" :width="100">
                 <template #cell="{ record }">
-                  <a-tag size="small">{{ record.eventType }}</a-tag>
+                  <StatusTag :status="record.eventType" dictKey="eventType" />
                 </template>
               </a-table-column>
               <a-table-column title="状态" data-index="status" :width="80">
                 <template #cell="{ record }">
-                  <a-tag :color="getStatusColor(record.status)" size="small">{{ record.status }}</a-tag>
+                  <StatusTag :status="record.status" dictKey="eventStatus" />
                 </template>
               </a-table-column>
               <a-table-column title="操作" :width="100" fixed="right">
                 <template #cell="{ record }">
                   <a-button type="text" size="mini" @click="viewMessage(record)">
-                    <icon-eye />
+                    <IconEye />
                     查看报文
                   </a-button>
                 </template>
@@ -127,8 +127,8 @@
         <a-descriptions :column="1" bordered size="small">
           <a-descriptions-item label="事件ID">{{ currentMessage.eventId }}</a-descriptions-item>
           <a-descriptions-item label="用户ID">{{ currentMessage.userId }}</a-descriptions-item>
-          <a-descriptions-item label="时间戳">{{ currentMessage.timestamp }}</a-descriptions-item>
-          <a-descriptions-item label="事件类型">{{ currentMessage.eventType }}</a-descriptions-item>
+          <a-descriptions-item label="时间戳">{{ DateUtils.formatDateTime(currentMessage.timestamp) }}</a-descriptions-item>
+          <a-descriptions-item label="事件类型"><StatusTag :status="currentMessage.eventType" dictKey="eventType" /></a-descriptions-item>
         </a-descriptions>
         
         <div class="json-content">
@@ -152,6 +152,8 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import * as echarts from 'echarts'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 // 路由相关
 const router = useRouter()
@@ -386,10 +388,7 @@ const formatJson = (obj) => {
   return JSON.stringify(obj, null, 2)
 }
 
-// 获取状态颜色
-const getStatusColor = (status) => {
-  return status === '成功' ? 'green' : 'red'
-}
+ 
 
 // 返回上一页
 const goBack = () => {

@@ -6,7 +6,7 @@
           <a-card>
             <template #title>
               <a-space>
-                <icon-safe />
+                <IconSafe />
                 权限服务
               </a-space>
             </template>
@@ -19,7 +19,7 @@
                 <a-card hoverable class="entry-card" @click="goToDataApply">
                   <a-space size="large" direction="vertical" fill>
                     <a-space align="center" size="small">
-                      <icon-storage />
+                      <IconStorage />
                       <span class="entry-title">数据权限申请</span>
                     </a-space>
                     <div class="entry-desc">申请 SELECT/UPDATE/INSERT/DELETE/EXECUTE 等数据权限</div>
@@ -31,7 +31,7 @@
                 <a-card hoverable class="entry-card" @click="goToAppApply">
                   <a-space size="large" direction="vertical" fill>
                     <a-space align="center" size="small">
-                      <icon-apps />
+                      <IconApps />
                       <span class="entry-title">应用权限申请</span>
                     </a-space>
                     <div class="entry-desc">申请 查看/编辑/调用/订阅 等应用权限</div>

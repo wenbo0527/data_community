@@ -31,10 +31,10 @@ const navigateTo = (path) => {
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['stat-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-title']} */ ;
+/** @type {__VLS_StyleScopedClasses['stat-card']} */ 
+/** @type {__VLS_StyleScopedClasses['module-card']} */ 
+/** @type {__VLS_StyleScopedClasses['module-title']} */ 
+/** @type {__VLS_StyleScopedClasses['module-title']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -50,7 +50,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1
     ...{ class: "page-title" },
 });
 const __VLS_0 = {}.IconDashboard;
-/** @type {[typeof __VLS_components.IconDashboard, typeof __VLS_components.iconDashboard, ]} */ ;
+/** @type {[typeof __VLS_components.IconDashboard, typeof __VLS_components.iconDashboard, ]} */ 
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({}));
 const __VLS_2 = __VLS_1({}, ...__VLS_functionalComponentArgsRest(__VLS_1));
@@ -61,7 +61,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "quick-actions" },
 });
 const __VLS_4 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
     ...{ 'onClick': {} },
@@ -81,14 +81,14 @@ __VLS_7.slots.default;
 {
     const { icon: __VLS_thisSlot } = __VLS_7.slots;
     const __VLS_12 = {}.IconRefresh;
-    /** @type {[typeof __VLS_components.IconRefresh, typeof __VLS_components.iconRefresh, ]} */ ;
+    /** @type {[typeof __VLS_components.IconRefresh, typeof __VLS_components.iconRefresh, ]} */ 
     // @ts-ignore
     const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({}));
     const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
 }
-var __VLS_7;
+let __VLS_7;
 const __VLS_16 = {}.AButton;
-/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+/** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
 // @ts-ignore
 const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
     ...{ 'onClick': {} },
@@ -106,12 +106,12 @@ __VLS_19.slots.default;
 {
     const { icon: __VLS_thisSlot } = __VLS_19.slots;
     const __VLS_24 = {}.IconQuestionCircle;
-    /** @type {[typeof __VLS_components.IconQuestionCircle, typeof __VLS_components.iconQuestionCircle, ]} */ ;
+    /** @type {[typeof __VLS_components.IconQuestionCircle, typeof __VLS_components.iconQuestionCircle, ]} */ 
     // @ts-ignore
     const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({}));
     const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
 }
-var __VLS_19;
+let __VLS_19;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "content-section" },
 });
@@ -119,7 +119,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "overview-section" },
 });
 const __VLS_28 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
     gutter: (24),
@@ -129,7 +129,7 @@ const __VLS_30 = __VLS_29({
 }, ...__VLS_functionalComponentArgsRest(__VLS_29));
 __VLS_31.slots.default;
 const __VLS_32 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
     span: (6),
@@ -139,7 +139,7 @@ const __VLS_34 = __VLS_33({
 }, ...__VLS_functionalComponentArgsRest(__VLS_33));
 __VLS_35.slots.default;
 const __VLS_36 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
     ...{ 'onClick': {} },
@@ -167,7 +167,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "stat-icon table-icon" },
 });
 const __VLS_44 = {}.IconStorage;
-/** @type {[typeof __VLS_components.IconStorage, typeof __VLS_components.iconStorage, ]} */ ;
+/** @type {[typeof __VLS_components.IconStorage, typeof __VLS_components.iconStorage, ]} */ 
 // @ts-ignore
 const __VLS_45 = __VLS_asFunctionalComponent(__VLS_44, new __VLS_44({}));
 const __VLS_46 = __VLS_45({}, ...__VLS_functionalComponentArgsRest(__VLS_45));
@@ -183,10 +183,10 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-label" },
 });
-var __VLS_39;
-var __VLS_35;
+let __VLS_39;
+let __VLS_35;
 const __VLS_48 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
     span: (6),
@@ -196,7 +196,7 @@ const __VLS_50 = __VLS_49({
 }, ...__VLS_functionalComponentArgsRest(__VLS_49));
 __VLS_51.slots.default;
 const __VLS_52 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_53 = __VLS_asFunctionalComponent(__VLS_52, new __VLS_52({
     ...{ 'onClick': {} },
@@ -224,7 +224,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "stat-icon external-icon" },
 });
 const __VLS_60 = {}.IconLink;
-/** @type {[typeof __VLS_components.IconLink, typeof __VLS_components.iconLink, ]} */ ;
+/** @type {[typeof __VLS_components.IconLink, typeof __VLS_components.iconLink, ]} */ 
 // @ts-ignore
 const __VLS_61 = __VLS_asFunctionalComponent(__VLS_60, new __VLS_60({}));
 const __VLS_62 = __VLS_61({}, ...__VLS_functionalComponentArgsRest(__VLS_61));
@@ -240,10 +240,10 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-label" },
 });
-var __VLS_55;
-var __VLS_51;
+let __VLS_55;
+let __VLS_51;
 const __VLS_64 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_65 = __VLS_asFunctionalComponent(__VLS_64, new __VLS_64({
     span: (6),
@@ -253,7 +253,7 @@ const __VLS_66 = __VLS_65({
 }, ...__VLS_functionalComponentArgsRest(__VLS_65));
 __VLS_67.slots.default;
 const __VLS_68 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_69 = __VLS_asFunctionalComponent(__VLS_68, new __VLS_68({
     ...{ 'onClick': {} },
@@ -281,7 +281,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "stat-icon metric-icon" },
 });
 const __VLS_76 = {}.IconBarChart;
-/** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ ;
+/** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ 
 // @ts-ignore
 const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({}));
 const __VLS_78 = __VLS_77({}, ...__VLS_functionalComponentArgsRest(__VLS_77));
@@ -297,10 +297,10 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-label" },
 });
-var __VLS_71;
-var __VLS_67;
+let __VLS_71;
+let __VLS_67;
 const __VLS_80 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
     span: (6),
@@ -310,7 +310,7 @@ const __VLS_82 = __VLS_81({
 }, ...__VLS_functionalComponentArgsRest(__VLS_81));
 __VLS_83.slots.default;
 const __VLS_84 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_85 = __VLS_asFunctionalComponent(__VLS_84, new __VLS_84({
     ...{ 'onClick': {} },
@@ -338,7 +338,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "stat-icon batch-icon" },
 });
 const __VLS_92 = {}.IconSettings;
-/** @type {[typeof __VLS_components.IconSettings, typeof __VLS_components.iconSettings, ]} */ ;
+/** @type {[typeof __VLS_components.IconSettings, typeof __VLS_components.iconSettings, ]} */ 
 // @ts-ignore
 const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({}));
 const __VLS_94 = __VLS_93({}, ...__VLS_functionalComponentArgsRest(__VLS_93));
@@ -354,14 +354,14 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "stat-label" },
 });
-var __VLS_87;
-var __VLS_83;
-var __VLS_31;
+let __VLS_87;
+let __VLS_83;
+let __VLS_31;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "relation-section" },
 });
 const __VLS_96 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
     ...{ class: "relation-diagram-card" },
@@ -377,7 +377,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 const __VLS_100 = {}.IconApps;
-/** @type {[typeof __VLS_components.IconApps, typeof __VLS_components.iconApps, ]} */ ;
+/** @type {[typeof __VLS_components.IconApps, typeof __VLS_components.iconApps, ]} */ 
 // @ts-ignore
 const __VLS_101 = __VLS_asFunctionalComponent(__VLS_100, new __VLS_100({
     ...{ style: {} },
@@ -389,12 +389,12 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ style: {} },
 });
-var __VLS_99;
+let __VLS_99;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "charts-section" },
 });
 const __VLS_104 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
     gutter: (24),
@@ -404,7 +404,7 @@ const __VLS_106 = __VLS_105({
 }, ...__VLS_functionalComponentArgsRest(__VLS_105));
 __VLS_107.slots.default;
 const __VLS_108 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_109 = __VLS_asFunctionalComponent(__VLS_108, new __VLS_108({
     span: (12),
@@ -414,7 +414,7 @@ const __VLS_110 = __VLS_109({
 }, ...__VLS_functionalComponentArgsRest(__VLS_109));
 __VLS_111.slots.default;
 const __VLS_112 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({
     ...{ class: "chart-card" },
@@ -430,10 +430,10 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-var __VLS_115;
-var __VLS_111;
+let __VLS_115;
+let __VLS_111;
 const __VLS_116 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_117 = __VLS_asFunctionalComponent(__VLS_116, new __VLS_116({
     span: (12),
@@ -443,7 +443,7 @@ const __VLS_118 = __VLS_117({
 }, ...__VLS_functionalComponentArgsRest(__VLS_117));
 __VLS_119.slots.default;
 const __VLS_120 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
     ...{ class: "chart-card" },
@@ -459,9 +459,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-var __VLS_123;
-var __VLS_119;
-var __VLS_107;
+let __VLS_123;
+let __VLS_119;
+let __VLS_107;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "modules-section" },
 });
@@ -469,7 +469,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2
     ...{ class: "section-title" },
 });
 const __VLS_124 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_125 = __VLS_asFunctionalComponent(__VLS_124, new __VLS_124({
     gutter: (24),
@@ -479,7 +479,7 @@ const __VLS_126 = __VLS_125({
 }, ...__VLS_functionalComponentArgsRest(__VLS_125));
 __VLS_127.slots.default;
 const __VLS_128 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_129 = __VLS_asFunctionalComponent(__VLS_128, new __VLS_128({
     span: (12),
@@ -489,7 +489,7 @@ const __VLS_130 = __VLS_129({
 }, ...__VLS_functionalComponentArgsRest(__VLS_129));
 __VLS_131.slots.default;
 const __VLS_132 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_133 = __VLS_asFunctionalComponent(__VLS_132, new __VLS_132({
     ...{ 'onClick': {} },
@@ -517,7 +517,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-icon table-icon" },
 });
 const __VLS_140 = {}.IconStorage;
-/** @type {[typeof __VLS_components.IconStorage, typeof __VLS_components.iconStorage, ]} */ ;
+/** @type {[typeof __VLS_components.IconStorage, typeof __VLS_components.iconStorage, ]} */ 
 // @ts-ignore
 const __VLS_141 = __VLS_asFunctionalComponent(__VLS_140, new __VLS_140({}));
 const __VLS_142 = __VLS_141({}, ...__VLS_functionalComponentArgsRest(__VLS_141));
@@ -530,30 +530,30 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-features" },
 });
 const __VLS_144 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_145 = __VLS_asFunctionalComponent(__VLS_144, new __VLS_144({}));
 const __VLS_146 = __VLS_145({}, ...__VLS_functionalComponentArgsRest(__VLS_145));
 __VLS_147.slots.default;
-var __VLS_147;
+let __VLS_147;
 const __VLS_148 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_149 = __VLS_asFunctionalComponent(__VLS_148, new __VLS_148({}));
 const __VLS_150 = __VLS_149({}, ...__VLS_functionalComponentArgsRest(__VLS_149));
 __VLS_151.slots.default;
-var __VLS_151;
+let __VLS_151;
 const __VLS_152 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_153 = __VLS_asFunctionalComponent(__VLS_152, new __VLS_152({}));
 const __VLS_154 = __VLS_153({}, ...__VLS_functionalComponentArgsRest(__VLS_153));
 __VLS_155.slots.default;
-var __VLS_155;
-var __VLS_135;
-var __VLS_131;
+let __VLS_155;
+let __VLS_135;
+let __VLS_131;
 const __VLS_156 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_157 = __VLS_asFunctionalComponent(__VLS_156, new __VLS_156({
     span: (12),
@@ -563,7 +563,7 @@ const __VLS_158 = __VLS_157({
 }, ...__VLS_functionalComponentArgsRest(__VLS_157));
 __VLS_159.slots.default;
 const __VLS_160 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_161 = __VLS_asFunctionalComponent(__VLS_160, new __VLS_160({
     ...{ 'onClick': {} },
@@ -591,7 +591,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-icon external-icon" },
 });
 const __VLS_168 = {}.IconLink;
-/** @type {[typeof __VLS_components.IconLink, typeof __VLS_components.iconLink, ]} */ ;
+/** @type {[typeof __VLS_components.IconLink, typeof __VLS_components.iconLink, ]} */ 
 // @ts-ignore
 const __VLS_169 = __VLS_asFunctionalComponent(__VLS_168, new __VLS_168({}));
 const __VLS_170 = __VLS_169({}, ...__VLS_functionalComponentArgsRest(__VLS_169));
@@ -604,31 +604,31 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-features" },
 });
 const __VLS_172 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_173 = __VLS_asFunctionalComponent(__VLS_172, new __VLS_172({}));
 const __VLS_174 = __VLS_173({}, ...__VLS_functionalComponentArgsRest(__VLS_173));
 __VLS_175.slots.default;
-var __VLS_175;
+let __VLS_175;
 const __VLS_176 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_177 = __VLS_asFunctionalComponent(__VLS_176, new __VLS_176({}));
 const __VLS_178 = __VLS_177({}, ...__VLS_functionalComponentArgsRest(__VLS_177));
 __VLS_179.slots.default;
-var __VLS_179;
+let __VLS_179;
 const __VLS_180 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_181 = __VLS_asFunctionalComponent(__VLS_180, new __VLS_180({}));
 const __VLS_182 = __VLS_181({}, ...__VLS_functionalComponentArgsRest(__VLS_181));
 __VLS_183.slots.default;
-var __VLS_183;
-var __VLS_163;
-var __VLS_159;
-var __VLS_127;
+let __VLS_183;
+let __VLS_163;
+let __VLS_159;
+let __VLS_127;
 const __VLS_184 = {}.ARow;
-/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ ;
+/** @type {[typeof __VLS_components.ARow, typeof __VLS_components.aRow, typeof __VLS_components.ARow, typeof __VLS_components.aRow, ]} */ 
 // @ts-ignore
 const __VLS_185 = __VLS_asFunctionalComponent(__VLS_184, new __VLS_184({
     gutter: (24),
@@ -640,7 +640,7 @@ const __VLS_186 = __VLS_185({
 }, ...__VLS_functionalComponentArgsRest(__VLS_185));
 __VLS_187.slots.default;
 const __VLS_188 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_189 = __VLS_asFunctionalComponent(__VLS_188, new __VLS_188({
     span: (12),
@@ -650,7 +650,7 @@ const __VLS_190 = __VLS_189({
 }, ...__VLS_functionalComponentArgsRest(__VLS_189));
 __VLS_191.slots.default;
 const __VLS_192 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_193 = __VLS_asFunctionalComponent(__VLS_192, new __VLS_192({
     ...{ 'onClick': {} },
@@ -678,7 +678,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-icon metric-icon" },
 });
 const __VLS_200 = {}.IconBarChart;
-/** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ ;
+/** @type {[typeof __VLS_components.IconBarChart, typeof __VLS_components.iconBarChart, ]} */ 
 // @ts-ignore
 const __VLS_201 = __VLS_asFunctionalComponent(__VLS_200, new __VLS_200({}));
 const __VLS_202 = __VLS_201({}, ...__VLS_functionalComponentArgsRest(__VLS_201));
@@ -691,30 +691,30 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-features" },
 });
 const __VLS_204 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_205 = __VLS_asFunctionalComponent(__VLS_204, new __VLS_204({}));
 const __VLS_206 = __VLS_205({}, ...__VLS_functionalComponentArgsRest(__VLS_205));
 __VLS_207.slots.default;
-var __VLS_207;
+let __VLS_207;
 const __VLS_208 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_209 = __VLS_asFunctionalComponent(__VLS_208, new __VLS_208({}));
 const __VLS_210 = __VLS_209({}, ...__VLS_functionalComponentArgsRest(__VLS_209));
 __VLS_211.slots.default;
-var __VLS_211;
+let __VLS_211;
 const __VLS_212 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_213 = __VLS_asFunctionalComponent(__VLS_212, new __VLS_212({}));
 const __VLS_214 = __VLS_213({}, ...__VLS_functionalComponentArgsRest(__VLS_213));
 __VLS_215.slots.default;
-var __VLS_215;
-var __VLS_195;
-var __VLS_191;
+let __VLS_215;
+let __VLS_195;
+let __VLS_191;
 const __VLS_216 = {}.ACol;
-/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ ;
+/** @type {[typeof __VLS_components.ACol, typeof __VLS_components.aCol, typeof __VLS_components.ACol, typeof __VLS_components.aCol, ]} */ 
 // @ts-ignore
 const __VLS_217 = __VLS_asFunctionalComponent(__VLS_216, new __VLS_216({
     span: (12),
@@ -724,7 +724,7 @@ const __VLS_218 = __VLS_217({
 }, ...__VLS_functionalComponentArgsRest(__VLS_217));
 __VLS_219.slots.default;
 const __VLS_220 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_221 = __VLS_asFunctionalComponent(__VLS_220, new __VLS_220({
     ...{ 'onClick': {} },
@@ -752,7 +752,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-icon batch-icon" },
 });
 const __VLS_228 = {}.IconSettings;
-/** @type {[typeof __VLS_components.IconSettings, typeof __VLS_components.iconSettings, ]} */ ;
+/** @type {[typeof __VLS_components.IconSettings, typeof __VLS_components.iconSettings, ]} */ 
 // @ts-ignore
 const __VLS_229 = __VLS_asFunctionalComponent(__VLS_228, new __VLS_228({}));
 const __VLS_230 = __VLS_229({}, ...__VLS_functionalComponentArgsRest(__VLS_229));
@@ -765,34 +765,34 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "module-features" },
 });
 const __VLS_232 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_233 = __VLS_asFunctionalComponent(__VLS_232, new __VLS_232({}));
 const __VLS_234 = __VLS_233({}, ...__VLS_functionalComponentArgsRest(__VLS_233));
 __VLS_235.slots.default;
-var __VLS_235;
+let __VLS_235;
 const __VLS_236 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_237 = __VLS_asFunctionalComponent(__VLS_236, new __VLS_236({}));
 const __VLS_238 = __VLS_237({}, ...__VLS_functionalComponentArgsRest(__VLS_237));
 __VLS_239.slots.default;
-var __VLS_239;
+let __VLS_239;
 const __VLS_240 = {}.ATag;
-/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+/** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
 // @ts-ignore
 const __VLS_241 = __VLS_asFunctionalComponent(__VLS_240, new __VLS_240({}));
 const __VLS_242 = __VLS_241({}, ...__VLS_functionalComponentArgsRest(__VLS_241));
 __VLS_243.slots.default;
-var __VLS_243;
-var __VLS_223;
-var __VLS_219;
-var __VLS_187;
+let __VLS_243;
+let __VLS_223;
+let __VLS_219;
+let __VLS_187;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "activity-section" },
 });
 const __VLS_244 = {}.ACard;
-/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ ;
+/** @type {[typeof __VLS_components.ACard, typeof __VLS_components.aCard, typeof __VLS_components.ACard, typeof __VLS_components.aCard, ]} */ 
 // @ts-ignore
 const __VLS_245 = __VLS_asFunctionalComponent(__VLS_244, new __VLS_244({
     title: "最近活动",
@@ -802,13 +802,13 @@ const __VLS_246 = __VLS_245({
 }, ...__VLS_functionalComponentArgsRest(__VLS_245));
 __VLS_247.slots.default;
 const __VLS_248 = {}.ATimeline;
-/** @type {[typeof __VLS_components.ATimeline, typeof __VLS_components.aTimeline, typeof __VLS_components.ATimeline, typeof __VLS_components.aTimeline, ]} */ ;
+/** @type {[typeof __VLS_components.ATimeline, typeof __VLS_components.aTimeline, typeof __VLS_components.ATimeline, typeof __VLS_components.aTimeline, ]} */ 
 // @ts-ignore
 const __VLS_249 = __VLS_asFunctionalComponent(__VLS_248, new __VLS_248({}));
 const __VLS_250 = __VLS_249({}, ...__VLS_functionalComponentArgsRest(__VLS_249));
 __VLS_251.slots.default;
 const __VLS_252 = {}.ATimelineItem;
-/** @type {[typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, ]} */ ;
+/** @type {[typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, ]} */ 
 // @ts-ignore
 const __VLS_253 = __VLS_asFunctionalComponent(__VLS_252, new __VLS_252({}));
 const __VLS_254 = __VLS_253({}, ...__VLS_functionalComponentArgsRest(__VLS_253));
@@ -828,9 +828,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "activity-time" },
 });
-var __VLS_255;
+let __VLS_255;
 const __VLS_256 = {}.ATimelineItem;
-/** @type {[typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, ]} */ ;
+/** @type {[typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, ]} */ 
 // @ts-ignore
 const __VLS_257 = __VLS_asFunctionalComponent(__VLS_256, new __VLS_256({}));
 const __VLS_258 = __VLS_257({}, ...__VLS_functionalComponentArgsRest(__VLS_257));
@@ -850,9 +850,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "activity-time" },
 });
-var __VLS_259;
+let __VLS_259;
 const __VLS_260 = {}.ATimelineItem;
-/** @type {[typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, ]} */ ;
+/** @type {[typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, typeof __VLS_components.ATimelineItem, typeof __VLS_components.aTimelineItem, ]} */ 
 // @ts-ignore
 const __VLS_261 = __VLS_asFunctionalComponent(__VLS_260, new __VLS_260({}));
 const __VLS_262 = __VLS_261({}, ...__VLS_functionalComponentArgsRest(__VLS_261));
@@ -872,100 +872,100 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "activity-time" },
 });
-var __VLS_263;
-var __VLS_251;
-var __VLS_247;
-/** @type {__VLS_StyleScopedClasses['asset-overview']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['title-area']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['page-description']} */ ;
-/** @type {__VLS_StyleScopedClasses['quick-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['content-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['overview-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-unit']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['external-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-unit']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-unit']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['batch-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-number']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-unit']} */ ;
-/** @type {__VLS_StyleScopedClasses['stat-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['relation-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['relation-diagram-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['placeholder-diagram']} */ ;
-/** @type {__VLS_StyleScopedClasses['charts-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['chart-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['placeholder-chart']} */ ;
-/** @type {__VLS_StyleScopedClasses['chart-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['placeholder-chart']} */ ;
-/** @type {__VLS_StyleScopedClasses['modules-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['section-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['table-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-features']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['external-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-features']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['metric-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-features']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-card']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['batch-icon']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-title']} */ ;
-/** @type {__VLS_StyleScopedClasses['module-features']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-user']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-action']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-target']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-time']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-user']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-action']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-target']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-time']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-user']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-action']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-target']} */ ;
-/** @type {__VLS_StyleScopedClasses['activity-time']} */ ;
-var __VLS_dollars;
+let __VLS_263;
+let __VLS_251;
+let __VLS_247;
+/** @type {__VLS_StyleScopedClasses['asset-overview']} */ 
+/** @type {__VLS_StyleScopedClasses['page-header']} */ 
+/** @type {__VLS_StyleScopedClasses['title-area']} */ 
+/** @type {__VLS_StyleScopedClasses['page-title']} */ 
+/** @type {__VLS_StyleScopedClasses['page-description']} */ 
+/** @type {__VLS_StyleScopedClasses['quick-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['content-section']} */ 
+/** @type {__VLS_StyleScopedClasses['overview-section']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-card']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-content']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['table-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-info']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-number']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-unit']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-label']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-card']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-content']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['external-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-info']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-number']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-unit']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-label']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-card']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-content']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-info']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-number']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-unit']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-label']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-card']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-content']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['batch-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-info']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-number']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-unit']} */ 
+/** @type {__VLS_StyleScopedClasses['stat-label']} */ 
+/** @type {__VLS_StyleScopedClasses['relation-section']} */ 
+/** @type {__VLS_StyleScopedClasses['relation-diagram-card']} */ 
+/** @type {__VLS_StyleScopedClasses['placeholder-diagram']} */ 
+/** @type {__VLS_StyleScopedClasses['charts-section']} */ 
+/** @type {__VLS_StyleScopedClasses['chart-card']} */ 
+/** @type {__VLS_StyleScopedClasses['placeholder-chart']} */ 
+/** @type {__VLS_StyleScopedClasses['chart-card']} */ 
+/** @type {__VLS_StyleScopedClasses['placeholder-chart']} */ 
+/** @type {__VLS_StyleScopedClasses['modules-section']} */ 
+/** @type {__VLS_StyleScopedClasses['section-title']} */ 
+/** @type {__VLS_StyleScopedClasses['module-card']} */ 
+/** @type {__VLS_StyleScopedClasses['module-header']} */ 
+/** @type {__VLS_StyleScopedClasses['module-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['table-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['module-title']} */ 
+/** @type {__VLS_StyleScopedClasses['module-features']} */ 
+/** @type {__VLS_StyleScopedClasses['module-card']} */ 
+/** @type {__VLS_StyleScopedClasses['module-header']} */ 
+/** @type {__VLS_StyleScopedClasses['module-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['external-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['module-title']} */ 
+/** @type {__VLS_StyleScopedClasses['module-features']} */ 
+/** @type {__VLS_StyleScopedClasses['module-card']} */ 
+/** @type {__VLS_StyleScopedClasses['module-header']} */ 
+/** @type {__VLS_StyleScopedClasses['module-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['metric-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['module-title']} */ 
+/** @type {__VLS_StyleScopedClasses['module-features']} */ 
+/** @type {__VLS_StyleScopedClasses['module-card']} */ 
+/** @type {__VLS_StyleScopedClasses['module-header']} */ 
+/** @type {__VLS_StyleScopedClasses['module-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['batch-icon']} */ 
+/** @type {__VLS_StyleScopedClasses['module-title']} */ 
+/** @type {__VLS_StyleScopedClasses['module-features']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-section']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-item']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-user']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-action']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-target']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-time']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-item']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-user']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-action']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-target']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-time']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-item']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-user']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-action']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-target']} */ 
+/** @type {__VLS_StyleScopedClasses['activity-time']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -987,4 +987,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

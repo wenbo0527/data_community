@@ -28,7 +28,7 @@
           <a-card class="basic-info-card">
             <template #title>
               <div class="card-title">
-                <icon-settings style="margin-right: 8px;" />
+                <IconSettings style="margin-right: 8px;" />
                 基本信息
               </div>
             </template>
@@ -91,7 +91,7 @@
           <a-card class="tag-values-card">
             <template #title>
               <div class="card-title">
-                <icon-tags style="margin-right: 8px;" />
+                <IconTags style="margin-right: 8px;" />
                 标签值配置
               </div>
             </template>
@@ -174,7 +174,7 @@
               
               <!-- 空状态提示 -->
               <div v-if="tagValues.length === 0" class="empty-state">
-                <icon-plus style="font-size: 48px; color: #c9cdd4;" />
+                <IconPlus style="font-size: 48px; color: #c9cdd4;" />
                 <p>暂无标签值，请点击上方"+"按钮添加第一个标签值</p>
               </div>
             </div>

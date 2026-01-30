@@ -12,7 +12,7 @@
               @search="handleSearch"
             />
             <a-button type="primary" @click="handleTableRegistration">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               注册标签表
             </a-button>
           </a-space>
@@ -27,9 +27,7 @@
         @page-change="handlePageChange"
       >
         <template #status="{ record }">
-          <a-tag :color="getStatusColor(record.status)">
-            {{ getStatusText(record.status) }}
-          </a-tag>
+          <StatusTag :status="record.status" dictKey="tagTableStatus" />
         </template>
         <template #tableName="{ record }">
           <a-link @click="handleViewDetails(record)">{{ record.tableName }}</a-link>
@@ -58,6 +56,9 @@
             </a-popconfirm>
           </a-space>
         </template>
+        <template #updateTime="{ record }">
+          {{ DateUtils.smartFormat(record.updateTime) }}
+        </template>
       </a-table>
     </a-card>
 
@@ -68,7 +69,7 @@
       :width="600"
       :footer="false"
     >
-      <table-detail
+      <TableDetail
         v-if="currentTable"
         :table-data="currentTable"
         @edit-mapping="handleEditMapping"
@@ -83,6 +84,8 @@ import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconCheckCircle, IconCloseCircle, IconMinusCircle } from '@arco-design/web-vue/es/icon'
 import TableDetail from './components/table-detail.vue'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -168,22 +171,7 @@ const tableData = computed(() => {
   return filteredData.value.slice(start, end)
 })
 
-// 状态相关方法
-const getStatusColor = (status) => {
-  const colorMap = {
-    online: 'green',
-    offline: 'red'
-  }
-  return colorMap[status] || 'gray'
-}
-
-const getStatusText = (status) => {
-  const textMap = {
-    online: '上线',
-    offline: '下线'
-  }
-  return textMap[status] || status
-}
+ 
 
  
 

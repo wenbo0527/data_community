@@ -4,17 +4,17 @@
       <h2>指标管理</h2>
       <a-dropdown>
         <a-button type="primary">
-          <template #icon><icon-plus /></template>
+          <template #icon><IconPlus /></template>
           新建指标
-          <template #suffix><icon-down /></template>
+          <template #suffix><IconDown /></template>
         </a-button>
         <template #content>
           <a-doption @click="handleCreateMetric('batch-business')">
-            <template #icon><icon-upload /></template>
+            <template #icon><IconUpload /></template>
             批量上传
           </a-doption>
           <a-doption @click="handleCreateMetric('create-business')">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新建指标
           </a-doption>
         </template>
@@ -32,7 +32,7 @@
             @press-enter="handleSearch"
           >
             <template #prefix>
-              <icon-search />
+              <IconSearch />
             </template>
           </a-input>
         </a-col>
@@ -66,7 +66,7 @@
           <a-space>
             <a-button type="primary" @click="handleSearch">
               <template #icon>
-                <icon-search />
+                <IconSearch />
               </template>
               搜索
             </a-button>
@@ -86,11 +86,7 @@
       @page-size-change="handlePageSizeChange"
     >
       <template #status="{ record }">
-        <a-tag
-          :color="getStatusColor(record.status)"
-        >
-          {{ getStatusText(record.status) }}
-        </a-tag>
+        <StatusTag :status="record.status" dictKey="metricStatus" />
       </template>
       
       
@@ -139,11 +135,10 @@
         :pagination="false"
       >
         <template #versionStatus="{ record }">
-          <a-tag
-            :color="record.versionStatus === 'active' ? 'green' : 'gray'"
-          >
-            {{ record.versionStatus === 'active' ? '当前版本' : '历史版本' }}
-          </a-tag>
+          <StatusTag :status="record.versionStatus" dictKey="versionStatus" />
+        </template>
+        <template #createTime="{ record }">
+          {{ DateUtils.formatDateTime(record.createTime) }}
         </template>
         <template #actions="{ record }">
           <a-space>
@@ -185,7 +180,7 @@
           <div>
             <h4>步骤1：下载Excel模版</h4>
             <a-button type="outline" @click="downloadTemplate('business')">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               下载业务核心指标模版
             </a-button>
           </div>
@@ -203,7 +198,7 @@
             >
               <template #upload-button>
                 <a-button type="primary">
-                  <template #icon><icon-upload /></template>
+                  <template #icon><IconUpload /></template>
                   选择Excel文件
                 </a-button>
               </template>
@@ -239,7 +234,7 @@
           <div>
             <h4>步骤1：下载Excel模版</h4>
             <a-button type="outline" @click="downloadTemplate('regulatory')">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               下载监管指标模版
             </a-button>
           </div>
@@ -257,7 +252,7 @@
             >
               <template #upload-button>
                 <a-button type="primary">
-                  <template #icon><icon-upload /></template>
+                  <template #icon><IconUpload /></template>
                   选择Excel文件
                 </a-button>
               </template>
@@ -291,6 +286,8 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { MetricType, RegulatoryCategory } from '@/types/metrics'
 import { generateExcelTemplate } from '@/utils/excelUtils'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 type UploadCategory = 'business' | 'regulatory'
 interface SimpleUploadFile {
@@ -435,7 +432,8 @@ const columns: Array<{
   {
     title: '更新时间',
     dataIndex: 'updateTime',
-    width: 160
+    width: 160,
+    render: ({ record }) => DateUtils.smartFormat(record.updateTime)
   },
   {
     title: '操作',
@@ -661,23 +659,7 @@ const resetSearch = () => {
   handleSearch()
 }
 
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    active: 'green',
-    inactive: 'orange',
-    draft: 'gray'
-  }
-  return colorMap[status] || 'gray'
-}
-
-const getStatusText = (status: string) => {
-  const textMap: Record<string, string> = {
-    active: '启用',
-    inactive: '停用',
-    draft: '草稿'
-  }
-  return textMap[status] || '未知'
-}
+ 
 
 const getCategoryColor = (category: string) => {
   const colorMap: Record<string, string> = {

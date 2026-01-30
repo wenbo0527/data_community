@@ -5,13 +5,13 @@
       <a-space>
         <a-button type="primary" @click="showBatchUpload = true">
           <template #icon>
-            <icon-upload />
+            <IconUpload />
           </template>
           批量上传
         </a-button>
         <a-button @click="handleDownloadTemplate">
           <template #icon>
-            <icon-download />
+            <IconDownload />
           </template>
           下载模板
         </a-button>

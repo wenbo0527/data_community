@@ -7,11 +7,11 @@
           <template #extra>
             <a-space>
               <a-button size="mini" @click="refreshList">
-                <template #icon><icon-refresh /></template>
+                <template #icon><IconRefresh /></template>
                 刷新
               </a-button>
               <a-button size="mini" @click="handleBatchApproval">
-                <template #icon><icon-check-circle /></template>
+                <template #icon><IconCheckCircle /></template>
                 批量审批
               </a-button>
             </a-space>
@@ -57,7 +57,7 @@
                 </div>
                 <div class="permission-info">
                   <span class="permission-type">{{ getPermissionTypeText(item.permissionType) }}</span>
-                  <span class="apply-time">{{ formatTime(item.applyTime) }}</span>
+                  <span class="apply-time">{{ DateUtils.formatDateTime(item.applyTime) }}</span>
                 </div>
               </div>
               <div class="approval-meta">
@@ -87,15 +87,15 @@
             <span>审批详情</span>
             <a-space style="margin-left: 16px">
               <a-button size="mini" @click="handleForward">
-                <template #icon><icon-share-internal /></template>
+                <template #icon><IconShareInternal /></template>
                 转发
               </a-button>
               <a-button size="mini" @click="handleViewHistory">
-                <template #icon><icon-history /></template>
+                <template #icon><IconHistory /></template>
                 历史记录
               </a-button>
               <a-button size="mini" @click="handlePrint">
-                <template #icon><icon-printer /></template>
+                <template #icon><IconPrinter /></template>
                 打印
               </a-button>
             </a-space>
@@ -115,7 +115,7 @@
         <a-card v-else :bordered="false">
           <a-empty description="请选择要审批的申请">
             <template #image>
-              <icon-unordered-list />
+              <IconUnorderedList />
             </template>
           </a-empty>
         </a-card>
@@ -163,6 +163,7 @@ import ForwardModal from './components/ForwardModal.vue'
 import HistoryModal from './components/HistoryModal.vue'
 import { getPermissionTypeText, getApprovalLevelText } from './utils'
 import { getPendingApplications, approveApplication, rejectApplication, forwardApplication } from '@/api/permission'
+import DateUtils from '@/utils/dateUtils'
 
 // 响应式数据
 const searchText = ref('')

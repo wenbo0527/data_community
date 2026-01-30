@@ -3,6 +3,7 @@
     <div class="chart-header">
       <div class="title">{{ chartTitle }}</div>
       <a-space>
+      <a-button size="small" @click="handleExportChart">导出数据</a-button>
         <a-radio-group v-model="chartType" @change="handleChartTypeChange" size="small">
           <a-radio value="burndown">燃尽图</a-radio>
           <a-radio value="cumulative">累积消耗图</a-radio>
@@ -68,10 +69,10 @@ const handleTabChange = (tabKey: string) => {
 
 // 根据当前选择更新图表数据（以百分比展示）
 const updateChartWithCurrentData = () => {
-  const filteredData = props.chartData.length > 0 && props.chartData[0].granularity 
-    ? props.chartData.filter(item => item.granularity === activeTab.value)
-    : props.chartData
-
+  const srcData = Array.isArray(props.chartData) ? props.chartData : []
+  const filteredData = srcData.length > 0 && srcData[0]?.granularity 
+    ? srcData.filter(item => item.granularity === activeTab.value)
+    : srcData
   if (chartType.value === 'burndown') {
     updateChart(filteredData, chartType.value)
   } else {
@@ -104,66 +105,83 @@ const calculateCumulativeData = (data: BurndownItem[]) => {
   })
 }
 
+const handleExportChart = () => {
+  const srcData = Array.isArray(props.chartData) ? props.chartData : []
+  const filteredData = srcData.length > 0 && srcData[0]?.granularity
+    ? srcData.filter(item => item.granularity === activeTab.value)
+    : srcData
+  const payload = {
+    chartType: chartType.value,
+    granularity: activeTab.value,
+    data: filteredData
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `burndown-${chartType.value}-${activeTab.value}-${Date.now()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 // 将数据归一化为百分比
 const normalizeToPercent = (data: any[], type: 'burndown' | 'cumulative') => {
-  const initialBudget = (data?.[0]?.initialBudget !== undefined)
-    ? Number(data[0].initialBudget)
-    : Number(data?.[0]?.budget || 0)
-
-  const safeInitial = initialBudget > 0 ? initialBudget : (data.reduce((max, i) => Math.max(max, Number(i.budget || 0)), 0) || 1)
-
+  const arr = Array.isArray(data) ? data : []
+  const initialBudget = (arr?.[0]?.initialBudget !== undefined)
+    ? Number(arr[0].initialBudget)
+    : Number(arr?.[0]?.budget || 0)
+  const safeInitial = initialBudget > 0 ? initialBudget : (arr.reduce((max, i) => Math.max(max, Number(i.budget || 0)), 0) || 1)
   if (type === 'burndown') {
-    const budgetPct = data.map(item => {
+    const budgetPct = arr.map(item => {
       const ib = Number(item.initialBudget ?? safeInitial)
       const b = Number(item.budget || 0)
       return Number(((b / (ib || 1)) * 100).toFixed(2))
     })
-    const actualPct = data.map(item => {
+    const actualPct = arr.map(item => {
       const ib = Number(item.initialBudget ?? safeInitial)
       const a = Number(item.actual || 0)
       return Number(((a / (ib || 1)) * 100).toFixed(2))
     })
-    // 预警线：剩余低于20%
-    const warnPct = data.map(() => 20)
+    const warnPct = arr.map(() => 20)
     return { budgetPct, actualPct, warnPct }
   } else {
-    const budgetPct = data.map(item => {
+    const budgetPct = arr.map(item => {
       const ib = Number(item.initialBudget ?? safeInitial)
-      const b = Number(item.budget || 0) // 此处为累积消耗
+      const b = Number(item.budget || 0)
       return Number(((b / (ib || 1)) * 100).toFixed(2))
     })
-    const actualPct = data.map(item => {
+    const actualPct = arr.map(item => {
       const ib = Number(item.initialBudget ?? safeInitial)
-      const a = Number(item.actual || 0) // 累积实际消耗
+      const a = Number(item.actual || 0)
       return Number(((a / (ib || 1)) * 100).toFixed(2))
     })
-    // 预警线：消耗高于80%
-    const warnPct = data.map(() => 80)
+    const warnPct = arr.map(() => 80)
     return { budgetPct, actualPct, warnPct }
   }
 }
 
 // 更新图表（以百分比展示）
 const updateChart = (data: any[], type: string) => {
+  const arr = Array.isArray(data) ? data : []
   console.log('updateChart被调用:', {
     hasChartRef: !!burndownChartRef.value,
     hasChartInstance: !!burndownChart,
-    dataLength: data?.length || 0,
+    dataLength: arr?.length || 0,
     chartType: type,
-    data,
-    sampleData: data?.[0],
-    xAxisData: data?.map(item => item.month || item.period),
-    budgetData: data?.map(item => item.budget),
-    actualData: data?.map(item => item.actual),
-    budgetDataConverted: data?.map(item => (item.budget / 10000).toFixed(2)),
-    actualDataConverted: data?.map(item => (item.actual / 10000).toFixed(2))
+    data: arr,
+    sampleData: arr?.[0],
+    xAxisData: arr?.map(item => item.month || item.period),
+    budgetData: arr?.map(item => item.budget),
+    actualData: arr?.map(item => item.actual),
+    budgetDataConverted: arr?.map(item => (item.budget / 10000).toFixed(2)),
+    actualDataConverted: arr?.map(item => (item.actual / 10000).toFixed(2))
   })
 
-  if (!burndownChartRef.value || !burndownChart || !data?.length) {
+  if (!burndownChartRef.value || !burndownChart || !arr?.length) {
     console.log('updateChart跳过:', {
       hasChartRef: !!burndownChartRef.value,
       hasChartInstance: !!burndownChart,
-      dataLength: data?.length || 0
+      dataLength: arr?.length || 0
     })
     return
   }
@@ -172,7 +190,7 @@ const updateChart = (data: any[], type: string) => {
   const rect = chartDom.getBoundingClientRect()
   console.log('图表容器尺寸:', { width: rect.width, height: rect.height })
 
-  const percentData = normalizeToPercent(data, type as 'burndown' | 'cumulative')
+  const percentData = normalizeToPercent(arr, type as 'burndown' | 'cumulative')
 
   // 基础配置（百分比坐标轴）
   const option: any = {
@@ -206,7 +224,7 @@ const updateChart = (data: any[], type: string) => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: data.map(item => item.month || item.period)
+      data: arr.map(item => item.month || item.period)
     },
     yAxis: {
       type: 'value',
@@ -302,7 +320,7 @@ const updateChart = (data: any[], type: string) => {
 }
 
 // 监听数据变化
-watch(() => props.chartData, (newData) => {
+watch(() => props.chartData, (newData: Array<BurndownItem>) => {
   console.log('props.chartData变化，新数据长度:', newData.length)
   if (burndownChart) {
     updateChartWithCurrentData();

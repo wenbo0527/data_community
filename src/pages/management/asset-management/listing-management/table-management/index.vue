@@ -4,7 +4,7 @@
       <h2>表管理</h2>
       <a-button type="primary" @click="goToRegisterForm">
         <template #icon>
-          <icon-plus />
+          <IconPlus />
         </template>
         新建表
       </a-button>
@@ -57,11 +57,10 @@
       @page-size-change="handlePageSizeChange"
     >
       <template #status="{ record }">
-        <a-tag
-          :color="getStatusColor(record.status)"
-        >
-          {{ getStatusText(record.status) }}
-        </a-tag>
+        <StatusTag :status="record.status" dictKey="tableAssetStatus" />
+      </template>
+      <template #registerTime="{ record }">
+        {{ DateUtils.formatDate(record.registerTime) }}
       </template>
       
       <template #actions="{ record }">
@@ -141,6 +140,8 @@ import { Message } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 import { useRouter } from 'vue-router'
 import { mockTables as tableManagementData } from '@/mock/data-map.ts'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 // 响应式数据
 const loading = ref(false)
@@ -183,6 +184,7 @@ const columns = [
   {
     title: '注册时间',
     dataIndex: 'registerTime',
+    slotName: 'registerTime',
     width: 180
   },
   {
@@ -260,23 +262,7 @@ const handlePageSizeChange = (pageSize: number) => {
   pagination.current = 1
 }
 
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    active: 'green',
-    inactive: 'orange',
-    archived: 'red'
-  }
-  return colorMap[status] || 'gray'
-}
-
-const getStatusText = (status: string) => {
-  const textMap: Record<string, string> = {
-    active: '活跃',
-    inactive: '非活跃',
-    archived: '已归档'
-  }
-  return textMap[status] || '未知'
-}
+ 
 
 const viewTable = (record: any) => {
   // 跳转到表详情页

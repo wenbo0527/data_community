@@ -1,55 +1,55 @@
 <template>
   <div class="external-data-evaluation-detail">
     <!-- 报告头部信息 -->
-    <a-card class="report-header" :bordered="false">
+    <ACard class="report-header" :bordered="false">
       <div class="header-content">
         <div class="title-section">
           <h1>{{ reportData.reportName }}</h1>
           <div class="meta-info">
-            <a-tag :color="getStatusColor(reportData.status)">{{ reportData.status }}</a-tag>
+            <ATag :color="getStatusColor(reportData.status)">{{ reportData.status }}</ATag>
             <span class="product-info">产品：{{ reportData.productName }}</span>
             <span class="date-info">分析周期：{{ reportData.analysisPeriod }}</span>
           </div>
         </div>
         <div class="action-section">
           
-          <a-button @click="toggleEditMode" v-if="reportData.editable && !isEditMode">
-            <template #icon><icon-edit /></template>
+          <AButton @click="toggleEditMode" v-if="reportData.editable && !isEditMode">
+            <template #icon><IconEdit /></template>
             编辑报告
-          </a-button>
-          <a-button type="primary" @click="saveReport" :loading="saving" v-if="isEditMode">
-            <template #icon><icon-save /></template>
+          </AButton>
+          <AButton type="primary" @click="saveReport" :loading="saving" v-if="isEditMode">
+            <template #icon><IconSave /></template>
             保存报告
-          </a-button>
-          <a-button @click="publishReport" :loading="publishing" v-if="isEditMode && reportData.status === '草稿'">
-            <template #icon><icon-send /></template>
+          </AButton>
+          <AButton @click="publishReport" :loading="publishing" v-if="isEditMode && reportData.status === '草稿'">
+            <template #icon><IconSend /></template>
             发布报告
-          </a-button>
-          <a-button type="primary" status="danger" @click="deleteReport" v-if="!isEditMode && reportData.status === '草稿'">
-            <template #icon><icon-delete /></template>
+          </AButton>
+          <AButton type="primary" status="danger" @click="deleteReport" v-if="!isEditMode && reportData.status === '草稿'">
+            <template #icon><IconDelete /></template>
             删除报告
-          </a-button>
-          <a-button @click="cancelEdit" v-if="isEditMode">
-            <template #icon><icon-close /></template>
+          </AButton>
+          <AButton @click="cancelEdit" v-if="isEditMode">
+            <template #icon><IconClose /></template>
             取消编辑
-          </a-button>
-          <a-button @click="handleBack" v-if="!isEditMode">
-            <template #icon><icon-left /></template>
+          </AButton>
+          <AButton @click="handleBack" v-if="!isEditMode">
+            <template #icon><IconLeft /></template>
             返回列表
-          </a-button>
-          <a-button type="primary" status="warning" @click="archiveReport" v-if="!isEditMode && reportData.status === '已发布'">
-            <template #icon><icon-archive /></template>
+          </AButton>
+          <AButton type="primary" status="warning" @click="archiveReport" v-if="!isEditMode && reportData.status === '已发布'">
+            <template #icon><IconArchive /></template>
             归档报告
-          </a-button>
+          </AButton>
         </div>
       </div>
-    </a-card>
+    </ACard>
 
-    <a-row :gutter="24">
-      <a-col :span="24">
-        <a-card>
+    <ARow :gutter="24">
+      <ACol :span="24">
+        <ACard>
           <!-- 基础信息栏 -->
-          <a-descriptions
+          <ADescriptions
             :data="basicInfo"
             :column="2"
             bordered
@@ -58,8 +58,8 @@
           />
 
           <!-- 分析进度（仅在分析中状态显示） -->
-          <a-card v-if="reportData.status === '分析中'" class="progress-card" title="分析进度" style="margin-bottom: 24px;">
-            <a-progress 
+          <ACard v-if="reportData.status === '分析中'" class="progress-card" title="分析进度" style="margin-bottom: 24px;">
+            <AProgress 
               :percent="reportData.progress" 
               :status="reportData.progress === 100 ? 'success' : 'active'"
             />
@@ -67,22 +67,22 @@
               <p>当前步骤：{{ getCurrentStepName() }}</p>
               <p v-if="reportData.estimatedCompletion">预计完成：{{ reportData.estimatedCompletion }}</p>
             </div>
-          </a-card>
-        </a-card>
-      </a-col>
-    </a-row>
+          </ACard>
+        </ACard>
+      </ACol>
+    </ARow>
 
-    <a-row :gutter="24">
-      <a-col :span="24">
-        <a-card>
+    <ARow :gutter="24">
+      <ACol :span="24">
+        <ACard>
           <!-- 动态渲染模块内容 -->
           <div v-for="module in reportData.modules" :key="module.id" class="content-section">
             <div class="module-header">
               <h3>{{ module.name }}</h3>
               <div v-if="isEditMode" class="edit-status">
-                <a-tag :color="getEditPermissionColor(module.id)">
+                <ATag :color="getEditPermissionColor(module.id)">
                   {{ getEditTypeLabel(module.id) }}
-                </a-tag>
+                </ATag>
                 <span class="edit-hint">{{ getEditPermissionText(module.id) }}</span>
               </div>
             </div>
@@ -93,7 +93,7 @@
                   <p>{{ module.content || module.textContent }}</p>
                 </div>
                 <div v-else-if="isEditMode && canEditText(module.id)" class="edit-text">
-                  <a-textarea
+                  <ATextarea
                     v-model="editData[module.id].textContent"
                     :placeholder="`请输入${module.name}内容`"
                     :auto-size="{ minRows: 4, maxRows: 10 }"
@@ -108,9 +108,9 @@
               <div v-if="module.table || module.tableData" class="table-content">
                 <h4>{{ module.table?.title || module.tableData?.title }}</h4>
                 <div v-if="isEditMode && !canEditTable(module.id)" class="edit-notice">
-                  <a-alert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
+                  <AAlert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
                 </div>
-                <a-table
+                <ATable
                   :columns="getTableColumns(module.table || module.tableData)"
                   :data="(module.table || module.tableData)?.data || getTableRows(module.table || module.tableData)"
                   :pagination="false"
@@ -124,9 +124,9 @@
                   <div v-for="table in module.tables" :key="table.title" class="table-section">
                     <h4>{{ table.title }}</h4>
                     <div v-if="isEditMode && !canEditTable(module.id)" class="edit-notice">
-                      <a-alert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
+                      <AAlert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
                     </div>
-                    <a-table
+                    <ATable
                       :columns="getTableColumns(table)"
                       :data="table.data || getTableRows(table)"
                       :pagination="false"
@@ -138,9 +138,9 @@
                   <div class="table-section">
                     <h4>{{ module.tableData.saturationTable.title }}</h4>
                     <div v-if="isEditMode && !canEditTable(module.id)" class="edit-notice">
-                      <a-alert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
+                      <AAlert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
                     </div>
-                    <a-table
+                    <ATable
                       :columns="getTableColumns(module.tableData.saturationTable)"
                       :data="getTableRows(module.tableData.saturationTable)"
                       :pagination="false"
@@ -150,9 +150,9 @@
                   <div class="table-section">
                     <h4>{{ module.tableData.correlationTable.title }}</h4>
                     <div v-if="isEditMode && !canEditTable(module.id)" class="edit-notice">
-                      <a-alert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
+                      <AAlert type="info" message="此表格为系统自动生成，不支持编辑" show-icon />
                     </div>
-                    <a-table
+                    <ATable
                       :columns="getTableColumns(module.tableData.correlationTable)"
                       :data="getTableRows(module.tableData.correlationTable)"
                       :pagination="false"
@@ -166,16 +166,16 @@
               <div v-if="module.charts || module.chartData" class="charts-content">
                 <div v-if="isEditMode && canSelectChart(module.id)" class="chart-selection">
                   <h4>图表选择</h4>
-                  <a-space wrap>
-                    <a-checkbox
+                  <ASpace wrap>
+                    <ACheckbox
                       v-for="(chart, index) in getAvailableCharts(module)"
                       :key="index"
                       v-model="editData[module.id].selectedCharts[index]"
                       @change="markAsModified(module.id)"
                     >
                       {{ chart.title }}
-                    </a-checkbox>
-                  </a-space>
+                    </ACheckbox>
+                  </ASpace>
                 </div>
                 <div v-if="module.charts">
                   <div v-for="chart in module.charts" :key="chart.title" class="chart-section">
@@ -231,9 +231,9 @@
               </div>
             </div>
           </div>
-        </a-card>
-      </a-col>
-    </a-row>
+        </ACard>
+      </ACol>
+    </ARow>
   </div>
 </template>
 

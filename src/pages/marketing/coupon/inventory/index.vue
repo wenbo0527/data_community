@@ -10,7 +10,7 @@
               :value="statisticsData.totalInventory"
               :value-style="{ color: '#1890ff' }">
               <template #suffix>
-                <icon-check-circle />
+                <IconCheckCircle />
               </template>
             </a-statistic>
           </a-card>
@@ -22,7 +22,7 @@
               :value="statisticsData.pendingApproval"
               :value-style="{ color: '#faad14' }">
               <template #suffix>
-                <icon-clock-circle />
+                <IconClockCircle />
               </template>
             </a-statistic>
           </a-card>
@@ -34,7 +34,7 @@
               :value="statisticsData.approvedCount"
               :value-style="{ color: '#52c41a' }">
               <template #suffix>
-                <icon-check-circle />
+                <IconCheckCircle />
               </template>
             </a-statistic>
           </a-card>
@@ -46,7 +46,7 @@
               :value="statisticsData.rejectedCount"
               :value-style="{ color: '#ff4d4f' }">
               <template #suffix>
-                <icon-close-circle />
+                <IconCloseCircle />
               </template>
             </a-statistic>
           </a-card>
@@ -118,13 +118,13 @@
             <a-button 
               type="primary" 
               @click="handleExport">
-              <template #icon><icon-download /></template>
+              <template #icon><IconDownload /></template>
               导出数据
             </a-button>
             <a-button 
               type="outline" 
               @click="handleRefresh">
-              <template #icon><icon-refresh /></template>
+              <template #icon><IconRefresh /></template>
               刷新数据
             </a-button>
           </div>
@@ -167,7 +167,7 @@
                 @click="handleSingleApprove(record)"
               >
                 <template #icon>
-                  <icon-check-circle />
+                  <IconCheckCircle />
                 </template>
                 通过
               </a-button>
@@ -178,7 +178,7 @@
                 @click="handleSingleReject(record)"
               >
                 <template #icon>
-                  <icon-close-circle />
+                  <IconCloseCircle />
                 </template>
                 拒绝
               </a-button>

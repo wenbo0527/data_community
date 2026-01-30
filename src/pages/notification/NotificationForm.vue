@@ -27,7 +27,7 @@
           <a-card class="basic-info-card" :bordered="false">
             <template #title>
               <div class="card-title">
-                <icon-edit />
+                <IconEdit />
                 基本信息
                 <span class="required-mark">*</span>
               </div>
@@ -48,7 +48,7 @@
               >
                 <a-radio value="document" class="type-option">
                   <div class="radio-content">
-                    <icon-file class="radio-icon" />
+                    <IconFile class="radio-icon" />
                     <div class="radio-text">
                       <div class="radio-title">仅上传文档</div>
                       <div class="radio-desc">上传文档到社区资源库</div>
@@ -57,7 +57,7 @@
                 </a-radio>
                 <a-radio value="notification" class="type-option">
                   <div class="radio-content">
-                    <icon-notification class="radio-icon" />
+                    <IconNotification class="radio-icon" />
                     <div class="radio-text">
                       <div class="radio-title">发送通知</div>
                       <div class="radio-desc">发布通知消息给用户</div>
@@ -158,7 +158,7 @@
               <a-form-item v-if="formData.contentType === 'notification'" field="target" label="通知对象" required>
                 <template #extra>
                   <a-link @click="goToUserGroupManagement">
-                    <icon-user-group /> 维护用户组
+                    <IconUserGroup /> 维护用户组
                   </a-link>
                 </template>
                 <a-select
@@ -206,7 +206,7 @@
             <template #title>
               <div class="card-title-with-actions">
                 <div class="card-title">
-                  <icon-edit />
+                  <IconEdit />
                   {{ formData.contentType === 'document' ? '文档描述' : '正文' }}
                   <span v-if="formData.contentType === 'notification'" class="required-mark">*</span>
                 </div>
@@ -234,19 +234,19 @@
                 <div v-if="formData.contentType === 'notification'" class="editor-toolbar">
                   <a-button-group size="mini">
                     <a-button @click="insertMarkdown('**', '**')" title="粗体">
-                      <icon-bold />
+                      <IconBold />
                     </a-button>
                     <a-button @click="insertMarkdown('*', '*')" title="斜体">
-                      <icon-italic />
+                      <IconItalic />
                     </a-button>
                     <a-button @click="insertMarkdown('`', '`')" title="代码">
-                      <icon-code />
+                      <IconCode />
                     </a-button>
                     <a-button @click="insertMarkdown('[', '](url)')" title="链接">
                       <icon-link />
                     </a-button>
                     <a-button @click="insertMarkdown('- ', '')" title="列表">
-                      <icon-list />
+                      <IconList />
                     </a-button>
                   </a-button-group>
                 </div>
@@ -303,7 +303,7 @@
           <a-card v-if="formData.contentType === 'notification'" class="publish-settings-card" :bordered="false">
             <template #title>
               <div class="card-title">
-                <icon-settings />
+                <IconSettings />
                 发布设置
               </div>
             </template>
@@ -338,7 +338,7 @@
                   :loading="isSaving"
                   size="large"
                 >
-                  <icon-save />
+                  <IconSave />
                   保存草稿
                 </a-button>
               </div>
@@ -350,7 +350,7 @@
                   size="large"
                   @click="handlePreview"
                 >
-                  <icon-eye />
+                  <IconEye />
                   预览
                 </a-button>
                 <a-button @click="handleCancel" size="large">
@@ -363,7 +363,7 @@
                   size="large"
                 >
                   <icon-send v-if="formData.contentType === 'notification'" />
-                  <icon-upload v-else />
+                  <IconUpload v-else />
                   {{ getSubmitButtonText() }}
                 </a-button>
               </div>
@@ -397,7 +397,7 @@
               <div class="list-header">
                 <span>现有用户组</span>
                 <a-button type="text" size="small" @click="resetGroupForm">
-                  <icon-plus /> 新增
+                  <IconPlus /> 新增
                 </a-button>
               </div>
             </template>
@@ -406,11 +406,11 @@
                 <span class="group-name">{{ group.label }}</span>
                 <div class="group-actions">
                   <a-button type="text" size="small" @click="handleEditGroup(group)">
-                    <icon-edit /> 编辑
+                    <IconEdit /> 编辑
                   </a-button>
                   <a-popconfirm content="确定删除该用户组吗？" @ok="handleDeleteGroup(group.value)">
                     <a-button type="text" status="danger" size="small">
-                      <icon-delete /> 删除
+                      <IconDelete /> 删除
                     </a-button>
                   </a-popconfirm>
                 </div>

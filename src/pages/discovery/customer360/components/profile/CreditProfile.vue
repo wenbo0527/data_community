@@ -109,7 +109,7 @@
         <div v-else-if="creditStatus === 'no_report'" class="no-report">
           <a-empty description="暂无征信报告">
             <template #image>
-              <icon-file :size="64" style="color: #c9cdd4;" />
+              <IconFile :size="64" style="color: #c9cdd4;" />
             </template>
           </a-empty>
         </div>
@@ -118,7 +118,7 @@
         <div v-else-if="creditStatus === 'no_permission'" class="no-permission">
           <a-empty description="暂无查看征信报告的权限">
             <template #image>
-              <icon-lock :size="64" style="color: #c9cdd4;" />
+              <IconLock :size="64" style="color: #c9cdd4;" />
             </template>
           </a-empty>
         </div>

@@ -25,12 +25,30 @@ export default defineConfig(({ command }) => ({
   build: {
     target: 'es2015',
     rollupOptions: {
-      external: ['fsevents']
-    }
+      external: ['fsevents'],
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('@antv/x6')) return 'antv-x6'
+            if (id.includes('@antv/g2')) return 'antv-g2'
+            if (id.includes('@antv')) return 'antv-others'
+            if (id.includes('echarts')) return 'echarts'
+            if (id.includes('@arco-design/web-vue/es/icon')) return 'arco-icons'
+            if (id.includes('@arco-design')) return 'arco'
+            if (id.includes('lodash') || id.includes('lodash-es')) return 'lodash'
+            if (id.includes('moment') || id.includes('dayjs')) return 'date-lib'
+            if (id.includes('vue') || id.includes('vue-router') || id.includes('vuex') || id.includes('pinia')) return 'vue-core'
+            return 'vendor'
+          }
+        }
+      }
+    },
+    chunkSizeWarningLimit: 2000
   },
   server: {
     host: '0.0.0.0',
     port: 5173,
+    strictPort: true,
     // 让 Vite 自动选择 HMR 客户端端口与主机，避免端口变更后 ping 失败
     watch: {
       // 排除可能导致无限重载的文件
@@ -82,31 +100,7 @@ export default defineConfig(({ command }) => ({
           }
         }
       },
-      '/api/alert': {
-        target: 'http://localhost:5173',
-        bypass: (req, res) => {
-          if (process.env.NODE_ENV === 'development') {
-            const { alertMockData } = require('./src/mock/alert.js');
-            const url = new URL(req.url, 'http://localhost:5173');
-            
-            if (url.pathname === '/api/alert/recent') {
-              const query = Object.fromEntries(url.searchParams);
-              const result = alertMockData.recent(query);
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify(result));
-              return;
-            }
-            
-            if (url.pathname === '/api/alert/overview') {
-              const result = alertMockData.overview();
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify(result));
-              return;
-            }
-          }
-        }
-      },
-
+      // 移除 /api/alert 的 bypass 代理，由 src/mock/alert.js 接管
     }
   },
   plugins: [
@@ -115,8 +109,9 @@ export default defineConfig(({ command }) => ({
       targets: ['chrome >= 49']
     }),
     viteMockServe({
-      localEnabled: false,
-      prodEnabled: false
+      localEnabled: true,
+      prodEnabled: false,
+      mockPath: 'src/mock'
     }),
     logServerPlugin()
   ],

@@ -4,7 +4,7 @@
     <a-card class="header-card" :bordered="false">
       <template #title>
         <div class="card-title">
-          <icon-send />
+          <IconSend />
           手工短信列表
         </div>
       </template>
@@ -12,15 +12,15 @@
       <div class="header-actions">
         <a-space>
           <a-button type="primary" @click="handleCreate">
-            <template #icon><icon-plus /></template>
+            <template #icon><IconPlus /></template>
             新增手工短信
           </a-button>
           <a-button type="primary" status="success" @click="handleSearch">
-            <template #icon><icon-search /></template>
+            <template #icon><IconSearch /></template>
             筛选
           </a-button>
           <a-button @click="resetSearch">
-            <template #icon><icon-refresh /></template>
+            <template #icon><IconRefresh /></template>
             重置
           </a-button>
         </a-space>
@@ -64,23 +64,25 @@
           <a-table-column title="模版名称" data-index="templateName" />
           <a-table-column title="发送人数" data-index="recipientCount" />
           <a-table-column title="创建人" data-index="creator" />
-          <a-table-column title="创建时间" data-index="createTime" />
+          <a-table-column title="创建时间" data-index="createTime">
+            <template #cell="{ record }">
+              {{ DateUtils.formatDateTime(record.createTime) }}
+            </template>
+          </a-table-column>
           <a-table-column title="状态" data-index="status">
             <template #cell="{ record }">
-              <a-tag :color="getStatusColor(record.status)">
-                {{ getStatusText(record.status) }}
-              </a-tag>
+              <StatusTag :status="record.status" dictKey="touchSmsStatus" />
             </template>
           </a-table-column>
           <a-table-column title="操作" fixed="right" :width="180">
             <template #cell="{ record }">
               <a-space>
                 <a-button type="text" size="small" @click="handleView(record)">
-                  <template #icon><icon-eye /></template>
+                  <template #icon><IconEye /></template>
                   查看
                 </a-button>
                 <a-button type="text" size="small" @click="handleCopy(record)">
-                  <template #icon><icon-copy /></template>
+                  <template #icon><IconCopy /></template>
                   复制
                 </a-button>
               </a-space>
@@ -104,6 +106,8 @@ import {
   IconEye, 
   IconCopy 
 } from '@arco-design/web-vue/es/icon'
+import StatusTag from '@/components/common/StatusTag.vue'
+import DateUtils from '@/utils/dateUtils'
 
 const router = useRouter()
 
@@ -176,27 +180,7 @@ const mockData = [
   }
 ]
 
-// 获取状态颜色
-const getStatusColor = (status) => {
-  const statusMap = {
-    pending: 'blue',
-    sending: 'orange',
-    completed: 'green',
-    failed: 'red'
-  }
-  return statusMap[status] || 'gray'
-}
-
-// 获取状态文本
-const getStatusText = (status) => {
-  const statusMap = {
-    pending: '待发送',
-    sending: '发送中',
-    completed: '已完成',
-    failed: '发送失败'
-  }
-  return statusMap[status] || '未知状态'
-}
+ 
 
 // 加载数据
 const loadData = () => {

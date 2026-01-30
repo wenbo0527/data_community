@@ -8,8 +8,8 @@ let __VLS_directives;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "table-detail-container" },
 });
-/** @type {__VLS_StyleScopedClasses['table-detail-container']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['table-detail-container']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {};
@@ -20,4 +20,4 @@ export default (await import('vue')).defineComponent({
         return {};
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

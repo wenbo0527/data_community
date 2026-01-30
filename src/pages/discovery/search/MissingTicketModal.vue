@@ -47,7 +47,7 @@
             <div class="arco-upload-list-item">
               <div class="arco-upload-picture-card">
                 <div class="arco-upload-picture-card-text">
-                  <icon-plus />
+                  <IconPlus />
                   <div style="margin-top: 10px; font-weight: 600">点击上传截图</div>
                 </div>
               </div>

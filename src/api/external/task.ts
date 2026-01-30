@@ -38,7 +38,7 @@ export interface Task {
 
 // 模拟任务数据存储
 // 模拟任务数据存储，包含配置信息
-let tasks: Task[] = [
+const tasks: Task[] = [
   {
     id: 1,
     taskName: '京东金融-产品级评估',

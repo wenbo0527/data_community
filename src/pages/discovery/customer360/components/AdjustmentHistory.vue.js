@@ -76,7 +76,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 if (!__VLS_ctx.history || __VLS_ctx.history.length === 0) {
     const __VLS_0 = {}.AEmpty;
-    /** @type {[typeof __VLS_components.AEmpty, typeof __VLS_components.aEmpty, ]} */ ;
+    /** @type {[typeof __VLS_components.AEmpty, typeof __VLS_components.aEmpty, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         description: "暂无调整记录",
@@ -87,7 +87,7 @@ if (!__VLS_ctx.history || __VLS_ctx.history.length === 0) {
 }
 else {
     const __VLS_4 = {}.ATable;
-    /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ ;
+    /** @type {[typeof __VLS_components.ATable, typeof __VLS_components.aTable, ]} */ 
     // @ts-ignore
     const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
         data: (__VLS_ctx.history),
@@ -104,8 +104,8 @@ else {
         bordered: (true),
     }, ...__VLS_functionalComponentArgsRest(__VLS_5));
 }
-/** @type {__VLS_StyleScopedClasses['adjustment-history']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['adjustment-history']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -123,4 +123,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

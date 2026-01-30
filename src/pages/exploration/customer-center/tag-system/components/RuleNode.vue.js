@@ -49,9 +49,9 @@ const __VLS_emit = defineEmits([
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-/** @type {__VLS_StyleScopedClasses['rule-node']} */ ;
-/** @type {__VLS_StyleScopedClasses['rule-node']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['rule-node']} */ 
+/** @type {__VLS_StyleScopedClasses['rule-node']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-item']} */ 
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -69,7 +69,7 @@ if (__VLS_ctx.node.type === 'logic') {
         ...{ class: "logic-info" },
     });
     const __VLS_0 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
         ...{ 'onClick': {} },
@@ -96,21 +96,21 @@ if (__VLS_ctx.node.type === 'logic') {
     __VLS_3.slots.default;
     if (!__VLS_ctx.node.collapsed) {
         const __VLS_8 = {}.IconDown;
-        /** @type {[typeof __VLS_components.IconDown, ]} */ ;
+        /** @type {[typeof __VLS_components.IconDown, ]} */ 
         // @ts-ignore
         const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({}));
         const __VLS_10 = __VLS_9({}, ...__VLS_functionalComponentArgsRest(__VLS_9));
     }
     else {
         const __VLS_12 = {}.IconRight;
-        /** @type {[typeof __VLS_components.IconRight, ]} */ ;
+        /** @type {[typeof __VLS_components.IconRight, ]} */ 
         // @ts-ignore
         const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({}));
         const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
     }
-    var __VLS_3;
+    let __VLS_3;
     const __VLS_16 = {}.ATag;
-    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+    /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
     // @ts-ignore
     const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
         ...{ 'onClick': {} },
@@ -134,7 +134,7 @@ if (__VLS_ctx.node.type === 'logic') {
     };
     __VLS_19.slots.default;
     (__VLS_ctx.node.operator === 'and' ? '且' : '或');
-    var __VLS_19;
+    let __VLS_19;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "node-count" },
     });
@@ -143,7 +143,7 @@ if (__VLS_ctx.node.type === 'logic') {
         ...{ class: "logic-actions" },
     });
     const __VLS_24 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_25 = __VLS_asFunctionalComponent(__VLS_24, new __VLS_24({
         ...{ 'onClick': {} },
@@ -166,9 +166,9 @@ if (__VLS_ctx.node.type === 'logic') {
         }
     };
     __VLS_27.slots.default;
-    var __VLS_27;
+    let __VLS_27;
     const __VLS_32 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
         ...{ 'onClick': {} },
@@ -191,9 +191,9 @@ if (__VLS_ctx.node.type === 'logic') {
         }
     };
     __VLS_35.slots.default;
-    var __VLS_35;
+    let __VLS_35;
     const __VLS_40 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
         ...{ 'onClick': {} },
@@ -216,10 +216,10 @@ if (__VLS_ctx.node.type === 'logic') {
         }
     };
     __VLS_43.slots.default;
-    var __VLS_43;
+    let __VLS_43;
     if (!__VLS_ctx.isRoot) {
         const __VLS_48 = {}.AButton;
-        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+        /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
         // @ts-ignore
         const __VLS_49 = __VLS_asFunctionalComponent(__VLS_48, new __VLS_48({
             ...{ 'onClick': {} },
@@ -240,13 +240,13 @@ if (__VLS_ctx.node.type === 'logic') {
             onClick: (...[$event]) => {
                 if (!(__VLS_ctx.node.type === 'logic'))
                     return;
-                if (!(!__VLS_ctx.isRoot))
+                if (__VLS_ctx.isRoot)
                     return;
                 __VLS_ctx.$emit('remove-node', __VLS_ctx.node.id);
             }
         };
         __VLS_51.slots.default;
-        var __VLS_51;
+        let __VLS_51;
     }
     if (!__VLS_ctx.node.collapsed) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -258,7 +258,7 @@ if (__VLS_ctx.node.type === 'logic') {
                 ...{ class: "child-node" },
             });
             const __VLS_56 = {}.RuleNode;
-            /** @type {[typeof __VLS_components.RuleNode, ]} */ ;
+            /** @type {[typeof __VLS_components.RuleNode, ]} */ 
             // @ts-ignore
             const __VLS_57 = __VLS_asFunctionalComponent(__VLS_56, new __VLS_56({
                 ...{ 'onAddLogicNode': {} },
@@ -356,7 +356,7 @@ if (__VLS_ctx.node.type === 'logic') {
                     ...{ class: "logic-connector" },
                 });
                 const __VLS_76 = {}.ATag;
-                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
                 // @ts-ignore
                 const __VLS_77 = __VLS_asFunctionalComponent(__VLS_76, new __VLS_76({
                     size: "small",
@@ -384,7 +384,7 @@ else if (__VLS_ctx.node.type === 'group') {
         ...{ class: "group-info" },
     });
     const __VLS_80 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_81 = __VLS_asFunctionalComponent(__VLS_80, new __VLS_80({
         ...{ 'onClick': {} },
@@ -403,7 +403,7 @@ else if (__VLS_ctx.node.type === 'group') {
     let __VLS_86;
     const __VLS_87 = {
         onClick: (...[$event]) => {
-            if (!!(__VLS_ctx.node.type === 'logic'))
+            if (__VLS_ctx.node.type === 'logic')
                 return;
             if (!(__VLS_ctx.node.type === 'group'))
                 return;
@@ -413,22 +413,22 @@ else if (__VLS_ctx.node.type === 'group') {
     __VLS_83.slots.default;
     if (!__VLS_ctx.node.collapsed) {
         const __VLS_88 = {}.IconDown;
-        /** @type {[typeof __VLS_components.IconDown, ]} */ ;
+        /** @type {[typeof __VLS_components.IconDown, ]} */ 
         // @ts-ignore
         const __VLS_89 = __VLS_asFunctionalComponent(__VLS_88, new __VLS_88({}));
         const __VLS_90 = __VLS_89({}, ...__VLS_functionalComponentArgsRest(__VLS_89));
     }
     else {
         const __VLS_92 = {}.IconRight;
-        /** @type {[typeof __VLS_components.IconRight, ]} */ ;
+        /** @type {[typeof __VLS_components.IconRight, ]} */ 
         // @ts-ignore
         const __VLS_93 = __VLS_asFunctionalComponent(__VLS_92, new __VLS_92({}));
         const __VLS_94 = __VLS_93({}, ...__VLS_functionalComponentArgsRest(__VLS_93));
     }
-    var __VLS_83;
+    let __VLS_83;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ onClick: (...[$event]) => {
-                if (!!(__VLS_ctx.node.type === 'logic'))
+                if (__VLS_ctx.node.type === 'logic')
                     return;
                 if (!(__VLS_ctx.node.type === 'group'))
                     return;
@@ -445,7 +445,7 @@ else if (__VLS_ctx.node.type === 'group') {
         ...{ class: "group-actions" },
     });
     const __VLS_96 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_97 = __VLS_asFunctionalComponent(__VLS_96, new __VLS_96({
         ...{ 'onClick': {} },
@@ -462,7 +462,7 @@ else if (__VLS_ctx.node.type === 'group') {
     let __VLS_102;
     const __VLS_103 = {
         onClick: (...[$event]) => {
-            if (!!(__VLS_ctx.node.type === 'logic'))
+            if (__VLS_ctx.node.type === 'logic')
                 return;
             if (!(__VLS_ctx.node.type === 'group'))
                 return;
@@ -470,9 +470,9 @@ else if (__VLS_ctx.node.type === 'group') {
         }
     };
     __VLS_99.slots.default;
-    var __VLS_99;
+    let __VLS_99;
     const __VLS_104 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_105 = __VLS_asFunctionalComponent(__VLS_104, new __VLS_104({
         ...{ 'onClick': {} },
@@ -489,7 +489,7 @@ else if (__VLS_ctx.node.type === 'group') {
     let __VLS_110;
     const __VLS_111 = {
         onClick: (...[$event]) => {
-            if (!!(__VLS_ctx.node.type === 'logic'))
+            if (__VLS_ctx.node.type === 'logic')
                 return;
             if (!(__VLS_ctx.node.type === 'group'))
                 return;
@@ -497,9 +497,9 @@ else if (__VLS_ctx.node.type === 'group') {
         }
     };
     __VLS_107.slots.default;
-    var __VLS_107;
+    let __VLS_107;
     const __VLS_112 = {}.AButton;
-    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
     // @ts-ignore
     const __VLS_113 = __VLS_asFunctionalComponent(__VLS_112, new __VLS_112({
         ...{ 'onClick': {} },
@@ -518,7 +518,7 @@ else if (__VLS_ctx.node.type === 'group') {
     let __VLS_118;
     const __VLS_119 = {
         onClick: (...[$event]) => {
-            if (!!(__VLS_ctx.node.type === 'logic'))
+            if (__VLS_ctx.node.type === 'logic')
                 return;
             if (!(__VLS_ctx.node.type === 'group'))
                 return;
@@ -526,7 +526,7 @@ else if (__VLS_ctx.node.type === 'group') {
         }
     };
     __VLS_115.slots.default;
-    var __VLS_115;
+    let __VLS_115;
     if (!__VLS_ctx.node.collapsed) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "group-content" },
@@ -545,7 +545,7 @@ else if (__VLS_ctx.node.type === 'group') {
                     ...{ class: "exclude-label" },
                 });
                 const __VLS_120 = {}.ATag;
-                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ ;
+                /** @type {[typeof __VLS_components.ATag, typeof __VLS_components.aTag, typeof __VLS_components.ATag, typeof __VLS_components.aTag, ]} */ 
                 // @ts-ignore
                 const __VLS_121 = __VLS_asFunctionalComponent(__VLS_120, new __VLS_120({
                     color: "red",
@@ -559,7 +559,7 @@ else if (__VLS_ctx.node.type === 'group') {
                 var __VLS_123;
             }
             const __VLS_124 = {}.ASelect;
-            /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+            /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
             // @ts-ignore
             const __VLS_125 = __VLS_asFunctionalComponent(__VLS_124, new __VLS_124({
                 ...{ 'onChange': {} },
@@ -580,18 +580,18 @@ else if (__VLS_ctx.node.type === 'group') {
             let __VLS_130;
             const __VLS_131 = {
                 onChange: (...[$event]) => {
-                    if (!!(__VLS_ctx.node.type === 'logic'))
+                    if (__VLS_ctx.node.type === 'logic')
                         return;
                     if (!(__VLS_ctx.node.type === 'group'))
                         return;
-                    if (!(!__VLS_ctx.node.collapsed))
+                    if (__VLS_ctx.node.collapsed)
                         return;
                     __VLS_ctx.$emit('data-source-type-change', condition);
                 }
             };
             var __VLS_127;
             const __VLS_132 = {}.AInput;
-            /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+            /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
             // @ts-ignore
             const __VLS_133 = __VLS_asFunctionalComponent(__VLS_132, new __VLS_132({
                 modelValue: (condition.fieldName),
@@ -607,7 +607,7 @@ else if (__VLS_ctx.node.type === 'group') {
             }, ...__VLS_functionalComponentArgsRest(__VLS_133));
             if (condition.dataSourceType === 'detail' || condition.dataSourceType === 'behavior') {
                 const __VLS_136 = {}.ASelect;
-                /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+                /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
                 // @ts-ignore
                 const __VLS_137 = __VLS_asFunctionalComponent(__VLS_136, new __VLS_136({
                     modelValue: (condition.aggregationType),
@@ -623,7 +623,7 @@ else if (__VLS_ctx.node.type === 'group') {
                 }, ...__VLS_functionalComponentArgsRest(__VLS_137));
             }
             const __VLS_140 = {}.ASelect;
-            /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+            /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
             // @ts-ignore
             const __VLS_141 = __VLS_asFunctionalComponent(__VLS_140, new __VLS_140({
                 modelValue: (condition.operator),
@@ -639,7 +639,7 @@ else if (__VLS_ctx.node.type === 'group') {
             }, ...__VLS_functionalComponentArgsRest(__VLS_141));
             if (__VLS_ctx.needValueInput(condition)) {
                 const __VLS_144 = {}.AInput;
-                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ ;
+                /** @type {[typeof __VLS_components.AInput, typeof __VLS_components.aInput, ]} */ 
                 // @ts-ignore
                 const __VLS_145 = __VLS_asFunctionalComponent(__VLS_144, new __VLS_144({
                     modelValue: (condition.value),
@@ -659,7 +659,7 @@ else if (__VLS_ctx.node.type === 'group') {
                     ...{ class: "date-range-section" },
                 });
                 const __VLS_148 = {}.ASelect;
-                /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+                /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
                 // @ts-ignore
                 const __VLS_149 = __VLS_asFunctionalComponent(__VLS_148, new __VLS_148({
                     ...{ 'onChange': {} },
@@ -680,11 +680,11 @@ else if (__VLS_ctx.node.type === 'group') {
                 let __VLS_154;
                 const __VLS_155 = {
                     onChange: (...[$event]) => {
-                        if (!!(__VLS_ctx.node.type === 'logic'))
+                        if (__VLS_ctx.node.type === 'logic')
                             return;
                         if (!(__VLS_ctx.node.type === 'group'))
                             return;
-                        if (!(!__VLS_ctx.node.collapsed))
+                        if (__VLS_ctx.node.collapsed)
                             return;
                         if (!(condition.dataSourceType !== 'attribute'))
                             return;
@@ -694,7 +694,7 @@ else if (__VLS_ctx.node.type === 'group') {
                 var __VLS_151;
                 if (condition.dateType === 'fixed') {
                     const __VLS_156 = {}.ARangePicker;
-                    /** @type {[typeof __VLS_components.ARangePicker, typeof __VLS_components.aRangePicker, ]} */ ;
+                    /** @type {[typeof __VLS_components.ARangePicker, typeof __VLS_components.aRangePicker, ]} */ 
                     // @ts-ignore
                     const __VLS_157 = __VLS_asFunctionalComponent(__VLS_156, new __VLS_156({
                         modelValue: (condition.dateRange),
@@ -712,7 +712,7 @@ else if (__VLS_ctx.node.type === 'group') {
                         ...{ class: "dynamic-date" },
                     });
                     const __VLS_160 = {}.AInputNumber;
-                    /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ ;
+                    /** @type {[typeof __VLS_components.AInputNumber, typeof __VLS_components.aInputNumber, ]} */ 
                     // @ts-ignore
                     const __VLS_161 = __VLS_asFunctionalComponent(__VLS_160, new __VLS_160({
                         modelValue: (condition.dynamicValue),
@@ -727,7 +727,7 @@ else if (__VLS_ctx.node.type === 'group') {
                         min: (1),
                     }, ...__VLS_functionalComponentArgsRest(__VLS_161));
                     const __VLS_164 = {}.ASelect;
-                    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ ;
+                    /** @type {[typeof __VLS_components.ASelect, typeof __VLS_components.aSelect, ]} */ 
                     // @ts-ignore
                     const __VLS_165 = __VLS_asFunctionalComponent(__VLS_164, new __VLS_164({
                         modelValue: (condition.dynamicUnit),
@@ -744,7 +744,7 @@ else if (__VLS_ctx.node.type === 'group') {
                 }
                 else if (condition.dateType === 'single') {
                     const __VLS_168 = {}.ADatePicker;
-                    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ ;
+                    /** @type {[typeof __VLS_components.ADatePicker, typeof __VLS_components.aDatePicker, ]} */ 
                     // @ts-ignore
                     const __VLS_169 = __VLS_asFunctionalComponent(__VLS_168, new __VLS_168({
                         modelValue: (condition.singleDate),
@@ -765,7 +765,7 @@ else if (__VLS_ctx.node.type === 'group') {
                     ...{ class: "sequence-section" },
                 });
                 const __VLS_172 = {}.ACheckbox;
-                /** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ ;
+                /** @type {[typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, typeof __VLS_components.ACheckbox, typeof __VLS_components.aCheckbox, ]} */ 
                 // @ts-ignore
                 const __VLS_173 = __VLS_asFunctionalComponent(__VLS_172, new __VLS_172({
                     modelValue: (condition.enableSequence),
@@ -779,7 +779,7 @@ else if (__VLS_ctx.node.type === 'group') {
                 var __VLS_175;
                 if (condition.enableSequence) {
                     const __VLS_176 = {}.AButton;
-                    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+                    /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
                     // @ts-ignore
                     const __VLS_177 = __VLS_asFunctionalComponent(__VLS_176, new __VLS_176({
                         ...{ 'onClick': {} },
@@ -796,11 +796,11 @@ else if (__VLS_ctx.node.type === 'group') {
                     let __VLS_182;
                     const __VLS_183 = {
                         onClick: (...[$event]) => {
-                            if (!!(__VLS_ctx.node.type === 'logic'))
+                            if (__VLS_ctx.node.type === 'logic')
                                 return;
                             if (!(__VLS_ctx.node.type === 'group'))
                                 return;
-                            if (!(!__VLS_ctx.node.collapsed))
+                            if (__VLS_ctx.node.collapsed)
                                 return;
                             if (!(condition.dataSourceType === 'behavior'))
                                 return;
@@ -817,7 +817,7 @@ else if (__VLS_ctx.node.type === 'group') {
                 ...{ class: "condition-actions" },
             });
             const __VLS_184 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_185 = __VLS_asFunctionalComponent(__VLS_184, new __VLS_184({
                 ...{ 'onClick': {} },
@@ -834,11 +834,11 @@ else if (__VLS_ctx.node.type === 'group') {
             let __VLS_190;
             const __VLS_191 = {
                 onClick: (...[$event]) => {
-                    if (!!(__VLS_ctx.node.type === 'logic'))
+                    if (__VLS_ctx.node.type === 'logic')
                         return;
                     if (!(__VLS_ctx.node.type === 'group'))
                         return;
-                    if (!(!__VLS_ctx.node.collapsed))
+                    if (__VLS_ctx.node.collapsed)
                         return;
                     __VLS_ctx.$emit('duplicate-condition', __VLS_ctx.node, condition);
                 }
@@ -846,7 +846,7 @@ else if (__VLS_ctx.node.type === 'group') {
             __VLS_187.slots.default;
             var __VLS_187;
             const __VLS_192 = {}.AButton;
-            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ ;
+            /** @type {[typeof __VLS_components.AButton, typeof __VLS_components.aButton, typeof __VLS_components.AButton, typeof __VLS_components.aButton, ]} */ 
             // @ts-ignore
             const __VLS_193 = __VLS_asFunctionalComponent(__VLS_192, new __VLS_192({
                 ...{ 'onClick': {} },
@@ -865,18 +865,18 @@ else if (__VLS_ctx.node.type === 'group') {
             let __VLS_198;
             const __VLS_199 = {
                 onClick: (...[$event]) => {
-                    if (!!(__VLS_ctx.node.type === 'logic'))
+                    if (__VLS_ctx.node.type === 'logic')
                         return;
                     if (!(__VLS_ctx.node.type === 'group'))
                         return;
-                    if (!(!__VLS_ctx.node.collapsed))
+                    if (__VLS_ctx.node.collapsed)
                         return;
                     __VLS_ctx.$emit('remove-condition', __VLS_ctx.node, conditionIndex);
                 }
             };
             __VLS_195.slots.default;
             const __VLS_200 = {}.IconDelete;
-            /** @type {[typeof __VLS_components.IconDelete, ]} */ ;
+            /** @type {[typeof __VLS_components.IconDelete, ]} */ 
             // @ts-ignore
             const __VLS_201 = __VLS_asFunctionalComponent(__VLS_200, new __VLS_200({}));
             const __VLS_202 = __VLS_201({}, ...__VLS_functionalComponentArgsRest(__VLS_201));
@@ -884,35 +884,35 @@ else if (__VLS_ctx.node.type === 'group') {
         }
     }
 }
-/** @type {__VLS_StyleScopedClasses['rule-node']} */ ;
-/** @type {__VLS_StyleScopedClasses['is-root']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-node']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['toggle-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-operator']} */ ;
-/** @type {__VLS_StyleScopedClasses['node-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['child-node']} */ ;
-/** @type {__VLS_StyleScopedClasses['logic-connector']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-group']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-header']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-info']} */ ;
-/** @type {__VLS_StyleScopedClasses['toggle-btn']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-name']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-count']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-actions']} */ ;
-/** @type {__VLS_StyleScopedClasses['group-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-condition']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['exclude-label']} */ ;
-/** @type {__VLS_StyleScopedClasses['date-range-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['dynamic-date']} */ ;
-/** @type {__VLS_StyleScopedClasses['sequence-section']} */ ;
-/** @type {__VLS_StyleScopedClasses['condition-actions']} */ ;
-var __VLS_dollars;
+/** @type {__VLS_StyleScopedClasses['rule-node']} */ 
+/** @type {__VLS_StyleScopedClasses['is-root']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-node']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-header']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-info']} */ 
+/** @type {__VLS_StyleScopedClasses['toggle-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-operator']} */ 
+/** @type {__VLS_StyleScopedClasses['node-count']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-content']} */ 
+/** @type {__VLS_StyleScopedClasses['child-node']} */ 
+/** @type {__VLS_StyleScopedClasses['logic-connector']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-group']} */ 
+/** @type {__VLS_StyleScopedClasses['group-header']} */ 
+/** @type {__VLS_StyleScopedClasses['group-info']} */ 
+/** @type {__VLS_StyleScopedClasses['toggle-btn']} */ 
+/** @type {__VLS_StyleScopedClasses['group-name']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-count']} */ 
+/** @type {__VLS_StyleScopedClasses['group-actions']} */ 
+/** @type {__VLS_StyleScopedClasses['group-content']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-item']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-condition']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-content']} */ 
+/** @type {__VLS_StyleScopedClasses['exclude-label']} */ 
+/** @type {__VLS_StyleScopedClasses['date-range-section']} */ 
+/** @type {__VLS_StyleScopedClasses['dynamic-date']} */ 
+/** @type {__VLS_StyleScopedClasses['sequence-section']} */ 
+/** @type {__VLS_StyleScopedClasses['condition-actions']} */ 
+let __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
@@ -934,4 +934,4 @@ export default (await import('vue')).defineComponent({
         };
     },
 });
-; /* PartiallyEnd: #4569/main.vue */
+ /* PartiallyEnd: #4569/main.vue */

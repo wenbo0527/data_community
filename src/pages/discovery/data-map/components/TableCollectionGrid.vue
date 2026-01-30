@@ -8,7 +8,7 @@
       <div class="header-right">
         <a-button type="primary" @click="handleCreateCollection">
           <template #icon>
-            <icon-plus />
+            <IconPlus />
           </template>
           新增集合
         </a-button>
@@ -55,7 +55,7 @@
                       @click.stop="handleRequestPermission(collection)"
                       class="permission-btn"
                     >
-                      <icon-lock />
+                      <IconLock />
                     </a-button>
                   </a-tooltip>
                   <a-button 
@@ -64,20 +64,20 @@
                     @click.stop="toggleFavorite(collection)"
                     :class="{ 'favorited': collection.isFavorite }"
                   >
-                    <icon-star-fill v-if="collection.isFavorite" />
-                    <icon-star v-else />
+                    <IconStarFill v-if="collection.isFavorite" />
+                    <IconStar v-else />
                   </a-button>
                   <a-dropdown @select="handleActionSelect" @click.stop>
                     <a-button type="text" size="mini" @click.stop>
-                      <icon-more />
+                      <IconMore />
                     </a-button>
                     <template #content>
                       <a-doption :value="{ action: 'edit', collection: collection }">
-                        <template #icon><icon-edit /></template>
+                        <template #icon><IconEdit /></template>
                         编辑集合
                       </a-doption>
                       <a-doption :value="{ action: 'delete', collection: collection }" class="danger-option">
-                        <template #icon><icon-delete /></template>
+                        <template #icon><IconDelete /></template>
                         删除集合
                       </a-doption>
                     </template>
