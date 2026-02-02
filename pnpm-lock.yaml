@@ -23,6 +23,9 @@ importers:
       '@monaco-editor/loader':
         specifier: ^1.7.0
         version: 1.7.0
+      '@playwright/test':
+        specifier: ^1.58.1
+        version: 1.58.1
       '@vueup/vue-quill':
         specifier: ^1.2.0
         version: 1.2.0(vue@3.5.19(typescript@5.9.2))
@@ -75,9 +78,6 @@ importers:
         specifier: ^0.18.5
         version: 0.18.5
     devDependencies:
-      '@playwright/test':
-        specifier: ^1.41.2
-        version: 1.58.1
       '@types/lodash-es':
         specifier: ^4.17.12
         version: 4.17.12
