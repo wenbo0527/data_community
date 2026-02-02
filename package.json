@@ -31,6 +31,7 @@
     "@vueup/vue-quill": "^1.2.0",
     "@vueuse/core": "^10.7.2",
     "axios": "^1.6.7",
+    "core-js": "^3.48.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.10",
     "echarts": "^5.4.3",
