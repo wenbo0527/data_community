@@ -226,7 +226,7 @@ export default class NodeConfigValidator {
 
     // 根据数据源类型校验特定字段
     switch (dataSource.type) {
-      case 'database':
+      case 'database': {
         if (!dataSource.connectionString && !dataSource.database) {
           errors.push({
             type: 'MISSING_DATABASE_CONFIG',
@@ -237,8 +237,9 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
 
-      case 'file':
+      case 'file': {
         if (!dataSource.connectionString) {
           errors.push({
             type: 'MISSING_FILE_PATH',
@@ -249,8 +250,9 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
 
-      case 'api':
+      case 'api': {
         if (!dataSource.connectionString) {
           errors.push({
             type: 'MISSING_API_URL',
@@ -261,6 +263,7 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
 
       default:
         warnings.push({
@@ -339,7 +342,7 @@ export default class NodeConfigValidator {
     // 根据输出类型校验特定字段
     switch (outputTarget.type) {
       case 'database':
-      case 'file':
+      case 'file': {
         if (!outputTarget.destination) {
           errors.push({
             type: 'MISSING_OUTPUT_DESTINATION',
@@ -350,8 +353,9 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
 
-      case 'api':
+      case 'api': {
         if (!outputTarget.destination) {
           errors.push({
             type: 'MISSING_API_ENDPOINT',
@@ -362,6 +366,7 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
 
       default:
         warnings.push({
@@ -440,7 +445,7 @@ export default class NodeConfigValidator {
   ): void {
     // 基础语法检查
     switch (language) {
-      case 'python':
+      case 'python': {
         // 检查Python基础语法
         if (code.includes('def ') && !code.includes('return')) {
           warnings.push({
@@ -452,8 +457,9 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
 
-      case 'sql':
+      case 'sql': {
         // 检查SQL基础语法
         const sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE']
         const hasKeyword = sqlKeywords.some(keyword => 
@@ -469,8 +475,9 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
 
-      case 'javascript':
+      case 'javascript': {
         // 检查JavaScript基础语法
         if (code.includes('function ') && !code.includes('return')) {
           warnings.push({
@@ -482,6 +489,7 @@ export default class NodeConfigValidator {
           })
         }
         break
+      }
     }
   }
 

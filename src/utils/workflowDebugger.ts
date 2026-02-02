@@ -194,10 +194,12 @@ export class WorkflowDebugger {
       // 按顺序执行节点
       for (const nodeId of executionOrder) {
         const node = workflow.nodes.find(n => n.id === nodeId);
-        if (!node) continue;
+        if (!node) {
+          this.log(session.id, 'error', 'Node not found', { nodeId });
+          return session;
+        }
 
-        session.currentNodeId = nodeId;
-        session.executionStack.push(nodeId);
+        session.currentNodeId = node.id;
 
         // 检查断点
         if (session.breakpoints.includes(nodeId)) {

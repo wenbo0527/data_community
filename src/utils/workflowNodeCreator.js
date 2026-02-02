@@ -156,39 +156,39 @@ export const createEdge = (source, target, graph) => {
   return newEdge;
 };
 
-/**
- * 获取节点类型的填充颜色
- * @param {string} type 节点类型
- * @returns {string} 填充颜色
- */
-const getNodeTypeFillColor = (type) => {
-  const colorMap = {
-    [NodeType.INPUT]: '#e6f7ff',
-    [NodeType.FILTER]: '#f6ffed',
-    [NodeType.JOIN]: '#e6f7ff',
-    [NodeType.UNION]: '#fff7e6',
-    [NodeType.AGG]: '#f9f0ff',
-    [NodeType.OUTPUT]: '#fff1f0'
-  };
-  return colorMap[type] || '#f5f5f5';
-};
+// /**
+//  * 获取节点类型的填充颜色
+//  * @param {string} type 节点类型
+//  * @returns {string} 填充颜色
+//  */
+// const getNodeTypeFillColor = (type) => {
+//   const colorMap = {
+//     [NodeType.INPUT]: '#e6f7ff',
+//     [NodeType.FILTER]: '#f6ffed',
+//     [NodeType.JOIN]: '#e6f7ff',
+//     [NodeType.UNION]: '#fff7e6',
+//     [NodeType.AGG]: '#f9f0ff',
+//     [NodeType.OUTPUT]: '#fff1f0'
+//   };
+//   return colorMap[type] || '#f5f5f5';
+// };
 
-/**
- * 获取节点类型的颜色
- * @param {string} type 节点类型
- * @returns {string} 颜色值
- */
-const getNodeTypeColor = (type) => {
-  const colorMap = {
-    [NodeType.INPUT]: '#1890ff',
-    [NodeType.FILTER]: '#52c41a',
-    [NodeType.JOIN]: '#1890ff',
-    [NodeType.UNION]: '#fa8c16',
-    [NodeType.AGG]: '#722ed1',
-    [NodeType.OUTPUT]: '#f5222d'
-  };
-  return colorMap[type] || '#1890ff';
-};
+// /**
+//  * 获取节点类型的颜色
+//  * @param {string} type 节点类型
+//  * @returns {string} 颜色值
+//  */
+// const getNodeTypeColor = (type) => {
+//   const colorMap = {
+//     [NodeType.INPUT]: '#1890ff',
+//     [NodeType.FILTER]: '#52c41a',
+//     [NodeType.JOIN]: '#1890ff',
+//     [NodeType.UNION]: '#fa8c16',
+//     [NodeType.AGG]: '#722ed1',
+//     [NodeType.OUTPUT]: '#f5222d'
+//   };
+//   return colorMap[type] || '#1890ff';
+// };
 
 
 
