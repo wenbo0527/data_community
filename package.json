@@ -43,6 +43,7 @@
     "regenerator-runtime": "^0.14.1",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5",
+    "whatwg-fetch": "^3.6.20",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
