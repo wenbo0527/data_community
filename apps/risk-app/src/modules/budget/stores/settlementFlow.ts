@@ -23,11 +23,13 @@ export interface ReconcileSnapshot {
 }
 
 export interface WriteoffRecord {
+  id: string
   productCode: string
   contractId: string
   amount: number
   discountAmount?: number
   remainingAfter: number
+  remark?: string
   createdAt: string
 }
 
@@ -100,11 +102,18 @@ export const useSettlementFlowStore = defineStore('settlementFlow', {
       const k = keyOf(supplierId, month)
       this.reconcileByKey[k] = { items: items.map(i => ({ ...i })), createdAt: new Date().toISOString() }
     },
-    addWriteoffRecord(supplierId: string, month: string, record: WriteoffRecord) {
+    addWriteoffRecord(supplierId: string, month: string, record: Omit<WriteoffRecord, 'id'> & { id?: string }) {
       const k = keyOf(supplierId, month)
       const snap = this.writeoffByKey[k] || { records: [], createdAt: new Date().toISOString() }
-      snap.records.push({ ...record })
+      snap.records.push({ ...record, id: record.id || `WR-${Date.now()}-${Math.floor(Math.random() * 1000)}` })
       this.writeoffByKey[k] = snap
+    },
+    revokeWriteoffRecord(supplierId: string, month: string, recordId: string) {
+      const k = keyOf(supplierId, month)
+      const snap = this.writeoffByKey[k]
+      if (snap) {
+        snap.records = snap.records.filter(r => r.id !== recordId)
+      }
     },
     markCostingCompleted(supplierId: string, month: string, completed = true) {
       const k = keyOf(supplierId, month)

@@ -520,13 +520,9 @@ watch(() => props.collections.length, () => {
 .title-actions {
   display: flex;
   gap: 4px;
-  opacity: 0;
+  opacity: 1;
   transition: all 0.2s ease;
   flex-shrink: 0;
-}
-
-.collection-card:hover .title-actions {
-  opacity: 1;
 }
 
 .title-actions :deep(.arco-btn) {

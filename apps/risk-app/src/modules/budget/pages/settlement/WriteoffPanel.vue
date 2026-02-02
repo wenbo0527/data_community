@@ -31,42 +31,80 @@
         <a-table-column title="产品名称" :width="200">
           <template #cell="{ record }">{{ record.productName }}</template>
         </a-table-column>
-        <a-table-column title="待核销总费用" :width="180">
-          <template #cell="{ record }">{{ formatAmount(record.pendingAmount) }}</template>
+        <a-table-column title="待核销总费用 (总额 / 剩余)" :width="240">
+          <template #cell="{ record }">
+            <span>{{ formatAmount(record.totalAmount) }} / <span :style="{ color: record.pendingAmount > 0 ? '#ff7d00' : '#00b42a', fontWeight: 'bold' }">{{ formatAmount(record.pendingAmount) }}</span></span>
+          </template>
         </a-table-column>
-        <a-table-column title="待核销减免量" :width="180">
-          <template #cell="{ record }">{{ (record.pendingDiscount ?? 0) }}</template>
+        <a-table-column title="待核销减免量 (总额 / 剩余)" :width="200">
+          <template #cell="{ record }">
+            <span>{{ record.totalDiscount }} / <span :style="{ color: record.pendingDiscount > 0 ? '#ff7d00' : '#00b42a', fontWeight: 'bold' }">{{ record.pendingDiscount }}</span></span>
+          </template>
         </a-table-column>
         <a-table-column title="选择合同与核销金额" :width="620">
           <template #cell="{ record }">
             <a-space>
               <a-space direction="vertical">
-                <a-space v-for="(w, idx) in record.writeoffs" :key="idx">
-                  <a-select v-model="w.contractId" placeholder="选择合同" style="width: 220px" @change="(val:string)=>onContractSelect(record, idx, val)">
-                    <a-option v-for="c in availableContracts" :key="c.id" :value="c.id">
-                      <span :style="{ color: c.contractType === 'framework' ? '#165DFF' : '#FF7D00' }">
-                        【{{ c.contractType === 'framework' ? '框架' : '补充' }}】
-                      </span>
-                      {{ c.contractName }}（剩余：{{ formatAmount(contractRemaining(c)) }}）
-                    </a-option>
-                  </a-select>
+                <a-space v-for="(w, idx) in record.writeoffs" :key="idx" align="start">
+                  <div style="display: flex; flex-direction: column">
+                    <a-select v-model="w.contractId" placeholder="选择合同" style="width: 220px" @change="(val:string)=>onContractSelect(record, idx, val)">
+                      <a-option v-for="c in availableContracts" :key="c.id" :value="c.id">
+                        <span :style="{ color: c.contractType === 'framework' ? '#165DFF' : '#FF7D00' }">
+                          【{{ c.contractType === 'framework' ? '框架' : '补充' }}】
+                        </span>
+                        {{ c.contractName }}（剩余：{{ formatAmount(contractRemaining(c)) }}，免费：{{ contractRemainingFree(c) }}）
+                      </a-option>
+                    </a-select>
+                    <span v-if="w.contractId" style="font-size: 12px; color: #86909c; margin-top: 2px">
+                      剩余金额：{{ formatAmount(selectedContractRemain(w.contractId)) }} | 免费量：{{ selectedContractRemainFree(w.contractId) }}
+                    </span>
+                  </div>
                   <a-tooltip content="核销金额">
-                    <a-input-number v-model="w.amount" :min="0" :max="record.pendingAmount" :precision="2" :disabled="!w.contractId" placeholder="金额" style="width: 100px" />
+                    <a-input-number v-model="w.amount" :min="0" :max="record.pendingAmount" :precision="2" :disabled="!w.contractId || (record.pendingAmount <= 0 && record.pendingDiscount <= 0)" placeholder="金额" style="width: 100px" />
                   </a-tooltip>
                   <a-tooltip content="核销减免量">
-                    <a-input-number v-model="w.discountAmount" :min="0" :max="record.pendingDiscount" :precision="0" :disabled="!w.contractId" placeholder="减免" style="width: 80px" />
+                    <a-input-number v-model="w.discountAmount" :min="0" :max="record.pendingDiscount" :precision="0" :disabled="!w.contractId || (record.pendingAmount <= 0 && record.pendingDiscount <= 0)" placeholder="减免" style="width: 80px" />
                   </a-tooltip>
-                  <a-button size="small" type="primary" @click="confirmWriteoff(record, idx)">执行</a-button>
-                  <a-button size="small" type="outline" @click="addWriteoffLineAt(record, idx)">＋</a-button>
-                  <a-button size="small" type="outline" @click="deleteWriteoffLine(record, idx)">－</a-button>
+                  <a-button size="small" type="primary" :disabled="record.pendingAmount <= 0 && record.pendingDiscount <= 0" @click="confirmWriteoff(record, idx)">执行</a-button>
                 </a-space>
+                
+                <!-- 核销记录明细外露 -->
+                <div v-if="getProductHistory(record.productCode).length > 0" style="margin-top: 8px; background: #f7f8fa; padding: 8px; border-radius: 4px;">
+                  <div style="font-size: 12px; color: #86909c; margin-bottom: 4px;">已核销记录：</div>
+                  <a-space direction="vertical" size="mini">
+                    <div v-for="h in getProductHistory(record.productCode)" :key="h.id" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                      <a-tag size="small" color="arcoblue">{{ selectedContractName(h.contractId) }}</a-tag>
+                      <span>{{ formatAmount(h.amount) }}</span>
+                      <span v-if="h.discountAmount" style="color: #86909c"> (减免: {{ h.discountAmount }})</span>
+                      <a-popconfirm content="确定撤销此笔核销？" @ok="revokeRecord(h)">
+                        <a-button type="text" size="mini" status="danger" style="padding: 0 4px; height: 20px;">
+                          <template #icon><icon-close /></template>
+                        </a-button>
+                      </a-popconfirm>
+                    </div>
+                  </a-space>
+                </div>
               </a-space>
             </a-space>
           </template>
         </a-table-column>
         <a-table-column title="状态" :width="160">
           <template #cell="{ record }">
-            <a-tag :status="record.pendingAmount <= 0 ? 'success' : 'warning'">{{ record.pendingAmount <= 0 ? '核销完成' : '待核销' }}</a-tag>
+            <a-tag :status="(record.pendingAmount <= 0 && record.pendingDiscount <= 0) ? 'success' : 'warning'">{{ (record.pendingAmount <= 0 && record.pendingDiscount <= 0) ? '核销完成' : '待核销' }}</a-tag>
+          </template>
+        </a-table-column>
+        <a-table-column title="操作" :width="120">
+          <template #cell="{ record }">
+            <a-space direction="vertical">
+              <a-space v-for="(w, idx) in record.writeoffs" :key="idx" style="height: 32px; display: flex; align-items: center;">
+                <a-tooltip content="编辑备注">
+                  <a-button size="small" :type="w.remark ? 'primary' : 'outline'" @click="openRemarkModal(record, idx)">
+                    <template #icon><icon-edit /></template>
+                    备注
+                  </a-button>
+                </a-tooltip>
+              </a-space>
+            </a-space>
           </template>
         </a-table-column>
       </template>
@@ -74,9 +112,13 @@
 
     <div v-if="!embedded" style="text-align: right; margin-top: 12px">
       <a-space>
-        <a-button type="primary" :disabled="productRows.every(r => r.pendingAmount > 0)" @click="finishTask">完成核销并生成报告</a-button>
+        <a-button type="primary" :disabled="productRows.every(r => r.pendingAmount > 0 || r.pendingDiscount > 0)" @click="finishTask">完成核销并生成报告</a-button>
       </a-space>
     </div>
+
+    <a-modal v-model:visible="remarkVisible" title="核销备注" @ok="saveRemark">
+      <a-textarea v-model="currentRemark" placeholder="请输入备注信息" :auto-size="{ minRows: 3, maxRows: 6 }" />
+    </a-modal>
   </div>
 </template>
 
@@ -84,9 +126,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
+import { IconEdit, IconHistory, IconClose } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '../../stores/contract'
 import { useSettlementSupplier } from '../../composables/useSettlementSupplier'
-import { useSettlementFlowStore } from '../../stores/settlementFlow'
+import { useSettlementFlowStore, WriteoffRecord } from '../../stores/settlementFlow'
 import { generateBillLines } from '../../utils/costing'
 import { getSupplierProductsMock } from '../../../external-data/mock/supplierProducts'
 import { log } from '@/utils/logger'
@@ -102,6 +145,53 @@ const form = ref({ supplierId: props.supplierId || '', channelId: '', month: pro
 const productRows = ref<any[]>([])
 const supplierProducts = ref<any[]>([])
 
+const remarkVisible = ref(false)
+const currentRemark = ref('')
+const editingTarget = ref<{ row: any, index: number } | null>(null)
+  
+  const getProductHistory = (productCode: string) => {
+  const allRecords = flowStore.getWriteoff(form.value.supplierId, form.value.month)?.records || []
+  return allRecords.filter(r => r.productCode === productCode).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+}
+
+const revokeRecord = (record: WriteoffRecord) => {
+  try {
+    // 1. 恢复合同余额
+    store.restoreBalance(record.contractId, record.amount, record.discountAmount || 0)
+    // 2. 删除核销记录
+    flowStore.revokeWriteoffRecord(form.value.supplierId, form.value.month, record.id)
+    // 3. 刷新列表 (不再需要，因为直接使用 getProductHistory 计算属性)
+    // historyRecords.value = historyRecords.value.filter(r => r.id !== record.id)
+    
+    // 4. 更新页面上的待核销金额
+    const row = productRows.value.find(r => r.productCode === record.productCode)
+    if (row) {
+      row.pendingAmount = Number((row.pendingAmount + record.amount).toFixed(2))
+      row.pendingDiscount = Number((row.pendingDiscount + (record.discountAmount || 0)).toFixed(0))
+    }
+    
+    Message.success('撤销成功')
+  } catch (error) {
+    Message.error('撤销失败')
+  }
+}
+
+const openRemarkModal = (row: any, index: number) => {
+  editingTarget.value = { row, index }
+  currentRemark.value = row.writeoffs[index].remark || ''
+  remarkVisible.value = true
+}
+
+const saveRemark = () => {
+  if (editingTarget.value) {
+    const { row, index } = editingTarget.value
+    if (row.writeoffs[index]) {
+      row.writeoffs[index].remark = currentRemark.value
+    }
+  }
+  remarkVisible.value = false
+}
+
 const availableContracts = computed(() => {
   const name = getSupplierName(form.value.supplierId)
   return store.list.filter((c: any) => c.status === 'active' && (c.supplier === name || c.supplier === form.value.supplierId))
@@ -112,9 +202,18 @@ const contractRemaining = (c: any) => {
   const off = Number(c.writtenOffAmount) || 0
   return Math.max(0, total - off)
 }
+const contractRemainingFree = (c: any) => {
+  const total = Number(c.totalFreeQuota) || 0
+  const used = Number(c.usedFreeQuota) || 0
+  return Math.max(0, total - used)
+}
 const selectedContractRemain = (id: string) => {
   const c = store.list.find((i: any) => i.id === id)
   return c ? contractRemaining(c) : 0
+}
+const selectedContractRemainFree = (id: string) => {
+  const c = store.list.find((i: any) => i.id === id)
+  return c ? contractRemainingFree(c) : 0
 }
 const selectedContractName = (id: string) => {
   const c = store.list.find((i: any) => i.id === id)
@@ -128,10 +227,10 @@ const onContractSelect = (row: any, index: number, contractId: string) => {
   row.writeoffs[index].discountAmount = 0
 }
 const goContractDetail = (id: string) => { if (!id) return; router.push(`/budget/contracts/${encodeURIComponent(id)}`) }
-const addWriteoffLineAt = (row: any, index: number) => { const insertIndex = Math.min((index ?? 0) + 1, row.writeoffs.length); row.writeoffs.splice(insertIndex, 0, { contractId: '', amount: 0, discountAmount: 0 }) }
+const addWriteoffLineAt = (row: any, index: number) => { const insertIndex = Math.min((index ?? 0) + 1, row.writeoffs.length); row.writeoffs.splice(insertIndex, 0, { contractId: '', amount: 0, discountAmount: 0, remark: '' }) }
 const deleteWriteoffLine = (row: any, index: number) => {
   if (!Array.isArray(row.writeoffs)) row.writeoffs = []
-  if (row.writeoffs.length <= 1) { row.writeoffs[0] = { contractId: '', amount: 0, discountAmount: 0 }; return }
+  if (row.writeoffs.length <= 1) { row.writeoffs[0] = { contractId: '', amount: 0, discountAmount: 0, remark: '' }; return }
   row.writeoffs.splice(index, 1)
 }
 const formatAmount = (n?: number) => { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) }
@@ -139,14 +238,26 @@ const loadPending = () => {
   if (!form.value.supplierId || !form.value.month) { Message.error('请选择征信机构与账期'); return }
   const byProduct = flowStore.pendingAmountByProduct(form.value.supplierId, form.value.month)
   const discountByProduct = flowStore.pendingDiscountByProduct(form.value.supplierId, form.value.month)
+  const reconcile = flowStore.getReconcile(form.value.supplierId, form.value.month)
   productRows.value = Object.keys(byProduct).map(code => {
     const name = supplierProducts.value.find((p: any) => p.productCode === code)?.productName || code
-    return { productCode: code, productName: name, pendingAmount: Number(byProduct[code].toFixed(2)), pendingDiscount: Number((discountByProduct[code] || 0).toFixed(0)), writeoffs: [{ contractId: '', amount: 0, discountAmount: 0 }] }
+    const originalItem = reconcile?.items.find((i: any) => i.productCode === code)
+    const totalAmount = originalItem?.finalAmount || 0
+    const totalDiscount = originalItem?.finalDiscount || 0
+    return { 
+      productCode: code, 
+      productName: name, 
+      totalAmount,
+      totalDiscount,
+      pendingAmount: Number(byProduct[code].toFixed(2)), 
+      pendingDiscount: Number((discountByProduct[code] || 0).toFixed(0)), 
+      writeoffs: [{ contractId: '', amount: 0, discountAmount: 0, remark: '' }] 
+    }
   })
   if (!productRows.value.length) Message.info('当前无待核销产品')
   log('writeoff.loadPending', { supplierId: form.value.supplierId, month: form.value.month, count: productRows.value.length })
 }
-const addWriteoffLine = (row: any) => { row.writeoffs.push({ contractId: '', amount: 0, discountAmount: 0 }) }
+const addWriteoffLine = (row: any) => { row.writeoffs.push({ contractId: '', amount: 0, discountAmount: 0, remark: '' }) }
 const supplementMockData = async () => {
   const sid = form.value.supplierId || ''
   const mon = form.value.month || ''
@@ -185,8 +296,8 @@ const supplementContractMock = async () => {
   const supplierName = getSupplierName(sid) || sid
   const now = Date.now()
   const makeDate = (offsetDays: number) => new Date(now + offsetDays * 86400000).toISOString()
-  await store.createContract({ contractNo: `HT-${Math.floor(now % 100000)}`, contractName: `${supplierName} 核销演示框架合同`, supplier: supplierName, amount: 500000, startDate: makeDate(0), endDate: makeDate(60), status: 'active', writtenOffAmount: 100000 } as any)
-  await store.createContract({ contractNo: `HT-${Math.floor((now+1) % 100000)}`, contractName: `${supplierName} 核销演示补充协议`, supplier: supplierName, amount: 200000, startDate: makeDate(0), endDate: makeDate(90), status: 'active', writtenOffAmount: 20000 } as any)
+  await store.createContract({ contractNo: `HT-${Math.floor(now % 100000)}`, contractName: `${supplierName} 核销演示框架合同`, supplier: supplierName, amount: 500000, startDate: makeDate(0), endDate: makeDate(60), status: 'active', writtenOffAmount: 100000, totalFreeQuota: 10000, usedFreeQuota: 2000 } as any)
+  await store.createContract({ contractNo: `HT-${Math.floor((now+1) % 100000)}`, contractName: `${supplierName} 核销演示补充协议`, supplier: supplierName, amount: 200000, startDate: makeDate(0), endDate: makeDate(90), status: 'active', writtenOffAmount: 20000, totalFreeQuota: 5000, usedFreeQuota: 100 } as any)
   Message.success('已补充合同Mock数据')
 }
 const confirmWriteoff = (row: any, idx: number) => {
@@ -202,18 +313,70 @@ const confirmWriteoff = (row: any, idx: number) => {
   if (amt > row.pendingAmount) { Message.error('超过当前产品待核销总费用'); return }
   if (discountAmt > row.pendingDiscount) { Message.error('超过当前产品待核销减免量'); return }
   
-  const next = { ...c, writtenOffAmount: Number(c.writtenOffAmount || 0) + amt }
+  const next = { ...c, writtenOffAmount: Number(c.writtenOffAmount || 0) + amt, usedFreeQuota: Number(c.usedFreeQuota || 0) + discountAmt }
   const contractIndex = store.list.findIndex((i: any) => i.id === c.id)
   if (contractIndex >= 0) store.list.splice(contractIndex, 1, next)
-  row.pendingAmount = Number((row.pendingAmount - amt).toFixed(2))
-  row.pendingDiscount = Number((row.pendingDiscount - discountAmt).toFixed(0))
-  flowStore.addWriteoffRecord(form.value.supplierId, form.value.month, { productCode: row.productCode, contractId: c.id, amount: amt, discountAmount: discountAmt, remainingAfter: contractRemaining(next), createdAt: new Date().toISOString() })
-  Message.success('核销已执行')
-  log('writeoff.confirm', { productCode: row.productCode, contractId: c.id, amount: amt, discountAmount: discountAmt })
+  // row.pendingAmount = Number((row.pendingAmount - amt).toFixed(2))
+  // row.pendingDiscount = Number((row.pendingDiscount - discountAmt).toFixed(0))
+  // 使用新的计算方式更新 pendingAmount，不直接修改 row
+  flowStore.addWriteoffRecord(form.value.supplierId, form.value.month, { productCode: row.productCode, contractId: c.id, amount: amt, discountAmount: discountAmt, remainingAfter: contractRemaining(next), remark: entry.remark || '', createdAt: new Date().toISOString() })
+  
+  // 重新计算该行的待核销金额，以保持数据一致性
+  const byProduct = flowStore.pendingAmountByProduct(form.value.supplierId, form.value.month)
+  const discountByProduct = flowStore.pendingDiscountByProduct(form.value.supplierId, form.value.month)
+  row.pendingAmount = Number((byProduct[row.productCode] || 0).toFixed(2))
+  row.pendingDiscount = Number((discountByProduct[row.productCode] || 0).toFixed(0))
+
+  // 智能重置输入框：
+  // 1. 如果还有待核销金额或减免量，尝试自动填入 min(剩余待核销, 当前合同剩余)
+  // 2. 如果当前合同已无余额，清空合同选择，提示切换
+  if (row.pendingAmount > 0 || row.pendingDiscount > 0) {
+    const currentRemain = contractRemaining(next)
+    const currentRemainFree = contractRemainingFree(next)
+    
+    // 只要合同还有余额或免费量，且能匹配上待核销的需求，就继续使用
+    const canCoverAmount = row.pendingAmount > 0 && currentRemain > 0
+    const canCoverDiscount = row.pendingDiscount > 0 && currentRemainFree > 0
+    
+    if (canCoverAmount || canCoverDiscount || (row.pendingAmount === 0 && row.pendingDiscount === 0)) {
+       // 合同还有可用额度（金额或免费量），自动填入
+       if (row.pendingAmount > 0) {
+         entry.amount = Number(Math.min(row.pendingAmount, currentRemain).toFixed(2))
+       } else {
+         entry.amount = 0
+       }
+       
+       if (row.pendingDiscount > 0) {
+         entry.discountAmount = Math.min(row.pendingDiscount, currentRemainFree)
+       } else {
+         entry.discountAmount = 0
+       }
+       
+       Message.success('核销已执行，已自动填入剩余可用额度')
+    } else {
+      // 合同虽然可能还有某种余额，但无法覆盖当前剩余的待核销项（例如：只剩免费量但待核销只有金额，或反之），
+      // 或者合同彻底空了。这里简化处理：只要当前合同无法继续从待核销中扣除任何一项，就提示切换。
+      // 更精细的逻辑是：如果 pendingAmount > 0 但 currentRemain == 0，提示金额不足；
+      // 如果 pendingDiscount > 0 但 currentRemainFree == 0，提示免费量不足。
+      // 为保持交互简单，统一提示切换。
+      
+      entry.contractId = ''
+      entry.amount = 0
+      entry.discountAmount = 0
+      Message.success('核销已执行，当前合同剩余额度不足以继续核销，请切换合同')
+    }
+  } else {
+    // 待核销金额和减免量均已清零
+    entry.amount = 0
+    entry.discountAmount = 0
+    Message.success('该产品核销已全部完成')
+  }
+
+  log('writeoff.confirm', { productCode: row.productCode, contractId: c.id, amount: amt, discountAmount: discountAmt, remark: entry.remark })
 }
 const finishTask = (): boolean => {
-  const allDone = productRows.value.every(r => r.pendingAmount <= 0)
-  if (!allDone) { Message.error('仍有待核销费用未完成'); return false }
+  const allDone = productRows.value.every(r => r.pendingAmount <= 0 && r.pendingDiscount <= 0)
+  if (!allDone) { Message.error('仍有待核销费用或减免量未完成'); return false }
   Message.success('全部产品核销完成，可在任务详情生成报告')
   log('writeoff.finish', { supplierId: form.value.supplierId, month: form.value.month })
   flowStore.markWriteoffCompleted(form.value.supplierId, form.value.month, true)

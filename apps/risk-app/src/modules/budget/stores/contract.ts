@@ -14,6 +14,8 @@ export interface ContractItem {
   dataCount?: number
   productCount?: number
   writtenOffAmount?: number
+  totalFreeQuota?: number
+  usedFreeQuota?: number
   contractType?: 'framework' | 'supplement'
   frameworkId?: string | null
 }
@@ -75,10 +77,12 @@ export const useContractStore = defineStore('contract', {
           const defaultProductCount = i.productCount ?? (numId % 5) + 1
           const ratios = [0.3, 0.5, 0.7]
           const defaultWrittenOff = i.writtenOffAmount ?? Math.round((i.amount || 0) * ratios[numId % ratios.length])
+          const defaultTotalFree = i.totalFreeQuota ?? 10000
+          const defaultUsedFree = i.usedFreeQuota ?? Math.round(defaultTotalFree * ratios[numId % ratios.length])
           const defaultType: 'framework' | 'supplement' = numId % 2 === 0 ? 'framework' : 'supplement'
           const frameworks = (this.list || []).filter(x => x.contractType === 'framework')
           const linkId = defaultType === 'supplement' && frameworks.length ? frameworks[frameworks.length - 1].id : null
-          return { ...i, dataCount: defaultDataCount, productCount: defaultProductCount, writtenOffAmount: defaultWrittenOff, contractType: i.contractType ?? defaultType, frameworkId: i.frameworkId ?? linkId }
+          return { ...i, dataCount: defaultDataCount, productCount: defaultProductCount, writtenOffAmount: defaultWrittenOff, totalFreeQuota: defaultTotalFree, usedFreeQuota: defaultUsedFree, contractType: i.contractType ?? defaultType, frameworkId: i.frameworkId ?? linkId }
         })
 
         this.list = list
@@ -133,6 +137,14 @@ export const useContractStore = defineStore('contract', {
       this.pricingMap[String(productId)] = {
         ...pricing,
         billingType: pricing.billingType as 'fixed' | 'tiered' | 'special'
+      }
+    },
+
+    restoreBalance(contractId: string, amount: number, discountAmount: number) {
+      const item = this.list.find(i => i.id === contractId)
+      if (item) {
+        item.writtenOffAmount = Math.max(0, (item.writtenOffAmount || 0) - amount)
+        item.usedFreeQuota = Math.max(0, (item.usedFreeQuota || 0) - discountAmount)
       }
     }
   }

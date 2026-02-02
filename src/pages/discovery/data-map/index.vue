@@ -69,54 +69,7 @@
               <BusinessProcessFlow />
             </div>
           </a-tab-pane>
-          <a-tab-pane key="3" title="指标地图">
-            <div class="tab-content-wrapper">
-              <!-- 指标层级筛选区域 -->
-              <div class="metrics-filter-section">
-                <div class="filter-header">
-                  <div class="filter-controls">
-                    <a-space>
-                      <span class="filter-label">指标层级:</span>
-                      <a-select 
-                        v-model="selectedLevel" 
-                        placeholder="选择层级" 
-                        style="width: 120px"
-                        @change="handleLevelChange"
-                      >
-                        <a-option value="all">全部层级</a-option>
-                        <a-option value="1">战略层(L1)</a-option>
-                        <a-option value="2">管理层(L2)</a-option>
-                        <a-option value="3">执行层(L3)</a-option>
-                      </a-select>
-                      
-                      <span class="filter-label">业务线:</span>
-                      <a-select 
-                        v-model="selectedLine" 
-                        placeholder="选择业务线" 
-                        style="width: 120px"
-                        @change="handleLineChange"
-                      >
-                        <a-option value="all">全部线路</a-option>
-                        <a-option value="scale">规模线</a-option>
-                        <a-option value="quality">质量线</a-option>
-                      </a-select>
-                      
-                      <a-button type="text" @click="resetFilters">
-                        <template #icon><IconRefresh /></template>
-                        重置
-                      </a-button>
-                    </a-space>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 指标画布 -->
-              <SubwayMap 
-                :level-filter="selectedLevel"
-                :line-filter="selectedLine"
-              />
-            </div>
-          </a-tab-pane>
+
         </a-tabs>
       </div>
 

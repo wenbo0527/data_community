@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Vue compilation artifacts
-*.vue.js
-*.vue.d.ts
+# Trae
+.trae/tmp
+.trae/worktree-*

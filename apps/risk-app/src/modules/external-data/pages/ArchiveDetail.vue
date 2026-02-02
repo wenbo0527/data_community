@@ -45,8 +45,40 @@
                 <a-table-column title="合同金额">
                   <template #cell="{ record }">{{ formatCurrency(record.amount) }}</template>
                 </a-table-column>
+                <a-table-column title="免费量" data-index="freeQuota" />
+                <a-table-column title="免费量有效期" data-index="validPeriod" />
+                <a-table-column title="已减免量" data-index="deductedAmount" />
+                <a-table-column title="备注" data-index="remark" />
               </template>
               <template #empty><a-empty description="暂无关联框架协议" /></template>
+            </a-table>
+            <a-divider style="margin: 16px 0" />
+            <div style="margin-bottom: 16px; font-weight: 600; font-size: 16px;">补充合同列表</div>
+            <a-table :data="contractInfo.supplementaryAgreements" :pagination="false">
+              <template #columns>
+                <a-table-column title="合同编号" data-index="id" />
+                <a-table-column title="合同名称" data-index="name" />
+                <a-table-column title="签署日期" data-index="signDate" />
+                <a-table-column title="免费量" data-index="freeQuota" />
+                <a-table-column title="免费量有效期" data-index="validPeriod" />
+                <a-table-column title="已减免量" data-index="deductedAmount" />
+                <a-table-column title="备注" data-index="remark" />
+              </template>
+              <template #empty><a-empty description="暂无关联补充合同" /></template>
+            </a-table>
+            <a-divider style="margin: 16px 0" />
+            <div style="margin-bottom: 16px; font-weight: 600; font-size: 16px;">核销列表</div>
+            <a-table :data="contractInfo.writeoffs" :pagination="false">
+              <template #columns>
+                <a-table-column title="账单月" data-index="month" />
+                <a-table-column title="核销金额">
+                  <template #cell="{ record }">{{ formatCurrency(record.amount) }}</template>
+                </a-table-column>
+                <a-table-column title="核销减免量" data-index="discountAmount" />
+                <a-table-column title="关联合同" data-index="contractName" />
+                <a-table-column title="备注信息" data-index="remark" />
+              </template>
+              <template #empty><a-empty description="暂无核销记录" /></template>
             </a-table>
           </a-card>
         </a-tab-pane>
@@ -103,6 +135,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExternalDataStore } from '@/modules/external-data/stores'
+import { useContractStore } from '../../budget/stores/contract'
+import { useSettlementFlowStore } from '../../budget/stores/settlementFlow'
 import { IconArrowLeft, IconEdit } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import DateUtils from '@/utils/dateUtils'
@@ -110,6 +144,8 @@ import DateUtils from '@/utils/dateUtils'
 const route = useRoute()
 const router = useRouter()
 const store = useExternalDataStore()
+const contractStore = useContractStore()
+const settlementFlowStore = useSettlementFlowStore()
 
 const activeTab = ref('product')
 const dataId = computed(() => String(route.params.id || ''))
@@ -118,10 +154,14 @@ const editVisible = ref(false)
 const editForm = ref({ description: '', tags: [] as string[], manager: '' })
 const contractInfo = ref<{
   totalSupplementAmount: number;
-  frameworkAgreements: Array<{ id: string; name: string; signDate: string; amount: number }>;
+  frameworkAgreements: Array<{ id: string; name: string; signDate: string; amount: number; freeQuota: number; validPeriod: string; remark: string; deductedAmount: number }>;
+  supplementaryAgreements: Array<{ id: string; name: string; signDate: string; freeQuota: number; validPeriod: string; remark: string; deductedAmount: number }>;
+  writeoffs: Array<{ month: string; amount: number; discountAmount: number; remark: string; contractName: string }>;
 }>({
   totalSupplementAmount: 0,
-  frameworkAgreements: []
+  frameworkAgreements: [],
+  supplementaryAgreements: [],
+  writeoffs: []
 })
 const effectSummary = computed(() => [
   { label: '覆盖率', value: `${coverage.value}%` },
@@ -202,6 +242,55 @@ const loadDetail = async () => {
     }
     inputParams.value = [{ name: 'id_card', type: 'string', required: true, description: '身份证号' },{ name: 'phone', type: 'string', required: false, description: '手机号' }]
     outputParams.value = [{ name: 'score', type: 'number', description: '风险评分' },{ name: 'risk_level', type: 'string', description: '风险等级' }]
+    
+    // Load Contracts
+    await contractStore.fetchContractList({ supplier: header.value.supplier })
+    const contracts = contractStore.list.filter(c => c.supplier === header.value.supplier)
+    const frameworks = contracts.filter(c => c.contractType === 'framework')
+    const supplements = contracts.filter(c => c.contractType === 'supplement')
+    
+    contractInfo.value.frameworkAgreements = frameworks.map(c => ({
+      id: c.id,
+      name: c.contractName,
+      signDate: c.startDate.split('T')[0],
+      amount: c.amount,
+      freeQuota: c.productCount ? c.productCount * 1000 : 0, // Mock free quota logic
+      validPeriod: `${c.startDate.split('T')[0]} ~ ${c.endDate.split('T')[0]}`,
+      remark: '无',
+      deductedAmount: c.writtenOffAmount || 0
+    }))
+    contractInfo.value.supplementaryAgreements = supplements.map(c => ({
+      id: c.id,
+      name: c.contractName,
+      signDate: c.startDate.split('T')[0],
+      freeQuota: c.productCount ? c.productCount * 500 : 0, // Mock free quota logic
+      validPeriod: `${c.startDate.split('T')[0]} ~ ${c.endDate.split('T')[0]}`,
+      remark: '无',
+      deductedAmount: c.writtenOffAmount || 0
+    }))
+    contractInfo.value.totalSupplementAmount = supplements.reduce((sum, c) => sum + (c.amount || 0), 0)
+    
+    // Load Writeoffs
+    const writeoffList = []
+    const prefix = `${header.value.supplier}-`
+    for (const [key, snapshot] of Object.entries(settlementFlowStore.writeoffByKey)) {
+      if (key.startsWith(prefix)) {
+        const month = key.replace(prefix, '')
+        if (snapshot && snapshot.records) {
+          for (const record of snapshot.records) {
+            const contract = contracts.find(c => c.id === record.contractId)
+            writeoffList.push({
+              month,
+              amount: record.amount,
+              discountAmount: record.discountAmount || 0,
+              remark: record.remark || '',
+              contractName: contract ? contract.contractName : record.contractId
+            })
+          }
+        }
+      }
+    }
+    contractInfo.value.writeoffs = writeoffList.sort((a, b) => b.month.localeCompare(a.month))
   } catch { Message.error('加载详情失败') }
 }
 onMounted(loadDetail)

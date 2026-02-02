@@ -12,6 +12,8 @@ export interface ContractItem {
   dataCount?: number
   productCount?: number
   writtenOffAmount?: number
+  totalFreeQuota?: number
+  usedFreeQuota?: number
   contractType?: 'framework' | 'supplement'
   frameworkId?: string | null
 }
