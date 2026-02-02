@@ -670,24 +670,27 @@ export default {
       return subjectCount.value > 1 || resourceCount > 1;
     });
     const subjectTypeLabel = computed(() => {
-      const map = { user: '用户', department: '部门', group: '虚拟组' };
-      return map[formData.subjectType] || '主体';
-    });
-    const operationModeLabel = computed(() => {
-      const map = { 
-        analysis: formData.permissionCategory === 'application' ? '基础使用' : '数据分析', 
-        dev: formData.permissionCategory === 'application' ? '管理配置' : '数据开发', 
-        custom: '自定义' 
-      };
-      return map[formData.operationMode] || '自定义';
-    });
-    const openBatchModal = () => {
-      batchModalVisible.value = true;
-    };
-    const confirmBatch = async () => {
-      batchModalVisible.value = false;
-      await handleSubmit();
-    };
+  const map = { user: '用户', department: '部门', group: '虚拟组' }
+  return map[formData.subjectType] || '主体'
+})
+
+const operationModeLabel = computed(() => {
+  const map = {
+    analysis: formData.permissionCategory === 'application' ? '基础使用' : '数据分析',
+    dev: formData.permissionCategory === 'application' ? '管理配置' : '数据开发',
+    custom: '自定义'
+  }
+  return map[formData.operationMode] || '自定义'
+})
+
+const openBatchModal = () => {
+  batchModalVisible.value = true
+}
+
+const confirmBatch = async () => {
+  batchModalVisible.value = false
+  await handleSubmit()
+}
     const clearAllSelection = () => {
       treeCheckedKeys.value = [];
       formData.selectedDatabases = [];
@@ -1002,7 +1005,12 @@ export default {
       clearAllSelection,
       handleSubmit,
       handleReset,
-      handleSaveDraft
+      loadDraft,
+      isBatchApplication,
+      subjectTypeLabel,
+      operationModeLabel,
+      openBatchModal,
+      confirmBatch
     };
   }
 };

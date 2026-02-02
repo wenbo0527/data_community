@@ -20,7 +20,7 @@
             </a-descriptions-item>
             <a-descriptions-item label="权限类型">
               <a-space>
-                <a-tag v-for="type in application.permissionTypes" :key="type">
+                <a-tag v-for="(type, index) in application.permissionTypes" :key="index">
                   {{ getPermissionTypeText(type) }}
                 </a-tag>
               </a-space>
@@ -112,6 +112,7 @@
             <a-timeline-item
               v-for="(record, index) in application.approvalHistory"
               :key="record.id"
+              :lineType="index === application.approvalHistory.length - 1 ? 'dashed' : 'solid'"
               :color="getTimelineColor(record.action)"
             >
               <div class="timeline-content">
@@ -197,7 +198,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, reactive } from 'vue';
 import { Message, Modal } from '@arco-design/web-vue';
 import SensitivityLabel from './SensitivityLabel.vue';
 import StatusLabel from './StatusLabel.vue';
