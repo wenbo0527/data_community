@@ -17,29 +17,38 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    # 修复 Git 128 错误：信任工作目录
+    - name: Fix Git Safe Directory
+      run: git config --global --add safe.directory *
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9.15.4
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        cache: 'pnpm'
     
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
     
     - name: Run linting
-      run: npm run lint
+      run: pnpm run lint
     
     - name: Run type checking
-      run: npm run typecheck
+      run: pnpm run typecheck
     
     - name: Run tests
-      run: npm run test:unit
+      run: pnpm run test:unit
     
     - name: Build project
-      run: npm run build
+      run: pnpm run build
     
     - name: Run performance tests
-      run: npm run test:performance
+      run: pnpm run test:performance
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
@@ -53,23 +62,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+
+    # 修复 Git 128 错误
+    - name: Fix Git Safe Directory
+      run: git config --global --add safe.directory *
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9.15.4
     
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
     - name: Run security audit
-      run: npm audit --audit-level high
+      run: pnpm audit --audit-level high
     
     - name: Run dependency check
-      run: npx depcheck
+      run: pnpm exec depcheck
 
   compatibility:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+
+    # 修复 Git 128 错误
+    - name: Fix Git Safe Directory
+      run: git config --global --add safe.directory *
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9.15.4
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
     
     - name: Test browser compatibility
       run: |
-        npm install -g playwright
-        npx playwright install
-        npm run test:e2e
+        pnpm exec playwright install
+        pnpm run test:e2e
     
     - name: Test mobile responsiveness
-      run: npm run test:responsive
+      run: pnpm run test:responsive
