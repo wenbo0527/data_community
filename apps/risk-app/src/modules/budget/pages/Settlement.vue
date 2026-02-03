@@ -26,6 +26,7 @@
             <a-option value="costing">待核算</a-option>
             <a-option value="reconcile">待对账</a-option>
             <a-option value="writeoff">待核销</a-option>
+            <a-option value="pending_reimbursement">待报销</a-option>
             <a-option value="done">已完成</a-option>
           </a-select>
         </a-form-item>
@@ -77,6 +78,7 @@
                 <a-button v-if="record.stage==='costing'" size="small" type="text" @click="startCosting(record)">发起核算</a-button>
                 <a-button v-if="record.stage==='reconcile'" size="small" type="text" @click="startReconcile(record)">发起对账</a-button>
                 <a-button v-if="record.stage==='writeoff'" size="small" type="text" @click="startWriteoff(record)">发起核销</a-button>
+                <a-button v-if="record.stage==='pending_reimbursement'" size="small" type="text" @click="startReimbursement(record)">发起报销</a-button>
                 <a-dropdown>
                   <a-button size="small" type="text">下载数据</a-button>
                   <template #content>
@@ -183,13 +185,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '@/modules/budget/stores/contract'
-import { useSettlementFlowStore } from '@/modules/budget/stores/settlementFlow'
+import { useSettlementFlowStore } from '../stores/settlementFlow'
 import StatusTag from '@/components/common/StatusTag.vue'
 import DateUtils from '@/utils/dateUtils'
 
 type Granularity = 'year'|'quarter'|'month'
-type TaskStatus = 'pending'|'running'|'succeeded'|'failed'|'canceled'|'costing'|'reconcile'|'writeoff'|'done'
-type Stage = 'costing'|'reconcile'|'writeoff'|'done'
+type TaskStatus = 'pending'|'running'|'succeeded'|'failed'|'canceled'|'costing'|'reconcile'|'writeoff'|'pending_reimbursement'|'done'
+type Stage = 'costing'|'reconcile'|'writeoff'|'pending_reimbursement'|'done'
 
 interface SettlementSummary { budgetAmount: number; actualAmount: number; diffAmount: number; diffRate: number }
 interface SettlementSubTask { id: string; taskId: string; supplierId: string; status: TaskStatus; progress: number; contracts: string[]; summary: SettlementSummary }
@@ -261,11 +263,11 @@ const monthOptions = computed(() => {
   return arr
 })
 const statusLabel = (s: TaskStatus) => {
-  const map: Record<string, string> = { pending: '待执行', running: '执行中', succeeded: '已完成', failed: '失败', canceled: '已取消', costing: '待核算', reconcile: '待对账', writeoff: '待核销', done: '已完成' }
+  const map: Record<string, string> = { pending: '待执行', running: '执行中', succeeded: '已完成', failed: '失败', canceled: '已取消', costing: '待核算', reconcile: '待对账', writeoff: '待核销', pending_reimbursement: '待报销', done: '已完成' }
   return map[s] || s
 }
 const statusTag = (s: TaskStatus) => {
-  const map: Record<string, string> = { pending: 'default', running: 'warning', succeeded: 'success', failed: 'danger', canceled: 'gray', costing: 'warning', reconcile: 'primary', writeoff: 'purple', done: 'success' }
+  const map: Record<string, string> = { pending: 'default', running: 'warning', succeeded: 'success', failed: 'danger', canceled: 'gray', costing: 'warning', reconcile: 'primary', writeoff: 'purple', pending_reimbursement: 'cyan', done: 'success' }
   return map[s] || 'default'
 }
 
@@ -342,6 +344,7 @@ const deleteTask = (task: SettlementTask) => { tasks.value = tasks.value.filter(
 const startCosting = (task: SettlementTask) => { router.push(`/budget/settlement/task/${task.id}?supplierId=${encodeURIComponent(task.supplierIds[0]||'')}&month=${encodeURIComponent(task.timeLabel)}&taskName=${encodeURIComponent(task.taskName||'')}&step=0`) }
 const startReconcile = (task: SettlementTask) => { router.push(`/budget/settlement/task/${task.id}?supplierId=${encodeURIComponent(task.supplierIds[0]||'')}&month=${encodeURIComponent(task.timeLabel)}&taskName=${encodeURIComponent(task.taskName||'')}&step=1`) }
 const startWriteoff = (task: SettlementTask) => { router.push(`/budget/settlement/task/${task.id}?supplierId=${encodeURIComponent(task.supplierIds[0]||'')}&month=${encodeURIComponent(task.timeLabel)}&taskName=${encodeURIComponent(task.taskName||'')}&step=2`) }
+const startReimbursement = (task: SettlementTask) => { router.push(`/budget/settlement/task/${task.id}?supplierId=${encodeURIComponent(task.supplierIds[0]||'')}&month=${encodeURIComponent(task.timeLabel)}&taskName=${encodeURIComponent(task.taskName||'')}&step=3`) }
 const applyFilter = () => {}
 const resetFilter = () => { filters.suppliers = []; filters.contracts = []; filters.granularity = undefined; filters.timeLabel = undefined; filters.status = undefined }
 const exportCsv = (filename: string, header: string[], rows: Array<Array<string|number>>) => {
@@ -468,6 +471,22 @@ const fillMockSnapshots = async (task: SettlementTask) => {
         }
       }
     }
+    
+    // 如果任务阶段在核销之后，标记核销完成
+    if (['pending_reimbursement', 'done'].includes(task.stage || '')) {
+      flowStore.markWriteoffCompleted(sid, task.timeLabel, true)
+    }
+
+    // 如果任务已完成，或处于待报销状态且随机已有部分数据
+    if (task.stage === 'done' || (task.stage === 'pending_reimbursement' && Math.random() > 0.5)) {
+      flowStore.setReimbursementSnapshot(sid, task.timeLabel, {
+        reimbursementNo: `RB-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+        paymentDate: new Date().toISOString().split('T')[0]
+      })
+      if (task.stage === 'done') {
+        flowStore.markReimbursementCompleted(sid, task.timeLabel, true)
+      }
+    }
   }
 }
 const seedMockTasks = () => {
@@ -480,7 +499,9 @@ const seedMockTasks = () => {
   const t1: SettlementTask = { id: `ST-${Date.now()-1}`, taskName: `结算任务-${nameFor(sampleSuppliers)}-${ym}`, supplierIds: sampleSuppliers, contractIds: sampleContracts, granularity: 'month', timeLabel: ym, status: 'pending', stage: 'costing', progress: 0, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts) }
   const t2: SettlementTask = { id: `ST-${Date.now()-2}`, taskName: `结算任务-${nameFor(sampleSuppliers.slice(0,2))}-${ym}`, supplierIds: sampleSuppliers.slice(0,2), contractIds: sampleContracts.slice(0,3), granularity: 'month', timeLabel: ym, status: 'pending', stage: 'reconcile', progress: 45, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,3)) }
   const t3: SettlementTask = { id: `ST-${Date.now()-3}`, taskName: `结算任务-${nameFor(sampleSuppliers.slice(0,1))}-${ym}`, supplierIds: sampleSuppliers.slice(0,1), contractIds: sampleContracts.slice(0,2), granularity: 'month', timeLabel: ym, status: 'succeeded', stage: 'done', progress: 100, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(0,2)) }
-  tasks.value = [t2, t3, t1]
+  const t4: SettlementTask = { id: `ST-${Date.now()-4}`, taskName: `结算任务-待报销-${nameFor(sampleSuppliers.slice(1,2))}-${ym}`, supplierIds: sampleSuppliers.slice(1,2), contractIds: sampleContracts.slice(1,2), granularity: 'month', timeLabel: ym, status: 'pending', stage: 'pending_reimbursement', progress: 80, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(1,2)) }
+  const t5: SettlementTask = { id: `ST-${Date.now()-5}`, taskName: `结算任务-待报销2-${nameFor(sampleSuppliers.slice(2,3))}-${ym}`, supplierIds: sampleSuppliers.slice(2,3), contractIds: sampleContracts.slice(2,3), granularity: 'month', timeLabel: ym, status: 'pending', stage: 'pending_reimbursement', progress: 85, createdBy: '系统', createdAt: new Date().toISOString(), summary: calcSummaryForContracts(sampleContracts.slice(2,3)) }
+  tasks.value = [t2, t3, t4, t5, t1]
   pagination.total = tasks.value.length
   Promise.resolve().then(async () => {
     for (const t of tasks.value) { await fillMockSnapshots(t) }

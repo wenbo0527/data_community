@@ -18,6 +18,7 @@ export interface ContractItem {
   usedFreeQuota?: number
   contractType?: 'framework' | 'supplement'
   frameworkId?: string | null
+  supplementIds?: string[]
 }
 
 export interface ContractListParams {
@@ -60,6 +61,9 @@ export const useContractStore = defineStore('contract', {
     },
     frameworkOptions: (state) => {
       return state.list.filter(i => i.contractType === 'framework').map(i => ({ label: `${i.contractName}（${i.contractNo}）`, value: i.id, supplier: i.supplier }))
+    },
+    supplementOptions: (state) => {
+      return state.list.filter(i => i.contractType === 'supplement').map(i => ({ label: `${i.contractName}（${i.contractNo}）`, value: i.id, supplier: i.supplier }))
     },
     getPricing: (state) => {
       return (productId: string) => state.pricingMap[productId]

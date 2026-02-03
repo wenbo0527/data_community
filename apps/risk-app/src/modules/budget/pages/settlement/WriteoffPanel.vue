@@ -132,6 +132,7 @@ import { useSettlementSupplier } from '../../composables/useSettlementSupplier'
 import { useSettlementFlowStore, WriteoffRecord } from '../../stores/settlementFlow'
 import { generateBillLines } from '../../utils/costing'
 import { getSupplierProductsMock } from '../../../external-data/mock/supplierProducts'
+import { createSettlementTask } from '../../api/settlement'
 import { log } from '@/utils/logger'
 
 const store = useContractStore()
@@ -374,10 +375,25 @@ const confirmWriteoff = (row: any, idx: number) => {
 
   log('writeoff.confirm', { productCode: row.productCode, contractId: c.id, amount: amt, discountAmount: discountAmt, remark: entry.remark })
 }
-const finishTask = (): boolean => {
+const finishTask = async (): Promise<boolean> => {
   const allDone = productRows.value.every(r => r.pendingAmount <= 0 && r.pendingDiscount <= 0)
   if (!allDone) { Message.error('仍有待核销费用或减免量未完成'); return false }
-  Message.success('全部产品核销完成，可在任务详情生成报告')
+  
+  try {
+    await createSettlementTask({
+      supplierIds: [form.value.supplierId],
+      contractIds: [],
+      granularity: 'month',
+      timeLabel: form.value.month,
+      createdBy: '管理员',
+      stage: 'pending_reimbursement',
+      taskName: `核销-${form.value.supplierId}-${form.value.month}`
+    } as any)
+  } catch (e) {
+    Message.warning('保存任务状态失败，已先行进入下一步')
+  }
+
+  Message.success('全部产品核销完成，进入待报销阶段')
   log('writeoff.finish', { supplierId: form.value.supplierId, month: form.value.month })
   flowStore.markWriteoffCompleted(form.value.supplierId, form.value.month, true)
   return true

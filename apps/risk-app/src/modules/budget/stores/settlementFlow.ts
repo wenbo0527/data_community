@@ -38,6 +38,12 @@ export interface WriteoffSnapshot {
   createdAt: string
 }
 
+export interface ReimbursementSnapshot {
+  reimbursementNo: string
+  paymentDate: string
+  createdAt: string
+}
+
 function keyOf(supplierId: string, month: string) { return `${supplierId}-${month}` }
 
 export const useSettlementFlowStore = defineStore('settlementFlow', {
@@ -45,19 +51,23 @@ export const useSettlementFlowStore = defineStore('settlementFlow', {
     costingByKey: {} as Record<string, CostingSnapshot>,
     reconcileByKey: {} as Record<string, ReconcileSnapshot>,
     writeoffByKey: {} as Record<string, WriteoffSnapshot>,
+    reimbursementByKey: {} as Record<string, ReimbursementSnapshot>,
     currentStepIndex: 0,
     costingCompletedByKey: {} as Record<string, boolean>,
     reconcileCompletedByKey: {} as Record<string, boolean>,
-    writeoffCompletedByKey: {} as Record<string, boolean>
+    writeoffCompletedByKey: {} as Record<string, boolean>,
+    reimbursementCompletedByKey: {} as Record<string, boolean>
   }),
   getters: {
-    currentStep(state) { return ['costing','reconcile','writeoff'][state.currentStepIndex] as 'costing'|'reconcile'|'writeoff' },
+    currentStep(state) { return ['costing','reconcile','writeoff', 'reimbursement'][state.currentStepIndex] as 'costing'|'reconcile'|'writeoff'|'reimbursement' },
     getCosting: (state) => (supplierId: string, month: string) => state.costingByKey[keyOf(supplierId, month)],
     getReconcile: (state) => (supplierId: string, month: string) => state.reconcileByKey[keyOf(supplierId, month)],
     getWriteoff: (state) => (supplierId: string, month: string) => state.writeoffByKey[keyOf(supplierId, month)],
+    getReimbursement: (state) => (supplierId: string, month: string) => state.reimbursementByKey[keyOf(supplierId, month)],
     isCostingCompleted: (state) => (supplierId: string, month: string) => Boolean(state.costingCompletedByKey[keyOf(supplierId, month)]),
     isReconcileCompleted: (state) => (supplierId: string, month: string) => Boolean(state.reconcileCompletedByKey[keyOf(supplierId, month)]),
     isWriteoffCompleted: (state) => (supplierId: string, month: string) => Boolean(state.writeoffCompletedByKey[keyOf(supplierId, month)]),
+    isReimbursementCompleted: (state) => (supplierId: string, month: string) => Boolean(state.reimbursementCompletedByKey[keyOf(supplierId, month)]),
     pendingAmountByProduct: (state) => (supplierId: string, month: string) => {
       const k = keyOf(supplierId, month)
       const recon = state.reconcileByKey[k]
@@ -92,7 +102,7 @@ export const useSettlementFlowStore = defineStore('settlementFlow', {
     }
   },
   actions: {
-    next() { if (this.currentStepIndex < 2) this.currentStepIndex++ },
+    next() { if (this.currentStepIndex < 3) this.currentStepIndex++ },
     prev() { if (this.currentStepIndex > 0) this.currentStepIndex-- },
     setCostingSnapshot(supplierId: string, month: string, lines: BillLine[], confirmed: Record<string, boolean>, excluded: Record<string, boolean>) {
       const k = keyOf(supplierId, month)
@@ -101,6 +111,11 @@ export const useSettlementFlowStore = defineStore('settlementFlow', {
     setReconcileSnapshot(supplierId: string, month: string, items: ReconcileItem[]) {
       const k = keyOf(supplierId, month)
       this.reconcileByKey[k] = { items: items.map(i => ({ ...i })), createdAt: new Date().toISOString() }
+    },
+    setReimbursementSnapshot(supplierId: string, month: string, data: { reimbursementNo: string; paymentDate: string }) {
+      // Set reimbursement snapshot data
+      const k = keyOf(supplierId, month)
+      this.reimbursementByKey[k] = { ...data, createdAt: new Date().toISOString() }
     },
     addWriteoffRecord(supplierId: string, month: string, record: Omit<WriteoffRecord, 'id'> & { id?: string }) {
       const k = keyOf(supplierId, month)
@@ -126,6 +141,10 @@ export const useSettlementFlowStore = defineStore('settlementFlow', {
     markWriteoffCompleted(supplierId: string, month: string, completed = true) {
       const k = keyOf(supplierId, month)
       this.writeoffCompletedByKey[k] = completed
+    },
+    markReimbursementCompleted(supplierId: string, month: string, completed = true) {
+      const k = keyOf(supplierId, month)
+      this.reimbursementCompletedByKey[k] = completed
     }
   }
 })

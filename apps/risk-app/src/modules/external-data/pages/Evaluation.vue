@@ -110,7 +110,17 @@ const archive = async (record: any) => {
 const create = async () => {
   const payload = { title: `评估-${Date.now()}`, type: filters.type || 'comprehensive', status: 'draft', score: 0 }
   const ok = await store.createEvaluation(payload)
-  if (ok) { Message.success('已创建评估'); await load() } else { Message.error('创建失败') }
+  if (ok) { 
+    Message.success('已创建评估'); 
+    await load()
+    // 创建成功后跳转到详情页
+    const newItem = store.evaluationList[0]
+    if (newItem?.id) {
+      router.push(`/external-data/evaluation/${encodeURIComponent(String(newItem.id))}`)
+    }
+  } else { 
+    Message.error('创建失败') 
+  }
 }
 </script>
 

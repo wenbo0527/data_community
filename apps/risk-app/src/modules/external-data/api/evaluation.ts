@@ -12,12 +12,12 @@ export async function getEvaluationReports(params: any) {
 }
 
 export async function getEvaluationReportDetail(id: string | number) {
-  const res: any = await http.get(`/external-data-evaluation/${id}`)
+  const res: any = await http.get(`/external-data-evaluation/detail/${id}`)
   return res?.data || res
 }
 
 export async function createEvaluationReport(payload: any) {
-  const res: any = await http.post('/external-data-evaluation', payload)
+  const res: any = await http.post('/external-data-evaluation/create', payload)
   return res?.data || res
 }
 

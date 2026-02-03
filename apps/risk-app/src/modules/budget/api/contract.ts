@@ -16,6 +16,7 @@ export interface ContractItem {
   usedFreeQuota?: number
   contractType?: 'framework' | 'supplement'
   frameworkId?: string | null
+  supplementIds?: string[]
 }
 
 export interface ContractListParams {

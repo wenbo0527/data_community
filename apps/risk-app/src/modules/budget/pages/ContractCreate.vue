@@ -60,6 +60,13 @@
                       </a-select>
                     </a-form-item>
                   </a-col>
+                  <a-col :span="12" v-if="form.contractType === 'framework'">
+                    <a-form-item field="supplementIds" label="关联补充协议">
+                      <a-select v-model="form.supplementIds" multiple :disabled="!form.supplier" placeholder="可选：关联已有的补充协议">
+                        <a-option v-for="s in filteredSupplementOptions" :key="s.value" :value="s.value">{{ s.label }}</a-option>
+                      </a-select>
+                    </a-form-item>
+                  </a-col>
                 </a-row>
                 <a-form-item label="已有外数">
                   <a-space direction="vertical" style="width: 100%">
@@ -82,7 +89,7 @@
                   <a-tab-pane v-for="extId in selectedExternalIds" :key="String(extId)" :title="externalLabel(extId)">
                     <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="计费方式" required><a-select v-model="externalConfigs[String(extId)].billingMode"><a-option value="查得计费">查得计费</a-option><a-option value="查询计费">查询计费</a-option></a-select></a-form-item></a-col>
-                      <a-col :span="12"><a-form-item label="计费类型" required><a-select v-model="externalConfigs[String(extId)].billingType"><a-option value="fixed">固定单价计费</a-option><a-option value="tiered">阶梯条件计费</a-option><a-option value="special">特殊计费</a-option></a-select></a-form-item></a-col>
+                      <a-col :span="12"><a-form-item label="计费类型" required><a-select v-model="externalConfigs[String(extId)].billingType" @change="onBillingTypeChange(String(extId))"><a-option value="fixed">固定单价计费</a-option><a-option value="tiered">阶梯条件计费</a-option><a-option value="special">特殊计费</a-option></a-select></a-form-item></a-col>
                     </a-row>
                     <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="基础单价" v-if="externalConfigs[String(extId)].billingType === 'fixed'" required><a-input-number v-model="externalConfigs[String(extId)].basePrice" :min="0" :precision="4" style="width:100%" /></a-form-item></a-col>
@@ -100,17 +107,49 @@
                             <template #content><a-doption value="copyPrev">复制上一行</a-doption><a-doption value="batch">批量添加</a-doption><a-doption value="clear">清空所有</a-doption></template>
                           </a-dropdown>
                           <a-divider direction="vertical" />
-                          <span>连续区间</span><a-switch v-model="externalConfigs[String(extId)].tierContinuous" />
+                          <span style="color: var(--color-text-3); font-size: 12px;">阶梯计费区间为闭区间不重叠，格式 [下限, 上限]，下一行下限=上一行上限+1</span>
                         </a-space>
                         <a-table :data="externalConfigs[String(extId)].tiers || []" :pagination="false" row-key="idx">
                           <template #columns>
-                            <a-table-column title="下限" :width="160"><template #cell="{ record }"><a-input-number v-model="record.lower" :min="0" style="width:100%" /></template></a-table-column>
-                            <a-table-column title="上限" :width="160"><template #cell="{ record }"><a-input-number v-model="record.upper" :min="0" style="width:100%" /></template></a-table-column>
-                            <a-table-column title="单价" :width="160"><template #cell="{ record }"><a-input-number v-model="record.price" :min="0" :precision="4" style="width:100%" /></template></a-table-column>
-                            <a-table-column title="操作" :width="200"><template #cell="{ rowIndex }"><a-space><a-button size="mini" @click="moveTier(String(extId), rowIndex, -1)">上移</a-button><a-button size="mini" @click="moveTier(String(extId), rowIndex, 1)">下移</a-button><a-button size="mini" status="danger" @click="removeTier(String(extId), rowIndex)">删除</a-button></a-space></template></a-table-column>
+                            <a-table-column title="下限（含）" :width="140">
+                              <template #cell="{ record, rowIndex }">
+                                <a-input-number 
+                                  v-model="record.lower" 
+                                  :disabled="true"
+                                  style="width:100%" 
+                                  placeholder="自动计算" />
+                              </template>
+                            </a-table-column>
+                            <a-table-column title="上限（含）" :width="140">
+                              <template #cell="{ record, rowIndex }">
+                                <template v-if="rowIndex === (externalConfigs[String(extId)].tiers?.length || 0) - 1">
+                                  <a-input value="∞" disabled style="width:100%; text-align: center;" />
+                                </template>
+                                <template v-else>
+                                  <a-input-number 
+                                    v-model="record.upper" 
+                                    :min="record.lower + 1" 
+                                    style="width:100%" 
+                                    @change="updateTierLimits(String(extId))" />
+                                </template>
+                              </template>
+                            </a-table-column>
+                            <a-table-column title="区间范围" :width="160">
+                              <template #cell="{ record, rowIndex }">
+                                <span style="color: var(--color-text-2); font-size: 12px;">
+                                  {{ formatTierRange(record, rowIndex === (externalConfigs[String(extId)].tiers?.length || 0) - 1) }}
+                                </span>
+                              </template>
+                            </a-table-column>
+                            <a-table-column title="单价" :width="120"><template #cell="{ record }"><a-input-number v-model="record.price" :min="0" :precision="4" style="width:100%" /></template></a-table-column>
+                            <a-table-column title="操作" :width="100">
+                              <template #cell="{ rowIndex }">
+                                <a-button size="mini" status="danger" @click="removeTier(String(extId), rowIndex)" :disabled="getTierCount(String(extId)) <= 2">删除</a-button>
+                              </template>
+                            </a-table-column>
                           </template>
                         </a-table>
-                        <a-alert type="warning" v-if="!tierValid(externalConfigs[String(extId)].tiers)" content="请确保每个区间上限大于下限，且单价有效" style="margin-top:8px" />
+                        <a-alert type="warning" v-if="!tierValid(externalConfigs[String(extId)].tiers)" content="阶梯计费至少需要2个区间，请确保每个区间单价有效" style="margin-top:8px" />
                       </a-col>
                     </a-row>
                     <a-form-item label="备注补充"><a-textarea v-model="externalConfigs[String(extId)].remark" :rows="3" placeholder="合同特殊说明、例外条款、计费口径补充等" /></a-form-item>
@@ -166,6 +205,7 @@ watch(() => externalStore.products, (val) => {
 }, { deep: true })
 
 const frameworkOptions = computed(() => store.frameworkOptions)
+const supplementOptions = computed(() => store.supplementOptions || [])
 const supplierOptions = computed(() => {
   // 1. 优先从 Store 的产品列表中提取所有去重的 supplier
   const s1 = (products.value || []).map((p: any) => String(p.supplier || '')).filter(Boolean)
@@ -185,6 +225,10 @@ const supplierOptions = computed(() => {
 const filteredFrameworkOptions = computed(() => {
   const sup = String(form.supplier || '')
   return (frameworkOptions.value || []).filter((f: any) => !sup || String(f.supplier || '') === sup)
+})
+const filteredSupplementOptions = computed(() => {
+  const sup = String(form.supplier || '')
+  return (supplementOptions.value || []).filter((s: any) => !sup || String(s.supplier || '') === sup)
 })
 const products = computed(() => externalStore.products || [])
 const externalOptions = computed(() => {
@@ -234,7 +278,8 @@ const form = reactive<any>({
   signDate: undefined,
   isGroupPurchase: false,
   supplier: '',
-  frameworkIds: [] as Array<string>
+  frameworkIds: [] as Array<string>,
+  supplementIds: [] as Array<string>
 })
 
 const rules = {
@@ -253,10 +298,25 @@ const skipUpload = () => { Message.info('已跳过上传'); skipUploadSelected.v
 // 供应商变更后，联动清空关联数据
 watch(() => form.supplier, (val) => {
   if (Array.isArray(form.frameworkIds)) form.frameworkIds = []
+  if (Array.isArray(form.supplementIds)) form.supplementIds = []
   selectedExternalIds.value = []
   activeExternalId.value = undefined
   Object.keys(externalConfigs).forEach(k => { delete externalConfigs[k] })
 })
+// 计费类型变更时的处理
+const onBillingTypeChange = (extKey: string) => {
+  const cfg = externalConfigs[extKey]
+  if (!cfg) return
+  
+  // 切换到阶梯计费时，确保至少有2行
+  if (cfg.billingType === 'tiered' && (!Array.isArray(cfg.tiers) || cfg.tiers.length < 2)) {
+    cfg.tiers = [
+      { lower: 0, upper: 1000, price: cfg.basePrice || 0 },
+      { lower: 1001, upper: Infinity, price: cfg.basePrice || 0 }
+    ]
+  }
+}
+
 function ensureConfigFor(extKey: string) {
   const p = products.value.find((x: any) => String(x.id) === String(extKey))
   const cfg = externalConfigs[extKey] || (externalConfigs[extKey] = {})
@@ -265,6 +325,14 @@ function ensureConfigFor(extKey: string) {
   if (cfg.basePrice == null && typeof p?.unitPrice === 'number') cfg.basePrice = Number(p.unitPrice)
   if (!Array.isArray(cfg.tiers)) cfg.tiers = []
   if (!cfg.remark) cfg.remark = ''
+  
+  // 如果是阶梯计费且没有区间，初始化2行
+  if (cfg.billingType === 'tiered' && cfg.tiers.length === 0) {
+    cfg.tiers = [
+      { lower: 0, upper: 1000, price: 0 },
+      { lower: 1000, upper: Infinity, price: 0 }
+    ]
+  }
 }
 watch(selectedExternalIds, (ids) => {
   const selProducts = ids.map(id => products.value.find((p: any) => String(p.id) === String(id))).filter(Boolean) as any[]
@@ -294,17 +362,150 @@ watch(selectedExternalIds, (ids) => {
   }
 })
 
-const addTier = (extKey: string) => { const cfg = externalConfigs[extKey] || (externalConfigs[extKey] = { billingMode: '', billingType: '', basePrice: undefined, tiers: [], remark: '' }); if (!Array.isArray(cfg.tiers)) cfg.tiers = []; cfg.tiers.push({ lower: 0, upper: 0, price: 0 }) }
-const removeTier = (extKey: string, idx: number) => { const cfg = externalConfigs[extKey]; if (cfg && Array.isArray(cfg.tiers)) cfg.tiers.splice(idx, 1) }
-const moveTier = (extKey: string, idx: number, delta: number) => { const t = externalConfigs[extKey]?.tiers; if (!Array.isArray(t)) return; const ni = idx + delta; if (ni < 0 || ni >= t.length) return; const tmp = t[idx]; t[idx] = t[ni]; t[ni] = tmp }
-const onTierMenuSelect = (extKey: string, key: string | number) => { const t = externalConfigs[extKey]?.tiers || (externalConfigs[extKey].tiers = []); if (key === 'copyPrev') { const last = t[t.length - 1]; const lower = last ? Number(last.upper) : 0; const upper = lower + 1000; const price = last ? Number(last.price) : 0; t.push({ lower, upper, price }) } else if (key === 'batch') { batchTargetExt.value = extKey; batchVisible.value = true } else if (key === 'clear') { externalConfigs[extKey].tiers = [] } }
-const tierValid = (tiers: Array<any>) => Array.isArray(tiers) && tiers.length > 0 && tiers.every((r: any) => typeof r.lower === 'number' && typeof r.upper === 'number' && typeof r.price === 'number' && r.upper > r.lower)
+const addTier = (extKey: string) => {
+  const cfg = externalConfigs[extKey] || (externalConfigs[extKey] = { billingMode: '', billingType: '', basePrice: undefined, tiers: [], remark: '' })
+  if (!Array.isArray(cfg.tiers)) cfg.tiers = []
+  
+  // 确保至少有2行
+  if (cfg.tiers.length === 0) {
+    // 添加第一行: 0 - 1000
+    cfg.tiers.push({ lower: 0, upper: 1000, price: 0 })
+    // 添加第二行: 1001 - Infinity
+    cfg.tiers.push({ lower: 1001, upper: Infinity, price: 0 })
+  } else {
+    // 在倒数第二行后插入新行
+    const lastIdx = cfg.tiers.length - 1
+    const prevUpper = lastIdx > 0 ? cfg.tiers[lastIdx - 1].upper : 0
+    const newLower = prevUpper + 1
+    const newUpper = newLower + 1000
+    cfg.tiers.splice(lastIdx, 0, { lower: newLower, upper: newUpper, price: 0 })
+    // 更新最后一行的下限
+    cfg.tiers[cfg.tiers.length - 1].lower = newUpper + 1
+  }
+  updateTierLimits(extKey)
+}
+
+const removeTier = (extKey: string, idx: number) => {
+  const cfg = externalConfigs[extKey]
+  if (cfg && Array.isArray(cfg.tiers) && cfg.tiers.length > 2) {
+    cfg.tiers.splice(idx, 1)
+    updateTierLimits(extKey)
+  }
+}
+
+// 更新所有区间的上下限，确保连续
+const updateTierLimits = (extKey: string) => {
+  const cfg = externalConfigs[extKey]
+  if (!cfg || !Array.isArray(cfg.tiers) || cfg.tiers.length === 0) return
+  
+  // 首行下限固定为0
+  cfg.tiers[0].lower = 0
+  
+  // 确保区间连续：下一行的下限 = 上一行的上限 + 1
+  for (let i = 1; i < cfg.tiers.length; i++) {
+    cfg.tiers[i].lower = cfg.tiers[i - 1].upper + 1
+  }
+  
+  // 末行上限为无穷大
+  cfg.tiers[cfg.tiers.length - 1].upper = Infinity
+}
+
+// 获取区间数量
+const getTierCount = (extKey: string) => {
+  const tiers = externalConfigs[extKey]?.tiers
+  return Array.isArray(tiers) ? tiers.length : 0
+}
+
+// 格式化区间范围显示（闭区间）
+const formatTierRange = (record: any, isLast: boolean) => {
+  const lower = record.lower
+  const upper = isLast ? '∞' : record.upper
+  return `[${lower}, ${upper}]`
+}
+const onTierMenuSelect = (extKey: string, key: string | number) => {
+  const t = externalConfigs[extKey]?.tiers || (externalConfigs[extKey].tiers = [])
+  if (key === 'copyPrev') {
+    // 在倒数第二行后插入新行
+    if (t.length < 2) {
+      addTier(extKey)
+    } else {
+      const lastIdx = t.length - 1
+      const prevTier = t[lastIdx - 1]
+      const newUpper = prevTier.upper + 1000
+      t.splice(lastIdx, 0, { lower: prevTier.upper, upper: newUpper, price: prevTier.price })
+      updateTierLimits(extKey)
+    }
+  } else if (key === 'batch') {
+    batchTargetExt.value = extKey
+    batchVisible.value = true
+  } else if (key === 'clear') {
+    // 清空时至少保留2行
+    externalConfigs[extKey].tiers = []
+    addTier(extKey)
+  }
+}
+
+const tierValid = (tiers: Array<any>) => {
+  if (!Array.isArray(tiers) || tiers.length < 2) return false
+  // 检查每个区间的单价是否有效
+  return tiers.every((r: any) => typeof r.price === 'number' && r.price >= 0)
+}
 const batchVisible = ref(false)
 const batchTargetExt = ref<string>('')
 const batchParams = reactive<{ startLower: number; width: number; count: number; basePrice: number; priceDelta: number }>({ startLower: 0, width: 1000, count: 3, basePrice: 0, priceDelta: 0 })
-const applyBatch = () => { const key = batchTargetExt.value; const cfg = externalConfigs[key]; if (!cfg) { batchVisible.value = false; return } const list: any[] = []; for (let i = 0; i < Math.max(1, Number(batchParams.count || 1)); i++) { const lower = Number(batchParams.startLower) + i * Number(batchParams.width); const upper = lower + Number(batchParams.width); const price = Number(batchParams.basePrice) + i * Number(batchParams.priceDelta || 0); list.push({ lower, upper, price }) } cfg.tiers = [...(cfg.tiers || []), ...list]; batchVisible.value = false }
+const applyBatch = () => {
+  const key = batchTargetExt.value
+  const cfg = externalConfigs[key]
+  if (!cfg) {
+    batchVisible.value = false
+    return
+  }
+  
+  const list: any[] = []
+  const count = Math.max(2, Number(batchParams.count || 2)) // 至少2个区间
+  
+  for (let i = 0; i < count - 1; i++) {
+    const lower = i === 0 ? Number(batchParams.startLower) : (Number(batchParams.startLower) + i * Number(batchParams.width) + i)
+    const upper = lower + Number(batchParams.width)
+    const price = Number(batchParams.basePrice) + i * Number(batchParams.priceDelta || 0)
+    list.push({ lower, upper, price })
+  }
+  
+  // 最后一行：上限为无穷大
+  const lastLower = list[list.length - 1].upper + 1
+  const lastPrice = Number(batchParams.basePrice) + (count - 1) * Number(batchParams.priceDelta || 0)
+  list.push({ lower: lastLower, upper: Infinity, price: lastPrice })
+  
+  cfg.tiers = list
+  updateTierLimits(key)
+  batchVisible.value = false
+}
 
-const normalizeTiers = (extKey: string) => { const cfg = externalConfigs[extKey]; if (!cfg || !Array.isArray(cfg.tiers)) return; cfg.tiers = cfg.tiers.filter((r: any) => Number(r.upper) > Number(r.lower)).map((r: any) => ({ lower: Number(r.lower), upper: Number(r.upper), price: Number(r.price) })).sort((a: any, b: any) => a.lower - b.lower); if (cfg.tierContinuous) { for (let i = 1; i < cfg.tiers.length; i++) { cfg.tiers[i].lower = cfg.tiers[i-1].upper } } }
+const normalizeTiers = (extKey: string) => {
+  const cfg = externalConfigs[extKey]
+  if (!cfg || !Array.isArray(cfg.tiers) || cfg.tiers.length === 0) return
+  
+  // 确保至少2行
+  if (cfg.tiers.length < 2) {
+    while (cfg.tiers.length < 2) {
+      const lastUpper = cfg.tiers.length > 0 ? cfg.tiers[cfg.tiers.length - 1].upper : 0
+      cfg.tiers.push({ lower: lastUpper, upper: lastUpper + 1000, price: 0 })
+    }
+  }
+  
+  // 过滤并排序
+  cfg.tiers = cfg.tiers
+    .filter((r: any) => typeof r.price === 'number')
+    .map((r: any) => ({
+      lower: Number(r.lower) || 0,
+      upper: r.upper === Infinity ? Infinity : (Number(r.upper) || 0),
+      price: Number(r.price) || 0
+    }))
+    .sort((a: any, b: any) => a.lower - b.lower)
+  
+  // 强制连续区间
+  updateTierLimits(extKey)
+}
 
 const submit = async () => {
   try { await formRef.value?.validate() } catch { return }
@@ -333,13 +534,17 @@ const submit = async () => {
     startDate: new Date(form.signDate || Date.now()).toISOString(),
     endDate: new Date(Date.now() + 180*86400000).toISOString(),
     status: 'active' as const,
-    frameworkId: form.contractType === 'supplement' ? (form.frameworkIds?.[0] ?? null) : null
+    frameworkId: form.contractType === 'supplement' ? (form.frameworkIds?.[0] ?? null) : null,
+    supplementIds: form.contractType === 'framework' ? (form.supplementIds || []) : []
   }
   const ok = await store.createContract(payload)
   if (ok) { Message.success('合同已创建'); router.push('/budget/contracts') } else { Message.error('创建合同失败') }
 }
 
 onMounted(async () => {
+  // 加载合同列表（用于关联框架合同和补充协议）
+  await store.fetchContractList()
+  // 加载外数产品列表
   if (!externalStore.products.length) {
     await externalStore.fetchProducts()
   }

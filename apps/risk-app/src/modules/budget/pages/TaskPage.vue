@@ -31,13 +31,14 @@
           <a-step title="费用核算" />
           <a-step title="外部对账" />
           <a-step title="确认核销" />
+          <a-step title="待报销" />
         </a-steps>
         <component :is="currentPanel" :supplierId="supplierId" :month="month" :embedded="true" ref="panelRef" />
         <div style="margin-top:12px; display:flex; justify-content:flex-end">
           <a-space>
             <a-button @click="prev" :disabled="currentIndex===0">上一步</a-button>
             <a-button type="outline" @click="save">保存</a-button>
-            <a-button type="primary" @click="next" :disabled="currentIndex===2">下一步</a-button>
+            <a-button type="primary" @click="next" :disabled="currentIndex===3">下一步</a-button>
           </a-space>
         </div>
       </a-card>
@@ -54,6 +55,7 @@ import { useContractStore } from '../stores/contract'
 import CostingPanel from './settlement/CostingPanel.vue'
 import ReconcilePanel from './settlement/ReconcilePanel.vue'
 import WriteoffPanel from './settlement/WriteoffPanel.vue'
+import ReimbursementPanel from './settlement/ReimbursementPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -65,7 +67,12 @@ const taskName = computed(() => String(route.query.taskName || route.params.id |
 const supplierId = computed(() => String(route.query.supplierId || ''))
 const month = computed(() => String(route.query.month || ''))
 const currentIndex = computed(() => flow.currentStepIndex)
-const currentPanel = computed(() => currentIndex.value === 0 ? CostingPanel : currentIndex.value === 1 ? ReconcilePanel : WriteoffPanel)
+const currentPanel = computed(() => {
+  if (currentIndex.value === 0) return CostingPanel
+  if (currentIndex.value === 1) return ReconcilePanel
+  if (currentIndex.value === 2) return WriteoffPanel
+  return ReimbursementPanel
+})
 const panelRef = ref<any>()
 const isStepCompleted = computed(() => {
   const sid = supplierId.value
@@ -73,7 +80,8 @@ const isStepCompleted = computed(() => {
   if (!sid || !mon) return false
   if (currentIndex.value === 0) return flow.isCostingCompleted(sid, mon)
   if (currentIndex.value === 1) return flow.isReconcileCompleted(sid, mon)
-  return flow.isWriteoffCompleted(sid, mon)
+  if (currentIndex.value === 2) return flow.isWriteoffCompleted(sid, mon)
+  return flow.isReimbursementCompleted(sid, mon)
 })
 
 const form = ref<{ supplierId: string; contractIds: string[]; granularity: 'month'; timeLabel: string; createdBy: string }>({

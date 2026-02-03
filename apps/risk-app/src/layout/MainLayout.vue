@@ -15,7 +15,7 @@
           <template v-for="item in currentSideMenus" :key="item.key">
             <a-sub-menu v-if="Array.isArray((item as any).children)" :key="item.key + '-group'">
               <template #title>{{ item.title }}</template>
-              <a-menu-item v-for="child in item.children" :key="child.key">{{ child.title }}</a-menu-item>
+              <a-menu-item v-for="child in (item as any).children" :key="child.key">{{ child.title }}</a-menu-item>
             </a-sub-menu>
             <a-menu-item v-else :key="item.key">{{ item.title }}</a-menu-item>
           </template>
@@ -61,6 +61,8 @@ const lifecycleMenus = [
 
 const analysisMenus = [
   { key: '/model-offline-analysis/feature-center', title: '特征中心' },
+  { key: '/model-offline-analysis/model-register', title: '模型注册' },
+  { key: '/model-offline-analysis/model-backtrack', title: '模型回溯' },
   { key: '/model-offline-analysis/task-management', title: '任务管理' },
   { key: '/model-offline-analysis/model-evaluation', title: '模型评估' }
 ]
@@ -87,6 +89,8 @@ function updateMenuState(path: string) {
   else if (path.startsWith('/budget/settlement')) activeSideMenu.value = '/budget/settlement'
   else if (path.startsWith('/external-data/lifecycle')) activeSideMenu.value = '/external-data/lifecycle'
   else if (path.startsWith('/model-offline-analysis/feature-center')) activeSideMenu.value = '/model-offline-analysis/feature-center'
+  else if (path.startsWith('/model-offline-analysis/model-register')) activeSideMenu.value = '/model-offline-analysis/model-register'
+  else if (path.startsWith('/model-offline-analysis/model-backtrack')) activeSideMenu.value = '/model-offline-analysis/model-backtrack'
   else if (path.startsWith('/model-offline-analysis/task-management')) activeSideMenu.value = '/model-offline-analysis/task-management'
   else if (path.startsWith('/model-offline-analysis/model-evaluation')) activeSideMenu.value = '/model-offline-analysis/model-evaluation'
   else activeSideMenu.value = path

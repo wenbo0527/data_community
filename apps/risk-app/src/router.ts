@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import offlineModelRoutes from './modules/offline-model/router'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -154,31 +155,7 @@ const routes: RouteRecordRaw[] = [
           }
         ]
       },
-      {
-        path: 'model-offline-analysis',
-        name: 'ModelOfflineAnalysis',
-        redirect: '/model-offline-analysis/feature-center',
-        children: [
-          {
-            path: 'feature-center',
-            name: 'FeatureCenterIndex',
-            component: () => import('./pages/model-offline-analysis/featureCenter/index.vue'),
-            meta: { title: '特征中心' }
-          },
-          {
-            path: 'task-management',
-            name: 'TaskManagementIndex',
-            component: () => import('./pages/model-offline-analysis/taskManagement/index.vue'),
-            meta: { title: '任务管理' }
-          },
-          {
-            path: 'model-evaluation',
-            name: 'ModelEvaluationIndex',
-            component: () => import('./pages/model-offline-analysis/modelEvaluation/index.vue'),
-            meta: { title: '模型评估' }
-          }
-        ]
-      }
+      ...offlineModelRoutes
     ]
   }
 ]

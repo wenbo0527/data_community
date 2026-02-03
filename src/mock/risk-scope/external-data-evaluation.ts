@@ -901,15 +901,21 @@ export default [
     url: '/api/external-data-evaluation/create',
     method: 'post',
     response: ({ body }: { body: any }) => {
-      const { reportName, reportType, analysisType, sampleFiles } = body;
+      const { title, type, status, score, reportName, reportType, analysisType, sampleFiles } = body;
       
+      // 兼容两种数据结构：新版(title/type)和旧版(reportName/reportType)
       const newReport = {
         id: Date.now(),
-        reportName,
-        reportType,
-        analysisType,
+        title: title || reportName || `评估-${Date.now()}`,
+        type: type || reportType || 'comprehensive',
+        reportType: type || reportType || 'comprehensive',
+        status: status || 'draft',
+        score: score ?? 0,
+        createdAt: new Date().toISOString(),
+        // 旧版字段（保持兼容性）
+        reportName: title || reportName,
+        analysisType: analysisType || type,
         generateDate: new Date().toISOString().split('T')[0],
-        status: 'pending',
         progress: 0,
         sampleTimeSpan: '',
         templateType: '标准模板',
