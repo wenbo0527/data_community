@@ -47,7 +47,9 @@
       <a-table :data="displayedTasks" row-key="id" :pagination="pagination" @page-change="onPageChange">
         <template #columns>
           <a-table-column title="任务名称" :width="180">
-            <template #cell="{ record }">{{ record.taskName || record.id }}</template>
+            <template #cell="{ record }">
+              <a-link @click="openDetail(record)">{{ record.taskName || record.id }}</a-link>
+            </template>
           </a-table-column>
           <a-table-column title="征信机构" :width="140">
             <template #cell="{ record }">{{ record.supplierIds[0] || '—' }}</template>
@@ -90,7 +92,6 @@
                 <a-button v-if="record.stage!=='done'" size="small" type="text" status="danger" @click="deleteTask(record)">删除</a-button>
                 <a-button v-if="record.stage==='done'" size="small" type="text" @click="cancelTask(record)">撤销</a-button>
                 <a-button v-if="record.stage==='done' && !record.archived" size="small" type="text" @click="archiveTask(record)">归档</a-button>
-                <a-button size="small" type="text" @click="openDetail(record)">查看</a-button>
               </a-space>
             </template>
           </a-table-column>
