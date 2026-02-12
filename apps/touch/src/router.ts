@@ -7,6 +7,7 @@ const TouchIndex = () => import('./pages/touch/index.vue')
 const ChannelBlacklist = () => import('./pages/touch/channel/blacklist.vue')
 const ChannelManualCallTemplate = () => import('./pages/touch/channel/manual-call-template.vue')
 const ChannelSmsTemplate = () => import('./pages/touch/channel/sms-template.vue')
+const ChannelSmsTemplateCreate = () => import('./pages/touch/channel/sms-template-create.vue')
 const ChannelAiCallTemplate = () => import('./pages/touch/channel/ai-call-template.vue')
 const ChannelAlert = () => import('./pages/touch/channel/alert.vue')
 const ChannelRateLimit = () => import('./pages/touch/channel/rate-limit.vue')
@@ -61,6 +62,12 @@ const routes: RouteRecordRaw[] = [
         name: 'ChannelSmsTemplate',
         component: ChannelSmsTemplate,
         meta: { title: '短信模板' }
+      },
+      {
+        path: 'channel/sms-template/create',
+        name: 'ChannelSmsTemplateCreate',
+        component: ChannelSmsTemplateCreate,
+        meta: { title: '短信策略模板新建' }
       },
       {
         path: 'channel/ai-call-template',

@@ -28,16 +28,16 @@
           第{{ rowIndex + 1 }}期
         </template>
         <template #periodConfig="{ record }">
-          <a-input-number v-model="record.count" :min="0" :max="product.totalAmount" class="count-input" placeholder="请输入条数" />
+          <a-input-number v-if="record" v-model="record.count" :min="0" :max="product.totalAmount" class="count-input" placeholder="请输入条数" />
         </template>
         <template #periodRatio="{ record }">
-          {{ calculateRatio(record.count, product.totalAmount) }}%
+          {{ record ? calculateRatio(record.count, product.totalAmount) : 0 }}%
         </template>
         <template #averageDailyAmount="{ record }">
-          {{ calculateDailyAmount(record.count, record.days) }}
+          {{ record ? calculateDailyAmount(record.count, record.days) : 0 }}
         </template>
         <template #discountOption="{ record }">
-          <a-row :gutter="8">
+          <a-row v-if="record" :gutter="8">
             <a-col :span="12">
               <a-select v-model="record.discount.type" class="discount-select">
                 <a-option value="none">无优惠</a-option>
@@ -59,7 +59,7 @@
           </a-row>
         </template>
         <template #totalCost="{ record }">
-          {{ calculateCost(record.count, getProductPrice(product.name), record.discount.type, record.discount.value) }}元
+          {{ record ? calculateCost(record.count, getProductPrice(product.name), record.discount.type, record.discount.value) : 0 }}元
         </template>
       </a-table>
     </div>

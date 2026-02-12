@@ -24,7 +24,7 @@
     <a-card class="table-list">
       <template #title>
         <a-space>
-          <IconTable />
+          <IconStorage />
           常用表列表 (共{{ collection.tables.length }}个)
         </a-space>
       </template>
@@ -33,7 +33,7 @@
           <a-card class="table-card" hoverable @click="showTableDetail(table)">
             <template #title>
               <a-space align="center">
-                <IconTable />
+                <IconStorage />
                 <a-typography-title :heading="6" style="margin: 0">
                   {{ table.name }}
                 </a-typography-title>
@@ -58,10 +58,7 @@ const getTypeColor = (type: string) => {
   // 类型颜色匹配逻辑
   return '#1890ff'
 }
-// defineProps and defineEmits are compiler macros, no import needed
-import IconTable from '@arco-design/web-vue/es/icon'
-import { IconRight } from '@arco-design/web-vue/es/icon'
-import { IconEdit } from '@arco-design/web-vue/es/icon'
+import { IconRight, IconEdit, IconStorage } from '@arco-design/web-vue/es/icon'
 
 interface TableItem {
   [key: string]: any;

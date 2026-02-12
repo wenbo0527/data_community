@@ -64,7 +64,14 @@ let idSeq = 1;
         { field: 'cert_no', target: 'cert_no' },
         { field: 'flow_id', target: 'flow_id' },
         { field: 'report_id', target: 'report_id' }
-      ]
+      ],
+      // 周期回溯相关字段
+      periodicity: 'daily',
+      weekDays: ['1'], // 默认每周一
+      monthDays: ['1'], // 默认每月1号
+      triggerType: 'schedule', // 定时触发
+      scheduleTime: '09:00', // 默认上午9点执行
+      kangarooTaskId: 'task-001'
     }
   }
   tasks.unshift(t)
@@ -95,7 +102,15 @@ export function createBacktrack(data) {
     },
     createTime: now,
     updateTime: now,
-    config: { ...data }
+    config: { 
+      ...data,
+      periodicity: data.periodicity || 'daily',
+      weekDays: data.weekDays || [],
+      monthDays: data.monthDays || [],
+      triggerType: data.triggerType || 'schedule',
+      scheduleTime: data.scheduleTime || null,
+      kangarooTaskId: data.kangarooTaskId || ''
+    }
   }
   tasks.unshift(task)
   return task

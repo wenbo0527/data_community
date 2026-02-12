@@ -6,7 +6,7 @@ import HorizontalNode from './HorizontalNode.vue'
 export function buildDisplayLines(nodeType, config = {}) {
   const lines = []
   if (nodeType === 'start') {
-    if (config?.taskType) lines.push(`任务类型222：${config.taskType}`)
+    if (config?.taskType) lines.push(`任务类型：${config.taskType}`)
     if (Array.isArray(config?.targetAudience) && config.targetAudience.length) lines.push(`目标人群：${config.targetAudience.join('、')}`)
   } else if (nodeType === 'crowd-split' || nodeType === 'audience-split') {
     const layers = Array.isArray(config?.crowdLayers) ? config.crowdLayers : []

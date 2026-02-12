@@ -1,30 +1,39 @@
 <template>
-  <div class="feature-edit-page">
+  <div class="feature-create-page">
     <a-breadcrumb style="margin-bottom: 12px">
-      <a-breadcrumb-item to="/offline-model/feature-center">特征中心</a-breadcrumb-item>
-      <a-breadcrumb-item>编辑特征</a-breadcrumb-item>
+      <a-breadcrumb-item to="/risk/model-offline-analysis/feature-center">特征中心</a-breadcrumb-item>
+      <a-breadcrumb-item>新建特征</a-breadcrumb-item>
     </a-breadcrumb>
 
-    <a-alert v-if="isModelScore" type="info" style="margin-bottom: 12px">
-      当前特征来源为模型分，将跳转至模型注册编辑页进行修改
-    </a-alert>
-
-    <a-card v-if="!isModelScore" :bordered="false" class="panel-card">
+    <a-card :bordered="false" class="panel-card">
       <template #title>特征基础信息</template>
       <a-form :model="form" layout="vertical">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="特征大类">
-              <a-select v-model="form.majorCategory" placeholder="请选择">
-                <a-option value="credit">征信变量</a-option>
-                <a-option value="behavior">行为变量</a-option>
-              </a-select>
+            <a-form-item label="特征大类" required>
+              <a-radio-group v-model="form.majorCategory" type="button">
+                <a-radio value="credit">征信变量</a-radio>
+                <a-radio value="behavior">行为变量</a-radio>
+                <a-radio value="model_output">模型输出</a-radio>
+              </a-radio-group>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="一级分类">
+            <a-form-item label="一级分类" required>
               <a-select v-model="form.level1" placeholder="请选择">
-                <a-option v-for="opt in level1Options" :key="opt.value" :value="opt.value">{{ opt.label }}</a-option>
+                <a-option v-for="opt in effectiveLevel1Options" :key="opt.value" :value="opt.value">{{ opt.label }}</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-alert v-if="form.majorCategory==='model_output'" type="info" style="margin-bottom: 8px">来源自动填充为平台模型输出，创建人为模型归属人</a-alert>
+        <a-alert v-else-if="form.majorCategory==='credit'" type="info" style="margin-bottom: 8px">征信大类需填写来源表与征信分类（一级/二级）</a-alert>
+        <a-alert v-else-if="form.majorCategory==='behavior'" type="info" style="margin-bottom: 8px">贷中行为需填写来源表与行为分类（一级/二级）</a-alert>
+        <a-row :gutter="16" v-if="form.majorCategory==='model_output'">
+          <a-col :span="24">
+            <a-form-item label="选择模型" required>
+              <a-select v-model="form.modelCode" placeholder="请选择已注册模型" allow-search @change="onModelCodeChange">
+                <a-option v-for="m in modelList" :key="m.code" :value="m.code">{{ m.name }} ({{ m.code }})</a-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -32,32 +41,32 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="二级分类">
-              <a-select v-model="form.level2" placeholder="请选择">
+              <a-select v-model="form.level2" placeholder="请选择" v-if="form.majorCategory!=='model_output'">
                 <a-option v-for="opt in level2Options(form.level1)" :key="opt.value" :value="opt.value">{{ opt.label }}</a-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item label="来源表">
-              <a-input v-model="form.sourceTable" placeholder="请输入来源表" />
+              <a-input v-model="form.sourceTable" placeholder="请输入来源表" v-if="form.majorCategory!=='model_output'" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="特征编码">
+            <a-form-item label="特征编码" required>
               <a-input v-model="form.code" placeholder="请输入编码" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="特征名称">
+            <a-form-item label="特征名称" required>
               <a-input v-model="form.name" placeholder="请输入名称" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="数据类型">
+            <a-form-item label="数据类型" required>
               <a-select v-model="form.dataType" placeholder="请选择">
                 <a-option value="int">int</a-option>
                 <a-option value="double">double</a-option>
@@ -74,7 +83,7 @@
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="模型类型">
+            <a-form-item label="模型类型" required>
               <a-select v-model="form.modelType" placeholder="请选择模型类型">
                 <a-option value="daily">日模型</a-option>
                 <a-option value="monthly">月模型</a-option>
@@ -98,22 +107,29 @@
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="需求提出人">
-              <a-input v-model="form.proposer" placeholder="请输入" />
+            <a-form-item label="默认值">
+              <a-input v-model="form.defaultValue" placeholder="请输入默认值" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="开发人">
-              <a-input v-model="form.developer" placeholder="请输入" />
+            <a-form-item label="需求提出人">
+              <a-input v-model="form.proposer" placeholder="请输入" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
+            <a-form-item label="开发人">
+              <a-input v-model="form.developer" placeholder="请输入" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
             <a-form-item label="上线时间">
               <a-date-picker v-model="form.onlineTime" style="width: 100%" />
             </a-form-item>
           </a-col>
+        </a-row>
+        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="验收人">
               <a-input v-model="form.accepter" placeholder="请输入" />
@@ -139,25 +155,60 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { featureAPI, modelAPI } from '@/api/offlineModel'
 
-const route = useRoute()
 const router = useRouter()
-const id = route.params.id
-const detail = ref(null)
-const form = ref({})
+const modelList = ref([])
 
-const isModelScore = computed(() => detail.value?.level1 === 'model_outputs')
+const form = ref({
+  majorCategory: '',
+  level1: '',
+  level2: '',
+  code: '',
+  name: '',
+  sourceTable: '',
+  processingLogic: '',
+  dataType: '',
+  batch: '',
+  proposer: '',
+  developer: '',
+  onlineTime: '',
+  accepter: '',
+  remark: '',
+  modelCode: '',
+  modelType: '',
+  updateFrequency: '按需',
+  defaultValue: ''
+})
+
+onMounted(async () => {
+  try {
+    const res = await modelAPI.getModels({ page: 1, pageSize: 200 })
+    modelList.value = Array.isArray(res.data) ? res.data : (res.data?.data || [])
+  } catch (err) {
+    console.error('获取模型列表失败:', err)
+  }
+})
 
 const level1Options = [
   { value: 'credit_report', label: '征信报告' },
   { value: 'credit_history', label: '信贷记录' },
   { value: 'transaction_behavior', label: '交易行为' },
-  { value: 'activity', label: '活跃度' }
+  { value: 'activity', label: '活跃度' },
+  { value: 'model_outputs', label: '模型输出' }
 ]
+
+const effectiveLevel1Options = computed(() => {
+  const cat = form.value.majorCategory
+  if (cat === 'model_output') return level1Options.filter(o => o.value === 'model_outputs')
+  if (cat === 'credit') return level1Options.filter(o => o.value === 'credit_report' || o.value === 'credit_history')
+  if (cat === 'behavior') return level1Options.filter(o => o.value === 'transaction_behavior' || o.value === 'activity')
+  return level1Options
+})
+
 const level2Options = (l1) => {
   const map = {
     credit_report: [
@@ -175,89 +226,81 @@ const level2Options = (l1) => {
     activity: [
       { value: 'login_days', label: '登录天数' },
       { value: 'session_count', label: '会话次数' }
+    ],
+    model_outputs: [
+      { value: 'score', label: '评分' },
+      { value: 'probability', label: '概率' }
     ]
   }
   return map[l1] || []
 }
 
-onMounted(async () => {
-  try {
-    const res = await featureAPI.getFeatureDetail(id)
-    detail.value = res.data || res
-    if (isModelScore.value) {
-      const serviceName = detail.value?.level2
-      const pm = await modelAPI.getPlatformModel(serviceName)
-      if (pm.success) {
-        const code = pm.data?.code
-        const models = await modelAPI.getModels({ name: code })
-        const list = models.data?.data || models.data || []
-        const modelId = Array.isArray(list) && list[0]?.id
-        if (modelId) {
-          router.replace(`/offline-model/model-register/edit/${modelId}`)
-          return
-        } else {
-          Message.warning('未找到对应已注册模型，请先在模型注册中创建')
-        }
-      }
-    }
-    form.value = {
-      majorCategory: detail.value?.majorCategory || '',
-      level1: detail.value?.level1 || '',
-      level2: detail.value?.level2 || '',
-      code: detail.value?.code || '',
-      name: detail.value?.name || '',
-      sourceTable: detail.value?.dataSource || '',
-      processingLogic: detail.value?.description || '',
-      dataType: detail.value?.type === 'time' ? 'timestamp' : (detail.value?.type === 'categorical' ? 'string' : (detail.value?.type === 'numerical' ? 'double' : 'string')),
-      batch: detail.value?.batch || '',
-      proposer: detail.value?.proposer || '',
-      developer: detail.value?.developer || '',
-      onlineTime: detail.value?.onlineTime || '',
-      accepter: detail.value?.accepter || '',
-      remark: detail.value?.remark || '',
-      modelType: detail.value?.modelType || 'other',
-      updateFrequency: detail.value?.updateFrequency || '按需'
-    }
-  } catch (e) {
-    Message.error('加载编辑数据失败')
-  }
-})
+const onModelCodeChange = (code) => {
+  if (!code) return
+  if (!form.value.name) form.value.name = '模型分'
+  if (!form.value.dataType) form.value.dataType = 'double'
+}
 
-import { goBack as goBackUtil } from '@/router/utils'
-const goBack = () => goBackUtil(router, '/offline-model/feature-center')
+const goBack = () => {
+  router.go(-1)
+}
+
 const handleSubmit = async () => {
-  if (isModelScore.value) return
+  if (!form.value.name || !form.value.code || !form.value.majorCategory || !form.value.level1 || !form.value.dataType) {
+    Message.error('请填写必填项')
+    return
+  }
+
+  const isModelOutput = form.value.majorCategory === 'model_output'
+  if (isModelOutput && !form.value.modelCode) {
+    Message.error('请选择已注册的模型')
+    return
+  }
+
   const typeMap = (dt) => {
     if (dt === 'timestamp') return 'time'
     if (dt === 'string') return 'categorical'
     if (dt === 'int' || dt === 'double') return 'numerical'
     return 'numerical'
   }
+
+  const selectedModel = isModelOutput ? (modelList.value || []).find(m => m.code === form.value.modelCode) : null
+  
   const payload = {
     name: form.value.name,
     code: form.value.code,
     type: typeMap(form.value.dataType),
     description: form.value.processingLogic || '',
-    dataSource: form.value.sourceTable || '',
-    updateFrequency: form.value.updateFrequency || detail.value?.updateFrequency || '按需',
+    dataSource: isModelOutput ? '平台模型输出' : (form.value.sourceTable || ''),
+    updateFrequency: form.value.updateFrequency || '按需',
     majorCategory: form.value.majorCategory,
-    level1: form.value.level1,
-    level2: form.value.level2,
+    level1: isModelOutput ? 'model_outputs' : form.value.level1,
+    level2: isModelOutput ? (form.value.modelCode || '') : form.value.level2,
     batch: form.value.batch,
     proposer: form.value.proposer,
     developer: form.value.developer,
     onlineTime: form.value.onlineTime,
     accepter: form.value.accepter,
     remark: form.value.remark,
-    modelType: form.value.modelType || 'other'
+    sourceType: isModelOutput ? 'model_output' : '',
+    sourceRefId: isModelOutput ? (form.value.modelCode || '') : '',
+    creator: isModelOutput ? (selectedModel?.creator || '平台模型') : undefined,
+    modelType: form.value.modelType || 'other',
+    defaultValue: form.value.defaultValue || ''
   }
-  const res = await featureAPI.updateFeature(id, payload)
-  if (res.success) { Message.success('更新成功'); router.push('/offline-model/feature-center') } else { Message.error(res.message || '更新失败') }
+
+  const res = await featureAPI.createFeature(payload)
+  if (res.success) {
+    Message.success(res.message || '创建成功')
+    router.push('/risk/model-offline-analysis/feature-center')
+  } else {
+    Message.error(res.message || '创建失败')
+  }
 }
 </script>
 
 <style scoped>
-.feature-edit-page { padding: 16px; background: #fff; }
+.feature-create-page { padding: 16px; background: #fff; }
 .panel-card { margin-bottom: 12px; }
 .actions-bar { display: flex; justify-content: flex-end; margin-top: 12px; }
 </style>

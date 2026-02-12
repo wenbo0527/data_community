@@ -65,39 +65,67 @@
               <a-form-item label="角色描述">
                 <a-textarea v-model="roleForm.description" :max-length="150" show-word-limit />
               </a-form-item>
-              <a-form-item label="绑定部门成员">
-                <a-select v-model="roleForm.boundDepartments" multiple allow-search placeholder="选择部门">
-                  <a-option v-for="d in departmentOptions" :key="d.value" :value="d.value">{{ d.label }}</a-option>
-                </a-select>
-              </a-form-item>
             </a-form>
           </a-tab-pane>
 
           <a-tab-pane key="resource" title="应用权限">
             <a-card :bordered="false">
-              <a-space style="margin-bottom: 12px">
-                <a-button type="primary" @click="openSelectApps">添加应用</a-button>
-              </a-space>
-              <a-table :data="roleForm.appResources" :pagination="false">
-                <template #columns>
-                  <a-table-column title="应用名称" data-index="appName" />
-                  <a-table-column title="应用ID" data-index="appId" />
-                  <a-table-column title="权限级别" :width="200">
-                    <template #cell="{ record }">
-                      <a-select v-model="record.level" style="width: 180px">
-                        <a-option value="VIEW">VIEW</a-option>
-                        <a-option value="USE">USE</a-option>
-                        <a-option value="ALL">ALL</a-option>
-                      </a-select>
-                    </template>
-                  </a-table-column>
-                  <a-table-column title="操作" :width="120">
-                    <template #cell="{ record }">
-                      <a-button type="text" status="danger" size="small" @click="removeAppResource(record)">移除</a-button>
-                    </template>
-                  </a-table-column>
-                </template>
-              </a-table>
+              <div class="resource-tree-section">
+                <div class="tree-toolbar">
+                  <a-space>
+                    <a-input-search v-model="appTreeSearch" placeholder="模糊搜索应用 / 模块" allow-clear />
+                    <a-select v-model="appStatusFilter" :options="appStatusOptions" placeholder="筛选状态" style="width: 140px" />
+                    <a-button @click="expandAllApps">展开全部</a-button>
+                    <a-button @click="collapseAllApps">折叠全部</a-button>
+                  </a-space>
+                </div>
+                <a-spin :loading="appTreeLoading">
+                  <a-tree
+                    :data="appTreeData"
+                    checkable
+                    :check-strictly="false"
+                    :virtual-list-props="{ height: 420 }"
+                    v-model:checked-keys="appTreeCheckedKeys"
+                    v-model:expanded-keys="appTreeExpandedKeys"
+                  />
+                </a-spin>
+                <div class="helper-text">
+                  支持模糊搜索与状态筛选。
+                </div>
+                <div class="global-selected-summary" v-if="totalSelectedApps > 0 || totalSelectedModules > 0">
+                  <div v-if="totalSelectedApps > 0 || totalSelectedModules > 0">
+                    已选应用 {{ totalSelectedApps }} 个；
+                    模块/功能 {{ totalSelectedModules }} 个
+                  </div>
+                  <div class="section-actions">
+                    <a-button type="text" status="danger" @click="clearAllAppSelection">清空选择</a-button>
+                  </div>
+                </div>
+                <div class="selected-preview" v-if="roleForm.appResources.length">
+                  <div class="section-title">已选应用预览</div>
+                  <a-collapse>
+                    <a-collapse-item v-for="app in roleForm.appResources" :key="app.appId" :header="app.appName">
+                      <a-list size="small" :bordered="false">
+                        <a-list-item v-for="module in (app.modules || [])" :key="app.appId + ':module:' + module">
+                          <a-space>
+                            <a-tag color="blue">模块</a-tag>
+                            <span>{{ module }}</span>
+                            <a-button type="text" status="danger" @click="removeModule(app.appId, module)">移除</a-button>
+                          </a-space>
+                        </a-list-item>
+                      </a-list>
+                      <div class="app-level-controls">
+                        <span>权限级别：</span>
+                        <a-select v-model="app.level" style="width: 180px; margin-left: 8px;">
+                          <a-option value="VIEW">VIEW</a-option>
+                          <a-option value="USE">USE</a-option>
+                          <a-option value="ALL">ALL</a-option>
+                        </a-select>
+                      </div>
+                    </a-collapse-item>
+                  </a-collapse>
+                </div>
+              </div>
             </a-card>
           </a-tab-pane>
 
@@ -165,41 +193,60 @@
           </a-tab-pane>
 
           <a-tab-pane key="users" title="已授予用户">
-            <a-space style="margin-bottom: 12px">
-              <a-button type="primary" @click="openGrantUser(currentRole)">授予用户</a-button>
-            </a-space>
-            <a-table :data="grantedUsers" :pagination="false">
-              <template #columns>
-                <a-table-column title="用户名称" data-index="name" />
-                <a-table-column title="用户ID" data-index="id" />
-                <a-table-column title="操作" :width="140">
-                  <template #cell="{ record }">
-                    <a-button type="text" status="danger" size="small" @click="revokeUser(record)">回收权限</a-button>
-                  </template>
-                </a-table-column>
-              </template>
-            </a-table>
+            <a-card :bordered="false">
+              <div class="section-title">添加用户</div>
+              <div class="grant-section">
+                <a-space style="width: 100%;">
+                  <a-select v-model="selectedUserIds" multiple allow-search style="flex: 1;" placeholder="选择用户">
+                    <a-option v-for="u in allUsers" :key="u.id" :value="u.id">{{ u.name }}</a-option>
+                  </a-select>
+                  <a-button type="primary" @click="grantUsersToRole">授予</a-button>
+                </a-space>
+              </div>
+              
+              <div class="section-title">已授予用户列表</div>
+              <a-table :data="grantedUsers" :pagination="false">
+                <template #columns>
+                  <a-table-column title="用户名称" data-index="name" />
+                  <a-table-column title="用户工号" data-index="id" />
+                  <a-table-column title="操作" :width="140">
+                    <template #cell="{ record }">
+                      <a-button type="text" status="danger" size="small" @click="revokeUser(record)">回收权限</a-button>
+                    </template>
+                  </a-table-column>
+                </template>
+              </a-table>
+            </a-card>
           </a-tab-pane>
           
           <a-tab-pane key="departments" title="已授予部门">
-            <a-space style="margin-bottom: 12px">
-              <a-button type="primary" @click="openGrantDepartment(currentRole)">授予部门</a-button>
-            </a-space>
-            <a-table :data="departmentsGranted" :pagination="false">
-              <template #columns>
-                <a-table-column title="部门名称">
-                  <template #cell="{ record }">
-                    {{ getDepartmentLabel(record) }}
-                  </template>
-                </a-table-column>
-                <a-table-column title="部门编码" data-index="code" />
-                <a-table-column title="操作" :width="140">
-                  <template #cell="{ record }">
-                    <a-button type="text" status="danger" size="small" @click="revokeDepartment(record)">回收绑定</a-button>
-                  </template>
-                </a-table-column>
-              </template>
-            </a-table>
+            <a-card :bordered="false">
+              <div class="section-title">添加部门</div>
+              <div class="grant-section">
+                <a-space style="width: 100%;">
+                  <a-select v-model="selectedDeptCodes" multiple allow-search style="flex: 1;" placeholder="选择部门">
+                    <a-option v-for="d in departmentOptions" :key="d.value" :value="d.value">{{ d.label }}</a-option>
+                  </a-select>
+                  <a-button type="primary" @click="grantDepartmentsToRole">授予</a-button>
+                </a-space>
+              </div>
+              
+              <div class="section-title">已授予部门列表</div>
+              <a-table :data="departmentsGranted" :pagination="false">
+                <template #columns>
+                  <a-table-column title="组织名称">
+                    <template #cell="{ record }">
+                      {{ getDepartmentLabel(record) }}
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="操作" :width="140">
+                    <template #cell="{ record }">
+                      <a-button type="text" status="danger" size="small" @click="revokeDepartment(record)">回收绑定</a-button>
+                    </template>
+                  </a-table-column>
+                </template>
+              </a-table>
+            </a-card>
           </a-tab-pane>
         </a-tabs>
       </div>
@@ -222,42 +269,12 @@
       </a-form>
     </a-modal>
 
-    <a-modal v-model:visible="grantVisible" title="授予用户" ok-text="授予" @ok="grantUsersToRole">
-      <a-select v-model="selectedUserIds" multiple allow-search style="width: 100%" placeholder="选择用户">
-        <a-option v-for="u in allUsers" :key="u.id" :value="u.id">{{ u.name }}</a-option>
-      </a-select>
-    </a-modal>
-    <a-modal v-model:visible="selectAppsVisible" title="选择应用" ok-text="添加" :width="800" @ok="addSelectedApps">
-      <a-input-search v-model="appSearchKey" allow-clear placeholder="搜索应用名称/ID" style="margin-bottom: 8px" />
-      <a-table
-        :data="filteredAvailableApps"
-        row-key="appId"
-        :pagination="{ pageSize: 5 }"
-        :row-selection="{ type: 'checkbox', selectedRowKeys: selectedAppKeys, onChange: onSelectAppKeys }"
-      >
-        <template #columns>
-          <a-table-column title="应用名称" data-index="appName" />
-          <a-table-column title="应用ID" data-index="appId" />
-          <a-table-column title="权限范围">
-            <template #cell="{ record }">
-              <a-space wrap>
-                <a-tag color="blue" v-for="p in record.permissions" :key="p">{{ p }}</a-tag>
-              </a-space>
-            </template>
-          </a-table-column>
-        </template>
-      </a-table>
-    </a-modal>
-    <a-modal v-model:visible="grantDeptVisible" title="授予部门" ok-text="授予" @ok="grantDepartmentsToRole">
-      <a-select v-model="selectedDeptCodes" multiple allow-search style="width: 100%" placeholder="选择部门">
-        <a-option v-for="d in departmentOptions" :key="d.value" :value="d.value">{{ d.label }}</a-option>
-      </a-select>
-    </a-modal>
+
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 
 const searchKey = ref('')
@@ -324,7 +341,7 @@ const roleForm = reactive({
     externalCatalogs: [],
     udf: []
   },
-  appResources: []
+  appResources: [], // 格式: [{ appName, appId, level, modules: [...] }]
 })
 
 const databases = ref(['db_core', 'db_mart', 'db_ext'])
@@ -352,7 +369,6 @@ const departmentOptions = [
   { label: '市场营销部', value: 'marketing' },
   { label: '数据分析部', value: 'data' }
 ]
-const grantDeptVisible = ref(false)
 const selectedDeptCodes = ref([])
 const getDepartmentLabel = (code) => {
   const found = departmentOptions.find(d => d.value === code?.code || d.value === code)
@@ -394,12 +410,6 @@ const revokeUser = (user) => {
   Message.success(`已回收用户 ${user.name} 的角色权限`)
 }
 
-const grantVisible = ref(false)
-const openGrantUser = (record) => {
-  currentRole.value = record
-  grantVisible.value = true
-}
-
 const grantUsersToRole = () => {
   const addList = allUsers.value.filter(u => selectedUserIds.value.includes(u.id))
   const existedIds = new Set(grantedUsers.value.map(u => u.id))
@@ -408,12 +418,6 @@ const grantUsersToRole = () => {
   grantedUsers.value = merged
   selectedUserIds.value = []
   Message.success('已授予用户')
-  grantVisible.value = false
-}
-const openGrantDepartment = (record) => {
-  currentRole.value = record
-  selectedDeptCodes.value = []
-  grantDeptVisible.value = true
 }
 const grantDepartmentsToRole = () => {
   const existed = new Set(departmentsGranted.value.map(d => d.code))
@@ -427,7 +431,6 @@ const grantDepartmentsToRole = () => {
     localStorage.setItem('roles:deptAssignments', JSON.stringify(map))
   } catch (e) {}
   Message.success('已授予部门')
-  grantDeptVisible.value = false
 }
 const revokeDepartment = (record) => {
   departmentsGranted.value = departmentsGranted.value.filter(d => d.code !== record.code)
@@ -469,64 +472,162 @@ const handleDelete = (record) => {
   Message.success(`已删除角色: ${record.name}`)
 }
 
-const selectAppsVisible = ref(false)
-const availableAppPermissions = ref([])
-const appSearchKey = ref('')
-const selectedAppKeys = ref([])
+// 应用权限选择树形组件相关
+const appTreeSearch = ref('')
+const appTreeExpandedKeys = ref([])
+const appTreeCheckedKeys = ref([])
+const appTreeLoading = ref(false)
+const appStatusFilter = ref('online')
+const appStatusOptions = [
+  { label: '已上线', value: 'online' },
+  { label: '测试中', value: 'test' },
+  { label: '废弃', value: 'discard' }
+]
 
-const loadAvailableApps = () => {
-  const raw = localStorage.getItem('permission.app.list')
-  if (raw) {
-    try {
-      availableAppPermissions.value = JSON.parse(raw)
-    } catch (e) {
-      availableAppPermissions.value = []
+// 应用目录结构
+const appCatalog = ref([
+  { name: '统一查询平台', type: 'App' },
+  { name: '指标管理系统', type: 'App' },
+  { name: '数据地图', type: 'App' },
+  { name: '大屏可视化', type: 'App' }
+])
+
+const mockModules = {
+  App: [
+    { id: 'm_query', name: 'SQL查询模块', sensitivityLevel: 'normal', owner: '平台组' },
+    { id: 'm_save', name: '查询保存功能', sensitivityLevel: 'normal', owner: '平台组' },
+    { id: 'm_export', name: '结果导出功能', sensitivityLevel: 'sensitive', owner: '安全组' },
+    { id: 'm_admin', name: '管理后台', sensitivityLevel: 'core', owner: '管理员' }
+  ]
+}
+
+const appTreeData = computed(() => {
+  return appCatalog.value.map(app => {
+    const modules = ['核心功能', '辅助功能', '系统管理'];
+    return {
+      key: `app:${app.name}`,
+      title: app.name,
+      status: 'online',
+      children: modules.map(m => ({
+        key: `app:${app.name}|module:${m}`,
+        title: m,
+        status: 'online',
+        children: (mockModules[app.type] || []).map(t => ({
+          key: `app:${app.name}|module:${m}|func:${t.id}`,
+          title: t.name,
+          status: t.sensitivityLevel === 'sensitive' ? 'test' : 'online',
+          meta: { id: t.id, name: t.name, sensitivityLevel: t.sensitivityLevel, owner: t.owner, app: app.name, appType: app.type, module: m }
+        }))
+      }))
+    };
+  });
+});
+
+const totalSelectedApps = computed(() => {
+  // 计算选中的应用数量（顶级节点）
+  return appTreeCheckedKeys.value.filter(key => key.startsWith('app:')).length;
+});
+
+const totalSelectedModules = computed(() => {
+  // 计算选中的模块数量（中间节点）
+  return appTreeCheckedKeys.value.filter(key => key.includes('|module:') && !key.includes('|func:')).length;
+});
+
+const syncAppSelectionFromTree = () => {
+  const keys = new Set(appTreeCheckedKeys.value || []);
+  const appsMap = {};
+
+  keys.forEach(k => {
+    if (k.includes('|module:') && !k.includes('|func:')) {
+      // 这是模块节点
+      const [appPart, modulePart] = k.split('|');
+      const appName = appPart.replace('app:', '');
+      const moduleName = modulePart.replace('module:', '');
+      
+      if (!appsMap[appName]) {
+        appsMap[appName] = {
+          appName: appName,
+          appId: `app_${appName.toLowerCase().replace(/\s+/g, '_')}`, // 生成应用ID
+          level: 'VIEW', // 默认权限级别
+          modules: []
+        };
+      }
+      
+      if (!appsMap[appName].modules.includes(moduleName)) {
+        appsMap[appName].modules.push(moduleName);
+      }
+    } else if (k.includes('|func:')) {
+      // 这是功能节点，需要找到所属应用和模块
+      const parts = k.split('|');
+      const appName = parts[0].replace('app:', '');
+      const moduleName = parts[1].replace('module:', '');
+      
+      if (!appsMap[appName]) {
+        appsMap[appName] = {
+          appName: appName,
+          appId: `app_${appName.toLowerCase().replace(/\s+/g, '_')}`,
+          level: 'VIEW',
+          modules: []
+        };
+      }
+      
+      if (!appsMap[appName].modules.includes(moduleName)) {
+        appsMap[appName].modules.push(moduleName);
+      }
+    } else if (k.startsWith('app:')) {
+      // 这是应用节点
+      const appName = k.replace('app:', '');
+      if (!appsMap[appName]) {
+        appsMap[appName] = {
+          appName: appName,
+          appId: `app_${appName.toLowerCase().replace(/\s+/g, '_')}`,
+          level: 'VIEW',
+          modules: [] // 选择整个应用时，模块为空数组表示所有模块
+        };
+      }
+    }
+  });
+
+  // 更新roleForm.appResources
+  roleForm.appResources = Object.values(appsMap);
+};
+
+// 监听树形选择的变化
+watch(() => appTreeCheckedKeys.value, () => {
+  syncAppSelectionFromTree();
+});
+
+const expandAllApps = () => {
+  const keys = [];
+  const walk = (nodes) => nodes.forEach(n => { 
+    keys.push(n.key); 
+    if (n.children) walk(n.children); 
+  });
+  walk(appTreeData.value);
+  appTreeExpandedKeys.value = keys;
+};
+
+const collapseAllApps = () => {
+  appTreeExpandedKeys.value = [];
+};
+
+const clearAllAppSelection = () => {
+  appTreeCheckedKeys.value = [];
+  roleForm.appResources = [];
+};
+
+const removeModule = (appId, moduleName) => {
+  const app = roleForm.appResources.find(a => a.appId === appId);
+  if (app && app.modules) {
+    app.modules = app.modules.filter(m => m !== moduleName);
+    // 如果模块数组为空，移除整个应用
+    if (app.modules.length === 0) {
+      roleForm.appResources = roleForm.appResources.filter(a => a.appId !== appId);
     }
   }
-  if (!availableAppPermissions.value.length) {
-    availableAppPermissions.value = [
-      { appName: '报表中心', appId: 'app_report', permissions: ['VIEW', 'USE'] },
-      { appName: '数据导入', appId: 'app_loader', permissions: ['VIEW', 'USE', 'ALL'] },
-      { appName: '知识库', appId: 'app_kb', permissions: ['VIEW', 'ALL'] }
-    ]
-  }
-}
+};
 
-const filteredAvailableApps = computed(() => {
-  const key = (appSearchKey.value || '').toLowerCase()
-  return availableAppPermissions.value.filter(i =>
-    i.appName.toLowerCase().includes(key) || i.appId.toLowerCase().includes(key)
-  )
-})
 
-const openSelectApps = () => {
-  loadAvailableApps()
-  selectedAppKeys.value = []
-  selectAppsVisible.value = true
-}
-
-const onSelectAppKeys = (keys) => {
-  selectedAppKeys.value = keys
-}
-
-const addSelectedApps = () => {
-  const existed = new Set(roleForm.appResources.map(i => i.appId))
-  const addItems = availableAppPermissions.value.filter(i => selectedAppKeys.value.includes(i.appId))
-  addItems.forEach(i => {
-    if (!existed.has(i.appId)) {
-      roleForm.appResources.push({
-        appName: i.appName,
-        appId: i.appId,
-        level: 'VIEW'
-      })
-    }
-  })
-  selectAppsVisible.value = false
-}
-
-const removeAppResource = (record) => {
-  roleForm.appResources = roleForm.appResources.filter(i => i.appId !== record.appId)
-}
 </script>
 
 <style scoped>
@@ -545,5 +646,48 @@ const removeAppResource = (record) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* 应用权限选择样式 */
+.resource-tree-section {
+  margin-bottom: 16px;
+}
+
+.tree-toolbar {
+  margin-bottom: 12px;
+}
+
+.helper-text {
+  margin-top: 8px;
+  color: #86909c;
+  font-size: 12px;
+}
+
+.global-selected-summary {
+  margin: 12px 0;
+  padding: 8px 12px;
+  background-color: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 4px;
+}
+
+.section-actions {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.selected-preview {
+  margin-top: 16px;
+}
+
+.app-level-controls {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+/* 授予用户和部门的样式 */
+.grant-section {
+  margin-bottom: 16px;
 }
 </style>

@@ -10,26 +10,73 @@
         
         <!-- Debug/Assist Layer (Visible when ruler is active or showGuides is on) -->
         <svg v-if="ruler.active || flags.showGuides" class="debug-layer" width="100%" height="100%" style="pointer-events: none; position: absolute; inset: 0; z-index: 25;">
+          <g v-if="flags.showGuides">
+            <!-- 绘制同层节点间的水平间距测量 -->
+            <g v-for="layerGroup in nodesByLayer" :key="layerGroup.index">
+              <g v-for="(node, idx) in layerGroup.sortedNodes.slice(0, -1)" :key="node.id">
+                <template v-if="nodesPx[node.id] && nodesPx[layerGroup.sortedNodes[idx+1].id]">
+                  <line 
+                    :x1="getDebugX(node.id, 0.5)" :y1="getDebugY(node.id)"
+                    :x2="getDebugX(layerGroup.sortedNodes[idx+1].id, -0.5)" :y2="getDebugY(layerGroup.sortedNodes[idx+1].id)"
+                    stroke="rgba(0, 102, 255, 0.4)" stroke-width="1" stroke-dasharray="2 2"
+                  />
+                  <text 
+                    :x="getDebugMidX(node.id, layerGroup.sortedNodes[idx+1].id)" 
+                    :y="getDebugY(node.id) - 5" 
+                    fill="rgba(0, 102, 255, 0.8)" :font-size="iconSize * 0.08" text-anchor="middle"
+                  >
+                    {{ getDebugDist(node.id, layerGroup.sortedNodes[idx+1].id).toFixed(0) }}px
+                  </text>
+                </template>
+              </g>
+            </g>
+          </g>
+
           <g v-for="(pos, id) in nodesPx" :key="id">
-          <!-- Bounding Box -->
-          <rect 
-            :x="pos.x - metrics.icon/2" :y="pos.y - metrics.icon/2" 
-            :width="metrics.icon" :height="metrics.icon" 
-            fill="none" stroke="rgba(255, 0, 0, 0.5)" :stroke-width="metrics.style.edgeStroke" stroke-dasharray="4 4"
-          />
-          <!-- Center Point -->
-          <circle :cx="pos.x" :cy="pos.y" :r="metrics.icon * 0.03" fill="red" />
-          <!-- Connection Point (Visual Center) -->
-          <circle v-if="nodesContactPx[id]" :cx="nodesContactPx[id].x" :cy="nodesContactPx[id].y" :r="metrics.icon * 0.04" fill="#52c41a" stroke="white" :stroke-width="metrics.style.edgeStroke" />
-          <!-- Edge Midpoints -->
-          <circle :cx="pos.x" :cy="pos.y - metrics.icon/2" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Top -->
-          <circle :cx="pos.x" :cy="pos.y + metrics.icon/2" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Bottom -->
-          <circle :cx="pos.x - metrics.icon/2" :cy="pos.y" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Left -->
-          <circle :cx="pos.x + metrics.icon/2" :cy="pos.y" :r="metrics.icon * 0.02" fill="#1890ff" /> <!-- Right -->
-          <!-- Label for ID (Optional, small) -->
-          <text :x="pos.x - metrics.icon/2 + 5" :y="pos.y - metrics.icon/2 + 15" fill="rgba(255,0,0,0.7)" :font-size="metrics.icon * 0.1" font-family="monospace">{{ id }}</text>
-        </g>
+            <!-- Bounding Box -->
+            <rect 
+              :x="Number(pos.x) - iconSize/2" :y="Number(pos.y) - iconSize/2" 
+              :width="iconSize" :height="iconSize" 
+              fill="none" stroke="rgba(255, 0, 0, 0.5)" :stroke-width="metrics.style.edgeStroke" stroke-dasharray="4 4"
+            />
+            <!-- Dimensions Label -->
+            <text 
+              v-if="flags.showGuides"
+              :x="pos.x" :y="Number(pos.y) - iconSize/2 - 5" 
+              fill="red" :font-size="iconSize * 0.08" font-weight="bold" text-anchor="middle"
+            >
+              {{ iconSize.toFixed(0) }}x{{ iconSize.toFixed(0) }}px
+            </text>
+            <!-- Percentage Coordinate Label -->
+            <text 
+              v-if="flags.showGuides"
+              :x="pos.x" :y="Number(pos.y) + iconSize/2 + 12" 
+              fill="#165dff" :font-size="iconSize * 0.08" font-weight="bold" text-anchor="middle"
+            >
+              {{ nodes.find((n: any) => n.id === id)?.xPct }}%, {{ nodes.find((n: any) => n.id === id)?.yPct }}%
+            </text>
+
+            <!-- Center Point -->
+            <circle :cx="pos.x" :cy="pos.y" :r="iconSize * 0.03" fill="red" />
+            <!-- Connection Point (Visual Center) -->
+            <circle v-if="nodesContactPx[id]" :cx="nodesContactPx[id].x" :cy="nodesContactPx[id].y" :r="iconSize * 0.04" fill="#52c41a" stroke="white" :stroke-width="metrics.style.edgeStroke" />
+            <!-- Edge Midpoints -->
+            <circle :cx="pos.x" :cy="Number(pos.y) - iconSize/2" :r="iconSize * 0.02" fill="#1890ff" /> <!-- Top -->
+            <circle :cx="pos.x" :cy="Number(pos.y) + iconSize/2" :r="iconSize * 0.02" fill="#1890ff" /> <!-- Bottom -->
+            <circle :cx="Number(pos.x) - iconSize/2" :cy="pos.y" :r="iconSize * 0.02" fill="#1890ff" /> <!-- Left -->
+            <circle :cx="Number(pos.x) + iconSize/2" :cy="pos.y" :r="iconSize * 0.02" fill="#1890ff" /> <!-- Right -->
+            <!-- Label for ID -->
+            <text :x="Number(pos.x) - iconSize/2 + 2" :y="Number(pos.y) - iconSize/2 + 10" fill="rgba(255,0,0,0.7)" :font-size="iconSize * 0.08" font-family="monospace">{{ id }}</text>
+          </g>
         </svg>
+
+        <!-- Global Info Overlay when showGuides is on -->
+        <div v-if="flags.showGuides" class="global-info-overlay">
+          <div class="info-item"><span>缩放比例:</span> <strong>{{ (effectiveScale * 100).toFixed(0) }}%</strong></div>
+          <div class="info-item"><span>视口尺寸:</span> <strong>{{ size.width.toFixed(0) }}x{{ size.height.toFixed(0) }}px</strong></div>
+          <div class="info-item"><span>图标尺寸:</span> <strong>{{ iconSize.toFixed(0) }}px</strong></div>
+          <div class="info-item"><span>网格单位:</span> <strong>50px</strong></div>
+        </div>
 
         <!-- Ruler Overlay -->
         <svg v-if="ruler.active" class="ruler-layer" width="100%" height="100%">
@@ -45,7 +92,7 @@
             stroke="red" :stroke-width="metrics.edgeStroke * 1.5" stroke-dasharray="5,5"
             marker-start="url(#rulerArrow)" marker-end="url(#rulerArrow)"
           />
-          <text v-if="rulerStats" :x="rulerStats.cx" :y="rulerStats.cy - 10" fill="red" :font-size="metrics.icon * 0.15" font-weight="bold" text-anchor="middle" style="text-shadow: 0 1px 2px white">
+          <text v-if="rulerStats" :x="rulerStats.cx" :y="rulerStats.cy - 10" fill="red" :font-size="iconSize * 0.15" font-weight="bold" text-anchor="middle" style="text-shadow: 0 1px 2px white">
             {{ rulerStats.angle.toFixed(1) }}° / {{ rulerStats.len.toFixed(0) }}px
           </text>
         </svg>
@@ -100,6 +147,9 @@
     
     <!-- Floating Tool Toggle if Coord Panel is hidden -->
     <div v-if="!coord.visible" class="floating-tools">
+      <a-button size="mini" @click="flags.showGuides = !flags.showGuides" :type="flags.showGuides ? 'primary' : 'secondary'">
+        {{ flags.showGuides ? '隐藏参考线' : '显示参考线' }}
+      </a-button>
       <a-button size="mini" @click="ruler.active = !ruler.active; ruler.step = 0" :type="ruler.active ? 'primary' : 'secondary'">
         {{ ruler.active ? '退出测量' : '测量工具' }}
       </a-button>
@@ -120,6 +170,7 @@ const props = defineProps<{ layers: Layer[]; nodes: Node[]; opts?: { hideNodes?:
 const root = ref<HTMLElement|null>(null)
 const size = ref({ width: 0, height: 0 })
 const scale = ref(1)
+const iconSize = computed(() => Number(metrics.value.icon))
 const contentStyle = computed(() => ({
   transform: `scale(${scale.value})`,
   transformOrigin: 'center center'
@@ -145,36 +196,36 @@ const metrics = computed(() => {
   
   // 2. 图标尺寸计算 (原 iconSize 逻辑)
   const rawIcon = unit * 0.12
-  const icon = Math.min(160, Math.max(64, rawIcon))
+  const icon = Math.min(120, Math.max(48, rawIcon)) // 减小图标尺寸以适应紧凑布局
   const iconDiag = icon * Math.SQRT2
 
-  // 3. 2.5D 几何投影参数
-  const projectionAngle = -148
+  // 3. 2.5D 几何投影参数 - 优化为更标准的等距视角
+  const projectionAngle = -150
   const projectionRad = (projectionAngle * Math.PI) / 180
 
   // 4. 布局与轮廓参数
   const layer = {
-    widthV: Math.min(iconDiag * 1.0, unit * 0.25),
-    lenMin: iconDiag * 2,
-    lenMax: iconDiag * 6,
-    padding: Math.round(icon * 1.2),
-    cornerRadius: Math.max(12, Math.round(icon * 0.15)),
-    labelInset: Math.max(12, Math.round(icon * 0.1)),
-    titleLeftMax: Math.round(icon * 1.5),
-    titleExtraMin: Math.round(icon * 0.6),
-    titleCharWidthRatio: 0.08, // 标题字符宽度比例
-    labelOffsetRatio: 0.2      // 标签偏移比例
+    widthV: Math.min(iconDiag * 1.2, unit * 0.3),
+    lenMin: iconDiag * 2.5,
+    lenMax: iconDiag * 7,
+    padding: Math.round(icon * 1.5), // 增加内边距
+    cornerRadius: Math.max(16, Math.round(icon * 0.2)),
+    labelInset: Math.max(16, Math.round(icon * 0.15)),
+    titleLeftMax: Math.round(icon * 2.0),
+    titleExtraMin: Math.round(icon * 0.8),
+    titleCharWidthRatio: 0.1,
+    labelOffsetRatio: 0.25
   }
 
   // 5. 视觉样式参数
   const style = {
-    margin: Math.round(unit * 0.03),
-    edgeStroke: Math.max(1, Math.round(icon * 0.015)),
-    busStroke: Math.max(2, Math.round(icon * 0.03)),
-    edgeDash: Math.max(4, Math.round(icon * 0.05)),
-    busDashA: Math.max(8, Math.round(icon * 0.08)),
-    busDashB: Math.max(4, Math.round(icon * 0.04)),
-    contactCap: Math.round(icon * 0.1)
+    margin: Math.round(unit * 0.04),
+    edgeStroke: Math.max(1.5, Math.round(icon * 0.02)),
+    busStroke: Math.max(3, Math.round(icon * 0.04)),
+    edgeDash: Math.max(5, Math.round(icon * 0.06)),
+    busDashA: Math.max(10, Math.round(icon * 0.1)),
+    busDashB: Math.max(5, Math.round(icon * 0.05)),
+    contactCap: Math.round(icon * 0.12)
   }
 
   // 6. 交互与工具参数
@@ -187,7 +238,7 @@ const metrics = computed(() => {
   }
 
   return { 
-    unit, icon, iconDiag, 
+    unit, icon: icon as number, iconDiag, 
     projectionAngle, projectionRad,
     layer, style, config
   }
@@ -653,7 +704,8 @@ const effectiveScale = computed(() => {
   const cw = Math.max(1, size.value.width)
   const ch = Math.max(1, size.value.height)
   const sFit = Math.min(1, Math.min((cw - margin * 2) / bw, (ch - margin * 2) / bh))
-  const s = Math.min(metrics.value.config.zoom.max, Math.max(metrics.value.config.zoom.min, Math.min(baseScale, sFit)))
+  let s = Math.min(metrics.value.config.zoom.max, Math.max(metrics.value.config.zoom.min, Math.min(baseScale, sFit)))
+  if (isNaN(s)) s = 1
   return s
 })
 const autoStyle = computed(() => {
@@ -679,6 +731,46 @@ const autoStyle = computed(() => {
   }
 })
 const activeNode = computed(() => props.nodes.find(n => n.id===activeNodeId.value) || null)
+
+const nodesByLayer = computed(() => {
+  const groups: Record<number, { index: number; sortedNodes: typeof props.nodes }> = {}
+  props.nodes.forEach(node => {
+    if (!groups[node.layerIndex]) {
+      groups[node.layerIndex] = { index: node.layerIndex, sortedNodes: [] }
+    }
+    const group = groups[node.layerIndex]
+    if (group) {
+      group.sortedNodes.push(node)
+    }
+  })
+  
+  return Object.values(groups).map(g => ({
+    ...g,
+    sortedNodes: g.sortedNodes.sort((a, b) => (nodesPx.value[a.id]?.x || 0) - (nodesPx.value[b.id]?.x || 0))
+  }))
+})
+
+function getDebugX(id: string, offsetMultiplier: number = 0) {
+  const p = nodesPx.value[id]
+  if (!p) return 0
+  return p.x + (iconSize.value * offsetMultiplier)
+}
+function getDebugY(id: string) {
+  const p = nodesPx.value[id]
+  return p ? p.y : 0
+}
+function getDebugDist(id1: string, id2: string) {
+  const p1 = nodesPx.value[id1]
+  const p2 = nodesPx.value[id2]
+  if (!p1 || !p2) return 0
+  return p2.x - p1.x - iconSize.value
+}
+function getDebugMidX(id1: string, id2: string) {
+  const p1 = nodesPx.value[id1]
+  const p2 = nodesPx.value[id2]
+  if (!p1 || !p2) return 0
+  return (p1.x + p2.x) / 2
+}
 const activeRect = computed(() => {
   if (!activeNodeId.value) return null
   const p = nodesPx.value[activeNodeId.value]
@@ -825,7 +917,21 @@ watch(() => flags.value.hideNodes, (v: boolean) => {
 <style scoped>
 .canvas-wrapper { position: relative; width: 100%; overflow: visible }
 .canvas-wrapper.is-dev { cursor: crosshair }
-.canvas { position: relative; width: 100%; background: rgba(0,0,0,0.02); display: block; aspect-ratio: 16 / 9 }
+.canvas { 
+  position: relative; 
+  width: 100%; 
+  background: #f0f7ff; 
+  background-image: 
+    linear-gradient(rgba(0, 102, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 102, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 1px 1px, rgba(0, 102, 255, 0.15) 1.5px, transparent 0);
+  background-size: 50px 50px, 50px 50px, 50px 50px;
+  display: block; 
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  box-shadow: inset 0 0 60px rgba(0, 102, 255, 0.05);
+  overflow: hidden;
+}
 .content { position: absolute; inset: 0; will-change: transform }
 .bg-image { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; z-index: 1 }
 .nodes { position: absolute; inset: 0; z-index: 30 }
@@ -836,5 +942,46 @@ watch(() => flags.value.hideNodes, (v: boolean) => {
 .coord-row .label { color: var(--color-text-3) }
 .coord-row .value { color: var(--color-text-1); font-weight: bold }
 .actions { display: flex; gap: 4px; margin-top: 8px; border-top: 1px solid var(--color-fill-3); padding-top: 8px; flex-wrap: wrap }
-.floating-tools { position: absolute; bottom: 16px; right: 16px; z-index: 100 }
+.floating-tools {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.global-info-overlay {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(22, 93, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  font-size: 12px;
+  color: #4e5969;
+}
+
+.info-item span {
+  color: #86909c;
+}
+
+.info-item strong {
+  color: #165dff;
+  font-family: monospace;
+}
 </style>

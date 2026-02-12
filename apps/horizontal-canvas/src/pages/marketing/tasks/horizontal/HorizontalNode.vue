@@ -25,12 +25,7 @@
 
     <!-- 内容区：纯展示，端口由X6系统管理 -->
     <div class="horizontal-node__content" :style="contentContainerStyle">
-      <div 
-        v-if="nodeType === 'ab-test' && config?.experimentName"
-        class="ab-test__experiment"
-      >
-        实验：{{ config.experimentName }}
-      </div>
+     
       <!-- 输出端口指示器（每行内容对应一个） -->
       <div 
         v-for="(text, idx) in outRows" 

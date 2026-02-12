@@ -56,7 +56,21 @@
           />
         </div>
       </a-tab-pane>
-
+      
+      <!-- 仅当产品为Su贷时显示实时数据tab -->
+      <a-tab-pane 
+        v-if="isSudaiProduct" 
+        key="realtime" 
+        title="实时数据">
+        <div class="module-content">
+          <RealTimeData 
+            :product-key="productKey"
+            :product-data="productData"
+            :user-real-time-data="realTimeData"
+            :loading="loading"
+          />
+        </div>
+      </a-tab-pane>
     </a-tabs>
   </div>
 </template>
@@ -67,6 +81,7 @@ import CustomerOverview from './CustomerOverview.vue'
 import BusinessCoreDetails from './BusinessCoreDetails.vue'
 import MarketingRecords from './MarketingRecords.vue'
 import ProductInfo from './ProductInfo.vue'
+import RealTimeData from './RealTimeData.vue'
 
 
 interface Props {
@@ -129,10 +144,40 @@ const marketingData = computed(() => {
   }
 })
 
+// 检查是否为Su贷产品
+const isSudaiProduct = computed(() => {
+  return props.productData?.productName?.includes('Su贷') || false;
+});
+
+// 实时数据（仅用于Su贷产品）
+const realTimeData = computed(() => {
+  if (!isSudaiProduct.value) return {};
+  
+  // 从用户数据中获取实时数据
+  const suDaiLoanRecord = props.userInfo.loanRecords?.find((record: any) => 
+    record.productName === 'Su贷'
+  );
+  
+  const suDaiCreditRecord = props.userInfo.creditsList?.find((record: any) => 
+    record.productName === 'Su贷'
+  );
+  
+  return {
+    currentBalance: suDaiLoanRecord?.realTimeBalance || suDaiLoanRecord?.balance || 150000,
+    dailyDisbursement: suDaiLoanRecord?.dailyDisbursement || 250000,
+    dailyRepayment: suDaiLoanRecord?.dailyRepayment || 180000,
+    currentRate: suDaiLoanRecord?.loanRate || 3.9,
+    riskScore: suDaiCreditRecord?.riskScore || suDaiLoanRecord?.riskScore || 785,
+    overdueDays: suDaiLoanRecord?.overdueDays || 0,
+    warningLevel: suDaiCreditRecord?.warningLevel || suDaiLoanRecord?.warningLevel || '低风险',
+    availableCredit: suDaiCreditRecord?.availableCredit || suDaiLoanRecord?.availableCredit || 50000
+  };
+});
+
 // 监听模块变化
 watch(
   selectedInfoModule,
-  (newModule, oldModule) => {
+  (newModule: string, oldModule: string) => {
     emit('module-change', newModule)
   }
 )
@@ -140,7 +185,7 @@ watch(
 // 监听产品变化，重置到概览模块
 watch(
   () => props.productKey,
-  (newKey, oldKey) => {
+  (newKey: string, oldKey: string) => {
     selectedInfoModule.value = 'overview'
   }
 )
@@ -148,7 +193,7 @@ watch(
 // 监听用户信息变化
 watch(
   () => props.userInfo,
-  (newUserInfo, oldUserInfo) => {
+  (newUserInfo: any, oldUserInfo: any) => {
     // 简化逻辑，移除调试代码
   },
   { deep: true, immediate: true }
@@ -157,7 +202,7 @@ watch(
 // 监听loading状态变化
 watch(
   () => props.loading,
-  (newLoading, oldLoading) => {
+  (newLoading: boolean, oldLoading: boolean) => {
     // 简化逻辑，移除调试代码
   }
 )

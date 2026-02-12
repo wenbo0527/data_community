@@ -39,8 +39,74 @@
           </a-form>
         </a-collapse-item>
 
-        <a-collapse-item key="sample" :header="createMode === 'single' ? '2. 选择样本数据' : '2. 配置周期回溯'" v-if="sampleForm.mode===createMode">
+        <a-collapse-item key="sample" :header="createMode === CREATE_MODES.SINGLE ? '2. 选择样本数据' : '2. 配置周期回溯'" v-if="sampleForm.mode===createMode">
           <a-form :model="sampleForm" layout="vertical">
+            <!-- 周期回溯配置 - 顶层 -->
+            <template v-if="createMode === CREATE_MODES.PERIODIC">
+              <a-divider orientation="left">周期任务配置</a-divider>
+              <a-row :gutter="16">
+                <a-col :span="12">
+                  <a-form-item label="任务发起时间" required>
+                    <a-radio-group v-model="sampleForm.periodicity">
+                      <a-radio value="daily">每日</a-radio>
+                      <a-radio value="weekly">每周</a-radio>
+                      <a-radio value="monthly">每月</a-radio>
+                    </a-radio-group>
+                  </a-form-item>
+                  
+                  <!-- 每周具体星期选择 -->
+                  <a-form-item v-if="sampleForm.periodicity === 'weekly'" label="每周具体时间" required>
+                    <a-checkbox-group v-model="sampleForm.weekDays">
+                      <a-checkbox value="1">周一</a-checkbox>
+                      <a-checkbox value="2">周二</a-checkbox>
+                      <a-checkbox value="3">周三</a-checkbox>
+                      <a-checkbox value="4">周四</a-checkbox>
+                      <a-checkbox value="5">周五</a-checkbox>
+                      <a-checkbox value="6">周六</a-checkbox>
+                      <a-checkbox value="0">周日</a-checkbox>
+                    </a-checkbox-group>
+                  </a-form-item>
+                  
+                  <!-- 每月具体日期选择 -->
+                  <a-form-item v-if="sampleForm.periodicity === 'monthly'" label="每月具体日期" required>
+                    <a-select 
+                      v-model="sampleForm.monthDays" 
+                      placeholder="选择每月执行日期" 
+                      multiple
+                      allow-clear
+                    >
+                      <a-option v-for="day in monthDayOptions" :key="day" :value="day">{{ day }}号</a-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                
+                <a-col :span="12">
+                  <a-form-item label="任务触发方式" required>
+                    <a-radio-group v-model="sampleForm.triggerType">
+                      <a-radio value="schedule">定时</a-radio>
+                      <a-radio value="subscribe">订阅</a-radio>
+                    </a-radio-group>
+                  </a-form-item>
+                  
+                  <!-- 定时任务配置 -->
+                  <a-form-item v-if="sampleForm.triggerType === 'schedule'" label="执行时间">
+                    <a-time-picker v-model="sampleForm.scheduleTime" format="HH:mm" placeholder="选择执行时间" style="width: 100%" />
+                  </a-form-item>
+                  
+                  <!-- 订阅任务配置 -->
+                  <a-form-item v-if="sampleForm.triggerType === 'subscribe'" label="订阅袋鼠云任务">
+                    <a-select v-model="sampleForm.kangarooTaskId" placeholder="选择袋鼠云任务ID" allow-search>
+                      <a-option value="">无</a-option>
+                      <a-option value="task-001">Doris表插入任务ID-001</a-option>
+                      <a-option value="task-002">Doris表插入任务ID-002</a-option>
+                      <a-option value="task-003">Hive表插入任务ID-001</a-option>
+                      <a-option value="task-004">Hive表插入任务ID-002</a-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+            </template>
+            
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="数据来源" required>
@@ -82,6 +148,9 @@
               <a-select v-model="record.target" placeholder="选择样本字段" allow-search @change="updateRequiredStatus(record)">
                 <a-option v-for="c in tableColumns" :key="c.name" :value="c.name">{{ c.name }} ({{ c.type }})</a-option>
               </a-select>
+            </template>
+            <template #encryptedCell="{ record }">
+              <a-switch v-model="record.isEncrypted" size="small" />
             </template>
             <template #statusCell="{ record }">
               <a-tag :color="record.status==='matched' ? 'green' : 'red'">{{ record.status==='matched' ? '已匹配' : '未匹配' }}</a-tag>
@@ -155,8 +224,23 @@ const modeOptions = [
   { label: '周期回溯', value: CREATE_MODES.PERIODIC, description: '定期执行模型回溯任务' }
 ]
 
+// 生成每月日期选项
+const monthDayOptions = Array.from({ length: 31 }, (_, i) => (i + 1).toString())
+
 // 样本表
-const sampleForm = ref({ mode: 'single', sourceType: 'doris', dbName: '', tableName: '', table: '' })
+const sampleForm = ref({ 
+  mode: CREATE_MODES.SINGLE, 
+  sourceType: 'doris', 
+  dbName: '', 
+  tableName: '', 
+  table: '', 
+  periodicity: 'daily', 
+  weekDays: [], // 每周具体星期
+  monthDays: [], // 每月具体日期
+  triggerType: 'schedule', // 任务触发方式：schedule(定时) 或 subscribe(订阅)
+  scheduleTime: null, // 定时执行时间
+  kangarooTaskId: '' 
+})
 const dbOptions = ref([])
 const tableNameOptions = ref([])
 const tableOptions = ref([])
@@ -170,6 +254,7 @@ const requiredDefs = [
   { title: '字段', dataIndex: 'name', width: 140 },
   { title: '说明', dataIndex: 'label', width: 160 },
   { title: '样本字段', dataIndex: 'target', slotName: 'targetCell', width: 220 },
+  { title: '是否关联时加密', dataIndex: 'isEncrypted', slotName: 'encryptedCell', width: 120 },
   { title: '状态', dataIndex: 'status', slotName: 'statusCell', width: 120 }
 ]
 
@@ -310,7 +395,7 @@ const onTableChange = async (name) => {
     requiredMappings.value = requiredMappings.value.map(r => {
       const same = tableColumns.value.find(c => c.name === r.name)
       const target = r.target || (same ? same.name : '')
-      return { ...r, target, status: target ? 'matched' : 'unmatched' }
+      return { ...r, target, status: target ? 'matched' : 'unmatched', isEncrypted: r.isEncrypted || false }
     })
     console.log('[Backtrack] requiredMappings after table', requiredMappings.value)
     console.log('[Backtrack] inputMappings after table', inputMappings.value)
@@ -370,7 +455,7 @@ const onServiceChange = async (serviceName) => {
         const same = tableColumns.value.find(c => c.name === name)
         const label = name === 'cert_no' ? '证件号' : name
         const target = same ? same.name : ''
-        return { name, label, target, status: target ? 'matched' : 'unmatched' }
+        return { name, label, target, status: target ? 'matched' : 'unmatched', isEncrypted: false }
       })
       Message.info(`必填映射生成: ${requiredMappings.value.length} 项，入参: ${modelInputs.value.length} 项`)
       console.log('[Backtrack] built inputMappings', inputMappings.value)
@@ -408,9 +493,13 @@ const handleSubmit = async () => {
       observeDate: observeForm.value.observeDate,
       dateRange: observeForm.value.dateRange || [],
       serviceName: modelForm.value.serviceName,
+      version: modelForm.value.selectedVersion,
       inputMappings: mappings,
       outputs: modelOutputs.value,
-      requiredFieldMappings: requiredMappings.value.map(r => ({ field: r.name, target: r.target })),
+      requiredFieldMappings: requiredMappings.value.map(r => ({ field: r.name, target: r.target, isEncrypted: !!r.isEncrypted })),
+      // 周期回溯相关字段
+      periodicity: sampleForm.value.periodicity,
+      kangarooTaskId: sampleForm.value.kangarooTaskId,
     }
     
     console.log('[Backtrack] submit payload', payload)

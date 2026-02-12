@@ -23,6 +23,11 @@
         <a-descriptions-item label="二级分类">{{ detail?.level2 || '-' }}</a-descriptions-item>
         <a-descriptions-item label="数据源">{{ detail?.dataSource || '-' }}</a-descriptions-item>
         <a-descriptions-item label="更新频率">{{ detail?.updateFrequency || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="模型类型">
+          <a-tag :color="modelTypeColor(detail?.modelType)">
+            {{ modelTypeLabel(detail?.modelType) }}
+          </a-tag>
+        </a-descriptions-item>
         <a-descriptions-item label="创建时间">{{ detail?.createTime || '-' }}</a-descriptions-item>
         <a-descriptions-item label="创建人">{{ detail?.creator || '-' }}</a-descriptions-item>
         <a-descriptions-item label="描述" :span="2">{{ detail?.description || '-' }}</a-descriptions-item>
@@ -84,6 +89,7 @@ const typeLabel = (t) => ({ numerical: '数值型', categorical: '分类型', te
 const statusColor = (s) => ({ active: 'green', inactive: 'red', draft: 'orange', pending: 'blue', expired: 'gray' }[s] || 'gray')
 const statusLabel = (s) => ({ active: '有效', inactive: '无效', draft: '草稿', pending: '待审核', expired: '已过期' }[s] || s)
 const modelTypeLabel = (t) => ({ classification: '分类模型', regression: '回归模型', clustering: '聚类模型', deep_learning: '深度学习' }[t] || t)
+const modelTypeColor = (mt) => ({ daily: 'blue', monthly: 'green', other: 'orange' }[mt] || 'gray')
 
 onMounted(async () => {
   try {

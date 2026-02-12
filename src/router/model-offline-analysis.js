@@ -46,6 +46,16 @@ export const modelOfflineAnalysisRoutes = [
         }
       },
       {
+        path: 'feature-center/create',
+        name: 'RiskFeatureCreate',
+        component: () => import('../pages/risk/model-offline-analysis/featureCenter/create.vue'),
+        meta: {
+          title: '新建特征',
+          hideInMenu: true,
+          permission: 'user'
+        }
+      },
+      {
         path: 'model-register',
         name: 'RiskModelRegister',
         component: () => import('../pages/risk/model-offline-analysis/modelRegister/index.vue'),

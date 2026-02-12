@@ -7,6 +7,8 @@ export const nodeTypes = {
   sms: { label: '短信', color: '#059669' },
   'ai-call': { label: 'AI外呼', color: '#047857' },
   'manual-call': { label: '人工外呼', color: '#047857' },
+  'app-push': { label: 'APP PUSH', color: '#10b981' },
+  'wechat-push': { label: '公众号推送', color: '#059669' },
   benefit: { label: '权益', color: '#ea580c' },
   wait: { label: '等待', color: '#7c3aed' }
 }

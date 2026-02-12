@@ -44,6 +44,13 @@
               </a-space>
             </template>
           </a-table-column>
+          <a-table-column title="用户部门" data-index="userDepartments">
+            <template #cell="{ record }">
+              <a-space wrap>
+                <a-tag v-for="dept in record.userDepartments" :key="dept" size="small" color="orange">{{ dept }}</a-tag>
+              </a-space>
+            </template>
+          </a-table-column>
           <a-table-column title="操作" width="150" align="center">
             <template #cell="{ record }">
               <a-space>
@@ -56,113 +63,146 @@
       </a-table>
     </a-card>
 
-    <!-- 配置资源抽屉 -->
+    <!-- 应用权限配置抽屉 -->
     <a-drawer
       v-model:visible="drawerVisible"
       :title="isNew ? '新增应用权限' : '编辑应用权限'"
       width="1000px"
-      @ok="handleSave"
       @cancel="drawerVisible = false"
       unmount-on-close
     >
-      <div class="drawer-content">
-        <a-form :model="currentConfig" layout="vertical">
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="所属应用" required>
-                <a-select v-model="currentConfig.appName" placeholder="请选择应用">
-                  <a-option>统一查询</a-option>
-                  <a-option>报表中心</a-option>
-                  <a-option>数据地图</a-option>
-                  <a-option>系统管理</a-option>
-                </a-select>
+      <a-tabs v-model:active-key="activeTab">
+        <a-tab-pane key="app" title="应用配置">
+          <div class="drawer-content">
+            <a-form :model="currentConfig" layout="vertical">
+              <a-row :gutter="16">
+                <a-col :span="12">
+                  <a-form-item label="所属应用" required>
+                    <a-select v-model="currentConfig.appName" placeholder="请选择应用">
+                      <a-option>统一查询</a-option>
+                      <a-option>报表中心</a-option>
+                      <a-option>数据地图</a-option>
+                      <a-option>系统管理</a-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="权限名称" required>
+                    <a-input v-model="currentConfig.permissionName" placeholder="请输入权限名称" />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              
+              <a-form-item label="角色描述">
+                <a-textarea v-model="currentConfig.description" placeholder="请输入角色描述" :rows="2" />
               </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="角色名称" required>
-                <a-input v-model="currentConfig.roleName" placeholder="请输入角色名称" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-          
-          <a-form-item label="角色描述">
-            <a-textarea v-model="currentConfig.description" placeholder="请输入角色描述" :rows="2" />
-          </a-form-item>
 
-          <a-row :gutter="16">
-            <a-col :span="8">
-              <a-form-item label="赋予全员">
-                <a-switch v-model="currentConfig.isAllUser" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="是否可申请">
-                <a-switch v-model="currentConfig.canApply" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="角色状态">
-                <a-radio-group v-model="currentConfig.status" type="button">
-                  <a-radio value="active">启用</a-radio>
-                  <a-radio value="inactive">停用</a-radio>
-                </a-radio-group>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <a-divider orientation="left">授予对象</a-divider>
-          <a-row :gutter="16">
-            <a-col :span="8">
-              <a-form-item label="对象类型">
-                <a-radio-group v-model="grantSubject.type" type="button">
-                  <a-radio value="role">角色</a-radio>
-                  <a-radio value="user">用户</a-radio>
-                  <a-radio value="department">部门</a-radio>
-                </a-radio-group>
-              </a-form-item>
-            </a-col>
-            <a-col :span="16">
-              <a-form-item :label="grantSubjectLabel">
-                <a-select v-model="grantSubject.value" :options="grantSubjectOptions" allow-search placeholder="请选择" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <a-divider orientation="left">资源权限配置</a-divider>
-          
-          <div class="resource-table-wrapper">
-            <a-table
-              :data="resourceData"
-              :pagination="false"
-              :show-header="true"
-              row-key="id"
-              :indent-size="20"
-              default-expand-all-rows
-            >
-              <template #columns>
-                <a-table-column title="页面路由" data-index="name">
-                  <template #cell="{ record }">
-                    <a-checkbox v-model="record.selected">{{ record.name }}</a-checkbox>
+              <a-row :gutter="16">
+                <a-col :span="8">
+                  <a-form-item label="赋予全员">
+                    <a-switch v-model="currentConfig.isAllUser" />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="8">
+                  <a-form-item label="是否可申请">
+                    <a-switch v-model="currentConfig.canApply" />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="8">
+                  <a-form-item label="角色状态">
+                    <a-radio-group v-model="currentConfig.status" type="button">
+                      <a-radio value="active">启用</a-radio>
+                      <a-radio value="inactive">停用</a-radio>
+                    </a-radio-group>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              
+              <a-divider orientation="left">资源权限配置</a-divider>
+              <div class="resource-table-wrapper">
+                <a-table
+                  :data="resourceData"
+                  :pagination="false"
+                  :show-header="true"
+                  row-key="id"
+                  :indent-size="20"
+                  default-expand-all-rows
+                >
+                  <template #columns>
+                    <a-table-column title="页面路由" data-index="name">
+                      <template #cell="{ record }">
+                        <a-checkbox v-model="record.selected">{{ record.name }}</a-checkbox>
+                      </template>
+                    </a-table-column>
+                    <a-table-column title="页面操作">
+                      <template #cell="{ record }">
+                        <a-space v-if="record.actions && record.actions.length">
+                          <a-checkbox 
+                            v-for="action in record.actions" 
+                            :key="action.id"
+                            v-model="action.selected"
+                          >
+                            {{ action.name }}
+                          </a-checkbox>
+                        </a-space>
+                      </template>
+                    </a-table-column>
                   </template>
-                </a-table-column>
-                <a-table-column title="页面操作">
-                  <template #cell="{ record }">
-                    <a-space v-if="record.actions && record.actions.length">
-                      <a-checkbox 
-                        v-for="action in record.actions" 
-                        :key="action.id"
-                        v-model="action.selected"
-                      >
-                        {{ action.name }}
-                      </a-checkbox>
-                    </a-space>
-                  </template>
-                </a-table-column>
-              </template>
-            </a-table>
+                </a-table>
+              </div>
+            </a-form>
           </div>
-        </a-form>
-      </div>
+        </a-tab-pane>
+        
+        <a-tab-pane key="grant" title="授予对象">
+          <div class="drawer-content">
+            <a-form layout="vertical">
+              <a-row :gutter="16">
+                <a-col :span="8">
+                  <a-form-item label="对象类型">
+                    <a-radio-group v-model="grantSubject.type" type="button">
+                      <a-radio value="role">角色</a-radio>
+                      <a-radio value="user">用户</a-radio>
+                    </a-radio-group>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="16">
+                  <a-form-item :label="grantSubjectLabel">
+                    <a-select v-model="grantSubject.value" :options="grantSubjectOptions" allow-search placeholder="请选择" />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="16">
+                <a-col :span="24" style="text-align: right;">
+                  <a-button type="primary" @click="addGrantToList">添加到列表</a-button>
+                </a-col>
+              </a-row>
+            </a-form>
+            
+            <!-- 已选择的授予对象 -->
+            <a-divider orientation="left">已选择的授予对象</a-divider>
+            <div class="selected-grants">
+              <a-table
+                :data="selectedGrants"
+                :pagination="false"
+                :show-header="true"
+              >
+                <template #columns>
+                  <a-table-column title="对象类型" data-index="type" />
+                  <a-table-column title="对象名称" data-index="name" />
+                  <a-table-column title="所属部门" data-index="department" />
+                  <a-table-column title="操作" :width="80">
+                    <template #cell="{ record }">
+                      <a-button type="text" status="danger" size="small" @click="removeGrant(record)">移除</a-button>
+                    </template>
+                  </a-table-column>
+                </template>
+              </a-table>
+            </div>
+          </div>
+        </a-tab-pane>
+      </a-tabs>
+      
       <template #footer>
         <div style="display: flex; justify-content: space-between; width: 100%;">
           <a-button @click="drawerVisible = false">取消</a-button>
@@ -187,13 +227,13 @@ const pagination = reactive({
 })
 
 const grantSubject = reactive({
-  type: 'department',
+  type: 'role',
   value: ''
 })
 const grantSubjectLabel = computed(() => {
   if (grantSubject.type === 'role') return '选择角色'
   if (grantSubject.type === 'user') return '选择用户'
-  return '选择部门'
+  return '选择对象'
 })
 const grantSubjectOptions = computed(() => {
   if (grantSubject.type === 'role') return [
@@ -206,11 +246,7 @@ const grantSubjectOptions = computed(() => {
     { label: '李四', value: 'lisi' },
     { label: '王五', value: 'wangwu' }
   ]
-  return [
-    { label: '风险管理部', value: 'risk' },
-    { label: '市场营销部', value: 'marketing' },
-    { label: '数据分析部', value: 'data' }
-  ]
+  return []
 })
 
 const tableData = ref([
@@ -220,7 +256,8 @@ const tableData = ref([
     type: '核心功能',
     description: '提供统一的数据查询和导出功能',
     roles: ['业务人员', '数据分析师'],
-    users: ['张三', '李四']
+    users: ['张三', '李四'],
+    userDepartments: ['技术部', '数据分析部']
   },
   {
     id: 2,
@@ -228,7 +265,8 @@ const tableData = ref([
     type: '核心功能',
     description: '企业级报表展示与管理',
     roles: ['管理层', '运营人员'],
-    users: ['王五']
+    users: ['王五'],
+    userDepartments: ['运营部']
   },
   {
     id: 3,
@@ -236,7 +274,8 @@ const tableData = ref([
     type: '系统管理',
     description: '系统基础配置与权限控制',
     roles: ['系统管理员'],
-    users: ['Admin']
+    users: ['Admin'],
+    userDepartments: ['IT部']
   },
   {
     id: 4,
@@ -244,12 +283,14 @@ const tableData = ref([
     type: '辅助功能',
     description: '提供平台使用指南和操作说明',
     roles: ['所有角色'],
-    users: ['全体用户']
+    users: ['全体用户'],
+    userDepartments: ['全公司']
   }
 ])
 
 // 抽屉相关
 const drawerVisible = ref(false)
+const activeTab = ref('app')
 const isNew = ref(false)
 const currentConfig = reactive({
   appName: '',
@@ -259,6 +300,12 @@ const currentConfig = reactive({
   canApply: true,
   status: 'active'
 })
+
+// 已选择的授予对象数据
+const selectedGrants = ref([
+  { type: '角色', name: '数据分析师', department: '数据分析部' },
+  { type: '用户', name: '张三', department: '技术部' }
+])
 
 const resourceData = ref([
   {
@@ -328,6 +375,10 @@ const handleGrant = () => {
   currentConfig.isAllUser = false
   currentConfig.canApply = true
   currentConfig.status = 'active'
+  
+  // 清空已选择的授予对象列表
+  selectedGrants.value = []
+  
   drawerVisible.value = true
 }
 
@@ -339,6 +390,18 @@ const handleEdit = (record) => {
   currentConfig.isAllUser = record.isAllUser || false
   currentConfig.canApply = record.canApply !== undefined ? record.canApply : true
   currentConfig.status = record.status || 'active'
+  
+  // 如果记录中有已保存的授予对象列表，则加载它们
+  if (record.grants && Array.isArray(record.grants)) {
+    selectedGrants.value = [...record.grants]
+  } else {
+    // 默认加载一些示例数据
+    selectedGrants.value = [
+      { type: '角色', name: '数据分析师', department: '数据分析部' },
+      { type: '用户', name: '张三', department: '技术部' }
+    ]
+  }
+  
   drawerVisible.value = true
 }
 
@@ -359,6 +422,59 @@ const getTypeColor = (type) => {
   }
 }
 
+// 添加授予对象到列表
+const addGrantToList = () => {
+  if (!grantSubject.value) {
+    Message.warning('请先选择授予对象')
+    return
+  }
+  
+  // 获取用户或角色的部门信息（这里使用模拟数据，实际项目中需要从用户/角色数据中获取）
+  let department = '未知部门'
+  if (grantSubject.type === 'user') {
+    // 假设从用户数据中获取部门信息
+    const userDepartments = {
+      'zhangsan': '技术部',
+      'lisi': '数据分析部',
+      'wangwu': '运营部'
+    }
+    department = userDepartments[grantSubject.value] || '未知部门'
+  } else if (grantSubject.type === 'role') {
+    // 假设从角色数据中获取部门信息
+    const roleDepartments = {
+      '业务人员': '业务部',
+      '数据分析师': '数据分析部',
+      '系统管理员': 'IT部'
+    }
+    department = roleDepartments[grantSubject.value] || '未知部门'
+  }
+  
+  // 检查是否已存在相同的授予对象
+  const exists = selectedGrants.value.some(item => 
+    item.type === grantSubject.type && item.name === grantSubject.value
+  )
+  
+  if (!exists) {
+    selectedGrants.value.push({
+      type: grantSubject.type === 'role' ? '角色' : '用户',
+      name: grantSubject.value,
+      department: department
+    })
+  } else {
+    Message.warning('该对象已被添加')
+  }
+}
+
+// 从列表中移除授予对象
+const removeGrant = (record) => {
+  const index = selectedGrants.value.findIndex(item => 
+    item.type === record.type && item.name === record.name
+  )
+  if (index !== -1) {
+    selectedGrants.value.splice(index, 1)
+  }
+}
+
 const handleSave = () => {
   Message.success('保存成功')
   try {
@@ -368,7 +484,8 @@ const handleSave = () => {
       subject: grantSubject.value,
       appName: currentConfig.appName,
       roleName: currentConfig.roleName,
-      resources: resourceData.value
+      resources: resourceData.value,
+      grants: selectedGrants.value // 保存所有选择的授予对象
     }
     localStorage.setItem('grants:app', JSON.stringify([record, ...existing]))
   } catch (e) {}
@@ -412,5 +529,8 @@ const handleSave = () => {
 :deep(.arco-table-td) {
   padding-top: 12px;
   padding-bottom: 12px;
+}
+.selected-grants {
+  margin-top: 20px;
 }
 </style>

@@ -14,6 +14,7 @@
       <!-- 缺失工单弹窗 -->
       <MissingTicketModal 
         v-model:visible="showMissingTicketModal" 
+        :initial-name="searchQuery"
         @confirm="handleMissingTicketConfirm"
       />
       

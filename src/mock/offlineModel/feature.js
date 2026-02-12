@@ -37,7 +37,8 @@ const mockFeatures = [
     updateFrequency: '每日',
     dataQuality: 95.2,
     missingRate: 0.8,
-    uniqueValueCount: 1200
+    uniqueValueCount: 1200,
+    modelType: 'daily'
   },
   {
     id: 2,
@@ -55,7 +56,8 @@ const mockFeatures = [
     updateFrequency: '一次性',
     dataQuality: 99.1,
     missingRate: 0.2,
-    uniqueValueCount: 3
+    uniqueValueCount: 3,
+    modelType: 'other'
   },
   {
     id: 3,
@@ -73,7 +75,8 @@ const mockFeatures = [
     updateFrequency: '每月',
     dataQuality: 87.5,
     missingRate: 15.3,
-    uniqueValueCount: 850
+    uniqueValueCount: 850,
+    modelType: 'monthly'
   },
   {
     id: 4,
@@ -91,7 +94,8 @@ const mockFeatures = [
     updateFrequency: '按需',
     dataQuality: 92.8,
     missingRate: 5.2,
-    uniqueValueCount: 25
+    uniqueValueCount: 25,
+    modelType: 'other'
   },
   {
     id: 5,
@@ -109,7 +113,8 @@ const mockFeatures = [
     updateFrequency: '实时',
     dataQuality: 88.9,
     missingRate: 25.6,
-    uniqueValueCount: 15000
+    uniqueValueCount: 15000,
+    modelType: 'daily'
   }
   ,
   {
@@ -127,7 +132,8 @@ const mockFeatures = [
     missingRate: 0.0,
     uniqueValueCount: 10000,
     level1: 'model_outputs',
-    level2: 'credit_score_service'
+    level2: 'credit_score_service',
+    modelType: 'other'
   }
   ,
   {
@@ -146,7 +152,8 @@ const mockFeatures = [
     uniqueValueCount: 300,
     majorCategory: 'credit',
     level1: 'credit_report',
-    level2: 'query_count'
+    level2: 'query_count',
+    modelType: 'monthly'
   }
   ,
   {
@@ -165,7 +172,8 @@ const mockFeatures = [
     uniqueValueCount: 200,
     majorCategory: 'credit',
     level1: 'credit_report',
-    level2: 'overdue_count'
+    level2: 'overdue_count',
+    modelType: 'monthly'
   }
   ,
   {
@@ -184,7 +192,8 @@ const mockFeatures = [
     uniqueValueCount: 150,
     majorCategory: 'credit',
     level1: 'credit_history',
-    level2: 'loan_times'
+    level2: 'loan_times',
+    modelType: 'monthly'
   }
   ,
   {
@@ -203,7 +212,8 @@ const mockFeatures = [
     uniqueValueCount: 120,
     majorCategory: 'credit',
     level1: 'credit_history',
-    level2: 'repay_ratio'
+    level2: 'repay_ratio',
+    modelType: 'monthly'
   }
   ,
   {
@@ -222,7 +232,8 @@ const mockFeatures = [
     uniqueValueCount: 5000,
     majorCategory: 'behavior',
     level1: 'transaction_behavior',
-    level2: 'avg_amount'
+    level2: 'avg_amount',
+    modelType: 'daily'
   }
   ,
   {
@@ -241,7 +252,8 @@ const mockFeatures = [
     uniqueValueCount: 800,
     majorCategory: 'behavior',
     level1: 'transaction_behavior',
-    level2: 'frequency'
+    level2: 'frequency',
+    modelType: 'daily'
   }
   ,
   {
@@ -260,7 +272,8 @@ const mockFeatures = [
     uniqueValueCount: 31,
     majorCategory: 'behavior',
     level1: 'activity',
-    level2: 'login_days'
+    level2: 'login_days',
+    modelType: 'daily'
   }
   ,
   {
@@ -279,7 +292,8 @@ const mockFeatures = [
     uniqueValueCount: 500,
     majorCategory: 'behavior',
     level1: 'activity',
-    level2: 'session_count'
+    level2: 'session_count',
+    modelType: 'daily'
   }
 ]
 
@@ -294,6 +308,11 @@ const featureStats = {
     categorical: mockFeatures.filter(f => f.type === FEATURE_TYPES.CATEGORICAL).length,
     text: mockFeatures.filter(f => f.type === FEATURE_TYPES.TEXT).length,
     time: mockFeatures.filter(f => f.type === FEATURE_TYPES.TIME).length
+  },
+  byModelType: {
+    daily: mockFeatures.filter(f => f.modelType === 'daily').length,
+    monthly: mockFeatures.filter(f => f.modelType === 'monthly').length,
+    other: mockFeatures.filter(f => f.modelType === 'other').length
   }
 }
 
@@ -353,6 +372,17 @@ export function getFeatures(params = {}) {
 }
 
 /**
+ * 获取特征列表按模型类型
+ */
+export function getFeaturesByModelType(modelType, params = {}) {
+  const allFeatures = getFeatures(params);
+  return {
+    ...allFeatures,
+    data: allFeatures.data.filter(f => f.modelType === modelType)
+  };
+}
+
+/**
  * 获取特征详情
  */
 export function getFeatureDetail(id) {
@@ -368,7 +398,9 @@ export function createFeature(featureData) {
     ...featureData,
     createTime: new Date().toLocaleString('zh-CN'),
     creator: featureData.creator || '当前用户',
-    status: FEATURE_STATUS.DRAFT
+    status: FEATURE_STATUS.DRAFT,
+    modelType: featureData.updateFrequency && featureData.updateFrequency.includes('日') ? 'daily' : 
+               featureData.updateFrequency && featureData.updateFrequency.includes('月') ? 'monthly' : 'other'
   }
   mockFeatures.push(newFeature)
   return newFeature
@@ -467,6 +499,17 @@ export function getFeatureStatus() {
   ]
 }
 
+/**
+ * 获取模型类型列表
+ */
+export function getModelTypes() {
+  return [
+    { value: 'daily', label: '日模型' },
+    { value: 'monthly', label: '月模型' },
+    { value: 'other', label: '其他模型' }
+  ];
+}
+
 export default {
   getFeatures,
   getFeatureDetail,
@@ -478,6 +521,8 @@ export default {
   exportFeatures,
   getFeatureTypes,
   getFeatureStatus,
+  getModelTypes,
+  getFeaturesByModelType,
   listTables,
   getTableColumns,
   getTableMeta,

@@ -58,6 +58,19 @@
             </a-select>
           </a-form-item>
           
+          <a-form-item label="模型类型">
+            <a-select
+              v-model="filterForm.modelType"
+              placeholder="请选择模型类型"
+              allow-clear
+              @change="handleFilterChange"
+            >
+              <a-option value="daily">日模型</a-option>
+              <a-option value="monthly">月模型</a-option>
+              <a-option value="other">其他模型</a-option>
+            </a-select>
+          </a-form-item>
+          
           <a-form-item>
             <a-space>
               <a-button type="primary" @click="handleSearch">
@@ -169,6 +182,12 @@
             {{ formatDate(record.createTime) }}
           </template>
           
+          <template #modelType="{ record }">
+            <a-tag :color="getModelTypeColor(record.modelType)">
+              {{ getModelTypeLabel(record.modelType) }}
+            </a-tag>
+          </template>
+          
           <template #actions="{ record }">
             <a-space>
               <a-button type="text" size="small" @click="handleViewDetail(record)">
@@ -211,7 +230,8 @@ const selectedRows = ref([])
 const filterForm = reactive({
   name: '',
   type: '',
-  status: ''
+  status: '',
+  modelType: ''
 })
 
 // 分页配置
@@ -267,6 +287,12 @@ const columns = [
     width: 120
   },
   {
+    title: '模型类型',
+    dataIndex: 'modelType',
+    slotName: 'modelType',
+    width: 120
+  },
+  {
     title: '操作',
     slotName: 'actions',
     width: 150,
@@ -292,11 +318,22 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true
   try {
-    const response = await featureAPI.getFeatures({
-      ...filterForm,
-      page: pagination.current,
-      pageSize: pagination.pageSize
-    })
+    let response;
+    if (filterForm.modelType) {
+      // 如果选择了模型类型，则使用按模型类型获取特征的API
+      response = await featureAPI.getFeaturesByModelType(filterForm.modelType, {
+        ...filterForm,
+        page: pagination.current,
+        pageSize: pagination.pageSize
+      });
+    } else {
+      // 否则使用常规获取特征的API
+      response = await featureAPI.getFeatures({
+        ...filterForm,
+        page: pagination.current,
+        pageSize: pagination.pageSize
+      });
+    }
     
     if (response.success) {
       store.setFeatures(response.data.data)
@@ -401,6 +438,24 @@ const getStatusLabel = (status) => {
     pending: '待审核'
   }
   return labels[status] || status
+}
+
+const getModelTypeColor = (modelType) => {
+  const colors = {
+    daily: 'blue',
+    monthly: 'green',
+    other: 'orange'
+  }
+  return colors[modelType] || 'gray'
+}
+
+const getModelTypeLabel = (modelType) => {
+  const labels = {
+    daily: '日模型',
+    monthly: '月模型',
+    other: '其他模型'
+  }
+  return labels[modelType] || modelType
 }
 
 const formatDate = (date) => {

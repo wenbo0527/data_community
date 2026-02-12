@@ -44,11 +44,11 @@
       <div class="tags-grid">
         <a-tag 
           v-for="tag in collectionTags.slice(0, 12)" 
-          :key="tag.name"
-          :color="getTagColor(tag.type)"
+          :key="tag?.name"
+          :color="getTagColor(tag?.type)"
           class="collection-tag"
         >
-          {{ tag.name }} ({{ tag.count }})
+          {{ tag?.name }} ({{ tag?.count ?? 0 }})
         </a-tag>
         <a-tag v-if="collectionTags.length === 0" color="gray">暂无标签</a-tag>
       </div>

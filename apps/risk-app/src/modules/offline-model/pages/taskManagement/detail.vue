@@ -76,8 +76,8 @@ const handleRetry = async (record) => {
   }
 }
 
-import { goBack } from '@/router/utils'
-const handleBack = () => goBack(router, '/model-offline-analysis/task-management')
+// import { goBack } from '@/router/utils' // 暂时注释掉，使用替代方法
+const handleBack = () => router.push('/model-offline-analysis/task-management')
 
 onMounted(loadDetail)
 

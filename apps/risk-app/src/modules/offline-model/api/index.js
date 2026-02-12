@@ -36,7 +36,13 @@ export const featureAPI = {
   getFeatureTypes: () => mockAPI.feature.getFeatureTypes(),
   
   // 获取特征状态列表
-  getFeatureStatus: () => mockAPI.feature.getFeatureStatus()
+  getFeatureStatus: () => mockAPI.feature.getFeatureStatus(),
+  
+  // 获取模型类型列表
+  getModelTypes: () => mockAPI.feature.getModelTypes(),
+  
+  // 获取特征列表按模型类型
+  getFeaturesByModelType: (modelType, params) => mockAPI.feature.getFeaturesByModelType(modelType, params)
   ,
   listTables: () => mockAPI.feature.listTables(),
   getTableColumns: (tableName) => mockAPI.feature.getTableColumns(tableName),

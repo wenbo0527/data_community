@@ -8,12 +8,31 @@
       </div>
       <div class="page-actions">
         <a-space>
-          <a-button type="primary" @click="handleCreateBacktrack">
-            <template #icon>
-              <icon-plus />
+          <a-dropdown>
+            <a-button type="primary">
+              <template #icon>
+                <icon-plus />
+              </template>
+              新建回溯
+              <template #suffix>
+                <icon-down />
+              </template>
+            </a-button>
+            <template #content>
+              <a-doption @click="handleCreateBacktrack('single')">
+                <template #icon>
+                  <icon-plus />
+                </template>
+                单次回溯
+              </a-doption>
+              <a-doption @click="handleCreateBacktrack('periodic')">
+                <template #icon>
+                  <icon-plus />
+                </template>
+                周期回溯
+              </a-doption>
             </template>
-            新建回溯
-          </a-button>
+          </a-dropdown>
         </a-space>
       </div>
     </div>
@@ -297,8 +316,11 @@ const handleSelectionChange = (rows) => {
   selectedRows.value = rows
 }
 
-const handleCreateBacktrack = () => {
-  navigateToBacktrackCreate(router, { source: 'offline' })
+const handleCreateBacktrack = (mode) => {
+  navigateToBacktrackCreate(router, { 
+    mode,
+    source: 'offline' 
+  })
 }
 
 // 无报告导出

@@ -21,6 +21,8 @@
               <a-col :span="12">
                 <a-form-item field="type" label="模型类型" required>
                   <a-select v-model="form.type" placeholder="请选择模型类型">
+                    <a-option value="daily">日模型</a-option>
+                    <a-option value="monthly">月模型</a-option>
                     <a-option value="classification">分类模型</a-option>
                     <a-option value="regression">回归模型</a-option>
                     <a-option value="clustering">聚类模型</a-option>
@@ -70,7 +72,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { goBack } from '@/router/utils'
+// import { goBack } from '@/router/utils' // 暂时注释掉，使用替代方法
 import { Message } from '@arco-design/web-vue'
 import { modelAPI } from '@/modules/offline-model/api'
 
@@ -130,7 +132,7 @@ const handleSubmit = async () => {
 }
 
 const handleCancel = () => {
-  goBack(router, '/model-offline-analysis/model-register')
+  router.push('/model-offline-analysis/model-register')
 }
 </script>
 

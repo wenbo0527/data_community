@@ -3,8 +3,8 @@
     <a-tabs v-model:activeKey="activeKey">
       <a-tab-pane 
         v-for="product in products"
-        :key="product.key"
-        :tab="`${product.name} (${product.count})`"
+        :key="product?.key || product?.name"
+        :tab="`${product?.name || '未知产品'} (${product?.count ?? 0})`"
       >
         <a-list item-layout="horizontal" :data-source="product.list">
           <template #renderItem="{ item }">

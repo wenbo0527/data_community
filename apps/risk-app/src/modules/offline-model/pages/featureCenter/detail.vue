@@ -1,49 +1,106 @@
 <template>
   <div class="feature-detail-page">
-    <a-breadcrumb style="margin-bottom: 12px">
+    <a-breadcrumb style="margin-bottom: 16px">
       <a-breadcrumb-item to="/model-offline-analysis/feature-center">特征中心</a-breadcrumb-item>
       <a-breadcrumb-item>特征详情</a-breadcrumb-item>
     </a-breadcrumb>
-    <a-card :bordered="false" class="panel-card">
-      <template #title>
-        <div class="title-row">
-          <span>{{ detail?.name || '-' }}（{{ detail?.code || '-' }}）</span>
-          <a-tag :color="bizColor">{{ bizLabel }}</a-tag>
+    <div class="content-container">
+      <a-card :bordered="false" class="panel-card header-card">
+        <div class="header-info">
+          <div class="title-section">
+            <h1 class="main-title">{{ detail?.name || '-' }}</h1>
+            <span class="sub-code">{{ detail?.code || '-' }}</span>
+            <a-tag :color="bizColor" size="small">{{ bizLabel }}</a-tag>
+          </div>
+          <div class="status-section">
+            <a-tag :color="statusColor(detail?.status)" bordered>
+              <template #icon><icon-check-circle-fill v-if="detail?.status === 'active'" /></template>
+              {{ statusLabel(detail?.status) }}
+            </a-tag>
+          </div>
         </div>
-      </template>
-      <a-descriptions :column="2" bordered>
-        <a-descriptions-item label="特征名称">{{ detail?.name }}</a-descriptions-item>
-        <a-descriptions-item label="特征编码">{{ detail?.code }}</a-descriptions-item>
-        <a-descriptions-item label="特征类型">{{ typeLabel(detail?.type) }}</a-descriptions-item>
-        <a-descriptions-item label="状态">
-          <a-tag :color="statusColor(detail?.status)">{{ statusLabel(detail?.status) }}</a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="业务大类">{{ detail?.majorCategory || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="一级分类">{{ detail?.level1 || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="二级分类">{{ detail?.level2 || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="数据源">{{ detail?.dataSource || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="更新频率">{{ detail?.updateFrequency || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="创建时间">{{ detail?.createTime || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="创建人">{{ detail?.creator || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="描述" :span="2">{{ detail?.description || '-' }}</a-descriptions-item>
-      </a-descriptions>
-    </a-card>
+      </a-card>
 
-    <a-card :bordered="false" class="panel-card" v-if="isModelScore">
-      <template #title>模型注册基础信息</template>
-      <a-descriptions :column="2" bordered>
-        <a-descriptions-item label="平台服务">{{ platformModel?.serviceName || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="平台名称">{{ platformModel?.name || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="模型编码">{{ platformModel?.code || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="版本">{{ platformModel?.version || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="算法框架">{{ platformModel?.framework || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="模型类型">{{ modelTypeLabel(platformModel?.type) }}</a-descriptions-item>
-        <a-descriptions-item label="主键字段" :span="2">{{ (platformModel?.pkFields || []).join(', ') || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="入参" :span="2">{{ (platformModel?.inputs || []).map(i=>i.name).join(', ') || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="出参" :span="2">{{ (platformModel?.outputs || []).map(o=>o.name).join(', ') || '-' }}</a-descriptions-item>
-        <a-descriptions-item label="描述" :span="2">{{ platformModel?.description || '-' }}</a-descriptions-item>
-      </a-descriptions>
-    </a-card>
+      <a-row :gutter="16">
+        <a-col :span="16">
+          <a-card :bordered="false" class="panel-card" title="基础配置信息">
+            <a-descriptions :column="2" bordered size="medium">
+              <a-descriptions-item label="特征类型">{{ typeLabel(detail?.type) }}</a-descriptions-item>
+              <a-descriptions-item label="更新频率">{{ detail?.updateFrequency || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="业务大类">{{ detail?.majorCategory || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="一级分类">{{ detail?.level1 || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="二级分类">{{ detail?.level2 || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="模型类型">
+                <a-space v-if="Array.isArray(detail?.modelType)">
+                  <a-tag v-for="mt in detail.modelType" :key="mt" :color="modelTypeColor(mt)" size="small">
+                    {{ modelTypeLabel(mt) }}
+                  </a-tag>
+                </a-space>
+                <a-tag v-else :color="modelTypeColor(detail?.modelType)" size="small">
+                  {{ modelTypeLabel(detail?.modelType) }}
+                </a-tag>
+              </a-descriptions-item>
+            </a-descriptions>
+            <div class="logic-section" v-if="detail?.processingLogic">
+              <div class="section-label">处理逻辑</div>
+              <div class="logic-content">{{ detail.processingLogic }}</div>
+            </div>
+          </a-card>
+
+          <a-card :bordered="false" class="panel-card" title="数据源配置" style="margin-top: 16px;">
+            <a-descriptions :column="1" bordered size="medium">
+              <a-descriptions-item label="日模型数据源">{{ detail?.dataSource || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="月模型数据源" v-if="detail?.monthlyDataSource">{{ detail?.monthlyDataSource }}</a-descriptions-item>
+              <a-descriptions-item label="默认值">{{ detail?.defaultValue || '-' }}</a-descriptions-item>
+            </a-descriptions>
+          </a-card>
+
+          <a-card :bordered="false" class="panel-card" v-if="detail?.defaultValueMappings?.length > 0" title="默认值转化映射" style="margin-top: 16px;">
+            <div v-for="(mapping, index) in detail.defaultValueMappings" :key="index" class="mapping-group">
+              <div class="mapping-header">
+                <icon-settings style="margin-right: 4px; color: #165dff;" />
+                触发条件：<a-tag :color="modelTypeColor(mapping.conditionType)" size="small">{{ modelTypeLabel(mapping.conditionType) }}</a-tag>
+              </div>
+              <a-table :data="mapping.mappings" :pagination="false" size="small" :bordered="true" class="mapping-table">
+                <template #columns>
+                  <a-table-column title="Key (原始值)" data-index="key" />
+                  <a-table-column title="Value (转化值)" data-index="value" />
+                </template>
+              </a-table>
+            </div>
+          </a-card>
+        </a-col>
+
+        <a-col :span="8">
+          <a-card :bordered="false" class="panel-card" title="管理信息">
+            <a-descriptions :column="1" size="medium">
+              <a-descriptions-item label="创建人">
+                <a-space size="mini">
+                  <a-avatar :size="24" style="background-color: #165dff;">
+                    <icon-user />
+                  </a-avatar>
+                  {{ detail?.creator || '-' }}
+                </a-space>
+              </a-descriptions-item>
+              <a-descriptions-item label="创建时间">{{ detail?.createTime || '-' }}</a-descriptions-item>
+            </a-descriptions>
+            <div class="desc-section">
+              <div class="section-label">特征描述</div>
+              <div class="desc-content">{{ detail?.description || '暂无描述信息' }}</div>
+            </div>
+          </a-card>
+
+          <a-card :bordered="false" class="panel-card" v-if="isModelScore" title="模型注册基础信息" style="margin-top: 16px;">
+            <a-descriptions :column="1" size="medium">
+              <a-descriptions-item label="平台服务">{{ platformModel?.serviceName || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="平台名称">{{ platformModel?.name || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="版本">{{ platformModel?.version || '-' }}</a-descriptions-item>
+              <a-descriptions-item label="算法框架">{{ platformModel?.framework || '-' }}</a-descriptions-item>
+            </a-descriptions>
+          </a-card>
+        </a-col>
+      </a-row>
+    </div>
 
     <div class="actions-bar">
       <a-space>
@@ -83,7 +140,8 @@ const bizColor = computed(() => {
 const typeLabel = (t) => ({ numerical: '数值型', categorical: '分类型', text: '文本型', time: '时间型' }[t] || t)
 const statusColor = (s) => ({ active: 'green', inactive: 'red', draft: 'orange', pending: 'blue', expired: 'gray' }[s] || 'gray')
 const statusLabel = (s) => ({ active: '有效', inactive: '无效', draft: '草稿', pending: '待审核', expired: '已过期' }[s] || s)
-const modelTypeLabel = (t) => ({ classification: '分类模型', regression: '回归模型', clustering: '聚类模型', deep_learning: '深度学习' }[t] || t)
+const modelTypeLabel = (t) => ({ daily: '日模型', monthly: '月模型', other: '其他模型', classification: '分类模型', regression: '回归模型', clustering: '聚类模型', deep_learning: '深度学习' }[t] || t)
+const modelTypeColor = (mt) => ({ daily: 'blue', monthly: 'green', other: 'orange' }[mt] || 'gray')
 
 onMounted(async () => {
   try {
@@ -95,18 +153,112 @@ onMounted(async () => {
       if (pm.success) platformModel.value = pm.data
     }
   } catch (e) {
-    Message.error('加载详情失败')
+    Message.error({ content: '加载详情失败', duration: 6000 })
   }
 })
 
-import { goBack as goBackUtil } from '@/router/utils'
-const goBack = () => goBackUtil(router, '/model-offline-analysis/feature-center')
+// import { goBack as goBackUtil } from '@/router/utils' // 暂时注释掉，使用替代方法
+const goBack = () => router.push('/model-offline-analysis/feature-center')
 const goEdit = () => router.push(`/model-offline-analysis/feature-center/edit/${id}`)
 </script>
 
 <style scoped>
-.feature-detail-page { padding: 16px; background: #fff; }
-.panel-card { margin-bottom: 12px; }
-.title-row { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.actions-bar { display: flex; justify-content: flex-end; margin-top: 12px; }
+.feature-detail-page {
+  padding: 16px;
+  background-color: #f4f7f9;
+  min-height: calc(100vh - 60px);
+}
+
+.content-container {
+  width: 100%;
+}
+
+.panel-card {
+  margin-bottom: 0;
+  border-radius: 4px;
+}
+
+.header-card {
+  margin-bottom: 16px;
+}
+
+.header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.main-title {
+  margin: 0;
+  font-size: 20px;
+  color: #1d2129;
+  font-weight: 600;
+}
+
+.sub-code {
+  font-size: 13px;
+  color: #86909c;
+  font-family: monospace;
+}
+
+.logic-section,
+.desc-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f2f3f5;
+}
+
+.section-label {
+  font-size: 13px;
+  color: #4e5969;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.logic-content,
+.desc-content {
+  background: #f7f8fa;
+  padding: 12px;
+  border-radius: 4px;
+  color: #1d2129;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.mapping-group {
+  margin-bottom: 20px;
+}
+
+.mapping-group:last-child {
+  margin-bottom: 0;
+}
+
+.mapping-header {
+  margin-bottom: 12px;
+  font-weight: 500;
+  color: #1d2129;
+  display: flex;
+  align-items: center;
+}
+
+.mapping-table {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding: 16px 24px;
+  background: #fff;
+  border-radius: 4px;
+}
 </style>

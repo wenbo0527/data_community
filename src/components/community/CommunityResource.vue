@@ -23,10 +23,10 @@
           :block-node="true"
         >
           <template #icon="{ node }">
-            <component :is="node.isLeaf ? IconFile : IconFolder" />
+            <component :is="node?.isLeaf ? IconFile : IconFolder" />
           </template>
           <template #title="{ node }">
-            <div class="tree-node-title">
+            <div v-if="node" class="tree-node-title">
               <span>{{ node.title }}</span>
               <span v-if="node.count" class="node-count">({{ node.count }})</span>
             </div>

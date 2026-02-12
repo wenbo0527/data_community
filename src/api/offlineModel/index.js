@@ -9,6 +9,12 @@ export const featureAPI = {
   // 获取特征列表
   getFeatures: (params) => mockAPI.feature.getFeatures(params),
   
+  // 获取特征列表按模型类型
+  getFeaturesByModelType: (modelType, params) => mockAPI.feature.getFeaturesByModelType(modelType, params),
+  
+  // 获取模型类型列表
+  getModelTypes: () => mockAPI.feature.getModelTypes(),
+  
   // 获取特征详情
   getFeatureDetail: (id) => mockAPI.feature.getFeatureDetail(id),
   

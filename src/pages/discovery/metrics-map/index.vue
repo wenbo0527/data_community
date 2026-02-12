@@ -310,8 +310,8 @@ const handleBatchUpload = async (option: { fileItem: FileItem }): Promise<Upload
       }
     })
     
-    if (res.data.success) {
-      batchFileCount.value = res.data.count
+    if (res.data?.success) {
+      batchFileCount.value = res.data?.count ?? 0
       fetchMetrics()
     }
   } catch (error) {
@@ -340,8 +340,8 @@ const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<
       }
     })
     
-    if (res.data.success) {
-      incrementalFileCount.value = res.data.count
+    if (res.data?.success) {
+      incrementalFileCount.value = res.data?.count ?? 0
       fetchMetrics()
     }
   } catch (error) {

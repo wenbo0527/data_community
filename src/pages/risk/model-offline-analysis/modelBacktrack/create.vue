@@ -39,8 +39,74 @@
           </a-form>
         </a-collapse-item>
 
-        <a-collapse-item key="sample" :header="createMode === 'single' ? '2. 选择样本数据' : '2. 配置周期回溯'" v-if="sampleForm.mode===createMode">
+        <a-collapse-item key="sample" :header="createMode === CREATE_MODES.SINGLE ? '2. 选择样本数据' : '2. 配置周期回溯'" v-if="sampleForm.mode===createMode">
           <a-form :model="sampleForm" layout="vertical">
+            <!-- 周期回溯配置 - 顶层 -->
+            <template v-if="createMode === CREATE_MODES.PERIODIC">
+              <a-divider orientation="left">周期任务配置</a-divider>
+              <a-row :gutter="16">
+                <a-col :span="12">
+                  <a-form-item label="任务发起时间" required>
+                    <a-radio-group v-model="sampleForm.periodicity">
+                      <a-radio value="daily">每日</a-radio>
+                      <a-radio value="weekly">每周</a-radio>
+                      <a-radio value="monthly">每月</a-radio>
+                    </a-radio-group>
+                  </a-form-item>
+                  
+                  <!-- 每周具体星期选择 -->
+                  <a-form-item v-if="sampleForm.periodicity === 'weekly'" label="每周具体时间" required>
+                    <a-checkbox-group v-model="sampleForm.weekDays">
+                      <a-checkbox value="1">周一</a-checkbox>
+                      <a-checkbox value="2">周二</a-checkbox>
+                      <a-checkbox value="3">周三</a-checkbox>
+                      <a-checkbox value="4">周四</a-checkbox>
+                      <a-checkbox value="5">周五</a-checkbox>
+                      <a-checkbox value="6">周六</a-checkbox>
+                      <a-checkbox value="0">周日</a-checkbox>
+                    </a-checkbox-group>
+                  </a-form-item>
+                  
+                  <!-- 每月具体日期选择 -->
+                  <a-form-item v-if="sampleForm.periodicity === 'monthly'" label="每月具体日期" required>
+                    <a-select 
+                      v-model="sampleForm.monthDays" 
+                      placeholder="选择每月执行日期" 
+                      multiple
+                      allow-clear
+                    >
+                      <a-option v-for="day in monthDayOptions" :key="day" :value="day">{{ day }}号</a-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                
+                <a-col :span="12">
+                  <a-form-item label="任务触发方式" required>
+                    <a-radio-group v-model="sampleForm.triggerType">
+                      <a-radio value="schedule">定时</a-radio>
+                      <a-radio value="subscribe">订阅</a-radio>
+                    </a-radio-group>
+                  </a-form-item>
+                  
+                  <!-- 定时任务配置 -->
+                  <a-form-item v-if="sampleForm.triggerType === 'schedule'" label="执行时间">
+                    <a-time-picker v-model="sampleForm.scheduleTime" format="HH:mm" placeholder="选择执行时间" style="width: 100%" />
+                  </a-form-item>
+                  
+                  <!-- 订阅任务配置 -->
+                  <a-form-item v-if="sampleForm.triggerType === 'subscribe'" label="订阅袋鼠云任务">
+                    <a-select v-model="sampleForm.kangarooTaskId" placeholder="选择袋鼠云任务ID" allow-search>
+                      <a-option value="">无</a-option>
+                      <a-option value="task-001">Doris表插入任务ID-001</a-option>
+                      <a-option value="task-002">Doris表插入任务ID-002</a-option>
+                      <a-option value="task-003">Hive表插入任务ID-001</a-option>
+                      <a-option value="task-004">Hive表插入任务ID-002</a-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+            </template>
+            
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="数据来源" required>
@@ -152,8 +218,23 @@ const modeOptions = [
   { label: '周期回溯', value: CREATE_MODES.PERIODIC, description: '定期执行模型回溯任务' }
 ]
 
+// 生成每月日期选项
+const monthDayOptions = Array.from({ length: 31 }, (_, i) => (i + 1).toString())
+
 // 样本表
-const sampleForm = ref({ mode: 'single', sourceType: 'doris', dbName: '', tableName: '', table: '' })
+const sampleForm = ref({ 
+  mode: CREATE_MODES.SINGLE, 
+  sourceType: 'doris', 
+  dbName: '', 
+  tableName: '', 
+  table: '', 
+  periodicity: 'daily', 
+  weekDays: [], // 每周具体星期
+  monthDays: [], // 每月具体日期
+  triggerType: 'schedule', // 任务触发方式：schedule(定时) 或 subscribe(订阅)
+  scheduleTime: null, // 定时执行时间
+  kangarooTaskId: '' 
+})
 const dbOptions = ref([])
 const tableNameOptions = ref([])
 const tableOptions = ref([])
@@ -396,6 +477,9 @@ const handleSubmit = async () => {
       inputMappings: mappings,
       outputs: modelOutputs.value,
       requiredFieldMappings: requiredMappings.value.map(r => ({ field: r.name, target: r.target })),
+      // 周期回溯相关字段
+      periodicity: sampleForm.value.periodicity,
+      kangarooTaskId: sampleForm.value.kangarooTaskId,
     }
     
     const res = await backtrackAPI.createBacktrack(payload)

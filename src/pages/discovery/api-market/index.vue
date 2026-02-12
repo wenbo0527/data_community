@@ -20,7 +20,7 @@
             :default-expanded-keys="['all']"
           >
             <template #extra="{ node }">
-              <span class="node-count">({{ node.count || 0 }})</span>
+              <span v-if="node" class="node-count">({{ node.count || 0 }})</span>
             </template>
           </a-tree>
         </div>

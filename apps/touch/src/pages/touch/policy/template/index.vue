@@ -152,7 +152,7 @@ const handleChannelChange = (value: SelectValue) => {}
 import { IconSearch, IconRefresh, IconEye, IconExperiment, IconCopy } from '@arco-design/web-vue/es/icon'
 import { Tag as ATag } from '@arco-design/web-vue'
 const searchForm = reactive({ templateId: '', messageType: '', title: '' })
-interface TemplateItem { id: string; messageType: string; scene: string; tags?: string[]; title: string; strategy: string; }
+interface TemplateItem { id: string; messageType: string; vendor?: string; scene: string; tags?: string[]; title: string; strategy: string; }
 const templateList = ref<TemplateItem[]>([])
 const loading = ref(false)
 const pagination = reactive({ current: 1, pageSize: 10, total: 0 })
@@ -169,6 +169,16 @@ const columns = [
   { title: '模板ID', dataIndex: 'id', width: 90 },
   { title: '消息类型', dataIndex: 'messageType', width: 90, render: ({ record }: { record: { messageType: string } }) => {
     const typeMap: Record<string, string> = { sms: '短信', push: '推送', email: '邮件' }; return typeMap[record.messageType] || record.messageType;
+  }},
+  { title: '厂商', dataIndex: 'vendor', width: 120, render: ({ record }: { record: { vendor: string } }) => {
+    const vendorMap: Record<string, string> = { 
+      aliyun: '阿里云短信', 
+      tencent: '腾讯云短信', 
+      baiying: '百应', 
+      jiusi: '九四', 
+      manual: '人工坐席' 
+    }; 
+    return vendorMap[record.vendor] || record.vendor || '-';
   }},
   { title: '一级场景', dataIndex: 'scene', width: 90 },
   { title: '策略Tag', dataIndex: 'tags', width: 120, render: ({ record }: { record: { tags?: string[] } }) => h('div', record.tags?.map((tag: string) => h(ATag, { color: 'blue', size: 'small', style: { marginRight: '4px' } }, () => tag))) },
@@ -203,7 +213,17 @@ const copyTemplate = (record: TemplateItem) => {
   const sceneMap: Record<string, string> = { '营销': 'marketing', '风控': 'risk', '通知': 'notification', '历史存量': 'history' };
   const scene = sceneMap[record.scene] || record.scene;
   const tags = JSON.stringify(record.tags || []);
-  router.push({ path: '/touch/policy/template/create', query: { mode: 'copy', title: `${record.title}_副本`, messageType: record.messageType, scene, tags } })
+  router.push({ 
+    path: '/touch/policy/template/create', 
+    query: { 
+      mode: 'copy', 
+      title: `${record.title}_副本`, 
+      messageType: record.messageType, 
+      scene, 
+      tags,
+      vendor: record.vendor
+    } 
+  })
 };
 
 const viewDetail = (record: { id: string }) => { console.log('查看详情', record) }
@@ -232,6 +252,7 @@ const fetchData = async () => {
     templateList.value = Array.from({ length: 12 }, (_, i) => ({
       id: `TP${1000 + i}`,
       messageType: ['sms', 'push', 'email'][i % 3],
+      vendor: ['aliyun', 'baiying', 'jiusi', 'tencent', 'manual'][i % 5],
       scene: scenes[i % scenes.length],
       tags: [['高优先级', '测试', '正式'][i % 3]],
       title: titles[i % titles.length],

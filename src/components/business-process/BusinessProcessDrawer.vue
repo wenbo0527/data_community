@@ -953,7 +953,7 @@ const copyErrorReport = async () => {
 时间: ${new Date().toLocaleString()}
 错误信息: ${report.currentError.message}
 错误上下文: ${report.currentError.context}
-重试次数: ${report.retryInfo.count}/${report.retryInfo.maxRetries}
+重试次数: ${report?.retryInfo?.count ?? 0}/${report?.retryInfo?.maxRetries ?? 0}
 组件状态: ${JSON.stringify(report.componentState, null, 2)}
 
 最近错误历史:

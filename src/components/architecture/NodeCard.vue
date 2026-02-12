@@ -19,11 +19,11 @@
       @mouseleave="$emit('mouseleave')" 
       @click="$emit('click')"
     >
-       <div class="node-body">
-         <div class="icon-box">
-           <img class="icon-img" :src="node.style?.icon || defaultIcon" alt="" />
-         </div>
-        <div v-if="!node.style?.icon" class="label">{{ node.name }}</div>
+      <div class="node-body">
+        <div class="icon-box">
+          <img class="icon-img" :src="node.style?.icon || defaultIcon" alt="" />
+        </div>
+        <div class="name-label">{{ node.name }}</div>
       </div>
     </div>
 
@@ -73,7 +73,7 @@ const animClass = computed(() => {
    position: absolute;
    left: 50%;
    top: 50%;
-   transform: translate(-50%, -50%);
+   transform: translate(-50%, -65%); /* Lift icon so feet land on anchor */
    width: 100%;
    height: 100%;
    display: flex;
@@ -84,6 +84,7 @@ const animClass = computed(() => {
   width: 100%;
   height: 100%;
    object-fit: contain;
+   filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15)); /* Add shadow to ground */
  }
 
  .fallback-shape {
@@ -94,14 +95,18 @@ const animClass = computed(() => {
    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
  }
 
-.label { 
-  position: relative; 
-  color: #fff; 
-  font-size: 14px; 
-  font-weight: 600; 
-  text-shadow: 0 1px 4px rgba(0,0,0,.6); 
-  z-index: 3;
+.name-label { 
+  position: absolute; 
+  bottom: 0px; 
+  left: 50%;
+  transform: translateX(-50%) skewX(-10deg); /* 2.5D text effect */
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
   pointer-events: none;
+  font-family: "PingFang SC", sans-serif;
 }
 .label.with-icon {
   /* optional: adjust if needed when icon is present */

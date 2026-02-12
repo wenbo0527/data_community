@@ -59,6 +59,14 @@ export const offlineModelRoutes = [
         props: true
       },
       {
+        path: 'feature-center/create',
+        name: 'FeatureCenterCreate',
+        component: () => import('../pages/offlineModel/featureCenter/create.vue'),
+        meta: {
+          title: '新建特征'
+        }
+      },
+      {
         path: 'model-register',
         name: 'ModelRegister',
         component: () => import('../pages/offlineModel/modelRegister/index.vue'),

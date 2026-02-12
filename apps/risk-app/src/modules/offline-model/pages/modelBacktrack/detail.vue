@@ -21,7 +21,11 @@
         </a-descriptions>
         <div class="section">
           <h3>必填字段映射</h3>
-          <a-table :data="detail.config?.requiredFieldMappings || []" :columns="requiredCols" row-key="field" size="small" :pagination="false" />
+          <a-table :data="detail.config?.requiredFieldMappings || []" :columns="requiredCols" row-key="field" size="small" :pagination="false">
+            <template #encryptedCell="{ record }">
+              <a-tag :color="record.isEncrypted ? 'blue' : 'gray'">{{ record.isEncrypted ? '是' : '否' }}</a-tag>
+            </template>
+          </a-table>
         </div>
         <div class="section">
           <h3>入参匹配情况</h3>
@@ -124,7 +128,8 @@ const sourceModule = computed(() => {
 
 const requiredCols = [
   { title: '字段', dataIndex: 'field', width: 160 },
-  { title: '目标', dataIndex: 'target', width: 200 }
+  { title: '目标', dataIndex: 'target', width: 200 },
+  { title: '是否关联时加密', dataIndex: 'isEncrypted', width: 140, slotName: 'encryptedCell' }
 ]
 const inputCols = [
   { title: '入参', dataIndex: 'input', width: 160 },
@@ -166,12 +171,12 @@ const loadDetail = async () => {
   }
 }
 
-import { goBack } from '@/router/utils'
+// import { goBack } from '@/router/utils' // 暂时注释掉，使用替代方法
 const handleBack = () => {
   if (isFromRisk.value) {
-    goBack(router, '/risk/model-offline-analysis/model-backtrack')
+    router.push('/risk/model-offline-analysis/model-backtrack')
   } else {
-    goBack(router, '/model-offline-analysis/model-backtrack')
+    router.push('/model-offline-analysis/model-backtrack')
   }
 }
 const handleStop = async () => {

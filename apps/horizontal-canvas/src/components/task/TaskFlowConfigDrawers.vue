@@ -60,6 +60,26 @@
       @update:visible="(visible) => handleVisibilityChange('sms', visible)"
     />
 
+    <AppPushNodeConfigDrawer
+      v-if="drawerStates?.['app-push']?.visible"
+      :visible="drawerStates['app-push'].visible"
+      :node-data="drawerStates['app-push'].data || {}"
+      :read-only="drawerStates['app-push'].readOnly === true"
+      @confirm="handleConfigConfirm('app-push', $event)"
+      @cancel="handleConfigCancel('app-push')"
+      @update:visible="(visible) => handleVisibilityChange('app-push', visible)"
+    />
+
+    <WechatPushNodeConfigDrawer
+      v-if="drawerStates?.['wechat-push']?.visible"
+      :visible="drawerStates['wechat-push'].visible"
+      :node-data="drawerStates['wechat-push'].data || {}"
+      :read-only="drawerStates['wechat-push'].readOnly === true"
+      @confirm="handleConfigConfirm('wechat-push', $event)"
+      @cancel="handleConfigCancel('wechat-push')"
+      @update:visible="(visible) => handleVisibilityChange('wechat-push', visible)"
+    />
+
     <ManualCallNodeConfigDrawer
       v-if="drawerStates?.['manual-call']?.visible"
       :visible="drawerStates['manual-call'].visible"
@@ -98,6 +118,8 @@ import CrowdSplitNodeConfigDrawer from './CrowdSplitNodeConfigDrawer.vue'
 import EventSplitNodeConfigDrawer from './EventSplitNodeConfigDrawer.vue'
 import ABTestNodeConfigDrawer from './ABTestNodeConfigDrawer.vue'
 import AICallNodeConfigDrawer from './AICallNodeConfigDrawer.vue'
+import AppPushNodeConfigDrawer from './AppPushNodeConfigDrawer.vue'
+import WechatPushNodeConfigDrawer from './WechatPushNodeConfigDrawer.vue'
 import SMSNodeConfigDrawer from './SMSNodeConfigDrawer.vue'
 import ManualCallNodeConfigDrawer from './ManualCallNodeConfigDrawer.vue'
 import WaitNodeConfigDrawer from './WaitNodeConfigDrawer.vue'

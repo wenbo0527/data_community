@@ -1,7 +1,7 @@
 import { reactive, nextTick } from 'vue'
 import { useStructuredLayout } from './useStructuredLayout.js'
 
-const SUPPORTED_TYPES = ['start','crowd-split','event-split','ab-test','ai-call','sms','manual-call','wait','benefit']
+const SUPPORTED_TYPES = ['start','crowd-split','event-split','ab-test','ai-call','sms','manual-call','app-push','wechat-push','wait','benefit']
 
 export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
   const structuredLayout = useStructuredLayout(getGraph)
@@ -13,6 +13,8 @@ export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
     'ai-call': { visible: false, data: {}, instance: null, readOnly: false },
     sms: { visible: false, data: {}, instance: null, readOnly: false },
     'manual-call': { visible: false, data: {}, instance: null, readOnly: false },
+    'app-push': { visible: false, data: {}, instance: null, readOnly: false },
+    'wechat-push': { visible: false, data: {}, instance: null, readOnly: false },
     wait: { visible: false, data: {}, instance: null, readOnly: false },
     benefit: { visible: false, data: {}, instance: null, readOnly: false }
   })

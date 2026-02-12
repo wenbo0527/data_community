@@ -2,7 +2,7 @@
   <div class="permission-form">
     <div class="form-header">
       <h3>{{ formData.permissionCategory === 'application' ? '应用权限申请' : '数据权限申请' }}</h3>
-      <p class="sub">请填写申请主体、资源配置、操作类型与期限理由</p>
+      <p class="sub">请填写申请主体、资源配置{{ formData.permissionCategory === 'data' ? '、操作类型' : '' }}与期限理由</p>
     </div>
     <a-form
       ref="formRef"
@@ -19,7 +19,6 @@
           <a-form-item label="主体类型" name="subjectType">
             <a-radio-group v-model="formData.subjectType">
               <a-radio value="user">用户</a-radio>
-              <a-radio value="department">部门</a-radio>
               <a-radio value="group">虚拟组</a-radio>
             </a-radio-group>
           </a-form-item>
@@ -29,12 +28,7 @@
               <span class="helper-text">支持搜索下拉多选用户</span>
             </div>
           </a-form-item>
-          <a-form-item v-if="formData.subjectType === 'department'" label="选择部门" name="selectedDepartments">
-            <a-select v-model="formData.selectedDepartments" multiple allow-search :options="departmentOptions" placeholder="搜索并选择部门" />
-            <div class="section-actions">
-              <span class="helper-text">支持搜索下拉多选部门</span>
-            </div>
-          </a-form-item>
+
           <a-form-item v-if="formData.subjectType === 'group'" label="选择虚拟组" name="selectedGroups">
             <a-select v-model="formData.selectedGroups" multiple allow-search :options="groupOptions" placeholder="搜索并选择虚拟组" />
             <div class="section-actions">
@@ -44,7 +38,7 @@
       </a-card>
       <a-card class="section-card">
           <div class="section-title">资源选择</div>
-          <a-form-item v-if="formData.permissionCategory !== 'application'" :label="formData.permissionCategory === 'application' ? '权限层级选择' : '资源层级选择'" name="resourceLevel">
+          <a-form-item v-if="formData.permissionCategory === 'data'" :label="formData.permissionCategory === 'application' ? '权限层级选择' : '资源层级选择'" name="resourceLevel">
           <a-radio-group v-model="formData.resourceLevel">
             <a-radio value="database">{{ formData.permissionCategory === 'application' ? '应用级申请' : '库级申请' }}</a-radio>
             <a-radio value="table">{{ formData.permissionCategory === 'application' ? '模块级申请' : '表级申请' }}</a-radio>
@@ -77,9 +71,8 @@
             </div>
             <div class="global-selected-summary" v-if="formData.permissionCategory === 'application' || (formData.resourceLevel === 'database' && totalSelectedSchemas > 0) || (formData.resourceLevel === 'table' && totalSelectedTables > 0)">
               <template v-if="formData.permissionCategory === 'application'">
-                <div v-if="totalSelectedSchemas > 0 || totalSelectedTables > 0">
-                  已选应用 {{ formData.selectedDatabases.length }} 个；
-                  模块/功能 {{ totalSelectedSchemas + totalSelectedTables }} 个
+                <div v-if="formData.selectedDatabases.length > 0">
+                  已选应用 {{ formData.selectedDatabases.length }} 个
                 </div>
               </template>
               <template v-else>
@@ -120,7 +113,7 @@
             </div>
           </div>
         </a-form-item>
-        <a-form-item label="操作类型配置" name="operationTypes">
+        <a-form-item v-if="formData.permissionCategory === 'data'" label="操作类型配置" name="operationTypes">
           <div class="ops-section">
             <div class="ops-title">选择模式</div>
             <a-radio-group v-model="formData.operationMode">
@@ -217,7 +210,7 @@
       </a-form-item>
 
       <!-- 审批信息 -->
-      <a-form-item label="审批信息">
+      <a-form-item v-if="formData.permissionCategory === 'data'" label="审批信息">
         <div class="approval-info">
           <div class="info-item">
             <span class="label">审批级别：</span>
@@ -824,12 +817,6 @@ const confirmBatch = async () => {
               return;
             }
           }
-          if (formData.subjectType === 'department') {
-            if (!formData.selectedDepartments || formData.selectedDepartments.length === 0) {
-              Message.warning('请至少选择1个部门');
-              return;
-            }
-          }
           if (formData.subjectType === 'group') {
             if (!formData.selectedGroups || formData.selectedGroups.length === 0) {
               Message.warning('请至少选择1个虚拟组');
@@ -846,6 +833,20 @@ const confirmBatch = async () => {
               Message.warning('临时权限时长不超过1年');
               return;
             }
+          }
+        }
+        // 应用权限申请验证
+        if (formData.permissionCategory === 'application') {
+          if (formData.subjectType === 'department') {
+            Message.warning('应用权限申请不支持按部门授权');
+            return;
+          }
+        }
+        // 对于应用权限，验证必须选择至少一个应用
+        if (formData.permissionCategory === 'application') {
+          if (!formData.selectedDatabases || formData.selectedDatabases.length === 0) {
+            Message.warning('请至少选择一个应用');
+            return;
           }
         }
 
@@ -891,10 +892,10 @@ const confirmBatch = async () => {
           selectedSchemas: Object.entries(formData.schemasByDb || {}).flatMap(([db, schemas]) => schemas.map(s => ({ database: db, schema: s }))),
           includeFutureTables: formData.includeFutureTables,
           selectedTables: selectedTablesPayload,
-          operationTypes: {
+          operationTypes: formData.permissionCategory === 'data' ? {
             generic: formData.operationTypes.generic,
             specific: formData.operationTypes.specific
-          },
+          } : undefined,
           sensitiveRequested: formData.sensitiveRequested,
           sensitiveReason: formData.sensitiveReason,
           duration: formData.duration,

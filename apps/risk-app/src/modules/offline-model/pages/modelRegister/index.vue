@@ -287,7 +287,9 @@ const handleDelete = (record) => {
 // 工具方法
 const getTypeColor = (type) => {
   const colors = {
-    classification: 'blue',
+    daily: 'blue',
+    monthly: 'green',
+    classification: 'arcoblue',
     regression: 'green',
     clustering: 'orange',
     deep_learning: 'purple'
@@ -297,6 +299,8 @@ const getTypeColor = (type) => {
 
 const getTypeLabel = (type) => {
   const labels = {
+    daily: '日模型',
+    monthly: '月模型',
     classification: '分类模型',
     regression: '回归模型',
     clustering: '聚类模型',

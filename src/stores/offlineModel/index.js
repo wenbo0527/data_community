@@ -49,7 +49,8 @@ export const useOfflineModelStore = defineStore('offlineModel', {
       feature: {
         name: '',
         type: '',
-        status: ''
+        status: '',
+        modelType: ''
       },
       model: {
         name: '',
@@ -158,7 +159,8 @@ export const useOfflineModelStore = defineStore('offlineModel', {
       this.filters.feature = {
         name: '',
         type: '',
-        status: ''
+        status: '',
+        modelType: ''
       }
     },
     

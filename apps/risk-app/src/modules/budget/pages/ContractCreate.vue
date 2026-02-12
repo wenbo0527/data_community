@@ -89,6 +89,9 @@
                   <a-tab-pane v-for="extId in selectedExternalIds" :key="String(extId)" :title="externalLabel(extId)">
                     <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="计费方式" required><a-select v-model="externalConfigs[String(extId)].billingMode"><a-option value="查得计费">查得计费</a-option><a-option value="查询计费">查询计费</a-option></a-select></a-form-item></a-col>
+                      <a-col :span="12"><a-form-item label="外数合同名称" required><a-input v-model="externalConfigs[String(extId)].contractName" placeholder="请输入外数合同名称" /></a-form-item></a-col>
+                    </a-row>
+                    <a-row :gutter="12">
                       <a-col :span="12"><a-form-item label="计费类型" required><a-select v-model="externalConfigs[String(extId)].billingType" @change="onBillingTypeChange(String(extId))"><a-option value="fixed">固定单价计费</a-option><a-option value="tiered">阶梯条件计费</a-option><a-option value="special">特殊计费</a-option></a-select></a-form-item></a-col>
                     </a-row>
                     <a-row :gutter="12">
@@ -321,6 +324,7 @@ function ensureConfigFor(extKey: string) {
   const p = products.value.find((x: any) => String(x.id) === String(extKey))
   const cfg = externalConfigs[extKey] || (externalConfigs[extKey] = {})
   if (!cfg.billingMode) cfg.billingMode = (p?.channel === '文件批量') ? '查得计费' : '查询计费'
+  if (!cfg.contractName) cfg.contractName = ''  // 新增：初始化外数合同名称
   if (!cfg.billingType) cfg.billingType = 'fixed'
   if (cfg.basePrice == null && typeof p?.unitPrice === 'number') cfg.basePrice = Number(p.unitPrice)
   if (!Array.isArray(cfg.tiers)) cfg.tiers = []
@@ -510,6 +514,17 @@ const normalizeTiers = (extKey: string) => {
 const submit = async () => {
   try { await formRef.value?.validate() } catch { return }
   if (!selectedExternalIds.value.length) { Message.error('请至少选择一个外数进行关联'); return }
+  
+  // 校验外数合同名称是否填写
+  for (const id of selectedExternalIds.value) {
+    const key = String(id)
+    const config = externalConfigs[key]
+    if (!config || !config.contractName || !config.contractName.trim()) {
+      Message.error(`外数 ${externalLabel(id)} 的合同名称不能为空`);
+      return
+    }
+  }
+  
   // 校验征信机构一致性
   const mismatched = selectedExternalIds.value.some((id) => {
     const p = products.value.find((x: any) => String(x.id) === String(id))

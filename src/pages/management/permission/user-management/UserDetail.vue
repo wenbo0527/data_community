@@ -12,9 +12,38 @@
 
     <div class="user-info-header">
       <a-descriptions :column="4" size="medium">
-        <a-descriptions-item label="部门信息">{{ user.department || '技术部/数据中心' }}</a-descriptions-item>
+        <a-descriptions-item label="工号">{{ user.employeeId || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="姓名">{{ user.realName || user.username || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="部门">{{ user.department || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="手机号">
+          <a-space>
+            <span>{{ user.phone || '-' }}</span>
+            <a-button type="text" size="mini" @click="showPhoneEditModal">
+              <icon-edit />
+            </a-button>
+          </a-space>
+        </a-descriptions-item>
       </a-descriptions>
     </div>
+
+    <!-- 编辑手机号的模态框 -->
+    <a-modal 
+      v-model:visible="phoneModalVisible" 
+      title="编辑手机号" 
+      :width="400"
+      @ok="savePhone"
+      @cancel="closePhoneModal"
+    >
+      <a-form :model="phoneForm" layout="vertical">
+        <a-form-item label="手机号" required :hide-label="true">
+          <a-input 
+            v-model="phoneForm.phone" 
+            placeholder="请输入手机号" 
+            :max-length="11"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
 
     <a-tabs v-model:active-key="activeTab" class="permission-tabs">
       <a-tab-pane key="roles" title="授予的角色">
@@ -43,28 +72,24 @@
             </a-radio-group>
           </div>
 
-          <a-table :data="appPermissions" :pagination="false">
+          <a-table :data="filteredAppPermissions" :pagination="false">
             <template #columns>
-              <a-table-column title="权限">
+              <a-table-column title="权限名称" data-index="name" :width="200" />
+              <a-table-column title="权限描述" data-index="description" />
+              <a-table-column title="权限来源" :width="120">
                 <template #cell="{ record }">
-                  <a-space>
-                    <icon-caret-right v-if="record.expandable" />
-                    {{ record.name }}
-                  </a-space>
+                  <a-tag :color="record.source === 'inherited' ? 'blue' : 'orange'">
+                    {{ record.source === 'inherited' ? '角色继承' : '直接申请' }}
+                  </a-tag>
                 </template>
               </a-table-column>
-              <a-table-column title="描述">
+              <a-table-column title="授予角色" data-index="roleName" :width="150" />
+              <a-table-column title="授予时间" data-index="grantTime" :width="180" />
+              <a-table-column title="操作" :width="120">
                 <template #cell="{ record }">
-                  {{ record.description }}
-                  <a-link v-if="record.name === '计算组管理'" style="font-size: 12px">查看权限差异</a-link>
-                </template>
-              </a-table-column>
-              <a-table-column title="授予用户" align="right">
-                <template #cell="{ record }">
-                  <a-space>
-                    <a-switch :model-value="record.granted" />
-                    <icon-lock v-if="record.source === 'inherited'" style="color: #86909c" />
-                  </a-space>
+                  <a-button type="text" size="small" @click="editPermission(record)">
+                    修改
+                  </a-button>
                 </template>
               </a-table-column>
             </template>
@@ -103,7 +128,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, computed } from 'vue'
+import { Message } from '@arco-design/web-vue'
 
 const props = defineProps({
   user: {
@@ -118,19 +144,87 @@ const activeTab = ref('app')
 const isEditingDesc = ref(false)
 const appFilter = ref('all')
 const dataFilter = ref('all')
+const phoneModalVisible = ref(false)
+const phoneForm = ref({
+  phone: ''
+})
 
 const roleData = ref([
   { name: 'VOLCANO_MAIN_ACCOUNT', description: '主账号默认角色', grantTime: '2024-01-01 10:00:00' }
 ])
 
-const appPermissions = ref([
-  { name: '新建数据库', description: '创建数据库以及浏览所有数据库列表', granted: true, source: 'inherited', expandable: false },
-  { name: '新建外部Catalog', description: '创建、删除、查看外部Catalog', granted: true, source: 'inherited', expandable: false },
-  { name: '数据加载管理', description: '数据导入模块的所有功能权限，包括新建编辑和删除导入任务、新建编辑删除数据源', granted: true, source: 'inherited', expandable: false },
-  { name: '知识库管理', description: '创建、查看、管理知识库', granted: true, source: 'inherited', expandable: false },
-  { name: '计算组管理', description: '展开以查看不同计算组的权限，您可以为其授予「USE」或「ALL」权限。', granted: false, source: 'direct', expandable: true },
-  { name: '全局审计日志', description: '开启全局审计日志查看权限', granted: true, source: 'inherited', expandable: false }
+const allAppPermissions = ref([
+  { name: '新建数据库', description: '创建数据库以及浏览所有数据库列表', granted: true, source: 'inherited', roleName: 'SystemAdmin', grantTime: '2024-01-01 10:00:00' },
+  { name: '新建外部Catalog', description: '创建、删除、查看外部Catalog', granted: true, source: 'inherited', roleName: 'SystemAdmin', grantTime: '2024-01-01 10:00:00' },
+  { name: '数据加载管理', description: '数据导入模块的所有功能权限，包括新建编辑和删除导入任务、新建编辑删除数据源', granted: true, source: 'inherited', roleName: 'DataAnalyst', grantTime: '2024-01-05 14:30:00' },
+  { name: '知识库管理', description: '创建、查看、管理知识库', granted: true, source: 'inherited', roleName: 'SystemAdmin', grantTime: '2024-01-01 10:00:00' },
+  { name: '计算组管理', description: '展开以查看不同计算组的权限，您可以为其授予「USE」或「ALL」权限。', granted: false, source: 'direct', roleName: '-', grantTime: '2024-02-10 09:15:00' },
+  { name: '全局审计日志', description: '开启全局审计日志查看权限', granted: true, source: 'inherited', roleName: 'SystemAdmin', grantTime: '2024-01-01 10:00:00' },
+  { name: '报表中心访问', description: '访问和使用报表中心功能', granted: true, source: 'direct', roleName: '-', grantTime: '2024-01-15 16:45:00' },
+  { name: '数据可视化', description: '使用数据可视化工具创建图表和仪表盘', granted: true, source: 'inherited', roleName: 'DataAnalyst', grantTime: '2024-01-05 14:30:00' }
 ])
+
+// 根据过滤条件计算显示的权限
+const filteredAppPermissions = computed(() => {
+  if (appFilter.value === 'all') {
+    return allAppPermissions.value
+  } else if (appFilter.value === 'inherited') {
+    return allAppPermissions.value.filter((permission: any) => permission.source === 'inherited')
+  } else if (appFilter.value === 'direct') {
+    return allAppPermissions.value.filter((permission: any) => permission.source === 'direct')
+  }
+  return allAppPermissions.value
+})
+
+// 显示编辑手机号模态框
+const showPhoneEditModal = () => {
+  phoneForm.value.phone = props.user.phone || ''
+  phoneModalVisible.value = true
+}
+
+// 保存手机号
+const savePhone = () => {
+  if (!phoneForm.value.phone) {
+    Message.error('请输入手机号')
+    return
+  }
+  
+  // 这里可以调用API更新用户手机号
+  // 暂时更新本地数据
+  props.user.phone = phoneForm.value.phone
+  Message.success('手机号更新成功')
+  closePhoneModal()
+}
+
+// 关闭手机号编辑模态框
+const closePhoneModal = () => {
+  phoneModalVisible.value = false
+}
+
+// 编辑权限
+const editPermission = (record: any) => {
+  if (record.source === 'inherited') {
+    // 如果是角色赋予的权限，弹出角色编辑模态框
+    showRoleEditModal(record)
+  } else {
+    // 如果是直接申请的权限，弹出应用权限编辑模态框
+    showAppPermissionEditModal(record)
+  }
+}
+
+// 显示角色编辑模态框
+const showRoleEditModal = (record: any) => {
+  Message.info(`编辑角色权限: ${record.name}`)
+  // 这里可以弹出角色编辑模态框
+  // 实际实现中可以打开一个编辑角色权限的模态框
+}
+
+// 显示应用权限编辑模态框
+const showAppPermissionEditModal = (record: any) => {
+  Message.info(`编辑应用权限: ${record.name}`)
+  // 这里可以弹出应用权限编辑模态框
+  // 实际实现中可以打开一个编辑应用权限的模态框
+}
 </script>
 
 <style scoped>

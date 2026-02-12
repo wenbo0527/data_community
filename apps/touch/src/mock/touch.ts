@@ -46,7 +46,39 @@ export default {
     { id: 1, name: "人工外呼脚本A", status: "启用" }
   ],
   smsTemplates: [
-    { id: 101, title: "短信模板A", scene: "营销" }
+    {
+      id: 1,
+      templateId: "2601122006487765848108",
+      smsType: "营销类",
+      primaryScene: "苏实行券(苏宁主APP), Su营(苏宁小程序)",
+      strategyTag: "Su营(苏宁主APP), Su营(苏宁小程序)",
+      label: "促销券下发成功短信通知",
+      template: "优惠券发放",
+      content: "【苏银消金】亲爱的用户，您的利率优惠券已到账！请登录Su营APP并完成您名下任意在优惠券使快会员优惠快回来，拒收请回复R",
+      status: "使用中"
+    },
+    {
+      id: 2,
+      templateId: "2501211448648175551156",
+      smsType: "营销类",
+      primaryScene: "Su营(苏宁易购小程序)",
+      strategyTag: "Su营(苏宁易购小程序)",
+      label: "优惠券下发成功短信通知",
+      template: "优惠券发放",
+      content: "【苏银消金】亲爱的用户，您的利率优惠券已到账！请登录Su营APP并完成您名下任意在优惠券使快会员优惠快回来，拒收请回复R",
+      status: "使用中"
+    },
+    {
+      id: 3,
+      templateId: "2511228101960531071201",
+      smsType: "营销类",
+      primaryScene: "促销优惠",
+      strategyTag: "Su营(苏宁(易购小程序))",
+      label: "手机APP优惠本商用",
+      template: "促销通知",
+      content: "【苏银消金】您的的信用门户卡放，版次打开我获APP官，拒我打开jobchina.cny3s3c5zqq4，拒收请回复R",
+      status: "使用中"
+    }
   ],
   aiCallTemplates: [
     { id: 201, name: "AI外呼话术A", vendor: "百应" }
@@ -59,10 +91,166 @@ export default {
     ]
   },
   queryDetails: [
-    { id: 1, channel: "sms", status: "success", time: "2024-01-01 10:00:00" }
+    { 
+      id: 1, 
+      recipient: "张三",
+      phone: "13800138001", 
+      type: "短信",
+      templateId: "SMS_001",
+      externalTemplateId: "EXT_SMS_001",
+      callDuration: null,
+      audioRecord: null,
+      channel: "sms", 
+      vendor: "阿里云",
+      status: "success", 
+      time: "2024-01-01 10:00:00" 
+    },
+    { 
+      id: 2, 
+      recipient: "李四",
+      phone: "13900139002", 
+      type: "AI外呼",
+      templateId: "AI_CALL_001",
+      externalTemplateId: "EXT_AI_001",
+      callDuration: 120,
+      audioRecord: "https://example.com/audio/001.mp3",
+      channel: "ai_call", 
+      vendor: "百应",
+      status: "success", 
+      time: "2024-01-01 11:00:00" 
+    },
+    { 
+      id: 3, 
+      recipient: "王五",
+      phone: "13700137003", 
+      type: "人工外呼",
+      templateId: "MANUAL_CALL_001",
+      externalTemplateId: "EXT_MANUAL_001",
+      callDuration: 180,
+      audioRecord: "https://example.com/audio/002.mp3",
+      channel: "manual_call", 
+      vendor: "自营",
+      status: "success", 
+      time: "2024-01-01 12:00:00" 
+    },
+    { 
+      id: 4, 
+      recipient: "赵六",
+      phone: "13600136004", 
+      type: "短信",
+      templateId: "SMS_002",
+      externalTemplateId: "EXT_SMS_002",
+      callDuration: null,
+      audioRecord: null,
+      channel: "sms", 
+      vendor: "腾讯云",
+      status: "failed", 
+      time: "2024-01-01 13:00:00" 
+    },
+    { 
+      id: 5, 
+      recipient: "孙七",
+      phone: "13500135005", 
+      type: "AI外呼",
+      templateId: "AI_CALL_002",
+      externalTemplateId: "EXT_AI_002",
+      callDuration: 90,
+      audioRecord: "https://example.com/audio/003.mp3",
+      channel: "ai_call", 
+      vendor: "九四",
+      status: "pending", 
+      time: "2024-01-01 14:00:00" 
+    }
   ],
   smsRecords: [
-    { id: 1, phone: "13800000000", status: "success", time: "2024-01-01 10:00:00" }
+    { 
+      id: 1, 
+      recipient: "张三", 
+      phone: "13800138001", 
+      templateId: "SMS_001", 
+      content: "【测试】尊敬的用户，您的验证码为123456，5分钟内有效。", 
+      vendor: "阿里云短信", 
+      smsVendor: "阿里云短信",
+      sendStatus: "success", 
+      sendTime: "2024-01-01 10:30:00" 
+    },
+    { 
+      id: 2, 
+      recipient: "李四", 
+      phone: "13900139002", 
+      templateId: "SMS_002", 
+      content: "【测试】您好，您的订单已发货，请注意查收。", 
+      vendor: "腾讯云短信", 
+      smsVendor: "腾讯云短信",
+      sendStatus: "success", 
+      sendTime: "2024-01-01 11:00:00" 
+    },
+    { 
+      id: 3, 
+      recipient: "王五", 
+      phone: "13700137003", 
+      templateId: "SMS_001", 
+      content: "【测试】尊敬的用户，您的验证码为654321，5分钟内有效。", 
+      vendor: "阿里云短信", 
+      smsVendor: "阿里云短信",
+      sendStatus: "failed", 
+      sendTime: "2024-01-01 11:30:00" 
+    },
+    { 
+      id: 4, 
+      recipient: "赵六", 
+      phone: "13600136004", 
+      templateId: "SMS_003", 
+      content: "【测试】您的会员即将到期，请及时续费。", 
+      vendor: "腾讯云短信", 
+      smsVendor: "腾讯云短信",
+      sendStatus: "sending", 
+      sendTime: "2024-01-01 12:00:00" 
+    },
+    { 
+      id: 5, 
+      recipient: "孙七", 
+      phone: "13500135005", 
+      templateId: "SMS_002", 
+      content: "【测试】您好，您的订单已签收，感谢您的支持。", 
+      vendor: "阿里云短信", 
+      smsVendor: "阿里云短信",
+      sendStatus: "success", 
+      sendTime: "2024-01-01 12:30:00" 
+    },
+    { 
+      id: 6, 
+      recipient: "周八", 
+      phone: "13400134006", 
+      templateId: "SMS_004", 
+      content: "【测试】恭喜您获得优惠券一张，请在15天内使用。", 
+      vendor: "腾讯云短信", 
+      smsVendor: "腾讯云短信",
+      sendStatus: "success", 
+      sendTime: "2024-01-01 13:00:00" 
+    },
+    { 
+      id: 7, 
+      recipient: "吴九", 
+      phone: "13300133007", 
+      templateId: "SMS_001", 
+      content: "【测试】尊敬的用户，您的验证码为789012，5分钟内有效。", 
+      vendor: "阿里云短信", 
+      smsVendor: "阿里云短信",
+      sendStatus: "success", 
+      sendTime: "2024-01-01 13:30:00" 
+    },
+    { 
+      id: 8, 
+      recipient: "郑十", 
+      phone: "13200132008", 
+      templateId: "SMS_005", 
+      content: "【测试】您的账户余额不足，请及时充值。", 
+      vendor: "腾讯云短信", 
+      smsVendor: "腾讯云短信",
+      sendStatus: "failed", 
+      sendTime: "2024-01-01 14:00:00" 
+    }
   ],
   aiCallRecords: [
     { id: 1, user: "用户1", vendor: "百应", time: "2024-01-01 10:00:00" }

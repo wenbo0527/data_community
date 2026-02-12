@@ -80,7 +80,7 @@
         >
           <a-radio-group v-model="formData.inventoryScope" type="button">
             <a-radio value="all">全部库存</a-radio>
-            <a-option value="specific">指定库存</a-radio>
+            <a-radio value="specific">指定库存</a-radio>
           </a-radio-group>
         </a-form-item>
 
