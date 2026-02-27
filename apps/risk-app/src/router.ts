@@ -63,6 +63,18 @@ const routes: RouteRecordRaw[] = [
             name: 'RiskExternalDataService',
             component: () => import('./modules/external-data/pages/Service.vue'),
             meta: { title: '外数数据服务' }
+          },
+          {
+            path: 'service-scene',
+            name: 'RiskExternalDataServiceScene',
+            component: () => import('./modules/external-data/pages/ServiceScene.vue'),
+            meta: { title: '服务场景入口' }
+          },
+          {
+            path: 'sample-preparation',
+            name: 'RiskExternalDataSamplePreparation',
+            component: () => import('./modules/external-data/pages/SamplePreparation.vue'),
+            meta: { title: '样本表准备' }
           }
         ]
       },

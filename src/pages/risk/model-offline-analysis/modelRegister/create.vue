@@ -42,25 +42,8 @@
                 </a-form-item>
               </a-col>
               <a-col :span="12">
-                <a-form-item field="framework" label="算法框架" required>
-                  <a-select v-model="form.framework" placeholder="请选择算法框架">
-                    <a-option value="sklearn">Scikit-learn</a-option>
-                    <a-option value="tensorflow">TensorFlow</a-option>
-                    <a-option value="pytorch">PyTorch</a-option>
-                    <a-option value="xgboost">XGBoost</a-option>
-                  </a-select>
-                </a-form-item>
-              </a-col>
-            </a-row>
-            <a-row :gutter="16">
-              <a-col :span="12">
                 <a-form-item field="version" label="版本" required>
                   <a-input v-model="form.version" placeholder="例如 1" />
-                </a-form-item>
-              </a-col>
-              <a-col :span="12">
-                <a-form-item field="parameters" label="超参数(JSON)">
-                  <a-input v-model="form.parameters" placeholder='{"n_estimators":100}' />
                 </a-form-item>
               </a-col>
             </a-row>
@@ -211,10 +194,8 @@ const form = ref({
   name: '',
   code: '',
   type: '',
-  framework: '',
   version: '',
   description: '',
-  parameters: '',
   inputParams: [],
   outputParams: [],
   modelFile: null
@@ -224,7 +205,6 @@ const rules = {
   name: [{ required: true, message: '请输入模型名称' }],
   code: [{ required: true, message: '请输入模型编码' }],
   type: [{ required: true, message: '请选择模型类型' }],
-  framework: [{ required: true, message: '请选择算法框架' }],
   version: [{ required: true, message: '请输入版本号' }]
 }
 
@@ -296,7 +276,6 @@ const handleServiceChange = async (serviceName) => {
   form.value.name = p.name
   form.value.code = p.code
   form.value.version = p.version
-  form.value.framework = p.framework
   form.value.type = p.type || form.value.type
   form.value.description = p.description || ''
   form.value.inputParams = (p.inputs || []).map(i => ({ __key: Date.now() + Math.random(), name: i.name, paramKind: 'feature', type: i.type, featureId: null, description: i.description || '' }))
@@ -406,11 +385,6 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitting.value = true
     const payload = { ...form.value }
-    if (payload.parameters) {
-      try { payload.parameters = JSON.parse(payload.parameters) } catch (e) {
-        // 忽略解析错误
-      }
-    }
     if (udfDefinition.value) {
       payload.udfDefinition = udfDefinition.value
     }
@@ -433,11 +407,6 @@ const handleSave = async () => {
     await formRef.value.validate()
     saving.value = true
     const payload = { ...form.value }
-    if (payload.parameters) {
-      try { payload.parameters = JSON.parse(payload.parameters) } catch (e) {
-        // 忽略解析错误
-      }
-    }
     if (udfDefinition.value) {
       payload.udfDefinition = udfDefinition.value
     }

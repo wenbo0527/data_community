@@ -57,6 +57,8 @@
                 >
                   <a-option value="download">明细数据下载</a-option>
                   <a-option value="report">分析报告模板</a-option>
+                  <a-option value="external_data_sample">外数样本表</a-option>
+                  <a-option value="validation_rule">校验规则</a-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -97,7 +99,7 @@
         </a-card>
 
         <!-- 入参定义 -->
-        <a-card title="入参定义" class="form-section">
+        <a-card title="入参定义" class="form-section" v-if="showParamsDefinition">
           <div class="params-definition">
             <div class="params-header">
               <span>定义模型的输入参数</span>
@@ -224,7 +226,7 @@
 
 
         <!-- 出参定义 -->
-        <a-card title="出参定义" class="form-section">
+        <a-card title="出参定义" class="form-section" v-if="showParamsDefinition">
           <div class="output-params-info">
             <div class="info-content">
               <IconInfoCircle class="info-icon" />
@@ -362,7 +364,12 @@ const saving = ref(false)
 // 判断是否为编辑模式
 const isEdit = computed(() => !!route.params.id)
 
-// Monaco Editor 相关计算属性
+// 是否展示入参/出参定义
+  const showParamsDefinition = computed(() => {
+    return !['external_data_sample', 'validation_rule'].includes(formData.useCase)
+  })
+
+  // Monaco Editor 相关计算属性
 const editorLanguage = computed(() => {
   return formData.languageType === 'SQL' ? 'sql' : 'python'
 })
@@ -431,6 +438,12 @@ const formRules = {
   inputParams: [
     {
       validator: (value, callback) => {
+        // 如果隐藏了入参定义，则跳过校验
+        if (!showParamsDefinition.value) {
+          callback()
+          return
+        }
+        
         if (value && value.length > 0) {
           for (let i = 0; i < value.length; i++) {
             const param = value[i]

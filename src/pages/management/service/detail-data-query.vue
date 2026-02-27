@@ -233,6 +233,13 @@
                     v-model="addForm.queryParams[param.name]"
                     :placeholder="param.description"
                   />
+                  <a-textarea
+                    v-else-if="param.type === 'textarea'"
+                    v-model="addForm.queryParams[param.name]"
+                    :placeholder="param.description"
+                    :auto-size="{ minRows: 3, maxRows: 6 }"
+                    allow-clear
+                  />
                   <a-input-number 
                     v-else-if="param.type === 'number'"
                     v-model="addForm.queryParams[param.name]"
@@ -623,9 +630,9 @@ const loadTemplates = async () => {
           {
             id: 'p1',
             name: 'user_id',
-            type: 'string',
+            type: 'textarea',
             required: true,
-            description: '用户ID，支持单个或多个用户ID查询'
+            description: '用户ID，支持单个或多个用户ID查询（多个ID请用换行或逗号分隔）'
           },
           {
             id: 'p2',
@@ -668,9 +675,9 @@ const loadTemplates = async () => {
           {
             id: 'p1',
             name: 'customer_id',
-            type: 'string',
+            type: 'textarea',
             required: true,
-            description: '客户ID'
+            description: '客户ID（支持批量输入）'
           },
           {
             id: 'p2',
@@ -748,7 +755,7 @@ const loadApplications = async () => {
         querySummary: '查询用户U123456在2024年1月的交易记录',
         applyTime: '2024-01-15 10:30:00',
         queryParams: {
-          user_id: 'U123456',
+          user_id: 'U123456\nU123457\nU123458',
           start_date: '2024-01-01',
           end_date: '2024-01-31',
           min_amount: 100
@@ -1276,6 +1283,8 @@ onMounted(() => {
 
 .param-value {
   color: #1d2129;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .modal-footer {
@@ -1309,6 +1318,8 @@ onMounted(() => {
 
 .query-params .param-value {
   color: #1d2129;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .field-tag {

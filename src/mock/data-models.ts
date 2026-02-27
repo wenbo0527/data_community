@@ -22,7 +22,9 @@ export enum UseCase {
   FEATURE_ENGINEERING = 'feature_engineering',
   MODEL_TRAINING = 'model_training',
   REPORT_GENERATION = 'report_generation',
-  DATA_VALIDATION = 'data_validation'
+  DATA_VALIDATION = 'data_validation',
+  EXTERNAL_DATA_SAMPLE = 'external_data_sample',
+  VALIDATION_RULE = 'validation_rule'
 }
 
 // 数据模型接口定义

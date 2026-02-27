@@ -1,9 +1,8 @@
 <template>
   <div class="marketing-records">
-    <div class="records-header">
-      <h4>营销记录</h4>
+    <div class="module-header">
+      <div class="header-title">营销记录</div>
       <div class="header-actions">
-
         <a-button size="small" @click="refreshData">
           <template #icon><IconRefresh /></template>
           刷新
@@ -16,184 +15,260 @@
       <p>加载营销记录数据...</p>
     </div>
     
-    <div v-else-if="!marketingRecords.length" class="empty-state">
+    <div v-else-if="!hasData" class="empty-state">
       <a-empty description="暂无营销记录" />
     </div>
     
-    <div v-else class="records-content">
-
+    <div v-else class="records-container">
       
-      <!-- 筛选工具栏 -->
-      <div class="filter-toolbar">
-        <a-input-search 
-          v-model="searchText"
-          placeholder="搜索营销活动..."
-          style="width: 200px;"
-          @search="handleSearch"
-        />
+      <!-- 1. 触达记录模块 (Touch Records) -->
+      <div class="record-section touch-section">
+        <div class="section-header">
+          <div class="title-group">
+            <span class="section-title">触达记录</span>
+            <a-tag size="small" color="arcoblue" bordered>{{ filteredTouchRecords.length }}</a-tag>
+          </div>
+          
+          <div class="filter-group">
+            <a-select 
+              v-model="touchFilters.channel" 
+              placeholder="触达渠道" 
+              style="width: 130px" 
+              allow-clear 
+              size="small"
+            >
+              <a-option>短信</a-option>
+              <a-option>AI外呼</a-option>
+              <a-option>人工外呼</a-option>
+              <a-option>AI外呼挂短</a-option>
+              <a-option>人工外呼挂短</a-option>
+            </a-select>
+            
+            <a-select 
+              v-model="touchFilters.result" 
+              placeholder="结果" 
+              style="width: 90px" 
+              allow-clear 
+              size="small"
+            >
+              <a-option>成功</a-option>
+              <a-option>失败</a-option>
+            </a-select>
+            
+            <a-range-picker 
+              v-model="touchFilters.dateRange" 
+              style="width: 200px" 
+              size="small" 
+            />
+            
+            <a-button size="small" @click="resetTouchFilters">重置</a-button>
+          </div>
+        </div>
         
-        <a-select 
-          v-model="statusFilter"
-          placeholder="筛选状态"
-          style="width: 120px;"
-          allow-clear
-          @change="handleStatusFilter"
-        >
-          <a-option value="成功">成功</a-option>
-          <a-option value="失败">失败</a-option>
-          <a-option value="进行中">进行中</a-option>
-        </a-select>
-        
-        <a-select 
-          v-model="channelFilter"
-          placeholder="筛选渠道"
-          style="width: 120px;"
-          allow-clear
-          @change="handleChannelFilter"
-        >
-          <a-option value="短信">短信</a-option>
-          <a-option value="邮件">邮件</a-option>
-          <a-option value="电话">电话</a-option>
-          <a-option value="APP推送">APP推送</a-option>
-        </a-select>
-        
-        <a-range-picker 
-          v-model="dateRange"
-          style="width: 240px;"
-          @change="handleDateFilter"
-        />
-      </div>
-      
-      <!-- 营销记录表格 -->
-      <div class="table-container">
         <a-table 
-          :columns="columns"
-          :data="filteredRecords"
-          :pagination="pagination"
-          :loading="loading"
+          :data="paginatedTouchRecords" 
+          :pagination="false"
           size="small"
-          @page-change="handlePageChange"
+          :bordered="{ wrapper: true, cell: false }"
+          row-key="id"
         >
-          <template #campaignType="{ record }">
-            <a-tag :color="getCampaignTypeColor(record.campaignType)">
-              {{ record.campaignType }}
-            </a-tag>
-          </template>
-          
-          <template #status="{ record }">
-            <a-tag :color="getStatusColor(record.status)">
-              {{ record.status }}
-            </a-tag>
-          </template>
-          
-          <template #channel="{ record }">
-            <div class="channel-cell">
-              <IconMessage v-if="record.channel === '短信'" class="channel-icon" />
-              <IconEmail v-else-if="record.channel === '邮件'" class="channel-icon" />
-              <IconPhone v-else-if="record.channel === '电话'" class="channel-icon" />
-              <IconNotification v-else class="channel-icon" />
-              <span>{{ record.channel }}</span>
-            </div>
-          </template>
-          
-          <template #responseRate="{ record }">
-            <div class="response-rate">
-              <a-progress 
-                :percent="record.responseRate"
-                :color="getResponseRateColor(record.responseRate)"
-                size="small"
-                :show-text="false"
-              />
-              <span class="rate-text">{{ record.responseRate }}%</span>
-            </div>
-          </template>
-          
-          <template #actions="{ record }">
-            <a-button size="mini" type="text" @click="viewDetail(record)">
-              查看详情
-            </a-button>
-            <a-button size="mini" type="text" @click="viewAnalysis(record)">
-              效果分析
-            </a-button>
+          <template #columns>
+            <a-table-column title="触达时间" data-index="touchDate" :width="160" />
+            <a-table-column title="渠道" data-index="touchChannel" :width="120">
+              <template #cell="{ record }">
+                <div class="channel-cell">
+                  <component :is="getChannelIcon(record.touchChannel)" />
+                  <span>{{ record.touchChannel }}</span>
+                </div>
+              </template>
+            </a-table-column>
+            <a-table-column title="内容" data-index="content" ellipsis tooltip>
+              <template #cell="{ record }">
+                <span>{{ record.content }}</span>
+                <span v-if="record.duration" style="color: var(--color-text-3); margin-left: 8px; font-size: 12px;">
+                  ({{ record.duration }})
+                </span>
+              </template>
+            </a-table-column>
+            <a-table-column title="状态" data-index="touchResult" :width="100">
+              <template #cell="{ record }">
+                <a-tag :color="record.touchResult === '成功' ? 'green' : 'red'" size="small">
+                  {{ record.touchResult }}
+                </a-tag>
+              </template>
+            </a-table-column>
+            <a-table-column title="操作" :width="80" align="center">
+              <template #cell="{ record }">
+                <a-link @click="viewDetail(record, 'touch')">详情</a-link>
+              </template>
+            </a-table-column>
           </template>
         </a-table>
+        
+        <div class="section-footer" v-if="filteredTouchRecords.length > 0">
+          <a-pagination 
+            size="small" 
+            :total="filteredTouchRecords.length" 
+            v-model:current="touchPage"
+            v-model:page-size="touchPageSize"
+            :page-size-options="[5, 10, 20, 50]"
+            show-total
+            show-page-size
+          />
+        </div>
       </div>
-      
 
+      <a-divider style="margin: 24px 0" />
+
+      <!-- 2. 权益记录模块 (Benefit Records) -->
+      <div class="record-section benefit-section">
+        <div class="section-header">
+          <div class="title-group">
+            <span class="section-title">权益记录</span>
+            <a-tag size="small" color="orange" bordered>{{ filteredBenefitRecords.length }}</a-tag>
+          </div>
+          
+          <div class="filter-group">
+            <a-select 
+              v-model="benefitFilters.type" 
+              placeholder="权益类型" 
+              style="width: 120px" 
+              allow-clear 
+              size="small"
+            >
+              <a-option>利息减免</a-option>
+              <a-option>折扣</a-option>
+              <a-option>现金红包</a-option>
+              <a-option>体验金</a-option>
+            </a-select>
+            
+            <a-select 
+              v-model="benefitFilters.status" 
+              placeholder="状态" 
+              style="width: 100px" 
+              allow-clear 
+              size="small"
+            >
+              <a-option>已发放</a-option>
+              <a-option>已核销</a-option>
+              <a-option>已过期</a-option>
+              <a-option>已使用</a-option>
+            </a-select>
+            
+            <a-button size="small" @click="resetBenefitFilters">重置</a-button>
+          </div>
+        </div>
+
+        <a-table 
+          :data="paginatedBenefitRecords" 
+          :pagination="false"
+          size="small"
+          :bordered="{ wrapper: true, cell: false }"
+          row-key="id"
+        >
+          <template #columns>
+            <a-table-column title="下发时间" data-index="benefitDate" :width="160" />
+            <a-table-column title="权益名称" data-index="benefitName" ellipsis tooltip />
+            <a-table-column title="权益类型" data-index="benefitType" :width="120">
+               <template #cell="{ record }">
+                 <a-tag :color="getBenefitTypeColor(record.benefitType)" size="small">
+                   {{ record.benefitType }}
+                 </a-tag>
+               </template>
+            </a-table-column>
+            <a-table-column title="权益状态" data-index="benefitStatus" :width="120">
+               <template #cell="{ record }">
+                 <a-badge 
+                   :status="getBenefitStatusBadge(record.benefitStatus)" 
+                   :text="record.benefitStatus" 
+                 />
+               </template>
+            </a-table-column>
+            <a-table-column title="操作" :width="80" align="center">
+              <template #cell="{ record }">
+                <a-link @click="viewDetail(record, 'benefit')">详情</a-link>
+              </template>
+            </a-table-column>
+          </template>
+        </a-table>
+        
+        <div class="section-footer" v-if="filteredBenefitRecords.length > 0">
+          <a-pagination 
+            size="small" 
+            :total="filteredBenefitRecords.length" 
+            v-model:current="benefitPage"
+            v-model:page-size="benefitPageSize"
+            :page-size-options="[5, 10, 20, 50]"
+            show-total
+            show-page-size
+          />
+        </div>
+      </div>
     </div>
     
     <!-- 详情抽屉 -->
     <a-drawer
       v-model:visible="detailDrawerVisible"
-      title="营销活动详情"
-      width="600px"
+      :title="drawerTitle"
+      width="640px"
+      :drawer-style="{ maxWidth: '90vw' }"
       placement="right"
     >
       <div v-if="selectedRecord" class="detail-content">
-        <div class="detail-section">
-          <h4>基本信息</h4>
-          <a-descriptions :column="2" bordered>
-            <a-descriptions-item label="活动名称">{{ selectedRecord.campaignName }}</a-descriptions-item>
-            <a-descriptions-item label="活动类型">
-              <a-tag :color="getCampaignTypeColor(selectedRecord.campaignType)">
-                {{ selectedRecord.campaignType }}
-              </a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="状态">
-              <a-tag :color="getStatusColor(selectedRecord.status)">
-                {{ selectedRecord.status }}
-              </a-tag>
-            </a-descriptions-item>
-            <a-descriptions-item label="渠道">{{ selectedRecord.channel }}</a-descriptions-item>
-            <a-descriptions-item label="开始时间">{{ selectedRecord.startTime }}</a-descriptions-item>
-            <a-descriptions-item label="结束时间">{{ selectedRecord.endTime }}</a-descriptions-item>
-          </a-descriptions>
-        </div>
-        
-        <div class="detail-section">
-          <h4>效果数据</h4>
-          <a-descriptions :column="2" bordered>
-            <a-descriptions-item label="响应率">{{ selectedRecord.responseRate }}%</a-descriptions-item>
-            <a-descriptions-item label="目标金额">{{ formatAmount(selectedRecord.targetAmount) }}</a-descriptions-item>
-            <a-descriptions-item label="实际金额">{{ formatAmount(selectedRecord.actualAmount) }}</a-descriptions-item>
-            <a-descriptions-item label="完成率">{{ calculateCompletionRate(selectedRecord) }}%</a-descriptions-item>
-          </a-descriptions>
-        </div>
-        
-        <div class="detail-section">
-          <h4>活动描述</h4>
-          <p>{{ selectedRecord.description || '暂无描述' }}</p>
-        </div>
-      </div>
-    </a-drawer>
-    
-    <!-- 效果分析抽屉 -->
-    <a-drawer
-      v-model:visible="analysisDrawerVisible"
-      title="效果分析"
-      width="800px"
-      placement="right"
-    >
-      <div v-if="selectedRecord" class="analysis-content">
-        <div class="analysis-section">
-          <h4>核心指标</h4>
-          <div class="metrics-grid">
-            <div class="metric-card">
-              <div class="metric-value">{{ selectedRecord.responseRate }}%</div>
-              <div class="metric-label">响应率</div>
+        <!-- 动态内容展示区域 -->
+        <div v-if="selectedType === 'touch'" class="touch-detail-preview">
+          <!-- 场景1：通话记录 (AI/人工) -->
+          <div v-if="selectedRecord.duration" class="call-record-card">
+            <div class="card-header">
+              <span class="label">通话录音</span>
+              <span class="duration">{{ selectedRecord.duration }}</span>
             </div>
-            <div class="metric-card">
-              <div class="metric-value">{{ calculateCompletionRate(selectedRecord) }}%</div>
-              <div class="metric-label">完成率</div>
+            <div class="audio-player-mock">
+              <a-button shape="circle" size="small" type="primary">
+                <icon-play-arrow />
+              </a-button>
+              <div class="progress-track">
+                <div class="progress-bar" style="width: 35%"></div>
+              </div>
+              <span class="time">00:15 / {{ selectedRecord.duration }}</span>
             </div>
-            <div class="metric-card">
-              <div class="metric-value">{{ calculateROI(selectedRecord) }}%</div>
-              <div class="metric-label">投资回报率</div>
+            
+            <div v-if="selectedRecord.transcript" class="transcript-box">
+              <div class="box-title">对话详情</div>
+              <a-typography-paragraph 
+                class="box-content" 
+                copyable 
+                :copy-text="selectedRecord.transcript"
+                style="margin-bottom: 0"
+              >
+                {{ selectedRecord.transcript }}
+              </a-typography-paragraph>
+            </div>
+          </div>
+          
+          <!-- 场景2：短信/消息 -->
+          <div v-else class="message-card">
+            <div class="card-header">
+              <span class="label">消息内容</span>
+            </div>
+            <div class="message-bubble">
+              <a-typography-paragraph 
+                copyable 
+                :copy-text="selectedRecord.content"
+                style="margin-bottom: 0"
+              >
+                {{ selectedRecord.content }}
+              </a-typography-paragraph>
             </div>
           </div>
         </div>
-        
 
+        <!-- 基础信息 -->
+        <a-descriptions :column="2" bordered size="large" class="detail-desc">
+          <template v-for="(value, key) in detailFields" :key="key">
+            <a-descriptions-item :label="key">{{ value }}</a-descriptions-item>
+          </template>
+        </a-descriptions>
       </div>
     </a-drawer>
   </div>
@@ -203,434 +278,382 @@
 import { ref, computed, reactive } from 'vue'
 import { 
   IconRefresh,
-  IconCheckCircle,
-  IconClockCircle,
-  IconCloseCircle,
   IconMessage,
-  IconEmail,
-  IconPhone,
+  IconRobot,
+  IconUser,
   IconNotification,
-  IconSearch,
-  IconEye
+  IconPhone,
+  IconPlayArrow,
+  IconPause
 } from '@arco-design/web-vue/es/icon'
-import { Message } from '@arco-design/web-vue'
 
 interface Props {
-  productKey: string
-  productData?: any
+  productKey?: string
   userInfo?: any
   loading?: boolean
   marketingData?: any
-}
-
-interface Emits {
-  (e: 'debug-info', info: any): void
-  (e: 'refresh'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false
 })
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits(['refresh', 'debug-info'])
 
-// 筛选状态
-const searchText = ref('')
-const statusFilter = ref('')
-const channelFilter = ref('')
-const dateRange = ref([])
-
-const pagination = reactive({
-  current: 1,
-  pageSize: 10,
-  total: 0
-})
-
-// 抽屉状态
+// --- 状态管理 ---
+const touchPage = ref(1)
+const touchPageSize = ref(5)
+const benefitPage = ref(1)
+const benefitPageSize = ref(5)
 const detailDrawerVisible = ref(false)
-const analysisDrawerVisible = ref(false)
-const selectedRecord = ref(null)
+const selectedRecord = ref<any>(null)
+const selectedType = ref<'touch' | 'benefit'>('touch')
 
-// 表格列定义
-const columns = [
-  { title: '活动名称', dataIndex: 'campaignName', width: 150 },
-  { title: '活动类型', dataIndex: 'campaignType', slotName: 'campaignType', width: 100 },
-  { title: '状态', dataIndex: 'status', slotName: 'status', width: 80 },
-  { title: '渠道', dataIndex: 'channel', slotName: 'channel', width: 100 },
-  { title: '开始时间', dataIndex: 'startTime', width: 120 },
-  { title: '结束时间', dataIndex: 'endTime', width: 120 },
-  { title: '响应率', dataIndex: 'responseRate', slotName: 'responseRate', width: 120 },
-  { title: '操作', slotName: 'actions', width: 140 }
-]
+const touchFilters = reactive({
+  channel: '',
+  result: '',
+  dateRange: [] as any[]
+})
 
-// 营销记录数据
-const marketingRecords = computed(() => {
-  console.log('🔍 [MarketingRecords] 计算营销记录数据:', {
-    hasMarketingData: !!props.marketingData,
-    hasUserInfo: !!props.userInfo,
-    productKey: props.productKey,
-    userInfoMarketingRecords: props.userInfo?.marketingRecords
-  })
-  
-  // 优先使用传入的marketingData
-  if (props.marketingData) {
-    const touchRecords = props.marketingData.touchRecords || []
-    const benefitRecords = props.marketingData.benefitRecords || []
-    
-    console.log('📊 [MarketingRecords] 使用传入的marketingData:', {
-      touchRecordsCount: touchRecords.length,
-      benefitRecordsCount: benefitRecords.length
-    })
-    
-    // 合并触达记录和权益记录
-    return [...touchRecords, ...benefitRecords]
-  }
-  
-  // 如果没有传入数据，从userInfo中获取并过滤
-  if (props.userInfo?.marketingRecords) {
-    const allTouchRecords = props.userInfo.marketingRecords.touchRecords || []
-    const allBenefitRecords = props.userInfo.marketingRecords.benefitRecords || []
-    
-    console.log('📊 [MarketingRecords] 从userInfo获取数据:', {
-      allTouchRecordsCount: allTouchRecords.length,
-      allBenefitRecordsCount: allBenefitRecords.length,
-      productKey: props.productKey
-    })
-    
-    // 根据productKey过滤
-    const filteredTouch = props.productKey 
-      ? (allTouchRecords || []).filter((item: any) => item.productKey === props.productKey)
-      : (allTouchRecords || [])
-    
-    const filteredBenefit = props.productKey
-      ? (allBenefitRecords || []).filter((item: any) => item.productKey === props.productKey) 
-      : (allBenefitRecords || [])
-    
-    console.log('📊 [MarketingRecords] 过滤后的数据:', {
-      filteredTouchCount: filteredTouch.length,
-      filteredBenefitCount: filteredBenefit.length,
-      totalCount: filteredTouch.length + filteredBenefit.length
-    })
-    
-    return [...filteredTouch, ...filteredBenefit]
-  }
-  
-  // 最后使用默认的模拟数据
-  return [
-    {
-      id: 1,
-      campaignName: '新年贷款优惠活动',
-      campaignType: '产品推广',
-      status: '成功',
-      channel: '短信',
-      startTime: '2024-01-01 10:00:00',
-      endTime: '2024-01-31 23:59:59',
-      responseRate: 85,
-      targetAmount: 50000,
-      actualAmount: 42500
-    },
-    {
-      id: 2,
-      campaignName: '信用卡分期推荐',
-      campaignType: '交叉销售',
-      status: '进行中',
-      channel: 'APP推送',
-      startTime: '2024-01-15 09:00:00',
-      endTime: '2024-02-15 23:59:59',
-      responseRate: 62,
-      targetAmount: 30000,
-      actualAmount: 18600
-    },
-    {
-      id: 3,
-      campaignName: '理财产品介绍',
-      campaignType: '新产品',
-      status: '失败',
-      channel: '邮件',
-      startTime: '2023-12-01 08:00:00',
-      endTime: '2023-12-31 23:59:59',
-      responseRate: 23,
-      targetAmount: 100000,
-      actualAmount: 23000
-    },
-    {
-      id: 4,
-      campaignName: '客户满意度调研',
-      campaignType: '客户关怀',
-      status: '成功',
-      channel: '电话',
-      startTime: '2024-01-10 14:00:00',
-      endTime: '2024-01-20 18:00:00',
-      responseRate: 78,
-      targetAmount: 0,
-      actualAmount: 0
+const benefitFilters = reactive({
+  type: '',
+  status: ''
+})
+
+// --- 数据源计算 ---
+const rawTouchRecords = computed(() => {
+  if (props.marketingData?.touchRecords) return props.marketingData.touchRecords
+  if (props.userInfo?.marketingRecords?.touchRecords) return props.userInfo.marketingRecords.touchRecords
+  return []
+})
+
+const rawBenefitRecords = computed(() => {
+  if (props.marketingData?.benefitRecords) return props.marketingData.benefitRecords
+  if (props.userInfo?.marketingRecords?.benefitRecords) return props.userInfo.marketingRecords.benefitRecords
+  return []
+})
+
+const hasData = computed(() => rawTouchRecords.value.length > 0 || rawBenefitRecords.value.length > 0)
+
+// --- 过滤逻辑 ---
+const filteredTouchRecords = computed(() => {
+  return rawTouchRecords.value.filter((item: any) => {
+    // 产品过滤
+    if (props.productKey && item.productKey !== props.productKey) return false
+    // 渠道过滤
+    if (touchFilters.channel && item.touchChannel !== touchFilters.channel) return false
+    // 结果过滤
+    if (touchFilters.result && item.touchResult !== touchFilters.result) return false
+    // 时间过滤 (简化处理)
+    if (touchFilters.dateRange && touchFilters.dateRange.length === 2) {
+       const date = new Date(item.touchDate).getTime()
+       const start = new Date(touchFilters.dateRange[0]).getTime()
+       const end = new Date(touchFilters.dateRange[1]).getTime()
+       if (date < start || date > end) return false
     }
-  ]
+    return true
+  })
 })
 
-
-
-// 筛选后的记录
-const filteredRecords = computed(() => {
-  let filtered = marketingRecords.value || []
-  
-  if (searchText.value) {
-    filtered = (filtered || []).filter(record => 
-      record.campaignName.toLowerCase().includes(searchText.value.toLowerCase())
-    )
-  }
-  
-  if (statusFilter.value) {
-    filtered = (filtered || []).filter(record => record.status === statusFilter.value)
-  }
-  
-  if (channelFilter.value) {
-    filtered = (filtered || []).filter(record => record.channel === channelFilter.value)
-  }
-  
-  pagination.total = filtered.length
-  return filtered
+const filteredBenefitRecords = computed(() => {
+  return rawBenefitRecords.value.filter((item: any) => {
+    // 产品过滤
+    if (props.productKey && item.productKey !== props.productKey) return false
+    // 类型过滤
+    if (benefitFilters.type && item.benefitType !== benefitFilters.type) return false
+    // 状态过滤
+    if (benefitFilters.status && item.benefitStatus !== benefitFilters.status) return false
+    return true
+  })
 })
 
-// 方法
+// --- 分页逻辑 ---
+const paginatedTouchRecords = computed(() => {
+  const start = (touchPage.value - 1) * touchPageSize.value
+  return filteredTouchRecords.value.slice(start, start + touchPageSize.value)
+})
+
+const paginatedBenefitRecords = computed(() => {
+  const start = (benefitPage.value - 1) * benefitPageSize.value
+  return filteredBenefitRecords.value.slice(start, start + benefitPageSize.value)
+})
+
+// --- 辅助方法 ---
 const refreshData = () => {
   emit('refresh')
-  emit('debug-info', {
-    action: 'refresh',
-    component: 'MarketingRecords',
-    productKey: props.productKey
-  })
 }
 
-
-
-const handleSearch = () => {
-  pagination.current = 1
+const resetTouchFilters = () => {
+  touchFilters.channel = ''
+  touchFilters.result = ''
+  touchFilters.dateRange = []
 }
 
-const handleStatusFilter = () => {
-  pagination.current = 1
+const resetBenefitFilters = () => {
+  benefitFilters.type = ''
+  benefitFilters.status = ''
 }
 
-const handleChannelFilter = () => {
-  pagination.current = 1
+const getChannelIcon = (channel: string) => {
+  if (channel.includes('AI')) return IconRobot
+  if (channel.includes('人工')) return IconUser
+  if (channel.includes('短信')) return IconMessage
+  return IconNotification
 }
 
-const handleDateFilter = () => {
-  pagination.current = 1
+const getBenefitTypeColor = (type: string) => {
+  const map: Record<string, string> = {
+    '利息减免': 'blue',
+    '折扣': 'orange',
+    '现金红包': 'red',
+    '体验金': 'gold'
+  }
+  return map[type] || 'gray'
 }
 
-const handlePageChange = (page: number) => {
-  pagination.current = page
+const getBenefitStatusBadge = (status: string) => {
+  const map: Record<string, string> = {
+    '已发放': 'processing',
+    '已核销': 'success',
+    '已使用': 'success',
+    '已过期': 'default',
+    '未使用': 'normal'
+  }
+  return map[status] || 'default' as any
 }
 
+const formatBenefitValue = (record: any) => {
+  if (record.benefitType === '折扣' || record.benefitValue < 1) {
+    return `${(record.benefitValue * 10).toFixed(1)}折`
+  }
+  return `¥${Number(record.benefitValue).toLocaleString()}`
+}
 
-
-const viewDetail = (record: any) => {
+// --- 详情逻辑 ---
+const viewDetail = (record: any, type: 'touch' | 'benefit') => {
   selectedRecord.value = record
+  selectedType.value = type
   detailDrawerVisible.value = true
-  emit('debug-info', {
-    action: 'view-detail',
-    component: 'MarketingRecords',
-    record: record
-  })
 }
 
-const viewAnalysis = (record: any) => {
-  selectedRecord.value = record
-  analysisDrawerVisible.value = true
-  emit('debug-info', {
-    action: 'view-analysis',
-    component: 'MarketingRecords',
-    record: record
-  })
-}
+const drawerTitle = computed(() => {
+  return selectedType.value === 'touch' ? '触达详情' : '权益详情'
+})
 
-// 格式化和计算辅助方法
-const formatAmount = (amount: number) => {
-  return new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'CNY'
-  }).format(amount)
-}
-
-const calculateCompletionRate = (record: any) => {
-  if (!record.targetAmount || record.targetAmount === 0) return 100
-  return Math.round((record.actualAmount / record.targetAmount) * 100)
-}
-
-const calculateROI = (record: any) => {
-  if (!record.targetAmount || record.targetAmount === 0) return 0
-  const investment = record.targetAmount * 0.1 // 假设投入成本为目标金额的10%
-  const profit = record.actualAmount - investment
-  return Math.round((profit / investment) * 100)
-}
-
-// 颜色辅助方法
-const getCampaignTypeColor = (type: string) => {
-  const colorMap: Record<string, string> = {
-    '产品推广': 'blue',
-    '交叉销售': 'green',
-    '新产品': 'orange',
-    '客户关怀': 'purple'
+const detailFields = computed(() => {
+  const record = selectedRecord.value
+  if (!record) return {}
+  
+  if (selectedType.value === 'touch') {
+    return {
+      '活动名称': record.campaignName,
+      '活动类型': record.campaignType,
+      '触达渠道': record.touchChannel,
+      '触达时间': record.touchDate,
+      '触达内容': record.content,
+      '触达结果': record.touchResult,
+      '用户反馈': record.responseAction,
+      '目标人群': record.targetAudience,
+      '关联产品': record.productKey || '-'
+    }
+  } else {
+    return {
+      '权益名称': record.benefitName,
+      '权益类型': record.benefitType,
+      '权益价值': formatBenefitValue(record),
+      '当前状态': record.benefitStatus,
+      '发放时间': record.benefitDate,
+      '过期时间': record.expiryDate,
+      '使用时间': record.useDate || '-',
+      '来源活动': record.sourceActivity,
+      '使用限制': record.usageRestriction
+    }
   }
-  return colorMap[type] || 'default'
-}
-
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    '成功': 'green',
-    '失败': 'red',
-    '进行中': 'orange'
-  }
-  return colorMap[status] || 'default'
-}
-
-const getResponseRateColor = (rate: number) => {
-  if (rate >= 70) return '#00b42a'
-  if (rate >= 40) return '#ff7d00'
-  return '#f53f3f'
-}
-
-
+})
 </script>
 
-<style scoped lang="scss">
+<style scoped lang="less">
 .marketing-records {
   padding: 16px;
+  background-color: var(--color-bg-2);
 }
 
-.records-header {
+.module-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-1);
+    border-left: 4px solid rgb(var(--primary-6));
+    padding-left: 12px;
+  }
 }
 
-.records-header h4 {
-  margin: 0;
-  color: #1d2129;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.header-actions {
+.section-header {
   display: flex;
-  gap: 8px;
-}
-
-.loading-state,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: #86909c;
-}
-
-.records-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-
-
-.filter-toolbar {
-  display: flex;
-  gap: 12px;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.table-container {
-  background: #fff;
-  border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  padding: 16px;
+  
+  .title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-1);
+    }
+  }
+  
+  .filter-group {
+    display: flex;
+    gap: 8px;
+  }
 }
 
 .channel-cell {
   display: flex;
   align-items: center;
   gap: 6px;
+  color: var(--color-text-2);
+  
+  .arco-icon {
+    color: rgb(var(--primary-6));
+  }
 }
 
-.channel-icon {
-  font-size: 14px;
-  color: #165dff;
+.benefit-value {
+  font-family: 'DIN Alternate', sans-serif;
+  font-weight: 600;
+  color: var(--color-text-1);
 }
 
-.response-rate {
+.section-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.loading-state, .empty-state {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-3);
+}
+
+:deep(.arco-descriptions-item-label) {
+  width: 100px;
+}
+
+.content-duration {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--color-text-2);
+  
+  .arco-icon {
+    color: rgb(var(--primary-6));
+  }
 }
 
-.rate-text {
-  font-size: 12px;
-  color: #1d2129;
-  font-weight: 500;
-  min-width: 35px;
-}
-
-
-
-/* 抽屉样式 */
-.detail-content, .analysis-content {
-  .detail-section, .analysis-section {
-    margin-bottom: 24px;
+.touch-detail-preview {
+  margin-bottom: 24px;
+  
+  .call-record-card, .message-card {
+    background: var(--color-fill-2);
+    border-radius: 4px;
+    padding: 16px;
     
-    h4 {
-      margin-bottom: 16px;
-      color: #1d2129;
-      font-weight: 600;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-weight: 500;
+      color: var(--color-text-2);
     }
   }
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.metric-card {
-  text-align: center;
-  padding: 20px;
-  background: #f7f8fa;
-  border-radius: 8px;
   
-  .metric-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1d2129;
-    margin-bottom: 8px;
+  .audio-player-mock {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--color-bg-1);
+    padding: 12px;
+    border-radius: 32px;
+    border: 1px solid var(--color-border-2);
+    
+    .progress-track {
+      flex: 1;
+      height: 4px;
+      background: var(--color-fill-3);
+      border-radius: 2px;
+      position: relative;
+      
+      .progress-bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background: rgb(var(--primary-6));
+        border-radius: 2px;
+      }
+    }
+    
+    .time {
+      font-size: 12px;
+      color: var(--color-text-3);
+      font-family: monospace;
+    }
   }
   
-  .metric-label {
-    font-size: 14px;
-    color: #86909c;
+  .transcript-box {
+    margin-top: 16px;
+    background: var(--color-bg-1);
+    border: 1px solid var(--color-border-2);
+    border-radius: 4px;
+    padding: 12px;
+    
+    .box-title {
+      font-size: 12px;
+      color: var(--color-text-3);
+      margin-bottom: 8px;
+    }
+    
+    .box-content {
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--color-text-1);
+      max-height: 200px;
+      overflow-y: auto;
+    }
   }
-}
-
-:deep(.arco-table-th) {
-  background-color: #f7f8fa;
-  font-weight: 500;
-}
-
-:deep(.arco-table-td) {
-  padding: 8px 12px;
-}
-
-:deep(.arco-table-size-small .arco-table-td) {
-  padding: 6px 8px;
-}
-
-:deep(.arco-progress-line-inner) {
-  height: 4px;
+  
+  .message-bubble {
+    background: var(--color-bg-1);
+    border: 1px solid var(--color-border-2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    position: relative;
+    margin-left: 8px;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 16px;
+      width: 10px;
+      height: 10px;
+      background: var(--color-bg-1);
+      border-left: 1px solid var(--color-border-2);
+      border-bottom: 1px solid var(--color-border-2);
+      transform: rotate(45deg);
+    }
+  }
 }
 </style>

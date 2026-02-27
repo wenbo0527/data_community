@@ -210,6 +210,17 @@
                 <h3 class="item-title">{{ item.name }}</h3>
                 <p class="item-description">{{ item.description }}</p>
                 
+                <div class="item-tags" v-if="item.businessScenarios?.length || item.recommendedUsage?.length">
+                  <div v-if="item.businessScenarios?.length" class="tag-group">
+                    <span class="tag-label">业务场景:</span>
+                    <a-tag v-for="tag in item.businessScenarios" :key="tag" size="small" color="arcoblue" class="custom-tag">{{ tag }}</a-tag>
+                  </div>
+                  <div v-if="item.recommendedUsage?.length" class="tag-group">
+                    <span class="tag-label">推荐使用:</span>
+                    <a-tag v-for="tag in item.recommendedUsage" :key="tag" size="small" color="green" class="custom-tag">{{ tag }}</a-tag>
+                  </div>
+                </div>
+
                 <div class="item-meta">
                   <span class="meta-item">
                     <IconUser />{{ item.owner }}
@@ -286,6 +297,8 @@ interface SearchResult {
   updateTime: string
   domain?: string
   isFavorite?: boolean
+  businessScenarios?: string[]
+  recommendedUsage?: string[]
   [key: string]: any
 }
 
@@ -390,6 +403,18 @@ const performSearch = async (query?: string) => {
   
   // 模拟API延迟
   await new Promise(resolve => setTimeout(resolve, 500))
+
+  // 模拟标签数据
+  const scenarios = ['精准营销', '风险控制', '客户流失预测', '市场趋势分析', '运营优化', '财务报表', '授信', '信贷审批', '反欺诈', '额度管理']
+  // 推荐使用标签：内容为数仓推荐
+  const usages = ['数仓推荐']
+
+  const getRandomTags = (options: string[], count = 2) => {
+    // 如果选项只有一个，直接返回该选项
+    if (options.length === 1) return options
+    const shuffled = [...options].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, Math.floor(Math.random() * count) + 1)
+  }
   
   // 搜索数据表
   const tables = mockDataMap.collections?.flatMap(collection => 
@@ -401,7 +426,9 @@ const performSearch = async (query?: string) => {
       owner: table.owner,
       updateTime: '2024-01-15',
       domain: table.domain,
-      isFavorite: false
+      isFavorite: false,
+      businessScenarios: getRandomTags(scenarios),
+      recommendedUsage: getRandomTags(usages)
     }))
   ) || []
   
@@ -421,7 +448,9 @@ const performSearch = async (query?: string) => {
       if (t && metric.name?.toLowerCase().includes(t)) s += 80
       if (t && metric.description?.toLowerCase().includes(t)) s += 20
       return s
-    })()
+    })(),
+    businessScenarios: getRandomTags(scenarios),
+    recommendedUsage: getRandomTags(usages)
   })) || []
   
   // 搜索外部数据
@@ -441,7 +470,9 @@ const performSearch = async (query?: string) => {
         if (t && '外部数据源A'.toLowerCase().includes(t)) s += 80
         if (t && '来自第三方的数据源'.toLowerCase().includes(t)) s += 20
         return s
-      })()
+      })(),
+      businessScenarios: getRandomTags(scenarios),
+      recommendedUsage: getRandomTags(usages)
     },
     {
       id: 'external_2',
@@ -458,7 +489,9 @@ const performSearch = async (query?: string) => {
         if (t && '外部数据源B'.toLowerCase().includes(t)) s += 80
         if (t && '合作伙伴提供的数据'.toLowerCase().includes(t)) s += 20
         return s
-      })()
+      })(),
+      businessScenarios: getRandomTags(scenarios),
+      recommendedUsage: getRandomTags(usages)
     }
   ]
   
@@ -467,7 +500,9 @@ const performSearch = async (query?: string) => {
     return items.filter(item => {
       const matchesQuery = !searchTerm || 
         (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.businessScenarios && item.businessScenarios.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (item.recommendedUsage && item.recommendedUsage.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
       
       const matchesType = !filters.value.type || item.type === filters.value.type
       const matchesDomain = !filters.value.domain || item.domain === filters.value.domain
@@ -876,6 +911,30 @@ const getTypeLabel = (type: string) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.item-tags {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag-label {
+  font-size: 12px;
+  color: #86909c;
+  min-width: 60px;
+}
+
+.custom-tag {
+  margin-right: 4px;
 }
 
 .item-meta {

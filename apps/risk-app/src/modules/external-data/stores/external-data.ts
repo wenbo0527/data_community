@@ -172,25 +172,59 @@ export const useExternalDataStore = defineStore('externalData', {
         }
       } catch (e: any) { this.error = e?.message ?? '获取生命周期数据失败' }
     },
-    async fetchServices() { this.error = null; try { const base = (this.products || []).map((p: any, idx: number) => ({ id: String(p.id ?? idx + 1), name: p.name || `外数服务-${idx + 1}`, supplier: p.supplier || '—', serviceType: ['API','文件','数据库','平台工具'][idx % 4], billingMode: p.billingMode || 'per_call', unitPrice: typeof p.unitPrice === 'number' ? p.unitPrice : (idx + 1) * 1.5, status: p.status === 'online' ? 'online' : p.status === 'maintaining' ? 'maintaining' : 'pending' })); this.services = base } catch (e: any) { this.error = e?.message ?? '获取服务列表失败' } },
-    async createService(payload: { name: string; supplier?: string; serviceType?: string; billingMode?: string; unitPrice?: number; status?: string; description?: string; accompanyPlan?: any; workflow?: any; templateKey?: string; templateTitle?: string; applyData?: any }) {
+    async fetchServices() {
+      this.error = null
+      try {
+        const types = ['在线批量调用', '外数离线回溯申请', '周期跑批任务申请', '全量变量回溯申请', '风险合规离线回溯申请', '批量外数调用服务申请']
+        const statuses = ['draft', 'approving', 'executing', 'completed']
+        const creators = ['张三', '李四', '王五', '赵六', '孙七']
+        
+        const base = (this.products || []).map((p: any, idx: number) => {
+          const now = new Date()
+          const createTime = new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
+          
+          return {
+            id: String(p.id ?? idx + 1),
+            name: p.name ? `${p.name}-服务` : `外数服务-${idx + 1}`,
+            serviceType: types[idx % types.length],
+            relatedProduct: p.name || `外数产品-${idx + 1}`,
+            description: p.description || '自动生成的服务描述',
+            status: statuses[idx % statuses.length],
+            creator: creators[idx % creators.length],
+            createdAt: createTime
+          }
+        })
+        this.services = base
+      } catch (e: any) {
+        this.error = e?.message ?? '获取服务列表失败'
+      }
+    },
+    async createService(payload: { name: string; serviceType?: string; description?: string; relatedProduct?: string; accompanyPlan?: any; workflow?: any; templateKey?: string; templateTitle?: string; applyData?: any; currentStage?: string; stages?: any[] }) {
       this.error = null
       try {
         const id = Date.now().toString()
         const item = {
           id,
           name: payload.name,
-          supplier: payload.supplier || '—',
-          serviceType: payload.serviceType || 'API',
-          billingMode: payload.billingMode || 'per_call',
-          unitPrice: typeof payload.unitPrice === 'number' ? payload.unitPrice : 0,
-          status: payload.status || 'pending',
+          serviceType: payload.serviceType || '在线批量调用',
+          relatedProduct: payload.relatedProduct || '',
           description: payload.description || '',
+          status: 'draft',
+          creator: '当前用户',
+          createdAt: new Date().toISOString(),
           accompanyPlan: payload.accompanyPlan || {},
           workflow: Array.isArray(payload.workflow) ? payload.workflow : [],
           templateKey: payload.templateKey,
           templateTitle: payload.templateTitle,
-          applyData: payload.applyData || {}
+          applyData: payload.applyData || {},
+          currentStage: payload.currentStage || 'preparation',
+          stages: payload.stages || [
+            { key: 'preparation', title: '样本表准备', status: 'process' },
+            { key: 'validation', title: '样本表校验', status: 'wait' },
+            { key: 'approval', title: '审批发起', status: 'wait' },
+            { key: 'execution', title: '调用发起', status: 'wait' },
+            { key: 'collection', title: '结果回收', status: 'wait' }
+          ]
         }
         this.services = [item, ...(this.services || [])]
         return true
@@ -199,7 +233,7 @@ export const useExternalDataStore = defineStore('externalData', {
         return false
       }
     },
-    async updateService(id: string, payload: Partial<{ name: string; supplier?: string; serviceType?: string; billingMode?: string; unitPrice?: number; status?: string; description?: string; accompanyPlan?: any; workflow?: any; templateKey?: string; templateTitle?: string; applyData?: any }>) {
+    async updateService(id: string, payload: Partial<{ name: string; serviceType?: string; description?: string; relatedProduct?: string; accompanyPlan?: any; workflow?: any; templateKey?: string; templateTitle?: string; applyData?: any; status?: string; currentStage?: string; stages?: any[] }>) {
       this.error = null
       try {
         const idx = (this.services || []).findIndex((x: any) => String(x.id) === String(id))
@@ -208,7 +242,6 @@ export const useExternalDataStore = defineStore('externalData', {
         const next = {
           ...prev,
           ...payload,
-          unitPrice: payload?.unitPrice != null ? Number(payload.unitPrice) : prev.unitPrice,
           workflow: Array.isArray(payload?.workflow) ? payload?.workflow : (prev.workflow || [])
         }
         ;(this.services as any[]).splice(idx, 1, next)

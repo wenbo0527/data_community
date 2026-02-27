@@ -161,7 +161,9 @@ export const STATUS_DICTIONARY: Record<string, Record<string, StatusMeta>> = {
   },
   dataModelUseCase: {
     download: { label: '明细数据下载', color: 'blue' },
-    report: { label: '分析报告模板', color: 'green' }
+    report: { label: '分析报告模板', color: 'green' },
+    external_data_sample: { label: '外数样本表', color: 'purple' },
+    validation_rule: { label: '校验规则', color: 'orange' }
   },
   dataModelLanguage: {
     sql: { label: 'SQL', color: 'orange' },

@@ -40,6 +40,8 @@
           >
             <a-option value="download">明细数据下载</a-option>
             <a-option value="report">分析报告模板</a-option>
+            <a-option value="external_data_sample">外数样本表</a-option>
+            <a-option value="validation_rule">校验规则</a-option>
           </a-select>
         </a-col>
         <a-col :span="4">

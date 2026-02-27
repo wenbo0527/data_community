@@ -64,25 +64,13 @@
       </a-row>
 
       <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item
-            field="priority"
-            label="紧急程度"
-          >
-            <a-radio-group v-model="form.priority" type="button" size="medium">
-              <a-radio value="low">普通</a-radio>
-              <a-radio value="medium">紧急</a-radio>
-              <a-radio value="high">非常紧急</a-radio>
-            </a-radio-group>
-          </a-form-item>
-        </a-col>
-
-        <a-col :span="12">
+        <a-col :span="24">
           <a-form-item
             field="expectedUsageTime"
             label="期望补齐时间"
+            :rules="[{ required: true, message: '请选择期望补齐时间' }]"
           >
-            <a-date-picker v-model="form.expectedUsageTime" style="width: 100%" placeholder="不限" />
+            <a-date-picker v-model="form.expectedUsageTime" style="width: 100%" placeholder="请选择时间" />
           </a-form-item>
         </a-col>
       </a-row>
@@ -160,7 +148,6 @@ const fileList = ref([])
 const form = reactive({
   type: 'table',
   targetAssetName: '',
-  priority: 'low',
   marketingScope: '',
   expectedUsageTime: '',
   description: ''
@@ -241,7 +228,6 @@ const handleCancel = () => {
 const resetForm = () => {
   formRef.value?.resetFields()
   form.type = 'table'
-  form.priority = 'low'
   form.targetAssetName = props.initialName || ''
   fileList.value = []
 }

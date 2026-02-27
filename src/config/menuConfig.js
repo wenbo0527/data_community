@@ -33,49 +33,31 @@ export const MENU_CONFIG = {
     title: '数据发现',
     icon: 'icon-search',
     type: 'module', // 模块，有子菜单
-    defaultPath: '/discovery/asset-overview',
+    defaultPath: '/discovery/data-map',
     children: {
-      'asset-overview': {
-        key: 'asset-overview',
-        title: '资产总览',
-        path: '/discovery/asset-overview',
-        routeName: 'AssetOverview'
-      },
       'data-map': {
         key: 'data-map',
         title: '统一搜索',
         path: '/discovery/data-map',
         routeName: 'dataMap'
       },
-      'full-data': {
-        key: 'full-data',
-        title: '全量数据',
-        path: '/discovery/data-map/table-list',
-        routeName: 'TableList'
-      },
-      'collections-management': {
-        key: 'collections-management',
-        title: '常用表管理',
-        path: '/discovery/data-map/collections',
-        routeName: 'CollectionsManagement'
-      },
-      'favorites': {
-        key: 'favorites',
-        title: '我的收藏',
-        path: '/discovery/favorites',
-        routeName: 'Favorites'
-      },
-      'lineage': {
-        key: 'lineage',
-        title: '血缘分析',
-        path: ROUTE_PATHS.DISCOVERY.LINEAGE,
-        routeName: ROUTE_NAMES.DISCOVERY.LINEAGE
-      },
       'data-asset': {
         key: 'data-asset',
         title: '数据资产',
         type: 'group',
         children: {
+          'asset-overview': {
+            key: 'asset-overview',
+            title: '资产总览',
+            path: '/discovery/asset-overview',
+            routeName: 'AssetOverview'
+          },
+          'full-data': {
+            key: 'full-data',
+            title: '全量数据',
+            path: '/discovery/data-map/table-list',
+            routeName: 'TableList'
+          },
           'metrics-map': {
             key: 'metrics-map',
             title: '指标地图',
@@ -88,18 +70,31 @@ export const MENU_CONFIG = {
             path: '/discovery/variable-map',
             routeName: 'VariableMapDiscovery'
           },
-          'credit-variables': {
-            key: 'credit-variables',
-            title: '征信变量',
-            path: '/discovery/credit',
-            routeName: 'credit'
-          },
           'external-data': {
             key: 'external-data',
             title: '外部数据',
             path: '/external-data-v1/list',
             routeName: 'external'
           },
+          'credit-variables': {
+            key: 'credit-variables',
+            title: '征信变量',
+            path: '/discovery/credit',
+            routeName: 'credit'
+          }
+        }
+      },
+      'data-resources': {
+        key: 'data-resources',
+        title: '数据资源',
+        type: 'group',
+        children: {
+          'data-resources-item': {
+            key: 'data-resources-item',
+            title: '数据资源',
+            path: '/discovery/data-resources',
+            routeName: 'DataResources'
+          }
         }
       },
       'data-elements': {
@@ -109,30 +104,49 @@ export const MENU_CONFIG = {
         children: {
           'api-market': {
             key: 'api-market',
-            title: 'API集市',
+            title: 'API市场',
             path: '/discovery/api-market',
             routeName: 'ApiMarket'
+          },
+          'messages': {
+            key: 'messages',
+            title: '消息列表',
+            path: '/discovery/messages',
+            routeName: 'Messages'
           }
         }
       },
-      'data-register': {
-        key: 'data-register',
-        title: '数据注册',
+      'resource-analysis': {
+        key: 'resource-analysis',
+        title: '资源分析',
         type: 'group',
         children: {
-          'batch-asset-management': {
-            key: 'batch-asset-management',
-            title: '批量资产管理',
-            path: '/discovery/asset-management/batch-asset-management',
-            routeName: 'BatchAssetManagement'
+          'lineage': {
+            key: 'lineage',
+            title: '血缘分析',
+            path: ROUTE_PATHS.DISCOVERY.LINEAGE,
+            routeName: ROUTE_NAMES.DISCOVERY.LINEAGE
           }
         }
       },
-      'customer360': {
-        key: 'customer360',
-        title: '客户360',
-        path: '/discovery/customer360',
-        routeName: 'Customer360'
+      'common-management': {
+        key: 'common-management',
+        title: '常用管理',
+        type: 'group',
+        children: {
+          'collections-management': {
+            key: 'collections-management',
+            title: '常用表管理',
+            path: '/discovery/data-map/collections',
+            routeName: 'CollectionsManagement'
+          },
+          'favorites': {
+            key: 'favorites',
+            title: '我的收藏',
+            path: '/discovery/favorites',
+            routeName: 'Favorites'
+          }
+        }
       }
     }
   },
