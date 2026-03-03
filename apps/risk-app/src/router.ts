@@ -75,6 +75,25 @@ const routes: RouteRecordRaw[] = [
             name: 'RiskExternalDataSamplePreparation',
             component: () => import('./modules/external-data/pages/SamplePreparation.vue'),
             meta: { title: '样本表准备' }
+          },
+          {
+            path: 'sample-preparation/create',
+            name: 'RiskExternalDataSamplePreparationCreate',
+            component: () => import('./modules/external-data/pages/SamplePreparationCreate.vue'),
+            meta: { title: '新建样本表' }
+          },
+          {
+            path: 'sample-preparation/edit/:id',
+            name: 'RiskExternalDataSamplePreparationEdit',
+            component: () => import('./modules/external-data/pages/SamplePreparationCreate.vue'),
+            meta: { title: '编辑样本表' },
+            props: true
+          },
+          {
+            path: 'validation-template',
+            name: 'RiskExternalDataValidationTemplate',
+            component: () => import('./modules/external-data/pages/ServiceValidationTemplate.vue'),
+            meta: { title: '服务校验模版管理' }
           }
         ]
       },

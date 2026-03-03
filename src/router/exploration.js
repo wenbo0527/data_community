@@ -1,3 +1,5 @@
+import { ROUTE_NAMES } from './constants'
+
 export default [
   {
     path: 'external-data-analysis',
@@ -64,6 +66,17 @@ export default [
     name: 'customer-center',
     component: () => import('../pages/exploration/customer-center/index.vue'),
     children: [
+      {
+        path: 'customer-360',
+        name: ROUTE_NAMES.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360,
+        component: () => import('../pages/discovery/customer360/index.vue')
+      },
+      {
+        path: 'customer-360/detail/:userId',
+        name: ROUTE_NAMES.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360_DETAIL,
+        component: () => import('../pages/discovery/customer360/detail.vue'),
+        props: true
+      },
       {
         path: 'event-center',
         name: 'event-center',

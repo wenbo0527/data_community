@@ -6,15 +6,19 @@
       <p>客群中心模块主页，包含标签体系、人群画像、事件中心等功能</p>
       
       <div class="module-grid">
-        <div class="module-card">
+        <div class="module-card" @click="$router.push('/exploration/customer-center/customer-360')">
+          <h3>客户360</h3>
+          <p>全方位展示客户画像与行为数据</p>
+        </div>
+        <div class="module-card" @click="$router.push('/exploration/customer-center/tag-system')">
           <h3>标签体系</h3>
           <p>标签管理、属性管理</p>
         </div>
-        <div class="module-card">
+        <div class="module-card" @click="$router.push('/exploration/customer-center/audience-system/audience-management')">
           <h3>人群画像</h3>
           <p>人群管理功能</p>
         </div>
-        <div class="module-card">
+        <div class="module-card" @click="$router.push('/exploration/customer-center/event-center')">
           <h3>事件中心</h3>
           <p>事件管理、虚拟事件</p>
         </div>
@@ -53,6 +57,14 @@
   border-radius: 8px;
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.module-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-color: rgb(var(--primary-6));
 }
 
 .module-card h3 {

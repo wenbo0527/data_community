@@ -334,194 +334,107 @@ const getStatusColor = (status: string) => {
 }
 
 .overview-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
 .info-card {
   background: #fff;
   border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  padding: 16px;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
   border-bottom: 1px solid #f2f3f5;
 }
 
 .card-icon {
-  margin-right: 8px;
+  margin-right: 12px;
   color: #165dff;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .card-title {
-  font-weight: 500;
+  font-weight: 600;
   color: #1d2129;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px 32px;
 }
 
 .info-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .label {
   color: #86909c;
-  font-size: 12px;
+  font-size: 13px;
+  margin-bottom: 2px;
 }
 
 .value {
   color: #1d2129;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 
-.value.highlight {
-  color: #165dff;
-  font-size: 14px;
+.value.amount {
+  font-family: 'DIN Alternate', sans-serif;
+  font-size: 16px;
   font-weight: 600;
-}
-
-.product-overview {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.overview-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.usage-progress {
-  margin-top: 16px;
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.progress-label {
-  font-size: 14px;
-  color: var(--color-text-2);
-}
-
-.progress-value {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-1);
-}
-
-.product-list {
-  margin-top: 20px;
-  border-top: 1px solid var(--color-border-2);
-  padding-top: 16px;
-}
-
-.list-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-1);
-  margin: 0 0 12px 0;
-}
-
-.product-items {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.product-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: var(--color-fill-1);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.product-item:hover {
-  background: var(--color-fill-2);
-  transform: translateY(-1px);
-}
-
-.product-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.product-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-1);
-}
-
-.product-amount {
-  font-size: 12px;
-  color: var(--color-text-3);
-}
-
-.product-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #1d2129;
 }
 
 /* 账户状态样式 */
 .account-status-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px 32px;
 }
 
 .status-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .status-item.total {
   grid-column: 1 / -1;
   border-top: 1px solid #f2f3f5;
-  padding-top: 12px;
+  padding-top: 16px;
   margin-top: 8px;
 }
 
 .status-item .label {
   color: #86909c;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .status-item .value {
   color: #1d2129;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .status-item .value.amount {
   color: #165dff;
+  font-family: 'DIN Alternate', sans-serif;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -530,38 +443,34 @@ const getStatusColor = (status: string) => {
   font-weight: 600;
 }
 
-.status-item .value.date {
-  color: #86909c;
-}
-
 .status-item .value.highlight {
   color: #ff7d00;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 700;
 }
 
 /* 风险情况样式 */
 .risk-status-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px 32px;
 }
 
 .risk-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .risk-item .label {
   color: #86909c;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .risk-item .value.risk-value {
   color: #f53f3f;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
 }
 

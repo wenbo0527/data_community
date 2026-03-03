@@ -4,9 +4,15 @@
       v-model:active-key="activeMainTab" 
       type="line" 
       size="default"
+      class="main-tabs"
       @change="handleMainTabChange"
     >
-      <a-tab-pane key="profile" title="客户画像">
+      <a-tab-pane key="all-around">
+        <template #title>
+          <span class="tab-title-with-icon">
+            <icon-dashboard /> 客户全景
+          </span>
+        </template>
         <div class="tab-content">
           <CustomerProfile
             :user-info="userInfo"
@@ -19,8 +25,13 @@
       <a-tab-pane 
         v-for="product in products" 
         :key="product.productKey"
-        :title="product.productName"
       >
+        <template #title>
+          <span class="tab-title-with-icon">
+            <component :is="getProductIcon(product.productName)" />
+            {{ product.productName }}
+          </span>
+        </template>
         <div class="tab-content">
           <InfoModuleTabs 
             :product-key="product.productKey"
@@ -38,6 +49,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { 
+  IconDashboard, 
+  IconSafe, 
+  IconInteraction, 
+  IconStorage 
+} from '@arco-design/web-vue/es/icon'
 import CustomerProfile from './CustomerProfile.vue'
 import InfoModuleTabs from './InfoModuleTabs.vue'
 
@@ -70,12 +87,19 @@ const props = withDefaults(defineProps<Props>(), {
   showDebugPanel: false
 })
 
+const getProductIcon = (productName: string) => {
+  if (productName.includes('贷')) return IconSafe
+  if (productName.includes('理财')) return IconInteraction
+  if (productName.includes('存款')) return IconStorage
+  return IconSafe // 默认图标
+}
+
 const emit = defineEmits<{
   'main-tab-change': [tabKey: string]
   'module-change': [moduleKey: string]
 }>()
 
-const activeMainTab = ref('profile')
+const activeMainTab = ref('all-around')
 
 const getProductTabLabel = (product: Product) => {
   const statusColor = getStatusColor(product.status)
@@ -185,20 +209,20 @@ const handleModuleChange = (moduleKey: string) => {
   transition: all 0.3s ease;
 }
 
-/* 客户画像Tab特殊样式 */
-:deep(.arco-tabs-tab[data-key="profile"]) {
+/* 客户全景Tab特殊样式 */
+:deep(.arco-tabs-tab[data-key="all-around"]) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   border-radius: 6px 6px 0 0;
   margin-right: 8px;
 }
 
-:deep(.arco-tabs-tab[data-key="profile"]:hover) {
+:deep(.arco-tabs-tab[data-key="all-around"]:hover) {
   background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
   color: #fff;
 }
 
-:deep(.arco-tabs-tab-active[data-key="profile"]) {
+:deep(.arco-tabs-tab-active[data-key="all-around"]) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
 }
@@ -211,5 +235,15 @@ const handleModuleChange = (moduleKey: string) => {
 
 :deep(.arco-tabs-nav-operations) {
   display: none;
+}
+
+.tab-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-title-with-icon :deep(.arco-icon) {
+  font-size: 16px;
 }
 </style>

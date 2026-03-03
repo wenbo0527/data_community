@@ -170,6 +170,12 @@ export const MENU_CONFIG = {
         title: '客群中心',
         type: 'group',
         children: {
+          'customer-360': {
+            key: 'customer-360',
+            title: '客户360',
+            path: ROUTE_PATHS.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360,
+            routeName: ROUTE_NAMES.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360
+          },
           'audience-management': {
             key: 'audience-management',
             title: '人群管理',

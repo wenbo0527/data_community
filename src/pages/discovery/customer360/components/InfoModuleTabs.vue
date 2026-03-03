@@ -1,82 +1,143 @@
 <template>
   <div class="info-module-tabs">
-    <div class="tabs-header">
-      <h4>信息模块</h4>
-      <div class="module-summary">
-        <span class="summary-text">产品: {{ currentProductName }}</span>
+    <!-- 实时数据区 -->
+    <div class="data-zone realtime-zone" v-if="isSudaiProduct">
+      <div class="zone-header">
+        <div class="zone-title">
+          <icon-thunderbolt />
+          <span>实时监控</span>
+          <a-tag color="green" size="small" class="live-tag">Live</a-tag>
+        </div>
+        <div class="zone-actions">
+          <a-tooltip content="数据反馈">
+            <a-button type="text" size="mini" @click="handleFeedback('realtime')">
+              <template #icon><icon-bug /></template>
+            </a-button>
+          </a-tooltip>
+        </div>
+      </div>
+      <div class="zone-content">
+        <RealTimeData 
+          :product-key="productKey"
+          :product-data="productData"
+          :user-real-time-data="realTimeData"
+          :loading="loading"
+        />
       </div>
     </div>
-    
-    <a-tabs 
-      v-model:active-key="selectedInfoModule" 
-      type="line" 
-      size="default"
-      @change="handleModuleChange"
+
+    <!-- 离线数据区 -->
+    <div class="data-zone offline-zone">
+      <div class="zone-header">
+        <div class="zone-title">
+          <icon-bar-chart />
+          <span>历史经营分析</span>
+          <span class="update-time">数据更新于 T-1</span>
+        </div>
+        <div class="zone-actions">
+          <a-tooltip content="数据反馈">
+            <a-button type="text" size="mini" @click="handleFeedback('offline')">
+              <template #icon><icon-bug /></template>
+            </a-button>
+          </a-tooltip>
+        </div>
+      </div>
+      
+      <a-tabs 
+        v-model:active-key="selectedInfoModule" 
+        type="line" 
+        size="default"
+        @change="handleModuleChange"
+      >
+        <a-tab-pane key="overview" title="客户概览">
+          <div class="module-content">
+            <CustomerOverview 
+              :product-key="productKey"
+              :product-data="productData"
+              :user-info="userInfo"
+              :loading="loading"
+            />
+          </div>
+        </a-tab-pane>
+        
+        <a-tab-pane key="business" title="业务核心明细">
+          <div class="module-content">
+            <BusinessCoreDetails 
+              :product-key="productKey"
+              :business-data="businessData"
+              :user-info="userInfo"
+              :loading="loading"
+            />
+          </div>
+        </a-tab-pane>
+        
+        <a-tab-pane key="marketing" title="营销记录">
+          <div class="module-content">
+            <MarketingRecords 
+              :product-key="productKey"
+              :marketing-data="marketingData"
+              :user-info="userInfo"
+              :loading="loading"
+            />
+          </div>
+        </a-tab-pane>
+        
+        <a-tab-pane key="product" title="产品信息">
+          <div class="module-content">
+            <ProductInfo 
+              :product-key="productKey"
+              :product-data="productData"
+              :user-info="userInfo"
+              :loading="loading"
+            />
+          </div>
+        </a-tab-pane>
+      </a-tabs>
+    </div>
+
+    <!-- 数据反馈抽屉 -->
+    <a-drawer 
+      v-model:visible="feedbackVisible" 
+      title="数据问题反馈" 
+      width="400"
+      unmount-on-close
+      @ok="submitFeedback"
     >
-      <a-tab-pane key="overview" title="客户概览">
-        <div class="module-content">
-          <CustomerOverview 
-            :product-key="productKey"
-            :product-data="productData"
-            :user-info="userInfo"
-            :loading="loading"
+      <a-form :model="feedbackForm" layout="vertical">
+        <a-form-item label="反馈来源">
+          <a-tag color="blue">{{ feedbackForm.source === 'realtime' ? '实时监控区' : '历史分析区' }}</a-tag>
+        </a-form-item>
+        <a-form-item label="问题类型" required>
+          <a-select v-model="feedbackForm.type" placeholder="请选择问题类型">
+            <a-option value="data_error">数据准确性错误</a-option>
+            <a-option value="data_missing">数据缺失/未展示</a-option>
+            <a-option value="data_outdated">数据更新不及时</a-option>
+            <a-option value="other">其他问题</a-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="问题描述" required>
+          <a-textarea 
+            v-model="feedbackForm.description" 
+            placeholder="请详细描述您发现的数据问题，以便我们快速排查..." 
+            :auto-size="{ minRows: 4, maxRows: 8 }"
           />
-        </div>
-      </a-tab-pane>
-      
-      <a-tab-pane key="business" title="业务核心明细">
-        <div class="module-content">
-          <BusinessCoreDetails 
-            :product-key="productKey"
-            :business-data="businessData"
-            :user-info="userInfo"
-            :loading="loading"
-          />
-        </div>
-      </a-tab-pane>
-      
-      <a-tab-pane key="marketing" title="营销记录">
-        <div class="module-content">
-          <MarketingRecords 
-            :product-key="productKey"
-            :marketing-data="marketingData"
-            :user-info="userInfo"
-            :loading="loading"
-          />
-        </div>
-      </a-tab-pane>
-      
-      <a-tab-pane key="product" title="产品信息">
-        <div class="module-content">
-          <ProductInfo 
-            :product-key="productKey"
-            :product-data="productData"
-            :user-info="userInfo"
-            :loading="loading"
-          />
-        </div>
-      </a-tab-pane>
-      
-      <!-- 仅当产品为Su贷时显示实时数据tab -->
-      <a-tab-pane 
-        v-if="isSudaiProduct" 
-        key="realtime" 
-        title="实时数据">
-        <div class="module-content">
-          <RealTimeData 
-            :product-key="productKey"
-            :product-data="productData"
-            :user-real-time-data="realTimeData"
-            :loading="loading"
-          />
-        </div>
-      </a-tab-pane>
-    </a-tabs>
+        </a-form-item>
+        <a-form-item label="上传截图 (可选)">
+          <a-upload draggable />
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <a-button @click="feedbackVisible = false">取消</a-button>
+        <a-button type="primary" @click="submitFeedback">提交反馈</a-button>
+      </template>
+    </a-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
+import { Message } from '@arco-design/web-vue'
+import { IconThunderbolt, IconBarChart, IconBug } from '@arco-design/web-vue/es/icon'
 import CustomerOverview from './CustomerOverview.vue'
 import BusinessCoreDetails from './BusinessCoreDetails.vue'
 import MarketingRecords from './MarketingRecords.vue'
@@ -213,43 +274,91 @@ const handleModuleChange = (moduleKey: string) => {
   emit('module-change', moduleKey)
 }
 
-// 移除了handleDebugInfo函数
+// 数据反馈相关
+const feedbackVisible = ref(false)
+const feedbackForm = reactive({
+  type: '',
+  description: '',
+  source: ''
+})
+
+const handleFeedback = (source: string) => {
+  feedbackForm.source = source
+  feedbackForm.type = ''
+  feedbackForm.description = ''
+  feedbackVisible.value = true
+}
+
+const submitFeedback = () => {
+  Message.success(`反馈提交成功！来源：${feedbackForm.source === 'realtime' ? '实时区' : '离线区'}`)
+  feedbackVisible.value = false
+}
 </script>
 
 <style scoped>
 .info-module-tabs {
-  background: #fff;
-  border-radius: 6px;
-  padding: 0;
+  background: transparent;
   width: 100%;
 }
 
-.tabs-header {
+.data-zone {
+  background: #fff;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.realtime-zone {
+  border: 1px solid #e8ffea;
+}
+
+.zone-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e6eb;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.tabs-header h4 {
-  margin: 0;
-  color: #1d2129;
+.zone-title {
+  display: flex;
+  align-items: center;
   font-size: 16px;
   font-weight: 600;
+  color: #1d2129;
 }
 
-.module-summary {
-  .summary-text {
-    color: #86909c;
-    font-size: 12px;
-  }
+.zone-title .arco-icon {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.live-tag {
+  margin-left: 8px;
+  animation: pulse 2s infinite;
+}
+
+.update-time {
+  font-size: 12px;
+  color: #86909c;
+  font-weight: normal;
+  margin-left: 12px;
+}
+
+.zone-content {
+  padding: 16px;
 }
 
 .module-content {
   padding: 16px;
-  min-height: 400px;
+  min-height: 300px;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 /* Tab样式优化 - 使用Arco Design */

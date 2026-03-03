@@ -1,7 +1,47 @@
 <template>
   <div class="customer-detail-container">
     
-    <!-- 头部区域已删除，默认显示客户画像 -->
+    <!-- Level 1: 客户级数据（常驻 Header） -->
+    <a-page-header :show-back="false" class="customer-header">
+      <template #title>
+        <div class="customer-info-grid">
+          <div class="info-row primary">
+            <span class="customer-name">{{ userInfo?.basicInfo?.name || '未知用户' }}</span>
+            <span class="info-label">年龄:</span> <span class="info-value">{{ userInfo?.basicInfo?.age || '28' }}岁</span>
+            <a-divider direction="vertical" />
+            <span class="info-label">性别:</span> <span class="info-value">{{ userInfo?.basicInfo?.gender || '男' }}</span>
+            <a-divider direction="vertical" />
+            <span class="info-label">当前状态:</span> 
+            <a-tag size="small" :color="userInfo?.basicInfo?.status === '正常' ? 'green' : 'red'">
+              {{ userInfo?.basicInfo?.status || '正常' }}
+            </a-tag>
+          </div>
+          
+          <div class="info-row secondary">
+            <span class="info-label">身份证号:</span> <span class="info-value">{{ userInfo?.basicInfo?.idCard || '320***********1234' }}</span>
+            <a-divider direction="vertical" />
+            <span class="info-label">统一客户号:</span> <span class="info-value">{{ userInfo?.userId || userId }}</span>
+            <a-divider direction="vertical" />
+            <span class="info-label">户籍:</span> <span class="info-value">{{ userInfo?.basicInfo?.residence || '江苏省南京市' }}</span>
+            <a-divider direction="vertical" />
+            <span class="info-label">证件有效期:</span> <span class="info-value">{{ userInfo?.basicInfo?.idCardExpiry || '2030-12-31' }}</span>
+          </div>
+
+          <div class="info-row financial">
+             <span class="info-label">总授信金额:</span> 
+             <span class="money-value">¥ {{ (userInfo?.totalCredit || 0).toLocaleString() }}</span>
+             <a-divider direction="vertical" />
+             <span class="info-label">总在贷余额:</span> 
+             <span class="money-value highlight">¥ {{ (userInfo?.usedCredit || 0).toLocaleString() }}</span>
+          </div>
+        </div>
+      </template>
+      <template #extra>
+        <div class="header-actions">
+           <HistoryQueryButton :user-id="userId" />
+        </div>
+      </template>
+    </a-page-header>
 
     <!-- 数据不一致警告 -->
     <div v-if="hasDataInconsistency" class="data-inconsistency-warning">
@@ -15,66 +55,35 @@
     </div>
 
     <!-- 加载状态 -->
-      <a-spin :loading="loading" style="width: 100%">
-        <!-- 加载中显示 -->
-        <div v-if="loading" class="loading-container">
-          <a-spin :size="32" />
-          <div class="loading-text">正在加载客户数据...</div>
-          <!-- 调试：加载状态 -->
-          <div v-if="showDebugPanel" style="background: #fff7e6; padding: 8px; margin-top: 16px; border-radius: 4px; font-size: 12px;">
-            <strong>⏳ 加载状态调试:</strong>
-            <div>loading: {{ loading }}</div>
-            <div>userId: {{ userId }}</div>
-            <div>userInfo: {{ !!userInfo }}</div>
-          </div>
+    <a-skeleton v-if="loading" animation class="skeleton-loader">
+      <a-space direction="vertical" :style="{width:'100%'}" size="large">
+        <a-skeleton-line :rows="3" :widths="['40%', '80%', '60%']" />
+        <a-skeleton-line :rows="2" :widths="['100%', '100%']" />
+        <div style="display:flex; gap:16px">
+          <a-skeleton-shape shape="square" :style="{width:'200px', height:'100vh'}" />
+          <a-skeleton-shape shape="square" :style="{flex:1, height:'100vh'}" />
         </div>
+      </a-space>
+    </a-skeleton>
 
-        <!-- 错误状态 -->
-        <div v-else-if="userInfo && userInfo.error" class="error-container">
-          <a-result status="error" :title="userInfo.error" />
-          <!-- 调试：错误状态 -->
-          <div v-if="showDebugPanel" style="background: #fff2f0; padding: 8px; margin-top: 16px; border-radius: 4px; font-size: 12px;">
-            <strong>❌ 错误状态调试:</strong>
-            <div>userInfo.error: {{ userInfo.error }}</div>
-            <div>完整userInfo: {{ JSON.stringify(userInfo, null, 2) }}</div>
-          </div>
-        </div>
+    <!-- 错误状态 -->
+    <div v-else-if="userInfo && userInfo.error" class="error-container">
+      <a-result status="error" :title="userInfo.error" />
+    </div>
 
-        <!-- 无数据状态 -->
-        <div v-else-if="!userInfo && !loading" class="empty-container">
-          <a-result status="info" title="暂无数据" sub-title="未找到用户信息" />
-          <!-- 调试：无数据状态 -->
-          <div v-if="showDebugPanel" style="background: #f6ffed; padding: 8px; margin-top: 16px; border-radius: 4px; font-size: 12px;">
-            <strong>📭 无数据状态调试:</strong>
-            <div>userInfo: {{ userInfo }}</div>
-            <div>loading: {{ loading }}</div>
-            <div>userId: {{ userId }}</div>
-            <div>fetchData是否被调用: 检查上方调试日志</div>
-          </div>
-        </div>
+    <!-- 无数据状态 -->
+    <div v-else-if="!userInfo && !loading" class="empty-container">
+      <a-empty>
+        <template #image>
+          <icon-user-group :style="{ fontSize: '48px', color: '#C9CDD4' }" />
+        </template>
+        暂无客户数据，请检查客户ID是否正确
+      </a-empty>
+    </div>
 
-        <!-- 主要内容 -->
-        <div v-else-if="userInfo && !userInfo.error" class="content">
-        <!-- 调试：渲染条件检查 -->
-        <div v-if="showDebugPanel" style="background: #e6f7ff; padding: 8px; margin-bottom: 16px; border-radius: 4px; font-size: 12px;">
-          <strong>🎯 主要内容渲染条件检查:</strong>
-          <div>userInfo存在: {{ !!userInfo }}</div>
-          <div>userInfo.error: {{ userInfo?.error }}</div>
-          <div>条件结果: {{ !!(userInfo && !userInfo.error) }}</div>
-          <div>userInfo类型: {{ typeof userInfo }}</div>
-          <div v-if="userInfo">userInfo键: {{ Object.keys(userInfo).join(', ') }}</div>
-        </div>
-
-        <!-- 顶部概览卡片已删除，按需求文档要求移除 -->
-
-        <!-- 页面标题和历史切片查询按钮 -->
-        <div class="page-header">
-          <h2 class="page-title">客户360-查询条件</h2>
-          <div class="header-actions">
-            <HistoryQueryButton :user-id="userId" />
-          </div>
-        </div>
-
+    <!-- 主要内容 -->
+    <div v-else-if="userInfo && !userInfo.error" class="content">
+        
         <!-- 主要内容区域 - 新的两级Tab架构 -->
         <div class="main-content">
           <MainTabs
@@ -111,7 +120,6 @@
           </template>
         </a-result>
       </div>
-    </a-spin>
   </div>
 </template>
 
@@ -127,6 +135,7 @@ document.title = '🔥 Customer360 Detail - ' + new Date().toLocaleTimeString()
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
+import { IconUserGroup } from '@arco-design/web-vue/es/icon'
 // 删除了不再需要的图标导入
 import { fetchUserInfo } from '../../../mock/customer360'
 import { formatAmount, formatPercent } from '../../../utils/formatUtils'
@@ -487,10 +496,73 @@ onUnmounted(() => {
   padding: 12px;
   background: transparent;
   min-height: 100vh;
-  /* 使用页面级滚动，移除容器内部滚动 */
-  /* 自定义滚动条样式 */
   scrollbar-width: thin;
   scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.customer-header {
+  background: #fff;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.customer-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.primary .customer-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  margin-right: 16px;
+}
+
+.secondary {
+  color: #4e5969;
+}
+
+.financial {
+  margin-top: 4px;
+}
+
+.info-label {
+  color: #86909c;
+  margin-right: 4px;
+}
+
+.info-value {
+  color: #1d2129;
+  font-weight: 500;
+}
+
+.money-value {
+  font-family: 'DIN Alternate', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.money-value.highlight {
+  color: #165dff;
+}
+
+/* 移除旧的样式 */
+.customer-name, .customer-id, .customer-info-row, .info-item, .customer-tags, .header-stats {
+  display: none;
+}
+
+.header-actions {
+  margin-left: 16px;
 }
 
 /* 历史切片查询按钮样式 */

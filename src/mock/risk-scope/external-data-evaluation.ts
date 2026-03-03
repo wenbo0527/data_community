@@ -37,8 +37,8 @@ const supplierProductsMock: SupplierProduct[] = [
 
 // 生成评估报告列表数据
 const generateEvaluationReports = (count = 20) => {
-  const statuses = ['草稿', '已发布', '已归档'];
-  const reportTypes = ['效果评估']; // 只保留效果评估一种类型
+  const statuses = ['draft', 'in_progress', 'completed', 'archived'];
+  const reportTypes = ['quality', 'performance', 'cost_effectiveness', 'comprehensive'];
   const analysisTypes = ['周期性分析', '实时分析', '批量分析'];
   
   const reports = [];
@@ -47,11 +47,15 @@ const generateEvaluationReports = (count = 20) => {
   const fixedReports = [
     {
       id: 11,
-      reportName: '产品A效果评估报告_20241201',
-      reportType: '效果评估',
+      title: '产品A质量评估报告_20241201',
+      reportName: '产品A质量评估报告_20241201',
+      type: 'quality',
+      reportType: 'quality',
       analysisType: '周期性分析',
       generateDate: '2024-12-01',
-      status: '已发布',
+      createdAt: '2024-12-01T10:00:00.000Z',
+      status: 'completed',
+      score: 85,
       progress: 100,
       sampleTimeSpan: '2024-11-01 至 2024-11-30',
       templateType: '标准模板',
@@ -60,24 +64,32 @@ const generateEvaluationReports = (count = 20) => {
     },
     {
       id: 10,
-      reportName: '产品A完整效果评估报告_20241207',
-      reportType: '效果评估',
+      title: '产品A综合评估报告_20241207',
+      reportName: '产品A综合评估报告_20241207',
+      type: 'comprehensive',
+      reportType: 'comprehensive',
       analysisType: '周期性分析',
       generateDate: '2024-12-07',
-      status: '草稿',
-      progress: 100,
+      createdAt: '2024-12-07T09:00:00.000Z',
+      status: 'draft',
+      score: 0,
+      progress: 0,
       sampleTimeSpan: '2024-11-01 至 2024-11-30',
       templateType: '标准模板',
-      analysisTime: '2024-12-07 16:30:00',
+      analysisTime: null,
       failureReason: null
     },
     {
       id: 12,
-      reportName: '产品B效果评估报告_20241202',
-      reportType: '效果评估',
+      title: '产品B性能评估报告_20241202',
+      reportName: '产品B性能评估报告_20241202',
+      type: 'performance',
+      reportType: 'performance',
       analysisType: '实时分析',
       generateDate: '2024-12-02',
-      status: '草稿',
+      createdAt: '2024-12-02T14:00:00.000Z',
+      status: 'in_progress',
+      score: 60,
       progress: 65,
       sampleTimeSpan: '2024-11-15 至 2024-12-02',
       templateType: '自定义模板',
@@ -86,11 +98,15 @@ const generateEvaluationReports = (count = 20) => {
     },
     {
       id: 13,
-      reportName: '产品C效果评估报告_20241203',
-      reportType: '效果评估',
+      title: '产品C性价比评估报告_20241203',
+      reportName: '产品C性价比评估报告_20241203',
+      type: 'cost_effectiveness',
+      reportType: 'cost_effectiveness',
       analysisType: '批量分析',
       generateDate: '2024-12-03',
-      status: '已归档',
+      createdAt: '2024-12-03T11:00:00.000Z',
+      status: 'archived',
+      score: 92,
       progress: 100,
       sampleTimeSpan: '2024-10-01 至 2024-11-30',
       templateType: '标准模板',
@@ -99,11 +115,15 @@ const generateEvaluationReports = (count = 20) => {
     },
     {
       id: 14,
-      reportName: '产品D效果评估报告_20241204',
-      reportType: '效果评估',
+      title: '产品D综合评估报告_20241204',
+      reportName: '产品D综合评估报告_20241204',
+      type: 'comprehensive',
+      reportType: 'comprehensive',
       analysisType: '周期性分析',
       generateDate: '2024-12-04',
-      status: '已发布',
+      createdAt: '2024-12-04T16:00:00.000Z',
+      status: 'completed',
+      score: 88,
       progress: 100,
       sampleTimeSpan: '2024-11-01 至 2024-11-30',
       templateType: '标准模板',
@@ -112,12 +132,16 @@ const generateEvaluationReports = (count = 20) => {
     },
     {
       id: 15,
-      reportName: '产品A效果评估报告_20241205',
-      reportType: '效果评估',
+      title: '产品A实时性能评估_20241205',
+      reportName: '产品A实时性能评估_20241205',
+      type: 'performance',
+      reportType: 'performance',
       analysisType: '实时分析',
       generateDate: '2024-12-05',
-      status: '草稿',
-      progress: 80,
+      createdAt: '2024-12-05T08:30:00.000Z',
+      status: 'draft',
+      score: 0,
+      progress: 0,
       sampleTimeSpan: '2024-12-01 至 2024-12-05',
       templateType: '自定义模板',
       analysisTime: null,
@@ -130,28 +154,40 @@ const generateEvaluationReports = (count = 20) => {
   // 生成随机数据
   for (let i = reports.length; i < count; i++) {
     const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const reportType = reportTypes[Math.floor(Math.random() * reportTypes.length)];
+    const type = reportTypes[Math.floor(Math.random() * reportTypes.length)];
     const analysisType = analysisTypes[Math.floor(Math.random() * analysisTypes.length)];
     
     const date = new Date();
     date.setDate(date.getDate() - Math.floor(Math.random() * 30));
     const dateStr = date.toISOString().split('T')[0];
+    const createdAt = date.toISOString();
     
     let progress = 0;
-    if (status === '已发布' || status === '已归档') progress = 100;
-    else if (status === '草稿') progress = Math.floor(Math.random() * 90) + 10;
+    let score = 0;
+    
+    if (status === 'completed' || status === 'archived') {
+      progress = 100;
+      score = Math.floor(Math.random() * 40) + 60; // 60-100
+    } else if (status === 'in_progress') {
+      progress = Math.floor(Math.random() * 90) + 10;
+      score = 0;
+    }
     
     reports.push({
       id: i + 1,
-      reportName: `${reportType}报告_${dateStr.replace(/-/g, '')}`,
-      reportType,
+      title: `${type === 'quality' ? '质量' : type === 'performance' ? '性能' : type === 'cost_effectiveness' ? '性价比' : '综合'}评估报告_${dateStr.replace(/-/g, '')}_${i}`,
+      reportName: `${type}评估报告_${dateStr.replace(/-/g, '')}`,
+      type,
+      reportType: type,
       analysisType,
       generateDate: dateStr,
+      createdAt,
       status,
+      score,
       progress,
       sampleTimeSpan: `${dateStr} 至 ${new Date().toISOString().split('T')[0]}`,
       templateType: Math.random() > 0.5 ? '标准模板' : '自定义模板',
-      analysisTime: (status === '已发布' || status === '已归档') ? `${dateStr} ${Math.floor(Math.random() * 24).toString().padStart(2, '0')}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}:00` : null,
+      analysisTime: (status === 'completed' || status === 'archived') ? `${dateStr} ${Math.floor(Math.random() * 24).toString().padStart(2, '0')}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}:00` : null,
       failureReason: null
     });
   }

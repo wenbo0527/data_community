@@ -4,12 +4,12 @@
     
     <div class="scene-grid">
       <a-card v-for="scene in scenes" :key="scene.id" hoverable class="scene-card" @click="handleSceneClick(scene)">
-        <template #cover>
-          <div class="scene-icon" :style="{ backgroundColor: scene.color }">
-            <component :is="scene.icon" />
-          </div>
-        </template>
         <a-card-meta :title="scene.title">
+          <template #avatar>
+            <div class="scene-avatar" :style="{ backgroundColor: scene.color }">
+              <component :is="scene.icon" />
+            </div>
+          </template>
           <template #description>
             <div class="scene-desc">{{ scene.description }}</div>
             <div class="scene-tags">
@@ -23,15 +23,26 @@
         </template>
       </a-card>
     </div>
+
+    <ServiceApplicationDrawer
+      v-model:visible="drawerVisible"
+      :edit-mode="false"
+      :initial-service-type="currentServiceType"
+      @success="handleSuccess"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconCloud, IconStorage, IconClockCircle, IconFindReplace, IconSafe, IconImport } from '@arco-design/web-vue/es/icon'
+import ServiceApplicationDrawer from '../components/ServiceApplicationDrawer.vue'
 
 const router = useRouter()
+const drawerVisible = ref(false)
+const currentServiceType = ref('')
 
 const scenes = [
   {
@@ -91,11 +102,13 @@ const scenes = [
 ]
 
 const handleSceneClick = (scene: any) => {
-  // 跳转到服务列表页，并带上创建参数
-  router.push({
-    name: 'RiskExternalDataService',
-    query: { action: 'create', serviceType: scene.serviceType }
-  })
+  currentServiceType.value = scene.serviceType
+  drawerVisible.value = true
+}
+
+const handleSuccess = () => {
+  // 申请成功后跳转到服务列表页
+  router.push({ name: 'RiskExternalDataService' })
 }
 
 const showDocs = (scene: any) => {
@@ -124,14 +137,15 @@ const showDocs = (scene: any) => {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.scene-icon {
-  height: 80px;
+.scene-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 24px;
   color: white;
-  border-radius: 4px 4px 0 0;
 }
 
 .scene-desc {
@@ -142,5 +156,6 @@ const showDocs = (scene: any) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   margin-bottom: 8px;
+  margin-top: 8px;
 }
 </style>

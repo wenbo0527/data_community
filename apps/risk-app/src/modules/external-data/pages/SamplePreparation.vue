@@ -1,171 +1,285 @@
 <template>
-  <div class="sample-preparation-container">
-    <a-page-header title="样本表准备" subtitle="上传并校验您的数据样本" />
-    
-    <a-card class="preparation-card">
-      <a-steps :current="currentStep" style="margin-bottom: 40px">
-        <a-step title="选择服务类型" description="确定数据用途" />
-        <a-step title="下载模板" description="获取标准格式" />
-        <a-step title="上传样本" description="提交数据文件" />
-        <a-step title="预校验" description="检查数据规范" />
-      </a-steps>
-      
-      <!-- 步骤1: 选择服务类型 -->
-      <div v-if="currentStep === 0" class="step-content">
-        <a-form :model="form" layout="vertical">
-          <a-form-item label="目标服务类型" required>
-            <a-select v-model="form.serviceType" placeholder="请选择服务类型" style="width: 400px">
-              <a-option>在线批量调用</a-option>
-              <a-option>外数离线回溯申请</a-option>
-              <a-option>全量变量回溯申请</a-option>
-              <a-option>风险合规离线回溯申请</a-option>
-            </a-select>
+  <div class="sample-preparation-list">
+    <a-page-header title="样本表准备" subtitle="管理您的数据样本及其历史版本">
+      <template #extra>
+        <a-button type="primary" @click="goToCreate">
+          <template #icon><icon-plus /></template>
+          新建样本表
+        </a-button>
+      </template>
+    </a-page-header>
+
+    <a-card class="list-card">
+      <!-- 筛选区域 -->
+      <a-row :gutter="24" class="search-form">
+        <a-col :span="8">
+          <a-form-item label="样本名称">
+            <a-input v-model="searchForm.name" placeholder="请输入样本逻辑名称" allow-clear />
           </a-form-item>
-          <a-form-item>
-            <a-button type="primary" @click="nextStep" :disabled="!form.serviceType">下一步</a-button>
+        </a-col>
+        <a-col :span="8">
+          <a-form-item label="创建人">
+            <a-input v-model="searchForm.creator" placeholder="请输入创建人姓名" allow-clear />
           </a-form-item>
-        </a-form>
-      </div>
-      
-      <!-- 步骤2: 下载模板 -->
-      <div v-if="currentStep === 1" class="step-content">
-        <a-result status="info" title="下载样本模板">
-          <template #subtitle>
-            请下载【{{ form.serviceType }}】的标准样本模板，并按照格式要求填充数据。
-          </template>
-          <template #extra>
-            <a-space>
-              <a-button @click="prevStep">上一步</a-button>
-              <a-button type="primary" @click="downloadTemplate">
-                <template #icon><icon-download /></template> 下载模板
-              </a-button>
-              <a-button type="outline" @click="nextStep">已准备好样本，下一步</a-button>
-            </a-space>
-          </template>
-        </a-result>
-      </div>
-      
-      <!-- 步骤3: 上传样本 -->
-      <div v-if="currentStep === 2" class="step-content">
-        <a-upload draggable action="/" :auto-upload="false" @change="handleFileChange" style="margin-bottom: 20px" />
-        <a-space>
-          <a-button @click="prevStep">上一步</a-button>
-          <a-button type="primary" @click="startValidation" :disabled="!fileList.length">开始校验</a-button>
-        </a-space>
-      </div>
-      
-      <!-- 步骤4: 预校验 -->
-      <div v-if="currentStep === 3" class="step-content">
-        <div v-if="isValidating" class="validating-state">
-          <a-spin tip="正在校验样本数据..." />
-          <p style="margin-top: 16px; color: var(--color-text-3)">系统正在检查文件格式、字段完整性及数据合规性...</p>
-        </div>
-        
-        <div v-else>
-          <a-result status="success" title="样本校验通过">
-            <template #subtitle>
-              样本数据符合【{{ form.serviceType }}】的规范要求，共解析有效数据 5,000 条。
+        </a-col>
+        <a-col :span="8" style="text-align: right">
+          <a-space>
+            <a-button type="primary" @click="handleSearch">
+              <template #icon><icon-search /></template>
+              查询
+            </a-button>
+            <a-button @click="handleReset">
+              <template #icon><icon-refresh /></template>
+              重置
+            </a-button>
+          </a-space>
+        </a-col>
+      </a-row>
+
+      <!-- 表格区域 -->
+      <a-table :data="tableData" :loading="loading" :pagination="pagination" @page-change="onPageChange">
+        <template #columns>
+          <a-table-column title="样本表逻辑名称" data-index="logicName" />
+          <a-table-column title="创建人" data-index="creator" />
+          <a-table-column title="当前版本" data-index="version">
+            <template #cell="{ record }">
+              <a-tag color="arcoblue">{{ record.version }}</a-tag>
             </template>
-            <template #extra>
+          </a-table-column>
+          <a-table-column title="最近更新时间" data-index="updateTime" />
+          <a-table-column title="应用场景说明" data-index="description" ellipsis tooltip />
+          <a-table-column title="操作" width="250">
+            <template #cell="{ record }">
               <a-space>
-                <a-button @click="currentStep = 0">重新准备</a-button>
-                <a-button type="primary" @click="goToCreateService">前往创建服务</a-button>
+                <a-button type="text" size="small" @click="handleEdit(record)">编辑</a-button>
+                <a-button type="text" size="small" status="success" @click="handleRun(record)">运行</a-button>
+                <a-button type="text" size="small" @click="showHistory(record)">历史版本</a-button>
               </a-space>
             </template>
-          </a-result>
-          
-          <a-collapse :default-active-key="['1']" style="margin-top: 24px; max-width: 800px; margin-left: auto; margin-right: auto;">
-            <a-collapse-item header="校验详情报告" key="1">
-              <a-descriptions :column="1" bordered>
-                <a-descriptions-item label="文件名称">{{ fileName }}</a-descriptions-item>
-                <a-descriptions-item label="文件大小">2.4 MB</a-descriptions-item>
-                <a-descriptions-item label="总行数">5,001 (含表头)</a-descriptions-item>
-                <a-descriptions-item label="有效数据">5,000 条</a-descriptions-item>
-                <a-descriptions-item label="字段完整性">100%</a-descriptions-item>
-              </a-descriptions>
-            </a-collapse-item>
-          </a-collapse>
-        </div>
-      </div>
+          </a-table-column>
+        </template>
+      </a-table>
     </a-card>
+
+    <!-- 历史版本抽屉 -->
+    <a-drawer :visible="historyVisible" @ok="historyVisible = false" @cancel="historyVisible = false" title="历史版本管理" width="600" :footer="false">
+      <div v-if="currentHistoryRecord">
+        <a-descriptions :column="1" bordered title="当前样本信息" style="margin-bottom: 20px">
+          <a-descriptions-item label="样本名称">{{ currentHistoryRecord.logicName }}</a-descriptions-item>
+          <a-descriptions-item label="当前版本">{{ currentHistoryRecord.version }}</a-descriptions-item>
+        </a-descriptions>
+
+        <a-timeline>
+          <a-timeline-item v-for="(ver, index) in historyVersions" :key="index" :label="ver.time">
+            <template #dot>
+              <icon-check-circle v-if="index === 0" style="color: #00b42a; font-size: 16px" />
+              <icon-clock-circle v-else style="font-size: 16px" />
+            </template>
+            <div class="version-content">
+              <div class="version-header">
+                <span class="version-tag">{{ ver.version }}</span>
+                <span class="version-operator">{{ ver.operator }}</span>
+              </div>
+              <div class="version-desc">{{ ver.description }}</div>
+              <div class="version-actions" style="margin-top: 8px">
+                <a-button type="secondary" size="mini" @click="handleRollback(ver)">回滚至此版本</a-button>
+                <a-button type="text" size="mini" @click="handleViewVersion(ver)">查看详情</a-button>
+              </div>
+            </div>
+          </a-timeline-item>
+        </a-timeline>
+      </div>
+    </a-drawer>
+
+    <!-- 新建/编辑抽屉 (父组件控制壳子) -->
+    <a-drawer
+      :visible="createDrawerVisible"
+      :width="800"
+      title="新建样本表"
+      @cancel="createDrawerVisible = false"
+      @ok="handleCreateSubmit"
+      :ok-loading="createRef?.isSubmitting"
+      ok-text="创建并校验"
+    >
+      <SamplePreparationCreate 
+        ref="createRef"
+        @success="handleDrawerSuccess"
+      />
+    </a-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconDownload } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconSearch, IconRefresh, IconCheckCircle, IconClockCircle } from '@arco-design/web-vue/es/icon'
+import SamplePreparationCreate from './SamplePreparationCreate.vue'
 
 const router = useRouter()
-const currentStep = ref(0)
-const form = reactive({ serviceType: '' })
-const fileList = ref([])
-const fileName = ref('')
-const isValidating = ref(false)
+const createRef = ref()
 
-const nextStep = () => {
-  if (currentStep.value < 3) currentStep.value++
+// 搜索表单
+const searchForm = reactive({
+  name: '',
+  creator: ''
+})
+
+// 表格数据
+const loading = ref(false)
+const tableData = ref([])
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 模拟数据生成
+const generateMockData = () => {
+  const data = []
+  for (let i = 0; i < 10; i++) {
+    data.push({
+      id: `sample_${i + 1}`,
+      logicName: `sample_risk_model_v${i + 1}`,
+      creator: ['张三', '李四', '王五'][i % 3],
+      version: `V1.${i}`,
+      updateTime: '2023-10-27 10:30:00',
+      description: '用于风险控制模型的离线训练样本数据，包含用户基础信息和行为特征。',
+      status: 'active'
+    })
+  }
+  return data
 }
 
-const prevStep = () => {
-  if (currentStep.value > 0) currentStep.value--
+// 页面加载
+onMounted(() => {
+  handleSearch()
+})
+
+// 查询操作
+const handleSearch = () => {
+  loading.value = true
+  // 模拟接口请求
+  setTimeout(() => {
+    tableData.value = generateMockData().filter(item => {
+      const matchName = !searchForm.name || item.logicName.includes(searchForm.name)
+      const matchCreator = !searchForm.creator || item.creator.includes(searchForm.creator)
+      return matchName && matchCreator
+    })
+    pagination.total = tableData.value.length
+    loading.value = false
+  }, 500)
 }
 
-const downloadTemplate = () => {
-  Message.success(`正在下载【${form.serviceType}】样本模板...`)
+// 重置操作
+const handleReset = () => {
+  searchForm.name = ''
+  searchForm.creator = ''
+  handleSearch()
 }
 
-const handleFileChange = (fileListArg: any) => {
-  fileList.value = fileListArg
-  if (fileListArg.length > 0) {
-    fileName.value = fileListArg[0].name
+// 分页切换
+const onPageChange = (current: number) => {
+  pagination.current = current
+  handleSearch()
+}
+
+// 跳转新建
+const goToCreate = () => {
+  createDrawerVisible.value = true
+}
+
+// 编辑操作
+const handleEdit = (record: any) => {
+  createDrawerVisible.value = true
+  // 实际场景中，这里应调用子组件的 loadData 方法或传入 props
+}
+
+// 新建抽屉相关
+const createDrawerVisible = ref(false)
+const handleCreateSubmit = () => {
+  if (createRef.value) {
+    createRef.value.handleSubmit()
   }
 }
 
-const startValidation = () => {
-  currentStep.value = 3
-  isValidating.value = true
-  
-  // 模拟校验过程
-  setTimeout(() => {
-    isValidating.value = false
-    Message.success('样本校验完成')
-  }, 2000)
+const handleDrawerSuccess = () => {
+  createDrawerVisible.value = false
+  handleSearch() // 刷新列表
 }
 
-const goToCreateService = () => {
-  router.push({
-    name: 'RiskExternalDataService',
-    query: { action: 'create', serviceType: form.serviceType, fromSample: 'true' }
-  })
+// 运行操作
+const handleRun = (record: any) => {
+  Message.loading('正在启动样本计算任务...')
+  setTimeout(() => {
+    Message.success(`样本 [${record.logicName}] 运行任务已提交`)
+  }, 1000)
+}
+
+// 历史版本相关
+const historyVisible = ref(false)
+const currentHistoryRecord = ref<any>(null)
+const historyVersions = ref<any[]>([])
+
+const showHistory = (record: any) => {
+  currentHistoryRecord.value = record
+  // 模拟获取历史版本数据
+  historyVersions.value = [
+    { version: record.version, time: '2023-10-27 10:30:00', operator: record.creator, description: '更新了部分特征字段，优化了数据清洗规则' },
+    { version: 'V1.1', time: '2023-10-20 15:20:00', operator: record.creator, description: '新增了用户行为埋点数据源' },
+    { version: 'V1.0', time: '2023-10-01 09:00:00', operator: '系统管理员', description: '初始版本创建' }
+  ]
+  historyVisible.value = true
+}
+
+const handleRollback = (version: any) => {
+  Message.info(`正在申请回滚至版本 ${version.version}...`)
+}
+
+const handleViewVersion = (version: any) => {
+  Message.info(`查看版本 ${version.version} 详情`)
 }
 </script>
 
 <style scoped>
-.sample-preparation-container {
+.sample-preparation-list {
   padding: 0 16px;
 }
 
-.preparation-card {
+.list-card {
   margin-top: 20px;
   min-height: 500px;
-  padding: 20px;
 }
 
-.step-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
+.search-form {
+  margin-bottom: 20px;
 }
 
-.validating-state {
+.version-content {
+  background-color: var(--color-fill-2);
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.version-header {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.version-tag {
+  font-weight: bold;
+  color: rgb(var(--primary-6));
+}
+
+.version-operator {
+  color: var(--color-text-3);
+  font-size: 12px;
+}
+
+.version-desc {
+  color: var(--color-text-2);
+  font-size: 13px;
+  margin-bottom: 8px;
 }
 </style>

@@ -51,7 +51,8 @@ const lifecycleMenus = [
     children: [
       { key: '/external-data/service-scene', title: '服务场景入口' },
       { key: '/external-data/service', title: '服务任务列表' },
-      { key: '/external-data/sample-preparation', title: '样本表准备' }
+      { key: '/external-data/sample-preparation', title: '样本表准备' },
+      { key: '/external-data/validation-template', title: '服务校验模版管理' }
     ]
   },
   {
@@ -91,6 +92,7 @@ function updateMenuState(path: string) {
   else if (path.startsWith('/external-data/evaluation')) activeSideMenu.value = '/external-data/evaluation'
   else if (path.startsWith('/external-data/service-scene')) activeSideMenu.value = '/external-data/service-scene'
   else if (path.startsWith('/external-data/sample-preparation')) activeSideMenu.value = '/external-data/sample-preparation'
+  else if (path.startsWith('/external-data/validation-template')) activeSideMenu.value = '/external-data/validation-template'
   else if (path.startsWith('/external-data/service')) activeSideMenu.value = '/external-data/service'
   else if (path.startsWith('/budget/overview')) activeSideMenu.value = '/budget/overview'
   else if (path.startsWith('/budget/list')) activeSideMenu.value = '/budget/list'
