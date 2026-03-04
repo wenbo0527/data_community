@@ -559,14 +559,16 @@ onUnmounted(() => {
   max-width: none;
   margin: 0;
   padding: 12px;
-  background: transparent;
-  min-height: 100vh;
-  scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
+  background: #f2f3f5;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* 优化后的顶部信息区域样式 */
 .customer-header-container {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -574,7 +576,7 @@ onUnmounted(() => {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .customer-basic-card {
@@ -655,7 +657,8 @@ onUnmounted(() => {
 }
 
 .detail-collapse {
-  margin-bottom: 16px;
+  flex-shrink: 0;
+  margin-bottom: 12px;
 }
 
 .detail-collapse :deep(.arco-collapse-item-header) {
@@ -672,163 +675,24 @@ onUnmounted(() => {
   margin-top: 2px;
 }
 
-
-
-/* 历史切片查询按钮样式 */
-.history-query-section {
-  background: white;
-  border-radius: 12px;
-  padding: 16px 24px;
-  margin-bottom: 24px;
-  display: flex;
-  justify-content: flex-end;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-/* Webkit浏览器滚动条样式 */
-.customer-detail-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.customer-detail-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.customer-detail-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.customer-detail-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding: 20px 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-right {
-  display: flex;
-  gap: 12px;
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #86909c;
-  font-weight: 500;
-}
-
-.back-button:hover {
-  color: #165dff;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #86909c;
-  font-size: 14px;
-}
-
-.breadcrumb span:last-child {
-  color: #1d2129;
-  font-weight: 500;
-}
-
-.product-tabs-container {
-  padding: 0 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  margin-bottom: 24px;
-  /* 强制显示调试 */
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  height: auto !important;
-  min-height: 200px;
-  border: 3px solid #ff0000 !important;
-}
-
-.product-tabs {
-  border-bottom: none;
-  /* 强制显示调试 */
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.product-tabs :deep(.arco-tabs-header) {
-  border-bottom: 1px solid #e5e6eb;
-  margin-bottom: 0;
-  /* 强制显示调试 */
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: #f0f0f0 !important;
-  min-height: 50px !important;
-}
-
-.product-tabs :deep(.arco-tabs-header-title-text) {
-  font-size: 14px;
-  font-weight: 500;
-  color: #86909c;
-  transition: all 0.3s ease;
-}
-
-.product-tabs :deep(.arco-tabs-header-title.arco-tabs-header-title-active .arco-tabs-header-title-text) {
-  color: #165dff;
-  font-weight: 600;
-}
-
-.product-tabs :deep(.arco-tabs-header-ink) {
-  background-color: #165dff;
-  height: 2px;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 400px;
-  border-radius: 12px;
-}
-
 .content {
+  flex: 1;
+  min-height: 0; /* 关键：允许 flex 子项小于内容高度，从而触发滚动 */
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
   padding: 0;
   width: 100%;
   max-width: 100%;
 }
-
-/* 概览卡片样式已删除，按需求文档要求移除顶部模块 */
 
 /* 主要内容区域 */
 .main-content {
+  flex: 1;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  align-items: stretch;
-  padding: 0;
-  max-width: 100%;
-  width: 100%;
+  overflow: hidden;
 }
 
 .left-content,
