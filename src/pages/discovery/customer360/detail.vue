@@ -598,7 +598,7 @@ onUnmounted(() => {
 
 .customer-name {
   font-size: 20px;
-  font font-weight: 600;
+  font-weight: 600;
   color: #1d2129;
 }
 
