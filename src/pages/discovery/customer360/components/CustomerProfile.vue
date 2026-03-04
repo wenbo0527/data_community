@@ -54,7 +54,7 @@
               </div>
               <div class="summary-item">
                 <span class="label">逾期记录</span>
-                <span class="value">{{ creditInfo?.overdueCount || 0 }}</span>
+                <span class="value">{{ creditInfo?.overdueTimes || creditInfo?.overdueCount || 0 }}</span>
               </div>
             </div>
           </div>
@@ -164,7 +164,7 @@ const props = withDefaults(defineProps<Props>(), {
 const activeTab = ref('')
 
 const getRiskLevel = () => {
-  const overdueCount = collectionRecords?.value?.length || 0
+  const overdueCount = props.collectionRecords?.length || 0
   if (overdueCount === 0) return '低风险'
   if (overdueCount <= 2) return '中风险'
   return '高风险'

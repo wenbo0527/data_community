@@ -243,8 +243,12 @@ const userId = computed(() => {
 // 移除了selfProductData和loanProductData计算属性，改为直接使用userOwnedProducts
 
 const creditData = computed(() => {
-  console.log('🔍 creditData计算属性被调用，使用productStore数据');
-  return productStore.creditRecords
+  console.log('🔍 creditData计算属性被调用');
+  // 优先返回征信报告汇总信息
+  if (userInfo.value?.creditReports && userInfo.value.creditReports.length > 0) {
+    return userInfo.value.creditReports[0]
+  }
+  return {}
 })
 const loanData = computed(() => {
   console.log('🔍 loanData计算属性被调用，使用productStore数据');
