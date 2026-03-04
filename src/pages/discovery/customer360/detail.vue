@@ -1,47 +1,83 @@
 <template>
   <div class="customer-detail-container">
     
-    <!-- Level 1: 客户级数据（常驻 Header） -->
-    <a-page-header :show-back="false" class="customer-header">
-      <template #title>
-        <div class="customer-info-grid">
-          <div class="info-row primary">
+    <!-- 优化后的顶部信息区域 -->
+    <div class="customer-header-container">
+      <!-- 左侧：客户基本信息卡片 -->
+      <div class="customer-basic-card">
+        <div class="customer-avatar">
+          <a-avatar :size="64" :style="{ backgroundColor: '#165DFF' }">
+            {{ userInfo?.basicInfo?.name?.charAt(0) || '客' }}
+          </a-avatar>
+        </div>
+        <div class="customer-info">
+          <div class="customer-name-row">
             <span class="customer-name">{{ userInfo?.basicInfo?.name || '未知用户' }}</span>
-            <span class="info-label">年龄:</span> <span class="info-value">{{ userInfo?.basicInfo?.age || '28' }}岁</span>
-            <a-divider direction="vertical" />
-            <span class="info-label">性别:</span> <span class="info-value">{{ userInfo?.basicInfo?.gender || '男' }}</span>
-            <a-divider direction="vertical" />
-            <span class="info-label">当前状态:</span> 
-            <a-tag size="small" :color="userInfo?.basicInfo?.status === '正常' ? 'green' : 'red'">
+            <a-tag :color="getStatusColor(userInfo?.basicInfo?.status)" size="small">
               {{ userInfo?.basicInfo?.status || '正常' }}
             </a-tag>
           </div>
-          
-          <div class="info-row secondary">
-            <span class="info-label">身份证号:</span> <span class="info-value">{{ userInfo?.basicInfo?.idCard || '320***********1234' }}</span>
+          <div class="customer-meta">
+            <span>{{ userInfo?.basicInfo?.age || '28' }}岁</span>
             <a-divider direction="vertical" />
-            <span class="info-label">统一客户号:</span> <span class="info-value">{{ userInfo?.userId || userId }}</span>
+            <span>{{ userInfo?.basicInfo?.gender || '男' }}</span>
             <a-divider direction="vertical" />
-            <span class="info-label">户籍:</span> <span class="info-value">{{ userInfo?.basicInfo?.residence || '江苏省南京市' }}</span>
-            <a-divider direction="vertical" />
-            <span class="info-label">证件有效期:</span> <span class="info-value">{{ userInfo?.basicInfo?.idCardExpiry || '2030-12-31' }}</span>
+            <span>{{ userInfo?.userId || userId }}</span>
           </div>
+        </div>
+      </div>
 
-          <div class="info-row financial">
-             <span class="info-label">总授信金额:</span> 
-             <span class="money-value">¥ {{ (userInfo?.totalCredit || 0).toLocaleString() }}</span>
-             <a-divider direction="vertical" />
-             <span class="info-label">总在贷余额:</span> 
-             <span class="money-value highlight">¥ {{ (userInfo?.usedCredit || 0).toLocaleString() }}</span>
-          </div>
+      <!-- 右侧：关键指标卡片 -->
+      <div class="key-metrics-card">
+        <div class="metric-item">
+          <div class="metric-label">总授信金额</div>
+          <div class="metric-value">¥ {{ (userInfo?.totalCredit || 0).toLocaleString() }}</div>
         </div>
-      </template>
-      <template #extra>
-        <div class="header-actions">
-           <HistoryQueryButton :user-id="userId" />
+        <div class="metric-item highlight">
+          <div class="metric-label">总在贷余额</div>
+          <div class="metric-value">¥ {{ (userInfo?.usedCredit || 0).toLocaleString() }}</div>
         </div>
-      </template>
-    </a-page-header>
+      </div>
+
+      <!-- 快捷操作栏 -->
+      <div class="quick-actions">
+        <HistoryQueryButton :user-id="userId" />
+        <a-tooltip content="查看征信">
+          <a-button type="text" size="small" @click="handleViewCredit">
+            <template #icon><icon-safe /></template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip content="查看用信">
+          <a-button type="text" size="small" @click="handleViewLoans">
+            <template #icon><icon-storage /></template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip :content="isFavorite ? '取消收藏' : '收藏客户'">
+          <a-button type="text" size="small" @click="handleToggleFavorite">
+            <template #icon>
+              <icon-star :style="{ color: isFavorite ? '#FFB800' : '#86909C' }" />
+            </template>
+          </a-button>
+        </a-tooltip>
+      </div>
+    </div>
+
+    <!-- 详细信息折叠面板 -->
+    <a-collapse v-model:active-key="detailExpanded" class="detail-collapse">
+      <a-collapse-item header="详细信息" key="detail">
+        <a-descriptions :column="3" bordered size="small">
+          <a-descriptions-item label="身份证号">
+            {{ userInfo?.basicInfo?.idCard || '320***********1234' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="户籍">
+            {{ userInfo?.basicInfo?.residence || '江苏省南京市' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="证件有效期">
+            {{ userInfo?.basicInfo?.idCardExpiry || '2030-12-31' }}
+          </a-descriptions-item>
+        </a-descriptions>
+      </a-collapse-item>
+    </a-collapse>
 
     <!-- 数据不一致警告 -->
     <div v-if="hasDataInconsistency" class="data-inconsistency-warning">
@@ -135,7 +171,7 @@ document.title = '🔥 Customer360 Detail - ' + new Date().toLocaleTimeString()
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconUserGroup } from '@arco-design/web-vue/es/icon'
+import { IconUserGroup, IconSafe, IconStorage, IconStar, IconRight } from '@arco-design/web-vue/es/icon'
 // 删除了不再需要的图标导入
 import { fetchUserInfo } from '../../../mock/customer360'
 import { formatAmount, formatPercent } from '../../../utils/formatUtils'
@@ -161,6 +197,8 @@ const showDebugPanel = ref(false)
 // Tab切换控制
 const activeInfoTab = ref('basic') // 默认显示基本信息Tab
 const selectedProduct = ref(null)
+const isFavorite = ref(false)
+const detailExpanded = ref(false)
 // 移除了selectedProductType，不再使用产品类型切换
 
 // 移除了调试系统相关的状态变量
@@ -231,6 +269,29 @@ const handleMainTabChange = (tabKey) => {
 // 处理模块切换
 const handleModuleChange = (moduleKey) => {
   console.log('🔄 [MODULE] 模块切换:', moduleKey)
+}
+
+const getStatusColor = (status) => {
+  const colorMap = {
+    '正常': 'green',
+    '逾期': 'red',
+    '关闭': 'gray',
+    '冻结': 'orange'
+  }
+  return colorMap[status] || 'blue'
+}
+
+const handleViewCredit = () => {
+  Message.info('跳转到征信详情')
+}
+
+const handleViewLoans = () => {
+  Message.info('跳转到用信记录')
+}
+
+const handleToggleFavorite = () => {
+  isFavorite.value = !isFavorite.value
+  Message.success(isFavorite.value ? '已收藏客户' : '已取消收藏')
 }
 
 // 数据完整性检查（只检查信贷产品）
@@ -500,70 +561,114 @@ onUnmounted(() => {
   scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
-.customer-header {
+/* 优化后的顶部信息区域样式 */
+.customer-header-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 16px;
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.customer-info-grid {
+.customer-basic-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.customer-avatar {
+  flex-shrink: 0;
+}
+
+.customer-info {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.info-row {
+.customer-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.customer-name {
+  font-size: 20px;
+  font font-weight: 600;
+  color: #1d2129;
+}
+
+.customer-meta {
   display: flex;
   align-items: center;
   font-size: 14px;
-  line-height: 1.5;
-}
-
-.primary .customer-name {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1d2129;
-  margin-right: 16px;
-}
-
-.secondary {
   color: #4e5969;
 }
 
-.financial {
-  margin-top: 4px;
+.key-metrics-card {
+  display: flex;
+  gap: 24px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  border-radius: 8px;
+  border: 1px solid #e5e6eb;
 }
 
-.info-label {
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.metric-item.highlight {
+  border-left: 3px solid #165DFF;
+  padding-left: 12px;
+}
+
+.metric-label {
+  font-size: 13px;
   color: #86909c;
-  margin-right: 4px;
 }
 
-.info-value {
+.metric-value {
+  font-size: 18px;
+  font-weight: 600;
   color: #1d2129;
+  font-family: 'DIN Alternate', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 16px;
+  border-left: 1px solid #e5e6eb;
+}
+
+.detail-collapse {
+  margin-bottom: 16px;
+}
+
+.detail-collapse :deep(.arco-collapse-item-header) {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
   font-weight: 500;
 }
 
-.money-value {
-  font-family: 'DIN Alternate', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1d2129;
+.detail-collapse :deep(.arco-collapse-item-content) {
+  background: #fff;
+  border-radius: 0 0 8px 8px;
+  padding: 16px;
+  margin-top: 2px;
 }
 
-.money-value.highlight {
-  color: #165dff;
-}
 
-/* 移除旧的样式 */
-.customer-name, .customer-id, .customer-info-row, .info-item, .customer-tags, .header-stats {
-  display: none;
-}
-
-.header-actions {
-  margin-left: 16px;
-}
 
 /* 历史切片查询按钮样式 */
 .history-query-section {

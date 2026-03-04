@@ -16,29 +16,90 @@
         </div>
       </div>
       
-      <a-tabs 
-        v-model:active-key="activeTab" 
-        type="line" 
-        size="default"
-      >
-        <a-tab-pane key="basic" title="基础画像">
-          <div class="module-content">
-            <BasicProfile :user-info="userInfo" />
+      <div class="modules-grid">
+        <div class="module-card" @click="activeTab = 'basic'">
+          <div class="card-header">
+            <icon-user />
+            <span>基础画像</span>
+            <a-tag size="small" color="blue">核心</a-tag>
           </div>
-        </a-tab-pane>
-        
-        <a-tab-pane key="credit" title="征信综合">
-          <div class="module-content">
-            <CreditProfile :user-info="userInfo" :credit-info="creditInfo" />
+          <div class="card-content">
+            <div class="data-summary">
+              <div class="summary-item">
+                <span class="label">年龄</span>
+                <span class="value">{{ userInfo?.basicInfo?.age || '28' }}岁</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">性别</span>
+                <span class="value">{{ userInfo?.basicInfo?.gender || '男' }}</span>
+              </div>
+            </div>
           </div>
-        </a-tab-pane>
-        
-        <a-tab-pane key="postloan" title="贷后管理">
-          <div class="module-content">
-            <PostLoanProfile :user-info="userInfo" :collection-records="collectionRecords" />
+          <div class="card-footer">
+            <a-link @click.stop="activeTab = 'basic'">查看详情 <icon-right /></a-link>
           </div>
-        </a-tab-pane>
-      </a-tabs>
+        </div>
+
+        <div class="module-card" @click="activeTab = 'credit'">
+          <div class="card-header">
+            <icon-safe />
+            <span>征信综合</span>
+            <a-tag size="small" color="green">重要</a-tag>
+          </div>
+          <div class="card-content">
+            <div class="data-summary">
+              <div class="summary-item">
+                <span class="label">查询次数</span>
+                <span class="value highlight">{{ creditInfo?.queryCount || 0 }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">逾期记录</span>
+                <span class="value">{{ creditInfo?.overdueCount || 0 }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a-link @click.stop="activeTab = 'credit'">查看详情 <icon-right /></a-link>
+          </div>
+        </div>
+
+        <div class="module-card" @click="activeTab = 'postloan'">
+          <div class="card-header">
+            <icon-bar-chart />
+            <span>贷后管理</span>
+            <a-tag size="small" color="orange">监控</a-tag>
+          </div>
+          <div class="card-content">
+            <div class="data-summary">
+              <div class="summary-item">
+                <span class="label">催收记录</span>
+                <span class="value">{{ collectionRecords?.length || 0 }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">风险等级</span>
+                <span class="value">{{ getRiskLevel() }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a-link @click.stop="activeTab = 'postloan'">查看详情 <icon-right /></a-link>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="activeTab" class="detail-panel">
+        <div class="detail-header">
+          <a-button type="text" size="small" @click="activeTab = ''">
+            <template #icon><icon-right :style="{ transform: 'rotate(180deg)' }" /></template>
+            返回概览
+          </a-button>
+        </div>
+        <div class="detail-content">
+          <BasicProfile v-if="activeTab === 'basic'" :user-info="userInfo" />
+          <CreditProfile v-if="activeTab === 'credit'" :user-info="userInfo" :credit-info="creditInfo" />
+          <PostLoanProfile v-if="activeTab === 'postloan'" :user-info="userInfo" :collection-records="collectionRecords" />
+        </div>
+      </div>
     </div>
 
     <!-- 数据反馈抽屉 -->
@@ -83,7 +144,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconBarChart, IconBug } from '@arco-design/web-vue/es/icon'
+import { IconBarChart, IconBug, IconUser, IconSafe, IconRight } from '@arco-design/web-vue/es/icon'
 import BasicProfile from './profile/BasicProfile.vue'
 import CreditProfile from './profile/CreditProfile.vue'
 import PostLoanProfile from './profile/PostLoanProfile.vue'
@@ -100,7 +161,14 @@ const props = withDefaults(defineProps<Props>(), {
   collectionRecords: () => []
 })
 
-const activeTab = ref('basic')
+const activeTab = ref('')
+
+const getRiskLevel = () => {
+  const overdueCount = collectionRecords?.value?.length || 0
+  if (overdueCount === 0) return '低风险'
+  if (overdueCount <= 2) return '中风险'
+  return '高风险'
+}
 
 // 数据反馈相关
 const feedbackVisible = ref(false)
@@ -129,9 +197,9 @@ const submitFeedback = () => {
 
 .data-zone {
   background: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
@@ -139,8 +207,8 @@ const submitFeedback = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f2f3f5;
 }
 
 .zone-title {
@@ -163,39 +231,91 @@ const submitFeedback = () => {
   margin-left: 12px;
 }
 
-.module-content {
-  padding: 16px;
-  min-height: 300px;
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
 }
 
-/* Tab样式优化 - 使用Arco Design */
-:deep(.arco-tabs-nav) {
-  margin-bottom: 0;
+.module-card {
   background: #fff;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 0;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-:deep(.arco-tabs-tab) {
-  padding: 12px 16px;
+.module-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #165DFF;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.card-header .arco-icon {
+  font-size: 18px;
+  color: #165DFF;
+}
+
+.card-content {
+  margin-bottom: 12px;
+}
+
+.data-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-item .label {
+  color: #86909c;
+  font-size: 13px;
+}
+
+.summary-item .value {
+  color: #1d2129;
   font-size: 14px;
   font-weight: 500;
-  color: #666;
-  border: none;
-  background: transparent;
 }
 
-:deep(.arco-tabs-tab:hover) {
-  color: #1890ff;
-}
-
-:deep(.arco-tabs-tab.arco-tabs-tab-active) {
-  color: #1890ff;
+.summary-item .value.highlight {
+  color: #165DFF;
   font-weight: 600;
 }
 
-:deep(.arco-tabs-nav-ink) {
-  background: #1890ff;
-  height: 2px;
+.card-footer {
+  border-top: 1px solid #f2f3f5;
+  padding-top: 12px;
+  text-align: right;
+}
+
+.detail-panel {
+  border-top: 1px solid #f2f3f5;
+  padding: 20px;
+}
+
+.detail-header {
+  margin-bottom: 16px;
+}
+
+.detail-content {
+  min-height: 300px;
 }
 </style>

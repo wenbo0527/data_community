@@ -9,9 +9,10 @@
     >
       <a-tab-pane key="all-around">
         <template #title>
-          <span class="tab-title-with-icon">
-            <icon-dashboard /> 客户全景
-          </span>
+          <div class="tab-title-enhanced all-around">
+            <icon-dashboard />
+            <span>客户全景</span>
+          </div>
         </template>
         <div class="tab-content">
           <CustomerProfile
@@ -27,10 +28,13 @@
         :key="product.productKey"
       >
         <template #title>
-          <span class="tab-title-with-icon">
+          <div class="tab-title-enhanced">
             <component :is="getProductIcon(product.productName)" />
-            {{ product.productName }}
-          </span>
+            <span>{{ product.productName }}</span>
+            <div class="tab-status-indicator" :class="product.status">
+              <div class="status-dot"></div>
+            </div>
+          </div>
         </template>
         <div class="tab-content">
           <InfoModuleTabs 
@@ -237,13 +241,52 @@ const handleModuleChange = (moduleKey: string) => {
   display: none;
 }
 
-.tab-title-with-icon {
+.tab-title-enhanced {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
-.tab-title-with-icon :deep(.arco-icon) {
+.tab-title-enhanced:hover {
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.tab-title-enhanced :deep(.arco-icon) {
   font-size: 16px;
+}
+
+.tab-status-indicator {
+  position: relative;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.tab-status-indicator.正常 .status-dot {
+  background: #52c41a;
+}
+
+.tab-status-indicator.逾期 .status-dot {
+  background: #ff4d4f;
+}
+
+.tab-status-indicator.关闭 .status-dot {
+  background: #8c8c8c;
+}
+
+.tab-status-indicator.冻结 .status-dot {
+  background: #fa8c16;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 </style>
