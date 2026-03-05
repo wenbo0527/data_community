@@ -159,23 +159,6 @@
         </template>
       </a-table>
     </div>
-
-    <!-- 创建/编辑模态框 -->
-    <a-modal
-      v-model:visible="modalVisible"
-      :title="modalTitle"
-      width="900px"
-      @ok="handleModalOk"
-      @cancel="handleModalCancel"
-    >
-      <VirtualEventForm
-        v-if="modalVisible"
-        :event-data="currentEvent"
-        :real-events="realEvents"
-        @submit="handleFormSubmit"
-        @cancel="handleModalCancel"
-      />
-    </a-modal>
   </div>
 </template>
 
@@ -285,18 +268,17 @@ const handleFilter = () => {
 }
 
 const handleCreate = () => {
-  currentEvent.value = null
-  modalTitle.value = '创建虚拟事件'
-  modalVisible.value = true
-}
-
-const handleEdit = (record) => {
-  currentEvent.value = { ...record }
-  modalTitle.value = '编辑虚拟事件'
-  modalVisible.value = true
-}
-
-const handleTest = (record) => {
+    router.push({ name: 'VirtualEventCreate' })
+  }
+  
+  const handleEdit = (record) => {
+    router.push({ 
+      name: 'VirtualEventEdit',
+      params: { id: record.id }
+    })
+  }
+  
+  const handleTest = (record) => {
   // 跳转到样本统计页面
   router.push({
     path: '/exploration/customer-center/event-center/sample-stats',

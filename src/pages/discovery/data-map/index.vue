@@ -1,641 +1,742 @@
 <template>
   <div class="data-map-container">
-    <!-- 加载状态 -->
-    <LoadingState 
-      v-if="loading"
-      type="skeleton"
-      :show-search="true"
-      :show-tabs="true"
-      :show-grid="true"
-      loading-text="正在加载数据资产..."
-    />
-    
-    <template v-else>
-      <!-- 页面标题和搜索区域 -->
-      <div class="header-section">
-        <div class="header-top-row">
-          <div class="title-area">
-            <h2 class="page-title">数据搜索</h2>
-            <p class="page-description">搜索和管理您的数据资产</p>
-          </div>
-          
-          <div class="search-actions">
-            <a-button 
-              type="text" 
-              @click="toggleAdvancedFilter"
-              :class="{ active: showAdvancedFilter }"
-            >
-              <IconFilter />高级搜索
-            </a-button>
-            <a-button type="text" @click="toggleHistory">
-              <IconHistory />搜索历史
-            </a-button>
+    <!-- 顶部 Banner 区域 -->
+    <div class="banner-section">
+      <div class="banner-content">
+        <div class="title-row">
+          <h1 class="banner-title">数据消费新体验</h1>
+          <span class="version-tag">2.0</span>
+        </div>
+        <p class="banner-subtitle">全新版本数据地图，包含查数、找数、用数等场景升级；为用户解决找数难，理解数据难的难点。</p>
+        
+        <div class="search-area">
+          <a-input-search 
+            v-model="searchForm.keyword"
+            class="main-search-input"
+            placeholder="输入关键词进行查询，支持各业务/标签/分组/指标等多个关键字，或尝试执行路径定义搜索"
+            search-button
+            size="large"
+            @search="handleSearch"
+          >
+            <template #button-icon>
+              <icon-search />
+            </template>
+          </a-input-search>
+          <a-button 
+            class="action-btn" 
+            size="large"
+            @click="toggleAdvancedFilter"
+            :type="showAdvancedFilter ? 'primary' : 'secondary'"
+          >
+            <template #icon><icon-filter /></template>
+            高级
+          </a-button>
+          <a-button class="action-btn" size="large">
+            <template #icon><icon-star /></template>
+            收藏
+          </a-button>
+        </div>
+
+        <!-- 高级筛选面板 -->
+        <div v-if="showAdvancedFilter" class="advanced-filter-panel">
+          <a-row :gutter="16">
+            <a-col :span="8">
+              <a-form-item label="包含关键词" label-col-flex="80px">
+                <a-input v-model="searchForm.include" placeholder="输入包含的关键词" allow-clear />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item label="排除关键词" label-col-flex="80px">
+                <a-input v-model="searchForm.exclude" placeholder="输入排除的关键词" allow-clear />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item label="业务模块" label-col-flex="80px">
+                <a-select v-model="searchForm.module" placeholder="选择业务模块" allow-clear>
+                  <a-option>贷前分析</a-option>
+                  <a-option>风控评估</a-option>
+                  <a-option>反欺诈</a-option>
+                  <a-option>自营业务</a-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <div class="filter-actions">
+            <a-button type="primary" size="small" @click="handleSearch">应用筛选</a-button>
+            <a-button size="small" @click="resetSearch">重置</a-button>
           </div>
         </div>
-        
-        <!-- 优化后的搜索组件 -->
-        <SearchSection
-          v-model="searchForm.name"
-          placeholder="请输入表名、描述或业务域进行搜索"
-          :loading="searchLoading"
-          :show-advanced-filter="showAdvancedFilter"
-          :show-history="showHistory"
-          @search="handleSearch"
-          @clear="handleClearSearch"
-          @filter-change="handleFilterChange"
-        />
       </div>
-
-      <!-- 标签页区域 -->
-      <div class="tabs-section">
-        <a-tabs v-model:active-key="activeTab" animation @change="handleTabChange">
-          <a-tab-pane key="1" title="常用表">
-            <div class="tab-content-wrapper">
-              <!-- 使用新的表集合网格组件 -->
-              <TableCollectionGrid
-                :collections="enhancedCollections"
-                :loading="collectionsLoading"
-                :page-size="12"
-                @collection-click="showCollectionDetail"
-                @create-collection="handleCreateCollection"
-                @edit-collection="handleEditCollection"
-                @delete-collection="handleDeleteCollection"
-                @favorite-change="handleFavoriteChange"
-              />
-            </div>
-          </a-tab-pane>
-          <a-tab-pane key="2" title="核心业务流程">
-            <div class="tab-content-wrapper business-process">
-              <BusinessProcessFlow />
-            </div>
-          </a-tab-pane>
-
-        </a-tabs>
+      <div class="banner-decoration">
+        <!-- 装饰背景，使用 CSS 或 SVG -->
+        <div class="decoration-circle"></div>
+        <div class="decoration-cube"></div>
       </div>
+    </div>
 
-      <!-- 表详情跳转 -->
-      <router-link 
-        v-if="currentTable" 
-        :to="`/discovery/data-map/${encodeURIComponent(JSON.stringify(currentTable))}`"
-        class="hidden-link"
-      />
-      
-      <!-- 创建/编辑集合对话框 -->
-      <CreateCollectionModal
-        v-model:visible="createCollectionVisible"
-        :edit-data="editingCollection"
-        @create="handleCreateCollectionSubmit"
-        @update="handleUpdateCollectionSubmit"
-      />
-    </template>
+    <!-- 主体内容区域 -->
+    <div class="main-content">
+      <a-row :gutter="24">
+        <!-- 左侧内容：最近浏览 + 常用表集合 -->
+        <a-col :span="17">
+          <!-- 最近浏览 -->
+          <div class="content-section">
+            <div class="section-header">
+              <h3 class="section-title">最近浏览</h3>
+              <div class="sort-options">
+                <icon-sort />
+                <span class="sort-label">排序</span>
+                <span class="sort-item active">按热度</span>
+                <span class="divider">|</span>
+                <span class="sort-item">按时间</span>
+              </div>
+            </div>
+            
+            <a-list :bordered="false" class="recent-list">
+              <a-list-item v-for="item in recentlyViewed" :key="item.id" class="recent-item">
+                <div class="recent-item-content">
+                  <div class="item-icon" :style="{ backgroundColor: item.iconColor || '#165DFF' }">
+                    {{ item.type }}
+                  </div>
+                  <span class="item-name">{{ item.name }}</span>
+                </div>
+                <template #actions>
+                  <span class="action-item"><icon-star /> {{ item.star }}</span>
+                  <span class="action-item"><icon-eye /></span>
+                </template>
+              </a-list-item>
+            </a-list>
+          </div>
+
+          <!-- 常用表集合 -->
+          <div class="content-section" style="margin-top: 24px;">
+            <div class="section-header">
+              <h3 class="section-title">常用表集合</h3>
+              <a-link class="more-link" @click="router.push('/discovery/data-map/collections')">查看更多 <icon-right /></a-link>
+            </div>
+            
+            <TableCollectionGrid
+              :collections="collections"
+              :show-header="false"
+              :page-size="6"
+              @collection-click="handleCollectionClick"
+            />
+          </div>
+        </a-col>
+
+        <!-- 右侧侧栏：数据资产/资源/要素 -->
+        <a-col :span="7">
+          <!-- 数据资产 -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">数据资产</h3>
+            <a-list :bordered="false" class="asset-list">
+              <a-list-item 
+                v-for="(item, index) in dataAssets" 
+                :key="index" 
+                class="asset-item clickable-item"
+                @click="handleAssetClick(item)"
+              >
+                <div class="asset-content">
+                  <icon-storage class="asset-icon" v-if="item.icon === 'icon-storage'" />
+                  <icon-folder class="asset-icon" v-else-if="item.icon === 'icon-folder'" />
+                  <icon-drive-file class="asset-icon" v-else-if="item.icon === 'icon-database'" />
+                  <span class="asset-name">{{ item.name }}</span>
+                  <a-tag v-if="item.isNew" color="orangered" size="small" class="new-tag">NEW</a-tag>
+                </div>
+                <span class="asset-count">{{ item.count }}</span>
+              </a-list-item>
+            </a-list>
+          </div>
+
+          <!-- 数据资源 -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">数据资源</h3>
+            <a-list :bordered="false" class="asset-list">
+              <a-list-item 
+                v-for="(item, index) in dataResources" 
+                :key="index" 
+                class="asset-item clickable-item"
+                @click="handleResourceClick(item)"
+              >
+                <div class="asset-content">
+                  <icon-apps class="asset-icon" />
+                  <span class="asset-name">{{ item.name }}</span>
+                </div>
+                <span class="asset-count">{{ item.count }}</span>
+              </a-list-item>
+            </a-list>
+          </div>
+
+          <!-- 数据要素 -->
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">数据要素</h3>
+            <a-list :bordered="false" class="asset-list">
+              <a-list-item 
+                v-for="(item, index) in dataElements" 
+                :key="index" 
+                class="asset-item clickable-item"
+                @click="handleElementClick(item)"
+              >
+                <div class="asset-content">
+                  <icon-bulb class="asset-icon" />
+                  <span class="asset-name">{{ item.name }}</span>
+                </div>
+                <span class="asset-count">{{ item.count }}</span>
+              </a-list-item>
+            </a-list>
+          </div>
+        </a-col>
+      </a-row>
+    </div>
+
+    <!-- 悬浮按钮 -->
+    <div class="floating-btn">
+      <icon-notification />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { 
+  IconSearch, IconStar, IconSort, IconEye, IconRight, 
+  IconFire, IconStorage, IconFolder, IconDriveFile,
+  IconApps, IconBulb, IconNotification, IconFilter
+} from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
-import { useDebounceFn } from '@vueuse/core'
-import { IconRefresh, IconFilter, IconHistory } from '@arco-design/web-vue/es/icon'
-import SearchSection from './components/SearchSection.vue'
 import TableCollectionGrid from './components/TableCollectionGrid.vue'
-import LoadingState from './components/LoadingState.vue'
-import CreateCollectionModal from './components/CreateCollectionModal.vue'
-import BusinessProcessFlow from '@/components/BusinessProcessFlow.vue'
-import SubwayMap from './components/SubwayMap.vue'
-import { tableMockData } from '@/mock/tableData.ts'
+import { 
+  mockRecentlyViewed, 
+  mockDataAssets, 
+  mockDataResources, 
+  mockDataElements, 
+  mockBusinessRecommendations 
+} from '@/mock/data-map'
 import mockData from '@/mock/data-map'
-
-
-// 新增状态管理
-const activeTab = ref('1')
-const searchLoading = ref(false)
-const collectionsLoading = ref(false)
-const searchFilters = ref<SearchFilters>({})
-const createCollectionVisible = ref(false)
-const editingCollection = ref<TableCollection | null>(null)
-const showAdvancedFilter = ref(false)
-const showHistory = ref(false)
-
-// 指标地图筛选状态
-const selectedLevel = ref('all')
-const selectedLine = ref('all')
-
-// 防抖搜索
-const debouncedFetchData = useDebounceFn(async () => {
-  await fetchCollections()
-}, 300)
-
-interface SearchForm {
-  name: string
-}
-
-interface SearchFilters {
-  type?: string
-  domain?: string
-  updateFrequency?: string
-}
-
-interface TableField {
-  name: string
-  type: string
-  description: string
-}
-
-interface HistoryState {
-  [key: string]: any
-}
-
-interface TableItem {
-  name: string
-  type: string
-  category: string
-  domain: string
-  updateFrequency: string
-  owner: string
-  description: string
-  fields: TableField[]
-}
-
-interface TableCollection {
-  id: string
-  name: string
-  description: string
-  type?: string
-  tables: TableItem[]
-  owner?: string
-  updateTime?: string
-  isFavorite?: boolean
-  isRecommended?: boolean
-}
 
 const router = useRouter()
 
-const searchForm = ref<SearchForm>({
-  name: ''
+// 状态管理
+const searchForm = ref({
+  keyword: '',
+  include: '',
+  exclude: '',
+  module: ''
 })
+const showAdvancedFilter = ref(false)
 
-const loading = ref(false)
-const currentTable = ref<TableItem | null>(null)
-const favoriteTables = ref<TableItem[]>(tableMockData)
-const tableCollections = ref<TableCollection[]>(mockData.collections || [])
+// 从 Mock 数据中获取
+const recentlyViewed = ref(mockRecentlyViewed || [])
+const dataAssets = ref(mockDataAssets || [])
+const dataResources = ref(mockDataResources || [])
+const dataElements = ref(mockDataElements || [])
+const collections = ref(mockData.collections || [])
 
-// 表详情数据
-const tableDetailData = computed(() => {
-  if (!currentTable.value) return []
-  return [
-    { label: '表名', value: currentTable.value.name },
-    { label: '表类型', value: currentTable.value.type },
-    { label: '所属目录', value: currentTable.value.category },
-    { label: '业务域', value: currentTable.value.domain },
-    { label: '更新频率', value: currentTable.value.updateFrequency },
-    { label: '负责人', value: currentTable.value.owner },
-    { label: '描述', value: currentTable.value.description }
-  ]
-})
-
-// 增强的集合数据
-const enhancedCollections = computed(() => {
-  return tableCollections.value.map(collection => ({
-    ...collection,
-    type: collection.type || getCollectionType(collection),
-    owner: collection.owner || '系统管理员',
-    updateTime: collection.updateTime || new Date().toISOString(),
-    isFavorite: collection.isFavorite || false,
-    isRecommended: collection.isRecommended || false
-  }))
-})
-
-// 根据集合内容推断类型
-const getCollectionType = (collection: TableCollection): string => {
-  const tableTypes = collection.tables.map(t => t.type)
-  if (tableTypes.includes('事实表')) return '业务流程'
-  if (tableTypes.includes('维度表')) return '数据分析'
-  return '通用'
-}
-
-// 获取表集合数据
-const fetchCollections = async () => {
-  collectionsLoading.value = true
-  try {
-    // 模拟API延迟
-    await new Promise(resolve => setTimeout(resolve, 800))
-    tableCollections.value = mockData.collections || []
-    favoriteTables.value = mockData.favoriteTables || []
-  } catch (error) {
-    Message.error('获取数据失败')
-    console.error('Failed to fetch collections:', error)
-  } finally {
-    collectionsLoading.value = false
-  }
-}
-
-// 优化的搜索处理
-const handleSearch = async (value: string, filters: SearchFilters) => {
-  if (!value.trim()) {
+// 搜索处理
+const handleSearch = () => {
+  if (!searchForm.value.keyword && !showAdvancedFilter.value) {
     Message.warning('请输入搜索关键词')
     return
   }
   
-  searchLoading.value = true
-  try {
-    // 模拟搜索API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    router.push({
-      path: '/discovery/search',
-      query: { 
-        q: value,
-        type: filters.type,
-        domain: filters.domain,
-        updateFrequency: filters.updateFrequency
-      }
-    })
-  } catch (error) {
-    Message.error('搜索失败，请重试')
-  } finally {
-    searchLoading.value = false
-  }
-}
-
-const handleClearSearch = () => {
-  searchForm.value.name = ''
-  searchFilters.value = {}
-}
-
-const handleFilterChange = (filters: SearchFilters) => {
-  searchFilters.value = filters
-  // 如果有搜索关键词，自动触发搜索
-  if (searchForm.value.name) {
-    handleSearch(searchForm.value.name, filters)
-  }
-}
-
-const handleTabChange = (key: string) => {
-  activeTab.value = key
-  // 切换标签页时可以进行相应的数据加载
-  if (key === '1' && !tableCollections.value.length) {
-    debouncedFetchData()
-  }
-}
-
-// 显示表详情
-const showDetail = (table: TableItem) => {
-  currentTable.value = table
-}
-
-const showCollectionDetail = (collection: TableCollection) => {
-  // 这里添加跳转到场景详情页的逻辑
+  // 模拟搜索跳转
   router.push({
-    name: 'CollectionDetail',
-    params: { id: collection.id }
+    path: '/discovery/search',
+    query: {
+      q: searchForm.value.keyword,
+      include: searchForm.value.include,
+      exclude: searchForm.value.exclude,
+      module: searchForm.value.module
+    }
   })
 }
 
-// 移除收藏
-const removeFavorite = (table: TableItem) => {
-  favoriteTables.value = favoriteTables.value.filter(t => t.name !== table.name)
-  Message.success('已取消收藏')
-}
-
-// 创建表集合 - 打开对话框
-const handleCreateCollection = () => {
-  editingCollection.value = null
-  createCollectionVisible.value = true
-}
-
-// 处理创建集合提交
-const handleCreateCollectionSubmit = (collection: Omit<TableCollection, "id">) => {
-  const newCollection: TableCollection = {
-    id: String(Date.now()),
-    name: collection.name,
-    description: collection.description || '',
-    type: collection.type || getCollectionType(collection as TableCollection),
-    tables: collection.tables,
-    owner: collection.owner || '当前用户',
-    updateTime: collection.updateTime || new Date().toISOString(),
-    isFavorite: collection.isFavorite || false
-  }
-  tableCollections.value.push(newCollection)
-  editingCollection.value = null
-  Message.success('创建成功')
-}
-
-// 处理编辑集合提交
-const handleUpdateCollectionSubmit = (collection: TableCollection) => {
-  const index = tableCollections.value.findIndex(c => c.id === collection.id)
-  if (index > -1) {
-    tableCollections.value[index] = collection
-    editingCollection.value = null
-    Message.success('更新成功')
-  }
-}
-
-// 编辑表集合
-const handleEditCollection = (collection: TableCollection) => {
-  console.log('[DataMap] handleEditCollection called with collection:', collection)
-  editingCollection.value = collection
-  console.log('[DataMap] Set editingCollection.value to:', collection)
-  createCollectionVisible.value = true
-  console.log('[DataMap] Set createCollectionVisible.value to true')
-}
-
-// 删除表集合
-const handleDeleteCollection = (collection: TableCollection) => {
-  const index = tableCollections.value.findIndex(c => c.id === collection.id)
-  if (index > -1) {
-    tableCollections.value.splice(index, 1)
-    Message.success('删除成功')
-  }
-}
-
-// 收藏状态变更
-const handleFavoriteChange = (collection: TableCollection, isFavorite: boolean) => {
-  const index = tableCollections.value.findIndex(c => c.id === collection.id)
-  if (index > -1) {
-    tableCollections.value[index].isFavorite = isFavorite
-  }
-}
-
-// 切换高级搜索
 const toggleAdvancedFilter = () => {
   showAdvancedFilter.value = !showAdvancedFilter.value
-  if (showAdvancedFilter.value) {
-    showHistory.value = false
+}
+
+const resetSearch = () => {
+  searchForm.value = {
+    keyword: '',
+    include: '',
+    exclude: '',
+    module: ''
   }
 }
 
-// 切换搜索历史
-const toggleHistory = () => {
-  showHistory.value = !showHistory.value
-  if (showHistory.value) {
-    showAdvancedFilter.value = false
+// 路由跳转处理
+const handleAssetClick = (item: any) => {
+  // 根据资产类型进行筛选跳转
+  // 例如：跳转到数据搜索页并带上类型参数
+  // 这里暂时统一跳转到数据搜索，并使用 query 参数
+  // 实际项目中可能需要更复杂的映射逻辑
+  
+  // 如果是"数据专题"，跳转到专题页（假设有）或搜索专题
+  if (item.name === '数据专题') {
+     // 示例：Message.info('跳转到数据专题页')
+     router.push({ path: '/discovery/search', query: { type: 'topic' } })
+     return
+  }
+
+  // 其他类型视为表类型或数据源类型
+  router.push({ 
+    path: '/discovery/search', 
+    query: { 
+      q: '', 
+      type: 'table',
+      source: item.name // 将名称作为来源筛选
+    } 
+  })
+}
+
+const handleResourceClick = (item: any) => {
+  if (item.name === 'API 接口') {
+    router.push({ path: '/discovery/api-market' })
+  } else if (item.name === '数据报表') {
+    // 假设跳转到报表中心或相关搜索
+    router.push({ path: '/discovery/search', query: { type: 'report' } })
+  } else if (item.name === '算法模型') {
+    // 跳转到模型相关页面
+    // 检查路由表，似乎有 model-offline-analysis 或 offlineModel
+    // 这里先跳搜索
+    router.push({ path: '/discovery/search', query: { type: 'model' } })
+  } else if (item.name === '数据看板') {
+    router.push({ path: '/discovery/search', query: { type: 'dashboard' } })
+  } else {
+    Message.info(`即将跳转到：${item.name}`)
   }
 }
 
-// 指标地图筛选方法
-const handleLevelChange = (value: string) => {
-  selectedLevel.value = value
-  console.log('Level filter changed to:', value)
-}
-
-const handleLineChange = (value: string) => {
-  selectedLine.value = value
-  console.log('Line filter changed to:', value)
-}
-
-const resetFilters = () => {
-  selectedLevel.value = 'all'
-  selectedLine.value = 'all'
-  console.log('Filters reset')
-}
-
-onMounted(async () => {
-  loading.value = true
-  try {
-    await fetchCollections()
-  } finally {
-    loading.value = false
+const handleElementClick = (item: any) => {
+  if (item.name === '核心指标') {
+    // 跳转到指标中心
+    router.push({ path: '/discovery/unified-metrics' })
+  } else if (item.name === '业务标签') {
+    // 跳转到客户360或标签管理
+    router.push({ path: '/discovery/customer360' })
+  } else if (item.name === '数据标准') {
+    // 假设有数据标准页
+    Message.info('跳转到数据标准管理')
+  } else {
+    Message.info(`即将跳转到：${item.name}`)
   }
-})
+}
+
+// 集合点击处理
+const handleCollectionClick = (collection: any) => {
+  // 跳转到集合详情页
+  router.push(`/discovery/data-map/collection/${collection.id}`)
+}
+
 </script>
 
 <style scoped>
 .data-map-container {
-  padding: 24px;
-  background: #f7f8fa;
   min-height: 100vh;
+  background: #f7f8fa;
+  position: relative;
+  overflow-x: hidden;
 }
 
-.header-section {
-  margin-bottom: 24px;
+/* Banner Section */
+.banner-section {
+  background: linear-gradient(180deg, #E6F0FF 0%, #F7F8FA 100%);
+  padding: 40px 60px;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 320px;
+  height: auto;
+}
+
+.banner-content {
+  max-width: 60%;
+  z-index: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-area {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  position: relative;
+}
+
+.advanced-filter-panel {
+  margin-top: 16px;
   padding: 24px;
   background: #ffffff;
   border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 800px;
   border: 1px solid #e5e6eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-.header-top-row {
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.action-btn {
+  background: #fff;
+  border: 1px solid #a9c5ff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  color: #165DFF;
+}
+
+.action-btn:hover {
+  background: #f2f3f5;
+  color: #165DFF;
+  border-color: #165DFF;
+}
+
+.action-btn[type="primary"] {
+  background: #e8f3ff;
+  border-color: #165DFF;
+  color: #165DFF;
+}
+
+.banner-title {
+  font-size: 44px;
+  font-weight: bold;
+  color: #1d2129;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.version-tag {
+  font-size: 36px;
+  font-weight: 600;
+  background: linear-gradient(90deg, #165DFF 0%, #00B42A 100%);
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-left: 12px;
+}
+
+.banner-subtitle {
+  font-size: 14px;
+  color: #86909c;
+  margin-bottom: 32px;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.search-area {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+.main-search-input {
+  flex: 1;
+  background: #fff;
+  border-radius: 30px;
+  border: 1px solid #165DFF;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.1);
+}
+
+.main-search-input :deep(.arco-input-wrapper) {
+  border-radius: 30px;
+  padding-left: 20px;
+  background: #fff;
+}
+
+.main-search-input :deep(.arco-input-search-btn) {
+  border-radius: 0 30px 30px 0;
+  background: transparent;
+  color: #165DFF;
+  border-left: 1px solid #f2f3f5;
+}
+
+.favorite-btn {
+  background: #fff;
+  color: #165DFF;
+  border: 1px solid #a9c5ff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Decoration */
+.banner-decoration {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* 这里可以使用背景图，为了简单模拟效果，用CSS画几个图形 */
+.decoration-cube {
+  position: absolute;
+  top: 40px;
+  right: 100px;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, #e8f3ff 0%, #cce4ff 100%);
+  transform: rotate(-15deg) skew(-10deg);
+  border-radius: 20px;
+  box-shadow: -20px 20px 40px rgba(22, 93, 255, 0.1);
+}
+
+/* Main Content */
+.main-content {
+  padding: 0 40px 40px;
+  max-width: 1600px;
+  margin: -40px auto 0;
+  position: relative;
+  z-index: 3;
+}
+
+.content-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-.title-area {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-}
-
-.page-title {
-  font-size: 24px;
+.section-title {
+  font-size: 16px;
   font-weight: 600;
   color: #1d2129;
   margin: 0;
-  line-height: 1.33;
 }
 
-.page-description {
-  font-size: 14px;
+.sort-options {
+  font-size: 12px;
   color: #86909c;
-  margin: 0;
-  line-height: 1.57;
-  white-space: nowrap;
-}
-
-.search-actions {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
 }
 
-.search-actions .arco-btn {
-  color: #4e5969;
-  transition: all 0.2s ease;
+.sort-item {
+  cursor: pointer;
 }
-
-.search-actions .arco-btn:hover {
-  color: #165dff;
-  background-color: #f2f3f5;
-}
-
-.search-actions .arco-btn.active {
-  color: #165dff;
-  background-color: #e8f3ff;
-}
-
-.tabs-section {
-  background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e5e6eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  overflow: hidden;
-}
-
-.tabs-section :deep(.arco-tabs-nav) {
-  padding: 0 24px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e6eb;
-  margin: 0;
-}
-
-.tabs-section :deep(.arco-tabs-tab) {
-  font-weight: 400;
-  font-size: 14px;
-  color: #4e5969;
-  padding: 16px 20px;
-  margin: 0;
-  transition: all 0.2s ease;
-}
-
-.tabs-section :deep(.arco-tabs-tab-active) {
-  color: #165dff;
+.sort-item.active {
+  color: #165DFF;
   font-weight: 500;
 }
 
-.tabs-section :deep(.arco-tabs-tab:hover) {
-  color: #165dff;
+/* Recent List */
+.recent-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f2f3f5;
+}
+.recent-item:last-child {
+  border-bottom: none;
+}
+
+.recent-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.item-name {
+  font-size: 14px;
+  color: #1d2129;
+}
+
+.action-item {
+  color: #86909c;
+  font-size: 12px;
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Recommendation Grid */
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.recommend-card {
+  border-radius: 8px;
+  border: 1px solid #e5e6eb;
+  background: #fff;
+  transition: all 0.3s;
+}
+.recommend-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.recommend-card :deep(.arco-card-body) {
+  padding: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: #86909c;
+  margin-bottom: 12px;
+}
+
+.card-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.stat-item {
+  font-size: 12px;
+  color: #4e5969;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Sidebar */
+.sidebar-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+  margin: 0 0 16px 0;
+}
+
+.asset-item {
+  padding: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clickable-item {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 10px 8px;
+  margin: 0 -8px;
+  border-radius: 4px;
+}
+
+.clickable-item:hover {
   background-color: #f2f3f5;
 }
 
-.tabs-section :deep(.arco-tabs-content) {
-  padding: 0;
+.asset-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.tabs-section :deep(.arco-tabs-content-item) {
-  padding: 0;
+.asset-icon {
+  color: #165DFF;
+  font-size: 16px;
 }
 
-.tab-content-wrapper {
-  padding: 24px;
-  min-height: 480px;
-  background: #ffffff;
+.asset-name {
+  font-size: 14px;
+  color: #4e5969;
 }
 
-.business-process {
-  background: #ffffff;
-  border-radius: 0 0 8px 8px;
+.asset-count {
+  font-size: 12px;
+  color: #86909c;
 }
 
-.hidden-link {
-  display: none;
+.new-tag {
+  margin-left: 4px;
+  font-size: 10px;
+  transform: scale(0.9);
 }
 
-/* 响应式设计 */
+/* Floating Button */
+.floating-btn {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #722ED1 0%, #165DFF 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(114, 46, 209, 0.4);
+  cursor: pointer;
+  z-index: 100;
+  transition: transform 0.3s;
+}
+.floating-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Responsive */
 @media (max-width: 1200px) {
-  .data-map-container {
-    padding: 20px;
-  }
-  
-  .header-section {
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  
-  .tab-content-wrapper {
-    padding: 20px;
+  .banner-content {
+    max-width: 80%;
   }
 }
 
 @media (max-width: 768px) {
-  .data-map-container {
-    padding: 16px;
-  }
-  
-  .header-section {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  
-  .header-top-row {
+  .banner-section {
+    padding: 20px;
+    height: auto;
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
   }
   
-  .title-area {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .banner-content {
+    max-width: 100%;
   }
   
-  .page-title {
-    font-size: 20px;
+  .main-content {
+    padding: 20px;
+    margin-top: 0;
   }
   
-  .search-actions {
-    align-self: flex-end;
-  }
-  
-  .tab-content-wrapper {
-    padding: 16px;
-    min-height: 360px;
-  }
-  
-  .tabs-section :deep(.arco-tabs-nav) {
-    padding: 0 16px;
-  }
-  
-  .tabs-section :deep(.arco-tabs-tab) {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .data-map-container {
-    padding: 12px;
-  }
-  
-  .header-section {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  
-  .header-top-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .title-area {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  
-  .page-title {
-    font-size: 18px;
-  }
-  
-  .page-description {
-    font-size: 13px;
-  }
-  
-  .search-actions {
-    align-self: stretch;
-    justify-content: flex-end;
-  }
-  
-  .search-actions .arco-btn {
-    font-size: 13px;
-    padding: 6px 12px;
-  }
-  
-  .tab-content-wrapper {
-    padding: 16px;
-    min-height: 320px;
-  }
-  
-  .tabs-section :deep(.arco-tabs-nav) {
-    padding: 0 12px;
-  }
-  
-  .tabs-section :deep(.arco-tabs-tab) {
-    padding: 12px 14px;
-    font-size: 13px;
+  .recommendation-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

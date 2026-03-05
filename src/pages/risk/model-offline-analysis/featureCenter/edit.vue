@@ -45,6 +45,18 @@
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
+            <a-form-item label="日分区来源表">
+              <a-input v-model="form.dayPartitionTable" placeholder="请输入日分区来源表" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="月分区来源表">
+              <a-input v-model="form.monthPartitionTable" placeholder="请输入月分区来源表" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="12">
             <a-form-item label="特征编码">
               <a-input v-model="form.code" placeholder="请输入编码" />
             </a-form-item>
@@ -183,6 +195,8 @@ onMounted(async () => {
       code: detail.value?.code || '',
       name: detail.value?.name || '',
       sourceTable: detail.value?.dataSource || '',
+      dayPartitionTable: detail.value?.dayPartitionTable || '',
+      monthPartitionTable: detail.value?.monthPartitionTable || '',
       processingLogic: detail.value?.description || '',
       dataType: detail.value?.type === 'time' ? 'timestamp' : (detail.value?.type === 'categorical' ? 'string' : (detail.value?.type === 'numerical' ? 'double' : 'string')),
       batch: detail.value?.batch || '',
@@ -213,6 +227,8 @@ const handleSubmit = async () => {
     type: typeMap(form.value.dataType),
     description: form.value.processingLogic || '',
     dataSource: form.value.sourceTable || '',
+    dayPartitionTable: form.value.dayPartitionTable || '',
+    monthPartitionTable: form.value.monthPartitionTable || '',
     updateFrequency: detail.value?.updateFrequency || '按需',
     majorCategory: form.value.majorCategory,
     level1: form.value.level1,

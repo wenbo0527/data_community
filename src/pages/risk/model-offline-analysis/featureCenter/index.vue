@@ -335,6 +335,18 @@
       </a-row>
       <a-row :gutter="16">
         <a-col :span="12">
+          <a-form-item label="日分区来源表">
+            <a-input v-model="registerForm.dayPartitionTable" placeholder="请输入日分区来源表" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="月分区来源表">
+            <a-input v-model="registerForm.monthPartitionTable" placeholder="请输入月分区来源表" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+      <a-row :gutter="16">
+        <a-col :span="12">
           <a-form-item label="特征编码" required>
             <a-input v-model="registerForm.code" placeholder="请输入编码" />
           </a-form-item>
@@ -915,7 +927,7 @@ const openRegister = async () => {
 }
 const closeRegister = () => { registerVisible.value = false }
 const registerForm = reactive({
-  majorCategory: '', level1: '', level2: '', code: '', name: '', sourceTable: '', processingLogic: '', dataType: '', batch: '', proposer: '', developer: '', onlineTime: '', accepter: '', remark: '', modelCode: ''
+  majorCategory: '', level1: '', level2: '', code: '', name: '', sourceTable: '', dayPartitionTable: '', monthPartitionTable: '', processingLogic: '', dataType: '', batch: '', proposer: '', developer: '', onlineTime: '', accepter: '', remark: '', modelCode: ''
 })
 const effectiveLevel1Options = computed(() => {
   const cat = registerForm.majorCategory
@@ -959,6 +971,8 @@ const submitRegister = async () => {
     type: typeMap(registerForm.dataType),
     description: registerForm.processingLogic || '',
     dataSource: isModelOutput ? '平台模型输出' : (registerForm.sourceTable || ''),
+    dayPartitionTable: registerForm.dayPartitionTable || '',
+    monthPartitionTable: registerForm.monthPartitionTable || '',
     updateFrequency: '按需',
     majorCategory: registerForm.majorCategory,
     level1: isModelOutput ? 'model_outputs' : registerForm.level1,

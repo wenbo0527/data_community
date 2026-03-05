@@ -71,6 +71,24 @@ export const generateVirtualEventData = (count: number, realEvents: EventData[])
   const statuses = ['已上线', '已下线'];
   const updaters = ['张三', '李四', '王五', '赵六'];
   
+  // 辅助生成输出字段
+  const generateOutputFields = () => {
+    const fields = ['user_id', 'order_id', 'amount', 'timestamp', 'status'];
+    const types = ['string', 'number', 'boolean', 'date'];
+    
+    return Array.from({ length: Mock.Random.integer(1, 3) }, () => ({
+      name: Mock.Random.pick(fields),
+      type: Mock.Random.pick(types) as any,
+      mapping: Mock.Random.word(5)
+    }));
+  };
+
+  // 辅助生成权限
+  const generatePermissions = () => {
+    const perms = ['read', 'write', 'delete', 'export'];
+    return Mock.Random.shuffle(perms).slice(0, Mock.Random.integer(1, 4));
+  };
+
   return Array.from({ length: count }, (_, i) => {
     const realEvent = realEvents[Mock.Random.integer(0, realEvents.length - 1)];
     if (!realEvent) {
@@ -87,7 +105,9 @@ export const generateVirtualEventData = (count: number, realEvents: EventData[])
         realEventId: null,
         version: 1,
         versions: [{ version: 1, updatedAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'), updater: Mock.Random.pick(updaters), description: '初始版本' }],
-        expireAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss')
+        expireAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
+        outputFields: generateOutputFields(),
+        permissions: generatePermissions()
       };
     }
     return {
@@ -103,7 +123,9 @@ export const generateVirtualEventData = (count: number, realEvents: EventData[])
       realEventId: realEvent.id,
       version: 1,
       versions: [{ version: 1, updatedAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'), updater: Mock.Random.pick(updaters), description: '初始版本' }],
-      expireAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss')
+      expireAt: Mock.Random.datetime('yyyy-MM-dd HH:mm:ss'),
+      outputFields: generateOutputFields(),
+      permissions: generatePermissions()
     };
   });
 };

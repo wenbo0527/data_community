@@ -31,6 +31,14 @@ export interface VirtualEventData {
   versions: VirtualEventVersion[];
   expireAt?: string;
   archived?: boolean;
+  outputFields?: OutputField[];
+  permissions?: string[];
+}
+
+export interface OutputField {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'date';
+  mapping: string;
 }
 
 export interface VirtualEventVersion {

@@ -1,7 +1,7 @@
 <template>
   <div class="table-collection-grid">
     <!-- 操作栏 -->
-    <div class="grid-header" v-if="!loading">
+    <div class="grid-header" v-if="!loading && showHeader">
       <div class="header-left">
         <span class="collection-count">共 {{ totalCount }} 个集合</span>
       </div>
@@ -171,11 +171,16 @@ interface TableCollectionGridEmits {
   (e: 'favorite-change', collection: TableCollection, isFavorite: boolean): void
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   collections: TableCollection[]
   loading?: boolean
   pageSize?: number
-}>()
+  showHeader?: boolean
+}>(), {
+  loading: false,
+  pageSize: 12,
+  showHeader: true
+})
 
 const emit = defineEmits<TableCollectionGridEmits>()
 

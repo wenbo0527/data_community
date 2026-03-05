@@ -175,6 +175,7 @@ export const mockTables = [
         ]
     }
 ];
+
 const mockCollections = [
     {
         id: 'collection-1',
@@ -203,35 +204,127 @@ const mockCollections = [
         description: '自营业务场景的相关数据表，用于分析自营贷款业务的运营情况',
         isRecommended: false,
         tables: mockTables.filter(table => table.domain === '自营业务')
+    },
+    {
+        id: 'collection-5',
+        name: '用户画像',
+        description: '全方位的用户画像数据，包含基础属性、行为偏好、消费能力等多维标签，助力精准营销。',
+        type: '用户画像',
+        isRecommended: true,
+        tables: mockTables.filter(table => table.domain === '用户域' || table.domain === '用户行为分析')
+    },
+    {
+        id: 'collection-6',
+        name: '电商大促活动',
+        description: '针对双11、618等大促活动的实时监控与复盘数据，支持分钟级数据更新。',
+        type: '营销活动',
+        isRecommended: false,
+        tables: mockTables.filter(table => table.domain === '交易域')
+    },
+    {
+        id: 'collection-7',
+        name: '供应链管理',
+        description: '涵盖采购、库存、物流等供应链全链路数据，帮助优化库存周转与物流效率。',
+        type: '业务流程',
+        isRecommended: false,
+        tables: mockTables.filter(table => table.domain === '产品域')
+    },
+    {
+        id: 'collection-8',
+        name: '渠道转化分析',
+        description: '各推广渠道的流量、转化、ROI分析数据，为渠道投放策略提供数据支撑。',
+        type: '数据分析',
+        isRecommended: false,
+        tables: mockTables.filter(table => table.domain === '用户行为分析')
     }
 ];
-const mockApis = [
+
+// 2.0 新增 Mock 数据
+
+// 最近浏览
+export const mockRecentlyViewed = [
+    { id: 1, name: 'zh_user_behavior_analysis', type: 'Z', iconColor: '#165DFF', star: 0, viewed: true },
+    { id: 2, name: 'hive_order_transactions', type: 'H', iconColor: '#00B42A', star: 0, viewed: true },
+    { id: 3, name: 'doris_realtime_metrics', type: 'D', iconColor: '#F53F3F', star: 0, viewed: true },
+    { id: 4, name: 'zh_customer_profiles', type: 'Z', iconColor: '#165DFF', star: 0, viewed: true },
+    { id: 5, name: 'las_log_analysis', type: 'L', iconColor: '#FF7D00', star: 0, viewed: true },
+];
+
+// 数据资产
+export const mockDataAssets = [
+    { name: 'ByteHouse CDW表', count: 132, icon: 'icon-storage' },
+    { name: 'EMR Hive表', count: 238, icon: 'icon-storage' },
+    { name: 'LAS表', count: 126, icon: 'icon-storage' },
+    { name: '数据专题', count: 30, icon: 'icon-folder' },
+    { name: 'EMR Doris表', count: '4K', icon: 'icon-storage' },
+    { name: 'LAS Schema库', count: 290, icon: 'icon-database' },
+    { name: 'EMR Hive库', count: 253, icon: 'icon-database' },
+    { name: 'EMR StarRocks表', count: '1K', icon: 'icon-storage' },
+    { name: 'EMR Serverless StarRocks表', count: 414, isNew: true, icon: 'icon-storage' },
+];
+
+// 数据资源 (新增)
+export const mockDataResources = [
+    { name: 'API 接口', count: 56, icon: 'icon-api' },
+    { name: '数据报表', count: 89, icon: 'icon-bar-chart' },
+    { name: '算法模型', count: 12, icon: 'icon-mind-mapping' },
+    { name: '数据看板', count: 45, icon: 'icon-dashboard' }
+];
+
+// 数据要素 (新增)
+export const mockDataElements = [
+    { name: '核心指标', count: 120, icon: 'icon-trophy' },
+    { name: '业务标签', count: 340, icon: 'icon-tag' },
+    { name: '数据标准', count: 85, icon: 'icon-book' }
+];
+
+// 业务线推荐 (改为 TableCollection 格式)
+export const mockBusinessRecommendations = [
+    {
+        id: 'rec-1',
+        name: 'Coral-资产体系测试',
+        description: '测试-test111',
+        type: '业务流程',
+        tables: Array(4).fill({}), // 模拟4张表
+        isRecommended: true,
+        isFavorite: true,
+        owner: 'Coral',
+        updateTime: '2023-12-01T10:00:00Z'
+    },
+    {
+        id: 'rec-2',
+        name: 'Test_资产体系业务线',
+        description: 'dfff - 这是一个用于测试资产体系业务线的集合，包含多个关键数据表。',
+        type: '数据分析',
+        tables: Array(2).fill({}), // 模拟2张表
+        isRecommended: false,
+        isFavorite: false,
+        owner: 'TestUser',
+        updateTime: '2023-12-05T14:30:00Z'
+    },
+    {
+        id: 'rec-3',
+        name: '测试1',
+        description: '111 - 简单的测试集合',
+        type: '风险管控',
+        tables: Array(1).fill({}), // 模拟1张表
+        isRecommended: false,
+        isFavorite: false,
+        owner: 'Admin',
+        updateTime: '2023-12-10T09:15:00Z'
+    }
+];
+
+export default [
     {
         url: '/api/data-map/tables',
         method: 'get',
-        response: ({ query }) => {
-            const { name, type, category, domain, current = 1, pageSize = 10 } = query;
-            let filteredTables = [...mockTables];
-            if (name) {
-                filteredTables = filteredTables.filter(table => table.name.toLowerCase().includes(name.toLowerCase()) ||
-                    table.description.toLowerCase().includes(name.toLowerCase()));
-            }
-            if (type) {
-                filteredTables = filteredTables.filter(table => table.type === type);
-            }
-            if (category) {
-                filteredTables = filteredTables.filter(table => table.category === category);
-            }
-            if (domain) {
-                filteredTables = filteredTables.filter(table => table.domain === domain);
-            }
-            const start = (current - 1) * pageSize;
-            const end = start + pageSize;
+        response: () => {
             return {
                 code: 200,
                 data: {
-                    list: filteredTables.slice(start, end),
-                    total: filteredTables.length
+                    list: mockTables,
+                    total: mockTables.length
                 }
             };
         }
@@ -247,7 +340,3 @@ const mockApis = [
         }
     }
 ];
-export default {
-    favoriteTables: mockTables.filter(table => table.name.includes('dim') || table.name.includes('fact')),
-    collections: mockCollections
-};

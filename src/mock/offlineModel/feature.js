@@ -399,8 +399,7 @@ export function createFeature(featureData) {
     createTime: new Date().toLocaleString('zh-CN'),
     creator: featureData.creator || '当前用户',
     status: FEATURE_STATUS.DRAFT,
-    modelType: featureData.updateFrequency && featureData.updateFrequency.includes('日') ? 'daily' : 
-               featureData.updateFrequency && featureData.updateFrequency.includes('月') ? 'monthly' : 'other'
+    modelType: featureData.dayPartitionTable ? 'daily' : (featureData.monthPartitionTable ? 'monthly' : 'other')
   }
   mockFeatures.push(newFeature)
   return newFeature
@@ -412,7 +411,9 @@ export function createFeature(featureData) {
 export function updateFeature(id, featureData) {
   const index = mockFeatures.findIndex(f => f.id === parseInt(id))
   if (index !== -1) {
-    mockFeatures[index] = { ...mockFeatures[index], ...featureData }
+    const updatedFeature = { ...mockFeatures[index], ...featureData }
+    updatedFeature.modelType = updatedFeature.dayPartitionTable ? 'daily' : (updatedFeature.monthPartitionTable ? 'monthly' : 'other')
+    mockFeatures[index] = updatedFeature
     return mockFeatures[index]
   }
   return null

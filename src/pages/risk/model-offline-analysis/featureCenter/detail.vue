@@ -22,6 +22,8 @@
         <a-descriptions-item label="一级分类">{{ detail?.level1 || '-' }}</a-descriptions-item>
         <a-descriptions-item label="二级分类">{{ detail?.level2 || '-' }}</a-descriptions-item>
         <a-descriptions-item label="数据源">{{ detail?.dataSource || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="日分区来源表">{{ detail?.dayPartitionTable || '-' }}</a-descriptions-item>
+        <a-descriptions-item label="月分区来源表">{{ detail?.monthPartitionTable || '-' }}</a-descriptions-item>
         <a-descriptions-item label="更新频率">{{ detail?.updateFrequency || '-' }}</a-descriptions-item>
         <a-descriptions-item label="创建时间">{{ detail?.createTime || '-' }}</a-descriptions-item>
         <a-descriptions-item label="创建人">{{ detail?.creator || '-' }}</a-descriptions-item>

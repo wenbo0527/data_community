@@ -58,19 +58,6 @@
             </a-select>
           </a-form-item>
           
-          <a-form-item label="模型类型">
-            <a-select
-              v-model="filterForm.modelType"
-              placeholder="请选择模型类型"
-              allow-clear
-              @change="handleFilterChange"
-            >
-              <a-option value="daily">日模型</a-option>
-              <a-option value="monthly">月模型</a-option>
-              <a-option value="other">其他模型</a-option>
-            </a-select>
-          </a-form-item>
-          
           <a-form-item>
             <a-space>
               <a-button type="primary" @click="handleSearch">
@@ -182,12 +169,6 @@
             {{ formatDate(record.createTime) }}
           </template>
           
-          <template #modelType="{ record }">
-            <a-tag :color="getModelTypeColor(record.modelType)">
-              {{ getModelTypeLabel(record.modelType) }}
-            </a-tag>
-          </template>
-          
           <template #actions="{ record }">
             <a-space>
               <a-button type="text" size="small" @click="handleViewDetail(record)">
@@ -284,12 +265,6 @@ const columns = [
   {
     title: '创建人',
     dataIndex: 'creator',
-    width: 120
-  },
-  {
-    title: '模型类型',
-    dataIndex: 'modelType',
-    slotName: 'modelType',
     width: 120
   },
   {

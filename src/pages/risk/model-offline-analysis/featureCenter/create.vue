@@ -83,14 +83,17 @@
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="模型类型" required>
-              <a-select v-model="form.modelType" placeholder="请选择模型类型">
-                <a-option value="daily">日模型</a-option>
-                <a-option value="monthly">月模型</a-option>
-                <a-option value="other">其他模型</a-option>
-              </a-select>
+            <a-form-item label="日分区来源表">
+              <a-input v-model="form.dayPartitionTable" placeholder="请输入日分区来源表" />
             </a-form-item>
           </a-col>
+          <a-col :span="12">
+            <a-form-item label="月分区来源表">
+              <a-input v-model="form.monthPartitionTable" placeholder="请输入月分区来源表" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="更新频率">
               <a-select v-model="form.updateFrequency" placeholder="请选择更新频率">
@@ -104,19 +107,18 @@
               </a-select>
             </a-form-item>
           </a-col>
-        </a-row>
-        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="默认值">
               <a-input v-model="form.defaultValue" placeholder="请输入默认值" />
             </a-form-item>
           </a-col>
+        </a-row>
+        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="需求提出人">
               <a-input v-model="form.proposer" placeholder="请输入" />
             </a-form-item>
           </a-col>
-        </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="开发人">
@@ -179,7 +181,8 @@ const form = ref({
   accepter: '',
   remark: '',
   modelCode: '',
-  modelType: '',
+  dayPartitionTable: '',
+  monthPartitionTable: '',
   updateFrequency: '按需',
   defaultValue: ''
 })
@@ -285,7 +288,8 @@ const handleSubmit = async () => {
     sourceType: isModelOutput ? 'model_output' : '',
     sourceRefId: isModelOutput ? (form.value.modelCode || '') : '',
     creator: isModelOutput ? (selectedModel?.creator || '平台模型') : undefined,
-    modelType: form.value.modelType || 'other',
+    dayPartitionTable: form.value.dayPartitionTable || '',
+    monthPartitionTable: form.value.monthPartitionTable || '',
     defaultValue: form.value.defaultValue || ''
   }
 

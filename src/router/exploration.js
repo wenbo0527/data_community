@@ -95,7 +95,31 @@ export default [
       {
         path: 'event-center/virtual-events',
         name: 'virtual-events',
-        component: () => import('../pages/exploration/customer-center/event-center/virtual-events.vue')
+        component: () => import('../pages/exploration/customer-center/event-center/virtual-events.vue'),
+        meta: {
+          title: '虚拟事件',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'event-center/virtual-events/create',
+        name: 'VirtualEventCreate',
+        component: () => import('../pages/exploration/customer-center/event-center/virtual-event-detail.vue'),
+        meta: {
+          title: '创建虚拟事件',
+          requiresAuth: true,
+          activeMenu: '/exploration/customer-center/event-center/virtual-events'
+        }
+      },
+      {
+        path: 'event-center/virtual-events/edit/:id',
+        name: 'VirtualEventEdit',
+        component: () => import('../pages/exploration/customer-center/event-center/virtual-event-detail.vue'),
+        meta: {
+          title: '编辑虚拟事件',
+          requiresAuth: true,
+          activeMenu: '/exploration/customer-center/event-center/virtual-events'
+        }
       },
       {
         path: 'event-center/sample-stats',
