@@ -32,32 +32,59 @@ export const MENU_CONFIG = {
     key: 'discovery',
     title: '数据发现',
     icon: 'icon-search',
-    type: 'module', // 模块，有子菜单
+    type: 'module',
     defaultPath: '/discovery/data-map',
     children: {
       'data-map': {
         key: 'data-map',
-        title: '统一搜索',
+        title: '数据地图',
         path: '/discovery/data-map',
-        routeName: 'dataMap'
+        routeName: 'dataMap',
+        icon: 'icon-apps'
       },
-      'data-asset': {
-        key: 'data-asset',
+      'data-resources': {
+        key: 'data-resources',
+        title: '数据资源',
+        type: 'group',
+        children: {
+          'api-market': {
+            key: 'api-market',
+            title: 'API资源',
+            path: '/discovery/api-market',
+            routeName: 'ApiMarket'
+          },
+          'system-data': {
+            key: 'system-data',
+            title: '业务系统',
+            path: '/discovery/data-resources/business-system',
+            routeName: 'BusinessSystem'
+          },
+          'file-import': {
+            key: 'file-import',
+            title: '文件导入',
+            path: '/discovery/data-resources/file-import',
+            routeName: 'FileImport'
+          }
+        }
+      },
+      'data-assets': {
+        key: 'data-assets',
         title: '数据资产',
         type: 'group',
         children: {
-          'asset-overview': {
-            key: 'asset-overview',
-            title: '资产总览',
-            path: '/discovery/asset-overview',
-            routeName: 'AssetOverview'
-          },
-          'full-data': {
-            key: 'full-data',
-            title: '全量数据',
+          'table-search': {
+            key: 'table-search',
+            title: '资产目录',
             path: '/discovery/data-map/table-list',
             routeName: 'TableList'
-          },
+          }
+        }
+      },
+      'data-elements': {
+        key: 'data-elements',
+        title: '数据要素',
+        type: 'group',
+        children: {
           'metrics-map': {
             key: 'metrics-map',
             title: '指标地图',
@@ -70,81 +97,42 @@ export const MENU_CONFIG = {
             path: '/discovery/variable-map',
             routeName: 'VariableMapDiscovery'
           },
-          'external-data': {
-            key: 'external-data',
-            title: '外部数据',
-            path: '/external-data-v1/list',
-            routeName: 'external'
+          'metrics-center': {
+            key: 'metrics-center',
+            title: '指标中心',
+            path: '/discovery/placeholder?title=指标中心&desc=指标统一管理中心正在建设中。',
+            routeName: 'UnifiedMetrics'
           },
-          'credit-variables': {
-            key: 'credit-variables',
-            title: '征信变量',
-            path: '/discovery/credit',
-            routeName: 'credit'
-          }
-        }
-      },
-      'data-resources': {
-        key: 'data-resources',
-        title: '数据资源',
-        type: 'group',
-        children: {
-          'data-resources-item': {
-            key: 'data-resources-item',
-            title: '数据资源',
-            path: '/discovery/data-resources',
-            routeName: 'DataResources'
-          }
-        }
-      },
-      'data-elements': {
-        key: 'data-elements',
-        title: '数据要素',
-        type: 'group',
-        children: {
-          'api-market': {
-            key: 'api-market',
-            title: 'API市场',
-            path: '/discovery/api-market',
-            routeName: 'ApiMarket'
+          'tag-management': {
+            key: 'tag-management',
+            title: '标签管理',
+            path: '/discovery/placeholder?title=标签管理&desc=客户标签与画像管理体系正在建设中。',
+            routeName: 'Customer360'
           },
-          'messages': {
-            key: 'messages',
-            title: '消息列表',
-            path: '/discovery/messages',
-            routeName: 'Messages'
+          'variable-center': {
+            key: 'variable-center',
+            title: '变量中心',
+            path: '/discovery/placeholder?title=变量中心&desc=变量统一注册与管理中心正在建设中。',
+            routeName: 'VariableList'
+          },
+          'feature-center': {
+            key: 'feature-center',
+            title: '特征中心',
+            path: '/discovery/placeholder?title=特征中心&desc=特征工程管理平台正在建设中。',
+            routeName: 'RiskFeatureCenter'
           }
         }
       },
-      'resource-analysis': {
-        key: 'resource-analysis',
-        title: '资源分析',
+      'analysis-tools': {
+        key: 'analysis-tools',
+        title: '分析工具',
         type: 'group',
         children: {
           'lineage': {
             key: 'lineage',
-            title: '血缘分析',
-            path: ROUTE_PATHS.DISCOVERY.LINEAGE,
-            routeName: ROUTE_NAMES.DISCOVERY.LINEAGE
-          }
-        }
-      },
-      'common-management': {
-        key: 'common-management',
-        title: '常用管理',
-        type: 'group',
-        children: {
-          'collections-management': {
-            key: 'collections-management',
-            title: '常用表管理',
-            path: '/discovery/data-map/collections',
-            routeName: 'CollectionsManagement'
-          },
-          'favorites': {
-            key: 'favorites',
-            title: '我的收藏',
-            path: '/discovery/favorites',
-            routeName: 'Favorites'
+            title: '全链路血缘',
+            path: '/discovery/placeholder?title=全链路血缘&desc=数据全链路血缘分析功能正在开发中。',
+            routeName: 'Lineage'
           }
         }
       }
@@ -304,6 +292,12 @@ export const MENU_CONFIG = {
             }
           }
         }
+      },
+      'indicator-dashboard': {
+        key: 'indicator-dashboard',
+        title: '指标看板',
+        path: '/exploration/indicator-dashboard',
+        routeName: 'indicator-dashboard'
       }
     }
   },

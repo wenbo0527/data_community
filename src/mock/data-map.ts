@@ -124,7 +124,7 @@ export const mockTables: TableItem[] = [
     domain: '用户域',
     updateFrequency: '每日',
     owner: '张三',
-    description: '用户维度表，存储用户基础信息。关联逻辑：作为主表关联fact_loan_apply表(user_id)和dws_risk_score表(user_id)，提供用户基础画像数据。',
+    description: '用户维度表，存储用户基础信息。来源：核心系统。关联逻辑：作为主表关联fact_loan_apply表(user_id)和dws_risk_score表(user_id)，提供用户基础画像数据。',
     recordCount: 1250000,
     storageSize: '2.5GB',
     partitionKeys: ['create_date'],
@@ -264,7 +264,7 @@ export const mockTables: TableItem[] = [
     domain: '贷前分析',
     updateFrequency: '实时',
     owner: '李四',
-    description: '贷款申请事实表。关联逻辑：通过user_id关联dim_user表获取申请人信息，通过user_id关联dws_risk_score表获取风控评分，用于贷前审批决策。',
+    description: '贷款申请事实表。来源：信贷系统。关联逻辑：通过user_id关联dim_user表获取申请人信息，通过user_id关联dws_risk_score表获取风控评分，用于贷前审批决策。',
     recordCount: 850000,
     storageSize: '1.8GB',
     partitionKeys: ['apply_date'],
@@ -404,7 +404,7 @@ export const mockTables: TableItem[] = [
     domain: '风控评估',
     updateFrequency: '每日',
     owner: '王五',
-    description: '风险评分汇总表。关联逻辑：通过user_id关联dim_user表获取用户基本信息，为fact_loan_apply表提供风控评分支持，同时关联dwd_fraud_alert表获取欺诈信息。',
+    description: '风险评分汇总表。来源：风控系统。关联逻辑：通过user_id关联dim_user表获取用户基本信息，为fact_loan_apply表提供风控评分支持，同时关联dwd_fraud_alert表获取欺诈信息。',
     recordCount: 1200000,
     storageSize: '800MB',
     partitionKeys: ['update_date'],
@@ -500,7 +500,7 @@ export const mockTables: TableItem[] = [
     domain: '反欺诈',
     updateFrequency: '实时',
     owner: '赵六',
-    description: '欺诈预警明细表。关联逻辑：通过user_id关联dim_user表和dws_risk_score表，为风控决策提供欺诈风险信息，是风控评分的重要组成部分。',
+    description: '欺诈预警明细表。来源：风控系统。关联逻辑：通过user_id关联dim_user表和dws_risk_score表，为风控决策提供欺诈风险信息，是风控评分的重要组成部分。',
     recordCount: 45000,
     storageSize: '120MB',
     partitionKeys: ['alert_date'],
@@ -607,7 +607,7 @@ export const mockTables: TableItem[] = [
     domain: '自营业务',
     updateFrequency: '实时',
     owner: '钱七',
-    description: '自营贷款业务事实表，记录自营贷款业务的交易信息',
+    description: '自营贷款业务事实表，记录自营贷款业务的交易信息。来源：核心系统。',
     recordCount: 320000,
     storageSize: '650MB',
     partitionKeys: ['transaction_date'],
@@ -816,7 +816,7 @@ const fieldRelations: FieldRelation[] = [
   }
 ];
 
-const mockCollections: TableCollection[] = [
+export const mockCollections: TableCollection[] = [
   {
     id: 'collection-1',
     name: '贷前分析',
@@ -865,6 +865,126 @@ const mockCollections: TableCollection[] = [
     tags: ['自营', '业务分析', '运营'],
     accessLevel: DataSensitivity.CONFIDENTIAL
   }
+];
+
+export const mockBusinessRecommendations = [
+  {
+    id: 'rec-1',
+    name: 'Coral-资产体系测试',
+    description: '测试-test111',
+    type: '业务流程',
+    tables: Array(4).fill({}), 
+    isRecommended: true,
+    isFavorite: true,
+    owner: 'Coral',
+    updateTime: '2023-12-01T10:00:00Z'
+  },
+  {
+    id: 'rec-2',
+    name: 'Test_资产体系业务线',
+    description: 'dfff - 这是一个用于测试资产体系业务线的集合，包含多个关键数据表。',
+    type: '数据分析',
+    tables: Array(2).fill({}),
+    isRecommended: false,
+    isFavorite: false,
+    owner: 'TestUser',
+    updateTime: '2023-12-05T14:30:00Z'
+  },
+  {
+    id: 'rec-3',
+    name: '测试1',
+    description: '111 - 简单的测试集合',
+    type: '风险管控',
+    tables: Array(1).fill({}),
+    isRecommended: false,
+    isFavorite: false,
+    owner: 'Admin',
+    updateTime: '2023-12-10T09:15:00Z'
+  }
+];
+
+export const mockRecentlyViewed = [
+    { id: 1, name: 'zh_user_behavior_analysis', type: 'Z', iconColor: '#165DFF', star: 0, viewed: true },
+    { id: 2, name: 'hive_order_transactions', type: 'H', iconColor: '#00B42A', star: 0, viewed: true },
+    { id: 3, name: 'doris_realtime_metrics', type: 'D', iconColor: '#F53F3F', star: 0, viewed: true },
+    { id: 4, name: 'zh_customer_profiles', type: 'Z', iconColor: '#165DFF', star: 0, viewed: true },
+    { id: 5, name: 'las_log_analysis', type: 'L', iconColor: '#FF7D00', star: 0, viewed: true },
+];
+
+export const mockDataResources = [
+    { 
+        name: '业务系统', 
+        count: '12Sys', 
+        icon: 'icon-apps', 
+        description: '核心、信贷、账务、催收等交易流水与日志',
+        details: [
+            '业务库表（MySQL、Oracle）',
+            '交易流水、日志表、状态表',
+            '客户申请、授信合同、放款记录',
+            '还款计划、逾期记录、催收记录'
+        ]
+    },
+    { 
+        name: '行为日志', 
+        count: '5Sys', 
+        icon: 'icon-history', 
+        description: 'APP/小程序埋点、接口日志、设备轨迹',
+        details: [
+            'APP/小程序埋点日志',
+            '接口调用日志',
+            '设备指纹、IP、地理位置',
+            '风控规则触发日志'
+        ]
+    },
+    { 
+        name: '外部合规', 
+        count: '15Src', 
+        icon: 'icon-cloud', 
+        description: '人行/百行征信、三方数据、黑名单',
+        details: [
+            '人行征信 / 百行征信',
+            '三方风控数据（多头、司法）',
+            '运营商、电商、社保公积金',
+            '外部黑名单、白名单'
+        ]
+    },
+    { 
+        name: '文件导入', 
+        count: '8Src', 
+        icon: 'icon-file', 
+        description: 'Excel/CSV、对账文件、监管报送',
+        details: [
+            '渠道合作方数据',
+            '财务对账数据',
+            '线下业务数据',
+            '监管报送回盘文件'
+        ]
+    }
+];
+
+export const mockDataAssets = [
+    { name: '用户域', count: 238, icon: 'icon-user-group' },
+    { name: '交易域', count: 414, icon: 'icon-transaction' },
+    { name: '商品域', count: 126, icon: 'icon-common' },
+    { name: '营销域', count: 132, icon: 'icon-notification' },
+    { name: '风控域', count: 253, icon: 'icon-shield' },
+    { name: '财务域', count: 89, icon: 'icon-safe' },
+    { name: '供应链域', count: 156, icon: 'icon-branch' },
+    { name: '公共域', count: 290, icon: 'icon-public' },
+];
+
+export const mockDataGovernance = [
+    { name: '数据标准', count: 85, icon: 'icon-book' },
+    { name: '质量规则', count: 142, icon: 'icon-check-circle' },
+    { name: '安全分级', count: 4, icon: 'icon-lock' },
+    { name: '数据血缘', count: '12W+', icon: 'icon-mind-mapping' }
+];
+
+export const mockDataElements = [
+    { name: '核心指标', count: 120, icon: 'icon-trophy' },
+    { name: '业务标签', count: 340, icon: 'icon-tag' },
+    { name: '数据变量', count: 560, icon: 'icon-code' },
+    { name: '模型特征', count: 890, icon: 'icon-mind-mapping' }
 ];
 
 const mockApis = [

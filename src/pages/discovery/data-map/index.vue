@@ -31,9 +31,9 @@
             <template #icon><icon-filter /></template>
             高级
           </a-button>
-          <a-button class="action-btn" size="large">
-            <template #icon><icon-star /></template>
-            收藏
+          <a-button class="action-btn" size="large" @click="handleFollow">
+            <template #icon><icon-heart /></template>
+            关注
           </a-button>
         </div>
 
@@ -76,117 +76,182 @@
 
     <!-- 主体内容区域 -->
     <div class="main-content">
-      <a-row :gutter="24">
-        <!-- 左侧内容：最近浏览 + 常用表集合 -->
-        <a-col :span="17">
-          <!-- 最近浏览 -->
-          <div class="content-section">
-            <div class="section-header">
-              <h3 class="section-title">最近浏览</h3>
-              <div class="sort-options">
-                <icon-sort />
-                <span class="sort-label">排序</span>
-                <span class="sort-item active">按热度</span>
-                <span class="divider">|</span>
-                <span class="sort-item">按时间</span>
-              </div>
-            </div>
-            
-            <a-list :bordered="false" class="recent-list">
-              <a-list-item v-for="item in recentlyViewed" :key="item.id" class="recent-item">
-                <div class="recent-item-content">
-                  <div class="item-icon" :style="{ backgroundColor: item.iconColor || '#165DFF' }">
-                    {{ item.type }}
+      <!-- 常用表集合 -->
+      <div class="content-section">
+        <div class="section-header">
+          <h3 class="section-title">常用表集合</h3>
+          <a-link class="more-link" @click="router.push('/discovery/data-map/collections')">查看更多 <icon-right /></a-link>
+        </div>
+        
+        <TableCollectionGrid
+          :collections="collections"
+          :show-header="false"
+          :page-size="8"
+          @collection-click="handleCollectionClick"
+        />
+      </div>
+
+      <!-- 数据体系全景 (合并了原侧边栏内容) -->
+      <div class="content-section" style="margin-top: 24px;">
+        <div class="section-header">
+          <h3 class="section-title">数据体系全景</h3>
+        </div>
+        
+        <div class="data-map-wrapper">
+             <div class="data-flow-container">
+               <!-- 数据资源 -->
+               <div class="system-column">
+                 <div class="relationship-card">
+                   <div class="card-icon resource-bg">
+                     <icon-apps />
+                   </div>
+                   <div class="card-info">
+                     <h4>数据资源</h4>
+                     <p>原始数据的汇聚与接入，包含各类业务系统产生的源数据、API接口及外部数据源。</p>
+                   </div>
+                 </div>
+                 <div class="column-list">
+                    <a-list :bordered="false" class="asset-list">
+                      <a-list-item 
+                        v-for="(item, index) in dataResources" 
+                        :key="index" 
+                        class="asset-item clickable-item"
+                        @click="handleResourceClick(item)"
+                      >
+                        <div class="asset-content">
+                          <icon-apps class="asset-icon" v-if="item.icon === 'icon-apps'" />
+                          <icon-history class="asset-icon" v-else-if="item.icon === 'icon-history'" />
+                          <icon-file class="asset-icon" v-else-if="item.icon === 'icon-file'" />
+                          <icon-cloud class="asset-icon" v-else-if="item.icon === 'icon-cloud'" />
+                          <div class="resource-info">
+                            <span class="asset-name">{{ item.name }}</span>
+                            <span v-if="item.description" class="resource-desc" :title="item.description">{{ item.description }}</span>
+                          </div>
+                        </div>
+                        <span class="asset-count">{{ item.count }}</span>
+                        <!-- 悬浮详情 -->
+                        <div class="hover-details" v-if="item.details && item.details.length">
+                          <div class="detail-item" v-for="(detail, dIndex) in item.details" :key="dIndex">
+                            • {{ detail }}
+                          </div>
+                        </div>
+                      </a-list-item>
+                    </a-list>
+                 </div>
+               </div>
+               
+               <div class="arrow-connector">
+                 <icon-right />
+               </div>
+    
+               <!-- 数据资产 -->
+               <div class="system-column">
+                 <div class="relationship-card">
+                   <div class="card-icon asset-bg">
+                     <icon-storage />
+                   </div>
+                   <div class="card-info">
+                     <h4>数据资产</h4>
+                     <p>经过治理、加工和标准化的数据集合，按业务域分层组织，具备明确的业务价值。</p>
+                   </div>
+                 </div>
+                 <div class="column-list">
+                    <a-list :bordered="false" class="asset-list">
+                      <a-list-item 
+                        v-for="(item, index) in dataAssets" 
+                        :key="index" 
+                        class="asset-item clickable-item"
+                        @click="handleAssetClick(item)"
+                      >
+                        <div class="asset-content">
+                          <icon-user-group class="asset-icon" v-if="item.icon === 'icon-user-group'" />
+                          <icon-branch class="asset-icon" v-else-if="item.icon === 'icon-transaction'" />
+                          <icon-common class="asset-icon" v-else-if="item.icon === 'icon-common'" />
+                          <icon-notification class="asset-icon" v-else-if="item.icon === 'icon-notification'" />
+                          <icon-safe class="asset-icon" v-else-if="item.icon === 'icon-shield'" />
+                          <icon-safe class="asset-icon" v-else-if="item.icon === 'icon-safe'" />
+                          <icon-branch class="asset-icon" v-else-if="item.icon === 'icon-branch'" />
+                          <icon-public class="asset-icon" v-else-if="item.icon === 'icon-public'" />
+                          <icon-storage class="asset-icon" v-else />
+                          <span class="asset-name">{{ item.name }}</span>
+                        </div>
+                        <span class="asset-count">{{ item.count }}</span>
+                      </a-list-item>
+                    </a-list>
+                 </div>
+               </div>
+    
+               <div class="arrow-connector">
+                 <icon-right />
+               </div>
+    
+               <!-- 数据要素 -->
+               <div class="system-column">
+                 <div class="relationship-card">
+                   <div class="card-icon element-bg">
+                     <icon-bulb />
+                   </div>
+                   <div class="card-info">
+                     <h4>数据要素</h4>
+                     <p>面向业务场景的高价值数据形态，如核心指标、业务标签，直接赋能业务决策。</p>
+                   </div>
+                 </div>
+                 <div class="column-list">
+                    <a-list :bordered="false" class="asset-list">
+                      <a-list-item 
+                        v-for="(item, index) in dataElements" 
+                        :key="index" 
+                        class="asset-item clickable-item"
+                        @click="handleElementClick(item)"
+                      >
+                        <div class="asset-content">
+                          <icon-trophy class="asset-icon" v-if="item.icon === 'icon-trophy'" />
+                          <icon-tag class="asset-icon" v-else-if="item.icon === 'icon-tag'" />
+                          <icon-code class="asset-icon" v-else-if="item.icon === 'icon-code'" />
+                          <icon-mind-mapping class="asset-icon" v-else-if="item.icon === 'icon-mind-mapping'" />
+                          <icon-bulb class="asset-icon" v-else />
+                          <span class="asset-name">{{ item.name }}</span>
+                        </div>
+                        <span class="asset-count">{{ item.count }}</span>
+                      </a-list-item>
+                    </a-list>
+                 </div>
+               </div>
+             </div>
+
+             <!-- 数据治理 (Foundation Layer) -->
+             <div class="governance-foundation">
+               <div class="foundation-header">
+                 <div class="card-icon governance-bg">
+                   <icon-settings />
+                 </div>
+                 <div class="card-info">
+                   <h4>数据治理</h4>
+                   <p>贯穿全生命周期的标准规范与质量保障体系</p>
+                 </div>
+               </div>
+               <div class="foundation-content">
+                  <div class="governance-grid">
+                    <div 
+                      v-for="(item, index) in dataGovernance" 
+                      :key="index" 
+                      class="governance-item"
+                    >
+                      <div class="asset-content">
+                        <icon-book class="asset-icon" v-if="item.icon === 'icon-book'" />
+                        <icon-check-circle class="asset-icon" v-else-if="item.icon === 'icon-check-circle'" />
+                        <icon-lock class="asset-icon" v-else-if="item.icon === 'icon-lock'" />
+                        <icon-mind-mapping class="asset-icon" v-else-if="item.icon === 'icon-mind-mapping'" />
+                        <icon-settings class="asset-icon" v-else />
+                        <span class="asset-name">{{ item.name }}</span>
+                      </div>
+                      <span class="asset-count">{{ item.count }}</span>
+                    </div>
                   </div>
-                  <span class="item-name">{{ item.name }}</span>
-                </div>
-                <template #actions>
-                  <span class="action-item"><icon-star /> {{ item.star }}</span>
-                  <span class="action-item"><icon-eye /></span>
-                </template>
-              </a-list-item>
-            </a-list>
-          </div>
-
-          <!-- 常用表集合 -->
-          <div class="content-section" style="margin-top: 24px;">
-            <div class="section-header">
-              <h3 class="section-title">常用表集合</h3>
-              <a-link class="more-link" @click="router.push('/discovery/data-map/collections')">查看更多 <icon-right /></a-link>
-            </div>
-            
-            <TableCollectionGrid
-              :collections="collections"
-              :show-header="false"
-              :page-size="6"
-              @collection-click="handleCollectionClick"
-            />
-          </div>
-        </a-col>
-
-        <!-- 右侧侧栏：数据资产/资源/要素 -->
-        <a-col :span="7">
-          <!-- 数据资产 -->
-          <div class="sidebar-section">
-            <h3 class="sidebar-title">数据资产</h3>
-            <a-list :bordered="false" class="asset-list">
-              <a-list-item 
-                v-for="(item, index) in dataAssets" 
-                :key="index" 
-                class="asset-item clickable-item"
-                @click="handleAssetClick(item)"
-              >
-                <div class="asset-content">
-                  <icon-storage class="asset-icon" v-if="item.icon === 'icon-storage'" />
-                  <icon-folder class="asset-icon" v-else-if="item.icon === 'icon-folder'" />
-                  <icon-drive-file class="asset-icon" v-else-if="item.icon === 'icon-database'" />
-                  <span class="asset-name">{{ item.name }}</span>
-                  <a-tag v-if="item.isNew" color="orangered" size="small" class="new-tag">NEW</a-tag>
-                </div>
-                <span class="asset-count">{{ item.count }}</span>
-              </a-list-item>
-            </a-list>
-          </div>
-
-          <!-- 数据资源 -->
-          <div class="sidebar-section">
-            <h3 class="sidebar-title">数据资源</h3>
-            <a-list :bordered="false" class="asset-list">
-              <a-list-item 
-                v-for="(item, index) in dataResources" 
-                :key="index" 
-                class="asset-item clickable-item"
-                @click="handleResourceClick(item)"
-              >
-                <div class="asset-content">
-                  <icon-apps class="asset-icon" />
-                  <span class="asset-name">{{ item.name }}</span>
-                </div>
-                <span class="asset-count">{{ item.count }}</span>
-              </a-list-item>
-            </a-list>
-          </div>
-
-          <!-- 数据要素 -->
-          <div class="sidebar-section">
-            <h3 class="sidebar-title">数据要素</h3>
-            <a-list :bordered="false" class="asset-list">
-              <a-list-item 
-                v-for="(item, index) in dataElements" 
-                :key="index" 
-                class="asset-item clickable-item"
-                @click="handleElementClick(item)"
-              >
-                <div class="asset-content">
-                  <icon-bulb class="asset-icon" />
-                  <span class="asset-name">{{ item.name }}</span>
-                </div>
-                <span class="asset-count">{{ item.count }}</span>
-              </a-list-item>
-            </a-list>
-          </div>
-        </a-col>
-      </a-row>
+               </div>
+             </div>
+        </div>
+      </div>
     </div>
 
     <!-- 悬浮按钮 -->
@@ -202,20 +267,31 @@ import { useRouter } from 'vue-router'
 import { 
   IconSearch, IconStar, IconSort, IconEye, IconRight, 
   IconFire, IconStorage, IconFolder, IconDriveFile,
-  IconApps, IconBulb, IconNotification, IconFilter
+  IconApps, IconBulb, IconNotification, IconFilter,
+  IconCloud, IconTrophy, IconTag, IconCode, IconMindMapping,
+  IconSafe, IconUserGroup, IconCommon, IconBranch, IconPublic, IconSettings, IconBook, IconCheckCircle, IconLock,
+  IconHeart, IconHistory, IconFile
 } from '@arco-design/web-vue/es/icon'
-import { Message } from '@arco-design/web-vue'
+import { Message, Modal } from '@arco-design/web-vue'
 import TableCollectionGrid from './components/TableCollectionGrid.vue'
 import { 
   mockRecentlyViewed, 
   mockDataAssets, 
   mockDataResources, 
   mockDataElements, 
-  mockBusinessRecommendations 
-} from '@/mock/data-map'
-import mockData from '@/mock/data-map'
+  mockBusinessRecommendations,
+  mockDataGovernance 
+} from '@/mock/data-map.ts'
+import mockData from '@/mock/data-map.ts'
 
 const router = useRouter()
+
+console.log('DataMap: mockData loaded', mockData);
+if (mockData && mockData.collections) {
+    console.log('DataMap: collections count', mockData.collections.length);
+} else {
+    console.error('DataMap: mockData.collections is missing!', mockData);
+}
 
 // 状态管理
 const searchForm = ref({
@@ -231,7 +307,28 @@ const recentlyViewed = ref(mockRecentlyViewed || [])
 const dataAssets = ref(mockDataAssets || [])
 const dataResources = ref(mockDataResources || [])
 const dataElements = ref(mockDataElements || [])
+const dataGovernance = ref(mockDataGovernance || [])
 const collections = ref(mockData.collections || [])
+
+// 关注功能
+const handleFollow = () => {
+  // 检查是否是首次关注（这里用 localStorage 模拟）
+  const hasFollowedBefore = localStorage.getItem('has_followed_assets')
+  
+  if (!hasFollowedBefore) {
+    Modal.info({
+      title: '关注提示',
+      content: '关注资产后，您将通过数字社区首页和数据服务公众号收到资产变更相关的通知。',
+      okText: '知道了',
+      onOk: () => {
+        localStorage.setItem('has_followed_assets', 'true')
+        Message.success('关注成功')
+      }
+    })
+  } else {
+    Message.success('关注成功')
+  }
+}
 
 // 搜索处理
 const handleSearch = () => {
@@ -267,59 +364,50 @@ const resetSearch = () => {
 
 // 路由跳转处理
 const handleAssetClick = (item: any) => {
-  // 根据资产类型进行筛选跳转
-  // 例如：跳转到数据搜索页并带上类型参数
-  // 这里暂时统一跳转到数据搜索，并使用 query 参数
-  // 实际项目中可能需要更复杂的映射逻辑
-  
-  // 如果是"数据专题"，跳转到专题页（假设有）或搜索专题
-  if (item.name === '数据专题') {
-     // 示例：Message.info('跳转到数据专题页')
-     router.push({ path: '/discovery/search', query: { type: 'topic' } })
-     return
-  }
-
-  // 其他类型视为表类型或数据源类型
+  // 数据资产点击 - 按业务域筛选数据表
   router.push({ 
     path: '/discovery/search', 
     query: { 
-      q: '', 
       type: 'table',
-      source: item.name // 将名称作为来源筛选
+      domain: item.name // 将名称（如'用户域'）作为业务域筛选
     } 
   })
 }
 
 const handleResourceClick = (item: any) => {
-  if (item.name === 'API 接口') {
-    router.push({ path: '/discovery/api-market' })
-  } else if (item.name === '数据报表') {
-    // 假设跳转到报表中心或相关搜索
-    router.push({ path: '/discovery/search', query: { type: 'report' } })
-  } else if (item.name === '算法模型') {
-    // 跳转到模型相关页面
-    // 检查路由表，似乎有 model-offline-analysis 或 offlineModel
-    // 这里先跳搜索
-    router.push({ path: '/discovery/search', query: { type: 'model' } })
-  } else if (item.name === '数据看板') {
-    router.push({ path: '/discovery/search', query: { type: 'dashboard' } })
-  } else {
-    Message.info(`即将跳转到：${item.name}`)
+  // 数据资源点击 - 统一跳转搜索页，作为关键词或来源筛选
+  // 提取描述中的关键词作为搜索词，例如 "核心系统"
+  let keyword = ''
+  if (item.description) {
+    const parts = item.description.split('、')
+    if (parts.length > 0) keyword = parts[0]
   }
+  
+  router.push({ 
+    path: '/discovery/search', 
+    query: { 
+      q: keyword || item.name,
+      type: 'table' // 资源最终是看表
+    } 
+  })
 }
 
 const handleElementClick = (item: any) => {
   if (item.name === '核心指标') {
-    // 跳转到指标中心
     router.push({ path: '/discovery/unified-metrics' })
   } else if (item.name === '业务标签') {
-    // 跳转到客户360或标签管理
     router.push({ path: '/discovery/customer360' })
-  } else if (item.name === '数据标准') {
-    // 假设有数据标准页
-    Message.info('跳转到数据标准管理')
+  } else if (item.name === '数据变量') {
+    router.push({ path: '/variables/map' })
+  } else if (item.name === '模型特征') {
+    // 跳转到特征中心
+    router.push({ path: '/risk/model-offline-analysis/feature-center' })
   } else {
-    Message.info(`即将跳转到：${item.name}`)
+    // 默认跳搜索
+    router.push({ 
+      path: '/discovery/search', 
+      query: { q: item.name } 
+    })
   }
 }
 
@@ -342,21 +430,24 @@ const handleCollectionClick = (collection: any) => {
 /* Banner Section */
 .banner-section {
   background: linear-gradient(180deg, #E6F0FF 0%, #F7F8FA 100%);
-  padding: 40px 60px;
+  padding: 40px 0; /* Remove horizontal padding from wrapper */
   position: relative;
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Center the content wrapper */
   align-items: center;
   min-height: 320px;
   height: auto;
 }
 
 .banner-content {
-  max-width: 60%;
+  width: 100%;
+  max-width: 1800px; /* Align with main-content max-width */
   z-index: 2;
   position: relative;
   display: flex;
   flex-direction: column;
+  padding: 0 40% 0 40px; /* Top, Right(decoration space), Bottom, Left(alignment) */
+  box-sizing: border-box;
 }
 
 .search-area {
@@ -494,7 +585,8 @@ const handleCollectionClick = (collection: any) => {
 /* Main Content */
 .main-content {
   padding: 0 40px 40px;
-  max-width: 1600px;
+  width: 100%;
+  max-width: 1800px; /* Increased from 1600px for larger screens */
   margin: -40px auto 0;
   position: relative;
   z-index: 3;
@@ -647,6 +739,34 @@ const handleCollectionClick = (collection: any) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative; /* Added relative positioning for hover context */
+}
+
+.hover-details {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  background: #fff;
+  border: 1px solid #e5e6eb;
+  border-radius: 4px;
+  padding: 12px;
+  width: 240px; /* Wider for details */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 100; /* Ensure it's above other elements */
+  pointer-events: none; /* Allow clicking through if needed, but usually fine */
+  margin-left: 10px; /* Space from item */
+}
+
+.asset-item:hover .hover-details {
+  display: block;
+}
+
+.detail-item {
+  font-size: 12px;
+  color: #4e5969; /* Darker text for readability */
+  line-height: 1.6;
+  margin-bottom: 4px;
 }
 
 .clickable-item {
@@ -672,9 +792,26 @@ const handleCollectionClick = (collection: any) => {
   font-size: 16px;
 }
 
+.resource-info {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+}
+
+.resource-desc {
+  font-size: 10px;
+  color: #86909c;
+  margin-top: 2px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .asset-name {
   font-size: 14px;
   color: #4e5969;
+  font-weight: 500;
 }
 
 .asset-count {
@@ -738,5 +875,168 @@ const handleCollectionClick = (collection: any) => {
   .recommendation-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Data Relationship Section */
+.data-map-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.data-flow-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 24px;
+}
+
+.system-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f7f8fa;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e6eb;
+}
+
+/* ... existing styles ... */
+.governance-foundation {
+  display: flex;
+  align-items: center;
+  /* background: linear-gradient(90deg, #fff0f0 0%, #fff 100%); */
+  background: #fff;
+  border: 1px solid #ffccc7; /* Keep the red border hint */
+  border-left: 4px solid #F53F3F; /* Stronger indicator */
+  border-radius: 4px;
+  padding: 20px 24px;
+  margin-top: 16px; /* Increased margin */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.foundation-header {
+  display: flex;
+  align-items: center;
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid #e5e6eb; /* Cleaner separator */
+  padding-right: 32px;
+  margin-right: 32px;
+}
+
+.foundation-content {
+  flex: 1;
+}
+
+.governance-grid {
+  display: grid; /* Use Grid for better control */
+  grid-template-columns: repeat(4, 1fr); /* 4 columns */
+  gap: 20px;
+}
+
+.governance-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9f9f9; /* Slight background for items */
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.governance-item:hover {
+  background: #fff;
+  border-color: #ffccc7;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+}
+/* ... existing styles ... */
+
+.relationship-card {
+  /* Remove flex:1 since it's now inside a column */
+  display: flex;
+  align-items: center;
+  /* background: #f7f8fa; Removed background, let column handle it or keep for header effect */
+  background: #fff; /* Make header distinct */
+  padding: 20px;
+  border-bottom: 1px solid #e5e6eb;
+  /* border-radius: 8px; Removed */
+  transition: all 0.3s;
+}
+
+.relationship-card:hover {
+  /* background: #fff; */
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); Removed hover effect on header only */
+  /* transform: translateY(-2px); Removed */
+}
+
+.column-list {
+  padding: 16px 20px;
+  flex: 1; /* Take remaining height */
+  background: #fff; /* White background for list */
+}
+
+.asset-list .asset-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f2f3f5;
+}
+
+.asset-list .asset-item:last-child {
+  border-bottom: none;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-right: 16px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.resource-bg {
+  background: linear-gradient(135deg, #165DFF 0%, #722ED1 100%);
+}
+
+.asset-bg {
+  background: linear-gradient(135deg, #00B42A 0%, #00D25C 100%);
+}
+
+.element-bg {
+  background: linear-gradient(135deg, #FF7D00 0%, #FF9A2E 100%);
+}
+
+.governance-bg {
+  background: linear-gradient(135deg, #F53F3F 0%, #F76560 100%);
+}
+
+.card-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.card-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #86909c;
+  line-height: 1.5;
+}
+
+.arrow-connector {
+  margin: 0; /* Remove margin since gap handles it */
+  color: #c9cdd4;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

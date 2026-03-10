@@ -182,6 +182,8 @@ const props = withDefaults(defineProps<{
   showHeader: true
 })
 
+console.log('TableCollectionGrid: collections prop received', props.collections)
+
 const emit = defineEmits<TableCollectionGridEmits>()
 
 const currentPage = ref(1)
