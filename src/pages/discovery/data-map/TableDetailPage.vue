@@ -33,11 +33,10 @@
         <a-descriptions :column="2" :data="tableBasicInfo" />
       </a-card>
       
-      <!-- 标签页内容 -->
+      <!-- 标签页展示内容 -->
       <a-card class="tab-content">
         <a-tabs v-model:active-key="activeMainTab" class="table-content" @change="handleMainTabChange">
-      <a-tab-pane key="details" title="明细信息">
-        <a-tabs default-active-key="structure">
+          <!-- 表结构 -->
           <a-tab-pane key="structure" title="表结构">
             <a-card class="table-info" title="字段信息">
               <a-table
@@ -65,6 +64,8 @@
               </a-table>
             </a-card>
           </a-tab-pane>
+
+          <!-- 数据预览 -->
           <a-tab-pane key="preview" title="数据预览">
             <a-card class="table-info">
               <template #title>
@@ -90,102 +91,133 @@
               </a-table>
             </a-card>
           </a-tab-pane>
-        </a-tabs>
-      </a-tab-pane>
-      <a-tab-pane key="relations" title="数据关系">
-        <div class="relation-info">
-          <a-space direction="vertical" style="width: 100%">
-            <a-card>
-              <a-tabs v-model:active-key="relationCategory" type="rounded">
-                <a-tab-pane key="association" title="关联关系">
-                  <a-tabs v-model:active-key="relationViewMode" type="rounded" @change="onRelationViewModeChange">
-                    <a-tab-pane key="graph" title="关联关系可视化">
-                      <div ref="relationTreeRef" class="relation-tree-container"></div>
-                    </a-tab-pane>
-                    <a-tab-pane key="list" title="关联关系列表">
-                      <a-table
-                        :data="allRelations"
-                        :pagination="false"
-                        :scroll="{ x: '100%' }"
-                        :bordered="false"
-                        class="table-borderless table-compact"
-                      >
-                        <template #columns>
-                          <a-table-column title="关联表" data-index="targetTable">
-                            <template #cell="{ record }">
-                              <a-link @click="goToTableByRelation(record)">
-                                {{ record.targetTable }}
-                              </a-link>
-                            </template>
-                          </a-table-column>
-                          <a-table-column title="关联字段">
-                            <template #cell="{ record }">
-                              {{ formatRelationFields(record.relationFields) }}
-                            </template>
-                          </a-table-column>
-                          <a-table-column title="关联类型" data-index="relationType" />
-                          <a-table-column title="业务模块">
-                            <template #cell="{ record }">
-                              <a-tag>{{ getModuleByTable(record.targetTable) }}</a-tag>
-                            </template>
-                          </a-table-column>
-                          <a-table-column title="关联说明" data-index="relationDescription" />
-                        </template>
-                      </a-table>
-                    </a-tab-pane>
-                  </a-tabs>
-                </a-tab-pane>
-                <a-tab-pane key="lineage" title="血缘关系">
-                  <!-- <div ref="lineageTreeRef" class="relation-tree-container"></div> -->
-                   <LineageGraph 
-                    v-if="tableData?.name"
-                    :table-name="tableData.name" 
-                    :layers="1" 
-                    style="height: 600px; width: 100%" 
-                   />
-                </a-tab-pane>
-              </a-tabs>
+
+          <!-- 关联关系 -->
+          <a-tab-pane key="relations" title="关联关系">
+            <div class="relation-info">
+              <a-space direction="vertical" style="width: 100%">
+                <a-card>
+                  <!-- 视图切换 -->
+                  <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
+                    <a-radio-group v-model="relationViewMode" type="button" @change="onRelationViewModeChange">
+                      <a-radio value="list">列表视图</a-radio>
+                      <a-radio value="graph">可视化视图</a-radio>
+                    </a-radio-group>
+                  </div>
+                  
+                  <!-- 列表视图 -->
+                  <div v-if="relationViewMode === 'list'">
+                    <a-table
+                      :data="allRelations"
+                      :pagination="false"
+                      :scroll="{ x: '100%' }"
+                      :bordered="false"
+                      class="table-borderless table-compact"
+                    >
+                      <template #columns>
+                        <a-table-column title="关联表" data-index="targetTable">
+                          <template #cell="{ record }">
+                            <a-link @click="goToTableByRelation(record)">
+                              {{ record.targetTable }}
+                            </a-link>
+                          </template>
+                        </a-table-column>
+                        <a-table-column title="关联字段">
+                          <template #cell="{ record }">
+                            {{ formatRelationFields(record.relationFields) }}
+                          </template>
+                        </a-table-column>
+                        <a-table-column title="关联类型" data-index="relationType" />
+                        <a-table-column title="业务模块">
+                          <template #cell="{ record }">
+                            <a-tag>{{ getModuleByTable(record.targetTable) }}</a-tag>
+                          </template>
+                        </a-table-column>
+                        <a-table-column title="关联说明" data-index="relationDescription" />
+                      </template>
+                    </a-table>
+                  </div>
+                  
+                  <!-- 可视化视图 -->
+                  <div v-else>
+                    <div ref="relationTreeRef" class="relation-tree-container"></div>
+                  </div>
+                </a-card>
+              </a-space>
+            </div>
+          </a-tab-pane>
+
+          <!-- 血缘关系 -->
+          <a-tab-pane key="lineage" title="血缘关系">
+             <a-card class="table-info">
+               <LineageGraph 
+                v-if="tableData?.name"
+                :table-name="tableData.name" 
+                :layers="1" 
+                style="height: 600px; width: 100%" 
+               />
+             </a-card>
+          </a-tab-pane>
+
+          <!-- 使用说明 -->
+          <a-tab-pane key="usage" title="使用说明">
+            <a-card class="table-info">
+              <a-alert type="info">
+                <template #title>
+                  <div style="font-size: 16px; font-weight: 500">使用说明</div>
+                </template>
+                <div style="margin-top: 12px">
+                  <p>1. 该表包含用户相关的维度信息</p>
+                  <p>2. 主键字段为 id</p>
+                  <p>3. 常用于与订单表、行为表等进行关联分析</p>
+                  <p>4. 数据每日更新</p>
+                </div>
+              </a-alert>
             </a-card>
-          </a-space>
-        </div>
-      </a-tab-pane>
-      <a-tab-pane key="usage" title="使用说明">
-        <a-card class="table-info">
-          <a-alert type="info">
-            <template #title>
-              <div style="font-size: 16px; font-weight: 500">使用说明</div>
-            </template>
-            <div style="margin-top: 12px">
-              <p>1. 该表包含用户相关的维度信息</p>
-              <p>2. 主键字段为 id</p>
-              <p>3. 常用于与订单表、行为表等进行关联分析</p>
-              <p>4. 数据每日更新</p>
-            </div>
-          </a-alert>
-        </a-card>
-      </a-tab-pane>
-      <a-tab-pane key="logic" title="加工逻辑">
-        <a-card class="table-info">
-          <template #title>
-            <div style="font-size: 16px; font-weight: 500">加工逻辑</div>
-          </template>
-          <div style="margin-top: 12px">
-            <div class="logic-content" style="white-space: pre-wrap; line-height: 1.6; color: var(--color-text-2)">
-              {{ tableData?.processingLogic || '暂无加工逻辑说明' }}
-            </div>
-            
-            <a-divider v-if="tableData?.sql" />
-            
-            <div v-if="tableData?.sql" class="sql-section">
-              <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px">SQL 代码</div>
-              <div class="sql-code-block">
-                <pre><code>{{ tableData.sql }}</code></pre>
+          </a-tab-pane>
+
+          <!-- 加工逻辑 -->
+          <a-tab-pane key="logic" title="加工逻辑">
+            <a-card class="table-info">
+              <template #title>
+                <div style="font-size: 16px; font-weight: 500">加工逻辑</div>
+              </template>
+              <div style="margin-top: 12px">
+                <div class="logic-content" style="white-space: pre-wrap; line-height: 1.6; color: var(--color-text-2)">
+                  {{ tableData?.processingLogic || '暂无加工逻辑说明' }}
+                </div>
+                
+                <a-divider v-if="tableData?.sql" />
+                
+                <div v-if="tableData?.sql" class="sql-section">
+                  <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px">SQL 代码</div>
+                  <div class="sql-code-block">
+                    <pre><code>{{ tableData.sql }}</code></pre>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </a-card>
-      </a-tab-pane>
-    </a-tabs>
+            </a-card>
+          </a-tab-pane>
+
+          <!-- 表版本信息 -->
+          <a-tab-pane key="versions" title="表版本信息">
+            <a-card class="table-info">
+              <a-table
+                :data="tableData?.versions || []"
+                :pagination="false"
+                :bordered="false"
+                class="table-borderless table-compact"
+              >
+                <template #columns>
+                  <a-table-column title="版本号" data-index="version" :width="120" />
+                  <a-table-column title="变更时间" data-index="createTime" :width="180" />
+                  <a-table-column title="变更人" data-index="creator" :width="120" />
+                  <a-table-column title="变更说明" data-index="changeDescription" />
+                </template>
+              </a-table>
+            </a-card>
+          </a-tab-pane>
+        </a-tabs>
       </a-card>
       
 
@@ -264,6 +296,14 @@ interface TableItem {
   relationDescription?: string
   processingLogic?: string
   sql?: string
+  versions?: TableVersion[]
+}
+
+interface TableVersion {
+  version: string
+  createTime: string
+  creator: string
+  changeDescription: string
 }
 
 interface Relation {
@@ -325,9 +365,22 @@ const isFavorite = ref(false)
 const sampleData = ref<any[]>([])
 const currentField = ref<TableField>()
 const activeModalTab = ref('structure') // 控制关联弹窗内的标签页
-const activeMainTab = ref('details') // 控制主标签页
+const activeMainTab = ref('structure') // 控制主标签页
 const relatedTables = ref<TableItem[]>([])
 const currentTableName = ref<string>('')
+
+const switchToRelationsTab = () => {
+  activeMainTab.value = 'relations';
+}
+
+const handleMainTabChange = (key: string) => {
+  activeMainTab.value = key;
+  if (key === 'relations' && relationViewMode.value === 'graph') {
+    nextTick(() => {
+      renderRelationTree();
+    });
+  }
+}
 
 const getModuleByTable = (tableName: string) => {
   // 简单映射：根据常见表名返回业务模块/场景
@@ -337,31 +390,9 @@ const getModuleByTable = (tableName: string) => {
   return '数据部'
 }
 
-// 监听主标签页切换
-const handleMainTabChange = (key: string) => {
-  activeMainTab.value = key;
-  // 如果切换到关联说明tab，且视图模式为图表，则渲染树图
-  if (key === 'relations' && relationViewMode.value === 'graph') {
-    nextTick(() => {
-      renderRelationTree();
-    });
-  }
-}
-
-// 监听标签页切换（保留原有函数以防其他地方使用）
-const handleTabChange = (key: string) => {
-  activeModalTab.value = key;
-  // 如果切换到关联说明tab，且视图模式为图表，则渲染树图
-  if (key === 'relations' && relationViewMode.value === 'graph') {
-    nextTick(() => {
-      renderRelationTree();
-    });
-  }
-}
-
 // 监听关联关系视图模式切换
 watch(relationViewMode, (newMode: 'graph' | 'list') => {
-  if (activeMainTab.value === 'relations' && newMode === 'graph') {
+  if (newMode === 'graph') {
     nextTick(() => {
       renderRelationTree();
     });
@@ -468,12 +499,7 @@ const initRelations = () => {
   logger.debug('关联关系数据初始化完成', { relations: allRelations.value });
   
   // 如果当前在关联说明tab且视图模式为图表，则渲染树图
-  logger.debug('初始化关联关系数据完成，检查是否需要渲染树图', { 
-    activeTab: activeMainTab.value, 
-    viewMode: relationViewMode.value,
-    shouldRender: activeMainTab.value === 'relations' && relationViewMode.value === 'graph'
-  });
-  if (activeMainTab.value === 'relations' && relationViewMode.value === 'graph') {
+  if (relationViewMode.value === 'graph') {
     nextTick(() => {
       logger.debug('准备渲染关系树图');
       renderRelationTree();
@@ -559,7 +585,27 @@ FROM
 LEFT JOIN 
   ods_user_extra t2
 ON 
-  t1.user_id = t2.user_id;`
+  t1.user_id = t2.user_id;`,
+              versions: [
+                {
+                  version: 'v1.0.0',
+                  createTime: '2023-01-01',
+                  creator: '张三',
+                  changeDescription: '初始版本上线，包含基本用户画像字段'
+                },
+                {
+                  version: 'v1.1.0',
+                  createTime: '2023-03-15',
+                  creator: '李四',
+                  changeDescription: '新增vip_level字段，优化数据清洗逻辑'
+                },
+                {
+                  version: 'v1.2.0',
+                  createTime: '2023-06-20',
+                  creator: '王五',
+                  changeDescription: '调整字段映射关系，修复部分历史数据缺失问题'
+                }
+              ]
              })
            }
            return createSafeTableData(mockTable)
@@ -583,6 +629,7 @@ function createSafeTableData(source: Partial<TableItem>): TableItem {
     description: '',
     processingLogic: '',
     sql: '',
+    versions: [],
     fields: [],
     ...source,
   }
@@ -617,12 +664,7 @@ watch(tableData, (currentRefData: TableItem | undefined) => {
   }
   
   // 当表数据变化时，仅在关联标签页且图表视图模式下重新渲染树图
-  logger.debug('表数据变化，检查是否需要重新渲染树图', { 
-    activeTab: activeModalTab.value, 
-    viewMode: relationViewMode.value,
-    shouldRender: activeModalTab.value === 'relations' && relationViewMode.value === 'graph'
-  });
-  if (activeModalTab.value === 'relations' && relationViewMode.value === 'graph') {
+  if (relationViewMode.value === 'graph') {
     nextTick(() => {
       logger.debug('准备渲染关系树图');
       renderRelationTree();
@@ -639,32 +681,20 @@ const toggleFavorite = () => {
 // 显示关联关系编辑器
 const showRelationEditor = () => {
   // 切换到关联说明tab并设置为编辑模式
-  activeModalTab.value = 'relations'
   relationViewMode.value = 'list'
+  switchToRelationsTab();
 }
 
 // 处理关系视图模式变化
 const onRelationViewModeChange = (value: string) => {
-  logger.debug('关系视图模式变化', { value, activeTab: activeModalTab.value });
-  if (value === 'graph' && activeModalTab.value === 'relations') {
+  logger.debug('关系视图模式变化', { value });
+  if (value === 'graph') {
     nextTick(() => {
       logger.debug('切换到可视化视图，准备渲染关系树图');
       renderRelationTree();
     });
   }
 }
-
-// 监听活动标签页变化
-watch(activeModalTab, (newTab: string, oldTab: string) => {
-  logger.debug('活动标签页变化', { oldTab, newTab, viewMode: relationViewMode.value });
-  // 当切换到关联说明tab且视图模式为图表时，渲染树图
-  if (newTab === 'relations' && relationViewMode.value === 'graph') {
-    nextTick(() => {
-      logger.debug('切换到关联标签页且为图表模式，准备渲染关系树图');
-      renderRelationTree();
-    });
-  }
-});
 
 // 渲染关联关系图
 const renderRelationTree = async () => {
@@ -1227,12 +1257,6 @@ const showAddToCollection = () => {
 
 const applyPermission = () => {
   logger.info('申请权限', tableData.value?.name)
-}
-
-const switchToRelationsTab = () => {
-  // 切换到主标签页的数据关系tab
-  activeMainTab.value = 'relations'
-  relationViewMode.value = 'list'
 }
 
 // 组件挂载时检查是否需要渲染关系图
