@@ -365,7 +365,7 @@
         <!-- 第一部分：基础属性与分类 -->
         <a-collapse-item key="basic" header="1. 基础属性与分类">
           <a-row :gutter="24">
-            <a-col :span="12">
+            <a-col :span="24">
               <a-form-item label="特征大类" required field="majorCategory">
                 <a-radio-group v-model="registerForm.majorCategory" type="button" size="small">
                   <a-radio value="credit">征信变量</a-radio>
@@ -374,45 +374,23 @@
                 </a-radio-group>
               </a-form-item>
             </a-col>
-            <a-col :span="6">
-              <a-form-item label="一级分类" required field="level1">
-                <a-select v-model="registerForm.level1" placeholder="请选择" allow-clear size="small">
-                  <a-option v-for="opt in effectiveLevel1Options" :key="opt.value" :value="opt.value">{{ opt.label }}</a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="二级分类" field="level2">
-                <a-select v-model="registerForm.level2" placeholder="请选择" allow-clear size="small" v-if="registerForm.majorCategory!=='model_output'">
-                  <a-option v-for="opt in level2Options(registerForm.level1)" :key="opt.value" :value="opt.value">{{ opt.label }}</a-option>
-                </a-select>
-                <a-input v-else disabled placeholder="自动关联" size="small" />
-              </a-form-item>
-            </a-col>
           </a-row>
 
           <a-row :gutter="24">
-            <a-col :span="8">
+            <a-col :span="12">
               <a-form-item label="特征编码" required field="code">
                 <a-input v-model="registerForm.code" placeholder="如：score_v1" size="small" />
               </a-form-item>
             </a-col>
-            <a-col :span="8">
+            <a-col :span="12">
               <a-form-item label="特征名称" required field="name">
                 <a-input v-model="registerForm.name" placeholder="请输入名称" size="small" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="8" v-if="registerForm.majorCategory==='model_output'">
-              <a-form-item label="选择模型" required field="modelCode">
-                <a-select v-model="registerForm.modelCode" placeholder="请选择已注册模型" allow-search size="small" @change="onModelCodeChange">
-                  <a-option v-for="m in modelList" :key="m.code" :value="m.code">{{ m.name }} ({{ m.code }})</a-option>
-                </a-select>
               </a-form-item>
             </a-col>
           </a-row>
 
           <a-row :gutter="24">
-            <a-col :span="8">
+            <a-col :span="12">
               <a-form-item label="数据类型" required field="dataType">
                 <a-select v-model="registerForm.dataType" placeholder="请选择" size="small">
                   <a-option value="int">int</a-option>
@@ -422,18 +400,9 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="8">
-              <a-form-item label="默认值">
-                <a-input v-model="registerForm.defaultValue" placeholder="默认值" size="small" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="模型类型" required field="modelType">
-                <a-select v-model="registerForm.modelType" placeholder="可多选" multiple allow-clear size="small">
-                  <a-option value="daily">日模型</a-option>
-                  <a-option value="monthly">月模型</a-option>
-                  <a-option value="other">其他模型</a-option>
-                </a-select>
+            <a-col :span="12">
+              <a-form-item label="备注" field="remark">
+                <a-textarea v-model="registerForm.remark" placeholder="请输入备注" :auto-size="{minRows:1,maxRows:3}" style="resize: none;" />
               </a-form-item>
             </a-col>
           </a-row>
@@ -441,45 +410,63 @@
 
         <!-- 第二部分：数据来源与加工逻辑 -->
         <a-collapse-item key="source" header="2. 数据来源与加工逻辑">
-          <a-row :gutter="24">
-            <a-col :span="12">
-              <a-form-item label="日模型来源表" v-if="registerForm.modelType.includes('daily') || registerForm.modelType.includes('other') || registerForm.modelType.length === 0" field="sourceTable">
-                <a-input v-model="registerForm.sourceTable" placeholder="请输入表名" size="small" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="月模型来源表" v-if="registerForm.modelType.includes('monthly')" field="monthlySourceTable">
-                <a-input v-model="registerForm.monthlySourceTable" placeholder="请输入表名" size="small" />
-              </a-form-item>
-            </a-col>
-          </a-row>
+          
+          <div class="mapping-section" style="margin-bottom: 24px">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-weight: 500;">数据来源配置</span>
+            </div>
+            
+            <div v-if="registerForm.dataSourceMappings.length === 0" class="empty-mapping">
+              <a-button type="outline" size="small" @click="addDataSourceMapping">
+                <template #icon><icon-plus /></template>
+                添加配置
+              </a-button>
+            </div>
 
-          <a-row :gutter="24">
-            <a-col :span="8">
-              <a-form-item label="更新频率" field="updateFrequency">
-                <a-select v-model="registerForm.updateFrequency" placeholder="请选择" size="small">
-                  <a-option value="实时">实时</a-option>
-                  <a-option value="日度">日度</a-option>
-                  <a-option value="周度">周度</a-option>
-                  <a-option value="月度">月度</a-option>
-                  <a-option value="按需">按需</a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="所属批次" field="batch">
-                <a-input v-model="registerForm.batch" placeholder="如：2023Q4" size="small" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <a-form-item label="加工逻辑" field="processingLogic">
-            <a-textarea v-model="registerForm.processingLogic" placeholder="描述特征加工逻辑..." :auto-size="{ minRows: 3, maxRows: 5 }" />
-          </a-form-item>
-
-          <a-form-item label="备注说明" field="remark">
-            <a-textarea v-model="registerForm.remark" placeholder="其他补充信息" :auto-size="{ minRows: 2, maxRows: 3 }" />
-          </a-form-item>
+            <div v-else class="mapping-table-container">
+              <a-row :gutter="12" class="mapping-header-row" style="margin-bottom: 8px; font-size: 12px; color: #86909c;">
+                <a-col :span="4">模型类型</a-col>
+                <a-col :span="5">来源表</a-col>
+                <a-col :span="5">表主键</a-col>
+                <a-col :span="4">字段名</a-col>
+                <a-col :span="4">日期字段</a-col>
+                <a-col :span="2">操作</a-col>
+              </a-row>
+              <div v-for="(mapping, mIdx) in registerForm.dataSourceMappings" :key="mIdx" class="mapping-row" style="margin-bottom: 8px;">
+                <a-row :gutter="12" align="center">
+                  <a-col :span="4">
+                    <a-select v-model="mapping.modelType" placeholder="模型类型" size="small">
+                      <a-option value="daily">日模型</a-option>
+                      <a-option value="monthly">月模型</a-option>
+                      <a-option value="other">其他模型</a-option>
+                    </a-select>
+                  </a-col>
+                  <a-col :span="5">
+                    <a-input v-model="mapping.sourceTable" placeholder="来源表名" size="small" />
+                  </a-col>
+                  <a-col :span="5">
+                    <a-input v-model="mapping.tablePrimaryKey" placeholder="表主键" size="small" />
+                  </a-col>
+                  <a-col :span="4">
+                    <a-input v-model="mapping.fieldName" placeholder="字段名" size="small" />
+                  </a-col>
+                  <a-col :span="4">
+                    <a-input v-model="mapping.dateField" placeholder="日期字段" size="small" />
+                  </a-col>
+                  <a-col :span="2">
+                    <a-space>
+                      <a-button type="text" status="success" size="small" @click="addDataSourceMapping(mIdx)">
+                        <template #icon><icon-plus /></template>
+                      </a-button>
+                      <a-button type="text" status="danger" size="small" @click="removeDataSourceMapping(mIdx)">
+                        <template #icon><icon-minus /></template>
+                      </a-button>
+                    </a-space>
+                  </a-col>
+                </a-row>
+              </div>
+            </div>
+          </div>
 
           <a-alert v-if="registerForm.majorCategory==='model_output'" type="info">
             来源自动填充为平台模型输出
@@ -487,94 +474,67 @@
         </a-collapse-item>
 
         <!-- 第三部分：管理信息与映射规则 -->
-        <a-collapse-item key="management" header="3. 管理信息与映射规则">
-          <a-row :gutter="24">
-            <a-col :span="6">
-              <a-form-item label="需求提出人" field="proposer">
-                <a-input v-model="registerForm.proposer" placeholder="姓名" size="small" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="开发负责人" field="developer">
-                <a-input v-model="registerForm.developer" placeholder="姓名" size="small" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="计划上线时间" field="onlineTime">
-                <a-date-picker v-model="registerForm.onlineTime" style="width: 100%" size="small" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="验收负责人" field="accepter">
-                <a-input v-model="registerForm.accepter" placeholder="姓名" size="small" />
-              </a-form-item>
-            </a-col>
-          </a-row>
+        <a-collapse-item key="management" header="3. 映射规则">
 
           <div class="mapping-section" style="margin-top: 16px">
             <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
               <span style="font-weight: 500;">默认值转化映射</span>
-              <a-button type="outline" size="mini" @click="addMapping">
+              <a-button type="outline" size="small" @click="addMappingGroup">
                 <template #icon><icon-plus /></template>
-                添加策略
+                添加特征映射
               </a-button>
             </div>
             
             <div v-if="registerForm.defaultValueMappings.length === 0" class="empty-mapping">
-              <a-empty description="暂无映射规则" />
+              暂无映射规则，请点击上方按钮添加
             </div>
 
-            <a-row :gutter="16">
-              <a-col :span="12" v-for="(mapping, mIdx) in registerForm.defaultValueMappings" :key="mIdx">
-                <div class="mapping-card">
-                  <div class="mapping-card-header">
-                    <div class="header-left">
-                      <a-tag color="arcoblue" size="small">策略 {{ mIdx + 1 }}</a-tag>
-                    </div>
-                    <div class="header-right">
-                      <a-button type="text" status="danger" size="mini" @click="removeMapping(mIdx)">
-                        <template #icon><icon-delete /></template>
-                      </a-button>
-                    </div>
-                  </div>
-                  
-                  <a-row :gutter="12">
-                    <a-col :span="12">
-                      <a-form-item label="适用模型" required>
-                        <a-select v-model="mapping.conditionType" placeholder="类型" size="small">
-                          <a-option value="daily">日模型</a-option>
-                          <a-option value="monthly">月模型</a-option>
-                          <a-option value="all">全量通用</a-option>
-                        </a-select>
-                      </a-form-item>
-                    </a-col>
-                    <a-col :span="12">
-                      <a-form-item label="规则描述">
-                        <a-input v-model="mapping.ruleDesc" placeholder="描述" size="small" />
-                      </a-form-item>
-                    </a-col>
-                  </a-row>
+            <div v-else>
+              <div v-for="(mapping, mIdx) in registerForm.defaultValueMappings" :key="mIdx" class="mapping-card" style="margin-bottom: 16px; border: 1px solid #e5e6eb; padding: 12px; border-radius: 4px;">
+                <!-- Header: Old Feature Name & Delete Group -->
+                <a-row :gutter="12" align="center" style="margin-bottom: 12px;">
+                  <a-col :span="20">
+                     <a-form-item label="老特征名" label-col-flex="80px" style="margin-bottom:0" required>
+                       <a-input v-model="mapping.oldFeatureName" placeholder="请输入老特征名" size="small" />
+                     </a-form-item>
+                  </a-col>
+                  <a-col :span="4" style="text-align: right;">
+                     <a-button type="text" status="danger" size="small" @click="removeMappingGroup(mIdx)">
+                       删除分组
+                     </a-button>
+                  </a-col>
+                </a-row>
 
-                  <div class="mapping-rule-container">
-                    <div class="rules-header">
-                      <span class="rules-title">映射明细</span>
-                      <a-button type="text" size="mini" @click="addMappingRule(mIdx)">
-                        <template #icon><icon-plus /></template>
-                        添加
-                      </a-button>
-                    </div>
-                    <div v-for="(rule, rIdx) in mapping.rules" :key="rIdx" class="mapping-rule-row">
-                      <a-input v-model="rule.origin" placeholder="原值" size="mini" />
-                      <icon-arrow-right style="color: #86909c" />
-                      <a-input v-model="rule.target" placeholder="目标值" size="mini" />
-                      <a-button type="text" status="danger" size="mini" @click="removeMappingRule(mIdx, rIdx)">
-                        <icon-close />
-                      </a-button>
-                    </div>
-                  </div>
+                <!-- Rules List -->
+                <div style="background: #f7f8fa; padding: 8px; border-radius: 4px;">
+                   <a-row :gutter="12" style="margin-bottom: 8px; font-size: 12px; color: #86909c;">
+                     <a-col :span="10">原值</a-col>
+                     <a-col :span="10">映射值</a-col>
+                     <a-col :span="4">操作</a-col>
+                   </a-row>
+                   <div v-for="(rule, rIdx) in mapping.rules" :key="rIdx" style="margin-bottom: 8px;">
+                     <a-row :gutter="12">
+                       <a-col :span="10">
+                         <a-input v-model="rule.origin" placeholder="原值" size="small" />
+                       </a-col>
+                       <a-col :span="10">
+                         <a-input v-model="rule.target" placeholder="映射值" size="small" />
+                       </a-col>
+                       <a-col :span="4">
+                         <a-space>
+                           <a-button type="text" status="success" size="small" @click="addRule(mIdx, rIdx)">
+                             <template #icon><icon-plus /></template>
+                           </a-button>
+                           <a-button type="text" status="danger" size="small" @click="removeRule(mIdx, rIdx)">
+                             <template #icon><icon-minus /></template>
+                           </a-button>
+                         </a-space>
+                       </a-col>
+                     </a-row>
+                   </div>
                 </div>
-              </a-col>
-            </a-row>
+              </div>
+            </div>
           </div>
         </a-collapse-item>
       </a-collapse>
@@ -631,24 +591,6 @@
           <a-option value="string">string</a-option>
           <a-option value="timestamp">timestamp</a-option>
         </a-select>
-      </template>
-      <template #batchCell="{ record }">
-        <a-input v-model="record.batch" placeholder="批次" />
-      </template>
-      <template #proposerCell="{ record }">
-        <a-input v-model="record.proposer" placeholder="需求提出人" />
-      </template>
-      <template #developerCell="{ record }">
-        <a-input v-model="record.developer" placeholder="开发人" />
-      </template>
-      <template #onlineTimeCell="{ record }">
-        <a-date-picker v-model="record.onlineTime" style="width: 100%" />
-      </template>
-      <template #accepterCell="{ record }">
-        <a-input v-model="record.accepter" placeholder="验收人" />
-      </template>
-      <template #remarkCell="{ record }">
-        <a-input v-model="record.remark" placeholder="备注" />
       </template>
       <template #actionsCell="{ rowIndex }">
         <a-button size="mini" status="danger" @click="removeImportRow(rowIndex)">移除</a-button>
@@ -766,15 +708,13 @@ const registerFormRef = ref(null)
 
 const registerRules = {
   majorCategory: [{ required: true, message: '请选择特征大类' }],
-  level1: [{ required: true, message: '请选择一级分类' }],
   code: [
     { required: true, message: '请输入特征编码' },
     { match: /^[a-zA-Z0-9_]+$/, message: '仅支持字母、数字和下划线' }
   ],
   name: [{ required: true, message: '请输入特征名称' }],
   dataType: [{ required: true, message: '请选择数据类型' }],
-  modelType: [{ required: true, message: '请选择模型类型' }],
-  modelCode: [{ required: true, message: '请选择模型' }]
+  modelType: [{ required: true, message: '请选择模型类型' }]
 }
 
 const registerForm = reactive({
@@ -783,8 +723,8 @@ const registerForm = reactive({
   level2: '', 
   code: '', 
   name: '', 
-  sourceTable: '', 
-  monthlySourceTable: '', 
+  // sourceTable: '', 
+  // monthlySourceTable: '', 
   processingLogic: '', 
   dataType: 'double', 
   defaultValue: '',
@@ -797,23 +737,41 @@ const registerForm = reactive({
   modelCode: '', 
   modelType: ['daily'],
   updateFrequency: '按需',
-  defaultValueMappings: []
+  defaultValueMappings: [{ oldFeatureName: '', rules: [{ origin: '', target: '' }] }],
+  dataSourceMappings: [{ modelType: 'daily', sourceTable: '', fieldName: '', tablePrimaryKey: '', dateField: '' }]
 })
 
-const addMapping = () => {
-  registerForm.defaultValueMappings.push({ conditionType: 'daily', ruleDesc: '', rules: [{ origin: '', target: '' }] })
+const addMappingGroup = () => {
+  registerForm.defaultValueMappings.push({ oldFeatureName: '', rules: [{ origin: '', target: '' }] })
 }
 
-const removeMapping = (index) => {
+const removeMappingGroup = (index) => {
   registerForm.defaultValueMappings.splice(index, 1)
 }
 
-const addMappingRule = (mIdx) => {
-  registerForm.defaultValueMappings[mIdx].rules.push({ origin: '', target: '' })
+const addRule = (gIdx, rIdx) => {
+  registerForm.defaultValueMappings[gIdx].rules.splice(rIdx + 1, 0, { origin: '', target: '' })
 }
 
-const removeMappingRule = (mIdx, rIdx) => {
-  registerForm.defaultValueMappings[mIdx].rules.splice(rIdx, 1)
+const removeRule = (gIdx, rIdx) => {
+  const rules = registerForm.defaultValueMappings[gIdx].rules
+  if (rules.length > 1) {
+    rules.splice(rIdx, 1)
+  } else {
+    rules[rIdx] = { origin: '', target: '' }
+  }
+}
+
+const addDataSourceMapping = (index) => {
+  if (typeof index === 'number') {
+    registerForm.dataSourceMappings.splice(index + 1, 0, { modelType: 'daily', sourceTable: '', fieldName: '', tablePrimaryKey: '', dateField: '' })
+  } else {
+    registerForm.dataSourceMappings.push({ modelType: 'daily', sourceTable: '', fieldName: '', tablePrimaryKey: '', dateField: '' })
+  }
+}
+
+const removeDataSourceMapping = (index) => {
+  registerForm.dataSourceMappings.splice(index, 1)
 }
 
 // 筛选表单
@@ -849,20 +807,16 @@ const columns = [
     width: 150
   },
   {
-    title: '日模型来源表',
-    dataIndex: 'dataSource',
-    width: 180
-  },
-  {
     title: '特征类型',
     dataIndex: 'type',
     slotName: 'type',
     width: 100
   },
   {
-    title: '默认值',
-    dataIndex: 'defaultValue',
-    width: 120
+    title: '支持模型类型',
+    dataIndex: 'modelType',
+    slotName: 'modelType',
+    width: 150
   },
   {
     title: '描述',
@@ -885,12 +839,6 @@ const columns = [
   {
     title: '创建人',
     dataIndex: 'creator',
-    width: 120
-  },
-  {
-    title: '模型类型',
-    dataIndex: 'modelType',
-    slotName: 'modelType',
     width: 120
   },
   {
@@ -1215,7 +1163,7 @@ watch(() => registerForm.majorCategory, (cat) => {
   if (cat === 'model_output') {
     registerForm.level1 = 'model_outputs'
     registerForm.level2 = ''
-    registerForm.sourceTable = ''
+    registerForm.dataSourceMappings = []
   } else if (cat === 'credit') {
     if (registerForm.level1 !== 'credit_report' && registerForm.level1 !== 'credit_history') {
       registerForm.level1 = 'credit_report'
@@ -1265,13 +1213,18 @@ const submitRegister = async () => {
   }
 
   const selectedModel = isModelOutput ? (modelList.value || []).find(m => m.code === registerForm.modelCode) : null
+  
+  // 从 dataSourceMappings 中提取数据
+  const dailyMapping = registerForm.dataSourceMappings.find(m => m.modelType === 'daily')
+  const monthlyMapping = registerForm.dataSourceMappings.find(m => m.modelType === 'monthly')
+
   const payload = {
     name: registerForm.name,
     code: registerForm.code,
     type: typeMap(registerForm.dataType),
     description: registerForm.processingLogic || '',
-    dataSource: (isModelOutput && !registerForm.modelType.includes('daily')) ? '平台模型输出' : (registerForm.sourceTable || ''),
-    monthlyDataSource: registerForm.monthlySourceTable || '',
+    dataSource: (isModelOutput && !registerForm.modelType.includes('daily')) ? '平台模型输出' : (dailyMapping?.sourceTable || ''),
+    monthlyDataSource: monthlyMapping?.sourceTable || '',
     updateFrequency: registerForm.modelType.includes('monthly') ? '月度' : (registerForm.updateFrequency || '按需'),
     majorCategory: registerForm.majorCategory,
     level1: isModelOutput ? 'model_outputs' : registerForm.level1,
@@ -1284,10 +1237,11 @@ const submitRegister = async () => {
     remark: registerForm.remark,
     sourceType: isModelOutput ? 'model_output' : '',
     sourceRefId: isModelOutput ? (registerForm.modelCode || '') : '',
-    creator: isModelOutput ? (selectedModel?.creator || '平台模型') : undefined,
-    modelType: registerForm.modelType, // 现在是一个数组
-    defaultValueMappings: registerForm.defaultValueMappings
-  }
+  creator: isModelOutput ? (selectedModel?.creator || '平台模型') : undefined,
+  modelType: registerForm.modelType, // 现在是一个数组
+  defaultValueMappings: registerForm.defaultValueMappings,
+  dataSourceMappings: registerForm.dataSourceMappings
+}
 
   try {
     const res = await featureAPI.createFeature(payload)

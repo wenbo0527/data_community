@@ -10,14 +10,16 @@
     <div class="market-content">
       <!-- 左侧业务场景树 -->
       <div class="left-sidebar">
-        <div class="sidebar-title">业务场景</div>
+        <div class="sidebar-title">API分类</div>
         <a-input-search placeholder="输入关键字搜索" class="tree-search" size="small" />
         <div class="tree-container">
           <a-tree
             :data="treeData"
             show-line
             block-node
-            :default-expanded-keys="['all']"
+            :default-expanded-keys="['all', 'internal', 'external']"
+            v-model:selected-keys="selectedKeys"
+            @select="onSelect"
           >
             <template #extra="{ node }">
               <span v-if="node" class="node-count">({{ node.count || 0 }})</span>
@@ -68,12 +70,21 @@
                   <div class="api-name-cell" @click="goToDetail(record.id)">
                     <IconCommon style="margin-right: 8px; color: #165dff;" />
                     <span class="name-text">{{ record.name }}</span>
+                    <a-tag v-if="record.status === 'maintenance'" size="small" color="orange" style="margin-left: 8px">维护中</a-tag>
                   </div>
                 </template>
               </a-table-column>
+              
+              <a-table-column v-if="currentFilter.key === 'external' || currentFilter.key === 'all'" title="数据提供方" data-index="provider">
+                <template #cell="{ record }">
+                  <span v-if="record.source === 'external'"><a-tag size="small" color="purple">{{ record.provider || '未知' }}</a-tag></span>
+                  <span v-else>-</span>
+                </template>
+              </a-table-column>
+              
               <a-table-column title="所属项目" data-index="project">
                 <template #cell="{ record }">
-                  <a-tag size="small" color="arcoblue">{{ record.project || 'QA_test2' }}</a-tag>
+                  <a-tag size="small" color="arcoblue">{{ record.project || '默认项目' }}</a-tag>
                 </template>
               </a-table-column>
               <a-table-column title="负责人" data-index="owner">
@@ -114,19 +125,36 @@ import {
 
 const router = useRouter()
 const searchQuery = ref('')
+const selectedKeys = ref(['all'])
+const currentFilter = ref({ type: 'all', key: 'all' })
 
 // 业务场景树数据
 const treeData = [
   {
     title: '全部',
     key: 'all',
-    count: 8,
+    count: 10,
     children: [
-      { title: 'fdsdsdawd', key: '1', count: 0 },
-      { title: 'delete_4', key: '2', count: 0 },
-      { title: 'business_test', key: '3', count: 0 },
-      { title: 'QA_test', key: '4', count: 7 },
-      { title: 'delete_test', key: '5', count: 0 }
+      {
+        title: '内部数据',
+        key: 'internal',
+        count: 6,
+        children: [
+          { title: '核心交易', key: 'core', count: 3 },
+          { title: '信贷风控', key: 'risk', count: 2 },
+          { title: '营销中心', key: 'marketing', count: 1 }
+        ]
+      },
+      {
+        title: '外部数据',
+        key: 'external',
+        count: 4,
+        children: [
+          { title: '外部征信', key: 'credit', count: 2 },
+          { title: '运营商数据', key: 'carrier', count: 1 },
+          { title: '学信网', key: 'chsi', count: 1 }
+        ]
+      }
     ]
   }
 ]
@@ -138,16 +166,66 @@ const STORAGE_KEY = 'api.management.list'
 const loadList = () => {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (raw) {
-    apiList.value = JSON.parse(raw)
+    apiList.value = JSON.parse(raw).map((item: any) => ({
+      ...item,
+      source: item.source || 'internal' // 兼容旧数据
+    }))
+  } else {
+    // 模拟数据
+    apiList.value = [
+      // 内部API
+      { id: '1', name: '查询用户基础信息', project: '核心交易', owner: '张三', maxQps: 1000, updateTime: '2023-11-01', source: 'internal', status: 'online', category: 'core' },
+      { id: '2', name: '获取账户余额', project: '核心交易', owner: '李四', maxQps: 2000, updateTime: '2023-11-02', source: 'internal', status: 'online', category: 'core' },
+      { id: '3', name: '查询近三个月流水', project: '核心交易', owner: '王五', maxQps: 500, updateTime: '2023-10-25', source: 'internal', status: 'maintenance', category: 'core' },
+      { id: '4', name: '用户风险等级评估', project: '信贷风控', owner: '赵六', maxQps: 200, updateTime: '2023-11-05', source: 'internal', status: 'online', category: 'risk' },
+      { id: '5', name: '授信额度试算', project: '信贷风控', owner: '赵六', maxQps: 150, updateTime: '2023-11-06', source: 'internal', status: 'online', category: 'risk' },
+      { id: '6', name: '营销活动资格校验', project: '营销中心', owner: '孙七', maxQps: 3000, updateTime: '2023-11-08', source: 'internal', status: 'online', category: 'marketing' },
+      
+      // 外部API
+      { id: '101', name: '企业工商信息查询', project: '外部征信', owner: '外部数据组', maxQps: 50, updateTime: '2023-11-10', source: 'external', status: 'online', provider: '企查查', category: 'credit' },
+      { id: '102', name: '个人反欺诈黑名单', project: '外部征信', owner: '外部数据组', maxQps: 100, updateTime: '2023-11-12', source: 'external', status: 'online', provider: '同盾科技', category: 'credit' },
+      { id: '103', name: '手机号在网时长查询', project: '运营商数据', owner: '外部数据组', maxQps: 200, updateTime: '2023-11-09', source: 'external', status: 'online', provider: '移动/联通/电信', category: 'carrier' },
+      { id: '104', name: '学历学籍核验', project: '学信网', owner: '外部数据组', maxQps: 20, updateTime: '2023-10-30', source: 'external', status: 'maintenance', provider: '学信网', category: 'chsi' }
+    ]
+  }
+}
+
+const onSelect = (newSelectedKeys: string[], data: any) => {
+  if (newSelectedKeys.length > 0) {
+    const key = newSelectedKeys[0]
+    // 判断选中节点类型
+    if (key === 'all') {
+      currentFilter.value = { type: 'all', key: 'all' }
+    } else if (key === 'internal' || key === 'external') {
+      currentFilter.value = { type: 'source', key: key }
+    } else {
+      // 假设其他都是具体分类
+      currentFilter.value = { type: 'category', key: key }
+    }
   }
 }
 
 const filteredList = computed(() => {
-  if (!searchQuery.value) return apiList.value
-  return apiList.value.filter((item: any) => 
-    item.name.includes(searchQuery.value) || 
-    (item.project && item.project.includes(searchQuery.value))
-  )
+  let list = apiList.value
+  
+  // 树筛选
+  if (currentFilter.value.type === 'source') {
+    list = list.filter((item: any) => item.source === currentFilter.value.key)
+  } else if (currentFilter.value.type === 'category') {
+    list = list.filter((item: any) => item.category === currentFilter.value.key)
+  }
+  
+  // 搜索框筛选
+  if (searchQuery.value) {
+      const keywords = searchQuery.value.trim().split(/\s+/)
+      list = list.filter((item: any) => {
+        return keywords.every((keyword: string) => 
+          item.name.includes(keyword) || 
+          (item.project && item.project.includes(keyword))
+        )
+      })
+    }
+  return list
 })
 
 const goToDetail = (id: string) => {
@@ -214,6 +292,10 @@ onMounted(() => {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+}
+
+.source-tabs {
+  margin-bottom: 20px;
 }
 
 .search-bar {

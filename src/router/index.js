@@ -386,6 +386,19 @@ const router = createRouter({
       redirect: '/discovery/asset-overview',
       children: [
         {
+          path: 'placeholder',
+          name: 'Placeholder',
+          component: () => import('../pages/common/PlaceholderPage.vue'),
+          meta: {
+            title: '功能建设中',
+            hidden: true
+          },
+          props: (route) => ({
+            title: route.query.title,
+            description: route.query.desc
+          })
+        },
+        {
           path: 'customer360',
           name: 'Customer360',
           component: () => import('../pages/discovery/customer360/index.vue'),
@@ -501,6 +514,18 @@ const router = createRouter({
           name: 'ApiDetail',
           component: () => import('../pages/discovery/api-market/ApiDetail.vue'),
           meta: { title: 'API详情' }
+        },
+        {
+          path: 'data-resources/business-system',
+          name: 'BusinessSystem',
+          component: () => import('../pages/discovery/data-resources/BusinessSystem.vue'),
+          meta: { title: '业务系统' }
+        },
+        {
+          path: 'data-resources/file-import',
+          name: 'FileImport',
+          component: () => import('../pages/discovery/data-resources/FileImport.vue'),
+          meta: { title: '文件导入' }
         },
         {
           path: 'asset-overview',

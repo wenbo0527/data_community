@@ -366,11 +366,20 @@ const debouncedSearch = useDebounceFn(async () => {
 // 初始化
 onMounted(() => {
   loadSearchHistory()
-  // 如果URL中有搜索参数，自动执行搜索
-  const query = route.query.q as string
-  if (query) {
-    searchQuery.value = query
-    handleSearch(query)
+  // 解析 URL 参数
+  const { q, type, domain } = route.query
+  
+  // 设置筛选条件
+  if (type) filters.value.type = type as string
+  if (domain) filters.value.domain = domain as string
+  
+  // 如果有查询词或筛选条件，执行搜索
+  if (q) {
+    searchQuery.value = q as string
+    handleSearch(q as string)
+  } else if (type || domain) {
+    // 如果没有关键词但有筛选条件，也触发搜索
+    handleSearch('')
   }
 })
 
@@ -378,18 +387,25 @@ onMounted(() => {
 watch(searchQuery, (newValue: string) => {
   if (newValue) {
     debouncedSearch()
-  } else {
+  } else if (Object.keys(filters.value).length === 0) {
+    // 只有在没有任何筛选条件且清空搜索词时才清空结果
     clearResults()
+  } else {
+    // 有筛选条件时，清空搜索词应重新搜索（展示符合筛选的所有结果）
+    debouncedSearch()
   }
 })
 
 // 搜索方法
 const handleSearch = async (query?: string) => {
-  const searchTerm = query || searchQuery.value
-  if (!searchTerm.trim()) return
+  const searchTerm = query !== undefined ? query : searchQuery.value
+  // 如果没有搜索词且没有筛选条件，才返回
+  if (!searchTerm.trim() && Object.keys(filters.value).length === 0) return
   
   searchLoading.value = true
-  saveSearchHistory(searchTerm)
+  if (searchTerm.trim()) {
+    saveSearchHistory(searchTerm)
+  }
   
   try {
     await performSearch(searchTerm)

@@ -1,131 +1,159 @@
 <template>
-  <div class="table-list-page">
-    <div class="page-header">
-      <a-breadcrumb>
-        <a-breadcrumb-item>数据地图</a-breadcrumb-item>
-        <a-breadcrumb-item>数据表</a-breadcrumb-item>
-      </a-breadcrumb>
-      <h2 class="page-title">数据表</h2>
-    </div>
-
-    <a-card>
-      <a-row class="search-info" align="center" :gutter="16">
-        <a-col :span="16">
-          <a-input-search
+  <div class="data-map-container">
+    <!-- 顶部 Banner 区域 -->
+    <div class="banner-section">
+      <div class="banner-content">
+        <div class="title-row">
+          <h1 class="banner-title">资产目录</h1>
+        </div>
+        <p class="banner-subtitle">全域数据资产的统一检索与管理入口，支持按业务域、主题域快速定位数据表。</p>
+        
+        <div class="search-area">
+          <a-input-search 
             v-model="searchKeyword"
-            placeholder="搜索表名、字段名或描述"
+            class="main-search-input"
+            placeholder="输入表名、字段名或描述进行搜索"
             search-button
+            size="large"
             allow-clear
             @search="handleSearch"
-            style="width: 100%"
-          />
-        </a-col>
-        <a-col :span="8">
-          <a-space>
+          >
+            <template #button-icon>
+              <icon-search />
+            </template>
+          </a-input-search>
+          
+          <div class="search-filters-inline">
             <a-select
               v-model="businessDomain"
               placeholder="业务域"
               allow-clear
-              style="width: 140px"
+              size="large"
+              style="width: 160px"
+              @change="handleFilterChange"
+              class="filter-select"
             >
-              <a-option value="domain1">业务域1</a-option>
-              <a-option value="domain2">业务域2</a-option>
-              <a-option value="domain3">业务域3</a-option>
-              <a-option value="domain4">业务域4</a-option>
+              <a-option v-for="theme in assetThemes" :key="theme.name" :value="theme.name">{{ theme.name }}</a-option>
             </a-select>
             <a-select
-              v-model="themeDomain"
-              placeholder="主题域"
+              v-model="tableType"
+              placeholder="资产类型"
               allow-clear
-              style="width: 140px"
+              size="large"
+              style="width: 160px"
+              @change="handleFilterChange"
+              class="filter-select"
             >
-              <a-option value="theme1">主题域1</a-option>
-              <a-option value="theme2">主题域2</a-option>
-              <a-option value="theme3">主题域3</a-option>
-              <a-option value="theme4">主题域4</a-option>
+              <a-option value="fact">事实表</a-option>
+              <a-option value="dim">维度表</a-option>
+              <a-option value="dws">汇总表</a-option>
+              <a-option value="dwd">明细表</a-option>
+              <a-option value="metric">指标</a-option>
+              <a-option value="variable">变量</a-option>
+              <a-option value="feature">特征</a-option>
             </a-select>
-          </a-space>
-        </a-col>
-      </a-row>
+          </div>
+        </div>
+      </div>
+      <div class="banner-decoration">
+        <div class="decoration-cube"></div>
+      </div>
+    </div>
 
-      <a-row :gutter="12">
-        <a-col 
-          v-for="record in tableData" 
-          :key="record.name" 
-          :span="8"
-          style="margin-bottom: 12px"
-        >
-          <a-card 
-            hoverable 
-            @click="showTableDetail(record)"
-            class="table-card"
-            :bordered="false"
+    <!-- 主体内容区域 -->
+    <div class="main-content">
+      <!-- 资产主题区域 (默认展示) -->
+      <div v-if="!hasSearchQuery" class="content-section">
+        <div class="section-header">
+          <h3 class="section-title">数据资产主题</h3>
+          <span class="section-subtitle">按业务域划分的数据资产集合</span>
+        </div>
+        
+        <a-row :gutter="[24, 24]">
+          <a-col 
+            v-for="theme in assetThemes" 
+            :key="theme.name" 
+            :xs="24" :sm="12" :md="8" :lg="6" :xl="6"
           >
-            <div class="card-header">
-              <IconFile style="margin-right: 8px" />
-              <span class="table-name">{{ record.name }}</span>
-              <a-tag 
-                v-if="record.type" 
-                :color="record.type === '维度表' ? 'arcoblue' : 'orangered'"
-                size="small"
-                style="margin-left: 8px"
-              >
-                {{ record.type }}
-              </a-tag>
+            <div 
+              class="theme-card-v2" 
+              @click="handleThemeClick(theme)"
+            >
+              <div class="theme-icon-box" :class="getThemeColorClass(theme.name)">
+                <component :is="getIconComponent(theme.icon)" />
+              </div>
+              <div class="theme-info-v2">
+                <h4 class="theme-name-v2">{{ theme.name }}</h4>
+                <div class="theme-meta">
+                  <span class="count-badge">{{ theme.count }} 资产</span>
+                </div>
+                <p class="theme-desc-v2">{{ theme.description || `包含${theme.name}相关的核心数据资产` }}</p>
+              </div>
             </div>
-            
-            <div class="card-content">
-              <p class="description" :title="record.description">{{ record.description }}</p>
-              <p class="update-time">{{ record.updateTime }}</p>
-            </div>
-            
-            <template #actions>
-              <a-space>
-                <a-tooltip content="收藏" position="bottom">
-                  <a-button type="text" @click.stop="addToFavorite(record)">
-                    <template #icon><IconStar /></template>
-                  </a-button>
-                </a-tooltip>
-                <a-tooltip content="申请权限" position="bottom">
-                  <a-button type="text" @click.stop="requestPermission(record)">
-                    <template #icon><IconLock /></template>
-                  </a-button>
-                </a-tooltip>
-                <a-tooltip content="复制表名" position="bottom">
-                  <a-button type="text" @click.stop="copyTableName(record)">
-                    <template #icon><IconCopy /></template>
-                  </a-button>
-                </a-tooltip>
-                <a-tooltip content="添加到集合" position="bottom">
-                  <a-button type="text" @click.stop="addToCollection(record)">
-                    <template #icon><IconFolderAdd /></template>
-                  </a-button>
-                </a-tooltip>
-              </a-space>
-            </template>
-          </a-card>
-        </a-col>
-      </a-row>
-    </a-card>
+          </a-col>
+        </a-row>
+      </div>
 
-    
+      <!-- 搜索结果列表 (搜索后展示) -->
+      <div v-else class="content-section">
+        <div class="section-header">
+          <div class="header-left">
+            <h3 class="section-title">搜索结果</h3>
+            <span class="result-count">共找到 {{ pagination.total }} 条相关数据资产</span>
+          </div>
+          <a-button type="text" size="small" @click="clearSearch">
+            <template #icon><icon-close /></template>
+            清空搜索
+          </a-button>
+        </div>
+
+        <a-spin :loading="loading" style="width: 100%">
+          <a-empty v-if="tableData.length === 0" description="未找到相关数据资产" />
+          <a-row :gutter="[20, 20]" v-else>
+            <a-col 
+              v-for="record in tableData" 
+              :key="record.name" 
+              :xs="24" :sm="12" :md="8" :lg="8" :xl="6"
+            >
+              <AssetCard 
+                :data="record" 
+                :type="getAssetType(record)"
+                @click="showTableDetail(record)"
+                @action="handleAssetAction"
+              />
+            </a-col>
+          </a-row>
+          
+          <div class="pagination-wrapper" v-if="tableData.length > 0">
+            <a-pagination
+              :total="pagination.total"
+              :current="pagination.current"
+              :page-size="pagination.pageSize"
+              show-total
+              show-jumper
+              @change="onPageChange"
+              @page-size-change="onPageSizeChange"
+            />
+          </div>
+        </a-spin>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import {
-  IconFile,
-  IconStar,
-  IconFolderAdd,
-  IconCopy,
-  IconLock
+  IconClose, IconSearch,
+  IconUserGroup, IconBranch, IconCommon, IconNotification,
+  IconSafe, IconPublic
 } from '@arco-design/web-vue/es/icon'
 
-
+import AssetCard from '@/components/business/AssetCard.vue'
 import { tableMockData } from '@/mock/tableData.ts'
+import { mockDataAssets } from '@/mock/data-map.ts'
 import DateUtils from '@/utils/dateUtils'
 
 interface TableItem {
@@ -138,81 +166,144 @@ interface TableItem {
   updateFrequency?: string
   owner?: string
   fields?: any[]
+  theme?: string
+  tags?: string[]
 }
 
 const route = useRoute()
 const router = useRouter()
 const searchKeyword = ref('')
 const businessDomain = ref('')
-const themeDomain = ref('')
+const tableType = ref('')
 const loading = ref(false)
 const tableData = ref<TableItem[]>([])
-const currentTable = ref<TableItem | null>(null)
+const assetThemes = ref(mockDataAssets)
 
 const pagination = ref({
   total: 0,
   current: 1,
-  pageSize: 10,
+  pageSize: 12,
   showTotal: true,
   showJumper: true,
   showPageSize: true,
 })
 
-// 初始化页面数据
-onMounted(() => {
-  const query = route.query.keyword as string
-  if (query) {
-    searchKeyword.value = query
-    handleSearch()
-  }
+// 是否有搜索条件
+const hasSearchQuery = computed(() => {
+  return !!(searchKeyword.value || businessDomain.value || tableType.value)
 })
 
-// 处理数据更新
-const updateTableData = () => {
-  return tableMockData.map(item => ({
-    ...item,
-    updateTime: DateUtils.smartFormat(item.updateTime || new Date())
-  }))
+// 图标组件映射 (用于主题)
+const iconMap: Record<string, any> = {
+  'icon-user-group': IconUserGroup,
+  'icon-transaction': IconBranch,
+  'icon-common': IconCommon,
+  'icon-notification': IconNotification,
+  'icon-shield': IconSafe,
+  'icon-safe': IconSafe,
+  'icon-branch': IconBranch,
+  'icon-public': IconPublic
 }
 
-// 检查关键字匹配
-const checkKeywordMatch = (item: TableItem) => {
-  return searchKeyword.value === '' || 
-    item.name.includes(searchKeyword.value) || 
-    item.description.includes(searchKeyword.value)
+const getIconComponent = (iconName: string) => {
+  return iconMap[iconName] || IconCommon
 }
 
-// 检查业务域匹配
-const checkDomainMatch = (item: TableItem) => {
-  return businessDomain.value === '' || 
-    item.domain === businessDomain.value
+// 主题颜色映射
+const getThemeColorClass = (name: string) => {
+  const colorMap: Record<string, string> = {
+    '用户域': 'theme-blue',
+    '交易域': 'theme-green',
+    '商品域': 'theme-orange',
+    '营销域': 'theme-red',
+    '风控域': 'theme-purple',
+    '财务域': 'theme-cyan',
+    '供应链域': 'theme-arcoblue',
+    '公共域': 'theme-gray'
+  }
+  return colorMap[name] || 'theme-blue'
 }
 
-// 检查主题域匹配
-const checkThemeMatch = (item: TableItem & {theme?: string}) => {
-  return themeDomain.value === '' || 
-    item.theme === themeDomain.value
+// 获取资产类型（用于传给 Card）
+const getAssetType = (record: TableItem) => {
+  // 这里根据 record 的属性来判断具体类型
+  // 暂时主要根据 type 字段映射
+  if (record.type === '指标') return 'metric'
+  if (record.type === '变量') return 'variable'
+  if (record.type === '特征') return 'feature'
+  return 'table' // 默认为 table，Card 内部会进一步处理 dim/fact 等
+}
+
+// 处理主题点击
+const handleThemeClick = (theme: any) => {
+  businessDomain.value = theme.name
+  handleSearch()
+}
+
+// 初始化页面数据
+onMounted(() => {
+  const { keyword, domain, type } = route.query
+  if (keyword) searchKeyword.value = keyword as string
+  if (domain) businessDomain.value = domain as string
+  if (type) tableType.value = type as string
+  
+  if (hasSearchQuery.value) handleSearch()
+})
+
+// 清空搜索
+const clearSearch = () => {
+  searchKeyword.value = ''
+  businessDomain.value = ''
+  tableType.value = ''
+  tableData.value = []
+}
+
+// 筛选变更
+const handleFilterChange = () => {
+  if (hasSearchQuery.value) handleSearch()
 }
 
 // 搜索处理
-const handleSearch = async (value?: string) => {
+const handleSearch = async () => {
+  if (!hasSearchQuery.value) return
+  
   loading.value = true
   try {
-    // 使用共享mock数据
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 500))
     
-    // 获取更新后的数据
-    const updatedData = updateTableData()
+    const allData = tableMockData.map(item => {
+      const rawItem = item as any
+      const updateTimeStr = rawItem.lastModified || rawItem.updateTime || new Date()
+      return {
+        ...item,
+        updateTime: DateUtils.smartFormat(updateTimeStr),
+        theme: item.domain,
+        // 模拟一些其他类型的标签
+        tags: item.type === '维度表' ? ['核心'] : []
+      }
+    }) as TableItem[]
     
-    // 过滤数据
-    tableData.value = updatedData.filter(item => 
-      checkKeywordMatch(item) && 
-      checkDomainMatch(item) && 
-      checkThemeMatch(item)
-    )
+    const filteredData = allData.filter(item => {
+      const keywordMatch = !searchKeyword.value || 
+        item.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) || 
+        item.description.toLowerCase().includes(searchKeyword.value.toLowerCase())
+      
+      const domainMatch = !businessDomain.value || item.domain === businessDomain.value
+      
+      let typeMatch = true
+      if (tableType.value) {
+         if (tableType.value === 'dim') typeMatch = item.type === '维度表' || item.type === 'dim'
+         else if (tableType.value === 'fact') typeMatch = item.type === '事实表' || item.type === 'fact'
+         else if (tableType.value === 'dws') typeMatch = item.type === '汇总表' || item.type === 'dws'
+         else if (tableType.value === 'dwd') typeMatch = item.type === '明细表' || item.type === 'dwd'
+         else typeMatch = item.type === tableType.value // 其他类型直接匹配
+      }
+      
+      return keywordMatch && domainMatch && typeMatch
+    })
     
-    // 更新分页总数
-    pagination.value.total = tableData.value.length
+    tableData.value = filteredData
+    pagination.value.total = filteredData.length
   } catch (error) {
     Message.error('搜索失败')
   } finally {
@@ -220,224 +311,294 @@ const handleSearch = async (value?: string) => {
   }
 }
 
-// 分页处理
 const onPageChange = (current: number) => {
   pagination.value.current = current
-  handleSearch()
 }
 
 const onPageSizeChange = (pageSize: number) => {
   pagination.value.pageSize = pageSize
-  handleSearch()
 }
 
-// 构建表详情参数
-const buildTableParams = (record: TableItem, fullTableData: any) => {
-  return {
-    name: record.name,
-    type: record.type || '',
-    description: record.description || '',
-    updateTime: record.updateTime || new Date().toLocaleDateString(),
-    fields: fullTableData.fields || [],
-    category: fullTableData.category || '',
-    domain: fullTableData.domain || '',
-    updateFrequency: fullTableData.updateFrequency || '',
-    owner: fullTableData.owner || ''
-  }
-}
-
-// 验证表记录
-const validateTableRecord = (record: TableItem) => {
-  if (!record?.name) {
-    throw new Error('表名不能为空')
-  }
-  
-  const fullTableData = tableMockData.find(item => item.name === record.name)
-  if (!fullTableData) {
-    throw new Error('未找到表数据')
-  }
-  
-  return fullTableData
-}
-
-// 显示表详情
 const showTableDetail = (record: TableItem) => {
   try {
-    const fullTableData = validateTableRecord(record)
-    const tableParams = buildTableParams(record, fullTableData)
-    
+    const tableParams = {
+        name: record.name,
+        type: record.type || '',
+        description: record.description || '',
+        updateTime: record.updateTime || new Date().toLocaleDateString(),
+        fields: record.fields || [],
+        category: record.category || '',
+        domain: record.domain || '',
+        updateFrequency: record.updateFrequency || '',
+        owner: record.owner || ''
+    }
     router.push({
       name: 'TableDetail',
-      params: {
-        tableName: record.name
-      },
-      query: {
-        table: JSON.stringify(tableParams)
-      }
+      params: { tableName: record.name },
+      query: { table: JSON.stringify(tableParams) }
     })
   } catch (error) {
-    Message.error((error as Error).message)
-    console.error('跳转表详情页失败:', error)
+    console.error(error)
   }
 }
 
-// 申请权限
-const requestPermission = async (record: TableItem) => {
-  try {
-    // TODO: 调用权限申请API
-    Message.success('权限申请已提交')
-  } catch (error) {
-    Message.error('权限申请失败')
-  }
-}
-
-// 添加到收藏
-const addToFavorite = async (record: TableItem) => {
-  try {
-    // TODO: 调用收藏API
+const handleAssetAction = ({ type, data }: { type: string, data: any }) => {
+  if (type === 'favorite') {
     Message.success('添加收藏成功')
-  } catch (error) {
-    Message.error('添加收藏失败')
+  } else if (type === 'permission') {
+    Message.success('权限申请已提交')
+  } else if (type === 'collection') {
+    Message.success('已添加到默认集合')
   }
 }
 
-// 复制表名
-const copyTableName = async (record: TableItem) => {
-  try {
-    await navigator.clipboard.writeText(record.name)
-    Message.success('复制成功')
-  } catch (error) {
-    Message.error('复制失败')
-  }
+const addToFavorite = async (record: TableItem) => {
+  Message.success('添加收藏成功')
 }
 
-// 添加到集合
 const addToCollection = async (record: TableItem) => {
-  try {
-    const { Modal, Select, Option } = await import('@arco-design/web-vue')
-    const { h } = await import('vue')
-    
-    const selectedCollection = ref('')
-    
-    Modal.confirm({
-      title: '添加到常用表集合',
-      content: () => {
-        return h('div', [
-          h(Select, {
-            placeholder: '请选择集合',
-            style: { width: '100%' },
-            allowClear: true,
-            'onUpdate:modelValue': (value: string) => {
-              selectedCollection.value = value
-            }
-          }, () => [
-            h(Option, { value: 'collection1' }, () => '常用表集合1'),
-            h(Option, { value: 'collection2' }, () => '常用表集合2'),
-            h(Option, { value: 'collection3' }, () => '常用表集合3')
-          ])
-        ])
-      },
-      onOk: async () => {
-        if (!selectedCollection.value) {
-          Message.warning('请选择集合')
-          return false
-        }
-        
-        try {
-          // TODO: 调用添加到集合API
-          Message.success(`已添加到${selectedCollection.value}`)
-          return true
-        } catch (error) {
-          Message.error('添加到集合失败')
-          return false
-        }
-      },
-      onCancel: () => {
-        Message.info('已取消')
-      }
-    })
-  } catch (error) {
-    Message.error('弹窗打开失败')
-  }
+  Message.success('已添加到默认集合')
+}
+
+const requestPermission = async (record: TableItem) => {
+  Message.success('权限申请已提交')
 }
 </script>
 
 <style scoped>
-.table-list-page {
-  padding: 20px;
+.data-map-container {
+  min-height: 100vh;
+  background: #f7f8fa;
+  position: relative;
+  overflow-x: hidden;
 }
 
-.page-header {
-  margin-bottom: 16px;
+/* Banner Section (Shared Style) */
+.banner-section {
+  background: linear-gradient(180deg, #E6F0FF 0%, #F7F8FA 100%);
+  padding: 40px 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 280px;
 }
 
-.page-title {
-  margin: 8px 0;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--color-text-1);
+.banner-content {
+  width: 100%;
+  max-width: 1800px;
+  z-index: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0 40% 0 40px;
+  box-sizing: border-box;
 }
 
-.search-info {
-  margin-bottom: 16px;
+.banner-title {
+  font-size: 40px;
+  font-weight: bold;
+  color: #1d2129;
+  margin: 0 0 16px 0;
+  line-height: 1.2;
 }
 
-.table-card {
-  cursor: pointer;
-  transition: all 0.2s;
+.banner-subtitle {
+  font-size: 14px;
+  color: #86909c;
+  margin-bottom: 32px;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.search-area {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+  flex-wrap: wrap;
+}
+
+.main-search-input {
+  flex: 1;
+  min-width: 400px;
+  background: #fff;
+  border-radius: 30px;
+  border: 1px solid #165DFF;
+  box-shadow: 0 4px 10px rgba(22, 93, 255, 0.1);
+}
+
+.main-search-input :deep(.arco-input-wrapper) {
+  border-radius: 30px;
+  padding-left: 20px;
+  background: #fff;
+}
+
+.main-search-input :deep(.arco-input-search-btn) {
+  border-radius: 0 30px 30px 0;
+  background: transparent;
+  color: #165DFF;
+  border-left: 1px solid #f2f3f5;
+}
+
+.search-filters-inline {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-select {
+  background: #fff;
   border-radius: 4px;
 }
 
-.table-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+/* Decoration (Shared Style) */
+.banner-decoration {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.card-header {
+.decoration-cube {
+  position: absolute;
+  top: 40px;
+  right: 100px;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, #e8f3ff 0%, #cce4ff 100%);
+  transform: rotate(-15deg) skew(-10deg);
+  border-radius: 20px;
+  box-shadow: -20px 20px 40px rgba(22, 93, 255, 0.1);
+}
+
+/* Main Content (Shared Style) */
+.main-content {
+  padding: 0 40px 40px;
+  width: 100%;
+  max-width: 1800px;
+  margin: -40px auto 0;
+  position: relative;
+  z-index: 3;
+}
+
+.content-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d2129;
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: #86909c;
+  margin-left: 12px;
+  font-weight: normal;
+}
+
+.result-count {
+  font-size: 13px;
+  color: #86909c;
+  margin-left: 12px;
+}
+
+/* Theme Cards V2 */
+.theme-card-v2 {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+  height: 100%;
+}
+
+.theme-card-v2:hover {
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: #165DFF;
+  transform: translateY(-4px);
+}
+
+.theme-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
 }
 
-.card-content {
-  margin: 16px 0;
+.theme-info-v2 {
+  flex: 1;
 }
 
-.description {
-  color: var(--color-text-2);
-  font-size: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 4px;
-  line-height: 1.4;
-}
-
-.update-time {
-  color: var(--color-text-3);
-  font-size: 11px;
-}
-
-.table-name {
-  font-weight: 500;
+.theme-name-v2 {
   font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+  margin: 0 0 8px 0;
 }
 
-.card-content {
-  margin-bottom: 12px;
-}
-
-.card-row {
-  display: flex;
+.theme-meta {
   margin-bottom: 8px;
 }
 
-.card-label {
-  color: var(--color-text-3);
-  margin-right: 8px;
-  min-width: 80px;
+.count-badge {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #4e5969;
 }
+
+.theme-desc-v2 {
+  font-size: 12px;
+  color: #86909c;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 36px;
+}
+
+.pagination-wrapper {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 主题颜色类 (复用) */
+.theme-blue { background: linear-gradient(135deg, #165DFF 0%, #4080FF 100%); }
+.theme-green { background: linear-gradient(135deg, #00B42A 0%, #23C343 100%); }
+.theme-orange { background: linear-gradient(135deg, #FF7D00 0%, #FF9A2E 100%); }
+.theme-red { background: linear-gradient(135deg, #F53F3F 0%, #F76560 100%); }
+.theme-purple { background: linear-gradient(135deg, #722ED1 0%, #9F5FEE 100%); }
+.theme-cyan { background: linear-gradient(135deg, #0FC6C2 0%, #44E6E2 100%); }
+.theme-arcoblue { background: linear-gradient(135deg, #165DFF 0%, #4080FF 100%); }
+.theme-gray { background: linear-gradient(135deg, #86909c 0%, #A9B3C1 100%); }
 </style>

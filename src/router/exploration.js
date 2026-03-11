@@ -235,5 +235,10 @@ export default [
         component: () => import('../pages/exploration/workflows/DataSourceConfig.vue')
       }
     ]
+  },
+  {
+    path: 'indicator-dashboard',
+    name: 'indicator-dashboard',
+    component: () => import('../pages/exploration/indicator-dashboard/index.vue')
   }
 ];
