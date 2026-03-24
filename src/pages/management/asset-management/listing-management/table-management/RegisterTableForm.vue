@@ -245,7 +245,8 @@ import { ref, reactive, computed } from 'vue'
 import type { Ref } from '@vue/reactivity'
 import { Message, Notification } from '@arco-design/web-vue'
 import { useRouter, useRoute } from 'vue-router'
-import { mockTables as tableManagementData } from '@/mock/data-map.ts'
+import { MetadataStore } from '@/mock/shared/metadata-store';
+const tableManagementData = MetadataStore.getTables();
 import { hiveDatabases, dorisDatabases, hiveTables, dorisTables } from '@/mock/tableData.ts'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 import RelationEditorPanel from '@/pages/discovery/data-map/components/RelationEditorPanel.vue'

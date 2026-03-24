@@ -66,7 +66,7 @@ export default {
       label: "优惠券下发成功短信通知",
       template: "优惠券发放",
       content: "【苏银消金】亲爱的用户，您的利率优惠券已到账！请登录Su营APP并完成您名下任意在优惠券使快会员优惠快回来，拒收请回复R",
-      status: "使用中"
+      status: "待审批"
     },
     {
       id: 3,
@@ -77,7 +77,40 @@ export default {
       label: "手机APP优惠本商用",
       template: "促销通知",
       content: "【苏银消金】您的的信用门户卡放，版次打开我获APP官，拒我打开jobchina.cny3s3c5zqq4，拒收请回复R",
-      status: "使用中"
+      status: "审批通过"
+    },
+    {
+      id: 4,
+      templateId: "2511228101960531071202",
+      smsType: "营销类",
+      primaryScene: "促销优惠",
+      strategyTag: "Su营(苏宁(易购小程序))",
+      label: "双11预热短信",
+      template: "促销通知",
+      content: "【苏银消金】双11大促即将开始，全场免息！",
+      status: "草稿"
+    },
+    {
+      id: 5,
+      templateId: "2511228101960531071203",
+      smsType: "通知类",
+      primaryScene: "还款提醒",
+      strategyTag: "还款通知",
+      label: "账单到期提醒",
+      template: "还款提醒",
+      content: "【苏银消金】您的本期账单即将到期，请及时还款。",
+      status: "审批拒绝"
+    },
+    {
+      id: 6,
+      templateId: "2511228101960531071204",
+      smsType: "通知类",
+      primaryScene: "系统通知",
+      strategyTag: "系统升级",
+      label: "系统维护通知",
+      template: "系统维护",
+      content: "【苏银消金】系统将于今晚进行维护，请提前做好准备。",
+      status: "停用"
     }
   ],
   aiCallTemplates: [

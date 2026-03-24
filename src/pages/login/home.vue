@@ -7,11 +7,13 @@
       </div>
       <div class="nav-menu">
         <a-menu mode="horizontal" :selected-keys="[activeMenu]">
-          <a-menu-item key="home" @click="$router.push('/home')">首页</a-menu-item>
-          <a-menu-item key="discovery" @click="$router.push('/discovery/external')">数据发现</a-menu-item>
-          <a-menu-item key="management" @click="$router.push('/management/service')">数据管理</a-menu-item>
-          <a-menu-item key="exploration" @click="$router.push('/exploration')">数据探索</a-menu-item>
-          <a-menu-item key="digital-marketing" @click="$router.push('/digital-marketing')">数字营销</a-menu-item>
+          <a-menu-item 
+            v-for="key in (topMenuOrder || [])" 
+            :key="key" 
+            @click="handleMenuClick(key)"
+          >
+            {{ menuConfig?.[key]?.title || key }}
+          </a-menu-item>
         </a-menu>
       </div>
       <div class="header-right">
@@ -429,8 +431,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, markRaw, computed, watch } from 'vue'
+import { ref, onMounted, markRaw, computed, watch, onErrorCaptured } from 'vue'
 import { useRouter } from 'vue-router'
+import { MENU_CONFIG, TOP_MENU_ORDER, getModuleDefaultPath } from '../../config/menuConfig'
+import { navigateTo } from '../../router/utils'
 import { useUserStore } from '../../stores/user'
 import ArchitectureChart from '../../components/layout/ArchitectureChart.vue'
 import HomeWelcomeModal from '../../components/home-welcome-modal.vue'
@@ -476,6 +480,19 @@ import { Message } from '@arco-design/web-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const menuConfig = MENU_CONFIG
+const topMenuOrder = TOP_MENU_ORDER
+
+const handleMenuClick = (key) => {
+  activeMenu.value = key
+  const module = menuConfig[key]
+  if (module) {
+     const path = getModuleDefaultPath(key) || module.path
+     if (path) {
+        navigateTo(router, path)
+     }
+  }
+}
 
 const archRef = ref(null)
 const hideNodes = ref(false)
@@ -497,6 +514,13 @@ const toggleDepartment = () => {}
 
 watch([hideNodes, coordEnabled, hideBg], ([hn, ce, hb]) => {
   console.log('[Home] toggles changed', { hideNodes: hn, coord: ce, hideBg: hb })
+})
+
+onErrorCaptured((err, instance, info) => {
+  console.error('[Home] Component Error Captured:', err)
+  console.error('[Home] Error Info:', info)
+  // 返回 false 阻止错误继续向上传播（如果需要的话），或者让它传播到全局处理器
+  return false 
 })
 
 // --- 状态定义 ---

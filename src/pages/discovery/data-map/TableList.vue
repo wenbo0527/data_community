@@ -69,27 +69,39 @@
           <span class="section-subtitle">按业务域划分的数据资产集合</span>
         </div>
         
-        <a-row :gutter="[24, 24]">
+        <a-row :gutter="[16, 16]">
           <a-col 
             v-for="theme in assetThemes" 
             :key="theme.name" 
-            :xs="24" :sm="12" :md="8" :lg="6" :xl="6"
+            :xs="24" :sm="12" :md="12" :lg="8" :xl="6"
           >
-            <div 
-              class="theme-card-v2" 
+            <a-card 
+              class="collection-card" 
+              hoverable 
               @click="handleThemeClick(theme)"
             >
-              <div class="theme-icon-box" :class="getThemeColorClass(theme.name)">
-                <component :is="getIconComponent(theme.icon)" />
-              </div>
-              <div class="theme-info-v2">
-                <h4 class="theme-name-v2">{{ theme.name }}</h4>
-                <div class="theme-meta">
-                  <span class="count-badge">{{ theme.count }} 资产</span>
+              <div class="card-content">
+                <div class="card-title">
+                  <h4 class="title-text" :title="theme.name">
+                    {{ theme.name }}
+                  </h4>
+                  <div class="title-actions" style="margin-left: 12px;">
+                    <div class="theme-icon-box-small" :class="getThemeColorClass(theme.name)">
+                      <component :is="getIconComponent(theme.icon)" />
+                    </div>
+                  </div>
                 </div>
-                <p class="theme-desc-v2">{{ theme.description || `包含${theme.name}相关的核心数据资产` }}</p>
+                
+                <div class="collection-stats">
+                  <a-tag size="small" color="arcoblue">业务域</a-tag>
+                  <span class="table-count">{{ theme.count }} 资产</span>
+                </div>
+              
+                <p class="card-description" :title="theme.description || `包含${theme.name}相关的核心数据资产`">
+                  {{ theme.description || `包含${theme.name}相关的核心数据资产` }}
+                </p>
               </div>
-            </div>
+            </a-card>
           </a-col>
         </a-row>
       </div>
@@ -109,18 +121,55 @@
 
         <a-spin :loading="loading" style="width: 100%">
           <a-empty v-if="tableData.length === 0" description="未找到相关数据资产" />
-          <a-row :gutter="[20, 20]" v-else>
+          <a-row :gutter="[16, 16]" v-else>
             <a-col 
               v-for="record in tableData" 
               :key="record.name" 
-              :xs="24" :sm="12" :md="8" :lg="8" :xl="6"
+              :xs="24" :sm="12" :md="12" :lg="8" :xl="6"
             >
-              <AssetCard 
-                :data="record" 
-                :type="getAssetType(record)"
+              <a-card 
+                class="collection-card" 
+                hoverable 
                 @click="showTableDetail(record)"
-                @action="handleAssetAction"
-              />
+              >
+                <div class="card-content">
+                  <div class="card-title">
+                    <h4 class="title-text" :title="record.name">
+                      {{ record.name }}
+                    </h4>
+                    <div class="title-actions">
+                      <a-tooltip content="申请权限">
+                        <a-button 
+                          type="text" 
+                          size="mini" 
+                          @click.stop="requestPermission(record)"
+                          class="permission-btn"
+                        >
+                          <IconLock />
+                        </a-button>
+                      </a-tooltip>
+                      <a-button 
+                        type="text" 
+                        size="mini" 
+                        @click.stop="addToFavorite(record)"
+                      >
+                        <IconStar />
+                      </a-button>
+                    </div>
+                  </div>
+                  
+                  <div class="collection-stats">
+                    <a-tag size="small" :color="record.type === '维度表' ? 'blue' : (record.type === '事实表' ? 'green' : 'arcoblue')">
+                      {{ record.type || '数据表' }}
+                    </a-tag>
+                    <span class="table-count">{{ record.domain }}</span>
+                  </div>
+                
+                  <p class="card-description" :title="record.description || '暂无描述'">
+                    {{ record.description || '暂无描述' }}
+                  </p>
+                </div>
+              </a-card>
             </a-col>
           </a-row>
           
@@ -148,7 +197,7 @@ import { Message } from '@arco-design/web-vue'
 import {
   IconClose, IconSearch,
   IconUserGroup, IconBranch, IconCommon, IconNotification,
-  IconSafe, IconPublic
+  IconSafe, IconPublic, IconLock, IconStar
 } from '@arco-design/web-vue/es/icon'
 
 import AssetCard from '@/components/business/AssetCard.vue'
@@ -519,73 +568,6 @@ const requestPermission = async (record: TableItem) => {
   margin-left: 12px;
 }
 
-/* Theme Cards V2 */
-.theme-card-v2 {
-  background: #f7f8fa;
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 1px solid transparent;
-  height: 100%;
-}
-
-.theme-card-v2:hover {
-  background: #fff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border-color: #165DFF;
-  transform: translateY(-4px);
-}
-
-.theme-icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #fff;
-}
-
-.theme-info-v2 {
-  flex: 1;
-}
-
-.theme-name-v2 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1d2129;
-  margin: 0 0 8px 0;
-}
-
-.theme-meta {
-  margin-bottom: 8px;
-}
-
-.count-badge {
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 12px;
-  color: #4e5969;
-}
-
-.theme-desc-v2 {
-  font-size: 12px;
-  color: #86909c;
-  line-height: 1.5;
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  height: 36px;
-}
-
 .pagination-wrapper {
   margin-top: 24px;
   display: flex;
@@ -601,4 +583,127 @@ const requestPermission = async (record: TableItem) => {
 .theme-cyan { background: linear-gradient(135deg, #0FC6C2 0%, #44E6E2 100%); }
 .theme-arcoblue { background: linear-gradient(135deg, #165DFF 0%, #4080FF 100%); }
 .theme-gray { background: linear-gradient(135deg, #86909c 0%, #A9B3C1 100%); }
+
+.theme-icon-box-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #fff;
+}
+
+/* Collection Card Style */
+.collection-card {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid #e5e6eb;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  height: 100%;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.collection-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #165dff;
+}
+
+.collection-card :deep(.arco-card-body) {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-content {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.title-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2129;
+  margin: 0;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.title-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 1;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.title-actions :deep(.arco-btn) {
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  color: #86909c;
+  border: 1px solid #e5e6eb;
+}
+
+.title-actions :deep(.arco-btn:hover) {
+  color: #165dff;
+  border-color: #165dff;
+  background: #e8f3ff;
+}
+
+.collection-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.collection-stats :deep(.arco-tag) {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.table-count {
+  font-size: 13px;
+  font-weight: 500;
+  color: #86909c;
+}
+
+.card-description {
+  font-size: 14px;
+  color: #86909c;
+  line-height: 1.57;
+  margin-bottom: 20px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  min-height: 44px;
+}
 </style>

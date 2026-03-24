@@ -65,25 +65,14 @@
           <template #actions="{ record }">
             <a-space>
               <a-button type="text" size="small" @click="editTask(record)" v-if="record.status === 'draft' || record.status === 'published'">编辑</a-button>
-              <a-dropdown v-if="record.versions && record.versions.length > 1">
-                <a-button type="text" size="small">
-                  历史版本
-                  <IconDown />
-                </a-button>
-                <template #content>
-                  <a-doption 
-                    v-for="version in record.versions" 
-                    :key="version.version"
-                    @click="viewVersion(record, version.version)"
-                  >
-                    <div class="version-option">
-                      <span>v{{ version.version }}</span>
-                      <a-tag v-if="version.isActive" color="green" size="small">运行中</a-tag>
-                      <span class="version-time">{{ version.createTime }}</span>
-                    </div>
-                  </a-doption>
-                </template>
-              </a-dropdown>
+              <a-button 
+                v-if="record.versions && record.versions.length > 0"
+                type="text" 
+                size="small"
+                @click="showHistory(record)"
+              >
+                历史版本
+              </a-button>
               <a-button type="text" size="small" @click="manualPush(record)" v-if="record.status === 'draft' || record.status === 'running'">手工推送</a-button>
               <a-button type="text" size="small" @click="viewExecutionLog(record)" v-if="record.status === 'running' || record.status === 'completed'">执行日志</a-button>
               <a-button type="text" size="small" @click="stopTask(record)" v-if="record.status === 'running'">停止</a-button>
@@ -93,14 +82,64 @@
         </a-table>
       </div>
     </div>
+    <!-- 历史版本弹窗 -->
+    <a-modal v-model:visible="historyVisible" title="历史版本" width="800px" :footer="false" class="history-modal">
+      <div class="history-modal-content">
+        <div class="version-list">
+          <div 
+            v-for="ver in currentTaskVersions" 
+            :key="ver.version" 
+            class="version-item"
+            :class="{ active: selectedVersionId === ver.version }"
+            @click="selectVersion(ver)"
+          >
+            <div class="version-info">
+              <span class="version-tag">v{{ ver.version }}</span>
+              <span class="version-time">{{ ver.createTime }}</span>
+            </div>
+            <div class="version-status">
+              <a-tag v-if="ver.isActive" color="green" size="small">运行中</a-tag>
+              <a-tag v-else-if="ver.isDraft" color="orange" size="small">草稿</a-tag>
+              <a-tag v-else color="gray" size="small">已归档</a-tag>
+            </div>
+          </div>
+        </div>
+        <div class="version-detail" v-if="selectedVersionData">
+          <div class="detail-header">
+            <h3>版本 v{{ selectedVersionData.version }}</h3>
+            <span class="detail-status">
+              <a-tag v-if="selectedVersionData.isActive" color="green">运行中</a-tag>
+              <a-tag v-else-if="selectedVersionData.isDraft" color="orange">草稿</a-tag>
+              <a-tag v-else color="gray">已归档</a-tag>
+            </span>
+          </div>
+          
+          <div class="detail-info-grid">
+            <div class="info-item">
+              <span class="label">修改时间：</span>
+              <span class="value">{{ selectedVersionData.createTime }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">修改人：</span>
+              <span class="value">{{ selectedVersionData.creator || '未知' }}</span>
+            </div>
+          </div>
+
+          <div class="detail-desc">
+            <div class="desc-label">版本说明：</div>
+            <p>{{ selectedVersionData.description || '暂无描述' }}</p>
+          </div>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, h, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconDown, IconRefresh } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { TaskStorage } from '../../../utils/taskStorage.js'
 import StatusTag from '@/components/common/StatusTag.vue'
 import DateUtils from '@/utils/dateUtils'
@@ -339,9 +378,63 @@ const editTask = (record) => {
   router.push(`/marketing/tasks/horizontal?mode=edit&id=${record.id}&version=${record.version}`)
 }
 
-// 查看历史版本
-const viewVersion = (record, version) => {
-  router.push(`/marketing/tasks/editor?mode=view&id=${record.id}&version=${version}`)
+// 历史版本相关状态
+const historyVisible = ref(false)
+const currentHistoryTask = ref(null)
+const selectedVersionId = ref(null)
+const currentTaskVersions = ref([])
+const selectedVersionData = computed(() => 
+  currentTaskVersions.value.find(v => v.version === selectedVersionId.value)
+)
+
+// 显示历史版本弹窗
+const showHistory = (record) => {
+  currentHistoryTask.value = record
+  // 模拟版本详细数据（实际应从接口获取）
+  // 确保同一时间只有1个草稿状态的画布和1个进行中的策略
+  // 这里的逻辑主要是为了展示效果，mock数据中通常只有一个running
+  
+  const versions = (record.versions || []).map(v => {
+    // 简单模拟不同版本的画布数据差异
+    // 实际项目中每个版本应该有独立的canvasData
+    const versionCanvasData = JSON.parse(JSON.stringify(record.canvasData || { nodes: [], connections: [] }))
+    
+    // 为了演示效果，稍微修改一下旧版本的节点位置或数量
+    if (v.version < record.version) {
+      if (versionCanvasData.nodes.length > 2) {
+        versionCanvasData.nodes.pop() // 旧版本少一个节点
+        // 移除相关的连线
+        versionCanvasData.connections = versionCanvasData.connections.filter(c => 
+          versionCanvasData.nodes.some(n => n.id === c.source) && 
+          versionCanvasData.nodes.some(n => n.id === c.target)
+        )
+      }
+    }
+
+    return {
+      ...v,
+      description: v.description || `这是版本 v${v.version} 的详细描述信息，记录了该版本的变更内容和策略调整。`,
+      // 根据 isActive 判断状态，如果没有 isActive 属性，默认非最新版本为 archived
+      status: v.isActive ? 'running' : (v.version === record.version && record.status === 'draft' ? 'draft' : 'archived'),
+      isDraft: v.version === record.version && record.status === 'draft',
+      isActive: v.isActive,
+      creator: record.creator,
+      canvasData: versionCanvasData
+    }
+  })
+  
+  // 按版本号倒序排列
+  currentTaskVersions.value = versions.sort((a, b) => b.version - a.version)
+  
+  if (versions.length > 0) {
+    selectedVersionId.value = versions[0].version
+  }
+  historyVisible.value = true
+}
+
+// 选择版本
+const selectVersion = (ver) => {
+  selectedVersionId.value = ver.version
 }
 
 // 手工推送任务
@@ -552,5 +645,130 @@ onMounted(() => {
 .danger-btn:hover {
   background-color: #ffece8;
   color: #f53f3f;
+}
+
+/* 历史版本弹窗样式 */
+.history-modal-content {
+  display: flex;
+  height: 500px;
+  border: 1px solid #f2f3f5;
+  border-radius: 4px;
+}
+
+.version-list {
+  width: 240px;
+  border-right: 1px solid #f2f3f5;
+  overflow-y: auto;
+  background-color: #f7f8fa;
+}
+
+.version-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f2f3f5;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.version-item:hover {
+  background-color: #e6f7ff;
+}
+
+.version-item.active {
+  background-color: #e6f7ff;
+  border-right: 2px solid #165dff;
+}
+
+.version-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.version-tag {
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.version-time {
+  font-size: 12px;
+  color: #86909c;
+}
+
+.version-status {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.version-detail {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f2f3f5;
+}
+
+.detail-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item .label {
+  font-size: 13px;
+  color: #86909c;
+}
+
+.info-item .value {
+  font-size: 14px;
+  color: #1d2129;
+  font-weight: 500;
+}
+
+.detail-desc {
+  background-color: #f7f8fa;
+  border-radius: 4px;
+  padding: 16px;
+  flex: 1;
+}
+
+.detail-desc .desc-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+  margin-bottom: 8px;
+}
+
+.detail-desc p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4e5969;
+  white-space: pre-wrap;
 }
 </style>

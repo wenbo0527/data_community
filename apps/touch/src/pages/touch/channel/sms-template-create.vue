@@ -245,6 +245,8 @@ import {
   IconInfoCircle 
 } from '@arco-design/web-vue/es/icon'
 
+import { createSmsTemplate } from '@/services/channelService'
+
 const router = useRouter()
 const formRef = ref()
 const variableModalVisible = ref(false)
@@ -305,7 +307,10 @@ async function handleSubmit() {
   }
   
   try {
-    // TODO: 调用保存接口
+    await createSmsTemplate({
+      ...formData,
+      label: formData.title // Mapping title to label as per mock structure
+    })
     Message.success('保存成功')
     router.push('/touch/channel/sms-template')
   } catch (error) {

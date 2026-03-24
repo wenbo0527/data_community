@@ -76,19 +76,33 @@
 
     <!-- 主体内容区域 -->
     <div class="main-content">
-      <!-- 常用表集合 -->
+      <!-- 常用表集合 & 核心业务流程 (Tab切换) -->
       <div class="content-section">
-        <div class="section-header">
-          <h3 class="section-title">常用表集合</h3>
-          <a-link class="more-link" @click="router.push('/discovery/data-map/collections')">查看更多 <icon-right /></a-link>
-        </div>
-        
-        <TableCollectionGrid
-          :collections="collections"
-          :show-header="false"
-          :page-size="8"
-          @collection-click="handleCollectionClick"
-        />
+        <a-tabs default-active-key="common" size="medium" type="text">
+          <template #extra>
+            <a-link class="more-link" @click="router.push('/discovery/data-map/collections')">查看更多 <icon-right /></a-link>
+          </template>
+          <a-tab-pane key="common" title="常用表集合">
+            <div class="tab-content-wrapper" style="padding-top: 16px;">
+                <TableCollectionGrid
+                :collections="collections"
+                :show-header="false"
+                :page-size="8"
+                @collection-click="handleCollectionClick"
+              />
+            </div>
+          </a-tab-pane>
+          <a-tab-pane key="business" title="核心业务流程">
+            <div class="tab-content-wrapper" style="padding-top: 16px;">
+                <TableCollectionGrid
+                :collections="businessCollections"
+                :show-header="false"
+                :page-size="8"
+                @collection-click="handleCollectionClick"
+              />
+            </div>
+          </a-tab-pane>
+        </a-tabs>
       </div>
 
       <!-- 数据体系全景 (合并了原侧边栏内容) -->
@@ -262,7 +276,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   IconSearch, IconStar, IconSort, IconEye, IconRight, 
@@ -280,18 +294,24 @@ import {
   mockDataResources, 
   mockDataElements, 
   mockBusinessRecommendations,
-  mockDataGovernance 
+  mockDataGovernance,
+  mockCollections as importedMockCollections
 } from '@/mock/data-map.ts'
 import mockData from '@/mock/data-map.ts'
 
 const router = useRouter()
 
 console.log('DataMap: mockData loaded', mockData);
-if (mockData && mockData.collections) {
-    console.log('DataMap: collections count', mockData.collections.length);
-} else {
-    console.error('DataMap: mockData.collections is missing!', mockData);
+// 使用导出的 mockCollections 或从 default export 中获取
+const collections = ref(importedMockCollections || mockData.collections || [])
+if (collections.value.length === 0) {
+    console.error('DataMap: collections is empty!', mockData);
 }
+
+// 核心业务流程集合
+const businessCollections = computed(() => {
+  return collections.value.filter(c => c.type === '业务流程')
+})
 
 // 状态管理
 const searchForm = ref({
@@ -308,7 +328,6 @@ const dataAssets = ref(mockDataAssets || [])
 const dataResources = ref(mockDataResources || [])
 const dataElements = ref(mockDataElements || [])
 const dataGovernance = ref(mockDataGovernance || [])
-const collections = ref(mockData.collections || [])
 
 // 关注功能
 const handleFollow = () => {

@@ -113,6 +113,7 @@ export const useUserStore = defineStore('user', () => {
           result.add('perm.data.manage')
         }
         const assignList = roleDeptAssignments[g.subject] || []
+        const bound = [] // 修复 bound 未定义的问题
         const mergedDept = Array.from(new Set([...(bound || []), ...(assignList || [])]))
         if (mergedDept.includes(dept)) {
           result.add('perm.data.manage')
@@ -126,6 +127,7 @@ export const useUserStore = defineStore('user', () => {
           result.add('perm.app.manage')
         }
         const assignList = roleDeptAssignments[g.subject] || []
+        const bound = [] // 修复 bound 未定义的问题
         const mergedDept = Array.from(new Set([...(bound || []), ...(assignList || [])]))
         if (mergedDept.includes(dept)) {
           result.add('perm.app.manage')

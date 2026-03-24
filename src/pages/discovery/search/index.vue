@@ -162,6 +162,11 @@
                   外部数据 <a-badge :count="externalResults.length" :max-count="99" />
                 </template>
               </a-tab-pane>
+              <a-tab-pane key="concept" title="业务概念">
+                <template #title>
+                  业务概念 <a-badge :count="conceptResults.length" :max-count="99" />
+                </template>
+              </a-tab-pane>
             </a-tabs>
           </div>
           <div class="results-tools">
@@ -323,6 +328,7 @@ const allResults = ref<SearchResult[]>([])
 const tableResults = ref<SearchResult[]>([])
 const metricResults = ref<SearchResult[]>([])
 const externalResults = ref<SearchResult[]>([])
+const conceptResults = ref<SearchResult[]>([])
 
 // 计算属性
 const currentResults = computed(() => {
@@ -333,6 +339,8 @@ const currentResults = computed(() => {
       return metricResults.value
     case 'external':
       return externalResults.value
+    case 'concept':
+      return conceptResults.value
     default:
       return allResults.value
   }
@@ -414,129 +422,59 @@ const handleSearch = async (query?: string) => {
   }
 }
 
+import { searchApi } from '@/api/community'
+
+// ... existing code ...
+
 const performSearch = async (query?: string) => {
   const searchTerm = query || searchQuery.value
   
-  // 模拟API延迟
-  await new Promise(resolve => setTimeout(resolve, 500))
+  // 使用新的 searchApi 进行搜索
+  try {
+    const res = await searchApi.search(searchTerm, filters.value)
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      
+      // 处理数据表结果
+      tableResults.value = (data.tables || []).map((t: any) => ({
+        id: `table_${t.name}`,
+        name: t.name,
+        description: t.description,
+        type: 'table',
+        owner: t.owner,
+        updateTime: t.lastModified || '2024-01-15',
+        domain: t.domain,
+        isFavorite: false
+      }))
 
-  // 模拟标签数据
-  const scenarios = ['精准营销', '风险控制', '客户流失预测', '市场趋势分析', '运营优化', '财务报表', '授信', '信贷审批', '反欺诈', '额度管理']
-  // 推荐使用标签：内容为数仓推荐
-  const usages = ['数仓推荐']
+      // 处理业务概念结果
+      const concepts = data.concepts || { domains: [], entities: [], elements: [] }
+      conceptResults.value = [
+        ...concepts.domains.map((d: any) => ({ ...d, id: d.code, type: 'concept', conceptType: '业务域' })),
+        ...concepts.entities.map((e: any) => ({ ...e, id: e.code, type: 'concept', conceptType: '业务实体' })),
+        ...concepts.elements.map((e: any) => ({ ...e, id: e.code, type: 'concept', conceptType: '数据要素' }))
+      ].map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        description: c.description || c.name,
+        type: 'concept',
+        owner: c.owner || '系统',
+        updateTime: '实时',
+        isFavorite: false,
+        conceptType: c.conceptType
+      }))
 
-  const getRandomTags = (options: string[], count = 2) => {
-    // 如果选项只有一个，直接返回该选项
-    if (options.length === 1) return options
-    const shuffled = [...options].sort(() => 0.5 - Math.random())
-    return shuffled.slice(0, Math.floor(Math.random() * count) + 1)
-  }
-  
-  // 搜索数据表
-  const tables = mockDataMap.collections?.flatMap(collection => 
-    collection.tables.map(table => ({
-      id: `table_${table.name}`,
-      name: table.name,
-      description: table.description,
-      type: 'table' as const,
-      owner: table.owner,
-      updateTime: '2024-01-15',
-      domain: table.domain,
-      isFavorite: false,
-      businessScenarios: getRandomTags(scenarios),
-      recommendedUsage: getRandomTags(usages)
-    }))
-  ) || []
-  
-  // 搜索指标
-  const metrics = mockMetrics?.map((metric: any) => ({
-    id: `metric_${metric.id}`,
-    name: metric.name,
-    description: metric.description,
-    type: 'metric' as const,
-    owner: metric.owner || '系统管理员',
-    updateTime: metric.updateTime || '2024-01-15',
-    domain: metric.category,
-    isFavorite: false,
-    heat: (() => {
-      const t = searchTerm?.toLowerCase() || ''
-      let s = 0
-      if (t && metric.name?.toLowerCase().includes(t)) s += 80
-      if (t && metric.description?.toLowerCase().includes(t)) s += 20
-      return s
-    })(),
-    businessScenarios: getRandomTags(scenarios),
-    recommendedUsage: getRandomTags(usages)
-  })) || []
-  
-  // 搜索外部数据
-  const external = [
-    {
-      id: 'external_1',
-      name: '外部数据源A',
-      description: '来自第三方的数据源',
-      type: 'external' as const,
-      owner: '系统管理员',
-      updateTime: '2024-01-15',
-      domain: '金融',
-      isFavorite: false,
-      heat: (() => {
-        const t = searchTerm?.toLowerCase() || ''
-        let s = 0
-        if (t && '外部数据源A'.toLowerCase().includes(t)) s += 80
-        if (t && '来自第三方的数据源'.toLowerCase().includes(t)) s += 20
-        return s
-      })(),
-      businessScenarios: getRandomTags(scenarios),
-      recommendedUsage: getRandomTags(usages)
-    },
-    {
-      id: 'external_2',
-      name: '外部数据源B',
-      description: '合作伙伴提供的数据',
-      type: 'external' as const,
-      owner: '数据管理员',
-      updateTime: '2024-01-10',
-      domain: '营销',
-      isFavorite: false,
-      heat: (() => {
-        const t = searchTerm?.toLowerCase() || ''
-        let s = 0
-        if (t && '外部数据源B'.toLowerCase().includes(t)) s += 80
-        if (t && '合作伙伴提供的数据'.toLowerCase().includes(t)) s += 20
-        return s
-      })(),
-      businessScenarios: getRandomTags(scenarios),
-      recommendedUsage: getRandomTags(usages)
+      // 模拟其他类型数据（保持原有逻辑或清空）
+      metricResults.value = [] // 暂时清空，或保留原有 mock 逻辑
+      externalResults.value = []
+
+      // 合并所有结果
+      allResults.value = [...tableResults.value, ...conceptResults.value]
     }
-  ]
-  
-  // 过滤搜索结果
-  const filterResults = (items: SearchResult[]) => {
-    return items.filter(item => {
-      const matchesQuery = !searchTerm || 
-        (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.businessScenarios && item.businessScenarios.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-        (item.recommendedUsage && item.recommendedUsage.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
-      
-      const matchesType = !filters.value.type || item.type === filters.value.type
-      const matchesDomain = !filters.value.domain || item.domain === filters.value.domain
-      
-      return matchesQuery && matchesType && matchesDomain
-    })
+  } catch (error) {
+    console.error('Search failed:', error)
+    Message.error('搜索失败，请重试')
   }
-  
-  tableResults.value = filterResults(tables).map(r => {
-    const t = searchTerm?.toLowerCase() || ''
-    const name = r.name?.toLowerCase() || ''
-    const desc = r.description?.toLowerCase() || ''
-    const heat = (t && name.includes(t) ? 80 : 0) + (t && desc.includes(t) ? 20 : 0)
-    return { ...r, heat }
-  })
-  metricResults.value = filterResults(metrics)
-  externalResults.value = filterResults(external)
-  allResults.value = [...tableResults.value, ...metricResults.value, ...externalResults.value]
 }
 
 const handleClearSearch = () => {
@@ -549,6 +487,7 @@ const clearResults = () => {
   tableResults.value = []
   metricResults.value = []
   externalResults.value = []
+  conceptResults.value = []
   currentPage.value = 1
 }
 

@@ -1,4 +1,6 @@
 import type { MockMethod } from 'vite-plugin-mock';
+import { MetadataStore } from './shared/metadata-store';
+export const mockTables = MetadataStore.getTables();
 
 // 数据地图模拟数据
 
@@ -116,7 +118,7 @@ export interface TableCollection {
 }
 
 // 模拟数据
-export const mockTables: TableItem[] = [
+const mockTables_old: TableItem[] = [
   {
     name: 'dim_user',
     type: 'dim',

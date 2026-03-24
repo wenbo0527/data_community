@@ -43,6 +43,30 @@ export async function listManualCallTemplates(): Promise<any[]> {
 export async function listSmsTemplates(): Promise<any[]> {
   return mock.smsTemplates
 }
+
+export async function createSmsTemplate(template: any): Promise<boolean> {
+  const templates = mock.smsTemplates as any[]
+  const newId = templates.length > 0 ? Math.max(...templates.map(t => t.id)) + 1 : 1
+  templates.push({
+    ...template,
+    id: newId,
+    templateId: Date.now().toString(), // Mock template ID
+    status: '草稿' // Default status for new template
+  })
+  return true
+}
+
+export async function updateSmsTemplateStatus(ids: number[], status: string): Promise<boolean> {
+  const templates = mock.smsTemplates as any[]
+  ids.forEach(id => {
+    const item = templates.find(t => t.id === id)
+    if (item) {
+      item.status = status
+    }
+  })
+  return true
+}
+
 export async function listAiCallTemplates(): Promise<any[]> {
   return mock.aiCallTemplates
 }

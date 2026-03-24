@@ -1,306 +1,70 @@
 <template>
-  <div class="variable-map-page">
+  <div class="metrics-map">
     <div class="page-header">
-      <a-breadcrumb>
-        <a-breadcrumb-item>变量管理</a-breadcrumb-item>
-        <a-breadcrumb-item>变量地图</a-breadcrumb-item>
-      </a-breadcrumb>
-      <div class="header-content">
-        <h1 class="page-title">变量地图</h1>
-        
-      </div>
+      <h2>变量地图</h2>
     </div>
 
-    <div class="page-content">
-      <!-- 控制面板 -->
-      <a-card class="control-panel" v-if="false">
-        <a-row :gutter="16">
-          <a-col :span="8">
-            <a-form-item label="中心变量">
-              <a-select
-                v-model="centerVariable"
-                placeholder="选择中心变量"
-                allow-clear
-                @change="handleCenterVariableChange"
-              >
-                <a-option v-for="variable in variableOptions" :key="variable.id" :value="variable.id">
-                  {{ variable.name }}
-                </a-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="关系深度">
-              <a-slider
-                v-model="depth"
-                :min="1"
-                :max="5"
-                :step="1"
-                show-input
-                @change="handleDepthChange"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="显示模式">
-              <a-radio-group v-model="displayMode" @change="handleDisplayModeChange">
-                <a-radio value="all">全部关系</a-radio>
-                <a-radio value="upstream">上游依赖</a-radio>
-                <a-radio value="downstream">下游依赖</a-radio>
-              </a-radio-group>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16" style="margin-top: 16px;">
-          <a-col :span="8">
-            <a-form-item label="变量类型筛选">
-              <a-select
-                v-model="selectedTypes"
-                placeholder="选择变量类型"
-                multiple
-                allow-clear
-                @change="handleTypeFilterChange"
-              >
-                <a-option value="numerical">数值型</a-option>
-                <a-option value="categorical">分类型</a-option>
-                <a-option value="text">文本型</a-option>
-                <a-option value="datetime">时间型</a-option>
-                <a-option value="boolean">布尔型</a-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="关系类型">
-              <a-checkbox-group v-model="selectedRelations" @change="handleRelationFilterChange">
-                <a-checkbox value="dependency">依赖关系</a-checkbox>
-                <a-checkbox value="computation">计算关系</a-checkbox>
-                <a-checkbox value="derivation">衍生关系</a-checkbox>
-              </a-checkbox-group>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-space>
-              <a-button type="primary" @click="handleAnalyzePath">
-                <template #icon><icon-swap /></template>
-                路径分析
-              </a-button>
-              <a-button @click="handleShowLineage">
-                <template #icon><icon-branch /></template>
-                血缘追踪
-              </a-button>
-            </a-space>
-          </a-col>
-        </a-row>
-      </a-card>
-
-      <!-- 关系图谱 -->
-      <a-card class="graph-container" v-if="false">
-        <div class="graph-header">
-          <div class="graph-title">变量关系图谱</div>
-          <div class="graph-legend">
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #52c41a;"></div>
-              <span>数值型</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #1890ff;"></div>
-              <span>分类型</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #fa8c16;"></div>
-              <span>文本型</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #722ed1;"></div>
-              <span>时间型</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #13c2c2;"></div>
-              <span>布尔型</span>
-            </div>
-          </div>
-        </div>
-        <div ref="graphContainer" class="graph-content"></div>
-      </a-card>
-
-      <!-- 变量列表（征信/行为） -->
-      <a-card class="list-container">
-        <template #title>
-          <div class="graph-title">变量列表</div>
-        </template>
-        <a-row :gutter="16">
-          <a-col :xs="24" :md="6" :lg="6" :xl="6">
-            <a-card :bordered="false">
-              <a-tree
-                :data="categoryTree"
-                :field-names="{ key: 'key', title: 'title', children: 'children' }"
-                block-node
-                @select="onCategorySelect"
-              />
-            </a-card>
-          </a-col>
-          <a-col :xs="24" :md="18" :lg="18" :xl="18">
-            <a-form :model="featureFilter" layout="inline" style="margin-bottom: 8px">
-              <a-form-item label="变量名称">
-                <a-input v-model="featureFilter.name" placeholder="输入名称或编码" allow-clear @change="fetchFeatureRows" />
-              </a-form-item>
-              <a-form-item>
-                <a-button type="primary" @click="fetchFeatureRows">
-                  <template #icon><IconSearch /></template>
-                  搜索
-                </a-button>
-              </a-form-item>
-            </a-form>
-            <a-table
-              :data="displayFeatureRows"
-              :columns="featureColumns"
-              :loading="featureLoading"
-              :pagination="featurePagination"
-              @page-change="handleFeaturePageChange"
-              row-key="id"
-            >
-              <template #nameCell="{ record }">
-                <a-link @click="openVariableDetail(record)">{{ record.name }}</a-link>
-              </template>
-              <template #majorCategoryCell="{ record }">
-                {{ getMajorCategoryLabel(record.majorCategory) }}
-              </template>
-              <template #level1Cell="{ record }">
-                {{ level1Label(record.level1) }}
-              </template>
-            </a-table>
-          </a-col>
-        </a-row>
-      </a-card>
-
-      <!-- 节点详情面板 -->
-      <a-card v-if="false" class="node-detail-panel">
-        <template #title>
-          <div class="panel-title">
-            <span>节点详情: {{ selectedNode.name }}</span>
-            <a-button type="text" size="small" @click="handleCloseDetail">
-              <template #icon><icon-close /></template>
-            </a-button>
-          </div>
-        </template>
-        <div class="node-detail-content">
-          <a-descriptions :data="nodeDetailData" :column="1" bordered />
-          <div class="node-actions">
-            <a-space>
-              <a-button type="primary" size="small" @click="handleViewVariableDetail">
-                查看变量详情
-              </a-button>
-              <a-button size="small" @click="handleCenterOnNode">
-                置为中心
-              </a-button>
-              <a-button size="small" @click="handleShowNodeLineage">
-                查看血缘
-              </a-button>
-            </a-space>
-          </div>
-        </div>
-      </a-card>
+    <!-- 搜索筛选区域 -->
+    <div class="search-section">
+      <a-row :gutter="16" justify="end">
+        <a-col :span="6">
+          <a-input
+            v-model="featureFilter.name"
+            placeholder="搜索变量名称"
+            allow-clear
+            @press-enter="fetchFeatureRows"
+          >
+            <template #prefix>
+              <icon-search />
+            </template>
+          </a-input>
+        </a-col>
+        <a-col :span="3">
+          <a-button type="primary" @click="fetchFeatureRows">
+            <template #icon><icon-search /></template>
+            搜索
+          </a-button>
+        </a-col>
+      </a-row>
     </div>
 
-    <!-- 路径分析对话框 -->
-    <a-modal v-if="false" v-model:visible="pathAnalysisVisible" title="路径分析" width="600px">
-      <template #default>
-        <div class="path-analysis-content">
-          <a-form :model="pathAnalysisForm" layout="vertical">
-            <a-form-item label="起始变量" required>
-              <a-select
-                v-model="pathAnalysisForm.sourceId"
-                placeholder="选择起始变量"
-                allow-clear
-              >
-                <a-option v-for="variable in variableOptions" :key="variable.id" :value="variable.id">
-                  {{ variable.name }}
-                </a-option>
-              </a-select>
-            </a-form-item>
-            <a-form-item label="目标变量" required>
-              <a-select
-                v-model="pathAnalysisForm.targetId"
-                placeholder="选择目标变量"
-                allow-clear
-              >
-                <a-option v-for="variable in variableOptions" :key="variable.id" :value="variable.id">
-                  {{ variable.name }}
-                </a-option>
-              </a-select>
-            </a-form-item>
-            <a-form-item label="最大深度">
-              <a-slider
-                v-model="pathAnalysisForm.maxDepth"
-                :min="1"
-                :max="10"
-                :step="1"
-                show-input
-              />
-            </a-form-item>
-          </a-form>
-          <div v-if="pathAnalysisResult" class="path-result">
-            <a-divider>分析结果</a-divider>
-            <div class="path-info">
-              <p><strong>路径长度:</strong> {{ pathAnalysisResult.length }}</p>
-              <p><strong>路径节点:</strong></p>
-              <div class="path-nodes">
-                <span v-for="(node, index) in pathAnalysisResult.nodes" :key="node.id" class="path-node">
-                  {{ node.name }}
-                  <icon-right v-if="index < pathAnalysisResult.nodes.length - 1" />
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
-      <template #footer>
-        <a-button @click="pathAnalysisVisible = false">取消</a-button>
-        <a-button type="primary" @click="handleExecutePathAnalysis">执行分析</a-button>
-      </template>
-    </a-modal>
-
-    <!-- 血缘追踪对话框 -->
-    <a-modal v-if="false" v-model:visible="lineageVisible" title="血缘追踪" width="800px">
-      <template #default>
-        <div class="lineage-content">
-          <div class="lineage-section">
-            <h4>上游依赖</h4>
-            <a-tree
-              :data="lineageData.upstream"
-              :field-names="{ key: 'id', title: 'name' }"
-              block-node
-            >
-              <template #title="nodeData">
-                <span class="tree-node">
-                  <span class="node-name">{{ nodeData.name }}</span>
-                  <span class="node-type">({{ getTypeLabel(nodeData.type) }})</span>
-                </span>
-              </template>
-            </a-tree>
-          </div>
-          <a-divider />
-          <div class="lineage-section">
-            <h4>下游使用</h4>
-            <a-tree
-              :data="lineageData.downstream"
-              :field-names="{ key: 'id', title: 'name' }"
-              block-node
-            >
-              <template #title="nodeData">
-                <span class="tree-node">
-                  <span class="node-name">{{ nodeData.name }}</span>
-                  <span class="node-type">({{ getTypeLabel(nodeData.type) }})</span>
-                </span>
-              </template>
-            </a-tree>
-          </div>
-        </div>
-      </template>
-      <template #footer>
-        <a-button @click="lineageVisible = false">关闭</a-button>
-      </template>
-    </a-modal>
+    <a-row :gutter="24">
+      <!-- 左侧导航树 -->
+      <a-col :span="6">
+        <a-card title="变量树" :bordered="false">
+          <a-tree
+            :data="categoryTree"
+            :field-names="{ key: 'key', title: 'title', children: 'children' }"
+            :show-line="true"
+            @select="onCategorySelect"
+          />
+        </a-card>
+      </a-col>
+      
+      <!-- 右侧内容区 -->
+      <a-col :span="18">
+        <a-card :bordered="false">
+          <a-table
+            :data="displayFeatureRows"
+            :columns="featureColumns"
+            :loading="featureLoading"
+            :pagination="featurePagination"
+            @page-change="handleFeaturePageChange"
+            row-key="id"
+          >
+            <template #nameCell="{ record }">
+              <span class="metric-name" @click="openVariableDetail(record)">{{ record.name }}</span>
+            </template>
+            <template #majorCategoryCell="{ record }">
+              {{ getMajorCategoryLabel(record.majorCategory) }}
+            </template>
+            <template #level1Cell="{ record }">
+              {{ level1Label(record.level1) }}
+            </template>
+          </a-table>
+        </a-card>
+      </a-col>
+    </a-row>
   </div>
 </template>
 
@@ -366,7 +130,7 @@ const featureRows = ref([])
 const featureFilter = reactive({ name: '', majorCategory: '', level1: '', level2: '' })
 const featurePagination = reactive({ current: 1, pageSize: 10, total: 0, showTotal: true, showJumper: true, showPageSize: true })
 const featureColumns = [
-  { title: '变量名称', dataIndex: 'name', width: 180 },
+  { title: '变量名称', dataIndex: 'name', width: 180, slotName: 'nameCell' },
   { title: '变量编码', dataIndex: 'code', width: 160 },
   { title: '业务类型', dataIndex: 'majorCategory', slotName: 'majorCategoryCell', width: 140 },
   { title: '一级分类', dataIndex: 'level1', slotName: 'level1Cell', width: 140 },
@@ -903,180 +667,37 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.variable-map-page {
-  padding: 16px;
-  background-color: #f5f5f5;
-  min-height: 100vh;
+.metrics-map {
+  padding: 20px;
 }
 
 .page-header {
-  margin-bottom: 16px;
-}
-
-.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
+  margin-bottom: 20px;
 }
 
-.page-title {
+.page-header h2 {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1d2129;
 }
 
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.page-content {
-  width: 100%;
-  margin: 0 auto;
-  position: relative;
-  padding: 0 12px;
-  box-sizing: border-box;
-}
-
-.control-panel {
-  margin-bottom: 16px;
-}
-
-.graph-container {
-  margin-bottom: 16px;
-}
-
-.list-container {
-  margin-bottom: 16px;
-}
-
-.graph-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.graph-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1d2129;
-}
-
-.graph-legend {
-  display: flex;
-  gap: 16px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #86909c;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-.graph-content {
-  width: 100%;
-  height: 600px;
-  border: 1px solid #e5e6eb;
-  border-radius: 6px;
-  background-color: #fff;
-}
-
-.node-detail-panel {
-  position: absolute;
-  top: 200px;
-  right: 16px;
-  width: 300px;
-  z-index: 1000;
-}
-
-.panel-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.node-detail-content {
-  padding: 16px 0;
-}
-
-.node-actions {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.path-analysis-content {
-  padding: 16px 0;
-}
-
-.path-result {
-  margin-top: 16px;
+.search-section {
+  margin-bottom: 20px;
   padding: 16px;
-  background-color: #f5f5f5;
+  background: #f8f9fa;
   border-radius: 6px;
 }
 
-.path-info {
-  font-size: 14px;
-  color: #1d2129;
-}
-
-.path-nodes {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
-.path-node {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background-color: #e6f7ff;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #1890ff;
-}
-
-.lineage-content {
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.lineage-section {
-  margin-bottom: 16px;
-}
-
-.lineage-section h4 {
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #1d2129;
-}
-
-.tree-node {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.node-name {
+.metric-name {
   font-weight: 500;
+  color: #1890ff;
+  cursor: pointer;
 }
 
-.node-type {
-  font-size: 12px;
-  color: #86909c;
+.metric-name:hover {
+  text-decoration: underline;
 }
 </style>

@@ -2,10 +2,16 @@
   <div class="sms-template-container">
     <a-card :bordered="false" title="短信管理" class="search-card">
       <template #extra>
-        <a-button type="primary" @click="handleCreate">
-          <template #icon><icon-plus /></template>
-          短信模板新建
-        </a-button>
+        <a-space>
+          <a-button type="primary" status="success" @click="handleBatchSubmit">
+            <template #icon><icon-send /></template>
+            批量提交
+          </a-button>
+          <a-button type="primary" @click="handleCreate">
+            <template #icon><icon-plus /></template>
+            短信模板新建
+          </a-button>
+        </a-space>
       </template>
       
       <a-form :model="searchForm" layout="inline" class="search-form">
@@ -56,15 +62,41 @@
         :loading="loading"
         :pagination="pagination"
         row-key="id"
+        v-model:selectedKeys="selectedKeys"
+        :row-selection="rowSelection"
         @page-change="onPageChange"
       >
         <template #status="{ record }">
           <a-tag v-if="record.status === '使用中'" color="green">使用中</a-tag>
-          <a-tag v-else color="gray">停用</a-tag>
+          <a-tag v-else-if="record.status === '草稿'" color="orange">草稿</a-tag>
+          <a-tag v-else-if="record.status === '待审批'" color="blue">待审批</a-tag>
+          <a-tag v-else-if="record.status === '审批通过'" color="green">审批通过</a-tag>
+          <a-tag v-else-if="record.status === '审批拒绝'" color="red">审批拒绝</a-tag>
+          <a-tag v-else color="gray">{{ record.status || '停用' }}</a-tag>
         </template>
         
         <template #action="{ record }">
           <a-space>
+            <a-button 
+              v-if="record.status === '草稿' || record.status === '审批拒绝'"
+              type="text" 
+              size="small" 
+              status="success"
+              @click="handleSubmitApproval(record)"
+            >
+              <template #icon><icon-send /></template>
+              提交审批
+            </a-button>
+            <a-button 
+              v-if="record.status === '待审批'"
+              type="text" 
+              size="small" 
+              status="warning"
+              @click="handleApproval(record)"
+            >
+              <template #icon><icon-check-circle /></template>
+              审批
+            </a-button>
             <a-button type="text" size="small" @click="handleView(record)">
               <template #icon><icon-eye /></template>
               查看
@@ -79,12 +111,31 @@
             </a-button>
             <a-button type="text" size="small" @click="handleCopy(record)">
               <template #icon><icon-copy /></template>
-              另起全复本
+              复制
             </a-button>
           </a-space>
         </template>
       </a-table>
     </a-card>
+
+    <!-- 审批弹窗 -->
+    <a-modal
+      v-model:visible="approvalModal.visible"
+      title="审批处理"
+      width="500px"
+    >
+      <div v-if="approvalModal.record">
+        <p>确认对模板 <strong>{{ approvalModal.record.templateId }}</strong> 进行审批操作吗？</p>
+        <p>内容：{{ approvalModal.record.content }}</p>
+      </div>
+      <template #footer>
+        <a-space>
+          <a-button @click="approvalModal.visible = false">取消</a-button>
+          <a-button type="primary" status="danger" @click="handleApproveReject">拒绝</a-button>
+          <a-button type="primary" status="success" @click="handleApprovePass">通过</a-button>
+        </a-space>
+      </template>
+    </a-modal>
   </div>
 </template>
 
@@ -92,12 +143,20 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconSearch, IconRefresh, IconEye, IconEdit, IconDelete, IconCopy } from '@arco-design/web-vue/es/icon'
-import { listSmsTemplates } from '@/services/channelService'
+import { IconPlus, IconSearch, IconRefresh, IconEye, IconEdit, IconDelete, IconCopy, IconCheckCircle, IconSend } from '@arco-design/web-vue/es/icon'
+import { listSmsTemplates, updateSmsTemplateStatus } from '@/services/channelService'
+import { Modal } from '@arco-design/web-vue'
 
 const router = useRouter()
 const list = ref<any[]>([])
 const loading = ref(false)
+const selectedKeys = ref([])
+
+const rowSelection = {
+  type: 'checkbox',
+  showCheckedAll: true,
+  onlyCurrent: false
+}
 
 const searchForm = reactive({
   templateId: '',
@@ -197,6 +256,63 @@ function handleCopy(record: any) {
     path: '/touch/channel/sms-template/create',
     query: { copyFrom: record.id }
   })
+}
+
+async function handleBatchSubmit() {
+  if (selectedKeys.value.length === 0) {
+    Message.warning('请至少选择一项')
+    return
+  }
+  
+  Modal.confirm({
+    title: '批量提交',
+    content: `确定要提交选中的 ${selectedKeys.value.length} 个模板进行审批吗？`,
+    onOk: async () => {
+      await updateSmsTemplateStatus(selectedKeys.value as number[], '待审批')
+      Message.success('提交成功')
+      selectedKeys.value = []
+      load()
+    }
+  })
+}
+
+async function handleSubmitApproval(record: any) {
+  Modal.confirm({
+    title: '提交审批',
+    content: `确定要提交模板 ${record.templateId} 进行审批吗？`,
+    onOk: async () => {
+      await updateSmsTemplateStatus([record.id], '待审批')
+      Message.success('提交成功')
+      load()
+    }
+  })
+}
+
+function handleApproval(record: any) {
+  approvalModal.record = record
+  approvalModal.visible = true
+}
+
+const approvalModal = reactive({
+  visible: false,
+  record: null as any,
+  comment: ''
+})
+
+async function handleApprovePass() {
+  if (!approvalModal.record) return
+  await updateSmsTemplateStatus([approvalModal.record.id], '使用中')
+  Message.success('审批通过')
+  approvalModal.visible = false
+  load()
+}
+
+async function handleApproveReject() {
+  if (!approvalModal.record) return
+  await updateSmsTemplateStatus([approvalModal.record.id], '审批拒绝')
+  Message.success('审批已拒绝')
+  approvalModal.visible = false
+  load()
 }
 
 load()

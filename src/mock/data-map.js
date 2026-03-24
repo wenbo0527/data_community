@@ -1,5 +1,8 @@
+import { MetadataStore } from "./shared/metadata-store";
+const mockTables = MetadataStore.getTables();
+
 // 模拟数据
-export const mockTables = [
+const mockTables_old = [
     {
         name: 'dim_user',
         type: 'dim',

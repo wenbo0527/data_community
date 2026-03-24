@@ -8,6 +8,7 @@
         </div>
       <div class="header-actions">
         <a-space>
+          <a-button type="primary" @click="openCreate">新建外数</a-button>
           <a-button type="outline" @click="goWithQuery('/external-data-v1/list')">技术详情</a-button>
           <a-button type="outline" @click="goWithQuery('/discovery/asset-management/external-data-management')">元数据管理</a-button>
           <a-button type="outline" @click="goWithQuery('/risk/external-data/evaluation')">查看评估</a-button>
@@ -28,6 +29,7 @@
           <a-radio-group v-model="filters.statusQuick">
             <a-radio value="">全部</a-radio>
             <a-radio value="importing">引入中</a-radio>
+            <a-radio value="pending_tech_profile">待完善技术档案</a-radio>
             <a-radio value="online">已上线</a-radio>
             <a-radio value="pending_evaluation">待评估</a-radio>
             <a-radio value="archived">已归档</a-radio>
@@ -174,41 +176,150 @@
       </a-space>
     </a-drawer>
 
-    <a-drawer v-model:visible="editVisible" :width="720" title="编辑档案">
+    <!-- 档案编辑弹窗 -->
+    <a-modal v-model:visible="editVisible" :title="editTarget ? '编辑档案' : '新建外数档案'" :width="800" @ok="saveEdit" :ok-loading="saving">
       <a-form :model="editForm" layout="vertical">
-        <a-row :gutter="12">
-          <a-col :span="12">
-            <a-form-item field="businessGoal" label="业务目标"><a-input v-model="editForm.businessGoal" /></a-form-item>
+        <a-divider orientation="left">基础信息</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item field="name" label="外数名称" required>
+              <a-input v-model="editForm.name" placeholder="请输入外数名称" />
+            </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item field="expectedBenefit" label="预期收益"><a-input v-model="editForm.expectedBenefit" /></a-form-item>
+          <a-col :span="8">
+            <a-form-item field="supplier" label="供应商">
+              <a-input v-model="editForm.supplier" placeholder="请输入供应商名称" />
+            </a-form-item>
           </a-col>
-        </a-row>
-        <a-form-item field="usageScene" label="使用场景"><a-textarea v-model="editForm.usageScene" :rows="3" /></a-form-item>
-        <a-row :gutter="12">
+          <a-col :span="8">
+            <a-form-item field="status" label="当前状态" required>
+              <a-select v-model="editForm.status" placeholder="选择当前状态">
+                <a-option value="importing">引入中</a-option>
+                <a-option value="pending_tech_profile">待完善技术档案</a-option>
+                <a-option value="online">已上线</a-option>
+                <a-option value="pending_evaluation">待评估</a-option>
+                <a-option value="archived">已归档</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="24">
+            <a-form-item field="usageScene" label="使用场景" required>
+              <a-textarea v-model="editForm.usageScene" placeholder="请详细描述该数据的使用场景" />
+            </a-form-item>
+          </a-col>
           <a-col :span="24">
             <a-form-item field="tags" label="标签">
-              <a-input-tag v-model="editForm.tags" allow-clear placeholder="输入标签后回车添加" />
+              <a-input-tag v-model="editForm.tags" placeholder="输入后回车添加标签" allow-clear />
             </a-form-item>
           </a-col>
         </a-row>
-        <a-row :gutter="12">
-          <a-col :span="12">
-            <a-form-item field="businessImpact" label="业务影响"><a-input v-model="editForm.businessImpact" /></a-form-item>
+
+        <a-divider orientation="left">接口配置</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="16">
+            <a-form-item field="apiUrl" label="接口地址" required>
+              <a-input v-model="editForm.apiUrl" placeholder="请输入 API URL" />
+            </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item field="alternativeSolution" label="替代方案"><a-input v-model="editForm.alternativeSolution" /></a-form-item>
+          <a-col :span="8">
+            <a-form-item field="requestMethod" label="请求方式" required>
+              <a-select v-model="editForm.requestMethod" placeholder="选择请求方式">
+                <a-option value="GET">GET</a-option>
+                <a-option value="POST">POST</a-option>
+              </a-select>
+            </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item field="businessRisk" label="业务风险"><a-input v-model="editForm.businessRisk" /></a-form-item>
-        <a-form-item field="remark" label="备注"><a-textarea v-model="editForm.remark" :rows="3" /></a-form-item>
-        <div style="text-align: right">
-          <a-space>
-            <a-button type="primary" :loading="saving" @click="saveEdit">保存</a-button>
-            <a-button type="outline" @click="editVisible = false">取消</a-button>
-          </a-space>
+
+        <a-divider orientation="left">数据要素模型</a-divider>
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span><strong>入参定义</strong></span>
+            <a-button type="outline" size="small" @click="addInputParam">添加参数</a-button>
+          </div>
+          <a-table :data="editForm.inputParams" :pagination="false" size="small">
+            <template #columns>
+              <a-table-column title="参数名">
+                <template #cell="{ record }"><a-input v-model="record.name" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="类型">
+                <template #cell="{ record }">
+                  <a-select v-model="record.type" size="small">
+                    <a-option value="string">String</a-option>
+                    <a-option value="number">Number</a-option>
+                  </a-select>
+                </template>
+              </a-table-column>
+              <a-table-column title="必填">
+                <template #cell="{ record }"><a-switch v-model="record.required" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="是否为要素">
+                <template #cell="{ record }"><a-switch v-model="record.isElement" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="操作" :width="80">
+                <template #cell="{ rowIndex }"><a-button type="text" status="danger" size="small" @click="removeInputParam(rowIndex)">删除</a-button></template>
+              </a-table-column>
+            </template>
+          </a-table>
         </div>
+
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span><strong>出参定义</strong></span>
+            <a-button type="outline" size="small" @click="addOutputParam">添加参数</a-button>
+          </div>
+          <a-table :data="editForm.outputParams" :pagination="false" size="small">
+            <template #columns>
+              <a-table-column title="参数名">
+                <template #cell="{ record }"><a-input v-model="record.name" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="类型">
+                <template #cell="{ record }">
+                  <a-select v-model="record.type" size="small">
+                    <a-option value="string">String</a-option>
+                    <a-option value="number">Number</a-option>
+                    <a-option value="boolean">Boolean</a-option>
+                  </a-select>
+                </template>
+              </a-table-column>
+              <a-table-column title="描述">
+                <template #cell="{ record }"><a-input v-model="record.description" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="操作" :width="80">
+                <template #cell="{ rowIndex }"><a-button type="text" status="danger" size="small" @click="removeOutputParam(rowIndex)">删除</a-button></template>
+              </a-table-column>
+            </template>
+          </a-table>
+        </div>
+
+        <a-divider orientation="left">数据存储与血缘</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="16">
+            <a-form-item field="targetTable" label="落库表名" required>
+              <a-input v-model="editForm.targetTable" placeholder="请输入落库表名，如 dwd_external_data_detail" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="相关操作">
+              <a-space>
+                <a-button type="outline" @click="viewTableFields" :disabled="!editForm.targetTable">查看表字段</a-button>
+                <a-button type="outline" @click="viewDataLineage">查看血缘</a-button>
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
       </a-form>
+    </a-modal>
+
+    <!-- 查看表字段抽屉 -->
+    <a-drawer v-model:visible="tableFieldsVisible" :width="500" title="表字段详情">
+      <a-table :data="mockTableFields" :pagination="false">
+        <template #columns>
+          <a-table-column title="字段名" data-index="name" />
+          <a-table-column title="类型" data-index="type" />
+          <a-table-column title="注释" data-index="comment" />
+        </template>
+      </a-table>
     </a-drawer>
   </div>
 </template>
@@ -292,11 +403,74 @@ const editVisible = ref(false)
 const detailVisible = ref(false)
 const editTarget = ref<any>(null)
 const detailTarget = ref<any>(null)
-const editForm = reactive({ businessGoal: '', expectedBenefit: '', usageScene: '', billingMode: 'per_call', unitPrice: 0, billingCycle: 'month', currency: 'CNY', effectiveDate: '', expireDate: '', tags: [] as string[], businessImpact: '', alternativeSolution: '', businessRisk: '', remark: '' })
-const openEdit = (record: any) => { editTarget.value = record; editForm.businessGoal = businessValue.businessGoal; editForm.expectedBenefit = businessValue.expectedBenefit; editForm.usageScene = record.usageScene; editForm.billingMode = record.billingMode; editForm.unitPrice = record.unitPrice; editForm.billingCycle = record.billingCycle; editForm.currency = record.currency; editForm.effectiveDate = record.effectiveDate; editForm.expireDate = record.expireDate; editForm.tags = Array.isArray(record.tags) ? [...record.tags] : []; editForm.businessImpact = businessValue.businessImpact; editForm.alternativeSolution = businessValue.alternativeSolution; editForm.businessRisk = businessValue.businessRisk; editForm.remark = ''; editVisible.value = true }
+const editForm = reactive({ 
+  name: '', supplier: '', status: 'importing', apiUrl: '', requestMethod: 'POST', 
+  inputParams: [{ name: '', type: 'string', required: true, isElement: false }],
+  outputParams: [{ name: '', type: 'string', description: '' }],
+  targetTable: '',
+  businessGoal: '', expectedBenefit: '', usageScene: '', billingMode: 'per_call', unitPrice: 0, billingCycle: 'month', currency: 'CNY', effectiveDate: '', expireDate: '', tags: [] as string[], businessImpact: '', alternativeSolution: '', businessRisk: '', remark: '' 
+})
+
+const tableFieldsVisible = ref(false)
+const mockTableFields = ref([
+  { name: 'id', type: 'bigint', comment: '主键ID' },
+  { name: 'user_name', type: 'varchar', comment: '用户姓名' },
+  { name: 'id_card', type: 'varchar', comment: '身份证号' },
+  { name: 'risk_score', type: 'int', comment: '风险评分' },
+  { name: 'create_time', type: 'timestamp', comment: '创建时间' }
+])
+
+const viewTableFields = () => {
+  tableFieldsVisible.value = true
+}
+
+const viewDataLineage = () => {
+  Message.info('即将跳转至外数血缘图谱页面...')
+}
+
+const openCreate = () => { 
+  editTarget.value = null; 
+  editForm.name = ''; editForm.supplier = ''; editForm.status = 'importing'; editForm.apiUrl = ''; editForm.requestMethod = 'POST'; 
+  editForm.inputParams = [{ name: '', type: 'string', required: true, isElement: false }];
+  editForm.outputParams = [{ name: '', type: 'string', description: '' }];
+  editForm.targetTable = '';
+  editForm.businessGoal = ''; editForm.expectedBenefit = ''; editForm.usageScene = ''; editForm.billingMode = 'per_call'; editForm.unitPrice = 0; editForm.billingCycle = 'month'; editForm.currency = 'CNY'; editForm.effectiveDate = ''; editForm.expireDate = ''; editForm.tags = []; editForm.businessImpact = ''; editForm.alternativeSolution = ''; editForm.businessRisk = ''; editForm.remark = ''; editVisible.value = true 
+}
+const openEdit = (record: any) => { 
+  editTarget.value = record; 
+  editForm.name = record.name || '';
+  editForm.supplier = record.supplier || '';
+  editForm.status = record.status || 'importing';
+  editForm.usageScene = record.usageScene; 
+  editForm.targetTable = record.targetTable || '';
+  editForm.billingMode = record.billingMode; 
+  editForm.unitPrice = record.unitPrice; 
+  editForm.billingCycle = record.billingCycle; 
+  editForm.currency = record.currency; 
+  editForm.effectiveDate = record.effectiveDate; 
+  editForm.expireDate = record.expireDate; 
+  editForm.tags = Array.isArray(record.tags) ? [...record.tags] : []; 
+  editVisible.value = true; 
+}
+
+// 添加/删除入参
+const addInputParam = () => {
+  editForm.inputParams.push({ name: '', type: 'string', required: true, isElement: false })
+}
+const removeInputParam = (index: number) => {
+  editForm.inputParams.splice(index, 1)
+}
+
+// 添加/删除出参
+const addOutputParam = () => {
+  editForm.outputParams.push({ name: '', type: 'string', description: '' })
+}
+const removeOutputParam = (index: number) => {
+  editForm.outputParams.splice(index, 1)
+}
 const openDetail = (record: any) => { detailTarget.value = record; detailVisible.value = true }
 const goDetailPage = (record: any) => { router.push({ path: `/risk/external-data/archive/${String(record.id)}`, query: { from: 'archive', archiveId: archiveId.value } }) }
-const saveEdit = async () => { if (!editForm.usageScene) { Message.error('请填写使用场景'); return } saving.value = true; try { if (editTarget.value) { editTarget.value.usageScene = editForm.usageScene; editTarget.value.billingMode = editForm.billingMode; editTarget.value.unitPrice = editForm.unitPrice; editTarget.value.billingCycle = editForm.billingCycle; editTarget.value.currency = editForm.currency; editTarget.value.effectiveDate = editForm.effectiveDate; editTarget.value.expireDate = editForm.expireDate; editTarget.value.tags = Array.isArray(editForm.tags) ? [...editForm.tags] : []; editVisible.value = false; Message.success('保存成功') } } finally { saving.value = false } }
+const saveEdit = async () => { if (!editForm.usageScene) { Message.error('请填写使用场景'); return } saving.value = true; try { if (editTarget.value) { editTarget.value.usageScene = editForm.usageScene; editTarget.value.billingMode = editForm.billingMode; editTarget.value.unitPrice = editForm.unitPrice; editTarget.value.billingCycle = editForm.billingCycle; editTarget.value.currency = editForm.currency; editTarget.value.effectiveDate = editForm.effectiveDate; editTarget.value.expireDate = editForm.expireDate; editTarget.value.tags = Array.isArray(editForm.tags) ? [...editForm.tags] : []; if (editTarget.value.status === 'pending_tech_profile') { editTarget.value.status = 'online'; Message.success('技术档案完善成功，状态已更新为【已上线】'); } else { Message.success('档案更新成功'); } } else { Message.success('档案新建成功'); } editVisible.value = false; } finally { saving.value = false } }
 const handleImportChange = () => {}
 const importing = ref(false)
 const importVisible = ref(false)
@@ -305,8 +479,8 @@ const exportList = () => { const headers = ['产品名称','编码','供应商',
 const formatDate = (d?: string | Date) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }
 const formatCurrency = (n?: number) => { try { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) } catch { return '—' } }
 const billingModeLabel = (m?: string) => m === 'per_call' ? '按次' : m === 'monthly' ? '按月' : m === 'tier' ? '阶梯' : '—'
-const statusLabel = (s?: string) => s === 'importing' ? '引入中' : s === 'online' ? '已上线' : s === 'pending_evaluation' ? '待评估' : s === 'archived' ? '已归档' : '—'
-const statusTag = (s?: string) => s === 'online' ? 'success' : s === 'pending_evaluation' ? 'warning' : s === 'importing' ? 'warning' : 'default'
+const statusLabel = (s?: string) => s === 'importing' ? '引入中' : s === 'online' ? '已上线' : s === 'pending_evaluation' ? '待评估' : s === 'pending_tech_profile' ? '待完善技术档案' : s === 'archived' ? '已归档' : '—'
+const statusTag = (s?: string) => s === 'online' ? 'success' : s === 'pending_evaluation' ? 'warning' : s === 'pending_tech_profile' ? 'warning' : s === 'importing' ? 'warning' : 'default'
 
 // 详情基础信息
 const detailBaseItems = computed(() => {

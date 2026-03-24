@@ -241,7 +241,8 @@ import {
   IconEdit
 } from '@arco-design/web-vue/es/icon'
 import { Modal } from '@arco-design/web-vue'
-import { mockTables } from '@/mock/data-map.ts'
+import { MetadataStore } from '@/mock/shared/metadata-store';
+const mockTables = MetadataStore.getTables();
 import DetailHeader from '@/components/common/DetailHeader.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
