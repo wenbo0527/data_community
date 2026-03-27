@@ -1,7 +1,7 @@
 <template>
   <div class="marketing-records">
     <div class="module-header">
-      <div class="header-title">营销记录</div>
+      <div class="header-title">触达记录</div>
       <div class="header-actions">
         <a-button size="small" @click="refreshData">
           <template #icon><IconRefresh /></template>
@@ -12,11 +12,11 @@
     
     <div v-if="loading" class="loading-state">
       <a-spin size="large" />
-      <p>加载营销记录数据...</p>
+      <p>加载触达记录数据...</p>
     </div>
     
     <div v-else-if="!hasData" class="empty-state">
-      <a-empty description="暂无营销记录" />
+      <a-empty description="暂无触达记录" />
     </div>
     
     <div v-else class="records-container">
@@ -25,7 +25,7 @@
       <div class="record-section touch-section">
         <div class="section-header">
           <div class="title-group">
-            <span class="section-title">触达记录</span>
+            <span class="section-title">记录列表</span>
             <a-tag size="small" color="arcoblue" bordered>{{ filteredTouchRecords.length }}</a-tag>
           </div>
           
@@ -111,93 +111,6 @@
             :total="filteredTouchRecords.length" 
             v-model:current="touchPage"
             v-model:page-size="touchPageSize"
-            :page-size-options="[5, 10, 20, 50]"
-            show-total
-            show-page-size
-          />
-        </div>
-      </div>
-
-      <a-divider style="margin: 24px 0" />
-
-      <!-- 2. 权益记录模块 (Benefit Records) -->
-      <div class="record-section benefit-section">
-        <div class="section-header">
-          <div class="title-group">
-            <span class="section-title">权益记录</span>
-            <a-tag size="small" color="orange" bordered>{{ filteredBenefitRecords.length }}</a-tag>
-          </div>
-          
-          <div class="filter-group">
-            <a-select 
-              v-model="benefitFilters.type" 
-              placeholder="权益类型" 
-              style="width: 120px" 
-              allow-clear 
-              size="small"
-            >
-              <a-option>利息减免</a-option>
-              <a-option>折扣</a-option>
-              <a-option>现金红包</a-option>
-              <a-option>体验金</a-option>
-            </a-select>
-            
-            <a-select 
-              v-model="benefitFilters.status" 
-              placeholder="状态" 
-              style="width: 100px" 
-              allow-clear 
-              size="small"
-            >
-              <a-option>已发放</a-option>
-              <a-option>已核销</a-option>
-              <a-option>已过期</a-option>
-              <a-option>已使用</a-option>
-            </a-select>
-            
-            <a-button size="small" @click="resetBenefitFilters">重置</a-button>
-          </div>
-        </div>
-
-        <a-table 
-          :data="paginatedBenefitRecords" 
-          :pagination="false"
-          size="small"
-          :bordered="{ wrapper: true, cell: false }"
-          row-key="id"
-        >
-          <template #columns>
-            <a-table-column title="下发时间" data-index="benefitDate" :width="160" />
-            <a-table-column title="权益名称" data-index="benefitName" ellipsis tooltip />
-            <a-table-column title="权益类型" data-index="benefitType" :width="120">
-               <template #cell="{ record }">
-                 <a-tag :color="getBenefitTypeColor(record.benefitType)" size="small">
-                   {{ record.benefitType }}
-                 </a-tag>
-               </template>
-            </a-table-column>
-            <a-table-column title="权益状态" data-index="benefitStatus" :width="120">
-               <template #cell="{ record }">
-                 <a-badge 
-                   :status="getBenefitStatusBadge(record.benefitStatus)" 
-                   :text="record.benefitStatus" 
-                 />
-               </template>
-            </a-table-column>
-            <a-table-column title="操作" :width="80" align="center">
-              <template #cell="{ record }">
-                <a-link @click="viewDetail(record, 'benefit')">详情</a-link>
-              </template>
-            </a-table-column>
-          </template>
-        </a-table>
-        
-        <div class="section-footer" v-if="filteredBenefitRecords.length > 0">
-          <a-pagination 
-            size="small" 
-            :total="filteredBenefitRecords.length" 
-            v-model:current="benefitPage"
-            v-model:page-size="benefitPageSize"
             :page-size-options="[5, 10, 20, 50]"
             show-total
             show-page-size

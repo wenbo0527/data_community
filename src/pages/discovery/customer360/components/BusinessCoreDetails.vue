@@ -19,9 +19,17 @@
       <!-- 授信列表 -->
       <div class="detail-section">
         <div class="section-header">
-          <IconIdcard class="section-icon" />
-          <span class="section-title">授信列表</span>
-          <a-badge :count="creditsList.length" class="section-badge" />
+          <div class="header-left">
+            <IconIdcard class="section-icon" />
+            <span class="section-title">授信列表</span>
+            <a-badge :count="creditsList.length" class="section-badge" />
+          </div>
+          <div class="header-right">
+            <a-tag color="green" size="small">
+              <template #icon><span class="live-dot"></span></template>
+              实时
+            </a-tag>
+          </div>
         </div>
         
         <div class="table-container">
@@ -647,16 +655,38 @@ const handleExport = () => {
 
 .section-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
   border-bottom: 1px solid #f2f3f5;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #00b42a;
+  margin-right: 4px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 .section-icon {
-  margin-right: 8px;
+  font-size: 18px;
   color: #165dff;
-  font-size: 16px;
+  margin-right: 8px;
 }
 
 .section-title {

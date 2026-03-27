@@ -307,15 +307,15 @@ const getStatusText = (status) => {
 
 // 事件处理函数
 const handleCreate = () => {
-  router.push('/management/data-models/create')
+  router.push('/management/service/data-models/create')
 }
 
 const handleView = (record) => {
-  router.push(`/management/data-models/${record.id}`)
+  router.push(`/management/service/data-models/${record.id}`)
 }
 
 const handleEdit = (record) => {
-  router.push(`/management/data-models/${record.id}/edit`)
+  router.push(`/management/service/data-models/${record.id}/edit`)
 }
 
 const handleCopy = async (record) => {

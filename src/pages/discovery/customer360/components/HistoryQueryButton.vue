@@ -1,6 +1,6 @@
 <template>
   <div class="history-query-button">
-    <!-- 历史查询按钮 -->
+    <!-- 明细查询按钮 -->
     <a-button 
       type="primary" 
       @click="openQueryDrawer"
@@ -8,20 +8,21 @@
       class="query-button"
     >
       <template #icon><IconHistory /></template>
-      历史切片数据查询
+      明细数据查询
     </a-button>
 
     <!-- 查询记录抽屉 -->
     <a-drawer
       v-model:visible="drawerVisible"
-      title="历史切片数据查询"
+      title="明细数据查询"
       width="80%"
       :footer="false"
       placement="right"
       class="query-drawer"
+      unmountOnClose
     >
       <div class="drawer-content">
-        <!-- 历史切片查询组件 -->
+        <!-- 明细数据查询组件 -->
         <HistorySliceQuery :user-id="props.userInfo?.userId || props.userInfo?.customerId" />
       </div>
     </a-drawer>

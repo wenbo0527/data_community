@@ -1,193 +1,198 @@
 <template>
   <div class="postloan-profile">
-    <div class="profile-section">
-      <h3 class="section-title">催收记录</h3>
-      
-      
-      <!-- 催收记录详情表格 -->
-      <div class="collection-records-section" v-if="collectionRecords?.length">
-          <div class="flex justify-between items-center mb-4">
-            <h4 class="subsection-title mb-0">催收记录详情</h4>
-            <div class="flex gap-2">
-              <a-select 
-                v-model="filterMethod" 
-                placeholder="筛选催收方式" 
-                style="width: 120px" 
-                size="small"
-                allow-clear
-              >
-                <a-option value="电话">电话</a-option>
-                <a-option value="短信">短信</a-option>
-                <a-option value="上门">上门</a-option>
-                <a-option value="邮件">邮件</a-option>
-              </a-select>
-              <a-select 
-                v-model="filterResult" 
-                placeholder="筛选联系结果" 
-                style="width: 120px" 
-                size="small"
-                allow-clear
-              >
-                <a-option value="联系成功">联系成功</a-option>
-                <a-option value="联系失败">联系失败</a-option>
-                <a-option value="已发送">已发送</a-option>
-                <a-option value="未联系到">未联系到</a-option>
-              </a-select>
-              <a-select 
-                v-model="sortBy" 
-                placeholder="排序方式" 
-                style="width: 120px" 
-                size="small"
-              >
-                <a-option value="date-desc">时间倒序</a-option>
-                <a-option value="date-asc">时间正序</a-option>
-                <a-option value="score-desc">评分降序</a-option>
-                <a-option value="score-asc">评分升序</a-option>
-              </a-select>
-              <a-button-group size="small">
-                <a-button 
-                  :type="viewMode === 'table' ? 'primary' : 'default'"
-                  @click="viewMode = 'table'"
+    <a-tabs v-model:active-key="activeSubTab" type="line" size="small" position="top" class="postloan-subtabs">
+      <a-tab-pane key="collection">
+        <template #title>催收记录</template>
+        <div class="profile-section">
+          <div class="collection-records-section" v-if="collectionRecords?.length">
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="subsection-title mb-0">催收记录详情</h4>
+              <div class="flex gap-2">
+                <a-select 
+                  v-model="filterMethod" 
+                  placeholder="筛选催收方式" 
+                  style="width: 120px" 
+                  size="small"
+                  allow-clear
                 >
-                  表格
-                </a-button>
-                <a-button 
-                  :type="viewMode === 'timeline' ? 'primary' : 'default'"
-                  @click="viewMode = 'timeline'"
+                  <a-option value="电话">电话</a-option>
+                  <a-option value="短信">短信</a-option>
+                  <a-option value="上门">上门</a-option>
+                  <a-option value="邮件">邮件</a-option>
+                </a-select>
+                <a-select 
+                  v-model="filterResult" 
+                  placeholder="筛选联系结果" 
+                  style="width: 120px" 
+                  size="small"
+                  allow-clear
                 >
-                  时间线
-                </a-button>
-              </a-button-group>
-            </div>
-          </div>
-        <!-- 表格视图 -->
-          <a-table
-            v-if="viewMode === 'table'"
-            :columns="collectionColumns"
-            :data="filteredAndSortedRecords"
-            :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }"
-            size="small"
-          >
-            <template #empty>
-              <div class="text-center py-8 text-gray-500">
-                <div class="text-lg mb-2">📋</div>
-                <div>暂无催收记录</div>
-              </div>
-            </template>
-          <template #collectionMethod="{ record }">
-            <a-tag :color="getMethodTagColor(record.collectionMethod)">
-              {{ record.collectionMethod }}
-            </a-tag>
-          </template>
-          <template #contactResult="{ record }">
-            <a-tag :color="getResultTagColor(record.contactResult)">
-              {{ record.contactResult }}
-            </a-tag>
-          </template>
-          <template #overdueAmount="{ record }">
-            <span class="font-medium text-red-600">
-              ¥{{ formatAmount(record.overdueAmount) }}
-            </span>
-          </template>
-          <template #overdueDays="{ record }">
-            <span :class="getOverdueDaysClass(record.overdueDays)">
-              {{ record.overdueDays }}天
-            </span>
-          </template>
-          <template #effectiveScore="{ record }">
-            <div class="flex items-center gap-1">
-              <span :class="getScoreClass(record.effectiveScore)">
-                {{ record.effectiveScore }}
-              </span>
-              <div class="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  class="h-full transition-all duration-300"
-                  :class="getScoreBarColor(record.effectiveScore)"
-                  :style="{ width: record.effectiveScore + '%' }"
-                ></div>
+                  <a-option value="联系成功">联系成功</a-option>
+                  <a-option value="联系失败">联系失败</a-option>
+                  <a-option value="已发送">已发送</a-option>
+                  <a-option value="未联系到">未联系到</a-option>
+                </a-select>
+                <a-select 
+                  v-model="sortBy" 
+                  placeholder="排序方式" 
+                  style="width: 120px" 
+                  size="small"
+                >
+                  <a-option value="date-desc">时间倒序</a-option>
+                  <a-option value="date-asc">时间正序</a-option>
+                  <a-option value="score-desc">评分降序</a-option>
+                  <a-option value="score-asc">评分升序</a-option>
+                </a-select>
+                <a-button-group size="small">
+                  <a-button 
+                    :type="viewMode === 'table' ? 'primary' : 'default'"
+                    @click="viewMode = 'table'"
+                  >
+                    表格
+                  </a-button>
+                  <a-button 
+                    :type="viewMode === 'timeline' ? 'primary' : 'default'"
+                    @click="viewMode = 'timeline'"
+                  >
+                    时间线
+                  </a-button>
+                </a-button-group>
               </div>
             </div>
-          </template>
-          <template #actions="{ record }">
-            <div class="flex gap-1">
-              <a-button type="text" size="small" @click="viewDetails(record)">
-                查看详情
-              </a-button>
-              <a-button type="text" size="small" @click="copyRecord(record)">
-                复制
-              </a-button>
-            </div>
-          </template>
-        </a-table>
-
-          <!-- 时间线视图 -->
-          <div v-if="viewMode === 'timeline'" class="timeline-view">
-            <a-timeline>
-              <a-timeline-item 
-                v-for="record in filteredAndSortedRecords" 
-                :key="record.id"
-                :color="getTimelineColor(record.effectiveScore)"
-              >
-                <template #dot>
-                  <div class="timeline-dot" :class="getTimelineDotClass(record.contactResult)">
-                    {{ getMethodIcon(record.collectionMethod) }}
-                  </div>
-                </template>
-                <div class="timeline-content">
-                  <div class="flex justify-between items-start mb-2">
-                    <div class="font-medium text-gray-900">
-                      {{ record.collectionDate }} {{ record.collectionTime }}
-                    </div>
-                    <div class="flex gap-2">
-                      <a-tag :color="getMethodTagColor(record.collectionMethod)" size="small">
-                        {{ record.collectionMethod }}
-                      </a-tag>
-                      <a-tag :color="getResultTagColor(record.contactResult)" size="small">
-                        {{ record.contactResult }}
-                      </a-tag>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-2">
-                    <div>催收员：{{ record.collectorName }}</div>
-                    <div>逾期金额：<span class="text-red-600 font-medium">¥{{ formatAmount(record.overdueAmount) }}</span></div>
-                    <div>逾期天数：<span :class="getOverdueDaysClass(record.overdueDays)">{{ record.overdueDays }}天</span></div>
-                    <div>效果评分：<span :class="getScoreClass(record.effectiveScore)">{{ record.effectiveScore }}</span></div>
-                  </div>
-                  <div v-if="record.promiseAmount" class="text-sm text-blue-600 mb-2">
-                    承诺还款：¥{{ formatAmount(record.promiseAmount) }}（{{ record.promiseDate }}）
-                  </div>
-                  <div class="text-sm text-gray-700 mb-3">{{ record.remarks }}</div>
-                  <div class="flex gap-2">
-                    <a-button type="text" size="small" @click="viewDetails(record)">
-                      查看详情
-                    </a-button>
-                    <a-button type="text" size="small" @click="copyRecord(record)">
-                      复制
-                    </a-button>
+            <a-table
+              v-if="viewMode === 'table'"
+              :columns="collectionColumns"
+              :data="filteredAndSortedRecords"
+              row-key="id"
+              :pagination="{ pageSize: 10, showTotal: true, showPageSize: true, showJumper: true, pageSizeOptions: [5, 10, 20, 50] }"
+              size="small"
+            >
+              <template #empty>
+                <div class="text-center py-8 text-gray-500">
+                  <div class="text-lg mb-2">📋</div>
+                  <div>暂无催收记录</div>
+                </div>
+              </template>
+              <template #collectionMethod="{ record }">
+                <a-tag :color="getMethodTagColor(record.collectionMethod)">
+                  {{ record.collectionMethod }}
+                </a-tag>
+              </template>
+              <template #contactResult="{ record }">
+                <a-tag :color="getResultTagColor(record.contactResult)">
+                  {{ record.contactResult }}
+                </a-tag>
+              </template>
+              <template #overdueAmount="{ record }">
+                <span class="font-medium text-red-600">
+                  ¥{{ formatAmount(record.overdueAmount) }}
+                </span>
+              </template>
+              <template #overdueDays="{ record }">
+                <span :class="getOverdueDaysClass(record.overdueDays)">
+                  {{ record.overdueDays }}天
+                </span>
+              </template>
+              <template #effectiveScore="{ record }">
+                <div class="flex items-center gap-1">
+                  <span :class="getScoreClass(record.effectiveScore)">
+                    {{ record.effectiveScore }}
+                  </span>
+                  <div class="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      class="h-full transition-all duration-300"
+                      :class="getScoreBarColor(record.effectiveScore)"
+                      :style="{ width: record.effectiveScore + '%' }"
+                    ></div>
                   </div>
                 </div>
-              </a-timeline-item>
-            </a-timeline>
-          </div>
-      </div>
-    </div>
+              </template>
+              <template #actions="{ record }">
+                <div class="flex gap-1">
+              <a-button type="text" size="small" @click="viewDetails">
+                    查看详情
+                  </a-button>
+                  <a-button type="text" size="small" @click="copyRecord(record)">
+                    复制
+                  </a-button>
+                </div>
+              </template>
+            </a-table>
 
-    <div class="profile-section" v-if="badNotifications && badNotifications.length">
-      <h3 class="section-title">不良通知</h3>
-      <a-table
-        :data="badNotifications"
-        row-key="id"
-        size="small"
-        :pagination="{ pageSize: 5, showSizeChanger: true, showQuickJumper: true }"
-      >
-        <template #columns>
-          <a-table-column title="短信发送时间" data-index="smsTime" :width="180" />
-          <a-table-column title="产品编号" data-index="productKey" :width="120" />
-          <a-table-column title="短信发送状态" data-index="smsStatus" :width="120" />
-          <a-table-column title="短信内容" data-index="smsContent" :ellipsis="true" />
-        </template>
-      </a-table>
-    </div>
+            <div v-if="viewMode === 'timeline'" class="timeline-view">
+              <a-timeline>
+                <a-timeline-item 
+                  v-for="record in filteredAndSortedRecords" 
+                  :key="record.id"
+                  :color="getTimelineColor(record.effectiveScore)"
+                >
+                  <template #dot>
+                    <div class="timeline-dot" :class="getTimelineDotClass(record.contactResult)">
+                      {{ getMethodIcon(record.collectionMethod) }}
+                    </div>
+                  </template>
+                  <div class="timeline-content">
+                    <div class="flex justify-between items-start mb-2">
+                      <div class="font-medium text-gray-900">
+                        {{ record.collectionDate }} {{ record.collectionTime }}
+                      </div>
+                      <div class="flex gap-2">
+                        <a-tag :color="getMethodTagColor(record.collectionMethod)" size="small">
+                          {{ record.collectionMethod }}
+                        </a-tag>
+                        <a-tag :color="getResultTagColor(record.contactResult)" size="small">
+                          {{ record.contactResult }}
+                        </a-tag>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-2">
+                      <div>催收员：{{ record.collectorName }}</div>
+                      <div>逾期金额：<span class="text-red-600 font-medium">¥{{ formatAmount(record.overdueAmount) }}</span></div>
+                      <div>逾期天数：<span :class="getOverdueDaysClass(record.overdueDays)">{{ record.overdueDays }}天</span></div>
+                      <div>效果评分：<span :class="getScoreClass(record.effectiveScore)">{{ record.effectiveScore }}</span></div>
+                    </div>
+                    <div v-if="record.promiseAmount" class="text-sm text-blue-600 mb-2">
+                      承诺还款：¥{{ formatAmount(record.promiseAmount) }}（{{ record.promiseDate }}）
+                    </div>
+                    <div class="text-sm text-gray-700 mb-3">{{ record.remarks }}</div>
+                    <div class="flex gap-2">
+                    <a-button type="text" size="small" @click="viewDetails">
+                        查看详情
+                      </a-button>
+                      <a-button type="text" size="small" @click="copyRecord(record)">
+                        复制
+                      </a-button>
+                    </div>
+                  </div>
+                </a-timeline-item>
+              </a-timeline>
+            </div>
+          </div>
+          <a-empty v-else description="暂无催收记录" />
+        </div>
+      </a-tab-pane>
+      <a-tab-pane key="bad-sms">
+        <template #title>不良短信</template>
+        <div class="profile-section">
+          <a-table
+            :data="badNotifications"
+            row-key="id"
+            size="small"
+            :pagination="{ pageSize: 5, showTotal: true, showPageSize: true, showJumper: true, pageSizeOptions: [5, 10, 20, 50] }"
+          >
+            <template #columns>
+              <a-table-column title="短信发送时间" data-index="smsTime" :width="180" />
+              <a-table-column title="产品编号" data-index="productKey" :width="120" />
+              <a-table-column title="短信发送状态" data-index="smsStatus" :width="120" />
+              <a-table-column title="短信内容" data-index="smsContent" :ellipsis="true" />
+            </template>
+            <template #empty>
+              <a-empty description="暂无不良短信" />
+            </template>
+          </a-table>
+        </div>
+      </a-tab-pane>
+    </a-tabs>
 
     
   </div>
@@ -201,6 +206,8 @@ interface Props {
   userInfo?: any
   collectionRecords?: any[]
 }
+
+const activeSubTab = ref('collection')
 
 // 筛选和排序状态
 const filterMethod = ref('')
@@ -345,26 +352,6 @@ const collectionColumns = [
   }
 ]
 
-const getMethodColor = (method: string) => {
-  const colorMap: Record<string, string> = {
-    '电话催收': 'blue',
-    '短信催收': 'green',
-    '上门催收': 'orange',
-    '法律催收': 'red'
-  }
-  return colorMap[method] || 'default'
-}
-
-const getResultColor = (result: string) => {
-  const colorMap: Record<string, string> = {
-    '配合良好': 'green',
-    '一般配合': 'blue',
-    '不配合': 'orange',
-    '拒绝配合': 'red'
-  }
-  return colorMap[result] || 'default'
-}
-
 // 催收方式标签颜色
 const getMethodTagColor = (method: string) => {
   const colorMap: Record<string, string> = {
@@ -485,9 +472,8 @@ const getMethodIcon = (method: string) => {
 }
 
 // 查看催收详情
-const viewDetails = (record: any) => {
-  console.log('查看催收详情:', record)
-  // TODO: 打开详情弹窗
+const viewDetails = () => {
+  Message.info('详情功能建设中')
 }
 
 // 复制催收记录
@@ -505,25 +491,45 @@ const copyRecord = async (record: any) => {
   
   try {
     await navigator.clipboard.writeText(copyText)
-    console.log('复制成功')
-    // TODO: 显示成功提示
+    Message.success('复制成功')
   } catch (err) {
-    console.error('复制失败:', err)
-    // TODO: 显示失败提示
+    Message.error('复制失败')
   }
 }
 </script>
 
 <style scoped>
 .postloan-profile {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.postloan-subtabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+:deep(.postloan-subtabs > .arco-tabs-nav) {
+  margin-bottom: 0;
+  padding: 0 20px;
+}
+
+:deep(.postloan-subtabs > .arco-tabs-content) {
+  flex: 1;
+  overflow: auto;
+  padding-top: 8px;
+}
+
+:deep(.postloan-subtabs.arco-tabs) {
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-section {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 6px;
+  padding: 16px 20px;
 }
 
 .section-title {

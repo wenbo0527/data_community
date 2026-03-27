@@ -119,6 +119,7 @@
               <a-input v-model="form.proposer" placeholder="请输入" />
             </a-form-item>
           </a-col>
+        </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="开发人">

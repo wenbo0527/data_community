@@ -287,6 +287,12 @@ interface RepaymentDetail {
   principalAmount: number;
   interestAmount: number;
   penaltyAmount: number;
+  discountAmount?: number;
+  interestAfterDiscount?: number;
+  discountRecoveredInterest?: number;
+  earlyRepaymentPenalty?: number;
+  discountInvalidReason?: string;
+  discountRecoverReason?: string;
   totalAmount: number;
   remainingBalance: number;
   status: string;
@@ -346,6 +352,14 @@ interface EnhancedLoanRecord {
   riskScore?: number;            // 风险评分
   warningLevel?: string;         // 预警等级
   availableCredit?: number;      // 可用额度
+  // 券使用信息
+  voucherTemplateId?: string;    // 券模板ID
+  voucherInventoryId?: string;   // 券库存ID
+  voucherName?: string;          // 券名称（券对客展示名称）
+  hasLockPeriod?: boolean;       // 是否设定锁定期
+  lockPeriodValue?: number;      // 锁定期限值
+  limitMethod?: string;          // 限定方式
+  resolveLockDate?: string;      // 解决锁定接触日期
   // 原有字段
   disbursementRecords?: Array<{
     batch: number;
@@ -752,9 +766,131 @@ const mockUsers: { [key: string]: UserData } = {
           responseAction: '无响应',
           conversionValue: 0,
           cost: 0.04
+        },
+        // 为 887123 (Su贷产品) 补齐5种触达记录
+        {
+          id: 'TCH-SU-001',
+          productKey: 'LN-2024-009', // Su贷 的 productKey 是 LN-2024-009
+          productName: 'Su贷',
+          touchDate: '2024-03-20 10:00:00',
+          touchChannel: '短信',
+          campaignName: 'Su贷额度提醒',
+          campaignType: '产品推广',
+          content: '【某某银行】尊敬的客户，您的Su贷可用额度已更新为150,000元，年化利率低至3.5%，点击申请：t.cn/sudai',
+          targetAudience: '白名单客户',
+          touchResult: '成功',
+          responseAction: '点击',
+          conversionValue: 0,
+          cost: 0.04
+        },
+        {
+          id: 'TCH-SU-002',
+          productKey: 'LN-2024-009',
+          productName: 'Su贷',
+          touchDate: '2024-03-21 14:30:00',
+          touchChannel: 'AI外呼',
+          campaignName: 'Su贷免息活动邀请',
+          campaignType: '活动通知',
+          content: '向客户介绍本月Su贷首月免息活动。',
+          duration: '1m 15s',
+          recordingUrl: 'mock_audio_su_01.mp3',
+          transcript: 'AI: 尊敬的客户您好，Su贷本月推出首月免息活动，想邀请您参与。\n客户: 这个免息有限额吗？\nAI: 最高支持10万元免息，您如果有资金需求非常划算。\n客户: 好的，我了解一下。',
+          targetAudience: '高潜力客户',
+          touchResult: '成功',
+          responseAction: '接通',
+          conversionValue: 0,
+          cost: 0.15
+        },
+        {
+          id: 'TCH-SU-003',
+          productKey: 'LN-2024-009',
+          productName: 'Su贷',
+          touchDate: '2024-03-21 14:32:00',
+          touchChannel: 'AI外呼挂短',
+          campaignName: 'Su贷免息活动详情',
+          campaignType: '活动通知',
+          content: '【某某银行】这是刚才为您介绍的Su贷首月免息活动链接：t.cn/sudai_free，请在活动期内查看。',
+          targetAudience: '高潜力客户',
+          touchResult: '成功',
+          responseAction: '点击',
+          conversionValue: 0,
+          cost: 0.05
+        },
+        {
+          id: 'TCH-SU-004',
+          productKey: 'LN-2024-009',
+          productName: 'Su贷',
+          touchDate: '2024-03-25 16:00:00',
+          touchChannel: '人工外呼',
+          campaignName: 'Su贷大额需求回访',
+          campaignType: '客户关怀',
+          content: '人工核实客户大额提款需求。',
+          duration: '4m 30s',
+          recordingUrl: 'mock_audio_su_02.mp3',
+          transcript: '坐席: 您好，这里是Su贷专属服务热线。看到您最近查询了大额额度。\n客户: 是的，我近期可能需要进一批货。\n坐席: 好的，针对您的企业经营需求，我们现在有专项补贴利率...\n(通话持续4分钟)',
+          targetAudience: '企业主客户',
+          touchResult: '成功',
+          responseAction: '意向明确',
+          conversionValue: 150000,
+          cost: 5.0
+        },
+        {
+          id: 'TCH-SU-005',
+          productKey: 'LN-2024-009',
+          productName: 'Su贷',
+          touchDate: '2024-03-25 16:05:00',
+          touchChannel: '人工外呼挂短',
+          campaignName: '客户经理专属服务卡',
+          campaignType: '客户关怀',
+          content: '【某某银行】感谢您的接听，我是Su贷专属客户经理李四，工号9527，办理大额提款请随时联系我，电话：139xxxx。',
+          targetAudience: '企业主客户',
+          touchResult: '成功',
+          responseAction: '保存',
+          conversionValue: 0,
+          cost: 0.05
         }
       ],
       benefitRecords: [
+        {
+          id: 'BEN-SU-001',
+          productKey: 'LN-2024-009',
+          productName: 'Su贷',
+          benefitDate: '2024-03-20',
+          benefitType: '利息减免',
+          benefitName: 'Su贷首月免息券',
+          benefitValue: 1000,
+          benefitStatus: '已发放',
+          expiryDate: '2024-04-20',
+          sourceActivity: 'Su贷免息活动邀请',
+          usageRestriction: '仅限Su贷首次提款使用，最高抵扣1000元利息'
+        },
+        {
+          id: 'BEN-SU-002',
+          productKey: 'LN-2024-009',
+          productName: 'Su贷',
+          benefitDate: '2024-03-25',
+          benefitType: '折扣',
+          benefitName: 'Su贷企业主专享8折利率卡',
+          benefitValue: 0.8,
+          benefitStatus: '已核销',
+          useDate: '2024-03-26',
+          expiryDate: '2024-06-25',
+          sourceActivity: 'Su贷大额需求回访',
+          usageRestriction: '仅限企业经营用途大额提款，单笔金额超10万可用'
+        },
+        {
+          id: 'BEN-SU-003',
+          productKey: 'LN-2024-009',
+          productName: 'Su贷',
+          benefitDate: '2024-01-15',
+          benefitType: '体验金',
+          benefitName: 'Su贷体验金50000元',
+          benefitValue: 50000,
+          benefitStatus: '已过期',
+          expiryDate: '2024-01-22',
+          sourceActivity: '新户礼包',
+          usageRestriction: '7天体验期，产生的收益可提现'
+        },
         {
           id: 'BEN001',
           productKey: 'LN-2024-001',
@@ -922,6 +1058,13 @@ const mockUsers: { [key: string]: UserData } = {
         remainingTotal: 32900.00,
         loanRate: 4.35,
         actualRepaymentFee: 125.50, // 新增字段：实际还款费用
+        voucherTemplateId: 'VT-2023-001',
+        voucherInventoryId: 'VI-987654321',
+        voucherName: '新人借款免息券',
+        hasLockPeriod: true,
+        lockPeriodValue: 30,
+        limitMethod: '指定产品',
+        resolveLockDate: '2023-09-14',
         disbursementRecords: [
           {
             batch: 1,
@@ -946,6 +1089,12 @@ const mockUsers: { [key: string]: UserData } = {
             principal: 1800.00,
             interest: 400.00,
             penalty: 0,
+            discountAmount: 50.00,
+            interestAfterDiscount: 350.00,
+            discountRecoveredInterest: 0,
+            earlyRepaymentPenalty: 0,
+            discountInvalidReason: '新人免息券抵扣',
+            discountRecoverReason: '',
             fee: 0,
             method: '自动扣款',
             status: '已还',
@@ -971,7 +1120,13 @@ const mockUsers: { [key: string]: UserData } = {
             amount: 2200.00,
             principal: 1850.00,
             interest: 350.00,
-            penalty: 0,
+            penalty: 10.50,
+            discountAmount: 0,
+            interestAfterDiscount: 350.00,
+            discountRecoveredInterest: 0,
+            earlyRepaymentPenalty: 0,
+            discountInvalidReason: '',
+            discountRecoverReason: '',
             fee: 0,
             method: '自动扣款',
             status: '已还',
@@ -1050,6 +1205,13 @@ const mockUsers: { [key: string]: UserData } = {
         remainingTotal: 25000.00,
         loanRate: 5.2,
         actualRepaymentFee: 85.30, // 新增字段：实际还款费用
+        voucherTemplateId: 'VT-2023-002',
+        voucherInventoryId: 'VI-987654322',
+        voucherName: '大额满减券',
+        hasLockPeriod: false,
+        lockPeriodValue: 0,
+        limitMethod: '全场通用',
+        resolveLockDate: '',
         disbursementRecords: [
           {
             batch: 1,
@@ -1074,6 +1236,12 @@ const mockUsers: { [key: string]: UserData } = {
             principal: 2300.00,
             interest: 500.00,
             penalty: 0,
+            discountAmount: 100.00,
+            interestAfterDiscount: 400.00,
+            discountRecoveredInterest: 0,
+            earlyRepaymentPenalty: 0,
+            discountInvalidReason: '满减活动优惠',
+            discountRecoverReason: '',
             fee: 0,
             method: '主动还款',
             status: '已还',
@@ -1140,6 +1308,13 @@ const mockUsers: { [key: string]: UserData } = {
         remainingTotal: 203991.95,
         loanRate: 3.9,
         actualRepaymentFee: 268.75, // 新增字段：实际还款费用
+        voucherTemplateId: 'VT-2024-003',
+        voucherInventoryId: 'VI-987654323',
+        voucherName: '专享提额券',
+        hasLockPeriod: true,
+        lockPeriodValue: 15,
+        limitMethod: '指定时间段',
+        resolveLockDate: '2024-01-30',
         // 实时数据字段
         realTimeBalance: 150000,
         dailyDisbursement: 250000,
@@ -1171,6 +1346,12 @@ const mockUsers: { [key: string]: UserData } = {
             principal: 4033.30,
             interest: 487.50,
             penalty: 0,
+            discountAmount: 0,
+            interestAfterDiscount: 487.50,
+            discountRecoveredInterest: 0,
+            earlyRepaymentPenalty: 50.00,
+            discountInvalidReason: '',
+            discountRecoverReason: '',
             fee: 0,
             method: '自动扣款',
             status: '已还',
@@ -1197,6 +1378,12 @@ const mockUsers: { [key: string]: UserData } = {
             principal: 4046.40,
             interest: 474.40,
             penalty: 0,
+            discountAmount: 0,
+            interestAfterDiscount: 474.40,
+            discountRecoveredInterest: 20.00,
+            earlyRepaymentPenalty: 0,
+            discountInvalidReason: '',
+            discountRecoverReason: '提前结清回收利息优惠',
             fee: 0,
             method: '自动扣款',
             status: '已还',
@@ -1923,6 +2110,13 @@ const mockUsers: { [key: string]: UserData } = {
         remainingPenalty: 1500.00,
         remainingTotal: 746500.00,
         loanRate: 0.0325,
+        voucherTemplateId: 'VT-2023-004',
+        voucherInventoryId: 'VI-987654324',
+        voucherName: '公积金免息券',
+        hasLockPeriod: true,
+        lockPeriodValue: 60,
+        limitMethod: '指定贷款',
+        resolveLockDate: '2023-07-20',
         repaymentDetails: [],
         repaymentPlan: []
       }

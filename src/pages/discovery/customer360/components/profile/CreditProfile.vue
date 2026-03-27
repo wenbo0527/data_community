@@ -3,7 +3,8 @@
     <a-spin :loading="loading">
       <div class="credit-content">
         <!-- 征信报告状态 -->
-        <a-card title="征信报告状态" class="status-card">
+        <div class="profile-section">
+          <h3 class="section-title">征信报告状态</h3>
           <div class="status-info">
             <div class="status-item">
               <span class="label">报告状态:</span>
@@ -47,50 +48,58 @@
               </a-button>
             </a-space>
           </div>
-        </a-card>
+        </div>
 
         <!-- 征信报告内容 -->
         <div v-if="creditStatus === 'available'" class="credit-report">
           <!-- 基本信息 -->
-          <a-card title="基本信息" class="info-card">
+          <div class="profile-section">
+            <h3 class="section-title">基本信息</h3>
             <a-descriptions :column="2" bordered>
               <a-descriptions-item label="姓名">{{ userInfo?.name || '张三' }}</a-descriptions-item>
               <a-descriptions-item label="身份证号">{{ userInfo?.idCard || '110101199001011234' }}</a-descriptions-item>
               <a-descriptions-item label="查询时间">{{ creditInfo?.queryTime || '2024-01-15' }}</a-descriptions-item>
               <a-descriptions-item label="查询机构">{{ creditInfo?.queryOrg || '某银行股份有限公司' }}</a-descriptions-item>
             </a-descriptions>
-          </a-card>
+          </div>
 
           <!-- 信贷记录摘要 -->
-          <a-card title="信贷记录摘要" class="summary-card">
-            <a-row :gutter="16">
-              <a-col :span="6">
-                <a-statistic title="信用卡账户数" :value="creditInfo?.creditCardCount || 5" suffix="个" />
-              </a-col>
-              <a-col :span="6">
-                <a-statistic title="贷款账户数" :value="creditInfo?.loanCount || 3" suffix="个" />
-              </a-col>
-              <a-col :span="6">
-                <a-statistic title="逾期账户数" :value="creditInfo?.overdueCount || 1" suffix="个" />
-              </a-col>
-              <a-col :span="6">
-                <a-statistic title="最长逾期天数" :value="creditInfo?.maxOverdueDays || 30" suffix="天" />
-              </a-col>
-            </a-row>
-          </a-card>
+          <div class="profile-section">
+            <h3 class="section-title">信贷记录摘要</h3>
+            <div class="grid grid-cols-4 gap-4">
+              <div class="summary-item-box">
+                <div class="summary-title">信用卡账户数</div>
+                <div class="summary-value">{{ creditInfo?.creditCardCount || 5 }}<span class="suffix">个</span></div>
+              </div>
+              <div class="summary-item-box">
+                <div class="summary-title">贷款账户数</div>
+                <div class="summary-value">{{ creditInfo?.loanCount || 3 }}<span class="suffix">个</span></div>
+              </div>
+              <div class="summary-item-box">
+                <div class="summary-title">逾期账户数</div>
+                <div class="summary-value highlight-red">{{ creditInfo?.overdueCount || 1 }}<span class="suffix">个</span></div>
+              </div>
+              <div class="summary-item-box">
+                <div class="summary-title">最长逾期天数</div>
+                <div class="summary-value highlight-red">{{ creditInfo?.maxOverdueDays || 30 }}<span class="suffix">天</span></div>
+              </div>
+            </div>
+          </div>
 
           <!-- 查询记录 -->
-          <a-card title="查询记录" class="query-card">
+          <div class="profile-section">
+            <h3 class="section-title">查询记录</h3>
             <a-table 
               :data="queryRecords" 
               :columns="queryColumns"
               :pagination="false"
               size="small"
             />
-          </a-card>
+          </div>
 
           <!-- 异议信息 -->
-          <a-card title="异议信息" class="dispute-card">
+          <div class="profile-section">
+            <h3 class="section-title">异议信息</h3>
             <a-empty v-if="!disputeRecords.length" description="暂无异议信息" />
             <a-list v-else :data="disputeRecords" size="small">
               <template #item="{ item }">
@@ -102,7 +111,7 @@
                 </a-list-item>
               </template>
             </a-list>
-          </a-card>
+          </div>
         </div>
 
         <!-- 无报告状态 -->
@@ -225,17 +234,28 @@ const disputeRecords = ref([])
 <style scoped>
 .credit-profile {
   padding: 16px;
-  background: #f5f5f5;
-  min-height: 500px;
+  width: 100%;
 }
 
 .credit-content {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
 }
 
-.status-card {
-  margin-bottom: 16px;
+.profile-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.section-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .status-info {
@@ -270,11 +290,35 @@ const disputeRecords = ref([])
   margin-bottom: 8px;
 }
 
-.info-card,
-.summary-card,
-.query-card,
-.dispute-card {
-  margin-bottom: 16px;
+.summary-item-box {
+  background: #fff;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+}
+
+.summary-title {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  color: #333;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'DIN Alternate', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.summary-value .suffix {
+  font-size: 13px;
+  margin-left: 4px;
+  font-weight: normal;
+  color: #86909c;
+}
+
+.highlight-red {
+  color: #f5222d !important;
 }
 
 .no-report,
@@ -283,6 +327,8 @@ const disputeRecords = ref([])
   align-items: center;
   justify-content: center;
   min-height: 300px;
+  background: #fafafa;
+  border-radius: 6px;
 }
 
 .dispute-item {
@@ -302,27 +348,22 @@ const disputeRecords = ref([])
   font-size: 12px;
 }
 
-:deep(.arco-card-header) {
-  border-bottom: 1px solid #e8e8e8;
-  padding: 16px 20px;
-}
-
-:deep(.arco-card-body) {
-  padding: 20px;
-}
-
 :deep(.arco-descriptions-item-label) {
   font-weight: 500;
   color: #666;
 }
 
-:deep(.arco-statistic-title) {
-  color: #666;
-  font-size: 12px;
+/* 表格优化 */
+:deep(.arco-table-th) {
+  background-color: #f7f8fa;
+  font-weight: 600;
 }
 
-:deep(.arco-statistic-content) {
-  color: #333;
-  font-weight: 600;
+:deep(.arco-table-td) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.arco-table-tbody .arco-table-tr:hover .arco-table-td) {
+  background-color: #f7f8fa;
 }
 </style>

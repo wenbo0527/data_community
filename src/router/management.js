@@ -167,7 +167,7 @@ export default [{
           path: 'data-elements',
           name: 'DataElements',
           meta: { title: '数据要素' },
-          component: () => import('../pages/management/asset-management/listing-management/variable-management/index.vue')
+          component: () => import('../pages/management/asset-management/listing-management/data-elements/index.vue')
         },
         {
           path: 'basic-management/tag-management',
