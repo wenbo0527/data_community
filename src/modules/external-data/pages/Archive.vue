@@ -9,15 +9,6 @@
       <div class="header-actions">
         <a-space>
           <a-button type="primary" @click="openCreate">新建外数</a-button>
-          <a-button type="outline" @click="goWithQuery('/external-data-v1/list')">技术详情</a-button>
-          <a-button type="outline" @click="goWithQuery('/discovery/asset-management/external-data-management')">元数据管理</a-button>
-          <a-button type="outline" @click="goWithQuery('/risk/external-data/evaluation')">查看评估</a-button>
-          <a-button type="outline" @click="goWithQuery('/risk/budget-overview')">预算信息</a-button>
-          <a-button type="outline" @click="goWithQuery('/risk/external-data/service')">服务状态</a-button>
-          <a-button type="outline">
-            <template #icon><IconDownload /></template>
-            导出数据
-          </a-button>
         </a-space>
       </div>
       </div>

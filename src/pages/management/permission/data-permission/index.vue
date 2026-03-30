@@ -27,7 +27,7 @@
           <a-table-column title="权限负责人" data-index="owner" />
           <a-table-column title="操作" width="150" align="center">
             <template #cell="{ record }">
-              <a-button type="text" size="small" @click="openDetail(record)">查看详情</a-button>
+              <a-button type="text" size="small" @click="openDetail(record)">编辑</a-button>
             </template>
           </a-table-column>
         </template>
@@ -35,7 +35,7 @@
     </a-card>
 
     <!-- 详情 Drawer -->
-    <a-drawer v-model:visible="detailVisible" :width="720" title="资源权限详情" unmount-on-close>
+    <a-drawer v-model:visible="detailVisible" :width="720" title="编辑资源权限" unmount-on-close>
       <div v-if="currentResource" class="resource-info" style="margin-bottom: 24px;">
         <a-descriptions :column="2" bordered>
           <a-descriptions-item label="资源名称">{{ currentResource.resourceName }}</a-descriptions-item>
