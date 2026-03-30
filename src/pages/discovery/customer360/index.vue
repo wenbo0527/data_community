@@ -44,7 +44,7 @@
       <div v-if="fuzzyVisible" class="fuzzy-search-area">
         <div class="fuzzy-search-header">
           <IconInfoCircleFill style="color: #165dff; margin-right: 8px;" />
-          <span>模糊搜索：支持根据姓名或身份证号后6位进行快速查询（选填）</span>
+          <span>请完整输入客户姓名和身份证后 6 位</span>
         </div>
         
         <a-form :model="fuzzyForm" layout="inline" class="fuzzy-form">

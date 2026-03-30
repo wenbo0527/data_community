@@ -206,7 +206,7 @@
                    语法检查
                  </a-button>
                 <a-divider direction="vertical" />
-                <span class="editor-info">{{ formData.languageType }} 编辑器</span>
+                <span class="editor-info">{{ formData.language === 'sql' ? 'SQL' : 'Python' }} 编辑器</span>
               </a-space>
             </div>
             <!-- Monaco Editor -->
@@ -371,7 +371,7 @@ const isEdit = computed(() => !!route.params.id)
 
   // Monaco Editor 相关计算属性
 const editorLanguage = computed(() => {
-  return formData.languageType === 'SQL' ? 'sql' : 'python'
+  return formData.language === 'sql' ? 'sql' : 'python'
 })
 
 const editorOptions = computed(() => {
@@ -401,7 +401,9 @@ const formData = reactive({
   maxMemory: 1024,
   parameters: [],
   inputParams: [],
-  outputParams: []
+  outputParams: [],
+  status: 'draft',
+  updatedAt: ''
 })
 
 // 表单验证规则
@@ -497,7 +499,7 @@ const formRules = {
 
 // 事件处理函数
 const handleBack = () => {
-  goBack(router, '/management/data-models')
+  goBack(router, '/management/service/data-models')
 }
 
 const handleLanguageChange = (language) => {
@@ -526,7 +528,7 @@ const validateCode = () => {
   }
   
   // 简单的语法检查
-  if (formData.languageType === 'SQL') {
+  if (formData.language === 'sql') {
     const sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE']
     const hasKeyword = sqlKeywords.some(keyword => 
       formData.code.toUpperCase().includes(keyword)
@@ -536,7 +538,7 @@ const validateCode = () => {
     } else {
       Message.warning('未检测到有效的SQL关键字')
     }
-  } else if (formData.languageType === 'Python') {
+  } else if (formData.language === 'python') {
     const pythonKeywords = ['def', 'import', 'if', 'for', 'while', 'class']
     const hasKeyword = pythonKeywords.some(keyword => 
       formData.code.includes(keyword)
@@ -625,7 +627,7 @@ const handleSaveDraft = async () => {
       Message.success('草稿保存成功')
       if (!isEdit.value) {
         // 新建模式下保存草稿后跳转到编辑页面
-        router.replace(`/management/data-models/edit/${response.data.id}`)
+        router.replace(`/management/service/data-models/edit/${response.data.id}`)
       }
     } else {
       Message.error(response.message || '保存失败')
@@ -663,7 +665,7 @@ const handleSave = async () => {
     
     if (response.code === 200) {
       Message.success(isEdit.value ? '模型更新成功' : '模型创建成功')
-      router.push('/management/data-models')
+      router.push('/management/service/data-models')
     } else {
       Message.error(response.message || (isEdit.value ? '更新失败' : '创建失败'))
     }
@@ -695,7 +697,7 @@ const saveModel = async (status) => {
     console.log('保存模型数据:', modelData)
     
     Message.success(isEdit.value ? '模型更新成功' : '模型创建成功')
-    router.push('/management/data-models')
+    router.push('/management/service/data-models')
   } catch (error) {
     Message.error('保存失败，请重试')
     console.error('Save model error:', error)
@@ -715,12 +717,12 @@ const loadModelData = async () => {
       Object.assign(formData, response.data)
     } else {
       Message.error(response.message || '加载模型数据失败')
-      goBack(router, '/management/data-models')
+      goBack(router, '/management/service/data-models')
     }
   } catch (error) {
     console.error('加载模型数据失败:', error)
     Message.error('加载模型数据失败')
-    goBack(router, '/management/data-models')
+    goBack(router, '/management/service/data-models')
   }
 }
 

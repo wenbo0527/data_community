@@ -346,7 +346,7 @@ const getParamTypeText = (type) => {
 // 事件处理函数
 import { goBack } from '@/router/utils'
 const handleBack = () => {
-  goBack(router, '/management/data-models')
+  goBack(router, '/management/service/data-models')
 }
 
 const handleCopy = async () => {
@@ -355,7 +355,7 @@ const handleCopy = async () => {
     
     if (response.code === 200) {
       Message.success('模型复制成功')
-      router.push('/management/data-models')
+      router.push('/management/service/data-models')
     } else {
       Message.error(response.message || '复制失败')
     }
@@ -366,7 +366,7 @@ const handleCopy = async () => {
 }
 
 const handleEdit = () => {
-  router.push(`/management/data-models/edit/${route.params.id}`)
+  router.push(`/management/service/data-models/edit/${route.params.id}`)
 }
 
 const handleExecute = async () => {
@@ -468,12 +468,12 @@ const loadModelData = async () => {
       await loadExecutionHistory()
     } else {
       Message.error(response.message || '加载模型数据失败')
-      goBack(router, '/management/data-models')
+      goBack(router, '/management/service/data-models')
     }
   } catch (error) {
     console.error('加载模型数据失败:', error)
     Message.error('加载模型数据失败')
-    goBack(router, '/management/data-models')
+    goBack(router, '/management/service/data-models')
   }
 }
 

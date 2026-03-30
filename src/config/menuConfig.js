@@ -27,116 +27,127 @@ export const MENU_CONFIG = {
     type: 'single' // 单页面，无子菜单
   },
 
-  // 数据发现
-  discovery: {
-    key: 'discovery',
-    title: '数据发现',
-    icon: 'icon-search',
-    type: 'module',
-    defaultPath: '/discovery/data-map',
-    children: {
-      'data-map': {
-        key: 'data-map',
-        title: '数据地图',
-        path: '/discovery/data-map',
-        routeName: 'dataMap',
-        icon: 'icon-apps'
-      },
-      'data-resources': {
-        key: 'data-resources',
-        title: '数据资源',
-        type: 'group',
-        children: {
-          'api-market': {
-            key: 'api-market',
-            title: 'API资源',
-            path: '/discovery/api-market',
-            routeName: 'ApiMarket'
+  // ====================== 2. 数据发现（消费端：前台查询、使用、分析）====================== 
+  discovery: { 
+    key: 'discovery', 
+    title: '数据发现', 
+    icon: 'icon-search', 
+    type: 'module', 
+    defaultPath: '/discovery/data-map', 
+    children: { 
+      // 总览层：业务语义总览（原数据地图）
+      'data-map': { 
+        key: 'data-map', 
+        title: '数据地图', 
+        path: '/discovery/data-map', 
+        routeName: 'dataMap', 
+        icon: 'icon-apps' 
+      }, 
+      // 资源层：数据资源发现 
+      'data-resources': { 
+        key: 'data-resources', 
+        title: '数据资源发现', 
+        type: 'group', 
+        children: { 
+          'system-data': { 
+            key: 'system-data', 
+            title: '业务系统数据源', 
+            path: '/discovery/data-resources/business-system', 
+            routeName: 'BusinessSystem' 
+          }, 
+          'file-import': { 
+            key: 'file-import', 
+            title: '文件资源', 
+            path: '/discovery/data-resources/file-import', 
+            routeName: 'FileImport' 
           },
-          'system-data': {
-            key: 'system-data',
-            title: '业务系统',
-            path: '/discovery/data-resources/business-system',
-            routeName: 'BusinessSystem'
+          'external-data': { 
+            key: 'external-data', 
+            title: '外部数据源', 
+            path: '/discovery/data-resources/external-data', 
+            routeName: 'ExternalData' 
           },
-          'file-import': {
-            key: 'file-import',
-            title: '文件导入',
-            path: '/discovery/data-resources/file-import',
-            routeName: 'FileImport'
+          'real-time-data': { 
+            key: 'real-time-data', 
+            title: '实时数据源', 
+            path: '/discovery/data-resources/real-time-data', 
+            routeName: 'RealTimeData' 
+          },
+          'log-data': { 
+            key: 'log-data', 
+            title: '日志数据源', 
+            path: '/discovery/data-resources/log-data', 
+            routeName: 'LogData' 
           }
-        }
-      },
-      'data-assets': {
-        key: 'data-assets',
-        title: '数据资产',
-        type: 'group',
-        children: {
-          'table-search': {
-            key: 'table-search',
-            title: '资产目录',
-            path: '/discovery/data-map/table-list',
-            routeName: 'TableList'
+        } 
+      }, 
+      // 资产层：数据资产发现 
+      'data-assets': { 
+        key: 'data-assets', 
+        title: '数据资产发现', 
+        type: 'group', 
+        children: { 
+          'table-search': { 
+            key: 'table-search', 
+            title: '资产目录', 
+            path: '/discovery/data-map/table-list', 
+            routeName: 'TableList' 
           }
-        }
-      },
-      'data-elements': {
-        key: 'data-elements',
-        title: '数据要素',
-        type: 'group',
-        children: {
-          'metrics-map': {
-            key: 'metrics-map',
-            title: '指标地图',
-            path: '/discovery/metrics-map',
-            routeName: 'metricsMap'
+        } 
+      }, 
+      // 要素层：数据要素发现
+      'data-elements': { 
+        key: 'data-elements', 
+        title: '数据要素发现', 
+        type: 'group', 
+        children: { 
+          'metrics-map': { 
+            key: 'metrics-map', 
+            title: '指标地图', 
+            path: '/discovery/metrics-map', 
+            routeName: 'metricsMap' 
+          }, 
+          'variable-map': { 
+            key: 'variable-map', 
+            title: '变量地图', 
+            path: '/discovery/variable-map', 
+            routeName: 'VariableMapDiscovery' 
+          }, 
+          'feature-map': { 
+            key: 'feature-map', 
+            title: '特征地图', 
+            path: '/discovery/feature-map', 
+            routeName: 'FeatureMapDiscovery' 
           },
-          'variable-map': {
-            key: 'variable-map',
-            title: '变量地图',
-            path: '/discovery/variable-map',
-            routeName: 'VariableMapDiscovery'
-          },
-          'metrics-center': {
-            key: 'metrics-center',
-            title: '指标中心',
-            path: '/discovery/placeholder?title=指标中心&desc=指标统一管理中心正在建设中。',
-            routeName: 'UnifiedMetrics'
-          },
-          'tag-management': {
-            key: 'tag-management',
-            title: '标签管理',
-            path: '/discovery/placeholder?title=标签管理&desc=客户标签与画像管理体系正在建设中。',
-            routeName: 'Customer360'
-          },
-          'variable-center': {
-            key: 'variable-center',
-            title: '变量中心',
-            path: '/discovery/placeholder?title=变量中心&desc=变量统一注册与管理中心正在建设中。',
-            routeName: 'VariableList'
-          },
-          'feature-center': {
-            key: 'feature-center',
-            title: '特征中心',
-            path: '/discovery/placeholder?title=特征中心&desc=特征工程管理平台正在建设中。',
-            routeName: 'RiskFeatureCenter'
+          'api-market': { 
+            key: 'api-market', 
+            title: '其他', 
+            path: '/discovery/api-market', 
+            routeName: 'ApiMarket' 
           }
-        }
-      },
-      'analysis-tools': {
-        key: 'analysis-tools',
-        title: '分析工具',
-        type: 'group',
-        children: {
-          'lineage': {
-            key: 'lineage',
-            title: '全链路血缘',
-            path: '/discovery/placeholder?title=全链路血缘&desc=数据全链路血缘分析功能正在开发中。',
-            routeName: 'Lineage'
+        } 
+      }, 
+      // 工具层：数据资产运营工具 
+      'analysis-tools': { 
+        key: 'analysis-tools', 
+        title: '数据资产运营工具', 
+        type: 'group', 
+        children: { 
+          'lineage': { 
+            key: 'lineage', 
+            title: '全链路血缘', 
+            path: '/discovery/lineage', 
+            routeName: 'discovery-lineage' 
+          },
+          'impact-analysis': {
+            key: 'impact-analysis',
+            title: '影响分析',
+            path: '/discovery/impact-analysis',
+            routeName: 'ImpactAnalysis'
           }
-        }
-      }
-    }
+        } 
+      } 
+    } 
   },
 
   // 数据探索
@@ -304,212 +315,169 @@ export const MENU_CONFIG = {
 
   
 
-  // 数据管理
-  management: {
-    key: 'management',
-    title: '数据管理',
-    icon: 'icon-robot',
-    type: 'module',
-    defaultPath: '/management/service',
-    children: {
-      'management-service': {
-        key: 'management-service',
-        title: '数据服务',
-        type: 'group',
-        children: {
-          'service-index': {
-            key: 'service-index',
-            title: '服务首页',
-            path: '/management/service',
-            routeName: 'management-service'
-          },
-          'detail-data-query': {
-            key: 'detail-data-query',
-            title: '明细数据查询服务',
-            path: '/management/service/detail-data-query',
-            routeName: 'detail-data-query'
-          },
-          'api-management': {
-            key: 'api-management',
-            title: 'API管理',
-            path: '/management/service/api-management',
-            routeName: 'management-service-api-list'
-          },
-          'data-models': {
-            key: 'data-models',
-            title: '数据查询&管理模型',
-            path: '/management/data-models',
-            routeName: 'data-models'
-          }
-        }
-      },
-      'asset-management': {
-        key: 'asset-management',
-        title: '资产管理',
-        type: 'group',
-        children: {
-          'listing-management': {
-            key: 'listing-management',
-            title: '上下架管理',
-            type: 'group',
-            children: {
-              'table-management': {
-                key: 'table-management',
-                title: '表管理',
-                path: '/management/asset-management/listing-management/table-management',
-                routeName: 'TableManagement'
-              },
-              'external-data-management': {
-                key: 'external-data-management',
-                title: '外部数据管理',
-                path: '/management/asset-management/listing-management/external-data-management',
-                routeName: 'ExternalDataManagement'
-              },
-              'metric-management': {
-                key: 'metric-management',
-                title: '指标管理',
-                path: '/management/asset-management/listing-management/metric-management',
-                routeName: 'MetricManagement'
-              },
-              'variable-management': {
-                key: 'variable-management',
-                title: '变量注册',
-                path: '/management/asset-management/listing-management/variable-management',
-                routeName: 'VariableManagementDiscovery'
-              }
-            }
-          },
-          'basic-management': {
-            key: 'basic-management',
-            title: '基础管理',
-            type: 'group',
-            children: {
+  // ====================== 1. 数据管理（管控端：后台配置、治理、运维）====================== 
+  management: { 
+    key: 'management', 
+    title: '数据管理', 
+    icon: 'icon-robot', 
+    type: 'module', 
+    defaultPath: '/management/service', 
+    children: { 
+      // 核心层：业务数据目录（原业务语义配置） 
+      'business-semantic-config': { 
+        key: 'business-semantic-config', 
+        title: '业务数据目录', 
+        type: 'group', 
+        children: { 
+          'business-domain': { 
+            key: 'business-domain', 
+            title: '业务域管理', 
+            path: '/management/business-domain', 
+            routeName: 'BusinessDomainList' 
+          }, 
+          'business-entity': { 
+            key: 'business-entity', 
+            title: '业务实体管理', 
+            path: '/management/business-entity', 
+            routeName: 'BusinessEntityList' 
+          }, 
+          'business-graph': { 
+            key: 'business-graph', 
+            title: '业务图谱', 
+            path: '/management/business-graph', 
+            routeName: 'BusinessRelationGraph' 
+          } 
+        } 
+      }, 
 
-              'metadata-collection': {
-                key: 'metadata-collection',
-                title: '元数据采集',
-                path: '/management/asset-management/basic-management/metadata-collection',
-                routeName: 'MetadataCollectionList'
-              },
-              'tag-management': {
-                key: 'tag-management',
-                title: '标签管理',
-                path: '/management/asset-management/basic-management/tag-management',
-                routeName: 'TagManagement'
-              }
-            }
+      // 资产层：数据资产管理 
+      'asset-management': { 
+        key: 'asset-management', 
+        title: '数据资产管理', 
+        type: 'group', 
+        children: { 
+          'metadata-collection': { 
+            key: 'metadata-collection', 
+            title: '元数据采集', 
+            path: '/management/asset-management/basic-management/metadata-collection', 
+            routeName: 'MetadataCollectionList' 
+          },
+          'metadata-modeling': {
+            key: 'metadata-modeling',
+            title: '元数据建模',
+            path: '/management/metadata/modeling',
+            routeName: 'MetadataModeling'
+          },
+          'data-resources': { 
+            key: 'data-resources', 
+            title: '数据资源上下架', 
+            path: '/management/asset-management/data-resources', 
+            routeName: 'DataResources' 
+          }, 
+          'data-assets': { 
+            key: 'data-assets', 
+            title: '数据资产上下架', 
+            path: '/management/asset-management/data-assets', 
+            routeName: 'DataAssets' 
+          }, 
+          'data-elements': { 
+            key: 'data-elements', 
+            title: '数据要素上下架', 
+            path: '/management/asset-management/data-elements', 
+            routeName: 'DataElements' 
+          },
+          'tag-management': { 
+            key: 'tag-management', 
+            title: '标签管理', 
+            path: '/management/asset-management/basic-management/tag-management', 
+            routeName: 'TagManagement' 
           }
-        }
-      },
-      'permission': {
-        key: 'permission',
-        title: '权限管理',
-        type: 'group',
-        children: {
-          'permission-apply': {
-            key: 'permission-apply',
-            title: '权限服务',
-            path: '/management/permission',
-            routeName: 'management-permission'
+        } 
+      }, 
+      // 治理层：数据标准治理 
+      'data-standard': { 
+        key: 'data-standard', 
+        title: '数据标准治理', 
+        type: 'group', 
+        children: { 
+          'standards': { 
+            key: 'standards', 
+            title: '数据标准管理', 
+            path: '/management/data-standard/standards', 
+            routeName: 'Standards' 
+          }, 
+          'domains': { 
+            key: 'domains', 
+            title: '技术数据域管理', 
+            path: '/management/data-standard/domains', 
+            routeName: 'DataDomains' 
+          }, 
+          'codes': { 
+            key: 'codes', 
+            title: '标准代码管理', 
+            path: '/management/data-standard/codes', 
+            routeName: 'StandardCodes' 
+          }, 
+          'words': { 
+            key: 'words', 
+            title: '标准单词管理', 
+            path: '/management/data-standard/words', 
+            routeName: 'StandardWords' 
           },
-          'business-module': {
-            key: 'business-module',
-            title: '业务模块管理',
-            path: '/management/permission/business-module',
-            routeName: 'BusinessModuleManagement'
-          },
-          'role-management': {
-            key: 'role-management',
-            title: '角色管理',
-            path: '/management/permission/role-management',
-            routeName: 'RoleManagement'
-          },
-          'user-management': {
-            key: 'user-management',
-            title: '用户管理',
-            path: '/management/permission/user-management',
-            routeName: 'UserManagement'
-          },
-          'data-permission': {
-            key: 'data-permission',
-            title: '数据权限',
-            path: '/management/permission/data-permission',
-            routeName: 'DataPermission'
-          },
-          'app-permission': {
-            key: 'app-permission',
-            title: '应用权限',
-            path: '/management/permission/app-permission',
-            routeName: 'AppPermission'
+          'standard-audit': {
+            key: 'standard-audit',
+            title: '标准稽核管理',
+            path: '/management/data-standard/audit',
+            routeName: 'StandardAudit'
           }
-        }
-      },
-      'data-standard': {
-        key: 'data-standard',
-        title: '数据标准',
-        type: 'group',
-        children: {
-          'standards': {
-            key: 'standards',
-            title: '数据标准管理',
-            path: '/management/data-standard/standards',
-            routeName: 'Standards'
+        } 
+      }, 
+            // 应用层：数据服务管理 
+      'management-service': { 
+        key: 'management-service', 
+        title: '数据服务管理', 
+        type: 'group', 
+        children: { 
+          'service-index': { 
+            key: 'service-index', 
+            title: '服务首页', 
+            path: '/management/service', 
+            routeName: 'management-service' 
+          }, 
+          'detail-data-query': { 
+            key: 'detail-data-query', 
+            title: '明细查询服务管理', 
+            path: '/management/service/detail-data-query', 
+            routeName: 'detail-data-query' 
+          }, 
+          'api-management': { 
+            key: 'api-management', 
+            title: 'API管理', 
+            path: '/management/service/api-management', 
+            routeName: 'management-service-api-list' 
+          }, 
+          'data-models': { 
+            key: 'data-models', 
+            title: '数据服务模型管理', 
+            path: '/management/service/data-models', 
+            routeName: 'data-models' 
           },
-          'domains': {
-            key: 'domains',
-            title: '数据域管理',
-            path: '/management/data-standard/domains',
-            routeName: 'DataDomains'
+          'service-monitor': {
+            key: 'service-monitor',
+            title: '服务监控',
+            path: '/management/service/monitor',
+            routeName: 'ServiceMonitor'
           },
-          'codes': {
-            key: 'codes',
-            title: '标准代码管理',
-            path: '/management/data-standard/codes',
-            routeName: 'StandardCodes'
-          },
-          'words': {
-            key: 'words',
-            title: '标准单词管理',
-            path: '/management/data-standard/words',
-            routeName: 'StandardWords'
+          'service-stats': {
+            key: 'service-stats',
+            title: '调用统计',
+            path: '/management/service/stats',
+            routeName: 'ServiceStats'
           }
-        }
-      },
-      
-      'notification-management': {
-        key: 'notification-management',
-        title: '通知管理',
-        type: 'group',
-        children: {
-          'notification-list': {
-            key: 'notification-list',
-            title: '通知列表',
-            path: '/admin/notifications/list',
-            routeName: 'NotificationList'
-          },
-          'notification-categories': {
-            key: 'notification-categories',
-            title: '分类管理',
-            path: '/admin/notifications/categories',
-            routeName: 'NotificationCategories'
-          }
-        }
-      },
+        } 
+      }, 
 
-      'doc-management': {
-        key: 'doc-management',
-        title: '文档管理',
-        type: 'group',
-        children: {
-          'doc-list': {
-            key: 'doc-list',
-            title: '文档列表',
-            path: '/admin/docs/list',
-            routeName: 'AdminDocList'
-          }
-        }
-      }
-    }
+    } 
   },
 
   // 数字营销
@@ -722,6 +690,12 @@ export const MENU_CONFIG = {
             title: '外数服务',
             path: '/risk/external-data/service',
             routeName: 'RiskExternalDataService'
+          },
+          'risk-external-data-service-scene': {
+            key: 'risk-external-data-service-scene',
+            title: '外数服务创建（新）',
+            path: '/risk/external-data/service-scene',
+            routeName: 'RiskExternalDataServiceScene'
           }
         }
       },
@@ -810,6 +784,101 @@ export const MENU_CONFIG = {
         routeName: 'TouchQuery'
       }
     }
+  },
+
+  // 系统管理
+  system: {
+    key: 'system',
+    title: '系统管理',
+    icon: 'icon-settings',
+    type: 'module',
+    defaultPath: '/management/permission',
+    children: {
+      // 权限与安全管控
+      'permission': {
+        key: 'permission',
+        title: '权限与安全管控',
+        type: 'group',
+        children: {
+          'permission-apply': {
+            key: 'permission-apply',
+            title: '权限服务',
+            path: '/management/permission',
+            routeName: 'management-permission'
+          },
+          'business-module': {
+            key: 'business-module',
+            title: '业务模块管理',
+            path: '/management/permission/business-module',
+            routeName: 'BusinessModuleManagement'
+          },
+          'role-management': {
+            key: 'role-management',
+            title: '角色管理',
+            path: '/management/permission/role-management',
+            routeName: 'RoleManagement'
+          },
+          'user-management': {
+            key: 'user-management',
+            title: '用户管理',
+            path: '/management/permission/user-management',
+            routeName: 'UserManagement'
+          },
+          'data-permission': {
+            key: 'data-permission',
+            title: '数据权限',
+            path: '/management/permission/data-permission',
+            routeName: 'DataPermission'
+          },
+          'app-permission': {
+            key: 'app-permission',
+            title: '应用权限',
+            path: '/management/permission/app-permission',
+            routeName: 'AppPermission'
+          }
+        }
+      },
+      // 通知管理
+      'notification': {
+        key: 'notification',
+        title: '通知管理',
+        type: 'group',
+        children: {
+          'notification-list': {
+            key: 'notification-list',
+            title: '通知列表',
+            path: '/admin/notifications/list',
+            routeName: 'AdminNotificationList'
+          },
+          'notification-categories': {
+            key: 'notification-categories',
+            title: '通知分类',
+            path: '/admin/notifications/categories',
+            routeName: 'AdminNotificationCategories'
+          },
+          'user-groups': {
+            key: 'user-groups',
+            title: '用户组管理',
+            path: '/admin/notifications/user-groups',
+            routeName: 'AdminUserGroups'
+          }
+        }
+      },
+      // 文档管理
+      'doc-management': {
+        key: 'doc-management',
+        title: '文档管理',
+        type: 'group',
+        children: {
+          'doc-list': {
+            key: 'doc-list',
+            title: '文档列表',
+            path: '/admin/docs/list',
+            routeName: 'AdminDocList'
+          }
+        }
+      }
+    }
   }
 }
 
@@ -821,7 +890,8 @@ export const TOP_MENU_ORDER = [
   'management', 
   'marketing', 
   'risk', 
-  'touch'
+  'touch',
+  'system'
 ]
 
 /**
@@ -920,24 +990,26 @@ export function getMenuItemByRouteName(routeName) {
 
 /**
  * 递归查找子菜单（按路由名称）
- * @param {Object.<string, MenuItem>} children - 子菜单对象
+ * @param {Object} children - 子菜单对象
  * @param {string} routeName - 要查找的路由名称
- * @returns {{ item: MenuItem; parent: string } | null} 菜单项信息或null
+ * @returns {{ item: any; parent?: string } | null} 菜单项信息或null
  */
 function findInChildrenByRouteName(children, routeName) {
+  if (!children || typeof children !== 'object') return null;
   const childKeys = Object.keys(children);
   
   for (const childKey of childKeys) {
-    const child = safeGet(children, childKey);
+    const child = children[childKey];
+    if (!child) continue;
     
-    if (child && child.routeName === routeName) {
+    if (child.routeName === routeName) {
       return { item: child, parent: childKey };
     }
     
-    if (child && child.children && typeof child.children === 'object') {
+    if (child.children && typeof child.children === 'object') {
       const result = findInChildrenByRouteName(child.children, routeName);
       if (result) {
-        return { ...result, parent: childKey };
+        return { ...result }; // 保持最深层级的 item
       }
     }
   }

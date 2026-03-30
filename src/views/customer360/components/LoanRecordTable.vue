@@ -7,8 +7,10 @@
           用信列表
         </h3>
         <div class="data-update-time">
-          <span class="update-label">数据日期：</span>
-          <span class="update-time">{{ currentDateTime }}</span>
+          <a-tag color="green" size="small">
+            <template #icon><span class="live-dot"></span></template>
+            数据时效为实时
+          </a-tag>
         </div>
       </div>
       <div class="table-actions">
@@ -218,6 +220,14 @@ interface LoanRecord {
   loanRate: number
   repaymentDetails?: any[]
   repaymentPlan?: any[]
+  // 券使用信息
+  voucherTemplateId?: string
+  voucherInventoryId?: string
+  voucherName?: string
+  hasLockPeriod?: boolean
+  lockPeriodValue?: number
+  limitMethod?: string
+  resolveLockDate?: string
 }
 
 interface Props {
@@ -344,6 +354,8 @@ const copyAllData = async () => {
       '实际还款本金', '实际还款利息', '实际还款罚息', '剩余本金', '剩余利息', '剩余罚息', '剩余应还总额',
       // 用信信息
       '用信单号', '用信日期', '用信结果', '拒绝原因',
+      // 券使用信息
+      '券模板ID', '券库存ID', '券名称', '是否设定锁定期', '锁定期限值', '限定方式', '解决锁定接触日期',
       // 账户信息
       '银行卡号', '渠道',
       // 其他字段
@@ -380,6 +392,14 @@ const copyAllData = async () => {
       record.loanDate ? formatDate(record.loanDate) : '-',
       record.result || '-',
       record.rejectReason || '-',
+      // 券使用信息
+      record.voucherTemplateId || '-',
+      record.voucherInventoryId || '-',
+      record.voucherName || '-',
+      record.hasLockPeriod === true ? '是' : (record.hasLockPeriod === false ? '否' : '-'),
+      record.lockPeriodValue !== undefined ? record.lockPeriodValue : '-',
+      record.limitMethod || '-',
+      record.resolveLockDate ? formatDate(record.resolveLockDate) : '-',
       // 账户信息
       record.bankCard || '-',
       record.channel || '-',
@@ -489,18 +509,22 @@ const handleViewRepaymentDetails = (loanData: LoanRecord) => {
 .data-update-time {
   display: flex;
   align-items: center;
-  font-size: 12px;
-  color: #86909c;
 }
 
-.update-label {
+.live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #00b42a;
   margin-right: 4px;
+  animation: pulse 2s infinite;
 }
 
-.update-time {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  color: #165dff;
-  font-weight: 500;
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 .title-icon {

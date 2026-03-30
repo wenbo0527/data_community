@@ -170,6 +170,44 @@
         </div>
       </div>
 
+      <!-- 券使用信息 -->
+      <div class="detail-section">
+        <h3 class="section-title">
+          <Ticket class="section-icon" />
+          券使用信息
+        </h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>券名称</label>
+            <div class="info-value">{{ loanData.voucherName || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>券模板ID</label>
+            <div class="info-value">{{ loanData.voucherTemplateId || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>券库存ID</label>
+            <div class="info-value">{{ loanData.voucherInventoryId || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>是否设定锁定期</label>
+            <div class="info-value">{{ loanData.hasLockPeriod === true ? '是' : (loanData.hasLockPeriod === false ? '否' : '-') }}</div>
+          </div>
+          <div class="info-item">
+            <label>锁定期限值</label>
+            <div class="info-value">{{ loanData.lockPeriodValue !== undefined ? loanData.lockPeriodValue : '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>限定方式</label>
+            <div class="info-value">{{ loanData.limitMethod || '-' }}</div>
+          </div>
+          <div class="info-item">
+            <label>解决锁定接触日期</label>
+            <div class="info-value">{{ loanData.resolveLockDate ? formatDate(loanData.resolveLockDate) : '-' }}</div>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="detail-section">
         <h3 class="section-title">
@@ -197,7 +235,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { FileText, CreditCard, DollarSign, TriangleAlert, AlertCircle, Settings, Copy, Eye } from 'lucide-vue-next'
+import { FileText, CreditCard, DollarSign, TriangleAlert, AlertCircle, Settings, Copy, Eye, Ticket } from 'lucide-vue-next'
 import { Message } from '@arco-design/web-vue'
 
 interface LoanData {
@@ -230,6 +268,13 @@ interface LoanData {
   loanRate: number
   repaymentDetails?: any[]
   repaymentPlan?: any[]
+  voucherTemplateId?: string
+  voucherInventoryId?: string
+  voucherName?: string
+  hasLockPeriod?: boolean
+  lockPeriodValue?: number
+  limitMethod?: string
+  resolveLockDate?: string
 }
 
 interface Props {

@@ -42,6 +42,12 @@ export const ROUTE_NAMES = {
       ROOT: 'management-accompany',
       CREATE: 'management-accompany-create',
       RESULT: 'management-accompany-result'
+    },
+    BUSINESS_CONCEPT: {
+      ROOT: 'business-concept',
+      DOMAIN: 'business-domain',
+      ENTITY: 'business-entity',
+      RELATION: 'business-relation'
     }
   },
   
@@ -136,6 +142,9 @@ export const ROUTE_PATHS = {
       ROOT: '/management/accompany',
       CREATE: '/management/accompany/create',
       RESULT: '/management/accompany/result'
+    },
+    BUSINESS_CONCEPT: {
+      ROOT: '/management/business-concept'
     }
   },
   
@@ -256,6 +265,14 @@ export const BREADCRUMB_CONFIG = {
     { title: '服务管理', path: ROUTE_PATHS.MANAGEMENT.SERVICE.ROOT },
     { title: '全量变量回溯申请', path: ROUTE_PATHS.MANAGEMENT.SERVICE.BACKTRACK }
   ],
+  [ROUTE_NAMES.MANAGEMENT.ACCOMPANY.ROOT]: [
+    { title: '管理中心', path: ROUTE_PATHS.MANAGEMENT.ROOT },
+    { title: '陪伴管理', path: ROUTE_PATHS.MANAGEMENT.ACCOMPANY.ROOT }
+  ],
+  [ROUTE_NAMES.MANAGEMENT.BUSINESS_CONCEPT.ROOT]: [
+    { title: '管理中心', path: ROUTE_PATHS.MANAGEMENT.ROOT },
+    { title: '业务概念中心', path: ROUTE_PATHS.MANAGEMENT.BUSINESS_CONCEPT.ROOT }
+  ],
   [ROUTE_NAMES.EXPLORATION.EXTERNAL_DATA_ANALYSIS.BUDGET_MANAGEMENT]: [
     { title: '探索分析', path: ROUTE_PATHS.EXPLORATION.ROOT },
     { title: '外部数据分析', path: ROUTE_PATHS.EXPLORATION.EXTERNAL_DATA_ANALYSIS.ROOT },
@@ -363,6 +380,11 @@ export const MENU_CONFIG = {
           key: 'management-accompany',
           title: '陪伴管理',
           path: ROUTE_PATHS.MANAGEMENT.ACCOMPANY.ROOT
+        },
+        {
+          key: 'business-concept',
+          title: '业务概念中心',
+          path: ROUTE_PATHS.MANAGEMENT.BUSINESS_CONCEPT.ROOT
         }
       ]
     },

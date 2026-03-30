@@ -1,5 +1,6 @@
 // 从data-map.ts导入mock数据
-import { mockTables } from './data-map';
+import { MetadataStore } from './shared/metadata-store';
+const mockTables = MetadataStore.getTables();
 import type { MockMethod } from 'vite-plugin-mock';
 
 // Hive库名mock数据

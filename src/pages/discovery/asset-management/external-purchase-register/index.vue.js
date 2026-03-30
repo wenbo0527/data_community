@@ -268,7 +268,8 @@ const handleNewDataSubmit = async () => {
                 supplier: newDataFormData.provider,
                 price: newDataFormData.unitPrice || 0,
                 interfaceTag: newDataFormData.interfaceTag,
-                isNew: true // 标记为新数据产品
+                isNew: true, // 标记为新数据产品
+                status: 'pending_tech_profile' // 标记为待完善技术档案
             };
             // 添加到表格数据中
             tableData.value.unshift(newDataProduct);

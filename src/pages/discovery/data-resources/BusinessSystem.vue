@@ -68,10 +68,6 @@
             <h3 class="section-title">系统列表</h3>
             <span class="result-count">共找到 {{ pagination.total }} 个业务系统</span>
           </div>
-          <a-button type="primary" size="small" @click="handleRegister">
-            <template #icon><icon-plus /></template>
-            注册系统
-          </a-button>
         </div>
 
         <a-spin :loading="loading" style="width: 100%">
@@ -125,7 +121,6 @@
                 <div class="card-actions">
                   <a-button type="text" size="mini" @click="viewDetail(system)">详情</a-button>
                   <a-button type="text" size="mini" @click="viewTables(system)">表目录</a-button>
-                  <a-button type="text" size="mini" @click="configSystem(system)">配置</a-button>
                 </div>
               </a-card>
             </a-col>

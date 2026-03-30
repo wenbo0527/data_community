@@ -169,6 +169,44 @@
         </div>
       </div>
 
+      <!-- 券使用信息 -->
+      <div class="detail-section">
+        <h3 class="section-title">
+          <Ticket class="section-icon" />
+          券使用信息
+        </h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">券名称：</span>
+            <span class="value">{{ loanData.voucherName || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">券模板ID：</span>
+            <span class="value code">{{ loanData.voucherTemplateId || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">券库存ID：</span>
+            <span class="value code">{{ loanData.voucherInventoryId || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">是否设定锁定期：</span>
+            <span class="value">{{ loanData.hasLockPeriod === true ? '是' : (loanData.hasLockPeriod === false ? '否' : '-') }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">锁定期限值：</span>
+            <span class="value">{{ loanData.lockPeriodValue !== undefined ? loanData.lockPeriodValue : '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">限定方式：</span>
+            <span class="value">{{ loanData.limitMethod || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">解决锁定接触日期：</span>
+            <span class="value">{{ loanData.resolveLockDate ? formatDate(loanData.resolveLockDate) : '-' }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 账户信息 -->
       <div class="detail-section">
         <h3 class="section-title">
@@ -209,7 +247,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { FileText, Copy, AlertCircle, CreditCard, DollarSign, User, Settings, Eye } from 'lucide-vue-next'
+import { FileText, Copy, AlertCircle, CreditCard, DollarSign, User, Settings, Eye, Ticket } from 'lucide-vue-next'
 import { Message } from '@arco-design/web-vue'
 
 interface LoanRecord {
@@ -245,6 +283,14 @@ interface LoanRecord {
   actualPaidPrincipal?: number
   actualPaidInterest?: number
   actualPaidPenalty?: number
+  // 券使用信息
+  voucherTemplateId?: string
+  voucherInventoryId?: string
+  voucherName?: string
+  hasLockPeriod?: boolean
+  lockPeriodValue?: number
+  limitMethod?: string
+  resolveLockDate?: string
 }
 
 interface Props {

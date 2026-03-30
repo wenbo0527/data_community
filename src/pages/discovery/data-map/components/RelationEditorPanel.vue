@@ -128,7 +128,8 @@ import { Modal } from '@arco-design/web-vue'
 import { IconPlus, IconDelete } from '@arco-design/web-vue/es/icon'
 
 // 从mock数据中导入表信息
-import { mockTables } from '@/mock/data-map.js'
+import { MetadataStore } from '@/mock/shared/metadata-store';
+const mockTables = MetadataStore.getTables();
 
 interface RelationFieldPair {
   sourceField: string

@@ -346,6 +346,445 @@ JOIN rfm_features rf ON uf.user_id = rf.user_id;`,
         avgDuration: 0,
         lastExecutedAt: ''
       }
+    },
+    {
+      id: 'dm_004',
+      name: '月度营收报表生成',
+      useCase: UseCase.REPORT_GENERATION,
+      languageType: LanguageType.SQL,
+      manager: '李四',
+      status: DataModelStatus.ACTIVE,
+      version: 'v1.5.0',
+      description: '每月自动汇总各业务线营收数据，生成财务所需的基础报表',
+      code: `SELECT 
+    department_id,
+    business_line,
+    SUM(revenue) as total_revenue,
+    SUM(cost) as total_cost,
+    (SUM(revenue) - SUM(cost)) as gross_profit,
+    ((SUM(revenue) - SUM(cost)) / NULLIF(SUM(revenue), 0)) * 100 as profit_margin
+FROM financial_records 
+WHERE record_month = '{report_month}'
+GROUP BY department_id, business_line
+ORDER BY total_revenue DESC;`,
+      parameters: [
+        {
+          id: 'p1',
+          name: 'report_month',
+          type: 'string',
+          defaultValue: '2024-02',
+          required: true,
+          description: '报表月份(YYYY-MM)'
+        }
+      ],
+      executionConfig: {
+        timeout: 120,
+        maxMemory: 1024
+      },
+      createdAt: '2023-11-05T09:00:00Z',
+      updatedAt: '2024-03-01T10:00:00Z',
+      executionHistory: [
+        {
+          id: 'exec_004',
+          executedAt: '2024-03-01T10:05:00Z',
+          status: 'success',
+          duration: 15,
+          resultRows: 45,
+          executedBy: '李四'
+        }
+      ],
+      executionStats: {
+        totalExecutions: 12,
+        successRate: 100,
+        avgDuration: 14.5,
+        lastExecutedAt: '2024-03-01T10:05:00Z'
+      }
+    },
+    {
+      id: 'dm_005',
+      name: '用户流失预警模型',
+      useCase: UseCase.MODEL_TRAINING,
+      languageType: LanguageType.PYTHON,
+      manager: '钱七',
+      status: DataModelStatus.ACTIVE,
+      version: 'v3.0.1',
+      description: '基于XGBoost算法，预测未来30天内极可能流失的高价值用户',
+      code: `import pandas as pd
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, roc_auc_score
+
+def train_churn_model(data_path, model_save_path):
+    # 加载特征数据
+    df = pd.read_csv(data_path)
+    
+    # 划分特征和标签
+    X = df.drop(columns=['user_id', 'is_churn'])
+    y = df['is_churn']
+    
+    # 划分训练集和验证集
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # 训练XGBoost模型
+    model = xgb.XGBClassifier(
+        max_depth={max_depth},
+        learning_rate={learning_rate},
+        n_estimators={n_estimators},
+        objective='binary:logistic',
+        eval_metric='auc'
+    )
+    
+    model.fit(X_train, y_train, eval_set=[(X_val, y_val)], early_stopping_rounds=10, verbose=False)
+    
+    # 评估
+    preds = model.predict(X_val)
+    auc = roc_auc_score(y_val, model.predict_proba(X_val)[:, 1])
+    
+    # 保存模型
+    model.save_model(model_save_path)
+    
+    return {"accuracy": accuracy_score(y_val, preds), "auc": auc}
+
+if __name__ == "__main__":
+    result = train_churn_model('{input_data}', '{output_model}')
+    print(f"模型训练完成, 评估结果: {result}")`,
+      parameters: [
+        {
+          id: 'p1',
+          name: 'input_data',
+          type: 'string',
+          defaultValue: '/data/features/user_features.csv',
+          required: true,
+          description: '输入特征数据路径'
+        },
+        {
+          id: 'p2',
+          name: 'output_model',
+          type: 'string',
+          defaultValue: '/models/churn_xgb.model',
+          required: true,
+          description: '模型保存路径'
+        },
+        {
+          id: 'p3',
+          name: 'max_depth',
+          type: 'number',
+          defaultValue: 5,
+          required: false,
+          description: '树的最大深度'
+        },
+        {
+          id: 'p4',
+          name: 'learning_rate',
+          type: 'number',
+          defaultValue: 0.1,
+          required: false,
+          description: '学习率'
+        },
+        {
+          id: 'p5',
+          name: 'n_estimators',
+          type: 'number',
+          defaultValue: 100,
+          required: false,
+          description: '树的数量'
+        }
+      ],
+      executionConfig: {
+        timeout: 3600,
+        maxMemory: 8192
+      },
+      createdAt: '2023-08-15T14:20:00Z',
+      updatedAt: '2024-03-25T09:15:00Z',
+      executionHistory: [
+        {
+          id: 'exec_005',
+          executedAt: '2024-03-25T09:15:00Z',
+          status: 'success',
+          duration: 1850,
+          resultRows: 0,
+          executedBy: '钱七'
+        }
+      ],
+      executionStats: {
+        totalExecutions: 8,
+        successRate: 87.5,
+        avgDuration: 1900.2,
+        lastExecutedAt: '2024-03-25T09:15:00Z'
+      }
+    },
+    {
+      id: 'dm_006',
+      name: '身份证号合规性校验',
+      useCase: UseCase.DATA_VALIDATION,
+      languageType: LanguageType.SQL,
+      manager: '孙八',
+      status: DataModelStatus.INACTIVE,
+      version: 'v1.0.0',
+      description: '通过正则表达式校验系统中存储的身份证号码格式是否合规',
+      code: `SELECT 
+    user_id, 
+    real_name, 
+    id_card_no 
+FROM user_info 
+WHERE id_card_no !~ '^[1-9]\\d{5}(18|19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2]\\d|3[0-1])\\d{3}[0-9Xx]$'
+LIMIT {limit};`,
+      parameters: [
+        {
+          id: 'p1',
+          name: 'limit',
+          type: 'number',
+          defaultValue: 500,
+          required: false,
+          description: '返回异常数据的最大条数'
+        }
+      ],
+      executionConfig: {
+        timeout: 60,
+        maxMemory: 512
+      },
+      createdAt: '2023-05-10T11:00:00Z',
+      updatedAt: '2023-10-20T16:00:00Z',
+      executionHistory: [
+        {
+          id: 'exec_006',
+          executedAt: '2023-10-20T16:00:00Z',
+          status: 'success',
+          duration: 12,
+          resultRows: 34,
+          executedBy: '孙八'
+        }
+      ],
+      executionStats: {
+        totalExecutions: 5,
+        successRate: 100,
+        avgDuration: 11.5,
+        lastExecutedAt: '2023-10-20T16:00:00Z'
+      }
+    },
+    {
+      id: 'dm_007',
+      name: '外部API数据采集样例',
+      useCase: UseCase.EXTERNAL_DATA_SAMPLE,
+      languageType: LanguageType.PYTHON,
+      manager: '周九',
+      status: DataModelStatus.ACTIVE,
+      version: 'v1.1.0',
+      description: '调用外部天气API接口获取指定城市的历史天气数据，用于补充内部业务数据的环境维度',
+      code: `import requests
+import json
+import pandas as pd
+from datetime import datetime
+
+def fetch_weather_data(city_code, start_date, end_date, api_key):
+    url = f"https://api.external-weather.com/v1/history"
+    params = {
+        "city": city_code,
+        "start": start_date,
+        "end": end_date,
+        "key": api_key
+    }
+    
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        df = pd.DataFrame(data['daily_records'])
+        # 数据转换与入库逻辑(省略)
+        return {"status": "success", "records_fetched": len(df)}
+    else:
+        raise Exception(f"API请求失败: {response.status_code}")
+
+if __name__ == "__main__":
+    res = fetch_weather_data('{city_code}', '{start_date}', '{end_date}', '{api_key}')
+    print(res)`,
+      parameters: [
+        {
+          id: 'p1',
+          name: 'city_code',
+          type: 'string',
+          defaultValue: '101010100',
+          required: true,
+          description: '城市编码(默认北京)'
+        },
+        {
+          id: 'p2',
+          name: 'start_date',
+          type: 'date',
+          defaultValue: '2024-03-01',
+          required: true,
+          description: '开始日期'
+        },
+        {
+          id: 'p3',
+          name: 'end_date',
+          type: 'date',
+          defaultValue: '2024-03-07',
+          required: true,
+          description: '结束日期'
+        },
+        {
+          id: 'p4',
+          name: 'api_key',
+          type: 'string',
+          defaultValue: 'demo_key_12345',
+          required: true,
+          description: 'API授权密钥'
+        }
+      ],
+      executionConfig: {
+        timeout: 300,
+        maxMemory: 1024
+      },
+      createdAt: '2024-01-20T13:45:00Z',
+      updatedAt: '2024-03-22T10:30:00Z',
+      executionHistory: [
+        {
+          id: 'exec_007',
+          executedAt: '2024-03-22T10:30:00Z',
+          status: 'success',
+          duration: 5,
+          resultRows: 7,
+          executedBy: '周九'
+        },
+        {
+          id: 'exec_008',
+          executedAt: '2024-03-21T10:30:00Z',
+          status: 'failed',
+          duration: 2,
+          resultRows: 0,
+          errorMessage: 'API请求超时',
+          executedBy: '系统定时任务'
+        }
+      ],
+      executionStats: {
+        totalExecutions: 60,
+        successRate: 98.3,
+        avgDuration: 4.2,
+        lastExecutedAt: '2024-03-22T10:30:00Z'
+      }
+    },
+    {
+      id: 'dm_008',
+      name: '交易金额异常监控规则',
+      useCase: UseCase.VALIDATION_RULE,
+      languageType: LanguageType.SQL,
+      manager: '吴十',
+      status: DataModelStatus.ARCHIVED,
+      version: 'v1.0.0',
+      description: '监控单笔交易金额超过阈值的记录（已归档，被实时风控系统替代）',
+      code: `SELECT 
+    transaction_id,
+    user_id,
+    amount,
+    transaction_time,
+    risk_level
+FROM transaction_log
+WHERE amount > {amount_threshold}
+  AND transaction_time >= CURRENT_DATE - INTERVAL '1 day';`,
+      parameters: [
+        {
+          id: 'p1',
+          name: 'amount_threshold',
+          type: 'number',
+          defaultValue: 50000,
+          required: true,
+          description: '异常金额阈值'
+        }
+      ],
+      executionConfig: {
+        timeout: 60,
+        maxMemory: 1024
+      },
+      createdAt: '2022-01-10T00:00:00Z',
+      updatedAt: '2023-12-31T23:59:59Z',
+      executionHistory: [],
+      executionStats: {
+        totalExecutions: 720,
+        successRate: 99.8,
+        avgDuration: 8.5,
+        lastExecutedAt: '2023-12-31T23:00:00Z'
+      }
+    },
+    {
+      id: 'dm_009',
+      name: '商品推荐协同过滤算法',
+      useCase: UseCase.MODEL_TRAINING,
+      languageType: LanguageType.PYTHON,
+      manager: '郑十一',
+      status: DataModelStatus.DRAFT,
+      version: 'v0.5.0',
+      description: '基于用户历史购买行为，使用矩阵分解（SVD）训练商品推荐模型',
+      code: `import pandas as pd
+from surprise import Dataset, Reader, SVD
+from surprise.model_selection import cross_validate
+
+def train_recommender(ratings_file):
+    # 加载数据
+    df = pd.read_csv(ratings_file)
+    reader = Reader(rating_scale=(1, 5))
+    data = Dataset.load_from_df(df[['user_id', 'item_id', 'rating']], reader)
+    
+    # 算法选择
+    algo = SVD(n_factors={n_factors}, n_epochs={n_epochs}, lr_all={lr_all})
+    
+    # 交叉验证评估
+    results = cross_validate(algo, data, measures=['RMSE', 'MAE'], cv=5, verbose=True)
+    
+    # 全量数据训练
+    trainset = data.build_full_trainset()
+    algo.fit(trainset)
+    
+    return {"rmse": results['test_rmse'].mean()}
+
+if __name__ == "__main__":
+    train_recommender('{ratings_file}')`,
+      parameters: [
+        {
+          id: 'p1',
+          name: 'ratings_file',
+          type: 'string',
+          defaultValue: '/data/ratings.csv',
+          required: true,
+          description: '评分数据路径'
+        },
+        {
+          id: 'p2',
+          name: 'n_factors',
+          type: 'number',
+          defaultValue: 100,
+          required: false,
+          description: '隐因子数量'
+        },
+        {
+          id: 'p3',
+          name: 'n_epochs',
+          type: 'number',
+          defaultValue: 20,
+          required: false,
+          description: '迭代次数'
+        },
+        {
+          id: 'p4',
+          name: 'lr_all',
+          type: 'number',
+          defaultValue: 0.005,
+          required: false,
+          description: '学习率'
+        }
+      ],
+      executionConfig: {
+        timeout: 7200,
+        maxMemory: 16384
+      },
+      createdAt: '2024-03-20T09:00:00Z',
+      updatedAt: '2024-03-21T15:00:00Z',
+      executionHistory: [],
+      executionStats: {
+        totalExecutions: 0,
+        successRate: 0,
+        avgDuration: 0,
+        lastExecutedAt: ''
+      }
     }
   ];
 };

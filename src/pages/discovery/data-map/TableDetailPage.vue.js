@@ -1,7 +1,8 @@
 import { ref, computed, watch, watchEffect, h } from 'vue';
 import { IconStar, IconSafe, IconFolderAdd, IconLink, IconInfoCircle, IconExclamationCircle } from '@arco-design/web-vue/es/icon';
 import { Modal } from '@arco-design/web-vue';
-import { mockTables } from '@/mock/data-map';
+import { MetadataStore } from '@/mock/shared/metadata-store';
+const mockTables = MetadataStore.getTables();
 import { useRoute, useRouter } from 'vue-router';
 import RelationEditorPanel from './components/RelationEditorPanel.vue';
 import AddToCollectionModal from './components/AddToCollectionModal.vue';

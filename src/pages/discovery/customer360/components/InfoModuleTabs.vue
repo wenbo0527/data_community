@@ -1,32 +1,6 @@
 <template>
   <div class="info-module-tabs">
-    <!-- 实时数据区 -->
-    <div class="data-zone realtime-zone" v-if="isSudaiProduct">
-      <div class="zone-header">
-        <div class="zone-title">
-          <icon-thunderbolt />
-          <span>实时监控</span>
-          <a-tag color="green" size="small" class="live-tag">Live</a-tag>
-        </div>
-        <div class="zone-actions">
-          <a-tooltip content="数据反馈">
-            <a-button type="text" size="mini" @click="handleFeedback('realtime')">
-              <template #icon><icon-bug /></template>
-            </a-button>
-          </a-tooltip>
-        </div>
-      </div>
-      <div class="zone-content">
-        <RealTimeData 
-          :product-key="productKey"
-          :product-data="productData"
-          :user-real-time-data="realTimeData"
-          :loading="loading"
-        />
-      </div>
-    </div>
-
-    <!-- 离线数据区 -->
+    <!-- 离线数据区 (现包含所有模块) -->
     <div class="data-zone offline-zone">
       <div class="zone-header">
         <div class="zone-title">
@@ -71,9 +45,39 @@
           </div>
         </a-tab-pane>
         
-        <a-tab-pane key="marketing" title="营销记录">
+        <!-- 实时业务数据 Tab (仅针对 Su贷 产品) -->
+        <a-tab-pane key="realtime" title="实时业务数据" v-if="isSudaiProduct">
+          <div class="module-content realtime-tab-content">
+            <div class="realtime-header mb-4 flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <icon-thunderbolt class="text-green-500 text-lg" />
+                <span class="font-medium text-gray-800">实时监控看板</span>
+                <a-tag color="green" size="small" class="live-tag">Live</a-tag>
+              </div>
+            </div>
+            <RealTimeData 
+              :product-key="productKey"
+              :product-data="productData"
+              :user-real-time-data="realTimeData"
+              :loading="loading"
+            />
+          </div>
+        </a-tab-pane>
+        
+        <a-tab-pane key="touch-records" title="触达记录" v-if="isSudaiProduct">
           <div class="module-content">
-            <MarketingRecords 
+            <TouchRecords 
+              :product-key="productKey"
+              :marketing-data="marketingData"
+              :user-info="userInfo"
+              :loading="loading"
+            />
+          </div>
+        </a-tab-pane>
+
+        <a-tab-pane key="benefit-records" title="权益记录" v-if="isSudaiProduct">
+          <div class="module-content">
+            <BenefitRecords 
               :product-key="productKey"
               :marketing-data="marketingData"
               :user-info="userInfo"
@@ -140,7 +144,8 @@ import { Message } from '@arco-design/web-vue'
 import { IconThunderbolt, IconBarChart, IconBug } from '@arco-design/web-vue/es/icon'
 import CustomerOverview from './CustomerOverview.vue'
 import BusinessCoreDetails from './BusinessCoreDetails.vue'
-import MarketingRecords from './MarketingRecords.vue'
+import TouchRecords from './TouchRecords.vue'
+import BenefitRecords from './BenefitRecords.vue'
 import ProductInfo from './ProductInfo.vue'
 import RealTimeData from './RealTimeData.vue'
 

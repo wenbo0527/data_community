@@ -115,7 +115,9 @@ const editMode = ref(false)
 const editingData = ref<any>(null)
 
 const goToScene = () => {
-  router.push({ name: 'RiskExternalDataServiceScene' })
+  editMode.value = false
+  editingData.value = null
+  createVisible.value = true
 }
 
 const openEdit = (record: any) => {

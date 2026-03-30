@@ -1,22 +1,31 @@
 import Mock from 'mockjs'
-const __Mock = (Mock && typeof Mock.setup === 'function')
+
+const __Mock = (Mock && typeof Mock?.setup === 'function')
   ? Mock
-  : (Mock && Mock.default && typeof Mock.default.setup === 'function')
+  : (Mock && Mock.default && typeof Mock.default?.setup === 'function')
     ? Mock.default
     : null
-const __MockGlobal = __Mock || { setup: () => {} }
+
+// 修正：确保 __MockGlobal 始终是一个对象，避免在 __Mock 为 null 时出错
+const __MockGlobal = __Mock || { setup: () => {}, mock: () => {} }
+
 if (typeof globalThis !== 'undefined') {
   globalThis.Mock = __MockGlobal
 }
+
 import { setupVariableManagementMock } from './variable-management'
 import variableMap from './variable-map'
 import { registerCommunityMocks } from './community-api'
 
 // 设置Mock.js配置
-if (__Mock) {
-  __Mock.setup({
-    timeout: '200-600'
-  })
+if (__Mock && typeof window !== 'undefined') {
+  try {
+    __Mock.setup({
+      timeout: '200-600'
+    })
+  } catch (e) {
+    console.warn('Mock.setup error:', e)
+  }
 }
 
 // 注册所有Mock接口

@@ -466,6 +466,125 @@
             </a-form-item>
           </a-col>
         </a-row>
+
+        <!-- 接口技术配置 -->
+        <a-divider orientation="left">接口技术配置</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item field="apiUrl" label="接口地址" required>
+              <a-input v-model="formData.apiUrl" placeholder="请输入 API URL" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item field="requestMethod" label="请求方式" required>
+              <a-select v-model="formData.requestMethod" placeholder="选择请求方式">
+                <a-option value="GET">GET</a-option>
+                <a-option value="POST">POST</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item field="qpsLimit" label="并发限制 (QPS)" required>
+              <a-input-number v-model="formData.qpsLimit" placeholder="输入 QPS 上限" :min="1" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item field="timeout" label="超时时间 (秒)" required>
+              <a-input-number v-model="formData.timeout" placeholder="输入超时时间" :min="1" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item field="authMethod" label="鉴权模式">
+          <a-select v-model="formData.authMethod" placeholder="选择鉴权模式">
+            <a-option value="token">Token 认证</a-option>
+            <a-option value="appkey">AppKey/Secret</a-option>
+            <a-option value="whitelist">IP 白名单</a-option>
+          </a-select>
+        </a-form-item>
+
+        <!-- 数据要素模型 -->
+        <a-divider orientation="left">数据要素模型</a-divider>
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span><strong>入参要素配置</strong></span>
+            <a-button type="outline" size="small" @click="addInputParam">添加参数</a-button>
+          </div>
+          <a-table :data="formData.inputParams" :pagination="false" size="small">
+            <template #columns>
+              <a-table-column title="参数名">
+                <template #cell="{ record }"><a-input v-model="record.name" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="类型">
+                <template #cell="{ record }">
+                  <a-select v-model="record.type" size="small">
+                    <a-option value="string">String</a-option>
+                    <a-option value="number">Number</a-option>
+                  </a-select>
+                </template>
+              </a-table-column>
+              <a-table-column title="必填">
+                <template #cell="{ record }"><a-switch v-model="record.required" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="操作" :width="80">
+                <template #cell="{ rowIndex }"><a-button type="text" status="danger" size="small" @click="removeInputParam(rowIndex)">删除</a-button></template>
+              </a-table-column>
+            </template>
+          </a-table>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span><strong>出参要素配置</strong></span>
+            <a-button type="outline" size="small" @click="addOutputParam">添加参数</a-button>
+          </div>
+          <a-table :data="formData.outputParams" :pagination="false" size="small">
+            <template #columns>
+              <a-table-column title="参数名">
+                <template #cell="{ record }"><a-input v-model="record.name" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="类型">
+                <template #cell="{ record }">
+                  <a-select v-model="record.type" size="small">
+                    <a-option value="string">String</a-option>
+                    <a-option value="number">Number</a-option>
+                    <a-option value="boolean">Boolean</a-option>
+                  </a-select>
+                </template>
+              </a-table-column>
+              <a-table-column title="描述">
+                <template #cell="{ record }"><a-input v-model="record.description" size="small" /></template>
+              </a-table-column>
+              <a-table-column title="操作" :width="80">
+                <template #cell="{ rowIndex }"><a-button type="text" status="danger" size="small" @click="removeOutputParam(rowIndex)">删除</a-button></template>
+              </a-table-column>
+            </template>
+          </a-table>
+        </div>
+
+        <!-- 合规与缓存策略 -->
+        <a-divider orientation="left">合规与缓存策略</a-divider>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item field="cacheTtl" label="缓存有效期 (天)">
+              <a-input-number v-model="formData.cacheTtl" placeholder="输入天数" :min="0" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item field="dataMasking" label="脱敏要求">
+              <a-select v-model="formData.dataMasking" placeholder="选择脱敏要求">
+                <a-option value="none">无</a-option>
+                <a-option value="md5">MD5加密传输</a-option>
+                <a-option value="sha256">SHA256加密传输</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item field="requireAuth" label="是否需用户授权">
+          <a-switch v-model="formData.requireAuth" />
+          <span style="margin-left: 8px; color: var(--color-text-3); font-size: 12px;">如果涉及个人隐私数据，建议开启此项。</span>
+        </a-form-item>
       </a-form>
     </a-modal>
 
@@ -863,8 +982,35 @@ const formData = reactive({
   dataManager: '',
   updateFrequency: '',
   dataManagementDescription: '',
-  files: [] as FileItem[]
+  files: [] as FileItem[],
+  // 新增技术与模型字段
+  apiUrl: '',
+  requestMethod: 'POST',
+  qpsLimit: 100,
+  timeout: 3,
+  authMethod: 'token',
+  inputParams: [{ name: '', type: 'string', required: true }],
+  outputParams: [{ name: '', type: 'string', description: '' }],
+  cacheTtl: 30,
+  dataMasking: 'none',
+  requireAuth: true
 })
+
+// 添加/删除入参
+const addInputParam = () => {
+  formData.inputParams.push({ name: '', type: 'string', required: true })
+}
+const removeInputParam = (index: number) => {
+  formData.inputParams.splice(index, 1)
+}
+
+// 添加/删除出参
+const addOutputParam = () => {
+  formData.outputParams.push({ name: '', type: 'string', description: '' })
+}
+const removeOutputParam = (index: number) => {
+  formData.outputParams.splice(index, 1)
+}
 
 // 表单验证规则
 const formRules = {

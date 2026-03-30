@@ -110,13 +110,183 @@
         </a-tab-pane>
       </a-tabs>
     </div>
-    <a-modal v-model:visible="editVisible" title="编辑档案" :width="720" @ok="saveEdit">
+    <a-modal v-model:visible="editVisible" title="编辑档案" :width="800" :footer="false" :mask-closable="false">
+      <a-steps :current="currentStep" style="margin-bottom: 24px" small>
+        <a-step title="基础信息" />
+        <a-step title="接口信息" />
+        <a-step title="数据存储与血缘" />
+      </a-steps>
+
       <a-form :model="editForm" layout="vertical">
-        <a-form-item field="description" label="描述"><a-textarea v-model="editForm.description" :rows="3" /></a-form-item>
-        <a-form-item field="tags" label="标签"><a-input-tag v-model="editForm.tags" allow-clear /></a-form-item>
-        <a-form-item field="manager" label="负责人"><a-input v-model="editForm.manager" /></a-form-item>
+        <!-- 步骤1：基础信息 -->
+        <div v-show="currentStep === 1">
+          <a-row :gutter="16">
+            <a-col :span="8">
+              <a-form-item field="name" label="外数名称" required>
+                <a-input v-model="editForm.name" placeholder="请输入外数名称" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item field="supplier" label="供应商">
+                <a-input v-model="editForm.supplier" placeholder="请输入供应商名称" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item field="status" label="当前状态" required>
+                <a-select v-model="editForm.status" placeholder="选择当前状态">
+                  <a-option value="importing">引入中</a-option>
+                  <a-option value="pending_tech_profile">待完善技术档案</a-option>
+                  <a-option value="online">已上线</a-option>
+                  <a-option value="pending_evaluation">待评估</a-option>
+                  <a-option value="archived">已归档</a-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="24">
+              <a-form-item field="description" label="描述" required>
+                <a-textarea v-model="editForm.description" placeholder="请详细描述该数据" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="24">
+              <a-form-item field="tags" label="标签">
+                <a-input-tag v-model="editForm.tags" placeholder="输入后回车添加标签" allow-clear />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </div>
+
+        <!-- 步骤2：接口信息 -->
+        <div v-show="currentStep === 2">
+          <a-row :gutter="16">
+            <a-col :span="16">
+              <a-form-item field="apiUrl" label="接口地址" required>
+                <a-select v-model="editForm.apiUrl" placeholder="请选择或输入 API 接口地址" allow-create allow-search>
+                  <a-option value="https://api.provider.com/v1/query">https://api.provider.com/v1/query (默认查询)</a-option>
+                  <a-option value="https://api.provider.com/v2/auth">https://api.provider.com/v2/auth (身份核验)</a-option>
+                  <a-option value="https://api.provider.com/v1/batch">https://api.provider.com/v1/batch (批量接口)</a-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item field="requestMethod" label="请求方式" required>
+                <a-select v-model="editForm.requestMethod" placeholder="选择请求方式">
+                  <a-option value="GET">GET</a-option>
+                  <a-option value="POST">POST</a-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-divider orientation="left" style="margin-top: 0">数据要素模型</a-divider>
+          <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span><strong>入参定义</strong></span>
+              <a-button type="outline" size="small" @click="addInputParam">添加参数</a-button>
+            </div>
+            <a-table :data="editForm.inputParams" :pagination="false" size="small">
+              <template #columns>
+                <a-table-column title="参数名">
+                  <template #cell="{ record }"><a-input v-model="record.name" size="small" /></template>
+                </a-table-column>
+                <a-table-column title="类型">
+                  <template #cell="{ record }">
+                    <a-select v-model="record.type" size="small">
+                      <a-option value="string">String</a-option>
+                      <a-option value="number">Number</a-option>
+                    </a-select>
+                  </template>
+                </a-table-column>
+                <a-table-column title="必填">
+                  <template #cell="{ record }"><a-switch v-model="record.required" size="small" /></template>
+                </a-table-column>
+                <a-table-column title="是否为要素">
+                  <template #cell="{ record }"><a-switch v-model="record.isElement" size="small" /></template>
+                </a-table-column>
+                <a-table-column title="操作" :width="80">
+                  <template #cell="{ rowIndex }"><a-button type="text" status="danger" size="small" @click="removeInputParam(rowIndex)">删除</a-button></template>
+                </a-table-column>
+              </template>
+            </a-table>
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span><strong>出参定义</strong></span>
+              <a-button type="outline" size="small" @click="addOutputParam">添加参数</a-button>
+            </div>
+            <a-table :data="editForm.outputParams" :pagination="false" size="small">
+              <template #columns>
+                <a-table-column title="参数名">
+                  <template #cell="{ record }"><a-input v-model="record.name" size="small" /></template>
+                </a-table-column>
+                <a-table-column title="类型">
+                  <template #cell="{ record }">
+                    <a-select v-model="record.type" size="small">
+                      <a-option value="string">String</a-option>
+                      <a-option value="number">Number</a-option>
+                      <a-option value="boolean">Boolean</a-option>
+                    </a-select>
+                  </template>
+                </a-table-column>
+                <a-table-column title="描述">
+                  <template #cell="{ record }"><a-input v-model="record.description" size="small" /></template>
+                </a-table-column>
+                <a-table-column title="操作" :width="80">
+                  <template #cell="{ rowIndex }"><a-button type="text" status="danger" size="small" @click="removeOutputParam(rowIndex)">删除</a-button></template>
+                </a-table-column>
+              </template>
+            </a-table>
+          </div>
+        </div>
+
+        <!-- 步骤3：数据存储与血缘 -->
+        <div v-show="currentStep === 3">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <span><strong>落库表配置 (支持多个)</strong></span>
+            <a-button type="primary" size="small" @click="addTargetTable">新增落库表</a-button>
+          </div>
+          
+          <a-card v-for="(table, index) in editForm.targetTables" :key="index" style="margin-bottom: 16px; background: var(--color-fill-2);" :bordered="false">
+            <a-row :gutter="16" align="center">
+              <a-col :span="14">
+                <a-form-item :label="`落库表名 ${Number(index) + 1}`" style="margin-bottom: 0;">
+                  <a-input v-model="table.name" placeholder="请输入落库表名，如 dwd_external_data_detail" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="10" style="text-align: right; padding-top: 28px;">
+                <a-space>
+                  <a-button type="outline" size="small" @click="viewTableFields(table.name)" :disabled="!table.name">查看字段</a-button>
+                  <a-button type="outline" size="small" @click="viewDataLineage(table.name)" :disabled="!table.name">查看血缘</a-button>
+                  <a-button type="text" status="danger" @click="removeTargetTable(index)" v-if="editForm.targetTables.length > 1">删除</a-button>
+                </a-space>
+              </a-col>
+            </a-row>
+          </a-card>
+        </div>
+
+        <!-- 底部导航按钮 -->
+        <div style="text-align: right; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-neutral-3);">
+          <a-space>
+            <a-button @click="editVisible = false">取消</a-button>
+            <a-button v-if="currentStep > 1" @click="currentStep--">上一步</a-button>
+            <a-button v-if="currentStep < 3" type="primary" @click="nextStep">下一步</a-button>
+            <a-button v-if="currentStep === 3" type="primary" @click="saveEdit">保存并完成</a-button>
+          </a-space>
+        </div>
+
       </a-form>
     </a-modal>
+
+    <!-- 查看表字段抽屉 -->
+    <a-drawer v-model:visible="tableFieldsVisible" :width="500" title="表字段详情">
+      <a-table :data="mockTableFields" :pagination="false">
+        <template #columns>
+          <a-table-column title="字段名" data-index="name" />
+          <a-table-column title="类型" data-index="type" />
+          <a-table-column title="注释" data-index="comment" />
+        </template>
+      </a-table>
+    </a-drawer>
   </div>
 </template>
 
@@ -139,7 +309,85 @@ const activeTab = ref('product')
 const dataId = computed(() => String(route.params.id || ''))
 const header = ref<any>({})
 const editVisible = ref(false)
-const editForm = ref({ description: '', tags: [] as string[], manager: '' })
+const editForm = ref({ 
+  name: '', supplier: '', status: 'importing', description: '', tags: [] as string[], manager: '',
+  apiUrl: '', requestMethod: 'POST',
+  inputParams: [{ name: '', type: 'string', required: true, isElement: false }],
+  outputParams: [{ name: '', type: 'string', description: '' }],
+  targetTables: [{ name: '' }]
+})
+
+const tableFieldsVisible = ref(false)
+const mockTableFields = ref([
+  { name: 'id', type: 'bigint', comment: '主键ID' },
+  { name: 'user_name', type: 'varchar', comment: '用户姓名' },
+  { name: 'id_card', type: 'varchar', comment: '身份证号' },
+  { name: 'risk_score', type: 'int', comment: '风险评分' },
+  { name: 'create_time', type: 'timestamp', comment: '创建时间' }
+])
+
+const currentStep = ref(1)
+
+const nextStep = () => {
+  if (currentStep.value === 1) {
+    if (!editForm.value.name || !editForm.value.description) {
+      Message.warning('请填写必填的基础信息')
+      return
+    }
+  } else if (currentStep.value === 2) {
+    if (!editForm.value.apiUrl) {
+      Message.warning('请填写接口地址')
+      return
+    }
+  }
+  currentStep.value++
+}
+
+const addTargetTable = () => {
+  editForm.value.targetTables.push({ name: '' })
+}
+const removeTargetTable = (index: number) => {
+  editForm.value.targetTables.splice(index, 1)
+}
+
+const viewTableFields = (tableName?: string) => {
+  tableFieldsVisible.value = true
+}
+
+const viewDataLineage = (tableName?: string) => {
+  Message.info(`即将跳转至表 ${tableName} 的血缘图谱页面...`)
+}
+
+const openEdit = () => { 
+  currentStep.value = 1
+  editForm.value.name = header.value.name || ''
+  editForm.value.supplier = header.value.supplier || ''
+  editForm.value.status = 'online'
+  editForm.value.description = header.value.description
+  editForm.value.tags = [...(header.value.tags || [])]
+  editForm.value.apiUrl = 'https://api.provider.com/v1/query'
+  editForm.value.requestMethod = 'POST'
+  editForm.value.targetTables = [{ name: 'dwd_external_data_detail' }]
+  editForm.value.inputParams = [{ name: 'id_card', type: 'string', required: true, isElement: true }]
+  editForm.value.outputParams = [{ name: 'risk_score', type: 'number', description: '风险评分' }]
+  editVisible.value = true 
+}
+
+// 添加/删除入参
+const addInputParam = () => {
+  editForm.value.inputParams.push({ name: '', type: 'string', required: true, isElement: false })
+}
+const removeInputParam = (index: number) => {
+  editForm.value.inputParams.splice(index, 1)
+}
+
+// 添加/删除出参
+const addOutputParam = () => {
+  editForm.value.outputParams.push({ name: '', type: 'string', description: '' })
+}
+const removeOutputParam = (index: number) => {
+  editForm.value.outputParams.splice(index, 1)
+}
 
 const goBackList = () => { router.push({ path: '/risk/external-data/archive' }) }
 const goTechDetail = () => { router.push({ path: `/external-data-v1/detail/${header.value.interfaceId || 'EXT001'}`, query: { from: 'archive', archiveId: dataId.value } }) }

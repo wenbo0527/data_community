@@ -22,7 +22,7 @@
             <a-divider direction="vertical" />
             <span>{{ userInfo?.basicInfo?.gender || '男' }}</span>
             <a-divider direction="vertical" />
-            <span>{{ userInfo?.userId || userId }}</span>
+            <span>统一客户ID：{{ userInfo?.userId || userId }}</span>
           </div>
         </div>
       </div>
@@ -61,23 +61,6 @@
         </a-tooltip>
       </div>
     </div>
-
-    <!-- 详细信息折叠面板 -->
-    <a-collapse v-model:active-key="detailExpanded" class="detail-collapse">
-      <a-collapse-item header="详细信息" key="detail">
-        <a-descriptions :column="3" bordered size="small">
-          <a-descriptions-item label="身份证号">
-            {{ userInfo?.basicInfo?.idCard || '320***********1234' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="户籍">
-            {{ userInfo?.basicInfo?.residence || '江苏省南京市' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="证件有效期">
-            {{ userInfo?.basicInfo?.idCardExpiry || '2030-12-31' }}
-          </a-descriptions-item>
-        </a-descriptions>
-      </a-collapse-item>
-    </a-collapse>
 
     <!-- 数据不一致警告 -->
     <div v-if="hasDataInconsistency" class="data-inconsistency-warning">

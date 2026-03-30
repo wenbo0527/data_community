@@ -128,7 +128,8 @@
 import { ref, watch, computed } from 'vue'
 import { Modal } from '@arco-design/web-vue'
 import { IconDelete, IconPlus } from '@arco-design/web-vue/es/icon'
-import { mockTables } from '@/mock/data-map'
+import { MetadataStore } from '@/mock/shared/metadata-store';
+const mockTables = MetadataStore.getTables();
 
 interface RelationFieldPair {
   sourceField: string

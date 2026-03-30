@@ -283,8 +283,10 @@ import {
 } from '../utils';
 import { PermissionType, DataPermissionType } from '../types';
 
-export default {
-  name: 'PermissionForm',
+import { MetadataStore } from '@/mock/shared/metadata-store';
+
+  export default {
+    name: 'PermissionForm',
   components: {
     SensitivityLabel
   },
@@ -433,33 +435,14 @@ export default {
       appCatalog.value.forEach(a => { map[a.name] = a.type; });
       return map;
     });
+    
+    const allMockTables = MetadataStore.getTables();
     const mockTables = {
-      Hive: [
-        { id: 'h_user', name: 'user_profile', sensitivityLevel: 'normal', owner: '数据平台' },
-        { id: 'h_order', name: 'order_detail', sensitivityLevel: 'sensitive', owner: '电商数据' },
-        { id: 'h_click', name: 'click_stream', sensitivityLevel: 'normal', owner: '埋点' },
-        { id: 'h_dim_prod', name: 'dim_product', sensitivityLevel: 'normal', owner: '商品中心' }
-      ],
-      Doris: [
-        { id: 'd_metric', name: 'metric_daily', sensitivityLevel: 'normal', owner: '指标团队' },
-        { id: 'd_view', name: 'sales_view', sensitivityLevel: 'sensitive', owner: '销售分析' },
-        { id: 'd_fact', name: 'fact_orders', sensitivityLevel: 'normal', owner: '电商数据' }
-      ],
-      MySQL: [
-        { id: 'm_cust', name: 'customers', sensitivityLevel: 'core', owner: 'CRM' },
-        { id: 'm_prod', name: 'products', sensitivityLevel: 'normal', owner: '商品中心' },
-        { id: 'm_order', name: 'orders', sensitivityLevel: 'sensitive', owner: '电商数据' }
-      ],
-      PostgreSQL: [
-        { id: 'p_fin', name: 'finance_tx', sensitivityLevel: 'sensitive', owner: '财务' },
-        { id: 'p_geo', name: 'geo_points', sensitivityLevel: 'normal', owner: 'GIS' },
-        { id: 'p_kpi', name: 'kpi_monthly', sensitivityLevel: 'normal', owner: '指标中心' }
-      ],
-      ClickHouse: [
-        { id: 'c_event', name: 'events_stream', sensitivityLevel: 'normal', owner: '埋点' },
-        { id: 'c_agg', name: 'agg_sessions', sensitivityLevel: 'sensitive', owner: '行为分析' },
-        { id: 'c_visit', name: 'visit_logs', sensitivityLevel: 'normal', owner: '埋点' }
-      ]
+      Hive: allMockTables.filter(t => t.type === 'Hive' || t.type === 'hive'),
+      Doris: allMockTables.filter(t => t.type === 'Doris' || t.type === 'doris'),
+      MySQL: allMockTables.filter(t => t.type === 'MySQL' || t.type === 'mysql'),
+      PostgreSQL: allMockTables.filter(t => t.type === 'PostgreSQL' || t.type === 'postgresql'),
+      ClickHouse: allMockTables.filter(t => t.type === 'ClickHouse' || t.type === 'clickhouse')
     };
     const getTablesOptions = (dbName) => {
       const type = dbTypeByName.value[dbName] || 'MySQL';

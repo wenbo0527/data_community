@@ -43,13 +43,13 @@ export default [{
       path: 'service/detail-data-query',
       name: 'detail-data-query',
       component: () => import('../pages/management/service/detail-data-query.vue'),
-      meta: { title: '明细数据查询服务' }
+      meta: { title: '明细查询服务管理' }
     },
     {
-      path: 'data-models',
+      path: 'service/data-models',
       name: 'data-models',
       component: () => import('../pages/management/data-models/index.vue'),
-      meta: { title: '数据查询&管理模型' },
+      meta: { title: '数据服务模型管理' },
       children: [
         {
           path: '',
@@ -80,6 +80,36 @@ export default [{
       ]
     },
     {
+      path: 'service/monitor',
+      name: 'ServiceMonitor',
+      component: () => import('../pages/management/service/ServiceMonitor.vue'),
+      meta: { title: '服务监控' }
+    },
+    {
+      path: 'service/stats',
+      name: 'ServiceStats',
+      component: () => import('../pages/management/service/ServiceStats.vue'),
+      meta: { title: '调用统计' }
+    },
+    {
+      path: 'metadata',
+      meta: { title: '元数据中心' },
+      children: [
+        {
+          path: 'modeling',
+          name: 'MetadataModeling',
+          component: () => import('../pages/management/metadata/modeling/index.vue'),
+          meta: { title: '元数据建模' }
+        },
+        {
+          path: 'query',
+          name: 'MetadataQuery',
+          component: () => import('../pages/management/metadata/query/index.vue'),
+          meta: { title: '元数据查询' }
+        }
+      ]
+    },
+    {
       path: 'accompany',
       name: 'management-accompany',
       component: () => import('../pages/management/accompany/index.vue'),
@@ -98,10 +128,47 @@ export default [{
       ]
     },
     {
+      path: 'business-domain',
+      name: 'BusinessDomainList',
+      meta: { title: '业务域管理' },
+      component: () => import('../pages/management/business-concept/BusinessDomainList.vue')
+    },
+    {
+      path: 'business-entity',
+      name: 'BusinessEntityList',
+      meta: { title: '业务实体管理' },
+      component: () => import('../pages/management/business-concept/BusinessEntityList.vue')
+    },
+    {
+      path: 'business-graph',
+      name: 'BusinessRelationGraph',
+      meta: { title: '业务图谱' },
+      component: () => import('../pages/management/business-concept/BusinessRelationGraph.vue')
+    },
+    {
       path: 'asset-management',
       meta: { title: '资产管理' },
       children: [
-
+        {
+          path: 'data-resources',
+          name: 'DataResources',
+          meta: { title: '数据资源' },
+          component: () => import('../pages/management/asset-management/listing-management/table-management/index.vue'),
+          props: { assetType: 'Resource' }
+        },
+        {
+          path: 'data-assets',
+          name: 'DataAssets',
+          meta: { title: '数据资产' },
+          component: () => import('../pages/management/asset-management/listing-management/table-management/index.vue'),
+          props: { assetType: 'Asset' }
+        },
+        {
+          path: 'data-elements',
+          name: 'DataElements',
+          meta: { title: '数据要素' },
+          component: () => import('../pages/management/asset-management/listing-management/data-elements/index.vue')
+        },
         {
           path: 'basic-management/tag-management',
           name: 'TagManagement',
@@ -125,76 +192,6 @@ export default [{
           name: 'MetadataCollectionDetail',
           meta: { title: '采集任务详情' },
           component: () => import('../pages/management/asset-management/basic-management/metadata-collection/index.vue'),
-          props: true
-        },
-        {
-          path: 'listing-management/table-management',
-          name: 'TableManagement',
-          meta: { title: '表管理' },
-          component: () => import('../pages/management/asset-management/listing-management/table-management/index.vue')
-        },
-        {
-          path: 'listing-management/table-management/register',
-          name: 'TableRegister',
-          meta: { title: '注册表单' },
-          component: () => import('../pages/management/asset-management/listing-management/table-management/RegisterTableForm.vue')
-        },
-        {
-          path: 'listing-management/external-data-management',
-          name: 'ExternalDataManagement',
-          meta: { title: '外数管理' },
-          component: () => import('../pages/management/asset-management/listing-management/external-data-management/index.vue')
-        },
-        {
-          path: 'listing-management/metric-management',
-          name: 'MetricManagement',
-          meta: { title: '指标管理' },
-          component: () => import('../pages/management/asset-management/listing-management/metric-management/index.vue')
-        },
-        {
-          path: 'listing-management/metric-management/create/edit',
-          name: 'MetricCreate',
-          meta: { title: '新建指标' },
-          component: () => import('../pages/management/asset-management/listing-management/metric-management/MetricDetail.vue')
-        },
-        {
-          path: 'listing-management/metric-management/:id/edit',
-          name: 'MetricEdit',
-          meta: { title: '编辑指标' },
-          component: () => import('../pages/management/asset-management/listing-management/metric-management/MetricDetail.vue'),
-          props: true
-        },
-        {
-          path: 'listing-management/metric-management/:id/:mode?',
-          name: 'MetricDetail',
-          meta: { title: '指标详情' },
-          component: () => import('../pages/management/asset-management/listing-management/metric-management/MetricDetail.vue'),
-          props: true
-        },
-        {
-          path: 'listing-management/variable-management',
-          name: 'VariableManagementDiscovery',
-          meta: { title: '变量注册' },
-          component: () => import('../pages/management/asset-management/listing-management/variable-management/index.vue')
-        },
-        {
-          path: 'listing-management/variable-management/create/edit',
-          name: 'VariableAssetCreate',
-          meta: { title: '新建变量' },
-          component: () => import('../pages/management/asset-management/listing-management/variable-management/VariableDetail.vue')
-        },
-        {
-          path: 'listing-management/variable-management/:id/edit',
-          name: 'VariableAssetEdit',
-          meta: { title: '编辑变量' },
-          component: () => import('../pages/management/asset-management/listing-management/variable-management/VariableDetail.vue'),
-          props: true
-        },
-        {
-          path: 'listing-management/variable-management/:id/:mode?',
-          name: 'VariableAssetDetail',
-          meta: { title: '变量详情' },
-          component: () => import('../pages/management/asset-management/listing-management/variable-management/VariableDetail.vue'),
           props: true
         }
       ]
@@ -317,6 +314,12 @@ export default [{
           name: 'StandardWords',
           component: () => import('../pages/management/data-standard/words/index.vue'),
           meta: { title: '标准单词管理' }
+        },
+        {
+          path: 'audit',
+          name: 'StandardAudit',
+          component: () => import('../pages/management/data-standard/audit/index.vue'),
+          meta: { title: '标准稽核管理' }
         }
       ]
     },

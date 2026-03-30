@@ -22,6 +22,9 @@ export default defineConfig(({ command }) => ({
   optimizeDeps: {
     exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue', 'fsevents']
   },
+  define: {
+    'define.amd': 'false'
+  },
   build: {
     target: 'es2015',
     rollupOptions: {

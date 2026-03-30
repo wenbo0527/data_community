@@ -29,8 +29,16 @@
       <!-- 客户基本信息卡片 -->
       <div class="info-card">
         <div class="card-header">
-          <IconUser class="card-icon" />
-          <span class="card-title">客户基本信息</span>
+          <div class="header-left">
+            <IconUser class="card-icon" />
+            <span class="card-title">客户基本信息</span>
+          </div>
+          <div class="header-right">
+            <a-tag color="green" size="small">
+              <template #icon><span class="live-dot"></span></template>
+              实时
+            </a-tag>
+          </div>
         </div>
         <div class="card-content">
           <div class="info-grid">
@@ -349,10 +357,32 @@ const getStatusColor = (status: string) => {
 
 .card-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 1px solid #f2f3f5;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #00b42a;
+  margin-right: 4px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 .card-icon {

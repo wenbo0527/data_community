@@ -66,10 +66,6 @@
             <h3 class="section-title">文件列表</h3>
             <span class="result-count">共找到 {{ pagination.total }} 个文件记录</span>
           </div>
-          <a-button type="primary" size="small" @click="handleUpload">
-            <template #icon><icon-upload /></template>
-            上传文件
-          </a-button>
         </div>
 
         <a-spin :loading="loading" style="width: 100%">
@@ -111,7 +107,6 @@
                 <div class="card-actions">
                   <a-button type="text" size="mini" @click="downloadFile(file)">下载</a-button>
                   <a-button type="text" size="mini" @click="previewData(file)" :disabled="file.status !== 'success'">预览</a-button>
-                  <a-button type="text" size="mini" status="danger" @click="deleteFile(file)">删除</a-button>
                 </div>
               </a-card>
             </a-col>

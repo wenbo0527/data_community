@@ -83,10 +83,11 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
 import DataStandardImportModal from '@/components/modals/DataStandardImportModal.vue'
+import { StandardStore } from '@/mock/shared/standard-store'
 
 const router = useRouter()
 const searchKey = ref('')
@@ -97,58 +98,26 @@ const pagination = reactive({
   total: 50
 })
 
-// Mock Data
-const tableData = ref([
-  {
-    id: 1,
-    standardNo: 'STD_001',
-    version: '1.0',
-    subject: '客户',
-    chineseName: '客户编号',
-    englishName: 'Customer ID',
-    englishAbbr: 'CUST_ID',
-    domain: 'ID_20',
-    dataType: 'VARCHAR',
-    length: 20,
-    precision: 0,
-    department: '数据管理部',
-    status: 'published',
-    updateTime: '2023-10-01 10:00:00'
-  },
-  {
-    id: 2,
-    standardNo: 'STD_002',
-    subject: '账户',
-    chineseName: '账户余额',
-    englishName: 'Account Balance',
-    englishAbbr: 'ACCT_BAL',
-    domain: 'AMT_18_2',
-    dataType: 'DECIMAL',
-    length: 18,
-    precision: 2,
-    department: '财务部',
-    status: 'published',
-    updateTime: '2023-10-02 14:30:00'
-  },
-  {
-    id: 3,
-    standardNo: 'STD_003',
-    subject: '公共',
-    chineseName: '证件类型',
-    englishName: 'Certificate Type',
-    englishAbbr: 'CERT_TYPE',
-    domain: 'CODE_2',
-    dataType: 'CHAR',
-    length: 2,
-    precision: 0,
-    department: '数据管理部',
-    status: 'draft',
-    updateTime: '2023-10-05 09:15:00'
-  }
-])
+// Mock Data from StandardStore
+const tableData = ref([])
+
+onMounted(() => {
+  tableData.value = StandardStore.getStandards()
+  pagination.total = tableData.value.length
+})
 
 const handleSearch = () => {
-  Message.info(`搜索：${searchKey.value}`)
+  const allStandards = StandardStore.getStandards()
+  if (!searchKey.value) {
+    tableData.value = allStandards
+  } else {
+    const key = searchKey.value.toLowerCase()
+    tableData.value = allStandards.filter(item => 
+      item.standardNo.toLowerCase().includes(key) ||
+      item.chineseName.includes(key) ||
+      item.englishAbbr.toLowerCase().includes(key)
+    )
+  }
 }
 
 const handlePageChange = (page) => {

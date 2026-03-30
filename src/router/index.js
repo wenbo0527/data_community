@@ -465,6 +465,12 @@ const router = createRouter({
           component: () => import('../pages/variable-map/index.vue')
         },
         {
+          path: 'feature-map',
+          name: 'FeatureMapDiscovery',
+          meta: { title: '特征地图' },
+          component: () => import('../pages/discovery/feature-map/index.vue')
+        },
+        {
           path: 'variable-map/detail/:id',
           name: 'VariableMapDetail',
           meta: { title: '变量详情' },
@@ -504,28 +510,52 @@ const router = createRouter({
           component: () => import('../pages/discovery/data-map/CollectionDetail.vue')
         },
         {
+          path: 'impact-analysis',
+          name: 'ImpactAnalysis',
+          component: () => import('../pages/discovery/impact-analysis/index.vue'),
+          meta: { title: '影响分析' }
+        },
+        {
           path: 'api-market',
           name: 'ApiMarket',
           component: () => import('../pages/discovery/api-market/index.vue'),
-          meta: { title: 'API集市' }
+          meta: { title: '其他' }
         },
         {
           path: 'api-market/detail/:id',
           name: 'ApiDetail',
           component: () => import('../pages/discovery/api-market/ApiDetail.vue'),
-          meta: { title: 'API详情' }
+          meta: { title: '其他详情' }
         },
         {
           path: 'data-resources/business-system',
           name: 'BusinessSystem',
           component: () => import('../pages/discovery/data-resources/BusinessSystem.vue'),
-          meta: { title: '业务系统' }
+          meta: { title: '业务系统数据源' }
         },
         {
           path: 'data-resources/file-import',
           name: 'FileImport',
           component: () => import('../pages/discovery/data-resources/FileImport.vue'),
-          meta: { title: '文件导入' }
+          meta: { title: '文件资源' }
+        },
+        {
+          path: 'data-resources/external-data',
+          name: 'ExternalData',
+          component: () => import('../pages/discovery/data-resources/ExternalData.vue'),
+          meta: { title: '外部数据源' }
+        },
+        {
+          path: 'data-resources/real-time-data',
+          name: 'RealTimeData',
+          component: () => import('../pages/discovery/data-resources/RealTimeData.vue'),
+          meta: { title: '实时数据源' }
+        },
+        {
+          path: 'data-resources/log-data',
+          name: 'LogData',
+          component: () => import('../pages/discovery/data-resources/LogData.vue'),
+          meta: { title: '日志数据源' }
         },
         {
           path: 'asset-overview',

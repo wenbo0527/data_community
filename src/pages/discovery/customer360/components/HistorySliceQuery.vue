@@ -1,7 +1,7 @@
 <template>
   <div class="history-slice-query">
-    
-    <!-- 历史记录列表 -->
+      
+      <!-- 历史查询记录列表 -->
     <div class="history-records-section">
       <div class="section-header">
         <h4>历史查询记录</h4>

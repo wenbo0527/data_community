@@ -34,21 +34,9 @@
               "icon": "lucide-file",
               "title": "外数评估需求文档"
             }
-          },
-          {
-            "id": "bce480dd374baa94",
-            "type": "leaf",
-            "state": {
-              "type": "release-notes",
-              "state": {
-                "currentVersion": "1.12.4"
-              },
-              "icon": "lucide-book-up",
-              "title": "版本说明 1.12.4"
-            }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -101,7 +89,8 @@
               "title": "书签"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -196,14 +185,15 @@
       "copilot:Open Copilot Chat": false
     }
   },
-  "active": "bf3c221ebac071fc",
+  "active": "fc8bd4329cb4196e",
   "lastOpenFiles": [
+    "2026-03-12.md",
+    "未命名.canvas",
+    "未命名.base",
     "未命名 1",
     "需求文档/外数生命周期/外数评估需求文档.md",
     "未命名.md",
     "未命名",
-    "未命名.canvas",
-    "未命名.base",
     "需求文档/数据发现/数据发现-指标注册.md",
     "需求文档/数据发现-v1.0.md",
     "需求文档/数据发现/数据发现-v1.0.md",
@@ -229,11 +219,9 @@
     "技术方案/方案执行优先级评估.md",
     "技术方案/控制台日志系统重复下载问题修复方案.md",
     "技术方案/控制台日志系统使用说明.md",
-    "技术方案/控制台日志系统TypeError修复总结.md",
     "技术方案/2025-08-07",
     "技术方案/2025-08-06/问题编号_008_2025-08-06.txt",
     "技术方案/2025-08-06/问题编号_007_2025-08-06.txt",
-    "技术方案/2025-08-06/问题编号_005_2025-08-06.txt",
-    "技术方案/2025-08-06"
+    "技术方案/2025-08-06/问题编号_005_2025-08-06.txt"
   ]
 }

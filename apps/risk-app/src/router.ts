@@ -65,6 +65,12 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '外数数据服务' }
           },
           {
+            path: 'service-create',
+            name: 'RiskExternalDataServiceCreate',
+            component: () => import('./modules/external-data/pages/Service.vue'),
+            meta: { title: '外数服务创建（新）' }
+          },
+          {
             path: 'service-scene',
             name: 'RiskExternalDataServiceScene',
             component: () => import('./modules/external-data/pages/ServiceScene.vue'),

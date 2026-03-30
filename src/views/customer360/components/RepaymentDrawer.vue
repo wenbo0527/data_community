@@ -149,21 +149,45 @@
                   <span class="detail-label">利息：</span>
                   <span class="detail-value amount">{{ formatAmount(record.interest) }}</span>
                 </div>
-                <div v-if="record.penalty > 0" class="detail-row">
+                <div class="detail-row">
                   <span class="detail-label">罚息：</span>
-                  <span class="detail-value amount penalty">{{ formatAmount(record.penalty) }}</span>
+                  <span class="detail-value amount penalty">{{ formatAmount(record.penalty || 0) }}</span>
                 </div>
-                <div v-if="record.fee > 0" class="detail-row">
+                <div class="detail-row">
+                  <span class="detail-label">优惠金额：</span>
+                  <span class="detail-value amount discount">{{ formatAmount(record.discountAmount || 0) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">优惠后利息：</span>
+                  <span class="detail-value amount">{{ formatAmount(record.interestAfterDiscount || 0) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">优惠收回利息：</span>
+                  <span class="detail-value amount">{{ formatAmount(record.discountRecoveredInterest || 0) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">提前还款违约金：</span>
+                  <span class="detail-value amount penalty">{{ formatAmount(record.earlyRepaymentPenalty || 0) }}</span>
+                </div>
+                <div class="detail-row">
                   <span class="detail-label">费用：</span>
-                  <span class="detail-value amount">{{ formatAmount(record.fee) }}</span>
+                  <span class="detail-value amount">{{ formatAmount(record.fee || 0) }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">还款方式：</span>
-                  <span class="detail-value">{{ record.method }}</span>
+                  <span class="detail-value">{{ record.method || '-' }}</span>
                 </div>
-                <div v-if="record.overdueDays > 0" class="detail-row">
+                <div class="detail-row">
+                  <span class="detail-label">优惠失效原因：</span>
+                  <span class="detail-value">{{ record.discountInvalidReason || '-' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">优惠回收原因：</span>
+                  <span class="detail-value">{{ record.discountRecoverReason || '-' }}</span>
+                </div>
+                <div class="detail-row">
                   <span class="detail-label">逾期天数：</span>
-                  <span class="detail-value overdue">{{ record.overdueDays }}天</span>
+                  <span class="detail-value" :class="{ overdue: record.overdueDays > 0 }">{{ record.overdueDays || 0 }}天</span>
                 </div>
               </div>
             </div>
@@ -252,6 +276,12 @@ interface RepaymentDetail {
   principal: number
   interest: number
   penalty: number
+  discountAmount?: number
+  interestAfterDiscount?: number
+  discountRecoveredInterest?: number
+  earlyRepaymentPenalty?: number
+  discountInvalidReason?: string
+  discountRecoverReason?: string
   fee: number
   method: string
   status: string
@@ -480,6 +510,10 @@ const copyText = async (text: string) => {
 
 .value.amount.penalty {
   color: #f53f3f;
+}
+
+.detail-value.amount.discount {
+  color: #00b42a;
 }
 
 .value.date {
