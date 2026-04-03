@@ -179,7 +179,7 @@ const mockTables_old = [
     }
 ];
 
-const mockCollections = [
+export const mockCollections = [
     {
         id: 'collection-1',
         name: '贷前分析',
