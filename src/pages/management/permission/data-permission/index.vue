@@ -51,14 +51,19 @@
         </div>
         <a-tabs v-model:active-key="activeTab">
           <a-tab-pane key="department" title="按部门">
-            <a-table :data="deptGrants" :pagination="false">
+            <div v-if="deptGrants.length > 0" style="margin-bottom: 8px;">
+              <a-checkbox v-model="deptSelectAll" @change="handleDeptSelectAll">全选</a-checkbox>
+            </div>
+            <a-table :data="deptGrants" :pagination="false" :row-selection="rowSelectionConfig('department')">
               <template #columns>
+                <a-table-column type="checkbox" />
                 <a-table-column title="部门名称" data-index="subjectName" />
                 <a-table-column title="权限点" data-index="permissions">
                   <template #cell="{ record }">
                     <a-space wrap><a-tag v-for="p in record.permissions" :key="p" size="small" color="blue">{{p}}</a-tag></a-space>
                   </template>
                 </a-table-column>
+                <a-table-column title="授权时间" data-index="grantTime" />
                 <a-table-column title="操作" width="100">
                   <template #cell="{ record }">
                     <a-button type="text" status="danger" size="small" @click="revokeGrant(record)">移除</a-button>
@@ -66,16 +71,26 @@
                 </a-table-column>
               </template>
             </a-table>
+            <div v-if="deptGrants.length > 0" style="margin-top: 12px; text-align: right;">
+              <a-button type="primary" status="danger" size="small" :disabled="selectedDeptKeys.length === 0" @click="batchRevoke('department')">
+                批量移除 ({{ selectedDeptKeys.length }})
+              </a-button>
+            </div>
           </a-tab-pane>
           <a-tab-pane key="role" title="按角色">
-            <a-table :data="roleGrants" :pagination="false">
+            <div v-if="roleGrants.length > 0" style="margin-bottom: 8px;">
+              <a-checkbox v-model="roleSelectAll" @change="handleRoleSelectAll">全选</a-checkbox>
+            </div>
+            <a-table :data="roleGrants" :pagination="false" :row-selection="rowSelectionConfig('role')">
               <template #columns>
+                <a-table-column type="checkbox" />
                 <a-table-column title="角色名称" data-index="subjectName" />
                 <a-table-column title="权限点" data-index="permissions">
                   <template #cell="{ record }">
                     <a-space wrap><a-tag v-for="p in record.permissions" :key="p" size="small" color="blue">{{p}}</a-tag></a-space>
                   </template>
                 </a-table-column>
+                <a-table-column title="授权时间" data-index="grantTime" />
                 <a-table-column title="操作" width="100">
                   <template #cell="{ record }">
                     <a-button type="text" status="danger" size="small" @click="revokeGrant(record)">移除</a-button>
@@ -83,16 +98,26 @@
                 </a-table-column>
               </template>
             </a-table>
+            <div v-if="roleGrants.length > 0" style="margin-top: 12px; text-align: right;">
+              <a-button type="primary" status="danger" size="small" :disabled="selectedRoleKeys.length === 0" @click="batchRevoke('role')">
+                批量移除 ({{ selectedRoleKeys.length }})
+              </a-button>
+            </div>
           </a-tab-pane>
           <a-tab-pane key="user" title="按用户">
-            <a-table :data="userGrants" :pagination="false">
+            <div v-if="userGrants.length > 0" style="margin-bottom: 8px;">
+              <a-checkbox v-model="userSelectAll" @change="handleUserSelectAll">全选</a-checkbox>
+            </div>
+            <a-table :data="userGrants" :pagination="false" :row-selection="rowSelectionConfig('user')">
               <template #columns>
+                <a-table-column type="checkbox" />
                 <a-table-column title="用户名称" data-index="subjectName" />
                 <a-table-column title="权限点" data-index="permissions">
                   <template #cell="{ record }">
                     <a-space wrap><a-tag v-for="p in record.permissions" :key="p" size="small" color="blue">{{p}}</a-tag></a-space>
                   </template>
                 </a-table-column>
+                <a-table-column title="授权时间" data-index="grantTime" />
                 <a-table-column title="操作" width="100">
                   <template #cell="{ record }">
                     <a-button type="text" status="danger" size="small" @click="revokeGrant(record)">移除</a-button>
@@ -100,6 +125,11 @@
                 </a-table-column>
               </template>
             </a-table>
+            <div v-if="userGrants.length > 0" style="margin-top: 12px; text-align: right;">
+              <a-button type="primary" status="danger" size="small" :disabled="selectedUserKeys.length === 0" @click="batchRevoke('user')">
+                批量移除 ({{ selectedUserKeys.length }})
+              </a-button>
+            </div>
           </a-tab-pane>
         </a-tabs>
       </div>
@@ -129,7 +159,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, h } from 'vue'
 import { Message } from '@arco-design/web-vue'
 
 const searchForm = reactive({
@@ -157,9 +187,12 @@ const resourceList = ref([
 
 // 授权记录数据 (MOCK)
 const grantsData = ref([
-  { id: 101, resourceId: 1, subjectType: 'department', subjectName: '数据分析部', permissions: ['SELECT'] },
-  { id: 102, resourceId: 1, subjectType: 'role', subjectName: 'DataAnalyst', permissions: ['SELECT', 'INSERT'] },
-  { id: 103, resourceId: 3, subjectType: 'user', subjectName: '张三', permissions: ['ALL'] }
+  { id: 101, resourceId: 1, subjectType: 'department', subjectName: '数据分析部', permissions: ['SELECT'], grantTime: '2025-01-15 10:30:00' },
+  { id: 102, resourceId: 1, subjectType: 'role', subjectName: 'DataAnalyst', permissions: ['SELECT', 'INSERT'], grantTime: '2025-02-20 14:20:00' },
+  { id: 103, resourceId: 3, subjectType: 'user', subjectName: '张三', permissions: ['ALL'], grantTime: '2025-03-01 09:00:00' },
+  { id: 104, resourceId: 1, subjectType: 'department', subjectName: '风险管理部', permissions: ['SELECT', 'UPDATE'], grantTime: '2025-03-05 11:15:00' },
+  { id: 105, resourceId: 1, subjectType: 'role', subjectName: 'ProjectManager', permissions: ['SELECT', 'UPDATE', 'DELETE'], grantTime: '2025-03-10 16:45:00' },
+  { id: 106, resourceId: 2, subjectType: 'user', subjectName: '李四', permissions: ['SELECT', 'INSERT'], grantTime: '2025-03-12 13:20:00' }
 ])
 
 const filteredData = computed(() => {
@@ -299,6 +332,100 @@ const submitGrant = () => {
 const revokeGrant = (record) => {
   grantsData.value = grantsData.value.filter(g => g.id !== record.id)
   Message.success('已移除授权')
+}
+
+// 批量移除相关逻辑
+const deptSelectAll = ref(false)
+const roleSelectAll = ref(false)
+const userSelectAll = ref(false)
+const selectedDeptKeys = ref([])
+const selectedRoleKeys = ref([])
+const selectedUserKeys = ref([])
+
+const rowSelectionConfig = (type) => {
+  if (type === 'department') {
+    return {
+      type: 'checkbox',
+      showCheckedAll: false,
+      selectedRowKeys: selectedDeptKeys.value,
+      onChange: (keys) => { selectedDeptKeys.value = keys }
+    }
+  }
+  if (type === 'role') {
+    return {
+      type: 'checkbox',
+      showCheckedAll: false,
+      selectedRowKeys: selectedRoleKeys.value,
+      onChange: (keys) => { selectedRoleKeys.value = keys }
+    }
+  }
+  return {
+    type: 'checkbox',
+    showCheckedAll: false,
+    selectedRowKeys: selectedUserKeys.value,
+    onChange: (keys) => { selectedUserKeys.value = keys }
+  }
+}
+
+const handleDeptSelectAll = (checked) => {
+  if (checked) {
+    selectedDeptKeys.value = deptGrants.value.map(g => g.id)
+  } else {
+    selectedDeptKeys.value = []
+  }
+}
+
+const handleRoleSelectAll = (checked) => {
+  if (checked) {
+    selectedRoleKeys.value = roleGrants.value.map(g => g.id)
+  } else {
+    selectedRoleKeys.value = []
+  }
+}
+
+const handleUserSelectAll = (checked) => {
+  if (checked) {
+    selectedUserKeys.value = userGrants.value.map(g => g.id)
+  } else {
+    selectedUserKeys.value = []
+  }
+}
+
+const batchRevoke = (type) => {
+  let keys = []
+  if (type === 'department') keys = selectedDeptKeys.value
+  if (type === 'role') keys = selectedRoleKeys.value
+  if (type === 'user') keys = selectedUserKeys.value
+
+  if (keys.length === 0) return
+
+  Message.warning({
+    id: 'batch-revoke',
+    content: `确认要撤销选中的 ${keys.length} 条授权记录吗？`,
+    duration: 0,
+    closable: true,
+    action: h('a-button', { type: 'primary', size: 'mini', onClick: () => confirmBatchRevoke(type, keys) }, '确认'),
+    close: () => Message.remove('batch-revoke')
+  })
+}
+
+const confirmBatchRevoke = (type, keys) => {
+  grantsData.value = grantsData.value.filter(g => !keys.includes(g.id))
+  // 清空选择
+  if (type === 'department') {
+    selectedDeptKeys.value = []
+    deptSelectAll.value = false
+  }
+  if (type === 'role') {
+    selectedRoleKeys.value = []
+    roleSelectAll.value = false
+  }
+  if (type === 'user') {
+    selectedUserKeys.value = []
+    userSelectAll.value = false
+  }
+  Message.success(`已批量移除 ${keys.length} 条授权记录`)
+  Message.remove('batch-revoke')
 }
 </script>
 

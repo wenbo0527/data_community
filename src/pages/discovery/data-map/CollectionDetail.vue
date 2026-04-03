@@ -73,7 +73,7 @@ import { Message, Modal } from '@arco-design/web-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import { IconFile, IconUser, IconLock, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
-import mockData from '@/mock/data-map'
+import { mockCollections } from '@/mock/data-map.js'
 
 interface TableField {
   name: string
@@ -129,14 +129,23 @@ const fetchCollection = async () => {
   loading.value = true
   try {
     const id = route.params.id
-    const found = mockData.collections.find(c => c.id === id)
+    
+    if (!id) {
+      Message.error('无效的场景ID')
+      router.push('/discovery/data-map/collections')
+      return
+    }
+    
+    const found = mockCollections.find(c => c.id === id)
+    
     if (found) {
       collection.value = found
     } else {
       Message.error('未找到该场景')
-      goBack(router, '/discovery/data-map/collections')
+      router.push('/discovery/data-map/collections')
     }
   } catch (error) {
+    console.error('Fetch collection error:', error)
     Message.error('获取数据失败')
   } finally {
     loading.value = false

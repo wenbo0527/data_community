@@ -100,6 +100,12 @@ const routes: RouteRecordRaw[] = [
             name: 'RiskExternalDataValidationTemplate',
             component: () => import('./modules/external-data/pages/ServiceValidationTemplate.vue'),
             meta: { title: '服务校验模版管理' }
+          },
+          {
+            path: 'online-call-application',
+            name: 'RiskExternalDataOnlineCallApplication',
+            component: () => import('./modules/external-data/pages/OnlineCallApplication.vue'),
+            meta: { title: '外数线上调用服务申请' }
           }
         ]
       },

@@ -92,18 +92,22 @@ const scenes = [
   },
   {
     id: 'batch-external',
-    title: '批量外数调用服务申请',
-    description: '适用于多源数据整合，支持跨渠道、跨产品的批量数据调用。',
+    title: '外数线上调用服务申请',
+    description: '针对风险贷中单次或周期发起文件交互形式的样本传输、调用、落库，并在线上业务进行调用。',
     icon: IconImport,
     color: '#14C9C9',
-    tags: ['多源整合', '批量调用', '跨渠道'],
-    serviceType: '批量外数调用服务申请'
+    tags: ['文件交互', '线上调用', '样本传输'],
+    serviceType: '外数线上调用服务申请'
   }
 ]
 
 const handleSceneClick = (scene: any) => {
-  currentServiceType.value = scene.serviceType
-  drawerVisible.value = true
+  if (scene.serviceType === '外数线上调用服务申请') {
+    router.push({ name: 'RiskExternalDataOnlineCallApplication' })
+  } else {
+    currentServiceType.value = scene.serviceType
+    drawerVisible.value = true
+  }
 }
 
 const handleSuccess = () => {

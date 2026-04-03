@@ -53,7 +53,8 @@ const lifecycleMenus = [
       { key: '/external-data/service-create', title: '外数服务创建（新）' },
       { key: '/external-data/service', title: '服务任务列表' },
       { key: '/external-data/sample-preparation', title: '样本表准备' },
-      { key: '/external-data/validation-template', title: '服务校验模版管理' }
+      { key: '/external-data/validation-template', title: '服务校验模版管理' },
+      { key: '/external-data/online-call-application', title: '外数线上调用服务申请' }
     ]
   },
   {

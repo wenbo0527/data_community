@@ -130,48 +130,119 @@
           </a-tab-pane>
 
           <a-tab-pane key="data" title="数据权限">
+            <a-alert v-if="currentRole?.builtin" type="warning" style="margin-bottom: 16px;">
+              <template #icon><icon-info-circle /></template>
+              <span style="color: #d91c1c; font-weight: 600;">系统默认角色，权限配置需谨慎</span>
+            </a-alert>
+            
             <a-card :bordered="false">
-              <div class="section-title">全局权限点</div>
-              <a-checkbox-group v-model="roleForm.dataPermissions.global">
-                <a-checkbox value="SELECT">SELECT</a-checkbox>
-                <a-checkbox value="INSERT">INSERT</a-checkbox>
-                <a-checkbox value="UPDATE">UPDATE</a-checkbox>
-                <a-checkbox value="DELETE">DELETE</a-checkbox>
-                <a-checkbox value="CREATE">CREATE</a-checkbox>
-                <a-checkbox value="DROP">DROP</a-checkbox>
-              </a-checkbox-group>
+              <div class="section-title">计算引擎 (按引擎分配权限)</div>
+              <a-radio-group v-model="selectedEngine" type="button">
+                <a-radio value="inceptor">Inceptor (Hive)</a-radio>
+                <a-radio value="doris">Doris</a-radio>
+              </a-radio-group>
+              <div class="engine-desc" v-if="selectedEngine">
+                当前为 <a-tag color="blue">{{ selectedEngine === 'inceptor' ? 'Inceptor (Hive)' : 'Doris' }}</a-tag> 引擎配置权限
+              </div>
             </a-card>
+            
             <a-card :bordered="false" style="margin-top:16px">
-              <div class="section-title">数据库/数据表/视图等粒度授权</div>
+              <div class="section-title">全局权限点 ({{ selectedEngine === 'inceptor' ? 'Inceptor' : 'Doris' }})</div>
+              <a-checkbox-group v-model="roleForm.dataPermissions.global" :disabled="selectedEngine === 'doris' && isAdminTemplate">
+                <template v-if="selectedEngine === 'inceptor'">
+                  <a-checkbox value="SELECT">SELECT</a-checkbox>
+                  <a-checkbox value="INSERT">INSERT</a-checkbox>
+                  <a-checkbox value="UPDATE">UPDATE</a-checkbox>
+                  <a-checkbox value="DELETE">DELETE</a-checkbox>
+                  <a-checkbox value="CREATE">CREATE</a-checkbox>
+                  <a-checkbox value="DROP">DROP</a-checkbox>
+                  <a-checkbox value="LOAD">LOAD</a-checkbox>
+                  <a-checkbox value="ALTER">ALTER</a-checkbox>
+                </template>
+                <template v-else>
+                  <a-checkbox value="select_priv">select_priv</a-checkbox>
+                  <a-checkbox value="insert_priv">insert_priv</a-checkbox>
+                  <a-checkbox value="update_priv">update_priv</a-checkbox>
+                  <a-checkbox value="delete_priv">delete_priv</a-checkbox>
+                  <a-checkbox value="create_priv">create_priv</a-checkbox>
+                  <a-checkbox value="drop_priv">drop_priv</a-checkbox>
+                  <a-checkbox value="load_priv">load_priv</a-checkbox>
+                  <a-checkbox value="alter_priv">alter_priv</a-checkbox>
+                </template>
+              </a-checkbox-group>
+              <div class="helper-text" v-if="isAdminTemplate">
+                <icon-info-circle /> 运维/DBA模板已锁定全部权限
+              </div>
+            </a-card>
+            
+            <a-card :bordered="false" style="margin-top:16px">
+              <div class="section-title">
+                {{ selectedEngine === 'inceptor' ? 'Inceptor' : 'Doris' }} 对象级权限配置
+              </div>
               <a-space direction="vertical" style="width:100%">
                 <div class="kv-row">
                   <span>数据库</span>
-                  <a-select v-model="roleForm.dataPermissions.database" style="width: 260px" allow-clear multiple>
-                    <a-option v-for="db in databases" :key="db" :value="db">{{ db }}</a-option>
-                  </a-select>
+                </div>
+                <div class="resource-list-container">
+                  <div class="resource-list-header">
+                    <a-input-search v-model="dbSearchKeyword" placeholder="搜索数据库" style="width: 200px; margin-bottom: 8px;" />
+                    <a-checkbox v-model="dbSelectAll" @change="handleDbSelectAll" style="margin-left: 8px;">全选</a-checkbox>
+                  </div>
+                  <div class="resource-list-content">
+                    <a-checkbox-group v-model="roleForm.dataPermissions.database" class="resource-checkbox-group">
+                      <a-checkbox v-for="db in filteredDatabases" :key="db" :value="db" class="resource-checkbox-item">
+                        {{ db }}
+                      </a-checkbox>
+                    </a-checkbox-group>
+                    <a-empty v-if="filteredDatabases.length === 0" description="无匹配数据库" />
+                  </div>
                 </div>
                 <div class="kv-row">
                   <span>数据表</span>
-                  <a-select v-model="roleForm.dataPermissions.tables" style="width: 320px" allow-clear multiple>
-                    <a-option v-for="tbl in tables" :key="tbl" :value="tbl">{{ tbl }}</a-option>
-                  </a-select>
+                </div>
+                <div class="resource-list-container">
+                  <div class="resource-list-header">
+                    <a-input-search v-model="tableSearchKeyword" placeholder="搜索数据表" style="width: 200px; margin-bottom: 8px;" />
+                    <a-checkbox v-model="tableSelectAll" @change="handleTableSelectAll" style="margin-left: 8px;">全选</a-checkbox>
+                  </div>
+                  <div class="resource-list-content">
+                    <a-checkbox-group v-model="roleForm.dataPermissions.tables" class="resource-checkbox-group">
+                      <a-checkbox v-for="tbl in filteredTables" :key="tbl" :value="tbl" class="resource-checkbox-item">
+                        {{ tbl }}
+                      </a-checkbox>
+                    </a-checkbox-group>
+                    <a-empty v-if="filteredTables.length === 0" description="无匹配数据表" />
+                  </div>
                 </div>
                 <div class="kv-row">
                   <span>视图</span>
-                  <a-select v-model="roleForm.dataPermissions.views" style="width: 320px" allow-clear multiple>
-                    <a-option v-for="v in views" :key="v" :value="v">{{ v }}</a-option>
-                  </a-select>
                 </div>
-                <div class="kv-row">
-                  <span>物化视图</span>
-                  <a-select v-model="roleForm.dataPermissions.mviews" style="width: 320px" allow-clear multiple>
-                    <a-option v-for="mv in mviews" :key="mv" :value="mv">{{ mv }}</a-option>
-                  </a-select>
+                <div class="resource-list-container">
+                  <div class="resource-list-header">
+                    <a-input-search v-model="viewSearchKeyword" placeholder="搜索视图" style="width: 200px; margin-bottom: 8px;" />
+                    <a-checkbox v-model="viewSelectAll" @change="handleViewSelectAll" style="margin-left: 8px;">全选</a-checkbox>
+                  </div>
+                  <div class="resource-list-content">
+                    <a-checkbox-group v-model="roleForm.dataPermissions.views" class="resource-checkbox-group">
+                      <a-checkbox v-for="v in filteredViews" :key="v" :value="v" class="resource-checkbox-item">
+                        {{ v }}
+                      </a-checkbox>
+                    </a-checkbox-group>
+                    <a-empty v-if="filteredViews.length === 0" description="无匹配视图" />
+                  </div>
                 </div>
+                <template v-if="selectedEngine === 'inceptor'">
+                  <div class="kv-row">
+                    <span>物化视图</span>
+                    <a-select v-model="roleForm.dataPermissions.mviews" style="width: 320px" allow-clear multiple>
+                      <a-option v-for="mv in mviewsByEngine" :key="mv" :value="mv">{{ mv }}</a-option>
+                    </a-select>
+                  </div>
+                </template>
                 <div class="kv-row">
                   <span>字典</span>
                   <a-select v-model="roleForm.dataPermissions.dictionaries" style="width: 320px" allow-clear multiple>
-                    <a-option v-for="d in dictionaries" :key="d" :value="d">{{ d }}</a-option>
+                    <a-option v-for="d in dictionariesByEngine" :key="d" :value="d">{{ d }}</a-option>
                   </a-select>
                 </div>
                 <div class="kv-row">
@@ -179,14 +250,6 @@
                   <a-select v-model="roleForm.dataPermissions.externalCatalogs" style="width: 320px" allow-clear multiple>
                     <a-option v-for="c in externalCatalogs" :key="c" :value="c">{{ c }}</a-option>
                   </a-select>
-                </div>
-                <div class="kv-row">
-                  <span>UDF 权限点</span>
-                  <a-checkbox-group v-model="roleForm.dataPermissions.udf">
-                    <a-checkbox value="CREATE_UDF">CREATE_UDF</a-checkbox>
-                    <a-checkbox value="DROP_UDF">DROP_UDF</a-checkbox>
-                    <a-checkbox value="EXECUTE_UDF">EXECUTE_UDF</a-checkbox>
-                  </a-checkbox-group>
                 </div>
               </a-space>
             </a-card>
@@ -276,6 +339,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import { IconInfoCircle } from '@arco-design/web-vue/es/icon'
 
 const searchKey = ref('')
 const pagination = reactive({
@@ -341,15 +405,136 @@ const roleForm = reactive({
     externalCatalogs: [],
     udf: []
   },
-  appResources: [], // 格式: [{ appName, appId, level, modules: [...] }]
+  appResources: [],
 })
 
-const databases = ref(['db_core', 'db_mart', 'db_ext'])
-const tables = ref(['orders', 'customers', 'transactions'])
-const views = ref(['vw_daily_sales', 'vw_user_activity'])
-const mviews = ref(['mv_monthly_sales'])
-const dictionaries = ref(['dict_region', 'dict_product'])
-const externalCatalogs = ref(['s3_catalog', 'hive_catalog'])
+// 模拟按引擎区分的数据
+const mockDataByEngine = {
+  inceptor: {
+    databases: [
+      'hive_ods', 'hive_dwd', 'hive_dim', 'hive_dm', 'hive_risk', 'hive_marketing', 
+      'hive_finance', 'hive_logistics', 'hive_hr', 'hive_bi'
+    ],
+    tables: [
+      'user_info', 'user_profile', 'user_behavior_log', 'user_address',
+      'order_detail', 'order_summary', 'order_item', 'order_refund',
+      'product_info', 'product_category', 'product_sku', 'product_stock',
+      'payment_record', 'payment_alipay', 'payment_wechat', 'payment_card',
+      'inventory_stock', 'inventory_warehouse', 'inventory_transfer',
+      'click_stream', 'app_event', 'web_visit_log', 'search_keyword',
+      'customer_service', 'complaint_record', 'feedback',
+      'employee_info', 'salary_record', 'attendance_log',
+      'risk_label', 'fraud_record', 'credit_score'
+    ],
+    views: [
+      'v_user_stats', 'v_user_active', 'v_user_portrait',
+      'v_sales_summary', 'v_sales_daily', 'v_sales_monthly',
+      'v_product_popular', 'v_product_trend',
+      'v_order_overview', 'v_order_abnormal',
+      'v_payment_summary', 'v_payment_daily'
+    ],
+    mviews: [
+      'mv_monthly_sales', 'mv_daily_trend', 'mv_user_retention', 'mv_product_stats'
+    ],
+    dictionaries: [
+      'dict_region', 'dict_category', 'dict_product_type', 'dict_payment_method', 'dict_channel'
+    ]
+  },
+  doris: {
+    databases: [
+      'doris_ods', 'doris_dwd', 'doris_dim', 'doris_ads', 'doris_risk', 'doris_marketing',
+      'doris_finance', 'doris_logistics', 'doris_hr', 'doris_bi'
+    ],
+    tables: [
+      'customer_overview', 'customer_segment', 'customer_lifecycle',
+      'sales_dashboard', 'sales_realtime', 'sales_history',
+      'gmv_trend', 'gmv_region', 'gmv_category',
+      'inventory_alert', 'inventory_forecast', 'inventory_turnover',
+      'revenue_daily', 'revenue_monthly', 'revenue_profit',
+      'ab_test_result', 'funnel_conversion', 'retention_cohort',
+      'credit_risk_score', 'loan_approval', 'fraud_detection',
+      'device_fingerprint', 'login_audit', 'security_event'
+    ],
+    views: [
+      'v_customer_view', 'v_order_stats', 'v_payment_summary',
+      'v_gmv_trend', 'v_inventory_alert', 'v_revenue_report',
+      'v_user_portrait', 'v_funnel_overview', 'v_risk_dashboard'
+    ],
+    mviews: [],
+    dictionaries: [
+      'doris_dict_user', 'doris_dict_region', 'doris_dict_category', 'doris_dict_channel'
+    ]
+  }
+}
+
+// 引擎相关
+const selectedEngine = ref('inceptor')
+
+const databasesByEngine = computed(() => mockDataByEngine[selectedEngine.value]?.databases || [])
+const tablesByEngine = computed(() => mockDataByEngine[selectedEngine.value]?.tables || [])
+const viewsByEngine = computed(() => mockDataByEngine[selectedEngine.value]?.views || [])
+const mviewsByEngine = computed(() => mockDataByEngine[selectedEngine.value]?.mviews || [])
+const dictionariesByEngine = computed(() => mockDataByEngine[selectedEngine.value]?.dictionaries || [])
+
+// 外部Catalog数据（模拟）
+const externalCatalogs = ref(['s3_catalog', 'hive_catalog', 'iceberg_catalog', 'hudi_catalog'])
+
+// 搜索关键词
+const dbSearchKeyword = ref('')
+const tableSearchKeyword = ref('')
+const viewSearchKeyword = ref('')
+
+// 全选状态
+const dbSelectAll = ref(false)
+const tableSelectAll = ref(false)
+const viewSelectAll = ref(false)
+
+// 过滤后的数据
+const filteredDatabases = computed(() => {
+  if (!dbSearchKeyword.value) return databasesByEngine.value
+  return databasesByEngine.value.filter(db => db.toLowerCase().includes(dbSearchKeyword.value.toLowerCase()))
+})
+
+const filteredTables = computed(() => {
+  if (!tableSearchKeyword.value) return tablesByEngine.value
+  return tablesByEngine.value.filter(t => t.toLowerCase().includes(tableSearchKeyword.value.toLowerCase()))
+})
+
+const filteredViews = computed(() => {
+  if (!viewSearchKeyword.value) return viewsByEngine.value
+  return viewsByEngine.value.filter(v => v.toLowerCase().includes(viewSearchKeyword.value.toLowerCase()))
+})
+
+// 全选处理
+const handleDbSelectAll = (checked) => {
+  if (checked) {
+    roleForm.dataPermissions.database = [...filteredDatabases.value]
+  } else {
+    roleForm.dataPermissions.database = []
+  }
+}
+
+const handleTableSelectAll = (checked) => {
+  if (checked) {
+    roleForm.dataPermissions.tables = [...filteredTables.value]
+  } else {
+    roleForm.dataPermissions.tables = []
+  }
+}
+
+const handleViewSelectAll = (checked) => {
+  if (checked) {
+    roleForm.dataPermissions.views = [...filteredViews.value]
+  } else {
+    roleForm.dataPermissions.views = []
+  }
+}
+
+// 判断是否为运维/DBA模板（根据角色名称）
+const isAdminTemplate = computed(() => {
+  const name = currentRole.value?.name?.toLowerCase() || ''
+  return name.includes('admin') || name.includes('dba') || name.includes('运维')
+})
 
 const grantedUsers = ref([
   { id: 'u_001', name: '张三' },
@@ -379,9 +564,28 @@ const openEditRole = (record) => {
   currentRole.value = record
   roleForm.name = record.name
   roleForm.description = record.description
-  if (record.name === 'SystemAdmin') {
+  selectedEngine.value = 'inceptor' // 重置引擎选择
+  
+  // 为不同角色预填充不同的数据权限配置
+  if (record.name === 'DataAnalyst') {
+    roleForm.dataPermissions.global = ['SELECT', 'DESCRIBE']
+    roleForm.dataPermissions.database = ['hive_ods', 'hive_dwd']
+    roleForm.dataPermissions.tables = ['user_info', 'order_detail', 'product_info']
+    roleForm.dataPermissions.views = ['v_user_stats', 'v_sales_summary']
+  } else if (record.name === 'ProjectManager') {
+    roleForm.dataPermissions.global = ['SELECT', 'DESCRIBE', 'INSERT']
+    roleForm.dataPermissions.database = ['hive_dwd', 'hive_dm', 'hive_marketing']
+    roleForm.dataPermissions.tables = ['sales_dashboard', 'gmv_trend', 'order_summary']
+  } else if (record.name === 'SystemAdmin') {
     roleForm.dataPermissions.global = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP']
+    roleForm.dataPermissions.database = ['hive_ods', 'hive_dwd', 'hive_dim', 'hive_dm', 'doris_ods', 'doris_dwd', 'doris_ads']
+  } else {
+    roleForm.dataPermissions.global = []
+    roleForm.dataPermissions.database = []
+    roleForm.dataPermissions.tables = []
+    roleForm.dataPermissions.views = []
   }
+  
   activeTab.value = 'resource'
   editVisible.value = true
   try {
@@ -689,5 +893,54 @@ const removeModule = (appId, moduleName) => {
 /* 授予用户和部门的样式 */
 .grant-section {
   margin-bottom: 16px;
+}
+
+/* 资源列表容器 */
+.resource-list-container {
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.resource-list-header {
+  display: flex;
+  align-items: center;
+}
+
+.resource-list-content {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.resource-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resource-checkbox-item {
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid #e5e6eb;
+  border-radius: 4px;
+  margin: 2px;
+}
+
+.resource-checkbox-item:hover {
+  border-color: #165dff;
+}
+
+.kv-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.kv-row > span:first-child {
+  width: 80px;
+  font-weight: 500;
+  color: #4e5969;
 }
 </style>

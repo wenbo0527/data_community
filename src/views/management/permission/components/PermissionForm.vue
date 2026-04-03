@@ -44,6 +44,150 @@
             <a-radio value="table">{{ formData.permissionCategory === 'application' ? '模块级申请' : '表级申请' }}</a-radio>
           </a-radio-group>
         </a-form-item>
+
+        <!-- 表申请：引擎选择 + 表名匹配 -->
+        <template v-if="formData.permissionCategory === 'data' && formData.resourceLevel === 'table'">
+          <a-form-item label="选择引擎" name="engineType">
+            <a-radio-group v-model="formData.engineType">
+              <a-radio value="inceptor">Inceptor</a-radio>
+              <a-radio value="doris">Doris</a-radio>
+            </a-radio-group>
+          </a-form-item>
+
+          <a-form-item label="表名匹配" name="tableNameInput">
+            <a-textarea
+              v-model="formData.tableNameInput"
+              placeholder="请输入表名，支持多个表名用逗号、换行或空格分隔&#10;例如：user_info, order_detail&#10;或：&#10;user_info&#10;order_detail"
+              :rows="4"
+              allow-clear
+            />
+            <div class="helper-text" style="margin-top: 8px;">
+              支持模糊匹配，输入表名后点击"查询匹配"按钮进行搜索
+            </div>
+          </a-form-item>
+
+          <a-form-item :wrapper-col="{ offset: 6 }">
+            <a-space>
+              <a-button type="primary" @click="searchTables" :loading="tableSearchLoading">
+                <template #icon><icon-search /></template>
+                查询匹配
+              </a-button>
+              <a-button @click="clearTableSearch">清空</a-button>
+            </a-space>
+          </a-form-item>
+
+          <!-- 匹配结果展示 -->
+          <a-form-item v-if="tableSearchResults.length > 0" label="匹配结果">
+            <div class="table-match-results">
+              <a-table
+                :data="tableSearchResults"
+                :pagination="{ pageSize: 5 }"
+                row-key="id"
+              >
+                <template #columns>
+                  <a-table-column title="表名" data-index="name" />
+                  <a-table-column title="数据库" data-index="database" />
+                  <a-table-column title="类型" data-index="type" />
+                  <a-table-column title="敏感级别" data-index="sensitivityLevel">
+                    <template #cell="{ record }">
+                      <a-tag :color="getSensitivityColor(record.sensitivityLevel)">
+                        {{ record.sensitivityLevel }}
+                      </a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="操作" width="80">
+                    <template #cell="{ record }">
+                      <a-button
+                        type="text"
+                        size="small"
+                        :disabled="isTableSelected(record)"
+                        @click="addTableToSelection(record)"
+                      >
+                        {{ isTableSelected(record) ? '已添加' : '添加' }}
+                      </a-button>
+                    </template>
+                  </a-table-column>
+                </template>
+              </a-table>
+            </div>
+          </a-form-item>
+
+          <!-- 已选表展示 -->
+          <a-form-item v-if="selectedTableList.length > 0" label="已选资源">
+            <div class="selected-tables-section">
+              <a-space wrap>
+                <a-tag
+                  v-for="table in selectedTableList"
+                  :key="table.id"
+                  closable
+                  @close="removeTableFromSelection(table)"
+                  color="blue"
+                >
+                  {{ table.database }}.{{ table.name }}
+                </a-tag>
+              </a-space>
+              <div style="margin-top: 8px;">
+                <a-button type="text" size="small" @click="clearAllSelectedTables">
+                  清空全部
+                </a-button>
+              </div>
+            </div>
+          </a-form-item>
+
+          <!-- 操作类型配置 -->
+          <a-form-item label="操作类型">
+            <a-radio-group v-model="formData.operationMode">
+              <a-radio value="analysis">数据分析</a-radio>
+              <a-radio value="dev">数据开发</a-radio>
+              <a-radio value="ops">运维 / DBA</a-radio>
+              <a-radio value="custom">自定义</a-radio>
+            </a-radio-group>
+            <!-- 权限详情展示 -->
+            <div v-if="formData.operationMode !== 'custom'" style="margin-top:16px">
+              <a-alert v-if="formData.operationMode === 'ops'" type="warning" show-icon>
+                <template #title>运维/DBA权限已锁定</template>
+                将赋予全部权限，包含 GRANT、ADMIN 等高危权限，请谨慎操作
+              </a-alert>
+              <template v-else>
+                <div class="permission-detail-card">
+                  <div class="permission-detail-header">
+                    <span class="permission-detail-title">{{ getOperationModeTitle(formData.operationMode) }}</span>
+                  </div>
+                  <div class="permission-detail-content">
+                    <div class="permission-tags">
+                      <a-tag v-for="op in operationSummary" :key="op" color="blue">{{ op }}</a-tag>
+                    </div>
+                    <div class="permission-desc">{{ getOperationModeDesc(formData.operationMode) }}</div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </a-form-item>
+
+          <!-- 自定义权限 -->
+          <template v-if="formData.operationMode === 'custom'">
+            <a-form-item label="通用操作类型">
+              <a-checkbox-group v-model="formData.operationTypes.generic">
+                <a-checkbox value="SELECT">SELECT</a-checkbox>
+                <a-checkbox value="DESCRIBE">DESCRIBE</a-checkbox>
+                <a-checkbox value="INSERT">INSERT</a-checkbox>
+                <a-checkbox value="UPDATE">UPDATE</a-checkbox>
+                <a-checkbox value="DELETE">DELETE</a-checkbox>
+                <a-checkbox value="ALTER">ALTER</a-checkbox>
+                <a-checkbox value="DROP">DROP</a-checkbox>
+                <a-checkbox value="CREATE">CREATE</a-checkbox>
+              </a-checkbox-group>
+            </a-form-item>
+            <a-form-item label="数据库专属操作">
+              <a-checkbox-group v-model="formData.operationTypes.specific">
+                <a-checkbox v-for="op in dbSpecificOps" :key="op" :value="op">{{ op }}</a-checkbox>
+              </a-checkbox-group>
+            </a-form-item>
+          </template>
+        </template>
+
+        <!-- 库申请：保持原有的树形选择 -->
+        <template v-if="formData.permissionCategory !== 'data' || formData.resourceLevel !== 'table' || !formData.engineType">
         <a-form-item :label="formData.permissionCategory === 'application' ? '权限浏览与选择' : '资源浏览与选择'" name="resourceTree">
           <div class="resource-tree-section">
             <div class="tree-toolbar">
@@ -119,38 +263,52 @@
             <a-radio-group v-model="formData.operationMode">
               <a-radio value="analysis">{{ formData.permissionCategory === 'application' ? '基础使用' : '数据分析' }}</a-radio>
               <a-radio value="dev">{{ formData.permissionCategory === 'application' ? '管理配置' : '数据开发' }}</a-radio>
+              <a-radio value="ops">运维 / DBA</a-radio>
               <a-radio value="custom">自定义</a-radio>
             </a-radio-group>
             <div v-if="formData.operationMode !== 'custom'" style="margin-top:12px">
-              <a-space wrap>
+              <a-alert v-if="formData.operationMode === 'ops'" type="warning" show-icon>
+                运维/DBA模板将赋予全部权限，自定义权限区将禁用
+              </a-alert>
+              <a-space wrap v-else>
                 <a-tag v-for="op in operationSummary" :key="op">{{ op }}</a-tag>
               </a-space>
             </div>
             <template v-else>
-              <div class="ops-title">{{ formData.permissionCategory === 'application' ? '通用权限类型' : '通用操作类型' }}</div>
-              <a-checkbox-group v-model:value="formData.operationTypes.generic">
-                <template v-if="formData.permissionCategory === 'application'">
-                  <a-checkbox value="VIEW">查看</a-checkbox>
-                  <a-checkbox value="USE">使用</a-checkbox>
-                  <a-checkbox value="EDIT">编辑</a-checkbox>
-                  <a-checkbox value="MANAGE">管理</a-checkbox>
-                  <a-checkbox value="GRANT">授权</a-checkbox>
-                </template>
-                <template v-else>
-                  <a-checkbox value="SELECT">SELECT</a-checkbox>
-                  <a-checkbox value="DESCRIBE">DESCRIBE</a-checkbox>
-                  <a-checkbox value="INSERT">INSERT</a-checkbox>
-                  <a-checkbox value="UPDATE">UPDATE</a-checkbox>
-                  <a-checkbox value="DELETE">DELETE</a-checkbox>
-                  <a-checkbox value="ALTER">ALTER</a-checkbox>
-                  <a-checkbox value="DROP">DROP</a-checkbox>
-                  <a-checkbox value="CREATE">CREATE</a-checkbox>
-                </template>
-              </a-checkbox-group>
-              <div class="ops-title">{{ formData.permissionCategory === 'application' ? '应用专属权限' : '数据库专属操作' }}</div>
-              <a-checkbox-group v-model:value="formData.operationTypes.specific">
-                <a-checkbox v-for="op in dbSpecificOps" :key="op" :value="op">{{ op }}</a-checkbox>
-              </a-checkbox-group>
+              <!-- 运维/DBA模式：禁止修改权限 -->
+              <div v-if="formData.operationMode === 'ops'" class="ops-disabled">
+                <a-result status="warning" title="运维/DBA权限已锁定">
+                  <template #subtitle>
+                    当前权限模板已锁定所有权限，无需也无法修改
+                  </template>
+                </a-result>
+              </div>
+              <template v-else>
+                <div class="ops-title">{{ formData.permissionCategory === 'application' ? '通用权限类型' : '通用操作类型' }}</div>
+                <a-checkbox-group v-model:value="formData.operationTypes.generic">
+                  <template v-if="formData.permissionCategory === 'application'">
+                    <a-checkbox value="VIEW">查看</a-checkbox>
+                    <a-checkbox value="USE">使用</a-checkbox>
+                    <a-checkbox value="EDIT">编辑</a-checkbox>
+                    <a-checkbox value="MANAGE">管理</a-checkbox>
+                    <a-checkbox value="GRANT">授权</a-checkbox>
+                  </template>
+                  <template v-else>
+                    <a-checkbox value="SELECT">SELECT</a-checkbox>
+                    <a-checkbox value="DESCRIBE">DESCRIBE</a-checkbox>
+                    <a-checkbox value="INSERT">INSERT</a-checkbox>
+                    <a-checkbox value="UPDATE">UPDATE</a-checkbox>
+                    <a-checkbox value="DELETE">DELETE</a-checkbox>
+                    <a-checkbox value="ALTER">ALTER</a-checkbox>
+                    <a-checkbox value="DROP">DROP</a-checkbox>
+                    <a-checkbox value="CREATE">CREATE</a-checkbox>
+                  </template>
+                </a-checkbox-group>
+                <div class="ops-title">{{ formData.permissionCategory === 'application' ? '应用专属权限' : '数据库专属操作' }}</div>
+                <a-checkbox-group v-model:value="formData.operationTypes.specific">
+                  <a-checkbox v-for="op in dbSpecificOps" :key="op" :value="op">{{ op }}</a-checkbox>
+                </a-checkbox-group>
+              </template>
             </template>
             <div v-if="isSensitiveOperation" class="sensitive-section">
               <a-checkbox v-model:checked="formData.sensitiveRequested">申请敏感权限</a-checkbox>
@@ -161,7 +319,8 @@
             </div>
           </div>
         </a-form-item>
-      </a-card>
+        </template>
+        </a-card>
 
       <!-- 申请期限 -->
       <a-form-item label="申请期限" name="duration">
@@ -171,15 +330,30 @@
         </a-radio-group>
       </a-form-item>
 
-      <!-- 到期日期（临时权限） -->
+      <!-- 临时权限天数选择 -->
       <a-form-item
         v-if="formData.duration === 'temporary'"
-        label="到期日期"
-        name="expireDate"
+        label="授权天数"
+        name="tempDays"
       >
-        <a-space>
-          <a-date-picker v-model:value="formData.startDate" format="YYYY-MM-DD" placeholder="开始日期" :disabled-date="disabledStartDate" />
-          <a-date-picker v-model:value="formData.expireDate" format="YYYY-MM-DD" placeholder="结束日期" :disabled-date="disabledEndDate" />
+        <a-space direction="vertical">
+          <a-radio-group v-model="tempDaysPreset">
+            <a-radio value="30">30 天（1个月）</a-radio>
+            <a-radio value="60">60 天（2个月）</a-radio>
+            <a-radio value="180">180 天（半年）</a-radio>
+            <a-radio value="custom">自定义</a-radio>
+          </a-radio-group>
+          <a-input-number
+            v-if="tempDaysPreset === 'custom'"
+            v-model="formData.customDays"
+            :min="1"
+            :max="365"
+            placeholder="请输入天数"
+            style="width: 150px; margin-top: 8px;"
+          />
+          <div v-if="formData.duration === 'temporary' && tempDaysPreset !== 'custom'" class="temp-hint">
+            <icon-info-circle /> 临时权限最长不超过 1 年，到期后需重新申请
+          </div>
         </a-space>
       </a-form-item>
 
@@ -272,6 +446,7 @@
 import { ref, reactive, computed, watch } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import dayjs from 'dayjs';
+import { IconInfoCircle } from '@arco-design/web-vue/es/icon';
 import SensitivityLabel from './SensitivityLabel.vue';
 import { 
   getApprovalLevel, 
@@ -313,8 +488,7 @@ import { MetadataStore } from '@/mock/shared/metadata-store';
       permissionCategory: 'application', // application | data
       permissionTypes: ['view'], // 应用权限或数据权限根据类别渲染
       duration: 'permanent',
-      startDate: null,
-      expireDate: null,
+      customDays: 30,
       reason: ''
     });
     formData.permissionCategory = (props.defaultCategory === 'data' ? 'data' : 'application');
@@ -325,12 +499,19 @@ import { MetadataStore } from '@/mock/shared/metadata-store';
     formData.resourceLevel = 'database';
     formData.selectedDatabases = [];
     formData.includeFutureTables = false;
+    formData.engineType = 'inceptor';
+    formData.tableNameInput = '';
+    formData.operationMode = 'analysis';
     formData.operationTypes = { generic: ['SELECT'], specific: [] };
     formData.tablesByDb = {};
     formData.schemasByDb = {};
     formData.sensitiveRequested = false;
     formData.sensitiveReason = '';
     formData.operationMode = 'analysis';
+    formData.engineType = '';
+    formData.tableNameInput = '';
+
+    const tempDaysPreset = ref('30');
 
     const reasonTemplates = ref(getApplicationReasonTemplates());
 
@@ -385,6 +566,13 @@ import { MetadataStore } from '@/mock/shared/metadata-store';
       return ops.has('DELETE') || ops.has('ALTER') || ops.has('DROP');
     });
     const operationSummary = computed(() => {
+      // 运维/DBA 模式显示全部权限
+      if (formData.operationMode === 'ops') {
+        if (formData.permissionCategory === 'application') {
+          return ['VIEW', 'USE', 'EDIT', 'MANAGE', 'GRANT'];
+        }
+        return ['SELECT', 'DESCRIBE', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'GRANT', 'ADMIN'];
+      }
       return [...(formData.operationTypes.generic || []), ...(formData.operationTypes.specific || [])];
     });
     watch(() => formData.operationMode, (mode) => {
@@ -393,12 +581,20 @@ import { MetadataStore } from '@/mock/shared/metadata-store';
           formData.operationTypes = { generic: ['VIEW', 'USE'], specific: [] };
         } else if (mode === 'dev') {
           formData.operationTypes = { generic: ['VIEW', 'USE', 'EDIT', 'MANAGE'], specific: [] };
+        } else if (mode === 'ops') {
+          formData.operationTypes = { generic: ['VIEW', 'USE', 'EDIT', 'MANAGE', 'GRANT'], specific: [] };
         }
       } else {
         if (mode === 'analysis') {
           formData.operationTypes = { generic: ['SELECT','DESCRIBE'], specific: [] };
         } else if (mode === 'dev') {
           formData.operationTypes = { generic: ['SELECT','DESCRIBE','INSERT','UPDATE','DELETE','CREATE','ALTER','DROP'], specific: dbSpecificOps.value };
+        } else if (mode === 'ops') {
+          // 运维/DBA：赋予全部权限
+          formData.operationTypes = { 
+            generic: ['SELECT','DESCRIBE','INSERT','UPDATE','DELETE','CREATE','ALTER','DROP','GRANT','ADMIN'], 
+            specific: [] 
+          };
         }
       }
     }, { immediate: true });
@@ -681,19 +877,6 @@ const confirmBatch = async () => {
       duration: [
         { required: true, message: '请选择申请期限', trigger: 'change' }
       ],
-      expireDate: [
-        { 
-          required: true, 
-          message: '请选择到期日期', 
-          trigger: 'change',
-          validator: (rule, value) => {
-            if (formData.duration === 'temporary' && !value) {
-              return Promise.reject('请选择到期日期');
-            }
-            return Promise.resolve();
-          }
-        }
-      ],
       reason: [
         { 
           required: true, 
@@ -708,15 +891,6 @@ const confirmBatch = async () => {
           }
         }
       ]
-    };
-
-    const disabledStartDate = (current) => {
-      return current && current < dayjs().startOf('day');
-    };
-    const disabledEndDate = (current) => {
-      if (!formData.startDate) return current && current < dayjs().startOf('day');
-      const maxEnd = dayjs(formData.startDate).add(1, 'year').endOf('day');
-      return current && (current < dayjs(formData.startDate).startOf('day') || current > maxEnd);
     };
 
     const applyTemplate = (template) => {
@@ -756,7 +930,15 @@ const confirmBatch = async () => {
         
         // 资源校验：表级需选择表；库级需选择数据库
         if (formData.permissionCategory === 'data') {
-          if (formData.resourceLevel === 'table') {
+          // 表申请：引擎+表名匹配模式
+          if (formData.resourceLevel === 'table' && formData.engineType) {
+            if (selectedTableList.value.length === 0) {
+              Message.warning('请至少添加一个表到已选资源');
+              return;
+            }
+          }
+          // 表申请：树形选择模式
+          if (formData.resourceLevel === 'table' && !formData.engineType) {
             if (!formData.selectedDatabases || formData.selectedDatabases.length === 0) {
               Message.warning('请先选择至少一个数据库');
               return;
@@ -771,6 +953,7 @@ const confirmBatch = async () => {
               return;
             }
           }
+          // 库申请
           if (formData.resourceLevel === 'database') {
             const totalSchemas = Object.values(formData.schemasByDb).reduce((acc, arr) => acc + (arr?.length || 0), 0);
             if (totalSchemas === 0) {
@@ -807,13 +990,13 @@ const confirmBatch = async () => {
             }
           }
           if (formData.duration === 'temporary') {
-            if (!formData.startDate || !formData.expireDate) {
-              Message.warning('临时权限需选择起止时间');
+            const days = tempDaysPreset.value === 'custom' ? formData.customDays : parseInt(tempDaysPreset.value);
+            if (!days || days <= 0) {
+              Message.warning('请选择临时权限天数');
               return;
             }
-            const diff = dayjs(formData.expireDate).diff(dayjs(formData.startDate), 'day');
-            if (diff < 0 || diff > 366) {
-              Message.warning('临时权限时长不超过1年');
+            if (days > 365) {
+              Message.warning('临时权限时长不超过1年（365天）');
               return;
             }
           }
@@ -841,7 +1024,8 @@ const confirmBatch = async () => {
           ? formData.permissionTypes
           : formData.permissionTypes.flatMap(p => mapAppPermissionToDataPermission(p));
 
-        const selectedTablesPayload = Object.entries(formData.tablesByDb || {}).flatMap(([dbName, ids]) => {
+        // 树形选择的表
+        const selectedTablesFromTree = Object.entries(formData.tablesByDb || {}).flatMap(([dbName, ids]) => {
           const opts = getTablesOptions(dbName);
           return (ids || []).map(id => {
             const found = opts.find(t => t.id === id || t.value === id);
@@ -855,6 +1039,20 @@ const confirmBatch = async () => {
             };
           });
         });
+
+        // 引擎+表名匹配选择的表
+        const selectedTablesFromMatch = selectedTableList.value.map(table => ({
+          id: table.id,
+          name: table.name,
+          database: table.database,
+          databaseType: table.type,
+          sensitivityLevel: table.sensitivityLevel,
+          owner: table.owner
+        }));
+
+        // 合并两种方式的表
+        const selectedTablesPayload = [...selectedTablesFromTree, ...selectedTablesFromMatch];
+
         const submitData = {
           resources: props.selectedResources,
           permissionCategory: formData.permissionCategory,
@@ -882,8 +1080,9 @@ const confirmBatch = async () => {
           sensitiveRequested: formData.sensitiveRequested,
           sensitiveReason: formData.sensitiveReason,
           duration: formData.duration,
-          startDate: formData.startDate ? dayjs(formData.startDate).format('YYYY-MM-DD') : null,
-          expireDate: formData.expireDate ? dayjs(formData.expireDate).format('YYYY-MM-DD') : null,
+          tempDays: formData.duration === 'temporary' 
+            ? (tempDaysPreset.value === 'custom' ? formData.customDays : parseInt(tempDaysPreset.value))
+            : null,
           reason: formData.reason.trim(),
           approvalLevel: approvalLevel.value
         };
@@ -898,7 +1097,8 @@ const confirmBatch = async () => {
       formRef.value.resetFields();
       formData.permissionTypes = ['view'];
       formData.duration = 'permanent';
-      formData.expireDate = null;
+      formData.customDays = 30;
+      tempDaysPreset.value = '30';
       formData.reason = '';
       emit('reset');
     };
@@ -909,7 +1109,7 @@ const confirmBatch = async () => {
         permissionCategory: formData.permissionCategory,
         permissionTypes: formData.permissionTypes,
         duration: formData.duration,
-        expireDate: formData.expireDate,
+        customDays: formData.customDays,
         reason: formData.reason
       };
       
@@ -927,7 +1127,14 @@ const confirmBatch = async () => {
           formData.permissionCategory = draft.permissionCategory || 'application';
           formData.permissionTypes = draft.permissionTypes || ['view'];
           formData.duration = draft.duration || 'permanent';
-          formData.expireDate = draft.expireDate ? dayjs(draft.expireDate) : null;
+          formData.customDays = draft.customDays || 30;
+          if (formData.duration === 'temporary') {
+            const days = formData.customDays;
+            if (days <= 30) tempDaysPreset.value = '30';
+            else if (days <= 60) tempDaysPreset.value = '60';
+            else if (days <= 180) tempDaysPreset.value = '180';
+            else tempDaysPreset.value = 'custom';
+          }
           formData.reason = draft.reason || '';
           return draft;
         } catch (error) {
@@ -958,6 +1165,165 @@ const confirmBatch = async () => {
       formData.permissionTypes = cat === 'data' ? [DataPermissionType.SELECT] : [PermissionType.VIEW];
     });
 
+    // ========== 表申请相关逻辑 ==========
+    const tableSearchLoading = ref(false);
+    const tableSearchResults = ref([]);
+    const selectedTableList = ref([]);
+
+    // 模拟表数据
+    const mockTableDatabase = [
+      // Inceptor (Hive) tables
+      { id: 'h1', name: 'user_info', database: 'hive_ods', type: 'Inceptor', sensitivityLevel: 'normal', owner: '数据平台组' },
+      { id: 'h2', name: 'user_profile', database: 'hive_ods', type: 'Inceptor', sensitivityLevel: 'sensitive', owner: '数据平台组' },
+      { id: 'h3', name: 'order_detail', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'sensitive', owner: '电商业务部' },
+      { id: 'h4', name: 'order_summary', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'normal', owner: '电商业务部' },
+      { id: 'h5', name: 'product_info', database: 'hive_ods', type: 'Inceptor', sensitivityLevel: 'normal', owner: '商品运营组' },
+      { id: 'h6', name: 'product_category', database: 'hive_dim', type: 'Inceptor', sensitivityLevel: 'normal', owner: '商品运营组' },
+      { id: 'h7', name: 'user_behavior_log', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'core', owner: '数据平台组' },
+      { id: 'h8', name: 'click_stream', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'normal', owner: '数据平台组' },
+      { id: 'h9', name: 'payment_transactions', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'core', owner: '财务部' },
+      { id: 'h10', name: 'inventory_stock', database: 'hive_ods', type: 'Inceptor', sensitivityLevel: 'normal', owner: '供应链组' },
+      { id: 'h11', name: 'warehouse_log', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'normal', owner: '供应链组' },
+      { id: 'h12', name: 'customer_service_record', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'sensitive', owner: '客服部' },
+      { id: 'h13', name: 'marketing_campaign', database: 'hive_dm', type: 'Inceptor', sensitivityLevel: 'normal', owner: '市场部' },
+      { id: 'h14', name: 'ad_click_stats', database: 'hive_dm', type: 'Inceptor', sensitivityLevel: 'normal', owner: '市场部' },
+      { id: 'h15', name: 'risk_control_log', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'core', owner: '风控部' },
+      { id: 'h16', name: 'credit_score', database: 'hive_dim', type: 'Inceptor', sensitivityLevel: 'core', owner: '风控部' },
+      { id: 'h17', name: 'driver_location', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'core', owner: '配送运营组' },
+      { id: 'h18', name: 'delivery_order', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'sensitive', owner: '配送运营组' },
+      { id: 'h19', name: 'employee_info', database: 'hive_dim', type: 'Inceptor', sensitivityLevel: 'sensitive', owner: '人力行政部' },
+      { id: 'h20', name: 'salary_payout', database: 'hive_dwd', type: 'Inceptor', sensitivityLevel: 'core', owner: '人力行政部' },
+
+      // Doris tables
+      { id: 'd1', name: 'customerOverview', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '数据分析组' },
+      { id: 'd2', name: 'salesDashboard', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '数据分析组' },
+      { id: 'd3', name: 'realtimeOrderStat', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '运营中心' },
+      { id: 'd4', name: 'inventoryAlert', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'sensitive', owner: '供应链组' },
+      { id: 'd5', name: 'userPortraitTag', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'sensitive', owner: '数据产品组' },
+      { id: 'd6', name: 'funnelConversion', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '数据产品组' },
+      { id: 'd7', name: 'retentionCohort', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '数据产品组' },
+      { id: 'd8', name: 'abTestResult', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '产品增长组' },
+      { id: 'd9', name: 'dailyRevenue', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '财务部' },
+      { id: 'd10', name: 'profitLossReport', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'sensitive', owner: '财务部' },
+      { id: 'd11', name: 'activeUserMetric', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '数据分析组' },
+      { id: 'd12', name: 'gmvTrend', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '运营中心' },
+      { id: 'd13', name: 'regionalSales', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '区域销售组' },
+      { id: 'd14', name: 'customerChurnPrediction', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'core', owner: '客户运营组' },
+      { id: 'd15', name: 'creditRiskScore', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'core', owner: '风控部' },
+      { id: 'd16', name: 'loanApprovalStat', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'core', owner: '风控部' },
+      { id: 'd17', name: 'fraudDetectionLog', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'core', owner: '风控部' },
+      { id: 'd18', name: 'deviceFingerprint', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'core', owner: '安全合规组' },
+      { id: 'd19', name: 'loginAudit', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'sensitive', owner: '安全合规组' },
+      { id: 'd20', name: 'systemHealthCheck', database: 'doris_ads', type: 'Doris', sensitivityLevel: 'normal', owner: '技术运维组' },
+    ];
+
+    // 搜索表
+    const searchTables = async () => {
+      const input = formData.tableNameInput?.trim();
+      if (!input) {
+        Message.warning('请输入表名进行搜索');
+        return;
+      }
+      if (!formData.engineType) {
+        Message.warning('请先选择引擎类型');
+        return;
+      }
+
+      tableSearchLoading.value = true;
+
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // 解析输入的表名（支持逗号、换行、空格分隔）
+      const searchNames = input
+        .split(/[,，\s\n]+/)
+        .map(name => name.trim().toLowerCase())
+        .filter(name => name.length > 0);
+
+      // 过滤匹配的数据
+      const results = mockTableDatabase.filter(table => {
+        // 引擎类型匹配
+        const engineMatch = table.type.toLowerCase() === formData.engineType.toLowerCase();
+        // 表名模糊匹配
+        const nameMatch = searchNames.some(searchName =>
+          table.name.toLowerCase().includes(searchName) ||
+          `${table.database}.${table.name}`.toLowerCase().includes(searchName)
+        );
+        return engineMatch && nameMatch;
+      });
+
+      tableSearchResults.value = results;
+      tableSearchLoading.value = false;
+
+      if (results.length === 0) {
+        Message.info('未找到匹配的表，请检查表名或引擎类型');
+      } else {
+        Message.success(`找到 ${results.length} 个匹配的表`);
+      }
+    };
+
+    // 清空搜索
+    const clearTableSearch = () => {
+      formData.tableNameInput = '';
+      tableSearchResults.value = [];
+    };
+
+    // 添加表到已选
+    const addTableToSelection = (table) => {
+      if (!selectedTableList.value.find(t => t.id === table.id)) {
+        selectedTableList.value.push(table);
+        Message.success(`已添加：${table.database}.${table.name}`);
+      }
+    };
+
+    // 从已选中移除表
+    const removeTableFromSelection = (table) => {
+      const index = selectedTableList.value.findIndex(t => t.id === table.id);
+      if (index > -1) {
+        selectedTableList.value.splice(index, 1);
+      }
+    };
+
+    // 清空所有已选表
+    const clearAllSelectedTables = () => {
+      selectedTableList.value = [];
+    };
+
+    // 检查表是否已选中
+    const isTableSelected = (table) => {
+      return selectedTableList.value.some(t => t.id === table.id);
+    };
+
+    // 获取敏感级别颜色
+    const getSensitivityColor = (level) => {
+      const colorMap = {
+        normal: 'green',
+        sensitive: 'orange',
+        core: 'red'
+      };
+      return colorMap[level] || 'default';
+    };
+
+    // 获取操作模式标题
+    const getOperationModeTitle = (mode) => {
+      const titles = {
+        analysis: '数据分析权限',
+        dev: '数据开发权限',
+        ops: '运维/DBA权限'
+      };
+      return titles[mode] || '';
+    };
+
+    // 获取操作模式描述
+    const getOperationModeDesc = (mode) => {
+      const descs = {
+        analysis: '适用于数据分析师，仅开放只读权限（SELECT, DESCRIBE），可申请追加 INSERT, LOAD',
+        dev: '适用于数据开发人员，开放增删改查及表结构变更权限，不可申请高危权限',
+        ops: '适用于运维/DBA，拥有全部权限，包含 GRANT、ADMIN 等高危操作权限'
+      };
+      return descs[mode] || '';
+    };
+
     return {
       formRef,
       formData,
@@ -967,8 +1333,7 @@ const confirmBatch = async () => {
       approvalLevel,
       PermissionType,
       DataPermissionType,
-      disabledStartDate,
-      disabledEndDate,
+      tempDaysPreset,
       applyTemplate,
       getResourceTypeText,
       getApprovalLevelDescription,
@@ -994,7 +1359,21 @@ const confirmBatch = async () => {
       subjectTypeLabel,
       operationModeLabel,
       openBatchModal,
-      confirmBatch
+      confirmBatch,
+      // 表申请相关
+      tableSearchLoading,
+      tableSearchResults,
+      selectedTableList,
+      searchTables,
+      clearTableSearch,
+      addTableToSelection,
+      removeTableFromSelection,
+      clearAllSelectedTables,
+      isTableSelected,
+      getSensitivityColor,
+      getOperationModeTitle,
+      getOperationModeDesc,
+      IconInfoCircle
     };
   }
 };
@@ -1092,6 +1471,46 @@ const confirmBatch = async () => {
   border-radius: 6px;
 }
 
+.ops-disabled {
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.permission-detail-card {
+  background: #f7f8fa;
+  border: 1px solid #e5e6e8;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.permission-detail-header {
+  margin-bottom: 12px;
+}
+
+.permission-detail-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.permission-tags {
+  margin-bottom: 8px;
+}
+
+.permission-desc {
+  font-size: 12px;
+  color: #86909c;
+  line-height: 1.5;
+}
+
+.temp-hint {
+  margin-top: 8px;
+  color: #86909c;
+  font-size: 12px;
+}
+
 .selected-resources {
   .no-resources {
     text-align: center;
@@ -1155,25 +1574,51 @@ const confirmBatch = async () => {
   padding: 12px;
   background: #f5f5f5;
   border-radius: 6px;
-  
+
   .info-item {
     display: flex;
     margin-bottom: 8px;
-    
+
     &:last-child {
       margin-bottom: 0;
     }
-    
+
     .label {
       color: #595959;
       width: 100px;
       flex-shrink: 0;
     }
-    
+
     .value {
       color: #262626;
       font-weight: 500;
     }
+  }
+}
+
+/* 表申请样式 */
+.table-match-results {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.selected-tables-section {
+  border: 1px solid #e6f7ff;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f0f5ff;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .permission-form {
+    padding: 12px;
+  }
+
+  .section-card {
+    margin-bottom: 12px;
   }
 }
 </style>
