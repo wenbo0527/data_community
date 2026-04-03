@@ -22,6 +22,11 @@
             <a-input v-model="searchForm.creator" placeholder="请输入创建人姓名" allow-clear />
           </a-form-item>
         </a-col>
+        <a-col :span="8">
+          <a-form-item label="创建时间">
+            <a-range-picker v-model="searchForm.dateRange" style="width: 100%" />
+          </a-form-item>
+        </a-col>
         <a-col :span="8" style="text-align: right">
           <a-space>
             <a-button type="primary" @click="handleSearch">
@@ -47,6 +52,12 @@
             </template>
           </a-table-column>
           <a-table-column title="最近更新时间" data-index="updateTime" />
+          <a-table-column title="最近运行时间" data-index="lastRunTime">
+            <template #cell="{ record }">
+              <span v-if="record.lastRunTime" style="color: #00B42A;">{{ record.lastRunTime }}</span>
+              <span v-else style="color: #86909C;">-</span>
+            </template>
+          </a-table-column>
           <a-table-column title="应用场景说明" data-index="description" ellipsis tooltip />
           <a-table-column title="操作" width="250">
             <template #cell="{ record }">
@@ -122,7 +133,8 @@ const createRef = ref()
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  creator: ''
+  creator: '',
+  dateRange: []
 })
 
 // 表格数据
@@ -137,6 +149,18 @@ const pagination = reactive({
 // 模拟数据生成
 const generateMockData = () => {
   const data = []
+  const lastRunTimes = [
+    '2025-01-28 14:30:00',
+    '2025-01-27 09:15:00',
+    null,
+    '2025-01-26 18:45:00',
+    '2025-01-25 11:20:00',
+    null,
+    '2025-01-24 16:00:00',
+    '2025-01-23 10:30:00',
+    null,
+    '2025-01-22 08:45:00'
+  ]
   for (let i = 0; i < 10; i++) {
     data.push({
       id: `sample_${i + 1}`,
@@ -144,6 +168,7 @@ const generateMockData = () => {
       creator: ['张三', '李四', '王五'][i % 3],
       version: `V1.${i}`,
       updateTime: '2023-10-27 10:30:00',
+      lastRunTime: lastRunTimes[i],
       description: '用于风险控制模型的离线训练样本数据，包含用户基础信息和行为特征。',
       status: 'active'
     })
@@ -175,6 +200,7 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.name = ''
   searchForm.creator = ''
+  searchForm.dateRange = []
   handleSearch()
 }
 
