@@ -11,6 +11,20 @@
             <a-option>风险合规离线回溯申请</a-option>
           </a-select>
         </a-form-item>
+
+        <a-form-item label="选择外数产品" required>
+          <a-select
+            v-model="form.externalProduct"
+            placeholder="请选择外数产品"
+            @change="handleExternalProductChange"
+            :loading="productsLoading"
+            allow-search
+          >
+            <a-option v-for="product in availableProducts" :key="product.productCode" :value="product.productCode">
+              {{ product.productName }} ({{ product.productCode }})
+            </a-option>
+          </a-select>
+        </a-form-item>
       </a-form>
     </a-card>
 
@@ -18,20 +32,20 @@
     <a-card title="目标表配置" :bordered="false" class="section-card">
       <a-form :model="tableForm" layout="vertical">
         <a-row :gutter="16">
-          <a-col :span="12">
+          <a-col :span="8">
             <a-form-item label="存储类型" required>
-              <a-radio-group v-model="tableForm.storageType" type="button">
+              <a-radio-group v-model="tableForm.storageType" type="button" @change="handleStorageTypeChange">
                 <a-radio value="doris">Doris</a-radio>
                 <a-radio value="hive">Hive</a-radio>
               </a-radio-group>
             </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item label="集群/连接" required>
-              <a-select v-model="tableForm.cluster" placeholder="请选择集群">
-                <a-option>Common-Cluster-01</a-option>
-                <a-option>Risk-Cluster-Pro</a-option>
-                <a-option>Data-Warehouse-V2</a-option>
+          <a-col :span="16">
+            <a-form-item label="操作类型" required>
+              <a-select v-model="tableForm.operationType" placeholder="请选择操作类型" :disabled="!tableForm.storageType">
+                <a-option v-for="op in availableOperations" :key="op.code" :value="op.code">
+                  {{ op.name }}
+                </a-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -39,10 +53,36 @@
 
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="数据库" required>
-              <a-input v-model="tableForm.database" placeholder="请输入数据库名称" />
+            <a-form-item label="集群/连接" required>
+              <a-select 
+                v-model="tableForm.cluster" 
+                placeholder="请选择集群" 
+                @change="handleClusterChange"
+                :loading="clustersLoading"
+              >
+                <a-option v-for="cluster in availableClusters" :key="cluster.id" :value="cluster.id">
+                  {{ cluster.name }}
+                </a-option>
+              </a-select>
             </a-form-item>
           </a-col>
+          <a-col :span="12">
+            <a-form-item label="数据库" required>
+              <a-select 
+                v-model="tableForm.database" 
+                placeholder="请选择数据库"
+                :loading="databasesLoading"
+                :disabled="!tableForm.cluster"
+              >
+                <a-option v-for="db in availableDatabases" :key="db.id" :value="db.name">
+                  {{ db.name }} ({{ db.description }})
+                </a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="表名" required>
               <a-input v-model="tableForm.tableName" placeholder="请输入表名" />
@@ -56,7 +96,47 @@
       </a-form>
     </a-card>
 
-    <!-- 3. 数据逻辑配置 -->
+    <!-- 3. 建议表结构 (基于外数自动生成) -->
+    <a-card title="建议表结构" :bordered="false" class="section-card">
+      <template #extra>
+        <a-space>
+          <a-tag v-if="form.externalProduct" color="green">
+            <template #icon><icon-check-circle /></template>
+            已选择: {{ form.externalProduct }}
+          </a-tag>
+          <a-button type="text" size="small" @click="generateTableStructure">
+            <template #icon><icon-refresh /></template>
+            重新生成
+          </a-button>
+        </a-space>
+      </template>
+
+      <a-alert v-if="!form.externalProduct" type="warning" class="mb-4">
+        请先在上方选择外数产品，系统将自动生成建议的表结构字段。
+      </a-alert>
+
+      <a-table v-else :data="tableForm.columns" :pagination="false" size="mini" :scroll="{ y: 200 }">
+        <template #columns>
+          <a-table-column title="字段名" data-index="name" :width="120" />
+          <a-table-column title="类型" data-index="type" :width="100" />
+          <a-table-column title="注释" data-index="comment" />
+          <a-table-column title="必填" :width="60" align="center">
+            <template #cell="{ record }">
+              <a-tag v-if="record.required" color="red" size="mini">必填</a-tag>
+              <a-tag v-else color="gray" size="mini">可选</a-tag>
+            </template>
+          </a-table-column>
+        </template>
+      </a-table>
+
+      <a-divider v-if="form.externalProduct" style="margin: 12px 0" />
+
+      <div v-if="form.externalProduct" style="font-size: 12px; color: var(--color-text-3);">
+        <icon-info-circle /> 已根据 "{{ form.externalProduct }}" 的要素要求自动生成表结构，您可以在提交前核对字段。
+      </div>
+    </a-card>
+
+    <!-- 4. 数据逻辑配置 -->
     <a-card title="数据逻辑配置" :bordered="false" class="section-card">
       <template #extra>
         <a-button type="text" size="small" @click="parseSelect">
@@ -66,7 +146,7 @@
       </template>
       <a-form :model="sqlForm" layout="vertical">
         <a-alert type="info" class="mb-4">
-          请输入 SELECT 查询语句，系统将自动解析字段用于建表。
+          请输入 SELECT 查询语句，补充外数需要返回的业务字段。
         </a-alert>
         <a-form-item label="SELECT 查询语句" required>
           <a-textarea 
@@ -78,58 +158,6 @@
           />
         </a-form-item>
       </a-form>
-    </a-card>
-
-    <!-- 4. 表结构定义 -->
-    <a-card title="表结构定义" :bordered="false" class="section-card">
-       <template #extra>
-         <a-space>
-           <a-button type="outline" size="mini" @click="loadStandardTemplate">
-            <template #icon><icon-import /></template>
-            加载标准模板
-          </a-button>
-          <a-button type="secondary" size="mini" @click="addColumn">
-            <template #icon><icon-plus /></template>
-            添加字段
-          </a-button>
-         </a-space>
-      </template>
-      
-      <a-table :data="tableForm.columns" :pagination="false" size="mini" :scroll="{ y: 200 }">
-        <template #columns>
-          <a-table-column title="字段名" data-index="name" :width="120">
-            <template #cell="{ record }">
-              <a-input v-model="record.name" size="mini" />
-            </template>
-          </a-table-column>
-          <a-table-column title="类型" data-index="type" :width="100">
-            <template #cell="{ record }">
-              <a-select v-model="record.type" size="mini">
-                <a-option>STRING</a-option>
-                <a-option>INT</a-option>
-                <a-option>BIGINT</a-option>
-                <a-option>DOUBLE</a-option>
-                <a-option>DATE</a-option>
-                <a-option>DATETIME</a-option>
-                <a-option>VARCHAR</a-option>
-                <a-option>DECIMAL</a-option>
-              </a-select>
-            </template>
-          </a-table-column>
-          <a-table-column title="注释" data-index="comment">
-            <template #cell="{ record }">
-              <a-input v-model="record.comment" size="mini" />
-            </template>
-          </a-table-column>
-          <a-table-column title="操作" :width="50" align="center">
-            <template #cell="{ rowIndex }">
-              <a-button type="text" status="danger" size="mini" @click="removeColumn(rowIndex)">
-                <template #icon><icon-delete /></template>
-              </a-button>
-            </template>
-          </a-table-column>
-        </template>
-      </a-table>
     </a-card>
 
     <!-- 5. 调度配置 -->
@@ -213,34 +241,52 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, defineEmits, defineExpose } from 'vue'
+import { reactive, ref, onMounted, defineEmits, defineExpose } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconImport, IconPlus, IconDelete, IconCode } from '@arco-design/web-vue/es/icon'
+import { IconImport, IconPlus, IconDelete, IconCode, IconRefresh, IconCheckCircle, IconInfoCircle } from '@arco-design/web-vue/es/icon'
+import { getActiveSupplierProducts, getExternalDataFields, externalDataFieldsMap } from '../mock/supplierProducts'
+import type { SupplierProduct, ExternalDataField } from '../mock/supplierProducts'
+import { 
+  getStorageClustersByType, 
+  getDatabasesByCluster, 
+  getOperationTypesByStorage 
+} from '../mock/storageClusters'
+import type { StorageCluster, Database, OperationType } from '../mock/storageClusters'
 
 const emit = defineEmits(['success'])
 
 const router = useRouter()
 const isSubmitting = ref(false)
 const validationVisible = ref(false)
+const productsLoading = ref(false)
+const clustersLoading = ref(false)
+const databasesLoading = ref(false)
+const availableProducts = ref<SupplierProduct[]>([])
+const availableClusters = ref<StorageCluster[]>([])
+const availableDatabases = ref<Database[]>([])
+const availableOperations = ref<OperationType[]>([])
 
-// 表单数据
-const form = reactive({ serviceType: '' })
+const form = reactive({
+  serviceType: '',
+  externalProduct: ''
+})
+
 const sqlForm = reactive({ content: '' })
 const scheduleForm = reactive({
   type: 'single',
   cycle: 'daily',
   time: '00:00'
 })
+
 const tableForm = reactive({
   storageType: 'doris',
+  operationType: '',
   cluster: '',
   database: '',
   tableName: '',
   description: '',
-  columns: [
-    { name: 'id', type: 'BIGINT', comment: '主键ID' }
-  ]
+  columns: [] as ExternalDataField[]
 })
 
 const validationResult = reactive({
@@ -252,7 +298,84 @@ const validationResult = reactive({
   hasDataRules: false
 })
 
-// 解析 SQL
+const loadClusters = async (type: string) => {
+  clustersLoading.value = true
+  try {
+    availableClusters.value = await getStorageClustersByType(type as 'doris' | 'hive' | 'all')
+  } finally {
+    clustersLoading.value = false
+  }
+}
+
+const loadDatabases = async (clusterId: string) => {
+  databasesLoading.value = true
+  try {
+    availableDatabases.value = await getDatabasesByCluster(clusterId)
+  } finally {
+    databasesLoading.value = false
+  }
+}
+
+const loadOperations = async (storageType: string) => {
+  availableOperations.value = await getOperationTypesByStorage(storageType)
+}
+
+onMounted(async () => {
+  productsLoading.value = true
+  try {
+    availableProducts.value = await getActiveSupplierProducts()
+    await loadClusters('all')
+    await loadOperations('doris')
+  } finally {
+    productsLoading.value = false
+  }
+})
+
+const handleStorageTypeChange = async () => {
+  tableForm.cluster = ''
+  tableForm.database = ''
+  tableForm.operationType = ''
+  availableDatabases.value = []
+  await loadClusters(tableForm.storageType)
+  await loadOperations(tableForm.storageType)
+}
+
+const handleClusterChange = async () => {
+  tableForm.database = ''
+  availableDatabases.value = []
+  if (tableForm.cluster) {
+    await loadDatabases(tableForm.cluster)
+  }
+}
+
+const handleServiceTypeChange = () => {
+  if (form.externalProduct && form.serviceType) {
+    generateTableStructure()
+  }
+}
+
+const handleExternalProductChange = (value: string) => {
+  if (value) {
+    generateTableStructure()
+  }
+}
+
+const generateTableStructure = async () => {
+  if (!form.externalProduct) {
+    Message.warning('请先选择外数产品')
+    return
+  }
+
+  const fields = externalDataFieldsMap[form.externalProduct]
+  if (fields && fields.length > 0) {
+    tableForm.columns = [...fields]
+    Message.success(`已生成 ${fields.length} 个建议字段`)
+  } else {
+    tableForm.columns = []
+    Message.warning('该外数产品暂无字段要素定义')
+  }
+}
+
 const parseSelect = () => {
   if (!sqlForm.content) return
 
@@ -278,123 +401,79 @@ const parseSelect = () => {
         return {
           name: name,
           type: 'STRING',
-          comment: ''
+          comment: '',
+          required: false
         }
       }).filter(c => c.name && c.name !== '*')
 
       if (parsedCols.length > 0) {
-        // 增量更新，保留已有字段的类型和注释
         const existingMap = new Map(tableForm.columns.map(c => [c.name, c]))
-        const newColumns = parsedCols.map(c => {
-          if (existingMap.has(c.name)) {
-            return existingMap.get(c.name)
+        const newColumns = [...tableForm.columns]
+
+        for (const parsed of parsedCols) {
+          if (!existingMap.has(parsed.name)) {
+            newColumns.push(parsed)
           }
-          return c
-        })
+        }
+
         tableForm.columns = newColumns
-        Message.success(`解析成功，更新了 ${newColumns.length} 个字段`)
+        Message.success(`解析成功，补充了 ${parsedCols.length} 个额外字段`)
       }
     }
   } catch (e) {
-    // 静默失败或轻微提示，不打断用户输入
     console.warn('SQL解析部分字段失败')
   }
 }
 
-// 模拟获取模版数据
-const getTemplates = (serviceType: string) => {
-  // 这里应该调用接口获取 ServiceValidationTemplate 中的数据
-  // 为了演示，我们使用硬编码的模拟数据，模拟 ServiceValidationTemplate.vue 中的 mockTemplates
-  const templates = [
-    {
-      serviceType: '在线批量调用',
-      fields: [
-        { name: 'request_id', type: 'STRING', comment: '请求ID' },
-        { name: 'id_no', type: 'STRING', comment: '身份证号' },
-        { name: 'mobile', type: 'STRING', comment: '手机号' },
-        { name: 'name', type: 'STRING', comment: '姓名' }
-      ]
-    },
-    {
-      serviceType: '外数离线回溯申请',
-      fields: [
-        { name: 'primary_key', type: 'STRING', comment: '业务主键' },
-        { name: 'event_time', type: 'DATETIME', comment: '发生时间' }
-      ]
-    }
-  ]
-  return templates.find(t => t.serviceType === serviceType)
-}
-
-// 加载标准模板
-const loadStandardTemplate = () => {
-  if (!form.serviceType) {
-    Message.warning('请先选择服务类型')
-    return
-  }
-  
-  const template = getTemplates(form.serviceType)
-  
-  if (template) {
-    const existingNames = tableForm.columns.map(c => c.name)
-    const newCols = template.fields.filter(c => !existingNames.includes(c.name))
-    tableForm.columns = [...newCols, ...tableForm.columns]
-    Message.success(`已加载【${form.serviceType}】的标准字段模板`)
-  } else {
-    Message.info('当前服务类型暂无标准模版')
-  }
-}
-
-const handleServiceTypeChange = () => {
-  // 服务类型变更时可以做一些重置或提示
-}
-
-const addColumn = () => {
-  tableForm.columns.push({ name: '', type: 'STRING', comment: '' })
-}
-
-const removeColumn = (index: number) => {
-  tableForm.columns.splice(index, 1)
-}
-
 const handleSubmit = () => {
-  // 基础校验
   if (!form.serviceType) {
     Message.warning('请选择目标服务类型')
+    return
+  }
+  if (!form.externalProduct) {
+    Message.warning('请选择外数产品')
+    return
+  }
+  if (!tableForm.operationType) {
+    Message.warning('请选择操作类型')
+    return
+  }
+  if (!tableForm.cluster) {
+    Message.warning('请选择集群')
+    return
+  }
+  if (!tableForm.database) {
+    Message.warning('请选择数据库')
+    return
+  }
+  if (!tableForm.tableName) {
+    Message.warning('请输入表名')
     return
   }
   if (!sqlForm.content) {
     Message.warning('请输入数据查询逻辑')
     return
   }
-  if (!tableForm.database || !tableForm.tableName) {
-    Message.warning('请填写完整的数据库和表名称')
-    return
-  }
 
   isSubmitting.value = true
   
-  // 模拟提交和校验过程
   setTimeout(() => {
     isSubmitting.value = false
     
-    // 执行校验逻辑
     const hasKey = tableForm.columns.some(c => ['id_no', 'primary_key', 'request_id'].includes(c.name))
+    const requiredFields = tableForm.columns.filter(c => c.required)
+    const hasAllRequired = requiredFields.every(f => tableForm.columns.some(c => c.name === f.name))
     
     validationResult.pkCheck = true
-    validationResult.fieldsCheck = hasKey
+    validationResult.fieldsCheck = hasAllRequired
     validationResult.typeCheck = true
     
-    // 模拟数据结果校验
-    // 如果没有配置数据规则，则视为通过（或跳过）
-    // 为了模拟，我们假设 '在线批量调用' 且包含 'mobile' 时有规则，其他情况无规则
     if (form.serviceType === '在线批量调用' && tableForm.columns.some(c => c.name === 'mobile')) {
       validationResult.hasDataRules = true
-      // 20% 概率校验失败
       validationResult.dataCheck = Math.random() > 0.2
     } else {
       validationResult.hasDataRules = false
-      validationResult.dataCheck = true // 无规则视为通过
+      validationResult.dataCheck = true
     }
 
     validationResult.success = validationResult.pkCheck && validationResult.fieldsCheck && validationResult.typeCheck && validationResult.dataCheck
@@ -415,12 +494,12 @@ const goToCreateService = () => {
     query: { 
       action: 'create', 
       serviceType: form.serviceType, 
+      externalProduct: form.externalProduct,
       sourceTable: `${tableForm.database}.${tableForm.tableName}` 
     }
   })
 }
 
-// 暴露给父组件调用
 defineExpose({
   handleSubmit,
   isSubmitting

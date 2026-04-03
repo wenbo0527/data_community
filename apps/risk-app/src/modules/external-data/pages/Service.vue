@@ -15,7 +15,7 @@
             <a-option value="周期跑批任务申请">周期跑批任务申请</a-option>
             <a-option value="全量变量回溯申请">全量变量回溯申请</a-option>
             <a-option value="风险合规离线回溯申请">风险合规离线回溯申请</a-option>
-            <a-option value="批量外数调用服务申请">批量外数调用服务申请</a-option>
+            <a-option value="外数线上调用服务申请">外数线上调用服务申请</a-option>
           </a-select>
         </a-form-item>
         <a-form-item field="status" label="状态">
@@ -76,7 +76,7 @@ import ServiceApplicationDrawer from '../components/ServiceApplicationDrawer.vue
 const store = useExternalDataStore()
 const router = useRouter()
 
-type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量变量回溯申请' | '风险合规离线回溯申请' | '批量外数调用服务申请'
+type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量变量回溯申请' | '风险合规离线回溯申请' | '外数线上调用服务申请'
 
 const supplierOptions = ref(['供应商A', '供应商B']) // 简单 Mock，或者从 store 获取
 
@@ -115,9 +115,7 @@ const editMode = ref(false)
 const editingData = ref<any>(null)
 
 const goToScene = () => {
-  editMode.value = false
-  editingData.value = null
-  createVisible.value = true
+  router.push({ name: 'RiskExternalDataServiceScene' })
 }
 
 const openEdit = (record: any) => {
