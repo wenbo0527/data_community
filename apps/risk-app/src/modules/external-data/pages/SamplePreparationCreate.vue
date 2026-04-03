@@ -3,6 +3,10 @@
     <!-- 1. 基础配置 -->
     <a-card title="基础配置" :bordered="false" class="section-card">
       <a-form :model="form" layout="vertical">
+        <a-form-item label="样本表名称" required>
+          <a-input v-model="form.sampleName" placeholder="请输入样本表名称" allow-clear />
+        </a-form-item>
+
         <a-form-item label="目标服务类型" required>
           <a-select v-model="form.serviceType" placeholder="请选择服务类型" @change="handleServiceTypeChange">
             <a-option>在线批量调用</a-option>
@@ -90,7 +94,7 @@
           </a-col>
         </a-row>
 
-        <a-form-item label="表描述">
+        <a-form-item label="应用场景说明">
           <a-textarea v-model="tableForm.description" placeholder="请输入表的业务描述" :auto-size="{ minRows: 2, maxRows: 4 }" />
         </a-form-item>
       </a-form>
@@ -268,6 +272,7 @@ const availableDatabases = ref<Database[]>([])
 const availableOperations = ref<OperationType[]>([])
 
 const form = reactive({
+  sampleName: '',
   serviceType: '',
   externalProduct: ''
 })
@@ -426,6 +431,10 @@ const parseSelect = () => {
 }
 
 const handleSubmit = () => {
+  if (!form.sampleName) {
+    Message.warning('请输入样本表名称')
+    return
+  }
   if (!form.serviceType) {
     Message.warning('请选择目标服务类型')
     return
