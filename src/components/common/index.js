@@ -2,19 +2,25 @@
 import BaseTable from './BaseTable.vue'
 import BaseForm from './BaseForm.vue'
 import BaseModal from './BaseModal.vue'
+import GenericCardGrid from './GenericCardGrid.vue'
+import GenericCardGridContent from './GenericCardGridContent.vue'
 
 // 导出组件
 export {
   BaseTable,
   BaseForm,
-  BaseModal
+  BaseModal,
+  GenericCardGrid,
+  GenericCardGridContent
 }
 
 // 默认导出
 export default {
   BaseTable,
   BaseForm,
-  BaseModal
+  BaseModal,
+  GenericCardGrid,
+  GenericCardGridContent
 }
 
 // 组件安装函数（用于全局注册）
@@ -22,6 +28,8 @@ export const install = (app) => {
   app.component('BaseTable', BaseTable)
   app.component('BaseForm', BaseForm)
   app.component('BaseModal', BaseModal)
+  app.component('GenericCardGrid', GenericCardGrid)
+  app.component('GenericCardGridContent', GenericCardGridContent)
 }
 
 // 组件配置预设

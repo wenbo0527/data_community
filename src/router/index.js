@@ -218,7 +218,7 @@ const riskRoutes = RISK_EXTERNAL_ENABLED
     ]
 
 const router = createRouter({
-  history: createWebHistory('/'),
+  history: createWebHistory(import.meta.env.BASE_URL || '/community/'),
   routes: [
     ...managementRoutes,
     ...notificationRoutes,

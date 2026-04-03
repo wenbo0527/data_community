@@ -30,7 +30,7 @@ export default defineConfig(({ command }) => ({
     rollupOptions: {
       external: ['fsevents'],
       output: {
-        manualChunks: (id) => {
+        manualChunks_disabled: (id) => {
           if (id.includes('node_modules')) {
             if (id.includes('@antv/x6')) return 'antv-x6'
             if (id.includes('@antv/g2')) return 'antv-g2'
