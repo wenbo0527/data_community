@@ -1,6 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
 import offlineModelRoutes from './modules/offline-model/router'
+
+// Qiankun 环境下使用 qiankun 的 basename
+// 独立运行时始终使用 '/risk/' 作为 base，因为静态文件部署在 /risk/ 路径下
+const routerBase = qiankunWindow.__POWERED_BY_QIANKUN__ ? (qiankunWindow.ROUTER_BASE || '/risk/') : '/risk/'
+
+console.log('[Risk] routerBase:', routerBase)
 
 const routes: RouteRecordRaw[] = [
   {
@@ -204,7 +211,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory('/'),
+  history: createWebHistory(routerBase),
   routes
 })
 

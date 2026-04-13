@@ -147,7 +147,7 @@
               </div>
               
               <!-- 应用配置弹窗 -->
-    <a-modal v-model:visible="configModalVisible" title="配置应用" @ok="handleConfigConfirm" @cancel="configModalVisible = false" :ok-button-props="{ disabled: !configForm.position || !configForm.application }">
+    <a-modal v-model:visible="configModalVisible" title="配置应用" @ok="handleConfigConfirm" @cancel="handleConfigModalCancel" :ok-button-props="{ disabled: !configForm.position || !configForm.application }">
                 <a-form :model="configForm" :rules="configRules">
                   <a-form-item field="position" label="选择位置">
                     <a-select v-model="configForm.position" placeholder="请选择要配置的位置">
@@ -940,6 +940,12 @@ const handleConfigConfirm = () => {
       configModalVisible.value = false
     }
   }
+}
+
+// 处理配置弹窗取消 - 修复取消按钮无法关闭弹窗的问题
+const handleConfigModalCancel = () => {
+  configForm.value = { position: '', application: '' }
+  configModalVisible.value = false
 }
 
 // 获取图标组件
