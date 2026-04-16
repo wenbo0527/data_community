@@ -1,0 +1,27 @@
+{
+  "name": "@app/shared-utils",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./dateUtils": "./dist/dateUtils.js",
+    "./formatUtils": "./dist/formatUtils.js",
+    "./validationUtils": "./dist/validationUtils.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --declaration --outDir dist",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "dayjs": ">=1.11.0"
+  }
+}
