@@ -103,15 +103,15 @@ function handleDataModelsAPI(url, method, params, data) {
       data: {
         records,
         total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize)
+        page: parseInt(page, 10),
+        pageSize: parseInt(pageSize, 10)
       }
     }
   }
   
   // 获取详情
   if (url.match(/\/api\/data-models\/\d+$/) && upperMethod === 'GET') {
-    const id = parseInt(url.split('/').pop())
+    const id = parseInt(url.split('/', 10).pop(), 10)
     const model = mockDataModels.find(item => item.id === id)
     
     if (!model) {
@@ -145,7 +145,7 @@ function handleDataModelsAPI(url, method, params, data) {
   
   // 更新
   if (url.match(/\/api\/data-models\/\d+$/) && upperMethod === 'PUT') {
-    const id = parseInt(url.split('/').pop())
+    const id = parseInt(url.split('/', 10).pop(), 10)
     const index = mockDataModels.findIndex(item => item.id === id)
     
     if (index === -1) {
@@ -167,7 +167,7 @@ function handleDataModelsAPI(url, method, params, data) {
   
   // 删除
   if (url.match(/\/api\/data-models\/\d+$/) && upperMethod === 'DELETE') {
-    const id = parseInt(url.split('/').pop())
+    const id = parseInt(url.split('/', 10).pop(), 10)
     const index = mockDataModels.findIndex(item => item.id === id)
     
     if (index === -1) {
@@ -185,7 +185,7 @@ function handleDataModelsAPI(url, method, params, data) {
   
   // 执行模型
   if (url.match(/\/api\/data-models\/\d+\/execute$/) && upperMethod === 'POST') {
-    const id = parseInt(url.split('/')[3])
+    const id = parseInt(url.split('/', 10)[3], 10)
     const model = mockDataModels.find(item => item.id === id)
     
     if (!model) {
@@ -218,7 +218,7 @@ function handleDataModelsAPI(url, method, params, data) {
   
   // 获取执行历史
   if (url.match(/\/api\/data-models\/\d+\/executions$/) && upperMethod === 'GET') {
-    const id = parseInt(url.split('/')[3])
+    const id = parseInt(url.split('/', 10)[3], 10)
     
     // 模拟执行历史
     const executions = [
@@ -368,8 +368,8 @@ function handleV1TagAndDatasourceAPI(url, method, params, data) {
   }
   // GET /api/v1/tag-tables
   if (url === '/api/v1/tag-tables' && upperMethod === 'GET') {
-    const page = parseInt(params?.current || params?.page || 1)
-    const pageSize = parseInt(params?.pageSize || 10)
+    const page = parseInt(params?.current || params?.page || 1, 10)
+    const pageSize = parseInt(params?.pageSize || 10, 10)
     let list = [...__v1TagTables]
     // 简易筛选
     if (params?.search) {
@@ -415,7 +415,7 @@ function handleV1TagAndDatasourceAPI(url, method, params, data) {
   if (url.match(/\/api\/v1\/tag-tables\/[^/]+$/) && upperMethod === 'PUT') {
     const id = url.split('/').pop()
     const idx = __v1TagTables.findIndex(t => t.id === id)
-    if (idx === -1) return { code: 404, message: 'not_found', data: null }
+    if (idx === -1) {return { code: 404, message: 'not_found', data: null }}
     __v1TagTables[idx] = { ...__v1TagTables[idx], ...data, updateTime: new Date().toISOString().replace('T', ' ').substring(0, 19) }
     return { code: 200, message: 'updated', data: __v1TagTables[idx] }
   }
@@ -455,11 +455,11 @@ function handleV1TagAndDatasourceAPI(url, method, params, data) {
     // 简单评分：身份证/手机号优先得分高
     const f = String(fields[0] || '').toLowerCase()
     let score = 70
-    if (/id_card|idcard/.test(f)) score = 98
-    else if (/mobile|phone|msisdn/.test(f)) score = 95
-    else if (/device_id|imei|idfa/.test(f)) score = 90
-    else if (/email/.test(f)) score = 85
-    else score = 75
+    if (/id_card|idcard/.test(f)) {score = 98}
+    else if (/mobile|phone|msisdn/.test(f)) {score = 95}
+    else if (/device_id|imei|idfa/.test(f)) {score = 90}
+    else if (/email/.test(f)) {score = 85}
+    else {score = 75}
     return { code: 200, message: 'success', data: { score, sampleSize: sampleLen, field: fields[0] || '' } }
   }
   // 默认
@@ -502,15 +502,15 @@ function handleAlertRulesAPI(url, method, params, data) {
     return {
       code: 200,
       message: 'success',
-      data: { records, total, page: parseInt(page), pageSize: parseInt(pageSize) }
+      data: { records, total, page: parseInt(page, 10), pageSize: parseInt(pageSize, 10) }
     }
   }
 
   // 详情
   if (url.match(/\/api\/alert-rules\/\d+$/) && upperMethod === 'GET') {
-    const id = parseInt(url.split('/').pop())
+    const id = parseInt(url.split('/', 10).pop(), 10)
     const rule = mockAlertRules.find(item => item.id === id)
-    if (!rule) throw new Error('预警规则不存在')
+    if (!rule) {throw new Error('预警规则不存在')}
     return { code: 200, message: 'success', data: rule }
   }
 
@@ -530,27 +530,27 @@ function handleAlertRulesAPI(url, method, params, data) {
 
   // 更新
   if (url.match(/\/api\/alert-rules\/\d+$/) && upperMethod === 'PUT') {
-    const id = parseInt(url.split('/').pop())
+    const id = parseInt(url.split('/', 10).pop(), 10)
     const index = mockAlertRules.findIndex(item => item.id === id)
-    if (index === -1) throw new Error('预警规则不存在')
+    if (index === -1) {throw new Error('预警规则不存在')}
     mockAlertRules[index] = { ...mockAlertRules[index], ...data }
     return { code: 200, message: '更新成功', data: mockAlertRules[index] }
   }
 
   // 删除
   if (url.match(/\/api\/alert-rules\/\d+$/) && upperMethod === 'DELETE') {
-    const id = parseInt(url.split('/').pop())
+    const id = parseInt(url.split('/', 10).pop(), 10)
     const index = mockAlertRules.findIndex(item => item.id === id)
-    if (index === -1) throw new Error('预警规则不存在')
+    if (index === -1) {throw new Error('预警规则不存在')}
     mockAlertRules.splice(index, 1)
     return { code: 200, message: '删除成功', data: null }
   }
 
   // 启用/禁用
   if (url.match(/\/api\/alert-rules\/\d+\/toggle$/) && upperMethod === 'PUT') {
-    const id = parseInt(url.split('/')[3])
+    const id = parseInt(url.split('/', 10)[3], 10)
     const rule = mockAlertRules.find(item => item.id === id)
-    if (!rule) throw new Error('预警规则不存在')
+    if (!rule) {throw new Error('预警规则不存在')}
     rule.enabled = !rule.enabled
     return { code: 200, message: rule.enabled ? '已启用' : '已禁用', data: rule }
   }
@@ -573,7 +573,7 @@ const __dataSources = [
 ]
 
 function initVariablesMemory() {
-  if (Array.isArray(__variablesMemory)) return
+  if (Array.isArray(__variablesMemory)) {return}
   const list = []
   for (let i = 1; i <= 50; i++) {
     const type = __variableTypes[Math.floor(Math.random() * __variableTypes.length)]
@@ -629,7 +629,7 @@ function handleVariablesAPI(url, method, params, data) {
     return {
       code: 200,
       message: 'success',
-      data: { list: pageList, total, page: parseInt(page), pageSize: parseInt(pageSize) }
+      data: { list: pageList, total, page: parseInt(page, 10), pageSize: parseInt(pageSize, 10) }
     }
   }
 

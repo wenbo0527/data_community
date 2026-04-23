@@ -295,7 +295,7 @@ export function usePreviewLine(graph = null) {
 
   // 缓存管理
   const getCachedResult = (key) => {
-    if (!options.enableCaching) return null
+    if (!options.enableCaching) {return null}
     
     const cached = cache.validationResults.get(key)
     if (cached && (Date.now() - cached.timestamp) < cache.cacheTimeout) {
@@ -305,7 +305,7 @@ export function usePreviewLine(graph = null) {
   }
 
   const setCachedResult = (key, data) => {
-    if (!options.enableCaching) return
+    if (!options.enableCaching) {return}
     
     cache.validationResults.set(key, {
       data,
@@ -843,7 +843,7 @@ export function usePreviewLine(graph = null) {
 
   // 检查重复连接的辅助函数
   const checkDuplicateConnection = async (sourceNodeId, targetNodeId, branchId = null) => {
-    if (!graph) return null
+    if (!graph) {return null}
 
     const allEdges = graph.getEdges() || []
     
@@ -869,7 +869,7 @@ export function usePreviewLine(graph = null) {
   // 获取节点的预览线
   const getPreviewLineByNode = (nodeId, branchId = null) => {
     const nodePreviewLines = previewLinesByNode.get(nodeId)
-    if (!nodePreviewLines) return null
+    if (!nodePreviewLines) {return null}
     
     const key = branchId || 'default'
     return nodePreviewLines.get(key) || null
@@ -878,7 +878,7 @@ export function usePreviewLine(graph = null) {
   // 获取节点的所有预览线
   const getPreviewLinesByNode = (nodeId) => {
     const nodePreviewLines = previewLinesByNode.get(nodeId)
-    if (!nodePreviewLines) return []
+    if (!nodePreviewLines) {return []}
     
     return Array.from(nodePreviewLines.values())
   }
@@ -1614,7 +1614,7 @@ export function usePreviewLine(graph = null) {
   // 初始化时扫描现有预览线
   const initializeFromGraph = withPerformanceMonitoring(async (targetGraph = null) => {
     const workingGraph = targetGraph || graph
-    if (!workingGraph) return
+    if (!workingGraph) {return}
 
     console.log('🔄 [PreviewLine] 初始化：扫描现有预览线...')
     
@@ -1655,7 +1655,7 @@ export function usePreviewLine(graph = null) {
 
   // 自动清理机制
   const setupAutoCleanup = () => {
-    if (!options.enableAutoCleanup) return
+    if (!options.enableAutoCleanup) {return}
 
     const cleanupInterval = setInterval(async () => {
       try {

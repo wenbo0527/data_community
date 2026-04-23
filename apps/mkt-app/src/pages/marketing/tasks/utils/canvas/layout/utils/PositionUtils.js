@@ -251,7 +251,7 @@ export class PositionUtils {
    * @returns {number} 调整次数
    */
   centerAlignLayer(layerNodes, positions) {
-    if (layerNodes.length === 0) return 0;
+    if (layerNodes.length === 0) {return 0;}
 
     console.log(`🎯 [层级对齐] 开始对齐 ${layerNodes.length} 个节点`);
 
@@ -371,13 +371,13 @@ export class PositionUtils {
     const tolerance = this.options.position.tolerance;
     
     layers.forEach((layer, layerIndex) => {
-      if (layer.length <= 1) return; // 单节点层无需修正
+      if (layer.length <= 1) {return;} // 单节点层无需修正
       
       // 计算该层的标准Y坐标（使用第一个节点的Y坐标作为标准）
       const firstNodeId = layer[0].id || layer[0].getId();
       const standardPosition = positions.get(firstNodeId);
       
-      if (!standardPosition) return;
+      if (!standardPosition) {return;}
       
       const standardY = standardPosition.y;
       console.log(`🎯 [Y坐标修正] 第${layerIndex}层标准Y坐标: ${standardY}`);
@@ -423,7 +423,7 @@ export class PositionUtils {
    * @returns {Array} 位置数组
    */
   generateUniformPositions(count, spacing = null) {
-    if (count <= 0) return [];
+    if (count <= 0) {return [];}
     
     const actualSpacing = spacing || this.options.position.defaultSpacing;
     const positions = [];

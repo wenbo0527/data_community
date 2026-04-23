@@ -101,7 +101,7 @@
                   </div>
                   <a-progress 
                     :percent="factor.contribution / 100" 
-                    :color="factor.impact > 0 ? '#F53F3F' : '#00B42A'"
+                    :color="factor.impact > 0 ? '#F53F3F' : 'var(--subapp-success)'"
                     :track-color="'#F2F3F5'"
                     size="small"
                   />
@@ -301,7 +301,7 @@ const updateChartData = () => {
           ])
         },
         itemStyle: {
-          color: '#165DFF'
+          color: 'var(--subapp-primary)'
         },
         data: data
       }

@@ -529,7 +529,7 @@ export class NodeConnectionOptimizer {
   public handleConnectionCreated(data: any): void {
     try {
       const { edge } = data
-      if (!edge) return
+      if (!edge) {return}
       
       const connectionInfo: ConnectionInfo = {
         sourceNodeId: edge.source?.cell,
@@ -562,7 +562,7 @@ export class NodeConnectionOptimizer {
   public handleConnectionRemoved(data: any): void {
     try {
       const { edge } = data
-      if (!edge) return
+      if (!edge) {return}
       
       this.activeConnections.delete(edge.id)
       

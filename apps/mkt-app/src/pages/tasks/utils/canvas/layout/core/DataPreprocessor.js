@@ -166,8 +166,8 @@ export class DataPreprocessor {
       };
       
       // 确保位置是有效数字
-      if (isNaN(normalizedNode.x)) normalizedNode.x = 0;
-      if (isNaN(normalizedNode.y)) normalizedNode.y = 0;
+      if (isNaN(normalizedNode.x)) {normalizedNode.x = 0;}
+      if (isNaN(normalizedNode.y)) {normalizedNode.y = 0;}
       
       return normalizedNode;
     });

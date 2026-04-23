@@ -217,7 +217,7 @@ const goToUserGroupManagement = () => {
 
 .type-option {
   padding: 12px 16px;
-  border: 1px solid #e5e6e8;
+  border: 1px solid var(--subapp-border);
   border-radius: 8px;
   cursor: pointer;
 }
@@ -239,12 +239,12 @@ const goToUserGroupManagement = () => {
 
 .radio-title {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .radio-desc {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .mode-alert {
@@ -259,7 +259,7 @@ const goToUserGroupManagement = () => {
 
 .field-tip {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin-top: 4px;
 }
 </style>

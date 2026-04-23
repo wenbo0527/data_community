@@ -129,8 +129,8 @@ function testUtilModules() {
     
     // 测试垂直分层构建
     const layers = layerUtilsInstance.buildVerticalLayersByType(mockNodes, (node) => {
-      if (node.id.includes('start')) return 'start';
-      if (node.id.includes('end')) return 'end';
+      if (node.id.includes('start')) {return 'start';}
+      if (node.id.includes('end')) {return 'end';}
       return 'other';
     });
     console.log('✅ 垂直分层构建成功:', layers.length, '层');
@@ -195,8 +195,8 @@ function testModuleIntegration() {
     
     // 2. 使用 LayerUtils 构建分层
     const layers = layerUtilsInstance.buildVerticalLayersByType(mockNodes, (node) => {
-      if (node.id.includes('start')) return 'start';
-      if (node.id.includes('end')) return 'end';
+      if (node.id.includes('start')) {return 'start';}
+      if (node.id.includes('end')) {return 'end';}
       return 'process';
     });
     console.log('✅ 分层构建完成:', layers.length, '层');

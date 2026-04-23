@@ -64,7 +64,7 @@ export function useCanvasConnection(graph) {
    * 设置连接线事件监听
    */
   const setupConnectionEvents = () => {
-    if (!graph.value) return
+    if (!graph.value) {return}
 
     // 连接线添加事件
     graph.value.on('edge:added', handleEdgeAdded)
@@ -249,7 +249,7 @@ export function useCanvasConnection(graph) {
    * 创建预览线
    */
   const createPreviewLine = (sourceId, targetPosition, options = {}) => {
-    if (!graph.value) return null
+    if (!graph.value) {return null}
 
     try {
       const previewId = `preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`

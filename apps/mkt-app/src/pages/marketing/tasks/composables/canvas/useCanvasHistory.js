@@ -26,7 +26,7 @@ export function useCanvasHistory(graph) {
 
   // 更新撤销重做状态
   const updateUndoRedoState = () => {
-    if (!graph) return
+    if (!graph) {return}
     
     try {
       const canUndoValue = graph.canUndo()
@@ -93,7 +93,7 @@ export function useCanvasHistory(graph) {
 
   // 更新历史栈
   const updateHistoryStack = () => {
-    if (!graph || !graph.history) return
+    if (!graph || !graph.history) {return}
     
     try {
       const undoStack = graph.history.undoStack || []
@@ -128,7 +128,7 @@ export function useCanvasHistory(graph) {
 
   // 获取操作描述
   const getOperationDescription = (command) => {
-    if (!command) return '未知操作'
+    if (!command) {return '未知操作'}
     
     const { event, data } = command
     
@@ -158,7 +158,7 @@ export function useCanvasHistory(graph) {
 
   // 跳转到指定历史状态
   const jumpToHistoryState = (targetIndex) => {
-    if (!graph || !graph.history) return
+    if (!graph || !graph.history) {return}
     
     try {
       const currentIndex = graph.history.undoStack.length - 1
@@ -197,7 +197,7 @@ export function useCanvasHistory(graph) {
 
   // 格式化时间显示
   const formatTime = (timestamp) => {
-    if (!timestamp) return ''
+    if (!timestamp) {return ''}
     
     const date = new Date(timestamp)
     const now = new Date()
@@ -219,7 +219,7 @@ export function useCanvasHistory(graph) {
     // 获取实际的graph实例（可能是ref）
     const graphInstance = graph?.value || graph
     
-    if (!graphInstance || !graphInstance.history) return
+    if (!graphInstance || !graphInstance.history) {return}
     
     try {
       graphInstance.history.clear()
@@ -294,7 +294,7 @@ export function useCanvasHistory(graph) {
     // 获取实际的graph实例（可能是ref）
     const graphInstance = graph?.value || graph
     
-    if (!graphInstance) return
+    if (!graphInstance) {return}
     
     try {
       graphInstance.off('history:undo')

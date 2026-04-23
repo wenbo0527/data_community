@@ -510,16 +510,16 @@ const handleSave = () => {
   border-radius: 4px;
 }
 .header-item {
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   font-size: 14px;
 }
 .header-item span {
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-weight: 500;
   margin-left: 8px;
 }
 .resource-table-wrapper {
-  border: 1px solid #f2f3f5;
+  border: 1px solid var(--subapp-bg-secondary);
   border-radius: 4px;
 }
 :deep(.arco-table-th) {

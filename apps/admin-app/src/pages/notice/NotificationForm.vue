@@ -988,7 +988,7 @@ onUnmounted(() => {
 .form-header {
   background: white;
   padding: 16px 24px;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
   margin-bottom: 24px;
 }
 
@@ -1006,7 +1006,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .new-content-tag {
@@ -1042,7 +1042,7 @@ onUnmounted(() => {
 .action-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   transition: all 0.3s ease;
   margin-bottom: 16px;
 }
@@ -1059,7 +1059,7 @@ onUnmounted(() => {
   gap: 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .card-title-with-switch {
@@ -1084,7 +1084,7 @@ onUnmounted(() => {
 .word-count {
   margin-left: auto;
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-weight: normal;
 }
 
@@ -1150,7 +1150,7 @@ onUnmounted(() => {
 
 .radio-icon {
   font-size: 20px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .radio-text {
@@ -1160,13 +1160,13 @@ onUnmounted(() => {
 .radio-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin-bottom: 4px;
 }
 
 .radio-desc {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 /* 表单字段 */
@@ -1213,7 +1213,7 @@ onUnmounted(() => {
   backdrop-filter: blur(4px);
   border-radius: 6px;
   padding: 4px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   z-index: 10;
 }
 
@@ -1224,7 +1224,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  border: 2px dashed #d9d9d9;
+  border: 2px dashed var(--subapp-text-tertiary);
   border-radius: 8px;
   background: #fafafa;
   transition: all 0.3s ease;
@@ -1232,13 +1232,13 @@ onUnmounted(() => {
 }
 
 .upload-area:hover {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   background: #f2f7ff;
 }
 
 .upload-icon {
   font-size: 48px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin-bottom: 16px;
 }
 
@@ -1248,13 +1248,13 @@ onUnmounted(() => {
 
 .upload-title {
   font-size: 16px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin-bottom: 8px;
 }
 
 .upload-subtitle {
   font-size: 14px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 /* 发布设置网格 */
@@ -1321,13 +1321,13 @@ onUnmounted(() => {
   padding: 16px;
   background: #fafbfc;
   border-radius: 8px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   font-size: 14px;
   line-height: 1.6;
 }
 
 .empty-preview {
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   text-align: center;
   padding: 40px 20px;
   font-style: italic;
@@ -1342,24 +1342,24 @@ onUnmounted(() => {
 .preview-content :deep(h1) {
   font-size: 20px;
   margin: 16px 0 8px 0;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .preview-content :deep(h2) {
   font-size: 18px;
   margin: 14px 0 6px 0;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .preview-content :deep(h3) {
   font-size: 16px;
   margin: 12px 0 4px 0;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .preview-content :deep(p) {
   margin: 8px 0;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .preview-content :deep(ul) {
@@ -1369,11 +1369,11 @@ onUnmounted(() => {
 
 .preview-content :deep(li) {
   margin: 4px 0;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .preview-content :deep(code) {
-  background: #f2f3f5;
+  background: var(--subapp-bg-secondary);
   padding: 2px 4px;
   border-radius: 3px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -1382,7 +1382,7 @@ onUnmounted(() => {
 
 .preview-content :deep(strong) {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 /* 附件上传 */
@@ -1399,7 +1399,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 24px;
-  border: 2px dashed #c9cdd4;
+  border: 2px dashed var(--subapp-text-quaternary);
   border-radius: 8px;
   background: #fafbfc;
   transition: all 0.3s ease;
@@ -1407,13 +1407,13 @@ onUnmounted(() => {
 }
 
 .upload-area:hover {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   background: #f2f7ff;
 }
 
 .upload-icon {
   font-size: 24px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .upload-text {
@@ -1423,20 +1423,20 @@ onUnmounted(() => {
 .upload-title {
   font-size: 14px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin-bottom: 4px;
 }
 
 .upload-desc {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .upload-tips {
   display: flex;
   gap: 8px;
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   background: #f7f8fa;
   padding: 8px 12px;
   border-radius: 6px;
@@ -1466,7 +1466,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .time-picker {
@@ -1574,17 +1574,17 @@ onUnmounted(() => {
 }
 
 .preview-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--subapp-bg-secondary);
   border-radius: 3px;
 }
 
 .preview-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--subapp-text-tertiary);
   border-radius: 3px;
 }
 
 .preview-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--subapp-text-tertiary);
 }
 
 .group-management {

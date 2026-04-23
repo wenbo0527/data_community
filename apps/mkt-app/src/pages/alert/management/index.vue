@@ -1043,13 +1043,13 @@ export default {
 .page-title {
   font-size: 24px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin: 0 0 8px 0;
 }
 
 .page-description {
   font-size: 14px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin: 0;
 }
 
@@ -1167,7 +1167,7 @@ export default {
 .page-title {
   font-size: 24px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin: 0;
 }
 
@@ -1224,7 +1224,7 @@ export default {
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin: 0;
 }
 
@@ -1236,18 +1236,18 @@ export default {
     align-items: flex-start;
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 1px solid #e5e6eb;
+    border-bottom: 1px solid var(--subapp-border);
   }
 
   .detail-title {
     font-size: 20px;
     font-weight: 600;
-    color: #1d2129;
+    color: var(--subapp-text-primary);
     margin: 0 0 8px 0;
   }
 
   .detail-time {
-    color: #86909c;
+    color: var(--subapp-text-tertiary);
     font-size: 14px;
   }
 
@@ -1263,12 +1263,12 @@ export default {
 
     .section-label {
       font-weight: 600;
-      color: #1d2129;
+      color: var(--subapp-text-primary);
       margin-bottom: 8px;
     }
 
     .section-content {
-      color: #4e5969;
+      color: var(--subapp-text-secondary);
       line-height: 1.6;
     }
   }
@@ -1283,7 +1283,7 @@ export default {
   .detail-actions {
     margin-top: 24px;
     padding-top: 16px;
-    border-top: 1px solid #e5e6eb;
+    border-top: 1px solid var(--subapp-border);
     text-align: right;
   }
 }
@@ -1296,18 +1296,18 @@ export default {
     align-items: flex-start;
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 1px solid #e5e6eb;
+    border-bottom: 1px solid var(--subapp-border);
   }
 
   .detail-title {
     font-size: 20px;
     font-weight: 600;
-    color: #1d2129;
+    color: var(--subapp-text-primary);
     margin: 0 0 8px 0;
   }
 
   .detail-subtitle {
-    color: #86909c;
+    color: var(--subapp-text-tertiary);
     font-size: 14px;
   }
 
@@ -1323,12 +1323,12 @@ export default {
 
     .section-label {
       font-weight: 600;
-      color: #1d2129;
+      color: var(--subapp-text-primary);
       margin-bottom: 8px;
     }
 
     .section-content {
-      color: #4e5969;
+      color: var(--subapp-text-secondary);
       line-height: 1.6;
     }
   }
@@ -1343,7 +1343,7 @@ export default {
   .detail-actions {
     margin-top: 24px;
     padding-top: 16px;
-    border-top: 1px solid #e5e6eb;
+    border-top: 1px solid var(--subapp-border);
     text-align: right;
   }
 }
@@ -1358,7 +1358,7 @@ export default {
 
 .condition-form h4 {
   margin: 0 0 16px 0;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-size: 14px;
   font-weight: 500;
 }
@@ -1366,13 +1366,13 @@ export default {
 .option-content {
   .option-label {
     font-weight: 500;
-    color: #1d2129;
+    color: var(--subapp-text-primary);
     margin-bottom: 4px;
   }
 
   .option-description {
     font-size: 12px;
-    color: #86909c;
+    color: var(--subapp-text-tertiary);
     line-height: 1.4;
   }
 }
@@ -1388,7 +1388,7 @@ export default {
   border: 1px solid #bae7ff;
   border-radius: 4px;
   font-size: 12px;
-  color: #1890ff;
+  color: var(--subapp-info);
 }
 
 /* 响应式设计 */

@@ -44,7 +44,7 @@
             <a-statistic
               title="总预警次数"
               :value="statisticsData.total"
-              :value-style="{ color: '#165DFF', fontSize: '24px', fontWeight: 600 }"
+              :value-style="{ color: 'var(--subapp-primary)', fontSize: '24px', fontWeight: 600 }"
             />
           </a-card>
         </a-col>
@@ -62,7 +62,7 @@
             <a-statistic
               title="已处理"
               :value="statisticsData.resolved"
-              :value-style="{ color: '#00B42A', fontSize: '24px', fontWeight: 600 }"
+              :value-style="{ color: 'var(--subapp-success)', fontSize: '24px', fontWeight: 600 }"
             />
           </a-card>
         </a-col>
@@ -505,7 +505,7 @@ const initTrendChart = () => {
         data: [5, 8, 12, 6, 9, 15, 11],
         smooth: true,
         itemStyle: {
-          color: '#165DFF'
+          color: 'var(--subapp-primary)'
         }
       },
       {

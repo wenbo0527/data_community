@@ -370,7 +370,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconSearch, IconRefresh, IconCheck, IconClose } from '@arco-design/web-vue/es/icon'
-import { approvalAPI } from '@/api/coupon.js'
+import { approvalAPI } from '@/api/coupon.ts'
 
 // 筛选表单
 const filterForm = reactive({

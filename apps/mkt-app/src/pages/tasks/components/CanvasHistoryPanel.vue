@@ -227,7 +227,7 @@ export default {
 
 .history-item-current {
   background: rgba(95, 149, 255, 0.1);
-  border-left-color: #5F95FF;
+  border-left-color: var(--subapp-primary);
 }
 
 .history-item-current:hover {
@@ -252,14 +252,14 @@ export default {
   height: 20px;
   border-radius: 50%;
   background: rgba(95, 149, 255, 0.1);
-  color: #5F95FF;
+  color: var(--subapp-primary);
   font-size: 12px;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .history-item-current .history-item-icon {
-  background: #5F95FF;
+  background: var(--subapp-primary);
   color: white;
 }
 

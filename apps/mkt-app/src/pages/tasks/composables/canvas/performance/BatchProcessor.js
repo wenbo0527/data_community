@@ -88,7 +88,7 @@ export class BatchProcessor {
    */
   async flushQueue(queueName) {
     const queue = this.queues.get(queueName)
-    if (!queue || queue.length === 0) return
+    if (!queue || queue.length === 0) {return}
 
     // 清除定时器
     if (this.timers.has(queueName)) {
@@ -209,7 +209,7 @@ export class BatchProcessor {
    */
   getQueueStatus(queueName) {
     const queue = this.queues.get(queueName)
-    if (!queue) return null
+    if (!queue) {return null}
 
     const now = Date.now()
     const ages = queue.map(item => now - item.timestamp)

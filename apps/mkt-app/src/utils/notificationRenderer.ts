@@ -13,12 +13,12 @@ export function operatorText(op: string): string {
 function buildMetricInfoMap(granularity: string) {
   const metrics = ALERT_METRICS_BY_GRANULARITY[granularity] || []
   const map: Record<string, any> = {}
-  for (const m of metrics) map[m.value] = m
+  for (const m of metrics) {map[m.value] = m}
   return map
 }
 
 export function formatMetricExpression(cfg: { metric: string; operator: string; threshold: number }, granularity: string): string {
-  if (!cfg || !cfg.metric || cfg.threshold === undefined || !cfg.operator) return ''
+  if (!cfg || !cfg.metric || cfg.threshold === undefined || !cfg.operator) {return ''}
   const infoMap = buildMetricInfoMap(granularity)
   const label = infoMap[cfg.metric]?.label || cfg.metric
   const unitType = infoMap[cfg.metric]?.unitType === 'percentage' ? '%' : ''
@@ -46,7 +46,7 @@ function substitute(template: string, vars: Record<string, string>) {
 }
 
 function normalizeTemplate(tpl: string): string {
-  if (!tpl) return tpl
+  if (!tpl) {return tpl}
   return tpl
     .replace(/【券库存名称】/g, '{{券库存名称}}')
     .replace(/【券包名称】/g, '{{券包名称}}')
@@ -62,20 +62,20 @@ export function renderAlertPreview(options: { name: string; metricConfigs: Array
     const t = options.type
     const g = options.granularity
     if (t === 'inventory') {
-      if (g === 'coupon_stock') return scopeVals.includes('custom_stock') ? '指定券库存' : '全部券库存'
-      if (g === 'coupon_package') return scopeVals.includes('custom_packages') ? '指定券包' : '全部券包'
-      if (g === 'coupon_instance_lifecycle') return '全部生命周期'
+      if (g === 'coupon_stock') {return scopeVals.includes('custom_stock') ? '指定券库存' : '全部券库存'}
+      if (g === 'coupon_package') {return scopeVals.includes('custom_packages') ? '指定券包' : '全部券包'}
+      if (g === 'coupon_instance_lifecycle') {return '全部生命周期'}
     }
     if (t === 'expiry') {
-      if (g === 'coupon_stock') return '全部券库存'
-      if (g === 'coupon_package') return '全部券包'
+      if (g === 'coupon_stock') {return '全部券库存'}
+      if (g === 'coupon_package') {return '全部券包'}
     }
-    if (t === 'failure') return '全部生命周期'
+    if (t === 'failure') {return '全部生命周期'}
     return (options.selectedInventories && options.selectedInventories.length > 0) || (options.selectedPackages && options.selectedPackages.length > 0) ? '指定对象' : '全部对象'
   })()
   for (const cfg of options.metricConfigs || []) {
     const exp = formatMetricExpression(cfg, options.granularity)
-    if (exp) lines.push(`命中指标：${exp}`)
+    if (exp) {lines.push(`命中指标：${exp}`)}
     const unitType = infoMap[cfg.metric]?.unitType === 'percentage' ? '%' : ''
     const metricLabel = infoMap[cfg.metric]?.label || cfg.metric
     const granularityLabel = (
@@ -101,8 +101,8 @@ export function renderAlertPreview(options: { name: string; metricConfigs: Array
       '对象数量': (options.selectedInventories && options.selectedInventories.length > 0) ? String(options.selectedInventories.length) : (options.selectedPackages && options.selectedPackages.length > 0) ? String(options.selectedPackages.length) : '全部',
       '对象清单': (options.selectedInventories && options.selectedInventories.length > 0) || (options.selectedPackages && options.selectedPackages.length > 0) ? '已选项' : '全部'
     }
-    if (options.extraVars) vars = { ...vars, ...options.extraVars }
-    if (cfg.extraVars) vars = { ...vars, ...cfg.extraVars }
+    if (options.extraVars) {vars = { ...vars, ...options.extraVars }}
+    if (cfg.extraVars) {vars = { ...vars, ...cfg.extraVars }}
     const preset = normalizeTemplate(infoMap[cfg.metric]?.presetNotice || '')
     const perMetricContent = (cfg.content && cfg.content.trim())
       ? substitute(cfg.content, vars)
@@ -135,7 +135,7 @@ export function renderAlertPreview(options: { name: string; metricConfigs: Array
       '对象数量': (options.selectedInventories && options.selectedInventories.length > 0) ? String(options.selectedInventories.length) : (options.selectedPackages && options.selectedPackages.length > 0) ? String(options.selectedPackages.length) : '全部',
       '对象清单': (options.selectedInventories && options.selectedInventories.length > 0) || (options.selectedPackages && options.selectedPackages.length > 0) ? '已选项' : '全部'
     }
-    if (options.extraVars) baseVars = { ...baseVars, ...options.extraVars }
+    if (options.extraVars) {baseVars = { ...baseVars, ...options.extraVars }}
     lines.push(substitute(normalizeTemplate(options.contentUnified), baseVars))
   }
   return lines.join('\n')

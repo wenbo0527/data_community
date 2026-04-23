@@ -87,7 +87,7 @@ const domainColor = computed(() => {
   if (domainCode === 'DOM004') return '#f9f0ff' // 紫
   if (domainCode === 'DOM005') return '#e8fffb' // 青
   if (domainCode === 'DOM006') return '#fff0f6' // 红
-  return '#f2f3f5'
+  return 'var(--subapp-bg-secondary)'
 })
 
 </script>
@@ -98,7 +98,7 @@ const domainColor = computed(() => {
   height: 100%;
   background: #fff;
   border-radius: 8px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
@@ -119,7 +119,7 @@ const domainColor = computed(() => {
 
 .node-header {
   padding: 8px 12px;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -149,19 +149,19 @@ const domainColor = computed(() => {
 }
 
 .layer-client {
-  color: #165DFF;
+  color: var(--subapp-primary);
   background: #E8F3FF;
   border: 1px solid #BEDAFF;
 }
 
 .layer-account {
-  color: #00B42A;
+  color: var(--subapp-success);
   background: #E8FFEA;
   border: 1px solid #AFF0B5;
 }
 
 .layer-business {
-  color: #FF7D00;
+  color: var(--subapp-warning);
   background: #FFF7E6;
   border: 1px solid #FFD591;
 }

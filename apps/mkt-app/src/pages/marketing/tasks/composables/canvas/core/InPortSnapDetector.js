@@ -35,17 +35,17 @@ export class InPortSnapDetector {
       const nodeId = node.id
       
       // 排除指定节点（通常是源节点）
-      if (nodeId === excludeNodeId) continue
+      if (nodeId === excludeNodeId) {continue}
       
       // 检查节点是否有in端口
       const nodeData = node.getData() || {}
       const nodeType = nodeData.nodeType || nodeData.type
       
-      if (!this.hasInPort(nodeType)) continue
+      if (!this.hasInPort(nodeType)) {continue}
       
       // 计算in端口位置
       const inPortPosition = this.calculateInPortPosition(node)
-      if (!inPortPosition) continue
+      if (!inPortPosition) {continue}
       
       // 计算距离
       const distance = Math.sqrt(
@@ -75,7 +75,7 @@ export class InPortSnapDetector {
    */
   hasInPort(nodeType) {
     // start节点没有in端口
-    if (nodeType === 'start') return false
+    if (nodeType === 'start') {return false}
     
     // 其他节点类型默认都有in端口
     return true
@@ -110,7 +110,7 @@ export class InPortSnapDetector {
    * 显示吸附视觉反馈
    */
   showSnapFeedback(target) {
-    if (!this.options.enableVisualFeedback || !target) return
+    if (!this.options.enableVisualFeedback || !target) {return}
 
     // 清除之前的高亮
     this.clearSnapFeedback()
@@ -165,7 +165,7 @@ export class InPortSnapDetector {
    * 执行吸附操作
    */
   performSnap(target, previewLine) {
-    if (!target || !previewLine) return null
+    if (!target || !previewLine) {return null}
 
     try {
       // 更新预览线的目标位置
@@ -220,7 +220,7 @@ export class InPortSnapDetector {
    */
   getNodeSnapPorts(nodeId) {
     const node = this.graph.getCellById(nodeId)
-    if (!node) return []
+    if (!node) {return []}
 
     const nodeData = node.getData() || {}
     const nodeType = nodeData.nodeType || nodeData.type
@@ -256,7 +256,7 @@ export class InPortSnapDetector {
    */
   getCachedSnapResult(key, maxAge = 100) {
     const cached = this.snapCache.get(key)
-    if (!cached) return null
+    if (!cached) {return null}
 
     const age = Date.now() - cached.timestamp
     if (age > maxAge) {

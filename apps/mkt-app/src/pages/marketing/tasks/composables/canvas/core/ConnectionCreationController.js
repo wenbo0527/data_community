@@ -180,7 +180,7 @@ export class ConnectionCreationController {
    * 查找现有连接
    */
   findExistingConnection(sourceNodeId, targetNodeId) {
-    if (!this.graph) return null
+    if (!this.graph) {return null}
 
     const edges = this.graph.getEdges() || []
     

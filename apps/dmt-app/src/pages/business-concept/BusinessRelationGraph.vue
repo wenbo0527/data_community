@@ -284,7 +284,7 @@ const initGraph = () => {
       enabled: true,
     },
     background: {
-      color: '#f5f7fa',
+      color: 'var(--subapp-bg-secondary)',
     },
   });
 };
@@ -334,7 +334,7 @@ const renderGraph = () => {
         label: getTypeLabel(rel.type),
         attrs: {
           line: {
-            stroke: getTypeColor(rel.type) === 'gray' ? '#A2B1C3' : getTypeColor(rel.type), // 简单映射颜色
+            stroke: getTypeColor(rel.type) === 'gray' ? 'var(--subapp-text-quaternary)' : getTypeColor(rel.type), // 简单映射颜色
             strokeWidth: 2,
             targetMarker: 'classic',
           },
@@ -448,7 +448,7 @@ const zoomOut = () => {
 
 .x6-graph-container {
   flex: 1;
-  background: #f5f7fa;
+  background: var(--subapp-bg-secondary);
   border-radius: 8px;
   border: 1px solid var(--color-border-2);
   overflow: hidden;

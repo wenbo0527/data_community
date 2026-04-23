@@ -173,7 +173,7 @@ const getNodeIconComponent = (nodeType) => {
 // 获取节点颜色
 const getNodeColor = (nodeType) => {
   const config = getNodeConfig(nodeType)
-  return config ? config.color : '#5F95FF'
+  return config ? config.color : 'var(--subapp-primary)'
 }
 
 // 检查节点类型是否允许
@@ -281,7 +281,7 @@ const handleClose = () => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--subapp-border);
   background: #fafafa;
   border-radius: 8px 8px 0 0;
 }

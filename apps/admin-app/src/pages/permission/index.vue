@@ -107,7 +107,7 @@ const goToAppApply = () => {
   font-weight: 600;
 }
 .intro-subtitle {
-  color: #6b7280;
+  color: var(--subapp-text-secondary);
   font-size: 13px;
 }
 .entry-title {
@@ -115,6 +115,6 @@ const goToAppApply = () => {
   font-weight: 600;
 }
 .entry-desc {
-  color: #6b7280;
+  color: var(--subapp-text-secondary);
 }
 </style>

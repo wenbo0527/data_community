@@ -429,7 +429,7 @@ const renderMarkdown = (text: string) => {
 .coupon-title {
   font-size: 16px;
   font-weight: bold;
-  color: #1f2937;
+  color: var(--subapp-text-primary);
   margin-bottom: 4px;
   line-height: 1.4;
 }
@@ -482,7 +482,7 @@ const renderMarkdown = (text: string) => {
 }
 
 .usage-list {
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   font-size: 13px;
   line-height: 1.6;
 }

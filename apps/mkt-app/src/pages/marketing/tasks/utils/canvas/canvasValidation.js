@@ -168,7 +168,7 @@ function validateFlowConnectivity(nodes, connections) {
   const visited = new Set()
   
   function dfs(nodeId) {
-    if (visited.has(nodeId)) return
+    if (visited.has(nodeId)) {return}
     visited.add(nodeId)
     reachableNodes.add(nodeId)
     
@@ -293,7 +293,7 @@ export function formatValidationMessage(validationResult) {
   }
   
   if (warnings.length > 0) {
-    if (message) message += '\n\n'
+    if (message) {message += '\n\n'}
     message += '警告：\n' + warnings.map(warning => `• ${warning}`).join('\n')
   }
   

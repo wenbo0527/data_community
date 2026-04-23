@@ -255,7 +255,7 @@ export class HierarchyAdapter {
       
       visited.add(nodeId);
       const node = nodes.find(n => n.id === nodeId);
-      if (!node) return null;
+      if (!node) {return null;}
 
       // 递归构建子节点
       const children = adjacencyList.get(nodeId) || [];
@@ -320,7 +320,7 @@ export class HierarchyAdapter {
       
       // 递归检查所有节点是否有NaN坐标
       const checkNaNCoordinates = (node, path = '') => {
-        if (!node) return;
+        if (!node) {return;}
         
         const currentPath = path ? `${path}/${node.id}` : node.id;
         if ((typeof node.x === 'number' && isNaN(node.x)) || (typeof node.y === 'number' && isNaN(node.y))) {
@@ -340,7 +340,7 @@ export class HierarchyAdapter {
     
     // 递归遍历层次结构，提取位置信息
     const extractPositions = (node, depth = 0) => {
-      if (!node) return;
+      if (!node) {return;}
       
       const indent = '  '.repeat(depth);
       console.log(`${indent}🔍 [HierarchyAdapter] 处理节点:`, {

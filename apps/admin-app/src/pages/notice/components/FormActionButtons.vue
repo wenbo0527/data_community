@@ -122,7 +122,7 @@ const handleCancel = () => {
 .action-tips {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px dashed #e5e6e8;
+  border-top: 1px dashed var(--subapp-border);
 }
 
 .tip-item {
@@ -130,7 +130,7 @@ const handleCancel = () => {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin-bottom: 8px;
 }
 

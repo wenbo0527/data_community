@@ -357,7 +357,7 @@ const onAddNodeClick = (e) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 1);
   border-color: #cbd5e1;
-  color: #1e293b;
+  color: var(--subapp-text-primary);
 }
 
 .canvas-toolbar .arco-btn-group .arco-btn:active {
@@ -369,7 +369,7 @@ const onAddNodeClick = (e) => {
 .canvas-toolbar .arco-btn-group .arco-btn:has(.zoom-percentage) {
   min-width: 80px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--subapp-text-primary);
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
 }
 

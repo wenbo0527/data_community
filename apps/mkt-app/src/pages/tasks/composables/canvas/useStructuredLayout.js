@@ -141,7 +141,7 @@ export function useStructuredLayout(getGraph) {
    */
   const centerAndFitCanvas = async () => {
     const graph = getGraph()
-    if (!graph) return
+    if (!graph) {return}
 
     try {
       // 先居中内容
@@ -757,8 +757,8 @@ export function useStructuredLayout(getGraph) {
         endpoints: (layer || []).filter(n => n.isEndpoint).length,
         previewLines: (layer || []).filter(n => n.isPreviewLine).length,
         nodes: layer.map(n => {
-          if (n.isEndpoint) return `${n.nodeId}(endpoint)`
-          if (n.isPreviewLine) return `${n.nodeId}(预览线)`
+          if (n.isEndpoint) {return `${n.nodeId}(endpoint)`}
+          if (n.isPreviewLine) {return `${n.nodeId}(预览线)`}
           return `${n.nodeId}(普通节点)`
         })
       }))
@@ -1487,12 +1487,12 @@ export function useStructuredLayout(getGraph) {
       // 垂直布局，检查X轴对齐
       const xCoords = positions.map(pos => pos.x)
       const xSpread = Math.max(...xCoords) - Math.min(...xCoords)
-      if (xSpread > 50) alignmentScore -= 30
+      if (xSpread > 50) {alignmentScore -= 30}
     } else {
       // 水平布局，检查Y轴对齐
       const yCoords = positions.map(pos => pos.y)
       const ySpread = Math.max(...yCoords) - Math.min(...yCoords)
-      if (ySpread > 50) alignmentScore -= 30
+      if (ySpread > 50) {alignmentScore -= 30}
     }
     
     // 分析间距分布
@@ -1511,8 +1511,8 @@ export function useStructuredLayout(getGraph) {
       const avgDistance = distances.reduce((sum, d) => sum + d, 0) / distances.length
       const minDistance = Math.min(...distances)
       
-      if (minDistance < 50) spacingScore -= 20 // 节点太近
-      if (avgDistance > 300) spacingScore -= 20 // 节点太远
+      if (minDistance < 50) {spacingScore -= 20} // 节点太近
+      if (avgDistance > 300) {spacingScore -= 20} // 节点太远
     }
     
     // 综合评分

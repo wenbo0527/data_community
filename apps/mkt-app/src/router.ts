@@ -20,6 +20,48 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '权益中心' }
   },
   {
+    path: '/benefit/dashboard',
+    name: 'BenefitDashboard',
+    component: () => import('./pages/coupon/index.vue'),
+    meta: { title: '权益首页' }
+  },
+  {
+    path: '/benefit/template',
+    name: 'BenefitTemplate',
+    component: () => import('./pages/coupon/template/index.vue'),
+    meta: { title: '券模板管理' }
+  },
+  {
+    path: '/benefit/management',
+    name: 'BenefitManagement',
+    component: () => import('./pages/coupon/management/index.vue'),
+    meta: { title: '券管理' }
+  },
+  {
+    path: '/benefit/package',
+    name: 'BenefitPackage',
+    component: () => import('./pages/coupon/package/index.vue'),
+    meta: { title: '券包管理' }
+  },
+  {
+    path: '/benefit/inventory',
+    name: 'BenefitInventory',
+    component: () => import('./pages/coupon/inventory/index.vue'),
+    meta: { title: '券库存管理' }
+  },
+  {
+    path: '/benefit/statistics',
+    name: 'BenefitStatistics',
+    component: () => import('./pages/coupon/statistics/index.vue'),
+    meta: { title: '权益统计' }
+  },
+  {
+    path: '/benefit/logs',
+    name: 'BenefitLogs',
+    component: () => import('./pages/coupon/record/index.vue'),
+    meta: { title: '权益日志' }
+  },
+  {
     path: '/marketing',
     name: 'Marketing',
     component: () => import('./pages/marketing/index.vue'),
@@ -94,41 +136,10 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '横向画布' }
   },
   {
-    path: '/data-map',
-    name: 'DataMap',
-    component: () => import('./pages/data-map/index.vue'),
-    meta: { title: '数据地图' }
-  },
-
-  {
-    path: '/api-market',
-    name: 'ApiMarket',
-    component: () => import('./pages/api-market/index.vue'),
-    meta: { title: 'API市场' }
-  },
-  {
-    path: '/customer360',
-    name: 'Customer360',
-    component: () => import('./pages/customer360/index.vue'),
-    meta: { title: '客户画像' }
-  },
-  {
-    path: '/credit',
-    name: 'Credit',
-    component: () => import('./pages/credit/index.vue'),
-    meta: { title: '信用评估' }
-  },
-  {
     path: '/alert',
     name: 'Alert',
     component: () => import('./pages/alert/index.vue'),
     meta: { title: '告警中心' }
-  },
-  {
-    path: '/search',
-    name: 'Search',
-    component: () => import('./pages/search/index.vue'),
-    meta: { title: '全局搜索' }
   },
   {
     path: '/tasks',
@@ -137,82 +148,112 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '任务中心' }
   },
   {
-    path: '/feature-map',
-    name: 'FeatureMap',
-    component: () => import('./pages/feature-map/index.vue'),
-    meta: { title: '特征地图' }
+    path: '/touch',
+    name: 'Touch',
+    component: () => import('./pages/touch/index.vue'),
+    meta: { title: '触达系统' }
   },
   {
-    path: '/impact-analysis',
-    name: 'ImpactAnalysis',
-    component: () => import('./pages/impact-analysis/index.vue'),
-    meta: { title: '影响分析' }
+    path: '/touch/policy/overview',
+    name: 'TouchPolicyOverview',
+    component: () => import('./pages/touch/policy/overview.vue'),
+    meta: { title: '策略数据概览' }
   },
   {
-    path: '/lineage',
-    name: 'Lineage',
-    component: () => import('./pages/lineage/index.vue'),
-    meta: { title: '血缘关系' }
+    path: '/touch/query',
+    name: 'TouchQuery',
+    component: () => import('./pages/touch/query/index.vue'),
+    meta: { title: '触达查询' }
   },
   {
-    path: '/batch-registration',
-    name: 'BatchRegistration',
-    component: () => import('./pages/batch-registration/index.vue'),
-    meta: { title: '批量注册' }
+    path: '/touch/channel',
+    name: 'TouchChannel',
+    component: () => import('./pages/touch/channel/index.vue'),
+    meta: { title: '渠道管理' }
   },
   {
-    path: '/asset-overview',
-    name: 'AssetOverview',
-    component: () => import('./pages/asset-overview/index.vue'),
-    meta: { title: '资产总览' }
+    path: '/touch/manual-sms',
+    name: 'TouchManualSms',
+    component: () => import('./pages/touch/manual-sms/list.vue'),
+    meta: { title: '手动短信' }
   },
   {
-    path: '/asset-management',
-    name: 'AssetManagement',
-    component: () => import('./pages/asset-management/index.vue'),
-    meta: { title: '资产管理' }
+    path: '/touch/system',
+    name: 'TouchSystem',
+    component: () => import('./pages/touch/system/index.vue'),
+    meta: { title: '系统概览' }
   },
   {
-    path: '/external',
-    name: 'External',
-    component: () => import('./pages/external/index.vue'),
-    meta: { title: '外部数据' }
+    path: '/call',
+    name: 'Call',
+    component: () => import('./pages/call/index.vue'),
+    meta: { title: '人工电销' }
   },
   {
-    path: '/favorites',
-    name: 'Favorites',
-    component: () => import('./pages/favorites/index.vue'),
-    meta: { title: '我的收藏' }
+    path: '/customer',
+    name: 'Customer',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '客群中心' }
   },
   {
-    path: '/global',
-    name: 'Global',
-    component: () => import('./pages/global/index.vue'),
-    meta: { title: '全局配置' }
+    path: '/customer/tag-system',
+    name: 'TagSystem',
+    component: () => import('./pages/customer/tag-system/index.vue'),
+    meta: { title: '标签系统' }
   },
   {
-    path: '/metrics-map',
-    name: 'MetricsMap',
-    component: () => import('./pages/metrics-map/index.vue'),
-    meta: { title: '指标地图' }
+    path: '/customer/tag-table',
+    name: 'TagTable',
+    component: () => import('./pages/customer/tag-system/table-management.vue'),
+    meta: { title: '标签表管理' }
   },
   {
-    path: '/regulatory-config',
-    name: 'RegulatoryConfig',
-    component: () => import('./pages/regulatory-config/index.vue'),
-    meta: { title: '合规配置' }
+    path: '/customer/list',
+    name: 'CustomerList',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '客群列表' }
   },
   {
-    path: '/unified-metrics',
-    name: 'UnifiedMetrics',
-    component: () => import('./pages/unified-metrics/index.vue'),
-    meta: { title: '统一指标' }
+    path: '/customer/selector',
+    name: 'CustomerSelector',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '客群圈选' }
   },
   {
-    path: '/asset-guide',
-    name: 'AssetGuide',
-    component: () => import('./pages/asset-guide/index.vue'),
-    meta: { title: '资产指南' }
+    path: '/customer/portrait',
+    name: 'CustomerPortrait',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '客户画像' }
+  },
+  {
+    path: '/customer/idmap',
+    name: 'CustomerIdmap',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: 'ID映射' }
+  },
+  {
+    path: '/customer/delete-approval',
+    name: 'CustomerDeleteApproval',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '删除审批' }
+  },
+  {
+    path: '/customer/lifecycle/rules',
+    name: 'CustomerLifecycleRules',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '生命周期规则' }
+  },
+  {
+    path: '/customer/lifecycle/analysis',
+    name: 'CustomerLifecycleAnalysis',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '生命周期分析' }
+  },
+  {
+    path: '/customer/lifecycle/monitor',
+    name: 'CustomerLifecycleMonitor',
+    component: () => import('./pages/customer/index.vue'),
+    meta: { title: '生命周期监控' }
   }
 ]
 

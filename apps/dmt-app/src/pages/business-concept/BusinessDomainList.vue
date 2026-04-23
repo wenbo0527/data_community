@@ -132,7 +132,7 @@ const handleActionSelect = (value: any, domain: any) => {
   align-items: center;
   margin-bottom: 20px;
   padding: 16px 0;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .collection-count {
@@ -145,7 +145,7 @@ const handleActionSelect = (value: any, domain: any) => {
 .collection-card {
   position: relative;
   border-radius: 8px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   transition: all 0.2s ease;
   cursor: pointer;
   height: 100%;
@@ -160,7 +160,7 @@ const handleActionSelect = (value: any, domain: any) => {
 .collection-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
 }
 
 .collection-card :deep(.arco-card-body) {
@@ -188,7 +188,7 @@ const handleActionSelect = (value: any, domain: any) => {
 .title-text {
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin: 0;
   line-height: 1.4;
   flex: 1;
@@ -209,13 +209,13 @@ const handleActionSelect = (value: any, domain: any) => {
   width: 28px;
   height: 28px;
   border-radius: 4px;
-  color: #86909c;
-  border: 1px solid #e5e6eb;
+  color: var(--subapp-text-tertiary);
+  border: 1px solid var(--subapp-border);
 }
 
 .title-actions :deep(.arco-btn:hover) {
-  color: #165dff;
-  border-color: #165dff;
+  color: var(--subapp-primary);
+  border-color: var(--subapp-primary);
   background: #e8f3ff;
 }
 
@@ -235,14 +235,14 @@ const handleActionSelect = (value: any, domain: any) => {
 .table-count {
   font-size: 13px;
   font-weight: 500;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   display: flex;
   align-items: center;
 }
 
 .card-description {
   font-size: 14px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   line-height: 1.57;
   margin-bottom: 12px;
   flex: 1;
@@ -258,9 +258,9 @@ const handleActionSelect = (value: any, domain: any) => {
 .card-footer-info {
   margin-top: auto;
   padding-top: 12px;
-  border-top: 1px dashed #f2f3f5;
+  border-top: 1px dashed var(--subapp-bg-secondary);
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .coverage-text {
@@ -270,7 +270,7 @@ const handleActionSelect = (value: any, domain: any) => {
 }
 
 .danger-option {
-  color: #f53f3f !important;
+  color: var(--subapp-danger) !important;
 }
 
 .danger-option:hover {

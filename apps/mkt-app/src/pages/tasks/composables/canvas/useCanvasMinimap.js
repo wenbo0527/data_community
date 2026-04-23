@@ -63,7 +63,7 @@ export function useCanvasMinimap(graph) {
 
   // 设置小地图样式
   const setupMinimapStyles = () => {
-    if (!minimapContainer.value) return
+    if (!minimapContainer.value) {return}
 
     try {
       // 查找小地图的DOM元素并应用样式
@@ -121,7 +121,7 @@ export function useCanvasMinimap(graph) {
 
   // 销毁小地图
   const disposeMinimap = () => {
-    if (!minimap || !graph) return
+    if (!minimap || !graph) {return}
 
     try {
       graph.disposePlugin(minimap)
@@ -134,7 +134,7 @@ export function useCanvasMinimap(graph) {
 
   // 更新小地图
   const updateMinimap = () => {
-    if (!minimap) return
+    if (!minimap) {return}
 
     try {
       // 强制更新小地图
@@ -147,7 +147,7 @@ export function useCanvasMinimap(graph) {
 
   // 重置小地图视口
   const resetMinimapViewport = () => {
-    if (!minimap || !graph) return
+    if (!minimap || !graph) {return}
 
     try {
       // 重置视口到画布中心
@@ -163,7 +163,7 @@ export function useCanvasMinimap(graph) {
 
   // 设置小地图尺寸
   const setMinimapSize = (width, height) => {
-    if (!minimap) return
+    if (!minimap) {return}
 
     try {
       minimap.resize(width, height)
@@ -175,7 +175,7 @@ export function useCanvasMinimap(graph) {
 
   // 获取小地图配置
   const getMinimapConfig = () => {
-    if (!minimap) return null
+    if (!minimap) {return null}
 
     return {
       width: minimap.options.width,
@@ -189,7 +189,7 @@ export function useCanvasMinimap(graph) {
 
   // 监听画布变化并更新小地图
   const setupMinimapListeners = () => {
-    if (!graph) return
+    if (!graph) {return}
 
     // 监听节点添加
     graph.on('node:added', () => {
@@ -226,7 +226,7 @@ export function useCanvasMinimap(graph) {
 
   // 移除小地图事件监听器
   const removeMinimapListeners = () => {
-    if (!graph) return
+    if (!graph) {return}
 
     graph.off('node:added')
     graph.off('node:removed')

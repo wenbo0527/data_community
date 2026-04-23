@@ -55,7 +55,7 @@ export class CoordinateSystemManager {
    * 获取画布变换状态（带缓存）
    */
   getCanvasTransform() {
-    if (!this.graph) return { translate: { tx: 0, ty: 0 }, scale: { sx: 1, sy: 1 } };
+    if (!this.graph) {return { translate: { tx: 0, ty: 0 }, scale: { sx: 1, sy: 1 } };}
     
     // 检查缓存
     const now = Date.now();
@@ -102,7 +102,7 @@ export class CoordinateSystemManager {
    * 逻辑坐标转DOM坐标 - 带缓存优化和错误处理
    */
   logicalToDOM(logicalX, logicalY) {
-    if (!this.graph) return { x: logicalX, y: logicalY };
+    if (!this.graph) {return { x: logicalX, y: logicalY };}
     
     // 输入验证
     if (typeof logicalX !== 'number' || typeof logicalY !== 'number' || !isFinite(logicalX) || !isFinite(logicalY)) {
@@ -146,7 +146,7 @@ export class CoordinateSystemManager {
    * DOM坐标转逻辑坐标 - 带缓存优化和错误处理
    */
   DOMToLogical(domX, domY) {
-    if (!this.graph) return { x: domX, y: domY };
+    if (!this.graph) {return { x: domX, y: domY };}
     
     // 输入验证
     if (typeof domX !== 'number' || typeof domY !== 'number' || !isFinite(domX) || !isFinite(domY)) {
@@ -295,7 +295,7 @@ export class CoordinateSystemManager {
    * 修正拖拽点位置
    */
   correctDragHintPosition(sourceNodeId, nodePosition, nodeSize, branchIndex = 0) {
-    if (!this.graph) return nodePosition;
+    if (!this.graph) {return nodePosition;}
 
     try {
       // 获取源节点的实际坐标偏移
@@ -337,7 +337,7 @@ export class CoordinateSystemManager {
    */
   // @ts-ignore
   correctPreviewLinePath(sourceNodeId, branchIndex, startPoint, endPoint, controlPoints = []) {
-    if (!this.graph) return { startPoint, endPoint, controlPoints };
+    if (!this.graph) {return { startPoint, endPoint, controlPoints };}
 
     try {
       // 获取源节点的实际坐标偏移
@@ -386,11 +386,11 @@ export class CoordinateSystemManager {
    * 获取节点的DOM中心点
    */
   getNodeDOMCenter(node) {
-    if (!node || !this.graph) return null;
+    if (!node || !this.graph) {return null;}
     
     try {
       const nodeView = this.graph.findViewByCell(node);
-      if (!nodeView) return null;
+      if (!nodeView) {return null;}
       
       const nodeElement = nodeView.container;
       const rect = nodeElement.getBoundingClientRect();
@@ -410,7 +410,7 @@ export class CoordinateSystemManager {
    * 验证坐标转换的准确性
    */
   validateCoordinateTransform(node) {
-    if (!node || !this.graph) return null;
+    if (!node || !this.graph) {return null;}
     
     try {
       const logicalPosition = node.getPosition();
@@ -497,7 +497,7 @@ export class CoordinateSystemManager {
    * 修正布局位置（新增方法）
    */
   correctLayoutPosition(nodeId, position) {
-    if (!this.graph || !position) return position;
+    if (!this.graph || !position) {return position;}
     
     try {
       // 获取节点的坐标偏移

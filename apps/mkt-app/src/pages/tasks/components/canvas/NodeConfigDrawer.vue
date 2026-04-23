@@ -523,7 +523,7 @@ const handleClose = () => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .node-config-drawer__header h3 {
@@ -600,7 +600,7 @@ input[type="number"]:focus,
 input[type="datetime-local"]:focus,
 textarea:focus,
 select:focus {
-  border-color: #5F95FF;
+  border-color: var(--subapp-primary);
   outline: none;
   box-shadow: 0 0 0 2px rgba(95, 149, 255, 0.2);
 }
@@ -640,7 +640,7 @@ select:focus {
 
 .node-config-drawer__footer {
   padding: 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--subapp-border);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -665,8 +665,8 @@ select:focus {
 }
 
 .btn-save {
-  background-color: #5F95FF;
-  border: 1px solid #5F95FF;
+  background-color: var(--subapp-primary);
+  border: 1px solid var(--subapp-primary);
   color: white;
 }
 
@@ -707,7 +707,7 @@ select:focus {
   width: 24px;
   height: 24px;
   border: none;
-  background-color: #ff4d4f;
+  background-color: var(--subapp-danger);
   color: white;
   border-radius: 50%;
   cursor: pointer;
@@ -739,8 +739,8 @@ select:focus {
 }
 
 .add-btn:hover:not(:disabled) {
-  border-color: #5F95FF;
-  color: #5F95FF;
+  border-color: var(--subapp-primary);
+  color: var(--subapp-primary);
 }
 
 .add-btn:disabled {

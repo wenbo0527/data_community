@@ -394,7 +394,7 @@ export class HierarchyLayoutEngine {
    * @param {Map} positionMap - 位置映射
    */
   applyCenterAlignment(positionMap) {
-    if (positionMap.size === 0) return;
+    if (positionMap.size === 0) {return;}
 
     // 计算整体边界
     const positions = Array.from(positionMap.values());
@@ -574,7 +574,7 @@ export class HierarchyLayoutEngine {
    * @returns {number} 节点总数
    */
   countNodes(node) {
-    if (!node) return 0;
+    if (!node) {return 0;}
     let count = 1;
     if (node.children && Array.isArray(node.children)) {
       count += node.children.reduce((sum, child) => sum + this.countNodes(child), 0);
@@ -588,7 +588,7 @@ export class HierarchyLayoutEngine {
    * @returns {Object} 边界信息
    */
   calculateBounds(node) {
-    if (!node) return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 };
+    if (!node) {return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 };}
     
     const positions = [];
     this.collectPositions(node, positions);
@@ -618,7 +618,7 @@ export class HierarchyLayoutEngine {
    * @param {Array} positions - 位置数组
    */
   collectPositions(node, positions) {
-    if (!node) return;
+    if (!node) {return;}
     
     if (typeof node.x === 'number' && typeof node.y === 'number') {
       positions.push({ x: node.x, y: node.y, id: node.id });

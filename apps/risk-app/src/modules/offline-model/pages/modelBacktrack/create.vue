@@ -548,7 +548,7 @@ const handleCancel = () => {
 .mode-selector { margin-top: 16px; }
 .step-indicator { margin-top: 16px; margin-bottom: 24px; }
 .page-content { max-width: 1200px; margin: 0 auto; }
-.match-summary { margin-top: 8px; color: #4e5969; }
-.actions-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); border-top: 1px solid #e5e6eb; padding: 10px 0; margin-top: 12px; }
+.match-summary { margin-top: 8px; color: var(--subapp-text-secondary); }
+.actions-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); border-top: 1px solid var(--subapp-border); padding: 10px 0; margin-top: 12px; }
 .actions-inner { display: flex; gap: 8px; justify-content: flex-end; max-width: 1200px; margin: 0 auto; padding: 0 8px; }
 </style>

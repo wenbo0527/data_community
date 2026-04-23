@@ -793,7 +793,7 @@ export class PreviewLineConnectionValidator {
    * @returns {Object|null} 位置坐标
    */
   static getNodePosition(node) {
-    if (!node) return null
+    if (!node) {return null}
 
     try {
       // 尝试多种方式获取位置

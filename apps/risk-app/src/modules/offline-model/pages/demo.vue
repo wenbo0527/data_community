@@ -332,7 +332,7 @@ const goToTaskManagement = () => {
       justify-content: space-between;
       align-items: center;
       padding: 12px 0;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--subapp-border);
       
       &:last-child {
         border-bottom: none;
@@ -346,7 +346,7 @@ const goToTaskManagement = () => {
       .stat-value {
         font-size: 20px;
         font-weight: 600;
-        color: #1890ff;
+        color: var(--subapp-info);
       }
     }
   }

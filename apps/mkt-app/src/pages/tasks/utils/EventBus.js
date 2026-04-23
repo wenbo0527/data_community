@@ -126,7 +126,7 @@ export class EventBus {
     }
 
     const eventListeners = this.listeners.get(event)
-    if (!eventListeners) return
+    if (!eventListeners) {return}
 
     if (!handlerOrId) {
       // 移除该事件的所有监听器

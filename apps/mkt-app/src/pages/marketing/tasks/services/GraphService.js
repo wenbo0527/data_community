@@ -212,9 +212,9 @@ export class GraphService {
    * 安全地序列化对象，避免循环引用问题
    */
   safeStringify(obj) {
-    if (obj === null) return 'null'
-    if (obj === undefined) return 'undefined'
-    if (typeof obj !== 'object') return String(obj)
+    if (obj === null) {return 'null'}
+    if (obj === undefined) {return 'undefined'}
+    if (typeof obj !== 'object') {return String(obj)}
     
     try {
       const seen = new WeakSet()
@@ -595,7 +595,7 @@ export class GraphService {
    * 设置事件监听器
    */
   setupEventListeners() {
-    if (!this.graph) return
+    if (!this.graph) {return}
     
     // 监听图的基础事件
     this.graph.on('node:added', (args) => {
@@ -623,7 +623,7 @@ export class GraphService {
    * 移除事件监听器
    */
   removeEventListeners() {
-    if (!this.graph) return
+    if (!this.graph) {return}
     
     this.graph.off('node:added')
     this.graph.off('node:removed')
@@ -635,7 +635,7 @@ export class GraphService {
    * 更新服务状态
    */
   updateState() {
-    if (!this.graph) return
+    if (!this.graph) {return}
     
     this.state.nodeCount = this.graph.getNodes().length
     this.state.edgeCount = this.graph.getEdges().length
@@ -648,7 +648,7 @@ export class GraphService {
    * @param {Object} data - 操作数据
    */
   recordOperation(type, data) {
-    if (!this.config.enableHistory) return
+    if (!this.config.enableHistory) {return}
     
     const operation = {
       type,
@@ -672,7 +672,7 @@ export class GraphService {
    * @param {Object} params - 参数
    */
   validateOperation(operation, params) {
-    if (!this.config.enableValidation) return
+    if (!this.config.enableValidation) {return}
     
     if (!this.isEnabled) {
       throw new Error('GraphService已禁用')

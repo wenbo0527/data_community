@@ -73,7 +73,7 @@ export const getBaseGraphConfig = (container) => ({
     enabled: true,
     beforeAddCommand: (event, args) => {
       // 过滤不需要记录的操作
-      if (args.key === 'tools') return false
+      if (args.key === 'tools') {return false}
       return true
     }
   },
@@ -156,7 +156,7 @@ export const getConnectingConfig = () => ({
   },
   validateConnection({ targetMagnet, sourceMagnet, sourceView, targetView }) {
     // 不允许连接到自己
-    if (sourceView === targetView) return false
+    if (sourceView === targetView) {return false}
     
     // 不允许连接到输出端口
     if (!targetMagnet || targetMagnet.getAttribute('port-group') !== 'in') {

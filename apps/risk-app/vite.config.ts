@@ -50,6 +50,7 @@ export default defineConfig(async () => {
       host: '0.0.0.0', 
       port: 5176, 
       strictPort: true,
+      hmr: false,  // 关闭 HMR，避免生产环境 WebSocket 警告
       // Qiankun 需要关闭 strictPort 以便主应用访问
     },
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } },

@@ -364,10 +364,10 @@ export class PortConfigValidator {
   // 更新端口连接数
   updatePortConnectionCount(nodeType, portType, operation = 'add') {
     const config = this.getPortConfig(nodeType)
-    if (!config) return false
+    if (!config) {return false}
     
     const portInfo = config.ports.get(portType)
-    if (!portInfo) return false
+    if (!portInfo) {return false}
     
     const increment = operation === 'add' ? 1 : -1
     portInfo.currentConnections = Math.max(0, portInfo.currentConnections + increment)
@@ -378,10 +378,10 @@ export class PortConfigValidator {
   // 重置端口连接数
   resetPortConnectionCount(nodeType, portType) {
     const config = this.getPortConfig(nodeType)
-    if (!config) return false
+    if (!config) {return false}
     
     const portInfo = config.ports.get(portType)
-    if (!portInfo) return false
+    if (!portInfo) {return false}
     
     portInfo.currentConnections = 0
     return true

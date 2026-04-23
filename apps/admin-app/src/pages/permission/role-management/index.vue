@@ -52,7 +52,7 @@
           <a-tag v-if="currentRole?.builtin" color="orangered" size="small">系统默认</a-tag>
           <a-tag v-else color="blue" size="small">自定义</a-tag>
           <a-divider direction="vertical" />
-          <span style="color:#86909c">当前角色：{{ currentRole?.name }}</span>
+          <span style="color:var(--subapp-text-tertiary)">当前角色：{{ currentRole?.name }}</span>
         </a-space>
       </template>
       <div class="role-config">
@@ -132,7 +132,7 @@
           <a-tab-pane key="data" title="数据权限">
             <a-alert v-if="currentRole?.builtin" type="warning" style="margin-bottom: 16px;">
               <template #icon><icon-info-circle /></template>
-              <span style="color: #d91c1c; font-weight: 600;">系统默认角色，权限配置需谨慎</span>
+              <span style="color: var(--subapp-danger); font-weight: 600;">系统默认角色，权限配置需谨慎</span>
             </a-alert>
             
             <a-card :bordered="false">
@@ -843,7 +843,7 @@ const removeModule = (appId, moduleName) => {
 }
 .section-title {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin-bottom: 8px;
 }
 .kv-row {
@@ -863,7 +863,7 @@ const removeModule = (appId, moduleName) => {
 
 .helper-text {
   margin-top: 8px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 12px;
 }
 
@@ -871,7 +871,7 @@ const removeModule = (appId, moduleName) => {
   margin: 12px 0;
   padding: 8px 12px;
   background-color: #f7f8fa;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 4px;
 }
 
@@ -887,7 +887,7 @@ const removeModule = (appId, moduleName) => {
 .app-level-controls {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed #e5e6eb;
+  border-top: 1px dashed var(--subapp-border);
 }
 
 /* 授予用户和部门的样式 */
@@ -898,7 +898,7 @@ const removeModule = (appId, moduleName) => {
 /* 资源列表容器 */
 .resource-list-container {
   background: #f7f8fa;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 12px;
@@ -923,13 +923,13 @@ const removeModule = (appId, moduleName) => {
 .resource-checkbox-item {
   padding: 4px 8px;
   background: #fff;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 4px;
   margin: 2px;
 }
 
 .resource-checkbox-item:hover {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
 }
 
 .kv-row {
@@ -941,6 +941,6 @@ const removeModule = (appId, moduleName) => {
 .kv-row > span:first-child {
   width: 80px;
   font-weight: 500;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 </style>

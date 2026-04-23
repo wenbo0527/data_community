@@ -82,7 +82,7 @@ const handleDelete = () => {
 <style scoped>
 .node-toolbar {
   background: white;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 6px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   padding: 8px;

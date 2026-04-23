@@ -153,7 +153,7 @@ export const createPresetConnection = (graph, sourceNode, sourcePortId, targetPo
  * @returns {boolean} 是否移除成功
  */
 export const removePresetConnection = (graph, connectionId) => {
-  if (!graph) return false
+  if (!graph) {return false}
 
   try {
     const edge = graph.getCellById(connectionId)
@@ -280,7 +280,7 @@ export const convertPresetToActualConnection = (graph, connectionId, targetNode,
  * @returns {Array} 预设连接线数组
  */
 export const getNodePresetConnections = (graph, nodeId) => {
-  if (!graph) return []
+  if (!graph) {return []}
 
   try {
     return graph.getEdges().filter(edge => {
@@ -300,7 +300,7 @@ export const getNodePresetConnections = (graph, nodeId) => {
  * @returns {number} 清理的连接线数量
  */
 export const clearNodePresetConnections = (graph, nodeId) => {
-  if (!graph) return 0
+  if (!graph) {return 0}
 
   try {
     const presetConnections = getNodePresetConnections(graph, nodeId)
@@ -323,7 +323,7 @@ export const clearNodePresetConnections = (graph, nodeId) => {
  * @returns {Array} 创建的预设连接线数组
  */
 export const createNodePresetConnections = (graph, node) => {
-  if (!graph || !node) return []
+  if (!graph || !node) {return []}
 
   const nodeData = node.getData() || {}
   // 🔧 修复：确保传递给getNodeConfig的是字符串类型

@@ -291,7 +291,7 @@ export function useCanvasLifecycle(
 
   // 处理窗口大小变化
   const handleResize = () => {
-    if (!graph.value) return
+    if (!graph.value) {return}
 
     try {
       // 延迟执行以确保DOM更新完成
@@ -318,7 +318,7 @@ export function useCanvasLifecycle(
 
   // 处理键盘快捷键
   const handleKeydown = (e) => {
-    if (!graph.value || state.isReadOnly.value) return
+    if (!graph.value || state.isReadOnly.value) {return}
 
     try {
       // 删除键 - 删除选中的节点或连接

@@ -416,7 +416,7 @@ export default {
 .debug-section {
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .debug-section:last-child {
@@ -428,7 +428,7 @@ export default {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
 }
 
 .port-debug-controls {
@@ -464,7 +464,7 @@ export default {
 }
 
 .stat-value.error {
-  color: #ff4d4f;
+  color: var(--subapp-danger);
 }
 
 .selected-node-port-info {
@@ -477,7 +477,7 @@ export default {
 .selected-node-port-info h5 {
   margin: 0 0 8px 0;
   font-size: 13px;
-  color: #1890ff;
+  color: var(--subapp-info);
   font-weight: 600;
 }
 
@@ -515,7 +515,7 @@ export default {
 
 .port-group-name {
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
   font-size: 11px;
   margin-bottom: 4px;
 }
@@ -533,26 +533,26 @@ export default {
 .coord-value {
   font-family: 'Monaco', 'Menlo', monospace;
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
 }
 
 .port-issues {
   background: #fff2f0;
   padding: 8px;
   border-radius: 4px;
-  border-left: 3px solid #ff4d4f;
+  border-left: 3px solid var(--subapp-danger);
 }
 
 .issues-title {
   font-weight: 600;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   font-size: 11px;
   margin-bottom: 4px;
 }
 
 .issue-item {
   font-size: 11px;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   margin-bottom: 2px;
 }
 
@@ -588,7 +588,7 @@ export default {
   display: block;
   font-size: 16px;
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
   font-family: 'Monaco', 'Menlo', monospace;
 }
 
@@ -596,19 +596,19 @@ export default {
   background: #fff2f0;
   padding: 12px;
   border-radius: 6px;
-  border-left: 4px solid #ff4d4f;
+  border-left: 4px solid var(--subapp-danger);
 }
 
 .debug-issues .issues-title {
   font-weight: 600;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   margin-bottom: 8px;
   font-size: 12px;
 }
 
 .debug-issues .issue-item {
   font-size: 12px;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   margin-bottom: 4px;
   padding-left: 8px;
 }

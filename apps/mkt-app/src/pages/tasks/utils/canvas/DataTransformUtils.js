@@ -476,7 +476,7 @@ export class DataTransformUtils {
       const result = this.deepClone(target)
       
       for (const key in source) {
-        if (source.hasOwnProperty(key)) {
+        if (Object.hasOwn(source, key)) {
           if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
             result[key] = this.deepMerge(result[key] || {}, source[key])
           } else {
@@ -515,8 +515,8 @@ export class DataTransformUtils {
           const config = getNodeConfig('start') // 默认使用start类型
           const attrs = getNodeAttrs('start')
           
-          if (config) nodeConfig = config
-          if (attrs) nodeAttrs = attrs
+          if (config) {nodeConfig = config}
+          if (attrs) {nodeAttrs = attrs}
         } catch (error) {
           console.warn('[DataTransformUtils] 获取节点配置失败，使用默认值:', error)
         }

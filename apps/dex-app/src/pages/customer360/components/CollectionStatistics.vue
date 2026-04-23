@@ -134,7 +134,7 @@ const statistics = computed(() => {
 .stat-value {
   font-size: 24px;
   font-weight: 600;
-  color: #1650d8;
+  color: var(--subapp-primary);
   margin-bottom: 4px;
 }
 

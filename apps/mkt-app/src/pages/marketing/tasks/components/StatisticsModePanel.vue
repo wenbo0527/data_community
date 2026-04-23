@@ -361,20 +361,20 @@ watch(() => props.canvasData, () => {
 
 .panel-header {
   padding: 16px;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .panel-header h3 {
   margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .panel-description {
   margin: 0;
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .panel-content {
@@ -391,7 +391,7 @@ watch(() => props.canvasData, () => {
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .stats-grid {
@@ -410,13 +410,13 @@ watch(() => props.canvasData, () => {
 .stat-value {
   font-size: 24px;
   font-weight: 600;
-  color: #165dff;
+  color: var(--subapp-primary);
   margin-bottom: 4px;
 }
 
 .stat-label {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .chart-container {
@@ -440,20 +440,20 @@ watch(() => props.canvasData, () => {
 .bar-label {
   font-size: 12px;
   font-weight: 500;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .bar-container {
   position: relative;
   height: 20px;
-  background: #e5e6eb;
+  background: var(--subapp-border);
   border-radius: 10px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #165dff, #3c7eff);
+  background: linear-gradient(90deg, var(--subapp-primary), #3c7eff);
   border-radius: 10px;
   transition: width 0.3s ease;
 }
@@ -465,7 +465,7 @@ watch(() => props.canvasData, () => {
   transform: translateY(-50%);
   font-size: 11px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .connection-analysis {
@@ -479,7 +479,7 @@ watch(() => props.canvasData, () => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .analysis-item:last-child {
@@ -488,13 +488,13 @@ watch(() => props.canvasData, () => {
 
 .analysis-label {
   font-size: 12px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .analysis-value {
   font-size: 12px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .health-score {
@@ -519,12 +519,12 @@ watch(() => props.canvasData, () => {
 }
 
 .score-excellent {
-  border-color: #00b42a;
+  border-color: var(--subapp-success);
   background: #e8f5e8;
 }
 
 .score-good {
-  border-color: #ff7d00;
+  border-color: var(--subapp-warning);
   background: #fff7e8;
 }
 
@@ -534,7 +534,7 @@ watch(() => props.canvasData, () => {
 }
 
 .score-poor {
-  border-color: #f53f3f;
+  border-color: var(--subapp-danger);
   background: #ffece8;
 }
 
@@ -551,12 +551,12 @@ watch(() => props.canvasData, () => {
 
 .score-excellent .score-value,
 .score-excellent .score-unit {
-  color: #00b42a;
+  color: var(--subapp-success);
 }
 
 .score-good .score-value,
 .score-good .score-unit {
-  color: #ff7d00;
+  color: var(--subapp-warning);
 }
 
 .score-fair .score-value,
@@ -566,7 +566,7 @@ watch(() => props.canvasData, () => {
 
 .score-poor .score-value,
 .score-poor .score-unit {
-  color: #f53f3f;
+  color: var(--subapp-danger);
 }
 
 .health-details {
@@ -584,18 +584,18 @@ watch(() => props.canvasData, () => {
 }
 
 .health-good {
-  color: #00b42a;
+  color: var(--subapp-success);
 }
 
 .health-bad {
-  color: #f53f3f;
+  color: var(--subapp-danger);
 }
 
 .panel-actions {
   display: flex;
   gap: 8px;
   padding-top: 16px;
-  border-top: 1px solid #e5e6eb;
+  border-top: 1px solid var(--subapp-border);
 }
 
 .panel-actions .arco-btn {

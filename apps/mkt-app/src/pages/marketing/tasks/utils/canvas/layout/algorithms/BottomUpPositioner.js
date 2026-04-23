@@ -180,7 +180,7 @@ export class BottomUpPositioner {
    * @param {Object} hierarchy - 层次结构
    */
   optimizeLayerPositions(layer, positions, hierarchy) {
-    if (layer.length <= 1) return;
+    if (layer.length <= 1) {return;}
     
     // 检测并解决重叠
     this.resolveOverlaps(layer, positions);
@@ -276,7 +276,7 @@ export class BottomUpPositioner {
    * @param {Object} bounds - 布局边界
    */
   applyGlobalAlignment(positions, hierarchy, bounds) {
-    if (!this.config.centerAlignment) return;
+    if (!this.config.centerAlignment) {return;}
     
     // 计算当前布局的边界
     const currentBounds = this.calculateLayoutBounds(positions);

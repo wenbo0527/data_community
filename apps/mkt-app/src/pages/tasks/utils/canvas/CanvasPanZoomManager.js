@@ -68,7 +68,7 @@ export class CanvasPanZoomManager {
    * 初始化管理器
    */
   init() {
-    if (!this.graph) return
+    if (!this.graph) {return}
     
     this.bindEvents()
     this.setupKeyboardShortcuts()
@@ -121,7 +121,7 @@ export class CanvasPanZoomManager {
   setupKeyboardShortcuts() {
     this.handleKeyDown = (e) => {
       // 防止在输入框中触发
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {return}
       
       // 更新修饰键状态
       this.isShiftPressed = e.shiftKey

@@ -54,7 +54,7 @@
           <a-table-column title="最近更新时间" data-index="updateTime" />
           <a-table-column title="最近运行时间" data-index="lastRunTime">
             <template #cell="{ record }">
-              <span v-if="record.lastRunTime" style="color: #00B42A;">{{ record.lastRunTime }}</span>
+              <span v-if="record.lastRunTime" style="color: var(--subapp-success);">{{ record.lastRunTime }}</span>
               <span v-else style="color: #86909C;">-</span>
             </template>
           </a-table-column>
@@ -83,7 +83,7 @@
         <a-timeline>
           <a-timeline-item v-for="(ver, index) in historyVersions" :key="index" :label="ver.time">
             <template #dot>
-              <icon-check-circle v-if="index === 0" style="color: #00b42a; font-size: 16px" />
+              <icon-check-circle v-if="index === 0" style="color: var(--subapp-success); font-size: 16px" />
               <icon-clock-circle v-else style="font-size: 16px" />
             </template>
             <div class="version-content">

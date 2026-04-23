@@ -816,7 +816,7 @@ const mockApiConfig = [
       // 分页
       const total = models.length;
       const start = (page - 1) * pageSize;
-      const end = start + parseInt(pageSize);
+      const end = start + parseInt(pageSize, 10);
       const list = models.slice(start, end);
       
       return {
@@ -825,8 +825,8 @@ const mockApiConfig = [
         data: {
           list,
           total,
-          page: parseInt(page),
-          pageSize: parseInt(pageSize)
+          page: parseInt(page, 10),
+          pageSize: parseInt(pageSize, 10)
         }
       };
     }
@@ -1028,7 +1028,7 @@ const mockApiConfig = [
       
       const total = model.executionHistory.length;
       const start = (page - 1) * pageSize;
-      const end = start + parseInt(pageSize);
+      const end = start + parseInt(pageSize, 10);
       const list = model.executionHistory.slice(start, end);
       
       return {
@@ -1037,8 +1037,8 @@ const mockApiConfig = [
         data: {
           list,
           total,
-          page: parseInt(page),
-          pageSize: parseInt(pageSize)
+          page: parseInt(page, 10),
+          pageSize: parseInt(pageSize, 10)
         }
       };
     }

@@ -236,7 +236,7 @@ const showAppPermissionEditModal = (record: any) => {
 
 .breadcrumb {
   padding: 16px 20px;
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
 }
 
 .user-info-header {
@@ -251,7 +251,7 @@ const showAppPermissionEditModal = (record: any) => {
 :deep(.arco-tabs-nav) {
   padding: 0 20px;
   background-color: #fafafa;
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
 }
 
 .tab-content {

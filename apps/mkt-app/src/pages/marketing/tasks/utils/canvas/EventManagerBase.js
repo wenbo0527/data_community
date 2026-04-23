@@ -20,7 +20,7 @@ export class EventManagerBase {
    * @param {Object} options - 选项配置
    */
   addGraphEvent(eventName, handler, options = {}) {
-    if (this.isDestroyed || !this.graph.value) return
+    if (this.isDestroyed || !this.graph.value) {return}
 
     const wrappedHandler = ErrorHandler.wrapEventHandler(handler, eventName)
     
@@ -51,7 +51,7 @@ export class EventManagerBase {
    * @param {Object} options - 选项配置
    */
   addDomEvent(target, eventName, handler, options = {}) {
-    if (this.isDestroyed) return
+    if (this.isDestroyed) {return}
 
     const element = typeof target === 'string' ? document.querySelector(target) : target
     if (!element) {
@@ -88,7 +88,7 @@ export class EventManagerBase {
    * @param {Function} handler - 事件处理函数（可选）
    */
   removeGraphEvent(eventName, handler = null) {
-    if (!this.graph.value || !this.eventListeners.has(eventName)) return
+    if (!this.graph.value || !this.eventListeners.has(eventName)) {return}
 
     const listeners = this.eventListeners.get(eventName)
     
@@ -119,10 +119,10 @@ export class EventManagerBase {
    */
   removeDomEvent(target, eventName, handler = null) {
     const element = typeof target === 'string' ? document.querySelector(target) : target
-    if (!element) return
+    if (!element) {return}
 
     const key = `${element.tagName || 'document'}_${eventName}`
-    if (!this.domEventListeners.has(key)) return
+    if (!this.domEventListeners.has(key)) {return}
 
     const listeners = this.domEventListeners.get(key)
     
@@ -172,7 +172,7 @@ export class EventManagerBase {
    * 清理所有事件监听器
    */
   cleanup() {
-    if (this.isDestroyed) return
+    if (this.isDestroyed) {return}
 
     console.log('[EventManager] 开始清理事件监听器')
     

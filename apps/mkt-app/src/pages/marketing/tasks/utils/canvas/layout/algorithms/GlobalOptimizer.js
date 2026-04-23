@@ -133,7 +133,7 @@ export class GlobalOptimizer {
     
     // 优化层内间距
     hierarchy.layers.forEach(layer => {
-      if (layer.length <= 1) return;
+      if (layer.length <= 1) {return;}
       
       // 获取层内节点位置并排序
       const layerNodes = layer.map(node => ({
@@ -176,12 +176,12 @@ export class GlobalOptimizer {
    * @param {Object} hierarchy - 层次结构
    */
   optimizeLayerSpacing(positions, hierarchy) {
-    if (hierarchy.layers.length <= 1) return;
+    if (hierarchy.layers.length <= 1) {return;}
     
     // 计算每层的Y坐标
     const layerYPositions = hierarchy.layers.map(layer => {
       const layerPositions = layer.map(node => positions.get(node.id)).filter(pos => pos);
-      if (layerPositions.length === 0) return 0;
+      if (layerPositions.length === 0) {return 0;}
       
       return layerPositions.reduce((sum, pos) => sum + pos.y, 0) / layerPositions.length;
     });
@@ -242,11 +242,11 @@ export class GlobalOptimizer {
    */
   applySymmetryOptimization(positions, hierarchy) {
     hierarchy.layers.forEach(layer => {
-      if (layer.length <= 2) return;
+      if (layer.length <= 2) {return;}
       
       // 计算层的中心点
       const layerPositions = layer.map(node => positions.get(node.id)).filter(pos => pos);
-      if (layerPositions.length === 0) return;
+      if (layerPositions.length === 0) {return;}
       
       const centerX = layerPositions.reduce((sum, pos) => sum + pos.x, 0) / layerPositions.length;
       
@@ -281,7 +281,7 @@ export class GlobalOptimizer {
     hierarchy.layers.forEach(layer => {
       layer.forEach(node => {
         const currentPos = positions.get(node.id);
-        if (!currentPos) return;
+        if (!currentPos) {return;}
         
         // 获取相邻层的连接节点
         const connectedNodes = this.getConnectedNodesInAdjacentLayers(node.id, hierarchy);
@@ -319,12 +319,12 @@ export class GlobalOptimizer {
     const adjustmentFactor = 0.1;
     
     hierarchy.graph.edges.forEach(edge => {
-      if (edge.virtual) return;
+      if (edge.virtual) {return;}
       
       const sourcePos = positions.get(edge.source);
       const targetPos = positions.get(edge.target);
       
-      if (!sourcePos || !targetPos) return;
+      if (!sourcePos || !targetPos) {return;}
       
       const currentLength = Math.sqrt(
         Math.pow(targetPos.x - sourcePos.x, 2) + 
@@ -382,10 +382,10 @@ export class GlobalOptimizer {
     let layerCount = 0;
     
     hierarchy.layers.forEach(layer => {
-      if (layer.length <= 1) return;
+      if (layer.length <= 1) {return;}
       
       const layerPositions = layer.map(node => positions.get(node.id)).filter(pos => pos);
-      if (layerPositions.length === 0) return;
+      if (layerPositions.length === 0) {return;}
       
       const centerX = layerPositions.reduce((sum, pos) => sum + pos.x, 0) / layerPositions.length;
       
@@ -425,7 +425,7 @@ export class GlobalOptimizer {
         position: positions.get(node.id)
       })).filter(item => item.position).sort((a, b) => a.position.x - b.position.x);
       
-      if (layerNodes.length <= 1) return;
+      if (layerNodes.length <= 1) {return;}
       
       // 计算间距的一致性
       const spacings = [];
@@ -469,12 +469,12 @@ export class GlobalOptimizer {
     let edgeCount = 0;
     
     hierarchy.graph.edges.forEach(edge => {
-      if (edge.virtual) return;
+      if (edge.virtual) {return;}
       
       const sourcePos = positions.get(edge.source);
       const targetPos = positions.get(edge.target);
       
-      if (!sourcePos || !targetPos) return;
+      if (!sourcePos || !targetPos) {return;}
       
       const length = Math.sqrt(
         Math.pow(targetPos.x - sourcePos.x, 2) + 
@@ -519,7 +519,7 @@ export class GlobalOptimizer {
    */
   calculateGlobalCenterX(positions) {
     const allPositions = Array.from(positions.values());
-    if (allPositions.length === 0) return 0;
+    if (allPositions.length === 0) {return 0;}
     
     return allPositions.reduce((sum, pos) => sum + pos.x, 0) / allPositions.length;
   }

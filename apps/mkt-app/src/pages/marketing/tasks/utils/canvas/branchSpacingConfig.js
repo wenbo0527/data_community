@@ -120,7 +120,7 @@ export function calculateAdaptiveBranchSpacing(branchCount, nodeType = 'default'
  * @returns {number} 总宽度
  */
 export function getBranchLayoutTotalWidth(branchCount, spacing) {
-  if (branchCount <= 1) return 0
+  if (branchCount <= 1) {return 0}
   return (branchCount - 1) * spacing
 }
 

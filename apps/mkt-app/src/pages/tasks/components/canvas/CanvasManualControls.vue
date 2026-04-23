@@ -344,7 +344,7 @@ export default {
 .status-indicator {
   padding: 4px 8px;
   border-radius: 4px;
-  background: #10b981;
+  background: var(--subapp-success);
   color: white;
   font-weight: 500;
 }

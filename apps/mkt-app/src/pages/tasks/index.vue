@@ -531,7 +531,7 @@ onMounted(() => {
 /* 页面头部样式 */
 .page-header {
   background: #fff;
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
   padding: 16px 24px;
 }
 
@@ -539,13 +539,13 @@ onMounted(() => {
   margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .page-description {
   margin: 0;
   font-size: 14px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 /* 内容卡片样式 */
@@ -572,7 +572,7 @@ onMounted(() => {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .task-filters {
@@ -591,7 +591,7 @@ onMounted(() => {
 }
 
 :deep(.arco-table-td) {
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
   padding: 10px 12px;
 }
 
@@ -601,8 +601,8 @@ onMounted(() => {
 
 /* 按钮样式 */
 :deep(.arco-btn-primary) {
-  background-color: #165dff;
-  border-color: #165dff;
+  background-color: var(--subapp-primary);
+  border-color: var(--subapp-primary);
 }
 
 :deep(.arco-btn-primary:hover) {
@@ -612,7 +612,7 @@ onMounted(() => {
 
 /* 任务名称链接样式 */
 .task-name-link {
-  color: #1890ff;
+  color: var(--subapp-info);
   text-decoration: none;
   cursor: pointer;
   font-weight: 500;
@@ -639,25 +639,25 @@ onMounted(() => {
 }
 
 .danger-btn {
-  color: #f53f3f;
+  color: var(--subapp-danger);
 }
 
 .danger-btn:hover {
   background-color: #ffece8;
-  color: #f53f3f;
+  color: var(--subapp-danger);
 }
 
 /* 历史版本弹窗样式 */
 .history-modal-content {
   display: flex;
   height: 500px;
-  border: 1px solid #f2f3f5;
+  border: 1px solid var(--subapp-bg-secondary);
   border-radius: 4px;
 }
 
 .version-list {
   width: 240px;
-  border-right: 1px solid #f2f3f5;
+  border-right: 1px solid var(--subapp-bg-secondary);
   overflow-y: auto;
   background-color: #f7f8fa;
 }
@@ -665,7 +665,7 @@ onMounted(() => {
 .version-item {
   padding: 12px 16px;
   cursor: pointer;
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
@@ -678,7 +678,7 @@ onMounted(() => {
 
 .version-item.active {
   background-color: #e6f7ff;
-  border-right: 2px solid #165dff;
+  border-right: 2px solid var(--subapp-primary);
 }
 
 .version-info {
@@ -689,12 +689,12 @@ onMounted(() => {
 
 .version-tag {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .version-time {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .version-status {
@@ -716,14 +716,14 @@ onMounted(() => {
   justify-content: space-between;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
 }
 
 .detail-header h3 {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .detail-info-grid {
@@ -741,12 +741,12 @@ onMounted(() => {
 
 .info-item .label {
   font-size: 13px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .info-item .value {
   font-size: 14px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-weight: 500;
 }
 
@@ -760,7 +760,7 @@ onMounted(() => {
 .detail-desc .desc-label {
   font-size: 14px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin-bottom: 8px;
 }
 
@@ -768,7 +768,7 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.6;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   white-space: pre-wrap;
 }
 </style>

@@ -13,7 +13,7 @@ export function useCanvasDragDrop(graph, emit) {
 
   // 设置拖拽事件监听器
   const setupDragListeners = () => {
-    if (!graph.value) return
+    if (!graph.value) {return}
 
     // 使用事件管理器批量添加拖拽事件
     addGraphEvent('node:mousedown', ErrorHandler.wrapEventHandler((args) => {

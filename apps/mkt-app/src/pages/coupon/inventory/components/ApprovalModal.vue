@@ -629,7 +629,7 @@ const handleSubmit = async () => {
     }
     
     // 调用API提交审批申请
-    const { approvalAPI } = await import('@/api/coupon.js')
+    const { approvalAPI } = await import('@/api/coupon.ts')
     const response = await approvalAPI.submitApproval(formData)
     
     if (response.code === 200) {
@@ -764,7 +764,7 @@ const getFieldsForStep = (step: number) => {
 }
 
 .approval-modal :deep(.arco-steps-item-description) {
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 14px;
 }
 
@@ -781,7 +781,7 @@ const getFieldsForStep = (step: number) => {
 }
 
 .approval-modal :deep(.arco-card-header) {
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
   padding: 20px 24px 16px;
 }
 
@@ -796,7 +796,7 @@ const getFieldsForStep = (step: number) => {
 
 .approval-modal :deep(.arco-form-item-label) {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-size: 14px;
 }
 
@@ -805,7 +805,7 @@ const getFieldsForStep = (step: number) => {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 8px;
   margin-bottom: 12px;
   transition: all 0.3s ease;
@@ -813,24 +813,24 @@ const getFieldsForStep = (step: number) => {
 }
 
 .radio-option:hover, .checkbox-option:hover {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   background-color: #f2f7ff;
 }
 
 .radio-option svg, .checkbox-option svg {
   margin-right: 8px;
-  color: #165dff;
+  color: var(--subapp-primary);
   font-size: 16px;
 }
 
 .radio-option span, .checkbox-option span {
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .radio-desc {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin-top: 4px;
   margin-left: 24px;
 }
@@ -844,7 +844,7 @@ const getFieldsForStep = (step: number) => {
 
 .user-option svg, .notification-option svg {
   margin-right: 8px;
-  color: #165dff;
+  color: var(--subapp-primary);
   font-size: 14px;
 }
 
@@ -854,13 +854,13 @@ const getFieldsForStep = (step: number) => {
 
 .notification-title {
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-size: 14px;
 }
 
 .notification-desc {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin-top: 2px;
 }
 
@@ -870,7 +870,7 @@ const getFieldsForStep = (step: number) => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
 }
 
 .summary-item:last-child {
@@ -879,16 +879,16 @@ const getFieldsForStep = (step: number) => {
 
 .summary-label {
   font-weight: 500;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .summary-value {
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .cost-highlight {
-  color: #f53f3f;
+  color: var(--subapp-danger);
   font-size: 16px;
 }
 
@@ -898,7 +898,7 @@ const getFieldsForStep = (step: number) => {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-top: 1px solid #f2f3f5;
+  border-top: 1px solid var(--subapp-bg-secondary);
   background-color: #fafbfc;
 }
 
@@ -913,7 +913,7 @@ const getFieldsForStep = (step: number) => {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .footer-actions {
@@ -924,12 +924,12 @@ const getFieldsForStep = (step: number) => {
 /* 进度条样式 */
 .approval-modal :deep(.arco-progress-line-text) {
   font-weight: 600;
-  color: #165dff;
+  color: var(--subapp-primary);
 }
 
 /* 按钮样式优化 */
 .approval-modal :deep(.arco-btn-primary) {
-  background: linear-gradient(135deg, #165dff 0%, #246fff 100%);
+  background: linear-gradient(135deg, var(--subapp-primary) 0%, #246fff 100%);
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -938,7 +938,7 @@ const getFieldsForStep = (step: number) => {
 }
 
 .approval-modal :deep(.arco-btn-primary:hover) {
-  background: linear-gradient(135deg, #0e4fd1 0%, #1c5aff 100%);
+  background: linear-gradient(135deg, #0e4fd1 0%, var(--subapp-primary) 100%);
   box-shadow: 0 4px 12px rgba(22, 93, 255, 0.4);
   transform: translateY(-1px);
 }

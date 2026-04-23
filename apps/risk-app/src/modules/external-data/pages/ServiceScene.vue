@@ -50,7 +50,7 @@ const scenes = [
     title: '在线批量调用',
     description: '适用于实时业务场景，通过API接口进行高并发数据查询。',
     icon: IconCloud,
-    color: '#165DFF',
+    color: 'var(--subapp-primary)',
     tags: ['实时API', '高并发', '低延迟'],
     serviceType: '在线批量调用'
   },
@@ -59,7 +59,7 @@ const scenes = [
     title: '外数离线回溯申请',
     description: '适用于历史数据分析，支持上传样本文件进行批量回溯。',
     icon: IconStorage,
-    color: '#722ED1',
+    color: 'var(--subapp-info)',
     tags: ['历史回溯', '文件上传', '离线处理'],
     serviceType: '外数离线回溯申请'
   },
@@ -68,7 +68,7 @@ const scenes = [
     title: '周期跑批任务申请',
     description: '适用于定期数据更新，支持配置Cron表达式进行自动化调度。',
     icon: IconClockCircle,
-    color: '#00B42A',
+    color: 'var(--subapp-success)',
     tags: ['定时任务', '自动化', '周期执行'],
     serviceType: '周期跑批任务申请'
   },
@@ -77,7 +77,7 @@ const scenes = [
     title: '全量变量回溯申请',
     description: '适用于模型训练与验证，支持全量特征变量的历史数据回溯。',
     icon: IconFindReplace,
-    color: '#FF7D00',
+    color: 'var(--subapp-warning)',
     tags: ['特征工程', '全量变量', '模型训练'],
     serviceType: '全量变量回溯申请'
   },
@@ -86,7 +86,7 @@ const scenes = [
     title: '风险合规离线回溯申请',
     description: '适用于合规审计与风险排查，提供敏感数据的安全查询通道。',
     icon: IconSafe,
-    color: '#F53F3F',
+    color: 'var(--subapp-danger)',
     tags: ['风险合规', '安全查询', '审计支持'],
     serviceType: '风险合规离线回溯申请'
   },

@@ -228,6 +228,6 @@ onUnmounted(() => {
 }
 
 .menu-item:hover span {
-  color: #111827;
+  color: var(--subapp-text-primary);
 }
 </style>

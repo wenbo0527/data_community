@@ -197,7 +197,7 @@ const pagination = reactive({
 const fetchApprovalHistory = async () => {
   loading.value = true
   try {
-    const { approvalAPI } = await import('@/api/coupon.js')
+    const { approvalAPI } = await import('@/api/coupon.ts')
     const response = await approvalAPI.getApprovalHistory({
       page: pagination.current,
       pageSize: pagination.pageSize,

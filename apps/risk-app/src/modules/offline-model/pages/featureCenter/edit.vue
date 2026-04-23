@@ -205,7 +205,7 @@
                   </div>
                   <div v-for="(rule, rIdx) in mapping.rules" :key="rIdx" class="mapping-rule-row">
                     <a-input v-model="rule.origin" placeholder="原值" size="mini" />
-                    <icon-arrow-right style="color: #86909c" />
+                    <icon-arrow-right style="color: var(--subapp-text-tertiary)" />
                     <a-input v-model="rule.target" placeholder="目标值" size="mini" />
                     <a-button type="text" status="danger" size="mini" @click="removeMappingRule(mIdx, rIdx)">
                       <icon-close />
@@ -454,7 +454,7 @@ const handleSubmit = async () => {
 }
 
 :deep(.arco-card-header) {
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
   height: 48px;
 }
 
@@ -469,7 +469,7 @@ const handleSubmit = async () => {
 
 .mapping-card {
   background: #f8f9fb;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 12px;
@@ -481,14 +481,14 @@ const handleSubmit = async () => {
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px dashed #e5e6eb;
+  border-bottom: 1px dashed var(--subapp-border);
 }
 
 .mapping-rule-container {
   background: #fff;
   padding: 12px;
   border-radius: 4px;
-  border: 1px solid #f2f3f5;
+  border: 1px solid var(--subapp-bg-secondary);
 }
 
 .rules-header {
@@ -501,7 +501,7 @@ const handleSubmit = async () => {
 .rules-title {
   font-size: 12px;
   font-weight: 500;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .mapping-rule-row {

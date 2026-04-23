@@ -46,7 +46,7 @@ class CrowdSplitLogger {
   }
 
   log(level, category, message, data = null) {
-    if (!this.shouldLog(level)) return
+    if (!this.shouldLog(level)) {return}
 
     const entry = this.createLogEntry(level, category, message, data)
     const prefix = `[CrowdSplit-${this.sessionId.slice(-6)}]`

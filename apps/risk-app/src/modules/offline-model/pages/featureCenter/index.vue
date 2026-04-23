@@ -424,7 +424,7 @@
             </div>
 
             <div v-else class="mapping-table-container">
-              <a-row :gutter="12" class="mapping-header-row" style="margin-bottom: 8px; font-size: 12px; color: #86909c;">
+              <a-row :gutter="12" class="mapping-header-row" style="margin-bottom: 8px; font-size: 12px; color: var(--subapp-text-tertiary);">
                 <a-col :span="4">模型类型</a-col>
                 <a-col :span="5">来源表</a-col>
                 <a-col :span="5">表主键</a-col>
@@ -490,7 +490,7 @@
             </div>
 
             <div v-else>
-              <div v-for="(mapping, mIdx) in registerForm.defaultValueMappings" :key="mIdx" class="mapping-card" style="margin-bottom: 16px; border: 1px solid #e5e6eb; padding: 12px; border-radius: 4px;">
+              <div v-for="(mapping, mIdx) in registerForm.defaultValueMappings" :key="mIdx" class="mapping-card" style="margin-bottom: 16px; border: 1px solid var(--subapp-border); padding: 12px; border-radius: 4px;">
                 <!-- Header: Old Feature Name & Delete Group -->
                 <a-row :gutter="12" align="center" style="margin-bottom: 12px;">
                   <a-col :span="20">
@@ -507,7 +507,7 @@
 
                 <!-- Rules List -->
                 <div style="background: #f7f8fa; padding: 8px; border-radius: 4px;">
-                   <a-row :gutter="12" style="margin-bottom: 8px; font-size: 12px; color: #86909c;">
+                   <a-row :gutter="12" style="margin-bottom: 8px; font-size: 12px; color: var(--subapp-text-tertiary);">
                      <a-col :span="10">原值</a-col>
                      <a-col :span="10">映射值</a-col>
                      <a-col :span="4">操作</a-col>
@@ -1375,7 +1375,7 @@ const downloadTemplate = () => {
         
         .stat-icon {
           font-size: 32px;
-          color: #1890ff;
+          color: var(--subapp-info);
           margin-right: 16px;
         }
         
@@ -1415,7 +1415,7 @@ const downloadTemplate = () => {
     .section-title {
       font-size: 15px;
       font-weight: 600;
-      color: #1d2129;
+      color: var(--subapp-text-primary);
       margin-bottom: 16px;
       padding-left: 12px;
       position: relative;
@@ -1430,7 +1430,7 @@ const downloadTemplate = () => {
         top: 3px;
         bottom: 3px;
         width: 3px;
-        background: #165dff;
+        background: var(--subapp-primary);
         border-radius: 2px;
       }
     }
@@ -1445,11 +1445,11 @@ const downloadTemplate = () => {
     border-radius: 4px;
     padding: 16px;
     margin-bottom: 16px;
-    border: 1px solid #e5e6eb;
+    border: 1px solid var(--subapp-border);
     transition: all 0.2s;
 
     &:hover {
-      border-color: #165dff;
+      border-color: var(--subapp-primary);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
@@ -1458,19 +1458,19 @@ const downloadTemplate = () => {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
-      border-bottom: 1px dashed #e5e6eb;
+      border-bottom: 1px dashed var(--subapp-border);
       padding-bottom: 8px;
 
       .mapping-index {
         font-weight: 500;
-        color: #4e5969;
+        color: var(--subapp-text-secondary);
         font-size: 13px;
       }
     }
 
     .mapping-sub-title {
       font-size: 13px;
-      color: #86909c;
+      color: var(--subapp-text-tertiary);
       margin: 12px 0 8px;
     }
 
@@ -1481,7 +1481,7 @@ const downloadTemplate = () => {
       background: #fff;
       padding: 8px;
       border-radius: 4px;
-      border: 1px solid #f2f3f5;
+      border: 1px solid var(--subapp-bg-secondary);
     }
   }
 
@@ -1490,8 +1490,8 @@ const downloadTemplate = () => {
     padding: 32px;
     background: #f7f8fa;
     border-radius: 4px;
-    color: #86909c;
-    border: 1px dashed #e5e6eb;
+    color: var(--subapp-text-tertiary);
+    border: 1px dashed var(--subapp-border);
   }
 }
 </style>

@@ -88,15 +88,15 @@ export class PortConfigurationFactory {
       
       // 检查是否可以创建输出连接
       canCreateOutConnection: () => {
-        if (!portConfig.hasOutPort) return false
-        if (portConfig.maxOutConnections === -1) return true
+        if (!portConfig.hasOutPort) {return false}
+        if (portConfig.maxOutConnections === -1) {return true}
         return portConfig.currentOutConnections < portConfig.maxOutConnections
       },
       
       // 检查是否可以创建输入连接
       canCreateInConnection: () => {
-        if (!portConfig.hasInPort) return false
-        if (portConfig.maxInConnections === -1) return true
+        if (!portConfig.hasInPort) {return false}
+        if (portConfig.maxInConnections === -1) {return true}
         return portConfig.currentInConnections < portConfig.maxInConnections
       }
     }
@@ -140,7 +140,7 @@ export class PortConfigurationFactory {
    */
   updateConnectionCount(nodeId, portType, delta) {
     const portConfig = this.portConfigurations.get(nodeId)
-    if (!portConfig) return false
+    if (!portConfig) {return false}
 
     if (portType === 'out') {
       portConfig.currentOutConnections += delta

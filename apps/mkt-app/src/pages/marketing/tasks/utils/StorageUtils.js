@@ -28,7 +28,7 @@ export class CacheItem {
    * @returns {boolean} 是否过期
    */
   isExpired() {
-    if (!this.expireTime) return false
+    if (!this.expireTime) {return false}
     return Date.now() > this.expireTime
   }
 
@@ -37,7 +37,7 @@ export class CacheItem {
    * @returns {number} 剩余时间，-1表示永不过期
    */
   getRemainingTime() {
-    if (!this.expireTime) return -1
+    if (!this.expireTime) {return -1}
     const remaining = this.expireTime - Date.now()
     return Math.max(0, remaining)
   }
@@ -118,7 +118,7 @@ export class StorageUtils {
           return defaultValue
       }
 
-      if (!cacheItem) return defaultValue
+      if (!cacheItem) {return defaultValue}
 
       // 检查是否过期
       if (cacheItem.isExpired()) {
@@ -310,7 +310,7 @@ export class StorageUtils {
   static getLocalStorageItem(key, deserialize) {
     try {
       const data = localStorage.getItem(key)
-      if (!data) return null
+      if (!data) {return null}
 
       if (deserialize) {
         const parsed = JSON.parse(data)
@@ -351,7 +351,7 @@ export class StorageUtils {
   static getSessionStorageItem(key, deserialize) {
     try {
       const data = sessionStorage.getItem(key)
-      if (!data) return null
+      if (!data) {return null}
 
       if (deserialize) {
         const parsed = JSON.parse(data)
@@ -428,13 +428,13 @@ export class StorageUtils {
    * @returns {boolean} 是否全部成功
    */
   static setItems(items, options = {}) {
-    if (!items || typeof items !== 'object') return false
+    if (!items || typeof items !== 'object') {return false}
 
     let allSuccess = true
 
     Object.entries(items).forEach(([key, value]) => {
       const success = this.setItem(key, value, options)
-      if (!success) allSuccess = false
+      if (!success) {allSuccess = false}
     })
 
     return allSuccess
@@ -447,7 +447,7 @@ export class StorageUtils {
    * @returns {Object} 键值对对象
    */
   static getItems(keys, options = {}) {
-    if (!Array.isArray(keys)) return {}
+    if (!Array.isArray(keys)) {return {}}
 
     const result = {}
 
@@ -465,13 +465,13 @@ export class StorageUtils {
    * @returns {boolean} 是否全部成功
    */
   static removeItems(keys, options = {}) {
-    if (!Array.isArray(keys)) return false
+    if (!Array.isArray(keys)) {return false}
 
     let allSuccess = true
 
     keys.forEach(key => {
       const success = this.removeItem(key, options)
-      if (!success) allSuccess = false
+      if (!success) {allSuccess = false}
     })
 
     return allSuccess
@@ -516,7 +516,7 @@ export class StorageUtils {
           return null
       }
 
-      if (!cacheItem) return null
+      if (!cacheItem) {return null}
 
       return {
         key,

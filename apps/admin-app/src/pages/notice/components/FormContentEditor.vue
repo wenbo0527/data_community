@@ -179,12 +179,12 @@ import { nextTick } from 'vue'
 
 .word-count {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .preview-section {
   margin-top: 16px;
-  border: 1px solid #e5e6e8;
+  border: 1px solid var(--subapp-border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -195,7 +195,7 @@ import { nextTick } from 'vue'
   align-items: center;
   padding: 8px 12px;
   background: #f7f8fa;
-  border-bottom: 1px solid #e5e6e8;
+  border-bottom: 1px solid var(--subapp-border);
   font-weight: 600;
 }
 

@@ -147,7 +147,7 @@ export function useLayoutEngine() {
 
       layer.forEach((nodeId, nodeIndex) => {
         const node = nodeMap.get(nodeId)
-        if (!node) return
+        if (!node) {return}
 
         const nodeSize = node.getSize()
         let x, y
@@ -228,7 +228,7 @@ export function useLayoutEngine() {
    * @param {string} type - 对齐类型：left, right, top, bottom, center-h, center-v
    */
   const alignNodes = (graph, type) => {
-    if (!graph) return
+    if (!graph) {return}
 
     const selectedNodes = graph.getSelectedCells().filter(cell => cell.isNode())
     if (selectedNodes.length < 2) {
@@ -289,7 +289,7 @@ export function useLayoutEngine() {
    * @param {string} direction - 分布方向：horizontal, vertical
    */
   const distributeNodes = (graph, direction) => {
-    if (!graph) return
+    if (!graph) {return}
 
     const selectedNodes = graph.getSelectedCells().filter(cell => cell.isNode())
     if (selectedNodes.length < 3) {

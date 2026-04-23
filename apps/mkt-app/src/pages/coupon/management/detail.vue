@@ -128,7 +128,7 @@ import { IconLeft, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import TemplateDetail from '../template/detail.vue'
 import CouponPreview from '../template/components/CouponPreview.vue'
-// import { inventoryAPI, templateAPI } from '@/api/coupon.js'
+// import { inventoryAPI, templateAPI } from '@/api/coupon.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -362,7 +362,7 @@ onMounted(async () => {
 .rules-content {
   white-space: pre-line;
   line-height: 1.6;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .preview-section {

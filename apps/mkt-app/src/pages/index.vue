@@ -260,11 +260,11 @@ const handleNavigate = (path) => {
 
 .module-icon {
   font-size: 18px;
-  color: #165dff;
+  color: var(--subapp-primary);
 }
 
 .card-description {
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 14px;
   margin: 12px 0;
   line-height: 1.5;

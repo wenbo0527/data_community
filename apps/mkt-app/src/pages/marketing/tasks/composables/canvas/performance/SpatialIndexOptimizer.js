@@ -73,7 +73,7 @@ export class SpatialIndexOptimizer {
    */
   removeItem(id) {
     const item = this.items.get(id)
-    if (!item) return false
+    if (!item) {return false}
 
     try {
       // 从所有相关网格单元中移除
@@ -170,7 +170,7 @@ export class SpatialIndexOptimizer {
     
     for (const candidate of candidates) {
       // 应用过滤器
-      if (filter && !filter(candidate)) continue
+      if (filter && !filter(candidate)) {continue}
       
       // 计算到边界中心的距离
       const centerX = candidate.bounds.x + candidate.bounds.width / 2
@@ -196,7 +196,7 @@ export class SpatialIndexOptimizer {
    */
   updateItem(id, newBounds, newData = null) {
     const item = this.items.get(id)
-    if (!item) return false
+    if (!item) {return false}
 
     // 检查是否需要更新
     const normalizedBounds = this.normalizeBounds(newBounds)
@@ -305,7 +305,7 @@ export class SpatialIndexOptimizer {
    * 调整网格大小
    */
   resizeGrid(newGridSize) {
-    if (newGridSize === this.options.gridSize) return
+    if (newGridSize === this.options.gridSize) {return}
 
     console.log(`🔄 [SpatialIndexOptimizer] 调整网格大小: ${this.options.gridSize} -> ${newGridSize}`)
     

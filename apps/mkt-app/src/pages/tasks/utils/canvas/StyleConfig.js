@@ -205,7 +205,7 @@ export class StyleConfig {
     const result = { ...target }
     
     for (const key in source) {
-      if (source.hasOwnProperty(key)) {
+      if (Object.hasOwn(source, key)) {
         if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
           result[key] = this.mergeStyles(result[key] || {}, source[key])
         } else {

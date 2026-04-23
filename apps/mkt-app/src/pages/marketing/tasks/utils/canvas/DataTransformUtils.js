@@ -515,8 +515,8 @@ export class DataTransformUtils {
           const config = getNodeConfig('start') // 默认使用start类型
           const attrs = getNodeAttrs('start')
           
-          if (config) nodeConfig = config
-          if (attrs) nodeAttrs = attrs
+          if (config) {nodeConfig = config}
+          if (attrs) {nodeAttrs = attrs}
         } catch (error) {
           console.warn('[DataTransformUtils] 获取节点配置失败，使用默认值:', error)
         }

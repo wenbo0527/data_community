@@ -40,11 +40,11 @@ export class PortCoordinateDebugger {
    * 统一的日志输出方法
    */
   log(level, message, data = null) {
-    if (!this.isEnabled) return
+    if (!this.isEnabled) {return}
 
     // 日志级别控制
     const shouldLog = this.shouldLog(level)
-    if (!shouldLog) return
+    if (!shouldLog) {return}
 
     if (data) {
       console.log(message, data)
@@ -84,7 +84,7 @@ export class PortCoordinateDebugger {
    * 调试节点创建时的坐标信息
    */
   debugNodeCreation(nodeData, nodeConfig) {
-    if (!this.isEnabled) return
+    if (!this.isEnabled) {return}
 
     const nodeId = nodeData.id || nodeConfig.id
     const debugData = {
@@ -119,7 +119,7 @@ export class PortCoordinateDebugger {
    * 调试端口配置信息
    */
   debugPortConfiguration(nodeId, portConfig) {
-    if (!this.isEnabled) return
+    if (!this.isEnabled) {return}
 
     this.log('debug', `🔧 [端口配置调试] 开始处理节点 ${nodeId}`)
     this.log('debug', `📋 接收到的端口配置:`, portConfig)
@@ -346,7 +346,7 @@ export class PortCoordinateDebugger {
    * 输出所有节点的调试信息
    */
   debugAllNodes() {
-    if (!this.isEnabled) return
+    if (!this.isEnabled) {return}
 
     this.log('info', '🔍 [端口坐标调试] 开始调试所有节点')
     
@@ -600,7 +600,7 @@ export class PortCoordinateDebugger {
    * 调试渲染后的端口坐标
    */
   debugRenderedPortCoordinates(nodeId) {
-    if (!this.isEnabled) return
+    if (!this.isEnabled) {return}
 
     this.log('debug', `🔍 [debugRenderedPortCoordinates] 开始调试节点 ${nodeId} 的渲染后端口坐标`)
     

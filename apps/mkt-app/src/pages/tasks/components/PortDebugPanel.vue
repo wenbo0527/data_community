@@ -418,7 +418,7 @@ defineExpose({
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
 }
 
 .node-details {
@@ -469,7 +469,7 @@ defineExpose({
 
 .port-group-title {
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
   margin-bottom: 8px;
   font-size: 12px;
 }
@@ -496,7 +496,7 @@ defineExpose({
 
 .final-coord {
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
 }
 
 .issues-section {
@@ -583,7 +583,7 @@ defineExpose({
 
 .dom-port {
   padding: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--subapp-border);
   font-size: 11px;
 }
 
@@ -593,12 +593,12 @@ defineExpose({
 
 .port-title {
   font-weight: 600;
-  color: #1890ff;
+  color: var(--subapp-info);
   margin-bottom: 4px;
 }
 
 .global-debug-info {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--subapp-border);
   padding-top: 16px;
 }
 

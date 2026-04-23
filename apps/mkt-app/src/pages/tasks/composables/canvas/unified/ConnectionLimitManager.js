@@ -74,7 +74,7 @@ export class ConnectionLimitManager {
   
   // 扫描现有连接
   async scanExistingConnections() {
-    if (!this.graph) return
+    if (!this.graph) {return}
     
     const edges = this.graph.getEdges() || []
     
@@ -539,7 +539,7 @@ export class ConnectionLimitManager {
     
     for (const [nodeId, stats] of this.connectionStats) {
       const node = this.graph.getCellById(nodeId)
-      if (!node) continue
+      if (!node) {continue}
       
       const nodeData = node.getData() || {}
       const nodeType = nodeData.nodeType || nodeData.type

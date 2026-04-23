@@ -6,6 +6,7 @@ import { createApp, type App } from 'vue'
 import { createPinia } from 'pinia'
 import ArcoVue from '@arco-design/web-vue'
 import '@arco-design/web-vue/es/index.css'
+import '../../../src/styles/subapp-tokens.css'
 import Root from './Root.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import MarketingIndex from './pages/marketing/index.vue'
@@ -80,7 +81,7 @@ function unmount() {
 }
 
 // 导出 qiankun 生命周期（UMD 格式）
-;(window as any).mktApp = {
+(window as any).mktApp = {
   bootstrap,
   mount,
   unmount

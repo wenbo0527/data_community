@@ -86,7 +86,7 @@ export class HierarchicalBuilder {
     
     // 添加边
     edges.forEach(edge => {
-      if (!edge) return;
+      if (!edge) {return;}
       
       const sourceId = edge.source || edge.sourceNodeId;
       const targetId = edge.target || edge.targetNodeId;
@@ -126,7 +126,7 @@ export class HierarchicalBuilder {
       
       const outEdges = graph.outEdges.get(nodeId) || [];
       for (const edge of outEdges) {
-        if (reversedEdges.has(edge.id)) continue;
+        if (reversedEdges.has(edge.id)) {continue;}
         
         if (!visited.has(edge.target)) {
           if (dfs(edge.target)) {
@@ -202,7 +202,7 @@ export class HierarchicalBuilder {
       
       const outEdges = graph.outEdges.get(nodeId) || [];
       outEdges.forEach(edge => {
-        if (graph.reversedEdges.has(edge.id)) return;
+        if (graph.reversedEdges.has(edge.id)) {return;}
         
         const targetNode = graph.nodes.get(edge.target);
         const newRank = currentRank + 1;
@@ -374,7 +374,7 @@ export class HierarchicalBuilder {
    */
   getNodeHierarchyInfo(nodeId, hierarchy) {
     const node = hierarchy.graph.nodes.get(nodeId);
-    if (!node) return null;
+    if (!node) {return null;}
     
     return {
       rank: node.rank,

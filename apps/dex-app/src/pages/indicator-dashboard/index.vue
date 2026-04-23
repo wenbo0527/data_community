@@ -110,7 +110,7 @@
             @change="handleMetricSelect"
           >
             <a-option v-for="item in availableMetrics" :key="item.id" :value="item.id" :label="item.name">
-              {{ item.name }} <span style="color: #86909c; font-size: 12px; margin-left: 4px">({{ item.code }})</span>
+              {{ item.name }} <span style="color: var(--subapp-text-tertiary); font-size: 12px; margin-left: 4px">({{ item.code }})</span>
             </a-option>
           </a-select>
         </a-form-item>
@@ -213,8 +213,8 @@ const availableMetrics = [
 
 // 模拟统计数据
 const stats = [
-  { title: '接入指标总数', value: 128, icon: IconBarChart, color: '#165DFF', unit: '个' },
-  { title: '今日更新', value: 12, icon: IconThunderbolt, color: '#00B42A', unit: '个' },
+  { title: '接入指标总数', value: 128, icon: IconBarChart, color: 'var(--subapp-primary)', unit: '个' },
+  { title: '今日更新', value: 12, icon: IconThunderbolt, color: 'var(--subapp-success)', unit: '个' },
   { title: '异常波动', value: 3, icon: IconSafe, color: '#F53F3F', unit: '个' },
   { title: '覆盖业务线', value: 8, icon: IconUserGroup, color: '#FF7D00', unit: '条' },
 ]

@@ -31,14 +31,14 @@
                       :title="stat.title"
                       :value="stat.value"
                       :precision="stat.precision || 0"
-                      :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
+                      :value-style="{ color: stat.trend === 'up' ? 'var(--subapp-success)' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
                     >
                       <template #prefix>
-                        <IconArrowRise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
+                        <IconArrowRise v-if="stat.trend === 'up'" :style="{ color: 'var(--subapp-success)', fontSize: '20px' }" />
                         <IconArrowFall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
                       </template>
                       <template #suffix>
-                        <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
+                        <span class="trend-text" :style="{ color: stat.trend === 'up' ? 'var(--subapp-success)' : '#F53F3F', fontSize: '14px' }">
                           {{ stat.percentage }}%
                         </span>
                       </template>
@@ -66,14 +66,14 @@
                     :title="stat.title"
                     :value="stat.value"
                     :precision="stat.precision || 0"
-                    :value-style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
+                    :value-style="{ color: stat.trend === 'up' ? 'var(--subapp-success)' : '#F53F3F', fontSize: '24px', fontWeight: 600 }"
                   >
                     <template #prefix>
-                      <IconArrowRise v-if="stat.trend === 'up'" :style="{ color: '#00B42A', fontSize: '20px' }" />
+                      <IconArrowRise v-if="stat.trend === 'up'" :style="{ color: 'var(--subapp-success)', fontSize: '20px' }" />
                       <IconArrowFall v-else :style="{ color: '#F53F3F', fontSize: '20px' }" />
                     </template>
                     <template #suffix>
-                      <span class="trend-text" :style="{ color: stat.trend === 'up' ? '#00B42A' : '#F53F3F', fontSize: '14px' }">
+                      <span class="trend-text" :style="{ color: stat.trend === 'up' ? 'var(--subapp-success)' : '#F53F3F', fontSize: '14px' }">
                         {{ stat.percentage }}%
                       </span>
                     </template>
@@ -192,7 +192,7 @@
             <a-table-column title="下发成功率" data-index="successRate" align="right">
               <template #cell="{ record }">
                 <a-badge
-                  :color="record.successRate >= 80 ? '#00B42A' : record.successRate >= 60 ? '#FF7D00' : '#F53F3F'"
+                  :color="record.successRate >= 80 ? 'var(--subapp-success)' : record.successRate >= 60 ? '#FF7D00' : '#F53F3F'"
                   :text="record.successRate.toFixed(1) + '%'"
                 />
               </template>
@@ -384,7 +384,7 @@ const warningData = ref([
 // 获取预警状态颜色
 const getAlertStatusColor = (status) => {
   const colors = {
-    normal: '#00B42A',
+    normal: 'var(--subapp-success)',
     warning: '#FF7D00',
     danger: '#F53F3F'
   }

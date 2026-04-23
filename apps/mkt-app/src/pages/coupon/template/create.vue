@@ -357,7 +357,7 @@
                           />
                         </a-tab-pane>
                         <a-tab-pane key="preview" title="预览">
-                          <div class="markdown-preview" v-html="formData.usageDescription" style="width: 100%; min-height: 200px; padding: 12px; border: 1px solid #e5e6eb; border-radius: 6px; background-color: #f7f8fa;"></div>
+                          <div class="markdown-preview" v-html="formData.usageDescription" style="width: 100%; min-height: 200px; padding: 12px; border: 1px solid var(--subapp-border); border-radius: 6px; background-color: #f7f8fa;"></div>
                         </a-tab-pane>
                       </a-tabs>
                     </div>
@@ -801,7 +801,7 @@ const handleSubmitAndCreate = async () => {
 .page-header {
   background: white;
   padding: 12px 0;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   position: sticky;
   top: 0;
@@ -822,14 +822,14 @@ const handleSubmitAndCreate = async () => {
 
 .back-btn {
   padding: 4px 8px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .page-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .header-right {
@@ -852,7 +852,7 @@ const handleSubmitAndCreate = async () => {
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   margin-bottom: 16px;
 }
 
@@ -865,7 +865,7 @@ const handleSubmitAndCreate = async () => {
   background: #f7f8fa;
   font-weight: 600;
   font-size: 16px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .content-layout :deep(.arco-collapse-item-content) {
@@ -935,14 +935,14 @@ const handleSubmitAndCreate = async () => {
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .section-header h4 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .config-group {
@@ -957,9 +957,9 @@ const handleSubmitAndCreate = async () => {
   margin: 0 0 20px 0;
   font-size: 15px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   padding-bottom: 8px;
-  border-bottom: 1px solid #f2f3f5;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
 }
 
 .preview-content {
@@ -978,7 +978,7 @@ const handleSubmitAndCreate = async () => {
   padding: 16px;
   background: #f7f8fa;
   border-radius: 8px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
 }
 
 .coupon-preview-section .preview-header {
@@ -992,7 +992,7 @@ const handleSubmitAndCreate = async () => {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .coupon-preview-section .preview-content {
@@ -1002,7 +1002,7 @@ const handleSubmitAndCreate = async () => {
 
 /* Markdown编辑器样式 */
 .markdown-editor-container {
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 6px;
   overflow: hidden;
   width: 100%;
@@ -1029,7 +1029,7 @@ const handleSubmitAndCreate = async () => {
   min-height: 200px;
   padding: 12px;
   background: white;
-  border-top: 1px solid #e5e6eb;
+  border-top: 1px solid var(--subapp-border);
   width: 100%;
   box-sizing: border-box;
   word-wrap: break-word;
@@ -1039,7 +1039,7 @@ const handleSubmitAndCreate = async () => {
 /* Quill编辑器样式优化 */
 .markdown-editor-container :deep(.ql-toolbar) {
   border: none;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
   background: #fafafa;
   width: 100%;
   box-sizing: border-box;
@@ -1064,7 +1064,7 @@ const handleSubmitAndCreate = async () => {
   margin-top: 20px;
   padding: 16px 20px;
   background: white;
-  border-top: 1px solid #e5e6eb;
+  border-top: 1px solid var(--subapp-border);
   border-radius: 0 0 8px 8px;
   display: flex;
   justify-content: flex-end;
@@ -1090,7 +1090,7 @@ const handleSubmitAndCreate = async () => {
 
 .form-card :deep(.arco-form-item-label) {
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   margin-bottom: 4px;
   font-size: 13px;
 }
@@ -1098,7 +1098,7 @@ const handleSubmitAndCreate = async () => {
 .form-card :deep(.arco-divider) {
   margin: 16px 0 12px 0;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-size: 14px;
 }
 
@@ -1361,8 +1361,8 @@ const handleSubmitAndCreate = async () => {
 .coupon-template-create[data-readonly="true"] :deep(.arco-date-picker),
 .coupon-template-create[data-readonly="true"] :deep(.arco-range-picker) {
   background-color: #f7f8fa !important;
-  border-color: #e5e6eb !important;
-  color: #86909c !important;
+  border-color: var(--subapp-border) !important;
+  color: var(--subapp-text-tertiary) !important;
   cursor: not-allowed !important;
 }
 
@@ -1370,19 +1370,19 @@ const handleSubmitAndCreate = async () => {
 .coupon-template-create[data-readonly="true"] :deep(.arco-select:hover),
 .coupon-template-create[data-readonly="true"] :deep(.arco-textarea:hover),
 .coupon-template-create[data-readonly="true"] :deep(.arco-input-number:hover) {
-  border-color: #e5e6eb !important;
+  border-color: var(--subapp-border) !important;
 }
 
 .coupon-template-create[data-readonly="true"] :deep(.arco-form-item-label)::after {
   content: " (只读)";
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 12px;
   font-weight: normal;
 }
 
 .coupon-template-create[data-readonly="true"] .config-title::after {
   content: " - 只读模式";
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 12px;
   font-weight: normal;
 }

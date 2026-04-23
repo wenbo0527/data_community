@@ -1170,7 +1170,7 @@ onMounted(() => {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #262626;
+  color: var(--subapp-text-primary);
 }
 
 .title-icon {
@@ -1211,7 +1211,7 @@ onMounted(() => {
 .empty-text {
   margin: 0;
   font-size: 15px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   line-height: 1.5;
 }
 
@@ -1237,7 +1237,7 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   border: 3px solid #e5e6eb;
-  border-top: 3px solid #165dff;
+  border-top: 3px solid var(--subapp-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -1250,7 +1250,7 @@ onMounted(() => {
 
 .loading-text {
   font-size: 14px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin: 0;
 }
 
@@ -1312,14 +1312,14 @@ onMounted(() => {
 .error-icon {
   font-size: 64px;
   margin-bottom: 16px;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   opacity: 0.8;
 }
 
 .error-text {
   margin: 0;
   font-size: 15px;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   font-weight: 500;
 }
 
@@ -1331,8 +1331,8 @@ onMounted(() => {
 
 .retry-btn {
   margin-top: 16px;
-  background: #ff4d4f;
-  border-color: #ff4d4f;
+  background: var(--subapp-danger);
+  border-color: var(--subapp-danger);
   color: white;
 }
 
@@ -1370,18 +1370,18 @@ onMounted(() => {
 }
 
 .record-item:hover {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   box-shadow: 0 4px 16px rgba(22, 93, 255, 0.1);
   transform: translateY(-2px);
 }
 
 .record-item:hover::before {
-  background: #165dff;
+  background: var(--subapp-primary);
   width: 6px;
 }
 
 .record-item.high-risk::before {
-  background: #ff4d4f;
+  background: var(--subapp-danger);
 }
 
 .record-item.medium-risk::before {
@@ -1393,13 +1393,13 @@ onMounted(() => {
 }
 
 .record-item.selected {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   background: #f0f7ff;
   box-shadow: 0 2px 12px rgba(22, 93, 255, 0.15);
 }
 
 .record-item.selected::before {
-  background: #165dff;
+  background: var(--subapp-primary);
   width: 6px;
 }
 
@@ -1423,7 +1423,7 @@ onMounted(() => {
 
 .record-type {
   font-weight: 500;
-  color: #262626;
+  color: var(--subapp-text-primary);
 }
 
 .record-date {
@@ -1466,12 +1466,12 @@ onMounted(() => {
 
 .detail-value {
   font-size: 13px;
-  color: #262626;
+  color: var(--subapp-text-primary);
 }
 
 .detail-value.amount {
   font-weight: 500;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
 }
 
 .detail-value.days {
@@ -1483,7 +1483,7 @@ onMounted(() => {
   padding: 8px 12px;
   background: #fafafa;
   border-radius: 4px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--subapp-info);
 }
 
 .notes-label {
@@ -1532,7 +1532,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #1890ff, #52c41a);
+  background: linear-gradient(90deg, var(--subapp-info), #52c41a);
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
@@ -1550,14 +1550,14 @@ onMounted(() => {
 .stat-icon {
   font-size: 28px;
   margin-bottom: 8px;
-  color: #1890ff;
+  color: var(--subapp-info);
   opacity: 0.8;
 }
 
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #1890ff;
+  color: var(--subapp-info);
   margin-bottom: 6px;
   line-height: 1;
 }
@@ -1584,7 +1584,7 @@ onMounted(() => {
 
 .stat-trend.down {
   background: #fff2f0;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
 }
 
 /* 标签系统样式 */
@@ -1593,7 +1593,7 @@ onMounted(() => {
   padding: 12px 16px;
   background: #fafafa;
   border-radius: 6px;
-  border-left: 4px solid #1890ff;
+  border-left: 4px solid var(--subapp-info);
 }
 
 .tag-group {
@@ -1641,13 +1641,13 @@ onMounted(() => {
 }
 
 .filter-group:hover {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   box-shadow: 0 2px 8px rgba(22, 93, 255, 0.1);
 }
 
 .filter-label {
   font-size: 12px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1658,20 +1658,20 @@ onMounted(() => {
 
 .reset-filters-btn {
   margin-left: auto;
-  background: #f2f3f5;
+  background: var(--subapp-bg-secondary);
   border-color: #e5e6eb;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .reset-filters-btn:hover {
   background: #e8f3ff;
-  border-color: #165dff;
-  color: #165dff;
+  border-color: var(--subapp-primary);
+  color: var(--subapp-primary);
 }
 
 .view-mode-toggle {
   display: flex;
-  background: #f2f3f5;
+  background: var(--subapp-bg-secondary);
   border-radius: 6px;
   padding: 2px;
   border: 1px solid #e5e6eb;
@@ -1680,7 +1680,7 @@ onMounted(() => {
 .view-mode-toggle .arco-btn {
   border: none;
   background: transparent;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   border-radius: 4px;
   margin: 0;
   transition: all 0.2s ease;
@@ -1688,7 +1688,7 @@ onMounted(() => {
 
 .view-mode-toggle .arco-btn.active {
   background: #ffffff;
-  color: #165dff;
+  color: var(--subapp-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -1765,8 +1765,8 @@ onMounted(() => {
 }
 
 .arco-btn-primary {
-  background: linear-gradient(135deg, #165dff, #4080ff);
-  border-color: #165dff;
+  background: linear-gradient(135deg, var(--subapp-primary), #4080ff);
+  border-color: var(--subapp-primary);
 }
 
 .arco-btn-primary:hover {
@@ -1787,8 +1787,8 @@ onMounted(() => {
 }
 
 .arco-btn-outline:hover {
-  border-color: #165dff;
-  color: #165dff;
+  border-color: var(--subapp-primary);
+  color: var(--subapp-primary);
   background: rgba(22, 93, 255, 0.05);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(22, 93, 255, 0.1);
@@ -1800,7 +1800,7 @@ onMounted(() => {
 }
 
 .arco-input:focus {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
 }
 
@@ -1809,7 +1809,7 @@ onMounted(() => {
 }
 
 .arco-select:focus-within {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
   box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
 }
 
@@ -1829,12 +1829,12 @@ onMounted(() => {
 }
 
 .arco-tag.arco-tag-checkable:hover {
-  border-color: #165dff;
+  border-color: var(--subapp-primary);
 }
 
 .arco-tag.arco-tag-checked {
-  background: #165dff;
-  border-color: #165dff;
+  background: var(--subapp-primary);
+  border-color: var(--subapp-primary);
   color: white;
 }
 
@@ -1855,8 +1855,8 @@ onMounted(() => {
 }
 
 .arco-pagination-item-active {
-  background: #165dff;
-  border-color: #165dff;
+  background: var(--subapp-primary);
+  border-color: var(--subapp-primary);
   color: white;
   box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
 }
@@ -1885,13 +1885,13 @@ onMounted(() => {
 
 .score-low {
   background: #fff2f0;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   border: 1px solid #ffb3b3;
 }
 
 /* 逾期天数样式 */
 .days-critical {
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   font-weight: 600;
 }
 
@@ -1905,7 +1905,7 @@ onMounted(() => {
 }
 
 .detail-value.promise {
-  color: #1890ff;
+  color: var(--subapp-info);
   font-weight: 500;
 }
 
@@ -1943,7 +1943,7 @@ onMounted(() => {
 
 .timeline-filters .arco-btn.active {
   background-color: #e8f3ff;
-  color: #165dff;
+  color: var(--subapp-primary);
 }
 
 .timeline-zoom {
@@ -1954,12 +1954,12 @@ onMounted(() => {
 
 .zoom-label {
   font-size: 12px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .zoom-value {
   font-size: 12px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-weight: 500;
   min-width: 35px;
 }
@@ -1994,7 +1994,7 @@ onMounted(() => {
 
 .filter-item label {
   font-size: 12px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   white-space: nowrap;
 }
 
@@ -2060,11 +2060,11 @@ onMounted(() => {
 }
 
 .dot-error {
-  background: #ff4d4f;
+  background: var(--subapp-danger);
 }
 
 .dot-info {
-  background: #1890ff;
+  background: var(--subapp-info);
 }
 
 .dot-warning {
@@ -2104,7 +2104,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   font-weight: 500;
-  color: #262626;
+  color: var(--subapp-text-primary);
   flex: 1;
 }
 
@@ -2114,7 +2114,7 @@ onMounted(() => {
 
 .expand-icon {
   transition: transform 0.3s ease;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .expand-icon.expanded {
@@ -2137,11 +2137,11 @@ onMounted(() => {
 
 .summary-item {
   font-size: 12px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .summary-item .amount {
-  color: #f53f3f;
+  color: var(--subapp-danger);
   font-weight: 500;
 }
 
@@ -2150,7 +2150,7 @@ onMounted(() => {
   padding: 12px;
   background: #f7f8fa;
   border-radius: 4px;
-  border-left: 3px solid #165dff;
+  border-left: 3px solid var(--subapp-primary);
   animation: slideDown 0.3s ease;
 }
 
@@ -2176,12 +2176,12 @@ onMounted(() => {
 }
 
 .detail-row .amount {
-  color: #ff4d4f;
+  color: var(--subapp-danger);
   font-weight: 500;
 }
 
 .promise-info {
-  color: #1890ff;
+  color: var(--subapp-info);
   font-weight: 500;
 }
 
@@ -2189,7 +2189,7 @@ onMounted(() => {
   padding: 8px;
   background: #fff;
   border-radius: 4px;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid var(--subapp-info);
   font-size: 13px;
   color: #595959;
   margin-bottom: 8px;

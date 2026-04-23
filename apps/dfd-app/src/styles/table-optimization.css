@@ -1,0 +1,118 @@
+/* 表格优化样式 - 提高空间利用效率 */
+
+/* 无边框表格样式 */
+.table-borderless .ant-table-thead > tr > th,
+.table-borderless .ant-table-tbody > tr > td {
+  border: none !important;
+}
+
+.table-borderless .ant-table-thead > tr > th {
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.table-borderless .ant-table {
+  border: none !important;
+}
+
+.table-borderless .ant-table-container {
+  border: none !important;
+}
+
+/* 紧凑模式样式 */
+.table-compact .ant-table-thead > tr > th,
+.table-compact .ant-table-tbody > tr > td {
+  padding: 8px 12px !important;
+}
+
+.table-compact .ant-table-thead > tr > th {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.table-compact .ant-table-tbody > tr > td {
+  font-size: 13px;
+}
+
+/* 超紧凑模式 */
+.table-ultra-compact .ant-table-thead > tr > th,
+.table-ultra-compact .ant-table-tbody > tr > td {
+  padding: 4px 8px !important;
+}
+
+.table-ultra-compact .ant-table-thead > tr > th {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.table-ultra-compact .ant-table-tbody > tr > td {
+  font-size: 12px;
+}
+
+/* 组合样式：无边框 + 紧凑 */
+.table-borderless-compact {
+  @apply table-borderless table-compact;
+}
+
+/* 减少表格容器边距 */
+.table-space-optimized {
+  margin: 0;
+  padding: 0;
+}
+
+.table-space-optimized .ant-table-wrapper {
+  margin: 0;
+}
+
+/* 优化分页器样式 */
+.table-space-optimized .ant-pagination {
+  margin: 12px 0 0 0;
+  padding: 0;
+}
+
+/* 工具栏优化 */
+.table-toolbar-compact {
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+
+.table-toolbar-compact .ant-btn {
+  margin-right: 8px;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .table-mobile-optimized .ant-table-thead > tr > th,
+  .table-mobile-optimized .ant-table-tbody > tr > td {
+    padding: 6px 4px !important;
+    font-size: 12px;
+  }
+  
+  .table-mobile-optimized .ant-table-thead > tr > th {
+    font-size: 11px;
+  }
+}
+
+/* 悬浮行效果优化 */
+.table-hover-optimized .ant-table-tbody > tr:hover > td {
+  background-color: #fafafa !important;
+}
+
+/* 选中行样式优化 */
+.table-selection-optimized .ant-table-tbody > tr.ant-table-row-selected > td {
+  background-color: #e6f7ff !important;
+}
+
+/* 表格内容对齐优化 */
+.table-align-optimized .ant-table-thead > tr > th {
+  text-align: center;
+}
+
+.table-align-optimized .ant-table-tbody > tr > td {
+  text-align: center;
+}
+
+/* 数字列右对齐 */
+.table-number-align .ant-table-tbody > tr > td.number-cell {
+  text-align: right;
+  font-family: 'Monaco', 'Menlo', monospace;
+}

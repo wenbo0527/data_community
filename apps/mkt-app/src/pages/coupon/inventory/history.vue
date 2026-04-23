@@ -18,7 +18,7 @@
           <a-statistic 
             title="总申请数" 
             :value="statistics.totalApplications"
-            :value-style="{ color: '#1890ff' }">
+            :value-style="{ color: 'var(--subapp-info)' }">
             <template #prefix>
               <IconFile />
             </template>
@@ -42,7 +42,7 @@
           <a-statistic 
             title="已拒绝" 
             :value="statistics.rejectedCount"
-            :value-style="{ color: '#ff4d4f' }">
+            :value-style="{ color: 'var(--subapp-danger)' }">
             <template #prefix>
               <IconCloseCircle />
             </template>
@@ -54,7 +54,7 @@
           <a-statistic 
             title="累计库存" 
             :value="statistics.totalInventory"
-            :value-style="{ color: '#722ed1' }">
+            :value-style="{ color: 'var(--subapp-info)' }">
             <template #prefix>
               <IconGift />
             </template>
@@ -174,7 +174,7 @@
           <a-table-column title="券模板数量" dataIndex="templateCount" width="100" align="right" />
           <a-table-column title="成功/总数" width="120" align="right">
             <template #cell="{ record }">
-              <span :style="{ color: record.successCount === record.totalCount ? '#52c41a' : '#ff4d4f' }">
+              <span :style="{ color: record.successCount === record.totalCount ? '#52c41a' : 'var(--subapp-danger)' }">
                 {{ record.successCount }}/{{ record.totalCount }}
               </span>
             </template>
@@ -270,7 +270,7 @@
               <a-statistic 
                 title="总数" 
                 :value="currentDetail.totalCount"
-                :value-style="{ color: '#1890ff' }" />
+                :value-style="{ color: 'var(--subapp-info)' }" />
             </a-card>
           </a-col>
           <a-col :span="6">
@@ -286,7 +286,7 @@
               <a-statistic 
                 title="失败" 
                 :value="currentDetail.failedCount"
-                :value-style="{ color: '#ff4d4f' }" />
+                :value-style="{ color: 'var(--subapp-danger)' }" />
             </a-card>
           </a-col>
           <a-col :span="6">
@@ -294,7 +294,7 @@
               <a-statistic 
                 title="成功率" 
                 :value="calculateSuccessRate(currentDetail.successCount, currentDetail.totalCount)"
-                :value-style="{ color: '#722ed1' }"
+                :value-style="{ color: 'var(--subapp-info)' }"
                 suffix="%" />
             </a-card>
           </a-col>
@@ -364,7 +364,7 @@ import {
   IconInfoCircle,
   IconExclamationCircle
 } from '@arco-design/web-vue/es/icon'
-import { inventoryAPI } from '@/api/coupon.js'
+import { inventoryAPI } from '@/api/coupon.ts'
 
 // 统计数据
 const statistics = reactive({

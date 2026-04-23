@@ -9,7 +9,7 @@ export function useCanvasPort() {
   const { graph } = useGraphInstance()
 
   const registerPortLayout = () => {
-    if (!graph.value) return
+    if (!graph.value) {return}
     // 右侧 out 端口组
     graph.value.addPortLayout('fixed-right-y', {
       position: 'right',
@@ -23,7 +23,7 @@ export function useCanvasPort() {
   }
 
   const registerConnectionValidation = () => {
-    if (!graph.value) return
+    if (!graph.value) {return}
     graph.value.setConnectionValidator(({ sourcePort, targetPort }) => {
       // 仅允许 out→in 方向连接，且禁止自环
       const srcGroup = sourcePort?.group
@@ -79,13 +79,13 @@ export function useCanvasPort() {
    */
   const refreshPortPositions = async () => {
     await nextTick()
-    if (!graph.value) return
+    if (!graph.value) {return}
     const nodes = graph.value.getNodes()
     nodes.forEach(node => {
       const ports = node.getPorts()
       ports.forEach(p => {
         const el = document.querySelector(`[data-port-id="${p.id}"]`)
-        if (!el) return
+        if (!el) {return}
         const { x, y, width, height } = el.getBoundingClientRect()
         node.setPortProp(p.id, 'args', {
           x: x + width / 2,

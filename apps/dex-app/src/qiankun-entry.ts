@@ -6,8 +6,8 @@ import { createApp, type App } from 'vue'
 import { createPinia } from 'pinia'
 import ArcoVue from '@arco-design/web-vue'
 import '@arco-design/web-vue/es/index.css'
+import '../../../src/styles/subapp-tokens.css'
 import Root from './Root.vue'
-import IndexVue from './pages/index.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 let app: App | null = null
@@ -15,8 +15,38 @@ let router: any = null
 
 const isQiankun = !!(window as any).__POWERED_BY_QIANKUN__
 
-const qiankunRoutes = [
-  { path: '/', redirect: '/exploration' }
+// 完整路由配置（与 router.ts 保持一致）
+const appRoutes = [
+  {
+    path: '/',
+    name: 'DexIndex',
+    component: () => import('./pages/index.vue'),
+    meta: { title: '数据探索域' }
+  },
+  {
+    path: '/customer360',
+    name: 'Customer360',
+    component: () => import('./pages/customer360/index.vue'),
+    meta: { title: '客户360' }
+  },
+  {
+    path: '/customer360/detail/:userId?',
+    name: 'Customer360Detail',
+    component: () => import('./pages/customer360/detail.vue'),
+    meta: { title: '客户详情' }
+  },
+  {
+    path: '/indicator-dashboard',
+    name: 'IndicatorDashboard',
+    component: () => import('./pages/indicator-dashboard/index.vue'),
+    meta: { title: '指标看板' }
+  },
+  {
+    path: '/analytics-workbench',
+    name: 'AnalyticsWorkbench',
+    component: () => import('./pages/index.vue'),
+    meta: { title: '分析工作台' }
+  }
 ]
 
 function bootstrap() {
@@ -31,7 +61,7 @@ function mount(props?: { container?: HTMLElement | ShadowRoot }) {
   
   router = createRouter({
     history: createWebHistory(base),
-    routes: qiankunRoutes
+    routes: appRoutes
   })
   
   app = createApp(Root)
@@ -82,7 +112,7 @@ if (!isQiankun) {
   
   router = createRouter({
     history: createWebHistory(base),
-    routes: qiankunRoutes
+    routes: appRoutes
   })
   
   app = createApp(Root)

@@ -77,7 +77,7 @@ onMounted(() => {
 <style scoped>
 .task-flow-config-drawers-test {
   padding: 10px;
-  background: #f0f0f0;
+  background: var(--subapp-border);
   border: 1px solid #ccc;
 }
 </style>

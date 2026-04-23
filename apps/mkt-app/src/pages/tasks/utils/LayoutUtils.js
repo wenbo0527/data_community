@@ -62,7 +62,7 @@ export class LayoutUtils {
     const config = { ...this.DEFAULT_CONFIG, ...options }
     const { direction = LayoutDirection.HIERARCHICAL } = config
 
-    if (!nodes || nodes.length === 0) return []
+    if (!nodes || nodes.length === 0) {return []}
 
     switch (direction) {
       case LayoutDirection.HIERARCHICAL:
@@ -99,7 +99,7 @@ export class LayoutUtils {
         layoutedNodes.find(node => node.id === nodeId)
       ).filter(Boolean)
 
-      if (levelNodes.length === 0) return
+      if (levelNodes.length === 0) {return}
 
       // 计算当前层的总宽度
       const totalWidth = levelNodes.reduce((sum, node) => sum + (node.width || 120), 0)
@@ -236,7 +236,7 @@ export class LayoutUtils {
    * @returns {Object} 中心节点
    */
   static findCenterNode(nodes, connections) {
-    if (nodes.length === 0) return null
+    if (nodes.length === 0) {return null}
 
     const connectionCounts = new Map()
 
@@ -267,7 +267,7 @@ export class LayoutUtils {
    * @returns {Array} 对齐后的节点数组
    */
   static alignNodes(nodes, alignType) {
-    if (!nodes || nodes.length === 0) return []
+    if (!nodes || nodes.length === 0) {return []}
 
     const alignedNodes = [...nodes]
     const bounds = this.getNodesBounds(nodes)
@@ -320,7 +320,7 @@ export class LayoutUtils {
    * @returns {Array} 分布后的节点数组
    */
   static distributeNodes(nodes, distributeType) {
-    if (!nodes || nodes.length < 3) return nodes
+    if (!nodes || nodes.length < 3) {return nodes}
 
     const distributedNodes = [...nodes]
     const bounds = this.getNodesBounds(nodes)
@@ -415,7 +415,7 @@ export class LayoutUtils {
    * @returns {boolean} 是否碰撞
    */
   static detectCollision(node1, node2, margin = 0) {
-    if (!node1 || !node2) return false
+    if (!node1 || !node2) {return false}
 
     const rect1 = {
       left: (node1.x || 0) - margin,
@@ -491,7 +491,7 @@ export class LayoutUtils {
         }
       }
 
-      if (!hasCollision) break
+      if (!hasCollision) {break}
     }
 
     return resolvedNodes
@@ -506,7 +506,7 @@ export class LayoutUtils {
   static snapToGrid(nodes, config) {
     const { snapToGrid = true, gridSize = 20 } = config
 
-    if (!snapToGrid || !nodes) return nodes
+    if (!snapToGrid || !nodes) {return nodes}
 
     return nodes.map(node => ({
       ...node,
@@ -543,7 +543,7 @@ export class LayoutUtils {
    * @returns {Array} 居中后的节点数组
    */
   static centerNodesToCanvas(nodes, canvasSize) {
-    if (!nodes || nodes.length === 0) return []
+    if (!nodes || nodes.length === 0) {return []}
 
     const bounds = this.getNodesBounds(nodes)
     const offsetX = (canvasSize.width - bounds.width) / 2 - bounds.left

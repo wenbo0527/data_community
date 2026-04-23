@@ -23,14 +23,14 @@ export class ValidationUtils {
    * @returns {boolean} 边是否有效
    */
   static isValidEdge(edge, graph) {
-    if (!edge || !edge.isEdge || !edge.isEdge()) return false
-    if (!graph || !graph.hasCell(edge.id)) return false
+    if (!edge || !edge.isEdge || !edge.isEdge()) {return false}
+    if (!graph || !graph.hasCell(edge.id)) {return false}
     
     const source = edge.getSource()
     const target = edge.getTarget()
     
     // 安全检查source和target对象
-    if (!source || !target) return false
+    if (!source || !target) {return false}
     
     // 安全获取cell属性，如果没有cell属性则使用id
     const sourceCell = source.cell || source.id
@@ -99,9 +99,9 @@ export class ValidationUtils {
    * @returns {*} 克隆后的对象
    */
   static deepClone(obj) {
-    if (obj === null || typeof obj !== 'object') return obj
-    if (obj instanceof Date) return new Date(obj.getTime())
-    if (obj instanceof Array) return obj.map(item => this.deepClone(item))
+    if (obj === null || typeof obj !== 'object') {return obj}
+    if (obj instanceof Date) {return new Date(obj.getTime())}
+    if (obj instanceof Array) {return obj.map(item => this.deepClone(item))}
     if (typeof obj === 'object') {
       const cloned = {}
       Object.keys(obj).forEach(key => {
@@ -118,9 +118,9 @@ export class ValidationUtils {
    * @returns {boolean} 是否为空
    */
   static isEmpty(obj) {
-    if (obj == null) return true
-    if (Array.isArray(obj) || typeof obj === 'string') return obj.length === 0
-    if (typeof obj === 'object') return Object.keys(obj).length === 0
+    if (obj == null) {return true}
+    if (Array.isArray(obj) || typeof obj === 'string') {return obj.length === 0}
+    if (typeof obj === 'object') {return Object.keys(obj).length === 0}
     return false
   }
 

@@ -231,7 +231,7 @@ const copyRecord = async (record: CollectionRecord) => {
 
 .score-low {
   background: #fff2f0;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
 }
 
 .record-content {
@@ -261,7 +261,7 @@ const copyRecord = async (record: CollectionRecord) => {
 }
 
 .detail-value.amount {
-  color: #1650d8;
+  color: var(--subapp-primary);
   font-weight: 500;
 }
 
@@ -270,7 +270,7 @@ const copyRecord = async (record: CollectionRecord) => {
 }
 
 .days-critical {
-  color: #ff4d4f;
+  color: var(--subapp-danger);
 }
 
 .days-warning {

@@ -37,12 +37,12 @@ import {
   IconUser,
   IconStorage,
   IconRelation,
-  IconMap,
-  IconFiles,
+  IconMindMapping,
+  IconFile,
   IconSettings,
   IconSafe,
   IconBranch,
-  IconTable
+  IconLayout
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
@@ -62,7 +62,7 @@ const modules = [
     key: 'data-models',
     title: '数据模型',
     path: '/data-models',
-    icon: IconTable,
+    icon: IconLayout,
     color: 'green',
     tag: '核心',
     description: '数据模型设计、定义与管理',
@@ -72,7 +72,7 @@ const modules = [
     key: 'data-standard',
     title: '数据标准',
     path: '/data-standard',
-    icon: IconFiles,
+    icon: IconFile,
     color: 'purple',
     tag: '治理',
     description: '数据标准定义、发布与执行',
@@ -82,7 +82,7 @@ const modules = [
     key: 'data-map',
     title: '数据地图',
     path: '/data-map',
-    icon: IconMap,
+    icon: IconMindMapping,
     color: 'cyan',
     tag: '数据',
     description: '全局数据资产可视化与检索',
@@ -185,11 +185,11 @@ const handleNavigate = (path) => {
 
 .module-icon {
   font-size: 18px;
-  color: #165dff;
+  color: var(--subapp-primary);
 }
 
 .card-description {
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 14px;
   margin: 12px 0;
   line-height: 1.5;

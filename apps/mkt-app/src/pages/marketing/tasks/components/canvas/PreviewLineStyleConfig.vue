@@ -49,7 +49,7 @@
               v-model="customStyle.stroke" 
               @input="updateCustomStyle"
               class="color-text"
-              placeholder="#1890ff"
+              placeholder="var(--subapp-info)"
             />
           </div>
         </div>
@@ -118,7 +118,7 @@
               v-model="customStyle.targetMarker.fill" 
               @input="updateCustomStyle"
               class="color-text"
-              placeholder="#1890ff"
+              placeholder="var(--subapp-info)"
             />
           </div>
         </div>
@@ -174,21 +174,21 @@ import { previewLineStyleManager } from '@/pages/marketing/tasks/utils/canvas/Pr
 // 响应式数据
 const currentTheme = ref('default')
 const customStyle = ref({
-  stroke: '#1890ff',
+  stroke: 'var(--subapp-info)',
   strokeWidth: 2,
   opacity: 0.8,
   strokeDasharray: '5 5',
   targetMarker: {
-    fill: '#1890ff',
-    stroke: '#1890ff'
+    fill: 'var(--subapp-info)',
+    stroke: 'var(--subapp-info)'
   }
 })
 
 // 可用主题
 const availableThemes = ref([
-  { name: 'default', label: '默认', color: '#1890ff' },
+  { name: 'default', label: '默认', color: 'var(--subapp-info)' },
   { name: 'dark', label: '深色', color: '#434343' },
-  { name: 'colorful', label: '彩色', color: '#ff4d4f' },
+  { name: 'colorful', label: '彩色', color: 'var(--subapp-danger)' },
   { name: 'minimal', label: '简约', color: '#d9d9d9' }
 ])
 
@@ -294,7 +294,7 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .config-title {
@@ -317,8 +317,8 @@ onMounted(() => {
 
 .btn-reset:hover {
   background: #e6f7ff;
-  border-color: #1890ff;
-  color: #1890ff;
+  border-color: var(--subapp-info);
+  color: var(--subapp-info);
 }
 
 .config-section {
@@ -354,14 +354,14 @@ onMounted(() => {
 }
 
 .theme-btn:hover {
-  background: #f0f0f0;
-  border-color: #1890ff;
+  background: var(--subapp-border);
+  border-color: var(--subapp-info);
 }
 
 .theme-btn.active {
   background: #e6f7ff;
-  border-color: #1890ff;
-  color: #1890ff;
+  border-color: var(--subapp-info);
+  color: var(--subapp-info);
 }
 
 .theme-preview {
@@ -425,7 +425,7 @@ onMounted(() => {
   appearance: none;
   width: 16px;
   height: 16px;
-  background: #1890ff;
+  background: var(--subapp-info);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -449,7 +449,7 @@ onMounted(() => {
 .preview-area {
   padding: 16px;
   background: #fafafa;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--subapp-border);
   border-radius: 6px;
 }
 

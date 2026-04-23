@@ -216,7 +216,7 @@ export function findNodesNeedingEndNodes(nodes, connections, previewLines) {
 
   return nodes.filter(node => {
     // 排除已经是结束节点的
-    if (node.type === 'end') return false
+    if (node.type === 'end') {return false}
     
     // 查找没有输出连接但有预览线的节点，或者完全没有输出的节点
     const hasRealConnection = nodesWithOutgoing.has(node.id)
@@ -382,7 +382,7 @@ export function findIncompleteNodes(nodes) {
   
   return nodes.filter(node => {
     // 排除结束节点
-    if (node.type === 'end') return false;
+    if (node.type === 'end') {return false;}
     
     const nodeData = node.data || {};
     const nodeConfig = nodeData.config || {};
@@ -514,28 +514,28 @@ export function validateForSave(canvasData) {
   const { nodes } = canvasData
   const configuredNodes = nodes.filter(node => {
     // 开始节点默认已配置
-    if (node.type === 'start') return true
+    if (node.type === 'start') {return true}
     
     // 检查isConfigured标志
-    if (node.isConfigured === true || node.data?.isConfigured === true) return true
+    if (node.isConfigured === true || node.data?.isConfigured === true) {return true}
     
     // 检查是否有配置数据
-    if (node.config && Object.keys(node.config).length > 0) return true
-    if (node.data?.config && Object.keys(node.data.config).length > 0) return true
+    if (node.config && Object.keys(node.config).length > 0) {return true}
+    if (node.data?.config && Object.keys(node.data.config).length > 0) {return true}
     
     return false
   })
   
   const unconfiguredNodes = nodes.filter(node => {
     // 开始节点默认已配置
-    if (node.type === 'start') return false
+    if (node.type === 'start') {return false}
     
     // 检查isConfigured标志
-    if (node.isConfigured === true || node.data?.isConfigured === true) return false
+    if (node.isConfigured === true || node.data?.isConfigured === true) {return false}
     
     // 检查是否有配置数据
-    if (node.config && Object.keys(node.config).length > 0) return false
-    if (node.data?.config && Object.keys(node.data.config).length > 0) return false
+    if (node.config && Object.keys(node.config).length > 0) {return false}
+    if (node.data?.config && Object.keys(node.data.config).length > 0) {return false}
     
     return true
   })
@@ -600,7 +600,7 @@ export function formatPublishValidationMessage(validationResult) {
   }
   
   if (warnings.length > 0) {
-    if (message) message += '\n\n'
+    if (message) {message += '\n\n'}
     message += '⚠️ 警告信息：\n'
     message += warnings.map(warning => `  • ${warning}`).join('\n')
     
@@ -610,7 +610,7 @@ export function formatPublishValidationMessage(validationResult) {
   }
   
   if (autoFixedData) {
-    if (message) message += '\n\n'
+    if (message) {message += '\n\n'}
     message += '✅ 已自动修复问题并优化布局'
   }
   

@@ -1507,7 +1507,7 @@ onMounted(() => {
 
 .recipients-card h4 {
   margin: 0 0 8px 0;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-size: 14px;
   font-weight: 500;
   display: flex;
@@ -1517,7 +1517,7 @@ onMounted(() => {
 
 .form-help-text {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   margin-top: 4px;
   line-height: 1.4;
 }
@@ -1531,21 +1531,21 @@ onMounted(() => {
   padding: 12px;
   background: white;
   border-radius: 6px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
 }
 
 .batch-input {
   padding: 12px;
   background: white;
   border-radius: 6px;
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
 }
 
 .no-type-selected,
 .no-channel-selected {
   padding: 40px 20px;
   text-align: center;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .recipients-summary {
@@ -1554,7 +1554,7 @@ onMounted(() => {
 
 .summary-content h5 {
   margin: 0 0 12px 0;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-size: 14px;
   font-weight: 500;
 }
@@ -1564,12 +1564,12 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   font-size: 13px;
 }
 
 .error-text {
-  color: #f53f3f;
+  color: var(--subapp-danger);
   font-size: 12px;
   margin-top: 4px;
 }

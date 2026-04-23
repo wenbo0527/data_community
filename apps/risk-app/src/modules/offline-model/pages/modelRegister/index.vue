@@ -368,7 +368,7 @@ const formatDate = (date) => {
         
         .stat-icon {
           font-size: 32px;
-          color: #1890ff;
+          color: var(--subapp-info);
           margin-right: 16px;
         }
         

@@ -355,7 +355,7 @@ export function canTransitionState(fromState, toState) {
 
 // 预览线识别函数
 export function isPreviewLine(edge) {
-  if (!edge) return false
+  if (!edge) {return false}
   
   // 如果是UnifiedEdge实例
   if (edge instanceof UnifiedEdge) {
@@ -379,7 +379,7 @@ export function isPreviewLine(edge) {
 
 // 连接线识别函数
 export function isConnectionLine(edge) {
-  if (!edge) return false
+  if (!edge) {return false}
   
   // 如果是UnifiedEdge实例
   if (edge instanceof UnifiedEdge) {

@@ -123,7 +123,7 @@ export class ConnectionValidator {
    * @returns {Object|null} 找到的连接或null
    */
   findConnectionInGraph(sourceNodeId, targetNodeId, branchId) {
-    if (!this.graph) return null
+    if (!this.graph) {return null}
 
     const allEdges = this.graph.getEdges() || []
     

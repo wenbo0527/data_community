@@ -8,7 +8,7 @@
             <a-statistic 
               title="总库存数量" 
               :value="statisticsData.totalInventory"
-              :value-style="{ color: '#1890ff' }">
+              :value-style="{ color: 'var(--subapp-info)' }">
               <template #suffix>
                 <IconCheckCircle />
               </template>
@@ -44,7 +44,7 @@
             <a-statistic 
               title="已拒绝数量" 
               :value="statisticsData.rejectedCount"
-              :value-style="{ color: '#ff4d4f' }">
+              :value-style="{ color: 'var(--subapp-danger)' }">
               <template #suffix>
                 <IconCloseCircle />
               </template>
@@ -319,7 +319,7 @@ const pagination = reactive({
 const fetchInventoryData = async () => {
   loading.value = true
   try {
-    const { inventoryAPI } = await import('@/api/coupon.js')
+    const { inventoryAPI } = await import('@/api/coupon.ts')
     
     // 构建查询参数，过滤掉空值
     const queryParams = {
@@ -353,7 +353,7 @@ const fetchInventoryData = async () => {
 // 获取统计数据
 const fetchStatistics = async () => {
   try {
-    const { inventoryAPI } = await import('@/api/coupon.js')
+    const { inventoryAPI } = await import('@/api/coupon.ts')
     const response = await inventoryAPI.getInventoryList({})
     if (response.code === 200) {
       const allData = response.data.list
@@ -404,7 +404,7 @@ const handleBatchWithdraw = async () => {
 const executeWithdraw = async (couponIds) => {
   withdrawLoading.value = true
   try {
-    const { inventoryAPI } = await import('@/api/coupon.js')
+    const { inventoryAPI } = await import('@/api/coupon.ts')
     const response = await inventoryAPI.batchWithdraw(couponIds)
     
     if (response.code === 200) {

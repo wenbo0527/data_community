@@ -1,0 +1,214 @@
+<template>
+  <a-layout class="layout-container">
+    <!-- 顶部菜单栏 -->
+    <a-layout-header class="top-menu-header">
+      <TopMenu @menu-change="handleTopMenuChange" ref="topMenuRef" />
+    </a-layout-header>
+
+    <a-layout class="layout-body">
+      <!-- 侧边菜单栏 -->
+      <a-layout-sider 
+        :collapsed="collapsed" 
+        :breakpoint="breakpoint" 
+        :width="220" 
+        :collapsible="true"
+        @collapse="handleCollapse" 
+        class="layout-sider" 
+        v-show="showSideMenu"
+      >
+        <SideMenu 
+          :active-module="activeModule"
+          :collapsed="collapsed"
+          :is-detail-page="isDetailPage"
+          ref="sideMenuRef"
+        />
+      </a-layout-sider>
+
+      <!-- 主内容区 -->
+      <a-layout class="layout-main">
+        <a-layout-header class="layout-header">
+          <a-space>
+            <a-button type="text" @click="toggleCollapse">
+              <template #icon>
+                <IconMenuFold v-if="!collapsed" />
+                <IconMenuUnfold v-else />
+              </template>
+            </a-button>
+            <BreadcrumbNav :current-path="route.path" />
+          </a-space>
+        </a-layout-header>
+        
+        <a-layout-content class="layout-content" :class="{ 'full-screen': isFullScreenLayout }">
+          <router-view />
+        </a-layout-content>
+      </a-layout>
+    </a-layout>
+  </a-layout>
+</template>
+
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import TopMenu from './TopMenu.vue'
+import SideMenu from './SideMenu.vue'
+import BreadcrumbNav from './BreadcrumbNav.vue'
+import { getMenuItemByRouteName } from '../../config/menuConfig'
+import {
+  IconMenuFold,
+  IconMenuUnfold
+} from '@arco-design/web-vue/es/icon'
+
+const route = useRoute()
+
+// 组件引用
+const topMenuRef = ref(null)
+const sideMenuRef = ref(null)
+
+// 布局状态
+const collapsed = ref(false)
+const breakpoint = 'xl'
+const activeModule = ref('discovery')
+
+// 计算是否为详情页
+const isDetailPage = computed(() => {
+  return route.path.includes('/detail') || route.path.includes('/customer360/')
+})
+
+// 计算是否显示侧边菜单
+const showSideMenu = computed(() => {
+  // 首页不显示侧边菜单
+  return activeModule.value !== 'home'
+})
+
+// 计算是否需要全屏布局（无内边距）
+const isFullScreenLayout = computed(() => {
+  // 优惠券模板创建页面需要全屏布局
+  return route.path.includes('/marketing/coupon/template/create') ||
+         route.path.includes('/marketing/coupon/create')
+})
+
+// 处理顶部菜单变化
+const handleTopMenuChange = (moduleKey) => {
+  console.log('顶部菜单变化:', moduleKey)
+  activeModule.value = moduleKey
+  
+  // 清空侧边菜单搜索
+  if (sideMenuRef.value) {
+    sideMenuRef.value.clearSearch()
+  }
+}
+
+// 处理侧边栏折叠
+const handleCollapse = (val) => {
+  collapsed.value = val
+}
+
+// 切换侧边栏折叠状态
+const toggleCollapse = () => {
+  collapsed.value = !collapsed.value
+}
+
+// 根据路由更新活动模块
+const updateActiveModuleFromRoute = () => {
+  const infoByName = getMenuItemByRouteName(route.name)
+  let moduleKey = infoByName?.module
+  if (!moduleKey) {
+    const p = route.path || ''
+    if (p.startsWith('/home')) moduleKey = 'home'
+    else if (p.startsWith('/discovery')) moduleKey = 'discovery'
+    else if (p.startsWith('/exploration')) moduleKey = 'exploration'
+    else if (p.startsWith('/management')) moduleKey = 'management'
+    else if (p.startsWith('/marketing')) moduleKey = 'marketing'
+    else if (p.startsWith('/risk')) moduleKey = 'risk'
+    else if (p.startsWith('/touch')) moduleKey = 'touch'
+  }
+  if (moduleKey && moduleKey !== activeModule.value) {
+    activeModule.value = moduleKey
+    if (topMenuRef.value && !topMenuRef.value.selectedKeys?.includes(moduleKey)) {
+      topMenuRef.value.setActiveMenu(moduleKey)
+    }
+  }
+}
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    updateActiveModuleFromRoute()
+  },
+  { immediate: true }
+)
+
+// 组件挂载时初始化
+onMounted(() => {
+  console.log('MainLayout 组件挂载完成')
+  updateActiveModuleFromRoute()
+})
+</script>
+
+<style scoped>
+.layout-container {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.layout-main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-menu-header {
+  padding: 0 24px;
+  background: #f8f9fa;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  height: 48px;
+  line-height: 48px;
+  position: relative;
+  z-index: 100;
+}
+
+.layout-sider {
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+  z-index: 50;
+}
+
+.layout-header {
+  background: #fff;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border-2);
+  height: 48px;
+  line-height: 48px;
+  position: relative;
+  z-index: 80;
+}
+
+.layout-content {
+  background: #f5f5f5;
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  z-index: 1;
+}
+
+/* 全屏布局样式 - 移除内边距 */
+.layout-content.full-screen {
+  padding: 0;
+  background: #fff;
+}
+
+:deep(.arco-layout-sider-trigger) {
+  background: #fff;
+  border-top: 1px solid var(--color-border-2);
+}
+</style>

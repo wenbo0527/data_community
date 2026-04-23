@@ -62,7 +62,7 @@
                   </template>
                 </AUpload>
                 <div class="file-note">支持.csv/.xlsx/.xls格式，最大100MB</div>
-                <div class="file-note" style="color: #165DFF; margin-top: 8px;">Demo模式：您可以跳过文件上传，直接点击下一步</div>
+                <div class="file-note" style="color: var(--subapp-primary); margin-top: 8px;">Demo模式：您可以跳过文件上传，直接点击下一步</div>
               </AFormItem>
             </AForm>
           </ACard>

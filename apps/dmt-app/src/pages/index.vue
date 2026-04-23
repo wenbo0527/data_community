@@ -34,7 +34,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import {
-  IconBooks,
+  IconBookmark,
   IconStorage,
   IconSettings,
   IconBranch,
@@ -51,7 +51,7 @@ const modules = [
     key: 'data-standard',
     title: '数据标准',
     path: '/data-standard',
-    icon: IconBooks,
+    icon: IconBookmark,
     color: 'blue',
     tag: '核心',
     description: '数据标准体系设计与执行',
@@ -87,7 +87,7 @@ const handleNavigate = (path) => {
 <style scoped>
 .dmt-container {
   padding: 24px;
-  background: #f5f6f7;
+  background: var(--subapp-bg-secondary);
   min-height: 100%;
 }
 
@@ -124,11 +124,11 @@ const handleNavigate = (path) => {
 
 .module-icon {
   font-size: 18px;
-  color: #165dff;
+  color: var(--subapp-primary);
 }
 
 .card-description {
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 14px;
   margin: 12px 0;
   line-height: 1.5;

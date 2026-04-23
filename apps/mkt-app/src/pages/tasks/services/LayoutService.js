@@ -162,7 +162,7 @@ export class LayoutService {
    * 绑定事件监听器
    */
   bindEventListeners() {
-    if (!this.graph) return
+    if (!this.graph) {return}
 
     // 监听节点变化
     this.graph.on('node:added', (args) => {
@@ -193,7 +193,7 @@ export class LayoutService {
    * @param {Object} args - 事件参数
    */
   handleNodeChange(action, args) {
-    if (!this.config.autoLayout.enabled) return
+    if (!this.config.autoLayout.enabled) {return}
 
     console.log('📐 [布局管理服务] 节点变化:', { action, nodeId: args.node?.id })
     
@@ -209,7 +209,7 @@ export class LayoutService {
    * @param {Object} args - 事件参数
    */
   handleEdgeChange(action, args) {
-    if (!this.config.autoLayout.enabled) return
+    if (!this.config.autoLayout.enabled) {return}
 
     console.log('📐 [布局管理服务] 连线变化:', { action, edgeId: args.edge?.id })
     

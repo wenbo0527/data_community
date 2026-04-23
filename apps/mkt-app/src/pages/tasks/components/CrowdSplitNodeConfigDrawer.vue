@@ -524,7 +524,7 @@ const recentLogs = computed(() => {
 const getLogColor = (level) => {
   const colors = {
     debug: '#666',
-    info: '#1890ff',
+    info: 'var(--subapp-info)',
     warn: '#faad14',
     error: '#f5222d'
   }
@@ -863,7 +863,7 @@ const handleSubmit = async () => {
 }
 
 .info-icon {
-  color: #1890ff;
+  color: var(--subapp-info);
   cursor: help;
 }
 
@@ -874,7 +874,7 @@ const handleSubmit = async () => {
 
 .fixed-label {
   background-color: #e6f4ff;
-  color: #1890ff;
+  color: var(--subapp-info);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -912,7 +912,7 @@ const handleSubmit = async () => {
 
 .remove-btn {
   margin-left: auto;
-  color: #ff4d4f;
+  color: var(--subapp-danger);
 }
 
 .remove-btn:hover {
@@ -940,8 +940,8 @@ const handleSubmit = async () => {
 }
 
 .search-btn:hover {
-  background-color: #f0f0f0;
-  color: #1890ff;
+  background-color: var(--subapp-border);
+  color: var(--subapp-info);
 }
 
 .action-buttons {
@@ -959,8 +959,8 @@ const handleSubmit = async () => {
 }
 
 .add-crowd-btn {
-  background-color: #1890ff;
-  border-color: #1890ff;
+  background-color: var(--subapp-info);
+  border-color: var(--subapp-info);
 }
 
 .add-crowd-btn:hover {
@@ -969,8 +969,8 @@ const handleSubmit = async () => {
 }
 
 .add-hit-crowd-btn {
-  background-color: #1890ff;
-  border-color: #1890ff;
+  background-color: var(--subapp-info);
+  border-color: var(--subapp-info);
 }
 
 .add-hit-crowd-btn:hover {

@@ -147,7 +147,7 @@ export default {
 }
 
 :deep(.x6-widget-minimap-viewport) {
-  border: 2px solid #5F95FF !important;
+  border: 2px solid var(--subapp-primary) !important;
   border-radius: 2px;
 }
 

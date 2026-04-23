@@ -345,8 +345,8 @@ export class EdgeOverlapManager {
       
       // 计算冲突严重程度
       let severity = 'low'
-      if (distance < 10) severity = 'high'
-      else if (distance < 20) severity = 'medium'
+      if (distance < 10) {severity = 'high'}
+      else if (distance < 20) {severity = 'medium'}
       
       return {
         hasConflict,
@@ -635,7 +635,7 @@ export class EdgeOverlapManager {
     })
 
     const node = this.graph.getCellById(nodeId)
-    if (!node) return
+    if (!node) {return}
 
     const nodePosition = node.getPosition()
     const nodeSize = (node && typeof node.getSize === 'function') ? node.getSize() : { width: 120, height: 40 }
@@ -675,8 +675,8 @@ export class EdgeOverlapManager {
    * 计算偏移倍数
    */
   calculateOffsetMultiplier(index, totalCount) {
-    if (totalCount === 1) return 0
-    if (totalCount === 2) return index === 0 ? -0.5 : 0.5
+    if (totalCount === 1) {return 0}
+    if (totalCount === 2) {return index === 0 ? -0.5 : 0.5}
     
     // 对于多条连线，使用对称分布
     const center = (totalCount - 1) / 2
@@ -762,8 +762,8 @@ export class EdgeOverlapManager {
    */
   calculateStartDirections(direction, offset) {
     if (direction === 'source') {
-      if (offset > 0) return ['bottom', 'right']
-      if (offset < 0) return ['bottom', 'left']
+      if (offset > 0) {return ['bottom', 'right']}
+      if (offset < 0) {return ['bottom', 'left']}
       return ['bottom']
     }
     return ['bottom']
@@ -774,8 +774,8 @@ export class EdgeOverlapManager {
    */
   calculateEndDirections(direction, offset) {
     if (direction === 'target') {
-      if (offset > 0) return ['top', 'right']
-      if (offset < 0) return ['top', 'left']
+      if (offset > 0) {return ['top', 'right']}
+      if (offset < 0) {return ['top', 'left']}
       return ['top']
     }
     return ['top']
@@ -1025,14 +1025,14 @@ export class EdgeOverlapManager {
       if (sourceId === nodeId) {
         const portId = edge.getSourcePortId() || 'out'
         const key = `source:${portId}`
-        if (!portGroups.has(key)) portGroups.set(key, [])
+        if (!portGroups.has(key)) {portGroups.set(key, [])}
         portGroups.get(key).push(edge)
       }
 
       if (targetId === nodeId) {
         const portId = edge.getTargetPortId() || 'in'
         const key = `target:${portId}`
-        if (!portGroups.has(key)) portGroups.set(key, [])
+        if (!portGroups.has(key)) {portGroups.set(key, [])}
         portGroups.get(key).push(edge)
       }
     })

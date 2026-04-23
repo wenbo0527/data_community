@@ -138,8 +138,8 @@ export class EdgeFilter {
     
     // 从边ID推断类型
     const edgeId = edge.id || (typeof edge.getId === 'function' ? edge.getId() : edge.id);
-    if (edgeId && edgeId.includes('preview')) return 'preview-line';
-    if (edgeId && edgeId.includes('temp')) return 'temporary';
+    if (edgeId && edgeId.includes('preview')) {return 'preview-line';}
+    if (edgeId && edgeId.includes('temp')) {return 'temporary';}
     
     return 'normal'; // 默认类型
   }

@@ -39,26 +39,26 @@ export class NodeFilter {
     
     try {
       // 优先从节点对象获取类型
-      if (node.type) return node.type;
+      if (node.type) {return node.type;}
       if (node.getType && typeof node.getType === 'function') {
         return node.getType();
       }
       
       // 从节点数据获取类型
       const nodeData = node.getData ? node.getData() : node.data || {};
-      if (nodeData.type) return nodeData.type;
-      if (nodeData.nodeType) return nodeData.nodeType;
+      if (nodeData.type) {return nodeData.type;}
+      if (nodeData.nodeType) {return nodeData.nodeType;}
       
     } catch (error) {
       console.warn(`⚠️ [节点类型] 获取节点 ${nodeId} 类型失败:`, error.message);
     }
     
     // 从节点ID推断类型
-    if (nodeId.includes('ai-call')) return 'ai-call';
-    if (nodeId.includes('manual-call')) return 'manual-call';
-    if (nodeId.includes('audience-split')) return 'audience-split';
-    if (nodeId.includes('start')) return 'start';
-    if (nodeId.includes('end')) return 'end';
+    if (nodeId.includes('ai-call')) {return 'ai-call';}
+    if (nodeId.includes('manual-call')) {return 'manual-call';}
+    if (nodeId.includes('audience-split')) {return 'audience-split';}
+    if (nodeId.includes('start')) {return 'start';}
+    if (nodeId.includes('end')) {return 'end';}
     
     return 'process'; // 默认类型
   }
@@ -175,12 +175,12 @@ export class NodeFilter {
       const bId = b.id || b.getId();
       
       // 开始节点优先级最高
-      if (aId.includes('start')) return -1;
-      if (bId.includes('start')) return 1;
+      if (aId.includes('start')) {return -1;}
+      if (bId.includes('start')) {return 1;}
       
       // 结束节点优先级最低
-      if (aId.includes('end')) return 1;
-      if (bId.includes('end')) return -1;
+      if (aId.includes('end')) {return 1;}
+      if (bId.includes('end')) {return -1;}
       
       // 其他节点按ID排序
       return aId.localeCompare(bId);

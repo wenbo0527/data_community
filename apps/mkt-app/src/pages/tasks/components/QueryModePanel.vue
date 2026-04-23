@@ -168,7 +168,7 @@ const highlightNode = (nodeId) => {
     // 高亮选中的节点
     const node = props.graph.getCellById(nodeId)
     if (node) {
-      node.setAttr('body/stroke', '#ff4d4f')
+      node.setAttr('body/stroke', 'var(--subapp-danger)')
       node.setAttr('body/strokeWidth', 3)
       
       // 居中显示节点
@@ -215,20 +215,20 @@ watch(() => props.canvasData, () => {
 
 .panel-header {
   padding: 16px;
-  border-bottom: 1px solid #e5e6eb;
+  border-bottom: 1px solid var(--subapp-border);
 }
 
 .panel-header h3 {
   margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .panel-description {
   margin: 0;
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .panel-content {
@@ -245,7 +245,7 @@ watch(() => props.canvasData, () => {
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .query-form {
@@ -263,7 +263,7 @@ watch(() => props.canvasData, () => {
 .form-item label {
   font-size: 12px;
   font-weight: 500;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .form-actions {
@@ -276,7 +276,7 @@ watch(() => props.canvasData, () => {
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .results-list {
@@ -294,7 +294,7 @@ watch(() => props.canvasData, () => {
 }
 
 .result-item:hover {
-  background: #e8f3ff;
+  background: var(--subapp-info);
   transform: translateY(-1px);
 }
 
@@ -307,7 +307,7 @@ watch(() => props.canvasData, () => {
 
 .result-type {
   padding: 2px 6px;
-  background: #165dff;
+  background: var(--subapp-primary);
   color: white;
   font-size: 10px;
   border-radius: 3px;
@@ -316,7 +316,7 @@ watch(() => props.canvasData, () => {
 .result-title {
   font-size: 13px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .result-meta {
@@ -324,11 +324,11 @@ watch(() => props.canvasData, () => {
   align-items: center;
   gap: 12px;
   font-size: 11px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .connection-count {
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .status {
@@ -339,17 +339,17 @@ watch(() => props.canvasData, () => {
 
 .status.active {
   background: #e8f5e8;
-  color: #00b42a;
+  color: var(--subapp-success);
 }
 
 .status.inactive {
-  background: #f2f3f5;
-  color: #86909c;
+  background: var(--subapp-bg-secondary);
+  color: var(--subapp-text-tertiary);
 }
 
 .status.error {
   background: #ffece8;
-  color: #f53f3f;
+  color: var(--subapp-danger);
 }
 
 .empty-state {
@@ -358,7 +358,7 @@ watch(() => props.canvasData, () => {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .empty-state .arco-icon {

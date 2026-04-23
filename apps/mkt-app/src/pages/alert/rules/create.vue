@@ -349,14 +349,14 @@ const confirmTest = () => {
 .marketing-page { padding: 16px; background-color: #fff; }
 .page-header { margin-bottom: 12px; }
 .page-title { margin: 0; font-size: 18px; font-weight: 600; }
-.page-description { margin: 2px 0 0; color: #86909c; }
+.page-description { margin: 2px 0 0; color: var(--subapp-text-tertiary); }
 .page-content { max-width: 1200px; margin: 0 auto; }
 .content-left, .content-right { display: flex; flex-direction: column; gap: 12px; }
 .panel-card { margin-top: 12px; }
 .side-panel { position: sticky; top: 16px; }
 .preview-block { margin-bottom: 12px; }
-.preview-content { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 6px; padding: 10px; white-space: pre-wrap; }
-.actions-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); border-top: 1px solid #e5e6eb; padding: 10px 0; margin-top: 12px; }
+.preview-content { background: #f7f8fa; border: 1px solid var(--subapp-border); border-radius: 6px; padding: 10px; white-space: pre-wrap; }
+.actions-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); border-top: 1px solid var(--subapp-border); padding: 10px 0; margin-top: 12px; }
 .actions-inner { display: flex; gap: 8px; justify-content: flex-end; max-width: 1200px; margin: 0 auto; padding: 0 8px; }
 </style>
 const isEditingSingleRule = computed(() => !!editingId.value)

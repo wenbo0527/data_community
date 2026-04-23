@@ -342,7 +342,7 @@ export class LayerUtils {
 
     // 验证每层的Y坐标一致性
     layerGroups.forEach((nodes, layerIndex) => {
-      if (nodes.length <= 1) return; // 单节点层无需验证
+      if (nodes.length <= 1) {return;} // 单节点层无需验证
 
       const firstY = nodes[0].position.y;
       const inconsistentNodes = nodes.filter(node => 

@@ -36,7 +36,7 @@ export class CacheManager {
    * 设置缓存项
    */
   set(key, value, customTTL = null) {
-    if (this.isDestroyed) return false
+    if (this.isDestroyed) {return false}
 
     try {
       const ttl = customTTL || this.options.ttl
@@ -75,7 +75,7 @@ export class CacheManager {
    * 获取缓存项
    */
   get(key) {
-    if (this.isDestroyed) return null
+    if (this.isDestroyed) {return null}
 
     const cacheItem = this.cache.get(key)
     
@@ -114,7 +114,7 @@ export class CacheManager {
    */
   has(key) {
     const cacheItem = this.cache.get(key)
-    if (!cacheItem) return false
+    if (!cacheItem) {return false}
     
     const now = Date.now()
     if (now > cacheItem.expiresAt) {
@@ -251,7 +251,7 @@ export class CacheManager {
    * 驱逐最近最少使用的项目
    */
   evictLRU() {
-    if (!this.options.enableLRU || this.cache.size === 0) return
+    if (!this.options.enableLRU || this.cache.size === 0) {return}
 
     let oldestKey = null
     let oldestTime = Infinity
@@ -363,7 +363,7 @@ export class CacheManager {
    */
   getItemInfo(key) {
     const cacheItem = this.cache.get(key)
-    if (!cacheItem) return null
+    if (!cacheItem) {return null}
 
     const now = Date.now()
     

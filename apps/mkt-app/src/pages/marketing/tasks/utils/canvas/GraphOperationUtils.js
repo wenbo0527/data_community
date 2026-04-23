@@ -20,7 +20,7 @@ export class GraphOperationUtils {
    */
   addNode(nodeData, nodesList) {
     return ErrorHandler.handleOperation(() => {
-      if (!this.graph.value) return null
+      if (!this.graph.value) {return null}
 
       const nodeId = nodeData.id || generateUniqueId()
       const node = {
@@ -41,8 +41,8 @@ export class GraphOperationUtils {
         const config = getNodeConfig(node.type)
         const attrs = getNodeAttrs(node.type)
         
-        if (config) nodeConfig = config
-        if (attrs) nodeAttrs = attrs
+        if (config) {nodeConfig = config}
+        if (attrs) {nodeAttrs = attrs}
       } catch (error) {
         console.warn('[GraphOperationUtils] 获取节点配置失败，使用默认值:', error)
       }
@@ -76,7 +76,7 @@ export class GraphOperationUtils {
   updateNode(nodeId, updates, nodesList) {
     ErrorHandler.handleOperation(() => {
       const nodeIndex = nodesList.findIndex(n => n.id === nodeId)
-      if (nodeIndex === -1) return
+      if (nodeIndex === -1) {return}
 
       nodesList[nodeIndex] = { ...nodesList[nodeIndex], ...updates }
       
@@ -106,7 +106,7 @@ export class GraphOperationUtils {
   deleteNode(nodeId, nodesList) {
     ErrorHandler.handleOperation(() => {
       const nodeIndex = nodesList.findIndex(n => n.id === nodeId)
-      if (nodeIndex === -1) return
+      if (nodeIndex === -1) {return}
 
       nodesList.splice(nodeIndex, 1)
       
@@ -128,7 +128,7 @@ export class GraphOperationUtils {
    */
   addConnection(connectionData, connectionsList) {
     return ErrorHandler.handleOperation(() => {
-      if (!this.graph.value) return null
+      if (!this.graph.value) {return null}
 
       const connectionId = connectionData.id || generateUniqueId()
       
@@ -304,7 +304,7 @@ export class GraphOperationUtils {
   updateConnection(connectionId, updates, connectionsList) {
     ErrorHandler.handleOperation(() => {
       const connectionIndex = connectionsList.findIndex(c => c.id === connectionId)
-      if (connectionIndex === -1) return
+      if (connectionIndex === -1) {return}
 
       connectionsList[connectionIndex] = { ...connectionsList[connectionIndex], ...updates }
       
@@ -331,7 +331,7 @@ export class GraphOperationUtils {
   deleteConnection(connectionId, connectionsList) {
     ErrorHandler.handleOperation(() => {
       const connectionIndex = connectionsList.findIndex(c => c.id === connectionId)
-      if (connectionIndex === -1) return
+      if (connectionIndex === -1) {return}
 
       connectionsList.splice(connectionIndex, 1)
       
@@ -355,7 +355,7 @@ export class GraphOperationUtils {
   duplicateNode(nodeId, nodesList, offsetX = 50, offsetY = 50) {
     ErrorHandler.handleOperation(() => {
       const originalNode = nodesList.find(n => n.id === nodeId)
-      if (!originalNode) return
+      if (!originalNode) {return}
 
       const newNode = {
         ...originalNode,
@@ -422,8 +422,8 @@ export class GraphOperationUtils {
           const config = getNodeConfig(nodeData.type)
           const attrs = getNodeAttrs(nodeData.type)
           
-          if (config) nodeConfig = config
-          if (attrs) nodeAttrs = attrs
+          if (config) {nodeConfig = config}
+          if (attrs) {nodeAttrs = attrs}
         } catch (error) {
           console.warn('[GraphOperationUtils] 获取节点配置失败，使用默认值:', error)
         }

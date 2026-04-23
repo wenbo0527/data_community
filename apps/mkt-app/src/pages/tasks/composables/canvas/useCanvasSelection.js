@@ -65,7 +65,7 @@ export function useCanvasSelection(graph, emit) {
 
   // 设置事件监听器
   const setupEventListeners = () => {
-    if (!graph.value) return
+    if (!graph.value) {return}
 
     // 使用事件管理器批量添加图形事件
     addGraphEvent('node:click', ErrorHandler.wrapEventHandler((args) => {

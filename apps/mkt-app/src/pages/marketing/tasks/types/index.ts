@@ -328,9 +328,9 @@ export function isNotNullish<T>(value: T | null | undefined): value is T {
 }
 
 export function isEmpty(value: any): boolean {
-  if (isNullish(value)) return true
-  if (isString(value) || isArray(value)) return value.length === 0
-  if (isObject(value)) return Object.keys(value).length === 0
+  if (isNullish(value)) {return true}
+  if (isString(value) || isArray(value)) {return value.length === 0}
+  if (isObject(value)) {return Object.keys(value).length === 0}
   return false
 }
 
@@ -342,20 +342,20 @@ export function isNotEmpty(value: any): boolean {
  * 深度比较工具
  */
 export function deepEqual(a: any, b: any): boolean {
-  if (a === b) return true
+  if (a === b) {return true}
   
-  if (a == null || b == null) return a === b
+  if (a == null || b == null) {return a === b}
   
-  if (typeof a !== typeof b) return false
+  if (typeof a !== typeof b) {return false}
   
-  if (typeof a !== 'object') return a === b
+  if (typeof a !== 'object') {return a === b}
   
-  if (Array.isArray(a) !== Array.isArray(b)) return false
+  if (Array.isArray(a) !== Array.isArray(b)) {return false}
   
   if (Array.isArray(a)) {
-    if (a.length !== b.length) return false
+    if (a.length !== b.length) {return false}
     for (let i = 0; i < a.length; i++) {
-      if (!deepEqual(a[i], b[i])) return false
+      if (!deepEqual(a[i], b[i])) {return false}
     }
     return true
   }
@@ -363,11 +363,11 @@ export function deepEqual(a: any, b: any): boolean {
   const keysA = Object.keys(a)
   const keysB = Object.keys(b)
   
-  if (keysA.length !== keysB.length) return false
+  if (keysA.length !== keysB.length) {return false}
   
   for (const key of keysA) {
-    if (!keysB.includes(key)) return false
-    if (!deepEqual(a[key], b[key])) return false
+    if (!keysB.includes(key)) {return false}
+    if (!deepEqual(a[key], b[key])) {return false}
   }
   
   return true
@@ -377,11 +377,11 @@ export function deepEqual(a: any, b: any): boolean {
  * 深度克隆工具
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') return obj
+  if (obj === null || typeof obj !== 'object') {return obj}
   
-  if (obj instanceof Date) return new Date(obj.getTime()) as T
+  if (obj instanceof Date) {return new Date(obj.getTime()) as T}
   
-  if (obj instanceof RegExp) return new RegExp(obj) as T
+  if (obj instanceof RegExp) {return new RegExp(obj) as T}
   
   if (Array.isArray(obj)) {
     return obj.map(item => deepClone(item)) as T
@@ -389,7 +389,7 @@ export function deepClone<T>(obj: T): T {
   
   const cloned = {} as T
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.hasOwn(obj, key)) {
       cloned[key] = deepClone(obj[key])
     }
   }
@@ -404,7 +404,7 @@ export function deepMerge<T extends object, U extends object>(target: T, source:
   const result = { ...target } as T & U
   
   for (const key in source) {
-    if (source.hasOwnProperty(key)) {
+    if (Object.hasOwn(source, key)) {
       const sourceValue = source[key]
       const targetValue = (result as any)[key]
       

@@ -337,14 +337,14 @@
               <div>提交前请检查以下项目：</div>
               <ul class="check-list">
                 <li v-if="!isUnifiedConfigComplete">
-                  <IconCloseCircle style="color: #f53f3f" /> 统一配置未完成
+                  <IconCloseCircle style="color: var(--subapp-danger)" /> 统一配置未完成
                 </li>
                 <li v-if="incompleteInventories.length > 0">
-                  <IconCloseCircle style="color: #f53f3f" /> 
+                  <IconCloseCircle style="color: var(--subapp-danger)" /> 
                   {{ incompleteInventories.length }} 个券库存配置不完整
                 </li>
                 <li v-if="!formData.approvalReason">
-                  <IconCloseCircle style="color: #f53f3f" /> 申请理由未填写
+                  <IconCloseCircle style="color: var(--subapp-danger)" /> 申请理由未填写
                 </li>
               </ul>
             </div>
@@ -362,7 +362,7 @@
       :mask-closable="false">
       <div class="success-content">
         <div class="success-icon">
-          <icon-check-circle style="font-size: 48px; color: #00b42a;" />
+          <icon-check-circle style="font-size: 48px; color: var(--subapp-success);" />
         </div>
         <div class="success-message">
           <h3>申请已提交成功！</h3>
@@ -496,7 +496,7 @@ import {
   IconCheck, IconExclamation, IconCopy, IconEdit, IconClose,
   IconExclamationCircle, IconCloseCircle
 } from '@arco-design/web-vue/es/icon'
-import { templateAPI, inventoryAPI } from '@/api/coupon.js'
+import { templateAPI, inventoryAPI } from '@/api/coupon.ts'
 import { useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 

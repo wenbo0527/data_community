@@ -84,7 +84,7 @@ export class FormatUtils {
    * 格式化手机号
    */
   static formatPhone(phone: string): string {
-    if (!phone) return ''
+    if (!phone) {return ''}
     
     // 移除所有非数字字符
     const cleaned = phone.replace(/\D/g, '')
@@ -101,7 +101,7 @@ export class FormatUtils {
    * 脱敏手机号
    */
   static maskPhone(phone: string): string {
-    if (!phone) return ''
+    if (!phone) {return ''}
     
     const cleaned = phone.replace(/\D/g, '')
     if (cleaned.length === 11) {
@@ -115,7 +115,7 @@ export class FormatUtils {
    * 脱敏身份证号
    */
   static maskIdCard(idCard: string): string {
-    if (!idCard) return ''
+    if (!idCard) {return ''}
     
     if (idCard.length === 18) {
       return idCard.replace(/(\d{6})(\d{8})(\d{4})/, '$1********$3')
@@ -130,7 +130,7 @@ export class FormatUtils {
    * 脱敏银行卡号
    */
   static maskBankCard(cardNumber: string): string {
-    if (!cardNumber) return ''
+    if (!cardNumber) {return ''}
     
     const cleaned = cardNumber.replace(/\s/g, '')
     if (cleaned.length >= 12) {
@@ -147,7 +147,7 @@ export class FormatUtils {
    * 格式化文件大小
    */
   static formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B'
+    if (bytes === 0) {return '0 B'}
     
     const k = 1024
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -198,7 +198,7 @@ export class FormatUtils {
    * 格式化期限
    */
   static formatTerm(term: number, unit: 'day' | 'month' | 'year' = 'month'): string {
-    if (!term || term <= 0) return ''
+    if (!term || term <= 0) {return ''}
     
     const unitMap = {
       'day': '天',
@@ -227,7 +227,7 @@ export class FormatUtils {
    * 截断文本
    */
   static truncateText(text: string, maxLength: number, suffix = '...'): string {
-    if (!text) return ''
+    if (!text) {return ''}
     
     if (text.length <= maxLength) {
       return text
