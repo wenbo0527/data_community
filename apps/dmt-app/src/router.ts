@@ -72,6 +72,58 @@ const routes: RouteRecordRaw[] = [
     name: 'VariableMap',
     component: () => import('./pages/variable-map/index.vue'),
     meta: { title: '变量地图' }
+  },
+  // 数据模型
+  {
+    path: '/data-models',
+    name: 'DataModels',
+    component: () => import('./pages/data-models/index.vue'),
+    meta: { title: '数据模型' },
+    children: [
+      {
+        path: '',
+        name: 'DataModelsList',
+        component: () => import('./pages/data-models/DataModelsList.vue'),
+        meta: { title: '模型列表' }
+      },
+      {
+        path: 'detail/:id',
+        name: 'DataModelsDetail',
+        component: () => import('./pages/data-models/DataModelsDetail.vue'),
+        meta: { title: '模型详情' }
+      },
+      {
+        path: 'create',
+        name: 'DataModelsCreate',
+        component: () => import('./pages/data-models/DataModelsForm.vue'),
+        meta: { title: '创建模型' }
+      },
+      {
+        path: 'edit/:id',
+        name: 'DataModelsEdit',
+        component: () => import('./pages/data-models/DataModelsForm.vue'),
+        meta: { title: '编辑模型' }
+      }
+    ]
+  },
+  // 陪跑计划
+  {
+    path: '/accompany',
+    name: 'Accompany',
+    component: () => import('./pages/accompany/index.vue'),
+    meta: { title: '陪跑计划' }
+  },
+  {
+    path: '/accompany/create',
+    name: 'AccompanyCreate',
+    component: () => import('./pages/accompany/create.vue'),
+    meta: { title: '创建陪跑计划' }
+  },
+  {
+    path: '/accompany/result',
+    name: 'AccompanyResult',
+    component: () => import('./pages/accompany/result.vue'),
+    meta: { title: '陪跑结果' }
   }
 ]
 
