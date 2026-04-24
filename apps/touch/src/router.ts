@@ -30,6 +30,10 @@ const QueryMarketingSearch = () => import('./pages/touch/query/marketing-search.
 const QueryMarketingList = () => import('./pages/touch/query/marketing-list.vue')
 const SystemIndex = () => import('./pages/touch/system/index.vue')
 const SystemDictionary = () => import('./pages/touch/system/dictionary.vue')
+const SmsIndex = () => import('./pages/touch/sms/index.vue')
+const SmsCreate = () => import('./pages/touch/sms/create.vue')
+const AiCallIndex = () => import('./pages/touch/ai-call/index.vue')
+const AiCallCreate = () => import('./pages/touch/ai-call/create.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -200,6 +204,30 @@ const routes: RouteRecordRaw[] = [
         name: 'SystemDictionary',
         component: SystemDictionary,
         meta: { title: '字典管理' }
+      },
+      {
+        path: 'sms',
+        name: 'SmsIndex',
+        component: SmsIndex,
+        meta: { title: '短信管理' }
+      },
+      {
+        path: 'sms/create',
+        name: 'SmsCreate',
+        component: SmsCreate,
+        meta: { title: '短信模板新建' }
+      },
+      {
+        path: 'ai-call',
+        name: 'AiCallIndex',
+        component: AiCallIndex,
+        meta: { title: 'AI外呼模板' }
+      },
+      {
+        path: 'ai-call/create',
+        name: 'AiCallCreate',
+        component: AiCallCreate,
+        meta: { title: 'AI外呼模板新建' }
       },
     ],
     component: TouchLayout

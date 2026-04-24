@@ -39,11 +39,11 @@
             <a-button type="primary" @click="handleSearch">查询</a-button>
             <a-button @click="handleReset">重置</a-button>
             <a-button v-show="activeTab === 'blacklist'" type="primary" @click="handleCreate">
-              <template #icon><icon-plus /></template>
+              <template #icon><IconPlus /></template>
               新建
             </a-button>
             <a-button v-show="activeTab === 'blacklist'" type="outline" @click="handleImport">
-              <template #icon><icon-upload /></template>
+              <template #icon><IconUpload /></template>
               批量导入
             </a-button>
           </a-space>
@@ -66,7 +66,7 @@
               <a-space>
                 <a-tooltip content="解禁用户" mini>
                   <a-button type="outline" status="warning" size="small" @click="handleUnban(record)">
-                    <template #icon><icon-undo /></template>
+                    <template #icon><IconUndo /></template>
                   </a-button>
                 </a-tooltip>
               </a-space>
@@ -124,6 +124,7 @@ export default {
       { title: '禁用策略', dataIndex: 'policy', width: 150, ellipsis: true, tooltip: true },
       { title: '来源', dataIndex: 'source', width: 150, ellipsis: true, tooltip: true }
     ];
+    console.log('初始化数据状态:', { blacklistData, unbannedData });
     return {
       formState: {
         username: '',
@@ -139,6 +140,24 @@ export default {
       unbannedColumns
     }
   },
+  mounted() {
+    console.log('mounted时blacklistData:', this.blacklistData);
+    console.log('mounted时unbannedData:', this.unbannedData);
+  },
+  watch: {
+    blacklistData: {
+      handler(val) {
+        console.log('blacklistData变更:', val);
+      },
+      deep: true
+    },
+    unbannedData: {
+      handler(val) {
+        console.log('unbannedData变更:', val);
+      },
+      deep: true
+    }
+  },
   methods: {
     maskPhone(phone) {
       if (!phone) return '';
@@ -149,8 +168,11 @@ export default {
       return idCard.slice(0, 6) + '********' + idCard.slice(-4);
     },
     handleTableScroll() {
+      console.log('表格滚动事件触发');
     },
     handleSearch() {
+      console.log('搜索条件:', this.formState);
+      console.log('原始黑名单数据:', mockData.blacklist);
       this.blacklistData = mockData.blacklist.filter(item => {
         const matchesUsername = !this.formState.username || item.username.includes(this.formState.username);
         const matchesPhone = !this.formState.phone || item.phone.includes(this.formState.phone);
@@ -161,10 +183,14 @@ export default {
         const matchesBanTime = !this.formState.banTimeRange.length || 
           (new Date(item.banTime) >= new Date(this.formState.banTimeRange[0]) && 
            new Date(item.banTime) <= new Date(this.formState.banTimeRange[1]));
-        return matchesUsername && matchesPhone && matchesIdCard && matchesAddTime && matchesBanTime;
+        const result = matchesUsername && matchesPhone && matchesIdCard && matchesAddTime && matchesBanTime;
+        console.log('筛选结果:', { item, result });
+        return result;
       });
+      console.log('筛选后的黑名单数据:', this.blacklistData);
     },
     handleReset() {
+      console.log('重置表单');
       this.formState = {
         username: '',
         phone: '',
@@ -174,9 +200,14 @@ export default {
       };
       this.handleSearch();
     },
-    handleCreate() {},
-    handleImport() {},
+    handleCreate() {
+      // 实现新建逻辑
+    },
+    handleImport() {
+      // 实现批量导入逻辑
+    },
     handleUnban(row) {
+      console.log('解禁用户:', row);
       this.unbannedData.push({
         ...row,
         unbanTime: new Date().toLocaleString()
@@ -188,7 +219,14 @@ export default {
 </script>
 
 <style scoped>
-.content { padding: 16px; height: calc(100vh - 60px); }
-.blacklist-table { height: 100%; }
-.blacklist-tabs { margin-top: 16px; }
+.content {
+  padding: 16px;
+  height: calc(100vh - 60px);
+}
+.blacklist-table {
+  height: 100%;
+}
+.blacklist-tabs {
+  margin-top: 16px;
+}
 </style>

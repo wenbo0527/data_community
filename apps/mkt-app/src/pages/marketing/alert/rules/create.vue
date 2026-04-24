@@ -1,379 +1,361 @@
 <template>
-  <div class="alert-rule-create">
-    <div class="header">
-      <h1>新建预警规则</h1>
-      <a-button @click="handleBack">返回列表</a-button>
+  <div class="rule-create-page marketing-page">
+    <div class="page-header">
+      <a-breadcrumb>
+        <a-breadcrumb-item to="/marketing/alert/management">预警管理</a-breadcrumb-item>
+        <a-breadcrumb-item>{{ pageTitle }}</a-breadcrumb-item>
+      </a-breadcrumb>
+      <h1 class="page-title">{{ pageTitle }}</h1>
     </div>
 
-    <!-- 单页模式：移除步骤条 -->
+    <div class="page-content">
+      <a-card :bordered="false" class="panel-card">
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="规则名称" required>
+              <a-input v-model="form.name" :disabled="!isEditingSingleRule" placeholder="规则名称自动生成" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-card>
+      <a-collapse :default-active-key="['rule-config','notify-config']" :bordered="false">
+        <a-collapse-item key="rule-config" header="规则配置">
+          <RuleForm
+            v-model="form"
+            :inventory-list="inventoryList"
+            :package-list="packageList"
+            :loading-inventory="loadingInventory"
+            :loading-packages="loadingPackages"
+            :on-load-inventories="loadCouponInventories"
+            :on-load-packages="loadCouponPackages"
+            :hide-description="true"
+            :show-basic-monitor="true"
+            :hide-basic="true"
+            :type-in-config="true"
+            :show-notify-content="false"
+            ref="formRef"
+          />
+        </a-collapse-item>
 
-    <div class="form-container">
-      <div class="form-content">
-        <!-- 步骤1: 基本信息 -->
-        <div class="step-form">
-          <RuleBasicInfo
-            ref="basicInfoRef"
-            v-model="ruleForm.basicInfo"
-            :rules="validationRules.basicInfo"
-          />
-        </div>
+        <a-collapse-item key="notify-config" header="通知与文案">
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-card title="通知文案预览" :bordered="false" class="panel-card">
+                <div class="preview-block">
+                  <h4>预览示例</h4>
+                  <pre class="preview-content">{{ renderedUnifiedPreview }}</pre>
+                </div>
+                <a-divider />
+              </a-card>
+            </a-col>
+            <a-col :span="12">
+              <RuleForm
+                v-model="form"
+                :inventory-list="inventoryList"
+                :package-list="packageList"
+                :loading-inventory="loadingInventory"
+                :loading-packages="loadingPackages"
+                :on-load-inventories="loadCouponInventories"
+                :on-load-packages="loadCouponPackages"
+                :show-basic-monitor="false"
+                :show-notify-content="true"
+              />
+            </a-col>
+          </a-row>
+        </a-collapse-item>
 
-        <!-- 步骤2: 条件配置 -->
-        <div class="step-form">
-          <RuleConditions
-            ref="conditionsRef"
-            v-model="ruleForm.conditions"
-            :rule-type="ruleForm.basicInfo.type"
-            :rules="validationRules.conditions"
-          />
-        </div>
-
-        
-
-        <!-- 步骤5: 预览确认 -->
-        <div class="step-form">
-          <RulePreview
-            :rule-form="ruleForm"
-            :preview-data="previewData"
-          />
-        </div>
-      </div>
-
-      <div class="preview-panel">
-        <div class="step-form">
-          <RuleNotifications
-            ref="notificationsRef"
-            v-model="ruleForm.notifications"
-            :rules="validationRules.notifications"
-          />
-        </div>
-        <div class="step-form">
-          <RuleContentTemplate
-            ref="contentTemplateRef"
-            v-model="ruleForm.contentTemplate"
-            :rule-type="ruleForm.basicInfo.type"
-            :rules="validationRules.contentTemplate"
-          />
-        </div>
-        <div class="preview-header">
-          <h3>实时预览</h3>
-        </div>
-        <div class="preview-content">
-          <ContentPreview
-            :rule-form="ruleForm"
-            :current-step="0"
-            :preview-data="previewData"
-          />
-        </div>
-      </div>
+      </a-collapse>
     </div>
 
-    <div class="step-actions">
-      <a-space>
-        <a-button type="primary" :loading="saving" @click="handleSave">保存规则</a-button>
-        <a-button @click="handleSaveDraft">保存草稿</a-button>
-      </a-space>
+    <div class="actions-bar">
+      <div class="actions-inner">
+        <a-button @click="handleCancel">返回</a-button>
+        <a-button type="outline" @click="handleTest">发送测试</a-button>
+        <a-button type="primary" :disabled="!allDone" @click="handleSubmit">{{ pageTitle === '编辑预警规则' ? '更新规则' : '创建规则' }}</a-button>
+      </div>
     </div>
   </div>
+
+  <a-modal v-model:visible="testVisible" title="发送测试" :width="600" @ok="confirmTest" @cancel="closeTest">
+    <div>
+      <a-descriptions :column="1" bordered>
+        <a-descriptions-item label="渠道">
+          <a-space>
+            <a-tag v-for="ch in selectedChannels" :key="ch">{{ channelText(ch) }}</a-tag>
+          </a-space>
+        </a-descriptions-item>
+        <a-descriptions-item label="接收人">
+          <a-space wrap>
+            <a-tag v-for="r in form.recipientsUnified" :key="r">{{ r }}</a-tag>
+          </a-space>
+        </a-descriptions-item>
+        <a-descriptions-item label="预览内容">
+          <pre class="preview-content">{{ renderedUnifiedPreview }}</pre>
+        </a-descriptions-item>
+      </a-descriptions>
+    </div>
+  </a-modal>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import RuleBasicInfo from '../components/RuleBasicInfo.vue'
-import RuleConditions from '../components/RuleConditions.vue'
-import RuleNotifications from '../components/RuleNotifications.vue'
-import RuleContentTemplate from '../components/RuleContentTemplate.vue'
-import RulePreview from '../components/RulePreview.vue'
-import ContentPreview from '../components/ContentPreview.vue'
+import { useRouter, useRoute } from 'vue-router'
+import RuleForm from '@/components/marketing/alert/RuleForm.vue'
+import { renderAlertPreview } from '@/utils/notificationRenderer'
+import { addAlertRule, updateAlertRule, getRuleById } from '@/api/alertRules'
+import { createAlertRule } from '@/api/alertRulesService'
 
 const router = useRouter()
 const route = useRoute()
+const editingId = computed(() => route.query.id || '')
+const pageTitle = computed(() => editingId.value ? '编辑预警规则' : '新建预警规则')
+const isEditingSingleRule = computed(() => !!editingId.value)
 
-// 单页模式：移除步骤状态
-const saving = ref(false)
+import { reactive } from 'vue'
 
-// 表单引用
-const basicInfoRef = ref()
-const conditionsRef = ref()
-const notificationsRef = ref()
-const contentTemplateRef = ref()
-
-// 规则表单数据
-const ruleForm = reactive({
-  basicInfo: {
-    name: '',
-    type: 'inventory',
-    description: '',
-    tags: []
-  },
+const form = reactive({
+  name: '',
+  type: '',
+  description: '',
   conditions: {
-    type: 'inventory',
-    threshold: 100,
-    thresholdType: 'absolute',
-    timeWindow: '1h',
-    checkInterval: '5m',
-    consecutiveCount: 1
+    granularity: '',
+    metricConfigs: [],
+    scope: [],
+    selectedInventories: [],
+    selectedPackages: [],
+    instanceConfig: 'general'
   },
-  notifications: {
-    channels: [
-      { type: 'wechat', enabled: true, config: {} },
-      { type: 'sms', enabled: false, config: {} },
-      { type: 'email', enabled: false, config: {} }
-    ],
-    recipients: {
-      users: [],
-      departments: [],
-      roles: []
-    }
-  },
-  contentTemplate: {
-    wechat: {
-      template: '',
-      variables: []
-    },
-    sms: {
-      template: '',
-      variables: []
-    },
-    email: {
-      template: '',
-      variables: [],
-      subject: ''
-    }
-  }
+  notificationConfigs: [{ channel: 'wechat' }],
+  content: { wechat: '', sms: '' },
+  contentUnified: '',
+  recipients: { wechatUsers: [], smsContacts: [] },
+  recipientsUnified: [],
+  needProcessing: false
 })
 
-// 验证规则
-const validationRules = {
-  basicInfo: {
-    name: [{ required: true, message: '请输入规则名称' }],
-    type: [{ required: true, message: '请选择监控类型' }]
-  },
-  conditions: {
-    threshold: [{ required: true, message: '请输入阈值' }],
-    checkInterval: [{ required: true, message: '请选择检查频率' }]
-  },
-  notifications: {
-    channels: [{ required: true, message: '请配置通知渠道' }],
-    recipients: [{ required: true, message: '请设置接收人' }]
-  },
-  contentTemplate: {
-    wechat: [{ required: true, message: '请配置企业微信文案' }]
+const formRef = ref(null)
+
+// mock 数据加载（复用管理页方法签名）
+const inventoryList = ref([])
+const packageList = ref([])
+const loadingInventory = ref(false)
+const loadingPackages = ref(false)
+const loadCouponInventories = async () => { /* 可接入真实API */ }
+const loadCouponPackages = async () => { /* 可接入真实API */ }
+
+const operatorText = (op) => ({
+  greater_than: '大于',
+  less_than: '小于',
+  equal: '等于',
+  greater_equal: '大于等于',
+  less_equal: '小于等于'
+})[op] || ''
+
+const metricUnitType = (metric) => {
+  // 简化：与 RuleForm 保持一致，通过内部映射判断单位
+  const u = {
+    remaining_stock_ratio: 'percentage',
+    daily_distribution_success_rate: 'percentage',
+    redemption_failure_ratio: 'percentage',
+    conversion_funnel_rate: 'percentage',
+    lifecycle_stock_trend: 'percentage'
   }
+  return u[metric] === 'percentage' ? '%' : ''
 }
 
-// 预览数据
-const previewData = computed(() => ({
-  ruleName: ruleForm.basicInfo.name,
-  ruleType: ruleForm.basicInfo.type,
-  triggerTime: new Date().toLocaleString('zh-CN'),
-  checkInterval: ruleForm.conditions.checkInterval,
-  metricName: getMetricName(ruleForm.basicInfo.type),
-  threshold: ruleForm.conditions.threshold,
-  currentValue: Math.floor(Math.random() * 200),
-  unit: getUnit(ruleForm.basicInfo.type),
-  trend: Math.random() > 0.5 ? '上升' : '下降',
-  couponName: '春节优惠券A',
-  inventoryName: '优惠券库存A',
-  packageName: '春节券包',
-  failureRate: Math.floor(Math.random() * 10),
-  remainingDays: Math.floor(Math.random() * 30)
-}))
-
-const getMetricName = (type) => {
-  const names = {
-    inventory: '库存量',
-    expiry: '剩余天数',
-    failure: '失败次数'
-  }
-  return names[type] || '指标'
+const formatMetricExpression = (cfg) => {
+  if (!cfg || !cfg.metric || (cfg.threshold === null || cfg.threshold === undefined) || !cfg.operator) return ''
+  const unit = metricUnitType(cfg.metric)
+  return `${cfg.metric} ${operatorText(cfg.operator)} ${cfg.threshold}${unit}`
 }
 
-const getUnit = (type) => {
-  const units = {
-    inventory: '个',
-    expiry: '天',
-    failure: '次'
+const renderedPreview = computed(() => {
+  const lines = []
+  lines.push(`【预警通知】规则：${form.name || '未命名规则'}`)
+  for (const cfg of form.conditions.metricConfigs || []) {
+    const exp = formatMetricExpression(cfg)
+    if (exp) lines.push(`命中指标：${exp}`)
   }
-  return units[type] || ''
-}
-
-// 处理复制功能
-onMounted(() => {
-  if (route.query.copyFrom) {
-    // 模拟加载被复制的规则数据
-    loadRuleForCopy(route.query.copyFrom)
+  if (form.content.wechat && (form.notificationConfigs || []).some(n => n.channel === 'wechat')) {
+    lines.push('— 企业微信文案 —')
+    lines.push(form.content.wechat)
   }
+  if (form.content.sms && (form.notificationConfigs || []).some(n => n.channel === 'sms')) {
+    lines.push('— 短信文案 —')
+    lines.push(form.content.sms)
+  }
+  return lines.join('\n')
 })
 
-const loadRuleForCopy = async (ruleId) => {
+const selectedChannels = computed(() => Array.from(new Set((form.notificationConfigs || []).map(nc => nc.channel).filter(Boolean))))
+const channelText = (channel) => ({ wechat: '企业微信', sms: '短信' }[channel] || channel)
+const renderedUnifiedPreview = computed(() => {
+  return renderAlertPreview({
+    name: form.name,
+    metricConfigs: form.conditions.metricConfigs || [],
+    granularity: form.conditions.granularity || 'coupon_stock',
+    contentUnified: form.contentUnified,
+    scope: form.conditions.scope || [],
+    type: form.type || '',
+    selectedInventories: form.conditions.selectedInventories || [],
+    selectedPackages: form.conditions.selectedPackages || []
+  })
+})
+
+const typeText = (t) => ({ inventory: '库存监控', expiry: '过期监控', failure: '失败监控' })[t] || ''
+const granularityText = (g) => ({ coupon_stock: '券库存粒度', coupon_package: '券包粒度', coupon_instance_lifecycle: '券实例生命周期粒度' }[g] || '')
+const scopeText = computed(() => {
+  const t = form.type
+  const g = form.conditions.granularity
+  const s = form.conditions.scope || []
+  if (t === 'inventory') {
+    if (g === 'coupon_stock') return s.includes('custom_stock') ? '指定券库存' : '全部券库存'
+    if (g === 'coupon_package') return s.includes('custom_packages') ? '指定券包' : '全部券包'
+    if (g === 'coupon_instance_lifecycle') return '全部生命周期'
+  }
+  if (t === 'expiry') {
+    if (g === 'coupon_stock') return '全部券库存'
+    if (g === 'coupon_package') return '全部券包'
+  }
+  if (t === 'failure') return '全部生命周期'
+  return ''
+})
+const autoRuleName = computed(() => {
+  const a = scopeText.value
+  const b = granularityText(form.conditions.granularity)
+  const c = typeText(form.type)
+  if (!a || !b || !c) return ''
+  return `${a}的${b}${c}`
+})
+watch([() => form.type, () => form.conditions.granularity, () => form.conditions.scope], () => { form.name = autoRuleName.value }, { deep: true })
+
+const basicDone = computed(() => !!form.name && !!form.type)
+const monitorDone = computed(() => {
+  const cond = form.conditions || {}
+  const list = cond.metricConfigs || []
+  if (!cond.granularity || list.length === 0) return false
+  return list.every(cfg => cfg && cfg.metric && cfg.operator && (cfg.threshold !== null && cfg.threshold !== undefined))
+})
+const notifyDone = computed(() => {
+  const channels = selectedChannels.value
+  if (channels.length === 0) return false
+  const metrics = form.conditions.metricConfigs || []
+  if (metrics.length === 0) return false
+  if (!metrics.every(cfg => cfg && cfg.content && cfg.content.trim())) return false
+  if (!Array.isArray(form.recipientsUnified) || form.recipientsUnified.length === 0) return false
+  return true
+})
+const allDone = computed(() => basicDone.value && monitorDone.value && notifyDone.value)
+
+// 加载已有规则（编辑模式）
+const loadExistingRule = () => {
+  const id = editingId.value
+  if (!id) return
+  const rule = getRuleById(id)
+  if (!rule) return
+  Object.assign(form, {
+    name: rule.name || '',
+    type: rule.type || '',
+    description: rule.description || '',
+    conditions: {
+      granularity: rule.conditions?.granularity || '',
+      metricConfigs: rule.conditions?.metricConfigs && rule.conditions.metricConfigs.length > 0
+        ? [JSON.parse(JSON.stringify(rule.conditions.metricConfigs[0]))]
+        : [],
+      scope: rule.conditions?.scope || [],
+      selectedInventories: rule.conditions?.selectedInventories || [],
+      selectedPackages: rule.conditions?.selectedPackages || [],
+      instanceConfig: rule.conditions?.instanceConfig || 'general'
+    },
+    notificationConfigs: (rule.channels || []).map(ch => ({ channel: ch })),
+    contentUnified: rule.contentUnified || '',
+    recipientsUnified: rule.recipientsUnified || [],
+    needProcessing: !!rule.needProcessing
+  })
+}
+// 初次加载与路由变化时加载
+loadExistingRule()
+watch(editingId, () => loadExistingRule())
+
+const handleCancel = () => {
+  router.push('/marketing/alert/management')
+}
+
+const handleSubmit = async () => {
+  if (!allDone.value) {
+    Message.warning('请先完成所有必填配置')
+    return
+  }
+  const validated = await formRef.value?.validate()
+  if (!validated) return
   try {
-    // 模拟API调用获取规则数据
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // 这里模拟复制的数据，实际应该从API获取
-    const mockRule = {
-      basicInfo: {
-        name: '库存预警规则-优惠券A（副本）',
-        type: 'inventory',
-        description: '监控优惠券库存情况',
-        tags: ['库存', '预警']
-      },
-      conditions: {
-        type: 'inventory',
-        threshold: 100,
-        thresholdType: 'absolute',
-        timeWindow: '1h',
-        checkInterval: '5m',
-        consecutiveCount: 1
-      },
-      notifications: {
-        channels: [
-          { type: 'wechat', enabled: true, config: {} }
-        ],
-        recipients: {
-          users: ['user1', 'user2'],
-          departments: ['dept1'],
-          roles: ['admin']
-        }
-      },
-      contentTemplate: {
-        wechat: {
-          template: '【库存预警】{{inventoryName}}库存告急！\n当前库存：{{currentValue}}{{unit}}\n预警阈值：{{threshold}}{{unit}}\n请及时补充库存。',
-          variables: ['inventoryName', 'currentValue', 'unit', 'threshold']
-        }
+    const channels = Array.from(new Set((validated.notificationConfigs || []).map(nc => nc.channel).filter(Boolean)))
+    const groupId = `group_${Date.now()}`
+    const metricList = Array.isArray(validated.conditions?.metricConfigs) ? validated.conditions.metricConfigs : []
+    if (editingId.value) {
+      const singleCfg = metricList[0] || null
+      const singlePayload = {
+        name: validated.name,
+        type: validated.type,
+        description: validated.description,
+        conditions: { ...validated.conditions, metricConfigs: singleCfg ? [singleCfg] : [] },
+        channels,
+        contentUnified: validated.contentUnified,
+        recipientsUnified: validated.recipientsUnified,
+        needProcessing: validated.needProcessing,
+        enabled: true
       }
+      updateAlertRule(editingId.value, singlePayload)
+      Message.success('规则更新成功')
+      router.push('/marketing/alert/management')
+    } else {
+      if (metricList.length === 0) {
+        Message.error('请至少添加一个指标')
+        return
+      }
+      const cfg = metricList[0]
+      const singleRule = {
+        name: validated.name,
+        type: validated.type,
+        description: validated.description,
+        conditions: { ...validated.conditions, metricConfigs: [cfg] },
+        channels,
+        contentUnified: validated.contentUnified,
+        recipientsUnified: validated.recipientsUnified,
+        needProcessing: validated.needProcessing,
+        enabled: true
+      }
+      addAlertRule(singleRule)
+      Message.success('规则创建成功')
+      router.push('/marketing/alert/management')
     }
-    
-    Object.assign(ruleForm, mockRule)
-    Message.success('已加载规则数据，请修改后保存')
-  } catch (error) {
-    Message.error('加载规则数据失败')
+  } catch (e) {
+    Message.error('创建失败')
+    console.error(e)
   }
 }
 
-// 统一校验：保存时依次校验各区块
-const validateAll = async () => {
-  const ok1 = await basicInfoRef.value?.validate()
-  const ok2 = await conditionsRef.value?.validate()
-  const ok3 = await notificationsRef.value?.validate()
-  const ok4 = await contentTemplateRef.value?.validate()
-  const allOk = [ok1, ok2, ok3, ok4].every(v => v !== false)
-  if (!allOk) {Message.warning('请完善必填信息')}
-  return allOk
-}
-
-// 保存处理
-const handleSave = async () => {
-  try {
-    saving.value = true
-    
-    // 最终验证：校验所有区块
-    const isValid = await validateAll()
-    if (!isValid) {return}
-    
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    Message.success('规则创建成功')
-    router.push('/marketing/alert/rules')
-  } catch (error) {
-    Message.error('保存失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-const handleSaveDraft = async () => {
-  try {
-    // 模拟保存草稿
-    await new Promise(resolve => setTimeout(resolve, 500))
-    Message.success('草稿已保存')
-  } catch (error) {
-    Message.error('保存草稿失败')
-  }
-}
-
-const handleBack = () => {
-  router.push('/marketing/alert/rules')
+const testVisible = ref(false)
+const handleTest = () => { testVisible.value = true }
+const closeTest = () => { testVisible.value = false }
+const confirmTest = () => {
+  testVisible.value = false
+  Message.success('已发送测试通知（模拟）')
 }
 </script>
 
-<style scoped lang="less">
-.alert-rule-create {
-  padding: 24px;
-  background: #fff;
-  min-height: 100%;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  
-  h1 {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--subapp-text-primary);
-    margin: 0;
-  }
-}
-
-.step-container {
-  margin-bottom: 32px;
-  padding: 0 100px;
-}
-
-.form-container {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 32px;
-  min-height: 500px;
-}
-
-.form-content {
-  width: 720px;
-  background: #f7f8fa;
-  border-radius: 6px;
-  padding: 24px;
-}
-
-.step-form {
-  max-width: 720px;
-}
-
-.preview-panel {
-  width: 480px;
-  background: #f7f8fa;
-  border-radius: 6px;
-  padding: 24px;
-  
-  .preview-header {
-    margin-bottom: 16px;
-    
-    h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--subapp-text-primary);
-      margin: 0;
-    }
-  }
-  
-  .preview-content {
-    background: #fff;
-    border-radius: 4px;
-    padding: 16px;
-    min-height: 300px;
-  }
-}
-
-.step-actions {
-  display: flex;
-  justify-content: center;
-  padding-top: 24px;
-  border-top: 1px solid var(--subapp-border);
-}
+<style scoped>
+.marketing-page { padding: 16px; background-color: #fff; }
+.page-header { margin-bottom: 12px; }
+.page-title { margin: 0; font-size: 18px; font-weight: 600; }
+.page-description { margin: 2px 0 0; color: #86909c; }
+.page-content { max-width: 1200px; margin: 0 auto; }
+.content-left, .content-right { display: flex; flex-direction: column; gap: 12px; }
+.panel-card { margin-top: 12px; }
+.side-panel { position: sticky; top: 16px; }
+.preview-block { margin-bottom: 12px; }
+.preview-content { background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 6px; padding: 10px; white-space: pre-wrap; }
+.actions-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); border-top: 1px solid #e5e6eb; padding: 10px 0; margin-top: 12px; }
+.actions-inner { display: flex; gap: 8px; justify-content: flex-end; max-width: 1200px; margin: 0 auto; padding: 0 8px; }
 </style>
