@@ -130,6 +130,24 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/marketing/global',
+    name: 'GlobalManagement',
+    component: () => import('./pages/global/index.vue'),
+    meta: { title: '全局管理' },
+    children: [
+      {
+        path: '',
+        redirect: '/marketing/global/rules'
+      },
+      {
+        path: 'rules',
+        name: 'GlobalRules',
+        component: () => import('./pages/global/rules/index.vue'),
+        meta: { title: '规则配置' }
+      }
+    ]
+  },
+  {
     path: '/canvas',
     name: 'Canvas',
     component: () => import('./pages/canvas/index.vue'),

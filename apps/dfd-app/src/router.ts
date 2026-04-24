@@ -23,7 +23,23 @@ const routes: RouteRecordRaw[] = [
     component: () => import('./pages/index.vue'),
     meta: { title: '数据发现域' }
   },
-  
+
+  // ========== 批量注册 ==========
+  {
+    path: '/batch-registration',
+    name: 'BatchRegistration',
+    component: () => import('./pages/batch-registration/index.vue'),
+    meta: { title: '批量注册指标' }
+  },
+
+  // ========== 监管配置 ==========
+  {
+    path: '/regulatory-config',
+    name: 'RegulatoryConfig',
+    component: () => import('./pages/regulatory-config/index.vue'),
+    meta: { title: '监管报表配置' }
+  },
+
   // ========== 数据资产运营工具 ==========
   // 资产血缘分析
   {
