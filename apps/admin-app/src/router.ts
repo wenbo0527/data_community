@@ -58,6 +58,48 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '通知管理' }
   },
   {
+    path: '/notifications',
+    name: 'Notifications',
+    component: () => import('./pages/notifications/index.vue'),
+    meta: { title: '通知管理' },
+    children: [
+      {
+        path: '',
+        redirect: '/notifications/list'
+      },
+      {
+        path: 'list',
+        name: 'NotificationList',
+        component: () => import('./pages/notifications/index.vue'),
+        meta: { title: '通知列表' }
+      },
+      {
+        path: 'detail/:id',
+        name: 'NotificationDetail',
+        component: () => import('./pages/notifications/detail.vue'),
+        meta: { title: '通知详情' }
+      },
+      {
+        path: 'categories',
+        name: 'NotificationCategories',
+        component: () => import('./pages/notifications/categories.vue'),
+        meta: { title: '分类管理' }
+      },
+      {
+        path: 'create',
+        name: 'NotificationCreate',
+        component: () => import('./pages/notifications/form.vue'),
+        meta: { title: '新建通知' }
+      },
+      {
+        path: 'edit/:id',
+        name: 'NotificationEdit',
+        component: () => import('./pages/notifications/form.vue'),
+        meta: { title: '编辑通知' }
+      }
+    ]
+  },
+  {
     path: '/content',
     name: 'Content',
     component: () => import('./pages/content/index.vue'),
