@@ -1,9 +1,17 @@
 <script setup>
-import { computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import MainLayout from './components/layout/MainLayout.vue'
+import { useRegistryStore } from '@/store'
 
 const route = useRoute()
+
+// 初始化微应用注册中心
+onMounted(async () => {
+  const registryStore = useRegistryStore()
+  await registryStore.loadAll()
+  console.log('[Registry] 初始化完成，已加载应用:', registryStore.appCount)
+})
 
 // 简化布局逻辑，避免递归更新
 const layoutType = computed(() => {
