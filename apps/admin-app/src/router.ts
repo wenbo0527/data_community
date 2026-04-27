@@ -59,6 +59,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
+        name: 'NotificationIndex',
         redirect: '/notifications/list'
       },
       {

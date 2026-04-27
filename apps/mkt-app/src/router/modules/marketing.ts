@@ -105,6 +105,7 @@ export const marketingRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
+        name: 'GlobalManagementIndex',
         redirect: '/marketing/global/rules'
       },
       {
