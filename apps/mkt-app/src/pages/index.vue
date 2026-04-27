@@ -37,21 +37,14 @@ import {
   IconApps,
   IconMessage,
   IconTag,
-  IconUser,
-  IconRelation,
-  IconLocation,
-  IconFile,
-  IconSearch,
-  IconList,
   IconStar,
-  IconSettings,
-  IconBranch,
-  IconBarChart,
-  IconHome
+  IconList,
+  IconBarChart
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
 
+// 仅保留 mkt-app 自身路由（已通过 router/modules/ 定义）
 const modules = [
   {
     key: 'benefit',
@@ -94,66 +87,6 @@ const modules = [
     features: ['画布编辑', '组件市场', '预览发布']
   },
   {
-    key: 'data-map',
-    title: '数据地图',
-    path: '/data-map',
-    icon: IconLocation,
-    color: 'cyan',
-    tag: '数据',
-    description: '营销数据资产可视化与血缘分析',
-    features: ['数据资产', '血缘关系', '质量监控']
-  },
-  {
-    key: 'data-resources',
-    title: '数据资源',
-    path: '/data-resources',
-    icon: IconFile,
-    color: 'purple',
-    tag: '数据',
-    description: '数据资源申请、使用、审批管理',
-    features: ['资源申请', '使用统计', '权限管理']
-  },
-  {
-    key: 'api-market',
-    title: 'API 市场',
-    path: '/api-market',
-    icon: IconRelation,
-    color: 'geekblue',
-    tag: '服务',
-    description: 'API 服务注册、调用、监控',
-    features: ['服务市场', '调用监控', '配额管理']
-  },
-  {
-    key: 'asset-guide',
-    title: '资产指南',
-    path: '/asset-guide',
-    icon: IconHome,
-    color: 'gold',
-    tag: '指南',
-    description: '数据资产使用指南与最佳实践',
-    features: ['使用指南', '最佳实践', '常见问题']
-  },
-  {
-    key: 'customer360',
-    title: '客户画像',
-    path: '/customer360',
-    icon: IconUser,
-    color: 'pink',
-    tag: '画像',
-    description: '客户360度画像与标签体系',
-    features: ['客户档案', '标签管理', '行为分析']
-  },
-  {
-    key: 'credit',
-    title: '信用评估',
-    path: '/credit',
-    icon: IconSettings,
-    color: 'magenta',
-    tag: '风控',
-    description: '客户信用评估与风险控制',
-    features: ['信用评分', '风险预警', '额度管理']
-  },
-  {
     key: 'alert',
     title: '告警中心',
     path: '/alert',
@@ -164,16 +97,6 @@ const modules = [
     features: ['告警规则', '通知配置', '历史记录']
   },
   {
-    key: 'search',
-    title: '全局搜索',
-    path: '/search',
-    icon: IconSearch,
-    color: 'blue',
-    tag: '工具',
-    description: '全局搜索与快速跳转',
-    features: ['模糊搜索', '快速导航', '历史记录']
-  },
-  {
     key: 'tasks',
     title: '任务中心',
     path: '/tasks',
@@ -182,36 +105,6 @@ const modules = [
     tag: '效率',
     description: '营销任务创建、分配、执行',
     features: ['任务管理', '执行监控', '结果分析']
-  },
-  {
-    key: 'feature-map',
-    title: '特征地图',
-    path: '/feature-map',
-    icon: IconLocation,
-    color: 'purple',
-    tag: '特征',
-    description: '特征指标体系与特征管理',
-    features: ['特征管理', '指标体系', '特征市场']
-  },
-  {
-    key: 'impact-analysis',
-    title: '影响分析',
-    path: '/impact-analysis',
-    icon: IconBranch,
-    color: 'cyan',
-    tag: '分析',
-    description: '数据变更影响范围分析',
-    features: ['影响分析', '血缘追踪', '变更管理']
-  },
-  {
-    key: 'lineage',
-    title: '血缘关系',
-    path: '/lineage',
-    icon: IconBranch,
-    color: 'orange',
-    tag: '分析',
-    description: '数据血缘关系可视化',
-    features: ['血缘图谱', '追溯分析', '影响评估']
   }
 ]
 

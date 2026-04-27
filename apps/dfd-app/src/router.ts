@@ -176,6 +176,14 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'API市场' }
   },
 
+  // ========== 指标看板 ==========
+  {
+    path: '/indicator-dashboard',
+    name: 'IndicatorDashboard',
+    component: () => import('./pages/indicator-dashboard/index.vue'),
+    meta: { title: '指标看板' }
+  },
+
   // ========== 统一指标 ==========
   {
     path: '/unified-metrics',

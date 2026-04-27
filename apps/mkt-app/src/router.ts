@@ -1,11 +1,35 @@
+/**
+ * mkt-app 路由入口
+ * 模块化路由配置
+ * 
+ * 模块划分：
+ * - benefit: 权益中心
+ * - reach: 触达系统
+ * - customer: 客群中心
+ * - call: 人工电销工作台
+ * - canvas: 营销画布
+ * - alert: 预警中心
+ * - tasks: 任务中心
+ */
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
+
+// 路由模块
+import { benefitRoutes } from './router/modules/benefit'
+import { marketingRoutes } from './router/modules/marketing'
+import { reachRoutes } from './router/modules/reach'
+import { customerRoutes } from './router/modules/customer'
+import { callRoutes } from './router/modules/call'
+import { canvasRoutes } from './router/modules/canvas'
+import { alertRoutes } from './router/modules/alert'
+import { tasksRoutes } from './router/modules/tasks'
 
 const routerBase = qiankunWindow.__POWERED_BY_QIANKUN__ ? (qiankunWindow.ROUTER_BASE || '/mkt/') : '/mkt/'
 
 console.log('[MKT] routerBase:', routerBase)
 
+// 合并所有路由
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -13,398 +37,14 @@ const routes: RouteRecordRaw[] = [
     component: () => import('./pages/index.vue'),
     meta: { title: '营销域' }
   },
-  {
-    path: '/benefit',
-    name: 'Benefit',
-    component: () => import('./pages/benefit/index.vue'),
-    meta: { title: '权益中心' }
-  },
-  {
-    path: '/benefit/dashboard',
-    name: 'BenefitDashboard',
-    component: () => import('./pages/coupon/index.vue'),
-    meta: { title: '权益首页' }
-  },
-  {
-    path: '/benefit/template',
-    name: 'BenefitTemplate',
-    component: () => import('./pages/coupon/template/index.vue'),
-    meta: { title: '券模板管理' }
-  },
-  {
-    path: '/benefit/management',
-    name: 'BenefitManagement',
-    component: () => import('./pages/coupon/management/index.vue'),
-    meta: { title: '券管理' }
-  },
-  {
-    path: '/benefit/package',
-    name: 'BenefitPackage',
-    component: () => import('./pages/coupon/package/index.vue'),
-    meta: { title: '券包管理' }
-  },
-  {
-    path: '/benefit/inventory',
-    name: 'BenefitInventory',
-    component: () => import('./pages/coupon/inventory/index.vue'),
-    meta: { title: '券库存管理' }
-  },
-  {
-    path: '/benefit/statistics',
-    name: 'BenefitStatistics',
-    component: () => import('./pages/coupon/statistics/index.vue'),
-    meta: { title: '权益统计' }
-  },
-  {
-    path: '/benefit/logs',
-    name: 'BenefitLogs',
-    component: () => import('./pages/coupon/record/index.vue'),
-    meta: { title: '权益日志' }
-  },
-  {
-    path: '/marketing',
-    name: 'Marketing',
-    component: () => import('./pages/marketing/index.vue'),
-    meta: { title: '营销中心' },
-    children: [
-      {
-        path: 'dashboard',
-        name: 'CouponDashboard',
-        component: () => import('./pages/coupon/index.vue'),
-        meta: { title: '权益首页' }
-      },
-      {
-        path: 'benefit/template',
-        name: 'Template',
-        component: () => import('./pages/coupon/template/index.vue'),
-        meta: { title: '模板管理' }
-      },
-      {
-        path: 'benefit/management',
-        name: 'Management',
-        component: () => import('./pages/coupon/management/index.vue'),
-        meta: { title: '券管理' }
-      },
-      {
-        path: 'benefit/package',
-        name: 'Package',
-        component: () => import('./pages/coupon/package/index.vue'),
-        meta: { title: '券包管理' }
-      },
-      {
-        path: 'statistics/logs',
-        name: 'CouponLogs',
-        component: () => import('./pages/coupon/record/index.vue'),
-        meta: { title: '权益日志' }
-      },
-      {
-        path: 'statistics/inventory',
-        name: 'Inventory',
-        component: () => import('./pages/coupon/inventory/index.vue'),
-        meta: { title: '库存查询' }
-      },
-      {
-        path: 'global/rules',
-        name: 'Rules',
-        component: () => import('./pages/coupon/rules/index.vue'),
-        meta: { title: '规则配置' }
-      },
-      {
-        path: 'alert',
-        name: 'Alert',
-        redirect: '/marketing/alert/management',
-        meta: { title: '预警中心' }
-      },
-      {
-        path: 'alert/management',
-        name: 'AlertMgmt',
-        component: () => import('./pages/marketing/alert/management/index.vue'),
-        meta: { title: '预警管理' }
-      },
-      {
-        path: 'alert/rules',
-        name: 'AlertRules',
-        component: () => import('./pages/marketing/alert/rules/index.vue'),
-        meta: { title: '预警规则' }
-      },
-      {
-        path: 'alert/rules/create',
-        name: 'AlertRulesCreate',
-        component: () => import('./pages/marketing/alert/rules/create.vue'),
-        meta: { title: '创建预警规则' }
-      },
-      {
-        path: 'alert/history',
-        name: 'AlertHistory',
-        component: () => import('./pages/marketing/alert/history/index.vue'),
-        meta: { title: '预警历史' }
-      },
-      {
-        path: 'tasks',
-        name: 'MarketingTasks',
-        component: () => import('./pages/marketing/tasks/index.vue'),
-        meta: { title: '营销任务' }
-      },
-      {
-        path: 'tasks/horizontal',
-        name: 'HorizontalCanvas',
-        component: () => import('./pages/canvas/index.vue'),
-        meta: { title: '横向画布' }
-      }
-    ]
-  },
-  {
-    path: '/marketing/global',
-    name: 'GlobalManagement',
-    component: () => import('./pages/global/index.vue'),
-    meta: { title: '全局管理' },
-    children: [
-      {
-        path: '',
-        redirect: '/marketing/global/rules'
-      },
-      {
-        path: 'rules',
-        name: 'GlobalRules',
-        component: () => import('./pages/global/rules/index.vue'),
-        meta: { title: '规则配置' }
-      }
-    ]
-  },
-  {
-    path: '/canvas',
-    name: 'Canvas',
-    component: () => import('./pages/canvas/index.vue'),
-    meta: { title: '横向画布' }
-  },
-  {
-    path: '/alert',
-    name: 'Alert',
-    component: () => import('./pages/alert/index.vue'),
-    meta: { title: '告警中心' }
-  },
-  {
-    path: '/tasks',
-    name: 'Tasks',
-    component: () => import('./pages/tasks/index.vue'),
-    meta: { title: '任务中心' }
-  },
-  {
-    path: '/touch',
-    name: 'Touch',
-    component: () => import('./pages/touch/index.vue'),
-    meta: { title: '触达系统' }
-  },
-  {
-    path: '/touch/policy/overview',
-    name: 'TouchPolicyOverview',
-    component: () => import('./pages/touch/policy/overview.vue'),
-    meta: { title: '策略数据概览' }
-  },
-  {
-    path: '/touch/query',
-    name: 'TouchQuery',
-    component: () => import('./pages/touch/query/index.vue'),
-    meta: { title: '触达查询' }
-  },
-  {
-    path: '/touch/channel',
-    name: 'TouchChannel',
-    component: () => import('./pages/touch/channel/index.vue'),
-    meta: { title: '渠道管理' }
-  },
-  {
-    path: '/touch/policy/template',
-    name: 'TouchPolicyTemplate',
-    component: () => import('./pages/touch/policy/template/index.vue'),
-    meta: { title: '策略模板' }
-  },
-  {
-    path: '/touch/policy/template/create',
-    name: 'TouchPolicyTemplateCreate',
-    component: () => import('./pages/touch/policy/template/create.vue'),
-    meta: { title: '创建策略模板' }
-  },
-  {
-    path: '/touch/query/ai-call-records',
-    name: 'TouchQueryAiCallRecords',
-    component: () => import('./pages/touch/query/ai-call-records.vue'),
-    meta: { title: 'AI呼叫记录' }
-  },
-  {
-    path: '/touch/query/ai-sms-vendor-records',
-    name: 'TouchQueryAiSmsVendorRecords',
-    component: () => import('./pages/touch/query/ai-sms-vendor-records.vue'),
-    meta: { title: 'AI短信厂商记录' }
-  },
-  {
-    path: '/touch/query/detail',
-    name: 'TouchQueryDetail',
-    component: () => import('./pages/touch/query/detail.vue'),
-    meta: { title: '触达详情' }
-  },
-  {
-    path: '/touch/query/manual-call-records',
-    name: 'TouchQueryManualCallRecords',
-    component: () => import('./pages/touch/query/manual-call-records.vue'),
-    meta: { title: '人工呼叫记录' }
-  },
-  {
-    path: '/touch/query/sms-records',
-    name: 'TouchQuerySmsRecords',
-    component: () => import('./pages/touch/query/sms-records.vue'),
-    meta: { title: '短信记录' }
-  },
-  {
-    path: '/touch/channel/sms-template',
-    name: 'TouchChannelSmsTemplate',
-    component: () => import('./pages/touch/channel/sms-template.vue'),
-    meta: { title: '短信模板' }
-  },
-  {
-    path: '/touch/channel/sms-template/create',
-    name: 'TouchChannelSmsTemplateCreate',
-    component: () => import('./pages/touch/channel/sms-template-create.vue'),
-    meta: { title: '创建短信模板' }
-  },
-  {
-    path: '/touch/channel/ai-call-template',
-    name: 'TouchChannelAiCallTemplate',
-    component: () => import('./pages/touch/channel/ai-call-template.vue'),
-    meta: { title: 'AI外呼模板' }
-  },
-  {
-    path: '/touch/channel/manual-call-template',
-    name: 'TouchChannelManualCallTemplate',
-    component: () => import('./pages/touch/channel/manual-call-template.vue'),
-    meta: { title: '人工电销模板' }
-  },
-  {
-    path: '/touch/channel/vendors',
-    name: 'TouchChannelVendors',
-    component: () => import('./pages/touch/channel/vendors/index.vue'),
-    meta: { title: '厂商管理' }
-  },
-  {
-    path: '/touch/channel/vendors/sms',
-    name: 'TouchChannelVendorsSms',
-    component: () => import('./pages/touch/channel/vendors/sms.vue'),
-    meta: { title: '短信厂商' }
-  },
-  {
-    path: '/touch/channel/vendors/ai',
-    name: 'TouchChannelVendorsAi',
-    component: () => import('./pages/touch/channel/vendors/ai.vue'),
-    meta: { title: 'AI厂商' }
-  },
-  {
-    path: '/touch/channel/blacklist',
-    name: 'TouchChannelBlacklist',
-    component: () => import('./pages/touch/channel/blacklist.vue'),
-    meta: { title: '黑名单管理' }
-  },
-  {
-    path: '/touch/channel/alert',
-    name: 'TouchChannelAlert',
-    component: () => import('./pages/touch/channel/alert.vue'),
-    meta: { title: '渠道预警' }
-  },
-  {
-    path: '/touch/channel/rate-limit',
-    name: 'TouchChannelRateLimit',
-    component: () => import('./pages/touch/channel/rate-limit.vue'),
-    meta: { title: '渠道限流' }
-  },
-  {
-    path: '/touch/system',
-    name: 'TouchSystem',
-    component: () => import('./pages/touch/system/index.vue'),
-    meta: { title: '系统概览' }
-  },
-  {
-    path: '/touch/system/dictionary',
-    name: 'TouchSystemDictionary',
-    component: () => import('./pages/touch/system/dictionary.vue'),
-    meta: { title: '系统词典' }
-  },
-  {
-    path: '/touch/manual-sms',
-    name: 'TouchManualSmsIndex',
-    component: () => import('./pages/touch/manual-sms/index.vue'),
-    meta: { title: '手动短信' }
-  },
-  {
-    path: '/call',
-    name: 'Call',
-    component: () => import('./pages/call/index.vue'),
-    meta: { title: '人工电销' }
-  },
-  {
-    path: '/customer',
-    name: 'Customer',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '客群中心' }
-  },
-  {
-    path: '/customer/tag-system',
-    name: 'TagSystem',
-    component: () => import('./pages/customer/tag-system/index.vue'),
-    meta: { title: '标签系统' }
-  },
-  {
-    path: '/customer/tag-table',
-    name: 'TagTable',
-    component: () => import('./pages/customer/tag-system/table-management.vue'),
-    meta: { title: '标签表管理' }
-  },
-  {
-    path: '/customer/list',
-    name: 'CustomerList',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '客群列表' }
-  },
-  {
-    path: '/customer/selector',
-    name: 'CustomerSelector',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '客群圈选' }
-  },
-  {
-    path: '/customer/portrait',
-    name: 'CustomerPortrait',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '客户画像' }
-  },
-  {
-    path: '/customer/idmap',
-    name: 'CustomerIdmap',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: 'ID映射' }
-  },
-  {
-    path: '/customer/delete-approval',
-    name: 'CustomerDeleteApproval',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '删除审批' }
-  },
-  {
-    path: '/customer/lifecycle/rules',
-    name: 'CustomerLifecycleRules',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '生命周期规则' }
-  },
-  {
-    path: '/customer/lifecycle/analysis',
-    name: 'CustomerLifecycleAnalysis',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '生命周期分析' }
-  },
-  {
-    path: '/customer/lifecycle/monitor',
-    name: 'CustomerLifecycleMonitor',
-    component: () => import('./pages/customer/index.vue'),
-    meta: { title: '生命周期监控' }
-  }
+  ...benefitRoutes,    // 权益中心
+  ...reachRoutes,       // 触达系统
+  ...customerRoutes,   // 客群中心
+  ...callRoutes,       // 人工电销工作台
+  ...canvasRoutes,     // 营销画布
+  ...alertRoutes,      // 预警中心
+  ...tasksRoutes,      // 任务中心
+  ...marketingRoutes   // 营销中心（包含子路由）
 ]
 
 const router = createRouter({

@@ -50,13 +50,7 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '业务模块权限' }
       }
     ]
-  },
-  {
-    path: '/notice',
-    name: 'Notice',
-    component: () => import('./pages/notice/index.vue'),
-    meta: { title: '通知管理' }
-  },
+
   {
     path: '/notifications',
     name: 'Notifications',

@@ -37,14 +37,7 @@ const routes: RouteRecordRaw[] = [
     name: 'Metadata',
     component: () => import('./pages/metadata/index.vue'),
     meta: { title: '元数据' }
-  },
-  // 文档管理
-  {
-    path: '/docs',
-    name: 'Docs',
-    component: () => import('./pages/docs/index.vue'),
-    meta: { title: '文档管理' }
-  },
+
   // 通知管理
   {
     path: '/notifications',
