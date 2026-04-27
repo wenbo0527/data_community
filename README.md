@@ -1,95 +1,164 @@
-# Vue 3 + Vite
+# Fintech Data Portal
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+**数据产品经理作品集 | 金融科技**
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+> 🎯 定位：企业级数据门户Demo，覆盖数据门户 + 营销套件 + 归因分析完整链路
 
-20250623
-# 角色
-请作为一个资深的前端工程师，在修改前请阅读当期的代码，保证代码整体简洁流畅。
+[![Vue 3](https://img.shields.io/badge/Vue%203-✓-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-✓-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Arco Design](https://img.shields.io/badge/Arco%20Design-✓-0079FF?style=flat-square)](https://arco.design/)
 
-# 项目架构说明
-项目整体使用 vue架构，项目为企业管理后台的web端页面
-项目只需要前端页面和模拟数据用于演示操作，无需后端
+---
 
-## 项目改进计划
+## 📦 核心模块
 
-### 1. 代码组织优化
-- 将通用组件从页面目录迁移到`/src/components`统一管理
-- 在`/src/mock`目录下建立统一的接口规范文档
-- 为每个业务模块创建独立的`types`定义文件
+### 1. 数据门户
+企业级数据资产可视化入口，提供数据架构图、节点管理、资产概览等功能。
 
-### 2. 性能优化
-- 在`/src/router`中配置路由懒加载
-- 对大型组件如`BusinessProcessFlow.vue`进行代码分割
-- 优化`/src/utils`中的工具函数执行效率
+| 功能 | 说明 |
+|------|------|
+| 架构图可视化 | 交互式数据架构图，支持拖拽和缩放 |
+| 节点管理 | 数据节点增删改查 |
+| 资产概览 | 数据资产分布与统计 |
 
-### 3. 开发体验
-- 为所有组件添加JSDoc注释
-- 完善`/src/types`中的类型定义
-- 建立统一的代码风格检查配置
+### 2. 营销套件
+完整的营销能力平台，支持权益管理、客群分群、营销编排、多渠道触达。
 
-### 4. 测试覆盖
-- 为关键业务组件添加单元测试
-- 对核心流程添加E2E测试
-- 建立`__tests__`目录结构
+| 功能 | 说明 |
+|------|------|
+| 权益中心 | 优惠券、积分、卡券管理 |
+| 客群管理 | RFM/CLV/Churn智能分群 |
+| 营销画布 | 可视化流程编排 |
+| 触达管理 | App Push / SMS 多渠道触达 |
 
-### 5. 文档完善
-- 编写组件使用文档
-- 完善API接口文档
-- 添加项目架构图说明
+### 3. 归因分析
+多维度营销归因分析，量化渠道效果，优化预算分配。
 
-# 前端组件说明
-前端组件统一使用Arco design
-Arco Design 风格，具备清晰的信息层级与导向，操作直观、流程简便；设计样式、操作流程高度一致，带来品牌信赖感；融入韵律美感，元素排版合理，重复与对比规律协调；拥有开放包容的特性，可灵活适应多种业务场景
+| 模型 | 适用场景 |
+|------|---------|
+| First-click | 强调拉新，归因起点 |
+| Last-click | 强调转化，归因终点 |
+| Linear | 均衡权重，平均分配 |
 
-# 整体结构说明
-项目框架由侧边菜单栏进行导航，使用Arco design menu组件进行导航
-更新页面时，请同步更新导航地址和侧边栏菜单的导航地址保障页面路由可以正常使用
-对于函数命名时，需要通读代码，了解背景避免重复使用相同函数名称
-针对多步骤页面：变量命名请使用
+### 4. 风控数据
+外数生命周期管理与离线模型回溯。
 
-# 备注说明
-文件中需要注意语法和模版的问题，请注意使用语法与项目架构相同
-代码生成时，请补充对应的备注信息
-所有的数值计算的需求，在前端均可使用模拟数据替代
+| 功能 | 说明 |
+|------|------|
+| 外数生命周期 | 外部数据全流程管理 |
+| 离线模型 | 模型回溯与验证 |
 
-# 代码检验
-需要区分页面的代码和组件的代码，尽量保证项目复杂内容的解耦
-公式应使用calculation.ts中的公式，如过没有现成可用的请新增，添加时注意公式名称不要和已存在的公式重复
-不要修改accompany.ts中的定义
-注意更新参数、函数、变量时区分使用场景，不要重复命名和重复生成
-在问题修复时，请注意代码修复在整个文件中的位置，保证代码生效
-在修复问题时，请注意之前错误的问题
-针对定义结构的accompany.ts页面增加注释，标明字段含义和引用页面
-针对关键步骤请增加控制台输出，便于排查，同时在更新页面时，请用文字化的方式更新下面的核心逻辑中的内容，使用自然语言描述页面核心功能
+### 5. 数据管理
+元数据管理与数据标准规范。
 
-# 关键诉求
-- 项目结构理解 ：
-- 确保熟悉项目的整体架构，特别是Vue 3和Vite的使用。
-- 理解Arco Design组件库的使用，确保UI的一致性和可维护性。
+| 功能 | 说明 |
+|------|------|
+| 元数据管理 | 数据血缘追踪 |
+| 数据标准 | 规范定义与管理 |
+| 资产目录 | 数据资产清单 |
 
-- 代码规范 ：
-- 遵循项目的命名规范，避免重复命名。
-- 在修改代码时，确保不修改 accompany.ts 中的定义。
-- 使用 calculations.ts 中的现有公式进行计算，若无合适公式，新增时注意命名不重复。
+---
 
-- 组件开发 ：
-- 组件开发时，确保解耦复杂逻辑，保持代码简洁。
-- 使用 script setup 语法，充分利用Vue 3的组合式API。
+## 🏗️ 技术架构
 
-- 调试和日志 ：
-- 在开发过程中，使用 console.log 进行调试，确保输出的信息有助于理解代码执行流程。
-- 在关键函数中添加日志，帮助定位问题。
-- 自动化和工具 ：
+```
+┌─────────────────────────────────────────────────────────┐
+│                      前端展示层                          │
+├─────────────────────────────────────────────────────────┤
+│  Vue 3 + TypeScript + Vite + Arco Design + X6 Graph    │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                      数据模拟层                          │
+├─────────────────────────────────────────────────────────┤
+│  Mock.js │ LocalStorage │ IndexedDB                    │
+└─────────────────────────────────────────────────────────┘
+```
 
-- 使用Vite的热重载功能，提高开发效率。
-- 利用TypeScript的类型检查，减少运行时错误。
-- 代码审查和测试 ：
+---
 
-- 定期进行代码审查，确保代码质量。
-- 编写单元测试，特别是对于复杂的计算逻辑，确保其正确性。
-- 文档和注释 ：
+## 🛠️ 技术栈
 
-- 在代码中添加必要的注释，帮助其他开发者理解代码逻辑。
-- 更新README和其他文档，确保项目的使用和开发指南是最新的。# data_community
+| 类别 | 技术 |
+|------|------|
+| 框架 | Vue 3 (Composition API) |
+| 构建 | Vite |
+| 语言 | TypeScript |
+| UI组件 | Arco Design |
+| 图表/图形 | X6 Graph |
+| 状态管理 | Pinia |
+| 路由 | Vue Router |
+
+---
+
+## 🚀 快速开始
+
+```bash
+# 克隆项目
+git clone https://github.com/wenbo0527/fintech-data-portal.git
+cd fintech-data-portal
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 访问 http://localhost:3000
+```
+
+---
+
+## 📂 目录结构
+
+```
+data_community/
+├── apps/                    # 子应用模块
+│   ├── mkt-app/            # 营销套件
+│   ├── risk-app/           # 风控数据
+│   ├── dex-app/            # 数据探索
+│   ├── dmt-app/            # 数据管理
+│   ├── admin-app/          # 系统管理
+│   ├── touch/              # 营销画布
+│   └── horizontal-canvas/  # 画布引擎
+├── data_community/         # 主门户
+│   └── src/                # 核心源码
+├── src/                    # 主应用入口
+├── public/                 # 静态资源
+└── README.md
+```
+
+---
+
+## 📊 核心功能演示
+
+### 数据门户首页
+![数据门户](public/screenshots/portal.png)
+
+### 营销画布
+![营销画布](public/screenshots/canvas.png)
+
+### 客群分群
+![客群分群](public/screenshots/audience.png)
+
+---
+
+## ⚠️ 声明
+
+所有数据均为**合成/脱敏数据**，仅用于Portfolio展示，不涉及真实用户信息。
+
+---
+
+## 👤 作者
+
+**wenbo**
+
+数据产品经理 | 数据门户 | 营销套件 | 归因分析
+
+- GitHub: [@wenbo0527](https://github.com/wenbo0527)
+- Portfolio: [data-community-two.vercel.app](https://data-community-two.vercel.app)
+
+---
+
+*⭐ Stars and forks are welcome!*

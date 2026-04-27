@@ -31,6 +31,7 @@ export default defineConfig(async () => {
 
   return {
     plugins,
+    base: '/touch/',
     server: { host: '0.0.0.0', port: 5181, strictPort: true },
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } }
   }

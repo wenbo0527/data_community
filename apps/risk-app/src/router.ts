@@ -17,9 +17,9 @@ console.log('[Risk] routerBase:', routerBase)
  */
 const routes: RouteRecordRaw[] = [
   // 首页重定向
-  { path: '', redirect: '/external-data/lifecycle' },
+  { path: '/', redirect: '/external-data/lifecycle' },
   {
-    path: 'index',
+    path: '/index',
     name: 'RiskIndex',
     component: () => import('./pages/index.vue'),
     meta: { title: '数字风险' }

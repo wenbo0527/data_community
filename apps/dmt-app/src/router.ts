@@ -124,6 +124,99 @@ const routes: RouteRecordRaw[] = [
     name: 'AccompanyResult',
     component: () => import('./pages/accompany/result.vue'),
     meta: { title: '陪跑结果' }
+  },
+  // ===== 资产管理层 =====
+  // 基础管理 - 标签管理
+  {
+    path: '/asset-management/basic-management/tag-management',
+    name: 'TagManagement',
+    component: () => import('./pages/asset-management/basic-management/tag-management/index.vue'),
+    meta: { title: '标签管理' }
+  },
+  // 基础管理 - 元数据采集
+  {
+    path: '/asset-management/basic-management/metadata-collection',
+    name: 'MetadataCollection',
+    component: () => import('./pages/asset-management/basic-management/metadata-collection/index.vue'),
+    meta: { title: '元数据采集' }
+  },
+  // 清单管理 - 表管理
+  {
+    path: '/asset-management/listing-management/table-management',
+    name: 'TableManagement',
+    component: () => import('./pages/asset-management/listing-management/table-management/index.vue'),
+    meta: { title: '表管理' }
+  },
+  // 清单管理 - 外数管理
+  {
+    path: '/asset-management/listing-management/external-data-management',
+    name: 'ExternalDataManagement',
+    component: () => import('./pages/asset-management/listing-management/external-data-management/index.vue'),
+    meta: { title: '外部数据管理' }
+  },
+  // 清单管理 - 指标管理
+  {
+    path: '/asset-management/listing-management/metric-management',
+    name: 'MetricManagement',
+    component: () => import('./pages/asset-management/listing-management/metric-management/index.vue'),
+    meta: { title: '指标管理' }
+  },
+  // 清单管理 - 变量注册
+  {
+    path: '/asset-management/listing-management/variable-management',
+    name: 'AssetVariableManagement',
+    component: () => import('./pages/asset-management/listing-management/variable-management/index.vue'),
+    meta: { title: '变量注册' }
+  },
+  // ===== 数据服务 =====
+  // 服务管理
+  {
+    path: '/service',
+    name: 'ServiceManagement',
+    component: () => import('./pages/service/index.vue'),
+    meta: { title: '服务管理' }
+  },
+  // 全量变量回溯
+  {
+    path: '/service/backtrack',
+    name: 'Backtrack',
+    component: () => import('./pages/service/backtrack.vue'),
+    meta: { title: '全量变量回溯申请' }
+  },
+  // 客户资金用途查询
+  {
+    path: '/service/fund-usage-query',
+    name: 'FundUsageQuery',
+    component: () => import('./pages/service/fund-usage-query/index.vue'),
+    meta: { title: '客户资金用途外数查询' }
+  },
+  // API管理
+  {
+    path: '/service/api-management',
+    name: 'ApiManagement',
+    component: () => import('./pages/service/api-management/index.vue'),
+    meta: { title: 'API管理' }
+  },
+  // 新建API
+  {
+    path: '/service/api-management/create',
+    name: 'ApiManagementCreate',
+    component: () => import('./pages/service/api-management/Wizard.vue'),
+    meta: { title: '新建API' }
+  },
+  // 编辑API
+  {
+    path: '/service/api-management/:id/edit',
+    name: 'ApiManagementEdit',
+    component: () => import('./pages/service/api-management/Wizard.vue'),
+    meta: { title: '编辑API' }
+  },
+  // 明细数据查询
+  {
+    path: '/service/detail-data-query',
+    name: 'DetailDataQuery',
+    component: () => import('./pages/service/detail-data-query.vue'),
+    meta: { title: '明细数据查询服务' }
   }
 ]
 

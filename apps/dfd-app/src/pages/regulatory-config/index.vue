@@ -139,7 +139,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconRefresh } from '@arco-design/web-vue/es/icon'
-import { RegulatoryCategory, RegulatoryLabels } from '@/types/metrics'
+import { RegulatoryCategory, REGULATORY_CATEGORY_LABELS } from '@/types/metrics'
 
 // 响应式数据
 const loading = ref(false)
@@ -232,7 +232,7 @@ const formRules = {
 // 监管报表大类选项
 const regulatoryCategoryOptions = computed(() => {
   return Object.values(RegulatoryCategory).map(value => ({
-    label: RegulatoryLabels[value],
+    label: REGULATORY_CATEGORY_LABELS[value],
     value
   }))
 })
@@ -250,7 +250,7 @@ const metricCategoryOptions = [
 
 // 获取监管报表大类标签
 const getRegulatoryLabel = (category: string) => {
-  return RegulatoryLabels[category as RegulatoryCategory] || category
+  return REGULATORY_CATEGORY_LABELS[category as RegulatoryCategory] || category
 }
 
 // 显示新增模态框
