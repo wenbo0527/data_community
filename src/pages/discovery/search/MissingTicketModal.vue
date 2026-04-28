@@ -63,18 +63,6 @@
         </a-col>
       </a-row>
 
-      <a-row :gutter="24">
-        <a-col :span="24">
-          <a-form-item
-            field="expectedUsageTime"
-            label="期望补齐时间"
-            :rules="[{ required: true, message: '请选择期望补齐时间' }]"
-          >
-            <a-date-picker v-model="form.expectedUsageTime" style="width: 100%" placeholder="请选择时间" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
       <a-form-item
         field="description"
         label="详细描述与用途"
@@ -149,7 +137,6 @@ const form = reactive({
   type: 'table',
   targetAssetName: '',
   marketingScope: '',
-  expectedUsageTime: '',
   description: ''
 })
 
