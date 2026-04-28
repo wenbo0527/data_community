@@ -30,6 +30,7 @@
           <a-button type="primary" @click="applyFilter">查询</a-button>
           <a-button style="margin-left: 8px" @click="resetFilter">重置</a-button>
           <a-button style="margin-left: 8px" type="outline" @click="goToScene">发起新服务</a-button>
+          <a-button style="margin-left: 8px" type="outline" status="warning" @click="goToAccompany">查看陪跑计划</a-button>
         </a-form-item>
       </a-form>
     </a-card>
@@ -116,6 +117,10 @@ const editingData = ref<any>(null)
 
 const goToScene = () => {
   router.push({ name: 'RiskExternalDataServiceScene' })
+}
+
+const goToAccompany = () => {
+  router.push({ name: 'RiskAccompanyList' })
 }
 
 const openEdit = (record: any) => {

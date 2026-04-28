@@ -4,7 +4,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: 'accompany',
     name: 'RiskAccompanyRoot',
-    redirect: '/risk/accompany'
+    redirect: 'accompany'
   },
   {
     path: 'accompany',
