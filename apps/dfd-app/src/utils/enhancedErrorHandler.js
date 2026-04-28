@@ -52,9 +52,9 @@ class EnhancedLogger {
     if (this.isDebugMode) {
       const [formattedMessage, logData] = this.formatMessage(LogLevels.DEBUG, message, data)
       if (logData) {
-        console.debug(formattedMessage, logData)
+
       } else {
-        console.debug(formattedMessage)
+
       }
     }
   }
@@ -62,31 +62,31 @@ class EnhancedLogger {
   info(message, data = null) {
     const [formattedMessage, logData] = this.formatMessage(LogLevels.INFO, message, data)
     if (logData) {
-      console.info(formattedMessage, logData)
+
     } else {
-      console.info(formattedMessage)
+
     }
   }
 
   warn(message, data = null) {
     const [formattedMessage, logData] = this.formatMessage(LogLevels.WARN, message, data)
     if (logData) {
-      console.warn(formattedMessage, logData)
+
     } else {
-      console.warn(formattedMessage)
+
     }
   }
 
   error(message, error = null, data = null) {
     const [formattedMessage, logData] = this.formatMessage(LogLevels.ERROR, message, data)
     if (error && logData) {
-      console.error(formattedMessage, error, logData)
+
     } else if (error) {
-      console.error(formattedMessage, error)
+
     } else if (logData) {
-      console.error(formattedMessage, logData)
+
     } else {
-      console.error(formattedMessage)
+
     }
   }
 }

@@ -26,8 +26,7 @@ export class PositionApplicator {
     this.config = config;
     this.appliedCount = 0;
     this.lastApplicationTime = null;
-    
-    console.log('PositionApplicator initialized');
+
   }
   
   /**
@@ -63,8 +62,7 @@ export class PositionApplicator {
     const errors = [];
     
     try {
-      console.log('Starting position application...');
-      
+
       // 清理预览线（如果需要）
       if (previewLineManager && options.clearPreviewLines !== false) {
         await this.clearPreviewLines(previewLineManager);
@@ -81,7 +79,7 @@ export class PositionApplicator {
           }
         } catch (error) {
           errors.push({ nodeId, error: error.message });
-          console.warn(`Failed to apply position for node ${nodeId}:`, error);
+
         }
       }
       
@@ -108,15 +106,13 @@ export class PositionApplicator {
         duration: this.lastApplicationTime,
         timestamp: Date.now()
       };
-      
-      console.log(`Position application completed: ${appliedNodes} applied, ${skippedNodes} skipped, ${errors.length} errors`);
+
       return result;
       
     } catch (error) {
       const endTime = Date.now();
       this.lastApplicationTime = endTime - startTime;
-      
-      console.error('Position application failed:', error);
+
       throw error;
     }
   }
@@ -132,14 +128,14 @@ export class PositionApplicator {
    */
   async applyNodePosition(graph, nodeId, position, options = {}) {
     if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
-      console.warn(`Invalid position for node ${nodeId}:`, position);
+
       return false;
     }
     
     try {
       const node = graph.getCellById(nodeId);
       if (!node) {
-        console.warn(`Node ${nodeId} not found in graph`);
+
         return false;
       }
       
@@ -166,7 +162,7 @@ export class PositionApplicator {
       return true;
       
     } catch (error) {
-      console.error(`Error applying position to node ${nodeId}:`, error);
+
       throw error;
     }
   }
@@ -213,8 +209,7 @@ export class PositionApplicator {
    */
   async syncNodePositions(graph, positions) {
     try {
-      console.log('Syncing node positions...');
-      
+
       // 这里可以添加额外的同步逻辑
       // 例如：更新相关的边、连接点等
       
@@ -224,7 +219,7 @@ export class PositionApplicator {
       }
       
     } catch (error) {
-      console.warn('Node position sync failed:', error);
+
     }
   }
   
@@ -237,10 +232,10 @@ export class PositionApplicator {
     try {
       if (previewLineManager && typeof previewLineManager.clearAllPreviewLines === 'function') {
         await previewLineManager.clearAllPreviewLines();
-        console.log('Preview lines cleared');
+
       }
     } catch (error) {
-      console.warn('Failed to clear preview lines:', error);
+
     }
   }
   
@@ -254,11 +249,11 @@ export class PositionApplicator {
       if (previewLineManager && typeof previewLineManager.verifyCleanup === 'function') {
         const isClean = await previewLineManager.verifyCleanup();
         if (!isClean) {
-          console.warn('Preview line cleanup verification failed');
+
         }
       }
     } catch (error) {
-      console.warn('Preview line cleanup verification error:', error);
+
     }
   }
   

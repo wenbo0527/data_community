@@ -115,24 +115,23 @@ export const realtimeManager = new RealtimeSubscriptionManager()
 // 错误处理工具
 export class SupabaseErrorHandler {
   static handleError(error: any, context: string): void {
-    console.error(`[Supabase Error] ${context}:`, error)
-    
+
     if (error.code) {
       switch (error.code) {
         case 'PGRST116':
-          console.warn('数据不存在或已被删除')
+
           break
         case 'PGRST301':
-          console.warn('权限不足，无法访问数据')
+
           break
         case '23505':
-          console.warn('数据重复，违反唯一约束')
+
           break
         case '23503':
-          console.warn('外键约束违反')
+
           break
         default:
-          console.warn(`数据库错误: ${error.message}`)
+
       }
     }
   }
@@ -214,7 +213,7 @@ export class PerformanceMonitor {
   endTimer(key: string): number {
     const startTime = this.metrics.get(key)
     if (!startTime) {
-      console.warn(`未找到计时器: ${key}`)
+
       return 0
     }
     
@@ -234,11 +233,11 @@ export class PerformanceMonitor {
     
     // 性能警告
     if (duration > 2000) {
-      console.warn(`查询性能警告: ${queryName} 耗时超过2秒`)
+
     }
     
     if (rowCount > 10000) {
-      console.warn(`数据量警告: ${queryName} 返回超过1万条数据`)
+
     }
   }
 }

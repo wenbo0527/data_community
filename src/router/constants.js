@@ -139,9 +139,9 @@ export const ROUTE_PATHS = {
       DETAIL: '/management/data-models/:id'
     },
     ACCOMPANY: {
-      ROOT: '/management/accompany',
-      CREATE: '/management/accompany/create',
-      RESULT: '/management/accompany/result'
+      ROOT: '/risk/accompany',
+      CREATE: '/risk/accompany/create',
+      RESULT: '/risk/accompany/result'
     },
     BUSINESS_CONCEPT: {
       ROOT: '/management/business-concept'
@@ -265,10 +265,7 @@ export const BREADCRUMB_CONFIG = {
     { title: '服务管理', path: ROUTE_PATHS.MANAGEMENT.SERVICE.ROOT },
     { title: '全量变量回溯申请', path: ROUTE_PATHS.MANAGEMENT.SERVICE.BACKTRACK }
   ],
-  [ROUTE_NAMES.MANAGEMENT.ACCOMPANY.ROOT]: [
-    { title: '管理中心', path: ROUTE_PATHS.MANAGEMENT.ROOT },
-    { title: '陪伴管理', path: ROUTE_PATHS.MANAGEMENT.ACCOMPANY.ROOT }
-  ],
+  // [accompany 已迁移至 risk-app, 路由: /risk/accompany]
   [ROUTE_NAMES.MANAGEMENT.BUSINESS_CONCEPT.ROOT]: [
     { title: '管理中心', path: ROUTE_PATHS.MANAGEMENT.ROOT },
     { title: '业务概念中心', path: ROUTE_PATHS.MANAGEMENT.BUSINESS_CONCEPT.ROOT }
@@ -377,7 +374,7 @@ export const MENU_CONFIG = {
           path: ROUTE_PATHS.MANAGEMENT.SERVICE.ROOT
         },
         {
-          key: 'management-accompany',
+          key: 'risk-accompany',
           title: '陪伴管理',
           path: ROUTE_PATHS.MANAGEMENT.ACCOMPANY.ROOT
         },

@@ -33,10 +33,7 @@ class LayerCalculator {
     // 简化方案：直接使用预定义的层级索引
     const layerIndex = this.getSimpleLayerIndex(nodeId, graph);
     const layerY = layerIndex * this.options.layer.baseHeight;
-    
-    console.log(
-      `[全局简单层级] 节点 ${nodeId} 层级Y坐标: 第${layerIndex}层 -> Y=${layerY}`,
-    );
+
     return layerY;
   }
 
@@ -61,7 +58,7 @@ class LayerCalculator {
       // 规则1：开始节点固定为第1层
       if (nodeId.includes('start') || nodeId.includes('Start') || nodeId.includes('begin')) {
         layerIndex = 1;
-        console.log(`[连接层级] 开始节点 ${nodeId} -> 第1层`);
+
       }
       // 规则2：普通节点 = 父节点最大层级 + 1
       else {
@@ -74,12 +71,12 @@ class LayerCalculator {
           console.log(`[连接层级] 普通节点 ${nodeId} 父节点层级 [${parentLayers.join(',')}] -> 第${layerIndex}层`);
         } else {
           layerIndex = 2; // 无父节点时的默认层级
-          console.log(`[连接层级] 普通节点 ${nodeId} 无父节点，使用默认第2层`);
+
         }
       }
 
     } catch (error) {
-      console.warn(`[连接层级] 节点 ${nodeId} 层级计算失败:`, error.message);
+
       layerIndex = 2; // 出错时默认第2层
     }
 
@@ -176,7 +173,7 @@ class LayerCalculator {
       }
       
     } catch (error) {
-      console.warn(`[简化层级] 获取节点 ${nodeId} 父节点失败:`, error.message);
+
     }
     
     return parentNodes;
@@ -234,7 +231,7 @@ class LayerCalculator {
       // 策略3：使用默认Y坐标
       return this.getDefaultLayerY(nodeId);
     } catch (error) {
-      console.warn(`[智能推断] 节点 ${nodeId} 推断失败:`, error.message);
+
       return this.getDefaultLayerY(nodeId);
     }
   }
@@ -263,15 +260,10 @@ class LayerCalculator {
     try {
       const currentLayerY = this.getNodeLayerY(nodeId, graph);
       const nextLayerY = currentLayerY + this.options.layer.baseHeight;
-      console.log(
-        `[布局引擎] 节点 ${nodeId} 下一层Y坐标: ${currentLayerY} + ${this.options.layer.baseHeight} = ${nextLayerY}`,
-      );
+
       return nextLayerY;
     } catch (error) {
-      console.warn(
-        `[布局引擎] 获取节点 ${nodeId} 下一层Y坐标失败:`,
-        error.message,
-      );
+
       // 使用默认的下一层Y坐标
       return this.options.layer.baseHeight * 2;
     }
@@ -354,22 +346,18 @@ class LayerCalculator {
     let currentLayer = [...leafNodes]; // 复制数组避免修改原数组
     let layerIndex = 0;
 
-    console.log(
-      `[层级构建] 开始自底向上构建，叶子节点: ${leafNodes.length}个`,
-    );
     console.log('[层级构建] 叶子节点列表:', leafNodes.map(n => n.id || n.getId()));
-    console.log(`[层级构建] 总节点数: ${allNodes.length}个`);
 
     // 检测无边连接模式
     const hasConnections = this.hasNodeConnections(allNodes, graph);
     if (!hasConnections) {
-      console.log('[类型分层] 检测到无边连接模式，启用节点类型垂直分层');
+
       return this.buildTypeBasedLayers(allNodes);
     }
 
     // 从叶子节点开始，逐层向上构建
     while (currentLayer.length > 0) {
-      console.log(`[层级构建] 处理第${layerIndex}层，节点数: ${currentLayer.length}`);
+
       console.log(`[层级构建] 第${layerIndex}层节点:`, currentLayer.map(n => n.id || n.getId()));
       
       layers.push([...currentLayer]);
@@ -388,7 +376,7 @@ class LayerCalculator {
       
       // 防止无限循环
       if (layerIndex > allNodes.length) {
-        console.warn('[层级构建] 检测到可能的无限循环，强制退出');
+
         break;
       }
     }
@@ -400,10 +388,6 @@ class LayerCalculator {
     
     if (unprocessedNodes.length > 0) {
       const unprocessedNodeIds = unprocessedNodes.map(n => n.id || n.getId());
-      console.log(
-        `[层级构建] 发现 ${unprocessedNodeIds.length} 个未处理的节点:`,
-        unprocessedNodeIds,
-      );
 
       // 将未处理的节点添加到最后一层
       layers.push(unprocessedNodes);
@@ -414,7 +398,6 @@ class LayerCalculator {
       });
     }
 
-    console.log(`[层级构建] 完成分层，共${layers.length}层`);
     return layers;
   }
 
@@ -429,7 +412,7 @@ class LayerCalculator {
       const edges = graph.getEdges();
       return edges && edges.length > 0;
     } catch (error) {
-      console.warn('[层级构建] 检查连接关系失败:', error.message);
+
       return false;
     }
   }
@@ -490,7 +473,7 @@ class LayerCalculator {
    */
   clearCache() {
     this.layerCache.clear();
-    console.log('[层级计算] 缓存已清除');
+
   }
 
   /**
@@ -547,8 +530,6 @@ class LayerCalculator {
         });
       });
 
-      console.log(`[层级计算] 完成计算，共${layers.length}层，${nodes.length}个节点`);
-      
       return {
         success: true,
         layers,
@@ -557,7 +538,7 @@ class LayerCalculator {
       };
       
     } catch (error) {
-      console.error('[层级计算] 计算失败:', error);
+
       return {
         success: false,
         error: error.message,

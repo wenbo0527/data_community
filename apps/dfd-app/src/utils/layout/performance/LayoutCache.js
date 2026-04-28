@@ -288,7 +288,7 @@ class LayoutCache {
         this.set(key, data, options);
         successCount++;
       } catch (error) {
-        console.warn(`Failed to set cache for key ${key}:`, error);
+
       }
     }
     
@@ -489,7 +489,7 @@ class LayoutCache {
     try {
       return JSON.parse(JSON.stringify(data));
     } catch (error) {
-      console.warn('Failed to clone cache data:', error);
+
       return data;
     }
   }

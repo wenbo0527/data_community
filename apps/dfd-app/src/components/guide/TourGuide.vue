@@ -137,7 +137,7 @@ const updateHighlight = () => {
   
   const element = document.querySelector(currentStep.value.element)
   if (!element) {
-    console.warn(`Element ${currentStep.value.element} not found`)
+
     return
   }
 

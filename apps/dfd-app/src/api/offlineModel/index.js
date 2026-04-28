@@ -143,7 +143,7 @@ export const taskAPI = {
   
   // 创建任务
   createTask: (data) => {
-    console.log('创建任务:', data)
+
     return Promise.resolve(mockAPI.createResponse({ id: 1 }))
   },
   
@@ -155,25 +155,25 @@ export const taskAPI = {
   
   // 暂停任务
   pauseTask: (id) => {
-    console.log('暂停任务:', id)
+
     return Promise.resolve(mockAPI.createResponse(null))
   },
   
   // 继续任务
   resumeTask: (id) => {
-    console.log('继续任务:', id)
+
     return Promise.resolve(mockAPI.createResponse(null))
   },
   
   // 停止任务
   stopTask: (id) => {
-    console.log('停止任务:', id)
+
     return Promise.resolve(mockAPI.createResponse(null))
   },
   
   // 删除任务
   deleteTask: (id) => {
-    console.log('删除任务:', id)
+
     return Promise.resolve(mockAPI.createResponse(null))
   },
   // 重试子任务
@@ -187,31 +187,31 @@ export const taskAPI = {
 export const evaluationAPI = {
   // 获取评估列表
   getEvaluations: (params) => {
-    console.log('获取评估列表:', params)
+
     return Promise.resolve(mockAPI.createResponse([]))
   },
   
   // 创建评估
   createEvaluation: (data) => {
-    console.log('创建评估:', data)
+
     return Promise.resolve(mockAPI.createResponse({ id: 1 }))
   },
   
   // 获取评估详情
   getEvaluationDetail: (id) => {
-    console.log('获取评估详情:', id)
+
     return Promise.resolve(mockAPI.createResponse({}))
   },
   
   // 获取评估报告
   getEvaluationReport: (id) => {
-    console.log('获取评估报告:', id)
+
     return Promise.resolve(mockAPI.createResponse({}))
   },
   
   // 导出评估报告
   exportEvaluationReport: (id) => {
-    console.log('导出评估报告:', id)
+
     return Promise.resolve(mockAPI.createResponse(null))
   }
 }

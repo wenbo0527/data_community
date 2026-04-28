@@ -483,7 +483,7 @@ class PreviewLineLock {
         try {
           listener(data);
         } catch (error) {
-          console.error('Error in preview line lock event listener:', error);
+
         }
       });
     }

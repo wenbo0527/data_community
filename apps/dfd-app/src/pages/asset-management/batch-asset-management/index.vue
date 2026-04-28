@@ -493,34 +493,34 @@ const getStatusText = (status: string) => {
 }
 
 const viewAsset = (record: any) => {
-  console.log('查看资产:', record)
+
 }
 
 const editAsset = (record: any) => {
-  console.log('编辑资产:', record)
+
 }
 
 const batchUpdateStatus = (status: string) => {
-  console.log('批量更新状态:', status, selectedRowKeys.value)
+
   Message.success(`批量${status === 'active' ? '启用' : '停用'}成功`)
 }
 
 const batchUpdateOwner = () => {
-  console.log('批量分配负责人:', selectedRowKeys.value)
+
 }
 
 const batchDelete = () => {
-  console.log('批量删除:', selectedRowKeys.value)
+
   Message.success('批量删除成功')
 }
 
 const exportSelected = () => {
-  console.log('导出选中:', selectedRowKeys.value)
+
   Message.success('导出成功')
 }
 
 const handleFileChange = (fileList: any) => {
-  console.log('文件变化:', fileList)
+
   previewVisible.value = false
 }
 
@@ -612,8 +612,7 @@ const downloadTemplate = () => {
     behavior: '行为变量导入模板.xlsx',
     credit: '征信变量导入模板.xlsx'
   }
-  
-  console.log('下载模板:', templateMap[importConfig.dataType])
+
   Message.success(`${getDataTypeText(importConfig.dataType)}模板下载成功`)
 }
 
@@ -654,7 +653,7 @@ const resetImportForm = () => {
 }
 
 const handleBatchOperation = () => {
-  console.log('批量操作:', batchOperation)
+
   Message.success('批量操作成功')
   showBatchModal.value = false
   resetBatchForm()

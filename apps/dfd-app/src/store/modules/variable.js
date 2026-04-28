@@ -153,7 +153,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('获取变量列表失败:', error)
+
         throw error
       } finally {
         this.variableLoading = false
@@ -170,7 +170,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('获取变量详情失败:', error)
+
         throw error
       } finally {
         this.variableDetailLoading = false
@@ -187,7 +187,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('创建变量失败:', error)
+
         throw error
       }
     },
@@ -203,7 +203,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('更新变量失败:', error)
+
         throw error
       }
     },
@@ -218,7 +218,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('删除变量失败:', error)
+
         throw error
       }
     },
@@ -233,7 +233,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('获取变量图谱失败:', error)
+
         throw error
       } finally {
         this.graphLoading = false
@@ -250,7 +250,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('获取变量血缘分析失败:', error)
+
         throw error
       } finally {
         this.lineageLoading = false
@@ -267,7 +267,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('获取路径分析失败:', error)
+
         throw error
       } finally {
         this.pathLoading = false
@@ -284,7 +284,7 @@ export const useVariableStore = defineStore('variable', {
         }
         return response
       } catch (error) {
-        console.error('获取影响分析失败:', error)
+
         throw error
       } finally {
         this.impactLoading = false

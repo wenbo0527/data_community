@@ -36,7 +36,7 @@ class NotificationAPI {
       // 目前使用Mock数据
       return await NotificationMockService.getNotifications(params);
     } catch (error) {
-      console.error('获取通知列表失败:', error);
+
       throw error;
     }
   }
@@ -50,7 +50,7 @@ class NotificationAPI {
     try {
       return await NotificationMockService.getNotification(id);
     } catch (error) {
-      console.error('获取通知详情失败:', error);
+
       throw error;
     }
   }
@@ -64,7 +64,7 @@ class NotificationAPI {
     try {
       return await NotificationMockService.createNotification(data);
     } catch (error) {
-      console.error('创建通知失败:', error);
+
       throw error;
     }
   }
@@ -79,7 +79,7 @@ class NotificationAPI {
     try {
       return await NotificationMockService.updateNotification(id, data);
     } catch (error) {
-      console.error('更新通知失败:', error);
+
       throw error;
     }
   }
@@ -93,7 +93,7 @@ class NotificationAPI {
     try {
       return await NotificationMockService.deleteNotification(id);
     } catch (error) {
-      console.error('删除通知失败:', error);
+
       throw error;
     }
   }
@@ -112,7 +112,7 @@ class NotificationAPI {
         message: '批量删除成功'
       };
     } catch (error) {
-      console.error('批量删除通知失败:', error);
+
       throw error;
     }
   }
@@ -129,7 +129,7 @@ class NotificationAPI {
         publishAt: new Date().toISOString()
       });
     } catch (error) {
-      console.error('发布通知失败:', error);
+
       throw error;
     }
   }
@@ -148,7 +148,7 @@ class NotificationAPI {
         message: '批量发布成功'
       };
     } catch (error) {
-      console.error('批量发布通知失败:', error);
+
       throw error;
     }
   }
@@ -162,7 +162,7 @@ class NotificationAPI {
     try {
       return await this.updateNotification(id, { status: 'archived' });
     } catch (error) {
-      console.error('归档通知失败:', error);
+
       throw error;
     }
   }
@@ -179,7 +179,7 @@ class CategoryAPI {
     try {
       return await NotificationMockService.getCategories();
     } catch (error) {
-      console.error('获取分类列表失败:', error);
+
       throw error;
     }
   }
@@ -208,7 +208,7 @@ class CategoryAPI {
         data: newCategory
       };
     } catch (error) {
-      console.error('创建分类失败:', error);
+
       throw error;
     }
   }
@@ -227,7 +227,7 @@ class CategoryAPI {
         data: { ...data, id } as Category
       };
     } catch (error) {
-      console.error('更新分类失败:', error);
+
       throw error;
     }
   }
@@ -245,7 +245,7 @@ class CategoryAPI {
         message: '删除成功'
       };
     } catch (error) {
-      console.error('删除分类失败:', error);
+
       throw error;
     }
   }
@@ -264,7 +264,7 @@ class FileUploadAPI {
     try {
       return await NotificationMockService.uploadFile(file);
     } catch (error) {
-      console.error('文件上传失败:', error);
+
       throw error;
     }
   }
@@ -282,7 +282,7 @@ class FileUploadAPI {
         message: '文件删除成功'
       };
     } catch (error) {
-      console.error('删除文件失败:', error);
+
       throw error;
     }
   }
@@ -310,7 +310,7 @@ class OperationLogAPI {
     try {
       return await NotificationMockService.getOperationLogs(notificationId);
     } catch (error) {
-      console.error('获取操作日志失败:', error);
+
       throw error;
     }
   }
@@ -327,13 +327,13 @@ class OperationLogAPI {
   }): Promise<ApiResponse> {
     try {
       // 实际项目中调用真实API记录日志
-      console.log('记录操作日志:', data);
+
       return {
         success: true,
         message: '日志记录成功'
       };
     } catch (error) {
-      console.error('记录操作日志失败:', error);
+
       throw error;
     }
   }

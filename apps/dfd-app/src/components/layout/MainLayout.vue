@@ -89,7 +89,7 @@ const isFullScreenLayout = computed(() => {
 
 // 处理顶部菜单变化
 const handleTopMenuChange = (moduleKey) => {
-  console.log('顶部菜单变化:', moduleKey)
+
   activeModule.value = moduleKey
   
   // 清空侧边菜单搜索
@@ -141,7 +141,7 @@ watch(
 
 // 组件挂载时初始化
 onMounted(() => {
-  console.log('MainLayout 组件挂载完成')
+
   updateActiveModuleFromRoute()
 })
 </script>

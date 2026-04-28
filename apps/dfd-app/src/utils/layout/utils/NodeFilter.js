@@ -44,7 +44,7 @@ class NodeFilter {
    */
   filter(nodes) {
     if (!Array.isArray(nodes)) {
-      console.warn('NodeFilter.filter: nodes must be an array');
+
       return [];
     }
     
@@ -102,7 +102,7 @@ class NodeFilter {
       
       return true;
     } catch (error) {
-      console.warn('NodeFilter.shouldIncludeNode error:', error);
+
       return false;
     }
   }
@@ -198,7 +198,7 @@ class NodeFilter {
             return false;
           }
         } catch (error) {
-          console.warn('Custom filter error:', error);
+
           return false;
         }
       }

@@ -491,9 +491,9 @@ const copySql = async (sqlContent: string) => {
   try {
     await navigator.clipboard.writeText(sqlContent)
     // 这里可以添加成功提示
-    console.log('SQL已复制到剪贴板')
+
   } catch (error) {
-    console.error('复制失败:', error)
+
     // 降级方案：使用传统方法复制
     const textArea = document.createElement('textarea')
     textArea.value = sqlContent
@@ -501,7 +501,7 @@ const copySql = async (sqlContent: string) => {
     textArea.select()
     document.execCommand('copy')
     document.body.removeChild(textArea)
-    console.log('SQL已复制到剪贴板（降级方案）')
+
   }
 }
 
@@ -703,7 +703,7 @@ WHERE data_dt = \${date}
       { id: '4', name: '平均放款金额', category: '业务核心指标' }
     ]
   } catch (error) {
-    console.error('获取指标详情失败:', error)
+
     Message.error('获取指标详情失败')
   } finally {
     loading.value = false
@@ -755,7 +755,7 @@ const fetchRelatedMetrics = async () => {
                       item.businessDomain === metricDetail.value?.businessDomain))
       .slice(0, 3)
   } catch (error) {
-    console.error('获取相关指标失败:', error)
+
   }
 }
 
@@ -771,12 +771,12 @@ const toggleFavorite = async () => {
     
     // 显示提示消息
     if (newFavoriteStatus) {
-      console.log('已添加到收藏')
+
     } else {
-      console.log('已取消收藏')
+
     }
   } catch (error) {
-    console.error('收藏操作失败:', error)
+
   }
 }
 
@@ -796,10 +796,10 @@ const confirmShare = () => {
 const copyShareLink = async () => {
   try {
     await navigator.clipboard.writeText(shareLink.value)
-    console.log('链接已复制到剪贴板')
+
     shareVisible.value = false
   } catch (error) {
-    console.error('复制链接失败:', error)
+
   }
 }
 

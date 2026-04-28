@@ -179,7 +179,7 @@ ORDER BY date DESC`
 
 // 方法
 const handleSearch = (value: string) => {
-  console.log('搜索指标:', value)
+
 }
 
 const resetView = () => {
@@ -202,7 +202,7 @@ const selectStation = (station: any) => {
 
 onMounted(() => {
   // 初始化画布
-  console.log('指标地图组件已挂载')
+
 })
 </script>
 

@@ -56,14 +56,12 @@ export class LayoutDirectionManager {
    */
   setDirection(direction) {
     if (!LAYOUT_DIRECTION_CONFIGS[direction]) {
-      console.warn(`[LayoutDirectionManager] 不支持的布局方向: ${direction}`)
+
       return false
     }
 
     const oldDirection = this.currentDirection
     this.currentDirection = direction
-
-    console.log(`[LayoutDirectionManager] 布局方向已切换: ${oldDirection} -> ${direction}`)
 
     // 通知监听器
     this.notifyListeners(direction, oldDirection)
@@ -131,7 +129,7 @@ export class LayoutDirectionManager {
       try {
         listener(newDirection, oldDirection)
       } catch (error) {
-        console.error('[LayoutDirectionManager] 监听器执行错误:', error)
+
       }
     })
   }

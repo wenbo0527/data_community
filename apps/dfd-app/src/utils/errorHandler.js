@@ -5,15 +5,11 @@
 
 export class ErrorHandler {
   static logError(context, error, additionalInfo = {}) {
-    console.error(`❌ [${context}] 错误:`, {
-      message: error.message,
-      stack: error.stack,
-      ...additionalInfo
-    })
+
   }
 
   static logWarning(context, message, additionalInfo = {}) {
-    console.warn(`⚠️ [${context}] 警告: ${message}`, additionalInfo)
+
   }
 
   static validateRequired(params, context = 'Unknown') {

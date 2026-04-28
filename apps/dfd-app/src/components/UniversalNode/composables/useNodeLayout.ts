@@ -378,19 +378,19 @@ export function useNodeLayout() {
     const maxWidth = parseInt(config.maxWidth)
     
     if (minWidth < 240 || maxWidth > 480) {
-      console.warn(`节点尺寸超出限制范围: ${minWidth}px - ${maxWidth}px`)
+
       return false
     }
     
     // 验证流式布局配置
     if (config.flowLayout.enabled) {
       if (config.flowLayout.maxItemsPerRow < 1) {
-        console.warn('流式布局每行最大项目数必须大于0')
+
         return false
       }
       
       if (parseInt(config.flowLayout.itemMinWidth) < 120) {
-        console.warn('流式布局项目最小宽度不能小于120px')
+
         return false
       }
     }

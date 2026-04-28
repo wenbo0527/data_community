@@ -15,7 +15,7 @@ export class TaskStorage {
       const tasks = localStorage.getItem(this.STORAGE_KEY);
       return tasks ? JSON.parse(tasks) : [];
     } catch (error) {
-      console.error('获取任务列表失败:', error);
+
       return [];
     }
   }
@@ -40,10 +40,10 @@ export class TaskStorage {
       
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(tasks));
       this.updateStats();
-      console.log('任务保存成功:', task.id);
+
       return true;
     } catch (error) {
-      console.error('保存任务失败:', error);
+
       return false;
     }
   }
@@ -65,13 +65,13 @@ export class TaskStorage {
       
       const success = this.saveTask(newTask);
       if (success) {
-        console.log('✅ [TaskStorage] 创建新任务成功:', newTask.id);
+
         return newTask;
       } else {
         throw new Error('保存任务失败');
       }
     } catch (error) {
-      console.error('❌ [TaskStorage] 创建任务失败:', error);
+
       throw error;
     }
   }
@@ -92,13 +92,13 @@ export class TaskStorage {
       
       const success = this.saveTask(updatedTask);
       if (success) {
-        console.log('✅ [TaskStorage] 更新任务成功:', taskId);
+
         return updatedTask;
       } else {
         throw new Error('保存任务失败');
       }
     } catch (error) {
-      console.error('❌ [TaskStorage] 更新任务失败:', error);
+
       throw error;
     }
   }
@@ -114,16 +114,16 @@ export class TaskStorage {
       const filteredTasks = tasks.filter(task => task.id !== taskId);
       
       if (filteredTasks.length === tasks.length) {
-        console.warn('未找到要删除的任务:', taskId);
+
         return false;
       }
       
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filteredTasks));
       this.updateStats();
-      console.log('任务删除成功:', taskId);
+
       return true;
     } catch (error) {
-      console.error('删除任务失败:', error);
+
       return false;
     }
   }
@@ -153,7 +153,7 @@ export class TaskStorage {
       this.saveStats(defaultStats);
       return defaultStats;
     } catch (error) {
-      console.error('获取存储统计失败:', error);
+
       return {
         totalTasks: 0,
         completedTasks: 0,
@@ -182,7 +182,7 @@ export class TaskStorage {
       
       this.saveStats(stats);
     } catch (error) {
-      console.error('更新统计信息失败:', error);
+
     }
   }
 
@@ -194,7 +194,7 @@ export class TaskStorage {
     try {
       localStorage.setItem(this.STATS_KEY, JSON.stringify(stats));
     } catch (error) {
-      console.error('保存统计信息失败:', error);
+
     }
   }
 
@@ -208,7 +208,7 @@ export class TaskStorage {
       const stats = localStorage.getItem(this.STATS_KEY) || '';
       return new Blob([tasks + stats]).size;
     } catch (error) {
-      console.error('计算存储大小失败:', error);
+
       return 0;
     }
   }
@@ -223,7 +223,7 @@ export class TaskStorage {
       const tasks = this.getAllTasks();
       return tasks.filter(predicate);
     } catch (error) {
-      console.error('查找任务失败:', error);
+
       return [];
     }
   }
@@ -238,7 +238,7 @@ export class TaskStorage {
       const tasks = this.getAllTasks();
       return tasks.find(task => task.id === taskId) || null;
     } catch (error) {
-      console.error('获取任务失败:', error);
+
       return null;
     }
   }
@@ -251,10 +251,10 @@ export class TaskStorage {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
       localStorage.removeItem(this.STATS_KEY);
-      console.log('所有任务已清空');
+
       return true;
     } catch (error) {
-      console.error('清空任务失败:', error);
+
       return false;
     }
   }
@@ -273,7 +273,7 @@ export class TaskStorage {
         exportedAt: new Date().toISOString()
       }, null, 2);
     } catch (error) {
-      console.error('导出任务失败:', error);
+
       return '{}';
     }
   }
@@ -289,12 +289,12 @@ export class TaskStorage {
       if (data.tasks && Array.isArray(data.tasks)) {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data.tasks));
         this.updateStats();
-        console.log('任务导入成功，共导入', data.tasks.length, '个任务');
+
         return true;
       }
       return false;
     } catch (error) {
-      console.error('导入任务失败:', error);
+
       return false;
     }
   }

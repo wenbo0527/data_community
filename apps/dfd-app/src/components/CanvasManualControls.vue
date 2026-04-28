@@ -165,26 +165,24 @@ export default {
       if (!structuredLayout || isLayouting.value) return
       
       if (!graph) {
-        console.error('[CanvasManualControls] 图实例不存在，无法应用布局')
+
         return
       }
       
       try {
         isLayouting.value = true
-        console.log('[CanvasManualControls] 🚀 手动触发布局（统一使用原生Dagre）')
-        
+
         // 统一使用统一结构化布局
         if (typeof structuredLayout.applyUnifiedStructuredLayout === 'function') {
           await structuredLayout.applyUnifiedStructuredLayout(graph)
         } else if (typeof structuredLayout.applyLayout === 'function') {
           await structuredLayout.applyLayout() // 已配置为原生Dagre布局
         } else {
-          console.error('[CanvasManualControls] 布局方法不可用')
+
         }
-        
-        console.log('[CanvasManualControls] ✅ 手动布局完成')
+
       } catch (error) {
-        console.error('[CanvasManualControls] 手动布局失败:', error)
+
       } finally {
         setTimeout(() => {
           isLayouting.value = false
@@ -197,19 +195,17 @@ export default {
       if (!graph) return
       
       try {
-        console.log('[CanvasManualControls] 📍 手动居中画布内容')
-        
+
         if (panZoomManager && typeof panZoomManager.centerContent === 'function') {
           panZoomManager.centerContent()
         } else if (typeof graph.centerContent === 'function') {
           graph.centerContent()
         } else {
-          console.error('[CanvasManualControls] 居中方法不可用')
+
         }
-        
-        console.log('[CanvasManualControls] ✅ 手动居中完成')
+
       } catch (error) {
-        console.error('[CanvasManualControls] 手动居中失败:', error)
+
       }
     }
     
@@ -218,37 +214,33 @@ export default {
       if (!graph) return
       
       try {
-        console.log('[CanvasManualControls] 🔍 手动缩放适应内容')
-        
+
         if (panZoomManager && typeof panZoomManager.fitToContent === 'function') {
           panZoomManager.fitToContent()
         } else if (typeof graph.zoomToFit === 'function') {
           graph.zoomToFit({ padding: 50 })
         } else {
-          console.error('[CanvasManualControls] 缩放方法不可用')
+
         }
-        
-        console.log('[CanvasManualControls] ✅ 手动缩放完成')
+
       } catch (error) {
-        console.error('[CanvasManualControls] 手动缩放失败:', error)
+
       }
     }
     
     // 重置视图
     const resetView = () => {
       try {
-        console.log('[CanvasManualControls] 🏠 重置视图')
-        
+
         if (graph) {
           // 重置缩放
           graph.zoom(1, { absolute: true })
           // 重置位置
           graph.translate(0, 0, { absolute: true })
         }
-        
-        console.log('[CanvasManualControls] ✅ 视图重置完成')
+
       } catch (error) {
-        console.error('[CanvasManualControls] 视图重置失败:', error)
+
       }
     }
     
@@ -277,15 +269,14 @@ export default {
       if (structuredLayout && typeof structuredLayout.setAutoLayoutEnabled === 'function') {
         structuredLayout.setAutoLayoutEnabled(newValue)
       }
-      
-      console.log(`[CanvasManualControls] 自动布局已${newValue ? '启用' : '禁用'}`)
+
       logCurrentConfig()
     }
     
     // 更新配置
     const updateConfig = (category, key, value) => {
       setAutomationConfig(category, key, value)
-      console.log(`[CanvasManualControls] 配置已更新: ${category}.${key} = ${value}`)
+
     }
     
     return {

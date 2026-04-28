@@ -73,8 +73,7 @@ export class UnifiedLayoutEngine {
     // 错误处理
     this.lastError = null;
     this.isInitialized = true;
-    
-    console.log('UnifiedLayoutEngine initialized successfully');
+
   }
   
   /**
@@ -88,7 +87,7 @@ export class UnifiedLayoutEngine {
 
     // 检查预览线锁定状态
     if (this.previewLineLock.isLocked()) {
-      console.warn('Layout execution skipped due to preview line lock');
+
       return { success: false, reason: 'locked' };
     }
 
@@ -108,7 +107,7 @@ export class UnifiedLayoutEngine {
       if (this.cache.enabled) {
         const cachedResult = this.cache.get(cacheKey);
         if (cachedResult) {
-          console.log('Using cached layout result');
+
           this.performanceMonitor.endTiming(taskId);
           // 触发布局完成事件（缓存）
           this.emit('layout:complete', { taskId, result: cachedResult, fromCache: true });
@@ -149,8 +148,7 @@ export class UnifiedLayoutEngine {
       
       // 触发布局错误事件
       this.emit('layout:error', { taskId, error });
-      
-      console.error('Layout execution failed:', error);
+
       return {
         success: false,
         error: error.message,
@@ -165,13 +163,13 @@ export class UnifiedLayoutEngine {
    */
   updateGraph(newGraph) {
     if (!newGraph) {
-      console.warn('Invalid graph provided to updateGraph');
+
       return;
     }
     
     this.graph = newGraph;
     this.cache.clear(); // 清除缓存
-    console.log('Graph updated successfully');
+
   }
   
   /**
@@ -180,7 +178,7 @@ export class UnifiedLayoutEngine {
    */
   updatePreviewManager(newPreviewManager) {
     this.previewLineManager = newPreviewManager;
-    console.log('Preview manager updated successfully');
+
   }
   
   /**
@@ -248,7 +246,7 @@ export class UnifiedLayoutEngine {
     this.debounceManager.cancel();
     this.previewLineLock.unlock('dispose');
     this.isInitialized = false;
-    console.log('UnifiedLayoutEngine disposed');
+
   }
   
   /**
@@ -261,7 +259,7 @@ export class UnifiedLayoutEngine {
     } else if (this.layoutModel && typeof this.layoutModel.on === 'function') {
       return this.layoutModel.on(event, listener);
     } else {
-      console.warn('Event system not available');
+
     }
   }
   
@@ -275,7 +273,7 @@ export class UnifiedLayoutEngine {
     } else if (this.layoutModel && typeof this.layoutModel.emit === 'function') {
       return this.layoutModel.emit(event, data);
     } else {
-      console.warn('Event system not available');
+
     }
   }
   
@@ -289,7 +287,7 @@ export class UnifiedLayoutEngine {
     } else if (this.layoutModel && typeof this.layoutModel.off === 'function') {
       return this.layoutModel.off(event, listener);
     } else {
-      console.warn('Event system not available');
+
     }
   }
 

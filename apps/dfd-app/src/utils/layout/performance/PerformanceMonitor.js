@@ -623,7 +623,7 @@ class PerformanceMonitor {
         try {
           listener(data);
         } catch (error) {
-          console.error('Error in performance monitor event listener:', error);
+
         }
       });
     }

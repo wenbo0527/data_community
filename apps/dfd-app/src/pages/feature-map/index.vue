@@ -204,13 +204,13 @@ const fetchFeatureRows = async () => {
     featureRows.value = (data && data.length) ? data : sampleRows
     featurePagination.total = res.data?.total ?? featureRows.value.length
     debugInfo.value = `加载成功：${featureRows.value.length}条`
-    console.log('[VariableMap] getFeatures response:', res)
-    console.log('[VariableMap] rows:', featureRows.value)
+
+
   } catch (e) {
     featureRows.value = sampleRows
     featurePagination.total = sampleRows.length
     debugInfo.value = '接口异常，已使用样例数据'
-    console.error('[VariableMap] 加载失败，使用样例数据：', e)
+
   } finally {
     featureLoading.value = false
   }
@@ -307,7 +307,7 @@ const initGraph = () => {
 // 获取变量选项 - 现在通过computed自动获取
 const fetchVariableOptions = async () => {
   // 变量选项已通过computed属性从store获取
-  console.log('变量选项已加载:', variableOptions.value)
+
 }
 
 // 渲染图形数据
@@ -322,7 +322,7 @@ const renderGraph = async () => {
     const graphData = variableStore.variableGraph
     
     if (!graphData || !graphData.nodes || !graphData.edges) {
-      console.warn('没有可用的图形数据')
+
       return
     }
 
@@ -453,7 +453,7 @@ const renderGraph = async () => {
     graph.value.centerContent()
 
   } catch (error) {
-    console.error('渲染图形失败:', error)
+
     Message.error('渲染图形失败')
   }
 }
@@ -595,7 +595,7 @@ const handleExecutePathAnalysis = async () => {
 
     Message.success('路径分析完成')
   } catch (error) {
-    console.error('路径分析失败:', error)
+
     Message.error('路径分析失败')
   }
 }
@@ -616,7 +616,7 @@ const fetchLineageData = async (variableId) => {
   try {
     await variableStore.fetchVariableLineage(variableId)
   } catch (error) {
-    console.error('获取血缘数据失败:', error)
+
     Message.error('获取血缘数据失败')
   }
 }

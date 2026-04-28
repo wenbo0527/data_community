@@ -37,8 +37,7 @@ export class EventManager {
     
     // 错误处理
     this.errorHandlers = [];
-    
-    console.log('🎯 [EventManager] 事件管理器初始化完成');
+
   }
 
   /**
@@ -52,7 +51,7 @@ export class EventManager {
    */
   on(event, listener, options = {}) {
     if (typeof listener !== 'function') {
-      console.warn('🎯 [EventManager] 监听器必须是函数');
+
       return;
     }
 
@@ -74,7 +73,6 @@ export class EventManager {
     // 按优先级排序（高优先级先执行）
     listeners.sort((a, b) => b.priority - a.priority);
 
-    console.log(`🎯 [EventManager] 添加监听器 [${event}]，当前数量:`, listeners.length);
     return listenerInfo.id;
   }
 
@@ -89,7 +87,7 @@ export class EventManager {
    */
   once(event, listener, options = {}) {
     if (typeof listener !== 'function') {
-      console.warn('🎯 [EventManager] 监听器必须是函数');
+
       return;
     }
 
@@ -109,7 +107,6 @@ export class EventManager {
     listeners.push(listenerInfo);
     listeners.sort((a, b) => b.priority - a.priority);
 
-    console.log(`🎯 [EventManager] 添加一次性监听器 [${event}]`);
     return listenerInfo.id;
   }
 
@@ -145,7 +142,7 @@ export class EventManager {
     const removedFromOnce = removeFromList(this.onceListeners);
 
     if (removedFromRegular || removedFromOnce) {
-      console.log(`🎯 [EventManager] 移除监听器 [${event}]`);
+
     }
   }
 
@@ -250,7 +247,7 @@ export class EventManager {
    */
   queueEvent(eventInfo) {
     if (this.eventQueue.length >= this.maxQueueSize) {
-      console.warn('🎯 [EventManager] 事件队列已满，丢弃最旧事件');
+
       this.eventQueue.shift();
     }
 
@@ -280,7 +277,7 @@ export class EventManager {
         });
       }
     } catch (error) {
-      console.error('🎯 [EventManager] 处理事件队列时出错:', error);
+
     } finally {
       this.isProcessing = false;
     }
@@ -321,14 +318,12 @@ export class EventManager {
       timestamp: Date.now()
     };
 
-    console.error(`🎯 [EventManager] 事件处理错误 [${event}]:`, error);
-
     // 调用错误处理器
     this.errorHandlers.forEach(handler => {
       try {
         handler(errorInfo);
       } catch (handlerError) {
-        console.error('🎯 [EventManager] 错误处理器本身出错:', handlerError);
+
       }
     });
   }
@@ -397,8 +392,7 @@ export class EventManager {
     this.eventQueue = [];
     this.eventStats.clear();
     this.totalEvents = 0;
-    
-    console.log('🎯 [EventManager] 已清除所有监听器和事件');
+
   }
 
   /**
@@ -409,8 +403,7 @@ export class EventManager {
     this.clear();
     this.errorHandlers = [];
     this.isProcessing = false;
-    
-    console.log('🎯 [EventManager] 事件管理器已销毁');
+
   }
 
   /**

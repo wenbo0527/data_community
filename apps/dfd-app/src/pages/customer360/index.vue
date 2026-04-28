@@ -139,9 +139,8 @@
 </template>
 
 <script setup lang="ts">
-console.log('🌟🌟🌟 INDEX.VUE SCRIPT SETUP 开始执行 🌟🌟🌟')
+
 console.log('🌟 当前时间:', new Date().toLocaleString())
-console.log('🌟 当前URL:', window.location.href)
 
 import { ref, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -153,10 +152,10 @@ const route = useRoute()
 
 // 监听路由变化
 watch(() => route.params.userId, (newUserId: string | string[] | undefined) => {
-  console.log('🌟 路由参数变化 - userId:', newUserId)
-  console.log('🌟 当前路由名称:', route.name)
-  console.log('🌟 当前路由路径:', route.path)
-  console.log('🌟 当前路由完整参数:', route.params)
+
+
+
+
 }, { immediate: true })
 
 const router = useRouter()

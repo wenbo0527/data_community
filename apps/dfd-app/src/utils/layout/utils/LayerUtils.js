@@ -27,7 +27,7 @@ class LayerUtils {
       const layer = this.calculateLayerBFS(nodeId, graph, maxDepth);
       return layer !== -1 ? layer : defaultLayer;
     } catch (error) {
-      console.warn(`LayerUtils.calculateNodeLayer error for node ${nodeId}:`, error);
+
       return defaultLayer;
     }
   }
@@ -411,7 +411,7 @@ class LayerUtils {
       const incomingEdges = graph.getIncomingEdges(nodeId);
       return incomingEdges.map(edge => this.getSourceId(edge)).filter(id => id);
     } catch (error) {
-      console.warn(`LayerUtils.getParentNodes error for node ${nodeId}:`, error);
+
       return [];
     }
   }
@@ -428,7 +428,7 @@ class LayerUtils {
       const outgoingEdges = graph.getOutgoingEdges(nodeId);
       return outgoingEdges.map(edge => this.getTargetId(edge)).filter(id => id);
     } catch (error) {
-      console.warn(`LayerUtils.getChildNodes error for node ${nodeId}:`, error);
+
       return [];
     }
   }

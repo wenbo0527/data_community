@@ -33,7 +33,7 @@ export const useFileUpload = () => {
     const file = event.file
     if (file) {
       currentFile.value = file
-      console.log(`[${type}上传] 选择的文件:`, file.name, '大小:', file.size, '类型:', file.type)
+
       const reader = new FileReader()
       reader.onload = (e) => {
         try {
@@ -44,7 +44,7 @@ export const useFileUpload = () => {
           console.log(`[${type}上传] 解析成功，共${jsonData.length}条记录`, jsonData.slice(0, 3))
           countRef.value = jsonData.length
         } catch (error) {
-          console.error('文件解析失败:', error)
+
         }
       }
       reader.readAsArrayBuffer(file)
@@ -54,19 +54,19 @@ export const useFileUpload = () => {
   const handleUpload = async (option: { fileItem: any }, apiUrl: string, countRef: any) => {
     const formData = new FormData()
     formData.append('file', option.fileItem.file as Blob)
-    console.log('开始上传文件:', option.fileItem.name)
+
     try {
       const res = await axios.post<{success: boolean, count: number}>(apiUrl, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       })
-      console.log('上传响应:', res.data)
+
       if (res.data.success) {
         countRef.value = res.data.count
       }
     } catch (error) {
-      console.error('上传失败:', error)
+
     }
     return {
       abort: () => {}

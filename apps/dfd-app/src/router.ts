@@ -1,22 +1,38 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
-
-const routerBase = qiankunWindow.__POWERED_BY_QIANKUN__ ? (qiankunWindow.ROUTER_BASE || '/dfd/') : '/dfd/'
-
-console.log('[DFD] routerBase:', routerBase)
 
 /**
  * 数据发现域路由配置
- * 
- * PRD 定义的功能：
- * 1. 数据资产运营工具（资产血缘分析、变更影响分析）
- * 2. 数据资产字典（资产目录列表、资产收藏）
- * 3. 数据要素字典（特征字典列表、变量字典列表、指标字典列表）
- * 4. 数据资源字典（资源列表）
- * 5. 统一搜索
+ *
+ * Shell 路由映射规则：
+ *   Shell url: /dfd/{feature}  → dfd-app base: /dfd/  →  dfd-app 路由: /{feature}
+ *
+ * PRD 子路径映射（Shell menus key → dfd-app URL）：
+ *   /dfd/data-map                → /data-map
+ *   /dfd/data-resources          → /discovery/data-resources (5-tab 聚合页)
+ *   /dfd/data-resources/system-data   → /discovery/data-resources?type=business
+ *   /dfd/data-resources/external-data→ /discovery/data-resources?type=external
+ *   /dfd/data-resources/file-import  → /discovery/data-resources?type=file
+ *   /dfd/data-resources/log-data    → /discovery/data-resources?type=log
+ *   /dfd/data-resources/real-time-data→ /discovery/data-resources?type=realtime
+ *   /dfd/asset-catalog           → /discovery/asset-catalog
+ *   /dfd/data-map/table-list     → /discovery/asset-catalog
+ *   /dfd/metrics-map             → /discovery/metrics-map
+ *   /dfd/variable-map            → /discovery/variable-map
+ *   /dfd/feature-map             → /discovery/feature-map
+ *   /dfd/api-market              → /discovery/api-market
+ *   /dfd/lineage                 → /discovery/lineage
+ *   /dfd/impact-analysis         → /discovery/impact-analysis
+ *   /dfd/favorites               → /discovery/favorites
+ *   /dfd/search                  → /discovery/search
+ *   /dfd/indicator-dict          → /discovery/indicator-dict
+ *   /dfd/variable-dict           → /discovery/variable-dict
+ *   /dfd/feature-dict            → /discovery/feature-dict
+ *   /dfd/indicator-dashboard     → /discovery/indicator-dashboard
+ *   /dfd/unified-metrics         → /discovery/unified-metrics
  */
 const routes: RouteRecordRaw[] = [
+  // ========== 独立页面（无嵌套布局）==========
   {
     path: '/',
     name: 'DfdIndex',
@@ -24,216 +40,341 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '数据发现域' }
   },
 
-  // ========== 批量注册 ==========
+  // ========== Discovery 嵌套路由（左侧内部菜单）==========
   {
-    path: '/batch-registration',
-    name: 'BatchRegistration',
-    component: () => import('./pages/batch-registration/index.vue'),
-    meta: { title: '批量注册指标' }
+    path: '/discovery',
+    component: () => import('./components/DiscoveryLayout.vue'),
+    children: [
+      // 默认 → 数据地图
+      { path: '', redirect: '/discovery/data-map' },
+
+      // --- 数据地图 ---
+      {
+        path: 'data-map',
+        name: 'DiscoveryDataMap',
+        component: () => import('./pages/data-map/index.vue'),
+        meta: { title: '数据地图' }
+      },
+
+      // --- 资产目录 ---
+      {
+        path: 'asset-catalog',
+        name: 'AssetCatalog',
+        component: () => import('./pages/asset-catalog/index.vue'),
+        meta: { title: '资产目录' }
+      },
+      {
+        path: 'data-map/table-list',
+        redirect: '/discovery/asset-catalog'
+      },
+
+      // --- 数据资源发现（5种子类型）---
+      // 通用聚合页：接收 ?type= 参数决定默认激活的 tab
+      {
+        path: 'data-resources',
+        name: 'DiscoveryDataResources',
+        component: () => import('./pages/data-resources/index.vue'),
+        meta: { title: '数据资源发现' }
+      },
+      // 5 个子路径别名 → 都路由到 data-resources
+      {
+        path: 'data-resources/system-data',
+        redirect: '/discovery/data-resources'
+      },
+      {
+        path: 'data-resources/external-data',
+        redirect: '/discovery/data-resources'
+      },
+      {
+        path: 'data-resources/file-import',
+        redirect: '/discovery/data-resources'
+      },
+      {
+        path: 'data-resources/log-data',
+        redirect: '/discovery/data-resources'
+      },
+      {
+        path: 'data-resources/real-time-data',
+        redirect: '/discovery/data-resources'
+      },
+
+      // --- 数据要素发现 ---
+      {
+        path: 'metrics-map',
+        name: 'MetricsMap',
+        component: () => import('./pages/metrics-map/index.vue'),
+        meta: { title: '指标地图' }
+      },
+      {
+        path: 'variable-map',
+        name: 'VariableMap',
+        component: () => import('./pages/variable-map/index.vue'),
+        meta: { title: '变量地图' }
+      },
+      {
+        path: 'feature-map',
+        name: 'FeatureMap',
+        component: () => import('./pages/feature-map/index.vue'),
+        meta: { title: '特征地图' }
+      },
+      {
+        path: 'api-market',
+        name: 'ApiMarket',
+        component: () => import('./pages/api-market/index.vue'),
+        meta: { title: '其他' }
+      },
+
+      // --- 数据资产运营工具 ---
+      {
+        path: 'lineage',
+        name: 'Lineage',
+        component: () => import('./pages/lineage/index.vue'),
+        meta: { title: '全链路血缘' }
+      },
+      {
+        path: 'impact-analysis',
+        name: 'ImpactAnalysis',
+        component: () => import('./pages/impact-analysis/index.vue'),
+        meta: { title: '变更影响分析' }
+      },
+
+      // --- 资产收藏 ---
+      {
+        path: 'favorites',
+        name: 'Favorites',
+        component: () => import('./pages/favorites/index.vue'),
+        meta: { title: '资产收藏' }
+      },
+
+      // --- 统一搜索 ---
+      {
+        path: 'search',
+        name: 'Search',
+        component: () => import('./pages/search/index.vue'),
+        meta: { title: '统一搜索' }
+      },
+
+      // --- 指标字典 ---
+      {
+        path: 'indicator-dict',
+        name: 'IndicatorDict',
+        component: () => import('./pages/indicator-dict/index.vue'),
+        meta: { title: '指标字典' }
+      },
+
+      // --- 变量字典 ---
+      {
+        path: 'variable-dict',
+        name: 'VariableDict',
+        component: () => import('./pages/variable-dict/index.vue'),
+        meta: { title: '变量字典' }
+      },
+
+      // --- 特征字典 ---
+      {
+        path: 'feature-dict',
+        name: 'FeatureDict',
+        component: () => import('./pages/feature-dict/index.vue'),
+        meta: { title: '特征字典' }
+      },
+
+      // --- 指标看板 ---
+      {
+        path: 'indicator-dashboard',
+        name: 'IndicatorDashboard',
+        component: () => import('./pages/indicator-dashboard/index.vue'),
+        meta: { title: '指标看板' }
+      },
+
+      // --- 统一指标 ---
+      {
+        path: 'unified-metrics',
+        name: 'UnifiedMetrics',
+        component: () => import('./pages/unified-metrics/index.vue'),
+        meta: { title: '统一指标' }
+      },
+
+      // --- 资产总览 ---
+      {
+        path: 'asset-overview',
+        name: 'AssetOverview',
+        component: () => import('./pages/asset-overview/index.vue'),
+        meta: { title: '资产总览' }
+      },
+
+      // --- 资产管理 ---
+      {
+        path: 'asset-management',
+        name: 'AssetManagement',
+        component: () => import('./pages/asset-management/index.vue'),
+        meta: { title: '资产管理' }
+      },
+
+      // --- 客户360 ---
+      {
+        path: 'customer360',
+        name: 'Customer360',
+        component: () => import('./pages/customer360/index.vue'),
+        meta: { title: '客户360' }
+      },
+      {
+        path: 'customer360/detail',
+        name: 'Customer360Detail',
+        component: () => import('./pages/customer360/detail.vue'),
+        meta: { title: '客户360详情' }
+      },
+
+      // --- 征信 ---
+      {
+        path: 'credit',
+        name: 'Credit',
+        component: () => import('./pages/credit/index.vue'),
+        meta: { title: '征信' }
+      },
+      {
+        path: 'credit/detail',
+        name: 'CreditDetail',
+        component: () => import('./pages/credit/detail.vue'),
+        meta: { title: '征信详情' }
+      },
+
+      // --- 外部数据 ---
+      {
+        path: 'external',
+        name: 'External',
+        component: () => import('./pages/external/index.vue'),
+        meta: { title: '外部数据' }
+      },
+      {
+        path: 'external/detail',
+        name: 'ExternalDetail',
+        component: () => import('./pages/external/detail.vue'),
+        meta: { title: '外部数据详情' }
+      },
+
+      // --- 指标地图详情 ---
+      {
+        path: 'metrics-map/detail',
+        name: 'MetricsMapDetail',
+        component: () => import('./pages/metrics-map/detail.vue'),
+        meta: { title: '指标详情' }
+      },
+
+      // --- 批量注册 ---
+      {
+        path: 'batch-registration',
+        name: 'BatchRegistration',
+        component: () => import('./pages/batch-registration/index.vue'),
+        meta: { title: '批量注册指标' }
+      },
+
+      // --- 监管配置 ---
+      {
+        path: 'regulatory-config',
+        name: 'RegulatoryConfig',
+        component: () => import('./pages/regulatory-config/index.vue'),
+        meta: { title: '监管报表配置' }
+      }
+    ]
   },
 
-  // ========== 监管配置 ==========
+  // ========== 扁平路由别名（兼容直接 URL 访问和 Shell iframe）==========
+  // 这些路径与 Shell menus 的 url 字段对应，格式：/dfd/{feature} → base 剥离后 /{feature}
   {
-    path: '/regulatory-config',
-    name: 'RegulatoryConfig',
-    component: () => import('./pages/regulatory-config/index.vue'),
-    meta: { title: '监管报表配置' }
+    path: '/data-map',
+    name: 'DataMapFlat',
+    component: () => import('./pages/data-map/index.vue'),
+    meta: { title: '数据地图' }
   },
-
-  // ========== 数据资产运营工具 ==========
-  // 资产血缘分析
-  {
-    path: '/lineage',
-    name: 'Lineage',
-    component: () => import('./pages/lineage/index.vue'),
-    meta: { title: '资产血缘分析' }
-  },
-  // 变更影响分析
-  {
-    path: '/impact-analysis',
-    name: 'ImpactAnalysis',
-    component: () => import('./pages/impact-analysis/index.vue'),
-    meta: { title: '变更影响分析' }
-  },
-  
-  // ========== 数据资产字典 ==========
-  // 资产目录列表
   {
     path: '/asset-catalog',
-    name: 'AssetCatalog',
+    name: 'AssetCatalogFlat',
     component: () => import('./pages/asset-catalog/index.vue'),
-    meta: { title: '资产目录列表' }
+    meta: { title: '资产目录' }
   },
-  // 资产收藏
-  {
-    path: '/favorites',
-    name: 'Favorites',
-    component: () => import('./pages/favorites/index.vue'),
-    meta: { title: '资产收藏' }
-  },
-  
-  // ========== 数据要素字典 ==========
-  // 特征字典列表
-  {
-    path: '/feature-dict',
-    name: 'FeatureDict',
-    component: () => import('./pages/feature-dict/index.vue'),
-    meta: { title: '特征字典列表' }
-  },
-  // 变量字典列表
-  {
-    path: '/variable-dict',
-    name: 'VariableDict',
-    component: () => import('./pages/variable-dict/index.vue'),
-    meta: { title: '变量字典列表' }
-  },
-  // 指标字典列表
-  {
-    path: '/indicator-dict',
-    name: 'IndicatorDict',
-    component: () => import('./pages/indicator-dict/index.vue'),
-    meta: { title: '指标字典列表' }
-  },
-  
-  // ========== 数据资源字典 ==========
-  // 资源列表
   {
     path: '/data-resources',
-    name: 'DataResources',
+    name: 'DataResourcesFlat',
     component: () => import('./pages/data-resources/index.vue'),
-    meta: { title: '资源列表' }
-  },
-  
-  // ========== 统一搜索 ==========
-  {
-    path: '/search',
-    name: 'Search',
-    component: () => import('./pages/search/index.vue'),
-    meta: { title: '统一搜索' }
-  },
-
-  // ========== 客户360 ==========
-  {
-    path: '/customer360',
-    name: 'Customer360',
-    component: () => import('./pages/customer360/index.vue'),
-    meta: { title: '客户360' }
+    meta: { title: '数据资源' }
   },
   {
-    path: '/customer360/detail',
-    name: 'Customer360Detail',
-    component: () => import('./pages/customer360/detail.vue'),
-    meta: { title: '客户360详情' }
-  },
-
-  // ========== 征信 ==========
-  {
-    path: '/credit',
-    name: 'Credit',
-    component: () => import('./pages/credit/index.vue'),
-    meta: { title: '征信' }
+    path: '/feature-dict',
+    name: 'FeatureDictFlat',
+    component: () => import('./pages/feature-dict/index.vue'),
+    meta: { title: '特征字典' }
   },
   {
-    path: '/credit/detail',
-    name: 'CreditDetail',
-    component: () => import('./pages/credit/detail.vue'),
-    meta: { title: '征信详情' }
-  },
-
-  // ========== 外部数据 ==========
-  {
-    path: '/external',
-    name: 'External',
-    component: () => import('./pages/external/index.vue'),
-    meta: { title: '外部数据' }
+    path: '/variable-dict',
+    name: 'VariableDictFlat',
+    component: () => import('./pages/variable-dict/index.vue'),
+    meta: { title: '变量字典' }
   },
   {
-    path: '/external/detail',
-    name: 'ExternalDetail',
-    component: () => import('./pages/external/detail.vue'),
-    meta: { title: '外部数据详情' }
+    path: '/indicator-dict',
+    name: 'IndicatorDictFlat',
+    component: () => import('./pages/indicator-dict/index.vue'),
+    meta: { title: '指标字典' }
   },
-
-  // ========== 指标地图 ==========
   {
     path: '/metrics-map',
-    name: 'MetricsMap',
+    name: 'MetricsMapFlat',
     component: () => import('./pages/metrics-map/index.vue'),
     meta: { title: '指标地图' }
   },
   {
-    path: '/metrics-map/detail',
-    name: 'MetricsMapDetail',
-    component: () => import('./pages/metrics-map/detail.vue'),
-    meta: { title: '指标详情' }
-  },
-
-  // ========== API市场 ==========
-  {
-    path: '/api-market',
-    name: 'ApiMarket',
-    component: () => import('./pages/api-market/index.vue'),
-    meta: { title: 'API市场' }
-  },
-
-  // ========== 指标看板 ==========
-  {
-    path: '/indicator-dashboard',
-    name: 'IndicatorDashboard',
-    component: () => import('./pages/indicator-dashboard/index.vue'),
-    meta: { title: '指标看板' }
-  },
-
-  // ========== 统一指标 ==========
-  {
-    path: '/unified-metrics',
-    name: 'UnifiedMetrics',
-    component: () => import('./pages/unified-metrics/index.vue'),
-    meta: { title: '统一指标' }
-  },
-
-  // ========== 其他 DFD 功能 ==========
-  // 资产总览
-  {
-    path: '/asset-overview',
-    name: 'AssetOverview',
-    component: () => import('./pages/asset-overview/index.vue'),
-    meta: { title: '资产总览' }
-  },
-  // 资产管理
-  {
-    path: '/asset-management',
-    name: 'AssetManagement',
-    component: () => import('./pages/asset-management/index.vue'),
-    meta: { title: '资产管理' }
-  },
-  // 数据地图
-  {
-    path: '/data-map',
-    name: 'DataMap',
-    component: () => import('./pages/data-map/index.vue'),
-    meta: { title: '数据地图' }
-  },
-  // 特征地图
-  {
     path: '/feature-map',
-    name: 'FeatureMap',
+    name: 'FeatureMapFlat',
     component: () => import('./pages/feature-map/index.vue'),
     meta: { title: '特征地图' }
   },
-  // 数据发现
+  {
+    path: '/api-market',
+    name: 'ApiMarketFlat',
+    component: () => import('./pages/api-market/index.vue'),
+    meta: { title: 'API市场' }
+  },
+  {
+    path: '/lineage',
+    name: 'LineageFlat',
+    component: () => import('./pages/lineage/index.vue'),
+    meta: { title: '全链路血缘' }
+  },
+  {
+    path: '/impact-analysis',
+    name: 'ImpactAnalysisFlat',
+    component: () => import('./pages/impact-analysis/index.vue'),
+    meta: { title: '变更影响分析' }
+  },
+  {
+    path: '/favorites',
+    name: 'FavoritesFlat',
+    component: () => import('./pages/favorites/index.vue'),
+    meta: { title: '资产收藏' }
+  },
+  {
+    path: '/search',
+    name: 'SearchFlat',
+    component: () => import('./pages/search/index.vue'),
+    meta: { title: '统一搜索' }
+  },
+  {
+    path: '/indicator-dashboard',
+    name: 'IndicatorDashboardFlat',
+    component: () => import('./pages/indicator-dashboard/index.vue'),
+    meta: { title: '指标看板' }
+  },
+  {
+    path: '/unified-metrics',
+    name: 'UnifiedMetricsFlat',
+    component: () => import('./pages/unified-metrics/index.vue'),
+    meta: { title: '统一指标' }
+  },
   {
     path: '/discovery',
-    name: 'Discovery',
+    name: 'DiscoveryFlat',
     component: () => import('./pages/discovery/index.vue'),
     meta: { title: '数据发现' }
-  },
-  // 资产指南
-  {
-    path: '/asset-guide',
-    name: 'AssetGuide',
-    component: () => import('./pages/asset-guide/index.vue'),
-    meta: { title: '资产指南' }
   }
 ]
 

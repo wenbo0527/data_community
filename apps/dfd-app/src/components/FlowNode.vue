@@ -111,7 +111,7 @@ const nodeData = computed(() => {
     try {
       return props.node.getData() || {}
     } catch (error) {
-      console.warn('[FlowNode] 获取节点数据失败:', error)
+
       return props.node.data || props.node.store?.data?.data || {}
     }
   }
@@ -123,25 +123,18 @@ const actualNodeType = computed(() => {
     const type = nodeData.value.nodeType || props.nodeType || 'start'
     
     // 🔧 修复：增强节点类型识别的调试日志
-    console.log('[FlowNode] 节点类型识别:', {
-      nodeDataType: nodeData.value.nodeType,
-      propsType: props.nodeType,
-      finalType: type,
-      nodeData: nodeData.value,
-      nodeId: props.node?.id,
-      hasNodeData: !!nodeData.value,
-      nodeDataKeys: Object.keys(nodeData.value || {})
+
     })
     
     // 🔧 修复：验证节点类型是否有效
     if (!type || typeof type !== 'string') {
-      console.warn('[FlowNode] 无效的节点类型，使用默认值:', type)
+
       return 'start'
     }
     
     return type
   } catch (error) {
-    console.error('[FlowNode] 获取节点类型失败:', error)
+
     return 'start'
   }
 })
@@ -176,7 +169,7 @@ const nodeColor = computed(() => {
     
     return color
   } catch (error) {
-    console.error('[FlowNode] 获取节点颜色失败:', error)
+
     return '#5F95FF' // 默认颜色
   }
 })
@@ -186,16 +179,10 @@ const nodeShape = computed(() => {
   try {
     const config = getNodeConfig(actualNodeType.value)
     const shape = config ? config.shape : 'rect'
-    
-    console.log('[FlowNode] 节点形状计算:', {
-      nodeType: actualNodeType.value,
-      shape: shape,
-      config: config
-    })
-    
+
     return shape
   } catch (error) {
-    console.error('[FlowNode] 获取节点形状失败:', error)
+
     return 'rect' // 默认形状
   }
 })
@@ -212,8 +199,7 @@ const handleClick = (event) => {
 
 // 处理删除按钮点击
 const handleDeleteClick = (event) => {
-  console.log('[FlowNode] 删除按钮被点击:', props.node?.id)
-  
+
   // 阻止事件冒泡和默认行为
   event.preventDefault()
   event.stopPropagation()
@@ -229,15 +215,14 @@ const handleDeleteClick = (event) => {
   
   // 如果是在X6环境中，通过X6的事件系统触发事件
   if (props.node && props.graph) {
-    console.log('[FlowNode] 通过X6事件系统触发删除事件')
+
     props.graph.trigger('vue:delete', { node: props.node })
   }
 }
 
 // 处理预占位点击
 const handleSlotClick = (slot) => {
-  console.log('[FlowNode] 预设位被点击:', slot, props.node?.id)
-  
+
   const slotData = {
     slot,
     nodeType: actualNodeType.value,
@@ -250,7 +235,7 @@ const handleSlotClick = (slot) => {
   
   // 如果是在X6环境中，通过X6的事件系统触发事件
   if (props.node && props.graph) {
-    console.log('[FlowNode] 通过X6事件系统触发预设位点击事件')
+
     props.graph.trigger('vue:slot-click', { node: props.node, data: slotData })
   }
 }

@@ -83,13 +83,12 @@ const getNodeColor = (nodeType) => {
 // 检查节点类型是否允许
 const isNodeTypeAllowed = (nodeType) => {
   if (!props.presetSlot || !props.presetSlot.allowedTypes || props.presetSlot.allowedTypes.length === 0) {
-    console.log('预设位没有限制，允许所有节点类型')
+
     return true
   }
   
   const allowed = props.presetSlot.allowedTypes.includes(nodeType)
-  console.log(`节点类型 ${nodeType} 是否允许:`, allowed, '允许的类型:', props.presetSlot.allowedTypes)
-  
+
   return allowed
 }
 

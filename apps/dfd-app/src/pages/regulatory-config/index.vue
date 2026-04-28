@@ -275,7 +275,7 @@ const toggleStatus = async (record: any) => {
     record.status = newStatus
     Message.success(`${newStatus === 'active' ? '启用' : '禁用'}成功`)
   } catch (error) {
-    console.error('切换状态失败:', error)
+
     Message.error('操作失败')
   }
 }
@@ -291,7 +291,7 @@ const deleteConfig = async (id: string) => {
     }
     Message.success('删除成功')
   } catch (error) {
-    console.error('删除失败:', error)
+
     Message.error('删除失败')
   }
 }
@@ -324,7 +324,7 @@ const handleSubmit = async () => {
     modalVisible.value = false
     resetForm()
   } catch (error) {
-    console.error('表单验证失败:', error)
+
   }
 }
 
@@ -394,7 +394,7 @@ const loadConfigList = async () => {
     configList.value = mockData
     pagination.total = mockData.length
   } catch (error) {
-    console.error('加载配置列表失败:', error)
+
     Message.error('加载数据失败')
   } finally {
     loading.value = false

@@ -76,8 +76,8 @@ const showBatchModal = () => {
 
 
 const confirmBatchUpload = () => {
-  console.log('确认批量上传', batchFileCount.value, '条记录')
-  console.log('触发批量上传API请求')
+
+
   batchFileCount.value = 0
   batchModalVisible.value = false
 }

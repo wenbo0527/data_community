@@ -309,7 +309,7 @@ export default {
         emit('ok', props.formData)
         return true
       } catch (error) {
-        console.error('Modal ok validation failed:', error)
+
         return false
       }
     }

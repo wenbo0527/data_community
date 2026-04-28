@@ -311,7 +311,7 @@ const initChart = async () => {
   
   chartInstance.setOption(option)
   } catch (error) {
-    console.error('图表初始化失败:', error)
+
   }
 }
 

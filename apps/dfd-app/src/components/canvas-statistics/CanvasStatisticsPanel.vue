@@ -165,7 +165,7 @@ const handleNodeSelect = (nodeIds: string[]) => {
 // 处理路径高亮
 const handlePathHighlight = (pathData: any) => {
   // 处理用户路径高亮逻辑
-  console.log('Path highlight:', pathData)
+
 }
 
 // 加载统计数据
@@ -173,10 +173,10 @@ const loadStatisticsData = async () => {
   loading.value = true
   try {
     // 这里调用API获取统计数据
-    console.log('Loading statistics data with filters:', filters.value)
+
     // TODO: 实现API调用
   } catch (error) {
-    console.error('Failed to load statistics data:', error)
+
   } finally {
     loading.value = false
   }

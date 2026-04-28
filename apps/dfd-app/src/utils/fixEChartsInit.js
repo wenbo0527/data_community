@@ -95,7 +95,7 @@ function generateFixReport() {
 
 // 生成并输出报告
 const report = generateFixReport()
-console.log('🔧 ECharts修复报告:')
+
 console.log(JSON.stringify(report, null, 2))
 
 export { generateFixSuggestions, generateFixReport }

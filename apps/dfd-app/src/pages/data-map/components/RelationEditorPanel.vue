@@ -233,50 +233,48 @@ const deleteRelation = (index: number) => {
 // 获取源字段选项
 const getSourceFieldOptions = () => {
   // 获取当前表的字段作为源字段选项
-  console.log('getSourceFieldOptions called, props:', { fieldName: props.fieldName, currentTableName: props.currentTableName });
-  console.log('getSourceFieldOptions, mockTables:', mockTables);
-  
+
+
   // 使用传递的当前表名来查找当前表
   let currentTable = null;
   if (props.currentTableName) {
     currentTable = mockTables.find((table: TableItem) => table.name === props.currentTableName);
-    console.log('getSourceFieldOptions, found currentTable by name:', currentTable);
+
   }
   
   // 如果没有传递当前表名或未找到，则使用旧的逻辑
   if (!currentTable) {
     currentTable = mockTables.find((table: TableItem) => table.fields);
-    console.log('getSourceFieldOptions, fallback to first table with fields:', currentTable);
+
   }
-  
-  console.log('getSourceFieldOptions, currentTable:', currentTable);
+
   if (currentTable && currentTable.fields) {
     const options = currentTable.fields.map((field: { name: string }) => ({
       label: field.name,
       value: field.name
     }));
-    console.log('getSourceFieldOptions, options:', options);
+
     return options;
   }
-  console.log('getSourceFieldOptions, returning empty array');
+
   return [];
 };
 
 // 获取目标字段选项
 const getTargetFieldOptions = (targetTableName: string) => {
   // 根据目标表名获取目标表的字段作为选项
-  console.log('getTargetFieldOptions called, targetTableName:', targetTableName);
+
   const targetTable = mockTables.find((table: TableItem) => table.name === targetTableName);
-  console.log('getTargetFieldOptions, targetTable:', targetTable);
+
   if (targetTable && targetTable.fields) {
     const options = targetTable.fields.map((field: { name: string }) => ({
       label: field.name,
       value: field.name
     }));
-    console.log('getTargetFieldOptions, options:', options);
+
     return options;
   }
-  console.log('getTargetFieldOptions, returning empty array');
+
   return [];
 };
 </script>

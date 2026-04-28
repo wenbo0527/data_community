@@ -427,7 +427,7 @@ const loadQueryDetail = async () => {
       executionTime: '2.3'
     }
   } catch (error) {
-    console.error('加载查询详情失败:', error)
+
     Message.error('加载查询详情失败')
   }
 }
@@ -463,7 +463,7 @@ const loadResultData = async () => {
       tableColumns.value = []
     }
   } catch (error) {
-    console.error('加载结果数据失败:', error)
+
     Message.error('加载结果数据失败')
   } finally {
     resultLoading.value = false

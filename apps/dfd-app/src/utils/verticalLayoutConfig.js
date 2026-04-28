@@ -162,20 +162,7 @@ export function calculateBranchPreviewPosition(sourceNode, branches, branchIndex
   const branchOffset = (branchIndex - (branchCount - 1) / 2) * adaptiveSpacing
   const endX = startX + branchOffset
   const endY = startY + previewLength
-  
-  console.log('📏 [VerticalLayout] 计算分支预览线位置:', {
-    nodeId: sourceNode.id,
-    nodeType,
-    branchIndex,
-    branchCount,
-    adaptiveSpacing,
-    previewLength,
-    start: { x: startX, y: startY, port: 'out' }, // 统一使用out端口
-    end: { x: endX, y: endY },
-    branchOffset,
-    branchLabel: branches[branchIndex]?.label
-  })
-  
+
   return {
     start: { 
       x: startX, 
@@ -224,13 +211,7 @@ export function calculateSinglePreviewPosition(sourceNode) {
   // 垂直向下延伸
   const endX = startX
   const endY = startY + config.SPACING.PREVIEW_LENGTH
-  
-  console.log('📏 [VerticalLayout] 计算单一预览线位置:', {
-    nodeId: sourceNode.id,
-    start: { x: startX, y: startY, port: 'out' }, // 统一使用out端口
-    end: { x: endX, y: endY }
-  })
-  
+
   return {
     start: { 
       x: startX, 
@@ -293,7 +274,7 @@ export function getBestSnapPosition(dragNode, snapTargets) {
       y: dragNode.y
     }
   } else {
-    console.error('❌ [getBestSnapPosition] 无效的dragNode参数:', dragNode)
+
     return null
   }
   

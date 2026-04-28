@@ -248,7 +248,7 @@ const loadProcesses = async () => {
     await new Promise(resolve => setTimeout(resolve, 500))
     processes.value = mockProcesses
   } catch (error) {
-    console.error('加载流程列表失败:', error)
+
     Message.error('加载失败，请重试')
   } finally {
     loading.value = false
@@ -279,7 +279,7 @@ const handleDuplicateProcess = (process: any) => {
     processes.value.push(duplicatedProcess)
     Message.success('流程复制成功')
   } catch (error) {
-    console.error('复制流程失败:', error)
+
     Message.error('复制失败，请重试')
   }
 }

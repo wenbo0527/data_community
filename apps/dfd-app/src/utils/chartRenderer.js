@@ -28,7 +28,7 @@ class ChartRenderer {
    */
   renderPieChart(container, data, options = {}) {
     if (!container) {
-      console.error('Chart container not found')
+
       return null
     }
 
@@ -59,7 +59,7 @@ class ChartRenderer {
    */
   renderBarChart(container, data, options = {}) {
     if (!container) {
-      console.error('Chart container not found')
+
       return null
     }
 
@@ -97,7 +97,7 @@ class ChartRenderer {
    */
   renderLineChart(container, data, options = {}) {
     if (!container) {
-      console.error('Chart container not found')
+
       return null
     }
 
@@ -136,7 +136,7 @@ class ChartRenderer {
    */
   renderDoughnutChart(container, data, options = {}) {
     if (!container) {
-      console.error('Chart container not found')
+
       return null
     }
 
@@ -187,7 +187,7 @@ class ChartRenderer {
         data: config.data,
         options: config.options,
         update: () => {
-          console.log('Chart updated')
+
         },
         destroy: () => {
           if (canvas && canvas.parentNode) {
@@ -196,7 +196,7 @@ class ChartRenderer {
           this.charts.delete(container)
         },
         resize: () => {
-          console.log('Chart resized')
+
         }
       }
 
@@ -208,7 +208,7 @@ class ChartRenderer {
 
       return chart
     } catch (error) {
-      console.error('Failed to create chart:', error)
+
       return null
     }
   }

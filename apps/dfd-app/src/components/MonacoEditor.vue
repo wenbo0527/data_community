@@ -137,7 +137,7 @@ const initEditor = async () => {
     }
 
   } catch (error) {
-    console.error('Monaco编辑器初始化失败:', error)
+
   }
 }
 

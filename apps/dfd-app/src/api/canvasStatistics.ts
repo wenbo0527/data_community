@@ -59,7 +59,7 @@ export async function getCanvasOverviewStats(
       lastUpdated: new Date().toISOString()
     }
   } catch (error) {
-    console.error('获取画布统计概览失败:', error)
+
     throw error
   }
 }
@@ -147,7 +147,7 @@ export async function getNodeStatistics(
       summary
     }
   } catch (error) {
-    console.error('获取节点统计详情失败:', error)
+
     throw error
   }
 }
@@ -230,7 +230,7 @@ export async function getUserPathData(
       conversionPath: sessionData.conversions_count > 0
     }
   } catch (error) {
-    console.error('获取用户路径数据失败:', error)
+
     throw error
   }
 }
@@ -291,7 +291,7 @@ export async function exportStatisticsData(
       size: blob.size
     }
   } catch (error) {
-    console.error('导出统计数据失败:', error)
+
     throw error
   }
 }

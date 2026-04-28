@@ -405,7 +405,7 @@ const captureScreenshot = async () => {
     showNotification('截图生成成功！', 'success')
     
   } catch (error) {
-    console.error('截图生成失败:', error)
+
     showNotification('截图生成失败，请重试', 'error')
   }
 }

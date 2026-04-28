@@ -68,7 +68,7 @@ class DataPreprocessor {
         ...result
       };
     } catch (error) {
-      console.error('[数据预处理] 预处理失败:', error);
+
       return {
         success: false,
         error: error.message,
@@ -89,7 +89,6 @@ class DataPreprocessor {
    * @returns {number} returns.totalEdges - 边总数
    */
   async preprocessLayoutData() {
-    console.log("[数据预处理] 开始提取布局数据");
 
     const nodes = this.graph.getNodes();
     const edges = this.graph.getEdges();
@@ -99,12 +98,6 @@ class DataPreprocessor {
 
     // 过滤有效边（排除预览线）
     const validEdges = this.filterValidEdges(edges);
-
-    console.log('[数据预处理] 数据统计:', {
-      '有效节点': validNodes.length,
-      '有效连线': validEdges.length,
-      '总处理节点': validNodes.length,
-    });
 
     return {
       validNodes,
@@ -187,7 +180,7 @@ class DataPreprocessor {
         }
       }
     } catch (error) {
-      console.warn(`[节点类型] 获取节点 ${nodeId} 类型失败:`, error.message);
+
     }
     
     // 从节点ID推断类型
@@ -241,7 +234,7 @@ class DataPreprocessor {
       }
       
     } catch (error) {
-      console.warn(`[数据预处理] 获取节点 ${nodeId} 父节点失败:`, error.message);
+
     }
     
     return parentNodes;
@@ -271,7 +264,7 @@ class DataPreprocessor {
       }
       
     } catch (error) {
-      console.warn(`[数据预处理] 获取节点 ${nodeId} 子节点失败:`, error.message);
+
     }
     
     return childNodes;

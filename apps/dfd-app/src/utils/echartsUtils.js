@@ -75,22 +75,21 @@ export async function safeInitECharts(container, options = {}, maxRetries = 15, 
           
           // 设置默认的Arco Design样式
           setArcoChartDefaults(chart)
-          
-          console.log(`✅ ECharts初始化成功，容器尺寸: ${rect.width}x${rect.height}，主题: ${theme}`)
+
           resolve(chart)
         } catch (error) {
-          console.error('❌ ECharts初始化失败:', error)
+
           reject(error)
         }
       } else {
         retryCount++
         if (retryCount <= maxRetries) {
           const reason = !hasValidSize ? `尺寸为0 (${rect.width}x${rect.height})` : '容器不可见'
-          console.warn(`⚠️ ECharts容器${reason}，第${retryCount}次重试`)
+
           setTimeout(tryInit, retryDelay)
         } else {
           const errorMsg = `ECharts初始化失败：容器问题，已重试${maxRetries}次`
-          console.error(`❌ ${errorMsg}`)
+
           reject(new Error(errorMsg))
         }
       }
@@ -191,9 +190,9 @@ export async function batchInitECharts(configs) {
     try {
       const chart = await safeInitECharts(config.container, config.options)
       results[config.name] = chart
-      console.log(`${config.name} 图表初始化成功`)
+
     } catch (error) {
-      console.error(`${config.name} 图表初始化失败:`, error)
+
       results[config.name] = null
     }
   })
@@ -211,9 +210,9 @@ export function safeDisposeChart(chart, name = '图表') {
   if (chart && !chart.isDisposed()) {
     try {
       chart.dispose()
-      console.log(`${name} 实例已销毁`)
+
     } catch (error) {
-      console.error(`${name} 销毁失败:`, error)
+
     }
   }
 }
@@ -227,7 +226,7 @@ export function safeDisposeChart(chart, name = '图表') {
  */
 export function createChartResizeObserver(container, chart, callback) {
   if (!window.ResizeObserver) {
-    console.warn('浏览器不支持ResizeObserver，使用window.resize事件')
+
     const handleResize = () => {
       if (chart && !chart.isDisposed()) {
         chart.resize()
@@ -306,7 +305,7 @@ export function useECharts(options = {}) {
       
     } catch (err) {
       error.value = err.message
-      console.error('❌ 图表初始化失败:', err)
+
     } finally {
       loading.value = false
     }

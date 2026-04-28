@@ -205,7 +205,7 @@ const downloadTemplate = () => {
       Message.success('模板下载成功')
     })
   } catch (error) {
-    console.error('下载模板失败:', error)
+
     Message.error('模板下载失败')
   }
 }
@@ -275,7 +275,7 @@ const parseFile = async () => {
     
     Message.success(`文件解析完成，共解析 ${parsedData.length} 条数据`)
   } catch (error) {
-    console.error('文件解析失败:', error)
+
     Message.error('文件解析失败：' + (error as Error).message)
   } finally {
     parsing.value = false
@@ -352,7 +352,7 @@ const exportErrors = async () => {
     exportErrorData(errorData, currentMetricType.value)
     Message.success('错误数据导出成功')
   } catch (error) {
-    console.error('导出错误数据失败:', error)
+
     Message.error('导出错误数据失败')
   }
 }

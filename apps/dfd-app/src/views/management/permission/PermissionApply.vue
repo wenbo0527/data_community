@@ -157,7 +157,7 @@ export default {
         
       } catch (error) {
         Message.error('提交申请失败');
-        console.error('提交申请失败:', error);
+
       } finally {
         submitting.value = false;
       }
@@ -171,7 +171,7 @@ export default {
 
     // 处理保存草稿
     const handleSaveDraft = (draftData) => {
-      console.log('保存草稿', draftData);
+
       // 实际逻辑中调用API保存草稿
     };
 

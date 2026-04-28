@@ -60,7 +60,7 @@ export const getDownstreamNodePosition = (node, graph, dx = 250, dy = 100) => {
  */
 export const createNode = (type, graph, position = { x: 100, y: 100 }, data = {}) => {
   if (!graph || !type) {
-    console.warn('Invalid graph instance or node type');
+
     return null;
   }
 
@@ -101,11 +101,10 @@ export const createNode = (type, graph, position = { x: 100, y: 100 }, data = {}
 
     // 添加节点到画布
     const node = graph.addNode(nodeConfig);
-    
-    console.log(`Created node: ${nodeId} of type: ${type}`);
+
     return node;
   } catch (error) {
-    console.error('Error creating node:', error);
+
     return null;
   }
 };
@@ -119,7 +118,7 @@ export const createNode = (type, graph, position = { x: 100, y: 100 }, data = {}
  */
 export const createEdge = (source, target, graph) => {
   if (!graph || !source || !target) {
-    console.warn('Graph, source and target are required to create edge');
+
     return null;
   }
 
@@ -200,7 +199,7 @@ export const createEdge = (source, target, graph) => {
  */
 export const createNodes = (nodeConfigs, graph) => {
   if (!Array.isArray(nodeConfigs) || !graph) {
-    console.warn('Node configs array and graph are required');
+
     return [];
   }
 
@@ -217,7 +216,7 @@ export const createNodes = (nodeConfigs, graph) => {
  */
 export const createEdges = (edgeConfigs, graph) => {
   if (!Array.isArray(edgeConfigs) || !graph) {
-    console.warn('Edge configs array and graph are required');
+
     return [];
   }
 
@@ -235,7 +234,7 @@ export const createEdges = (edgeConfigs, graph) => {
  */
 export const createDownstreamNode = (sourceNode, nodeType, graph) => {
   if (!sourceNode || !nodeType || !graph) {
-    console.warn('Invalid parameters for creating downstream node');
+
     return { node: null, edge: null };
   }
 
@@ -246,14 +245,14 @@ export const createDownstreamNode = (sourceNode, nodeType, graph) => {
     // 创建新节点
     const newNode = createNode(nodeType, graph, position);
     if (!newNode) {
-      console.warn('Failed to create new node');
+
       return { node: null, edge: null };
     }
 
     // 创建连接边
     const edge = createEdge(sourceNode.id, newNode.id, graph);
     if (!edge) {
-      console.warn('Failed to create edge');
+
       // 如果边创建失败，删除已创建的节点
       graph.removeNode(newNode.id);
       return { node: null, edge: null };
@@ -261,7 +260,7 @@ export const createDownstreamNode = (sourceNode, nodeType, graph) => {
 
     return { node: newNode, edge };
   } catch (error) {
-    console.error('Error creating downstream node:', error);
+
     return { node: null, edge: null };
   }
 };

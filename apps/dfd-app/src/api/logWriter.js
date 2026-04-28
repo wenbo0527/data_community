@@ -34,7 +34,7 @@ class LogWriter {
       await fs.promises.writeFile(fullPath, content, 'utf8');
       return { success: true, path: fullPath };
     } catch (error) {
-      console.error('Failed to write log file:', error);
+
       throw error;
     }
   }
@@ -50,7 +50,7 @@ class LogWriter {
       await fs.promises.appendFile(fullPath, content, 'utf8');
       return { success: true, path: fullPath };
     } catch (error) {
-      console.error('Failed to append log file:', error);
+
       throw error;
     }
   }
@@ -73,7 +73,7 @@ class LogWriter {
       await fs.promises.writeFile(fullPath, clearContent, 'utf8');
       return { success: true, path: fullPath };
     } catch (error) {
-      console.error('Failed to clear log file:', error);
+
       throw error;
     }
   }

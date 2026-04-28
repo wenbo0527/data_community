@@ -778,8 +778,7 @@ export const inventoryAPI = {
     await delay(1000)
     
     // 模拟撤回操作
-    console.log('撤回券ID:', couponIds)
-    
+
     return {
       code: 200,
       message: '撤回成功',
@@ -797,12 +796,7 @@ export const inventoryAPI = {
     // 获取当前库存数据
     const inventoryResponse = await this.getInventoryList({ approvalStatus: 'pending' })
     const pendingItems = inventoryResponse.data.list
-    
-    console.log('批量审批券库存:', {
-      pendingCount: pendingItems.length,
-      params
-    })
-    
+
     // 模拟批量审批操作
     const results = pendingItems.map(item => ({
       id: item.id,
@@ -847,8 +841,7 @@ export const inventoryAPI = {
   // 批量创建券库存
   async batchCreateInventory(data) {
     await delay(2000)
-    console.log('批量创建券库存请求:', data)
-    
+
     // 模拟批量创建结果
     const results = data.templateIds.map((templateId, index) => ({
       templateId,
@@ -1229,8 +1222,7 @@ export const approvalAPI = {
   // 处理审批
   async processApproval(params) {
     await delay(1000)
-    console.log('处理审批请求:', params)
-    
+
     return {
       code: 200,
       data: {
@@ -1245,8 +1237,7 @@ export const approvalAPI = {
   // 批量处理审批
   async batchProcessApproval(params) {
     await delay(1500)
-    console.log('批量处理审批请求:', params)
-    
+
     const results = params.ids.map(id => ({
       id,
       status: params.action,
@@ -1335,8 +1326,7 @@ export const userAPI = {
 
 // 统一错误处理
 export const handleAPIError = (error) => {
-  console.error('API Error:', error)
-  
+
   if (error.response) {
     // 服务器响应错误
     const { status, data } = error.response

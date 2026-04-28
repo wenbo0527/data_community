@@ -237,7 +237,7 @@ const isEmpty = computed(() => {
 // 安全的产品数据
 const safeProducts = computed(() => {
   if (!props.productData || typeof props.productData !== 'object') {
-    console.warn('[ProductModules] productData 不是有效对象:', props.productData)
+
     return []
   }
   // 返回products数组，这是ProductBasicInfo组件期望的格式
@@ -252,7 +252,7 @@ const saveTabState = () => {
     tabStates.value[props.productType] = currentActiveKey.value
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tabStates.value))
   } catch (error) {
-    console.warn('[ProductModules] 保存Tab状态失败:', error)
+
   }
 }
 
@@ -273,7 +273,7 @@ const loadTabState = () => {
       }
     }
   } catch (error) {
-    console.warn('[ProductModules] 加载Tab状态失败:', error)
+
   }
 }
 
@@ -309,19 +309,16 @@ const loadModule = async (moduleKey) => {
     
     loadedModules.value.push(moduleKey)
     emit('module-loaded', moduleKey)
-    
-    console.log(`[ProductModules] 模块 ${moduleKey} 加载完成`)
+
   } catch (error) {
-    console.error(`[ProductModules] 模块 ${moduleKey} 加载失败:`, error)
+
   }
 }
 
 // Tab切换处理
 const handleTabChange = async (activeKey) => {
   if (props.loading || activeKey === currentActiveKey.value) return
-  
-  console.log('[ProductModules] Tab切换:', activeKey)
-  
+
   // 懒加载模块
   if (props.lazyLoad && !loadedModules.value.includes(activeKey)) {
     await loadModule(activeKey)
@@ -354,8 +351,7 @@ const handleDebugInfo = (info) => {
 watch(
   () => props.productType,
   (newType, oldType) => {
-    console.log('[ProductModules] 产品类型变化:', { from: oldType, to: newType })
-    
+
     // 保存当前状态
     if (oldType && props.rememberState) {
       tabStates.value[oldType] = currentActiveKey.value
@@ -381,10 +377,7 @@ watch(
 watch(
   () => props.productData,
   (newData, oldData) => {
-    console.log('[ProductModules] 产品数据变化:', {
-      newCount: newData?.products?.length || 0,
-      oldCount: oldData?.products?.length || 0
-    })
+
     emit('debug-info', {
       component: 'ProductModules',
       action: 'product-data-change',
@@ -402,10 +395,7 @@ watch(
 watch(
   () => props.userInfo,
   (newInfo, oldInfo) => {
-    console.log('[ProductModules] 用户信息变化:', {
-      newUserId: newInfo?.userId,
-      oldUserId: oldInfo?.userId
-    })
+
     emit('debug-info', {
       component: 'ProductModules',
       action: 'user-info-change',

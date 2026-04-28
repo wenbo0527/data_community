@@ -246,9 +246,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 // 调试props数据传递
-console.log('🔍 [Props调试] userInfo:', props.userInfo)
-console.log('🔍 [Props调试] productKey:', props.productKey)
-console.log('🔍 [Props调试] quotaAdjustHistory:', props.userInfo?.quotaAdjustHistory)
+
+
 
 // 分页状态（保留分页功能）
 
@@ -407,24 +406,24 @@ const loansList = computed(() => {
 })
 const adjustmentsList = computed(() => {
   const data = props.userInfo?.quotaAdjustHistory
-  console.log('🔍 [调额记录调试] 原始数据:', data)
+
   console.log('🔍 [调额记录调试] 数据类型:', typeof data, '是否为数组:', Array.isArray(data))
   
   if (!Array.isArray(data)) {
-    console.log('❌ [调额记录调试] 数据不是数组，返回空数组')
+
     return []
   }
   
   // 如果没有productKey，返回所有数据
   if (!props.productKey) {
-    console.log('🔍 [调额记录调试] 无productKey过滤，返回所有数据，数量:', data.length)
+
     return data
   }
   
   // 根据productKey过滤数据
   const filtered = data.filter((item: any) => item.productKey === props.productKey)
-  console.log('🔍 [调额记录调试] productKey过滤:', props.productKey, '过滤后数量:', filtered.length)
-  console.log('🔍 [调额记录调试] 过滤后数据:', filtered)
+
+
   return filtered
 })
 

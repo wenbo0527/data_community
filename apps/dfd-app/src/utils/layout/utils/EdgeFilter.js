@@ -59,7 +59,7 @@ class EdgeFilter {
    */
   filter(edges, nodes = null) {
     if (!Array.isArray(edges)) {
-      console.warn('EdgeFilter.filter: edges must be an array');
+
       return [];
     }
     
@@ -120,7 +120,7 @@ class EdgeFilter {
       
       return true;
     } catch (error) {
-      console.warn('EdgeFilter.shouldIncludeEdge error:', error);
+
       return false;
     }
   }
@@ -261,7 +261,7 @@ class EdgeFilter {
             return false;
           }
         } catch (error) {
-          console.warn('Custom edge filter error:', error);
+
           return false;
         }
       }

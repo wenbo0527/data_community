@@ -200,7 +200,7 @@ class DragSnapLogger {
    */
   setDebugMode(enabled) {
     this.isDebugMode = enabled
-    console.log(`🔧 [拖拽日志] 调试模式${enabled ? '已启用' : '已禁用'}`)
+
   }
 
   /**

@@ -881,7 +881,7 @@ watch([filterMethod, filterResult, filterScore, filterAmount, filterDate], () =>
 
 // 查看详情
 const viewDetails = (record) => {
-  console.log('查看催收记录详情:', record)
+
   // 这里可以打开详情弹窗或跳转到详情页
   Message.info('查看催收记录详情功能')
 }
@@ -921,7 +921,7 @@ const copyRecord = async (record) => {
       Message.success('催收记录已复制到剪贴板')
     }
   } catch (error) {
-    console.error('复制失败:', error)
+
     Message.error(`复制失败: ${error.message || '请手动复制'}`)
   }
 }
@@ -1022,7 +1022,7 @@ const copyAllRecords = async () => {
       })
     }
   } catch (error) {
-    console.error('批量复制失败:', error)
+
     Message.error({
       content: `批量复制失败: ${error.message || '请重试'}`,
       duration: 5000
@@ -1163,7 +1163,7 @@ const batchCopyTimelineItems = () => {
       Message.success(`已复制 ${selectedRecords.length} 条记录到剪贴板`)
     })
   } catch (error) {
-    console.error('批量复制失败:', error)
+
     Message.error('批量复制失败，请重试')
   }
 }

@@ -42,7 +42,7 @@ class MockPreviewLineManager {
   }
   
   processPendingCalculations() {
-    console.log('Mock: Processing pending calculations');
+
   }
 }
 
@@ -60,8 +60,7 @@ class APICompatibilityTest {
    * 运行所有兼容性测试
    */
   async runAllTests() {
-    console.log('\n=== API兼容性测试开始 ===\n');
-    
+
     // 测试构造函数兼容性
     await this.testConstructorCompatibility();
     
@@ -84,8 +83,7 @@ class APICompatibilityTest {
    * 测试构造函数兼容性
    */
   async testConstructorCompatibility() {
-    console.log('🔍 测试构造函数兼容性...');
-    
+
     try {
       // 测试基本构造
       const originalEngine = new UnifiedStructuredLayoutEngine(this.mockGraph);
@@ -128,8 +126,7 @@ class APICompatibilityTest {
    * 测试核心方法兼容性
    */
   async testCoreMethodsCompatibility() {
-    console.log('🔍 测试核心方法兼容性...');
-    
+
     try {
       const originalEngine = new UnifiedStructuredLayoutEngine(this.mockGraph);
       const newEngine = new UnifiedLayoutEngine(this.mockGraph);
@@ -211,8 +208,7 @@ class APICompatibilityTest {
    * 测试配置选项兼容性
    */
   async testOptionsCompatibility() {
-    console.log('🔍 测试配置选项兼容性...');
-    
+
     try {
       const testOptions = {
         layer: {
@@ -258,8 +254,7 @@ class APICompatibilityTest {
    * 测试返回值兼容性
    */
   async testReturnValueCompatibility() {
-    console.log('🔍 测试返回值兼容性...');
-    
+
     try {
       const originalEngine = new UnifiedStructuredLayoutEngine(this.mockGraph);
       const newEngine = new UnifiedLayoutEngine(this.mockGraph);
@@ -306,7 +301,7 @@ class APICompatibilityTest {
     
     const status = passed ? '✅' : '❌';
     const errorMsg = error ? ` (${error})` : '';
-    console.log(`${status} ${testName}${errorMsg}`);
+
   }
   
   /**
@@ -317,25 +312,22 @@ class APICompatibilityTest {
     const passedTests = this.testResults.filter(result => result.passed).length;
     const failedTests = totalTests - passedTests;
     const passRate = ((passedTests / totalTests) * 100).toFixed(1);
-    
-    console.log('\n=== API兼容性测试结果汇总 ===');
-    console.log(`总测试数: ${totalTests}`);
-    console.log(`通过数: ${passedTests}`);
-    console.log(`失败数: ${failedTests}`);
-    console.log(`兼容率: ${passRate}%`);
-    
+
+
+
+
+
     if (failedTests > 0) {
-      console.log('\n❌ 失败的测试:');
+
       this.testResults
         .filter(result => !result.passed)
         .forEach(result => {
-          console.log(`  - ${result.name}: ${result.error}`);
+
         });
     } else {
-      console.log('\n🎉 所有API兼容性测试通过！');
+
     }
-    
-    console.log('\n详细测试结果:');
+
     console.log(JSON.stringify(this.testResults, null, 2));
   }
 }

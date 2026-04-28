@@ -10,7 +10,7 @@
  */
 export function getNodeType(node) {
   if (!node) {
-    console.warn('[NodeTypeHelper] 节点对象为空')
+
     return null
   }
   
@@ -68,8 +68,7 @@ export function getNodeType(node) {
     })
     return null
   }
-  
-  console.log('[NodeTypeHelper] 成功获取节点类型:', nodeType)
+
   return nodeType
 }
 
@@ -106,14 +105,14 @@ export function getSafeNodeLabel(node, getNodeLabel) {
   }
   
   if (!isValidNodeType(nodeType)) {
-    console.warn('[NodeTypeHelper] 无效的节点类型:', nodeType)
+
     return nodeType // 返回原始类型作为标签
   }
   
   try {
     return getNodeLabel(nodeType) || nodeType
   } catch (error) {
-    console.error('[NodeTypeHelper] 获取节点标签失败:', error)
+
     return nodeType
   }
 }

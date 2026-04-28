@@ -1089,7 +1089,7 @@ const confirmBatch = async () => {
 
         emit('submit', submitData);
       } catch (error) {
-        console.error('表单验证失败:', error);
+
       }
     };
 
@@ -1138,7 +1138,7 @@ const confirmBatch = async () => {
           formData.reason = draft.reason || '';
           return draft;
         } catch (error) {
-          console.error('加载草稿失败:', error);
+
         }
       }
       return null;

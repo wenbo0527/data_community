@@ -101,8 +101,6 @@ const emit = defineEmits(['next', 'prev'])
 
 const selectedCreditProducts = ref<string[]>([])
 
-console.log('初始化selectedCreditProducts:', selectedCreditProducts.value)
-
 // 模拟信贷产品数据
 const creditProductOptions = [
   { 
@@ -132,12 +130,12 @@ const creditProductOptions = [
 
 const getSelectedScenes = (dataProduct: { scenes?: any[] }): any[] => {
   const scenes = dataProduct.scenes || []
-  console.log('获取选中场景数据:', scenes)
+
   return scenes
 }
 
 const getCreditProductData = (dataProduct: any, scene: { sceneValue: string; sceneName: string; amount: number; ratio: number; creditProducts?: any[] }) => {
-  console.log('获取信贷产品数据，场景信息:', scene)
+
   const creditProducts = selectedCreditProducts.value.map(creditProductValue => {
     const creditProductName = creditProductOptions.find(option => option.value === creditProductValue)?.label || ''
     const product = {
@@ -147,7 +145,7 @@ const getCreditProductData = (dataProduct: any, scene: { sceneValue: string; sce
       dataProductId: dataProduct.id,
       sceneValue: scene.sceneValue
     }
-    console.log('生成信贷产品数据:', product)
+
     return product
   })
   return creditProducts
@@ -155,12 +153,12 @@ const getCreditProductData = (dataProduct: any, scene: { sceneValue: string; sce
 
 const calculateRatio = (amount: number, total: number) => {
   if (typeof amount !== 'number' || typeof total !== 'number' || total <= 0) {
-    console.warn('计算比例参数无效:', { amount, total })
+
     return '0.00'
   }
   const validAmount = Math.max(0, amount)
   const ratio = ((validAmount / total) * 100).toFixed(2)
-  console.log('计算比例:', { amount: validAmount, total, ratio })
+
   return ratio
 }
 
@@ -171,16 +169,15 @@ const updateAmount = (record: {
   sceneValue: string;
   sceneValueAmount?: number;
 }, sceneName: string) => {
-  console.log('updateAmount调用，传入的record:', record, '场景名称:', sceneName)
-  
+
   if (!record || typeof record.amount !== 'number' || !record.creditProductValue || !record.sceneValue) {
-    console.warn('无效的记录数据:', record)
+
     return
   }
 
   const dataProduct = props.formData.dataProducts.find(dp => dp.id === record.dataProductId)
   if (!dataProduct) {
-    console.warn('未找到对应的数据产品:', record.dataProductId)
+
     return
   }
 
@@ -233,7 +230,6 @@ const updateAmount = (record: {
   scene.remainingAmount = Math.max(0, scene.amount - scene.allocatedAmount)
   scene.ratio = Number(calculateRatio(scene.allocatedAmount, dataProduct.totalAmount))
 
-  console.log('更新后的场景数据:', scene)
 };
 
 const handleNext = () => {
@@ -254,18 +250,16 @@ const columns = [
 ]
 
 const getTableData = (dataProduct: any) => {
-  console.log('获取表格数据，数据产品:', dataProduct)
+
   if (!dataProduct || !Array.isArray(dataProduct.scenes)) {
-    console.warn('数据产品或场景数据无效')
+
     return []
   }
 
   const scenes = dataProduct.scenes
-  console.log('场景数据:', scenes)
-  
+
   const tableData = scenes.map((scene: Scene) => {
     if (!scene) return []
-    console.log('处理场景数据:', scene)
 
     const sceneName = sceneOptions.find(option => option.value === scene.sceneValue)?.label || scene.sceneName || ''
 
@@ -289,8 +283,7 @@ const getTableData = (dataProduct: any) => {
       }
     })
   }).flat().filter(Boolean)
-  
-  console.log('生成的表格数据:', tableData)
+
   return tableData
 }
 
@@ -342,7 +335,7 @@ const calculateSceneTotal = (sceneValue: string): number => {
 }
 
 const handleAutoAllocation = () => {
-  console.log('开始自动分配，当前选中的信贷产品:', selectedCreditProducts.value)
+
   selectedScenes.value.forEach(sceneValue => {
     const totalPerScene = props.formData.dataProducts.reduce((sum, dp) => {
       const sceneData = dp.scenes?.find((s: any) => s.sceneValue === sceneValue)
@@ -383,12 +376,12 @@ onMounted(() => {
 })
 
 const initializeSceneConfig = (forceUpdate = false) => {
-  console.log('初始化场景配置开始，forceUpdate:', forceUpdate)
+
   selectedScenes.value = ['credit_apply', 'credit_pass'];
   props.formData.dataProducts.forEach((dataProduct) => {
-    console.log('处理数据产品:', dataProduct)
+
     selectedScenes.value.forEach((sceneValue) => {
-      console.log('处理场景:', sceneValue)
+
       sceneConfig.value[sceneValue] = selectedCreditProducts.value.map(creditProductValue => {
         const existing = sceneConfig.value[sceneValue]?.find(
           (item: { creditProductValue: string; dataProductId: string }) => 
@@ -403,17 +396,17 @@ const initializeSceneConfig = (forceUpdate = false) => {
           dataProductId: dataProduct.id,
           sceneValueAmount: dataProduct.scenes?.find(s => s.sceneValue === sceneValue)?.amount || 0
         };
-        console.log('场景配置项:', newConfig)
+
         return newConfig;
       });
     });
   });
-  console.log('初始化场景配置完成，当前配置:', sceneConfig.value)
+
 };
 
 // 监听信贷产品选择变化
 watch(selectedCreditProducts, (newValue) => {
-  console.log('信贷产品选择变化，新值:', newValue)
+
   console.log('当前表格数据:', getTableData(props.formData.dataProducts[0]))
   initializeSceneConfig(true)
 }, { deep: true })

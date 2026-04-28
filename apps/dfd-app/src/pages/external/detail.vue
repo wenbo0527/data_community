@@ -588,7 +588,7 @@ const handleEditSubmit = async () => {
   try {
     await editFormRef.value?.validate()
     // TODO: 调用接口保存数据
-    console.log('保存编辑数据:', editForm.value)
+
     // 模拟保存成功
     dataDetail.value = {
       ...dataDetail.value,
@@ -602,7 +602,7 @@ const handleEditSubmit = async () => {
     Message.success('保存成功')
     editDrawerVisible.value = false
   } catch (error) {
-    console.error('表单验证失败:', error)
+
   }
 }
 
@@ -610,7 +610,7 @@ const handleEditSubmit = async () => {
 const handleInterfaceChange = async (value) => {
   try {
     // TODO: 调用接口获取对应数据
-    console.log('切换到', value ? '主接口' : '备用接口')
+
     // 模拟加载数据
     await new Promise(resolve => setTimeout(resolve, 1000))
     // 更新界面数据
@@ -639,7 +639,7 @@ const interfaceId = computed(() => route.params.id)
 onMounted(async () => {
   try {
     // TODO: 根据interfaceId获取数据详情
-    console.log('获取数据详情:', interfaceId.value)
+
     // 模拟异步获取数据
     await new Promise(resolve => setTimeout(resolve, 1000))
   } catch (error) {

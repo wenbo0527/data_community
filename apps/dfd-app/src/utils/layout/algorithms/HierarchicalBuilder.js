@@ -26,16 +26,13 @@ export class HierarchicalBuilder {
       allNodes = context.nodes || [];
       edges = context.edges || [];
     }
-    console.log(' [分层构建] 开始构建分层结构');
-    console.log(` [分层构建] 输入节点数: ${allNodes.length}, 边数: ${edges.length}`);
+
 
     // 过滤掉虚拟节点
     const normalNodes = allNodes.filter(node => !node.isVirtual);
-    console.log(` [分层构建] 过滤后节点数: ${normalNodes.length}`);
 
     // 检查是否有边连接
     const hasEdges = edges && edges.length > 0;
-    console.log(` [分层构建] 是否有边连接: ${hasEdges}`);
 
     let layers;
     if (hasEdges) {
@@ -46,7 +43,6 @@ export class HierarchicalBuilder {
       layers = this.buildTypeBasedLayers(normalNodes);
     }
 
-    console.log(` [分层构建] 分层构建完成，共 ${layers.length} 层`);
     layers.forEach((layer, index) => {
       console.log(`  第${index}层: ${layer.length}个节点`, layer.map(n => n.id || n.getId()));
     });
@@ -64,7 +60,6 @@ export class HierarchicalBuilder {
    * @returns {Array} 分层结果
    */
   calculateLayersBottomUp(normalNodes, allEdges) {
-    console.log(' [自底向上分层] 开始自底向上层级计算');
 
     // 构建父子关系
     this.buildParentChildRelationships(normalNodes, allEdges);
@@ -81,8 +76,7 @@ export class HierarchicalBuilder {
 
     // 从叶子节点开始，逐层向上构建
     while (currentLayer.length > 0) {
-      console.log(` [自底向上分层] 处理第${layerIndex}层，节点数: ${currentLayer.length}`);
-      
+
       layers.push([...currentLayer]);
       
       // 标记当前层节点为已处理
@@ -99,8 +93,6 @@ export class HierarchicalBuilder {
       currentLayer.forEach((node) => {
         const nodeId = node.id || node.getId();
         const parents = this.layoutModel.childParentMap.get(nodeId) || [];
-
-        console.log(` [自底向上分层] 节点 ${nodeId} 的父节点:`, parents);
 
         parents.forEach((parentId) => {
           if (!processedNodes.has(parentId)) {
@@ -127,19 +119,13 @@ export class HierarchicalBuilder {
           processedNodes.has(childId),
         );
 
-        console.log(
-          ` [自底向上分层] 父节点 ${parentId} 的实际子节点:`,
-          realChildren,
-          `全部处理完成: ${allChildrenProcessed}`,
-        );
-
         if (allChildrenProcessed) {
           const parentNode = normalNodes.find(
             (n) => (n.id || n.getId()) === parentId,
           );
           if (parentNode && !parentNode.isVirtual) {
             nextLayer.push(parentNode);
-            console.log(` [自底向上分层] 添加父节点 ${parentId} 到下一层`);
+
           }
         }
       });
@@ -149,14 +135,10 @@ export class HierarchicalBuilder {
 
       // 防止无限循环
       if (layerIndex > 20) {
-        console.warn(' [自底向上分层] 层级构建超过20层，强制停止');
+
         break;
       }
     }
-
-    console.log(
-      ` [自底向上分层] 初步构建完成，共 ${layers.length} 层，已处理 ${processedNodes.size} 个节点`,
-    );
 
     // 检查未处理的节点
     const allNodeIds = normalNodes
@@ -167,10 +149,6 @@ export class HierarchicalBuilder {
     );
 
     if (unprocessedNodeIds.length > 0) {
-      console.warn(
-        ` [自底向上分层] 发现 ${unprocessedNodeIds.length} 个未处理的节点:`,
-        unprocessedNodeIds,
-      );
 
       // 将未处理的节点添加到最后一层
       const unprocessedNodes = normalNodes.filter((node) =>
@@ -188,13 +166,11 @@ export class HierarchicalBuilder {
         nodeToLayer.set(nodeId, layers.length - 1);
       });
 
-      console.log(` [自底向上分层] 已将未处理节点添加到第${layers.length - 1}层`);
     }
 
     // 反转层级顺序（使第0层为顶层）
     layers.reverse();
 
-    console.log(' [自底向上分层] 层级反转完成，最终层级结构:');
     layers.forEach((layer, index) => {
       console.log(
         `  第${index}层: ${layer.length}个节点`,
@@ -210,10 +186,6 @@ export class HierarchicalBuilder {
         this.layoutModel.nodeToLayer.set(nodeId, index);
       });
     });
-
-    console.log(
-      ` [自底向上分层] nodeToLayer映射重建完成，共 ${this.layoutModel.nodeToLayer.size} 个节点`,
-    );
 
     return layers;
   }
@@ -239,12 +211,6 @@ export class HierarchicalBuilder {
       } else {
         otherNodes.push(node);
       }
-    });
-
-    console.log(' [类型分层] 节点分类:', {
-      start: startNodes.length,
-      end: endNodes.length,
-      other: otherNodes.length
     });
 
     // 构建垂直分层：start在顶层，end在底层，其他节点在中间
@@ -278,8 +244,6 @@ export class HierarchicalBuilder {
       });
     });
 
-    console.log(` [类型分层] nodeToLayer映射完成，共 ${this.layoutModel.nodeToLayer.size} 个节点`);
-
     return layers;
   }
 
@@ -289,8 +253,7 @@ export class HierarchicalBuilder {
    * @param {Array} edges - 边列表
    */
   buildParentChildRelationships(nodes, edges) {
-    console.log(' [关系构建] 开始构建父子关系');
-    
+
     // 初始化映射
     this.layoutModel.parentChildMap = new Map();
     this.layoutModel.childParentMap = new Map();
@@ -324,7 +287,6 @@ export class HierarchicalBuilder {
       }
     });
 
-    console.log(` [关系构建] 父子关系构建完成，父子映射: ${this.layoutModel.parentChildMap.size}, 子父映射: ${this.layoutModel.childParentMap.size}`);
   }
 
   /**

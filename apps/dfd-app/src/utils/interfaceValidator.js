@@ -54,17 +54,17 @@ export function validateInterface(obj, interfaceDefinition, objectName = 'Object
   }
   
   if (missingMethods.length > 0) {
-    console.error(`❌ [Interface] ${objectName} 缺少方法:`, missingMethods)
+
   }
   
   if (wrongTypes.length > 0) {
-    console.error(`❌ [Interface] ${objectName} 类型错误:`, wrongTypes)
+
   }
   
   const isValid = missingMethods.length === 0 && wrongTypes.length === 0
   
   if (isValid) {
-    console.log(`✅ [Interface] ${objectName} 接口验证通过`)
+
   }
   
   return isValid
@@ -81,7 +81,7 @@ export function createInterfaceProxy(target, interfaceDefinition, objectName = '
   return new Proxy(target, {
     get(obj, prop) {
       if (prop in interfaceDefinition && !(prop in obj)) {
-        console.error(`❌ [Interface] ${objectName}.${prop} 方法不存在`)
+
         return () => {
           throw new Error(`${objectName}.${prop} 方法未实现`)
         }
@@ -105,9 +105,9 @@ export function createInterfaceWrapper(source, interfaceDefinition, objectName =
     if (key in source) {
       wrapper[key] = source[key]
     } else {
-      console.warn(`⚠️ [Interface] ${objectName}.${key} 方法缺失，使用默认实现`)
+
       wrapper[key] = () => {
-        console.error(`❌ [Interface] ${objectName}.${key} 方法未实现`)
+
         return null
       }
     }

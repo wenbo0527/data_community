@@ -284,7 +284,7 @@ class LayoutConfig {
         try {
           callback(newValue, oldValue, path);
         } catch (error) {
-          console.warn(`LayoutConfig listener error for path '${path}':`, error);
+
         }
       });
     }
@@ -296,7 +296,7 @@ class LayoutConfig {
         try {
           callback(newValue, oldValue, path);
         } catch (error) {
-          console.warn(`LayoutConfig global listener error:`, error);
+
         }
       });
     }
@@ -327,7 +327,7 @@ class LayoutConfig {
       
       return true;
     } catch (error) {
-      console.error('Failed to import config from JSON:', error);
+
       return false;
     }
   }

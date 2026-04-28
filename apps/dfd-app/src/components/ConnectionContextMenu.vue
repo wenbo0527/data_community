@@ -51,21 +51,21 @@ const emit = defineEmits([
 
 // 处理删除连接线
 const handleDeleteConnection = () => {
-  console.log('删除连接线:', props.connectionData)
+
   emit('delete-connection', props.connectionData)
   emit('close')
 }
 
 // 处理编辑连接
 const handleEditConnection = () => {
-  console.log('编辑连接:', props.connectionData)
+
   emit('edit-connection', props.connectionData)
   emit('close')
 }
 
 // 处理查看详情
 const handleViewDetails = () => {
-  console.log('查看连接详情:', props.connectionData)
+
   emit('view-details', props.connectionData)
   emit('close')
 }

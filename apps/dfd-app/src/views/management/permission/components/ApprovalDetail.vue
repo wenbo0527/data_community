@@ -303,7 +303,7 @@ export default {
             approvalForm.forwardTo = undefined;
             
           } catch (error) {
-            console.error('审批失败:', error);
+
             Message.error('审批失败，请重试');
           } finally {
             approving.value = false;

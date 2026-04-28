@@ -27,7 +27,7 @@ export class SmartCacheManager {
   set(type, key, value, customTtl) {
     const cache = this.caches[type]
     if (!cache) {
-      console.warn(`[SmartCacheManager] 未知缓存类型: ${type}`)
+
       return
     }
 
@@ -132,7 +132,7 @@ export class SmartCacheManager {
         this.set(type, key, value)
       })
     } catch (error) {
-      console.error('[SmartCacheManager] 预加载失败:', error)
+
     }
   }
 
@@ -218,7 +218,7 @@ export class SmartCacheManager {
     this.stats.cleanups++
     
     if (cleanedCount > 0) {
-      console.log(`[SmartCacheManager] 清理了 ${cleanedCount} 个过期缓存项`)
+
     }
   }
 

@@ -504,7 +504,7 @@ const onCascaderChange = (value: string[]) => {
   if (value && value.length === 2) {
     formData.value.businessType = value[0]
     formData.value.productType = value[1]
-    console.log('业务类型变化:', value[0], '产品类型变化:', value[1])
+
     Message.info(`已选择${getBusinessTypeName(value[0])}模式 - ${getProductTypeName(value[1])}产品`)
   }
 }

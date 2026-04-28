@@ -77,8 +77,8 @@ const showIncrementalModal = () => {
 
 
 const confirmIncrementalUpload = () => {
-  console.log('确认增量上传', incrementalFileCount.value, '条记录')
-  console.log('触发增量上传API请求')
+
+
   incrementalFileCount.value = 0
   incrementalModalVisible.value = false
 }

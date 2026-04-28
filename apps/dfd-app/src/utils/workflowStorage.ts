@@ -25,7 +25,7 @@ export class WorkflowStorage {
       const data = localStorage.getItem(this.STORAGE_KEYS.WORKFLOWS);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('获取工作流数据失败:', error);
+
       return [];
     }
   }
@@ -47,7 +47,7 @@ export class WorkflowStorage {
       localStorage.setItem(this.STORAGE_KEYS.WORKFLOWS, JSON.stringify(workflows));
       return true;
     } catch (error) {
-      console.error('保存工作流失败:', error);
+
       return false;
     }
   }
@@ -70,7 +70,7 @@ export class WorkflowStorage {
       localStorage.setItem(this.STORAGE_KEYS.WORKFLOWS, JSON.stringify(filteredWorkflows));
       return true;
     } catch (error) {
-      console.error('删除工作流失败:', error);
+
       return false;
     }
   }
@@ -83,7 +83,7 @@ export class WorkflowStorage {
       const data = localStorage.getItem(this.STORAGE_KEYS.DATA_SOURCES);
       return data ? JSON.parse(data) : { files: [], databases: [] };
     } catch (error) {
-      console.error('获取数据源配置失败:', error);
+
       return { files: [], databases: [] };
     }
   }
@@ -105,7 +105,7 @@ export class WorkflowStorage {
       localStorage.setItem(this.STORAGE_KEYS.DATA_SOURCES, JSON.stringify(dataSources));
       return true;
     } catch (error) {
-      console.error('保存文件数据源失败:', error);
+
       return false;
     }
   }
@@ -127,7 +127,7 @@ export class WorkflowStorage {
       localStorage.setItem(this.STORAGE_KEYS.DATA_SOURCES, JSON.stringify(dataSources));
       return true;
     } catch (error) {
-      console.error('保存数据库连接失败:', error);
+
       return false;
     }
   }
@@ -148,7 +148,7 @@ export class WorkflowStorage {
       localStorage.setItem(this.STORAGE_KEYS.DATA_SOURCES, JSON.stringify(dataSources));
       return true;
     } catch (error) {
-      console.error('删除数据源失败:', error);
+
       return false;
     }
   }
@@ -165,7 +165,7 @@ export class WorkflowStorage {
         theme: 'light'
       };
     } catch (error) {
-      console.error('获取应用设置失败:', error);
+
       return {
         autoSave: true,
         debugMode: false,
@@ -182,7 +182,7 @@ export class WorkflowStorage {
       localStorage.setItem(this.STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
       return true;
     } catch (error) {
-      console.error('保存应用设置失败:', error);
+
       return false;
     }
   }
@@ -204,7 +204,7 @@ export class WorkflowStorage {
       });
       return true;
     } catch (error) {
-      console.error('清空数据失败:', error);
+
       return false;
     }
   }
@@ -236,7 +236,7 @@ export class WorkflowStorage {
       }
       return true;
     } catch (error) {
-      console.error('导入数据失败:', error);
+
       return false;
     }
   }

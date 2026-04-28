@@ -326,7 +326,7 @@ const refreshStatistics = async () => {
     
     Message.success('统计数据已更新')
   } catch (error) {
-    console.error('统计数据更新失败:', error)
+
     Message.error('统计数据更新失败')
   } finally {
     statsLoading.value = false
@@ -451,7 +451,7 @@ const calculatePerformanceMetrics = (tasks) => {
 // 渲染图表
 const renderCharts = (tasks) => {
   if (!ChartRenderer) {
-    console.warn('ChartRenderer not available, using mock charts')
+
     renderMockCharts(tasks)
     return
   }
@@ -569,19 +569,19 @@ const getTaskCreationTrend = (tasks) => {
 
 // 维度变化处理
 const onDimensionChange = (value) => {
-  console.log('统计维度变化:', value)
+
   refreshStatistics()
 }
 
 // 时间范围变化处理
 const onTimeRangeChange = (value) => {
-  console.log('时间范围变化:', value)
+
   refreshStatistics()
 }
 
 // 导出统计数据
 const exportStatistics = () => {
-  console.log('导出统计数据')
+
   Message.info('数据导出功能开发中...')
 }
 

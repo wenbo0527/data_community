@@ -234,23 +234,23 @@ const handleDebugInfo = (info) => {
 // 监听器
 watch(() => props.selectedProduct, (newProduct) => {
   if (newProduct) {
-    console.log('🔍 [DEBUG] 选中产品变化:', newProduct)
+
   }
 }, { immediate: true, deep: true })
 
 watch(() => props.userInfo, (newUserInfo) => {
   if (newUserInfo) {
-    console.log('🔍 [DEBUG] 用户信息更新:', newUserInfo)
+
   }
 }, { immediate: true })
 
 // 生命周期
 onMounted(() => {
-  console.log('🔍 [DEBUG] ProductModulesComplete 组件已挂载')
+
 })
 
 onUnmounted(() => {
-  console.log('🔍 [DEBUG] ProductModulesComplete 组件已卸载')
+
 })
 </script>
 

@@ -143,10 +143,9 @@
 </template>
 
 <script setup lang="ts">
-console.log('🔥🔥🔥 DETAIL.VUE SCRIPT SETUP 开始执行 🔥🔥🔥')
+
 console.log('🔥 当前时间:', new Date().toLocaleString())
-console.log('🔥 window.location.href:', window.location.href)
-console.log('🔥 document.title:', document.title)
+
 
 // 在页面标题中添加标识
 document.title = '🔥 Customer360 Detail - ' + new Date().toLocaleTimeString()
@@ -218,15 +217,15 @@ const productOptions = ref([
 
 // 获取用户ID
 const userId = computed(() => {
-  console.log('📍 详情页获取用户ID，route.params:', route.params)
-  console.log('📍 详情页获取用户ID，route.query:', route.query)
+
+
   return route.params.userId || route.query.userId
 })
 
 // 移除了selfProductData和loanProductData计算属性，改为直接使用userOwnedProducts
 
 const creditData = computed(() => {
-  console.log('🔍 creditData计算属性被调用');
+
   // 优先返回征信报告汇总信息
   if (userInfo.value?.creditReports && userInfo.value.creditReports.length > 0) {
     return userInfo.value.creditReports[0]
@@ -234,11 +233,11 @@ const creditData = computed(() => {
   return {}
 })
 const loanData = computed(() => {
-  console.log('🔍 loanData计算属性被调用，使用productStore数据');
+
   return productStore.loanRecords
 })
 const adjustmentData = computed(() => {
-  console.log('🔍 adjustmentData计算属性被调用，使用productStore数据');
+
   return productStore.quotaAdjustHistory
 })
 
@@ -250,12 +249,12 @@ const collectionRecords = computed(() => {
 
 // 处理主Tab切换
 const handleMainTabChange = (tabKey) => {
-  console.log('🔄 [MAIN-TAB] 主Tab切换:', tabKey)
+
 }
 
 // 处理模块切换
 const handleModuleChange = (moduleKey) => {
-  console.log('🔄 [MODULE] 模块切换:', moduleKey)
+
 }
 
 const getStatusColor = (status) => {
@@ -307,30 +306,26 @@ const hasDataInconsistency = computed(() => {
 
 // 获取数据
 const fetchData = async () => {
-  console.log('🔍 [DEBUG] 开始获取用户数据', { userId: userId.value })
+
   if (!userId.value) {
-    console.log('❌ [DEBUG] 用户ID为空，无法获取数据')
+
     return
   }
-  
-  console.log('📡 [DEBUG] 调用fetchUserInfo API', { userId: userId.value })
+
   loading.value = true
-  console.log('⏳ [DEBUG] 设置loading状态为true')
-  
+
   try {
     // 添加延迟确保API调用完成
-    console.log('🔄 [DEBUG] 准备调用 fetchUserInfo...')
-    console.log('🔍 [DEBUG] fetchUserInfo函数类型:', typeof fetchUserInfo)
-    console.log('🔍 [DEBUG] fetchUserInfo函数:', fetchUserInfo)
-    console.log('🔍 [DEBUG] 调用参数userId:', userId.value)
-    
+
+
+
+
     const response = await fetchUserInfo(userId.value)
-    
-    console.log('🎯 [DEBUG] fetchUserInfo调用完成，立即检查response:')
-    console.log('🎯 [DEBUG] response类型:', typeof response)
-    console.log('🎯 [DEBUG] response是否为null:', response === null)
-    console.log('🎯 [DEBUG] response是否为undefined:', response === undefined)
-    console.log('🎯 [DEBUG] response值:', response)
+
+
+
+
+
     console.log('📥 [DEBUG] API响应原始数据', { 
       response, 
       hasData: !!response,
@@ -341,14 +336,14 @@ const fetchData = async () => {
     
     // 验证响应数据结构
     if (!response) {
-      console.log('⚠️ [DEBUG] API返回空数据')
+
       Message.error('API 返回数据为空')
       return
     }
     
     // 检查API是否返回错误
     if (response.error) {
-      console.log('❌ [DEBUG] API返回错误', { error: response.error })
+
       Message.error(response.message || '用户不存在')
       // 设置错误状态而不是null，这样页面可以显示错误信息
       userInfo.value = {
@@ -373,21 +368,13 @@ const fetchData = async () => {
     })
     
     // 立即验证 userInfo 是否正确设置
-    console.log('🔍 [VERIFY] userInfo.value 验证:', {
-      isNull: userInfo.value === null,
-      isUndefined: userInfo.value === undefined,
-      type: typeof userInfo.value,
-      value: userInfo.value
-    })
-    
+
     // 强制触发响应式更新
     await nextTick()
-    console.log('🔄 [VERIFY] nextTick后 userInfo.value:', userInfo.value)
-    
+
     // 使用nextTick确保DOM更新
     await nextTick()
-    console.log('🔄 [DEBUG] nextTick完成，DOM已更新')
-    
+
     // 强制检查渲染条件
     console.log('🎯 [RENDER DEBUG] 渲染条件检查:', {
       userInfoExists: !!userInfo.value,
@@ -400,41 +387,25 @@ const fetchData = async () => {
     if (userInfo.value) {
       const products = userInfo.value.products || []
       // 所有产品都是信贷产品
-      console.log('📊 关键数据字段检查:', {
-        totalProducts: products.length,
-        creditRecords: userInfo.value.creditsList?.length || 0,
-        loanRecords: userInfo.value.loanRecords?.length || 0,
-        adjustmentRecords: userInfo.value.quotaAdjustHistory?.length || 0
-      })
+
     }
     
     // 检查计算属性
-    console.log('🧮 计算属性检查:', {
-      userOwnedProducts: userOwnedProducts.value?.length || 0,
-      creditData: creditData.value?.length || 0,
-      loanData: loanData.value?.length || 0,
-      adjustmentData: adjustmentData.value?.length || 0
-    })
-    
+
     // 验证计算属性是否正确计算
     if (!userOwnedProducts.value || userOwnedProducts.value.length === 0) {
-      console.log('⚠️ 用户拥有产品数据为空，可能存在数据结构问题')
+
     }
     
     // 再次使用nextTick确保所有组件状态更新完成
     await nextTick()
-    console.log('🔄 [DEBUG] 组件状态更新后nextTick完成')
-    
+
   } catch (error) {
-    console.error('💥 [DEBUG] 获取数据失败', { error: error.message, stack: error.stack })
+
     Message.error(`获取用户数据失败: ${error.message}`)
   } finally {
     loading.value = false
-    console.log('🏁 [DEBUG] 数据获取完成', { 
-      loading: loading.value, 
-      hasUserInfo: !!userInfo.value,
-      userInfoValue: userInfo.value
-    })
+
   }
 }
 
@@ -458,7 +429,7 @@ const getRiskLevelColor = (level) => {
 // 处理产品选择
 const handleProductSelect = (product) => {
   selectedProduct.value = product
-  console.log('选中产品:', product)
+
 }
 
 // 产品统计数据计算属性
@@ -478,9 +449,9 @@ const productStats = computed(() => {
 
 // 监听路由变化
 watch(() => userId.value, (newUserId, oldUserId) => {
-  console.log('🔄 路由userId变化:', { oldUserId, newUserId })
+
   if (newUserId && newUserId !== oldUserId) {
-    console.log('🔄 检测到userId变化，重新获取数据')
+
     fetchData()
   }
 })
@@ -493,12 +464,7 @@ watch(() => userId.value, (newUserId, oldUserId) => {
 
 // 监听计算属性变化
 watch(() => userOwnedProducts.value, (newProducts, oldProducts) => {
-  console.log('🧮 userOwnedProducts计算属性变化:', {
-    hasData: !!newProducts,
-    totalCount: newProducts?.length || 0,
-    creditProductsCount: newProducts?.length || 0 // 所有产品都是信贷产品
-  })
-  
+
   // 只在产品数据真正变化时自动选择第一个产品
   // 避免重复触发导致无限循环
   if (newProducts && newProducts.length > 0 && 
@@ -506,7 +472,7 @@ watch(() => userOwnedProducts.value, (newProducts, oldProducts) => {
       !selectedProduct.value) {
     const firstProduct = newProducts[0]
     selectedProduct.value = firstProduct.productKey
-    console.log('🔄 自动选择第一个产品:', firstProduct.productKey, firstProduct.productName)
+
   }
 }, { immediate: false })
 
@@ -526,7 +492,7 @@ onMounted(async () => {
   try {
     await fetchData()
   } catch (error) {
-    console.error('数据获取失败:', error)
+
     Message.error(`初始化失败: ${error.message}`)
   }
 })

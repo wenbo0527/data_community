@@ -484,7 +484,7 @@ const initNodeTypeDistributionChart = () => {
 
 // 处理图表交互
 const handleChartInteraction = (chartType: string, params: any) => {
-  console.log('Chart interaction:', chartType, params)
+
   emit('chart-interaction', { chartType, params })
   
   // 如果启用联动，更新其他图表
@@ -496,12 +496,12 @@ const handleChartInteraction = (chartType: string, params: any) => {
 // 更新联动图表
 const updateLinkedCharts = (sourceChart: string, params: any) => {
   // 根据选中的数据更新其他图表
-  console.log('Updating linked charts:', sourceChart, params)
+
 }
 
 // 钻取数据
 const drillDown = (chartType: string) => {
-  console.log('Drill down:', chartType)
+
   emit('drill-down', { chartType })
 }
 
@@ -617,14 +617,13 @@ const updateFullscreenChart = () => {
 // 更新图表
 const updateChart = () => {
   // 根据图表类型更新显示
-  console.log('Update chart type:', chartType.value)
+
 }
 
 // 刷新图表
 const refreshChart = () => {
   // 重新加载数据并更新图表
-  console.log('Refresh charts')
-  
+
   // 更新所有图表
   if (nodeVisitsInstance) nodeVisitsInstance.resize()
   if (conversionTrendInstance) conversionTrendInstance.resize()
@@ -643,7 +642,7 @@ watch(() => props.selectedNodes, (newNodes: any[]) => {
 // 高亮选中的节点
 const highlightSelectedNodes = (nodeIds: string[]) => {
   // 在图表中高亮显示选中的节点
-  console.log('Highlight selected nodes:', nodeIds)
+
 }
 
 // 监听筛选条件变化
@@ -655,7 +654,7 @@ watch(() => props.filters, () => {
 // 更新图表数据
 const updateChartData = () => {
   // 根据筛选条件重新加载图表数据
-  console.log('Update chart data with filters:', props.filters)
+
 }
 
 onMounted(() => {

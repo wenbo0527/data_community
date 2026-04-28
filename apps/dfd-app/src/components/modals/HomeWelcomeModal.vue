@@ -89,7 +89,7 @@ import { useUserStore } from '@/store'
 
 // 定义getDepartmentFeatures函数
 const getDepartmentFeatures = () => {
-    console.log('当前用户部门:', userStore.userInfo.department);
+
     let features;
     switch (userStore.userInfo.department) {
         case 'risk':
@@ -124,7 +124,7 @@ const getDepartmentFeatures = () => {
                 '协作支持：团队协作/技术支持'
             ];
     }
-    console.log('返回的场景指引内容:', features);
+
     return features;
 };
 
@@ -160,7 +160,7 @@ const currentStepContent = computed(() => {
 
 // 在组件挂载时输出currentStep的值
 onMounted(() => {
-    console.log('组件挂载时的currentStep值:', currentStep.value)
+
 })
 
 // 监听visible变化，当弹窗打开时重置步骤
@@ -168,7 +168,7 @@ watch(() => props.visible, (newVal) => {
     if (newVal && props.isNewUser) {
         currentStep.value = 0
         guideStarted.value = false
-        console.log('弹窗打开时重置currentStep值:', currentStep.value)
+
     }
 })
 
@@ -226,9 +226,9 @@ const startGuide = () => {
     // 设置guideStarted为true，触发视图切换
     guideStarted.value = true
     currentStep.value = 0
-    console.log('点击开始体验后的currentStep值:', currentStep.value)
+
     // 确保显示认识数字社区的内容
-    console.log('当前显示的步骤内容:', stepContent[currentStep.value])
+
 }
 
 const prevStep = () => {
@@ -239,7 +239,7 @@ const nextStep = () => {
     if (currentStep.value < stepContent.length - 1) {  // 根据stepContent数组长度判断
         const nextStepValue = currentStep.value + 1
         currentStep.value = nextStepValue
-        console.log('切换到下一步:', nextStepValue)
+
     } else {
         Message.success('恭喜您完成新手引导！')
         emit('update:visible', false)

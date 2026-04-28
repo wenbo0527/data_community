@@ -15,7 +15,7 @@ import { watch, ref, computed } from 'vue'
 const props = defineProps<{ opts?: { hideNodes?: boolean; coord?: boolean; hideBg?: boolean } }>()
 const mergedOpts = computed(() => ({ ...(props.opts || {}) }))
 watch(() => props.opts, (v: { hideNodes?: boolean; coord?: boolean } | undefined) => {
-  console.log('[ArchitectureChart] opts', v)
+
 }, { deep: true })
 </script>
 

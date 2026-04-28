@@ -472,7 +472,7 @@ const performSearch = async (query?: string) => {
       allResults.value = [...tableResults.value, ...conceptResults.value]
     }
   } catch (error) {
-    console.error('Search failed:', error)
+
     Message.error('搜索失败，请重试')
   }
 }
@@ -596,7 +596,7 @@ const showMissingTicket = () => {
 }
 
 const handleMissingTicketConfirm = (data: any) => {
-  console.log('提交缺失工单:', data)
+
   // 这里可以调用API提交工单
   Message.success('缺失工单已提交')
 }

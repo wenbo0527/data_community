@@ -577,7 +577,7 @@ const saveAsTemplate = () => {
   }
   
   // 保存模板逻辑
-  console.log('保存模板:', template)
+
 }
 
 // 显示导出历史
@@ -588,13 +588,13 @@ const showExportHistory = () => {
 // 显示导出设置
 const showExportSettings = () => {
   // 显示设置面板
-  console.log('显示导出设置')
+
 }
 
 // 下载历史文件
 const downloadHistoryFile = (item: any) => {
   // 模拟下载历史文件
-  console.log('下载历史文件:', item.filename)
+
 }
 
 // 切换字段组 - 已存在同名函数，移除重复定义

@@ -344,7 +344,7 @@ const initTrendChart = () => {
 // 切换图表全屏
 const toggleChartFullscreen = () => {
   // TODO: 实现图表全屏功能
-  console.log('Toggle chart fullscreen')
+
 }
 
 // 选择节点
@@ -361,13 +361,13 @@ const refreshData = () => {
 // 查看全部节点
 const viewAllNodes = () => {
   // TODO: 导航到节点列表页面
-  console.log('View all nodes')
+
 }
 
 // 监听筛选条件变化
 watch(() => props.filters, () => {
   // TODO: 根据筛选条件重新加载数据
-  console.log('Filters changed:', props.filters)
+
 }, { deep: true })
 
 // 监听加载状态

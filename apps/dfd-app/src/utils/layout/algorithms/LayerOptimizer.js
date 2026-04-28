@@ -16,7 +16,6 @@ export class LayerOptimizer {
    * @returns {Map} 优化后的位置映射
    */
   async optimizeUnifiedLayerAlignment(positions, layerStructure) {
-    console.log(" [统一优化] 开始层级内统一优化");
 
     let totalAdjustments = 0;
 
@@ -38,10 +37,6 @@ export class LayerOptimizer {
         totalAdjustments += layerAdjustments;
       }
     }
-
-    console.log(
-      ` [统一优化] 优化完成，调整 ${totalAdjustments} 个节点位置`,
-    );
 
     return positions;
   }
@@ -72,12 +67,6 @@ export class LayerOptimizer {
     const totalAdjustments =
       overlapAdjustments + alignmentAdjustments + centerAdjustments;
 
-    console.log(
-      ` [单层优化] 第${layerIndex}层优化完成，总调整 ${totalAdjustments} 次`,
-    );
-    console.log(
-      `   [优化详情] 重叠解决: ${overlapAdjustments}, parent-child对齐: ${alignmentAdjustments}, 层级居中: ${centerAdjustments}`,
-    );
 
     return totalAdjustments;
   }
@@ -99,20 +88,16 @@ export class LayerOptimizer {
       const nodeId = node.id || node.getId();
       const pos = positions.get(nodeId);
       if (!pos) {
-        console.warn(
-          ` [重叠解决] 节点 ${nodeId} 在positions中不存在，跳过处理`,
-        );
+
         return false;
       }
       return true;
     });
 
     if (validNodes.length === 0) {
-      console.log(' [重叠解决] 没有有效节点需要处理重叠');
+
       return 0;
     }
-
-    console.log(` [重叠解决] 开始处理 ${validNodes.length} 个节点的重叠问题，强制最小间距: ${enhancedMinSpacing}px`);
 
     // 按X坐标排序
     const sortedNodes = validNodes.sort((a, b) => {
@@ -135,8 +120,7 @@ export class LayerOptimizer {
     });
 
     // 打印排序后的节点信息
-    console.log(' [重叠解决] 排序后的节点:', sortedNodes.map(node => {
-        const nodeId = node.id || node.getId();
+
         const pos = positions.get(nodeId);
         return `${nodeId}(normal, x=${pos.x.toFixed(1)})`;
       }),
@@ -189,17 +173,14 @@ export class LayerOptimizer {
       
       // 如果本轮没有调整，说明重叠已解决
       if (iterationAdjustments === 0) {
-        console.log(` [重叠解决] 第${iteration}轮检测无重叠，解决完成`);
+
         break;
       }
-      
-      console.log(` [重叠解决] 第${iteration}轮完成，调整了${iterationAdjustments}个节点`);
+
     }
 
     // 增强修复：最终验证，确保没有遗漏的重叠
     this.validateNoOverlaps(sortedNodes, positions, enhancedMinSpacing);
-
-    console.log(` [重叠解决] 重叠解决完成，调整 ${adjustments} 个节点，执行了${iteration}轮检测`);
 
     return adjustments;
   }
@@ -211,8 +192,7 @@ export class LayerOptimizer {
    * @param {number} minSpacing - 最小间距
    */
   validateNoOverlaps(sortedNodes, positions, minSpacing) {
-    console.log(' [重叠验证] 开始最终重叠验证');
-    
+
     let overlapCount = 0;
     
     for (let i = 1; i < sortedNodes.length; i++) {
@@ -231,9 +211,9 @@ export class LayerOptimizer {
     }
     
     if (overlapCount === 0) {
-      console.log(' [重叠验证] 验证通过，无节点重叠');
+
     } else {
-      console.error(` [重叠验证] 发现${overlapCount}处重叠，需要进一步处理`);
+
     }
   }
 
@@ -248,17 +228,13 @@ export class LayerOptimizer {
     let adjustments = 0;
     let forcedAlignments = 0;
 
-    console.log(` [parent-child对齐] 开始增强parent-child X坐标对齐优化，处理 ${layerNodes.length} 个节点`);
-
     layerNodes.forEach((node) => {
       const nodeId = node.id || node.getId();
       const nodePos = positions.get(nodeId);
 
       // 关键修复：检查节点位置是否存在
       if (!nodePos) {
-        console.warn(
-          ` [parent-child对齐] 节点 ${nodeId} 在positions中不存在，跳过处理`,
-        );
+
         return;
       }
 
@@ -286,7 +262,7 @@ export class LayerOptimizer {
             console.log(
               ` [parent-child对齐] 强制精确调整节点 ${nodeId}: ${oldX.toFixed(1)} → ${optimalX.toFixed(1)} (deviation: ${deviation.toFixed(3)}px)`,
             );
-            console.log(`   └─ 子节点位置: ${childInfo}`);
+
             console.log(`   └─ 计算的最优X坐标: ${optimalX.toFixed(3)}`);
 
             // 同步更新图形节点位置
@@ -294,7 +270,7 @@ export class LayerOptimizer {
               const graphNode = this.graph.getCellById(nodeId);
               if (graphNode) {
                 graphNode.setPosition({ x: optimalX, y: nodePos.y });
-                console.log(` [图形同步] 节点 ${nodeId} 图形位置已同步到精确对齐位置`);
+
               }
             }
 
@@ -318,7 +294,6 @@ export class LayerOptimizer {
       }
     });
 
-    console.log(` [parent-child对齐] 增强对齐优化完成，调整 ${adjustments} 个父节点位置，强制修正 ${forcedAlignments} 次`);
     return adjustments;
   }
 
@@ -329,7 +304,7 @@ export class LayerOptimizer {
    */
   calculateOptimalParentPosition(childPositions) {
     if (!childPositions || childPositions.length === 0) {
-      console.warn(' [父节点定位] 子节点位置数组为空，返回默认位置0');
+
       return 0;
     }
 
@@ -405,16 +380,14 @@ export class LayerOptimizer {
       const nodeId = node.id || node.getId();
       const pos = positions.get(nodeId);
       if (!pos) {
-        console.warn(
-          ` [层级居中] 节点 ${nodeId} 在positions中不存在，跳过处理`,
-        );
+
         return false;
       }
       return true;
     });
 
     if (validNodes.length === 0) {
-      console.log(' [层级居中] 没有有效节点需要居中对齐');
+
       return 0;
     }
 
@@ -435,9 +408,7 @@ export class LayerOptimizer {
         // 同步图形节点位置
         if (node.setPosition) {
           node.setPosition({ x: 0, y: pos.y });
-          console.log(
-            ` [同步修复] 图形节点 ${nodeId} 内部位置已同步到居中位置`,
-          );
+
         }
 
         return 1;
@@ -462,8 +433,6 @@ export class LayerOptimizer {
   optimizeMultiNodeSymmetricDistribution(validNodes, positions) {
     const nodeCount = validNodes.length;
     let adjustments = 0;
-
-    console.log(` [增强对称分布] 开始优化 ${nodeCount} 个节点的智能对称分布`);
 
     // 获取当前X坐标并排序
     const nodePositions = validNodes
@@ -725,7 +694,7 @@ export class LayerOptimizer {
    */
   clearCache() {
     // 清除优化相关缓存
-    console.log(' [缓存清理] 清除LayerOptimizer缓存');
+
   }
 
   /**

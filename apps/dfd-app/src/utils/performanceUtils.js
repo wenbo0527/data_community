@@ -213,7 +213,7 @@ export class OptimizedEventBus {
         try {
           callback(...args)
         } catch (error) {
-          console.error(`事件处理错误 [${event}]:`, error)
+
         }
       })
     }

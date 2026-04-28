@@ -578,13 +578,13 @@ const viewLoanDetail = (record) => {
 
 // 查看还款计划
 const handleViewRepaymentPlan = (loanData) => {
-  console.log('查看还款计划:', loanData.loanNo)
+
   Message.info('还款计划功能开发中...')
 }
 
 // 查看还款历史
 const handleViewRepaymentHistory = (loanData) => {
-  console.log('查看还款历史:', loanData.loanNo)
+
   // 可以复用现有的还款记录功能
   const record = {
     loanNo: loanData.loanNo,
@@ -599,8 +599,7 @@ const handleViewRepaymentHistory = (loanData) => {
 
 // 导出用信详情
 const handleExportLoanDetail = (loanData) => {
-  console.log('导出用信详情:', loanData.loanNo)
-  
+
   // 构建导出数据
   const exportData = [
     ['字段名称', '字段值'],

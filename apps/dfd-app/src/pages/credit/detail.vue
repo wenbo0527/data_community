@@ -284,7 +284,7 @@ const handleEditSubmit = async () => {
   try {
     await editFormRef.value?.validate()
     // TODO: 调用接口保存数据
-    console.log('保存编辑数据:', editForm.value)
+
     // 模拟保存成功
     variableDetail.value = {
       ...variableDetail.value,
@@ -295,7 +295,7 @@ const handleEditSubmit = async () => {
     Message.success('保存成功')
     editDrawerVisible.value = false
   } catch (error) {
-    console.error('表单验证失败:', error)
+
   }
 }
 
@@ -306,7 +306,7 @@ const variableId = computed(() => route.params.id)
 onMounted(async () => {
   try {
     // TODO: 根据variableId获取数据详情
-    console.log('获取数据详情:', variableId.value)
+
     // 模拟异步获取数据
     await new Promise(resolve => setTimeout(resolve, 1000))
   } catch (error) {

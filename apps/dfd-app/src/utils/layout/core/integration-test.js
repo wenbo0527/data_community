@@ -44,8 +44,7 @@ class CoreModulesIntegrationTest {
       layerOptimizer: null,
       globalOptimizer: null
     };
-    
-    console.log('🧪 [集成测试] 核心算法模块集成测试初始化');
+
   }
   
   /**
@@ -53,7 +52,7 @@ class CoreModulesIntegrationTest {
    * @returns {Promise<Object>} 测试结果
    */
   async runFullIntegrationTest() {
-    console.log('🚀 [集成测试] 开始核心算法模块集成测试');
+
     const startTime = Date.now();
     
     try {
@@ -86,18 +85,16 @@ class CoreModulesIntegrationTest {
         errors: this.testResults.errors,
         details: this.testResults.details
       };
-      
-      console.log(`🏁 [集成测试] 测试完成，耗时: ${duration}ms`);
-      console.log(`✅ 通过: ${finalResults.passed}, ❌ 失败: ${finalResults.failed}`);
-      
+
+
       if (finalResults.errors.length > 0) {
-        console.error('❌ [集成测试] 发现错误:', finalResults.errors);
+
       }
       
       return finalResults;
       
     } catch (error) {
-      console.error('💥 [集成测试] 测试执行失败:', error);
+
       return {
         success: false,
         error: error.message,
@@ -110,8 +107,7 @@ class CoreModulesIntegrationTest {
    * 测试模块初始化
    */
   async testModuleInitialization() {
-    console.log('📦 [模块初始化] 开始测试模块初始化');
-    
+
     try {
       // 初始化数据预处理器（需要传入graph参数）
       const mockGraph = this.createMockGraphInstance();
@@ -155,9 +151,7 @@ class CoreModulesIntegrationTest {
         enableCache: true
       });
       this.recordTest('GlobalOptimizer初始化', true);
-      
-      console.log('✅ [模块初始化] 所有模块初始化成功');
-      
+
     } catch (error) {
       this.recordTest('模块初始化', false, error.message);
       throw error;
@@ -168,8 +162,7 @@ class CoreModulesIntegrationTest {
    * 测试数据流转
    */
   async testDataFlow() {
-    console.log('🔄 [数据流转] 开始测试模块间数据流转');
-    
+
     try {
       // 创建测试数据
       const testGraph = this.createTestGraph();
@@ -199,12 +192,10 @@ class CoreModulesIntegrationTest {
       // 6. 全局优化
       const globalOptimized = await this.modules.globalOptimizer.applyGlobalOptimization(positions, { layers: hierarchicalData.layers, totalLayers: hierarchicalData.layers.length }, testGraph);
       this.recordTest('全局优化输出', globalOptimized && globalOptimized.success);
-      
-      console.log('✅ [数据流转] 数据流转测试完成');
-      
+
     } catch (error) {
       this.recordTest('数据流转', false, error.message);
-      console.error('❌ [数据流转] 测试失败:', error);
+
     }
   }
   
@@ -212,8 +203,7 @@ class CoreModulesIntegrationTest {
    * 测试算法链路完整性
    */
   async testAlgorithmChain() {
-    console.log('🔗 [算法链路] 开始测试完整算法链路');
-    
+
     try {
       const testGraph = this.createTestGraph();
       
@@ -225,14 +215,14 @@ class CoreModulesIntegrationTest {
       this.recordTest('完整算法链路', isValid);
       
       if (isValid) {
-        console.log('✅ [算法链路] 完整算法链路测试通过');
+
       } else {
-        console.error('❌ [算法链路] 完整算法链路测试失败');
+
       }
       
     } catch (error) {
       this.recordTest('算法链路', false, error.message);
-      console.error('❌ [算法链路] 测试失败:', error);
+
     }
   }
   
@@ -240,8 +230,7 @@ class CoreModulesIntegrationTest {
    * 测试性能和缓存机制
    */
   async testPerformanceAndCache() {
-    console.log('⚡ [性能缓存] 开始测试性能和缓存机制');
-    
+
     try {
       const testGraph = this.createTestGraph();
       
@@ -263,13 +252,11 @@ class CoreModulesIntegrationTest {
       const cacheStats = this.modules.globalOptimizer.getCacheStats();
       const cacheValid = cacheStats && typeof cacheStats.hitRate === 'number';
       this.recordTest('缓存机制', cacheValid);
-      
-      console.log(`⚡ [性能缓存] 第一次运行: ${duration1}ms, 第二次运行: ${duration2}ms`);
-      console.log(`⚡ [性能缓存] 缓存统计:`, cacheStats);
-      
+
+
     } catch (error) {
       this.recordTest('性能缓存', false, error.message);
-      console.error('❌ [性能缓存] 测试失败:', error);
+
     }
   }
   
@@ -277,8 +264,7 @@ class CoreModulesIntegrationTest {
    * 测试错误处理
    */
   async testErrorHandling() {
-    console.log('🛡️ [错误处理] 开始测试错误处理机制');
-    
+
     try {
       // 测试空数据处理
       const emptyDataPreprocessor = new DataPreprocessor(this.createEmptyMockGraph());
@@ -295,12 +281,10 @@ class CoreModulesIntegrationTest {
       const cyclicDataPreprocessor = new DataPreprocessor(cyclicGraph);
       const cyclicResult = await cyclicDataPreprocessor.preprocessLayoutData();
       this.recordTest('循环依赖处理', cyclicResult !== null);
-      
-      console.log('✅ [错误处理] 错误处理测试完成');
-      
+
     } catch (error) {
       this.recordTest('错误处理', false, error.message);
-      console.error('❌ [错误处理] 测试失败:', error);
+
     }
   }
   
@@ -308,8 +292,7 @@ class CoreModulesIntegrationTest {
    * 测试边界情况
    */
   async testEdgeCases() {
-    console.log('🎯 [边界情况] 开始测试边界情况');
-    
+
     try {
       // 测试单节点图
       const singleNodeGraph = this.createSingleNodeGraph();
@@ -325,12 +308,10 @@ class CoreModulesIntegrationTest {
       const deepGraph = this.createDeepTestGraph(8);
       const deepResult = await this.runCompleteLayoutChain(deepGraph);
       this.recordTest('深层嵌套处理', this.validateChainResult(deepResult));
-      
-      console.log('✅ [边界情况] 边界情况测试完成');
-      
+
     } catch (error) {
       this.recordTest('边界情况', false, error.message);
-      console.error('❌ [边界情况] 测试失败:', error);
+
     }
   }
   
@@ -587,10 +568,10 @@ class CoreModulesIntegrationTest {
   recordTest(testName, passed, error = null) {
     if (passed) {
       this.testResults.passed++;
-      console.log(`✅ [${testName}] 测试通过`);
+
     } else {
       this.testResults.failed++;
-      console.error(`❌ [${testName}] 测试失败${error ? ': ' + error : ''}`);
+
       if (error) {
         this.testResults.errors.push({ test: testName, error });
       }
@@ -627,10 +608,10 @@ export default CoreModulesIntegrationTest;
 if (typeof window === 'undefined' && import.meta.url === `file://${process.argv[1]}`) {
   const test = new CoreModulesIntegrationTest();
   test.runFullIntegrationTest().then(result => {
-    console.log('🏁 [最终结果]', result);
+
     process.exit(result.success ? 0 : 1);
   }).catch(error => {
-    console.error('💥 [测试执行失败]', error);
+
     process.exit(1);
   });
 }

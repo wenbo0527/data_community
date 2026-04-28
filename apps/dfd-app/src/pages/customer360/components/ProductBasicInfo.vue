@@ -178,7 +178,7 @@ const sendDebugInfo = (type, message, data = null) => {
 // 监听 props 变化
 watch(() => props.productType, (newType, oldType) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 [ProductBasicInfo] productType变化:', { oldType, newType })
+
   }
 }, { immediate: true })
 
@@ -196,23 +196,14 @@ watch(() => props.productData, (newData, oldData) => {
 
 watch(() => props.userInfo, (newInfo, oldInfo) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('👤 [ProductBasicInfo] userInfo变化:', {
-      productType: props.productType,
-      hasNewUserInfo: !!newInfo,
-      hasOldUserInfo: !!oldInfo
-    })
+
   }
 }, { immediate: true, deep: true })
 
 // 组件挂载时的调试
 onMounted(() => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('🚀 [ProductBasicInfo] 组件挂载完成:', {
-      productType: props.productType,
-      hasProductData: !!props.productData,
-      productDataLength: props.productData?.length || 0,
-      hasUserInfo: !!props.userInfo
-    })
+
   }
 })
 

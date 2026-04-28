@@ -403,12 +403,12 @@ const currentTables = computed(() => {
 
 // 确保组件挂载后高亮第一个步骤
 onMounted(() => {
-  console.groupCollapsed('[业务流程] 初始化加载');
-  console.log('初始步骤数据表:', currentProcessSteps.value[0]?.tables);
-  console.log('初始步骤指标:', currentMetrics.value);
-  console.log('业务类型:', businessType.value);
-  console.log('产品选型:', productType.value);
-  console.groupEnd();
+
+
+
+
+
+
   selectStep(0);
 })
 
@@ -570,7 +570,7 @@ const metricColumns = [
 ]
 
 const showMetricDetail = (metric: any) => {
-  console.log('查看指标详情:', metric)
+
 }
 
 const getStepTooltipContent = (stepIndex: number) => {
@@ -601,11 +601,10 @@ const selectStep = (index: number) => {
   // 重置编辑状态
   isEditing.value = false;
   selectedTables.value = [];
-  
-  console.log('更新后activeStep:', activeStep.value);
-  console.log('当前步骤数据表:', currentTables.value);
-  console.log('当前步骤指标:', currentMetrics.value);
-  console.groupEnd();
+
+
+
+
 }
 
 // 显示表详情
@@ -615,11 +614,10 @@ const selectStep = (index: number) => {
  */
 const showTableDetail = (record: TableItem) => {
   if(isEditing.value) return
-  
-  console.groupCollapsed(`[数据表] 点击表: ${record.name}`)
-  console.log('表详情:', record)
+
+
   console.log('点击时间:', new Date().toLocaleString())
-  console.groupEnd()
+
   router.push({
     name: 'TableDetail',
     params: { 
@@ -639,24 +637,24 @@ const cancelEditing = () => {
 
 const saveChanges = () => {
   isEditing.value = false
-  console.log('保存更改')
+
 }
 
 // 编辑数据表绑定
 const editTableBinding = () => {
-  console.log('编辑数据表绑定')
+
   Message.info('编辑数据表绑定功能')
 }
 
 // 编辑指标绑定
 const editMetricBinding = () => {
-  console.log('编辑指标绑定')
+
   Message.info('编辑指标绑定功能')
 }
 
 // 视图模式变更处理
 const handleViewModeChange = (value: string) => {
-  console.log('视图模式变更:', value)
+
   // 通过currentViewMode计算属性的setter自动处理
 }
 
@@ -706,8 +704,7 @@ const getProductTypeText = (type: string) => {
 
 // 保存业务流程
 const saveBusinessProcess = (data: any) => {
-  console.log('保存业务流程数据:', data)
-  
+
   if (currentEditProcess.value) {
     // 编辑模式
     const index = processList.value.findIndex(p => p.id === currentEditProcess.value!.id)

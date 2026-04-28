@@ -421,7 +421,7 @@ class PerformanceConfig {
         break;
         
       default:
-        console.warn(`Unknown optimization action: ${suggestion.action}`);
+
     }
   }
   
@@ -455,7 +455,7 @@ class PerformanceConfig {
         try {
           callback(newValue, oldValue, path);
         } catch (error) {
-          console.warn(`PerformanceConfig listener error for path '${path}':`, error);
+
         }
       });
     }

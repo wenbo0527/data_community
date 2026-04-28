@@ -536,7 +536,7 @@ const hideNodeTooltip = () => {
 const viewNodeDetails = (nodeId?: string) => {
   if (!nodeId) return
   // TODO: 实现查看节点详情逻辑
-  console.log('View node details:', nodeId)
+
   hideNodeTooltip()
 }
 

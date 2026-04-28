@@ -202,7 +202,7 @@ export class ValidationUtils {
     try {
       return await asyncFn()
     } catch (error) {
-      console.error(`[${context}] 异步操作失败:`, error)
+
       return fallbackValue
     }
   }
@@ -223,7 +223,7 @@ export class ValidationUtils {
       } catch (error) {
         lastError = error
         if (i < maxRetries) {
-          console.warn(`重试 ${i + 1}/${maxRetries} 失败:`, error.message)
+
           await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)))
         }
       }
@@ -270,8 +270,7 @@ export class PerformanceMonitor {
       
       this.history.push(result)
       this.metrics.delete(name)
-      
-      console.log(`[Performance] ${name}: ${result.duration}ms`)
+
       return result.duration
     }
     return 0
@@ -375,8 +374,6 @@ export class ErrorHandler {
       this.errorHistory.shift()
     }
 
-    console.error(`[ErrorHandler] ${context}:`, error, metadata)
-    
     // 可以在这里添加错误上报逻辑
     this.reportError(errorRecord)
   }

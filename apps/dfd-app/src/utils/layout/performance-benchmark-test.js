@@ -77,10 +77,9 @@ function createMockPreviewManager() {
  * 性能测试函数
  */
 async function performanceTest(engineName, engine, testData, iterations = 10) {
-    console.log(`\n🚀 开始测试 ${engineName}`);
-    console.log(`📊 测试数据: ${testData.nodes.length} 节点, ${testData.edges.length} 边`);
-    console.log(`🔄 测试轮数: ${iterations}`);
-    
+
+
+
     const times = [];
     const memoryUsages = [];
     
@@ -100,7 +99,7 @@ async function performanceTest(engineName, engine, testData, iterations = 10) {
                 enableCache: true
             });
         } catch (error) {
-            console.warn(`⚠️  第 ${i + 1} 轮测试出现错误:`, error.message);
+
             continue;
         }
         
@@ -122,8 +121,7 @@ async function performanceTest(engineName, engine, testData, iterations = 10) {
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
     const avgMemory = memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length;
-    
-    console.log(`\n📈 ${engineName} 性能统计:`);
+
     console.log(`  平均执行时间: ${avgTime.toFixed(2)}ms`);
     console.log(`  最快执行时间: ${minTime.toFixed(2)}ms`);
     console.log(`  最慢执行时间: ${maxTime.toFixed(2)}ms`);
@@ -144,7 +142,7 @@ async function performanceTest(engineName, engine, testData, iterations = 10) {
  * 主测试函数
  */
 async function runBenchmark() {
-    console.log('🎯 统一布局引擎性能基准测试');
+
     console.log('=' .repeat(50));
     
     // 创建模拟环境
@@ -187,12 +185,11 @@ async function runBenchmark() {
     }
     
     // 输出总结报告
-    console.log('\n🎉 性能基准测试完成');
+
     console.log('=' .repeat(50));
-    console.log('\n📋 总结报告:');
-    
+
     results.forEach(result => {
-        console.log(`\n${result.testCase}:`);
+
         console.log(`  平均执行时间: ${result.newEngine.avgTime.toFixed(2)}ms`);
         console.log(`  最快执行时间: ${result.newEngine.minTime.toFixed(2)}ms`);
         console.log(`  最慢执行时间: ${result.newEngine.maxTime.toFixed(2)}ms`);
@@ -202,29 +199,28 @@ async function runBenchmark() {
     // 计算总体性能
     const totalAvgTime = results.reduce((sum, r) => sum + r.newEngine.avgTime, 0) / results.length;
     const totalAvgMemory = results.reduce((sum, r) => sum + r.newEngine.avgMemory, 0) / results.length;
-    
-    console.log(`\n🏆 总体性能表现:`);
+
     console.log(`  平均执行时间: ${totalAvgTime.toFixed(2)}ms`);
     console.log(`  平均内存使用: ${(totalAvgMemory / 1024 / 1024).toFixed(2)}MB`);
     
     // 性能评估
     if (totalAvgTime < 100) {
-        console.log('\n✅ 性能表现优秀: 平均执行时间小于100ms');
+
     } else if (totalAvgTime < 500) {
-        console.log('\n✅ 性能表现良好: 平均执行时间小于500ms');
+
     } else {
-        console.log('\n⚠️  性能需要优化: 平均执行时间超过500ms');
+
     }
     
     if (totalAvgMemory / 1024 / 1024 < 10) {
-        console.log('✅ 内存使用合理: 平均内存使用小于10MB');
+
     } else {
-        console.log('⚠️  内存使用较高: 平均内存使用超过10MB');
+
     }
 }
 
 // 运行基准测试
 runBenchmark().catch(error => {
-    console.error('❌ 基准测试失败:', error);
+
     process.exit(1);
 });

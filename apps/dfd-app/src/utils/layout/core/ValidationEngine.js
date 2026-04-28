@@ -50,7 +50,7 @@ export class ValidationEngine {
     this.warnings = [];
     
     this.initializeDefaultRules();
-    console.log('✅ [ValidationEngine] 验证引擎初始化完成');
+
   }
 
   /**
@@ -236,12 +236,12 @@ export class ValidationEngine {
    */
   addRule(type, validator) {
     if (typeof validator !== 'function') {
-      console.warn('✅ [ValidationEngine] 验证器必须是函数');
+
       return;
     }
     
     this.rules.set(type, validator);
-    console.log(`✅ [ValidationEngine] 添加验证规则: ${type}`);
+
   }
 
   /**
@@ -252,12 +252,12 @@ export class ValidationEngine {
    */
   addCustomValidator(name, validator) {
     if (typeof validator !== 'function') {
-      console.warn('✅ [ValidationEngine] 自定义验证器必须是函数');
+
       return;
     }
     
     this.customValidators.set(name, validator);
-    console.log(`✅ [ValidationEngine] 添加自定义验证器: ${name}`);
+
   }
 
   /**
@@ -298,7 +298,7 @@ export class ValidationEngine {
     } catch (error) {
       result.errors.push({ type: 'validation_error', message: `验证过程出错: ${error.message}` });
       result.isValid = false;
-      console.error('✅ [ValidationEngine] 验证过程出错:', error);
+
     }
     
     // 缓存结果
@@ -364,8 +364,7 @@ export class ValidationEngine {
       errors: allErrors,
       warnings: allWarnings
     };
-    
-    console.log('✅ [ValidationEngine] 完整布局验证:', overallResult.isValid ? '通过' : '失败');
+
     return overallResult;
   }
 
@@ -399,7 +398,7 @@ export class ValidationEngine {
    */
   clearCache() {
     this.validationCache.clear();
-    console.log('✅ [ValidationEngine] 验证缓存已清除');
+
   }
 
   /**
@@ -437,8 +436,7 @@ export class ValidationEngine {
     this.clearCache();
     this.errors = [];
     this.warnings = [];
-    
-    console.log('✅ [ValidationEngine] 验证引擎已销毁');
+
   }
 }
 

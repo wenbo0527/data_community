@@ -205,7 +205,7 @@ const addStep = () => {
       editStepName(newStep.id)
     }, 100)
   } catch (error) {
-    console.error('添加步骤时出错:', error)
+
     Message.error('添加步骤失败，请重试')
   }
 }
@@ -221,7 +221,7 @@ const removeStep = (index: number) => {
     localSteps.value.splice(index, 1)
     handleStepChange()
   } catch (error) {
-    console.error('移除步骤时出错:', error)
+
     Message.error('移除步骤失败，请重试')
   }
 }
@@ -236,7 +236,7 @@ const moveStepUp = (index: number) => {
       handleStepChange()
     }
   } catch (error) {
-    console.error('上移步骤时出错:', error)
+
     Message.error('移动步骤失败，请重试')
   }
 }
@@ -251,7 +251,7 @@ const moveStepDown = (index: number) => {
       handleStepChange()
     }
   } catch (error) {
-    console.error('下移步骤时出错:', error)
+
     Message.error('移动步骤失败，请重试')
   }
 }
@@ -270,7 +270,7 @@ const handleStepNameBlur = (step: ProcessStep) => {
     editingStepId.value = null
     handleStepChange()
   } catch (error) {
-    console.error('步骤名称编辑时出错:', error)
+
     Message.error('保存步骤名称失败，请重试')
   }
 }
@@ -309,7 +309,7 @@ const handleDrop = (targetIndex: number, event: DragEvent) => {
       handleStepChange()
     }
   } catch (error) {
-    console.error('拖拽步骤时出错:', error)
+
     Message.error('移动步骤失败，请重试')
   }
 }
@@ -329,7 +329,7 @@ const handleStepChange = () => {
       localSteps.value.every(step => step.name.trim().length > 0)
     emit('validate', isValid)
   } catch (error) {
-    console.error('步骤验证时出错:', error)
+
     emit('validate', false)
   }
 }

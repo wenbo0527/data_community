@@ -889,7 +889,7 @@ onMounted(() => {
   const ro = new ResizeObserver(entries => {
     const r = entries[0]?.contentRect
     if (r) size.value = { width: r.width, height: r.height }
-    console.log('[Canvas2_5D] resize', r)
+
   })
   if (root.value) ro.observe(root.value)
   const propHide = props.opts?.hideNodes
@@ -905,13 +905,11 @@ onMounted(() => {
 watch(() => [props.opts?.hideNodes, props.opts?.coord], () => {
   const propHide = props.opts?.hideNodes
   flags.value.hideNodes = propHide !== undefined ? toBool(propHide) : false
-  console.log('[Canvas2_5D] opts changed', {
-    hideNodes: flags.value.hideNodes,
-    coord: toBool(props.opts?.coord)
+
   })
 })
 watch(() => flags.value.hideNodes, (v: boolean) => {
-  console.log('[Canvas2_5D] flags.hideNodes updated', v)
+
 })
 </script>
 <style scoped>

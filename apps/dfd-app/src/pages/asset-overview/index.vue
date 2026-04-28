@@ -269,16 +269,16 @@ const updateLayoutDimensions = () => {
     width: window.innerWidth,
     height: window.innerHeight
   }
-  console.log('Layout dimensions updated:', layoutDimensions.value)
+
 }
 
 const refreshData = () => {
-  console.log('刷新数据')
+
   // 这里可以添加刷新数据的逻辑
 }
 
 const showGuide = () => {
-  console.log('显示使用指南')
+
   // 这里可以添加显示指南的逻辑
 }
 

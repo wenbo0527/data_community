@@ -307,7 +307,7 @@ export function useNodeSpacing() {
     // 验证基础间距
     const baseSpacing = parseInt(config.baseSpacing)
     if (baseSpacing < 4) {
-      console.warn('基础间距过小，可能影响可读性')
+
       return false
     }
     
@@ -321,17 +321,17 @@ export function useNodeSpacing() {
     const isContentTitleRatioValid = fibonacci.validateSpacingRatio(contentGap, titleGap)
     
     if (!isContentPortRatioValid) {
-      console.warn('内容与端口间距比例不符合黄金比例')
+
     }
     
     if (!isContentTitleRatioValid) {
-      console.warn('内容与标题间距比例不符合黄金比例')
+
     }
     
     // 验证最小行高
     const minRowHeight = parseInt(config.minRowHeight)
     if (minRowHeight < 24) {
-      console.warn('最小行高小于24px，可能影响端口布局')
+
       return false
     }
     

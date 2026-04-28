@@ -182,8 +182,6 @@ const props = withDefaults(defineProps<{
   showHeader: true
 })
 
-console.log('TableCollectionGrid: collections prop received', props.collections)
-
 const emit = defineEmits<TableCollectionGridEmits>()
 
 const currentPage = ref(1)
@@ -285,51 +283,48 @@ const handleRequestPermission = (collection: TableCollection) => {
 
 // 处理操作选择
 const handleActionSelect = (value: string | number | Record<string, any>) => {
-  console.log('[TableCollectionGrid] handleActionSelect called with value:', value, 'type:', typeof value)
-  
+
   // 如果传递的是对象，直接使用
   if (typeof value === 'object' && value !== null && 'action' in value && 'collection' in value) {
-    console.log('[TableCollectionGrid] Received collection object directly:', value)
+
     const { action, collection } = value
     
     switch (action) {
       case 'edit':
-        console.log('[TableCollectionGrid] Emitting edit-collection event for collection:', collection)
+
         emit('edit-collection', collection)
         break
       case 'delete':
-        console.log('[TableCollectionGrid] Handling delete for collection:', collection)
+
         handleDeleteCollection(collection)
         break
       default:
-        console.warn('[TableCollectionGrid] Unknown action:', action)
+
     }
     return
   }
   
   // 保持原有的字符串处理方式
   const [action, id] = (value as string).split('-')
-  console.log('[TableCollectionGrid] Parsed action and id:', { action, id })
+
   const collection = props.collections.find((c: TableCollection) => c.id === id)
   
   if (!collection) {
-    console.warn('[TableCollectionGrid] Collection not found for id:', id)
+
     return
   }
-  
-  console.log('[TableCollectionGrid] Found collection:', collection)
-  
+
   switch (action) {
     case 'edit':
-      console.log('[TableCollectionGrid] Emitting edit-collection event for collection:', collection)
+
       emit('edit-collection', collection)
       break
     case 'delete':
-      console.log('[TableCollectionGrid] Handling delete for collection:', collection)
+
       handleDeleteCollection(collection)
       break
     default:
-      console.warn('[TableCollectionGrid] Unknown action:', action)
+
   }
 }
 

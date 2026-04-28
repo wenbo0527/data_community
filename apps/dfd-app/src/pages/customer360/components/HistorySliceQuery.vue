@@ -467,7 +467,7 @@ const viewHistoryDetail = (record) => {
   // 打开查询结果详情抽屉
   selectedQueryRecord.value = record
   showQueryResultDrawer.value = true
-  console.log('打开查询结果详情抽屉:', record)
+
 }
 
 // 重试查询
@@ -492,7 +492,7 @@ const retryQuery = async (record) => {
       Message.error('查询重试失败')
     }
   } catch (error) {
-    console.error('重试查询失败:', error)
+
     record.status = 'failed'
     Message.error('查询重试失败')
   }
@@ -537,7 +537,7 @@ const deleteHistoryRecord = async (recordId) => {
       Message.success('历史记录已删除')
     }
   } catch (error) {
-    console.error('删除历史记录失败:', error)
+
     Message.error('删除失败')
   }
 }
@@ -545,13 +545,13 @@ const deleteHistoryRecord = async (recordId) => {
 // 搜索历史记录
 const handleSearchInput = () => {
   // 搜索逻辑已在计算属性 filteredHistoryRecords 中处理
-  console.log('搜索关键词:', searchKeyword.value)
+
 }
 
 // 清空搜索
 const handleSearchClear = () => {
   searchKeyword.value = ''
-  console.log('搜索已清空')
+
 }
 
 // 刷新历史记录
@@ -561,7 +561,7 @@ const refreshHistoryRecords = async () => {
     await loadHistoryQueryRecords()
     Message.success('历史记录已刷新')
   } catch (error) {
-    console.error('刷新历史记录失败:', error)
+
     Message.error('刷新失败')
   } finally {
     historyRecordsLoading.value = false
@@ -583,7 +583,7 @@ const createNewQuery = async () => {
 
 // 监听selectedModelParams变化
 watch(selectedModelParams, (newVal) => {
-  console.log('参数配置更新:', newVal ? newVal.length : 0, '个参数')
+
 }, { deep: true })
 
 // 加载数据模型列表
@@ -609,10 +609,10 @@ const loadDataModels = async () => {
     
     if (response.success) {
       availableModels.value = response.data
-      console.log('数据模型加载成功:', response.data.length, '个模型')
+
     }
   } catch (error) {
-    console.error('加载数据模型失败:', error)
+
     // 使用默认数据
     availableModels.value = [
       { label: '客户基础信息', value: 'customer_basic', description: '包含客户的基本信息' },
@@ -633,8 +633,7 @@ const formatDate = (date = new Date()) => {
 
 // 处理模型选择
 const handleModelSelect = (modelType) => {
-  console.log('选择数据模型:', modelType)
-  
+
   // 根据选中的模型加载参数配置
   // 建立模型ID到参数配置的映射
   const modelParamsMap = {
@@ -770,8 +769,7 @@ const handleModelSelect = (modelType) => {
   }
   
   const params = modelParamsMap[modelType] || []
-  console.log('加载参数配置:', params.length, '个参数')
-  
+
   selectedModelParams.value = params
   
   // 重置参数值
@@ -839,7 +837,7 @@ const performQuery = async () => {
     // 刷新历史记录
     await loadHistoryQueryRecords()
   } catch (error) {
-    console.error('查询执行失败:', error)
+
     Message.error('查询执行失败')
   } finally {
     querying.value = false
@@ -959,7 +957,7 @@ const loadHistoryQueryRecords = async () => {
     ]
     
   } catch (error) {
-    console.error('加载历史记录失败:', error)
+
     historyQueryRecords.value = []
   }
 }
@@ -973,14 +971,14 @@ const loadHistoryQueryRecords = async () => {
 
 // 组件挂载时加载历史记录和数据模型
 onMounted(async () => {
-  console.log('🌟🌟🌟🌟🌟 [HistorySliceQuery组件] 组件已成功挂载! 🌟🌟🌟🌟🌟')
-  console.log('👤 传入的用户ID:', props.userId)
+
+
   console.log('📅 挂载时间:', new Date().toLocaleTimeString())
   console.log('🔍 About to call loadHistoryQueryRecords()');
   loadHistoryQueryRecords()
   console.log('🔍 About to call loadDataModels()');
   await loadDataModels()
-  console.log('🔍 Component mounted initialization completed');
+
 })
 
 // 复制单个文本

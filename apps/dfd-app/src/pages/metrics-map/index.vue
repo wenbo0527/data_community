@@ -258,12 +258,12 @@ const handleFileChange = (type: string, event: any) => {
         const workbook = XLSX.read(data, { type: 'array' })
         const firstSheetName = workbook.SheetNames?.[0]
         if (!firstSheetName) {
-          console.warn('Excel 文件中未找到工作表')
+
           return
         }
         const firstSheet = workbook.Sheets[firstSheetName]
         if (!firstSheet) {
-          console.warn('工作表解析失败')
+
           return
         }
         const jsonData = XLSX.utils.sheet_to_json(firstSheet)
@@ -274,7 +274,7 @@ const handleFileChange = (type: string, event: any) => {
           batchFileCount.value = jsonData.length
         }
       } catch (error) {
-        console.error('文件解析失败:', error)
+
       }
     }
     reader.readAsArrayBuffer(file)
@@ -298,7 +298,7 @@ const handleBatchUpload = async (option: { fileItem: FileItem }): Promise<Upload
   const formData = new FormData()
   const fileBlob = option.fileItem?.file
   if (!fileBlob) {
-    console.error('批量上传文件为空')
+
     return { abort: () => {} }
   }
   formData.append('file', fileBlob as Blob)
@@ -315,7 +315,7 @@ const handleBatchUpload = async (option: { fileItem: FileItem }): Promise<Upload
       fetchMetrics()
     }
   } catch (error) {
-    console.error('批量上传失败:', error)
+
   }
   
   return {
@@ -328,7 +328,7 @@ const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<
   const formData = new FormData()
   const fileBlob = option.fileItem?.file
   if (!fileBlob) {
-    console.error('增量上传文件为空')
+
     return { abort: () => {} }
   }
   formData.append('file', fileBlob as Blob)
@@ -345,7 +345,7 @@ const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<
       fetchMetrics()
     }
   } catch (error) {
-    console.error('增量上传失败:', error)
+
   }
   
   return {
@@ -373,12 +373,12 @@ const fetchMetrics = async () => {
         pagination.value.total = 0
       }
     } else {
-      console.warn('未找到可用的指标列表 mock 接口')
+
       tableData.value = []
       pagination.value.total = 0
     }
   } catch (error) {
-    console.error('获取指标列表失败:', error)
+
     tableData.value = []
     pagination.value.total = 0
   }

@@ -17,7 +17,7 @@ const loadStats = {
  * @returns {Promise} 组件加载Promise
  */
 export function loadComponent(componentPath, componentName = '未知组件') {
-  console.log(`🔄 [组件加载] 开始加载: ${componentName}`)
+
   loadStats.loading.add(componentName)
   
   const startTime = performance.now()
@@ -32,7 +32,7 @@ export function loadComponent(componentPath, componentName = '未知组件') {
       
       // 验证组件导出
       if (!module?.default && !module?.[componentName]) {
-        console.warn(`⚠️ [组件验证] ${componentName} 可能缺少默认导出`)
+
       }
       
       return module?.default || module?.[componentName] || module
@@ -67,34 +67,31 @@ export function loadComponent(componentPath, componentName = '未知组件') {
       }
       
       loadStats.errors.push(errorInfo)
-      
-      console.group(`❌ [组件加载失败] ${componentName}`)
-      console.error('错误信息:', error.message)
-      console.error('组件路径:', componentPath)
+
+
+
       console.error('加载时间:', `${loadTime.toFixed(2)}ms`)
-      console.error('错误堆栈:', error.stack)
+
       if (fileName) {
-        console.error('定位文件:', fileName)
-        console.error('定位行列:', `${lineNumber}:${columnNumber}`)
+
+
       }
       
       // 分析错误类型
       if (error.message.includes('SyntaxError')) {
-        console.error('🔍 语法错误分析:')
-        console.error('- 检查组件文件是否存在语法错误')
-        console.error('- 检查 import/export 语句是否正确')
-        console.error('- 检查是否使用了不支持的语法')
+
+
+
+
       }
       
       if (error.message.includes('Cannot resolve module')) {
-        console.error('🔍 模块解析错误:')
-        console.error('- 检查文件路径是否正确')
-        console.error('- 检查文件是否存在')
-        console.error('- 检查文件扩展名是否正确')
+
+
+
+
       }
-      
-      console.groupEnd()
-      
+
       throw error
     })
 }
@@ -124,20 +121,19 @@ export function clearLoadStats() {
  * 打印加载统计报告
  */
 export function printLoadReport() {
-  console.group('📊 [组件加载统计报告]')
-  console.log('成功加载:', loadStats.success)
-  console.log('加载失败:', loadStats.failed)
+
+
+
   console.log('正在加载:', Array.from(loadStats.loading))
   
   if (loadStats.errors.length > 0) {
-    console.group('❌ 失败详情:')
+
     loadStats.errors.forEach((error, index) => {
-      console.log(`${index + 1}. ${error.componentName}: ${error.error}`)
+
     })
-    console.groupEnd()
+
   }
-  
-  console.groupEnd()
+
 }
 
 // 全局暴露统计函数（开发环境）

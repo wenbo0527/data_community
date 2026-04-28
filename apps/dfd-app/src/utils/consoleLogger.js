@@ -51,7 +51,7 @@ export const consoleLogger = {
    * 分组日志结束
    */
   groupEnd() {
-    console.groupEnd()
+
   },
 
   /**
@@ -59,6 +59,6 @@ export const consoleLogger = {
    * @param {any} data - 要显示的数据
    */
   table(data) {
-    console.table(data)
+
   }
 }

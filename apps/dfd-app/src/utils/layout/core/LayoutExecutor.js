@@ -64,7 +64,7 @@ export class LayoutExecutor {
    */
   async execute(context) {
     if (this.isExecuting) {
-      console.warn('Layout execution already in progress');
+
       return { success: false, reason: 'already_executing' };
     }
     
@@ -75,8 +75,7 @@ export class LayoutExecutor {
     const startTime = Date.now();
     
     try {
-      console.log(`Starting layout execution ${this.executionId}`);
-      
+
       // 阶段1：数据预处理
       const preprocessedData = await this.executeStage('preprocessing', () => {
         return this.modules.dataPreprocessor.preprocess({
@@ -162,15 +161,13 @@ export class LayoutExecutor {
         },
         timestamp: Date.now()
       };
-      
-      console.log(`Layout execution ${this.executionId} completed successfully in ${this.lastExecutionTime}ms`);
+
       return result;
       
     } catch (error) {
       const endTime = Date.now();
       this.lastExecutionTime = endTime - startTime;
-      
-      console.error(`Layout execution ${this.executionId} failed:`, error);
+
       return {
         success: false,
         executionId: this.executionId,
@@ -197,16 +194,15 @@ export class LayoutExecutor {
     const stageStartTime = Date.now();
     
     try {
-      console.log(`Executing stage: ${stageName}`);
+
       const result = await stageFunction();
       const stageDuration = Date.now() - stageStartTime;
-      
-      console.log(`Stage ${stageName} completed in ${stageDuration}ms`);
+
       return result;
       
     } catch (error) {
       const stageDuration = Date.now() - stageStartTime;
-      console.error(`Stage ${stageName} failed after ${stageDuration}ms:`, error);
+
       throw new Error(`Stage ${stageName} failed: ${error.message}`);
     }
   }
@@ -237,7 +233,7 @@ export class LayoutExecutor {
    */
   cancel() {
     if (this.isExecuting) {
-      console.log(`Cancelling layout execution ${this.executionId}`);
+
       this.isExecuting = false;
       this.currentStage = 'cancelled';
     }

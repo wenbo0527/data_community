@@ -759,12 +759,7 @@ const versionHistoryColumns = [
 const fetchMetrics = async () => {
   try {
     loading.value = true
-    console.log('请求参数:', {
-      page: pagination.value.current,
-      pageSize: pagination.value.pageSize,
-      ...searchForm.value
-    })
-    
+
     // 使用 mock 数据
     const queryParams = { 
       ...searchForm.value, 
@@ -776,8 +771,7 @@ const fetchMetrics = async () => {
     }
     
     const mockList = metricsMock[0].response({ query: queryParams })
-    console.log('Mock数据:', mockList)
-    
+
     if (mockList && mockList.data) {
       tableData.value = mockList.data.list || []
       pagination.value.total = mockList.data.total || 0
@@ -786,7 +780,7 @@ const fetchMetrics = async () => {
       pagination.value.total = 0
     }
   } catch (error) {
-    console.error('获取指标列表失败:', error)
+
     tableData.value = []
     pagination.value.total = 0
   } finally {
@@ -986,7 +980,7 @@ const handleSubmit = async () => {
       fetchMetrics()
     }
   } catch (error) {
-    console.error('表单验证失败:', error)
+
   }
 }
 
@@ -1037,7 +1031,7 @@ const goToRegulatoryConfig = () => {
 
 // 标签页切换
 const handleTabChange = (key: string | number) => {
-  console.log('切换标签页:', key)
+
 }
 
 // 获取状态颜色
@@ -1084,7 +1078,7 @@ const getCategoryText = (category: string) => {
 
 // 组件挂载
 onMounted(() => {
-  console.log('统一指标页面挂载，开始获取数据')
+
   fetchMetrics()
 })
 </script>

@@ -173,14 +173,12 @@ const selectedKeys = ref<string[]>([])
 // 监听selectedKeys变化，同步更新newCollection.tables
 watch(selectedKeys, (newKeys) => {
   if (!newKeys || !mockTransferData.value) return
-  
-  console.log('当前选中的key值:', newKeys);
-  
+
   newCollection.value.tables = mockTransferData.value
     .filter(item => item?.key && newKeys.includes(item.key))
     .map(item => {
       console.log('Transfer item 数据:', JSON.stringify(item, null, 2));
-      console.log('当前渲染的表项数据:', item);
+
       return {
         name: item?.name || '',
         type: item?.type || '',
@@ -192,8 +190,7 @@ watch(selectedKeys, (newKeys) => {
         fields: []
       }
     })
-    
-  console.log('转换后的表数据:', newCollection.value.tables);
+
 })
 
 const tableColumns = [
@@ -358,12 +355,10 @@ const showCollectionDetail = (collection: TableCollection) => {
 
 const handleTransferItemClick = (item: any) => {
   // 输出传入的item参数
-  console.log('handleTransferItemClick called with item:', item);
-  
+
   // 确保从mockTransferData中获取完整数据
   const fullItem = mockTransferData.value.find(data => data?.key === item?.key) || item;
-  console.log('完整的表项数据:', fullItem);
-  
+
   // 确保有有效的key值
   if (!fullItem?.key) {
     console.warn('点击的表项缺少key值:', JSON.stringify(fullItem));
@@ -372,15 +367,13 @@ const handleTransferItemClick = (item: any) => {
   
   const tableName = fullItem?.name || '未知表';
   const tableType = fullItem?.type || '未知类型';
-  console.log(`Transfer组件点击事件触发，表名: ${tableName}，类型: ${tableType}`);
-  
+
   // 更新选中状态
   const isSelected = selectedKeys.value.includes(fullItem.key)
   selectedKeys.value = isSelected 
     ? selectedKeys.value.filter(key => key !== fullItem.key)
     : [...selectedKeys.value, fullItem.key]
-  
-  console.log('更新后的selectedKeys:', selectedKeys.value)
+
 }
 </script>
 

@@ -145,7 +145,7 @@ const fetchCollection = async () => {
       router.push('/discovery/data-map/collections')
     }
   } catch (error) {
-    console.error('Fetch collection error:', error)
+
     Message.error('获取数据失败')
   } finally {
     loading.value = false
@@ -166,7 +166,7 @@ const showDetail = (table: TableItem) => {
       } as unknown as any
     }
   }).catch(err => {
-    console.error('路由跳转失败:', err)
+
     Message.error('无法打开表详情')
   })
 }

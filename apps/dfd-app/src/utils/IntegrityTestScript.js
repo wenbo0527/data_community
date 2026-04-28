@@ -38,20 +38,20 @@
             
             // 实时输出结果
             const emoji = status === 'pass' ? '✅' : status === 'fail' ? '❌' : '⚠️';
-            console.log(`${emoji} [${testName}] ${message}`);
+
             if (details) {
-                console.log('   详细信息:', details);
+
             }
         }
 
         printSummary() {
             console.log('\n' + '='.repeat(60));
-            console.log('📊 测试结果汇总');
+
             console.log('='.repeat(60));
-            console.log(`总测试数: ${this.summary.total}`);
-            console.log(`✅ 通过: ${this.summary.passed}`);
-            console.log(`❌ 失败: ${this.summary.failed}`);
-            console.log(`⚠️  警告: ${this.summary.warnings}`);
+
+
+
+
             console.log(`成功率: ${((this.summary.passed / this.summary.total) * 100).toFixed(1)}%`);
             console.log('='.repeat(60));
             
@@ -74,8 +74,7 @@
 
         // 初始化测试环境
         initializeTestEnvironment() {
-            console.log('🔧 初始化测试环境...');
-            
+
             // 获取关键实例
             this.graph = window.graph || window.__graph__ || null;
             this.layoutEngine = window.layoutEngine || window.__layoutEngine__ || null;
@@ -400,11 +399,11 @@
 
         // 执行完整测试套件
         runFullTestSuite() {
-            console.log('🚀 开始执行完整性测试套件...');
+
             console.log('='.repeat(60));
             
             if (!this.initializeTestEnvironment()) {
-                console.log('❌ 测试环境初始化失败，终止测试');
+
                 return this.collector.printSummary();
             }
 
@@ -421,8 +420,7 @@
 
         // 快速完整性检查
         runQuickCheck() {
-            console.log('⚡ 执行快速完整性检查...');
-            
+
             if (!this.initializeTestEnvironment()) {
                 return false;
             }
@@ -437,21 +435,20 @@
         // 获取详细的问题报告
         getDetailedReport() {
             const failedTests = this.collector.getFailedTests();
-            
-            console.log('\n📋 详细问题报告');
+
             console.log('='.repeat(40));
             
             if (failedTests.length === 0) {
-                console.log('✅ 没有发现问题');
+
                 return;
             }
 
             failedTests.forEach((test, index) => {
-                console.log(`\n${index + 1}. ${test.testName}`);
-                console.log(`   问题: ${test.message}`);
+
+
                 if (test.details) {
-                    console.log('   详细信息:');
-                    console.log(test.details);
+
+
                 }
             });
         }
@@ -466,8 +463,7 @@
 
         // 修复NaN坐标
         fixNaNCoordinates() {
-            console.log('🔧 开始修复NaN坐标...');
-            
+
             const nodes = this.graph.getNodes();
             let fixedCount = 0;
             
@@ -501,8 +497,7 @@
                     console.log(`✅ 修复节点 ${node.id} 坐标: (${x}, ${y})`);
                 }
             });
-            
-            console.log(`🎉 修复完成，共修复 ${fixedCount} 个节点`);
+
             return fixedCount;
         }
     }
@@ -527,7 +522,7 @@
         const layoutEngine = window.layoutEngine || window.__layoutEngine__;
         
         if (!graph) {
-            console.error('❌ Graph实例未找到');
+
             return 0;
         }
         
@@ -541,8 +536,7 @@
         tester.getDetailedReport();
     };
 
-    console.log('✅ 完整性测试脚本已加载');
-    console.log('📖 使用说明:');
+
     console.log('   • runIntegrityTests() - 执行完整测试套件');
     console.log('   • runQuickIntegrityCheck() - 快速完整性检查');
     console.log('   • fixNaNCoordinates() - 自动修复NaN坐标');

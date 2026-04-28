@@ -53,9 +53,9 @@ export const useUserStore = defineStore('user', () => {
   const setUserDepartment = (department) => {
     if (['risk', 'marketing', 'data'].includes(department)) {
       userInfo.value.department = department
-      console.log(`用户部门已切换至: ${departmentName.value}`)
+
     } else {
-      console.warn('无效的部门名称:', department)
+
     }
   }
 
@@ -79,7 +79,7 @@ export const useUserStore = defineStore('user', () => {
       
       return isNewUser.value
     } catch (error) {
-      console.error('检查用户角色失败:', error)
+
       return false
     }
   }
@@ -174,7 +174,7 @@ export const useUserStore = defineStore('user', () => {
       
       return { success: true, user: mockUserInfo }
     } catch (error) {
-      console.error('登录失败:', error)
+
       return { success: false, error: error.message }
     }
   }
@@ -217,7 +217,7 @@ export const useUserStore = defineStore('user', () => {
       }
       computeEffectivePermissions()
     } catch (error) {
-      console.error('初始化用户数据失败:', error)
+
     }
   }
 

@@ -15,6 +15,7 @@ if (typeof globalThis !== 'undefined') {
 
 import { setupVariableManagementMock } from './variable-management'
 import variableMap from './variable-map'
+import { setupFeatureMapMock } from './feature-map'
 import { registerCommunityMocks } from './community-api'
 
 // 设置Mock.js配置
@@ -33,6 +34,11 @@ function registerMocks() {
   // 注册变量管理相关接口（函数式注册）
   if (__Mock) {
     setupVariableManagementMock()
+  }
+
+  // 注册特征地图接口
+  if (__Mock) {
+    setupFeatureMapMock()
   }
   
   // 注册变量地图相关接口

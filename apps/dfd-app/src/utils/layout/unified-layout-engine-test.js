@@ -49,11 +49,11 @@ class UnifiedLayoutEngineTest {
   createMockPreviewManager() {
     return {
       clearAllPreviewLines: async () => {
-        console.log('Mock: Preview lines cleared');
+
         return true;
       },
       verifyCleanup: async () => {
-        console.log('Mock: Preview line cleanup verified');
+
         return true;
       }
     };
@@ -72,15 +72,14 @@ class UnifiedLayoutEngineTest {
     
     const status = passed ? '✅' : '❌';
     const errorMsg = error ? ` - ${error}` : '';
-    console.log(`${status} ${name}${errorMsg}`);
+
   }
   
   /**
    * 运行所有测试
    */
   async runAllTests() {
-    console.log('\n=== 统一布局引擎集成测试 ===\n');
-    
+
     try {
       // 测试1：引擎初始化
       await this.testEngineInitialization();
@@ -107,7 +106,7 @@ class UnifiedLayoutEngineTest {
       await this.testDispose();
       
     } catch (error) {
-      console.error('测试执行出错:', error);
+
       this.recordTest('测试执行', false, error.message);
     }
     
@@ -167,7 +166,7 @@ class UnifiedLayoutEngineTest {
         const errorMsg = result ? 
           `执行失败: ${result.error || result.reason || '未知原因'}, 阶段: ${result.stage || '未知'}` : 
           '返回结果为空';
-        console.error('布局执行详细错误:', result);
+
         this.recordTest('布局执行', false, errorMsg);
       }
     } catch (error) {
@@ -271,33 +270,28 @@ class UnifiedLayoutEngineTest {
    * 打印测试结果
    */
   printTestResults() {
-    console.log('\n=== 测试结果汇总 ===');
-    
+
     const passed = this.testResults.filter(test => test.passed).length;
     const total = this.testResults.length;
     const passRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
-    
-    console.log(`总测试数: ${total}`);
-    console.log(`通过数: ${passed}`);
-    console.log(`失败数: ${total - passed}`);
-    console.log(`通过率: ${passRate}%`);
-    
+
+
+
+
     if (passed === total) {
-      console.log('\n🎉 所有测试通过！统一布局引擎功能正常。');
+
     } else {
-      console.log('\n⚠️  部分测试失败，请检查相关模块。');
-      
+
       // 显示失败的测试
       const failedTests = this.testResults.filter(test => !test.passed);
       if (failedTests.length > 0) {
-        console.log('\n失败的测试:');
+
         failedTests.forEach(test => {
-          console.log(`  - ${test.name}: ${test.error || '未知错误'}`);
+
         });
       }
     }
-    
-    console.log('\n详细测试结果:');
+
     console.log(JSON.stringify(this.testResults, null, 2));
   }
 }

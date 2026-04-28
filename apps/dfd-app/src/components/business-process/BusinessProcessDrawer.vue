@@ -242,11 +242,11 @@ interface Props {
 // 属性验证
 const validateProps = (props: Props) => {
   if (!props.mode || !['create', 'edit'].includes(props.mode)) {
-    console.warn('BusinessProcessDrawer: mode 属性必须是 "create" 或 "edit"')
+
   }
   
   if (props.mode === 'edit' && !props.processId) {
-    console.warn('BusinessProcessDrawer: 编辑模式下必须提供 processId')
+
   }
 }
 
@@ -325,7 +325,7 @@ const retryComponent = async () => {
       logError('重试次数超限', '建议用户刷新页面')
     }
   } catch (error) {
-    console.error('重试组件时发生错误:', error)
+
     handleComponentError(error, '重试操作')
   } finally {
     isRecovering.value = false
@@ -355,7 +355,7 @@ const resetComponent = () => {
     
     Message.success('组件已重置')
   } catch (error) {
-    console.error('重置组件时发生错误:', error)
+
     // 强制重置关键状态
     hasError.value = false
     currentStepIndex.value = 0
@@ -373,8 +373,7 @@ const logError = (error: string, context: string) => {
   if (errorHistory.value.length > 50) {
     errorHistory.value = errorHistory.value.slice(-30)
   }
-  
-  console.error(`[BusinessProcessDrawer] ${context}: ${error}`)
+
 }
 
 // 获取错误报告
@@ -458,7 +457,7 @@ const {
     }
     return data
   } catch (error) {
-    console.warn('获取流程数据时出错:', error)
+
     return null
   }
 }, {
@@ -472,7 +471,7 @@ const {
       // 确保data.basicInfo.name存在且不为空
       return Boolean(data.basicInfo?.name && typeof data.basicInfo.name === 'string' && data.basicInfo.name.trim().length > 0)
     } catch (error) {
-      console.warn('验证流程数据时出错:', error)
+
       return false
     }
   }
@@ -511,7 +510,7 @@ const stepList = computed(() => {
       { key: 'preview', title: '预览确认', description: '预览完整流程配置' }
     ]
   } catch (error) {
-    console.warn('计算步骤列表时出错:', error)
+
     return [
       { key: 'basic', title: '基本信息', description: '配置流程基本信息' },
       { key: 'preview', title: '预览确认', description: '预览完整流程配置' }
@@ -543,7 +542,7 @@ const currentStepData = computed(() => {
     }
     return null
   } catch (error) {
-    console.warn('获取当前步骤数据时出错:', error)
+
     return null
   }
 })
@@ -567,7 +566,7 @@ const allStepsValid = computed(() => {
 const handleStepChange = (stepIndex: number) => {
   try {
     if (typeof stepIndex !== 'number' || stepIndex < 0) {
-      console.warn('无效的步骤索引:', stepIndex)
+
       return
     }
     
@@ -577,7 +576,7 @@ const handleStepChange = (stepIndex: number) => {
       Message.warning('请先完成当前步骤的配置')
     }
   } catch (error) {
-    console.error('步骤切换时出错:', error)
+
     Message.error('步骤切换失败')
   }
 }
@@ -590,7 +589,7 @@ const handleStepValidate = (isValid: boolean) => {
       triggerAutoSave()
     }
   } catch (error) {
-    console.error('步骤验证时出错:', error)
+
   }
 }
 
@@ -603,7 +602,7 @@ const handleNextStep = () => {
       Message.warning('请先完成当前步骤的配置')
     }
   } catch (error) {
-    console.error('下一步操作失败:', error)
+
     Message.error('操作失败，请重试')
   }
 }
@@ -615,7 +614,7 @@ const handlePrevStep = () => {
       currentStepIndex.value--
     }
   } catch (error) {
-    console.error('上一步操作失败:', error)
+
     Message.error('操作失败，请重试')
   }
 }
@@ -652,7 +651,7 @@ const handleStepDataUpdate = (updatedStepData: ProcessStep) => {
       }
     }
   } catch (error) {
-    console.error('更新步骤数据失败:', error)
+
     Message.error('更新失败，请重试')
   }
 }
@@ -666,7 +665,7 @@ const handleBackToSelection = () => {
     selectedProcess.value = null
     resetEditor()
   } catch (error) {
-    console.error('返回选择界面失败:', error)
+
     Message.error('操作失败，请重试')
   }
 }
@@ -677,7 +676,7 @@ const handleCreateProcess = () => {
     selectedProcess.value = null
     initEditor()
   } catch (error) {
-    console.error('创建流程失败:', error)
+
     Message.error('操作失败，请重试')
   }
 }
@@ -689,7 +688,7 @@ const handleEditProcess = (process: any) => {
     // 使用选中的流程数据初始化编辑器
     initEditor(process.id)
   } catch (error) {
-    console.error('编辑流程失败:', error)
+
     Message.error('操作失败，请重试')
   }
 }
@@ -697,10 +696,10 @@ const handleEditProcess = (process: any) => {
 const handleDeleteProcess = (processId: string) => {
   try {
     // 这里可以添加删除流程的逻辑
-    console.log('删除流程:', processId)
+
     Message.success('流程删除成功')
   } catch (error) {
-    console.error('删除流程失败:', error)
+
     Message.error('删除失败，请重试')
   }
 }
@@ -724,21 +723,21 @@ const handleClose = () => {
     if (typeof triggerAutoSave === 'function') {
       try {
         // triggerAutoSave 是 saveNow 方法，不需要 cancel
-        console.log('自动保存已停止')
+
       } catch (error) {
-        console.warn('清理自动保存时出错:', error)
+
       }
     }
     
     emit('cancel')
   } catch (error) {
-    console.error('关闭抽屉失败:', error)
+
     Message.error('关闭时发生错误，请重试')
     // 即使出错也要尝试关闭
     try {
       emit('cancel')
     } catch (emitError) {
-      console.error('发送取消事件失败:', emitError)
+
     }
   }
 }
@@ -767,13 +766,13 @@ const handleSubmit = async () => {
         handleClose()
       }, 1000)
     } catch (error) {
-      console.error('提交流程数据失败:', error)
+
       Message.error(error instanceof Error ? error.message : '保存失败，请重试')
     } finally {
       submitting.value = false
     }
   } catch (error) {
-    console.error('提交流程时发生未预期错误:', error)
+
     Message.error('操作失败，请重试')
     submitting.value = false
   }
@@ -801,7 +800,7 @@ watch(() => props.visible, (newVisible) => {
       resetEditor()
     }
   } catch (error) {
-    console.error('初始化抽屉时发生错误:', error)
+
     Message.error('初始化失败，请重试')
     emit('update:visible', false)
     handleComponentError(error)
@@ -927,16 +926,16 @@ const handleComponentError = async (error: unknown, context = '组件操作') =>
     
     // 发送错误报告到监控系统（如果需要）
     if (typeof window !== 'undefined' && window.console) {
-      console.group(`🚨 [BusinessProcessDrawer] ${context}错误`)
-      console.error('错误信息:', errorMsg)
-      console.error('错误上下文:', context)
-      console.error('错误对象:', error)
+
+
+
+
       console.error('组件状态:', getErrorReport())
-      console.groupEnd()
+
     }
   } catch (handlerError) {
     // 错误处理器本身出错，使用最基本的错误处理
-    console.error('错误处理器异常:', handlerError)
+
     hasError.value = true
     errorMessage.value = '系统异常，请刷新页面重试'
     Message.error('系统异常，请刷新页面重试')
@@ -977,7 +976,7 @@ ${report.currentError.stack}
       Message.success('错误信息已复制到剪贴板')
     }
   } catch (error) {
-    console.error('复制错误报告失败:', error)
+
     Message.error('复制失败，请手动复制错误信息')
   }
 }

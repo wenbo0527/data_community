@@ -266,15 +266,15 @@ const handleFormChange = async () => {
       const errors = await formRef.value?.validate()
       emit('validate', !errors)
     } catch (validateError) {
-      console.warn('表单验证失败:', validateError)
+
       emit('validate', false)
     }
   } catch (error) {
-    console.error('表单变化处理失败:', error)
+
     try {
       emit('validate', false)
     } catch (emitError) {
-      console.error('发送验证事件失败:', emitError)
+
     }
   }
 }
@@ -288,11 +288,11 @@ const handleSubmit = (data: any) => {
       emit('validate', true)
     }
   } catch (error) {
-    console.error('表单提交处理失败:', error)
+
     try {
       emit('validate', false)
     } catch (emitError) {
-      console.error('发送验证事件失败:', emitError)
+
     }
   }
 }
@@ -305,11 +305,11 @@ const showTagInputHandler = () => {
       try {
         tagInputRef.value?.focus()
       } catch (focusError) {
-        console.warn('标签输入框聚焦失败:', focusError)
+
       }
     })
   } catch (error) {
-    console.error('显示标签输入框失败:', error)
+
   }
 }
 
@@ -323,7 +323,7 @@ const handleTagInputConfirm = () => {
     newTag.value = ''
     showTagInput.value = false
   } catch (error) {
-    console.error('标签输入确认失败:', error)
+
     // 重置输入状态
     newTag.value = ''
     showTagInput.value = false
@@ -335,7 +335,7 @@ const handleTagInputBlur = () => {
   try {
     handleTagInputConfirm()
   } catch (error) {
-    console.error('标签输入失焦处理失败:', error)
+
   }
 }
 
@@ -348,7 +348,7 @@ const removeTag = (tag: string) => {
       handleFormChange()
     }
   } catch (error) {
-    console.error('移除标签失败:', error)
+
   }
 }
 
@@ -360,7 +360,7 @@ watch(() => props.data, (newData) => {
       initFormData()
     }
   } catch (error) {
-    console.warn('BasicInfoEditor: Error initializing form data:', error)
+
     // 发生错误时重置为默认值
     try {
       Object.assign(formData, {
@@ -374,7 +374,7 @@ watch(() => props.data, (newData) => {
       // 通知父组件验证失败
       emit('validate', false)
     } catch (resetError) {
-      console.error('BasicInfoEditor: Error resetting form data:', resetError)
+
     }
   }
 }, { immediate: true, deep: true })
@@ -389,12 +389,12 @@ watch(() => formData, () => {
       emit('validate', false)
     }
   } catch (error) {
-    console.warn('BasicInfoEditor: Error in form validation watcher:', error)
+
     // 发生错误时通知父组件验证失败
     try {
       emit('validate', false)
     } catch (emitError) {
-      console.error('BasicInfoEditor: Error emitting validation result:', emitError)
+
     }
   }
 }, { immediate: true, deep: true })

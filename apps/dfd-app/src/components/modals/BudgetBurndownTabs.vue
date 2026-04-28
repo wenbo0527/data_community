@@ -178,17 +178,12 @@ const updateChart = (data: any[], type: string) => {
   })
 
   if (!burndownChartRef.value || !burndownChart || !arr?.length) {
-    console.log('updateChart跳过:', {
-      hasChartRef: !!burndownChartRef.value,
-      hasChartInstance: !!burndownChart,
-      dataLength: arr?.length || 0
-    })
+
     return
   }
 
   const chartDom = burndownChartRef.value
   const rect = chartDom.getBoundingClientRect()
-  console.log('图表容器尺寸:', { width: rect.width, height: rect.height })
 
   const percentData = normalizeToPercent(arr, type as 'burndown' | 'cumulative')
 
@@ -292,16 +287,7 @@ const updateChart = (data: any[], type: string) => {
     ]
   }
 
-  console.log('设置ECharts配置:', option)
-  console.log('详细配置信息:', {
-    xAxisData: option.xAxis.data,
-    seriesCount: option.series.length,
-    series0Data: option.series[0]?.data,
-    series1Data: option.series[1]?.data,
-    chartInstance: !!burndownChart,
-    containerElement: burndownChartRef.value
-  })
-  
+
   burndownChart.setOption(option, true) // 强制重绘
   burndownChart.resize() // 调整大小
   
@@ -315,21 +301,19 @@ const updateChart = (data: any[], type: string) => {
       isDisposed: burndownChart?.isDisposed()
     })
   }, 100)
-  
-  console.log('ECharts配置设置完成，已强制重绘和调整大小')
+
 }
 
 // 监听数据变化
 watch(() => props.chartData, (newData: Array<BurndownItem>) => {
-  console.log('props.chartData变化，新数据长度:', newData.length)
+
   if (burndownChart) {
     updateChartWithCurrentData();
   }
 }, { immediate: true });
 
 onMounted(() => {
-  console.log('初始化ECharts实例，数据长度:', props.chartData.length)
-  
+
   // 延迟初始化，确保DOM完全渲染
   nextTick(() => {
     initChart()
@@ -339,15 +323,12 @@ onMounted(() => {
 // 初始化图表函数
 const initChart = async () => {
   try {
-    console.log('开始安全初始化燃尽图表...')
-    
+
     burndownChart = await safeInitECharts(burndownChartRef.value, {
       theme: 'default',
       renderer: 'canvas'
     })
-    
-    console.log('燃尽图表初始化成功')
-    
+
     // 监听容器尺寸，确保全宽覆盖
     if (burndownChartRef.value) {
       try {
@@ -356,7 +337,7 @@ const initChart = async () => {
         })
         resizeObserver.observe(burndownChartRef.value)
       } catch (e) {
-        console.warn('ResizeObserver 初始化失败，使用窗口resize备选', e)
+
         window.addEventListener('resize', () => burndownChart && burndownChart.resize())
       }
     }
@@ -364,7 +345,7 @@ const initChart = async () => {
     // 初始化图表数据
     updateChartWithCurrentData()
   } catch (error) {
-    console.error('燃尽图表初始化失败:', error)
+
   }
 }
 onUnmounted(() => {

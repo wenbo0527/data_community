@@ -387,7 +387,7 @@ const showTableDetail = (record: TableItem) => {
       query: { table: JSON.stringify(tableParams) }
     })
   } catch (error) {
-    console.error(error)
+
   }
 }
 

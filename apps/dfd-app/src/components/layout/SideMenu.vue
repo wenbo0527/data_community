@@ -158,7 +158,7 @@ const handleMenuClick = (item) => {
       if (menuPath) {
         navigateTo(router, menuPath)
       } else {
-        console.warn(`未找到菜单项 ${targetKey} 对应的路径`)
+
       }
     } else if (item && item.path) {
       // 新的对象格式
@@ -166,7 +166,7 @@ const handleMenuClick = (item) => {
       selectedKeys.value = [item.key]
     }
   } catch (error) {
-    console.error('侧边菜单点击错误:', error)
+
   }
 }
 

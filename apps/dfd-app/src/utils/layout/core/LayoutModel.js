@@ -52,8 +52,7 @@ export class LayoutModel {
     
     // 事件监听器
     this.listeners = new Map();
-    
-    console.log('📊 [LayoutModel] 初始化完成，节点数:', this.nodes.length);
+
   }
 
   /**
@@ -68,8 +67,7 @@ export class LayoutModel {
     this.recordChange('nodes', oldNodes, this.nodes);
     this.invalidateCache();
     this.emit('nodesChanged', { oldNodes, newNodes: this.nodes });
-    
-    console.log('📊 [LayoutModel] 节点数据已更新，数量:', this.nodes.length);
+
   }
 
   /**
@@ -84,8 +82,7 @@ export class LayoutModel {
     this.recordChange('edges', oldEdges, this.edges);
     this.invalidateCache();
     this.emit('edgesChanged', { oldEdges, newEdges: this.edges });
-    
-    console.log('📊 [LayoutModel] 边数据已更新，数量:', this.edges.length);
+
   }
 
   /**
@@ -100,8 +97,7 @@ export class LayoutModel {
     this.recordChange('layers', oldLayers, this.layers);
     this.invalidateCache();
     this.emit('layersChanged', { oldLayers, newLayers: this.layers });
-    
-    console.log('📊 [LayoutModel] 层级数据已更新，层数:', this.layers.length);
+
   }
 
   /**
@@ -123,8 +119,7 @@ export class LayoutModel {
     this.recordChange('positions', oldPositions, this.positions);
     this.invalidateCache();
     this.emit('positionsChanged', { oldPositions, newPositions: this.positions });
-    
-    console.log('📊 [LayoutModel] 位置数据已更新，节点数:', this.positions.size);
+
   }
 
   /**
@@ -210,8 +205,7 @@ export class LayoutModel {
     }
     
     const isValid = issues.length === 0;
-    console.log(`📊 [LayoutModel] 数据验证${isValid ? '通过' : '失败'}，问题数:`, issues.length);
-    
+
     return {
       isValid,
       issues,
@@ -342,7 +336,7 @@ export class LayoutModel {
         try {
           listener(data);
         } catch (error) {
-          console.error(`📊 [LayoutModel] 事件监听器错误 [${event}]:`, error);
+
         }
       });
     }
@@ -388,7 +382,7 @@ export class LayoutModel {
     this.lastModified = Date.now();
     
     this.emit('modelReset', {});
-    console.log('📊 [LayoutModel] 模型已重置');
+
   }
 
   /**
@@ -398,7 +392,7 @@ export class LayoutModel {
   destroy() {
     this.reset();
     this.listeners.clear();
-    console.log('📊 [LayoutModel] 模型已销毁');
+
   }
 
   /**

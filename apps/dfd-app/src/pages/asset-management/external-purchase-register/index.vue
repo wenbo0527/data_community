@@ -797,7 +797,7 @@ const handleNewDataSubmit = async () => {
       resetNewDataForm()
     }
   } catch (error) {
-    console.error('表单验证失败:', error)
+
   }
 }
 

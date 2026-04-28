@@ -435,7 +435,7 @@ const analyzeUserPath = async () => {
     isAnimating.value = false
     
   } catch (error) {
-    console.error('路径分析失败:', error)
+
   } finally {
     loading.value = false
   }

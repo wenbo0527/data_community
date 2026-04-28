@@ -17,13 +17,12 @@ let router: any = null
 const isQiankun = !!(window as any).__POWERED_BY_QIANKUN__
 
 function bootstrap() {
-  console.log('[DFD] Qiankun bootstrap')
+
   return Promise.resolve()
 }
 
 function mount(props?: { container?: HTMLElement | ShadowRoot }) {
-  console.log('[DFD] Qiankun mount', props)
-  
+
   const base = '/dfd/'
   
   router = createRouter({
@@ -47,14 +46,14 @@ function mount(props?: { container?: HTMLElement | ShadowRoot }) {
   }
   
   router.isReady().then(() => {
-    console.log('[DFD] Router is ready')
+
   })
   
   return Promise.resolve()
 }
 
 function unmount() {
-  console.log('[DFD] Qiankun unmount')
+
   if (app) {
     app.unmount()
     app = null
@@ -74,8 +73,7 @@ function unmount() {
 if (!isQiankun) {
   const currentPath = window.location.pathname
   const base = currentPath.startsWith('/dfd') ? '/dfd/' : '/'
-  console.log('[DFD] 独立模式启动, base:', base)
-  
+
   router = createRouter({
     history: createWebHistory(base),
     routes
@@ -86,6 +84,5 @@ if (!isQiankun) {
   app.use(ArcoVue)
   app.use(router)
   app.mount('#app')
-  
-  console.log('[DFD] 独立模式启动')
+
 }

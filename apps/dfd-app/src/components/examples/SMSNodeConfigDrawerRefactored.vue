@@ -268,7 +268,7 @@ const handleSubmit = () => {
 
 // 处理调试提交
 const handleDebugSubmit = () => {
-  console.log('[SMSNodeConfigDrawer] 调试提交，跳过验证')
+
   const config = {
     ...formData,
     nodeType: 'sms'

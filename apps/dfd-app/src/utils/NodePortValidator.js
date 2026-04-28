@@ -21,8 +21,7 @@ export class NodePortValidator {
    * @returns {Object} 验证结果
    */
   validateAllNodes(nodes) {
-    console.log('🔍 [节点端口验证] 开始验证所有节点的端口配置')
-    
+
     const results = {
       isValid: true,
       totalNodes: nodes.length,
@@ -162,7 +161,6 @@ export class NodePortValidator {
    * @param {Object} result - 验证结果对象
    */
   validateStartNode(result) {
-    console.log(`📋 [开始节点验证] 验证节点 ${result.nodeId}`)
 
     // 开始节点应该只有out端口
     if (!result.portAnalysis.hasOutPort) {
@@ -189,7 +187,6 @@ export class NodePortValidator {
    * @param {Object} result - 验证结果对象
    */
   validateEndNode(result) {
-    console.log(`📋 [结束节点验证] 验证节点 ${result.nodeId}`)
 
     // 结束节点应该只有in端口
     if (!result.portAnalysis.hasInPort) {
@@ -216,7 +213,6 @@ export class NodePortValidator {
    * @param {Object} result - 验证结果对象
    */
   validateMiddleNode(result) {
-    console.log(`📋 [中间节点验证] 验证节点 ${result.nodeId}`)
 
     // 中间节点应该同时有in端口和out端口
     if (!result.portAnalysis.hasInPort) {
@@ -270,14 +266,6 @@ export class NodePortValidator {
       y: nodePosition.y + nodeSize.height      // 节点底部
     }
 
-    console.log(`📍 [端口位置验证] 节点 ${result.nodeId}:`, {
-      nodePosition,
-      nodeSize,
-      expectedInPortPosition,
-      expectedOutPortPosition,
-      actualInPortPosition: result.portAnalysis.inPortPosition,
-      actualOutPortPosition: result.portAnalysis.outPortPosition
-    })
   }
 
   /**
@@ -320,7 +308,7 @@ export class NodePortValidator {
 
       return null
     } catch (error) {
-      console.warn(`获取端口位置失败:`, error)
+
       return null
     }
   }
@@ -364,22 +352,13 @@ export class NodePortValidator {
    * @param {Object} results - 总体验证结果
    */
   logValidationSummary(results) {
-    console.log('📊 [节点端口验证总结]:', {
-      totalNodes: results.totalNodes,
-      validNodes: results.validNodes,
-      invalidNodes: results.invalidNodes,
-      isValid: results.isValid,
-      summary: results.summary,
-      errorCount: results.errors.length,
-      warningCount: results.warnings.length
-    })
 
     if (results.errors.length > 0) {
-      console.error('❌ [验证错误]:', results.errors)
+
     }
 
     if (results.warnings.length > 0) {
-      console.warn('⚠️ [验证警告]:', results.warnings)
+
     }
   }
 }

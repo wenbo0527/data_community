@@ -538,22 +538,22 @@ const tablePagination = {
 
 // 图谱事件处理
 const handleNodeClick = (node: any) => {
-  console.log('节点点击:', node)
+
   Message.info(`点击了节点: ${node.name}`)
 }
 
 const handleEdgeClick = (edge: any) => {
-  console.log('边点击:', edge)
+
   Message.info(`点击了关系: ${getRelationshipLabel(edge.relationship)}`)
 }
 
 const handleNodeDetails = (node: any) => {
-  console.log('查看节点详情:', node)
+
   viewNodeDetails(node)
 }
 
 const handleRiskAnalysis = (node: any) => {
-  console.log('风险分析:', node)
+
   analyzeRiskPath(node)
 }
 
@@ -604,7 +604,7 @@ const renderGraph = () => {
   
   // 这里应该使用实际的图形库（如D3.js、AntV G6等）来渲染关系图谱
   // 由于篇幅限制，这里只是一个占位符
-  console.log('渲染关系图谱', relationshipData.value)
+
 }
 
 const fitToScreen = () => {

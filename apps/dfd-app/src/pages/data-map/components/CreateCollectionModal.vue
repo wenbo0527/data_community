@@ -195,7 +195,7 @@ const formData = ref({
 // 编辑模式判断
 const isEditMode = computed(() => {
   const editMode = !!props.editData
-  console.log('[CreateCollectionModal] isEditMode computed:', editMode, 'props.editData:', props.editData)
+
   return editMode
 })
 
@@ -357,7 +357,7 @@ const handleCreateCollection = async () => {
     
     handleCancel()
   } catch (error) {
-    console.error('表单验证失败:', error)
+
     Message.error(isEditMode.value ? '更新失败' : '创建失败')
   }
 }
@@ -381,12 +381,12 @@ const handleCancel = () => {
 
 // 监听visible变化
 watch(() => props.visible, (newVisible: boolean) => {
-  console.log('[CreateCollectionModal] visible watcher triggered with newVisible:', newVisible)
+
   if (!newVisible) {
-    console.log('[CreateCollectionModal] Modal is closing, calling handleCancel')
+
     handleCancel()
   } else if (newVisible && props.editData) {
-    console.log('[CreateCollectionModal] Modal is opening in edit mode, filling form data with editData')
+
     // 编辑模式时填充数据
     formData.value = {
       name: props.editData.name,
@@ -396,17 +396,17 @@ watch(() => props.visible, (newVisible: boolean) => {
       isRecommended: props.editData.isRecommended || false,
       tables: [...props.editData.tables]
     }
-    console.log('[CreateCollectionModal] Form data filled from editData:', formData.value)
+
   } else {
-    console.log('[CreateCollectionModal] Modal is opening but not in edit mode. editData exists:', !!props.editData)
+
   }
 })
 
 // 监听editData变化
 watch(() => props.editData, (newEditData: TableCollection | null | undefined) => {
-  console.log('[CreateCollectionModal] editData watcher triggered with newEditData:', newEditData)
+
   if (newEditData && props.visible) {
-    console.log('[CreateCollectionModal] Filling form data with editData')
+
     formData.value = {
       name: newEditData.name,
       description: newEditData.description || '',
@@ -414,9 +414,9 @@ watch(() => props.editData, (newEditData: TableCollection | null | undefined) =>
       owner: newEditData.owner || '当前用户',
       tables: [...newEditData.tables]
     }
-    console.log('[CreateCollectionModal] Form data filled:', formData.value)
+
   } else {
-    console.log('[CreateCollectionModal] Not filling form data. newEditData exists:', !!newEditData, 'props.visible:', props.visible)
+
   }
 }, { deep: true })
 </script>

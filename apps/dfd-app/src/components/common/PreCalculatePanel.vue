@@ -191,7 +191,7 @@ const copyResults = async () => {
   try {
     await navigator.clipboard.writeText(resultText)
   } catch (error) {
-    console.error('复制失败:', error)
+
   }
 }
 

@@ -452,7 +452,7 @@ const onExcludeGroupsToggle = (value: string | number | boolean) => {
   if (!boolValue && excludeGroups.value.length > 0) {
     // 如果关闭开关且存在排除条件组，需要删除所有排除条件组
     // 这里可以添加确认对话框
-    console.warn('关闭排除条件组功能将删除所有已创建的排除条件组')
+
   }
 }
 

@@ -276,7 +276,7 @@ const handleNext = () => {
     return
   }
   // 添加校验通过日志
-  console.log('场景步骤校验通过，触发下一步')
+
   emit('next')
 }
 

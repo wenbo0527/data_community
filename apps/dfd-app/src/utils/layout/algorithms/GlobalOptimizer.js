@@ -71,12 +71,7 @@ class GlobalOptimizer {
     this.lockReason = null;
     this.lockTimeoutTimer = null;
     this.LOCK_TIMEOUT = 10000; // 10秒超时
-    
-    console.log('[GlobalOptimizer] 全局优化器初始化完成', {
-      enableGlobalOptimization: this.options.enableGlobalOptimization,
-      enableCache: this.layoutCache.enabled,
-      maxCacheSize: this.layoutCache.maxSize
-    });
+
   }
   
   /**
@@ -88,11 +83,10 @@ class GlobalOptimizer {
    */
   async applyGlobalOptimization(positions, layerStructure, graph) {
     if (!this.options.enableGlobalOptimization) {
-      console.log('[GlobalOptimization] 全局优化已禁用，跳过');
+
       return { success: true, message: '全局优化已禁用' };
     }
-    
-    console.log('🌍 [GlobalOptimization] 开始全局布局优化');
+
     const startTime = Date.now();
     
     try {
@@ -118,9 +112,7 @@ class GlobalOptimizer {
       
       const duration = Date.now() - startTime;
       this.updatePerformanceMetrics(duration);
-      
-      console.log(`🌍 [GlobalOptimization] 全局优化完成，耗时: ${duration}ms`);
-      
+
       return {
         success: true,
         duration,
@@ -129,7 +121,7 @@ class GlobalOptimizer {
       };
       
     } catch (error) {
-      console.error('[GlobalOptimization] 全局优化失败:', error);
+
       return {
         success: false,
         error: error.message,
@@ -144,11 +136,10 @@ class GlobalOptimizer {
    * @param {Object} layerStructure - 层级结构
    */
   async adjustGlobalLayerSpacing(positions, layerStructure) {
-    console.log('[LayerSpacing] 开始调整全局层间距');
-    
+
     const { layers, totalLayers } = layerStructure;
     if (totalLayers <= 1) {
-      console.log('[LayerSpacing] 只有一层，无需调整间距');
+
       return;
     }
     
@@ -172,8 +163,7 @@ class GlobalOptimizer {
         }
       }
     });
-    
-    console.log('[LayerSpacing] 全局层间距调整完成');
+
   }
   
   /**
@@ -182,8 +172,7 @@ class GlobalOptimizer {
    * @param {Object} layerStructure - 层级结构
    */
   async applyGlobalXAxisBalancing(positions, layerStructure) {
-    console.log('[XAxisBalancing] 开始全局X轴平衡');
-    
+
     // 1. 分析X轴密度分布
     const densityAnalysis = this.analyzeXAxisDensity(positions);
     
@@ -197,8 +186,7 @@ class GlobalOptimizer {
     if (strategy.primaryIssue !== 'balanced') {
       this.applyRebalanceAdjustments(positions, layerStructure, strategy);
     }
-    
-    console.log('[XAxisBalancing] 全局X轴平衡完成');
+
   }
   
   /**
@@ -313,7 +301,7 @@ class GlobalOptimizer {
    */
   applyRebalanceAdjustments(positions, layerStructure, strategy) {
     if (strategy.primaryIssue === 'balanced') {
-      console.log('[重平衡] 分布已平衡，无需调整');
+
       return;
     }
 
@@ -342,7 +330,6 @@ class GlobalOptimizer {
       }
     });
 
-    console.log(`[重平衡] 完成，调整了 ${adjustedNodes} 个节点`);
   }
   
   /**
@@ -359,13 +346,13 @@ class GlobalOptimizer {
       const isValid = pos.x !== undefined && pos.y !== undefined && 
                      !isNaN(pos.x) && !isNaN(pos.y);
       if (!isValid) {
-        console.warn('[全局居中] 发现无效位置，已过滤:', pos);
+
       }
       return isValid;
     });
 
     if (validPositions.length === 0) {
-      console.warn('[全局居中] 没有有效位置，跳过全局居中');
+
       return;
     }
 
@@ -382,7 +369,6 @@ class GlobalOptimizer {
       pos.y += offsetY;  // 只修改Y轴，保持X轴不变
     });
 
-    console.log('🌍 [全局居中完成] 仅进行Y轴居中，X轴分布完全保护');
   }
   
   /**
@@ -391,8 +377,7 @@ class GlobalOptimizer {
    * @param {Object} layerStructure - 层级结构
    */
   async applyAestheticOptimizations(positions, layerStructure) {
-    console.log('[AestheticOptimization] 开始美学优化');
-    
+
     // 1. 检查对称分布
     await this.optimizeSymmetricDistribution(positions, layerStructure);
     
@@ -401,8 +386,7 @@ class GlobalOptimizer {
     
     // 3. 调整节点间距
     await this.optimizeNodeSpacing(positions);
-    
-    console.log('[AestheticOptimization] 美学优化完成');
+
   }
   
   /**
@@ -422,7 +406,7 @@ class GlobalOptimizer {
       }).sort((a, b) => a - b);
       
       if (this.checkSymmetricDistribution(xCoords)) {
-        console.log(`[对称分布] 层 ${layerIndex} 已是对称分布，无需调整`);
+
         return;
       }
       
@@ -641,7 +625,7 @@ class GlobalOptimizer {
     this.layoutCache.cache.set(key, result);
     this.layoutCache.misses++;
     this.updateCacheHitRate();
-    console.log(`[布局缓存] 缓存布局结果，当前缓存大小: ${this.layoutCache.cache.size}`);
+
   }
   
   /**
@@ -656,7 +640,7 @@ class GlobalOptimizer {
     if (result) {
       this.layoutCache.hits++;
       this.updateCacheHitRate();
-      console.log('[布局缓存] 命中缓存');
+
     }
     return result;
   }
@@ -691,7 +675,7 @@ class GlobalOptimizer {
     this.layoutCache.hits = 0;
     this.layoutCache.misses = 0;
     this.updateCacheHitRate();
-    console.log('[布局缓存] 缓存已清除');
+
   }
   
   /**
@@ -700,7 +684,7 @@ class GlobalOptimizer {
    */
   lockPreviewLineRefresh(reason = '布局计算中') {
     if (this.previewLineRefreshLocked) {
-      console.warn(`[预览线锁定] 已经锁定，原因: ${this.lockReason}`);
+
       return false;
     }
     
@@ -710,11 +694,10 @@ class GlobalOptimizer {
     
     // 设置超时自动解锁
     this.lockTimeoutTimer = setTimeout(() => {
-      console.warn(`[预览线锁定] 锁定超时，自动解锁。原因: ${this.lockReason}`);
+
       this.unlockPreviewLineRefresh('超时自动解锁');
     }, this.LOCK_TIMEOUT);
-    
-    console.log(`[预览线锁定] 预览线刷新已锁定，原因: ${reason}`);
+
     return true;
   }
   
@@ -724,7 +707,7 @@ class GlobalOptimizer {
    */
   unlockPreviewLineRefresh(reason = '布局计算完成') {
     if (!this.previewLineRefreshLocked) {
-      console.warn('[预览线锁定] 当前未锁定');
+
       return false;
     }
     
@@ -739,8 +722,7 @@ class GlobalOptimizer {
       clearTimeout(this.lockTimeoutTimer);
       this.lockTimeoutTimer = null;
     }
-    
-    console.log(`[预览线锁定] 预览线刷新已解锁，原因: ${reason}，锁定时长: ${lockDuration}ms`);
+
     return true;
   }
   
@@ -815,8 +797,7 @@ class GlobalOptimizer {
       lastLayoutDuration: 0,
       cacheHitRate: 0
     };
-    
-    console.log('[GlobalOptimizer] 清理完成');
+
   }
   
   /**

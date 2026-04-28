@@ -314,7 +314,7 @@ const executeQuery = async () => {
     
     Message.success(`查询完成，找到 ${filteredTasks.length} 个匹配的任务`)
   } catch (error) {
-    console.error('查询失败:', error)
+
     Message.error('查询失败，请重试')
   } finally {
     queryLoading.value = false
@@ -332,7 +332,7 @@ const resetQuery = () => {
 
 // 节点类型变化处理
 const onNodeTypeChange = (values) => {
-  console.log('节点类型筛选变化:', values)
+
 }
 
 // 获取所有任务数据
@@ -358,14 +358,14 @@ const getAllTasksData = async () => {
 
 // 查看任务画布
 const viewTaskCanvas = (task) => {
-  console.log('查看任务画布:', task)
+
   // 这里可以打开画布编辑器或预览模式
   Message.info('画布查看功能开发中...')
 }
 
 // 分析任务
 const analyzeTask = (task) => {
-  console.log('分析任务:', task)
+
   Message.info('任务分析功能开发中...')
 }
 

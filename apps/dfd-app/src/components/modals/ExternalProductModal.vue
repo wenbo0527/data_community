@@ -121,7 +121,7 @@ let psiChart: echarts.ECharts | null = null
 
 // 更新图表
 const updatePriceChart = (data: any[]) => {
-  console.log('更新价格图表，数据长度:', data?.length)
+
   if (priceChartRef.value && priceChart && data?.length) {
     const option = {
       tooltip: {
@@ -173,7 +173,7 @@ const updatePriceChart = (data: any[]) => {
 }
 
 const updateCostChart = (data: any[]) => {
-  console.log('更新成本图表，数据长度:', data?.length)
+
   if (costChartRef.value && costChart && data?.length) {
     const option = {
       tooltip: {
@@ -440,8 +440,7 @@ const updatePsiChart = (data: any[]) => {
 
 // 初始化图表
 const initCharts = async () => {
-  console.log('开始安全初始化图表...')
-  
+
   try {
     // 使用批量初始化功能
     const chartConfigs = [
@@ -462,11 +461,9 @@ const initCharts = async () => {
     ivChart = charts.iv
     ksChart = charts.ks
     psiChart = charts.psi
-    
-    console.log('所有图表初始化完成')
-    
+
   } catch (error) {
-    console.error('图表初始化失败:', error)
+
   }
 }
 
@@ -528,12 +525,11 @@ watch(() => props.productData, (newVal: any) => {
     const mockData = props.selectedProducts.length > 1 ? 
   props.selectedProducts.map(product => generateExternalProductData(product as string)).flat() :
   generateExternalProductData(props.productData.product || '产品A')
-    
-    console.log('生成的产品数据:', mockData)
-    console.log('产品名称:', props.productData.product)
-    console.log('selectedProducts:', props.selectedProducts)
+
+
+
     if (!mockData || mockData.length === 0) {
-      console.error('生成的产品数据为空!')
+
       return
     }
     

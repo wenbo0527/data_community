@@ -112,7 +112,7 @@ const fetchNotificationStats = async () => {
       }
     }
   } catch (error) {
-    console.error('获取通知统计失败:', error)
+
     // 使用模拟数据作为降级方案
     stats.value = [
       {

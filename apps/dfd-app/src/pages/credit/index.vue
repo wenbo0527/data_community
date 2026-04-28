@@ -299,7 +299,7 @@ const basicInfo = computed(() => [
 ])
 
 const handleSearch = (value) => {
-  console.log('搜索:', value)
+
 }
 
 const handleBatchUpload = () => {
@@ -316,11 +316,11 @@ const handleView = (record) => {
 }
 
 const handleEdit = (record) => {
-  console.log('编辑记录:', record)
+
 }
 
 const handleDelete = (record) => {
-  console.log('删除记录:', record)
+
 }
 
 const closeDrawer = () => {

@@ -137,7 +137,7 @@ export function navigateTo(router, to, options = {}) {
       router.push(routeConfig)
     }
   } catch (error) {
-    console.error('Navigation failed:', error)
+
     businessMessage.error('页面跳转失败')
   }
 }
@@ -215,7 +215,7 @@ export function addDynamicRoutes(router, routes) {
     try {
       router.addRoute(createRouteConfig(route))
     } catch (error) {
-      console.error('Failed to add route:', route, error)
+
     }
   })
 }
@@ -230,7 +230,7 @@ export function removeDynamicRoutes(router, routeNames) {
     try {
       router.removeRoute(name)
     } catch (error) {
-      console.error('Failed to remove route:', name, error)
+
     }
   })
 }
@@ -326,7 +326,7 @@ export function validateRouteParams(route, rules = {}) {
 export function setCacheRoute(routeName, cache = true) {
   // 这里可以结合 keep-alive 组件使用
   // 具体实现依赖于项目的缓存策略
-  console.log(`Route ${routeName} cache set to ${cache}`)
+
 }
 
 /**

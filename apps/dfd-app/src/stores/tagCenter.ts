@@ -55,7 +55,7 @@ export const useTagCenterStore = defineStore('tagCenter', () => {
       }
     } catch (error) {
       Message.error('加载数据失败')
-      console.error('Failed to load tag tables:', error)
+
     } finally {
       loading.value = false
     }

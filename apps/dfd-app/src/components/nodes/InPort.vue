@@ -33,12 +33,6 @@ onMounted(async () => {
     y: y + height / 2
   }
 
-  console.log(`[InPort] 注册输入端口: ${props.portId}`, {
-    nodeId: props.nodeId,
-    portCenter,
-    group: 'in'
-  })
-
   graph.value.addPort({
     id: props.portId,
     group: 'in',

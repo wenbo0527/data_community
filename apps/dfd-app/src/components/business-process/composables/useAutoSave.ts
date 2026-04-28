@@ -267,7 +267,7 @@ export function useAutoSave(
       
       return compressed
     } catch (error) {
-      console.warn('数据压缩失败:', error)
+
       return data
     }
   }
@@ -342,7 +342,7 @@ export function useAutoSave(
     try {
       currentDataStr = JSON.stringify(currentData)
     } catch (serializeError) {
-      console.warn('AutoSave: 数据序列化失败', serializeError)
+
       if (isManual) {
         Message.error('数据序列化失败，无法保存')
       }
@@ -578,7 +578,7 @@ export function useAutoSave(
         return data
       }
     } catch (error) {
-      console.warn('加载草稿失败:', error)
+
     }
     return null
   }
@@ -589,7 +589,7 @@ export function useAutoSave(
       const key = `business_process_draft_${processId || 'new'}`
       localStorage.removeItem(key)
     } catch (error) {
-      console.warn('清除草稿失败:', error)
+
     }
   }
 
@@ -607,13 +607,13 @@ export function useAutoSave(
               const parsed = JSON.parse(data)
               drafts.push({ key, data: parsed })
             } catch (error) {
-              console.warn(`解析草稿失败: ${key}`, error)
+
             }
           }
         }
       }
     } catch (error) {
-      console.warn('获取草稿列表失败:', error)
+
     }
     
     return drafts.sort((a, b) => 
@@ -648,7 +648,7 @@ export function useAutoSave(
           localStorage.setItem(key, JSON.stringify(saveData))
           return true
         } catch (error) {
-          console.warn('页面卸载时保存失败:', error)
+
           return false
         }
         
@@ -752,7 +752,7 @@ export function useAutoSave(
           }
           localStorage.setItem(key, JSON.stringify(saveData))
         } catch (error) {
-          console.warn('页面卸载时保存失败:', error)
+
         }
         
         // 提示用户有未保存的更改
@@ -794,19 +794,19 @@ export function useAutoSave(
       try {
         // 确保数据存在且有效
         if (!newData || typeof newData !== 'object') {
-          console.debug('AutoSave: 数据无效，跳过保存')
+
           return
         }
         
         // 确保enabled属性存在，添加更严格的检查
         if (typeof isEnabled.value === 'undefined' || isEnabled.value === null) {
-          console.warn('AutoSave: enabled属性未定义，使用默认值true')
+
           isEnabled.value = true
         }
         
         // 检查是否启用自动保存
         if (!isEnabled.value) {
-          console.debug('AutoSave: 自动保存已禁用，跳过保存')
+
           return
         }
         
@@ -838,7 +838,7 @@ export function useAutoSave(
           const cleanData = checkCircular(newData)
           dataStr = JSON.stringify(cleanData)
         } catch (serializationError) {
-          console.error('AutoSave: 数据序列化失败', serializationError)
+
           state.value.saveStatus = 'error'
           state.value.errorMessage = '数据包含无法序列化的内容'
           return
@@ -857,10 +857,10 @@ export function useAutoSave(
             }
           }
         } else {
-          console.debug('AutoSave: 数据验证失败，跳过保存')
+
         }
       } catch (error) {
-        console.error('AutoSave: 监听器执行失败', error)
+
         // 记录错误但不阻止程序继续运行
         state.value.saveStatus = 'error'
         state.value.errorMessage = error instanceof Error ? error.message : '自动保存监听器执行失败'

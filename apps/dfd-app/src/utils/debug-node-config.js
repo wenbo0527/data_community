@@ -5,34 +5,26 @@
 
 // 在浏览器控制台中运行此脚本来调试节点配置
 window.debugNodeConfig = function(nodeId) {
-  console.log('🔍 [调试] 开始检查节点配置:', nodeId)
-  
+
   // 尝试从全局变量中获取图实例
   const graph = window.graph || window.taskFlowGraph
   if (!graph) {
-    console.error('❌ [调试] 未找到图实例')
+
     return
   }
   
   // 获取节点
   const node = graph.getCellById(nodeId)
   if (!node) {
-    console.error('❌ [调试] 未找到节点:', nodeId)
+
     return
   }
   
   // 获取节点数据
   const nodeData = node.getData()
-  console.log('📋 [调试] 节点基本信息:', {
-    id: node.id,
-    type: nodeData?.type,
-    label: nodeData?.label,
-    isConfigured: nodeData?.isConfigured
-  })
-  
+
   // 检查配置数据结构
-  console.log('🔧 [调试] 节点完整数据:', nodeData)
-  
+
   // 检查可能的人群配置字段
   const configFields = {
     'crowdLayers': nodeData?.crowdLayers,
@@ -42,31 +34,24 @@ window.debugNodeConfig = function(nodeId) {
     'branches': nodeData?.branches,
     'config.branches': nodeData?.config?.branches
   }
-  
-  console.log('👥 [调试] 人群配置字段检查:')
+
   Object.entries(configFields).forEach(([field, value]) => {
     if (value) {
-      console.log(`  ✅ ${field}:`, value)
+
       if (Array.isArray(value)) {
-        console.log(`    - 数组长度: ${value.length}`)
+
         value.forEach((item, index) => {
-          console.log(`    - [${index}]:`, {
-            id: item.id,
-            name: item.name,
-            crowdName: item.crowdName,
-            audienceName: item.audienceName,
-            label: item.label
-          })
+
         })
       }
     } else {
-      console.log(`  ❌ ${field}: 未找到`)
+
     }
   })
   
   // 检查未命中分支
   if (nodeData?.unmatchBranch) {
-    console.log('🎯 [调试] 未命中分支配置:', nodeData.unmatchBranch)
+
   }
   
   return {
@@ -78,11 +63,10 @@ window.debugNodeConfig = function(nodeId) {
 
 // 批量检查所有人群分流节点
 window.debugAllAudienceSplitNodes = function() {
-  console.log('🔍 [调试] 开始检查所有人群分流节点')
-  
+
   const graph = window.graph || window.taskFlowGraph
   if (!graph) {
-    console.error('❌ [调试] 未找到图实例')
+
     return
   }
   
@@ -91,11 +75,9 @@ window.debugAllAudienceSplitNodes = function() {
     const data = node.getData()
     return data?.type === 'audience-split'
   })
-  
-  console.log(`📊 [调试] 找到 ${audienceSplitNodes.length} 个人群分流节点`)
-  
+
   audienceSplitNodes.forEach((node, index) => {
-    console.log(`\n--- 节点 ${index + 1} ---`)
+
     window.debugNodeConfig(node.id)
   })
   
@@ -107,17 +89,16 @@ window.debugAllAudienceSplitNodes = function() {
 
 // 模拟PreviewLineSystem的getNodeBranches方法
 window.testGetNodeBranches = function(nodeId) {
-  console.log('🧪 [测试] 模拟getNodeBranches方法:', nodeId)
-  
+
   const graph = window.graph || window.taskFlowGraph
   if (!graph) {
-    console.error('❌ [测试] 未找到图实例')
+
     return
   }
   
   const node = graph.getCellById(nodeId)
   if (!node) {
-    console.error('❌ [测试] 未找到节点:', nodeId)
+
     return
   }
   
@@ -197,7 +178,7 @@ window.testGetNodeBranches = function(nodeId) {
     }
     
     // 如果没有找到人群配置数据，生成默认分支
-    console.log('⚠️ [测试] 人群分流节点未找到人群配置数据，生成默认分支:', nodeId)
+
     return [
       { id: 'default_branch_1', label: '分支1', type: 'audience', isDefault: true },
       { id: 'default_branch_2', label: '分支2', type: 'audience', isDefault: true }
@@ -207,10 +188,9 @@ window.testGetNodeBranches = function(nodeId) {
   return []
 }
 
-console.log('🔧 [调试工具] 调试脚本已加载，可用方法:')
 console.log('  - debugNodeConfig(nodeId): 检查指定节点的配置')
 console.log('  - debugAllAudienceSplitNodes(): 检查所有人群分流节点')
 console.log('  - testGetNodeBranches(nodeId): 测试分支生成逻辑')
-console.log('\n使用示例:')
+
 console.log('  debugNodeConfig("node_1756881179035")')
 console.log('  testGetNodeBranches("node_1756881179035")')

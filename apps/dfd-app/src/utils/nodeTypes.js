@@ -365,25 +365,19 @@ export const nodeTypes = {
 export const getNodeConfig = (nodeType) => {
   // 🔧 修复：添加类型检查，处理非字符串类型
   if (typeof nodeType !== 'string') {
-    console.warn(`[getNodeConfig] Invalid node type format: ${typeof nodeType}, value:`, nodeType)
+
     return null
   }
   
   // 🔧 修复：处理空字符串和空值
   if (!nodeType || nodeType.trim() === '') {
-    console.warn('[getNodeConfig] Empty node type provided')
+
     return null
   }
   
   const normalizedType = nodeType.trim()
   const config = nodeTypes[normalizedType]
-  
-  console.log('[getNodeConfig] 查找节点配置:', {
-    originalType: nodeType,
-    normalizedType: normalizedType,
-    found: !!config,
-    config: config,
-    availableTypes: Object.keys(nodeTypes)
+
   })
   
   if (!config) {
@@ -407,7 +401,7 @@ export const getNodeConfig = (nodeType) => {
 export const getNodeAttrs = (nodeType) => {
   const config = getNodeConfig(nodeType)
   if (!config) {
-    console.warn(`[nodeTypes] 未找到节点类型配置: ${nodeType}`)
+
     return {}
   }
 
@@ -467,8 +461,7 @@ export const getAllNodeTypes = () => {
            nodeTypes[type] && 
            typeof nodeTypes[type] === 'object'
   })
-  
-  console.log('[nodeTypes] 获取所有节点类型:', validTypes)
+
   return validTypes
 }
 
@@ -499,13 +492,13 @@ export const isValidNodeType = (nodeType) => {
 export const getNodeLabel = (nodeType) => {
   // 🔧 修复：添加类型检查，处理非字符串类型
   if (typeof nodeType !== 'string') {
-    console.warn(`Invalid node type format: ${typeof nodeType}, value:`, nodeType)
+
     return '未知节点'
   }
   
   // 🔧 修复：处理空字符串和空值
   if (!nodeType || nodeType.trim() === '') {
-    console.warn('Empty node type provided to getNodeLabel')
+
     return '未知节点'
   }
   
@@ -731,7 +724,7 @@ export const generateDynamicNextSlots = (nodeType, config = {}) => {
       return []
 
     default:
-      console.warn('[nodeTypes] 未知节点类型，返回空预设位:', nodeType)
+
       return []
   }
 }

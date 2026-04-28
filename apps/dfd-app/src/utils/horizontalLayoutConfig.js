@@ -162,20 +162,7 @@ export function calculateHorizontalBranchPreviewPosition(sourceNode, branches, b
   const branchOffset = (branchIndex - (branchCount - 1) / 2) * adaptiveSpacing
   const endX = startX + previewLength
   const endY = startY + branchOffset
-  
-  console.log('📏 [HorizontalLayout] 计算分支预览线位置:', {
-    nodeId: sourceNode.id,
-    nodeType,
-    branchIndex,
-    branchCount,
-    adaptiveSpacing,
-    previewLength,
-    start: { x: startX, y: startY, port: 'out' },
-    end: { x: endX, y: endY },
-    branchOffset,
-    branchLabel: branches[branchIndex]?.label
-  })
-  
+
   return {
     start: { 
       x: startX, 
@@ -224,13 +211,7 @@ export function calculateHorizontalSinglePreviewPosition(sourceNode) {
   // 水平向右延伸
   const endX = startX + config.SPACING.PREVIEW_LENGTH
   const endY = startY
-  
-  console.log('📏 [HorizontalLayout] 计算单一预览线位置:', {
-    nodeId: sourceNode.id,
-    start: { x: startX, y: startY, port: 'out' },
-    end: { x: endX, y: endY }
-  })
-  
+
   return {
     start: { 
       x: startX, 

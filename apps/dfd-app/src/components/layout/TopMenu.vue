@@ -103,7 +103,7 @@ const handleMenuClick = (key) => {
       }
     }
   } catch (error) {
-    console.error('顶部菜单点击错误:', error)
+
   }
 }
 

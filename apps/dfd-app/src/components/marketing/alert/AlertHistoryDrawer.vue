@@ -353,7 +353,7 @@ const loadAlertHistory = async () => {
     }
   } catch (error) {
     Message.error('加载预警历史失败')
-    console.error('Load alert history error:', error)
+
   } finally {
     loading.value = false
   }

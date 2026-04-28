@@ -103,21 +103,21 @@ class MockPreviewManager {
     updatePreviewLines(lines) {
         if (!this.locked) {
             this.previewLines = lines || [];
-            console.log(`📏 [预览线管理器] 更新预览线: ${this.previewLines.length} 条`);
+
         }
     }
     
     clearPreviewLines() {
         if (!this.locked) {
             this.previewLines = [];
-            console.log('🧹 [预览线管理器] 清除所有预览线');
+
         }
     }
     
     setLocked(locked, reason = null) {
         this.locked = locked;
         this.lockReason = reason;
-        console.log(`🔒 [预览线管理器] ${locked ? '锁定' : '解锁'}: ${reason || '无原因'}`);
+
     }
     
     isLocked() {
@@ -242,7 +242,7 @@ function createWorkflowData() {
  * 集成测试：基本布局功能
  */
 async function testBasicLayoutIntegration() {
-    console.log('\n🧪 集成测试：基本布局功能');
+
     console.log('-'.repeat(40));
     
     const graph = new MockX6Graph();
@@ -265,10 +265,8 @@ async function testBasicLayoutIntegration() {
             rankSep: 80,
             nodeSep: 60
         });
-        
-        console.log('✅ 基本布局功能测试通过');
-        console.log(`📊 布局结果: ${result.nodeCount} 个节点已定位`);
-        
+
+
         // 验证节点位置是否合理
         const layoutedNodes = result.nodes || nodes;
         let validPositions = 0;
@@ -278,12 +276,10 @@ async function testBasicLayoutIntegration() {
                 validPositions++;
             }
         });
-        
-        console.log(`📍 有效位置: ${validPositions}/${layoutedNodes.length}`);
-        
+
         return validPositions === layoutedNodes.length;
     } catch (error) {
-        console.error('❌ 基本布局功能测试失败:', error.message);
+
         return false;
     }
 }
@@ -292,7 +288,7 @@ async function testBasicLayoutIntegration() {
  * 集成测试：缓存机制
  */
 async function testCacheIntegration() {
-    console.log('\n🧪 集成测试：缓存机制');
+
     console.log('-'.repeat(40));
     
     const graph = new MockX6Graph();
@@ -325,11 +321,10 @@ async function testCacheIntegration() {
         // 缓存应该显著提高性能
         const improvement = ((time1 - time2) / time1) * 100;
         console.log(`🚀 性能提升: ${improvement.toFixed(2)}%`);
-        
-        console.log('✅ 缓存机制测试通过');
+
         return true;
     } catch (error) {
-        console.error('❌ 缓存机制测试失败:', error.message);
+
         return false;
     }
 }
@@ -338,7 +333,7 @@ async function testCacheIntegration() {
  * 集成测试：事件系统
  */
 async function testEventIntegration() {
-    console.log('\n🧪 集成测试：事件系统');
+
     console.log('-'.repeat(40));
     
     const graph = new MockX6Graph();
@@ -356,17 +351,17 @@ async function testEventIntegration() {
     // 监听事件
     engine.on('layout:start', () => {
         eventsFired.push('layout:start');
-        console.log('🎯 事件触发: layout:start');
+
     });
     
     engine.on('layout:complete', (data) => {
         eventsFired.push('layout:complete');
-        console.log('🎯 事件触发: layout:complete', data?.nodeCount || 0, '个节点');
+
     });
     
     engine.on('layout:error', (error) => {
         eventsFired.push('layout:error');
-        console.log('🎯 事件触发: layout:error', error.message);
+
     });
     
     try {
@@ -380,14 +375,14 @@ async function testEventIntegration() {
         const hasNoErrorEvent = !eventsFired.includes('layout:error');
         
         if (hasStartEvent && hasCompleteEvent && hasNoErrorEvent) {
-            console.log('✅ 事件系统测试通过');
+
             return true;
         } else {
-            console.log('❌ 事件系统测试失败: 事件触发不完整');
+
             return false;
         }
     } catch (error) {
-        console.error('❌ 事件系统测试失败:', error.message);
+
         return false;
     }
 }
@@ -396,7 +391,7 @@ async function testEventIntegration() {
  * 集成测试：预览线管理器集成
  */
 async function testPreviewManagerIntegration() {
-    console.log('\n🧪 集成测试：预览线管理器集成');
+
     console.log('-'.repeat(40));
     
     const graph = new MockX6Graph();
@@ -420,12 +415,11 @@ async function testPreviewManagerIntegration() {
         
         // 测试预览线管理器方法调用
         engine.updatePreviewManager(previewManager);
-        console.log('🔄 预览线管理器更新完成');
-        
-        console.log('✅ 预览线管理器集成测试通过');
+
+
         return true;
     } catch (error) {
-        console.error('❌ 预览线管理器集成测试失败:', error.message);
+
         return false;
     }
 }
@@ -434,7 +428,7 @@ async function testPreviewManagerIntegration() {
  * 主集成测试函数
  */
 async function runIntegrationTests() {
-    console.log('🎯 统一布局引擎集成测试');
+
     console.log('='.repeat(50));
     
     const tests = [
@@ -451,20 +445,19 @@ async function runIntegrationTests() {
             const passed = await test();
             results.push({ name, passed });
         } catch (error) {
-            console.error(`❌ 测试 "${name}" 执行失败:`, error.message);
+
             results.push({ name, passed: false });
         }
     }
     
     // 输出测试结果
-    console.log('\n🎉 集成测试完成');
+
     console.log('='.repeat(50));
-    console.log('\n📋 测试结果:');
-    
+
     let passedCount = 0;
     results.forEach(result => {
         const status = result.passed ? '✅ 通过' : '❌ 失败';
-        console.log(`  ${result.name}: ${status}`);
+
         if (result.passed) passedCount++;
     });
     
@@ -474,9 +467,9 @@ async function runIntegrationTests() {
     console.log(`\n🏆 总体结果: ${passedCount}/${totalTests} 通过 (${passRate}%)`);
     
     if (passedCount === totalTests) {
-        console.log('\n✅ 所有集成测试通过！新引擎可以在实际项目中正常工作。');
+
     } else {
-        console.log('\n⚠️  部分集成测试失败，需要进一步调试和修复。');
+
     }
     
     return passedCount === totalTests;
@@ -484,6 +477,6 @@ async function runIntegrationTests() {
 
 // 运行集成测试
 runIntegrationTests().catch(error => {
-    console.error('❌ 集成测试执行失败:', error);
+
     process.exit(1);
 });

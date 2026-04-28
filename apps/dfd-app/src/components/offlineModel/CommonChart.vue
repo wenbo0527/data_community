@@ -434,7 +434,7 @@ const handleExport = () => {
     
     emit('export', url)
   } catch (error) {
-    console.error('导出图表失败:', error)
+
   }
 }
 
