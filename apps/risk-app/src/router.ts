@@ -27,94 +27,94 @@ const routes: RouteRecordRaw[] = [
 
   // ========== 外数生命周期 ==========
   {
-    path: 'external-data',
+    path: '/external-data',
     name: 'ExternalDataRoot',
     redirect: '/external-data/lifecycle'
   },
   {
-    path: 'external-data/lifecycle',
+    path: '/external-data/lifecycle',
     name: 'RiskExternalDataLifecycle',
     component: () => import('./modules/external-data/pages/Lifecycle.vue'),
     meta: { title: '外数生命周期' }
   },
   {
-    path: 'external-data/lifecycle/:id',
+    path: '/external-data/lifecycle/:id',
     name: 'RiskExternalDataLifecycleDetail',
     component: () => import('./modules/external-data/pages/Lifecycle.vue'),
     meta: { title: '外数生命周期详情' },
     props: true
   },
   {
-    path: 'external-data/evaluation',
+    path: '/external-data/evaluation',
     name: 'RiskExternalDataEvaluation',
     component: () => import('./modules/external-data/pages/Evaluation.vue'),
     meta: { title: '外数评估' }
   },
   {
-    path: 'external-data/evaluation/:id',
+    path: '/external-data/evaluation/:id',
     name: 'RiskExternalDataEvaluationDetail',
     component: () => import('./modules/external-data/pages/EvaluationDetail.vue'),
     meta: { title: '评估详情' },
     props: true
   },
   {
-    path: 'external-data/archive',
+    path: '/external-data/archive',
     name: 'RiskExternalDataArchive',
     component: () => import('./modules/external-data/pages/Archive.vue'),
     meta: { title: '外数档案' }
   },
   {
-    path: 'external-data/archive/:id',
+    path: '/external-data/archive/:id',
     name: 'RiskExternalDataArchiveDetail',
     component: () => import('./modules/external-data/pages/ArchiveDetail.vue'),
     meta: { title: '档案详情' },
     props: true
   },
   {
-    path: 'external-data/service',
+    path: '/external-data/service',
     name: 'RiskExternalDataService',
     component: () => import('./modules/external-data/pages/Service.vue'),
     meta: { title: '外数数据服务' }
   },
   {
-    path: 'external-data/service-create',
+    path: '/external-data/service-create',
     name: 'RiskExternalDataServiceCreate',
     component: () => import('./modules/external-data/pages/Service.vue'),
     meta: { title: '外数服务创建（新）' }
   },
   {
-    path: 'external-data/service-scene',
+    path: '/external-data/service-scene',
     name: 'RiskExternalDataServiceScene',
     component: () => import('./modules/external-data/pages/ServiceScene.vue'),
     meta: { title: '服务场景入口' }
   },
   {
-    path: 'external-data/sample-preparation',
+    path: '/external-data/sample-preparation',
     name: 'RiskExternalDataSamplePreparation',
     component: () => import('./modules/external-data/pages/SamplePreparation.vue'),
     meta: { title: '样本表准备' }
   },
   {
-    path: 'external-data/sample-preparation/create',
+    path: '/external-data/sample-preparation/create',
     name: 'RiskExternalDataSamplePreparationCreate',
     component: () => import('./modules/external-data/pages/SamplePreparationCreate.vue'),
     meta: { title: '新建样本表' }
   },
   {
-    path: 'external-data/sample-preparation/edit/:id',
+    path: '/external-data/sample-preparation/edit/:id',
     name: 'RiskExternalDataSamplePreparationEdit',
     component: () => import('./modules/external-data/pages/SamplePreparationCreate.vue'),
     meta: { title: '编辑样本表' },
     props: true
   },
   {
-    path: 'external-data/validation-template',
+    path: '/external-data/validation-template',
     name: 'RiskExternalDataValidationTemplate',
     component: () => import('./modules/external-data/pages/ServiceValidationTemplate.vue'),
     meta: { title: '服务校验模版管理' }
   },
   {
-    path: 'external-data/online-call-application',
+    path: '/external-data/online-call-application',
     name: 'RiskExternalDataOnlineCallApplication',
     component: () => import('./modules/external-data/pages/OnlineCallApplication.vue'),
     meta: { title: '外数线上调用服务申请' }
@@ -122,87 +122,87 @@ const routes: RouteRecordRaw[] = [
 
   // ========== 预算管理 ==========
   {
-    path: 'budget',
+    path: '/budget',
     name: 'RiskBudgetRoot',
     redirect: '/budget/overview'
   },
   {
-    path: 'budget/overview',
+    path: '/budget/overview',
     name: 'BudgetOverview',
     component: () => import('./modules/budget/pages/Overview.vue'),
     meta: { title: '预算总览' }
   },
   {
-    path: 'budget/monitor',
+    path: '/budget/monitor',
     name: 'RiskBudgetMonitorPage',
     component: () => import('./modules/budget/pages/Monitor.vue'),
     meta: { title: '预算监控' }
   },
   {
-    path: 'budget/contracts',
+    path: '/budget/contracts',
     name: 'RiskBudgetContracts',
     component: () => import('./modules/budget/pages/Contracts.vue'),
     meta: { title: '合同管理' }
   },
   {
-    path: 'budget/contracts/:id',
+    path: '/budget/contracts/:id',
     name: 'RiskBudgetContractDetail',
     component: () => import('./modules/budget/pages/ContractDetail.vue'),
     meta: { title: '合同详情' },
     props: true
   },
   {
-    path: 'budget/contracts/create',
+    path: '/budget/contracts/create',
     name: 'RiskBudgetContractCreate',
     component: () => import('./modules/budget/pages/ContractCreate.vue'),
     meta: { title: '新建合同' }
   },
   {
-    path: 'budget/settlement',
+    path: '/budget/settlement',
     name: 'RiskBudgetSettlement',
     component: () => import('./modules/budget/pages/Settlement.vue'),
     meta: { title: '结算管理' }
   },
   {
-    path: 'budget/settlement/task/new',
+    path: '/budget/settlement/task/new',
     name: 'RiskBudgetSettlementTaskNew',
     component: () => import('./modules/budget/pages/TaskPage.vue'),
     meta: { title: '创建结算任务' }
   },
   {
-    path: 'budget/settlement/task/:id',
+    path: '/budget/settlement/task/:id',
     name: 'RiskBudgetSettlementTask',
     component: () => import('./modules/budget/pages/TaskPage.vue'),
     meta: { title: '结算任务' },
     props: true
   },
   {
-    path: 'budget/accounting',
+    path: '/budget/accounting',
     name: 'RiskBudgetAccounting',
     component: () => import('./modules/budget/pages/Accounting.vue'),
     meta: { title: '核算流程' }
   },
   {
-    path: 'budget/list',
+    path: '/budget/list',
     name: 'RiskBudgetList',
     component: () => import('./modules/budget/pages/List.vue'),
     meta: { title: '预算列表' }
   },
   {
-    path: 'budget/create',
+    path: '/budget/create',
     name: 'RiskBudgetCreate',
     component: () => import('./modules/budget/pages/Create.vue'),
     meta: { title: '新建预算' }
   },
   {
-    path: 'budget/edit/:id',
+    path: '/budget/edit/:id',
     name: 'RiskBudgetEdit',
     component: () => import('./modules/budget/pages/Edit.vue'),
     meta: { title: '编辑预算' },
     props: true
   },
   {
-    path: 'budget/detail/:id',
+    path: '/budget/detail/:id',
     name: 'RiskBudgetDetail',
     component: () => import('./modules/budget/pages/Detail.vue'),
     meta: { title: '预算详情' },

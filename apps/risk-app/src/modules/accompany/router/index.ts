@@ -2,12 +2,12 @@ import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
   {
-    path: 'accompany',
+    path: '/accompany',
     name: 'RiskAccompanyRoot',
     redirect: 'accompany'
   },
   {
-    path: 'accompany',
+    path: '/accompany',
     name: 'RiskAccompany',
     component: () => import('../pages/Layout.vue'),
     meta: {
