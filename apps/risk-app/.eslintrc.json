@@ -37,15 +37,17 @@
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/ban-ts-comment": "off",
 
-    /* 钟离：Vue Router path 辅助检查
-     * ⚠️ 已知局限：selector 无法区分 root path 和 children path
-     * 会误报 children 中相对路径（OK，不报错），会漏报 root 中缺 / 的路径
-     * 主要保障：单元测试 tests/router/risk-app.spec.ts（验证 children 相对路径正确性）
-     * 运行时保障：createRouter → tokenizePath 会校验，缺 / 会在生产报 error
-     */
-    "no-restricted-syntax": ["warn", {
-      "selector": "Property[key.name='path'] > Literal[value!=''][value!='/']",
-      "message": "Vue Router path 应以 / 开头。根级必须，children 使用相对路径。当前: \"{{ value }}\""
-    }]
+    /* 阿里云代码规范质量规则（从 eslint-config-aliyun 提取） */
+    "eqeqeq": ["error", "always"],
+    "radix": ["error"],
+    "camelcase": ["error", { "properties": "never" }],
+    "no-useless-escape": ["error"],
+    "array-callback-return": ["error"],
+    "no-new-object": ["error"],
+    "no-array-constructor": ["error"],
+    "arrow-spacing": ["error"],
+    "no-duplicate-imports": ["error"],
+
+
   }
 }
