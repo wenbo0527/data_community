@@ -27,8 +27,129 @@
             搜索
           </a-button>
         </a-col>
-
+        <a-col :span="3">
+          <a-button 
+            :type="showAdvancedFilter ? 'primary' : 'secondary'"
+            @click="toggleAdvancedFilter"
+          >
+            <template #icon><icon-filter /></template>
+            高级
+          </a-button>
+        </a-col>
       </a-row>
+
+      <!-- 高级筛选面板 -->
+      <div v-if="showAdvancedFilter" class="advanced-filter-panel">
+        <a-row :gutter="16">
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.type" 
+              placeholder="指标类型" 
+              allow-clear
+            >
+              <a-option value="原子指标">原子指标</a-option>
+              <a-option value="派生指标">派生指标</a-option>
+              <a-option value="复合指标">复合指标</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.domain" 
+              placeholder="指标域" 
+              allow-clear
+            >
+              <a-option value="资本监管">资本监管</a-option>
+              <a-option value="流动性监管">流动性监管</a-option>
+              <a-option value="信贷风险监管">信贷风险监管</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.updateFrequency" 
+              placeholder="更新频率" 
+              allow-clear
+            >
+              <a-option value="实时">实时</a-option>
+              <a-option value="日更新">日更新</a-option>
+              <a-option value="周更新">周更新</a-option>
+              <a-option value="月更新">月更新</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.status" 
+              placeholder="状态" 
+              allow-clear
+            >
+              <a-option value="上线">上线</a-option>
+              <a-option value="下线">下线</a-option>
+              <a-option value="草稿">草稿</a-option>
+            </a-select>
+          </a-col>
+        </a-row>
+
+        <!-- 包含和剔除筛选条件 -->
+        <div class="condition-builder">
+          <div class="condition-header">
+            <span class="condition-title">筛选条件</span>
+            <a-button type="text" size="mini" @click="addCondition">
+              <icon-plus />添加条件
+            </a-button>
+          </div>
+
+          <!-- 已添加的条件 -->
+          <div v-if="advancedConditions.length > 0" class="condition-list">
+            <div 
+              v-for="(condition, index) in advancedConditions" 
+              :key="index"
+              class="condition-item"
+            >
+              <a-select 
+                v-model="condition.matchType" 
+                style="width: 100px"
+              >
+                <a-option value="include">包含</a-option>
+                <a-option value="exclude">剔除</a-option>
+              </a-select>
+              <a-input
+                v-model="condition.value"
+                placeholder="请输入关键词"
+                style="flex: 1"
+                allow-clear
+              />
+              <a-button type="text" status="danger" @click="removeCondition(index)">
+                <icon-delete />
+              </a-button>
+            </div>
+          </div>
+
+          <!-- 快速添加标签 -->
+          <div v-if="advancedConditions.length === 0" class="quick-conditions">
+            <span class="quick-label">快速添加：</span>
+            <a-tag 
+              v-for="(tag, index) in quickTags" 
+              :key="index"
+              class="quick-tag"
+              @click="addQuickCondition(tag, 'include')"
+            >
+              包含 {{ tag }}
+            </a-tag>
+            <a-tag 
+              v-for="(tag, index) in quickTags" 
+              :key="'ex-' + index"
+              class="quick-tag exclude"
+              @click="addQuickCondition(tag, 'exclude')"
+            >
+              剔除 {{ tag }}
+            </a-tag>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <a-button type="outline" @click="resetAdvancedFilters">重置筛选</a-button>
+          <a-button type="primary" @click="applyAdvancedSearch">应用筛选</a-button>
+        </div>
+      </div>
     </div>
 
     <a-row :gutter="24">
@@ -102,13 +223,25 @@ import type { TreeNodeData } from '@arco-design/web-vue'
 import type { RequestOption, UploadRequest, FileItem } from '@arco-design/web-vue/es/upload/interfaces'
 // 强制使用 TS 版指标 mock，避免误用旧版 JS
 import metricsMock from '@/mock/metrics.ts'
-import { IconUpload, IconDownload, IconPlus } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconDownload, IconPlus, IconFilter, IconDelete } from '@arco-design/web-vue/es/icon'
 import IncrementalImportModal from '@/components/modals/IncrementalImportModal.vue'
 import BatchImportModal from '@/components/modals/BatchImportModal.vue'
 import BusinessProcessFlow from '@/components/BusinessProcessFlow.vue'
 import type { MetricItem } from '@/types/metrics'
 import { METRIC_TYPE_LABELS, REGULATORY_CATEGORY_LABELS, MetricType } from '@/types/metrics'
 import { useRouter } from 'vue-router'
+
+interface AdvancedCondition {
+  matchType: 'include' | 'exclude'
+  value: string
+}
+
+interface AdvancedFilters {
+  type: string
+  domain: string
+  updateFrequency: string
+  status: string
+}
 
 interface ApiResponse<T> {
   data: {
@@ -154,6 +287,17 @@ const selectedReportName = ref('')
 const selectedKeys = ref<(string | number)[]>([])
 const showCreateModal = ref(false)
 
+// 高级筛选相关
+const showAdvancedFilter = ref(false)
+const advancedFilters = ref<AdvancedFilters>({
+  type: '',
+  domain: '',
+  updateFrequency: '',
+  status: ''
+})
+const advancedConditions = ref<AdvancedCondition[]>([])
+const quickTags = ref(['核销', '逾期', '不良', '不良率', '迁徙率'])
+
 const pagination = ref({
   total: 0,
   current: 1,
@@ -190,6 +334,46 @@ const treeData = computed(() => {
     }))
   }))
 })
+
+// 高级筛选相关方法
+const toggleAdvancedFilter = () => {
+  showAdvancedFilter.value = !showAdvancedFilter.value
+}
+
+const addCondition = () => {
+  advancedConditions.value.push({
+    matchType: 'include',
+    value: ''
+  })
+}
+
+const removeCondition = (index: number) => {
+  advancedConditions.value.splice(index, 1)
+}
+
+const addQuickCondition = (tag: string, matchType: 'include' | 'exclude') => {
+  const existing = advancedConditions.value.find((c: AdvancedCondition) => c.value === tag && c.matchType === matchType)
+  if (!existing) {
+    advancedConditions.value.push({
+      matchType,
+      value: tag
+    })
+  }
+}
+
+const resetAdvancedFilters = () => {
+  advancedFilters.value = {
+    type: '',
+    domain: '',
+    updateFrequency: '',
+    status: ''
+  }
+  advancedConditions.value = []
+}
+
+const applyAdvancedSearch = () => {
+  handleSearch()
+}
 
 // 处理树节点选择
 const handleTabChange = (key: string | number) => {
@@ -479,6 +663,98 @@ onMounted(() => {
   padding: 16px;
   background: #f8f9fa;
   border-radius: 6px;
+}
+
+.advanced-filter-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #e5e6eb;
+}
+
+.condition-builder {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.condition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.condition-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4e5969;
+}
+
+.condition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.condition-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.condition-item:hover {
+  border-color: #165dff;
+}
+
+.quick-conditions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.quick-label {
+  font-size: 13px;
+  color: #86909c;
+  margin-right: 8px;
+}
+
+.quick-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.quick-tag:hover {
+  background: #e8f3ff;
+  border-color: #165dff;
+  color: #165dff;
+}
+
+.quick-tag.exclude:hover {
+  background: #fff1e8;
+  border-color: #ff7d00;
+  color: #ff7d00;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
 }
 
 .tree-card {

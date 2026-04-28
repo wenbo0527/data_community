@@ -6,7 +6,7 @@
 
     <!-- 搜索筛选区域 -->
     <div class="search-section">
-      <a-row :gutter="16" justify="end">
+      <a-row :gutter="16" justify="end" align="center">
         <a-col :span="6">
           <a-input
             v-model="featureFilter.name"
@@ -25,7 +25,129 @@
             搜索
           </a-button>
         </a-col>
+        <a-col>
+          <a-button 
+            @click="toggleAdvancedFilter"
+            :type="showAdvancedFilter ? 'primary' : 'secondary'"
+          >
+            <template #icon><icon-filter /></template>
+            高级
+          </a-button>
+        </a-col>
       </a-row>
+
+      <!-- 高级筛选面板 -->
+      <div v-if="showAdvancedFilter" class="advanced-filter-panel">
+        <a-row :gutter="16">
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.variableType" 
+              placeholder="变量类型" 
+              allow-clear
+            >
+              <a-option value="numerical">数值型</a-option>
+              <a-option value="categorical">分类型</a-option>
+              <a-option value="text">文本型</a-option>
+              <a-option value="datetime">时间型</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.businessType" 
+              placeholder="业务类型" 
+              allow-clear
+            >
+              <a-option value="credit">征信变量</a-option>
+              <a-option value="behavior">行为变量</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.level1" 
+              placeholder="一级分类" 
+              allow-clear
+            >
+              <a-option value="credit_report">征信报告</a-option>
+              <a-option value="credit_history">信贷记录</a-option>
+              <a-option value="transaction_behavior">交易行为</a-option>
+              <a-option value="activity">活跃度</a-option>
+              <a-option value="model_outputs">模型输出</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="advancedFilters.updateFrequency" 
+              placeholder="更新频率" 
+              allow-clear
+            >
+              <a-option value="realtime">实时</a-option>
+              <a-option value="daily">日更新</a-option>
+              <a-option value="weekly">周更新</a-option>
+              <a-option value="monthly">月更新</a-option>
+            </a-select>
+          </a-col>
+        </a-row>
+
+        <!-- 包含和剔除筛选条件 -->
+        <div class="condition-builder">
+          <div class="condition-header">
+            <span class="condition-title">筛选条件</span>
+            <a-button type="text" size="mini" @click="addCondition">
+              <icon-plus />添加条件
+            </a-button>
+          </div>
+
+          <div v-if="advancedConditions.length > 0" class="condition-list">
+            <div 
+              v-for="(condition, index) in advancedConditions" 
+              :key="index"
+              class="condition-item"
+            >
+              <a-select 
+                v-model="condition.matchType" 
+                style="width: 100px"
+              >
+                <a-option value="include">包含</a-option>
+                <a-option value="exclude">剔除</a-option>
+              </a-select>
+              <a-input
+                v-model="condition.value"
+                placeholder="请输入关键词"
+                style="flex: 1"
+                allow-clear
+              />
+              <a-button type="text" status="danger" @click="removeCondition(index)">
+                <icon-delete />
+              </a-button>
+            </div>
+          </div>
+
+          <div v-if="advancedConditions.length === 0" class="quick-conditions">
+            <span class="quick-label">快速添加：</span>
+            <a-tag 
+              v-for="(tag, index) in quickTags" 
+              :key="index"
+              class="quick-tag"
+              @click="addQuickCondition(tag, 'include')"
+            >
+              包含 {{ tag }}
+            </a-tag>
+            <a-tag 
+              v-for="(tag, index) in quickTags" 
+              :key="'ex-' + index"
+              class="quick-tag exclude"
+              @click="addQuickCondition(tag, 'exclude')"
+            >
+              剔除 {{ tag }}
+            </a-tag>
+          </div>
+        </div>
+
+        <div class="filter-actions-bottom">
+          <a-button type="outline" @click="resetAdvancedFilters">重置筛选</a-button>
+          <a-button type="primary" @click="applyAdvancedFilters">应用筛选</a-button>
+        </div>
+      </div>
     </div>
 
     <a-row :gutter="24">
@@ -68,14 +190,14 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Graph } from '@antv/x6'
 import { Message } from '@arco-design/web-vue'
 import { useVariableStore } from '@/store/modules/variable'
 import { featureAPI } from '@/api/offlineModel'
-import { IconSearch } from '@arco-design/web-vue/es/icon'
+import { IconSearch, IconFilter, IconPlus, IconDelete } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
 const variableStore = useVariableStore()
@@ -114,6 +236,17 @@ const pathAnalysisResult = ref(null)
 // 血缘追踪
 const lineageVisible = ref(false)
 const lineageData = computed(() => variableStore.variableLineage)
+
+// 高级筛选相关
+const showAdvancedFilter = ref(false)
+const advancedFilters = reactive({
+  variableType: '',
+  businessType: '',
+  level1: '',
+  updateFrequency: ''
+})
+const advancedConditions = ref<Array<{ matchType: 'include' | 'exclude', value: string }>>([])
+const quickTags = ref(['核销', '逾期', '不良', '欺诈', '高风险', '低风险'])
 
 // 类型映射
 const typeMap = {
@@ -219,6 +352,71 @@ const handleFeaturePageChange = async (page) => {
   featurePagination.current = page
   await fetchFeatureRows()
 }
+
+// 高级筛选方法
+const toggleAdvancedFilter = () => {
+  showAdvancedFilter.value = !showAdvancedFilter.value
+}
+
+const addCondition = () => {
+  advancedConditions.value.push({
+    matchType: 'include',
+    value: ''
+  })
+}
+
+const removeCondition = (index) => {
+  advancedConditions.value.splice(index, 1)
+}
+
+const addQuickCondition = (tag, matchType) => {
+  const existing = advancedConditions.value.find(c => c.value === tag && c.matchType === matchType)
+  if (!existing) {
+    advancedConditions.value.push({
+      matchType,
+      value: tag
+    })
+  }
+}
+
+const resetAdvancedFilters = () => {
+  advancedFilters.variableType = ''
+  advancedFilters.businessType = ''
+  advancedFilters.level1 = ''
+  advancedFilters.updateFrequency = ''
+  advancedConditions.value = []
+}
+
+const applyAdvancedFilters = async () => {
+  // 将高级筛选条件应用到featureFilter
+  if (advancedFilters.businessType) {
+    featureFilter.majorCategory = advancedFilters.businessType
+  }
+  if (advancedFilters.level1) {
+    featureFilter.level1 = advancedFilters.level1
+  }
+  
+  // 应用包含和剔除条件
+  const includeTerms = advancedConditions.value
+    .filter(c => c.matchType === 'include' && c.value.trim())
+    .map(c => c.value.trim())
+  
+  const excludeTerms = advancedConditions.value
+    .filter(c => c.matchType === 'exclude' && c.value.trim())
+    .map(c => c.value.trim())
+  
+  // 可以将这些条件合并到搜索关键词中或单独处理
+  if (includeTerms.length > 0) {
+    console.log('包含条件:', includeTerms)
+  }
+  if (excludeTerms.length > 0) {
+    console.log('剔除条件:', excludeTerms)
+  }
+  
+  featurePagination.current = 1
+  await fetchFeatureRows()
+}
+
 const debugInfo = ref('初始化中')
 
 // 获取类型标签
@@ -689,6 +887,98 @@ onUnmounted(() => {
   padding: 16px;
   background: #f8f9fa;
   border-radius: 6px;
+}
+
+.advanced-filter-panel {
+  margin-top: 16px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e6eb;
+}
+
+.condition-builder {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.condition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.condition-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4e5969;
+}
+
+.condition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.condition-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.condition-item:hover {
+  border-color: #165dff;
+}
+
+.quick-conditions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.quick-label {
+  font-size: 13px;
+  color: #86909c;
+  margin-right: 8px;
+}
+
+.quick-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.quick-tag:hover {
+  background: #e8f3ff;
+  border-color: #165dff;
+  color: #165dff;
+}
+
+.quick-tag.exclude:hover {
+  background: #fff1e8;
+  border-color: #ff7d00;
+  color: #ff7d00;
+}
+
+.filter-actions-bottom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
 }
 
 .metric-name {
