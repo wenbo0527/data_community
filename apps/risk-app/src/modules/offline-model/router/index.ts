@@ -4,7 +4,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/model-offline-analysis',
     name: 'RiskOfflineModel',
-    redirect: 'model-offline-analysis/feature-center',
+    redirect: 'feature-center',
     component: () => import('../pages/Layout.vue'),
     meta: {
       title: '离线模型',
@@ -12,7 +12,7 @@ const routes: RouteRecordRaw[] = [
     },
     children: [
       {
-        path: '/demo',
+        path: 'demo',
         name: 'RiskOfflineModelDemo',
         component: () => import('../pages/demo.vue'),
         meta: {
@@ -21,7 +21,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/test',
+        path: 'test',
         name: 'RiskOfflineModelTest',
         component: () => import('../pages/test.vue'),
         meta: {
@@ -30,7 +30,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/feature-center',
+        path: 'feature-center',
         name: 'RiskFeatureCenter',
         component: () => import('../pages/featureCenter/index.vue'),
         meta: {
@@ -39,7 +39,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/feature-center/detail/:id',
+        path: 'feature-center/detail/:id',
         name: 'RiskFeatureCenterDetail',
         component: () => import('../pages/featureCenter/detail.vue'),
         meta: {
@@ -48,7 +48,7 @@ const routes: RouteRecordRaw[] = [
         props: true
       },
       {
-        path: '/feature-center/edit/:id',
+        path: 'feature-center/edit/:id',
         name: 'RiskFeatureCenterEdit',
         component: () => import('../pages/featureCenter/edit.vue'),
         meta: {
@@ -57,7 +57,7 @@ const routes: RouteRecordRaw[] = [
         props: true
       },
       {
-        path: '/feature-center/create',
+        path: 'feature-center/create',
         name: 'RiskFeatureCenterCreate',
         component: () => import('../pages/featureCenter/create.vue'),
         meta: {
@@ -65,7 +65,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/model-register',
+        path: 'model-register',
         name: 'RiskModelRegister',
         component: () => import('../pages/modelRegister/index.vue'),
         meta: {
@@ -74,7 +74,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/model-register/create',
+        path: 'model-register/create',
         name: 'RiskModelRegisterCreate',
         component: () => import('../pages/modelRegister/create.vue'),
         meta: {
@@ -82,7 +82,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/model-register/edit/:id',
+        path: 'model-register/edit/:id',
         name: 'RiskModelRegisterEdit',
         component: () => import('../pages/modelRegister/edit.vue'),
         meta: {
@@ -91,7 +91,7 @@ const routes: RouteRecordRaw[] = [
         props: true
       },
       {
-        path: '/model-register/detail/:id',
+        path: 'model-register/detail/:id',
         name: 'RiskModelRegisterDetail',
         component: () => import('../pages/modelRegister/detail.vue'),
         meta: {
@@ -100,7 +100,7 @@ const routes: RouteRecordRaw[] = [
         props: true
       },
       {
-        path: '/model-backtrack',
+        path: 'model-backtrack',
         name: 'RiskModelBacktrack',
         component: () => import('../pages/modelBacktrack/index.vue'),
         meta: {
@@ -109,7 +109,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/model-backtrack/create',
+        path: 'model-backtrack/create',
         name: 'RiskModelBacktrackCreate',
         component: () => import('../pages/modelBacktrack/create.vue'),
         meta: {
@@ -117,7 +117,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/model-backtrack/detail/:id',
+        path: 'model-backtrack/detail/:id',
         name: 'RiskModelBacktrackDetail',
         component: () => import('../pages/modelBacktrack/detail.vue'),
         meta: {
@@ -126,7 +126,7 @@ const routes: RouteRecordRaw[] = [
         props: true
       },
       {
-        path: '/task-management',
+        path: 'task-management',
         name: 'RiskTaskManagement',
         component: () => import('../pages/taskManagement/index.vue'),
         meta: {
@@ -135,7 +135,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/task-management/detail/:id',
+        path: 'task-management/detail/:id',
         name: 'RiskTaskManagementDetail',
         component: () => import('../pages/taskManagement/detail.vue'),
         meta: {
@@ -144,7 +144,7 @@ const routes: RouteRecordRaw[] = [
         props: true
       },
       {
-        path: '/model-evaluation',
+        path: 'model-evaluation',
         name: 'RiskModelEvaluation',
         component: () => import('../pages/modelEvaluation/index.vue'),
         meta: {

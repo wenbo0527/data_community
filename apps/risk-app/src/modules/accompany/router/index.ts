@@ -4,7 +4,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/accompany',
     name: 'RiskAccompanyRoot',
-    redirect: 'accompany'
+    redirect: ''
   },
   {
     path: '/accompany',
@@ -25,7 +25,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/create',
+        path: 'create',
         name: 'RiskAccompanyCreate',
         component: () => import('../pages/create.vue'),
         meta: {
@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
-        path: '/result',
+        path: 'result',
         name: 'RiskAccompanyResult',
         component: () => import('../pages/result.vue'),
         meta: {
