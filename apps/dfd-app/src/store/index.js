@@ -1,0 +1,9 @@
+import { createPinia } from 'pinia'
+
+const pinia = createPinia()
+
+export default pinia
+export * from './modules/app'
+export * from './modules/user'
+export * from './modules/model-offline'
+export * from './modules/variable'

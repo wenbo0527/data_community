@@ -141,6 +141,6 @@ const handleCancel = () => {
 .page-header { margin-bottom: 12px; }
 .page-title { margin: 0; font-size: 18px; font-weight: 600; }
 .page-content { max-width: 1200px; margin: 0 auto; }
-.actions-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); border-top: 1px solid #e5e6eb; padding: 10px 0; margin-top: 12px; }
+.actions-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); border-top: 1px solid var(--subapp-border); padding: 10px 0; margin-top: 12px; }
 .actions-inner { display: flex; gap: 8px; justify-content: flex-end; max-width: 1200px; margin: 0 auto; padding: 0 8px; }
 </style>

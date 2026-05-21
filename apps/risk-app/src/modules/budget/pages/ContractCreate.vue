@@ -72,7 +72,7 @@
                   <a-space direction="vertical" style="width: 100%">
                     <a-space>
                        <a-button size="mini" @click="forceRefreshProducts">刷新外数列表</a-button>
-                       <span style="font-size: 12px; color: #86909c">当前外数总数: {{ products.length }}</span>
+                       <span style="font-size: 12px; color: var(--subapp-text-tertiary)">当前外数总数: {{ products.length }}</span>
                     </a-space>
                     <a-select v-model="selectedExternalIds" multiple allow-clear allow-search :options="externalOptions" placeholder="选择一个或多个外数" style="width: 100%" />
                   </a-space>

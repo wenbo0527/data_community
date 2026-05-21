@@ -4,7 +4,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/model-offline-analysis',
     name: 'RiskOfflineModel',
-    redirect: '/model-offline-analysis/feature-center',
+    redirect: 'feature-center',
     component: () => import('../pages/Layout.vue'),
     meta: {
       title: '离线模型',

@@ -1,0 +1,109 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true,
+    "vue/setup-compiler-macros": true
+  },
+  "parser": "vue-eslint-parser",
+  "extends": [
+    "eslint:recommended",
+    "plugin:vue/vue3-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "parser": "@typescript-eslint/parser",
+    "extraFileExtensions": [".vue"]
+  },
+  "plugins": ["vue", "@typescript-eslint"],
+  "rules": {
+    // ========== Vue 相关规则 ==========
+    "vue/multi-word-component-names": "off",
+    "vue/no-unused-vars": "off",
+    "vue/no-unused-components": "off",
+    "vue/require-default-prop": "off",
+    "vue/require-prop-types": "off",
+    "vue/prop-name-casing": "off",
+    "vue/component-name-in-template-casing": "off",
+    "vue/no-side-effects-in-computed-properties": "off",
+    "vue/no-mutating-props": "off",
+
+    // 禁用格式类规则
+    "vue/max-attributes-per-line": "off",
+    "vue/singleline-html-element-content-newline": "off",
+    "vue/html-indent": "off",
+    "vue/html-closing-bracket-newline": "off",
+    "vue/first-attribute-linebreak": "off",
+    "vue/multiline-html-element-content-newline": "off",
+    "vue/attributes-order": "off",
+    "vue/html-self-closing": "off",
+    "vue/block-order": "off",
+
+    // ========== TypeScript 相关规则 ==========
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-inferrable-types": "off",
+
+    // ========== 字节代码规范核心规则 ==========
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-alert": "error",
+    "no-var": "error",
+    "no-with": "error",
+    "no-eval": "error",
+    "no-new-wrappers": "error",
+    "no-implied-eval": "error",
+    "no-multi-str": "error",
+    "no-proto": "error",
+    "no-throw-literal": "error",
+    "no-unused-expressions": "error",
+    "no-useless-escape": "error",
+    "no-duplicate-imports": "off",
+    "prefer-const": "error",
+    "prefer-arrow-callback": "error",
+    "arrow-spacing": "error",
+    "eqeqeq": ["error", "always"],
+    "curly": ["error", "all"],
+    "guard-for-in": "error",
+    "no-empty": ["error", { "allowEmptyCatch": true }],
+    "prefer-promise-reject-errors": "off",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    "radix": "error",
+    "wrap-iife": ["error", "any"],
+    "camelcase": ["error", { "properties": "never" }],
+    "new-cap": "error",
+
+    // 复杂度限制
+    "complexity": "off",
+    "max-depth": "off",
+    "max-params": "off",
+    "max-nested-callbacks": "off",
+    "max-len": "off",
+    "id-blacklist": "off",
+    "require-await": "off",
+
+    // 格式规则
+    "indent": "off",
+    "quotes": "off",
+    "semi": "off",
+    "comma-dangle": "off",
+    "object-curly-spacing": "off",
+    "array-bracket-spacing": "off"
+  },
+  "overrides": [
+    {
+      "files": ["*.test.js", "*.spec.js", "**/*.mock.js", "**/*.fixture.js"],
+      "rules": {
+        "no-console": "off",
+        "no-debugger": "off"
+      }
+    }
+  ]
+}

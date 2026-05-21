@@ -111,6 +111,6 @@ const spanMethod = ({ record, column, rowIndex }: { record: any; column: any; ro
 .process-table :deep(.arco-table-tr) { height: 48px; }
 .process-table :deep(.arco-table-cell) { padding: 12px 8px; }
 .comparison-cell { display: flex; justify-content: center; align-items: center; }
-.warning-text { color: #f53f3f; }
-.success-text { color: #00b42a; }
+.warning-text { color: var(--subapp-danger); }
+.success-text { color: var(--subapp-success); }
 </style>

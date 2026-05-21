@@ -1,0 +1,906 @@
+/**
+ * 节点配置管理器
+ * 统一管理所有节点类型的配置处理逻辑，解决重复代码和维护成本高的问题
+ */
+
+import { generateDynamicNextSlots } from '../../../../../utils/nodeTypes.js'
+import { validatePortConfig } from './portConfigFactory.js'
+import { ErrorHandler } from './ErrorHandler.js'
+
+/**
+ * 节点配置策略基类
+ */
+class BaseNodeConfigStrategy {
+  constructor(nodeType) {
+    this.nodeType = nodeType
+  }
+
+  /**
+   * 验证配置数据
+   * @param {Object} config - 配置数据
+   * @returns {Object} 验证结果 { valid: boolean, errors: string[] }
+   */
+  validateConfig(config) {
+    return { valid: true, errors: [] }
+  }
+
+  /**
+   * 预处理配置数据
+   * @param {Object} config - 原始配置数据
+   * @returns {Object} 处理后的配置数据
+   */
+  preprocessConfig(config) {
+    return config
+  }
+
+  /**
+   * 更新节点数据
+   * @param {Object} node - 节点实例
+   * @param {Object} config - 配置数据
+   */
+  updateNodeData(node, config) {
+    const currentData = node.getData() || {}
+    const processedConfig = this.preprocessConfig(config)
+    
+    console.log('🔧 [NodeConfigManager] 更新节点数据:', {
+      nodeId: node.id,
+      nodeType: this.nodeType,
+      originalConfig: config,
+      processedConfig: processedConfig,
+      hasCrowdLayers: !!(config.crowdLayers && Array.isArray(config.crowdLayers)),
+      crowdLayersCount: config.crowdLayers ? config.crowdLayers.length : 0
+    })
+    
+    const updatedData = {
+      ...currentData,
+      config: processedConfig,
+      isConfigured: true, // 🔧 修复：配置完成后明确标记节点为已配置
+      lastUpdated: Date.now()
+    }
+    
+    // 🔧 修复：确保节点类型正确保存到数据中
+    if (this.nodeType) {
+      updatedData.type = this.nodeType
+      updatedData.nodeType = this.nodeType
+    }
+    
+    // 🔧 修复：对于人群分流节点，确保crowdLayers配置正确保存
+    if (this.nodeType === 'audience-split' && config.crowdLayers) {
+      // 直接保存原始的crowdLayers配置到config中
+      updatedData.config.crowdLayers = config.crowdLayers
+      
+      // 同时保存未命中分支配置
+      if (config.unmatchBranch) {
+        updatedData.config.unmatchBranch = config.unmatchBranch
+      }
+      
+      console.log('🔧 [NodeConfigManager] 人群分流节点配置保存:', {
+        nodeId: node.id,
+        crowdLayersCount: config.crowdLayers.length,
+        hasUnmatchBranch: !!config.unmatchBranch,
+        finalConfig: updatedData.config
+      })
+    }
+    
+    // 如果配置中包含节点名称，同时更新到label字段
+    if (config.nodeName) {
+      updatedData.label = config.nodeName
+    }
+    
+    node.setData(updatedData)
+    
+    // 🔧 验证数据是否正确保存
+    const verifyData = node.getData()
+    console.log('🔍 [NodeConfigManager] 验证节点数据保存:', {
+      nodeId: node.id,
+      nodeType: this.nodeType,
+      savedType: verifyData.type,
+      savedNodeType: verifyData.nodeType,
+      savedConfigKeys: Object.keys(verifyData.config || {}),
+      hasSavedCrowdLayers: !!(verifyData.config?.crowdLayers && Array.isArray(verifyData.config.crowdLayers)),
+      savedCrowdLayersCount: verifyData.config?.crowdLayers ? verifyData.config.crowdLayers.length : 0,
+      isConfigured: verifyData.isConfigured
+    })
+  }
+
+  /**
+   * 更新节点样式
+   * @param {Object} node - 节点实例
+   * @param {Object} config - 配置数据
+   */
+  updateNodeStyle(node, config) {
+    // 基础样式更新：节点名称
+    if (config.nodeName) {
+      node.setAttrByPath('text/text', config.nodeName)
+    }
+  }
+
+  /**
+   * 更新节点布局
+   * @param {Object} node - 节点实例
+   * @param {Object} config - 配置数据
+   * @param {Object} layoutManager - 布局管理器
+   */
+  updateNodeLayout(node, config, layoutManager) {
+    // 默认不需要特殊布局处理
+  }
+
+  /**
+   * 触发后置处理
+   * @param {Object} node - 节点实例
+   * @param {Object} config - 配置数据
+   * @param {Object} context - 上下文对象
+   */
+  postProcess(node, config, context) {
+    console.log(`[NodeConfigManager] 开始后置处理 - 节点类型: ${this.nodeType}, 节点ID: ${node.id}`)
+    
+    // 对于分支节点，需要更新输出端口
+    if (this.nodeType === 'audience-split' || this.nodeType === 'event-split' || this.nodeType === 'ab-test') {
+      try {
+        // 获取处理后的配置
+        const processedConfig = this.preprocessConfig(config)
+        console.log(`[NodeConfigManager] 更新分支节点端口 - 配置:`, processedConfig)
+        
+        // 计算需要的输出端口数量
+        let requiredOutputs = 1
+        
+        if (this.nodeType === 'audience-split') {
+          if (processedConfig.branches && Array.isArray(processedConfig.branches)) {
+            requiredOutputs = processedConfig.branches.length
+          } else if (processedConfig.branchCount && typeof processedConfig.branchCount === 'number') {
+            requiredOutputs = processedConfig.branchCount // 不再自动加1，分支数量就是配置的数量
+          } else {
+            requiredOutputs = 1 // 默认：只有1个输出端口，分支由配置管理
+          }
+        } else if (this.nodeType === 'event-split') {
+          requiredOutputs = 2 // 是/否两个分支
+        } else if (this.nodeType === 'ab-test') {
+          if (processedConfig.versions && Array.isArray(processedConfig.versions)) {
+            requiredOutputs = processedConfig.versions.length
+          } else {
+            requiredOutputs = 2 // 默认A/B两个版本
+          }
+        }
+        
+        console.log(`[NodeConfigManager] 节点 ${node.id} 需要 ${requiredOutputs} 个输出端口`)
+
+        // 在横版画布下（提供了 updateNodeFromConfig）跳过旧的统一底部 out 端口策略
+        const hasHorizontalUpdater = context && context.nodeOperations && typeof context.nodeOperations.updateNodeFromConfig === 'function'
+        if (hasHorizontalUpdater) {
+          console.log(`[NodeConfigManager] 检测到横版更新器，跳过统一底部 out 端口更新`)
+        } else {
+          // 更新节点的输出端口（旧策略）
+          this.updateNodeOutputPorts(node, requiredOutputs, config)
+        }
+        
+        // 如果有布局管理器，通知其更新分支
+        if (context.structuredLayout && context.structuredLayout.updateSplitNodeBranches) {
+          console.log(`[NodeConfigManager] 通过布局管理器更新分支`)
+          context.structuredLayout.updateSplitNodeBranches(node, processedConfig)
+        }
+        
+        console.log(`[NodeConfigManager] 分支节点后置处理完成 - 已更新为 ${requiredOutputs} 个输出端口`)
+      } catch (error) {
+        console.error(`[NodeConfigManager] 分支节点后置处理失败:`, error)
+      }
+    } else {
+      console.log(`[NodeConfigManager] 跳过端口更新 - 节点类型: ${this.nodeType}`)
+    }
+    
+    // 注意：预览线创建由 useConfigDrawers.js 统一处理，避免重复调用
+    console.log(`[NodeConfigManager] 后置处理完成 - 节点类型: ${this.nodeType}, 节点ID: ${node.id}`)
+  }
+
+  /**
+   * 更新节点的输出端口数量
+   * @param {Object} node - 节点实例
+   * @param {number} requiredOutputs - 需要的输出端口数量
+   */
+  updateNodeOutputPorts(node, requiredOutputs, config = {}) {
+    if (!node || typeof node.getPorts !== 'function') {
+      console.warn(`[NodeConfigManager] 节点不支持端口操作`)
+      return
+    }
+
+    try {
+      const currentPorts = node.getPorts()
+      const outputPorts = currentPorts.filter(port => port.group === 'out')
+      const currentOutputCount = outputPorts.length
+      
+      console.log(`🔧 [NodeConfigManager] 开始更新端口 - 节点: ${node.id}`)
+      console.log(`📊 [NodeConfigManager] 端口状态:`, {
+        nodeId: node.id,
+        nodeType: this.nodeType,
+        currentOutputCount,
+        requiredOutputs,
+        currentPorts: currentPorts.map(p => ({ id: p.id, group: p.group, position: p.position }))
+      })
+      
+      // 获取分支配置以确定正确的端口ID
+      const processedConfig = this.preprocessConfig(config)
+      const branches = processedConfig.branches || []
+      
+      console.log(`🌿 [NodeConfigManager] 分支配置:`, {
+        nodeId: node.id,
+        nodeType: this.nodeType,
+        branches,
+        processedConfig
+      })
+      
+      // 特别针对事件分流节点的日志
+      if (this.nodeType === 'event-split') {
+        console.log(`🎯 [NodeConfigManager] 事件分流节点端口更新详情:`, {
+          nodeId: node.id,
+          currentOutputPorts: outputPorts.map(p => p.id),
+          expectedBranches: branches.map(b => ({ id: b.id, name: b.name })),
+          requiredOutputs: 1 // 统一使用单个out端口
+        })
+      }
+      
+      if (currentOutputCount < requiredOutputs) {
+        // 需要添加更多输出端口
+        console.log(`➕ [NodeConfigManager] 需要添加端口: ${requiredOutputs - currentOutputCount} 个`)
+        
+        for (let i = currentOutputCount; i < requiredOutputs; i++) {
+          // 为了与BranchLayoutManager.js保持一致，我们只创建统一的'out'端口
+          // 检查是否已经有统一的'out'端口
+          const hasUnifiedOutPort = outputPorts.some(port => port.id === 'out')
+          
+          if (!hasUnifiedOutPort && i === 0) {
+            // 只在第一次循环时添加统一的'out'端口
+            const unifiedPortConfig = {
+              group: 'out',
+              id: 'out',
+              position: {
+                name: 'bottom',
+                args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+              },
+              attrs: {
+                circle: {
+                  r: 6,
+                  magnet: true,
+                  stroke: '#5F95FF',
+                  strokeWidth: 2,
+                  fill: '#fff',
+                  style: { visibility: 'visible' }
+                }
+              },
+              markup: [{ tagName: 'circle', selector: 'circle' }]
+            }
+            
+            console.log(`🔌 [NodeConfigManager] 添加统一输出端口配置:`, {
+              nodeId: node.id,
+              nodeType: this.nodeType,
+              portConfig: unifiedPortConfig
+            })
+            
+            node.addPort(unifiedPortConfig)
+            console.log(`✅ [NodeConfigManager] 成功添加统一输出端口: out`)
+          }
+          
+
+          
+          // 跳出循环，因为我们只需要添加一次统一端口
+          break
+        }
+      } else if (currentOutputCount > requiredOutputs) {
+        // 需要移除多余的输出端口（但保留至少1个）
+        const portsToRemove = Math.min(currentOutputCount - requiredOutputs, currentOutputCount - 1)
+        console.log(`➖ [NodeConfigManager] 需要移除端口: ${portsToRemove} 个`)
+        
+        for (let i = 0; i < portsToRemove; i++) {
+          const portToRemove = outputPorts[currentOutputCount - 1 - i]
+          if (portToRemove) {
+            node.removePort(portToRemove.id)
+            console.log(`🗑️ [NodeConfigManager] 移除输出端口: ${portToRemove.id}`)
+          }
+        }
+      } else {
+        console.log(`⚖️ [NodeConfigManager] 端口数量已匹配，无需添加或移除`)
+        
+        // 但是需要检查端口ID是否正确
+        if (this.nodeType === 'event-split' && branches.length > 0) {
+          console.log(`🔄 [NodeConfigManager] 检查事件分流节点端口ID是否正确`)
+          
+          // 确保有统一的'out'端口
+          const hasUnifiedOutPort = outputPorts.some(port => port.id === 'out')
+          
+          if (!hasUnifiedOutPort) {
+            console.log(`🔄 [NodeConfigManager] 缺少统一的'out'端口，重新创建`)
+            
+            // 添加统一的'out'端口
+            const unifiedPortConfig = {
+              group: 'out',
+              id: 'out',
+              position: {
+                name: 'bottom',
+                args: { x: '50%', y: '100%', dx: 0, dy: 0 }
+              },
+              attrs: {
+                circle: {
+                  r: 6,
+                  magnet: true,
+                  stroke: '#5F95FF',
+                  strokeWidth: 2,
+                  fill: '#fff',
+                  style: { visibility: 'visible' }
+                }
+              },
+              markup: [{ tagName: 'circle', selector: 'circle' }]
+            }
+            
+            node.addPort(unifiedPortConfig)
+            console.log(`✅ [NodeConfigManager] 重新添加统一输出端口: out`)
+          }
+        }
+      }
+      
+      // 确保统一的'out'端口位置正确（不需要更新位置，因为它应该始终在底部中心）
+      if (currentOutputCount === requiredOutputs && requiredOutputs > 1) {
+        console.log(`🔄 [NodeConfigManager] 检查统一端口位置`)
+        
+        // 确保统一的'out'端口位置正确
+        const unifiedPort = outputPorts.find(port => port.id === 'out')
+        if (unifiedPort) {
+          // 确保统一端口位置在底部中心
+          node.setPortProp('out', 'position/args/dx', 0)
+          node.setPortProp('out', 'position/args/dy', 0)
+          console.log(`📍 [NodeConfigManager] 确保统一端口 'out' 位置在底部中心`)
+        }
+      }
+      
+      // 验证最终端口状态
+      const finalPorts = node.getPorts()
+      const finalOutputPorts = finalPorts.filter(port => port.group === 'out')
+      console.log(`🎯 [NodeConfigManager] 端口更新完成:`, {
+        nodeId: node.id,
+        nodeType: this.nodeType,
+        finalOutputCount: finalOutputPorts.length,
+        finalPorts: finalOutputPorts.map(p => ({ 
+          id: p.id, 
+          group: p.group, 
+          position: p.position,
+          args: p.position?.args 
+        }))
+      })
+      
+      // 特别针对事件分流节点的最终验证
+      if (this.nodeType === 'event-split') {
+        console.log(`🎯 [NodeConfigManager] 事件分流节点最终端口验证:`, {
+          nodeId: node.id,
+          finalOutputPortIds: finalOutputPorts.map(p => p.id),
+          portUpdateSuccess: finalOutputPorts.length === requiredOutputs,
+          hasUnifiedOutPort: finalOutputPorts.some(p => p.id === 'out')
+        })
+      }
+      
+    } catch (error) {
+      console.error(`❌ [NodeConfigManager] 更新端口失败:`, error)
+    }
+  }
+
+  /**
+   * 执行完整的配置处理流程
+   * @param {Object} node - 节点实例
+   * @param {Object} config - 配置数据
+   * @param {Object} context - 上下文对象
+   */
+  async process(node, config, context = {}) {
+    console.log(`[NodeConfigManager] 开始处理 ${this.nodeType} 节点配置:`, { nodeId: node.id, config })
+
+    try {
+      // 1. 验证配置
+      const validation = this.validateConfig(config)
+      if (!validation.valid) {
+        throw new Error(`配置验证失败: ${validation.errors.join(', ')}`)
+      }
+
+      // 2. 更新节点数据
+      this.updateNodeData(node, config)
+
+      // 3. 更新节点样式
+      this.updateNodeStyle(node, config)
+
+      // 4. 更新节点布局
+      if (context.layoutManager) {
+        this.updateNodeLayout(node, config, context.layoutManager)
+      }
+
+      // 5. 后置处理
+      this.postProcess(node, config, context)
+
+      console.log(`[NodeConfigManager] ${this.nodeType} 节点配置处理完成`)
+    } catch (error) {
+      console.error(`[NodeConfigManager] ${this.nodeType} 节点配置处理失败:`, error)
+      throw error
+    }
+  }
+}
+
+/**
+ * 简单节点配置策略（适用于单输出节点）
+ */
+class SimpleNodeConfigStrategy extends BaseNodeConfigStrategy {
+  constructor(nodeType) {
+    super(nodeType)
+  }
+
+  validateConfig(config) {
+    const errors = []
+    
+    // 基础验证
+    if (config.nodeName && typeof config.nodeName !== 'string') {
+      errors.push('节点名称必须是字符串')
+    }
+
+    return { valid: errors.length === 0, errors }
+  }
+}
+
+/**
+ * 分支节点配置策略（适用于多输出节点）
+ */
+class BranchNodeConfigStrategy extends BaseNodeConfigStrategy {
+  constructor(nodeType) {
+    super(nodeType)
+  }
+
+  updateNodeLayout(node, config, layoutManager) {
+    console.log(`[NodeConfigManager] 节点配置完成 - 节点类型: ${this.nodeType}, 节点ID: ${node.id}`)
+    
+    // 🎯 新方案：只更新节点层级信息，不触发完整布局
+    this.updateNodeLayerInfo(node, config, layoutManager)
+    
+    // 注释掉原有的完整布局引擎触发逻辑
+    // if (layoutManager && layoutManager.isReady && layoutManager.isReady.value) {
+    //   layoutManager.updateSplitNodeBranches(node, config)
+    // } else if (layoutManager && layoutManager.initLayoutEngine) {
+    //   // 如果布局引擎未就绪，初始化后再更新
+    //   layoutManager.initLayoutEngine()
+    //   setTimeout(() => {
+    //     if (layoutManager.updateSplitNodeBranches) {
+    //       layoutManager.updateSplitNodeBranches(node, config)
+    //     }
+    //   }, 100)
+    // }
+  }
+
+  /**
+   * 🎯 新方案：只更新节点层级信息，不触发完整布局
+   * @param {Object} node - 节点对象
+   * @param {Object} config - 配置对象
+   * @param {Object} layoutManager - 布局管理器
+   */
+  updateNodeLayerInfo(node, config, layoutManager) {
+    try {
+      console.log(`[NodeConfigManager] 开始更新节点层级信息: ${node.id}`)
+      
+      // 获取布局引擎实例
+      const layoutEngine = layoutManager?.layoutEngine || 
+                          window.unifiedStructuredLayoutEngine ||
+                          window.UnifiedStructuredLayoutEngine ||
+                          layoutManager?.unifiedStructuredLayoutEngine
+      
+      if (!layoutEngine) {
+        console.warn(`[NodeConfigManager] 未找到布局引擎，无法更新层级信息`)
+        return
+      }
+      
+      // 🎯 关键：清除该节点的层级缓存，强制重新计算
+      if (layoutEngine.layerCache) {
+        layoutEngine.layerCache.delete(node.id)
+        console.log(`[NodeConfigManager] 已清除节点 ${node.id} 的层级缓存`)
+      }
+      
+      // 🎯 关键：使用新的简化层级计算方法
+      const newLayerIndex = layoutEngine.calculateNodeLayerByConnection(node.id)
+      console.log(`[NodeConfigManager] 节点 ${node.id} 新层级: 第${newLayerIndex}层`)
+      
+      // 🎯 关键：通知预览线管理器层级信息已更新
+      this.notifyPreviewManagerLayerUpdate(node.id, newLayerIndex)
+      
+      console.log(`[NodeConfigManager] 节点层级信息更新完成: ${node.id} -> 第${newLayerIndex}层`)
+      
+    } catch (error) {
+      console.error(`[NodeConfigManager] 更新节点层级信息失败:`, error)
+    }
+  }
+
+  /**
+   * 通知预览线管理器层级信息已更新
+   * @param {string} nodeId - 节点ID
+   * @param {number} layerIndex - 层级索引
+   */
+  notifyPreviewManagerLayerUpdate(nodeId, layerIndex) {
+    try {
+      // 优先使用新的PreviewLineSystem
+      const previewLineSystem = window.previewLineSystem
+      const legacyPreviewLineManager = window.previewLineSystem
+      
+      if (previewLineSystem) {
+        // 使用新的预览线系统
+        console.log(`[NodeConfigManager] 通知新预览线系统: 节点 ${nodeId} 层级已更新为第${layerIndex}层`)
+        
+        // 触发预览线位置重新计算（如果新系统支持）
+        if (typeof previewLineSystem.refreshPreviewLines === 'function') {
+          setTimeout(() => {
+            previewLineSystem.refreshPreviewLines(nodeId)
+          }, 100)
+        } else if (typeof previewLineSystem.updatePreviewLinePosition === 'function') {
+          setTimeout(() => {
+            previewLineSystem.updatePreviewLinePosition(nodeId)
+          }, 100)
+        }
+      } else if (legacyPreviewLineManager) {
+        // 回退到旧的预览线管理器
+        // 🔧 修复：不仅设置标志位，还要确保布局引擎实际可用
+        if (legacyPreviewLineManager.layoutEngine && typeof legacyPreviewLineManager.layoutEngine.getNodeLayerY === 'function') {
+          legacyPreviewLineManager.layoutEngineReady = true
+          console.log(`[NodeConfigManager] 布局引擎已确认可用，设置就绪状态`)
+        } else {
+          console.warn(`[NodeConfigManager] 布局引擎不可用，尝试初始化...`)
+          if (typeof legacyPreviewLineManager.initializeLayoutEngineIfNeeded === 'function') {
+            legacyPreviewLineManager.initializeLayoutEngineIfNeeded()
+          }
+        }
+        
+        // 如果有该节点的预览线，触发重新计算
+        if (legacyPreviewLineManager.previewLines && legacyPreviewLineManager.previewLines.has(nodeId)) {
+          console.log(`[NodeConfigManager] 通知预览线管理器: 节点 ${nodeId} 层级已更新为第${layerIndex}层`)
+          
+          // 触发预览线位置重新计算
+          if (legacyPreviewLineManager.refreshPreviewLines) {
+            setTimeout(() => {
+              legacyPreviewLineManager.refreshPreviewLines(nodeId)
+            }, 100)
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`[NodeConfigManager] 通知预览线管理器失败:`, error)
+    }
+  }
+}
+
+/**
+ * 人群分流节点配置策略
+ */
+class AudienceSplitConfigStrategy extends BranchNodeConfigStrategy {
+  constructor(nodeType = 'audience-split') {
+    super(nodeType)
+  }
+
+  preprocessConfig(config) {
+    // 将新的 crowdLayers 数据结构转换为兼容旧逻辑的 branches 格式
+    if (config.crowdLayers && config.crowdLayers.length > 0) {
+      const branches = config.crowdLayers.map((layer, index) => ({
+        id: layer.id,
+        name: layer.crowdName || `分支${index + 1}`,
+        crowdId: layer.crowdId,
+        crowdName: layer.crowdName,
+        order: layer.order || index + 1,
+        isDefault: false
+      }))
+
+      // 从配置中读取未命中分支，而不是自动添加
+      if (config.unmatchBranch) {
+        branches.push({
+          id: config.unmatchBranch.id || 'default',
+          name: config.unmatchBranch.name || '未命中人群',
+          crowdId: null,
+          crowdName: config.unmatchBranch.name || '未命中人群',
+          order: config.unmatchBranch.order || branches.length + 1,
+          isDefault: true
+        })
+      }
+
+      return {
+        ...config,
+        branches,
+        branchCount: branches.length,
+        audiences: branches.map(branch => ({
+          id: branch.crowdId,
+          name: branch.crowdName,
+          condition: branch.id
+        }))
+      }
+    }
+
+    return config
+  }
+
+  validateConfig(config) {
+    const errors = []
+    
+    if (config.crowdLayers && !Array.isArray(config.crowdLayers)) {
+      errors.push('人群层级必须是数组')
+    }
+    
+    // 检查crowdLayers数组中的元素是否包含有效的crowdId
+    if (config.crowdLayers && Array.isArray(config.crowdLayers)) {
+      const invalidLayers = config.crowdLayers.filter(layer => 
+        !layer.crowdId || layer.crowdId === null || layer.crowdId === undefined || layer.crowdId === ''
+      )
+      
+      // 添加调试日志，显示具体的分层信息
+      console.log('[调试] 人群分流节点验证:', {
+        totalLayers: config.crowdLayers.length,
+        validLayers: config.crowdLayers.length - invalidLayers.length,
+        invalidLayers: invalidLayers.length,
+        layerDetails: config.crowdLayers.map((layer, index) => ({
+          index,
+          id: layer.id,
+          crowdId: layer.crowdId,
+          crowdName: layer.crowdName,
+          isValid: !!layer.crowdId
+        }))
+      })
+      
+      if (invalidLayers.length > 0) {
+        errors.push(`有${invalidLayers.length}个人群层级未选择人群`)
+      }
+    }
+
+    return { valid: errors.length === 0, errors }
+  }
+}
+
+/**
+ * 事件分流节点配置策略
+ */
+class EventSplitConfigStrategy extends BranchNodeConfigStrategy {
+  constructor() {
+    super('event-split')
+  }
+
+  preprocessConfig(config) {
+    // 事件分流节点固定有两个分支：是/否
+    const branches = [
+      {
+        id: 'event_yes',
+        name: config.yesLabel || '是',
+        condition: 'yes'
+      },
+      {
+        id: 'event_no', 
+        name: config.noLabel || '否',
+        condition: 'no'
+      }
+    ]
+
+    return {
+      ...config,
+      branches,
+      branchCount: branches.length
+    }
+  }
+}
+
+/**
+ * AB测试节点配置策略
+ */
+class ABTestConfigStrategy extends BranchNodeConfigStrategy {
+  constructor() {
+    super('ab-test')
+  }
+
+  preprocessConfig(config) {
+    // AB测试节点固定有两个分支：A组/B组
+    const branches = [
+      {
+        id: 'ab_a',
+        name: config.groupALabel || '实验组A',
+        condition: 'group_a',
+        ratio: config.groupARatio || 50
+      },
+      {
+        id: 'ab_b',
+        name: config.groupBLabel || '实验组B',
+        condition: 'group_b',
+        ratio: config.groupBRatio || 50
+      }
+    ]
+
+    return {
+      ...config,
+      branches,
+      branchCount: branches.length
+    }
+  }
+
+  validateConfig(config) {
+    const errors = []
+    
+    if (config.groupARatio && (config.groupARatio < 0 || config.groupARatio > 100)) {
+      errors.push('A组比例必须在0-100之间')
+    }
+    
+    if (config.groupBRatio && (config.groupBRatio < 0 || config.groupBRatio > 100)) {
+      errors.push('B组比例必须在0-100之间')
+    }
+
+    const totalRatio = (config.groupARatio || 50) + (config.groupBRatio || 50)
+    if (Math.abs(totalRatio - 100) > 0.01) {
+      errors.push('A组和B组比例之和必须等于100%')
+    }
+
+    return { valid: errors.length === 0, errors }
+  }
+}
+
+/**
+ * 开始节点配置策略
+ */
+class StartNodeConfigStrategy extends BranchNodeConfigStrategy {
+  constructor() {
+    super('start')
+  }
+
+  updateNodeStyle(node, config) {
+    super.updateNodeStyle(node, config)
+    
+    // 根据任务类型设置不同的颜色
+    const typeColors = {
+      marketing: '#FF6B6B',
+      notification: '#4ECDC4',
+      survey: '#45B7D1',
+      retention: '#96CEB4'
+    }
+
+    const color = typeColors[config.taskType] || '#5F95FF'
+
+    node.attr({
+      body: {
+        fill: color,
+        stroke: color
+      }
+    })
+
+    // 移除默认外置文本写入，避免与自定义标题/内容区重复显示
+    // 标题与内容的展示由各画布实现（如 horizontal/index.vue）负责
+  }
+
+  validateConfig(config) {
+    const errors = []
+    
+    if (config.taskType && !['marketing', 'notification', 'survey', 'retention'].includes(config.taskType)) {
+      errors.push('任务类型必须是 marketing、notification、survey 或 retention 之一')
+    }
+
+    return { valid: errors.length === 0, errors }
+  }
+}
+
+/**
+ * 节点配置管理器主类
+ */
+class NodeConfigManager {
+  constructor() {
+    this.strategies = new Map()
+    this.initStrategies()
+  }
+
+  /**
+   * 初始化所有节点配置策略
+   */
+  initStrategies() {
+    // 注册各种节点配置策略
+    this.strategies.set('start', new StartNodeConfigStrategy())
+    this.strategies.set('audience-split', new AudienceSplitConfigStrategy('audience-split'))
+    this.strategies.set('event-split', new EventSplitConfigStrategy())
+    this.strategies.set('ab-test', new ABTestConfigStrategy())
+    
+    // crowd-split 使用 audience-split 策略（UI层面的映射）
+    this.strategies.set('crowd-split', new AudienceSplitConfigStrategy('crowd-split'))
+    
+    // 简单节点策略
+    this.strategies.set('ai-call', new SimpleNodeConfigStrategy('ai-call'))
+    this.strategies.set('sms', new SimpleNodeConfigStrategy('sms'))
+    this.strategies.set('manual-call', new SimpleNodeConfigStrategy('manual-call'))
+    this.strategies.set('wait', new SimpleNodeConfigStrategy('wait'))
+    this.strategies.set('end', new SimpleNodeConfigStrategy('end'))
+  }
+
+  /**
+   * 注册自定义节点配置策略
+   * @param {string} nodeType - 节点类型
+   * @param {BaseNodeConfigStrategy} strategy - 配置策略实例
+   */
+  registerStrategy(nodeType, strategy) {
+    if (!(strategy instanceof BaseNodeConfigStrategy)) {
+      throw new Error('策略必须继承自 BaseNodeConfigStrategy')
+    }
+    this.strategies.set(nodeType, strategy)
+    console.log(`[NodeConfigManager] 注册节点配置策略: ${nodeType}`)
+  }
+
+  /**
+   * 获取节点配置策略
+   * @param {string} nodeType - 节点类型
+   * @returns {BaseNodeConfigStrategy} 配置策略实例
+   */
+  getStrategy(nodeType) {
+    const strategy = this.strategies.get(nodeType)
+    if (!strategy) {
+      console.warn(`[NodeConfigManager] 未找到节点类型 ${nodeType} 的配置策略，使用默认策略`)
+      return new SimpleNodeConfigStrategy(nodeType)
+    }
+    return strategy
+  }
+
+  /**
+   * 处理节点配置
+   * @param {string} nodeType - 节点类型
+   * @param {Object} node - 节点实例
+   * @param {Object} config - 配置数据
+   * @param {Object} context - 上下文对象
+   * @returns {Promise<boolean>} 处理结果
+   */
+  async processNodeConfig(nodeType, node, config, context = {}) {
+    console.log(`[NodeConfigManager] 开始处理节点配置 - 节点类型: ${nodeType}, 节点ID: ${node.id}`)
+    console.log(`[NodeConfigManager] 配置数据:`, config)
+    console.log(`[NodeConfigManager] 上下文对象:`, context)
+    
+    try {
+      const strategy = this.getStrategy(nodeType)
+      await strategy.process(node, config, context)
+      console.log(`[NodeConfigManager] 节点配置处理完成 - 节点类型: ${nodeType}, 节点ID: ${node.id}`)
+      return true
+    } catch (error) {
+      console.error(`[NodeConfigManager] 节点配置处理失败 - 节点类型: ${nodeType}, 节点ID: ${node.id}:`, error)
+      return false
+    }
+  }
+
+  /**
+   * 批量处理多个节点配置
+   * @param {Array} nodeConfigs - 节点配置数组 [{ nodeType, node, config, context }]
+   */
+  async processBatchNodeConfigs(nodeConfigs) {
+    console.log(`[NodeConfigManager] 开始批量处理 ${nodeConfigs.length} 个节点配置`)
+    
+    const results = []
+    for (const { nodeType, node, config, context } of nodeConfigs) {
+      try {
+        await this.processNodeConfig(nodeType, node, config, context)
+        results.push({ success: true, nodeId: node.id })
+      } catch (error) {
+        console.error(`[NodeConfigManager] 批量处理节点 ${node.id} 失败:`, error)
+        results.push({ success: false, nodeId: node.id, error: error.message })
+      }
+    }
+    
+    console.log(`[NodeConfigManager] 批量处理完成，成功: ${results.filter(r => r.success).length}，失败: ${results.filter(r => !r.success).length}`)
+    return results
+  }
+
+  /**
+   * 获取所有支持的节点类型
+   * @returns {Array} 节点类型数组
+   */
+  getSupportedNodeTypes() {
+    return Array.from(this.strategies.keys())
+  }
+
+  /**
+   * 检查节点类型是否支持
+   * @param {string} nodeType - 节点类型
+   * @returns {boolean} 是否支持
+   */
+  isNodeTypeSupported(nodeType) {
+    return this.strategies.has(nodeType)
+  }
+}
+
+// 创建单例实例
+const nodeConfigManager = new NodeConfigManager()
+
+export {
+  NodeConfigManager,
+  BaseNodeConfigStrategy,
+  SimpleNodeConfigStrategy,
+  BranchNodeConfigStrategy,
+  nodeConfigManager
+}
+
+export default nodeConfigManager

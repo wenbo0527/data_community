@@ -109,24 +109,25 @@ export default [{
         }
       ]
     },
-    {
-      path: 'accompany',
-      name: 'management-accompany',
-      component: () => import('../pages/management/accompany/index.vue'),
-      meta: { title: '陪伴管理' },
-      children: [
-        {
-          path: 'create',
-          name: 'management-accompany-create',
-          component: () => import('../pages/management/accompany/create.vue')
-        },
-        {
-          path: 'result',
-          name: 'management-accompany-result',
-          component: () => import('../pages/management/accompany/result.vue')
-        }
-      ]
-    },
+    // [accompany 已迁移至 risk-app/modules/accompany/]
+    // {
+    //   path: 'accompany',
+    //   name: 'management-accompany',
+    //   component: () => import('../pages/management/accompany/index.vue'),
+    //   meta: { title: '陪伴管理' },
+    //   children: [
+    //     {
+    //       path: 'create',
+    //       name: 'management-accompany-create',
+    //       component: () => import('../pages/management/accompany/create.vue')
+    //     },
+    //     {
+    //       path: 'result',
+    //       name: 'management-accompany-result',
+    //       component: () => import('../pages/management/accompany/result.vue')
+    //     }
+    //   ]
+    // },
     {
       path: 'business-domain',
       name: 'BusinessDomainList',

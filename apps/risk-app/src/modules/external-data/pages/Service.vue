@@ -30,6 +30,7 @@
           <a-button type="primary" @click="applyFilter">查询</a-button>
           <a-button style="margin-left: 8px" @click="resetFilter">重置</a-button>
           <a-button style="margin-left: 8px" type="outline" @click="goToScene">发起新服务</a-button>
+          <a-button style="margin-left: 8px" type="outline" status="warning" @click="goToAccompany">查看陪跑计划</a-button>
         </a-form-item>
       </a-form>
     </a-card>
@@ -78,7 +79,11 @@ const router = useRouter()
 
 type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量变量回溯申请' | '风险合规离线回溯申请' | '外数线上调用服务申请'
 
-const supplierOptions = ref(['供应商A', '供应商B']) // 简单 Mock，或者从 store 获取
+const supplierOptions = computed(() => {
+  const suppliers = new Set<string>()
+  store.products.forEach(p => { if (p.supplier) suppliers.add(p.supplier) })
+  return Array.from(suppliers)
+})
 
 const filters = reactive<{ supplier?: string; serviceType?: ServiceType; status?: string }>({})
 const services = ref<any[]>([])
@@ -87,7 +92,7 @@ const displayedServices = computed<any[]>(() => {
   return (services.value as Array<{ serviceType?: string; status?: string; supplier?: string }>).filter((x) => {
     if (filters.serviceType && x.serviceType !== filters.serviceType) return false
     if (filters.status && x.status !== filters.status) return false
-    // if (filters.supplier && x.supplier !== filters.supplier) return false // 假设数据中有 supplier 字段
+    if (filters.supplier && x.supplier !== filters.supplier) return false
     return true
   })
 })
@@ -116,6 +121,10 @@ const editingData = ref<any>(null)
 
 const goToScene = () => {
   router.push({ name: 'RiskExternalDataServiceScene' })
+}
+
+const goToAccompany = () => {
+  router.push({ name: 'RiskAccompanyList' })
 }
 
 const openEdit = (record: any) => {

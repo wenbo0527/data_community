@@ -58,7 +58,7 @@
           <a-card :bordered="false" class="panel-card" v-if="detail?.defaultValueMappings?.length > 0" title="默认值转化映射" style="margin-top: 16px;">
             <div v-for="(mapping, index) in detail.defaultValueMappings" :key="index" class="mapping-group">
               <div class="mapping-header">
-                <icon-settings style="margin-right: 4px; color: #165dff;" />
+                <icon-settings style="margin-right: 4px; color: var(--subapp-primary);" />
                 触发条件：<a-tag :color="modelTypeColor(mapping.conditionType)" size="small">{{ modelTypeLabel(mapping.conditionType) }}</a-tag>
               </div>
               <a-table :data="mapping.mappings" :pagination="false" size="small" :bordered="true" class="mapping-table">
@@ -76,7 +76,7 @@
             <a-descriptions :column="1" size="medium">
               <a-descriptions-item label="创建人">
                 <a-space size="mini">
-                  <a-avatar :size="24" style="background-color: #165dff;">
+                  <a-avatar :size="24" style="background-color: var(--subapp-primary);">
                     <icon-user />
                   </a-avatar>
                   {{ detail?.creator || '-' }}
@@ -197,13 +197,13 @@ const goEdit = () => router.push(`/model-offline-analysis/feature-center/edit/${
 .main-title {
   margin: 0;
   font-size: 20px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-weight: 600;
 }
 
 .sub-code {
   font-size: 13px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-family: monospace;
 }
 
@@ -211,12 +211,12 @@ const goEdit = () => router.push(`/model-offline-analysis/feature-center/edit/${
 .desc-section {
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #f2f3f5;
+  border-top: 1px solid var(--subapp-bg-secondary);
 }
 
 .section-label {
   font-size: 13px;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -226,7 +226,7 @@ const goEdit = () => router.push(`/model-offline-analysis/feature-center/edit/${
   background: #f7f8fa;
   padding: 12px;
   border-radius: 4px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -243,7 +243,7 @@ const goEdit = () => router.push(`/model-offline-analysis/feature-center/edit/${
 .mapping-header {
   margin-bottom: 12px;
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
   display: flex;
   align-items: center;
 }

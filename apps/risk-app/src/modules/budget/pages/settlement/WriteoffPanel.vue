@@ -33,12 +33,12 @@
         </a-table-column>
         <a-table-column title="待核销总费用 (总额 / 剩余)" :width="240">
           <template #cell="{ record }">
-            <span>{{ formatAmount(record.totalAmount) }} / <span :style="{ color: record.pendingAmount > 0 ? '#ff7d00' : '#00b42a', fontWeight: 'bold' }">{{ formatAmount(record.pendingAmount) }}</span></span>
+            <span>{{ formatAmount(record.totalAmount) }} / <span :style="{ color: record.pendingAmount > 0 ? 'var(--subapp-warning)' : 'var(--subapp-success)', fontWeight: 'bold' }">{{ formatAmount(record.pendingAmount) }}</span></span>
           </template>
         </a-table-column>
         <a-table-column title="待核销减免量 (总额 / 剩余)" :width="200">
           <template #cell="{ record }">
-            <span>{{ record.totalDiscount }} / <span :style="{ color: record.pendingDiscount > 0 ? '#ff7d00' : '#00b42a', fontWeight: 'bold' }">{{ record.pendingDiscount }}</span></span>
+            <span>{{ record.totalDiscount }} / <span :style="{ color: record.pendingDiscount > 0 ? 'var(--subapp-warning)' : 'var(--subapp-success)', fontWeight: 'bold' }">{{ record.pendingDiscount }}</span></span>
           </template>
         </a-table-column>
         <a-table-column title="选择合同与核销金额" :width="620">
@@ -49,13 +49,13 @@
                   <div style="display: flex; flex-direction: column">
                     <a-select v-model="w.contractId" placeholder="选择合同" style="width: 220px" @change="(val:string)=>onContractSelect(record, idx, val)">
                       <a-option v-for="c in availableContracts" :key="c.id" :value="c.id">
-                        <span :style="{ color: c.contractType === 'framework' ? '#165DFF' : '#FF7D00' }">
+                        <span :style="{ color: c.contractType === 'framework' ? 'var(--subapp-primary)' : 'var(--subapp-warning)' }">
                           【{{ c.contractType === 'framework' ? '框架' : '补充' }}】
                         </span>
                         {{ c.contractName }}（剩余：{{ formatAmount(contractRemaining(c)) }}，免费：{{ contractRemainingFree(c) }}）
                       </a-option>
                     </a-select>
-                    <span v-if="w.contractId" style="font-size: 12px; color: #86909c; margin-top: 2px">
+                    <span v-if="w.contractId" style="font-size: 12px; color: var(--subapp-text-tertiary); margin-top: 2px">
                       剩余金额：{{ formatAmount(selectedContractRemain(w.contractId)) }} | 免费量：{{ selectedContractRemainFree(w.contractId) }}
                     </span>
                   </div>
@@ -70,12 +70,12 @@
                 
                 <!-- 核销记录明细外露 -->
                 <div v-if="getProductHistory(record.productCode).length > 0" style="margin-top: 8px; background: #f7f8fa; padding: 8px; border-radius: 4px;">
-                  <div style="font-size: 12px; color: #86909c; margin-bottom: 4px;">已核销记录：</div>
+                  <div style="font-size: 12px; color: var(--subapp-text-tertiary); margin-bottom: 4px;">已核销记录：</div>
                   <a-space direction="vertical" size="mini">
                     <div v-for="h in getProductHistory(record.productCode)" :key="h.id" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
                       <a-tag size="small" color="arcoblue">{{ selectedContractName(h.contractId) }}</a-tag>
                       <span>{{ formatAmount(h.amount) }}</span>
-                      <span v-if="h.discountAmount" style="color: #86909c"> (减免: {{ h.discountAmount }})</span>
+                      <span v-if="h.discountAmount" style="color: var(--subapp-text-tertiary)"> (减免: {{ h.discountAmount }})</span>
                       <a-popconfirm content="确定撤销此笔核销？" @ok="revokeRecord(h)">
                         <a-button type="text" size="mini" status="danger" style="padding: 0 4px; height: 20px;">
                           <template #icon><icon-close /></template>

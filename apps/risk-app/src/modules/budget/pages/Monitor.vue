@@ -293,7 +293,7 @@ watch(filterForm, (nv) => {
 .page-header { margin-bottom: 16px; }
 .desc { color: var(--color-text-2); }
 .toolbar { margin-bottom: 12px; background: #fff; }
-.warning-text { color: #f53f3f; }
+.warning-text { color: var(--subapp-danger); }
 .comparison-cell { display: flex; justify-content: center; }
 .trend-icon { margin-left: 4px; }
 .content-row { margin-top: 12px; }

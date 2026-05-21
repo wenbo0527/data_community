@@ -608,13 +608,13 @@ export const MENU_CONFIG = {
           'management-accompany-create': {
             key: 'management-accompany-create',
             title: '创建陪跑',
-            path: '/management/accompany/create',
+            path: '/risk/accompany/create',
             routeName: 'management-accompany-create'
           },
           'management-accompany-result': {
             key: 'management-accompany-result',
             title: '陪跑结果',
-            path: '/management/accompany/result',
+            path: '/risk/accompany/result',
             routeName: 'management-accompany-result'
           }
         }

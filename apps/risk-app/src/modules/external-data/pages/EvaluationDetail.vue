@@ -854,14 +854,14 @@ onMounted(() => {
   margin: 0 0 8px 0;
   font-size: 24px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .meta-info {
   display: flex;
   gap: 16px;
   align-items: center;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   font-size: 14px;
 }
 
@@ -879,7 +879,7 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 16px;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .nav-menu {
@@ -899,19 +899,19 @@ onMounted(() => {
 }
 
 .nav-item:hover {
-  background-color: #f2f3f5;
+  background-color: var(--subapp-bg-secondary);
 }
 
 .nav-item.active {
-  background-color: #e6f7ff;
-  border-color: #1890ff;
+  background-color: var(--subapp-info);
+  border-color: var(--subapp-info);
 }
 
 .nav-number {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: #1890ff;
+  background-color: var(--subapp-info);
   color: white;
   display: flex;
   align-items: center;
@@ -922,7 +922,7 @@ onMounted(() => {
 }
 
 .nav-item.active .nav-number {
-  background-color: #1890ff;
+  background-color: var(--subapp-info);
 }
 
 .nav-content {
@@ -934,7 +934,7 @@ onMounted(() => {
 
 .nav-text {
   font-weight: 500;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .edit-info {
@@ -945,7 +945,7 @@ onMounted(() => {
 
 .edit-permission {
   font-size: 11px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
   line-height: 1.2;
 }
 
@@ -956,7 +956,7 @@ onMounted(() => {
 .progress-text {
   margin-top: 12px;
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .progress-text p {
@@ -978,7 +978,7 @@ onMounted(() => {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .edit-status {
@@ -989,7 +989,7 @@ onMounted(() => {
 
 .edit-hint {
   font-size: 12px;
-  color: #86909c;
+  color: var(--subapp-text-tertiary);
 }
 
 .text-content {
@@ -998,7 +998,7 @@ onMounted(() => {
 
 .text-content p {
   line-height: 1.6;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
   margin: 0;
 }
 
@@ -1012,7 +1012,7 @@ onMounted(() => {
   margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .tables-content {
@@ -1031,11 +1031,11 @@ onMounted(() => {
   margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .chart-container {
-  border: 1px solid #e5e6eb;
+  border: 1px solid var(--subapp-border);
   border-radius: 6px;
   padding: 16px;
   background-color: white;
@@ -1050,7 +1050,7 @@ onMounted(() => {
   margin: 16px 0 8px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d2129;
+  color: var(--subapp-text-primary);
 }
 
 .suggestions-list {
@@ -1061,7 +1061,7 @@ onMounted(() => {
 .suggestions-list li {
   margin-bottom: 8px;
   line-height: 1.5;
-  color: #4e5969;
+  color: var(--subapp-text-secondary);
 }
 
 .table-container {

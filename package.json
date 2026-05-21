@@ -60,6 +60,7 @@
     "depcheck": "^1.4.7",
     "esbuild": "^0.27.2",
     "eslint": "^8.56.0",
+    "eslint-config-aliyun": "^2.0.4",
     "eslint-plugin-vue": "^9.21.1",
     "jscpd": "^3.5.10",
     "jsdom": "^24.0.0",
@@ -78,8 +79,7 @@
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "packageManager": "pnpm@9.15.4"
-  ,
+  "packageManager": "pnpm@9.15.4",
   "pnpm": {
     "overrides": {
       "typescript": "5.3.3"

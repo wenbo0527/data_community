@@ -61,7 +61,7 @@ const getChangeClass = (value: number) => value > 0 ? 'warning-text' : 'success-
 .budget-consumption-tab { padding: 16px; }
 .time-range-selector { margin-bottom: 16px; }
 .comparison-cell { display: flex; justify-content: center; align-items: center; gap: 8px; }
-.warning-text { color: #f53f3f; }
-.success-text { color: #00b42a; }
+.warning-text { color: var(--subapp-danger); }
+.success-text { color: var(--subapp-success); }
 .clickable { cursor: pointer; }
 </style>

@@ -40,12 +40,15 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { convertToMenuTree, getMenuItemByPath, getMenuItemByRouteName } from '../../config/menuConfig'
+import { useMenu } from '../../composables/useMenu'
 import { navigateTo } from '../../router/utils'
 import MenuItemRenderer from './MenuItemRenderer.vue'
 
 const router = useRouter()
 const route = useRoute()
+
+// 使用微应用注册中心获取菜单
+const { legacyMenus, filterMenus, findMenuByPath } = useMenu()
 
 // Props
 const props = defineProps({
@@ -72,40 +75,18 @@ const selectedKeys = ref([])
 // 展开的子菜单
 const openKeys = ref([])
 
-// 原始菜单数据
+// 原始菜单数据（从注册中心获取）
 const menuItems = computed(() => {
-  return convertToMenuTree(props.activeModule)
+  return legacyMenus.value
 })
 
 // 过滤后的菜单数据
 const filteredMenuItems = computed(() => {
-  if (!searchText.value) {
-    return menuItems.value
+  if (searchText.value) {
+    return filterMenus(searchText.value)
   }
-  
-  return filterMenuItems(menuItems.value, searchText.value.toLowerCase())
+  return menuItems.value
 })
-
-// 过滤菜单项
-const filterMenuItems = (items, searchTerm) => {
-  const result = []
-  
-  for (const item of items) {
-    if (item.title.toLowerCase().includes(searchTerm)) {
-      result.push(item)
-    } else if (item.children) {
-      const filteredChildren = filterMenuItems(item.children, searchTerm)
-      if (filteredChildren.length > 0) {
-        result.push({
-          ...item,
-          children: filteredChildren
-        })
-      }
-    }
-  }
-  
-  return result
-}
 
 // 处理搜索
 const handleSearch = () => {
@@ -121,7 +102,9 @@ const handleSearch = () => {
         }
       }
     }
-    collectOpenKeys(filteredMenuItems.value)
+    // 使用 registry 的 filterMenus 结果
+    const filtered = filterMenus(searchText.value)
+    collectOpenKeys(filtered)
     openKeys.value = newOpenKeys
   }
 }
@@ -182,21 +165,11 @@ const handleSubMenuClick = (key) => {
 
 // 根据当前路由更新选中状态
 const updateSelectedFromRoute = () => {
-  const menuInfo = getMenuItemByRouteName(route.name)
-  if (menuInfo && menuInfo.item) {
-    selectedKeys.value = [menuInfo.item.key]
-    
-    // 自动展开父级菜单
-    if (menuInfo.parent) {
-      const parentKeys = []
-      const currentParent = menuInfo.parent
-      while (currentParent) {
-        parentKeys.unshift(currentParent)
-        // 这里可以扩展为查找更深层的父级关系
-        break
-      }
-      openKeys.value = [...new Set([...openKeys.value, ...parentKeys])]
-    }
+  // 使用注册中心的 findMenuByPath 查找当前路由对应的菜单
+  const currentPath = route.path
+  const menuItem = findMenuByPath(currentPath)
+  if (menuItem) {
+    selectedKeys.value = [menuItem.key]
   }
 }
 

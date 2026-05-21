@@ -1,0 +1,53 @@
+{
+  "root": true,
+  "parser": "vue-eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "parser": "@typescript-eslint/parser",
+    "extraFileExtensions": [".vue"]
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:vue/vue3-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "plugins": ["vue", "@typescript-eslint"],
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "ignorePatterns": ["dist/", "node_modules/"],
+  "rules": {
+    "vue/multi-word-component-names": "off",
+    "vue/no-unused-vars": "off",
+    "vue/no-unused-components": "off",
+    "vue/require-default-prop": "off",
+    "vue/require-prop-types": "off",
+    "vue/prop-name-casing": "off",
+    "vue/component-name-in-template-casing": "off",
+    "vue/no-side-effects-in-computed-properties": "off",
+    "vue/no-mutating-props": "off",
+    "no-console": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+
+    /* 阿里云代码规范质量规则（从 eslint-config-aliyun 提取） */
+    "eqeqeq": ["error", "always"],
+    "radix": ["error"],
+    "camelcase": ["error", { "properties": "never" }],
+    "no-useless-escape": ["error"],
+    "array-callback-return": ["error"],
+    "no-new-object": ["error"],
+    "no-array-constructor": ["error"],
+    "arrow-spacing": ["error"],
+    "no-duplicate-imports": ["error"],
+
+
+  }
+}
