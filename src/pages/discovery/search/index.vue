@@ -66,6 +66,19 @@
           <a-row :gutter="16">
             <a-col :span="6">
               <a-select 
+                v-model="filters.module" 
+                placeholder="搜索模块" 
+                allow-clear
+                @change="handleFilterChange"
+              >
+                <a-option value="all">全部</a-option>
+                <a-option value="table">数据表</a-option>
+                <a-option value="concept">业务概念</a-option>
+                <a-option value="metric">指标</a-option>
+              </a-select>
+            </a-col>
+            <a-col :span="6">
+              <a-select 
                 v-model="filters.type" 
                 placeholder="数据类型" 
                 allow-clear
@@ -102,12 +115,75 @@
                 <a-option value="月更新">月更新</a-option>
               </a-select>
             </a-col>
-            <a-col :span="6">
-              <a-button type="outline" @click="resetFilters">
-                重置筛选
-              </a-button>
-            </a-col>
           </a-row>
+
+          <!-- 包含和剔除筛选条件 -->
+          <div class="condition-builder">
+            <div class="condition-header">
+              <span class="condition-title">筛选条件</span>
+              <a-button type="text" size="mini" @click="addCondition">
+                <IconPlus />添加条件
+              </a-button>
+            </div>
+
+            <!-- 已添加的条件 -->
+            <div v-if="advancedConditions.length > 0" class="condition-list">
+              <div 
+                v-for="(condition, index) in advancedConditions" 
+                :key="index"
+                class="condition-item"
+              >
+                <a-select 
+                  v-model="condition.matchType" 
+                  style="width: 100px"
+                  @change="handleConditionChange"
+                >
+                  <a-option value="include">包含</a-option>
+                  <a-option value="exclude">剔除</a-option>
+                </a-select>
+                <a-input
+                  v-model="condition.value"
+                  placeholder="请输入关键词"
+                  style="flex: 1"
+                  allow-clear
+                  @input="handleConditionChange"
+                />
+                <a-button type="text" status="danger" @click="removeCondition(index)">
+                  <IconDelete />
+                </a-button>
+              </div>
+            </div>
+
+            <!-- 快速添加标签 -->
+            <div v-if="advancedConditions.length === 0" class="quick-conditions">
+              <span class="quick-label">快速添加：</span>
+              <a-tag 
+                v-for="(tag, index) in quickTags" 
+                :key="index"
+                class="quick-tag"
+                @click="addQuickCondition(tag, 'include')"
+              >
+                包含 {{ tag }}
+              </a-tag>
+              <a-tag 
+                v-for="(tag, index) in quickTags" 
+                :key="'ex-' + index"
+                class="quick-tag exclude"
+                @click="addQuickCondition(tag, 'exclude')"
+              >
+                剔除 {{ tag }}
+              </a-tag>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <a-button type="outline" @click="resetFilters">
+              重置筛选
+            </a-button>
+            <a-button type="primary" @click="applyAdvancedSearch">
+              应用筛选
+            </a-button>
+          </div>
         </div>
         
         <!-- 搜索历史 -->
@@ -291,6 +367,12 @@ interface SearchFilters {
   type?: string
   domain?: string
   updateFrequency?: string
+  module?: string
+}
+
+interface AdvancedCondition {
+  matchType: 'include' | 'exclude'
+  value: string
 }
 
 interface SearchResult {
@@ -322,6 +404,8 @@ const currentPage = ref(1)
 const pageSize = ref(12)
 const searchHistory = ref<string[]>([])
 const filters = ref<SearchFilters>({})
+const advancedConditions = ref<AdvancedCondition[]>([])
+const quickTags = ref(['dim', 'fact', 'ods', 'dwd', 'dws', 'ads'])
 
 // 搜索结果数据
 const allResults = ref<SearchResult[]>([])
@@ -375,17 +459,48 @@ const debouncedSearch = useDebounceFn(async () => {
 onMounted(() => {
   loadSearchHistory()
   // 解析 URL 参数
-  const { q, type, domain } = route.query
+  const { q, type, domain, module, include, exclude, favorites } = route.query
   
   // 设置筛选条件
   if (type) filters.value.type = type as string
   if (domain) filters.value.domain = domain as string
+  if (module) filters.value.module = module as string
+  
+  // 解析包含和剔除条件
+  if (include) {
+    const includeTerms = Array.isArray(include) ? include : [include]
+    includeTerms.forEach((term: string) => {
+      if (term) {
+        advancedConditions.value.push({
+          matchType: 'include',
+          value: term
+        })
+      }
+    })
+  }
+  
+  if (exclude) {
+    const excludeTerms = Array.isArray(exclude) ? exclude : [exclude]
+    excludeTerms.forEach((term: string) => {
+      if (term) {
+        advancedConditions.value.push({
+          matchType: 'exclude',
+          value: term
+        })
+      }
+    })
+  }
+
+  // 处理关注筛选
+  if (favorites === 'true') {
+    showFavoritesOnly.value = true
+  }
   
   // 如果有查询词或筛选条件，执行搜索
   if (q) {
     searchQuery.value = q as string
     handleSearch(q as string)
-  } else if (type || domain) {
+  } else if (type || domain || module || include || exclude || favorites) {
     // 如果没有关键词但有筛选条件，也触发搜索
     handleSearch('')
   }
@@ -429,9 +544,26 @@ import { searchApi } from '@/api/community'
 const performSearch = async (query?: string) => {
   const searchTerm = query || searchQuery.value
   
+  // 准备包含和剔除条件
+  const includeTerms = advancedConditions.value
+    .filter(c => c.matchType === 'include' && c.value.trim())
+    .map(c => c.value.trim())
+  
+  const excludeTerms = advancedConditions.value
+    .filter(c => c.matchType === 'exclude' && c.value.trim())
+    .map(c => c.value.trim())
+  
+  // 构建搜索参数
+  const searchParams = {
+    ...filters.value,
+    keyword: searchTerm,
+    include: includeTerms,
+    exclude: excludeTerms
+  }
+  
   // 使用新的 searchApi 进行搜索
   try {
-    const res = await searchApi.search(searchTerm, filters.value)
+    const res = await searchApi.search(searchTerm, searchParams)
     if (res.code === 200 && res.data) {
       const data = res.data
       
@@ -500,9 +632,42 @@ const handleFilterChange = () => {
 
 const resetFilters = () => {
   filters.value = {}
+  advancedConditions.value = []
   if (searchQuery.value) {
     debouncedSearch()
   }
+}
+
+// 高级条件相关方法
+const addCondition = () => {
+  advancedConditions.value.push({
+    matchType: 'include',
+    value: ''
+  })
+}
+
+const removeCondition = (index: number) => {
+  advancedConditions.value.splice(index, 1)
+  handleConditionChange()
+}
+
+const addQuickCondition = (tag: string, matchType: 'include' | 'exclude') => {
+  const existing = advancedConditions.value.find(c => c.value === tag && c.matchType === matchType)
+  if (!existing) {
+    advancedConditions.value.push({
+      matchType,
+      value: tag
+    })
+    handleConditionChange()
+  }
+}
+
+const handleConditionChange = useDebounceFn(() => {
+  // 条件变化时自动触发搜索
+}, 500)
+
+const applyAdvancedSearch = () => {
+  handleSearch()
 }
 
 // 切换方法
@@ -735,6 +900,90 @@ const getTypeLabel = (type: string) => {
   background: #f7f8fa;
   border-radius: 6px;
   border: 1px solid #e5e6eb;
+}
+
+.condition-builder {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.condition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.condition-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4e5969;
+}
+
+.condition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.condition-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.condition-item:hover {
+  border-color: #165dff;
+}
+
+.quick-conditions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.quick-label {
+  font-size: 13px;
+  color: #86909c;
+  margin-right: 8px;
+}
+
+.quick-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.quick-tag:hover {
+  background: #e8f3ff;
+  border-color: #165dff;
+  color: #165dff;
+}
+
+.quick-tag.exclude:hover {
+  background: #fff1e8;
+  border-color: #ff7d00;
+  color: #ff7d00;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
 }
 
 .history-header {

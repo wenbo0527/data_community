@@ -31,8 +31,13 @@
             <template #icon><icon-filter /></template>
             高级
           </a-button>
-          <a-button class="action-btn" size="large" @click="handleFollow">
-            <template #icon><icon-heart /></template>
+          <a-button 
+            class="action-btn" 
+            size="large"
+            :type="showFavoritesOnly ? 'primary' : 'secondary'"
+            @click="toggleFavoritesFilter"
+          >
+            <template #icon><icon-heart :class="{ 'favorite-active': showFavoritesOnly }" /></template>
             关注
           </a-button>
         </div>
@@ -40,30 +45,115 @@
         <!-- 高级筛选面板 -->
         <div v-if="showAdvancedFilter" class="advanced-filter-panel">
           <a-row :gutter="16">
-            <a-col :span="8">
-              <a-form-item label="包含关键词" label-col-flex="80px">
-                <a-input v-model="searchForm.include" placeholder="输入包含的关键词" allow-clear />
-              </a-form-item>
+            <a-col :span="6">
+              <a-select 
+                v-model="searchForm.module" 
+                placeholder="搜索模块" 
+                allow-clear
+              >
+                <a-option value="all">全部</a-option>
+                <a-option value="table">数据表</a-option>
+                <a-option value="concept">业务概念</a-option>
+                <a-option value="metric">指标</a-option>
+              </a-select>
             </a-col>
-            <a-col :span="8">
-              <a-form-item label="排除关键词" label-col-flex="80px">
-                <a-input v-model="searchForm.exclude" placeholder="输入排除的关键词" allow-clear />
-              </a-form-item>
+            <a-col :span="6">
+              <a-select 
+                v-model="searchForm.type" 
+                placeholder="数据类型" 
+                allow-clear
+              >
+                <a-option value="table">数据表</a-option>
+                <a-option value="metric">指标</a-option>
+                <a-option value="external">外部数据</a-option>
+              </a-select>
             </a-col>
-            <a-col :span="8">
-              <a-form-item label="业务模块" label-col-flex="80px">
-                <a-select v-model="searchForm.module" placeholder="选择业务模块" allow-clear>
-                  <a-option>贷前分析</a-option>
-                  <a-option>风控评估</a-option>
-                  <a-option>反欺诈</a-option>
-                  <a-option>自营业务</a-option>
-                </a-select>
-              </a-form-item>
+            <a-col :span="6">
+              <a-select 
+                v-model="searchForm.domain" 
+                placeholder="业务域" 
+                allow-clear
+              >
+                <a-option value="用户域">用户域</a-option>
+                <a-option value="交易域">交易域</a-option>
+                <a-option value="产品域">产品域</a-option>
+                <a-option value="风控域">风控域</a-option>
+              </a-select>
+            </a-col>
+            <a-col :span="6">
+              <a-select 
+                v-model="searchForm.updateFrequency" 
+                placeholder="更新频率" 
+                allow-clear
+              >
+                <a-option value="实时">实时</a-option>
+                <a-option value="日更新">日更新</a-option>
+                <a-option value="周更新">周更新</a-option>
+                <a-option value="月更新">月更新</a-option>
+              </a-select>
             </a-col>
           </a-row>
-          <div class="filter-actions">
-            <a-button type="primary" size="small" @click="handleSearch">应用筛选</a-button>
-            <a-button size="small" @click="resetSearch">重置</a-button>
+
+          <!-- 包含和剔除筛选条件 -->
+          <div class="condition-builder">
+            <div class="condition-header">
+              <span class="condition-title">筛选条件</span>
+              <a-button type="text" size="mini" @click="addCondition">
+                <icon-plus />添加条件
+              </a-button>
+            </div>
+
+            <!-- 已添加的条件 -->
+            <div v-if="advancedConditions.length > 0" class="condition-list">
+              <div 
+                v-for="(condition, index) in advancedConditions" 
+                :key="index"
+                class="condition-item"
+              >
+                <a-select 
+                  v-model="condition.matchType" 
+                  style="width: 100px"
+                >
+                  <a-option value="include">包含</a-option>
+                  <a-option value="exclude">剔除</a-option>
+                </a-select>
+                <a-input
+                  v-model="condition.value"
+                  placeholder="请输入关键词"
+                  style="flex: 1"
+                  allow-clear
+                />
+                <a-button type="text" status="danger" @click="removeCondition(index)">
+                  <icon-delete />
+                </a-button>
+              </div>
+            </div>
+
+            <!-- 快速添加标签 -->
+            <div v-if="advancedConditions.length === 0" class="quick-conditions">
+              <span class="quick-label">快速添加：</span>
+              <a-tag 
+                v-for="(tag, index) in quickTags" 
+                :key="index"
+                class="quick-tag"
+                @click="addQuickCondition(tag, 'include')"
+              >
+                包含 {{ tag }}
+              </a-tag>
+              <a-tag 
+                v-for="(tag, index) in quickTags" 
+                :key="'ex-' + index"
+                class="quick-tag exclude"
+                @click="addQuickCondition(tag, 'exclude')"
+              >
+                剔除 {{ tag }}
+              </a-tag>
+            </div>
+          </div>
+
+          <div class="filter-actions-bottom">
+            <a-button type="outline" @click="resetAdvancedFilters">重置筛选</a-button>
+            <a-button type="primary" @click="handleSearch">应用筛选</a-button>
           </div>
         </div>
       </div>
@@ -284,8 +374,13 @@ import {
   IconApps, IconBulb, IconNotification, IconFilter,
   IconCloud, IconTrophy, IconTag, IconCode, IconMindMapping,
   IconSafe, IconUserGroup, IconCommon, IconBranch, IconPublic, IconSettings, IconBook, IconCheckCircle, IconLock,
-  IconHeart, IconHistory, IconFile
+  IconHeart, IconHistory, IconFile, IconPlus, IconDelete
 } from '@arco-design/web-vue/es/icon'
+
+interface AdvancedCondition {
+  matchType: 'include' | 'exclude'
+  value: string
+}
 import { Message, Modal } from '@arco-design/web-vue'
 import TableCollectionGrid from './components/TableCollectionGrid.vue'
 import { 
@@ -313,14 +408,23 @@ const businessCollections = computed(() => {
   return collections.value.filter(c => c.type === '业务流程')
 })
 
+// 初始化
+onMounted(() => {
+  loadFavoriteAssets()
+})
+
 // 状态管理
 const searchForm = ref({
   keyword: '',
-  include: '',
-  exclude: '',
-  module: ''
+  module: '',
+  type: '',
+  domain: '',
+  updateFrequency: ''
 })
 const showAdvancedFilter = ref(false)
+const advancedConditions = ref<AdvancedCondition[]>([])
+const quickTags = ref(['dim', 'fact', 'ods', 'dwd', 'dws', 'ads'])
+const showFavoritesOnly = ref(false)
 
 // 从 Mock 数据中获取
 const recentlyViewed = ref(mockRecentlyViewed || [])
@@ -329,23 +433,29 @@ const dataResources = ref(mockDataResources || [])
 const dataElements = ref(mockDataElements || [])
 const dataGovernance = ref(mockDataGovernance || [])
 
-// 关注功能
-const handleFollow = () => {
-  // 检查是否是首次关注（这里用 localStorage 模拟）
-  const hasFollowedBefore = localStorage.getItem('has_followed_assets')
-  
-  if (!hasFollowedBefore) {
-    Modal.info({
-      title: '关注提示',
-      content: '关注资产后，您将通过数字社区首页和数据服务公众号收到资产变更相关的通知。',
-      okText: '知道了',
-      onOk: () => {
-        localStorage.setItem('has_followed_assets', 'true')
-        Message.success('关注成功')
+// 关注的资产（从 localStorage 读取）
+const favoriteAssets = ref<Set<string>>(new Set())
+
+// 初始化加载关注的资产
+const loadFavoriteAssets = () => {
+  const stored = localStorage.getItem('favorite-assets')
+  if (stored) {
+    favoriteAssets.value = new Set(JSON.parse(stored))
+  }
+}
+
+// 切换关注筛选
+const toggleFavoritesFilter = () => {
+  showFavoritesOnly.value = !showFavoritesOnly.value
+  // 将筛选状态传递给搜索页面
+  if (showFavoritesOnly.value) {
+    // 跳转到搜索页面并筛选关注的资产
+    router.push({
+      path: '/discovery/search',
+      query: {
+        favorites: 'true'
       }
     })
-  } else {
-    Message.success('关注成功')
   }
 }
 
@@ -355,17 +465,61 @@ const handleSearch = () => {
     Message.warning('请输入搜索关键词')
     return
   }
-  
+
+  // 提取包含和剔除条件
+  const includeTerms = advancedConditions.value
+    .filter(c => c.matchType === 'include' && c.value.trim())
+    .map(c => c.value.trim())
+
+  const excludeTerms = advancedConditions.value
+    .filter(c => c.matchType === 'exclude' && c.value.trim())
+    .map(c => c.value.trim())
+
   // 模拟搜索跳转
   router.push({
     path: '/discovery/search',
     query: {
       q: searchForm.value.keyword,
-      include: searchForm.value.include,
-      exclude: searchForm.value.exclude,
-      module: searchForm.value.module
+      include: includeTerms,
+      exclude: excludeTerms,
+      module: searchForm.value.module,
+      type: searchForm.value.type,
+      domain: searchForm.value.domain
     }
   })
+}
+
+// 高级条件相关方法
+const addCondition = () => {
+  advancedConditions.value.push({
+    matchType: 'include',
+    value: ''
+  })
+}
+
+const removeCondition = (index: number) => {
+  advancedConditions.value.splice(index, 1)
+}
+
+const addQuickCondition = (tag: string, matchType: 'include' | 'exclude') => {
+  const existing = advancedConditions.value.find((c: AdvancedCondition) => c.value === tag && c.matchType === matchType)
+  if (!existing) {
+    advancedConditions.value.push({
+      matchType,
+      value: tag
+    })
+  }
+}
+
+const resetAdvancedFilters = () => {
+  searchForm.value = {
+    keyword: '',
+    module: '',
+    type: '',
+    domain: '',
+    updateFrequency: ''
+  }
+  advancedConditions.value = []
 }
 
 const toggleAdvancedFilter = () => {
@@ -375,10 +529,12 @@ const toggleAdvancedFilter = () => {
 const resetSearch = () => {
   searchForm.value = {
     keyword: '',
-    include: '',
-    exclude: '',
-    module: ''
+    module: '',
+    type: '',
+    domain: '',
+    updateFrequency: ''
   }
+  advancedConditions.value = []
 }
 
 // 路由跳转处理
@@ -487,6 +643,95 @@ const handleCollectionClick = (collection: any) => {
   width: 100%;
   max-width: 800px;
   border: 1px solid #e5e6eb;
+}
+
+.condition-builder {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.condition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.condition-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4e5969;
+}
+
+.condition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.condition-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.condition-item:hover {
+  border-color: #165dff;
+}
+
+.quick-conditions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.quick-label {
+  font-size: 13px;
+  color: #86909c;
+  margin-right: 8px;
+}
+
+.quick-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.quick-tag:hover {
+  background: #e8f3ff;
+  border-color: #165dff;
+  color: #165dff;
+}
+
+.quick-tag.exclude:hover {
+  background: #fff1e8;
+  border-color: #ff7d00;
+  color: #ff7d00;
+}
+
+.filter-actions-bottom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.favorite-active {
+  color: #f53f3f;
+  fill: #f53f3f;
 }
 
 .filter-actions {

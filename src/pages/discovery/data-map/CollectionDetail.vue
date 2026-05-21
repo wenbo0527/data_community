@@ -73,7 +73,7 @@ import { Message, Modal } from '@arco-design/web-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import { IconFile, IconUser, IconLock, IconStar, IconStarFill } from '@arco-design/web-vue/es/icon'
-import { mockCollections } from '@/mock/data-map.js'
+import mockData from '@/mock/data-map.js'
 
 interface TableField {
   name: string
@@ -136,7 +136,7 @@ const fetchCollection = async () => {
       return
     }
     
-    const found = mockCollections.find(c => c.id === id)
+    const found = mockData.collections.find(c => c.id === id)
     
     if (found) {
       collection.value = found

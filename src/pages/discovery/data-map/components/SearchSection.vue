@@ -58,44 +58,125 @@
       <div v-if="props.showAdvancedFilter" class="advanced-filter">
         <a-row :gutter="16">
           <a-col :span="6">
-            <a-input
-              v-model="filters.includeKeyword"
-              placeholder="包含以下关键词"
-              allow-clear
-              @input="handleFilterChange"
-            >
-              <template #prefix>
-                <IconPlusCircle />
-              </template>
-            </a-input>
-          </a-col>
-          <a-col :span="6">
-            <a-input
-              v-model="filters.excludeKeyword"
-              placeholder="不包含以下关键词"
-              allow-clear
-              @input="handleFilterChange"
-            >
-              <template #prefix>
-                <IconMinusCircle />
-              </template>
-            </a-input>
-          </a-col>
-          <a-col :span="6">
-            <a-tree-select
-              v-model="filters.module"
-              placeholder="归属业务模块"
-              :data="moduleOptions"
+            <a-select 
+              v-model="filters.module" 
+              placeholder="搜索模块" 
               allow-clear
               @change="handleFilterChange"
-            />
+            >
+              <a-option value="all">全部</a-option>
+              <a-option value="table">数据表</a-option>
+              <a-option value="concept">业务概念</a-option>
+              <a-option value="metric">指标</a-option>
+            </a-select>
           </a-col>
           <a-col :span="6">
-            <a-button type="outline" @click="resetFilters">
-              重置筛选
-            </a-button>
+            <a-select 
+              v-model="filters.type" 
+              placeholder="数据类型" 
+              allow-clear
+              @change="handleFilterChange"
+            >
+              <a-option value="table">数据表</a-option>
+              <a-option value="metric">指标</a-option>
+              <a-option value="external">外部数据</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="filters.domain" 
+              placeholder="业务域" 
+              allow-clear
+              @change="handleFilterChange"
+            >
+              <a-option value="用户域">用户域</a-option>
+              <a-option value="交易域">交易域</a-option>
+              <a-option value="产品域">产品域</a-option>
+              <a-option value="风控域">风控域</a-option>
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <a-select 
+              v-model="filters.updateFrequency" 
+              placeholder="更新频率" 
+              allow-clear
+              @change="handleFilterChange"
+            >
+              <a-option value="实时">实时</a-option>
+              <a-option value="日更新">日更新</a-option>
+              <a-option value="周更新">周更新</a-option>
+              <a-option value="月更新">月更新</a-option>
+            </a-select>
           </a-col>
         </a-row>
+
+        <!-- 包含和剔除筛选条件 -->
+        <div class="condition-builder">
+          <div class="condition-header">
+            <span class="condition-title">筛选条件</span>
+            <a-button type="text" size="mini" @click="addCondition">
+              <IconPlus />添加条件
+            </a-button>
+          </div>
+
+          <!-- 已添加的条件 -->
+          <div v-if="advancedConditions.length > 0" class="condition-list">
+            <div 
+              v-for="(condition, index) in advancedConditions" 
+              :key="index"
+              class="condition-item"
+            >
+              <a-select 
+                v-model="condition.matchType" 
+                style="width: 100px"
+                @change="handleConditionChange"
+              >
+                <a-option value="include">包含</a-option>
+                <a-option value="exclude">剔除</a-option>
+              </a-select>
+              <a-input
+                v-model="condition.value"
+                placeholder="请输入关键词"
+                style="flex: 1"
+                allow-clear
+                @input="handleConditionChange"
+              />
+              <a-button type="text" status="danger" @click="removeCondition(index)">
+                <IconDelete />
+              </a-button>
+            </div>
+          </div>
+
+          <!-- 快速添加标签 -->
+          <div v-if="advancedConditions.length === 0" class="quick-conditions">
+            <span class="quick-label">快速添加：</span>
+            <a-tag 
+              v-for="(tag, index) in quickTags" 
+              :key="index"
+              class="quick-tag"
+              @click="addQuickCondition(tag, 'include')"
+            >
+              包含 {{ tag }}
+            </a-tag>
+            <a-tag 
+              v-for="(tag, index) in quickTags" 
+              :key="'ex-' + index"
+              class="quick-tag exclude"
+              @click="addQuickCondition(tag, 'exclude')"
+            >
+              剔除 {{ tag }}
+            </a-tag>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <a-button type="outline" @click="resetFilters">
+            重置筛选
+          </a-button>
+          <a-button type="primary" @click="applyAdvancedSearch">
+            应用筛选
+          </a-button>
+        </div>
       </div>
       
 
@@ -110,20 +191,27 @@ import { useDebounceFn } from '@vueuse/core'
 import { 
   IconSearch, 
   IconDelete, 
+  IconPlus,
   IconPlusCircle, 
   IconMinusCircle 
 } from '@arco-design/web-vue/es/icon'
 
 interface SearchFilters {
-  includeKeyword?: string
-  excludeKeyword?: string
   module?: string
+  type?: string
+  domain?: string
+  updateFrequency?: string
+}
+
+interface AdvancedCondition {
+  matchType: 'include' | 'exclude'
+  value: string
 }
 
 interface SearchSectionEmits {
   (e: 'search', value: string, filters: SearchFilters): void
   (e: 'clear'): void
-  (e: 'filter-change', filters: SearchFilters): void
+  (e: 'filter-change', filters: SearchFilters, advancedConditions: AdvancedCondition[]): void
 }
 
 const props = defineProps<{
@@ -142,33 +230,13 @@ const showSuggestions = ref(false)
 const suggestions = ref<string[]>([])
 const searchHistory = ref<string[]>([])
 const filters = ref<SearchFilters>({
-  includeKeyword: '',
-  excludeKeyword: '',
-  module: ''
+  module: '',
+  type: '',
+  domain: '',
+  updateFrequency: ''
 })
-
-const moduleOptions = ref([
-  {
-    key: 'm-100',
-    title: '数据部',
-    children: [
-      {
-        key: 'm-101',
-        title: '业务核心数据',
-        children: [
-          { key: 'm-102', title: '授信场景' }
-        ]
-      }
-    ]
-  },
-  {
-    key: 'm-200',
-    title: '业务部',
-    children: [
-      { key: 'm-201', title: '营销场景' }
-    ]
-  }
-])
+const advancedConditions = ref<AdvancedCondition[]>([])
+const quickTags = ref(['dim', 'fact', 'ods', 'dwd', 'dws', 'ads'])
 
 // 防抖搜索
 const debouncedSearch = useDebounceFn((value: string) => {
@@ -264,16 +332,51 @@ const clearHistory = () => {
 }
 
 const handleFilterChange = () => {
-  emit('filter-change', filters.value)
+  emit('filter-change', filters.value, advancedConditions.value)
 }
 
 const resetFilters = () => {
   filters.value = {
-    includeKeyword: '',
-    excludeKeyword: '',
-    module: ''
+    module: '',
+    type: '',
+    domain: '',
+    updateFrequency: ''
   }
-  emit('filter-change', filters.value)
+  advancedConditions.value = []
+  emit('filter-change', filters.value, [])
+}
+
+// 高级条件相关方法
+const addCondition = () => {
+  advancedConditions.value.push({
+    matchType: 'include',
+    value: ''
+  })
+}
+
+const removeCondition = (index: number) => {
+  advancedConditions.value.splice(index, 1)
+  handleConditionChange()
+}
+
+const addQuickCondition = (tag: string, matchType: 'include' | 'exclude') => {
+  const existing = advancedConditions.value.find((c: AdvancedCondition) => c.value === tag && c.matchType === matchType)
+  if (!existing) {
+    advancedConditions.value.push({
+      matchType,
+      value: tag
+    })
+    handleConditionChange()
+  }
+}
+
+const handleConditionChange = useDebounceFn(() => {
+  // 条件变化时自动触发筛选
+  emit('filter-change', filters.value, advancedConditions.value)
+}, 500)
+
+const applyAdvancedSearch = () => {
+  handleSearch()
 }
 
 watch(() => props.modelValue, (newValue: string | undefined) => {
@@ -420,6 +523,90 @@ onUnmounted(() => {
   background: #f7f8fa;
   border-radius: 6px;
   border: 1px solid #e5e6eb;
+}
+
+.condition-builder {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
+}
+
+.condition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.condition-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4e5969;
+}
+
+.condition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.condition-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.condition-item:hover {
+  border-color: #165dff;
+}
+
+.quick-conditions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+}
+
+.quick-label {
+  font-size: 13px;
+  color: #86909c;
+  margin-right: 8px;
+}
+
+.quick-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.quick-tag:hover {
+  background: #e8f3ff;
+  border-color: #165dff;
+  color: #165dff;
+}
+
+.quick-tag.exclude:hover {
+  background: #fff1e8;
+  border-color: #ff7d00;
+  color: #ff7d00;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e5e6eb;
 }
 
 .filter-toggle {
