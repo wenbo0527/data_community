@@ -6,7 +6,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const callRoutes: RouteRecordRaw[] = [
   {
-    path: '/call',
+    path: 'call',
     name: 'Call',
     component: () => import('@/pages/call/index.vue'),
     meta: { title: '人工电销' }

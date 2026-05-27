@@ -6,7 +6,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const marketingRoutes: RouteRecordRaw[] = [
   {
-    path: '/marketing',
+    path: 'marketing',
     name: 'Marketing',
     component: () => import('@/pages/marketing/index.vue'),
     meta: { title: '营销中心' },

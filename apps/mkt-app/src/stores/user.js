@@ -4,14 +4,16 @@ import { ref, computed } from 'vue'
 export const useUserStore = defineStore('user', () => {
   // 用户基本信息
   const userInfo = ref({
-    id: null,
-    name: '张三',
-    department: 'risk', // risk, marketing, data
-    role: 'user',
-    avatar: null,
-    email: null,
-    phone: null,
-    joinDate: null
+    id: '1',
+    username: 'admin',
+    name: '管理员',
+    email: 'admin@example.com',
+    avatar: '',
+    roles: ['admin'],
+    permissions: ['*'],
+    department: '技术部',
+    phone: '13800138000',
+    status: 'active'
   })
 
   // 是否为新用户

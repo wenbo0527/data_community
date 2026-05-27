@@ -29,22 +29,28 @@ const routerBase = qiankunWindow.__POWERED_BY_QIANKUN__ ? (qiankunWindow.ROUTER_
 
 console.log('[MKT] routerBase:', routerBase)
 
-// 合并所有路由
+// 合并所有路由 - 使用 MainLayout 作为根路由
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'MktIndex',
-    component: () => import('./pages/index.vue'),
-    meta: { title: '营销域' }
-  },
-  ...benefitRoutes,    // 权益中心
-  ...reachRoutes,       // 触达系统
-  ...customerRoutes,   // 客群中心
-  ...callRoutes,       // 人工电销工作台
-  ...canvasRoutes,     // 营销画布
-  ...alertRoutes,      // 预警中心
-  ...tasksRoutes,      // 任务中心
-  ...marketingRoutes   // 营销中心（包含子路由）
+    component: () => import('./layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'MktIndex',
+        component: () => import('./pages/index.vue'),
+        meta: { title: '营销域' }
+      },
+      ...benefitRoutes,
+      ...reachRoutes,
+      ...customerRoutes,
+      ...callRoutes,
+      ...canvasRoutes,
+      ...alertRoutes,
+      ...tasksRoutes,
+      ...marketingRoutes
+    ]
+  }
 ]
 
 const router = createRouter({

@@ -6,7 +6,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const canvasRoutes: RouteRecordRaw[] = [
   {
-    path: '/canvas',
+    path: 'canvas',
     name: 'Canvas',
     component: () => import('@/pages/canvas/index.vue'),
     meta: { title: '营销画布' }
