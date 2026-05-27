@@ -378,9 +378,6 @@ importers:
       vue-router:
         specifier: ^4.3.0
         version: 4.5.1(vue@3.5.19(typescript@5.3.3))
-      vuex:
-        specifier: '3'
-        version: 3.6.2(vue@3.5.19(typescript@5.3.3))
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
@@ -5201,11 +5198,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  vuex@3.6.2:
-    resolution: {integrity: sha512-ETW44IqCgBpVomy520DT5jf8n0zoCac+sxWnn+hMe/CzaSejb/eVw2YToiXYX+Ex/AuHHia28vWTq4goAexFbw==}
-    peerDependencies:
-      vue: ^2.0.0
 
   w3c-xmlserializer@5.0.0:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
@@ -10521,10 +10513,6 @@ snapshots:
       '@vue/shared': 3.5.19
     optionalDependencies:
       typescript: 5.3.3
-
-  vuex@3.6.2(vue@3.5.19(typescript@5.3.3)):
-    dependencies:
-      vue: 3.5.19(typescript@5.3.3)
 
   w3c-xmlserializer@5.0.0:
     dependencies:

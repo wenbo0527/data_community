@@ -3,7 +3,7 @@
  * 从微应用注册中心获取菜单，支持动态更新
  */
 import { computed, onMounted } from 'vue'
-import { useRegistryStore } from '@/store'
+import { useRegistryStore } from '@/stores/registry'
 import type { MenuItem } from '@/shared/registry/types'
 
 // 导出菜单项类型供外部使用

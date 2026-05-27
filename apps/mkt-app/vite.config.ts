@@ -48,7 +48,7 @@ export default defineConfig(async () => {
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
     build: {
       rollupOptions: {
-        external: ['vuex']
+        external: []
       }
     },
     base: '/mkt/'
