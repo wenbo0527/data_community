@@ -11,7 +11,7 @@
  * - alert: 预警中心
  * - tasks: 任务中心
  */
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
 
@@ -48,7 +48,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(routerBase),
+  history: createWebHashHistory(routerBase),
   routes
 })
 
