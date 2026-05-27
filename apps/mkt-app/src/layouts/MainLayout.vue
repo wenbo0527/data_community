@@ -181,9 +181,32 @@ const canvasMenus = [
 ]
 
 // ========== 电销工作台 ==========
-// 注：电销工作台使用内部Tab导航（数据看板、外呼任务、名单管理、坐席监控、通话记录）
 const callMenus = [
-  { key: '/call', title: '人工电销工作台' }
+  {
+    key: 'call-group',
+    title: '外呼管理',
+    children: [
+      { key: '/call', title: '数据看板' },
+      { key: '/call/task', title: '任务列表' },
+      { key: '/call/list', title: '名单管理' },
+      { key: '/call/record', title: '通话记录' }
+    ]
+  },
+  {
+    key: 'team-group',
+    title: '团队',
+    children: [
+      { key: '/call/agent', title: '坐席管理' },
+      { key: '/call/team', title: '班组管理' }
+    ]
+  },
+  {
+    key: 'system-group',
+    title: '系统',
+    children: [
+      { key: '/call/settings', title: '系统设置' }
+    ]
+  }
 ]
 
 const menuMap: Record<string, any[]> = {
