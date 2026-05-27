@@ -261,6 +261,11 @@ const creditColumns = [
     width: 100
   },
   {
+    title: '三方借据号',
+    dataIndex: 'thirdPartyLoanId',
+    width: 180
+  },
+  {
     title: '操作',
     slotName: 'actions',
     width: 150,

@@ -294,7 +294,8 @@ const handleCompareSingleReport = (report: any) => {
 
 :deep(> .arco-tabs > .arco-tabs-content-holder) {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   height: 100%;
   padding-left: 20px;
 }

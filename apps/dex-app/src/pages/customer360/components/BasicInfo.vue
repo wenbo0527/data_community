@@ -7,6 +7,9 @@
       <a-descriptions-item label="性别">{{ userInfo.basicInfo?.gender || userInfo.gender || '-' }}</a-descriptions-item>
       <a-descriptions-item label="手机号码">{{ userInfo.basicInfo?.phone || userInfo.mobile || userInfo.phone || '-' }}</a-descriptions-item>
       <a-descriptions-item label="客户号">{{ userInfo.basicInfo?.customerNo || userInfo.customerNo || '-' }}</a-descriptions-item>
+      <a-descriptions-item label="三方客户号">
+        <span :style="{ color: 'var(--subapp-primary)' }">{{ userInfo.basicInfo?.thirdPartyCustomerId || '-' }}</span>
+      </a-descriptions-item>
       <a-descriptions-item label="户籍">{{ userInfo.basicInfo?.address || userInfo.address || '-' }}</a-descriptions-item>
       <a-descriptions-item label="身份证号">{{ userInfo.basicInfo?.idCard || userInfo.idCard || '-' }}</a-descriptions-item>
       <a-descriptions-item label="身份证有效期">{{ userInfo.basicInfo?.idExpiry || userInfo.idExpiry || '-' }}</a-descriptions-item>

@@ -252,7 +252,7 @@ const hasData = computed(() => rawTouchRecords.value.length > 0 || rawBenefitRec
 const filteredTouchRecords = computed(() => {
   return rawTouchRecords.value.filter((item: any) => {
     // 产品过滤
-    if (props.productKey && item.productKey !== props.productKey) {return false}
+    if (props.productKey && item.productKey && item.productKey !== props.productKey) {return false}
     // 渠道过滤
     if (touchFilters.channel && item.touchChannel !== touchFilters.channel) {return false}
     // 结果过滤
@@ -271,7 +271,7 @@ const filteredTouchRecords = computed(() => {
 const filteredBenefitRecords = computed(() => {
   return rawBenefitRecords.value.filter((item: any) => {
     // 产品过滤
-    if (props.productKey && item.productKey !== props.productKey) {return false}
+    if (props.productKey && item.productKey && item.productKey !== props.productKey) {return false}
     // 类型过滤
     if (benefitFilters.type && item.benefitType !== benefitFilters.type) {return false}
     // 状态过滤

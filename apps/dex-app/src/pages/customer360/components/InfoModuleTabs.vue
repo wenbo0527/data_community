@@ -201,10 +201,10 @@ const marketingData = computed(() => {
   
   return {
     touchRecords: props.userInfo.marketingRecords?.touchRecords?.filter((item: any) => 
-      item.productKey === props.productKey
+      !item.productKey || item.productKey === props.productKey
     ) || [],
     benefitRecords: props.userInfo.marketingRecords?.benefitRecords?.filter((item: any) => 
-      item.productKey === props.productKey
+      !item.productKey || item.productKey === props.productKey
     ) || [],
     effectAnalysis: props.userInfo.marketingRecords?.effectAnalysis || {}
   }
@@ -218,25 +218,17 @@ const isSudaiProduct = computed(() => {
 // 实时数据（仅用于Su贷产品）
 const realTimeData = computed(() => {
   if (!isSudaiProduct.value) {return {};}
-  
-  // 从用户数据中获取实时数据
-  const suDaiLoanRecord = props.userInfo.loanRecords?.find((record: any) => 
+  // 优先使用 userInfo.realTimeData（来自 mock）
+  if (props.userInfo?.realTimeData) {
+    return props.userInfo.realTimeData;
+  }
+  // 兜底：从 loanRecords 拼装旧字段
+  const suDaiLoanRecord = props.userInfo?.loanRecords?.find((record: any) =>
     record.productName === 'Su贷'
   );
-  
-  const suDaiCreditRecord = props.userInfo.creditsList?.find((record: any) => 
-    record.productName === 'Su贷'
-  );
-  
   return {
-    currentBalance: suDaiLoanRecord?.realTimeBalance || suDaiLoanRecord?.balance || 150000,
-    dailyDisbursement: suDaiLoanRecord?.dailyDisbursement || 250000,
-    dailyRepayment: suDaiLoanRecord?.dailyRepayment || 180000,
-    currentRate: suDaiLoanRecord?.loanRate || 3.9,
-    riskScore: suDaiCreditRecord?.riskScore || suDaiLoanRecord?.riskScore || 785,
-    overdueDays: suDaiLoanRecord?.overdueDays || 0,
-    warningLevel: suDaiCreditRecord?.warningLevel || suDaiLoanRecord?.warningLevel || '低风险',
-    availableCredit: suDaiCreditRecord?.availableCredit || suDaiLoanRecord?.availableCredit || 50000
+    currentBalance: suDaiLoanRecord?.balance || 150000,
+    availableCredit: suDaiLoanRecord?.availableCredit || 50000
   };
 });
 

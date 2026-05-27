@@ -57,6 +57,11 @@ const columns = [
     dataIndex: 'riskLevel'
   },
   {
+    title: '三方借据号',
+    dataIndex: 'thirdPartyLoanId',
+    render: ({ record }) => record.thirdPartyLoanId || '-'
+  },
+  {
     title: '操作',
     render: () => '查看详情'
   }

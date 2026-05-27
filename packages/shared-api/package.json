@@ -1,0 +1,31 @@
+{
+  "name": "@app/shared-api",
+  "version": "1.0.0",
+  "description": "统一 API 请求封装",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./request": "./dist/request.js",
+    "./types": "./dist/types.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --declaration --outDir dist",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "vue": ">=3.0.0",
+    "@arco-design/web-vue": ">=2.55.0"
+  }
+}

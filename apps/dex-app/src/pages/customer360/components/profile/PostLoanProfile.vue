@@ -181,10 +181,11 @@
             :pagination="{ pageSize: 5, showTotal: true, showPageSize: true, showJumper: true, pageSizeOptions: [5, 10, 20, 50] }"
           >
             <template #columns>
-              <a-table-column title="短信发送时间" data-index="smsTime" :width="180" />
+              <a-table-column title="短信发送时间" data-index="notificationDate" :width="180" />
               <a-table-column title="产品编号" data-index="productKey" :width="120" />
-              <a-table-column title="短信发送状态" data-index="smsStatus" :width="120" />
-              <a-table-column title="短信内容" data-index="smsContent" :ellipsis="true" />
+              <a-table-column title="短信类型" data-index="notificationType" :width="120" />
+              <a-table-column title="短信发送状态" data-index="status" :width="120" />
+              <a-table-column title="短信内容" data-index="content" :ellipsis="true" />
             </template>
             <template #empty>
               <a-empty description="暂无不良短信" />

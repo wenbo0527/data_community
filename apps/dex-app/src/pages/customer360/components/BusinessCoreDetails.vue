@@ -47,22 +47,14 @@
                 复制
               </a-button>
             </template>
-            <template #status="{ record }">
-              <a-tag :color="getCreditStatusColor(record.status)">
-                {{ record.status }}
+            <template #reportStatus="{ record }">
+              <a-tag :color="getCreditStatusColor(record.reportStatus)">
+                {{ record.reportStatus }}
               </a-tag>
             </template>
             
-            <template #currentAmount="{ record }">
-              <span class="amount-text">{{ formatAmount(record.currentAmount) }}</span>
-            </template>
-            
-            <template #usedAmount="{ record }">
-              <span class="amount-text">{{ formatAmount(record.usedAmount) }}</span>
-            </template>
-            
-            <template #availableAmount="{ record }">
-              <span class="amount-text available">{{ formatAmount(record.currentAmount - record.usedAmount) }}</span>
+            <template #creditScore="{ record }">
+              <span>{{ record.creditScore || '-' }}</span>
             </template>
             
             <template #actions="{ record }">
@@ -108,18 +100,16 @@
               </a-tag>
             </template>
             
-            <template #previousAmount="{ record }">
-              <span class="amount-text">{{ formatAmount(record.previousAmount) }}</span>
+            <template #before="{ record }">
+              <span class="amount-text">{{ formatAmount(record.before) }}</span>
             </template>
             
-            <template #newAmount="{ record }">
-              <span class="amount-text">{{ formatAmount(record.newAmount) }}</span>
+            <template #after="{ record }">
+              <span class="amount-text">{{ formatAmount(record.after) }}</span>
             </template>
             
-            <template #adjustmentAmount="{ record }">
-              <span :class="['amount-text', record.type === '提额' ? 'increase' : 'decrease']">
-                {{ record.type === '提额' ? '+' : '-' }}{{ formatAmount(Math.abs(record.newAmount - record.previousAmount)) }}
-              </span>
+            <template #reason="{ record }">
+              <span>{{ record.reason || '-' }}</span>
             </template>
             
             <template #actions="{ record }">
@@ -221,8 +211,7 @@ import {
 import { Message } from '@arco-design/web-vue'
 import CreditDetailDrawer from './CreditDetailDrawer.vue'
 import LoanDetailDrawer from './LoanDetailDrawer.vue'
-// import LoanRecordTable from '@/views/customer360/components/LoanRecordTable.vue'
-// TODO: 需要创建 LoanRecordTable 组件
+import LoanRecordTable from './LoanRecordTable.vue'
 // import DisbursementDrawer from './DisbursementDrawer.vue'
 // import RepaymentDrawer from './RepaymentDrawer.vue'
 // import RepaymentDetailDrawer from './RepaymentDetailDrawer.vue'
@@ -283,105 +272,38 @@ const currentLoanData = ref(null)
 
 // 表格列定义
 const creditColumns = [
-  { 
-    title: '授信单号', 
-    dataIndex: 'productName', 
-    width: 120,
-    filterable: {
-      filter: (value: string, record: any) => record.productName?.toLowerCase().includes(value.toLowerCase()),
-      slotName: 'productName-filter',
-      icon: () => h('icon-search')
-    }
+  { title: '授信单号', dataIndex: 'id', width: 120 },
+  { title: '授信状态', dataIndex: 'reportStatus', slotName: 'reportStatus', width: 80 },
+  { title: '信用评分', dataIndex: 'creditScore', slotName: 'creditScore', width: 80 },
+  { title: '信用等级', dataIndex: 'creditLevel', width: 80 },
+  { title: '总授信额度', dataIndex: 'creditOverview.totalCreditLimit', width: 110 },
+  { title: '已用额度', dataIndex: 'creditOverview.usedCredit', width: 100 },
+  { title: '额度使用率', dataIndex: 'creditOverview.creditUtilizationRate', width: 90,
+    render: ({ record }: any) => record.creditOverview?.creditUtilizationRate != null ? record.creditOverview.creditUtilizationRate + '%' : '-'
   },
-  { 
-    title: '授信状态', 
-    dataIndex: 'status', 
-    slotName: 'status', 
-    width: 80,
-    filterable: {
-      filters: [
-        { text: '正常', value: '正常' },
-        { text: '冻结', value: '冻结' },
-        { text: '已结清', value: '已结清' }
-      ],
-      filter: (value: string[], record: any) => value.includes(record.status),
-      multiple: true
-    }
-  },
-  { title: '授信额度', dataIndex: 'currentAmount', slotName: 'currentAmount', width: 100 },
-  { title: '已用额度', dataIndex: 'usedAmount', slotName: 'usedAmount', width: 100 },
-  { title: '可用额度', dataIndex: 'availableAmount', slotName: 'availableAmount', width: 100 },
-  { title: '授信日期', dataIndex: 'openDate', width: 120 },
+  { title: '查询日期', dataIndex: 'queryDate', width: 110 },
   { title: '操作', slotName: 'actions', width: 80 }
 ]
 
 
 
 const adjustmentColumns = [
-  { 
-    title: '调整类型', 
-    dataIndex: 'type', 
-    slotName: 'type', 
-    width: 80,
-    filterable: {
-      filters: [
-        { text: '提额', value: '提额' },
-        { text: '降额', value: '降额' }
-      ],
-      filter: (value: string[], record: any) => value.includes(record.type),
-      multiple: true
-    }
-  },
+  { title: '调整类型', dataIndex: 'type', slotName: 'type', width: 80 },
   { title: '产品名称', dataIndex: 'productName', width: 120 },
-  { title: '原额度', dataIndex: 'previousAmount', slotName: 'previousAmount', width: 100 },
-  { title: '新额度', dataIndex: 'newAmount', slotName: 'newAmount', width: 100 },
-  { title: '调整金额', dataIndex: 'adjustmentAmount', slotName: 'adjustmentAmount', width: 100 },
-  { title: '调整时间', dataIndex: 'adjustmentDate', width: 120 },
+  { title: '原额度', dataIndex: 'before', slotName: 'before', width: 100 },
+  { title: '新额度', dataIndex: 'after', slotName: 'after', width: 100 },
+  { title: '调整原因', dataIndex: 'reason', width: 120 },
+  { title: '调整时间', dataIndex: 'date', width: 120 },
   { title: '操作', slotName: 'actions', width: 80 }
 ]
 
 const paymentColumns = [
-  { 
-    title: '支付编号', 
-    dataIndex: 'paymentId', 
-    width: 120,
-    filterable: {
-      filter: (value: string, record: any) => record.paymentId?.toLowerCase().includes(value.toLowerCase()),
-      slotName: 'paymentId-filter',
-      icon: () => h('icon-search')
-    }
-  },
-  { 
-    title: '状态', 
-    dataIndex: 'status', 
-    slotName: 'status', 
-    width: 80,
-    filterable: {
-      filters: [
-        { text: '成功', value: '成功' },
-        { text: '失败', value: '失败' },
-        { text: '处理中', value: '处理中' }
-      ],
-      filter: (value: string[], record: any) => value.includes(record.status),
-      multiple: true
-    }
-  },
+  { title: '支付编号', dataIndex: 'id', width: 120 },
+  { title: '状态', dataIndex: 'status', slotName: 'payStatus', width: 80 },
+  { title: '支付类型', dataIndex: 'type', width: 80 },
   { title: '支付金额', dataIndex: 'amount', slotName: 'amount', width: 100 },
-  { 
-    title: '支付方式', 
-    dataIndex: 'paymentMethod', 
-    width: 100,
-    filterable: {
-      filters: [
-        { text: '银行卡', value: '银行卡' },
-        { text: '支付宝', value: '支付宝' },
-        { text: '微信', value: '微信' }
-      ],
-      filter: (value: string[], record: any) => value.includes(record.paymentMethod),
-      multiple: true
-    }
-  },
-  { title: '支付时间', dataIndex: 'paymentTime', width: 120 },
+  { title: '支付方式', dataIndex: 'method', width: 100 },
+  { title: '支付时间', dataIndex: 'date', width: 120 },
   { title: '操作', slotName: 'actions', width: 80 }
 ]
 
@@ -389,49 +311,20 @@ const paymentColumns = [
 const creditsList = computed(() => {
   const data = props.userInfo?.creditsList
   if (!Array.isArray(data)) {return []}
-  
-  // 如果没有productKey，返回所有数据
   if (!props.productKey) {return data}
-  
-  // 根据productKey过滤数据
-  return data.filter((item: any) => item.productKey === props.productKey)
+  return data.filter((item: any) => !item.productKey || item.productKey === props.productKey)
 })
 const loansList = computed(() => {
   const data = props.userInfo?.loanRecords
   if (!Array.isArray(data)) {return []}
-  
-  // 如果没有productKey，返回所有数据
   if (!props.productKey) {return data}
-  
-  // 根据productKey过滤数据
-  return data.filter((item: any) => item.productKey === props.productKey)
+  return data.filter((item: any) => !item.productKey || item.productKey === props.productKey)
 })
 const adjustmentsList = computed(() => {
   const data = props.userInfo?.quotaAdjustHistory
-  console.log('🔍 [调额记录调试] 原始数据:', data)
-  console.log('🔍 [调额记录调试] 数据类型:', typeof data, '是否为数组:', Array.isArray(data))
-  
-  if (!Array.isArray(data)) {
-    console.log('❌ [调额记录调试] 数据不是数组，返回空数组')
-    return []
-  }
-  
-  // 如果没有productKey，返回所有数据
-  if (!props.productKey) {
-    console.log('🔍 [调额记录调试] 无productKey过滤，返回所有数据，数量:', data.length)
-    return data
-  }
-  
-  // 根据productKey过滤数据
-  const filtered = data.filter((item: any) => item.productKey === props.productKey)
-  console.log('🔍 [调额记录调试] productKey过滤:', props.productKey, '过滤后数量:', filtered.length)
-  console.log('🔍 [调额记录调试] 过滤后数据:', filtered)
-  return filtered
-})
-
-// 筛选后的调额记录列表
-const filteredAdjustmentsList = computed(() => {
-  return adjustmentsList.value
+  if (!Array.isArray(data)) {return []}
+  if (!props.productKey) {return data}
+  return data.filter((item: any) => !item.productKey || item.productKey === props.productKey)
 })
 const paymentsList = computed(() => {
   const data = props.userInfo?.paymentProcessRecords
@@ -441,7 +334,7 @@ const paymentsList = computed(() => {
   if (!props.productKey) {return data}
   
   // 根据productKey过滤数据
-  return data.filter((item: any) => item.productKey === props.productKey)
+  return data.filter((item: any) => !item.productKey || item.productKey === props.productKey)
 })
 
 // 更新分页总数

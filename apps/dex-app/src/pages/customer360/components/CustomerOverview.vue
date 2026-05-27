@@ -51,6 +51,10 @@
               <span class="value">{{ userInfo.customerId }}</span>
             </div>
             <div class="info-item">
+              <span class="label">三方客户号</span>
+              <span class="value" style="color: var(--subapp-primary)">{{ userInfo.basicInfo?.thirdPartyCustomerId || '-' }}</span>
+            </div>
+            <div class="info-item">
               <span class="label">身份证号</span>
               <span class="value">{{ formatIdCard(userInfo.idCard) }}</span>
             </div>

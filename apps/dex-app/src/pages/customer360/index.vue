@@ -6,47 +6,46 @@
         <h2>客户360视图</h2>
         <p>请输入客户ID查询客户详细信息</p>
       </div>
-      <div class="search-form">
-        <a-input
-          v-model="searchForm.userId"
-          placeholder="请输入用户ID（如：887123）"
-          class="search-input"
-          size="large"
-          @keyup.enter="handleExactSearch"
-          :loading="loading"
-        />
-        <a-button 
-          type="primary" 
-          @click="handleExactSearch" 
-          class="search-button"
-          size="large"
-          :loading="loading"
-        >
-          <IconSearch />
-          搜索客户
-        </a-button>
-        <a-button 
-          type="text"
-          class="fuzzy-toggle"
-          @click="toggleFuzzy"
-        >
-          <template #icon>
-            <IconCaretUp v-if="fuzzyVisible" />
-            <IconCaretDown v-else />
-          </template>
-          {{ fuzzyVisible ? '收起模糊搜索' : '模糊搜索' }}
-        </a-button>
-      </div>
-      <div class="search-tips">
-        <p>示例用户ID：887123、123</p>
+
+      <!-- 搜索模式切换 -->
+      <div class="search-mode-tabs">
+        <a-radio-group v-model="searchMode" type="button" size="medium">
+          <a-radio value="exact">精确搜索</a-radio>
+          <a-radio value="fuzzy">模糊搜索</a-radio>
+          <a-radio value="product">产品授信时间查询</a-radio>
+        </a-radio-group>
       </div>
 
-      <div v-if="fuzzyVisible" class="fuzzy-search-area">
+      <!-- 精确搜索表单（Mode 1） -->
+      <div v-if="searchMode === 'exact'" class="exact-search-area">
+        <a-form :model="searchForm" layout="inline" class="exact-form">
+          <a-form-item label="客户ID">
+            <a-input
+              v-model="searchForm.userId"
+              placeholder="请输入用户ID（如：887123）"
+              allow-clear
+              @keyup.enter="handleExactSearch"
+              style="width: 300px"
+            />
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" @click="handleExactSearch" :loading="loading">
+              <template #icon><IconSearch /></template>
+              查询
+            </a-button>
+          </a-form-item>
+        </a-form>
+        <div class="search-tips">
+          <p>示例用户ID：887123、123</p>
+        </div>
+      </div>
+
+      <!-- 模糊搜索表单（Mode 2） -->
+      <div v-if="searchMode === 'fuzzy'" class="fuzzy-search-area">
         <div class="fuzzy-search-header">
           <IconInfoCircleFill style="color: var(--subapp-primary); margin-right: 8px;" />
           <span>请完整输入客户姓名和身份证后 6 位</span>
         </div>
-        
         <a-form :model="fuzzyForm" layout="inline" class="fuzzy-form">
           <a-form-item label="姓名" field="name">
             <a-input
@@ -65,11 +64,7 @@
             />
           </a-form-item>
           <a-form-item>
-            <a-button
-              type="primary"
-              @click="handleFuzzySearch"
-              :loading="loading"
-            >
+            <a-button type="primary" @click="handleFuzzySearch" :loading="loading">
               <template #icon><IconSearch /></template>
               搜索
             </a-button>
@@ -84,7 +79,7 @@
             <div class="search-results-header">
               <span v-if="jumpCountdown > 0" class="jump-indicator">
                 <a-spin size="small" />
-                自动跳转中 ({{ jumpCountdown }}s)... 
+                自动跳转中 ({{ jumpCountdown }}s)...
                 <a-button type="text" size="mini" @click="cancelJump">取消</a-button>
               </span>
               <span v-else>共找到 <strong>{{ searchResults.length }}</strong> 个匹配客户，点击行进入详情</span>
@@ -132,6 +127,79 @@
           </div>
         </div>
       </div>
+
+      <!-- 产品授信时间查询表单（Mode 3） -->
+      <div v-if="searchMode === 'product'" class="product-search-area">
+        <div class="product-search-header">
+          <IconInfoCircleFill style="color: #165dff; margin-right: 8px;" />
+          <span>按产品名称和授信时间范围筛选客户</span>
+        </div>
+        <a-form :model="productForm" layout="inline" class="product-form">
+          <a-form-item label="产品名称">
+            <a-select
+              v-model="productForm.productCode"
+              placeholder="请选择产品"
+              allow-search
+              allow-clear
+              style="width: 200px"
+            >
+              <a-option v-for="p in PRODUCT_LIST" :key="p.productCode" :value="p.productCode">
+                {{ p.productName }} ({{ p.productCode }})
+              </a-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="授信时间">
+            <a-range-picker
+              v-model="productForm.creditRange"
+              format="YYYY-MM-DD"
+              :placeholder="['开始日期', '结束日期']"
+              style="width: 260px"
+            />
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" @click="handleProductCreditSearch" :loading="loading">
+              <template #icon><IconSearch /></template>
+              查询
+            </a-button>
+            <a-button style="margin-left: 8px" @click="handleProductCreditReset">重置</a-button>
+          </a-form-item>
+        </a-form>
+
+        <!-- 查询结果 -->
+        <div v-if="productSearchDone" class="product-results">
+          <div v-if="productSearchResults.length" class="search-results-header">
+            共找到 <strong>{{ productSearchResults.length }}</strong> 个匹配客户，点击行进入详情
+          </div>
+          <a-table
+            v-if="productSearchResults.length"
+            :data="productSearchResults"
+            :loading="loading"
+            :pagination="{ pageSize: 20 }"
+            row-key="userId"
+            size="small"
+            class="search-result-table"
+            :scroll="{ x: 640 }"
+            @row-click="handleProductResultRowClick"
+          >
+            <template #columns>
+              <a-table-column title="统一客户ID" data-index="userId" :width="120" fixed="left" />
+              <a-table-column title="姓名" data-index="name" :width="120" fixed="left" />
+              <a-table-column title="产品名称" data-index="productName" :width="160" />
+              <a-table-column title="授信时间" data-index="creditTime" :width="120" />
+              <a-table-column title="状态" data-index="creditStatus" :width="100">
+                <template #cell="{ record }">
+                  <a-tag v-if="record.creditStatus === '正常'" color="green" size="small">{{ record.creditStatus }}</a-tag>
+                  <a-tag v-else-if="record.creditStatus === '冻结'" color="gray" size="small">{{ record.creditStatus }}</a-tag>
+                  <a-tag v-else color="red" size="small">{{ record.creditStatus }}</a-tag>
+                </template>
+              </a-table-column>
+            </template>
+          </a-table>
+          <div v-else class="search-empty">
+            <a-empty description="未找到匹配的客户" />
+          </div>
+        </div>
+      </div>
     </div>
     <!-- 子路由内容 -->
     <router-view />
@@ -148,6 +216,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { IconSearch, IconCaretDown, IconCaretUp, IconInfoCircleFill } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { mockUsers, fetchUserInfo } from '@/mock/customer360'
+import { PRODUCT_LIST } from '@/mock/products'
 
 const route = useRoute()
 
@@ -174,6 +243,16 @@ const fuzzyForm = reactive({
   name: '',
   idCardTail: ''
 })
+
+// 产品授信时间查询
+type SearchMode = 'exact' | 'fuzzy' | 'product'
+const searchMode = ref<SearchMode>('exact')
+const productForm = reactive({
+  productCode: '',
+  creditRange: []
+})
+const productSearchResults = ref<any[]>([])
+const productSearchDone = ref(false)
 
 const handleExactSearch = async () => {
   cancelJump()
@@ -254,78 +333,130 @@ const handleFuzzySearch = () => {
     const userName = String(user.name || '')
     const idCard = String(user.idCard || '')
     const customerLevel = user.customerLevel || ''
-    const status = user.status || ''
-    const mobile = String(user.mobile || '')
 
-    // 模糊匹配逻辑：如果输入了姓名，则匹配姓名；如果输入了身份证后6位，则匹配身份证
-    const nameMatch = name ? userName.includes(name) : true
-    const idCardTail = idCard.slice(-6)
-    const idCardMatch = idCardTailInput
-      ? idCardTail.includes(idCardTailInput) || idCard.includes(idCardTailInput)
-      : true
+    const nameMatch = name && userName.includes(name)
+    const idCardMatch = idCardTailInput && idCard.endsWith(idCardTailInput)
 
-    if (nameMatch && idCardMatch) {
-      // 仅提取产品名称用于列表展示
-      const productNames = (user.products || []).map((p: any) => p.productName).filter(Boolean)
-
+    if (nameMatch || idCardMatch) {
       results.push({
         userId,
         name: userName,
-        mobile,
-        idCard,
+        idCardTail: idCard.slice(-6),
         customerLevel,
-        status,
-        productNames
+        productNames: user.productNames || []
       })
     }
   })
 
   searchResults.value = results
-
-  if (!results.length) {
-    // 没找到结果，不需要额外跳转
-  } else if (results.length === 1) {
-    const only = results[0]
-    jumpCountdown.value = 3
-    
-    const startTimer = () => {
-      jumpTimer.value = setTimeout(() => {
-        if (jumpCountdown.value > 1) {
-          jumpCountdown.value--
-          startTimer()
-        } else {
-          router.push({
-            name: 'Customer360Detail',
-            params: {
-              userId: String(only.userId)
-            }
-          })
-          jumpTimer.value = null
-          jumpCountdown.value = 0
-        }
-      }, 1000)
-    }
-    
-    Message.info({
-      content: `匹配到 1 位客户，${jumpCountdown.value}秒后自动跳转...`,
-      duration: 3000
-    })
-    startTimer()
-  } else {
-    Message.success(`匹配到 ${results.length} 位客户`)
-  }
-
   loading.value = false
+
+  if (results.length === 1) {
+    startJumpTimer(results[0].userId)
+  } else if (results.length === 0) {
+    Message.warning('未找到匹配的客户，请尝试其他关键词')
+  } else {
+    Message.success(`共找到 ${results.length} 个匹配客户`)
+  }
+}
+
+const startJumpTimer = (userId: string) => {
+  jumpCountdown.value = 3
+  jumpTimer.value = setInterval(() => {
+    jumpCountdown.value--
+    if (jumpCountdown.value <= 0) {
+      clearInterval(jumpTimer.value!)
+      jumpTimer.value = null
+      jumpCountdown.value = 0
+      router.push({
+        name: 'Customer360Detail',
+        query: { userId }
+      })
+    }
+  }, 1000)
 }
 
 const handleResultRowClick = (record: any) => {
-  if (!record?.userId) {return}
-
+  cancelJump()
   router.push({
     name: 'Customer360Detail',
-    params: {
-      userId: String(record.userId)
+    query: { userId: record.userId }
+  })
+}
+
+// 产品授信时间搜索
+const handleProductCreditSearch = async () => {
+  cancelJump()
+  if (!productForm.productCode) {
+    Message.warning('请选择产品名称')
+    return
+  }
+
+  loading.value = true
+  productSearchDone.value = false
+
+  try {
+    const userIds = Object.keys(mockUsers)
+    const results: any[] = []
+
+    userIds.forEach((userId) => {
+      const user = (mockUsers as any)[userId]
+      if (!user || !user.creditRecords) return
+
+      const matched = user.creditRecords.filter((record: any) => {
+        const productMatch = record.productCode === productForm.productCode
+        if (!productMatch) return false
+
+        if (productForm.creditRange && productForm.creditRange.length === 2) {
+          const creditTime = new Date(record.creditTime)
+          const [start, end] = productForm.creditRange
+          const startDate = new Date(start)
+          const endDate = new Date(end)
+          endDate.setHours(23, 59, 59, 999)
+          return creditTime >= startDate && creditTime <= endDate
+        }
+        return true
+      })
+
+      if (matched.length > 0) {
+        results.push({
+          userId,
+          name: user.name,
+          productName: matched[0].productName,
+          creditTime: matched[0].creditTime,
+          creditStatus: matched[0].creditStatus
+        })
+      }
+    })
+
+    productSearchResults.value = results
+    productSearchDone.value = true
+
+    if (results.length === 0) {
+      Message.warning('未找到匹配的客户')
+    } else {
+      Message.success(`共找到 ${results.length} 个匹配客户`)
     }
+  } catch (error) {
+    console.error('[ERROR] 产品授信查询失败:', error)
+    Message.error('查询失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleProductCreditReset = () => {
+  productForm.productCode = ''
+  productForm.creditRange = []
+  productSearchResults.value = []
+  productSearchDone.value = false
+}
+
+const handleProductResultRowClick = (record: any) => {
+  cancelJump()
+  router.push({
+    name: 'Customer360Detail',
+    query: { userId: record.userId }
   })
 }
 </script>
@@ -437,6 +568,52 @@ const handleResultRowClick = (record: any) => {
   margin-right: 16px;
 }
 
+.search-mode-tabs {
+  margin-bottom: 24px;
+}
+
+.exact-search-area {
+  margin-bottom: 16px;
+}
+
+.exact-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.exact-form :deep(.arco-form-item) {
+  margin-bottom: 0;
+}
+
+.product-search-area {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid var(--subapp-bg-secondary);
+  text-align: left;
+}
+
+.product-search-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--subapp-text-secondary);
+}
+
+.product-form {
+  margin-bottom: 8px;
+}
+
+.product-form :deep(.arco-form-item) {
+  margin-bottom: 0;
+  margin-right: 16px;
+}
+
 .search-results {
   margin-top: 20px;
   opacity: 0;
@@ -470,6 +647,10 @@ const handleResultRowClick = (record: any) => {
 
 .search-empty {
   padding: 24px 0;
+}
+
+.product-results {
+  margin-top: 20px;
 }
 
 .list-tags {
@@ -528,26 +709,6 @@ const handleResultRowClick = (record: any) => {
   .search-results,
   .search-section {
     transition: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .customer-360-container {
-    padding: 20px 16px;
-  }
-  
-  .search-section {
-    padding: 32px 24px;
-  }
-  
-  .search-form {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .search-input,
-  .search-button {
-    width: 100%;
   }
 }
 </style>

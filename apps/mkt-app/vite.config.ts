@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { viteMockServe } from 'vite-plugin-mock'
 import path from 'path'
-import qiankun from 'vite-plugin-qiankun'
 
 export default defineConfig(async () => {
   let logPlugin: any = null
@@ -30,14 +29,10 @@ export default defineConfig(async () => {
 
   const plugins = [
     vue(), 
-    qiankun({
-      name: 'mkt-app',
-      hot: true,
-    }),
     indexRedirect,
     viteMockServe({
       mockPath: path.resolve(__dirname, '../../src/mock/mkt-scope'),
-      enable: false,
+      enable: true,
     })
   ]
   if (logPlugin) plugins.unshift(logPlugin)
@@ -48,8 +43,14 @@ export default defineConfig(async () => {
       host: '0.0.0.0', 
       port: 5177, 
       strictPort: true,
+      hmr: false,
     },
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+    build: {
+      rollupOptions: {
+        external: ['vuex']
+      }
+    },
     base: '/mkt/'
   }
 })
