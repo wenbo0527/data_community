@@ -34,27 +34,21 @@
       @page-size-change="onPageSizeChange" :bordered="true" :stripe="true">
       <template #columns>
         
-        <a-table-column title="券名称" data-index="name" :width="220">
+        <a-table-column title="券名称" data-index="couponName" :width="220">
           <template #cell="{ record }">
-            <a-tooltip :content="record.name" position="top">
+            <a-tooltip :content="record.couponName" position="top">
               <a-space>
-                <a-tag :color="record.type === '满减券' ? 'blue' : 'green'">
-                  {{ record.type }}
+                <a-tag :color="record.couponType === 'reduction' ? 'blue' : record.couponType === 'discount' ? 'cyan' : record.couponType === 'PRICED_DISCOUNT' ? 'orange' : 'green'">
+                  {{ couponTypeLabelMap[record.couponType] || record.couponType }}
                 </a-tag>
                 <a-link @click="handleViewDetail(record)" style="color: rgb(var(--primary-6)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">
-                  {{ record.name }}
+                  {{ record.couponName }}
                 </a-link>
               </a-space>
             </a-tooltip>
           </template>
         </a-table-column>
-        <a-table-column title="状态" data-index="status" :width="150" align="center" :filterable="{ filters: [
-            { text: '草稿', value: '草稿' },
-            { text: '待审核', value: '待审核' },
-            { text: '生效中', value: '生效中' },
-            { text: '已暂停', value: '已暂停' },
-            { text: '已失效', value: '已失效' }
-          ] }">
+        <a-table-column title="状态" data-index="status" :width="150" align="center" :filterable="{ filters: statusFilters }">
           <template #cell="{ record }">
             <StatusTag :status="record.status" dictKey="couponStatus" />
           </template>
@@ -91,17 +85,18 @@
         <a-table-column title="操作" fixed="right" :width="150">
           <template #cell="{ record }">
             <a-space>
-              <template v-if="record.status === '草稿'">
+              <template v-if="record.status === 'draft'">
                 <a-button type="text" size="small" @click="handleEdit(record)">编辑</a-button>
                 <a-button type="text" size="small" @click="handleOnline(record)">上线</a-button>
                 <a-button type="text" size="small" status="danger" @click="handleDelete(record)">删除</a-button>
               </template>
-              <template v-else-if="record.status === '待审核'">
+              <template v-else-if="record.status === 'pending'">
                 <a-button type="text" size="small" @click="handleWithdraw(record)">撤回</a-button>
               </template>
-              <template v-else-if="record.status === '生效中'">
+              <template v-else-if="record.status === 'online' || record.status === 'active'">
                 <a-button type="text" size="small" @click="handleViewDetail(record)">详情</a-button>
                 <a-button type="text" size="small" @click="handlePause(record)">暂停</a-button>
+                <a-button type="text" size="small" status="warning" @click="handleSimulateJdCallback(record)">模拟京东回调</a-button>
               </template>
             </a-space>
           </template>
@@ -279,6 +274,30 @@ import { inventoryAPI } from '@/api/coupon'
 import StatusTag from '@/components/common/StatusTag.vue'
 import DateUtils from '@/utils/dateUtils'
 
+/**
+ * 状态筛选下拉 (v1.2.8 5/26 教训链修复)
+ * 模板状态机不含 'locked' / 'used' (PRD §11.1 3 态 + 扩展)
+ * 保留 'draft' / 'pending' / 'online' / 'expired' / 'invalidated' 4+1 混合态
+ * 本列接 StatusTag dictKey="couponStatus" (types 已扩 9 态支持)
+ */
+const statusFilters = [
+  { text: '草稿', value: 'draft' },
+  { text: '待审核', value: 'pending' },
+  { text: '生效中', value: 'online' },
+  { text: '已过期', value: 'expired' },
+  { text: '已作废', value: 'invalidated' },
+]
+
+// 6/9 v1.3.1 教训链修复: 补 couponType 中英映射（消除 v-if 中文枚举静默失败）
+const couponTypeLabelMap = {
+  reduction: '满减券',
+  discount: '折扣券',
+  cash: '立减券',
+  gift: '礼品券',
+  interest_free: '免息券',
+  PRICED_DISCOUNT: '临价折扣券',
+}
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -366,7 +385,7 @@ const templateOptions = ref([])
 
 const handleViewDetail = (record) => {
   router.push({
-    path: '/marketing/coupon/management/detail',
+    path: '/benefit/management/detail',
     query: {
       templateId: record.templateId,
       instanceId: record.id
@@ -386,7 +405,7 @@ const handleApproveModal = (record) => {
 const handleApprove = (record) => {
   Modal.confirm({
     title: '确认审批',
-    content: `确定要通过审批「${record.name}」吗？`,
+    content: `确定要通过审批「${record.couponName}」吗？`,
     onOk: async () => {
       try {
         // TODO: 调用接口更新状态
@@ -514,10 +533,12 @@ onMounted(() => {
   // 检查路由参数，显示创建弹窗
   if (route.query.showCreateModal === 'true') {
     showCreateModal.value = true
-    // 如果有模板ID和名称，自动填充
-    if (route.query.templateId) {
-      formData.value.templateId = route.query.templateId
-      formData.value.name = route.query.templateName
+    // P0-模板-fail-#4 (qa 15:17 fail) 修复: 严格判断 templateId 非空 (原 if (route.query.templateId) 对 'undefined'/'' 都 falsy, 但某些场景 qa 报告 'templateId=&' URL 编码 = 空字符串, 弹窗不填充)
+    if (route.query.templateId && String(route.query.templateId).trim() !== '') {
+      formData.value.templateId = String(route.query.templateId)
+      if (route.query.templateName) {
+        formData.value.name = String(route.query.templateName)
+      }
     }
   }
 })
@@ -592,10 +613,10 @@ const handleSubmit = async () => {
 
 // 暂停/启用券
 const handlePause = (record) => {
-  const action = record.status === '已暂停' ? '启用' : '暂停'
+  const action = record.status === 'paused' ? '启用' : '暂停'
   Modal.warning({
     title: `确认${action}`,
-    content: `确定要${action}「${record.name}」吗？`,
+    content: `确定要${action}「${record.couponName}」吗？`,
     onOk: async () => {
       try {
         // TODO: 调用接口更新状态
@@ -608,10 +629,32 @@ const handlePause = (record) => {
   })
 }
 
+// 模拟京东回调
+const handleSimulateJdCallback = (record) => {
+  Modal.warning({
+    title: '模拟京东回调',
+    content: `确定要模拟京东对「${record.couponName}」的回调吗？回调后状态将变为已核销。`,
+    okText: '确认回调',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        // 模拟更新状态
+        const idx = tableData.value.findIndex(r => r.id === record.id)
+        if (idx > -1) {
+          tableData.value[idx].status = '已核销'
+        }
+        Message.success('京东回调模拟成功，券已核销')
+      } catch (error) {
+        Message.error('回调模拟失败')
+      }
+    }
+  })
+}
+
 // 编辑券
 const handleEdit = (record) => {
   // TODO: 跳转到编辑页面
-  router.push(`/marketing/coupon/management/edit/${record.id}`);
+  router.push(`/marketing/benefit/management/edit/${record.id}`);
 };
 
 // 上线券
@@ -619,7 +662,7 @@ const handleOnline = (record) => {
   Modal.confirm({
     title: '确认上线',
     content: `
-      确定要上线「${record.name}」吗？
+      确定要上线「${record.couponName}」吗？
         审核人：${auditorOptions.value.find(a => a.id === record.auditor)?.name || '未指定'}
       
     `,
@@ -639,7 +682,7 @@ const handleOnline = (record) => {
 const handleWithdraw = (record) => {
   Modal.confirm({
     title: '确认撤回',
-    content: `确定要撤回「${record.name}」的审核申请吗？`,
+    content: `确定要撤回「${record.couponName}」的审核申请吗？`,
     onOk: async () => {
       try {
         // TODO: 调用撤回接口
@@ -656,7 +699,7 @@ const handleWithdraw = (record) => {
 const handleReject = (record) => {
   Modal.confirm({
     title: '确认拒绝',
-    content: `确定要拒绝「${record.name}」吗？`,
+    content: `确定要拒绝「${record.couponName}」吗？`,
     okText: '确认拒绝',
     cancelText: '取消',
     onOk: async () => {
@@ -683,7 +726,7 @@ const handleRowDblClick = (record) => {
   
   instanceParams.value = [
     { label: '券ID', value: record.id },
-    { label: '券名称', value: record.name },
+    { label: '券名称', value: record.couponName },
     { label: '券类型', value: record.type },
     { label: '关联模版', value: template?.name || '无' },
     { label: '状态', value: record.status },
@@ -696,7 +739,7 @@ const handleRowDblClick = (record) => {
   
   instanceParams.value = [
     { label: '券ID', value: record.id },
-    { label: '券名称', value: record.name },
+    { label: '券名称', value: record.couponName },
     { label: '券类型', value: record.type },
     { label: '关联模版', value: template?.name || '无' },
     { label: '状态', value: record.status },
@@ -737,7 +780,7 @@ const handleRowDblClick = (record) => {
 const handleDelete = (record) => {
   Modal.confirm({
     title: '确认删除',
-    content: `确定要删除券包「${record.name}」吗？`,
+    content: `确定要删除券包「${record.couponName}」吗？`,
     onOk: async () => {
       try {
         // TODO: 调用删除接口
