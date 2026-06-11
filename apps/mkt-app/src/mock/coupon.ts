@@ -96,6 +96,11 @@ export interface MockPackage {
   creatorId?: string
   /** 挂载的库存批次（PRD §12.2，v1.2.8 字段名） */
   inventory_batches?: MockInventoryBatch[]
+  // v1.2.9 修订: 停用时间戳 — 仅在 status='inactive' 时由 handleStatusChange 写入
+  // 必为可选字段，避免 5/26 教训链 #1（types 与 mock 实例字段必对齐）导致列渲染异常
+  // 重新激活或解绑回退 draft 时清空
+  // 6/11 T1: 改名为 invalidated_time 复用 PRD §11.3 (避免字段冗余)
+  invalidated_time?: string
   // 6/9 v1.3.1 教训链修复: 补 2 字段（package/index.vue 列映射）—— 消除 v1.2.8-C' v2 公开承认的偏差
   /** 包含的券种类数组（package/index.vue 表格列 data-index="couponTypes"） */
   couponTypes?: string[]
