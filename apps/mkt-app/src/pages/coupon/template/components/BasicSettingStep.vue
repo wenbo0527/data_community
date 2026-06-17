@@ -280,6 +280,6 @@ const handleNext = async () => {
 // 取消处理
 const handleCancel = () => {
   emit('cancel')
-  goBack(router, '/marketing/coupon/template')
+  goBack(router, '/marketing/benefit/template')
 }
 </script>

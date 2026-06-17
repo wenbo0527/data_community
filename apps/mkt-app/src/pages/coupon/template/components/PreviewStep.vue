@@ -113,9 +113,6 @@ const formatDiscountInfo = (data) => {
       { label: '后期折扣', value: `${data.fixedBackDiscount || 0}%` }
     )
   }
-  if (data.limitMinRate) {
-    info.push({ label: '最低利率', value: `${data.minRate || 0}%` })
-  }
   return info
 }
 
@@ -141,7 +138,7 @@ const handleSubmit = async () => {
   try {
     // TODO: 实现表单提交逻辑
     Message.success('创建成功')
-    router.push('/marketing/coupon/template')
+    router.push('/marketing/benefit/template')
   } catch (error) {
     console.error('提交失败:', error)
   }

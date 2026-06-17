@@ -1,0 +1,246 @@
+{
+  "_meta": {
+    "mock_version": "1.0.0",
+    "owner": "data_community_doc (S406)",
+    "dev_owner": "data_community_dev (S403)",
+    "task_id": "TASK-20260603-B2A5D2BB",
+    "prd_ref": "PRD-库存预警配置页增量v1.2",
+    "created_at": "2026-06-03T08:45:00+08:00",
+    "description": "库存预警配置完整版 mock 数据，与 PRD §5 字段定义 1:1 对齐"
+  },
+  "alert_rules": [
+    {
+      "id": "rule-uuid-001",
+      "product_id": "JD_001",
+      "product_name": "京东大额低息",
+      "threshold_value": 5000,
+      "alert_level": "warning",
+      "notify_channel": ["inbox", "email"],
+      "notify_users": ["zhangsan", "lisi"],
+      "enabled": true,
+      "cooldown_minutes": 60,
+      "created_at": "2026-05-15T10:30:00+08:00",
+      "updated_at": "2026-06-01T14:22:00+08:00",
+      "created_by": "operator01",
+      "updated_by": "operator02"
+    },
+    {
+      "id": "rule-uuid-002",
+      "product_id": "MT_001",
+      "product_name": "美团大额低息",
+      "threshold_value": 200,
+      "alert_level": "critical",
+      "notify_channel": ["inbox"],
+      "notify_users": ["wangwu"],
+      "enabled": true,
+      "cooldown_minutes": 30,
+      "created_at": "2026-05-20T09:15:00+08:00",
+      "updated_at": "2026-05-20T09:15:00+08:00",
+      "created_by": "operator03",
+      "updated_by": "operator03"
+    },
+    {
+      "id": "rule-uuid-003",
+      "product_id": "JD_001",
+      "product_name": "京东大额低息",
+      "threshold_value": 3000,
+      "alert_level": "warning",
+      "notify_channel": ["inbox"],
+      "notify_users": ["zhangsan"],
+      "enabled": false,
+      "cooldown_minutes": 60,
+      "created_at": "2026-04-10T11:00:00+08:00",
+      "updated_at": "2026-05-30T11:00:00+08:00",
+      "created_by": "operator01",
+      "updated_by": "operator03",
+      "disabled_reason": "与 rule-uuid-001 重复，临时停用以测试唯一性约束",
+      "disabled_at": "2026-05-30T11:00:00+08:00"
+    }
+  ],
+  "product_status_snapshot": [
+    {
+      "product_id": "JD_001",
+      "product_name": "京东大额低息",
+      "product_status": "active",
+      "current_stock": 4800
+    },
+    {
+      "product_id": "MT_001",
+      "product_name": "美团大额低息",
+      "product_status": "active",
+      "current_stock": 180
+    },
+    {
+      "product_id": "SUD001",
+      "product_name": "SU 贷",
+      "product_status": "active",
+      "current_stock": 5000
+    }
+  ],
+  "alert_rules_audit": [
+    {
+      "id": "audit-uuid-001",
+      "rule_id": "rule-uuid-001",
+      "action": "create",
+      "before_value": null,
+      "after_value": {
+        "id": "rule-uuid-001",
+        "product_id": "JD_001",
+        "product_name": "京东大额低息",
+        "threshold_value": 5000,
+        "alert_level": "warning",
+        "notify_channel": ["inbox", "email"],
+        "notify_users": ["zhangsan", "lisi"],
+        "enabled": true,
+        "cooldown_minutes": 60,
+        "created_at": "2026-05-15T10:30:00+08:00",
+        "updated_at": "2026-05-15T10:30:00+08:00",
+        "created_by": "operator01",
+        "updated_by": "operator01"
+      },
+      "operator_id": "operator01",
+      "operator_name": "张三",
+      "operated_at": "2026-05-15T10:30:00+08:00"
+    },
+    {
+      "id": "audit-uuid-002",
+      "rule_id": "rule-uuid-001",
+      "action": "update",
+      "before_value": {
+        "threshold_value": 3000,
+        "notify_channel": ["inbox"]
+      },
+      "after_value": {
+        "threshold_value": 5000,
+        "notify_channel": ["inbox", "email"]
+      },
+      "operator_id": "operator02",
+      "operator_name": "李四",
+      "operated_at": "2026-06-01T14:22:00+08:00"
+    },
+    {
+      "id": "audit-uuid-003",
+      "rule_id": "rule-uuid-003",
+      "action": "disable",
+      "before_value": {
+        "enabled": true
+      },
+      "after_value": {
+        "enabled": false,
+        "disabled_reason": "与 rule-uuid-001 重复，临时停用以测试唯一性约束",
+        "disabled_at": "2026-05-30T11:00:00+08:00"
+      },
+      "operator_id": "operator03",
+      "operator_name": "王五",
+      "operated_at": "2026-05-30T11:00:00+08:00"
+    }
+  ],
+  "abnormal_combinations_for_testing": [
+    {
+      "case_id": "rule-test-001",
+      "scenario": "阈值 = 0",
+      "field": "threshold_value",
+      "invalid_value": 0,
+      "expected_behavior": "❌ 前端拒绝，提示「阈值需 ≥ 1」"
+    },
+    {
+      "case_id": "rule-test-002",
+      "scenario": "阈值为负",
+      "field": "threshold_value",
+      "invalid_value": -100,
+      "expected_behavior": "❌ 前端拒绝，提示「阈值需 ≥ 1」"
+    },
+    {
+      "case_id": "rule-test-003",
+      "scenario": "阈值超上限",
+      "field": "threshold_value",
+      "invalid_value": 1500000,
+      "expected_behavior": "❌ 前端拒绝，提示「阈值不能超过 1,000,000」"
+    },
+    {
+      "case_id": "rule-test-004",
+      "scenario": "同产品重复启用",
+      "field": "product_id + enabled",
+      "invalid_value": { "product_id": "MT_001", "enabled": true },
+      "expected_behavior": "❌ 后端唯一性约束拒绝"
+    },
+    {
+      "case_id": "rule-test-005",
+      "scenario": "通知人为空",
+      "field": "notify_users",
+      "invalid_value": [],
+      "expected_behavior": "❌ 前端拒绝，提示「至少选择 1 名通知接收人」"
+    },
+    {
+      "case_id": "rule-test-006",
+      "scenario": "通知渠道为空",
+      "field": "notify_channel",
+      "invalid_value": [],
+      "expected_behavior": "❌ 前端拒绝，提示「至少选择 1 个通知渠道」"
+    },
+    {
+      "case_id": "rule-test-007",
+      "scenario": "阈值 > 当前库存",
+      "field": "threshold_value",
+      "invalid_value": 1000000,
+      "expected_behavior": "✅ 允许，立即触发预警"
+    }
+  ],
+  "frontend_validation_rules": {
+    "threshold_value": {
+      "type": "integer",
+      "min": 1,
+      "max": 1000000,
+      "error_messages": {
+        "min": "阈值需 ≥ 1",
+        "max": "阈值不能超过 1,000,000",
+        "type": "阈值必须为整数"
+      }
+    },
+    "notify_users": {
+      "min_items": 1,
+      "error_messages": {
+        "min_items": "至少选择 1 名通知接收人"
+      }
+    },
+    "notify_channel": {
+      "min_items": 1,
+      "error_messages": {
+        "min_items": "至少选择 1 个通知渠道"
+      }
+    },
+    "cooldown_minutes": {
+      "type": "integer",
+      "min": 1,
+      "max": 1440,
+      "default": 60,
+      "error_messages": {
+        "min": "冷却时间至少 1 分钟",
+        "max": "冷却时间不超过 24 小时（1440 分钟）"
+      }
+    }
+  },
+  "business_rules": {
+    "R-01_unique_constraint": {
+      "rule": "同一产品只能有一条 enabled=true 的规则",
+      "test_case": "abnormal_combinations_for_testing.rule-test-004"
+    },
+    "R-02_product_status_linkage": {
+      "rule": "product_status_snapshot.X.product_status != 'active' 时，对应产品预警规则不触发",
+      "behavior": "规则 enabled=true 但实际不触发，列表行变灰"
+    },
+    "R-03_threshold_exceed_stock": {
+      "rule": "threshold_value > current_stock 不是错误，是立即触发预警信号",
+      "test_case": "alert_rules[0] 当前 4800 < 阈值 5000 已触发"
+    },
+    "R-04_SUD001_legacy_protection": {
+      "rule": "SUD001 不出现在产品下拉中（存量保护）",
+      "behavior": "新建对话框产品选项不含 SUD001；列表 SUD001 行只读"
+    },
+    "R-05_audit_retention": {
+      "rule": "alert_rules_audit 记录所有 create/update/delete/enable/disable",
+      "retention_days": 180,
+      "behavior": "软停用保留规则，列表只读"
+    }
+  }
+}

@@ -2,7 +2,7 @@ import { ref } from 'vue'
 
 export function useApi<TParams = any, TResp = any>(requestFn: (params: TParams) => Promise<TResp>) {
   const loading = ref(false)
-  const error = ref<any>(null)
+  const error = ref(null)
 
   const call = async (params: TParams): Promise<TResp | null> => {
     loading.value = true

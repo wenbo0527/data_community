@@ -31,7 +31,7 @@ export default defineConfig(async () => {
     vue(), 
     indexRedirect,
     viteMockServe({
-      mockPath: path.resolve(__dirname, '../../src/mock/mkt-scope'),
+      mockPath: path.resolve(__dirname, 'src/mock'),
       enable: true,
     })
   ]

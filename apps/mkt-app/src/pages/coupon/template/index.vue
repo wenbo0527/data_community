@@ -4,15 +4,51 @@
       <div class="header-actions">
         <a-space>
           <a-select
-            v-model="searchKeyword"
+            v-model="searchType"
             placeholder="选择模版类型"
-            style="width: 300px"
+            style="width: 200px"
             @change="handleSearch"
             allow-clear
           >
             <a-option value="interest_free">免息券</a-option>
             <a-option value="discount">折扣券</a-option>
+            <a-option value="PRICED_DISCOUNT">临价折扣券</a-option>
           </a-select>
+          <!-- 产品筛选（原有） -->
+          <a-select
+            v-model="searchProduct"
+            placeholder="选择产品"
+            style="width: 200px"
+            @change="handleSearch"
+            allow-clear
+          >
+            <a-option value="SUD001">SU贷</a-option>
+            <a-option value="JD_001">京东大额低息</a-option>
+            <a-option value="MT_001">美团大额低息</a-option>
+          </a-select>
+          <!-- 状态筛选（P0-PRD-#6 新增） -->
+          <a-select
+            v-model="searchStatus"
+            placeholder="选择状态"
+            style="width: 160px"
+            @change="handleSearch"
+            allow-clear
+          >
+            <a-option value="online">已上架</a-option>
+            <a-option value="offline">已下架</a-option>
+            <a-option value="draft">草稿</a-option>
+            <a-option value="paused">已暂停</a-option>
+            <a-option value="expired">已过期</a-option>
+          </a-select>
+          <!-- 名称搜索（P0-PRD-#6 新增） -->
+          <a-input-search
+            v-model="searchName"
+            placeholder="搜索券名称"
+            style="width: 240px"
+            allow-clear
+            @search="handleSearch"
+            @clear="handleSearch"
+          />
           <a-button type="primary" @click="handleCreate">
             <template #icon>
               <IconPlus />
@@ -38,8 +74,8 @@
           <a-table-column title="模版名称" data-index="name" :width="200" :filterable="{ filterSearch: true }">
             <template #cell="{ record }">
               <a-space>
-                <a-tag :color="record.type === 'interest_free' ? 'arcoblue' : 'green'">
-                  {{ record.type === 'interest_free' ? '免息券' : '折扣券' }}
+            <a-tag :color="record.type === 'interest_free' ? 'arcoblue' : record.type === 'PRICED_DISCOUNT' ? 'orange' : 'green'">
+                  {{ record.type === 'interest_free' ? '免息券' : record.type === 'discount' ? '折扣券' : '临价折扣券' }}
                 </a-tag>
                 <a-link @click="handleRowDblClick(record)">
                   {{ record.name }}
@@ -54,9 +90,14 @@
                   <span class="scope-label">产品：</span>
                   <a-space size="mini">
                     <a-tag v-for="product in record.products" :key="product" size="small">
-                      {{ product === 'personal_loan' ? '个人贷款' : '企业贷款' }}
+                      {{ product === 'personal_loan' ? '个人贷款' : product === 'SUD001' ? 'SU贷' : product === 'JD_001' ? '京东' : product === 'MT_001' ? '美团' : '企业贷款' }}
                     </a-tag>
                   </a-space>
+                  <!-- 临价折扣券显示产品名称 -->
+                  <div v-if="record.type === 'PRICED_DISCOUNT' && record.product_name" class="scope-row">
+                    <span class="scope-label">产品：</span>
+                    <a-tag size="small" color="orange">{{ record.product_name }}</a-tag>
+                  </div>
                 </div>
                 <div class="scope-row">
                   <span class="scope-label">渠道：</span>
@@ -69,18 +110,26 @@
               </div>
             </template>
           </a-table-column>
-          <a-table-column title="有效期" data-index="validityPeriod" :width="160">
+          <a-table-column title="有效期" data-index="valid_from" :width="160">
             <template #cell="{ record }">
               <div>
-                {{ record.validityPeriodType === 'unlimited' ? '长期有效' : `${record.validityPeriod[0].split(' ')[0]} 至 ${record.validityPeriod[1].split(' ')[0]}` }}
+                {{ record.validityPeriodType === 'unlimited' ? '长期有效' : `${record.valid_from || ''} 至 ${record.valid_to || ''}` }}
               </div>
             </template>
           </a-table-column>
           <a-table-column title="属主" data-index="creator" :width="100" :filterable="{ filterSearch: true }" />
-          <a-table-column title="状态" data-index="status" :width="80" align="center" :filterable="{ filterMultiple: false }" :filters="[{ text: '生效中', value: '生效中' }, { text: '已失效', value: '已失效' }, { text: '草稿', value: '草稿' }]">
+          <a-table-column title="状态" data-index="status" :width="80" align="center" :filterable="{ filterMultiple: false }" :filters="[
+            // v1.6.1 6/14 修: filter value 严格对齐 statusTextMap 5 态 + mock 状态机
+            // (mock/coupon.ts:16: 'draft' | 'active' | 'online' | 'paused' | 'expired')
+            // 5/26 教训链 #1: 避免英文 enum 拼写漂移
+            { text: '草稿', value: 'draft' },
+            { text: '生效中', value: 'online' },
+            { text: '已暂停', value: 'paused' },
+            { text: '已过期', value: 'expired' }
+          ]">
             <template #cell="{ record }">
-              <a-tag :color="record.status === '生效中' ? 'green' : 'gray'">
-                {{ record.status }}
+              <a-tag :color="statusColorMap[record.status] || 'gray'">
+                {{ statusTextMap[record.status] || record.status }}
               </a-tag>
             </template>
           </a-table-column>
@@ -91,13 +140,13 @@
                   type="text"
                   size="small"
                   @click="handleStatusChange(record)"
-                  :status="record.status === '生效中' ? 'danger' : 'success'"
+                  :status="record.status === 'online' ? 'danger' : 'success'"
                 >
-                  {{ record.status === '生效中' ? '下线' : '上线' }}
+                  {{ record.status === 'online' ? '下线' : '上线' }}
                 </a-button>
                 <a-divider direction="vertical" />
                 <a-button
-                  v-if="record.status === '草稿'"
+                  v-if="record.status === 'draft'"
                   type="text"
                   size="small"
                   status="danger"
@@ -126,6 +175,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
+import { templateAPI } from '@/api/coupon.js'
 
 const router = useRouter()
 
@@ -189,27 +239,47 @@ const onPageSizeChange = (pageSize) => {
 
 // 新建券模版
 const handleCreate = () => {
-  router.push('/marketing/coupon/create')
+  router.push('/benefit/template/create')
 }
 
 // 处理上线/下线
-const handleStatusChange = (record) => {
-  if (record.status === '生效中') {
+const handleStatusChange = async (record) => {
+  if (record.status === 'online') {
     Modal.warning({
       title: '确认下线',
       content: `确定要下线模版「${record.name}」吗？`,
-      onOk: () => {
-        // TODO: 调用下线接口
-        record.status = '已失效'
-        Message.success('下线成功')
-        fetchData()
+      onOk: async () => {
+        // P0-模板-#1 BUG-5: 调 templateAPI.updateTemplate 接口 (上线/下线)
+        try {
+          const res = await templateAPI.updateTemplate(record.templateId || record.id, { status: 'offline' })
+          if (res.code === 200) {
+            record.status = 'offline'
+            Message.success('下线成功')
+            fetchData()
+          } else {
+            Message.error(res.message || '下线失败')
+          }
+        } catch (err) {
+          console.error('下线接口失败:', err)
+          Message.error('下线失败')
+        }
       }
     })
   } else {
-    // TODO: 调用上线接口
-    record.status = '生效中'
-    Message.success('上线成功')
-    fetchData()
+    // P0-模板-#1 BUG-5: 调 templateAPI.updateTemplate 接口 (上线)
+    try {
+      const res = await templateAPI.updateTemplate(record.templateId || record.id, { status: 'online' })
+      if (res.code === 200) {
+        record.status = 'online'
+        Message.success('上线成功')
+        fetchData()
+      } else {
+        Message.error(res.message || '上线失败')
+      }
+    } catch (err) {
+      console.error('上线接口失败:', err)
+      Message.error('上线失败')
+    }
   }
 }
 
@@ -226,7 +296,7 @@ const handleCopy = (record) => {
   
   // 跳转到创建页面并传递复制数据
   router.push({
-    path: '/marketing/coupon/template/create',
+    path: '/marketing/benefit/template/create',
     query: {
       mode: 'create',
       copyData: encodeURIComponent(JSON.stringify(copyData))
@@ -238,7 +308,7 @@ const handleCopy = (record) => {
 // 处理点击查看详情
 const handleRowDblClick = (record) => {
   router.push({
-    path: '/marketing/coupon/template/detail',
+    path: '/marketing/benefit/template/detail',
     query: { 
       id: record.id,
       mode: 'view' // 添加mode参数标识为查看模式
@@ -262,21 +332,47 @@ onMounted(() => {
   fetchData()
 })
 
-const searchKeyword = ref('')
+const searchType = ref('')
+const searchProduct = ref('')
+const searchStatus = ref('')
+const searchName = ref('')
 
-// 处理搜索
-const handleSearch = (value) => {
-  if (!value) {
-    fetchData()
-    return
-  }
-  
-  const filteredData = templateMockData.filter(item => 
-    item.type === value
-  )
-  
-  tableData.value = filteredData
-  pagination.value.total = filteredData.length
+/** MockTemplate.status enum 6 态 中文映射 (PRD v1.2.4 §11.1 3 态 + 扩展)
+ *  v1.2.8 注: 本映射是【券模板】状态(业务态),非【用户券】状态。
+ *  用户券失败态(pending/5 个 failed_*) 见 detail.vue:218 getStatusText。
+ *  5/26 教训链: 模板状态机只有 draft/online/offline/active/paused/expired
+ *  加 failed_* 是状态错位,会出列渲染异常。
+ */
+const statusTextMap = {
+  draft: '草稿',
+  online: '生效中',
+  offline: '已下线',
+  active: '生效中',
+  paused: '已暂停',
+  expired: '已过期',
+}
+const statusColorMap = {
+  draft: 'gray',
+  online: 'green',
+  offline: 'orange',
+  active: 'green',
+  paused: 'gray',
+  expired: 'red',
+}
+
+// 处理搜索（按类型 + 产品 + 状态 + 名称筛选）
+const handleSearch = () => {
+  tableData.value = templateMockData.filter(item => {
+    const matchType = !searchType.value || item.type === searchType.value
+    const matchProduct = !searchProduct.value || item.product_id === searchProduct.value || (item.products && (
+      item.products.includes(searchProduct.value) ||
+      item.products.some(p => (typeof p === 'string' ? p : p.product_id) === searchProduct.value)
+    ))
+    const matchStatus = !searchStatus.value || item.status === searchStatus.value
+    const matchName = !searchName.value || (item.name || '').toLowerCase().includes(searchName.value.toLowerCase())
+    return matchType && matchProduct && matchStatus && matchName
+  })
+  pagination.value.total = tableData.value.length
   pagination.value.current = 1
 }
 </script>

@@ -968,7 +968,7 @@ const handleRuleClick = (rule) => {
 
 const navigateToTemplate = (templateId) => {
   if (!templateId) return
-  router.push(`/marketing/coupon/template/detail?id=${templateId}&mode=view`)
+  router.push(`/marketing/benefit/template/detail?id=${templateId}&mode=view`)
 }
 
 const navigateToPackage = (packageId) => {

@@ -6,6 +6,7 @@
     <div class="page-content">
       <p>权益中心首页</p>
     </div>
+    <router-view />
   </div>
 </template>
 

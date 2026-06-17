@@ -135,7 +135,10 @@ const getCouponTypeText = () => {
   // 否则根据券类型自动生成
   const typeMap: Record<string, string> = {
     'interest_free': '免息券',
-    'discount': '折扣券'
+    'discount': '折扣券',
+    'PRICED_DISCOUNT': displayData.value.product_name
+      ? `临价折扣-${displayData.value.product_name}`
+      : '临价折扣'
   }
   return typeMap[displayData.value.type] || '免息券'
 }
@@ -161,6 +164,11 @@ const getBenefitValue = () => {
       return `${rate}折`
     }
     return '100元' // 默认值
+  } else if (displayData.value.type === 'PRICED_DISCOUNT') {
+    if (displayData.value.discount_value) {
+      return `${(displayData.value.discount_value / 10).toFixed(1)}折`
+    }
+    return displayData.value.product_name || '临价折扣'
   }
   return '3期' // 兜底默认值
 }
@@ -176,6 +184,8 @@ const getBenefitDesc = () => {
   if (displayData.value.type === 'interest_free') {
     return '免息'
   } else if (displayData.value.type === 'discount') {
+    return '折扣'
+  } else if (displayData.value.type === 'PRICED_DISCOUNT') {
     return '折扣'
   }
   return '免息' // 默认值
@@ -196,6 +206,11 @@ const getDisplayTitle = () => {
   // 根据券类型生成默认标题
   if (displayData.value.type === 'discount') {
     return '满减优惠券'
+  } else if (displayData.value.type === 'PRICED_DISCOUNT') {
+    const discount = displayData.value.discount_value
+      ? `${(displayData.value.discount_value / 10).toFixed(1)}折`
+      : ''
+    return [displayData.value.product_name, discount].filter(Boolean).join(' · ') || '临价折扣券'
   }
   return '借6期免前3期优惠券' // 免息券默认标题
 }

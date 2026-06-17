@@ -210,7 +210,8 @@ import {
   IconStorage,
   IconUserGroup,
   IconCopy,
-  IconThunderbolt
+  IconThunderbolt,
+  IconRobot
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
@@ -239,11 +240,16 @@ const analysisTools = [
   { key: 'adhoc', title: '统一查询', icon: IconCode, desc: 'Ad-hoc SQL即席查询工具', color: '#165DFF', bgColor: '#e8f3ff' },
   { key: 'jupyter', title: 'JupyterHub', icon: IconExperiment, desc: '交互式数据科学开发环境', color: '#722ED1', bgColor: '#f9f0ff' },
   { key: 'report', title: '智慧报表', icon: IconBarChart, desc: '拖拽式可视化报表生成', color: '#00B42A', bgColor: '#e8ffea' },
-  { key: 'detail', title: '明细查询', icon: IconFile, desc: '海量底层明细数据检索', color: '#FF7D00', bgColor: '#fff7e8' }
+  { key: 'detail', title: '明细查询', icon: IconFile, desc: '海量底层明细数据检索', color: '#FF7D00', bgColor: '#fff7e8' },
+  { key: 'askxiaoshu', title: '问小数', icon: IconRobot, desc: 'AI智能数据问答助手', color: '#F53F3F', bgColor: '#FFE8E8', path: 'https://118.196.79.130:8445/ask-xiaoshu' }
 ]
 
 const handleAnalysisClick = (tool) => {
-  Message.info(`正在前往 ${tool.title} ...`)
+  if (tool.path && tool.path.startsWith('http')) {
+    window.open(tool.path, '_blank')
+  } else {
+    Message.info(`正在前往 ${tool.title} ...`)
+  }
 }
 
 // 最近访问 Mock 数据

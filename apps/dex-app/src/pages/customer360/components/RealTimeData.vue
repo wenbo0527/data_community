@@ -21,11 +21,24 @@
     <div class="data-section">
       <h3 class="section-title">授信列表</h3>
       <a-table :data="creditList" :columns="creditColumns" :pagination="false" size="small" :bordered="true">
-        <template #creditAmount="{ record }">
-          {{ formatCurrency(record.creditAmount) }}
+        <template #totalAmount="{ record }">
+          {{ formatCurrency(record.totalAmount) }}
         </template>
-        <template #creditStatus="{ record }">
-          <a-tag :color="getCreditStatusColor(record.creditStatus)">{{ record.creditStatus }}</a-tag>
+        <template #currentAmount="{ record }">
+          {{ formatCurrency(record.currentAmount) }}
+        </template>
+        <template #interestRate="{ record }">
+          {{ record.interestRate != null ? record.interestRate + '%' : '-' }}
+        </template>
+        <template #result="{ record }">
+          <a-tag :color="getResultColor(record.result)">{{ record.result || '-' }}</a-tag>
+        </template>
+        <template #rejectReason="{ record }">
+          <span v-if="record.rejectReason" class="text-red-500">{{ record.rejectReason }}</span>
+          <span v-else>-</span>
+        </template>
+        <template #availableDays="{ record }">
+          {{ record.availableDays != null ? record.availableDays + '天' : '-' }}
         </template>
       </a-table>
     </div>
@@ -34,14 +47,27 @@
     <div class="data-section">
       <h3 class="section-title">用信列表</h3>
       <a-table :data="loanList" :columns="loanColumns" :pagination="false" size="small" :bordered="true">
-        <template #loanAmount="{ record }">
-          {{ formatCurrency(record.loanAmount) }}
+        <template #loanNo="{ record }">
+          <span class="copyable" @click="copyText(record.loanNo)">{{ record.loanNo || '-' }}</span>
         </template>
-        <template #balance="{ record }">
-          {{ formatCurrency(record.balance) }}
+        <template #result="{ record }">
+          <a-tag :color="getResultColor(record.result)">{{ record.result || '-' }}</a-tag>
         </template>
-        <template #loanStatus="{ record }">
-          <a-tag :color="getLoanStatusColor(record.loanStatus)">{{ record.loanStatus }}</a-tag>
+        <template #rejectReason="{ record }">
+          <span v-if="record.rejectReason" class="text-red-500">{{ record.rejectReason }}</span>
+          <span v-else>-</span>
+        </template>
+        <template #iouNo="{ record }">
+          <span class="copyable" @click="copyText(record.iouNo)">{{ record.iouNo || '-' }}</span>
+        </template>
+        <template #status="{ record }">
+          <a-tag :color="getStatusColor(record.status)">{{ record.status || '-' }}</a-tag>
+        </template>
+        <template #amount="{ record }">
+          {{ formatCurrency(record.amount) }}
+        </template>
+        <template #installments="{ record }">
+          {{ record.installments != null ? record.installments + '期' : '-' }}
         </template>
       </a-table>
     </div>
@@ -49,129 +75,138 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed } from 'vue'
 
+// 授信记录
 interface CreditRecord {
-  id: string;
-  productName: string;
-  creditTime: string;
-  creditAmount: number;
-  creditStatus: string;
-  source: string;
+  creditNo?: string
+  creditDate?: string
+  channel?: string
+  result?: string
+  rejectReason?: string
+  totalAmount?: number
+  currentAmount?: number
+  interestRate?: number
+  riskLevel?: string
+  availableDays?: number
 }
 
+// 用信记录
 interface LoanRecord {
-  id: string;
-  productName: string;
-  loanTime: string;
-  loanAmount: number;
-  balance: number;
-  loanStatus: string;
+  loanNo?: string
+  loanDate?: string
+  bankCardNo?: string
+  channel?: string
+  result?: string
+  rejectReason?: string
+  iouNo?: string
+  status?: string
+  amount?: number
+  installments?: number
 }
 
 interface Props {
-  productKey?: string;
-  productData?: any;
-  userRealTimeData?: any;
-  loading?: boolean;
+  productKey?: string
+  productData?: any
+  userRealTimeData?: any
+  loading?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false
-});
+})
 
-// 授信额度汇总（来自 mock userInfo.realTimeData）
+// 授信额度汇总
 const totalCreditLimit = computed(() => {
-  if (props.userRealTimeData?.totalCreditLimit) return props.userRealTimeData.totalCreditLimit;
-  if (props.productData?.currentTotalCreditAmount) return props.productData.currentTotalCreditAmount;
-  return 250000;
-});
-
+  if (props.userRealTimeData?.totalCreditLimit) return props.userRealTimeData.totalCreditLimit
+  if (props.productData?.currentTotalCreditAmount) return props.productData.currentTotalCreditAmount
+  return 250000
+})
 
 // 可用额度
 const availableCredit = computed(() => {
-  if (props.userRealTimeData?.availableCredit !== undefined) return props.userRealTimeData.availableCredit;
+  if (props.userRealTimeData?.availableCredit !== undefined) return props.userRealTimeData.availableCredit
   if (props.productData) {
-    const total = props.productData.currentTotalCreditAmount || 0;
-    const used = props.productData.currentTotalLoanBalance || 0;
-    return Math.max(0, total - used);
+    const total = props.productData.currentTotalCreditAmount || 0
+    const used = props.productData.currentTotalLoanBalance || 0
+    return Math.max(0, total - used)
   }
-  return props.userRealTimeData?.usedCredit ? props.userRealTimeData.totalCreditLimit - props.userRealTimeData.usedCredit : 50000;
-});
+  return props.userRealTimeData?.usedCredit
+    ? props.userRealTimeData.totalCreditLimit - props.userRealTimeData.usedCredit
+    : 50000
+})
 
-
-// 授信列表（来自 mock，必须用 computed 保持响应性）
-const creditList = computed(() =>
-  props.userRealTimeData?.creditList?.length
-    ? props.userRealTimeData.creditList as CreditRecord[]
+// 授信列表
+const creditList = computed<CreditRecord[]>(() =>
+  (props.userRealTimeData?.creditList?.length)
+    ? props.userRealTimeData.creditList
     : [
-        { id: 'CR001', productName: 'Su贷-极速版', creditTime: '2026-05-01', creditAmount: 100000, creditStatus: '正常', source: '自动' },
-        { id: 'CR002', productName: 'Su贷-标准版', creditTime: '2026-04-15', creditAmount: 50000, creditStatus: '正常', source: '自动' },
-        { id: 'CR003', productName: 'Su贷-极速版', creditTime: '2026-03-01', creditAmount: 100000, creditStatus: '冻结', source: '人工' },
-        { id: 'CR004', productName: 'Su贷-标准版', creditTime: '2026-01-10', creditAmount: 80000, creditStatus: '销户', source: '自动' }
+        { creditNo: 'CR20260501001', creditDate: '2026-05-01', channel: 'APP', result: '成功', rejectReason: null, totalAmount: 100000, currentAmount: 85000, interestRate: 4.2, riskLevel: 'A', availableDays: 180 },
+        { creditNo: 'CR20260415002', creditDate: '2026-04-15', channel: 'H5', result: '成功', rejectReason: null, totalAmount: 50000, currentAmount: 50000, interestRate: 5.1, riskLevel: 'B', availableDays: 90 },
+        { creditNo: 'CR20260301003', creditDate: '2026-03-01', channel: '人工', result: '拒绝', rejectReason: '信用评分不足', totalAmount: 80000, currentAmount: 0, interestRate: null, riskLevel: 'C', availableDays: 0 },
+        { creditNo: 'CR20260110004', creditDate: '2026-01-10', channel: 'APP', result: '成功', rejectReason: null, totalAmount: 150000, currentAmount: 0, interestRate: 3.9, riskLevel: 'A', availableDays: 0 }
       ]
-);
+)
 
-// 用信列表（来自 mock，必须用 computed 保持响应性）
-const loanList = computed(() =>
-  props.userRealTimeData?.loanList?.length
-    ? props.userRealTimeData.loanList as LoanRecord[]
+// 用信列表
+const loanList = computed<LoanRecord[]>(() =>
+  (props.userRealTimeData?.loanList?.length)
+    ? props.userRealTimeData.loanList
     : [
-        { id: 'LN001', productName: 'Su贷-极速版', loanTime: '2026-05-01', loanAmount: 50000, balance: 45000, loanStatus: '正常' },
-        { id: 'LN002', productName: 'Su贷-标准版', loanTime: '2026-04-20', loanAmount: 30000, balance: 0, loanStatus: '结清' },
-        { id: 'LN003', productName: 'Su贷-极速版', loanTime: '2026-03-15', loanAmount: 20000, balance: 8500, loanStatus: '正常' },
-        { id: 'LN004', productName: 'Su贷-标准版', loanTime: '2026-02-28', loanAmount: 15000, balance: 0, loanStatus: '结清' },
-        { id: 'LN005', productName: 'Su贷-极速版', loanTime: '2026-01-10', loanAmount: 80000, balance: 32000, loanStatus: '逾期' },
-        { id: 'LN006', productName: 'Su贷-标准版', loanTime: '2025-12-05', loanAmount: 50000, balance: 0, loanStatus: '结清' }
+        { loanNo: 'LN20260501001', loanDate: '2026-05-01', bankCardNo: '****1234', channel: 'APP', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0501-001', status: '正常', amount: 50000, installments: 12 },
+        { loanNo: 'LN20260420002', loanDate: '2026-04-20', bankCardNo: '****5678', channel: 'H5', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0420-002', status: '正常', amount: 30000, installments: 6 },
+        { loanNo: 'LN20260315003', loanDate: '2026-03-15', bankCardNo: '****9012', channel: 'APP', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0315-003', status: '正常', amount: 20000, installments: 9 },
+        { loanNo: 'LN20260110005', loanDate: '2026-01-10', bankCardNo: '****3456', channel: '人工', result: '失败', rejectReason: '风险拦截', iouNo: null, status: '拒绝', amount: 0, installments: 0 }
       ]
-);
+)
 
-// 授信列表列定义
+// 授信列表列
 const creditColumns = [
-  { title: '产品名称', dataIndex: 'productName', slotName: 'productName' },
-  { title: '授信时间', dataIndex: 'creditTime', slotName: 'creditTime' },
-  { title: '授信额度', dataIndex: 'creditAmount', slotName: 'creditAmount' },
-  { title: '授信状态', dataIndex: 'creditStatus', slotName: 'creditStatus' },
-  { title: '来源', dataIndex: 'source', slotName: 'source' }
-];
+  { title: '授信单号', dataIndex: 'creditNo', width: 150 },
+  { title: '授信日期', dataIndex: 'creditDate', width: 110 },
+  { title: '渠道', dataIndex: 'channel', width: 80 },
+  { title: '授信结果', dataIndex: 'result', slotName: 'result', width: 90 },
+  { title: '拒绝原因', dataIndex: 'rejectReason', slotName: 'rejectReason', width: 140 },
+  { title: '总授信额度', dataIndex: 'totalAmount', slotName: 'totalAmount', width: 120 },
+  { title: '当前额度', dataIndex: 'currentAmount', slotName: 'currentAmount', width: 110 },
+  { title: '授信定价', dataIndex: 'interestRate', slotName: 'interestRate', width: 90 },
+  { title: '风险评级', dataIndex: 'riskLevel', width: 90 },
+  { title: '可用期限', dataIndex: 'availableDays', slotName: 'availableDays', width: 90 }
+]
 
-// 用信列表列定义（无三方借据号）
+// 用信列表列
 const loanColumns = [
-  { title: '产品名称', dataIndex: 'productName', slotName: 'productName' },
-  { title: '用信时间', dataIndex: 'loanTime', slotName: 'loanTime' },
-  { title: '借款金额', dataIndex: 'loanAmount', slotName: 'loanAmount' },
-  { title: '余额', dataIndex: 'balance', slotName: 'balance' },
-  { title: '状态', dataIndex: 'loanStatus', slotName: 'loanStatus' }
-];
+  { title: '用信单号', dataIndex: 'loanNo', slotName: 'loanNo', width: 140 },
+  { title: '用信日期', dataIndex: 'loanDate', slotName: 'loanDate', width: 110 },
+  { title: '银行卡号', dataIndex: 'bankCardNo', slotName: 'bankCardNo', width: 130 },
+  { title: '渠道', dataIndex: 'channel', width: 80 },
+  { title: '用信结果', dataIndex: 'result', slotName: 'result', width: 90 },
+  { title: '拒绝原因', dataIndex: 'rejectReason', slotName: 'rejectReason', width: 120 },
+  { title: '借据号', dataIndex: 'iouNo', slotName: 'iouNo', width: 150 },
+  { title: '借据状态', dataIndex: 'status', slotName: 'status', width: 90 },
+  { title: '借款金额', dataIndex: 'amount', slotName: 'amount', width: 110 },
+  { title: '期数', dataIndex: 'installments', slotName: 'installments', width: 70 }
+]
 
-// 格式化货币
 const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'CNY',
-    minimumFractionDigits: 2
-  }).format(value);
-};
+  if (value == null) return '-'
+  return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', minimumFractionDigits: 2 }).format(value)
+}
 
-// 授信状态颜色
-const getCreditStatusColor = (status: string): string => {
-  const map: Record<string, string> = {
-    '正常': 'green',
-    '冻结': 'orange',
-    '销户': 'gray'
-  };
-  return map[status] || 'gray';
-};
+const getResultColor = (result?: string) => {
+  const map: Record<string, string> = { '成功': 'green', '失败': 'red', '拒绝': 'orange', '待处理': 'blue' }
+  return map[result || ''] || 'default'
+}
 
-// 用信状态颜色
-const getLoanStatusColor = (status: string): string => {
-  const map: Record<string, string> = {
-    '正常': 'green',
-    '逾期': 'red',
-    '结清': 'gray'
-  };
-  return map[status] || 'gray';
-};
+const getStatusColor = (status?: string) => {
+  const map: Record<string, string> = { '正常': 'green', '逾期': 'red', '已结清': 'gray', '冻结': 'orange', '拒绝': 'red' }
+  return map[status || ''] || 'default'
+}
+
+const copyText = async (text?: string) => {
+  if (!text) return
+  try { await navigator.clipboard.writeText(String(text)) } catch {}
+}
 </script>
 
 <style scoped>
@@ -198,7 +233,6 @@ const getLoanStatusColor = (status: string): string => {
   padding-bottom: 8px;
 }
 
-/* 额度指标卡 */
 .quota-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -235,17 +269,22 @@ const getLoanStatusColor = (status: string): string => {
   color: var(--subapp-text-tertiary, #89929a);
 }
 
+.text-red-500 {
+  color: #f53f3f;
+}
+
+.copyable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.copyable:hover {
+  color: #1655d0;
+}
+
 @media (max-width: 768px) {
-  .quota-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .real-time-data-container {
-    padding: 12px;
-  }
-
-  .data-section {
-    padding: 12px;
-  }
+  .quota-grid { grid-template-columns: 1fr; }
+  .real-time-data-container { padding: 12px; }
+  .data-section { padding: 12px; }
 }
 </style>

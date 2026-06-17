@@ -24,7 +24,13 @@
         </template>
         <div class="card-description">{{ module.description }}</div>
         <div class="card-features">
-          <a-tag v-for="feat in module.features" :key="feat" size="small">{{ feat }}</a-tag>
+          <span
+            v-for="feat in module.features"
+            :key="feat.label"
+            class="feat-tag"
+            :class="{ 'feat-tag-external': feat.external }"
+            @click.stop="handleFeatureClick(feat)"
+          >{{ feat.label }}</span>
         </div>
       </a-card>
     </div>
@@ -36,7 +42,8 @@ import { useRouter } from 'vue-router'
 import {
   IconUser,
   IconBarChart,
-  IconTool
+  IconTool,
+  IconRobot
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
@@ -50,7 +57,11 @@ const modules = [
     color: 'blue',
     tag: 'PRD',
     description: '客户全景视图与画像分析',
-    features: ['客户搜索', '客户详情', '画像分析']
+    features: [
+      { label: '客户搜索', path: '/customer360' },
+      { label: '客户详情', path: '/customer360/detail' },
+      { label: '画像分析', path: '/customer360/profile' }
+    ]
   },
   {
     key: 'indicator-dashboard',
@@ -60,7 +71,11 @@ const modules = [
     color: 'green',
     tag: 'PRD',
     description: '业务指标可视化与实时监控',
-    features: ['指标配置', '可视化看板', '实时监控']
+    features: [
+      { label: '指标配置', path: '/indicator-dashboard/config' },
+      { label: '可视化看板', path: '/indicator-dashboard/board' },
+      { label: '实时监控', path: '/indicator-dashboard/monitor' }
+    ]
   },
   {
     key: 'analytics-workbench',
@@ -70,12 +85,25 @@ const modules = [
     color: 'purple',
     tag: 'PRD',
     description: '自助分析与数据探索工具',
-    features: ['数据查询', '可视化分析', '报表导出']
+    features: [
+      { label: '数据查询', path: '/analytics-workbench' },
+      { label: '可视化分析', path: '/analytics-workbench' },
+      { label: '报表导出', path: '/analytics-workbench' },
+      { label: '问小数', path: 'https://118.196.79.130:8445/ask-xiaoshu', external: true, icon: IconRobot }
+    ]
   }
 ]
 
 const handleNavigate = (path) => {
   router.push(path)
+}
+
+const handleFeatureClick = (feat) => {
+  if (feat.external) {
+    window.open(feat.path, '_blank')
+  } else {
+    router.push(feat.path)
+  }
 }
 </script>
 
@@ -134,6 +162,34 @@ const handleNavigate = (path) => {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+
+.feat-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  background: #f2f3f5;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #4e5969;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.feat-tag:hover {
+  background: #e8f3ff;
+  color: #165dff;
+}
+
+.feat-tag-external {
+  background: #fff0e8;
+  color: #f53f3f;
+  border-color: #ffdac1;
+}
+
+.feat-tag-external:hover {
+  background: #ffe8da;
+  color: #d91c1c;
 }
 
 @media (max-width: 1200px) {

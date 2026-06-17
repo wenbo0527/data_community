@@ -637,7 +637,7 @@ const handleValidityTypeChange = () => {
 }
 
 const handleBack = () => {
-  goBack(router, '/marketing/coupon/inventory')
+  goBack(router, '/marketing/benefit/statistics/inventory')
 }
 
 const showTemplateSelector = () => {
@@ -812,13 +812,13 @@ const showSuccessModal = (batchId) => {
 // 立即审批
 const goToApproval = () => {
   successModalVisible.value = false
-  router.push(`/marketing/coupon/inventory/approval?batchId=${createdBatchId.value}`)
+  router.push(`/marketing/benefit/statistics/inventory/approval?batchId=${createdBatchId.value}`)
 }
 
 // 稍后审批
 const goToInventoryList = () => {
   successModalVisible.value = false
-  router.push('/marketing/coupon/inventory')
+  router.push('/marketing/benefit/statistics/inventory')
 }
 
 // 初始化

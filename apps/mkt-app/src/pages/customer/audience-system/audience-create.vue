@@ -92,43 +92,11 @@
           <span class="card-title">人群圈选规则</span>
         </template>
         <template #extra>
-          <a-button size="small" type="primary" @click="addConditionGroup">
-            <template #icon><IconPlus /></template>
-            添加条件组
-          </a-button>
+          <span class="card-hint">使用下方工具配置人群圈选规则</span>
         </template>
         <div class="rules-config-section">
-          <LogicTreeConfig
-            :condition-groups="audienceForm.conditionGroups"
-            :cross-group-logic="audienceForm.crossGroupLogic || 'or'"
-            :exclude-cross-group-logic="audienceForm.excludeCrossGroupLogic || 'or'"
-            :editable="true"
-            :data-source-type-options="dataSourceTypeOptions"
-            :date-type-options="dateTypeOptions"
-            :dynamic-unit-options="dynamicUnitOptions"
-            :get-field-options="getFieldOptions"
-            :get-aggregation-options="getAggregationOptions"
-            :get-operator-options="getOperatorOptions"
-            :need-value-input="needValueInput"
-            :get-value-placeholder="getValuePlaceholder"
-            :on-data-source-type-change="onDataSourceTypeChange"
-            :on-date-type-change="onDateTypeChange"
-            :get-tag-options="getTagOptions"
-            :get-tag-operator-options="getTagOperatorOptions"
-            :need-tag-value-input="needTagValueInput"
-            :get-tag-value-placeholder="getTagValuePlaceholder"
-            :get-event-options="getEventOptions"
-            :get-event-property-options="getEventPropertyOptions"
-            :get-property-operator-options="getPropertyOperatorOptions"
-            @add-condition-group="addConditionGroup"
-            @add-exclude-condition-group="addExcludeConditionGroup"
-            @delete-exclude-condition-group="deleteExcludeConditionGroup"
-            @delete-condition-group="deleteConditionGroup"
-            @toggle-group-logic="toggleGroupLogic"
-            @set-cross-group-logic="setCrossGroupLogic"
-            @set-exclude-cross-group-logic="setExcludeCrossGroupLogic"
-            @add-condition-by-type="addConditionByType"
-            @remove-condition="removeCondition"
+          <CDPRuleBuilderForm
+            v-model="audienceForm.cdpRule"
           />
         </div>
       </a-card>
@@ -235,8 +203,8 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconPlus, IconDelete, IconSettings, IconTags, IconUpload } from '@arco-design/web-vue/es/icon'
-import LogicTreeConfig from '@/components/common/LogicTreeConfig.vue'
+import { IconUpload } from '@arco-design/web-vue/es/icon'
+import CDPRuleBuilderForm from '@/components/task/CDPRuleBuilderForm.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -258,27 +226,11 @@ const audienceForm = reactive({
     expireDate: null,
     description: ''
   },
-  conditionGroups: [] as Array<{
-    id?: string
-    logic?: string
-    isExclude?: boolean
-    conditions: Array<{
-      id?: string
-      type?: string
-      dataSourceType?: string
-      fieldName?: string
-      aggregationType?: string
-      operator?: string
-      value?: string
-      dateType?: string
-      dynamicValue?: number
-      dynamicUnit?: string
-      dateRange?: [string, string]
-      isExclude?: boolean
-    }>
-  }>,
-  crossGroupLogic: 'or',
-  excludeCrossGroupLogic: 'or',
+  cdpRule: {
+    ruleGroups: [],
+    excludeGroups: [],
+    crossGroupOperator: 'AND',
+  },
   import: {
     method: 'file',
     fileList: [] as any[]
@@ -318,7 +270,7 @@ const canPreCalculate = computed(() => {
   }
   
   // 规则创建模式需要至少一个条件组
-  if (createMode.value === 'rule' && audienceForm.conditionGroups.length === 0) {
+  if (createMode.value === 'rule' && audienceForm.cdpRule.ruleGroups.length === 0) {
     return false
   }
   
@@ -329,553 +281,6 @@ const canPreCalculate = computed(() => {
   
   return true
 })
-
-
-// 条件配置相关函数
-const addConditionGroup = () => {
-  audienceForm.conditionGroups.push({
-    id: Date.now().toString(),
-    logic: 'and',
-    conditions: [{
-      id: Date.now().toString() + '_1',
-      type: 'tag',
-      dataSourceType: 'tag',
-      fieldName: '',
-      aggregationType: '',
-      operator: '',
-      value: '',
-      dateType: 'dynamic',
-      dynamicValue: 1,
-      dynamicUnit: 'days',
-      dateRange: undefined as [string, string] | undefined,
-      isExclude: false
-    }]
-  })
-}
-
-const addExcludeConditionGroup = () => {
-  audienceForm.conditionGroups.push({
-    id: Date.now().toString(),
-    logic: 'and',
-    isExclude: true,
-    conditions: [{
-      id: Date.now().toString() + '_1',
-      type: 'tag',
-      dataSourceType: 'tag',
-      fieldName: '',
-      aggregationType: '',
-      operator: '',
-      value: '',
-      dateType: 'dynamic',
-      dynamicValue: 1,
-      dynamicUnit: 'days',
-      dateRange: undefined as [string, string] | undefined,
-      isExclude: false
-    }]
-  })
-}
-
-const deleteConditionGroup = (groupIndex: number) => {
-  // 找到常规条件组中的索引
-  const regularGroups = audienceForm.conditionGroups.filter((group: any) => !group.isExclude)
-  if (groupIndex >= 0 && groupIndex < regularGroups.length) {
-    const targetGroup = regularGroups[groupIndex]
-    const actualIndex = audienceForm.conditionGroups.indexOf(targetGroup)
-    audienceForm.conditionGroups.splice(actualIndex, 1)
-  }
-}
-
-const deleteExcludeConditionGroup = (groupIndex: number) => {
-  // 找到排除条件组中的索引
-  const excludeGroups = audienceForm.conditionGroups.filter((group: any) => group.isExclude)
-  if (groupIndex >= 0 && groupIndex < excludeGroups.length) {
-    const targetGroup = excludeGroups[groupIndex]
-    const actualIndex = audienceForm.conditionGroups.indexOf(targetGroup)
-    audienceForm.conditionGroups.splice(actualIndex, 1)
-  }
-}
-
-const toggleCrossGroupLogic = () => {
-  audienceForm.crossGroupLogic = audienceForm.crossGroupLogic === 'and' ? 'or' : 'and'
-}
-
-const toggleGroupLogic = (group: any) => {
-  group.logic = group.logic === 'and' ? 'or' : 'and'
-}
-
-const addConditionByType = (group: any, type: string) => {
-  // 映射类型到正确的dataSourceType
-  let dataSourceType = type
-  if (type === 'tag') {
-    dataSourceType = 'tag'
-  } else if (type === 'behavior') {
-    dataSourceType = 'event'
-  } else if (type === 'detail') {
-    dataSourceType = 'detail'
-  }
-  
-  group.conditions.push({
-    id: Date.now().toString() + '_' + group.conditions.length,
-    type: type,
-    dataSourceType: dataSourceType,
-    fieldName: '',
-    aggregationType: '',
-    operator: '',
-    value: '',
-    dateType: 'dynamic',
-    dynamicValue: 1,
-    dynamicUnit: 'days',
-    dateRange: undefined as [string, string] | undefined,
-    isExclude: false
-  })
-}
-
-const removeCondition = (group: any, conditionIndex: number) => {
-  if (group.conditions && conditionIndex >= 0 && conditionIndex < group.conditions.length) {
-    group.conditions.splice(conditionIndex, 1)
-  }
-}
-
-// ConditionConfig组件所需的数据选项
-const dataSourceTypeOptions = [
-  { label: '标签', value: 'tag' },
-  { label: '事件', value: 'event' },
-  { label: '明细数据', value: 'detail' }
-]
-
-const dateTypeOptions = [
-  { label: '动态时间', value: 'dynamic' },
-  { label: '固定时间', value: 'fixed' }
-]
-
-const dynamicUnitOptions = [
-  { label: '天', value: 'days' },
-  { label: '周', value: 'weeks' },
-  { label: '月', value: 'months' }
-]
-
-// 获取字段选项
-const getFieldOptions = (dataSourceType: string) => {
-  const fieldMap: Record<string, Array<{label: string, value: string}>> = {
-    attribute: [
-      { label: '年龄', value: 'age' },
-      { label: '性别', value: 'gender' },
-      { label: '城市', value: 'city' },
-      { label: '收入', value: 'income' },
-      { label: '职业', value: 'occupation' },
-      { label: '教育程度', value: 'education' },
-      // 消费金融相关标签
-      { label: '信用评级', value: 'credit_rating' },
-      { label: '收入水平', value: 'income_level' },
-      { label: '职业类型', value: 'occupation_type' },
-      { label: '婚姻状况', value: 'marital_status' },
-      { label: '年龄段', value: 'age_group' },
-      { label: '资产规模', value: 'asset_scale' },
-      { label: '负债情况', value: 'debt_status' },
-      { label: '风险等级', value: 'risk_level' },
-      { label: '征信记录', value: 'credit_history' },
-      { label: '居住状况', value: 'residence_status' }
-    ],
-    tag: [
-      { label: '年龄', value: 'age' },
-      { label: '性别', value: 'gender' },
-      { label: '城市', value: 'city' },
-      { label: '收入', value: 'income' },
-      { label: '职业', value: 'occupation' },
-      { label: '教育程度', value: 'education' },
-      // 消费金融相关标签
-      { label: '信用评级', value: 'credit_rating' },
-      { label: '收入水平', value: 'income_level' },
-      { label: '职业类型', value: 'occupation_type' },
-      { label: '婚姻状况', value: 'marital_status' },
-      { label: '年龄段', value: 'age_group' },
-      { label: '资产规模', value: 'asset_scale' },
-      { label: '负债情况', value: 'debt_status' },
-      { label: '风险等级', value: 'risk_level' },
-      { label: '征信记录', value: 'credit_history' },
-      { label: '居住状况', value: 'residence_status' }
-    ],
-    behavior: [
-      { label: '登录行为', value: 'login_behavior' },
-      { label: '购买行为', value: 'purchase_behavior' },
-      { label: '浏览行为', value: 'view_behavior' },
-      { label: '点击行为', value: 'click_behavior' },
-      { label: '分享行为', value: 'share_behavior' },
-      // 消费金融相关行为
-      { label: '贷款申请行为', value: 'loan_application_behavior' },
-      { label: '还款行为', value: 'repayment_behavior' },
-      { label: '逾期行为', value: 'overdue_behavior' },
-      { label: '提前还款行为', value: 'early_repayment_behavior' },
-      { label: '额度调整行为', value: 'credit_limit_adjustment_behavior' },
-      { label: '风险评估行为', value: 'risk_assessment_behavior' },
-      { label: '征信查询行为', value: 'credit_inquiry_behavior' },
-      { label: '产品咨询行为', value: 'product_consultation_behavior' },
-      { label: '合同签署行为', value: 'contract_signing_behavior' },
-      { label: '账户开通行为', value: 'account_opening_behavior' }
-    ],
-    event: [
-      { label: '登录事件', value: 'login_event' },
-      { label: '购买事件', value: 'purchase_event' },
-      { label: '浏览事件', value: 'view_event' },
-      { label: '点击事件', value: 'click_event' },
-      { label: '分享事件', value: 'share_event' },
-      // 消费金融相关事件
-      { label: '贷款申请事件', value: 'loan_application_event' },
-      { label: '还款事件', value: 'repayment_event' },
-      { label: '逾期事件', value: 'overdue_event' },
-      { label: '提前还款事件', value: 'early_repayment_event' },
-      { label: '额度调整事件', value: 'credit_limit_adjustment_event' },
-      { label: '风险评估事件', value: 'risk_assessment_event' },
-      { label: '征信查询事件', value: 'credit_inquiry_event' },
-      { label: '产品咨询事件', value: 'product_consultation_event' },
-      { label: '合同签署事件', value: 'contract_signing_event' },
-      { label: '账户开通事件', value: 'account_opening_event' }
-    ],
-    detail: [
-      { label: '用户ID', value: 'user_id' },
-      { label: '订单金额', value: 'order_amount' },
-      { label: '订单时间', value: 'order_time' },
-      { label: '商品类别', value: 'product_category' },
-      { label: '支付方式', value: 'payment_method' },
-      // 消费金融相关明细数据
-      { label: '贷款金额', value: 'loan_amount' },
-      { label: '还款金额', value: 'repayment_amount' },
-      { label: '逾期天数', value: 'overdue_days' },
-      { label: '信用分数', value: 'credit_score' },
-      { label: '月收入', value: 'monthly_income' },
-      { label: '负债率', value: 'debt_ratio' },
-      { label: '担保方式', value: 'guarantee_type' },
-      { label: '贷款期限', value: 'loan_term' },
-      { label: '利率', value: 'interest_rate' },
-      { label: '还款方式', value: 'repayment_method' },
-      { label: '贷款用途', value: 'loan_purpose' },
-      { label: '抵押物价值', value: 'collateral_value' },
-      { label: '账户余额', value: 'account_balance' },
-      { label: '交易金额', value: 'transaction_amount' }
-    ]
-  }
-  return fieldMap[dataSourceType] || []
-}
-
-// 获取聚合选项
-const getAggregationOptions = (dataSourceType: string) => {
-  const aggregationMap: Record<string, Array<{label: string, value: string}>> = {
-    behavior: [
-      { label: '次数', value: 'count' },
-      { label: '总和', value: 'sum' },
-      { label: '平均值', value: 'avg' },
-      { label: '最大值', value: 'max' },
-      { label: '最小值', value: 'min' },
-      { label: '去重计数', value: 'distinct_count' }
-    ],
-    event: [
-      { label: '次数', value: 'count' },
-      { label: '总和', value: 'sum' },
-      { label: '平均值', value: 'avg' },
-      { label: '最大值', value: 'max' },
-      { label: '最小值', value: 'min' },
-      { label: '去重计数', value: 'distinct_count' }
-    ],
-    detail: [
-      { label: '计数', value: 'count' },
-      { label: '求和', value: 'sum' },
-      { label: '平均值', value: 'avg' },
-      { label: '最大值', value: 'max' },
-      { label: '最小值', value: 'min' },
-      { label: '去重计数', value: 'distinct_count' }
-    ]
-  }
-  
-  if (dataSourceType === 'tag' || dataSourceType === 'attribute') {
-    return []
-  }
-  
-  return aggregationMap[dataSourceType] || [
-    { label: '计数', value: 'count' },
-    { label: '求和', value: 'sum' },
-    { label: '平均值', value: 'avg' },
-    { label: '最大值', value: 'max' },
-    { label: '最小值', value: 'min' },
-    { label: '去重计数', value: 'distinct_count' }
-  ]
-}
-
-// 获取操作符选项
-const getOperatorOptions = (condition: any) => {
-  const vt = getConditionValueType(condition)
-  if (vt === 'number') {
-    return [
-      { label: '等于', value: 'eq' },
-      { label: '不等于', value: 'ne' },
-      { label: '大于', value: 'gt' },
-      { label: '小于', value: 'lt' },
-      { label: '大于等于', value: 'gte' },
-      { label: '小于等于', value: 'lte' },
-      { label: '区间', value: 'between' }
-    ]
-  }
-  if (vt === 'enum') {
-    return [
-      { label: '等于', value: 'eq' },
-      { label: '不等于', value: 'ne' },
-      { label: '包含', value: 'in' },
-      { label: '不包含', value: 'not_in' }
-    ]
-  }
-  if (vt === 'date') {
-    return [
-      { label: '在时间范围内', value: 'in_range' },
-      { label: '早于', value: 'before' },
-      { label: '晚于', value: 'after' }
-    ]
-  }
-  return [
-    { label: '等于', value: 'eq' },
-    { label: '不等于', value: 'ne' },
-    { label: '模糊匹配', value: 'like' },
-    { label: '不包含', value: 'not_in' }
-  ]
-}
-
-// 判断是否需要值输入
-const needValueInput = (condition: any) => {
-  const vt = getConditionValueType(condition)
-  return vt !== 'none'
-}
-
-// 获取值输入占位符
-const getValuePlaceholder = (condition: any) => {
-  const vt = getConditionValueType(condition)
-  if (vt === 'number') return '请输入数值或区间'
-  if (vt === 'enum') return '请选择或输入枚举值'
-  if (vt === 'date') return '请选择时间范围'
-  return '请输入值'
-}
-
-// 数据源类型变化处理
-const onDataSourceTypeChange = (condition: any) => {
-  condition.fieldName = ''
-  condition.aggregationType = ''
-}
-
-// 日期类型变化处理
-const onDateTypeChange = (condition: any) => {
-  if (condition.dateType === 'dynamic') {
-    condition.dateRange = undefined
-    condition.dynamicValue = 1
-    condition.dynamicUnit = 'days'
-  } else {
-    condition.dynamicValue = undefined
-    condition.dynamicUnit = undefined
-    condition.dateRange = ['', ''] as [string, string]
-  }
-}
-
-// 根据字段判断值类型
-const getConditionValueType = (condition: any): 'number' | 'enum' | 'text' | 'date' | 'none' => {
-  const field = condition.fieldName || ''
-  const ds = condition.dataSourceType || ''
-  const numberFields = new Set([
-    'age','income','credit_score','monthly_income','debt_ratio','loan_amount','repayment_amount','overdue_days','asset_scale','transaction_amount','order_amount','interest_rate'
-  ])
-  const enumFields = new Set([
-    'gender','city','occupation','education','credit_rating','income_level','occupation_type','marital_status','age_group','risk_level','residence_status','payment_method','product_category','loan_purpose','repayment_method'
-  ])
-  const dateFields = new Set(['order_time'])
-  if (dateFields.has(field)) return 'date'
-  if (numberFields.has(field)) return 'number'
-  if (enumFields.has(field)) return 'enum'
-  if (ds === 'event') return 'text'
-  return 'text'
-}
-
-// 获取标签选项
-const getTagOptions = () => {
-  return [
-    // 基础属性
-    { label: '年龄', value: 'age' },
-    { label: '性别', value: 'gender' },
-    { label: '城市', value: 'city' },
-    { label: '婚姻状况', value: 'marital_status' },
-    { label: '教育程度', value: 'education' },
-    { label: '职业类型', value: 'occupation_type' },
-    { label: '居住状况', value: 'residence_status' },
-    
-    // 金融属性
-    { label: '收入水平', value: 'income_level' },
-    { label: '信用评级', value: 'credit_rating' },
-    { label: '风险等级', value: 'risk_level' },
-    { label: '信用分数', value: 'credit_score' },
-    { label: '资产规模', value: 'asset_scale' },
-    { label: '负债情况', value: 'debt_status' },
-    { label: '征信记录', value: 'credit_history' },
-    { label: '月收入', value: 'monthly_income' },
-    { label: '负债率', value: 'debt_ratio' },
-    
-    // 行为特征
-    { label: '活跃度', value: 'activity_level' },
-    { label: '响应层级', value: 'response_level' },
-    { label: '产品使用频率', value: 'product_usage_frequency' },
-    { label: '客户价值等级', value: 'customer_value_level' },
-    { label: '风险偏好', value: 'risk_preference' }
-  ]
-}
-
-// 获取标签操作符选项
-const getTagOperatorOptions = () => {
-  return [
-    { label: '等于', value: 'eq' },
-    { label: '不等于', value: 'ne' },
-    { label: '包含', value: 'in' },
-    { label: '不包含', value: 'not_in' }
-  ]
-}
-
-// 判断标签是否需要值输入
-const needTagValueInput = (condition: any) => {
-  return true
-}
-
-// 获取标签值输入占位符
-const getTagValuePlaceholder = (condition: any) => {
-  return '请选择或输入标签值'
-}
-
-// 获取事件选项
-const getEventOptions = () => {
-  return [
-    // 贷款相关事件
-    { label: '贷款申请', value: 'loan_application' },
-    { label: '贷款审批', value: 'loan_approval' },
-    { label: '贷款放款', value: 'loan_disbursement' },
-    { label: '还款', value: 'repayment' },
-    { label: '提前还款', value: 'early_repayment' },
-    { label: '逾期还款', value: 'overdue_repayment' },
-    { label: '贷款结清', value: 'loan_settlement' },
-    
-    // 风险相关事件
-    { label: '风险评估', value: 'risk_assessment' },
-    { label: '征信查询', value: 'credit_inquiry' },
-    { label: '风险预警', value: 'risk_warning' },
-    { label: '逾期提醒', value: 'overdue_reminder' },
-    { label: '催收记录', value: 'collection_record' },
-    
-    // 业务相关事件
-    { label: '产品咨询', value: 'product_consultation' },
-    { label: '合同签署', value: 'contract_signing' },
-    { label: '账户开通', value: 'account_opening' },
-    { label: '额度调整', value: 'credit_limit_adjustment' },
-    { label: '产品升级', value: 'product_upgrade' },
-    { label: '服务申请', value: 'service_application' },
-    
-    // 用户行为事件
-    { label: '登录', value: 'login' },
-    { label: '页面访问', value: 'page_visit' },
-    { label: '功能使用', value: 'feature_usage' },
-    { label: '文档下载', value: 'document_download' },
-    { label: '客服咨询', value: 'customer_service_inquiry' }
-  ]
-}
-
-// 获取事件属性选项
-const getEventPropertyOptions = (eventName: string) => {
-  const propertyMap: Record<string, Array<{label: string, value: string}>> = {
-    loan_application: [
-      { label: '贷款金额', value: 'loan_amount' },
-      { label: '贷款期限', value: 'loan_term' },
-      { label: '利率', value: 'interest_rate' },
-      { label: '贷款用途', value: 'loan_purpose' }
-    ],
-    loan_approval: [
-      { label: '审批结果', value: 'approval_result' },
-      { label: '审批时长', value: 'approval_duration' }
-    ],
-    loan_disbursement: [
-      { label: '放款金额', value: 'disbursement_amount' },
-      { label: '放款渠道', value: 'disbursement_channel' }
-    ],
-    repayment: [
-      { label: '还款金额', value: 'repayment_amount' },
-      { label: '还款方式', value: 'repayment_method' }
-    ],
-    early_repayment: [
-      { label: '提前天数', value: 'early_days' }
-    ],
-    overdue_repayment: [
-      { label: '逾期天数', value: 'overdue_days' }
-    ],
-    loan_settlement: [
-      { label: '结清状态', value: 'settlement_status' }
-    ],
-    risk_assessment: [
-      { label: '风险等级', value: 'risk_level' },
-      { label: '信用分数', value: 'credit_score' }
-    ],
-    credit_inquiry: [
-      { label: '查询渠道', value: 'inquiry_channel' }
-    ],
-    risk_warning: [
-      { label: '预警级别', value: 'warning_level' }
-    ],
-    overdue_reminder: [
-      { label: '提醒方式', value: 'reminder_method' }
-    ],
-    collection_record: [
-      { label: '催收结果', value: 'collection_result' }
-    ],
-    product_consultation: [
-      { label: '咨询渠道', value: 'consultation_channel' }
-    ],
-    contract_signing: [
-      { label: '签署渠道', value: 'sign_channel' }
-    ],
-    account_opening: [
-      { label: '账户类型', value: 'account_type' }
-    ],
-    credit_limit_adjustment: [
-      { label: '调整幅度', value: 'adjustment_amount' }
-    ],
-    product_upgrade: [
-      { label: '升级类型', value: 'upgrade_type' }
-    ],
-    service_application: [
-      { label: '服务类型', value: 'service_type' }
-    ],
-    login: [
-      { label: '登录渠道', value: 'login_channel' }
-    ],
-    page_visit: [
-      { label: '页面URL', value: 'page_url' },
-      { label: '停留时长', value: 'stay_duration' }
-    ],
-    feature_usage: [
-      { label: '功能名称', value: 'feature_name' }
-    ],
-    document_download: [
-      { label: '文档名称', value: 'document_name' }
-    ],
-    customer_service_inquiry: [
-      { label: '问题类型', value: 'issue_type' }
-    ]
-  }
-  return propertyMap[eventName] || []
-}
-
-// 获取属性操作符选项
-const getPropertyOperatorOptions = () => {
-  return [
-    { label: '等于', value: 'eq' },
-    { label: '不等于', value: 'ne' },
-    { label: '大于', value: 'gt' },
-    { label: '小于', value: 'lt' },
-    { label: '大于等于', value: 'gte' },
-    { label: '小于等于', value: 'lte' },
-    { label: '包含', value: 'in' },
-    { label: '不包含', value: 'not_in' },
-    { label: '模糊匹配', value: 'like' }
-  ]
-}
-
 
 
 // 文件上传处理
@@ -892,7 +297,7 @@ const preCalculate = async () => {
     
     // 更新预览统计
     previewStats.totalCount = Math.floor(Math.random() * 100000) + 10000
-    previewStats.ruleCount = audienceForm.conditionGroups.length
+    previewStats.ruleCount = audienceForm.cdpRule.ruleGroups.length
     previewStats.coverage = Math.floor(Math.random() * 30) + 70
     previewStats.estimatedTime = Math.floor(Math.random() * 10) + 1
     
@@ -911,9 +316,9 @@ const preCalculate = async () => {
 
 // 保存人群
 const saveAudience = async () => {
-  // 如果还没有预计算，先进行预计算
-  if (!showPreviewResult.value) {
-    Message.warning('请先进行预计算')
+  // 基本信息校验
+  if (!audienceForm.basic.name) {
+    Message.warning('请填写人群名称')
     return
   }
   
@@ -927,9 +332,8 @@ const saveAudience = async () => {
       id: audienceId,
       ...audienceForm.basic,
       createMode: createMode.value,
-      conditionGroups: audienceForm.conditionGroups,
-      crossGroupLogic: audienceForm.crossGroupLogic,
-      importConfig: audienceForm.import,
+      // 规则模式：直接使用 cdpRule；导入模式：使用 importConfig
+      ...(createMode.value === 'rule' ? { cdpRule: audienceForm.cdpRule } : { importConfig: audienceForm.import }),
       createUser: '当前用户',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString(),
@@ -956,15 +360,6 @@ const saveAudience = async () => {
 const goBack = () => {
   router.push({ name: 'audience-management' })
 }
-
-// 逻辑设置
-const setCrossGroupLogic = (value: string) => {
-  audienceForm.crossGroupLogic = value === 'and' ? 'and' : 'or'
-}
-
-const setExcludeCrossGroupLogic = (value: string) => {
-  audienceForm.excludeCrossGroupLogic = value === 'and' ? 'and' : 'or'
-}
 </script>
 
 <style scoped>
@@ -976,6 +371,12 @@ const setExcludeCrossGroupLogic = (value: string) => {
   max-height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.card-hint {
+  font-size: 12px;
+  color: #999;
+  font-weight: normal;
 }
 
 .breadcrumb {

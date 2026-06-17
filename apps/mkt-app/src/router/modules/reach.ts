@@ -148,5 +148,23 @@ export const reachRoutes: RouteRecordRaw[] = [
     name: 'TouchManualSmsIndex',
     component: () => import('@/pages/touch/manual-sms/index.vue'),
     meta: { title: '手动短信' }
+  },
+  {
+    path: 'touch/query/marketing-list',
+    name: 'TouchQueryMarketingList',
+    component: () => import('@/pages/touch/query/marketing-list.vue'),
+    meta: { title: '营销记录列表' }
+  },
+  {
+    path: 'touch/query/marketing-search',
+    name: 'TouchQueryMarketingSearch',
+    component: () => import('@/pages/touch/query/marketing-search.vue'),
+    meta: { title: '营销记录搜索' }
+  },
+  {
+    path: 'touch/query/manual-sms-vendor-records',
+    name: 'TouchQueryManualSmsVendorRecords',
+    component: () => import('@/pages/touch/query/manual-sms-vendor-records.vue'),
+    meta: { title: '人工短信厂商记录' }
   }
 ]

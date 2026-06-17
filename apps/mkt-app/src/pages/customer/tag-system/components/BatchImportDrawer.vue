@@ -221,7 +221,7 @@ const uploadProgress = ref(0)
 
 // 预览数据
 const previewData = ref<any[]>([])
-const validationSummary = ref<any>(null)
+const validationSummary = ref(null)
 
 // 导入结果
 const importResult = reactive({

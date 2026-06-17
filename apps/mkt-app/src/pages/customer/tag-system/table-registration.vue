@@ -196,7 +196,7 @@ const minMatchRate = ref(95)
 const maxErrorRate = ref(5)
 
 // 注册结果
-const registrationResult = ref<any>(null)
+const registrationResult = ref(null)
 const submitting = ref(false)
 
 const canSubmit = computed(() => {

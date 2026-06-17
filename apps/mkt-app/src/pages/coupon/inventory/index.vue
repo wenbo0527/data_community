@@ -54,6 +54,16 @@
       </a-row>
     </div>
 
+    <!-- 预警阈值配置 -->
+    <a-card class="alert-threshold-card" style="margin-bottom: 16px">
+      <a-space>
+        <span style="font-weight: 500">预警阈值：</span>
+        <a-input-number v-model="alertThreshold.value" :min="0" style="width: 120px" />
+        <a-button type="primary" size="small" @click="saveAlertThreshold">保存阈值</a-button>
+        <span style="color: var(--color-text-3); font-size: 12px">库存低于此值显示🔴</span>
+      </a-space>
+    </a-card>
+
     <!-- 搜索表单 -->
     <a-card class="search-card">
       <a-form :model="formModel" @submit="handleSearch" layout="horizontal" :style="{ width: '100%' }">
@@ -86,12 +96,22 @@
                 <a-option value="used">已核销</a-option>
                 <a-option value="expired">已过期</a-option>
                 <a-option value="invalid">已作废</a-option>
+                <a-option value="invalidated">已作废(新)</a-option>
               </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="8">
             <a-form-item field="createTime" label="创建时间">
               <a-range-picker v-model="formModel.createTime" placeholder="请选择创建时间范围" allow-clear />
+            </a-form-item>
+          </a-col>
+          <!-- 产品筛选（临价折扣券） -->
+          <a-col :span="8">
+            <a-form-item field="product_id" label="产品">
+              <a-select v-model="formModel.product_id" placeholder="请选择产品" allow-clear>
+                <a-option value="JD_001">京东大额低息</a-option>
+                <a-option value="MT_001">美团大额低息</a-option>
+              </a-select>
             </a-form-item>
           </a-col>
         </a-row>
@@ -214,8 +234,10 @@ const columns = [
     width: 100,
     align: 'center',
     customCell: ({ record }) => h('a-tag', {
-      color: record.couponType === 'discount' ? 'blue' : record.couponType === 'reduction' ? 'green' : 'orange'
-    }, record.couponType === 'discount' ? '折扣券' : record.couponType === 'reduction' ? '满减券' : '立减券')
+      // v1.6.1 6/14 修: 补 PRICED_DISCOUNT 临价折扣券（types/api/coupon.ts:29 + mock/coupon.ts:10/42/56）
+      // 5/26 教训链 #1: types 改 → mock 改 → column 改 三方同步，缺一会 fallback 错显
+      color: record.couponType === 'discount' ? 'blue' : record.couponType === 'reduction' ? 'green' : record.couponType === 'PRICED_DISCOUNT' ? 'purple' : 'orange'
+    }, record.couponType === 'discount' ? '折扣券' : record.couponType === 'reduction' ? '满减券' : record.couponType === 'PRICED_DISCOUNT' ? '临价折扣券' : '立减券')
   },
   {
     title: '有效期',
@@ -230,24 +252,46 @@ const columns = [
     align: 'center',
     customCell: ({ record }) => h('a-tag', {
       color: {
-        'received': 'blue',
-        'locked': 'orange',
-        'used': 'green',
-        'expired': 'red',
-        'invalid': 'gray'
+        // v1.2.8 PRD §11.3 9 态中文映射 (5/26 教训链 #1: 表头枚举必须跟 types 9 态严格 1:1)
+        'pending': 'arcoblue',                // 内部态 - 对用户不可见
+        'received': 'blue',                   // 未使用 (激活态)
+        'failed_1001_core_rejected': 'red',   // 核心拒收
+        'failed_1002_timeout': 'red',         // 超时
+        'failed_1003_invalidation': 'red',    // 存量作废失败
+        'failed_1004_kafka_push': 'red',      // Kafka 推送失败
+        'failed_1005_kafka_consume': 'red',   // Kafka 消费失败
+        'invalidated': 'red',                 // 已作废
+        'expired': 'gray'                     // 已过期
       }[record.status]
     }, {
-      'received': '已领取',
-      'locked': '已锁定',
-      'used': '已核销',
-      'expired': '已过期',
-      'invalid': '已作废'
+      'pending': '待确认',
+      'received': '未使用',
+      'failed_1001_core_rejected': '核心拒收失败',
+      'failed_1002_timeout': '超时失败',
+      'failed_1003_invalidation': '存量作废失败',
+      'failed_1004_kafka_push': '推送失败',
+      'failed_1005_kafka_consume': '消费失败',
+      'invalidated': '已作废',
+      'expired': '已过期'
     }[record.status])
   },
   { 
     title: '创建时间', 
     dataIndex: 'createTime', 
     width: 160
+  },
+  {
+    title: '作废时间',
+    dataIndex: 'invalidated_time',
+    width: 160,
+    customCell: ({ record }) => record.invalidated_time || '—'
+  },
+  {
+    title: '预警',
+    dataIndex: 'stock',
+    width: 80,
+    align: 'center',
+    customCell: ({ record }) => record.stock < alertThreshold.value ? '🔴' : '🟢'
   },
   {
     title: '操作',
@@ -264,8 +308,19 @@ const formModel = reactive({
   userId: '',
   packageId: '',
   status: '',
-  createTime: []
+  createTime: [],
+  product_id: '',
 })
+
+// 预警阈值（localStorage 持久化，默认 100）
+const alertThreshold = ref(
+  parseInt(localStorage.getItem('mkt-inventory-alert-threshold') || '100')
+)
+
+// 保存预警阈值
+const saveAlertThreshold = () => {
+  localStorage.setItem('mkt-inventory-alert-threshold', String(alertThreshold.value))
+}
 
 // 统计数据
 const statisticsData = reactive({
@@ -431,6 +486,7 @@ const resetForm = () => {
   formModel.packageId = ''
   formModel.status = ''
   formModel.createTime = []
+  formModel.product_id = ''
   handleSearch()
 }
 
@@ -461,13 +517,15 @@ const handleRowClick = (record) => {
   }
   
   // 验证选中状态
-  const validStatus = ['received', 'locked'];
+  // v1.2.8 PRD §11.3: types 9 态已删 'locked'(临价折扣券无"已锁定"概念)
+  // 改为 ['received'] 仅可选未使用状态的券
+  const validStatus = ['received'];
   const hasInvalidSelection = selectedRows.value.some(
     item => !validStatus.includes(item.status)
   );
-  
+
   if (hasInvalidSelection) {
-    Message.warning('只能选择状态为"已领取"或"已锁定"的券');
+    Message.warning('只能选择状态为"已领取"的券');
   }
 };
 

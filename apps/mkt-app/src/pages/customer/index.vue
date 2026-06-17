@@ -65,10 +65,7 @@
           <a-textarea v-model="formData.desc" placeholder="请输入客群描述" />
         </a-form-item>
         <a-form-item label="筛选条件">
-          <div class="condition-builder">
-            <p class="condition-tip">请在下方添加筛选条件</p>
-            <!-- 条件构建器占位 -->
-          </div>
+          <CDPRuleBuilderForm v-model="formData.cdpRule" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -77,6 +74,10 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import CDPRuleBuilderForm from '@/components/task/CDPRuleBuilderForm.vue'
+
+const router = useRouter()
 
 const loading = ref(false)
 const modalVisible = ref(false)
@@ -93,7 +94,7 @@ const formData = reactive({
   id: '',
   name: '',
   desc: '',
-  conditions: []
+  cdpRule: null,
 })
 
 const columns = [
@@ -134,16 +135,14 @@ const handleRefresh = () => {
 }
 
 const handleCreate = () => {
-  modalTitle.value = '新建客群'
-  isEdit.value = false
-  Object.assign(formData, { id: '', name: '', desc: '', conditions: [] })
-  modalVisible.value = true
+  // 跳转到人群创建页面
+  router.push('/exploration/customer-center/audience-system/audience-create')
 }
 
 const handleEdit = (record: any) => {
   modalTitle.value = '编辑客群'
   isEdit.value = true
-  Object.assign(formData, record)
+  Object.assign(formData, { ...record, cdpRule: record.cdpRule || null })
   modalVisible.value = true
 }
 

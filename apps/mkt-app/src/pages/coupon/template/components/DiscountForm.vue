@@ -72,29 +72,6 @@
         </template>
       </div>
     </a-form-item>
-
-    <a-form-item field="limitMinRate" label="是否限制最低利率" required>
-      <a-radio-group v-model="formData.limitMinRate">
-        <a-radio :value="true">是</a-radio>
-        <a-radio :value="false">否</a-radio>
-      </a-radio-group>
-    </a-form-item>
-
-    <a-form-item
-      v-if="formData.limitMinRate"
-      field="minRate"
-      label="最低利率"
-      required
-    >
-      <a-input-number
-        v-model="formData.minRate"
-        :min="0"
-        :precision="4"
-        placeholder="请输入最低利率"
-        style="width: 200px"
-      />
-      <span style="margin-left: 8px">%/天</span>
-    </a-form-item>
   </a-card>
 </template>
 

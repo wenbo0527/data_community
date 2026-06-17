@@ -1,38 +1,44 @@
 <template>
   <div class="marketing-center">
-    <div class="page-header">
-      <a-typography-title :heading="1">营销中心</a-typography-title>
-      <a-typography-text>营销活动管理、任务调度与效果分析</a-typography-text>
-    </div>
-    
-    <div class="module-grid">
-      <a-card 
-        v-for="module in modules" 
-        :key="module.key"
-        class="module-card"
-        hoverable
-        @click="handleNavigate(module.path)"
-      >
-        <template #title>
-          <div class="card-title">
-            <component :is="module.icon" class="module-icon" />
-            <span>{{ module.title }}</span>
+    <!-- P0-模板-fail-#2 (qa 15:17 fail) 修复: 加 router-view, 让 marketing 子路由 (benefit/template, benefit/management, statistics/inventory, alert/* 等) 能渲染 -->
+    <!-- 模式与 src/pages/benefit/index.vue 一致: dashboard 在根路径显示, 子路由在 router-view 处渲染 -->
+    <template v-if="isRootPath">
+      <div class="page-header">
+        <a-typography-title :heading="1">营销中心</a-typography-title>
+        <a-typography-text>营销活动管理、任务调度与效果分析</a-typography-text>
+      </div>
+      
+      <div class="module-grid">
+        <a-card 
+          v-for="module in modules" 
+          :key="module.key"
+          class="module-card"
+          hoverable
+          @click="handleNavigate(module.path)"
+        >
+          <template #title>
+            <div class="card-title">
+              <component :is="module.icon" class="module-icon" />
+              <span>{{ module.title }}</span>
+            </div>
+          </template>
+          <template #extra>
+            <a-tag :color="module.color">{{ module.tag }}</a-tag>
+          </template>
+          <div class="card-description">{{ module.description }}</div>
+          <div class="card-features">
+            <a-tag v-for="feat in module.features" :key="feat" size="small">{{ feat }}</a-tag>
           </div>
-        </template>
-        <template #extra>
-          <a-tag :color="module.color">{{ module.tag }}</a-tag>
-        </template>
-        <div class="card-description">{{ module.description }}</div>
-        <div class="card-features">
-          <a-tag v-for="feat in module.features" :key="feat" size="small">{{ feat }}</a-tag>
-        </div>
-      </a-card>
-    </div>
+        </a-card>
+      </div>
+    </template>
+    <router-view v-else />
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   IconApps,
   IconMessage,
@@ -45,6 +51,14 @@ import {
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
+const route = useRoute()
+
+// P0-模板-fail-#2 (qa 15:17 fail) 修复: 根路径是 /marketing 时显示 dashboard, 其他路径 (benefit/template, benefit/management, statistics/inventory 等) 走 router-view
+const isRootPath = computed(() => {
+  const fullPath = route.path
+  // /marketing 或 /marketing/ 视为根路径 (hash 模式: /mkt/#/marketing)
+  return fullPath === '/marketing' || fullPath === '/marketing/' || fullPath === '/mkt/marketing' || fullPath === '/mkt/marketing/'
+})
 
 const modules = [
   {
@@ -60,7 +74,7 @@ const modules = [
   {
     key: 'coupon',
     title: '优惠券',
-    path: '/marketing/coupon/management',
+    path: "/marketing/benefit/management",
     icon: IconTag,
     color: 'red',
     tag: '核心',
