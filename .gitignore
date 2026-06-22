@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,15 +7,41 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn-integrity
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+out/
 *.local
 
-# Editor directories and files
+# Vue / Vite
+.vite/
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Test outputs
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+reports/
+python-reports/
+jscpd-all/
+jscpd-risk/
+
+# Editor / IDE
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,7 +49,53 @@ dist-ssr
 *.sln
 *.sw?
 
-# Trae
-.trae/tmp
-.trae/worktree-*
-data_community
+# AI IDE tools
+.trae/
+.aider*
+.cursor/
+
+# Vercel
+.vercel/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Demo / Debug artifacts (root-level 散落文件)
+browser-test-*.html
+debug-*.json
+debug_*.js
+test_*.js
+test_*.cjs
+test-*.js
+test-*.cjs
+test-*.md
+verify-*.js
+comprehensive-*.js
+update-imports.js
+if patch fails*
+log-server.js
+
+# Reports / Plans (中文报告散落)
+*报告*.md
+*方案*.md
+*完成报告*.md
+*修复报告*.md
+*修复方案*.md
+*排查方案*.md
+*问题评估*.md
+*评估报告*.md
+*还原*.md
+*操作指南*.md
+*操作完成*.md
+*总结*.md
+*清单*.md
+*需求*.md
+*表格*.md
+
+# Sub-projects (不应在此 monorepo)
+data_community/
+
+# Backup
+.backup-archive/
