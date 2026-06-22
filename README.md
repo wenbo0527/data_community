@@ -1,164 +1,99 @@
 # Fintech Data Portal
 
-**数据产品经理作品集 | 金融科技**
+> 企业级数据门户 Demo · 文博作品集
 
-> 🎯 定位：企业级数据门户Demo，覆盖数据门户 + 营销套件 + 归因分析完整链路
+[![Vue](https://img.shields.io/badge/Vue-3-4FC08D)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6)]()
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-[![Vue 3](https://img.shields.io/badge/Vue%203-✓-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-✓-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Arco Design](https://img.shields.io/badge/Arco%20Design-✓-0079FF?style=flat-square)](https://arco.design/)
+## 📌 这是什么
 
----
+面向金融业务团队的**数据资产一体化门户**，覆盖**数据发现 → 数据管理 → 数据探索 → ChatBI 问数**完整闭环。
 
-## 📦 核心模块
+解决：
+- 找数难：分散在多个系统，找一个指标要问 5 个人
+- 口径乱：同一指标 5 个定义，"活跃用户"数据打架
+- 用数门槛高：业务方自助分析能力弱，依赖数据团队取数
+- 复用率低：同样指标被重复计算，资产浪费
 
-### 1. 数据门户
-企业级数据资产可视化入口，提供数据架构图、节点管理、资产概览等功能。
+## ✨ 核心能力
 
-| 功能 | 说明 |
-|------|------|
-| 架构图可视化 | 交互式数据架构图，支持拖拽和缩放 |
-| 节点管理 | 数据节点增删改查 |
-| 资产概览 | 数据资产分布与统计 |
+| 模块 | 能力 |
+|:---|:---|
+| **数据发现** | 语义搜索、标签推荐、血缘关系、使用排行 |
+| **数据管理** | 元数据管理、指标统一、权限控制、质量监控 |
+| **数据探索** | 统一查询、Jupyter Hub、智慧报表、ChatBI |
+| **画布编排** | 营销策略画布（DAG）、预览线、AB 实验 |
 
-### 2. 营销套件
-完整的营销能力平台，支持权益管理、客群分群、营销编排、多渠道触达。
+## 🏗️ 技术栈
 
-| 功能 | 说明 |
-|------|------|
-| 权益中心 | 优惠券、积分、卡券管理 |
-| 客群管理 | RFM/CLV/Churn智能分群 |
-| 营销画布 | 可视化流程编排 |
-| 触达管理 | App Push / SMS 多渠道触达 |
-
-### 3. 归因分析
-多维度营销归因分析，量化渠道效果，优化预算分配。
-
-| 模型 | 适用场景 |
-|------|---------|
-| First-click | 强调拉新，归因起点 |
-| Last-click | 强调转化，归因终点 |
-| Linear | 均衡权重，平均分配 |
-
-### 4. 风控数据
-外数生命周期管理与离线模型回溯。
-
-| 功能 | 说明 |
-|------|------|
-| 外数生命周期 | 外部数据全流程管理 |
-| 离线模型 | 模型回溯与验证 |
-
-### 5. 数据管理
-元数据管理与数据标准规范。
-
-| 功能 | 说明 |
-|------|------|
-| 元数据管理 | 数据血缘追踪 |
-| 数据标准 | 规范定义与管理 |
-| 资产目录 | 数据资产清单 |
-
----
-
-## 🏗️ 技术架构
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                      前端展示层                          │
-├─────────────────────────────────────────────────────────┤
-│  Vue 3 + TypeScript + Vite + Arco Design + X6 Graph    │
-└─────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                      数据模拟层                          │
-├─────────────────────────────────────────────────────────┤
-│  Mock.js │ LocalStorage │ IndexedDB                    │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🛠️ 技术栈
-
-| 类别 | 技术 |
-|------|------|
-| 框架 | Vue 3 (Composition API) |
-| 构建 | Vite |
-| 语言 | TypeScript |
-| UI组件 | Arco Design |
-| 图表/图形 | X6 Graph |
-| 状态管理 | Pinia |
-| 路由 | Vue Router |
-
----
-
-## 🚀 快速开始
-
-```bash
-# 克隆项目
-git clone https://github.com/wenbo0527/fintech-data-portal.git
-cd fintech-data-portal
-
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 访问 http://localhost:3000
-```
-
----
+- **前端**：Vue 3 + TypeScript + Vite + Pinia + Arco Design
+- **画布**：自研 DAG 编辑器（支持 30+ 策略并行）
+- **后端**：Supabase（Postgres + Auth）
+- **测试**：Vitest + Playwright
+- **包管理**：pnpm workspace（monorepo）
 
 ## 📂 目录结构
 
 ```
-data_community/
-├── apps/                    # 子应用模块
-│   ├── mkt-app/            # 营销套件
-│   ├── risk-app/           # 风控数据
-│   ├── dex-app/            # 数据探索
-│   ├── dmt-app/            # 数据管理
-│   ├── admin-app/          # 系统管理
-│   ├── touch/              # 营销画布
-│   └── horizontal-canvas/  # 画布引擎
-├── data_community/         # 主门户
-│   └── src/                # 核心源码
-├── src/                    # 主应用入口
-├── public/                 # 静态资源
-└── README.md
+fintech-data-portal/
+├── apps/                      # 子应用（monorepo 入口）
+├── packages/                  # 共享包
+├── src/                       # 主应用源码
+│   ├── api/                   # API 调用层
+│   ├── assets/                # 静态资源
+│   ├── components/            # 通用组件
+│   ├── composables/           # 组合式函数
+│   ├── views/                 # 页面级组件
+│   └── router/                # 路由配置
+├── scripts/                   # 工具脚本
+├── tests/                     # 单元测试
+├── vite-plugins/              # 自定义 Vite 插件
+├── public/                    # 公共静态资源
+├── docs/                      # 项目文档
+├── .github/                   # GitHub Actions 配置
+└── supabase/                  # 数据库迁移 + Edge Functions
 ```
 
----
+## 🚀 快速开始
 
-## 📊 核心功能演示
+```bash
+# 1. 克隆
+git clone https://github.com/wenbo0527/fintech-data-portal.git
 
-### 数据门户首页
-![数据门户](public/screenshots/portal.png)
+# 2. 安装依赖（pnpm workspace）
+pnpm install
 
-### 营销画布
-![营销画布](public/screenshots/canvas.png)
+# 3. 启动开发服务
+pnpm dev
 
-### 客群分群
-![客群分群](public/screenshots/audience.png)
+# 4. 访问 http://localhost:5173
+```
 
----
+## 📊 量化成果
 
-## ⚠️ 声明
+| 指标 | 数值 |
+|:---|:---|
+| 数据表统一管理 | 3000+ 张 |
+| 指标统一口径 | 100+ 个 |
+| 变量 / 特征 | 10000+ 个 |
+| 同时运行策略 | 30+ 个 |
+| 链路吞吐 | 百万级/小时 |
+| 配置周期 | 周级 → 小时级 |
 
-所有数据均为**合成/脱敏数据**，仅用于Portfolio展示，不涉及真实用户信息。
+## 📝 相关文档
 
----
+- [`docs/数据标准与元数据管理功能说明.md`](docs/数据标准与元数据管理功能说明.md)
+- [`docs/详情页信息清单.md`](docs/详情页信息清单.md)
 
 ## 👤 作者
 
-**wenbo**
-
-数据产品经理 | 数据门户 | 营销套件 | 归因分析
-
+**文博** · AI+ 数据产品负责人
 - GitHub: [@wenbo0527](https://github.com/wenbo0527)
-- Portfolio: [data-community-two.vercel.app](https://data-community-two.vercel.app)
+- 知乎: [@wenbo-67-38](https://www.zhihu.com/people/wenbo-67-38)
+- Email: wzhai0527@163.com
 
 ---
 
-*⭐ Stars and forks are welcome!*
+⭐ Star 本仓库如果对你的工作有帮助！
