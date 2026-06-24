@@ -574,7 +574,7 @@ const mountTemplateColumns = [
     render: ({ record }) => record.valid_from && record.valid_to
       ? `${record.valid_from} 至 ${record.valid_to}` : '—' },
   { title: '折扣', dataIndex: 'discount_value', width: 80, align: 'center',
-    render: ({ record }) => record.discount_value ? `${(record.discount_value * 10).toFixed(1)} 折` : '—' },
+    render: ({ record }) => record.discount_value ? `${record.discount_value * 10} 折` : '—' },
 ]
 
 /** 从 pricedTemplateMockData 按 product_id + status='online' + 有效期内 过滤 */

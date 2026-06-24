@@ -166,7 +166,7 @@ const getBenefitValue = () => {
     return '100元' // 默认值
   } else if (displayData.value.type === 'PRICED_DISCOUNT') {
     if (displayData.value.discount_value) {
-      return `${(displayData.value.discount_value / 10).toFixed(1)}折`
+      return `${Math.round(displayData.value.discount_value / 10)}折`
     }
     return displayData.value.product_name || '临价折扣'
   }
@@ -208,7 +208,7 @@ const getDisplayTitle = () => {
     return '满减优惠券'
   } else if (displayData.value.type === 'PRICED_DISCOUNT') {
     const discount = displayData.value.discount_value
-      ? `${(displayData.value.discount_value / 10).toFixed(1)}折`
+      ? `${Math.round(displayData.value.discount_value / 10)}折`
       : ''
     return [displayData.value.product_name, discount].filter(Boolean).join(' · ') || '临价折扣券'
   }

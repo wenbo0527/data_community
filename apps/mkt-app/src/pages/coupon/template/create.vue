@@ -71,7 +71,7 @@
           </a-grid-item>
         </a-grid>
 
-        <a-form-item field="validityPeriodType" label="有效期" required>
+        <a-form-item v-if="formData.type !== 'PRICED_DISCOUNT'" field="validityPeriodType" label="有效期" required>
           <a-radio-group v-model="formData.validityPeriodType">
             <a-radio value="limited">有期限</a-radio>
             <a-radio value="unlimited">无期限</a-radio>
