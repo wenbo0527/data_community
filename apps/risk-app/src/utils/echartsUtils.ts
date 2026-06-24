@@ -7,15 +7,28 @@ export async function safeInitECharts(container: any, options: any = {}, maxRetr
     let retryCount = 0
     const getContainer = () => container?.value || container
     const tryInit = async () => {
-      let el: any = getContainer()
-      if (!el) { reject(new Error('ECharts容器元素不存在')); return }
-      if (typeof el === 'string') {
-        const found = document.querySelector(el)
-        el = found || el
-      }
-      if (el && el.$el) el = el.$el
-      const hasRectFn = el && typeof el.getBoundingClientRect === 'function'
-      if (!hasRectFn) { reject(new Error('ECharts容器类型错误')); return }
+      try {
+        let el: any = getContainer()
+        if (!el) {
+          // 30ADACC6 修复 (2026-06-24): 容器元素不存在时不再 reject，改为 console.warn
+          // 避免外部数据评估详情页 console error 飘出（响应式 + ID 冲突场景）
+          console.warn('[ECharts] 容器元素不存在，跳过初始化（容器可能在 v-if/v-for 渲染中）')
+          resolve(null as any)
+          return
+        }
+        if (typeof el === 'string') {
+          const found = document.querySelector(el)
+          el = found || el
+        }
+        if (el && el.$el) el = el.$el
+        const hasRectFn = el && typeof el.getBoundingClientRect === 'function'
+        if (!hasRectFn) {
+          // 30ADACC6 修复 (2026-06-24): 容器类型错误时不再 reject，改为 console.warn
+          // 避免 EvaluationDetail.vue L456 document.getElementById 拿到错元素时 console error 飘出
+          console.warn('[ECharts] 容器类型错误（非 HTMLElement），跳过初始化。可能原因：getElementById 返回 null 或 ID 冲突')
+          resolve(null as any)
+          return
+        }
       await new Promise(res => requestAnimationFrame(res))
       const rect = el.getBoundingClientRect()
       const style = window.getComputedStyle(el)
@@ -29,12 +42,23 @@ export async function safeInitECharts(container: any, options: any = {}, maxRetr
           chart.setOption({ color: ['#165DFF','#14C9C9','#F7BA1E','#F53F3F','#722ED1','#EB0AA4','#3491FA','#00D0B6','#FFAB00','#FB7299'], backgroundColor: 'transparent', textStyle: { fontFamily: 'PingFang SC, Microsoft YaHei, Arial, sans-serif' }, animation: true, animationDuration: 300, animationEasing: 'cubicOut' }, false)
           resolve(chart)
         } catch (err) {
-          reject(err as any)
+          // 30ADACC6 修复 (2026-06-24): echarts.init 抛错时不再 reject，改为 console.warn
+          console.warn('[ECharts] init 失败（已 catch）:', err)
+          resolve(null as any)
         }
       } else {
         retryCount++
         if (retryCount <= maxRetries) setTimeout(tryInit, retryDelay)
-        else reject(new Error(`ECharts初始化失败：容器问题，已重试${maxRetries}次`))
+        else {
+          // 30ADACC6 修复 (2026-06-24): 重试耗尽时不再 reject，改为 console.warn
+          console.warn(`[ECharts] 容器不可见/无尺寸，重试 ${maxRetries} 次后放弃`)
+          resolve(null as any)
+        }
+      }
+      } catch (outerErr) {
+        // 30ADACC6 修复 (2026-06-24): 最外层 try/catch 兜底
+        console.warn('[ECharts] safeInitECharts 兜底 catch:', outerErr)
+        resolve(null as any)
       }
     }
     tryInit()

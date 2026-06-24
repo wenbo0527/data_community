@@ -457,10 +457,16 @@ const renderCharts = async () => {
         if (chartDom) {
           try {
             const myChart = await safeInitECharts(chartDom);
-            const option = getChartOption(chart);
-            myChart.setOption(option);
+            if (myChart) {
+              const option = getChartOption(chart);
+              myChart.setOption(option);
+            } else {
+              // 30ADACC6 修复 (2026-06-24): safeInitECharts 返回 null 时静默跳过（容器问题已由工具函数 console.warn）
+              console.debug(`[EvaluationDetail] 跳过 chart ${module.id}-${chart.type} 渲染（容器不可用）`);
+            }
           } catch (error) {
-            console.error('图表初始化失败:', error);
+            // 30ADACC6 修复 (2026-06-24): console.error 改为 console.warn
+            console.warn('图表初始化失败:', error);
           }
         }
       }
