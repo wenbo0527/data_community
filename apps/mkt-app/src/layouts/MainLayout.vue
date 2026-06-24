@@ -103,8 +103,8 @@ const benefitMenus = [
     { key: '/benefit/statistics',  title: '库存查询' },
     { key: '/benefit/logs',       title: '权益日志' },
   ]},
-  // 父4 👁️ 透视 - 3 子 (v1.2.9 修复: 移走 - 客群归客群中心)
-  // v1.2.9 修复: 删除"父4 透视"组 (3 子菜单 应归 customerMenus 客群中心)
+  // 父4 👁️ 透视 - 3 子 (v1.2.9 修复: 已删父4 透视组，3 children 已迁 customerMenus "人群管理"父 (v1.2.9-B 闭环 2026-06-24))
+  // v1.2.9 修复: 删除"父4 透视"组 (3 子菜单 应归 customerMenus 客群中心) — 2026-06-24 PM 决策 B 简化版闭环
   // 父5 📋 规则 - 1 子
   { key: 'benefit-group-rules', title: '规则', children: [
     { key: '/marketing/global/rules', title: '全局规则' },
