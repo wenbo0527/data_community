@@ -2,9 +2,11 @@
 
 const tasks = []
 let idSeq = 1;
+const operationLogs = []
+let logIdSeq = 1;
 
 // 预置一个示例任务，便于直接查看详情演示
-(function seed() {
+;(function seed() {
   const now = new Date().toISOString()
   const seedOutputs = [
     { name: 'score', type: 'number', description: '风险评分' },
@@ -81,20 +83,21 @@ let idSeq = 1;
 export function createBacktrack(data) {
   const id = idSeq++
   const now = new Date().toISOString()
+  const status = data.status || 'running'
   // 构造样例结果
   const outputs = Array.isArray(data.outputs) ? data.outputs : []
   const sample = (idx) => ({ idx, output: Object.fromEntries(outputs.map(o => [o.name, o.type === 'number' ? Math.round(Math.random()*100)/100 : 'ok'])) })
   const task = {
     id,
-    status: 'running',
-    progress: [
+    status,
+    progress: status === 'draft' ? [] : [
       { key: 'init', name: '初始化', status: 'done', time: now },
       { key: 'pull', name: '拉取样本', status: 'running', time: now },
       { key: 'map', name: '参数匹配', status: 'pending', time: '' },
       { key: 'execute', name: '执行模型', status: 'pending', time: '' },
       { key: 'finish', name: '完成', status: 'pending', time: '' }
     ],
-    result: {
+    result: status === 'draft' ? null : {
       total: 3,
       success: 3,
       failed: 0,
@@ -132,6 +135,10 @@ export function getBacktrackDetail(id) {
 export function updateBacktrackProgress(id, patch) {
   const t = tasks.find(x => x.id === parseInt(id))
   if (!t) return null
+
+  if (patch.status) {
+    t.status = patch.status
+  }
 
   // 更新进度
   if (patch.progress) {
@@ -171,9 +178,28 @@ export function updateBacktrackProgress(id, patch) {
   return t
 }
 
+export function logOperation(data) {
+  const log = {
+    id: logIdSeq++,
+    backtrackId: data.backtrackId,
+    operation: data.operation,
+    operator: data.operator || '当前用户',
+    detail: data.detail || '',
+    createTime: new Date().toISOString()
+  }
+  operationLogs.unshift(log)
+  return log
+}
+
+export function getOperationLogs(backtrackId) {
+  return operationLogs.filter(l => String(l.backtrackId) === String(backtrackId))
+}
+
 export default {
   createBacktrack,
   getBacktracks,
   getBacktrackDetail,
-  updateBacktrackProgress
+  updateBacktrackProgress,
+  logOperation,
+  getOperationLogs
 }

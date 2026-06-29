@@ -236,6 +236,7 @@ export function createModel(modelData) {
     code: modelData.code,
     type: modelData.type || MODEL_TYPES.CLASSIFICATION,
     framework: modelData.framework || FRAMEWORKS.SKLEARN,
+    variableVersion: modelData.variableVersion || 'new',
     versionNumber: 1,
     version: 1,
     versions: [1],
