@@ -308,6 +308,9 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.19(@types/node@22.19.7)(less@4.5.1)(sass-embedded@1.90.0)(sass@1.97.3)(terser@5.46.0)
+      vite-plugin-qiankun:
+        specifier: ^1.0.15
+        version: 1.0.15(typescript@5.3.3)(vite@5.4.19(@types/node@22.19.7)(less@4.5.1)(sass-embedded@1.90.0)(sass@1.97.3)(terser@5.46.0))
       vue-tsc:
         specifier: ^1.8.0
         version: 1.8.27(typescript@5.3.3)
@@ -583,9 +586,6 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.19(@types/node@22.19.7)(less@4.5.1)(sass-embedded@1.90.0)(sass@1.97.3)(terser@5.46.0)
-      vite-plugin-qiankun:
-        specifier: ^1.0.15
-        version: 1.0.15(typescript@5.3.3)(vite@5.4.19(@types/node@22.19.7)(less@4.5.1)(sass-embedded@1.90.0)(sass@1.97.3)(terser@5.46.0))
 
   apps/touch:
     dependencies:
@@ -615,11 +615,11 @@ importers:
   packages/lineage-graph:
     dependencies:
       '@antv/x6':
-        specifier: '>=1.35.0'
-        version: 2.19.2
+        specifier: ^1.35.0
+        version: 1.35.1
       '@antv/x6-vue-shape':
         specifier: '>=3.0.0'
-        version: 3.0.2(@antv/x6@2.19.2)(vue@3.5.19(typescript@5.3.3))
+        version: 3.0.2(@antv/x6@1.35.1)(vue@3.5.19(typescript@5.3.3))
       '@arco-design/web-vue':
         specifier: '>=2.55.0'
         version: 2.57.0(vue@3.5.19(typescript@5.3.3))
@@ -5463,18 +5463,12 @@ snapshots:
       vue: 3.5.19(typescript@5.3.3)
       vue-demi: 0.14.10(vue@3.5.19(typescript@5.3.3))
 
-  '@antv/x6-vue-shape@3.0.2(@antv/x6@2.19.2)(vue@3.5.19(typescript@5.3.3))':
-    dependencies:
-      '@antv/x6': 2.19.2
-      vue: 3.5.19(typescript@5.3.3)
-      vue-demi: 0.14.10(vue@3.5.19(typescript@5.3.3))
-
   '@antv/x6@1.35.1':
     dependencies:
       csstype: 3.1.3
       jquery: 3.7.1
       jquery-mousewheel: 3.2.2
-      lodash-es: 4.17.21
+      lodash-es: 4.17.23
       mousetrap: 1.6.5
       utility-types: 3.11.0
 
