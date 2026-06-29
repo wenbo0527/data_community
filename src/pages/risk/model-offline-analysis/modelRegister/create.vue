@@ -47,6 +47,12 @@
                 </a-form-item>
               </a-col>
             </a-row>
+            <a-form-item field="variableVersion" label="变量版本" required>
+              <a-radio-group v-model="form.variableVersion" type="button">
+                <a-radio value="new">新变量模型</a-radio>
+                <a-radio value="old">老变量模型</a-radio>
+              </a-radio-group>
+            </a-form-item>
             <a-form-item field="description" label="描述">
               <a-textarea v-model="form.description" placeholder="请输入模型描述" :max-length="300" show-word-limit />
             </a-form-item>
@@ -195,6 +201,7 @@ const form = ref({
   code: '',
   type: '',
   version: '',
+  variableVersion: 'new',
   description: '',
   inputParams: [],
   outputParams: [],
@@ -205,7 +212,8 @@ const rules = {
   name: [{ required: true, message: '请输入模型名称' }],
   code: [{ required: true, message: '请输入模型编码' }],
   type: [{ required: true, message: '请选择模型类型' }],
-  version: [{ required: true, message: '请输入版本号' }]
+  version: [{ required: true, message: '请输入版本号' }],
+  variableVersion: [{ required: true, message: '请选择变量版本' }]
 }
 
 const featureOptions = ref([])

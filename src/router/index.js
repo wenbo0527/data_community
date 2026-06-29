@@ -225,6 +225,12 @@ const router = createRouter({
     ...offlineModelRoutes,
     ...externalDataRoutes,
     {
+      path: '/403',
+      name: 'Forbidden',
+      component: () => import('../pages/error/403.vue'),
+      meta: { title: '无权限' }
+    },
+    {
       path: '/external-data-archive',
       redirect: '/external-data/archive'
     },
@@ -742,7 +748,7 @@ const router = createRouter({
 
 // 增强的全局前置守卫
 router.beforeEach(async (to, from, next) => {
-  console.log(`🚀 [路由导航] ${from.path || '/'} → ${to.path}`)
+  if (import.meta.env.DEV) console.log(`🚀 [路由导航] ${from.path || '/'} → ${to.path}`)
   
   try {
     const userStore = useUserStore()
@@ -750,19 +756,19 @@ router.beforeEach(async (to, from, next) => {
     // 设置页面标题
     if (to.meta?.title) {
       document.title = `${to.meta.title} - 数字社区`
-      console.log(`📄 [页面标题] ${to.meta.title}`)
+      if (import.meta.env.DEV) console.log(`📄 [页面标题] ${to.meta.title}`)
     }
     
     // 白名单路由直接通过
     if (ROUTE_GUARD_CONFIG.whiteList.includes(to.path)) {
-      console.log('✅ [路由导航] 白名单路由，直接通过')
+      if (import.meta.env.DEV) console.log('✅ [路由导航] 白名单路由，直接通过')
       next()
       return
     }
     
     // 检查用户登录状态
     if (!userStore.userInfo?.token) {
-      console.log('🔒 [权限检查] 用户未登录，重定向到登录页')
+      if (import.meta.env.DEV) console.log('🔒 [权限检查] 用户未登录，重定向到登录页')
       warning('请先登录')
       next({
         path: ROUTE_GUARD_CONFIG.loginPath,
@@ -773,31 +779,25 @@ router.beforeEach(async (to, from, next) => {
     
     // 检查路由权限
     if (!checkRoutePermission(to, userStore.userInfo)) {
-      console.warn('⚠️ [权限检查] 权限不足，无法访问该页面')
-      console.error('您没有访问该页面的权限')
-      next({ path: ROUTE_GUARD_CONFIG.defaultRedirect })
+      if (import.meta.env.DEV) console.warn('⚠️ [权限检查] 权限不足，无法访问该页面')
+      error('您没有访问该页面的权限')
+      next({ path: '/403', query: { from: to.fullPath } })
       return
     }
     
     // 添加组件加载监控
-    console.log('🔍 Component loading monitor:', {
-      route: to.path,
-      name: to.name,
-      component: to.matched[to.matched.length - 1]?.components?.default?.toString?.() || 'Unknown'
-    })
-    
-    console.log('✅ [路由导航] 权限检查通过')
+    if (import.meta.env.DEV) {
+      console.log('🔍 Component loading monitor:', {
+        route: to.path,
+        name: to.name,
+        component: to.matched[to.matched.length - 1]?.components?.default?.toString?.() || 'Unknown'
+      })
+      console.log('✅ [路由导航] 权限检查通过')
+    }
     next()
   } catch (err) {
-    console.group('❌ [路由守卫错误]')
-    console.error('错误详情:', err)
-    console.error('目标路由:', to)
-    console.error('来源路由:', from)
-    console.error('错误类型:', err.name)
-    console.error('是否语法错误:', err.name === 'SyntaxError')
-    console.error('是否保留字错误:', err.message && err.message.includes('reserved word'))
-    console.groupEnd()
     console.error('页面访问异常')
+    if (import.meta.env.DEV) console.error(err)
     next({ path: ROUTE_GUARD_CONFIG.defaultRedirect })
   }
 })
@@ -809,11 +809,11 @@ router.afterEach((to, from) => {
     const breadcrumb = getBreadcrumb(to.name, to)
     if (breadcrumb.length > 0) {
       // 可以将面包屑信息存储到 store 中供组件使用
-      console.log('Breadcrumb:', breadcrumb)
+      if (import.meta.env.DEV) console.log('Breadcrumb:', breadcrumb)
     }
     
     // 页面访问统计
-    console.log(`Navigation: ${from.path} -> ${to.path}`)
+    if (import.meta.env.DEV) console.log(`Navigation: ${from.path} -> ${to.path}`)
   } catch (err) {
     console.error('After route error:', err)
   }

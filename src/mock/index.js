@@ -60,7 +60,7 @@ function registerMocks() {
 
 // 初始化Mock服务
 export function initMockService() {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     registerMocks()
     console.log('Mock服务已启动')
   }

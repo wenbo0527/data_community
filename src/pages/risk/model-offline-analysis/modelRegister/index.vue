@@ -86,6 +86,12 @@
               {{ getTypeLabel(record.type) }}
             </a-tag>
           </template>
+
+          <template #variableVersion="{ record }">
+            <a-tag :color="(record.variableVersion || 'new') === 'old' ? 'orange' : 'green'">
+              {{ (record.variableVersion || 'new') === 'old' ? '老变量模型' : '新变量模型' }}
+            </a-tag>
+          </template>
           
           
           
@@ -196,6 +202,12 @@ const columns = [
     title: '模型类型',
     dataIndex: 'type',
     slotName: 'type',
+    width: 120
+  },
+  {
+    title: '变量版本',
+    dataIndex: 'variableVersion',
+    slotName: 'variableVersion',
     width: 120
   },
   

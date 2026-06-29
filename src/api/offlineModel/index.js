@@ -130,6 +130,16 @@ export const backtrackAPI = {
   stopBacktrack: (id) => {
     const result = mockAPI.backtrack.updateBacktrackProgress(id, { status: 'stopped' })
     return Promise.resolve(mockAPI.createResponse(result))
+  },
+
+  logOperation: (data) => {
+    const result = mockAPI.backtrack.logOperation(data)
+    return Promise.resolve(mockAPI.createResponse(result))
+  },
+
+  getOperationLogs: (backtrackId) => {
+    const result = mockAPI.backtrack.getOperationLogs(backtrackId)
+    return Promise.resolve(mockAPI.createResponse(result))
   }
 }
 

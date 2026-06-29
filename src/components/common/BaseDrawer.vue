@@ -10,6 +10,7 @@
     :placement="placement"
     :closable="closable"
     :mask-closable="maskClosable"
+    :esc-to-close="true"
     @cancel="handleCancel"
     @close="handleCancel"
   >
@@ -80,7 +81,7 @@ const props = defineProps({
   },
   width: {
     type: String,
-    default: '520px'
+    default: 'min(640px, 90vw)'
   },
   placement: {
     type: String,
@@ -136,7 +137,7 @@ const props = defineProps({
   // 调试选项
   showDebugButton: {
     type: Boolean,
-    default: process.env.NODE_ENV === 'development'
+    default: import.meta.env.DEV
   }
 })
 
@@ -177,11 +178,11 @@ const handleDebugSubmit = () => {
 }
 
 /* 表单样式 */
-:deep(.ant-form-item) {
+:deep(.arco-form-item) {
   margin-bottom: 16px;
 }
 
-:deep(.ant-form-item-label) {
+:deep(.arco-form-item-label) {
   font-weight: 500;
 }
 

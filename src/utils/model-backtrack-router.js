@@ -7,16 +7,12 @@
  * 模型回溯路由路径常量
  */
 export const MODEL_BACKTRACK_ROUTES = {
-  // 离线模块基础路径
-  BASE: '/offline-model/model-backtrack',
-  // 列表页
-  LIST: '/offline-model/model-backtrack',
-  // 创建页
-  CREATE: '/offline-model/model-backtrack/create',
-  // 详情页
-  DETAIL: '/offline-model/model-backtrack/detail',
-  // 报告页（详情页的报告标签）
-  REPORT: '/offline-model/model-backtrack/detail'
+  OFFLINE_LIST: '/offline-model/model-backtrack',
+  OFFLINE_CREATE: '/offline-model/model-backtrack/create',
+  OFFLINE_DETAIL: '/offline-model/model-backtrack/detail',
+  RISK_LIST: '/risk/model-offline-analysis/model-backtrack',
+  RISK_CREATE: '/risk/model-offline-analysis/model-backtrack/create',
+  RISK_DETAIL: '/risk/model-offline-analysis/model-backtrack/detail'
 }
 
 /**
@@ -28,7 +24,8 @@ export const MODEL_BACKTRACK_QUERY = {
   // 跳转来源：risk（风险域）| offline（离线模块）
   SOURCE: 'source',
   // 默认标签页：config | progress | result | report
-  TAB: 'tab'
+  TAB: 'tab',
+  COPY_FROM: 'copyFrom'
 }
 
 /**
@@ -62,7 +59,7 @@ export function navigateToBacktrackList(router, options = {}) {
   }
   
   router.push({
-    path: MODEL_BACKTRACK_ROUTES.LIST,
+    path: options.source === 'risk' ? MODEL_BACKTRACK_ROUTES.RISK_LIST : MODEL_BACKTRACK_ROUTES.OFFLINE_LIST,
     query
   })
 }
@@ -82,9 +79,12 @@ export function navigateToBacktrackCreate(router, options = {}) {
   if (options.source) {
     query[MODEL_BACKTRACK_QUERY.SOURCE] = options.source
   }
+  if (options.copyFrom) {
+    query[MODEL_BACKTRACK_QUERY.COPY_FROM] = options.copyFrom
+  }
   
   router.push({
-    path: MODEL_BACKTRACK_ROUTES.CREATE,
+    path: options.source === 'risk' ? MODEL_BACKTRACK_ROUTES.RISK_CREATE : MODEL_BACKTRACK_ROUTES.OFFLINE_CREATE,
     query
   })
 }
@@ -107,7 +107,7 @@ export function navigateToBacktrackDetail(router, id, options = {}) {
   }
   
   router.push({
-    path: `${MODEL_BACKTRACK_ROUTES.DETAIL}/${id}`,
+    path: `${options.source === 'risk' ? MODEL_BACKTRACK_ROUTES.RISK_DETAIL : MODEL_BACKTRACK_ROUTES.OFFLINE_DETAIL}/${id}`,
     query
   })
 }
@@ -135,7 +135,8 @@ export function getBacktrackRouteParams(route) {
   return {
     mode: route.query[MODEL_BACKTRACK_QUERY.MODE],
     source: route.query[MODEL_BACKTRACK_QUERY.SOURCE],
-    tab: route.query[MODEL_BACKTRACK_QUERY.TAB]
+    tab: route.query[MODEL_BACKTRACK_QUERY.TAB],
+    copyFrom: route.query[MODEL_BACKTRACK_QUERY.COPY_FROM]
   }
 }
 

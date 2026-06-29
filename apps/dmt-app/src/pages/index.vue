@@ -39,7 +39,6 @@ import {
   IconSettings,
   IconBranch,
   IconFile,
-  IconTable,
   IconCheckCircle,
   IconSearch
 } from '@arco-design/web-vue/es/icon'
