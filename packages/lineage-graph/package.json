@@ -1,0 +1,17 @@
+{
+  "name": "@app/lineage-graph",
+  "version": "1.0.0",
+  "description": "血缘图组件（X6）",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "vue": ">=3.0.0",
+    "@arco-design/web-vue": ">=2.55.0",
+    "@antv/x6": ">=1.35.0",
+    "@antv/x6-vue-shape": ">=3.0.0",
+    "@dagrejs/dagre": ">=1.1.8"
+  }
+}
