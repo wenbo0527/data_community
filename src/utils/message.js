@@ -36,7 +36,7 @@ export const error = (content, config = {}) => {
   return Message.error({
     content,
     ...defaultConfig,
-    duration: 4000, // 错误消息显示时间稍长
+    duration: 6000,
     ...config
   })
 }
@@ -104,6 +104,9 @@ export default {
  * 业务场景快捷方法
  */
 export const businessMessage = {
+  error: (content, config = {}) => error(content, config),
+  warning: (content, config = {}) => warning(content, config),
+  info: (content, config = {}) => info(content, config),
   // 操作成功
   operationSuccess: (operation = '操作') => success(`${operation}成功`),
   

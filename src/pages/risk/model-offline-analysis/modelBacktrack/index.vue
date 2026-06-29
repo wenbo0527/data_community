@@ -51,8 +51,18 @@
           @page-change="handlePageChange"
           @selection-change="handleSelectionChange"
         >
+          <template #taskName="{ record }">
+            <span>{{ record.taskName || '-' }}</span>
+          </template>
+
           <template #modelName="{ record }">
             <a-link @click="handleViewModel(record)">{{ record.modelName }}</a-link>
+          </template>
+
+          <template #variableVersion="{ record }">
+            <a-tag :color="(record.variableVersion || 'new') === 'old' ? 'orange' : 'green'">
+              {{ (record.variableVersion || 'new') === 'old' ? '老变量模型' : '新变量模型' }}
+            </a-tag>
           </template>
           
           <template #type="{ record }">
@@ -73,6 +83,7 @@
           
           <template #actions="{ record }">
             <a-space>
+              <a-button type="text" size="small" @click="handleCopy(record)">复制</a-button>
               <a-button type="text" size="small" @click="handleViewDetail(record)">
                 查看详情
               </a-button>
@@ -98,16 +109,14 @@ import PageHeader from '../components/PageHeader.vue'
 import FilterBar from '../components/FilterBar.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useTaskStore } from '@/store/modules/model-offline'
 import { Message } from '@arco-design/web-vue'
+import { backtrackAPI } from '@/api/offlineModel'
 import { 
   navigateToBacktrackCreate, 
   navigateToBacktrackDetail
 } from '@/utils/model-backtrack-router'
-import { getCommonColumns } from '../components/table-columns'
 
 const router = useRouter()
-const store = useTaskStore()
 
 // 响应式数据
 const loading = ref(false)
@@ -138,30 +147,22 @@ const pagination = reactive({
   showPageSize: true
 })
 
-const baseColumns = getCommonColumns({
-  nameTitle: '模型名称',
-  nameKey: 'modelName',
-  nameSlot: 'modelName',
-  typeTitle: '回溯类型',
-  typeKey: 'type',
-  typeSlot: 'type',
-  statusTitle: '状态',
-  statusKey: 'status',
-  statusSlot: 'status',
-  createTimeTitle: '创建时间',
-  createTimeKey: 'createTime',
-  createTimeSlot: 'createTime'
-})
 const columns = [
-  ...baseColumns.slice(0, 2),
+  { title: '任务名称', dataIndex: 'taskName', slotName: 'taskName', width: 200 },
+  { title: '模型名称', dataIndex: 'modelName', slotName: 'modelName', width: 200 },
+  { title: '变量版本', dataIndex: 'variableVersion', slotName: 'variableVersion', width: 120 },
+  { title: '回溯类型', dataIndex: 'type', slotName: 'type', width: 120 },
   { title: '回溯版本', dataIndex: 'version', width: 100 },
   { title: '开始时间', dataIndex: 'startTime', width: 180 },
   { title: '结束时间', dataIndex: 'endTime', width: 180 },
-  ...baseColumns.slice(2)
+  { title: '状态', dataIndex: 'status', slotName: 'status', width: 100 },
+  { title: '创建时间', dataIndex: 'createTime', slotName: 'createTime', width: 180 },
+  { title: '操作', slotName: 'actions', width: 220, fixed: 'right' }
 ]
 
 // 计算属性
-const backtrackList = computed(() => store.backtracks)
+const dataSource = ref([])
+const backtrackList = computed(() => dataSource.value)
 
 // 生命周期
 onMounted(() => {
@@ -172,41 +173,21 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取数据
-    // await store.fetchBacktracks({
-    //   ...filterForm,
-    //   page: pagination.current,
-    //   pageSize: pagination.pageSize
-    // })
-    
-    // 模拟数据
-    const mockData = [
-      {
-        id: 1,
-        modelName: '信用评分模型',
-        type: 'single',
-        version: 'v1.0.0',
-        startTime: '2024-01-15 10:30:00',
-        endTime: '2024-01-15 12:30:00',
-        status: 'completed',
-        creator: '张三',
-        createTime: '2024-01-15 10:30:00'
-      },
-      {
-        id: 2,
-        modelName: '风险预测模型',
-        type: 'periodic',
-        version: 'v1.0.1',
-        startTime: '2024-01-16 14:20:00',
-        endTime: '',
-        status: 'running',
-        creator: '李四',
-        createTime: '2024-01-16 14:20:00'
-      }
-    ]
-    
-    store.backtracks = mockData
-    pagination.total = mockData.length
+    const res = await backtrackAPI.getBacktracks({ page: pagination.current, pageSize: pagination.pageSize })
+    const list = res.data?.data || []
+    dataSource.value = list.map(t => ({
+      id: t.id,
+      taskName: t.config?.taskName || '',
+      modelName: t.config?.modelCode || t.config?.serviceName || '-',
+      variableVersion: t.config?.variableVersion || 'new',
+      type: t.config?.mode || 'single',
+      version: t.config?.version || '-',
+      startTime: t.createTime,
+      endTime: t.updateTime,
+      status: t.status,
+      createTime: t.createTime
+    }))
+    pagination.total = res.data?.total || dataSource.value.length
   } catch (error) {
     Message.error('加载数据失败')
   } finally {
@@ -249,23 +230,44 @@ const handleCreateBacktrack = (mode) => {
  
 
 const handleViewModel = (record) => {
-  // 使用统一的路由跳转，保持来源信息
-  router.push({
-    path: `/offline-model/model-register/detail/${record.modelId}`,
-    query: {
-      source: 'risk'
-    }
-  })
+  void record
+  router.push('/risk/model-offline-analysis/model-register')
 }
 
 const handleViewDetail = (record) => {
   navigateToBacktrackDetail(router, record.id, { source: 'risk' })
 }
 
- 
+const handleCopy = async (record) => {
+  try {
+    await backtrackAPI.logOperation({
+      backtrackId: record.id,
+      operation: 'copy',
+      operator: '当前用户',
+      detail: `复制任务 ${record.id}`
+    })
+  } catch (e) {
+    Message.warning('操作日志记录失败')
+  }
+  navigateToBacktrackCreate(router, {
+    mode: record.type,
+    source: 'risk',
+    copyFrom: record.id
+  })
+}
 
-const handleStop = () => {
-  Message.info('停止回溯功能开发中')
+const handleStop = async (record) => {
+  try {
+    const res = await backtrackAPI.stopBacktrack(record.id)
+    if (res.success) {
+      Message.success('任务已停止')
+      await loadData()
+    } else {
+      Message.error(res.message || '停止失败')
+    }
+  } catch (error) {
+    Message.error('停止任务失败')
+  }
 }
 
 // 工具方法
@@ -287,6 +289,7 @@ const getTypeLabel = (type) => {
 
 const getStatusColor = (status) => {
   const colors = {
+    draft: 'gray',
     running: 'blue',
     completed: 'green',
     failed: 'red',
@@ -297,6 +300,7 @@ const getStatusColor = (status) => {
 
 const getStatusLabel = (status) => {
   const labels = {
+    draft: '草稿',
     running: '运行中',
     completed: '已完成',
     failed: '失败',

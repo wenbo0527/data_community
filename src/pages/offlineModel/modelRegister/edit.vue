@@ -51,6 +51,12 @@
                 </a-form-item>
               </a-col>
             </a-row>
+            <a-form-item field="variableVersion" label="变量版本" required>
+              <a-radio-group v-model="form.variableVersion" type="button">
+                <a-radio value="new">新变量模型</a-radio>
+                <a-radio value="old">老变量模型</a-radio>
+              </a-radio-group>
+            </a-form-item>
             <a-form-item field="description" label="描述">
               <a-textarea v-model="form.description" placeholder="请输入模型描述" :max-length="300" show-word-limit />
             </a-form-item>
@@ -79,14 +85,15 @@ const router = useRouter()
 const id = route.params.id
 const formRef = ref()
 const submitting = ref(false)
-const form = ref({ name: '', code: '', type: '', framework: '', version: '', description: '', parameters: '' })
+const form = ref({ name: '', code: '', type: '', framework: '', version: '', variableVersion: 'new', description: '', parameters: '' })
 
 const rules = {
   name: [{ required: true, message: '请输入模型名称' }],
   code: [{ required: true, message: '请输入模型编码' }],
   type: [{ required: true, message: '请选择模型类型' }],
   framework: [{ required: true, message: '请选择算法框架' }],
-  version: [{ required: true, message: '请输入版本号' }]
+  version: [{ required: true, message: '请输入版本号' }],
+  variableVersion: [{ required: true, message: '请选择变量版本' }]
 }
 
 onMounted(async () => {
@@ -99,6 +106,7 @@ onMounted(async () => {
       type: data?.type || '',
       framework: data?.framework || '',
       version: data?.version || '',
+      variableVersion: data?.variableVersion || 'new',
       description: data?.description || '',
       parameters: JSON.stringify(data?.hyperparameters || {})
     }

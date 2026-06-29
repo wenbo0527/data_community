@@ -26,17 +26,9 @@ if (import.meta.env.DEV) {
 
 // 在开发环境加载 Mock 接口
 if (import.meta.env.DEV) {
-  Promise.all([
-    import('./mock/external-data.ts'),
-    import('./mock/budget.ts'),
-    import('./mock/offlineModel/index.js'),
-    import('./mock/index.js').then(({ initMockService }) => {
-      initMockService()
-      console.info('🧪 变量管理Mock接口已加载')
-    })
-  ])
+  import('./mock/bootstrap.js')
     .then(() => {
-      console.info('🧪 Mock 接口已加载（external-data, budget, offlineModel, variable-management）')
+      console.info('🧪 Mock 接口已加载')
     })
     .catch(err => {
       console.warn('⚠️ Mock 接口加载失败:', err)

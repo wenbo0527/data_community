@@ -16,7 +16,7 @@ export default defineConfig(async () => {
 
   return {
     plugins,
-    server: { host: '0.0.0.0', port: 5181, strictPort: true },
+    server: { host: '0.0.0.0', port: Number(process.env.DMT_PORT || process.env.PORT) || 5181, strictPort: true },
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
     base: '/dmt/'
   }

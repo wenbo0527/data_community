@@ -212,15 +212,15 @@ export const arcoConfig = {
   
   // 模态框默认配置
   modal: {
-    width: 520,
-    maskClosable: false,
+    width: 640,
+    maskClosable: true,
     escToClose: true
   },
   
   // 抽屉默认配置
   drawer: {
-    width: 520,
-    maskClosable: false,
+    width: 640,
+    maskClosable: true,
     escToClose: true
   }
 }

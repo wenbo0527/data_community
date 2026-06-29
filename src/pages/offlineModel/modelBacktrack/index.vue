@@ -125,8 +125,18 @@
           @page-change="handlePageChange"
           @selection-change="handleSelectionChange"
         >
+          <template #taskName="{ record }">
+            <span>{{ record.taskName || '-' }}</span>
+          </template>
+
           <template #modelName="{ record }">
             <a-link @click="handleViewModel(record)">{{ record.modelName }}</a-link>
+          </template>
+
+          <template #variableVersion="{ record }">
+            <a-tag :color="(record.variableVersion || 'new') === 'old' ? 'orange' : 'green'">
+              {{ (record.variableVersion || 'new') === 'old' ? '老变量模型' : '新变量模型' }}
+            </a-tag>
           </template>
           
           <template #type="{ record }">
@@ -157,6 +167,7 @@
           
           <template #actions="{ record }">
             <a-space>
+              <a-button type="text" size="small" @click="handleCopy(record)">复制</a-button>
               <a-button type="text" size="small" @click="handleViewDetail(record)">查看详情</a-button>
               <a-button v-if="record.status === 'running'" type="text" size="small" status="warning" @click="handleStop(record)">停止</a-button>
             </a-space>
@@ -171,11 +182,10 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { backtrackAPI } from '@/api/offlineModel'
-import { Message, Modal } from '@arco-design/web-vue'
+import { Message } from '@arco-design/web-vue'
 import { 
   navigateToBacktrackCreate, 
-  navigateToBacktrackDetail,
-  navigateToBacktrackReport 
+  navigateToBacktrackDetail
 } from '@/utils/model-backtrack-router'
 
 const router = useRouter()
@@ -205,10 +215,22 @@ const pagination = reactive({
 // 表格列配置
 const columns = [
   {
+    title: '任务名称',
+    dataIndex: 'taskName',
+    slotName: 'taskName',
+    width: 200
+  },
+  {
     title: '模型名称',
     dataIndex: 'modelName',
     slotName: 'modelName',
     width: 200
+  },
+  {
+    title: '变量版本',
+    dataIndex: 'variableVersion',
+    slotName: 'variableVersion',
+    width: 120
   },
   {
     title: '回溯类型',
@@ -273,9 +295,11 @@ const loadData = async () => {
     const list = res.data?.data || []
     dataSource.value = list.map(t => ({
       id: t.id,
-      modelName: t.config?.serviceName || '-',
-      type: 'periodic',
-      version: '-',
+      taskName: t.config?.taskName || '',
+      modelName: t.config?.modelCode || t.config?.serviceName || '-',
+      variableVersion: t.config?.variableVersion || 'new',
+      type: t.config?.mode || 'single',
+      version: t.config?.version || '-',
       startTime: t.createTime,
       endTime: t.updateTime,
       status: t.status,
@@ -323,15 +347,31 @@ const handleCreateBacktrack = (mode) => {
   })
 }
 
+const handleCopy = async (record) => {
+  try {
+    await backtrackAPI.logOperation({
+      backtrackId: record.id,
+      operation: 'copy',
+      operator: '当前用户',
+      detail: `复制任务 ${record.id}`
+    })
+  } catch (e) {
+    Message.warning('操作日志记录失败')
+  }
+  navigateToBacktrackCreate(router, {
+    mode: record.type,
+    source: 'offline',
+    copyFrom: record.id
+  })
+}
+
 // 无报告导出
 
 // 无批量操作与表格设置
 
 const handleViewModel = (record) => {
-  router.push({
-    path: `/offline-model/model-register/detail/${record.modelId}`,
-    query: { source: 'offline' }
-  })
+  void record
+  router.push('/offline-model/model-register')
 }
 
 const handleViewDetail = (record) => {
@@ -381,6 +421,7 @@ const getTypeLabel = (type) => {
 
 const getStatusColor = (status) => {
   const colors = {
+    draft: 'gray',
     running: 'blue',
     completed: 'green',
     failed: 'red',
@@ -391,6 +432,7 @@ const getStatusColor = (status) => {
 
 const getStatusLabel = (status) => {
   const labels = {
+    draft: '草稿',
     running: '运行中',
     completed: '已完成',
     failed: '失败',

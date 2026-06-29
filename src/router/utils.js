@@ -1,5 +1,5 @@
 import { ROUTE_NAMES, ROUTE_PATHS, BREADCRUMB_CONFIG, ROUTE_GUARD_CONFIG } from './constants'
-import { businessMessage } from '../utils/message'
+import { error } from '../utils/message'
 
 /**
  * 路由工具函数
@@ -138,7 +138,7 @@ export function navigateTo(router, to, options = {}) {
     }
   } catch (error) {
     console.error('Navigation failed:', error)
-    businessMessage.error('页面跳转失败')
+    error('页面跳转失败')
   }
 }
 

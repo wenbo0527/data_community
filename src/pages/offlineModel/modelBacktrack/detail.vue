@@ -11,12 +11,16 @@
       <a-tab-pane key="config" title="配置信息">
         <a-descriptions :column="2" bordered title="基础信息" size="small">
           <a-descriptions-item label="回溯ID">{{ detail.id }}</a-descriptions-item>
-          <a-descriptions-item label="状态"><a-tag>{{ detail.status }}</a-tag></a-descriptions-item>
+          <a-descriptions-item label="任务名称">{{ detail.config?.taskName || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="状态">
+            <a-tag :color="getStatusColor(detail.status)">{{ getStatusLabel(detail.status) }}</a-tag>
+          </a-descriptions-item>
           <a-descriptions-item label="数据来源">{{ detail.config?.sourceType }}</a-descriptions-item>
           <a-descriptions-item label="样本表">{{ detail.config?.table }}</a-descriptions-item>
           <a-descriptions-item label="库名">{{ detail.config?.dbName }}</a-descriptions-item>
           <a-descriptions-item label="表名">{{ detail.config?.tableName }}</a-descriptions-item>
           <a-descriptions-item label="模型服务">{{ detail.config?.serviceName }}</a-descriptions-item>
+          <a-descriptions-item label="变量版本">{{ (detail.config?.variableVersion || 'new') === 'old' ? '老变量模型' : '新变量模型' }}</a-descriptions-item>
           <a-descriptions-item label="创建时间">{{ detail.createTime }}</a-descriptions-item>
         </a-descriptions>
         <div class="section">
@@ -150,11 +154,33 @@ const importanceCols = [
 
 const currentStep = computed(() => {
   const idx = (detail.value.progress || []).findIndex(s => s.status === 'running')
-  return idx >= 0 ? idx : (detail.value.progress || []).length - 1
+  return idx >= 0 ? idx : Math.max((detail.value.progress || []).length - 1, 0)
 })
 
 const stepDesc = (s) => {
   return s.status === 'done' ? (s.time || '') : (s.status === 'running' ? '进行中' : '')
+}
+
+const getStatusColor = (status) => {
+  const colors = {
+    draft: 'gray',
+    running: 'arcoblue',
+    completed: 'green',
+    failed: 'red',
+    stopped: 'orange'
+  }
+  return colors[status] || 'gray'
+}
+
+const getStatusLabel = (status) => {
+  const labels = {
+    draft: '草稿',
+    running: '进行中',
+    completed: '已完成',
+    failed: '已失败',
+    stopped: '已停止'
+  }
+  return labels[status] || status
 }
 
 const loadDetail = async () => {

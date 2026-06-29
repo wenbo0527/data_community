@@ -64,45 +64,6 @@ export default defineConfig(({ command }) => ({
       ]
     },
     proxy: {
-      '/api/crowds': {
-        target: 'http://localhost:5173',
-        bypass: (req, res) => {
-          if (process.env.NODE_ENV === 'development' && req.method === 'GET') {
-            // 移除调试日志语句
-            const mockData = [
-              {
-                id: 'dev_' + Date.now(),
-                name: '动态生成用户',
-                count: Math.floor(Math.random() * 5000),
-                updateTime: new Date().toISOString(),
-                _isMock: true
-              },
-              {
-                id: 'dev_1',
-                name: '开发环境用户',
-                count: 2000,
-                updateTime: new Date().toISOString()
-              },
-              { 
-                id: 1, 
-                name: '高净值客户', 
-                count: 1500,
-                updateTime: new Date().toISOString()
-              },
-              { 
-                id: 2, 
-                name: '新注册用户',
-                count: 4500,
-                updateTime: new Date().toISOString()
-              }
-            ];
-
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(mockData));
-             return;
-          }
-        }
-      },
       // 移除 /api/alert 的 bypass 代理，由 src/mock/alert.js 接管
     }
   },

@@ -5,6 +5,7 @@
         <div class="logo-text">数据管理</div>
       </div>
       <a-menu mode="horizontal" :selected-keys="[activeTopMenu]" @menu-item-click="handleTopMenuClick" class="top-menu">
+        <a-menu-item key="variable">变量一体化管理</a-menu-item>
         <a-menu-item key="business">业务数据目录</a-menu-item>
         <a-menu-item key="asset">数据资产管理</a-menu-item>
         <a-menu-item key="standard">数据标准治理</a-menu-item>
@@ -41,21 +42,42 @@ const route = useRoute()
 
 console.log('[DMT-MainLayout] route:', route.path)
 
-const activeTopMenu = ref('business')
+const activeTopMenu = ref('variable')
 const activeSideMenu = ref('')
-const openKeys = ref(['business'])
+const openKeys = ref(['variable'])
+
+// ========== 变量一体化管理 ==========
+const variableMenus = [
+  { key: '/variable-hub', title: '一体化总览' },
+  { key: '/variable-management', title: '变量台账' },
+  { key: '/explore/map', title: '变量全景' },
+  { key: '/evaluation/tasks', title: '评估任务中心' },
+  {
+    key: 'explore',
+    title: '探索过程',
+    children: [
+      { key: '/explore/topics', title: '探索课题' }
+    ]
+  },
+  {
+    key: 'config',
+    title: '模块配置',
+    children: [
+      { key: '/explore/taxonomy', title: '探索分类管理' }
+    ]
+  }
+]
 
 // ========== 业务数据目录 ==========
 const businessMenus = [
-  { key: '/business-domain', title: '业务域管理' },
-  { key: '/business-entity', title: '业务实体管理' },
-  { key: '/business-graph', title: '业务图谱' }
+  { key: '/business-concept', title: '业务概念' }
 ]
 
 // ========== 数据资产管理 ==========
 const assetMenus = [
+  { key: '/metadata', title: '元数据管理' },
+  { key: '/variable-management', title: '变量管理' },
   { key: '/asset-management/basic-management/metadata-collection', title: '元数据采集' },
-  { key: '/metadata/modeling', title: '元数据建模' },
   { key: '/asset-management/listing-management/table-management', title: '数据资源上下架' },
   { key: '/asset-management/listing-management/metric-management', title: '数据要素上下架' },
   { key: '/asset-management/basic-management/tag-management', title: '标签管理' }
@@ -73,14 +95,16 @@ const standardMenus = [
 // ========== 数据服务管理 ==========
 const serviceMenus = [
   { key: '/service', title: '服务首页' },
+  { key: '/service/backtrack', title: '全量变量回溯' },
+  { key: '/service/fund-usage-query', title: '客户资金用途查询' },
   { key: '/service/detail-data-query', title: '明细查询服务管理' },
   { key: '/service/api-management', title: 'API管理' },
   { key: '/data-models', title: '数据服务模型管理' },
-  { key: '/service/monitor', title: '服务监控' },
-  { key: '/service/stats', title: '调用统计' }
+  { key: '/accompany', title: '陪跑计划' }
 ]
 
 const menuMap: Record<string, any[]> = {
+  variable: variableMenus,
   business: businessMenus,
   asset: assetMenus,
   standard: standardMenus,
@@ -88,17 +112,28 @@ const menuMap: Record<string, any[]> = {
 }
 
 const currentSideMenus = computed(() => {
-  return menuMap[activeTopMenu.value] || businessMenus
+  return menuMap[activeTopMenu.value] || variableMenus
 })
 
 function updateMenuState(path: string) {
   for (const menu of currentSideMenus.value) {
-    if ((menu as any).key === path || path.startsWith((menu as any).key)) {
-      activeSideMenu.value = (menu as any).key
+    const item = menu as any
+    if (Array.isArray(item.children)) {
+      for (const child of item.children) {
+        if (child.key === path || path.startsWith(child.key)) {
+          activeSideMenu.value = child.key
+          openKeys.value = [item.key]
+          return
+        }
+      }
+    } else if (item.key === path || path.startsWith(item.key)) {
+      activeSideMenu.value = item.key
+      openKeys.value = []
       return
     }
   }
   activeSideMenu.value = ''
+  openKeys.value = []
 }
 
 function handleTopMenuClick(key: string) {
@@ -110,18 +145,30 @@ function handleTopMenuClick(key: string) {
 }
 
 function handleSideMenuClick(key: string) {
+  if (!key.startsWith('/')) return
   router.push(key)
 }
 
 watch(() => route.path, (path) => {
   // Auto-detect top menu based on path
-  if (path.includes('business-domain') || path.includes('business-entity') || path.includes('business-graph')) {
+  if (
+    path === '/' ||
+    path.includes('variable-hub') ||
+    path.includes('variable-management') ||
+    path.includes('explore') ||
+    path.includes('evaluation')
+  ) {
+    activeTopMenu.value = 'variable'
+  } else if (path.includes('business-concept')) {
     activeTopMenu.value = 'business'
-  } else if (path.includes('asset-management') || path.includes('metadata')) {
+  } else if (
+    path.includes('asset-management') ||
+    path.includes('metadata')
+  ) {
     activeTopMenu.value = 'asset'
   } else if (path.includes('data-standard')) {
     activeTopMenu.value = 'standard'
-  } else if (path.includes('service') || path.includes('data-models')) {
+  } else if (path.includes('service') || path.includes('data-models') || path.includes('accompany')) {
     activeTopMenu.value = 'service'
   }
   updateMenuState(path)

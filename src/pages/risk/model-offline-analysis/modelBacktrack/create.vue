@@ -26,6 +26,9 @@
       <a-collapse :default-active-key="['model','sample','required','match','output']" :bordered="false">
         <a-collapse-item key="model" header="1. 选择回溯模型">
           <a-form :model="modelForm" layout="vertical">
+            <a-form-item label="任务名称" required>
+              <a-input v-model="modelForm.taskName" placeholder="请输入任务名称" />
+            </a-form-item>
             <a-form-item label="模型与版本" required>
               <a-cascader
                 v-model="modelForm.modelVersion"
@@ -255,7 +258,7 @@ const requiredDefs = [
 const observeForm = ref({ observeDate: '', dateRange: [] })
 
 // 模型服务与入参/出参
-const modelForm = ref({ serviceName: '', selectedVersion: '', modelVersion: [] })
+const modelForm = ref({ taskName: '', serviceName: '', selectedVersion: '', modelCode: '', variableVersion: 'new', modelVersion: [] })
 const platformServices = ref([])
 const modelInputs = ref([])
 const modelOutputs = ref([])
@@ -328,9 +331,71 @@ const loadServices = async () => {
   }
 }
 
+const prefillFromCopy = async (copyFromId) => {
+  try {
+    const res = await backtrackAPI.getBacktrackDetail(copyFromId)
+    const detail = res.data
+    const cfg = detail?.config || {}
+    const mode = cfg.mode || CREATE_MODES.SINGLE
+
+    modelForm.value.taskName = ''
+    createMode.value = mode
+    sampleForm.value.mode = mode
+
+    sampleForm.value.sourceType = cfg.sourceType || 'doris'
+    await onSourceChange()
+
+    if (cfg.dbName) {
+      sampleForm.value.dbName = cfg.dbName
+      await onDbChange(cfg.dbName)
+    }
+    if (cfg.tableName || cfg.table) {
+      sampleForm.value.tableName = cfg.tableName || cfg.table
+      await onTableNameChange(sampleForm.value.tableName)
+    }
+
+    if (cfg.serviceName) {
+      modelForm.value.modelVersion = cfg.version ? [cfg.serviceName, cfg.version] : [cfg.serviceName]
+      await onModelVersionChange(modelForm.value.modelVersion)
+    }
+
+    if (Array.isArray(cfg.inputMappings) && cfg.inputMappings.length) {
+      inputMappings.value = (inputMappings.value || []).map(m => {
+        const fromSvc = m.from === '当前模型' ? modelForm.value.serviceName : m.from
+        const found = cfg.inputMappings.find(x => x.input === m.name && (!x.serviceName || x.serviceName === fromSvc))
+        const target = found?.target || ''
+        return { ...m, target, status: target ? 'matched' : 'unmatched' }
+      })
+    }
+    if (Array.isArray(cfg.requiredFieldMappings) && cfg.requiredFieldMappings.length) {
+      requiredMappings.value = (requiredMappings.value || []).map(r => {
+        const found = cfg.requiredFieldMappings.find(x => x.field === r.name)
+        const target = found?.target || ''
+        return { ...r, target, status: target ? 'matched' : 'unmatched' }
+      })
+    }
+
+    if (mode === CREATE_MODES.PERIODIC) {
+      sampleForm.value.periodicity = ''
+      sampleForm.value.weekDays = []
+      sampleForm.value.monthDays = []
+      sampleForm.value.triggerType = ''
+      sampleForm.value.scheduleTime = null
+      sampleForm.value.kangarooTaskId = ''
+      observeForm.value.dateRange = []
+    }
+  } catch (e) {
+    Message.error('复制任务初始化失败')
+  }
+}
+
 onMounted(async () => {
   await loadTables()
   await loadServices()
+  if (routeParams.copyFrom) {
+    await prefillFromCopy(routeParams.copyFrom)
+    return
+  }
   if (routeParams.mode && (routeParams.mode === CREATE_MODES.SINGLE || routeParams.mode === CREATE_MODES.PERIODIC)) {
     createMode.value = routeParams.mode
     sampleForm.value.mode = routeParams.mode
@@ -395,6 +460,15 @@ const onServiceChange = async (serviceName) => {
     const res = await modelAPI.getPlatformModel(serviceName)
     if (res.success) {
       const p = res.data
+      modelForm.value.modelCode = p.code || ''
+      try {
+        const mRes = await modelAPI.getModels({ page: 1, pageSize: 1000 })
+        const list = mRes.data?.data || []
+        const matched = list.find(m => m.code === modelForm.value.modelCode)
+        modelForm.value.variableVersion = matched?.variableVersion || 'new'
+      } catch (e) {
+        modelForm.value.variableVersion = 'new'
+      }
       modelInputs.value = (p.inputs || []).map(i => ({ name: i.name, type: i.type, description: i.description || '' }))
       modelOutputs.value = (p.outputs || []).map(o => ({ name: o.name, type: o.type, description: o.description || '' }))
       const baseInputs = modelInputs.value.map(i => {
@@ -446,9 +520,17 @@ const handleSubmit = async () => {
   try {
     submitting.value = true
     const errors = []
+    if (!modelForm.value.taskName) errors.push('请输入任务名称')
     if (!sampleForm.value.table) errors.push('请选择样本表')
     if (!modelForm.value.serviceName) errors.push('请选择回溯模型')
     if ((requiredMappings.value || []).some(r => !r.target)) errors.push('请完成必填字段映射')
+    if (sampleForm.value.mode === CREATE_MODES.PERIODIC) {
+      if (!sampleForm.value.periodicity) errors.push('请选择周期类型')
+      if (sampleForm.value.periodicity === 'weekly' && !(sampleForm.value.weekDays || []).length) errors.push('请选择每周具体时间')
+      if (sampleForm.value.periodicity === 'monthly' && !(sampleForm.value.monthDays || []).length) errors.push('请选择每月具体日期')
+      if (!sampleForm.value.triggerType) errors.push('请选择任务触发方式')
+      if (sampleForm.value.triggerType === 'schedule' && !sampleForm.value.scheduleTime) errors.push('请选择执行时间')
+    }
     
     if (errors.length > 0) {
       errors.forEach(error => Message.warning(error))
@@ -465,6 +547,7 @@ const handleSubmit = async () => {
       }))
 
     const payload = {
+      taskName: modelForm.value.taskName,
       table: sampleForm.value.table,
       sourceType: sampleForm.value.sourceType,
       dbName: sampleForm.value.dbName,
@@ -474,17 +557,25 @@ const handleSubmit = async () => {
       dateRange: observeForm.value.dateRange || [],
       serviceName: modelForm.value.serviceName,
       version: modelForm.value.selectedVersion,
+      modelCode: modelForm.value.modelCode,
+      variableVersion: modelForm.value.variableVersion,
+      copiedFrom: routeParams.copyFrom ? Number(routeParams.copyFrom) : undefined,
+      status: routeParams.copyFrom ? 'draft' : 'running',
       inputMappings: mappings,
       outputs: modelOutputs.value,
       requiredFieldMappings: requiredMappings.value.map(r => ({ field: r.name, target: r.target })),
       // 周期回溯相关字段
       periodicity: sampleForm.value.periodicity,
+      weekDays: sampleForm.value.weekDays || [],
+      monthDays: sampleForm.value.monthDays || [],
+      triggerType: sampleForm.value.triggerType || '',
+      scheduleTime: sampleForm.value.scheduleTime || null,
       kangarooTaskId: sampleForm.value.kangarooTaskId,
     }
     
     const res = await backtrackAPI.createBacktrack(payload)
     if (res.success) {
-      Message.success('回溯任务创建成功')
+      Message.success(routeParams.copyFrom ? '草稿已保存' : '回溯任务创建成功')
       router.push('/risk/model-offline-analysis/model-backtrack')
     } else {
       Message.error(res.message || '创建失败')
