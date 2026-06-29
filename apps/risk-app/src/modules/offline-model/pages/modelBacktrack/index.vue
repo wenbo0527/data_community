@@ -157,6 +157,7 @@
           
           <template #actions="{ record }">
             <a-space>
+              <a-button type="text" size="small" @click="handleCopy(record)">复制</a-button>
               <a-button type="text" size="small" @click="handleViewDetail(record)">查看详情</a-button>
               <a-button v-if="record.status === 'running'" type="text" size="small" status="warning" @click="handleStop(record)">停止</a-button>
             </a-space>
@@ -273,9 +274,9 @@ const loadData = async () => {
     const list = res.data?.data || []
     dataSource.value = list.map(t => ({
       id: t.id,
-      modelName: t.config?.serviceName || '-',
-      type: 'periodic',
-      version: '-',
+      modelName: t.config?.modelCode || t.config?.serviceName || '-',
+      type: t.config?.mode || 'single',
+      version: t.config?.version || '-',
       startTime: t.createTime,
       endTime: t.updateTime,
       status: t.status,
@@ -346,6 +347,24 @@ const handleRefresh = () => {
   Message.success('数据已刷新')
 }
 
+const handleCopy = async (record) => {
+  try {
+    await backtrackAPI.logOperation({
+      backtrackId: record.id,
+      operation: 'copy',
+      operator: '当前用户',
+      detail: `复制任务 ${record.id}`
+    })
+  } catch (e) {
+    Message.warning('操作日志记录失败')
+  }
+  navigateToBacktrackCreate(router, {
+    mode: record.type,
+    source: 'offline',
+    copyFrom: record.id
+  })
+}
+
  
 
 const handleStop = async (record) => {
@@ -381,6 +400,7 @@ const getTypeLabel = (type) => {
 
 const getStatusColor = (status) => {
   const colors = {
+    draft: 'gray',
     running: 'blue',
     completed: 'green',
     failed: 'red',
@@ -391,6 +411,7 @@ const getStatusColor = (status) => {
 
 const getStatusLabel = (status) => {
   const labels = {
+    draft: '草稿',
     running: '运行中',
     completed: '已完成',
     failed: '失败',

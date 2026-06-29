@@ -28,7 +28,8 @@ export const MODEL_BACKTRACK_QUERY = {
   // 跳转来源：risk（风险域）| offline（离线模块）
   SOURCE: 'source',
   // 默认标签页：config | progress | result | report
-  TAB: 'tab'
+  TAB: 'tab',
+  COPY_FROM: 'copyFrom'
 }
 
 /**
@@ -81,6 +82,9 @@ export function navigateToBacktrackCreate(router, options = {}) {
   }
   if (options.source) {
     query[MODEL_BACKTRACK_QUERY.SOURCE] = options.source
+  }
+  if (options.copyFrom) {
+    query[MODEL_BACKTRACK_QUERY.COPY_FROM] = options.copyFrom
   }
   
   router.push({
@@ -135,7 +139,8 @@ export function getBacktrackRouteParams(route) {
   return {
     mode: route.query[MODEL_BACKTRACK_QUERY.MODE],
     source: route.query[MODEL_BACKTRACK_QUERY.SOURCE],
-    tab: route.query[MODEL_BACKTRACK_QUERY.TAB]
+    tab: route.query[MODEL_BACKTRACK_QUERY.TAB],
+    copyFrom: route.query[MODEL_BACKTRACK_QUERY.COPY_FROM]
   }
 }
 

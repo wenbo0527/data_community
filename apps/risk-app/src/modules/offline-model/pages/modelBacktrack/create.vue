@@ -493,7 +493,68 @@ const loadServices = async () => {
 }
 loadServices()
 
+const prefillFromCopy = async (copyFromId) => {
+  try {
+    const res = await backtrackAPI.getBacktrackDetail(copyFromId)
+    const detail = res.data
+    const cfg = detail?.config || {}
+    const mode = cfg.mode || CREATE_MODES.SINGLE
+
+    modelForm.value.taskName = ''
+    createMode.value = mode
+    sampleForm.value.mode = mode
+
+    sampleForm.value.tableNameInput = cfg.table || ''
+    sampleForm.value.sqlWhere = cfg.sqlWhere || ''
+
+    observeForm.value.dateRange = Array.isArray(cfg.dateRange) ? cfg.dateRange : []
+
+    if (sampleForm.value.tableNameInput) {
+      await handleTableValidate()
+    }
+
+    if (cfg.serviceName) {
+      modelForm.value.modelVersion = cfg.version ? [cfg.serviceName, cfg.version] : [cfg.serviceName]
+      await onModelVersionChange(modelForm.value.modelVersion)
+    }
+
+    if (Array.isArray(cfg.inputMappings) && cfg.inputMappings.length) {
+      inputMappings.value = (inputMappings.value || []).map(m => {
+        const fromSvc = m.from === '当前模型' ? modelForm.value.serviceName : m.from
+        const found = cfg.inputMappings.find(x => x.input === m.name && (!x.serviceName || x.serviceName === fromSvc))
+        const target = found?.target || ''
+        return { ...m, target, status: target ? 'matched' : 'unmatched' }
+      })
+    }
+    if (Array.isArray(cfg.requiredFieldMappings) && cfg.requiredFieldMappings.length) {
+      requiredMappings.value = (requiredMappings.value || []).map(r => {
+        const found = cfg.requiredFieldMappings.find(x => x.field === r.name)
+        const target = found?.target || ''
+        return { ...r, target, status: target ? 'matched' : 'unmatched', isEncrypted: !!found?.isEncrypted }
+      })
+    }
+
+    if (mode === CREATE_MODES.PERIODIC) {
+      sampleForm.value.periodicity = ''
+      sampleForm.value.weekDays = []
+      sampleForm.value.monthDays = []
+      sampleForm.value.triggerType = ''
+      sampleForm.value.scheduleTime = null
+      sampleForm.value.kangarooTaskId = ''
+      sampleForm.value.taskStartDate = null
+      sampleForm.value.taskEndDate = null
+      observeForm.value.dateRange = []
+    }
+  } catch (e) {
+    Message.error('复制任务初始化失败')
+  }
+}
+
 onMounted(async () => {
+  if (routeParams.copyFrom) {
+    await prefillFromCopy(routeParams.copyFrom)
+    return
+  }
   if (routeParams.mode && (routeParams.mode === CREATE_MODES.SINGLE || routeParams.mode === CREATE_MODES.PERIODIC)) {
     createMode.value = routeParams.mode
     sampleForm.value.mode = routeParams.mode
@@ -574,6 +635,7 @@ const handleSubmit = async () => {
     const errors = []
     if (!sampleForm.value.tableNameInput) errors.push('请输入样本表名')
     if (!modelForm.value.serviceName) errors.push('请选择回溯模型')
+    if (routeParams.copyFrom && !modelForm.value.taskName) errors.push('请输入任务名称')
     if ((requiredMappings.value || []).some(r => !r.target)) errors.push('请完成必填字段映射')
     if (createMode.value === CREATE_MODES.PERIODIC) {
       if (!sampleForm.value.taskStartDate) errors.push('请选择任务执行开始时间')
@@ -593,10 +655,16 @@ const handleSubmit = async () => {
       serviceName: modelForm.value.serviceName,
       version: modelForm.value.selectedVersion,
       taskName: modelForm.value.taskName,
+      copiedFrom: routeParams.copyFrom ? Number(routeParams.copyFrom) : undefined,
+      status: routeParams.copyFrom ? 'draft' : 'running',
       inputMappings: mappings,
       outputs: modelOutputs.value,
       requiredFieldMappings: requiredMappings.value.map(r => ({ field: r.name, target: r.target, isEncrypted: !!r.isEncrypted })),
       periodicity: sampleForm.value.periodicity,
+      weekDays: sampleForm.value.weekDays || [],
+      monthDays: sampleForm.value.monthDays || [],
+      triggerType: sampleForm.value.triggerType || '',
+      scheduleTime: sampleForm.value.scheduleTime || null,
       kangarooTaskId: sampleForm.value.kangarooTaskId,
       sqlWhere: sampleForm.value.sqlWhere,
       taskStartDate: sampleForm.value.taskStartDate,
@@ -604,7 +672,7 @@ const handleSubmit = async () => {
     }
     const res = await backtrackAPI.createBacktrack(payload)
     if (res.success) {
-      Message.success('回溯任务创建成功')
+      Message.success(routeParams.copyFrom ? '草稿已保存' : '回溯任务创建成功')
       router.push(isFromRisk.value ? '/risk/model-offline-analysis/model-backtrack' : '/model-offline-analysis/model-backtrack')
     } else {
       Message.error(res.message || '创建失败')

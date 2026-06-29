@@ -11,7 +11,7 @@
       <a-tab-pane key="config" title="配置信息">
         <a-descriptions :column="2" bordered title="基础信息" size="small">
           <a-descriptions-item label="回溯ID">{{ detail.id }}</a-descriptions-item>
-          <a-descriptions-item label="状态"><a-tag>{{ detail.status }}</a-tag></a-descriptions-item>
+          <a-descriptions-item label="状态"><a-tag>{{ getStatusLabel(detail.status) }}</a-tag></a-descriptions-item>
           <a-descriptions-item label="数据来源">{{ detail.config?.sourceType }}</a-descriptions-item>
           <a-descriptions-item label="样本表">{{ detail.config?.table }}</a-descriptions-item>
           <a-descriptions-item label="库名">{{ detail.config?.dbName }}</a-descriptions-item>
@@ -155,11 +155,22 @@ const importanceCols = [
 
 const currentStep = computed(() => {
   const idx = (detail.value.progress || []).findIndex(s => s.status === 'running')
-  return idx >= 0 ? idx : (detail.value.progress || []).length - 1
+  return idx >= 0 ? idx : Math.max((detail.value.progress || []).length - 1, 0)
 })
 
 const stepDesc = (s) => {
   return s.status === 'done' ? (s.time || '') : (s.status === 'running' ? '进行中' : '')
+}
+
+const getStatusLabel = (status) => {
+  const labels = {
+    draft: '草稿',
+    running: '进行中',
+    completed: '已完成',
+    failed: '已失败',
+    stopped: '已停止'
+  }
+  return labels[status] || status
 }
 
 const loadDetail = async () => {
