@@ -76,6 +76,16 @@
                  </a-tag>
                </template>
             </a-table-column>
+            <a-table-column title="预计优惠金额" data-index="expectedAmount" :width="140" align="right">
+              <template #cell="{ record }">
+                <span class="amount-cell">¥{{ formatAmount(record.expectedAmount) }}</span>
+              </template>
+            </a-table-column>
+            <a-table-column title="实际优惠金额" data-index="actualAmount" :width="140" align="right">
+              <template #cell="{ record }">
+                <span class="amount-cell" :class="getActualAmountClass(record)">¥{{ formatAmount(record.actualAmount) }}</span>
+              </template>
+            </a-table-column>
             <a-table-column title="权益状态" data-index="benefitStatus" :width="120">
                <template #cell="{ record }">
                  <a-badge 
@@ -329,6 +339,19 @@ const formatBenefitValue = (record: any) => {
   return `¥${Number(record.benefitValue).toLocaleString()}`
 }
 
+const formatAmount = (value: number | undefined | null) => {
+  if (value === null || value === undefined || Number.isNaN(value)) return '0.00'
+  return Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+const getActualAmountClass = (record: any) => {
+  const expected = Number(record.expectedAmount) || 0
+  const actual = Number(record.actualAmount) || 0
+  if (actual > expected) return 'amount-cell-high'
+  if (actual < expected && expected > 0) return 'amount-cell-low'
+  return ''
+}
+
 // --- 详情逻辑 ---
 const viewDetail = (record: any, type: 'touch' | 'benefit') => {
   selectedRecord.value = record
@@ -361,6 +384,8 @@ const detailFields = computed(() => {
       '权益名称': record.benefitName,
       '权益类型': record.benefitType,
       '权益价值': formatBenefitValue(record),
+      '预计优惠金额': `¥${formatAmount(record.expectedAmount)}`,
+      '实际优惠金额': `¥${formatAmount(record.actualAmount)}`,
       '当前状态': record.benefitStatus,
       '发放时间': record.benefitDate,
       '过期时间': record.expiryDate,
@@ -432,6 +457,20 @@ const detailFields = computed(() => {
   font-family: 'DIN Alternate', sans-serif;
   font-weight: 600;
   color: var(--color-text-1);
+}
+
+.amount-cell {
+  font-family: 'DIN Alternate', sans-serif;
+  font-weight: 500;
+  color: var(--color-text-1);
+}
+
+.amount-cell-high {
+  color: rgb(var(--success-6));
+}
+
+.amount-cell-low {
+  color: rgb(var(--warning-6));
 }
 
 .section-footer {

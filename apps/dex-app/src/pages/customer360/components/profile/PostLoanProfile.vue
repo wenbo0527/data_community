@@ -172,7 +172,7 @@
         </div>
       </a-tab-pane>
       <a-tab-pane key="bad-sms">
-        <template #title>不良短信</template>
+        <template #title>还款提醒</template>
         <div class="profile-section">
           <a-table
             :data="badNotifications"
@@ -182,13 +182,30 @@
           >
             <template #columns>
               <a-table-column title="短信发送时间" data-index="notificationDate" :width="180" />
-              <a-table-column title="产品编号" data-index="productKey" :width="120" />
-              <a-table-column title="短信类型" data-index="notificationType" :width="120" />
-              <a-table-column title="短信发送状态" data-index="status" :width="120" />
-              <a-table-column title="短信内容" data-index="content" :ellipsis="true" />
+              <a-table-column title="发送系统" data-index="sendSystem" :width="140" />
+              <a-table-column title="短信发送状态" data-index="sendStatus" :width="120">
+                <template #cell="{ record }">
+                  <a-tag :color="getSendStatusColor(record.sendStatus)" size="small">
+                    {{ record.sendStatus || '-' }}
+                  </a-tag>
+                </template>
+              </a-table-column>
+              <a-table-column title="短信发送接受状态" data-index="receiveStatus" :width="150">
+                <template #cell="{ record }">
+                  <a-tag :color="getReceiveStatusColor(record.receiveStatus)" size="small">
+                    {{ record.receiveStatus || '-' }}
+                  </a-tag>
+                </template>
+              </a-table-column>
+              <a-table-column title="短信内容" data-index="content" :ellipsis="true">
+                <template #cell="{ record }">
+                  <span class="sms-content" :title="record.content">{{ record.content }}</span>
+                </template>
+              </a-table-column>
+              <a-table-column title="备注" data-index="remark" :width="160" :ellipsis="true" />
             </template>
             <template #empty>
-              <a-empty description="暂无不良短信" />
+              <a-empty description="暂无还款提醒" />
             </template>
           </a-table>
         </div>
@@ -377,6 +394,28 @@ const getResultTagColor = (result: string) => {
     '已查看': 'cyan'
   }
   return colorMap[result] || 'default'
+}
+
+// 短信发送状态颜色
+const getSendStatusColor = (status: string) => {
+  const colorMap: Record<string, string> = {
+    '发送成功': 'green',
+    '发送失败': 'red',
+    '发送中': 'orange',
+    '待发送': 'blue'
+  }
+  return colorMap[status] || 'default'
+}
+
+// 短信发送接受状态颜色
+const getReceiveStatusColor = (status: string) => {
+  const colorMap: Record<string, string> = {
+    '已送达': 'green',
+    '送达失败': 'red',
+    '等待回执': 'orange',
+    '未知': 'gray'
+  }
+  return colorMap[status] || 'default'
 }
 
 // 逾期天数样式

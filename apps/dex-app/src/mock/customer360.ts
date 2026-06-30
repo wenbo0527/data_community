@@ -471,19 +471,63 @@ export const mockUsers: Record<string, any> = {
     badNotifications: [
       {
         id: 'BN001',
-        notificationDate: '2026-03-15',
+        notificationDate: '2026-05-28 09:30:00',
         notificationType: '逾期提醒',
-        content: '您在我司的贷款已逾期，请尽快处理',
-        status: '已发送',
-        sendMethod: '短信'
+        content: '您在我司的贷款已逾期15天，请尽快处理以避免产生更多费用，详询客服400-888-8888。',
+        sendSystem: '催收系统',
+        sendStatus: '发送成功',
+        receiveStatus: '已送达',
+        remark: '客户已读未回'
       },
       {
         id: 'BN002',
-        notificationDate: '2026-03-01',
+        notificationDate: '2026-05-25 18:00:00',
+        notificationType: '还款提醒',
+        content: '您的贷款本期应还金额 ¥3,200.00，请于2026-05-30前存入还款账户，避免逾期影响征信。',
+        sendSystem: '还款提醒系统',
+        sendStatus: '发送成功',
+        receiveStatus: '已送达',
+        remark: ''
+      },
+      {
+        id: 'BN003',
+        notificationDate: '2026-05-20 10:15:00',
         notificationType: '到期提醒',
-        content: '您的贷款将于3天后到期，请确保账户余额充足',
-        status: '已发送',
-        sendMethod: '短信'
+        content: '您的贷款将于5天后到期，请确保账户余额充足，以便自动扣款成功。',
+        sendSystem: '还款提醒系统',
+        sendStatus: '发送成功',
+        receiveStatus: '已送达',
+        remark: ''
+      },
+      {
+        id: 'BN004',
+        notificationDate: '2026-05-18 14:20:00',
+        notificationType: '逾期提醒',
+        content: '您的贷款已逾期5天，请尽快处理。本期应还金额 ¥3,200.00。',
+        sendSystem: '催收系统',
+        sendStatus: '发送成功',
+        receiveStatus: '送达失败',
+        remark: '手机号为空号'
+      },
+      {
+        id: 'BN005',
+        notificationDate: '2026-05-15 09:00:00',
+        notificationType: '逾期提醒',
+        content: '您的贷款已逾期1天，请尽快处理以避免产生逾期费用。',
+        sendSystem: '催收系统',
+        sendStatus: '发送成功',
+        receiveStatus: '已送达',
+        remark: ''
+      },
+      {
+        id: 'BN006',
+        notificationDate: '2026-05-10 16:45:00',
+        notificationType: '还款成功',
+        content: '您的本期还款 ¥3,200.00 已成功扣收，感谢您的配合。',
+        sendSystem: '账务系统',
+        sendStatus: '发送成功',
+        receiveStatus: '已送达',
+        remark: ''
       }
     ],
     loanRecords: [
@@ -670,13 +714,13 @@ export const mockUsers: Record<string, any> = {
         { id: 'TR008', productKey: 'LN-2024-009', touchDate: '2026-04-25 16:45', touchChannel: '人工外呼', content: '产品推介，针对有车客户推荐车主贷，提到利率优惠', touchResult: '成功', operator: '王五', duration: '02:30', transcript: '客服：您好张先生，我注意到您是我行优质车主客户，特为您推荐我行车主贷产品，年利率低至5.8%，最高可借100万。客户：需要什么材料？客服：行驶证和身份证即可，全程线上审批。客户：好的我了解一下。' }
       ],
       benefitRecords: [
-        { id: 'BR001', productKey: 'LN-2024-009', benefitDate: '2026-05-20', benefitName: '积分翻倍奖励', benefitType: '积分奖励', benefitAmount: 5000, benefitStatus: '已发放', benefitDescription: '5月积分翻倍活动，授信客户专属，5000积分已到账，可前往积分商城兑换好礼' },
-        { id: 'BR002', productKey: 'LN-2024-009', benefitDate: '2026-05-15', benefitName: 'VIP专享利率优惠券', benefitType: '利率优惠', benefitAmount: 0, benefitStatus: '已发放', benefitDescription: 'Su贷VIP专享利率优惠券，原利率8.9%，使用后降至7.2%，有效期至2026-06-30' },
-        { id: 'BR003', productKey: 'LN-2024-009', benefitDate: '2026-05-10', benefitName: '首次用信免息券', benefitType: '免息优惠', benefitAmount: 0, benefitStatus: '已发放', benefitDescription: '首次使用Su贷产品，可享受30天免息优惠，借款金额上限10万，有效期30天' },
-        { id: 'BR004', productKey: 'LN-2024-009', benefitDate: '2026-04-20', benefitName: '推荐好友奖励', benefitType: '推荐奖励', benefitAmount: 200, benefitStatus: '已发放', benefitDescription: '推荐好友成功申请Su贷，获得200元现金红包，已发放至绑定的银行账户' },
-        { id: 'BR005', productKey: 'LN-2024-009', benefitDate: '2026-04-15', benefitName: '会员等级提升', benefitType: '权益升级', benefitAmount: 0, benefitStatus: '已发放', benefitDescription: 'Su贷会员等级由银卡升级为金卡，享受更高额度、更低利率、优先审批权益' },
-        { id: 'BR006', productKey: 'LN-2024-009', benefitDate: '2026-04-01', benefitName: '幸运抽奖资格', benefitType: '活动权益', benefitAmount: 0, benefitStatus: '待领取', benefitDescription: '4月活动期间用信客户，可参与幸运抽奖，奖品包括iPhone、购物卡、积分等，领取截止日期2026-06-30' },
-        { id: 'BR007', productKey: 'LN-2024-009', benefitDate: '2026-03-20', benefitName: '生日专属利率券', benefitType: '利率优惠', benefitAmount: 0, benefitStatus: '已使用', benefitDescription: '客户生日专属利率优惠券，已在2026-03-22的贷款申请中使用，实际享受利率7.5%（原利率8.9%）' }
+        { id: 'BR001', productKey: 'LN-2024-009', benefitDate: '2026-05-20', benefitName: '积分翻倍奖励', benefitType: '积分奖励', benefitAmount: 5000, expectedAmount: 5000, actualAmount: 5000, benefitStatus: '已发放', benefitDescription: '5月积分翻倍活动，授信客户专属，5000积分已到账，可前往积分商城兑换好礼' },
+        { id: 'BR002', productKey: 'LN-2024-009', benefitDate: '2026-05-15', benefitName: 'VIP专享利率优惠券', benefitType: '利率优惠', benefitAmount: 0, expectedAmount: 1200, actualAmount: 0, benefitStatus: '已发放', benefitDescription: 'Su贷VIP专享利率优惠券，原利率8.9%，使用后降至7.2%，有效期至2026-06-30，预计优惠1200元' },
+        { id: 'BR003', productKey: 'LN-2024-009', benefitDate: '2026-05-10', benefitName: '首次用信免息券', benefitType: '免息优惠', benefitAmount: 0, expectedAmount: 800, actualAmount: 0, benefitStatus: '已发放', benefitDescription: '首次使用Su贷产品，可享受30天免息优惠，借款金额上限10万，有效期30天，预计优惠800元' },
+        { id: 'BR004', productKey: 'LN-2024-009', benefitDate: '2026-04-20', benefitName: '推荐好友奖励', benefitType: '推荐奖励', benefitAmount: 200, expectedAmount: 200, actualAmount: 200, benefitStatus: '已发放', benefitDescription: '推荐好友成功申请Su贷，获得200元现金红包，已发放至绑定的银行账户' },
+        { id: 'BR005', productKey: 'LN-2024-009', benefitDate: '2026-04-15', benefitName: '会员等级提升', benefitType: '权益升级', benefitAmount: 0, expectedAmount: 0, actualAmount: 0, benefitStatus: '已发放', benefitDescription: 'Su贷会员等级由银卡升级为金卡，享受更高额度、更低利率、优先审批权益' },
+        { id: 'BR006', productKey: 'LN-2024-009', benefitDate: '2026-04-01', benefitName: '幸运抽奖资格', benefitType: '活动权益', benefitAmount: 0, expectedAmount: 500, actualAmount: 0, benefitStatus: '待领取', benefitDescription: '4月活动期间用信客户，可参与幸运抽奖，奖品包括iPhone、购物卡、积分等，领取截止日期2026-06-30，预计优惠500元' },
+        { id: 'BR007', productKey: 'LN-2024-009', benefitDate: '2026-03-20', benefitName: '生日专属利率券', benefitType: '利率优惠', benefitAmount: 0, expectedAmount: 600, actualAmount: 580, benefitStatus: '已使用', benefitDescription: '客户生日专属利率优惠券，已在2026-03-22的贷款申请中使用，实际享受利率7.5%（原利率8.9%），实际优惠580元' }
       ],
       effectAnalysis: {
         totalTouch: 12,

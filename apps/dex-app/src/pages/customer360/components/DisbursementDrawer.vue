@@ -9,7 +9,7 @@
   >
     <template #title>
       <div class="drawer-title">
-        <icon-credit-card class="title-icon" />
+        <IconStorage class="title-icon" />
         放款信息详情
       </div>
     </template>
@@ -176,6 +176,7 @@ import {
   IconUser,
   IconFile,
   IconHistory,
+  IconStorage,
   IconCheckCircle,
   IconCopy,
   IconExclamationCircle

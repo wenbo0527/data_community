@@ -68,12 +68,14 @@
       
       <!-- 用信列表 -->
       <div class="detail-section">
-        <LoanRecordTable 
+        <LoanRecordTable
           :data="loansList"
           :loading="loading"
           @view-loan-detail="viewLoanDetail"
           @view-disbursement-details="handleViewDisbursementDetails"
           @view-repayment-details="handleViewRepaymentDetails"
+          @view-loan-tags="handleViewLoanTags"
+          @view-initial-repayment-plan="handleViewInitialRepaymentPlan"
         />
       </div>
       
@@ -172,16 +174,18 @@
     />
 
     <!-- 放款记录抽屉 -->
-    <!-- <DisbursementDrawer
-      v-model:visible="disbursementVisible"
+    <DisbursementDrawer
+      :visible="disbursementVisible"
       :loanRecord="currentLoanData"
-    /> -->
+      @close="disbursementVisible = false"
+    />
 
     <!-- 还款记录抽屉 -->
-    <!-- <RepaymentDrawer
-      v-model:visible="repaymentVisible"
+    <RepaymentDrawer
+      :visible="repaymentVisible"
       :loanRecord="currentLoanData"
-    /> -->
+      @close="repaymentVisible = false"
+    />
 
     <!-- 还款明细抽屉 -->
     <!-- <RepaymentDetailDrawer
@@ -194,6 +198,43 @@
       v-model:visible="disbursementDetailVisible"
       :loan-data="currentLoanData"
     /> -->
+
+    <!-- 用信标签抽屉 -->
+    <a-drawer
+      v-model:visible="loanTagsVisible"
+      title="用信标签"
+      width="520px"
+      :footer="false"
+    >
+      <div v-if="currentLoanData" class="loan-tags-content">
+        <a-descriptions :column="1" bordered size="large">
+          <a-descriptions-item label="用信编号">{{ currentLoanData.loanNo || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="产品名称">{{ currentLoanData.productName || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="用信日期">{{ currentLoanData.loanDate || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="用信金额">¥{{ formatAmount(currentLoanData.amount) }}</a-descriptions-item>
+          <a-descriptions-item label="关联标签">
+            <div class="tag-list">
+              <a-tag
+                v-for="tag in getLoanTags(currentLoanData)"
+                :key="tag"
+                color="arcoblue"
+                size="medium"
+              >
+                {{ tag }}
+              </a-tag>
+              <span v-if="getLoanTags(currentLoanData).length === 0" class="text-gray-500">暂无标签</span>
+            </div>
+          </a-descriptions-item>
+        </a-descriptions>
+      </div>
+    </a-drawer>
+
+    <!-- 初始还款计划抽屉 -->
+    <InitialRepaymentPlanDrawer
+      :visible="initialPlanVisible"
+      :loan-record="currentLoanData"
+      @close="initialPlanVisible = false"
+    />
   </div>
 </template>
 
@@ -212,8 +253,9 @@ import { Message } from '@arco-design/web-vue'
 import CreditDetailDrawer from './CreditDetailDrawer.vue'
 import LoanDetailDrawer from './LoanDetailDrawer.vue'
 import LoanRecordTable from './LoanRecordTable.vue'
-// import DisbursementDrawer from './DisbursementDrawer.vue'
-// import RepaymentDrawer from './RepaymentDrawer.vue'
+import DisbursementDrawer from './DisbursementDrawer.vue'
+import RepaymentDrawer from './RepaymentDrawer.vue'
+import InitialRepaymentPlanDrawer from './InitialRepaymentPlanDrawer.vue'
 // import RepaymentDetailDrawer from './RepaymentDetailDrawer.vue'
 // import DisbursementDetailDrawer from './DisbursementDetailDrawer.vue'
 
@@ -265,6 +307,8 @@ const repaymentVisible = ref(false)
 // 弹窗状态管理
 const repaymentDetailVisible = ref(false)
 const disbursementDetailVisible = ref(false)
+const loanTagsVisible = ref(false)
+const initialPlanVisible = ref(false)
 
 // 当前选中的数据
 const currentCreditData = ref(null)
@@ -478,16 +522,45 @@ const viewRepaymentDetails = (record: any) => {
   repaymentVisible.value = true
 }
 
-// 处理LoanRecordTable组件的放款明细事件
+// 处理LoanRecordTable组件的放款信息事件
 const handleViewDisbursementDetails = (record: any) => {
   currentLoanData.value = record
-  disbursementDetailVisible.value = true
+  disbursementVisible.value = true
 }
 
-// 处理LoanRecordTable组件的还款明细事件
+// 处理LoanRecordTable组件的还款信息事件
 const handleViewRepaymentDetails = (record: any) => {
   currentLoanData.value = record
-  repaymentDetailVisible.value = true
+  repaymentVisible.value = true
+}
+
+// 处理LoanRecordTable组件的用信标签事件
+const handleViewLoanTags = (record: any) => {
+  currentLoanData.value = record
+  loanTagsVisible.value = true
+}
+
+// 处理LoanRecordTable组件的初始还款计划事件
+const handleViewInitialRepaymentPlan = (record: any) => {
+  currentLoanData.value = record
+  initialPlanVisible.value = true
+}
+
+// 根据用信记录派生出关联标签
+const getLoanTags = (record: any) => {
+  if (!record) return []
+  const tags: string[] = []
+  if (record.productName) tags.push(record.productName)
+  if (record.status === '逾期') tags.push('逾期')
+  else if (record.status === '正常') tags.push('在贷')
+  else if (record.status === '已结清') tags.push('已结清')
+  if (record.channel) tags.push(`${record.channel}渠道`)
+  if (record.installments && record.installments > 1) tags.push(`${record.installments}期分期`)
+  if (record.overdueDays && record.overdueDays > 0) tags.push(`逾期${record.overdueDays}天`)
+  if (record.interestRate) tags.push(`利率${record.interestRate}%`)
+  if (record.result === '成功') tags.push('审批通过')
+  if (record.contractNo) tags.push('已签约')
+  return tags
 }
 
 // 刷新数据
@@ -637,5 +710,15 @@ const handleExport = () => {
 
 :deep(.arco-badge-number) {
   background-color: var(--subapp-primary);
+}
+
+.loan-tags-content {
+  padding: 8px 4px;
+}
+
+.loan-tags-content .tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 </style>

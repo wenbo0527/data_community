@@ -1,12 +1,13 @@
 <template>
   <a-modal
-    v-model:visible="visible"
+    :visible="visible"
     :title="isEdit ? '编辑备注' : '添加备注'"
     :width="520"
     :mask-closable="false"
     class="note-modal"
     @before-ok="handleSave"
     @cancel="handleCancel"
+    @update:visible="(val) => emit('update:visible', val)"
   >
     <div class="note-form">
       <div class="form-item">
