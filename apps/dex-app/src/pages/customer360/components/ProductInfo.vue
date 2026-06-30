@@ -71,7 +71,7 @@
       <!-- 授信明细列表 -->
       <div class="info-card">
         <div class="card-header">
-          <icon-credit-card class="card-icon" />
+          <IconStorage class="card-icon" />
           <span class="card-title">授信明细列表</span>
           <a-badge :count="creditDetailsList.length" class="card-badge" />
         </div>
@@ -188,7 +188,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { IconRefresh, IconUser, IconIdcard } from '@arco-design/web-vue/es/icon'
+import { IconRefresh, IconUser, IconIdcard, IconStorage } from '@arco-design/web-vue/es/icon'
 
 const props = defineProps({
   userInfo: {
