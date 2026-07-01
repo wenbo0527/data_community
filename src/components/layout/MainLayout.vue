@@ -71,7 +71,7 @@ const activeModule = ref('discovery')
 
 // 计算是否为详情页
 const isDetailPage = computed(() => {
-  return route.path.includes('/detail') || route.path.includes('/customer360/')
+  return route.path.includes('/detail')
 })
 
 // 计算是否显示侧边菜单

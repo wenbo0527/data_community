@@ -405,28 +405,17 @@ const router = createRouter({
           })
         },
         {
-          path: 'customer360',
-          name: 'Customer360',
-          component: () => import('../pages/discovery/customer360/index.vue'),
+          path: 'placeholder',
+          name: 'Placeholder',
+          component: () => import('../pages/common/PlaceholderPage.vue'),
           meta: {
-            title: '客户360',
-            requiresAuth: true
-          }
-        },
-        {
-          path: 'customer360/detail/:userId',
-          name: 'Customer360Detail',
-          component: () => import('../pages/discovery/customer360/detail.vue'),
-          meta: {
-            title: '客户360详情',
-            requiresAuth: true
+            title: '功能建设中',
+            hidden: true
           },
-          props: true,
-          beforeEnter: (to) => {
-            if (!/^\d+$/.test(to.params.userId)) {
-              return '/discovery/customer360';
-            }
-          }
+          props: (route) => ({
+            title: route.query.title,
+            description: route.query.desc
+          })
         },
         {
           path: 'external',

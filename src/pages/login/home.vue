@@ -850,7 +850,6 @@ const todos = ref([
 // 可用应用列表
 const availableApplications = [
   { label: '模型平台', value: 'model-platform', icon: 'IconRobot' },
-  { label: '客户360', value: 'customer360', icon: 'IconUserGroup' },
   { label: '数据地图', value: 'data-map', icon: 'IconLocation' },
   { label: '客群中心', value: 'customer-center', icon: 'IconUserGroup' },
   { label: '权益中心', value: 'benefit-center', icon: 'IconHeart' },
@@ -976,7 +975,6 @@ const getIconComponent = (iconName) => {
 const getApplicationPath = (appValue) => {
   const pathMap = {
     'model-platform': '/exploration',
-    'customer360': '/discovery/customer360',
     'data-map': '/discovery/data-map',
     'customer-center': '/exploration/customer-center',
     'benefit-center': '/marketing/benefit',
