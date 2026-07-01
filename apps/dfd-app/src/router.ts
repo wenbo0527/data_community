@@ -210,20 +210,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '资产管理' }
       },
 
-      // --- 客户360 ---
-      {
-        path: 'customer360',
-        name: 'Customer360',
-        component: () => import('./pages/customer360/index.vue'),
-        meta: { title: '客户360' }
-      },
-      {
-        path: 'customer360/detail',
-        name: 'Customer360Detail',
-        component: () => import('./pages/customer360/detail.vue'),
-        meta: { title: '客户360详情' }
-      },
-
       // --- 征信 ---
       {
         path: 'credit',
