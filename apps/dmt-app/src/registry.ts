@@ -21,24 +21,24 @@ const registry: MicroAppRegistry = {
       order: 1
     },
     {
+      key: 'dmt-business-concept',
+      label: '业务概念',
+      icon: 'icon-book',
+      path: '/dmt/business-concept',
+      order: 2
+    },
+    {
       key: 'dmt-metadata',
       label: '元数据',
       icon: 'icon-database',
       path: '/dmt/metadata',
-      order: 2
+      order: 3
     },
     {
       key: 'dmt-data-standard',
       label: '数据标准',
       icon: 'icon-rule',
       path: '/dmt/data-standard',
-      order: 3
-    },
-    {
-      key: 'dmt-business-concept',
-      label: '业务概念',
-      icon: 'icon-book',
-      path: '/dmt/business-concept',
       order: 4
     },
     {

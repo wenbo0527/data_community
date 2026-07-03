@@ -9,7 +9,7 @@
         <div class="header-actions">
           <a-space>
             <a-button type="outline" @click="$router.push('/budget/monitor')">预算监控</a-button>
-            <a-button type="primary" @click="$router.push('/external-data/archive')">外数档案</a-button>
+            <a-button type="primary" @click="$router.push('/variable-hub/external-data/archive')">外数档案</a-button>
           </a-space>
         </div>
       </div>
@@ -22,19 +22,19 @@
         </a-card>
       </a-grid-item>
       <a-grid-item>
-        <a-card hoverable class="nav-card" @click="goNav('/external-data/archive')">
+        <a-card hoverable class="nav-card" @click="goNav('/variable-hub/external-data/archive')">
           <div class="nav-title">档案管理</div>
           <div class="nav-sub">档案与状态</div>
         </a-card>
       </a-grid-item>
       <a-grid-item>
-        <a-card hoverable class="nav-card" @click="goNav('/external-data/evaluation')">
+        <a-card hoverable class="nav-card" @click="goNav('/variable-hub/external-data/evaluation')">
           <div class="nav-title">评估中心</div>
           <div class="nav-sub">报告与结论</div>
         </a-card>
       </a-grid-item>
       <a-grid-item>
-        <a-card hoverable class="nav-card" @click="goNav('/external-data/service')">
+        <a-card hoverable class="nav-card" @click="goNav('/variable-hub/external-data/service')">
           <div class="nav-title">服务管理</div>
           <div class="nav-sub">配置与使用</div>
         </a-card>
@@ -124,7 +124,7 @@ const tasksLoading = computed(() => store.tasksLoading)
 
 const load = async () => { try { await store.fetchProducts(); await store.fetchBurndown({ range: 'month' }); await store.fetchTasks(); Message.success('已加载生命周期数据') } catch { Message.error('加载失败') } }
 onMounted(load)
-const goArchive = (status: string) => { router.push({ path: '/external-data/archive', query: { status } }) }
+const goArchive = (status: string) => { router.push({ path: '/variable-hub/external-data/archive', query: { status } }) }
 const goNav = (path: string) => { router.push(path) }
 const onGranularityChange = async (g: 'month' | 'quarter') => { await store.fetchBurndown({ range: g }) }
 const taskTag = (s?: string) => s === 'pending' ? 'default' : s === 'in_progress' ? 'warning' : s === 'completed' ? 'success' : 'default'

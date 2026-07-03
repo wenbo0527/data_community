@@ -1,5 +1,6 @@
 import http from '../../../api/http'
-const useMock = (import.meta as any)?.env?.VITE_USE_MOCK === 'true'
+const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {}
+const useMock = env.VITE_USE_MOCK === 'true' || env.VITE_USE_MOCK === true || !env.VITE_API_BASE
 
 export async function getSettlementList(_: any) {
   if (useMock) {

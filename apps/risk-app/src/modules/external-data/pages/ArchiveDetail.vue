@@ -559,7 +559,7 @@ const hitRate = ref(62)
 const lift = ref(18)
 const avgLatency = ref(120)
 
-const goBackList = () => { router.push({ path: '/external-data/archive' }) }
+const goBackList = () => { router.push({ path: '/variable-hub/external-data/archive' }) }
 const statusLabel = (s?: string) => s === 'importing' ? '引入中' : s === 'online' ? '已上线' : s === 'pending_evaluation' ? '待评估' : s === 'archived' ? '已归档' : '—'
 const statusTag = (s?: string) => s === 'online' ? 'success' : s === 'pending_evaluation' ? 'warning' : s === 'importing' ? 'warning' : 'default'
 const formatDate = (d?: string | Date) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }

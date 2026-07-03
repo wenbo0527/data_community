@@ -12,111 +12,185 @@ console.log('[Risk] routerBase:', routerBase)
  * MainLayout 包裹层 — 为独立运行（iframe 直接加载 risk-app）提供完整导航
  * 所有子路由都作为 MainLayout 的 children，这样它们都在 MainLayout 内渲染，
  * 继承顶部 Tab 栏和左侧菜单。
+ *
+ * 路由结构：
+ *  /                              → /variable-hub（风险要素工作台）
+ *  /variable-hub                  → 风险要素（变量一体化）
+ *    /variable-hub/external-data  → 外数生命周期管理（子模块）
+ *  /budget/*                      → 预算管理
+ *  /model-offline-analysis/*      → 离线模型分析
+ *  /accompany/*                   → 陪跑计划
  */
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('./layout/MainLayout.vue'),
     children: [
-      // ========== 首页重定向 ==========
-      { path: '/', redirect: '/external-data/lifecycle' },
+      // ========== 入口重定向：默认进入风险要素（变量一体化工作台）==========
+      { path: '/', redirect: '/variable-hub' },
+
+      // ========== 风险要素（变量一体化）==========
       {
-        path: '/index',
-        name: 'RiskIndex',
-        component: () => import('./pages/index.vue'),
-        meta: { title: '数字风险' }
+        path: '/variable-hub',
+        name: 'VariableHub',
+        component: () => import('./modules/variable-hub/pages/workbench/index.vue'),
+        meta: { title: '风险要素' }
+      },
+      {
+        path: '/variable-management',
+        name: 'VariableManagement',
+        component: () => import('./modules/variable-hub/pages/variable-management/index.vue'),
+        meta: { title: '变量台账' }
+      },
+      {
+        path: '/variable-management/detail/:id/:mode?',
+        name: 'VariableAssetDetail',
+        component: () => import('./modules/variable-hub/pages/variable-management/detail.vue'),
+        meta: { title: '变量详情' }
+      },
+      {
+        path: '/explore/topics',
+        name: 'ExploreTopics',
+        component: () => import('./modules/variable-hub/pages/explore/topics/index.vue'),
+        meta: { title: '探索课题' }
+      },
+      {
+        path: '/explore/topics/:id',
+        name: 'ExploreTopicDetail',
+        component: () => import('./modules/variable-hub/pages/explore/topics/detail.vue'),
+        meta: { title: '课题详情' }
+      },
+      {
+        path: '/explore/compare',
+        name: 'ExploreCompare',
+        component: () => import('./modules/variable-hub/pages/explore/compare/index.vue'),
+        meta: { title: '实验对比' }
+      },
+      {
+        path: '/explore/map',
+        name: 'ExploreMap',
+        component: () => import('./modules/variable-hub/pages/explore/map/index.vue'),
+        meta: { title: '变量全景' }
+      },
+      {
+        path: '/explore/taxonomy',
+        name: 'ExploreTaxonomy',
+        component: () => import('./modules/variable-hub/pages/explore/taxonomy/index.vue'),
+        meta: { title: '探索分类管理' }
+      },
+      {
+        path: '/explore/audit',
+        name: 'ExploreAudit',
+        component: () => import('./modules/variable-hub/pages/explore/audit/index.vue'),
+        meta: { title: '决策审计' }
+      },
+      {
+        path: '/evaluation/tasks',
+        name: 'EvaluationTasks',
+        component: () => import('./modules/variable-hub/pages/evaluation/tasks/index.vue'),
+        meta: { title: '评估任务中心' }
       },
 
-      // ========== 外数生命周期 ==========
+      // ========== 外数生命周期管理（作为风险要素的子模块）==========
       {
-        path: '/external-data',
+        path: '/variable-hub/external-data',
         name: 'ExternalDataRoot',
-        redirect: '/external-data/lifecycle'
+        redirect: '/variable-hub/external-data/lifecycle'
       },
       {
-        path: '/external-data/lifecycle',
+        path: '/variable-hub/external-data/lifecycle',
         name: 'RiskExternalDataLifecycle',
         component: () => import('./modules/external-data/pages/Lifecycle.vue'),
         meta: { title: '外数生命周期' }
       },
       {
-        path: '/external-data/lifecycle/:id',
+        path: '/variable-hub/external-data/lifecycle/:id',
         name: 'RiskExternalDataLifecycleDetail',
         component: () => import('./modules/external-data/pages/Lifecycle.vue'),
         meta: { title: '外数生命周期详情' },
         props: true
       },
       {
-        path: '/external-data/evaluation',
+        path: '/variable-hub/external-data/evaluation',
         name: 'RiskExternalDataEvaluation',
         component: () => import('./modules/external-data/pages/Evaluation.vue'),
         meta: { title: '外数评估' }
       },
       {
-        path: '/external-data/evaluation/:id',
+        path: '/variable-hub/external-data/evaluation/create',
+        name: 'RiskExternalDataEvaluationCreate',
+        component: () => import('./modules/external-data/pages/CreateEvaluation.vue'),
+        meta: { title: '创建外数评估' }
+      },
+      {
+        path: '/variable-hub/external-data/evaluation/:id',
         name: 'RiskExternalDataEvaluationDetail',
         component: () => import('./modules/external-data/pages/EvaluationDetail.vue'),
         meta: { title: '评估详情' },
         props: true
       },
       {
-        path: '/external-data/archive',
+        path: '/variable-hub/external-data/archive',
         name: 'RiskExternalDataArchive',
         component: () => import('./modules/external-data/pages/Archive.vue'),
         meta: { title: '外数档案' }
       },
       {
-        path: '/external-data/archive/:id',
+        path: '/variable-hub/external-data/archive/:id',
         name: 'RiskExternalDataArchiveDetail',
         component: () => import('./modules/external-data/pages/ArchiveDetail.vue'),
         meta: { title: '档案详情' },
         props: true
       },
       {
-        path: '/external-data/service',
+        path: '/variable-hub/external-data/service',
         name: 'RiskExternalDataService',
         component: () => import('./modules/external-data/pages/Service.vue'),
         meta: { title: '外数数据服务' }
       },
       {
-        path: '/external-data/service-create',
+        path: '/variable-hub/external-data/service-create',
         name: 'RiskExternalDataServiceCreate',
-        component: () => import('./modules/external-data/pages/Service.vue'),
-        meta: { title: '外数服务创建（新）' }
+        redirect: { path: '/variable-hub/external-data/service', query: { mode: 'create' } }
       },
       {
-        path: '/external-data/service-scene',
+        path: '/variable-hub/external-data/service-mode/:mode',
+        name: 'RiskExternalDataServiceMode',
+        redirect: (to: any) => ({ path: '/variable-hub/external-data/service', query: { mode: to.params.mode } })
+      },
+      {
+        path: '/variable-hub/external-data/service-scene',
         name: 'RiskExternalDataServiceScene',
         component: () => import('./modules/external-data/pages/ServiceScene.vue'),
         meta: { title: '服务场景入口' }
       },
       {
-        path: '/external-data/sample-preparation',
+        path: '/variable-hub/external-data/sample-preparation',
         name: 'RiskExternalDataSamplePreparation',
         component: () => import('./modules/external-data/pages/SamplePreparation.vue'),
         meta: { title: '样本表准备' }
       },
       {
-        path: '/external-data/sample-preparation/create',
+        path: '/variable-hub/external-data/sample-preparation/create',
         name: 'RiskExternalDataSamplePreparationCreate',
         component: () => import('./modules/external-data/pages/SamplePreparationCreate.vue'),
         meta: { title: '新建样本表' }
       },
       {
-        path: '/external-data/sample-preparation/edit/:id',
+        path: '/variable-hub/external-data/sample-preparation/edit/:id',
         name: 'RiskExternalDataSamplePreparationEdit',
         component: () => import('./modules/external-data/pages/SamplePreparationCreate.vue'),
         meta: { title: '编辑样本表' },
         props: true
       },
       {
-        path: '/external-data/validation-template',
+        path: '/variable-hub/external-data/validation-template',
         name: 'RiskExternalDataValidationTemplate',
         component: () => import('./modules/external-data/pages/ServiceValidationTemplate.vue'),
         meta: { title: '服务校验模版管理' }
       },
       {
-        path: '/external-data/online-call-application',
+        path: '/variable-hub/external-data/online-call-application',
         name: 'RiskExternalDataOnlineCallApplication',
         component: () => import('./modules/external-data/pages/OnlineCallApplication.vue'),
         meta: { title: '外数线上调用服务申请' }
@@ -212,26 +286,22 @@ const routes: RouteRecordRaw[] = [
       },
 
       // ========== 离线模型分析（作为 MainLayout 的子路由）==========
-      // redirect 根路径到 feature-center
       {
         path: '/model-offline-analysis',
         redirect: '/model-offline-analysis/feature-center'
       },
-      // 功能演示
       {
         path: '/model-offline-analysis/demo',
         name: 'RiskOfflineModelDemo',
         component: () => import('./modules/offline-model/pages/demo.vue'),
         meta: { title: '功能演示', icon: 'icon-play-circle' }
       },
-      // 测试页面
       {
         path: '/model-offline-analysis/test',
         name: 'RiskOfflineModelTest',
         component: () => import('./modules/offline-model/pages/test.vue'),
         meta: { title: '测试页面', icon: 'icon-bug' }
       },
-      // 特征中心
       {
         path: '/model-offline-analysis/feature-center',
         name: 'RiskFeatureCenter',
@@ -258,7 +328,6 @@ const routes: RouteRecordRaw[] = [
         component: () => import('./modules/offline-model/pages/featureCenter/create.vue'),
         meta: { title: '新建特征' }
       },
-      // 模型注册
       {
         path: '/model-offline-analysis/model-register',
         name: 'RiskModelRegister',
@@ -285,7 +354,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '模型详情' },
         props: true
       },
-      // 模型回溯
       {
         path: '/model-offline-analysis/model-backtrack',
         name: 'RiskModelBacktrack',
@@ -305,7 +373,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '回溯详情' },
         props: true
       },
-      // 任务管理
       {
         path: '/model-offline-analysis/task-management',
         name: 'RiskTaskManagement',
@@ -319,7 +386,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '任务详情' },
         props: true
       },
-      // 模型评估
       {
         path: '/model-offline-analysis/model-evaluation',
         name: 'RiskModelEvaluation',
