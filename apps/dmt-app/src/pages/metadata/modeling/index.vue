@@ -3,6 +3,12 @@
     <div class="page-header">
       <h2>元数据建模</h2>
       <p class="description">构建元数据模型，定义实体绑定、血缘关系与数据标准映射。</p>
+      <a-space style="margin-top: 8px">
+        <a-tag color="arcoblue">表数据源：{{ availableTables.length }} 张</a-tag>
+        <a-tag color="green">业务域：{{ availableDomains.length }} 个</a-tag>
+        <a-tag color="orange">业务实体：{{ availableEntities.length }} 个</a-tag>
+        <a-tag color="purple">标准：{{ availableStandards.length }} 条</a-tag>
+      </a-space>
     </div>
 
     <a-tabs default-active-key="entity-binding" type="rounded">

@@ -21,24 +21,24 @@ const registry: MicroAppRegistry = {
       order: 1
     },
     {
-      key: 'dmt-business-concept',
-      label: '业务概念',
-      icon: 'icon-book',
-      path: '/dmt/business-concept',
-      order: 2
-    },
-    {
       key: 'dmt-metadata',
       label: '元数据',
       icon: 'icon-database',
       path: '/dmt/metadata',
-      order: 3
+      order: 2
     },
     {
       key: 'dmt-data-standard',
       label: '数据标准',
       icon: 'icon-rule',
       path: '/dmt/data-standard',
+      order: 3
+    },
+    {
+      key: 'dmt-business-concept',
+      label: '业务概念',
+      icon: 'icon-book',
+      path: '/dmt/business-concept',
       order: 4
     },
     {
@@ -68,6 +68,13 @@ const registry: MicroAppRegistry = {
       icon: 'icon-run',
       path: '/dmt/accompany',
       order: 8
+    },
+    {
+      key: 'dmt-classify',
+      label: '数据分级',
+      icon: 'icon-safe',
+      path: '/dmt/metadata/classify/sources',
+      order: 9
     }
   ],
   routes: []
