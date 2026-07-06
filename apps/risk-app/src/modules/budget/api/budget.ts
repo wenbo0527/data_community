@@ -1,9 +1,18 @@
 import http from '../../../api/http'
-const useMock = (import.meta as any)?.env?.VITE_USE_MOCK === 'true'
+// 兼容 Vite 注入的 import.meta.env
+const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {}
+const useMock = env.VITE_USE_MOCK === 'true' || env.VITE_USE_MOCK === true || !env.VITE_API_BASE
 
 export async function getBudgetList(params: { page?: number; pageSize?: number }) {
   if (useMock) {
-    const list = Array.from({ length: 8 }, (_, i) => ({ id: `B${i+1}`, name: `年度预算-${i+1}`, year: new Date().getFullYear(), total: 1000000 + i*50000, used: 400000 + i*30000, status: 'active' }))
+    const list = Array.from({ length: 8 }, (_, i) => ({
+      id: `B${i + 1}`,
+      name: `年度预算-${i + 1}`,
+      year: new Date().getFullYear(),
+      total: 1000000 + i * 50000,
+      used: 400000 + i * 30000,
+      status: 'active'
+    }))
     return { list, total: list.length }
   }
   return await http.get('/budget/list', { params })

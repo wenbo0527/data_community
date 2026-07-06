@@ -2,23 +2,94 @@
   <a-layout class="main-layout">
     <a-layout-header class="main-header">
       <div class="logo">
-        <div class="logo-text">Data Community</div>
+        <div class="logo-text">数字风险</div>
       </div>
-      <a-menu mode="horizontal" :selected-keys="[activeTopMenu]" @menu-item-click="handleTopMenuClick" class="top-menu">
-        <a-menu-item key="lifecycle">外数生命周期</a-menu-item>
+      <a-menu
+        mode="horizontal"
+        :selected-keys="topSelectedKeys"
+        @menu-item-click="handleTopMenuClick"
+        class="top-menu"
+      >
+        <a-menu-item key="riskData">风险数据生命周期</a-menu-item>
         <a-menu-item key="analysis">离线模型分析</a-menu-item>
       </a-menu>
     </a-layout-header>
     <a-layout class="body-layout">
-      <a-layout-sider class="main-sider" :width="220" collapsible breakpoint="xl">
-        <a-menu :selected-keys="[activeSideMenu]" :default-open-keys="openKeys" @menu-item-click="handleSideMenuClick" :auto-open="true">
-          <template v-for="item in currentSideMenus" :key="item.key">
-            <a-sub-menu v-if="Array.isArray((item as any).children)" :key="item.key + '-group'">
-              <template #title>{{ item.title }}</template>
-              <a-menu-item v-for="child in (item as any).children" :key="child.key">{{ child.title }}</a-menu-item>
-            </a-sub-menu>
-            <a-menu-item v-else :key="item.key">{{ item.title }}</a-menu-item>
-          </template>
+      <a-layout-sider class="main-sider" :width="240" collapsible breakpoint="xl">
+        <!-- 风险数据生命周期 Tab -->
+        <a-menu
+          v-if="activeTopMenu === 'riskData'"
+          :selected-keys="sideSelectedKeys"
+          :open-keys="sideOpenKeys"
+          :auto-open="false"
+          @menu-item-click="handleSideMenuClick"
+          @sub-menu-click="handleSubMenuClick"
+        >
+          <!-- 风险要素 -->
+          <a-sub-menu key="risk-factor-group">
+            <template #title>风险要素</template>
+            <a-menu-item key="/variable-hub">一体化总览</a-menu-item>
+            <a-menu-item key="/variable-management">变量台账</a-menu-item>
+            <a-menu-item key="/explore/map">变量全景</a-menu-item>
+            <a-menu-item key="/evaluation/tasks">评估任务中心</a-menu-item>
+          </a-sub-menu>
+          <a-sub-menu key="risk-factor-explore">
+            <template #title>探索过程</template>
+            <a-menu-item key="/explore/topics">探索课题</a-menu-item>
+            <a-menu-item key="/explore/compare">实验对比</a-menu-item>
+          </a-sub-menu>
+          <a-sub-menu key="risk-factor-config">
+            <template #title>模块配置</template>
+            <a-menu-item key="/explore/taxonomy">探索分类管理</a-menu-item>
+            <a-menu-item key="/explore/audit">决策审计</a-menu-item>
+          </a-sub-menu>
+
+          <!-- 外数生命周期管理 -->
+          <a-sub-menu key="external-data-core-group">
+            <template #title>外数生命周期</template>
+            <a-menu-item key="/variable-hub/external-data/lifecycle">生命周期总览</a-menu-item>
+            <a-menu-item key="/variable-hub/external-data/archive">外数档案管理</a-menu-item>
+            <a-menu-item key="/variable-hub/external-data/evaluation">外数评估中心</a-menu-item>
+          </a-sub-menu>
+          <a-sub-menu key="external-data-service-group">
+            <template #title>外数服务管理</template>
+            <a-menu-item key="/variable-hub/external-data/service-scene">服务场景入口</a-menu-item>
+            <a-menu-item key="/variable-hub/external-data/service-create">外数服务创建（新）</a-menu-item>
+            <a-menu-item key="/variable-hub/external-data/service">服务任务列表</a-menu-item>
+            <a-menu-item key="/variable-hub/external-data/sample-preparation">样本表准备</a-menu-item>
+            <a-menu-item key="/variable-hub/external-data/validation-template">服务校验模版管理</a-menu-item>
+            <a-menu-item key="/variable-hub/external-data/online-call-application">外数线上调用服务申请</a-menu-item>
+          </a-sub-menu>
+          <a-sub-menu key="external-data-budget-group">
+            <template #title>预算与合同</template>
+            <a-menu-item key="/budget/overview">预算总览</a-menu-item>
+            <a-menu-item key="/budget/list">预算列表</a-menu-item>
+            <a-menu-item key="/budget/monitor">预算监控</a-menu-item>
+            <a-menu-item key="/budget/contracts">合同管理</a-menu-item>
+            <a-menu-item key="/budget/settlement">结算管理</a-menu-item>
+            <a-menu-item key="/budget/accounting">核算流程</a-menu-item>
+          </a-sub-menu>
+          <a-sub-menu key="external-data-accompany-group">
+            <template #title>陪跑计划</template>
+            <a-menu-item key="/accompany">陪跑列表</a-menu-item>
+            <a-menu-item key="/accompany/create">创建陪跑</a-menu-item>
+            <a-menu-item key="/accompany/result">陪跑结果</a-menu-item>
+          </a-sub-menu>
+        </a-menu>
+
+        <!-- 离线模型分析 Tab -->
+        <a-menu
+          v-else
+          :selected-keys="sideSelectedKeys"
+          :open-keys="sideOpenKeys"
+          :auto-open="false"
+          @menu-item-click="handleSideMenuClick"
+        >
+          <a-menu-item key="/model-offline-analysis/feature-center">特征中心</a-menu-item>
+          <a-menu-item key="/model-offline-analysis/model-register">模型注册</a-menu-item>
+          <a-menu-item key="/model-offline-analysis/model-backtrack">模型回溯</a-menu-item>
+          <a-menu-item key="/model-offline-analysis/task-management">任务管理</a-menu-item>
+          <a-menu-item key="/model-offline-analysis/model-evaluation">模型评估</a-menu-item>
         </a-menu>
       </a-layout-sider>
       <a-layout-content class="main-content">
@@ -37,91 +108,89 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 
-const activeTopMenu = ref('lifecycle')
-const activeSideMenu = ref('')
-const openKeys = ref(['budget'])
+const activeTopMenu = ref('riskData')
+const activeSideMenu = ref<string>('')
+const openSubKeys = ref<string[]>([
+  'risk-factor-group',
+  'external-data-core-group',
+  'external-data-service-group',
+  'external-data-budget-group',
+  'external-data-accompany-group'
+])
 
-const lifecycleMenus = [
-  { key: '/external-data/lifecycle', title: '生命周期总览' },
-  { key: '/external-data/archive', title: '外数档案管理' },
-  { key: '/external-data/evaluation', title: '外数评估中心' },
-  {
-    key: 'service',
-    title: '外数服务管理',
-    children: [
-      { key: '/external-data/service-scene', title: '服务场景入口' },
-      { key: '/external-data/service-create', title: '外数服务创建（新）' },
-      { key: '/external-data/service', title: '服务任务列表' },
-      { key: '/external-data/sample-preparation', title: '样本表准备' },
-      { key: '/external-data/validation-template', title: '服务校验模版管理' },
-      { key: '/external-data/online-call-application', title: '外数线上调用服务申请' }
-    ]
-  },
-  {
-    key: 'budget',
-    title: '预算管理',
-    children: [
-      { key: '/budget/overview', title: '预算总览' },
-      { key: '/budget/list', title: '预算列表' },
-      { key: '/budget/monitor', title: '预算监控' },
-      { key: '/budget/contracts', title: '合同管理' },
-      { key: '/budget/settlement', title: '结算管理' }
-    ]
-  }
-]
-
-const analysisMenus = [
-  { key: '/model-offline-analysis/feature-center', title: '特征中心' },
-  { key: '/model-offline-analysis/model-register', title: '模型注册' },
-  { key: '/model-offline-analysis/model-backtrack', title: '模型回溯' },
-  { key: '/model-offline-analysis/task-management', title: '任务管理' },
-  { key: '/model-offline-analysis/model-evaluation', title: '模型评估' }
-]
-
-const currentSideMenus = computed(() => {
-  return activeTopMenu.value === 'analysis' ? analysisMenus : lifecycleMenus
-})
+const topSelectedKeys = computed(() => [activeTopMenu.value])
+const sideSelectedKeys = computed(() => (activeSideMenu.value ? [activeSideMenu.value] : []))
+const sideOpenKeys = computed(() => openSubKeys.value)
 
 watch(() => route.path, (path) => {
   updateMenuState(path)
 }, { immediate: true })
 
 function updateMenuState(path: string) {
-  if (path.startsWith('/model-offline-analysis')) activeTopMenu.value = 'analysis'
-  else activeTopMenu.value = 'lifecycle'
+  if (path.startsWith('/model-offline-analysis')) {
+    activeTopMenu.value = 'analysis'
+  } else {
+    activeTopMenu.value = 'riskData'
+  }
 
-  if (path.startsWith('/external-data/archive')) activeSideMenu.value = '/external-data/archive'
-  else if (path.startsWith('/external-data/evaluation')) activeSideMenu.value = '/external-data/evaluation'
-  else if (path.startsWith('/external-data/service-scene')) activeSideMenu.value = '/external-data/service-scene'
-  else if (path.startsWith('/external-data/sample-preparation')) activeSideMenu.value = '/external-data/sample-preparation'
-  else if (path.startsWith('/external-data/validation-template')) activeSideMenu.value = '/external-data/validation-template'
-  else if (path.startsWith('/external-data/service')) activeSideMenu.value = '/external-data/service'
+  // 风险要素
+  if (path === '/variable-hub' || path === '/variable-hub/') activeSideMenu.value = '/variable-hub'
+  else if (path.startsWith('/variable-management')) activeSideMenu.value = '/variable-management'
+  else if (path.startsWith('/explore/topics')) activeSideMenu.value = '/explore/topics'
+  else if (path.startsWith('/explore/compare')) activeSideMenu.value = '/explore/compare'
+  else if (path.startsWith('/explore/taxonomy')) activeSideMenu.value = '/explore/taxonomy'
+  else if (path.startsWith('/explore/audit')) activeSideMenu.value = '/explore/audit'
+  else if (path.startsWith('/explore/map')) activeSideMenu.value = '/explore/map'
+  else if (path.startsWith('/evaluation/')) activeSideMenu.value = '/evaluation/tasks'
+  // 外数
+  else if (path.startsWith('/variable-hub/external-data/lifecycle')) activeSideMenu.value = '/variable-hub/external-data/lifecycle'
+  else if (path.startsWith('/variable-hub/external-data/archive')) activeSideMenu.value = '/variable-hub/external-data/archive'
+  else if (path.startsWith('/variable-hub/external-data/evaluation')) activeSideMenu.value = '/variable-hub/external-data/evaluation'
+  else if (path.startsWith('/variable-hub/external-data/service-scene')) activeSideMenu.value = '/variable-hub/external-data/service-scene'
+  else if (path.startsWith('/variable-hub/external-data/service-create')) activeSideMenu.value = '/variable-hub/external-data/service-create'
+  else if (path.startsWith('/variable-hub/external-data/service')) activeSideMenu.value = '/variable-hub/external-data/service'
+  else if (path.startsWith('/variable-hub/external-data/sample-preparation')) activeSideMenu.value = '/variable-hub/external-data/sample-preparation'
+  else if (path.startsWith('/variable-hub/external-data/validation-template')) activeSideMenu.value = '/variable-hub/external-data/validation-template'
+  else if (path.startsWith('/variable-hub/external-data/online-call-application')) activeSideMenu.value = '/variable-hub/external-data/online-call-application'
+  // 预算
   else if (path.startsWith('/budget/overview')) activeSideMenu.value = '/budget/overview'
   else if (path.startsWith('/budget/list')) activeSideMenu.value = '/budget/list'
   else if (path.startsWith('/budget/monitor')) activeSideMenu.value = '/budget/monitor'
   else if (path.startsWith('/budget/contracts')) activeSideMenu.value = '/budget/contracts'
   else if (path.startsWith('/budget/settlement')) activeSideMenu.value = '/budget/settlement'
-  else if (path.startsWith('/external-data/lifecycle')) activeSideMenu.value = '/external-data/lifecycle'
+  else if (path.startsWith('/budget/accounting')) activeSideMenu.value = '/budget/accounting'
+  // 陪跑
+  else if (path.startsWith('/accompany/create')) activeSideMenu.value = '/accompany/create'
+  else if (path.startsWith('/accompany/result')) activeSideMenu.value = '/accompany/result'
+  else if (path.startsWith('/accompany')) activeSideMenu.value = '/accompany'
+  // 离线模型
   else if (path.startsWith('/model-offline-analysis/feature-center')) activeSideMenu.value = '/model-offline-analysis/feature-center'
   else if (path.startsWith('/model-offline-analysis/model-register')) activeSideMenu.value = '/model-offline-analysis/model-register'
   else if (path.startsWith('/model-offline-analysis/model-backtrack')) activeSideMenu.value = '/model-offline-analysis/model-backtrack'
   else if (path.startsWith('/model-offline-analysis/task-management')) activeSideMenu.value = '/model-offline-analysis/task-management'
   else if (path.startsWith('/model-offline-analysis/model-evaluation')) activeSideMenu.value = '/model-offline-analysis/model-evaluation'
-  else activeSideMenu.value = path
+  else activeSideMenu.value = ''
 }
 
 const handleTopMenuClick = (key: string) => {
   activeTopMenu.value = key
-  if (key === 'lifecycle') {
-    router.push('/external-data/lifecycle')
+  if (key === 'riskData') {
+    router.push('/variable-hub')
   } else if (key === 'analysis') {
     router.push('/model-offline-analysis/feature-center')
   }
 }
 
 const handleSideMenuClick = (key: string) => {
-  if (key && key !== 'budget') {
-    router.push(key)
+  if (!key || !key.startsWith('/')) return
+  router.push(key)
+}
+
+const handleSubMenuClick = (key: string) => {
+  if (openSubKeys.value.includes(key)) {
+    openSubKeys.value = openSubKeys.value.filter((k) => k !== key)
+  } else {
+    openSubKeys.value = [...openSubKeys.value, key]
   }
 }
 </script>

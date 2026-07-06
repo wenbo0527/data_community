@@ -296,7 +296,7 @@ const formRef = ref();
 
 // 返回上一页
 const handleBack = () => {
-  router.push('/exploration/external-data-evaluation/list');
+  router.push('/variable-hub/external-data/evaluation/list');
 };
 
 // 当前步骤
@@ -755,7 +755,7 @@ const customUpload = (options: UploadOptions) => {
 };
 
 // 导入任务API服务
-import { createTask } from '@/api/external/task.ts';
+import { createTask } from '@/modules/external-data/api/task';
 
 // 表单提交
 const handleSubmit = async () => {
@@ -779,7 +779,7 @@ const handleSubmit = async () => {
       AMessage.success('任务创建成功');
       // 跳转到进度页面
       router.push({
-        path: '/exploration/external-data-evaluation/progress',
+        path: '/variable-hub/external-data/evaluation/progress',
         query: {
           taskId: response.data.id,
           taskName: form.reportName

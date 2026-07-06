@@ -14,13 +14,7 @@ console.log('[DMT] routerBase:', routerBase)
 const childRoutes: RouteRecordRaw[] = [
   {
     path: '',
-    redirect: '/variable-hub'
-  },
-  {
-    path: 'variable-hub',
-    name: 'VariableHub',
-    component: () => import('./pages/variable-hub/index.vue'),
-    meta: { title: '变量一体化管理' }
+    redirect: '/business-concept'
   },
   {
     path: 'business-concept',
@@ -33,6 +27,60 @@ const childRoutes: RouteRecordRaw[] = [
     name: 'DataStandard',
     component: () => import('./pages/data-standard/index.vue'),
     meta: { title: '数据标准' }
+  },
+  {
+    path: 'data-standard/standards',
+    name: 'DataStandardStandards',
+    component: () => import('./pages/data-standard/standards/index.vue'),
+    meta: { title: '数据标准管理' }
+  },
+  {
+    path: 'data-standard/standards/detail/:id',
+    name: 'DataStandardStandardsDetail',
+    component: () => import('./pages/data-standard/standards/detail.vue'),
+    meta: { title: '标准详情' }
+  },
+  {
+    path: 'data-standard/standards/edit/:id',
+    name: 'DataStandardStandardsEdit',
+    component: () => import('./pages/data-standard/standards/edit.vue'),
+    meta: { title: '编辑标准' }
+  },
+  {
+    path: 'data-standard/domains',
+    name: 'DataStandardDomains',
+    component: () => import('./pages/data-standard/domains/index.vue'),
+    meta: { title: '技术数据域管理' }
+  },
+  {
+    path: 'data-standard/domains/detail/:id',
+    name: 'DataStandardDomainDetail',
+    component: () => import('./pages/data-standard/domains/detail.vue'),
+    meta: { title: '技术数据域详情' }
+  },
+  {
+    path: 'data-standard/domains/edit/:id',
+    name: 'DataStandardDomainEdit',
+    component: () => import('./pages/data-standard/domains/edit.vue'),
+    meta: { title: '编辑技术数据域' }
+  },
+  {
+    path: 'data-standard/codes',
+    name: 'DataStandardCodes',
+    component: () => import('./pages/data-standard/codes/index.vue'),
+    meta: { title: '标准代码管理' }
+  },
+  {
+    path: 'data-standard/words',
+    name: 'DataStandardWords',
+    component: () => import('./pages/data-standard/words/index.vue'),
+    meta: { title: '标准单词管理' }
+  },
+  {
+    path: 'data-standard/audit',
+    name: 'DataStandardAudit',
+    component: () => import('./pages/data-standard/audit/index.vue'),
+    meta: { title: '标准稽核管理' }
   },
   {
     path: 'metadata',
@@ -51,60 +99,6 @@ const childRoutes: RouteRecordRaw[] = [
     name: 'UserGroups',
     component: () => import('./pages/user-groups/index.vue'),
     meta: { title: '用户组管理' }
-  },
-  {
-    path: 'variable-management',
-    name: 'VariableManagement',
-    component: () => import('./pages/variable-management/index.vue'),
-    meta: { title: '变量管理' }
-  },
-  {
-    path: 'variable-management/detail/:id/:mode?',
-    name: 'VariableAssetDetail',
-    component: () => import('./pages/variable-management/detail.vue'),
-    meta: { title: '变量详情' }
-  },
-  {
-    path: 'explore/topics',
-    name: 'ExploreTopics',
-    component: () => import('./pages/explore/topics/index.vue'),
-    meta: { title: '探索课题' }
-  },
-  {
-    path: 'explore/topics/:id',
-    name: 'ExploreTopicDetail',
-    component: () => import('./pages/explore/topics/detail.vue'),
-    meta: { title: '课题详情' }
-  },
-  {
-    path: 'explore/compare',
-    name: 'ExploreCompare',
-    component: () => import('./pages/explore/compare/index.vue'),
-    meta: { title: '实验对比' }
-  },
-  {
-    path: 'explore/map',
-    name: 'ExploreMap',
-    component: () => import('./pages/explore/map/index.vue'),
-    meta: { title: '变量全景' }
-  },
-  {
-    path: 'evaluation/tasks',
-    name: 'EvaluationTasks',
-    component: () => import('./pages/evaluation/tasks/index.vue'),
-    meta: { title: '评估任务中心' }
-  },
-  {
-    path: 'explore/taxonomy',
-    name: 'ExploreTaxonomy',
-    component: () => import('./pages/explore/taxonomy/index.vue'),
-    meta: { title: '探索分类管理' }
-  },
-  {
-    path: 'explore/audit',
-    name: 'ExploreAudit',
-    component: () => import('./pages/explore/audit/index.vue'),
-    meta: { title: '决策审计' }
   },
   {
     path: 'data-models',
@@ -177,8 +171,8 @@ const childRoutes: RouteRecordRaw[] = [
   {
     path: 'asset-management/listing-management/external-data-management',
     name: 'ExternalDataManagement',
-    component: () => import('./pages/asset-management/listing-management/external-data-management/index.vue'),
-    meta: { title: '外部数据管理' }
+    redirect: '/risk/variable-hub/external-data/lifecycle',
+    meta: { title: '外部数据管理（已迁到 risk-app）' }
   },
   {
     path: 'asset-management/listing-management/metric-management',
@@ -187,16 +181,22 @@ const childRoutes: RouteRecordRaw[] = [
     meta: { title: '指标管理' }
   },
   {
-    path: 'asset-management/listing-management/variable-management',
-    name: 'AssetVariableManagement',
-    component: () => import('./pages/asset-management/listing-management/variable-management/index.vue'),
-    meta: { title: '变量注册' }
-  },
-  {
     path: 'service',
     name: 'ServiceManagement',
     component: () => import('./pages/service/index.vue'),
     meta: { title: '服务管理' }
+  },
+  {
+    path: 'service/stats',
+    name: 'ServiceStats',
+    component: () => import('./pages/service/ServiceStats.vue'),
+    meta: { title: '服务统计' }
+  },
+  {
+    path: 'service/monitor',
+    name: 'ServiceMonitor',
+    component: () => import('./pages/service/ServiceMonitor.vue'),
+    meta: { title: '服务监控' }
   },
   {
     path: 'service/backtrack',

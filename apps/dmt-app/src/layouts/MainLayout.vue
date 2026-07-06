@@ -5,7 +5,6 @@
         <div class="logo-text">数据管理</div>
       </div>
       <a-menu mode="horizontal" :selected-keys="[activeTopMenu]" @menu-item-click="handleTopMenuClick" class="top-menu">
-        <a-menu-item key="variable">变量一体化管理</a-menu-item>
         <a-menu-item key="business">业务数据目录</a-menu-item>
         <a-menu-item key="asset">数据资产管理</a-menu-item>
         <a-menu-item key="standard">数据标准治理</a-menu-item>
@@ -42,31 +41,9 @@ const route = useRoute()
 
 console.log('[DMT-MainLayout] route:', route.path)
 
-const activeTopMenu = ref('variable')
+const activeTopMenu = ref('business')
 const activeSideMenu = ref('')
-const openKeys = ref(['variable'])
-
-// ========== 变量一体化管理 ==========
-const variableMenus = [
-  { key: '/variable-hub', title: '一体化总览' },
-  { key: '/variable-management', title: '变量台账' },
-  { key: '/explore/map', title: '变量全景' },
-  { key: '/evaluation/tasks', title: '评估任务中心' },
-  {
-    key: 'explore',
-    title: '探索过程',
-    children: [
-      { key: '/explore/topics', title: '探索课题' }
-    ]
-  },
-  {
-    key: 'config',
-    title: '模块配置',
-    children: [
-      { key: '/explore/taxonomy', title: '探索分类管理' }
-    ]
-  }
-]
+const openKeys = ref(['business'])
 
 // ========== 业务数据目录 ==========
 const businessMenus = [
@@ -76,7 +53,6 @@ const businessMenus = [
 // ========== 数据资产管理 ==========
 const assetMenus = [
   { key: '/metadata', title: '元数据管理' },
-  { key: '/variable-management', title: '变量管理' },
   { key: '/asset-management/basic-management/metadata-collection', title: '元数据采集' },
   { key: '/asset-management/listing-management/table-management', title: '数据资源上下架' },
   { key: '/asset-management/listing-management/metric-management', title: '数据要素上下架' },
@@ -85,7 +61,8 @@ const assetMenus = [
 
 // ========== 数据标准治理 ==========
 const standardMenus = [
-  { key: '/data-standard', title: '数据标准管理' },
+  { key: '/data-standard', title: '数据标准概览' },
+  { key: '/data-standard/standards', title: '数据标准管理' },
   { key: '/data-standard/domains', title: '技术数据域管理' },
   { key: '/data-standard/codes', title: '标准代码管理' },
   { key: '/data-standard/words', title: '标准单词管理' },
@@ -95,6 +72,8 @@ const standardMenus = [
 // ========== 数据服务管理 ==========
 const serviceMenus = [
   { key: '/service', title: '服务首页' },
+  { key: '/service/stats', title: '服务统计' },
+  { key: '/service/monitor', title: '服务监控' },
   { key: '/service/backtrack', title: '全量变量回溯' },
   { key: '/service/fund-usage-query', title: '客户资金用途查询' },
   { key: '/service/detail-data-query', title: '明细查询服务管理' },
@@ -104,7 +83,6 @@ const serviceMenus = [
 ]
 
 const menuMap: Record<string, any[]> = {
-  variable: variableMenus,
   business: businessMenus,
   asset: assetMenus,
   standard: standardMenus,
@@ -112,7 +90,7 @@ const menuMap: Record<string, any[]> = {
 }
 
 const currentSideMenus = computed(() => {
-  return menuMap[activeTopMenu.value] || variableMenus
+  return menuMap[activeTopMenu.value] || businessMenus
 })
 
 function updateMenuState(path: string) {
@@ -151,15 +129,7 @@ function handleSideMenuClick(key: string) {
 
 watch(() => route.path, (path) => {
   // Auto-detect top menu based on path
-  if (
-    path === '/' ||
-    path.includes('variable-hub') ||
-    path.includes('variable-management') ||
-    path.includes('explore') ||
-    path.includes('evaluation')
-  ) {
-    activeTopMenu.value = 'variable'
-  } else if (path.includes('business-concept')) {
+  if (path === '/' || path.includes('business-concept')) {
     activeTopMenu.value = 'business'
   } else if (
     path.includes('asset-management') ||

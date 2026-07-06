@@ -68,14 +68,15 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { useExternalDataStore } from '@/modules/external-data/stores'
 import ServiceApplicationDrawer from '../components/ServiceApplicationDrawer.vue'
 
 const store = useExternalDataStore()
 const router = useRouter()
+const route = useRoute()
 
 type ServiceType = '在线批量调用' | '外数离线回溯申请' | '周期跑批任务申请' | '全量变量回溯申请' | '风险合规离线回溯申请' | '外数线上调用服务申请'
 
@@ -118,6 +119,28 @@ onMounted(load)
 const createVisible = ref(false)
 const editMode = ref(false)
 const editingData = ref<any>(null)
+
+// ?mode=create 时自动打开新建抽屉
+function handleRouteMode(query: Record<string, any>) {
+  if (query.mode === 'create') {
+    editMode.value = false
+    editingData.value = null
+    createVisible.value = true
+  } else if (query.mode === 'edit' && query.id) {
+    const target = (store.services || []).find((s: any) => String(s.id) === String(query.id))
+    if (target) {
+      editMode.value = true
+      editingData.value = target
+      createVisible.value = true
+    }
+  }
+}
+
+watch(
+  () => route.query,
+  (q) => handleRouteMode(q as Record<string, any>),
+  { immediate: true }
+)
 
 const goToScene = () => {
   router.push({ name: 'RiskExternalDataServiceScene' })
