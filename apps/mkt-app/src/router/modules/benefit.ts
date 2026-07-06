@@ -23,6 +23,12 @@ export const benefitRoutes: RouteRecordRaw[] = [
     meta: { title: '新建券模板' }
   },
   {
+    path: '/benefit/template/detail',
+    name: 'BenefitTemplateDetail',
+    component: () => import('@/pages/coupon/template/detail.vue'),
+    meta: { title: '券模板详情' }
+  },
+  {
     path: '/benefit/management',
     name: 'BenefitManagement',
     component: () => import('@/pages/coupon/management/index.vue'),
