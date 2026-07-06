@@ -17,7 +17,12 @@ export default defineConfig(async () => {
   return {
     plugins,
     server: { host: '0.0.0.0', port: 5185, strictPort: true },
-    resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+        '@shared': path.resolve(__dirname, '../../src/mock/shared')
+      }
+    },
     base: '/dfd/'
   }
 })

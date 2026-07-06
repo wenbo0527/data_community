@@ -36,6 +36,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'DfdIndex',
+    redirect: '/asset-catalog'
+  },
+  {
+    path: '/index',
+    name: 'DfdIndexPage',
     component: () => import('./pages/index.vue'),
     meta: { title: '数据发现域' }
   },
@@ -54,6 +59,13 @@ const routes: RouteRecordRaw[] = [
         name: 'DiscoveryDataMap',
         component: () => import('./pages/data-map/index.vue'),
         meta: { title: '数据地图' }
+      },
+      // --- 数据地图 · 表详情（F-004/F-005 入口）---
+      {
+        path: 'data-map/table/:tableName',
+        name: 'DiscoveryDataMapTable',
+        component: () => import('./pages/data-map/TableDetailPage.vue'),
+        meta: { title: '表详情' }
       },
 
       // --- 资产目录 ---
@@ -285,6 +297,12 @@ const routes: RouteRecordRaw[] = [
     name: 'DataMapFlat',
     component: () => import('./pages/data-map/index.vue'),
     meta: { title: '数据地图' }
+  },
+  {
+    path: '/data-map/table/:tableName',
+    name: 'DataMapTableFlat',
+    component: () => import('./pages/data-map/TableDetailPage.vue'),
+    meta: { title: '表详情' }
   },
   {
     path: '/asset-catalog',
