@@ -29,64 +29,20 @@ const childRoutes: RouteRecordRaw[] = [
     meta: { title: '数据标准' }
   },
   {
-    path: 'data-standard/standards',
-    name: 'DataStandardStandards',
-    component: () => import('./pages/data-standard/standards/index.vue'),
-    meta: { title: '数据标准管理' }
-  },
-  {
-    path: 'data-standard/standards/detail/:id',
-    name: 'DataStandardStandardsDetail',
-    component: () => import('./pages/data-standard/standards/detail.vue'),
-    meta: { title: '标准详情' }
-  },
-  {
-    path: 'data-standard/standards/edit/:id',
-    name: 'DataStandardStandardsEdit',
-    component: () => import('./pages/data-standard/standards/edit.vue'),
-    meta: { title: '编辑标准' }
-  },
-  {
-    path: 'data-standard/domains',
-    name: 'DataStandardDomains',
-    component: () => import('./pages/data-standard/domains/index.vue'),
-    meta: { title: '技术数据域管理' }
-  },
-  {
-    path: 'data-standard/domains/detail/:id',
-    name: 'DataStandardDomainDetail',
-    component: () => import('./pages/data-standard/domains/detail.vue'),
-    meta: { title: '技术数据域详情' }
-  },
-  {
-    path: 'data-standard/domains/edit/:id',
-    name: 'DataStandardDomainEdit',
-    component: () => import('./pages/data-standard/domains/edit.vue'),
-    meta: { title: '编辑技术数据域' }
-  },
-  {
-    path: 'data-standard/codes',
-    name: 'DataStandardCodes',
-    component: () => import('./pages/data-standard/codes/index.vue'),
-    meta: { title: '标准代码管理' }
-  },
-  {
-    path: 'data-standard/words',
-    name: 'DataStandardWords',
-    component: () => import('./pages/data-standard/words/index.vue'),
-    meta: { title: '标准单词管理' }
-  },
-  {
-    path: 'data-standard/audit',
-    name: 'DataStandardAudit',
-    component: () => import('./pages/data-standard/audit/index.vue'),
-    meta: { title: '标准稽核管理' }
-  },
-  {
     path: 'metadata',
     name: 'Metadata',
     component: () => import('./pages/metadata/index.vue'),
     meta: { title: '元数据' }
+  },
+  {
+    // 兼容 /dmt/metadata/modeling 直接访问 — 重定向到元数据首页
+    path: 'metadata/modeling',
+    redirect: '/metadata'
+  },
+  {
+    // 兼容 /dmt/metadata/query 直接访问 — 重定向到元数据首页
+    path: 'metadata/query',
+    redirect: '/metadata'
   },
   {
     path: 'notifications',
@@ -169,12 +125,6 @@ const childRoutes: RouteRecordRaw[] = [
     meta: { title: '表管理' }
   },
   {
-    path: 'asset-management/listing-management/external-data-management',
-    name: 'ExternalDataManagement',
-    redirect: '/risk/variable-hub/external-data/lifecycle',
-    meta: { title: '外部数据管理（已迁到 risk-app）' }
-  },
-  {
     path: 'asset-management/listing-management/metric-management',
     name: 'MetricManagement',
     component: () => import('./pages/asset-management/listing-management/metric-management/index.vue'),
@@ -185,18 +135,6 @@ const childRoutes: RouteRecordRaw[] = [
     name: 'ServiceManagement',
     component: () => import('./pages/service/index.vue'),
     meta: { title: '服务管理' }
-  },
-  {
-    path: 'service/stats',
-    name: 'ServiceStats',
-    component: () => import('./pages/service/ServiceStats.vue'),
-    meta: { title: '服务统计' }
-  },
-  {
-    path: 'service/monitor',
-    name: 'ServiceMonitor',
-    component: () => import('./pages/service/ServiceMonitor.vue'),
-    meta: { title: '服务监控' }
   },
   {
     path: 'service/backtrack',
@@ -233,6 +171,53 @@ const childRoutes: RouteRecordRaw[] = [
     name: 'DetailDataQuery',
     component: () => import('./pages/service/detail-data-query.vue'),
     meta: { title: '明细数据查询服务' }
+  },
+  // ============ 数据分级分类（PRD v1.0-rc.2）============
+  // ============ 数据分级分类（PRD v1.0-rc.2，挂在数据管理下）============
+  {
+    path: 'metadata/classify/matrix',
+    name: 'ClassifyMatrix',
+    component: () => import('./pages/metadata/classify-matrix.vue'),
+    meta: { title: '数据安全分级矩阵表' }
+  },
+  {
+    path: 'metadata/classify/tasks',
+    name: 'ClassifyTasks',
+    component: () => import('./pages/metadata/classify-tasks.vue'),
+    meta: { title: '分级分类任务' }
+  },
+  {
+    path: 'metadata/classify/api-docs',
+    name: 'ClassifyApiDocs',
+    component: () => import('./pages/metadata/classify-api-docs.vue'),
+    meta: { title: '分级分类 API 文档' }
+  },
+  {
+    path: 'metadata/classify',
+    name: 'ClassifyEntry',
+    component: () => import('./pages/metadata/classify/index.vue'),
+    meta: { title: '数据分级分类' },
+    redirect: '/metadata/classify/sources',
+    children: [
+      {
+        path: 'sources',
+        name: 'ClassifySources',
+        component: () => import('./pages/metadata/classify/sources.vue'),
+        meta: { title: '数据源' }
+      },
+      {
+        path: 'tables/:systemId',
+        name: 'ClassifyTables',
+        component: () => import('./pages/metadata/classify/tables.vue'),
+        meta: { title: '表列表' }
+      },
+      {
+        path: 'table/:systemId/:schema/:tableName',
+        name: 'ClassifyTableDetail',
+        component: () => import('./pages/metadata/classify/table-detail.vue'),
+        meta: { title: '表详情' }
+      }
+    ]
   }
 ]
 
