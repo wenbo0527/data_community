@@ -296,7 +296,7 @@ const handleCopy = (record) => {
   
   // 跳转到创建页面并传递复制数据
   router.push({
-    path: '/marketing/benefit/template/create',
+    path: '/benefit/template/create',
     query: {
       mode: 'create',
       copyData: encodeURIComponent(JSON.stringify(copyData))
@@ -308,8 +308,8 @@ const handleCopy = (record) => {
 // 处理点击查看详情
 const handleRowDblClick = (record) => {
   router.push({
-    path: '/marketing/benefit/template/detail',
-    query: { 
+    path: '/benefit/template/detail',
+    query: {
       id: record.id,
       mode: 'view' // 添加mode参数标识为查看模式
     }
