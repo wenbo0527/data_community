@@ -879,6 +879,38 @@ export const MENU_CONFIG = {
         }
       }
     }
+  },
+
+  // ====================== 数据分级分类（新增顶级，PRD v1.0-rc.2）======================
+  dataClassify: {
+    key: 'dataClassify',
+    title: '数据分级分类',
+    icon: 'icon-safe',
+    type: 'module',
+    defaultPath: '/dmt/metadata/classify-matrix',
+    children: {
+      'classify-list': {
+        key: 'classify-list',
+        title: '分级分类列表',
+        path: '/dmt/metadata/classify-matrix',
+        routeName: 'ClassifyMatrix',
+        target: '_blank'
+      },
+      'classify-data': {
+        key: 'classify-data',
+        title: '数据信息',
+        path: '/dmt/metadata/classify/sources',
+        routeName: 'ClassifySources',
+        target: '_blank'
+      },
+      'classify-api-docs': {
+        key: 'classify-api-docs',
+        title: '消费 API 文档',
+        path: '/dmt/metadata/classify-api-docs',
+        routeName: 'ClassifyApiDocs',
+        target: '_blank'
+      }
+    }
   }
 }
 
@@ -888,6 +920,7 @@ export const TOP_MENU_ORDER = [
   'discovery', 
   'exploration', 
   'management', 
+  'dataClassify',
   'marketing', 
   'risk', 
   'touch',

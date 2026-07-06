@@ -68,6 +68,13 @@ const registry: MicroAppRegistry = {
       icon: 'icon-run',
       path: '/dmt/accompany',
       order: 8
+    },
+    {
+      key: 'dmt-classify',
+      label: '数据分级',
+      icon: 'icon-safe',
+      path: '/dmt/metadata/classify/sources',
+      order: 9
     }
   ],
   routes: []

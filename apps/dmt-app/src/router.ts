@@ -41,6 +41,16 @@ const childRoutes: RouteRecordRaw[] = [
     meta: { title: '元数据' }
   },
   {
+    // 兼容 /dmt/metadata/modeling 直接访问 — 重定向到元数据首页
+    path: 'metadata/modeling',
+    redirect: '/metadata'
+  },
+  {
+    // 兼容 /dmt/metadata/query 直接访问 — 重定向到元数据首页
+    path: 'metadata/query',
+    redirect: '/metadata'
+  },
+  {
     path: 'notifications',
     name: 'Notifications',
     component: () => import('./pages/notifications/index.vue'),
@@ -233,6 +243,53 @@ const childRoutes: RouteRecordRaw[] = [
     name: 'DetailDataQuery',
     component: () => import('./pages/service/detail-data-query.vue'),
     meta: { title: '明细数据查询服务' }
+  },
+  // ============ 数据分级分类（PRD v1.0-rc.2）============
+  // ============ 数据分级分类（PRD v1.0-rc.2，挂在数据管理下）============
+  {
+    path: 'metadata/classify/matrix',
+    name: 'ClassifyMatrix',
+    component: () => import('./pages/metadata/classify-matrix.vue'),
+    meta: { title: '数据安全分级矩阵表' }
+  },
+  {
+    path: 'metadata/classify/tasks',
+    name: 'ClassifyTasks',
+    component: () => import('./pages/metadata/classify-tasks.vue'),
+    meta: { title: '分级分类任务' }
+  },
+  {
+    path: 'metadata/classify/api-docs',
+    name: 'ClassifyApiDocs',
+    component: () => import('./pages/metadata/classify-api-docs.vue'),
+    meta: { title: '分级分类 API 文档' }
+  },
+  {
+    path: 'metadata/classify',
+    name: 'ClassifyEntry',
+    component: () => import('./pages/metadata/classify/index.vue'),
+    meta: { title: '数据分级分类' },
+    redirect: '/metadata/classify/sources',
+    children: [
+      {
+        path: 'sources',
+        name: 'ClassifySources',
+        component: () => import('./pages/metadata/classify/sources.vue'),
+        meta: { title: '数据源' }
+      },
+      {
+        path: 'tables/:systemId',
+        name: 'ClassifyTables',
+        component: () => import('./pages/metadata/classify/tables.vue'),
+        meta: { title: '表列表' }
+      },
+      {
+        path: 'table/:systemId/:schema/:tableName',
+        name: 'ClassifyTableDetail',
+        component: () => import('./pages/metadata/classify/table-detail.vue'),
+        meta: { title: '表详情' }
+      }
+    ]
   }
 ]
 

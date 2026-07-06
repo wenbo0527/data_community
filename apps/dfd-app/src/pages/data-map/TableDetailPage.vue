@@ -28,26 +28,62 @@
     </DetailHeader>
     
     <div v-if="tableData" class="table-content">
+      <!-- 数据来源标识（F-004/F-005 资源/资产区分） -->
+      <div class="source-type-bar">
+        <a-tag :color="getSourceTypeColor()" size="medium" class="source-type-tag">
+          <template #icon><icon-storage /></template>
+          {{ getSourceTypeLabel() }}
+        </a-tag>
+        <a-tag color="gray" size="medium">
+          <template #icon><icon-branch /></template>
+          {{ getSystemLabel() }}
+        </a-tag>
+        <span class="source-type-tip">
+          F-{{ getFeatureId() }}：该表{{ getFeatureHint() }}
+        </span>
+      </div>
+
       <!-- 基本信息卡片 -->
       <a-card class="table-info">
         <a-descriptions :column="2" :data="tableBasicInfo" />
       </a-card>
-      
+
       <!-- 标签页展示内容 -->
       <a-card class="tab-content">
         <a-tabs v-model:active-key="activeMainTab" class="table-content" @change="handleMainTabChange">
           <!-- 表结构 -->
           <a-tab-pane key="structure" title="表结构">
             <a-card class="table-info" title="字段信息">
+              <template #extra>
+                <a-space>
+                  <a-input
+                    v-model="fieldSearchKw"
+                    placeholder="搜索字段名/描述/业务目录"
+                    allow-clear
+                    size="small"
+                    style="width: 220px"
+                  />
+                  <a-select
+                    v-model="fieldFilterLevel"
+                    placeholder="敏感级别"
+                    allow-clear
+                    size="small"
+                    style="width: 110px"
+                  >
+                    <a-option v-for="lv in (['L1', 'L2', 'L3', 'L4'] as const)" :key="lv" :value="lv">{{ lv }}</a-option>
+                  </a-select>
+                </a-space>
+              </template>
               <a-table
-                :data="tableData?.fields || []"
-                :pagination="false"
+                :data="filteredFields"
+                :pagination="{ showTotal: true, pageSize: 20 }"
                 :scroll="{ x: '100%' }"
                 :bordered="false"
                 class="table-borderless table-compact"
+                row-key="name"
               >
                 <template #columns>
-                  <a-table-column title="字段名" data-index="name">
+                  <a-table-column title="字段名" data-index="name" :width="160">
                     <template #cell="{ record }">
                       <span 
                         :class="{ 'relation-field': isRelationField(record.name) }"
@@ -58,8 +94,40 @@
                       </span>
                     </template>
                   </a-table-column>
-                  <a-table-column title="类型" data-index="type" />
-                  <a-table-column title="描述" data-index="description" />
+                  <a-table-column title="类型" data-index="type" :width="100" />
+                  <a-table-column title="描述" data-index="description" :width="180" />
+                  <a-table-column title="分级分类" :width="320" fixed="right">
+                    <template #cell="{ record }">
+                      <a-space :size="4" v-if="record.sensitivity_level" direction="vertical">
+                        <a-space :size="4">
+                          <a-tag :color="getLevelColor(record.sensitivity_level)" size="small">
+                            {{ record.sensitivity_level }}
+                          </a-tag>
+                          <a-tag v-if="record.grade" :color="record.grade === '关键' ? 'red' : record.grade === '重要' ? 'orange' : 'gray'" size="small">
+                            {{ record.grade }}
+                          </a-tag>
+                          <a-tag v-if="record.business_belonging" color="arcoblue" size="small">
+                            {{ record.business_belonging }}
+                          </a-tag>
+                        </a-space>
+                        <a-tooltip
+                          v-if="record.category_l1"
+                          :content="`${record.category_l1} / ${record.category_l2} / ${record.category_l3} / ${record.category_l4}`"
+                        >
+                          <a-space :size="2">
+                            <a-tag v-if="record.category_l1" color="purple" size="small">{{ record.category_l1 }}</a-tag>
+                            <span v-if="record.category_l2" class="chain-sep">/</span>
+                            <a-tag v-if="record.category_l2" color="purple" size="small">{{ record.category_l2 }}</a-tag>
+                            <span v-if="record.category_l3" class="chain-sep">/</span>
+                            <a-tag v-if="record.category_l3" color="purple" size="small">{{ record.category_l3 }}</a-tag>
+                            <span v-if="record.category_l4" class="chain-sep">/</span>
+                            <a-tag v-if="record.category_l4" color="purple" size="small">{{ record.category_l4 }}</a-tag>
+                          </a-space>
+                        </a-tooltip>
+                      </a-space>
+                      <span v-else style="color: #c9cdd4">—</span>
+                    </template>
+                  </a-table-column>
                 </template>
               </a-table>
             </a-card>
@@ -241,6 +309,7 @@ import {
   IconEdit
 } from '@arco-design/web-vue/es/icon'
 import { Modal } from '@arco-design/web-vue'
+import { IconStorage, IconBranch } from '@arco-design/web-vue/es/icon'
 import { MetadataStore } from '@/mock/shared/metadata-store';
 const mockTables = MetadataStore.getTables();
 import DetailHeader from '@/components/common/DetailHeader.vue'
@@ -255,6 +324,7 @@ import { TitleComponent, TooltipComponent } from 'echarts/components'
 import type { EChartsType, CallbackDataParams } from 'echarts/types/dist/shared'
 import { safeInitECharts, safeDisposeChart } from '@/utils/echartsUtils'
 import dataMapMock from '@/mock/data-map.ts'
+import { SENSITIVITY_NAMES } from '@shared/classify-constants'
 import LineageGraph from '@/pages/lineage/components/LineageGraph.vue'
 
 // 注册必须的组件
@@ -370,6 +440,28 @@ const activeMainTab = ref('structure') // 控制主标签页
 const relatedTables = ref<TableItem[]>([])
 const currentTableName = ref<string>('')
 
+// ============ F4 字段列 + 搜索筛选 ============
+const fieldSearchKw = ref('')
+const fieldFilterLevel = ref<string>('')
+const filteredFields = computed(() => {
+  const all = (tableData.value?.fields || []) as any[]
+  return all.filter(f => {
+    if (fieldFilterLevel.value && f.sensitivity_level !== fieldFilterLevel.value) return false
+    if (fieldSearchKw.value) {
+      const kw = fieldSearchKw.value.toLowerCase()
+      const hit = (f.name || '').toLowerCase().includes(kw) ||
+        (f.description || '').toLowerCase().includes(kw) ||
+        (f.category_l4 || '').toLowerCase().includes(kw) ||
+        (f.category_l1 || '').toLowerCase().includes(kw)
+      if (!hit) return false
+    }
+    return true
+  })
+})
+const getLevelColor = (lv: string): string => {
+  return { L1: 'green', L2: 'gold', L3: 'orange', L4: 'red' }[lv] || 'gray'
+}
+
 const switchToRelationsTab = () => {
   activeMainTab.value = 'relations';
 }
@@ -389,6 +481,54 @@ const getModuleByTable = (tableName: string) => {
   if (tableName === 'fact_loan_apply') return '授信场景'
   if (tableName === 'dws_risk_score') return '风控评分'
   return '数据部'
+}
+
+// ========== F-004/F-005 资源/资产数据来源识别 ==========
+// HIVE 数仓 = 数据资产 (F-005)
+// 业务系统表 = 数据资源 (F-004)
+const getTableSourceType = (): 'asset' | 'resource' => {
+  const name = (tableData.value?.name || '').toLowerCase()
+  const desc = (tableData.value?.description || '').toLowerCase()
+  // HIVE 数仓下的表（dwd_/dws_/ads_/dim_/fact_ 等典型数仓分层表名）属于数据资产
+  if (name.startsWith('dwd_') || name.startsWith('dws_') || name.startsWith('ads_') ||
+      name.startsWith('dim_') || name.startsWith('fact_') || name.startsWith('ods_')) {
+    return 'asset'
+  }
+  // 业务系统的业务表（t_user_info / t_loan_apply 等）属于数据资源
+  if (name.startsWith('t_') || name.startsWith('s_') || name.startsWith('biz_')) {
+    return 'resource'
+  }
+  // 看 schema 描述
+  if (desc.includes('hive') || desc.includes('数仓') || desc.includes('底表')) {
+    return 'asset'
+  }
+  return 'resource'
+}
+
+const getSourceTypeLabel = () => {
+  const t = getTableSourceType()
+  return t === 'asset' ? '数据资产（HIVE 底表）' : '数据资源（业务系统）'
+}
+
+const getSourceTypeColor = () => {
+  return getTableSourceType() === 'asset' ? 'arcoblue' : 'green'
+}
+
+const getSystemLabel = () => {
+  const name = tableData.value?.name || ''
+  if (name.startsWith('dwd_') || name.startsWith('dws_') || name.startsWith('ads_')) return '数仓（HIVE）'
+  if (name.startsWith('t_user') || name.startsWith('t_account') || name.startsWith('t_loan')) return '核心业务系统'
+  return '业务系统'
+}
+
+const getFeatureId = () => {
+  return getTableSourceType() === 'asset' ? '005' : '004'
+}
+
+const getFeatureHint = () => {
+  return getTableSourceType() === 'asset'
+    ? '属于数据资产（HIVE 底表）层，字段展示已加上分级分类列'
+    : '属于数据资源（业务系统）层，字段展示已加上分级分类列'
 }
 
 // 监听关联关系视图模式切换
@@ -1292,6 +1432,12 @@ onMounted(() => {
 .table-detail-page {
   padding: 24px;
 }
+
+.category-chain { font-size: 12px; }
+.chain-sep { color: #c9cdd4; margin: 0 1px; }
+.source-type-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.source-type-tag { font-weight: 500; }
+.source-type-tip { font-size: 12px; color: #86909c; }
 
 .page-header {
   margin-bottom: 16px;

@@ -9,6 +9,7 @@
         <a-menu-item key="business">业务数据目录</a-menu-item>
         <a-menu-item key="asset">数据资产管理</a-menu-item>
         <a-menu-item key="standard">数据标准治理</a-menu-item>
+        <a-menu-item key="classify">数据分级分类</a-menu-item>
         <a-menu-item key="service">数据服务管理</a-menu-item>
       </a-menu>
     </a-layout-header>
@@ -76,7 +77,6 @@ const businessMenus = [
 // ========== 数据资产管理 ==========
 const assetMenus = [
   { key: '/metadata', title: '元数据管理' },
-  { key: '/variable-management', title: '变量管理' },
   { key: '/asset-management/basic-management/metadata-collection', title: '元数据采集' },
   { key: '/asset-management/listing-management/table-management', title: '数据资源上下架' },
   { key: '/asset-management/listing-management/metric-management', title: '数据要素上下架' },
@@ -103,11 +103,18 @@ const serviceMenus = [
   { key: '/accompany', title: '陪跑计划' }
 ]
 
+// ========== 数据分级分类（PRD v1.0-rc.2）==========
+const classifyMenus = [
+  { key: '/metadata/classify/matrix', title: '分级分类列表' },
+  { key: '/metadata/classify/sources', title: '数据信息' }
+]
+
 const menuMap: Record<string, any[]> = {
   variable: variableMenus,
   business: businessMenus,
   asset: assetMenus,
   standard: standardMenus,
+  classify: classifyMenus,
   service: serviceMenus
 }
 
@@ -116,17 +123,35 @@ const currentSideMenus = computed(() => {
 })
 
 function updateMenuState(path: string) {
+  // 精确匹配
   for (const menu of currentSideMenus.value) {
     const item = menu as any
     if (Array.isArray(item.children)) {
       for (const child of item.children) {
-        if (child.key === path || path.startsWith(child.key)) {
+        if (child.key === path) {
           activeSideMenu.value = child.key
           openKeys.value = [item.key]
           return
         }
       }
-    } else if (item.key === path || path.startsWith(item.key)) {
+    } else if (item.key === path) {
+      activeSideMenu.value = item.key
+      openKeys.value = []
+      return
+    }
+  }
+  // 模糊匹配（startsWith）：用完整 key 不带斜杠
+  for (const menu of currentSideMenus.value) {
+    const item = menu as any
+    if (Array.isArray(item.children)) {
+      for (const child of item.children) {
+        if (path.startsWith(child.key)) {
+          activeSideMenu.value = child.key
+          openKeys.value = [item.key]
+          return
+        }
+      }
+    } else if (path.startsWith(item.key + '/') || path === item.key) {
       activeSideMenu.value = item.key
       openKeys.value = []
       return
@@ -163,9 +188,9 @@ watch(() => route.path, (path) => {
     activeTopMenu.value = 'business'
   } else if (
     path.includes('asset-management') ||
-    path.includes('metadata')
+    path.includes('classify/')
   ) {
-    activeTopMenu.value = 'asset'
+    activeTopMenu.value = path.includes('classify') ? 'classify' : 'asset'
   } else if (path.includes('data-standard')) {
     activeTopMenu.value = 'standard'
   } else if (path.includes('service') || path.includes('data-models') || path.includes('accompany')) {
