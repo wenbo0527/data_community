@@ -14,6 +14,10 @@
             <template #icon><icon-download /></template>
             下载模板
           </a-button>
+          <a-button @click="exportAll">
+            <template #icon><icon-export /></template>
+            导出
+          </a-button>
           <a-button type="primary" @click="openUpload">
             <template #icon><icon-upload /></template>
             批量上传分级分类
@@ -129,7 +133,7 @@
             </template>
           </a-table-column>
           <a-table-column title="最近更新" data-index="updated_at" :width="120" />
-          <a-table-column title="操作" :width="200" fixed="right">
+          <a-table-column title="操作" :width="160" fixed="right">
             <template #cell="{ record }">
               <a-space>
                 <a-tooltip content="查看表详情与字段分级">
@@ -137,9 +141,6 @@
                 </a-tooltip>
                 <a-tooltip content="编辑字段分级（需治理员权限）">
                   <a-button type="text" size="small" @click="goToDetail(record)">编辑</a-button>
-                </a-tooltip>
-                <a-tooltip content="导出该表的所有字段分级">
-                  <a-button type="text" size="small" @click="exportTable(record)">导出</a-button>
                 </a-tooltip>
               </a-space>
             </template>
@@ -162,7 +163,7 @@ import ClassifyUploadModal from './components/ClassifyUploadModal.vue'
 import { classifySystemsData } from '@shared/classify-modules'
 import { SENSITIVITY_COLORS } from '@shared/classify-constants'
 import type { ClassifyField, ClassifyTable, SensitivityLevel } from '@shared/classify-types'
-import { IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconDownload, IconExport } from '@arco-design/web-vue/es/icon'
 
 const route = useRoute()
 const router = useRouter()
@@ -206,10 +207,12 @@ const onUploadSuccess = (count: number) => {
   uploadVisible.value = false
 }
 
-// 导出（按表）
-const exportTable = (t: ClassifyTable) => {
+// 全局导出（按数据源）
+const exportAll = () => {
+  const sysName = currentSystem.value?.name || '当前数据源'
+  const totalFields = tables.value.reduce((s, t) => s + t.fields.length, 0)
   // Demo 模式：仅 Toast 提示，不生成真实 Excel 文件
-  Message.info(`Demo 模式：已生成「${t.schema}.${t.table_name}」共 ${t.fields.length} 个字段的分级导出（实际部署时生成 xlsx）`)
+  Message.info(`Demo 模式：已生成「${sysName}」共 ${tables.value.length} 张表 / ${totalFields} 个字段的分级导出（实际部署时生成 xlsx）`)
 }
 
 // 下载模板
