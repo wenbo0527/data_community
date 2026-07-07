@@ -10,7 +10,7 @@
         v-model:open-keys="openKeys"
         mode="inline"
         class="discovery-menu"
-        @click="handleMenuClick"
+        @menu-item-click="handleMenuClick"
       >
         <!-- 数据地图（默认首页） -->
         <a-menu-item key="/discovery/data-map">
@@ -35,7 +35,7 @@
           <template #title>
             <span><icon-folder /> 数据资产发现</span>
           </template>
-          <a-menu-item key="/discovery/data-map/table-list">资产目录</a-menu-item>
+          <a-menu-item key="/discovery/asset-catalog">资产目录</a-menu-item>
         </a-sub-menu>
 
         <!-- 数据要素发现 -->
@@ -52,7 +52,7 @@
         <!-- 数据资产运营工具 -->
         <a-sub-menu key="analysis-tools">
           <template #title>
-            <span><icon-tools /> 数据资产运营工具</span>
+            <span><icon-tool /> 数据资产运营工具</span>
           </template>
           <a-menu-item key="/discovery/lineage">全链路血缘</a-menu-item>
           <a-menu-item key="/discovery/impact-analysis">影响分析</a-menu-item>
@@ -85,19 +85,36 @@ const openKeys = ref<string[]>([])
 // 从当前路由同步选中状态
 const syncSelectedKeys = () => {
   const path = route.path
+  // [埋点] 路由变化同步菜单高亮
+  // eslint-disable-next-line no-console
+  console.log('[MENU-SYNC] path ->', path, 'selectedKeys ->', [path])
   selectedKeys.value = [path]
   // 展开对应的 sub-menu
   if (path.startsWith('/discovery/data-resources')) openKeys.value = ['data-resources']
-  else if (path.startsWith('/discovery/data-map/table-list')) openKeys.value = ['data-assets']
+  else if (path.startsWith('/discovery/asset-catalog') || path.startsWith('/discovery/data-map/table-list')) openKeys.value = ['data-assets']
   else if (path.startsWith('/discovery/metrics-map') || path.startsWith('/discovery/variable-map') || path.startsWith('/discovery/feature-map') || path.startsWith('/discovery/api-market')) openKeys.value = ['data-elements']
   else if (path.startsWith('/discovery/lineage') || path.startsWith('/discovery/impact-analysis')) openKeys.value = ['analysis-tools']
+  else openKeys.value = []
 }
 
 watch(() => route.path, syncSelectedKeys, { immediate: true })
 
-const handleMenuClick = ({ key }: { key: string }) => {
-  if (key !== route.path) {
-    router.push(key)
+const handleMenuClick = (itemKey: string) => {
+  // Arco 2.x a-menu @menu-item-click 传 itemKey: string
+  // [埋点]
+  // eslint-disable-next-line no-console
+  console.log('[MENU-CLICK] itemKey:', itemKey, 'currentPath:', route.path)
+
+  // 父菜单（a-sub-menu）点击不会传 key，避免 push(undefined)
+  if (!itemKey || itemKey === route.path) return
+  if (typeof itemKey === 'string' && itemKey.startsWith('/')) {
+    router.push(itemKey).then(() => {
+      // eslint-disable-next-line no-console
+      console.log('[MENU-CLICK] router.push resolved, new path:', route.path)
+    }).catch((err) => {
+      // eslint-disable-next-line no-console
+      console.warn('[MENU-CLICK] router.push rejected:', err)
+    })
   }
 }
 </script>

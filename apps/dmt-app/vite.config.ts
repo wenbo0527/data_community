@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import { viteMockServe } from 'vite-plugin-mock'
 
 export default defineConfig(async () => {
   let logPlugin: any = null
@@ -11,7 +12,10 @@ export default defineConfig(async () => {
     logPlugin = null
   }
 
-  const plugins = [vue()]
+  const plugins = [vue(), viteMockServe({
+    mockPath: path.resolve(__dirname, 'src/mock'),
+    enable: true
+  })]
   if (logPlugin) plugins.unshift(logPlugin)
 
   return {

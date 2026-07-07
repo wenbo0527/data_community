@@ -14,6 +14,10 @@
             <template #icon><icon-download /></template>
             下载模板
           </a-button>
+          <a-button @click="exportAll">
+            <template #icon><icon-export /></template>
+            导出
+          </a-button>
           <a-button type="primary" @click="openUpload">
             <template #icon><icon-upload /></template>
             批量上传分级分类
@@ -162,7 +166,8 @@ import ClassifyUploadModal from './components/ClassifyUploadModal.vue'
 import { classifySystemsData } from '@shared/classify-modules'
 import { SENSITIVITY_COLORS } from '@shared/classify-constants'
 import type { ClassifyField, ClassifyTable, SensitivityLevel } from '@shared/classify-types'
-import { IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
+<<<<<<< HEAD
+import { IconUpload, IconDownload, IconExport } from '@arco-design/web-vue/es/icon'
 
 const route = useRoute()
 const router = useRouter()
@@ -206,10 +211,16 @@ const onUploadSuccess = (count: number) => {
   uploadVisible.value = false
 }
 
-// 导出（按表）
+// 导出（按表 + 全数据源）
 const exportTable = (t: ClassifyTable) => {
   // Demo 模式：仅 Toast 提示，不生成真实 Excel 文件
   Message.info(`Demo 模式：已生成「${t.schema}.${t.table_name}」共 ${t.fields.length} 个字段的分级导出（实际部署时生成 xlsx）`)
+}
+const exportAll = () => {
+  const sysName = currentSystem.value?.name || '当前数据源'
+  const totalFields = tables.value.reduce((s, t) => s + t.fields.length, 0)
+  // Demo 模式：仅 Toast 提示，不生成真实 Excel 文件
+  Message.info(`Demo 模式：已生成「${sysName}」共 ${tables.value.length} 张表 / ${totalFields} 个字段的分级导出（实际部署时生成 xlsx）`)
 }
 
 // 下载模板

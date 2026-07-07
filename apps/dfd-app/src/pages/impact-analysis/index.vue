@@ -119,8 +119,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
+
+onMounted(() => {
+  // 默认填充表名并自动触发一次分析,让页面进入即有数据
+  form.tableName = form.tableName || 'dwd_user_info'
+  analyzeUpstream()
+})
 
 const form = reactive({
   changeType: 'column_delete',

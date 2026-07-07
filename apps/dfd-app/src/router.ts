@@ -2,6 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
 /**
+ * standalone 模式固定 base 为 /dfd/。
+ * 如果将来需要重新接入 qiankun, 只需在这里读取 qiankun 注入的 base 即可。
+ */
+const routerBase = '/dfd/'
+
+/**
  * 数据发现域路由配置
  *
  * Shell 路由映射规则：
@@ -88,26 +94,26 @@ const routes: RouteRecordRaw[] = [
         component: () => import('./pages/data-resources/index.vue'),
         meta: { title: '数据资源发现' }
       },
-      // 5 个子路径别名 → 都路由到 data-resources
+      // 5 个子路径别名 → 都路由到 data-resources(带 type 参数)
       {
-        path: 'data-resources/system-data',
-        redirect: '/discovery/data-resources'
+        path: 'data-resources/business-system',
+        redirect: '/discovery/data-resources?type=business'
       },
       {
         path: 'data-resources/external-data',
-        redirect: '/discovery/data-resources'
+        redirect: '/discovery/data-resources?type=external'
       },
       {
         path: 'data-resources/file-import',
-        redirect: '/discovery/data-resources'
+        redirect: '/discovery/data-resources?type=file'
       },
       {
         path: 'data-resources/log-data',
-        redirect: '/discovery/data-resources'
+        redirect: '/discovery/data-resources?type=log'
       },
       {
         path: 'data-resources/real-time-data',
-        redirect: '/discovery/data-resources'
+        redirect: '/discovery/data-resources?type=realtime'
       },
 
       // --- 数据要素发现 ---
@@ -396,4 +402,10 @@ const routes: RouteRecordRaw[] = [
   }
 ]
 
-export default routes
+const router = createRouter({
+  history: createWebHistory(routerBase),
+  routes
+})
+
+export { router }
+export default router
