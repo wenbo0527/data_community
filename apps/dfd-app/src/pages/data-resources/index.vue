@@ -52,6 +52,7 @@
                   <a-descriptions-item label="更新时间">{{ sys.updatedAt }}</a-descriptions-item>
                 </a-descriptions>
                 <template #actions>
+                  <a-button type="text" size="small" @click="viewTables(sys)">查看表</a-button>
                   <a-button type="text" size="small" @click="viewDetail(sys)">详情</a-button>
                   <a-button type="text" size="small" @click="syncMeta(sys)">同步元数据</a-button>
                 </template>
@@ -209,11 +210,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 
-const activeType = ref('business')
+const route = useRoute()
+const router = useRouter()
+// 根据 ?type= 决定默认 activeType
+const typeMap: Record<string, string> = {
+  business: 'business',
+  'business-system': 'business',
+  external: 'external',
+  'external-data': 'external',
+  file: 'file',
+  'file-import': 'file',
+  log: 'log',
+  'log-data': 'log',
+  realtime: 'realtime',
+  'real-time-data': 'realtime'
+}
+const activeType = ref(typeMap[String(route.query.type || '')] || 'business')
 const loading = ref(false)
+
+onMounted(() => {
+  // 再次同步一次,防止路由 query 变化时未及时更新
+  const t = typeMap[String(route.query.type || '')]
+  if (t) activeType.value = t
+})
+
+watch(() => route.query.type, (val) => {
+  const t = typeMap[String(val || '')]
+  if (t) activeType.value = t
+})
 
 // ============= 业务系统 =============
 const bsSearch = ref('')
@@ -355,7 +383,14 @@ const getDbTypeColor = (dbType: string) => {
   const map: Record<string, string> = { oracle: 'red', mysql: 'blue', postgresql: 'green', mongodb: 'cyan' }
   return map[dbType] || 'gray'
 }
-const viewDetail = (item: any) => Message.info(`查看详情：${item.name}（Demo模式）`)
+const viewDetail = (item: any) => {
+  // 数据源详情：跳转到资产目录并按 domain 过滤
+  router.push({ path: '/discovery/asset-catalog', query: { domain: item.name, system: item.database || '' } })
+}
+const viewTables = (item: any) => {
+  // 跳转到资产目录并按数据库过滤，列表里能看到该业务系统下的表
+  router.push({ path: '/discovery/asset-catalog', query: { system: item.database || '', source: 'business-system' } })
+}
 const syncMeta = (item: any) => Message.success(`元数据同步已触发：${item.name}`)
 const testConnection = (item: any) => Message.success(`连接测试成功：${item.name}`)
 const downloadFile = (item: any) => Message.info(`下载文件：${item.name}（Demo模式）`)

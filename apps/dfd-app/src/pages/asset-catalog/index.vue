@@ -62,6 +62,21 @@
 
     <!-- 主体内容区域 -->
     <div class="main-content">
+      <!-- 当前数据源标识 banner(从 data-resources 跳转过来时展示) -->
+      <a-alert
+        v-if="businessDomain"
+        :title="`当前数据源：${businessDomain}`"
+        :content="`仅展示 ${businessDomain} 数据库下的业务表,共 ${tableData.length} 张`"
+        type="info"
+        show-icon
+        style="margin-bottom: 16px"
+        closable
+      >
+        <template #action>
+          <a-button size="small" type="text" @click="clearSearch">查看全部数据源</a-button>
+        </template>
+      </a-alert>
+
       <!-- 资产主题区域 (默认展示) -->
       <div v-if="!hasSearchQuery" class="content-section">
         <div class="section-header">
@@ -122,49 +137,55 @@
         <a-spin :loading="loading" style="width: 100%">
           <a-empty v-if="tableData.length === 0" description="未找到相关数据资产" />
           <a-row :gutter="[16, 16]" v-else>
-            <a-col 
-              v-for="record in tableData" 
-              :key="record.name" 
+            <a-col
+              v-for="record in tableData"
+              :key="record.name"
               :xs="24" :sm="12" :md="12" :lg="8" :xl="6"
             >
-              <a-card 
-                class="collection-card" 
-                hoverable 
+              <a-card
+                class="collection-card"
+                hoverable
                 @click="showTableDetail(record)"
               >
                 <div class="card-content">
                   <div class="card-title">
                     <h4 class="title-text" :title="record.name">
-                      {{ record.name }}
+                      <a-link @click.stop="showTableDetail(record)">{{ record.name }}</a-link>
                     </h4>
                     <div class="title-actions">
                       <a-tooltip content="申请权限">
-                        <a-button 
-                          type="text" 
-                          size="mini" 
+                        <a-button
+                          type="text"
+                          size="mini"
                           @click.stop="requestPermission(record)"
                           class="permission-btn"
                         >
                           <icon-lock />
                         </a-button>
                       </a-tooltip>
-                      <a-button 
-                        type="text" 
-                        size="mini" 
+                      <a-button
+                        type="text"
+                        size="mini"
                         @click.stop="addToFavorite(record)"
                       >
                         <icon-star />
                       </a-button>
                     </div>
                   </div>
-                  
+
                   <div class="collection-stats">
                     <a-tag size="small" :color="record.type === '维度表' ? 'blue' : (record.type === '事实表' ? 'green' : 'arcoblue')">
                       {{ record.type || '数据表' }}
                     </a-tag>
+                    <a-tag size="small" :color="getLevelColor(record.level)">
+                      {{ record.level || 'L1' }}
+                    </a-tag>
+                    <a-tag size="small" :color="record.grade === '关键' ? 'red' : record.grade === '重要' ? 'orange' : 'gray'">
+                      {{ record.grade || '一般' }}
+                    </a-tag>
                     <span class="table-count">{{ record.domain }}</span>
                   </div>
-                
+
                   <p class="card-description" :title="record.description || '暂无描述'">
                     {{ record.description || '暂无描述' }}
                   </p>
@@ -212,20 +233,39 @@ const mockDataAssets = [
   { name: '公共域', icon: 'icon-common', count: 112, description: '时间维表、地区维表等公共数据资产' }
 ]
 
-// 模拟表格数据
+// 模拟表格数据:按业务系统数据库分组 (与 data-resources 业务系统对应)
 const tableMockData = [
-  { name: 'dwd_trade_order', type: '明细表', domain: '交易域', description: '交易订单明细宽表', updateTime: '2024-04-15', owner: '数据平台组' },
-  { name: 'dws_trade daily', type: '汇总表', domain: '交易域', description: '交易每日汇总表', updateTime: '2024-04-14', owner: '数据平台组' },
-  { name: 'dim_user_info', type: '维度表', domain: '用户域', description: '用户信息维度表', updateTime: '2024-04-10', owner: '数据平台组' },
-  { name: 'dwd_risk_event', type: '明细表', domain: '风控域', description: '风控事件明细表', updateTime: '2024-04-12', owner: '风控组' },
-  { name: 'dws_mkt_campaign', type: '汇总表', domain: '营销域', description: '营销活动汇总表', updateTime: '2024-04-11', owner: '营销组' },
-  { name: 'dim_product', type: '维度表', domain: '商品域', description: '商品维度表', updateTime: '2024-04-09', owner: '商品组' },
-  { name: 'dwd_finance_settle', type: '明细表', domain: '财务域', description: '财务结算明细表', updateTime: '2024-04-13', owner: '财务组' },
-  { name: 'dws_user_behavior', type: '汇总表', domain: '用户域', description: '用户行为每日汇总', updateTime: '2024-04-14', owner: '数据平台组' },
-  { name: 'fact_core_indicator', type: '事实表', domain: '风控域', description: '核心指标事实表', updateTime: '2024-04-08', owner: '风控组' },
-  { name: 'dim_time', type: '维度表', domain: '公共域', description: '时间维度表', updateTime: '2024-01-01', owner: '数据平台组' },
-  { name: 'dwd_supply_chain', type: '明细表', domain: '供应链域', description: '供应链明细表', updateTime: '2024-04-07', owner: '供应链组' },
-  { name: 'dws_product_sales', type: '汇总表', domain: '商品域', description: '商品销售汇总表', updateTime: '2024-04-12', owner: '商品组' }
+  // === ORCL_TRADE 核心交易系统 ===
+  { name: 'T_LOAN_APPLY', type: '业务表', domain: 'ORCL_TRADE', description: '贷款申请主表(交易核心)', updateTime: '2024-04-15', owner: '王建' },
+  { name: 'T_REPAY_PLAN', type: '业务表', domain: 'ORCL_TRADE', description: '还款计划表(交易核心)', updateTime: '2024-04-15', owner: '王建' },
+  { name: 'T_LOAN_CONTRACT', type: '业务表', domain: 'ORCL_TRADE', description: '贷款合同表', updateTime: '2024-04-14', owner: '王建' },
+  { name: 'T_LOAN_DISBURSE', type: '业务表', domain: 'ORCL_TRADE', description: '放款流水表', updateTime: '2024-04-14', owner: '王建' },
+
+  // === RISK_DB 风控决策引擎 ===
+  { name: 'T_DECISION', type: '业务表', domain: 'RISK_DB', description: '风控决策结果表', updateTime: '2024-04-15', owner: '刘强' },
+  { name: 'T_RULE_HIT', type: '业务表', domain: 'RISK_DB', description: '规则命中日志表', updateTime: '2024-04-15', owner: '刘强' },
+  { name: 'T_FEATURE', type: '业务表', domain: 'RISK_DB', description: '风控特征表', updateTime: '2024-04-12', owner: '刘强' },
+  { name: 'T_STRATEGY', type: '业务表', domain: 'RISK_DB', description: '风控策略配置表', updateTime: '2024-04-10', owner: '刘强' },
+
+  // === MKT_DB 营销活动平台 ===
+  { name: 'MKT_CAMPAIGN', type: '业务表', domain: 'MKT_DB', description: '营销活动主表', updateTime: '2024-04-13', owner: '陈明' },
+  { name: 'MKT_USER_COUPON', type: '业务表', domain: 'MKT_DB', description: '用户卡券表', updateTime: '2024-04-13', owner: '陈明' },
+  { name: 'MKT_CAMPAIGN_RPT', type: '业务表', domain: 'MKT_DB', description: '营销活动报表', updateTime: '2024-04-11', owner: '陈明' },
+
+  // === FIN_DB 财务核算系统 ===
+  { name: 'FIN_SETTLE', type: '业务表', domain: 'FIN_DB', description: '财务结算主表', updateTime: '2024-04-13', owner: '赵丽' },
+  { name: 'FIN_INVOICE', type: '业务表', domain: 'FIN_DB', description: '发票主表', updateTime: '2024-04-12', owner: '赵丽' },
+  { name: 'FIN_GL_ENTRY', type: '业务表', domain: 'FIN_DB', description: '总账分录表', updateTime: '2024-04-12', owner: '赵丽' },
+
+  // === CRM_DB 客户关系管理 ===
+  { name: 'T_USER_INFO', type: '业务表', domain: 'CRM_DB', description: 'CRM用户主表', updateTime: '2024-04-11', owner: '孙伟' },
+  { name: 'T_ACCOUNT', type: '业务表', domain: 'CRM_DB', description: 'CRM账户表', updateTime: '2024-04-10', owner: '孙伟' },
+  { name: 'CRM_USER_TAG', type: '业务表', domain: 'CRM_DB', description: 'CRM用户标签表', updateTime: '2024-04-09', owner: '孙伟' },
+
+  // === FRAUD_DB 反欺诈系统 ===
+  { name: 'FRAUD_ALERT', type: '业务表', domain: 'FRAUD_DB', description: '欺诈预警表', updateTime: '2024-04-15', owner: '周杰' },
+  { name: 'FRAUD_RULE', type: '业务表', domain: 'FRAUD_DB', description: '反欺诈规则表', updateTime: '2024-04-12', owner: '周杰' },
+  { name: 'FRAUD_DEVICE', type: '业务表', domain: 'FRAUD_DB', description: '欺诈设备指纹表', updateTime: '2024-04-10', owner: '周杰' }
 ]
 
 interface TableItem {
@@ -256,7 +296,7 @@ const pagination = ref({
 })
 
 const hasSearchQuery = computed(() => {
-  return !!(searchKeyword.value || businessDomain.value || tableType.value)
+  return !!(searchKeyword.value || businessDomain.value || tableType.value || route.query.system)
 })
 
 // 图标组件映射
@@ -289,25 +329,56 @@ const getThemeColorClass = (name: string) => {
   return colorMap[name] || 'theme-blue'
 }
 
+const getLevelColor = (lv: string): string => {
+  return { L1: 'green', L2: 'gold', L3: 'orange', L4: 'red' }[lv] || 'gray'
+}
+
 const handleThemeClick = (theme: any) => {
   businessDomain.value = theme.name
   handleSearch()
 }
 
 onMounted(() => {
-  const { keyword, domain, type } = route.query
+  const { keyword, domain, type, system } = route.query
   if (keyword) searchKeyword.value = keyword as string
   if (domain) businessDomain.value = domain as string
   if (type) tableType.value = type as string
-  
-  if (hasSearchQuery.value) handleSearch()
+  if (system) businessDomain.value = system as string // 用 businessDomain 兼容展示过滤
+
+  // 默认展示表(按 system 过滤 or 全部)
+  loadAllTables()
 })
 
 const clearSearch = () => {
   searchKeyword.value = ''
   businessDomain.value = ''
   tableType.value = ''
-  tableData.value = []
+  loadAllTables()
+}
+
+// 默认加载:展示所有 mock 表(支持按 system/businessDomain 过滤)
+const loadAllTables = () => {
+  loading.value = true
+  setTimeout(() => {
+    // 按 businessDomain (= 数据库) 过滤
+    const sysFilter = businessDomain.value
+    const source = tableMockData.filter(t => !sysFilter || t.domain === sysFilter)
+
+    // 给每条表附加分级分类、安全等级等 demo 字段
+    const enriched = source.map((t, idx) => ({
+      ...t,
+      id: `${t.domain}_${idx}`,
+      // 模拟分级分类:demo 用
+      level: ['L1', 'L2', 'L3', 'L4'][(idx + (sysFilter ? sysFilter.charCodeAt(0) : 0)) % 4],
+      grade: ['一般', '重要', '关键'][idx % 3],
+      sensitivity: ['公开', '内部', '保密', '机密'][idx % 4],
+      recordCount: 10000 + idx * 1234,
+      storageSize: `${(1 + idx * 0.5).toFixed(1)}GB`
+    }))
+    tableData.value = enriched
+    pagination.value.total = enriched.length
+    loading.value = false
+  }, 200)
 }
 
 const handleFilterChange = () => {
@@ -316,32 +387,40 @@ const handleFilterChange = () => {
 
 const handleSearch = async () => {
   if (!hasSearchQuery.value) return
-  
+
   loading.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
+    await new Promise(resolve => setTimeout(resolve, 300))
+
     const filteredData = tableMockData.filter(item => {
-      const keywordMatch = !searchKeyword.value || 
-        item.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) || 
+      const keywordMatch = !searchKeyword.value ||
+        item.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
         (item.description && item.description.toLowerCase().includes(searchKeyword.value.toLowerCase()))
-      
+
       const domainMatch = !businessDomain.value || item.domain === businessDomain.value
-      
+
       let typeMatch = true
       if (tableType.value) {
-        if (tableType.value === 'dim') typeMatch = item.type === '维度表'
-        else if (tableType.value === 'fact') typeMatch = item.type === '事实表'
-        else if (tableType.value === 'dws') typeMatch = item.type === '汇总表'
-        else if (tableType.value === 'dwd') typeMatch = item.type === '明细表'
+        if (tableType.value === '业务表') typeMatch = item.type === '业务表'
         else typeMatch = item.type === tableType.value
       }
-      
+
       return keywordMatch && domainMatch && typeMatch
     })
-    
-    tableData.value = filteredData
-    pagination.value.total = filteredData.length
+
+    // 给每条表附加分级分类 demo 字段
+    const enriched = filteredData.map((t, idx) => ({
+      ...t,
+      id: `${t.domain}_${idx}`,
+      level: ['L1', 'L2', 'L3', 'L4'][idx % 4],
+      grade: ['一般', '重要', '关键'][idx % 3],
+      sensitivity: ['公开', '内部', '保密', '机密'][idx % 4],
+      recordCount: 10000 + idx * 1234,
+      storageSize: `${(1 + idx * 0.5).toFixed(1)}GB`
+    }))
+
+    tableData.value = enriched
+    pagination.value.total = enriched.length
   } catch (error) {
     Message.error('搜索失败')
   } finally {
@@ -358,7 +437,8 @@ const onPageSizeChange = (pageSize: number) => {
 }
 
 const showTableDetail = (record: TableItem) => {
-  Message.info(`资产详情：${record.name}（Demo模式）`)
+  // 跳转数据地图下的表详情页
+  router.push(`/discovery/data-map/table/${encodeURIComponent(record.name)}`)
 }
 
 const addToFavorite = async (record: TableItem) => {
