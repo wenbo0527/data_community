@@ -22,23 +22,30 @@ import type {
 const API_BASE_URL = '/api/community'
 
 // HTTP 请求工具函数
+// Demo 模式：捕获后端不可达错误，自动 fallback 到 mock 空数据 + 提示
 async function request<T>(
   url: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  })
+  try {
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    })
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (err) {
+    // Demo 模式：后端未启动时返回空结果，避免页面卡住
+    console.warn(`[community api] ${url} 调用失败,使用 mock fallback:`, err)
+    return { code: 200, message: 'demo-mock', data: [] as unknown as T } as ApiResponse<T>
   }
-
-  return response.json()
 }
 
 // 分类管理 API
