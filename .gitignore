@@ -99,3 +99,8 @@ data_community/
 
 # Backup
 .backup-archive/
+# Dead repo protection (链 A 周末·2026-07-12 added)
+# Apps 子应用无需 git 跟踪 zip (workspace backup 是本地职责)
+*.zip
+apps/*.zip
+apps/*/dist-ssr/
