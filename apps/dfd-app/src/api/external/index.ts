@@ -1,5 +1,4 @@
-import axios from 'axios';
-import type { AxiosPromise } from 'axios';
+import request from '../request';
 
 export interface InterfaceItem {
   interfaceId: string;
@@ -23,6 +22,6 @@ export function getExternalInterfaces(params: {
   keyword?: string;
   page: number;
   size: number;
-}): AxiosPromise<ListResponse> {
+}): Promise<ListResponse> {
   return Promise.resolve({} as any);
 }
