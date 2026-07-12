@@ -39,13 +39,25 @@ export default defineConfig(async () => {
 
   return {
     plugins,
-    server: { 
-      host: '0.0.0.0', 
-      port: 5176, 
+    server: {
+      host: '0.0.0.0',
+      port: 5176,
       strictPort: true,
       hmr: false,
     },
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
-    base: '/risk/'
+    base: '/risk/',
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
+            arco: ['@arco-design/web-vue'],
+            api: ['axios', '@app/shared-api'],
+          },
+        },
+      },
+      chunkSizeWarning: 600,
+    },
   }
 })
