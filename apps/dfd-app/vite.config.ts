@@ -23,6 +23,18 @@ export default defineConfig(async () => {
         '@shared': path.resolve(__dirname, '../../src/mock/shared')
       }
     },
-    base: '/dfd/'
+    base: '/dfd/',
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
+            arco: ['@arco-design/web-vue'],
+            api: ['axios', '@app/shared-api'],
+          },
+        },
+      },
+      chunkSizeWarning: 600,
+    },
   }
 })
