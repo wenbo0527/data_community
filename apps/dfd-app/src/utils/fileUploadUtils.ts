@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import axios from 'axios'
+import request from '../api/request'
 import * as XLSX from 'xlsx'
 
 export const useFileUpload = () => {
@@ -56,7 +56,7 @@ export const useFileUpload = () => {
     formData.append('file', option.fileItem.file as Blob)
 
     try {
-      const res = await axios.post<{success: boolean, count: number}>(apiUrl, formData, {
+      const res = await request.post<{success: boolean, count: number}>(apiUrl, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
