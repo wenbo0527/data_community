@@ -2,6 +2,21 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
 /**
+ * 数据发现域路由实例
+ *
+ * ⚠️ 修复 (TASK-20260713-5DDCB440 · 2026-07-13 14:55):
+ *   原 router.ts 只导出 routes 数组, main.ts `app.use(routes)` 不能建立
+ *   vue-router context → useRoute() 返回 undefined → MainLayout setup 崩
+ *   ('Cannot read properties of undefined (reading "path")')
+ *
+ * 修复方式: 创建真正的 router 实例 (createRouter) 并导出,
+ *           替代原先只 export routes 数组的反模式
+ *
+ * 根因历史: 这是 dfd 一直存在的潜在 bug (与 B8/R3 改动无关),
+ *           Playwright 实测才暴露 (HTTP 200 ≠ Vue 实际渲染)
+ */
+
+/**
  * 数据发现域路由配置
  *
  * Shell 路由映射规则：
@@ -396,4 +411,9 @@ const routes: RouteRecordRaw[] = [
   }
 ]
 
-export default routes
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+export default router
