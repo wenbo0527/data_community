@@ -233,6 +233,7 @@ watch(
   border-right: 1px solid #e5e6eb;
   overflow-y: auto;
   height: calc(100vh - 56px);
+  box-sizing: border-box !important;
 }
 
 .main-content {
@@ -240,12 +241,13 @@ watch(
   padding: 16px;
   overflow-y: auto;
   background: #f0f2f5;
+  box-sizing: border-box !important;
 }
 
 .content-wrapper {
   background: #fff;
   border-radius: 4px;
-  min-height: calc(100vh - 88px);
   padding: 16px;
+  overflow: hidden;
 }
 </style>

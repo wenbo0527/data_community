@@ -3,12 +3,14 @@
 // 不引入新业务，仅简化为基础 Vue app entry
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import ArcoVue from '@arco-design/web-vue/es/arco-vue.js'
 import '@arco-design/web-vue/es/index.css'
 import Root from './Root.vue'
 import router from './router'
 
 const app = createApp(Root)
 app.use(createPinia())
+app.use(ArcoVue)
 app.use(router)
 app.mount('#app')
 
