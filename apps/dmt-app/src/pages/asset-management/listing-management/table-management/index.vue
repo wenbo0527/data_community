@@ -129,6 +129,38 @@
         <a-form-item label="负责人" field="owner">
           <a-input v-model="formData.owner" placeholder="请输入负责人" />
         </a-form-item>
+
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="状态" field="status">
+              <a-select v-model="formData.status" placeholder="选择状态">
+                <a-option value="active">活跃</a-option>
+                <a-option value="onShelf">已上架</a-option>
+                <a-option value="offShelf">已下架</a-option>
+                <a-option value="inactive">非活跃</a-option>
+                <a-option value="archived">已归档</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="发布人" field="publisher">
+              <a-input v-model="formData.publisher" placeholder="请输入发布人" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="上架时间" field="onShelfTime">
+              <a-input v-model="formData.onShelfTime" placeholder="YYYY-MM-DD HH:mm:ss" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="下架时间" field="offShelfTime">
+              <a-input v-model="formData.offShelfTime" placeholder="YYYY-MM-DD HH:mm:ss" />
+            </a-form-item>
+          </a-col>
+        </a-row>
       </a-form>
     </a-modal>
   </div>
@@ -225,7 +257,11 @@ const formData = reactive({
   database: '',
   description: '',
   category: '',
-  owner: ''
+  owner: '',
+  status: 'onShelf',
+  publisher: '',
+  onShelfTime: '',
+  offShelfTime: ''
 })
 
 // 表单验证规则
@@ -241,6 +277,12 @@ const formRules = {
   ],
   owner: [
     { required: true, message: '请输入负责人' }
+  ],
+  status: [
+    { required: true, message: '请选择状态' }
+  ],
+  publisher: [
+    { required: true, message: '请输入发布人' }
   ]
 }
 

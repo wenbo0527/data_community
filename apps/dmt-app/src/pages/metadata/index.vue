@@ -12,6 +12,9 @@
       <a-tab-pane key="query" title="查询">
         <QueryView />
       </a-tab-pane>
+      <a-tab-pane key="asset-listing" title="数据资产上下架">
+        <AssetListingView />
+      </a-tab-pane>
     </a-tabs>
   </div>
 </template>
@@ -20,6 +23,7 @@
 import { ref } from 'vue'
 import ModelingView from './modeling/index.vue'
 import QueryView from './query/index.vue'
+import AssetListingView from '@/pages/asset-management/listing-management/asset-management/index.vue'
 
 const activeTab = ref('modeling')
 </script>

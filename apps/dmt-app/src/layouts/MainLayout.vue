@@ -78,6 +78,7 @@ const businessMenus = [
 const assetMenus = [
   { key: '/metadata', title: '元数据管理' },
   { key: '/asset-management/basic-management/metadata-collection', title: '元数据采集' },
+  { key: '/asset-management/listing-management/asset-management', title: '数据资产上下架' },
   { key: '/asset-management/listing-management/table-management', title: '数据资源上下架' },
   { key: '/asset-management/listing-management/metric-management', title: '数据要素上下架' },
   { key: '/asset-management/basic-management/tag-management', title: '标签管理' }

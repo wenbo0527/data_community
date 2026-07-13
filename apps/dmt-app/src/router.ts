@@ -119,6 +119,12 @@ const childRoutes: RouteRecordRaw[] = [
     meta: { title: '元数据采集' }
   },
   {
+    path: 'asset-management/listing-management/asset-management',
+    name: 'AssetListingOverview',
+    component: () => import('./pages/asset-management/listing-management/asset-management/index.vue'),
+    meta: { title: '数据资产上下架' }
+  },
+  {
     path: 'asset-management/listing-management/table-management',
     name: 'TableManagement',
     component: () => import('./pages/asset-management/listing-management/table-management/index.vue'),
