@@ -1,5 +1,10 @@
 /**
  * 社区资源管理系统 - API 接口定义
+ *
+ * TASK-20260714-05935425 Phase 1 清理 (2026-07-15):
+ * - 项目无真后端，删除 fetch 主调，改 USE_MOCK 短路模式
+ * - request() 短路返回 mockOk 包装，保留 dead fetch 分支供未来真后端联调
+ * - uploadDocument / uploadAttachment 改 USE_MOCK 短路返回成功
  */
 
 import type {
@@ -17,15 +22,35 @@ import type {
   CategoryStats,
   HomeStats
 } from '@/types/community'
+import { mockCategories as _communityMockCategories, mockTreeNodes, mockDocuments, mockHomeStats, mockCategoryStats, mockUsers as _communityMockUsers } from '@/mock/community'
+import { mockNotifications } from '@/mock/notification'
 
-// API 基础配置
+// API 基础配置（项目无真后端 → 全部走本地 mock）
 const API_BASE_URL = '/api/community'
+const USE_MOCK = true
 
-// HTTP 请求工具函数
+// 模拟网络延迟
+const mockDelay = <T>(data: T, ms = 100): Promise<T> =>
+  new Promise(resolve => setTimeout(() => resolve(data), ms))
+
+// Mock 响应包装
+const mockOk = <T>(data: T): ApiResponse<T> => ({
+  code: 200,
+  data,
+  message: 'success',
+  timestamp: new Date().toISOString()
+})
+
+// HTTP 请求工具函数（USE_MOCK 短路 + dead fetch 分支保留供后端联调时启用）
 async function request<T>(
   url: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
+  if (USE_MOCK) {
+    // mock 模式下根据 url 返回本地数据（具体路由在下方各 API 函数中处理）
+    return mockOk<T>(undefined as T)
+  }
+  // dead code: 项目无真后端，保留供未来真实接口联调
   const response = await fetch(`${API_BASE_URL}${url}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -44,269 +69,479 @@ async function request<T>(
 // 分类管理 API
 export const categoryApi = {
   // 获取所有分类
-  getCategories: (): Promise<ApiResponse<ResourceCategoryModel[]>> =>
-    request('/categories'),
+  getCategories: (): Promise<ApiResponse<ResourceCategoryModel[]>> => {
+    if (USE_MOCK) return mockDelay(mockOk(mockCategories))
+    return request('/categories')
+  },
 
   // 获取分类详情
-  getCategoryById: (id: string): Promise<ApiResponse<ResourceCategoryModel>> =>
-    request(`/categories/${id}`),
+  getCategoryById: (id: string): Promise<ApiResponse<ResourceCategoryModel>> => {
+    if (USE_MOCK) {
+      const found = mockCategories.find(c => c.id === id) || mockCategories[0]
+      return mockDelay(mockOk(found))
+    }
+    return request(`/categories/${id}`)
+  },
 
   // 创建分类
-  createCategory: (data: Omit<ResourceCategoryModel, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<ResourceCategoryModel>> =>
-    request('/categories', {
+  createCategory: (data: Omit<ResourceCategoryModel, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<ResourceCategoryModel>> => {
+    if (USE_MOCK) {
+      const newCategory: ResourceCategoryModel = {
+        ...data,
+        id: 'cat-mock-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      return mockDelay(mockOk(newCategory))
+    }
+    return request('/categories', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 更新分类
-  updateCategory: (id: string, data: Partial<ResourceCategoryModel>): Promise<ApiResponse<ResourceCategoryModel>> =>
-    request(`/categories/${id}`, {
+  updateCategory: (id: string, data: Partial<ResourceCategoryModel>): Promise<ApiResponse<ResourceCategoryModel>> => {
+    if (USE_MOCK) {
+      const found = mockCategories.find(c => c.id === id) || mockCategories[0]
+      const updated: ResourceCategoryModel = { ...found, ...data, updatedAt: new Date().toISOString() }
+      return mockDelay(mockOk(updated))
+    }
+    return request(`/categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 删除分类
-  deleteCategory: (id: string): Promise<ApiResponse<void>> =>
-    request(`/categories/${id}`, {
+  deleteCategory: (id: string): Promise<ApiResponse<void>> => {
+    if (USE_MOCK) return mockDelay(mockOk<void>(undefined))
+    return request(`/categories/${id}`, {
       method: 'DELETE',
-    }),
+    })
+  }
 }
 
 // 树节点管理 API
 export const treeApi = {
   // 获取树形结构
-  getTreeNodes: (params?: TreeQueryParams): Promise<ApiResponse<TreeNode[]>> => {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  getTreeNodes: (_params?: TreeQueryParams): Promise<ApiResponse<TreeNode[]>> => {
+    if (USE_MOCK) return mockDelay(mockOk(mockTreeNodes))
+    const queryString = _params ? `?${new URLSearchParams(_params as any).toString()}` : ''
     return request(`/tree${queryString}`)
   },
 
   // 获取树节点详情
-  getTreeNodeById: (id: string): Promise<ApiResponse<TreeNode>> =>
-    request(`/tree/${id}`),
+  getTreeNodeById: (id: string): Promise<ApiResponse<TreeNode>> => {
+    if (USE_MOCK) {
+      const found = mockTreeNodes.find(t => t.id === id) || mockTreeNodes[0]
+      return mockDelay(mockOk(found))
+    }
+    return request(`/tree/${id}`)
+  },
 
   // 创建树节点
-  createTreeNode: (data: Omit<TreeNode, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<TreeNode>> =>
-    request('/tree', {
+  createTreeNode: (data: Omit<TreeNode, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<TreeNode>> => {
+    if (USE_MOCK) {
+      const newNode: TreeNode = {
+        ...data,
+        id: 'tree-mock-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      return mockDelay(mockOk(newNode))
+    }
+    return request('/tree', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 更新树节点
-  updateTreeNode: (id: string, data: Partial<TreeNode>): Promise<ApiResponse<TreeNode>> =>
-    request(`/tree/${id}`, {
+  updateTreeNode: (id: string, data: Partial<TreeNode>): Promise<ApiResponse<TreeNode>> => {
+    if (USE_MOCK) {
+      const found = mockTreeNodes.find(t => t.id === id) || mockTreeNodes[0]
+      const updated: TreeNode = { ...found, ...data, updatedAt: new Date().toISOString() }
+      return mockDelay(mockOk(updated))
+    }
+    return request(`/tree/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 删除树节点
-  deleteTreeNode: (id: string): Promise<ApiResponse<void>> =>
-    request(`/tree/${id}`, {
+  deleteTreeNode: (id: string): Promise<ApiResponse<void>> => {
+    if (USE_MOCK) return mockDelay(mockOk<void>(undefined))
+    return request(`/tree/${id}`, {
       method: 'DELETE',
-    }),
+    })
+  }
 }
 
 // 文档管理 API
 export const documentApi = {
   // 获取文档列表
-  getDocuments: (params?: QueryParams): Promise<ApiResponse<PaginatedResponse<Document>>> => {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  getDocuments: (_params?: QueryParams): Promise<ApiResponse<PaginatedResponse<Document>>> => {
+    if (USE_MOCK) {
+      return mockDelay(mockOk({
+        items: mockDocuments,
+        total: mockDocuments.length,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1
+      }))
+    }
+    const queryString = _params ? `?${new URLSearchParams(_params as any).toString()}` : ''
     return request(`/documents${queryString}`)
   },
 
   // 获取文档详情
-  getDocumentById: (id: string): Promise<ApiResponse<Document>> =>
-    request(`/documents/${id}`),
+  getDocumentById: (id: string): Promise<ApiResponse<Document>> => {
+    if (USE_MOCK) {
+      const found = mockDocuments.find(d => d.id === id) || mockDocuments[0]
+      return mockDelay(mockOk(found))
+    }
+    return request(`/documents/${id}`)
+  },
 
   // 创建文档
-  createDocument: (data: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Document>> =>
-    request('/documents', {
+  createDocument: (data: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Document>> => {
+    if (USE_MOCK) {
+      const newDoc: Document = {
+        ...data,
+        id: 'doc-mock-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      return mockDelay(mockOk(newDoc))
+    }
+    return request('/documents', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 更新文档
-  updateDocument: (id: string, data: Partial<Document>): Promise<ApiResponse<Document>> =>
-    request(`/documents/${id}`, {
+  updateDocument: (id: string, data: Partial<Document>): Promise<ApiResponse<Document>> => {
+    if (USE_MOCK) {
+      const found = mockDocuments.find(d => d.id === id) || mockDocuments[0]
+      const updated: Document = { ...found, ...data, updatedAt: new Date().toISOString() }
+      return mockDelay(mockOk(updated))
+    }
+    return request(`/documents/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 删除文档
-  deleteDocument: (id: string): Promise<ApiResponse<void>> =>
-    request(`/documents/${id}`, {
+  deleteDocument: (id: string): Promise<ApiResponse<void>> => {
+    if (USE_MOCK) return mockDelay(mockOk<void>(undefined))
+    return request(`/documents/${id}`, {
       method: 'DELETE',
-    }),
+    })
+  },
 
-  // 上传文档文件
-  uploadDocument: (file: File, categoryId: string): Promise<ApiResponse<{ fileUrl: string; fileName: string; fileSize: string }>> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('categoryId', categoryId)
-
-    return fetch(`${API_BASE_URL}/documents/upload`, {
-      method: 'POST',
-      body: formData,
-    }).then(response => response.json())
+  // 上传文档文件 (TASK-20260714-05935425: dead code, 无调用方, 改 USE_MOCK 短路返回成功)
+  uploadDocument: async (_file: File, _categoryId: string): Promise<ApiResponse<{ fileUrl: string; fileName: string; fileSize: string }>> => {
+    void _file
+    void _categoryId
+    return mockDelay(mockOk({
+      fileUrl: '/mock-upload-' + Date.now() + '.pdf',
+      fileName: 'mock-document.pdf',
+      fileSize: '1.0MB'
+    }))
   },
 
   // 增加文档查看次数
-  incrementViews: (id: string): Promise<ApiResponse<void>> =>
-    request(`/documents/${id}/views`, {
+  incrementViews: (id: string): Promise<ApiResponse<void>> => {
+    if (USE_MOCK) return mockDelay(mockOk<void>(undefined))
+    return request(`/documents/${id}/views`, {
       method: 'POST',
-    }),
+    })
+  }
 }
 
 // 通知管理 API
 export const notificationApi = {
   // 获取通知列表
-  getNotifications: (params?: QueryParams): Promise<ApiResponse<PaginatedResponse<Notification>>> => {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  getNotifications: (_params?: QueryParams): Promise<ApiResponse<PaginatedResponse<Notification>>> => {
+    if (USE_MOCK) {
+      return mockDelay(mockOk({
+        items: mockNotifications,
+        total: mockNotifications.length,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1
+      }))
+    }
+    const queryString = _params ? `?${new URLSearchParams(_params as any).toString()}` : ''
     return request(`/notifications${queryString}`)
   },
 
   // 获取通知详情
-  getNotificationById: (id: string): Promise<ApiResponse<Notification>> =>
-    request(`/notifications/${id}`),
+  getNotificationById: (id: string): Promise<ApiResponse<Notification>> => {
+    if (USE_MOCK) {
+      const found = mockNotifications.find(n => n.id === id) || mockNotifications[0]
+      return mockDelay(mockOk(found))
+    }
+    return request(`/notifications/${id}`)
+  },
 
   // 创建通知
-  createNotification: (data: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Notification>> =>
-    request('/notifications', {
+  createNotification: (data: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Notification>> => {
+    if (USE_MOCK) {
+      const newNotification: Notification = {
+        ...data,
+        id: 'notif-mock-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      return mockDelay(mockOk(newNotification))
+    }
+    return request('/notifications', {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 更新通知
-  updateNotification: (id: string, data: Partial<Notification>): Promise<ApiResponse<Notification>> =>
-    request(`/notifications/${id}`, {
+  updateNotification: (id: string, data: Partial<Notification>): Promise<ApiResponse<Notification>> => {
+    if (USE_MOCK) {
+      const found = mockNotifications.find(n => n.id === id) || mockNotifications[0]
+      const updated: Notification = { ...found, ...data, updatedAt: new Date().toISOString() }
+      return mockDelay(mockOk(updated))
+    }
+    return request(`/notifications/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-    }),
+    })
+  },
 
   // 删除通知
-  deleteNotification: (id: string): Promise<ApiResponse<void>> =>
-    request(`/notifications/${id}`, {
+  deleteNotification: (id: string): Promise<ApiResponse<void>> => {
+    if (USE_MOCK) return mockDelay(mockOk<void>(undefined))
+    return request(`/notifications/${id}`, {
       method: 'DELETE',
-    }),
+    })
+  },
 
   // 发布通知
-  publishNotification: (id: string): Promise<ApiResponse<Notification>> =>
-    request(`/notifications/${id}/publish`, {
+  publishNotification: (id: string): Promise<ApiResponse<Notification>> => {
+    if (USE_MOCK) {
+      const found = mockNotifications.find(n => n.id === id) || mockNotifications[0]
+      return mockDelay(mockOk(found))
+    }
+    return request(`/notifications/${id}/publish`, {
       method: 'POST',
-    }),
+    })
+  },
 
   // 撤回通知
-  unpublishNotification: (id: string): Promise<ApiResponse<Notification>> =>
-    request(`/notifications/${id}/unpublish`, {
+  unpublishNotification: (id: string): Promise<ApiResponse<Notification>> => {
+    if (USE_MOCK) {
+      const found = mockNotifications.find(n => n.id === id) || mockNotifications[0]
+      return mockDelay(mockOk(found))
+    }
+    return request(`/notifications/${id}/unpublish`, {
       method: 'POST',
-    }),
+    })
+  },
 
   // 增加通知查看次数
-  incrementViews: (id: string): Promise<ApiResponse<void>> =>
-    request(`/notifications/${id}/views`, {
+  incrementViews: (id: string): Promise<ApiResponse<void>> => {
+    if (USE_MOCK) return mockDelay(mockOk<void>(undefined))
+    return request(`/notifications/${id}/views`, {
       method: 'POST',
-    }),
+    })
+  }
 }
 
 // 通知附件管理 API
 export const attachmentApi = {
   // 获取通知附件列表
-  getAttachments: (notificationId: string): Promise<ApiResponse<NotificationAttachment[]>> =>
-    request(`/notifications/${notificationId}/attachments`),
+  getAttachments: (_notificationId: string): Promise<ApiResponse<NotificationAttachment[]>> => {
+    if (USE_MOCK) return mockDelay(mockOk<NotificationAttachment[]>([]))
+    return request(`/notifications/${_notificationId}/attachments`)
+  },
 
-  // 上传通知附件
-  uploadAttachment: (notificationId: string, file: File, description?: string): Promise<ApiResponse<NotificationAttachment>> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    if (description) {
-      formData.append('description', description)
-    }
-
-    return fetch(`${API_BASE_URL}/notifications/${notificationId}/attachments`, {
-      method: 'POST',
-      body: formData,
-    }).then(response => response.json())
+  // 上传通知附件 (TASK-20260714-05935425: dead code, 无调用方, 改 USE_MOCK 短路返回成功)
+  uploadAttachment: async (_notificationId: string, _file: File, _description?: string): Promise<ApiResponse<NotificationAttachment>> => {
+    void _notificationId
+    void _file
+    void _description
+    return mockDelay(mockOk({
+      id: 'mock-attachment-' + Date.now(),
+      fileName: 'mock-attachment.pdf',
+      fileSize: '512KB',
+      fileUrl: '/mock-attachment-' + Date.now() + '.pdf',
+      mimeType: 'application/pdf',
+      uploadedAt: new Date().toISOString()
+    } as NotificationAttachment))
   },
 
   // 删除通知附件
-  deleteAttachment: (notificationId: string, attachmentId: string): Promise<ApiResponse<void>> =>
-    request(`/notifications/${notificationId}/attachments/${attachmentId}`, {
+  deleteAttachment: (notificationId: string, attachmentId: string): Promise<ApiResponse<void>> => {
+    if (USE_MOCK) return mockDelay(mockOk<void>(undefined))
+    return request(`/notifications/${notificationId}/attachments/${attachmentId}`, {
       method: 'DELETE',
-    }),
+    })
+  }
 }
 
 // 用户管理 API
 export const userApi = {
   // 获取用户列表
-  getUsers: (params?: QueryParams): Promise<ApiResponse<PaginatedResponse<User>>> => {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  getUsers: (_params?: QueryParams): Promise<ApiResponse<PaginatedResponse<User>>> => {
+    if (USE_MOCK) {
+      return mockDelay(mockOk({
+        items: mockUsers,
+        total: mockUsers.length,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1
+      }))
+    }
+    const queryString = _params ? `?${new URLSearchParams(_params as any).toString()}` : ''
     return request(`/users${queryString}`)
   },
 
   // 获取用户详情
-  getUserById: (id: string): Promise<ApiResponse<User>> =>
-    request(`/users/${id}`),
+  getUserById: (id: string): Promise<ApiResponse<User>> => {
+    if (USE_MOCK) {
+      const found = mockUsers.find(u => u.id === id) || mockUsers[0]
+      return mockDelay(mockOk(found))
+    }
+    return request(`/users/${id}`)
+  },
 
   // 获取当前用户信息
-  getCurrentUser: (): Promise<ApiResponse<User>> =>
-    request('/users/me'),
+  getCurrentUser: (): Promise<ApiResponse<User>> => {
+    if (USE_MOCK) return mockDelay(mockOk(mockUsers[0]))
+    return request('/users/me')
+  },
 
   // 更新用户信息
-  updateUser: (id: string, data: Partial<User>): Promise<ApiResponse<User>> =>
-    request(`/users/${id}`, {
+  updateUser: (id: string, data: Partial<User>): Promise<ApiResponse<User>> => {
+    if (USE_MOCK) {
+      const found = mockUsers.find(u => u.id === id) || mockUsers[0]
+      const updated: User = { ...found, ...data, updatedAt: new Date().toISOString() }
+      return mockDelay(mockOk(updated))
+    }
+    return request(`/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-    }),
+    })
+  }
 }
 
 // 统计数据 API
 export const statsApi = {
   // 获取首页统计数据
-  getHomeStats: (): Promise<ApiResponse<HomeStats>> =>
-    request('/stats/home'),
+  getHomeStats: (): Promise<ApiResponse<HomeStats>> => {
+    if (USE_MOCK) return mockDelay(mockOk(mockHomeStats))
+    return request('/stats/home')
+  },
 
   // 获取分类统计数据
-  getCategoryStats: (): Promise<ApiResponse<CategoryStats[]>> =>
-    request('/stats/categories'),
+  getCategoryStats: (): Promise<ApiResponse<CategoryStats[]>> => {
+    if (USE_MOCK) return mockDelay(mockOk(mockCategoryStats))
+    return request('/stats/categories')
+  },
 
   // 获取用户活动统计
   getUserActivityStats: (userId?: string): Promise<ApiResponse<any>> => {
+    if (USE_MOCK) {
+      return mockDelay(mockOk({
+        userId: userId || mockUsers[0].id,
+        activeDays: 25,
+        loginCount: 150,
+        operationCount: 320
+      }))
+    }
     const queryString = userId ? `?userId=${userId}` : ''
     return request(`/stats/activity${queryString}`)
-  },
+  }
 }
 
 // 操作日志 API
 export const logApi = {
   // 获取操作日志列表
-  getLogs: (params?: QueryParams): Promise<ApiResponse<PaginatedResponse<OperationLog>>> => {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+  getLogs: (_params?: QueryParams): Promise<ApiResponse<PaginatedResponse<OperationLog>>> => {
+    if (USE_MOCK) {
+      return mockDelay(mockOk({
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 0
+      }))
+    }
+    const queryString = _params ? `?${new URLSearchParams(_params as any).toString()}` : ''
     return request(`/logs${queryString}`)
   },
 
   // 记录操作日志
-  createLog: (data: Omit<OperationLog, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<OperationLog>> =>
-    request('/logs', {
+  createLog: (_data: Omit<OperationLog, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<OperationLog>> => {
+    if (USE_MOCK) {
+      const newLog: OperationLog = {
+        ..._data,
+        id: 'log-mock-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      return mockDelay(mockOk(newLog))
+    }
+    return request('/logs', {
       method: 'POST',
-      body: JSON.stringify(data),
-    }),
+      body: JSON.stringify(_data),
+    })
+  }
 }
 
 // 搜索 API
 export const searchApi = {
   // 全文搜索
-  search: (keyword: string, params?: Partial<QueryParams>): Promise<ApiResponse<{
+  search: (keyword: string, _params?: Partial<QueryParams>): Promise<ApiResponse<{
     documents: Document[]
     notifications: Notification[]
     total: number
   }>> => {
-    const queryParams = { keyword, ...params }
+    if (USE_MOCK) {
+      // mock 模式：从 mockDocuments / mockNotifications 模糊匹配
+      const lowerKeyword = keyword.toLowerCase()
+      const matchedDocs = mockDocuments.filter(d =>
+        d.title.toLowerCase().includes(lowerKeyword) ||
+        d.description.toLowerCase().includes(lowerKeyword)
+      )
+      const matchedNotifs = mockNotifications.filter(n =>
+        n.title.toLowerCase().includes(lowerKeyword)
+      )
+      return mockDelay(mockOk({
+        documents: matchedDocs,
+        notifications: matchedNotifs,
+        total: matchedDocs.length + matchedNotifs.length
+      }))
+    }
+    const queryParams = { keyword, ..._params }
     const queryString = `?${new URLSearchParams(queryParams as any).toString()}`
     return request(`/search${queryString}`)
   },
 
   // 搜索建议
-  getSuggestions: (keyword: string): Promise<ApiResponse<string[]>> =>
-    request(`/search/suggestions?keyword=${encodeURIComponent(keyword)}`),
+  getSuggestions: (keyword: string): Promise<ApiResponse<string[]>> => {
+    if (USE_MOCK) {
+      // mock 模式：从 mockCategories + mockDocuments 提取建议
+      const lowerKeyword = keyword.toLowerCase()
+      const suggestions = [
+        ...mockCategories.map(c => c.name),
+        ...mockDocuments.map(d => d.title)
+      ].filter(s => s.toLowerCase().includes(lowerKeyword)).slice(0, 10)
+      return mockDelay(mockOk(suggestions))
+    }
+    return request(`/search/suggestions?keyword=${encodeURIComponent(keyword)}`)
+  }
 }
 
 // 导出所有 API
@@ -319,5 +554,5 @@ export default {
   user: userApi,
   stats: statsApi,
   log: logApi,
-  search: searchApi,
+  search: searchApi
 }
