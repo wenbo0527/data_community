@@ -59,6 +59,19 @@ export const customerRoutes: RouteRecordRaw[] = [
     component: () => import('@/pages/customer/event-center/sample-stats.vue'),
     meta: { title: '样本统计' }
   },
+  // TASK-20260715-BF00A0E1 (文博 14:19 拍板 · 方案 A' · 修正版)
+  // 修 mkt-app event-create 路由空白 + convention 一致性整改
+  // 历史引用 bug: event-management.vue L259/L263 用 /exploration/customer-center/event-center/event-create (从主项目复制没改)
+  // 文博确认: 按 PM 倾向 + 项目尽量方式统一 (mkt convention 全部 customer/<page> 相对路径)
+  // URL 变更诚实告知:
+  //   旧 URL: /mkt/#/exploration/customer-center/event-center/event-create (文博给的, 历史引用 bug)
+  //   新 URL: /mkt/#/customer/event-create (符合 mkt convention)
+  {
+    path: 'customer/event-create',
+    name: 'EventCreate',
+    component: () => import('@/pages/customer/event-center/event-create.vue'),
+    meta: { title: '事件新建' }
+  },
   {
     path: 'customer/kafka-datasource',
     name: 'KafkaDatasource',
