@@ -41,16 +41,6 @@ export const customerRoutes: RouteRecordRaw[] = [
     component: () => import('@/pages/customer/event-center/index.vue'),
     meta: { title: '事件首页' }
   },
-  // TASK-20260715-BF00A0E1 (文博 14:15 拍板 · 方案 A)
-  // 修 https://118.196.79.130:8443/mkt/#/exploration/customer-center/event-center/event-create 空白
-  // event-management.vue L259 + L263 引用此 URL, 但 router 缺失导致空白页
-  // PM 边界: 不改 event-management.vue 引用路径, 保持 URL 一致
-  {
-    path: '/exploration/customer-center/event-center/event-create',
-    name: 'EventCreate',
-    component: () => import('@/pages/customer/event-center/event-create.vue'),
-    meta: { title: '事件新建' }
-  },
   {
     path: 'customer/event-management',
     name: 'EventManagement',
