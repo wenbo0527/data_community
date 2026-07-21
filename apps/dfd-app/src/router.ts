@@ -88,7 +88,15 @@ const routes: RouteRecordRaw[] = [
         path: 'asset-catalog',
         name: 'AssetCatalog',
         component: () => import('./pages/asset-catalog/index.vue'),
-        meta: { title: '资产目录' }
+        meta: { title: '资产目录' },
+        children: [
+          {
+            path: 'table/:tableName',
+            name: 'AssetCatalogTable',
+            component: () => import('./pages/data-map/TableDetailPage.vue'),
+            meta: { title: '表详情' }
+          }
+        ]
       },
       {
         path: 'data-map/table-list',
@@ -324,6 +332,12 @@ const routes: RouteRecordRaw[] = [
     name: 'AssetCatalogFlat',
     component: () => import('./pages/asset-catalog/index.vue'),
     meta: { title: '资产目录' }
+  },
+  {
+    path: '/asset-catalog/table/:tableName',
+    name: 'AssetCatalogTableFlat',
+    component: () => import('./pages/data-map/TableDetailPage.vue'),
+    meta: { title: '表详情' }
   },
   {
     path: '/data-resources',
