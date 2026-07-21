@@ -665,7 +665,9 @@ watch(() => route.params, (params: { [key: string]: string | string[] }) => {
   logger.debug('路由参数', { tableParam })
   
   if (tableParam) {
-    tableData.value = parseTableData(tableParam) || createSafeTableData({})
+    // 修复 (TASK-20260721-941EB043-reopen): 未在 mock 的表也保留 tableParam 作为 name
+    // 避免 "未命名表"；同时保证 F-004/F-005 分类逻辑按表名前缀正常工作
+    tableData.value = parseTableData(tableParam) || createSafeTableData({ name: tableParam })
     logger.debug('解析表数据', { name: tableData.value?.name })
     // 初始化关联关系数据
     initRelations()
