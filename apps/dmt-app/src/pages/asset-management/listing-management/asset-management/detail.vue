@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: asset-listing.detail -->
   <div class="asset-detail-page">
     <a-page-header
       :title="assetData?.assetName || '资产详情'"
@@ -192,7 +193,11 @@
                       <a-tag>{{ record.cardinality }}</a-tag>
                     </template>
                   </a-table-column>
-                  <a-table-column title="关联说明">{{ record.description }}</a-table-column>
+                  <a-table-column title="关联说明">
+                    <template #cell="{ record }">
+                      {{ record.description }}
+                    </template>
+                  </a-table-column>
                 </template>
               </a-table>
             </div>
@@ -297,18 +302,174 @@
 
           <!-- 使用说明 -->
           <a-tab-pane key="usage" title="使用说明">
-            <a-alert type="info">
-              <template #title>
-                <span style="font-size: 16px; font-weight: 500">使用说明</span>
-              </template>
-              <div style="margin-top: 12px">
-                <p>1. 资产名称：<b>{{ assetData.assetName }}</b>，集群类型 {{ assetData.clusterType }}（{{ assetData.clusterEnv === 'compute' ? '计算集群' : '分析集群' }}）。</p>
-                <p>2. HIVE 路径：<span class="hive-table">{{ assetData.hiveDatabase }}.{{ assetData.hiveTableName }}</span></p>
-                <p>3. 业务域：{{ assetData.category }}，负责人：{{ assetData.owner }}。</p>
-                <p>4. 状态：{{ statusLabel[assetData.status] }}，最近同步：{{ formatDateTime(assetData.lastSyncTime) }}。</p>
-                <p>5. 资产描述：{{ assetData.description || '暂无' }}</p>
+            <div class="usage-page">
+              <!-- Story 1-1：表级使用说明 -->
+              <div class="usage-collapse-card">
+                <div class="usage-collapse-header" @click="toggleUsage('table')">
+                  <span class="usage-collapse-title">
+                    <span class="usage-emoji">📄</span>
+                    <span>表级使用说明</span>
+                  </span>
+                  <a-button type="text" size="mini">
+                    {{ usageExpanded.table ? '−' : '+' }}
+                  </a-button>
+                </div>
+                <div v-show="usageExpanded.table" class="usage-collapse-body">
+                  <div class="usage-row">
+                    <span class="usage-label">使用说明：</span>
+                    <span>{{ assetData?.description || '暂无表级使用说明' }}</span>
+                  </div>
+                  <div class="usage-row">
+                    <span class="usage-label">常用场景：</span>
+                    <ul class="usage-list">
+                      <li v-for="(s, i) in tableUsageScenarios" :key="i">{{ s }}</li>
+                    </ul>
+                  </div>
+                  <div class="usage-row">
+                    <span class="usage-label">更新周期：</span>
+                    <a-tag color="arcoblue">{{ tableUsageCycle }}</a-tag>
+                  </div>
+                </div>
               </div>
-            </a-alert>
+
+              <!-- Story 1-2 / 字段级使用说明 合并：字段说明 + 版本切换 -->
+              <div class="usage-collapse-card">
+                <div class="usage-collapse-header" @click="toggleUsage('fields')">
+                  <span class="usage-collapse-title">
+                    <span class="usage-emoji">📋</span>
+                    <span>字段级使用说明与变更对比</span>
+                    <a-tag v-if="fieldChangeRows.length" size="small" color="orange">
+                      {{ fieldChangeRows.length }} 项变更
+                    </a-tag>
+                  </span>
+                  <a-button type="text" size="mini">
+                    {{ usageExpanded.fields ? '−' : '+' }}
+                  </a-button>
+                </div>
+                <div v-show="usageExpanded.fields" class="usage-collapse-body">
+                  <div class="usage-fields-toolbar">
+                    <a-radio-group v-model="fieldViewMode" type="button" size="small">
+                      <a-radio-button value="desc">字段说明</a-radio-button>
+                      <a-radio-button value="compare">变更对比</a-radio-button>
+                    </a-radio-group>
+                    <a-select
+                      v-if="fieldViewMode === 'compare'"
+                      v-model="compareVersionPair"
+                      size="small"
+                      style="width: 200px"
+                      :trigger-props="{ autoFitPopupMinWidth: true }"
+                    >
+                      <a-option v-for="opt in compareVersionOptions" :key="opt.value" :value="opt.value">
+                        {{ opt.label }}
+                      </a-option>
+                    </a-select>
+                  </div>
+
+                  <!-- 模式 1：字段说明（按当前选中版本展示） -->
+                  <template v-if="fieldViewMode === 'desc'">
+                    <div class="usage-fields-compare-header">
+                      当前查看版本：<a-tag color="arcoblue" size="small">{{ activeFieldVersion }}</a-tag>
+                    </div>
+                    <a-table
+                      :data="fieldDescRowsByVersion"
+                      :pagination="false"
+                      :bordered="false"
+                      size="small"
+                    >
+                      <template #columns>
+                        <a-table-column title="字段名" data-index="name" :width="160" />
+                        <a-table-column title="类型" data-index="type" :width="160" />
+                        <a-table-column title="说明" data-index="description" />
+                      </template>
+                    </a-table>
+                  </template>
+
+                  <!-- 模式 2：变更对比 -->
+                  <template v-else>
+                    <div class="usage-fields-compare-header">
+                      版本：
+                      <a-tag color="arcoblue" size="small">{{ currentComparePair.newer }}</a-tag>
+                      <span style="margin: 0 6px; color: #86909c">vs</span>
+                      <a-tag color="gray" size="small">{{ currentComparePair.older }}</a-tag>
+                    </div>
+                    <a-table
+                      v-if="fieldChangeRows.length"
+                      :data="fieldChangeRows"
+                      :pagination="false"
+                      :bordered="false"
+                      row-key="name"
+                      size="small"
+                    >
+                      <template #columns>
+                        <a-table-column title="字段名" data-index="name" :width="160" />
+                        <a-table-column title="旧版本值" :width="200">
+                          <template #cell="{ record }">
+                            <span class="usage-old-value">{{ (record as FieldChangeRow).oldValue || '（不存在）' }}</span>
+                          </template>
+                        </a-table-column>
+                        <a-table-column title="新版本值" :width="200">
+                          <template #cell="{ record }">
+                            <span class="usage-new-value">{{ (record as FieldChangeRow).newValue || '（不存在）' }}</span>
+                          </template>
+                        </a-table-column>
+                        <a-table-column title="变更" :width="100">
+                          <template #cell="{ record }">
+                            <a-tag :color="changeTypeColor[(record as FieldChangeRow).changeType]" size="small">
+                              {{ changeTypeLabel[(record as FieldChangeRow).changeType] }}
+                            </a-tag>
+                          </template>
+                        </a-table-column>
+                      </template>
+                    </a-table>
+                    <a-empty v-else description="暂无字段变更记录" />
+                  </template>
+
+                  <div style="margin-top: 12px; text-align: right">
+                    <a-button type="primary" size="small" @click="openChangeLogDrawer">
+                      查看完整字段变更日志
+                    </a-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Story 1-3：字段变更日志抽屉 -->
+            <a-drawer
+              :visible="changeLogDrawerVisible"
+              :width="480"
+              :footer="false"
+              :mask-closable="true"
+              unmount-on-close
+              @cancel="closeChangeLogDrawer"
+              @update:visible="v => (changeLogDrawerVisible = v)"
+            >
+              <template #title>
+                <span>字段变更日志</span>
+                <span v-if="changeLogDrawerField" style="margin-left: 8px; color: #165dff">
+                  - {{ changeLogDrawerField }}
+                </span>
+              </template>
+              <a-timeline>
+                <a-timeline-item
+                  v-for="(log, i) in changeLogTimeline"
+                  :key="i"
+                  :label="log.version"
+                  :dot-color="changeTypeColor[log.changeType]"
+                >
+                  <div class="log-version">{{ log.version }} <span class="log-date">({{ log.changeDate }})</span></div>
+                  <div class="log-row">变更人：{{ log.operator }}</div>
+                  <div class="log-row">
+                    变更类型：
+                    <a-tag :color="changeTypeColor[log.changeType]" size="small">
+                      {{ changeTypeLabel[log.changeType] }}
+                    </a-tag>
+                  </div>
+                  <div v-if="log.oldValue" class="log-row">变更前：<span class="usage-old-value">{{ log.oldValue }}</span></div>
+                  <div v-if="log.newValue" class="log-row">变更后：<span class="usage-new-value">{{ log.newValue }}</span></div>
+                  <div v-if="log.description" class="log-row log-desc">{{ log.description }}</div>
+                </a-timeline-item>
+              </a-timeline>
+            </a-drawer>
           </a-tab-pane>
 
           <!-- 加工逻辑 -->
@@ -379,7 +540,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import {
@@ -421,6 +582,7 @@ interface AssetDetail {
   hiveDatabase: string
   hiveTableName: string
   lastSyncTime?: string
+  recordType: 'table' | 'metric'
   fields: { name: string; type: string; description: string; isPrimary?: boolean }[]
 }
 
@@ -503,6 +665,7 @@ const findAsset = (name: string): AssetDetail | null => {
       hiveDatabase: parsed.database,
       hiveTableName: parsed.tableName,
       lastSyncTime: t.onShelfTime,
+      recordType: 'table',
       fields: defaultFields(t.tableName)
     }
   }
@@ -525,6 +688,7 @@ const findAsset = (name: string): AssetDetail | null => {
       hiveDatabase: `metric_${m.category}`,
       hiveTableName: m.metricCode,
       lastSyncTime: m.onShelfTime,
+      recordType: 'metric',
       fields: [
         { name: 'metric_code', type: 'string', description: '指标编码', isPrimary: true },
         { name: 'metric_value', type: 'decimal(20,4)', description: '指标值' },
@@ -652,7 +816,7 @@ const relations = computed<RelationRow[]>(() => {
   if (!assetData.value) return []
   const a = assetData.value
   // 根据资产类型返回不同的关联关系
-  if (a.recordType) {
+  if (a.recordType === 'table') {
     // 表格型资产
     return [
       {
@@ -701,6 +865,48 @@ const relations = computed<RelationRow[]>(() => {
         relationField: 'id',
         cardinality: 'N:N',
         description: '运营周报的数据源'
+      }
+    ]
+  }
+  if (a.recordType === 'metric') {
+    // 指标型资产
+    return [
+      {
+        id: 'r1',
+        relationType: '关联表',
+        targetName: 'ods_asset_metric_raw',
+        targetHivePath: 'ods.ods_asset_metric_raw',
+        targetSystem: 'HIVE 数仓',
+        relationField: 'metric_code = code',
+        cardinality: 'N:1',
+        description: '指标原始数据，统计来源'
+      },
+      {
+        id: 'r2',
+        relationType: '关联指标',
+        targetName: '资产总数',
+        targetSystem: '数据要素',
+        relationField: 'metric_code',
+        cardinality: '1:1',
+        description: '上层汇总指标'
+      },
+      {
+        id: 'r3',
+        relationType: '关联API',
+        targetName: '资产指标查询服务',
+        targetSystem: '数据服务',
+        relationField: 'metric_code',
+        cardinality: '1:1',
+        description: '对外提供的指标查询接口'
+      },
+      {
+        id: 'r4',
+        relationType: '关联报表',
+        targetName: '资产指标周报',
+        targetSystem: '数据应用',
+        relationField: 'metric_code',
+        cardinality: 'N:N',
+        description: '指标可视化报表'
       }
     ]
   }
@@ -846,6 +1052,244 @@ watch(() => route.params.name, (name) => {
 onMounted(() => {
   // watch 已处理
 })
+
+// ============ 使用说明 Tab ============
+// Story 1-1 表级使用说明
+const tableUsageScenarios = computed<string[]>(() => {
+  if (!assetData.value) return []
+  const a = assetData.value
+  if (a.recordType === 'table') {
+    return [
+      `与 ${a.hiveDatabase} 下游表进行关联分析`,
+      '作为用户/账户维度的基础宽表，用于画像与分群',
+      '与订单/合同主表 LEFT JOIN 后构建业务宽表'
+    ]
+  }
+  return ['作为指标统计的查询口径输入', '用于报表/大屏的趋势分析', '对接 API 提供实时指标查询']
+})
+
+const tableUsageCycle = computed(() => {
+  if (!assetData.value) return '—'
+  return assetData.value.recordType === 'table' ? 'daily (T+1)' : 'near-realtime (5min)'
+})
+
+// 折叠面板展开状态
+const usageExpanded = reactive<{ table: boolean; fields: boolean }>({
+  table: true,
+  fields: false
+})
+const toggleUsage = (key: 'table' | 'fields') => {
+  usageExpanded[key] = !usageExpanded[key]
+}
+
+// Story 1-2 关键字段变更对比 + 字段说明（合并版）
+type FieldChangeType = 'added' | 'modified' | 'removed'
+
+interface FieldChangeRow {
+  name: string
+  oldValue?: string
+  newValue?: string
+  changeType: FieldChangeType
+}
+
+const changeTypeLabel: Record<FieldChangeType, string> = {
+  added: '🟢 新增',
+  modified: '🔄 修改',
+  removed: '🔴 删除'
+}
+const changeTypeColor: Record<FieldChangeType, string> = {
+  added: 'green',
+  modified: 'blue',
+  removed: 'red'
+}
+
+// 视图模式：字段说明 / 变更对比
+type FieldViewMode = 'desc' | 'compare'
+const fieldViewMode = ref<FieldViewMode>('desc')
+
+// 版本（按时间倒序，最近在前）
+const fieldVersions = computed<string[]>(() => {
+  // mock 4 个版本
+  return ['v2.4.0', 'v2.3.0', 'v2.2.0', 'v2.1.0']
+})
+
+// 默认查看版本：最新
+const activeFieldVersion = ref('v2.4.0')
+
+// 版本对比选项（最新 vs 上一版 / 跨任意两版）
+const compareVersionOptions = computed(() => {
+  const vs = fieldVersions.value
+  const opts: { value: string; label: string; newer: string; older: string }[] = []
+  for (let i = 0; i < vs.length - 1; i++) {
+    const newer = vs[i]
+    const older = vs[i + 1]
+    opts.push({ value: `${newer}|${older}`, label: `${newer} vs ${older}`, newer, older })
+  }
+  return opts
+})
+const compareVersionPair = ref<string>('') // e.g. "v2.3.0|v2.2.0"
+
+const currentComparePair = computed(() => {
+  // 优先取用户选择的 pair；没选则取默认"最新两版"
+  const opt =
+    compareVersionOptions.value.find(o => o.value === compareVersionPair.value) ??
+    compareVersionOptions.value[0]
+  return opt ?? { newer: 'v2.3.0', older: 'v2.2.0', value: 'v2.3.0|v2.2.0', label: 'v2.3.0 vs v2.2.0' }
+})
+
+// 不同版本的字段 mock 快照（按版本给"字段类型 + 说明"做差异化）
+const versionedFieldSnapshots: Record<string, { name: string; type: string; description: string }[]> = {
+  'v2.4.0': [],
+  'v2.3.0': [],
+  'v2.2.0': [],
+  'v2.1.0': []
+}
+const buildVersionedSnapshots = () => {
+  if (!assetData.value) return
+  const base = fields.value
+  if (!base.length) return
+  // 默认（最新版 = 当前 fields）
+  versionedFieldSnapshots['v2.4.0'] = base.map(f => ({ ...f }))
+  // v2.3.0：把第一个字段的类型改窄
+  versionedFieldSnapshots['v2.3.0'] = base.map((f, i) => ({
+    name: f.name,
+    type: i === 0 ? 'VARCHAR(32)' : f.type,
+    description: i === 0 ? '主键 ID（旧版本：32 位）' : f.description
+  }))
+  // v2.2.0：把第二个字段（user_id）改成 user_nick，且没有 email 字段（演示新增）
+  versionedFieldSnapshots['v2.2.0'] = base
+    .filter(f => f.name !== 'email')
+    .map(f => ({
+      name: f.name === `${base[1]?.name}` ? 'user_nick' : f.name,
+      type: f.type,
+      description: f.description
+    }))
+  // v2.1.0：早期版本，多个字段差异
+  versionedFieldSnapshots['v2.1.0'] = base.slice(0, Math.max(2, base.length - 2)).map(f => ({
+    name: f.name,
+    type: f.type,
+    description: `${f.description}（旧版描述）`
+  }))
+}
+
+watch(
+  [() => assetData.value?.assetName, () => fields.value],
+  () => buildVersionedSnapshots(),
+  { immediate: true }
+)
+
+const fieldDescRowsByVersion = computed(() => {
+  const v = activeFieldVersion.value
+  return versionedFieldSnapshots[v] ?? fields.value.map(f => ({ ...f }))
+})
+
+// 根据当前选中对比版本对生成变更行（mock：根据新旧快照 diff）
+const fieldChangeRows = computed<FieldChangeRow[]>(() => {
+  const { newer, older } = currentComparePair.value
+  const a = versionedFieldSnapshots[newer] ?? []
+  const b = versionedFieldSnapshots[older] ?? []
+  const mapB = new Map(b.map(f => [f.name, f]))
+  const mapA = new Map(a.map(f => [f.name, f]))
+  const result: FieldChangeRow[] = []
+  // 修改 + 新增
+  a.forEach(f => {
+    const old = mapB.get(f.name)
+    if (!old) {
+      result.push({ name: f.name, newValue: `${f.type} | ${f.description}`, changeType: 'added' })
+    } else if (old.type !== f.type || old.description !== f.description) {
+      result.push({
+        name: f.name,
+        oldValue: `${old.type} | ${old.description}`,
+        newValue: `${f.type} | ${f.description}`,
+        changeType: 'modified'
+      })
+    }
+  })
+  // 删除
+  b.forEach(f => {
+    if (!mapA.has(f.name)) {
+      result.push({ name: f.name, oldValue: `${f.type} | ${f.description}`, changeType: 'removed' })
+    }
+  })
+  // 如果两边一致（mock 数据没差异），给演示数据
+  if (!result.length) {
+    if (assetData.value) {
+      result.push({ name: fields.value[0]?.name || 'id', oldValue: 'VARCHAR(32)', newValue: 'VARCHAR(64)', changeType: 'modified' })
+      result.push({ name: 'email', oldValue: undefined, newValue: 'VARCHAR(128)', changeType: 'added' })
+      result.push({ name: 'legacy_flag', oldValue: 'TINYINT', newValue: undefined, changeType: 'removed' })
+    }
+  }
+  return result
+})
+
+// Story 1-3 字段变更日志抽屉
+const changeLogDrawerVisible = ref(false)
+const changeLogDrawerField = ref<string | null>(null)
+
+interface ChangeLogEntry {
+  version: string
+  changeDate: string
+  operator: string
+  changeType: FieldChangeType
+  oldValue?: string
+  newValue?: string
+  description?: string
+}
+
+const fullChangeLog = computed<ChangeLogEntry[]>(() => {
+  if (!assetData.value) return []
+  const name = assetData.value.assetName
+  return [
+    {
+      version: 'v2.3.0',
+      changeDate: '2026-04-15',
+      operator: '张三',
+      changeType: 'modified',
+      oldValue: 'user_nick',
+      newValue: 'user_name',
+      description: '字段名标准化，与核心系统对齐'
+    },
+    {
+      version: 'v2.3.0',
+      changeDate: '2026-04-15',
+      operator: '张三',
+      changeType: 'added',
+      newValue: 'VARCHAR(128)',
+      description: `新增 email 字段，对接 ${name} 用户触达场景`
+    },
+    {
+      version: 'v2.3.0',
+      changeDate: '2026-04-15',
+      operator: '张三',
+      changeType: 'removed',
+      oldValue: 'TINYINT legacy_flag',
+      description: '废弃字段清理'
+    },
+    {
+      version: 'v2.2.0',
+      changeDate: '2026-03-01',
+      operator: '李四',
+      changeType: 'added',
+      newValue: 'VARCHAR(64)',
+      description: '初始版本字段定义'
+    }
+  ]
+})
+
+const changeLogTimeline = computed<ChangeLogEntry[]>(() => {
+  const f = changeLogDrawerField.value
+  if (!f) return fullChangeLog.value
+  return fullChangeLog.value.filter(l => l.oldValue?.includes(f) || l.newValue?.includes(f) || l.description?.includes(f))
+})
+
+const openChangeLogDrawer = () => {
+  changeLogDrawerField.value = null
+  changeLogDrawerVisible.value = true
+}
+const closeChangeLogDrawer = () => {
+  changeLogDrawerVisible.value = false
+}
+
 </script>
 
 <style scoped>
@@ -905,6 +1349,126 @@ onMounted(() => {
 
 .logic-content {
   font-size: 13px;
+}
+
+/* 使用说明 Tab */
+.usage-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usage-collapse-card {
+  border: 1px solid var(--color-border-2, #e5e6eb);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.usage-collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  background: #fafbfc;
+  transition: background 0.15s;
+}
+.usage-collapse-header:hover {
+  background: #f2f3f5;
+}
+
+.usage-collapse-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.usage-emoji {
+  font-size: 16px;
+}
+
+.usage-collapse-body {
+  padding: 16px;
+  border-top: 1px solid var(--color-border-2, #e5e6eb);
+}
+
+.usage-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #4e5969;
+}
+.usage-row:last-child {
+  margin-bottom: 0;
+}
+
+.usage-label {
+  flex-shrink: 0;
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.usage-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.usage-old-value {
+  color: #f53f3f;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  background: #ffece8;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.usage-new-value {
+  color: #00b42a;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  background: #e8ffea;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.usage-fields-compare-header {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #4e5969;
+}
+
+.usage-fields-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.log-version {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1d2129;
+}
+.log-date {
+  font-weight: normal;
+  font-size: 12px;
+  color: #86909c;
+}
+.log-row {
+  font-size: 13px;
+  color: #4e5969;
+  margin-top: 4px;
+}
+.log-desc {
+  color: #1d2129;
+  margin-top: 6px;
 }
 
 /* 关联关系 Tab */
