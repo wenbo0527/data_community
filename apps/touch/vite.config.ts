@@ -33,6 +33,18 @@ export default defineConfig(async () => {
     plugins,
     base: '/touch/',
     server: { host: '0.0.0.0', port: 5181, strictPort: true },
-    resolve: { alias: { '@': path.resolve(__dirname, 'src') } }
+    resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
+            arco: ['@arco-design/web-vue'],
+            api: ['axios', '@app/shared-api'],
+          },
+        },
+      },
+      chunkSizeWarning: 600,
+    },
   }
 })

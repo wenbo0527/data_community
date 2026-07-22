@@ -5,7 +5,6 @@
         <div class="logo-text">数据管理</div>
       </div>
       <a-menu mode="horizontal" :selected-keys="[activeTopMenu]" @menu-item-click="handleTopMenuClick" class="top-menu">
-        <a-menu-item key="variable">变量一体化管理</a-menu-item>
         <a-menu-item key="business">业务数据目录</a-menu-item>
         <a-menu-item key="asset">数据资产管理</a-menu-item>
         <a-menu-item key="standard">数据标准治理</a-menu-item>
@@ -29,45 +28,58 @@
         <div class="content-wrapper">
           <router-view />
         </div>
+        <!-- 产品说明浮动按钮（页面顶部居右） -->
+        <div class="prd-fab">
+          <a-button
+            type="primary"
+            shape="circle"
+            size="large"
+            @click="openPrdDrawer"
+            title="查看当前页面产品说明"
+          >
+            <template #icon><IconBook /></template>
+          </a-button>
+        </div>
       </a-layout-content>
     </a-layout>
+
+    <!-- 产品说明抽屉（右侧滑出） -->
+    <a-drawer
+      :visible="prdDrawerVisible"
+      placement="right"
+      :width="640"
+      :title="prdDrawerTitle"
+      :mask="true"
+      :mask-closable="true"
+      :esc-to-close="true"
+      :hide-cancel="true"
+      :ok-text="'关闭'"
+      @ok="prdDrawerVisible = false"
+      @cancel="prdDrawerVisible = false"
+      @close="prdDrawerVisible = false"
+    >
+      <div class="prd-drawer-body">
+        <MarkdownLite :source="prdContent" />
+      </div>
+    </a-drawer>
   </a-layout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { IconBook } from '@arco-design/web-vue/es/icon'
+import MarkdownLite from '@/components/common/MarkdownLite.vue'
+import { getPrdForRoute, getPrdTitle } from '@/prd-content'
 
 const router = useRouter()
 const route = useRoute()
 
 console.log('[DMT-MainLayout] route:', route.path)
 
-const activeTopMenu = ref('variable')
+const activeTopMenu = ref('business')
 const activeSideMenu = ref('')
-const openKeys = ref(['variable'])
-
-// ========== 变量一体化管理 ==========
-const variableMenus = [
-  { key: '/variable-hub', title: '一体化总览' },
-  { key: '/variable-management', title: '变量台账' },
-  { key: '/explore/map', title: '变量全景' },
-  { key: '/evaluation/tasks', title: '评估任务中心' },
-  {
-    key: 'explore',
-    title: '探索过程',
-    children: [
-      { key: '/explore/topics', title: '探索课题' }
-    ]
-  },
-  {
-    key: 'config',
-    title: '模块配置',
-    children: [
-      { key: '/explore/taxonomy', title: '探索分类管理' }
-    ]
-  }
-]
+const openKeys = ref<string[]>([])
 
 // ========== 业务数据目录 ==========
 const businessMenus = [
@@ -78,8 +90,21 @@ const businessMenus = [
 const assetMenus = [
   { key: '/metadata', title: '元数据管理' },
   { key: '/asset-management/basic-management/metadata-collection', title: '元数据采集' },
-  { key: '/asset-management/listing-management/table-management', title: '数据资源上下架' },
-  { key: '/asset-management/listing-management/metric-management', title: '数据要素上下架' },
+  { key: '/asset-management/listing-management/asset-management', title: '数据资产上下架' },
+  {
+    key: 'data-source-group',
+    title: '数据资源上下架',
+    children: [
+      { key: '/asset-management/listing-management/data-source/business-system', title: '业务系统' }
+    ]
+  },
+  {
+    key: 'element-management-group',
+    title: '数据要素上下架',
+    children: [
+      { key: '/asset-management/listing-management/metric-management', title: '指标台账' }
+    ]
+  },
   { key: '/asset-management/basic-management/tag-management', title: '标签管理' }
 ]
 
@@ -110,7 +135,6 @@ const classifyMenus = [
 ]
 
 const menuMap: Record<string, any[]> = {
-  variable: variableMenus,
   business: businessMenus,
   asset: assetMenus,
   standard: standardMenus,
@@ -119,7 +143,7 @@ const menuMap: Record<string, any[]> = {
 }
 
 const currentSideMenus = computed(() => {
-  return menuMap[activeTopMenu.value] || variableMenus
+  return menuMap[activeTopMenu.value] || []
 })
 
 function updateMenuState(path: string) {
@@ -176,14 +200,8 @@ function handleSideMenuClick(key: string) {
 
 watch(() => route.path, (path) => {
   // Auto-detect top menu based on path
-  if (
-    path === '/' ||
-    path.includes('variable-hub') ||
-    path.includes('variable-management') ||
-    path.includes('explore') ||
-    path.includes('evaluation')
-  ) {
-    activeTopMenu.value = 'variable'
+  if (path === '/') {
+    activeTopMenu.value = 'business'
   } else if (path.includes('business-concept')) {
     activeTopMenu.value = 'business'
   } else if (
@@ -198,6 +216,25 @@ watch(() => route.path, (path) => {
   }
   updateMenuState(path)
 }, { immediate: true })
+
+// ========== 产品说明 Drawer ==========
+const prdDrawerVisible = ref(false)
+const prdContent = ref('')
+const prdDrawerTitle = ref('产品说明')
+
+const openPrdDrawer = () => {
+  prdContent.value = getPrdForRoute(route.path)
+  prdDrawerTitle.value = getPrdTitle(prdContent.value)
+  prdDrawerVisible.value = true
+}
+
+// 路由切换时，如果抽屉已打开，则刷新内容
+watch(() => route.path, (path) => {
+  if (prdDrawerVisible.value) {
+    prdContent.value = getPrdForRoute(path)
+    prdDrawerTitle.value = getPrdTitle(prdContent.value)
+  }
+})
 </script>
 
 <style scoped>
@@ -244,9 +281,23 @@ watch(() => route.path, (path) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+/* 产品说明浮动按钮（页面内容右上角） */
+.prd-fab {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 99;
+  display: flex;
+  justify-content: flex-end;
+}
+.prd-drawer-body {
+  padding: 4px 8px 24px;
+}
+
 .main-content {
   margin: 16px;
   overflow-y: auto;
+  position: relative;
 }
 
 .content-wrapper {

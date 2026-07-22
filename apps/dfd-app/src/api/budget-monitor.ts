@@ -1,4 +1,4 @@
-import axios from 'axios'
+import request from './request'
 
 export interface BurndownPoint {
   granularity?: 'month' | 'quarter'
@@ -41,7 +41,7 @@ export async function getBurndown(params?: {
   year?: string
   targetLoan?: number
 }): Promise<BurndownPoint[]> {
-  const res = await axios.get('/api/external-data/burndown', { params })
+  const res = await request.get('/api/external-data/burndown', { params })
   const payload = (res as any)?.data
   const list = Array.isArray(payload) ? payload : (payload?.data ?? [])
   return (list ?? []) as BurndownPoint[]
@@ -55,7 +55,7 @@ export async function getWarnings(params?: {
   year?: string
   targetLoan?: number
 }): Promise<WarningItem[]> {
-  const res = await axios.get('/api/external-data/warning', { params })
+  const res = await request.get('/api/external-data/warning', { params })
   const payload = (res as any)?.data
   const list = Array.isArray(payload) ? payload : (payload?.data ?? [])
   return (list ?? []) as WarningItem[]

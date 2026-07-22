@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import request from '../../api/request'
 
 // 评估中心 API（JS 文件）
 // 注意：这些 API 均为 mock/服务封装，若路径调整可在此统一修改

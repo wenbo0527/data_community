@@ -11,7 +11,7 @@ const registry: MicroAppRegistry = {
     description: '数据发现域子应用（资产字典、要素字典、资源字典、搜索分析）'
   },
   basePath: '/dfd',
-  entry: 'http://localhost:5184',
+  entry: 'http://localhost:5185',
   menu: [
     {
       key: 'dfd-index',

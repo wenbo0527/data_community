@@ -18,6 +18,18 @@ export default defineConfig(async () => {
     plugins,
     server: { host: '0.0.0.0', port: 5180, strictPort: true },
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
-    base: '/dex/'
+    base: '/dex/',
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
+            arco: ['@arco-design/web-vue'],
+            api: ['axios', '@app/shared-api'],
+          },
+        },
+      },
+      chunkSizeWarning: 600,
+    },
   }
 })

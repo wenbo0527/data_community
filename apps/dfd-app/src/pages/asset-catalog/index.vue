@@ -358,7 +358,7 @@ const onPageSizeChange = (pageSize: number) => {
 }
 
 const showTableDetail = (record: TableItem) => {
-  Message.info(`资产详情：${record.name}（Demo模式）`)
+  router.push({ name: 'AssetCatalogTable', params: { tableName: record.name } })
 }
 
 const addToFavorite = async (record: TableItem) => {

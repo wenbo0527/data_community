@@ -1,4 +1,4 @@
-import axios from 'axios';
+import request from '../request';
 
 /**
  * 获取外部数据评估报告列表
@@ -11,7 +11,7 @@ import axios from 'axios';
  * @returns {Promise} 评估报告列表
  */
 export function getEvaluationReports(params = {}) {
-  return axios.get('/api/external-data-evaluation/list', { params });
+  return request.get('/api/external-data-evaluation/list', { params });
 }
 
 /**
@@ -20,7 +20,7 @@ export function getEvaluationReports(params = {}) {
  * @returns {Promise} 评估报告详情
  */
 export function getEvaluationReportDetail(id) {
-  return axios.get(`/api/external-data-evaluation/detail/${id}`);
+  return request.get(`/api/external-data-evaluation/detail/${id}`);
 }
 
 /**
@@ -29,7 +29,7 @@ export function getEvaluationReportDetail(id) {
  * @returns {Promise} 创建结果
  */
 export function createEvaluationReport(formData) {
-  return axios.post('/api/external-data-evaluation/create', formData, {
+  return request.post('/api/external-data-evaluation/create', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -41,7 +41,7 @@ export function createEvaluationReport(formData) {
  * @returns {Promise} 产品列表
  */
 export function getRegisteredProducts() {
-  return axios.get('/api/external-data-evaluation/products');
+  return request.get('/api/external-data-evaluation/products');
 }
 
 /**
@@ -50,7 +50,7 @@ export function getRegisteredProducts() {
  * @returns {Promise} 发布结果
  */
 export function publishReport(id) {
-  return axios.post(`/api/external-data-evaluation/publish/${id}`);
+  return request.post(`/api/external-data-evaluation/publish/${id}`);
 }
 
 /**
@@ -59,5 +59,5 @@ export function publishReport(id) {
  * @returns {Promise} 归档结果
  */
 export function archiveReport(id) {
-  return axios.post(`/api/external-data-evaluation/archive/${id}`);
+  return request.post(`/api/external-data-evaluation/archive/${id}`);
 }

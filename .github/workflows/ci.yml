@@ -17,9 +17,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    # 修复 Git 128 错误：信任工作目录
+    # 修复 Git 128 错误：信任工作目录（glob 必须加引号，避免 shell 提前展开）
     - name: Fix Git Safe Directory
-      run: git config --global --add safe.directory *
+      run: git config --global --add safe.directory '*'
 
     - name: Install pnpm
       uses: pnpm/action-setup@v2
@@ -63,9 +63,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # 修复 Git 128 错误
+    # 修复 Git 128 错误（glob 必须加引号，避免 shell 提前展开）
     - name: Fix Git Safe Directory
-      run: git config --global --add safe.directory *
+      run: git config --global --add safe.directory '*'
 
     - name: Install pnpm
       uses: pnpm/action-setup@v2
@@ -92,9 +92,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # 修复 Git 128 错误
+    # 修复 Git 128 错误（glob 必须加引号，避免 shell 提前展开）
     - name: Fix Git Safe Directory
-      run: git config --global --add safe.directory *
+      run: git config --global --add safe.directory '*'
 
     - name: Install pnpm
       uses: pnpm/action-setup@v2

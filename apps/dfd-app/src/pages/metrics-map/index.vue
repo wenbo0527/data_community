@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import request from '../../api/request'
 import * as XLSX from 'xlsx'
 import type { TreeNodeData } from '@arco-design/web-vue'
 import type { RequestOption, UploadRequest, FileItem } from '@arco-design/web-vue/es/upload/interfaces'
@@ -304,7 +304,7 @@ const handleBatchUpload = async (option: { fileItem: FileItem }): Promise<Upload
   formData.append('file', fileBlob as Blob)
   
   try {
-    const res = await axios.post<{success: boolean, count: number}>('/api/metrics/batch-import', formData, {
+    const res = await request.post<{success: boolean, count: number}>('/api/metrics/batch-import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -334,7 +334,7 @@ const handleIncrementalUpload = async (option: { fileItem: FileItem }): Promise<
   formData.append('file', fileBlob as Blob)
   
   try {
-    const res = await axios.post<{success: boolean, count: number}>('/api/metrics/incremental-import', formData, {
+    const res = await request.post<{success: boolean, count: number}>('/api/metrics/incremental-import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

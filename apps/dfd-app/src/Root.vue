@@ -1,11 +1,13 @@
 <template>
   <div id="app">
-    <router-view />
+    <MainLayout />
   </div>
 </template>
 
 <script setup lang="ts">
-// Root component for dfd-app
+import MainLayout from './layouts/MainLayout.vue'
+
+// Root component for dfd-app - wraps MainLayout around router-view
 </script>
 
 <style>

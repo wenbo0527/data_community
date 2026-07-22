@@ -65,7 +65,34 @@ const routes: RouteRecordRaw[] = [
     path: '/exploration/customer-center/event-center',
     name: 'EventCenter',
     component: () => import('./pages/exploration/customer-center/event-center/index.vue'),
-    meta: { title: '事件中心' }
+    meta: { title: '事件中心' },
+    redirect: { name: 'EventCreate' },
+    children: [
+      {
+        path: 'event-create',
+        name: 'EventCreate',
+        component: () => import('./pages/exploration/customer-center/event-center/event-create.vue'),
+        meta: { title: '事件创建' }
+      },
+      {
+        path: 'event-management',
+        name: 'EventManagement',
+        component: () => import('./pages/exploration/customer-center/event-center/event-management.vue'),
+        meta: { title: '事件管理' }
+      },
+      {
+        path: 'sample-stats',
+        name: 'SampleStats',
+        component: () => import('./pages/exploration/customer-center/event-center/sample-stats.vue'),
+        meta: { title: '样本统计' }
+      },
+      {
+        path: 'virtual-events',
+        name: 'VirtualEvents',
+        component: () => import('./pages/exploration/customer-center/event-center/virtual-events.vue'),
+        meta: { title: '虚拟事件' }
+      }
+    ]
   },
   {
     path: '/exploration/customer-center/datasource',

@@ -119,10 +119,49 @@ const childRoutes: RouteRecordRaw[] = [
     meta: { title: '元数据采集' }
   },
   {
-    path: 'asset-management/listing-management/table-management',
-    name: 'TableManagement',
-    component: () => import('./pages/asset-management/listing-management/table-management/index.vue'),
-    meta: { title: '表管理' }
+    path: 'asset-management/listing-management/asset-management',
+    name: 'AssetListingOverview',
+    component: () => import('./pages/asset-management/listing-management/asset-management/sources.vue'),
+    meta: { title: '数据资产上下架' }
+  },
+  {
+    path: 'asset-management/listing-management/asset-management/system/:systemId',
+    name: 'AssetListingSystem',
+    component: () => import('./pages/asset-management/listing-management/asset-management/system-tables.vue'),
+    meta: { title: '系统资产列表' }
+  },
+  {
+    path: 'asset-management/listing-management/asset-management/detail/:name',
+    name: 'AssetListingDetail',
+    component: () => import('./pages/asset-management/listing-management/asset-management/detail.vue'),
+    meta: { title: '资产详情' }
+  },
+  {
+    path: 'asset-management/listing-management/data-source',
+    name: 'DataSourceListingOverview',
+    component: () => import('./pages/asset-management/listing-management/data-source/business-system.vue'),
+    meta: { title: '数据资源上下架' }
+  },
+  {
+    path: 'asset-management/listing-management/data-source/business-system',
+    name: 'DataSourceBusinessSystem',
+    component: () => import('./pages/asset-management/listing-management/data-source/sources.vue'),
+    meta: { title: '业务系统' }
+  },
+  {
+    path: 'asset-management/listing-management/data-source/system/:systemId',
+    name: 'DataSourceListingSystem',
+    component: () => import('./pages/asset-management/listing-management/asset-management/system-tables.vue'),
+    meta: { title: '系统资源列表' }
+  },
+  {
+    // 旧路径（表管理）已迁移到「数据资源上下架」入口，保留 redirect 兼容老链接
+    path: 'asset-management/listing-management/table-management/:subPath(.*)*',
+    name: 'TableManagementLegacyRedirect',
+    redirect: (to: any) => ({
+      path: `/asset-management/listing-management/data-source${to.params.subPath ? '/' + (Array.isArray(to.params.subPath) ? to.params.subPath.join('/') : to.params.subPath) : ''}`
+    }),
+    meta: { title: '表管理（已迁移）' }
   },
   {
     path: 'asset-management/listing-management/metric-management',
@@ -174,20 +213,9 @@ const childRoutes: RouteRecordRaw[] = [
   },
   // ============ 数据分级分类（PRD v1.0-rc.2）============
   // ============ 数据分级分类（PRD v1.0-rc.2，挂在数据管理下）============
+  // matrix / tasks 已移入下方 ClassifyEntry 的 children 子路由
   {
-    path: 'metadata/classify/matrix',
-    name: 'ClassifyMatrix',
-    component: () => import('./pages/metadata/classify-matrix.vue'),
-    meta: { title: '数据安全分级矩阵表' }
-  },
-  {
-    path: 'metadata/classify/tasks',
-    name: 'ClassifyTasks',
-    component: () => import('./pages/metadata/classify-tasks.vue'),
-    meta: { title: '分级分类任务' }
-  },
-  {
-    path: 'metadata/classify/api-docs',
+    path: 'metadata/classify-api-docs',
     name: 'ClassifyApiDocs',
     component: () => import('./pages/metadata/classify-api-docs.vue'),
     meta: { title: '分级分类 API 文档' }
@@ -216,6 +244,18 @@ const childRoutes: RouteRecordRaw[] = [
         name: 'ClassifyTableDetail',
         component: () => import('./pages/metadata/classify/table-detail.vue'),
         meta: { title: '表详情' }
+      },
+      {
+        path: 'matrix',
+        name: 'ClassifyMatrix',
+        component: () => import('./pages/metadata/classify-matrix.vue'),
+        meta: { title: '数据安全分级矩阵表' }
+      },
+      {
+        path: 'tasks',
+        name: 'ClassifyTasks',
+        component: () => import('./pages/metadata/classify-tasks.vue'),
+        meta: { title: '分级分类任务' }
       }
     ]
   }

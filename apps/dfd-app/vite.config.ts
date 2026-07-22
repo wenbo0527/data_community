@@ -20,9 +20,23 @@ export default defineConfig(async () => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
-        '@shared': path.resolve(__dirname, '../../src/mock/shared')
+        // 修正 (R3): 原来 '../../src/mock/shared' 解析到 apps/data_community/src/mock/shared (上层, 错)
+        // 实际 dfd-app 自己的 mock 在 apps/dfd-app/src/mock/shared/
+        '@shared': path.resolve(__dirname, 'src/mock/shared')
       }
     },
-    base: '/dfd/'
+    base: '/dfd/',
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
+            arco: ['@arco-design/web-vue'],
+            api: ['axios', '@app/shared-api'],
+          },
+        },
+      },
+      chunkSizeWarning: 600,
+    },
   }
 })

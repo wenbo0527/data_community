@@ -48,8 +48,16 @@ export default defineConfig(async () => {
     resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
     build: {
       rollupOptions: {
-        external: []
-      }
+        external: [],
+        output: {
+          manualChunks: {
+            vue: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
+            arco: ['@arco-design/web-vue'],
+            api: ['axios', '@app/shared-api'],
+          },
+        },
+      },
+      chunkSizeWarning: 600,
     },
     base: '/mkt/'
   }
