@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: data-standard -->
   <div class="codes-page">
     <a-card class="general-card" title="标准代码管理">
       <a-row style="margin-bottom: 16px">

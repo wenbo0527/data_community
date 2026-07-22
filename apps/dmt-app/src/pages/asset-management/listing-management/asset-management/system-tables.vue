@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: asset-listing.resource.system -->
   <div class="system-tables-page">
     <!-- 面包屑 -->
     <a-breadcrumb class="breadcrumb">
@@ -202,6 +203,7 @@ import { IconSearch, IconSync, IconRefresh } from '@arco-design/web-vue/es/icon'
 import DmtPageHeader from '../../../../components/common/DmtPageHeader.vue'
 import { ASSET_SYSTEMS, mockTables, type AssetSystemId, type ClusterType, SYSTEM_CLUSTER_MAP } from '@/mock/data-map'
 import { listingStore } from '@/mock/listing-store'
+import { triggerSyncFromShelf, runMetadataTask, createMetadataTask } from '@/mock/metadata-bus'
 import { formatDateTime } from '@/utils/dateUtils'
 
 type ShelfStatus = 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
@@ -355,32 +357,54 @@ const runSync = async () => {
     Message.info('没有可同步的资产')
     return
   }
+  // ⚡ 联动：造一个"批量同步"汇总任务，状态变化通过 bus 回调回填
+  const batchTask = createMetadataTask({
+    taskName: `${currentSystem.value?.name || '系统'}批量同步（${targets.length} 个资产）`,
+    dataSourceType: 'Hive',
+    assetType: '表',
+    triggeredBy: 'shelf'
+  })
+  Message.loading({ content: `任务 ${batchTask.id} 运行中…`, duration: 1500 })
   syncing.value = true
   syncProgress.total = targets.length
   syncProgress.done = 0
   syncProgress.failed = 0
-  const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-  for (const a of targets) {
-    await new Promise(r => setTimeout(r, 80))
-    if (Math.random() > 0.05) {
-      a.lastSyncTime = now
-      syncProgress.done += 1
+  void runMetadataTask(batchTask.id).then(t => {
+    // 通过 bus 自身逻辑登记一条虚拟产物：在我们批量模式下，把成功的资产时间更新
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
+    if (t.status === 'success') {
+      // 80% 成功率，更新成功资产的时间
+      let fail = 0
+      targets.forEach(a => {
+        if (Math.random() < 0.8) {
+          a.lastSyncTime = now
+          syncProgress.done += 1
+        } else {
+          fail += 1
+          syncProgress.failed += 1
+        }
+      })
+      Message.success(`批次 ${batchTask.id} 完成：成功 ${syncProgress.done} 条，失败 ${syncProgress.failed} 条`)
     } else {
-      syncProgress.failed += 1
+      Message.warning(`批次 ${batchTask.id} 失败：${t.errorMessage}`)
     }
-  }
-  syncing.value = false
-  const failedMsg = syncProgress.failed > 0 ? `，失败 ${syncProgress.failed} 条` : ''
-  Message.success(`同步完成：成功 ${syncProgress.done} 条${failedMsg}`)
-  setTimeout(() => { syncVisible.value = false }, 400)
+    syncing.value = false
+    setTimeout(() => { syncVisible.value = false }, 400)
+  })
 }
 
 const syncOne = (record: AssetRow) => {
-  Message.loading({ content: `正在同步 ${record.name}…`, duration: 600 })
-  setTimeout(() => {
-    record.lastSyncTime = new Date().toISOString().slice(0, 19).replace('T', ' ')
-    Message.success(`${record.name} 同步成功`)
-  }, 700)
+  // ⚡ 联动采集任务：基于记录创建采集任务，并切换到「元数据管理 - 任务」Tab
+  const task = triggerSyncFromShelf(record.name)
+  Message.success(`已创建采集任务 ${task.id}，可在「元数据管理 → 任务」中查看`)
+  void runMetadataTask(task.id).then(t => {
+    if (t.status === 'success') {
+      record.lastSyncTime = new Date().toISOString().slice(0, 19).replace('T', ' ')
+      Message.success(`${record.name} 同步成功（${task.id}）`)
+    } else {
+      Message.warning(`${record.name} 同步失败：${t.errorMessage}`)
+    }
+  })
 }
 
 const refreshAll = () => {

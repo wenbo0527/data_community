@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: asset-listing.resource.business-system -->
   <div class="business-system-page">
     <DmtPageHeader title="业务系统" sub-title="全量业务源表的统一台账，支持跨系统筛选、搜索与同步" />
 
@@ -154,6 +155,7 @@ import {
   ASSET_SYSTEMS, mockTables, type AssetSystemId, type ClusterType
 } from '@/mock/data-map'
 import { listingStore } from '@/mock/listing-store'
+import { triggerSyncFromShelf, runMetadataTask, createMetadataTask } from '@/mock/metadata-bus'
 import { formatDateTime } from '@/utils/dateUtils'
 
 type ShelfStatus = 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
@@ -308,32 +310,50 @@ const runSync = async () => {
     Message.info('没有可同步的资产')
     return
   }
+  // ⚡ 联动：造一个"业务系统台账批量同步"汇总任务
+  const batchTask = createMetadataTask({
+    taskName: `业务系统台账批量同步（${targets.length} 个资产）`,
+    dataSourceType: 'MySQL',
+    assetType: '表',
+    triggeredBy: 'shelf'
+  })
+  Message.loading({ content: `任务 ${batchTask.id} 运行中…`, duration: 1500 })
   syncing.value = true
   syncProgress.total = targets.length
   syncProgress.done = 0
   syncProgress.failed = 0
-  const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-  for (const r of targets) {
-    await new Promise(res => setTimeout(res, 80))
-    if (Math.random() > 0.05) {
-      r.lastSyncTime = now
-      syncProgress.done += 1
+  void runMetadataTask(batchTask.id).then(t => {
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
+    if (t.status === 'success') {
+      targets.forEach(r => {
+        if (Math.random() < 0.8) {
+          r.lastSyncTime = now
+          syncProgress.done += 1
+        } else {
+          syncProgress.failed += 1
+        }
+      })
+      Message.success(`批次 ${batchTask.id} 完成：成功 ${syncProgress.done}，失败 ${syncProgress.failed}`)
     } else {
-      syncProgress.failed += 1
+      Message.warning(`批次 ${batchTask.id} 失败：${t.errorMessage}`)
     }
-  }
-  syncing.value = false
-  const failedMsg = syncProgress.failed > 0 ? `，失败 ${syncProgress.failed} 条` : ''
-  Message.success(`同步完成：成功 ${syncProgress.done} 条${failedMsg}`)
-  setTimeout(() => { syncVisible.value = false }, 400)
+    syncing.value = false
+    setTimeout(() => { syncVisible.value = false }, 400)
+  })
 }
 
 const syncOne = (record: Row) => {
-  Message.loading({ content: `正在同步 ${record.name}…`, duration: 600 })
-  setTimeout(() => {
-    record.lastSyncTime = new Date().toISOString().slice(0, 19).replace('T', ' ')
-    Message.success(`${record.name} 同步成功`)
-  }, 700)
+  // ⚡ 联动：触发采集任务（vs 之前的简单模拟）
+  const task = triggerSyncFromShelf(record.name)
+  Message.success(`已创建采集任务 ${task.id}，可在「元数据管理 → 任务」中查看`)
+  void runMetadataTask(task.id).then(t => {
+    if (t.status === 'success') {
+      record.lastSyncTime = new Date().toISOString().slice(0, 19).replace('T', ' ')
+      Message.success(`${record.name} 同步成功（${task.id}）`)
+    } else {
+      Message.warning(`${record.name} 同步失败：${t.errorMessage}`)
+    }
+  })
 }
 
 // 操作

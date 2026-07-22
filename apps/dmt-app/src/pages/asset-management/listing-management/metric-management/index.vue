@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: asset-listing.metric -->
   <div class="metric-management">
     <div class="page-header">
       <h2>指标管理</h2>

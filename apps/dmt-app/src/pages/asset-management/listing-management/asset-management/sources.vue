@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: asset-listing -->
   <div class="asset-sources-page">
     <DmtPageHeader title="数据资产上下架" sub-title="按数据源分组管理资产的上架与下架" />
 

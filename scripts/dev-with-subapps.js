@@ -75,7 +75,7 @@ function waitForPort(name, url, timeoutMs = 60000) {
   })
 }
 
-function runDev(name, cwd, script = 'dev') {
+function runDev(name, cwd, script = 'dev', extraEnv = {}) {
   // 检查 node_modules 是否存在
   if (!fs.existsSync(path.join(cwd, 'node_modules'))) {
     console.error(`[${name}] 错误: 未发现 node_modules，请先在 ${cwd} 目录下运行 npm install`)
@@ -86,7 +86,7 @@ function runDev(name, cwd, script = 'dev') {
   const p = spawn(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', script], { 
     cwd, 
     stdio: 'inherit', 
-    env: { ...process.env, FORCE_COLOR: 'true' } 
+    env: { ...process.env, FORCE_COLOR: 'true', ...extraEnv } 
   })
   
   p.on('error', (err) => {
@@ -107,7 +107,8 @@ async function main() {
   const apps = [
     { name: 'horizontal-canvas', cwd: `${root}/apps/horizontal-canvas`, url: 'http://127.0.0.1:5175/', port: 5175 },
     { name: 'risk-app', cwd: `${root}/apps/risk-app`, url: 'http://127.0.0.1:5176/', port: 5176 },
-    { name: 'touch', cwd: `${root}/apps/touch`, url: 'http://127.0.0.1:5181/', port: 5181 }
+    { name: 'touch', cwd: `${root}/apps/touch`, url: 'http://127.0.0.1:5181/', port: 5181 },
+    { name: 'dmt-app', cwd: `${root}/apps/dmt-app`, url: 'http://127.0.0.1:5184/', port: 5184, env: { DMT_PORT: '5184' } }
   ]
   const mainApp = { name: 'main-app', cwd: root, url: 'http://127.0.0.1:5173/', port: 5173 }
   
@@ -121,7 +122,7 @@ async function main() {
     console.log('跳过端口预释放 (SKIP_KILL=1)')
   }
 
-  const children = apps.map(a => runDev(a.name, a.cwd)).filter(Boolean)
+  const children = apps.map(a => runDev(a.name, a.cwd, 'dev', a.env)).filter(Boolean)
   
   if (children.length < apps.length) {
     console.error('--- 部分子应用无法启动，请检查上方 node_modules 提示 ---')

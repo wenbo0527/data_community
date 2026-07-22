@@ -47,7 +47,7 @@
     <a-drawer
       :visible="prdDrawerVisible"
       placement="right"
-      :width="640"
+      :width="720"
       :title="prdDrawerTitle"
       :mask="true"
       :mask-closable="true"
@@ -58,6 +58,32 @@
       @cancel="prdDrawerVisible = false"
       @close="prdDrawerVisible = false"
     >
+      <!-- PRD 元信息栏（ID / 层级 / 责任人 / 状态 / 更新日期） -->
+      <div class="prd-meta" v-if="prdInfo">
+        <a-space :size="6" wrap>
+          <a-tag color="arcoblue">{{ prdInfo.id }}</a-tag>
+          <a-tag :color="levelTagColor[prdInfo.level] || 'gray'">{{ prdInfo.level }} · {{ levelLabel[prdInfo.level] }}</a-tag>
+          <a-tag :color="statusTagColor[prdInfo.status]">{{ statusLabel[prdInfo.status] }}</a-tag>
+          <a-tag>👤 {{ prdInfo.owner }}</a-tag>
+          <a-tag>🕒 {{ prdInfo.updatedAt }}</a-tag>
+          <a-tag class="prd-key-tag" v-if="prdInfoKey">{{ prdInfoKey }}</a-tag>
+        </a-space>
+      </div>
+      <!-- 多内容并列（如该 key 对应多份 PRD） -->
+      <a-alert
+        v-if="sameKeySiblings.length > 1"
+        type="info"
+        :show-icon="false"
+        class="prd-siblings"
+        style="margin: 8px 0 0"
+      >
+        <template #title>此 key 关联了 {{ sameKeySiblings.length }} 份 PRD 文档</template>
+        <a-space :size="6" wrap>
+          <a-tag v-for="t in sameKeySiblings" :key="t.key" :color="t.key === prdInfoKey ? 'arcoblue' : 'gray'">
+            {{ t.title }}
+          </a-tag>
+        </a-space>
+      </a-alert>
       <div class="prd-drawer-body">
         <MarkdownLite :source="prdContent" />
       </div>
@@ -70,7 +96,13 @@ import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { IconBook } from '@arco-design/web-vue/es/icon'
 import MarkdownLite from '@/components/common/MarkdownLite.vue'
-import { getPrdForRoute, getPrdTitle } from '@/prd-content'
+import {
+  getPrdForRoute,
+  getPrdTitle,
+  getPrdKeyForRoute,
+  listAllPrds
+} from '@/prd-content'
+import type { PrdInfo } from '@/prd-content'
 
 const router = useRouter()
 const route = useRoute()
@@ -89,7 +121,15 @@ const businessMenus = [
 // ========== 数据资产管理 ==========
 const assetMenus = [
   { key: '/metadata', title: '元数据管理' },
-  { key: '/asset-management/basic-management/metadata-collection', title: '元数据采集' },
+  {
+    key: 'metadata-collect-group',
+    title: '元数据采集',
+    children: [
+      { key: '/asset-management/basic-management/metadata-collection/task-list', title: '任务列表' },
+      { key: '/asset-management/basic-management/metadata-collection', title: '创建任务' },
+      { key: '/asset-management/basic-management/data-source', title: '数据源管理' }
+    ]
+  },
   { key: '/asset-management/listing-management/asset-management', title: '数据资产上下架' },
   {
     key: 'data-source-group',
@@ -221,18 +261,59 @@ watch(() => route.path, (path) => {
 const prdDrawerVisible = ref(false)
 const prdContent = ref('')
 const prdDrawerTitle = ref('产品说明')
+const prdInfo = ref<PrdInfo | null>(null)
+const prdInfoKey = ref('')
+const sameKeySiblings = ref<Array<{ key: string; title: string; level: string }>>([])
+
+// PRD 元信息渲染配置
+const levelTagColor: Record<string, string> = {
+  L0: 'red',
+  L1: 'arcoblue',
+  L2: 'cyan',
+  L3: 'gray',
+  SPEC: 'purple'
+}
+const levelLabel: Record<string, string> = {
+  L0: '总章程',
+  L1: '域主 PRD',
+  L2: '子 PRD',
+  L3: 'spec',
+  SPEC: '接口契约'
+}
+const statusTagColor: Record<string, string> = {
+  draft: 'orange',
+  review: 'gold',
+  released: 'green',
+  deprecated: 'gray'
+}
+const statusLabel: Record<string, string> = {
+  draft: '草稿',
+  review: '评审中',
+  released: '已发布',
+  deprecated: '已弃用'
+}
 
 const openPrdDrawer = () => {
-  prdContent.value = getPrdForRoute(route.path)
-  prdDrawerTitle.value = getPrdTitle(prdContent.value)
+  refreshPrd(route.path)
   prdDrawerVisible.value = true
+}
+
+const refreshPrd = (path: string) => {
+  const info = getPrdForRoute(path)
+  prdInfo.value = info
+  prdInfoKey.value = getPrdKeyForRoute(path)
+  prdContent.value = info.content
+  prdDrawerTitle.value = getPrdTitle(info.content)
+  // 同 key 关联的兄弟页：列出所有与当前相同 key 的页面信息（实际是同 key 的多个 alias）
+  sameKeySiblings.value = listAllPrds()
+    .filter((x: any) => x.key === prdInfoKey.value || x.level === info.level)
+    .map((x: any) => ({ key: x.key, title: x.title, level: x.level }))
 }
 
 // 路由切换时，如果抽屉已打开，则刷新内容
 watch(() => route.path, (path) => {
   if (prdDrawerVisible.value) {
-    prdContent.value = getPrdForRoute(path)
-    prdDrawerTitle.value = getPrdTitle(prdContent.value)
+    refreshPrd(path)
   }
 })
 </script>
@@ -292,6 +373,24 @@ watch(() => route.path, (path) => {
 }
 .prd-drawer-body {
   padding: 4px 8px 24px;
+}
+
+.prd-meta {
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: #fafbfc;
+  border: 1px solid var(--color-border-2);
+  border-radius: 6px;
+}
+
+.prd-key-tag {
+  font-family: 'JetBrains Mono', Consolas, Menlo, monospace;
+  background: #f0f7ff;
+  color: #165dff;
+}
+
+.prd-siblings {
+  font-size: 12px;
 }
 
 .main-content {

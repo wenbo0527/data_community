@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: service.api -->
   <div class="api-management">
     <div class="page-header">
       <h2>API管理</h2>

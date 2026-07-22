@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: metadata -->
   <div class="metadata-container">
     <!-- 顶部统计 -->
     <a-row :gutter="16" class="stats-row">

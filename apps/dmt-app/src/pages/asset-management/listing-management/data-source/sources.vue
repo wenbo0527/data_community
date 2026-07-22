@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: asset-listing -->
   <div class="resource-sources-page">
     <DmtPageHeader title="数据资源上下架" sub-title="按业务系统分组管理源表的上架与下架" />
 

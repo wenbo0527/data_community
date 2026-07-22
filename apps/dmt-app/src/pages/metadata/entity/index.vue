@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: metadata.entity -->
   <div class="entity-panel">
     <ModelingView />
   </div>

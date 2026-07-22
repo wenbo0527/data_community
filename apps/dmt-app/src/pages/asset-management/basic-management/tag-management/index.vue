@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: tag-management -->
   <div class="tag-management-page">
     <div class="page-header">
       <div class="header-content">
