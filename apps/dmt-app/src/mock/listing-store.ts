@@ -18,7 +18,7 @@ export interface MockMetric {
   clusterType: 'HIVE' | 'MySQL' | 'Oracle'
   owner: string
   registerTime: string
-  status: 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
+  status: 'active' | 'onShelf' | 'offShelf'
   onShelfTime?: string
   offShelfTime?: string
   publisher: string

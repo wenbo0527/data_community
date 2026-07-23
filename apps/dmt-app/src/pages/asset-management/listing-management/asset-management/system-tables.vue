@@ -28,26 +28,21 @@
 
     <!-- 系统统计概览 -->
     <a-row :gutter="16" class="stats-row">
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card>
           <a-statistic title="资产总数" :value="totalAssets" :value-style="{ color: '#165DFF' }" />
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card>
           <a-statistic title="已上架" :value="onShelfCount" :value-style="{ color: '#00B42A' }">
             <template #suffix><span style="font-size: 14px; color: #86909c">/ {{ totalAssets }}</span></template>
           </a-statistic>
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card>
           <a-statistic title="已下架" :value="offShelfCount" :value-style="{ color: '#FF7D00' }" />
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card>
-          <a-statistic title="未激活 / 归档" :value="archivedCount" :value-style="{ color: '#86909C' }" />
         </a-card>
       </a-col>
     </a-row>
@@ -70,8 +65,6 @@
           <a-select v-model="statusFilter" placeholder="状态" allow-clear @change="handleSearch">
             <a-option value="onShelf">已上架</a-option>
             <a-option value="offShelf">已下架</a-option>
-            <a-option value="archived">已归档</a-option>
-            <a-option value="inactive">未激活</a-option>
             <a-option value="active">活跃</a-option>
           </a-select>
         </a-col>
@@ -206,7 +199,7 @@ import { listingStore } from '@/mock/listing-store'
 import { triggerSyncFromShelf, runMetadataTask, createMetadataTask } from '@/mock/metadata-bus'
 import { formatDateTime } from '@/utils/dateUtils'
 
-type ShelfStatus = 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
+type ShelfStatus = 'active' | 'onShelf' | 'offShelf'
 
 interface AssetRow {
   id: string
@@ -225,10 +218,10 @@ interface AssetRow {
 }
 
 const statusLabel: Record<ShelfStatus, string> = {
-  active: '活跃', onShelf: '已上架', offShelf: '已下架', inactive: '未激活', archived: '已归档'
+  active: '活跃', onShelf: '已上架', offShelf: '已下架'
 }
 const statusColor: Record<ShelfStatus, string> = {
-  active: 'green', onShelf: 'green', offShelf: 'orange', inactive: 'gray', archived: 'gray'
+  active: 'green', onShelf: 'green', offShelf: 'orange'
 }
 
 const route = useRoute()
@@ -298,7 +291,6 @@ watch(systemId, (id) => {
 const totalAssets = computed(() => assets.value.length)
 const onShelfCount = computed(() => assets.value.filter(a => a.status === 'onShelf' || a.status === 'active').length)
 const offShelfCount = computed(() => assets.value.filter(a => a.status === 'offShelf').length)
-const archivedCount = computed(() => assets.value.filter(a => a.status === 'archived' || a.status === 'inactive').length)
 
 // 筛选
 const searchKw = ref('')
@@ -413,7 +405,7 @@ const refreshAll = () => {
 }
 
 // 操作
-const canOnShelf = (a: AssetRow) => a.status === 'offShelf' || a.status === 'archived' || a.status === 'inactive'
+const canOnShelf = (a: AssetRow) => a.status === 'offShelf'
 const canOffShelf = (a: AssetRow) => a.status === 'onShelf' || a.status === 'active'
 
 const onShelf = (a: AssetRow) => {

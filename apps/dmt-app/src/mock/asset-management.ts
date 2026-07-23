@@ -16,8 +16,8 @@
  *   + shelfRecordId / recordType (table|metric) / action (上架|下架|编辑)
  */
 
-export type ShelfStatus = 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
-export type ShelfAction = '上架' | '下架' | '编辑' | '归档' | '激活'
+export type ShelfStatus = 'active' | 'onShelf' | 'offShelf'
+export type ShelfAction = '上架' | '下架' | '编辑'
 export type RecordType = 'table' | 'metric'
 
 export interface MockShelfRecord {
@@ -81,12 +81,12 @@ export const mockShelfRecords: MockShelfRecord[] = [
     category: '客户',
     owner: '王芳',
     registerTime: '2025-12-10 14:00:00',
-    status: 'archived',
+    status: 'offShelf',
     onShelfTime: '2025-12-15 10:00:00',
     offShelfTime: '2026-05-20 18:00:00',
     publisher: '王芳',
-    description: '旧版用户画像归档下架',
-    action: '归档',
+    description: '旧版用户画像下架',
+    action: '下架',
     actionTime: '2026-05-20 18:00:00',
     operator: '王芳',
     remark: '新版 t_customer_360 替代'

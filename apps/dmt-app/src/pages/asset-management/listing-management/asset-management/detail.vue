@@ -565,7 +565,7 @@ const relationTypeColor: Record<string, string> = {
   '关联报表': 'pinkpurple'
 }
 
-type ShelfStatus = 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
+type ShelfStatus = 'active' | 'onShelf' | 'offShelf'
 
 interface AssetDetail {
   assetName: string
@@ -587,7 +587,7 @@ interface AssetDetail {
 }
 
 interface ShelfHistoryItem {
-  action: '上架' | '下架' | '归档' | '激活' | '编辑'
+  action: '上架' | '下架' | '编辑'
   operator: string
   actionTime: string
   remark?: string
@@ -603,16 +603,12 @@ interface VersionItem {
 const statusLabel: Record<ShelfStatus, string> = {
   active: '活跃',
   onShelf: '已上架',
-  offShelf: '已下架',
-  inactive: '未激活',
-  archived: '已归档'
+  offShelf: '已下架'
 }
 const statusColor: Record<ShelfStatus, string> = {
   active: 'green',
   onShelf: 'green',
-  offShelf: 'orange',
-  inactive: 'gray',
-  archived: 'gray'
+  offShelf: 'orange'
 }
 
 const route = useRoute()
@@ -990,7 +986,7 @@ const gotoLineageAsset = (record: LineageRow) => {
 }
 
 // 操作
-const canOnShelf = (a: AssetDetail) => a.status === 'offShelf' || a.status === 'archived' || a.status === 'inactive'
+const canOnShelf = (a: AssetDetail) => a.status === 'offShelf'
 const canOffShelf = (a: AssetDetail) => a.status === 'onShelf' || a.status === 'active'
 
 const onShelf = (a: AssetDetail) => {

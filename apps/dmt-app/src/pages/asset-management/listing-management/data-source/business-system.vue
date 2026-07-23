@@ -158,7 +158,7 @@ import { listingStore } from '@/mock/listing-store'
 import { triggerSyncFromShelf, runMetadataTask, createMetadataTask } from '@/mock/metadata-bus'
 import { formatDateTime } from '@/utils/dateUtils'
 
-type ShelfStatus = 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
+type ShelfStatus = 'active' | 'onShelf' | 'offShelf'
 
 interface Row {
   id: string
@@ -178,10 +178,10 @@ interface Row {
 }
 
 const statusLabel: Record<ShelfStatus, string> = {
-  active: '活跃', onShelf: '已上架', offShelf: '已下架', inactive: '未激活', archived: '已归档'
+  active: '活跃', onShelf: '已上架', offShelf: '已下架'
 }
 const statusColor: Record<ShelfStatus, string> = {
-  active: 'green', onShelf: 'green', offShelf: 'orange', inactive: 'gray', archived: 'gray'
+  active: 'green', onShelf: 'green', offShelf: 'orange'
 }
 const clusterColor: Record<ClusterType, string> = {
   HIVE: 'arcoblue', MySQL: 'orange', Oracle: 'purple'
@@ -357,7 +357,7 @@ const syncOne = (record: Row) => {
 }
 
 // 操作
-const canOnShelf = (r: Row) => r.status === 'offShelf' || r.status === 'archived' || r.status === 'inactive'
+const canOnShelf = (r: Row) => r.status === 'offShelf'
 const canOffShelf = (r: Row) => r.status === 'onShelf' || r.status === 'active'
 
 const onShelf = (r: Row) => {
