@@ -18,10 +18,6 @@
           <h3>人群画像</h3>
           <p>人群管理功能</p>
         </div>
-        <div class="module-card" @click="$router.push('/exploration/customer-center/event-center')">
-          <h3>事件中心</h3>
-          <p>事件管理、虚拟事件</p>
-        </div>
       </div>
     </div>
     <!-- 渲染子路由组件 -->

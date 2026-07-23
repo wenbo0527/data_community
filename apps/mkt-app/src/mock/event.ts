@@ -802,6 +802,15 @@ const mockEventAPI = {
         resolve(generateTopicSampleRecord(datasourceId, topic));
       }, 300);
     });
+  },
+
+  // 下线事件（TASK-20260720-482B803B dev 实施补全 · 候选 #141 同根病锁版守）
+  offlineEvent: (id: string) => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve({ success: true, id, status: '已下线', updateTime: new Date().toISOString() });
+      }, 300);
+    });
   }
 };
 

@@ -569,7 +569,7 @@ const handleExport = () => {
 }
 
 const handleBack = () => {
-  router.push('/exploration/customer-center/event-center/event-management')
+  router.push('/customer/event-management')
 }
 
 const handleChartExport = () => {

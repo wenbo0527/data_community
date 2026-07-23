@@ -77,7 +77,6 @@ const customerCenterMenus = [
     ]
   },
   { key: '/exploration/customer-center/tag-system', title: '标签系统' },
-  { key: '/exploration/customer-center/event-center', title: '事件中心' },
   { key: '/exploration/customer-center/datasource', title: '数据源' }
 ]
 

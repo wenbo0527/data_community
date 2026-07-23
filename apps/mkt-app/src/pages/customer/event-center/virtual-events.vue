@@ -279,11 +279,11 @@ const handleCreate = () => {
   }
   
   const handleTest = (record) => {
-  // 跳转到样本统计页面
+  // 跳转到样本统计页面 (TASK-20260714-BD4107B8 修复: 路径对齐 router/modules/customer.ts L57 'customer/sample-stats')
   router.push({
-    path: '/exploration/customer-center/event-center/sample-stats',
-    query: { 
-      eventId: record.id, 
+    path: '/customer/sample-stats',
+    query: {
+      eventId: record.id,
       eventName: record.eventName,
       isVirtual: 'true'
     }

@@ -18,9 +18,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import type { DataProduct } from '@/types/accompany'
 import type { StepItem } from '@/types/steps'
-import { calculateAssignedAmount, calculateProgress, calculateTotalRatio } from '@/utils/calculations'
 import BasicInfoStep from '@/components/steps/BasicInfoStep.vue'
 import DataProductStep from '@/components/steps/DataProductStep.vue'
 import SceneStep from '@/components/steps/SceneStep.vue'

@@ -50,6 +50,7 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '业务模块权限' }
       }
     ]
+  },
 
   {
     path: '/notifications',

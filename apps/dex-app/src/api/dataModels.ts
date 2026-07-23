@@ -1,9 +1,7 @@
 /**
  * 数据模型 API (Mock)
+ * TASK-20260714-9EA2D40C: 清理残留 axios（dead code）· 仅保留 mock 路径
  */
-import axios from '../utils/axios'
-
-const USE_MOCK = true
 
 // Mock 数据
 const mockDataModels = [
@@ -16,32 +14,24 @@ const mockDataModels = [
  * 获取数据模型列表
  */
 export async function getDataModelsList(): Promise<any[]> {
-  if (USE_MOCK) {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    return mockDataModels
-  }
-  const response = await axios.get('/api/dataModels')
-  return response.data
+  await new Promise(resolve => setTimeout(resolve, 200))
+  return mockDataModels
 }
 
 /**
  * 执行数据模型
  */
 export async function executeDataModel(modelId: string, params: any): Promise<any> {
-  if (USE_MOCK) {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return {
-      success: true,
-      modelId,
-      result: {
-        score: 750,
-        level: 'A',
-        recommendation: '建议通过'
-      }
+  await new Promise(resolve => setTimeout(resolve, 500))
+  return {
+    success: true,
+    modelId,
+    result: {
+      score: 750,
+      level: 'A',
+      recommendation: '建议通过'
     }
   }
-  const response = await axios.post('/api/dataModels/execute', { modelId, ...params })
-  return response.data
 }
 
 export default { getDataModelsList, executeDataModel }
