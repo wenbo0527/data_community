@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: metadata.task -->
   <div class="task-panel">
     <!-- 顶部说明 -->
     <a-alert type="info" :show-icon="false" class="task-tip">

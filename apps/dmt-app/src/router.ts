@@ -119,6 +119,18 @@ const childRoutes: RouteRecordRaw[] = [
     meta: { title: '元数据采集' }
   },
   {
+    path: 'asset-management/basic-management/metadata-collection/task-list',
+    name: 'MetadataCollectionList',
+    component: () => import('./pages/asset-management/basic-management/metadata-collection/List.vue'),
+    meta: { title: '采集任务列表' }
+  },
+  {
+    path: 'asset-management/basic-management/data-source',
+    name: 'DataSourceManagement',
+    component: () => import('./pages/asset-management/basic-management/data-source/index.vue'),
+    meta: { title: '数据源管理' }
+  },
+  {
     path: 'asset-management/listing-management/asset-management',
     name: 'AssetListingOverview',
     component: () => import('./pages/asset-management/listing-management/asset-management/sources.vue'),

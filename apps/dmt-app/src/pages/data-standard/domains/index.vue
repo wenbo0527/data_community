@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: data-standard.domains -->
   <div class="domains-page">
     <a-card class="general-card" title="数据域管理">
       <a-row style="margin-bottom: 16px">

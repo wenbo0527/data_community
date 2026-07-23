@@ -16,6 +16,7 @@ import { loadComponent } from '../utils/componentLoader'
 const RISK_EXTERNAL_ENABLED = (import.meta.env?.VITE_RISK_EXTERNAL === 'true')
 const RISK_EXTERNAL_BASE_URL = import.meta.env?.VITE_RISK_EXTERNAL_URL || 'http://127.0.0.1:5176'
 const TOUCH_EXTERNAL_URL = import.meta.env?.VITE_TOUCH_EXTERNAL_URL || 'http://127.0.0.1:5181/touch'
+const DMT_EXTERNAL_URL = import.meta.env?.VITE_DMT_EXTERNAL_URL || 'http://127.0.0.1:5184'
 
 const riskRoutes = RISK_EXTERNAL_ENABLED
   ? [
@@ -385,6 +386,21 @@ const router = createRouter({
         return false
       },
       meta: { title: '触达管理（独立）' }
+    },
+    {
+      path: '/dmt/:subPath(.*)*',
+      name: 'DmtStandalone',
+      beforeEnter: (to) => {
+        // dmt-app 子应用 base 是 '/dmt/'，主应用访问路径 /dmt/xxx 要拼上 base 前缀
+        const base = `${DMT_EXTERNAL_URL.replace(/\/$/, '')}/dmt`
+        const subParams = Array.isArray(to.params.subPath) ? to.params.subPath.join('/') : (to.params.subPath || '')
+        const sub = subParams ? `/${subParams}` : ''
+        const qs = new URLSearchParams(to.query || {}).toString()
+        const url = qs ? `${base}${sub}?${qs}` : `${base}${sub}`
+        window.location.href = url
+        return false
+      },
+      meta: { title: '数据管理（独立）' }
     },
     {
       path: '/discovery',

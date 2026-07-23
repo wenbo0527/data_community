@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: metadata-collection -->
   <div class="metadata-collection">
     <div class="page-header">
       <h2>元数据采集</h2>
@@ -10,6 +11,16 @@
         <a-button @click="resetForm">重置</a-button>
       </a-space>
     </div>
+    <a-alert
+      type="info"
+      :show-icon="false"
+      class="collection-tip"
+      style="margin: 8px 0 16px"
+    >
+      <template #title>采集任务 ↔ 数据资产上下架 联动</template>
+      点击「创建采集任务」并选择「运行」后，采集结果会自动登记到「数据资产/资源/要素」上下架台账。
+      上下架页面的「同步元数据」按钮也会在这里新建一条采集任务，状态实时双向同步。
+    </a-alert>
 
     <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
       <a-card title="任务与数据源">
@@ -193,7 +204,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
 import type { FormInstance } from '@arco-design/web-vue'
-import { createMetadataTask, getMetadataTaskDetail } from '@/api/metadata'
+import { createMetadataTask as createMetadataTaskApi, getMetadataTaskDetail } from '@/api/metadata'
+import { createMetadataTask, startMetadataTaskAsync } from '@/mock/metadata-bus'
 import { useRoute } from 'vue-router'
 
 type DataSourceType = 'Doris' | 'Hive' | 'Oracle'
@@ -303,8 +315,15 @@ const submitTask = async () => {
       lineage: { ...form.lineage },
       business: { ...form.business }
     }
-    await createMetadataTask(payload)
-    Message.success('采集任务已创建')
+    await createMetadataTaskApi(payload)
+    // 同时注册到 metadata-bus，让它出现在任务列表里，并自动开始运行（联动 listing）
+    const task = createMetadataTask({
+      taskName: form.taskName,
+      dataSourceType: form.dataSourceType,
+      assetType: form.assetType
+    })
+    startMetadataTaskAsync(task.id)
+    Message.success(`采集任务 ${task.id} 已创建，正在运行…`)
     resetForm()
   } catch (e: any) {
     Message.error(e?.message || '创建任务失败')

@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: accompany -->
   <div class="content">
     <a-steps :current="currentStep" class="steps-nav">
       <a-step v-for="step in steps" :key="step.key" :title="step.title" />

@@ -59,15 +59,15 @@
 
     <!-- 筛选区 -->
     <a-card class="filter-card">
-      <a-form layout="inline">
+      <a-form layout="inline" :model="filterForm">
         <a-form-item label="搜索">
-          <a-input v-model="searchKw" placeholder="按表名/注释搜索" allow-clear style="width: 240px" />
+          <a-input v-model="filterForm.searchKw" placeholder="按表名/注释搜索" allow-clear style="width: 240px" />
         </a-form-item>
         <a-form-item label="分级状态">
-          <a-select v-model="statusFilter" placeholder="全部" allow-clear style="width: 140px" @change="applyFilter">
+          <a-select v-model="filterForm.statusFilter" placeholder="全部" allow-clear style="width: 140px" @change="applyFilter">
             <a-option value="all">全部</a-option>
             <a-option value="done">已分级</a-option>
-            <a-option value="pending">待分级</a-option>
+            <a-option value="pending">未完成</a-option>
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -177,14 +177,20 @@ const avgCoverage = computed(() => {
   return Math.round((total / tables.value.length) * 10) / 10
 })
 
+const filterForm = reactive({
+  searchKw: '',
+  statusFilter: '' as '' | 'all' | 'done' | 'pending'
+})
 const searchKw = ref('')
 const statusFilter = ref<'all' | 'done' | 'pending' | ''>('')
 const filteredTables = computed(() => {
   return tables.value.filter(t => {
-    const matchKw = !searchKw.value || t.table_name.includes(searchKw.value) || t.table_comment.includes(searchKw.value)
-    const matchStatus = !statusFilter.value || statusFilter.value === 'all' ||
-      (statusFilter.value === 'done' && t.coverage === 100) ||
-      (statusFilter.value === 'pending' && t.coverage < 100)
+    const kw = filterForm.searchKw || searchKw.value
+    const sf = filterForm.statusFilter || statusFilter.value
+    const matchKw = !kw || t.table_name.includes(kw) || t.table_comment.includes(kw)
+    const matchStatus = !sf || sf === 'all' ||
+      (sf === 'done' && t.coverage === 100) ||
+      (sf === 'pending' && t.coverage < 100)
     return matchKw && matchStatus
   })
 })

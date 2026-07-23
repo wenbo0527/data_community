@@ -1,17 +1,18 @@
 <template>
+  <!-- @prd: asset-listing.resource.business-system -->
   <div class="resource-sources-page">
     <DmtPageHeader title="数据资源上下架" sub-title="按业务系统分组管理源表的上架与下架" />
 
     <!-- 统计卡 -->
     <a-row :gutter="16" class="stats-row">
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card>
           <a-statistic title="资源总数" :value="stats.totalAssets" :value-style="{ color: '#165DFF' }">
             <template #suffix><span style="font-size: 14px; color: #86909c">个</span></template>
           </a-statistic>
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card>
           <a-statistic title="已上架" :value="stats.onShelfCount" :value-style="{ color: '#00B42A' }">
             <template #suffix>
@@ -20,14 +21,9 @@
           </a-statistic>
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card>
           <a-statistic title="已下架" :value="stats.offShelfCount" :value-style="{ color: '#FF7D00' }" />
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card>
-          <a-statistic title="未激活 / 归档" :value="stats.archivedCount" :value-style="{ color: '#86909C' }" />
         </a-card>
       </a-col>
     </a-row>
@@ -60,11 +56,6 @@
                 <a-tag color="orange" size="small">{{ sys.offShelfCount }}</a-tag>
               </a-space>
             </a-descriptions-item>
-            <a-descriptions-item label="未激活 / 归档">
-              <a-space :size="4">
-                <a-tag color="gray" size="small">{{ sys.archivedCount }}</a-tag>
-              </a-space>
-            </a-descriptions-item>
             <a-descriptions-item label="说明">{{ sys.description }}</a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -89,7 +80,7 @@ const router = useRouter()
 interface AssetRecord {
   name: string
   systemId: AssetSystemId
-  status: 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
+  status: 'active' | 'onShelf' | 'offShelf'
 }
 
 const allAssets = computed<AssetRecord[]>(() => {
@@ -112,8 +103,7 @@ const stats = computed(() => {
   return {
     totalAssets: list.length,
     onShelfCount: list.filter(a => a.status === 'onShelf' || a.status === 'active').length,
-    offShelfCount: list.filter(a => a.status === 'offShelf').length,
-    archivedCount: list.filter(a => a.status === 'archived' || a.status === 'inactive').length
+    offShelfCount: list.filter(a => a.status === 'offShelf').length
   }
 })
 
@@ -125,8 +115,7 @@ const systemCards = computed(() => {
       ...sys,
       totalCount: list.length,
       onShelfCount: list.filter(a => a.status === 'onShelf' || a.status === 'active').length,
-      offShelfCount: list.filter(a => a.status === 'offShelf').length,
-      archivedCount: list.filter(a => a.status === 'archived' || a.status === 'inactive').length
+      offShelfCount: list.filter(a => a.status === 'offShelf').length
     }
   })
 })

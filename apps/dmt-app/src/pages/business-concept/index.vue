@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: business-concept -->
   <div class="business-concept-center">
     <a-tabs v-model:active-key="activeTab" type="card-gutter">
       <a-tab-pane key="domain" title="业务域管理">

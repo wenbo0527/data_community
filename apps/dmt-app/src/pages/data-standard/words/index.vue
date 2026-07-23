@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: data-standard -->
   <div class="words-page">
     <a-card class="general-card" title="标准单词管理">
       <a-row style="margin-bottom: 16px">

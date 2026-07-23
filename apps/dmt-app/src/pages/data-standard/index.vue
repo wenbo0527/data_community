@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: data-standard -->
   <div class="data-standard-page">
     <div class="page-header">
       <h1>数据标准</h1>

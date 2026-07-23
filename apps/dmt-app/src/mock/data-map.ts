@@ -10,7 +10,7 @@
  * 字段规范 (PM 派单 grep ≥5 实证):
  *   tableName / computeClusterTable / analysisClusterTable /
  *   category / owner / registerTime /
- *   status (active|onShelf|offShelf|inactive|archived) /
+ *   status (active|onShelf|offShelf) /
  *   onShelfTime / offShelfTime / publisher / description
  */
 
@@ -249,7 +249,7 @@ export const mockTables: MockTable[] = [
     clusterType: 'MySQL',
     owner: '王芳',
     registerTime: '2025-12-10 14:00:00',
-    status: 'archived',
+    status: 'offShelf',
     onShelfTime: '2025-12-15 10:00:00',
     offShelfTime: '2026-05-20 18:00:00',
     publisher: '王芳',
@@ -279,9 +279,9 @@ export const mockTables: MockTable[] = [
     clusterType: 'MySQL',
     owner: '刘洋',
     registerTime: '2026-07-01 12:00:00',
-    status: 'inactive',
+    status: 'offShelf',
     publisher: '刘洋',
-    description: '实验指标表（未激活）'
+    description: '实验指标表（已下架）'
   },
   {
     tableName: 't_credit_rule_config',

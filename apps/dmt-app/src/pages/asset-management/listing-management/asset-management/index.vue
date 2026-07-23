@@ -16,24 +16,19 @@
 
     <!-- 统计卡片 -->
     <a-row :gutter="16" class="stats-section">
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card title="资产总数" :bordered="false">
           <a-statistic :value="stats.total" :value-style="{ color: '#165DFF' }" />
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card title="已上架" :bordered="false">
           <a-statistic :value="stats.onShelf" :value-style="{ color: '#00B42A' }" />
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="8">
         <a-card title="已下架" :bordered="false">
           <a-statistic :value="stats.offShelf" :value-style="{ color: '#FF7D00' }" />
-        </a-card>
-      </a-col>
-      <a-col :span="6">
-        <a-card title="已归档 / 未激活" :bordered="false">
-          <a-statistic :value="stats.archived" :value-style="{ color: '#86909C' }" />
         </a-card>
       </a-col>
     </a-row>
@@ -61,8 +56,6 @@
           >
             <a-option value="onShelf">已上架</a-option>
             <a-option value="offShelf">已下架</a-option>
-            <a-option value="archived">已归档</a-option>
-            <a-option value="inactive">未激活</a-option>
             <a-option value="active">活跃</a-option>
           </a-select>
         </a-col>
@@ -242,7 +235,7 @@ import { mockTables } from '@/mock/data-map'
 import { listingStore } from '@/mock/listing-store'
 import { formatDateTime } from '@/utils/dateUtils'
 
-type ShelfStatus = 'active' | 'onShelf' | 'offShelf' | 'inactive' | 'archived'
+type ShelfStatus = 'active' | 'onShelf' | 'offShelf'
 type ClusterType = 'HIVE'
 type HiveClusterEnv = 'compute' | 'analysis'
 
@@ -267,16 +260,12 @@ interface AssetItem {
 const statusLabel: Record<ShelfStatus, string> = {
   active: '活跃',
   onShelf: '已上架',
-  offShelf: '已下架',
-  inactive: '未激活',
-  archived: '已归档'
+  offShelf: '已下架'
 }
 const statusColor: Record<ShelfStatus, string> = {
   active: 'green',
   onShelf: 'green',
-  offShelf: 'orange',
-  inactive: 'gray',
-  archived: 'gray'
+  offShelf: 'orange'
 }
 
 const router = useRouter()
@@ -369,8 +358,7 @@ const stats = computed(() => {
   return {
     total: list.length,
     onShelf: list.filter(a => a.status === 'onShelf' || a.status === 'active').length,
-    offShelf: list.filter(a => a.status === 'offShelf').length,
-    archived: list.filter(a => a.status === 'archived' || a.status === 'inactive').length
+    offShelf: list.filter(a => a.status === 'offShelf').length
   }
 })
 
@@ -485,8 +473,7 @@ const syncOne = (record: AssetItem) => {
 }
 
 // 操作判断
-const canOnShelf = (record: AssetItem) =>
-  record.status === 'offShelf' || record.status === 'archived' || record.status === 'inactive'
+const canOnShelf = (record: AssetItem) => record.status === 'offShelf'
 const canOffShelf = (record: AssetItem) =>
   record.status === 'onShelf' || record.status === 'active'
 
