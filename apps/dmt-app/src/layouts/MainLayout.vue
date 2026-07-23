@@ -67,8 +67,42 @@
           <a-tag>👤 {{ prdInfo.owner }}</a-tag>
           <a-tag>🕒 {{ prdInfo.updatedAt }}</a-tag>
           <a-tag class="prd-key-tag" v-if="prdInfoKey">{{ prdInfoKey }}</a-tag>
+          <a-tag v-if="prdIsOverridden" color="gold" size="small">📝 用户已修改</a-tag>
         </a-space>
       </div>
+
+      <!-- 模式状态提示 + 操作按钮（编辑入口只能通过「编辑此文档」按钮） -->
+      <div class="prd-toolbar">
+        <a-tag :color="prdEditMode === 'edit' ? 'arcoblue' : 'gray'" size="small">
+          {{ prdEditMode === 'edit' ? '✏️ 编辑模式' : '👁 查看模式' }}
+        </a-tag>
+        <a-space :size="6">
+          <a-button
+            v-if="prdEditMode === 'view' && prdInfoKey"
+            size="mini"
+            type="primary"
+            @click="enterEditDraft"
+          >编辑此文档</a-button>
+          <a-button
+            v-if="prdEditMode === 'edit'"
+            size="mini"
+            @click="cancelPrdEdit"
+          >返回查看</a-button>
+          <a-button
+            v-if="prdEditMode === 'edit' && isEditingDirty"
+            type="primary"
+            size="mini"
+            @click="commitPrdEdit"
+          >保存</a-button>
+          <a-button
+            v-if="prdIsOverridden && prdEditMode === 'view'"
+            size="mini"
+            status="warning"
+            @click="resetCurrentPrd"
+          >重置回内置</a-button>
+        </a-space>
+      </div>
+
       <!-- 多内容并列（如该 key 对应多份 PRD） -->
       <a-alert
         v-if="sameKeySiblings.length > 1"
@@ -84,8 +118,47 @@
           </a-tag>
         </a-space>
       </a-alert>
+
+      <!-- 内容：查看模式 / 编辑模式 -->
       <div class="prd-drawer-body">
-        <MarkdownLite :source="prdContent" />
+        <!-- 查看模式 -->
+        <div v-if="prdEditMode === 'view'" key="prd-view">
+          <MarkdownLite :source="prdContent" />
+        </div>
+        <!-- 编辑模式 -->
+        <div v-else key="prd-edit" class="prd-edit-form">
+          <a-form :model="prdDraft" layout="vertical">
+            <a-row :gutter="12">
+              <a-col :span="12">
+                <a-form-item label="负责人">
+                  <a-input v-model="prdDraft.owner" placeholder="负责人" allow-clear />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="更新日期">
+                  <a-input v-model="prdDraft.updatedAt" placeholder="YYYY-MM-DD" allow-clear />
+                </a-form-item>
+              </a-col>
+            </a-row>
+            <a-form-item label="状态">
+              <a-radio-group v-model="prdDraft.status" type="button">
+                <a-radio value="draft">草稿</a-radio>
+                <a-radio value="review">评审中</a-radio>
+                <a-radio value="released">已发布</a-radio>
+                <a-radio value="deprecated">已弃用</a-radio>
+              </a-radio-group>
+            </a-form-item>
+            <a-form-item label="内容（Markdown）">
+              <a-textarea
+                v-model="prdDraft.content"
+                :auto-size="{ minRows: 16, maxRows: 40 }"
+                placeholder="# 标题\n\n## 1. 背景\n..."
+                allow-clear
+                style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12.5px;"
+              />
+            </a-form-item>
+          </a-form>
+        </div>
       </div>
     </a-drawer>
   </a-layout>
@@ -100,9 +173,14 @@ import {
   getPrdForRoute,
   getPrdTitle,
   getPrdKeyForRoute,
-  listAllPrds
+  listAllPrds,
+  getEffectivePrdForRoute,
+  savePrdOverride,
+  resetPrdOverride,
+  isPrdOverridden,
+  resetAllPrdOverrides
 } from '@/prd-content'
-import type { PrdInfo } from '@/prd-content'
+import type { PrdInfo, PrdKey } from '@/prd-content'
 
 const router = useRouter()
 const route = useRoute()
@@ -262,8 +340,88 @@ const prdDrawerVisible = ref(false)
 const prdContent = ref('')
 const prdDrawerTitle = ref('产品说明')
 const prdInfo = ref<PrdInfo | null>(null)
-const prdInfoKey = ref('')
+const prdInfoKey = ref<PrdKey | ''>('')
+const prdIsOverridden = ref(false)
 const sameKeySiblings = ref<Array<{ key: string; title: string; level: string }>>([])
+
+// 编辑模式
+type PrdEditMode = 'view' | 'edit'
+const prdEditMode = ref<PrdEditMode>('view')
+const prdDraft = ref<PrdInfo>({
+  id: '',
+  level: 'L1',
+  owner: '',
+  updatedAt: '',
+  status: 'draft',
+  content: ''
+})
+const isEditingDirty = ref(false)
+
+// 编辑方法
+const enterEditDraft = () => {
+  if (!prdInfo.value) return
+  prdDraft.value = {
+    id: prdInfo.value.id,
+    level: prdInfo.value.level,
+    owner: prdInfo.value.owner,
+    updatedAt: prdInfo.value.updatedAt,
+    status: prdInfo.value.status,
+    content: prdInfo.value.content
+  }
+  isEditingDirty.value = true
+  prdEditMode.value = 'edit'
+}
+
+const commitPrdEdit = () => {
+  if (!prdInfoKey.value) return
+  // 同步 updatedAt 为今天
+  const today = new Date().toISOString().slice(0, 10)
+  prdDraft.value.updatedAt = today
+  savePrdOverride(prdInfoKey.value as PrdKey, { ...prdDraft.value })
+  // 刷新本地视图
+  const effective = getEffectivePrdForRoute(route.path)
+  prdInfo.value = effective.info
+  prdContent.value = effective.info.content
+  prdIsOverridden.value = effective.isOverridden
+  prdDrawerTitle.value = getPrdTitle(effective.info.content)
+  isEditingDirty.value = false
+  // eslint-disable-next-line no-console
+  console.log(`[PRD] 已保存覆盖: ${prdInfoKey.value}`)
+}
+
+const cancelPrdEdit = () => {
+  // 重置 dirty 状态、清除草稿、切回查看视图
+  isEditingDirty.value = false
+  prdDraft.value = {
+    id: '',
+    level: 'L1',
+    owner: '',
+    updatedAt: '',
+    status: 'draft',
+    content: ''
+  }
+  prdEditMode.value = 'view'
+}
+
+const resetCurrentPrd = () => {
+  if (!prdInfoKey.value) return
+  resetPrdOverride(prdInfoKey.value as PrdKey)
+  const effective = getEffectivePrdForRoute(route.path)
+  prdInfo.value = effective.info
+  prdContent.value = effective.info.content
+  prdIsOverridden.value = effective.isOverridden
+  prdDrawerTitle.value = getPrdTitle(effective.info.content)
+  isEditingDirty.value = false
+  prdEditMode.value = 'view'
+  // eslint-disable-next-line no-console
+  console.log(`[PRD] 已重置回内置: ${prdInfoKey.value}`)
+}
+
+// 路由切换时关闭编辑
+watch(() => route.path, () => {
+  prdEditMode.value = 'view'
+  isEditingDirty.value = false
+})
 
 // PRD 元信息渲染配置
 const levelTagColor: Record<string, string> = {
@@ -299,14 +457,15 @@ const openPrdDrawer = () => {
 }
 
 const refreshPrd = (path: string) => {
-  const info = getPrdForRoute(path)
-  prdInfo.value = info
-  prdInfoKey.value = getPrdKeyForRoute(path)
-  prdContent.value = info.content
-  prdDrawerTitle.value = getPrdTitle(info.content)
+  const effective = getEffectivePrdForRoute(path)
+  prdInfo.value = effective.info
+  prdInfoKey.value = effective.key
+  prdIsOverridden.value = effective.isOverridden
+  prdContent.value = effective.info.content
+  prdDrawerTitle.value = getPrdTitle(effective.info.content)
   // 同 key 关联的兄弟页：列出所有与当前相同 key 的页面信息（实际是同 key 的多个 alias）
   sameKeySiblings.value = listAllPrds()
-    .filter((x: any) => x.key === prdInfoKey.value || x.level === info.level)
+    .filter((x: any) => x.key === prdInfoKey.value || x.level === effective.info.level)
     .map((x: any) => ({ key: x.key, title: x.title, level: x.level }))
 }
 
@@ -391,6 +550,25 @@ watch(() => route.path, (path) => {
 
 .prd-siblings {
   font-size: 12px;
+}
+
+.prd-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 6px 10px;
+  background: #fafbfc;
+  border-radius: 4px;
+}
+
+.prd-edit-form {
+  padding: 4px 0;
+}
+
+.prd-edit-form .arco-textarea {
+  line-height: 1.6;
 }
 
 .main-content {

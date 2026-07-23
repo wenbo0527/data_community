@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: service -->
   <div class="detail-data-query-container">
     <!-- 页面头部 -->
     <DetailHeader title="明细数据查询服务" :backEnabled="true">

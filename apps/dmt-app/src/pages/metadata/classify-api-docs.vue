@@ -1,5 +1,5 @@
 <template>
-  <!-- @prd: classify -->
+  <!-- @prd: classify-api-docs -->
   <div class="classify-api-docs-page">
     <DmtPageHeader title="分级分类 API 文档" :sub-title="`对外提供分级分类标签查询接口（Demo 模式，仅展示）· 共 ${apis.length} 个接口`" />
 

@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: user-groups -->
   <div class="user-groups-page">
     <!-- 页面头部 -->
     <div class="page-header">

@@ -1,4 +1,5 @@
 <template>
+  <!-- @prd: service.api -->
   <div class="api-wizard-container">
     <!-- 顶部状态栏 -->
     <div class="api-header">
