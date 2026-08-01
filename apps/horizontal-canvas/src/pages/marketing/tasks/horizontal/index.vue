@@ -31,6 +31,9 @@
         <a-tooltip v-if="publishReady === false" :content="(publishMessages || []).join('\n') || '发布校验未通过'">
           <a-tag color="red">校验未通过</a-tag>
         </a-tooltip>
+        <a-tooltip v-if="isDirty && !isViewMode" content="画布有未保存修改，请及时保存或发布">
+          <a-tag color="orange">● 未保存</a-tag>
+        </a-tooltip>
       </div>
     </div>
     <div class="header-right">
@@ -125,6 +128,12 @@
       </div>
       
       <div ref="canvasContainerRef" class="canvas-container" :class="{ 'is-panning': isPanning }" :style="{ visibility: initializing ? 'hidden' : 'visible' }">
+        <!-- 空白画布引导：点击打开节点选择器 -->
+        <div v-if="isEmptyCanvas && !isViewMode" class="empty-canvas-hint" @click="openEmptyCanvasSelector">
+          <div class="empty-canvas-hint__title">开始构建营销任务流</div>
+          <div class="empty-canvas-hint__desc">点击此处添加第一个业务节点，或从左侧选择节点类型</div>
+          <a-button type="primary" size="large">添加节点</a-button>
+        </div>
         <!-- 预览图容器 -->
         <div 
           v-if="showMinimap" 
@@ -283,6 +292,7 @@ const isNameEditing = ref(false)
 const approvalStatus = ref(null)
 const publishReady = ref(false)
 const publishMessages = ref([])
+const isDirty = ref(false) // 画布数据自上次保存/发布以来是否已变更
 
 const { user: currentUser } = useCurrentUser()
 
@@ -310,6 +320,16 @@ const versionOptions = computed(() => {
 })
 const isPublished = computed(() => taskStatus.value === 'published' || taskStatus.value === 'running')
 const initializing = ref(((route.query.mode === 'edit') || (route.query.mode === 'view')) && !!route.query.id)
+
+// 画布是否"空白"（仅开始节点或无节点）→ 用于显示引导占位线
+const isEmptyCanvas = computed(() => {
+  try {
+    if (!graph || initializing.value) return false
+    const nodes = graph.getNodes?.() || []
+    if (!nodes.length) return true
+    return nodes.every(n => { try { const d = n.getData?.() || {}; return d.type === 'start' || d.nodeType === 'start' } catch { return false } })
+  } catch { return false }
+})
 
 // 统计面板激活态：仅在有焦点节点时预留空间与展示
 const statsFocusNodeId = ref('')
@@ -1085,6 +1105,17 @@ onMounted(async () => {
     }
   })
 
+  // 画布数据变更标记（用于顶部"未保存"提示）
+  const markDirty = () => { if (!isLoadingTask.value) isDirty.value = true }
+  graph.on('node:added', markDirty)
+  graph.on('node:removed', markDirty)
+  graph.on('node:change:position', markDirty)
+  graph.on('node:change:size', markDirty)
+  graph.on('edge:added', markDirty)
+  graph.on('edge:removed', markDirty)
+  graph.on('edge:change:target', markDirty)
+  graph.on('edge:change:source', markDirty)
+
   // 实例化菜单组合式（仅做状态/事件绑定；具体操作函数依赖延迟到 configDrawers/deleteNodeCascade 之后绑定）
   const {
     nodeActionsMenu, edgeActionsMenu, portActionsMenu,
@@ -1469,12 +1500,14 @@ function ensureStartNode() {
   if (isViewMode.value) return null
   // 高级节点：展开为触达节点 + 事件分流节点（含一条连线与历史入栈）
   if (nodeType && TOUCH_COMBOS[nodeType]) {
-    const inserted = insertTouchComboNodes(nodeType)
+    const createdIds = insertTouchComboNodes(nodeType)
+    if (Array.isArray(createdIds) && createdIds.length) highlightNodes(createdIds)
     try { closeNodeSelector() } catch {}
     pendingInsertionEdge = null
-    return inserted
+    return createdIds
   }
   const node = insertNodeAndFinalize(graph, nodeType, pendingCreatePoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode)
+  if (node && node.id) highlightNodes([node.id])
   try { closeNodeSelector() } catch {}
   pendingInsertionEdge = null
   return node
@@ -1612,8 +1645,8 @@ function insertTouchComboNodes(comboType) {
   try { graph.cleanSelection && graph.cleanSelection() } catch {}
   try { useCanvasHistory && useCanvasHistory(graph) && useCanvasHistory.recordCommand && useCanvasHistory.recordCommand('add-combo') } catch {}
 
-  // 持久化：沿用 collectCanvasData + saveTask 流程；不直接写 TaskStorage（由画布保存按钮统一写入）
-  return splitNode
+  // 返回创建的节点 id 列表，供调用方做高亮提示
+  return [outreachId, splitId]
 }
 
 function closeNodeSelector() { 
@@ -1658,6 +1691,7 @@ function handleConfigCancelProxy({ drawerType }) {
 async function updateNodeFromConfigUnified(node, nodeType, config) {
   try {
     updateNodeUnifiedSvc(graph, node, nodeType, config)
+    isDirty.value = true
   } catch (e) {
     console.error('[Horizontal] updateNodeFromConfigUnified 失败:', e)
   }
@@ -1724,6 +1758,7 @@ try {
 async function loadTaskData() {
   if (isLoadingTask.value) return
   isLoadingTask.value = true
+  isDirty.value = false
   try {
     const taskId = route.query.id
     const taskVersionParam = route.query.version || 1
@@ -2312,7 +2347,9 @@ function onCanvasDrop(e) {
     if (TOUCH_COMBOS[nodeType]) {
       pendingCreatePoint = { x: local.x, y: local.y }
       pendingInsertionEdge = null
-      insertTouchComboNodes(nodeType)
+      const createdIds = insertTouchComboNodes(nodeType)
+      if (createdIds && createdIds.length) highlightNodes(createdIds)
+      else Message.warning('高级组合节点创建失败，请重试')
       return
     }
     const x = local.x
@@ -2321,7 +2358,7 @@ function onCanvasDrop(e) {
     const fourOutTypes = ['crowd-split', 'event-split', 'ab-test']
     const outCount = fourOutTypes.includes(nodeType) ? 4 : 1
     const newNodeId = `${nodeType}-${Date.now()}`
-    graph.addNode(createVueShapeNode({
+    const created = graph.addNode(createVueShapeNode({
       id: newNodeId,
       x,
       y,
@@ -2329,13 +2366,47 @@ function onCanvasDrop(e) {
       outCount,
       data: { type: nodeType, nodeType: nodeType, isConfigured: false }
     }))
+    if (created) highlightNodes([created.id])
   } catch (e) {
+    Message.error('拖放创建节点失败，请重试')
     console.warn('[Horizontal] 拖放创建节点失败:', e)
   }
 }
 
+/**
+ * 高亮画布上的一组节点（脉冲动画），1.5s 后自动结束
+ * 入参：nodeIds: string[]
+ * 副作用：仅修改 DOM class；不持久化、不影响画布数据
+ */
+function highlightNodes(nodeIds = []) {
+  try {
+    if (!Array.isArray(nodeIds) || !nodeIds.length) return
+    const stage = document.querySelector('.canvas-container')
+    if (!stage) return
+    nodeIds.forEach(id => {
+      const el = stage.querySelector?.(`[data-node-id="${id}"]`)
+      if (el) {
+        el.classList.add('focus-pulse')
+        setTimeout(() => { try { el.classList.remove('focus-pulse') } catch {} }, 1500)
+      }
+    })
+  } catch {}
+}
+
 // 缩放比例显示
 // 由 useCanvasState 提供 scaleDisplayText
+
+// 空白画布引导点击：从画布中心打开节点类型选择器
+function openEmptyCanvasSelector() {
+  try {
+    if (isViewMode.value) return
+    const rect = canvasContainerRef.value?.getBoundingClientRect?.() || { width: 800, height: 600, left: 0, top: 0 }
+    pendingCreatePoint = { x: 320, y: 200 }
+    nodeSelectorPosition.value = { x: Math.round(rect.width / 2 - 160), y: Math.round(rect.height / 2 - 220) }
+    nodeSelectorSourceNode.value = null
+    showNodeSelector.value = true
+  } catch {}
+}
 
 // 工具栏功能方法
 const handleZoomIn = () => {
@@ -2595,6 +2666,7 @@ const saveTask = async () => {
     if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...saveMeta, canvasData }); Message.success('已保存为草稿，可继续编辑') }
     else { saved = saveTaskSvc(saveMeta, canvasData); if (!saved || !saved.id) { Message.error('保存失败：未生成任务ID，请稍后重试'); return } Message.success('已保存为草稿，可继续编辑'); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
     taskStatus.value = 'draft'
+    isDirty.value = false
     return saved
   } catch (e) { Message.error(`保存失败: ${e.message || '未知错误'}`) }
 }
@@ -2614,6 +2686,7 @@ const publishTask = async () => {
     if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...publishMeta, canvasData }); Message.success(`已发布当前版本（v${versionToUse}），可在任务列表查看`) }
     else { saved = publishTaskSvc(publishMeta, canvasData); if (!saved || !saved.id) { Message.error('发布失败：未生成任务ID，请稍后重试'); return } Message.success(`已发布当前版本（v${versionToUse}），可在任务列表查看`); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
     taskStatus.value = 'published'
+    isDirty.value = false
     return saved
   } catch (e) { Message.error(`发布失败: ${e.message || '未知错误'}`) }
 }
@@ -2771,6 +2844,16 @@ const testClick = () => {
 }
 
 /* 移除基础信息卡片相关样式 */
+.empty-canvas-hint {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; pointer-events: auto;
+  background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.04) 0%, rgba(99, 102, 241, 0) 70%);
+  cursor: pointer;
+}
+.empty-canvas-hint__title { font-size: 22px; font-weight: 600; color: #1f2937; }
+.empty-canvas-hint__desc { font-size: 14px; color: #64748b; margin-bottom: 6px; }
+.empty-canvas-hint:hover .empty-canvas-hint__title { color: #4f46e5; }
 
 .canvas-container {
   width: 100%!important;
