@@ -103,7 +103,6 @@ const registry: MicroAppRegistry = {
       icon: 'icon-app',
       order: 15,
       children: [
-        { key: 'dfd-customer360', label: '客户360', path: '/dfd/customer360' },
         { key: 'dfd-credit', label: '征信', path: '/dfd/credit' },
         { key: 'dfd-metrics-map', label: '指标地图', path: '/dfd/metrics-map' },
         { key: 'dfd-api-market', label: 'API市场', path: '/dfd/api-market' },

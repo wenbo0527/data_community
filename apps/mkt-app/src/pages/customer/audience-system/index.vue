@@ -24,7 +24,7 @@ const router = useRouter()
 
 // 跳转到人群管理页面
 const goToAudienceManagement = () => {
-  router.push('/exploration/customer-center/audience-system/audience-management')
+  router.push('/marketing/exploration/customer-center/audience-system/audience-management')
 }
 </script>
 

@@ -205,7 +205,7 @@ const handlePageChange = (page) => {
 
 // 表注册
 const handleTableRegistration = () => {
-  router.push('/exploration/customer-center/tag-system/table-registration')
+  router.push('/customer/tag-system/table-registration')
 }
 
 // 查看详情
@@ -216,7 +216,7 @@ const handleViewDetails = (record) => {
 
 const handleEdit = (record) => {
   router.push({
-    path: '/exploration/customer-center/tag-system/table-registration',
+    path: '/customer/tag-system/table-registration',
     query: { tableId: record.id, mode: 'edit' }
   })
 }

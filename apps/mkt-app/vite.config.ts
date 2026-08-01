@@ -39,9 +39,9 @@ export default defineConfig(async () => {
 
   return {
     plugins,
-    server: { 
-      host: '0.0.0.0', 
-      port: 5177, 
+    server: {
+      host: '0.0.0.0',
+      port: 5177,
       strictPort: true,
       hmr: false,
     },

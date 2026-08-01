@@ -41,7 +41,7 @@ onMounted(async () => {
         eventData.value = target
       } else {
         Message.error('未找到该虚拟事件')
-        router.push('/customer/virtual-events')
+        router.push('/customer/event-center/virtual-events')
       }
     }
   } catch (error) {
@@ -56,7 +56,7 @@ const handleSubmit = async (formData) => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
     Message.success(isEdit.value ? '更新成功' : '创建成功')
-    router.push('/customer/virtual-events')
+    router.push('/customer/event-center/virtual-events')
   } catch (error) {
     Message.error('操作失败')
   }

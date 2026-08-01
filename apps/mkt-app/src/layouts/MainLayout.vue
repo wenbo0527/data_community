@@ -156,9 +156,9 @@ const customerMenus = [
     { key: '/customer', title: '客群首页' },
   ]},
   { key: 'customer-group-audience', title: '人群管理', children: [
-    { key: '/exploration/customer-center/audience-system/audience-management', title: '人群列表' },
-    { key: '/exploration/customer-center/audience-system/audience-create', title: '人群圈选' },
-    { key: '/exploration/customer-center/audience-system/audience-detail', title: '客户画像' },
+    { key: '/marketing/exploration/customer-center/audience-system/audience-management', title: '人群列表' },
+    { key: '/marketing/exploration/customer-center/audience-system/audience-create', title: '人群圈选' },
+    { key: '/marketing/exploration/customer-center/audience-system/audience-detail', title: '客户画像' },
   ]},
   { key: 'customer-group-event', title: '事件中心', children: [
     { key: '/customer/event-center',         title: '事件首页' },

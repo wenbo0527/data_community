@@ -149,6 +149,43 @@ export const marketingRoutes: RouteRecordRaw[] = [
         name: 'HorizontalCanvas',
         component: () => import('@/pages/canvas/index.vue'),
         meta: { title: '横向画布' }
+      },
+      // exploration 探索域路由（放在 marketing 父级下，统一 /marketing/... 前缀）
+      {
+        path: 'exploration',
+        name: 'Exploration',
+        meta: { title: '探索域' },
+        redirect: { name: 'AudienceManagement' }
+      },
+      {
+        path: 'exploration/customer-center',
+        name: 'ExplorationCustomerCenter',
+        meta: { title: '客户中心' },
+        redirect: { name: 'AudienceManagement' }
+      },
+      {
+        path: 'exploration/customer-center/audience-system',
+        name: 'ExplorationAudienceSystem',
+        meta: { title: '人群系统' },
+        redirect: { name: 'AudienceManagement' }
+      },
+      {
+        path: 'exploration/customer-center/audience-system/audience-management',
+        name: 'AudienceManagement',
+        component: () => import('@/pages/customer/audience-system/audience-management.vue'),
+        meta: { title: '人群管理' }
+      },
+      {
+        path: 'exploration/customer-center/audience-system/audience-create',
+        name: 'AudienceCreate',
+        component: () => import('@/pages/customer/audience-system/audience-create.vue'),
+        meta: { title: '创建人群' }
+      },
+      {
+        path: 'exploration/customer-center/audience-system/audience-detail',
+        name: 'AudienceDetail',
+        component: () => import('@/pages/customer/audience-system/audience-detail.vue'),
+        meta: { title: '人群详情' }
       }
     ]
   },
@@ -165,41 +202,4 @@ export const marketingRoutes: RouteRecordRaw[] = [
         meta: { title: '规则配置' }
       }
     ]
-  },
-  // exploration 探索域路由
-  {
-    path: 'exploration',
-    name: 'Exploration',
-    meta: { title: '探索域' },
-    redirect: '/marketing/exploration/customer-center/audience-system/audience-management'
-  },
-  {
-    path: 'exploration/customer-center',
-    name: 'ExplorationCustomerCenter',
-    meta: { title: '客户中心' },
-    redirect: '/marketing/exploration/customer-center/audience-system/audience-management'
-  },
-  {
-    path: 'exploration/customer-center/audience-system',
-    name: 'ExplorationAudienceSystem',
-    meta: { title: '人群系统' },
-    redirect: '/marketing/exploration/customer-center/audience-system/audience-management'
-  },
-  {
-    path: 'exploration/customer-center/audience-system/audience-management',
-    name: 'AudienceManagement',
-    component: () => import('@/pages/customer/audience-system/audience-management.vue'),
-    meta: { title: '人群管理' }
-  },
-  {
-    path: 'exploration/customer-center/audience-system/audience-create',
-    name: 'AudienceCreate',
-    component: () => import('@/pages/customer/audience-system/audience-create.vue'),
-    meta: { title: '创建人群' }
-  },
-  {
-    path: 'exploration/customer-center/audience-system/audience-detail',
-    name: 'AudienceDetail',
-    component: () => import('@/pages/customer/audience-system/audience-detail.vue'),
-    meta: { title: '人群详情' }
   }]

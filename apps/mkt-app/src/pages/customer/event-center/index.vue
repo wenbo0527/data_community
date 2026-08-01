@@ -498,7 +498,7 @@ const getEventTypeColor = (type) => {
 
 // 事件处理函数
 const handleQuickCreate = () => {
-  router.push('/customer/event-management')
+  router.push('/customer/event-center/event-management')
 }
 
 const handleRefresh = () => {
@@ -520,11 +520,10 @@ const handleExportType = () => {
 }
 
 const handleViewAllEvents = () => {
-  router.push('/customer/event-management')
+  router.push('/customer/event-center/event-management')
 }
 
 const handleTestEvent = (event) => {
-  // 跳转到样本统计页面 (TASK-20260714-FCA1BD2D 修复: 路径对齐 router/modules/customer.ts L57 'customer/sample-stats')
   router.push({
     path: '/customer/sample-stats',
     query: { eventId: event.id, eventName: event.eventName }

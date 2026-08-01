@@ -41,7 +41,12 @@
 
       <!-- 快捷操作栏 -->
       <div class="quick-actions">
-        <HistoryQueryButton :user-id="userId" />
+        <HistoryQueryButton :user-info="userInfo" />
+        <a-tooltip content="字段权限配置（PM 配置后台）">
+          <a-button type="text" size="small" @click="openFieldConfigDrawer">
+            <template #icon><IconSettings /></template>
+          </a-button>
+        </a-tooltip>
         <a-tooltip content="查看征信">
           <a-button type="text" size="small" @click="handleViewCredit">
             <template #icon><IconSafe /></template>
@@ -60,6 +65,18 @@
           </a-button>
         </a-tooltip>
       </div>
+
+      <!-- 字段权限配置抽屉（PRD §F-004） -->
+      <a-drawer
+        v-model:visible="fieldConfigVisible"
+        title="字段权限配置（PM 配置后台）"
+        width="700"
+        :footer="false"
+        placement="right"
+        unmount-on-close
+      >
+        <FieldPermissionConfig />
+      </a-drawer>
     </div>
 
     <!-- 数据不一致警告 -->
@@ -102,43 +119,76 @@
 
     <!-- 主要内容 -->
     <div v-else-if="userInfo && !userInfo.error" class="content">
-        
-        <!-- 主要内容区域 - 新的两级Tab架构 -->
-        <div class="main-content">
-          <MainTabs
-          :user-info="userInfo"
-          :products="userOwnedProducts"
-          :credit-info="creditData"
-          :collection-records="collectionRecords"
-          :loading="loading"
-          :show-debug-panel="showDebugPanel"
-          @main-tab-change="handleMainTabChange"
-          @module-change="handleModuleChange"
-        />
-        </div>
-      </div>
 
-      <!-- 错误状态 -->
-      <div v-else-if="!loading && (userInfo?.error || !userInfo)" class="error-container">
-        <a-result 
-          :status="userInfo?.error ? '404' : '500'" 
-          :title="userInfo?.error ? userInfo.errorMessage : '未找到用户信息'"
-        >
-          <template #subtitle>
-            <div v-if="userInfo?.error">
-              错误类型: {{ userInfo.errorType }}<br>
-              用户ID: {{ userInfo.userId }}<br>
-              请检查用户ID是否正确，或联系系统管理员
-            </div>
-            <div v-else>
-              请检查用户ID是否正确，或联系系统管理员
+      <div class="main-layout">
+        <!-- 左侧菜单（合并客户级 Tab + 产品可展开） -->
+        <LeftNavMenu
+          v-model="navSelection"
+          :products="userOwnedProducts"
+          :loan-records="userInfo?.loanRecords || []"
+        />
+
+        <!-- 右侧内容区 -->
+        <main class="content-pane">
+          <!-- 客户级 Tab：客户概览 -->
+          <template v-if="navSelection.type === 'top' && navSelection.topKey === 'all-around'">
+            <CustomerProfile :user-info="userInfo" />
+          </template>
+
+          <!-- 客户级 Tab：贷后管理 -->
+          <template v-else-if="navSelection.type === 'top' && navSelection.topKey === 'postloan'">
+            <div class="data-zone offline-zone">
+              <div class="zone-header">
+                <div class="zone-title">
+                  <IconBarChart />
+                  <span>贷后综合分析</span>
+                  <span class="update-time">数据更新于 T-1</span>
+                </div>
+              </div>
+              <PostLoanProfile :user-info="userInfo" :collection-records="collectionRecords" />
             </div>
           </template>
-          <template #extra>
-            <a-button type="primary" @click="goBack">返回搜索</a-button>
+
+          <!-- 客户级 Tab：征信 -->
+          <template v-else-if="navSelection.type === 'top' && navSelection.topKey === 'credit'">
+            <div class="data-zone offline-zone credit-zone">
+              <CreditReportList
+                :reports="userInfo?.creditReports || []"
+                @view-detail="handleViewCreditDetail"
+                @compare="handleCompareReports"
+              />
+            </div>
           </template>
-        </a-result>
+
+          <!-- 产品 Tab：产品名选中（未选授信产品ID） -->
+          <template v-else-if="navSelection.type === 'product-name'">
+            <div class="content-placeholder">
+              <a-empty description="请在左侧选择具体的授信产品ID 查看详情" />
+            </div>
+          </template>
+
+          <!-- 产品 Tab：授信产品ID 选中 -->
+          <template v-else-if="navSelection.type === 'credit-id'">
+            <InfoModuleTabs
+              :product-key="navSelection.productKey"
+              :product-data="currentSelectedProduct"
+              :user-info="userInfo"
+              :loading="loading"
+              :show-debug-panel="showDebugPanel"
+              :credit-product-id="navSelection.creditProductId"
+              @module-change="handleModuleChange"
+            />
+          </template>
+
+          <!-- 默认占位 -->
+          <template v-else>
+            <div class="content-placeholder">
+              <a-empty description="请在左侧选择模块" />
+            </div>
+          </template>
+        </main>
       </div>
+    </div>
   </div>
 </template>
 
@@ -147,14 +197,29 @@
 // 在页面标题中添加标识
 document.title = '🔥 Customer360 Detail - ' + new Date().toLocaleTimeString()
 
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconUserGroup, IconSafe, IconStorage, IconStar } from '@arco-design/web-vue/es/icon'
+import {
+  IconUserGroup,
+  IconSafe,
+  IconStorage,
+  IconStar,
+  IconDashboard,
+  IconBarChart,
+  IconIdcard,
+  IconSettings
+} from '@arco-design/web-vue/es/icon'
 // 删除了不再需要的图标导入
 import { fetchUserInfo } from '../../mock/customer360'
 import { formatAmount, formatPercent } from '../../utils/formatUtils'
-import MainTabs from './components/MainTabs.vue'
+import LeftNavMenu from './components/LeftNavMenu.vue'
+import InfoModuleTabs from './components/InfoModuleTabs.vue'
+import CustomerProfile from './components/CustomerProfile.vue'
+import PostLoanProfile from './components/profile/PostLoanProfile.vue'
+import CreditReportList from './components/CreditReportList.vue'
+import HistoryQueryButton from './components/HistoryQueryButton.vue'
+import FieldPermissionConfig from './components/FieldPermissionConfig.vue'
 
 // 基础响应式变量
 const route = useRoute()
@@ -167,7 +232,27 @@ const activeInfoTab = ref('basic') // 默认显示基本信息Tab
 const selectedProduct = ref(null)
 const isFavorite = ref(false)
 const detailExpanded = ref(false)
+// v3.3: 字段权限配置抽屉
+const fieldConfigVisible = ref(false)
+const openFieldConfigDrawer = () => {
+  fieldConfigVisible.value = true
+}
 // 移除了selectedProductType，不再使用产品类型切换
+
+// 左侧菜单选中状态（统一管理）
+type NavSelection =
+  | { type: 'top'; topKey: 'all-around' | 'postloan' | 'credit' }
+  | { type: 'product-name'; productName: string }
+  | { type: 'credit-id'; productName: string; creditProductId: string; productKey: string }
+  | { type: 'none' }
+
+const navSelection = ref<NavSelection>({ type: 'top', topKey: 'all-around' })
+
+// 当前选中的产品（基于 navSelection 计算）
+const currentSelectedProduct = computed(() => {
+  if (navSelection.value.type !== 'credit-id') {return undefined}
+  return userOwnedProducts.value.find(p => p.productKey === navSelection.value.productKey)
+})
 
 // 移除了调试系统相关的状态变量
 
@@ -180,10 +265,10 @@ const detailExpanded = ref(false)
 // 用户拥有的产品数据（所有产品都是信贷产品）
 const userOwnedProducts = computed(() => {
   if (!userInfo.value || userInfo.value.error) {return []}
-  
+
   const products = []
   const userProducts = userInfo.value.products || []
-  
+
   // 所有产品都是信贷产品
   userProducts.forEach(product => {
     products.push({
@@ -192,9 +277,12 @@ const userOwnedProducts = computed(() => {
       type: 'loan'
     })
   })
-  
+
   return products
 })
+
+// 三列布局：主 Tab / 产品侧栏 / 内容区（依赖 userOwnedProducts，必须在它之后）
+// 已由 navSelection / currentSelectedProduct（上方定义）接管
 
 // 产品选项（已简化，不再区分自营和助贷）
 const productOptions = ref([
@@ -221,12 +309,10 @@ const collectionRecords = computed(() => {
   return userInfo.value.collectionRecords || []
 })
 
-// 处理主Tab切换
-const handleMainTabChange = (tabKey) => {
-}
-
 // 处理模块切换
-const handleModuleChange = (moduleKey) => {
+const handleModuleChange = (moduleKey: string) => {
+  // 占位：保留事件桥接，具体实现可后续接入分析埋点
+  console.debug('[customer360] module change:', moduleKey)
 }
 
 const getStatusColor = (status) => {
@@ -250,6 +336,27 @@ const handleViewLoans = () => {
 const handleToggleFavorite = () => {
   isFavorite.value = !isFavorite.value
   Message.success(isFavorite.value ? '已收藏客户' : '已取消收藏')
+}
+
+// 产品状态颜色（用于产品详情头部）
+const getProductStatusColor = (status?: string) => {
+  const colorMap: Record<string, string> = {
+    '正常': 'green',
+    '正常使用': 'green',
+    '逾期': 'red',
+    '结清': 'blue',
+    '关闭': 'gray',
+    '冻结': 'orange'
+  }
+  return colorMap[status || ''] || 'default'
+}
+
+// 征信模块事件处理
+const handleViewCreditDetail = (report: any) => {
+  Message.info(`查看征信报告 ${report.id || ''}`)
+}
+const handleCompareReports = (reports: any[]) => {
+  Message.info(`对比 ${reports.length} 份征信报告`)
 }
 
 // 数据完整性检查（只检查信贷产品）
@@ -1099,20 +1206,120 @@ onUnmounted(() => {
   .customer-info-tabs .arco-tabs-nav {
     padding: 0 8px;
   }
-  
+
   .tab-content {
     padding: 16px;
   }
-  
+
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .header-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+}
+
+/* ====== 主区域：左侧菜单 + 右侧内容区 ====== */
+.main-layout {
+  background: #fff;
+  border-radius: 8px;
+  margin: 0 20px 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: calc(100vh - 320px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.content-pane {
+  flex: 1;
+  overflow-y: auto;
+  background: #fff;
+  padding: 16px 20px;
+  min-width: 0;
+}
+
+.content-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+}
+
+.product-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.product-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--subapp-text-primary);
+}
+
+.product-detail-title .arco-icon {
+  color: var(--subapp-info);
+}
+
+.product-detail-meta {
+  font-size: 13px;
+  color: var(--subapp-text-secondary);
+}
+
+.data-zone {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.zone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--subapp-bg-secondary);
+  flex-shrink: 0;
+}
+
+.zone-title {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--subapp-text-primary);
+}
+
+.zone-title .arco-icon {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.update-time {
+  font-size: 12px;
+  color: var(--subapp-text-tertiary);
+  font-weight: normal;
+  margin-left: 12px;
+}
+
+@media (max-width: 1200px) {
+  .main-layout {
+    min-height: auto;
+    flex-direction: column;
   }
 }
 </style>

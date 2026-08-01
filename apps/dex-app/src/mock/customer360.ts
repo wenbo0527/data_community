@@ -537,8 +537,13 @@ export const mockUsers: Record<string, any> = {
         thirdPartyCustomerId: 'EXT-887123-LON001',
         loanDate: '2024-03-15',
         channel: 'APP',
-        productName: '个人信用贷款',
+        productName: '全资',
         productKey: 'CREDIT_SELF_001',
+        creditProductId: 'GRX0001',
+        // v3.3: 绑定授信申请 ID 与用信产品
+        creditApplicationId: 'CA-2024-001',
+        loanProductId: 'LP-GRX0001-001',
+        loanProductName: '个人信用贷款-借款1',
         result: '成功',
         rejectReason: null,
         contractNo: 'CON-2024-001-CS001',
@@ -562,8 +567,13 @@ export const mockUsers: Record<string, any> = {
         thirdPartyCustomerId: 'EXT-887123-LON002',
         loanDate: '2024-09-01',
         channel: 'APP',
-        productName: '消费分期',
+        productName: '全资',
         productKey: 'CREDIT_SELF_002',
+        creditProductId: 'XFFQ0001',
+        // v3.3: 绑定授信申请 ID 与用信产品
+        creditApplicationId: 'CA-2024-002',
+        loanProductId: 'LP-XFFQ0001-001',
+        loanProductName: '消费分期-借款1',
         result: '成功',
         rejectReason: null,
         contractNo: 'CON-2024-009-CS002',
@@ -587,8 +597,13 @@ export const mockUsers: Record<string, any> = {
         thirdPartyCustomerId: 'EXT-887123-LON003',
         loanDate: '2026-01-25',
         channel: 'APP',
-        productName: 'Su贷',
+        productName: '联合贷',
         productKey: 'LN-2024-009',
+        creditProductId: 'BYD0001',
+        // v3.3: 绑定授信申请 ID 与用信产品
+        creditApplicationId: 'CA-2024-003',
+        loanProductId: 'LP-BYD0001-001',
+        loanProductName: '联合贷极速版-借款1',
         result: '成功',
         rejectReason: null,
         contractNo: 'CON-2026-025-LN009',
@@ -605,12 +620,257 @@ export const mockUsers: Record<string, any> = {
         remainingPenalty: 0,
         remainingTotal: 200400,
         interestRate: 3.9
+      },
+      {
+        // BYD0001 下的第二笔用信（同授信产品 ID 下挂多笔）
+        id: 'LON003B',
+        loanNo: 'LN20260410003B',
+        thirdPartyCustomerId: 'EXT-887123-LON003B',
+        loanDate: '2026-04-10',
+        channel: 'APP',
+        productName: '联合贷',
+        productKey: 'LN-2024-009',
+        creditProductId: 'BYD0001',
+        // v3.3: 同一授信申请 ID 下挂第二个用信产品
+        creditApplicationId: 'CA-2024-003',
+        loanProductId: 'LP-BYD0001-002',
+        loanProductName: '联合贷极速版-借款2',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-410-LN009',
+        status: '正常',
+        amount: 30000,
+        balance: 28000,
+        installments: 6,
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: null,
+        currentPeriod: 2,
+        remainingPrincipal: 28000,
+        remainingInterest: 1200,
+        remainingPenalty: 0,
+        remainingTotal: 29200,
+        interestRate: 3.9
+      },
+      {
+        id: 'LON004',
+        loanNo: 'LN20260520004',
+        thirdPartyCustomerId: 'EXT-887123-LON004',
+        loanDate: '2026-05-20',
+        channel: 'APP',
+        productName: '联合贷',
+        productKey: 'LN-2024-010',
+        creditProductId: 'BYD0002',
+        // v3.3: 绑定授信申请 ID 与用信产品
+        creditApplicationId: 'CA-2024-004',
+        loanProductId: 'LP-BYD0002-001',
+        loanProductName: '联合贷标准版-借款1',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-520-LN009',
+        status: '正常',
+        amount: 50000,
+        balance: 50000,
+        installments: 6,
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: null,
+        currentPeriod: 1,
+        remainingPrincipal: 50000,
+        remainingInterest: 1500,
+        remainingPenalty: 0,
+        remainingTotal: 51500,
+        interestRate: 3.6
+      },
+      // ===== Su贷借款记录（对应 realTimeData.loanList 6 笔） =====
+      // CA-2026-001 (SUJS0001) 下 3 笔用信（极速版）
+      {
+        id: 'LON101',
+        loanNo: 'LN20260110001',
+        thirdPartyCustomerId: 'EXT-887123-LON101',
+        loanDate: '2026-01-10',
+        channel: 'APP',
+        productName: 'Su贷-极速版',
+        productKey: 'SU-2026-001',
+        creditProductId: 'SUJS0001',
+        // v3.3: 绑定授信申请 ID 与用信产品
+        creditApplicationId: 'CA-2026-001',
+        loanProductId: 'LP-SUJS0001-001',
+        loanProductName: 'Su贷极速版-借款1',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-001-SUJS-01',
+        status: '正常',
+        amount: 80000,
+        balance: 45000,
+        installments: 12,
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: null,
+        currentPeriod: 5,
+        remainingPrincipal: 45000,
+        remainingInterest: 1800,
+        remainingPenalty: 0,
+        remainingTotal: 46800,
+        interestRate: 7.2
+      },
+      {
+        id: 'LON102',
+        loanNo: 'LN20260315002',
+        thirdPartyCustomerId: 'EXT-887123-LON102',
+        loanDate: '2026-03-15',
+        channel: 'APP',
+        productName: 'Su贷-极速版',
+        productKey: 'SU-2026-001',
+        creditProductId: 'SUJS0001',
+        // v3.3: 同授信申请 ID 下挂第二个用信产品
+        creditApplicationId: 'CA-2026-001',
+        loanProductId: 'LP-SUJS0001-002',
+        loanProductName: 'Su贷极速版-借款2',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-002-SUJS-02',
+        status: '正常',
+        amount: 20000,
+        balance: 8500,
+        installments: 6,
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: null,
+        currentPeriod: 3,
+        remainingPrincipal: 8500,
+        remainingInterest: 320,
+        remainingPenalty: 0,
+        remainingTotal: 8820,
+        interestRate: 7.2
+      },
+      {
+        id: 'LON103',
+        loanNo: 'LN20260110003',
+        thirdPartyCustomerId: 'EXT-887123-LON103',
+        loanDate: '2026-01-10',
+        channel: 'APP',
+        productName: 'Su贷-极速版',
+        productKey: 'SU-2026-001',
+        creditProductId: 'SUJS0001',
+        // v3.3: 同授信申请 ID 下挂第三个用信产品（逾期）
+        creditApplicationId: 'CA-2026-001',
+        loanProductId: 'LP-SUJS0001-003',
+        loanProductName: 'Su贷极速版-借款3（逾期）',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-003-SUJS-03',
+        status: '逾期',
+        amount: 80000,
+        balance: 32000,
+        installments: 24,
+        overdueDays: 28,
+        maxOverdueDays: 28,
+        settlementDate: null,
+        currentPeriod: 6,
+        remainingPrincipal: 32000,
+        remainingInterest: 1100,
+        remainingPenalty: 480,
+        remainingTotal: 33580,
+        interestRate: 8.9
+      },
+      // CA-2026-002 (SUBZ0001) 下 3 笔用信（标准版）
+      {
+        id: 'LON201',
+        loanNo: 'LN20260415001',
+        thirdPartyCustomerId: 'EXT-887123-LON201',
+        loanDate: '2026-04-15',
+        channel: 'APP',
+        productName: 'Su贷-标准版',
+        productKey: 'SU-2026-002',
+        creditProductId: 'SUBZ0001',
+        // v3.3: 标准版授信申请
+        creditApplicationId: 'CA-2026-002',
+        loanProductId: 'LP-SUBZ0001-001',
+        loanProductName: 'Su贷标准版-借款1',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-001-SUBZ-01',
+        status: '正常',
+        amount: 30000,
+        balance: 0,
+        installments: 12,
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: '2026-05-20',
+        currentPeriod: 12,
+        remainingPrincipal: 0,
+        remainingInterest: 0,
+        remainingPenalty: 0,
+        remainingTotal: 0,
+        interestRate: 8.9
+      },
+      {
+        id: 'LON202',
+        loanNo: 'LN20251205002',
+        thirdPartyCustomerId: 'EXT-887123-LON202',
+        loanDate: '2025-12-05',
+        channel: 'APP',
+        productName: 'Su贷-标准版',
+        productKey: 'SU-2026-002',
+        creditProductId: 'SUBZ0001',
+        // v3.3: 同授信申请 ID 下挂第二个用信产品（结清）
+        creditApplicationId: 'CA-2026-002',
+        loanProductId: 'LP-SUBZ0001-002',
+        loanProductName: 'Su贷标准版-借款2（结清）',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-002-SUBZ-02',
+        status: '结清',
+        amount: 50000,
+        balance: 0,
+        installments: 12,
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: '2026-04-20',
+        currentPeriod: 12,
+        remainingPrincipal: 0,
+        remainingInterest: 0,
+        remainingPenalty: 0,
+        remainingTotal: 0,
+        interestRate: 8.9
+      },
+      {
+        id: 'LON203',
+        loanNo: 'LN20260228003',
+        thirdPartyCustomerId: 'EXT-887123-LON203',
+        loanDate: '2026-02-28',
+        channel: 'APP',
+        productName: 'Su贷-标准版',
+        productKey: 'SU-2026-002',
+        creditProductId: 'SUBZ0001',
+        // v3.3: 同授信申请 ID 下挂第三个用信产品（结清）
+        creditApplicationId: 'CA-2026-002',
+        loanProductId: 'LP-SUBZ0001-003',
+        loanProductName: 'Su贷标准版-借款3（结清）',
+        result: '成功',
+        rejectReason: null,
+        contractNo: 'CON-2026-003-SUBZ-03',
+        status: '结清',
+        amount: 15000,
+        balance: 0,
+        installments: 6,
+        overdueDays: 0,
+        maxOverdueDays: 0,
+        settlementDate: '2026-04-15',
+        currentPeriod: 6,
+        remainingPrincipal: 0,
+        remainingInterest: 0,
+        remainingPenalty: 0,
+        remainingTotal: 0,
+        interestRate: 8.9
       }
     ],
     products: [
+      // 产品名 = 全资（自有资金产品）
       {
         productKey: 'CREDIT_SELF_001',
-        productName: '个人信用贷款',
+        productName: '全资',
         productCode: 'P004',
         productType: 'self',
         bank: '中国银行',
@@ -621,11 +881,12 @@ export const mockUsers: Record<string, any> = {
         status: '正常使用',
         creditTime: '2023-04-20',
         creditStatus: '正常',
-        thirdPartyLoanId: 'IOU-CREDIT-SELF-001'
+        thirdPartyLoanId: 'IOU-CREDIT-SELF-001',
+        creditProductId: 'GRX0001'
       },
       {
         productKey: 'CREDIT_SELF_002',
-        productName: '消费分期',
+        productName: '全资',
         productCode: 'P005',
         productType: 'self',
         bank: '交通银行',
@@ -636,11 +897,13 @@ export const mockUsers: Record<string, any> = {
         status: '正常使用',
         creditTime: '2024-09-01',
         creditStatus: '正常',
-        thirdPartyLoanId: 'IOU-CREDIT-SELF-002'
+        thirdPartyLoanId: 'IOU-CREDIT-SELF-002',
+        creditProductId: 'XFFQ0001'
       },
+      // 产品名 = 联合贷（与合作方联合出资）
       {
         productKey: 'LN-2024-009',
-        productName: 'Su贷',
+        productName: '联合贷',
         productCode: 'P001',
         productType: 'loan',
         amount: 2e5,
@@ -648,7 +911,196 @@ export const mockUsers: Record<string, any> = {
         startDate: '2024-01-15',
         creditTime: '2026-05-25',
         creditStatus: '正常',
-        thirdPartyLoanId: 'IOU-LN-2024-009'
+        thirdPartyLoanId: 'IOU-LN-2024-009',
+        creditProductId: 'BYD0001'
+      },
+      {
+        productKey: 'LN-2024-010',
+        productName: '联合贷',
+        productCode: 'P001',
+        productType: 'loan',
+        amount: 100000,
+        rate: 4.1,
+        startDate: '2025-03-10',
+        creditTime: '2026-05-20',
+        creditStatus: '正常',
+        thirdPartyLoanId: 'IOU-LN-2024-010',
+        creditProductId: 'BYD0002'
+      },
+      // ===== Su贷产品（线上极速贷款 · 自营） =====
+      {
+        productKey: 'SU-2026-001',
+        productName: 'Su贷-极速版',
+        productCode: 'P010',
+        productType: 'sudai',
+        amount: 250000,
+        balance: 85500,
+        rate: 7.2,
+        interestRate: '7.20%',
+        startDate: '2026-01-10',
+        creditTime: '2026-01-10',
+        creditStatus: '正常',
+        thirdPartyLoanId: 'IOU-SU-2026-001',
+        creditProductId: 'SUJS0001',
+        bank: 'XX银行（自营）',
+        maturityDate: '2027-01-10'
+      },
+      {
+        productKey: 'SU-2026-002',
+        productName: 'Su贷-标准版',
+        productCode: 'P011',
+        productType: 'sudai',
+        amount: 80000,
+        balance: 0,
+        rate: 8.9,
+        interestRate: '8.90%',
+        startDate: '2026-04-15',
+        creditTime: '2026-04-15',
+        creditStatus: '正常',
+        thirdPartyLoanId: 'IOU-SU-2026-002',
+        creditProductId: 'SUBZ0001',
+        bank: 'XX银行（自营）',
+        maturityDate: '2027-04-15'
+      }
+    ],
+    // ===== v3.3: CreditApplication + LoanProduct（Neo4j 节点扩展） =====
+    // 授信申请：授信产品下的"授信申请 ID"，是授信产品与用信产品的桥梁
+    creditApplications: [
+      // GRX0001（个人信用贷款/全资）下 1 个授信申请 CA-2024-001，下挂 1 个用信产品
+      {
+        creditApplicationId: 'CA-2024-001',
+        creditProductId: 'GRX0001',
+        appliedAt: '2024-03-15T10:20:00Z',
+        approvedBy: '风控组 · 张三',
+        status: '生效'
+      },
+      // XFFQ0001（消费分期/全资）下 1 个授信申请 CA-2024-002，下挂 1 个用信产品
+      {
+        creditApplicationId: 'CA-2024-002',
+        creditProductId: 'XFFQ0001',
+        appliedAt: '2024-09-01T14:30:00Z',
+        approvedBy: '风控组 · 李四',
+        status: '生效'
+      },
+      // BYD0001（联合贷·极速版）下 1 个授信申请 CA-2024-003，下挂 2 个用信产品
+      {
+        creditApplicationId: 'CA-2024-003',
+        creditProductId: 'BYD0001',
+        appliedAt: '2024-01-15T09:00:00Z',
+        approvedBy: '风控组 · 王五',
+        status: '生效'
+      },
+      // BYD0002（联合贷·标准版）下 1 个授信申请 CA-2024-004，下挂 1 个用信产品
+      {
+        creditApplicationId: 'CA-2024-004',
+        creditProductId: 'BYD0002',
+        appliedAt: '2025-03-10T11:15:00Z',
+        approvedBy: '风控组 · 赵六',
+        status: '生效'
+      },
+      // ===== Su贷授信申请 =====
+      // SUJS0001（Su贷-极速版）下 1 个授信申请 CA-2026-001，下挂 3 个用信产品
+      {
+        creditApplicationId: 'CA-2026-001',
+        creditProductId: 'SUJS0001',
+        appliedAt: '2026-01-10T10:20:00Z',
+        approvedBy: '系统自动审批',
+        status: '生效'
+      },
+      // SUBZ0001（Su贷-标准版）下 1 个授信申请 CA-2026-002，下挂 3 个用信产品
+      {
+        creditApplicationId: 'CA-2026-002',
+        creditProductId: 'SUBZ0001',
+        appliedAt: '2026-04-15T14:30:00Z',
+        approvedBy: '系统自动审批',
+        status: '生效'
+      }
+    ],
+    // 用信产品：用信申请 ID 下挂的实际用信产品（如 花呗1-借款1、花呗1-借款2）
+    loanProducts: [
+      // CA-2024-001 (GRX0001) 下挂 1 个用信产品
+      {
+        loanProductId: 'LP-GRX0001-001',
+        loanProductName: '个人信用贷款-借款1',
+        creditProductId: 'GRX0001',
+        creditApplicationId: 'CA-2024-001',
+        createdAt: '2024-03-20T09:30:00Z'
+      },
+      // CA-2024-002 (XFFQ0001) 下挂 1 个用信产品
+      {
+        loanProductId: 'LP-XFFQ0001-001',
+        loanProductName: '消费分期-借款1',
+        creditProductId: 'XFFQ0001',
+        creditApplicationId: 'CA-2024-002',
+        createdAt: '2024-09-05T10:00:00Z'
+      },
+      // CA-2024-003 (BYD0001) 下挂 2 个用信产品
+      {
+        loanProductId: 'LP-BYD0001-001',
+        loanProductName: '联合贷极速版-借款1',
+        creditProductId: 'BYD0001',
+        creditApplicationId: 'CA-2024-003',
+        createdAt: '2024-01-20T10:00:00Z'
+      },
+      {
+        loanProductId: 'LP-BYD0001-002',
+        loanProductName: '联合贷极速版-借款2',
+        creditProductId: 'BYD0001',
+        creditApplicationId: 'CA-2024-003',
+        createdAt: '2024-04-15T11:00:00Z'
+      },
+      // CA-2024-004 (BYD0002) 下挂 1 个用信产品
+      {
+        loanProductId: 'LP-BYD0002-001',
+        loanProductName: '联合贷标准版-借款1',
+        creditProductId: 'BYD0002',
+        creditApplicationId: 'CA-2024-004',
+        createdAt: '2025-03-15T10:00:00Z'
+      },
+      // ===== Su贷用信产品 =====
+      // CA-2026-001 (SUJS0001) 下挂 3 个用信产品（极速版多笔用信）
+      {
+        loanProductId: 'LP-SUJS0001-001',
+        loanProductName: 'Su贷极速版-借款1',
+        creditProductId: 'SUJS0001',
+        creditApplicationId: 'CA-2026-001',
+        createdAt: '2026-01-15T10:00:00Z'
+      },
+      {
+        loanProductId: 'LP-SUJS0001-002',
+        loanProductName: 'Su贷极速版-借款2',
+        creditProductId: 'SUJS0001',
+        creditApplicationId: 'CA-2026-001',
+        createdAt: '2026-03-20T11:00:00Z'
+      },
+      {
+        loanProductId: 'LP-SUJS0001-003',
+        loanProductName: 'Su贷极速版-借款3（逾期）',
+        creditProductId: 'SUJS0001',
+        creditApplicationId: 'CA-2026-001',
+        createdAt: '2026-01-15T14:00:00Z'
+      },
+      // CA-2026-002 (SUBZ0001) 下挂 3 个用信产品
+      {
+        loanProductId: 'LP-SUBZ0001-001',
+        loanProductName: 'Su贷标准版-借款1',
+        creditProductId: 'SUBZ0001',
+        creditApplicationId: 'CA-2026-002',
+        createdAt: '2026-04-20T10:00:00Z'
+      },
+      {
+        loanProductId: 'LP-SUBZ0001-002',
+        loanProductName: 'Su贷标准版-借款2（结清）',
+        creditProductId: 'SUBZ0001',
+        creditApplicationId: 'CA-2026-002',
+        createdAt: '2025-12-10T10:00:00Z'
+      },
+      {
+        loanProductId: 'LP-SUBZ0001-003',
+        loanProductName: 'Su贷标准版-借款3（结清）',
+        creditProductId: 'SUBZ0001',
+        creditApplicationId: 'CA-2026-002',
+        createdAt: '2026-02-28T10:00:00Z'
       }
     ],
     currentOverdueDays: 0,
@@ -833,7 +1285,8 @@ export const mockUsers: Record<string, any> = {
         startDate: '2025-03-10',
         creditTime: '2026-05-15',
         creditStatus: '正常',
-        thirdPartyLoanId: 'IOU-LN-2025-007'
+        thirdPartyLoanId: 'IOU-LN-2025-007',
+        creditProductId: 'BYD0003'
       },
       {
         productKey: 'LN-2025-012',
@@ -845,7 +1298,8 @@ export const mockUsers: Record<string, any> = {
         startDate: '2025-06-20',
         creditTime: '2026-05-20',
         creditStatus: '正常',
-        thirdPartyLoanId: 'IOU-LN-2025-012'
+        thirdPartyLoanId: 'IOU-LN-2025-012',
+        creditProductId: 'MYJB0001'
       }
     ]
   }

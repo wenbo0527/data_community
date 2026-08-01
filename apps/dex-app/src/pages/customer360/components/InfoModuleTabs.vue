@@ -36,7 +36,7 @@
         
         <a-tab-pane key="business" title="业务核心明细">
           <div class="module-content">
-            <BusinessCoreDetails 
+            <BusinessCoreDetails
               :product-key="productKey"
               :business-data="businessData"
               :user-info="userInfo"
@@ -44,7 +44,7 @@
             />
           </div>
         </a-tab-pane>
-        
+
         <!-- 实时业务数据 Tab (仅针对 Su贷 产品) -->
         <a-tab-pane key="realtime" title="实时业务数据" v-if="isSudaiProduct">
           <div class="module-content realtime-tab-content">
@@ -66,7 +66,7 @@
         
         <a-tab-pane key="touch-records" title="触达记录" v-if="isSudaiProduct">
           <div class="module-content">
-            <TouchRecords 
+            <TouchRecords
               :product-key="productKey"
               :marketing-data="marketingData"
               :user-info="userInfo"
@@ -77,20 +77,9 @@
 
         <a-tab-pane key="benefit-records" title="权益记录" v-if="isSudaiProduct">
           <div class="module-content">
-            <BenefitRecords 
+            <BenefitRecords
               :product-key="productKey"
               :marketing-data="marketingData"
-              :user-info="userInfo"
-              :loading="loading"
-            />
-          </div>
-        </a-tab-pane>
-        
-        <a-tab-pane key="product" title="产品信息">
-          <div class="module-content">
-            <ProductInfo 
-              :product-key="productKey"
-              :product-data="productData"
               :user-info="userInfo"
               :loading="loading"
             />
@@ -146,7 +135,6 @@ import CustomerOverview from './CustomerOverview.vue'
 import BusinessCoreDetails from './BusinessCoreDetails.vue'
 import TouchRecords from './TouchRecords.vue'
 import BenefitRecords from './BenefitRecords.vue'
-import ProductInfo from './ProductInfo.vue'
 import RealTimeData from './RealTimeData.vue'
 
 
@@ -157,6 +145,7 @@ interface Props {
   loading?: boolean
   defaultModule?: string
   showDebugPanel?: boolean
+  creditProductId?: string
 }
 
 interface Emits {
@@ -166,7 +155,8 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   defaultModule: 'overview',
-  showDebugPanel: false
+  showDebugPanel: false,
+  creditProductId: ''
 })
 
 const emit = defineEmits<Emits>()
@@ -179,23 +169,32 @@ const currentProductName = computed(() => {
   return props.productData?.productName || '未知产品'
 })
 
+// 过滤辅助函数：优先按 creditProductId，回退按 productKey
+const filterByCreditProduct = (list: any[]) => {
+  if (!list) {return []}
+  if (props.creditProductId) {
+    return list.filter((item: any) => item.creditProductId === props.creditProductId)
+  }
+  return list.filter((item: any) => item.productKey === props.productKey)
+}
+
 const businessData = computed(() => {
   if (!props.userInfo || !props.productKey) {return {}}
-  
+
   return {
-    creditList: props.userInfo.creditsList?.filter((item: any) => 
-      item.productKey === props.productKey
-    ) || [],
-    loanList: props.userInfo.loanRecords?.filter((item: any) => 
-      item.productKey === props.productKey
-    ) || [],
-    adjustmentHistory: props.userInfo.quotaAdjustHistory?.filter((item: any) => 
-      item.productKey === props.productKey
-    ) || [],
+    creditList: filterByCreditProduct(props.userInfo.creditsList) || [],
+    loanList: filterByCreditProduct(props.userInfo.loanRecords) || [],
+    adjustmentHistory: filterByCreditProduct(props.userInfo.quotaAdjustHistory) || [],
     paymentProcess: props.userInfo.paymentProcessRecords || {}
   }
 })
 
+// 用户拥有的产品（用于 LoanList 中展示分组的产品名）
+const userOwnedProducts = computed(() => {
+  return props.userInfo?.products || []
+})
+
+// marketingData：用于触达/权益记录（Su贷产品专属）
 const marketingData = computed(() => {
   if (!props.userInfo || !props.productKey) {return {}}
   
@@ -350,6 +349,23 @@ const submitFeedback = () => {
 .module-content {
   padding: 16px;
   min-height: 300px;
+}
+
+.loan-list-header {
+  padding: 8px 0 16px;
+  border-bottom: 1px dashed #f0f0f0;
+  margin-bottom: 12px;
+}
+.loan-list-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--subapp-text-secondary);
+}
+.loan-list-icon {
+  color: var(--subapp-info);
+  font-size: 14px;
 }
 
 @keyframes pulse {

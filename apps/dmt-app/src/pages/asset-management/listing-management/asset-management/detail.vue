@@ -349,45 +349,73 @@
                 <div v-show="usageExpanded.fields" class="usage-collapse-body">
                   <div class="usage-fields-toolbar">
                     <a-radio-group v-model="fieldViewMode" type="button" size="small">
-                      <a-radio-button value="desc">字段说明</a-radio-button>
+                      <a-radio-button value="desc">字段说明（V1 vs V2）</a-radio-button>
                       <a-radio-button value="compare">变更对比</a-radio-button>
+                      <a-radio-button value="diff">V1 vs V2 全量对比</a-radio-button>
                     </a-radio-group>
-                    <a-select
-                      v-if="fieldViewMode === 'compare'"
-                      v-model="compareVersionPair"
-                      size="small"
-                      style="width: 200px"
-                      :trigger-props="{ autoFitPopupMinWidth: true }"
-                    >
-                      <a-option v-for="opt in compareVersionOptions" :key="opt.value" :value="opt.value">
-                        {{ opt.label }}
-                      </a-option>
-                    </a-select>
+                    <!-- 版本下拉已合并到表格列头里 -->
+                    <div v-if="fieldViewMode === 'diff'" class="diff-stats-summary">
+                      <a-tag color="green" size="small">+{{ diffStats.added }} 新增</a-tag>
+                      <a-tag color="red" size="small">-{{ diffStats.removed }} 删除</a-tag>
+                      <a-tag color="blue" size="small">{{ diffStats.modified }} 修改</a-tag>
+                      <a-tag color="gray" size="small">{{ diffStats.unchanged }} 未变</a-tag>
+                    </div>
                   </div>
 
-                  <!-- 模式 1：字段说明（按当前选中版本展示） -->
+                  <!-- 模式 1：字段说明（默认对比最新两版：字段名 / 版本1 / 版本2） -->
                   <template v-if="fieldViewMode === 'desc'">
-                    <div class="usage-fields-compare-header">
-                      当前查看版本：<a-tag color="arcoblue" size="small">{{ activeFieldVersion }}</a-tag>
-                    </div>
                     <a-table
-                      :data="fieldDescRowsByVersion"
+                      v-if="mergedFieldDiff.length"
+                      :data="mergedFieldDiff"
+                      :columns="descTableColumns"
                       :pagination="false"
-                      :bordered="false"
+                      :bordered="true"
+                      row-key="key"
                       size="small"
+                      class="diff-table"
+                      :row-class="(record: any) => `diff-row diff-row-${(record as DiffFieldRow).status}`"
                     >
-                      <template #columns>
-                        <a-table-column title="字段名" data-index="name" :width="160" />
-                        <a-table-column title="类型" data-index="type" :width="160" />
-                        <a-table-column title="说明" data-index="description" />
+                      <template #versionA-header>
+                        <div class="diff-col-header">
+                          <span class="diff-col-version-label">版本1</span>
+                          <a-select
+                            v-model="compareVersionA"
+                            size="small"
+                            class="diff-col-version-select"
+                            @change="handleVersionAChange"
+                          >
+                            <a-option v-for="v in fieldVersions" :key="v" :value="v">
+                              {{ v }}
+                            </a-option>
+                          </a-select>
+                        </div>
+                      </template>
+                      <template #versionB-header>
+                        <div class="diff-col-header">
+                          <span class="diff-col-version-label">版本2</span>
+                          <a-select
+                            v-model="compareVersionB"
+                            size="small"
+                            class="diff-col-version-select"
+                          >
+                            <a-option
+                              v-for="v in fieldVersions.filter(v => v !== compareVersionA)"
+                              :key="v"
+                              :value="v"
+                            >
+                              {{ v }}
+                            </a-option>
+                          </a-select>
+                        </div>
                       </template>
                     </a-table>
+                    <a-empty v-else description="暂无字段可展示" />
                   </template>
 
                   <!-- 模式 2：变更对比 -->
-                  <template v-else>
+                  <template v-else-if="fieldViewMode === 'compare'">
                     <div class="usage-fields-compare-header">
-                      版本：
+                      对比版本：
                       <a-tag color="arcoblue" size="small">{{ currentComparePair.newer }}</a-tag>
                       <span style="margin: 0 6px; color: #86909c">vs</span>
                       <a-tag color="gray" size="small">{{ currentComparePair.older }}</a-tag>
@@ -395,40 +423,88 @@
                     <a-table
                       v-if="fieldChangeRows.length"
                       :data="fieldChangeRows"
+                      :columns="compareTableColumns"
                       :pagination="false"
                       :bordered="false"
                       row-key="name"
                       size="small"
                     >
-                      <template #columns>
-                        <a-table-column title="字段名" data-index="name" :width="160" />
-                        <a-table-column title="旧版本值" :width="200">
-                          <template #cell="{ record }">
-                            <span class="usage-old-value">{{ (record as FieldChangeRow).oldValue || '（不存在）' }}</span>
-                          </template>
-                        </a-table-column>
-                        <a-table-column title="新版本值" :width="200">
-                          <template #cell="{ record }">
-                            <span class="usage-new-value">{{ (record as FieldChangeRow).newValue || '（不存在）' }}</span>
-                          </template>
-                        </a-table-column>
-                        <a-table-column title="变更" :width="100">
-                          <template #cell="{ record }">
-                            <a-tag :color="changeTypeColor[(record as FieldChangeRow).changeType]" size="small">
-                              {{ changeTypeLabel[(record as FieldChangeRow).changeType] }}
-                            </a-tag>
-                          </template>
-                        </a-table-column>
+                      <template #compareOld-header>
+                        <div class="diff-col-header">
+                          <span class="diff-col-version-label">旧版本</span>
+                          <a-select
+                            v-model="compareVersionA"
+                            size="small"
+                            class="diff-col-version-select"
+                            @change="handleVersionAChange"
+                          >
+                            <a-option v-for="v in fieldVersions" :key="v" :value="v">
+                              {{ v }}
+                            </a-option>
+                          </a-select>
+                        </div>
+                      </template>
+                      <template #compareNew-header>
+                        <div class="diff-col-header">
+                          <span class="diff-col-version-label">新版本</span>
+                          <a-select
+                            v-model="compareVersionB"
+                            size="small"
+                            class="diff-col-version-select"
+                          >
+                            <a-option
+                              v-for="v in fieldVersions.filter(v => v !== compareVersionA)"
+                              :key="v"
+                              :value="v"
+                            >
+                              {{ v }}
+                            </a-option>
+                          </a-select>
+                        </div>
                       </template>
                     </a-table>
                     <a-empty v-else description="暂无字段变更记录" />
                   </template>
 
-                  <div style="margin-top: 12px; text-align: right">
-                    <a-button type="primary" size="small" @click="openChangeLogDrawer">
-                      查看完整字段变更日志
-                    </a-button>
-                  </div>
+                  <!-- 模式 3：V1 vs V2 全量对比 (diff 视图) -->
+                  <template v-else-if="fieldViewMode === 'diff'">
+                    <div class="diff-vs-header">
+                      <div class="diff-version-tag diff-version-left">
+                        <span class="diff-arrow">⇐</span>
+                        <a-tag color="gray" size="small">{{ currentComparePair.older }}（V1 / 旧版本）</a-tag>
+                      </div>
+                      <div class="diff-version-tag diff-version-right">
+                        <a-tag color="arcoblue" size="small">{{ currentComparePair.newer }}（V2 / 新版本）</a-tag>
+                        <span class="diff-arrow">⇒</span>
+                      </div>
+                    </div>
+
+                    <a-table
+                      v-if="mergedFieldDiff.length"
+                      :data="mergedFieldDiff"
+                      :columns="diffTableColumns"
+                      :pagination="false"
+                      :bordered="true"
+                      row-key="key"
+                      size="small"
+                      class="diff-table"
+                      :row-class="(record: any) => `diff-row diff-row-${(record as DiffFieldRow).status}`"
+                    >
+                      <template #diffV1-header>
+                        <div class="diff-col-header">
+                          <span class="diff-col-version">V1</span>
+                          <span class="diff-col-label">{{ currentComparePair.older }}</span>
+                        </div>
+                      </template>
+                      <template #diffV2-header>
+                        <div class="diff-col-header">
+                          <span class="diff-col-version diff-col-version-new">V2</span>
+                          <span class="diff-col-label">{{ currentComparePair.newer }}</span>
+                        </div>
+                      </template>
+                    </a-table>
+                    <a-empty v-else description="暂无字段可对比" />
+                  </template>
                 </div>
               </div>
             </div>
@@ -514,20 +590,138 @@
 
           <!-- 版本信息 -->
           <a-tab-pane key="versions" title="版本信息">
-            <a-table
-              :data="versions"
-              :pagination="false"
-              :bordered="false"
-            >
-              <template #columns>
-                <a-table-column title="版本号" data-index="version" :width="120" />
-                <a-table-column title="变更时间" data-index="createTime" :width="200">
-                  <template #cell="{ record }">{{ formatDateTime(record.createTime) }}</template>
-                </a-table-column>
-                <a-table-column title="变更人" data-index="creator" :width="140" />
-                <a-table-column title="变更说明" data-index="changeDescription" />
-              </template>
-            </a-table>
+            <div class="version-detail-page">
+              <a-table
+                :data="versions"
+                :pagination="false"
+                :bordered="false"
+                row-key="version"
+                :expanded-row-keys="expandedVersionKeys"
+                class="version-detail-table"
+              >
+                <template #columns>
+                  <a-table-column title="版本号" data-index="version" :width="120">
+                    <template #cell="{ record }">
+                      <a-link @click="toggleVersionExpand((record as VersionItem).version)">
+                        <span class="version-toggle">
+                          {{ expandedVersionKeys.includes((record as VersionItem).version) ? '▼' : '▶' }}
+                        </span>
+                        <span style="margin-left: 6px;">{{ (record as VersionItem).version }}</span>
+                      </a-link>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="变更类型" :width="100">
+                    <template #cell="{ record }">
+                      <a-tag
+                        v-if="(record as VersionItem).changeType"
+                        size="small"
+                        :color="changeTypeTagColor[(record as VersionItem).changeType!] || 'gray'"
+                      >
+                        {{ (record as VersionItem).changeType }}
+                      </a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="风险" :width="80">
+                    <template #cell="{ record }">
+                      <a-tag
+                        v-if="(record as VersionItem).riskLevel"
+                        size="small"
+                        :color="riskLevelColor[(record as VersionItem).riskLevel!] || 'gray'"
+                      >
+                        {{ (record as VersionItem).riskLevel }}
+                      </a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="变更时间" data-index="createTime" :width="160">
+                    <template #cell="{ record }">{{ formatDateTime(record.createTime) }}</template>
+                  </a-table-column>
+                  <a-table-column title="变更人" data-index="creator" :width="100" />
+                  <a-table-column title="变更摘要" data-index="changeDescription">
+                    <template #cell="{ record }">
+                      <div class="version-summary-line">
+                        <span>{{ (record as VersionItem).changeDescription }}</span>
+                        <span v-if="(record as VersionItem).changeSummary" class="version-summary-tags">
+                          <a-tag
+                             v-if="(record as VersionItem).changeSummary?.added"
+                             color="green" size="small"
+                           >
+                             +{{ (record as VersionItem).changeSummary!.added }}
+                           </a-tag>
+                           <a-tag
+                             v-if="(record as VersionItem).changeSummary?.modified"
+                             color="blue" size="small"
+                           >
+                             {{ (record as VersionItem).changeSummary!.modified }}改
+                           </a-tag>
+                           <a-tag
+                             v-if="(record as VersionItem).changeSummary?.removed"
+                             color="red" size="small"
+                           >
+                             -{{ (record as VersionItem).changeSummary!.removed }}
+                           </a-tag>
+                        </span>
+                      </div>
+                    </template>
+                  </a-table-column>
+                </template>
+
+                <!-- 展开行：git 提交记录 -->
+                <template #expanded-row="{ record }">
+                  <div class="version-expanded-detail">
+                    <div v-if="(record as VersionItem).gitRecords?.length" class="detail-block">
+                      <div class="detail-block-title">
+                        <span class="detail-icon">🔧</span>
+                        Git 提交记录
+                        <span class="git-record-count">
+                          共 {{ (record as VersionItem).gitRecords!.length }} 次提交
+                        </span>
+                      </div>
+                      <div class="git-list">
+                        <div
+                          v-for="(g, idx) in (record as VersionItem).gitRecords"
+                          :key="g.hash"
+                          class="git-item"
+                        >
+                          <div class="git-rail">
+                            <span class="git-dot" />
+                            <span v-if="idx !== (record as VersionItem).gitRecords!.length - 1" class="git-line" />
+                          </div>
+                          <div class="git-content">
+                            <div class="git-header">
+                              <a-tooltip :content="g.hash">
+                                <code class="git-hash">{{ g.shortHash }}</code>
+                              </a-tooltip>
+                              <a-tag v-if="g.branch" size="small" color="arcoblue">
+                                <template #icon><IconBranch /></template>
+                                {{ g.branch }}
+                              </a-tag>
+                              <span class="git-message">{{ g.message }}</span>
+                            </div>
+                            <div class="git-meta">
+                              <span class="git-author">
+                                <IconUser class="git-meta-icon" />
+                                {{ g.author }}
+                              </span>
+                              <span class="git-time">
+                                <IconClockCircle class="git-meta-icon" />
+                                {{ g.commitTime }}
+                              </span>
+                              <span v-if="g.filesChanged" class="git-files">
+                                <IconFile class="git-meta-icon" />
+                                {{ g.filesChanged }} 个文件
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="detail-block-empty">
+                      该版本暂无 Git 提交记录。
+                    </div>
+                  </div>
+                </template>
+              </a-table>
+            </div>
           </a-tab-pane>
         </a-tabs>
       </a-card>
@@ -540,7 +734,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import {
@@ -548,7 +742,11 @@ import {
   IconSafe,
   IconSync,
   IconArrowUp,
-  IconArrowDown
+  IconArrowDown,
+  IconBranch,
+  IconUser,
+  IconClockCircle,
+  IconFile
 } from '@arco-design/web-vue/es/icon'
 import { LineageGraph } from '@app/lineage-graph'
 import { mockTables } from '@/mock/data-map'
@@ -593,11 +791,47 @@ interface ShelfHistoryItem {
   remark?: string
 }
 
+interface VersionChangeRecord {
+  type: 'added' | 'modified' | 'removed'
+  fieldName: string
+  oldValue?: string
+  newValue?: string
+}
+
+interface ApprovalRecord {
+  approver: string
+  action: '通过' | '驳回'
+  comment?: string
+  actionTime: string
+}
+
+interface GitRecord {
+  hash: string
+  shortHash: string
+  author: string
+  authorEmail?: string
+  commitTime: string
+  message: string
+  branch?: string
+  filesChanged?: number
+}
+
 interface VersionItem {
   version: string
   createTime: string
   creator: string
   changeDescription: string
+  // 详细信息
+  changeType?: 'DDL' | '数据修复' | '加工逻辑' | '权限' | '上架发布' | '初始化'
+  changeSummary?: { added: number; modified: number; removed: number; totalAfter: number }
+  fieldChanges?: VersionChangeRecord[]
+  upstreamImpact?: string[]
+  downstreamImpact?: string[]
+  sqlSnippet?: string
+  approvals?: ApprovalRecord[]
+  riskLevel?: '高' | '中' | '低'
+  // Git 提交记录（按时间倒序）
+  gitRecords?: GitRecord[]
 }
 
 const statusLabel: Record<ShelfStatus, string> = {
@@ -740,21 +974,189 @@ const shelfHistory = computed<ShelfHistoryItem[]>(() => {
 
 const versions = computed<VersionItem[]>(() => {
   if (!assetData.value) return []
+  const a = assetData.value
+  const snapshots = versionedFieldSnapshots
+  const versionList = ['v2.4.0', 'v2.3.0', 'v2.2.0', 'v2.1.0']
+
+  // 工具：根据两个版本的快照计算差异
+  const calcDiff = (newer: string, older: string): VersionChangeRecord[] => {
+    const newerFields = snapshots[newer] ?? []
+    const olderFields = snapshots[older] ?? []
+    const mapOlder = new Map(olderFields.map(f => [f.name, f]))
+    const result: VersionChangeRecord[] = []
+    newerFields.forEach(f => {
+      const old = mapOlder.get(f.name)
+      if (!old) {
+        result.push({ type: 'added', fieldName: f.name, newValue: `${f.type} | ${f.description}` })
+      } else if (old.type !== f.type || old.description !== f.description) {
+        result.push({
+          type: 'modified',
+          fieldName: f.name,
+          oldValue: `${old.type} | ${old.description}`,
+          newValue: `${f.type} | ${f.description}`,
+        })
+      }
+    })
+    olderFields.forEach(f => {
+      if (!newerFields.find(n => n.name === f.name)) {
+        result.push({ type: 'removed', fieldName: f.name, oldValue: `${f.type} | ${f.description}` })
+      }
+    })
+    return result
+  }
+
+  // 概要：根据 diff 计算 N 增 / M 改 / K 删
+  const summary = (records: VersionChangeRecord[], totalAfter: number) => {
+    let added = 0, modified = 0, removed = 0
+    records.forEach(r => {
+      if (r.type === 'added') added++
+      else if (r.type === 'modified') modified++
+      else removed++
+    })
+    return { added, modified, removed, totalAfter }
+  }
+
   return [
     {
-      version: 'v1.0.0',
-      createTime: assetData.value.registerTime,
-      creator: assetData.value.owner,
-      changeDescription: '资产初始版本'
+      version: versionList[0]!,  // v2.4.0（最新版，相对 v2.3.0 几乎没有变更）
+      createTime: '2025-11-15 10:30',
+      creator: '李雪',
+      changeDescription: '字段说明文案更新，业务语义更清晰',
+      changeType: '加工逻辑',
+      riskLevel: '低',
+      changeSummary: summary(calcDiff(versionList[0]!, versionList[1]!), snapshots[versionList[0]!]?.length ?? 0),
+      fieldChanges: calcDiff(versionList[0]!, versionList[1]!),
+      upstreamImpact: [],
+      downstreamImpact: ['用户画像分析报表'],
+      approvals: [
+        { approver: '王伟（数据架构师）', action: '通过', comment: '说明文案更准确', actionTime: '2025-11-15 14:20' },
+      ],
+      gitRecords: [
+        { hash: '8f3a1c2d9b4e5f6a7c8d9e0f1a2b3c4d5e6f7a8b', shortHash: '8f3a1c2', author: '李雪', authorEmail: 'lixue@example.com', commitTime: '2025-11-15 10:28', message: 'docs(user_dim): 优化 create_time / owner / status 字段描述文案', branch: 'main', filesChanged: 3 },
+        { hash: '7e2b9c1d8a3f4e5d6c7b8a9f0e1d2c3b4a5f6e7d', shortHash: '7e2b9c1', author: '李雪', authorEmail: 'lixue@example.com', commitTime: '2025-11-14 18:12', message: 'refactor(user_dim): 字段说明文案统一标准化', branch: 'main', filesChanged: 2 },
+      ],
     },
     {
+      version: versionList[1]!,  // v2.3.0 - 类型调整
+      createTime: '2025-10-08 16:42',
+      creator: '张磊',
+      changeDescription: '主键 ID 类型从 VARCHAR(32) 扩到 VARCHAR(64)，向下兼容',
+      changeType: 'DDL',
+      riskLevel: '中',
+      changeSummary: summary(calcDiff(versionList[1]!, versionList[2]!), snapshots[versionList[1]!]?.length ?? 0),
+      fieldChanges: calcDiff(versionList[1]!, versionList[2]!),
+      upstreamImpact: ['ods.user_ods.user_id (上游表)'],
+      downstreamImpact: ['用户分群计算逻辑', '画像宽表', 'CRM 同步任务'],
+      sqlSnippet: `-- 主键扩位 DDL
+ALTER TABLE dwd.user_dim
+MODIFY COLUMN id VARCHAR(64)
+COMMENT '主键 ID（兼容 32 位历史数据）';
+
+-- 数据回填（历史 32 位 ID 前补 0 到 64 位）
+INSERT OVERWRITE dwd.user_dim
+SELECT
+  LPAD(CAST(id AS STRING), 64, '0') AS id,
+  name, email, status, update_time
+FROM dwd.user_dim
+WHERE LENGTH(CAST(id AS STRING)) <= 32;`,
+      approvals: [
+        { approver: '王伟（数据架构师）', action: '驳回', comment: '请补回填 SQL 与回滚方案', actionTime: '2025-10-09 09:15' },
+        { approver: '王伟（数据架构师）', action: '通过', comment: '已补充完整方案', actionTime: '2025-10-09 17:30' },
+        { approver: '陈芳（DBA）', action: '通过', actionTime: '2025-10-10 08:45' },
+      ],
+      gitRecords: [
+        { hash: '6d1c8b2a7f3e4d5c6b7a8f9e0d1c2b3a4f5e6d7c', shortHash: '6d1c8b2', author: '张磊', authorEmail: 'zhanglei@example.com', commitTime: '2025-10-08 16:40', message: 'feat(user_dim): 主键 ID 由 VARCHAR(32) 扩位到 VARCHAR(64)，支持历史 32 位数据', branch: 'main', filesChanged: 5 },
+        { hash: '5c0b7a1f6e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b', shortHash: '5c0b7a1', author: '张磊', authorEmail: 'zhanglei@example.com', commitTime: '2025-10-08 15:55', message: 'feat(user_dim): 新增 LPAD 回填 SQL，补齐回滚方案', branch: 'main', filesChanged: 2 },
+        { hash: '4a9f6e0d5c1b2a3f4e5d6c7b8a9f0e1d2c3b4a5f', shortHash: '4a9f6e0', author: '王伟', authorEmail: 'wangwei@example.com', commitTime: '2025-10-08 14:10', message: 'review(user_dim): DDL 评审意见 - 需补充回填 SQL 与回滚方案', branch: 'main', filesChanged: 1 },
+      ],
+    },
+    {
+      version: versionList[2]!,  // v2.2.0 - 新增 email
+      createTime: '2025-08-22 11:15',
+      creator: '张磊',
+      changeDescription: '字段命名标准化，user_id → user_nick；新增 email 字段对接用户触达',
+      changeType: 'DDL',
+      riskLevel: '中',
+      changeSummary: summary(calcDiff(versionList[2]!, versionList[3]!), snapshots[versionList[2]!]?.length ?? 0),
+      fieldChanges: calcDiff(versionList[2]!, versionList[3]!),
+      upstreamImpact: ['dwd.user_dim (依赖 user_id)'],
+      downstreamImpact: ['营销触达任务', '用户标签系统'],
+      sqlSnippet: `-- 1. 字段重命名
+ALTER TABLE dwd.user_dim
+CHANGE COLUMN user_id user_nick VARCHAR(64)
+COMMENT '用户昵称';
+
+-- 2. 新增 email 字段
+ALTER TABLE dwd.user_dim
+ADD COLUMNS (email VARCHAR(128) COMMENT '用户邮箱');`,
+      approvals: [
+        { approver: '王伟（数据架构师）', action: '通过', comment: '命名规范统一', actionTime: '2025-08-22 15:00' },
+      ],
+      gitRecords: [
+        { hash: '3f8e5d0c4b1a2f3e4d5c6b7a8f9e0d1c2b3a4f5e', shortHash: '3f8e5d0', author: '张磊', authorEmail: 'zhanglei@example.com', commitTime: '2025-08-22 11:10', message: 'feat(user_dim): 新增 email 字段（VARCHAR 128）', branch: 'main', filesChanged: 4 },
+        { hash: '2e7d4c0b3a9f1e2d3c4b5a6f7e8d9c0b1a2f3e4d', shortHash: '2e7d4c0', author: '张磊', authorEmail: 'zhanglei@example.com', commitTime: '2025-08-22 10:42', message: 'refactor(user_dim): 字段重命名 user_id → user_nick，统一命名规范', branch: 'main', filesChanged: 6 },
+      ],
+    },
+    {
+      version: versionList[3]!,  // v2.1.0 - 早期版本
+      createTime: '2025-06-10 09:00',
+      creator: '李雪',
+      changeDescription: '资产初始版本，建立基础用户维度表（含 user_id、name、status 等 6 个字段）',
+      changeType: '初始化',
+      riskLevel: '低',
+      changeSummary: summary([], snapshots[versionList[3]!]?.length ?? 0),
+      fieldChanges: [],
+      upstreamImpact: ['ods.user_ods'],
+      downstreamImpact: [],
+      approvals: [
+        { approver: '王伟（数据架构师）', action: '通过', comment: '初始版本', actionTime: '2025-06-10 17:30' },
+      ],
+      gitRecords: [
+        { hash: '1d6c3b0a2f8e0d1c2b3a4f5e6d7c8b9a0f1e2d3c', shortHash: '1d6c3b0', author: '李雪', authorEmail: 'lixue@example.com', commitTime: '2025-06-10 08:55', message: 'feat(user_dim): 初始建表，建立基础用户维度表（6 个核心字段）', branch: 'main', filesChanged: 1 },
+      ],
+    },
+    // 历史的 v1.x 版本（保留向后兼容）
+    {
       version: 'v1.1.0',
-      createTime: assetData.value.onShelfTime || assetData.value.registerTime,
-      creator: assetData.value.publisher,
-      changeDescription: '资产上架发布'
+      createTime: a.onShelfTime || a.registerTime,
+      creator: a.publisher,
+      changeDescription: '资产上架发布',
+      changeType: '上架发布',
+      riskLevel: '低',
+      changeSummary: { added: 0, modified: 0, removed: 0, totalAfter: 0 },
+      approvals: [],
+      gitRecords: [
+        { hash: '0c5b2a9f1e7d0c1b2a3f4e5d6c7b8a9f0e1d2c3b', shortHash: '0c5b2a9', author: a.publisher, commitTime: a.onShelfTime || a.registerTime, message: 'release(user_dim): v1.1.0 资产上架发布', branch: 'main', filesChanged: 1 },
+      ],
+    },
+    {
+      version: 'v1.0.0',
+      createTime: a.registerTime,
+      creator: a.owner,
+      changeDescription: '资产初始版本',
+      changeType: '初始化',
+      riskLevel: '低',
+      changeSummary: { added: 0, modified: 0, removed: 0, totalAfter: 0 },
+      approvals: [],
+      gitRecords: [
+        { hash: 'a4f1e8d0c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2', shortHash: 'a4f1e8d', author: a.owner, commitTime: a.registerTime, message: 'chore(user_dim): v1.0.0 资产初始注册', branch: 'main', filesChanged: 1 },
+      ],
     }
   ]
 })
+
+// 当前展开的版本行
+const expandedVersionKeys = ref<string[]>([])
+
+// 切换展开
+const toggleVersionExpand = (key: string) => {
+  const idx = expandedVersionKeys.value.indexOf(key)
+  if (idx > -1) {
+    expandedVersionKeys.value.splice(idx, 1)
+  } else {
+    expandedVersionKeys.value.push(key)
+  }
+}
 
 const processingLogic = computed(() => {
   if (!assetData.value) return '暂无加工逻辑说明'
@@ -1099,8 +1501,97 @@ const changeTypeColor: Record<FieldChangeType, string> = {
   removed: 'red'
 }
 
-// 视图模式：字段说明 / 变更对比
-type FieldViewMode = 'desc' | 'compare'
+// 字段变更明细（嵌套表格用）
+const changeTypeColorGrid: Record<'added' | 'modified' | 'removed', string> = {
+  added: 'green',
+  modified: 'blue',
+  removed: 'red'
+}
+const changeTypeLabelGrid: Record<'added' | 'modified' | 'removed', string> = {
+  added: '新增',
+  modified: '修改',
+  removed: '删除'
+}
+
+// 变更类型颜色映射
+type ChangeTypeTag = NonNullable<VersionItem['changeType']>
+const changeTypeTagColor: Record<ChangeTypeTag, string> = {
+  'DDL': 'orange',
+  '数据修复': 'red',
+  '加工逻辑': 'blue',
+  '权限': 'purple',
+  '上架发布': 'green',
+  '初始化': 'gray',
+}
+
+// 风险等级颜色
+type RiskLevel = NonNullable<VersionItem['riskLevel']>
+const riskLevelColor: Record<RiskLevel, string> = {
+  '高': 'red',
+  '中': 'orange',
+  '低': 'gray',
+}
+
+// SQL 复制
+import { Message as ArcoMessage } from '@arco-design/web-vue'
+const copySql = async (sql: string) => {
+  try {
+    await navigator.clipboard.writeText(sql)
+    ArcoMessage.success('SQL 已复制到剪贴板')
+  } catch (e) {
+    ArcoMessage.error('复制失败，请手动选择')
+  }
+}
+
+// V1 vs V2 全量对比：每个状态的标签 + 颜色
+type DiffStatus = 'unchanged' | 'modified' | 'added' | 'removed'
+const diffStatusLabel: Record<DiffStatus, string> = {
+  unchanged: '未变',
+  modified: '🔄 修改',
+  added: '🟢 新增',
+  removed: '🔴 删除'
+}
+const diffStatusColor: Record<DiffStatus, string> = {
+  unchanged: 'gray',
+  modified: 'blue',
+  added: 'green',
+  removed: 'red'
+}
+
+// V1 列的 class 决定器
+//  - removed: 整行显示「（不存在）」
+//  - unchanged / modified: 显示原本值；只有 modified 才高亮差异字符
+//  - added: 显示「（不存在）」
+const getDiffV1Class = (row: DiffFieldRow): string => {
+  if (row.status === 'added') return 'diff-cell-empty'   // 不存在
+  if (row.status === 'unchanged') return ''
+  if (row.status === 'modified') {
+    // 是否真的有变化？
+    const tChanged = row.typeDiff?.left?.changed
+    const dChanged = row.descDiff?.left?.changed
+    if (tChanged && dChanged) return 'diff-cell-old'
+    // 类型或说明有改动 → 整段红底
+    if (tChanged || dChanged) return 'diff-cell-old'
+    return ''
+  }
+  return 'diff-cell-old'  // removed
+}
+
+const getDiffV2Class = (row: DiffFieldRow): string => {
+  if (row.status === 'removed') return 'diff-cell-empty'   // 不存在
+  if (row.status === 'unchanged') return ''
+  if (row.status === 'modified') {
+    const tChanged = row.typeDiff?.right?.changed
+    const dChanged = row.descDiff?.right?.changed
+    if (tChanged && dChanged) return 'diff-cell-new'
+    if (tChanged || dChanged) return 'diff-cell-new'
+    return ''
+  }
+  return 'diff-cell-new'  // added
+}
+
+// 视图模式：字段说明 / 变更对比 / V1 vs V2 全量对比
+type FieldViewMode = 'desc' | 'compare' | 'diff'
 const fieldViewMode = ref<FieldViewMode>('desc')
 
 // 版本（按时间倒序，最近在前）
@@ -1112,26 +1603,47 @@ const fieldVersions = computed<string[]>(() => {
 // 默认查看版本：最新
 const activeFieldVersion = ref('v2.4.0')
 
-// 版本对比选项（最新 vs 上一版 / 跨任意两版）
-const compareVersionOptions = computed(() => {
+// 版本对比：两个独立的下拉（左侧"版本1"，右侧"版本2"）
+// 默认取最新两版：版本1 = 第二新，版本2 = 最新
+const compareVersionA = ref<string>('')  // 版本1（旧）
+const compareVersionB = ref<string>('')  // 版本2（新）
+
+// 每次 fieldVersions 变化时，若两个 ref 没值或值不再可用，自动重置为最新两版
+const initCompareVersionDefaults = () => {
   const vs = fieldVersions.value
-  const opts: { value: string; label: string; newer: string; older: string }[] = []
-  for (let i = 0; i < vs.length - 1; i++) {
-    const newer = vs[i]
-    const older = vs[i + 1]
-    opts.push({ value: `${newer}|${older}`, label: `${newer} vs ${older}`, newer, older })
+  if (vs.length >= 2) {
+    const newest = vs[0]!
+    const secondNewest = vs[1]!
+    if (!compareVersionB.value || !vs.includes(compareVersionB.value)) {
+      compareVersionB.value = newest
+    }
+    if (!compareVersionA.value || !vs.includes(compareVersionA.value)) {
+      compareVersionA.value = secondNewest
+    }
+  } else if (vs.length === 1) {
+    compareVersionB.value = vs[0]!
+    compareVersionA.value = vs[0]!
   }
-  return opts
-})
-const compareVersionPair = ref<string>('') // e.g. "v2.3.0|v2.2.0"
+}
+watch(() => fieldVersions.value, initCompareVersionDefaults, { immediate: true })
 
 const currentComparePair = computed(() => {
-  // 优先取用户选择的 pair；没选则取默认"最新两版"
-  const opt =
-    compareVersionOptions.value.find(o => o.value === compareVersionPair.value) ??
-    compareVersionOptions.value[0]
-  return opt ?? { newer: 'v2.3.0', older: 'v2.2.0', value: 'v2.3.0|v2.2.0', label: 'v2.3.0 vs v2.2.0' }
+  const a = compareVersionA.value || fieldVersions.value[1] || fieldVersions.value[0] || 'v2.3.0'
+  const b = compareVersionB.value || fieldVersions.value[0] || 'v2.4.0'
+  // 注意：版本1 = 旧版 A；版本2 = 新版 B
+  return { newer: b, older: a }
 })
+
+// 当改版本1时，如果版本2和它重了，自动切到下一个
+const handleVersionAChange = (val: string | number | boolean) => {
+  const v = val as string
+  if (v === compareVersionB.value) {
+    const vs = fieldVersions.value
+    const idx = vs.indexOf(v)
+    const next = vs[idx + 1] || vs[idx - 1] || ''
+    if (next) compareVersionB.value = next
+  }
+}
 
 // 不同版本的字段 mock 快照（按版本给"字段类型 + 说明"做差异化）
 const versionedFieldSnapshots: Record<string, { name: string; type: string; description: string }[]> = {
@@ -1217,6 +1729,317 @@ const fieldChangeRows = computed<FieldChangeRow[]>(() => {
   }
   return result
 })
+
+// ============ V1 vs V2 全量对比（diff 视图） ============
+interface DiffCell {
+  text: string
+  changed?: boolean
+}
+
+interface DiffFieldRow {
+  key: string  // 用于 :key 的唯一标识（包含左右版本信息）
+  name: string  // 字段名（公共字段取原名，独有字段加标记）
+  status: 'unchanged' | 'modified' | 'added' | 'removed'
+  left?: { type: string; description: string }   // V1（older）
+  right?: { type: string; description: string }  // V2（newer）
+  typeDiff?: { left: DiffCell; right: DiffCell }
+  descDiff?: { left: DiffCell; right: DiffCell }
+}
+
+// 字符级 diff（简易 LCS）
+interface DiffLine {
+  type: 'eq' | 'del' | 'add'
+  text: string
+}
+
+/**
+ * 用最长公共子序列做文本级 diff
+ */
+const computeTextDiff = (oldText: string, newText: string): { left: DiffCell; right: DiffCell } => {
+  const a = oldText || ''
+  const b = newText || ''
+
+  if (a === b) {
+    return {
+      left: { text: a },
+      right: { text: b },
+    }
+  }
+
+  // 如果两边都不太长，做 LCS
+  if (a.length <= 80 && b.length <= 80) {
+    const dp: number[][] = []
+    for (let i = 0; i <= a.length; i++) dp.push(new Array(b.length + 1).fill(0))
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        dp[i]![j] = a[i - 1] === b[j - 1] ? (dp[i - 1]![j - 1]! + 1) : Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!)
+      }
+    }
+    // 回溯得到公共部分
+    const common: string[] = []
+    let i = a.length, j = b.length
+    while (i > 0 && j > 0) {
+      if (a[i - 1] === b[j - 1]) {
+        common.unshift(a[i - 1]!)
+        i--
+        j--
+      } else if (dp[i - 1]![j]! >= dp[i]![j - 1]!) {
+        i--
+      } else {
+        j--
+      }
+    }
+    const commonStr = common.join('')
+
+    // 高亮"差异"段：在 left 中高亮删除部分，在 right 中高亮新增部分
+    const leftSegments: DiffLine[] = []
+    const rightSegments: DiffLine[] = []
+    let cursorA = 0
+    let cursorC = 0
+    while (cursorA < a.length) {
+      const idx = a.indexOf(commonStr[cursorC]!, cursorA)
+      if (idx === cursorA) {
+        cursorA++
+        cursorC++
+      } else if (idx > 0) {
+        leftSegments.push({ type: 'del', text: a.substring(cursorA, idx) })
+        cursorA = idx
+      } else {
+        leftSegments.push({ type: 'del', text: a[cursorA]! })
+        cursorA++
+      }
+    }
+    cursorA = 0
+    cursorC = 0
+    while (cursorA < b.length) {
+      const idx = b.indexOf(commonStr[cursorC]!, cursorA)
+      if (idx === cursorA) {
+        cursorA++
+        cursorC++
+      } else if (idx > 0) {
+        rightSegments.push({ type: 'add', text: b.substring(cursorA, idx) })
+        cursorA = idx
+      } else {
+        rightSegments.push({ type: 'add', text: b[cursorA]! })
+        cursorA++
+      }
+    }
+
+    return {
+      left: { text: leftSegments.map(s => s.text).join(''), changed: leftSegments.some(s => s.type === 'del') },
+      right: { text: rightSegments.map(s => s.text).join(''), changed: rightSegments.some(s => s.type === 'add') },
+    }
+  }
+
+  // 太长就整体高亮
+  return {
+    left: { text: a, changed: true },
+    right: { text: b, changed: true },
+  }
+}
+
+/**
+ * 把"旧字段 + 新字段"按字段名对齐，生成一张完整的 diff 行表
+ */
+const mergedFieldDiff = computed<DiffFieldRow[]>(() => {
+  const { newer, older } = currentComparePair.value
+  const a = versionedFieldSnapshots[newer] ?? []
+  const b = versionedFieldSnapshots[older] ?? []
+
+  const mapB = new Map(b.map(f => [f.name, f]))
+  const mapA = new Map(a.map(f => [f.name, f]))
+  const result: DiffFieldRow[] = []
+
+  // 遍历 newer（V2）：
+  //   - 在 older（V1）中存在 → 公共字段（可能未改 / 已改）
+  //   - 不存在 → 新增字段（added）
+  a.forEach(f => {
+    const old = mapB.get(f.name)
+    if (!old) {
+      result.push({
+        key: `add__${f.name}`,
+        name: f.name,
+        status: 'added',
+        right: { type: f.type, description: f.description },
+      })
+    } else {
+      const typeChanged = old.type !== f.type
+      const descChanged = old.description !== f.description
+      if (typeChanged || descChanged) {
+        result.push({
+          key: `mod__${f.name}`,
+          name: f.name,
+          status: 'modified',
+          left: { type: old.type, description: old.description },
+          right: { type: f.type, description: f.description },
+          typeDiff: computeTextDiff(old.type, f.type),
+          descDiff: computeTextDiff(old.description, f.description),
+        })
+      } else {
+        result.push({
+          key: `eq__${f.name}`,
+          name: f.name,
+          status: 'unchanged',
+          left: { type: old.type, description: old.description },
+          right: { type: f.type, description: f.description },
+        })
+      }
+    }
+  })
+
+  // 遍历 older（V1），找 V2 中已删除的字段
+  b.forEach(f => {
+    if (!mapA.has(f.name)) {
+      result.push({
+        key: `del__${f.name}`,
+        name: f.name,
+        status: 'removed',
+        left: { type: f.type, description: f.description },
+      })
+    }
+  })
+
+  return result
+})
+
+// diff 汇总统计
+const diffStats = computed(() => {
+  const stats = { added: 0, removed: 0, modified: 0, unchanged: 0 }
+  mergedFieldDiff.value.forEach(r => {
+    if (r.status === 'added') stats.added++
+    else if (r.status === 'removed') stats.removed++
+    else if (r.status === 'modified') stats.modified++
+    else stats.unchanged++
+  })
+  return stats
+})
+
+// ============ 三种视图的列定义（columns 数据驱动 + 命名插槽渲染表头） ============
+
+// 模式 1：字段说明（desc）列定义
+const descTableColumns = computed(() => [
+  {
+    title: '字段名',
+    dataIndex: 'name',
+    width: 220,
+    render: ({ record }: { record: DiffFieldRow }) =>
+      h('div', { class: 'diff-name-cell' }, [
+        h(
+          'a-tag',
+          { size: 'small', color: diffStatusColor[record.status] },
+          { default: () => diffStatusLabel[record.status] }
+        ),
+        h(
+          'span',
+          { class: ['diff-name', record.status === 'removed' && 'diff-name-removed'] },
+          record.name
+        ),
+      ]),
+  },
+  {
+    title: '版本1',
+    titleSlotName: 'versionA-header',
+    render: ({ record }: { record: DiffFieldRow }) => {
+      if (!record.left) return h('span', { class: 'diff-cell-empty' }, '（不存在）')
+      return h(
+        'span',
+        { class: getDiffV1Class(record) },
+        `${record.left!.type} · ${record.left!.description}`
+      )
+    },
+  },
+  {
+    title: '版本2',
+    titleSlotName: 'versionB-header',
+    render: ({ record }: { record: DiffFieldRow }) => {
+      if (!record.right) return h('span', { class: 'diff-cell-empty' }, '（不存在）')
+      return h(
+        'span',
+        { class: getDiffV2Class(record) },
+        `${record.right!.type} · ${record.right!.description}`
+      )
+    },
+  },
+])
+
+// 模式 2：变更对比（compare）列定义
+const compareTableColumns = computed(() => [
+  {
+    title: '字段名',
+    dataIndex: 'name',
+    width: 160,
+  },
+  {
+    title: '旧版本',
+    titleSlotName: 'compareOld-header',
+    width: 220,
+    render: ({ record }: { record: FieldChangeRow }) =>
+      h('span', { class: 'usage-old-value' }, record.oldValue || '（不存在）'),
+  },
+  {
+    title: '新版本',
+    titleSlotName: 'compareNew-header',
+    width: 220,
+    render: ({ record }: { record: FieldChangeRow }) =>
+      h('span', { class: 'usage-new-value' }, record.newValue || '（不存在）'),
+  },
+  {
+    title: '变更',
+    width: 100,
+    render: ({ record }: { record: FieldChangeRow }) =>
+      h(
+        'a-tag',
+        { size: 'small', color: changeTypeColor[record.changeType] },
+        { default: () => changeTypeLabel[record.changeType] }
+      ),
+  },
+])
+
+// 模式 3：V1 vs V2 全量对比（diff）列定义
+const diffTableColumns = computed(() => [
+  {
+    title: '字段名',
+    dataIndex: 'name',
+    width: 220,
+    render: ({ record }: { record: DiffFieldRow }) =>
+      h('div', { class: 'diff-name-cell' }, [
+        h(
+          'a-tag',
+          { size: 'small', color: diffStatusColor[record.status] },
+          { default: () => diffStatusLabel[record.status] }
+        ),
+        h(
+          'span',
+          { class: ['diff-name', record.status === 'removed' && 'diff-name-removed'] },
+          record.name
+        ),
+      ]),
+  },
+  {
+    title: 'V1',
+    titleSlotName: 'diffV1-header',
+    render: ({ record }: { record: DiffFieldRow }) => {
+      if (!record.left) return h('span', { class: 'diff-cell-empty' }, '（不存在）')
+      return h(
+        'span',
+        { class: getDiffV1Class(record) },
+        `${record.left!.type} · ${record.left!.description}`
+      )
+    },
+  },
+  {
+    title: 'V2',
+    titleSlotName: 'diffV2-header',
+    render: ({ record }: { record: DiffFieldRow }) => {
+      if (!record.right) return h('span', { class: 'diff-cell-empty' }, '（不存在）')
+      return h(
+        'span',
+        { class: getDiffV2Class(record) },
+        `${record.right!.type} · ${record.right!.description}`
+      )
+    },
+  },
+])
 
 // Story 1-3 字段变更日志抽屉
 const changeLogDrawerVisible = ref(false)
@@ -1445,7 +2268,563 @@ const closeChangeLogDrawer = () => {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
+
+/* ============ 双版本独立下拉 ============ */
+.version-pair-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #fafbfc;
+  border: 1px solid #e5e6e8;
+  border-radius: 6px;
+}
+
+.version-pair-label {
+  font-size: 12px;
+  color: #86909c;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.version-pair-label:first-child {
+  margin-left: 0;
+}
+
+.version-pair-vs {
+  font-size: 12px;
+  color: #c9cdd4;
+  font-weight: 500;
+  margin: 0 4px;
+}
+
+/* ============ 表格列头内的下拉选择器（紧凑版） ============ */
+.diff-col-version-label {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d2129;
+  white-space: nowrap;
+}
+
+.diff-col-version-select {
+  width: 110px;
+  display: inline-block;
+}
+
+.diff-col-version-select :deep(.arco-select-view) {
+  min-height: 24px !important;
+  height: 24px !important;
+  padding: 0 6px !important;
+  font-size: 12px !important;
+  background: #fafbfc;
+  border-color: #c9cdd4;
+}
+
+.diff-col-version-select :deep(.arco-select-view:hover) {
+  border-color: #165dff;
+  background: #fff;
+}
+
+/* ============ diff 视图样式 ============ */
+.diff-stats-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.diff-vs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #f7f9fc 0%, #f0f7ff 50%, #f7f9fc 100%);
+  border: 1px solid #e5e6e8;
+  border-radius: 6px;
+}
+
+.diff-version-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.diff-version-tag.diff-version-left {
+  justify-content: flex-start;
+}
+
+.diff-version-tag.diff-version-right {
+  justify-content: flex-end;
+}
+
+.diff-arrow {
+  color: #c9cdd4;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 表格内差异单元格高亮 */
+.diff-cell-old {
+  display: inline-block;
+  background-color: #fff1f0;
+  color: #d93b3b;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-decoration: line-through;
+  text-decoration-color: rgba(217, 59, 59, 0.4);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.diff-cell-new {
+  display: inline-block;
+  background-color: #e8ffea;
+  color: #1a7f37;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.diff-cell-empty {
+  color: #c9cdd4;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.diff-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diff-name {
+  font-weight: 500;
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 13px;
+}
+
+/* 列头：V1/V2 标识 */
+.diff-col-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diff-col-version {
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: #f2f3f5;
+  color: #86909c;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 3px;
+}
+
+.diff-col-version-new {
+  background-color: #e8f4ff;
+  color: #165dff;
+}
+
+.diff-col-label {
+  color: #1d2129;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.diff-desc-sep {
+  color: #c9cdd4;
+  margin: 0 4px;
+}
+
+.diff-name-removed {
+  color: #c9cdd4;
+  text-decoration: line-through;
+}
+
+/* 整行着色：新增 / 删除 / 未变 */
+.diff-row-added {
+  background-color: #f6fffa !important;
+}
+
+.diff-row-removed {
+  background-color: #fef6f6 !important;
+}
+
+.diff-row-modified {
+  background-color: #fffbea !important;
+}
+
+.diff-row-unchanged {
+  /* 不变行保持默认白色 */
+}
+
+/* 表格整体紧凑 */
+.diff-table :deep(.arco-table-td),
+.diff-table :deep(.arco-table-th) {
+  padding: 6px 12px !important;
+  font-size: 13px;
+}
+
+/* ============ 版本详情（可展开） ============ */
+.version-detail-page {
+  padding: 4px 0;
+}
+
+.version-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, #fafbfc 0%, #f7f9fc 100%);
+  border: 1px solid #e5e6e8;
+  border-radius: 8px;
+}
+
+.version-summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px;
+  border-right: 1px solid #e5e6e8;
+}
+
+.version-summary-stat:last-of-type {
+  border-right: none;
+}
+
+.version-summary-stat .stat-num {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+  line-height: 1.2;
+}
+
+.version-summary-stat .stat-label {
+  font-size: 12px;
+  color: #86909c;
+}
+
+.version-summary-tip {
+  margin-left: auto;
+  color: #86909c;
+  font-size: 12px;
+}
+
+.version-toggle {
+  color: #c9cdd4;
+  font-size: 10px;
+  display: inline-block;
+  width: 12px;
+}
+
+.version-summary-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.version-summary-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.version-old-value {
+  color: #d93b3b;
+  background: #fff1f0;
+  padding: 0 4px;
+  border-radius: 2px;
+  text-decoration: line-through;
+  font-size: 12px;
+}
+
+.version-new-value {
+  color: #1a7f37;
+  background: #e8ffea;
+  padding: 0 4px;
+  border-radius: 2px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* 展开区域样式 */
+.version-expanded-detail {
+  padding: 16px 24px;
+  background: #fafbfc;
+  border: 1px dashed #e5e6e8;
+  border-radius: 6px;
+  margin: 8px 16px;
+}
+
+.detail-block {
+  margin-bottom: 18px;
+}
+
+.detail-block:last-child {
+  margin-bottom: 0;
+}
+
+.detail-block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d2129;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e6e8;
+}
+
+.detail-icon {
+  font-size: 14px;
+}
+
+/* 变更统计四宫格 */
+.detail-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.detail-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  background: #fff;
+  border: 1px solid #e5e6e8;
+  border-radius: 4px;
+}
+
+.detail-stat-label {
+  font-size: 12px;
+  color: #86909c;
+  margin-bottom: 6px;
+}
+
+.detail-stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+/* SQL 区 */
+.detail-sql {
+  margin: 0;
+  padding: 12px 16px;
+  background: #1e2129;
+  color: #d4d6d9;
+  border-radius: 4px;
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 上下游影响 */
+.detail-impact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detail-impact-section {
+  background: #fff;
+  border: 1px solid #e5e6e8;
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+
+.impact-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1d2129;
+  margin-bottom: 8px;
+}
+
+.impact-icon {
+  font-size: 12px;
+}
+
+.impact-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.impact-list li {
+  font-size: 12px;
+  color: #4e5969;
+  line-height: 1.8;
+}
+
+/* 审批记录 */
+.approval-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.approval-approver {
+  font-weight: 500;
+  color: #1d2129;
+}
+
+.approval-comment {
+  color: #86909c;
+  font-style: italic;
+  flex: 1;
+}
+
+.approval-time {
+  color: #86909c;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.detail-block-empty {
+  text-align: center;
+  color: #86909c;
+  font-size: 12px;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.version-detail-table :deep(.arco-table-expand-btn-cell .arco-table-cell) {
+  padding: 0 !important;
+}
+
+/* ============ Git 提交记录时间轴 ============ */
+.git-record-count {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: normal;
+  color: #86909c;
+}
+
+.git-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.git-item {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  align-items: stretch;
+}
+
+.git-rail {
+  position: relative;
+  width: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.git-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #165dff;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #165dff;
+  flex-shrink: 0;
+}
+
+.git-line {
+  flex: 1;
+  width: 2px;
+  background: #e5e6e8;
+  margin-top: 4px;
+}
+
+.git-content {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e5e6e8;
+  border-radius: 6px;
+  padding: 10px 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.git-content:hover {
+  border-color: #165dff;
+  box-shadow: 0 2px 6px rgba(22, 93, 255, 0.08);
+}
+
+.git-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.git-hash {
+  display: inline-block;
+  font-family: 'JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  color: #165dff;
+  background: #f0f7ff;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.git-message {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d2129;
+  line-height: 1.5;
+}
+
+.git-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: #4e5969;
+  flex-wrap: wrap;
+}
+
+.git-author,
+.git-time,
+.git-files {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.git-meta-icon {
+  font-size: 12px;
+  color: #86909c;
+}
+
+.git-author {
+  font-weight: 500;
+  color: #1d2129;
+}
+
 
 .log-version {
   font-weight: 600;

@@ -87,7 +87,6 @@ const resourceMenus = [
 const opsMenus = [
   { key: '/lineage', title: '全链路血缘' },
   { key: '/impact-analysis', title: '变更影响分析' },
-  { key: '/customer360', title: '客户360' },
   { key: '/credit', title: '征信' },
   { key: '/batch-registration', title: '批量注册指标' },
   { key: '/regulatory-config', title: '监管报表配置' }

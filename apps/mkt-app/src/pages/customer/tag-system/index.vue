@@ -178,7 +178,7 @@ const fileList = ref([])
 
 // 导航方法
 const navigateTo = (routeName) => {
-  router.push(`/exploration/customer-center/tag-system/${routeName}`)
+  router.push(`/customer/tag-system/${routeName}`)
 }
 
 // 文件上传处理

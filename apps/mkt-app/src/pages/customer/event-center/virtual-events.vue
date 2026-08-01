@@ -279,7 +279,7 @@ const handleCreate = () => {
   }
   
   const handleTest = (record) => {
-  // 跳转到样本统计页面 (TASK-20260714-BD4107B8 修复: 路径对齐 router/modules/customer.ts L57 'customer/sample-stats')
+  // 跳转到样本统计页面（mkt-app convention: /customer/<page>）
   router.push({
     path: '/customer/sample-stats',
     query: {
