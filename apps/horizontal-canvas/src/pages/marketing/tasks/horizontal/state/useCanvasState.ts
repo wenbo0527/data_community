@@ -14,7 +14,7 @@ export function useCanvasState() {
    * 边界：DOM 不存在时回退为 0
    */
   function updateStatisticsPanelTop(toolbarWrapperEl?: HTMLElement | null, statisticsPanelTopRef?: { value: number }) {
-    const rect = toolbarWrapperEl && (toolbarWrapperEl as any).getBoundingClientRect ? (toolbarWrapperEl as any).getBoundingClientRect() : null
+    const rect = toolbarWrapperEl?.getBoundingClientRect?.() || null
     const top = rect ? Math.max(0, Math.round(rect.bottom + 8)) : 0
     if (statisticsPanelTopRef && typeof statisticsPanelTopRef === 'object') statisticsPanelTopRef.value = top
     return top
@@ -26,7 +26,7 @@ export function useCanvasState() {
    * 边界：DOM 不存在时返回 { left:0, width:0 }
    */
   function updateDebugDockBounds(contentEl?: HTMLElement | null, showStatisticsPanelRef?: { value: boolean }, isViewMode?: boolean, isPublished?: boolean, statisticsPanelWidthRef?: { value: number }, debugDockBoundsRef?: { value: { left: number; width: number } }) {
-    const rect = contentEl && (contentEl as any).getBoundingClientRect ? (contentEl as any).getBoundingClientRect() : null
+    const rect = contentEl?.getBoundingClientRect?.() || null
     if (!rect) return { left: 0, width: 0 }
     const result = { left: Math.round(rect.left), width: Math.round(rect.width) }
     if (debugDockBoundsRef && typeof debugDockBoundsRef === 'object') debugDockBoundsRef.value = result
@@ -76,7 +76,8 @@ export function useCanvasState() {
    * 入参：showMinimapRef({value:boolean}), anchorRect(any), canvasRect(any), minimapPositionRef({value:{left;top}})
    * 返回：{left;top}
    */
-  function toggleMinimapUI(showMinimapRef: { value: boolean }, anchorRect: any, canvasRect: any, minimapPositionRef: { value: { left: number; top: number } }) {
+  interface RectInput { left: number; top: number; right: number; bottom: number; width: number; height: number }
+function toggleMinimapUI(showMinimapRef: { value: boolean }, anchorRect: RectInput | null | undefined, canvasRect: RectInput | null | undefined, minimapPositionRef: { value: { left: number; top: number } }) {
     showMinimapRef.value = !showMinimapRef.value
     const pos = computeMinimapPosition(anchorRect, canvasRect)
     minimapPositionRef.value = pos
@@ -132,8 +133,8 @@ export function useCanvasState() {
    * 返回：void
    */
   function setupPanelWatchers(showStatisticsPanelRef: { value: boolean }, statisticsPanelWidthRef: { value: number }, updateTopFn: () => Promise<void> | void, updateDockFn: () => Promise<void> | void) {
-    watch(showStatisticsPanelRef as any, async () => { await nextTick(); await updateTopFn() })
-    watch([showStatisticsPanelRef as any, statisticsPanelWidthRef as any], async () => { await nextTick(); await updateDockFn() })
+    watch(showStatisticsPanelRef, async () => { await nextTick(); await updateTopFn() })
+    watch([showStatisticsPanelRef, statisticsPanelWidthRef], async () => { await nextTick(); await updateDockFn() })
   }
   /**
    * 更新缩放显示文本
