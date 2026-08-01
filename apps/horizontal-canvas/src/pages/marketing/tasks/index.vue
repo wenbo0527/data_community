@@ -22,6 +22,12 @@
           </template>
           新建任务
         </a-button>
+        <a-button @click="openAnalyticsModal">
+          <template #icon>
+            <icon-data-analysis />
+          </template>
+          埋点分析
+        </a-button>
         <template v-if="canBatchSubmitApproval">
           <a-button type="primary" @click="batchSubmitApproval">批量提交审批</a-button>
         </template>
@@ -134,6 +140,10 @@
       </a-form-item>
     </a-form>
   </a-modal>
+
+  <a-modal v-model:visible="analyticsVisible" title="画布交互埋点 - 归因分析" :footer="false" width="780px" :mask-closable="true">
+    <CanvasAnalyticsPanel />
+  </a-modal>
 </div>
 </template>
 
@@ -151,11 +161,15 @@ import { IconPlus, IconDown, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { TaskStorage } from '../../../utils/taskStorage.js'
 import { validateForPublish } from './horizontal/persistence/PersistenceService.ts'
 import { useCurrentUser } from '../../../composables/useCurrentUser.js'
+import CanvasAnalyticsPanel from '../../../components/analytics/CanvasAnalyticsPanel.vue'
 
 const router = useRouter()
 const { user: currentUser } = useCurrentUser()
 const createModalVisible = ref(false)
+const analyticsVisible = ref(false)
 const createForm = reactive({ name: '', description: '' })
+
+function openAnalyticsModal() { analyticsVisible.value = true }
 
 // 表格列定义
 const columns = [

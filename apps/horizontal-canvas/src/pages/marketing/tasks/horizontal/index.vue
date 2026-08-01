@@ -273,6 +273,8 @@ import { TaskStorage } from '../../../../utils/taskStorage.js'
 import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
 import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
 import { useCurrentUser } from '../../../../composables/useCurrentUser.js'
+import * as tracker from '../../../../utils/trackerService.js'
+import { CANVAS_FUNNEL_STEPS } from '../../../../utils/canvasFunnel.js'
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
 import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph, bindDefaultShortcuts } from './graph/GraphService.ts'
 import { useCanvasState } from './state/useCanvasState.ts'
@@ -421,7 +423,7 @@ let minimapPaused = false
 // 工具栏组件引用（用于获取小地图按钮的当前位置）
 const toolbarRef = ref(null)
 const clickAddNodeType = ref('');
-watch(selectedVersionId, async (val) => {
+watch(selectedVersionId, async (val, oldVal) => {
   try {
     if (!isViewMode.value) return
     if (!val) return
@@ -433,6 +435,7 @@ watch(selectedVersionId, async (val) => {
     await loadTaskData()
     try { taskStatus.value = vEntry ? (vEntry.status || 'draft') : taskStatus.value } catch {}
     try { showStatisticsPanel.value = false; statsFocusNodeId.value = '' } catch {}
+    try { tracker.track('canvas_version_switch', { taskId: id, version: Number(val), props: { fromVersion: oldVal ? Number(oldVal) : null, toVersion: Number(val) } }) } catch {}
   } catch {}
 })
 
@@ -1131,7 +1134,10 @@ onMounted(async () => {
     openConfigDrawer: (type, node, data) => configDrawers && configDrawers.openConfigDrawer(type, node, data),
     createVueShapeNode, getNodeLabel,
     deleteNodeCascade: id => deleteNodeCascade(id),
-    Message, Modal
+    Message, Modal,
+    onTrack: (event, payload) => {
+      try { tracker.track(event, { taskId: editingTaskId.value, version: editingTaskVersion.value, props: payload || {} }) } catch {}
+    }
   })
 
   // 按住Ctrl/Command时允许橡皮框，否则禁用以避免误触
@@ -1501,13 +1507,22 @@ function ensureStartNode() {
   // 高级节点：展开为触达节点 + 事件分流节点（含一条连线与历史入栈）
   if (nodeType && TOUCH_COMBOS[nodeType]) {
     const createdIds = insertTouchComboNodes(nodeType)
-    if (Array.isArray(createdIds) && createdIds.length) highlightNodes(createdIds)
+    if (Array.isArray(createdIds) && createdIds.length) {
+      highlightNodes(createdIds)
+      try { tracker.track('combo_insert', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { comboType: nodeType, nodeCount: createdIds.length } }) } catch {}
+    }
     try { closeNodeSelector() } catch {}
     pendingInsertionEdge = null
     return createdIds
   }
   const node = insertNodeAndFinalize(graph, nodeType, pendingCreatePoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode)
-  if (node && node.id) highlightNodes([node.id])
+  if (node && node.id) {
+    highlightNodes([node.id])
+    try {
+      tracker.track('node_drop', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, isCombo: false, via: 'selector' } })
+      if (nodeType !== 'start') tracker.trackFunnelStep('canvas_creation', 'first_node_drop', { nodeType })
+    } catch {}
+  }
   try { closeNodeSelector() } catch {}
   pendingInsertionEdge = null
   return node
@@ -1692,7 +1707,14 @@ async function updateNodeFromConfigUnified(node, nodeType, config) {
   try {
     updateNodeUnifiedSvc(graph, node, nodeType, config)
     isDirty.value = true
+    try {
+      const branchCount = Array.isArray(config?.branches) ? config.branches.length : 0
+      tracker.track('drawer_save', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, branchCount } })
+      // 漏斗：首节点配置完成（任意 hit 节点首次配置）
+      tracker.trackFunnelStep('canvas_creation', 'first_node_saved', { nodeType })
+    } catch {}
   } catch (e) {
+    try { tracker.track('drawer_save_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'updateNodeFailed' } }) } catch {}
     console.error('[Horizontal] updateNodeFromConfigUnified 失败:', e)
   }
 }
@@ -1720,6 +1742,14 @@ function deleteNodeCascade(nodeId) {
 
 // 在updateNodeFromConfig函数定义后初始化配置抽屉
 configDrawers = useConfigDrawers(() => graph, { updateNodeFromConfig: updateNodeFromConfigUnified })
+// 包装：抽屉打开埋点（useConfigDrawers 不持有 tracker，包装注入）
+try {
+  const originalOpen = configDrawers.openConfigDrawer
+  configDrawers.openConfigDrawer = (type, node, data) => {
+    try { tracker.track('drawer_open', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType: type, isReadOnly: !!(data && data.__readOnly) } }) } catch {}
+    return originalOpen(type, node, data)
+  }
+} catch {}
 
 try {
   if (graph) {
@@ -1789,6 +1819,18 @@ async function loadTaskData() {
         if (graph) {
           const ok = loadCanvasData(canvasForVersion)
           scheduleCenterContent({ padding: 50, onDone: () => { initializing.value = false } })
+          // 埋点：画布加载完成
+          try {
+            tracker.track('canvas_task_loaded', {
+              taskId: numericTaskId, version: parseInt(taskVersionParam),
+              props: { mode: route.query.mode, nodeCount: (canvasForVersion.nodes || []).length, edgeCount: (canvasForVersion.connections || []).length }
+            })
+            tracker.track('canvas_open', {
+              taskId: numericTaskId, version: parseInt(taskVersionParam),
+              props: { mode: route.query.mode, isEdit: route.query.mode === 'edit' }
+            })
+            tracker.trackFunnelStep('canvas_creation', 'canvas_open', { taskId: numericTaskId })
+          } catch {}
         } else {
           initializing.value = false
         }
@@ -1796,6 +1838,13 @@ async function loadTaskData() {
     } else {
       try { ensureStartNode() } catch {}
       initializing.value = false
+      try {
+        tracker.track('canvas_open', {
+          taskId: numericTaskId, version: parseInt(taskVersionParam),
+          props: { mode: route.query.mode, isEdit: route.query.mode === 'edit', empty: true }
+        })
+        tracker.trackFunnelStep('canvas_creation', 'canvas_open', { taskId: numericTaskId })
+      } catch {}
     }
     } else {
       Message.warning('未找到指定的任务数据，将创建新任务')
@@ -2348,8 +2397,15 @@ function onCanvasDrop(e) {
       pendingCreatePoint = { x: local.x, y: local.y }
       pendingInsertionEdge = null
       const createdIds = insertTouchComboNodes(nodeType)
-      if (createdIds && createdIds.length) highlightNodes(createdIds)
-      else Message.warning('高级组合节点创建失败，请重试')
+      if (createdIds && createdIds.length) {
+        highlightNodes(createdIds)
+        try {
+          tracker.track('combo_insert', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { comboType: nodeType, nodeCount: createdIds.length } })
+        } catch {}
+      } else {
+        Message.warning('高级组合节点创建失败，请重试')
+        try { tracker.track('node_drop_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'combo_insert_failed' } }) } catch {}
+      }
       return
     }
     const x = local.x
@@ -2366,9 +2422,19 @@ function onCanvasDrop(e) {
       outCount,
       data: { type: nodeType, nodeType: nodeType, isConfigured: false }
     }))
-    if (created) highlightNodes([created.id])
+    if (created) {
+      highlightNodes([created.id])
+      try {
+        tracker.track('node_drop', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, isCombo: false, x, y } })
+        // 漏斗：首个非 start 业务节点
+        if (nodeType !== 'start') tracker.trackFunnelStep('canvas_creation', 'first_node_drop', { nodeType })
+      } catch {}
+    } else {
+      try { tracker.track('node_drop_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'addNode_failed' } }) } catch {}
+    }
   } catch (e) {
     Message.error('拖放创建节点失败，请重试')
+    try { tracker.track('node_drop_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'exception' } }) } catch {}
     console.warn('[Horizontal] 拖放创建节点失败:', e)
   }
 }
@@ -2655,6 +2721,7 @@ const loadCanvasData = (canvasData) => {
 // 保存任务函数 - 参考原版画布实现
 const saveTask = async () => {
   if (!taskName.value) { Message.error('请输入任务名称'); return }
+  const saveStart = Date.now()
   try {
     const canvasData = collectCanvasData(graph)
     const validation = validateForPublish(graph, canvasData)
@@ -2667,17 +2734,31 @@ const saveTask = async () => {
     else { saved = saveTaskSvc(saveMeta, canvasData); if (!saved || !saved.id) { Message.error('保存失败：未生成任务ID，请稍后重试'); return } Message.success('已保存为草稿，可继续编辑'); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
     taskStatus.value = 'draft'
     isDirty.value = false
+    const saveMs = Date.now() - saveStart
+    try { tracker.track('save_draft', { taskId: editingTaskId.value, version: versionToUse, props: { durationMs: saveMs, pass: validation.pass, versionToUse } }) } catch {}
+    if (validation.pass) { try { tracker.trackFunnelStep('canvas_creation', 'validate_pass', {}) } catch {} ; try { tracker.trackFunnelStep('canvas_creation', 'save_draft', {}) } catch {} }
     return saved
-  } catch (e) { Message.error(`保存失败: ${e.message || '未知错误'}`) }
+  } catch (e) {
+    try { tracker.track('save_draft', { taskId: editingTaskId.value, version: taskVersion.value, props: { durationMs: Date.now() - saveStart, pass: false, error: String(e?.message || 'unknown') } }) } catch {}
+    Message.error(`保存失败: ${e.message || '未知错误'}`)
+  }
 }
 
 // 发布任务函数 - 参考原版画布实现
 const publishTask = async () => {
   if (!taskName.value) { Message.error('请输入任务名称'); return }
+  const publishStart = Date.now()
   try {
     const canvasData = collectCanvasData(graph)
     const validation = validateForPublish(graph, canvasData)
-    if (!validation.pass) { showValidationModal(validation.messages, validation.details || []); return }
+    if (!validation.pass) {
+      try {
+        const kinds = (validation.details || []).map(d => d.kind).filter(Boolean)
+        tracker.track('validate_fail', { taskId: editingTaskId.value, version: taskVersion.value, props: { errorKinds: kinds, messageCount: (validation.messages || []).length } })
+      } catch {}
+      showValidationModal(validation.messages, validation.details || [])
+      return
+    }
     const name = taskName.value || '未命名任务'
     let versionToUse = taskVersion.value || 1
     if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
@@ -2687,8 +2768,15 @@ const publishTask = async () => {
     else { saved = publishTaskSvc(publishMeta, canvasData); if (!saved || !saved.id) { Message.error('发布失败：未生成任务ID，请稍后重试'); return } Message.success(`已发布当前版本（v${versionToUse}），可在任务列表查看`); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
     taskStatus.value = 'published'
     isDirty.value = false
+    try {
+      tracker.track('publish', { taskId: editingTaskId.value, version: versionToUse, props: { durationMs: Date.now() - publishStart, version: versionToUse } })
+      tracker.trackFunnelStep('canvas_creation', 'publish', { version: versionToUse })
+    } catch {}
     return saved
-  } catch (e) { Message.error(`发布失败: ${e.message || '未知错误'}`) }
+  } catch (e) {
+    try { tracker.track('publish', { taskId: editingTaskId.value, version: taskVersion.value, props: { durationMs: Date.now() - publishStart, pass: false, error: String(e?.message || 'unknown') } }) } catch {}
+    Message.error(`发布失败: ${e.message || '未知错误'}`)
+  }
 }
 
 function submitApprovalOnly() {
@@ -2697,6 +2785,10 @@ function submitApprovalOnly() {
     const canvasData = collectCanvasData(graph)
     const validation = validateForPublish(graph, canvasData)
     if (!validation.pass) {
+      try {
+        const kinds = (validation.details || []).map(d => d.kind).filter(Boolean)
+        tracker.track('validate_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { errorKinds: kinds, fromSubmitApproval: true } })
+      } catch {}
       showValidationModal(validation.messages, validation.details || [])
       publishReady.value = false
       publishMessages.value = validation.messages || []
@@ -2705,6 +2797,7 @@ function submitApprovalOnly() {
     TaskStorage.updateTask(editingTaskId.value, { version: editingTaskVersion.value, description: taskDescription.value || '', updateTime: new Date().toLocaleString('zh-CN'), publishReady: true, publishMessages: [], lastValidatedAt: new Date().toISOString() })
     TaskStorage.submitApproval(editingTaskId.value, editingTaskVersion.value, currentUser.value, taskDescription.value || '')
     approvalStatus.value = 'pending_approval'
+    try { tracker.track('submit_approval', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { by: currentUser.value } }) } catch {}
     Message.success('已提交审批')
   } catch (e) { Message.error(`提交审批失败: ${e?.message || '未知错误'}`) }
 }

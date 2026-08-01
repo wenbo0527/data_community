@@ -26,8 +26,9 @@ export function useCanvasMenus(deps) {
   const {
     getGraph, getIsViewMode, getContentRect,
     openConfigDrawer, createVueShapeNode, getNodeLabel,
-    deleteNodeCascade, Message, Modal
-  } = deps
+    deleteNodeCascade, Message, Modal,
+    onTrack
+  } = deps || {}
 
   const nodeActionsMenu = ref({ visible: false, x: 0, y: 0, nodeId: null })
   const edgeActionsMenu = ref({ visible: false, x: 0, y: 0, edgeId: null })
@@ -98,6 +99,7 @@ export function useCanvasMenus(deps) {
       outCount,
       data: { ...data, nodeName: `${data?.nodeName || label}_副本` }
     }))
+    try { onTrack && onTrack('node_action_copy', { nodeType }) } catch {}
     headerMenuCooldownUntil = Date.now() + 600
     nodeActionsMenu.value.visible = false
   }
@@ -107,10 +109,12 @@ export function useCanvasMenus(deps) {
     if (!nodeId) return
     const graph = getGraph()
     if (!graph) return
+    let capturedNodeType = ''
     try {
       const node = graph.getCellById(nodeId)
       const data = node?.getData?.() || {}
       const nodeType = data?.type || data?.nodeType
+      capturedNodeType = String(nodeType || '')
       if (nodeType === 'start') {
         try { Message.warning('开始节点不支持删除') } catch {}
         nodeActionsMenu.value.visible = false
@@ -125,6 +129,7 @@ export function useCanvasMenus(deps) {
       hideCancel: false,
       onOk: () => {
         deleteNodeCascade(nodeId)
+        try { onTrack && onTrack('node_action_delete', { nodeType: capturedNodeType }) } catch {}
         Message.success('节点已删除')
         nodeActionsMenu.value.visible = false
       }
