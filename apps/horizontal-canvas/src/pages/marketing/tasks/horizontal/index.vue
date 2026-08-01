@@ -216,7 +216,7 @@ import NodeTypeSelector from '@/components/canvas/NodeTypeSelector.vue';
 import CanvasToolbar from '@/components/toolbar/CanvasToolbar.vue';
 import CanvasHistoryPanel from '@/components/history/CanvasHistoryPanel.vue';
 import CanvasDebugPanel from '@/components/debug/CanvasDebugPanel.vue';
-import { getNodeLabel } from '@/utils/nodeTypes.js';
+import { getNodeLabel, TOUCH_COMBOS } from '@/utils/nodeTypes.js';
 // 水平连接校验：目标在源节点右侧
 import { createHorizontalPortConfig } from './utils/portConfigFactoryHorizontal.js';
 import { createVueShapeNode } from './createVueShapeNode.js';
@@ -583,7 +583,6 @@ function performPasteFromClipboard() {
  * 处理节点选择事件
  */
 const handleNodeSelect = (nodeIds) => {
-  console.log('📊 [Horizontal] 选中节点:', nodeIds)
   // 这里可以实现节点高亮或其他交互逻辑
   if (graph && nodeIds && nodeIds.length > 0) {
     // 清除之前的选中状态
@@ -607,7 +606,6 @@ const handleNodeSelect = (nodeIds) => {
  * 处理路径高亮事件
  */
 const handlePathHighlight = (pathData) => {
-  console.log('🛤️ [Horizontal] 路径高亮:', pathData)
   // 这里可以实现路径高亮逻辑
   if (graph && pathData && pathData.path) {
     // 清除之前的高亮
@@ -680,15 +678,10 @@ const onDebugPanelPositionUpdate = (pos) => {
 }
 
 onMounted(async () => {
-  console.log('[Horizontal] 组件挂载完成，开始初始化...') // 添加挂载日志
   
   // 添加全局点击测试
   setTimeout(() => {
-    console.log('[Horizontal] 全局点击测试 - 请在控制台输入: testClick()')
     window.testClick = () => {
-      console.log('[Horizontal] 全局测试点击成功！')
-      console.log('[Horizontal] 当前graph状态:', graph ? '已初始化' : '未初始化')
-      console.log('[Horizontal] 当前taskName:', taskName.value)
     }
   }, 1000)
   
@@ -998,7 +991,6 @@ onBeforeUnmount(() => {
     const allWithin = outs.every(o => o.args?.y >= contentStart && o.args?.y <= contentEnd)
     const countOk = outs.length === rows.length
     const hasAttrs = outs.every(o => !!o.attrs?.circle && (o.attrs.circle['port-group'] === 'out' || o.attrs.circle['data-port-group'] === 'out'))
-    console.log('[SelfTest] portConfig', { inItem, outsCount: outs.length, firstOut: outs[0], allWithin, countOk, hasAttrs, groups: cfg.groups })
   }
   selfValidatePortConfig()
 
@@ -1139,16 +1131,13 @@ onBeforeUnmount(() => {
     isStatisticsMode: () => !!showStatisticsPanel.value,
     onNodeClickForStats: (node) => { 
       try { 
-        console.log('[Stats] onNodeClickForStats -> node:', node?.id)
         const id = String(node?.id || '')
         statsFocusNodeId.value = id
-        console.log('[Stats] focusNodeId set:', id)
         try { window.dispatchEvent(new CustomEvent('stats:focus', { detail: { id } })) } catch {}
     showStatisticsPanel.value = true 
     } catch {} 
   },
     openConfigDrawer: (type, node, data) => {
-      console.log('openConfigDrawer111', type, node, data);
       configDrawers.openConfigDrawer(type, node, { ...(data || {}), __readOnly: isViewMode.value });
     },
     setShowNodeSelector: v => { showNodeSelector.value = v },
@@ -1243,7 +1232,6 @@ onBeforeUnmount(() => {
         try { pos = node.getPortPosition?.(p.id) || null } catch {}
         return { id: p.id, group: p.group, pos }
       })
-      console.log('🧩 节点端口检查', { nodeId: node.id, ports: details })
       
       // 初始化端口动画状态 - 默认缩小至80%
       setTimeout(() => {
@@ -1279,7 +1267,6 @@ onBeforeUnmount(() => {
   graph.on('edge:change:target', ({ edge }) => {
     try {
       const tgt = edge.getTarget?.()
-      console.log('🎯 边目标变更', { id: edge.id, target: tgt })
     } catch {}
   })
 
@@ -1382,7 +1369,6 @@ onBeforeUnmount(() => {
 
   graph.on('edge:removed', ({ edge }) => {
     try {
-      console.log('🗑️ 边已移除', { id: edge?.id })
     } catch {}
   })
 
@@ -1489,15 +1475,157 @@ function ensureStartNode() {
 // 用途：节点选择器确认类型后插入节点并完成端到端收尾
 // 入参：nodeType 节点类型字符串
 // 返回：创建的节点对象或 null
-// 边界：查看模式不允许；需存在待创建坐标 pendingCreatePoint；可能存在边插入来源 pendingInsertionEdge
+// 边界：查看模式不允许；需存在待创建坐标 pendingCreatePoint；可能存在边插入来源 pendingInsertionEdge；高级节点（*-touch-combo）展开为两个真实节点 + 一条边
 // 副作用：端口修正与两段边重连、历史入栈、TaskStorage 持久化写入、关闭节点选择器
   function handleNodeTypeSelected(nodeType) {
   if (isViewMode.value) return null
+  // 高级节点：展开为触达节点 + 事件分流节点（含一条连线与历史入栈）
+  if (nodeType && TOUCH_COMBOS[nodeType]) {
+    const inserted = insertTouchComboNodes(nodeType)
+    try { closeNodeSelector() } catch {}
+    pendingInsertionEdge = null
+    return inserted
+  }
   const node = insertNodeAndFinalize(graph, nodeType, pendingCreatePoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode)
   try { closeNodeSelector() } catch {}
   pendingInsertionEdge = null
-  console.log('handleNodeTypeSelected111',nodeType,node);
   return node
+}
+
+// 用途：高级触达组合节点 → 生成两个真实子节点（触达 + 事件分流）+ 一条连线，并写持久化
+// 入参：comboType - 'sms-touch-combo' | 'ai-touch-combo'
+// 返回：事件分流节点（聚焦对象）或 null
+// 边界：要求 graph 存在；事件分流默认 2 分支（命中/未命中），命中标签默认『是』、未命中标签默认『否』，未命中超时沿用现有 timeout 字段
+// 副作用：新增 2 个 cell、1 条 edge、清理 pendingInsertionEdge、TaskStorage 持久化、历史入栈
+function insertTouchComboNodes(comboType) {
+  if (!graph || !comboType || !TOUCH_COMBOS[comboType]) return null
+  const combo = TOUCH_COMBOS[comboType]
+  const outreachType = combo.outreach.type
+  const splitType = combo.split.type
+  const now = Date.now()
+  const outreachId = `${outreachType}-${now}`
+  const splitId = `${splitType}-${now + 1}`
+
+  // 触达节点放在选择器坐标；事件分流放在其右侧（横向偏移 280）
+  const basePoint = pendingCreatePoint || { x: 120, y: 120 }
+  const outreachPoint = { x: basePoint.x, y: basePoint.y }
+  const splitPoint = { x: basePoint.x + 280, y: basePoint.y }
+
+  // 若存在边插入来源，需要先把边拆成两段并重接到新触达节点
+  let pendingSource = null
+  let pendingTarget = null
+  if (pendingInsertionEdge) {
+    try {
+      pendingSource = pendingInsertionEdge.getSource?.()
+      pendingTarget = pendingInsertionEdge.getTarget?.()
+      graph.removeEdge?.(pendingInsertionEdge.id)
+    } catch {}
+  }
+
+  // 触达节点
+  let outreachNode = null
+  try {
+    outreachNode = graph.addNode(createVueShapeNode({
+      id: outreachId,
+      x: outreachPoint.x,
+      y: outreachPoint.y,
+      label: getNodeLabel(outreachType) || outreachType,
+      outCount: 1,
+      data: {
+        type: outreachType,
+        nodeType: outreachType,
+        comboType,
+        isConfigured: false,
+        config: {}
+      }
+    }))
+  } catch (e) {
+    console.warn('[Horizontal] 创建组合节点中的触达节点失败:', e)
+    return null
+  }
+
+  // 事件分流节点（默认 2 分支：分支1「发生事件」监听 custom 事件 + 分支2「否」超时未发生；高级组合节点锁定事件类型）
+  let splitNode = null
+  try {
+    const timeoutVal = 60
+    const unitVal = '分钟'
+    const defaultBranches = [
+      { id: `${splitId}-branch-0`, key: `branch-${now}-0`, name: '发生事件', label: '发生事件', type: 'hit', unconditional: true, default: false, eventType: 'custom', customEventName: combo.split.customEventName || '', eventTypeLabel: combo.split.customEventName || '', conditions: [] },
+      { id: `${splitId}-branch-1`, key: `branch-${now}-miss`, name: '否', label: '否', type: 'miss', unconditional: false, default: true, eventType: '', customEventName: '', eventTypeLabel: '', conditions: [] }
+    ]
+    const splitConfig = {
+      nodeName: combo.split.customEventName || '事件分流',
+      eventType: 'custom',
+      eventTypeLabel: combo.split.customEventName,
+      customEventName: combo.split.customEventName || '',
+      eventCondition: '',
+      branches: defaultBranches,
+      timeout: timeoutVal,
+      unit: unitVal,
+      splitCount: defaultBranches.length,
+      nodeType: splitType,
+      comboType
+    }
+    splitNode = graph.addNode(createVueShapeNode({
+      id: splitId,
+      x: splitPoint.x,
+      y: splitPoint.y,
+      label: combo.split.customEventName || getNodeLabel(splitType) || '事件分流',
+      outCount: defaultBranches.length,
+      data: {
+        type: splitType,
+        nodeType: splitType,
+        comboType,
+        isConfigured: false,
+        config: splitConfig
+      }
+    }))
+  } catch (e) {
+    console.warn('[Horizontal] 创建组合节点中的事件分流节点失败:', e)
+    return null
+  }
+
+  // 触达节点 out-0 → 事件分流 in
+  try {
+    graph.addEdge({
+      source: { cell: outreachId, port: 'out-0' },
+      target: { cell: splitId, port: 'in' },
+      router: { name: 'normal' },
+      connector: { name: 'smooth' },
+      attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } }
+    })
+  } catch (e) {
+    console.warn('[Horizontal] 创建组合节点内连线失败:', e)
+  }
+
+  // 还原边插入来源：源 → 触达 in；事件分流 out-0 → 原目标
+  if (pendingSource && pendingTarget && outreachNode && splitNode) {
+    try {
+      graph.addEdge({
+        source: { cell: pendingSource.cell, port: pendingSource.port },
+        target: { cell: outreachId, port: 'in' },
+        router: { name: 'normal' },
+        connector: { name: 'smooth' },
+        attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } }
+      })
+      graph.addEdge({
+        source: { cell: splitId, port: 'out-0' },
+        target: { cell: pendingTarget.cell, port: pendingTarget.port },
+        router: { name: 'normal' },
+        connector: { name: 'smooth' },
+        attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } }
+      })
+    } catch (e) {
+      console.warn('[Horizontal] 还原边插入来源失败:', e)
+    }
+  }
+
+  // 清理选择与历史入栈
+  try { graph.cleanSelection && graph.cleanSelection() } catch {}
+  try { useCanvasHistory && useCanvasHistory(graph) && useCanvasHistory.recordCommand && useCanvasHistory.recordCommand('add-combo') } catch {}
+
+  // 持久化：沿用 collectCanvasData + saveTask 流程；不直接写 TaskStorage（由画布保存按钮统一写入）
+  return splitNode
 }
 
 function closeNodeSelector() { 
@@ -1615,7 +1743,6 @@ function deleteCurrentNode() {
     hideCancel: false,
     onOk: () => {
       deleteNodeCascade(nodeId)
-      console.info('[Horizontal] 节点删除', { nodeId })
       Message.success('节点已删除')
       nodeActionsMenu.value.visible = false
     }
@@ -1635,7 +1762,6 @@ function deleteNodeCascade(nodeId) {
     const edges = graph.getConnectedEdges(node)
     edges.forEach(e => { try { graph.removeEdge(e); console.info('[Horizontal] 连接删除(节点级)', { edgeId: e?.id, nodeId }) } catch {} })
     graph.removeNode(nodeId)
-    console.info('[Horizontal] 节点安全删除完成', { nodeId })
   } catch (e) {
     console.warn('[Horizontal] deleteNodeCascade 异常:', e)
   }
@@ -1778,10 +1904,8 @@ async function loadTaskData() {
 
 // 处理编辑模式的参数 - 在graph完全初始化后
 const query = route.query
-console.log('[Horizontal] 路由查询参数:', query)
 
 if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
-  console.log(`[Horizontal] ${query.mode === 'edit' ? '编辑' : '查看'}模式 - 任务ID: ${query.id}, 版本: ${query.version}`)
   try {
     setTimeout(() => { loadTaskData() }, 300)
   } catch (error) {
@@ -1789,7 +1913,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
     Message.error('加载任务数据失败: ' + error.message)
   }
 } else {
-  console.log('[Horizontal] 新建任务模式')
 }
 
  if (false) {
@@ -1844,7 +1967,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
       const firstCoordIssue = coordValidations.find(v => !v.ok)
       if (firstCoordIssue) problems.push('OUT_PORT_MISALIGNED')
       coordValidations.forEach(v => {
-        console.log(`   - 行${v.index}: 期望Y=${v.expectedY} 端口(${v.portId})Y=${v.portY} 差值=${v.delta} 对齐=${v.ok ? '✅' : '❌'}`)
       })
       const allPorts = Array.from(view?.container?.querySelectorAll?.('.x6-port-body[data-port][data-port-group="out"]') || [])
       const circleInfos = allPorts.map(circleEl => {
@@ -1897,13 +2019,11 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
         const deltaPortDom = portYClient != null ? Math.abs(portYClient - expectedYClient) : null
         const configDelta = configuredYClient != null ? Math.abs(configuredYClient - expectedYClient) : null
         const ok = deltaText != null && deltaPortConv != null ? (deltaText <= 2 && deltaPortConv <= 2) : false
-        console.log(`   - 公式[行${i}] relY=${relY} expectedGraphY=${expectedGraphY} expectedClientY=${expectedYClient} portAbsRelY=${portAbsRelY} portGraphY=${portGraphY} portClientY(DOM)=${portYClient} portClientY(GraphConv)=${portClientFromGraph}`)
         return { index: i, expectedY: expectedYClient, textY: textYClient, portId: domPort ? (domPort.id || '(unknown)') : null, portY: portYClient, portYConv: portClientFromGraph, configuredY: configuredYClient, deltaText, deltaPortDom, deltaPortConv, configDelta, ok }
       })
       const firstDomIssue = domCoordValidations.find(v => !v.ok)
       if (firstDomIssue) problems.push('DOM_MISALIGNED')
       domCoordValidations.forEach(v => {
-        console.log(`   - DOM行${v.index}: 期望Y=${v.expectedY} 文本Y=${v.textY} 端口(${v.portId})Y_DOM=${v.portY} 端口Y_Conv=${v.portYConv} 文本差值=${v.deltaText} 端口差值(DOM)=${v.deltaPortDom} 端口差值(Conv)=${v.deltaPortConv} 配置Y=${v.configuredY} 配置差值=${v.configDelta} 对齐=${v.ok ? '✅' : '❌'}`)
       })
 
       try {
@@ -1925,108 +2045,38 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
 
     const rows = []
     if (rows.length > 0) {
-      console.log('   - 显示内容详情:')
       rows.forEach((text, index) => {
-        console.log(`     第${index + 1}行: "${text}"`)
       })
     }
     
     // 标题区域详细信息
-    console.log('\n🎯 标题区域 (header):')
-    console.log(`   - 选择器: [selector="header"]`)
-    console.log(`   - 位置: (0, 0) [相对节点]`)
-    console.log(`   - 背景色: #F2F3F5`)
-    console.log(`   - 边框: 1px solid #E5E6EB`)
-    console.log(`   - 垂直对齐: 所有标题元素应在36px高度内垂直居中`)
     
-    console.log('\n📐 标题元素垂直对齐验证:')
-    console.log(`   - header-icon Y: 8 (图标顶部)`)
-    console.log(`   - header-icon-text Y: ${POSITIONS.ICON_TEXT_Y} (文字基线)`)
-    console.log(`   - header-title Y: ${POSITIONS.TITLE_Y} (文字基线)`)
-    console.log(`   - menu-dots Y: ${POSITIONS.MENU_DOT_Y} (菜单点中心)`)
-    console.log(`   - 垂直中心线: ${headerHeight / 2} = 18px`)
     
-    console.log('\n🎨 图标区域 (header-icon):')
-    console.log(`   - 选择器: [selector="header-icon"]`)
-    console.log(`   - 位置: (12, 8) [相对header]`)
-    console.log(`   - 绝对位置: (12, 8) [相对节点]`)
-    console.log(`   - 尺寸: 24 × 24`)
-    console.log(`   - 背景色: ${COLORS.HEADER_ICON}`)
-    console.log(`   - 圆角: 4px`)
-    console.log(`   - 图标文字: "${standardIconText}"`)
     
-    console.log('\n🔤 图标文本 (header-icon-text):')
-    console.log(`   - 选择器: [selector="header-icon-text"]`)
-    console.log(`   - 位置: (${POSITIONS.ICON_TEXT_X}, ${POSITIONS.ICON_TEXT_Y}) [相对header]`)
-    console.log(`   - 绝对位置: (${POSITIONS.ICON_TEXT_X}, ${POSITIONS.ICON_TEXT_Y}) [相对节点]`)
-    console.log(`   - 文本: "${standardIconText}"`)
-    console.log(`   - 颜色: ${COLORS.ICON_TEXT}`)
-    console.log(`   - 字体大小: ${TYPOGRAPHY.ICON_FONT_SIZE}px`)
-    console.log(`   - 文本锚点: ${TYPOGRAPHY.ICON_TEXT_ANCHOR}`)
     
-    console.log('\n📝 标题文本 (header-title):')
-    console.log(`   - 选择器: [selector="header-title"]`)
-    console.log(`   - 位置: (${POSITIONS.TITLE_X}, ${POSITIONS.TITLE_Y}) [相对header]`)
-    console.log(`   - 绝对位置: (${POSITIONS.TITLE_X}, ${POSITIONS.TITLE_Y}) [相对节点]`)
-    console.log(`   - 标准文本: "${standardLabel}"`)
-    console.log(`   - 实际文本: "${nodeName}"`)
-    console.log(`   - 颜色: ${COLORS.TITLE_TEXT}`)
-    console.log(`   - 字体大小: ${TYPOGRAPHY.TITLE_FONT_SIZE}px`)
-    console.log(`   - 字重: ${TYPOGRAPHY.TITLE_FONT_WEIGHT}`)
-    console.log(`   - 文本锚点: ${TYPOGRAPHY.TITLE_TEXT_ANCHOR}`)
-    console.log(`   - 文字边界框: X=${POSITIONS.TITLE_X}, Y=${POSITIONS.TITLE_Y}, 宽度自适应`)
     
     // 菜单点详细信息
-    console.log('\n⚙️ 菜单点 (menu-dots):')
-    console.log(`   - 菜单点0: 选择器 [selector="menu-dot-0"], 位置 (${width + POSITIONS.MENU_DOT_OFFSETS[0]}, ${POSITIONS.MENU_DOT_Y}) [相对节点], 尺寸 3×3`)
-    console.log(`   - 菜单点1: 选择器 [selector="menu-dot-1"], 位置 (${width + POSITIONS.MENU_DOT_OFFSETS[1]}, ${POSITIONS.MENU_DOT_Y}) [相对节点], 尺寸 3×3`)
-    console.log(`   - 菜单点2: 选择器 [selector="menu-dot-2"], 位置 (${width + POSITIONS.MENU_DOT_OFFSETS[2]}, ${POSITIONS.MENU_DOT_Y}) [相对节点], 尺寸 3×3`)
-    console.log(`   - 颜色: ${COLORS.MENU_DOT}`)
-    console.log(`   - 圆角: 1.5px`)
-    console.log(`   - 可见性: ${nodeType === 'start' || nodeType === 'end' ? '隐藏' : '可见'}`)
     
     // 内容区域详细信息
-    console.log('\n📋 内容区域:')
-    console.log(`   - 内容起始Y坐标: ${headerHeight + contentPadding}`)
-    console.log(`   - 内容高度: ${contentHeight}`)
-    console.log(`   - 内容中心Y坐标: ${contentCenter}`)
-    console.log(`   - 文本对齐: dominantBaseline=middle（按行几何中点对齐）`)
-    console.log(`   - 第0行Y坐标验证: ${headerHeight} + ${contentPadding} + 0×${rowHeight} + ${Math.floor(rowHeight / 2)} + ${baselineAdjust} = ${headerHeight + contentPadding + Math.floor(rowHeight / 2) + baselineAdjust}`)
     
     if (rows.length > 0) {
-      console.log(`   - 行信息详情:`)
       rows.forEach((text, i) => {
         // 行几何中点：headerHeight + contentPadding + i * rowHeight + rowHeight/2
         const v = headerHeight + contentPadding + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust
         const absTextX = position.x + POSITIONS.CONTENT_START_X
         const absTextY = position.y + v
         const clientText = graph?.graphToClientPoint ? graph.graphToClientPoint({ x: absTextX, y: absTextY }) : { x: absTextX, y: absTextY }
-        console.log(`     第${i + 1}行:`)
-        console.log(`       - 选择器: [selector="row-${i}"]`)
-        console.log(`       - Y坐标: ${v} [相对节点]`)
-        console.log(`       - 计算过程: ${headerHeight} + ${contentPadding} + ${i}×${rowHeight} + ${Math.floor(rowHeight / 2)} + ${baselineAdjust} = ${v}`)
-        console.log(`       - 绝对坐标(文本): (${absTextX}, ${absTextY}) [相对画布]`)
-        console.log(`       - 屏幕坐标(文本): (${clientText.x}, ${clientText.y}) [考虑缩放/平移]`)
-        console.log(`       - 文本内容: "${text}"`)
-        console.log(`       - 字体大小: ${TYPOGRAPHY.CONTENT_FONT_SIZE}px`)
-        console.log(`       - 颜色: ${COLORS.CONTENT_TEXT}`)
-        console.log(`       - 文本锚点: ${TYPOGRAPHY.CONTENT_TEXT_ANCHOR}`)
         // 对应行的 out 端口坐标（相对节点）：行几何中点（与文本 dominantBaseline: middle 对齐）
         const outY = v
         const outId = isSplit ? `out-${i}` : 'out'
         const absOutX = position.x + width
         const absOutY = position.y + outY
         const clientOut = graph?.graphToClientPoint ? graph.graphToClientPoint({ x: absOutX, y: absOutY }) : { x: absOutX, y: absOutY }
-        console.log(`       - 对齐的输出端口: id=${outId}, 坐标 (${width}, ${outY}) [相对节点]`)
-        console.log(`       - 对齐的输出端口绝对坐标: (${absOutX}, ${absOutY}) [相对画布]`)
-        console.log(`       - 对齐的输出端口屏幕坐标: (${clientOut.x}, ${clientOut.y}) [考虑缩放/平移]`)
-        console.log(`       - 端口dy: ${outY} - (${height} / 2) = ${outY - (height / 2)}`)
       })
 
       // 追加：DOM实测（文本BBox中心 与 端口circle中心）
       try {
         const view = graph?.findViewByCell ? graph.findViewByCell(node) : null
-        console.log('\n🔬 DOM测量: 文本BBox中心与端口circle中心对比')
         if (!view) {
           console.warn('   - 未能获取到节点视图，跳过DOM测量')
         } else {
@@ -2034,17 +2084,13 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
           const bbox = node.getBBox ? node.getBBox() : null
           const nodeTopGraph = Math.round(bbox?.y || 0)
           const nodeCenterGraphY = Math.round((bbox?.y || 0) + ((bbox?.height || 0) / 2))
-          console.log(`   - 坐标基准: nodeTopGraph=${nodeTopGraph} nodeCenterGraphY=${nodeCenterGraphY}`)
 
           // 文本BBox中心（增强内容行匹配）
-          console.log('\n🔍 内容行DOM测量（增强匹配）:')
           
           // 获取所有内容元素
           const contentEl = view.container?.querySelector('.horizontal-node__content')
           if (contentEl) {
             const textElements = Array.from(contentEl.querySelectorAll('.port-indicator'))
-            console.log(`   - 找到内容区域，共 ${textElements.length} 个.port-indicator元素`)
-            console.log(`   - 期望内容行数: ${rows.length}`)
             if (textElements.length === 0) {
               const d = node.getData?.() || {}
               const cfgLines = d?.config?.displayLines || []
@@ -2080,13 +2126,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
                 const dataText = textEl.getAttribute('data-text') || ''
                 const dataTextMatch = dataText === expectedText
                 
-                console.log(`   - [row-${i}] ✅ 找到DOM元素:`)
-                console.log(`       - 期望文本: "${expectedText}"`)
-                console.log(`       - 实际文本: "${actualText}"`)
-                console.log(`       - data-text: "${dataText}"`)
-                console.log(`       - 文本匹配: ${textMatch ? '✅' : '❌'} (data-text: ${dataTextMatch ? '✅' : '❌'})`)
-                console.log(`       - 元素尺寸: 宽=${Math.round(rect.width)} 高=${Math.round(rect.height)}`)
-                console.log(`       - 中心坐标: 屏幕=(${centerClientX}, ${centerClientY}) 画布=(${Math.round(cg.x)}, ${Math.round(cg.y)})`)
                 
                 // 验证内容是否正确显示
                 if (!textMatch) {
@@ -2096,35 +2135,20 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
                   console.warn(`       - ⚠️ 元素尺寸为0，可能未正确渲染！`)
                 }
               } else {
-                console.log(`   - [row-${i}] ❌ 缺少DOM元素: 期望文本:"${text}"`)
-                console.log(`       - 可能原因: Vue组件未渲染、数据未更新、元素选择器错误`)
                 
                 // 提供调试建议
-                console.log(`       - 调试建议:`)
-                console.log(`         1. 检查HorizontalNode组件的outRows计算`)
-                console.log(`         2. 检查节点数据中的displayLines或配置内容`)
-                console.log(`         3. 检查Vue组件是否正确挂载和渲染`)
-                console.log(`         4. 检查data-row属性是否正确设置`)
               }
             })
             
             // 如果有额外的DOM元素，也显示出来
             if (textElements.length > rows.length) {
-              console.log(`   - ⚠️ 发现额外的DOM元素:`)
               for (let i = rows.length; i < textElements.length; i++) {
                 const extraEl = textElements[i]
                 const rect = extraEl.getBoundingClientRect()
                 const text = extraEl.textContent?.trim() || ''
-                console.log(`     [extra-${i}] 文本:"${text}" 尺寸:宽=${Math.round(rect.width)} 高=${Math.round(rect.height)}`)
               }
             }
           } else {
-            console.log(`   - ❌ 内容区域(.horizontal-node__content)未找到`)
-            console.log(`   - 可能原因:`)
-            console.log(`     1. HorizontalNode组件未正确渲染`)
-            console.log(`     2. Vue组件挂载失败`)
-            console.log(`     3. 节点选择器错误`)
-            console.log(`   - 建议检查节点视图结构:`, view.container?.innerHTML?.substring(0, 500))
           }
 
           // 端口circle中心（增强端口识别）
@@ -2136,7 +2160,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
           for (const selector of portSelectors) {
             allPorts = Array.from(container?.querySelectorAll?.(selector) || [])
             if (allPorts.length > 0) {
-              console.log(`   - 使用选择器 ${selector} 找到 ${allPorts.length} 个端口元素`)
               break
             }
           }
@@ -2204,67 +2227,43 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
               !outCircles.includes(c) && !inCircles.includes(c)
             )
 
-            console.log(`   - 端口DOM统计: 总计${circleInfos.length}`)
-            console.log(`   - in端口: ${inCircles.length}个`)
-            console.log(`   - out端口: ${outCircles.length}个`)
             if (unidentified.length > 0) {
-              console.log(`   - 未识别端口: ${unidentified.length}个`)
             }
 
             // 详细显示所有端口信息
-            console.log('   - 端口详细信息:')
             circleInfos.forEach(c => {
               const portType = inCircles.includes(c) ? 'IN' : 
                              outCircles.includes(c) ? 'OUT' : 'UNKNOWN'
-              console.log(`   - [${portType} ${c.id || '(无id)'}] group=${c.group || '(无group)'} type=${c.type || '(无type)'} element=${c.element}`)
-              console.log(`     屏幕中心=(${c.cxClient}, ${c.cyClient}) 画布中心=(${c.cxGraph}, ${c.cyGraph})`)
             })
 
             // 增强端口和内容行的匹配检测
             const nodeBBox = node.getBBox()
             const nodeCenterY = nodeBBox.y + nodeBBox.height / 2
             
-            console.log('\n🎯 端口与内容行匹配检测:')
-            console.log(`   - 内容行数: ${rows.length}`)
-            console.log(`   - out端口数: ${outCircles.length}`)
-            console.log(`   - in端口数: ${inCircles.length}`)
             
             // in端口检测：应该位于节点中心
             if (inCircles.length > 0) {
-              console.log('   📍 in端口对齐检测:')
               inCircles.forEach(c => {
                 const delta = Math.abs(c.cyGraph - nodeCenterY)
-                console.log(`   - [IN端口 ${c.id}] 实测Y=${c.cyGraph} 期望中心Y=${nodeCenterY} 差值=${delta}`)
                 if (delta > 2) {
                   console.warn(`   - ⚠️ IN端口 ${c.id} 未对齐到节点中心！`)
                 } else {
-                  console.log(`   - ✅ IN端口 ${c.id} 正确对齐到节点中心`)
                 }
               })
             }
             
             // out端口与内容行匹配检测
             if (outCircles.length > 0 && rows.length > 0) {
-              console.log('   📍 out端口与内容行匹配检测:')
-              console.log(`   - out端口数量: ${outCircles.length}`)
-              console.log(`   - 内容行数量: ${rows.length}`)
-              console.log(`   - 期望的行Y坐标计算参数:`)
-              console.log(`     - headerHeight: ${headerHeight}`)
-              console.log(`     - contentPadding: ${contentPadding}`)
-              console.log(`     - rowHeight: ${rowHeight}`)
-              console.log(`     - baselineAdjust: ${baselineAdjust}`)
               
               // 获取内容元素的实际位置
               const contentEl = view.container?.querySelector('.horizontal-node__content')
               const textElements = contentEl ? Array.from(contentEl.querySelectorAll('.port-indicator')) : []
               
-              console.log(`   - 找到 ${textElements.length} 个内容元素`)
               
               // 计算期望的行Y坐标（基于节点顶部 + 绝对偏移）
               const expectedRowYs = rows.map((_, i) => {
                 const rowYFromNodeTop = headerHeight + contentPadding + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust
                 const expectedY = nodeBBox.y + rowYFromNodeTop
-                console.log(`     - 行${i}: 相对节点顶部=${rowYFromNodeTop}, 绝对Y=${expectedY}`)
                 return expectedY
               })
               
@@ -2290,21 +2289,14 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
                 
                 if (closestPort) {
                   const delta = Math.abs(closestPort.cyGraph - expectedY)
-                  console.log(`   - [行${rowIndex}] "${rowText}"`)
-                  console.log(`     期望Y: ${expectedY}`)
-                  console.log(`     端口Y: ${closestPort.cyGraph} (id: ${closestPort.id})`)
                   if (actualContentY) {
-                    console.log(`     内容Y: ${actualContentY}`)
                   }
-                  console.log(`     差值: ${delta}`)
                   
                   if (delta > 2) {
                     console.warn(`     ⚠️ 端口未对齐到内容行！`)
                   } else {
-                    console.log(`     ✅ 端口正确对齐到内容行`)
                   }
                 } else {
-                  console.log(`   - [行${rowIndex}] "${rowText}" - 未找到对应端口`)
                 }
               })
               const problems = []
@@ -2316,13 +2308,10 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
               if (problems.length) {
                 console.warn('\n❗ 诊断结论: ' + problems.join('；'))
               } else {
-                console.log('\n✅ 诊断结论: 内容与端口完全匹配')
               }
             } else if (outCircles.length > 0) {
-              console.log('   - out端口存在但无内容行，按Y坐标排序检测:')
               const sortedOut = outCircles.slice().sort((a, b) => a.cyGraph - b.cyGraph)
               sortedOut.forEach((c, idx) => {
-                console.log(`   - [OUT端口 ${c.id}] Y=${c.cyGraph}`)
               })
             }
 
@@ -2333,7 +2322,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
               // 转换为相对节点中心的dy（因为X6端口系统使用相对中心的dy）
               return rowYFromNodeTop - (height / 2)
             })
-            console.log(`   - 建议端口dy(基于layout): [${recommendedDys.map(v => Math.round(v)).join(', ')}]  (height=${height})`)
 
             // 直接应用推荐dy到端口（按 out-i 映射），便于快速校正
             try {
@@ -2347,7 +2335,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
                   node.setPortProp(pid, 'args/y', yRel)
                 }
               })
-              console.log('   - 已应用DOM推荐dy到端口: ', portIds.map((pid, i) => `${pid}:${Math.round(recommendedDys[i])}`).join(', '))
             } catch (applyErr) {
               console.warn('   - 应用推荐dy失败（忽略，继续调试）:', applyErr)
             }
@@ -2360,22 +2347,14 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
       // 计算分流节点各行的垂直中点偏移（相对节点坐标），采用行几何中点
       if (isSplit && rows.length > 0) {
         computedVerticalOffsets = rows.map((_, i) => headerHeight + contentPadding + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust)
-        console.log(`   - 分流节点垂直偏移: [${computedVerticalOffsets.join(', ')}]`)
       }
     } else {
-      console.log('   - 无内容行 (空节点)')
     }
     
     // 端口信息
-    console.log('\n🔌 端口信息:')
-    console.log(`   - 输入端口: Y坐标 ${contentCenter} (相对节点)`)
-    console.log(`   - 输出端口数量: ${isSplit ? Math.max(1, rows.length) : 1}`)
     if (isSplit && rows.length > 0) {
       const outIds = rows.map((_, i) => `out-${i}`)
-      console.log(`   - 输出端口ID: [${outIds.join(', ')}]`)
-      console.log(`   - 输出端口Y坐标: [${computedVerticalOffsets.join(', ')}] (相对节点)`)
     } else {
-      console.log(`   - 输出端口Y坐标: ${contentCenter} (相对节点)`)
     }
 
     // 端口-内容行对齐检测（读取实际端口配置与最终Y）
@@ -2397,10 +2376,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
       const expectedRowYsGraph = rows.map((_, i) => (bbox?.y || position.y) + contentStart + i * rowHeight + Math.floor(rowHeight / 2))
       const groupsConf = node.getProp ? (node.getProp('ports/groups') || {}) : {}
       const outLayoutName = groupsConf?.out?.portLayout?.name || groupsConf?.out?.portLayout || '(未知)'
-      console.log('\n🧭 高度/基准与布局信息:')
-      console.log(`   - modelHeight=${modelHeight} domHeight=${domHeight} bboxHeight=${bboxHeight} 使用布局中心Y=${layoutCenterGraphY}`)
-      console.log(`   - 端口组布局: out.portLayout=${String(outLayoutName)}`)
-      console.log('   - 期望行Y(画布):', expectedRowYsGraph)
       const outPortComputed = outPorts.map(p => {
         const a = p?.args || {}
         const hasRow = typeof a.rowIndex === 'number'
@@ -2411,16 +2386,10 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
             : ((layoutCenterGraphY - nodeTopGraph) + (a.dy ?? 0)))
         return { id: p.id, dy: a.dy ?? 0, yGraph: nodeTopGraph + yRel }
       })
-      console.log('   - 端口dy与最终Y(布局):', outPortComputed)
       const sortedY = outPortComputed.map(o => o.yGraph).slice().sort((a,b)=>a-b)
       const steps = sortedY.map((y, i) => i>0 ? y - sortedY[i-1] : null).filter(v => v != null)
       const rowSteps = expectedRowYsGraph.map((y, i) => i>0 ? y - expectedRowYsGraph[i-1] : null).filter(v => v != null)
-      console.log('   - 端口Y步进(布局):', steps)
-      console.log('   - 行中心Y步进(期望):', rowSteps)
-      console.log('\n🔎 端口-内容行对齐检测:')
-      console.log('   - 期望行Y(画布):', rows.map((_, i) => nodeTopGraph + contentStart + i * rowHeight + Math.floor(rowHeight / 2) + baselineAdjust))
       if (!outPorts.length) {
-        console.log('   - 未发现输出端口')
       } else {
         outPorts.forEach(p => {
           const a = p?.args || {}
@@ -2454,7 +2423,6 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
           if (delta > 0) {
             console.warn(msg)
           } else {
-            console.log(msg)
           }
         })
       }
@@ -2463,23 +2431,8 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
     }
     
     // 尺寸计算过程
-    console.log('\n📐 尺寸计算过程:')
-    console.log(`   - 基础高度 = header(${headerHeight}) + padding(${contentPadding}) + 内容(${rows.length}×${rowHeight}) + 12`)
-    console.log(`   - 计算高度 = ${headerHeight} + ${contentPadding} + ${rows.length}×${rowHeight} + 12 = ${headerHeight + contentPadding + rows.length * rowHeight + 12}`)
-    console.log(`   - 最终高度 = max(MIN_HEIGHT(${NODE_DIMENSIONS.MIN_HEIGHT}), 计算高度) = ${height}`)
     
     // 样式常量汇总
-    console.log('\n🎨 样式常量汇总:')
-    console.log(`   - 节点宽度: ${NODE_DIMENSIONS.WIDTH}`)
-    console.log(`   - 头部高度: ${NODE_DIMENSIONS.HEADER_HEIGHT}`)
-    console.log(`   - 行高: ${NODE_DIMENSIONS.ROW_HEIGHT}`)
-    console.log(`   - 内容内边距: ${NODE_DIMENSIONS.CONTENT_PADDING}`)
-    console.log(`   - 菜单点Y位置: ${POSITIONS.MENU_DOT_Y}`)
-    console.log(`   - 标题X位置: ${POSITIONS.TITLE_X}`)
-    console.log(`   - 标题Y位置: ${POSITIONS.TITLE_Y}`)
-    console.log(`   - 内容字体大小: ${TYPOGRAPHY.CONTENT_FONT_SIZE}px`)
-    console.log(`   - 标题字体大小: ${TYPOGRAPHY.TITLE_FONT_SIZE}px`)
-    console.log(`   - 图标字体大小: ${TYPOGRAPHY.ICON_FONT_SIZE}px`)
 }
 function onCanvasDragOver(e) {
   e.preventDefault()
@@ -2490,10 +2443,17 @@ function onCanvasDrop(e) {
   if (isViewMode.value) return
   try {
     const local = graph?.pageToLocal ? graph.pageToLocal(e.pageX, e.pageY) : { x: e.offsetX, y: e.offsetY }
-    const x = local.x
-    const y = local.y
     const nodeType = e.dataTransfer.getData('nodeType')
     if (!nodeType) return
+    // 高级节点（短信/AI 触达组合）走组合节点插入逻辑，不生成视觉实体
+    if (TOUCH_COMBOS[nodeType]) {
+      pendingCreatePoint = { x: local.x, y: local.y }
+      pendingInsertionEdge = null
+      insertTouchComboNodes(nodeType)
+      return
+    }
+    const x = local.x
+    const y = local.y
     const label = getNodeLabel(nodeType) || nodeType
     const fourOutTypes = ['crowd-split', 'event-split', 'ab-test']
     const outCount = fourOutTypes.includes(nodeType) ? 4 : 1
@@ -2522,7 +2482,6 @@ const handleZoomIn = () => {
   if (typeof graph.zoomTo === 'function') graph.zoomTo(next)
   else graph.zoom(next)
   useCanvasState().updateScaleDisplay(scaleDisplayText, graph.zoom?.() || next)
-  console.log('[Toolbar] 放大画布，当前缩放:', graph.zoom?.())
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
@@ -2533,7 +2492,6 @@ const handleZoomOut = () => {
   if (typeof graph.zoomTo === 'function') graph.zoomTo(next)
   else graph.zoom(next)
   useCanvasState().updateScaleDisplay(scaleDisplayText, graph.zoom?.() || next)
-  console.log('[Toolbar] 缩小画布，当前缩放:', graph.zoom?.())
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
@@ -2543,7 +2501,6 @@ const handleResetZoom = () => {
   else graph.zoom(1)
   scheduleCenterContent({ preserveZoom: false })
   useCanvasState().updateScaleDisplay(scaleDisplayText, 1)
-  console.log('[Toolbar] 重置缩放并居中')
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
@@ -2553,7 +2510,6 @@ const handleSetZoom = (scale) => {
   if (typeof graph.zoomTo === 'function') graph.zoomTo(clamped)
   else graph.zoom(clamped)
   useCanvasState().updateScaleDisplay(scaleDisplayText, graph.zoom?.() || clamped)
-  console.log(`[Toolbar] 设置缩放比例: ${clamped} -> ${newZoom}%`)
   setTimeout(() => { try { minimap?.updateGraph?.() } catch {} }, 50)
 }
 
@@ -2641,7 +2597,6 @@ const handleJumpToHistoryState = (index) => {
   }
 
 const handleToggleMinimap = (payload) => {
-  console.log('[Toolbar] 切换小地图')
   const anchor = payload?.anchorRect || null
   const canvasRect = canvasContainerRef.value?.getBoundingClientRect?.() || null
   useCanvasState().toggleMinimapUI(showMinimap, anchor, canvasRect, minimapPosition)
@@ -2682,13 +2637,11 @@ const handleToggleMinimap = (payload) => {
 
 // 切换辅助线显示/隐藏
 const toggleSnapline = () => {
-  console.log('[Toolbar] 切换辅助线')
   showSnapline.value = !showSnapline.value
   
   if (graph) {
     // 更新辅助线配置
     graph.setSnaplineEnabled(showSnapline.value)
-    console.log(`[Snapline] 辅助线已${showSnapline.value ? '开启' : '关闭'}`)
   }
 }
 
@@ -2763,7 +2716,6 @@ const handleAddNode = (payload) => {
 
 // 返回函数
 const goBack = () => {
-  console.log('[goBack] 返回按钮被点击')
   router.push('/marketing/tasks')
 }
 
@@ -2840,7 +2792,6 @@ const validateCanvasForPublish = (canvasData) => validateForPublish(graph, canva
 
 // 测试函数
 const testClick = () => {
-  console.log('=== 测试按钮被点击了！ ===')
   console.log('函数状态:', {
     saveTask: typeof saveTask,
     publishTask: typeof publishTask,

@@ -19,6 +19,11 @@ export const TARGET_AUDIENCE_OPTIONS = [
   { label: '新用户', value: 'new' },
   { label: '自定义', value: 'custom' }
 ]
+export const PRODUCT_OPTIONS = [
+  { label: '苏贷', value: 'sudai' },
+  { label: '京东大额低息', value: 'jd_low_interest' },
+  { label: '美团大额低息', value: 'meituan_low_interest' }
+]
 export const VALIDATION_LIMITS = {
   deduplicationDays: { min: 1, max: 365 },
   pushLimit: { min: 1, max: 100000 }

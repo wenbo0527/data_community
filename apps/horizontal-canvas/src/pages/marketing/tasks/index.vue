@@ -228,11 +228,9 @@ const pagination = reactive({
 
 // 初始化数据
 const initData = () => {
-  console.log('🔄 [TaskList] 开始加载任务列表数据')
   
   // 从本地存储获取所有任务
   const storedTasks = TaskStorage.getAllTasks()
-  console.log('📦 [TaskList] 从本地存储加载的任务:', storedTasks)
   
   // 转换本地存储的任务格式以匹配列表显示
   const convertedStoredTasks = storedTasks.map(task => ({
@@ -268,7 +266,6 @@ const initData = () => {
   
   // 显示存储统计
   const stats = TaskStorage.getStorageStats()
-  console.log('📈 [TaskList] 存储统计:', stats)
 }
 
 // 获取状态颜色
@@ -487,7 +484,6 @@ const viewVersion = (record, version) => {
 
 // 手工推送任务
 const manualPush = (record) => {
-  console.log('手工推送任务:', record)
   if (record.status === 'draft') {
     record.status = 'running'
   }
@@ -496,20 +492,17 @@ const manualPush = (record) => {
 
 // 查看执行日志
 const viewExecutionLog = (record) => {
-  console.log('查看执行日志:', record)
   Message.info('执行日志功能开发中...')
 }
 
 // 停止任务
 const stopTask = (record) => {
-  console.log('停止任务:', record)
   record.status = 'disabled'
   Message.success('任务已停止')
 }
 
 // 删除任务
 const deleteTask = (record) => {
-  console.log('🗑️ [TaskList] 删除任务:', record)
   
   try {
     // 从本地存储删除任务
@@ -524,11 +517,9 @@ const deleteTask = (record) => {
       }
       
       Message.success('任务删除成功')
-      console.log('✅ [TaskList] 任务删除成功:', record.id)
       
       // 显示更新后的存储统计
       const stats = TaskStorage.getStorageStats()
-      console.log('📈 [TaskList] 删除后存储统计:', stats)
     } else {
       // 如果是模拟数据（ID 1-4），提示无法删除
       if (record.id >= 1 && record.id <= 4) {
@@ -546,18 +537,15 @@ const deleteTask = (record) => {
 // 分页变化
 const onPageChange = (page) => {
   pagination.current = page
-  console.log('页码变化:', page)
 }
 
 const onPageSizeChange = (pageSize) => {
   pagination.pageSize = pageSize
   pagination.current = 1
-  console.log('页大小变化:', pageSize)
 }
 
 // 刷新任务列表
 const refreshTaskList = () => {
-  console.log('🔄 [TaskList] 刷新任务列表')
   initData()
   Message.success('任务列表已刷新')
 }

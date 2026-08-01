@@ -8,6 +8,11 @@ export function buildDisplayLines(nodeType, config = {}) {
   if (nodeType === 'start') {
     if (config?.taskType) lines.push(`任务类型：${config.taskType}`)
     if (Array.isArray(config?.targetAudience) && config.targetAudience.length) lines.push(`目标人群：${config.targetAudience.join('、')}`)
+    if (Array.isArray(config?.products) && config.products.length) {
+      const PRODUCT_LABEL = { sudai: '苏贷', jd_low_interest: '京东大额低息', meituan_low_interest: '美团大额低息' }
+      const names = config.products.map(p => PRODUCT_LABEL[p] || p).filter(Boolean)
+      if (names.length) lines.push(`产品：${names.join('、')}`)
+    }
   } else if (nodeType === 'crowd-split' || nodeType === 'audience-split') {
     const layers = Array.isArray(config?.crowdLayers) ? config.crowdLayers : []
     const branches = Array.isArray(config?.branches) ? config.branches : []
@@ -22,15 +27,41 @@ export function buildDisplayLines(nodeType, config = {}) {
       lines.push('其他')
     }
   } else if (nodeType === 'event-split') {
-    const eventType = config?.eventTypeLabel || (Array.isArray(config?.events) && config.events.length ? (config.events[0]?.type || config.events[0]?.name || '事件') : (config?.eventType || config?.eventName || '事件'))
     const timeoutVal = config?.timeout != null ? String(config.timeout) : ''
     const timeoutUnit = config?.unit || '分钟'
-    lines.push(`发生【${eventType}】`)
-    if (timeoutVal) {
-      lines.push(`【${timeoutVal}${timeoutUnit}】未发生事件`)
-    } else {
-      lines.push('【未设置超时】未发生事件')
-    }
+    // 仅展示分支：按顺序匹配命中第一即落入；miss 分支的触发条件=超时未发生
+    const branches = Array.isArray(config?.branches) ? config.branches : []
+    branches.forEach(b => {
+      const isMiss = b.type === 'miss'
+      const unconditional = Boolean(b.unconditional)
+      const label = b.name || b.label || (isMiss ? '否' : (unconditional ? '发生事件' : ''))
+      const eventTag = isMiss ? '' : (b.eventTypeLabel || b.customEventName || b.eventType || '')
+      if (isMiss) {
+        if (timeoutVal) {
+          lines.push(`↳ ${timeoutVal}${timeoutUnit}未发生 → ${label}`)
+        } else {
+          lines.push(`↳ 未设置超时未发生 → ${label}`)
+        }
+        return
+      }
+      const eventPrefix = eventTag ? `【${eventTag}】` : '【未选事件】'
+      if (unconditional) {
+        lines.push(`↳ ${eventPrefix}${label}: 无条件`)
+        return
+      }
+      const conds = Array.isArray(b.conditions) ? b.conditions.filter(c => c && (c.field || c.value)) : []
+      if (!conds.length) {
+        lines.push(`↳ ${eventPrefix}${label}`)
+        return
+      }
+      const condTexts = conds.map(c => {
+        const opLabel = c.operatorLabel || ({ eq: '=', neq: '≠', contains: '包含', gt: '>', lt: '<', in: '属于', not_in: '不属于' }[c.operator] || c.operator)
+        const field = c.field || '属性'
+        const value = c.value != null ? String(c.value) : ''
+        return `${field} ${opLabel} ${value}`
+      })
+      lines.push(`↳ ${eventPrefix}${label}: ${condTexts.join(' AND ')}`)
+    })
   } else if (nodeType === 'ab-test') {
     const branches = Array.isArray(config?.branches) ? config.branches : []
     const variants = Array.isArray(config?.variants) ? config.variants : []
