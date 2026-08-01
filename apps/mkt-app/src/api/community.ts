@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/mockRequest'
 
 export const communityApi = {
   getList: (params: any) => request.get('/api/community/list', { params }),

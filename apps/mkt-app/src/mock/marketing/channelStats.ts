@@ -1,6 +1,10 @@
-// ChannelStat Mock 数据 (多渠道投放效果对比)
-// TASK-20260717-2FFA5BCA · 候选 #235 dev 范围 · PM A' 拍板 23:00 CST
-
+/**
+ * Channel Stats Mock Data（多渠道投放效果对比）
+ * 用途：营销渠道投放效果 mock（曝光/点击/转化/成本/ROI）
+ * 来源：TASK-20260717-2FFA5BCA · 候选 #235 dev 范围 · PM A' 拍板 23:00 CST
+ * 消费方：@/api/marketing.ts + @/mock/marketing/index.ts 聚合
+ * 边界：纯前端 demo；5 大渠道（微信/短信/AI外呼/人工电销/邮件）
+ */
 import type { ChannelStat } from '@/types/marketing'
 
 const today = new Date().toISOString().substring(0, 10)

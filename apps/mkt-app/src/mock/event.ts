@@ -1,4 +1,10 @@
-// 事件中心Mock数据服务
+/**
+ * Event Center Mock Service（mockjs 动态生成）
+ * 用途：事件中心全部 mock（事件/虚拟事件/示例统计/Kafka/条件/趋势/异常/用户路径）
+ * 来源：customer/event-center 7 个页面使用
+ * 消费方：@/pages/customer/event-center/* (7 vue)
+ * 边界：纯前端 demo；使用 mockjs 实时生成；返回 mockEventAPI 对象
+ */
 import Mock from 'mockjs';
 import type { 
   EventData, 

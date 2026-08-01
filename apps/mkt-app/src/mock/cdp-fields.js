@@ -1,5 +1,10 @@
-// CDP 规则构建器 Mock 数据
-// 字段类型：标签（文本型/数值型）、事件
+/**
+ * CDP Rule Builder Mock Data
+ * 用途：CDP 规则构建器字段池（标签文本/标签数值/事件 三大类）
+ * 来源：覆盖 dmt-app CDP 规则引擎
+ * 消费方：@/pages/tasks/components/task/CDPRuleBuilderForm.vue
+ * 边界：纯前端 demo；字段池层级结构（group/subGroup/fields）
+ */
 
 export const tagFields = [
   {

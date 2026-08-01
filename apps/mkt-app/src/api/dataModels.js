@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/mockRequest'
 
 /**
  * 数据模型管理API

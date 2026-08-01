@@ -1,53 +1,84 @@
-// 画布统计API接口
-import { supabase } from '@/utils/supabase'
-import type { 
-  CanvasOverviewStats, 
-  NodeStats, 
-  UserPathData, 
+// 画布统计API接口（mock 实现）
+// 用途：原实现从 supabase 拉数据；项目无后端，改为本地 mock 生成。
+// 边界：纯前端 demo；保留原函数签名 + 返回结构。
+import type {
+  CanvasOverviewStats,
+  NodeStats,
+  UserPathData,
   ExportRequest,
-  FilterState 
+  FilterState
 } from '@/components/canvas-statistics'
+
+const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+
+// 内联 mock 数据生成
+const generateMockNodeStats = (canvasId: string, count: number = 12): any[] => {
+  const now = Date.now()
+  return Array.from({ length: count }, (_, i) => {
+    const enter = Math.floor(Math.random() * 1000) + 100
+    const exit = Math.floor(enter * (0.5 + Math.random() * 0.4))
+    return {
+      canvas_id: canvasId,
+      node_id: `node_${i + 1}`,
+      stat_date: new Date(now - i * 86400000).toISOString().substring(0, 10),
+      enter_count: enter,
+      exit_count: exit,
+      unique_users: Math.floor(enter * 0.7),
+      avg_stay_time: Math.floor(Math.random() * 60) + 10,
+      max_stay_time: Math.floor(Math.random() * 120) + 60,
+      min_stay_time: Math.floor(Math.random() * 10) + 1,
+      conversion_rate: +(exit / enter * 100).toFixed(2),
+      hourly_stats: Array.from({ length: 24 }, (_, h) => ({ hour: h, count: Math.floor(Math.random() * 50) }))
+    }
+  })
+}
+
+const generateMockUserSession = (canvasId: string, userId: string) => ({
+  id: `session_${Date.now()}`,
+  user_id: userId,
+  device_type: ['mobile', 'desktop', 'tablet'][Math.floor(Math.random() * 3)],
+  location: ['北京', '上海', '广州', '深圳'][Math.floor(Math.random() * 4)],
+  session_start: new Date(Date.now() - 3600000).toISOString(),
+  session_end: new Date().toISOString(),
+  total_duration: 3600,
+  nodes_visited: ['node_1', 'node_2', 'node_3'],
+  conversions_count: Math.floor(Math.random() * 3),
+  metadata: { total_visits: Math.floor(Math.random() * 10) + 1 }
+})
+
+const generateMockPathNodes = (sessionId: string, count: number = 4) => {
+  const now = Date.now()
+  return Array.from({ length: count }, (_, i) => ({
+    id: `path_${sessionId}_${i}`,
+    session_id: sessionId,
+    node_id: `node_${i + 1}`,
+    enter_time: new Date(now - (count - i) * 600000).toISOString(),
+    exit_time: new Date(now - (count - i - 1) * 600000).toISOString(),
+    stay_time: Math.floor(Math.random() * 120) + 30,
+    conversion_type: i === count - 1 ? 'goal_complete' : null,
+    conversion_value: i === count - 1 ? 1 : 0,
+    previous_node_id: i > 0 ? `node_${i}` : null,
+    next_node_ids: i < count - 1 ? `node_${i + 2}` : '',
+    node_position: { x: i * 200, y: 100 }
+  }))
+}
 
 /**
  * 获取画布整体统计概览
  */
 export async function getCanvasOverviewStats(
-  canvasId: string, 
+  canvasId: string,
   filters: FilterState
 ): Promise<CanvasOverviewStats> {
+  await delay(150)
   try {
-    // 构建查询条件
-    let query = supabase
-      .from('canvas_node_stats')
-      .select(`
-        canvas_id,
-        node_id,
-        stat_date,
-        enter_count,
-        exit_count,
-        unique_users,
-        avg_stay_time,
-        conversion_rate,
-        hourly_stats
-      `)
-      .eq('canvas_id', canvasId)
-
-    // 应用时间范围过滤
-    if (filters.dateFrom && filters.dateTo) {
-      query = query
-        .gte('stat_date', filters.dateFrom)
-        .lte('stat_date', filters.dateTo)
-    }
-
-    const { data, error } = await query
-      .order('stat_date', { ascending: false })
-      .limit(100)
-
-    if (error) throw error
-
-    // 计算统计概览
-    const stats = calculateOverviewStats(data || [])
-    
+    const raw = generateMockNodeStats(canvasId, 12)
+    const filtered = raw.filter(item => {
+      if (filters.dateFrom && item.stat_date < filters.dateFrom) return false
+      if (filters.dateTo && item.stat_date > filters.dateTo) return false
+      return true
+    }).slice(0, 100)
+    const stats = calculateOverviewStats(filtered)
     return {
       totalVisits: stats.totalVisits,
       totalConversions: stats.totalConversions,
@@ -85,47 +116,26 @@ export async function getNodeStatistics(
     avgConversionRate: number
   }
 }> {
+  await delay(150)
   try {
-    let query = supabase
-      .from('canvas_node_stats')
-      .select(`
-        canvas_id,
-        node_id,
-        stat_date,
-        enter_count,
-        exit_count,
-        unique_users,
-        avg_stay_time,
-        max_stay_time,
-        min_stay_time,
-        conversion_rate,
-        hourly_stats
-      `, { count: 'exact' })
-      .eq('canvas_id', canvasId)
-
-    // 应用时间范围过滤
-    if (filters.dateFrom && filters.dateTo) {
-      query = query
-        .gte('stat_date', filters.dateFrom)
-        .lte('stat_date', filters.dateTo)
-    }
-
-    // 应用分页
+    const raw = generateMockNodeStats(canvasId, 30)
+    const filtered = raw.filter(item => {
+      if (filters.dateFrom && item.stat_date < filters.dateFrom) return false
+      if (filters.dateTo && item.stat_date > filters.dateTo) return false
+      return true
+    })
+    filtered.sort((a, b) => {
+      const av = (a as any)[sortBy] || 0
+      const bv = (b as any)[sortBy] || 0
+      return sortOrder === 'asc' ? av - bv : bv - av
+    })
     const start = (page - 1) * pageSize
-    query = query
-      .range(start, start + pageSize - 1)
-      .order(sortBy, { ascending: sortOrder === 'asc' })
-
-    const { data, count, error } = await query
-
-    if (error) throw error
-
-    // 转换数据格式
-    const nodes = (data || []).map(item => ({
+    const slice = filtered.slice(start, start + pageSize)
+    const nodes: NodeStats[] = slice.map(item => ({
       nodeId: item.node_id,
-      nodeType: 'start', // 需要从节点配置中获取
-      nodeLabel: `节点 ${item.node_id}`, // 需要从节点配置中获取
-      position: { x: 0, y: 0 }, // 需要从节点配置中获取
+      nodeType: 'start',
+      nodeLabel: `节点 ${item.node_id}`,
+      position: { x: 0, y: 0 },
       enterCount: item.enter_count,
       exitCount: item.exit_count,
       conversionRate: item.conversion_rate,
@@ -135,17 +145,8 @@ export async function getNodeStatistics(
       uniqueUsers: item.unique_users,
       trend: item.hourly_stats || []
     }))
-
-    // 计算汇总数据
-    const summary = calculateNodeSummary(data || [])
-
-    return {
-      nodes,
-      total: count || 0,
-      page,
-      pageSize,
-      summary
-    }
+    const summary = calculateNodeSummary(filtered)
+    return { nodes, total: filtered.length, page, pageSize, summary }
   } catch (error) {
     console.error('获取节点统计详情失败:', error)
     throw error
@@ -159,75 +160,32 @@ export async function getUserPathData(
   canvasId: string,
   userId: string
 ): Promise<UserPathData> {
+  await delay(120)
   try {
-    // 获取用户会话
-    const { data: sessionData, error: sessionError } = await supabase
-      .from('canvas_user_sessions')
-      .select(`
-        id,
-        user_id,
-        device_type,
-        location,
-        session_start,
-        session_end,
-        total_duration,
-        nodes_visited,
-        conversions_count,
-        metadata
-      `)
-      .eq('canvas_id', canvasId)
-      .eq('user_id', userId)
-      .order('session_start', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (sessionError) throw sessionError
-
-    // 获取用户路径节点
-    const { data: pathData, error: pathError } = await supabase
-      .from('user_path_nodes')
-      .select(`
-        id,
-        session_id,
-        node_id,
-        enter_time,
-        exit_time,
-        stay_time,
-        conversion_type,
-        conversion_value,
-        previous_node_id,
-        next_node_ids,
-        node_position
-      `)
-      .eq('session_id', sessionData.id)
-      .order('enter_time', { ascending: true })
-
-    if (pathError) throw pathError
-
-    // 转换路径数据格式
-    const path = (pathData || []).map(item => ({
+    const session = generateMockUserSession(canvasId, userId)
+    const pathData = generateMockPathNodes(session.id, 4)
+    const path = pathData.map(item => ({
       nodeId: item.node_id,
-      nodeLabel: `节点 ${item.node_id}`, // 需要从节点配置中获取
+      nodeLabel: `节点 ${item.node_id}`,
       position: item.node_position || { x: 0, y: 0 },
       enterTime: item.enter_time,
       exitTime: item.exit_time,
       stayTime: item.stay_time,
       conversionRate: item.conversion_value || 0,
-      nextNodes: item.next_node_ids ? item.next_node_ids.split(',') : []
+      nextNodes: item.next_node_ids ? item.next_node_ids.split(',').filter(Boolean) : []
     }))
-
     return {
-      userId: sessionData.user_id,
+      userId: session.user_id,
       userProfile: {
-        firstVisit: sessionData.session_start,
-        lastVisit: sessionData.session_end,
-        totalVisits: sessionData.metadata?.total_visits || 1,
-        deviceType: sessionData.device_type,
-        location: sessionData.location
+        firstVisit: session.session_start,
+        lastVisit: session.session_end,
+        totalVisits: session.metadata?.total_visits || 1,
+        deviceType: session.device_type,
+        location: session.location
       },
       path,
-      totalStayTime: sessionData.total_duration || 0,
-      conversionPath: sessionData.conversions_count > 0
+      totalStayTime: session.total_duration || 0,
+      conversionPath: session.conversions_count > 0
     }
   } catch (error) {
     console.error('获取用户路径数据失败:', error)
@@ -247,7 +205,6 @@ export async function exportStatisticsData(
   size: number
 }> {
   try {
-    // 根据请求参数获取数据
     const exportData: any = {}
 
     if (request.dataType === 'overview' || request.dataType === 'all') {
@@ -260,7 +217,6 @@ export async function exportStatisticsData(
       exportData.nodes = nodeStats
     }
 
-    // 根据格式生成文件
     let blob: Blob
     let filename: string
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
@@ -270,17 +226,17 @@ export async function exportStatisticsData(
         blob = generateCSV(exportData, request.fields)
         filename = `canvas_statistics_${canvasId}_${timestamp}.csv`
         break
-      
+
       case 'excel':
         blob = generateExcel(exportData, request.fields)
         filename = `canvas_statistics_${canvasId}_${timestamp}.xlsx`
         break
-      
+
       case 'json':
         blob = generateJSON(exportData)
         filename = `canvas_statistics_${canvasId}_${timestamp}.json`
         break
-      
+
       default:
         throw new Error('不支持的导出格式')
     }

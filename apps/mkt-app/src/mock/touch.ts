@@ -1,3 +1,10 @@
+/**
+ * Touch/Channel Mock Data（最大聚合 mock 源）
+ * 用途：触达/渠道/模板/记录/告警/黑名单聚合 mock（14+ 字段）
+ * 来源：覆盖触达系统全部业务领域（短信/AI外呼/人工电销/渠道速率/黑名单）
+ * 消费方：@/services/{channelService,queryService,systemService,templateService}.ts
+ * 边界：纯前端 demo；mock 数据通过函数暴露 mutable 数组（createSmsTemplate 副作用）
+ */
 export default {
   blacklist: [
     { username: "用户1", phone: "13800138000", idCard: "110101199003077654", addTime: "2023-01-01 10:00:00", banTime: "2023-01-15 14:30:00", policy: "全局禁用", source: "短信系统" },

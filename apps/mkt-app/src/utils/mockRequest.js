@@ -1,6 +1,14 @@
 /**
- * HTTP 请求工具函数
- * 用于纯前端 demo，模拟 API 请求
+ * 模拟 HTTP 请求拦截器（mock）
+ * 用途：纯前端 demo，根据 URL 前缀路由到本地 mock 处理函数；不发起真实 HTTP 请求。
+ * 路由覆盖：
+ *   - /api/data-models       → handleDataModelsAPI       (mock/data-models)
+ *   - /api/alert-rules       → handleAlertRulesAPI       (mock/alert-rules)
+ *   - /api/variables         → handleVariablesAPI        (内联 mock)
+ *   - /api/variable-map      → handleVariableMapAPI      (内联 mock)
+ *   - /api/v1/*              → handleV1TagAndDatasourceAPI (内联 __v1TagTables)
+ * 行为：所有请求模拟 300ms 延迟；返回统一 { code: 200, message: 'success', data } 结构。
+ * 边界：与真 axios 不兼容；项目内禁止使用真实 HTTP 客户端。
  */
 
 import { mockDataModels } from '@/mock/data-models'

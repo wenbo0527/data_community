@@ -1,4 +1,10 @@
-// 预警规则 Mock 数据源（REST 风格）
+/**
+ * Alert Rules Mock Data Source（REST 风格）
+ * 用途：库存/失效/故障预警规则 mock（inventory/expiry/failure 三类）
+ * 来源：TASK-20260603-B2A5D2BB · PRD-库存预警配置页增量v1.2
+ * 消费方：@/utils/mockRequest.js（handleAlertRulesAPI）、@/api/alertRulesService
+ * 边界：纯前端 demo；预警规则含完整条件配置（granularity/metricConfigs/window）
+ */
 export type AlertRule = {
   id: number
   name: string

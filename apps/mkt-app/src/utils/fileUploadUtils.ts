@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import axios from 'axios'
 import * as XLSX from 'xlsx'
+import mockRequest from './mockRequest'
 
 export const useFileUpload = () => {
   const isDragover = ref(false)
@@ -52,18 +52,19 @@ export const useFileUpload = () => {
   }
 
   const handleUpload = async (option: { fileItem: any }, apiUrl: string, countRef: any) => {
-    const formData = new FormData()
-    formData.append('file', option.fileItem.file as Blob)
-    console.log('开始上传文件:', option.fileItem.name)
+    // 项目无后端，上传改为 mock：模拟进度 + 随机成功（行数取自 currentFile 解析）
+    console.log('开始上传文件(mock):', option.fileItem.name)
+    await new Promise(resolve => setTimeout(resolve, 300))
+    // 模拟进度
+    for (let p = 0; p <= 100; p += 20) {
+      uploadProgress.value = p
+      await new Promise(resolve => setTimeout(resolve, 50))
+    }
     try {
-      const res = await axios.post<{success: boolean, count: number}>(apiUrl, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      console.log('上传响应:', res.data)
-      if (res.data.success) {
-        countRef.value = res.data.count
+      // 走 mockRequest 拦截（默认返回 null，由 mockRequest 处理 5 类路由）
+      const res = await mockRequest({ url: apiUrl, method: 'POST', data: { filename: option.fileItem.name } }) as { success: boolean; count: number }
+      if (res?.success) {
+        countRef.value = res.count
       }
     } catch (error) {
       console.error('上传失败:', error)

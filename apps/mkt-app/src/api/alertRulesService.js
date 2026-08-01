@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '@/utils/mockRequest'
 
 // 获取规则列表
 export function getAlertRules(params) {

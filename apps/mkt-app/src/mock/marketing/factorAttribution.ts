@@ -1,6 +1,10 @@
-// FactorAttribution Mock 数据 (多因子贡献度分析)
-// TASK-20260717-2FFA5BCA · 候选 #235 dev 范围 · PM A' 拍板 23:00 CST
-
+/**
+ * Factor Attribution Mock Data（多因子贡献度分析）
+ * 用途：营销多因子贡献度 mock（曝光/价格/活动/渠道 + 权重 + 贡献率）
+ * 来源：TASK-20260717-2FFA5BCA · 候选 #235 dev 范围 · PM A' 拍板 23:00 CST
+ * 消费方：@/api/marketing.ts + @/mock/marketing/index.ts 聚合
+ * 边界：纯前端 demo；4 类因子 + 关联 campaign
+ */
 import type { FactorAttribution } from '@/types/marketing'
 
 const today = new Date().toISOString().substring(0, 10)

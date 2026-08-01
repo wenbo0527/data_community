@@ -1,3 +1,10 @@
+/**
+ * Data Models Mock Data Source
+ * 用途：数据模型列表/详情 mock（含 SQL/Python 双语言类型，5 状态机）
+ * 来源：覆盖元数据建模（dmt-app 数据模型 + 离线模型）
+ * 消费方：@/utils/mockRequest.js（handleDataModelsAPI）、@/api/dataModels.js
+ * 边界：纯前端 demo；状态机 draft→active→inactive→archived；mockjs 辅助生成
+ */
 import type { MockMethod } from 'vite-plugin-mock';
 import Mock from 'mockjs';
 

@@ -1,6 +1,10 @@
-// UserConversion Mock 数据 (营销数仓转化漏斗)
-// TASK-20260717-2FFA5BCA · 候选 #235 dev 范围 · PM A' 拍板 23:00 CST
-
+/**
+ * User Conversion Mock Data（营销数仓转化漏斗）
+ * 用途：用户转化明细 mock（按用户 ID + 阶段 + 转化率）
+ * 来源：TASK-20260717-2FFA5BCA · 候选 #235 dev 范围 · PM A' 拍板 23:00 CST
+ * 消费方：@/api/marketing.ts + @/mock/marketing/index.ts 聚合
+ * 边界：纯前端 demo；5 阶段（注册→实名→绑卡→交易→复购）
+ */
 import type { UserConversion } from '@/types/marketing'
 
 const now = () => new Date().toISOString().replace('T', ' ').substring(0, 19)

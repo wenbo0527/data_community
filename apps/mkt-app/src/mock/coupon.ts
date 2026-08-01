@@ -1,6 +1,9 @@
 /**
  * Coupon Mock Data
- * Mock data for coupon module
+ * 用途：券模板/库存 mock 数据源（覆盖 8 类券种 + 库存告警规则）
+ * 来源：TASK-20260609-C3AD735A（合并双 mock 源为单一数据源）
+ * 消费方：@/api/coupon.ts、@/api/coupon.js、@/services/* (8 个页面)
+ * 边界：纯前端 demo；不接后端；字段 1:1 对齐 types/api/coupon.ts
  */
 
 export interface MockTemplate {
