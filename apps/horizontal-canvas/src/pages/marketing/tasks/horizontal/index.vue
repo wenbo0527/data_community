@@ -51,6 +51,27 @@
     </a-form>
   </a-modal>
 
+  <a-modal v-model:visible="validationVisible" title="发布校验未通过" ok-text="我知道了" :cancel-button-props="{ style: 'display:none' }" :hide-cancel="true">
+    <div class="validation-list">
+      <template v-for="(item, idx) in validationItems" :key="idx">
+        <div v-if="typeof item === 'string'" class="validation-item validation-item--text">
+          <span>{{ item }}</span>
+        </div>
+        <div v-else class="validation-item validation-item--group">
+          <div class="validation-item__title">
+            <span v-if="item.kind === 'unconfigured'">未完成配置的节点：</span>
+            <span v-else-if="item.kind === 'no-out'">未连接后续节点的节点：</span>
+            <span v-else-if="item.kind === 'cycle'">环路涉及的节点：</span>
+            <span v-else>{{ item.kind }}：</span>
+          </div>
+          <div class="validation-item__links">
+            <a-tag v-for="n in item.nodeIds" :key="n.id" checkable :default-checked="false" class="validation-link" @click="focusNodeById(n.id)">{{ n.label }}</a-tag>
+          </div>
+        </div>
+      </template>
+    </div>
+  </a-modal>
+
       <div class="content" ref="contentRef" @mousedown="onContentMouseDown" @mouseover="onContentMouseOver" @mouseout="onContentMouseOut">
 
     <CanvasHistoryPanel
@@ -242,6 +263,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { TaskStorage } from '../../../../utils/taskStorage.js'
 import CanvasStatisticsPanel from '@/components/statistics/CanvasStatisticsPanel.vue'
 import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as saveTaskSvc, publishTask as publishTaskSvc, validateForPublish } from './persistence/PersistenceService'
+import { useCurrentUser } from '../../../../composables/useCurrentUser.js'
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
 import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph, bindDefaultShortcuts } from './graph/GraphService.ts'
 import { useCanvasState } from './state/useCanvasState.ts'
@@ -261,6 +283,8 @@ const isNameEditing = ref(false)
 const approvalStatus = ref(null)
 const publishReady = ref(false)
 const publishMessages = ref([])
+
+const { user: currentUser } = useCurrentUser()
 
 const formModel = reactive({ taskName: '', taskDescription: '', taskVersion: 1 })
 watch(taskName, v => { formModel.taskName = v })
@@ -2566,12 +2590,11 @@ const saveTask = async () => {
     let versionToUse = taskVersion.value || 1
     if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
     const name = taskName.value || '未命名任务'
-    const saveMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'draft', publishReady: validation.pass, publishMessages: validation.messages || [], lastValidatedAt: new Date().toISOString(), updateTime: new Date().toLocaleString('zh-CN'), creator: '当前用户' }
+    const saveMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'draft', publishReady: validation.pass, publishMessages: validation.messages || [], lastValidatedAt: new Date().toISOString(), updateTime: new Date().toLocaleString('zh-CN'), creator: currentUser.value }
     let saved
-    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...saveMeta, canvasData }); Message.success('更新成功') }
-    else { saved = saveTaskSvc(saveMeta, canvasData); Message.success('保存成功'); if (saved && saved.id) { isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) } }
+    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...saveMeta, canvasData }); Message.success('已保存为草稿，可继续编辑') }
+    else { saved = saveTaskSvc(saveMeta, canvasData); if (!saved || !saved.id) { Message.error('保存失败：未生成任务ID，请稍后重试'); return } Message.success('已保存为草稿，可继续编辑'); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
     taskStatus.value = 'draft'
-    setTimeout(() => { router.push('/marketing/tasks') }, 1000)
     return saved
   } catch (e) { Message.error(`保存失败: ${e.message || '未知错误'}`) }
 }
@@ -2582,16 +2605,15 @@ const publishTask = async () => {
   try {
     const canvasData = collectCanvasData(graph)
     const validation = validateForPublish(graph, canvasData)
-    if (!validation.pass) { const detail = validation.messages.join('\n'); Modal.warning({ title: '发布校验未通过', content: `请修复以下问题:\n${detail}` }); return }
+    if (!validation.pass) { showValidationModal(validation.messages, validation.details || []); return }
     const name = taskName.value || '未命名任务'
     let versionToUse = taskVersion.value || 1
     if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
-    const publishMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'published', publishTime: new Date().toLocaleString('zh-CN'), updateTime: new Date().toLocaleString('zh-CN'), creator: '当前用户' }
+    const publishMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'published', publishTime: new Date().toLocaleString('zh-CN'), updateTime: new Date().toLocaleString('zh-CN'), creator: currentUser.value }
     let saved
-    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...publishMeta, canvasData }); Message.success('发布成功') }
-    else { saved = publishTaskSvc(publishMeta, canvasData); Message.success('发布成功'); if (saved && saved.id) { isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) } }
+    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...publishMeta, canvasData }); Message.success(`已发布当前版本（v${versionToUse}），可在任务列表查看`) }
+    else { saved = publishTaskSvc(publishMeta, canvasData); if (!saved || !saved.id) { Message.error('发布失败：未生成任务ID，请稍后重试'); return } Message.success(`已发布当前版本（v${versionToUse}），可在任务列表查看`); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
     taskStatus.value = 'published'
-    setTimeout(() => { router.push('/marketing/tasks') }, 1000)
     return saved
   } catch (e) { Message.error(`发布失败: ${e.message || '未知错误'}`) }
 }
@@ -2602,14 +2624,13 @@ function submitApprovalOnly() {
     const canvasData = collectCanvasData(graph)
     const validation = validateForPublish(graph, canvasData)
     if (!validation.pass) {
-      const detail = validation.messages.join('\n')
-      Modal.warning({ title: '发布校验未通过', content: `请修复以下问题:\n${detail}` })
+      showValidationModal(validation.messages, validation.details || [])
       publishReady.value = false
       publishMessages.value = validation.messages || []
       return
     }
     TaskStorage.updateTask(editingTaskId.value, { version: editingTaskVersion.value, description: taskDescription.value || '', updateTime: new Date().toLocaleString('zh-CN'), publishReady: true, publishMessages: [], lastValidatedAt: new Date().toISOString() })
-    TaskStorage.submitApproval(editingTaskId.value, editingTaskVersion.value, '当前用户', taskDescription.value || '')
+    TaskStorage.submitApproval(editingTaskId.value, editingTaskVersion.value, currentUser.value, taskDescription.value || '')
     approvalStatus.value = 'pending_approval'
     Message.success('已提交审批')
   } catch (e) { Message.error(`提交审批失败: ${e?.message || '未知错误'}`) }
@@ -2617,6 +2638,56 @@ function submitApprovalOnly() {
 
 // 画布发布前校验
 const validateCanvasForPublish = (canvasData) => validateForPublish(graph, canvasData)
+
+// 聚焦指定节点：选中、滚动居中、闪烁高亮
+function focusNodeById(nodeId) {
+  try {
+    if (!graph || !nodeId) return false
+    const cell = graph.getCellById(nodeId) || graph.getCellById(String(nodeId))
+    if (!cell) return false
+    try { graph.cleanSelection?.() } catch {}
+    try { graph.select?.(cell) } catch {}
+    const pos = cell.getPosition?.() || { x: 0, y: 0 }
+    const size = cell.getSize?.() || { width: 200, height: 120 }
+    if (typeof graph.scrollContentToPoint === 'function') {
+      graph.scrollContentToPoint(pos.x + size.width / 2, pos.y + size.height / 2, { animation: { duration: 300 } })
+    } else if (typeof graph.translateTo === 'function') {
+      graph.translateTo(-(pos.x - 100), -(pos.y - 100))
+    }
+    try {
+      const stage = document.querySelector('.canvas-container')
+      const nodeEl = stage?.querySelector?.(`[data-node-id="${nodeId}"]`)
+      if (nodeEl) {
+        nodeEl.classList.add('focus-pulse')
+        setTimeout(() => nodeEl.classList.remove('focus-pulse'), 1600)
+      }
+    } catch {}
+    return true
+  } catch { return false }
+}
+
+// 显示发布校验失败对话框（带可点击的节点定位）
+const validationVisible = ref(false)
+const validationItems = ref([])
+function showValidationModal(messages, details = []) {
+  const nodes = (() => {
+    try { return graph?.getNodes?.() || [] } catch { return [] }
+  })()
+  const idToLabel = new Map()
+  nodes.forEach(n => {
+    const d = n.getData?.() || {}
+    idToLabel.set(String(n.id), d.label || String(n.id))
+  })
+  // 将 details 平铺为可点击项（kind + nodeIds），放在 messages 之后
+  const flat = (messages || []).slice()
+  ;(details || []).forEach(d => {
+    if (d && Array.isArray(d.nodeIds) && d.nodeIds.length) {
+      flat.push({ kind: d.kind, nodeIds: d.nodeIds.map(id => ({ id: String(id), label: idToLabel.get(String(id)) || String(id) })) })
+    }
+  })
+  validationItems.value = flat
+  validationVisible.value = true
+}
 
 // 测试函数
 const testClick = () => {
@@ -2943,6 +3014,22 @@ const testClick = () => {
 .statistics-panel-resize-handle--top:hover {
   background: rgba(59, 130, 246, 0.15);
 }
+
+/* 校验对话框 */
+.validation-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
+.validation-item { font-size: 13px; line-height: 1.6; color: var(--color-text-2); }
+.validation-item--text { color: var(--color-text-2); }
+.validation-item__title { color: var(--color-text-1); font-weight: 500; margin-bottom: 4px; }
+.validation-item__links { display: flex; flex-wrap: wrap; gap: 6px; }
+.validation-link { cursor: pointer; transition: transform .15s ease; }
+.validation-link:hover { transform: scale(1.04); }
+
+/* 节点定位闪烁 */
+@keyframes focusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 34, 45, 0); }
+  50% { box-shadow: 0 0 0 8px rgba(245, 34, 45, 0.35); }
+}
+.focus-pulse { animation: focusPulse 0.8s ease-in-out 2; border-radius: 8px; }
 
 /* 响应式布局调整 */
 .horizontal-task-flow-page {

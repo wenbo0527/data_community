@@ -150,8 +150,10 @@ import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconDown, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { TaskStorage } from '../../../utils/taskStorage.js'
 import { validateForPublish } from './horizontal/persistence/PersistenceService.ts'
+import { useCurrentUser } from '../../../composables/useCurrentUser.js'
 
 const router = useRouter()
+const { user: currentUser } = useCurrentUser()
 const createModalVisible = ref(false)
 const createForm = reactive({ name: '', description: '' })
 
@@ -319,7 +321,7 @@ function confirmCreateTask() {
       status: 'draft',
       canvasData: { nodes: [], connections: [] },
       createTime: new Date().toLocaleString('zh-CN'),
-      creator: '当前用户'
+      creator: currentUser.value
     })
     createModalVisible.value = false
     createForm.name = ''
@@ -368,7 +370,7 @@ function confirmSubmitApproval() {
     if (!id || !version) return
     if (!approvalForm.remark || !approvalForm.remark.trim()) { Message.warning('请输入版本说明'); return }
     TaskStorage.updateTask(id, { version, description: approvalForm.remark, updateTime: new Date().toLocaleString('zh-CN') })
-    TaskStorage.submitApproval(id, version, '当前用户', approvalForm.remark)
+    TaskStorage.submitApproval(id, version, currentUser.value, approvalForm.remark)
     approvalModalVisible.value = false
     refreshTaskList()
     Message.success('已提交审批')
@@ -377,7 +379,7 @@ function confirmSubmitApproval() {
 
 function approveOne(record) {
   try {
-    TaskStorage.approveVersions([{ id: record.id, version: record.version }], 'approve', '当前用户', '')
+    TaskStorage.approveVersions([{ id: record.id, version: record.version }], 'approve', currentUser.value, '')
     refreshTaskList()
     Message.success('已审批通过')
   } catch { Message.error('审批失败') }
@@ -385,7 +387,7 @@ function approveOne(record) {
 
 function rejectOne(record) {
   try {
-    TaskStorage.approveVersions([{ id: record.id, version: record.version }], 'reject', '当前用户', '')
+    TaskStorage.approveVersions([{ id: record.id, version: record.version }], 'reject', currentUser.value, '')
     refreshTaskList()
     Message.success('已驳回')
   } catch { Message.error('驳回失败') }
@@ -396,7 +398,7 @@ function batchApprove(decision) {
     const ids = new Set(selectedRowKeys.value)
     const rows = taskData.value.filter(r => ids.has(r.id) && r.status === 'pending_approval')
     const items = rows.map(r => ({ id: r.id, version: r.version }))
-    const res = TaskStorage.approveVersions(items, decision, '当前用户', '')
+    const res = TaskStorage.approveVersions(items, decision, currentUser.value, '')
     const ok = res.filter(x => x.status === 'success').length
     const fail = res.length - ok
     refreshTaskList()
@@ -430,7 +432,7 @@ function confirmBatchSubmitApproval() {
     rows.forEach(r => {
       try {
         TaskStorage.updateTask(r.id, { version: r.version, description: batchApprovalForm.remark, updateTime: new Date().toLocaleString('zh-CN') })
-        TaskStorage.submitApproval(r.id, r.version, '当前用户', batchApprovalForm.remark)
+        TaskStorage.submitApproval(r.id, r.version, currentUser.value, batchApprovalForm.remark)
       } catch {}
     })
     batchApprovalModalVisible.value = false
@@ -476,12 +478,16 @@ const viewVersion = (record, version) => {
   router.push(`/marketing/tasks/horizontal?mode=view&id=${record.id}&version=${version}`)
 }
 
-// 手工推送任务
+// 手工推送任务（mock：仅状态切换，需写回 localStorage 以保证刷新后生效）
 const manualPush = (record) => {
-  if (record.status === 'draft') {
-    record.status = 'running'
+  try {
+    const nextStatus = record.status === 'draft' ? 'running' : record.status
+    TaskStorage.updateTask(record.id, { status: nextStatus, updateTime: new Date().toLocaleString('zh-CN') })
+    record.status = nextStatus
+    Message.success('任务已推送，进入运行态')
+  } catch {
+    Message.error('推送失败')
   }
-  Message.success('任务推送成功')
 }
 
 // 查看执行日志
@@ -489,10 +495,15 @@ const viewExecutionLog = (record) => {
   Message.info('执行日志功能开发中...')
 }
 
-// 停止任务
+// 停止任务（mock：状态写回 localStorage）
 const stopTask = (record) => {
-  record.status = 'disabled'
-  Message.success('任务已停止')
+  try {
+    TaskStorage.updateTask(record.id, { status: 'disabled', updateTime: new Date().toLocaleString('zh-CN') })
+    record.status = 'disabled'
+    Message.success('任务已停止')
+  } catch {
+    Message.error('停止失败')
+  }
 }
 
 // 删除任务

@@ -3,7 +3,7 @@ import { validateForPublishPure } from '../../src/pages/marketing/tasks/horizont
 
 describe('validateForPublishPure', () => {
   it('空数据：返回格式错误', () => {
-    expect(validateForPublishPure(null)).toEqual({ pass: false, messages: ['画布数据格式不正确'] })
+    expect(validateForPublishPure(null)).toEqual({ pass: false, messages: ['画布数据格式不正确'], details: [] })
     const r = validateForPublishPure({ nodes: [], connections: [] })
     expect(r.pass).toBe(false)
     expect(r.messages).toContain('画布中没有任何节点')
