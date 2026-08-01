@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { getNodeLabel } from '@/utils/nodeTypes.js'
 import { buildDisplayLines } from './createVueShapeNode.js'
@@ -51,7 +51,6 @@ import { NODE_DIMENSIONS } from './styles/nodeStyles.js'
 import * as ArcoIcons from '@arco-design/web-vue/es/icon'
 
 const props = defineProps({ node: { type: Object, required: true }, graph: { type: Object, default: null } })
-console.log('🚀 [HorizontalNode] 组件初始化:', { hasNode: !!props.node, nodeId: props.node?.id, hasGraph: !!props.graph, timestamp: Date.now() })
 const hasError = computed(() => false)
 const errorMessage = computed(() => '')
 const nodeDataRef = ref(props.node?.getData?.() || {})
@@ -66,7 +65,7 @@ const disabled = computed(() => nodeData.value?.disabled || false)
 const ICON_NAME_MAP = { 'crowd-split': 'IconUserGroup', 'event-split': 'IconThunderbolt', 'ab-test': 'IconExperiment', 'wait': 'IconClockCircle', 'end': 'IconPoweroff', 'sms': 'IconMessage', 'ai-call': 'IconPhone', 'manual-call': 'IconUserAdd', 'benefit': 'IconGift' }
 const nodeIconComponent = computed(() => { const iconName = ICON_NAME_MAP[nodeType.value] || 'IconApps'; return ArcoIcons[iconName] || ArcoIcons.IconApps })
 const iconText = computed(() => getNodeIconText(nodeType.value))
-const headerTitle = computed(() => { const title = config.value?.nodeName || getNodeLabel(nodeType.value) || '节点'; console.log('📝 [HorizontalNode] 标题计算:', { configNodeName: config.value?.nodeName, nodeType: nodeType.value, getNodeLabel: getNodeLabel(nodeType.value), finalTitle: title, config: config.value }); return title })
+const headerTitle = computed(() => config.value?.nodeName || getNodeLabel(nodeType.value) || '节点')
 const rawLinesCount = computed(() => Array.isArray(config.value?.displayLines) ? config.value.displayLines.length : 0)
 const contentHeight = computed(() => { const isStart = nodeType.value === 'start'; const rowsCount = Array.isArray(outRows.value) ? outRows.value.length : 0; const baseCount = isStart ? Math.max(1, rawLinesCount.value) : Math.max(1, rowsCount); return baseCount * NODE_DIMENSIONS.ROW_HEIGHT })
 const contentContainerStyle = computed(() => ({ position: 'relative', height:'100%', padding: '0px', gap: NODE_DIMENSIONS.ROW_GAP+'px' }))
@@ -88,8 +87,6 @@ function rowEvenStyle(idx) {
   const step = n > 0 ? contentH / n : NODE_DIMENSIONS.ROW_HEIGHT
   const centerY = (idx + 0.5) * step
   const top = Math.max(0, Math.round(centerY - NODE_DIMENSIONS.ROW_HEIGHT / 2))
-  console.log('rowHeight111',{  height: NODE_DIMENSIONS.ROW_HEIGHT + 'px',
-    lineHeight: NODE_DIMENSIONS.ROW_HEIGHT + 'px',})
   return {
     // position: 'absolute',
     // top: top + 'px',
@@ -100,72 +97,30 @@ function rowEvenStyle(idx) {
   }
 }
 const outRows = computed(() => {
-  console.log('📝 [HorizontalNode] 开始生成显示行:', { hasDisplayLines: !!config.value?.displayLines?.length, displayLines: config.value?.displayLines, nodeType: nodeType.value, config: config.value, nodeData: nodeData.value, timestamp: Date.now() })
-  if (config.value?.displayLines) {
-    console.log('📝 [HorizontalNode] displayLines详细检查:', { displayLines: config.value.displayLines, type: typeof config.value.displayLines, isArray: Array.isArray(config.value.displayLines), length: config.value.displayLines.length, firstItem: config.value.displayLines[0], nodeType: nodeType.value, configKeys: Object.keys(config.value || {}) })
-  }
   if (config.value?.displayLines?.length) {
-    console.log('📝 [HorizontalNode] 使用displayLines:', { lines: config.value.displayLines, count: config.value.displayLines.length, firstLine: config.value.displayLines[0] })
     const labelFallback = getNodeLabel(nodeType.value) || '节点'
-    if (config.value.displayLines.length === 1 && config.value.displayLines[0] === labelFallback) {
-      console.log('🧹 [HorizontalNode] 清理兜底展示(标签作为内容行)，返回空')
-      return []
-    }
-    // if (nodeType.value === 'start') {
-    //   return [config.value.displayLines.join('\n')]
-    // }
+    if (config.value.displayLines.length === 1 && config.value.displayLines[0] === labelFallback) return []
     return config.value.displayLines
   }
   const topLevelLines = nodeData.value?.displayLines
   if (Array.isArray(topLevelLines) && topLevelLines.length) {
     const labelFallback = getNodeLabel(nodeType.value) || '节点'
-    if (topLevelLines.length === 1 && topLevelLines[0] === labelFallback) {
-      console.log('🧹 [HorizontalNode] 清理兜底展示(顶层displayLines)，返回空')
-      return []
-    }
-    console.log('📝 [HorizontalNode] 使用顶层displayLines:', { lines: topLevelLines, count: topLevelLines.length, firstLine: topLevelLines[0] })
+    if (topLevelLines.length === 1 && topLevelLines[0] === labelFallback) return []
     return topLevelLines
   }
   const lines = buildDisplayLines(nodeType.value, config.value || {})
-  console.log('📝 [HorizontalNode] 通过buildDisplayLines生成显示行:', { nodeType: nodeType.value, lines, count: lines.length })
   const labelFallback = getNodeLabel(nodeType.value) || '节点'
-  if (lines.length === 1 && lines[0] === labelFallback) {
-    console.log('🧹 [HorizontalNode] 清理兜底展示(标签作为内容行)，返回空')
-    return []
-  }
+  if (lines.length === 1 && lines[0] === labelFallback) return []
   return lines
 })
 
 onMounted(() => {
-  console.log('✅ [HorizontalNode] 组件挂载完成:', { nodeId: props.node?.id, initialData: props.node?.getData?.(), timestamp: Date.now(), componentReady: true })
   if (props.node) {
-    console.log('🔧 [HorizontalNode] 注册数据变化监听器')
-    props.node.on('change:data', ({ current, previous }) => {
-      console.log('🔧 [HorizontalNode] 接收到change:data事件:', { nodeId: props.node?.id, current, previous, currentDisplayLines: current?.config?.displayLines, previousDisplayLines: previous?.config?.displayLines, timestamp: Date.now() })
+    props.node.on('change:data', ({ current }) => {
       nodeDataRef.value = current || props.node?.getData?.() || {}
     })
-    props.node.on('change:props', ({ current, previous }) => {
-      console.log('🔧 [HorizontalNode] 接收到change:props事件:', { nodeId: props.node?.id, current, previous, timestamp: Date.now() })
-    })
   }
-  setTimeout(() => {
-    const element = document.querySelector(`[data-node-id="${props.node?.id}"]`)
-    const contentElements = element?.querySelectorAll('.port-indicator')
-    console.log('🔍 [HorizontalNode] DOM检查:', { nodeId: props.node?.id, elementFound: !!element, contentElementsCount: contentElements?.length || 0, timestamp: Date.now() })
-    setTimeout(() => {
-      console.log('🔍 [HorizontalNode] outRows检查:', { nodeId: props.node?.id, outRowsLength: outRows.value.length, firstOutRow: outRows.value[0], timestamp: Date.now() })
-    }, 0)
-  }, 100)
 })
-
-watch(nodeData, (newData, oldData) => {
-  console.log('👀 [HorizontalNode] 节点数据变化:', { newNodeType: newData?.nodeType || newData?.type, oldNodeType: oldData?.nodeType || oldData?.type, newConfig: newData?.config, oldConfig: oldData?.config, newDisplayLines: newData?.config?.displayLines, oldDisplayLines: oldData?.config?.displayLines, newDisplayLinesCount: newData?.config?.displayLines?.length, oldDisplayLinesCount: oldData?.config?.displayLines?.length, timestamp: Date.now() })
-  setTimeout(() => {
-    console.log('🔍 [HorizontalNode] 数据变化后outRows检查:', { outRowsLength: outRows.value.length, firstOutRow: outRows.value[0], timestamp: Date.now() })
-  }, 0)
-}, { deep: true, immediate: true })
-
-onUnmounted(() => { console.log('❌ [HorizontalNode] 组件卸载:', { nodeId: props.node?.id }) })
 </script>
 
 <style scoped>
