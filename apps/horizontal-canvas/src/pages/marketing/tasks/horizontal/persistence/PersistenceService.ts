@@ -4,11 +4,11 @@ import { createVueShapeNode } from '../createVueShapeNode.js'
 import { validateForPublishPure } from './validateForPublish.js'
 
 // 包装纯算法（内部供 validateForPublish 使用；同时供单测直接覆盖）
-function runPureValidation(canvasData: { nodes: any[]; connections: any[] }): { messages: string[]; byId: Map<string, any> } {
+function runPureValidation(canvasData: { nodes: any[]; connections: any[] }): { messages: string[]; details: any[]; byId: Map<string, any> } {
   const result = validateForPublishPure(canvasData)
   const byId = new Map<string, any>()
   if (canvasData && Array.isArray(canvasData.nodes)) canvasData.nodes.forEach((n: any) => byId.set(n.id, n))
-  return { messages: result.messages.slice(), byId }
+  return { messages: result.messages.slice(), details: (result.details || []).slice(), byId }
 }
 
 export type GraphLike = any
@@ -147,9 +147,12 @@ export function publishTask(meta: any, canvasData: any): any {
  * - 端口完整性：每个节点的 out 端口需有连接
  * - 分支完整性：分流/AB 节点每个分支需存在连线（按 edge.data.branchId 对齐）
  */
-export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): { pass: boolean; messages: string[] } {
+export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): { pass: boolean; messages: string[]; details?: any[] } {
   // 委托纯算法做基础校验（可被单测覆盖）
-  const { messages, byId } = runPureValidation(canvasData)
+  const pure = runPureValidation(canvasData)
+  const messages = pure.messages
+  const details = pure.details
+  const byId = pure.byId
   try {
     if (graph) {
       const missingPortConnections: string[] = []
@@ -180,7 +183,7 @@ export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[];
       if (missingBranchConnections.length > 0) messages.push(`以下分流分支未连接: ${missingBranchConnections.join(', ')}`)
     }
   } catch {}
-  return { pass: messages.length === 0, messages }
+  return { pass: messages.length === 0, messages, details }
 }
 /*
 用途：持久化服务（采集/加载/保存/发布/发布校验）

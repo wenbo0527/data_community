@@ -12,8 +12,9 @@
  */
 export function validateForPublishPure(canvasData) {
   const messages = []
+  const details = []
   if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) {
-    return { pass: false, messages: ['画布数据格式不正确'] }
+    return { pass: false, messages: ['画布数据格式不正确'], details: [] }
   }
   if (canvasData.nodes.length === 0) {
     messages.push('画布中没有任何节点')
@@ -47,22 +48,32 @@ export function validateForPublishPure(canvasData) {
   })
   if (unconfigured.length) {
     messages.push(`存在未完成配置的节点: ${unconfigured.map(n => n.label || n.id).join(', ')}`)
+    details.push({ kind: 'unconfigured', nodeIds: unconfigured.map(n => String(n.id)) })
   }
 
   const noOut = canvasData.nodes.filter(n => n.type !== 'end' && (outgoing.get(n.id) || 0) === 0)
   if (noOut.length) {
     messages.push(`存在未连接后续节点的节点: ${noOut.map(n => n.label || n.id).join(', ')}`)
+    details.push({ kind: 'no-out', nodeIds: noOut.map(n => String(n.id)) })
   }
 
-  const cycleMsg = detectCycle(canvasData.nodes, canvasData.connections, byId)
-  if (cycleMsg) messages.push(cycleMsg)
+  const cycle = detectCycleDetailed(canvasData.nodes, canvasData.connections, byId)
+  if (cycle) {
+    messages.push(cycle.message)
+    details.push({ kind: 'cycle', nodeIds: cycle.path })
+  }
 
-  return { pass: messages.length === 0, messages }
+  return { pass: messages.length === 0, messages, details }
 }
 
 const WHITE = 0, GRAY = 1, BLACK = 2
 
 function detectCycle(nodes, connections, byId) {
+  const d = detectCycleDetailed(nodes, connections, byId)
+  return d ? d.message : null
+}
+
+function detectCycleDetailed(nodes, connections, byId) {
   try {
     const ids = new Set(nodes.map(n => String(n.id)))
     const adj = new Map()
@@ -97,7 +108,7 @@ function detectCycle(nodes, connections, byId) {
         const n = byId.get(id)
         return `${n?.label || id}(${id})`
       })
-      return `存在环路: ${labels.join(' -> ')}`
+      return { message: `存在环路: ${labels.join(' -> ')}`, path: cyclePath }
     }
   } catch {}
   return null
