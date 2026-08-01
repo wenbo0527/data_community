@@ -47,25 +47,6 @@ export async function applyQuickLayout(graph: GraphLike, options: any = {}): Pro
 }
 
 /**
- * 结构化布局装配
- * 入参：graph(GraphLike), options({ provider, direction })
- * 返回：Promise<void>
- * 边界：依赖外部 provider 的 initialize/switch/apply；布局后清理边顶点
- */
-export async function applyStructuredLayout(graph: GraphLike, options: any = {}): Promise<void> {
-  const provider = options.provider
-  const direction = options.direction || 'LR'
-  if (provider) {
-    try {
-      if (provider.initializeLayoutEngine) await provider.initializeLayoutEngine()
-      if (provider.switchLayoutDirection) await provider.switchLayoutDirection(direction)
-      if (provider.applyUnifiedStructuredLayout) await provider.applyUnifiedStructuredLayout(graph)
-    } catch {}
-  }
-  cleanupEdgeVertices(graph)
-}
-
-/**
  * 清理边顶点
  * 入参：graph(GraphLike)
  * 返回：void

@@ -7,7 +7,10 @@
  *  - isConfigured 兼容（n.isConfigured ?? n.data?.isConfigured ?? config 非空）
  *  - AB 实验分支按 index 补齐 id/name/label
  *  - AB 实验边按 sourcePort 中的 out-N 推断 branchId
+ *  - 在 canvasData 上打标 _migrationVersion = MIGRATION_VERSION，便于缓存跳过
  */
+export const MIGRATION_VERSION = 1
+
 export function migrateCanvasData(canvasData) {
   try {
     if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return canvasData
@@ -41,8 +44,8 @@ export function migrateCanvasData(canvasData) {
       } catch {}
       return { ...e, branchId }
     })
-    return { ...canvasData, nodes, connections }
-  } catch { return canvasData }
+    return { ...canvasData, nodes, connections, _migrationVersion: MIGRATION_VERSION }
+} catch { return canvasData }
 }
 /*
 用途：画布数据迁移（兼容旧字段、AB 分支补齐）
