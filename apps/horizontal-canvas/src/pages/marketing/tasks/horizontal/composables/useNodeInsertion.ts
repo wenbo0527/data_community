@@ -1,54 +1,75 @@
-export function computeSelectorFromAnchor(anchorRect: { left: number; bottom: number; width: number }, contentRect: { left: number; top: number }, graph: any) {
+import type { X6GraphLike, X6Cell, X6Port, XYPoint } from '@/types/graph.js'
+
+export function computeSelectorFromAnchor(anchorRect: { left: number; bottom: number; width: number }, contentRect: { left: number; top: number }, graph: X6GraphLike | null) {
   const x = anchorRect.left - contentRect.left + anchorRect.width / 2
   const y = anchorRect.bottom - contentRect.top + 8
   const pageX = anchorRect.left + anchorRect.width / 2
   const pageY = anchorRect.bottom + 8
-  const local = graph && graph.pageToLocal ? graph.pageToLocal(pageX, pageY) : { x, y }
+  const local = graph?.pageToLocal ? graph.pageToLocal(pageX, pageY) : { x, y }
   return { selectorPos: { x, y }, pendingPoint: { x: local.x, y: local.y } }
 }
 
-export function computeSelectorCenter(containerRect: { left: number; top: number; width: number; height: number }, graph: any) {
+export function computeSelectorCenter(containerRect: { left: number; top: number; width: number; height: number }, graph: X6GraphLike | null) {
   const x = containerRect.width / 2
   const y = containerRect.height / 2
   const pageX = containerRect.left + containerRect.width / 2
   const pageY = containerRect.top + containerRect.height / 2
-  const local = graph && graph.pageToLocal ? graph.pageToLocal(pageX, pageY) : { x, y }
+  const local = graph?.pageToLocal ? graph.pageToLocal(pageX, pageY) : { x, y }
   return { selectorPos: { x, y }, pendingPoint: { x: local.x, y: local.y } }
 }
 
-export function insertNodeFromSelector(graph: any, nodeType: string, pendingPoint: { x: number; y: number }, pendingInsertionEdge: any, getNodeLabel: (t: string) => string, createVueShapeNode: (spec: any) => any) {
+export interface CreateVueShapeNode {
+  (spec: { id: string; x: number; y: number; label: string; outCount: number; data: Record<string, unknown> }): X6Cell
+}
+
+export function insertNodeFromSelector(
+  graph: X6GraphLike,
+  nodeType: string,
+  pendingPoint: XYPoint | null,
+  pendingInsertionEdge: X6Cell | null,
+  getNodeLabel: ((t: string) => string) | null,
+  createVueShapeNode: CreateVueShapeNode
+): X6Cell | null {
   if (!graph || !nodeType || !pendingPoint) return null
   if (nodeType === 'audience-split') nodeType = 'crowd-split'
   const label = (getNodeLabel && getNodeLabel(nodeType)) || nodeType
   const fourOutTypes = ['audience-split', 'crowd-split', 'event-split', 'ab-test']
   const outCount = fourOutTypes.includes(nodeType) ? 4 : 1
   const newNodeId = `${nodeType}-${Date.now()}`
-  const node = graph.addNode(createVueShapeNode({ id: newNodeId, x: pendingPoint.x, y: pendingPoint.y, label, outCount, data: { type: nodeType, nodeType, isConfigured: false } }))
+  const node = graph.addNode?.(createVueShapeNode({
+    id: newNodeId, x: pendingPoint.x, y: pendingPoint.y, label, outCount,
+    data: { type: nodeType, nodeType, isConfigured: false }
+  })) || null
   if (pendingInsertionEdge) {
     try {
-      const source = pendingInsertionEdge.getSource?.()
-      const target = pendingInsertionEdge.getTarget?.()
+      const source = pendingInsertionEdge.getSource?.() as X6Port | undefined
+      const target = pendingInsertionEdge.getTarget?.() as X6Port | undefined
       graph.removeEdge?.(pendingInsertionEdge.id)
-      graph.addEdge({ source: { cell: source.cell, port: source.port }, target: { cell: newNodeId, port: 'in' }, router: { name: 'normal' }, connector: { name: 'smooth' }, attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } } })
-      graph.addEdge({ source: { cell: newNodeId, port: 'out-0' }, target: { cell: target.cell, port: target.port }, router: { name: 'normal' }, connector: { name: 'smooth' }, attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } } })
+      graph.addEdge?.({ source: { cell: source?.cell, port: source?.port }, target: { cell: newNodeId, port: 'in' }, router: { name: 'normal' }, connector: { name: 'smooth' }, attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } } })
+      graph.addEdge?.({ source: { cell: newNodeId, port: 'out-0' }, target: { cell: target?.cell, port: target?.port }, router: { name: 'normal' }, connector: { name: 'smooth' }, attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } } })
     } catch {}
   }
   return node
 }
 
+export interface InsertFinalizeHandlers {
+  onPersist?: (graph: X6GraphLike, node: X6Cell | null) => void
+  onAfter?: (node: X6Cell | null) => void
+}
+
 export function insertNodeAndFinalize(
-  graph: any,
+  graph: X6GraphLike,
   nodeType: string,
-  pendingPoint: { x: number; y: number },
-  pendingInsertionEdge: any,
-  getNodeLabel: (t: string) => string,
-  createVueShapeNode: (spec: any) => any,
-  finalize?: { onPersist?: (graph: any, node: any) => void; onAfter?: (node: any) => void }
+  pendingPoint: XYPoint | null,
+  pendingInsertionEdge: X6Cell | null,
+  getNodeLabel: ((t: string) => string) | null,
+  createVueShapeNode: CreateVueShapeNode,
+  finalize?: InsertFinalizeHandlers
 ) {
   const node = insertNodeFromSelector(graph, nodeType, pendingPoint, pendingInsertionEdge, getNodeLabel, createVueShapeNode)
-  try { graph.cleanSelection && graph.cleanSelection() } catch {}
-  try { finalize?.onPersist && finalize.onPersist(graph, node) } catch {}
-  try { finalize?.onAfter && finalize.onAfter(node) } catch {}
+  try { graph.cleanSelection?.() } catch {}
+  try { finalize?.onPersist?.(graph, node) } catch {}
+  try { finalize?.onAfter?.(node) } catch {}
   return node
 }
 /*

@@ -88,6 +88,70 @@ describe('validateForPublishPure', () => {
     const r = validateForPublishPure(data)
     expect(r.pass).toBe(true)
   })
+
+  it('多错误聚合：details 数组结构正确', () => {
+    const data = {
+      nodes: [
+        { id: 'start', type: 'start' },
+        { id: 'n1', type: 'sms' },
+        { id: 'n2', type: 'sms' }
+      ],
+      connections: [
+        { source: 'start', target: 'n1' }
+      ]
+    }
+    const r = validateForPublishPure(data)
+    expect(r.pass).toBe(false)
+    expect(Array.isArray(r.details)).toBe(true)
+    const kinds = r.details.map(d => d.kind)
+    expect(kinds).toContain('unconfigured')
+    expect(kinds).toContain('no-out')
+  })
+
+  it('AB 实验分支：全部配置且每分支有出边 → pass', () => {
+    const data = {
+      nodes: [
+        { id: 'start', type: 'start' },
+        { id: 'ab', type: 'ab-test', config: { branches: [{ id: 'b1' }, { id: 'b2' }, { id: 'b3' }, { id: 'b4' }] }, isConfigured: true },
+        { id: 'e1', type: 'end' },
+        { id: 'e2', type: 'end' },
+        { id: 'e3', type: 'end' },
+        { id: 'e4', type: 'end' }
+      ],
+      connections: [
+        { source: 'start', target: 'ab' },
+        { source: 'ab', target: 'e1', sourcePort: 'out-0', branchId: 'b1' },
+        { source: 'ab', target: 'e2', sourcePort: 'out-1', branchId: 'b2' },
+        { source: 'ab', target: 'e3', sourcePort: 'out-2', branchId: 'b3' },
+        { source: 'ab', target: 'e4', sourcePort: 'out-3', branchId: 'b4' }
+      ]
+    }
+    const r = validateForPublishPure(data)
+    expect(r.pass).toBe(true)
+  })
+
+  it('format 异常（节点不是数组）: 透传返回', () => {
+    const bad = { nodes: 'not-array', connections: [] }
+    const r = validateForPublishPure(bad)
+    expect(r.pass).toBe(false)
+    expect(r.messages).toContain('画布数据格式不正确')
+  })
+
+  it('isConfigured 显式 true 即便 config 为空：视为已配置', () => {
+    const data = {
+      nodes: [
+        { id: 'start', type: 'start' },
+        { id: 'n', type: 'sms', isConfigured: true },
+        { id: 'end', type: 'end' }
+      ],
+      connections: [
+        { source: 'start', target: 'n' },
+        { source: 'n', target: 'end' }
+      ]
+    }
+    const r = validateForPublishPure(data)
+    expect(r.pass).toBe(true)
+  })
 })
 /*
 用途：validateForPublishPure 单元测试

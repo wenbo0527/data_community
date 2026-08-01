@@ -1,9 +1,11 @@
-export type GraphLike = any
+import type { X6GraphLike, X6Cell } from '@/types/graph.js'
 import { MiniMap } from '@antv/x6-plugin-minimap'
 import { History } from '@antv/x6-plugin-history'
 import { Keyboard } from '@antv/x6-plugin-keyboard'
 import { Selection } from '@antv/x6-plugin-selection'
 import { Graph } from '@antv/x6'
+
+export type GraphLike = X6GraphLike
 
 /**
  * 创建通用 Graph 实例（占位 API）
