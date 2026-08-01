@@ -37,7 +37,7 @@ export function useCanvasPersistence(deps) {
   /**
    * 保存为草稿
    * 入参：无（依赖注入的所有 getXxx()）
-   * 返回：boolean 是否成功
+   * 返回：Promise<boolean> 是否成功
    * 副作用：写 TaskStorage + tracker；调用 setTaskStatus/setIsDirty；跳转路由
    */
   async function saveDraft() {
@@ -101,7 +101,7 @@ export function useCanvasPersistence(deps) {
   /**
    * 发布当前版本
    * 入参：无
-   * 返回：boolean
+   * 返回：Promise<boolean>
    * 副作用：写 TaskStorage + tracker；调用 setTaskStatus/setIsDirty；跳转路由
    */
   async function publish() {
@@ -166,7 +166,7 @@ export function useCanvasPersistence(deps) {
   /**
    * 提交审批
    * 入参：无
-   * 返回：boolean
+   * 返回：Promise<boolean>
    * 副作用：调用 TaskStorage.updateTask + submitApproval；设置 approvalStatus/publishReady/publishMessages
    */
   async function submitApproval() {

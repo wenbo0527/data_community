@@ -41,7 +41,8 @@ export function validateForPublishPure(canvasData) {
     const cfg = n.config || {}
     const configuredFlag = n.isConfigured === true
     const noConfig = !cfg || Object.keys(cfg).length === 0
-    if ((noConfig || !configuredFlag) && !idSet.has(n.id)) {
+    // 仅当"无 config 且未显式标记 isConfigured"才算未配置
+    if (noConfig && !configuredFlag && !idSet.has(n.id)) {
       idSet.add(n.id)
       unconfigured.push(n)
     }
