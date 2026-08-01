@@ -1,119 +1,142 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-// 单字段权限三元组（PRD §4.4 R01）
+// 字段维度：客户 / 客户-产品 / 授信 / 借据
+// PRD §F-005 自定义查询：4 维度拆分 + 借据多行复制
+export type FieldDimension = 'customer' | 'customer-product' | 'credit-application' | 'loan-product'
+
 export interface FieldPermission {
-  fieldKey: string         // 字段路径，如 "customer.idCard" / "loan.loanNo"
-  fieldLabel: string       // 中文名，如 "身份证号" / "用信编号"
-  visible: boolean         // 是否可见
-  copyable: boolean        // 是否可复制
-  searchable: boolean      // 是否可搜索
+  fieldKey: string         // 字段路径
+  fieldLabel: string       // 中文名
+  visible: boolean
+  copyable: boolean
+  searchable: boolean
 }
 
 export const useFieldPermissionStore = defineStore('fieldPermission', () => {
-  // 全量字段权限配置（mock 演示：默认全部 visible+copyable+searchable）
-  // 真实场景从 /api/dex/customer360/field-config 拉取
-  const fields = ref<FieldPermission[]>([
-    // ===== 客户基本信息 =====
-    { fieldKey: 'customer.name',         fieldLabel: '客户姓名',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.idCard',       fieldLabel: '身份证号',   visible: true, copyable: false, searchable: false }, // 示例：R01 不可复制不可搜索
-    { fieldKey: 'customer.phone',        fieldLabel: '手机号',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.birthDate',    fieldLabel: '出生日期',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.gender',       fieldLabel: '性别',       visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.email',        fieldLabel: '邮箱',       visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.address',      fieldLabel: '居住地址',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.company',      fieldLabel: '工作单位',   visible: true, copyable: true, searchable: true },
-    // P0: 客户画像扩展
-    { fieldKey: 'customer.customerLevel', fieldLabel: '客户等级',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.occupation',    fieldLabel: '职业',       visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.annualIncome',  fieldLabel: '年收入',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'customer.marriage',      fieldLabel: '婚姻状况',   visible: true, copyable: true, searchable: true },
+  // 字段按 4 维度分组（真实场景从 /api/dex/customer360/field-config 拉取）
+  const fieldsByDimension = ref<Record<FieldDimension, FieldPermission[]>>({
+    // ===== 维度 1：客户（cross-product 全局画像） =====
+    customer: [
+      { fieldKey: 'name',           fieldLabel: '客户姓名',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'idCard',         fieldLabel: '身份证号',   visible: true, copyable: false, searchable: false }, // R01
+      { fieldKey: 'phone',          fieldLabel: '手机号',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'gender',         fieldLabel: '性别',       visible: true, copyable: true, searchable: true },
+      { fieldKey: 'birthDate',      fieldLabel: '出生日期',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'email',          fieldLabel: '邮箱',       visible: true, copyable: true, searchable: true },
+      { fieldKey: 'address',        fieldLabel: '居住地址',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'company',        fieldLabel: '工作单位',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'customerLevel',  fieldLabel: '客户等级',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'occupation',     fieldLabel: '职业',       visible: true, copyable: true, searchable: true },
+      { fieldKey: 'annualIncome',   fieldLabel: '年收入',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'marriage',       fieldLabel: '婚姻状况',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'creditScore',    fieldLabel: '信用评分',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'creditLevel',    fieldLabel: '信用等级',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'totalCredit',    fieldLabel: '总授信额度', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'usedCredit',     fieldLabel: '总在贷余额', visible: true, copyable: true, searchable: true }
+    ],
 
-    // ===== 授信信息 =====
-    { fieldKey: 'credit.creditProductId',     fieldLabel: '授信产品ID',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.creditApplicationId', fieldLabel: '授信申请ID',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.amount',              fieldLabel: '授信额度',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.balance',             fieldLabel: '在贷余额',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.interestRate',        fieldLabel: '利率',         visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.startDate',           fieldLabel: '授信起始日',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.maturityDate',        fieldLabel: '到期日',       visible: true, copyable: true, searchable: true },
-    // P0: PRD §R08 关键豁免字段
-    { fieldKey: 'credit.productName',         fieldLabel: '产品名称',     visible: true, copyable: true, searchable: true }, // R08 不受字段权限控制
-    { fieldKey: 'credit.creditTime',          fieldLabel: '授信时间',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.bank',               fieldLabel: '资方银行',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'credit.creditStatus',       fieldLabel: '授信状态',     visible: true, copyable: true, searchable: true },
+    // ===== 维度 2：客户-产品（基于当前选中授信产品） =====
+    customerProduct: [
+      { fieldKey: 'productName',       fieldLabel: '产品名称',   visible: true, copyable: true, searchable: true }, // PRD §R08 豁免
+      { fieldKey: 'productCode',       fieldLabel: '产品编码',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'creditProductId',   fieldLabel: '授信产品ID', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'amount',            fieldLabel: '授信额度',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'balance',           fieldLabel: '在贷余额',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'interestRate',      fieldLabel: '利率',       visible: true, copyable: true, searchable: true },
+      { fieldKey: 'startDate',         fieldLabel: '授信起始日', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'maturityDate',      fieldLabel: '到期日',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'creditTime',        fieldLabel: '授信时间',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'creditStatus',      fieldLabel: '授信状态',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'bank',              fieldLabel: '资方银行',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'productType',       fieldLabel: '产品类型',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'thirdPartyLoanId',  fieldLabel: '三方借据号', visible: true, copyable: true, searchable: true }
+    ],
 
-    // ===== 用信信息 =====
-    { fieldKey: 'loan.loanNo',          fieldLabel: '用信编号',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.loanProductId',   fieldLabel: '用信产品ID',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.loanProductName', fieldLabel: '用信产品名',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.amount',          fieldLabel: '用信金额',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.balance',         fieldLabel: '当前余额',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.loanDate',        fieldLabel: '用信日期',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.status',          fieldLabel: '用信状态',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.contractNo',      fieldLabel: '合同编号',     visible: true, copyable: true, searchable: true },
-    // P0: 用信核心扩展
-    { fieldKey: 'loan.channel',         fieldLabel: '申请渠道',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.installments',    fieldLabel: '分期数',       visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.currentPeriod',   fieldLabel: '当前期次',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.overdueDays',     fieldLabel: '逾期天数',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.maxOverdueDays',  fieldLabel: '历史最大逾期', visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.settlementDate',  fieldLabel: '结清日期',     visible: true, copyable: true, searchable: true },
-    // P0: 剩余应还明细（PRD §视图 4 用信产品卡片直接展示）
-    { fieldKey: 'loan.remainingPrincipal', fieldLabel: '剩余本金',    visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.remainingInterest',  fieldLabel: '剩余利息',    visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.remainingPenalty',   fieldLabel: '剩余罚息',    visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.remainingTotal',     fieldLabel: '剩余应还',    visible: true, copyable: true, searchable: true },
-    // P1: 用信结果 + 三方客户号
-    { fieldKey: 'loan.result',              fieldLabel: '申请结果',    visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.rejectReason',        fieldLabel: '拒绝原因',    visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.thirdPartyCustomerId', fieldLabel: '三方客户号', visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.id',                  fieldLabel: '借据ID',      visible: true, copyable: true, searchable: true },
-    { fieldKey: 'loan.productKey',          fieldLabel: '产品Key',     visible: true, copyable: true, searchable: true },
+    // ===== 维度 3：授信（授信申请 ID） =====
+    creditApplication: [
+      { fieldKey: 'creditApplicationId', fieldLabel: '授信申请ID', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'creditProductId',     fieldLabel: '授信产品ID', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'productName',         fieldLabel: '产品名称',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'appliedAt',           fieldLabel: '申请时间',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'approvedBy',          fieldLabel: '审批人',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'status',              fieldLabel: '授信状态',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'loanProductCount',    fieldLabel: '用信产品数', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'totalLoanAmount',     fieldLabel: '用信总金额', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'totalLoanCount',      fieldLabel: '用信总笔数', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'overdueCount',        fieldLabel: '逾期笔数',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'overdueAmount',       fieldLabel: '逾期金额',   visible: true, copyable: true, searchable: true }
+    ],
 
-    // ===== 征信信息 =====
-    { fieldKey: 'creditReport.score',           fieldLabel: '信用评分',           visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.level',           fieldLabel: '信用等级',           visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.queryDate',       fieldLabel: '查询日期',           visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.utilization',     fieldLabel: '额度使用率',         visible: true, copyable: true, searchable: true },
-    // P1: 征信报告基础
-    { fieldKey: 'creditReport.reportId',        fieldLabel: '报告编号',           visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.source',          fieldLabel: '数据来源',           visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.reportStatus',    fieldLabel: '报告状态',           visible: true, copyable: true, searchable: true },
-    // P1: 征信报告 - 信用总览（嵌套）
-    { fieldKey: 'creditReport.creditOverview.creditCardAccounts',   fieldLabel: '信用卡账户数',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.creditOverview.loanAccounts',         fieldLabel: '贷款账户数',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.creditOverview.totalCreditLimit',     fieldLabel: '总授信额度',     visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.creditOverview.usedCredit',           fieldLabel: '已用额度',       visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.creditOverview.creditUtilizationRate', fieldLabel: '征信报告-额度使用率', visible: true, copyable: true, searchable: true },
-    // P1: 征信报告 - 逾期信息（嵌套）
-    { fieldKey: 'creditReport.overdueInfo.overdueCount',          fieldLabel: '累计逾期次数',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.overdueInfo.maxOverdueDays',        fieldLabel: '历史最大逾期天数', visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.overdueInfo.overdueAmount',         fieldLabel: '逾期金额',       visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.overdueInfo.currentOverdueCount',   fieldLabel: '当前逾期笔数',   visible: true, copyable: true, searchable: true },
-    // P1: 征信报告 - 查询记录（嵌套）
-    { fieldKey: 'creditReport.queryRecords.totalQueryCount',      fieldLabel: '累计查询次数',   visible: true, copyable: true, searchable: true },
-    { fieldKey: 'creditReport.queryRecords.queriesLast3Months',    fieldLabel: '近3个月查询次数', visible: true, copyable: true, searchable: true }
-  ])
+    // ===== 维度 4：借据（用信产品 ID · 每行一条借据） =====
+    loanProduct: [
+      // 用信产品维度
+      { fieldKey: 'loanProductId',       fieldLabel: '用信产品ID',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'loanProductName',     fieldLabel: '用信产品名',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'creditApplicationId', fieldLabel: '授信申请ID',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'createdAt',           fieldLabel: '创建时间',     visible: true, copyable: true, searchable: true },
+      // 借据维度（每个 loanRecord 一行）
+      { fieldKey: 'id',                  fieldLabel: '借据ID',       visible: true, copyable: true, searchable: true },
+      { fieldKey: 'loanNo',              fieldLabel: '用信编号',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'productName',         fieldLabel: '产品名称',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'amount',              fieldLabel: '用信金额',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'balance',             fieldLabel: '当前余额',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'loanDate',            fieldLabel: '用信日期',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'status',              fieldLabel: '用信状态',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'contractNo',          fieldLabel: '合同编号',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'channel',             fieldLabel: '申请渠道',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'installments',        fieldLabel: '分期数',       visible: true, copyable: true, searchable: true },
+      { fieldKey: 'currentPeriod',       fieldLabel: '当前期次',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'overdueDays',         fieldLabel: '逾期天数',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'maxOverdueDays',      fieldLabel: '历史最大逾期', visible: true, copyable: true, searchable: true },
+      { fieldKey: 'settlementDate',      fieldLabel: '结清日期',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'remainingPrincipal',  fieldLabel: '剩余本金',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'remainingInterest',   fieldLabel: '剩余利息',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'remainingPenalty',    fieldLabel: '剩余罚息',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'remainingTotal',      fieldLabel: '剩余应还',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'result',              fieldLabel: '申请结果',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'rejectReason',        fieldLabel: '拒绝原因',     visible: true, copyable: true, searchable: true },
+      { fieldKey: 'thirdPartyCustomerId', fieldLabel: '三方客户号',   visible: true, copyable: true, searchable: true },
+      { fieldKey: 'productKey',          fieldLabel: '产品Key',      visible: true, copyable: true, searchable: true },
+      { fieldKey: 'interestRate',        fieldLabel: '利率',         visible: true, copyable: true, searchable: true }
+    ]
+  })
 
-  // 当前生效的字段权限（in-memory，PM 配置台调整后实时刷新生效）
-  const updateField = (fieldKey: string, patch: Partial<FieldPermission>) => {
-    const idx = fields.value.findIndex(f => f.fieldKey === fieldKey)
+  // 兼容旧版字段池（aggregate 所有维度的字段）
+  const fields = computed(() => {
+    const all: FieldPermission[] = []
+    const seen = new Set<string>()
+    Object.values(fieldsByDimension.value).forEach(dimFields => {
+      dimFields.forEach(f => {
+        if (!seen.has(f.fieldKey)) {
+          seen.add(f.fieldKey)
+          all.push(f)
+        }
+      })
+    })
+    return all
+  })
+
+  // 当前生效的字段权限更新
+  const updateField = (dimension: FieldDimension, fieldKey: string, patch: Partial<FieldPermission>) => {
+    const arr = fieldsByDimension.value[dimension]
+    const idx = arr.findIndex(f => f.fieldKey === fieldKey)
     if (idx >= 0) {
-      // R01 强一致链：visible=false → copyable=false + searchable=false
+      // R01 强一致链
       if (patch.visible === false) {
         patch.copyable = false
         patch.searchable = false
       }
-      fields.value[idx] = { ...fields.value[idx], ...patch }
+      arr[idx] = { ...arr[idx], ...patch }
     }
   }
 
-  // 查字段权限（用于前端过滤）
   const getField = (fieldKey: string): FieldPermission | undefined =>
     fields.value.find(f => f.fieldKey === fieldKey)
 
-  // R01 校验：list 中字段不能跨越 visible=false 的字段
+  const getFieldByDim = (dimension: FieldDimension, fieldKey: string): FieldPermission | undefined =>
+    fieldsByDimension.value[dimension].find(f => f.fieldKey === fieldKey)
+
   const isCopyable = (fieldKey: string) => {
     const f = getField(fieldKey)
     return !!f && f.visible && f.copyable
@@ -129,13 +152,26 @@ export const useFieldPermissionStore = defineStore('fieldPermission', () => {
     return !!f && f.visible
   }
 
-  // 字段池（仅 visible=true 的字段可选）
-  const availableFieldPool = computed(() => fields.value.filter(f => f.visible))
+  // 字段池（仅 visible=true · 按维度）
+  const availableFieldPool = computed<Record<FieldDimension, FieldPermission[]>>(() => {
+    const out: Record<FieldDimension, FieldPermission[]> = {
+      customer: [],
+      'customer-product': [],
+      'credit-application': [],
+      'loan-product': []
+    }
+    ;(Object.keys(fieldsByDimension.value) as FieldDimension[]).forEach(dim => {
+      out[dim] = fieldsByDimension.value[dim].filter(f => f.visible)
+    })
+    return out
+  })
 
   return {
+    fieldsByDimension,
     fields,
     updateField,
     getField,
+    getFieldByDim,
     isCopyable,
     isSearchable,
     isVisible,

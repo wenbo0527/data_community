@@ -45,18 +45,6 @@
           </div>
         </a-tab-pane>
 
-        <!-- 用信列表 Tab：按「授信申请ID → 用信产品」二级分组 -->
-        <a-tab-pane key="loan-list" title="用信列表">
-          <div class="module-content">
-            <LoanProductsGroupedList
-              :loans="userInfo?.loanRecords || []"
-              :loan-products="userInfo?.loanProducts || []"
-              :credit-applications="userInfo?.creditApplications || []"
-              :products="userOwnedProducts"
-            />
-          </div>
-        </a-tab-pane>
-
         <!-- 实时业务数据 Tab (仅针对 Su贷 产品) -->
         <a-tab-pane key="realtime" title="实时业务数据" v-if="isSudaiProduct">
           <div class="module-content realtime-tab-content">
@@ -92,17 +80,6 @@
             <BenefitRecords
               :product-key="productKey"
               :marketing-data="marketingData"
-              :user-info="userInfo"
-              :loading="loading"
-            />
-          </div>
-        </a-tab-pane>
-
-        <a-tab-pane key="product" title="产品信息">
-          <div class="module-content">
-            <ProductInfo
-              :product-key="productKey"
-              :product-data="productDataArray"
               :user-info="userInfo"
               :loading="loading"
             />
@@ -158,9 +135,7 @@ import CustomerOverview from './CustomerOverview.vue'
 import BusinessCoreDetails from './BusinessCoreDetails.vue'
 import TouchRecords from './TouchRecords.vue'
 import BenefitRecords from './BenefitRecords.vue'
-import ProductInfo from './ProductInfo.vue'
 import RealTimeData from './RealTimeData.vue'
-import LoanProductsGroupedList from './LoanProductsGroupedList.vue'
 
 
 interface Props {
@@ -219,14 +194,7 @@ const userOwnedProducts = computed(() => {
   return props.userInfo?.products || []
 })
 
-// productData 兼容：ProductInfo 期望数组（产品列表），其他子组件期望单个对象
-const productDataArray = computed(() => {
-  if (!props.productData) {return []}
-  return Array.isArray(props.productData) ? props.productData : [props.productData]
-})
-
-// 用信列表：已下沉到 BusinessCoreDetails 中的「用信列表」section（按 productName 分组）
-
+// marketingData：用于触达/权益记录（Su贷产品专属）
 const marketingData = computed(() => {
   if (!props.userInfo || !props.productKey) {return {}}
   

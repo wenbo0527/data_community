@@ -26,22 +26,27 @@
       <template #visible="{ record }">
         <a-switch
           :model-value="record.visible"
-          @change="(val: any) => handleUpdate(record.fieldKey, 'visible', val)"
+          @change="(val: any) => handleUpdate(record.dimension, record.fieldKey, 'visible', val)"
         />
       </template>
       <template #copyable="{ record }">
         <a-switch
           :model-value="record.copyable"
           :disabled="!record.visible"
-          @change="(val: any) => handleUpdate(record.fieldKey, 'copyable', val)"
+          @change="(val: any) => handleUpdate(record.dimension, record.fieldKey, 'copyable', val)"
         />
       </template>
       <template #searchable="{ record }">
         <a-switch
           :model-value="record.searchable"
           :disabled="!record.visible"
-          @change="(val: any) => handleUpdate(record.fieldKey, 'searchable', val)"
+          @change="(val: any) => handleUpdate(record.dimension, record.fieldKey, 'searchable', val)"
         />
+      </template>
+      <template #dimensionLabel="{ record }">
+        <a-tag size="mini" :color="dimensionTagColor(record.dimension)">
+          {{ record.dimensionLabel }}
+        </a-tag>
       </template>
       <template #status="{ record }">
         <a-tag
@@ -88,14 +93,42 @@ import { useFieldPermissionStore } from '../stores/fieldPermission'
 
 const fieldStore = useFieldPermissionStore()
 
-const fields = computed(() => fieldStore.fields)
+// 维度标签映射
+const dimensionLabels: Record<string, string> = {
+  customer: '客户维度',
+  'customer-product': '客户-产品维度',
+  'credit-application': '授信维度',
+  'loan-product': '借据维度'
+}
+
+// 拼接四维度字段（带 dimension 标识）
+const fields = computed(() => {
+  const out: any[] = []
+  ;(Object.keys(fieldStore.fieldsByDimension) as string[]).forEach(dim => {
+    fieldStore.fieldsByDimension[dim as keyof typeof fieldStore.fieldsByDimension].forEach(f => {
+      out.push({
+        ...f,
+        dimension: dim,
+        dimensionLabel: dimensionLabels[dim] || dim
+      })
+    })
+  })
+  return out
+})
 
 const columns = [
+  {
+    title: '维度',
+    dataIndex: 'dimensionLabel',
+    key: 'dimensionLabel',
+    slotName: 'dimensionLabel',
+    width: 140
+  },
   {
     title: '字段路径',
     dataIndex: 'fieldKey',
     key: 'fieldKey',
-    width: 180,
+    width: 200,
     render: ({ record }: any) => (
       `<code style="font-size:12px;color:#165dff">${record.fieldKey}</code>`
     )
@@ -139,9 +172,19 @@ const columns = [
   }
 ]
 
-const handleUpdate = (fieldKey: string, key: 'visible' | 'copyable' | 'searchable', val: boolean) => {
-  fieldStore.updateField(fieldKey, { [key]: val } as any)
+const handleUpdate = (dimension: string, fieldKey: string, key: 'visible' | 'copyable' | 'searchable', val: boolean) => {
+  fieldStore.updateField(dimension as any, fieldKey, { [key]: val } as any)
   Message.success(`已更新 ${fieldKey} · ${key}=${val}`)
+}
+
+const dimensionTagColor = (dim: string) => {
+  const map: Record<string, string> = {
+    customer: 'gray',
+    'customer-product': 'arcoblue',
+    'credit-application': 'purple',
+    'loan-product': 'green'
+  }
+  return map[dim] || 'gray'
 }
 
 const activeCount = computed(() => fields.value.filter(f => f.visible).length)
