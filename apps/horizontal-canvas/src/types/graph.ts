@@ -90,9 +90,34 @@ export interface X6GraphLike {
   [k: string]: any
 }
 
+export interface CanvasNodeRecord {
+  id: string
+  type?: string
+  x?: number
+  y?: number
+  position?: { x: number; y: number }
+  label?: string
+  config?: Record<string, any>
+  data?: X6NodeData
+  isConfigured?: boolean
+  branches?: Array<{ id?: string; label?: string; name?: string }>
+  [k: string]: any
+}
+
+export interface CanvasConnectionRecord extends X6EdgeData {
+  source: string
+  target: string
+  sourcePort?: string
+  sourcePortId?: string
+  targetPort?: string
+  targetPortId?: string
+  label?: string
+  [k: string]: any
+}
+
 export interface CanvasData {
-  nodes: Array<{ id: string; type?: string; config?: any; data?: X6NodeData; [k: string]: unknown }>
-  connections: Array<X6EdgeData & { source: string; target: string; [k: string]: unknown }>
+  nodes: CanvasNodeRecord[]
+  connections: CanvasConnectionRecord[]
   _migrationVersion?: number
   [k: string]: unknown
 }

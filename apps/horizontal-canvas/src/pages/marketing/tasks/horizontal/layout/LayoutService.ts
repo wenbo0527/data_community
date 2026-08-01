@@ -4,8 +4,8 @@ import HorizontalQuickLayout from '../utils/quickLayout.js'
 export type GraphLike = X6GraphLike
 
 export interface ApplyQuickLayoutOptions {
-  containerEl?: any
-  minimap?: any
+  containerEl?: HTMLElement | null
+  minimap?: { updateGraph?: () => void; update?: () => void; dispose?: () => void; [k: string]: unknown } | null
   minimapPaused?: boolean
   startX?: number
   startY?: number

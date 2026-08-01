@@ -1,6 +1,6 @@
 /**
  * 画布数据迁移（兼容旧字段、补齐 AB 分支 id、AB 分支边的 branchId）
- * 入参：canvasData({ nodes: any[]; connections: any[] })
+ * 入参：canvasData({ nodes: CanvasNodeRecord[]; connections: CanvasConnectionRecord[] })
  * 返回：迁移后的 canvasData（若格式异常原样返回）
  * 细节：
  *  - 节点 config 扁平化兜底（n.config ?? n.data?.config）
