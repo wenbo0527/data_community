@@ -136,7 +136,7 @@ const handleRefresh = () => {
 
 const handleCreate = () => {
   // 跳转到人群创建页面
-  router.push('/exploration/customer-center/audience-system/audience-create')
+  router.push('/marketing/exploration/customer-center/audience-system/audience-create')
 }
 
 const handleEdit = (record: any) => {

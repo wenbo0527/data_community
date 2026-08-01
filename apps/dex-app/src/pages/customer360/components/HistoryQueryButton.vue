@@ -1,30 +1,60 @@
 <template>
   <div class="history-query-button">
     <!-- 明细查询按钮 -->
-    <a-button 
-      type="primary" 
+    <a-button
+      type="primary"
       @click="openQueryDrawer"
       :loading="loading"
       class="query-button"
     >
       <template #icon><IconHistory /></template>
-      明细数据查询
+      数据查询与导出
     </a-button>
 
-    <!-- 查询记录抽屉 -->
+    <!-- 数据查询与导出抽屉（PRD §视图 3） -->
     <a-drawer
       v-model:visible="drawerVisible"
-      title="明细数据查询"
+      title="数据查询与导出"
       width="80%"
       :footer="false"
       placement="right"
       class="query-drawer"
       unmount-on-close
     >
-      <div class="drawer-content">
-        <!-- 明细数据查询组件 -->
-        <HistorySliceQuery :user-id="props.userInfo?.userId || props.userInfo?.customerId" />
-      </div>
+      <a-tabs
+        v-model:active-key="drawerTabKey"
+        type="line"
+        size="large"
+        class="drawer-tabs"
+      >
+        <!-- Tab 1: 数据模型查询（复用现有 HistorySliceQuery） -->
+        <a-tab-pane key="model-query" title="数据模型查询">
+          <div class="tab-pane-content">
+            <div class="tab-pane-header">
+              <IconHistory class="header-icon" />
+              <span class="header-title">历史查询记录</span>
+              <a-tag color="arcoblue" size="small">复用现有 · 老用户无感知升级</a-tag>
+            </div>
+            <HistorySliceQuery :user-info="props.userInfo" />
+          </div>
+        </a-tab-pane>
+
+        <!-- Tab 2: 自定义查询（v3.3 新能力 · 字段级权限可见） -->
+        <a-tab-pane key="custom-query" title="自定义查询">
+          <div class="tab-pane-content">
+            <div class="tab-pane-header">
+              <IconStorage class="header-icon" />
+              <span class="header-title">自定义查询</span>
+              <a-tag color="purple" size="small">v3.3 新能力 · 受字段级权限控制</a-tag>
+            </div>
+            <CustomQueryPanel
+              :user-info="props.userInfo"
+              :session-id="sessionId"
+              @audit-copy="handleAuditCopy"
+            />
+          </div>
+        </a-tab-pane>
+      </a-tabs>
     </a-drawer>
 
 
@@ -77,20 +107,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { 
-  IconHistory
+import {
+  IconHistory,
+  IconStorage
 } from '@arco-design/web-vue/es/icon'
 import { getDataModelsList } from '@/api/dataModels'
 import HistorySliceQuery from './HistorySliceQuery.vue'
+import CustomQueryPanel from './CustomQueryPanel.vue'
 
 // Props
 const props = defineProps({
   userId: {
     type: String,
-    required: true
+    default: ''
   },
   userInfo: {
     type: Object,
@@ -101,8 +133,32 @@ const props = defineProps({
 // 响应式数据
 const loading = ref(false)
 const drawerVisible = ref(false)
+const drawerTabKey = ref<string>('model-query')
+const sessionId = ref(`S-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
 const resultModalVisible = ref(false)
 const resultLoading = ref(false)
+
+// 复制审计：记录最近 50 条
+const auditLogs = ref<{
+  auditLogId: string
+  userId: string
+  customerId: string
+  fieldList: string[]
+  sessionId: string
+  timestamp: number
+}[]>([])
+
+const handleAuditCopy = (payload: any) => {
+  auditLogs.value.unshift({
+    ...payload,
+    timestamp: Date.now()
+  })
+  if (auditLogs.value.length > 50) {
+    auditLogs.value = auditLogs.value.slice(0, 50)
+  }
+  // 真实场景：调用 /api/dex/customer360/custom-query/copy 上报
+  console.debug('[v3.3] audit-copy:', payload)
+}
 
 // 查询结果相关
 const currentQueryRecord = ref(null)
@@ -405,6 +461,45 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.drawer-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-tabs :deep(.arco-tabs-content-holder) {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+}
+
+.tab-pane-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tab-pane-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.header-icon {
+  font-size: 16px;
+  color: var(--subapp-info);
+}
+
+.header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--subapp-text-primary);
 }
 
 

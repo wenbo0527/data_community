@@ -50,7 +50,7 @@ export default defineConfig(({ command }) => ({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5177,
     strictPort: true,
     // 让 Vite 自动选择 HMR 客户端端口与主机，避免端口变更后 ping 失败
     watch: {

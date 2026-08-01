@@ -16,6 +16,27 @@
     </div>
     
     <div v-else class="details-content">
+      <!-- BP-1: 业务核心明细 sticky header（上下文不丢） -->
+      <div class="business-sticky-header">
+        <div class="bsh-row">
+          <IconBookmark class="bsh-icon" />
+          <span class="bsh-label">当前查看</span>
+          <a-tag color="arcoblue" size="small">
+            {{ currentCreditProduct?.productName || '未选择产品' }}
+          </a-tag>
+          <a-tag v-if="currentCreditProduct?.creditProductId" color="gray" size="mini">
+            {{ currentCreditProduct.creditProductId }}
+          </a-tag>
+        </div>
+        <div class="bsh-meta">
+          <span>客户: <strong>{{ props.userInfo?.name || '-' }}</strong></span>
+          <a-divider direction="vertical" />
+          <span>授信额度: <strong>¥{{ formatAmount(currentCreditProduct?.amount) }}</strong></span>
+          <a-divider direction="vertical" />
+          <span>在贷余额: <strong class="text-green-600">¥{{ formatAmount(currentCreditProduct?.balance) }}</strong></span>
+        </div>
+      </div>
+
       <!-- 授信列表 -->
       <div class="detail-section">
         <div class="section-header">
@@ -66,19 +87,6 @@
         </div>
       </div>
       
-      <!-- 用信列表 -->
-      <div class="detail-section">
-        <LoanRecordTable
-          :data="loansList"
-          :loading="loading"
-          @view-loan-detail="viewLoanDetail"
-          @view-disbursement-details="handleViewDisbursementDetails"
-          @view-repayment-details="handleViewRepaymentDetails"
-          @view-loan-tags="handleViewLoanTags"
-          @view-initial-repayment-plan="handleViewInitialRepaymentPlan"
-        />
-      </div>
-      
       <!-- 调额记录 -->
       <div class="detail-section">
         <div class="section-header">
@@ -86,9 +94,9 @@
           <span class="section-title">调额记录</span>
           <a-badge :count="adjustmentsList.length" class="section-badge" />
         </div>
-        
+
         <div class="table-container">
-          <a-table 
+          <a-table
             :columns="adjustmentColumns"
             :data="adjustmentsList"
             :pagination="adjustmentPagination"
@@ -101,19 +109,19 @@
                 {{ record.type }}
               </a-tag>
             </template>
-            
+
             <template #before="{ record }">
               <span class="amount-text">{{ formatAmount(record.before) }}</span>
             </template>
-            
+
             <template #after="{ record }">
               <span class="amount-text">{{ formatAmount(record.after) }}</span>
             </template>
-            
+
             <template #reason="{ record }">
               <span>{{ record.reason || '-' }}</span>
             </template>
-            
+
             <template #actions="{ record }">
               <a-button size="mini" type="text" @click="viewAdjustmentDetail(record)">
                 查看详情
@@ -122,12 +130,22 @@
           </a-table>
         </div>
       </div>
-      
-      <!-- 支付流程 -->
+
+      <!-- 用信列表（按「授信申请ID → 用信产品」二级分组 · PRD §F-003） -->
+      <div class="detail-section">
+        <LoanProductsGroupedList
+          :loans="loansList"
+          :loan-products="loanProductsList"
+          :credit-applications="creditApplicationsList"
+          :products="productsList"
+        />
+      </div>
+
+      <!-- 删除支持流程 -->
       <div class="detail-section">
         <div class="section-header">
           <IconWechatpay class="section-icon" />
-          <span class="section-title">支付流程</span>
+          <span class="section-title">删除支持流程</span>
           <a-badge :count="paymentsList.length" class="section-badge" />
         </div>
         
@@ -240,14 +258,15 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, h } from 'vue'
-import { 
-  IconIdcard, 
-  IconUser, 
-  IconSwap, 
+import {
+  IconIdcard,
+  IconUser,
+  IconSwap,
   IconMore,
   IconRefresh,
   IconCopy,
-  IconWechatpay
+  IconWechatpay,
+  IconBookmark
 } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import CreditDetailDrawer from './CreditDetailDrawer.vue'
@@ -256,6 +275,7 @@ import LoanRecordTable from './LoanRecordTable.vue'
 import DisbursementDrawer from './DisbursementDrawer.vue'
 import RepaymentDrawer from './RepaymentDrawer.vue'
 import InitialRepaymentPlanDrawer from './InitialRepaymentPlanDrawer.vue'
+import LoanProductsGroupedList from './LoanProductsGroupedList.vue'
 // import RepaymentDetailDrawer from './RepaymentDetailDrawer.vue'
 // import DisbursementDetailDrawer from './DisbursementDetailDrawer.vue'
 
@@ -373,12 +393,31 @@ const adjustmentsList = computed(() => {
 const paymentsList = computed(() => {
   const data = props.userInfo?.paymentProcessRecords
   if (!Array.isArray(data)) {return []}
-  
+
   // 如果没有productKey，返回所有数据
   if (!props.productKey) {return data}
   
   // 根据productKey过滤数据
   return data.filter((item: any) => !item.productKey || item.productKey === props.productKey)
+})
+
+// v3.3: 授信申请 / 用信产品 / 产品列表（给 LoanProductsGroupedList 用）
+const creditApplicationsList = computed(() => {
+  return props.userInfo?.creditApplications || []
+})
+
+const loanProductsList = computed(() => {
+  return props.userInfo?.loanProducts || []
+})
+
+const productsList = computed(() => {
+  return props.userInfo?.products || []
+})
+
+// BP-1: 当前授信产品（基于 productKey 匹配 · 切换产品时头部 sticky 上下文随之刷新）
+const currentCreditProduct = computed(() => {
+  if (!props.productKey) {return null}
+  return productsList.value.find((p: any) => p.productKey === props.productKey) || null
 })
 
 // 更新分页总数
@@ -610,7 +649,47 @@ const handleExport = () => {
 .details-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+}
+
+/* BP-1: Sticky header（业务核心明细上下文） */
+.business-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%);
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bsh-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.bsh-icon {
+  font-size: 16px;
+  color: var(--subapp-info);
+}
+
+.bsh-label {
+  font-size: 12px;
+  color: var(--subapp-text-tertiary);
+}
+
+.bsh-meta {
+  font-size: 12px;
+  color: var(--subapp-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .detail-section {

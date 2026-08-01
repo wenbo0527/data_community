@@ -18,6 +18,13 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '客户360' }
   },
   {
+    // 短路径：/customer360/:userId → 详情页
+    path: '/customer360/:userId(\\d+)',
+    name: 'Customer360DetailShort',
+    component: () => import('./pages/customer360/detail.vue'),
+    meta: { title: '客户详情' }
+  },
+  {
     path: '/customer360/detail/:userId?',
     name: 'Customer360Detail',
     component: () => import('./pages/customer360/detail.vue'),

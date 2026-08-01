@@ -570,7 +570,7 @@ const handleElementClick = (item: any) => {
   if (item.name === '核心指标') {
     router.push({ path: '/discovery/unified-metrics' })
   } else if (item.name === '业务标签') {
-    router.push({ path: '/discovery/customer360' })
+    router.push({ path: '/dex/customer360' })
   } else if (item.name === '数据变量') {
     router.push({ path: '/variables/map' })
   } else if (item.name === '模型特征') {

@@ -498,7 +498,7 @@ const getEventTypeColor = (type) => {
 
 // 事件处理函数
 const handleQuickCreate = () => {
-  router.push('/exploration/customer-center/event-center/event-management')
+  router.push('/customer/event-center/event-management')
 }
 
 const handleRefresh = () => {
@@ -520,12 +520,12 @@ const handleExportType = () => {
 }
 
 const handleViewAllEvents = () => {
-  router.push('/exploration/customer-center/event-center/event-management')
+  router.push('/customer/event-center/event-management')
 }
 
 const handleTestEvent = (event) => {
   router.push({
-    path: '/exploration/customer-center/event-center/sample-stats',
+    path: '/customer/sample-stats',
     query: { eventId: event.id, eventName: event.eventName }
   })
 }

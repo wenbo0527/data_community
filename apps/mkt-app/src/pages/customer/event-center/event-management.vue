@@ -300,34 +300,6 @@ const handlePageSizeChange = (pageSize) => {
   paginationConfig.current = 1
 }
 
-const handleModalOk = () => {
-  // 表单提交逻辑在EventForm组件中处理
-}
-
-const handleModalCancel = () => {
-  modalVisible.value = false
-  currentEvent.value = null
-}
-
-const handleFormSubmit = async (formData) => {
-  try {
-    if (currentEvent.value) {
-      // 编辑模式
-      await mockEventAPI.updateEvent(currentEvent.value.id, formData)
-      Message.success('事件更新成功')
-    } else {
-      // 创建模式
-      await mockEventAPI.createEvent(formData)
-      Message.success('事件创建成功')
-    }
-    modalVisible.value = false
-    await loadEvents()
-  } catch (error) {
-    Message.error('操作失败')
-    console.error('保存事件失败:', error)
-  }
-}
-
 // 工具函数
 const getEventTypeColor = (type) => {
   const colorMap = {

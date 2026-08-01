@@ -279,11 +279,11 @@ const handleCreate = () => {
   }
   
   const handleTest = (record) => {
-  // 跳转到样本统计页面
+  // 跳转到样本统计页面（mkt-app convention: /customer/<page>）
   router.push({
-    path: '/exploration/customer-center/event-center/sample-stats',
-    query: { 
-      eventId: record.id, 
+    path: '/customer/sample-stats',
+    query: {
+      eventId: record.id,
       eventName: record.eventName,
       isVirtual: 'true'
     }

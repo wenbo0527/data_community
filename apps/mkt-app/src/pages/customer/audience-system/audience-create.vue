@@ -3,10 +3,10 @@
     <!-- 面包屑导航 -->
     <a-breadcrumb class="breadcrumb">
       <a-breadcrumb-item>
-        <router-link to="/exploration/customer-center">客户中心</router-link>
+        <router-link to="/marketing/exploration/customer-center">客户中心</router-link>
       </a-breadcrumb-item>
       <a-breadcrumb-item>
-        <router-link to="/exploration/customer-center/audience-system/audience-management">人群管理</router-link>
+        <router-link to="/marketing/exploration/customer-center/audience-system/audience-management">人群管理</router-link>
       </a-breadcrumb-item>
       <a-breadcrumb-item>{{ getPageTitle() }}</a-breadcrumb-item>
     </a-breadcrumb>
@@ -14,7 +14,13 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-content">
-        <h2 class="page-title">{{ getPageTitle() }}</h2>
+        <div class="page-title-row">
+          <h2 class="page-title">{{ getPageTitle() }}</h2>
+          <a-tag color="arcoblue" class="subject-badge">
+            <template #icon><IconUser /></template>
+            单主体圈选
+          </a-tag>
+        </div>
         <p class="page-description">{{ getPageDescription() }}</p>
       </div>
     </div>
@@ -27,31 +33,12 @@
         </template>
         <a-form :model="audienceForm.basic" layout="vertical" class="basic-form">
           <a-row :gutter="24">
-            <a-col :span="6">
+            <a-col :span="8">
               <a-form-item label="人群名称" required>
                 <a-input v-model="audienceForm.basic.name" placeholder="请输入人群名称" />
               </a-form-item>
             </a-col>
-            <a-col :span="6">
-              <a-form-item label="人群类型" required>
-                <a-select v-model="audienceForm.basic.audienceType" placeholder="请选择人群类型">
-                  <a-option value="static">静态人群</a-option>
-                  <a-option value="dynamic">动态人群</a-option>
-                  <a-option value="computed">计算人群</a-option>
-                  <a-option value="rule">规则人群</a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="共享级别" required>
-                <a-select v-model="audienceForm.basic.shareLevel" placeholder="请选择共享级别">
-                  <a-option value="public">公开</a-option>
-                  <a-option value="private">私有</a-option>
-                  <a-option value="team">团队</a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
+            <a-col :span="8">
               <a-form-item label="更新频率">
                 <a-select v-model="audienceForm.basic.updateFrequency" placeholder="请选择更新频率">
                   <a-option value="realtime">实时</a-option>
@@ -62,12 +49,10 @@
                 </a-select>
               </a-form-item>
             </a-col>
-          </a-row>
-          <a-row :gutter="24">
-            <a-col :span="6">
+            <a-col :span="8">
               <a-form-item label="有效期">
-                <a-date-picker 
-                  v-model="audienceForm.basic.expireDate" 
+                <a-date-picker
+                  v-model="audienceForm.basic.expireDate"
                   placeholder="请选择有效期"
                   style="width: 100%"
                 />
@@ -75,10 +60,10 @@
             </a-col>
           </a-row>
           <a-form-item label="人群描述">
-            <a-textarea 
-              v-model="audienceForm.basic.description" 
+            <a-textarea
+              v-model="audienceForm.basic.description"
               placeholder="请输入人群描述"
-              :rows="4"
+              :rows="3"
             />
           </a-form-item>
         </a-form>
@@ -86,62 +71,18 @@
     </div>
 
     <!-- 规则配置 -->
-    <div class="content-section" v-if="createMode === 'rule'">
+    <div class="content-section">
       <a-card class="form-card">
         <template #title>
           <span class="card-title">人群圈选规则</span>
         </template>
         <template #extra>
-          <span class="card-hint">使用下方工具配置人群圈选规则</span>
+          <span class="card-hint">从下方「+ 添加条件组」开始，或点击示例快速填充</span>
         </template>
         <div class="rules-config-section">
           <CDPRuleBuilderForm
             v-model="audienceForm.cdpRule"
           />
-        </div>
-      </a-card>
-    </div>
-
-    <!-- 数据导入 -->
-    <div class="content-section" v-if="createMode === 'import'">
-      <a-card class="form-card">
-        <template #title>
-          <span class="card-title">数据导入配置</span>
-        </template>
-        <template #extra>
-          <span class="card-description">通过文件上传、数据库导入或API接口导入人群数据</span>
-        </template>
-        <div class="import-config-section">
-          <a-form :model="audienceForm.import" layout="vertical">
-            <a-form-item label="导入方式">
-              <a-radio-group v-model="audienceForm.import.method">
-                <a-radio value="file">文件上传</a-radio>
-                <a-radio value="database">数据库导入</a-radio>
-                <a-radio value="api">API接口</a-radio>
-              </a-radio-group>
-            </a-form-item>
-            
-            <!-- 文件上传 -->
-            <div v-if="audienceForm.import.method === 'file'">
-              <a-form-item label="上传文件">
-                <a-upload
-                  :file-list="audienceForm.import.fileList"
-                  :show-file-list="true"
-                  :auto-upload="false"
-                  accept=".csv,.xlsx,.json"
-                  @change="handleFileChange"
-                >
-                  <template #upload-button>
-                    <div class="upload-area">
-                      <IconUpload style="font-size: 48px; color: #c9cdd4;" />
-                      <div style="margin-top: 8px;">点击或拖拽文件到此处上传</div>
-                      <div style="color: #86909c; font-size: 12px; margin-top: 4px;">支持 CSV、Excel、JSON 格式</div>
-                    </div>
-                  </template>
-                </a-upload>
-              </a-form-item>
-            </div>
-          </a-form>
         </div>
       </a-card>
     </div>
@@ -203,25 +144,23 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconUpload } from '@arco-design/web-vue/es/icon'
+import { IconUser } from '@arco-design/web-vue/es/icon'
 import CDPRuleBuilderForm from '@/components/task/CDPRuleBuilderForm.vue'
 
 const router = useRouter()
 const route = useRoute()
 
-// 获取创建模式和编辑状态
-const createMode = ref(route.query.mode as string || 'rule') // rule | import
+// 编辑状态
 const isEditMode = ref(!!route.params.id)
 const saving = ref(false)
 const preCalculating = ref(false)
 const showPreviewResult = ref(false)
+const createMode = ref<'rule' | 'import'>('rule')
 
 // 人群表单数据
 const audienceForm = reactive({
   basic: {
     name: '',
-    audienceType: 'rule',
-    shareLevel: 'public',
     updateFrequency: 'daily',
     expireDate: null,
     description: ''
@@ -230,10 +169,7 @@ const audienceForm = reactive({
     ruleGroups: [],
     excludeGroups: [],
     crossGroupOperator: 'AND',
-  },
-  import: {
-    method: 'file',
-    fileList: [] as any[]
+    crossExcludeGroupOperator: 'OR',
   }
 })
 
@@ -250,43 +186,31 @@ const getPageTitle = () => {
   if (isEditMode.value) {
     return '编辑人群'
   }
-  return createMode.value === 'rule' ? '自定义规则创建人群' : '数据导入创建人群'
+  return '新建人群'
 }
 
 const getPageDescription = () => {
   if (isEditMode.value) {
     return '修改人群配置信息'
   }
-  return createMode.value === 'rule' 
-    ? '通过配置条件规则来定义人群范围，支持标签、事件、明细数据三种类型'
-    : '通过文件上传、数据库导入或API接口导入人群数据'
+  return '通过「标签」和「行为」组合条件，圈选出您的目标人群'
 }
 
 // 计算属性：是否可以进行预计算
 const canPreCalculate = computed(() => {
-  // 基本信息必须填写完整
-  if (!audienceForm.basic.name || !audienceForm.basic.audienceType) {
+  // 基本信息必须填写人群名称
+  if (!audienceForm.basic.name) {
     return false
   }
-  
-  // 规则创建模式需要至少一个条件组
+
+  // 规则创建模式需要至少一个有效条件
   if (createMode.value === 'rule' && audienceForm.cdpRule.ruleGroups.length === 0) {
     return false
   }
-  
-  // 导入模式需要上传文件
-  if (createMode.value === 'import' && audienceForm.import.method === 'file' && audienceForm.import.fileList.length === 0) {
-    return false
-  }
-  
+
   return true
 })
 
-
-// 文件上传处理
-const handleFileChange = (fileList: any[]) => {
-  audienceForm.import.fileList = fileList
-}
 
 // 预计算
 const preCalculate = async () => {
@@ -331,9 +255,7 @@ const saveAudience = async () => {
     const audienceData = {
       id: audienceId,
       ...audienceForm.basic,
-      createMode: createMode.value,
-      // 规则模式：直接使用 cdpRule；导入模式：使用 importConfig
-      ...(createMode.value === 'rule' ? { cdpRule: audienceForm.cdpRule } : { importConfig: audienceForm.import }),
+      cdpRule: audienceForm.cdpRule,
       createUser: '当前用户',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString(),
@@ -422,6 +344,28 @@ const goBack = () => {
   font-size: 24px;
   font-weight: 600;
   color: #1d2129;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page-title-row .page-title {
+  margin: 0;
+}
+
+.subject-badge {
+  font-size: 12px;
+  border-radius: 12px;
+  padding: 2px 10px;
+}
+
+.subject-hint {
+  color: #86909c;
+  font-size: 12px;
 }
 
 .page-description {

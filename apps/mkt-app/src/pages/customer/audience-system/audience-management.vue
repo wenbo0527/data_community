@@ -297,7 +297,7 @@ const handlePageSizeChange = (pageSize) => {
 // 跳转到人群详情页
 const goToAudienceDetail = (record) => {
   router.push({
-    path: '/exploration/customer-center/audience-system/audience-detail',
+    path: '/marketing/exploration/customer-center/audience-system/audience-detail',
     query: { id: record.id }
   })
 }
@@ -305,7 +305,7 @@ const goToAudienceDetail = (record) => {
 // 编辑人群
 const editAudience = (record) => {
   router.push({
-    path: '/exploration/customer-center/audience-system/audience-create',
+    path: '/marketing/exploration/customer-center/audience-system/audience-create',
     query: { id: record.id, mode: 'edit' }
   })
 }
@@ -325,7 +325,7 @@ const removeAudience = (index) => {
 // 自定义规则创建人群
 const addAudienceByRule = () => {
   router.push({
-    path: '/exploration/customer-center/audience-system/audience-create',
+    path: '/marketing/exploration/customer-center/audience-system/audience-create',
     query: { mode: 'rule' }
   })
 }
@@ -333,7 +333,7 @@ const addAudienceByRule = () => {
 // 数据导入创建人群
 const addAudienceByImport = () => {
   router.push({
-    path: '/exploration/customer-center/audience-system/audience-create',
+    path: '/marketing/exploration/customer-center/audience-system/audience-create',
     query: { mode: 'import' }
   })
 }

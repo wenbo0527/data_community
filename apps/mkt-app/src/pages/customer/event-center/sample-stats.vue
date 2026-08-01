@@ -3,7 +3,10 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1 class="page-title">{{ currentEvent.eventName }}<</h1>
+        <h1 class="page-title">
+          <span v-if="currentEvent">{{ currentEvent.eventName }}</span>
+          <span v-else>样本统计</span>
+        </h1>
 
         <div class="event-info" v-if="currentEvent">
           <StatusTag :status="currentEvent.eventType" dictKey="eventType" />
@@ -60,8 +63,8 @@
               </a-button>
             </div>
             <div class="anomaly-list">
-              <div 
-                v-for="anomaly in sampleStats.anomalies" 
+              <div
+                v-for="anomaly in (sampleStats.value.anomalies || [])"
                 :key="anomaly.id"
                 class="anomaly-item"
                 :class="`severity-${anomaly.severity}`"
@@ -80,7 +83,7 @@
                 </div>
                 <div class="anomaly-time">{{ DateUtils.formatDateTime(anomaly.detectedAt) }}</div>
               </div>
-              <div v-if="sampleStats.anomalies.length === 0" class="no-anomaly">
+              <div v-if="!sampleStats.value.anomalies || sampleStats.value.anomalies.length === 0" class="no-anomaly">
                 <IconCheckCircle class="no-anomaly-icon" />
                 <div class="no-anomaly-text">暂无异常检测</div>
               </div>
@@ -569,7 +572,7 @@ const handleExport = () => {
 }
 
 const handleBack = () => {
-  router.push('/exploration/customer-center/event-center/event-management')
+  router.push('/customer/event-management')
 }
 
 const handleChartExport = () => {

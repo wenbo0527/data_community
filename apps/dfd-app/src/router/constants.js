@@ -62,8 +62,6 @@ export const ROUTE_NAMES = {
     },
     CUSTOMER_CENTER: {
       ROOT: 'customer-center',
-      CUSTOMER_360: 'customer-360',
-      CUSTOMER_360_DETAIL: 'customer-360-detail',
       EVENT_CENTER: {
         ROOT: 'event-center',
         MANAGEMENT: 'event-management',
@@ -158,8 +156,6 @@ export const ROUTE_PATHS = {
     },
     CUSTOMER_CENTER: {
       ROOT: '/exploration/customer-center',
-      CUSTOMER_360: '/exploration/customer-center/customer-360',
-      CUSTOMER_360_DETAIL: '/exploration/customer-center/customer-360/detail/:userId',
       EVENT_CENTER: {
         ROOT: '/exploration/customer-center/event-center',
         MANAGEMENT: '/exploration/customer-center/event-center/event-management',
@@ -277,17 +273,6 @@ export const BREADCRUMB_CONFIG = {
     { title: '探索分析', path: ROUTE_PATHS.EXPLORATION.ROOT },
     { title: '外部数据分析', path: ROUTE_PATHS.EXPLORATION.EXTERNAL_DATA_ANALYSIS.ROOT },
     { title: '预算管理', path: ROUTE_PATHS.EXPLORATION.EXTERNAL_DATA_ANALYSIS.BUDGET_MANAGEMENT }
-  ],
-  [ROUTE_NAMES.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360]: [
-    { title: '探索分析', path: ROUTE_PATHS.EXPLORATION.ROOT },
-    { title: '客群中心', path: ROUTE_PATHS.EXPLORATION.CUSTOMER_CENTER.ROOT },
-    { title: '客户360', path: ROUTE_PATHS.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360 }
-  ],
-  [ROUTE_NAMES.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360_DETAIL]: [
-    { title: '探索分析', path: ROUTE_PATHS.EXPLORATION.ROOT },
-    { title: '客群中心', path: ROUTE_PATHS.EXPLORATION.CUSTOMER_CENTER.ROOT },
-    { title: '客户360', path: ROUTE_PATHS.EXPLORATION.CUSTOMER_CENTER.CUSTOMER_360 },
-    { title: '客户详情', path: '' }
   ],
   [ROUTE_NAMES.EXTERNAL_DATA.LIFECYCLE]: [
     { title: '外数中心', path: '' },
@@ -420,9 +405,7 @@ export const ROUTE_GUARD_CONFIG = {
   // 白名单路由（无需登录）
   whiteList: [
     ROUTE_PATHS.LOGIN,
-    ROUTE_PATHS.HOME,
-    '/discovery/customer360',
-    '/discovery/customer360/123'
+    ROUTE_PATHS.HOME
   ],
   
   // 需要权限验证的路由

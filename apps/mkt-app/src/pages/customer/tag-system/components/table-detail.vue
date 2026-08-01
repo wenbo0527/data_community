@@ -282,7 +282,7 @@ const formatNumber = (num) => {
 // 事件处理
 const handleConfigureMapping = () => {
   router.push({
-    path: '/exploration/customer-center/tag-system/table-registration',
+    path: '/customer/tag-system/table-registration',
     query: { 
       tableId: props.tableData.id, 
       mode: 'mapping',
@@ -294,7 +294,7 @@ const handleConfigureMapping = () => {
 const handleEditMapping = () => {
   emit('edit-mapping', props.tableData)
   router.push({
-    path: '/exploration/customer-center/tag-system/table-registration',
+    path: '/customer/tag-system/table-registration',
     query: { 
       tableId: props.tableData.id, 
       mode: 'edit',
