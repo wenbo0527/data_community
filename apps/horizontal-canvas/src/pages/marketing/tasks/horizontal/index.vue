@@ -264,7 +264,7 @@ import {
   
 } from './styles/nodeStyles.js';
 // 导入性能监控和端口验证
-import { applyQuickLayout as applyQuickLayoutSvc, applyStructuredLayout as applyStructuredLayoutSvc } from './layout/LayoutService.ts'
+import { applyQuickLayout as applyQuickLayoutSvc } from './layout/LayoutService.ts'
 import { IconEdit, IconCheck } from '@arco-design/web-vue/es/icon'
 // 导入测试用例
  
@@ -275,6 +275,8 @@ import { collectCanvasData, loadCanvasData as loadCanvasDataSvc, saveTask as sav
 import { useCurrentUser } from '../../../../composables/useCurrentUser.js'
 import * as tracker from '../../../../utils/trackerService.js'
 import { CANVAS_FUNNEL_STEPS } from '../../../../utils/canvasFunnel.js'
+import { logger as _logger } from '../../../../utils/logger.js'
+const log = _logger.create('Horizontal')
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
 import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph, bindDefaultShortcuts } from './graph/GraphService.ts'
 import { useCanvasState } from './state/useCanvasState.ts'
@@ -1199,15 +1201,8 @@ onMounted(async () => {
 
   // 保留空声明以避免未定义警告（模板已使用内联表达式）
 
-  try {
-    const nodeCount = (graph?.getNodes?.() || []).length
-    const edgeCount = (graph?.getEdges?.() || []).length
-    if (nodeCount > 1 || edgeCount > 0) {
-      await applyStructuredLayoutSvc(graph, { provider: configDrawers?.structuredLayout, direction: 'LR' })
-    }
-  } catch (e) {
-    console.warn('[Horizontal] 结构化布局初始化失败:', e)
-  }
+  // 注：旧 applyStructuredLayoutSvc + useStructuredLayout mock 已移除（死路径）。
+  // 加载画布时不再主动布局；由用户通过工具栏"智能布局"按钮触发 applyQuickLayoutSvc。
 
   graph.on('node:config-updated', ({ node, nodeType, config }) => {
     try {
@@ -1446,7 +1441,7 @@ onMounted(async () => {
         node.setData({ ...data, dragging: true })
       }
     } catch (e) {
-      console.warn('[Horizontal] node:moving 异常:', e)
+      log.warn('node:moving 异常', e)
     }
   })
   
@@ -1458,7 +1453,7 @@ onMounted(async () => {
         node.setData({ ...data, dragging: false })
       }
     } catch (e) {
-      console.warn('[Horizontal] node:moved 恢复样式异常:', e)
+      log.warn('node:moved 恢复样式异常', e)
     }
   })
   
@@ -1576,7 +1571,7 @@ function insertTouchComboNodes(comboType) {
       }
     }))
   } catch (e) {
-    console.warn('[Horizontal] 创建组合节点中的触达节点失败:', e)
+    log.warn('创建组合节点中的触达节点失败', e)
     return null
   }
 
@@ -1631,7 +1626,7 @@ function insertTouchComboNodes(comboType) {
       attrs: { line: { stroke: '#4C78FF', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } }
     })
   } catch (e) {
-    console.warn('[Horizontal] 创建组合节点内连线失败:', e)
+    log.warn('创建组合节点内连线失败', e)
   }
 
   // 还原边插入来源：源 → 触达 in；事件分流 out-0 → 原目标
@@ -1683,7 +1678,7 @@ function handleConfigConfirmProxy({ drawerType, config }) {
     // 点抽屉确认按钮后处理的事件，
     configDrawers.handleConfigConfirm(drawerType, config)
   } catch (e) {
-    console.warn('[Horizontal] 配置确认处理异常:', e)
+    log.warn('配置确认处理异常', e)
   }
 }
 
@@ -1691,7 +1686,7 @@ function handleConfigCancelProxy({ drawerType }) {
   try {
     configDrawers.handleConfigCancel(drawerType)
   } catch (e) {
-    console.warn('[Horizontal] 配置取消处理异常:', e)
+    log.warn('配置取消处理异常', e)
   }
 }
 
@@ -1715,7 +1710,7 @@ async function updateNodeFromConfigUnified(node, nodeType, config) {
     } catch {}
   } catch (e) {
     try { tracker.track('drawer_save_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'updateNodeFailed' } }) } catch {}
-    console.error('[Horizontal] updateNodeFromConfigUnified 失败:', e)
+    log.error('updateNodeFromConfigUnified 失败', e)
   }
 }
 
@@ -1851,7 +1846,7 @@ async function loadTaskData() {
       initializing.value = false
     }
   } catch (error) {
-    console.warn('[Horizontal] 加载任务数据失败:', error)
+    log.warn('加载任务数据失败', error)
   } finally { isLoadingTask.value = false }
 }
 
@@ -1862,7 +1857,7 @@ if ((query.mode === 'edit' || query.mode === 'view') && query.id) {
   try {
     setTimeout(() => { loadTaskData() }, 300)
   } catch (error) {
-    console.error('[Horizontal] 加载任务数据时发生错误:', error)
+    log.error('加载任务数据时发生错误', error)
     Message.error('加载任务数据失败: ' + error.message)
   }
 } else {
@@ -2435,7 +2430,7 @@ function onCanvasDrop(e) {
   } catch (e) {
     Message.error('拖放创建节点失败，请重试')
     try { tracker.track('node_drop_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'exception' } }) } catch {}
-    console.warn('[Horizontal] 拖放创建节点失败:', e)
+    log.warn('拖放创建节点失败', e)
   }
 }
 
@@ -2633,8 +2628,6 @@ const toggleSnapline = () => {
     graph.setSnaplineEnabled(showSnapline.value)
   }
 }
-
-const handleApplyLayout = () => { if (!graph) return; applyStructuredLayoutSvc(graph) }
 
 // 布局参数配置
 const layoutOptions = {

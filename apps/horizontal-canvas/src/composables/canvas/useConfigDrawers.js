@@ -1,9 +1,7 @@
 import { reactive, nextTick } from 'vue'
-import { useStructuredLayout } from './useStructuredLayout.js'
 import { DRAWER_KEYS } from '@/components/task/drawerRegistry.ts'
 
 export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
-  const structuredLayout = useStructuredLayout(getGraph)
   // 从注册表键集合动态生成 drawerStates，保证与渲染注册表一致
   const drawerStates = reactive(
     Object.fromEntries(DRAWER_KEYS.map(k => [k, { visible: false, data: {}, instance: null, readOnly: false }]))
@@ -71,7 +69,7 @@ export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
     if (!visible) closeConfigDrawer(key)
   }
 
-  return { drawerStates, openConfigDrawer, closeConfigDrawer, handleConfigConfirm, handleConfigCancel, handleDrawerVisibilityChange, structuredLayout, closeAllDrawers }
+  return { drawerStates, openConfigDrawer, closeConfigDrawer, handleConfigConfirm, handleConfigCancel, handleDrawerVisibilityChange, closeAllDrawers }
 }
 /*
 用途：配置抽屉组合式（打开/关闭/写回）
