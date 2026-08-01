@@ -1,6 +1,15 @@
 import { TaskStorage } from '@/utils/taskStorage.js'
 import { getNodeLabel } from '@/utils/nodeTypes.js'
 import { createVueShapeNode } from '../createVueShapeNode.js'
+import { validateForPublishPure } from './validateForPublish.js'
+
+// 包装纯算法（内部供 validateForPublish 使用；同时供单测直接覆盖）
+function runPureValidation(canvasData: { nodes: any[]; connections: any[] }): { messages: string[]; byId: Map<string, any> } {
+  const result = validateForPublishPure(canvasData)
+  const byId = new Map<string, any>()
+  if (canvasData && Array.isArray(canvasData.nodes)) canvasData.nodes.forEach((n: any) => byId.set(n.id, n))
+  return { messages: result.messages.slice(), byId }
+}
 
 export type GraphLike = any
 
@@ -139,57 +148,8 @@ export function publishTask(meta: any, canvasData: any): any {
  * - 分支完整性：分流/AB 节点每个分支需存在连线（按 edge.data.branchId 对齐）
  */
 export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): { pass: boolean; messages: string[] } {
-  const messages: string[] = []
-  if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return { pass: false, messages: ['画布数据格式不正确'] }
-  if (canvasData.nodes.length === 0) messages.push('画布中没有任何节点')
-  const byId = new Map<string, any>()
-  canvasData.nodes.forEach((n: any) => byId.set(n.id, n))
-  const outgoing = new Map<string, number>()
-  const incoming = new Map<string, number>()
-  canvasData.connections.forEach((e: any) => { if (!e.source || !e.target) return; outgoing.set(e.source, (outgoing.get(e.source) || 0) + 1); incoming.set(e.target, (incoming.get(e.target) || 0) + 1) })
-  const hasStart = canvasData.nodes.some((n: any) => n.type === 'start')
-  if (!hasStart) messages.push('缺少开始节点')
-  const unconfiguredByConfig: any[] = []
-  const unconfiguredByFlag: any[] = []
-  canvasData.nodes.forEach((n: any) => { if (n.type === 'start' || n.type === 'end') return; const cfg = n.config || {}; const configuredFlag = n.isConfigured === true; if (!cfg || Object.keys(cfg).length === 0) unconfiguredByConfig.push(n); if (!configuredFlag) unconfiguredByFlag.push(n) })
-  if (unconfiguredByConfig.length > 0 || unconfiguredByFlag.length > 0) { const idSet = new Set<string>(); const merged = [...unconfiguredByConfig, ...unconfiguredByFlag].filter((n: any) => { if (idSet.has(n.id)) return false; idSet.add(n.id); return true }); messages.push(`存在未完成配置的节点: ${merged.map((n: any) => `${n.label || n.id}`).join(', ')}`) }
-  const noOut = canvasData.nodes.filter((n: any) => n.type !== 'end' && (outgoing.get(n.id) || 0) === 0)
-  if (noOut.length > 0) messages.push(`存在未连接后续节点的节点: ${noOut.map((n: any) => `${n.label || n.id}`).join(', ')}`)
-  try {
-    const ids = new Set<string>(canvasData.nodes.map(n => String(n.id)))
-    const adj = new Map<string, string[]>()
-    ids.forEach(id => adj.set(id, []))
-    canvasData.connections.forEach((e: any) => { const s = String(e.source || ''); const t = String(e.target || ''); if (ids.has(s) && ids.has(t)) (adj.get(s) || []).push(t) })
-    const WHITE = 0, GRAY = 1, BLACK = 2
-    const color = new Map<string, number>()
-    ids.forEach(id => color.set(id, WHITE))
-    let cyclePath: string[] = []
-    let hasCycle = false
-    const stack: string[] = []
-    const dfs = (u: string): boolean => {
-      color.set(u, GRAY)
-      stack.push(u)
-      const ns = adj.get(u) || []
-      for (let i = 0; i < ns.length; i++) {
-        const v = ns[i]
-        const c = color.get(v) || WHITE
-        if (c === WHITE) { if (dfs(v)) return true }
-        else if (c === GRAY) { const idx = stack.lastIndexOf(v); cyclePath = stack.slice(idx); hasCycle = true; return true }
-      }
-      stack.pop()
-      color.set(u, BLACK)
-      return false
-    }
-    for (const id of ids) { if ((color.get(id) || WHITE) === WHITE) { if (dfs(id)) break } }
-    if (hasCycle) {
-      const cycleLabels = cyclePath.map(id => {
-        const n = byId.get(id)
-        const label = (n && (n.label || (n.data && n.data.label))) || String(id)
-        return `${label}(${id})`
-      })
-      messages.push(`存在环路: ${cycleLabels.join(' -> ')}`)
-    }
-  } catch {}
+  // 委托纯算法做基础校验（可被单测覆盖）
+  const { messages, byId } = runPureValidation(canvasData)
   try {
     if (graph) {
       const missingPortConnections: string[] = []

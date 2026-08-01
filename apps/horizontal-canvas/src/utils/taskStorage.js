@@ -1,7 +1,16 @@
+import { migrateCanvasData } from './migrateCanvasData.js'
+import { RuntimeStatsMock } from './runtimeStatsMock.js'
+
 const KEY = 'horizontal_canvas_tasks'
+
+/**
+ * 任务本地存储（CRUD + 版本快照）
+ * 说明：所有读都通过 migrateCanvasData 做一次迁移；版本快照独立维护，与任务主记录分离。
+ * 边界：不负责审批流（参见 approvalService.js）；不负责运行时统计（参见 runtimeStatsMock.js）。
+ */
 export const TaskStorage = {
   getAllTasks() {
-    try { 
+    try {
       const raw = JSON.parse(localStorage.getItem(KEY) || '[]')
       return Array.isArray(raw) ? raw.map(t => ({
         ...t,
@@ -13,6 +22,7 @@ export const TaskStorage = {
     } catch { return [] }
   },
   getTaskById(id) { return this.getAllTasks().find(t => String(t.id) === String(id)) || null },
+
   saveTask(task) {
     const list = this.getAllTasks()
     const idx = list.findIndex(t => String(t.id) === String(task.id))
@@ -41,11 +51,13 @@ export const TaskStorage = {
     localStorage.setItem(KEY, JSON.stringify(list))
     return task
   },
+
   deleteTask(id) {
     const list = this.getAllTasks().filter(t => String(t.id) !== String(id))
     localStorage.setItem(KEY, JSON.stringify(list))
     return true
   },
+
   updateTask(id, data) {
     // DocRef: 架构文档「关键代码片段/本地任务存储：创建与更新」
     const list = this.getAllTasks()
@@ -74,10 +86,11 @@ export const TaskStorage = {
     localStorage.setItem(KEY, JSON.stringify(list))
     return created
   },
+
   // DocRef: 架构文档「关键代码片段/本地任务存储：创建与更新」
   createTask(task) { const t = { id: String(Date.now()), ...task }; this.saveTask(t); return t },
-  getStorageStats() { const list = this.getAllTasks(); return { totalTasks: list.length } }
-  ,
+  getStorageStats() { const list = this.getAllTasks(); return { totalTasks: list.length } },
+
   // 版本读取
   getTaskVersions(id) {
     const t = this.getTaskById(id)
@@ -91,56 +104,7 @@ export const TaskStorage = {
       return entry && entry.canvasData ? migrateCanvasData(entry.canvasData) : null
     } catch { return null }
   },
-  submitApproval(id, version, user, remark) {
-    const list = this.getAllTasks()
-    const idx = list.findIndex(t => String(t.id) === String(id))
-    if (idx < 0) return false
-    const t = list[idx]
-    const vIdx = (t.versions || []).findIndex(v => Number(v.version) === Number(version))
-    if (vIdx < 0) return false
-    const v = t.versions[vIdx]
-    const flow = Array.isArray(v.approvalFlow) ? v.approvalFlow.slice() : []
-    flow.push({ action: 'submit', by: String(user || ''), at: new Date().toISOString(), remark: String(remark || '') })
-    t.versions[vIdx] = { ...v, approvalStatus: 'pending_approval', approvalFlow: flow }
-    t.status = 'pending_approval'
-    localStorage.setItem(KEY, JSON.stringify(list))
-    return true
-  },
-  approveVersions(items, decision, user, remark) {
-    const list = this.getAllTasks()
-    const dec = decision === 'reject' ? 'rejected' : 'approved'
-    const res = []
-    items.forEach(it => {
-      const idx = list.findIndex(t => String(t.id) === String(it.id))
-      if (idx < 0) { res.push({ id: it.id, version: it.version, status: 'error', message: 'not_found' }); return }
-      const t = list[idx]
-      const vIdx = (t.versions || []).findIndex(v => Number(v.version) === Number(it.version))
-      if (vIdx < 0) { res.push({ id: it.id, version: it.version, status: 'error', message: 'version_not_found' }); return }
-      const v = t.versions[vIdx]
-      if (v.approvalStatus !== 'pending_approval') { res.push({ id: it.id, version: it.version, status: 'error', message: 'not_pending' }); return }
-      const flow = Array.isArray(v.approvalFlow) ? v.approvalFlow.slice() : []
-      flow.push({ action: dec === 'approved' ? 'approve' : 'reject', by: String(user || ''), at: new Date().toISOString(), remark: String(remark || '') })
-      t.versions[vIdx] = { ...v, approvalStatus: dec, approvalFlow: flow }
-      t.status = dec
-      localStorage.setItem(KEY, JSON.stringify(list))
-      res.push({ id: it.id, version: it.version, status: 'success' })
-    })
-    return res
-  },
-  withdrawApproval(id, version, user, remark) {
-    const list = this.getAllTasks()
-    const idx = list.findIndex(t => String(t.id) === String(id))
-    if (idx < 0) return false
-    const t = list[idx]
-    const vIdx = (t.versions || []).findIndex(v => Number(v.version) === Number(version))
-    if (vIdx < 0) return false
-    const v = t.versions[vIdx]
-    const flow = Array.isArray(v.approvalFlow) ? v.approvalFlow.slice() : []
-    flow.push({ action: 'withdraw', by: String(user || ''), at: new Date().toISOString(), remark: String(remark || '') })
-    t.versions[vIdx] = { ...v, approvalStatus: null, approvalFlow: flow }
-    localStorage.setItem(KEY, JSON.stringify(list))
-    return true
-  },
+
   seedIfEmpty() {
     const list = this.getAllTasks()
     if (Array.isArray(list) && list.length) return
@@ -161,137 +125,14 @@ export const TaskStorage = {
   }
 }
 
-function migrateCanvasData(canvasData) {
-  try {
-    if (!canvasData || !Array.isArray(canvasData.nodes) || !Array.isArray(canvasData.connections)) return canvasData
-    const idToNode = new Map()
-    const nodes = canvasData.nodes.map(n => {
-      const cfg = n.config || (n.data && n.data.config) || {}
-      const type = n.type || (n.data && n.data.type) || ''
-      const isConfigured = (n.isConfigured === true) || (n.data && n.data.isConfigured === true) || (cfg && Object.keys(cfg).length > 0)
-      const migrated = { ...n, isConfigured, config: cfg }
-      idToNode.set(migrated.id, migrated)
-      // 为 AB 实验补齐分支 id/label
-      if (type === 'ab-test' && Array.isArray(migrated.config?.branches)) {
-        migrated.config.branches = migrated.config.branches.map((b, i) => ({ id: b?.id || `branch_${i + 1}`, name: b?.name || `分支${i + 1}`, label: b?.label || (b?.name || `分支${i + 1}`), percentage: b?.percentage }))
-      }
-      return migrated
-    })
-    const connections = canvasData.connections.map(e => {
-      const srcNode = idToNode.get(e.source)
-      let branchId = e.branchId || null
-      // 为 AB 实验边补齐 branchId（根据 sourcePort 中的 out-N）
-      try {
-        const sp = e.sourcePort || e.sourcePortId || 'out'
-        if (srcNode && srcNode.type === 'ab-test' && !branchId) {
-          const match = /^out-(\d+)$/.exec(sp)
-          const branches = Array.isArray(srcNode.config?.branches) ? srcNode.config.branches : []
-          if (match) {
-            const idx = Number(match[1])
-            branchId = branches[idx]?.id || null
-          }
-        }
-      } catch {}
-      return { ...e, branchId }
-    })
-    return { ...canvasData, nodes, connections }
-  } catch { return canvasData }
-}
+/**
+ * 兼容导出：旧代码可能从 taskStorage.js 直接 import RuntimeStatsMock；
+ * 真实实现已迁移到 utils/runtimeStatsMock.js
+ */
+export { RuntimeStatsMock }
 
-// 运行态统计的mock
-export const RuntimeStatsMock = {
-  getNodeDailyStats(taskId, nodeId) {
-    try {
-      const days = 7
-      const list = []
-      const seedBase = Number(String(taskId).slice(-6)) || 123456
-      for (let i = 0; i < days; i++) {
-        const date = new Date(Date.now() - i * 24 * 3600 * 1000)
-        const ds = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
-        const seed = seedBase + i + (String(nodeId || '').length || 1)
-        const enter = 50 + ((seed * 7) % 200)
-        const exit = Math.max(0, enter - ((seed * 3) % 40))
-        list.push({ date: ds, enter, exit })
-      }
-      return list.reverse()
-    } catch { return [] }
-  },
-  getUserPath(taskId, userId) {
-    try {
-      const nodes = (TaskStorage.getTaskById(taskId)?.canvasData?.nodes) || []
-      const conns = (TaskStorage.getTaskById(taskId)?.canvasData?.connections) || []
-      if (!nodes.length) return []
-      const start = nodes.find(n => n.type === 'start') || nodes[0]
-      const adj = new Map()
-      conns.forEach(e => {
-        const s = e.source
-        const t = e.target
-        if (!adj.has(s)) adj.set(s, [])
-        adj.get(s).push(t)
-      })
-      const path = [start.id]
-      let curr = start.id
-      const maxSteps = 10
-      for (let k = 0; k < maxSteps; k++) {
-        const nexts = adj.get(curr) || []
-        if (!nexts.length) break
-        const pick = (userId && String(userId).length) ? (String(userId).charCodeAt(0) + k) % nexts.length : 0
-        const nxt = nexts[pick]
-        path.push(nxt)
-        curr = nxt
-      }
-      return path
-    } catch { return [] }
-  },
-  // 按分支拆分的每日出人数（用于分流/AB节点）
-  getNodeDailyBranchStats(taskId, nodeId, branches = []) {
-    try {
-      const days = 7
-      const list = []
-      const baseDaily = RuntimeStatsMock.getNodeDailyStats(taskId, nodeId) || []
-      const withPct = Array.isArray(branches) && branches.length && branches.every(b => typeof b.percentage === 'number')
-      const weights = branches.map((b, i) => {
-        if (withPct) return Math.max(0, b.percentage || 0)
-        const key = String(b.id || i)
-        let acc = 0
-        for (let k = 0; k < key.length; k++) acc += key.charCodeAt(k)
-        return (acc % 10) + 1
-      })
-      const weightSum = weights.reduce((a,b)=>a+b,0) || 1
-      for (let i = 0; i < days; i++) {
-        const r = baseDaily[i] || { date: '', exit: 0 }
-        const totalExit = Number(r.exit || 0)
-        const branchExits = {}
-        branches.forEach((b, idx) => {
-          const ratio = withPct ? ((b.percentage || 0) / 100) : (weights[idx] / weightSum)
-          branchExits[String(b.id || idx)] = Math.round(totalExit * ratio)
-        })
-        list.push({ date: r.date, branchExits })
-      }
-      return list
-    } catch { return [] }
-  },
-  // 画布级每日统计（进入画布/进入结束）
-  getCanvasDailyStats(taskId) {
-    try {
-      const nodes = (TaskStorage.getTaskById(taskId)?.canvasData?.nodes) || []
-      const starts = nodes.filter(n => n.type === 'start')
-      const ends = nodes.filter(n => n.type === 'end')
-      const days = 7
-      const res = []
-      for (let i = 0; i < days; i++) {
-        const date = RuntimeStatsMock.getNodeDailyStats(taskId, starts[0]?.id || 'start')[i]?.date || ''
-        const enter = starts.reduce((sum, s) => {
-          const r = RuntimeStatsMock.getNodeDailyStats(taskId, s.id)[i] || { enter: 0 }
-          return sum + (r.enter || 0)
-        }, 0)
-        const endEnter = ends.reduce((sum, s) => {
-          const r = RuntimeStatsMock.getNodeDailyStats(taskId, s.id)[i] || { enter: 0 }
-          return sum + (r.enter || 0)
-        }, 0)
-        res.push({ date, canvasEnter: enter, canvasEndEnter: endEnter })
-      }
-      return res
-    } catch { return [] }
-  }
-}
+/*
+用途：任务本地存储（CRUD + 版本快照）
+说明：所有读取都通过 migrateCanvasData 做一次迁移；版本快照独立维护；审批/运行时统计已迁出。
+边界：仅 localStorage 持久化；审批流请用 approvalService；运行时统计请用 runtimeStatsMock。
+*/

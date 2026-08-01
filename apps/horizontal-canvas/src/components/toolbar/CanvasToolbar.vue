@@ -239,7 +239,6 @@ const handleLayoutDirectionChange = d => {
 const onToggleMinimapClick = e => {
   try {
     const rect = e?.currentTarget?.getBoundingClientRect?.();
-    console.log('onToggleMinimapClick111',rect)
     emit("toggle-minimap", { anchorRect: rect });
   } catch {
     emit("toggle-minimap");
