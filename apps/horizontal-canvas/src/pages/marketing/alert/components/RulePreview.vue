@@ -496,9 +496,7 @@ const submitRule = async () => {
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()
     }
-    
-    console.log('提交规则数据:', submitData)
-    
+
     Message.success(isEdit.value ? '规则更新成功！' : '规则创建成功！')
     
     // 返回列表页面

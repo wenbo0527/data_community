@@ -254,16 +254,10 @@ const initData = () => {
   
   // 仅使用本地存储任务数据
   const allTasks = convertedStoredTasks
-  
-  console.log('✅ [TaskList] 任务列表数据加载完成:', {
-    storedTasksCount: convertedStoredTasks.length,
-    mockTasksCount: 0,
-    totalTasksCount: allTasks.length
-  })
-  
+
   taskData.value = allTasks
   pagination.total = allTasks.length
-  
+
   // 显示存储统计
   const stats = TaskStorage.getStorageStats()
 }
