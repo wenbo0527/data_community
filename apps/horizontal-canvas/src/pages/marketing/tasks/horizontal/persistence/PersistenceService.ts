@@ -2,19 +2,20 @@ import { TaskStorage } from '@/utils/taskStorage.js'
 import { getNodeLabel } from '@/utils/nodeTypes.js'
 import { createVueShapeNode } from '../createVueShapeNode.js'
 import { validateForPublishPure } from './validateForPublish.js'
+import type { X6GraphLike, X6Cell, CanvasData, ValidationResult, TaskMeta } from '@/types/graph.js'
 
 // 包装纯算法（内部供 validateForPublish 使用；同时供单测直接覆盖）
-function runPureValidation(canvasData: { nodes: any[]; connections: any[] }): { messages: string[]; details: any[]; byId: Map<string, any> } {
-  const result = validateForPublishPure(canvasData)
+function runPureValidation(canvasData: CanvasData): { messages: string[]; details: any[]; byId: Map<string, any> } {
+  const result = validateForPublishPure(canvasData as any)
   const byId = new Map<string, any>()
   if (canvasData && Array.isArray(canvasData.nodes)) canvasData.nodes.forEach((n: any) => byId.set(n.id, n))
   return { messages: result.messages.slice(), details: (result.details || []).slice(), byId }
 }
 
-export type GraphLike = any
+export type GraphLike = X6GraphLike
 
-export function collectCanvasData(graph: GraphLike): { nodes: any[]; connections: any[] } {
-  const nodes = (graph.getNodes?.() || []).map((n: any) => {
+export function collectCanvasData(graph: GraphLike): CanvasData {
+  const nodes = (graph.getNodes?.() || []).map((n: X6Cell) => {
     try {
       const pos = n.getPosition?.() || { x: 0, y: 0 }
       const data = n.getData?.() || {}
@@ -23,7 +24,7 @@ export function collectCanvasData(graph: GraphLike): { nodes: any[]; connections
       return { id: n.id, type: 'node', x: 0, y: 0, label: '未知节点', config: {}, isConfigured: false, branches: [] }
     }
   })
-  const connections = (graph.getEdges?.() || []).map((e: any) => {
+  const connections = (graph.getEdges?.() || []).map((e: X6Cell) => {
     try {
       const src = e.getSource?.() || {}
       const tgt = e.getTarget?.() || {}
@@ -32,7 +33,7 @@ export function collectCanvasData(graph: GraphLike): { nodes: any[]; connections
       return { id: e.id, source: null, target: null, sourcePortId: null, targetPortId: null }
     }
   })
-  return { nodes, connections }
+  return { nodes: nodes as any, connections: connections as any }
 }
 
 /**
@@ -147,7 +148,7 @@ export function publishTask(meta: any, canvasData: any): any {
  * - 端口完整性：每个节点的 out 端口需有连接
  * - 分支完整性：分流/AB 节点每个分支需存在连线（按 edge.data.branchId 对齐）
  */
-export function validateForPublish(graph: GraphLike, canvasData: { nodes: any[]; connections: any[] }): { pass: boolean; messages: string[]; details?: any[] } {
+export function validateForPublish(graph: GraphLike, canvasData: CanvasData): ValidationResult {
   // 委托纯算法做基础校验（可被单测覆盖）
   const pure = runPureValidation(canvasData)
   const messages = pure.messages

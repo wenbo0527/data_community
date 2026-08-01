@@ -276,6 +276,9 @@ import { useCurrentUser } from '../../../../composables/useCurrentUser.js'
 import * as tracker from '../../../../utils/trackerService.js'
 import { CANVAS_FUNNEL_STEPS } from '../../../../utils/canvasFunnel.js'
 import { logger as _logger } from '../../../../utils/logger.js'
+import { useCanvasPersistence } from '../../../../composables/canvas/useCanvasPersistence.js'
+import { useCanvasDrop } from '../../../../composables/canvas/useCanvasDrop.js'
+import { useCanvasQuickLayout } from '../../../../composables/canvas/useCanvasQuickLayout.js'
 const log = _logger.create('Horizontal')
 import { ensureStartNode as ensureStartNodeSvc, updateNodeUnified as updateNodeUnifiedSvc } from './node/NodeService'
 import { bindConnectionPolicies, toggleMinimap, useHistory, useKeyboard, useSelection, createGraph, bindDefaultShortcuts } from './graph/GraphService.ts'
@@ -2381,58 +2384,22 @@ function onCanvasDragOver(e) {
 }
 
 function onCanvasDrop(e) {
-  e.preventDefault()
-  if (isViewMode.value) return
-  try {
-    const local = graph?.pageToLocal ? graph.pageToLocal(e.pageX, e.pageY) : { x: e.offsetX, y: e.offsetY }
-    const nodeType = e.dataTransfer.getData('nodeType')
-    if (!nodeType) return
-    // 高级节点（短信/AI 触达组合）走组合节点插入逻辑，不生成视觉实体
-    if (TOUCH_COMBOS[nodeType]) {
-      pendingCreatePoint = { x: local.x, y: local.y }
-      pendingInsertionEdge = null
-      const createdIds = insertTouchComboNodes(nodeType)
-      if (createdIds && createdIds.length) {
-        highlightNodes(createdIds)
-        try {
-          tracker.track('combo_insert', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { comboType: nodeType, nodeCount: createdIds.length } })
-        } catch {}
-      } else {
-        Message.warning('高级组合节点创建失败，请重试')
-        try { tracker.track('node_drop_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'combo_insert_failed' } }) } catch {}
-      }
-      return
-    }
-    const x = local.x
-    const y = local.y
-    const label = getNodeLabel(nodeType) || nodeType
-    const fourOutTypes = ['crowd-split', 'event-split', 'ab-test']
-    const outCount = fourOutTypes.includes(nodeType) ? 4 : 1
-    const newNodeId = `${nodeType}-${Date.now()}`
-    const created = graph.addNode(createVueShapeNode({
-      id: newNodeId,
-      x,
-      y,
-      label,
-      outCount,
-      data: { type: nodeType, nodeType: nodeType, isConfigured: false }
-    }))
-    if (created) {
-      highlightNodes([created.id])
-      try {
-        tracker.track('node_drop', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, isCombo: false, x, y } })
-        // 漏斗：首个非 start 业务节点
-        if (nodeType !== 'start') tracker.trackFunnelStep('canvas_creation', 'first_node_drop', { nodeType })
-      } catch {}
-    } else {
-      try { tracker.track('node_drop_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'addNode_failed' } }) } catch {}
-    }
-  } catch (e) {
-    Message.error('拖放创建节点失败，请重试')
-    try { tracker.track('node_drop_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { nodeType, reason: 'exception' } }) } catch {}
-    log.warn('拖放创建节点失败', e)
-  }
+  return dropHandler.onCanvasDrop(e)
 }
+
+const dropHandler = useCanvasDrop({
+  getGraph: () => graph,
+  getIsViewMode: () => isViewMode.value,
+  createVueShapeNode, getNodeLabel,
+  insertTouchComboNodes: (nodeType) => insertTouchComboNodes(nodeType),
+  highlightNodes,
+  setPendingCreatePoint: v => { pendingCreatePoint = v },
+  setPendingInsertionEdge: v => { pendingInsertionEdge = v },
+  Message, log, tracker,
+  getEditingTaskId: () => editingTaskId.value,
+  getEditingTaskVersion: () => editingTaskVersion.value,
+  TOUCH_COMBOS
+})
 
 /**
  * 高亮画布上的一组节点（脉冲动画），1.5s 后自动结束
@@ -2647,23 +2614,18 @@ const layoutOptions = {
  * 特点：仅重新排列节点位置，不改变端口和连线绑定
  */
 const handleQuickLayout = async () => {
-  if (!graph) { Message.warning('画布未初始化，请稍后再试'); return }
-  const loadingMessage = Message.loading('正在应用智能布局...')
-  try {
-    await applyQuickLayoutSvc(graph, { 
-      containerEl: canvasContainerRef.value, 
-      minimap, 
-      minimapPaused, 
-      ...layoutOptions 
-    })
-    loadingMessage.close()
-    Message.success('智能布局应用成功！')
-    handleFitContent()
-  } catch (error) {
-    loadingMessage.close()
-    Message.error(`布局失败: ${error.message}`)
-  }
+  return layoutCtl.applyQuickLayout()
 }
+const layoutCtl = useCanvasQuickLayout({
+  getGraph: () => graph,
+  getContainerEl: () => canvasContainerRef.value,
+  getMinimap: () => minimap,
+  getMinimapPaused: () => minimapPaused,
+  getLayoutOptions: () => layoutOptions,
+  Message,
+  onAfterLayout: () => handleFitContent(),
+  applyQuickLayoutSvc
+})
 
 
 const handleAddNode = (payload) => {
@@ -2711,92 +2673,39 @@ const loadCanvasData = (canvasData) => {
   return loadCanvasDataSvc(graph, canvasData)
 }
 
-// 保存任务函数 - 参考原版画布实现
-const saveTask = async () => {
-  if (!taskName.value) { Message.error('请输入任务名称'); return }
-  const saveStart = Date.now()
-  try {
-    const canvasData = collectCanvasData(graph)
-    const validation = validateForPublish(graph, canvasData)
-    let versionToUse = taskVersion.value || 1
-    if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
-    const name = taskName.value || '未命名任务'
-    const saveMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'draft', publishReady: validation.pass, publishMessages: validation.messages || [], lastValidatedAt: new Date().toISOString(), updateTime: new Date().toLocaleString('zh-CN'), creator: currentUser.value }
-    let saved
-    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...saveMeta, canvasData }); Message.success('已保存为草稿，可继续编辑') }
-    else { saved = saveTaskSvc(saveMeta, canvasData); if (!saved || !saved.id) { Message.error('保存失败：未生成任务ID，请稍后重试'); return } Message.success('已保存为草稿，可继续编辑'); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
-    taskStatus.value = 'draft'
-    isDirty.value = false
-    const saveMs = Date.now() - saveStart
-    try { tracker.track('save_draft', { taskId: editingTaskId.value, version: versionToUse, props: { durationMs: saveMs, pass: validation.pass, versionToUse } }) } catch {}
-    if (validation.pass) { try { tracker.trackFunnelStep('canvas_creation', 'validate_pass', {}) } catch {} ; try { tracker.trackFunnelStep('canvas_creation', 'save_draft', {}) } catch {} }
-    return saved
-  } catch (e) {
-    try { tracker.track('save_draft', { taskId: editingTaskId.value, version: taskVersion.value, props: { durationMs: Date.now() - saveStart, pass: false, error: String(e?.message || 'unknown') } }) } catch {}
-    Message.error(`保存失败: ${e.message || '未知错误'}`)
-  }
-}
-
-// 发布任务函数 - 参考原版画布实现
-const publishTask = async () => {
-  if (!taskName.value) { Message.error('请输入任务名称'); return }
-  const publishStart = Date.now()
-  try {
-    const canvasData = collectCanvasData(graph)
-    const validation = validateForPublish(graph, canvasData)
-    if (!validation.pass) {
-      try {
-        const kinds = (validation.details || []).map(d => d.kind).filter(Boolean)
-        tracker.track('validate_fail', { taskId: editingTaskId.value, version: taskVersion.value, props: { errorKinds: kinds, messageCount: (validation.messages || []).length } })
-      } catch {}
-      showValidationModal(validation.messages, validation.details || [])
-      return
-    }
-    const name = taskName.value || '未命名任务'
-    let versionToUse = taskVersion.value || 1
-    if (isEditMode.value && editingTaskId.value) { const existing = TaskStorage.getTaskById(parseInt(editingTaskId.value)); if (existing && existing.status === 'published') { versionToUse = (existing.version || 1) + 1; taskVersion.value = versionToUse } }
-    const publishMeta = { name, description: taskDescription.value || '', version: versionToUse, type: 'marketing', status: 'published', publishTime: new Date().toLocaleString('zh-CN'), updateTime: new Date().toLocaleString('zh-CN'), creator: currentUser.value }
-    let saved
-    if (isEditMode.value && editingTaskId.value) { saved = TaskStorage.updateTask(editingTaskId.value, { ...publishMeta, canvasData }); Message.success(`已发布当前版本（v${versionToUse}），可在任务列表查看`) }
-    else { saved = publishTaskSvc(publishMeta, canvasData); if (!saved || !saved.id) { Message.error('发布失败：未生成任务ID，请稍后重试'); return } Message.success(`已发布当前版本（v${versionToUse}），可在任务列表查看`); isEditMode.value = true; editingTaskId.value = saved.id; router.replace({ path: '/marketing/tasks/horizontal', query: { mode: 'edit', id: saved.id, version: saved.version } }) }
-    taskStatus.value = 'published'
-    isDirty.value = false
-    try {
-      tracker.track('publish', { taskId: editingTaskId.value, version: versionToUse, props: { durationMs: Date.now() - publishStart, version: versionToUse } })
-      tracker.trackFunnelStep('canvas_creation', 'publish', { version: versionToUse })
-    } catch {}
-    return saved
-  } catch (e) {
-    try { tracker.track('publish', { taskId: editingTaskId.value, version: taskVersion.value, props: { durationMs: Date.now() - publishStart, pass: false, error: String(e?.message || 'unknown') } }) } catch {}
-    Message.error(`发布失败: ${e.message || '未知错误'}`)
-  }
-}
-
-function submitApprovalOnly() {
-  try {
-    if (!taskName.value) { Message.error('请输入任务名称'); return }
-    const canvasData = collectCanvasData(graph)
-    const validation = validateForPublish(graph, canvasData)
-    if (!validation.pass) {
-      try {
-        const kinds = (validation.details || []).map(d => d.kind).filter(Boolean)
-        tracker.track('validate_fail', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { errorKinds: kinds, fromSubmitApproval: true } })
-      } catch {}
-      showValidationModal(validation.messages, validation.details || [])
-      publishReady.value = false
-      publishMessages.value = validation.messages || []
-      return
-    }
-    TaskStorage.updateTask(editingTaskId.value, { version: editingTaskVersion.value, description: taskDescription.value || '', updateTime: new Date().toLocaleString('zh-CN'), publishReady: true, publishMessages: [], lastValidatedAt: new Date().toISOString() })
-    TaskStorage.submitApproval(editingTaskId.value, editingTaskVersion.value, currentUser.value, taskDescription.value || '')
-    approvalStatus.value = 'pending_approval'
-    try { tracker.track('submit_approval', { taskId: editingTaskId.value, version: editingTaskVersion.value, props: { by: currentUser.value } }) } catch {}
-    Message.success('已提交审批')
-  } catch (e) { Message.error(`提交审批失败: ${e?.message || '未知错误'}`) }
-}
-
 // 画布发布前校验
 const validateCanvasForPublish = (canvasData) => validateForPublish(graph, canvasData)
+
+// 实例化持久化组合式（保存/发布/提交审批）
+const persistence = useCanvasPersistence({
+  getGraph: () => graph,
+  getTaskName: () => taskName.value,
+  getTaskDescription: () => taskDescription.value,
+  getTaskVersion: () => taskVersion.value,
+  setTaskVersion: v => { taskVersion.value = v },
+  getIsEditMode: () => isEditMode.value,
+  setIsEditMode: v => { isEditMode.value = v },
+  getEditingTaskId: () => editingTaskId.value,
+  setEditingTaskId: v => { editingTaskId.value = v },
+  getEditingTaskVersion: () => editingTaskVersion.value,
+  getCurrentUser: () => currentUser.value,
+  Message,
+  validateForPublish,
+  collectCanvasData,
+  TaskStorage,
+  saveTaskSvc, publishTaskSvc,
+  tracker,
+  router,
+  onShowValidation: showValidationModal,
+  setTaskStatus: v => { taskStatus.value = v },
+  setIsDirty: v => { isDirty.value = v },
+  setPublishReady: v => { publishReady.value = v },
+  setPublishMessages: v => { publishMessages.value = v },
+  setApprovalStatus: v => { approvalStatus.value = v }
+})
+const saveTask = () => persistence.saveDraft()
+const publishTask = () => persistence.publish()
+const submitApprovalOnly = () => persistence.submitApproval()
 
 // 聚焦指定节点：选中、滚动居中、闪烁高亮
 function focusNodeById(nodeId) {
