@@ -389,23 +389,40 @@ const generateTopUsers = (): TopUser[] => {
 const generateMessageDetails = (eventId: string): MessageDetail[] => {
   const messageTypes = ['订单消息', '库存消息', '通知消息', '状态消息', '数据同步'];
   const formats: ('json' | 'xml' | 'text' | 'binary')[] = ['json', 'xml', 'text', 'binary'];
-  
+
+  // 该事件可能由这些虚拟事件触发（mock 数据）
+  const virtualEventPool = [
+    { id: 'VIRT288188', name: '虚拟原始军' },
+    { id: 'VIRT290012', name: '激活未复购' },
+    { id: 'VIRT290088', name: '高价值预警' },
+    { id: 'VIRT295001', name: '沉默用户唤醒' }
+  ];
+
   return Array.from({ length: 200 }, (_, i) => {
     const messageType = Mock.Random.pick(messageTypes);
     const format = Mock.Random.pick(formats);
     const size = Mock.Random.integer(512, 51200); // 512B-50KB
-    
+
     // 生成消息内容
     const content = generateMessageContent(messageType, format);
-    
-  return {
-    id: `msg_${eventId}_${Date.now()}_${i}`,
-    timestamp: new Date(Date.now() - Mock.Random.integer(0, 86400000)).toISOString(),
-    messageType,
-    size,
-    content,
-    format
-  };
+
+    // 模拟：70% 概率有虚拟事件触发（其中一半带名称）
+    const triggeredVirtualEvent = Mock.Random.boolean()
+      ? (() => {
+          const ev = Mock.Random.pick(virtualEventPool);
+          return { id: ev.id, name: Mock.Random.boolean() ? ev.name : '' };
+        })()
+      : null;
+
+    return {
+      id: `msg_${eventId}_${Date.now()}_${i}`,
+      timestamp: new Date(Date.now() - Mock.Random.integer(0, 86400000)).toISOString(),
+      messageType,
+      size,
+      content,
+      format,
+      triggeredVirtualEvent
+    };
   });
 };
 
@@ -816,6 +833,45 @@ const mockEventAPI = {
       setTimeout(() => {
         resolve({ success: true, id, status: '已下线', updateTime: new Date().toISOString() });
       }, 300);
+    });
+  },
+
+  // 创建虚拟事件组合（OR / AND 多事件组合）—— 2026-08-02 新增
+  createCombineVirtualEvent: (params: {
+    name: string;
+    description?: string;
+    scenarios: string[];
+    combineType: 'OR' | 'AND';
+    events: Array<{ id: string; name: string }>;
+  }) => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // 生成 VIRT*** 风格 ID（6 位随机数）
+        const newId = `VIRT${String(Math.floor(Math.random() * 900000) + 100000)}`;
+        const now = new Date().toISOString();
+        resolve({
+          success: true,
+          id: newId,
+          eventName: params.name,
+          eventId: newId,
+          description: params.description || '',
+          scenario: params.scenarios,
+          combineType: params.combineType,
+          combineEvents: params.events,
+          status: '已上线',
+          realEventId: null,
+          updater: '当前用户',
+          createTime: now,
+          updateTime: now,
+          version: 1,
+          versions: [{
+            version: 1,
+            creator: '当前用户',
+            createdAt: now,
+            note: `首次创建（${params.combineType} of ${params.events.length} events）`
+          }]
+        });
+      }, 500);
     });
   }
 };
