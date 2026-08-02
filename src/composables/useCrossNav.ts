@@ -75,31 +75,64 @@ export function useCrossNav() {
   /**
    * 跳转到指定 key 路由
    * @param key 例如 'discovery:data-map' 或 'discovery:customer360-detail'
-   * @param params 参数替换,例如 { userId: '123' } 会替换 :userId
+   * @param options.context 上下文参数(通过 query 传递,接收页面可读取)
+   * @param options.params 参数替换,例如 { userId: '123' } 会替换 :userId
    */
-  const go = (key: string, params?: Record<string, string | number>) => {
+  const go = (
+    key: string,
+    options?: {
+      params?: Record<string, string | number>
+      context?: Record<string, string | number | boolean>
+    }
+  ) => {
     let path = ROUTE_TABLE[key]
     if (!path) {
       console.warn(`[useCrossNav] 未注册的路由 key: ${key}`)
       return Promise.reject(new Error(`Unknown route key: ${key}`))
     }
+    const params = options?.params
+    const context = options?.context
+
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
         path = path.replace(`:${k}`, String(v))
       })
     }
+
+    // P0#2: 上下文通过 query 传递,接收页面用 useRoute().query 读取
+    if (context && Object.keys(context).length > 0) {
+      const queryString = Object.entries(context)
+        .filter(([_, v]) => v !== undefined && v !== null)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+        .join('&')
+      if (queryString) path += `?${queryString}`
+    }
+
     return router.push(path)
   }
 
   /**
    * 仅解析路径,不跳转(用于 a-link href)
    */
-  const resolve = (key: string, params?: Record<string, string | number>): string => {
+  const resolve = (
+    key: string,
+    options?: {
+      params?: Record<string, string | number>
+      context?: Record<string, string | number | boolean>
+    }
+  ): string => {
     let path = ROUTE_TABLE[key] || '#'
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
+    if (options?.params) {
+      Object.entries(options.params).forEach(([k, v]) => {
         path = path.replace(`:${k}`, String(v))
       })
+    }
+    if (options?.context && Object.keys(options.context).length > 0) {
+      const queryString = Object.entries(options.context)
+        .filter(([_, v]) => v !== undefined && v !== null)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+        .join('&')
+      if (queryString) path += `?${queryString}`
     }
     return path
   }

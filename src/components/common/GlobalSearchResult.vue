@@ -7,8 +7,29 @@
     />
     <template v-else>
       <div class="result-summary">
-        找到 <b>{{ totalCount }}</b> 条结果
+        找到 <b>{{ totalCount }}</b> 条结果 · 已按"用户意图"分组
       </div>
+
+      <!-- 1. 智能意图推荐(P0#1 整合点:不按数据类型,按意图) -->
+      <section v-if="intentCards.length > 0" class="intent-section">
+        <div class="intent-title">意图推荐</div>
+        <div class="intent-grid">
+          <div
+            v-for="card in intentCards"
+            :key="card.key"
+            class="intent-card"
+            @click="onIntentClick(card)"
+          >
+            <component :is="card.icon" class="intent-icon" />
+            <div class="intent-content">
+              <div class="intent-card-title">{{ card.title }}</div>
+              <div class="intent-card-desc">{{ card.desc }}</div>
+            </div>
+            <icon-right class="intent-arrow" />
+          </div>
+        </div>
+      </section>
+
       <a-tabs v-model:active-key="activeTab">
         <a-tab-pane v-for="tab in tabs" :key="tab.key">
           <template #title>
@@ -54,7 +75,9 @@ import {
   IconTags,
   IconCommon,
   IconDesktop,
-  IconApps
+  IconApps,
+  IconUserGroup,
+  IconRight
 } from '@arco-design/web-vue/es/icon'
 import { searchApi } from '@/api/community'
 
@@ -179,12 +202,116 @@ const doSearch = async (kw: string) => {
     // 自动切到第一个有结果的 tab
     const firstTab = tabs.find(t => (results.value as any)[t.key]?.length > 0)
     if (firstTab) activeTab.value = firstTab.key
+
+    // P0#1: 生成意图推荐卡片
+    intentCards.value = generateIntentCards(kw, results.value)
   } catch (err) {
     console.warn('[GlobalSearchResult] 搜索失败', err)
     results.value = { tables: [], metrics: [], tags: [], concepts: [], dashboards: [] }
+    intentCards.value = []
   } finally {
     loading.value = false
   }
+}
+
+// === P0#1: 意图识别 ===
+interface IntentCard {
+  key: string
+  title: string
+  desc: string
+  icon: any
+  routeKey: string
+  params?: Record<string, string>
+}
+
+const intentCards = ref<IntentCard[]>([])
+
+// 客户相关关键词
+const CUSTOMER_KEYWORDS = ['客户', 'user', '用户', '授信', '信贷', 'loan', '客户数', '客户画像', '客户360', '客户洞察']
+// 指标相关
+const METRIC_KEYWORDS = ['指标', 'metric', '日活', 'dau', 'gmv', '转化率']
+// 数据源相关
+const SOURCE_KEYWORDS = ['数据源', 'datasource', '数据库', 'kafka', 'mysql']
+// 看板相关
+const BOARD_KEYWORDS = ['看板', 'dashboard', '报表', 'report', '驾驶舱']
+
+const generateIntentCards = (kw: string, res: SearchResults): IntentCard[] => {
+  const lower = kw.toLowerCase()
+  const cards: IntentCard[] = []
+
+  // 1. 客户洞察(命中客户关键词 或 results.tags/metrics 里有客户相关)
+  const isCustomerIntent = CUSTOMER_KEYWORDS.some(k => lower.includes(k.toLowerCase()))
+  if (isCustomerIntent) {
+    cards.push({
+      key: 'customer-insight',
+      title: '查看客户洞察',
+      desc: `跳转到客户 360,预填搜索"${kw}"`,
+      icon: IconUserGroup,
+      routeKey: 'discovery:customer360',
+      params: { keyword: kw }
+    })
+  }
+
+  // 2. 数据地图(有表)
+  if (res.tables.length > 0) {
+    cards.push({
+      key: 'browse-tables',
+      title: `浏览 ${res.tables.length} 张数据表`,
+      desc: '在数据地图中查看详情与血缘',
+      icon: IconStorage,
+      routeKey: 'discovery:data-map'
+    })
+  }
+
+  // 3. 指标地图(有指标)
+  if (res.metrics.length > 0) {
+    cards.push({
+      key: 'browse-metrics',
+      title: `查看 ${res.metrics.length} 个指标定义`,
+      desc: '在指标地图中查看业务口径',
+      icon: IconBranch,
+      routeKey: 'discovery:metrics-map'
+    })
+  }
+
+  // 4. 看板(命中看板关键词)
+  if (BOARD_KEYWORDS.some(k => lower.includes(k.toLowerCase())) || res.dashboards.length > 0) {
+    cards.push({
+      key: 'browse-dashboards',
+      title: `查看看板/报表`,
+      desc: '在指标看板中浏览可视化',
+      icon: IconDesktop,
+      routeKey: 'exploration:indicator-dashboard'
+    })
+  }
+
+  // 5. 数据源(命中)
+  if (SOURCE_KEYWORDS.some(k => lower.includes(k.toLowerCase()))) {
+    cards.push({
+      key: 'browse-sources',
+      title: '查看数据源',
+      desc: '管理数据源接入',
+      icon: IconStorage,
+      routeKey: 'exploration:tag-system'
+    })
+  }
+
+  // 6. 业务概念(命中)
+  if (res.concepts.length > 0) {
+    cards.push({
+      key: 'browse-concepts',
+      title: `查看 ${res.concepts.length} 个业务概念`,
+      desc: '在业务概念图谱中浏览',
+      icon: IconCommon,
+      routeKey: 'management:business-concept'
+    })
+  }
+
+  return cards.slice(0, 4) // 最多 4 张
+}
+
+const onIntentClick = (card: IntentCard) => {
+  emit('navigate', { routeKey: card.routeKey, params: card.params })
 }
 
 watch(
@@ -213,6 +340,70 @@ watch(
   .result-icon {
     font-size: 22px;
     color: #165dff;
+  }
+
+  // P0#1: 意图卡片样式
+  .intent-section {
+    margin-bottom: 24px;
+
+    .intent-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #4e5969;
+      margin-bottom: 12px;
+    }
+
+    .intent-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .intent-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 100%);
+      border: 1px solid #e8f3ff;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      &:hover {
+        border-color: #165dff;
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(22, 93, 255, 0.1);
+      }
+
+      .intent-icon {
+        font-size: 24px;
+        color: #165dff;
+        flex-shrink: 0;
+      }
+
+      .intent-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .intent-card-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1d2129;
+      }
+
+      .intent-card-desc {
+        font-size: 12px;
+        color: #86909c;
+        margin-top: 2px;
+      }
+
+      .intent-arrow {
+        color: #c9cdd4;
+        font-size: 14px;
+      }
+    }
   }
 }
 </style>

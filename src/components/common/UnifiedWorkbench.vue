@@ -88,6 +88,12 @@
       </a-row>
     </section>
 
+    <!-- 5. P0#5: 我的产出(跨模块工作产出聚合) -->
+    <section class="artifacts">
+      <h2 class="section-title">我的产出</h2>
+      <MyArtifactsPanel />
+    </section>
+
     <!-- 5. 搜索结果抽屉(L2 整合接入) -->
     <a-drawer
       v-model:visible="searchDrawer"
@@ -121,6 +127,7 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { useCrossNav } from '@/composables/useCrossNav'
 import GlobalSearchResult from './GlobalSearchResult.vue'
+import MyArtifactsPanel from './MyArtifactsPanel.vue'
 
 type Module = 'discovery' | 'management' | 'exploration'
 
@@ -437,5 +444,9 @@ onMounted(loadRecentVisits)
     color: #c9cdd4;
     margin-top: 2px;
   }
+}
+
+.artifacts {
+  margin-top: 24px;
 }
 </style>
