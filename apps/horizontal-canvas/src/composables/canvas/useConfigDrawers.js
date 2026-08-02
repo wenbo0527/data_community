@@ -1,28 +1,16 @@
 import { reactive, nextTick } from 'vue'
-import { useStructuredLayout } from './useStructuredLayout.js'
-
-const SUPPORTED_TYPES = ['start','crowd-split','event-split','ab-test','ai-call','sms','manual-call','app-push','wechat-push','wait','benefit']
+import { DRAWER_KEYS } from '@/components/task/drawerRegistry.ts'
 
 export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
-  const structuredLayout = useStructuredLayout(getGraph)
-  const drawerStates = reactive({
-    start: { visible: false, data: {}, instance: null, readOnly: false },
-    'crowd-split': { visible: false, data: {}, instance: null, readOnly: false },
-    'event-split': { visible: false, data: {}, instance: null, readOnly: false },
-    'ab-test': { visible: false, data: {}, instance: null, readOnly: false },
-    'ai-call': { visible: false, data: {}, instance: null, readOnly: false },
-    sms: { visible: false, data: {}, instance: null, readOnly: false },
-    'manual-call': { visible: false, data: {}, instance: null, readOnly: false },
-    'app-push': { visible: false, data: {}, instance: null, readOnly: false },
-    'wechat-push': { visible: false, data: {}, instance: null, readOnly: false },
-    wait: { visible: false, data: {}, instance: null, readOnly: false },
-    benefit: { visible: false, data: {}, instance: null, readOnly: false }
-  })
+  // 从注册表键集合动态生成 drawerStates，保证与渲染注册表一致
+  const drawerStates = reactive(
+    Object.fromEntries(DRAWER_KEYS.map(k => [k, { visible: false, data: {}, instance: null, readOnly: false }]))
+  )
 
   const normalizeType = (type) => {
-    if (!type) return  
+    if (!type) return
     const t = String(type)
-    if (SUPPORTED_TYPES.includes(t)) return t
+    if (DRAWER_KEYS.includes(t)) return t
     // 简单映射
     if (t === 'audience-split') return 'crowd-split'
     return null
@@ -66,7 +54,6 @@ export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
     if (!key || !drawerStates[key]) return
     const g = getGraph && getGraph()
     const node = drawerStates[key].instance || (g?.getSelectedCells?.()?.[0])
-    console.log('handleConfigConfirm1111',key,g,node,g?.getSelectedCells?.());
     if (node && typeof updateNodeFromConfig === 'function') {
       const type = node.getData?.()?.nodeType || node.getData?.()?.type || key
       updateNodeFromConfig(node, type, config || {})
@@ -82,7 +69,7 @@ export const useConfigDrawers = (getGraph, { updateNodeFromConfig }) => {
     if (!visible) closeConfigDrawer(key)
   }
 
-  return { drawerStates, openConfigDrawer, closeConfigDrawer, handleConfigConfirm, handleConfigCancel, handleDrawerVisibilityChange, structuredLayout, closeAllDrawers }
+  return { drawerStates, openConfigDrawer, closeConfigDrawer, handleConfigConfirm, handleConfigCancel, handleDrawerVisibilityChange, closeAllDrawers }
 }
 /*
 用途：配置抽屉组合式（打开/关闭/写回）

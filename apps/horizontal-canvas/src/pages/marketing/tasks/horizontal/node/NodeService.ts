@@ -1,50 +1,69 @@
 import { getNodeLabel } from '@/utils/nodeTypes.js'
 import { createVueShapeNode } from '../createVueShapeNode.js'
+import type { X6GraphLike, X6Cell, XYPoint } from '@/types/graph.js'
 
-export type GraphLike = any
+export type GraphLike = X6GraphLike
+
+export interface NodePortSpec {
+  id: string
+  group?: string
+  args?: Record<string, unknown>
+  attrs?: { circle?: Record<string, unknown> }
+}
+
+export interface NodeSpecShape {
+  id: string
+  x: number
+  y: number
+  label: string
+  width: number
+  height: number
+  ports: { items: NodePortSpec[]; groups: Record<string, unknown> }
+  data: Record<string, unknown>
+}
 
 /**
  * 创建节点规格
- * 入参：nodeType(string)、config(any)、pos({ x:number; y:number })
- * 返回：Vue Shape 节点规格对象
+ * 入参：nodeType(string)、config(Record<string, unknown>)、pos({ x, y })
+ * 返回：NodeSpecShape（Vue Shape 节点规格对象）
  * 边界：标记 isConfigured=true；label 优先使用 config.nodeName 其后回退到类型标签
  */
-export function createNodeSpec(nodeType: string, config: any, pos: { x: number; y: number }): any {
+export function createNodeSpec(nodeType: string, config: Record<string, unknown>, pos: XYPoint): NodeSpecShape {
   const label = config?.nodeName || getNodeLabel(nodeType) || nodeType
   return createVueShapeNode({ id: `${nodeType}-${Date.now()}`, x: pos.x, y: pos.y, label, data: { type: nodeType, nodeType, config, isConfigured: true } })
 }
 
 /**
  * 统一更新节点（尺寸、端口映射、数据写回）
- * 入参：graph(GraphLike)、node(Cell)、nodeType(string)、config(any)
+ * 入参：graph(X6GraphLike)、node(X6Cell)、nodeType(string)、config(Record<string, unknown>)
  * 返回：void
  * 边界：按 out-N 规则重映射出端口；移除旧端口并保持连接；写回 data/props 并触发 change:data
  */
-export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string, config: any): void {
+export function updateNodeUnified(graph: GraphLike, node: X6Cell, nodeType: string, config: Record<string, unknown>): void {
   const pos = node.getPosition?.() || { x: 0, y: 0 }
   const label = config?.nodeName || getNodeLabel(nodeType) || nodeType
   const spec = createVueShapeNode({ id: node.id, x: pos.x, y: pos.y, label, data: { type: nodeType, nodeType, config, isConfigured: true } })
-  node.resize(spec.width, spec.height)
-  const existingPorts = node.getPorts ? node.getPorts() : []
-  const existingIds = new Set((existingPorts || []).map((p: any) => p.id))
-  const specIds = new Set((spec.ports.items || []).map((p: any) => p.id))
-  if (node.setProp) node.setProp('ports/groups', spec.ports.groups)
-  ;(existingPorts || []).forEach((p: any) => {
+  node.resize?.(spec.width, spec.height)
+  const existingPorts = node.getPorts?.() || []
+  const existingIds = new Set((existingPorts || []).map((p: { id: string }) => p.id))
+  const specIds = new Set((spec.ports.items || []).map((p: { id: string }) => p.id))
+  node.setProp?.('ports/groups', spec.ports.groups)
+  ;(existingPorts || []).forEach((p: { id: string; group?: string }) => {
     if (!specIds.has(p.id)) {
       try {
         const isOut = p.group === 'out'
         if (isOut) {
-          const edges = (graph?.getOutgoingEdges?.(node) || []).filter((e: any) => {
+          const edges = (graph?.getOutgoingEdges?.(node) || []).filter((e: X6Cell) => {
             try { return e.getSourcePortId?.() === p.id } catch { return false }
           })
-          edges.forEach((e: any) => { try { graph.removeEdge?.(e) } catch {} })
+          edges.forEach((e: X6Cell) => { try { graph?.removeEdge?.(e.id) } catch {} })
         }
         node.removePort?.(p.id)
       } catch {}
     }
   })
   if (spec.ports.items && spec.ports.items.length) {
-    spec.ports.items.forEach((it: any) => {
+    spec.ports.items.forEach((it: NodePortSpec) => {
       if (existingIds.has(it.id)) {
         try {
           node.setPortProp?.(it.id, 'group', it.group)
@@ -57,14 +76,14 @@ export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string,
           }
         } catch {}
       } else {
-        node.addPort && node.addPort(it)
+        node.addPort?.(it)
       }
     })
   }
   try {
     const outgoing = graph?.getOutgoingEdges?.(node) || []
-    const byPort: Record<string, any[]> = {}
-    outgoing.forEach((e: any) => {
+    const byPort: Record<string, X6Cell[]> = {}
+    outgoing.forEach((e: X6Cell) => {
       const pid = (() => { try { return e.getSourcePortId?.() } catch { return null } })()
       if (!pid) return
       if (!byPort[pid]) byPort[pid] = []
@@ -73,42 +92,39 @@ export function updateNodeUnified(graph: GraphLike, node: any, nodeType: string,
     Object.keys(byPort).forEach((pid) => {
       const list = byPort[pid]
       if (Array.isArray(list) && list.length > 1) {
-        list.slice(1).forEach((e: any) => { try { graph.removeEdge?.(e) } catch {} })
+        list.slice(1).forEach((e: X6Cell) => { try { graph?.removeEdge?.(e.id) } catch {} })
       }
     })
   } catch {}
   if (node.setProp) {
     if (node.setData) node.setData(spec.data)
-    node.prop('data', spec.data)
-    node.prop('nodeType', spec.data.nodeType)
-    node.prop('headerTitle', spec.data.headerTitle)
-    node.prop('displayLines', spec.data.displayLines)
-    node.trigger('change:data', { current: spec.data, previous: node.getData?.() })
+    node.prop?.('data', spec.data)
+    node.prop?.('nodeType', spec.data.nodeType)
+    node.prop?.('headerTitle', spec.data.headerTitle)
+    node.prop?.('displayLines', spec.data.displayLines)
+    node.trigger?.('change:data', { current: spec.data, previous: node.getData?.() })
   }
 }
 
 /**
  * 保障开始节点存在
- * 入参：graph(GraphLike)
+ * 入参：graph(X6GraphLike)
  * 返回：void
  * 场景：空画布或缺少 start 节点时自动补齐一个开始节点
  */
 export function ensureStartNode(graph: GraphLike): void {
-  console.log('initStart1111',graph)
-  const nodes = graph.getNodes()
-  console.log('nodes1111',nodes)
-  const hasStart = nodes.some((n: any) => { const d = n.getData ? n.getData() : {}; return d?.type === 'start' || d?.nodeType === 'start' || String(n.id).includes('start') })
+  const nodes = graph.getNodes?.() || []
+  const hasStart = nodes.some((n: X6Cell) => { const d = n.getData?.() || {}; return d?.type === 'start' || d?.nodeType === 'start' || String(n.id).includes('start') })
   if (hasStart) return
   const startNodeId = 'start-node'
   try {
     const rect = graph?.container?.getBoundingClientRect?.() || { width: 800, height: 600 }
-    // 先创建规格以获取高度，再按容器垂直居中计算 y
     const draft = createVueShapeNode({ id: startNodeId, x: 60, y: 0, label: '开始', outCount: 1, data: { type: 'start', nodeType: 'start', isConfigured: true }, portsOptions: { includeIn: false, outIds: ['out'] } })
     const y = Math.max(20, Math.round(((rect.height || 600) - (draft?.height || 120)) / 2))
     const spec = { ...draft, y }
-    graph.addNode(spec)
+    graph.addNode?.(spec)
   } catch {
-    graph.addNode(createVueShapeNode({ id: startNodeId, x: 60, y: 160, label: '开始', outCount: 1, data: { type: 'start', nodeType: 'start', isConfigured: true }, portsOptions: { includeIn: false, outIds: ['out'] } }))
+    graph.addNode?.(createVueShapeNode({ id: startNodeId, x: 60, y: 160, label: '开始', outCount: 1, data: { type: 'start', nodeType: 'start', isConfigured: true }, portsOptions: { includeIn: false, outIds: ['out'] } }))
   }
 }
 /*

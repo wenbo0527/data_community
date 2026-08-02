@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 5175",
-    "test": "vitest"
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint:any": "node scripts/lint-any.mjs",
+    "lint:routes": "bash scripts/test-routes.sh"
   },
   "dependencies": {
     "@antv/hierarchy": "^0.6.14",

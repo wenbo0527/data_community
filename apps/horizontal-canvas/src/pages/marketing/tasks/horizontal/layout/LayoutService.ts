@@ -1,13 +1,34 @@
-export type GraphLike = any
+import type { X6GraphLike } from '@/types/graph.js'
 import HorizontalQuickLayout from '../utils/quickLayout.js'
+
+export type GraphLike = X6GraphLike
+
+export interface ApplyQuickLayoutOptions {
+  containerEl?: HTMLElement | null
+  minimap?: { updateGraph?: () => void; update?: () => void; dispose?: () => void; [k: string]: unknown } | null
+  minimapPaused?: boolean
+  startX?: number
+  startY?: number
+  colSpacing?: number
+  laneGapY?: number
+  colScale?: number
+  laneScale?: number
+  spreadX?: number
+  spreadY?: number
+  expandX?: number
+  quickLayout?: HorizontalQuickLayout
+}
+
+export interface LayoutBounds { minX: number; minY: number; maxX: number; maxY: number }
+export interface LayoutResult { bounds?: LayoutBounds; [k: string]: unknown }
 
 /**
  * 快速布局
- * 入参：graph(GraphLike), options({ containerEl, minimap, minimapPaused, startX, startY, colSpacing, laneGapY, colScale, laneScale, spreadX, spreadY, expandX, quickLayout })
- * 返回：any（布局结果，包含 bounds 等）
+ * 入参：graph(X6GraphLike), options(ApplyQuickLayoutOptions)
+ * 返回：LayoutResult（包含 bounds 等）
  * 边界：失败容错；布局后关闭/开启辅助线；根据容器与布局宽度居中视图；可触发小地图更新
  */
-export async function applyQuickLayout(graph: GraphLike, options: any = {}): Promise<any> {
+export async function applyQuickLayout(graph: GraphLike, options: ApplyQuickLayoutOptions = {}): Promise<LayoutResult | null> {
   if (!graph) return null
   const {
     containerEl,
@@ -23,7 +44,7 @@ export async function applyQuickLayout(graph: GraphLike, options: any = {}): Pro
     spreadY,
     expandX
   } = options || {}
-  try { graph.setSnaplineEnabled && graph.setSnaplineEnabled(false) } catch {}
+  try { graph.setSnaplineEnabled?.(false) } catch {}
   const instance = options.quickLayout || new HorizontalQuickLayout({})
   const result = await instance.executeHierarchyTreeLayout(graph, {
     startX,
@@ -37,7 +58,7 @@ export async function applyQuickLayout(graph: GraphLike, options: any = {}): Pro
     expandX
   })
   cleanupEdgeVertices(graph)
-  try { graph.setSnaplineEnabled && graph.setSnaplineEnabled(true) } catch {}
+  try { graph.setSnaplineEnabled?.(true) } catch {}
   setTimeout(() => {
     try {
       if (!minimapPaused && minimap && minimap.updateGraph) minimap.updateGraph()
@@ -47,34 +68,15 @@ export async function applyQuickLayout(graph: GraphLike, options: any = {}): Pro
 }
 
 /**
- * 结构化布局装配
- * 入参：graph(GraphLike), options({ provider, direction })
- * 返回：Promise<void>
- * 边界：依赖外部 provider 的 initialize/switch/apply；布局后清理边顶点
- */
-export async function applyStructuredLayout(graph: GraphLike, options: any = {}): Promise<void> {
-  const provider = options.provider
-  const direction = options.direction || 'LR'
-  if (provider) {
-    try {
-      if (provider.initializeLayoutEngine) await provider.initializeLayoutEngine()
-      if (provider.switchLayoutDirection) await provider.switchLayoutDirection(direction)
-      if (provider.applyUnifiedStructuredLayout) await provider.applyUnifiedStructuredLayout(graph)
-    } catch {}
-  }
-  cleanupEdgeVertices(graph)
-}
-
-/**
  * 清理边顶点
- * 入参：graph(GraphLike)
+ * 入参：graph(X6GraphLike)
  * 返回：void
  * 场景：布局后或需要还原边路线时调用
  */
 export function cleanupEdgeVertices(graph: GraphLike): void {
   try {
     const edges = graph?.getEdges?.() || []
-    edges.forEach((e: any) => { try { e && e.setVertices && e.setVertices([]) } catch {} })
+    edges.forEach((e) => { try { e.setVertices?.([]) } catch {} })
   } catch {}
 }
 /*

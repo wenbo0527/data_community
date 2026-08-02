@@ -1,17 +1,19 @@
-export type GraphLike = any
+import type { X6GraphLike, X6Cell } from '@/types/graph.js'
 import { MiniMap } from '@antv/x6-plugin-minimap'
 import { History } from '@antv/x6-plugin-history'
 import { Keyboard } from '@antv/x6-plugin-keyboard'
 import { Selection } from '@antv/x6-plugin-selection'
 import { Graph } from '@antv/x6'
 
+export type GraphLike = X6GraphLike
+
 /**
  * 创建通用 Graph 实例（占位 API）
- * 入参：container(HTMLElement) 容器元素；options(any) X6 Graph 额外配置
+ * 入参：container(HTMLElement) 容器元素；options(X6 Graph 额外配置)
  * 返回：GraphLike（X6 Graph 实例或 null）
  * 场景：页面装配阶段创建图；当前占位，统一走 createGraph 以使用默认配置
  */
-export function create(container: HTMLElement, options: any): GraphLike {
+export function create(container: HTMLElement, options: Record<string, unknown>): GraphLike {
   return null
 }
 
@@ -66,7 +68,7 @@ export function centerContent(graph: GraphLike, options: { padding?: number; pre
  * 返回：MiniMap 实例或 null
  * 场景：工具栏切换小地图；销毁时调用 disposePlugin('minimap')
  */
-export function toggleMinimap(graph: GraphLike, container: HTMLElement | null, visible: boolean, options: any = {}): any {
+export function toggleMinimap(graph: GraphLike, container: HTMLElement | null, visible: boolean, options: Record<string, unknown> = {}): unknown {
   if (!graph) return null
   if (visible) {
     if (!container) return null
@@ -81,47 +83,47 @@ export function toggleMinimap(graph: GraphLike, container: HTMLElement | null, v
 
 /**
  * 注册 History 插件
- * 入参：graph(GraphLike), options(any)
+ * 入参：graph(GraphLike), options(History 配置)
  * 返回：History 插件实例
  * 场景：撤销/重做与历史栈管理
  */
-export function useHistory(graph: GraphLike, options: any = {}): any {
-  const plugin = new History(options)
+export function useHistory(graph: GraphLike, options: Record<string, unknown> = {}): unknown {
+  const plugin = new History(options as never)
   try { graph.use(plugin) } catch {}
   return plugin
 }
 
 /**
  * 注册 Keyboard 插件
- * 入参：graph(GraphLike), options(any)
+ * 入参：graph(GraphLike), options(Keyboard 配置)
  * 返回：Keyboard 插件实例
  * 场景：绑定快捷键（与 bindDefaultShortcuts 配合）
  */
-export function useKeyboard(graph: GraphLike, options: any = {}): any {
-  const plugin = new Keyboard(options)
+export function useKeyboard(graph: GraphLike, options: Record<string, unknown> = {}): unknown {
+  const plugin = new Keyboard(options as never)
   try { graph.use(plugin) } catch {}
   return plugin
 }
 
 /**
  * 注册 Selection 插件
- * 入参：graph(GraphLike), options(any)
+ * 入参：graph(GraphLike), options(Selection 配置)
  * 返回：Selection 插件实例
  * 场景：多选/橡皮框选择（与 configureSelectionRubberbandGate 配合）
  */
-export function useSelection(graph: GraphLike, options: any = {}): any {
-  const plugin = new Selection(options)
+export function useSelection(graph: GraphLike, options: Record<string, unknown> = {}): unknown {
+  const plugin = new Selection(options as never)
   try { graph.use(plugin) } catch {}
   return plugin
 }
 
 /**
  * 创建 Graph（带默认配置）
- * 入参：container(HTMLElement), options(any)
+ * 入参：container(HTMLElement), options(Graph 配置)
  * 返回：X6 Graph 实例
  * 场景：页面装配创建图；默认开启背景/网格/滚轮/高亮等
  */
-export function createGraph(container: HTMLElement, options: any = {}): any {
+export function createGraph(container: HTMLElement, options: Record<string, unknown> = {}): unknown {
   return new Graph({
     container,
     background: { color: '#ffffff', opacity: 0.8 },
@@ -158,22 +160,26 @@ export function bindDefaultShortcuts(graph: GraphLike, handlers: { handleUndo?: 
  * 返回：{ handleKeyDown, handleKeyUp }
  * 场景：避免与平移冲突，按下修饰键启用橡皮框并禁用平移，松开还原
  */
-export function configureSelectionRubberbandGate(selectionPlugin: any, graph: GraphLike) {
+export interface SelectionPluginLike {
+  enableRubberband?: () => void
+  disableRubberband?: () => void
+}
+export function configureSelectionRubberbandGate(selectionPlugin: SelectionPluginLike | null, graph: GraphLike) {
   const modifierPressed = { value: false }
   const handleKeyDown = (e: KeyboardEvent) => {
-    const pressed = !!(e && (e.ctrlKey || (e as any).metaKey))
+    const pressed = !!(e && (e.ctrlKey || e.metaKey))
     if (pressed && !modifierPressed.value) {
       modifierPressed.value = true
-      try { selectionPlugin?.enableRubberband && selectionPlugin.enableRubberband() } catch {}
-      try { graph?.disablePanning && graph.disablePanning() } catch {}
+      try { selectionPlugin?.enableRubberband?.() } catch {}
+      try { graph?.disablePanning?.() } catch {}
     }
   }
   const handleKeyUp = (e: KeyboardEvent) => {
-    const pressed = !!(e && (e.ctrlKey || (e as any).metaKey))
+    const pressed = !!(e && (e.ctrlKey || e.metaKey))
     if (!pressed && modifierPressed.value) {
       modifierPressed.value = false
-      try { selectionPlugin?.disableRubberband && selectionPlugin.disableRubberband() } catch {}
-      try { graph?.enablePanning && graph.enablePanning() } catch {}
+      try { selectionPlugin?.disableRubberband?.() } catch {}
+      try { graph?.enablePanning?.() } catch {}
     }
   }
   if (typeof window !== 'undefined') {
@@ -185,11 +191,11 @@ export function configureSelectionRubberbandGate(selectionPlugin: any, graph: Gr
 
 /**
  * 添加节点（占位 API）
- * 入参：graph(GraphLike), spec(any 节点规格)
+ * 入参：graph(GraphLike), spec(节点规格)
  * 返回：Cell 或 null
  * 场景：统一入口，当前由页面/工厂直接添加，可后续迁移到服务
  */
-export function addNode(graph: GraphLike, spec: any): any { return null }
+export function addNode(graph: GraphLike, spec: Record<string, unknown>): X6Cell | null { return null }
 /**
  * 删除节点（占位 API）
  * 入参：graph(GraphLike), id(string)
@@ -198,10 +204,10 @@ export function addNode(graph: GraphLike, spec: any): any { return null }
 export function removeNode(graph: GraphLike, id: string): void {}
 /**
  * 添加边（占位 API）
- * 入参：graph(GraphLike), spec(any 边规格)
+ * 入参：graph(GraphLike), spec(边规格)
  * 返回：Cell 或 null
  */
-export function addEdge(graph: GraphLike, spec: any): any { return null }
+export function addEdge(graph: GraphLike, spec: Record<string, unknown>): X6Cell | null { return null }
 /**
  * 删除边（占位 API）
  * 入参：graph(GraphLike), id(string)
@@ -216,12 +222,31 @@ export function removeEdge(graph: GraphLike, id: string): void {}
  */
 export function deleteNodeCascade(graph: GraphLike, id: string): void {}
 
-export function bindConnectionPolicies(graph: GraphLike, ctx: { isViewMode: () => boolean; isPanning: () => boolean; Message?: { warning: (msg: string) => void } }) {
+interface ConnectionCtx {
+  isViewMode: () => boolean
+  isPanning: () => boolean
+  Message?: { warning: (msg: string) => void }
+}
+
+interface ValidateConnectionArgs {
+  sourceMagnet?: Element | null
+  targetMagnet?: Element | null
+  sourceView?: { cell?: X6Cell }
+  targetView?: { cell?: X6Cell }
+  edge?: { id?: string }
+}
+
+interface ValidateMagnetArgs {
+  magnet?: Element | null
+  view?: { cell?: X6Cell }
+}
+
+export function bindConnectionPolicies(graph: GraphLike, ctx: ConnectionCtx) {
   // 用途：连接与磁铁校验策略（源端口唯一、方向约束）
   // 入参：图实例与上下文（查看模式/平移状态/消息）
   // 返回：`validateConnection/validateMagnet` 方法对接 X6 连接钩子
   // 边界：仅拦截与提示，不做实际连接操作；查看模式屏蔽所有连接
-  function validateConnection({ sourceMagnet, targetMagnet, sourceView, targetView, edge }: any) {
+  function validateConnection({ sourceMagnet, targetMagnet, sourceView, targetView, edge }: ValidateConnectionArgs): boolean {
     if (ctx.isPanning?.()) return false
     if (ctx.isViewMode?.()) return false
     if (!sourceMagnet || !targetMagnet) return false
@@ -230,7 +255,7 @@ export function bindConnectionPolicies(graph: GraphLike, ctx: { isViewMode: () =
     if (sg !== 'out' || tg !== 'in') return false
     const srcCell = sourceView?.cell
     const sourcePortId = sourceMagnet.getAttribute('port') || sourceMagnet.getAttribute('data-port') || sourceMagnet.getAttribute('data-port-id')
-    const exists = (graph.getOutgoingEdges?.(srcCell) || []).some((e: any) => {
+    const exists = (graph.getOutgoingEdges?.(srcCell) || []).some((e: X6Cell) => {
       try {
         if (edge && e.id === edge.id) return false
         return e.getSourcePortId?.() === sourcePortId
@@ -239,7 +264,7 @@ export function bindConnectionPolicies(graph: GraphLike, ctx: { isViewMode: () =
     if (exists) { try { ctx.Message?.warning?.('该源端口已存在连接，不能重复连接') } catch {}; return false }
     return true
   }
-  function validateMagnet({ magnet, view }: any) {
+  function validateMagnet({ magnet, view }: ValidateMagnetArgs): boolean {
     if (!magnet) return false
     if (ctx.isViewMode?.()) return false
     const g = magnet.getAttribute('port-group') || magnet.getAttribute('data-port-group')
@@ -247,7 +272,7 @@ export function bindConnectionPolicies(graph: GraphLike, ctx: { isViewMode: () =
     const sourcePortId = magnet.getAttribute('port') || magnet.getAttribute('data-port') || magnet.getAttribute('data-port-id')
     const cell = view?.cell
     if (cell && sourcePortId) {
-      const exists = (graph.getOutgoingEdges?.(cell) || []).some((e: any) => {
+      const exists = (graph.getOutgoingEdges?.(cell) || []).some((e: X6Cell) => {
         try { return e.getSourcePortId?.() === sourcePortId } catch { return false }
       })
       if (exists) { try { ctx.Message?.warning?.('该源端口已存在连接，不能重复连接') } catch {}; return false }

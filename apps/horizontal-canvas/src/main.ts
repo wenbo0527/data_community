@@ -10,8 +10,8 @@ app.use(ArcoVue)
 app.use(router)
 
 Object.keys(ArcoIcons).forEach((k: string) => {
-  const c: any = (ArcoIcons as any)[k]
-  if (c && c.name) app.component(c.name, c)
+  const c: { name?: string } | undefined = (ArcoIcons as Record<string, { name?: string }>)[k]
+  if (c && c.name) app.component(c.name, c as never)
 })
 
 router.isReady().then(() => app.mount('#app'))

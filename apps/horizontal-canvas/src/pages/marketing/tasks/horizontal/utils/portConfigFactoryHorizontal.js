@@ -28,8 +28,6 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
       enableValidation = false
   } = options
 
-  console.log('createHorizontalPortConfigOptions1111', options)
-
   const groups = {
     in: {
       position: 'left',
@@ -84,7 +82,6 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
       }
     }
   }
-  console.log('dy1111',(nodeHeight+2)/2)
   const items = []
   if (includeIn) {
     items.push({
@@ -115,8 +112,6 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
   const start = typeof contentStart === 'number' ? contentStart : (NODE_DIMENSIONS.HEADER_HEIGHT + (NODE_DIMENSIONS.CONTENT_PADDING / 2))
   const end = typeof contentEnd === 'number' ? contentEnd : (start + ((Math.max(1, outCount) - 1) * NODE_DIMENSIONS.ROW_GAP) + Math.max(1, outCount) * NODE_DIMENSIONS.ROW_HEIGHT)
   const contentH = end - start
-
-  console.log('contentH11111',NODE_DIMENSIONS.HEADER_HEIGHT, start, end, contentH)
 
   // DocRef: 架构文档「关键代码片段/端口工厂：绝对定位右侧输出端口」
   ids.forEach((id, idx) => {
@@ -157,7 +152,6 @@ export function createHorizontalPortConfig(outCount = 1, options = {}) {
     groups,
     items
   }
-  console.log('portConfig1111', groups, items)
 
   // 修复：启用端口位置验证（与原版一致），附加验证结果
   if (enableValidation && contentLines && Array.isArray(contentLines)) {
