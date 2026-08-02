@@ -123,6 +123,9 @@
 
           <!-- 完整血缘(资源 → 要素) -->
           <a-tab-pane key="lineage" title="完整血缘">
+            <div style="margin-bottom: 16px;">
+              <ColumnLineageViewer />
+            </div>
             <a-card class="table-info" title="资源 → 要素 完整链路">
               <a-empty v-if="lineageGraph.nodes.length === 0" description="该表无血缘信息" />
               <div v-else class="lineage-graph">
@@ -383,6 +386,7 @@ import DetailHeader from '@/components/common/DetailHeader.vue'
 import { useAssetClassification } from '@/composables/useAssetClassification'
 import { LineageGraphStore, type LineageNodeType } from '@/mock/shared/lineage-graph'
 import CommentPanel from '@/components/common/CommentPanel.vue'
+import ColumnLineageViewer from '@/components/common/ColumnLineageViewer.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'

@@ -15,7 +15,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
     coverage: {
-      provider: 'v8',
+      // provider: 'v8',  // 需要 @vitest/coverage-v8 包(可选安装)
       reporter: ['text', 'json', 'html'],
       include: [
         'src/composables/**/*.ts',
@@ -24,13 +24,14 @@ export default defineConfig({
       exclude: [
         'src/mock/shared/index.ts',
         '**/*.d.ts'
-      ],
-      thresholds: {
-        statements: 70,
-        branches: 60,
-        functions: 70,
-        lines: 70
-      }
+      ]
+      // 阈值:需要在 @vitest/coverage-v8 安装后启用
+      // thresholds: {
+      //   statements: 70,
+      //   branches: 60,
+      //   functions: 70,
+      //   lines: 70
+      // }
     }
   },
   resolve: {

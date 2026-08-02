@@ -145,6 +145,13 @@
           <a-empty v-else description="请选择一张表查看字段打标情况" />
         </div>
       </a-tab-pane>
+
+      <!-- === 字段级血缘 === -->
+      <a-tab-pane key="column-lineage" title="字段级血缘">
+        <div class="tab-content">
+          <ColumnLineageViewer />
+        </div>
+      </a-tab-pane>
     </a-tabs>
 
     <!-- 弹窗：绑定业务实体 -->
@@ -239,6 +246,7 @@ import { MetadataStore } from '@/mock/shared/metadata-store'
 import { StandardStore } from '@/mock/shared/standard-store'
 import { useAssetClassification } from '@/composables/useAssetClassification'
 import ClassificationViewer from '@/components/common/ClassificationViewer.vue'
+import ColumnLineageViewer from '@/components/common/ColumnLineageViewer.vue'
 
 const router = useRouter()
 
