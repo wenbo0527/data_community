@@ -879,6 +879,17 @@ router.getRoutes().forEach((route) => {
 })
 
 
+// === P0 角色机制: 权限守卫 + 无权限页 ===
+import { unauthorizedRoute } from './guard'
+// 注册 unauthorized 路由(若已存在则跳过)
+const hasUnauthorized = router.getRoutes().some(r => r.name === 'unauthorized')
+if (!hasUnauthorized) {
+  router.addRoute(unauthorizedRoute)
+}
+import { setupPermissionGuard } from './guard'
+setupPermissionGuard(router)
+
+
 const _routeNameCount = {}
 router.getRoutes().forEach((r) => {
   if (r.name) {

@@ -1,10 +1,13 @@
 <template>
   <div class="unified-workbench">
-    <!-- 1. Hero 区(模块标题 + 全局搜索) -->
+    <!-- 1. Hero 区(模块标题 + 全局搜索 + 角色切换器) -->
     <section class="hero">
       <div class="hero-content">
-        <h1 class="hero-title">{{ moduleTitle }}</h1>
-        <p class="hero-greeting">{{ greeting }}</p>
+        <div class="hero-title-row">
+          <h1 class="hero-title">{{ moduleTitle }}</h1>
+          <RoleSwitcher />
+        </div>
+        <p class="hero-greeting">{{ rolePersonalizedGreeting }}</p>
       </div>
       <div class="hero-search">
         <a-input-search
@@ -23,24 +26,33 @@
       <GlobalGovernanceOverview />
     </section>
 
-    <!-- 2. 模块快捷作业 -->
+    <!-- 2. 角色个性化快捷作业(P0 角色机制) -->
     <section class="shortcuts">
-      <h2 class="section-title">{{ moduleTitle }} · 快捷作业</h2>
+      <div class="section-header">
+        <h2 class="section-title">{{ moduleTitle }} · 快捷作业</h2>
+        <a-tag :color="currentRoleDef.color">
+          {{ currentRoleDef.avatar }} {{ currentRoleDef.label }}· {{ currentRoleDef.department }}
+        </a-tag>
+        <span class="role-hint">已根据角色定制 · 共 {{ shortcuts.length }} 个</span>
+      </div>
       <a-row :gutter="16" class="shortcut-grid">
         <a-col
-          v-for="tool in shortcuts"
+          v-for="tool in personalizedShortcuts"
           :key="tool.key"
           :xs="12" :sm="12" :md="6" :lg="6" :xl="6"
           :xxl="6"
         >
-          <a-card class="shortcut-card" hoverable @click="onToolClick(tool)">
+          <a-card class="shortcut-card" hoverable @click="onPersonalizedClick(tool)">
             <div class="shortcut-card-inner">
-              <div class="shortcut-icon">
+              <div class="shortcut-icon" :style="{ color: currentRoleDef.color }">
                 <component :is="tool.icon" />
               </div>
               <div class="shortcut-text">
                 <div class="shortcut-title">{{ tool.title }}</div>
                 <div class="shortcut-desc">{{ tool.desc }}</div>
+                <a-tag :color="moduleColor(tool.module)" size="mini" class="module-tag">
+                  {{ moduleLabel(tool.module) }}
+                </a-tag>
               </div>
             </div>
           </a-card>
@@ -93,6 +105,39 @@
       </a-row>
     </section>
 
+    <!-- 4.5. 我的收藏(P0 角色机制 + 收藏系统) -->
+    <section class="favorites-section" v-if="topFavorites.length > 0">
+      <div class="section-header">
+        <h2 class="section-title">
+          <icon-star class="section-icon" />
+          我的收藏
+        </h2>
+        <a-link @click="onViewAllFavorites">
+          查看全部 <icon-right />
+        </a-link>
+      </div>
+      <a-row :gutter="16">
+        <a-col
+          v-for="fav in topFavorites"
+          :key="fav.id"
+          :xs="12" :sm="8" :md="6" :lg="6"
+        >
+          <a-card class="favorite-card" hoverable @click="onVisitFavorite(fav)">
+            <div class="favorite-inner">
+              <component :is="resourceIcon(fav.resourceType)" class="fav-icon" />
+              <div class="favorite-info">
+                <div class="favorite-title">{{ fav.resourceName }}</div>
+                <div class="favorite-meta">
+                  <a-tag size="mini">{{ resourceTypeName(fav.resourceType) }}</a-tag>
+                  <span class="visit-count">{{ fav.visitCount }} 次</span>
+                </div>
+              </div>
+            </div>
+          </a-card>
+        </a-col>
+      </a-row>
+    </section>
+
     <!-- 5. P0#5: 我的产出(跨模块工作产出聚合) -->
     <section class="artifacts">
       <h2 class="section-title">我的产出</h2>
@@ -131,9 +176,21 @@ import {
   IconApps
 } from '@arco-design/web-vue/es/icon'
 import { useCrossNav } from '@/composables/useCrossNav'
+import { usePersonalizedWorkbench } from '@/composables/usePersonalizedWorkbench'
 import GlobalSearchResult from './GlobalSearchResult.vue'
 import MyArtifactsPanel from './MyArtifactsPanel.vue'
 import GlobalGovernanceOverview from './GlobalGovernanceOverview.vue'
+import RoleSwitcher from './RoleSwitcher.vue'
+import { FavoriteStore } from '@/mock/shared/favorite-directory'
+import {
+  IconStar,
+  IconCode,
+  IconFile,
+  IconDashboard,
+  IconLink,
+  IconCommon,
+  IconRight
+} from '@arco-design/web-vue/es/icon'
 
 type Module = 'discovery' | 'management' | 'exploration'
 
@@ -157,6 +214,124 @@ const emit = defineEmits<{
 }>()
 
 const { go } = useCrossNav()
+
+// P0 角色机制: 个性化工作台
+const { shortcuts: roleShortcuts, currentRoleDef, onShortcutClick } = usePersonalizedWorkbench()
+
+// 当前用户(从 favorite store 推断 mock,实际应从 useUserStore 取)
+// 这里写死方便演示 — dev 模式下 RoleSwitcher 切换角色后,FavoriteStore 自动筛选
+const currentUserId = computed(() => {
+  // 从角色映射:数据工程师→张三,运营主管→王运营...
+  const roleMap: Record<string, string> = {
+    data_engineer: 'user-zhangsan',
+    data_admin: 'user-zhangsan',
+    risk_analyst: 'user-fengkong',
+    risk_manager: 'user-fengkong',
+    loan_manager: 'user-xindai',
+    operation_lead: 'user-yunying',
+    marketing_lead: 'user-yingxiao',
+    product_manager: 'user-chanpin',
+    finance_lead: 'user-caiwu',
+    admin: 'user-system'
+  }
+  return roleMap[currentRoleDef.value.role] || 'user-zhangsan'
+})
+
+// 我的收藏:按当前用户筛 + Top 4
+const topFavorites = computed(() => {
+  const list = FavoriteStore.byUser(currentUserId.value)
+  return [...list]
+    .sort((a, b) => b.visitCount - a.visitCount)
+    .slice(0, 4)
+})
+
+const resourceIcon = (type: string) => ({
+  table: IconStorage,
+  field: IconCode,
+  metric: IconBranch,
+  tag: IconTags,
+  audience: IconUserGroup,
+  dashboard: IconDashboard,
+  service: IconDesktop,
+  api: IconFile,
+  report: IconCalendar
+}[type] || IconStorage)
+
+const resourceTypeName = (type: string) => ({
+  table: '表', field: '字段', metric: '指标', tag: '标签',
+  audience: '人群', dashboard: '看板', service: '服务', api: 'API', report: '报表'
+}[type] || type)
+
+const onVisitFavorite = (fav: any) => {
+  FavoriteStore.visit(fav.id)
+  if (fav.resourcePath) {
+    go(fav.resourceKey as any || fav.resourcePath)
+  }
+}
+
+const onViewAllFavorites = () => {
+  go('management:favorites' as any)
+}
+
+const moduleColor = (mod: string) => ({
+  discovery: 'arcoblue',
+  management: 'purple',
+  exploration: 'green'
+}[mod] || 'gray')
+
+const moduleLabel = (mod: string) => ({
+  discovery: '发现',
+  management: '管理',
+  exploration: '探索'
+}[mod] || mod)
+
+// 角色个性化问候语
+const rolePersonalizedGreeting = computed(() => {
+  const def = currentRoleDef.value
+  return `欢迎 ${def.label} (${def.department}) — ${def.description}`
+})
+
+// 把 roleShortcuts 转成 component-friendly 格式
+const iconMap: Record<string, any> = {
+  'data-map': IconStorage,
+  'customer360': IconUserGroup,
+  'metrics-map': IconBranch,
+  'variable-map': IconDesktop,
+  'lineage': IconLink,
+  'service': IconDesktop,
+  'metadata-modeling': IconCode,
+  'data-standard': IconCommon,
+  'data-permission': IconSafe,
+  'business-concept': IconLink,
+  'asset-tags': IconStar,
+  'favorites': IconStar,
+  'tag-system': IconTags,
+  'event-center': IconCalendar,
+  'audience-system': IconUserGroup,
+  'workflows': IconCode,
+  'indicator-dashboard': IconDashboard
+}
+
+const personalizedShortcuts = computed(() =>
+  roleShortcuts.value.map(s => ({
+    key: s.key,
+    title: s.title,
+    desc: s.desc,
+    icon: iconMap[s.key] || IconStorage,
+    navKey: s.routeKey
+  }))
+)
+
+const onPersonalizedClick = (tool: any) => {
+  onShortcutClick({
+    key: tool.key,
+    title: tool.title,
+    desc: tool.desc,
+    iconName: '',
+    module: 'discovery',
+    routeKey: tool.navKey
+  })
+}
 
 // 搜索(L2 整合入口)
 const searchKeyword = ref('')
@@ -297,6 +472,84 @@ onMounted(loadRecentVisits)
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .section-icon {
+    color: #ff7d00;
+  }
+
+  .role-hint {
+    font-size: 12px;
+    color: #86909c;
+    margin-left: auto;
+  }
+}
+
+.shortcut-text .module-tag {
+  margin-top: 4px;
+}
+
+.favorites-section {
+  margin-bottom: 24px;
+
+  .favorite-card {
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .favorite-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .fav-icon {
+      font-size: 24px;
+      color: #ff7d00;
+      flex-shrink: 0;
+    }
+
+    .favorite-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .favorite-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1d2129;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 4px;
+    }
+
+    .favorite-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #86909c;
+    }
+  }
 }
 
 .hero {
