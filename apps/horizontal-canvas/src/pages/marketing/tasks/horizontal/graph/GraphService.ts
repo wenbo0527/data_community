@@ -134,7 +134,7 @@ export function createGraph(container: HTMLElement, options: Record<string, unkn
     mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'], factor: 1.15, maxScale: 3, minScale: 0.1 },
     history: { enabled: false },
     highlighting: { magnetAvailable: { name: 'stroke', args: { padding: 8, attrs: { stroke: '#3b82f6', 'stroke-width': 2, 'stroke-dasharray': '4,4' } } }, magnetAdsorbed: { name: 'stroke', args: { padding: 10, attrs: { stroke: '#2563eb', 'stroke-width': 2.5, 'stroke-dasharray': 'none' } } } },
-    ...(options as any)
+    ...options
   })
 }
 

@@ -2,7 +2,7 @@ import { TaskStorage } from '@/utils/taskStorage.js'
 import { getNodeLabel } from '@/utils/nodeTypes.js'
 import { createVueShapeNode } from '../createVueShapeNode.js'
 import { validateForPublishPure } from './validateForPublish.js'
-import type { X6GraphLike, X6Cell, X6NodeData, CanvasData, CanvasNodeRecord, ValidationResult, TaskMeta } from '@/types/graph.js'
+import type { X6GraphLike, X6Cell, X6NodeData, CanvasData, CanvasNodeRecord, CanvasConnectionRecord, ValidationResult, TaskMeta } from '@/types/graph.js'
 
 // 包装纯算法（内部供 validateForPublish 使用；同时供单测直接覆盖）
 function runPureValidation(canvasData: CanvasData): { messages: string[]; details: Array<{ kind: string; nodeIds: string[] }>; byId: Map<string, CanvasNodeRecord> } {
@@ -33,7 +33,7 @@ export function collectCanvasData(graph: GraphLike): CanvasData {
       return { id: e.id, source: null, target: null, sourcePortId: null, targetPortId: null }
     }
   })
-  return { nodes: nodes as CanvasNodeRecord[], connections: connections as any }
+  return { nodes: nodes as CanvasNodeRecord[], connections: connections as CanvasConnectionRecord[] }
 }
 
 /**
