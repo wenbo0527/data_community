@@ -250,7 +250,7 @@ import { getNodeLabel, TOUCH_COMBOS } from '@/utils/nodeTypes.js';
 // 水平连接校验：目标在源节点右侧
 import { createHorizontalPortConfig } from './utils/portConfigFactoryHorizontal.js';
 import { createVueShapeNode } from './createVueShapeNode.js';
-import { buildDisplayLines } from './createVueShapeNode.js';
+import { buildDisplayLines } from './nodeDisplayLines.js';
 import { useConfigDrawers } from '@/composables/canvas/useConfigDrawers.js';
 import { useCanvasHistory } from '@/composables/canvas/useCanvasHistory.js';
 import { CanvasController } from './services/CanvasController.js';
