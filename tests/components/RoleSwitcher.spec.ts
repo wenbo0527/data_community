@@ -22,9 +22,10 @@ describe('RoleSwitcher.vue', () => {
     expect(wrapper.text()).toContain('数据工程师')
   })
 
-  it('shows role department label', () => {
+  it('shows role emoji in trigger', () => {
     const wrapper = mountComponent(RoleSwitcher)
-    expect(wrapper.text()).toContain('数据团队')
+    // 🧑‍💻 data_engineer avatar (在 trigger 按钮里)
+    expect(wrapper.html()).toContain('🧑‍💻')
   })
 
   it('renders avatar with role emoji', () => {

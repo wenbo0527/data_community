@@ -13,7 +13,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'tests/**/*.spec.ts'],
     coverage: {
       // provider: 'v8',  // 需要 @vitest/coverage-v8 包(可选安装)
       reporter: ['text', 'json', 'html'],
