@@ -1,5 +1,21 @@
 <template>
   <div class="standards-page">
+    <!-- P1.2 接入: 标准统计卡 -->
+    <a-row :gutter="16" style="margin-bottom: 16px">
+      <a-col :span="6">
+        <a-statistic title="标准总数" :value="totalStandards" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="已发布" :value="publishedStandards" :value-style="{ color: '#00b42a' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="草稿" :value="draftStandards" :value-style="{ color: '#ff7d00' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="关联字段" :value="linkedFieldCount" :value-style="{ color: '#165dff' }" />
+      </a-col>
+    </a-row>
+
     <a-card class="general-card" title="数据标准管理">
       <a-row style="margin-bottom: 16px">
         <a-col :span="12">
@@ -96,11 +112,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
 import DataStandardImportModal from '@/components/modals/DataStandardImportModal.vue'
 import { StandardStore } from '@/mock/shared/standard-store'
+import { FieldLinkStore } from '@/mock/shared/lineage'
+
+// === 标准统计(P1 接入) ===
+const totalStandards = computed(() => StandardStore.list().length)
+const publishedStandards = computed(() =>
+  StandardStore.list().filter(s => s.status === 'published').length
+)
+const draftStandards = computed(() =>
+  StandardStore.list().filter(s => s.status !== 'published').length
+)
+const linkedFieldCount = computed(() => {
+  const codes = new Set(StandardStore.list().map(s => s.standardNo || s.code))
+  return FieldLinkStore.list().filter(l => codes.has(l.standardCode)).length
+})
 import { FieldLinkStore } from '@/mock/shared/lineage'
 
 const router = useRouter()

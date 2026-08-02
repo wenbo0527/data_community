@@ -5,6 +5,22 @@
       <p class="description">构建元数据模型，定义实体绑定、血缘关系与数据标准映射。</p>
     </div>
 
+    <!-- P1.2 接入: 元数据统计 -->
+    <a-row :gutter="16" style="margin-bottom: 16px">
+      <a-col :span="6">
+        <a-statistic title="已建模表" :value="modeledTableCount" :value-style="{ color: '#165dff' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="字段打标" :value="taggedFieldCount" :value-style="{ color: '#722ed1' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="平均合规率" :value="avgCompliance + '%'" :value-style="{ color: avgCompliance >= 80 ? '#00b42a' : '#ff7d00' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="平均分级覆盖率" :value="avgCoverage + '%'" :value-style="{ color: avgCoverage >= 80 ? '#00b42a' : '#ff7d00' }" />
+      </a-col>
+    </a-row>
+
     <a-tabs default-active-key="entity-binding" type="rounded">
       <!-- 实体绑定 -->
       <a-tab-pane key="entity-binding" title="实体绑定">
@@ -239,6 +255,24 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { FieldLinkStore } from '@/mock/shared/lineage'
+import { MetadataStore } from '@/mock/shared/metadata-store'
+
+// === P1.2 接入: 元数据统计 ===
+const modeledTableCount = computed(() => MetadataStore.getTables().length)
+const taggedFieldCount = computed(() => FieldLinkStore.list().length)
+const avgCompliance = computed(() => {
+  const tables = MetadataStore.getTables()
+  if (!tables.length) return 0
+  const total = tables.reduce((sum, t) => sum + FieldLinkStore.tableComplianceRate((t as any).tableName || (t as any).name), 0)
+  return Math.round(total / tables.length)
+})
+const avgCoverage = computed(() => {
+  const tables = MetadataStore.getTables()
+  if (!tables.length) return 0
+  const total = tables.reduce((sum, t) => sum + FieldLinkStore.tableClassifyCoverage((t as any).tableName || (t as any).name), 0)
+  return Math.round(total / tables.length)
+})
 import { Message } from '@arco-design/web-vue'
 import { IconLink, IconBranch, IconCheckCircle, IconMagic } from '@arco-design/web-vue/es/icon'
 import { BusinessConceptStore } from '@/mock/shared/business-concept-store'
