@@ -5,9 +5,10 @@
  *   1. 数据实体(50 客户 / 40 标签 / 20 人群 / 12 Owner / 15 业务域 / 10 工单 / 4 圈选规则)
  *   2. HTTP mock 端点(/api/customer-directory/* 等)
  *   3. 共享 Store
+ *   4. 打通层: lineage / standard-classify-matrix / classification-taxonomy
  *
  * 使用:
- *   import { CustomerDirectoryStore, TagDirectoryStore, ... } from '@/mock/shared'
+ *   import { CustomerDirectoryStore, TagDirectoryStore, FieldLinkStore } from '@/mock/shared'
  */
 
 // === 实体 ===
@@ -23,12 +24,21 @@ export { tagDirectoryMocks } from './tag-directory'
 export { audienceDirectoryMocks } from './audience-directory'
 export { workflowDirectoryMocks } from './workflow-directory'
 
-// === 既有 shared(元数据/标准/搜索) ===
+// === 既有 shared(元数据/标准/搜索/分类类型) ===
 export { MetadataStore } from './metadata-store'
 export { BusinessConceptStore } from './business-concept-store'
 export { StandardStore } from './standard-store'
 export { default as metadataApiMocks } from './metadata-api'
 export { default as searchApiMocks } from './search-api'
+export type { SensitivityLevel, Grade, BusinessBelonging, ClassifyField, ClassifyTable, ClassifySystem } from './classify-types'
+
+// === 打通层(五大共享)===
+export { FieldLinkStore, getEnhancedField, getEnhancedTable } from './lineage'
+export type { FieldLink, EnhancedFieldInfo } from './lineage'
+export { StandardClassifyMatrixStore, STANDARD_CLASSIFY_MATRIX } from './standard-classify-matrix'
+export type { StandardClassifyMatrix, DataTypeCategory } from './standard-classify-matrix'
+export { TaxonomyStore, TAXONOMY } from './classification-taxonomy'
+export type { TaxonomyNode } from './classification-taxonomy'
 
 /**
  * 汇总所有 shared mock 端点
@@ -60,5 +70,8 @@ export const MOCK_DATA_STATS = {
   crowdQueries: 4,
   applications: 10,
   owners: 12,
-  businessDomains: 15
+  businessDomains: 15,
+  fieldLinks: 10, // 打通层:字段关联
+  standardClassifyMatrix: 25, // 打通层:标准-分级矩阵
+  taxonomy: 50 // 打通层:统一分类树
 }
