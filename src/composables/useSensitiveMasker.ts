@@ -98,14 +98,14 @@ export function maskValue(rawValue: any, config: MaskingConfig | string): string
  * 根据敏感级别推断脱敏策略
  */
 export function autoMaskBySensitivity(sensitivity: string, value: any): string {
-  const strategyMap: Record<string, string> = {
-    L1: 'none',
-    L2: 'partial:mobile',
-    L3: 'partial:id_card',
-    L4: 'full'
+  const strategyMap: Record<string, string | MaskingConfig> = {
+    L1: { strategy: 'none' },
+    L2: { strategy: 'partial', prefixLen: 3, suffixLen: 4, replaceChar: '*' },
+    L3: { strategy: 'partial', prefixLen: 6, suffixLen: 4, replaceChar: '*' },
+    L4: { strategy: 'full', replaceChar: '*' }
   }
-  const strategy = strategyMap[sensitivity] || 'none'
-  return maskValue(value, strategy)
+  const strategy = strategyMap[sensitivity] || strategyMap['L1']
+  return maskValue(value, strategy as any)
 }
 
 /**

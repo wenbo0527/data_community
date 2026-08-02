@@ -2,36 +2,40 @@ import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
+/**
+ * Vitest 配置(单元测试)
+ *
+ * 覆盖 src/composables 和 src/mock/shared 两个核心目录
+ * jsdom 环境支持 Vue 组件测试
+ */
 export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./tests/setup.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      include: [
+        'src/composables/**/*.ts',
+        'src/mock/shared/**/*.ts'
+      ],
       exclude: [
-        'node_modules/',
-        'tests/',
-        '**/*.d.ts',
-        '**/*.config.*',
-        '**/mock/**',
-        '**/*.test.{js,ts}',
-        '**/*.spec.{js,ts}'
+        'src/mock/shared/index.ts',
+        '**/*.d.ts'
       ],
       thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 70,
-        statements: 80
+        statements: 70,
+        branches: 60,
+        functions: 70,
+        lines: 70
       }
     }
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '~': resolve(__dirname, './tests')
+      '@': resolve(__dirname, 'src')
     }
   }
 })

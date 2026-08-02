@@ -121,6 +121,86 @@
             </a-card>
           </a-tab-pane>
 
+          <!-- 完整血缘(资源 → 要素) -->
+          <a-tab-pane key="lineage" title="完整血缘">
+            <a-card class="table-info" title="资源 → 要素 完整链路">
+              <a-empty v-if="lineageGraph.nodes.length === 0" description="该表无血缘信息" />
+              <div v-else class="lineage-graph">
+                <div class="lineage-stats">
+                  <a-statistic title="节点数" :value="lineageGraph.nodes.length" />
+                  <a-statistic title="边数" :value="lineageGraph.edges.length" />
+                  <a-statistic
+                    title="业务要素"
+                    :value="lineageGraph.nodes.filter(n => n.type === 'business_element').length"
+                  />
+                  <a-statistic
+                    title="标准引用"
+                    :value="lineageGraph.nodes.filter(n => n.type === 'data_standard').length"
+                  />
+                </div>
+
+                <!-- 节点表格 -->
+                <a-table
+                  :data="lineageGraph.nodes"
+                  :pagination="false"
+                  size="small"
+                  row-key="id"
+                  style="margin-top: 16px;"
+                >
+                  <template #columns>
+                    <a-table-column title="类型" data-index="type" :width="120">
+                      <template #cell="{ record }">
+                        <a-tag :color="lineageNodeColor(record.type)" size="small">
+                          {{ lineageNodeTypeName(record.type) }}
+                        </a-tag>
+                      </template>
+                    </a-table-column>
+                    <a-table-column title="名称" data-index="name" />
+                    <a-table-column title="关联" :width="280">
+                      <template #cell="{ record }">
+                        <a-tag v-if="record.meta?.standardCode" color="cyan" size="small">
+                          {{ record.meta.standardCode }}
+                        </a-tag>
+                        <a-tag v-if="record.meta?.sensitivityLevel" :color="sensitivityColor(record.meta.sensitivityLevel)" size="small">
+                          {{ record.meta.sensitivityLevel }}
+                        </a-tag>
+                        <a-tag v-if="record.meta?.domainCode" color="purple" size="small">
+                          {{ record.meta.domainCode }}
+                        </a-tag>
+                      </template>
+                    </a-table-column>
+                  </template>
+                </a-table>
+
+                <!-- 字段链路概览(可读文本) -->
+                <a-divider />
+                <div class="chain-summary">
+                  <h4>字段血缘链路摘要</h4>
+                  <a-collapse :default-active-key="[]">
+                    <a-collapse-item
+                      v-for="field in sampleFieldsWithLineage"
+                      :key="field"
+                      :header="field"
+                    >
+                      <pre>{{ lineageChain(field) }}</pre>
+                    </a-collapse-item>
+                  </a-collapse>
+                </div>
+              </div>
+            </a-card>
+          </a-tab-pane>
+
+          <!-- 协作注释 -->
+          <a-tab-pane key="comments" title="协作注释">
+            <CommentPanel
+              v-if="tableData"
+              resource-type="table"
+              :resource-id="tableData.name"
+              user-id="user-zhangsan"
+              user-name="张三"
+            />
+          </a-tab-pane>
+
           <!-- 数据预览 -->
           <a-tab-pane key="preview" title="数据预览">
             <a-card class="table-info">
@@ -301,6 +381,8 @@ import { MetadataStore } from '@/mock/shared/metadata-store';
 const mockTables = MetadataStore.getTables();
 import DetailHeader from '@/components/common/DetailHeader.vue'
 import { useAssetClassification } from '@/composables/useAssetClassification'
+import { LineageGraphStore, type LineageNodeType } from '@/mock/shared/lineage-graph'
+import CommentPanel from '@/components/common/CommentPanel.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'
@@ -443,6 +525,47 @@ const sensitivityColor = (level: string) => {
     L4: 'red'
   }[level] || 'gray'
 }
+
+// === 完整血缘链路(资源 → 要素) ===
+const lineageGraph = computed(() => {
+  if (!tableData.value?.name) return { nodes: [], edges: [] }
+  return LineageGraphStore.build('data_table', tableData.value.name)
+})
+
+const lineageChain = (tableField: string) => {
+  const parts = tableField.split('.')
+  const t = parts[0] || ''
+  const f = parts[1] || ''
+  return LineageGraphStore.chainOf(t, f)
+}
+
+const lineageNodeColor = (type: string) => ({
+  business_domain: '#722ed1',
+  business_entity: '#9254de',
+  business_element: '#b37feb',
+  data_table: '#165dff',
+  data_field: '#40a9ff',
+  data_standard: '#13c2c2',
+  classification: '#fa541c'
+}[type as LineageNodeType] || '#86909c')
+
+const lineageNodeTypeName = (type: string) => ({
+  business_domain: '业务域',
+  business_entity: '业务实体',
+  business_element: '业务要素',
+  data_table: '数据表',
+  data_field: '数据字段',
+  data_standard: '数据标准',
+  classification: '分级分类'
+}[type as LineageNodeType] || type)
+
+const sampleFieldsWithLineage = computed(() => {
+  if (!tableData.value) return []
+  return lineageGraph.value.nodes
+    .filter((n: any) => n.type === 'data_field')
+    .map((n: any) => `${n.meta?.tableName || tableData.value.name}.${n.name}`)
+    .slice(0, 5)
+})
 
 const switchToRelationsTab = () => {
   activeMainTab.value = 'relations';

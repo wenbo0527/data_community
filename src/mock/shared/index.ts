@@ -40,6 +40,16 @@ export type { AssetComment, ResourceType, CommentType } from './comment-store'
 export { AssetTagStore, assetTagMocks } from './asset-tags'
 export type { AssetTagDefinition, AssetTagBinding, AssetResourceType, AssetTagCategory } from './asset-tags'
 
+// === 完整血缘链路(资源→要素) ===
+export {
+  buildLineageFromTable,
+  buildLineageFromElement,
+  buildLineage,
+  LineageGraphStore,
+  lineageGraphMocks
+} from './lineage-graph'
+export type { LineageNode, LineageEdge, LineageGraph, LineageNodeType } from './lineage-graph'
+
 // === 打通层(五大共享)===
 export { FieldLinkStore, getEnhancedField, getEnhancedTable } from './lineage'
 export type { FieldLink, EnhancedFieldInfo } from './lineage'
@@ -61,6 +71,7 @@ import { default as searchApiMocks } from './search-api'
 import { columnLineageMocks } from './column-lineage'
 import { commentMocks } from './comment-store'
 import { assetTagMocks } from './asset-tags'
+import { lineageGraphMocks } from './lineage-graph'
 
 export const SHARED_MOCK_ENDPOINTS = [
   ...customerDirectoryMocks,
@@ -71,7 +82,8 @@ export const SHARED_MOCK_ENDPOINTS = [
   ...searchApiMocks,
   ...columnLineageMocks,
   ...commentMocks,
-  ...assetTagMocks
+  ...assetTagMocks,
+  ...lineageGraphMocks
 ]
 
 /**
@@ -91,5 +103,6 @@ export const MOCK_DATA_STATS = {
   columnLineageEdges: 10,     // P1: 字段级血缘
   comments: 8,                // P1: 协作注释
   assetTagDefinitions: 16,    // P1: 资产标签定义
-  assetTagBindings: 16        // P1: 资产标签绑定
+  assetTagBindings: 16,       // P1: 资产标签绑定
+  lineageGraphEndpoints: 3     // 资源→要素完整链路
 }
