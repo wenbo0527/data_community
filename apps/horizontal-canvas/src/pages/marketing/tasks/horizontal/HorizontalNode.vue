@@ -46,7 +46,7 @@
 import { ref, computed, onMounted } from 'vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { getNodeLabel } from '@/utils/nodeTypes.js'
-import { buildDisplayLines } from './createVueShapeNode.js'
+import { buildDisplayLines } from './nodeDisplayLines.js'
 import { NODE_DIMENSIONS } from './styles/nodeStyles.js'
 import * as ArcoIcons from '@arco-design/web-vue/es/icon'
 
