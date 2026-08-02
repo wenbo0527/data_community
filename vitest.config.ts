@@ -3,35 +3,61 @@ import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
 /**
- * Vitest 配置(单元测试)
+ * Vitest config (unit + component tests for this branch only)
  *
- * 覆盖 src/composables 和 src/mock/shared 两个核心目录
- * jsdom 环境支持 Vue 组件测试
+ * include: 仅本分支新增的测试
+ * coverage: 仅本分支新增的核心模块(13 个 store + composable)
  */
 export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'tests/**/*.spec.ts'],
+    include: [
+      'src/mock/shared/__tests__/**/*.test.ts',
+      'src/types/__tests__/**/*.test.ts',
+      'src/composables/__tests__/**/*.test.ts',
+      'tests/components/**/*.spec.ts'
+    ],
+    exclude: [
+      'node_modules/**',
+      'dist/**',
+      '.{idea,git,cache,output,temp}/**'
+    ],
     coverage: {
-      // provider: 'v8',  // 需要 @vitest/coverage-v8 包(可选安装)
-      reporter: ['text', 'json', 'html'],
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'json', 'html'],
       include: [
-        'src/composables/**/*.ts',
-        'src/mock/shared/**/*.ts'
+        // 本分支新增的核心模块
+        'src/composables/useSensitiveMasker.ts',
+        'src/composables/useGlossary.ts',
+        'src/composables/useFieldPermission.ts',
+        'src/composables/useCrossNav.ts',
+        'src/composables/useColumnLineage.ts',
+        'src/composables/useAssetClassification.ts',
+        'src/composables/usePersonalizedWorkbench.ts',
+        'src/mock/shared/lineage.ts',
+        'src/mock/shared/column-lineage.ts',
+        'src/mock/shared/lineage-graph.ts',
+        'src/mock/shared/comment-store.ts',
+        'src/mock/shared/asset-tags.ts',
+        'src/mock/shared/favorite-directory.ts',
+        'src/mock/shared/search-extras.ts',
+        'src/mock/shared/standard-classify-matrix.ts',
+        'src/mock/shared/classification-taxonomy.ts',
+        'src/types/roles.ts'
       ],
       exclude: [
-        'src/mock/shared/index.ts',
-        '**/*.d.ts'
-      ]
-      // 阈值:需要在 @vitest/coverage-v8 安装后启用
-      // thresholds: {
-      //   statements: 70,
-      //   branches: 60,
-      //   functions: 70,
-      //   lines: 70
-      // }
+        '**/*.d.ts',
+        '**/*.test.ts',
+        '**/*.spec.ts'
+      ],
+      thresholds: {
+        statements: 85,
+        branches: 75,
+        functions: 65,
+        lines: 85
+      }
     }
   },
   resolve: {
