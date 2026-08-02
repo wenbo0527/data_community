@@ -32,6 +32,14 @@ export { default as metadataApiMocks } from './metadata-api'
 export { default as searchApiMocks } from './search-api'
 export type { SensitivityLevel, Grade, BusinessBelonging, ClassifyField, ClassifyTable, ClassifySystem } from './classify-types'
 
+// === P1 补齐: Column-lineage / Comments / AssetTags ===
+export { ColumnLineageStore, columnLineageMocks } from './column-lineage'
+export type { ColumnLineageEdge } from './column-lineage'
+export { CommentStore, commentMocks } from './comment-store'
+export type { AssetComment, ResourceType, CommentType } from './comment-store'
+export { AssetTagStore, assetTagMocks } from './asset-tags'
+export type { AssetTagDefinition, AssetTagBinding, AssetResourceType, AssetTagCategory } from './asset-tags'
+
 // === 打通层(五大共享)===
 export { FieldLinkStore, getEnhancedField, getEnhancedTable } from './lineage'
 export type { FieldLink, EnhancedFieldInfo } from './lineage'
@@ -50,6 +58,9 @@ import { audienceDirectoryMocks } from './audience-directory'
 import { workflowDirectoryMocks } from './workflow-directory'
 import { default as metadataApiMocks } from './metadata-api'
 import { default as searchApiMocks } from './search-api'
+import { columnLineageMocks } from './column-lineage'
+import { commentMocks } from './comment-store'
+import { assetTagMocks } from './asset-tags'
 
 export const SHARED_MOCK_ENDPOINTS = [
   ...customerDirectoryMocks,
@@ -57,7 +68,10 @@ export const SHARED_MOCK_ENDPOINTS = [
   ...audienceDirectoryMocks,
   ...workflowDirectoryMocks,
   ...metadataApiMocks,
-  ...searchApiMocks
+  ...searchApiMocks,
+  ...columnLineageMocks,
+  ...commentMocks,
+  ...assetTagMocks
 ]
 
 /**
@@ -71,7 +85,11 @@ export const MOCK_DATA_STATS = {
   applications: 10,
   owners: 12,
   businessDomains: 15,
-  fieldLinks: 10, // 打通层:字段关联
+  fieldLinks: 10,             // 打通层:字段关联
   standardClassifyMatrix: 25, // 打通层:标准-分级矩阵
-  taxonomy: 50 // 打通层:统一分类树
+  taxonomy: 50,               // 打通层:统一分类树
+  columnLineageEdges: 10,     // P1: 字段级血缘
+  comments: 8,                // P1: 协作注释
+  assetTagDefinitions: 16,    // P1: 资产标签定义
+  assetTagBindings: 16        // P1: 资产标签绑定
 }
