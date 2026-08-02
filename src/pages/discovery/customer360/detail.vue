@@ -39,6 +39,29 @@
         </div>
       </div>
 
+      <!-- 打通层: 客户字段可见性(基于敏感级别三维权限) -->
+      <div class="field-permission-card">
+        <div class="card-header">
+          <icon-safe class="header-icon" />
+          <span class="header-title">字段可见性</span>
+          <a-tag size="small" color="arcoblue">基于敏感级别 / L1-L4</a-tag>
+        </div>
+        <div class="field-tags">
+          <a-tag
+            v-for="field in customerFields"
+            :key="field.name"
+            :color="field.canSee ? 'gray' : 'red'"
+            size="small"
+            class="field-tag"
+          >
+            <icon-eye v-if="field.canSee" />
+            <icon-eye-invisible v-else />
+            {{ field.name }}
+            <span class="field-sensitivity">{{ field.sensitivity }}</span>
+          </a-tag>
+        </div>
+      </div>
+
       <!-- 快捷操作栏 -->
       <div class="quick-actions">
         <HistoryQueryButton :user-id="userId" />
@@ -165,6 +188,7 @@ import CreditList from './components/CreditList.vue'
 import LoanList from './components/LoanList.vue'
 import AdjustmentHistory from './components/AdjustmentHistory.vue'
 import CollectionRecords from './components/CollectionRecords.vue'
+import { useFieldPermission } from '@/composables/useFieldPermission'
 import CreditReports from './components/CreditRecords.vue'
 import HistoryQueryButton from './components/HistoryQueryButton.vue'
 import UserProfile from './components/UserProfile.vue'
@@ -175,6 +199,19 @@ const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
 const userInfo = ref(null)
+
+// === 打通层: 客户字段可见性(基于敏感级别) ===
+const { can } = useFieldPermission('customer360')
+const customerFields = computed(() => [
+  { name: '用户ID', sensitivity: 'L1', canSee: can('user_id', 'public').visible },
+  { name: '姓名', sensitivity: 'L2', canSee: can('user_name', 'internal').visible },
+  { name: '身份证号', sensitivity: 'L3', canSee: can('id_card', 'confidential').visible },
+  { name: '手机号', sensitivity: 'L3', canSee: can('mobile', 'confidential').visible },
+  { name: '征信报告', sensitivity: 'L4', canSee: can('credit_report', 'restricted').visible },
+  { name: '授信额度', sensitivity: 'L2', canSee: can('credit_amount', 'internal').visible },
+  { name: '账户余额', sensitivity: 'L2', canSee: can('balance', 'internal').visible },
+  { name: '逾期天数', sensitivity: 'L3', canSee: can('overdue_days', 'confidential').visible }
+])
 const loading = ref(true)
 const showDebugPanel = ref(false)
 // Tab切换控制
@@ -596,6 +633,52 @@ onUnmounted(() => {
   align-items: center;
   font-size: 14px;
   color: #4e5969;
+}
+
+.field-permission-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-left: 16px;
+  flex: 0 0 auto;
+  min-width: 360px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    .header-icon {
+      color: #722ed1;
+      font-size: 16px;
+    }
+
+    .header-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+  }
+
+  .field-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .field-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+
+      .field-sensitivity {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-left: 2px;
+      }
+    }
+  }
 }
 
 .key-metrics-card {

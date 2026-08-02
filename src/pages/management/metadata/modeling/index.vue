@@ -112,6 +112,39 @@
           </a-table>
         </div>
       </a-tab-pane>
+
+      <!-- === 打通层: 字段打标 tab === -->
+      <a-tab-pane key="field-tagging" title="字段打标">
+        <div class="tab-content">
+          <div class="toolbar">
+            <a-select
+              v-model="selectedTable"
+              placeholder="选择表查看字段打标"
+              style="width: 280px;"
+              allow-search
+              @change="onTableChange"
+            >
+              <a-option
+                v-for="t in availableTables"
+                :key="t"
+                :value="t"
+              >
+                {{ t }}
+              </a-option>
+            </a-select>
+            <a-button
+              type="primary"
+              style="margin-left: 16px;"
+              @click="showAutoTagSuggestion"
+            >
+              <template #icon><IconMagic /></template>
+              一键自动打标
+            </a-button>
+          </div>
+          <ClassificationViewer v-if="selectedTable" :table-name="selectedTable" />
+          <a-empty v-else description="请选择一张表查看字段打标情况" />
+        </div>
+      </a-tab-pane>
     </a-tabs>
 
     <!-- 弹窗：绑定业务实体 -->
@@ -200,10 +233,12 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconLink, IconBranch, IconCheckCircle } from '@arco-design/web-vue/es/icon'
+import { IconLink, IconBranch, IconCheckCircle, IconMagic } from '@arco-design/web-vue/es/icon'
 import { BusinessConceptStore } from '@/mock/shared/business-concept-store'
 import { MetadataStore } from '@/mock/shared/metadata-store'
 import { StandardStore } from '@/mock/shared/standard-store'
+import { useAssetClassification } from '@/composables/useAssetClassification'
+import ClassificationViewer from '@/components/common/ClassificationViewer.vue'
 
 const router = useRouter()
 
@@ -224,6 +259,35 @@ const entityBindingData = ref([
 ])
 
 const bindModalVisible = ref(false)
+
+// === 打通层: 字段打标 ===
+const { suggestAndTag } = useAssetClassification()
+const selectedTable = ref('')
+const availableTables = computed(() => MetadataStore.getTables().map(t => t.tableName))
+const onTableChange = (v) => { selectedTable.value = v }
+const showAutoTagSuggestion = async () => {
+  if (!selectedTable.value) {
+    Message.warning('请先选择一张表')
+    return
+  }
+  const table = MetadataStore.getTables().find(t => t.tableName === selectedTable.value)
+  if (!table?.fields) {
+    Message.warning('该表无字段')
+    return
+  }
+  let taggedCount = 0
+  for (const field of table.fields) {
+    suggestAndTag({
+      tableName: selectedTable.value,
+      fieldName: field.name,
+      fieldType: field.type,
+      businessBelonging: '零售',
+      linkBy: 'user-zhangsan'
+    })
+    taggedCount++
+  }
+  Message.success(`已为 ${taggedCount} 个字段生成打标建议,请在 ClassificationViewer 查看`)
+}
 const bindForm = reactive({
   tableName: '',
   database: '',

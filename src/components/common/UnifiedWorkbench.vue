@@ -18,6 +18,11 @@
       </div>
     </section>
 
+    <!-- 1.5. 数据治理全景(打通数据标准/分级/资源/资产/要素) -->
+    <section class="governance">
+      <GlobalGovernanceOverview />
+    </section>
+
     <!-- 2. 模块快捷作业 -->
     <section class="shortcuts">
       <h2 class="section-title">{{ moduleTitle }} · 快捷作业</h2>
@@ -128,6 +133,7 @@ import {
 import { useCrossNav } from '@/composables/useCrossNav'
 import GlobalSearchResult from './GlobalSearchResult.vue'
 import MyArtifactsPanel from './MyArtifactsPanel.vue'
+import GlobalGovernanceOverview from './GlobalGovernanceOverview.vue'
 
 type Module = 'discovery' | 'management' | 'exploration'
 
@@ -448,5 +454,9 @@ onMounted(loadRecentVisits)
 
 .artifacts {
   margin-top: 24px;
+}
+
+.governance {
+  margin-bottom: 24px;
 }
 </style>

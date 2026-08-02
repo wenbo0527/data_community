@@ -39,27 +39,83 @@
           <!-- 表结构 -->
           <a-tab-pane key="structure" title="表结构">
             <a-card class="table-info" title="字段信息">
+              <!-- 打通层: 合规概览 -->
+              <div v-if="classificationOverview" class="classification-overview">
+                <div class="overview-item">
+                  <span class="overview-label">标准合规率:</span>
+                  <a-progress
+                    :percent="classificationOverview.complianceRate / 100"
+                    :stroke-color="classificationOverview.complianceRate >= 80 ? '#00b42a' : '#ff7d00'"
+                    size="small"
+                    style="flex: 1; min-width: 120px;"
+                  />
+                  <span class="overview-value">{{ classificationOverview.complianceRate }}%</span>
+                </div>
+                <div class="overview-item">
+                  <span class="overview-label">分级覆盖率:</span>
+                  <a-progress
+                    :percent="classificationOverview.classifyCoverage / 100"
+                    :stroke-color="classificationOverview.classifyCoverage >= 80 ? '#00b42a' : '#ff7d00'"
+                    size="small"
+                    style="flex: 1; min-width: 120px;"
+                  />
+                  <span class="overview-value">{{ classificationOverview.classifyCoverage }}%</span>
+                </div>
+              </div>
               <a-table
-                :data="tableData?.fields || []"
+                :data="enhancedFields"
                 :pagination="false"
                 :scroll="{ x: '100%' }"
                 :bordered="false"
                 class="table-borderless table-compact"
               >
                 <template #columns>
-                  <a-table-column title="字段名" data-index="name">
+                  <a-table-column title="字段名" data-index="fieldName">
                     <template #cell="{ record }">
-                      <span 
-                        :class="{ 'relation-field': isRelationField(record.name) }"
-                        @click="isRelationField(record.name) ? switchToRelationsTab() : null"
-                        :style="{ cursor: isRelationField(record.name) ? 'pointer' : 'default' }"
+                      <span
+                        :class="{ 'relation-field': isRelationField(record.fieldName) }"
+                        @click="isRelationField(record.fieldName) ? switchToRelationsTab() : null"
+                        :style="{ cursor: isRelationField(record.fieldName) ? 'pointer' : 'default' }"
                       >
-                        {{ record.name }}
+                        {{ record.fieldName }}
                       </span>
                     </template>
                   </a-table-column>
-                  <a-table-column title="类型" data-index="type" />
-                  <a-table-column title="描述" data-index="description" />
+                  <a-table-column title="类型" data-index="fieldType" :width="100">
+                    <template #cell="{ record }">
+                      <a-tag size="small">{{ record.fieldType }}</a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="描述" data-index="fieldComment" :ellipsis="true" />
+                  <a-table-column title="数据标准" :width="200">
+                    <template #cell="{ record }">
+                      <a-tooltip v-if="record.standard" :content="record.standard.description">
+                        <a-tag color="arcoblue" size="small">
+                          {{ record.standard.code }} · {{ record.standard.chineseName }}
+                        </a-tag>
+                      </a-tooltip>
+                      <a-tag v-else size="small" color="gray">未关联</a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="敏感级别" :width="120">
+                    <template #cell="{ record }">
+                      <a-tag
+                        v-if="record.sensitivity"
+                        :color="sensitivityColor(record.sensitivity.level)"
+                        size="small"
+                      >
+                        {{ record.sensitivity.level }} · {{ record.sensitivity.grade }}
+                      </a-tag>
+                      <a-tag v-else size="small" color="gray">未分级</a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="业务要素" :width="160">
+                    <template #cell="{ record }">
+                      <a-tag v-if="record.businessElement" color="purple" size="small">
+                        {{ record.businessElement.name }}
+                      </a-tag>
+                    </template>
+                  </a-table-column>
                 </template>
               </a-table>
             </a-card>
@@ -244,6 +300,7 @@ import { Modal } from '@arco-design/web-vue'
 import { MetadataStore } from '@/mock/shared/metadata-store';
 const mockTables = MetadataStore.getTables();
 import DetailHeader from '@/components/common/DetailHeader.vue'
+import { useAssetClassification } from '@/composables/useAssetClassification'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'
@@ -369,6 +426,23 @@ const activeModalTab = ref('structure') // 控制关联弹窗内的标签页
 const activeMainTab = ref('structure') // 控制主标签页
 const relatedTables = ref<TableItem[]>([])
 const currentTableName = ref<string>('')
+
+// === 打通层: 字段全景视图 + 合规概览 ===
+const { tableOverview, tableView } = useAssetClassification()
+const classificationOverview = computed(() =>
+  tableData.value ? tableOverview(tableData.value.name) : null
+)
+const enhancedFields = computed(() =>
+  tableData.value ? tableView(tableData.value.name) : []
+)
+const sensitivityColor = (level: string) => {
+  return {
+    L1: 'gray',
+    L2: 'arcoblue',
+    L3: 'orange',
+    L4: 'red'
+  }[level] || 'gray'
+}
 
 const switchToRelationsTab = () => {
   activeMainTab.value = 'relations';
@@ -1291,6 +1365,37 @@ onMounted(() => {
 <style scoped>
 .table-detail-page {
   padding: 24px;
+}
+
+.classification-overview {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #f7f8fa;
+  border-radius: 6px;
+
+  .overview-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .overview-label {
+    font-size: 13px;
+    color: #4e5969;
+    white-space: nowrap;
+    min-width: 90px;
+  }
+
+  .overview-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2129;
+    min-width: 45px;
+    text-align: right;
+  }
 }
 
 .page-header {

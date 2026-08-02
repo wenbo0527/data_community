@@ -48,6 +48,19 @@
             </template>
           </a-table-column>
           <a-table-column title="归口管理部门" data-index="department" width="150" />
+          <a-table-column title="被引用字段数" width="130">
+            <template #cell="{ record }">
+              <a-tooltip
+                v-if="getFieldLinkCount(record.standardNo) > 0"
+                :content="`查看引用此标准的字段列表`"
+              >
+                <a-tag color="arcoblue" size="small">
+                  {{ getFieldLinkCount(record.standardNo) }} 个字段
+                </a-tag>
+              </a-tooltip>
+              <a-tag v-else size="small" color="gray">未引用</a-tag>
+            </template>
+          </a-table-column>
           <a-table-column title="状态" data-index="status" width="100">
             <template #cell="{ record }">
               <a-tag :color="record.status === 'published' ? 'green' : 'orange'">
@@ -88,8 +101,14 @@ import { Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
 import DataStandardImportModal from '@/components/modals/DataStandardImportModal.vue'
 import { StandardStore } from '@/mock/shared/standard-store'
+import { FieldLinkStore } from '@/mock/shared/lineage'
 
 const router = useRouter()
+
+// === 打通层: 标准被引用字段数 ===
+const getFieldLinkCount = (standardNo) => {
+  return FieldLinkStore.byStandard(standardNo).length
+}
 const searchKey = ref('')
 const importVisible = ref(false)
 const pagination = reactive({
