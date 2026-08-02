@@ -194,8 +194,20 @@ export default [{
           meta: { title: '采集任务详情' },
           component: () => import('../pages/management/asset-management/basic-management/metadata-collection/index.vue'),
           props: true
+        },
+        {
+          path: 'asset-tags',
+          name: 'management-asset-tags',
+          meta: { title: '资产标签' },
+          component: () => import('../pages/management/asset-management/asset-tags/index.vue')
         }
       ]
+    },
+    {
+      path: 'favorites',
+      name: 'management-favorites',
+      component: () => import('../pages/management/favorites/index.vue'),
+      meta: { title: '我的收藏' }
     },
     {
       path: 'permission',

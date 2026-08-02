@@ -2,10 +2,10 @@
  * 共享 Mock 资产统一入口
  *
  * 所有跨模块可复用的 mock 数据集中在这里,提供:
- *   1. 数据实体(50 客户 / 40 标签 / 20 人群 / 12 Owner / 15 业务域 / 10 工单 / 4 圈选规则)
- *   2. HTTP mock 端点(/api/customer-directory/* 等)
- *   3. 共享 Store
- *   4. 打通层: lineage / standard-classify-matrix / classification-taxonomy
+ *   1. 数据实体:客户/标签/人群/工单/圈选/Owner/业务域/收藏/搜索建议
+ *   2. HTTP mock 端点:统一管理 26 个端点
+ *   3. 共享 Store:CRUD + 关联查询
+ *   4. 打通层:lineage / standard-classify-matrix / classification-taxonomy
  *
  * 使用:
  *   import { CustomerDirectoryStore, TagDirectoryStore, FieldLinkStore } from '@/mock/shared'
@@ -17,12 +17,15 @@ export { TAGS, TAG_GROUPS, TagDirectoryStore } from './tag-directory'
 export { AUDIENCES, AudienceDirectoryStore } from './audience-directory'
 export { CROWD_QUERIES, APPLICATIONS, BUSINESS_DOMAINS, CrowdQueryStore, ApplicationStore, BusinessDomainStore } from './workflow-directory'
 export { OWNER_DIRECTORY, OwnerDirectoryStore } from './owner-directory'
+export { FAVORITES, FavoriteStore } from './favorite-directory'
 
 // === HTTP Mock 端点(给 vite-plugin-mock 用) ===
 export { customerDirectoryMocks } from './customer-directory'
 export { tagDirectoryMocks } from './tag-directory'
 export { audienceDirectoryMocks } from './audience-directory'
 export { workflowDirectoryMocks } from './workflow-directory'
+export { favoriteMocks } from './favorite-directory'
+export { searchExtrasMocks } from './search-extras'
 
 // === 既有 shared(元数据/标准/搜索/分类类型) ===
 export { MetadataStore } from './metadata-store'
@@ -58,6 +61,14 @@ export type { StandardClassifyMatrix, DataTypeCategory } from './standard-classi
 export { TaxonomyStore, TAXONOMY } from './classification-taxonomy'
 export type { TaxonomyNode } from './classification-taxonomy'
 
+// === 搜索补全 ===
+export {
+  HOT_SEARCHES,
+  SEARCH_SUGGESTIONS,
+  SYNONYMS,
+  SearchExtrasStore
+} from './search-extras'
+
 /**
  * 汇总所有 shared mock 端点
  * 用于 vite-plugin-mock 集中注册
@@ -66,6 +77,8 @@ import { customerDirectoryMocks } from './customer-directory'
 import { tagDirectoryMocks } from './tag-directory'
 import { audienceDirectoryMocks } from './audience-directory'
 import { workflowDirectoryMocks } from './workflow-directory'
+import { favoriteMocks } from './favorite-directory'
+import { searchExtrasMocks } from './search-extras'
 import { default as metadataApiMocks } from './metadata-api'
 import { default as searchApiMocks } from './search-api'
 import { columnLineageMocks } from './column-lineage'
@@ -78,6 +91,8 @@ export const SHARED_MOCK_ENDPOINTS = [
   ...tagDirectoryMocks,
   ...audienceDirectoryMocks,
   ...workflowDirectoryMocks,
+  ...favoriteMocks,
+  ...searchExtrasMocks,
   ...metadataApiMocks,
   ...searchApiMocks,
   ...columnLineageMocks,
@@ -97,12 +112,16 @@ export const MOCK_DATA_STATS = {
   applications: 10,
   owners: 12,
   businessDomains: 15,
-  fieldLinks: 10,             // 打通层:字段关联
-  standardClassifyMatrix: 25, // 打通层:标准-分级矩阵
-  taxonomy: 50,               // 打通层:统一分类树
-  columnLineageEdges: 10,     // P1: 字段级血缘
-  comments: 8,                // P1: 协作注释
-  assetTagDefinitions: 16,    // P1: 资产标签定义
-  assetTagBindings: 16,       // P1: 资产标签绑定
-  lineageGraphEndpoints: 3     // 资源→要素完整链路
+  favorites: 20,               // 收藏(新增)
+  hotSearches: 10,            // 热门搜索(新增)
+  searchSuggestions: 27,      // 搜索建议(新增)
+  synonyms: 19,               // 同义词(新增)
+  fieldLinks: 10,
+  standardClassifyMatrix: 25,
+  taxonomy: 50,
+  columnLineageEdges: 10,
+  comments: 8,
+  assetTagDefinitions: 16,
+  assetTagBindings: 16,
+  lineageGraphEndpoints: 3
 }
