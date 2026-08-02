@@ -210,6 +210,12 @@ export default [{
       meta: { title: '我的收藏' }
     },
     {
+      path: 'permission/data-permission/apply',
+      name: 'management-data-permission-apply',
+      component: () => import('../pages/management/permission/data-permission/apply.vue'),
+      meta: { title: '权限申请' }
+    },
+    {
       path: 'permission',
       name: 'management-permission',
       component: () => import('../pages/management/permission/index.vue'),

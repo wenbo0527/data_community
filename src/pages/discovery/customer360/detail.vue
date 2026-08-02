@@ -37,6 +37,18 @@
           <div class="metric-label">总在贷余额</div>
           <div class="metric-value">¥ {{ (userInfo?.usedCredit || 0).toLocaleString() }}</div>
         </div>
+
+        <!-- P1 接入: 收藏按钮 -->
+        <div class="metric-item favorite-item">
+          <div class="metric-label">收藏客户</div>
+          <FavoriteButton
+            resource-type="audience"
+            :resource-id="userInfo?.userId || 'unknown'"
+            :resource-name="userInfo?.name || '未知客户'"
+            user-id="user-zhangsan"
+            user-name="张三"
+          />
+        </div>
       </div>
 
       <!-- 打通层: 客户字段可见性(基于敏感级别三维权限) -->
@@ -182,6 +194,7 @@ import { IconUserGroup, IconSafe, IconStorage, IconStar, IconRight } from '@arco
 import { fetchUserInfo } from '../../../mock/customer360'
 import { formatAmount, formatPercent } from '../../../utils/formatUtils'
 import { useProductStore } from '../../../stores/productStore'
+import FavoriteButton from '@/components/common/FavoriteButton.vue'
 import BasicInfo from './components/BasicInfo.vue'
 import UserOwnedProducts from './components/UserOwnedProducts.vue'
 import CreditList from './components/CreditList.vue'

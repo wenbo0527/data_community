@@ -59,6 +59,8 @@ import {
   IconCalendar
 } from '@arco-design/web-vue/es/icon'
 import { useCrossNav } from '@/composables/useCrossNav'
+import { useRoleStore } from '@/stores/role'
+import { computed } from 'vue'
 
 interface Artifact {
   id: string
@@ -67,6 +69,7 @@ interface Artifact {
   status?: 'running' | 'success' | 'failed' | 'draft'
   time: string
   routeKey: string
+  ownerId: string  // P1: 归属用户
 }
 
 const props = defineProps<{
@@ -81,19 +84,64 @@ const { go } = useCrossNav()
 const activeTab = ref('workflow')
 const showAll = ref(false)
 
-// 默认 mock 数据(可在 props 覆盖)
+// P1.3: 当前用户(从 role store 推断)
+const roleStore = useRoleStore()
+
+const roleToUserId: Record<string, string> = {
+  data_engineer: 'user-zhangsan',
+  data_admin: 'user-zhangsan',
+  risk_analyst: 'user-fengkong',
+  risk_manager: 'user-fengkong',
+  loan_manager: 'user-xindai',
+  operation_lead: 'user-yunying',
+  marketing_lead: 'user-yingxiao',
+  product_manager: 'user-chanpin',
+  finance_lead: 'user-caiwu',
+  admin: 'user-system'
+}
+
+const currentUserId = computed(() => roleToUserId[roleStore.currentRole] || 'user-zhangsan')
+
+// P1.3: 按用户的 mock 产出
 const mockArtifacts: Artifact[] = [
-  { id: '1', type: 'workflow', title: 'DAU 计算工作流', status: 'success', time: '今天 14:30', routeKey: 'exploration:workflows' },
-  { id: '2', type: 'workflow', title: '授信转化漏斗', status: 'running', time: '昨天 09:15', routeKey: 'exploration:workflows' },
-  { id: '3', type: 'dashboard', title: 'CEO 经营看板', status: 'success', time: '2 天前', routeKey: 'exploration:indicator-dashboard' },
-  { id: '4', type: 'audience', title: '高价值活跃用户', status: 'success', time: '今天 10:00', routeKey: 'exploration:audience-management' },
-  { id: '5', type: 'audience', title: '新注册用户', status: 'draft', time: '昨天 16:20', routeKey: 'exploration:audience-management' },
-  { id: '6', type: 'tag', title: '信用良好用户', status: 'success', time: '3 天前', routeKey: 'exploration:tag-system' },
-  { id: '7', type: 'report', title: 'Q1 销售复盘', status: 'success', time: '上周', routeKey: 'exploration:indicator-dashboard' },
-  { id: '8', type: 'model', title: '欺诈检测模型 v2', status: 'failed', time: '昨天 22:00', routeKey: 'exploration:workflows' }
+  // 张三(数据工程师/数据治理)
+  { id: 'a1', type: 'workflow', title: 'DAU 计算工作流', status: 'success', time: '今天 14:30', routeKey: 'exploration:workflows', ownerId: 'user-zhangsan' },
+  { id: 'a2', type: 'tag', title: '高价值潜力标签 v2', status: 'success', time: '昨天 09:15', routeKey: 'exploration:tag-system', ownerId: 'user-zhangsan' },
+  { id: 'a3', type: 'dashboard', title: '数据资产总览看板', status: 'success', time: '2 天前', routeKey: 'exploration:indicator-dashboard', ownerId: 'user-zhangsan' },
+  { id: 'a4', type: 'audience', title: '数据质量监控人群', status: 'draft', time: '今天 10:00', routeKey: 'exploration:audience-management', ownerId: 'user-zhangsan' },
+
+  // 风控值班
+  { id: 'b1', type: 'audience', title: '严重逾期催收名单', status: 'success', time: '今天 11:20', routeKey: 'exploration:audience-management', ownerId: 'user-fengkong' },
+  { id: 'b2', type: 'model', title: '欺诈检测模型 v2', status: 'failed', time: '昨天 22:00', routeKey: 'exploration:workflows', ownerId: 'user-fengkong' },
+  { id: 'b3', type: 'dashboard', title: '风控监控看板', status: 'running', time: '今天 09:00', routeKey: 'exploration:indicator-dashboard', ownerId: 'user-fengkong' },
+  { id: 'b4', type: 'report', title: '周催收报表', status: 'draft', time: '2 天前', routeKey: 'exploration:indicator-dashboard', ownerId: 'user-fengkong' },
+
+  // 信贷经理
+  { id: 'c1', type: 'workflow', title: '授信转化漏斗', status: 'running', time: '昨天 09:15', routeKey: 'exploration:workflows', ownerId: 'user-xindai' },
+  { id: 'c2', type: 'dashboard', title: '贷款额度看板', status: 'success', time: '3 天前', routeKey: 'exploration:indicator-dashboard', ownerId: 'user-xindai' },
+  { id: 'c3', type: 'audience', title: '高意向贷款人群', status: 'success', time: '今天 14:00', routeKey: 'exploration:audience-management', ownerId: 'user-xindai' },
+
+  // 王运营
+  { id: 'd1', type: 'audience', title: '高价值活跃用户', status: 'success', time: '今天 10:00', routeKey: 'exploration:audience-management', ownerId: 'user-yunying' },
+  { id: 'd2', type: 'audience', title: '新注册用户', status: 'draft', time: '昨天 16:20', routeKey: 'exploration:audience-management', ownerId: 'user-yunying' },
+  { id: 'd3', type: 'report', title: '本周运营复盘', status: 'success', time: '今天 18:00', routeKey: 'exploration:indicator-dashboard', ownerId: 'user-yunying' },
+  { id: 'd4', type: 'tag', title: '近期活跃用户', status: 'success', time: '昨天 09:00', routeKey: 'exploration:tag-system', ownerId: 'user-yunying' },
+
+  // 营销经理
+  { id: 'e1', type: 'audience', title: '营销潜客人群', status: 'success', time: '今天 15:00', routeKey: 'exploration:audience-management', ownerId: 'user-yingxiao' },
+  { id: 'e2', type: 'dashboard', title: '营销活动效果', status: 'success', time: '今天 11:00', routeKey: 'exploration:indicator-dashboard', ownerId: 'user-yingxiao' },
+
+  // 产品经理
+  { id: 'f1', type: 'audience', title: '新功能体验用户', status: 'draft', time: '昨天 14:00', routeKey: 'exploration:audience-management', ownerId: 'user-chanpin' },
+
+  // 财务主管
+  { id: 'g1', type: 'report', title: 'Q1 销售复盘', status: 'success', time: '上周', routeKey: 'exploration:indicator-dashboard', ownerId: 'user-caiwu' }
 ]
 
-const artifacts = computed(() => props.artifacts || mockArtifacts)
+// P1.3: 按当前用户过滤(核心改动)
+const artifacts = computed(() =>
+  props.artifacts || mockArtifacts.filter(a => a.ownerId === currentUserId.value)
+)
 
 const tabs = [
   { key: 'workflow', title: '工作流' },

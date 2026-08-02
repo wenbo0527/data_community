@@ -57,6 +57,7 @@ export const ROUTE_TABLE: Record<string, string> = {
   'management:service': '/management/service',
   'management:metadata-modeling': '/management/metadata/modeling',
   'management:data-permission': '/management/permission/data-permission',
+  'management:data-permission-apply': '/management/permission/data-permission/apply',
   'management:business-concept': '/management/business-concept',
   'management:data-standard': '/management/data-standard/standards',
   'management:asset-tags': '/management/asset-management/asset-tags',

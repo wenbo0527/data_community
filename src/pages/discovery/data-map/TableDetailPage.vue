@@ -30,6 +30,15 @@
     <div v-if="tableData" class="table-content">
       <!-- 基本信息卡片 -->
       <a-card class="table-info">
+        <template #extra>
+          <FavoriteButton
+            resource-type="table"
+            :resource-id="tableData.name || ''"
+            :resource-name="tableData.name || ''"
+            user-id="user-zhangsan"
+            user-name="张三"
+          />
+        </template>
         <a-descriptions :column="2" :data="tableBasicInfo" />
       </a-card>
       
@@ -387,6 +396,7 @@ import { useAssetClassification } from '@/composables/useAssetClassification'
 import { LineageGraphStore, type LineageNodeType } from '@/mock/shared/lineage-graph'
 import CommentPanel from '@/components/common/CommentPanel.vue'
 import ColumnLineageViewer from '@/components/common/ColumnLineageViewer.vue'
+import FavoriteButton from '@/components/common/FavoriteButton.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'

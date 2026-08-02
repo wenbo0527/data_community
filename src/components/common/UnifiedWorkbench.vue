@@ -26,6 +26,45 @@
       <GlobalGovernanceOverview />
     </section>
 
+    <!-- 1.6. 今日业务概念(按角色推荐) -->
+    <section v-if="roleConcepts.length > 0" class="business-concepts">
+      <div class="section-header">
+        <h2 class="section-title">
+          <icon-link class="section-icon" />
+          今日业务概念
+        </h2>
+        <a-link @click="onViewAllConcepts">查看图谱 <icon-right /></a-link>
+      </div>
+      <a-row :gutter="16">
+        <a-col
+          v-for="concept in roleConcepts"
+          :key="concept.code"
+          :xs="12" :sm="8" :md="6" :lg="6"
+        >
+          <a-card class="concept-card" hoverable @click="onViewConcept(concept)">
+            <div class="concept-inner">
+              <div class="concept-header">
+                <a-tag :color="concept.level === 1 ? 'purple' : concept.level === 2 ? 'arcoblue' : 'green'" size="small">
+                  L{{ concept.level }} · {{ nodeTypeLabel(concept.nodeType) }}
+                </a-tag>
+                <span v-if="concept.standardCode" class="concept-std">{{ concept.standardCode }}</span>
+              </div>
+              <div class="concept-name">{{ concept.name }}</div>
+              <div class="concept-desc">{{ concept.description }}</div>
+              <div class="concept-footer">
+                <a-tag size="mini">{{ concept.businessBelonging }}</a-tag>
+                <span v-if="concept.defaultSensitivity" class="concept-sensitivity">
+                  <a-tag size="mini" :color="sensitivityColor(concept.defaultSensitivity)">
+                    {{ concept.defaultSensitivity }}
+                  </a-tag>
+                </span>
+              </div>
+            </div>
+          </a-card>
+        </a-col>
+      </a-row>
+    </section>
+
     <!-- 2. 角色个性化快捷作业(P0 角色机制) -->
     <section class="shortcuts">
       <div class="section-header">
@@ -290,6 +329,31 @@ const rolePersonalizedGreeting = computed(() => {
   const def = currentRoleDef.value
   return `欢迎 ${def.label} (${def.department}) — ${def.description}`
 })
+
+// P1.2: 按角色推荐业务概念
+import { TaxonomyStore } from '@/mock/shared/classification-taxonomy'
+const roleConcepts = computed(() => {
+  const def = currentRoleDef.value
+  // 按业务归属筛概念
+  const concepts = TaxonomyStore.byBusinessBelonging(def.department as any)
+  // 取前 8 个
+  return concepts.slice(0, 8)
+})
+
+const nodeTypeLabel = (type: string) => ({
+  domain: '业务域',
+  entity: '业务实体',
+  element: '业务要素',
+  field: '子要素'
+}[type] || type)
+
+const onViewConcept = (concept: any) => {
+  go('management:business-concept' as any)
+}
+
+const onViewAllConcepts = () => {
+  go('management:business-concept' as any)
+}
 
 // 把 roleShortcuts 转成 component-friendly 格式
 const iconMap: Record<string, any> = {
@@ -711,5 +775,63 @@ onMounted(loadRecentVisits)
 
 .governance {
   margin-bottom: 24px;
+}
+
+.business-concepts {
+  margin-bottom: 24px;
+
+  .section-icon {
+    color: #722ed1;
+  }
+
+  .concept-card {
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(114, 46, 209, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .concept-inner {
+      .concept-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+
+        .concept-std {
+          font-family: monospace;
+          font-size: 11px;
+          color: #86909c;
+          background: #f7f8fa;
+          padding: 1px 4px;
+          border-radius: 2px;
+        }
+      }
+
+      .concept-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1d2129;
+        margin-bottom: 4px;
+      }
+
+      .concept-desc {
+        font-size: 12px;
+        color: #4e5969;
+        line-height: 1.5;
+        min-height: 36px;
+        margin-bottom: 8px;
+      }
+
+      .concept-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
+  }
 }
 </style>
