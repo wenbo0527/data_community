@@ -47,10 +47,21 @@
           </a-select>
         </div>
         <div class="button-area">
-          <a-button type="primary" @click="handleCreate">
-            <template #icon><IconPlus /></template>
-            创建虚拟事件
-          </a-button>
+          <a-dropdown trigger="click">
+            <a-button type="primary">
+              <template #icon><IconPlus /></template>
+              创建虚拟事件
+              <IconDown />
+            </a-button>
+            <template #content>
+              <a-doption @click="handleCreate">
+                <IconPlus class="dropdown-icon" /> 创建虚拟事件（单事件）
+              </a-doption>
+              <a-doption @click="handleCreateCombine">
+                <IconLink class="dropdown-icon" /> 虚拟事件组合（OR / AND）
+              </a-doption>
+            </template>
+          </a-dropdown>
           <a-button @click="handleRefresh">
             <template #icon><IconRefresh /></template>
             刷新
@@ -139,9 +150,9 @@
                   <template #icon><IconEdit /></template>
                   编辑
                 </a-button>
-                <a-button type="text" size="small" @click="handleTest(record)">
+                <a-button type="text" size="small" @click="handleStats(record)">
                   <template #icon><IconPlayCircle /></template>
-                  测试
+                  统计
                 </a-button>
                 <a-button v-if="record.status !== '已下线'" type="text" size="small" @click="handleOffline(record)" status="danger">
                   下线
@@ -174,7 +185,9 @@ import {
   IconRefresh,
   IconEdit,
   IconDelete,
-  IconPlayCircle
+  IconPlayCircle,
+  IconDown,
+  IconLink
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
@@ -270,6 +283,11 @@ const handleFilter = () => {
 const handleCreate = () => {
     router.push({ name: 'VirtualEventCreate' })
   }
+
+// 跳转虚拟事件组合创建（OR/AND 多事件）页面
+const handleCreateCombine = () => {
+  router.push({ name: 'VirtualEventCombine' })
+}
   
   const handleEdit = (record) => {
     router.push({ 
@@ -278,8 +296,8 @@ const handleCreate = () => {
     })
   }
   
-  const handleTest = (record) => {
-  // 跳转到样本统计页面（mkt-app convention: /customer/<page>）
+// 跳转样本统计（mkt-app convention: /customer/<page>）
+const handleStats = (record) => {
   router.push({
     path: '/customer/sample-stats',
     query: {
