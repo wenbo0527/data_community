@@ -26,6 +26,7 @@
             <a-list-item
               class="role-item"
               :class="{ 'role-active': item.item.key === roleStore.currentRole }"
+              :data-testid="`role-${item.item.key}`"
               @click="onSelect(item.item.key)"
             >
               <a-list-item-meta>
@@ -67,7 +68,7 @@
       </div>
     </template>
 
-    <a-button shape="round" size="small" class="trigger-button" @click="popoverVisible = !popoverVisible">
+    <a-button shape="round" size="small" class="trigger-button" data-testid="role-switcher-trigger" @click="popoverVisible = !popoverVisible">
       <a-avatar :size="20" :style="{ background: roleStore.currentRoleDef.color }" class="trigger-avatar">
         {{ roleStore.currentRoleDef.avatar }}
       </a-avatar>

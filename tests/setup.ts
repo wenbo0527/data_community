@@ -1,40 +1,28 @@
-import { vi } from 'vitest'
+/**
+ * 组件/E2E 测试全局 setup
+ */
+import { setActivePinia, createPinia } from 'pinia'
+import { vi, beforeEach } from 'vitest'
 
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
+beforeEach(() => {
+  // 重置 Pinia
+  setActivePinia(createPinia())
 })
 
-// Mock IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
+// Mock Arco icons(组件测试中避免 ESM 问题)
+vi.mock('@arco-design/web-vue/es/icon', () => ({
+  default: {},
+  IconStorage: { name: 'IconStorage', render: () => null },
+  IconUserGroup: { name: 'IconUserGroup', render: () => null },
+  IconLink: { name: 'IconLink', render: () => null },
+  IconStar: { name: 'IconStar', render: () => null },
+  IconUp: { name: 'IconUp', render: () => null },
+  IconDown: { name: 'IconDown', render: () => null },
+  IconEye: { name: 'IconEye', render: () => null },
+  IconEyeInvisible: { name: 'IconEyeInvisible', render: () => null },
+  IconClose: { name: 'IconClose', render: () => null },
+  IconRefresh: { name: 'IconRefresh', render: () => null },
+  IconRight: { name: 'IconRight', render: () => null },
+  IconSafe: { name: 'IconSafe', render: () => null },
+  IconPlus: { name: 'IconPlus', render: () => null }
 }))
-
-// Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
-
-// Mock scrollTo
-window.scrollTo = vi.fn()
-
-// Mock console methods to reduce noise in tests
-global.console = {
-  ...console,
-  warn: vi.fn(),
-  error: vi.fn(),
-}

@@ -22,12 +22,12 @@
     </section>
 
     <!-- 1.5. 数据治理全景(打通数据标准/分级/资源/资产/要素) -->
-    <section class="governance">
+    <section class="governance" data-testid="governance-overview">
       <GlobalGovernanceOverview />
     </section>
 
     <!-- 1.6. 今日业务概念(按角色推荐) -->
-    <section v-if="roleConcepts.length > 0" class="business-concepts">
+    <section v-if="roleConcepts.length > 0" class="business-concepts" data-testid="business-concepts">
       <div class="section-header">
         <h2 class="section-title">
           <icon-link class="section-icon" />
@@ -66,7 +66,7 @@
     </section>
 
     <!-- 2. 角色个性化快捷作业(P0 角色机制) -->
-    <section class="shortcuts">
+    <section class="shortcuts" data-testid="shortcuts-section">
       <div class="section-header">
         <h2 class="section-title">{{ moduleTitle }} · 快捷作业</h2>
         <a-tag :color="currentRoleDef.color">
@@ -145,7 +145,7 @@
     </section>
 
     <!-- 4.5. 我的收藏(P0 角色机制 + 收藏系统) -->
-    <section class="favorites-section" v-if="topFavorites.length > 0">
+    <section class="favorites-section" data-testid="favorite-section" v-if="topFavorites.length > 0">
       <div class="section-header">
         <h2 class="section-title">
           <icon-star class="section-icon" />
@@ -178,7 +178,7 @@
     </section>
 
     <!-- 5. P0#5: 我的产出(跨模块工作产出聚合) -->
-    <section class="artifacts">
+    <section class="artifacts" data-testid="my-artifacts-panel">
       <h2 class="section-title">我的产出</h2>
       <MyArtifactsPanel />
     </section>
