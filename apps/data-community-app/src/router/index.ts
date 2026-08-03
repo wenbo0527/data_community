@@ -89,6 +89,19 @@ import { Message } from '@arco-design/web-vue'
 const APP_BASE = '/dca/'
 
 router.beforeEach((to, from, next) => {
+  // ===== 容错 1: 去重双 dca 前缀 =====
+  // 例: /dca/dca/workbench → /dca/workbench
+  // 这种情况出现在历史链接/书签/外部跳转,路由表里只有 /dca/workbench
+  if (to.path.startsWith('/dca/dca/')) {
+    next({
+      path: to.path.replace(/^\/dca\/dca/, '/dca'),
+      query: to.query,
+      hash: to.hash,
+      replace: true
+    })
+    return
+  }
+
   // ===== base prefix 自动补齐 =====
   // 子应用 router base 是 /dca/, 但 router.push('/workbench') 会跳过 base
   // 导致跳转到根域的 /workbench。这里拦截 to.path 并强制加 base 前缀。
