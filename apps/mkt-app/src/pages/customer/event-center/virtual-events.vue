@@ -286,26 +286,26 @@ const handleFilter = () => {
 }
 
 const handleCreate = () => {
-    router.push({ name: 'VirtualEventCreate' })
-  }
+  router.push({ name: 'VirtualEventCreate' })
+}
 
-  // P1#2 虚拟事件组合创建 - 2026-08-02: dropdown menu 选择
-  const handleCreateMenu = (key: string) => {
-    if (key === 'single') {
-      router.push({ name: 'VirtualEventCreate' })
-    } else if (key === 'combine') {
-      router.push({ name: 'VirtualEventCombine' })
-    }
+// P1#2 虚拟事件组合创建 - 2026-08-02: dropdown menu 选择
+const handleCreateMenu = (key: string) => {
+  if (key === 'single') {
+    router.push({ name: 'VirtualEventCreate' })
+  } else if (key === 'combine') {
+    router.push({ name: 'VirtualEventCombine' })
   }
-  
-  const handleEdit = (record) => {
-    router.push({ 
-      name: 'VirtualEventEdit',
-      params: { id: record.id }
-    })
-  }
-  
-  const handleTest = (record) => {
+}
+
+const handleEdit = (record) => {
+  router.push({
+    name: 'VirtualEventEdit',
+    params: { id: record.id }
+  })
+}
+
+const handleTest = (record) => {
   // 跳转到样本统计页面（mkt-app convention: /customer/<page>）
   router.push({
     path: '/customer/sample-stats',
