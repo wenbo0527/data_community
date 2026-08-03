@@ -132,7 +132,8 @@ export const StandardClassifyMatrixStore = {
     else if (upper.includes('ADDR') || upper.includes('ADDRESS')) category = 'ADDR'
     else if (upper.includes('CODE') || upper.includes('TYPE') || upper.includes('STATUS')) category = 'CODE'
     else if (upper.includes('DATE') || upper.includes('TIME') || upper.includes('DT')) category = 'DATE'
-    else if (upper.includes('NUM') || upper.includes('INT') || upper.includes('DEC')) category = 'NUM'
+    else if (upper.includes('AMT') || upper.includes('MONEY') || upper.includes('BAL') || upper.includes('DECIMAL')) category = 'AMT'
+    else if (upper.includes('NUM') || upper.includes('INT')) category = 'NUM'
     else if (upper.includes('TEXT') || upper.includes('VARCHAR') || upper.includes('CHAR') || upper.includes('STR')) category = 'TEXT'
     else if (upper.includes('BOOL') || upper.includes('FLAG')) category = 'BOOL'
 

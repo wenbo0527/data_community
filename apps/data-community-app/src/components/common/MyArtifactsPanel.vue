@@ -60,7 +60,6 @@ import {
 } from '@arco-design/web-vue/es/icon'
 import { useCrossNav } from '@/composables/useCrossNav'
 import { useRoleStore } from '@/stores/role'
-import { computed } from 'vue'
 
 interface Artifact {
   id: string

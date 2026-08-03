@@ -1,0 +1,24 @@
+{
+  "name": "data-community-app",
+  "version": "1.0.0",
+  "description": "数据社区子应用 - 数据发现 + 数据管理 + 数据探索 统一工作台",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5185",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@arco-design/web-vue": "^2.55.0",
+    "file-saver": "^2.0.5",
+    "pinia": "^2.1.0",
+    "vue": "^3.4.0",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.4.0",
+    "vite-plugin-mock": "^3.0.2",
+    "typescript": "^5.3.0"
+  }
+}

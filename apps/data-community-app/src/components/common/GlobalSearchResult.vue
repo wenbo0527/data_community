@@ -79,7 +79,7 @@ import {
   IconUserGroup,
   IconRight
 } from '@arco-design/web-vue/es/icon'
-import { searchApi } from '@/api/community'
+import { searchApi } from '@/api/search-shim'
 
 interface SearchItem {
   id?: string

@@ -27,7 +27,7 @@
     </section>
 
     <!-- 1.6. 今日业务概念(按角色推荐) -->
-    <section v-if="roleConcepts.length > 0" class="business-concepts" data-testid="business-concepts">
+    <section v-if="roleConcepts && roleConcepts.length > 0" class="business-concepts" data-testid="business-concepts">
       <div class="section-header">
         <h2 class="section-title">
           <icon-link class="section-icon" />
@@ -72,7 +72,7 @@
         <a-tag :color="currentRoleDef.color">
           {{ currentRoleDef.avatar }} {{ currentRoleDef.label }}· {{ currentRoleDef.department }}
         </a-tag>
-        <span class="role-hint">已根据角色定制 · 共 {{ shortcuts.length }} 个</span>
+        <span class="role-hint">已根据角色定制 · 共 {{ (shortcuts || []).length }} 个</span>
       </div>
       <a-row :gutter="16" class="shortcut-grid">
         <a-col
@@ -124,7 +124,7 @@
     <!-- 4. 最近访问(从 localStorage 读) -->
     <section class="recent">
       <h2 class="section-title">最近访问</h2>
-      <a-empty v-if="recentVisits.length === 0" description="暂无最近访问" />
+      <a-empty v-if="!recentVisits || recentVisits.length === 0" description="暂无最近访问" />
       <a-row v-else :gutter="16">
         <a-col
           v-for="visit in recentVisits.slice(0, 6)"
@@ -145,7 +145,7 @@
     </section>
 
     <!-- 4.5. 我的收藏(P0 角色机制 + 收藏系统) -->
-    <section class="favorites-section" data-testid="favorite-section" v-if="topFavorites.length > 0">
+    <section class="favorites-section" data-testid="favorite-section" v-if="topFavorites && topFavorites.length > 0">
       <div class="section-header">
         <h2 class="section-title">
           <icon-star class="section-icon" />
@@ -212,7 +212,13 @@ import {
   IconCalendar,
   IconDesktop,
   IconClockCircle,
-  IconApps
+  IconApps,
+  IconStar,
+  IconCode,
+  IconFile,
+  IconDashboard,
+  IconLink,
+  IconRight
 } from '@arco-design/web-vue/es/icon'
 import { useCrossNav } from '@/composables/useCrossNav'
 import { usePersonalizedWorkbench } from '@/composables/usePersonalizedWorkbench'
@@ -221,15 +227,6 @@ import MyArtifactsPanel from './MyArtifactsPanel.vue'
 import GlobalGovernanceOverview from './GlobalGovernanceOverview.vue'
 import RoleSwitcher from './RoleSwitcher.vue'
 import { FavoriteStore } from '@/mock/shared/favorite-directory'
-import {
-  IconStar,
-  IconCode,
-  IconFile,
-  IconDashboard,
-  IconLink,
-  IconCommon,
-  IconRight
-} from '@arco-design/web-vue/es/icon'
 
 type Module = 'discovery' | 'management' | 'exploration'
 
