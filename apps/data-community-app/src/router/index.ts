@@ -8,7 +8,7 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/dca/workbench'
+    redirect: { name: 'workbench' }
   },
   // ===== 统一工作台(三模块整合入口) =====
   {
