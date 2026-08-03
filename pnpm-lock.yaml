@@ -423,9 +423,6 @@ importers:
 
   apps/mkt-app:
     dependencies:
-      '@app/shared-api':
-        specifier: workspace:*
-        version: link:../../packages/shared-api
       '@arco-design/web-vue':
         specifier: ^2.55.0
         version: 2.57.0(vue@3.5.19(typescript@5.3.3))
