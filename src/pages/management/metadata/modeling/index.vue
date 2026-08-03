@@ -259,7 +259,10 @@ import { FieldLinkStore } from '@/mock/shared/lineage'
 import { MetadataStore } from '@/mock/shared/metadata-store'
 
 // === P1.2 接入: 元数据统计 ===
-const modeledTableCount = computed(() => MetadataStore.getTables().length)
+const modeledTableCount = computed(() => {
+  const tables = MetadataStore.getTables()
+  return tables.length
+})
 const taggedFieldCount = computed(() => FieldLinkStore.list().length)
 const avgCompliance = computed(() => {
   const tables = MetadataStore.getTables()
@@ -305,7 +308,6 @@ const bindModalVisible = ref(false)
 // === 打通层: 字段打标 ===
 const { suggestAndTag } = useAssetClassification()
 const selectedTable = ref('')
-const availableTables = computed(() => MetadataStore.getTables().map(t => t.tableName))
 const onTableChange = (v) => { selectedTable.value = v }
 const showAutoTagSuggestion = async () => {
   if (!selectedTable.value) {
