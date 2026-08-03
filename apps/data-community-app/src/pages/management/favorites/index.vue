@@ -267,7 +267,11 @@ const notificationColor = (n: string) => ({
 const onVisit = (record: any) => {
   FavoriteStore.visit(record.id)
   if (record.resourcePath) {
-    router.push(record.resourcePath)
+    // 子应用 base 兼容:去前导 '/' 让 vue-router 自动加 base
+    const path = record.resourcePath.startsWith('/')
+      ? record.resourcePath.substring(1)
+      : record.resourcePath
+    router.push(path)
   }
 }
 

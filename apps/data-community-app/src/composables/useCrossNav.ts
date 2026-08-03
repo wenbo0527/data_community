@@ -102,6 +102,10 @@ export function useCrossNav() {
       })
     }
 
+    // 子应用 base 兼容:vue-router 4 接到以 '/' 开头的路径会跳过 base
+    // 这里去掉前导 '/',让 vue-router 自动加 base('/dca/' 等)
+    if (path.startsWith('/')) path = path.substring(1)
+
     // P0#2: 上下文通过 query 传递,接收页面用 useRoute().query 读取
     if (context && Object.keys(context).length > 0) {
       const queryString = Object.entries(context)
@@ -136,6 +140,11 @@ export function useCrossNav() {
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
         .join('&')
       if (queryString) path += `?${queryString}`
+    }
+    // href 需要带 base(浏览器地址栏)
+    const base = import.meta.env.BASE_URL || '/dca/'
+    if (!path.startsWith(base) && path.startsWith('/')) {
+      path = base.replace(/\/$/, '') + path
     }
     return path
   }

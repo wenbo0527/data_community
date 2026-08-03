@@ -69,11 +69,17 @@ const roleLabel = (role: string) => {
 
 const onSwitchRole = () => {
   // 跳转到任何工作台都行,RoleSwitcher 会在那里显示
-  router.push(roleStore.defaultLanding)
+  const path = roleStore.defaultLanding.startsWith('/')
+    ? roleStore.defaultLanding.substring(1)
+    : roleStore.defaultLanding
+  router.push(path)
 }
 
 const onGoHome = () => {
-  router.push(roleStore.defaultLanding)
+  const path = roleStore.defaultLanding.startsWith('/')
+    ? roleStore.defaultLanding.substring(1)
+    : roleStore.defaultLanding
+  router.push(path)
 }
 </script>
 

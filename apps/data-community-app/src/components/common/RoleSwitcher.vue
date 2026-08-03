@@ -123,7 +123,11 @@ const onSelect = (role: UserRole) => {
     popoverVisible.value = false
     // 跳转到该角色的默认着陆页
     if (def.defaultLanding) {
-      router.push(def.defaultLanding)
+      // 子应用 base 兼容
+      const path = def.defaultLanding.startsWith('/')
+        ? def.defaultLanding.substring(1)
+        : def.defaultLanding
+      router.push(path)
     }
   }
 }

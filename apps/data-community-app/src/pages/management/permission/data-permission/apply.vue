@@ -279,7 +279,7 @@ const filteredFields = computed(() => {
 })
 
 const onViewTable = (tableName: string) => {
-  router.push(`/discovery/data-map?table=${tableName}`)
+  router.push(`discovery/data-map?table=${tableName}`)
 }
 
 const onRemoveField = (key: string) => {
@@ -378,7 +378,7 @@ const onReset = () => {
 
 const onViewApplications = () => {
   // 跳转到我的申请/收藏(实际应有独立页)
-  router.push('/management/favorites')
+  router.push('management/favorites')
 }
 
 const sensitivityColor = (level: string) => ({

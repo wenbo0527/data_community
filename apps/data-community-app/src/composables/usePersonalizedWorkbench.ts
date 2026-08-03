@@ -68,11 +68,13 @@ export function usePersonalizedWorkbench() {
       const def = SHORTCUT_REGISTRY[shortcut.key as keyof typeof SHORTCUT_REGISTRY]
       if (def) {
         const meta = ROLE_DEFINITIONS[roleStore.currentRole]
-        const targetRoute = shortcut.module === 'discovery' ? `/${shortcut.key === 'lineage' ? 'discovery/lineage' : `discovery/${shortcut.key}`}`
-          : shortcut.module === 'management' ? `/management/${shortcut.key}`
-          : shortcut.module === 'exploration' ? `/exploration/${shortcut.key}`
+        const targetRoute = shortcut.module === 'discovery' ? `${shortcut.key === 'lineage' ? 'discovery/lineage' : `discovery/${shortcut.key}`}`
+          : shortcut.module === 'management' ? `management/${shortcut.key}`
+          : shortcut.module === 'exploration' ? `exploration/${shortcut.key}`
           : '/'
-        router.push(targetRoute)
+        // 子应用 base 兼容:去前导 '/'
+        const path = targetRoute.startsWith('/') ? targetRoute.substring(1) : targetRoute
+        router.push(path || 'workbench')
       }
     }
   }
@@ -84,7 +86,10 @@ export function usePersonalizedWorkbench() {
     const ok = roleStore.switchRole(role)
     if (ok) {
       const def = ROLE_DEFINITIONS[role]
-      router.push(def.defaultLanding)
+      const path = def.defaultLanding.startsWith('/')
+        ? def.defaultLanding.substring(1)
+        : def.defaultLanding
+      router.push(path)
     }
   }
 

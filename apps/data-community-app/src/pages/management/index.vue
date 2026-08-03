@@ -34,10 +34,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 const router = useRouter()
-const goWorkbench = () => router.push('/dca/workbench')
-const goAssetTags = () => router.push('/dca/management/asset-management/asset-tags')
-const goFavorites = () => router.push('/dca/management/favorites')
-const goPermissionApply = () => router.push('/dca/management/permission/data-permission/apply')
+const goWorkbench = () => router.push('workbench')
+const goAssetTags = () => router.push('management/asset-management/asset-tags')
+const goFavorites = () => router.push('management/favorites')
+const goPermissionApply = () => router.push('management/permission/data-permission/apply')
 </script>
 
 <style lang="scss" scoped>

@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 const router = useRouter()
-const goWorkbench = () => router.push('/dca/workbench')
+const goWorkbench = () => router.push('workbench')
 </script>
 
 <style lang="scss" scoped>

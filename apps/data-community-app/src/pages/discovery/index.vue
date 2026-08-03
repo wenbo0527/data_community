@@ -34,9 +34,9 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 const router = useRouter()
-const goWorkbench = () => router.push('/dca/workbench')
-const goDataMap = () => router.push('/dca/discovery/data-map')
-const goCustomer360 = () => router.push('/dca/discovery/customer360')
+const goWorkbench = () => router.push('workbench')
+const goDataMap = () => router.push('discovery/data-map')
+const goCustomer360 = () => router.push('discovery/customer360')
 </script>
 
 <style lang="scss" scoped>
