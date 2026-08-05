@@ -10,19 +10,19 @@
     </a-page-header>
     <a-row :gutter="16">
       <a-col :span="8">
-        <a-card hoverable @click="goAssetTags" class="entry-card">
+        <a-card :bordered="false" hoverable @click="goAssetTags" class="entry-card">
           <h3>🏷️ 资产标签</h3>
           <p>16 预置标签 + 5 类资源</p>
         </a-card>
       </a-col>
       <a-col :span="8">
-        <a-card hoverable @click="goFavorites" class="entry-card">
+        <a-card :bordered="false" hoverable @click="goFavorites" class="entry-card">
           <h3>⭐ 我的收藏</h3>
           <p>个人 / 团队 / 共享收藏</p>
         </a-card>
       </a-col>
       <a-col :span="8">
-        <a-card hoverable @click="goPermissionApply" class="entry-card">
+        <a-card :bordered="false" hoverable @click="goPermissionApply" class="entry-card">
           <h3>🔐 字段权限申请</h3>
           <p>3 步骤申请流程</p>
         </a-card>

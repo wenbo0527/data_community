@@ -108,7 +108,7 @@
         <a-collapse-item v-for="group in groups" :key="group.key" :header="`${group.label} (${group.items.length})`">
           <a-row :gutter="16">
             <a-col v-for="item in group.items" :key="item.id" :xs="24" :sm="12" :md="8" :lg="6">
-              <a-card class="fav-card" hoverable @click="onVisit(item)">
+              <a-card :bordered="false" class="fav-card" hoverable @click="onVisit(item)">
                 <div class="fav-card-header">
                   <component :is="resourceIcon(item.resourceType)" class="fav-icon" />
                   <a-link>{{ item.resourceName }}</a-link>
@@ -128,7 +128,7 @@
     <div v-else-if="viewMode === 'stats'">
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-card title="按资源类型分布">
+          <a-card :bordered="false" title="按资源类型分布">
             <div v-for="(count, type) in typeCount" :key="type" class="stat-bar">
               <div class="stat-bar-label">{{ resourceTypeName(type) }}</div>
               <a-progress :percent="(count / myFavorites.length) * 100" :show-text="false" />
@@ -137,7 +137,7 @@
           </a-card>
         </a-col>
         <a-col :span="12">
-          <a-card title="访问 Top 5">
+          <a-card :bordered="false" title="访问 Top 5">
             <a-list :data="topFavorites" size="small">
               <template #item="item">
                 <a-list-item>

@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import UnifiedWorkbench from '@/components/common/UnifiedWorkbench.vue'
+import UnifiedWorkbench from '@/components-dca/common/UnifiedWorkbench.vue'
 </script>
 
 <style lang="scss" scoped>

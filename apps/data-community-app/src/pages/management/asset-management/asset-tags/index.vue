@@ -32,7 +32,7 @@
     <a-row :gutter="16" class="content-row">
       <!-- 左:标签定义 -->
       <a-col :span="14">
-        <a-card title="标签定义" :bordered="false">
+        <a-card :bordered="false" title="标签定义" :bordered="false">
           <template #extra>
             <a-segmented
               v-model="activeCategory"
@@ -76,7 +76,7 @@
 
       <!-- 右:标签绑定 -->
       <a-col :span="10">
-        <a-card title="最近绑定" :bordered="false">
+        <a-card :bordered="false" title="最近绑定" :bordered="false">
           <a-list :data="recentBindings" size="small" :pagination-props="false">
             <template #item="item">
               <a-list-item>

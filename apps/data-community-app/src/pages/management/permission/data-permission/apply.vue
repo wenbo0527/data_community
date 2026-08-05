@@ -1,11 +1,21 @@
 <template>
   <div class="permission-apply-page">
     <a-page-header
-      title="权限申请"
+      :title="contextTitle"
       sub-title="申请访问受限字段 · 待 Owner 审批通过后方可使用"
       :back="true"
       @back="onBack"
     />
+
+    <!-- 从其它页面带过来的资源上下文(API / 数据标准等) -->
+    <a-alert
+      v-if="contextResourceName"
+      type="info"
+      :show-icon="true"
+      style="margin-bottom: 16px"
+    >
+      正在为资源「{{ contextResourceName }}」申请字段权限({{ contextResourceType }})
+    </a-alert>
 
     <!-- 3 步骤指示器 -->
     <a-steps :current="currentStep" class="apply-steps">
@@ -16,7 +26,7 @@
 
     <!-- Step 1: 选择资源 -->
     <div v-if="currentStep === 1" class="step-content">
-      <a-card title="选择受限字段" :bordered="false">
+      <a-card :bordered="false" title="选择受限字段">
         <template #extra>
           <a-input-search
             v-model="searchKeyword"
@@ -68,7 +78,7 @@
 
     <!-- Step 2: 填写原因 -->
     <div v-if="currentStep === 2" class="step-content">
-      <a-card title="填写申请信息" :bordered="false">
+      <a-card :bordered="false" title="填写申请信息">
         <a-form :model="applyForm" layout="vertical">
           <a-form-item label="申请的字段">
             <a-space wrap>
@@ -213,14 +223,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { FieldLinkStore } from '@/mock/shared/lineage'
 import { ApplicationStore } from '@/mock/shared/workflow-directory'
 import { TaxonomyStore } from '@/mock/shared/classification-taxonomy'
 
 const router = useRouter()
+const route = useRoute()
+
+// 从其它页面带过来的资源上下文(query.resourceType / resourceId / resourceName)
+const contextResourceType = ref('')
+const contextResourceId = ref('')
+const contextResourceName = ref('')
+const contextTitle = ref('权限申请')
+
+onMounted(() => {
+  const q = route.query
+  if (q.resourceType || q.resourceId || q.resourceName) {
+    contextResourceType.value = String(q.resourceType || '')
+    contextResourceId.value = String(q.resourceId || '')
+    contextResourceName.value = String(q.resourceName || '')
+    contextTitle.value = `权限申请 · ${contextResourceName.value}`
+  }
+})
 
 const currentStep = ref(1)
 const submitting = ref(false)

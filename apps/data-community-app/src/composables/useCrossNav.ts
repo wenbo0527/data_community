@@ -13,8 +13,7 @@ export const ROUTE_KEYS = {
   // discovery
   discoveryHome: { module: 'discovery', page: 'index' },
   discoveryDataMap: { module: 'discovery', page: 'data-map' },
-  discoveryCustomer360: { module: 'discovery', page: 'customer360' },
-  discoveryCustomer360Detail: { module: 'discovery', page: 'customer360/detail', param: 'userId' },
+  discoveryOverview: { module: 'discovery', page: 'overview' },
   discoveryMetrics: { module: 'discovery', page: 'metrics-map' },
   discoveryVariable: { module: 'discovery', page: 'variable-map' },
   discoveryLineage: { module: 'discovery', page: 'lineage' },
@@ -28,6 +27,8 @@ export const ROUTE_KEYS = {
   managementService: { module: 'management', page: 'service' },
   // exploration
   explorationHome: { module: 'exploration', page: 'index' },
+  explorationCustomer360: { module: 'exploration', page: 'customer360' },
+  explorationCustomer360Detail: { module: 'exploration', page: 'customer360/detail', param: 'userId' },
   explorationTags: { module: 'exploration', page: 'customer-center/tag-system' },
   explorationEvents: { module: 'exploration', page: 'customer-center/event-center' },
   explorationAudience: { module: 'exploration', page: 'customer-center/audience-system/audience-management' },
@@ -45,8 +46,7 @@ export const ROUTE_TABLE: Record<string, string> = {
   // discovery
   'discovery:index': '/discovery/index',
   'discovery:data-map': '/discovery/data-map',
-  'discovery:customer360': '/discovery/customer360',
-  'discovery:customer360-detail': '/discovery/customer360/detail/:userId',
+  'discovery:overview': '/discovery/overview',
   'discovery:metrics-map': '/discovery/metrics-map',
   'discovery:variable-map': '/discovery/variable-map',
   'discovery:lineage': '/discovery/lineage',
@@ -65,6 +65,8 @@ export const ROUTE_TABLE: Record<string, string> = {
 
   // exploration
   'exploration:index': '/exploration/index',
+  'exploration:customer360': '/exploration/customer360',
+  'exploration:customer360-detail': '/exploration/customer360/detail/:userId',
   'exploration:tag-system': '/exploration/customer-center/tag-system',
   'exploration:event-center': '/exploration/customer-center/event-center',
   'exploration:audience-management': '/exploration/customer-center/audience-system/audience-management',

@@ -14,7 +14,8 @@
     "strict": false,
     "esModuleInterop": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/mock/*": ["../../dfd-app/src/mock/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue"]

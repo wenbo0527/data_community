@@ -13,9 +13,9 @@
 
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useRoleStore } from '@/stores/role'
+import { useRoleStore } from '@/stores-dca/role'
 import { useCrossNav } from '@/composables/useCrossNav'
-import { SHORTCUT_REGISTRY, ROLE_DEFINITIONS, type ShortcutMeta, type UserRole } from '@/types/roles'
+import { SHORTCUT_REGISTRY, ROLE_DEFINITIONS, type ShortcutMeta, type UserRole } from '@/types-dca/roles'
 
 export interface WorkbenchShortcutItem {
   key: string
