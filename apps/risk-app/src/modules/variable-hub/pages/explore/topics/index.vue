@@ -1,17 +1,20 @@
 <template>
   <div class="explore-topics-page">
-    <DmtPageHeader title="探索课题" subtitle="展示探索中、已采纳、已否决、已暂缓的全过程留痕。">
+    <DmtPageHeader title="探索课题 / 衍生需求" subtitle="展示探索课题全过程 + 衍生需求 4 状态机（待开发/开发中/待注册/已注册）。">
       <template #extra>
         <a-button @click="router.push('/explore/map')">查看全景</a-button>
+        <a-button @click="handleCreateDerivation">新建衍生需求</a-button>
         <a-button type="primary" @click="handleCreateTopic">新建课题</a-button>
       </template>
     </DmtPageHeader>
 
     <a-card :bordered="false" class="filter-card">
       <a-space wrap size="large">
-        <a-input v-model="filters.keyword" allow-clear placeholder="搜索课题名称 / 业务问题" style="width: 260px" />
+        <a-input v-model="filters.keyword" allow-clear placeholder="搜索课题/需求 名称 / 业务问题" style="width: 260px" />
+        <a-select v-model="filters.demandType" allow-clear placeholder="需求类型" style="width: 160px" :options="demandTypeOptions" />
         <a-select v-model="filters.domain" allow-clear placeholder="业务域" style="width: 160px" :options="domainOptions" />
         <a-select v-model="filters.status" allow-clear placeholder="状态" style="width: 160px" :options="statusOptions" />
+        <a-select v-model="filters.derivationStatus" allow-clear placeholder="衍生需求状态" style="width: 160px" :options="derivationStatusOptions" />
         <a-select v-model="filters.visibility" allow-clear placeholder="可见性" style="width: 160px" :options="visibilityOptions" />
         <a-select v-model="filters.priority" allow-clear placeholder="优先级" style="width: 160px" :options="priorityOptions" />
         <a-button @click="resetFilters">重置</a-button>
@@ -30,7 +33,21 @@
         @page-size-change="handlePageSizeChange"
       >
         <template #nameCell="{ record }">
-          <a-link @click="router.push(`/explore/topics/${record.id}`)">{{ record.name }}</a-link>
+          <a-link @click="router.push(`/explore/topics/${record.id}`)">
+            <a-tag v-if="record.demandType === 'derivation'" size="mini" color="purple" style="margin-right: 4px">衍生需求</a-tag>
+            <a-tag v-else size="mini" color="arcoblue" style="margin-right: 4px">探索课题</a-tag>
+            {{ record.name }}
+          </a-link>
+        </template>
+        <template #derivationStatusCell="{ record }">
+          <a-tag v-if="record.derivationStatus" :color="derivationStatusColor(record.derivationStatus)">
+            {{ derivationStatusLabel(record.derivationStatus) }}
+          </a-tag>
+          <span v-else class="muted">—</span>
+        </template>
+        <template #featureIdCell="{ record }">
+          <a-link v-if="record.featureId" @click="router.push(`/variable-management/detail/${record.featureId}`)">{{ record.featureId }}</a-link>
+          <span v-else class="muted">—</span>
         </template>
         <template #domainCell="{ record }">
           <a-space wrap>
@@ -125,8 +142,10 @@ const router = useRouter()
 
 const filters = reactive({
   keyword: '',
+  demandType: '' as '' | 'topic' | 'derivation',
   domain: '',
   status: '' as '' | ExploreTopicStatus,
+  derivationStatus: '' as '' | 'pending_dev' | 'developing' | 'pending_register' | 'registered',
   visibility: '' as '' | ExploreVisibility,
   priority: '' as '' | ExplorePriority
 })
@@ -169,6 +188,32 @@ const domainOptions = [
   { label: '反欺诈', value: '反欺诈' },
   { label: '客户画像', value: '客户画像' }
 ]
+
+const demandTypeOptions = [
+  { label: '探索课题', value: 'topic' },
+  { label: '衍生需求', value: 'derivation' }
+]
+
+const derivationStatusOptions = [
+  { label: '待开发', value: 'pending_dev' },
+  { label: '开发中', value: 'developing' },
+  { label: '待注册', value: 'pending_register' },
+  { label: '已注册', value: 'registered' }
+]
+
+const derivationStatusLabel = (s: string) => ({
+  pending_dev: '待开发',
+  developing: '开发中',
+  pending_register: '待注册',
+  registered: '已注册'
+}[s] || s)
+
+const derivationStatusColor = (s: string) => ({
+  pending_dev: 'gray',
+  developing: 'arcoblue',
+  pending_register: 'gold',
+  registered: 'green'
+}[s] || 'gray')
 
 const statusOptions = [
   { label: '探索中', value: 'exploring' },
@@ -233,11 +278,17 @@ const filteredTopics = computed(() => {
   if (keyword) {
     list = list.filter((item) => item.name.toLowerCase().includes(keyword) || item.businessProblem.toLowerCase().includes(keyword))
   }
+  if (filters.demandType) {
+    list = list.filter((item) => (item.demandType || 'topic') === filters.demandType)
+  }
   if (filters.domain) {
     list = list.filter((item) => item.domainTags.includes(filters.domain))
   }
   if (filters.status) {
     list = list.filter((item) => item.status === filters.status)
+  }
+  if (filters.derivationStatus) {
+    list = list.filter((item) => item.derivationStatus === filters.derivationStatus)
   }
   if (filters.visibility) {
     list = list.filter((item) => item.visibility === filters.visibility)
@@ -269,15 +320,17 @@ const resetFilters = () => {
 }
 
 const columns = [
-  { title: '课题名称', dataIndex: 'name', slotName: 'nameCell', width: 240 },
-  { title: '业务域', dataIndex: 'domainTags', slotName: 'domainCell', width: 160 },
-  { title: '状态', dataIndex: 'status', slotName: 'statusCell', width: 110 },
-  { title: '优先级', dataIndex: 'priority', slotName: 'priorityCell', width: 110 },
-  { title: '可见性', dataIndex: 'visibility', slotName: 'visibilityCell', width: 130 },
-  { title: '关联变量', dataIndex: 'variableSync', slotName: 'syncStatusCell', width: 130 },
-  { title: '负责人', dataIndex: 'owner', width: 120 },
+  { title: '需求名称', dataIndex: 'name', slotName: 'nameCell', width: 280 },
+  { title: '业务域', dataIndex: 'domainTags', slotName: 'domainCell', width: 140 },
+  { title: '需求状态', dataIndex: 'status', slotName: 'statusCell', width: 110 },
+  { title: '衍生需求状态', dataIndex: 'derivationStatus', slotName: 'derivationStatusCell', width: 130 },
+  { title: '关联特征ID', dataIndex: 'featureId', slotName: 'featureIdCell', width: 170 },
+  { title: '优先级', dataIndex: 'priority', slotName: 'priorityCell', width: 100 },
+  { title: '可见性', dataIndex: 'visibility', slotName: 'visibilityCell', width: 120 },
+  { title: '变量同步', dataIndex: 'variableSync', slotName: 'syncStatusCell', width: 130 },
+  { title: '负责人', dataIndex: 'owner', width: 100 },
   { title: '关联资源', dataIndex: 'relatedResources', slotName: 'resourcesCell' },
-  { title: '更新时间', dataIndex: 'updatedAt', width: 160 },
+  { title: '更新时间', dataIndex: 'updatedAt', width: 150 },
   { title: '操作', dataIndex: 'action', slotName: 'actionCell', width: 140 }
 ]
 
@@ -322,6 +375,12 @@ const handleCreateTopic = () => {
   createForm.dataSourceId = ''
   createForm.relatedVariableIds = []
   createVisible.value = true
+}
+
+// 新建衍生需求（文档 §三 模块 A · F-01）
+// 跳转到 /variable-management 并携带 query 参数，触发 DerivationCreateModal
+const handleCreateDerivation = () => {
+  router.push({ path: '/variable-management', query: { action: 'create_derivation' } })
 }
 
 const variableTypeOptions = computed(() =>

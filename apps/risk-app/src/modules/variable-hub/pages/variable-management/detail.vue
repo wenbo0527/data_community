@@ -1,5 +1,12 @@
 <template>
   <div class="variable-detail-page">
+    <!-- 404 处理（文档 B2 E1 · 特征ID不存在） -->
+    <NotFound
+      v-if="notFound"
+      :feature-id="variableId"
+      :on-retry="() => fetchVariableDetail()"
+    />
+    <template v-else>
     <div class="page-header">
       <a-breadcrumb class="breadcrumb">
         <a-breadcrumb-item @click="handleBackToList">变量中心</a-breadcrumb-item>
@@ -11,6 +18,7 @@
           <div class="title-wrapper">
             <h1 class="title">{{ variableData.name || '变量详情' }}</h1>
             <a-tag :color="getStatusColor(variableData.status)" class="status-tag" size="medium">{{ getStatusLabel(variableData.status) }}</a-tag>
+            <a-tag color="purple" size="small" class="role-tag">当前角色：{{ currentUserName }}（{{ currentRole === 'risk_data_member' ? '成员' : currentRole === 'risk_data_admin' ? '管理员' : '社区' }}）</a-tag>
           </div>
 
           <!-- 横向字段带：核心 / 辅助各占一行，每行内字段平均分布，呼吸感更足 -->
@@ -33,18 +41,6 @@
           <a-button @click="handleBackToList">
             <template #icon><IconArrowLeft /></template>
             返回列表
-          </a-button>
-          <a-button type="outline" @click="handleDerive">
-            <template #icon><IconCopy /></template>
-            衍生
-          </a-button>
-          <a-button type="outline" @click="openGovernanceDrawer('accompany')">
-            <template #icon><IconDriveFile /></template>
-            陪跑
-          </a-button>
-          <a-button type="outline" @click="openGovernanceDrawer('evaluation')">
-            <template #icon><IconExperiment /></template>
-            评估
           </a-button>
           <a-button
             v-if="['draft', 'pending'].includes(String(variableData.status || ''))"
@@ -70,270 +66,93 @@
     </div>
 
     <div class="detail-content">
+      <!-- ========== 编辑保护提示（用户反馈）============ -->
+      <a-alert
+        v-if="showEditLockNotice"
+        :type="editLockNoticeType"
+        :show-icon="true"
+        style="margin-bottom: 16px"
+      >
+        <template #title>
+          <icon-lock /> 编辑保护 · {{ editLockNoticeTitle }}
+        </template>
+        <div>{{ getEditLockReason(currentMidloanStatus) }}</div>
+        <div v-if="lockedFields.length > 0" style="margin-top: 8px; font-size: 12px;">
+          <strong>已锁定的字段（{{ lockedFields.length }}）：</strong>
+          <a-tag v-for="f in lockedFields" :key="f.field" color="gray" size="mini" style="margin-left: 4px">
+            {{ f.label }}
+          </a-tag>
+        </div>
+      </a-alert>
+
       <a-tabs v-model:active-key="activeTab" class="detail-tabs">
         <a-tab-pane key="basic" title="变量基础信息">
-          <div class="tab-content">
-            <ParamGroup title="基本属性" :items="basicInfo" :columns="3" />
+          <BasicInfoCard
+            :basic-info="basicInfo"
+            :technical-info="technicalInfo"
+            :typed-profile-info="typedProfileInfo"
+            :typed-profile-title="typedProfileTitle"
+            :variable-data="variableData"
+          />
+        </a-tab-pane>
 
-            <ParamGroup title="技术属性" :items="technicalInfo" :columns="3" />
-
-            <ParamGroup :title="typedProfileTitle" :items="typedProfileInfo" :columns="3" />
-
-            <a-card title="质量指标" class="detail-card">
-              <a-row :gutter="16">
-                <a-col :span="12">
-                  <div class="quality-item">
-                    <div class="quality-label">数据质量</div>
-                    <div class="quality-value">
-                      <a-progress
-                        :percent="variableData.dataQuality"
-                        :color="getQualityColor(variableData.dataQuality)"
-                        size="large"
-                      />
-                      <span class="quality-text">{{ variableData.dataQuality }}%</span>
-                    </div>
-                  </div>
-                </a-col>
-                <a-col :span="12">
-                  <div class="quality-item">
-                    <div class="quality-label">缺失率</div>
-                    <div class="quality-value">
-                      <a-progress
-                        :percent="variableData.missingRate"
-                        status="exception"
-                        size="large"
-                      />
-                      <span class="quality-text">{{ variableData.missingRate }}%</span>
-                    </div>
-                  </div>
-                </a-col>
-              </a-row>
-              <a-row :gutter="16" style="margin-top: 16px;">
-                <a-col :span="12">
-                  <div class="quality-item">
-                    <div class="quality-label">唯一值数量</div>
-                    <div class="quality-value">
-                      <span class="quality-number">{{ variableData.uniqueValueCount }}</span>
-                    </div>
-                  </div>
-                </a-col>
-                <a-col :span="12">
-                  <div class="quality-item">
-                    <div class="quality-label">更新频率</div>
-                    <div class="quality-value">
-                      <span class="quality-text">{{ variableData.updateFrequency }}</span>
-                    </div>
-                  </div>
-                </a-col>
-              </a-row>
-            </a-card>
-
-            <a-card title="变量定义" class="detail-card">
-              <div class="definition-content">
-                {{ variableData.definition || '暂无定义' }}
-              </div>
-            </a-card>
-          </div>
+        <!-- ========== 治理与生命周期（已抽到 LifecycleTab 容器组件）============ -->
+        <a-tab-pane key="governance" title="治理与生命周期">
+          <LifecycleTab
+            :is-midloan-behavior="isMidloanBehavior"
+            :variable-data="variableData"
+            :current-midloan-status="currentMidloanStatus"
+            :can-retry="canRetry && hasPerm(PERMISSIONS.RETRY_SYNC)"
+            :retry-label="retryLabel"
+            :allowed-actions="allowedActions"
+            :status-change-list="statusChangeList"
+            :sync-log-list="syncLogList"
+            :offline-batch-summary="offlineBatchSummary"
+            :lifecycle-header="lifecycleHeader"
+            :lifecycle-stages="lifecycleStages"
+            :effect-summary="effectSummary"
+            :has-perm="hasPerm"
+            @retry="onRetry"
+            @manual-retry="onManualBatchRetry"
+            @supplement-table="openSupplementTable"
+            @action="onAction"
+          />
         </a-tab-pane>
 
         <a-tab-pane key="evaluation" title="变量评估">
-          <div class="tab-content">
-            <a-card title="评估概览" class="detail-card">
-              <a-descriptions :data="evaluationInfo" :column="2" bordered />
-            </a-card>
-
-            <a-card title="关联分析报告" class="detail-card">
-              <a-table :data="analysisReports" :columns="analysisReportColumns" row-key="id" :pagination="false">
-                <template #source="{ record }">
-                  <a-tag v-if="record.source === 'risk-app'" color="arcoblue">risk</a-tag>
-                  <a-tag v-else color="green">dmt</a-tag>
-                </template>
-                <template #actions="{ record }">
-                  <a-space>
-                    <a-button type="text" size="small" @click="handleViewAnalysisReport(record)">查看</a-button>
-                    <a-button v-if="record.url" type="text" size="small" @click="handleCopyReportLink(record)">复制链接</a-button>
-                  </a-space>
-                </template>
-                <template #empty><a-empty description="暂无关联报告" /></template>
-              </a-table>
-            </a-card>
-          </div>
+          <EvaluationCard
+            :analysis-reports="analysisReports"
+            :analysis-report-columns="analysisReportColumns"
+            :is-external="variableData.sourceType === 'external'"
+            :is-external-linked="!!variableData.sourceRefs?.externalEvaluationId"
+            :external-eval-id="variableData.sourceRefs?.externalEvaluationId || ''"
+            :branch-storage-key="`branch-reports:${variableData.id}`"
+            :on-open-external-evaluation="handleOpenExternalEvaluation"
+            :on-unlink-external-evaluation="handleUnlinkExternalEvaluation"
+            :on-link-external-evaluation="handleLinkExternalEvaluation"
+            @view-report="handleViewAnalysisReport"
+            @copy-link="handleCopyReportLink"
+          />
         </a-tab-pane>
 
-        <a-tab-pane key="governance" title="治理与生命周期">
-          <div class="tab-content">
-            <a-card title="生命周期阶段" class="detail-card">
-              <a-descriptions :column="2" :data="lifecycleHeader" bordered />
-              <a-divider style="margin: 12px 0" />
-              <a-table :data="lifecycleStages" :pagination="false">
-                <template #columns>
-                  <a-table-column title="阶段" data-index="stage" :width="160" />
-                  <a-table-column title="状态" :width="120">
-                    <template #cell="{ record }"><a-tag :status="record.status==='completed'?'success':(record.status==='in_progress'?'warning':'default')">{{ record.statusLabel }}</a-tag></template>
-                  </a-table-column>
-                  <a-table-column title="开始时间" data-index="startDate" :width="160" />
-                  <a-table-column title="结束时间" data-index="endDate" :width="160" />
-                  <a-table-column title="说明" data-index="description" />
-                </template>
-                <template #empty><a-empty description="暂无阶段数据" /></template>
-              </a-table>
-            </a-card>
-
-            <a-card title="评估与效果" class="detail-card">
-              <a-descriptions :column="2" :data="effectSummary" bordered />
-            </a-card>
-          </div>
-        </a-tab-pane>
-
-        <a-tab-pane key="source" title="来源与血缘">
-          <div class="tab-content">
-            <a-card title="数据源信息" class="detail-card">
-              <a-descriptions :data="sourceInfo" :column="2" bordered />
-            </a-card>
-
-            <a-card v-if="isExternalSource && hasAnyExternalRef" title="外数关联" class="detail-card">
-              <a-space wrap>
-                <a-button v-if="hasExternalArchive" type="primary" @click="openRiskExternalArchive">查看外数档案</a-button>
-                <a-button v-if="hasExternalEvaluation" @click="openRiskExternalEvaluation">查看外数评估</a-button>
-                <a-button v-if="hasExternalLifecycle" @click="openRiskExternalLifecycle">查看外数生命周期</a-button>
-                <a-button @click="openRiskExternalService">查看外数服务</a-button>
-              </a-space>
-            </a-card>
-
-            <a-card title="字段映射" class="detail-card">
-              <a-table
-                :data="fieldMappingData"
-                :columns="fieldMappingColumns"
-                row-key="id"
-                :pagination="false"
-              >
-                <template #status="{ record }">
-                  <a-tag :color="record.status === 'active' ? 'green' : 'red'">
-                    {{ record.status === 'active' ? '正常' : '异常' }}
-                  </a-tag>
-                </template>
-              </a-table>
-            </a-card>
-
-            <a-card title="数据血缘" class="detail-card">
-              <LineageGraph
-                class="lineage-graph"
-                :table-name="variableData.code || variableData.name || '变量'"
-                :layers="2"
-                :data-types="['Variable', 'Table', 'Metric', 'API']"
-                :upstream="upstreamLineage"
-                :downstream="downstreamLineage"
-              />
-            </a-card>
-          </div>
-        </a-tab-pane>
-
-        <a-tab-pane key="usage" title="使用与分发">
-          <div class="tab-content">
-            <a-card title="使用统计" class="detail-card">
-              <a-row :gutter="16">
-                <a-col :span="6">
-                  <div class="usage-stat">
-                    <div class="stat-number">{{ usageStats.total }}</div>
-                    <div class="stat-label">总使用次数</div>
-                  </div>
-                </a-col>
-                <a-col :span="6">
-                  <div class="usage-stat">
-                    <div class="stat-number">{{ usageStats.metrics }}</div>
-                    <div class="stat-label">指标引用</div>
-                  </div>
-                </a-col>
-                <a-col :span="6">
-                  <div class="usage-stat">
-                    <div class="stat-number">{{ usageStats.models }}</div>
-                    <div class="stat-label">模型使用</div>
-                  </div>
-                </a-col>
-                <a-col :span="6">
-                  <div class="usage-stat">
-                    <div class="stat-number">{{ usageStats.reports }}</div>
-                    <div class="stat-label">报表引用</div>
-                  </div>
-                </a-col>
-              </a-row>
-            </a-card>
-
-            <a-card title="使用场景列表" class="detail-card">
-              <a-table
-                :data="usageScenarios"
-                :columns="usageColumns"
-                row-key="id"
-                :pagination="usagePagination"
-                @page-change="handleUsagePageChange"
-              >
-                <template #type="{ record }">
-                  <a-tag :color="getUsageTypeColor(record.type)">
-                    {{ getUsageTypeLabel(record.type) }}
-                  </a-tag>
-                </template>
-                <template #actions="{ record }">
-                  <a-space>
-                    <a-button type="text" size="small" @click="handleViewUsage(record)">
-                      查看
-                    </a-button>
-                    <a-button type="text" size="small" @click="handleGotoUsage(record)">
-                      跳转
-                    </a-button>
-                  </a-space>
-                </template>
-              </a-table>
-            </a-card>
-          </div>
+        <a-tab-pane key="lineage-usage" title="血缘与使用">
+          <LineageUsageCard
+            :upstream-lineage="upstreamLineage"
+            :downstream-lineage="downstreamLineage"
+            :variable-code="variableData.code"
+            :variable-name="variableData.name"
+          />
         </a-tab-pane>
 
         <a-tab-pane key="versions" title="变更记录">
-          <div class="tab-content">
-            <a-card title="版本列表" class="detail-card">
-              <a-table
-                :data="versionList"
-                :columns="versionColumns"
-                row-key="id"
-                :pagination="versionPagination"
-                @page-change="handleVersionPageChange"
-              >
-                <template #version="{ record }">
-                  <div class="version-info">
-                    <div class="version-number">{{ record.version }}</div>
-                    <a-tag v-if="record.isCurrent" color="green">当前版本</a-tag>
-                  </div>
-                </template>
-                <template #changes="{ record }">
-                  <div class="changes-content">
-                    <div v-for="change in record.changes" :key="change" class="change-item">
-                      • {{ change }}
-                    </div>
-                  </div>
-                </template>
-                <template #actions="{ record }">
-                  <a-space>
-                    <a-button 
-                      v-if="!record.isCurrent" 
-                      type="text" 
-                      size="small" 
-                      @click="handleCompareVersion(record)"
-                    >
-                      对比
-                    </a-button>
-                    <a-button 
-                      v-if="!record.isCurrent" 
-                      type="text" 
-                      size="small" 
-                      status="warning"
-                      @click="handleRollbackVersion(record)"
-                    >
-                      回滚
-                    </a-button>
-                  </a-space>
-                </template>
-              </a-table>
-            </a-card>
-          </div>
+          <ChangeRecordCard
+            :version-list="versionList"
+            :version-columns="versionColumns"
+            :version-pagination="versionPagination"
+            @version-page-change="handleVersionPageChange"
+            @compare-version="handleCompareVersion"
+            @rollback-version="handleRollbackVersion"
+          />
         </a-tab-pane>
       </a-tabs>
     </div>
@@ -375,6 +194,32 @@
       </a-space>
     </a-drawer>
 
+    <!-- ========== 补充数据底表弹窗（B1 R10） ========== -->
+    <a-modal
+      v-model:visible="supplementTableVisible"
+      title="补充数据底表名称"
+      :footer="false"
+      @cancel="supplementTableVisible = false"
+    >
+      <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
+        数据底表名称是内数 API 注册（INT-01）的必填参数，必须按规范填写 ads_xxx / dim_xxx / dws_xxx 等。
+      </a-alert>
+      <a-form layout="vertical">
+        <a-form-item label="数据底表名称" required>
+          <a-input v-model="supplementTableForm.tableName" placeholder="例如：ads_midloan_collect_resp_hrs" />
+        </a-form-item>
+        <a-form-item label="说明（可选）">
+          <a-textarea v-model="supplementTableForm.remark" placeholder="可说明补全原因" :rows="2" />
+        </a-form-item>
+      </a-form>
+      <div style="text-align: right; margin-top: 16px">
+        <a-space>
+          <a-button @click="supplementTableVisible = false">取消</a-button>
+          <a-button type="primary" :disabled="!supplementTableForm.tableName" @click="onSupplementTable">保存</a-button>
+        </a-space>
+      </div>
+    </a-modal>
+
     <a-modal v-model:visible="reportPreviewVisible" :title="reportPreviewTitle" :footer="false" width="720px">
       <a-descriptions :data="reportPreviewMeta" :column="2" bordered />
       <a-divider />
@@ -414,11 +259,23 @@
       :context-name="variableData.name"
       :default-tab="governanceDefaultTab"
     />
+
+    <!-- ========== 演示控制台 + 角色切换器（P1-1） ========== -->
+    <DemoConsole @reset-feature="onResetFeature" @quick="onDemoQuick" />
+
+    <!-- ========== OA 单/验收/上线/下线抽屉（文档 C1 R02 / E1 R04 / F1 R02）============ -->
+    <MidloanActionDrawer
+      v-model:visible="actionDrawerVisible"
+      :action-key="currentActionKey"
+      :variable-data="variableData"
+      @submit="onActionSubmit"
+    />
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch, shallowRef } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { useVariableStore } from '@/modules/variable-hub/store/variable'
@@ -431,11 +288,28 @@ import { VariableStatusStore } from '@/modules/variable-hub/mock/variable-manage
 import { ExploreStore } from '@/modules/variable-hub/mock/explore/explore-store'
 import GovernanceActionDrawer from '@/modules/variable-hub/components/GovernanceActionDrawer.vue'
 import ParamGroup from '@/modules/variable-hub/components/ParamGroup.vue'
+import NotFound from '@/modules/variable-hub/components/common/NotFound.vue'
+import MidloanActionDrawer from '@/modules/variable-hub/components/risk-feature/MidloanActionDrawer.vue'
+import OfflineBatchCard from '@/modules/variable-hub/components/risk-feature/OfflineBatchCard.vue'
+import FeatureArchiveCard from '@/modules/variable-hub/components/risk-feature/FeatureArchiveCard.vue'
+import StatusChangeTable from '@/modules/variable-hub/components/risk-feature/StatusChangeTable.vue'
+import LineageUsageCard from '@/modules/variable-hub/components/risk-feature/LineageUsageCard.vue'
+import ChangeRecordCard from '@/modules/variable-hub/components/risk-feature/ChangeRecordCard.vue'
+import EvaluationCard from '@/modules/variable-hub/components/risk-feature/EvaluationCard.vue'
+import BasicInfoCard from '@/modules/variable-hub/components/risk-feature/BasicInfoCard.vue'
+import LifecycleTab from '@/modules/variable-hub/components/risk-feature/LifecycleTab.vue'
+import StatusTimeline11 from '@/modules/variable-hub/components/risk-feature/StatusTimeline11.vue'
+import { allowedActionsByStatus, isRetryableFailedStatus, midloanStatusLabel, midloanStatusColor, getEditLockReason, getLockedFields } from '@/modules/variable-hub/constants/midloanStatusMap'
+import MidloanStateEngine, { SyncLogStore, OfflineRecordStore, StatusChangeStore } from '@/modules/variable-hub/mock/risk-feature/stateEngine'
+import DemoConsole from '@/modules/variable-hub/components/risk-feature/DemoConsole.vue'
+import UserContext, { PERMISSIONS } from '@/modules/variable-hub/mock/risk-feature/permissions'
 
 const router = useRouter()
 const route = useRoute()
 const variableStore = useVariableStore()
 const variableId = computed(() => String(route.params.id || ''))
+// 404 标识（文档 B2 E1 · 特征ID不存在）
+const notFound = ref(false)
 
 // 当前激活的标签页
 const activeTab = ref('basic')
@@ -443,8 +317,9 @@ const activeTab = ref('basic')
 // 头部辅助信息（创建人/更新时间）默认折叠，避免首屏过密
 const headerInfoExpanded = ref([])
 
-// 变量数据
-const variableData = computed(() => variableStore.currentVariable || {
+// 变量数据：使用 shallowRef 持有本地副本，mutation 后通过 reset/refresh 同步 store 变更
+// 注意：必须用 ref 而非 computed，否则后续给 .value 赋值会触发"Maximum recursive updates"
+const EMPTY_VARIABLE = {
   id: '',
   name: '',
   code: '',
@@ -466,7 +341,38 @@ const variableData = computed(() => variableStore.currentVariable || {
   sourceRefs: {},
   category: '',
   profile: {}
-})
+}
+
+const variableData = shallowRef(structuredCloneSafe(variableStore.currentVariable) || EMPTY_VARIABLE)
+
+/** 把 store 中的当前变量复制到本地 ref（mutation 后调用）*/
+function syncVariableFromStore() {
+  const cur = variableStore.currentVariable
+  if (!cur) return
+  try {
+    variableData.value = structuredClone(cur)
+  } catch {
+    try {
+      variableData.value = JSON.parse(JSON.stringify(cur))
+    } catch {
+      variableData.value = { ...cur }
+    }
+  }
+}
+
+/** structuredClone 的安全降级包装 */
+function structuredCloneSafe(obj) {
+  if (obj == null) return obj
+  try {
+    return structuredClone(obj)
+  } catch {
+    try {
+      return JSON.parse(JSON.stringify(obj))
+    } catch {
+      return { ...obj }
+    }
+  }
+}
 
 const variableCategory = computed(() => {
   const v = variableStore.currentVariable || {}
@@ -506,16 +412,6 @@ const typedProfileInfo = computed(() => {
     label: f.label,
     value: profile[f.key] != null && profile[f.key] !== '' ? String(profile[f.key]) : '无'
   }))
-})
-
-const evaluationInfo = computed(() => {
-  const hasRiskEval = isExternalSource.value && hasExternalEvaluation.value
-  return [
-    { label: '评估状态', value: hasRiskEval ? '已关联外数评估' : '变量质量评估' },
-    { label: '评估得分', value: variableData.value.quality != null ? `${variableData.value.quality}` : (variableData.value.dataQuality ? `${variableData.value.dataQuality}` : '—') },
-    { label: '缺失率', value: variableData.value.missingRate != null ? `${variableData.value.missingRate}%` : '—' },
-    { label: '更新时间', value: variableData.value.updatedAt || '—' }
-  ]
 })
 
 const analysisReports = ref([])
@@ -732,6 +628,36 @@ const openRiskExternalEvaluation = () => {
   window.open(buildRiskAppUrl(`/risk/external-data/evaluation/${id}`), '_blank')
 }
 
+// ============ 评估 Tab：外数评估中心操作回调 ============
+const handleOpenExternalEvaluation = () => {
+  openRiskExternalEvaluation()
+}
+
+const handleUnlinkExternalEvaluation = () => {
+  if (!variableStore.currentVariable) return
+  const refs = variableStore.currentVariable.sourceRefs || {}
+  if (!refs.externalEvaluationId) return
+  // mock：删除关联字段
+  delete refs.externalEvaluationId
+  // 同步到本地副本（shallowRef + structuredClone）
+  syncVariableFromStore()
+  Message.success('已解除与外数评估中心的关联')
+}
+
+const handleLinkExternalEvaluation = () => {
+  if (!variableStore.currentVariable) return Promise.resolve('')
+  const refs = variableStore.currentVariable.sourceRefs || (variableStore.currentVariable.sourceRefs = {})
+  // mock：生成评估单号并回填
+  const newId = `EXT-EVAL-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900 + 100)}`
+  refs.externalEvaluationId = newId
+  syncVariableFromStore()
+  // 模拟异步跳转外数评估中心
+  setTimeout(() => {
+    window.open(buildRiskAppUrl(`/risk/external-data/evaluation/${newId}`), '_blank')
+  }, 100)
+  return Promise.resolve(newId)
+}
+
 const openRiskExternalService = () => {
   const id = externalRefs.value.externalServiceId
   if (id) {
@@ -942,6 +868,14 @@ const fetchVariableDetail = async () => {
     }
     
     await variableStore.fetchVariableDetail(variableId)
+    // 404 处理：变量ID不存在（文档 B2 E1）
+    if (!variableStore.currentVariable) {
+      notFound.value = true
+      return
+    }
+    notFound.value = false
+    // 拉取后同步到本地 shallowRef（避免 computed 递归循环）
+    syncVariableFromStore()
     buildAnalysisReports()
     
     // Mock字段映射数据
@@ -1185,10 +1119,248 @@ const handleVersionPageChange = (page) => {
 
 // 初始化
 onMounted(() => {
-  fetchVariableDetail()
+  fetchVariableDetail().then(() => {
+    // 加载完整状态历史（用户反馈）
+    if (variableId.value && isMidloanBehavior.value) {
+      MidloanStateEngine.initMockStatusHistory(variableId.value)
+      refreshStatusChangeList()
+      refreshSyncLogs()
+    }
+  })
   fetchUsageScenarios()
   fetchVersionHistory()
 })
+
+// ============ 11 状态机相关（midloan_behavior）============
+
+// 是否贷中行为品类
+const isMidloanBehavior = computed(() => {
+  const v = variableData.value
+  if (!v) return false
+  return v.category === 'midloan_behavior' || v.midloanStatus != null
+})
+
+// 当前 midloan 状态
+const currentMidloanStatus = computed(() => {
+  return variableData.value?.midloanStatus || ''
+})
+
+// 权限控制
+const hasPerm = (p) => UserContext.has(p)
+
+// 可重试状态
+const canRetry = computed(() => isRetryableFailedStatus(currentMidloanStatus.value))
+const retryLabel = computed(() => {
+  if (currentMidloanStatus.value === 'offline_failed') return '手动触发批次重试'
+  return '重新同步'
+})
+
+// 动态操作按钮
+const allowedActions = computed(() => {
+  return allowedActionsByStatus(currentMidloanStatus.value, variableData.value, roleForActions.value)
+})
+
+// ============ 编辑保护（用户反馈）============
+/** 是否需要展示编辑保护提示（任何有锁定字段的状态都展示）*/
+const showEditLockNotice = computed(() => {
+  const s = currentMidloanStatus.value
+  // 完全可编辑的状态：registered 不展示（pending_register 是 derivation 状态，不出现在 midloanStatus）
+  if (s === 'registered') return false
+  return true
+})
+/** 提示级别 */
+const editLockNoticeType = computed(() => {
+  const s = currentMidloanStatus.value
+  if (s === 'online' || s === 'offline') return 'error'  // 已投产，强烈警告
+  if (s.endsWith('_failed')) return 'warning'              // 异常态
+  if (['developing_oa', 'dw_online', 'dw_online_failed'].includes(s)) return 'info'  // 部分可补充
+  return 'warning'  // 流程中
+})
+const editLockNoticeTitle = computed(() => {
+  const s = currentMidloanStatus.value
+  if (s === 'online') return '已上线投产'
+  if (s === 'offline') return '已下线归档'
+  if (s.endsWith('_failed')) return '异常状态'
+  if (['developing_oa', 'dw_online', 'dw_online_failed'].includes(s)) return '部分字段已锁定'
+  return '编辑受限'
+})
+/** 锁定字段列表 */
+const lockedFields = computed(() => {
+  return getLockedFields(currentMidloanStatus.value)
+})
+
+// 状态变更记录（P1-3）— 使用 shallowRef 避免响应式引起循环
+const statusChangeList = shallowRef([])
+const refreshStatusChangeList = () => {
+  const list = StatusChangeStore.list({ featureId: variableId.value })
+  // 显式克隆避免响应式代理
+  statusChangeList.value = list.map(item => ({
+    id: item.id,
+    fromStatus: item.fromStatus,
+    toStatus: item.toStatus,
+    trigger: item.trigger,
+    operator: item.operator,
+    operatorRole: item.operatorRole,
+    operatedAt: item.operatedAt,
+    reason: item.reason || ''
+  }))
+}
+// 状态变更表已抽到 StatusChangeTable 子组件
+// statusChangeColumns 不再需要在 detail.vue 定义
+
+// 下线批次结果（K2 R03）— 一次性读取
+const offlineBatchSummary = computed(() => {
+  // 避免 reactive tracking：每次主动读取
+  return OfflineRecordStore.batchSummary()
+})
+
+// 同步日志
+const featureSyncLogs = shallowRef([])
+const refreshSyncLogs = () => {
+  const list = SyncLogStore.list({ featureId: variableId.value })
+  featureSyncLogs.value = list.map(item => ({ ...item }))
+}
+
+/**
+ * 同步日志列表（用于状态步骤条内嵌展示）
+ * 不响应式追踪，每次主动从 store 读取
+ */
+const syncLogList = computed(() => {
+  return SyncLogStore.list({ featureId: variableId.value })
+})
+
+// ============ OA 单/验收/上线流程/下线抽屉（文档 C1 R01 / E1 R02 / F1 R02）============
+const actionDrawerVisible = ref(false)
+const currentActionKey = ref('submit_dev_oa')
+
+// ============ 状态切换操作 ============
+const onRetry = () => {
+  const fid = variableId.value
+  if (!fid) return
+  if (!UserContext.has(PERMISSIONS.RETRY_SYNC)) {
+    Message.warning('当前角色无「重新同步」权限，请切换为风险数据管理员')
+    return
+  }
+  const r = MidloanStateEngine.retrySync(fid)
+  if (r.ok) Message.success('已重新同步，等待内数/变量中心回调')
+  else Message.error(r.reason || '重试失败')
+  refreshAfterMutation()
+}
+
+const onManualBatchRetry = () => {
+  const fid = variableId.value
+  if (!fid) return
+  if (!UserContext.has(PERMISSIONS.RETRY_OFFLINE_BATCH)) {
+    Message.warning('当前角色无「手动触发下线批次重试」权限，请切换为风险数据管理员')
+    return
+  }
+  const r = MidloanStateEngine.retrySync(fid)
+  if (r.ok) Message.success('已手动触发变量中心下线批次重试')
+  refreshAfterMutation()
+}
+
+const onAction = (action) => {
+  // 走抽屉的 4 个动作（文档 C1 R01 / E1 R02 / F-07 / E2）
+  if (['submit_dev_oa', 'submit_verify', 'request_offline', 'verify_reject'].includes(action.key)) {
+    currentActionKey.value = action.key
+    actionDrawerVisible.value = true
+    return
+  }
+  // 其他动作直接调用 stateEngine
+  const fid = variableId.value
+  if (!fid) return
+  // 当前状态不是可执行状态：友好提示"展示已发起的内容"
+  const curStatus = variableData.value?.midloanStatus || variableData.value?.status
+  if (curStatus === 'online' || curStatus === 'offline' || curStatus === 'syncing_internal' || curStatus === 'syncing_variable') {
+    // 已是终态/同步中：直接弹窗展示已发起的 OA 单据（已有"已发起的 OA 单据"卡片，无需重复弹窗）
+    Message.info('当前已是线上运行实例，请查看上方「已发起的 OA 单据」卡片')
+    return
+  }
+  const r = MidloanStateEngine.handleAction(fid, action.key)
+  if (r.ok) Message.success(`${action.label} 已完成`)
+  else if (r.reason) Message.error(r.reason)
+  refreshAfterMutation()
+}
+
+// 抽屉提交后回调
+const onActionSubmit = (payload) => {
+  const fid = variableId.value
+  if (!fid) return
+  const r = MidloanStateEngine.handleAction(fid, currentActionKey.value, payload)
+  if (r.ok) Message.success('操作已完成')
+  else if (r.reason) Message.error(r.reason)
+  actionDrawerVisible.value = false
+  refreshAfterMutation()
+}
+
+const openSupplementTable = () => {
+  supplementTableForm.tableName = variableData.value?.dataTableName || ''
+  supplementTableForm.remark = ''
+  supplementTableVisible.value = true
+}
+
+const supplementTableVisible = ref(false)
+const supplementTableForm = reactive({ tableName: '', remark: '' })
+
+function onSupplementTable() {
+  const fid = variableId.value
+  if (!fid || !supplementTableForm.tableName) return
+  const r = MidloanStateEngine.supplementDataTable(fid, supplementTableForm.tableName, supplementTableForm.remark)
+  if (r.ok) Message.success('已补充数据底表名称')
+  supplementTableVisible.value = false
+  refreshAfterMutation()
+}
+
+// 重置 / 演示快捷
+function onResetFeature() {
+  const fid = variableId.value
+  if (!fid) return
+  const r = MidloanStateEngine.resetFeature(fid)
+  if (r.ok) Message.success('已重置到初始状态')
+  refreshAfterMutation()
+}
+
+function onDemoQuick(action) {
+  onAction({ key: action, label: action })
+}
+
+// 刷新（mock store 已经就地修改，强制 refetch）
+function refreshAfterMutation() {
+  setTimeout(() => {
+    syncVariableFromStore()
+    refreshSyncLogs()
+    refreshStatusChangeList()
+  }, 0)
+}
+
+// 暴露 demo 全局
+window.__midloanCurrentFeatureId = computed(() => variableData.value?.id)
+window.__midloanVariableList = variableStore.variableList
+window.__refreshMidloanDetail = () => {
+  refreshSyncLogs()
+  refreshStatusChangeList()
+  syncVariableFromStore()
+}
+
+// 角色 tag（响应式同步 UserContext 变化）
+const currentRole = ref(UserContext.get().role)
+const currentUserName = ref(UserContext.get().name)
+window.addEventListener('user-context-changed', () => {
+  setTimeout(() => {
+    currentRole.value = UserContext.get().role
+    currentUserName.value = UserContext.get().name
+  }, 0)
+})
+
+// 切换角色后触发 allowedActions 重新计算（computed 不依赖 currentRole，但允许 admin 看到重试按钮）
+// 通过 currentRole 改变自身依赖，触发 allowedActionsByStatus 重算
+const roleForActions = computed(() => currentRole.value)
+
+// 初次加载
+setTimeout(() => {
+  refreshSyncLogs()
+  refreshStatusChangeList()
+}, 100)
 </script>
 
 <style scoped>
@@ -1321,6 +1493,27 @@ onMounted(() => {
   color: var(--color-text-3);
   font-weight: 400;
 }
+.batch-stat {
+  text-align: center;
+  padding: 16px;
+  background: var(--color-fill-2, #f7f8fa);
+  border-radius: 6px;
+}
+.batch-stat .batch-num {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text-1, #1d2129);
+}
+.batch-stat .batch-label {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-text-2, #4e5969);
+}
+.batch-stat.success .batch-num { color: #00b42a; }
+.batch-stat.failed .batch-num { color: #f53f3f; }
+.missing-table { color: var(--color-text-3, #86909c); font-style: italic; }
+.role-tag { margin-left: 8px; }
+.demo-buttons-tip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 :deep(.arco-descriptions-item-value-inline) {
   color: var(--color-text-1);
