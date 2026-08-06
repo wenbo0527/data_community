@@ -131,6 +131,9 @@ export const useVariableStore = defineStore('variable', {
         const response: any = await getVariableDetail(id)
         if (response?.code === 200) {
           this.currentVariable = response.data
+        } else {
+          // 404：清空 currentVariable
+          this.currentVariable = null
         }
         return response
       } finally {

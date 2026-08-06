@@ -54,6 +54,69 @@
         </a-card>
       </a-tab-pane>
 
+      <!-- ============ 衍生需求专属 Tab（A3）============ -->
+      <a-tab-pane v-if="isDerivation" key="derivation" :title="`衍生需求信息`">
+        <a-card :bordered="false" class="panel-card">
+          <a-alert type="info" :show-icon="false" style="margin-bottom: 16px">
+            文档 §三 模块 A · A3 · 衍生需求专属字段（业务场景/数据源/数据时效/开发人员/产品范围/批次等）
+          </a-alert>
+
+          <a-descriptions title="基础属性" :column="3" bordered size="small">
+            <a-descriptions-item label="需求ID">{{ topicId }}</a-descriptions-item>
+            <a-descriptions-item label="业务场景">
+              <a-tag color="purple">{{ topic?.businessScene || '—' }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="品类">
+              <a-tag color="arcoblue">{{ topic?.category || 'midloan_behavior' }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="数据源">
+              <a-tag>{{ topic?.dataSource || 'Hbase' }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="数据时效">
+              <a-tag color="cyan">{{ topic?.dataFreshness || '—' }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="开发人员">{{ topic?.developer || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="预期效果" :span="3">{{ topic?.expectedEffect || '—' }}</a-descriptions-item>
+          </a-descriptions>
+
+          <a-divider>特征核心属性</a-divider>
+
+          <a-descriptions :column="3" bordered size="small">
+            <a-descriptions-item label="特征英文名">{{ topic?.featureEnName || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="特征中文名">{{ topic?.featureCnName || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="字段类型">
+              <a-tag>{{ topic?.fieldType || '—' }}</a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="加工逻辑" :span="3">{{ topic?.processingLogic || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="默认值">{{ topic?.defaultValue || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="一级分类">{{ topic?.l1Category || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="二级分类">{{ topic?.l2Category || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="标准化后源表" :span="2">{{ topic?.sourceTableAfter || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="源表（变更前）">{{ topic?.sourceTableBefore || '—' }}</a-descriptions-item>
+          </a-descriptions>
+
+          <a-divider>注册阶段信息（待补充）</a-divider>
+
+          <a-descriptions :column="3" bordered size="small">
+            <a-descriptions-item label="数据底表名">{{ topic?.dataTableName || '待补充' }}</a-descriptions-item>
+            <a-descriptions-item label="数仓任务ID">{{ topic?.dwTaskId || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="OA开发单号">{{ topic?.devOaOrderId || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="OA验收单号">{{ topic?.verifyOaOrderId || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="验收人">{{ topic?.acceptor || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="批次">{{ topic?.batch || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="产品范围">{{ topic?.productScope || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="名单类型">{{ topic?.listType || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="备注" :span="3">{{ topic?.remark || '—' }}</a-descriptions-item>
+          </a-descriptions>
+
+          <a-divider v-if="topic?.featureId">关联特征档案</a-divider>
+
+          <a-alert v-if="topic?.featureId" type="success" :show-icon="false" style="margin-bottom: 12px">
+            该衍生需求已注册到风险数据特征台账，关联特征ID：<a-link @click="goFeatureDetail(topic.featureId)">{{ topic.featureId }}</a-link>
+          </a-alert>
+        </a-card>
+      </a-tab-pane>
+
       <a-tab-pane key="experiments" :title="`实验记录 (${experiments.length})`">
         <a-card :bordered="false" class="panel-card">
           <template #title>
@@ -321,6 +384,15 @@ const route = useRoute()
 const router = useRouter()
 
 const topicId = String(route.params.id || '')
+
+// 是否衍生需求（A3）
+const isDerivation = computed(() => topic.value?.demandType === 'derivation')
+
+// 跳转到特征详情
+function goFeatureDetail(featureId) {
+  router.push(`/variable-management/detail/${featureId}`)
+}
+
 // 注：computed 内引用 tickRef.value 是为了让 mock 同步延迟的 setTimeout 完成后，
 // 1 秒轮询触发响应式更新，台账自动刷新到最新状态
 const topic = computed(() => {

@@ -1,5 +1,19 @@
 export type ExploreVisibility = 'team' | 'company' | 'audit'
 export type ExploreTopicStatus = 'exploring' | 'adopted' | 'rejected' | 'paused'
+
+/**
+ * 衍生需求 4 状态机（文档 §三 模块 A · F-01）
+ * 待开发 → 开发中 → 待注册 → 已注册（单向流转）
+ * 仅 demandType='derivation' 的 topic 才会走此状态机
+ */
+export type DerivationStatus = 'pending_dev' | 'developing' | 'pending_register' | 'registered'
+
+/**
+ * 需求类型：探索课题 vs 衍生需求
+ * - topic：探索中→已采纳/否决/暂缓
+ * - derivation：衍生需求 4 状态机
+ */
+export type DemandType = 'topic' | 'derivation'
 export type ExplorePriority = 'high' | 'medium' | 'low'
 export type ExploreDecisionResult = 'adopted' | 'rejected' | 'paused'
 
@@ -37,6 +51,8 @@ export interface VariableSyncInfo {
 
 export interface ExploreTopic {
   id: string
+  /** 需求类型（默认 topic，衍生需求为 derivation） */
+  demandType?: DemandType
   name: string
   businessProblem: string
   hypothesis: string
@@ -67,6 +83,41 @@ export interface ExploreTopic {
    * 探索中心只读展示，状态变更由变量中心事件驱动
    */
   variableSync?: VariableSyncInfo
+  /** ============ 衍生需求专属字段（demandType='derivation' 时使用） ============ */
+  /** 衍生需求 4 状态机（待开发/开发中/待注册/已注册） */
+  derivationStatus?: DerivationStatus
+  /** 业务场景：贷前/贷中/贷后 */
+  businessScene?: string
+  /** 预期效果 */
+  expectedEffect?: string
+  /** 品类：默认 midloan_behavior（衍生需求锁定为贷中行为） */
+  category?: string
+  /** 关联数据源：Hbase */
+  dataSource?: string
+  /** 特征核心属性 */
+  featureEnName?: string
+  featureCnName?: string
+  fieldType?: string
+  processingLogic?: string
+  defaultValue?: string
+  l1Category?: string
+  l2Category?: string
+  sourceTableAfter?: string
+  sourceTableBefore?: string
+  originFeatureEnName?: string
+  dataFreshness?: string
+  developer?: string
+  excelReport?: string
+  /** 注册阶段补充 */
+  dataTableName?: string
+  dwTaskId?: string
+  productScope?: string
+  listType?: string
+  batch?: string
+  acceptor?: string
+  remark?: string
+  /** 关联特征ID（注册后写入） */
+  featureId?: string
 }
 
 export interface ExploreExperiment {
@@ -248,7 +299,7 @@ function nowFmt() {
 
 function nextTopicId() {
   const prefix = 'EXP-2026-'
-  const all = [...readExtraTopics(), ...topicMocks]
+  const all = [...readExtraTopics(), ...topicMocks, ...derivationMocks]
   const nums = all
     .map((t) => String(t.id))
     .filter((id) => id.startsWith(prefix))
@@ -369,6 +420,301 @@ const experimentMocks: ExploreExperiment[] = [
   }
 ]
 
+// ============ 衍生需求（从 derivations.ts 合并 · 文档 §三 模块 A · F-01）============
+// 这些数据原本在 derivations.ts 中，现在作为 demandType='derivation' 的 ExploreTopic 存在
+// 4 状态机：pending_dev → developing → pending_register → registered
+// 已合并到课题页统一管理
+const derivationMocks: ExploreTopic[] = [
+  {
+    id: 'DRV-20260725-0001',
+    demandType: 'derivation',
+    name: '近30日大额交易次数',
+    businessScene: '贷中',
+    expectedEffect: '识别异常消费模式，辅助贷中反欺诈策略',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_BIGTXN_CNT_30D',
+    featureCnName: '近30日大额交易次数',
+    fieldType: 'Integer',
+    processingLogic: '从 dwd_trade_detail 过滤 amount >= 5000 的成功记录，按 user_id 维度统计 30 天滚动窗口',
+    defaultValue: '0',
+    l1Category: 'credit_grant',
+    l2Category: 'credit_grant_amount',
+    sourceTableAfter: 'ads_midloan_bigtxn_30d',
+    sourceTableBefore: 'dwd_trade_detail',
+    dataFreshness: 'offline_t1',
+    developer: '王数仓',
+    dataTableName: 'ads_midloan_bigtxn_30d',
+    dwTaskId: 'DW-TASK-998877',
+    productScope: '现金贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    derivationStatus: 'registered',
+    featureId: 'MIDLOAN-FEAT-0001',
+    businessProblem: '贷中反欺诈需要识别异常大额交易',
+    hypothesis: '近30日大额交易次数特征可显著提升欺诈识别效果',
+    domainTags: ['风控'],
+    variableTypeTags: ['数值型'],
+    priority: 'high',
+    visibility: 'team',
+    status: 'adopted',
+    owner: '小李',
+    createdAt: '2026-07-25 10:00:00',
+    updatedAt: '2026-08-01 09:30:00',
+    relatedResources: [
+      { type: 'table', name: 'dwd_trade_detail', displayName: 'dwd_trade_detail' }
+    ],
+    referencedTopicIds: []
+  },
+  {
+    id: 'DRV-20260801-0007',
+    demandType: 'derivation',
+    name: '近7日还款波动率',
+    businessScene: '贷中',
+    expectedEffect: '贷中风险预警，发现还款异常',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_REPAY_VOL_7D',
+    featureCnName: '近7日还款波动率',
+    fieldType: 'Double',
+    processingLogic: '计算近7日还款金额序列的标准差，再除以均值得到波动率',
+    defaultValue: '0.0',
+    l1Category: 'repayment',
+    l2Category: 'repayment_volatility',
+    sourceTableAfter: 'ads_midloan_repay_vol_7d',
+    sourceTableBefore: 'dwd_repayment_detail',
+    dataFreshness: 'realtime',
+    developer: '王数仓',
+    dataTableName: 'ads_midloan_repay_vol_7d',
+    dwTaskId: 'DW-TASK-998900',
+    productScope: '消费分期',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    derivationStatus: 'registered',
+    featureId: 'MIDLOAN-FEAT-0007',
+    businessProblem: '贷中风险预警',
+    hypothesis: '还款波动率反映用户行为稳定性',
+    domainTags: ['风控'],
+    variableTypeTags: ['数值型'],
+    priority: 'high',
+    visibility: 'team',
+    status: 'adopted',
+    owner: '小李',
+    createdAt: '2026-08-01 14:00:00',
+    updatedAt: '2026-08-03 11:00:00',
+    relatedResources: [
+      { type: 'table', name: 'dwd_repayment_detail', displayName: 'dwd_repayment_detail' }
+    ],
+    referencedTopicIds: []
+  },
+  {
+    id: 'DRV-20260803-0015',
+    demandType: 'derivation',
+    name: '夜间活跃度指数',
+    businessScene: '贷中',
+    expectedEffect: '识别异常夜间活动',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_NIGHT_ACTIVE_IDX',
+    featureCnName: '夜间活跃度指数',
+    fieldType: 'Double',
+    processingLogic: '统计 22:00-06:00 期间的用户行为次数，与日间行为次数比值',
+    defaultValue: '0.0',
+    l1Category: 'user_behavior',
+    l2Category: 'time_pattern',
+    sourceTableAfter: 'ads_midloan_night_active',
+    sourceTableBefore: 'dwd_user_event',
+    dataFreshness: 'realtime',
+    developer: '王数仓',
+    dataTableName: 'ads_midloan_night_active',
+    dwTaskId: 'DW-TASK-998888',
+    productScope: '现金贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    derivationStatus: 'developing',
+    businessProblem: '识别异常夜间活动模式',
+    hypothesis: '欺诈用户夜间活跃度显著高于正常用户',
+    domainTags: ['风控', '反欺诈'],
+    variableTypeTags: ['数值型'],
+    priority: 'medium',
+    visibility: 'team',
+    status: 'exploring',
+    owner: '小李',
+    createdAt: '2026-08-03 09:00:00',
+    updatedAt: '2026-08-05 14:20:00',
+    relatedResources: [
+      { type: 'table', name: 'dwd_user_event', displayName: 'dwd_user_event' }
+    ],
+    referencedTopicIds: []
+  },
+  {
+    id: 'DRV-20260804-0020',
+    demandType: 'derivation',
+    name: '信用历史长度',
+    businessScene: '贷中',
+    expectedEffect: '评估用户信用历史',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_CREDIT_HIST_LEN',
+    featureCnName: '信用历史长度',
+    fieldType: 'Integer',
+    processingLogic: '计算用户首次授信至今的天数',
+    defaultValue: '0',
+    l1Category: 'credit_history',
+    l2Category: 'history_length',
+    sourceTableAfter: 'ads_midloan_credit_hist_len',
+    sourceTableBefore: 'dwd_user_credit',
+    dataFreshness: 'offline_t1',
+    developer: '王数仓',
+    dataTableName: 'ads_midloan_credit_hist_len',
+    dwTaskId: 'DW-TASK-998866',
+    productScope: '现金贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    derivationStatus: 'developing',
+    businessProblem: '评估用户信用历史',
+    hypothesis: '信用历史长度与违约率负相关',
+    domainTags: ['风控'],
+    variableTypeTags: ['数值型'],
+    priority: 'medium',
+    visibility: 'team',
+    status: 'exploring',
+    owner: '小李',
+    createdAt: '2026-08-04 10:00:00',
+    updatedAt: '2026-08-05 16:00:00',
+    relatedResources: [
+      { type: 'table', name: 'dwd_user_credit', displayName: 'dwd_user_credit' }
+    ],
+    referencedTopicIds: []
+  },
+  {
+    id: 'DRV-20260805-0025',
+    demandType: 'derivation',
+    name: '申请频次指数',
+    businessScene: '贷中',
+    expectedEffect: '评估用户申请行为',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_APPLY_FREQ_IDX',
+    featureCnName: '申请频次指数',
+    fieldType: 'Double',
+    processingLogic: '近 7 日申请次数 / 近 30 日申请次数',
+    defaultValue: '0.0',
+    l1Category: 'user_behavior',
+    l2Category: 'apply_pattern',
+    sourceTableAfter: 'ads_midloan_apply_freq',
+    sourceTableBefore: 'dwd_loan_apply',
+    dataFreshness: 'realtime',
+    developer: '王数仓',
+    dataTableName: 'ads_midloan_apply_freq',
+    dwTaskId: 'DW-TASK-998800',
+    productScope: '现金贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    derivationStatus: 'pending_register',
+    remark: '由原内数变量迁移为贷中行为品类',
+    businessProblem: '评估用户申请行为',
+    hypothesis: '申请频次激增预示用户风险',
+    domainTags: ['风控'],
+    variableTypeTags: ['数值型'],
+    priority: 'medium',
+    visibility: 'team',
+    status: 'exploring',
+    owner: '数据应用团队',
+    createdAt: '2026-08-05 10:00:00',
+    updatedAt: '2026-08-04 09:15:00',
+    relatedResources: [
+      { type: 'table', name: 'dwd_loan_apply', displayName: 'dwd_loan_apply' }
+    ],
+    referencedTopicIds: []
+  },
+  {
+    id: 'DRV-20260803-0030',
+    demandType: 'derivation',
+    name: '近30日交易总笔数',
+    businessScene: '贷中',
+    expectedEffect: '评估用户活跃度',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_TXN_CNT_30D',
+    featureCnName: '近30日交易总笔数',
+    fieldType: 'Integer',
+    processingLogic: '近 30 日成功交易总笔数',
+    defaultValue: '0',
+    l1Category: 'user_behavior',
+    l2Category: 'activity_level',
+    sourceTableAfter: 'ads_midloan_txn_cnt_30d',
+    sourceTableBefore: 'dwd_trade_detail',
+    dataFreshness: 'offline_t1',
+    developer: '王数仓',
+    dataTableName: 'ads_midloan_txn_cnt_30d',
+    dwTaskId: 'DW-TASK-998755',
+    productScope: '现金贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '数据应用团队',
+    remark: '由原内数变量迁移为贷中行为品类',
+    derivationStatus: 'pending_register',
+    businessProblem: '评估用户活跃度',
+    hypothesis: '交易频次反映用户活跃度',
+    domainTags: ['风控'],
+    variableTypeTags: ['数值型'],
+    priority: 'low',
+    visibility: 'team',
+    status: 'exploring',
+    owner: '数据应用团队',
+    createdAt: '2026-08-03 11:20:00',
+    updatedAt: '2026-08-04 09:15:00',
+    relatedResources: [
+      { type: 'table', name: 'dwd_trade_detail', displayName: 'dwd_trade_detail' }
+    ],
+    referencedTopicIds: []
+  },
+  {
+    id: 'DRV-20260805-0050',
+    demandType: 'derivation',
+    name: '近30日社保缴纳连续月数',
+    businessScene: '贷中',
+    expectedEffect: '通过社保缴纳连续月数评估用户工作稳定性',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_SOCIAL_CONT_MONTHS_30D',
+    featureCnName: '近30日社保缴纳连续月数',
+    fieldType: 'Integer',
+    processingLogic: '对接社保查询 API，按 user_id 统计近30日内连续社保缴纳月数',
+    defaultValue: '0',
+    l1Category: 'repayment',
+    l2Category: 'repayment_stability',
+    sourceTableAfter: '',
+    sourceTableBefore: 'dwd_social_security_log',
+    dataFreshness: 'offline_t2',
+    developer: '王数仓',
+    productScope: '小微贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    remark: '需数仓团队联调社保查询 API',
+    derivationStatus: 'pending_dev',
+    businessProblem: '评估用户工作稳定性',
+    hypothesis: '社保连续缴纳反映工作稳定性',
+    domainTags: ['风控'],
+    variableTypeTags: ['数值型'],
+    priority: 'medium',
+    visibility: 'team',
+    status: 'exploring',
+    owner: '小李',
+    createdAt: '2026-08-05 10:30:00',
+    updatedAt: '2026-08-05 10:30:00',
+    relatedResources: [],
+    referencedTopicIds: []
+  }
+]
+
 const decisionMocks: ExploreDecision[] = [
   {
     id: 'DEC-001',
@@ -434,8 +780,8 @@ const auditMocks: ExploreAuditEvent[] = [
 ]
 
 export const ExploreStore = {
-  listTopics: () => [...readExtraTopics(), ...topicMocks].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
-  getTopicById: (id: string) => [...readExtraTopics(), ...topicMocks].find((item) => item.id === id),
+  listTopics: () => [...readExtraTopics(), ...topicMocks, ...derivationMocks].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+  getTopicById: (id: string) => [...readExtraTopics(), ...topicMocks, ...derivationMocks].find((item) => item.id === id),
   addTopic: (payload: {
     name: string
     businessProblem: string
