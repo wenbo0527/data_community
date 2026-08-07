@@ -8,12 +8,12 @@
  * - 状态变更自动记录（由 stateEngine 内部实现）
  * - 自动重试（5秒×3次，由 stateEngine.scheduleAutoRetry 实现）
  */
-import { computed, ref } from 'vue'
-import * as MidloanStateEngine from '@/modules/variable-hub/mock/risk-feature/stateEngine'
+import { computed, ref, type Ref } from 'vue'
+import MidloanStateEngine from '@/modules/variable-hub/mock/risk-feature/stateEngine'
 import { allowedActionsByStatus } from '@/modules/variable-hub/constants/midloanStatusMap'
 import { useRolePermissions } from './useRolePermissions'
 
-export function useMidloanState(variableId, currentStatus) {
+export function useMidloanState(variableId: Ref<string>, currentStatus: Ref<string>) {
   // 当前角色（响应式）
   const { role } = useRolePermissions()
 
@@ -25,7 +25,7 @@ export function useMidloanState(variableId, currentStatus) {
    * 自动走抽屉（submit_dev_oa/submit_verify/request_offline/verify_reject）
    * 其他走 stateEngine 直接切换
    */
-  async function executeAction(actionKey: string, payload) {
+  async function executeAction(actionKey: string, payload?: any) {
     if (!variableId.value) {
       return { ok: false, reason: '特征ID为空' }
     }
@@ -63,7 +63,7 @@ export function useMidloanState(variableId, currentStatus) {
    * 是否需要抽屉（4 个特殊动作）
    */
   const NEEDS_DRAWER = ['submit_dev_oa', 'submit_verify', 'request_offline', 'verify_reject']
-  function needsDrawer(actionKey) {
+  function needsDrawer(actionKey: string) {
     return NEEDS_DRAWER.includes(actionKey)
   }
 

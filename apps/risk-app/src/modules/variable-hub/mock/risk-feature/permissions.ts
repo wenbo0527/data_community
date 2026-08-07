@@ -91,22 +91,22 @@ export const UserContext = {
   get() {
     return { ..._currentUser }
   },
-  set(user) {
+  set(user: any) {
     _currentUser = { ..._currentUser, ...user }
   },
   /** 切换角色（演示用） */
-  switchRole(role) {
+  switchRole(role: string) {
     if (ROLE_MATRIX[role]) {
       _currentUser = { ..._currentUser, role }
     }
   },
   /** 是否有某权限 */
-  has(permission) {
+  has(permission: string) {
     const set = ROLE_MATRIX[_currentUser.role]
     return set ? set.has(permission) : false
   },
   /** 是否有任一权限 */
-  hasAny(...permissions) {
+  hasAny(...permissions: string[]) {
     return permissions.some(p => this.has(p))
   },
   /** 列出所有权限 */

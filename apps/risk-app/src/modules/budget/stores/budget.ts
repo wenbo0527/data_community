@@ -12,9 +12,10 @@ export const useBudgetStore = defineStore('budget', {
     async fetchBudgetList(params?: { page?: number; pageSize?: number }) {
       this.loading = true
       try {
-        const res = await getBudgetList(params || { page: 1, pageSize: 10 })
-        this.list = res.list || []
-        this.total = Number(res.total || this.list.length)
+        const res: any = await getBudgetList(params || { page: 1, pageSize: 10 })
+        const data = res?.data || res
+        this.list = data.list || []
+        this.total = Number(data.total || this.list.length)
       } finally {
         this.loading = false
       }

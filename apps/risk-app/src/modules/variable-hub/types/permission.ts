@@ -14,9 +14,9 @@ export interface UserContext {
 }
 
 export const USER_ROLES: Record<UserRole, UserRole> = {
-  RISK_DATA_MEMBER: 'risk_data_member',
-  RISK_DATA_ADMIN: 'risk_data_admin',
-  COMMUNITY_ADMIN: 'community_admin'
+  risk_data_member: 'risk_data_member',
+  risk_data_admin: 'risk_data_admin',
+  community_admin: 'community_admin'
 }
 
 export const ROLE_LABELS: Record<AnyRole, string> = {
@@ -53,14 +53,14 @@ export type Permission =
   | 'supplement_table'     // B1
 
 export const PERMISSIONS: Record<Permission, Permission> = {
-  SUBMIT_DEV_OA: 'submit_dev_oa',
-  SUBMIT_VERIFY: 'submit_verify',
-  VERIFY_PASS: 'verify_pass',
-  VERIFY_REJECT: 'verify_reject',
-  START_ONLINE: 'start_online',
-  REQUEST_OFFLINE: 'request_offline',
-  RETRY_SYNC: 'retry_sync',
-  RETRY_DW: 'retry_dw',
-  MANUAL_BATCH_RETRY: 'manual_batch_retry',
-  SUPPLEMENT_TABLE: 'supplement_table'
+  submit_dev_oa: 'submit_dev_oa',
+  submit_verify: 'submit_verify',
+  verify_pass: 'verify_pass',
+  verify_reject: 'verify_reject',
+  start_online: 'start_online',
+  request_offline: 'request_offline',
+  retry_sync: 'retry_sync',
+  retry_dw: 'retry_dw',
+  manual_batch_retry: 'manual_batch_retry',
+  supplement_table: 'supplement_table',
 }

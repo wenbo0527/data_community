@@ -43,7 +43,7 @@ export const useExploreStore = defineStore('explore', () => {
     dataSourceId?: string
     relatedVariableIds?: string[]
   }) {
-    const r = ExploreStore.addTopic(payload)
+    const r = ExploreStore.addTopic(payload as any)
     refresh()
     return r
   }

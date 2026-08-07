@@ -341,7 +341,7 @@ function nextExperimentId() {
 
 function readExtraDecisions(): ExploreDecision[] {
   const data = safeParse(localStorage.getItem(DECISION_KEY))
-  return Array.isArray(data) ? data : []
+  return (Array.isArray(data) ? data : []) as unknown as ExploreDecision[]
 }
 
 function writeExtraDecisions(list: ExploreDecision[]) {
@@ -350,7 +350,7 @@ function writeExtraDecisions(list: ExploreDecision[]) {
 
 function readExtraAudit(): ExploreAuditEvent[] {
   const data = safeParse(localStorage.getItem(AUDIT_KEY))
-  return Array.isArray(data) ? data : []
+  return (Array.isArray(data) ? data : []) as unknown as ExploreAuditEvent[]
 }
 
 function writeExtraAudit(list: ExploreAuditEvent[]) {
@@ -359,7 +359,7 @@ function writeExtraAudit(list: ExploreAuditEvent[]) {
 
 function readExtraExperiments(): ExploreExperiment[] {
   const data = safeParse(localStorage.getItem(EXPERIMENT_KEY))
-  return Array.isArray(data) ? data : []
+  return (Array.isArray(data) ? data : []) as unknown as ExploreExperiment[]
 }
 
 function writeExtraExperiments(list: ExploreExperiment[]) {

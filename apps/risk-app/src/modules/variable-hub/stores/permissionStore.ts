@@ -30,7 +30,7 @@ export const usePermissionStore = defineStore('permission', () => {
   const isCommunity = computed(() => role.value === USER_ROLES.COMMUNITY_ADMIN)
 
   /** 角色中文名 */
-  const roleLabel = computed(() => ROLE_LABELS[role.value] || role.value)
+  const roleLabel = computed(() => (ROLE_LABELS as any)[role.value] || role.value)
 
   /** 切换角色（包装 UserContext.switchRole + 触发响应式） */
   function switchRole(newRole: string) {

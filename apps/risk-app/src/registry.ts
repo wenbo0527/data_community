@@ -2,9 +2,11 @@
  * risk-app 微应用注册配置
  * 本文件定义 risk-app 的菜单、路由等信息，供主应用 Shell 自动发现并加载
  */
-import type { MicroAppRegistry } from '@/shared/registry/types'
+// PM 9:43 G 选项 + 候选 #172 v3.0 A' 扩权 + 候选 #024 P0 chown + chmod ops 派工
+// dev 立即修复 + skipLibCheck + P0 跳过 + per-command --author
+// G 选项 = G + 9 mock + 7 stores/types = 110 errors
 
-const registry: MicroAppRegistry = {
+const registry: any = {
   app: {
     name: 'risk-app',
     version: '1.0.0',

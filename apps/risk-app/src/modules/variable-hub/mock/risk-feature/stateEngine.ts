@@ -24,7 +24,7 @@ interface SyncLog {
   id: string                          // SYNC-YYYYMMDD-NNNNNN
   featureId: string
   featureName: string
-  type: 'oa_dev' | 'oa_verify' | 'oa_production_internal' | 'oa_production_variable'
+  type: 'oa_dev' | 'oa_verify' | 'oa_production' | 'oa_production_internal' | 'oa_production_variable'
        | 'dw_callback' | 'internal_sync' | 'variable_sync' | 'offline_batch'
   direction: 'call' | 'callback' | 'batch'
   status: 'success' | 'failed' | 'pending'
@@ -48,7 +48,7 @@ interface StatusChangeLog {
   operator: string                    // 操作人（人或系统）
   operatorRole: string                // 角色
   operatedAt: string                  // 操作时间
-  reason?: string                     // 备注（如驳回原因）
+  reason?: any                     // 备注（如驳回原因）
 }
 
 let statusChangeLogs: StatusChangeLog[] = []
@@ -56,14 +56,15 @@ let statusChangeLogs: StatusChangeLog[] = []
 function chgId() {
   const d = new Date()
   const ymd = d.toISOString().slice(0, 10).replace(/-/g, '')
-  const count = statusChangeLogs.filter(l => l.id.startsWith(`CHG-${ymd}-`)).length
+  const count = (statusChangeLogs as any[]).filter((l: any) => l.id.startsWith(`CHG-${ymd}-`)).length
   return `CHG-${ymd}-${String(count + 1).padStart(6, '0')}`
 }
 
 export const StatusChangeStore = {
-  list(filter = {}) {
-    let list = [...statusChangeLogs].reverse()
-    if (filter.featureId) list = list.filter(l => l.featureId === filter.featureId)
+  list(filter: any = {}): any[] {
+    let list: any[] = [...statusChangeLogs]
+    list = list.reverse()
+    if (filter.featureId) list = list.filter((l: any) => l.featureId === filter.featureId)
     return list
   },
   push(log: StatusChangeLog) {
@@ -80,7 +81,7 @@ let syncLogs: SyncLog[] = []
 function logId() {
   const d = new Date()
   const ymd = d.toISOString().slice(0, 10).replace(/-/g, '')
-  const count = syncLogs.filter(l => l.id.startsWith(`SYNC-${ymd}-`)).length
+  const count = (syncLogs as any[]).filter((l: any) => l.id.startsWith(`SYNC-${ymd}-`)).length
   return `SYNC-${ymd}-${String(count + 1).padStart(6, '0')}`
 }
 
@@ -143,11 +144,12 @@ function scheduleAutoRetry(featureId: string, currentRetryCount: number, retryFn
 
 // ============ 同步日志 API ============
 export const SyncLogStore = {
-  list(filter = {}) {
-    let list = [...syncLogs].reverse()
-    if (filter.featureId) list = list.filter(l => l.featureId === filter.featureId)
-    if (filter.type) list = list.filter(l => l.type === filter.type)
-    if (filter.status) list = list.filter(l => l.status === filter.status)
+  list(filter: any = {}): any[] {
+    let list: any[] = [...syncLogs]
+    list = list.reverse()
+    if (filter.featureId) list = list.filter((l: any) => l.featureId === filter.featureId)
+    if (filter.type) list = list.filter((l: any) => l.type === filter.type)
+    if (filter.status) list = list.filter((l: any) => l.status === filter.status)
     return list
   },
   push(log: SyncLog) {
@@ -200,7 +202,7 @@ let offlineRecords: OfflineRecord[] = [
 
 export const OfflineRecordStore = {
   list() {
-    return [...offlineRecords].reverse()
+    return [...offlineRecords].reverse() as any[]
   },
   push(rec: OfflineRecord) {
     offlineRecords.push(rec)
@@ -208,21 +210,21 @@ export const OfflineRecordStore = {
   },
   /** 批次结果统计（K2 R03） */
   batchSummary() {
-    const success = offlineRecords.filter(r => r.status === 'success').length
-    const failed = offlineRecords.filter(r => r.status === 'failed').length
+    const success = (offlineRecords as any[]).filter((r: any) => r.status === 'success').length
+    const failed = (offlineRecords as any[]).filter((r: any) => r.status === 'failed').length
     return { total: offlineRecords.length, success, failed }
   }
 }
 
 /** 记录状态变更（D.3 / B2 R11） */
-export function recordStatusChange(featureId, featureName, fromStatus, toStatus, trigger, operator, operatorRole, reason) {
+export function recordStatusChange(featureId: string, featureName: string, fromStatus?: string, toStatus?: string, trigger?: string, operator?: string, operatorRole?: string, reason?: any) {
   StatusChangeStore.push({
     id: chgId(),
     featureId,
     featureName,
-    fromStatus,
-    toStatus,
-    trigger,
+    fromStatus: fromStatus || '',
+    toStatus: toStatus || '',
+    trigger: trigger || '',
     operator: operator || '小李',
     operatorRole: operatorRole || 'risk_data_member',
     operatedAt: nowStr(),
@@ -893,7 +895,7 @@ export function initMockStatusHistory(featureId: string): void {
     // 触发变量数据上的 timestamp 字段（如果有）
     if (v) {
       const tsKey = STATUS_TIMESTAMP_MAP[status]
-      if (tsKey) v[tsKey] = operatedAt
+      if (tsKey) (v as any)[tsKey] = operatedAt
     }
 
     // 入变更记录（除首个状态外）
@@ -956,14 +958,14 @@ export function initMockStatusHistory(featureId: string): void {
 /**
  * 添加一条 mock 同步日志
  */
-function pushMockSyncLog(featureId, featureName, type, direction, status, offsetMin, baseTime, reason) {
+function pushMockSyncLog(featureId: string, featureName: string, type: string, direction: string, status: string, offsetMin: number, baseTime: string, reason?: string) {
   syncLogs.push({
     id: logId(),
     featureId,
     featureName,
-    type,
-    direction,
-    status,
+    type: type as any,
+    direction: direction as any,
+    status: status as any,
     startedAt: offsetTime(baseTime, offsetMin),
     finishedAt: offsetTime(baseTime, offsetMin - 1),
     retryCount: 0,
@@ -974,14 +976,14 @@ function pushMockSyncLog(featureId, featureName, type, direction, status, offset
 /**
  * 添加一条 mock 下线批次
  */
-function pushMockOfflineBatch(featureId, featureName, status, offsetMin, baseTime, reason) {
+function pushMockOfflineBatch(featureId: string, featureName: string, status: string, offsetMin: number, baseTime: string, reason: string) {
   offlineRecords.push({
     batchId: `BATCH-${Date.now().toString().slice(-6)}`,
     featureId,
     featureName,
     offlineAt: offsetTime(baseTime, offsetMin),
     reason,
-    status,
+    status: status as any,
     detail: status === 'failed' ? '变量中心接口返回 500，请联系管理员' : '变量中心确认下线成功'
   })
 }
@@ -1019,7 +1021,7 @@ export const MidloanStateEngine = {
   /** 初始化 mock 完整状态历史 */
   initMockStatusHistory,
   /** 聚合：根据 action key 调用对应函数 */
-  handleAction(featureId, key, payload) {
+  handleAction(featureId: string, key: string, payload?: any): any {
     switch (key) {
       case 'submit_dev_oa': return submitDevOA(featureId, payload)
       case 'simulate_dw_success':
@@ -1048,7 +1050,7 @@ export const MidloanStateEngine = {
    *
    * 文档 K1 明确：下线是被动接收，不允许主动批量申请下线，故移除 request_offline
    */
-  batchExecute(featureIds, actionKey, payload?) {
+  batchExecute(featureIds: string[], actionKey: string, payload?: any) {
     // 白名单：仅允许主流程操作 + 重试类
     const allowedKeys = [
       'submit_dev_oa',

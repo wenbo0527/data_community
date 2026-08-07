@@ -64,26 +64,26 @@ const STATUS_MAPS = {
  * 通用取值：{ statusType, status } => { label, color }
  * status 不存在时返回 { label: '—', color: 'gray' }
  */
-export const getStatus = (statusType, status) => {
-  const map = STATUS_MAPS[statusType]
+export const getStatus = (statusType: keyof typeof STATUS_MAPS, status: string) => {
+  const map = STATUS_MAPS[statusType] as Record<string, { label: string; color: string }> | undefined
   if (!map) return { label: '—', color: 'gray' }
   return map[status] || { label: '—', color: 'gray' }
 }
 
-export const statusLabel = (statusType, status) => getStatus(statusType, status).label
-export const statusColor = (statusType, status) => getStatus(statusType, status).color
+export const statusLabel = (statusType: keyof typeof STATUS_MAPS, status: string) => getStatus(statusType, status).label
+export const statusColor = (statusType: keyof typeof STATUS_MAPS, status: string) => getStatus(statusType, status).color
 
 /**
  * 同名 status 在不同域可能含义不同（pending=待审核 or 待执行）
  * 提供按域的快捷调用
  */
-export const variableStatus = (s) => getStatus('variable', s)
-export const topicStatus = (s) => getStatus('topic', s)
-export const taskStatus = (s) => getStatus('task', s)
-export const insightStatus = (s) => getStatus('insight', s)
-export const riskStatus = (s) => getStatus('risk', s)
-export const priorityStatus = (s) => getStatus('priority', s)
-export const visibilityStatus = (s) => getStatus('visibility', s)
-export const sourceTypeStatus = (s) => getStatus('sourceType', s)
+export const variableStatus = (s: string) => getStatus('variable', s)
+export const topicStatus = (s: string) => getStatus('topic', s)
+export const taskStatus = (s: string) => getStatus('task', s)
+export const insightStatus = (s: string) => getStatus('insight', s)
+export const riskStatus = (s: string) => getStatus('risk', s)
+export const priorityStatus = (s: string) => getStatus('priority', s)
+export const visibilityStatus = (s: string) => getStatus('visibility', s)
+export const sourceTypeStatus = (s: string) => getStatus('sourceType', s)
 
 export default STATUS_MAPS
