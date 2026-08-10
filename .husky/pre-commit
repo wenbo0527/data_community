@@ -1,3 +1,30 @@
-# Simplified pre-commit for testing
-echo "✅ pre-commit: minimal hook (always pass)"
+# pre-commit hook: staged JS/TS/Vue 文件 ESLint
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(js|ts|jsx|tsx|vue)$" || true)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "✅ pre-commit: 无 JS/TS/Vue 文件 staged, 跳过 lint"
+    exit 0
+fi
+
+echo "📋 pre-commit: 检查 staged 文件..."
+echo "$STAGED_FILES" | head -10
+
+# 跑 ESLint（不 set -e，避免 lint 报错时退出）
+eslint --no-eslintrc \
+    --config .eslintrc.byted.json \
+    --ext .js,.ts,.jsx,.tsx,.vue \
+    --max-warnings 0 \
+    $STAGED_FILES
+
+ESLINT_EXIT=$?
+
+if [ $ESLINT_EXIT -ne 0 ]; then
+    echo ""
+    echo "❌ pre-commit: lint 失败 (exit=$ESLINT_EXIT)"
+    echo "   修复后重新 git add + commit"
+    exit $ESLINT_EXIT
+fi
+
+echo ""
+echo "✅ pre-commit: lint 通过"
 exit 0
