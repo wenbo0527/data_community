@@ -2,6 +2,7 @@
   "name": "data-community-platform",
   "version": "1.0.0",
   "description": "数据社区平台",
+  "deprecated": "src/ 主应用已停止维护，详见 src/DEPRECATED.md。线上生产用 portal-shell + apps/* 子应用架构。",
   "scripts": {
     "dev": "node scripts/dev-with-subapps.js",
     "dev:main": "vite",
