@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 #===============================================================================
 # 数字社区原子部署脚本（符号链接切换 + 版本目录管理）
-# 用法: ./deploy.sh <app_name> [--staging]
-# 示例: ./deploy.sh mkt-app
-#       ./deploy.sh risk-app --staging
+# 用法: ./deploy.sh <nginx_path> [<app_dir>] [--staging]
+# 示例: ./deploy.sh mkt                    # 默认 app_dir = mkt-app
+#       ./deploy.sh risk risk-app           # 显式指定
+#       ./deploy.sh mkt --staging           # staging 端口 8444
+#
+# 命名约定:
+#   - nginx_path: nginx location 路径，如 mkt/risk/dex/admin/dmt/dfd
+#   - app_dir: 本地 apps/ 下的目录名，默认 "${nginx_path}-app"
+#   - 远程路径: /var/www/html/${nginx_path} （与 nginx location 一致）
 #
 # 优势:
 #   - 原子切换（ln -sfn）：切换瞬间完成，无中间状态
@@ -15,34 +21,49 @@
 #===============================================================================
 set -euo pipefail
 
-APP="${1:-}"
+NGINX_PATH="${1:-}"
 STAGING=""
-[[ "${2:-}" == "--staging" ]] && STAGING=1
+APP_DIR=""
+shift || true
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --staging) STAGING=1 ;;
+    *) APP_DIR="$1" ;;
+  esac
+  shift || true
+done
 
-if [[ -z "$APP" ]]; then
-  echo "用法: $0 <app_name> [--staging]"
-  echo "示例: $0 mkt-app"
+if [[ -z "$NGINX_PATH" ]]; then
+  echo "用法: $0 <nginx_path> [<app_dir>] [--staging]"
+  echo "示例:"
+  echo "    $0 mkt                  # 默认 app_dir=mkt-app"
+  echo "    $0 risk risk-app        # 显式指定 app_dir"
+  echo "    $0 mkt --staging        # staging 端口 8444"
   exit 1
 fi
 
+# 默认 app_dir = "${nginx_path}-app"（命名约定）
+APP_DIR="${APP_DIR:-${NGINX_PATH}-app}"
+APP="$NGINX_PATH"  # 用于日志输出
+
 VERSION=$(git rev-parse --short HEAD)
 REMOTE_BASE="/var/www/html"
-REMOTE_DIR="${REMOTE_BASE}/${APP}"
-REMOTE_VERSION_DIR="${REMOTE_BASE}/${APP}-${VERSION}"
+REMOTE_DIR="${REMOTE_BASE}/${NGINX_PATH}"
+REMOTE_VERSION_DIR="${REMOTE_BASE}/${NGINX_PATH}-${VERSION}"
 REMOTE_HOST="118.196.79.130"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
 
 # staging 端口（8444）vs 生产（8443）
 if [[ -n "$STAGING" ]]; then
   REMOTE_PORT=8444
-  HEALTH_URL="https://${REMOTE_HOST}:${REMOTE_PORT}/${APP}/"
+  HEALTH_URL="https://${REMOTE_HOST}:${REMOTE_PORT}/${NGINX_PATH}/"
 else
   REMOTE_PORT=8443
-  HEALTH_URL="https://${REMOTE_HOST}:${REMOTE_PORT}/${APP}/"
+  HEALTH_URL="https://${REMOTE_HOST}:${REMOTE_PORT}/${NGINX_PATH}/"
 fi
 
-echo "==> [${APP}@${VERSION}] 构建中..."
-cd "$(dirname "$0")/../apps/${APP}" && npm run build
+echo "==> [${NGINX_PATH}@${VERSION} · app=${APP_DIR}] 构建中..."
+cd "$(dirname "$0")/../apps/${APP_DIR}" && npm run build
 
 echo "==> [${APP}@${VERSION}] 首次部署迁移检查（远程）..."
 # 首次部署时，APP 可能是真实目录（不是符号链接）
@@ -59,11 +80,11 @@ ssh ${SSH_OPTS} root@${REMOTE_HOST} "
 
 echo "==> [${APP}@${VERSION}] rsync 版本目录（不带 --delete）..."
 # 注意：不带 --delete，避免影响其他版本
+# 注意：macOS BSD rsync 不支持 --chmod，权限修复由下方 chown/chmod 处理
 rsync -av \
   --exclude='node_modules' \
   --exclude='.git' \
   --exclude='dist/assets/*.map' \
-  --chmod=Da+rX,Dar+wX \
   dist/ root@${REMOTE_HOST}:${REMOTE_VERSION_DIR}/
 
 echo "==> [${APP}@${VERSION}] 修复权限..."
