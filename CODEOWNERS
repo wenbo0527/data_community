@@ -1,0 +1,186 @@
+# CODEOWNERS · 数字社区研发团队 2
+
+> **本文件由 TASK-20260810-B298F6C5 落地 · 2026-08-10**
+> **格式**: GitHub CODEOWNERS 标准 · @username 是 GitHub 用户名
+> **优先级**: .github/CODEOWNERS > CODEOWNERS > docs/CODEOWNERS
+> **机制**: GitHub 自动 assign reviewer 给 owner · PR 必须经 owner approve 才能 merge
+
+详见：https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+---
+
+## 1. 默认 owner（所有文件）
+
+```
+# 默认 owner（fallback · 适用于未指定路径）
+*                                    @data-community-arch @data-community-pm
+```
+
+---
+
+## 2. 数字社区 6 子应用（按应用分配 owner）
+
+```
+# 风控应用
+apps/risk-app/                       @data-community-arch @data-community-dev
+apps/risk-app/**/api/                @data-community-dev
+apps/risk-app/**/services/           @data-community-dev
+
+# 营销应用
+apps/mkt-app/                        @data-community-arch @data-community-dev
+apps/mkt-app/**/api/                 @data-community-dev
+apps/mkt-app/**/services/            @data-community-dev
+
+# 数据探索
+apps/dex-app/                        @data-community-arch @data-community-dev
+apps/dex-app/**/api/                 @data-community-dev
+
+# 数据模型
+apps/dmt-app/                        @data-community-arch @data-community-dev
+apps/dmt-app/**/api/                 @data-community-dev
+
+# 数据发现
+apps/dfd-app/                        @data-community-arch @data-community-dev
+apps/dfd-app/**/api/                 @data-community-dev
+
+# 运营后台
+apps/admin-app/                      @data-community-arch @data-community-dev
+apps/admin-app/**/api/               @data-community-dev
+
+# 资产管理
+apps/asset-app/                      @data-community-arch @data-community-dev
+apps/asset-app/**/api/               @data-community-dev
+
+# 触达管理
+apps/touch/                          @data-community-arch @data-community-dev
+apps/touch/**/api/                   @data-community-dev
+
+# 横版画布
+apps/horizontal-canvas/              @data-community-arch @data-community-dev
+apps/horizontal-canvas/**/api/       @data-community-dev
+
+# 报表监控
+apps/report-monitor/                 @data-community-arch @data-community-dev
+apps/report-monitor-backend/         @data-community-arch @data-community-dev
+
+# 主入口 shell
+portal-shell/                        @data-community-arch
+```
+
+---
+
+## 3. 共享包 / 基础设施
+
+```
+# 共享 API 包（仅 packages 内部使用 · 业务代码禁止）
+packages/                            @data-community-arch
+
+# 部署脚本
+scripts/                             @data-community-arch @data-community-dev
+deploy.sh                            @data-community-arch @data-community-dev
+.nginx/                              @data-community-arch @data-community-dev
+
+# CI/CD 配置
+.github/workflows/                   @data-community-arch @data-community-dev
+.github/CODEOWNERS                   @data-community-pm
+```
+
+---
+
+## 4. 文档（doc 角色）
+
+```
+# 文档目录（doc 角色负责）
+docs/                                @data-community-doc
+memory/changelog/                    @data-community-doc
+README.md                            @data-community-doc @data-community-pm
+CHANGELOG.md                         @data-community-doc
+CONTRIBUTING.md                      @data-community-doc
+
+# 仓库根规约文档
+CODEOWNERS                           @data-community-pm
+LICENSE                              @data-community-pm
+```
+
+---
+
+## 5. 工具链（linting / 测试 / 类型）
+
+```
+# ESLint / TypeScript / 测试配置
+.eslintrc.json                       @data-community-arch @data-community-dev
+.eslintrc.byted.json                 @data-community-arch @data-community-dev
+tsconfig*.json                       @data-community-arch @data-community-dev
+vitest.config.ts                     @data-community-arch @data-community-dev
+playwright.config.ts                 @data-community-arch @data-community-dev
+.eslintignore                        @data-community-arch @data-community-dev
+```
+
+---
+
+## 6. 依赖与配置
+
+```
+# 依赖与包管理
+package.json                         @data-community-arch @data-community-pm
+package-lock.json                    @data-community-arch @data-community-dev
+pnpm-lock.yaml                       @data-community-arch @data-community-dev
+pnpm-workspace.yaml                  @data-community-arch @data-community-dev
+.npmrc                               @data-community-arch
+.nvmrc                               @data-community-arch
+
+# 环境变量
+.env                                 @data-community-arch @data-community-pm
+.env.*                               @data-community-arch @data-community-pm
+```
+
+---
+
+## 7. 监控与运维
+
+```
+# 监控 / 告警 / 部署
+docker-compose.yml                   @data-community-arch @data-community-dev
+Dockerfile                           @data-community-arch @data-community-dev
+.k8s/                                @data-community-arch @data-community-dev
+monitoring/                          @data-community-arch @data-community-dev
+```
+
+---
+
+## 8. 主应用冻结（src/ 特殊处理）
+
+```
+# src/ 主应用已冻结（2026-08-10 文博拍板）
+# 新功能不在 src/ 开发，修改需 C 级拍板
+src/                                 @data-community-arch @data-community-pm
+src/DEPRECATED.md                    @data-community-pm
+```
+
+---
+
+## 9. 团队角色映射
+
+| GitHub 用户 | 角色 | 职责 |
+|:---|:---|:---|
+| `@data-community-arch` | arch | 架构设计、跨应用治理、技术决策 |
+| `@data-community-dev` | dev | 子应用开发、PR review、代码质量 |
+| `@data-community-qa` | qa | 测试覆盖、QA 流程 |
+| `@data-community-doc` | doc | 文档沉淀、README、Wiki |
+| `@data-community-pm` | PM | 项目管理、派单、立项 |
+
+> **注意**：本文件使用占位符 GitHub 用户名（`@data-community-arch` 等）。实际部署时需替换为团队真实 GitHub 用户名。PM 边界外 · 派蒙协调。
+
+---
+
+## 10. 关联文档
+
+- [BRANCH_NAMING.md](docs/BRANCH_NAMING.md) — 分支命名规约
+- [BRANCH_CLEANUP.md](docs/BRANCH_CLEANUP.md) — 分支清理 SOP
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — 架构总览
+- [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) — PR 模板
+- [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) — Issue 模板
+
+---
+
+*数字社区研发团队 2 · v1.0 · 2026-08-10 拍板生效 · TASK-20260810-B298F6C5 落地*
