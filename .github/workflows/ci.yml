@@ -2,9 +2,24 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, feature/project-structure-optimization ]
+    branches:
+      - main
+      - develop
+      - 'feat/**'
+      - 'fix/**'
+      - 'refactor/**'
+      - 'docs/**'
+      - 'chore/**'
+      - 'feature/project-structure-optimization'  # 历史分支兼容保留
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - develop
+      - 'feat/**'
+      - 'fix/**'
+      - 'refactor/**'
+      - 'docs/**'
+      - 'chore/**'
 
 jobs:
   test:
