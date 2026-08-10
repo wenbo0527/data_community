@@ -1,0 +1,15 @@
+# pre-commit hook: 在 staged JS/TS/Vue 文件上跑 lint 检查
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(js|ts|jsx|tsx|vue)$")
+if [ -z "$STAGED_FILES" ]; then
+    echo "✅ pre-commit: 无 JS/TS/Vue 文件 staged, 跳过 lint"
+    exit 0
+fi
+echo "📋 pre-commit: 检查 staged 文件..."
+pnpm exec eslint --no-eslintrc --config .eslintrc.byted.json --ext .js,.ts,.jsx,.tsx,.vue --max-warnings 0 $STAGED_FILES 2>&1 | tail -20
+ESLINT_EXIT=$?
+if [ $ESLINT_EXIT -ne 0 ]; then
+    echo "❌ pre-commit: lint 失败"
+    exit $ESLINT_EXIT
+fi
+echo "✅ pre-commit: lint 通过"
+exit 0

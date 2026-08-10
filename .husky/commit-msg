@@ -1,0 +1,19 @@
+# 验证 commit message 符合 Conventional Commits 格式
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+if echo "$COMMIT_MSG" | grep -qE "^Merge (branch|remote-tracking branch)"; then
+    exit 0
+fi
+if echo "$COMMIT_MSG" | grep -qE "^Revert \""; then
+    exit 0
+fi
+PATTERN='^(feat|fix|refactor|docs|chore|hotfix|test|build|ci|style|perf|revert)(\([a-z0-9-]+\))?!?: .{1,100}$'
+if echo "$COMMIT_MSG" | head -1 | grep -qE "$PATTERN"; then
+    echo "✅ commit message 格式正确"
+    exit 0
+else
+    echo "❌ commit message 不符合 Conventional Commits 格式"
+    echo "正确格式: <type>(<scope>): <subject>"
+    echo "type: feat / fix / refactor / docs / chore / hotfix / test / build / ci / style / perf / revert"
+    exit 1
+fi
