@@ -47,18 +47,33 @@ APP_DIR="${APP_DIR:-${NGINX_PATH}-app}"
 APP="$NGINX_PATH"  # 用于日志输出
 
 VERSION=$(git rev-parse --short HEAD)
-REMOTE_BASE="/var/www/html"
-REMOTE_DIR="${REMOTE_BASE}/${NGINX_PATH}"
-REMOTE_VERSION_DIR="${REMOTE_BASE}/${NGINX_PATH}-${VERSION}"
+REMOTE_BASE=""  # 根据 STAGING/非 STAGING 在下方赋值
+REMOTE_DIR=""
+REMOTE_VERSION_DIR=""
 REMOTE_HOST="118.196.79.130"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
 
 # staging 端口（8444）vs 生产（8443）
 if [[ -n "$STAGING" ]]; then
   REMOTE_PORT=8444
+  REMOTE_BASE="/var/www/staging"   # staging 独立路径（避免污染 prod）
+  REMOTE_DIR="${REMOTE_BASE}/${NGINX_PATH}"
+  REMOTE_VERSION_DIR="${REMOTE_BASE}/${NGINX_PATH}-${VERSION}"
   HEALTH_URL="https://${REMOTE_HOST}:${REMOTE_PORT}/${NGINX_PATH}/"
+  
+  # 🔴 关键安全门：staging 部署必填 STAGING_CONFIRM=yes
+  if [[ "${STAGING_CONFIRM:-}" != "yes" ]]; then
+    echo "❌ staging 部署需 STAGING_CONFIRM=yes 环境变量"
+    echo "   示例: STAGING_CONFIRM=yes ./deploy.sh ${NGINX_PATH} --staging"
+    exit 1
+  fi
+  
+  echo "    ⚠️⚠️⚠️ STAGING 部署（端口 ${REMOTE_PORT} · 路径 ${REMOTE_BASE}）⚠️⚠️⚠️"
 else
   REMOTE_PORT=8443
+  REMOTE_BASE="/var/www/html"
+  REMOTE_DIR="${REMOTE_BASE}/${NGINX_PATH}"
+  REMOTE_VERSION_DIR="${REMOTE_BASE}/${NGINX_PATH}-${VERSION}"
   HEALTH_URL="https://${REMOTE_HOST}:${REMOTE_PORT}/${NGINX_PATH}/"
 fi
 
