@@ -1,6 +1,6 @@
 <template>
-  <div class="discovery-overview-page">
-    <a-page-header title="数据总览" sub-title="所有录入数据的统一看板 · 资源 / 资产 / 要素 一目了然" :back="false" />
+  <PageContainer>
+    <PageHeader title="数据总览" sub-title="所有录入数据的统一看板 · 资源 / 资产 / 要素 一目了然" />
 
     <div class="content-wrapper">
       <!-- 顶部:核心指标 -->
@@ -144,13 +144,15 @@
         </a-col>
       </a-row>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ApiStore, MetricStore, VariableStore, FeatureStore, CollectionStore } from '../../../mock/shared/dataset'
+import { ApiStore, MetricStore, VariableStore, FeatureStore, CollectionStore } from '@/mock-shared/dataset'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
 
 const router = useRouter()
 
@@ -192,7 +194,7 @@ const assetList = computed(() => CollectionStore.all().map(c => ({
   name: c.name,
   domain: c.type,
   tableCount: c.tableCount + '张',
-  path: `discovery/data-map/collection/${c.id}`
+  path: `discovery/collection/${c.id}`
 })))
 
 const elementTabs = computed(() => {
@@ -209,13 +211,13 @@ const elementTabs = computed(() => {
 // 底部关注 / 浏览(走 mock,后续接 favorites store)
 const favorites = ref([
   { name: 'DAU 指标', type: 'metric', owner: '王运营', path: 'discovery/unified-metrics' },
-  { name: '贷前分析 集合', type: 'asset', owner: '王运营', path: 'discovery/data-map/collection/1' },
+  { name: '贷前分析 集合', type: 'asset', owner: '王运营', path: 'discovery/collection/1' },
   { name: '用户画像查询 API', type: 'api', owner: '王运营', path: 'discovery/api-market' },
   { name: '信用分 变量', type: 'variable', owner: '张风控', path: 'discovery/variable-dict' }
 ])
 const recentlyViewed = ref([
   { name: 'DAU', type: 'metric', time: '5 分钟前', path: 'discovery/unified-metrics' },
-  { name: 'dwd_贷款_0042', type: 'table', time: '20 分钟前', path: 'discovery/data-map' },
+  { name: 'dwd_贷款_0042', type: 'table', time: '20 分钟前', path: 'discovery/asset-catalog' },
   { name: 'getCreditScore', type: 'api', time: '1 小时前', path: 'discovery/api-market' }
 ])
 
@@ -231,11 +233,11 @@ function goItem(path: string) { router.push(path) }
 function goResource() { router.push('discovery/data-resources') }
 function goAsset() { router.push('discovery/asset-catalog') }
 function goElement() { router.push('discovery/indicator-dict') }
-function goFavorite() { router.push('management/favorites') }
+function goFavorite() { router.push('discovery/favorites') }
 </script>
 
 <style lang="scss" scoped>
-.discovery-overview-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
 
 .kpi-card {

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { fileURLToPath, URL } from 'node:url'
 
 /**
  * Vitest config (unit + component tests for this branch only)
@@ -62,7 +62,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '~': fileURLToPath(new URL('./src', import.meta.url))
     }
   }
 })

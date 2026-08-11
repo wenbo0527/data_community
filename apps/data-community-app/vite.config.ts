@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { viteMockServe } from 'vite-plugin-mock'
 import path from 'path'
 
 const ROOT = path.resolve(__dirname, '../..')
@@ -9,11 +8,8 @@ const MONOREPO = path.resolve(ROOT, 'src')
 
 export default defineConfig({
   plugins: [
-    vue(),
-    viteMockServe({
-      mockPath: path.resolve(__dirname, 'src/mock'),
-      enable: true,
-    })
+    vue()
+    // viteMockServe 已禁用 - 改为 ESM 方式加载 src/mock
   ],
   server: {
     host: '0.0.0.0',
@@ -44,7 +40,9 @@ export default defineConfig({
       { find: '@/stores-dca', replacement: path.resolve(__dirname, 'src/stores-dca') },
       { find: '@/utils-dca', replacement: path.resolve(__dirname, 'src/utils-dca') },
       { find: '@/mock-dca', replacement: path.resolve(__dirname, 'src/mock') },
+      { find: '@mock-dca', replacement: path.resolve(__dirname, 'src/mock') },
       { find: '@/mock-shared', replacement: path.resolve(__dirname, 'src/mock/shared') },
+      { find: '@mock-shared', replacement: path.resolve(__dirname, 'src/mock/shared') },
       { find: '@/composables', replacement: path.resolve(__dirname, 'src/composables') },
       { find: '@/dfd-pages', replacement: path.resolve(DFD, 'pages') },
       { find: '@/shared', replacement: MONOREPO },
@@ -88,7 +86,8 @@ export default defineConfig({
       'mockjs',
       'nanoid',
       'uuid',
-    ]
+    ],
+    // holdUntilCrawlEnd: true,
   },
   build: {
     rollupOptions: {

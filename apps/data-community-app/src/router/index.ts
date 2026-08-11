@@ -29,24 +29,11 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '数据发现' }
       },
       {
-        path: 'discovery/data-map',
-        name: 'data-map',
-        component: () => import('../pages/discovery/data-map/index.vue'),
-        meta: { title: '数据地图' }
-      },
-      {
         // 规范化路径:id 必须是数字,杜绝 '/collection/discovery' 这种把模块名当 id 的误用
         path: 'discovery/collection/:id(\\d+)',
         name: 'collection-detail',
         component: () => import('../pages/discovery/collection-detail.vue'),
         meta: { title: '集合详情' }
-      },
-      {
-        // 兼容老路径:旧的 data-map/collection/:id 仍可访问,避免历史链接 404
-        path: 'discovery/data-map/collection/:id(\\d+)',
-        alias: ['discovery/collection/:id(\\d+)'],
-        component: () => import('../pages/discovery/collection-detail.vue'),
-        meta: { title: '集合详情(兼容)' }
       },
       {
         // 客户 360 已从「数据发现」移到「数据探索」,旧路径 discovery/customer360
@@ -74,18 +61,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '资产目录' }
       },
       {
-        path: 'discovery/asset-overview',
-        name: 'asset-overview',
-        component: () => import('../../../dfd-app/src/pages/asset-overview/index.vue'),
-        meta: { title: '资产概览' }
-      },
-      {
-        path: 'discovery/asset-guide',
-        name: 'asset-guide',
-        component: () => import('../../../dfd-app/src/pages/asset-guide/index.vue'),
-        meta: { title: '资产指南' }
-      },
-      {
         path: 'discovery/credit',
         name: 'credit',
         component: () => import('../../../dfd-app/src/pages/credit/index.vue'),
@@ -94,7 +69,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'discovery/external',
         name: 'external',
-        component: () => import('../../../dfd-app/src/pages/external/index.vue'),
+        component: () => import('../pages/discovery/external.vue'),
         meta: { title: '外部数据' }
       },
       {
@@ -106,7 +81,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'discovery/indicator-dict',
         name: 'indicator-dict',
-        component: () => import('../../../dfd-app/src/pages/indicator-dict/index.vue'),
+        component: () => import('../pages/discovery/indicator-dict.vue'),
         meta: { title: '指标字典' }
       },
       {
@@ -136,7 +111,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'discovery/variable-dict',
         name: 'variable-dict',
-        component: () => import('../../../dfd-app/src/pages/variable-dict/index.vue'),
+        component: () => import('../pages/discovery/variable-dict.vue'),
         meta: { title: '变量字典' }
       },
       {
@@ -148,7 +123,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'discovery/feature-dict',
         name: 'feature-dict',
-        component: () => import('../../../dfd-app/src/pages/feature-dict/index.vue'),
+        component: () => import('../pages/discovery/feature-dict.vue'),
         meta: { title: '特征字典' }
       },
       {
@@ -164,15 +139,9 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '血缘构建' }
       },
       {
-        path: 'discovery/impact-analysis',
-        name: 'impact-analysis',
-        component: () => import('../../../dfd-app/src/pages/impact-analysis/index.vue'),
-        meta: { title: '变更影响分析' }
-      },
-      {
         path: 'discovery/data-resources',
         name: 'data-resources',
-        component: () => import('../../../dfd-app/src/pages/data-resources/index.vue'),
+        component: () => import('../pages/discovery/data-resources.vue'),
         meta: { title: '数据资源目录' }
       },
       {
@@ -195,18 +164,6 @@ const routes: RouteRecordRaw[] = [
       { path: 'discovery/data-resources/logs',     name: 'dr-logs',     component: () => import('../pages/discovery/data-resources/logs.vue'),     meta: { title: '日志数据' } },
       { path: 'discovery/data-resources/realtime', name: 'dr-realtime', component: () => import('../pages/discovery/data-resources/realtime.vue'), meta: { title: '实时数据' } },
       {
-        path: 'discovery/batch-registration',
-        name: 'batch-registration',
-        component: () => import('../../../dfd-app/src/pages/batch-registration/index.vue'),
-        meta: { title: '批量注册' }
-      },
-      {
-        path: 'discovery/regulatory-config',
-        name: 'regulatory-config',
-        component: () => import('../../../dfd-app/src/pages/regulatory-config/index.vue'),
-        meta: { title: '监管报表配置' }
-      },
-      {
         path: 'discovery/search',
         name: 'search',
         component: () => import('../../../dfd-app/src/pages/search/index.vue'),
@@ -219,12 +176,8 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../../../dfd-app/src/pages/asset-management/index.vue'),
         meta: { title: '数据管理' }
       },
-      {
-        path: 'management/favorites',
-        name: 'favorites',
-        component: () => import('../../../dfd-app/src/pages/favorites/index.vue'),
-        meta: { title: '我的收藏' }
-      },
+      // 2026-08-06 清理:management/favorites 已统一到 discovery/favorites(我的关注)
+      //   原版定位"收藏的是资产/指标/变量/特征/外数",属于数据发现域
       {
         path: 'management/notifications',
         name: 'notifications',
@@ -232,10 +185,46 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '通知中心' }
       },
       {
+        path: 'management/notifications/detail/:id',
+        name: 'notification-detail',
+        component: () => import('../pages/management/notifications/detail.vue'),
+        meta: { title: '通知详情' }
+      },
+      {
+        path: 'management/notifications/categories',
+        name: 'notification-categories',
+        component: () => import('../pages/management/notifications/categories.vue'),
+        meta: { title: '通知分类' }
+      },
+      {
         path: 'management/business-concept',
         name: 'business-concept',
         component: () => import('../pages/management/business-concept/index.vue'),
         meta: { title: '业务概念' }
+      },
+      {
+        path: 'management/business-domain',
+        name: 'business-domain',
+        component: () => import('../pages/management/business-concept/BusinessDomainList.vue'),
+        meta: { title: '业务域管理' }
+      },
+      {
+        path: 'management/business-entity',
+        name: 'business-entity',
+        component: () => import('../pages/management/business-concept/BusinessEntityList.vue'),
+        meta: { title: '业务实体管理' }
+      },
+      {
+        path: 'management/business-graph',
+        name: 'business-graph',
+        component: () => import('../pages/management/business-concept/BusinessRelationGraph.vue'),
+        meta: { title: '业务图谱' }
+      },
+      {
+        path: 'management/data-standard',
+        name: 'data-standard-index',
+        component: () => import('../pages/management/data-standard/index.vue'),
+        meta: { title: '数据标准' }
       },
       {
         path: 'management/data-standard/standards',
@@ -250,10 +239,115 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '标准详情' }
       },
       {
+        path: 'management/data-standard/domains',
+        name: 'data-standard-domains',
+        component: () => import('../pages/management/data-standard/domains/index.vue'),
+        meta: { title: '数据域管理' }
+      },
+      {
+        path: 'management/data-standard/domains/create',
+        name: 'data-standard-domain-create',
+        component: () => import('../pages/management/data-standard/domains/edit.vue'),
+        meta: { title: '新建数据域' }
+      },
+      {
+        path: 'management/data-standard/domains/:id/edit',
+        name: 'data-standard-domain-edit',
+        component: () => import('../pages/management/data-standard/domains/edit.vue'),
+        meta: { title: '编辑数据域' },
+        props: true
+      },
+      {
+        path: 'management/data-standard/domains/:id',
+        name: 'data-standard-domain-detail',
+        component: () => import('../pages/management/data-standard/domains/detail.vue'),
+        meta: { title: '数据域详情' },
+        props: true
+      },
+      {
+        path: 'management/data-standard/codes',
+        name: 'data-standard-codes',
+        component: () => import('../pages/management/data-standard/codes/index.vue'),
+        meta: { title: '标准代码管理' }
+      },
+      {
+        path: 'management/data-standard/words',
+        name: 'data-standard-words',
+        component: () => import('../pages/management/data-standard/words/index.vue'),
+        meta: { title: '标准单词管理' }
+      },
+      {
+        path: 'management/data-standard/audit',
+        name: 'data-standard-audit',
+        component: () => import('../pages/management/data-standard/audit/index.vue'),
+        meta: { title: '标准稽核管理' }
+      },
+      // ===== 数据质量管理 =====
+      {
+        path: 'management/data-quality/tasks',
+        name: 'quality-task-list',
+        component: () => import('../pages/management/data-quality/task-list/index.vue'),
+        meta: { title: '校验任务管理' }
+      },
+      {
+        path: 'management/data-quality/tasks/create',
+        name: 'quality-task-create',
+        component: () => import('../pages/management/data-quality/task-list/TaskForm.vue'),
+        meta: { title: '新建校验任务' }
+      },
+      {
+        path: 'management/data-quality/tasks/:id/edit',
+        name: 'quality-task-edit',
+        component: () => import('../pages/management/data-quality/task-list/TaskForm.vue'),
+        meta: { title: '编辑校验任务' },
+        props: true
+      },
+      {
+        path: 'management/data-quality/instances',
+        name: 'quality-instance-list',
+        component: () => import('../pages/management/data-quality/task-instances/index.vue'),
+        meta: { title: '任务实例日志' }
+      },
+      {
+        path: 'management/data-quality/instances/:id',
+        name: 'quality-instance-detail',
+        component: () => import('../pages/management/data-quality/task-instances/InstanceDetail.vue'),
+        meta: { title: '实例详情' },
+        props: true
+      },
+      {
         path: 'management/data-models',
         name: 'data-models',
         component: () => import('../pages/management/data-models/index.vue'),
-        meta: { title: '数据模型' }
+        meta: { title: '数据模型' },
+        children: [
+          {
+            path: '',
+            name: 'data-models-list',
+            component: () => import('../pages/management/data-models/DataModelsList.vue'),
+            meta: { title: '数据模型列表' }
+          },
+          {
+            path: 'create',
+            name: 'data-models-create',
+            component: () => import('../pages/management/data-models/DataModelsForm.vue'),
+            meta: { title: '新增数据模型' }
+          },
+          {
+            path: ':id/edit',
+            name: 'data-models-edit',
+            component: () => import('../pages/management/data-models/DataModelsForm.vue'),
+            meta: { title: '编辑数据模型' },
+            props: true
+          },
+          {
+            path: ':id',
+            name: 'data-models-detail',
+            component: () => import('../pages/management/data-models/DataModelsDetail.vue'),
+            meta: { title: '数据模型详情' },
+            props: true
+          }
+        ]
       },
       {
         path: 'management/user-groups',
@@ -262,10 +356,73 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '用户组管理' }
       },
       {
+        path: 'management/metadata',
+        name: 'metadata',
+        component: () => import('../pages/management/metadata/index.vue'),
+        meta: { title: '元数据' }
+      },
+      {
         path: 'management/metadata/modeling',
         name: 'metadata-modeling',
         component: () => import('../pages/management/metadata/modeling.vue'),
         meta: { title: '元数据建模' }
+      },
+      {
+        path: 'management/metadata/entity',
+        name: 'metadata-entity',
+        component: () => import('../pages/management/metadata/entity/index.vue'),
+        meta: { title: '业务实体' }
+      },
+      {
+        path: 'management/metadata/task',
+        name: 'metadata-task',
+        component: () => import('../pages/management/metadata/task/index.vue'),
+        meta: { title: '采集任务' }
+      },
+      {
+        path: 'management/metadata/classify-api-docs',
+        name: 'classify-api-docs',
+        component: () => import('../pages/management/metadata/classify-api-docs.vue'),
+        meta: { title: '分级分类 API 文档' }
+      },
+      {
+        path: 'management/metadata/classify-matrix',
+        name: 'classify-matrix',
+        component: () => import('../pages/management/metadata/classify-matrix.vue'),
+        meta: { title: '数据安全分级矩阵表' }
+      },
+      {
+        path: 'management/metadata/classify-tasks',
+        name: 'classify-tasks',
+        component: () => import('../pages/management/metadata/classify-tasks.vue'),
+        meta: { title: '分级分类任务' }
+      },
+      {
+        path: 'management/metadata/classify',
+        name: 'classify-entry',
+        component: () => import('../pages/management/metadata/classify/index.vue'),
+        redirect: '/management/metadata/classify/sources',
+        meta: { title: '数据分级分类' },
+        children: [
+          {
+            path: 'sources',
+            name: 'classify-sources',
+            component: () => import('../pages/management/metadata/classify/sources.vue'),
+            meta: { title: '数据源' }
+          },
+          {
+            path: 'tables/:systemId',
+            name: 'classify-tables',
+            component: () => import('../pages/management/metadata/classify/tables.vue'),
+            meta: { title: '表列表' }
+          },
+          {
+            path: 'table/:systemId/:schema/:tableName',
+            name: 'classify-table-detail',
+            component: () => import('../pages/management/metadata/classify/table-detail.vue'),
+            meta: { title: '表详情' }
+          }
+        ]
       },
       {
         path: 'management/service',
@@ -280,6 +437,54 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'API 上架向导' }
       },
       {
+        path: 'management/service/backtrack',
+        name: 'service-backtrack',
+        component: () => import('../pages/management/service/backtrack.vue'),
+        meta: { title: '全量变量回溯申请' }
+      },
+      {
+        path: 'management/service/detail-data-query',
+        name: 'service-detail-data-query',
+        component: () => import('../pages/management/service/detail-data-query.vue'),
+        meta: { title: '明细数据查询服务' }
+      },
+      {
+        path: 'management/service/monitor',
+        name: 'service-monitor',
+        component: () => import('../pages/management/service/ServiceMonitor.vue'),
+        meta: { title: '服务监控' }
+      },
+      {
+        path: 'management/service/stats',
+        name: 'service-stats',
+        component: () => import('../pages/management/service/ServiceStats.vue'),
+        meta: { title: '调用统计' }
+      },
+      {
+        path: 'management/service/fund-usage-query',
+        name: 'service-fund-usage-query',
+        component: () => import('../pages/management/service/fund-usage-query/index.vue'),
+        meta: { title: '客户资金用途外数查询' }
+      },
+      {
+        path: 'management/service/api-management',
+        name: 'service-api-management',
+        component: () => import('../pages/management/service/api-management/index.vue'),
+        meta: { title: 'API管理' }
+      },
+      {
+        path: 'management/service/api-management/create',
+        name: 'service-api-management-create',
+        component: () => import('../pages/management/service/api-management/Wizard.vue'),
+        meta: { title: '新建API' }
+      },
+      {
+        path: 'management/service/api-management/:id/edit',
+        name: 'service-api-management-edit',
+        component: () => import('../pages/management/service/api-management/Wizard.vue'),
+        meta: { title: '编辑API' }
+      },
+      {
         path: 'management/asset-management/asset-tags',
         name: 'asset-tags',
         component: () => import('../pages/management/asset-management/asset-tags/index.vue'),
@@ -291,13 +496,143 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../pages/management/asset-management/tag-group/index.vue'),
         meta: { title: '标签分组管理' }
       },
+      // ===== 资产管理 - 基础管理 =====
+      {
+        path: 'management/asset-management/basic-management/data-source',
+        name: 'asset-data-source',
+        component: () => import('../pages/management/asset-management/basic-management/data-source/index.vue'),
+        meta: { title: '数据源管理' }
+      },
+      {
+        path: 'management/asset-management/basic-management/metadata-collection',
+        name: 'metadata-collection',
+        component: () => import('../pages/management/asset-management/basic-management/metadata-collection/index.vue'),
+        meta: { title: '创建采集任务' }
+      },
+      {
+        path: 'management/asset-management/basic-management/metadata-collection/task-list',
+        name: 'metadata-collection-list',
+        component: () => import('../pages/management/asset-management/basic-management/metadata-collection/List.vue'),
+        meta: { title: '采集任务列表' }
+      },
+      {
+        path: 'management/asset-management/basic-management/tag-management',
+        name: 'tag-management',
+        component: () => import('../pages/management/asset-management/basic-management/tag-management/index.vue'),
+        meta: { title: '标签管理' }
+      },
+      // ===== 资产管理 - 上下架管理 =====
+      {
+        path: 'management/asset-management/listing-management/asset-management',
+        name: 'asset-listing-overview',
+        component: () => import('../pages/management/asset-management/listing-management/asset-management/sources.vue'),
+        meta: { title: '数据资产上下架' }
+      },
+      {
+        path: 'management/asset-management/listing-management/asset-management/system/:systemId',
+        name: 'asset-listing-system',
+        component: () => import('../pages/management/asset-management/listing-management/asset-management/system-tables.vue'),
+        meta: { title: '系统资产列表' }
+      },
+      {
+        path: 'management/asset-management/listing-management/asset-management/detail/:name',
+        name: 'asset-listing-detail',
+        component: () => import('../pages/management/asset-management/listing-management/asset-management/detail.vue'),
+        meta: { title: '资产详情' }
+      },
+      {
+        path: 'management/asset-management/listing-management/data-source',
+        name: 'data-source-listing-overview',
+        component: () => import('../pages/management/asset-management/listing-management/data-source/sources.vue'),
+        meta: { title: '数据资源上下架' }
+      },
+      {
+        path: 'management/asset-management/listing-management/data-source/business-system',
+        name: 'data-source-business-system',
+        component: () => import('../pages/management/asset-management/listing-management/data-source/business-system.vue'),
+        meta: { title: '业务系统台账' }
+      },
+      {
+        path: 'management/asset-management/listing-management/data-source/system/:systemId',
+        name: 'data-source-listing-system',
+        component: () => import('../pages/management/asset-management/listing-management/asset-management/system-tables.vue'),
+        meta: { title: '系统资源列表' }
+      },
+      {
+        path: 'management/asset-management/listing-management/metric-management',
+        name: 'metric-management',
+        component: () => import('../pages/management/asset-management/listing-management/metric-management/index.vue'),
+        meta: { title: '指标管理' }
+      },
+      {
+        path: 'management/asset-management/listing-management/metric-management/:id/:mode',
+        name: 'MetricDetail',
+        component: () => import('../pages/management/asset-management/listing-management/metric-management/MetricDetail.vue'),
+        meta: { title: '指标详情' }
+      },
       {
         path: 'management/permission/data-permission/apply',
         name: 'permission-apply',
         component: () => import('../pages/management/permission/data-permission/apply.vue'),
         meta: { title: '字段权限申请' }
       },
+      // 2026-08-06 新增:补齐原版 4 步权限流程
+      {
+        path: 'management/permission/data-permission/approval',
+        name: 'permission-approval',
+        component: () => import('../pages/management/permission/data-permission/approval.vue'),
+        meta: { title: '字段权限·我的审批' }
+      },
+      {
+        path: 'management/permission/data-permission/management',
+        name: 'permission-management',
+        component: () => import('../pages/management/permission/data-permission/management.vue'),
+        meta: { title: '字段权限·申请管理' }
+      },
+      {
+        path: 'management/permission/data-permission/progress',
+        name: 'permission-progress',
+        component: () => import('../pages/management/permission/data-permission/progress.vue'),
+        meta: { title: '字段权限·我的进度' }
+      },
+      // 2026-08-06 新增:数据上下架(资源/资产/要素/批量)
+      {
+        path: 'management/shelf/resource-shelf',
+        name: 'shelf-resource',
+        component: () => import('../pages/management/shelf/resource-shelf.vue'),
+        meta: { title: '资源上下架' }
+      },
+      {
+        path: 'management/shelf/asset-shelf',
+        name: 'shelf-asset',
+        component: () => import('../pages/management/shelf/asset-shelf.vue'),
+        meta: { title: '资产上下架' }
+      },
+      {
+        path: 'management/shelf/element-shelf',
+        name: 'shelf-element',
+        component: () => import('../pages/management/shelf/element-shelf.vue'),
+        meta: { title: '要素上下架' }
+      },
+      {
+        path: 'management/shelf/batch-shelf',
+        name: 'shelf-batch',
+        component: () => import('../pages/management/shelf/batch-shelf.vue'),
+        meta: { title: '批量上下架' }
+      },
+      // 数据分级分类已迁移到 metadata/classify 体系（与 dmt-app 一致）
+      {
+        path: 'management/classification',
+        redirect: '/management/metadata/classify/sources'
+      },
       // ===== 数据探索 =====
+      // 仅保留 DCA 探索域自有的 4 个核心入口(已对齐"客户 360 / 工作流 / 看板"三件套):
+      //   - 客户 360(单客户画像查询,真实深度页面)
+      //   - 客户 360 详情(独立详情页)
+      //   - 分析工作流(可视化流程列表)
+      //   - 业务指标看板(跨域指标可视化)
+      // 已清理:
+      //   - 客群管理 / 标签体系 / 虚拟事件 → 划归 MKT 营销域(端口 5177)
       {
         path: 'exploration',
         name: 'exploration',
@@ -309,6 +644,19 @@ const routes: RouteRecordRaw[] = [
         name: 'workflows',
         component: () => import('../pages/exploration/workflows.vue'),
         meta: { title: '分析工作流' }
+      },
+      {
+        // 工作流详情/编辑(2026-08-06 补齐):列表点行进入
+        path: 'exploration/workflows/editor/:id',
+        name: 'workflow-editor',
+        component: () => import('../pages/exploration/workflow-editor.vue'),
+        meta: { title: '工作流编辑' }
+      },
+      {
+        path: 'exploration/indicator-dashboard',
+        name: 'exploration-indicator-dashboard',
+        component: () => import('../pages/exploration/indicator-dashboard.vue'),
+        meta: { title: '业务指标看板' }
       },
       // ===== 无访问权限 =====
       {
@@ -360,25 +708,15 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  // ===== 容错 2: 处理绝对路径(包含 /dca 前缀)=====
+  // ===== 容错 2: 处理根路径跳转 =====
   if (to.path === '/dca' || to.path === '/dca/') {
     const nextRoute: RouteLocationRaw = { path: '/', replace: true }
     ;(nextRoute as any).params = {}
     next(nextRoute)
     return
   }
-  if (to.path.startsWith('/dca/')) {
-    const stripped = to.path.substring('/dca'.length)
-    const nextRoute: RouteLocationRaw = {
-      path: stripped,
-      query: to.query,
-      hash: to.hash,
-      replace: true
-    }
-    ;(nextRoute as any).params = {}
-    next(nextRoute)
-    return
-  }
+
+  // 注:createWebHistory 已 base='/dca/',to.path 不带 /dca 前缀,无需再 strip
 
   const meta = to.meta as { allowedRoles?: string[]; requireAuth?: boolean }
 

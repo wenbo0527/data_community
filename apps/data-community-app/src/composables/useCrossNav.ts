@@ -6,13 +6,12 @@ import { useRouter } from 'vue-router'
  *
  * 用法:
  *   const { go } = useCrossNav()
- *   go('discovery:data-map')
+ *   go('discovery:asset-catalog')
  *   go('discovery:customer360-detail', { userId: '123' })
  */
 export const ROUTE_KEYS = {
   // discovery
   discoveryHome: { module: 'discovery', page: 'index' },
-  discoveryDataMap: { module: 'discovery', page: 'data-map' },
   discoveryOverview: { module: 'discovery', page: 'overview' },
   discoveryMetrics: { module: 'discovery', page: 'metrics-map' },
   discoveryVariable: { module: 'discovery', page: 'variable-map' },
@@ -26,12 +25,11 @@ export const ROUTE_KEYS = {
   managementBusinessConcept: { module: 'management', page: 'business-concept' },
   managementService: { module: 'management', page: 'service' },
   // exploration
+  // 2026-08-06 清理:客群/标签/事件路由已删除,这里同步移除对应的 key,
+  //   避免跨模块跳转走 ghost 路径
   explorationHome: { module: 'exploration', page: 'index' },
   explorationCustomer360: { module: 'exploration', page: 'customer360' },
   explorationCustomer360Detail: { module: 'exploration', page: 'customer360/detail', param: 'userId' },
-  explorationTags: { module: 'exploration', page: 'customer-center/tag-system' },
-  explorationEvents: { module: 'exploration', page: 'customer-center/event-center' },
-  explorationAudience: { module: 'exploration', page: 'customer-center/audience-system/audience-management' },
   explorationWorkflows: { module: 'exploration', page: 'workflows' },
   explorationDashboard: { module: 'exploration', page: 'indicator-dashboard' }
 } as const
@@ -45,12 +43,13 @@ export type RouteKey = keyof typeof ROUTE_KEYS
 export const ROUTE_TABLE: Record<string, string> = {
   // discovery
   'discovery:index': '/discovery/index',
-  'discovery:data-map': '/discovery/data-map',
+  'discovery:asset-catalog': '/discovery/asset-catalog',
   'discovery:overview': '/discovery/overview',
   'discovery:metrics-map': '/discovery/metrics-map',
   'discovery:variable-map': '/discovery/variable-map',
   'discovery:lineage': '/discovery/lineage',
   'discovery:search': '/discovery/search',
+  'discovery:favorites': '/discovery/favorites', // 2026-08-06:统一收藏入口
 
   // management
   'management:index': '/management/index',
@@ -61,15 +60,13 @@ export const ROUTE_TABLE: Record<string, string> = {
   'management:business-concept': '/management/business-concept',
   'management:data-standard': '/management/data-standard/standards',
   'management:asset-tags': '/management/asset-management/asset-tags',
-  'management:favorites': '/management/favorites',
+  'management:favorites': '/discovery/favorites', // 2026-08-06:统一到发现域
 
   // exploration
+  // 2026-08-06 清理:同上,移除客群/标签/事件 3 条
   'exploration:index': '/exploration/index',
   'exploration:customer360': '/exploration/customer360',
   'exploration:customer360-detail': '/exploration/customer360/detail/:userId',
-  'exploration:tag-system': '/exploration/customer-center/tag-system',
-  'exploration:event-center': '/exploration/customer-center/event-center',
-  'exploration:audience-management': '/exploration/customer-center/audience-system/audience-management',
   'exploration:workflows': '/exploration/workflows',
   'exploration:indicator-dashboard': '/exploration/indicator-dashboard'
 }
@@ -79,7 +76,7 @@ export function useCrossNav() {
 
   /**
    * 跳转到指定 key 路由
-   * @param key 例如 'discovery:data-map' 或 'discovery:customer360-detail'
+   * @param key 例如 'discovery:asset-catalog' 或 'discovery:customer360-detail'
    * @param options.context 上下文参数(通过 query 传递,接收页面可读取)
    * @param options.params 参数替换,例如 { userId: '123' } 会替换 :userId
    */

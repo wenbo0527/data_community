@@ -307,7 +307,7 @@ const getStatusText = (status) => {
 
 // 事件处理函数
 const handleCreate = () => {
-  router.push('/management/service/data-models/create')
+  router.push('/home/management/service/data-models/create')
 }
 
 const handleView = (record) => {

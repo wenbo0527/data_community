@@ -1,6 +1,19 @@
-import type { MockMethod } from 'vite-plugin-mock';
 import { MetadataStore } from './shared/metadata-store';
-export const mockTables = MetadataStore.getTables();
+
+// 综合 Mock 数据：基于 MetadataStore 但补充 fields/type/category/qualityScore
+const baseMeta = MetadataStore.getTables()
+export const mockTables = baseMeta.map((meta) => ({
+  ...meta,
+  type: 'TABLE',
+  category: '主数据',
+  updateFrequency: 'daily',
+  qualityScore: 85 + Math.floor(Math.random() * 15),
+  fields: [
+    { name: 'id', type: 'BIGINT', sensitivity: 'PUBLIC', description: '主键', isPrimary: true },
+    { name: 'created_at', type: 'TIMESTAMP', sensitivity: 'INTERNAL', description: '创建时间' },
+    { name: 'updated_at', type: 'TIMESTAMP', sensitivity: 'INTERNAL', description: '更新时间' }
+  ]
+})) as any[]
 
 // 数据地图模拟数据
 
@@ -824,7 +837,7 @@ export const mockCollections: TableCollection[] = [
     name: '贷前分析',
     description: '贷前分析场景的相关数据表，包含贷款申请、用户信息等核心数据',
     type: '业务流程',
-    tables: mockTables.filter(table => ['贷前分析', '用户域'].includes(table.domain)),
+    tables: (mockTables as any[]).filter((table) => table && ['信贷域', '客户域'].includes(table.domain)),
     owner: '张三',
     updateTime: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5分钟前
     isFavorite: true,
@@ -1039,7 +1052,7 @@ const mockApis = [
       };
     }
   }
-] as MockMethod[];
+] as any;
 
 export default {
   tables: mockTables,

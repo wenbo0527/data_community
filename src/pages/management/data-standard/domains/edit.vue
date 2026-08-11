@@ -179,7 +179,7 @@ const handleSave = async () => {
     setTimeout(() => {
       saving.value = false
       Message.success(isEdit.value ? '更新成功' : '创建成功')
-      router.push('/management/data-standard/domains')
+      router.push('/home/management/data-standard/domains')
     }, 1000)
   }
 }

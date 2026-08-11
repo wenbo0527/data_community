@@ -38,13 +38,13 @@ export interface SearchRecord {
 const MOCK_RECORDS: SearchRecord[] = [
   // ── 数据表(table) ──────────────────────────
   { id: 't-001', type: 'table', name: 'dwd_贷款_0042', description: '贷款申请主表',
-    domain: '用户域', owner: '王运营', path: 'discovery/data-map', query: { table: 'dwd_贷款_0042' }, score: 0 },
+    domain: '用户域', owner: '王运营', path: 'discovery/asset-catalog', query: { table: 'dwd_贷款_0042' }, score: 0 },
   { id: 't-002', type: 'table', name: 'dwd_风控_0017', description: '风控评分事实表',
-    domain: '风控域', owner: '张风控', path: 'discovery/data-map', query: { table: 'dwd_风控_0017' }, score: 0 },
+    domain: '风控域', owner: '张风控', path: 'discovery/asset-catalog', query: { table: 'dwd_风控_0017' }, score: 0 },
   { id: 't-003', type: 'table', name: 'dws_客户主档', description: '客户主档宽表',
-    domain: '用户域', owner: '李产品', path: 'discovery/data-map', query: { table: 'dws_客户主档' }, score: 0 },
+    domain: '用户域', owner: '李产品', path: 'discovery/asset-catalog', query: { table: 'dws_客户主档' }, score: 0 },
   { id: 't-004', type: 'table', name: 'ods_交易流水', description: '交易流水原始层',
-    domain: '交易域', owner: '吴工程', path: 'discovery/data-map', query: { table: 'ods_交易流水' }, score: 0 },
+    domain: '交易域', owner: '吴工程', path: 'discovery/asset-catalog', query: { table: 'ods_交易流水' }, score: 0 },
 
   // ── 指标(metric) ────────────────────────────
   { id: 'm-001', type: 'metric', name: '首逾率', description: '贷款首期逾期率',
@@ -72,7 +72,7 @@ const MOCK_RECORDS: SearchRecord[] = [
  * 后续若有「按 type 全跳转」的入口,可直接复用这张表
  */
 export const JUMP_TARGETS: Record<SearchRecordType, { path: string }> = {
-  table:  { path: 'discovery/data-map' },
+  table:  { path: 'discovery/asset-catalog' },
   metric: { path: 'discovery/indicator-dict' },
   api:    { path: 'discovery/api-market' },
   field:  { path: 'discovery/variable-dict' }

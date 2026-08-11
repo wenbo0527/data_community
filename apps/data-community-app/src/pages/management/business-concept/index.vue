@@ -94,7 +94,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { BusinessConceptStore } from '@/mock/shared/business-concept-store'
+import { BusinessConceptStore } from '@/mock-shared/business-concept-store'
 
 const router = useRouter()
 

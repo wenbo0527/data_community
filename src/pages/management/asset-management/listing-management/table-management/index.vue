@@ -179,7 +179,7 @@ const handleCreate = () => {
   if (props.assetType === 'Resource') {
     Message.info('打开数据源接入弹窗')
   } else {
-    router.push('/management/asset-management/listing-management/table-management/register')
+    router.push('/home/management/asset-management/listing-management/table-management/register')
   }
 }
 

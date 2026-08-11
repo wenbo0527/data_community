@@ -157,7 +157,7 @@ const filterBySupplier = async (supplier: string) => {
 }
 
 const goToExternalPurchaseRegister = () => {
-  router.push('/discovery/asset-management/external-purchase-register')
+  router.push('/home/discovery/asset-management/external-purchase-register')
 }
 
 const showSupplierModal = ref(false)

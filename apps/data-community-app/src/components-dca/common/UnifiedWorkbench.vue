@@ -226,7 +226,7 @@ import GlobalSearchResult from './GlobalSearchResult.vue'
 import MyArtifactsPanel from './MyArtifactsPanel.vue'
 import GlobalGovernanceOverview from './GlobalGovernanceOverview.vue'
 import RoleSwitcher from './RoleSwitcher.vue'
-import { FavoriteStore } from '@/mock/shared/favorite-directory'
+import { FavoriteStore } from '@/mock-shared/favorite-directory'
 
 type Module = 'discovery' | 'management' | 'exploration'
 
@@ -307,7 +307,7 @@ const onVisitFavorite = (fav: any) => {
 }
 
 const onViewAllFavorites = () => {
-  go('management:favorites' as any)
+  go('discovery:favorites' as any)
 }
 
 const moduleColor = (mod: string) => ({
@@ -329,7 +329,7 @@ const rolePersonalizedGreeting = computed(() => {
 })
 
 // P1.2: 按角色推荐业务概念
-import { TaxonomyStore } from '@/mock/shared/classification-taxonomy'
+import { TaxonomyStore } from '@/mock-shared/classification-taxonomy'
 const roleConcepts = computed(() => {
   const def = currentRoleDef.value
   // 按业务归属筛概念
@@ -355,7 +355,7 @@ const onViewAllConcepts = () => {
 
 // 把 roleShortcuts 转成 component-friendly 格式
 const iconMap: Record<string, any> = {
-  'data-map': IconStorage,
+  'asset-catalog': IconStorage,
   'customer360': IconUserGroup,
   'metrics-map': IconBranch,
   'variable-map': IconDesktop,

@@ -1,10 +1,10 @@
 <template>
-  <div class="api-market-page">
-    <a-page-header title="API 市场" sub-title="数据服务 · 申请使用" :back="false">
+  <PageContainer>
+    <PageHeader title="API 市场" sub-title="数据服务 · 申请使用">
       <template #extra>
         <a-button @click="goBack"><template #icon><icon-left /></template>返回</a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
     <div class="content-wrapper">
       <a-row :gutter="[16, 16]">
         <a-col v-for="api in apis" :key="api.id" :span="8">
@@ -66,13 +66,16 @@
       <a-divider />
       <pre v-if="tryOutResult" class="tryout-result">{{ tryOutResult }}</pre>
     </a-drawer>
-  </div>
+    </div>
+   </PageContainer>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { ApiStore } from '../../../mock/shared/dataset'
+import { ApiStore } from '@/mock-shared/dataset'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
 
 const router = useRouter()
 // 直接复用公共 mock:A002 标记为已申请,其余未申请
@@ -120,7 +123,7 @@ function applyApi(api: any) {
 const goBack = () => router.push('discovery')
 </script>
 <style lang="scss" scoped>
-.api-market-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
 .api-card {
   height: 100%;

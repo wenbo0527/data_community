@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { StandardStore } from '@/mock/shared/standard-store'
+import { StandardStore } from '@/mock-shared/standard-store'
 
 const route = useRoute()
 const router = useRouter()
@@ -158,9 +158,9 @@ function applyPermission() {
 function viewField(record: any) {
   const [domain, table, field] = (record.fullPath || '').split('.')
   if (domain && table) {
-    router.push({ path: 'discovery/data-map', query: { domain, table, focusField: field } })
+    router.push({ path: 'discovery/asset-catalog', query: { domain, table, focusField: field } })
   } else {
-    router.push('discovery/data-map')
+    router.push('discovery/asset-catalog')
   }
 }
 function governField(record: any) {

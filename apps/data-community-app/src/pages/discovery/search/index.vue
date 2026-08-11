@@ -144,7 +144,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { SearchExtrasStore } from '@/mock/shared/search-extras'
+import { SearchExtrasStore } from '@/mock-shared/search-extras'
 import { useMockSearch, JUMP_TARGETS as MOCK_JUMP_TARGETS } from '@/composables/useMockSearch'
 
 const router = useRouter()

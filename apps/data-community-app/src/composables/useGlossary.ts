@@ -99,7 +99,7 @@ export const GLOSSARY: Record<string, GlossaryTerm> = {
     name: '资产总览',
     shortDesc: '同义词,已统一为"资产总览"',
     longDesc: '历史上"资产总览"指 KPI 卡片式的资产数量统计,与"数据地图"是同一概念的不同视角(总览 vs 详情)。',
-    examples: ['/discovery/asset-overview 已重定向至 /discovery/data-map'],
+    examples: ['/discovery/asset-overview 已重定向至 /discovery/asset-catalog'],
     relatedTerms: ['data_map'],
     module: 'discovery',
     uiHint: '是"数据地图"的首页摘要'

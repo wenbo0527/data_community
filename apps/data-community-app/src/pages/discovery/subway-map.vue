@@ -246,7 +246,7 @@ function selectNode(node: any) {
   selectedNode.value = node
 }
 
-const goBack = () => router.push('discovery/data-map')
+const goBack = () => router.push('discovery/asset-catalog')
 </script>
 
 <style lang="scss" scoped>

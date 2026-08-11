@@ -15,7 +15,10 @@
     "esModuleInterop": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@/mock/*": ["../../dfd-app/src/mock/*"]
+      "@/mock/*": ["../../dfd-app/src/mock/*"],
+      "@/mock-shared/*": ["./src/mock/shared/*"],
+      "@/components-dca/*": ["./src/components-dca/*"],
+      "@/utils-dca/*": ["./src/utils-dca/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue"]

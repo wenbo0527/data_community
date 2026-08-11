@@ -256,7 +256,7 @@ const handleFilter = () => {
 }
 
 const handleCreate = () => {
-  router.push('/exploration/customer-center/event-center/event-create')
+  router.push('/home/exploration/customer-center/event-center/event-create')
 }
 
 const handleEdit = (record) => {

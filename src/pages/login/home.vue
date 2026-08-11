@@ -344,7 +344,7 @@
                         <a-button 
                           type="text" 
                           size="small" 
-                          @click="$router.push('/management/tasks')"
+                          @click="$router.push('/home/management/tasks')"
                           class="view-more-btn compact"
                         >
                           查看更多

@@ -1,9 +1,8 @@
 <template>
-  <div class="feature-dict-page">
-    <a-page-header
+  <PageContainer>
+    <PageHeader
       :title="focusFeature ? `特征字典 · ${focusFeature}` : '特征字典'"
       sub-title="所有 ML 特征的标准定义 · 字典视图与地图视图合一"
-      :back="false"
     >
       <template #extra>
         <a-button @click="goOverview">
@@ -11,7 +10,7 @@
           数据总览
         </a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
     <div class="content-wrapper">
       <a-alert v-if="focusFeature" type="info" :show-icon="true" style="margin-bottom: 16px">
         正在查看「{{ focusFeature }}」的特征定义
@@ -100,13 +99,15 @@
         </a-descriptions>
       </a-drawer>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { FeatureStore } from '../../../mock/shared/dataset'
+import { FeatureStore } from '@/mock-shared/dataset'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -170,7 +171,7 @@ function closeDetail() { focusFeatureInfo.value = null }
 function goOverview() { router.push('discovery/overview') }
 </script>
 <style lang="scss" scoped>
-.feature-dict-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
 .map-card {
   transition: all 0.2s;

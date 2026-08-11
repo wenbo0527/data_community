@@ -571,7 +571,7 @@ const handleFinish = () => {
     router.push(`/discovery/data-map/table/${encodeURIComponent(editingId.value)}`)
   } else {
     // 新建模式：返回表管理页面
-    router.push('/discovery/asset-management/table-management')
+    router.push('/home/discovery/asset-management/table-management')
   }
 }
 
@@ -579,7 +579,7 @@ const handleFinish = () => {
 const handleBack = () => {
   if (isEditMode.value) {
     // 编辑模式下返回表管理列表
-    router.push('/discovery/asset-management/table-management')
+    router.push('/home/discovery/asset-management/table-management')
   } else {
     // 新建模式下返回上一页
     router.go(-1)

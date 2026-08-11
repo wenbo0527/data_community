@@ -384,7 +384,7 @@ const loadDataSources = () => {
 };
 
 const goBack = () => {
-  router.push('/exploration/workflows');
+  router.push('/home/exploration/workflows');
 };
 
 const addFileDataSource = () => {

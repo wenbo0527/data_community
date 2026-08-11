@@ -12,7 +12,15 @@ export enum RegulatoryCategory {
   PBOC_INTEREST_RATE = 'pboc_interest_rate' // 人行-利率报备检测分析
 }
 
-// 监管报表大类标签映射
+// 监管报表大类标签映射(单数别名,供业务页面使用)
+export const RegulatoryLabels = {
+  [RegulatoryCategory.CBIRC_BANKING]: '银保监会-银监报表',
+  [RegulatoryCategory.PBOC_CENTRALIZED]: '人行-大集中报表',
+  [RegulatoryCategory.PBOC_FINANCIAL_BASE]: '人行-金融基础数据',
+  [RegulatoryCategory.PBOC_INTEREST_RATE]: '人行-利率报备检测分析'
+}
+
+// 监管报表大类标签映射(复数,兼容旧引用)
 export const RegulatoryCategories = {
   [RegulatoryCategory.CBIRC_BANKING]: '银保监会-银监报表',
   [RegulatoryCategory.PBOC_CENTRALIZED]: '人行-大集中报表',

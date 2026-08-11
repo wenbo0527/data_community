@@ -1,11 +1,11 @@
 <template>
-  <div class="external-page">
-    <a-page-header title="外部数据" sub-title="外部数据源接入 · 查询 · 消费分析" :back="false">
+  <PageContainer>
+    <PageHeader title="外部数据" sub-title="外部数据源接入 · 查询 · 消费分析">
       <template #extra>
         <a-button @click="goBack"><template #icon><icon-left /></template>返回</a-button>
         <a-button type="primary"><template #icon><icon-plus /></template>接入新数据源</a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
 
     <div class="content-wrapper">
       <a-row :gutter="16" style="margin-bottom: 16px">
@@ -49,12 +49,14 @@
         </a-table>
       </a-card>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
 
 const router = useRouter()
 
@@ -75,6 +77,6 @@ const goBack = () => router.push('discovery')
 </script>
 
 <style lang="scss" scoped>
-.external-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
 </style>

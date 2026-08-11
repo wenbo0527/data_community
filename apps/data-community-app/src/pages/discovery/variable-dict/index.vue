@@ -1,9 +1,8 @@
 <template>
-  <div class="variable-dict-page">
-    <a-page-header
+  <PageContainer>
+    <PageHeader
       :title="focusVariable ? `变量字典 · ${focusVariable}` : '变量字典'"
       sub-title="所有变量的标准定义 · 字典视图与地图视图合一"
-      :back="false"
     >
       <template #extra>
         <a-button @click="goOverview">
@@ -11,7 +10,7 @@
           数据总览
         </a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
     <div class="content-wrapper">
       <a-alert v-if="focusVariable" type="info" :show-icon="true" style="margin-bottom: 16px">
         正在查看「{{ focusVariable }}」的变量定义
@@ -92,13 +91,15 @@
         </a-descriptions>
       </a-drawer>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { VariableStore } from '../../../mock/shared/dataset'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
+import { VariableStore } from '@/mock-shared/dataset'
 
 const router = useRouter()
 const route = useRoute()
@@ -155,7 +156,7 @@ function closeDetail() { focusVariableInfo.value = null }
 function goOverview() { router.push('discovery/overview') }
 </script>
 <style lang="scss" scoped>
-.variable-dict-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
 .map-card {
   transition: all 0.2s;

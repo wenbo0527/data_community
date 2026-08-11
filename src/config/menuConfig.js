@@ -430,8 +430,7 @@ export const MENU_CONFIG = {
             path: '/management/data-standard/audit',
             routeName: 'StandardAudit'
           }
-        } 
-      }, 
+        }, 
             // 应用层：数据服务管理 
       'management-service': { 
         key: 'management-service', 

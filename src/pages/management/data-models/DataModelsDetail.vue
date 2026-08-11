@@ -355,7 +355,7 @@ const handleCopy = async () => {
     
     if (response.code === 200) {
       Message.success('模型复制成功')
-      router.push('/management/service/data-models')
+      router.push('/home/management/service/data-models')
     } else {
       Message.error(response.message || '复制失败')
     }

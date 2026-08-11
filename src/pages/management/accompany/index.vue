@@ -158,7 +158,7 @@ const handleSearch = (value) => {
 }
 
 const handleCreate = () => {
-  router.push('/management/accompany/create')
+  router.push('/home/management/accompany/create')
 }
 
 const handleViewResult = (record) => {

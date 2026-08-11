@@ -1,29 +1,47 @@
 <template>
-  <div class="discovery-favorites-page">
-    <a-page-header title="我的关注" sub-title="收藏的资产 / 关注的指标 / 申请过的字段 · 一站式查看" :back="false">
+  <PageContainer>
+    <PageHeader title="我的关注" sub-title="收藏的资产 / 关注的指标 / 申请过的字段 · 一站式查看">
       <template #extra>
         <a-button @click="goOverview">
           <template #icon><icon-storage /></template>
           返回数据总览
         </a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
 
     <div class="content-wrapper">
+      <!-- 顶部统计(2026-08-06:从 FavoriteStore 派生) -->
+      <a-row :gutter="16" class="stat-row">
+        <a-col :span="6">
+          <a-statistic title="总关注" :value="allItems.length" :value-style="{ color: '#165dff' }" />
+        </a-col>
+        <a-col :span="6">
+          <a-statistic title="变更通知订阅" :value="notifyCount" :value-style="{ color: '#f53f3f' }" />
+        </a-col>
+        <a-col :span="6">
+          <a-statistic title="团队共享" :value="groupCount.team" :value-style="{ color: '#722ed1' }" />
+        </a-col>
+        <a-col :span="6">
+          <a-statistic title="近 7 天访问" :value="recentVisitCount" :value-style="{ color: '#00b42a' }" />
+        </a-col>
+      </a-row>
+
       <a-tabs default-active-key="all" v-model:activeKey="activeTab">
         <a-tab-pane v-for="t in tabs" :key="t.code" :title="`${t.name} (${t.items.length})`">
           <a-card :bordered="false">
             <a-list :data="t.items" size="medium">
-              <template #cell="{ item }">
+              <template #item="{ item }">
                 <a-list-item class="fav-row">
                   <a-space>
-                    <a-tag :color="typeColor(item.type)">{{ typeLabel(item.type) }}</a-tag>
-                    <a-link @click="goItem(item.path)">{{ item.name }}</a-link>
-                    <a-tag size="small">{{ item.code }}</a-tag>
+                    <a-tag :color="typeColor(item.resourceType)">{{ typeLabel(item.resourceType) }}</a-tag>
+                    <a-link @click="goItem(item)">{{ item.resourceName }}</a-link>
+                    <a-tag size="small">{{ item.resourceId }}</a-tag>
+                    <a-tag v-for="tag in item.tags" :key="tag" size="small">{{ tag }}</a-tag>
                   </a-space>
                   <a-space>
-                    <span class="meta">关注于 {{ item.followedAt }}</span>
-                    <a-tag size="small">Owner: {{ item.owner }}</a-tag>
+                    <a-tag :color="groupColor(item.group)" size="small">{{ groupLabel(item.group) }}</a-tag>
+                    <a-tag :color="notifColor(item.notification)" size="small">{{ notifLabel(item.notification) }}</a-tag>
+                    <span class="meta">访问 {{ item.visitCount }} 次 · {{ item.lastVisitTime }}</span>
                     <a-button type="text" size="small" status="danger" @click="unfollow(item)">取消关注</a-button>
                   </a-space>
                 </a-list-item>
@@ -34,66 +52,92 @@
         </a-tab-pane>
       </a-tabs>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { ApiStore, MetricStore, VariableStore, FeatureStore } from '../../../mock/shared/dataset'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
+import {
+  FavoriteStore,
+  FAVORITE_TYPES,
+  FAVORITE_GROUP_LABEL,
+  FAVORITE_GROUP_COLOR,
+  FAVORITE_NOTIFICATION_LABEL,
+  FAVORITE_NOTIFICATION_COLOR,
+  type FavoriteItem,
+  type FavoriteResourceType
+} from '@/mock-shared/favorite-store'
 
 const router = useRouter()
-const activeTab = ref('all')
+const activeTab = ref<string>('all')
 
-// 由公共 mock 派生的关注列表,真实环境应走 favorites store
-const followings = ref([
-  { name: 'DAU', code: 'M001', type: 'metric', owner: '王运营', path: 'discovery/unified-metrics', followedAt: '2026-08-01' },
-  { name: '首逾率', code: 'M020', type: 'metric', owner: '张风控', path: 'discovery/indicator-dict', followedAt: '2026-07-25' },
-  { name: 'GMV', code: 'M010', type: 'metric', owner: '李产品', path: 'discovery/indicator-dict', followedAt: '2026-07-18' },
-  { name: '信用分', code: 'V301', type: 'variable', owner: '张风控', path: 'discovery/variable-dict', followedAt: '2026-08-03' },
-  { name: '近30天活跃天数', code: 'V101', type: 'variable', owner: '王运营', path: 'discovery/variable-dict', followedAt: '2026-07-30' },
-  { name: '设备指纹风险分', code: 'F005', type: 'feature', owner: '数美', path: 'discovery/feature-dict', followedAt: '2026-07-15' },
-  { name: '用户RFM分层', code: 'F003', type: 'feature', owner: '陈营销', path: 'discovery/feature-dict', followedAt: '2026-07-10' },
-  { name: '用户画像查询', code: 'A001', type: 'api', owner: '王运营', path: 'discovery/api-market', followedAt: '2026-08-02' },
-  { name: '授信查询', code: 'A002', type: 'api', owner: '张风控', path: 'discovery/api-market', followedAt: '2026-07-22' },
-  { name: '贷前分析 集合', code: '1', type: 'asset', owner: '王运营', path: 'discovery/data-map/collection/1', followedAt: '2026-08-04' }
-])
+// 2026-08-06:全部接 FavoriteStore,统一数据源
+const allItems = computed(() => FavoriteStore.mine())
 
 const tabs = computed(() => {
-  const groups: Record<string, { name: string; items: any[] }> = {
-    all: { name: '全部', items: followings.value },
-    metric: { name: '指标', items: followings.value.filter(i => i.type === 'metric') },
-    variable: { name: '变量', items: followings.value.filter(i => i.type === 'variable') },
-    feature: { name: '特征', items: followings.value.filter(i => i.type === 'feature') },
-    api: { name: 'API', items: followings.value.filter(i => i.type === 'api') },
-    asset: { name: '资产', items: followings.value.filter(i => i.type === 'asset') }
-  }
-  return Object.entries(groups).map(([code, info]) => ({ code, ...info }))
+  const groups: { code: string; name: string; items: FavoriteItem[] }[] = [{ code: 'all', name: '全部', items: allItems.value }]
+  FAVORITE_TYPES.forEach(t => {
+    const items = allItems.value.filter(f => f.resourceType === t.value)
+    groups.push({ code: t.value, name: t.label, items })
+  })
+  return groups.filter(g => g.code === 'all' || g.items.length > 0 || ['metric', 'variable', 'feature', 'api', 'table'].includes(g.code))
 })
 
-function typeColor(t: string) {
-  return { metric: 'arcoblue', variable: 'green', feature: 'purple', api: 'orange', asset: 'purple' }[t] || 'gray'
+const groupCount = computed(() => ({
+  team: allItems.value.filter(f => f.group === 'team').length,
+  personal: allItems.value.filter(f => f.group === 'personal').length,
+  shared: allItems.value.filter(f => f.group === 'shared').length
+}))
+
+const notifyCount = computed(() => allItems.value.filter(f => f.notification === 'on_change').length)
+
+const recentVisitCount = computed(() => allItems.value.filter(f => f.lastVisitTime.includes('今天') || f.lastVisitTime.includes('昨天') || f.lastVisitTime.includes('刚刚') || /\d+\s*天前/.test(f.lastVisitTime)).length)
+
+function typeColor(t: FavoriteResourceType) {
+  return FAVORITE_TYPES.find(x => x.value === t)?.color || 'gray'
 }
-function typeLabel(t: string) {
-  return { metric: '指标', variable: '变量', feature: '特征', api: 'API', asset: '资产' }[t] || t
+function typeLabel(t: FavoriteResourceType) {
+  return FAVORITE_TYPES.find(x => x.value === t)?.label || t
+}
+function groupColor(g: string) {
+  return FAVORITE_GROUP_COLOR[g as keyof typeof FAVORITE_GROUP_COLOR] || 'gray'
+}
+function groupLabel(g: string) {
+  return FAVORITE_GROUP_LABEL[g as keyof typeof FAVORITE_GROUP_LABEL] || g
+}
+function notifColor(n: string) {
+  return FAVORITE_NOTIFICATION_COLOR[n as keyof typeof FAVORITE_NOTIFICATION_COLOR] || 'gray'
+}
+function notifLabel(n: string) {
+  return FAVORITE_NOTIFICATION_LABEL[n as keyof typeof FAVORITE_NOTIFICATION_LABEL] || n
 }
 
-function goItem(path: string) { router.push(path) }
-function goOverview() { router.push('discovery/overview') }
-
-function unfollow(item: any) {
-  const idx = followings.value.findIndex(i => i.code === item.code && i.type === item.type)
-  if (idx > -1) {
-    followings.value.splice(idx, 1)
-    Message.success(`已取消关注「${item.name}」`)
+function goItem(item: FavoriteItem) {
+  FavoriteStore.visit(item.id)
+  if (item.resourcePath) {
+    const p = item.resourcePath.startsWith('/') ? item.resourcePath.substring(1) : item.resourcePath
+    router.push(p)
   }
+}
+
+function goOverview() {
+  router.push('discovery/overview')
+}
+
+function unfollow(item: FavoriteItem) {
+  const ok = FavoriteStore.remove(item.id)
+  if (ok) Message.success(`已取消关注「${item.resourceName}」`)
 }
 </script>
 
 <style lang="scss" scoped>
-.discovery-favorites-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
+.stat-row { margin-bottom: 16px; }
 .fav-row {
   display: flex;
   justify-content: space-between;

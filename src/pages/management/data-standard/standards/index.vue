@@ -131,7 +131,6 @@ const linkedFieldCount = computed(() => {
   const codes = new Set(StandardStore.list().map(s => s.standardNo || s.code))
   return FieldLinkStore.list().filter(l => codes.has(l.standardCode)).length
 })
-import { FieldLinkStore } from '@/mock/shared/lineage'
 
 const router = useRouter()
 

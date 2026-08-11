@@ -21,7 +21,7 @@ export type UserRole =
  */
 export type WorkbenchShortcut =
   // discovery
-  | 'data-map'
+  | 'asset-catalog'
   | 'customer360'
   | 'metrics-map'
   | 'variable-map'
@@ -79,7 +79,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     label: '数据工程师',
     department: '数据团队',
     description: '元数据建模 / 标签开发 / 字段打标',
-    shortcuts: ['data-map', 'metadata-modeling', 'data-standard', 'business-concept', 'asset-tags', 'favorites'],
+    shortcuts: ['asset-catalog', 'metadata-modeling', 'data-standard', 'business-concept', 'asset-tags', 'favorites'],
     defaultLanding: '/management/metadata/modeling',
     allowedRoutes: ['*'],
     color: '#165dff',
@@ -90,7 +90,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     label: '数据治理者',
     department: '数据团队',
     description: '数据治理 / 资产上下架 / 标准制定',
-    shortcuts: ['data-map', 'metadata-modeling', 'data-standard', 'data-permission', 'business-concept', 'asset-tags', 'service', 'favorites'],
+    shortcuts: ['asset-catalog', 'metadata-modeling', 'data-standard', 'data-permission', 'business-concept', 'asset-tags', 'service', 'favorites'],
     defaultLanding: '/management/data-standard/standards',
     allowedRoutes: ['*'],
     color: '#722ed1',
@@ -101,7 +101,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     label: '风控分析师',
     department: '风控团队',
     description: '风险评估 / 欺诈检测 / 逾期监控',
-    shortcuts: ['customer360', 'audience-system', 'tag-system', 'metrics-map', 'data-map', 'favorites'],
+    shortcuts: ['customer360', 'audience-system', 'tag-system', 'metrics-map', 'asset-catalog', 'favorites'],
     defaultLanding: '/exploration/customer360',
     allowedRoutes: ['*'],
     color: '#fa541c',
@@ -123,8 +123,8 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     label: '信贷经理',
     department: '信贷团队',
     description: '贷款审批 / 授信管理 / API 申请',
-    shortcuts: ['data-map', 'service', 'workflows', 'customer360', 'metrics-map', 'favorites'],
-    defaultLanding: '/discovery/data-map',
+    shortcuts: ['asset-catalog', 'service', 'workflows', 'customer360', 'metrics-map', 'favorites'],
+    defaultLanding: '/discovery/asset-catalog',
     allowedRoutes: ['*'],
     color: '#13c2c2',
     avatar: '💳'
@@ -178,7 +178,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     label: '系统管理员',
     department: 'IT 团队',
     description: '系统配置 / 全权限',
-    shortcuts: ['data-map', 'metadata-modeling', 'data-standard', 'business-concept', 'asset-tags', 'service', 'data-permission', 'customer360', 'audience-system', 'tag-system', 'event-center', 'workflows', 'indicator-dashboard', 'favorites'],
+    shortcuts: ['asset-catalog', 'metadata-modeling', 'data-standard', 'business-concept', 'asset-tags', 'service', 'data-permission', 'customer360', 'audience-system', 'tag-system', 'event-center', 'workflows', 'indicator-dashboard', 'favorites'],
     defaultLanding: '/discovery/index',
     allowedRoutes: ['*'],
     color: '#1d2129',
@@ -191,7 +191,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
  */
 export const SHORTCUT_REGISTRY: Record<WorkbenchShortcut, ShortcutMeta> = {
   // discovery
-  'data-map': { key: 'data-map', title: '数据地图', desc: '浏览所有数据资产', iconName: 'IconStorage', module: 'discovery', routeKey: 'discovery:data-map' },
+  'asset-catalog': { key: 'asset-catalog', title: '资产目录', desc: '资产目录台账', iconName: 'IconStorage', module: 'discovery', routeKey: 'discovery:asset-catalog' },
   'customer360': { key: 'customer360', title: '客户 360', desc: '客户全景查询', iconName: 'IconUserGroup', module: 'exploration', routeKey: 'exploration:customer360' },
   'metrics-map': { key: 'metrics-map', title: '指标地图', desc: '业务指标体系', iconName: 'IconBranch', module: 'discovery', routeKey: 'discovery:metrics-map' },
   'variable-map': { key: 'variable-map', title: '变量地图', desc: '变量与画像管理', iconName: 'IconDesktop', module: 'discovery', routeKey: 'discovery:variable-map' },
@@ -203,7 +203,7 @@ export const SHORTCUT_REGISTRY: Record<WorkbenchShortcut, ShortcutMeta> = {
   'data-permission': { key: 'data-permission', title: '字段权限', desc: '字段级权限配置', iconName: 'IconSafe', module: 'management', routeKey: 'management:data-permission' },
   'business-concept': { key: 'business-concept', title: '业务概念', desc: '业务域 / 实体 / 图谱', iconName: 'IconLink', module: 'management', routeKey: 'management:business-concept' },
   'asset-tags': { key: 'asset-tags', title: '资产标签', desc: '资产标签管理', iconName: 'IconTag', module: 'management', routeKey: 'management:asset-tags' },
-  'favorites': { key: 'favorites', title: '我的收藏', desc: '收藏的资产/指标/看板', iconName: 'IconStar', module: 'management', routeKey: 'management:favorites' },
+  'favorites': { key: 'favorites', title: '我的关注', desc: '收藏的资产/指标/看板', iconName: 'IconStar', module: 'discovery', routeKey: 'discovery:favorites' },
   // exploration
   'tag-system': { key: 'tag-system', title: '标签体系', desc: '标签 / 标签组管理', iconName: 'IconTags', module: 'exploration', routeKey: 'exploration:tag-system' },
   'event-center': { key: 'event-center', title: '事件中心', desc: '事件 / 虚拟事件', iconName: 'IconCalendar', module: 'exploration', routeKey: 'exploration:event-center' },

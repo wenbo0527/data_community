@@ -17,15 +17,19 @@
             <template #icon><IconSearch /></template>
             查询
           </a-button>
+          <a-button status="warning" @click="goImpactAnalysis">
+            <template #icon><IconAlert /></template>
+            切换到影响分析
+          </a-button>
           <a-button @click="goBack">返回</a-button>
         </a-space>
       </div>
     </div>
 
     <div class="graph-wrapper">
-      <LineageGraph 
-        :table-name="currentTableName" 
-        :layers="currentLayers" 
+      <LineageGraph
+        :table-name="currentTableName"
+        :layers="currentLayers"
         :data-types="currentDataTypes"
         :only-failed="currentOnlyFailed"
       />
@@ -34,15 +38,16 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { IconSearch } from '@arco-design/web-vue/es/icon'
+import { ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { IconSearch, IconExclamationCircle as IconAlert } from '@arco-design/web-vue/es/icon'
 import LineageGraph from './components/LineageGraph.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const form = reactive({
-  tableName: 'dim_user',
+  tableName: typeof route.query.table === 'string' ? route.query.table : 'dim_user',
   layers: 1,
   dataTypes: [],
   onlyFailed: false
@@ -54,7 +59,12 @@ const currentDataTypes = ref(form.dataTypes)
 const currentOnlyFailed = ref(form.onlyFailed)
 
 const goBack = () => {
-  router.push('/discovery')
+  router.push('/home/discovery')
+}
+
+/** 跳转到影响分析页面(P0-E:模块互通) */
+const goImpactAnalysis = () => {
+  router.push({ path: '/home/discovery/impact-analysis', query: { table: currentTableName.value } })
 }
 
 const handleSearch = () => {
@@ -63,6 +73,14 @@ const handleSearch = () => {
   currentDataTypes.value = form.dataTypes
   currentOnlyFailed.value = form.onlyFailed
 }
+
+onMounted(() => {
+  // 支持从 ?table=xxx 跳转过来
+  if (typeof route.query.table === 'string' && route.query.table) {
+    currentTableName.value = route.query.table
+    form.tableName = route.query.table
+  }
+})
 </script>
 
 <style scoped>

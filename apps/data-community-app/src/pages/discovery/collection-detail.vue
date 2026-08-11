@@ -13,7 +13,7 @@
               <template #icon><icon-left /></template>
               返回数据发现
             </a-button>
-            <a-button type="primary" @click="safePush('discovery/data-map')">
+            <a-button type="primary" @click="safePush('discovery/asset-catalog')">
               <template #icon><icon-storage /></template>
               打开数据地图
             </a-button>
@@ -318,7 +318,7 @@ const goBack = () => {
 const showTableDetail = (table: any) => {
   // 跳到数据地图,带表名筛选
   router.push({
-    path: 'discovery/data-map',
+    path: 'discovery/asset-catalog',
     query: { table: table.name }
   })
 }

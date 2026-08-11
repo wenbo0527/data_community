@@ -153,7 +153,7 @@
               style="margin-left: 16px;"
               @click="showAutoTagSuggestion"
             >
-              <template #icon><IconMagic /></template>
+              <template #icon><IconStar /></template>
               一键自动打标
             </a-button>
           </div>
@@ -277,7 +277,7 @@ const avgCoverage = computed(() => {
   return Math.round(total / tables.length)
 })
 import { Message } from '@arco-design/web-vue'
-import { IconLink, IconBranch, IconCheckCircle, IconMagic } from '@arco-design/web-vue/es/icon'
+import { IconLink, IconBranch, IconCheckCircle, IconStar as IconMagic } from '@arco-design/web-vue/es/icon'
 import { BusinessConceptStore } from '@/mock/shared/business-concept-store'
 import { MetadataStore } from '@/mock/shared/metadata-store'
 import { StandardStore } from '@/mock/shared/standard-store'
@@ -424,7 +424,7 @@ const handleLineageSubmit = () => {
 
 const viewLineageGraph = () => {
   Message.info('正在打开血缘图谱分析页...')
-  router.push('/discovery/lineage')
+  router.push('/home/discovery/lineage')
 }
 
 // ===== 标准映射逻辑 =====

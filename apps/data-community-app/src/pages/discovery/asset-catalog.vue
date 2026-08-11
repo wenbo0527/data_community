@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MetadataStore } from '@/mock/shared/metadata-store'
+import { MetadataStore } from '@/mock-shared/metadata-store'
 
 const router = useRouter()
 const route = useRoute()

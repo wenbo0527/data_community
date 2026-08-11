@@ -386,7 +386,7 @@ const testDatabaseConnection = async () => {
 };
 
 const goToDataSourceConfig = () => {
-  router.push('/exploration/workflows/datasources');
+  router.push('/home/exploration/workflows/datasources');
 };
 
 const getFileTypeColor = (type) => {

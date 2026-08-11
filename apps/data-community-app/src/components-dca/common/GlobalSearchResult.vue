@@ -153,7 +153,7 @@ const onClickItem = (item: SearchItem) => {
   }
   // 兜底映射:按 type 字段路由
   const map: Record<string, string> = {
-    table: 'discovery:data-map',
+    table: 'discovery:asset-catalog',
     metric: 'discovery:metrics-map',
     concept: 'management:business-concept',
     dashboard: 'exploration:indicator-dashboard'
@@ -259,7 +259,7 @@ const generateIntentCards = (kw: string, res: SearchResults): IntentCard[] => {
       title: `浏览 ${res.tables.length} 张数据表`,
       desc: '在数据地图中查看详情与血缘',
       icon: IconStorage,
-      routeKey: 'discovery:data-map'
+      routeKey: 'discovery:asset-catalog'
     })
   }
 

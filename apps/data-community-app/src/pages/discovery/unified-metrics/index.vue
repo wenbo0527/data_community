@@ -1,10 +1,10 @@
 <template>
-  <div class="unified-metrics-page">
-    <a-page-header title="统一指标" sub-title="多维分析 · 趋势监控" :back="false">
+  <PageContainer>
+    <PageHeader title="统一指标" sub-title="多维分析 · 趋势监控">
       <template #extra>
         <a-button @click="goBack"><template #icon><icon-left /></template>返回</a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
     <div class="content-wrapper">
       <a-card :bordered="false" style="margin-bottom: 16px">
         <a-row :gutter="16">
@@ -52,11 +52,13 @@
         </a-col>
       </a-row>
     </div>
-  </div>
+  </PageContainer>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
 const router = useRouter()
 const metric = ref('M001')
 const range = ref('30d')
@@ -83,6 +85,6 @@ const ageData = ref([
 const goBack = () => router.push('discovery')
 </script>
 <style lang="scss" scoped>
-.unified-metrics-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
 </style>

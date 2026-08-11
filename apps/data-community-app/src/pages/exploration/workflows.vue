@@ -1,6 +1,6 @@
 <template>
-  <div class="workflows-page">
-    <a-page-header title="分析工作流" sub-title="可视化编排数据采集、清洗、计算、推送全流程">
+  <PageContainer>
+    <PageHeader title="分析工作流" sub-title="可视化编排数据采集、清洗、计算、推送全流程">
       <template #extra>
         <a-button @click="goWorkbench">返回工作台</a-button>
         <a-button type="primary" style="margin-left: 8px">
@@ -8,7 +8,7 @@
           新建工作流
         </a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
 
     <a-card>
       <a-table
@@ -29,12 +29,14 @@
         <template #lastRunAt="{ record }">{{ record.lastRunAt || '尚未运行' }}</template>
       </a-table>
     </a-card>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
 
 const router = useRouter()
 const workflows = ref<any[]>([])
@@ -68,16 +70,13 @@ function statusLabel(s: string) {
 }
 
 function openWorkflow(w: any) {
-  router.push('exploration/workflows/editor/' + w.id)
+  // 2026-08-06:改为 name + params,避免 vue-router 4 解析带冒号路径时的 warning
+  router.push({ name: 'workflow-editor', params: { id: w.id } })
 }
 
 const goWorkbench = () => router.push('workbench')
 </script>
 
 <style lang="scss" scoped>
-.workflows-page {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
+/* 2026-08-06 统一:页面背景/高度/最大宽度由 PageContainer 提供 */
 </style>

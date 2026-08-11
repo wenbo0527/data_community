@@ -620,7 +620,7 @@ const handleCreateMetric = (type: string) => {
       break
     case 'create-business':
       console.log('新建指标')
-  router.push('/discovery/asset-management/metric-management/create/edit?type=business')
+  router.push('/home/discovery/asset-management/metric-management/create/edit?type=business')
       break
 
   }

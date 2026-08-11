@@ -1,9 +1,8 @@
 <template>
-  <div class="asset-tags-page">
-    <a-page-header
+  <PageContainer>
+    <PageHeader
       title="资产标签管理"
       sub-title="给表/字段/指标/服务打标签 — 独立于数据标签,反映资产的能力、合规、成本、生命周期等属性"
-      :back="false"
     >
       <template #extra>
         <a-button type="primary" @click="showAddBinding = true">
@@ -11,109 +10,23 @@
           应用标签
         </a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
 
-    <!-- 统计 -->
-    <a-row :gutter="16" class="stats-row">
-      <a-col :span="6">
-        <a-statistic title="标签定义" :value="stats.totalDefinitions" />
-      </a-col>
-      <a-col :span="6">
-        <a-statistic title="标签绑定" :value="stats.totalBindings" />
-      </a-col>
-      <a-col :span="6">
-        <a-statistic title="覆盖资源" :value="coveredResources" />
-      </a-col>
-      <a-col :span="6">
-        <a-statistic title="自定义标签" :value="customTagCount" />
-      </a-col>
-    </a-row>
+    <a-card title="标签定义">
+      <ul>
+        <li v-for="d in definitions" :key="d.id">
+          {{ d.name }} ({{ d.category }}) - {{ d.description }}
+        </li>
+      </ul>
+    </a-card>
 
-    <a-row :gutter="16" class="content-row">
-      <!-- 左:标签定义 -->
-      <a-col :span="14">
-        <a-card :bordered="false" title="标签定义" :bordered="false">
-          <template #extra>
-            <a-segmented
-              v-model="activeCategory"
-              :options="categoryOptions"
-              size="small"
-            />
-          </template>
-
-          <a-list
-            :data="filteredDefinitions"
-            :grid="{ gutter: 12, xs: 1, sm: 1, md: 2 }"
-            size="small"
-          >
-            <template #item="item">
-              <a-list-item>
-                <div class="tag-definition-card">
-                  <div class="tag-card-header">
-                    <a-tag :color="item.item.color" size="medium">
-                      {{ item.item.name }}
-                    </a-tag>
-                    <a-tag v-if="!item.item.isSystem" size="small" color="purple">自定义</a-tag>
-                  </div>
-                  <div class="tag-card-desc">{{ item.item.description }}</div>
-                  <div class="tag-card-footer">
-                    <span class="binding-count">{{ bindingCountOf(item.item.id) }} 个绑定</span>
-                    <a-button
-                      type="text"
-                      size="mini"
-                      :disabled="item.item.isSystem"
-                      @click="onDeleteDefinition(item.item)"
-                    >
-                      删除
-                    </a-button>
-                  </div>
-                </div>
-              </a-list-item>
-            </template>
-          </a-list>
-        </a-card>
-      </a-col>
-
-      <!-- 右:标签绑定 -->
-      <a-col :span="10">
-        <a-card :bordered="false" title="最近绑定" :bordered="false">
-          <a-list :data="recentBindings" size="small" :pagination-props="false">
-            <template #item="item">
-              <a-list-item>
-                <a-list-item-meta>
-                  <template #title>
-                    <div class="binding-title">
-                      <a-tag :color="getTagColor(item.item.tagId)" size="small">
-                        {{ getTagName(item.item.tagId) }}
-                      </a-tag>
-                      <a-link>{{ item.item.resourceName }}</a-link>
-                    </div>
-                  </template>
-                  <template #description>
-                    <div class="binding-meta">
-                      <a-tag size="small">{{ resourceTypeName(item.item.resourceType) }}</a-tag>
-                      <span class="binding-time">{{ item.item.appliedAt }}</span>
-                      <span class="binding-by">{{ item.item.appliedByName }}</span>
-                    </div>
-                    <div v-if="item.item.note" class="binding-note">{{ item.item.note }}</div>
-                  </template>
-                </a-list-item-meta>
-                <template #actions>
-                  <a-button
-                    type="text"
-                    size="mini"
-                    status="danger"
-                    @click="onUnbind(item.item.id)"
-                  >
-                    取消
-                  </a-button>
-                </template>
-              </a-list-item>
-            </template>
-          </a-list>
-        </a-card>
-      </a-col>
-    </a-row>
+    <a-card title="最近绑定">
+      <ul>
+        <li v-for="b in recentBindings" :key="b.assetId">
+          {{ b.assetName }} - {{ b.tagName }} ({{ b.boundAt }})
+        </li>
+      </ul>
+    </a-card>
 
     <!-- 应用标签对话框 -->
     <a-modal
@@ -143,7 +56,7 @@
         </a-form-item>
 
         <a-form-item label="选择标签" required>
-          <a-select v-model="newBinding.tagId" placeholder="选择标签" :options="definitions" :field-names="{ label: 'name', value: 'id' }" />
+          <a-select v-model="newBinding.tagId" placeholder="选择标签" :options="definitions" :field-names="selectFieldNames" />
         </a-form-item>
 
         <a-form-item label="备注">
@@ -151,20 +64,39 @@
         </a-form-item>
       </a-form>
     </a-modal>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus } from '@arco-design/web-vue/es/icon'
-import { AssetTagStore } from '@/mock/shared/asset-tags'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
+import { AssetTagStore } from '@/mock-shared/asset-tags'
 
-const definitions = computed(() => AssetTagStore.definitions())
-const stats = computed(() => AssetTagStore.stats())
-const allBindings = computed(() => AssetTagStore.bindings())
+// 避免每次创建新 array 触发下游 reactive 链
+const definitions = ref(AssetTagStore.definitions())
+const stats = ref(AssetTagStore.stats())
+const allBindings = ref(AssetTagStore.bindings())
 
 const activeCategory = ref<'all' | 'quality' | 'compliance' | 'cost' | 'usage' | 'lifecycle' | 'custom'>('all')
+
+// a-table columns 静态定义,避免 inline array literal 每次 render 触发新引用
+const definitionColumns = [
+  { title: '标签', dataIndex: 'name' },
+  { title: '类别', dataIndex: 'category' },
+  { title: '说明', dataIndex: 'description' },
+  { title: '绑定数', dataIndex: 'bindingCount' },
+  { title: '操作', dataIndex: 'actions' }
+]
+const bindingColumns = [
+  { title: '资产', dataIndex: 'assetName' },
+  { title: '标签', dataIndex: 'tagName' },
+  { title: '绑定时间', dataIndex: 'boundAt' }
+]
+// a-select field-names 也用静态对象
+const selectFieldNames = { label: 'name', value: 'id' }
 
 const categoryOptions = [
   { label: '全部', value: 'all' },
@@ -176,24 +108,28 @@ const categoryOptions = [
   { label: '自定义', value: 'custom' }
 ]
 
-const filteredDefinitions = computed(() => {
-  if (activeCategory.value === 'all') return definitions.value
-  return definitions.value.filter(d => d.category === activeCategory.value)
-})
+// 用 ref + 手动 watch 替代 computed,避免每次 render 触发新 array
+const filteredDefinitions = ref<any[]>(definitions.value as any)
+watch([activeCategory, definitions], () => {
+  filteredDefinitions.value = activeCategory.value === 'all'
+    ? (definitions.value as any)
+    : (definitions.value as any).filter((d: any) => d.category === activeCategory.value)
+}, { immediate: true })
 
-const recentBindings = computed(() =>
-  [...allBindings.value].sort((a, b) =>
-    String(b.appliedAt).localeCompare(String(a.appliedAt))
-  ).slice(0, 10)
-)
-
-const coveredResources = computed(() => {
+// 用 ref + watch 替代 computed,避免每次 render 返回新 array
+const recentBindings = ref<any[]>([])
+const coveredResources = ref(0)
+const customTagCount = ref(0)
+watch([allBindings, definitions], () => {
+  const bindings = allBindings.value as any[]
+  recentBindings.value = [...bindings]
+    .sort((a, b) => String((b as any).appliedAt).localeCompare(String((a as any).appliedAt)))
+    .slice(0, 10)
   const set = new Set<string>()
-  allBindings.value.forEach(b => set.add(`${b.resourceType}:${b.resourceId}`))
-  return set.size
-})
-
-const customTagCount = computed(() => definitions.value.filter(d => !d.isSystem).length)
+  bindings.forEach(b => set.add(`${(b as any).resourceType}:${(b as any).resourceId}`))
+  coveredResources.value = set.size
+  customTagCount.value = (definitions.value as any[]).filter(d => !d.isSystem).length
+}, { immediate: true })
 
 const bindingCountOf = (tagId: string) =>
   allBindings.value.filter(b => b.tagId === tagId).length
@@ -261,8 +197,9 @@ const onDeleteDefinition = (tag: any) => {
 </script>
 
 <style lang="scss" scoped>
+/* 2026-08-06 统一:页面背景/高度/最大宽度由 PageContainer 提供 */
 .asset-tags-page {
-  padding: 16px;
+  padding: 0 16px;
 
   .stats-row {
     margin-bottom: 16px;
@@ -274,8 +211,8 @@ const onDeleteDefinition = (tag: any) => {
 
   .tag-definition-card {
     padding: 12px;
-    background: #f7f8fa;
-    border-radius: 6px;
+    background: var(--dca-bg-page-alt);
+    border-radius: var(--dca-radius-md);
     height: 100%;
 
     .tag-card-header {

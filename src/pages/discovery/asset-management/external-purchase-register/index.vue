@@ -764,7 +764,7 @@ const handleSelectionChange = (rowKeys: string[], rows: DataProduct[]) => {
 const finishRegistration = () => {
   const message = isEditMode.value ? '外数采购项目更新成功' : '外数采购项目注册成功'
   Message.success(message)
-  router.push('/discovery/asset-management/external-data-management')
+  router.push('/home/discovery/asset-management/external-data-management')
 }
 
 // 新增外数注册相关方法

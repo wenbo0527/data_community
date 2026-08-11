@@ -80,9 +80,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { IconSafe } from '@arco-design/web-vue/es/icon'
-import { FieldLinkStore } from '@/mock/shared/lineage'
-import { TaxonomyStore } from '@/mock/shared/classification-taxonomy'
-import { MetadataStore } from '@/mock/shared/metadata-store'
+import { FieldLinkStore } from '@/mock-shared/lineage'
+import { TaxonomyStore } from '@/mock-shared/classification-taxonomy'
+import { MetadataStore } from '@/mock-shared/metadata-store'
 
 defineEmits<{ drillDown: [] }>()
 

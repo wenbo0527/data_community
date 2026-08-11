@@ -116,9 +116,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { MetadataStore } from '@/mock/shared/metadata-store'
-import { BusinessConceptStore } from '@/mock/shared/business-concept-store'
-import { StandardStore } from '@/mock/shared/standard-store'
+import { MetadataStore } from '@/mock-shared/metadata-store'
+import { BusinessConceptStore } from '@/mock-shared/business-concept-store'
+import { StandardStore } from '@/mock-shared/standard-store'
 
 const router = useRouter()
 

@@ -240,7 +240,7 @@ const templates = [
 
 // 方法
 const goBack = () => {
-  router.push('/exploration/workflows');
+  router.push('/home/exploration/workflows');
 };
 
 const selectTemplate = (templateId) => {

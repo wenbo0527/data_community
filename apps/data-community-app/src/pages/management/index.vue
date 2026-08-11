@@ -36,7 +36,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const goWorkbench = () => router.push('workbench')
 const goAssetTags = () => router.push('management/asset-management/asset-tags')
-const goFavorites = () => router.push('management/favorites')
+const goFavorites = () => router.push('discovery/favorites')
 const goPermissionApply = () => router.push('management/permission/data-permission/apply')
 </script>
 

@@ -210,3 +210,24 @@ export class DateUtils {
 }
 
 export default DateUtils
+
+// 独立导出函数，兼容解构导入 { formatDateTime } 用法
+export function formatDateTime(date: string | Date, format = 'YYYY-MM-DD HH:mm:ss'): string {
+  return DateUtils.formatDateTime(date, format)
+}
+
+export function formatDate(date: string | Date, format = 'YYYY-MM-DD'): string {
+  return DateUtils.formatDate(date, format)
+}
+
+export function formatTime(date: string | Date, format = 'HH:mm:ss'): string {
+  return DateUtils.formatTime(date, format)
+}
+
+export function getRelativeTime(date: string | Date): string {
+  return DateUtils.getRelativeTime(date)
+}
+
+export function smartFormat(date: string | Date): string {
+  return DateUtils.smartFormat(date)
+}

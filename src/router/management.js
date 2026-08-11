@@ -206,7 +206,7 @@ export default [{
     {
       path: 'favorites',
       name: 'management-favorites',
-      component: () => import('../pages/management/favorites/index.vue'),
+      component: () => import('../pages/discovery/favorites/index.vue'),
       meta: { title: '我的收藏' }
     },
     {
@@ -342,5 +342,107 @@ export default [{
         }
       ]
     },
+    // === G2: 补齐 management 游离页 ===
+    {
+      path: 'asset-management/overview',
+      name: 'AssetManagementOverview',
+      meta: { title: '资产总揽' },
+      component: () => import('../pages/management/asset-management/overview/index.vue')
+    },
+    {
+      path: 'asset-management/listing-management/metric-management',
+      name: 'MetricManagement',
+      meta: { title: '指标登记管理' },
+      component: () => import('../pages/management/asset-management/listing-management/metric-management/index.vue')
+    },
+    {
+      path: 'asset-management/listing-management/variable-management',
+      name: 'VariableListingManagement',
+      meta: { title: '变量登记管理' },
+      component: () => import('../pages/management/asset-management/listing-management/variable-management/index.vue')
+    },
+    {
+      path: 'asset-management/listing-management/external-data-management',
+      name: 'ExternalDataListingManagement',
+      meta: { title: '外数登记管理' },
+      component: () => import('../pages/management/asset-management/listing-management/external-data-management/index.vue')
+    },
+    {
+      path: 'business-concept',
+      name: 'BusinessConcept',
+      meta: { title: '业务概念' },
+      component: () => import('../pages/management/business-concept/index.vue')
+    },
+    {
+      path: 'data-map',
+      name: 'ManagementDataMap',
+      meta: { title: '管理域数据地图' },
+      component: () => import('../pages/management/data-map/index.vue')
+    },
+    // === 权限管理 4 大入口(原 management.js 已注册 children,这里独立注册顶部入口)===
+    {
+      path: 'permission/apply',
+      name: 'management-permission-apply',
+      meta: { title: '权限申请' },
+      component: () => import('../pages/management/permission/PermissionApply.vue')
+    },
+    {
+      path: 'permission/approval',
+      name: 'management-permission-approval',
+      meta: { title: '我的审批' },
+      component: () => import('../pages/management/permission/PermissionApproval.vue')
+    },
+    {
+      path: 'permission/progress',
+      name: 'management-permission-progress',
+      meta: { title: '我的进度' },
+      component: () => import('../pages/management/permission/PermissionProgress.vue')
+    },
+    {
+      path: 'permission/management',
+      name: 'management-permission-management',
+      meta: { title: '申请管理' },
+      component: () => import('../pages/management/permission/PermissionManagement.vue')
+    },
+    // === 标签管理子页面 ===
+    {
+      path: 'asset-management/basic-management/tag-management/apply',
+      name: 'TagGroupApply',
+      meta: { title: '标签申请' },
+      component: () => import('../pages/management/asset-management/basic-management/tag-management/TagGroupApply.vue')
+    },
+    {
+      path: 'asset-management/basic-management/tag-management/form',
+      name: 'TagGroupForm',
+      meta: { title: '标签表单' },
+      component: () => import('../pages/management/asset-management/basic-management/tag-management/TagGroupForm.vue')
+    },
+    {
+      path: 'asset-management/basic-management/tag-management/usage/:tagId',
+      name: 'TagUsageDetail',
+      meta: { title: '标签使用详情' },
+      component: () => import('../pages/management/asset-management/basic-management/tag-management/TagUsageDetail.vue'),
+      props: true
+    },
+    // === 用户管理子页面 ===
+    {
+      path: 'permission/user-management/organization',
+      name: 'OrganizationManagement',
+      meta: { title: '组织架构' },
+      component: () => import('../pages/management/permission/user-management/OrganizationManagement.vue')
+    },
+    {
+      path: 'permission/user-management/position',
+      name: 'PositionManagement',
+      meta: { title: '岗位管理' },
+      component: () => import('../pages/management/permission/user-management/PositionManagement.vue')
+    },
+    {
+      path: 'permission/user-management/user/:id',
+      name: 'UserDetail',
+      meta: { title: '用户详情' },
+      component: () => import('../pages/management/permission/user-management/UserDetail.vue'),
+      props: true
+    }
   ]
 }]

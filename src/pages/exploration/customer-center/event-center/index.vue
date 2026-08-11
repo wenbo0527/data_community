@@ -498,7 +498,7 @@ const getEventTypeColor = (type) => {
 
 // 事件处理函数
 const handleQuickCreate = () => {
-  router.push('/exploration/customer-center/event-center/event-management')
+  router.push('/home/exploration/customer-center/event-center/event-management')
 }
 
 const handleRefresh = () => {
@@ -520,7 +520,7 @@ const handleExportType = () => {
 }
 
 const handleViewAllEvents = () => {
-  router.push('/exploration/customer-center/event-center/event-management')
+  router.push('/home/exploration/customer-center/event-center/event-management')
 }
 
 const handleTestEvent = (event) => {

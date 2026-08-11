@@ -287,42 +287,42 @@ const collections = ref([
     type: '业务流程', typeColor: 'red', count: 156,
     iconKey: 'bar-chart', iconBg: 'linear-gradient(135deg, #f53f3f, #f76560)',
     followers: [{ name: '王', color: '#165dff' }, { name: '张', color: '#f53f3f' }, { name: '李', color: '#00b42a' }],
-    path: 'discovery/data-map/collection/1'
+    path: 'discovery/collection/1'
   },
   {
     id: 2, name: '风控评估', description: '风控模型、欺诈检测、预警数据',
     type: '业务流程', typeColor: 'red', count: 89,
     iconKey: 'safe', iconBg: 'linear-gradient(135deg, #fa541c, #ff7a45)',
     followers: [{ name: '张', color: '#f53f3f' }, { name: '陈', color: '#722ed1' }],
-    path: 'discovery/data-map/collection/2'
+    path: 'discovery/collection/2'
   },
   {
     id: 3, name: '反欺诈策略', description: '欺诈规则、关联图谱、案件数据',
     type: '业务流程', typeColor: 'red', count: 234,
     iconKey: 'branch', iconBg: 'linear-gradient(135deg, #722ed1, #9254de)',
     followers: [{ name: '陈', color: '#722ed1' }, { name: '林', color: '#165dff' }, { name: '黄', color: '#00b42a' }, { name: '赵', color: '#fa8c16' }],
-    path: 'discovery/data-map/collection/3'
+    path: 'discovery/collection/3'
   },
   {
     id: 4, name: '客户主档域', description: '客户基本信息、画像主表(非个人粒度)',
     type: '数据域', typeColor: 'arcoblue', count: 86,
     iconKey: 'user-group', iconBg: 'linear-gradient(135deg, #165dff, #722ed1)',
     followers: [{ name: '王', color: '#165dff' }, { name: '李', color: '#00b42a' }],
-    path: 'discovery/data-map/collection/4'
+    path: 'discovery/collection/4'
   },
   {
     id: 5, name: '用户域核心表', description: '用户主档、画像、标签主表',
     type: '数据域', typeColor: 'arcoblue', count: 128,
     iconKey: 'storage', iconBg: 'linear-gradient(135deg, #00b42a, #00d25c)',
     followers: [{ name: '王', color: '#165dff' }, { name: '钱', color: '#f53f3f' }, { name: '孙', color: '#722ed1' }],
-    path: 'discovery/data-map/collection/5'
+    path: 'discovery/collection/5'
   },
   {
     id: 6, name: '交易域核心表', description: '订单、支付、清结算主表',
     type: '数据域', typeColor: 'arcoblue', count: 256,
     iconKey: 'common', iconBg: 'linear-gradient(135deg, #13c2c2, #36cfc9)',
     followers: [{ name: '李', color: '#00b42a' }, { name: '周', color: '#165dff' }],
-    path: 'discovery/data-map?domain=交易域'
+    path: 'discovery/asset-catalog?domain=交易域'
   },
   {
     id: 7, name: '指标体系', description: '业务指标、原子指标、衍生指标',
@@ -336,7 +336,7 @@ const collections = ref([
     type: '合规', typeColor: 'orange', count: 47,
     iconKey: 'file', iconBg: 'linear-gradient(135deg, #fa8c16, #ffa940)',
     followers: [{ name: '钱', color: '#f53f3f' }, { name: '冯', color: '#165dff' }],
-    path: 'discovery/regulatory-config'
+    path: 'discovery/collection/8'
   }
 ])
 
@@ -353,12 +353,12 @@ const dataResources = ref([
 
 // ========== 数据资产(6 个域)==========
 const dataAssets = ref([
-  { name: '用户域', count: 128, description: '客户主档/画像/标签', path: 'discovery/data-map?domain=用户域' },
-  { name: '交易域', count: 256, description: '订单/支付/清结算', path: 'discovery/data-map?domain=交易域' },
-  { name: '风控域', count: 95, description: '模型/规则/策略', path: 'discovery/data-map?domain=风控域' },
-  { name: '营销域', count: 132, description: '活动/圈选/触达', path: 'discovery/data-map?domain=营销域' },
-  { name: '财务域', count: 78, description: '账务/计费/对账', path: 'discovery/data-map?domain=财务域' },
-  { name: '产品域', count: 64, description: '产品/合同/资产', path: 'discovery/data-map?domain=产品域' }
+  { name: '用户域', count: 128, description: '客户主档/画像/标签', path: 'discovery/asset-catalog?domain=用户域' },
+  { name: '交易域', count: 256, description: '订单/支付/清结算', path: 'discovery/asset-catalog?domain=交易域' },
+  { name: '风控域', count: 95, description: '模型/规则/策略', path: 'discovery/asset-catalog?domain=风控域' },
+  { name: '营销域', count: 132, description: '活动/圈选/触达', path: 'discovery/asset-catalog?domain=营销域' },
+  { name: '财务域', count: 78, description: '账务/计费/对账', path: 'discovery/asset-catalog?domain=财务域' },
+  { name: '产品域', count: 64, description: '产品/合同/资产', path: 'discovery/asset-catalog?domain=产品域' }
 ])
 
 // ========== 数据要素(5 类)==========
@@ -374,7 +374,7 @@ const dataElements = ref([
 const dataGovernance = ref([
   { name: '元数据管理', count: 1283, description: '表/字段/血缘', iconKey: 'storage', path: 'management/metadata/modeling' },
   { name: '数据标准', count: 256, description: '国标/行标/企标', iconKey: 'book', path: 'management/data-standard/standards' },
-  { name: '数据质量', count: 89, description: '完整度/准确度/及时性', iconKey: 'safe', path: 'discovery/asset-overview' },
+  { name: '数据质量', count: 89, description: '完整度/准确度/及时性', iconKey: 'safe', path: 'discovery/asset-catalog' },
   { name: '数据安全', count: 47, description: '分级/脱敏/权限', iconKey: 'safe', path: 'management/permission/data-permission/apply' },
   { name: '业务概念', count: 178, description: '业务术语/口径', iconKey: 'link', path: 'management/business-concept' },
   { name: '资产标签', count: 312, description: '资产分类/标签', iconKey: 'tags', path: 'management/asset-management/asset-tags' }
@@ -429,7 +429,7 @@ const onViewAllCollections = () => {
   safePush('discovery/asset-catalog')
 }
 const onViewDataSystem = () => {
-  safePush('discovery/data-map')
+  safePush('discovery/asset-catalog')
 }
 
 // 5 个区域共用一个 item 跳转入口,消除「5 个 handle 函数互相重复」的问题

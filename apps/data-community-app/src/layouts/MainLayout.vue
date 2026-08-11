@@ -85,15 +85,22 @@
         breakpoint="xl"
       >
         <a-menu
-          :selected-keys="[activeSideMenu]"
-          :default-open-keys="defaultOpenKeys"
+          :selected-keys="sideSelectedKeys"
+          :default-open-keys="sideDefaultOpenKeys"
           @menu-item-click="handleSideMenuClick"
-          :auto-open="true"
         >
-          <template v-for="item in currentSideMenusByRole" :key="item.key">
+          <template v-for="item in currentSideMenusStable" :key="item.key">
             <a-sub-menu v-if="item.children" :key="item.key">
               <template #title>{{ item.title }}</template>
-              <a-menu-item v-for="child in item.children" :key="child.key">{{ child.title }}</a-menu-item>
+              <template v-for="child in item.children" :key="child.key">
+                <!-- 三级菜单:有子项时渲染嵌套 a-sub-menu -->
+                <a-sub-menu v-if="child.children" :key="child.key">
+                  <template #title>{{ child.title }}</template>
+                  <a-menu-item v-for="grandchild in child.children" :key="grandchild.key">{{ grandchild.title }}</a-menu-item>
+                </a-sub-menu>
+                <!-- 二级菜单:无子项时直接渲染 a-menu-item -->
+                <a-menu-item v-else :key="child.key">{{ child.title }}</a-menu-item>
+              </template>
             </a-sub-menu>
             <a-menu-item v-else :key="item.key">{{ item.title }}</a-menu-item>
           </template>
@@ -132,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { useRoleStore } from '../stores-dca/role'
@@ -190,6 +197,9 @@ const topMenuMap: Record<string, { key: string; path: string }> = {
 const activeTopMenu = ref('workbench')
 const activeSideMenu = ref('')
 const defaultOpenKeys = ref<string[]>([])
+// 用 computed 包装避免每次模板渲染都创建新 array,触发 arco menu 内部 watch
+const sideSelectedKeys = computed<string[]>(() => activeSideMenu.value ? [activeSideMenu.value] : [])
+const sideDefaultOpenKeys = computed<string[]>(() => defaultOpenKeys.value)
 
 // ── 数据发现菜单(按 资源/资产/要素 三分法重构)───────
 const discoveryMenus = [
@@ -206,14 +216,10 @@ const discoveryMenus = [
     { key: 'discovery/data-resources/realtime', title: '实时接入' },
   ]},
 
-  // 数据资产(治理后) — 这里都是「平台层面」的资产:
-  // 指南(新人入门) / 总览(大盘) / 目录(资产台账) / 地图(全量数据)
+  // 数据资产(治理后) — 平台层面的资产台账
   // 客户 360 已移出,属于「数据探索」侧的分析视图
   { key: 'discovery-group-assets', title: '🏛️ 数据资产', children: [
-    { key: 'discovery/asset-guide', title: '资产指南' },
-    { key: 'discovery/asset-overview', title: '资产总览' },
     { key: 'discovery/asset-catalog', title: '资产目录' },
-    { key: 'discovery/data-map', title: '数据地图' },
   ]},
 
   // 数据要素(高价值业务形态 — 指标 / 变量 / 特征 / 外数 4 个核心入口)
@@ -228,49 +234,104 @@ const discoveryMenus = [
   // 运营工具(实际是数据治理 + 监管 + API,跨三大类)
   { key: 'discovery-group-ops', title: '🛠 治理运营', children: [
     { key: 'discovery/lineage', title: '全链路血缘' },
-    { key: 'discovery/impact-analysis', title: '变更影响分析' },
-    { key: 'discovery/batch-registration', title: '批量注册' },
-    { key: 'discovery/regulatory-config', title: '监管报表' },
     { key: 'discovery/api-market', title: 'API 市场' },
   ]},
 ]
 
-// ── 数据管理菜单(去掉前导 /,与 router path 一致)───────
+// ── 数据管理菜单(2026-08-11 重构:二级分组+三级归类)──
 const managementMenus = [
   { key: 'management-group-home', title: '首页', children: [
     { key: 'management', title: '数据管理' },
   ]},
-  { key: 'management-group-fav', title: '我的', children: [
-    { key: 'management/favorites', title: '我的收藏' },
+  { key: 'management-group-mine', title: '我的', children: [
     { key: 'management/notifications', title: '通知中心' },
+    { key: 'management/notifications/categories', title: '通知分类' },
   ]},
-  { key: 'management-group-std', title: '标准与建模', children: [
-    { key: 'management/data-standard/standards', title: '数据标准' },
-    { key: 'management/business-concept', title: '业务概念' },
-    { key: 'management/metadata/modeling', title: '元数据建模' },
-    { key: 'management/data-models', title: '数据模型' },
+  // ── 元数据管理(数据源→采集→上下架→标签 全生命周期)──
+  // 上下架管理与「数据发现」三分法对应:
+  //   数据资源 ↔ 业务系统/文件/日志/实时 (discovery/data-resources)
+  //   数据资产 ↔ 资产目录/数据表 (discovery/asset-catalog)
+  //   数据要素 ↔ 指标/变量/特征/外数/API (discovery/indicator-dict 等)
+  { key: 'management-group-metadata', title: '元数据管理', children: [
+    { key: 'management/metadata-sub-basic', title: '元数据基础', children: [
+      { key: 'management/metadata', title: '元数据总览' },
+      { key: 'management/metadata/modeling', title: '元数据建模' },
+    ]},
+    { key: 'management/metadata-sub-collect', title: '采集管理', children: [
+      { key: 'management/asset-management/basic-management/data-source', title: '数据源管理' },
+      { key: 'management/metadata/task', title: '采集任务' },
+    ]},
+    { key: 'management/metadata-sub-shelf', title: '上下架管理', children: [
+      // ↔ 数据发现·数据资源(业务系统/文件/日志/实时)
+      { key: 'management/asset-management/listing-management/data-source', title: '数据资源上下架' },
+      // ↔ 数据发现·数据资产(资产目录/数据表)
+      { key: 'management/asset-management/listing-management/asset-management', title: '数据资产上下架' },
+      // ↔ 数据发现·数据要素(指标/变量/特征/外数/API)
+      { key: 'management/shelf/element-shelf', title: '数据要素上下架' },
+      // 指标管理属于数据要素范畴,归入上下架管理
+      { key: 'management/asset-management/listing-management/metric-management', title: '指标管理' },
+      { key: 'management/shelf/batch-shelf', title: '批量上下架' },
+    ]},
+    // 标签管理(对资产打标,属于元数据管理范畴)
+    { key: 'management/metadata-sub-tag', title: '标签管理', children: [
+      { key: 'management/asset-management/basic-management/tag-management', title: '标签管理' },
+      { key: 'management/asset-management/asset-tags', title: '资产标签' },
+      { key: 'management/asset-management/tag-group', title: '标签分组' },
+    ]},
   ]},
-  { key: 'management-group-asset', title: '资产管理', children: [
-    { key: 'management/asset-management/asset-tags', title: '资产标签' },
-    { key: 'management/asset-management/tag-group', title: '标签分组' },
+  // ── 数据治理(标准+分级分类+业务概念)──
+  { key: 'management-group-governance', title: '数据治理', children: [
+    { key: 'management/governance-sub-std', title: '数据标准', children: [
+      { key: 'management/data-standard/standards', title: '数据标准' },
+      { key: 'management/data-standard/domains', title: '数据域管理' },
+      { key: 'management/data-standard/codes', title: '标准代码' },
+      { key: 'management/data-standard/words', title: '标准单词' },
+      { key: 'management/data-standard/audit', title: '标准稽核' },
+    ]},
+    { key: 'management/governance-sub-classify', title: '数据分级分类', children: [
+      { key: 'management/metadata/classify/sources', title: '分级分类·数据源' },
+      { key: 'management/metadata/classify-matrix', title: '分级矩阵表' },
+      { key: 'management/metadata/classify-tasks', title: '分级分类任务' },
+      { key: 'management/metadata/classify-api-docs', title: '分级分类 API 文档' },
+    ]},
+    { key: 'management/governance-sub-biz', title: '业务概念', children: [
+      { key: 'management/business-concept', title: '业务概念总览' },
+      { key: 'management/business-domain', title: '业务域管理' },
+      { key: 'management/business-entity', title: '业务实体管理' },
+      { key: 'management/business-graph', title: '业务图谱' },
+    ]},
+    { key: 'management/governance-sub-quality', title: '数据质量', children: [
+      { key: 'management/data-quality/tasks', title: '校验任务管理' },
+      { key: 'management/data-quality/instances', title: '任务实例日志' },
+    ]},
   ]},
-  { key: 'management-group-service', title: '服务', children: [
-    { key: 'management/service', title: '数据服务' },
-    { key: 'management/service/api-wizard', title: 'API 上架' },
+  // ── 数据要素管理(模型+服务)──
+  // 标签管理已迁入元数据管理;指标管理已归入上下架管理·数据要素上下架
+  { key: 'management-group-element', title: '数据要素管理', children: [
+    { key: 'management/element-sub-model', title: '数据模型', children: [
+      { key: 'management/data-models', title: '数据模型' },
+    ]},
+    { key: 'management/element-sub-service', title: '数据服务', children: [
+      { key: 'management/service', title: '数据服务' },
+      { key: 'management/service/api-management', title: 'API 管理' },
+      { key: 'management/service/api-wizard', title: 'API 上架' },
+      { key: 'management/service/monitor', title: '服务监控' },
+      { key: 'management/service/stats', title: '调用统计' },
+    ]},
   ]},
-  { key: 'management-group-perm', title: '权限', children: [
-    { key: 'management/permission/data-permission/apply', title: '字段权限申请' },
-    { key: 'management/user-groups', title: '用户组管理' },
-  ]},
+  // 字段权限/查询类服务(backtrack/detail-data-query/fund-usage-query)
+  // 不属于数据管理范畴,已从侧边菜单移除,路由保留可直接访问
 ]
 
 // ── 数据探索菜单(去掉前导 /,与 router path 一致)───────
-// 数据探索 = 面向业务的「分析视图」:客户 360 / 客群 / 标签 / 事件 / 工作流 / 看板
+// 数据探索 = 面向业务的「分析视图」:客户 360 / 工作流 / 指标看板
+//   2026-08-06 清理:已移除越界路由(客群/标签/事件→ MKT)
 // 数据发现 = 平台级「资产管理」:总览 / 资源 / 资产 / 要素 / 治理
 const explorationMenus = [
   { key: 'exploration', title: '数据探索' },
   { key: 'exploration/customer360', title: '客户 360' },
   { key: 'exploration/workflows', title: '分析工作流' },
+  { key: 'exploration/indicator-dashboard', title: '业务指标看板' },
 ]
 
 // ── 工作台菜单(快速入口 + 我的)────────────
@@ -282,7 +343,7 @@ const workbenchMenus = [
     { key: 'management/data-standard/standards', title: '数据标准' },
   ]},
   { key: 'workbench-group-mine', title: '我的', children: [
-    { key: 'management/favorites', title: '我的收藏' },
+    { key: 'discovery/favorites', title: '我的关注' },
     { key: 'management/notifications', title: '通知中心' },
   ]},
 ]
@@ -315,74 +376,115 @@ const currentSideMenus = computed(() => allMenus[activeTopMenu.value] || [])
 //  - admin 直接放行,其它角色走规则引擎
 //  - 组 key(`*-group-*`)只作容器,完全由其子项决定是否显示
 //  - `splitKey` 把原始 key 加入候选,确保每个菜单至少有这一次匹配机会
+//  - 「数据探索」顶层 3 项(entry / customer360 / workflows)对所有角色可见,
+//    因为它们是「客户 360」等核心业务的入口;否则 data_engineer 这类角色
+//    完全看不到客户 360,体验割裂。子组「客户中心 / 指标看板」再按角色过滤
 const PUBLIC_TOP_MODULES = new Set(['discovery', 'workbench'])
+// 数据探索的顶层入口项,所有角色均可见(不依赖 shortcuts)
+const EXPLORATION_ALWAYS_ON = new Set([
+  'exploration',
+  'exploration/customer360',
+  'exploration/workflows',
+])
 
-const currentSideMenusByRole = computed(() => {
+// 用 ref + 手动 update 替代 computed,避免每次 render 返回新 array
+// arco menu watch prop 变化时反复触发,导致 layout 渲染循环
+let _sideMenusCache: { key: string; result: any[] } = { key: '', result: [] }
+const currentSideMenusByRole = ref<any[]>([])
+
+function recomputeSideMenus() {
   const roleDef = roleStore.currentRoleDef
-  // 1. 公共模块不过滤,直接返回
+  let result: any[]
+  // 1. 公共模块不过滤,直接返回原始引用
   if (PUBLIC_TOP_MODULES.has(activeTopMenu.value)) {
-    return currentSideMenus.value
-  }
-  if (!roleDef) return currentSideMenus.value
-  // admin 看全部
-  if (roleDef.role === 'admin') return currentSideMenus.value
-  const shortcuts = roleDef.shortcuts || []
-  if (shortcuts.length === 0) return currentSideMenus.value
-
-  const allowedSet = new Set<string>(shortcuts)
-  // 共用菜单始终显示(收藏/通知/工作台/3 大模块入口)
-  const alwaysOn = new Set(['favorites', 'notifications', 'workbench', 'discovery', 'management', 'exploration'])
-
-  // 拆分菜单 key 为路径段,同时生成 xxx-yyy 这种中划线命名形式,
-  // 兼容 shortcuts 中各种命名风格
-  const splitKey = (k: string) => {
-    const parts = k.split('/').filter(Boolean)
-    const expanded: string[] = [k, ...parts]
-    for (let i = 0; i < parts.length - 1; i++) {
-      expanded.push(`${parts[i]}-${parts[i + 1]}`)
+    result = currentSideMenus.value
+  } else if (!roleDef || roleDef.role === 'admin') {
+    result = currentSideMenus.value
+  } else {
+    const shortcuts = roleDef.shortcuts || []
+    if (shortcuts.length === 0) {
+      result = currentSideMenus.value
+    } else {
+      const allowedSet = new Set<string>(shortcuts)
+      const alwaysOn = new Set(['favorites', 'notifications', 'workbench', 'discovery', 'management', 'exploration'])
+      const splitKey = (k: string) => {
+        const parts = k.split('/').filter(Boolean)
+        const expanded: string[] = [k, ...parts]
+        for (let i = 0; i < parts.length - 1; i++) {
+          expanded.push(`${parts[i]}-${parts[i + 1]}`)
+        }
+        return expanded
+      }
+      const isAllowed = (k: string) => {
+        if (alwaysOn.has(k)) return true
+        // 容器 key(二级分组 -group- / 三级归类 -sub-)不作权限拦截
+        if (/-group-/.test(k) || /-sub-/.test(k)) return true
+        if (activeTopMenu.value === 'exploration' && EXPLORATION_ALWAYS_ON.has(k)) return true
+        const parts = splitKey(k)
+        return parts.some(p => allowedSet.has(p))
+      }
+      const filterItem = (item: any): any | null => {
+        if (Array.isArray(item.children)) {
+          const newChildren = item.children.map(filterItem).filter(Boolean)
+          if (newChildren.length === 0) return null
+          return { ...item, children: newChildren }
+        }
+        if (isAllowed(item.key)) return item
+        return null
+      }
+      result = currentSideMenus.value.map(filterItem).filter(Boolean)
     }
-    return expanded
   }
-  // 判断菜单项是否在角色允许范围内
-  const isAllowed = (k: string) => {
-    if (alwaysOn.has(k)) return true
-    // 组 key(`*-group-*`)不参与 shortcuts,只作容器
-    if (/-group-/.test(k)) return true
-    const parts = splitKey(k)
-    return parts.some(p => allowedSet.has(p))
+  // 只在 result 实际变化时更新 ref
+  if (result !== currentSideMenusByRole.value) {
+    currentSideMenusByRole.value = result
   }
+}
 
-  // 递归过滤:子项在 allowed 范围才显示,组下无子项则整组隐藏
-  const filterItem = (item: any): any | null => {
-    if (Array.isArray(item.children)) {
-      const newChildren = item.children.map(filterItem).filter(Boolean)
-      if (newChildren.length === 0) return null
-      return { ...item, children: newChildren }
-    }
-    if (isAllowed(item.key)) return item
-    return null
-  }
+// 在 activeTopMenu/role/currentSideMenus 变化时重算
+watch([activeTopMenu, () => roleStore.currentRole, currentSideMenus], recomputeSideMenus, { immediate: true, flush: 'post' })
 
-  return currentSideMenus.value
-    .map(filterItem)
-    .filter(Boolean)
-})
+// stable:不再有,直接用 currentSideMenusByRole
+const currentSideMenusStable = currentSideMenusByRole
 
 function updateMenuState(path: string) {
   // 1. 顶部主模块(route.path 不带前导 /,topMenuMap 的 key 也不带前导 /)
   for (const [prefix, info] of Object.entries(topMenuMap)) {
     if (path === prefix || path.startsWith(prefix + '/')) {
-      activeTopMenu.value = info.key
+      if (activeTopMenu.value !== info.key) activeTopMenu.value = info.key
       break
     }
   }
   // 2. 侧边栏选中
-  activeSideMenu.value = path
-  defaultOpenKeys.value = currentSideMenusByRole.value
-    .filter(m => m.children?.some(c =>
-      path === c.key || path.startsWith(c.key + '/')
-    ))
-    .map(m => m.key)
+  if (activeSideMenu.value !== path) activeSideMenu.value = path
+  // 计算需要展开的菜单 key(支持三级嵌套)
+  const newOpenKeys: string[] = []
+  for (const group of currentSideMenusStable.value) {
+    if (!group.children) continue
+    let groupMatched = false
+    for (const sub of group.children) {
+      // 三级菜单:sub 有 children,检查孙项是否命中
+      if (sub.children) {
+        const subMatched = sub.children.some((g: any) =>
+          path === g.key || path.startsWith(g.key + '/')
+        )
+        if (subMatched) {
+          groupMatched = true
+          newOpenKeys.push(sub.key)
+        }
+      } else {
+        // 二级菜单:直接检查 sub 是否命中
+        if (path === sub.key || path.startsWith(sub.key + '/')) {
+          groupMatched = true
+        }
+      }
+    }
+    if (groupMatched) newOpenKeys.push(group.key)
+  }
+  // 数组内容相同才更新,避免每次都生成新 array 触发 arco menu 重复渲染
+  if (JSON.stringify(newOpenKeys) !== JSON.stringify(defaultOpenKeys.value)) {
+    defaultOpenKeys.value = newOpenKeys
+  }
 }
 
 function handleTopMenuClick(key: string) {
@@ -428,10 +530,7 @@ const NAME_BY_PATH: Record<string, string> = {
   'discovery/data-resources/realtime': 'dr-realtime',
 
   // —— 数据资产 ——
-  'discovery/asset-guide': 'asset-guide',
-  'discovery/asset-overview': 'asset-overview',
   'discovery/asset-catalog': 'asset-catalog',
-  'discovery/data-map': 'data-map',
 
   // —— 数据要素(精简到 4 个核心入口,与 discoveryMenus 保持一致)——
   'discovery/indicator-dict': 'indicator-dict',
@@ -444,30 +543,69 @@ const NAME_BY_PATH: Record<string, string> = {
 
   // —— 治理运营 ——
   'discovery/lineage': 'lineage',
-  'discovery/impact-analysis': 'impact-analysis',
-  'discovery/batch-registration': 'batch-registration',
-  'discovery/regulatory-config': 'regulatory-config',
   'discovery/api-market': 'api-market',
 
   // —— 数据管理 ——
   'management': 'management',
-  'management/favorites': 'favorites',
   'management/notifications': 'notifications',
-  'management/business-concept': 'business-concept',
-  'management/data-standard/standards': 'data-standard',
+  'management/notifications/categories': 'notification-categories',
+  'management/metadata': 'metadata',
   'management/metadata/modeling': 'metadata-modeling',
-  'management/service': 'service',
-  'management/service/api-wizard': 'api-wizard',
+  'management/metadata/entity': 'metadata-entity',
+  'management/metadata/task': 'metadata-task',
+  'management/metadata/classify/sources': 'classify-sources',
+  'management/metadata/classify/tables': 'classify-tables',
+  'management/metadata/classify-matrix': 'classify-matrix',
+  'management/metadata/classify-tasks': 'classify-tasks',
+  'management/metadata/classify-api-docs': 'classify-api-docs',
+  'management/business-concept': 'business-concept',
+  'management/business-domain': 'business-domain',
+  'management/business-entity': 'business-entity',
+  'management/business-graph': 'business-graph',
+  'management/data-standard/standards': 'data-standard',
+  'management/data-standard/domains': 'data-standard-domains',
+  'management/data-standard/codes': 'data-standard-codes',
+  'management/data-standard/words': 'data-standard-words',
+  'management/data-standard/audit': 'data-standard-audit',
+  'management/data-quality/tasks': 'quality-task-list',
+  'management/data-quality/instances': 'quality-instance-list',
+  'management/data-models': 'data-models',
   'management/asset-management/asset-tags': 'asset-tags',
   'management/asset-management/tag-group': 'tag-group',
+  'management/asset-management/basic-management/data-source': 'asset-data-source',
+  'management/asset-management/basic-management/metadata-collection': 'metadata-collection',
+  'management/asset-management/basic-management/metadata-collection/task-list': 'metadata-collection-list',
+  'management/asset-management/basic-management/tag-management': 'tag-management',
+  'management/asset-management/listing-management/asset-management': 'asset-listing-overview',
+  'management/asset-management/listing-management/data-source': 'data-source-listing-overview',
+  'management/asset-management/listing-management/metric-management': 'metric-management',
+  'management/service': 'service',
+  'management/service/api-wizard': 'api-wizard',
+  'management/service/api-management': 'service-api-management',
+  'management/service/backtrack': 'service-backtrack',
+  'management/service/detail-data-query': 'service-detail-data-query',
+  'management/service/fund-usage-query': 'service-fund-usage-query',
+  'management/service/monitor': 'service-monitor',
+  'management/service/stats': 'service-stats',
   'management/permission/data-permission/apply': 'permission-apply',
-  'management/data-models': 'data-models',
+  'management/permission/data-permission/approval': 'permission-approval',
+  'management/permission/data-permission/management': 'permission-management',
+  'management/permission/data-permission/progress': 'permission-progress',
+  'management/shelf/resource-shelf': 'shelf-resource',
+  'management/shelf/asset-shelf': 'shelf-asset',
+  'management/shelf/element-shelf': 'shelf-element',
+  'management/shelf/batch-shelf': 'shelf-batch',
   'management/user-groups': 'user-groups',
 
   // —— 数据探索 ——
+  // 2026-08-06 清理:客群/标签/事件已划归 MKT,这里不再引用它们的 key
+  //   指标看板已确认为 DCA 探索域自有能力,保留
   'exploration': 'exploration',
   'exploration/customer360': 'Customer360',
+  'exploration/customer360/detail': 'Customer360Detail',
   'exploration/workflows': 'workflows',
+  'exploration/workflows/editor': 'workflow-editor',
+  'exploration/indicator-dashboard': 'exploration-indicator-dashboard',
 
   // —— 工作台 ——
   'workbench': 'workbench'
@@ -491,13 +629,8 @@ function goToProfile() {
   Message.info('个人信息(待实现)')
 }
 
-watch(() => route.path, (path) => {
-  updateMenuState(path)
-}, { immediate: true })
-
-onMounted(() => {
-  updateMenuState(route.path)
-})
+// 不再 watch route.path,避免 arco menu 内部 watch 触发的 reactive 循环
+// 页面切换时菜单状态由 page onMounted 自行管理
 </script>
 
 <style scoped>

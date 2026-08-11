@@ -605,7 +605,7 @@ const router = useRouter()
 
 // 导航到采购登记页面
 const navigateToRegister = () => {
-  router.push('/discovery/asset-management/external-purchase-register')
+  router.push('/home/discovery/asset-management/external-purchase-register')
 }
 
 // 处理新增采购项目

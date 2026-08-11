@@ -1,10 +1,10 @@
 <template>
-  <div class="credit-page">
-    <a-page-header title="征信查询" sub-title="个人/企业征信 · 风险评估" :back="false">
+  <PageContainer>
+    <PageHeader title="征信查询" sub-title="个人/企业征信 · 风险评估">
       <template #extra>
         <a-button @click="goBack"><template #icon><icon-left /></template>返回</a-button>
       </template>
-    </a-page-header>
+    </PageHeader>
 
     <div class="content-wrapper">
       <a-card :bordered="false" style="margin-bottom: 16px">
@@ -69,12 +69,14 @@
         </a-col>
       </a-row>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
 import { Message } from '@arco-design/web-vue'
 
 const router = useRouter()
@@ -120,6 +122,6 @@ const goBack = () => router.push('discovery')
 </script>
 
 <style lang="scss" scoped>
-.credit-page { background: #f5f7fa; min-height: 100vh; }
+/* 2026-08-06 统一:页面背景/高度由 PageContainer 提供 */
 .content-wrapper { padding: 0 24px 24px; }
 </style>

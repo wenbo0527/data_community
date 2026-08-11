@@ -1,9 +1,10 @@
 <template>
-  <div class="permission-apply-page">
-    <a-page-header
+  <PageContainer>
+    <PageHeader
       :title="contextTitle"
       sub-title="申请访问受限字段 · 待 Owner 审批通过后方可使用"
-      :back="true"
+      show-back
+      back-text="返回"
       @back="onBack"
     />
 
@@ -49,7 +50,9 @@
               </template>
             </a-table-column>
             <a-table-column title="所属表" data-index="tableName" :width="140">
-              <a-link @click="onViewTable(record.tableName)">{{ record.tableName }}</a-link>
+              <template #cell="{ record }">
+                <a-link @click="onViewTable(record.tableName)">{{ record.tableName }}</a-link>
+              </template>
             </a-table-column>
             <a-table-column title="敏感级别" :width="100">
               <template #cell="{ record }">
@@ -59,7 +62,9 @@
               </template>
             </a-table-column>
             <a-table-column title="所属要素" data-index="elementName">
-              <a-tag v-if="record.elementName" color="purple" size="small">{{ record.elementName }}</a-tag>
+              <template #cell="{ record }">
+                <a-tag v-if="record.elementName" color="purple" size="small">{{ record.elementName }}</a-tag>
+              </template>
             </a-table-column>
             <a-table-column title="说明" data-index="comment" :ellipsis="true" />
           </template>
@@ -219,16 +224,20 @@
         </div>
       </a-card>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Message } from '@arco-design/web-vue'
+import { Message, Modal } from '@arco-design/web-vue'
 import { useRouter, useRoute } from 'vue-router'
-import { FieldLinkStore } from '@/mock/shared/lineage'
-import { ApplicationStore } from '@/mock/shared/workflow-directory'
-import { TaxonomyStore } from '@/mock/shared/classification-taxonomy'
+import PageContainer from '@/components-dca/common/PageContainer.vue'
+import PageHeader from '@/components-dca/common/PageHeader.vue'
+import { FieldLinkStore } from '@/mock-shared/lineage'
+// 2026-08-06:workflow-directory 在 DFD 那边为同名文件,保留 @/mock/shared/ 以避免歧义
+import { ApplicationStore } from '@/mock-shared/workflow-directory'
+import { TaxonomyStore } from '@/mock-shared/classification-taxonomy'
+import { PermissionStore } from '@/mock-shared/permission-store'
 
 const router = useRouter()
 const route = useRoute()
@@ -306,7 +315,7 @@ const filteredFields = computed(() => {
 })
 
 const onViewTable = (tableName: string) => {
-  router.push(`discovery/data-map?table=${tableName}`)
+  router.push(`discovery/asset-catalog?table=${tableName}`)
 }
 
 const onRemoveField = (key: string) => {
@@ -352,7 +361,7 @@ const onNext = () => {
   currentStep.value = 2
 }
 
-// Step 3 提交
+// Step 3 提交(2026-08-06:同时写入 PermissionStore,与审批/进度页数据打通)
 const onSubmit = async () => {
   submitting.value = true
   try {
@@ -363,6 +372,7 @@ const onSubmit = async () => {
     selectedKeys.value.forEach(key => {
       const [table, field] = key.split('.')
       const fieldData = availableFields.value.find(f => f.key === key)
+      // 旧 ApplicationStore(通知中心)
       ApplicationStore.add({
         type: 'permission_apply',
         title: `申请访问「${table}.${field}」字段`,
@@ -374,6 +384,18 @@ const onSubmit = async () => {
         reason: applyForm.reason,
         status: 'pending',
         duration: applyForm.duration
+      })
+      // 新 PermissionStore(权限流程)
+      PermissionStore.createDraft({
+        applicant: '王运营',
+        applicantDept: '数据运营组',
+        tablePath: table,
+        fieldName: field,
+        fieldDesc: (fieldData as any)?.label || '',
+        reason: applyForm.reason,
+        purpose: 'data-analysis',
+        scope: 'read',
+        validMonths: applyForm.duration
       })
     })
 
@@ -405,7 +427,7 @@ const onReset = () => {
 
 const onViewApplications = () => {
   // 跳转到我的申请/收藏(实际应有独立页)
-  router.push('management/favorites')
+  router.push('discovery/favorites')
 }
 
 const sensitivityColor = (level: string) => ({
@@ -414,10 +436,10 @@ const sensitivityColor = (level: string) => ({
 </script>
 
 <style lang="scss" scoped>
+/* 2026-08-06 统一:页面背景/高度/最大宽度由 PageContainer 提供 */
+/* 保留内层 padding/max-width(页面宽度定制) */
 .permission-apply-page {
-  padding: 16px;
-  max-width: 1100px;
-  margin: 0 auto;
+  padding: 0 16px;
 
   .apply-steps {
     margin-bottom: 24px;
@@ -430,7 +452,7 @@ const sensitivityColor = (level: string) => ({
   .step-actions {
     margin-top: 24px;
     padding-top: 16px;
-    border-top: 1px solid #f2f3f5;
+    border-top: 1px solid var(--dca-border-light);
     text-align: right;
   }
 
