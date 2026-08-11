@@ -2,8 +2,9 @@ import { getBudgetList, getBudgetDetail, createBudget as createBudgetApi, update
 
 export const budgetApiService = {
   async getBudgets(params: { page?: number; pageSize?: number }) {
-    const res = await getBudgetList(params)
-    return { list: res.list || [], total: Number(res.total || (res.list || []).length) }
+    const res: any = await getBudgetList(params)
+    const data = res?.data || res
+    return { list: data.list || [], total: Number(data.total || (data.list || []).length) }
   },
   async getBudget(id: string) {
     return await getBudgetDetail(id)

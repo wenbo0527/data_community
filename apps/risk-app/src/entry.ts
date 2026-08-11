@@ -10,6 +10,13 @@ import '@arco-design/web-vue/es/index.css'
 import Root from './Root.vue'
 import router from './router'
 
+// Qiankun 微前端类型扩展（PM 9 状态机 G 选项必修 · 2026-08-07）
+declare global {
+  interface Window {
+    __POWERED_BY_QIANKUN__?: boolean
+  }
+}
+
 // 判断是否在 Qiankun 环境中
 const isQiankun = window.__POWERED_BY_QIANKUN__ || false
 

@@ -38,7 +38,7 @@ export function useRolePermissions() {
   })
 
   /** 当前角色中文名 */
-  const roleLabel = computed(() => ROLE_LABELS[role.value] || role.value)
+  const roleLabel = computed(() => (ROLE_LABELS as Record<string, string>)[role.value] || role.value)
 
   /** 是否匹配角色 */
   const isMember = computed(() => role.value === 'risk_data_member')

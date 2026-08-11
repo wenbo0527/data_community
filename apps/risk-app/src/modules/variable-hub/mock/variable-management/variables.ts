@@ -1,5 +1,5 @@
 export type VariableSourceType = 'external' | 'internal' | 'credit'
-export type VariableCategory = 'behavior' | 'credit' | 'external'
+export type VariableCategory = 'behavior' | 'credit' | 'external' | 'midloan_behavior'
 
 export interface VariableSourceRefs {
   externalServiceId?: string | number
@@ -39,6 +39,9 @@ export interface VariableAssetMock {
   type: string
   status: string
   description: string
+  featureCnName?: string
+  sourceTableAfter?: string
+  sourceTableBefore?: string
   dataSource: string
   dataSourceName: string
   sourceField?: string
@@ -79,6 +82,21 @@ export interface VariableAssetMock {
   syncFailedReason?: string
   syncFailedAt?: string
   syncRetryCount?: number
+  // ============ 验收 / 驳回 / 引用 状态机专属字段 ============
+  acceptor?: string
+  verifiedAt?: string
+  rejectReason?: string
+  rejectedAt?: string
+  registeredAt?: string
+  developingOaAt?: string
+  pendingVerifyAt?: string
+  syncingInternalAt?: string
+  syncingVariableAt?: string
+  referenceStatus?: string
+  referenceDetail?: string
+  // ============ 下线 状态机专属字段 ============
+  offlineTime?: string
+  offlineReason?: string
 }
 
 const now = new Date()

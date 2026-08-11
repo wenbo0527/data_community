@@ -69,12 +69,12 @@ export const MIDLOAN_FAILED_STATUSES: MidloanStatus[] = [
 ]
 
 /** 取状态元数据 */
-export const midloanStatusMeta = (status: string): MidloanStatusMeta => {
-  return (MIDLOAN_STATUS_MAP as any)[status] || { label: status, color: 'gray', description: '' }
+export const midloanStatusMeta = (status?: string): MidloanStatusMeta => {
+  return (MIDLOAN_STATUS_MAP as any)[status || ''] || { label: status || '', color: 'gray', description: '' }
 }
 
-export const midloanStatusLabel = (status: string) => midloanStatusMeta(status).label
-export const midloanStatusColor = (status: string) => midloanStatusMeta(status).color
+export const midloanStatusLabel = (status?: string) => midloanStatusMeta(status).label
+export const midloanStatusColor = (status?: string) => midloanStatusMeta(status).color
 
 /**
  * 判断给定状态是否为可重试异常状态（用于详情页红色 Alert）
@@ -417,7 +417,7 @@ export const tableActionsByStatus = (
   // 主流程操作：从 allowedActionsByStatus 合并（排除 demo 演示按钮）
   const allMain = allowedActionsByStatus(status, record, role)
   // 去重：topActions 中已暴露过的快捷按钮不在「更多操作」中重复出现
-  const topActionKeys = new Set(topActions.map(a => a.key))
+  const topActionKeys = new Set<string>(topActions.map(a => a.key))
   const retryKeyMap: Record<string, string> = {
     retry_sync: 'retry',
     retry_dw: 'retry',

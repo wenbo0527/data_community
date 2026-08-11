@@ -34,6 +34,8 @@ export interface DerivationRecord {
   listType?: string                   // 名单类型
   batch?: string                      // 批次
   acceptor?: string                   // 验收人
+  verifiedAt?: string                 // 验收时间
+  registeredAt?: string               // 注册时间
   remark?: string                     // 备注
   /** 状态与系统字段 */
   status: 'pending_dev' | 'developing' | 'pending_register' | 'registered'
@@ -275,13 +277,13 @@ function nextId(): string {
 
 export const DerivationStore = {
   /** 列表查询 */
-  list(filter = {}) {
-    let list = [...store]
-    if (filter.status) list = list.filter(d => d.status === filter.status)
-    if (filter.businessScene) list = list.filter(d => d.businessScene === filter.businessScene)
+  list(filter: any = {}) {
+    let list: any[] = [...store]
+    if (filter.status) list = list.filter((d: any) => d.status === filter.status)
+    if (filter.businessScene) list = list.filter((d: any) => d.businessScene === filter.businessScene)
     if (filter.keyword) {
       const k = String(filter.keyword).toLowerCase()
-      list = list.filter(d =>
+      list = list.filter((d: any) =>
         d.name.toLowerCase().includes(k) ||
         d.id.toLowerCase().includes(k) ||
         d.featureEnName.toLowerCase().includes(k) ||
@@ -291,11 +293,11 @@ export const DerivationStore = {
     return list
   },
   /** 详情查询 */
-  get(id) {
-    return store.find(d => d.id === id) || null
+  get(id: string) {
+    return store.find((d: any) => d.id === id) || null
   },
   /** 创建（A1） */
-  create(payload, creator = 'Demo 用户') {
+  create(payload: any, creator: string = 'Demo 用户') {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
     const record: DerivationRecord = {
       id: nextId(),
@@ -309,15 +311,15 @@ export const DerivationStore = {
     return record
   },
   /** 状态流转：A2 */
-  updateStatus(id, newStatus, operator = 'Demo 用户') {
-    const d = store.find(x => x.id === id)
+  updateStatus(id: string, newStatus: string, operator: string = 'Demo 用户') {
+    const d = store.find((x: any) => x.id === id)
     if (!d) return null
-    d.status = newStatus
+    d.status = newStatus as any
     d.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
     return d
   },
   /** 注册：B1 - 写入协作信息和数据底表 */
-  register(id, payload) {
+  register(id: string, payload: any) {
     const d = store.find(x => x.id === id)
     if (!d) return null
     // 数据底表名称等可暂空
@@ -347,7 +349,7 @@ export const DerivationStore = {
     return d
   },
   /** 补充数据底表（B1 R10） */
-  supplementDataTable(id, tableName) {
+  supplementDataTable(id: string, tableName: string) {
     const d = store.find(x => x.id === id)
     if (!d) return null
     d.dataTableName = tableName

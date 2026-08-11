@@ -60,7 +60,7 @@ export const useDerivationStore = defineStore('derivation', () => {
 
   /** 补充数据底表 */
   function supplementDataTable(id: string, tableName: string, remark?: string) {
-    const r = DerivationStore.supplementDataTable?.(id, tableName, remark)
+    const r = DerivationStore.supplementDataTable?.(id, tableName)
     refresh()
     return r
   }
