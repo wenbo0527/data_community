@@ -93,12 +93,12 @@ export function getBreadcrumb(routeName, route = {}) {
  */
 export function checkRoutePermission(route, user = {}) {
   // 白名单路由直接通过
-  if (ROUTE_GUARD_CONFIG.whiteList.includes(route.path)) {
+  if (ROUTE_GUARD_CONFIG.whiteList && ROUTE_GUARD_CONFIG.whiteList.includes(route.path)) {
     return true
   }
-  
+
   // 检查用户是否登录
-  if (!user.token && ROUTE_GUARD_CONFIG.authRequired.some(path => route.path.startsWith(path))) {
+  if (!user.token && ROUTE_GUARD_CONFIG.authRequired && ROUTE_GUARD_CONFIG.authRequired.some(path => route.path.startsWith(path))) {
     return false
   }
   

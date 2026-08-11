@@ -205,7 +205,7 @@ const handlePageChange = (page) => {
 
 // 表注册
 const handleTableRegistration = () => {
-  router.push('/exploration/customer-center/tag-system/table-registration')
+  router.push('/home/exploration/customer-center/tag-system/table-registration')
 }
 
 // 查看详情

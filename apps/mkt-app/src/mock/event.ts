@@ -817,6 +817,46 @@ const mockEventAPI = {
         resolve({ success: true, id, status: '已下线', updateTime: new Date().toISOString() });
       }, 300);
     });
+  },
+
+  // P1#2 虚拟事件组合创建 - 2026-08-02 (从 commit 7cb2cadb cherry-pick)
+  createCombineVirtualEvent: (params: {
+    name: string;
+    description?: string;
+    scenarios: string[];
+    combineType: 'OR' | 'AND';
+    events: Array<{ id: string; name: string }>;
+  }) => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // 生成 VIRT*** 风格 ID(6 位随机数)
+        const newId = `VIRT${String(Math.floor(Math.random() * 900000) + 100000)}`;
+        const now = new Date().toISOString();
+        resolve({
+          success: true,
+          id: newId,
+          eventName: params.name,
+          eventId: newId,
+          description: params.description || '',
+          scenario: params.scenarios,
+          combineType: params.combineType,
+          combineEvents: params.events,
+          status: '已上线',
+          realEventId: null,
+          updater: '当前用户',
+          createTime: now,
+          updateTime: now,
+          version: 1,
+          versions: [{
+            version: 1,
+            creator: '当前用户',
+            createdAt: now,
+            description: `首次创建(${params.combineType} of ${params.events.length} events)`
+          }],
+          expireAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString()
+        });
+      }, 600);
+    });
   }
 };
 

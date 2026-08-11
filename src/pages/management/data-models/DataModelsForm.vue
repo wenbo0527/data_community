@@ -665,7 +665,7 @@ const handleSave = async () => {
     
     if (response.code === 200) {
       Message.success(isEdit.value ? '模型更新成功' : '模型创建成功')
-      router.push('/management/service/data-models')
+      router.push('/home/management/service/data-models')
     } else {
       Message.error(response.message || (isEdit.value ? '更新失败' : '创建失败'))
     }
@@ -697,7 +697,7 @@ const saveModel = async (status) => {
     console.log('保存模型数据:', modelData)
     
     Message.success(isEdit.value ? '模型更新成功' : '模型创建成功')
-    router.push('/management/service/data-models')
+    router.push('/home/management/service/data-models')
   } catch (error) {
     Message.error('保存失败，请重试')
     console.error('Save model error:', error)

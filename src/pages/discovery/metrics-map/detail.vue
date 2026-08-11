@@ -478,7 +478,7 @@ const openReport = (url: string) => {
 // 方法
 const goBack = () => {
   // 返回指标地图页面
-  router.push('/discovery/metrics-map')
+  router.push('/home/discovery/metrics-map')
 }
 
 // SQL展开/收起功能

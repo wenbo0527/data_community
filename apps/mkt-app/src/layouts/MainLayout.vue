@@ -244,12 +244,19 @@ function updateMenuState(path: string) {
 // 顶部菜单点击
 function handleTopMenuClick(key: string) {
   activeTopMenu.value = key
-  router.push(topMenuDefaultPath[key] || '/')
+  const target = topMenuDefaultPath[key] || '/'
+  // 子应用 base 兼容:去前导 '/' 让 vue-router 自动加 base('/mkt/')
+  const path = target.startsWith('/') ? target.substring(1) : target
+  router.push(path || 'benefit/template')
 }
 
 // 侧边栏菜单点击
 function handleSideMenuClick(key: string) {
-  if (key) router.push(key)
+  if (!key) return
+  // mkt 用 hash mode, base = '/mkt/'
+  // router.push('/customer/...') 会跳过 base,改为去前导 '/' 当相对路径
+  const path = key.startsWith('/') ? key.substring(1) : key
+  router.push(path)
 }
 
 watch(() => route.path, (path) => {

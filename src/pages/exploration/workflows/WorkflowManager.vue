@@ -204,7 +204,7 @@ const loadWorkflows = async () => {
 };
 
 const createWorkflow = () => {
-  router.push('/exploration/workflows/create');
+  router.push('/home/exploration/workflows/create');
 };
 
 const editWorkflow = (id) => {

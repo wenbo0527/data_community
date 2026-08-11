@@ -53,6 +53,13 @@ export const customerRoutes: RouteRecordRaw[] = [
     component: () => import('@/pages/customer/event-center/virtual-events.vue'),
     meta: { title: '虚拟事件' }
   },
+  // P1#2 虚拟事件组合创建 - 2026-08-02 (补 commit 7cb2cadb 漏注册的路由)
+  {
+    path: 'customer/virtual-event-combine',
+    name: 'VirtualEventCombine',
+    component: () => import('@/pages/customer/event-center/virtual-event-combine.vue'),
+    meta: { title: '虚拟事件组合' }
+  },
   {
     path: 'customer/sample-stats',
     name: 'SampleStats',

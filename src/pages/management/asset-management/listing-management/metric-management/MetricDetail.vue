@@ -423,7 +423,7 @@ const formRules = computed(() => getFormRules())
 
 // 方法
 const goBack = () => {
-  router.push('/discovery/asset-management/metric-management')
+  router.push('/home/discovery/asset-management/metric-management')
 }
 
 const handleEdit = () => {

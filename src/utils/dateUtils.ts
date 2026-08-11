@@ -1,212 +1,90 @@
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import 'dayjs/locale/zh-cn'
-
-// 配置dayjs
-dayjs.extend(relativeTime)
-dayjs.locale('zh-cn')
-
 /**
- * 日期工具类
- * 提供统一的日期格式化和处理功能
+ * 日期工具(简化版)
+ *
+ * 提供权限页面使用的日期格式化、相对时间、范围等
  */
-export class DateUtils {
-  /**
-   * 格式化日期
-   */
-  static formatDate(date: string | Date, format = 'YYYY-MM-DD'): string {
-    if (!date) return ''
-    return dayjs(date).format(format)
-  }
 
-  /**
-   * 格式化日期时间
-   */
-  static formatDateTime(date: string | Date, format = 'YYYY-MM-DD HH:mm:ss'): string {
-    if (!date) return ''
-    return dayjs(date).format(format)
-  }
+const DateUtils = {
+  /** 格式化日期 */
+  format(date: string | Date | number, pattern: string = 'YYYY-MM-DD HH:mm'): string {
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return ''
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return pattern
+      .replace('YYYY', String(d.getFullYear()))
+      .replace('MM', pad(d.getMonth() + 1))
+      .replace('DD', pad(d.getDate()))
+      .replace('HH', pad(d.getHours()))
+      .replace('mm', pad(d.getMinutes()))
+      .replace('ss', pad(d.getSeconds()))
+  },
 
-  /**
-   * 格式化时间
-   */
-  static formatTime(date: string | Date, format = 'HH:mm:ss'): string {
-    if (!date) return ''
-    return dayjs(date).format(format)
-  }
+  /** 格式化日期时间(带秒) */
+  formatDateTime(date: string | Date | number, pattern: string = 'YYYY-MM-DD HH:mm:ss'): string {
+    return this.format(date, pattern)
+  },
 
-  /**
-   * 获取相对时间
-   */
-  static getRelativeTime(date: string | Date): string {
-    if (!date) return ''
-    return dayjs(date).fromNow()
-  }
+  /** 相对时间 */
+  fromNow(date: string | Date | number): string {
+    const d = new Date(date).getTime()
+    if (isNaN(d)) return ''
+    const diff = Date.now() - d
+    const abs = Math.abs(diff)
+    const sec = Math.floor(abs / 1000)
+    if (sec < 60) return diff >= 0 ? `${sec} 秒前` : `${sec} 秒后`
+    const min = Math.floor(sec / 60)
+    if (min < 60) return diff >= 0 ? `${min} 分钟前` : `${min} 分钟后`
+    const hour = Math.floor(min / 60)
+    if (hour < 24) return diff >= 0 ? `${hour} 小时前` : `${hour} 小时后`
+    const day = Math.floor(hour / 24)
+    if (day < 30) return diff >= 0 ? `${day} 天前` : `${day} 天后`
+    const month = Math.floor(day / 30)
+    if (month < 12) return diff >= 0 ? `${month} 个月前` : `${month} 个月后`
+    const year = Math.floor(day / 365)
+    return diff >= 0 ? `${year} 年前` : `${year} 年后`
+  },
 
-  /**
-   * 计算时间差（天数）
-   */
-  static getDaysDiff(startDate: string | Date, endDate: string | Date): number {
-    if (!startDate || !endDate) return 0
-    return dayjs(endDate).diff(dayjs(startDate), 'day')
-  }
-
-  /**
-   * 计算时间差（小时）
-   */
-  static getHoursDiff(startDate: string | Date, endDate: string | Date): number {
-    if (!startDate || !endDate) return 0
-    return dayjs(endDate).diff(dayjs(startDate), 'hour')
-  }
-
-  /**
-   * 计算时间差（分钟）
-   */
-  static getMinutesDiff(startDate: string | Date, endDate: string | Date): number {
-    if (!startDate || !endDate) return 0
-    return dayjs(endDate).diff(dayjs(startDate), 'minute')
-  }
-
-  /**
-   * 判断是否为今天
-   */
-  static isToday(date: string | Date): boolean {
-    if (!date) return false
-    return dayjs(date).isSame(dayjs(), 'day')
-  }
-
-  /**
-   * 判断是否为昨天
-   */
-  static isYesterday(date: string | Date): boolean {
-    if (!date) return false
-    return dayjs(date).isSame(dayjs().subtract(1, 'day'), 'day')
-  }
-
-  /**
-   * 判断是否为本周
-   */
-  static isThisWeek(date: string | Date): boolean {
-    if (!date) return false
-    return dayjs(date).isSame(dayjs(), 'week')
-  }
-
-  /**
-   * 判断是否为本月
-   */
-  static isThisMonth(date: string | Date): boolean {
-    if (!date) return false
-    return dayjs(date).isSame(dayjs(), 'month')
-  }
-
-  /**
-   * 判断是否为本年
-   */
-  static isThisYear(date: string | Date): boolean {
-    if (!date) return false
-    return dayjs(date).isSame(dayjs(), 'year')
-  }
-
-  /**
-   * 获取日期范围
-   */
-  static getDateRange(startDate: string | Date, endDate: string | Date): string {
-    if (!startDate || !endDate) return ''
-    const start = dayjs(startDate).format('YYYY-MM-DD')
-    const end = dayjs(endDate).format('YYYY-MM-DD')
-    return `${start} 至 ${end}`
-  }
-
-  /**
-   * 获取月份的第一天
-   */
-  static getMonthStart(date: string | Date = new Date()): string {
-    return dayjs(date).startOf('month').format('YYYY-MM-DD')
-  }
-
-  /**
-   * 获取月份的最后一天
-   */
-  static getMonthEnd(date: string | Date = new Date()): string {
-    return dayjs(date).endOf('month').format('YYYY-MM-DD')
-  }
-
-  /**
-   * 获取年份的第一天
-   */
-  static getYearStart(date: string | Date = new Date()): string {
-    return dayjs(date).startOf('year').format('YYYY-MM-DD')
-  }
-
-  /**
-   * 获取年份的最后一天
-   */
-  static getYearEnd(date: string | Date = new Date()): string {
-    return dayjs(date).endOf('year').format('YYYY-MM-DD')
-  }
-
-  /**
-   * 添加时间
-   */
-  static addTime(date: string | Date, amount: number, unit: 'day' | 'month' | 'year' | 'hour' | 'minute' = 'day'): string {
-    return dayjs(date).add(amount, unit).format('YYYY-MM-DD HH:mm:ss')
-  }
-
-  /**
-   * 减少时间
-   */
-  static subtractTime(date: string | Date, amount: number, unit: 'day' | 'month' | 'year' | 'hour' | 'minute' = 'day'): string {
-    return dayjs(date).subtract(amount, unit).format('YYYY-MM-DD HH:mm:ss')
-  }
-
-  /**
-   * 验证日期格式
-   */
-  static isValidDate(date: string | Date): boolean {
-    return dayjs(date).isValid()
-  }
-
-  /**
-   * 获取时间戳
-   */
-  static getTimestamp(date: string | Date = new Date()): number {
-    return dayjs(date).valueOf()
-  }
-
-  /**
-   * 从时间戳创建日期
-   */
-  static fromTimestamp(timestamp: number, format = 'YYYY-MM-DD HH:mm:ss'): string {
-    return dayjs(timestamp).format(format)
-  }
-
-  /**
-   * 智能格式化日期
-   * 根据时间距离现在的长短选择合适的显示格式
-   */
-  static smartFormat(date: string | Date): string {
-    if (!date) return ''
-    
-    const now = dayjs()
-    const target = dayjs(date)
-    const diffMinutes = now.diff(target, 'minute')
-    const diffHours = now.diff(target, 'hour')
-    const diffDays = now.diff(target, 'day')
-    
-    if (diffMinutes < 1) {
-      return '刚刚'
-    } else if (diffMinutes < 60) {
-      return `${diffMinutes}分钟前`
-    } else if (diffHours < 24) {
-      return `${diffHours}小时前`
-    } else if (diffDays < 7) {
-      return `${diffDays}天前`
-    } else if (target.isSame(now, 'year')) {
-      return target.format('MM-DD HH:mm')
-    } else {
-      return target.format('YYYY-MM-DD')
+  /** 范围转数组 */
+  range(start: Date | string, end: Date | string, step: 'day' | 'hour' = 'day'): Date[] {
+    const result: Date[] = []
+    const s = new Date(start).getTime()
+    const e = new Date(end).getTime()
+    const inc = step === 'day' ? 86400000 : 3600000
+    for (let t = s; t <= e; t += inc) {
+      result.push(new Date(t))
     }
+    return result
+  },
+
+  /** 加天数 */
+  addDays(date: string | Date | number, days: number): Date {
+    const d = new Date(date)
+    d.setDate(d.getDate() + days)
+    return d
+  },
+
+  /** 加月数 */
+  addMonths(date: string | Date | number, months: number): Date {
+    const d = new Date(date)
+    d.setMonth(d.getMonth() + months)
+    return d
+  },
+
+  /** 相差天数 */
+  diffDays(a: string | Date, b: string | Date): number {
+    return Math.floor((new Date(a).getTime() - new Date(b).getTime()) / 86400000)
+  },
+
+  /** 今天 */
+  today(): string {
+    return new Date().toISOString().slice(0, 10)
+  },
+
+  /** 是否过期 */
+  isExpired(date: string | Date): boolean {
+    return new Date(date).getTime() < Date.now()
   }
 }
 
 export default DateUtils
+export { DateUtils }

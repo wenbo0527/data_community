@@ -132,7 +132,7 @@ const fetchCollection = async () => {
     
     if (!id) {
       Message.error('无效的场景ID')
-      router.push('/discovery/data-map/collections')
+      router.push('/home/discovery/data-map/collections')
       return
     }
     
@@ -142,7 +142,7 @@ const fetchCollection = async () => {
       collection.value = found
     } else {
       Message.error('未找到该场景')
-      router.push('/discovery/data-map/collections')
+      router.push('/home/discovery/data-map/collections')
     }
   } catch (error) {
     console.error('Fetch collection error:', error)

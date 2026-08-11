@@ -1027,12 +1027,12 @@ const exportMetrics = () => {
 
 // 跳转到批量注册页面
 const goToBatchRegistration = () => {
-  router.push('/discovery/batch-registration')
+  router.push('/home/discovery/batch-registration')
 }
 
 // 跳转到监管配置页面
 const goToRegulatoryConfig = () => {
-  router.push('/discovery/regulatory-config')
+  router.push('/home/discovery/regulatory-config')
 }
 
 // 标签页切换

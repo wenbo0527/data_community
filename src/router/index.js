@@ -219,7 +219,7 @@ const riskRoutes = RISK_EXTERNAL_ENABLED
     ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL || '/community/'),
+  history: createWebHistory(import.meta.env.BASE_URL || '/'),
   routes: [
     ...managementRoutes,
     ...notificationRoutes,
@@ -447,6 +447,7 @@ const router = createRouter({
         {
           path: 'external',
           name: 'external',
+          meta: { title: '外数资源' },
           component: () => import('../pages/discovery/external/index.vue')
         },
         {
@@ -457,6 +458,7 @@ const router = createRouter({
         {
           path: 'credit',
           name: 'credit',
+          meta: { title: '征信变量' },
           component: () => import('../pages/discovery/credit/index.vue')
         },
         {
@@ -478,6 +480,7 @@ const router = createRouter({
         {
           path: 'metrics-map',
           name: 'metricsMap',
+          meta: { title: '指标地图' },
           component: () => import('../pages/discovery/metrics-map/index.vue')
         },
         {
@@ -536,6 +539,43 @@ const router = createRouter({
           name: 'ImpactAnalysis',
           component: () => import('../pages/discovery/impact-analysis/index.vue'),
           meta: { title: '影响分析' }
+        },
+        {
+          path: 'elements-dictionary',
+          name: 'ElementsDictionary',
+          component: () => import('../pages/discovery/elements-dictionary/index.vue'),
+          meta: { title: '要素字典' }
+        },
+        {
+          path: 'classification',
+          name: 'SmartClassification',
+          component: () => import('../pages/discovery/classification/index.vue'),
+          meta: { title: '智能分级分类' }
+        },
+        {
+          path: 'asset-detail/:tableName',
+          name: 'AssetDetail',
+          component: () => import('../pages/discovery/asset-detail/index.vue'),
+          meta: { title: '资产详情' },
+          props: true
+        },
+        {
+          path: 'batch-registration',
+          name: 'BatchRegistration',
+          component: () => import('../pages/discovery/batch-registration/index.vue'),
+          meta: { title: '批量注册指标' }
+        },
+        {
+          path: 'regulatory-config',
+          name: 'RegulatoryConfig',
+          component: () => import('../pages/discovery/regulatory-config/index.vue'),
+          meta: { title: '监管报表配置' }
+        },
+        {
+          path: 'asset-guide',
+          name: 'AssetGuide',
+          component: () => import('../pages/discovery/asset-guide/index.vue'),
+          meta: { title: '资产导览' }
         },
         {
           path: 'api-market',
@@ -614,6 +654,18 @@ const router = createRouter({
           name: 'TableRegisterDiscovery',
           meta: { title: '注册表单' },
           component: () => import('../pages/management/asset-management/listing-management/table-management/RegisterTableForm.vue')
+        },
+        {
+          path: 'asset-management/table-management',
+          name: 'TableManagementDiscovery',
+          meta: { title: '表管理(发现域)' },
+          component: () => import('../pages/discovery/asset-management/table-management/index.vue')
+        },
+        {
+          path: 'asset-management/field-management',
+          name: 'FieldManagementDiscovery',
+          meta: { title: '字段管理(发现域)' },
+          component: () => import('../pages/discovery/asset-management/field-management/index.vue')
         }
       ]
     },
@@ -642,10 +694,10 @@ const router = createRouter({
     ...riskRoutes,
     ...budgetRoutes,
     {
-      path: '/digital-marketing',
-      name: 'digitalMarketing',
-      component: () => import('../pages/marketing/index.vue')
-    },
+    path: '/digital-marketing',
+    name: 'digitalMarketing',
+    component: () => import('../pages/digital-marketing/index.vue')
+  },
     ...marketingRoutes,
     {
       path: '/external-data-v1',
@@ -877,6 +929,17 @@ router.getRoutes().forEach((route) => {
     }))
   })
 })
+
+
+// === P0 角色机制: 权限守卫 + 无权限页 ===
+import { unauthorizedRoute } from './guard'
+// 注册 unauthorized 路由(若已存在则跳过)
+const hasUnauthorized = router.getRoutes().some(r => r.name === 'unauthorized')
+if (!hasUnauthorized) {
+  router.addRoute(unauthorizedRoute)
+}
+import { setupPermissionGuard } from './guard'
+setupPermissionGuard(router)
 
 
 const _routeNameCount = {}

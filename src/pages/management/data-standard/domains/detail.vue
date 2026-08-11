@@ -94,7 +94,7 @@ const detailData = ref<any>(null)
 const relatedStandards = ref<any[]>([])
 
 const goBack = () => {
-  router.push('/management/data-standard/domains')
+  router.push('/home/management/data-standard/domains')
 }
 
 const handleEdit = () => {

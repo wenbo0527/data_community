@@ -68,13 +68,13 @@ const serviceList = ref([
 const handleApply = (service) => {
   if (service.id === 4) {
     // 全量变量回溯申请，跳转到专门的申请页面
-    router.push('/management/service/backtrack')
+    router.push('/home/management/service/backtrack')
   } else if (service.id === 6) {
     // 客户资金用途外数查询，跳转到专门的查询页面
-    router.push('/management/service/fund-usage-query')
+    router.push('/home/management/service/fund-usage-query')
   } else if (service.id === 8) {
     // API管理
-    router.push('/management/service/api-management')
+    router.push('/home/management/service/api-management')
   } else {
     Message.success(`已提交${service.title}申请`)
   }

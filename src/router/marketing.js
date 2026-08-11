@@ -17,6 +17,43 @@ export default [
         component: () => import('../pages/marketing/coupon/statistics/index.vue'),
         meta: { title: '权益首页' }
       },
+      // === G3 补齐: 营销游离页 ===
+      // 注意: 'alert' 路径在下方 (line ~120) 还有嵌套版本,这里用 redirect
+      {
+        path: 'alert',
+        redirect: '/marketing/alert/index',
+        meta: { title: '预警中心' }
+      },
+      {
+        path: 'benefit/management',
+        name: 'BenefitManagement',
+        component: () => import('../pages/marketing/benefit/management/index.vue'),
+        meta: { title: '权益管理' }
+      },
+      {
+        path: 'benefit/package',
+        name: 'BenefitPackage',
+        component: () => import('../pages/marketing/benefit/package/index.vue'),
+        meta: { title: '权益包' }
+      },
+      {
+        path: 'benefit/template',
+        name: 'BenefitTemplate',
+        component: () => import('../pages/marketing/benefit/template/index.vue'),
+        meta: { title: '权益模板' }
+      },
+      {
+        path: 'coupon/rules',
+        name: 'CouponRules',
+        component: () => import('../pages/marketing/coupon/rules/index.vue'),
+        meta: { title: '券规则' }
+      },
+      {
+        path: 'coupon/template/detail',
+        name: 'CouponTemplateDetail',
+        component: () => import('../pages/marketing/coupon/template/detail.vue'),
+        meta: { title: '券模板详情' }
+      },
       {
         path: 'benefit',
         name: 'benefitConfig',
@@ -82,7 +119,14 @@ export default [
       {
         path: 'alert',
         name: 'MarketingAlert',
+        meta: { title: '预警中心' },
         children: [
+          {
+            path: 'index',
+            name: 'MarketingAlertIndex',
+            meta: { title: '预警中心' },
+            component: () => import('../pages/marketing/alert/index.vue')
+          },
           {
             path: 'rules',
             name: 'MarketingAlertRules',

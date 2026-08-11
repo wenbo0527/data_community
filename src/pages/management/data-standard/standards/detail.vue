@@ -143,7 +143,7 @@ const activeTab = ref('basic')
 const detailData = ref<any>(null)
 
 const goBack = () => {
-  router.push('/management/data-standard/standards')
+  router.push('/home/management/data-standard/standards')
 }
 
 const handleEdit = () => {

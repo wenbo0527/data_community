@@ -435,7 +435,7 @@ const retryTask = async () => {
 
 // 返回任务列表
 const goToList = () => {
-  router.push('/exploration/external-data-evaluation/task-list');
+  router.push('/home/exploration/external-data-evaluation/task-list');
 };
 
 // 组件挂载时初始化

@@ -1,0 +1,83 @@
+/**
+ * tokens.scss —— DCA 设计 token
+ *
+ * 2026-08-06 统一抽象:
+ *   - 颜色(背景 / 文字 / 边框 / 品牌 / 状态)
+ *   - 间距(padding / margin / 圆角)
+ *   - 字号 / 字重
+ *   - 阴影
+ *
+ * 使用方式:
+ *   @import '@/styles-dca/tokens.scss';  // 暂时 SASS 变量形式
+ *   或  :root { --bg-page: #...; ... }   // 后续可升级为 CSS 变量
+ */
+
+// ───── 颜色 ─────
+// 背景
+$bg-page: #f5f7fa;        // 页面背景(浅灰,绝大多数页面用这个)
+$bg-page-alt: #f7f8fa;    // 页面背景(更浅,少数页面用)
+$bg-card: #ffffff;         // 卡片 / Drawer 背景
+$bg-hover: #f5f7fa;        // 列表 hover
+$bg-emphasis: #e8f3ff;     // 高亮背景(选中 / 激活)
+
+// 文字
+$text-primary: #1d2129;    // 主要文字
+$text-secondary: #4e5969;  // 次要文字
+$text-tertiary: #86909c;   // 辅助文字
+$text-disabled: #c9cdd4;   // 禁用
+
+// 边框
+$border-default: #e5e6eb;
+$border-light: #f2f3f5;
+$border-strong: #c9cdd4;
+
+// 品牌 / 状态
+$brand-primary: #165dff;
+$brand-primary-light: #4080ff;
+$brand-secondary: #722ed1;
+$brand-tertiary: #0fc6c2;
+
+$success: #00b42a;
+$warning: #ff7d00;
+$danger: #f53f3f;
+$info: #165dff;
+
+// ───── 间距 ─────
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 40px;
+
+// 圆角
+$radius-sm: 2px;
+$radius-md: 4px;
+$radius-lg: 8px;
+$radius-xl: 12px;
+
+// ───── 字号 ─────
+$font-size-xs: 11px;
+$font-size-sm: 12px;
+$font-size-md: 13px;
+$font-size-base: 14px;
+$font-size-lg: 15px;
+$font-size-xl: 16px;
+$font-size-2xl: 18px;
+
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ───── 阴影 ─────
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+$shadow-md: 0 2px 8px rgba(0, 0, 0, 0.04);
+$shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+$shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+// ───── 布局 ─────
+$page-max-width: 1500px;       // 标准页最大宽度
+$page-max-width-wide: 1800px;  // 宽屏(数据总览 / 资产目录)
+$page-max-width-narrow: 1200px; // 窄屏(搜索结果)
+$page-padding: $spacing-lg;    // 24px

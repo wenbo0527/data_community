@@ -341,14 +341,14 @@ const saveEvent = async () => {
       status: '草稿'
     })
     Message.success('事件已保存')
-    router.push('/exploration/customer-center/event-center/event-management')
+    router.push('/home/exploration/customer-center/event-center/event-management')
   } catch {
     Message.error('保存失败')
   }
 }
 
 const goBack = () => {
-  router.push('/exploration/customer-center/event-center/event-management')
+  router.push('/home/exploration/customer-center/event-center/event-management')
 }
 
 onMounted(async () => {

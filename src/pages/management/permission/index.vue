@@ -54,10 +54,10 @@ import { IconSafe, IconStorage, IconApps } from '@arco-design/web-vue/es/icon'
 const router = useRouter()
 
 const goToDataApply = () => {
-  router.push('/management/permission/apply/data')
+  router.push('/home/management/permission/apply/data')
 }
 const goToAppApply = () => {
-  router.push('/management/permission/apply/application')
+  router.push('/home/management/permission/apply/application')
 }
 </script>
 

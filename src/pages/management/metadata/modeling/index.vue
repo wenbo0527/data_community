@@ -5,6 +5,22 @@
       <p class="description">构建元数据模型，定义实体绑定、血缘关系与数据标准映射。</p>
     </div>
 
+    <!-- P1.2 接入: 元数据统计 -->
+    <a-row :gutter="16" style="margin-bottom: 16px">
+      <a-col :span="6">
+        <a-statistic title="已建模表" :value="modeledTableCount" :value-style="{ color: '#165dff' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="字段打标" :value="taggedFieldCount" :value-style="{ color: '#722ed1' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="平均合规率" :value="avgCompliance + '%'" :value-style="{ color: avgCompliance >= 80 ? '#00b42a' : '#ff7d00' }" />
+      </a-col>
+      <a-col :span="6">
+        <a-statistic title="平均分级覆盖率" :value="avgCoverage + '%'" :value-style="{ color: avgCoverage >= 80 ? '#00b42a' : '#ff7d00' }" />
+      </a-col>
+    </a-row>
+
     <a-tabs default-active-key="entity-binding" type="rounded">
       <!-- 实体绑定 -->
       <a-tab-pane key="entity-binding" title="实体绑定">
@@ -112,6 +128,46 @@
           </a-table>
         </div>
       </a-tab-pane>
+
+      <!-- === 打通层: 字段打标 tab === -->
+      <a-tab-pane key="field-tagging" title="字段打标">
+        <div class="tab-content">
+          <div class="toolbar">
+            <a-select
+              v-model="selectedTable"
+              placeholder="选择表查看字段打标"
+              style="width: 280px;"
+              allow-search
+              @change="onTableChange"
+            >
+              <a-option
+                v-for="t in availableTables"
+                :key="t"
+                :value="t"
+              >
+                {{ t }}
+              </a-option>
+            </a-select>
+            <a-button
+              type="primary"
+              style="margin-left: 16px;"
+              @click="showAutoTagSuggestion"
+            >
+              <template #icon><IconStar /></template>
+              一键自动打标
+            </a-button>
+          </div>
+          <ClassificationViewer v-if="selectedTable" :table-name="selectedTable" />
+          <a-empty v-else description="请选择一张表查看字段打标情况" />
+        </div>
+      </a-tab-pane>
+
+      <!-- === 字段级血缘 === -->
+      <a-tab-pane key="column-lineage" title="字段级血缘">
+        <div class="tab-content">
+          <ColumnLineageViewer />
+        </div>
+      </a-tab-pane>
     </a-tabs>
 
     <!-- 弹窗：绑定业务实体 -->
@@ -199,11 +255,35 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { FieldLinkStore } from '@/mock/shared/lineage'
+import { MetadataStore } from '@/mock/shared/metadata-store'
+
+// === P1.2 接入: 元数据统计 ===
+const modeledTableCount = computed(() => {
+  const tables = MetadataStore.getTables()
+  return tables.length
+})
+const taggedFieldCount = computed(() => FieldLinkStore.list().length)
+const avgCompliance = computed(() => {
+  const tables = MetadataStore.getTables()
+  if (!tables.length) return 0
+  const total = tables.reduce((sum, t) => sum + FieldLinkStore.tableComplianceRate((t as any).tableName || (t as any).name), 0)
+  return Math.round(total / tables.length)
+})
+const avgCoverage = computed(() => {
+  const tables = MetadataStore.getTables()
+  if (!tables.length) return 0
+  const total = tables.reduce((sum, t) => sum + FieldLinkStore.tableClassifyCoverage((t as any).tableName || (t as any).name), 0)
+  return Math.round(total / tables.length)
+})
 import { Message } from '@arco-design/web-vue'
-import { IconLink, IconBranch, IconCheckCircle } from '@arco-design/web-vue/es/icon'
+import { IconLink, IconBranch, IconCheckCircle, IconStar as IconMagic } from '@arco-design/web-vue/es/icon'
 import { BusinessConceptStore } from '@/mock/shared/business-concept-store'
 import { MetadataStore } from '@/mock/shared/metadata-store'
 import { StandardStore } from '@/mock/shared/standard-store'
+import { useAssetClassification } from '@/composables/useAssetClassification'
+import ClassificationViewer from '@/components/common/ClassificationViewer.vue'
+import ColumnLineageViewer from '@/components/common/ColumnLineageViewer.vue'
 
 const router = useRouter()
 
@@ -224,6 +304,34 @@ const entityBindingData = ref([
 ])
 
 const bindModalVisible = ref(false)
+
+// === 打通层: 字段打标 ===
+const { suggestAndTag } = useAssetClassification()
+const selectedTable = ref('')
+const onTableChange = (v) => { selectedTable.value = v }
+const showAutoTagSuggestion = async () => {
+  if (!selectedTable.value) {
+    Message.warning('请先选择一张表')
+    return
+  }
+  const table = MetadataStore.getTables().find(t => t.tableName === selectedTable.value)
+  if (!table?.fields) {
+    Message.warning('该表无字段')
+    return
+  }
+  let taggedCount = 0
+  for (const field of table.fields) {
+    suggestAndTag({
+      tableName: selectedTable.value,
+      fieldName: field.name,
+      fieldType: field.type,
+      businessBelonging: '零售',
+      linkBy: 'user-zhangsan'
+    })
+    taggedCount++
+  }
+  Message.success(`已为 ${taggedCount} 个字段生成打标建议,请在 ClassificationViewer 查看`)
+}
 const bindForm = reactive({
   tableName: '',
   database: '',
@@ -316,7 +424,7 @@ const handleLineageSubmit = () => {
 
 const viewLineageGraph = () => {
   Message.info('正在打开血缘图谱分析页...')
-  router.push('/discovery/lineage')
+  router.push('/home/discovery/lineage')
 }
 
 // ===== 标准映射逻辑 =====

@@ -3,7 +3,6 @@ import vue from '@vitejs/plugin-vue'
 import legacy from '@vitejs/plugin-legacy'
 import { resolve } from 'path'
 import { logServerPlugin } from './vite-plugins/logServerPlugin.js'
-import { viteMockServe } from 'vite-plugin-mock'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => ({
@@ -20,7 +19,23 @@ export default defineConfig(({ command }) => ({
     }
   },
   optimizeDeps: {
-    exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue', 'fsevents']
+    exclude: ['arco-design-vue/packages/arco-vue-docs', '@web-vue', 'fsevents'],
+    // 强制 vite 在启动时预编译这些核心 deps,避免 Playwright 触发 504
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      '@arco-design/web-vue',
+      '@arco-design/web-vue/es/icon',
+      '@antv/x6',
+      'echarts',
+      'mockjs',
+      'core-js/stable',
+      'regenerator-runtime/runtime',
+      'whatwg-fetch'
+    ],
+    // 测试期间保持稳定(不会因为新文件加入触发重新 optimize)
+    holdUntilCrawlEnd: true
   },
   define: {
     'define.amd': 'false'
@@ -52,6 +67,7 @@ export default defineConfig(({ command }) => ({
     host: '0.0.0.0',
     port: 5177,
     strictPort: true,
+    hmr: { overlay: false },
     // 让 Vite 自动选择 HMR 客户端端口与主机，避免端口变更后 ping 失败
     watch: {
       // 排除可能导致无限重载的文件
@@ -72,11 +88,7 @@ export default defineConfig(({ command }) => ({
     legacy({
       targets: ['chrome >= 49']
     }),
-    viteMockServe({
-      localEnabled: true,
-      prodEnabled: false,
-      mockPath: 'src/mock'
-    }),
+    // viteMockServe 已禁用 - 用 src/mock/bootstrap.js 自己加载
     logServerPlugin()
   ],
   resolve: {

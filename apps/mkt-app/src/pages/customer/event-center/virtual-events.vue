@@ -47,10 +47,26 @@
           </a-select>
         </div>
         <div class="button-area">
-          <a-button type="primary" @click="handleCreate">
-            <template #icon><IconPlus /></template>
-            创建虚拟事件
-          </a-button>
+          <!-- P1#2 虚拟事件组合创建 - 2026-08-02: 改为 dropdown 含 2 个 menu item -->
+          <a-dropdown>
+            <a-button type="primary">
+              <template #icon><IconPlus /></template>
+              创建虚拟事件
+              <template #suffix><IconDown /></template>
+            </a-button>
+            <template #content>
+              <a-menu @menu-item-click="(key) => handleCreateMenu(key as string)">
+                <a-menu-item key="single">
+                  <template #icon><IconPlus /></template>
+                  创建虚拟事件(单事件)
+                </a-menu-item>
+                <a-menu-item key="combine">
+                  <template #icon><IconLink /></template>
+                  虚拟事件组合(OR / AND)
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
           <a-button @click="handleRefresh">
             <template #icon><IconRefresh /></template>
             刷新
@@ -174,7 +190,9 @@ import {
   IconRefresh,
   IconEdit,
   IconDelete,
-  IconPlayCircle
+  IconPlayCircle,
+  IconDown,
+  IconLink
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
@@ -268,17 +286,26 @@ const handleFilter = () => {
 }
 
 const handleCreate = () => {
+  router.push({ name: 'VirtualEventCreate' })
+}
+
+// P1#2 虚拟事件组合创建 - 2026-08-02: dropdown menu 选择
+const handleCreateMenu = (key: string) => {
+  if (key === 'single') {
     router.push({ name: 'VirtualEventCreate' })
+  } else if (key === 'combine') {
+    router.push({ name: 'VirtualEventCombine' })
   }
-  
-  const handleEdit = (record) => {
-    router.push({ 
-      name: 'VirtualEventEdit',
-      params: { id: record.id }
-    })
-  }
-  
-  const handleTest = (record) => {
+}
+
+const handleEdit = (record) => {
+  router.push({
+    name: 'VirtualEventEdit',
+    params: { id: record.id }
+  })
+}
+
+const handleTest = (record) => {
   // 跳转到样本统计页面（mkt-app convention: /customer/<page>）
   router.push({
     path: '/customer/sample-stats',

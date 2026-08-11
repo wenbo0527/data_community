@@ -753,7 +753,7 @@ const basicInfo: Array<{ label: string; value: string; }> = [
 
 // 返回上一页
 const handleBack = () => {
-  router.push('/exploration/external-data-evaluation');
+  router.push('/home/exploration/external-data-evaluation');
 };
 
 // 归档报告
@@ -780,7 +780,7 @@ const archiveReport = () => {
         if (result.code === 200) {
           Message.success('报告归档成功');
           // 可以选择跳转到列表页或更新报告状态
-          router.push('/exploration/external-data-evaluation');
+          router.push('/home/exploration/external-data-evaluation');
         } else {
           Message.error(result.message || '归档失败');
         }
@@ -816,7 +816,7 @@ const deleteReport = () => {
         if (result.code === 200) {
           Message.success('报告删除成功');
           // 跳转到报告列表页
-          router.push('/exploration/external-data-evaluation');
+          router.push('/home/exploration/external-data-evaluation');
         } else {
           Message.error(result.message || '删除失败');
         }

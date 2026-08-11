@@ -241,7 +241,7 @@ const fetchDataSources = async () => {
 }
 
 
-const goBack = () => { router.push('/discovery/asset-management/variable-management') }
+const goBack = () => { router.push('/home/discovery/asset-management/variable-management') }
 const handleEdit = () => { router.push({ name: 'VariableAssetDetail', params: { id: route.params.id, mode: 'edit' } }) }
 
 

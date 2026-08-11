@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "strict": false,
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/mock/*": ["../../dfd-app/src/mock/*"],
+      "@/mock-shared/*": ["./src/mock/shared/*"],
+      "@/components-dca/*": ["./src/components-dca/*"],
+      "@/utils-dca/*": ["./src/utils-dca/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue"]
+}

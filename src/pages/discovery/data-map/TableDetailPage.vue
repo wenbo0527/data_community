@@ -30,6 +30,15 @@
     <div v-if="tableData" class="table-content">
       <!-- 基本信息卡片 -->
       <a-card class="table-info">
+        <template #extra>
+          <FavoriteButton
+            resource-type="table"
+            :resource-id="tableData.name || ''"
+            :resource-name="tableData.name || ''"
+            user-id="user-zhangsan"
+            user-name="张三"
+          />
+        </template>
         <a-descriptions :column="2" :data="tableBasicInfo" />
       </a-card>
       
@@ -39,30 +48,169 @@
           <!-- 表结构 -->
           <a-tab-pane key="structure" title="表结构">
             <a-card class="table-info" title="字段信息">
+              <!-- 打通层: 合规概览 -->
+              <div v-if="classificationOverview" class="classification-overview">
+                <div class="overview-item">
+                  <span class="overview-label">标准合规率:</span>
+                  <a-progress
+                    :percent="classificationOverview.complianceRate / 100"
+                    :stroke-color="classificationOverview.complianceRate >= 80 ? '#00b42a' : '#ff7d00'"
+                    size="small"
+                    style="flex: 1; min-width: 120px;"
+                  />
+                  <span class="overview-value">{{ classificationOverview.complianceRate }}%</span>
+                </div>
+                <div class="overview-item">
+                  <span class="overview-label">分级覆盖率:</span>
+                  <a-progress
+                    :percent="classificationOverview.classifyCoverage / 100"
+                    :stroke-color="classificationOverview.classifyCoverage >= 80 ? '#00b42a' : '#ff7d00'"
+                    size="small"
+                    style="flex: 1; min-width: 120px;"
+                  />
+                  <span class="overview-value">{{ classificationOverview.classifyCoverage }}%</span>
+                </div>
+              </div>
               <a-table
-                :data="tableData?.fields || []"
+                :data="enhancedFields"
                 :pagination="false"
                 :scroll="{ x: '100%' }"
                 :bordered="false"
                 class="table-borderless table-compact"
               >
                 <template #columns>
-                  <a-table-column title="字段名" data-index="name">
+                  <a-table-column title="字段名" data-index="fieldName">
                     <template #cell="{ record }">
-                      <span 
-                        :class="{ 'relation-field': isRelationField(record.name) }"
-                        @click="isRelationField(record.name) ? switchToRelationsTab() : null"
-                        :style="{ cursor: isRelationField(record.name) ? 'pointer' : 'default' }"
+                      <span
+                        :class="{ 'relation-field': isRelationField(record.fieldName) }"
+                        @click="isRelationField(record.fieldName) ? switchToRelationsTab() : null"
+                        :style="{ cursor: isRelationField(record.fieldName) ? 'pointer' : 'default' }"
                       >
-                        {{ record.name }}
+                        {{ record.fieldName }}
                       </span>
                     </template>
                   </a-table-column>
-                  <a-table-column title="类型" data-index="type" />
-                  <a-table-column title="描述" data-index="description" />
+                  <a-table-column title="类型" data-index="fieldType" :width="100">
+                    <template #cell="{ record }">
+                      <a-tag size="small">{{ record.fieldType }}</a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="描述" data-index="fieldComment" :ellipsis="true" />
+                  <a-table-column title="数据标准" :width="200">
+                    <template #cell="{ record }">
+                      <a-tooltip v-if="record.standard" :content="record.standard.description">
+                        <a-tag color="arcoblue" size="small">
+                          {{ record.standard.code }} · {{ record.standard.chineseName }}
+                        </a-tag>
+                      </a-tooltip>
+                      <a-tag v-else size="small" color="gray">未关联</a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="敏感级别" :width="120">
+                    <template #cell="{ record }">
+                      <a-tag
+                        v-if="record.sensitivity"
+                        :color="sensitivityColor(record.sensitivity.level)"
+                        size="small"
+                      >
+                        {{ record.sensitivity.level }} · {{ record.sensitivity.grade }}
+                      </a-tag>
+                      <a-tag v-else size="small" color="gray">未分级</a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="业务要素" :width="160">
+                    <template #cell="{ record }">
+                      <a-tag v-if="record.businessElement" color="purple" size="small">
+                        {{ record.businessElement.name }}
+                      </a-tag>
+                    </template>
+                  </a-table-column>
                 </template>
               </a-table>
             </a-card>
+          </a-tab-pane>
+
+          <!-- 完整血缘(资源 → 要素) -->
+          <a-tab-pane key="lineage" title="完整血缘">
+            <div style="margin-bottom: 16px;">
+              <ColumnLineageViewer />
+            </div>
+            <a-card class="table-info" title="资源 → 要素 完整链路">
+              <a-empty v-if="lineageGraph.nodes.length === 0" description="该表无血缘信息" />
+              <div v-else class="lineage-graph">
+                <div class="lineage-stats">
+                  <a-statistic title="节点数" :value="lineageGraph.nodes.length" />
+                  <a-statistic title="边数" :value="lineageGraph.edges.length" />
+                  <a-statistic
+                    title="业务要素"
+                    :value="lineageGraph.nodes.filter(n => n.type === 'business_element').length"
+                  />
+                  <a-statistic
+                    title="标准引用"
+                    :value="lineageGraph.nodes.filter(n => n.type === 'data_standard').length"
+                  />
+                </div>
+
+                <!-- 节点表格 -->
+                <a-table
+                  :data="lineageGraph.nodes"
+                  :pagination="false"
+                  size="small"
+                  row-key="id"
+                  style="margin-top: 16px;"
+                >
+                  <template #columns>
+                    <a-table-column title="类型" data-index="type" :width="120">
+                      <template #cell="{ record }">
+                        <a-tag :color="lineageNodeColor(record.type)" size="small">
+                          {{ lineageNodeTypeName(record.type) }}
+                        </a-tag>
+                      </template>
+                    </a-table-column>
+                    <a-table-column title="名称" data-index="name" />
+                    <a-table-column title="关联" :width="280">
+                      <template #cell="{ record }">
+                        <a-tag v-if="record.meta?.standardCode" color="cyan" size="small">
+                          {{ record.meta.standardCode }}
+                        </a-tag>
+                        <a-tag v-if="record.meta?.sensitivityLevel" :color="sensitivityColor(record.meta.sensitivityLevel)" size="small">
+                          {{ record.meta.sensitivityLevel }}
+                        </a-tag>
+                        <a-tag v-if="record.meta?.domainCode" color="purple" size="small">
+                          {{ record.meta.domainCode }}
+                        </a-tag>
+                      </template>
+                    </a-table-column>
+                  </template>
+                </a-table>
+
+                <!-- 字段链路概览(可读文本) -->
+                <a-divider />
+                <div class="chain-summary">
+                  <h4>字段血缘链路摘要</h4>
+                  <a-collapse :default-active-key="[]">
+                    <a-collapse-item
+                      v-for="field in sampleFieldsWithLineage"
+                      :key="field"
+                      :header="field"
+                    >
+                      <pre>{{ lineageChain(field) }}</pre>
+                    </a-collapse-item>
+                  </a-collapse>
+                </div>
+              </div>
+            </a-card>
+          </a-tab-pane>
+
+          <!-- 协作注释 -->
+          <a-tab-pane key="comments" title="协作注释">
+            <CommentPanel
+              v-if="tableData"
+              resource-type="table"
+              :resource-id="tableData.name"
+              user-id="user-zhangsan"
+              user-name="张三"
+            />
           </a-tab-pane>
 
           <!-- 数据预览 -->
@@ -244,6 +392,11 @@ import { Modal } from '@arco-design/web-vue'
 import { MetadataStore } from '@/mock/shared/metadata-store';
 const mockTables = MetadataStore.getTables();
 import DetailHeader from '@/components/common/DetailHeader.vue'
+import { useAssetClassification } from '@/composables/useAssetClassification'
+import { LineageGraphStore, type LineageNodeType } from '@/mock/shared/lineage-graph'
+import CommentPanel from '@/components/common/CommentPanel.vue'
+import ColumnLineageViewer from '@/components/common/ColumnLineageViewer.vue'
+import FavoriteButton from '@/components/common/FavoriteButton.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { goBack } from '@/router/utils'
 import RelationEditor from './components/RelationEditor.vue'
@@ -369,6 +522,64 @@ const activeModalTab = ref('structure') // 控制关联弹窗内的标签页
 const activeMainTab = ref('structure') // 控制主标签页
 const relatedTables = ref<TableItem[]>([])
 const currentTableName = ref<string>('')
+
+// === 打通层: 字段全景视图 + 合规概览 ===
+const { tableOverview, tableView } = useAssetClassification()
+const classificationOverview = computed(() =>
+  tableData.value ? tableOverview(tableData.value.name) : null
+)
+const enhancedFields = computed(() =>
+  tableData.value ? tableView(tableData.value.name) : []
+)
+const sensitivityColor = (level: string) => {
+  return {
+    L1: 'gray',
+    L2: 'arcoblue',
+    L3: 'orange',
+    L4: 'red'
+  }[level] || 'gray'
+}
+
+// === 完整血缘链路(资源 → 要素) ===
+const lineageGraph = computed(() => {
+  if (!tableData.value?.name) return { nodes: [], edges: [] }
+  return LineageGraphStore.build('data_table', tableData.value.name)
+})
+
+const lineageChain = (tableField: string) => {
+  const parts = tableField.split('.')
+  const t = parts[0] || ''
+  const f = parts[1] || ''
+  return LineageGraphStore.chainOf(t, f)
+}
+
+const lineageNodeColor = (type: string) => ({
+  business_domain: '#722ed1',
+  business_entity: '#9254de',
+  business_element: '#b37feb',
+  data_table: '#165dff',
+  data_field: '#40a9ff',
+  data_standard: '#13c2c2',
+  classification: '#fa541c'
+}[type as LineageNodeType] || '#86909c')
+
+const lineageNodeTypeName = (type: string) => ({
+  business_domain: '业务域',
+  business_entity: '业务实体',
+  business_element: '业务要素',
+  data_table: '数据表',
+  data_field: '数据字段',
+  data_standard: '数据标准',
+  classification: '分级分类'
+}[type as LineageNodeType] || type)
+
+const sampleFieldsWithLineage = computed(() => {
+  if (!tableData.value) return []
+  return lineageGraph.value.nodes
+    .filter((n: any) => n.type === 'data_field')
+    .map((n: any) => `${n.meta?.tableName || tableData.value.name}.${n.name}`)
+    .slice(0, 5)
+})
 
 const switchToRelationsTab = () => {
   activeMainTab.value = 'relations';
@@ -1291,6 +1502,37 @@ onMounted(() => {
 <style scoped>
 .table-detail-page {
   padding: 24px;
+}
+
+.classification-overview {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #f7f8fa;
+  border-radius: 6px;
+
+  .overview-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .overview-label {
+    font-size: 13px;
+    color: #4e5969;
+    white-space: nowrap;
+    min-width: 90px;
+  }
+
+  .overview-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2129;
+    min-width: 45px;
+    text-align: right;
+  }
 }
 
 .page-header {

@@ -33,6 +33,9 @@ export interface VirtualEventData {
   archived?: boolean;
   outputFields?: OutputField[];
   permissions?: string[];
+  // 虚拟事件组合字段(P1#2 虚拟事件组合创建 - 2026-08-02)
+  combineType?: 'OR' | 'AND';
+  combineEvents?: string[];
 }
 
 export interface OutputField {

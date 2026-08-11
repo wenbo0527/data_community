@@ -381,7 +381,7 @@ const handleToggleStatus = async (record) => {
 
 // 创建变量（跳转页面）
 const handleCreate = () => {
-  router.push('/discovery/asset-management/variable-management/create/edit')
+  router.push('/home/discovery/asset-management/variable-management/create/edit')
 }
 
 // 导出变量清单

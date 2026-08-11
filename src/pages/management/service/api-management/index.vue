@@ -137,7 +137,7 @@
   })
 
   const goCreate = () => {
-    router.push('/management/service/api-management/create')
+    router.push('/home/management/service/api-management/create')
   }
 
   const editApi = (record: any) => {

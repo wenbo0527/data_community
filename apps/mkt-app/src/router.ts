@@ -49,4 +49,35 @@ const router = createRouter({
   routes
 })
 
+/**
+ * 路由守卫 - 容错处理
+ *
+ * 处理一些历史/重复的 URL 形式,避免白页:
+ * 1. /customer/customer/... → 重定向到 /customer/...(去重双 customer)
+ * 2. 以 '/' 开头的绝对路径 → 去掉前导 '/',让 vue-router 自动加 base
+ */
+router.beforeEach((to, from, next) => {
+  let path = to.path
+
+  // 容错 1: 去重双 customer
+  // 例: customer/customer/virtual-events → customer/virtual-events
+  if (path.startsWith('customer/customer/')) {
+    path = path.replace(/^customer\/customer/, 'customer')
+  }
+
+  // 容错 2: 以 '/' 开头(绝对路径) → 去掉前导 '/'
+  // vue-router 4 + hash mode + base='/mkt/' 时,
+  // 绝对路径会跳过 base,实际跳到根域
+  if (path.startsWith('/') && path !== '/') {
+    path = path.substring(1)
+  }
+
+  if (path !== to.path) {
+    next({ path, replace: true })
+    return
+  }
+
+  next()
+})
+
 export default router

@@ -217,7 +217,7 @@ const router = useRouter()
 
 const navigateTo = (path: string) => {
   if (path === 'module-management') {
-    router.push('/management/asset-management/basic-management/module-management')
+    router.push('/home/management/asset-management/basic-management/module-management')
   } else if (['table-management', 'external-data-management', 'metric-management', 'variable-management'].includes(path)) {
     router.push(`/management/asset-management/listing-management/${path}`)
   } else {

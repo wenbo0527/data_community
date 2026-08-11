@@ -607,7 +607,7 @@ const currentTableFields = computed(() => {
   return currentTable.value?.fields || []
 })
 
-const goBack = () => router.push('/management/service/api-management')
+const goBack = () => router.push('/home/management/service/api-management')
 
 const onDatabaseChange = () => {
   form.table = ''
@@ -795,7 +795,7 @@ const saveApi = () => {
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
     Message.success('保存成功')
-    router.push('/management/service/api-management')
+    router.push('/home/management/service/api-management')
   } catch (e) {
     Message.error('保存失败')
   }

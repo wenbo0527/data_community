@@ -906,7 +906,7 @@ const handleQueryTypeChange = (value) => {
 // 确认查询 (身份证号查询模式)
 const confirmQuery = () => {
   Message.success('查询申请已提交，等待审批')
-  router.push('/management/service')
+  router.push('/home/management/service')
 }
 
 // 确认批量查询 (批量回溯模式)
@@ -921,7 +921,7 @@ const confirmBatchQuery = () => {
   }
   
   Message.success('批量回溯申请已提交，等待审批')
-  router.push('/management/service')
+  router.push('/home/management/service')
 }
 
 // 监听selectedLoanKeys变化

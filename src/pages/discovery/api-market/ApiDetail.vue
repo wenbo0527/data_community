@@ -282,7 +282,7 @@ const responseExample = computed(() => {
 })
 
 const goBack = () => {
-  router.push('/discovery/api-market')
+  router.push('/home/discovery/api-market')
 }
 
 onMounted(() => {

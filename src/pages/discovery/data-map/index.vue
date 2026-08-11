@@ -170,7 +170,7 @@
       <div class="content-section">
         <a-tabs default-active-key="common" size="medium" type="text">
           <template #extra>
-            <a-link class="more-link" @click="router.push('/discovery/data-map/collections')">查看更多 <icon-right /></a-link>
+            <a-link class="more-link" @click="router.push('/home/discovery/data-map/collections')">查看更多 <icon-right /></a-link>
           </template>
           <a-tab-pane key="common" title="常用表集合">
             <div class="tab-content-wrapper" style="padding-top: 16px;">
@@ -451,7 +451,7 @@ const toggleFavoritesFilter = () => {
   if (showFavoritesOnly.value) {
     // 跳转到搜索页面并筛选关注的资产
     router.push({
-      path: '/discovery/search',
+      path: '/home/discovery/search',
       query: {
         favorites: 'true'
       }
@@ -477,7 +477,7 @@ const handleSearch = () => {
 
   // 模拟搜索跳转
   router.push({
-    path: '/discovery/search',
+    path: '/home/discovery/search',
     query: {
       q: searchForm.value.keyword,
       include: includeTerms,
@@ -541,7 +541,7 @@ const resetSearch = () => {
 const handleAssetClick = (item: any) => {
   // 数据资产点击 - 按业务域筛选数据表
   router.push({ 
-    path: '/discovery/search', 
+    path: '/home/discovery/search', 
     query: { 
       type: 'table',
       domain: item.name // 将名称（如'用户域'）作为业务域筛选
@@ -559,7 +559,7 @@ const handleResourceClick = (item: any) => {
   }
   
   router.push({ 
-    path: '/discovery/search', 
+    path: '/home/discovery/search', 
     query: { 
       q: keyword || item.name,
       type: 'table' // 资源最终是看表
@@ -569,9 +569,9 @@ const handleResourceClick = (item: any) => {
 
 const handleElementClick = (item: any) => {
   if (item.name === '核心指标') {
-    router.push({ path: '/discovery/unified-metrics' })
+    router.push({ path: '/home/discovery/unified-metrics' })
   } else if (item.name === '业务标签') {
-    router.push({ path: '/discovery/customer360' })
+    router.push({ path: '/home/discovery/customer360' })
   } else if (item.name === '数据变量') {
     router.push({ path: '/variables/map' })
   } else if (item.name === '模型特征') {
@@ -580,7 +580,7 @@ const handleElementClick = (item: any) => {
   } else {
     // 默认跳搜索
     router.push({ 
-      path: '/discovery/search', 
+      path: '/home/discovery/search', 
       query: { q: item.name } 
     })
   }
