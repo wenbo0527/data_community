@@ -90,6 +90,7 @@
           <BasicInfoCard
             :basic-info="basicInfo"
             :technical-info="technicalInfo"
+            :long-text-info="longTextInfo"
             :typed-profile-info="typedProfileInfo"
             :typed-profile-title="typedProfileTitle"
             :variable-data="variableData"
@@ -270,6 +271,12 @@
       :variable-data="variableData"
       @submit="onActionSubmit"
     />
+    <!-- ========== 审核通过+注册（B1 完整注册表单）============ -->
+    <VariableRegisterDrawer
+      v-model:visible="registerDrawerVisible"
+      :requirement-data="registerDrawerRequirementData"
+      @submit="handleRegisterSubmit"
+    />
     </template>
   </div>
 </template>
@@ -290,6 +297,7 @@ import GovernanceActionDrawer from '@/modules/variable-hub/components/Governance
 import ParamGroup from '@/modules/variable-hub/components/ParamGroup.vue'
 import NotFound from '@/modules/variable-hub/components/common/NotFound.vue'
 import MidloanActionDrawer from '@/modules/variable-hub/components/risk-feature/MidloanActionDrawer.vue'
+import VariableRegisterDrawer from '@/modules/variable-hub/components/risk-feature/VariableRegisterDrawer.vue'
 import OfflineBatchCard from '@/modules/variable-hub/components/risk-feature/OfflineBatchCard.vue'
 import FeatureArchiveCard from '@/modules/variable-hub/components/risk-feature/FeatureArchiveCard.vue'
 import StatusChangeTable from '@/modules/variable-hub/components/risk-feature/StatusChangeTable.vue'
@@ -732,7 +740,10 @@ const basicInfo = computed(() => [
   { label: '变量名称', value: variableData.value.name },
   { label: '变量编码', value: variableData.value.code },
   { label: '变量类型', value: getTypeLabel(variableData.value.type) },
-  { label: '创建人', value: variableData.value.creator },
+  { label: '特征粒度', value: variableData.value.featureGranularity === 'identity_plus_product' ? '身份证号 + 产品号' : (variableData.value.featureGranularity === 'identity_only' ? '身份证号' : '—') },
+  { label: '需求提出人', value: variableData.value.requirementProposer || variableData.value.creator || '—' },
+  { label: '管理人', value: variableData.value.adminManager || '—' },
+  { label: '数仓开发人员', value: variableData.value.developer || '—' },
   { label: '创建时间', value: variableData.value.createdAt },
   { label: '更新时间', value: variableData.value.updatedAt }
 ])
@@ -741,9 +752,19 @@ const basicInfo = computed(() => [
 const technicalInfo = computed(() => [
   { label: '数据源', value: variableData.value.dataSourceName },
   { label: '源字段', value: variableData.value.sourceField },
-  { label: '更新频率', value: variableData.value.updateFrequency },
-  { label: '描述', value: variableData.value.description || '暂无描述' }
+  { label: '更新频率', value: variableData.value.updateFrequency }
 ])
+
+// 长文本区域：描述（含变量定义）+ 口径（独立整行展示）
+const longTextInfo = computed(() => {
+  const desc = variableData.value.description || '暂无描述'
+  const def = variableData.value.definition
+  const descValue = def ? `${desc}\n\n【变量定义】\n${def}` : desc
+  return [
+    { label: '描述', value: descValue },
+    { label: '口径', value: variableData.value.processingLogic || '暂无口径说明' }
+  ]
+})
 
 // 数据源信息
 const sourceInfo = computed(() => [
@@ -1232,6 +1253,9 @@ const syncLogList = computed(() => {
 // ============ OA 单/验收/上线流程/下线抽屉（文档 C1 R01 / E1 R02 / F1 R02）============
 const actionDrawerVisible = ref(false)
 const currentActionKey = ref('submit_dev_oa')
+// VariableRegisterDrawer（审核模式：submit_requirement 打开 B1 完整注册表单）
+const registerDrawerVisible = ref(false)
+const registerDrawerRequirementData = ref(null)
 
 // ============ 状态切换操作 ============
 const onRetry = () => {
@@ -1260,8 +1284,14 @@ const onManualBatchRetry = () => {
 }
 
 const onAction = (action) => {
-  // 走抽屉的 4 个动作（文档 C1 R01 / E1 R02 / F-07 / E2）
-  if (['submit_dev_oa', 'submit_verify', 'request_offline', 'verify_reject'].includes(action.key)) {
+  // submit_requirement：打开 VariableRegisterDrawer 审核模式（B1 完整注册表单）
+  if (action.key === 'submit_requirement') {
+    registerDrawerRequirementData.value = variableData.value
+    registerDrawerVisible.value = true
+    return
+  }
+  // 走抽屉的动作（文档 A0 / C1 / E0 / E1 / F0）
+  if (['submit_dev_oa', 'business_verify_pass', 'admin_confirm_pass', 'submit_production_order'].includes(action.key)) {
     currentActionKey.value = action.key
     actionDrawerVisible.value = true
     return
@@ -1290,6 +1320,18 @@ const onActionSubmit = (payload) => {
   if (r.ok) Message.success('操作已完成')
   else if (r.reason) Message.error(r.reason)
   actionDrawerVisible.value = false
+  refreshAfterMutation()
+}
+
+// VariableRegisterDrawer 提交回调（审核模式：submit_requirement）
+const handleRegisterSubmit = (payload) => {
+  const fid = payload.requirementId || variableId.value
+  if (!fid) return
+  const r = MidloanStateEngine.handleAction(fid, 'submit_requirement', payload)
+  if (r.ok) Message.success('已审核通过并完成 B1 标准化注册')
+  else if (r.reason) Message.error(r.reason)
+  registerDrawerVisible.value = false
+  registerDrawerRequirementData.value = null
   refreshAfterMutation()
 }
 

@@ -13,6 +13,10 @@
         >
           <template #prefix><icon-search /></template>
         </a-input>
+        <a-button type="primary" @click="requirementDrawerVisible = true">
+          <template #icon><icon-plus /></template>
+          新建需求
+        </a-button>
         <a-dropdown trigger="click" @select="handleCreateMenuSelect">
           <a-button type="primary">
             <template #icon><icon-plus /></template>
@@ -41,11 +45,11 @@
         </a-tab-pane>
       </a-tabs>
 
-      <!-- 贷中行为 9 状态机分布概览（仅选中品类时显示） -->
+      <!-- 贷中行为 11 状态机分布概览（仅选中品类时显示） -->
       <a-card v-if="filterForm.riskCategory === 'midloan_behavior' && activeTab === 'features'" class="midloan-overview-card">
         <template #title>
           <a-space>
-            <span>贷中行为特征 · 9 状态机分布（9 正常 + 4 异常 = 13 态，严格对齐文档 D.4）</span>
+            <span>贷中行为特征 · 11 状态机分布（11 正常 + 4 异常 = 15 态，严格对齐文档 D.4）</span>
             <a-tag color="arcoblue" size="small">MIDLOAN-FEAT-*</a-tag>
           </a-space>
         </template>
@@ -96,6 +100,18 @@
               @change="handleSearch"
             >
               <a-option v-for="opt in RISK_CATEGORY_OPTIONS" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </a-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="变量来源">
+            <a-select
+              v-model="filterForm.sourceFilter"
+              placeholder="全量"
+              allow-clear
+              @change="handleSearch"
+            >
+              <a-option v-for="opt in VARIABLE_SOURCE_FILTER_OPTIONS" :key="opt.value" :value="opt.value">
                 {{ opt.label }}
               </a-option>
             </a-select>
@@ -202,8 +218,16 @@
       v-model:visible="registerDrawerVisible"
       :existing-names="existingFeatureNames"
       :existing-cn-names="existingFeatureCnNames"
+      :requirement-data="registerDrawerRequirementData"
       @submit="handleRegisterSubmit"
       @save-draft="handleRegisterSaveDraft"
+    />
+
+    <!-- ============ 新建需求（A1 需求提出表单）============ -->
+    <RequirementProposalDrawer
+      v-model:visible="requirementDrawerVisible"
+      @submit="handleRequirementSubmit"
+      @batch-submit="handleBatchRequirementSubmit"
     />
 
     <!-- ============ 列表页通用 Action 抽屉（提交OA/发起验收/验收驳回）============ -->
@@ -658,7 +682,7 @@ import { variableStatus } from '@/modules/variable-hub/constants/statusMap'
 import DmtPageHeader from '@/modules/variable-hub/components/PageHeader.vue'
 import DmtStatGroup from '@/modules/variable-hub/components/StatGroup.vue'
 import { ExploreStore } from '@/modules/variable-hub/mock/explore/explore-store'
-import { RISK_CATEGORY_OPTIONS, MIDLOAN_L1_CATEGORIES } from '@/modules/variable-hub/constants/riskCategoryMap'
+import { RISK_CATEGORY_OPTIONS, MIDLOAN_L1_CATEGORIES, VARIABLE_SOURCE_FILTER_OPTIONS } from '@/modules/variable-hub/constants/riskCategoryMap'
 import { midloanStatusLabel, midloanStatusColor, allowedActionsByStatus, canEdit, getEditLockReason, tableActionsByStatus } from '@/modules/variable-hub/constants/midloanStatusMap'
 import { riskCategoryLabel, riskCategoryColor } from '@/modules/variable-hub/constants/riskCategoryMap'
 import DerivationStore from '@/modules/variable-hub/mock/risk-feature/derivations'
@@ -666,6 +690,7 @@ import DerivationCreateModal from '@/modules/variable-hub/components/risk-featur
 import BulkImportDerivationModal from '@/modules/variable-hub/components/risk-feature/BulkImportDerivationModal.vue'
 import DerivationRegisterModal from '@/modules/variable-hub/components/risk-feature/DerivationRegisterModal.vue'
 import VariableRegisterDrawer from '@/modules/variable-hub/components/risk-feature/VariableRegisterDrawer.vue'
+import RequirementProposalDrawer from '@/modules/variable-hub/components/risk-feature/RequirementProposalDrawer.vue'
 import MidloanActionDrawer from '@/modules/variable-hub/components/risk-feature/MidloanActionDrawer.vue'
 import { ExploreTaxonomyStore } from '@/modules/variable-hub/mock/explore/explore-taxonomy-store'
 import EvaluationTaskStore from '@/modules/variable-hub/mock/evaluation/evaluation-task-store'
@@ -704,7 +729,7 @@ const statItems = computed(() => [
   { title: '已停用', value: stats.value.inactive, iconText: '×', iconBg: '#fff1f0', iconColor: '#f53f3f', subtitle: '已停用/归档' }
 ])
 
-// 贷中行为品类 9 状态机统计（仅当选择"贷中行为"时显示）
+// 贷中行为品类 11 状态机统计（仅当选择"贷中行为"时显示）
 const midloanStats = computed(() => {
   const list = (variableStore.variableList || []).filter((v) => v.category === 'midloan_behavior')
   const groups = {}
@@ -718,13 +743,14 @@ const midloanStats = computed(() => {
     online: groups.online || 0,
     syncing: (groups.syncing_internal || 0) + (groups.syncing_variable || 0),
     failed: (groups.internal_sync_failed || 0) + (groups.variable_sync_failed || 0) + (groups.dw_online_failed || 0) + (groups.offline_failed || 0),
-    developing: (groups.registered || 0) + (groups.developing_oa || 0) + (groups.dw_online || 0) + (groups.pending_verify || 0) + (groups.verified || 0)
+    developing: (groups.registered || 0) + (groups.developing_oa || 0) + (groups.dw_online || 0) + (groups.business_acceptance || 0) + (groups.business_verified || 0) + (groups.admin_confirmed || 0) + (groups.param_preparing || 0)
   }
 })
 
 const filterForm = reactive({
   keyword: '',
   riskCategory: '',
+  sourceFilter: '',
   type: '',
   status: '',
   l1Category: '',
@@ -745,6 +771,17 @@ const variableList = computed(() => {
         return item.category === 'midloan_behavior' || item.category === 'behavior'
       }
       return item.category === filterForm.riskCategory
+    })
+  }
+  // 变量来源筛选（2026-08-10 需求5：按内数/外数/行为/实时分类）
+  if (filterForm.sourceFilter) {
+    const sf = filterForm.sourceFilter
+    list = list.filter((item) => {
+      if (sf === 'internal') return item.sourceType === 'internal'
+      if (sf === 'external') return item.sourceType === 'external'
+      if (sf === 'behavior') return item.category === 'behavior' || item.category === 'midloan_behavior'
+      if (sf === 'realtime') return item.dataFreshness === 'realtime'
+      return true
     })
   }
   // 一级分类过滤
@@ -979,10 +1016,10 @@ const displayList = computed(() => {
  */
 const getStatusDescription = (status) => {
   const map = {
-    developing_oa: '数仓开发中',
-    pending_verify: '验收人处理中',
-    syncing_internal: '同步内数中',
-    syncing_variable: '同步变量中心中',
+    developing_oa: '开发中（OA单）',
+    param_preparing: '参数准备中',
+    syncing_internal: '内数注册中',
+    syncing_variable: '变量中心注册中',
     offline: '已归档（终态）'
   }
   return map[status] || '无操作'
@@ -1022,8 +1059,8 @@ const getTableMainActions = (record) => {
  * 主流程操作点击处理（在列表页直接弹出抽屉/直接执行）
  */
 const handleMainFlowAction = (record, action) => {
-  // 主流程操作（submit_dev_oa/submit_verify/verify_pass/verify_reject/
-  // start_online/retry_dw/manual_batch_retry）直接在列表页触发
+  // 主流程操作（submit_requirement/submit_dev_oa/business_verify_pass/admin_confirm_pass/
+  // submit_production_order/retry_sync/retry_dw/manual_batch_retry）直接在列表页触发
   triggerTableAction(record, action)
 }
 
@@ -1036,13 +1073,20 @@ const handleTableAction = (record, action) => {
 
 /**
  * 统一的表格 action 触发入口
- * 1. 需要抽屉的 action（submit_dev_oa / submit_verify / verify_reject）→ 弹 MidloanActionDrawer
- * 2. 直接执行的 action（verify_pass / start_online / retry_sync / retry_dw / manual_batch_retry / simulate_*）→ 直接调用 stateEngine
+ * 1. 需要抽屉的 action（submit_requirement / submit_dev_oa / business_verify_pass / admin_confirm_pass / submit_production_order）→ 弹 MidloanActionDrawer
+ * 2. 直接执行的 action（retry_sync / retry_dw / manual_batch_retry / simulate_*）→ 直接调用 stateEngine
  * 3. 详情 / 编辑 / 补充数据底表 / 外数档案 / 评估 / 血缘 / 变更记录 → 跳转到详情页对应 Tab
  */
 const triggerTableAction = (record, action) => {
   const status = record.midloanStatus || record.status
-  const drawerActions = ['submit_dev_oa', 'submit_verify', 'verify_reject']
+  const drawerActions = ['submit_dev_oa', 'business_verify_pass', 'admin_confirm_pass', 'submit_production_order']
+
+  // submit_requirement：打开 VariableRegisterDrawer 审核模式（B1 完整注册表单）
+  if (action.key === 'submit_requirement') {
+    registerDrawerRequirementData.value = record
+    registerDrawerVisible.value = true
+    return
+  }
 
   if (drawerActions.includes(action.key)) {
     // 在列表页直接弹抽屉
@@ -1054,8 +1098,6 @@ const triggerTableAction = (record, action) => {
 
   // 直接执行类操作
   const directActions = {
-    verify_pass: () => Message.success('验收通过已记录'),
-    start_online: () => Message.success('已发起上线流程'),
     retry_sync: () => Message.success('已触发重新同步'),
     retry_dw: () => Message.success('已触发重新触发数仓任务'),
     manual_batch_retry: () => Message.success('已触发手动批次重试'),
@@ -1245,21 +1287,24 @@ const l1CategoryLabel = (key) => {
   return found ? found.label : (key || '—')
 }
 
-// 状态筛选下拉选项（用 9 状态机常量，严格对齐文档 D.4）
+// 状态筛选下拉选项（用 11 状态机常量，严格对齐文档 D.4）
 const MIDLOAN_STATUS_FILTER_OPTIONS = [
-  { value: 'registered',          label: '已注册',         color: 'blue' },
-  { value: 'developing_oa',       label: '数仓开发中',     color: 'purple' },
-  { value: 'dw_online',           label: '数仓开发完成',   color: 'cyan-dark' },
-  { value: 'pending_verify',      label: '待验收',         color: 'gold' },
-  { value: 'verified',            label: '已验收',         color: 'green-light' },
-  { value: 'syncing_internal',    label: '内数同步中',     color: 'cyan' },
-  { value: 'syncing_variable',    label: '变量中心同步中', color: 'cyan' },
+  { value: 'requirement_proposal', label: '需求提出',       color: 'orange' },
+  { value: 'registered',           label: '已注册',         color: 'blue' },
+  { value: 'developing_oa',        label: '开发中（OA单）', color: 'purple' },
+  { value: 'dw_online',            label: '数仓已上线',     color: 'cyan-dark' },
+  { value: 'business_acceptance',  label: '待业务验证',     color: 'magenta' },
+  { value: 'business_verified',    label: '业务已验证',     color: 'gold' },
+  { value: 'admin_confirmed',      label: '管理员已确认',   color: 'green-light' },
+  { value: 'param_preparing',      label: '参数准备',       color: 'cyan' },
+  { value: 'syncing_internal',     label: '内数注册中',     color: 'cyan' },
+  { value: 'syncing_variable',     label: '变量中心注册中', color: 'cyan' },
   { value: 'online',              label: '已上线',         color: 'green' },
   { value: 'offline',             label: '已下线',         color: 'darkgray' },
-  { value: 'internal_sync_failed', label: '内数同步失败',  color: 'red' },
-  { value: 'variable_sync_failed', label: '变量中心同步失败', color: 'red' },
-  { value: 'dw_online_failed',    label: '数仓开发失败',   color: 'red' },
-  { value: 'offline_failed',      label: '下线接收失败' }
+  { value: 'internal_sync_failed', label: '内数注册失败',  color: 'red' },
+  { value: 'variable_sync_failed', label: '变量中心注册失败', color: 'red' },
+  { value: 'dw_online_failed',    label: '数仓上线失败',   color: 'red' },
+  { value: 'offline_failed',      label: '下线接收失败',   color: 'red' }
 ]
 
 // 二级分类动态选项（从现有变量 l2Category 去重）
@@ -1351,6 +1396,7 @@ const handleReset = () => {
   filterForm.status = ''
   filterForm.l1Category = ''
   filterForm.l2Category = ''
+  filterForm.sourceFilter = ''
   variableStore.resetFilters()
   clearSelection()
   handleSearch()
@@ -1402,11 +1448,11 @@ const getBatchAvailableActions = () => {
   const role = UserContext.get().role
   // 文档 K1 明确下线是被动接收（变量中心发起），台账无主动申请下线，故移除 request_offline
   const allowedKeys = [
+    'submit_requirement',
     'submit_dev_oa',
-    'submit_verify',
-    'verify_pass',
-    'verify_reject',
-    'start_online',
+    'business_verify_pass',
+    'admin_confirm_pass',
+    'submit_production_order',
     'retry_sync',
     'retry_dw',
     'manual_batch_retry'
@@ -1439,9 +1485,8 @@ const getBatchAvailableActions = () => {
  * 因此需要在确认弹窗中明确告知用户。
  */
 const NEED_DRAWER_PAYLOAD_ACTIONS = new Set([
-  'submit_dev_oa',     // 需要 OA 开发单号
-  'submit_verify',     // 需要验收人 + OA 验收单号
-  'verify_reject'      // 需要驳回原因 + 说明
+  'submit_dev_oa',           // 需要 OA 开发单号
+  'submit_production_order'  // 需要 OA 投产单号
 ])
 
 const handleBatchAction = (batchAction) => {
@@ -1530,6 +1575,7 @@ const showIncrementalModal = () => {
 const handleCreateMenuSelect = (val) => {
   if (val === 'add' || val === 'create') {
     // 「注册为变量」=「新增」= 打开完整注册表单抽屉（B1 文档）
+    registerDrawerRequirementData.value = null
     registerDrawerVisible.value = true
     return
   }
@@ -1540,6 +1586,8 @@ const handleCreateMenuSelect = (val) => {
 
 // ============ 新增：完整注册表单（B1 文档）============
 const registerDrawerVisible = ref(false)
+// 审核模式：传入 A1 需求数据，预填 B1 注册表单（submit_requirement 触发）
+const registerDrawerRequirementData = ref(null)
 
 // 已存在的英文名/中文名（用于去重校验）
 const existingFeatureNames = computed(() =>
@@ -1550,8 +1598,26 @@ const existingFeatureCnNames = computed(() =>
 )
 
 const handleRegisterSubmit = (payload) => {
-  const draft = VariableDraftStore.addDraft(payload)
-  Message.success(`已创建特征：${draft.name}（${draft.id}），状态：已注册`)
+  // 审核模式（submit_requirement）：走 stateEngine 推进流程，而非新增草稿
+  if (payload.isReview) {
+    const result = MidloanStateEngine.handleAction(payload.requirementId, 'submit_requirement', payload)
+    if (result?.ok) {
+      Message.success('已审核通过并完成 B1 标准化注册')
+      registerDrawerVisible.value = false
+      registerDrawerRequirementData.value = null
+      fetchVariableList()
+    } else {
+      Message.error(result?.reason || '提交失败')
+    }
+    return
+  }
+  const draft = VariableDraftStore.addDraft({
+    ...payload,
+    midloanStatus: 'requirement_proposal',
+    requirementProposalAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    requirementProposer: UserContext.get().name || '业务方'
+  })
+  Message.success(`已创建特征：${draft.name}（${draft.id}），状态：需求提案`)
   registerDrawerVisible.value = false
   // 刷新台账数据 + 跳转到详情页（B1 R21）
   fetchVariableList()
@@ -1566,6 +1632,31 @@ const handleRegisterSaveDraft = (payload) => {
     featureCnName: payload.featureCnName || '（未命名草稿）'
   })
   Message.success('草稿已保存到「变量台账」底部，可在台账列表中查看')
+}
+
+// ============ 新建需求（A1 需求提出表单）============
+const requirementDrawerVisible = ref(false)
+
+const handleRequirementSubmit = (payload) => {
+  const proposal = VariableDraftStore.addRequirementProposal({
+    ...payload,
+    creator: UserContext.get().name || '小李'
+  })
+  Message.success(`已创建需求：${proposal.name}（${proposal.id}），状态：需求提出，已通知管理员审核`)
+  requirementDrawerVisible.value = false
+  // 刷新台账数据 + 跳转到详情页（A1）
+  fetchVariableList()
+  router.push({ name: 'VariableAssetDetail', params: { id: proposal.id } })
+}
+
+const handleBatchRequirementSubmit = (payloads) => {
+  const creator = UserContext.get().name || '小李'
+  const results = VariableDraftStore.batchAddRequirementProposals(
+    payloads.map((p) => ({ ...p, creator }))
+  )
+  Message.success(`已批量创建 ${results.length} 条需求，状态：需求提出，已通知管理员审核`)
+  requirementDrawerVisible.value = false
+  fetchVariableList()
 }
 
 const openBatchTopicModal = () => {

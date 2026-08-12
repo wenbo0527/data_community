@@ -73,7 +73,7 @@ defineEmits(['retry', 'manual-retry'])
 const isFailed = computed(() => isRetryableFailedStatus(props.status))
 
 // 把异常状态映射到对应正常状态的下标，作为时间轴 current
-// 9 状态机索引：registered=0, developing_oa=1, dw_online=2, pending_verify=3,
+// 9 状态机索引：registered=0, developing_oa=1, dw_online=2, business_verified=5,
 //               verified=4, syncing_internal=5, syncing_variable=6,
 //               online=7, offline=8
 const currentStepIndex = computed(() => {

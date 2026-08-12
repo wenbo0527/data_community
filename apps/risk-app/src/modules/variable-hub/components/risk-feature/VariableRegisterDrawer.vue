@@ -2,18 +2,37 @@
   变量新增（B1 特征注册表单 · 文档 §三 模块 B）
   - 4 区块：特征核心属性 / 特征分类信息 / 来源与时效 / 协作信息
   - 支持 Excel 评估报告附件上传（B1 R14）
-  - 提交后状态=已注册，生成 MIDLOAN-FEAT-DRAFT-NNNN，详情页可继续走 9 状态机
+  - 提交后状态=已注册，生成 MIDLOAN-FEAT-DRAFT-NNNN，详情页可继续走状态机
+  - 审核模式：传入 requirementData 时为「审核通过+注册」，预填 A1 需求信息，所有字段可编辑
 -->
 <template>
   <a-drawer
     :visible="visible"
     :width="640"
-    title="新增变量（特征注册）"
+    :title="isReviewMode ? '审核通过+注册（B1 标准化注册）' : '新增变量（特征注册）'"
     :ok-loading="submitting"
     @cancel="handleCancel"
     @ok="handleSubmit"
   >
-    <a-alert type="info" :show-icon="false" style="margin-bottom: 16px">
+    <!-- 审核模式：A1 需求信息预览 -->
+    <a-card
+      v-if="isReviewMode && requirementData"
+      title="A1 需求信息（业务方填写）"
+      size="small"
+      :bordered="true"
+      style="margin-bottom: 16px; background: var(--color-fill-1)"
+    >
+      <a-descriptions
+        :column="1"
+        :data="requirementPreviewItems"
+        :label-style="{ width: '100px', color: 'var(--color-text-3)' }"
+      />
+    </a-card>
+
+    <a-alert v-if="isReviewMode" type="info" :show-icon="false" style="margin-bottom: 16px">
+      审核通过后将自动完成：重复备案校验 + 参数映射 + 进入「已注册」状态。所有字段均可编辑修改，流程不做回退。
+    </a-alert>
+    <a-alert v-else type="info" :show-icon="false" style="margin-bottom: 16px">
       提交后将生成特征资产并跳转到详情页，状态为「已注册」，可在详情页继续发起「提开发OA单」等流程。
     </a-alert>
 
@@ -82,6 +101,16 @@
             :rows="3"
             placeholder="描述特征的衍生/计算规则，例如：从 dwd_trade_detail 过滤 amount >= 5000 的成功记录，按 user_id 维度统计 30 天滚动窗口"
           />
+        </a-form-item>
+
+        <a-form-item label="特征粒度" required>
+          <a-radio-group v-model="form.featureGranularity">
+            <a-radio value="identity_only">身份证号</a-radio>
+            <a-radio value="identity_plus_product">身份证号 + 产品号</a-radio>
+          </a-radio-group>
+          <template #extra>
+            <span style="color: var(--color-text-3); font-size: 12px;">区分特征入参维度：仅身份证号 或 身份证号+产品号</span>
+          </template>
         </a-form-item>
 
         <a-form-item label="特征分类">
@@ -257,9 +286,11 @@
 
     <template #footer>
       <a-space>
-        <a-button @click="handleSaveDraft">保存草稿</a-button>
+        <a-button v-if="!isReviewMode" @click="handleSaveDraft">保存草稿</a-button>
         <a-button @click="handleCancel">取消</a-button>
-        <a-button type="primary" :loading="submitting" @click="handleSubmit">提交并跳转详情</a-button>
+        <a-button type="primary" :loading="submitting" @click="handleSubmit">
+          {{ isReviewMode ? '审核通过并注册' : '提交并跳转详情' }}
+        </a-button>
       </a-space>
     </template>
   </a-drawer>
@@ -285,18 +316,39 @@ interface Props {
   existingNames?: string[]
   /** 已存在的中文名列表（用于去重校验）*/
   existingCnNames?: string[]
+  /** 审核模式：传入 A1 需求数据，预填表单 */
+  requirementData?: any
 }
 
 const props = withDefaults(defineProps<Props>(), {
   existingNames: () => [],
-  existingCnNames: () => []
+  existingCnNames: () => [],
+  requirementData: () => null
 })
 
 const emit = defineEmits<{
   (e: 'update:visible', val: boolean): void
-  (e: 'submit', payload: RegisterFormPayload): void
+  (e: 'submit', payload: RegisterFormPayload & { isReview?: boolean; requirementId?: string }): void
   (e: 'save-draft', payload: RegisterFormPayload): void
 }>()
+
+/** 审核模式：传入了 requirementData */
+const isReviewMode = computed(() => !!props.requirementData)
+
+/** A1 需求信息预览项 */
+const requirementPreviewItems = computed(() => {
+  const r = props.requirementData || {}
+  return [
+    { label: '需求ID', value: r.id || r.midloanFeatureId || '-' },
+    { label: '需求名称', value: r.requirementName || r.name || '-' },
+    { label: '业务场景', value: r.businessScenario || r.description || '-' },
+    { label: '预期效果', value: r.expectedEffect || '（未填写）' },
+    { label: '加工逻辑', value: r.processingLogic || '（未填写）' },
+    { label: '默认值', value: r.defaultValue || '（未填写）' },
+    { label: '特征粒度', value: r.featureGranularity === 'identity_plus_product' ? '身份证号 + 产品号' : '身份证号' },
+    { label: '提出人', value: r.requirementProposer || r.creator || '-' }
+  ]
+})
 
 const submitting = ref(false)
 const formRef = ref<any>(null)
@@ -309,6 +361,7 @@ function createEmptyForm(): RegisterFormPayload {
     fieldType: 'Integer',
     processingLogic: '',
     defaultValue: '',
+    featureGranularity: 'identity_only',
     category: 'midloan_behavior',
     l1Category: '',
     l2Category: '',
@@ -448,7 +501,12 @@ function handleSubmit() {
   if (!validateAll()) return
   submitting.value = true
   try {
-    emit('submit', { ...form })
+    const payload: RegisterFormPayload & { isReview?: boolean; requirementId?: string } = { ...form }
+    if (isReviewMode.value && props.requirementData) {
+      payload.isReview = true
+      payload.requirementId = props.requirementData.id || props.requirementData.midloanFeatureId
+    }
+    emit('submit', payload)
   } finally {
     submitting.value = false
   }
@@ -465,9 +523,25 @@ function handleSaveDraft() {
   }
 }
 
-// 打开时重置
+// 打开时重置 / 审核模式预填 A1 数据
 watch(() => props.visible, (v) => {
-  if (v) reset()
+  if (v) {
+    Object.assign(form, createEmptyForm())
+    errors.name = undefined
+    errors.featureCnName = undefined
+
+    // 审核模式：预填 A1 需求信息
+    if (isReviewMode.value && props.requirementData) {
+      const r = props.requirementData
+      form.featureCnName = r.requirementName || r.name || r.featureCnName || ''
+      form.processingLogic = r.processingLogic || form.processingLogic
+      form.defaultValue = r.defaultValue || form.defaultValue
+      form.featureGranularity = r.featureGranularity || 'identity_only'
+      form.description = r.businessScenario || r.description || ''
+      form.creator = r.requirementProposer || r.creator || '小李'
+      form.remark = `需求审核注册：${r.id || r.midloanFeatureId || ''}`
+    }
+  }
 })
 </script>
 

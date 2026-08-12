@@ -20,11 +20,11 @@
       <a-descriptions-item label="数仓上线时间">{{ data.dwOnlineTime || data.dwOnlineAt || '—' }}</a-descriptions-item>
       <a-descriptions-item label="已注册时间">{{ data.registeredAt || '—' }}</a-descriptions-item>
       <a-descriptions-item label="开发中(OA)时间">{{ data.developingOaAt || '—' }}</a-descriptions-item>
-      <a-descriptions-item label="验收时间">{{ data.verifiedAt || '—' }}</a-descriptions-item>
+      <a-descriptions-item label="业务验证时间">{{ data.verifiedAt || '—' }}</a-descriptions-item>
       <a-descriptions-item label="内数同步时间">{{ data.syncingInternalAt || '—' }}</a-descriptions-item>
       <a-descriptions-item label="变量中心同步时间">{{ data.syncingVariableAt || '—' }}</a-descriptions-item>
       <a-descriptions-item label="OA开发单号">{{ data.devOaOrderId || '—' }}</a-descriptions-item>
-      <a-descriptions-item label="OA验收单号">{{ data.verifyOaOrderId || '—' }}</a-descriptions-item>
+      <a-descriptions-item label="OA验收单号（历史）">{{ data.verifyOaOrderId || '—' }}</a-descriptions-item>
       <a-descriptions-item label="验收人">{{ data.acceptor || '—' }}</a-descriptions-item>
       <a-descriptions-item label="接口号">{{ data.apiNo || '—' }}</a-descriptions-item>
       <a-descriptions-item label="上线时间">{{ data.onlineTime || '—' }}</a-descriptions-item>

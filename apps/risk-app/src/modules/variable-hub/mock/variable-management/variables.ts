@@ -73,7 +73,7 @@ export interface VariableAssetMock {
   dwTaskId?: string
   dwOnlineTime?: string
   devOaOrderId?: string
-  verifyOaOrderId?: string
+  verifyOaOrderId?: string            // OA验收单号（v2.0 历史数据，v2.1 已取消验收单）
   onlineOaOrderId?: string
   apiNo?: string
   apiName?: string
@@ -84,12 +84,14 @@ export interface VariableAssetMock {
   syncRetryCount?: number
   // ============ 验收 / 驳回 / 引用 状态机专属字段 ============
   acceptor?: string
-  verifiedAt?: string
+  developer?: string                 // 数仓开发人员
+  adminManager?: string             // 管理人
+  verifiedAt?: string                 // 验收时间（v2.0 历史，v2.1 改为 businessVerifiedAt）
   rejectReason?: string
   rejectedAt?: string
   registeredAt?: string
   developingOaAt?: string
-  pendingVerifyAt?: string
+  pendingVerifyAt?: string            // 待验收时间（v2.0 历史，v2.1 已移除）
   syncingInternalAt?: string
   syncingVariableAt?: string
   referenceStatus?: string
@@ -97,6 +99,23 @@ export interface VariableAssetMock {
   // ============ 下线 状态机专属字段 ============
   offlineTime?: string
   offlineReason?: string
+  // ============ 需求提出 / 业务验证 专属字段（v2.1）============
+  requirementProposalAt?: string          // 需求提出时间
+  businessAcceptanceAt?: string           // 待业务验证时间
+  businessVerifiedAt?: string             // 业务已验证时间
+  adminConfirmedAt?: string              // 管理员已确认时间
+  paramPreparingAt?: string               // 参数准备时间
+  requirementProposer?: string            // 需求提出人
+  standardizedAttachment?: boolean        // 标准化附件是否已补充
+  paramMappingStatus?: string             // 参数映射状态（pending/completed）
+  paramMappingVerifiedAt?: string         // 参数映射验证时间
+  paramValidationStatus?: string           // 参数有效性验证状态（pending/passed/failed）
+  paramValidatedAt?: string               // 参数验证时间
+  duplicateCheckStatus?: string          // 重复备案校验状态（pending/passed/failed）
+  duplicateCheckedAt?: string             // 重复校验时间
+  oaDocLink?: string                      // OA单据链接（OA回调同步）
+  archiveStatus?: string                  // 归档状态
+  featureGranularity?: 'identity_only' | 'identity_plus_product'  // 特征粒度
 }
 
 const now = new Date()
@@ -108,8 +127,8 @@ export const variableAssets: VariableAssetMock[] = [
     name: '近30日交易次数',
     code: 'IN_TXN_CNT_30D',
     type: 'numerical',
-    status: 'pending_register',
-    description: '近 30 天交易次数（贷中行为品类）',
+    status: 'requirement_proposal',
+    description: '近 30 天交易次数（贷中行为品类 · 需求提出阶段）',
     dataSource: 'hbase',
     dataSourceName: 'Hbase 行为元数据表',
     sourceField: 'txn_cnt_30d',
@@ -119,14 +138,17 @@ export const variableAssets: VariableAssetMock[] = [
     uniqueValueCount: 800,
     definition: '过去 30 天成功交易次数',
     creator: '数据应用团队',
+    developer: '王数仓',
+    adminManager: '培培',
     createdAt: fmt(new Date(now.getTime() - 5 * 86400000)),
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
-    /** 衍生需求占位记录（id 前缀 VAR-），category 仍按 VariableCategory 类型归类，避免污染 midloan_behavior 统计 */
-    category: 'behavior',
-    /** 中间状态字段保留为空字符串，避免被误识别为 midloan 特征 */
-    midloanStatus: '' as any,
-    midloanFeatureId: '',
+    /** 衍生需求转 midloan 特征（2026-08-10 会议调整：业务直接在台账发起需求）*/
+    category: 'midloan_behavior',
+    /** 进入 11 状态机起点：需求提出 */
+    midloanStatus: 'requirement_proposal' as any,
+    midloanFeatureId: 'MIDLOAN-FEAT-0099',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260803-0030',
     fieldType: 'Integer',
     processingLogic: '按用户维度统计近30日交易成功记录数',
@@ -138,6 +160,14 @@ export const variableAssets: VariableAssetMock[] = [
     dwTaskId: 'DW-TASK-998755',
     devOaOrderId: '',
     upstreamTable: 'dwd_trade_detail',
+    // 需求提出阶段字段
+    requirementProposalAt: fmt(new Date(now.getTime() - 5 * 86400000)),
+    requirementProposer: '数据应用团队',
+    standardizedAttachment: false,
+    paramMappingStatus: 'pending',
+    duplicateCheckStatus: 'pending',
+    oaDocLink: '',
+    archiveStatus: '',
     profile: {
       categoryLevel1: '交易行为',
       categoryLevel2: '交易频次',
@@ -194,6 +224,7 @@ export const variableAssets: VariableAssetMock[] = [
     /** 11 状态机专属字段 */
     midloanStatus: 'online',
     midloanFeatureId: 'MIDLOAN-FEAT-0001',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260725-0001',
     fieldType: 'Integer',
     processingLogic: '从 dwd_trade_detail 过滤 amount >= 5000 的成功记录，按 user_id 维度统计 30 天滚动窗口',
@@ -208,6 +239,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260801-0003',
     onlineOaOrderId: 'OA-PROD-20260803-0003',
     acceptor: '小李',
+    developer: '数仓_A',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 7 * 86400000)),
     apiNo: 'MIDLOAN-API-0001',
     apiName: 'midloan_bigtxn_30d_query',
@@ -221,6 +254,18 @@ export const variableAssets: VariableAssetMock[] = [
     referenceStatus: '已引用',
     referenceDetail: '已正式投产到变量中心，关联决策引擎：风控V3、风控V4',
     upstreamTable: 'dwd_trade_detail',
+    requirementProposalAt: fmt(new Date(now.getTime() - 27 * 86400000)),
+    businessAcceptanceAt: fmt(new Date(now.getTime() - 12 * 86400000)),
+    requirementProposer: '业务方-张三',
+    standardizedAttachment: true,
+    paramMappingStatus: 'completed',
+    paramMappingVerifiedAt: fmt(new Date(now.getTime() - 26 * 86400000)),
+    paramValidationStatus: 'passed',
+    paramValidatedAt: fmt(new Date(now.getTime() - 4 * 86400000)),
+    duplicateCheckStatus: 'passed',
+    duplicateCheckedAt: fmt(new Date(now.getTime() - 26 * 86400000)),
+    oaDocLink: 'https://oa.example.com/doc/OA-PROD-20260803-0003',
+    archiveStatus: 'archived',
     effectMetrics: { iv: 0.38, ks: 0.28, auc: 0.74, coverage: 0.97, lift: 15 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 180000, monthlyCost: 0, costTrend: 'stable' }
   },
@@ -244,6 +289,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'syncing_internal',
     midloanFeatureId: 'MIDLOAN-FEAT-0002',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260801-0007',
     fieldType: 'Double',
     processingLogic: '计算近7日还款金额序列的标准差，再除以均值得到波动率',
@@ -258,6 +304,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260803-0010',
     onlineOaOrderId: 'OA-PROD-20260805-0010',
     acceptor: '小李',
+    developer: '数仓_B',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 1.5 * 86400000)),
     /** 当前状态=内数同步中（D.3 时间戳）*/
     registeredAt: fmt(new Date(now.getTime() - 15 * 86400000)),
@@ -265,6 +313,17 @@ export const variableAssets: VariableAssetMock[] = [
     pendingVerifyAt: fmt(new Date(now.getTime() - 3 * 86400000)),
     syncingInternalAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     upstreamTable: 'dwd_repayment_detail',
+    requirementProposalAt: fmt(new Date(now.getTime() - 17 * 86400000)),
+    businessAcceptanceAt: fmt(new Date(now.getTime() - 3 * 86400000)),
+    requirementProposer: '业务方-李四',
+    standardizedAttachment: true,
+    paramMappingStatus: 'completed',
+    paramMappingVerifiedAt: fmt(new Date(now.getTime() - 16 * 86400000)),
+    paramValidationStatus: 'pending',
+    duplicateCheckStatus: 'passed',
+    duplicateCheckedAt: fmt(new Date(now.getTime() - 16 * 86400000)),
+    oaDocLink: 'https://oa.example.com/doc/OA-PROD-20260805-0010',
+    archiveStatus: 'in_progress',
     effectMetrics: { iv: 0.27, ks: 0.21, auc: 0.69, coverage: 0.92, lift: 9 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 95000, monthlyCost: 0, costTrend: 'up' }
   },
@@ -288,6 +347,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'internal_sync_failed',
     midloanFeatureId: 'MIDLOAN-FEAT-0003',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260803-0015',
     fieldType: 'Double',
     processingLogic: '从催收工单系统 join 用户触达日志，计算 avg(respond_time - send_time) / 3600',
@@ -302,6 +362,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260805-0012',
     onlineOaOrderId: 'OA-PROD-20260806-0012',
     acceptor: '小李',
+    developer: '王数仓',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 2 * 86400000)),
     /** 当前状态=内数同步失败（D.3 时间戳）*/
     registeredAt: fmt(new Date(now.getTime() - 8 * 86400000)),
@@ -309,6 +371,17 @@ export const variableAssets: VariableAssetMock[] = [
     pendingVerifyAt: fmt(new Date(now.getTime() - 3 * 86400000)),
     syncingInternalAt: fmt(new Date(now.getTime() - 1.5 * 86400000)),
     upstreamTable: 'dwd_collection_log',
+    requirementProposalAt: fmt(new Date(now.getTime() - 10 * 86400000)),
+    businessAcceptanceAt: fmt(new Date(now.getTime() - 4 * 86400000)),
+    requirementProposer: '业务方-王五',
+    standardizedAttachment: true,
+    paramMappingStatus: 'completed',
+    paramMappingVerifiedAt: fmt(new Date(now.getTime() - 9 * 86400000)),
+    paramValidationStatus: 'pending',
+    duplicateCheckStatus: 'passed',
+    duplicateCheckedAt: fmt(new Date(now.getTime() - 9 * 86400000)),
+    oaDocLink: '',
+    archiveStatus: 'in_progress',
     syncFailedReason: '数据底表名称为空（ads_midloan_collect_resp_hrs），内数找不到对应表',
     syncFailedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     syncRetryCount: 1,
@@ -329,12 +402,15 @@ export const variableAssets: VariableAssetMock[] = [
     quality: 89,
     missingRate: 0.04,
     creator: '张风控',
+    developer: '数仓_A',
+    adminManager: '培培',
     createdAt: fmt(new Date(now.getTime() - 3 * 86400000)),
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
     midloanStatus: 'registered',
     midloanFeatureId: 'MIDLOAN-FEAT-0004',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260804-0020',
     fieldType: 'Double',
     processingLogic: '从支用明细按 user_id 排序，计算相邻支用日期差值的均值',
@@ -366,12 +442,15 @@ export const variableAssets: VariableAssetMock[] = [
     quality: 90,
     missingRate: 0.03,
     creator: '李行为',
+    developer: '数仓_B',
+    adminManager: '培培',
     createdAt: fmt(new Date(now.getTime() - 18 * 86400000)),
     updatedAt: fmt(new Date(now.getTime() - 2 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
     midloanStatus: 'developing_oa',
     midloanFeatureId: 'MIDLOAN-FEAT-0005',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260718-0005',
     fieldType: 'Integer',
     processingLogic: '从用户行为日志过滤 22:00-06:00 时段，按 user_id 累加分钟数',
@@ -404,12 +483,15 @@ export const variableAssets: VariableAssetMock[] = [
     quality: 93,
     missingRate: 0.02,
     creator: '张风控',
+    developer: '王数仓',
+    adminManager: '培培',
     createdAt: fmt(new Date(now.getTime() - 14 * 86400000)),
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
     midloanStatus: 'dw_online',
     midloanFeatureId: 'MIDLOAN-FEAT-0006',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260722-0008',
     fieldType: 'Integer',
     processingLogic: '按 user_id 统计近7日的不同 IP 数',
@@ -428,13 +510,13 @@ export const variableAssets: VariableAssetMock[] = [
     effectMetrics: { iv: 0.33, ks: 0.26, auc: 0.73, coverage: 0.96, lift: 13 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 88000, monthlyCost: 0, costTrend: 'stable' }
   },
-  // ============ 补齐：pending_verify（待验收）============
+  // ============ 补齐：business_acceptance（待业务验证）============
   {
     id: 'MIDLOAN-FEAT-0009',
     name: '近30日异常时段交易占比',
     code: 'MIDLOAN_NIGHT_TXN_RATIO_30D',
     type: 'numerical',
-    status: 'pending_verify',
+    status: 'business_acceptance',
     description: '贷中风控：用户近30日夜间时段交易金额占比',
     dataSource: 'hbase',
     dataSourceName: 'Hbase 行为元数据表',
@@ -447,8 +529,9 @@ export const variableAssets: VariableAssetMock[] = [
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
-    midloanStatus: 'pending_verify',
+    midloanStatus: 'business_acceptance',
     midloanFeatureId: 'MIDLOAN-FEAT-0009',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260725-0011',
     fieldType: 'Double',
     processingLogic: '夜间交易总额 / 全天交易总额',
@@ -462,21 +545,23 @@ export const variableAssets: VariableAssetMock[] = [
     devOaOrderId: 'OA-DEV-20260727-0042',
     verifyOaOrderId: 'OA-VERIFY-20260801-0005',
     acceptor: '小李',
+    developer: '数仓_A',
+    adminManager: '培培',
     registeredAt: fmt(new Date(now.getTime() - 7 * 86400000)),
-    /** 当前状态=待验收（D.3 时间戳）*/
+    /** 当前状态=待业务验证（D.3 时间戳）*/
     developingOaAt: fmt(new Date(now.getTime() - 5 * 86400000)),
-    pendingVerifyAt: fmt(new Date(now.getTime() - 1 * 86400000)),
+    businessAcceptanceAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     upstreamTable: 'dwd_trade_detail',
     effectMetrics: { iv: 0.29, ks: 0.23, auc: 0.7, coverage: 0.93, lift: 10 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 75000, monthlyCost: 0, costTrend: 'stable' }
   },
-  // ============ 补齐：verified（已验收）============
+  // ============ 补齐：business_verified（业务已验证）============
   {
     id: 'MIDLOAN-FEAT-0010',
     name: '近90日多头借贷 APP 数',
     code: 'MIDLOAN_MULTILOAN_APP_CNT_90D',
     type: 'numerical',
-    status: 'verified',
+    status: 'business_verified',
     description: '贷中多头借贷检测：近90日用户安装/活跃的借贷类 APP 数',
     dataSource: 'hbase',
     dataSourceName: 'Hbase 行为元数据表',
@@ -489,8 +574,9 @@ export const variableAssets: VariableAssetMock[] = [
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
-    midloanStatus: 'verified',
+    midloanStatus: 'business_verified',
     midloanFeatureId: 'MIDLOAN-FEAT-0010',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260726-0014',
     fieldType: 'Integer',
     processingLogic: '从设备画像数据统计近90日活跃借贷类 APP 数',
@@ -504,11 +590,13 @@ export const variableAssets: VariableAssetMock[] = [
     devOaOrderId: 'OA-DEV-20260728-0050',
     verifyOaOrderId: 'OA-VERIFY-20260802-0008',
     acceptor: '小李',
-    verifiedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
+    developer: '数仓_B',
+    adminManager: '培培',
     registeredAt: fmt(new Date(now.getTime() - 6 * 86400000)),
-    /** 当前状态=已验收（D.3 时间戳）*/
+    /** 当前状态=业务已验证（D.3 时间戳）*/
     developingOaAt: fmt(new Date(now.getTime() - 4 * 86400000)),
-    pendingVerifyAt: fmt(new Date(now.getTime() - 2 * 86400000)),
+    businessAcceptanceAt: fmt(new Date(now.getTime() - 3 * 86400000)),
+    businessVerifiedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     upstreamTable: 'dwd_device_app_log',
     effectMetrics: { iv: 0.42, ks: 0.35, auc: 0.79, coverage: 0.9, lift: 16 },
     costMetrics: { pricePerCall: 0, monthlyCalls: 55000, monthlyCost: 0, costTrend: 'stable' }
@@ -519,7 +607,7 @@ export const variableAssets: VariableAssetMock[] = [
     name: '近30日通讯录新增联系人均值',
     code: 'MIDLOAN_CONTACT_AVG_30D',
     type: 'numerical',
-    status: 'online',
+    status: 'admin_confirmed',
     description: '贷中行为：用户近30日通讯录日均新增联系人数',
     dataSource: 'hbase',
     dataSourceName: 'Hbase 行为元数据表',
@@ -532,8 +620,9 @@ export const variableAssets: VariableAssetMock[] = [
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
-    midloanStatus: 'online',  // 9 状态机：已上线
+    midloanStatus: 'admin_confirmed',  // 管理员已确认，待提投产单
     midloanFeatureId: 'MIDLOAN-FEAT-0011',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260727-0017',
     fieldType: 'Double',
     processingLogic: '按 user_id 统计近30日通讯录日均新增联系人数',
@@ -548,6 +637,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260803-0011',
     onlineOaOrderId: 'OA-PROD-20260804-0011',
     acceptor: '小李',
+    developer: '王数仓',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 2 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 5 * 86400000)),
     apiNo: 'MIDLOAN-API-0011',
@@ -585,6 +676,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'syncing_variable',
     midloanFeatureId: 'MIDLOAN-FEAT-0012',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260728-0019',
     fieldType: 'Integer',
     processingLogic: '从定位服务日志识别虚拟定位/瞬移事件，统计 30 天累计次数',
@@ -599,6 +691,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260804-0013',
     onlineOaOrderId: 'OA-PROD-20260805-0013',
     acceptor: '小李',
+    developer: '数仓_A',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 3 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 4 * 86400000)),
     apiNo: 'MIDLOAN-API-0012',
@@ -633,6 +727,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'offline',
     midloanFeatureId: 'MIDLOAN-FEAT-0007',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260202-0001',
     fieldType: 'Integer',
     processingLogic: '从 dwd_trade_detail 过滤 amount >= 3000 的成功记录（旧版本阈值）',
@@ -646,6 +741,8 @@ export const variableAssets: VariableAssetMock[] = [
     devOaOrderId: 'OA-DEV-20260205-0001',
     verifyOaOrderId: 'OA-VERIFY-20260210-0001',
     acceptor: '小李',
+    developer: '数仓_B',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 165 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 178 * 86400000)),
     apiNo: 'MIDLOAN-API-0007',
@@ -679,6 +776,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'offline',
     midloanFeatureId: 'MIDLOAN-FEAT-0008',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260310-0003',
     fieldType: 'Integer',
     processingLogic: '从外部数据源API查询近90日多头借贷次数（数据源已下线）',
@@ -692,6 +790,8 @@ export const variableAssets: VariableAssetMock[] = [
     devOaOrderId: 'OA-DEV-20260312-0002',
     verifyOaOrderId: 'OA-VERIFY-20260318-0004',
     acceptor: '小李',
+    developer: '王数仓',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 135 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 148 * 86400000)),
     apiNo: 'MIDLOAN-API-0008',
@@ -726,6 +826,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'offline',
     midloanFeatureId: 'MIDLOAN-FEAT-0013',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260525-0003',
     fieldType: 'Integer',
     processingLogic: '从设备画像系统统计近7日不同 device_id 数',
@@ -739,6 +840,8 @@ export const variableAssets: VariableAssetMock[] = [
     devOaOrderId: 'OA-DEV-20260601-0001',
     verifyOaOrderId: 'OA-VERIFY-20260605-0001',
     acceptor: '小李',
+    developer: '数仓_A',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 55 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 70 * 86400000)),
     apiNo: 'MIDLOAN-API-0013',
@@ -778,6 +881,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'variable_sync_failed',
     midloanFeatureId: 'MIDLOAN-FEAT-0014',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260729-0022',
     fieldType: 'Integer',
     processingLogic: '从用户通讯录文本匹配催收词库，统计 60 天累计次数',
@@ -792,6 +896,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260803-0015',
     onlineOaOrderId: 'OA-PROD-20260804-0015',
     acceptor: '小李',
+    developer: '数仓_B',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 2 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 4 * 86400000)),
     apiNo: 'MIDLOAN-API-0014',
@@ -823,12 +929,15 @@ export const variableAssets: VariableAssetMock[] = [
     quality: 80,
     missingRate: 0.1,
     creator: '赵治理',
+    developer: '王数仓',
+    adminManager: '培培',
     createdAt: fmt(new Date(now.getTime() - 6 * 86400000)),
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
     midloanStatus: 'dw_online_failed',
     midloanFeatureId: 'MIDLOAN-FEAT-0015',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260730-0025',
     fieldType: 'Double',
     processingLogic: 'OCR 失败次数 / OCR 总次数',
@@ -870,6 +979,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'offline_failed',
     midloanFeatureId: 'MIDLOAN-FEAT-0016',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260620-0008',
     fieldType: 'Integer',
     processingLogic: '从用户账户绑定日志统计近7日不同银行卡号数量',
@@ -883,6 +993,8 @@ export const variableAssets: VariableAssetMock[] = [
     devOaOrderId: 'OA-DEV-20260622-0020',
     verifyOaOrderId: 'OA-VERIFY-20260626-0005',
     acceptor: '小李',
+    developer: '数仓_A',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 30 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 40 * 86400000)),
     apiNo: 'MIDLOAN-API-0016',
@@ -906,7 +1018,7 @@ export const variableAssets: VariableAssetMock[] = [
     name: '近30日是否存在异地登录',
     code: 'MIDLOAN_REMOTE_LOGIN_30D',
     type: 'categorical',
-    status: 'online',
+    status: 'param_preparing',
     description: '贷中风控：近30日是否存在异地登录（Boolean）',
     dataSource: 'hbase',
     dataSourceName: 'Hbase 行为元数据表',
@@ -919,8 +1031,9 @@ export const variableAssets: VariableAssetMock[] = [
     updatedAt: fmt(new Date(now.getTime() - 1 * 86400000)),
     sourceType: 'internal',
     category: 'midloan_behavior',
-    midloanStatus: 'online',
+    midloanStatus: 'param_preparing',  // 参数准备（提投产单+OA审批通过）
     midloanFeatureId: 'MIDLOAN-FEAT-0017',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260708-0002',
     fieldType: 'Boolean',
     processingLogic: '基于用户登录 IP 归属地与常用登录地对比，存在差异则标记 true',
@@ -935,6 +1048,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260714-0003',
     onlineOaOrderId: 'OA-PROD-20260715-0003',
     acceptor: '小李',
+    developer: '数仓_B',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 18 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 24 * 86400000)),
     apiNo: 'MIDLOAN-API-0017',
@@ -966,6 +1081,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'online',
     midloanFeatureId: 'MIDLOAN-FEAT-0018',
+    featureGranularity: 'identity_only',
     derivationId: 'DRV-20260701-0001',
     fieldType: 'String',
     processingLogic: '从登录 IP 归属地解析城市，按 user_id 取近30日累计登录次数最多的城市',
@@ -980,6 +1096,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260709-0002',
     onlineOaOrderId: 'OA-PROD-20260710-0002',
     acceptor: '小张',
+    developer: '王数仓',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 24 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 30 * 86400000)),
     apiNo: 'MIDLOAN-API-0018',
@@ -1012,6 +1130,7 @@ export const variableAssets: VariableAssetMock[] = [
     category: 'midloan_behavior',
     midloanStatus: 'online',
     midloanFeatureId: 'MIDLOAN-FEAT-0019',
+    featureGranularity: 'identity_plus_product',
     derivationId: 'DRV-20260626-0006',
     fieldType: 'Integer',
     processingLogic: '从规则引擎日志统计近30日命中白名单规则的累计次数',
@@ -1026,6 +1145,8 @@ export const variableAssets: VariableAssetMock[] = [
     verifyOaOrderId: 'OA-VERIFY-20260702-0001',
     onlineOaOrderId: 'OA-PROD-20260703-0001',
     acceptor: '小张',
+    developer: '数仓_A',
+    adminManager: '培培',
     verifiedAt: fmt(new Date(now.getTime() - 30 * 86400000)),
     registeredAt: fmt(new Date(now.getTime() - 36 * 86400000)),
     apiNo: 'MIDLOAN-API-0019',

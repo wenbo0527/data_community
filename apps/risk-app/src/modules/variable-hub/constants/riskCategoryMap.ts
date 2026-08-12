@@ -60,5 +60,17 @@ export const LIST_TYPES = [
   { label: '灰名单', value: 'gray' }
 ]
 
+/**
+ * 变量分类筛选选项（2026-08-10 会议新增 · 需求5）
+ * 按内数/外数/行为/实时分类展示，支持全量混合展示
+ */
+export const VARIABLE_SOURCE_FILTER_OPTIONS = [
+  { label: '全量', value: '', description: '全量混合展示' },
+  { label: '内数', value: 'internal', description: '内部数据源变量' },
+  { label: '外数', value: 'external', description: '外部数据源变量' },
+  { label: '行为', value: 'behavior', description: '行为类变量' },
+  { label: '实时', value: 'realtime', description: '实时数据源变量' }
+] as const
+
 export const riskCategoryLabel = (cat: string) => RISK_CATEGORY_MAP[cat as RiskCategory]?.label || cat || '—'
 export const riskCategoryColor = (cat: string) => RISK_CATEGORY_MAP[cat as RiskCategory]?.color || 'gray'

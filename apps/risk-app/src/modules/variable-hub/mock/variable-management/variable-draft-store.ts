@@ -22,6 +22,10 @@ export interface RegisterFormPayload {
   processingLogic: string
   /** 默认值（非必填）*/
   defaultValue?: string
+  /** 特征粒度：identity_only（仅身份证号）/ identity_plus_product（身份证号+产品号）*/
+  featureGranularity?: 'identity_only' | 'identity_plus_product'
+  /** 描述/业务场景 */
+  description?: string
   // ============ 特征分类信息 ============
   /** 特征分类（默认 midloan_behavior，一期固定）*/
   category: VariableCategory
@@ -61,6 +65,30 @@ export interface RegisterFormPayload {
   dwTaskId?: string
   /** Excel 评估报告附件（文件名/大小）*/
   excelAttachment?: { name: string; size: number; uploadedAt: string }
+}
+
+/**
+ * 需求提出表单字段（A1 R01 · 文档 v2.1 模块 A0/A1）
+ */
+export interface RequirementProposalPayload {
+  /** 需求名称（必填，≤30字）*/
+  requirementName: string
+  /** 业务场景（必填，描述业务用途）*/
+  businessScenario: string
+  /** 预期效果（选填，描述预期效果/提升度预期）*/
+  expectedEffect?: string
+  /** 加工逻辑（选填，描述大致加工思路）*/
+  processingLogic?: string
+  /** 默认值（选填，如 "0" / "false"）*/
+  defaultValue?: string
+  /** 特征粒度：identity_only（仅身份证号）/ identity_plus_product（身份证号+产品号）*/
+  featureGranularity?: 'identity_only' | 'identity_plus_product'
+  /** Excel 评估报告附件（文件名/大小）*/
+  excelAttachment?: { name: string; size: number; uploadedAt: string }
+  /** 批量导入的记录（选填）*/
+  batchImportedRecords?: Array<Record<string, any>>
+  /** 创建人（业务方角色，自动带入）*/
+  creator?: string
 }
 
 export type VariableDraftMock = VariableAssetMock & {
@@ -103,6 +131,21 @@ function buildNextDraftId(existing: string[]) {
 
 function nowFmt() {
   return new Date().toISOString().slice(0, 19).replace('T', ' ')
+}
+
+/**
+ * 生成需求 ID：DRV-YYYYMMDD-NNNN（如 DRV-20260812-0001）
+ */
+function buildRequirementId(existing: string[]): string {
+  const today = new Date()
+  const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`
+  const prefix = `DRV-${dateStr}-`
+  const nums = existing
+    .filter((id) => id.startsWith(prefix))
+    .map((id) => Number(id.slice(prefix.length)))
+    .filter((n) => !Number.isNaN(n))
+  const next = (nums.length ? Math.max(...nums) : 0) + 1
+  return `${prefix}${pad(next)}`
 }
 
 /**
@@ -225,6 +268,121 @@ export const VariableDraftStore = {
     }
     writeAll([item, ...existing])
     return item
+  },
+
+  /**
+   * 需求提出表单提交（A1 R01）：写入草稿仓库并返回生成的需求资产对象
+   * - 生成需求 ID：DRV-YYYYMMDD-NNNN
+   * - midloanStatus = requirement_proposal（需求提出，待管理员审核）
+   * - 业务方角色 risk_data_member
+   */
+  addRequirementProposal(payload: RequirementProposalPayload): VariableDraftMock {
+    const existing = readAll()
+    const id = buildRequirementId(existing.map((item) => item.id))
+    const now = nowFmt()
+    const creator = payload.creator || '小李'
+    const item: VariableDraftMock = {
+      id,
+      name: payload.requirementName,
+      featureCnName: payload.requirementName,
+      code: payload.requirementName,
+      type: 'numerical',
+      status: 'requirement_proposal',
+      midloanStatus: 'requirement_proposal',
+      midloanFeatureId: id,
+      description: payload.businessScenario,
+      dataSource: 'internal',
+      dataSourceName: '待补充（需求提出阶段）',
+      creator,
+      createdAt: now,
+      updatedAt: now,
+      sourceType: 'internal',
+      category: 'midloan_behavior',
+      fieldType: 'String',
+      processingLogic: payload.processingLogic || '',
+      defaultValue: payload.defaultValue || '',
+      featureGranularity: payload.featureGranularity || 'identity_only',
+      // 需求提出阶段专属字段
+      requirementProposalAt: now,
+      requirementProposer: creator,
+      standardizedAttachment: false,
+      paramMappingStatus: 'pending',
+      duplicateCheckStatus: 'pending',
+      oaDocLink: '',
+      archiveStatus: '',
+      upstreamTable: '',
+      profile: {
+        requirementName: payload.requirementName,
+        businessScenario: payload.businessScenario,
+        expectedEffect: payload.expectedEffect,
+        processingLogic: payload.processingLogic,
+        defaultValue: payload.defaultValue,
+        featureGranularity: payload.featureGranularity || 'identity_only',
+        excelAttachment: payload.excelAttachment,
+        batchImportedRecords: payload.batchImportedRecords,
+        role: 'risk_data_member',
+        registeredAt: now
+      }
+    }
+    writeAll([item, ...existing])
+    return item
+  },
+
+  /**
+   * 批量创建需求提出记录（从 Excel 导入）
+   * 每行一条需求，自动生成 DRV-YYYYMMDD-NNNN 编号
+   */
+  batchAddRequirementProposals(payloads: RequirementProposalPayload[]): VariableDraftMock[] {
+    const existing = readAll()
+    const now = nowFmt()
+    const creator = payloads[0]?.creator || '小李'
+    const results: VariableDraftMock[] = []
+    for (const payload of payloads) {
+      const id = buildRequirementId([...existing.map(i => i.id), ...results.map(r => r.id)])
+      const item: VariableDraftMock = {
+        id,
+        name: payload.requirementName,
+        featureCnName: payload.requirementName,
+        code: payload.requirementName,
+        type: 'numerical',
+        status: 'requirement_proposal',
+        midloanStatus: 'requirement_proposal',
+        midloanFeatureId: id,
+        description: payload.businessScenario,
+        dataSource: 'internal',
+        dataSourceName: '待补充（需求提出阶段）',
+        creator,
+        createdAt: now,
+        updatedAt: now,
+        sourceType: 'internal',
+        category: 'midloan_behavior',
+        fieldType: 'String',
+        processingLogic: payload.processingLogic || '',
+        defaultValue: payload.defaultValue || '',
+        featureGranularity: payload.featureGranularity || 'identity_only',
+        requirementProposalAt: now,
+        requirementProposer: creator,
+        standardizedAttachment: false,
+        paramMappingStatus: 'pending',
+        duplicateCheckStatus: 'pending',
+        oaDocLink: '',
+        archiveStatus: '',
+        upstreamTable: '',
+        profile: {
+          requirementName: payload.requirementName,
+          businessScenario: payload.businessScenario,
+          expectedEffect: payload.expectedEffect,
+          processingLogic: payload.processingLogic,
+          defaultValue: payload.defaultValue,
+          featureGranularity: payload.featureGranularity || 'identity_only',
+          role: 'risk_data_member',
+          registeredAt: now
+        }
+      }
+      results.push(item)
+    }
+    writeAll([...results, ...existing])
+    return results
   },
 
   clear() {

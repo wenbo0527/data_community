@@ -1,8 +1,10 @@
 <!--
-  通用 midloan 状态切换抽屉 · 文档 C1 R02 / E1 R02 / F1 R02 / K1 R01
-  - 提开发 OA 单（C1）：预览特征信息 + 填写 OA 单号 + 说明（接收方=数仓团队，展示但不可改）
-  - 发起验收（E1）：预览特征信息 + 选择验收人（默认带入协作信息中的验收人）+ OA 验收单号 + 说明
-  - 发起上线流程（F1）：预览特征信息 + 提示"上线后将调用内数+变量中心+OA投产单同步" + 取消/确认
+  通用 midloan 状态切换抽屉 · 文档 v2.1 C1 / E0 / E1 / F0 / K1
+  - 审核通过+注册（A0）：标准化附件 switch + 审核说明
+  - 提开发OA单（C1）：预览特征信息 + 填写 OA 单号 + 说明（接收方=数仓团队，展示但不可改）
+  - 业务验证通过（E0·台账内操作）：预览特征信息 + 验证说明（不走OA单）
+  - 管理员确认通过（E1·台账内操作）：预览特征信息 + 确认说明（不走OA单）
+  - 提投产单（F0）：预览特征信息 + OA投产单号自动生成 + 参数准备提示 + 备注
 -->
 <template>
   <a-drawer
@@ -17,7 +19,7 @@
       {{ config.alert }}
     </a-alert>
 
-    <!-- 特征信息预览（提交开发单 / 发起验收 / 发起上线流程 都需要预览）-->
+    <!-- 特征信息预览 -->
     <a-card
       v-if="showPreview"
       title="特征信息预览"
@@ -33,6 +35,24 @@
     </a-card>
 
     <a-form :model="form" layout="vertical" :disabled="submitting">
+      <!-- 需求审核注册（A0：管理员审核通过后进入注册）-->
+      <template v-if="actionKey === 'submit_requirement'">
+        <a-alert type="info" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            审核通过后将自动完成：重复备案校验 + 参数映射 + 进入「已注册」状态。流程不做回退。
+          </p>
+        </a-alert>
+        <a-form-item label="标准化附件">
+          <a-switch v-model="form.standardizedAttachment" />
+          <template #extra>
+            <span style="color: var(--color-text-3); font-size: 12px;">确认已补充标准化需求附件</span>
+          </template>
+        </a-form-item>
+        <a-form-item label="审核说明（可选）">
+          <a-textarea v-model="form.remark" :rows="3" placeholder="补充审核说明" />
+        </a-form-item>
+      </template>
+
       <!-- 提开发 OA 单（C1 R02：接收方=数仓团队，展示但不可改）-->
       <template v-if="actionKey === 'submit_dev_oa'">
         <a-form-item label="接收方">
@@ -54,49 +74,47 @@
         </a-form-item>
       </template>
 
-      <!-- 发起验收（E1 R03：接收方默认取 B1 协作信息中的验收人；E1 R04：预览特征信息）-->
-      <template v-else-if="actionKey === 'submit_verify'">
-        <a-form-item label="验收人" required>
-          <a-select
-            v-model="form.acceptor"
-            placeholder="请选择验收人"
-            allow-clear
-          >
-            <a-option
-              v-for="opt in acceptorOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-              <span v-if="opt.isDefault" style="color: var(--color-text-3); font-size: 12px;">（默认）</span>
-            </a-option>
-          </a-select>
-          <template #extra v-if="defaultAcceptorHint">
-            <span style="color: var(--color-text-3); font-size: 12px;">{{ defaultAcceptorHint }}</span>
-          </template>
-        </a-form-item>
-        <a-form-item label="OA 验收单号">
-          <a-input :model-value="form.generatedOaOrderId || '提交后由 OA 系统自动生成'" disabled />
-          <template #extra>
-            <span style="color: var(--color-text-3); font-size: 12px;">
-              <icon-info-circle /> OA 验收单号由 OA 系统提交后返回，无需人工填写
-            </span>
-          </template>
-        </a-form-item>
-        <a-form-item label="验收标准（可选）">
-          <a-textarea v-model="form.remark" :rows="3" placeholder="可列出验收标准/验证点" />
+      <!-- 业务验证通过（E0·台账内操作，不走OA单）-->
+      <template v-else-if="actionKey === 'business_verify_pass'">
+        <a-alert type="success" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            确认后特征状态将变更为「业务已验证」，等待管理员确认（台账内操作，不走OA单）。
+          </p>
+        </a-alert>
+        <a-form-item label="验证说明（可选）">
+          <a-textarea v-model="form.remark" :rows="3" placeholder="可填写验证结论/验证点说明" />
         </a-form-item>
       </template>
 
-      <!-- 发起上线流程（F1 R02：确认抽屉 + 提示，无需填表单字段）-->
-      <template v-else-if="actionKey === 'start_online'">
-        <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
-          <p style="margin: 0 0 4px 0; font-weight: 500;">⚠️ 确认操作</p>
+      <!-- 管理员确认通过（E1·台账内操作，不走OA单）-->
+      <template v-else-if="actionKey === 'admin_confirm_pass'">
+        <a-alert type="success" :show-icon="false" style="margin-bottom: 12px">
           <p style="margin: 0; font-size: 13px;">
-            确认后将自动调用：内数 INT-01 API（注册/变更接口）+ 变量中心 INT-03（注册接口）+ INT-09 OA 投产单（告知内数与变量中心）。
+            确认后特征状态将变更为「管理员已确认」，可提投产单上线（台账内操作，不走OA单）。
+          </p>
+        </a-alert>
+        <a-form-item label="确认说明（可选）">
+          <a-textarea v-model="form.remark" :rows="3" placeholder="可填写确认意见/注意事项" />
+        </a-form-item>
+      </template>
+
+      <!-- 提投产单（F0：OA审批通过→参数准备→内数注册中）-->
+      <template v-else-if="actionKey === 'submit_production_order'">
+        <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0 0 4px 0; font-weight: 500;">上线确认</p>
+          <p style="margin: 0; font-size: 13px;">
+            提产后将依次完成：OA投产单审批 → 系统自动参数映射+有效性验证 → 内数API注册（INT-01）→ 变量中心注册（INT-03）。
             请确认数据底表/接口字段已准备就绪。
           </p>
         </a-alert>
+        <a-form-item label="OA 投产单号">
+          <a-input :model-value="form.generatedOaOrderId || '提交后由 OA 系统自动生成'" disabled />
+          <template #extra>
+            <span style="color: var(--color-text-3); font-size: 12px;">
+              <icon-info-circle /> OA 投产单号由 OA 系统提交后返回，无需人工填写
+            </span>
+          </template>
+        </a-form-item>
         <a-form-item label="备注（可选）">
           <a-textarea v-model="form.remark" :rows="3" placeholder="可填写上线批次/灰度策略等说明" />
         </a-form-item>
@@ -119,21 +137,6 @@
           <a-textarea v-model="form.remark" :rows="3" placeholder="说明对哪些模型/指标/报表有影响" />
         </a-form-item>
       </template>
-
-      <!-- 验收驳回（E3）-->
-      <template v-else-if="actionKey === 'verify_reject'">
-        <a-form-item label="驳回原因" required>
-          <a-radio-group v-model="form.reason">
-            <a-radio value="数据不符合预期">数据不符合预期</a-radio>
-            <a-radio value="代码质量不合格">代码质量不合格</a-radio>
-            <a-radio value="性能不达标">性能不达标</a-radio>
-            <a-radio value="文档不完整">文档不完整</a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item label="详细说明" required>
-          <a-textarea v-model="form.remark" :rows="3" placeholder="请详细说明驳回原因，便于开发人员修改" />
-        </a-form-item>
-      </template>
     </a-form>
   </a-drawer>
 </template>
@@ -144,8 +147,8 @@ import { Message } from '@arco-design/web-vue'
 
 interface Props {
   visible: boolean
-  actionKey: 'submit_dev_oa' | 'submit_verify' | 'start_online' | 'request_offline' | 'verify_reject'
-  /** 当前变量数据（用于预览与自动带入验收人）*/
+  actionKey: 'submit_requirement' | 'submit_dev_oa' | 'business_verify_pass' | 'admin_confirm_pass' | 'submit_production_order' | 'request_offline'
+  /** 当前变量数据（用于预览）*/
   variableData?: any
 }
 
@@ -165,12 +168,13 @@ const form = reactive<any>({
   reason: '',
   offlineDate: '',
   remark: '',
-  generatedOaOrderId: ''
+  generatedOaOrderId: '',
+  standardizedAttachment: true
 })
 
-/** 哪些 action 需要预览特征信息（文档 C1 R02 / E1 R04 / F1 R02）*/
+/** 哪些 action 需要预览特征信息 */
 const showPreview = computed(() => {
-  return ['submit_dev_oa', 'submit_verify', 'start_online'].includes(props.actionKey)
+  return ['submit_dev_oa', 'business_verify_pass', 'admin_confirm_pass', 'submit_production_order'].includes(props.actionKey)
 })
 
 /** 预览字段映射（文档 E1 R04 明确要求展示的字段）*/
@@ -227,31 +231,36 @@ const defaultAcceptorHint = computed(() => {
 })
 
 const config = computed(() => {
-  const map = {
+  const map: Record<string, { title: string; alert: string; alertType?: string }> = {
+    submit_requirement: {
+      title: '需求审核注册',
+      alert: '审核通过后进入「已注册」状态，流程不做回退。',
+      alertType: 'info'
+    },
     submit_dev_oa: {
       title: '提开发 OA 单',
       alert: '本操作会向 OA 系统提交开发单（接收方=数仓团队）。提交后系统自动等待「数仓回调」。',
       alertType: 'info'
     },
-    submit_verify: {
-      title: '发起验收',
-      alert: '本操作会向 OA 系统提交验收单，请确认验收人和验收标准。',
-      alertType: 'info'
+    business_verify_pass: {
+      title: '业务验证通过',
+      alert: '台账内操作（不走OA单）。确认后进入「业务已验证」，等待管理员确认。',
+      alertType: 'success'
     },
-    start_online: {
-      title: '发起上线流程',
-      alert: '上线流程确认：将依次调用内数 INT-01 + 变量中心 INT-03 + OA 投产单 INT-09。',
+    admin_confirm_pass: {
+      title: '管理员确认通过',
+      alert: '台账内操作（不走OA单）。确认后进入「管理员已确认」，可提投产单上线。',
+      alertType: 'success'
+    },
+    submit_production_order: {
+      title: '提投产单',
+      alert: '上线确认：提产后将依次完成 OA审批→参数映射+验证→内数注册→变量中心注册。',
       alertType: 'warning'
     },
     request_offline: {
       title: '申请下线',
       alert: '本操作会触发变量中心被动接收「下线」指令，请填写下线原因。',
       alertType: 'warning'
-    },
-    verify_reject: {
-      title: '验收驳回',
-      alert: '驳回后将通知开发人员修改并重新提单。',
-      alertType: 'error'
     }
   }
   return map[props.actionKey] || { title: '操作', alert: '' }
@@ -266,11 +275,6 @@ watch(() => props.visible, (v) => {
     form.reason = ''
     form.offlineDate = ''
     form.remark = ''
-    // 默认带入验收人（文档 E1 R03）
-    if (props.actionKey === 'submit_verify') {
-      const variable = props.variableData || {}
-      form.acceptor = variable.acceptor || variable.creator || '小李'
-    }
   }
 })
 
@@ -279,17 +283,8 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
-  // 校验（OA 单号由 OA 系统自动生成，无需校验）
-  if (props.actionKey === 'submit_verify' && !form.acceptor) {
-    Message.warning('请选择验收人')
-    return
-  }
   if (props.actionKey === 'request_offline' && (!form.reason || !form.offlineDate)) {
     Message.warning('请填写下线原因和下线日期')
-    return
-  }
-  if (props.actionKey === 'verify_reject' && (!form.reason || !form.remark)) {
-    Message.warning('请填写驳回原因和详细说明')
     return
   }
   submitting.value = true

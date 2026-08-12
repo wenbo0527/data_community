@@ -1,5 +1,5 @@
 /**
- * 风险特征 9 状态机 mock 引擎
+ * 风险特征 11 状态机 mock 引擎
  * 来源：风险数据一体化一期 文档 §四 状态流转表
  *
  * INT-01~INT-11 全部用 mock 接口模拟，包含：
@@ -10,9 +10,9 @@
  * - 失败重试
  * - 变量中心下线批次
  *
- * 状态机严格对齐文档 v2.0 D.4 色板（9 正常 + 4 异常 = 13 态）：
- *   已注册 → 数仓开发中 → 数仓开发完成 → 待验收 → 已验收 →
- *   内数同步中 → 变量中心同步中 → 已上线 → 已下线
+ * 状态机严格对齐文档 v2.1 D.4 色板（12 正常 + 4 异常 = 16 态）：
+ *   需求提出 → 已注册 → 开发中(OA单) → 数仓已上线 → 待业务验证 → 业务已验证 → 管理员已确认 →
+ *   参数准备 → 内数注册中 → 变量中心注册中 → 已上线 → 已下线
  */
 
 import { midloanStatusMeta } from '@/modules/variable-hub/constants/midloanStatusMap'
@@ -94,11 +94,14 @@ function nowStr() {
  * 每个状态切换时同时记录对应的时间戳
  */
 const STATUS_TIMESTAMP_MAP: Record<string, string> = {
+  requirement_proposal: 'requirementProposalAt',
   registered: 'registeredAt',
   developing_oa: 'developingOaAt',
   dw_online: 'dwOnlineAt',
-  pending_verify: 'pendingVerifyAt',
-  verified: 'verifiedAt',
+  business_acceptance: 'businessAcceptanceAt',
+  business_verified: 'businessVerifiedAt',
+  admin_confirmed: 'adminConfirmedAt',
+  param_preparing: 'paramPreparingAt',
   syncing_internal: 'syncingInternalAt',
   syncing_variable: 'syncingVariableAt',
   online: 'onlineAt',
@@ -232,7 +235,76 @@ export function recordStatusChange(featureId: string, featureName: string, fromS
   })
 }
 
-// ============ 9 状态机 mock 联动动作 ============
+// ============ 11 状态机 mock 联动动作 ============
+
+/** A0：需求提出 → 已注册（管理员审核补充标准化附件后进入注册） */
+export function submitRequirement(featureId: string, payload?: { remark?: string; standardizedAttachment?: boolean }): { ok: boolean; reason?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  if (v.midloanStatus !== 'requirement_proposal') {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许审核注册` }
+  }
+  // 需求7：重复备案前置校验
+  const dupCheck = checkDuplicate(featureId)
+  if (dupCheck.isDuplicate) {
+    return { ok: false, reason: `重复备案校验未通过：${dupCheck.reason}` }
+  }
+  // 需求3：流程不做回退，管理员审核后直接进入注册
+  const fromStatus = v.midloanStatus
+  v.midloanStatus = 'registered'
+  setStatusTimestamp(v, 'registered')
+  // 需求8：注册前完成参数映射
+  v.paramMappingStatus = 'completed'
+  v.paramMappingVerifiedAt = nowStr()
+  recordStatusChange(featureId, v.name, fromStatus, 'registered', 'A0 管理员审核通过', '管理员', 'risk_data_admin', payload?.remark || '管理员审核通过，补充标准化附件后进入注册')
+  return { ok: true }
+}
+
+/** 需求7：重复备案前置校验 - 新增变量做前置重复校验 */
+export function checkDuplicate(featureId: string): { ok: boolean; isDuplicate: boolean; duplicateWith?: string; reason?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, isDuplicate: false, reason: '特征不存在' }
+  // 模拟：在存量数据中查找同名或同编码的变量
+  const duplicate = variableAssets.find(x =>
+    x.id !== featureId &&
+    (x.name === v.name || x.code === v.code)
+  )
+  const now = nowStr()
+  if (duplicate) {
+    v.duplicateCheckStatus = 'failed'
+    v.duplicateCheckedAt = now
+    recordStatusChange(featureId, v.name, '', '', '需求7 重复备案校验', '系统', 'internal_number_system', `与已有变量 ${duplicate.id}(${duplicate.name}) 重复`)
+    return { ok: true, isDuplicate: true, duplicateWith: duplicate.id, reason: `与已有变量 ${duplicate.name} 重复` }
+  }
+  v.duplicateCheckStatus = 'passed'
+  v.duplicateCheckedAt = now
+  recordStatusChange(featureId, v.name, '', '', '需求7 重复备案校验通过', '系统', 'internal_number_system', '无重复，校验通过')
+  return { ok: true, isDuplicate: false }
+}
+
+/** 需求8：参数有效性验证 - 上线前做参数有效性验证 */
+export function validateParams(featureId: string): { ok: boolean; passed: boolean; reason?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, passed: false, reason: '特征不存在' }
+  const now = nowStr()
+  // 模拟：检查参数映射是否完成、数据底表是否补充、接口号是否分配
+  if (!v.paramMappingStatus || v.paramMappingStatus !== 'completed') {
+    v.paramValidationStatus = 'failed'
+    v.paramValidatedAt = now
+    recordStatusChange(featureId, v.name, '', '', '需求8 参数有效性验证失败', '系统', 'internal_number_system', '参数映射未完成')
+    return { ok: true, passed: false, reason: '参数映射未完成，请先完成参数映射' }
+  }
+  if (!v.dataTableName) {
+    v.paramValidationStatus = 'failed'
+    v.paramValidatedAt = now
+    recordStatusChange(featureId, v.name, '', '', '需求8 参数有效性验证失败', '系统', 'internal_number_system', '数据底表未补充')
+    return { ok: true, passed: false, reason: '数据底表未补充' }
+  }
+  v.paramValidationStatus = 'passed'
+  v.paramValidatedAt = now
+  recordStatusChange(featureId, v.name, '', '', '需求8 参数有效性验证通过', '系统', 'internal_number_system', '参数映射已完成，数据底表已补充，验证通过')
+  return { ok: true, passed: true }
+}
 
 /** C1：提 OA 开发单 */
 export function submitDevOA(featureId: string, payload?: { oaOrderId?: string; remark?: string }): { success: boolean; oaId?: string; reason?: string } {
@@ -262,6 +334,8 @@ export function submitDevOA(featureId: string, payload?: { oaOrderId?: string; r
   v.midloanStatus = 'developing_oa'
   setStatusTimestamp(v, 'developing_oa')
   v.devOaOrderId = oaId
+  // 需求6：OA回调同步OA单链接
+  v.oaDocLink = `https://oa.example.com/doc/${oaId}`
   recordStatusChange(featureId, v.name, fromStatus, 'developing_oa', 'C1 提开发OA单', '小李', 'risk_data_member', `OA单号：${oaId}`)
   SyncLogStore.push({
     id: logId(),
@@ -313,10 +387,10 @@ export function dwCallback(featureId: string, success = true, taskId = ''): { ok
   v.dwTaskId = taskId || `DW-TASK-${Math.floor(Math.random() * 900000 + 100000)}`
   v.dwOnlineTime = now
   recordStatusChange(featureId, v.name, fromStatus, 'dw_online', 'D1 数仓任务回调成功', '数仓任务调度系统', 'dw_system', `任务ID：${v.dwTaskId}`)
-  // D1 R07: 数仓回调成功后自动推进至「待验收」
-  v.midloanStatus = 'pending_verify'
-  setStatusTimestamp(v, 'pending_verify')
-  recordStatusChange(featureId, v.name, 'dw_online', 'pending_verify', 'D1 R07 自动推进', '数仓任务调度系统', 'dw_system', '数仓已就绪，等待发起验收')
+  // D1 R07: 数仓回调成功后自动推进至「业务验收」（2026-08-10 会议调整）
+  v.midloanStatus = 'business_acceptance'
+  setStatusTimestamp(v, 'business_acceptance')
+  recordStatusChange(featureId, v.name, 'dw_online', 'business_acceptance', 'D1 R07 自动推进', '数仓任务调度系统', 'dw_system', '数仓已就绪，自动进入待业务验证')
   SyncLogStore.push({
     id: logId(),
     featureId,
@@ -333,112 +407,56 @@ export function dwCallback(featureId: string, success = true, taskId = ''): { ok
   return { ok: true }
 }
 
-/** E1：发起验收 → 创建 OA 验收单 */
-export function submitVerify(featureId: string, payload?: { acceptor?: string; verifyOaOrderId?: string; remark?: string }): { ok: boolean; oaId?: string; reason?: string } {
+/** E0：业务验证通过（台账内操作，不走OA单·文档 v2.1 E0 R01） */
+export function businessVerifyPass(featureId: string, operator = '小李'): { ok: boolean; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, reason: '特征不存在' }
-  if (v.midloanStatus !== 'dw_online') {
-    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许发起验收` }
+  if (v.midloanStatus !== 'business_acceptance') {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许业务验证` }
+  }
+  const fromStatus = v.midloanStatus
+  v.midloanStatus = 'business_verified'
+  setStatusTimestamp(v, 'business_verified')
+  v.acceptor = operator
+  recordStatusChange(featureId, v.name, fromStatus, 'business_verified', 'E0 业务验证通过', operator, 'risk_data_member', '业务验证人在台账内确认通过（不走OA单）')
+  return { ok: true }
+}
+
+/** E1：管理员确认通过（台账内操作，不走OA单·文档 v2.1 E1 R03） */
+export function adminConfirmPass(featureId: string, operator = '培培'): { ok: boolean; reason?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  if (v.midloanStatus !== 'business_verified') {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许管理员确认` }
+  }
+  const fromStatus = v.midloanStatus
+  v.midloanStatus = 'admin_confirmed'
+  setStatusTimestamp(v, 'admin_confirmed')
+  recordStatusChange(featureId, v.name, fromStatus, 'admin_confirmed', 'E1 管理员确认通过', operator, 'risk_data_admin', '管理员在台账内确认通过（不走OA单），可提投产单')
+  return { ok: true }
+}
+
+/** F0：提投产单 → OA审批通过 → 参数准备 → 内数注册中（文档 v2.1 F0） */
+export function submitProductionOrder(featureId: string, payload?: { remark?: string }): { ok: boolean; reason?: string; oaId?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  if (v.midloanStatus !== 'admin_confirmed') {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许提投产单` }
   }
   if (DemoFlags.isOADown()) {
-    SyncLogStore.push({
-      id: logId(),
-      featureId,
-      featureName: v.name,
-      type: 'oa_verify',
-      direction: 'call',
-      status: 'failed',
-      reason: 'OA系统响应超时（演示开关触发）',
-      startedAt: nowStr(),
-      finishedAt: nowStr(),
-      retryCount: 0
-    })
-    return { ok: false, reason: 'OA系统响应超时（演示开关触发）' }
-  }
-  const oaId = payload?.verifyOaOrderId || `OA-VERIFY-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`
-  const acceptor = payload?.acceptor || '小李'
-  const fromStatus = v.midloanStatus
-  v.midloanStatus = 'pending_verify'
-  setStatusTimestamp(v, 'pending_verify')
-  v.verifyOaOrderId = oaId
-  v.acceptor = acceptor
-  recordStatusChange(featureId, v.name, fromStatus, 'pending_verify', 'E1 发起验收', '小李', 'risk_data_member', `OA验收单号：${oaId} 验收人：${acceptor}`)
-  const now = nowStr()
-  SyncLogStore.push({
-    id: logId(),
-    featureId,
-    featureName: v.name,
-    type: 'oa_verify',
-    direction: 'call',
-    status: 'success',
-    request: { featureId, content: '数据底表/加工逻辑/字段完整性' },
-    response: { oaId, acceptor: v.creator || '验收人' },
-    startedAt: now,
-    finishedAt: now,
-    retryCount: 0
-  })
-  return { ok: true, oaId }
-}
-
-/** E2：验收通过 */
-export function verifyPass(featureId: string, operator = '小李'): { ok: boolean } {
-  const v = variableAssets.find(x => x.id === featureId)
-  if (!v || v.midloanStatus !== 'pending_verify') return { ok: false }
-  const fromStatus = v.midloanStatus
-  v.midloanStatus = 'verified'
-  setStatusTimestamp(v, 'verified')
-  v.acceptor = operator
-  recordStatusChange(featureId, v.name, fromStatus, 'verified', 'E2 验收通过', operator, 'risk_data_member')
-  return { ok: true }
-}
-
-/** E3：验收驳回 → 回退到开发中（OA单），数仓重新修改后回调 */
-export function verifyReject(featureId: string, reason = '验收未通过', operator = '验收人'): { ok: boolean; reason?: string } {
-  const v = variableAssets.find(x => x.id === featureId)
-  if (!v) return { ok: false, reason: '特征不存在' }
-  if (v.midloanStatus !== 'pending_verify') {
-    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许驳回` }
-  }
-  if (!reason || !reason.trim()) {
-    return { ok: false, reason: '驳回原因不能为空' }
+    return { ok: false, reason: 'OA系统响应超时，请稍后重试（演示开关触发）' }
   }
   const now = nowStr()
-  const fromStatus = v.midloanStatus
-  v.midloanStatus = 'developing_oa'
-  setStatusTimestamp(v, 'developing_oa')
-  v.rejectReason = reason
-  v.rejectedAt = now
-  recordStatusChange(featureId, v.name, fromStatus, 'developing_oa', 'E3 验收驳回', operator, 'risk_data_member', reason)
-  SyncLogStore.push({
-    id: logId(),
-    featureId,
-    featureName: v.name,
-    type: 'oa_verify',
-    direction: 'callback',
-    status: 'failed',
-    reason: '验收驳回：' + reason,
-    startedAt: now,
-    finishedAt: now,
-    retryCount: 0,
-    operator: operator
-  })
-  return { ok: true }
-}
-
-/** F1：发起上线流程（文档 F1 R02：弹出确认抽屉预览后点击「确认」） */
-export function startOnlineFlow(featureId: string): { ok: boolean; reason?: string; oaId?: string } {
-  const v = variableAssets.find(x => x.id === featureId)
-  if (!v) return { ok: false, reason: '特征不存在' }
-  if (v.midloanStatus !== 'verified') {
-    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许发起上线` }
-  }
-  // 上线投产 OA 单号（OA 系统自动生成）
   const oaId = `OA-PROD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`
   const fromStatus = v.midloanStatus
-  v.midloanStatus = 'syncing_internal'
-  setStatusTimestamp(v, 'syncing_internal')
+
+  // 阶段1：提投产单 → OA审批通过 → 参数准备
+  v.midloanStatus = 'param_preparing'
+  setStatusTimestamp(v, 'param_preparing')
   v.onlineOaOrderId = oaId
-  // 记录上线投产 OA 同步日志
+  v.oaDocLink = `https://oa.example.com/doc/${oaId}`
+  recordStatusChange(featureId, v.name, fromStatus, 'param_preparing', 'F0 提投产单·OA审批通过', '培培', 'risk_data_admin', `投产单号：${oaId}，系统自动参数映射+验证`)
+
   SyncLogStore.push({
     id: logId(),
     featureId,
@@ -446,14 +464,28 @@ export function startOnlineFlow(featureId: string): { ok: boolean; reason?: stri
     type: 'oa_production',
     direction: 'call',
     status: 'success',
-    request: { featureId, receiver: '内数系统 + 变量中心', content: '上线投产通知' },
-    response: { oaId, receiver: 'dw_team', target: ['internal_number_system', 'variable_center'] },
-    startedAt: nowStr(),
-    finishedAt: nowStr(),
+    request: { featureId, oaType: '投产单', receiver: 'OA系统' },
+    response: { oaId, status: 'approved' },
+    startedAt: now,
+    finishedAt: now,
     retryCount: 0,
-    operator: '小李'
+    operator: '培培'
   })
-  recordStatusChange(featureId, v.name, fromStatus, 'syncing_internal', 'F1 发起上线流程', '小李', 'risk_data_member', `上线投产 OA 单号：${oaId}（用户确认上线，自动提OA单给内数+变量中心）`)
+
+  // 阶段2：系统自动参数映射+有效性验证
+  const paramCheck = validateParams(featureId)
+  if (!paramCheck.passed) {
+    // 参数验证失败，返回参数映射配置环节
+    v.midloanStatus = 'admin_confirmed'
+    recordStatusChange(featureId, v.name, 'param_preparing', 'admin_confirmed', 'F0 参数验证失败', '系统', 'system', `参数验证失败：${paramCheck.reason}`)
+    return { ok: false, reason: `参数验证失败，请检查映射：${paramCheck.reason}` }
+  }
+
+  // 阶段3：验证通过 → 内数注册中（走OA单通知内数团队，人注册）
+  v.midloanStatus = 'syncing_internal'
+  setStatusTimestamp(v, 'syncing_internal')
+  recordStatusChange(featureId, v.name, 'param_preparing', 'syncing_internal', 'F0 参数验证通过·进入内数注册', '系统', 'system', '参数映射+验证通过，OA单已提给内数团队')
+
   // 立即触发内数同步
   setTimeout(() => internalSync(featureId, true), 0)
   return { ok: true, oaId }
@@ -605,6 +637,8 @@ export function receiveOffline(featureId: string, reason = '变量中心下线',
   v.offlineReason = reason + (payload?.remark ? `（${payload.remark}）` : '')
   v.referenceStatus = '已断开'
   v.referenceDetail = '变量中心已断开引用，等待数字社区团队断开 hbase/hive'
+  // 需求6：全流程节点信息归档留存
+  v.archiveStatus = 'archived'
   recordStatusChange(featureId, v.name, fromStatus, 'offline', 'K1 变量中心发起下线', '变量中心系统', 'variable_center_system', v.offlineReason)
   OfflineRecordStore.push({
     batchId: `BATCH-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 900 + 100)}`,
@@ -735,8 +769,8 @@ export function resetFeature(featureId: string): { ok: boolean } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false }
   const fromStatus = v.midloanStatus
-  v.midloanStatus = 'registered'
-  setStatusTimestamp(v, 'registered')
+  v.midloanStatus = 'requirement_proposal'
+  setStatusTimestamp(v, 'requirement_proposal')
   v.syncFailedReason = ''
   v.syncFailedAt = ''
   v.syncRetryCount = 0
@@ -745,43 +779,52 @@ export function resetFeature(featureId: string): { ok: boolean } {
   v.apiNo = ''
   v.apiName = ''
   v.onlineTime = ''
-  recordStatusChange(featureId, v.name, fromStatus, 'registered', 'Demo 重置', '小李', 'risk_data_member', '重置到「已注册」')
+  recordStatusChange(featureId, v.name, fromStatus, 'requirement_proposal', 'Demo 重置', '小李', 'risk_data_member', '重置到「需求提出」')
   return { ok: true }
 }
 
 /**
  * ============ Mock 数据补充：完整状态历史初始化（用户反馈）============
  *
- * 给定一个特征，根据其当前 midloanStatus 自动生成从「已注册」开始的
+ * 给定一个特征，根据其当前 midloanStatus 自动生成从「需求提出」开始的
  * 完整状态变更历史 + 同步日志 + 下线批次。
  *
  * 业务规则：
- * - 从 registered 开始，按 9 状态机顺序生成
+ * - 从 requirement_proposal 开始，按 11 状态机顺序生成
  * - 异常状态从失败点向前推演
  * - 同一特征只初始化一次（避免重复）
  */
 const MOCK_HISTORY_INITIALIZED = new Set<string>()
 
-/** 9 状态机：每个状态的模拟进入时间偏移（分钟）*/
+/** 状态机：每个状态的模拟进入时间偏移（分钟）*/
 const STATUS_TIMELINE_OFFSET: Record<string, number> = {
+  requirement_proposal: -30,  // 比 registered 早 30 分钟
   registered: 0,        // 0 分钟（基线）
   developing_oa: 30,    // +30 分钟
   dw_online: 120,       // +1.5 小时
-  pending_verify: 125,  // +5 分钟
-  verified: 240,        // +1.9 小时
-  syncing_internal: 245,// +5 分钟
-  syncing_variable: 360,// +1.9 小时
+  business_acceptance: 130,  // dw_online 后 10 分钟（自动推进）
+  business_verified: 200,     // +70 分钟（业务验证通过）
+  admin_confirmed: 240,       // +40 分钟（管理员确认通过）
+  param_preparing: 245,       // +5 分钟（提投产单+参数准备）
+  syncing_internal: 250,      // +5 分钟（内数注册中）
+  syncing_variable: 360,      // +1.9 小时
   online: 480,          // +2 小时
   offline: 1440         // +1 天
 }
 
 /** 状态变更对应的角色 + 触发方式 + 备注 */
 const STATUS_CHANGE_META: Record<string, { trigger: string; operator: string; operatorRole: string; reason: string }> = {
-  registered: {
-    trigger: '创建特征',
-    operator: '小李',
+  requirement_proposal: {
+    trigger: '业务发起需求',
+    operator: '业务方',
     operatorRole: 'risk_data_member',
-    reason: '特征已注册，等待提开发OA单'
+    reason: '业务直接在台账发起需求'
+  },
+  registered: {
+    trigger: '管理员审核+注册',
+    operator: '培培',
+    operatorRole: 'risk_data_admin',
+    reason: '管理员审核通过，补充标准化附件，特征已注册'
   },
   developing_oa: {
     trigger: '提交开发OA单',
@@ -795,23 +838,35 @@ const STATUS_CHANGE_META: Record<string, { trigger: string; operator: string; op
     operatorRole: 'dw_system',
     reason: '数仓任务 ID：DW-MID-2026-0039 执行成功'
   },
-  pending_verify: {
-    trigger: '提交验收',
+  business_acceptance: {
+    trigger: '自动推进至待业务验证',
+    operator: '数仓系统',
+    operatorRole: 'dw_system',
+    reason: '数仓已上线，自动推进至待业务验证'
+  },
+  business_verified: {
+    trigger: '业务验证通过',
     operator: '小李',
     operatorRole: 'risk_data_member',
-    reason: 'OA验收单号：OA-VERIFY-2026-0012'
+    reason: '业务验证人在台账内确认通过（不走OA单）'
   },
-  verified: {
-    trigger: '验收通过',
-    operator: '王工',
-    operatorRole: 'risk_data_member',
-    reason: '验收意见：字段逻辑正确，可上线'
+  admin_confirmed: {
+    trigger: '管理员确认通过',
+    operator: '培培',
+    operatorRole: 'risk_data_admin',
+    reason: '管理员在台账内确认通过（不走OA单），可提投产单'
+  },
+  param_preparing: {
+    trigger: '提投产单·OA审批通过',
+    operator: '培培',
+    operatorRole: 'risk_data_admin',
+    reason: '系统自动参数映射+有效性验证'
   },
   syncing_internal: {
-    trigger: '发起上线流程',
-    operator: '小李',
-    operatorRole: 'risk_data_member',
-    reason: 'OA单号：OA-ONLINE-2026-0089'
+    trigger: '参数验证通过·进入内数注册',
+    operator: '系统',
+    operatorRole: 'system',
+    reason: '参数映射+验证通过，OA单已提给内数团队'
   },
   syncing_variable: {
     trigger: '内数API回调成功',
@@ -861,20 +916,20 @@ export function initMockStatusHistory(featureId: string): void {
 
   const currentStatus = v.midloanStatus
 
-  // 找到当前状态在 9 状态机顺序中的下标
+  // 找到当前状态在状态机顺序中的下标
   const STATUS_ORDER = [
-    'registered', 'developing_oa', 'dw_online', 'pending_verify',
-    'verified', 'syncing_internal', 'syncing_variable', 'online', 'offline'
+    'requirement_proposal', 'registered', 'developing_oa', 'dw_online', 'business_acceptance',
+    'business_verified', 'admin_confirmed', 'param_preparing', 'syncing_internal', 'syncing_variable', 'online', 'offline'
   ]
   const currentIdx = STATUS_ORDER.indexOf(currentStatus)
   const isFailed = currentStatus.endsWith('_failed')
 
   // 异常状态映射到正常状态
   const failedToNormal: Record<string, number> = {
-    internal_sync_failed: 5,    // syncing_internal
-    variable_sync_failed: 6,    // syncing_variable
-    dw_online_failed: 2,        // dw_online
-    offline_failed: 8           // offline
+    internal_sync_failed: 8,    // syncing_internal
+    variable_sync_failed: 9,    // syncing_variable
+    dw_online_failed: 3,        // dw_online
+    offline_failed: 11          // offline
   }
   const targetIdx = isFailed
     ? failedToNormal[currentStatus]
@@ -884,8 +939,8 @@ export function initMockStatusHistory(featureId: string): void {
   // 基础时间：当前时间
   const baseTime = new Date().toISOString()
 
-  // 从 registered 开始到 targetIdx 生成变更记录
-  let prevStatus = 'registered'
+  // 从 requirement_proposal 开始到 targetIdx 生成变更记录
+  let prevStatus = 'requirement_proposal'
   for (let i = 0; i <= targetIdx; i++) {
     const status = STATUS_ORDER[i]
     const meta = STATUS_CHANGE_META[status]
@@ -940,10 +995,10 @@ export function initMockStatusHistory(featureId: string): void {
   }
 
   // 补充：内数 + 变量中心同步日志（如果当前到 syncing_internal 或之后）
-  if (targetIdx >= 5) {
+  if (targetIdx >= 8) {
     pushMockSyncLog(featureId, v.name, 'internal_sync', 'callback', 'success', STATUS_TIMELINE_OFFSET['syncing_internal'], baseTime, '内数API返回成功，接口号：INTERNAL-API-001')
   }
-  if (targetIdx >= 6) {
+  if (targetIdx >= 9) {
     pushMockSyncLog(featureId, v.name, 'variable_sync', 'callback', 'success', STATUS_TIMELINE_OFFSET['syncing_variable'], baseTime, '变量中心注册成功，接口号：VC-API-002')
   }
 
@@ -1003,12 +1058,12 @@ export function retryDwTask(featureId: string) {
 }
 
 export const MidloanStateEngine = {
+  submitRequirement,
   submitDevOA,
   dwCallback,
-  submitVerify,
-  verifyPass,
-  verifyReject,
-  startOnlineFlow,
+  businessVerifyPass,
+  adminConfirmPass,
+  submitProductionOrder,
   internalSync,
   variableSync,
   receiveOffline,
@@ -1020,20 +1075,26 @@ export const MidloanStateEngine = {
   resetFeature,
   /** 初始化 mock 完整状态历史 */
   initMockStatusHistory,
+  /** 需求7：重复备案前置校验 */
+  checkDuplicate,
+  /** 需求8：参数有效性验证 */
+  validateParams,
   /** 聚合：根据 action key 调用对应函数 */
   handleAction(featureId: string, key: string, payload?: any): any {
     switch (key) {
+      case 'submit_requirement': return submitRequirement(featureId, payload)
       case 'submit_dev_oa': return submitDevOA(featureId, payload)
       case 'simulate_dw_success':
       case 'simulate_dw_success_dw': return dwCallback(featureId, true)
       case 'simulate_dw_failed': return dwCallback(featureId, false)
-      case 'submit_verify': return submitVerify(featureId, payload)
-      case 'verify_pass': return verifyPass(featureId)
-      case 'verify_reject': return verifyReject(featureId, payload?.reason || '验收未通过', payload?.operator || '验收人')
-      case 'start_online': return startOnlineFlow(featureId)
+      case 'business_verify_pass': return businessVerifyPass(featureId, payload?.operator || '小李')
+      case 'admin_confirm_pass': return adminConfirmPass(featureId, payload?.operator || '培培')
+      case 'submit_production_order': return submitProductionOrder(featureId, payload)
       case 'retry_sync': return retrySync(featureId)
       case 'retry_dw': return retryDwTask(featureId)
       case 'manual_batch_retry': return retrySync(featureId)
+      case 'check_duplicate': return checkDuplicate(featureId)
+      case 'validate_params': return validateParams(featureId)
       case 'simulate_supplement_table':
         return supplementDataTable(featureId, 'ads_midloan_demo_table')
       default: return { ok: false, reason: `未知动作：${key}` }
@@ -1053,11 +1114,11 @@ export const MidloanStateEngine = {
   batchExecute(featureIds: string[], actionKey: string, payload?: any) {
     // 白名单：仅允许主流程操作 + 重试类
     const allowedKeys = [
+      'submit_requirement',
       'submit_dev_oa',
-      'submit_verify',
-      'verify_pass',
-      'verify_reject',
-      'start_online',
+      'business_verify_pass',
+      'admin_confirm_pass',
+      'submit_production_order',
       'retry_sync',
       'retry_dw',
       'manual_batch_retry'

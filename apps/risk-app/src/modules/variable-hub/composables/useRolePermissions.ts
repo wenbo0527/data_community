@@ -76,10 +76,9 @@ export function useRolePermissions() {
     if (roleKey === 'risk_data_member') {
       return allActions.filter(a =>
         a.key === 'submit_dev_oa' ||
-        a.key === 'submit_verify' ||
-        a.key === 'verify_pass' ||
-        a.key === 'verify_reject' ||
-        a.key === 'start_online' ||
+        a.key === 'business_verify_pass' ||
+        a.key === 'admin_confirm_pass' ||
+        a.key === 'submit_production_order' ||
         a.key === 'request_offline' ||
         a.key === 'retry_sync' ||
         a.key === 'supplement_table'

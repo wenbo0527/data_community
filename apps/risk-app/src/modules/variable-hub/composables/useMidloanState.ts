@@ -1,6 +1,7 @@
 /**
  * midloan 状态机 composable · 文档 §三 模块 J
  * 阶段 S3-1 · 11 状态机业务逻辑封装
+ * 2026-08-10 新增需求提出（A0）和业务验收（D3/D4）节点
  *
  * 职责：
  * - 状态切换（封装 stateEngine.handleAction）
@@ -22,7 +23,7 @@ export function useMidloanState(variableId: Ref<string>, currentStatus: Ref<stri
 
   /**
    * 执行状态切换操作
-   * 自动走抽屉（submit_dev_oa/submit_verify/request_offline/verify_reject）
+   * 自动走抽屉（submit_dev_oa/business_verify_pass/admin_confirm_pass/submit_production_order）
    * 其他走 stateEngine 直接切换
    */
   async function executeAction(actionKey: string, payload?: any) {
@@ -43,15 +44,17 @@ export function useMidloanState(variableId: Ref<string>, currentStatus: Ref<stri
    */
   const allowedActions = computed(() => {
     const status = currentStatus.value || 'registered'
-    const allActions = allowedActionsByStatus(status) || []
+    const allActions = allowedActionsByStatus(status, undefined, role.value) || []
 
     // 角色过滤
     if (role.value === 'community_admin') return []
 
     if (role.value === 'risk_data_member') {
-      // 风险数据成员：允许大部分操作，但隐藏 retry_dw + manual_batch_retry
+      // 风险数据成员：允许大部分操作，但隐藏 retry_dw + manual_batch_retry + submit_requirement（仅管理员可审核需求）
       return allActions.filter(a =>
-        a.key !== 'retry_dw' && a.key !== 'manual_batch_retry'
+        a.key !== 'retry_dw' &&
+        a.key !== 'manual_batch_retry' &&
+        a.key !== 'submit_requirement'
       )
     }
 
@@ -60,9 +63,9 @@ export function useMidloanState(variableId: Ref<string>, currentStatus: Ref<stri
   })
 
   /**
-   * 是否需要抽屉（4 个特殊动作）
+   * 是否需要抽屉（6 个特殊动作）
    */
-  const NEEDS_DRAWER = ['submit_dev_oa', 'submit_verify', 'request_offline', 'verify_reject']
+  const NEEDS_DRAWER = ['submit_requirement', 'submit_dev_oa', 'business_verify_pass', 'admin_confirm_pass', 'submit_production_order', 'request_offline']
   function needsDrawer(actionKey: string) {
     return NEEDS_DRAWER.includes(actionKey)
   }

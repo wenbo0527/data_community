@@ -44,12 +44,19 @@ export const PERMISSIONS = {
   DISCONNECT_DATA: 'disconnect_data',              // 断开数据
   DEV_EDIT_COLLABORATION: 'dev_edit_collaboration',// 编辑协作信息
   DRAFT_SAVE: 'draft_save',                       // 保存草稿
-  EXPORT_LIST: 'export_list'                      // 导出列表
+  EXPORT_LIST: 'export_list',                      // 导出列表
+  REVIEW_REQUIREMENT: 'review_requirement',        // 审核需求提出
+  BUSINESS_ACCEPTANCE: 'business_acceptance',       // 待业务验证
+  VIEW_ALL_VARIABLES: 'view_all_variables',         // 查看全量变量
+  DUPLICATE_CHECK: 'duplicate_check',              // 重复备案校验
+  PARAM_MAPPING: 'param_mapping',                  // 参数映射
+  PARAM_VALIDATION: 'param_validation'              // 参数有效性验证
 }
 
 // ============ 角色 × 权限 矩阵（D.2）============
 const ROLE_MATRIX = {
   // 风险数据成员：业务人员（创建/注册/启用/查看自己日志）
+  // 2026-08-10 新增：业务验收、全量变量查看、重复备案校验
   [USER_ROLES.RISK_DATA_MEMBER]: new Set([
     PERMISSIONS.CREATE_DERIVATION,
     PERMISSIONS.REGISTER_FEATURE,
@@ -57,9 +64,13 @@ const ROLE_MATRIX = {
     PERMISSIONS.VIEW_SYNC_LOG,
     PERMISSIONS.VIEW_OFFLINE_RECORD,
     PERMISSIONS.DRAFT_SAVE,
-    PERMISSIONS.EXPORT_LIST
+    PERMISSIONS.EXPORT_LIST,
+    PERMISSIONS.BUSINESS_ACCEPTANCE,
+    PERMISSIONS.VIEW_ALL_VARIABLES,
+    PERMISSIONS.DUPLICATE_CHECK
   ]),
   // 风险数据管理员：超管（全部能力 + 重新同步 + 手动触发下线重试）
+  // 2026-08-10 新增全部新权限：需求审核、业务验收、全量变量、重复备案、参数映射/验证
   [USER_ROLES.RISK_DATA_ADMIN]: new Set([
     PERMISSIONS.CREATE_DERIVATION,
     PERMISSIONS.REGISTER_FEATURE,
@@ -70,13 +81,21 @@ const ROLE_MATRIX = {
     PERMISSIONS.VIEW_OFFLINE_RECORD,
     PERMISSIONS.DEV_EDIT_COLLABORATION,
     PERMISSIONS.DRAFT_SAVE,
-    PERMISSIONS.EXPORT_LIST
+    PERMISSIONS.EXPORT_LIST,
+    PERMISSIONS.REVIEW_REQUIREMENT,
+    PERMISSIONS.BUSINESS_ACCEPTANCE,
+    PERMISSIONS.VIEW_ALL_VARIABLES,
+    PERMISSIONS.DUPLICATE_CHECK,
+    PERMISSIONS.PARAM_MAPPING,
+    PERMISSIONS.PARAM_VALIDATION
   ]),
   // 数字社区管理员：仅查看 + 断开数据
+  // 2026-08-10 新增：全量变量开放查看
   [USER_ROLES.COMMUNITY_ADMIN]: new Set([
     PERMISSIONS.VIEW_SYNC_LOG,
     PERMISSIONS.VIEW_OFFLINE_RECORD,
-    PERMISSIONS.DISCONNECT_DATA
+    PERMISSIONS.DISCONNECT_DATA,
+    PERMISSIONS.VIEW_ALL_VARIABLES
   ])
 }
 

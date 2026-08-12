@@ -1,11 +1,11 @@
 <!--
-  9 状态机竖直点状步骤条（文档 §三 B1 §3.6 设计图 · v2 完整版）
+  11 状态机竖直点状步骤条（文档 §三 B1 §3.6 设计图 · v2 完整版）
   - 类型：Arco Design a-steps direction="vertical" type="dot"
   - 布局：步骤信息展示在步骤条右侧（description 区域）
   - 数据整合：状态变更记录 + 同步日志 + 下线批次 + 特征档案 + 动态操作 + 备注
 
   阶段：v2（用户反馈重构 · 治理与生命周期统一收纳）
-  状态机严格对齐文档 v2.0 D.4：9 正常 + 4 异常 = 13 态
+  状态机严格对齐文档 v2.0 D.4：11 正常 + 4 异常 = 15 态
 -->
 <template>
   <div class="status-step-flow">
@@ -55,138 +55,164 @@
       </a-space>
     </a-card>
 
-    <!-- ========== 竖直点状步骤条（步骤信息右侧展示）============ -->
-    <a-steps
-      direction="vertical"
-      type="dot"
-      :current="currentStepIndex"
-      :status="isFailed ? 'error' : 'process'"
-      class="step-flow"
-    >
-      <a-step
-        v-for="(step, idx) in steps"
-        :key="step.key"
-        :title="step.label"
+    <!-- ========== 5 阶段折叠展示（文档 v2.1 K1）============ -->
+    <div class="phase-flow">
+      <div
+        v-for="phase in phasesData"
+        :key="phase.key"
+        class="phase-block"
+        :class="`phase-${phase.status}`"
       >
-        <template #icon>
-          <span
-            v-if="idx < currentStepIndex"
-            class="step-dot done"
-          >✓</span>
-          <span
-            v-else-if="idx === currentStepIndex && !isFailed"
-            class="step-dot current"
-          >●</span>
-          <span
-            v-else-if="idx === currentStepIndex && isFailed"
-            class="step-dot failed"
-          >✕</span>
-          <span
-            v-else
-            class="step-dot pending"
-          >○</span>
-        </template>
-        <template #description>
-          <div class="step-right" v-if="isStepReached(step.key, idx)">
-            <!-- 头部：时间 + 操作人 + 触发方式 -->
-            <div class="step-header">
-              <a-space :size="6" wrap>
-                <a-tag
-                  v-if="getStatusChangeRecord(step.key)"
-                  :color="getStatusBadgeColor(step.key)"
-                  size="small"
-                >
-                  {{ getStepBadge(step.key) }}
-                </a-tag>
-                <a-tag v-else-if="idx === currentStepIndex && !isFailed" color="blue" size="small">
-                  <icon-location /> 当前状态
-                </a-tag>
-                <a-tag v-else color="gray" size="small">
-                  <icon-clock-circle /> 未到达
-                </a-tag>
-              </a-space>
-              <span class="step-time">{{ stepTime(step, idx) }}</span>
-              <span v-if="stepOperator(step, idx)" class="step-operator">
-                <icon-user /> {{ stepOperator(step, idx) }}
-              </span>
-            </div>
+        <!-- 阶段头部（可点击折叠/展开）-->
+        <div class="phase-header" @click="togglePhase(phase.key)">
+          <icon-right :class="{ 'is-expanded': isPhaseExpanded(phase.key) }" class="phase-arrow" />
+          <span class="phase-title">{{ phase.label }}</span>
+          <a-tag :color="phaseTagColor(phase.status)" size="small">
+            {{ phase.milestone }}
+          </a-tag>
+          <span class="phase-status-text" :class="`status-${phase.status}`">
+            <template v-if="phase.status === 'completed'">已完成·{{ phase.steps.length }}个节点</template>
+            <template v-else-if="phase.status === 'active'">进行中</template>
+            <template v-else>未到达</template>
+          </span>
+        </div>
 
-            <!-- 主内容：状态描述 + 备注 -->
-            <div class="step-body">
-              <div class="step-desc">{{ getStatusDescription(step.key) }}</div>
-              <div v-if="getStatusChangeRecord(step.key)?.reason" class="step-reason">
-                <icon-edit /> 备注：{{ getStatusChangeRecord(step.key).reason }}
-              </div>
-            </div>
-
-            <!-- 底部：动态操作按钮（点击触发）============ -->
-            <!-- 只在「当前步骤」展示可执行操作；已过的步骤不展示按钮，避免重复点击 -->
-            <div v-if="idx === currentStepIndex" class="step-actions">
-              <a-space wrap>
-                <a-tag
-                  v-for="action in getActionsForStatus(step.key)"
-                  :key="action.key"
-                  :color="action.type === 'primary' ? 'arcoblue' : (action.type === 'danger' ? 'red' : (action.type === 'warning' ? 'orange' : 'gray'))"
-                  size="small"
-                  style="cursor: pointer"
-                  @click="onActionClick(action)"
-                >
-                  <icon-right /> {{ action.label }}
-                </a-tag>
-                <a-tag v-if="getActionsForStatus(step.key).length === 0" color="gray" size="small">
-                  当前状态下无可执行操作
-                </a-tag>
-              </a-space>
-            </div>
-
-            <!-- ========== 同步日志（仅 syncing_internal / syncing_variable，且当前已达到该步骤）============ -->
-            <div
-              v-if="['syncing_internal', 'syncing_variable', 'internal_sync_failed', 'variable_sync_failed'].includes(step.key) && idx <= currentStepIndex"
-              class="step-sync-logs"
+        <!-- 阶段内容（折叠/展开）-->
+        <div v-show="isPhaseExpanded(phase.key)" class="phase-body">
+          <a-steps
+            direction="vertical"
+            type="dot"
+            :current="phase.localCurrentIndex"
+            :status="phaseStepStatus(phase.status)"
+            class="step-flow"
+          >
+            <a-step
+              v-for="step in phase.steps"
+              :key="step.key"
+              :title="step.label"
             >
-              <a-divider style="margin: 8px 0" orientation="left">
-                <span style="font-size: 12px; color: var(--color-text-3);">同步日志</span>
-              </a-divider>
-              <a-space direction="vertical" :size="4" style="width: 100%">
-                <div
-                  v-for="log in getSyncLogsForStep(step.key)"
-                  :key="log.id"
-                  class="sync-log-row"
-                >
-                  <a-tag :color="log.status === 'success' ? 'green' : (log.status === 'failed' ? 'red' : 'gray')" size="mini">
-                    {{ log.direction }}
-                  </a-tag>
-                  <span class="sync-log-type">{{ log.type }}</span>
-                  <span class="sync-log-time">{{ log.startedAt }}</span>
-                  <span v-if="log.reason" class="sync-log-reason">{{ log.reason }}</span>
-                </div>
-                <a-empty v-if="getSyncLogsForStep(step.key).length === 0" :image-size="40" description="暂无同步日志" />
-              </a-space>
-            </div>
+              <template #icon>
+                <span
+                  v-if="step.globalIdx < currentStepIndex"
+                  class="step-dot done"
+                >✓</span>
+                <span
+                  v-else-if="step.globalIdx === currentStepIndex && !isFailed"
+                  class="step-dot current"
+                >●</span>
+                <span
+                  v-else-if="step.globalIdx === currentStepIndex && isFailed"
+                  class="step-dot failed"
+                >✕</span>
+                <span
+                  v-else
+                  class="step-dot pending"
+                >○</span>
+              </template>
+              <template #description>
+                <div class="step-right" v-if="isStepReached(step.key, step.globalIdx)">
+                  <!-- 头部：时间 + 操作人 + 触发方式 -->
+                  <div class="step-header">
+                    <a-space :size="6" wrap>
+                      <a-tag
+                        v-if="getStatusChangeRecord(step.key)"
+                        :color="getStatusBadgeColor(step.key)"
+                        size="small"
+                      >
+                        {{ getStepBadge(step.key) }}
+                      </a-tag>
+                      <a-tag v-else-if="step.globalIdx === currentStepIndex && !isFailed" color="blue" size="small">
+                        <icon-location /> 当前状态
+                      </a-tag>
+                      <a-tag v-else color="gray" size="small">
+                        <icon-clock-circle /> 未到达
+                      </a-tag>
+                    </a-space>
+                    <span class="step-time">{{ stepTime(step, step.globalIdx) }}</span>
+                    <span v-if="stepOperator(step, step.globalIdx)" class="step-operator">
+                      <icon-user /> {{ stepOperator(step, step.globalIdx) }}
+                    </span>
+                  </div>
 
-            <!-- ========== 下线批次（仅 offline / offline_failed 步骤，且当前已达到该步骤）============ -->
-            <div
-              v-if="['offline', 'offline_failed'].includes(step.key) && idx <= currentStepIndex && offlineBatches.length > 0"
-              class="step-offline-batch"
-            >
-              <a-divider style="margin: 8px 0" orientation="left">
-                <span style="font-size: 12px; color: var(--color-text-3);">下线批次</span>
-              </a-divider>
-              <a-space direction="vertical" :size="4" style="width: 100%">
-                <div v-for="batch in offlineBatches" :key="batch.batchId" class="batch-row">
-                  <a-tag :color="batch.status === 'success' ? 'green' : 'red'" size="mini">
-                    {{ batch.status === 'success' ? '成功' : '失败' }}
-                  </a-tag>
-                  <span class="batch-id">{{ batch.batchId }}</span>
-                  <span class="batch-time">{{ batch.offlineAt }}</span>
-                  <span class="batch-reason">{{ batch.reason }}</span>
+                  <!-- 主内容：状态描述 + 备注 -->
+                  <div class="step-body">
+                    <div class="step-desc">{{ getStatusDescription(step.key) }}</div>
+                    <div v-if="getStatusChangeRecord(step.key)?.reason" class="step-reason">
+                      <icon-edit /> 备注：{{ getStatusChangeRecord(step.key).reason }}
+                    </div>
+                  </div>
+
+                  <!-- 底部：动态操作按钮（点击触发）============ -->
+                  <!-- 只在「当前步骤」展示可执行操作；已过的步骤不展示按钮，避免重复点击 -->
+                  <div v-if="step.globalIdx === currentStepIndex" class="step-actions">
+                    <a-space wrap>
+                      <a-tag
+                        v-for="action in getActionsForStatus(step.key)"
+                        :key="action.key"
+                        :color="action.type === 'primary' ? 'arcoblue' : (action.type === 'danger' ? 'red' : (action.type === 'warning' ? 'orange' : 'gray'))"
+                        size="small"
+                        style="cursor: pointer"
+                        @click="onActionClick(action)"
+                      >
+                        <icon-right /> {{ action.label }}
+                      </a-tag>
+                      <a-tag v-if="getActionsForStatus(step.key).length === 0" color="gray" size="small">
+                        当前状态下无可执行操作
+                      </a-tag>
+                    </a-space>
+                  </div>
+
+                  <!-- ========== 同步日志（仅 syncing_internal / syncing_variable，且当前已达到该步骤）============ -->
+                  <div
+                    v-if="['syncing_internal', 'syncing_variable', 'internal_sync_failed', 'variable_sync_failed'].includes(step.key) && step.globalIdx <= currentStepIndex"
+                    class="step-sync-logs"
+                  >
+                    <a-divider style="margin: 8px 0" orientation="left">
+                      <span style="font-size: 12px; color: var(--color-text-3);">同步日志</span>
+                    </a-divider>
+                    <a-space direction="vertical" :size="4" style="width: 100%">
+                      <div
+                        v-for="log in getSyncLogsForStep(step.key)"
+                        :key="log.id"
+                        class="sync-log-row"
+                      >
+                        <a-tag :color="log.status === 'success' ? 'green' : (log.status === 'failed' ? 'red' : 'gray')" size="mini">
+                          {{ log.direction }}
+                        </a-tag>
+                        <span class="sync-log-type">{{ log.type }}</span>
+                        <span class="sync-log-time">{{ log.startedAt }}</span>
+                        <span v-if="log.reason" class="sync-log-reason">{{ log.reason }}</span>
+                      </div>
+                      <a-empty v-if="getSyncLogsForStep(step.key).length === 0" :image-size="40" description="暂无同步日志" />
+                    </a-space>
+                  </div>
+
+                  <!-- ========== 下线批次（仅 offline / offline_failed 步骤，且当前已达到该步骤）============ -->
+                  <div
+                    v-if="['offline', 'offline_failed'].includes(step.key) && step.globalIdx <= currentStepIndex && offlineBatches.length > 0"
+                    class="step-offline-batch"
+                  >
+                    <a-divider style="margin: 8px 0" orientation="left">
+                      <span style="font-size: 12px; color: var(--color-text-3);">下线批次</span>
+                    </a-divider>
+                    <a-space direction="vertical" :size="4" style="width: 100%">
+                      <div v-for="batch in offlineBatches" :key="batch.batchId" class="batch-row">
+                        <a-tag :color="batch.status === 'success' ? 'green' : 'red'" size="mini">
+                          {{ batch.status === 'success' ? '成功' : '失败' }}
+                        </a-tag>
+                        <span class="batch-id">{{ batch.batchId }}</span>
+                        <span class="batch-time">{{ batch.offlineAt }}</span>
+                        <span class="batch-reason">{{ batch.reason }}</span>
+                      </div>
+                    </a-space>
+                  </div>
                 </div>
-              </a-space>
-            </div>
-          </div>
-        </template>
-      </a-step>
-    </a-steps>
+              </template>
+            </a-step>
+          </a-steps>
+        </div>
+      </div>
+    </div>
 
     <!-- ========== 异常状态底部提示 ========== -->
     <div v-if="isFailed" class="failed-branch-tip">
@@ -197,9 +223,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   MIDLOAN_STATUS_ORDER,
+  MIDLOAN_PHASES,
   midloanStatusMeta,
   MIDLOAN_FAILED_STATUSES,
   isRetryableFailedStatus,
@@ -242,16 +269,16 @@ const isFailed = computed(() => isRetryableFailedStatus(props.status))
 const currentStatusLabel = computed(() => midloanStatusMeta(props.status).label)
 
 // 当前步骤下标（异常状态映射到对应正常位置）
-// 9 状态机索引：registered=0, developing_oa=1, dw_online=2, pending_verify=3,
-//               verified=4, syncing_internal=5, syncing_variable=6,
-//               online=7, offline=8
+// 状态机索引：requirement_proposal=0, registered=1, developing_oa=2, dw_online=3,
+//             business_acceptance=4, business_verified=5, admin_confirmed=6,
+//             param_preparing=7, syncing_internal=8, syncing_variable=9, online=10, offline=11
 const currentStepIndex = computed(() => {
   if (isFailed.value) {
     const failedMap = {
-      internal_sync_failed: 5,    // syncing_internal
-      variable_sync_failed: 6,    // syncing_variable
-      dw_online_failed: 2,        // dw_online
-      offline_failed: 8           // offline
+      internal_sync_failed: 8,    // syncing_internal
+      variable_sync_failed: 9,    // syncing_variable
+      dw_online_failed: 3,        // dw_online
+      offline_failed: 11          // offline
     }
     return failedMap[props.status] !== undefined ? failedMap[props.status] : 0
   }
@@ -259,13 +286,98 @@ const currentStepIndex = computed(() => {
   return idx >= 0 ? idx : -1
 })
 
-// 步骤列表
-const steps = computed(() =>
-  MIDLOAN_STATUS_ORDER.map((key) => ({
-    key,
-    label: midloanStatusMeta(key).label
-  }))
-)
+// ============ 5 阶段折叠展示逻辑（文档 v2.1 K1）============
+// 折叠状态：记录已展开的阶段 key
+const expandedPhases = ref([])
+
+// 当前 active 阶段 key
+const activePhaseKey = computed(() => {
+  for (const phase of MIDLOAN_PHASES) {
+    const indices = phase.statuses.map(s => MIDLOAN_STATUS_ORDER.indexOf(s))
+    const minIdx = Math.min(...indices)
+    const maxIdx = Math.max(...indices)
+    if (currentStepIndex.value >= minIdx && currentStepIndex.value <= maxIdx) {
+      return phase.key
+    }
+  }
+  return MIDLOAN_PHASES[MIDLOAN_PHASES.length - 1].key
+})
+
+// 初始化：默认展开 active 阶段；状态变化时自动展开新 active 阶段
+watch(activePhaseKey, (key) => {
+  if (!expandedPhases.value.includes(key)) {
+    expandedPhases.value.push(key)
+  }
+}, { immediate: true })
+
+function togglePhase(key) {
+  const idx = expandedPhases.value.indexOf(key)
+  if (idx >= 0) {
+    expandedPhases.value.splice(idx, 1)
+  } else {
+    expandedPhases.value.push(key)
+  }
+}
+
+function isPhaseExpanded(key) {
+  return expandedPhases.value.includes(key)
+}
+
+// 各阶段数据 + 状态计算
+const phasesData = computed(() => {
+  return MIDLOAN_PHASES.map(phase => {
+    const indices = phase.statuses.map(s => MIDLOAN_STATUS_ORDER.indexOf(s))
+    const minIdx = Math.min(...indices)
+    const maxIdx = Math.max(...indices)
+
+    const phaseSteps = phase.statuses.map((key, localIdx) => ({
+      key,
+      label: midloanStatusMeta(key).label,
+      globalIdx: indices[localIdx]
+    }))
+
+    let status
+    if (currentStepIndex.value > maxIdx) {
+      status = 'completed'
+    } else if (currentStepIndex.value >= minIdx && currentStepIndex.value <= maxIdx) {
+      status = 'active'
+    } else {
+      status = 'pending'
+    }
+
+    let localCurrentIndex
+    if (status === 'completed') {
+      localCurrentIndex = phaseSteps.length
+    } else if (status === 'active') {
+      const activeLocalIdx = phaseSteps.findIndex(s => s.globalIdx === currentStepIndex.value)
+      localCurrentIndex = activeLocalIdx >= 0 ? activeLocalIdx : 0
+    } else {
+      localCurrentIndex = -1
+    }
+
+    return {
+      key: phase.key,
+      label: phase.label,
+      milestone: phase.milestone,
+      statuses: phase.statuses,
+      steps: phaseSteps,
+      status,
+      localCurrentIndex
+    }
+  })
+})
+
+function phaseTagColor(status) {
+  if (status === 'completed') return 'green'
+  if (status === 'active') return 'arcoblue'
+  return 'gray'
+}
+
+function phaseStepStatus(status) {
+  if (status === 'completed') return 'finish'
+  if (status === 'active') return isFailed.value ? 'error' : 'process'
+  return 'wait'
+}
 
 // ============ 数据查询 helper ============
 /**
@@ -384,9 +496,67 @@ const getMidloanStatusColor = midloanStatusColor
   color: var(--color-text-1);
 }
 
+/* ========== 5 阶段折叠展示 ========== */
+.phase-flow {
+  margin-top: 8px;
+}
+.phase-block {
+  margin-bottom: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-2, #e5e6eb);
+  overflow: hidden;
+}
+.phase-block.phase-active {
+  border-color: var(--color-primary-light-3, #bedaff);
+  box-shadow: 0 0 0 1px var(--color-primary-light-3, #bedaff);
+}
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--color-fill-1, #f7f8fa);
+  transition: background 0.2s;
+  user-select: none;
+}
+.phase-header:hover {
+  background: var(--color-fill-2, #f2f3f5);
+}
+.phase-arrow {
+  font-size: 12px;
+  color: var(--color-text-3, #86909c);
+  transition: transform 0.2s;
+}
+.phase-arrow.is-expanded {
+  transform: rotate(90deg);
+}
+.phase-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-1, #1d2129);
+}
+.phase-status-text {
+  margin-left: auto;
+  font-size: 12px;
+}
+.phase-status-text.status-completed {
+  color: var(--color-success, #00b42a);
+}
+.phase-status-text.status-active {
+  color: var(--color-primary, #165dff);
+  font-weight: 500;
+}
+.phase-status-text.status-pending {
+  color: var(--color-text-4, #c9cdd4);
+}
+.phase-body {
+  padding: 8px 12px 4px 12px;
+}
+
 /* ========== 步骤流 ========== */
 .step-flow {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 /* ========== 步骤右侧内容 ========== */

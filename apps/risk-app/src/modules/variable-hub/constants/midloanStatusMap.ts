@@ -1,26 +1,29 @@
 /**
- * 贷中行为特征 9 状态机色板
+ * 贷中行为特征 11 状态机色板
  * 来源：风险数据一体化一期·贷中行为特征自动化上下线 文档（v2.0 模板版）· 状态机章节
  *
- * 9 正常状态 + 4 异常状态（共 13 态，严格对齐文档 D.4 色板）
- * 阶段 S4 · 完整 13 状态 × 操作类型对应关系
+ * 11 正常状态 + 4 异常状态（共 15 态，严格对齐文档 D.4 色板）
+ * 阶段 S4 · 完整 15 状态 × 操作类型对应关系
  */
 
 export type MidloanStatus =
-  // 9 正常状态（文档 v2.0 严格顺序）
+  // 正常状态（文档 v2.1 严格顺序）
+  | 'requirement_proposal'    // 需求提出
   | 'registered'              // 已注册
-  | 'developing_oa'           // 数仓开发中
-  | 'dw_online'               // 数仓开发完成
-  | 'pending_verify'          // 待验收
-  | 'verified'                // 已验收
-  | 'syncing_internal'        // 内数同步中
-  | 'syncing_variable'        // 变量中心同步中
+  | 'developing_oa'           // 开发中（OA单）
+  | 'dw_online'               // 数仓已上线
+  | 'business_acceptance'     // 待业务验证
+  | 'business_verified'       // 业务已验证
+  | 'admin_confirmed'         // 管理员已确认
+  | 'param_preparing'         // 参数准备
+  | 'syncing_internal'        // 内数注册中
+  | 'syncing_variable'        // 变量中心注册中
   | 'online'                  // 已上线
   | 'offline'                 // 已下线
   // 4 异常状态
-  | 'internal_sync_failed'    // 内数同步失败
-  | 'variable_sync_failed'    // 变量中心同步失败
-  | 'dw_online_failed'        // 数仓开发失败
+  | 'internal_sync_failed'    // 内数注册失败
+  | 'variable_sync_failed'    // 变量中心注册失败
+  | 'dw_online_failed'        // 数仓上线失败
   | 'offline_failed'          // 下线接收失败
 
 export interface MidloanStatusMeta {
@@ -31,33 +34,55 @@ export interface MidloanStatusMeta {
 }
 
 export const MIDLOAN_STATUS_MAP: Record<MidloanStatus, MidloanStatusMeta> = {
-  registered:           { label: '已注册',        color: 'blue',     description: '特征已注册，等待提开发OA单' },
-  developing_oa:        { label: '数仓开发中',     color: 'purple',   description: '已提开发OA单，数仓开发中' },
-  dw_online:            { label: '数仓开发完成',   color: 'cyan-dark', description: '数仓任务已上线，等待发起验收' },
-  pending_verify:       { label: '待验收',        color: 'gold',     description: '已发起OA验收单，等待验收人处理' },
-  verified:             { label: '已验收',        color: 'green-light', description: '验收通过，可发起上线流程' },
-  syncing_internal:     { label: '内数同步中',     color: 'cyan',     description: 'OA单已提给内数，等待返回接口信息' },
-  syncing_variable:     { label: '变量中心同步中', color: 'cyan',     description: 'OA单已提给变量中心，等待确认上线' },
-  online:               { label: '已上线',        color: 'green',    description: '变量中心已确认上线，特征投产中' },
-  offline:              { label: '已下线',        color: 'darkgray', description: '变量中心已下线，归档保留' },
+  requirement_proposal: { label: '需求提出',       color: 'gray',      description: '业务直接发起需求，等待管理员审核补充标准化附件' },
+  registered:           { label: '已注册',        color: 'blue',      description: '特征已注册，等待提开发OA单' },
+  developing_oa:        { label: '开发中（OA单）', color: 'purple',    description: '已提开发OA单，数仓开发中' },
+  dw_online:            { label: '数仓已上线',     color: 'cyan-dark', description: '数仓任务已上线，等待业务验证' },
+  business_acceptance:  { label: '待业务验证',     color: 'gold',      description: '数仓已上线，业务验证人需在台账内确认（不走OA单）' },
+  business_verified:    { label: '业务已验证',     color: 'gold',      description: '业务验证通过，等待管理员确认（台账内操作）' },
+  admin_confirmed:      { label: '管理员已确认',   color: 'green-light', description: '管理员确认通过，可提投产单上线' },
+  param_preparing:      { label: '参数准备',       color: 'cyan',      description: '系统自动参数映射+有效性验证，验证通过后人注册' },
+  syncing_internal:     { label: '内数注册中',     color: 'cyan',      description: 'OA单已提给内数，等待返回接口信息' },
+  syncing_variable:     { label: '变量中心注册中', color: 'cyan',      description: 'OA单已提给变量中心，等待确认上线' },
+  online:               { label: '已上线',        color: 'green',     description: '变量中心已确认上线，特征投产中' },
+  offline:              { label: '已下线',        color: 'darkgray',  description: '变量中心已下线，归档保留' },
   // 异常
-  internal_sync_failed: { label: '内数同步失败',  color: 'red',      description: '内数API注册/变更返回失败，可点击「重新同步」' },
-  variable_sync_failed: { label: '变量中心同步失败', color: 'red',    description: '变量中心注册返回失败，可点击「重新同步」' },
-  dw_online_failed:     { label: '数仓开发失败',  color: 'red',      description: '数仓任务执行失败，可点击「重新触发数仓任务」' },
-  offline_failed:       { label: '下线接收失败',  color: 'red',      description: '变量中心批次同步失败，可手动触发批次重试' }
+  internal_sync_failed: { label: '内数注册失败',   color: 'red',       description: '内数API注册/变更返回失败，可点击「重新同步」' },
+  variable_sync_failed: { label: '变量中心注册失败', color: 'red',     description: '变量中心注册返回失败，可点击「重新同步」' },
+  dw_online_failed:     { label: '数仓上线失败',   color: 'red',       description: '数仓任务执行失败，可点击「重新触发数仓任务」' },
+  offline_failed:       { label: '下线接收失败',   color: 'red',       description: '变量中心批次同步失败，可手动触发批次重试' }
 }
 
-/** 9 状态机正常流转顺序（时间轴展示用 · 文档 v2.0 严格顺序） */
+/** 状态机正常流转顺序（时间轴展示用 · 文档 v2.1 严格顺序） */
 export const MIDLOAN_STATUS_ORDER: MidloanStatus[] = [
+  'requirement_proposal',   // 阶段1·注册
   'registered',
-  'developing_oa',
+  'developing_oa',          // 阶段2·开发
   'dw_online',
-  'pending_verify',
-  'verified',
+  'business_acceptance',    // 阶段3·验证
+  'business_verified',
+  'admin_confirmed',
+  'param_preparing',        // 阶段4·上线
   'syncing_internal',
   'syncing_variable',
   'online',
-  'offline'
+  'offline'                 // 阶段5·汰换
+]
+
+/** 5 阶段折叠展示定义（文档 v2.1 K1） */
+export interface MidloanPhase {
+  key: string
+  label: string
+  milestone: string
+  statuses: MidloanStatus[]
+}
+
+export const MIDLOAN_PHASES: MidloanPhase[] = [
+  { key: 'register',   label: '阶段1·注册', milestone: '注册完成',     statuses: ['requirement_proposal', 'registered'] },
+  { key: 'develop',   label: '阶段2·开发', milestone: '分析可用',     statuses: ['developing_oa', 'dw_online'] },
+  { key: 'verify',    label: '阶段3·验证', milestone: '上线就绪',     statuses: ['business_acceptance', 'business_verified', 'admin_confirmed'] },
+  { key: 'online',    label: '阶段4·上线', milestone: '生产策略可用', statuses: ['param_preparing', 'syncing_internal', 'syncing_variable', 'online'] },
+  { key: 'retire',    label: '阶段5·汰换', milestone: '特征退役',     statuses: ['offline'] }
 ]
 
 /** 异常状态列表 */
@@ -117,29 +142,32 @@ export const allowedActionsByStatus = (status: string, _data?: any, role?: strin
 
   switch (status) {
     // ============ 主流程操作 ============
+    case 'requirement_proposal':
+      // 需求提出：管理员审核通过后进入注册（含重复校验+补充标准化附件）
+      return [{ key: 'submit_requirement', label: '审核通过+注册', type: 'primary', category: 'main' }]
+
     case 'registered':
       return [{ key: 'submit_dev_oa', label: '提开发OA单', type: 'primary', category: 'main' }]
 
-    case 'dw_online':
-      return [{ key: 'submit_verify', label: '发起验收', type: 'primary', category: 'main' }]
+    case 'business_acceptance':
+      // 待业务验证：业务验证人在台账内点「验证通过」（不走OA单，台账内操作）
+      return [{ key: 'business_verify_pass', label: '业务验证通过', type: 'primary', category: 'main' }]
 
-    case 'verified':
-      return [{ key: 'start_online', label: '发起上线流程', type: 'primary', category: 'main' }]
+    case 'business_verified':
+      // 业务已验证：管理员在台账内点「确认通过」（不走OA单，台账内操作）
+      return [{ key: 'admin_confirm_pass', label: '管理员确认通过', type: 'primary', category: 'main' }]
+
+    case 'admin_confirmed':
+      // 管理员已确认：管理员点「提投产单」→OA审批通过→参数准备
+      return [{ key: 'submit_production_order', label: '提投产单', type: 'primary', category: 'main' }]
 
     // ============ 演示快捷按钮 ============
     case 'developing_oa':
-      // 数仓开发中：演示模拟数仓回调（成功/失败）
+      // 开发中（OA单）：演示模拟数仓回调（成功/失败）
       return [
         { key: 'simulate_dw_success', label: '模拟数仓成功', category: 'demo' },
         { key: 'simulate_dw_success_dw', label: '模拟数仓成功（DW回调）', category: 'demo' },
         { key: 'simulate_dw_failed', label: '模拟数仓失败', category: 'demo' }
-      ]
-
-    case 'pending_verify':
-      // 待验收：演示模拟 OA 验收（通过/驳回）
-      return [
-        { key: 'verify_pass', label: '模拟验收通过', category: 'demo' },
-        { key: 'verify_reject', label: '验收驳回', type: 'danger', category: 'demo' }
       ]
 
     // ============ 异常重试操作 ============
@@ -161,10 +189,11 @@ export const allowedActionsByStatus = (status: string, _data?: any, role?: strin
       // 下线批次重试：仅管理员
       return isAdmin ? [{ key: 'manual_batch_retry', label: '手动触发批次重试', type: 'warning', category: 'error' }] : []
 
-    // ============ 中间态（同步中） ============
+    // ============ 中间态（同步中/参数准备） ============
+    case 'param_preparing':
     case 'syncing_internal':
     case 'syncing_variable':
-      // 同步中：等待系统自动完成，暂无用户操作
+      // 参数准备/同步中：等待系统自动完成，暂无用户操作
       return []
 
     // ============ 终态 ============
@@ -237,7 +266,7 @@ export const VARIABLE_FIELD_POLICIES: FieldEditPolicy[] = [
   { field: 'dataTableName', label: '数据底表名', category: 'supplementary' },
   { field: 'dwTaskId', label: '数仓任务ID', category: 'supplementary' },
   { field: 'devOaOrderId', label: 'OA开发单号', category: 'supplementary' },
-  { field: 'verifyOaOrderId', label: 'OA验收单号', category: 'supplementary' },
+  { field: 'verifyOaOrderId', label: 'OA验收单号（v2.0历史）', category: 'supplementary' },
   { field: 'acceptor', label: '验收人', category: 'supplementary' },
   // 元数据（描述/标签）
   { field: 'businessScene', label: '业务场景', category: 'meta' },
@@ -262,13 +291,13 @@ export const canEditField = (status: string, field: string): boolean => {
   const policy = VARIABLE_FIELD_POLICIES.find(p => p.field === field)
   if (!policy || policy.category === 'meta') return true
 
-  // 补充字段：developing_oa / dw_online / dw_online_failed 可编辑
+  // 补充字段：开发/数仓/验证阶段可编辑
   if (policy.category === 'supplementary') {
-    return ['developing_oa', 'dw_online', 'dw_online_failed'].includes(status)
+    return ['developing_oa', 'dw_online', 'dw_online_failed', 'business_acceptance', 'business_verified', 'admin_confirmed'].includes(status)
   }
 
-  // 核心字段：已注册阶段可编辑
-  return ['registered'].includes(status)
+  // 核心字段：需求提出/已注册阶段可编辑
+  return ['registered', 'requirement_proposal'].includes(status)
 }
 
 /**
@@ -302,19 +331,26 @@ export const getEditLockReason = (status: string): string => {
       return '已上线：核心信息已投产调用，修改将影响实际生产调用，请先申请下线'
     case 'offline':
       return '已下线：归档状态，禁止修改'
-    case 'pending_verify':
-    case 'verified':
+    case 'param_preparing':
     case 'syncing_internal':
     case 'syncing_variable':
-      return '流程进行中：处于流程中状态，暂不开放编辑'
+      return '流程进行中：处于参数准备/同步状态，暂不开放编辑'
     case 'internal_sync_failed':
     case 'variable_sync_failed':
     case 'dw_online_failed':
     case 'offline_failed':
       return '异常态：暂不开放编辑，请先处理异常（重试）'
+    case 'requirement_proposal':
+      return '需求提出：业务发起需求阶段，核心字段可编辑'
     case 'developing_oa':
     case 'dw_online':
       return '开发/数仓阶段：仅可补充数据底表、OA单号等运维字段'
+    case 'business_acceptance':
+      return '待业务验证：数仓已上线，业务验证人需在台账内确认'
+    case 'business_verified':
+      return '业务已验证：业务验证通过，等待管理员确认'
+    case 'admin_confirmed':
+      return '管理员已确认：管理员确认通过，可提投产单'
     case 'registered':
       return '已注册：所有字段均可编辑'
     default:
@@ -360,7 +396,7 @@ export interface TableAction {
 /**
  * 台账操作结果：分为「顶层快捷」+「主流程操作」
  * - topActions：直接显示在操作列（详情/编辑/外数档案/重试/补充底表）
- * - mainActions：通过「更多操作」dropdown 触发抽屉（submit_dev_oa/submit_verify/verify_pass/start_online 等）
+ * - mainActions：通过「更多操作」dropdown 触发抽屉（submit_dev_oa/business_verify_pass/admin_confirm_pass/submit_production_order 等）
  *
  * 用户反馈：动态操作下沉到列表页（详情页已经看得到的不重复；列表页能快速触发）
  */
@@ -384,7 +420,7 @@ export const tableActionsByStatus = (
   // 编辑（受保护）
   const editable = (() => {
     if (status === 'online' || status === 'offline') return false
-    if (['registered'].includes(status)) return true
+    if (['registered', 'requirement_proposal'].includes(status)) return true
     return false
   })()
   if (editable) {
@@ -392,7 +428,7 @@ export const tableActionsByStatus = (
   }
 
   // 补充数据底表
-  const needSupplement = ['developing_oa', 'dw_online', 'dw_online_failed'].includes(status) && !hasDataTable
+  const needSupplement = ['developing_oa', 'dw_online', 'dw_online_failed', 'business_acceptance', 'business_verified', 'admin_confirmed'].includes(status) && !hasDataTable
   if (needSupplement) {
     topActions.push({ key: 'supplement_table', label: '补充数据底表', type: 'warning' })
   }
