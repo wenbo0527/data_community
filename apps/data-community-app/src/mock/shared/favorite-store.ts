@@ -4,7 +4,10 @@
  * 2026-08-06 新建:统一"我的关注"入口,数据源桥接 dfd-app 的 favorite-directory。
  * 收藏对象 = 资产 / 指标 / 变量 / 特征 / API / 集合,与原版"资产门户"定位一致。
  *
- * 上线后:把 mutator 替换为 HTTP 调用即可,业务方不感知。
+ * 2026-08-12 候选 #172 v3.0 C 级:TASK-20260811-CFC1B6FD
+ *   - 跨包 import 修复:从 `'../../../../dfd-app/src/mock/shared/favorite-directory'`
+ *     改为本地 `'./favorite-directory'`(DCA 端已复制完整文件,仅 6 行 resourcePath 改为 DCA 路由)
+ *   - 上线后:把 mutator 替换为 HTTP 调用即可,业务方不感知。
  */
 import { ref, computed } from 'vue'
 import {
@@ -13,7 +16,7 @@ import {
   type FavoriteResourceType,
   type FavoriteGroup,
   type FavoriteNotification
-} from '../../../../dfd-app/src/mock/shared/favorite-directory'
+} from './favorite-directory'
 
 // ───────────────────────────── 响应式状态 ─────────────────────────────
 const _items = ref<FavoriteItem[]>(FAVORITES.map(f => ({ ...f, tags: [...f.tags] })))

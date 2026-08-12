@@ -1,5 +1,5 @@
 /**
- * 收藏 Directory
+ * 收藏 Directory —— DCA 端副本
  *
  * 用户的资产收藏 / 关注 / 订阅
  * 跨模块(发现/管理/探索)共享,支持:
@@ -8,6 +8,14 @@
  *   - 标签
  *   - 备注
  *   - 通知订阅(数据更新通知)
+ *
+ * TODO: 候选 B HTTP API 替换
+ *   - 来源:`apps/dfd-app/src/mock/shared/favorite-directory.ts`(2026-08-11 之前)
+ *   - 现状:DCA 端副本(同步维护,数据 100% 等价,仅 6 行 resourcePath DCA 路由差异)
+ *   - 长期:把 `FavoriteStore.mutator` + `FAVORITES` 数据源替换为 HTTP API(/api/favorites),
+ *     跨包 mock 依赖彻底解耦(候选 B v1.1)
+ *
+ * 任务:TASK-20260811-CFC1B6FD · 候选 #172 v3.0 C 级 · 2026-08-12 dev 修复
  */
 
 import type { MockMethod } from 'vite-plugin-mock'
