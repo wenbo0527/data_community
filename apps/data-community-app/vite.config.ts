@@ -102,5 +102,5 @@ export default defineConfig({
     },
     chunkSizeWarning: 1500
   },
-  base: '/dca/'
+  base: '/data-community/'
 })
