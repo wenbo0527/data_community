@@ -17,24 +17,57 @@
         <div class="title-section">
           <div class="title-wrapper">
             <h1 class="title">{{ variableData.name || '变量详情' }}</h1>
-            <a-tag :color="getStatusColor(variableData.status)" class="status-tag" size="medium">{{ getStatusLabel(variableData.status) }}</a-tag>
+            <!-- 文档 v2.1 K1 R08：详情页展示「阶段 · 状态」格式 -->
+            <template v-if="variableData.category === 'midloan_behavior' && variableData.midloanStatus">
+              <a-tag v-if="getPhaseByStatus(variableData.midloanStatus)" color="gray" size="small">
+                {{ getPhaseByStatus(variableData.midloanStatus)?.label }}
+              </a-tag>
+              <span style="color: #86909c; margin: 0 2px;">·</span>
+              <a-tag :color="midloanStatusColor(variableData.midloanStatus)" class="status-tag" size="medium">{{ midloanStatusLabel(variableData.midloanStatus) }}</a-tag>
+              <!-- 文档 v2.1 §四：数据形态标签（离线分析/在线接口） -->
+              <a-tag
+                :color="midloanStatusDataForm(variableData.midloanStatus) === 'offline_analysis' ? 'arcoblue' : 'green'"
+                size="small"
+              >
+                {{ midloanStatusDataForm(variableData.midloanStatus) === 'offline_analysis' ? '离线分析' : '在线接口' }}
+              </a-tag>
+            </template>
+            <a-tag v-else :color="getStatusColor(variableData.status)" class="status-tag" size="medium">{{ getStatusLabel(variableData.status) }}</a-tag>
             <a-tag color="purple" size="small" class="role-tag">当前角色：{{ currentUserName }}（{{ currentRole === 'risk_data_member' ? '成员' : currentRole === 'risk_data_admin' ? '管理员' : '社区' }}）</a-tag>
           </div>
 
-          <!-- 横向字段带：核心 / 辅助各占一行，每行内字段平均分布，呼吸感更足 -->
-          <ParamGroup :items="headerInfo" :columns="4" :gap="20" />
+          <!-- 顶部公共信息（永久可见：全品类公共·注册即确定） -->
+          <div class="header-public-grid">
+            <div class="public-row">
+              <div class="public-item"><span class="label">变量编码</span><span class="value mono">{{ headerPublic.code }}</span></div>
+              <div class="public-item"><span class="label">变量类型</span><span class="value">{{ headerPublic.variableType }}</span></div>
+              <div class="public-item"><span class="label">字段类型</span><span class="value">{{ headerPublic.fieldType }}</span></div>
+              <div class="public-item"><span class="label">默认值</span><span class="value mono">{{ headerPublic.defaultValue }}</span></div>
+            </div>
+            <div class="public-row">
+              <div class="public-item"><span class="label">来源类型</span><span class="value">{{ headerPublic.sourceType }}</span></div>
+              <div class="public-item"><span class="label">特征粒度</span><span class="value">{{ headerPublic.featureGranularity }}</span></div>
+              <div class="public-item"><span class="label">一级分类</span><span class="value">{{ headerPublic.categoryLevel1 }}</span></div>
+              <div class="public-item"><span class="label">二级分类</span><span class="value">{{ headerPublic.categoryLevel2 }}</span></div>
+            </div>
+            <div class="public-row">
+              <div class="public-item"><span class="label">需求提出人</span><span class="value">{{ headerPublic.proposer }}</span></div>
+              <div class="public-item"><span class="label">创建人</span><span class="value">{{ headerPublic.creator }}</span></div>
+              <div class="public-item public-full"><span class="label">标签 / 维度</span>
+                <span class="value tag-row">
+                  <a-tag v-for="t in headerPublic.tagList" :key="'t'+t" color="arcoblue" size="mini">{{ t }}</a-tag>
+                  <a-tag v-for="d in headerPublic.dimensionList" :key="'d'+d" color="green" size="mini">{{ d }}</a-tag>
+                  <span v-if="headerPublic.tagList.length === 0 && headerPublic.dimensionList.length === 0" class="empty">无</span>
+                </span>
+              </div>
+            </div>
+          </div>
 
-          <!-- 描述：整行展示，2 行省略，避免逐字换行 -->
-          <ParamGroup :items="descriptionInfo" :columns="1" :gap="0" class="header-description-group">
-            <template #item-0="{ item }">
-              <a-typography-paragraph
-                :ellipsis="{ rows: 2, showTooltip: true, expandable: true }"
-                style="margin: 0"
-              >
-                {{ item.value }}
-              </a-typography-paragraph>
-            </template>
-          </ParamGroup>
+          <!-- 简短描述摘要（顶部只给截前 80 字，长文本统一进 tab 的业务含义卡） -->
+          <div class="header-description-summary">
+            <span class="label">描述摘要</span>
+            <span class="value">{{ headerPublic.descriptionSummary }}</span>
+          </div>
         </div>
 
         <div class="actions">
@@ -87,37 +120,196 @@
 
       <a-tabs v-model:active-key="activeTab" class="detail-tabs">
         <a-tab-pane key="basic" title="变量基础信息">
-          <BasicInfoCard
-            :basic-info="basicInfo"
-            :technical-info="technicalInfo"
-            :long-text-info="longTextInfo"
-            :typed-profile-info="typedProfileInfo"
-            :typed-profile-title="typedProfileTitle"
-            :variable-data="variableData"
-          />
+
+          <!-- ========= 基础人员信息（注册即有 + 后期部分回填） ========= -->
+          <a-card title="基础与人员信息" class="detail-card">
+            <a-descriptions :column="3" bordered size="small">
+              <a-descriptions-item label="创建时间">{{ basePersonInfo.createdAt }}</a-descriptions-item>
+              <a-descriptions-item label="更新时间">{{ basePersonInfo.updatedAt }}</a-descriptions-item>
+              <a-descriptions-item label="需求提出人">{{ basePersonInfo.proposer }}</a-descriptions-item>
+              <a-descriptions-item label="管理人">{{ basePersonInfo.adminManager }}</a-descriptions-item>
+              <a-descriptions-item label="数仓开发人员">{{ basePersonInfo.developer }}</a-descriptions-item>
+              <a-descriptions-item label="验收人">{{ basePersonInfo.acceptor }}</a-descriptions-item>
+            </a-descriptions>
+          </a-card>
+
+          <!-- ========= 长文本区（业务含义 + 技术口径 + 备注） ========= -->
+          <a-card title="业务含义与技术口径" class="detail-card">
+            <div class="longtext-block">
+              <div class="longtext-label"><icon-file-document /> 业务含义 / 使用场景</div>
+              <a-typography-paragraph
+                :ellipsis="{ rows: 6, expandable: true, showTooltip: true }"
+                class="longtext-value"
+              >{{ longtextMeaning }}</a-typography-paragraph>
+            </div>
+            <a-divider style="margin: 16px 0" />
+            <div class="longtext-block">
+              <div class="longtext-label"><icon-code /> 技术口径 / 加工逻辑（SQL / 公式 / 伪代码）</div>
+              <pre class="longtext-code">{{ longtextProcessingLogic || '暂无口径说明' }}</pre>
+            </div>
+            <a-divider style="margin: 16px 0" />
+            <div class="longtext-block">
+              <div class="longtext-label"><icon-edit-2 /> 备注</div>
+              <a-typography-paragraph
+                :ellipsis="{ rows: 4, expandable: true }"
+                class="longtext-value"
+              >{{ longtextRemark || '—' }}</a-typography-paragraph>
+            </div>
+          </a-card>
+
+          <!-- ========= HIVE 表与字段（精简：库名/表名/分区/分区字段/更新频率 + 标准化前原始表） ========= -->
+          <a-card title="HIVE 表与字段" class="detail-card">
+            <a-alert type="info" :show-icon="true" style="margin-bottom: 12px">
+              <template #title>HBase 数据由 HIVE 提供，下方为底层 HIVE 表注册信息</template>
+              <div>标准化前表名/字段 = 原始上游表（数据源）→ 标准化后表名/字段 = 当前 HIVE 注册表</div>
+            </a-alert>
+            <a-descriptions :column="2" bordered size="small">
+              <a-descriptions-item label="标准化前表名（原始上游）">
+                <a-space>
+                  <code class="mono">{{ hiveInfo.sourceDbName }}.{{ hiveInfo.sourceTableName }}</code>
+                  <a-button size="mini" type="text" @click="copyText(hiveInfo.sourceDbName + '.' + hiveInfo.sourceTableName, '标准化前表名')">复制</a-button>
+                </a-space>
+              </a-descriptions-item>
+              <a-descriptions-item label="标准化前字段名（原始上游）">
+                <a-space>
+                  <code class="mono">{{ hiveInfo.sourceFieldName }}</code>
+                  <a-button size="mini" type="text" @click="copyText(hiveInfo.sourceFieldName, '标准化前字段名')">复制</a-button>
+                </a-space>
+              </a-descriptions-item>
+              <a-descriptions-item label="标准化后 HIVE 数据库名">{{ hiveInfo.databaseName }}</a-descriptions-item>
+              <a-descriptions-item label="标准化后 HIVE 表名">
+                <a-space>
+                  <code class="mono strong">{{ hiveInfo.tableName }}</code>
+                  <a-button size="mini" type="text" @click="copyText(hiveInfo.tableName, 'HIVE表名')">复制</a-button>
+                </a-space>
+              </a-descriptions-item>
+              <a-descriptions-item label="是否分区表">{{ hiveInfo.isPartitioned ? '是' : '否' }}</a-descriptions-item>
+              <a-descriptions-item label="分区字段">
+                <a-tag v-for="p in hiveInfo.partitionFields" :key="p" color="purple" size="mini" style="margin-right: 4px;">
+                  {{ p }}
+                </a-tag>
+                <span v-if="hiveInfo.partitionFields.length === 0">—</span>
+              </a-descriptions-item>
+              <a-descriptions-item label="更新频率">{{ hiveInfo.updateFrequency }}</a-descriptions-item>
+            </a-descriptions>
+          </a-card>
+
+          <!-- ========= 技术关联信息（精简） ========= -->
+          <a-card title="技术关联信息" class="detail-card">
+            <a-descriptions :column="2" bordered size="small">
+              <a-descriptions-item label="数据源名称">{{ techLink.dataSourceName }}</a-descriptions-item>
+              <a-descriptions-item label="数据底表 / 映射表">
+                <a-space>
+                  <span :class="{ 'missing-table': !techLink.dataTableName }">
+                    {{ techLink.dataTableName || '未补充（必填）' }}
+                  </span>
+                  <a-button size="mini" type="primary" v-if="!techLink.dataTableName" @click="openSupplementTable">补充</a-button>
+                  <a-button size="mini" v-else @click="openSupplementTable">修改</a-button>
+                </a-space>
+              </a-descriptions-item>
+              <a-descriptions-item label="接口号（生产）">
+                <code v-if="techLink.apiNo" class="mono">{{ techLink.apiNo }}</code>
+                <span v-else>—（阶段4上线后回填）</span>
+              </a-descriptions-item>
+              <a-descriptions-item label="响应字段（外数）">
+                <span>{{ techLink.responseField || '—（仅外数品类）' }}</span>
+              </a-descriptions-item>
+            </a-descriptions>
+          </a-card>
+
+          <!-- 关键时间戳 & 运维信息已内嵌到离线分析/API调用两个 tab 的 StatusStepFlow 中，无需重复展示 -->
+
+          <!-- ========= 非贷中行为：通用生命周期阶段 ========= -->
+          <template v-if="!isMidloanBehavior">
+            <a-card title="生命周期阶段（通用）" class="detail-card">
+              <a-alert type="info" :show-icon="false" style="margin-bottom: 12px">
+                本品类（{{ nonMidloanCategoryLabel }}）采用通用生命周期阶段，不接入贷中行为 11 状态机。
+                如需使用精细化状态机，请联系数据团队评估迁移到「贷中行为」品类。
+              </a-alert>
+              <a-descriptions :column="2" :data="lifecycleHeader" bordered />
+              <a-divider style="margin: 12px 0" />
+              <a-table :data="lifecycleStages" :pagination="false">
+                <template #columns>
+                  <a-table-column title="阶段" data-index="stage" :width="160" />
+                  <a-table-column title="状态" :width="120">
+                    <template #cell="{ record }">
+                      <a-tag :status="record.status==='completed'?'success':(record.status==='in_progress'?'warning':'default')">{{ record.statusLabel }}</a-tag>
+                    </template>
+                  </a-table-column>
+                  <a-table-column title="开始时间" data-index="startDate" :width="160" />
+                  <a-table-column title="结束时间" data-index="endDate" :width="160" />
+                  <a-table-column title="说明" data-index="description" />
+                </template>
+                <template #empty><a-empty description="暂无阶段数据" /></template>
+              </a-table>
+            </a-card>
+          </template>
         </a-tab-pane>
 
-        <!-- ========== 治理与生命周期（已抽到 LifecycleTab 容器组件）============ -->
-        <a-tab-pane key="governance" title="治理与生命周期">
-          <LifecycleTab
-            :is-midloan-behavior="isMidloanBehavior"
-            :variable-data="variableData"
-            :current-midloan-status="currentMidloanStatus"
-            :can-retry="canRetry && hasPerm(PERMISSIONS.RETRY_SYNC)"
-            :retry-label="retryLabel"
-            :allowed-actions="allowedActions"
-            :status-change-list="statusChangeList"
-            :sync-log-list="syncLogList"
-            :offline-batch-summary="offlineBatchSummary"
-            :lifecycle-header="lifecycleHeader"
-            :lifecycle-stages="lifecycleStages"
-            :effect-summary="effectSummary"
-            :has-perm="hasPerm"
-            @retry="onRetry"
-            @manual-retry="onManualBatchRetry"
-            @supplement-table="openSupplementTable"
-            @action="onAction"
-          />
+        <!-- ========== 离线分析状态（阶段 1-3：注册/开发/验证）============ -->
+        <a-tab-pane key="offline_lifecycle" title="离线分析状态（阶段1-3）">
+          <template v-if="isMidloanBehavior">
+            <a-card title="离线分析状态链路（阶段1·注册 / 阶段2·开发 / 阶段3·验证）" class="detail-card">
+              <StatusStepFlow
+                :status="currentMidloanStatus"
+                scope="offline_analysis"
+                :status-change-list="statusChangeList"
+                :sync-logs="syncLogList"
+                :offline-batches="offlineBatchSummary?.list || []"
+                :feature-archive="featureArchiveSummary"
+                :retry-count="variableData.syncRetryCount || 0"
+                :failed-reason="variableData.syncFailedReason"
+                :failed-at="variableData.syncFailedAt"
+                :show-retry="canRetryInOfflineScope && hasPerm(PERMISSIONS.RETRY_SYNC)"
+                :show-manual-retry="false"
+                :retry-label="retryLabel"
+                @retry="onRetry"
+                @manual-retry="onManualBatchRetry"
+                @action="onAction"
+                @supplement-table="openSupplementTable"
+              />
+            </a-card>
+          </template>
+          <template v-else>
+            <a-alert type="info" :show-icon="true" class="detail-card">
+              <template #title>非贷中行为品类</template>
+              <div>本品类（{{ nonMidloanCategoryLabel }}）采用通用阶段，不接入贷中行为 11 状态机。</div>
+            </a-alert>
+          </template>
+        </a-tab-pane>
+
+        <!-- ========== API 调用状态（阶段 4-5：上线/汰换）============ -->
+        <a-tab-pane key="api_lifecycle" title="API调用状态（阶段4-5）">
+          <template v-if="isMidloanBehavior">
+            <a-card title="API 调用状态链路（阶段4·上线 / 阶段5·汰换）" class="detail-card">
+              <StatusStepFlow
+                :status="currentMidloanStatus"
+                scope="online_interface"
+                :status-change-list="statusChangeList"
+                :sync-logs="syncLogList"
+                :offline-batches="offlineBatchSummary?.list || []"
+                :feature-archive="featureArchiveSummary"
+                :retry-count="variableData.syncRetryCount || 0"
+                :failed-reason="variableData.syncFailedReason"
+                :failed-at="variableData.syncFailedAt"
+                :show-retry="canRetryInApiScope && hasPerm(PERMISSIONS.RETRY_SYNC)"
+                :show-manual-retry="currentMidloanStatus === 'offline_failed' && hasPerm(PERMISSIONS.RETRY_SYNC)"
+                :retry-label="retryLabel"
+                @retry="onRetry"
+                @manual-retry="onManualBatchRetry"
+                @action="onAction"
+                @supplement-table="openSupplementTable"
+              />
+            </a-card>
+            <!-- 下线批次汇总卡（K2 R03） -->
+            <OfflineBatchCard :summary="offlineBatchSummary" />
+          </template>
+          <template v-else>
+            <a-alert type="info" :show-icon="true" class="detail-card">
+              <template #title>非贷中行为品类</template>
+              <div>本品类（{{ nonMidloanCategoryLabel }}）采用通用阶段，不接入贷中行为 11 状态机。</div>
+            </a-alert>
+          </template>
         </a-tab-pane>
 
         <a-tab-pane key="evaluation" title="变量评估">
@@ -271,7 +463,7 @@
       :variable-data="variableData"
       @submit="onActionSubmit"
     />
-    <!-- ========== 审核通过+注册（B1 完整注册表单）============ -->
+    <!-- ========== 注册特征（审核模式：submit_requirement）============ -->
     <VariableRegisterDrawer
       v-model:visible="registerDrawerVisible"
       :requirement-data="registerDrawerRequirementData"
@@ -299,15 +491,13 @@ import NotFound from '@/modules/variable-hub/components/common/NotFound.vue'
 import MidloanActionDrawer from '@/modules/variable-hub/components/risk-feature/MidloanActionDrawer.vue'
 import VariableRegisterDrawer from '@/modules/variable-hub/components/risk-feature/VariableRegisterDrawer.vue'
 import OfflineBatchCard from '@/modules/variable-hub/components/risk-feature/OfflineBatchCard.vue'
-import FeatureArchiveCard from '@/modules/variable-hub/components/risk-feature/FeatureArchiveCard.vue'
 import StatusChangeTable from '@/modules/variable-hub/components/risk-feature/StatusChangeTable.vue'
 import LineageUsageCard from '@/modules/variable-hub/components/risk-feature/LineageUsageCard.vue'
 import ChangeRecordCard from '@/modules/variable-hub/components/risk-feature/ChangeRecordCard.vue'
 import EvaluationCard from '@/modules/variable-hub/components/risk-feature/EvaluationCard.vue'
-import BasicInfoCard from '@/modules/variable-hub/components/risk-feature/BasicInfoCard.vue'
-import LifecycleTab from '@/modules/variable-hub/components/risk-feature/LifecycleTab.vue'
+import StatusStepFlow from '@/modules/variable-hub/components/risk-feature/StatusStepFlow.vue'
 import StatusTimeline11 from '@/modules/variable-hub/components/risk-feature/StatusTimeline11.vue'
-import { allowedActionsByStatus, isRetryableFailedStatus, midloanStatusLabel, midloanStatusColor, getEditLockReason, getLockedFields } from '@/modules/variable-hub/constants/midloanStatusMap'
+import { allowedActionsByStatus, isRetryableFailedStatus, midloanStatusLabel, midloanStatusColor, getEditLockReason, getLockedFields, getPhaseByStatus, midloanStatusDataForm, getStatusCategory } from '@/modules/variable-hub/constants/midloanStatusMap'
 import MidloanStateEngine, { SyncLogStore, OfflineRecordStore, StatusChangeStore } from '@/modules/variable-hub/mock/risk-feature/stateEngine'
 import DemoConsole from '@/modules/variable-hub/components/risk-feature/DemoConsole.vue'
 import UserContext, { PERMISSIONS } from '@/modules/variable-hub/mock/risk-feature/permissions'
@@ -397,29 +587,167 @@ const typedProfileTitle = computed(() => {
   return '行为变量基础信息'
 })
 
-// header 字段带：核心信息（编码/类型/来源/数据源/创建人/更新时间）
-const headerInfo = computed(() => [
-  { label: '变量编码', value: variableData.value.code || '—' },
-  { label: '变量类型', value: getTypeLabel(variableData.value.type) || '—' },
-  { label: '来源类型', value: sourceTypeLabel.value || '—' },
-  { label: '数据源', value: variableData.value.dataSourceName || '—' },
-  { label: '创建人', value: variableData.value.creator || '—' },
-  { label: '更新时间', value: variableData.value.updatedAt || '—' }
-])
+/** 当前品类的 profile 原始对象（方便各分层卡直接取字段） */
+const profile = computed(() => (variableStore.currentVariable || {}).profile || {})
 
-// header 描述
-const descriptionInfo = computed(() => [
-  { label: '描述', value: variableData.value.description || '—' }
-])
+// 顶部公共信息（永久可见 · 注册即确定 · 全品类公共）
+const headerPublic = computed(() => {
+  const v = variableData.value
+  const p = profile.value
+  const categoryLabel = sourceTypeLabel.value || '—'
+  const granularity = v.featureGranularity === 'identity_plus_product'
+    ? '身份证号 + 产品号'
+    : (v.featureGranularity === 'identity_only' ? '身份证号' : '—')
+  const catL1 = p.categoryLevel1 || '—'
+  const catL2 = p.categoryLevel2 || '—'
+  const tagList = Array.isArray(p.tags) ? p.tags.filter(Boolean) : (p.tags ? String(p.tags).split(/[,，、\s]+/).filter(Boolean) : [])
+  const dimensionList = Array.isArray(p.dimensions) ? p.dimensions.filter(Boolean) : (p.dimensions ? String(p.dimensions).split(/[,，、\s]+/).filter(Boolean) : [])
+  const rawDesc = v.description || ''
+  const summary = rawDesc.length > 80 ? rawDesc.slice(0, 80) + '…' : (rawDesc || '—')
+  return {
+    code: v.code || '—',
+    variableType: getTypeLabel(v.type) || '—',
+    fieldType: p.fieldType || v.fieldType || '—',
+    defaultValue: (p.defaultValue ?? v.defaultValue ?? '') === '' ? '无' : (String(p.defaultValue ?? v.defaultValue)),
+    sourceType: categoryLabel,
+    featureGranularity: granularity,
+    categoryLevel1: catL1,
+    categoryLevel2: catL2,
+    proposer: v.requirementProposer || v.creator || '—',
+    creator: v.creator || '—',
+    tagList,
+    dimensionList,
+    descriptionSummary: summary
+  }
+})
 
+/** 长文本：业务含义（合并 description + definition + profile.meaning） */
+const longtextMeaning = computed(() => {
+  const v = variableData.value
+  const p = profile.value
+  const parts = []
+  if (v.description) parts.push(v.description)
+  if (v.definition) parts.push(`【变量定义】\n${v.definition}`)
+  if (p.meaning && !parts.some(x => x.includes(p.meaning))) parts.push(`【业务解释】\n${p.meaning}`)
+  return parts.join('\n\n') || '暂无业务含义说明'
+})
+
+/** 长文本：技术口径 / 加工逻辑（SQL/公式/伪代码） */
+const longtextProcessingLogic = computed(() => {
+  const v = variableData.value
+  const p = profile.value
+  const logic = p.processingLogic || v.processingLogic || ''
+  const parts = []
+  if (logic) parts.push(logic)
+  if (p.formula && !parts.some(x => x.includes(p.formula))) parts.push(`公式：${p.formula}`)
+  return parts.join('\n\n')
+})
+
+/** 长文本：备注 */
+const longtextRemark = computed(() => profile.value.remark || variableData.value.remark || '')
+
+/** HIVE 表与字段（精简：库名/表名/是否分区/分区字段/更新频率 + 标准化前原始表与字段） */
+const hiveInfo = computed(() => {
+  const v = variableData.value
+  const p = profile.value
+
+  // 标准化后 HIVE 表
+  const existingHive = v.hiveInfo || {}
+  const rawTable = existingHive.tableName || p.sourceTableBigData || p.sourceTable || v.dataTableName || ''
+  let databaseName = existingHive.databaseName
+  let tableName = rawTable
+  if (!databaseName && rawTable && rawTable.includes('.')) {
+    const [db, rest] = rawTable.split(/\.(.+)/)
+    databaseName = db
+    tableName = rest
+  }
+  databaseName = databaseName || (rawTable ? rawTable.split('.')[0] : '') || 'risk_dw'
+
+  const partitionFields = existingHive.partitionFields || ['ds']
+  const isPartitioned = existingHive.isPartitioned != null ? existingHive.isPartitioned : (partitionFields.length > 0)
+
+  // 标准化前（原始上游）表与字段
+  // 优先：existingHive.sourceTable / sourceField（直接上游）；其次：profile.sourceTableRaw + sourceField；最后：p.stdTable + sourceField
+  const rawSrcTable = existingHive.sourceTable || p.sourceTableRaw || p.stdTable || p.sourceTable || ''
+  let sourceDbName = existingHive.sourceDb || p.sourceDb || ''
+  let sourceTableName = rawSrcTable
+  if (!sourceDbName && rawSrcTable && rawSrcTable.includes('.')) {
+    const [db, rest] = rawSrcTable.split(/\.(.+)/)
+    sourceDbName = db
+    sourceTableName = rest
+  }
+  if (!sourceDbName) sourceDbName = sourceTableName ? 'ods_raw' : '—'
+  if (!sourceTableName) sourceTableName = rawSrcTable || v.code || '—'
+  const sourceFieldName = existingHive.sourceField || p.sourceField || v.sourceField || v.code || '—'
+
+  return {
+    // 标准化前
+    sourceDbName,
+    sourceTableName,
+    sourceFieldName,
+    // 标准化后 HIVE
+    databaseName,
+    tableName: tableName ? `${databaseName}.${tableName}` : `${databaseName}.dwd_demo_table_df`,
+    isPartitioned,
+    partitionFields: isPartitioned ? partitionFields : [],
+    updateFrequency: existingHive.updateFrequency || v.updateFrequency || p.updateFrequency || 'T+1 日更新'
+  }
+})
+
+/** 技术关联信息（精简：数据源名 + 数据底表 + 接口号 + 响应字段） */
+const techLink = computed(() => {
+  const v = variableData.value
+  const p = profile.value
+  return {
+    dataSourceName: v.dataSourceName || '—',
+    dataTableName: v.dataTableName || '',
+    apiNo: v.apiNo || p.interfaceName || p.apiNo || '',
+    responseField: p.responseField || ''
+  }
+})
+
+/** 基础与人员信息（注册即确定 + 后期部分回填） */
+const basePersonInfo = computed(() => {
+  const v = variableData.value
+  return {
+    createdAt: v.createdAt || '—',
+    updatedAt: v.updatedAt || '—',
+    proposer: v.requirementProposer || v.creator || '—',
+    adminManager: v.adminManager || '—',
+    developer: v.developer || '—',
+    acceptor: v.acceptor || '—'
+  }
+})
+
+/** 复制文本的通用方法（加 toast 提示） */
+async function copyText(text, label = '内容') {
+  if (!text || text === '—') {
+    Message.info(`${label}为空，暂无可复制内容`)
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(String(text))
+    Message.success(`${label}已复制`)
+  } catch {
+    Message.warning(`${label}复制失败，请手动选中复制`)
+  }
+}
+
+/** typedProfile 的 InfoCard 结构（不再单独渲染，保留给其他潜在引用）*/
 const typedProfileInfo = computed(() => {
   const v = variableStore.currentVariable || {}
-  const profile = v.profile || {}
+  const pf = v.profile || {}
   const schema = PROFILE_FIELD_SCHEMAS[variableCategory.value] || []
-  return schema.map((f) => ({
-    label: f.label,
-    value: profile[f.key] != null && profile[f.key] !== '' ? String(profile[f.key]) : '无'
-  }))
+  const skipped = new Set([
+    'meaning','processingLogic','fieldType','defaultValue','tags','dimensions','remark',
+    'categoryLevel1','categoryLevel2','processingFormula','processingExpression'
+  ])
+  return schema
+    .filter(f => !skipped.has(f.key))
+    .map((f) => ({
+      label: f.label,
+      value: pf[f.key] != null && pf[f.key] !== '' ? String(pf[f.key]) : '无'
+    }))
 })
 
 const analysisReports = ref([])
@@ -735,44 +1063,9 @@ const usageTypeMap = {
   dashboard: { label: '仪表板', color: 'purple' }
 }
 
-// 基本信息
-const basicInfo = computed(() => [
-  { label: '变量名称', value: variableData.value.name },
-  { label: '变量编码', value: variableData.value.code },
-  { label: '变量类型', value: getTypeLabel(variableData.value.type) },
-  { label: '特征粒度', value: variableData.value.featureGranularity === 'identity_plus_product' ? '身份证号 + 产品号' : (variableData.value.featureGranularity === 'identity_only' ? '身份证号' : '—') },
-  { label: '需求提出人', value: variableData.value.requirementProposer || variableData.value.creator || '—' },
-  { label: '管理人', value: variableData.value.adminManager || '—' },
-  { label: '数仓开发人员', value: variableData.value.developer || '—' },
-  { label: '创建时间', value: variableData.value.createdAt },
-  { label: '更新时间', value: variableData.value.updatedAt }
-])
-
-// 技术属性
-const technicalInfo = computed(() => [
-  { label: '数据源', value: variableData.value.dataSourceName },
-  { label: '源字段', value: variableData.value.sourceField },
-  { label: '更新频率', value: variableData.value.updateFrequency }
-])
-
-// 长文本区域：描述（含变量定义）+ 口径（独立整行展示）
-const longTextInfo = computed(() => {
-  const desc = variableData.value.description || '暂无描述'
-  const def = variableData.value.definition
-  const descValue = def ? `${desc}\n\n【变量定义】\n${def}` : desc
-  return [
-    { label: '描述', value: descValue },
-    { label: '口径', value: variableData.value.processingLogic || '暂无口径说明' }
-  ]
-})
-
-// 数据源信息
-const sourceInfo = computed(() => [
-  { label: '数据源名称', value: variableData.value.dataSourceName },
-  { label: '数据源类型', value: variableData.value.sourceType === 'external' ? '外数' : (variableData.value.sourceType === 'credit' ? '征信' : '内数') },
-  { label: '连接信息', value: variableData.value.sourceType === 'external' ? '—' : 'PostgreSQL:10.0.0.1:5432/analytics' },
-  { label: '最后同步时间', value: '—' }
-])
+// 基本信息已统一到 ① 顶部 headerPublic / ② 基础人员信息卡（基础与人员信息）/
+// ③ 业务含义与技术口径 / ④ HIVE 表与字段 / ⑤ 技术关联信息 / ⑥ 后期补充卡
+// 此处删除重复 computed（basicInfo/technicalInfo/longTextInfo/sourceInfo/effectSummary）。
 
 // 获取状态标签
 const getStatusLabel = (status) => statusMap[status]?.label || status
@@ -795,13 +1088,6 @@ const lifecycleHeader = computed(() => ([
   { label: '当前状态', value: lifecycleCurrent.value.statusLabel },
   { label: '负责人', value: variableData.value.creator || '—' },
   { label: '最近更新时间', value: variableData.value.updatedAt || '—' }
-]))
-
-const effectSummary = computed(() => ([
-  { label: '评估得分', value: variableData.value.quality != null ? `${variableData.value.quality}` : (variableData.value.dataQuality ? `${variableData.value.dataQuality}` : '—') },
-  { label: '缺失率', value: variableData.value.missingRate != null ? `${variableData.value.missingRate}%` : '—' },
-  { label: '唯一值数量', value: variableData.value.uniqueValueCount ?? '—' },
-  { label: '更新频率', value: variableData.value.updateFrequency || '—' }
 ]))
 
 const lifecycleCurrent = computed(() => {
@@ -1176,6 +1462,43 @@ const retryLabel = computed(() => {
   return '重新同步'
 })
 
+/** 异常重试是否在离线分析 scope 内（仅 dw_online_failed） */
+const canRetryInOfflineScope = computed(() => {
+  if (!canRetry.value) return false
+  return getStatusCategory(currentMidloanStatus.value) === 'offline_analysis'
+})
+
+/** 异常重试是否在 API 调用 scope 内（internal_sync_failed/variable_sync_failed/offline_failed） */
+const canRetryInApiScope = computed(() => {
+  if (!canRetry.value) return false
+  return getStatusCategory(currentMidloanStatus.value) === 'online_interface'
+})
+
+/** 特征档案摘要（传给 StatusStepFlow 顶部摘要卡） */
+const featureArchiveSummary = computed(() => {
+  const v = variableData.value || {}
+  return {
+    featureId: v.id || v.featureId || '',
+    name: v.name || v.featureCnName || '',
+    devOaOrderId: v.devOaOrderId || '',
+    acceptor: v.acceptor || '',
+    dataTableName: v.dataTableName || ''
+  }
+})
+
+/** 非 midloan 品类的中文标签（用于提示卡，防御性兜底） */
+const nonMidloanCategoryLabel = computed(() => {
+  const v = variableData.value || {}
+  const cat = v.category || v.sourceType || ''
+  const map = {
+    external: '外数',
+    credit: '征信',
+    internal: '内数',
+    behavior: '行为（非贷中）'
+  }
+  return map[cat] || cat || '当前'
+})
+
 // 动态操作按钮
 const allowedActions = computed(() => {
   return allowedActionsByStatus(currentMidloanStatus.value, variableData.value, roleForActions.value)
@@ -1265,6 +1588,12 @@ const onRetry = () => {
     Message.warning('当前角色无「重新同步」权限，请切换为风险数据管理员')
     return
   }
+  // 内数同步失败：先引导用户补充数据底表，再重试
+  if (variableData.value?.midloanStatus === 'internal_sync_failed' && !variableData.value?.dataTableName) {
+    currentActionKey.value = 'retry_sync_supplement_table'
+    actionDrawerVisible.value = true
+    return
+  }
   const r = MidloanStateEngine.retrySync(fid)
   if (r.ok) Message.success('已重新同步，等待内数/变量中心回调')
   else Message.error(r.reason || '重试失败')
@@ -1290,8 +1619,18 @@ const onAction = (action) => {
     registerDrawerVisible.value = true
     return
   }
-  // 走抽屉的动作（文档 A0 / C1 / E0 / E1 / F0）
-  if (['submit_dev_oa', 'business_verify_pass', 'admin_confirm_pass', 'submit_production_order'].includes(action.key)) {
+  // 走抽屉的动作（文档 A0 / C1 / E0 / E1 / F0 / 管理员状态修正 / 内数失败补表 / 变量归档）
+  if ([
+    'submit_dev_oa',
+    'business_verify_pass',
+    'admin_confirm_pass',
+    'submit_production_order',
+    'oa_production_approve',
+    'oa_production_reject',
+    'correct_status',
+    'retry_sync_supplement_table',
+    'archive_variable'
+  ].includes(action.key)) {
     currentActionKey.value = action.key
     actionDrawerVisible.value = true
     return
@@ -1559,6 +1898,111 @@ setTimeout(() => {
 
 :deep(.arco-descriptions-item-value-inline) {
   color: var(--color-text-1);
+}
+
+/* ====== 顶部公共信息（注册即确定）====== */
+.header-public-grid {
+  margin-top: 12px;
+  background: var(--color-fill-1, #f7f8fa);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.header-public-grid .public-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.header-public-grid .public-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.header-public-grid .public-item.public-full {
+  grid-column: span 2;
+}
+.header-public-grid .label {
+  color: var(--color-text-3, #86909c);
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.header-public-grid .value {
+  color: var(--color-text-1, #1d2129);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.header-public-grid .value.tag-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.header-public-grid .value .empty { color: var(--color-text-4); }
+
+.header-description-summary {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-2, #4e5969);
+  background: #fafbfc;
+  border-left: 3px solid var(--color-primary-light-3, #94caff);
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+}
+.header-description-summary .label {
+  color: var(--color-text-3, #86909c);
+  margin-right: 6px;
+}
+
+/* ====== 长文本区（业务含义 / 技术口径 / 备注）====== */
+.longtext-block { line-height: 1.7; }
+.longtext-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-1);
+  margin-bottom: 8px;
+}
+.longtext-value {
+  margin: 0 !important;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--color-text-2, #4e5969);
+  font-size: 13px;
+}
+.longtext-code {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+  background: var(--color-fill-2, #f2f3f5);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+.mono.strong {
+  color: var(--color-primary, #165dff);
+  font-weight: 600;
 }
 
 .quality-item {

@@ -130,14 +130,26 @@
               <a-option value="boolean">布尔型</a-option>
             </a-select>
           </a-form-item>
-          <a-form-item label="状态">
+          <a-form-item label="离线分析状态">
             <a-select
-              v-model="filterForm.status"
-              placeholder="全部状态"
+              v-model="filterForm.offlineAnalysisStatus"
+              placeholder="全部离线分析状态"
               allow-clear
               @change="handleSearch"
             >
-              <a-option v-for="opt in MIDLOAN_STATUS_FILTER_OPTIONS" :key="opt.value" :value="opt.value">
+              <a-option v-for="opt in OFFLINE_ANALYSIS_FILTER_OPTIONS" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </a-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="API调用状态">
+            <a-select
+              v-model="filterForm.apiCallStatus"
+              placeholder="全部API调用状态"
+              allow-clear
+              @change="handleSearch"
+            >
+              <a-option v-for="opt in API_CALL_FILTER_OPTIONS" :key="opt.value" :value="opt.value">
                 {{ opt.label }}
               </a-option>
             </a-select>
@@ -175,7 +187,7 @@
               <template #content>
                 <a-doption v-if="!savedViews.length" value="__empty" disabled>暂无保存的视图</a-doption>
                 <a-doption v-for="item in savedViews" :key="item.id" :value="item.id">
-                  {{ item.name }} ({{ item.filters.type || '全部' }} / {{ item.filters.status || '全部' }})
+                  {{ item.name }} ({{ item.filters.type || '全部' }} / {{ item.filters.offlineAnalysisStatus || item.filters.apiCallStatus || '全部状态' }})
                 </a-doption>
               </template>
             </a-dropdown>
@@ -238,6 +250,36 @@
       @update:visible="actionDrawerVisible = $event"
       @submit="handleActionDrawerSubmit"
     />
+
+    <!-- ========== 提交上线抽屉（非 midloan 行为品类·草稿/pending） ========== -->
+    <a-modal
+      v-model:visible="onlineApprovalVisible"
+      title="提交上线审批"
+      :width="480"
+      ok-text="提交审批"
+      cancel-text="取消"
+      :ok-loading="onlineApprovalSubmitting"
+      @ok="handleOnlineApprovalSubmit"
+      @cancel="onlineApprovalForm.reason = ''; onlineApprovalForm.approver = 'dmt_admin'"
+    >
+      <a-alert type="info" :show-icon="false" style="margin-bottom: 12px;">
+        <p style="margin: 0; font-size: 13px;">变量 <strong>{{ onlineApprovalRecord?.name || '' }}</strong> 提交后将进入审批流程。</p>
+      </a-alert>
+      <a-form :model="onlineApprovalForm" layout="vertical">
+        <a-form-item label="启用原因" required>
+          <a-textarea v-model="onlineApprovalForm.reason" :rows="3" placeholder="请填写启用原因" />
+        </a-form-item>
+        <a-form-item label="预计上线时间" required>
+          <a-input v-model="onlineApprovalForm.expectedOnlineTime" placeholder="例如：2026-09-01" />
+        </a-form-item>
+        <a-form-item label="审批人" required>
+          <a-select v-model="onlineApprovalForm.approver">
+            <a-option value="dmt_admin">DMT 管理员（小张）</a-option>
+            <a-option value="data_admin">数据管理员（小王）</a-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-modal>
 
     <!-- 保存视图弹窗 -->
     <a-modal
@@ -404,22 +446,77 @@
               {{ getRiskCategoryLabel(record.category) }}
             </a-tag>
           </template>
-          <template #midloanStatusCell="{ record }">
-            <a-space :size="4" wrap>
-              <a-tag :color="getMidloanStatusColor(record.midloanStatus || record.status)" size="small">
-                {{ getMidloanStatusLabel(record.midloanStatus || record.status) }}
-              </a-tag>
-              <!-- 有 main 操作：金色 tag（点击跳转详情）-->
-              <a-tooltip v-if="record.actionHint" :content="`去详情页执行：${record.actionHint}`">
-                <a-tag color="gold" size="mini" style="cursor: pointer" @click="handleQuickAction(record)">
-                  <icon-right /> {{ record.actionHint }}
+          <!-- 离线分析状态列（阶段1-3） -->
+          <template #offlineAnalysisStatusCell="{ record }">
+            <div class="status-cell-stack">
+              <a-tooltip
+                v-if="getStatusCategory(record.midloanStatus || record.status) === 'offline_analysis' && record.actionHintKey"
+                :content="`点这里：${record.actionHint}`"
+              >
+                <a-tag
+                  :color="getMidloanStatusColor(record.midloanStatus || record.status)"
+                  size="small"
+                  style="cursor: pointer"
+                  @click="handleQuickAction(record)"
+                >
+                  <icon-right /> {{ getOfflineAnalysisDisplay(record.midloanStatus || record.status) }}
                 </a-tag>
               </a-tooltip>
-              <!-- 无操作：灰色占位（明确表达"无操作"）-->
-              <a-tag v-else color="gray" size="mini" style="opacity: 0.65">
-                {{ getStatusDescription(record.midloanStatus || record.status) }}
+              <a-tag
+                v-else-if="getStatusCategory(record.midloanStatus || record.status) === 'offline_analysis'"
+                :color="getMidloanStatusColor(record.midloanStatus || record.status)"
+                size="small"
+              >
+                {{ getOfflineAnalysisDisplay(record.midloanStatus || record.status) }}
               </a-tag>
-            </a-space>
+              <span v-else-if="getStatusCategory(record.midloanStatus || record.status) === 'online_interface'" class="status-done">已完成</span>
+              <span v-else>—</span>
+              <!-- 操作提示（仅离线分析阶段显示） -->
+              <a-tooltip
+                v-if="getStatusCategory(record.midloanStatus || record.status) === 'offline_analysis' && record.actionHint"
+                :content="`点这里唤起抽屉：${record.actionHint}`"
+              >
+                <a-tag color="gold" size="mini" style="cursor: pointer" @click="handleQuickAction(record)">
+                  <icon-thunderbolt /> {{ record.actionHint }}
+                </a-tag>
+              </a-tooltip>
+            </div>
+          </template>
+          <!-- API调用状态列（阶段4-5） -->
+          <template #apiCallStatusCell="{ record }">
+            <div class="status-cell-stack">
+              <a-tooltip
+                v-if="getStatusCategory(record.midloanStatus || record.status) === 'online_interface' && record.actionHintKey"
+                :content="`点这里：${record.actionHint}`"
+              >
+                <a-tag
+                  :color="getMidloanStatusColor(record.midloanStatus || record.status)"
+                  size="small"
+                  style="cursor: pointer"
+                  @click="handleQuickAction(record)"
+                >
+                  <icon-right /> {{ getApiCallDisplay(record.midloanStatus || record.status) }}
+                </a-tag>
+              </a-tooltip>
+              <a-tag
+                v-else-if="getStatusCategory(record.midloanStatus || record.status) === 'online_interface'"
+                :color="getMidloanStatusColor(record.midloanStatus || record.status)"
+                size="small"
+              >
+                {{ getApiCallDisplay(record.midloanStatus || record.status) }}
+              </a-tag>
+              <span v-else-if="getStatusCategory(record.midloanStatus || record.status) === 'offline_analysis'" class="status-pending">未进入</span>
+              <span v-else>—</span>
+              <!-- 操作提示（仅API调用阶段显示） -->
+              <a-tooltip
+                v-if="getStatusCategory(record.midloanStatus || record.status) === 'online_interface' && record.actionHint"
+                :content="`点这里唤起抽屉：${record.actionHint}`"
+              >
+                <a-tag color="gold" size="mini" style="cursor: pointer" @click="handleQuickAction(record)">
+                  <icon-thunderbolt /> {{ record.actionHint }}
+                </a-tag>
+              </a-tooltip>
+            </div>
           </template>
           <template #l1CategoryCell="{ record }">
             <a-tag color="arcoblue" size="small">{{ l1CategoryLabel(record.l1Category) }}</a-tag>
@@ -683,7 +780,7 @@ import DmtPageHeader from '@/modules/variable-hub/components/PageHeader.vue'
 import DmtStatGroup from '@/modules/variable-hub/components/StatGroup.vue'
 import { ExploreStore } from '@/modules/variable-hub/mock/explore/explore-store'
 import { RISK_CATEGORY_OPTIONS, MIDLOAN_L1_CATEGORIES, VARIABLE_SOURCE_FILTER_OPTIONS } from '@/modules/variable-hub/constants/riskCategoryMap'
-import { midloanStatusLabel, midloanStatusColor, allowedActionsByStatus, canEdit, getEditLockReason, tableActionsByStatus } from '@/modules/variable-hub/constants/midloanStatusMap'
+import { midloanStatusLabel, midloanStatusColor, allowedActionsByStatus, canEdit, getEditLockReason, tableActionsByStatus, OFFLINE_ANALYSIS_FILTER_OPTIONS, API_CALL_FILTER_OPTIONS, getStatusCategory, getOfflineAnalysisDisplay, getApiCallDisplay } from '@/modules/variable-hub/constants/midloanStatusMap'
 import { riskCategoryLabel, riskCategoryColor } from '@/modules/variable-hub/constants/riskCategoryMap'
 import DerivationStore from '@/modules/variable-hub/mock/risk-feature/derivations'
 import DerivationCreateModal from '@/modules/variable-hub/components/risk-feature/DerivationCreateModal.vue'
@@ -752,7 +849,8 @@ const filterForm = reactive({
   riskCategory: '',
   sourceFilter: '',
   type: '',
-  status: '',
+  offlineAnalysisStatus: '',
+  apiCallStatus: '',
   l1Category: '',
   l2Category: ''
 })
@@ -870,7 +968,8 @@ const handleSelectSavedView = (val) => {
   globalKeyword.value = view.filters.keyword || ''
   filterForm.keyword = view.filters.keyword || ''
   filterForm.type = view.filters.type || ''
-  filterForm.status = view.filters.status || ''
+  filterForm.offlineAnalysisStatus = view.filters.offlineAnalysisStatus || ''
+  filterForm.apiCallStatus = view.filters.apiCallStatus || ''
   filterForm.l1Category = view.filters.l1Category || ''
   filterForm.l2Category = view.filters.l2Category || ''
   pagination.current = 1
@@ -908,7 +1007,8 @@ const columnsAll = [
   { title: '变量编码', dataIndex: 'code', width: 180 },
   { title: '品类', dataIndex: 'category', slotName: 'categoryCell', width: 110 },
   { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
-  { title: '状态', dataIndex: 'midloanStatus', slotName: 'midloanStatusCell', width: 180 },
+  { title: '离线分析状态', dataIndex: 'offlineAnalysisStatus', slotName: 'offlineAnalysisStatusCell', width: 140 },
+  { title: 'API调用状态', dataIndex: 'apiCallStatus', slotName: 'apiCallStatusCell', width: 140 },
   { title: '一级分类', dataIndex: 'l1Category', slotName: 'l1CategoryCell', width: 110 },
   { title: '二级分类', dataIndex: 'l2Category', slotName: 'l2CategoryCell', width: 130 },
   { title: '创建人', dataIndex: 'creator', width: 120 },
@@ -919,7 +1019,8 @@ const columnsAll = [
 const columnsEffect = [
   { title: '变量名称', dataIndex: 'name', slotName: 'name', width: 200 },
   { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
-  { title: '状态', dataIndex: 'midloanStatus', slotName: 'midloanStatusCell', width: 160 },
+  { title: '离线分析状态', dataIndex: 'offlineAnalysisStatus', slotName: 'offlineAnalysisStatusCell', width: 140 },
+  { title: 'API调用状态', dataIndex: 'apiCallStatus', slotName: 'apiCallStatusCell', width: 140 },
   { title: 'IV', dataIndex: 'effectMetrics', slotName: 'ivCell', width: 100, align: 'right' },
   { title: 'KS', dataIndex: 'effectMetrics', slotName: 'ksCell', width: 100, align: 'right' },
   { title: 'AUC', dataIndex: 'effectMetrics', slotName: 'aucCell', width: 100, align: 'right' },
@@ -931,7 +1032,8 @@ const columnsEffect = [
 const columnsCost = [
   { title: '变量名称', dataIndex: 'name', slotName: 'name', width: 200 },
   { title: '类型', dataIndex: 'type', slotName: 'type', width: 100 },
-  { title: '状态', dataIndex: 'midloanStatus', slotName: 'midloanStatusCell', width: 160 },
+  { title: '离线分析状态', dataIndex: 'offlineAnalysisStatus', slotName: 'offlineAnalysisStatusCell', width: 140 },
+  { title: 'API调用状态', dataIndex: 'apiCallStatus', slotName: 'apiCallStatusCell', width: 140 },
   { title: '单价(元/次)', dataIndex: 'costMetrics', slotName: 'priceCell', width: 120, align: 'right' },
   { title: '月均调用', dataIndex: 'costMetrics', slotName: 'callsCell', width: 130, align: 'right' },
   { title: '月均成本', dataIndex: 'costMetrics', slotName: 'monthlyCostCell', width: 140, align: 'right' },
@@ -990,69 +1092,161 @@ const formatNumber = (value) => {
 // 当前角色（每次渲染读取，不做响应式追踪，避免 Layout 循环）
 // 切换角色会触发 DemoConsole 的 user-context-changed 事件
 // 我们直接读取 UserContext.get().role 而不订阅，避免循环
-const displayList = computed(() => {
-  const list = variableList.value || []
+// ============ 最外层：状态 × 操作 映射逻辑（集中管理）============
+/**
+ * 状态与操作的对应关系集中定义在最外层，便于维护和审查。
+ *
+ * 数据形态分两大类：
+ * - 离线分析状态（阶段1-3）：需求提出→已注册→开发中→数仓已上线→待业务验证→业务已验证→管理员已确认
+ * - API调用状态（阶段4-5）：参数准备→内数注册中→变量中心注册中→已上线→已下线
+ *
+ * 每个状态对应：
+ * - topActions：列表页顶层快捷按钮（详情/编辑/补充底表/外数档案/重试）
+ * - mainActions：主流程操作（通过「更多操作」dropdown 触发）
+ */
+const buildStatusActionMap = (record, role) => {
+  const status = record.midloanStatus || record.status
+  const { topActions, mainActions } = tableActionsByStatus(status, record, role)
+  const topKeys = new Set(topActions.map(a => a.key))
+  const dedupedMain = mainActions.filter(a => !topKeys.has(a.key))
+  /** 第一个主流程操作用于状态列「点这里」快捷入口 */
+  const firstMainAction = dedupedMain.length > 0 ? dedupedMain[0] : null
+  return {
+    status,
+    topActions,
+    mainActions: dedupedMain,
+    actionHint: firstMainAction ? firstMainAction.label : '',
+    actionHintKey: firstMainAction ? firstMainAction.key : ''
+  }
+}
+
+// 预计算所有行的状态×操作映射（最外层集中处理，模板只做展示）
+const statusActionMap = computed(() => {
   const role = UserContext.get().role
+  const map = {}
+  const list = variableList.value || []
+  list.forEach(record => {
+    map[record.id] = buildStatusActionMap(record, role)
+  })
+  return map
+})
+
+const displayList = computed(() => {
+  let list = variableList.value || []
+  // 离线分析状态筛选（阶段1-3）
+  if (filterForm.offlineAnalysisStatus) {
+    list = list.filter(record => {
+      const status = record.midloanStatus || record.status
+      return getStatusCategory(status) === 'offline_analysis' && status === filterForm.offlineAnalysisStatus
+    })
+  }
+  // API调用状态筛选（阶段4-5）
+  if (filterForm.apiCallStatus) {
+    list = list.filter(record => {
+      const status = record.midloanStatus || record.status
+      return getStatusCategory(status) === 'online_interface' && status === filterForm.apiCallStatus
+    })
+  }
   return list.map(record => {
-    const status = record.midloanStatus || record.status
-    const all = allowedActionsByStatus(status, record, role)
-    const mainActions = all.filter(a => a.category !== 'demo')
-
-    // 去重：若顶层按钮已展示该 action（如 online 的「申请下线」），
-    // 则不在状态 tag 上重复显示 hint，避免视觉冗余
-    const { topActions } = tableActionsByStatus(status, record, role)
-    const topKeys = new Set(topActions.map(a => a.key))
-    const dedupedMain = mainActions.filter(a => !topKeys.has(a.key))
-
+    const actionInfo = statusActionMap.value[record.id] || { actionHint: '', actionHintKey: '' }
     return {
       ...record,
-      actionHint: dedupedMain.length > 0 ? dedupedMain[0].label : ''
+      actionHint: actionInfo.actionHint,
+      actionHintKey: actionInfo.actionHintKey
     }
   })
 })
 
 /**
- * 获取状态的简短描述（用于无操作时的灰色占位标签）
- */
-const getStatusDescription = (status) => {
-  const map = {
-    developing_oa: '开发中（OA单）',
-    param_preparing: '参数准备中',
-    syncing_internal: '内数注册中',
-    syncing_variable: '变量中心注册中',
-    offline: '已归档（终态）'
-  }
-  return map[status] || '无操作'
-}
-
-/**
  * 表格内的状态列快捷操作处理
- * 直接跳转详情页（详情页已有完整操作按钮）
+ * 点击状态列的「点这里：xxx」tag → 直接唤起对应抽屉，不再跳转详情页
+ * 1. 主流程5个动作（submit_requirement / submit_dev_oa / business_verify_pass / admin_confirm_pass / submit_production_order）
+ *    → MidloanActionDrawer
+ * 2. OA 投产审批（oa_production_approve / oa_production_reject）
+ *    → MidloanActionDrawer（Drawer 内部需要 actionKey 兼容）
+ * 3. submit_online（草稿/pending）→ onlineApproval 抽屉
+ * 4. retry_* → 直接执行（不需抽屉）
  */
-const handleQuickAction = (record) => {
+const handleQuickAction = (record, actionKey) => {
+  // 优先取函数传入的 actionKey（主状态tag点击时用）；未传入则从 record 取
+  const key = actionKey || record.actionHintKey
+  if (!key) {
+    Message.warning('当前状态下无可执行操作')
+    return
+  }
+
+  // 主流程5个 + OA审批2个 + 管理员状态修正 + 内数失败补表 + 变量归档 → 唤起 MidloanActionDrawer
+  const drawerActions = [
+    'submit_requirement',
+    'submit_dev_oa',
+    'business_verify_pass',
+    'admin_confirm_pass',
+    'submit_production_order',
+    'oa_production_approve',
+    'oa_production_reject',
+    'correct_status',
+    'retry_sync_supplement_table',
+    'archive_variable'
+  ]
+  if (drawerActions.includes(key)) {
+    actionDrawerRecord.value = record
+    actionDrawerKey.value = key
+    actionDrawerVisible.value = true
+    return
+  }
+
+  // 提交上线（非 midloan 行为品类·草稿/pending）
+  if (key === 'submit_online') {
+    onlineApprovalRecord.value = record
+    onlineApprovalVisible.value = true
+    return
+  }
+
+  // 重试类（直接执行）
+  if (key.startsWith('retry') || key === 'manual_batch_retry') {
+    // 内数同步失败 + 无数据底表：先引导补充数据底表
+    if (key === 'retry_sync' && record?.midloanStatus === 'internal_sync_failed' && !record?.dataTableName) {
+      actionDrawerRecord.value = record
+      actionDrawerKey.value = 'retry_sync_supplement_table'
+      actionDrawerVisible.value = true
+      return
+    }
+    triggerTableAction(record, { key })
+    return
+  }
+
+  // 兜底：跳详情页
   handleViewDetail(record)
 }
 
 /**
  * 获取某行变量在当前状态+角色下的顶层快捷操作
- * （用户反馈：操作×状态映射）
+ * 从最外层 statusActionMap 读取，保证映射逻辑集中管理
  */
 const getTableTopActions = (record) => {
-  const status = record.midloanStatus || record.status
-  const role = UserContext.get().role
-  const { topActions } = tableActionsByStatus(status, record, role)
-  return topActions
+  const actionInfo = statusActionMap.value[record.id]
+  if (!actionInfo) {
+    const status = record.midloanStatus || record.status
+    const role = UserContext.get().role
+    const { topActions } = tableActionsByStatus(status, record, role)
+    return topActions
+  }
+  return actionInfo.topActions
 }
 
 /**
  * 获取某行变量在当前状态+角色下的主流程操作（dropdown）
- * （用户反馈：动态操作下沉到列表页）
+ * 从最外层 statusActionMap 读取
  */
 const getTableMainActions = (record) => {
-  const status = record.midloanStatus || record.status
-  const role = UserContext.get().role
-  const { mainActions } = tableActionsByStatus(status, record, role)
-  return mainActions
+  const actionInfo = statusActionMap.value[record.id]
+  if (!actionInfo) {
+    const status = record.midloanStatus || record.status
+    const role = UserContext.get().role
+    const { mainActions } = tableActionsByStatus(status, record, role)
+    return mainActions
+  }
+  return actionInfo.mainActions
 }
 
 /**
@@ -1073,7 +1267,7 @@ const handleTableAction = (record, action) => {
 
 /**
  * 统一的表格 action 触发入口
- * 1. 需要抽屉的 action（submit_requirement / submit_dev_oa / business_verify_pass / admin_confirm_pass / submit_production_order）→ 弹 MidloanActionDrawer
+ * 1. 需要抽屉的 action（submit_requirement / submit_dev_oa / business_verify_pass / admin_confirm_pass / submit_production_order / submit_online / correct_status）→ 弹对应抽屉
  * 2. 直接执行的 action（retry_sync / retry_dw / manual_batch_retry / simulate_*）→ 直接调用 stateEngine
  * 3. 详情 / 编辑 / 补充数据底表 / 外数档案 / 评估 / 血缘 / 变更记录 → 跳转到详情页对应 Tab
  */
@@ -1085,6 +1279,21 @@ const triggerTableAction = (record, action) => {
   if (action.key === 'submit_requirement') {
     registerDrawerRequirementData.value = record
     registerDrawerVisible.value = true
+    return
+  }
+
+  // submit_online：非 midloan 行为品类的草稿/pending → 弹简化的上线审批抽屉
+  if (action.key === 'submit_online') {
+    onlineApprovalRecord.value = record
+    onlineApprovalVisible.value = true
+    return
+  }
+
+  // correct_status：管理员专属，弹状态修正抽屉
+  if (action.key === 'correct_status') {
+    actionDrawerRecord.value = record
+    actionDrawerKey.value = 'correct_status'
+    actionDrawerVisible.value = true
     return
   }
 
@@ -1178,13 +1387,15 @@ const handleActionDrawerSubmit = (payload) => {
   if (!actionDrawerRecord.value) return
   actionDrawerSubmitting.value = true
   try {
+    // correct_status：payload 含 targetStatus / reason / remark
+    // 其他主流程：payload 透传到 stateEngine
     const result = MidloanStateEngine.handleAction(
       actionDrawerRecord.value.id,
       actionDrawerKey.value,
       { operator: UserContext.get().name || '小李', ...payload }
     )
     if (result?.ok) {
-      Message.success('操作成功，状态已更新')
+      Message.success(actionDrawerKey.value === 'correct_status' ? '状态已修正' : '操作成功，状态已更新')
       actionDrawerVisible.value = false
       fetchVariableList()
     } else {
@@ -1192,6 +1403,45 @@ const handleActionDrawerSubmit = (payload) => {
     }
   } finally {
     actionDrawerSubmitting.value = false
+  }
+}
+
+// ============ 提交上线（非 midloan 行为品类·草稿/pending） ============
+const onlineApprovalVisible = ref(false)
+const onlineApprovalRecord = ref(null)
+const onlineApprovalSubmitting = ref(false)
+const onlineApprovalForm = reactive({
+  reason: '',
+  expectedOnlineTime: '',
+  approver: 'dmt_admin'
+})
+
+const handleOnlineApprovalSubmit = async () => {
+  if (!onlineApprovalRecord.value) return
+  if (!onlineApprovalForm.reason.trim()) {
+    Message.warning('请填写启用原因')
+    return
+  }
+  if (!onlineApprovalForm.expectedOnlineTime.trim()) {
+    Message.warning('请填写预计上线时间')
+    return
+  }
+  onlineApprovalSubmitting.value = true
+  try {
+    const record = VariableStatusStore.submitForOnline({
+      variableId: onlineApprovalRecord.value.id,
+      reason: onlineApprovalForm.reason.trim(),
+      expectedOnlineTime: onlineApprovalForm.expectedOnlineTime.trim(),
+      approver: onlineApprovalForm.approver
+    })
+    Message.success(`已发起审批：审批单 ${record.id}（审批人：${onlineApprovalForm.approver}）`)
+    onlineApprovalVisible.value = false
+    onlineApprovalForm.reason = ''
+    onlineApprovalForm.expectedOnlineTime = ''
+    onlineApprovalForm.approver = 'dmt_admin'
+    fetchVariableList()
+  } finally {
+    onlineApprovalSubmitting.value = false
   }
 }
 
@@ -1287,26 +1537,6 @@ const l1CategoryLabel = (key) => {
   return found ? found.label : (key || '—')
 }
 
-// 状态筛选下拉选项（用 11 状态机常量，严格对齐文档 D.4）
-const MIDLOAN_STATUS_FILTER_OPTIONS = [
-  { value: 'requirement_proposal', label: '需求提出',       color: 'orange' },
-  { value: 'registered',           label: '已注册',         color: 'blue' },
-  { value: 'developing_oa',        label: '开发中（OA单）', color: 'purple' },
-  { value: 'dw_online',            label: '数仓已上线',     color: 'cyan-dark' },
-  { value: 'business_acceptance',  label: '待业务验证',     color: 'magenta' },
-  { value: 'business_verified',    label: '业务已验证',     color: 'gold' },
-  { value: 'admin_confirmed',      label: '管理员已确认',   color: 'green-light' },
-  { value: 'param_preparing',      label: '参数准备',       color: 'cyan' },
-  { value: 'syncing_internal',     label: '内数注册中',     color: 'cyan' },
-  { value: 'syncing_variable',     label: '变量中心注册中', color: 'cyan' },
-  { value: 'online',              label: '已上线',         color: 'green' },
-  { value: 'offline',             label: '已下线',         color: 'darkgray' },
-  { value: 'internal_sync_failed', label: '内数注册失败',  color: 'red' },
-  { value: 'variable_sync_failed', label: '变量中心注册失败', color: 'red' },
-  { value: 'dw_online_failed',    label: '数仓上线失败',   color: 'red' },
-  { value: 'offline_failed',      label: '下线接收失败',   color: 'red' }
-]
-
 // 二级分类动态选项（从现有变量 l2Category 去重）
 const l2CategoryOptionsForFilter = computed(() => {
   const set = new Set()
@@ -1370,8 +1600,7 @@ const fetchVariableList = async () => {
       page: pagination.current,
       pageSize: pagination.pageSize,
       keyword: filterForm.keyword,
-      type: filterForm.type,
-      status: filterForm.status
+      type: filterForm.type
     })
   } catch (error) {
     console.error('获取变量列表失败:', error)
@@ -1382,8 +1611,7 @@ const fetchVariableList = async () => {
 const handleSearch = () => {
   variableStore.updateFilters({
     keyword: filterForm.keyword,
-    type: filterForm.type,
-    status: filterForm.status
+    type: filterForm.type
   })
   pagination.current = 1
   clearSelection()
@@ -1393,7 +1621,8 @@ const handleSearch = () => {
 const handleReset = () => {
   filterForm.keyword = ''
   filterForm.type = ''
-  filterForm.status = ''
+  filterForm.offlineAnalysisStatus = ''
+  filterForm.apiCallStatus = ''
   filterForm.l1Category = ''
   filterForm.l2Category = ''
   filterForm.sourceFilter = ''
@@ -2245,5 +2474,20 @@ refreshDerivations()
 }
 .placeholder {
   color: var(--color-text-4, #c9cdd4);
+}
+
+/* 离线分析/API调用状态列辅助样式 */
+.status-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.status-done {
+  color: var(--color-green-6, #00b42a);
+  font-size: 12px;
+}
+.status-pending {
+  color: var(--color-text-4, #c9cdd4);
+  font-size: 12px;
 }
 </style>

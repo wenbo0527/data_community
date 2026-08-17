@@ -39,7 +39,7 @@ export const ROLE_COLORS: Record<AnyRole, string> = {
   oa_system: 'cyan'
 }
 
-/** 文档 D.2 权限矩阵：3 角色 12 操作（2026-08-10 新增需求提出/业务验收节点） */
+/** 文档 D.2 权限矩阵：3 角色 13 操作（2026-08-10 新增需求提出/业务验收节点；v2.1 新增管理员状态修正） */
 export type Permission =
   | 'submit_requirement'        // A0 需求提出审核
   | 'submit_dev_oa'             // C1
@@ -51,6 +51,7 @@ export type Permission =
   | 'retry_dw'                  // D2
   | 'manual_batch_retry'        // K2
   | 'supplement_table'          // B1
+  | 'correct_status'            // v2.1 管理员状态修正
 
 export const PERMISSIONS: Record<Permission, Permission> = {
   submit_requirement: 'submit_requirement',
@@ -63,4 +64,5 @@ export const PERMISSIONS: Record<Permission, Permission> = {
   retry_dw: 'retry_dw',
   manual_batch_retry: 'manual_batch_retry',
   supplement_table: 'supplement_table',
+  correct_status: 'correct_status',
 }

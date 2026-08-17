@@ -1,10 +1,16 @@
 <!--
   通用 midloan 状态切换抽屉 · 文档 v2.1 C1 / E0 / E1 / F0 / K1
-  - 审核通过+注册（A0）：标准化附件 switch + 审核说明
+  - 注册特征（A0·审核注册）：与 VariableRegisterDrawer 审核模式完全一致的 4 区块表单
+    （特征核心属性 / 分类信息 / 来源与时效 / 协作信息），所有字段均可编辑。
+    注意：实际触发入口（详情页/列表页 submit_requirement）走的是 VariableRegisterDrawer，
+    这里的 submit_requirement 分支作为通用入口兜底，内容保持一致。
   - 提开发OA单（C1）：预览特征信息 + 填写 OA 单号 + 说明（接收方=数仓团队，展示但不可改）
   - 业务验证通过（E0·台账内操作）：预览特征信息 + 验证说明（不走OA单）
   - 管理员确认通过（E1·台账内操作）：预览特征信息 + 确认说明（不走OA单）
   - 提投产单（F0）：预览特征信息 + OA投产单号自动生成 + 参数准备提示 + 备注
+  - OA 审批通过/驳回（F0.1/F0.2）：审批意见/驳回原因+说明
+  - 内数同步失败补表（retry_sync_supplement_table）：先补表再重试
+  - 状态修正（管理员专属）：目标状态选择 + 修正原因
 -->
 <template>
   <a-drawer
@@ -35,22 +41,148 @@
     </a-card>
 
     <a-form :model="form" layout="vertical" :disabled="submitting">
-      <!-- 需求审核注册（A0：管理员审核通过后进入注册）-->
+      <!-- 注册特征（A0：审核注册，与 VariableRegisterDrawer 审核模式字段一致）-->
       <template v-if="actionKey === 'submit_requirement'">
         <a-alert type="info" :show-icon="false" style="margin-bottom: 12px">
           <p style="margin: 0; font-size: 13px;">
-            审核通过后将自动完成：重复备案校验 + 参数映射 + 进入「已注册」状态。流程不做回退。
+            管理员正在对 A1 需求进行审核+注册。提交后将自动完成：重复备案校验 + 参数映射 + 进入「已注册」状态。所有字段均可编辑修改，流程不做回退。
           </p>
         </a-alert>
-        <a-form-item label="标准化附件">
-          <a-switch v-model="form.standardizedAttachment" />
-          <template #extra>
-            <span style="color: var(--color-text-3); font-size: 12px;">确认已补充标准化需求附件</span>
-          </template>
-        </a-form-item>
-        <a-form-item label="审核说明（可选）">
-          <a-textarea v-model="form.remark" :rows="3" placeholder="补充审核说明" />
-        </a-form-item>
+
+        <!-- 区块 1：特征核心属性 -->
+        <a-card title="特征核心属性" :bordered="false" size="small" class="reg-block">
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="特征英文名" required>
+                <a-input v-model="form.name" placeholder="例如：MIDLOAN_BIGTXN_CNT_30D" :max-length="30" show-word-limit />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="特征中文名" required>
+                <a-input v-model="form.featureCnName" placeholder="例如：近30日大额交易次数" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="字段类型" required>
+                <a-select v-model="form.fieldType" :options="FIELD_TYPE_OPTIONS" placeholder="请选择" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="默认值（非必填）">
+                <a-input v-model="form.defaultValue" placeholder="例如：0" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-form-item label="加工逻辑" required>
+            <a-textarea v-model="form.processingLogic" :rows="3" placeholder="描述特征的衍生/计算规则" />
+          </a-form-item>
+          <a-form-item label="特征粒度" required>
+            <a-radio-group v-model="form.featureGranularity">
+              <a-radio value="identity_only">身份证号</a-radio>
+              <a-radio value="identity_plus_product">身份证号 + 产品号</a-radio>
+            </a-radio-group>
+          </a-form-item>
+          <a-form-item label="特征分类">
+            <a-radio-group v-model="form.category">
+              <a-radio value="midloan_behavior">贷中行为（一期固定）</a-radio>
+            </a-radio-group>
+          </a-form-item>
+        </a-card>
+
+        <!-- 区块 2：特征分类信息 -->
+        <a-card title="特征分类信息" :bordered="false" size="small" class="reg-block">
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="一级分类" required>
+                <a-select v-model="form.l1Category" :options="L1_CATEGORY_OPTIONS" placeholder="请选择一级分类" @change="form.l2Category = ''" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="二级分类（与一级联动）" required>
+                <a-select v-model="form.l2Category" :options="l2Options" placeholder="请选择二级分类" :disabled="!form.l1Category" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-card>
+
+        <!-- 区块 3：来源与时效 -->
+        <a-card title="来源与时效" :bordered="false" size="small" class="reg-block">
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="数据时效">
+                <a-select v-model="form.dataFreshness" :options="DATA_FRESHNESS_OPTIONS" placeholder="请选择" allow-clear />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="数据源类型">
+                <a-select v-model="form.sourceType" :options="SOURCE_TYPE_OPTIONS" placeholder="请选择" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="标准化前来源表（非必填）">
+                <a-input v-model="form.sourceTableBefore" placeholder="例如：dwd_trade_detail" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="原特征英文名（非必填）">
+                <a-input v-model="form.sourceField" placeholder="对应原始字段名" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-form-item label="数仓底表" required>
+            <a-input v-model="form.dataTableName" placeholder="例如：ads_midloan_bigtxn_30d" />
+            <template #extra>
+              <span style="color: var(--color-text-3); font-size: 12px;">与「标准化后来源表」一致，默认与特征英文名相同</span>
+            </template>
+          </a-form-item>
+        </a-card>
+
+        <!-- 区块 4：协作信息 -->
+        <a-card title="协作信息" :bordered="false" size="small" class="reg-block">
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="创建人">
+                <a-input v-model="form.creator" disabled />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="开发人员（必填，从数仓团队）" required>
+                <a-select v-model="form.developer" :options="DEVELOPER_OPTIONS" placeholder="请选择开发人员" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="验收人（默认带入创建人）">
+                <a-input v-model="form.acceptor" placeholder="可手动调整" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="产品范围">
+                <a-input v-model="form.productScope" placeholder="例如：风控反欺诈" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="12">
+            <a-col :span="12">
+              <a-form-item label="名单类型">
+                <a-select v-model="form.listType" :options="LIST_TYPE_OPTIONS" placeholder="可选" allow-clear />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="批次">
+                <a-input v-model="form.batch" placeholder="例如：MIDLOAN-2026Q3" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-form-item label="审核说明（可选）">
+            <a-textarea v-model="form.remark" :rows="2" :max-length="200" show-word-limit placeholder="协作说明、风险点、依赖等" />
+          </a-form-item>
+        </a-card>
       </template>
 
       <!-- 提开发 OA 单（C1 R02：接收方=数仓团队，展示但不可改）-->
@@ -120,21 +252,105 @@
         </a-form-item>
       </template>
 
-      <!-- 申请下线（文档 K1：下线是被动接收；这里保留抽屉但仅做演示触发）-->
-      <template v-else-if="actionKey === 'request_offline'">
-        <a-form-item label="下线原因" required>
+      <!-- OA 投产审批通过（F0.1：通过后系统自动参数映射+内数注册）-->
+      <template v-else-if="actionKey === 'oa_production_approve'">
+        <a-alert type="success" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            审批通过后将依次进入：参数准备 → 内数注册 → 变量中心注册。系统自动完成参数映射+有效性验证。
+          </p>
+        </a-alert>
+        <a-form-item label="审批意见（可选）">
+          <a-textarea v-model="form.remark" :rows="3" placeholder="可填写审批意见/上线批次/灰度策略等说明" />
+        </a-form-item>
+      </template>
+
+      <!-- OA 投产审批驳回（F0.2：驳回原因必填）-->
+      <template v-else-if="actionKey === 'oa_production_reject'">
+        <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            驳回后将回退到「管理员已确认」，管理员修正后可重新提投产单。
+          </p>
+        </a-alert>
+        <a-form-item label="驳回原因" required>
           <a-radio-group v-model="form.reason">
-            <a-radio value="业务下线">业务下线</a-radio>
-            <a-radio value="被新特征替代">被新特征替代</a-radio>
-            <a-radio value="数据源下线">数据源下线</a-radio>
-            <a-radio value="效果衰减">效果衰减</a-radio>
+            <a-radio value="参数不全">参数不全</a-radio>
+            <a-radio value="数据底表未就绪">数据底表未就绪</a-radio>
+            <a-radio value="接口字段未对齐">接口字段未对齐</a-radio>
+            <a-radio value="上线时机不合适">上线时机不合适</a-radio>
+            <a-radio value="其他">其他</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="下线日期" required>
-          <a-date-picker v-model="form.offlineDate" style="width: 100%" />
+        <a-form-item label="详细说明（必填）" required>
+          <a-textarea v-model="form.remark" :rows="3" placeholder="请详细说明驳回原因，便于管理员修正" />
         </a-form-item>
-        <a-form-item label="影响说明（可选）">
-          <a-textarea v-model="form.remark" :rows="3" placeholder="说明对哪些模型/指标/报表有影响" />
+      </template>
+
+      <!-- 内数同步失败补充数据底表（仅在 internal_sync_failed 状态下打开）-->
+      <template v-else-if="actionKey === 'retry_sync_supplement_table'">
+        <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            内数同步失败通常因为数据底表名称缺失。请先补充数据底表，再重新触发同步。
+          </p>
+        </a-alert>
+        <a-form-item label="数据底表名称" required>
+          <a-input v-model="form.tableName" placeholder="例如：ads_midloan_feature_001" allow-clear />
+          <template #extra>
+            <span style="color: var(--color-text-3); font-size: 12px;">需与数仓已上线的 Hive 表名一致</span>
+          </template>
+        </a-form-item>
+        <a-form-item label="补充说明（可选）">
+          <a-textarea v-model="form.remark" :rows="3" placeholder="可填写数据底表来源/字段说明等" />
+        </a-form-item>
+      </template>
+
+      <!-- 变量归档（管理员专属 · 仅需求提出 / 已注册阶段）-->
+      <template v-else-if="actionKey === 'archive_variable'">
+        <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            归档后变量将进入「已归档」终态，从主列表移除，可通过「已归档」筛选查看。归档操作不可恢复，请谨慎填写原因。
+          </p>
+        </a-alert>
+        <a-form-item label="当前状态">
+          <a-input :model-value="props.variableData?.midloanStatus || props.variableData?.status || '-'" disabled />
+        </a-form-item>
+        <a-form-item label="归档原因" required>
+          <a-radio-group v-model="form.reason">
+            <a-radio value="业务取消">业务取消</a-radio>
+            <a-radio value="需求重复">需求重复</a-radio>
+            <a-radio value="数据源不可用">数据源不可用</a-radio>
+            <a-radio value="字段定义变更">字段定义变更</a-radio>
+            <a-radio value="其他">其他</a-radio>
+          </a-radio-group>
+        </a-form-item>
+        <a-form-item label="详细说明（必填）" required>
+          <a-textarea v-model="form.remark" :rows="3" placeholder="请详细说明归档原因，便于审计追溯" />
+        </a-form-item>
+      </template>
+
+      <!-- 状态修正（管理员专属）：跨系统状态不可修正，仅展示可修正的目标态 -->
+      <template v-else-if="actionKey === 'correct_status'">
+        <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            跨系统状态（内数同步中/变量中心同步中/已上线/已下线）不可手动修正。
+            以下为可修正的离线分析阶段状态（管理员专用）。
+          </p>
+        </a-alert>
+        <a-form-item label="当前状态">
+          <a-input :model-value="props.variableData?.midloanStatus || props.variableData?.status || '-'" disabled />
+        </a-form-item>
+        <a-form-item label="修正为" required>
+          <a-select v-model="form.targetStatus" placeholder="选择目标状态">
+            <a-option
+              v-for="opt in correctableOptions"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
+            </a-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="修正原因（必填）" required>
+          <a-textarea v-model="form.remark" :rows="3" placeholder="请说明修正原因（必填，记录审计日志）" />
         </a-form-item>
       </template>
     </a-form>
@@ -144,10 +360,17 @@
 <script setup lang="ts">
 import { reactive, ref, watch, computed } from 'vue'
 import { Message } from '@arco-design/web-vue'
+import {
+  FIELD_TYPE_OPTIONS,
+  DATA_FRESHNESS_OPTIONS,
+  L1_CATEGORY_OPTIONS,
+  L1_L2_CATEGORY_MAP,
+  SOURCE_TYPE_OPTIONS
+} from '@/modules/variable-hub/mock/variable-management/variable-draft-store'
 
 interface Props {
   visible: boolean
-  actionKey: 'submit_requirement' | 'submit_dev_oa' | 'business_verify_pass' | 'admin_confirm_pass' | 'submit_production_order' | 'request_offline'
+  actionKey: 'submit_requirement' | 'submit_dev_oa' | 'business_verify_pass' | 'admin_confirm_pass' | 'submit_production_order' | 'oa_production_approve' | 'oa_production_reject' | 'retry_sync_supplement_table' | 'archive_variable' | 'correct_status'
   /** 当前变量数据（用于预览）*/
   variableData?: any
 }
@@ -162,15 +385,77 @@ const emit = defineEmits<Emits>()
 
 const submitting = ref(false)
 const form = reactive<any>({
-  oaOrderId: '',
+  // 注册特征字段（submit_requirement）
+  name: '',
+  featureCnName: '',
+  fieldType: 'Integer',
+  defaultValue: '',
+  processingLogic: '',
+  featureGranularity: 'identity_only',
+  category: 'midloan_behavior',
+  l1Category: '',
+  l2Category: '',
+  dataFreshness: undefined,
+  sourceType: 'internal',
+  sourceTableBefore: '',
+  sourceField: '',
+  dataTableName: '',
+  productScope: '',
+  listType: undefined,
+  batch: '',
   acceptor: '',
+  creator: '小李',
+  developer: '',
+  remark: '',
+  _lastSyncedName: '',
+  // 其他动作字段
+  oaOrderId: '',
   verifyOaOrderId: '',
   reason: '',
   offlineDate: '',
-  remark: '',
   generatedOaOrderId: '',
-  standardizedAttachment: true
+  standardizedAttachment: true,
+  targetStatus: '',
+  tableName: ''
 })
+
+/** 二级分类联动选项（与 VariableRegisterDrawer 保持一致）*/
+const l2Options = computed(() => {
+  if (!form.l1Category) return []
+  return (L1_L2_CATEGORY_MAP[form.l1Category] || []).map((v) => ({ value: v, label: v }))
+})
+
+/** 名单类型 */
+const LIST_TYPE_OPTIONS = [
+  { value: '白名单', label: '白名单' },
+  { value: '黑名单', label: '黑名单' },
+  { value: '灰名单', label: '灰名单' },
+  { value: '其他', label: '其他' }
+]
+
+/** 开发人员（数仓团队）*/
+const DEVELOPER_OPTIONS = [
+  { value: '王数仓', label: '王数仓' },
+  { value: '数仓_A', label: '数仓_A' },
+  { value: '数仓_B', label: '数仓_B' },
+  { value: '数仓_C', label: '数仓_C' }
+]
+
+/** 状态修正可选项（管理员专用 · 与 allowedActionsByStatus 中 correctableStatuses 对齐）*/
+const correctableOptions = [
+  { value: 'requirement_proposal', label: '需求提出' },
+  { value: 'registered', label: '已注册' },
+  { value: 'developing_oa', label: '开发中（OA）' },
+  { value: 'dw_online', label: '数仓已上线' },
+  { value: 'business_acceptance', label: '待业务验证' },
+  { value: 'business_verified', label: '业务已验证' },
+  { value: 'admin_confirmed', label: '管理员已确认' },
+  { value: 'oa_production_reviewing', label: 'OA 投产审批中' },
+  { value: 'dw_online_failed', label: '数仓上线失败' },
+  { value: 'internal_sync_failed', label: '内数同步失败' },
+  { value: 'variable_sync_failed', label: '变量中心同步失败' },
+  { value: 'offline_failed', label: '下线接收失败' }
+]
 
 /** 哪些 action 需要预览特征信息 */
 const showPreview = computed(() => {
@@ -231,10 +516,10 @@ const defaultAcceptorHint = computed(() => {
 })
 
 const config = computed(() => {
-  const map: Record<string, { title: string; alert: string; alertType?: string }> = {
+  const map: Record<string, { title: string; alert: string; alertType?: 'info' | 'success' | 'warning' | 'error' | 'normal' }> = {
     submit_requirement: {
-      title: '需求审核注册',
-      alert: '审核通过后进入「已注册」状态，流程不做回退。',
+      title: '注册特征（B1 标准化注册）',
+      alert: '管理员正在对 A1 需求进行审核+注册，提交后进入「已注册」状态，流程不做回退。',
       alertType: 'info'
     },
     submit_dev_oa: {
@@ -257,9 +542,29 @@ const config = computed(() => {
       alert: '上线确认：提产后将依次完成 OA审批→参数映射+验证→内数注册→变量中心注册。',
       alertType: 'warning'
     },
-    request_offline: {
-      title: '申请下线',
-      alert: '本操作会触发变量中心被动接收「下线」指令，请填写下线原因。',
+    oa_production_approve: {
+      title: 'OA 投产审批通过',
+      alert: '审批通过后系统将依次进入参数准备、内数注册、变量中心注册。',
+      alertType: 'success'
+    },
+    oa_production_reject: {
+      title: 'OA 投产审批驳回',
+      alert: '驳回后状态将回退到「管理员已确认」，请详细填写驳回原因。',
+      alertType: 'warning'
+    },
+    retry_sync_supplement_table: {
+      title: '补充数据底表·重新同步',
+      alert: '请先补充数据底表名称，再触发内数同步。',
+      alertType: 'warning'
+    },
+    archive_variable: {
+      title: '变量归档',
+      alert: '归档后变量进入「已归档」终态，从主列表移除，可通过「已归档」筛选查看。',
+      alertType: 'warning'
+    },
+    correct_status: {
+      title: '状态修正（管理员）',
+      alert: '仅风险数据管理员可执行；跨系统状态不可手动修正。修正操作将记录审计日志。',
       alertType: 'warning'
     }
   }
@@ -275,6 +580,40 @@ watch(() => props.visible, (v) => {
     form.reason = ''
     form.offlineDate = ''
     form.remark = ''
+    form.targetStatus = ''
+    form.tableName = props.variableData?.dataTableName || ''
+    // submit_requirement：进入审核注册模式，重置注册表单字段，并预填默认值
+    if (props.actionKey === 'submit_requirement') {
+      form.name = props.variableData?.code || props.variableData?.featureEnName || props.variableData?.name || ''
+      form.featureCnName = props.variableData?.featureCnName || props.variableData?.name || ''
+      form.fieldType = props.variableData?.fieldType || 'Integer'
+      form.processingLogic = props.variableData?.processingLogic || ''
+      form.defaultValue = props.variableData?.defaultValue || ''
+      form.featureGranularity = props.variableData?.featureGranularity || 'identity_only'
+      form.category = props.variableData?.category || 'midloan_behavior'
+      form.l1Category = props.variableData?.l1Category || ''
+      form.l2Category = props.variableData?.l2Category || ''
+      form.dataFreshness = props.variableData?.dataFreshness || undefined
+      form.sourceType = props.variableData?.sourceType || 'internal'
+      form.sourceTableBefore = props.variableData?.sourceTableBefore || ''
+      form.sourceField = props.variableData?.sourceField || ''
+      form.productScope = props.variableData?.productScope || ''
+      form.listType = props.variableData?.listType || undefined
+      form.batch = props.variableData?.batch || ''
+      form.developer = props.variableData?.developer || ''
+      form.acceptor = props.variableData?.acceptor || props.variableData?.creator || '小李'
+      form.creator = props.variableData?.creator || '小李'
+      // 数仓底表（合并后的字段）：默认与特征英文名一致
+      form.dataTableName = props.variableData?.dataTableName || form.name || ''
+    }
+  }
+})
+
+/** 注册特征模式：特征英文名变化时，默认同步数仓底表（用户可手动调整）*/
+watch(() => form.name, (n) => {
+  if (props.actionKey === 'submit_requirement' && (!form.dataTableName || form.dataTableName === form._lastSyncedName)) {
+    form.dataTableName = n
+    form._lastSyncedName = n
   }
 })
 
@@ -283,8 +622,20 @@ function handleCancel() {
 }
 
 async function handleSubmit() {
-  if (props.actionKey === 'request_offline' && (!form.reason || !form.offlineDate)) {
-    Message.warning('请填写下线原因和下线日期')
+  if (props.actionKey === 'oa_production_reject' && (!form.reason || !form.remark?.trim())) {
+    Message.warning('请选择驳回原因并填写详细说明')
+    return
+  }
+  if (props.actionKey === 'retry_sync_supplement_table' && !form.tableName?.trim()) {
+    Message.warning('请填写数据底表名称')
+    return
+  }
+  if (props.actionKey === 'archive_variable' && (!form.reason || !form.remark?.trim())) {
+    Message.warning('请选择归档原因并填写详细说明')
+    return
+  }
+  if (props.actionKey === 'correct_status' && (!form.targetStatus || !form.remark?.trim())) {
+    Message.warning('请选择目标状态并填写修正原因')
     return
   }
   submitting.value = true

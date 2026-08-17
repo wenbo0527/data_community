@@ -3,13 +3,14 @@
   - 4 区块：特征核心属性 / 特征分类信息 / 来源与时效 / 协作信息
   - 支持 Excel 评估报告附件上传（B1 R14）
   - 提交后状态=已注册，生成 MIDLOAN-FEAT-DRAFT-NNNN，详情页可继续走状态机
-  - 审核模式：传入 requirementData 时为「审核通过+注册」，预填 A1 需求信息，所有字段可编辑
+  - 审核模式：传入 requirementData 时为「注册特征（需求审核）」，预填 A1 需求信息，所有字段可编辑
+  - 标题与「新增变量」入口统一为「注册特征」，避免需求方/管理员看到不同文案
 -->
 <template>
   <a-drawer
     :visible="visible"
     :width="640"
-    :title="isReviewMode ? '审核通过+注册（B1 标准化注册）' : '新增变量（特征注册）'"
+    :title="'注册特征（B1 标准化注册）'"
     :ok-loading="submitting"
     @cancel="handleCancel"
     @ok="handleSubmit"
@@ -30,7 +31,7 @@
     </a-card>
 
     <a-alert v-if="isReviewMode" type="info" :show-icon="false" style="margin-bottom: 16px">
-      审核通过后将自动完成：重复备案校验 + 参数映射 + 进入「已注册」状态。所有字段均可编辑修改，流程不做回退。
+      管理员正在对 A1 需求进行审核+注册。提交后将自动完成：重复备案校验 + 参数映射 + 进入「已注册」状态。所有字段均可编辑修改，流程不做回退。
     </a-alert>
     <a-alert v-else type="info" :show-icon="false" style="margin-bottom: 16px">
       提交后将生成特征资产并跳转到详情页，状态为「已注册」，可在详情页继续发起「提开发OA单」等流程。
@@ -289,7 +290,7 @@
         <a-button v-if="!isReviewMode" @click="handleSaveDraft">保存草稿</a-button>
         <a-button @click="handleCancel">取消</a-button>
         <a-button type="primary" :loading="submitting" @click="handleSubmit">
-          {{ isReviewMode ? '审核通过并注册' : '提交并跳转详情' }}
+          注册特征
         </a-button>
       </a-space>
     </template>

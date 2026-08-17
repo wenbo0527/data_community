@@ -50,7 +50,8 @@ export const PERMISSIONS = {
   VIEW_ALL_VARIABLES: 'view_all_variables',         // 查看全量变量
   DUPLICATE_CHECK: 'duplicate_check',              // 重复备案校验
   PARAM_MAPPING: 'param_mapping',                  // 参数映射
-  PARAM_VALIDATION: 'param_validation'              // 参数有效性验证
+  PARAM_VALIDATION: 'param_validation',              // 参数有效性验证
+  CORRECT_STATUS: 'correct_status'                   // v2.1 管理员状态修正
 }
 
 // ============ 角色 × 权限 矩阵（D.2）============
@@ -87,7 +88,8 @@ const ROLE_MATRIX = {
     PERMISSIONS.VIEW_ALL_VARIABLES,
     PERMISSIONS.DUPLICATE_CHECK,
     PERMISSIONS.PARAM_MAPPING,
-    PERMISSIONS.PARAM_VALIDATION
+    PERMISSIONS.PARAM_VALIDATION,
+    PERMISSIONS.CORRECT_STATUS
   ]),
   // 数字社区管理员：仅查看 + 断开数据
   // 2026-08-10 新增：全量变量开放查看

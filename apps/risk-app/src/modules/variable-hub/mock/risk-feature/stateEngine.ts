@@ -10,9 +10,10 @@
  * - 失败重试
  * - 变量中心下线批次
  *
- * 状态机严格对齐文档 v2.1 D.4 色板（12 正常 + 4 异常 = 16 态）：
+ * 状态机严格对齐文档 v2.1 D.4 色板（11 正常 + 4 异常 = 15 态）：
  *   需求提出 → 已注册 → 开发中(OA单) → 数仓已上线 → 待业务验证 → 业务已验证 → 管理员已确认 →
  *   参数准备 → 内数注册中 → 变量中心注册中 → 已上线 → 已下线
+ * 数据形态分界：管理员已确认（含）之前为离线分析，之后为在线接口
  */
 
 import { midloanStatusMeta } from '@/modules/variable-hub/constants/midloanStatusMap'
@@ -101,11 +102,13 @@ const STATUS_TIMESTAMP_MAP: Record<string, string> = {
   business_acceptance: 'businessAcceptanceAt',
   business_verified: 'businessVerifiedAt',
   admin_confirmed: 'adminConfirmedAt',
+  oa_production_reviewing: 'oaProductionReviewingAt',
   param_preparing: 'paramPreparingAt',
   syncing_internal: 'syncingInternalAt',
   syncing_variable: 'syncingVariableAt',
   online: 'onlineAt',
-  offline: 'offlineTime'  // 已存在
+  offline: 'offlineTime',  // 已存在
+  archived: 'archivedAt'
 }
 
 /** 在状态变更时同时记录时间戳 */
@@ -336,7 +339,8 @@ export function submitDevOA(featureId: string, payload?: { oaOrderId?: string; r
   v.devOaOrderId = oaId
   // 需求6：OA回调同步OA单链接
   v.oaDocLink = `https://oa.example.com/doc/${oaId}`
-  recordStatusChange(featureId, v.name, fromStatus, 'developing_oa', 'C1 提开发OA单', '小李', 'risk_data_member', `OA单号：${oaId}`)
+  const devRemark = payload?.remark ? `（备注：${payload.remark}）` : ''
+  recordStatusChange(featureId, v.name, fromStatus, 'developing_oa', 'C1 提开发OA单', '小李', 'risk_data_member', `OA单号：${oaId}${devRemark}`)
   SyncLogStore.push({
     id: logId(),
     featureId,
@@ -408,7 +412,7 @@ export function dwCallback(featureId: string, success = true, taskId = ''): { ok
 }
 
 /** E0：业务验证通过（台账内操作，不走OA单·文档 v2.1 E0 R01） */
-export function businessVerifyPass(featureId: string, operator = '小李'): { ok: boolean; reason?: string } {
+export function businessVerifyPass(featureId: string, operator = '小李', remark?: string): { ok: boolean; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, reason: '特征不存在' }
   if (v.midloanStatus !== 'business_acceptance') {
@@ -418,12 +422,13 @@ export function businessVerifyPass(featureId: string, operator = '小李'): { ok
   v.midloanStatus = 'business_verified'
   setStatusTimestamp(v, 'business_verified')
   v.acceptor = operator
-  recordStatusChange(featureId, v.name, fromStatus, 'business_verified', 'E0 业务验证通过', operator, 'risk_data_member', '业务验证人在台账内确认通过（不走OA单）')
+  const verifyRemark = remark ? `（验证说明：${remark}）` : ''
+  recordStatusChange(featureId, v.name, fromStatus, 'business_verified', 'E0 业务验证通过', operator, 'risk_data_member', `业务验证人在台账内确认通过（不走OA单）${verifyRemark}`)
   return { ok: true }
 }
 
 /** E1：管理员确认通过（台账内操作，不走OA单·文档 v2.1 E1 R03） */
-export function adminConfirmPass(featureId: string, operator = '培培'): { ok: boolean; reason?: string } {
+export function adminConfirmPass(featureId: string, operator = '培培', remark?: string): { ok: boolean; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, reason: '特征不存在' }
   if (v.midloanStatus !== 'business_verified') {
@@ -432,11 +437,12 @@ export function adminConfirmPass(featureId: string, operator = '培培'): { ok: 
   const fromStatus = v.midloanStatus
   v.midloanStatus = 'admin_confirmed'
   setStatusTimestamp(v, 'admin_confirmed')
-  recordStatusChange(featureId, v.name, fromStatus, 'admin_confirmed', 'E1 管理员确认通过', operator, 'risk_data_admin', '管理员在台账内确认通过（不走OA单），可提投产单')
+  const confirmRemark = remark ? `（确认说明：${remark}）` : ''
+  recordStatusChange(featureId, v.name, fromStatus, 'admin_confirmed', 'E1 管理员确认通过', operator, 'risk_data_admin', `管理员在台账内确认通过（不走OA单），可提投产单${confirmRemark}`)
   return { ok: true }
 }
 
-/** F0：提投产单 → OA审批通过 → 参数准备 → 内数注册中（文档 v2.1 F0） */
+/** F0：提投产单 → 进入 OA 审批闸门（等待审批人通过）（文档 v2.1 F0） */
 export function submitProductionOrder(featureId: string, payload?: { remark?: string }): { ok: boolean; reason?: string; oaId?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, reason: '特征不存在' }
@@ -450,12 +456,13 @@ export function submitProductionOrder(featureId: string, payload?: { remark?: st
   const oaId = `OA-PROD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`
   const fromStatus = v.midloanStatus
 
-  // 阶段1：提投产单 → OA审批通过 → 参数准备
-  v.midloanStatus = 'param_preparing'
-  setStatusTimestamp(v, 'param_preparing')
+  // 阶段1：提投产单 → 进入 OA 审批闸门
+  v.midloanStatus = 'oa_production_reviewing'
+  setStatusTimestamp(v, 'oa_production_reviewing')
   v.onlineOaOrderId = oaId
   v.oaDocLink = `https://oa.example.com/doc/${oaId}`
-  recordStatusChange(featureId, v.name, fromStatus, 'param_preparing', 'F0 提投产单·OA审批通过', '培培', 'risk_data_admin', `投产单号：${oaId}，系统自动参数映射+验证`)
+  const prodRemark = payload?.remark ? `（备注：${payload.remark}）` : ''
+  recordStatusChange(featureId, v.name, fromStatus, 'oa_production_reviewing', 'F0 提投产单·进入OA审批', '培培', 'risk_data_admin', `投产单号：${oaId}，等待OA审批人通过${prodRemark}`)
 
   SyncLogStore.push({
     id: logId(),
@@ -465,30 +472,71 @@ export function submitProductionOrder(featureId: string, payload?: { remark?: st
     direction: 'call',
     status: 'success',
     request: { featureId, oaType: '投产单', receiver: 'OA系统' },
-    response: { oaId, status: 'approved' },
+    response: { oaId, status: 'pending' },
     startedAt: now,
     finishedAt: now,
     retryCount: 0,
     operator: '培培'
   })
+  return { ok: true, oaId }
+}
+
+/** F0.1：OA 审批通过 → 参数准备 → 内数注册中（文档 v2.1 F0.1） */
+export function oaProductionApprove(featureId: string, payload?: { operator?: string; remark?: string }): { ok: boolean; reason?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  if (v.midloanStatus !== 'oa_production_reviewing') {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许审批` }
+  }
+  const operator = payload?.operator || '培培'
+  const fromStatus = v.midloanStatus
+
+  // 阶段1：OA 审批通过 → 参数准备
+  v.midloanStatus = 'param_preparing'
+  setStatusTimestamp(v, 'param_preparing')
+  const approveRemark = payload?.remark ? `（审批意见：${payload.remark}）` : ''
+  recordStatusChange(featureId, v.name, fromStatus, 'param_preparing', 'F0.1 OA审批通过·进入参数准备', operator, 'risk_data_admin', `OA审批通过，系统自动参数映射+有效性验证${approveRemark}`)
 
   // 阶段2：系统自动参数映射+有效性验证
   const paramCheck = validateParams(featureId)
   if (!paramCheck.passed) {
-    // 参数验证失败，返回参数映射配置环节
+    // 参数验证失败：回退到 admin_confirmed（让管理员修正后再提）
     v.midloanStatus = 'admin_confirmed'
-    recordStatusChange(featureId, v.name, 'param_preparing', 'admin_confirmed', 'F0 参数验证失败', '系统', 'system', `参数验证失败：${paramCheck.reason}`)
+    setStatusTimestamp(v, 'admin_confirmed')
+    recordStatusChange(featureId, v.name, 'param_preparing', 'admin_confirmed', 'F0.1 参数验证失败·回退', '系统', 'system', `参数验证失败：${paramCheck.reason}`)
     return { ok: false, reason: `参数验证失败，请检查映射：${paramCheck.reason}` }
   }
 
-  // 阶段3：验证通过 → 内数注册中（走OA单通知内数团队，人注册）
+  // 阶段3：验证通过 → 内数注册中
   v.midloanStatus = 'syncing_internal'
   setStatusTimestamp(v, 'syncing_internal')
-  recordStatusChange(featureId, v.name, 'param_preparing', 'syncing_internal', 'F0 参数验证通过·进入内数注册', '系统', 'system', '参数映射+验证通过，OA单已提给内数团队')
+  recordStatusChange(featureId, v.name, 'param_preparing', 'syncing_internal', 'F0.1 参数验证通过·进入内数注册', '系统', 'system', '参数映射+验证通过，OA单已提给内数团队')
 
   // 立即触发内数同步
   setTimeout(() => internalSync(featureId, true), 0)
-  return { ok: true, oaId }
+  return { ok: true }
+}
+
+/** F0.2：OA 审批驳回 → 回退到 admin_confirmed（文档 v2.1 F0.2） */
+export function oaProductionReject(featureId: string, payload?: { operator?: string; remark?: string; reason?: string }): { ok: boolean; reason?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  if (v.midloanStatus !== 'oa_production_reviewing') {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不允许驳回` }
+  }
+  const operator = payload?.operator || '培培'
+  const fromStatus = v.midloanStatus
+  const fallbackReason = payload?.remark || 'OA审批驳回'
+
+  v.midloanStatus = 'admin_confirmed'
+  setStatusTimestamp(v, 'admin_confirmed')
+  // payload.reason 为驳回类别，payload.remark 为详细说明
+  const category = payload?.reason
+  const detail = payload?.remark
+  const categoryText = category ? `${category}` : ''
+  const detailText = detail ? `，详细说明：${detail}` : ''
+  recordStatusChange(featureId, v.name, fromStatus, 'admin_confirmed', 'F0.2 OA审批驳回·回退', operator, 'risk_data_admin', `驳回原因：${categoryText}${detailText || (fallbackReason && fallbackReason !== 'OA审批驳回' ? `（${fallbackReason}）` : '')}`)
+  return { ok: true }
 }
 
 /** G1：内数同步 */
@@ -626,6 +674,24 @@ export function variableSync(featureId: string, forceFail = false): { ok: boolea
 export function receiveOffline(featureId: string, reason = '变量中心下线', payload?: { offlineDate?: string; remark?: string }): { ok: boolean; reason?: string } {
   const v = variableAssets.find(x => x.id === featureId)
   if (!v) return { ok: false, reason: '特征不存在' }
+  // 文档 v2.1 L1 R07：下线边界处理——内数注册中/变量中心注册中状态忽略下线回调并记录日志告警
+  if (v.midloanStatus === 'syncing_internal' || v.midloanStatus === 'syncing_variable') {
+    SyncLogStore.push({
+      id: logId(),
+      featureId,
+      featureName: v.name,
+      type: 'offline_batch',
+      direction: 'callback',
+      status: 'failed',
+      reason: `下线回调被忽略：当前状态为「${midloanStatusMeta(v.midloanStatus).label}」，等待上线完成后再处理下线`,
+      startedAt: nowStr(),
+      finishedAt: nowStr(),
+      retryCount: 0,
+      operator: 'variable_center_system'
+    })
+    console.warn(`[stateEngine] 下线回调被忽略：特征 ${featureId} 当前状态为 ${v.midloanStatus}，等待上线完成后再处理下线`)
+    return { ok: false, reason: `当前状态为「${midloanStatusMeta(v.midloanStatus).label}」，等待上线完成后再处理下线` }
+  }
   if (v.midloanStatus !== 'online') {
     return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不是「已上线」，不接受下线` }
   }
@@ -761,6 +827,68 @@ export function supplementDataTable(featureId: string, tableName: string): { ok:
   }
   v.dataTableName = tableName.trim()
   v.syncFailedReason = ''
+  return { ok: true }
+}
+
+/**
+ * 变量归档（文档 v2.1 §六 变量归档）
+ * - 仅在 requirement_proposal / registered 阶段可发起
+ * - midloan_behavior 品类：midloanStatus 置为 'archived'
+ * - 非 midloan 品类：status 置为 'archived'
+ * - 归档后写入 archiveStatus / archivedAt / archivedReason
+ */
+export function archiveVariable(featureId: string, payload?: { reason?: string; operator?: string }): { ok: boolean; reason?: string } {
+  const v: any = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  const curStatus = v.midloanStatus || v.status
+  // 仅允许需求提出 / 已注册 阶段发起归档
+  if (!['requirement_proposal', 'registered'].includes(curStatus)) {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(curStatus).label || curStatus}）不允许归档，仅「需求提出」「已注册」阶段可发起` }
+  }
+  // 归档原因必填
+  if (!payload?.reason || !payload.reason.trim()) {
+    return { ok: false, reason: '归档原因必填' }
+  }
+  const now = nowStr()
+  const operator = payload?.operator || '培培'
+  const fromStatus = curStatus
+  // midloan 品类更新 midloanStatus，其他品类更新 status
+  if (v.category === 'midloan_behavior' || v.midloanStatus) {
+    v.midloanStatus = 'archived'
+    setStatusTimestamp(v, 'archived')
+  } else {
+    v.status = 'archived'
+  }
+  // 归档元数据
+  v.archiveStatus = 'archived'
+  v.archivedAt = now
+  v.archivedReason = payload.reason.trim()
+  v.archivedBy = operator
+  // 写入审计日志
+  recordStatusChange(
+    featureId,
+    v.name,
+    fromStatus,
+    'archived',
+    '归档',
+    operator,
+    'risk_data_admin',
+    `归档原因：${payload.reason.trim()}`
+  )
+  // 同步日志
+  SyncLogStore.push({
+    id: logId(),
+    featureId,
+    featureName: v.name,
+    type: 'internal_sync',
+    direction: 'call',
+    status: 'success',
+    reason: `变量已归档：${payload.reason.trim()}`,
+    startedAt: now,
+    finishedAt: now,
+    retryCount: 0,
+    operator
+  })
   return { ok: true }
 }
 
@@ -1052,9 +1180,114 @@ export function initAllMockHistories(): void {
   })
 }
 
-/** 重试数仓任务 */
-export function retryDwTask(featureId: string) {
-  return dwCallback(featureId, true)
+/**
+ * 重试数仓任务（文档 v2.1 异常状态处理表）
+ * 重试超3次触发人工介入提醒，管理员可通过状态修正回退至「已注册」重新提开发单
+ */
+export function retryDwTask(featureId: string, operator = '培培'): { ok: boolean; reason?: string; needManualIntervention?: boolean } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  if (v.midloanStatus !== 'dw_online_failed') {
+    return { ok: false, reason: `当前状态（${midloanStatusMeta(v.midloanStatus).label}）不是「数仓上线失败」` }
+  }
+  // 递增重试计数
+  const retryCount = (v.syncRetryCount || 0) + 1
+  v.syncRetryCount = retryCount
+  // 超过3次触发人工介入提醒
+  if (retryCount > 3) {
+    recordStatusChange(featureId, v.name, 'dw_online_failed', 'dw_online_failed',
+      `数仓任务重试超3次（已重试${retryCount}次），触发人工介入提醒`, operator, 'risk_data_admin',
+      `管理员可通过状态修正功能回退至「已注册」重新提开发单`)
+    SyncLogStore.push({
+      id: logId(),
+      featureId,
+      featureName: v.name,
+      type: 'dw_callback',
+      direction: 'call',
+      status: 'failed',
+      reason: `数仓任务重试超3次（已重试${retryCount}次），需人工介入`,
+      startedAt: nowStr(),
+      finishedAt: nowStr(),
+      retryCount,
+      operator
+    })
+    return { ok: false, reason: `数仓任务重试超3次（已重试${retryCount}次），需人工介入。管理员可通过状态修正功能回退至「已注册」重新提开发单`, needManualIntervention: true }
+  }
+  // 重试调用数仓回调（复用原OA单）
+  const result = dwCallback(featureId, true)
+  if (result.ok) {
+    v.syncRetryCount = 0 // 成功后重置计数
+  }
+  return result
+}
+
+/**
+ * 管理员状态修正功能（文档 v2.1 §四 管理员状态修正功能）
+ * - 仅允许在相邻状态间修正
+ * - 跨系统状态（内数注册中/变量中心注册中/已上线/已下线）不可修正
+ * - 修正操作必须记录原因，且触发告警通知管理员确认
+ */
+const ADJACENT_STATUS_MAP: Record<string, string[]> = {
+  // 正向→逆向修正（误操作回退）
+  registered: ['requirement_proposal'],
+  developing_oa: ['registered'],
+  dw_online: ['developing_oa'],
+  business_acceptance: ['dw_online'],
+  business_verified: ['business_acceptance'],
+  admin_confirmed: ['business_verified'],
+  // 异常态→正常态修正
+  dw_online_failed: ['developing_oa', 'registered'],  // 数仓失败可修正回开发中或已注册
+  internal_sync_failed: ['param_preparing'],
+  variable_sync_failed: ['syncing_internal'],
+  offline_failed: ['online']
+}
+
+// 不可修正的状态（跨系统状态，对端系统状态无法同步回退）
+const NON_CORRECTABLE_STATUSES = ['syncing_internal', 'syncing_variable', 'online', 'offline']
+
+export function correctStatus(featureId: string, targetStatus: string, reason: string, operator = '培培'): { ok: boolean; reason?: string } {
+  const v = variableAssets.find(x => x.id === featureId)
+  if (!v) return { ok: false, reason: '特征不存在' }
+  const currentStatus = v.midloanStatus || ''
+  // 校验：不可修正的状态
+  if (NON_CORRECTABLE_STATUSES.includes(currentStatus)) {
+    return { ok: false, reason: `当前状态「${midloanStatusMeta(currentStatus).label}」为跨系统状态，不可修正（对端系统状态无法同步回退）` }
+  }
+  // 校验：目标状态必须在相邻状态列表中
+  const allowedTargets = ADJACENT_STATUS_MAP[currentStatus] || []
+  if (!allowedTargets.includes(targetStatus)) {
+    return { ok: false, reason: `不允许从「${midloanStatusMeta(currentStatus).label}」修正至「${midloanStatusMeta(targetStatus).label}」，仅允许相邻状态间修正` }
+  }
+  // 校验：原因必填
+  if (!reason || !reason.trim()) {
+    return { ok: false, reason: '修正原因必填' }
+  }
+  // 执行修正
+  const fromStatus = currentStatus
+  v.midloanStatus = targetStatus
+  setStatusTimestamp(v, targetStatus)
+  // 重置重试计数
+  v.syncRetryCount = 0
+  // 记录状态变更（含修正原因）
+  recordStatusChange(featureId, v.name, fromStatus, targetStatus,
+    `管理员状态修正：${midloanStatusMeta(fromStatus).label} → ${midloanStatusMeta(targetStatus).label}`,
+    operator, 'risk_data_admin', `修正原因：${reason}（已触发告警通知管理员确认）`)
+  // 同步日志
+  SyncLogStore.push({
+    id: logId(),
+    featureId,
+    featureName: v.name,
+    type: 'internal_sync',
+    direction: 'call',
+    status: 'success',
+    reason: `管理员状态修正：${midloanStatusMeta(fromStatus).label} → ${midloanStatusMeta(targetStatus).label}，原因：${reason}`,
+    startedAt: nowStr(),
+    finishedAt: nowStr(),
+    retryCount: 0,
+    operator
+  })
+  console.warn(`[stateEngine] 管理员状态修正：特征 ${featureId} 从 ${fromStatus} 修正至 ${targetStatus}，原因：${reason}，已触发告警`)
+  return { ok: true }
 }
 
 export const MidloanStateEngine = {
@@ -1064,11 +1297,15 @@ export const MidloanStateEngine = {
   businessVerifyPass,
   adminConfirmPass,
   submitProductionOrder,
+  oaProductionApprove,
+  oaProductionReject,
   internalSync,
   variableSync,
   receiveOffline,
   retrySync,
   retryDwTask,
+  /** 管理员状态修正功能（文档 v2.1 §四） */
+  correctStatus,
   /** B1 R10 补充数据底表名称 */
   supplementDataTable,
   /** 重置单个特征到初始状态 */
@@ -1079,6 +1316,8 @@ export const MidloanStateEngine = {
   checkDuplicate,
   /** 需求8：参数有效性验证 */
   validateParams,
+  /** 变量归档（仅需求提出 / 已注册阶段） */
+  archiveVariable,
   /** 聚合：根据 action key 调用对应函数 */
   handleAction(featureId: string, key: string, payload?: any): any {
     switch (key) {
@@ -1087,16 +1326,29 @@ export const MidloanStateEngine = {
       case 'simulate_dw_success':
       case 'simulate_dw_success_dw': return dwCallback(featureId, true)
       case 'simulate_dw_failed': return dwCallback(featureId, false)
-      case 'business_verify_pass': return businessVerifyPass(featureId, payload?.operator || '小李')
-      case 'admin_confirm_pass': return adminConfirmPass(featureId, payload?.operator || '培培')
+      case 'business_verify_pass': return businessVerifyPass(featureId, payload?.operator || '小李', payload?.remark)
+      case 'admin_confirm_pass': return adminConfirmPass(featureId, payload?.operator || '培培', payload?.remark)
       case 'submit_production_order': return submitProductionOrder(featureId, payload)
+      case 'oa_production_approve': return oaProductionApprove(featureId, payload)
+      case 'oa_production_reject': return oaProductionReject(featureId, payload)
       case 'retry_sync': return retrySync(featureId)
-      case 'retry_dw': return retryDwTask(featureId)
+      case 'retry_dw': return retryDwTask(featureId, payload?.operator || '培培')
       case 'manual_batch_retry': return retrySync(featureId)
+      case 'correct_status': return correctStatus(featureId, payload?.targetStatus, payload?.remark, payload?.operator || '培培')
+      case 'retry_sync_supplement_table':
+        // 抽屉：先补充数据底表，再触发内数同步
+        if (!payload?.tableName || !payload.tableName.trim()) {
+          return { ok: false, reason: '请填写数据底表名称' }
+        }
+        const suppRes = supplementDataTable(featureId, payload.tableName.trim())
+        if (!suppRes.ok) return suppRes
+        return retrySync(featureId)
       case 'check_duplicate': return checkDuplicate(featureId)
       case 'validate_params': return validateParams(featureId)
       case 'simulate_supplement_table':
         return supplementDataTable(featureId, 'ads_midloan_demo_table')
+      case 'archive_variable':
+        return archiveVariable(featureId, payload)
       default: return { ok: false, reason: `未知动作：${key}` }
     }
   },

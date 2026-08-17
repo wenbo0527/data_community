@@ -5,12 +5,27 @@
   - 数据整合：状态变更记录 + 同步日志 + 下线批次 + 特征档案 + 动态操作 + 备注
 
   阶段：v2（用户反馈重构 · 治理与生命周期统一收纳）
-  状态机严格对齐文档 v2.0 D.4：11 正常 + 4 异常 = 15 态
+  状态机严格对齐文档 v2.1 D.4：11 正常 + 4 异常 = 15 态
 -->
 <template>
   <div class="status-step-flow">
-    <!-- ========== 异常状态顶部 alert ========== -->
-    <a-alert v-if="isFailed" type="error" :show-icon="true" class="mb-12">
+    <!-- ========== scope 外顶部提示 ========== -->
+    <a-alert
+      v-if="scopeBanner"
+      :type="scopeBanner.type"
+      :show-icon="true"
+      class="mb-12"
+    >
+      <template #title>
+        <component :is="scopeBanner.icon" /> {{ scopeBanner.title }}
+      </template>
+      <div class="alert-detail">
+        <div>{{ scopeBanner.detail }}</div>
+      </div>
+    </a-alert>
+
+    <!-- ========== 异常状态顶部 alert（仅当前 scope 包含异常态时展示） ========== -->
+    <a-alert v-if="isFailedInScope" type="error" :show-icon="true" class="mb-12">
       <template #title>
         <icon-exclamation-circle-fill /> {{ currentStatusLabel }} · 异常状态
       </template>
@@ -55,42 +70,20 @@
       </a-space>
     </a-card>
 
-    <!-- ========== 5 阶段折叠展示（文档 v2.1 K1）============ -->
-    <div class="phase-flow">
-      <div
-        v-for="phase in phasesData"
-        :key="phase.key"
-        class="phase-block"
-        :class="`phase-${phase.status}`"
+    <!-- ========== 状态列表（按 scope 直接铺平，去除阶段折叠外层）============ -->
+    <div class="status-list">
+      <a-steps
+        direction="vertical"
+        type="dot"
+        :current="flatCurrentIndex"
+        :status="flatStepsStatus"
+        class="step-flow"
       >
-        <!-- 阶段头部（可点击折叠/展开）-->
-        <div class="phase-header" @click="togglePhase(phase.key)">
-          <icon-right :class="{ 'is-expanded': isPhaseExpanded(phase.key) }" class="phase-arrow" />
-          <span class="phase-title">{{ phase.label }}</span>
-          <a-tag :color="phaseTagColor(phase.status)" size="small">
-            {{ phase.milestone }}
-          </a-tag>
-          <span class="phase-status-text" :class="`status-${phase.status}`">
-            <template v-if="phase.status === 'completed'">已完成·{{ phase.steps.length }}个节点</template>
-            <template v-else-if="phase.status === 'active'">进行中</template>
-            <template v-else>未到达</template>
-          </span>
-        </div>
-
-        <!-- 阶段内容（折叠/展开）-->
-        <div v-show="isPhaseExpanded(phase.key)" class="phase-body">
-          <a-steps
-            direction="vertical"
-            type="dot"
-            :current="phase.localCurrentIndex"
-            :status="phaseStepStatus(phase.status)"
-            class="step-flow"
-          >
-            <a-step
-              v-for="step in phase.steps"
-              :key="step.key"
-              :title="step.label"
-            >
+        <a-step
+          v-for="step in flatSteps"
+          :key="step.key"
+          :title="step.label"
+        >
               <template #icon>
                 <span
                   v-if="step.globalIdx < currentStepIndex"
@@ -209,13 +202,11 @@
                 </div>
               </template>
             </a-step>
-          </a-steps>
-        </div>
-      </div>
+    </a-steps>
     </div>
 
-    <!-- ========== 异常状态底部提示 ========== -->
-    <div v-if="isFailed" class="failed-branch-tip">
+    <!-- ========== 异常状态底部提示（仅当前 scope 包含异常态时展示） ========== -->
+    <div v-if="isFailedInScope" class="failed-branch-tip">
       <icon-exclamation-circle-fill style="color:#f53f3f" />
       <span>当前处于异常分支，需要修复后点击上方按钮重试。修复后将回到正常状态「{{ nextNormalLabel }}」</span>
     </div>
@@ -223,10 +214,14 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, h } from 'vue'
 import {
   MIDLOAN_STATUS_ORDER,
   MIDLOAN_PHASES,
+  getPhasesByScope,
+  getStatusOrderByScope,
+  isStatusOutsideScope,
+  getStatusCategory,
   midloanStatusMeta,
   MIDLOAN_FAILED_STATUSES,
   isRetryableFailedStatus,
@@ -238,6 +233,12 @@ import {
 const props = defineProps({
   /** 当前状态 */
   status: { type: String, required: true },
+  /** 阶段展示范围：all=完整5阶段；offline_analysis=仅阶段1-3；online_interface=仅阶段4-5 */
+  scope: {
+    type: String,
+    default: 'all',
+    validator: (v) => ['all', 'offline_analysis', 'online_interface'].includes(v)
+  },
   /** 状态变更时间戳映射 */
   timestamps: { type: Object, default: () => ({}) },
   /** 状态变更记录列表 */
@@ -264,21 +265,47 @@ const props = defineProps({
 
 const emit = defineEmits(['retry', 'manual-retry', 'action', 'supplement-table'])
 
+// ============ scope 感知的常量与辅助 ============
+const scopePhases = computed(() => getPhasesByScope(props.scope))
+const scopeStatusOrder = computed(() => getStatusOrderByScope(props.scope))
+const scopeFirstIdx = computed(() => MIDLOAN_STATUS_ORDER.indexOf(scopeStatusOrder.value[0]))
+const scopeLastIdx = computed(() => MIDLOAN_STATUS_ORDER.indexOf(scopeStatusOrder.value[scopeStatusOrder.value.length - 1]))
+
+/** scope 外提示 banner（当前状态不在 scope 范围内时展示） */
+const scopeBanner = computed(() => {
+  const pos = isStatusOutsideScope(props.status, props.scope)
+  if (pos === 'inside') return null
+  if (props.scope === 'offline_analysis' && pos === 'after') {
+    return {
+      type: 'success',
+      title: '离线分析阶段已完成',
+      detail: '该特征已进入 API 调用阶段（上线/汰换），请切换到「API调用状态」tab 查看后续推进。',
+      icon: 'icon-check-circle-fill'
+    }
+  }
+  if (props.scope === 'online_interface' && pos === 'before') {
+    return {
+      type: 'warning',
+      title: '尚未进入 API 调用阶段',
+      detail: '当前特征仍在离线分析阶段（注册/开发/验证），请切换到「离线分析状态」tab 查看推进情况。',
+      icon: 'icon-info-circle-fill'
+    }
+  }
+  return null
+})
+
 // ============ 核心响应式状态 ============
 const isFailed = computed(() => isRetryableFailedStatus(props.status))
 const currentStatusLabel = computed(() => midloanStatusMeta(props.status).label)
 
-// 当前步骤下标（异常状态映射到对应正常位置）
-// 状态机索引：requirement_proposal=0, registered=1, developing_oa=2, dw_online=3,
-//             business_acceptance=4, business_verified=5, admin_confirmed=6,
-//             param_preparing=7, syncing_internal=8, syncing_variable=9, online=10, offline=11
-const currentStepIndex = computed(() => {
+/** 当前状态在全局 12 状态机中的下标（异常态映射到对应正常位置） */
+const globalStepIndex = computed(() => {
   if (isFailed.value) {
     const failedMap = {
-      internal_sync_failed: 8,    // syncing_internal
-      variable_sync_failed: 9,    // syncing_variable
-      dw_online_failed: 3,        // dw_online
-      offline_failed: 11          // offline
+      internal_sync_failed: 8,
+      variable_sync_failed: 9,
+      dw_online_failed: 3,
+      offline_failed: 11
     }
     return failedMap[props.status] !== undefined ? failedMap[props.status] : 0
   }
@@ -286,98 +313,65 @@ const currentStepIndex = computed(() => {
   return idx >= 0 ? idx : -1
 })
 
-// ============ 5 阶段折叠展示逻辑（文档 v2.1 K1）============
-// 折叠状态：记录已展开的阶段 key
-const expandedPhases = ref([])
-
-// 当前 active 阶段 key
-const activePhaseKey = computed(() => {
-  for (const phase of MIDLOAN_PHASES) {
-    const indices = phase.statuses.map(s => MIDLOAN_STATUS_ORDER.indexOf(s))
-    const minIdx = Math.min(...indices)
-    const maxIdx = Math.max(...indices)
-    if (currentStepIndex.value >= minIdx && currentStepIndex.value <= maxIdx) {
-      return phase.key
-    }
-  }
-  return MIDLOAN_PHASES[MIDLOAN_PHASES.length - 1].key
+/** 异常态是否在当前 scope 内（异常态 dataForm 需与 scope 对齐） */
+const isFailedInScope = computed(() => {
+  if (!isFailed.value) return false
+  const cat = getStatusCategory(props.status)
+  if (props.scope === 'all') return true
+  if (props.scope === 'offline_analysis') return cat === 'offline_analysis'
+  if (props.scope === 'online_interface') return cat === 'online_interface'
+  return false
 })
 
-// 初始化：默认展开 active 阶段；状态变化时自动展开新 active 阶段
-watch(activePhaseKey, (key) => {
-  if (!expandedPhases.value.includes(key)) {
-    expandedPhases.value.push(key)
-  }
-}, { immediate: true })
+/** 全局步骤下标（12 正常状态机的 0-based 索引，模板内 step.globalIdx 对比均用此值） */
+const currentStepIndex = globalStepIndex
 
-function togglePhase(key) {
-  const idx = expandedPhases.value.indexOf(key)
-  if (idx >= 0) {
-    expandedPhases.value.splice(idx, 1)
-  } else {
-    expandedPhases.value.push(key)
-  }
-}
+/** scope 相对步骤下标（仅用于 localCurrentIndex 计算，内部使用） */
+const localStepIndexInScope = computed(() => {
+  const gi = globalStepIndex.value
+  if (gi < 0) return -1
 
-function isPhaseExpanded(key) {
-  return expandedPhases.value.includes(key)
-}
+  const first = scopeFirstIdx.value
+  const last = scopeLastIdx.value
 
-// 各阶段数据 + 状态计算
-const phasesData = computed(() => {
-  return MIDLOAN_PHASES.map(phase => {
+  if (props.scope === 'all' || props.scope === undefined) return gi
+
+  if (gi < first) return -1
+  if (gi > last) return scopeStatusOrder.value.length
+  return gi - first
+})
+
+// ============ 状态列表（按 scope 铺平，直接展示）============
+/** 把 scope 内所有阶段的状态展平成一个扁平步骤列表 */
+const flatSteps = computed(() => {
+  const phases = scopePhases.value
+  return phases.flatMap(phase => {
     const indices = phase.statuses.map(s => MIDLOAN_STATUS_ORDER.indexOf(s))
-    const minIdx = Math.min(...indices)
-    const maxIdx = Math.max(...indices)
-
-    const phaseSteps = phase.statuses.map((key, localIdx) => ({
+    return phase.statuses.map((key, localIdx) => ({
       key,
       label: midloanStatusMeta(key).label,
-      globalIdx: indices[localIdx]
+      globalIdx: indices[localIdx],
+      dataForm: phase.dataForm
     }))
-
-    let status
-    if (currentStepIndex.value > maxIdx) {
-      status = 'completed'
-    } else if (currentStepIndex.value >= minIdx && currentStepIndex.value <= maxIdx) {
-      status = 'active'
-    } else {
-      status = 'pending'
-    }
-
-    let localCurrentIndex
-    if (status === 'completed') {
-      localCurrentIndex = phaseSteps.length
-    } else if (status === 'active') {
-      const activeLocalIdx = phaseSteps.findIndex(s => s.globalIdx === currentStepIndex.value)
-      localCurrentIndex = activeLocalIdx >= 0 ? activeLocalIdx : 0
-    } else {
-      localCurrentIndex = -1
-    }
-
-    return {
-      key: phase.key,
-      label: phase.label,
-      milestone: phase.milestone,
-      statuses: phase.statuses,
-      steps: phaseSteps,
-      status,
-      localCurrentIndex
-    }
   })
 })
 
-function phaseTagColor(status) {
-  if (status === 'completed') return 'green'
-  if (status === 'active') return 'arcoblue'
-  return 'gray'
-}
+/** 当前步骤在 flatSteps 中的索引（用于 a-steps :current） */
+const flatCurrentIndex = computed(() => {
+  const gi = globalStepIndex.value
+  const idx = flatSteps.value.findIndex(s => s.globalIdx === gi)
+  return idx >= 0 ? idx : 0
+})
 
-function phaseStepStatus(status) {
-  if (status === 'completed') return 'finish'
-  if (status === 'active') return isFailed.value ? 'error' : 'process'
-  return 'wait'
-}
+/** a-steps 的 :status（finish/process/error/wait） */
+const flatStepsStatus = computed(() => {
+  if (isFailed.value) return 'error'
+  const gi = globalStepIndex.value
+  const last = flatSteps.value[flatSteps.value.length - 1]?.globalIdx
+  if (gi >= last) return 'finish'
+  if (gi < flatSteps.value[0]?.globalIdx) return 'wait'
+  return 'process'
+})
 
 // ============ 数据查询 helper ============
 /**
@@ -496,67 +490,46 @@ const getMidloanStatusColor = midloanStatusColor
   color: var(--color-text-1);
 }
 
-/* ========== 5 阶段折叠展示 ========== */
-.phase-flow {
+/* ========== 状态列表（直接铺平，无阶段外层）========== */
+.status-list {
   margin-top: 8px;
-}
-.phase-block {
-  margin-bottom: 4px;
-  border-radius: 6px;
-  border: 1px solid var(--color-border-2, #e5e6eb);
-  overflow: hidden;
-}
-.phase-block.phase-active {
-  border-color: var(--color-primary-light-3, #bedaff);
-  box-shadow: 0 0 0 1px var(--color-primary-light-3, #bedaff);
-}
-.phase-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  background: var(--color-fill-1, #f7f8fa);
-  transition: background 0.2s;
-  user-select: none;
-}
-.phase-header:hover {
-  background: var(--color-fill-2, #f2f3f5);
-}
-.phase-arrow {
-  font-size: 12px;
-  color: var(--color-text-3, #86909c);
-  transition: transform 0.2s;
-}
-.phase-arrow.is-expanded {
-  transform: rotate(90deg);
-}
-.phase-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-1, #1d2129);
-}
-.phase-status-text {
-  margin-left: auto;
-  font-size: 12px;
-}
-.phase-status-text.status-completed {
-  color: var(--color-success, #00b42a);
-}
-.phase-status-text.status-active {
-  color: var(--color-primary, #165dff);
-  font-weight: 500;
-}
-.phase-status-text.status-pending {
-  color: var(--color-text-4, #c9cdd4);
-}
-.phase-body {
-  padding: 8px 12px 4px 12px;
+  padding: 4px 4px 4px 0;
 }
 
 /* ========== 步骤流 ========== */
 .step-flow {
   margin-top: 0;
+}
+
+/* ========== 步骤操作按钮颜色（覆盖 arco 默认 checked 误色）========== */
+/* arco v2.55+ 在某些条件下会给 a-tag 自动加上 .arco-tag-checked 类，导致渲染为 gold 色。
+   强制让详情页时间轴里的「主流程按钮」按 :color 属性回归 arcoblue/red/orange/gray */
+.step-actions :deep(.arco-tag-checked.arco-tag-color-arcoblue),
+.step-actions :deep(.arco-tag.arco-tag-checked[style*="cursor: pointer"]) {
+  background-color: rgb(var(--arcoblue-6));
+  border-color: rgb(var(--arcoblue-6));
+  color: #fff;
+}
+.step-actions :deep(.arco-tag-checked.arco-tag-color-arcoblue:hover) {
+  background-color: rgb(var(--arcoblue-5));
+  border-color: rgb(var(--arcoblue-5));
+}
+.step-actions :deep(.arco-tag-checked.arco-tag-color-red) {
+  background-color: rgb(var(--danger-6));
+  border-color: rgb(var(--danger-6));
+  color: #fff;
+}
+.step-actions :deep(.arco-tag-checked.arco-tag-color-orange) {
+  background-color: rgb(var(--warning-6));
+  border-color: rgb(var(--warning-6));
+  color: #fff;
+}
+/* 兜底：干掉任何残留 gold/checked 类 */
+.step-actions :deep(.arco-tag-checked.arco-tag-color-gold),
+.step-actions :deep(.arco-tag.arco-tag-gold.arco-tag-checked) {
+  background-color: rgb(var(--arcoblue-6));
+  border-color: rgb(var(--arcoblue-6));
+  color: #fff;
 }
 
 /* ========== 步骤右侧内容 ========== */
