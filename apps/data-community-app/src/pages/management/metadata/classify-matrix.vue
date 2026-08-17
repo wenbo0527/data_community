@@ -8,10 +8,10 @@
             <template #icon><icon-upload /></template>
             批量导入
           </a-button>
-          <a-radio-group v-model="viewMode" type="button">
-            <a-radio value="table">矩阵视图</a-radio>
-            <a-radio value="tree">树形视图</a-radio>
-          </a-radio-group>
+          <a-button @click="downloadTemplate">
+            <template #icon><icon-download /></template>
+            下载模板
+          </a-button>
         </a-space>
       </template>
     </PageHeader>
@@ -67,7 +67,7 @@
     </a-card>
 
     <!-- 矩阵视图 -->
-    <a-card v-if="viewMode === 'table'" class="table-card">
+    <a-card class="table-card">
       <a-table
         :data="pagedData"
         :pagination="pagination"
@@ -96,27 +96,6 @@
           </a-table-column>
         </template>
       </a-table>
-    </a-card>
-
-    <!-- 树形视图 -->
-    <a-card v-else class="tree-card">
-      <a-tree
-        :data="treeData"
-        :default-expand-all="true"
-        block-node
-      >
-        <template #title="nodeData">
-          <span class="tree-node">
-            <span class="tree-label">{{ nodeData.title }}</span>
-            <a-tag v-if="nodeData.level" :color="SENSITIVITY_COLORS[nodeData.level]" size="small">
-              {{ nodeData.level }}
-            </a-tag>
-            <a-tag v-else-if="nodeData.count !== undefined" size="small" color="gray">
-              {{ nodeData.count }} 条
-            </a-tag>
-          </span>
-        </template>
-      </a-tree>
     </a-card>
 
     <!-- 详情弹窗 -->
@@ -154,23 +133,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconUpload } from '@arco-design/web-vue/es/icon'
+import { IconUpload, IconDownload } from '@arco-design/web-vue/es/icon'
 import PageHeader from '@/components-dca/common/PageHeader.vue'
 import ClassifyMatrixUploadModal from './classify/components/ClassifyMatrixUploadModal.vue'
 import { classifyMatrixData, matrixL1List } from '@/mock-shared/classify-matrix'
 import { SENSITIVITY_COLORS, SENSITIVITY_NAMES } from '@/mock-shared/classify-constants'
 import type { ClassifyMatrixItem } from '@/mock-shared/classify-types'
-
-// ============ 视图模式（持久化） ============
-const STORAGE_KEY = 'classify-matrix-view-mode'
-const viewMode = ref<'table' | 'tree'>('table')
-onMounted(() => {
-  const cached = localStorage.getItem(STORAGE_KEY)
-  if (cached === 'tree' || cached === 'table') viewMode.value = cached
-})
-watch(viewMode, v => localStorage.setItem(STORAGE_KEY, v))
 
 // ============ 筛选 ============
 const filterForm = ref({ l1: '', level: '', keyword: '' })
@@ -220,44 +190,6 @@ const pagedData = computed(() => {
 const onPageChange = (current: number) => { pagination.value.current = current }
 const onPageSizeChange = (size: number) => { pagination.value.pageSize = size; pagination.value.current = 1 }
 
-// ============ 树形视图 ============
-const treeData = computed(() => {
-  // 构造一级→二级→三级→四级 树
-  const root: any[] = []
-  const l1Map = new Map<string, any>()
-  filteredData.value.forEach(item => {
-    if (!l1Map.has(item.category_l1)) {
-      const node = { key: `l1-${item.category_l1}`, title: item.category_l1, count: 0, children: [] }
-      l1Map.set(item.category_l1, node)
-      root.push(node)
-    }
-    const l1Node = l1Map.get(item.category_l1)!
-    l1Node.count++
-
-    let l2Node = l1Node.children.find((c: any) => c.title === item.category_l2)
-    if (!l2Node) {
-      l2Node = { key: `l2-${item.category_l1}-${item.category_l2}`, title: item.category_l2, count: 0, children: [] }
-      l1Node.children.push(l2Node)
-    }
-    l2Node.count++
-
-    let l3Node = l2Node.children.find((c: any) => c.title === item.category_l3)
-    if (!l3Node) {
-      l3Node = { key: `l3-${item.category_l2}-${item.category_l3}`, title: item.category_l3, count: 0, children: [] }
-      l2Node.children.push(l3Node)
-    }
-    l3Node.count++
-
-    l3Node.children.push({
-      key: item.id,
-      title: item.category_l4,
-      level: item.sensitivity_level,
-      isLeaf: true
-    })
-  })
-  return root
-})
-
 // ============ 详情弹窗 ============
 const detailVisible = ref(false)
 const detailRecord = ref<ClassifyMatrixItem | null>(null)
@@ -273,6 +205,27 @@ const onUploadSuccess = (result: { added: number; updated: number; ignored: numb
   uploadVisible.value = false
   Message.success(`导入完成：新增 ${result.added} 条，更新 ${result.updated} 条，忽略 ${result.ignored} 条`)
 }
+
+// ============ 下载导入模板 ============
+const downloadTemplate = () => {
+  const header = ['一级分类', '二级定义', '三级定义', '四级分类内容', '安全级别']
+  const sample = [
+    ['客户信息', '个人PII', '联系方式', '手机号', 'L3'],
+    ['客户信息', '个人PII', '身份信息', '身份证号', 'L4'],
+    ['业务交易', '订单', '支付信息', '支付金额', 'L3']
+  ]
+  const escape = (s) => `"${String(s).replace(/"/g, '""')}"`
+  const csv = [header, ...sample].map(row => row.map(escape).join(',')).join('\n')
+  // 加 UTF-8 BOM，避免 Excel 打开中文乱码
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = '分级分类矩阵表_导入模板.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+  Message.success('模板已下载')
+}
 </script>
 
 <style scoped>
@@ -281,7 +234,4 @@ const onUploadSuccess = (result: { added: number; updated: number; ignored: numb
 .filter-tags { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
 .table-card :deep(.clickable-row) { cursor: pointer; }
 .table-card :deep(.clickable-row:hover) { background-color: var(--color-fill-2); }
-.tree-card { min-height: 400px; }
-.tree-node { display: inline-flex; align-items: center; gap: 8px; }
-.tree-label { font-weight: 500; }
 </style>
