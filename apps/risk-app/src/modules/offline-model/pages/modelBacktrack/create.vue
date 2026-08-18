@@ -57,6 +57,15 @@
                   />
                 </a-form-item>
               </a-col>
+              <!-- 模块A P0：推理入参特征文件落库勾选项 -->
+              <a-col :span="12">
+                <a-form-item label=" ">
+                  <a-checkbox v-model="observeForm.featurePersist">
+                    推理入参入库
+                  </a-checkbox>
+                  <div class="field-hint" style="margin-top:4px;">勾选后，本次回溯的推理入参特征文件将写入推理结果表，供后续追溯与复用</div>
+                </a-form-item>
+              </a-col>
             </a-row>
           </a-form>
         </a-collapse-item>
@@ -204,7 +213,15 @@
         <!-- 步骤三：必填字段映射 -->
         <a-collapse-item key="required" header="步骤三：必填字段映射">
           <div class="section-tip">根据样本表字段，完成以下必填字段的映射匹配</div>
-          <a-table :data="requiredMappings" :columns="requiredDefs" row-key="name" size="small" :pagination="false">
+          <div class="table-search-row">
+            <a-input-search
+              v-model="requiredSearch"
+              placeholder="按字段名搜索"
+              allow-clear
+              style="width: 240px; margin-bottom: 8px;"
+            />
+          </div>
+          <a-table :data="filteredRequiredMappings" :columns="requiredDefs" row-key="name" size="small" :pagination="false">
             <template #targetCell="{ record }">
               <a-select
                 v-model="record.target"
@@ -236,17 +253,35 @@
           <div class="section-tip">
             已匹配 <a-badge :count="matchedCount" :max-count="99" style="margin: 0 4px;" />{{ matchedCount }} / {{ inputMappings.length }}，未匹配 {{ inputMappings.length - matchedCount }}
           </div>
-          <a-table :data="inputMappings" :columns="mappingDefs" row-key="rowKey" size="small" :pagination="false">
+          <div class="table-search-row">
+            <a-input-search
+              v-model="mappingSearch"
+              placeholder="按入参名搜索"
+              allow-clear
+              style="width: 240px; margin-bottom: 8px;"
+            />
+          </div>
+          <a-table :data="filteredInputMappings" :columns="mappingDefs" row-key="rowKey" size="small" :pagination="false">
             <template #targetCell="{ record }">
+              <!-- 模块B P1：后端模糊搜索（输入即触发、不区分大小写、50条分页） -->
               <a-select
-                v-model="record.target"
-                placeholder="选择特征中心特征"
-                allow-search
+                :model-value="record.target"
+                placeholder="输入关键词搜索特征"
                 style="width: 100%;"
-                @change="updateInputStatus(record)"
+                allow-search
+                :filter-option="false"
+                :loading="featureSearchLoading && featureSearchActiveRowKey === record.rowKey"
+                :not-found-content="featureSearchLoading && featureSearchActiveRowKey === record.rowKey ? '搜索中…' : '无匹配特征'"
+                @search="(kw) => triggerFeatureSearch(record.rowKey, kw)"
+                @change="(v) => { record.target = v; updateInputStatus(record); }"
+                @dropdown-reach-bottom="() => {}"
               >
-                <a-option v-for="f in featureTargets" :key="f.name" :value="f.name">
-                  {{ f.cnName || f.name }} <span class="col-type">{{ f.dataType || f.type || '' }}</span>
+                <a-option
+                  v-for="f in (featureSearchActiveRowKey === record.rowKey ? featureSearchResults : (record.target ? [{ name: record.target, code: record.target, description: '当前已选' }] : []))"
+                  :key="f.code || f.name"
+                  :value="f.code || f.name"
+                >
+                  {{ f.name }} <span class="col-type">{{ f.type || '' }}</span>
                 </a-option>
               </a-select>
             </template>
@@ -263,7 +298,15 @@
 
         <!-- 步骤五：输出信息 -->
         <a-collapse-item key="output" header="步骤五：输出信息">
-          <a-table :data="modelOutputs" :columns="modelOutputDefs" row-key="name" size="small" :pagination="false" />
+          <div class="table-search-row">
+            <a-input-search
+              v-model="outputSearch"
+              placeholder="按出参名搜索"
+              allow-clear
+              style="width: 240px; margin-bottom: 8px;"
+            />
+          </div>
+          <a-table :data="filteredModelOutputs" :columns="modelOutputDefs" row-key="name" size="small" :pagination="false" />
         </a-collapse-item>
       </a-collapse>
     </div>
@@ -344,7 +387,7 @@ const requiredDefs = [
 ]
 
 // 观测日期
-const observeForm = ref({ observeDate: '', dateRange: [] })
+const observeForm = ref({ observeDate: '', dateRange: [], featurePersist: false })
 
 // SQL 预览
 const baseSQL = computed(() => {
@@ -374,6 +417,12 @@ const modelOutputDefs = [
 // 入参匹配
 const inputMappings = ref([])
 const featureTargets = ref([])
+// 模块B P1：步骤四『映射到特征中心』模糊搜索
+const featureSearchKeyword = ref('')        // 当前行输入框搜索关键词（行级隔离）
+const featureSearchResults = ref([])        // 当前激活行的搜索结果
+const featureSearchLoading = ref(false)
+const featureSearchActiveRowKey = ref('')   // 当前展开搜索的行 rowKey
+const featureSearchTimers = new Map()       // 防抖：每行一个 timer
 const mappingDefs = [
   { title: '入参名', dataIndex: 'name', width: 160 },
   { title: '类型', dataIndex: 'type', width: 120 },
@@ -382,6 +431,52 @@ const mappingDefs = [
   { title: '状态', dataIndex: 'status', slotName: 'statusCell', width: 100, align: 'center' }
 ]
 const matchedCount = computed(() => inputMappings.value.filter(i => i.status === 'matched').length)
+
+// 步骤三/四/五：按名称列前端搜索过滤（不区分大小写）
+const requiredSearch = ref('')
+const mappingSearch = ref('')
+const outputSearch = ref('')
+const filteredRequiredMappings = computed(() => {
+  const kw = (requiredSearch.value || '').trim().toLowerCase()
+  if (!kw) return requiredMappings.value
+  return requiredMappings.value.filter(r => (r.name || '').toLowerCase().includes(kw))
+})
+const filteredInputMappings = computed(() => {
+  const kw = (mappingSearch.value || '').trim().toLowerCase()
+  if (!kw) return inputMappings.value
+  return inputMappings.value.filter(r => (r.name || '').toLowerCase().includes(kw))
+})
+const filteredModelOutputs = computed(() => {
+  const kw = (outputSearch.value || '').trim().toLowerCase()
+  if (!kw) return modelOutputs.value
+  return modelOutputs.value.filter(o => (o.name || '').toLowerCase().includes(kw))
+})
+
+// 模块B P1：触发后端模糊搜索（防抖 250ms）
+const triggerFeatureSearch = async (rowKey, keyword) => {
+  if (featureSearchTimers.has(rowKey)) {
+    clearTimeout(featureSearchTimers.get(rowKey))
+  }
+  const t = setTimeout(async () => {
+    featureSearchLoading.value = true
+    featureSearchActiveRowKey.value = rowKey
+    try {
+      const res = await featureAPI.searchFeatures(keyword, 1, 50)
+      if (res.success) {
+        featureSearchResults.value = res.data || []
+      } else {
+        featureSearchResults.value = []
+        Message.error(res.message || '搜索服务异常，请重试')
+      }
+    } catch (e) {
+      featureSearchResults.value = []
+      Message.error('搜索服务异常，请重试')
+    } finally {
+      featureSearchLoading.value = false
+    }
+  }, 250)
+  featureSearchTimers.set(rowKey, t)
+}
 
 // v1.3: 样本表输入 + 拉取数据
 const handleTableValidate = async () => {
@@ -657,6 +752,8 @@ const handleSubmit = async () => {
       taskName: modelForm.value.taskName,
       copiedFrom: routeParams.copyFrom ? Number(routeParams.copyFrom) : undefined,
       status: routeParams.copyFrom ? 'draft' : 'running',
+      // 模块A P0：推理入参特征文件落库开关
+      featurePersist: !!observeForm.value.featurePersist,
       inputMappings: mappings,
       outputs: modelOutputs.value,
       requiredFieldMappings: requiredMappings.value.map(r => ({ field: r.name, target: r.target, isEncrypted: !!r.isEncrypted })),

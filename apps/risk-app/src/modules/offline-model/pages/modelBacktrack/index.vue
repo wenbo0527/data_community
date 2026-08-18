@@ -73,6 +73,7 @@
               <a-option value="completed">已完成</a-option>
               <a-option value="failed">失败</a-option>
               <a-option value="stopped">已停止</a-option>
+              <a-option value="partial_success">部分成功</a-option>
             </a-select>
           </a-form-item>
           
@@ -404,7 +405,8 @@ const getStatusColor = (status) => {
     running: 'blue',
     completed: 'green',
     failed: 'red',
-    stopped: 'orange'
+    stopped: 'orange',
+    partial_success: 'cyan'
   }
   return colors[status] || 'gray'
 }
@@ -415,7 +417,8 @@ const getStatusLabel = (status) => {
     running: '运行中',
     completed: '已完成',
     failed: '失败',
-    stopped: '已停止'
+    stopped: '已停止',
+    partial_success: '部分成功'
   }
   return labels[status] || status
 }

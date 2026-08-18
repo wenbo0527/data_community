@@ -259,6 +259,16 @@ export const featureAPI = {
     } catch (error) {
       return createErrorResponse('获取库下表失败: ' + error.message)
     }
+  },
+  // 步骤四『映射到特征中心』下拉框模糊搜索（模块B P1）
+  async searchFeatures(keyword, page, pageSize) {
+    await simulateDelay(150, 500)
+    try {
+      const result = featureMock.searchFeatures(keyword, page, pageSize)
+      return createResponse(result)
+    } catch (error) {
+      return createErrorResponse('特征搜索失败: ' + error.message)
+    }
   }
 }
 

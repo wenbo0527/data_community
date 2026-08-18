@@ -393,6 +393,38 @@ export function getFeatureDetail(id) {
 }
 
 /**
+ * 步骤四『映射到特征中心』下拉框模糊搜索（模块B P1）
+ * @param {string} keyword - 搜索关键词（按名称 / 描述模糊匹配，不区分大小写）
+ * @param {number} page - 页码，默认 1
+ * @param {number} pageSize - 每页条数，默认 50
+ * 行为约定：
+ *   - keyword 为空时返回全量列表（按 pageSize 截取）
+ *   - 不区分大小写
+ *   - 匹配字段：name、description、code
+ *   - 返回空数组时下拉框展示『无匹配特征』
+ */
+export function searchFeatures(keyword = '', page = 1, pageSize = 50) {
+  const kw = (keyword || '').trim().toLowerCase()
+  let list = [...mockFeatures]
+  if (kw) {
+    list = list.filter(f =>
+      (f.name || '').toLowerCase().includes(kw) ||
+      (f.code || '').toLowerCase().includes(kw) ||
+      (f.description || '').toLowerCase().includes(kw)
+    )
+  }
+  const start = (page - 1) * pageSize
+  const end = start + pageSize
+  return {
+    data: list.slice(start, end),
+    total: list.length,
+    page,
+    pageSize,
+    keyword
+  }
+}
+
+/**
  * 默认值转化配置
  */
 const defaultValueTransformConfig = {
@@ -564,6 +596,7 @@ export default {
   getFeatureStatus,
   getModelTypes,
   getFeaturesByModelType,
+  searchFeatures,
   listTables,
   getTableColumns,
   getTableMeta,
