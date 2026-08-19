@@ -562,14 +562,59 @@ export function getFeatureStatus() {
 }
 
 /**
- * 获取特征列表按模型类型
+ * 获取特征列表按模型类型（先过滤再分页，避免分页后过滤丢数据）
  */
 export function getFeaturesByModelType(modelType, params = {}) {
-  const allFeatures = getFeatures(params);
+  const { name = '', type = '', status = '', majorCategory = '', level1 = '', level2 = '', page = 1, pageSize = 10 } = params
+
+  let filteredFeatures = [...mockFeatures]
+
+  // 按名称筛选
+  if (name) {
+    filteredFeatures = filteredFeatures.filter(f =>
+      f.name.toLowerCase().includes(name.toLowerCase()) ||
+      f.code.toLowerCase().includes(name.toLowerCase())
+    )
+  }
+  // 按类型筛选
+  if (type) {
+    filteredFeatures = filteredFeatures.filter(f => f.type === type)
+  }
+  // 按业务大类筛选
+  if (majorCategory) {
+    filteredFeatures = filteredFeatures.filter(f => f.majorCategory === majorCategory)
+  }
+  // 按一级分类筛选
+  if (level1) {
+    filteredFeatures = filteredFeatures.filter(f => f.level1 === level1)
+  }
+  // 按二级分类筛选
+  if (level2) {
+    filteredFeatures = filteredFeatures.filter(f => f.level2 === level2)
+  }
+  // 按状态筛选
+  if (status) {
+    if (status === 'inactive') {
+      filteredFeatures = filteredFeatures.filter(f => f.status !== 'active')
+    } else {
+      filteredFeatures = filteredFeatures.filter(f => f.status === status)
+    }
+  }
+
+  // 先按模型类型过滤
+  filteredFeatures = filteredFeatures.filter(f => f.modelType === modelType)
+
+  // 再分页
+  const start = (page - 1) * pageSize
+  const end = start + pageSize
+  const paginatedFeatures = filteredFeatures.slice(start, end)
+
   return {
-    ...allFeatures,
-    data: allFeatures.data.filter(f => f.modelType === modelType)
-  };
+    data: paginatedFeatures,
+    total: filteredFeatures.length,
+    page,
+    pageSize
+  }
 }
 
 /**

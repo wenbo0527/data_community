@@ -226,6 +226,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { featureAPI, modelAPI } from '@/modules/offline-model/api'
+import { level2Options, getEffectiveLevel1Options, typeMap } from './shared'
 
 const route = useRoute()
 const router = useRouter()
@@ -265,47 +266,7 @@ const rules = {
 
 const isModelScore = computed(() => detail.value?.level1 === 'model_outputs')
 
-const level1Options = [
-  { value: 'credit_report', label: '征信报告' },
-  { value: 'credit_history', label: '信贷记录' },
-  { value: 'transaction_behavior', label: '交易行为' },
-  { value: 'activity', label: '活跃度' },
-  { value: 'model_outputs', label: '模型输出' }
-]
-
-const effectiveLevel1Options = computed(() => {
-  const cat = form.value.majorCategory
-  if (cat === 'model_output') return level1Options.filter(o => o.value === 'model_outputs')
-  if (cat === 'credit') return level1Options.filter(o => o.value === 'credit_report' || o.value === 'credit_history')
-  if (cat === 'behavior') return level1Options.filter(o => o.value === 'transaction_behavior' || o.value === 'activity')
-  return level1Options
-})
-
-const level2Options = (l1) => {
-  const map = {
-    credit_report: [
-      { value: 'overdue_count', label: '逾期次数' },
-      { value: 'query_count', label: '查询次数' }
-    ],
-    credit_history: [
-      { value: 'loan_times', label: '贷款次数' },
-      { value: 'repay_ratio', label: '还款比率' }
-    ],
-    transaction_behavior: [
-      { value: 'avg_amount', label: '平均交易额' },
-      { value: 'frequency', label: '交易频次' }
-    ],
-    activity: [
-      { value: 'login_days', label: '登录天数' },
-      { value: 'session_count', label: '会话次数' }
-    ],
-    model_outputs: [
-      { value: 'score', label: '评分' },
-      { value: 'probability', label: '概率' }
-    ]
-  }
-  return map[l1] || []
-}
+const effectiveLevel1Options = computed(() => getEffectiveLevel1Options(form.value.majorCategory))
 
 onMounted(async () => {
   try {
@@ -389,12 +350,6 @@ const handleSubmit = async () => {
     return
   }
 
-  const typeMap = (dt) => {
-    if (dt === 'timestamp') return 'time'
-    if (dt === 'string') return 'categorical'
-    if (dt === 'int' || dt === 'double') return 'numerical'
-    return 'numerical'
-  }
   const payload = {
     name: form.value.name,
     code: form.value.code,
