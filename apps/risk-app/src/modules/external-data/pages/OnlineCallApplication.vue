@@ -117,7 +117,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :span="8">
-                  <a-form-item label="单次跑批客户量限制" field="batchUserLimit" required>
+                  <a-form-item label="单次跑批客户量限制（单位：万）" field="batchUserLimit" required>
                     <a-input-number
                       v-model="step1Form.batchUserLimit"
                       :min="1"
@@ -129,7 +129,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :span="8">
-                  <a-form-item label="累计去重客户量限制" field="dedupWeightLimit" required>
+                  <a-form-item label="累计去重客户量限制（单位：万）" field="dedupWeightLimit" required>
                     <a-input-number
                       v-model="step1Form.dedupWeightLimit"
                       :min="1"
@@ -212,10 +212,10 @@
             <a-descriptions-item label="剩余次数">
               {{ existingApplication?.total_count - existingApplication?.used_count }} / {{ existingApplication?.total_count }}
             </a-descriptions-item>
-            <a-descriptions-item label="单次跑批客户量限制">
+            <a-descriptions-item label="单次跑批客户量限制（单位：万）">
               {{ existingApplication?.batch_user_limit.toLocaleString() }}
             </a-descriptions-item>
-            <a-descriptions-item label="累计去重客户量限制">
+            <a-descriptions-item label="累计去重客户量限制（单位：万）">
               {{ existingApplication?.dedup_weight_limit.toLocaleString() }}
             </a-descriptions-item>
             <a-descriptions-item label="本次跑批客户量" :span="2">
@@ -336,10 +336,10 @@
               {{ computedResult.dedupCount <= existingApplication?.dedup_weight_limit ? '在限制内' : '超出限制' }}
             </a-tag>
           </a-descriptions-item>
-          <a-descriptions-item label="单次跑批客户量限制">
+          <a-descriptions-item label="单次跑批客户量限制（单位：万）">
             {{ existingApplication?.batch_user_limit.toLocaleString() }}
           </a-descriptions-item>
-          <a-descriptions-item label="累计去重客户量限制">
+          <a-descriptions-item label="累计去重客户量限制（单位：万）">
             {{ existingApplication?.dedup_weight_limit.toLocaleString() }}
           </a-descriptions-item>
         </a-descriptions>
