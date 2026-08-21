@@ -37,22 +37,33 @@ function generateMockProducts() {
     { supplierId: 'SUP-001', productCode: 'XUEXIN_SPECIAL_AUDIT', productName: '特殊教育审核', category: 'SPECIAL' },
   ]
 
-  // supplierId → 中文供应商映射
-  const supplierMap: Record<string, string> = {
+  // PRD R01: 合作机构（partnerOrg）映射 - 字段统一
+  const partnerOrgMap: Record<string, string> = {
     'SUP-001': '学信网',
-    'SUP-002': '百行征信',
-    'SUP-003': '同盾科技',
+    'SUP-002': '百行征信有限公司',
+    'SUP-003': '朴道征信有限公司',
+  }
+  // PRD R02: 供应商（supplier）映射 - 待白曦补充，本期先用恒普/海纳/内部三档占位
+  const supplierMap: Record<string, string> = {
+    'SUP-001': '恒普',
+    'SUP-002': '海纳',
+    'SUP-003': '内部',
   }
 
   return products.map((p, idx) => {
     const hasInterfaces = Math.random() > 0.1
     const hasBottomTable = Math.random() > 0.1
+    // PRD R07: 空白卡片 - 前 2 个允许接口号/落库表名为空，模拟「先签协议后引入」
+    const isBlankCard = idx < 2
     return {
       id: p.productCode,
       name: p.productName,
       code: `ED-${String(idx + 1).padStart(3, '0')}`,
-      supplier: supplierMap[p.supplierId] || p.supplierId,
-      status: hasInterfaces && hasBottomTable ? 'active' : (hasInterfaces ? 'importing' : 'pending_evaluation'),
+      // PRD R01 合作机构
+      partnerOrg: partnerOrgMap[p.supplierId] || p.supplierId,
+      // PRD R02 供应商（独立字段，由文本输入改为选项列表）
+      supplier: supplierMap[p.supplierId] || '内部',
+      status: isBlankCard ? 'importing' : (hasInterfaces && hasBottomTable ? 'active' : (hasInterfaces ? 'importing' : 'pending_evaluation')),
       createdAt: randomDateWithinYear(),
       usageScene: idx % 2 === 0 ? '贷前评分' : '贷中监控',
       billingMode: p.category === 'SPECIAL' ? 'package' : 'per_call',
@@ -64,10 +75,17 @@ function generateMockProducts() {
       tags: ['外数', p.category === 'SPECIAL' ? '特殊' : '风控'],
       evaluationScore: randBetween(60, 95),
       monitorStatus: Math.random() > 0.15 ? '正常' : '异常',
+      // PRD R03 接口号（非必填，后期可改）
+      interfaceNo: isBlankCard ? '' : `IF-${String(idx + 1).padStart(4, '0')}`,
+      // PRD R04 落库表名（由必填改为非必填）
+      bottomTable: isBlankCard ? '' : `dwd_${p.productCode.toLowerCase()}_detail`,
+      dbTable: isBlankCard ? '' : `dwd_${p.productCode.toLowerCase()}_detail`,
+      tableName: isBlankCard ? '' : `dwd_${p.productCode.toLowerCase()}_detail`,
       hasInterfaces,
       hasBottomTable,
       frameworkAgreements: [],
       totalSupplementAmount: 0,
+      isBlankCard,
     }
   })
 }

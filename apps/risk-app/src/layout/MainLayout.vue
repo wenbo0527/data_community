@@ -66,6 +66,7 @@
             <a-menu-item key="/budget/list">预算列表</a-menu-item>
             <a-menu-item key="/budget/monitor">预算监控</a-menu-item>
             <a-menu-item key="/budget/contracts">合同管理</a-menu-item>
+            <a-menu-item key="/budget/sign-reports">签报管理</a-menu-item>
             <a-menu-item key="/budget/settlement">结算管理</a-menu-item>
             <a-menu-item key="/budget/accounting">核算流程</a-menu-item>
           </a-sub-menu>
@@ -157,6 +158,7 @@ function updateMenuState(path: string) {
   else if (path.startsWith('/budget/list')) activeSideMenu.value = '/budget/list'
   else if (path.startsWith('/budget/monitor')) activeSideMenu.value = '/budget/monitor'
   else if (path.startsWith('/budget/contracts')) activeSideMenu.value = '/budget/contracts'
+  else if (path.startsWith('/budget/sign-reports')) activeSideMenu.value = '/budget/sign-reports'
   else if (path.startsWith('/budget/settlement')) activeSideMenu.value = '/budget/settlement'
   else if (path.startsWith('/budget/accounting')) activeSideMenu.value = '/budget/accounting'
   // 陪跑

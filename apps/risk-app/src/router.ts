@@ -234,6 +234,25 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '新建合同' }
       },
       {
+        path: '/budget/sign-reports',
+        name: 'RiskBudgetSignReports',
+        component: () => import('./modules/budget/pages/SignReports.vue'),
+        meta: { title: '签报管理' }
+      },
+      {
+        path: '/budget/sign-reports/new',
+        name: 'RiskBudgetSignReportCreate',
+        component: () => import('./modules/budget/pages/SignReportDetail.vue'),
+        meta: { title: '新增签报' }
+      },
+      {
+        path: '/budget/sign-reports/:id',
+        name: 'RiskBudgetSignReportDetail',
+        component: () => import('./modules/budget/pages/SignReportDetail.vue'),
+        meta: { title: '签报详情' },
+        props: true
+      },
+      {
         path: '/budget/settlement',
         name: 'RiskBudgetSettlement',
         component: () => import('./modules/budget/pages/Settlement.vue'),

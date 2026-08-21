@@ -47,15 +47,13 @@
                 </a-row>
                 <a-row :gutter="12">
                   <a-col :span="12">
-                    <a-form-item field="supplier" label="征信机构" required>
-                      <a-select v-model="form.supplier" allow-create allow-clear placeholder="选择或输入征信机构，如 学信网 / 百行 / 朴道 / 钱塘">
-                        <a-option v-for="s in supplierOptions" :key="s.value" :value="s.value">{{ s.label }}</a-option>
-                      </a-select>
+                    <a-form-item field="supplier" label="合作机构" required>
+                      <a-select v-model="form.supplier" allow-clear allow-search placeholder="选择合作机构" :options="partnerOrgOptions" />
                     </a-form-item>
                   </a-col>
                   <a-col :span="12" v-if="form.contractType === 'supplement'">
                     <a-form-item field="frameworkIds" label="关联框架合同" required>
-                      <a-select v-model="form.frameworkIds" multiple :disabled="!form.supplier" placeholder="先选择征信机构后展示其有效框架合同">
+                      <a-select v-model="form.frameworkIds" multiple :disabled="!form.supplier" placeholder="先选择合作机构后展示其有效框架合同">
                         <a-option v-for="f in filteredFrameworkOptions" :key="f.value" :value="f.value">{{ f.label }}</a-option>
                       </a-select>
                     </a-form-item>
@@ -68,13 +66,57 @@
                     </a-form-item>
                   </a-col>
                 </a-row>
+                <!-- PRD R10: 新增签报号字段 + R11: 合同初始占用金额 -->
+                <a-row :gutter="12">
+                  <a-col :span="12">
+                    <a-form-item field="signReportNo" label="签报号">
+                      <a-select v-model="form.signReportNo" allow-clear allow-search placeholder="搜索选择已有签报（非必填，可后续补绑）">
+                        <a-option v-for="r in signReportOptions" :key="r.id" :value="r.reportNo">{{ r.reportNo }} - {{ r.title }}</a-option>
+                      </a-select>
+                    </a-form-item>
+                  </a-col>
+                  <a-col :span="12">
+                    <a-form-item field="initialOccupiedAmount" label="合同初始占用金额">
+                      <a-input-number v-model="form.initialOccupiedAmount" :min="0" :step="1000" style="width:100%" placeholder="历史已使用金额，默认0" />
+                    </a-form-item>
+                  </a-col>
+                </a-row>
+                <!-- PRD: 选择签报后展示剩余未占用金额 -->
+                <a-row v-if="selectedSignReportInfo" :gutter="12" style="margin-top: -4px">
+                  <a-col :span="24">
+                    <a-alert type="info" show-icon>
+                      <template #title>签报剩余未占用金额</template>
+                      <div>
+                        <span>签报号：<b>{{ selectedSignReportInfo.reportNo }}</b>　·　合作机构：<b>{{ selectedSignReportInfo.partnerOrg || '—' }}</b></span>
+                      </div>
+                      <div style="margin-top: 4px">
+                        成交通知书金额：<b>{{ formatAmount(selectedSignReportInfo.noticeAmount) }}</b>
+                        　-　初始占用：<b>{{ formatAmount(selectedSignReportInfo.initialOccupiedAmount) }}</b>
+                        　-　已绑定合同：<b>{{ formatAmount(selectedSignReportInfo.usedContractAmount) }}</b>
+                        　=　<b :style="{ color: selectedSignReportInfo.remainingAmount < 0 ? 'var(--color-danger-6)' : 'var(--color-success-6)' }">剩余未占用：{{ formatAmount(selectedSignReportInfo.remainingAmount) }}</b>
+                      </div>
+                      <div v-if="!form.supplier" style="margin-top: 4px; color: var(--color-text-3); font-size: 12px">请先在上方选择合作机构，以展示对应合作机构的签报剩余额度</div>
+                    </a-alert>
+                  </a-col>
+                </a-row>
                 <a-form-item label="已有外数">
                   <a-space direction="vertical" style="width: 100%">
                     <a-space>
                        <a-button size="mini" @click="forceRefreshProducts">刷新外数列表</a-button>
-                       <span style="font-size: 12px; color: var(--subapp-text-tertiary)">当前外数总数: {{ products.length }}</span>
+                       <span style="font-size: 12px; color: var(--subapp-text-tertiary)">当前外数总数: {{ products.length }}（左侧可选，右侧已关联不可取消）</span>
                     </a-space>
-                    <a-select v-model="selectedExternalIds" multiple allow-clear allow-search :options="externalOptions" placeholder="选择一个或多个外数" style="width: 100%" />
+                    <!-- PRD D1: 穿梭框（Transfer）+ 接口号搜索 + 已关联不可取消 -->
+                    <a-transfer
+                      v-model:target-keys="selectedExternalIds"
+                      :data="externalTransferData"
+                      :allow-search="true"
+                      :search-placeholder="'搜索外数名称或接口号'"
+                      :titles="['可选外数', '已关联外数']"
+                      :filter-option="filterExternal"
+                      show-check-all
+                      :virtual-list-props="{ height: 360 }"
+                      style="width: 100%"
+                    />
                   </a-space>
                 </a-form-item>
                 <div class="step-actions"><a-space><a-button @click="skipUpload">跳过上传</a-button></a-space></div>
@@ -189,10 +231,13 @@ import { Message } from '@arco-design/web-vue'
 import { IconUpload } from '@arco-design/web-vue/es/icon'
 import { useContractStore } from '@/modules/budget/stores/contract'
 import { useExternalDataStore } from '@/modules/external-data/stores/external-data'
+import { partnerOrgNames } from '@/modules/budget/api/supplierDictionary'
+import { useSignReportStore } from '@/modules/budget/stores/signReport'
 
 const router = useRouter()
 const store = useContractStore()
 const externalStore = useExternalDataStore()
+const signReportStore = useSignReportStore()
 const formRef = ref()
 const uploadProgress = ref(0)
 const skipUploadSelected = ref(false)
@@ -206,6 +251,31 @@ const forceRefreshProducts = async () => {
 watch(() => externalStore.products, (val) => {
   console.log('[Debug] Component Watcher: Store products changed, new length:', val?.length)
 }, { deep: true })
+
+// PRD R01: 合作机构选项列表
+const partnerOrgOptions = computed(() => partnerOrgNames.map(n => ({ label: n, value: n })))
+// PRD R10: 签报搜索选项
+const signReportOptions = computed(() => signReportStore.list)
+// PRD: 选择签报后展示的剩余未占用金额信息
+const selectedSignReportInfo = computed(() => {
+  const reportNo = String(form.signReportNo || '').trim()
+  if (!reportNo) return null
+  const signReport = signReportStore.list.find((r: any) => String(r.reportNo) === reportNo)
+  if (!signReport) return null
+  const sup = String(form.supplier || '').trim()
+  const partnerOrgData = sup ? (signReport.partnerOrgs || []).find((p: any) => String(p.partnerOrg) === sup) : null
+  const noticeAmount = Number(partnerOrgData?.noticeAmount || signReport.totalAmount || 0)
+  const initialOccupied = Number(partnerOrgData?.initialOccupiedAmount || 0)
+  // PRD: 已绑定合同金额（按签报号 + 合作机构匹配；新建合同尚未持久化前不计入）
+  const usedContractAmount = (store.list || []).filter((c: any) => String(c.signReportNo || '') === reportNo && (!sup || String(c.supplier || '') === sup))
+    .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+  const remainingAmount = Number((noticeAmount - initialOccupied - usedContractAmount).toFixed(2))
+  return { reportNo, partnerOrg: sup, noticeAmount, initialOccupied, usedContractAmount, remainingAmount }
+})
+const formatAmount = (n?: number) => {
+  const v = Number(n || 0)
+  return `${v.toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' })}`
+}
 
 const frameworkOptions = computed(() => store.frameworkOptions)
 const supplementOptions = computed(() => store.supplementOptions || [])
@@ -238,7 +308,7 @@ const externalOptions = computed(() => {
   const sup = String(form.supplier || '').trim()
   const allProducts = products.value || []
   console.log('[Debug] 重新计算 externalOptions')
-  console.log('[Debug] 当前选择的征信机构 (sup):', `"${sup}"`)
+  console.log('[Debug] 当前选择的合作机构 (sup):', `"${sup}"`)
   console.log('[Debug] Store 中的产品总数 (allProducts.length):', allProducts.length)
   
   if (allProducts.length > 0) {
@@ -261,15 +331,38 @@ const externalOptions = computed(() => {
   
   console.log('[Debug] 过滤后的可选产品数 (base.length):', base.length)
   
+  // PRD R24/R25: 选项列表附加展示接口号，支持按接口号搜索
   return base.map((p: any) => ({
-    label: `${p.name}（${p.supplier || '—'}/${p.channel || '—'}）`,
+    label: `${p.name}（${p.supplier || '—'}/${p.channel || '—'}${p.interfaceNo ? ' / 接口号:' + p.interfaceNo : ''}）`,
     value: p.id
   }))
 })
+// PRD D1: 穿梭框数据源（含接口号字段、不可取消 disabled）
+const externalTransferData = computed(() => {
+  const sup = String(form.supplier || '').trim()
+  const base = (products.value || []).filter((p: any) => !sup || String(p.supplier || '').trim() === sup)
+  return base.map((p: any) => ({
+    value: String(p.id),
+    label: p.name || p.productName || p.code,
+    disabled: false,
+    // 自定义搜索字段（接口号）
+    interfaceNo: p.interfaceNo || '',
+    supplier: p.supplier || '—',
+    tag: p.interfaceNo ? `接口号:${p.interfaceNo}` : '待补充接口号'
+  }))
+})
+// PRD D1: 穿梭框搜索（名称/接口号/合作机构）
+const filterExternal = (inputValue: string, item: any) => {
+  if (!inputValue) return true
+  const k = String(inputValue).toLowerCase()
+  return String(item.label || '').toLowerCase().includes(k)
+    || String(item.interfaceNo || '').toLowerCase().includes(k)
+    || String(item.supplier || '').toLowerCase().includes(k)
+}
 const selectedExternalIds = ref<Array<string | number>>([])
 const activeExternalId = ref<string | number | undefined>(undefined)
 const externalConfigs = reactive<Record<string, any>>({})
-const externalLabel = (id: string | number) => { const p = products.value.find((x: any) => String(x.id) === String(id)); return p ? `${p.name}（${p.supplier || '—'}/${p.channel || '—'}）` : String(id) }
+const externalLabel = (id: string | number) => { const p = products.value.find((x: any) => String(x.id) === String(id)) as any; return p ? `${p.name}（${p.supplier || '—'}/${p.channel || '—'}${p.interfaceNo ? ' / ' + p.interfaceNo : ''}）` : String(id) }
 
 const form = reactive<any>({
   contractType: 'framework',
@@ -281,6 +374,8 @@ const form = reactive<any>({
   signDate: undefined,
   isGroupPurchase: false,
   supplier: '',
+  signReportNo: '',
+  initialOccupiedAmount: 0,
   frameworkIds: [] as Array<string>,
   supplementIds: [] as Array<string>
 })
@@ -292,7 +387,7 @@ const rules = {
   fullName: [{ required: true, message: '请输入合同全称' }],
   amount: [{ required: true, message: '请输入合同总金额' }],
   signDate: [{ required: true, message: '请选择签订日期' }],
-  supplier: [{ required: true, message: '请输入征信机构' }],
+  supplier: [{ required: true, message: '请输入合作机构' }],
   frameworkIds: [{ validator: (_: any, val: any, cb: any) => { if (form.contractType === 'supplement' && (!Array.isArray(val) || val.length === 0)) return cb('请选择关联框架合同'); cb() } }]
 }
 
@@ -344,9 +439,9 @@ watch(selectedExternalIds, (ids) => {
   if (!form.supplier) {
     if (selSuppliers.length === 1) {
       form.supplier = selSuppliers[0]
-      Message.success(`已自动将征信机构设为：${form.supplier}`)
+      Message.success(`已自动将合作机构设为：${form.supplier}`)
     } else if (selSuppliers.length > 1) {
-      Message.warning('所选外数包含多个征信机构，请先选择统一的征信机构')
+      Message.warning('所选外数包含多个合作机构，请先选择统一的合作机构')
     }
   } else {
     const filtered = ids.filter(id => {
@@ -355,7 +450,7 @@ watch(selectedExternalIds, (ids) => {
     })
     if (filtered.length !== ids.length) {
       selectedExternalIds.value = filtered
-      Message.warning('已过滤与当前征信机构不一致的外数')
+      Message.warning('已过滤与当前合作机构不一致的外数')
     }
   }
   selectedExternalIds.value.forEach(id => ensureConfigFor(String(id)))
@@ -525,13 +620,49 @@ const submit = async () => {
     }
   }
   
-  // 校验征信机构一致性
+  // 校验合作机构一致性
   const mismatched = selectedExternalIds.value.some((id) => {
     const p = products.value.find((x: any) => String(x.id) === String(id))
     return p && String(p.supplier || '') !== String(form.supplier || '')
   })
-  if (mismatched) { Message.error('所选外数与当前征信机构不一致，请调整'); return }
+  if (mismatched) { Message.error('所选外数与当前合作机构不一致，请调整'); return }
   
+  // PRD V1: 合同总金额 ≥ 合同初始占用金额 + 合同已报销金额
+  const totalAmount = Number(form.amount || 0)
+  const initialOccupied = Number(form.initialOccupiedAmount || 0)
+  const writtenOff = 0 // 新建合同时已报销金额为0
+  if (totalAmount < initialOccupied + writtenOff) {
+    const diff = (initialOccupied + writtenOff) - totalAmount
+    Message.error(`合同总金额不足，差额${diff.toLocaleString('zh-CN')}元`)
+    return
+  }
+
+  // PRD V3: 签报/成交通知书金额 ≥ 合同总金额（跨层级校验，签报绑定合同时）
+  if (form.signReportNo && form.supplier) {
+    const signReport = signReportStore.list.find((r: any) => r.reportNo === form.signReportNo)
+    if (signReport) {
+      const partnerOrgData = signReport.partnerOrgs?.find((p: any) => p.partnerOrg === form.supplier)
+      if (partnerOrgData) {
+        const noticeAmount = Number(partnerOrgData.noticeAmount || 0)
+        if (noticeAmount < totalAmount) {
+          const diff = totalAmount - noticeAmount
+          Message.error(`签报/成交通知书金额不足，差额${diff.toLocaleString('zh-CN')}元`)
+          return
+        }
+        // R6: Σ合同金额 ≤ 签报noticeAmount（防止多合同累计超额）
+        const samePartnerContracts = store.list.filter((c: any) =>
+          c.signReportNo === form.signReportNo && c.supplier === form.supplier
+        )
+        const existingTotal = samePartnerContracts.reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+        if (existingTotal + totalAmount > noticeAmount) {
+          const overrun = existingTotal + totalAmount - noticeAmount
+          Message.error(`签报额度已被其他合同占用${existingTotal.toLocaleString('zh-CN')}元，本次超出签报额度${overrun.toLocaleString('zh-CN')}元`)
+          return
+        }
+      }
+    }
+  }
+
   // 存储外数价格配置到 Store
   selectedExternalIds.value.forEach((id: string | number) => {
     const key = String(id)
@@ -545,6 +676,8 @@ const submit = async () => {
     contractNo: form.contractNo,
     contractName: form.fullName,
     supplier: form.supplier,
+    signReportNo: form.signReportNo || undefined,
+    initialOccupiedAmount: Number(form.initialOccupiedAmount) || 0,
     amount: Number(form.amount || 0),
     startDate: new Date(form.signDate || Date.now()).toISOString(),
     endDate: new Date(Date.now() + 180*86400000).toISOString(),
@@ -563,6 +696,8 @@ onMounted(async () => {
   if (!externalStore.products.length) {
     await externalStore.fetchProducts()
   }
+  // PRD R10: 加载签报列表（供搜索选择）
+  await signReportStore.fetchList()
 })
 const beforeUpload = (file: any) => { const okType = ['application/pdf','application/msword'].includes(file.type) || /\.docx?$|\.pdf$/i.test(file.name); const okSize = file.size <= 10 * 1024 * 1024; if (!okType) { Message.error('仅支持 PDF / Word 文件'); return false } if (!okSize) { Message.error('文件大小应不超过 10MB'); return false } return true }
 </script>

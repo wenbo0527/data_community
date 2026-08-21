@@ -18,6 +18,8 @@ export interface BillLine {
   freeDeducted?: number
   freeValidStart?: string
   freeValidEnd?: string
+  paymentType?: string
+  externalUnitPrice?: number
   amountExclTax: number
   taxRate: number
   taxAmount: number

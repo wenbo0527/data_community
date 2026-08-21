@@ -31,9 +31,17 @@
           </a-radio-group>
         </a-form-item>
         <a-form-item field="suppliers" label="供应商">
-          <a-select v-model="filters.suppliers" multiple allow-clear placeholder="选择供应商" style="width: 260px">
+          <a-select v-model="filters.suppliers" multiple allow-clear placeholder="选择供应商" style="width: 220px">
             <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
           </a-select>
+        </a-form-item>
+        <a-form-item field="partnerOrgs" label="合作机构">
+          <a-select v-model="filters.partnerOrgs" multiple allow-clear placeholder="选择合作机构" style="width: 220px">
+            <a-option v-for="s in partnerOrgOptions" :key="s" :value="s">{{ s }}</a-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item field="interfaceNo" label="接口号">
+          <a-input v-model="filters.interfaceNo" allow-clear placeholder="精确匹配" style="width: 180px" />
         </a-form-item>
         <a-form-item field="status" label="状态">
           <a-select v-model="filters.status" allow-clear placeholder="选择状态" style="width: 160px">
@@ -44,10 +52,10 @@
           </a-select>
         </a-form-item>
         <a-form-item field="usageScene" label="使用场景">
-          <a-input v-model="filters.usageScene" allow-clear placeholder="文本匹配" style="width: 200px" />
+          <a-input v-model="filters.usageScene" allow-clear placeholder="文本匹配" style="width: 160px" />
         </a-form-item>
         <a-form-item field="keyword" label="关键词">
-          <a-input v-model="filters.keyword" allow-clear placeholder="名称/编码" style="width: 200px" />
+          <a-input v-model="filters.keyword" allow-clear placeholder="名称/编码" style="width: 160px" />
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="applyFilter">查询</a-button>
@@ -55,6 +63,10 @@
         </a-form-item>
         <a-form-item style="margin-left: auto">
           <a-space>
+            <a-button type="primary" @click="openBlankCreate">
+              <template #icon><IconPlus /></template>
+              新建空白卡片
+            </a-button>
             <a-button @click="refreshProducts">刷新</a-button>
             <a-button type="outline" @click="exportList">导出列表</a-button>
           </a-space>
@@ -65,35 +77,46 @@
     <a-card title="档案列表" :bordered="true" :loading="loading">
       <a-table :data="displayedList" row-key="id" :pagination="pagination" @page-change="onPageChange">
         <template #columns>
-          <a-table-column title="产品名称" :width="220">
+          <a-table-column title="产品名称" :width="200">
             <template #cell="{ record }">
               <a-button type="text" @click="goDetailPage(record)">{{ record.name }}</a-button>
+              <a-tag v-if="record.isBlankCard" size="small" color="orange" style="margin-left: 6px">空白卡片</a-tag>
             </template>
           </a-table-column>
-          <a-table-column title="供应商" data-index="supplier" :width="160" />
-          <a-table-column title="状态" :width="120">
+          <!-- PRD R01 + R05: 合作机构字段排在供应商字段前面 -->
+          <a-table-column title="合作机构" data-index="partnerOrg" :width="180" />
+          <a-table-column title="供应商" data-index="supplier" :width="140" />
+          <!-- PRD R03: 接口号 -->
+          <a-table-column title="接口号" data-index="interfaceNo" :width="140">
+            <template #cell="{ record }">
+              <span :style="{ color: record.interfaceNo ? 'inherit' : 'var(--color-text-3)' }">{{ record.interfaceNo || '待补充' }}</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="落库表名" :width="220">
+            <template #cell="{ record }">
+              <span :style="{ color: record.bottomTable ? 'inherit' : 'var(--color-text-3)' }">{{ record.bottomTable || '待补充' }}</span>
+            </template>
+          </a-table-column>
+          <a-table-column title="状态" :width="100">
             <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
           </a-table-column>
-          <a-table-column title="接入时间" :width="180">
+          <a-table-column title="接入时间" :width="160">
             <template #cell="{ record }">{{ formatDate(record.createdAt) }}</template>
           </a-table-column>
-          <a-table-column title="使用场景" :width="240">
+          <a-table-column title="使用场景" :width="180">
             <template #cell="{ record }">{{ record.usageScene || '—' }}</template>
           </a-table-column>
-          <a-table-column title="标签" :width="200">
+          <a-table-column title="标签" :width="160">
             <template #cell="{ record }">
               <a-space wrap>
                 <a-tag v-for="t in (record.tags||[])" :key="t">{{ t }}</a-tag>
               </a-space>
             </template>
           </a-table-column>
-          <a-table-column title="评估得分" :width="120">
+          <a-table-column title="评估得分" :width="100">
             <template #cell="{ record }">{{ record.evaluationScore ?? '—' }}</template>
           </a-table-column>
-          <a-table-column title="监控状态" :width="120">
-            <template #cell="{ record }">{{ record.monitorStatus ?? '—' }}</template>
-          </a-table-column>
-          <a-table-column title="操作" :width="260" fixed="right">
+          <a-table-column title="操作" :width="180" fixed="right">
             <template #cell="{ record }">
               <a-space>
                 <a-button size="small" type="text" @click="openEdit(record)">编辑档案</a-button>
@@ -166,8 +189,38 @@
       </a-space>
     </a-drawer>
 
-    <a-drawer v-model:visible="editVisible" :width="720" title="编辑档案">
+    <a-drawer v-model:visible="editVisible" :width="760" title="编辑档案">
       <a-form :model="editForm" layout="vertical">
+        <a-divider orientation="left">基础信息（PRD A1 字段排序：合作机构→供应商→接口号→落库表名）</a-divider>
+        <a-row :gutter="12">
+          <a-col :span="12"><a-form-item field="name" label="产品名称" required><a-input v-model="editForm.name" placeholder="外数产品名称" /></a-form-item></a-col>
+          <a-col :span="12"><a-form-item field="code" label="产品编码"><a-input v-model="editForm.code" placeholder="ED-001" /></a-form-item></a-col>
+        </a-row>
+        <a-row :gutter="12">
+          <!-- PRD R01: 合作机构（选项列表） -->
+          <a-col :span="12">
+            <a-form-item field="partnerOrg" label="合作机构" required>
+              <a-select v-model="editForm.partnerOrg" allow-clear allow-search placeholder="选择合作机构">
+                <a-option v-for="s in partnerOrgOptions" :key="s" :value="s">{{ s }}</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <!-- PRD R02: 供应商（选项列表，待白曦补充枚举值） -->
+          <a-col :span="12">
+            <a-form-item field="supplier" label="供应商">
+              <a-select v-model="editForm.supplier" allow-clear allow-search placeholder="选择供应商">
+                <a-option v-for="s in supplierOptionsList" :key="s" :value="s">{{ s }}</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="12">
+          <!-- PRD R03: 接口号（非必填） -->
+          <a-col :span="12"><a-form-item field="interfaceNo" label="接口号（可后期补充）"><a-input v-model="editForm.interfaceNo" placeholder="IF-0001" allow-clear /></a-form-item></a-col>
+          <!-- PRD R04: 落库表名（非必填） -->
+          <a-col :span="12"><a-form-item field="bottomTable" label="落库表名（可后期补充）"><a-input v-model="editForm.bottomTable" placeholder="dwd_xxx_detail" allow-clear /></a-form-item></a-col>
+        </a-row>
+        <a-divider orientation="left">业务信息</a-divider>
         <a-row :gutter="12">
           <a-col :span="12"><a-form-item field="businessGoal" label="业务目标"><a-input v-model="editForm.businessGoal" /></a-form-item></a-col>
           <a-col :span="12"><a-form-item field="expectedBenefit" label="预期收益"><a-input v-model="editForm.expectedBenefit" /></a-form-item></a-col>
@@ -189,6 +242,38 @@
         </div>
       </a-form>
     </a-drawer>
+
+    <!-- PRD A2: 空白卡片创建（接口号/落库表名可空） -->
+    <a-modal v-model:visible="blankCreateVisible" title="新建空白外数卡片" :width="640" @ok="submitBlankCreate" @cancel="resetBlankForm">
+      <a-alert type="info" show-icon style="margin-bottom: 12px" message="空白卡片：用于在引入外数前预签合同，接口号与落库表名可为空，待接口引入后再补充。" />
+      <a-form :model="blankForm" layout="vertical">
+        <a-row :gutter="12">
+          <a-col :span="12"><a-form-item field="name" label="产品名称" required><a-input v-model="blankForm.name" placeholder="外数产品名称" /></a-form-item></a-col>
+          <a-col :span="12"><a-form-item field="code" label="产品编码"><a-input v-model="blankForm.code" placeholder="自动生成" /></a-form-item></a-col>
+        </a-row>
+        <a-row :gutter="12">
+          <a-col :span="12">
+            <a-form-item field="partnerOrg" label="合作机构" required>
+              <a-select v-model="blankForm.partnerOrg" allow-clear allow-search placeholder="选择合作机构">
+                <a-option v-for="s in partnerOrgOptions" :key="s" :value="s">{{ s }}</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item field="supplier" label="供应商">
+              <a-select v-model="blankForm.supplier" allow-clear allow-search placeholder="选择供应商">
+                <a-option v-for="s in supplierOptionsList" :key="s" :value="s">{{ s }}</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="12">
+          <a-col :span="12"><a-form-item field="interfaceNo" label="接口号（可空，后期补充）"><a-input v-model="blankForm.interfaceNo" placeholder="暂留空" allow-clear /></a-form-item></a-col>
+          <a-col :span="12"><a-form-item field="bottomTable" label="落库表名（可空，后期补充）"><a-input v-model="blankForm.bottomTable" placeholder="暂留空" allow-clear /></a-form-item></a-col>
+        </a-row>
+        <a-form-item field="remark" label="备注（选填）"><a-textarea v-model="blankForm.remark" :rows="3" /></a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -197,8 +282,9 @@ import { reactive, onMounted, computed, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router'
 import { useExternalDataStore } from '@/modules/external-data/stores'
-import { IconDownload } from '@arco-design/web-vue/es/icon'
+import { IconDownload, IconPlus } from '@arco-design/web-vue/es/icon'
 import DateUtils from '@/utils/dateUtils'
+import { partnerOrgNames } from '@/modules/budget/api/supplierDictionary'
 
 const router = useRouter()
 const store = useExternalDataStore()
@@ -207,12 +293,16 @@ const products = computed(() => store.products)
 const loading = ref(false)
 const productsView = ref<any[]>([])
 const saving = ref(false)
+// PRD R01: 合作机构选项列表
+const partnerOrgOptions = computed(() => partnerOrgNames)
+// PRD R02: 供应商选项列表（待白曦补充枚举值，本期占位 恒普/海纳/内部）
+const supplierOptionsList = computed(() => Array.from(new Set([...productsView.value.map((p: any) => p.supplier).filter(Boolean), '恒普', '海纳', '内部'])))
 const supplierOptions = computed(() => Array.from(new Set(productsView.value.map((p: any) => p.supplier).filter(Boolean))))
-const filters = reactive<{ suppliers: string[]; status?: string; statusQuick?: string; usageScene?: string; keyword?: string }>({ suppliers: [], statusQuick: '' })
+const filters = reactive<{ suppliers: string[]; partnerOrgs: string[]; status?: string; statusQuick?: string; usageScene?: string; keyword?: string; interfaceNo?: string }>({ suppliers: [], partnerOrgs: [], statusQuick: '' })
 const pagination = reactive({ total: 0, pageSize: 10, current: 1, showTotal: true })
-const displayedList = computed(() => productsView.value.filter((p: any) => { if (filters.statusQuick && !filters.status) filters.status = filters.statusQuick; if (filters.suppliers.length && !filters.suppliers.includes(p.supplier)) return false; if (filters.status && p.status !== filters.status) return false; if (filters.usageScene && !String(p.usageScene || '').includes(filters.usageScene)) return false; if (filters.keyword) { const k = filters.keyword.toLowerCase(); const name = String(p.name || '').toLowerCase(); const code = String(p.code || '').toLowerCase(); if (!name.includes(k) && !code.includes(k)) return false } return true }))
+const displayedList = computed(() => productsView.value.filter((p: any) => { if (filters.statusQuick && !filters.status) filters.status = filters.statusQuick; if (filters.suppliers.length && !filters.suppliers.includes(p.supplier)) return false; if (filters.partnerOrgs.length && !filters.partnerOrgs.includes(p.partnerOrg)) return false; if (filters.interfaceNo && String(p.interfaceNo || '') !== filters.interfaceNo) return false; if (filters.status && p.status !== filters.status) return false; if (filters.usageScene && !String(p.usageScene || '').includes(filters.usageScene)) return false; if (filters.keyword) { const k = filters.keyword.toLowerCase(); const name = String(p.name || '').toLowerCase(); const code = String(p.code || '').toLowerCase(); if (!name.includes(k) && !code.includes(k)) return false } return true }))
 const applyFilter = () => { pagination.current = 1; Message.success('筛选已更新') }
-const resetFilter = () => { filters.suppliers = []; filters.status = undefined; filters.usageScene = undefined; filters.keyword = undefined }
+const resetFilter = () => { filters.suppliers = []; filters.partnerOrgs = []; filters.status = undefined; filters.usageScene = undefined; filters.keyword = undefined; filters.interfaceNo = undefined }
 const onPageChange = (page: number) => { pagination.current = page }
 const randBetween = (min: number, max: number) => Math.floor(min + Math.random() * (max - min + 1))
 const randomDateWithinYear = () => { const now = Date.now(); const delta = randBetween(0, 365) * 24 * 60 * 60 * 1000; return new Date(now - delta).toISOString() }
@@ -223,13 +313,23 @@ const buildProductsView = () => {
     const id = String(p.id ?? idx + 1)
     const name = p.name || p.productName || p.code || `外数产品-${idx+1}`
     const code = p.code || `ED-${idx+1}`
+    // PRD R01 合作机构 + R02 供应商（独立字段）
+    const partnerOrg = p.partnerOrg || p.supplier || '—'
     const supplier = p.supplier || '—'
-    const hasInterfaces = Number(p.interfaces || 0) > 0
-    const hasBottomTable = Boolean(p.bottomTable || p.dbTable || p.tableName)
+    // PRD R03 接口号
+    const interfaceNo = p.interfaceNo || ''
+    // PRD R04 落库表名（非必填）
+    const bottomTable = p.bottomTable || p.dbTable || p.tableName || ''
+    const hasInterfaces = Number(p.interfaces || 0) > 0 || !!interfaceNo
+    const hasBottomTable = Boolean(bottomTable)
     const baseStatus = normalizeStatus(p.status)
-    const derivedStatus = (hasInterfaces && hasBottomTable) ? 'online' : (baseStatus || 'importing')
+    // PRD R07: 空白卡片状态锁定为「引入中」
+    const derivedStatus = p.isBlankCard ? 'importing' : ((hasInterfaces && hasBottomTable) ? 'online' : (baseStatus || 'importing'))
     return { 
-      id, name, code, supplier, status: derivedStatus, 
+      id, name, code, 
+      partnerOrg, supplier, 
+      interfaceNo, bottomTable,
+      status: derivedStatus, 
       createdAt: p.createdAt || randomDateWithinYear(), 
       usageScene: p.usageScene || '贷前评分/贷中监控', 
       billingMode: p.billingMode || 'per_call', 
@@ -243,7 +343,8 @@ const buildProductsView = () => {
       monitorStatus: p.monitorStatus || (Math.random() > 0.15 ? '正常' : '异常'), 
       hasInterfaces, hasBottomTable,
       frameworkAgreements: p.frameworkAgreements || [],
-      totalSupplementAmount: p.totalSupplementAmount || 0
+      totalSupplementAmount: p.totalSupplementAmount || 0,
+      isBlankCard: !!p.isBlankCard
     }
   })
   if (!productsView.value.length && !loading.value) {
@@ -261,11 +362,105 @@ const editVisible = ref(false)
 const detailVisible = ref(false)
 const editTarget = ref<any>(null)
 const detailTarget = ref<any>(null)
-const editForm = reactive({ businessGoal: '', expectedBenefit: '', usageScene: '', billingMode: 'per_call', unitPrice: 0, billingCycle: 'month', currency: 'CNY', effectiveDate: '', expireDate: '', tags: [] as string[], businessImpact: '', alternativeSolution: '', businessRisk: '', remark: '' })
-const openEdit = (record: any) => { editTarget.value = record; editForm.usageScene = record.usageScene; editForm.billingMode = record.billingMode; editForm.unitPrice = record.unitPrice; editForm.billingCycle = record.billingCycle; editForm.currency = record.currency; editForm.effectiveDate = record.effectiveDate; editForm.expireDate = record.expireDate; editForm.tags = Array.isArray(record.tags) ? [...record.tags] : []; editVisible.value = true }
+// PRD A1: 编辑表单字段（合作机构/供应商/接口号/落库表名）
+const editForm = reactive({ name: '', code: '', partnerOrg: '', supplier: '', interfaceNo: '', bottomTable: '', businessGoal: '', expectedBenefit: '', usageScene: '', billingMode: 'per_call', unitPrice: 0, billingCycle: 'month', currency: 'CNY', effectiveDate: '', expireDate: '', tags: [] as string[], businessImpact: '', alternativeSolution: '', businessRisk: '', remark: '' })
+const openEdit = (record: any) => {
+  editTarget.value = record
+  editForm.name = record.name || ''
+  editForm.code = record.code || ''
+  editForm.partnerOrg = record.partnerOrg || ''
+  editForm.supplier = record.supplier || ''
+  editForm.interfaceNo = record.interfaceNo || ''
+  editForm.bottomTable = record.bottomTable || ''
+  editForm.usageScene = record.usageScene
+  editForm.billingMode = record.billingMode
+  editForm.unitPrice = record.unitPrice
+  editForm.billingCycle = record.billingCycle
+  editForm.currency = record.currency
+  editForm.effectiveDate = record.effectiveDate
+  editForm.expireDate = record.expireDate
+  editForm.tags = Array.isArray(record.tags) ? [...record.tags] : []
+  editVisible.value = true
+}
 const openDetail = (record: any) => { detailTarget.value = record; detailVisible.value = true }
 const goDetailPage = (record: any) => { router.push({ path: `/external-data/archive/${String(record.id)}`, query: { from: 'archive', archiveId: archiveId.value } }) }
-const saveEdit = async () => { if (!editForm.usageScene) { Message.error('请填写使用场景'); return } saving.value = true; try { if (editTarget.value) { editTarget.value.usageScene = editForm.usageScene; editTarget.value.billingMode = editForm.billingMode; editTarget.value.unitPrice = editForm.unitPrice; editTarget.value.billingCycle = editForm.billingCycle; editTarget.value.currency = editForm.currency; editTarget.value.effectiveDate = editForm.effectiveDate; editTarget.value.expireDate = editForm.expireDate; editTarget.value.tags = Array.isArray(editForm.tags) ? [...editForm.tags] : []; editVisible.value = false; Message.success('保存成功') } } finally { saving.value = false } }
+const saveEdit = async () => {
+  if (!editForm.partnerOrg) { Message.error('请选择合作机构'); return }
+  if (!editForm.name) { Message.error('请输入产品名称'); return }
+  saving.value = true
+  try {
+    if (editTarget.value) {
+      editTarget.value.name = editForm.name
+      editTarget.value.code = editForm.code
+      editTarget.value.partnerOrg = editForm.partnerOrg
+      editTarget.value.supplier = editForm.supplier
+      editTarget.value.interfaceNo = editForm.interfaceNo
+      editTarget.value.bottomTable = editForm.bottomTable
+      editTarget.value.usageScene = editForm.usageScene
+      editTarget.value.billingMode = editForm.billingMode
+      editTarget.value.unitPrice = editForm.unitPrice
+      editTarget.value.billingCycle = editForm.billingCycle
+      editTarget.value.currency = editForm.currency
+      editTarget.value.effectiveDate = editForm.effectiveDate
+      editTarget.value.expireDate = editForm.expireDate
+      editTarget.value.tags = Array.isArray(editForm.tags) ? [...editForm.tags] : []
+      editVisible.value = false
+      Message.success('保存成功')
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+// PRD A2: 空白卡片创建
+const blankCreateVisible = ref(false)
+const blankForm = reactive({ name: '', code: '', partnerOrg: '', supplier: '', interfaceNo: '', bottomTable: '', remark: '' })
+const openBlankCreate = () => {
+  blankForm.name = ''
+  blankForm.code = ''
+  blankForm.partnerOrg = ''
+  blankForm.supplier = ''
+  blankForm.interfaceNo = ''
+  blankForm.bottomTable = ''
+  blankForm.remark = ''
+  blankCreateVisible.value = true
+}
+const resetBlankForm = () => { openBlankCreate() }
+const submitBlankCreate = () => {
+  if (!blankForm.name) { Message.error('请输入产品名称'); return }
+  if (!blankForm.partnerOrg) { Message.error('请选择合作机构'); return }
+  const idx = productsView.value.length + 1
+  const newCard = {
+    id: `BLANK-${Date.now()}`,
+    name: blankForm.name,
+    code: blankForm.code || `ED-${String(idx).padStart(3, '0')}`,
+    partnerOrg: blankForm.partnerOrg,
+    supplier: blankForm.supplier || '内部',
+    interfaceNo: blankForm.interfaceNo || '',
+    bottomTable: blankForm.bottomTable || '',
+    status: 'importing',
+    createdAt: new Date().toISOString(),
+    usageScene: '',
+    billingMode: 'per_call',
+    unitPrice: 0,
+    billingCycle: 'month',
+    currency: 'CNY',
+    effectiveDate: '',
+    expireDate: '',
+    tags: ['外数', '空白卡片'],
+    evaluationScore: 0,
+    monitorStatus: '—',
+    hasInterfaces: !!blankForm.interfaceNo,
+    hasBottomTable: !!blankForm.bottomTable,
+    frameworkAgreements: [],
+    totalSupplementAmount: 0,
+    isBlankCard: true
+  }
+  productsView.value.unshift(newCard)
+  pagination.total = productsView.value.length
+  Message.success('空白卡片已创建')
+  blankCreateVisible.value = false
+}
 const formatDate = (d?: string | Date) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }
 const formatCurrency = (n?: number) => { try { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) } catch { return '—' } }
 const billingModeLabel = (m?: string) => m === 'per_call' ? '按次' : m === 'monthly' ? '按月' : m === 'tier' ? '阶梯' : '—'

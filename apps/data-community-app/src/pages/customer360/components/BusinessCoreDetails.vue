@@ -138,6 +138,11 @@
           :loan-products="loanProductsList"
           :credit-applications="creditApplicationsList"
           :products="productsList"
+          @view-loan="viewLoanDetail"
+          @view-disbursement="handleViewDisbursementDetails"
+          @view-repayment="handleViewRepaymentDetails"
+          @view-initial-plan="handleViewInitialRepaymentPlan"
+          @view-tags="handleViewLoanTags"
         />
       </div>
 

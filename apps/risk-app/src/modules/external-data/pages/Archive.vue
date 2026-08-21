@@ -66,7 +66,13 @@
               <a-button type="text" @click="goDetailPage(record)">{{ record.name }}</a-button>
             </template>
           </a-table-column>
+          <a-table-column title="合作机构" :width="200">
+            <template #cell="{ record }">{{ record.partnerOrg || '—' }}</template>
+          </a-table-column>
           <a-table-column title="供应商" data-index="supplier" :width="160" />
+          <a-table-column title="接口号" :width="140">
+            <template #cell="{ record }">{{ record.interfaceNo || '—' }}</template>
+          </a-table-column>
           <a-table-column title="状态" :width="120">
             <template #cell="{ record }"><a-tag :status="statusTag(record.status)">{{ statusLabel(record.status) }}</a-tag></template>
           </a-table-column>
@@ -179,9 +185,18 @@
                 <a-input v-model="editForm.name" placeholder="请输入外数名称" />
               </a-form-item>
             </a-col>
+            <!-- PRD R01/R05: 新增合作机构字段，放在供应商前面 -->
+            <a-col :span="8">
+              <a-form-item field="partnerOrg" label="合作机构">
+                <a-select v-model="editForm.partnerOrg" allow-clear allow-search placeholder="选择合作机构" :options="partnerOrgOptions" />
+              </a-form-item>
+            </a-col>
+            <!-- PRD R02: 供应商由文本输入改为选项列表 -->
             <a-col :span="8">
               <a-form-item field="supplier" label="供应商">
-                <a-input v-model="editForm.supplier" placeholder="请输入供应商名称" />
+                <a-select v-model="editForm.supplier" allow-clear allow-create allow-search placeholder="选择或输入供应商名称">
+                  <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
+                </a-select>
               </a-form-item>
             </a-col>
             <a-col :span="8">
@@ -211,6 +226,12 @@
         <!-- 步骤2：接口信息 -->
         <div v-show="currentStep === 2">
           <a-row :gutter="16">
+            <!-- PRD R03: 新增接口号字段，非必填，后期可更改 -->
+            <a-col :span="8">
+              <a-form-item field="interfaceNo" label="接口号">
+                <a-input v-model="editForm.interfaceNo" placeholder="接口号（非必填，后期可补充）" />
+              </a-form-item>
+            </a-col>
             <a-col :span="16">
               <a-form-item field="apiUrl" label="接口地址" required>
                 <a-select v-model="editForm.apiUrl" placeholder="请选择或输入 API 接口地址" allow-create allow-search>
@@ -350,6 +371,7 @@ import { useRouter } from 'vue-router'
 import { useExternalDataStore } from '@/modules/external-data/stores'
 import { IconDownload } from '@arco-design/web-vue/es/icon'
 import DateUtils from '@/utils/dateUtils'
+import { partnerOrgNames } from '@/modules/budget/api/supplierDictionary'
 
 const router = useRouter()
 const store = useExternalDataStore()
@@ -358,6 +380,8 @@ const products = computed(() => store.products)
 const loading = ref(false)
 const productsView = ref<any[]>([])
 const saving = ref(false)
+const partnerOrgOptions = computed(() => partnerOrgNames.map(n => ({ label: n, value: n })))
+// PRD R02: 供应商改为选项列表，枚举值待补充，先上线框架支持allow-create
 const supplierOptions = computed(() => Array.from(new Set(productsView.value.map((p: any) => p.supplier).filter(Boolean))))
 const filters = reactive<{ suppliers: string[]; status?: string; statusQuick?: string; usageScene?: string; keyword?: string }>({ suppliers: [], statusQuick: '' })
 const pagination = reactive({ total: 0, pageSize: 10, current: 1, showTotal: true })
@@ -380,7 +404,7 @@ const buildProductsView = () => {
     const baseStatus = normalizeStatus(p.status)
     const derivedStatus = (hasInterfaces && hasBottomTable) ? 'online' : (baseStatus || 'importing')
     return { 
-      id, name, code, supplier, status: derivedStatus, 
+      id, name, code, supplier, partnerOrg: p.partnerOrg || p.creditAgency || '—', interfaceNo: p.interfaceNo || '', status: derivedStatus, 
       createdAt: p.createdAt || randomDateWithinYear(), 
       usageScene: p.usageScene || '贷前评分/贷中监控', 
       billingMode: p.billingMode || 'per_call', 
@@ -437,7 +461,7 @@ const removeTargetTable = (index: number) => {
 }
 
 const editForm = reactive({ 
-  name: '', supplier: '', status: 'importing', apiUrl: '', requestMethod: 'POST', 
+  name: '', partnerOrg: '', supplier: '', status: 'importing', apiUrl: '', requestMethod: 'POST', interfaceNo: '',
   inputParams: [{ name: '', type: 'string', required: true, isElement: false }],
   outputParams: [{ name: '', type: 'string', description: '' }],
   targetTables: [{ name: '' }],
@@ -464,7 +488,7 @@ const viewDataLineage = (tableName?: string) => {
 const openCreate = () => { 
   editTarget.value = null; 
   currentStep.value = 1;
-  editForm.name = ''; editForm.supplier = ''; editForm.status = 'importing'; editForm.apiUrl = ''; editForm.requestMethod = 'POST'; 
+  editForm.name = ''; editForm.partnerOrg = ''; editForm.supplier = ''; editForm.status = 'importing'; editForm.apiUrl = ''; editForm.requestMethod = 'POST'; editForm.interfaceNo = '';
   editForm.inputParams = [{ name: '', type: 'string', required: true, isElement: false }];
   editForm.outputParams = [{ name: '', type: 'string', description: '' }];
   editForm.targetTables = [{ name: '' }];
@@ -475,8 +499,10 @@ const openEdit = (record: any) => {
   editTarget.value = record; 
   currentStep.value = 1;
   editForm.name = record.name || '';
+  editForm.partnerOrg = record.partnerOrg || record.creditAgency || '';
   editForm.supplier = record.supplier || '';
   editForm.status = record.status || 'importing';
+  editForm.interfaceNo = record.interfaceNo || '';
   editForm.usageScene = record.usageScene; 
   editForm.targetTables = record.targetTables || [{ name: record.targetTable || '' }];
   editForm.billingMode = record.billingMode; 
@@ -505,8 +531,8 @@ const removeOutputParam = (index: number) => {
 }
 
 const openDetail = (record: any) => { detailTarget.value = record; detailVisible.value = true }
-const goDetailPage = (record: any) => { router.push({ path: `/external-data/archive/${String(record.id)}`, query: { from: 'archive', archiveId: archiveId.value } }) }
-const saveEdit = async () => { if (!editForm.usageScene) { Message.error('请填写使用场景'); return } saving.value = true; try { if (editTarget.value) { editTarget.value.usageScene = editForm.usageScene; editTarget.value.billingMode = editForm.billingMode; editTarget.value.unitPrice = editForm.unitPrice; editTarget.value.billingCycle = editForm.billingCycle; editTarget.value.currency = editForm.currency; editTarget.value.effectiveDate = editForm.effectiveDate; editTarget.value.expireDate = editForm.expireDate; editTarget.value.tags = Array.isArray(editForm.tags) ? [...editForm.tags] : []; if (editTarget.value.status === 'pending_tech_profile') { editTarget.value.status = 'online'; Message.success('技术档案完善成功，状态已更新为【已上线】'); } else { Message.success('档案更新成功'); } } else { Message.success('档案新建成功'); } editVisible.value = false; } finally { saving.value = false } }
+const goDetailPage = (record: any) => { router.push({ path: `/variable-hub/external-data/archive/${String(record.id)}`, query: { from: 'archive', archiveId: archiveId.value } }) }
+const saveEdit = async () => { if (!editForm.usageScene) { Message.error('请填写使用场景'); return } saving.value = true; try { if (editTarget.value) { editTarget.value.partnerOrg = editForm.partnerOrg; editTarget.value.supplier = editForm.supplier; editTarget.value.interfaceNo = editForm.interfaceNo; editTarget.value.usageScene = editForm.usageScene; editTarget.value.billingMode = editForm.billingMode; editTarget.value.unitPrice = editForm.unitPrice; editTarget.value.billingCycle = editForm.billingCycle; editTarget.value.currency = editForm.currency; editTarget.value.effectiveDate = editForm.effectiveDate; editTarget.value.expireDate = editForm.expireDate; editTarget.value.tags = Array.isArray(editForm.tags) ? [...editForm.tags] : []; if (editTarget.value.status === 'pending_tech_profile') { editTarget.value.status = 'online'; Message.success('技术档案完善成功，状态已更新为【已上线】'); } else { Message.success('档案更新成功'); } } else { Message.success('档案新建成功'); } editVisible.value = false; } finally { saving.value = false } }
 const formatDate = (d?: string | Date) => { try { return DateUtils.formatDateTime(d || '') } catch { return '—' } }
 const formatCurrency = (n?: number) => { try { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) } catch { return '—' } }
 const billingModeLabel = (m?: string) => m === 'per_call' ? '按次' : m === 'monthly' ? '按月' : m === 'tier' ? '阶梯' : '—'

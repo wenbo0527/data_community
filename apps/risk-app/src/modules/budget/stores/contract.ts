@@ -19,6 +19,10 @@ export interface ContractItem {
   contractType?: 'framework' | 'supplement'
   frameworkId?: string | null
   supplementIds?: string[]
+  // PRD R10: 签报号字段（非必填，支持搜索选择已有签报）
+  signReportNo?: string
+  // PRD R11: 合同初始占用金额（非必填，默认0）
+  initialOccupiedAmount?: number
 }
 
 export interface ContractListParams {

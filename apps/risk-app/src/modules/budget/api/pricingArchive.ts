@@ -41,8 +41,15 @@ pricingMock.push(
   { supplierId: 'SUP-003', productCode: 'PD_DATA_EXPORT', billingType: 'volume', unit: 'record', currency: 'CNY', taxRate: 0.06, unitPrice: 0.018, remark: '批量导出服务' }
 )
 
+// 合作机构全称 → SUP-ID 映射（兼容历史短名称）
+const nameToId: Record<string, string> = {
+  '学信网': 'SUP-001',
+  '百行': 'SUP-002', '百行征信有限公司': 'SUP-002',
+  '朴道': 'SUP-003', '朴道征信有限公司': 'SUP-003',
+  '钱塘': 'SUP-004', '钱塘征信有限公司': 'SUP-004'
+}
+
 export async function getActivePricing(supplierId: string, productCode: string): Promise<Pricing | null> {
-  const nameToId: Record<string, string> = { '学信网': 'SUP-001', '百行': 'SUP-002', '朴道': 'SUP-003' }
   const normalizedId = pricingMock.some(p => p.supplierId === supplierId) ? supplierId : (nameToId[supplierId] || supplierId)
   const found = pricingMock.find(p => p.supplierId === normalizedId && p.productCode === productCode) || null
   return Promise.resolve(found)
@@ -50,7 +57,6 @@ export async function getActivePricing(supplierId: string, productCode: string):
 
 export async function getActivePricingMap(supplierId: string): Promise<Record<string, Pricing>> {
   const map: Record<string, Pricing> = {}
-  const nameToId: Record<string, string> = { '学信网': 'SUP-001', '百行': 'SUP-002', '朴道': 'SUP-003' }
   const normalizedId = pricingMock.some(p => p.supplierId === supplierId) ? supplierId : (nameToId[supplierId] || supplierId)
   for (const p of pricingMock) { if (p.supplierId === normalizedId) map[p.productCode] = p }
   return Promise.resolve(map)

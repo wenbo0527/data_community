@@ -10,10 +10,16 @@ export interface CostingSnapshot {
 
 export interface ReconcileItem {
   productCode: string
+  productName?: string
+  originalProductName?: string
+  matchedProductCode?: string
+  matchedProductName?: string
   systemAmount: number
   externalAmount: number
+  externalUnitPrice?: number
   finalAmount: number
   finalDiscount?: number
+  callMethod?: string
   reason?: string
 }
 

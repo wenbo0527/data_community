@@ -7,8 +7,8 @@ const makeDate = (offsetDays: number) => new Date(now + offsetDays * 86400000).t
 const baseContracts: any[] = [
   // Existing ones (adapted from original api/contract.ts)
   { id: 'C-20260101', contractNo: 'HT-001', contractName: '外数采购-学信网2026Q1', supplier: '学信网', amount: 1200000, startDate: makeDate(0), endDate: makeDate(90), status: 'active', contractType: 'framework' },
-  { id: 'C-20260102', contractNo: 'HT-002', contractName: '外数采购-百行2026Q1', supplier: '百行', amount: 800000, startDate: makeDate(0), endDate: makeDate(60), status: 'active', contractType: 'framework' },
-  { id: 'C-20260103', contractNo: 'HT-003', contractName: '外数采购-朴道2026Q1', supplier: '朴道', amount: 600000, startDate: makeDate(0), endDate: makeDate(45), status: 'active', contractType: 'framework' },
+  { id: 'C-20260102', contractNo: 'HT-002', contractName: '外数采购-百行征信有限公司2026Q1', supplier: '百行征信有限公司', amount: 800000, startDate: makeDate(0), endDate: makeDate(60), status: 'active', contractType: 'framework' },
+  { id: 'C-20260103', contractNo: 'HT-003', contractName: '外数采购-朴道征信有限公司2026Q1', supplier: '朴道征信有限公司', amount: 600000, startDate: makeDate(0), endDate: makeDate(45), status: 'active', contractType: 'framework' },
   
   // NEW: Xuexin Framework & Supplement
   { 
@@ -23,7 +23,9 @@ const baseContracts: any[] = [
     contractType: 'framework',
     dataCount: 10000,
     productCount: 10,
-    writtenOffAmount: 500000
+    writtenOffAmount: 500000,
+    signReportNo: '签报〔2026〕69号',
+    initialOccupiedAmount: 300000
   },
   { 
     id: 'C-XX-SUP-01', 
@@ -38,7 +40,8 @@ const baseContracts: any[] = [
     frameworkId: 'C-XX-FW-01',
     dataCount: 2000,
     productCount: 2,
-    writtenOffAmount: 0
+    writtenOffAmount: 0,
+    initialOccupiedAmount: 0
   }
 ]
 
@@ -92,7 +95,7 @@ export default [
         id,
         contractNo: body.contractNo || id,
         contractName: body.contractName || '未命名合同',
-        supplier: body.supplier || '未知征信机构',
+        supplier: body.supplier || '未知合作机构',
         amount: Number(body.amount) || 0,
         startDate: body.startDate || new Date().toISOString(),
         endDate: body.endDate || new Date(Date.now() + 30 * 86400000).toISOString(),

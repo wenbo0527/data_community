@@ -14,7 +14,7 @@
           <a-descriptions :column="{ xs: 1, sm: 2, md: 3, lg: 4 }" class="header-info" :label-style="{ 'color': 'var(--color-text-3)' }" :value-style="{ 'font-weight': 500 }">
             <a-descriptions-item label="产品编码">{{ header.code || '—' }}</a-descriptions-item>
             <a-descriptions-item label="供应商"><a-tag size="small" bordered>{{ header.supplier || '—' }}</a-tag></a-descriptions-item>
-            <a-descriptions-item label="征信机构">{{ header.creditAgency || '—' }}</a-descriptions-item>
+            <a-descriptions-item label="合作机构">{{ header.creditAgency || '—' }}</a-descriptions-item>
             <a-descriptions-item label="外数类型"><a-tag color="arcoblue" size="small">{{ header.externalDataType || '—' }}</a-tag></a-descriptions-item>
             <a-descriptions-item label="产品分类">{{ header.productCategory || '—' }}</a-descriptions-item>
             <a-descriptions-item label="数据管理人">{{ header.manager || '—' }}</a-descriptions-item>
@@ -634,7 +634,7 @@ const loadDetail = async () => {
       name: base.name || '—',
       code: base.code || `ED-${base.id}`,
       supplier: base.supplier || '—',
-      creditAgency: '百行征信', // 新增：征信机构字段
+      creditAgency: '百行征信有限公司', // 合作机构字段
       externalDataType: externalDataType, // 新增：外数类型
       productCategory: '反欺诈类', // 新增：产品分类
       status: base.status || 'importing',

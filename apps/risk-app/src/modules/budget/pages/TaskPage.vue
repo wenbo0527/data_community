@@ -5,7 +5,7 @@
       <a-card v-if="!id" :bordered="true" title="基础信息">
         <a-form :model="form" layout="vertical">
           <a-row :gutter="12">
-            <a-col :span="12"><a-form-item field="supplierId" label="征信机构" required><a-select v-model="form.supplierId" placeholder="选择征信机构"><a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option></a-select></a-form-item></a-col>
+            <a-col :span="12"><a-form-item field="supplierId" label="合作机构" required><a-select v-model="form.supplierId" placeholder="选择合作机构"><a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option></a-select></a-form-item></a-col>
             <a-col :span="12"><a-form-item field="contractIds" label="合同"><a-select v-model="form.contractIds" multiple allow-clear placeholder="选择合同"><a-option v-for="c in filteredContractOptions" :key="c.id" :value="c.id">{{ c.contractName }}</a-option></a-select></a-form-item></a-col>
           </a-row>
           <a-row :gutter="12">
@@ -24,21 +24,25 @@
       <a-card :bordered="true" v-else>
         <a-descriptions :column="3" title="任务信息" style="margin-bottom: 12px">
           <a-descriptions-item label="任务名称">{{ taskName }}</a-descriptions-item>
-          <a-descriptions-item label="征信机构">{{ supplierName }}</a-descriptions-item>
+          <a-descriptions-item label="合作机构">{{ supplierName }}</a-descriptions-item>
           <a-descriptions-item label="账期">{{ month }}</a-descriptions-item>
         </a-descriptions>
+        <!-- PRD R34: 4步流程：外部对账 → 费用核算（保留但跳过） → 确认核销 → 待报销 -->
         <a-steps :current="currentIndex" style="margin-bottom:12px">
-          <a-step title="费用核算" />
           <a-step title="外部对账" />
+          <!-- PRD R34: 费用核算步骤保留展示，但灰色禁用、系统自动跳过 -->
+          <a-step title="费用核算（自动跳过）" disabled />
           <a-step title="确认核销" />
           <a-step title="待报销" />
         </a-steps>
+        <a-alert v-if="currentIndex === 0" type="info" show-icon style="margin-bottom: 12px" message="第1步费用核算已自动跳过，系统将直接从「外部对账」进入「确认核销」。" />
         <component :is="currentPanel" :supplierId="supplierId" :month="month" :embedded="true" ref="panelRef" />
         <div style="margin-top:12px; display:flex; justify-content:flex-end">
           <a-space>
             <a-button @click="prev" :disabled="currentIndex===0">上一步</a-button>
             <a-button type="outline" @click="save">保存</a-button>
-            <a-button type="primary" @click="next" :disabled="currentIndex===3">下一步</a-button>
+            <!-- PRD R34: 跳过费用核算后，从 step=0（外部对账）直接到 step=2（确认核销） -->
+            <a-button type="primary" @click="nextToWriteoff" :disabled="currentIndex===3">下一步</a-button>
           </a-space>
         </div>
       </a-card>
@@ -52,7 +56,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { useSettlementFlowStore } from '../stores/settlementFlow'
 import { useContractStore } from '../stores/contract'
-import CostingPanel from './settlement/CostingPanel.vue'
+// PRD R34: 4步流程 - 费用核算已禁用，仅保留 外部对账/确认核销/待报销 三步的 Panel 组件
 import ReconcilePanel from './settlement/ReconcilePanel.vue'
 import WriteoffPanel from './settlement/WriteoffPanel.vue'
 import ReimbursementPanel from './settlement/ReimbursementPanel.vue'
@@ -66,20 +70,23 @@ const id = computed(() => String(route.params.id || ''))
 const taskName = computed(() => String(route.query.taskName || route.params.id || ''))
 const supplierId = computed(() => String(route.query.supplierId || ''))
 const month = computed(() => String(route.query.month || ''))
+// PRD R34: 4步流程：0=外部对账，1=费用核算，2=确认核销，3=待报销
 const currentIndex = computed(() => flow.currentStepIndex)
 const currentPanel = computed(() => {
-  if (currentIndex.value === 0) return CostingPanel
+  if (currentIndex.value === 0) return ReconcilePanel
+  // PRD R34: 费用核算步骤已禁用，currentIndex 不会出现 1；若出现则回落到外部对账
   if (currentIndex.value === 1) return ReconcilePanel
   if (currentIndex.value === 2) return WriteoffPanel
-  return ReimbursementPanel
+  if (currentIndex.value === 3) return ReimbursementPanel
+  return ReconcilePanel
 })
 const panelRef = ref<any>()
 const isStepCompleted = computed(() => {
   const sid = supplierId.value
   const mon = month.value
   if (!sid || !mon) return false
-  if (currentIndex.value === 0) return flow.isCostingCompleted(sid, mon)
-  if (currentIndex.value === 1) return flow.isReconcileCompleted(sid, mon)
+  if (currentIndex.value === 0) return flow.isReconcileCompleted(sid, mon)
+  if (currentIndex.value === 1) return flow.isCostingCompleted(sid, mon)
   if (currentIndex.value === 2) return flow.isWriteoffCompleted(sid, mon)
   return flow.isReimbursementCompleted(sid, mon)
 })
@@ -134,7 +141,39 @@ const next = async () => {
     Message.error('推进失败，请稍后重试')
   }
 }
-const prev = () => flow.prev()
+// PRD R34: 跳过费用核算 - 外部对账(step=0)完成后直接跳到确认核销(step=2)
+const nextToWriteoff = async () => {
+  if (currentIndex.value === 0) {
+    let ok = false
+    if (panelRef.value && typeof panelRef.value.complete === 'function') {
+      ok = Boolean(await panelRef.value.complete())
+    } else {
+      ok = true
+    }
+    if (ok) {
+      // 跳过 step=1（费用核算）直接到 step=2
+      flow.next()
+      flow.next()
+      router.replace({ path: route.path, query: { ...route.query, step: String(flow.currentStepIndex) } })
+      Message.success('已跳过费用核算，进入确认核销')
+    } else {
+      Message.warning('请先完成外部对账')
+    }
+    return
+  }
+  // 其它步骤走原 next
+  await next()
+}
+const prev = () => {
+  // PRD R34: 上一步也需要跳过费用核算。step=2 时回退应回到 step=0
+  if (currentIndex.value === 2) {
+    flow.prev()
+    flow.prev()
+    router.replace({ path: route.path, query: { ...route.query, step: String(flow.currentStepIndex) } })
+    return
+  }
+  flow.prev()
+}
 const goBack = () => router.push('/budget/settlement')
 const save = async () => {
   try {
@@ -152,7 +191,11 @@ const submitCreate = () => {
 }
 
 onMounted(async () => { await store.fetchContractList({ page: 1, pageSize: 100 }) })
-const stepParam = computed(() => Number(route.query.step || 0))
+// PRD R34: 默认从step=0（外部对账）开始，费用核算步骤已删除
+const stepParam = computed(() => {
+  const v = Number(route.query.step)
+  return Number.isNaN(v) ? 0 : Math.max(0, v)
+})
 onMounted(() => { const idx = stepParam.value; if (!Number.isNaN(idx)) { while (flow.currentStepIndex > idx) flow.prev(); while (flow.currentStepIndex < idx) flow.next() } })
 </script>
 

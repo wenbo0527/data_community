@@ -46,28 +46,42 @@
     <!-- 用信列表 -->
     <div class="data-section">
       <h3 class="section-title">用信列表</h3>
-      <a-table :data="loanList" :columns="loanColumns" :pagination="false" size="small" :bordered="true">
+      <a-table :data="loanList" :columns="loanColumns" :pagination="false" size="small" :bordered="true" :scroll="{ x: 1400 }">
         <template #loanNo="{ record }">
           <span class="copyable" @click="copyText(record.loanNo)">{{ record.loanNo || '-' }}</span>
+        </template>
+        <template #bankCardNo="{ record }">
+          <span class="copyable" @click="copyText(record.bankCardNo)">{{ record.bankCardNo || '-' }}</span>
         </template>
         <template #result="{ record }">
           <a-tag :color="getResultColor(record.result)">{{ record.result || '-' }}</a-tag>
         </template>
         <template #rejectReason="{ record }">
-          <span v-if="record.rejectReason" class="text-red-500">{{ record.rejectReason }}</span>
+          <span v-if="record.rejectReason" style="color: #f5222d;">{{ record.rejectReason }}</span>
           <span v-else>-</span>
         </template>
         <template #iouNo="{ record }">
-          <span class="copyable" @click="copyText(record.iouNo)">{{ record.iouNo || '-' }}</span>
+          <span v-if="record.iouNo" class="copyable" @click="copyText(record.iouNo)">{{ record.iouNo }}</span>
+          <span v-else>-</span>
         </template>
-        <template #status="{ record }">
-          <a-tag :color="getStatusColor(record.status)">{{ record.status || '-' }}</a-tag>
+        <template #thirdPartyIouNo="{ record }">
+          <span v-if="record.thirdPartyIouNo" class="copyable" @click="copyText(record.thirdPartyIouNo)">{{ record.thirdPartyIouNo }}</span>
+          <span v-else>-</span>
+        </template>
+        <template #iouStatus="{ record }">
+          <a-tag :color="getIouStatusColor(record.iouStatus)">{{ record.iouStatus || '-' }}</a-tag>
         </template>
         <template #amount="{ record }">
           {{ formatCurrency(record.amount) }}
         </template>
         <template #installments="{ record }">
-          {{ record.installments != null ? record.installments + '期' : '-' }}
+          {{ record.installments != null && record.installments > 0 ? record.installments + '期' : '-' }}
+        </template>
+        <template #loanActions="{ record }">
+          <a-space :size="4">
+            <a-button type="text" size="mini" @click="handleLoanDetail(record)">查看</a-button>
+            <a-button type="text" size="mini" @click="copyText(JSON.stringify(record, null, 2))">复制</a-button>
+          </a-space>
         </template>
       </a-table>
     </div>
@@ -96,11 +110,11 @@ interface LoanRecord {
   loanNo?: string
   loanDate?: string
   bankCardNo?: string
-  channel?: string
   result?: string
   rejectReason?: string
   iouNo?: string
-  status?: string
+  thirdPartyIouNo?: string
+  iouStatus?: string
   amount?: number
   installments?: number
 }
@@ -153,10 +167,10 @@ const loanList = computed<LoanRecord[]>(() =>
   (props.userRealTimeData?.loanList?.length)
     ? props.userRealTimeData.loanList
     : [
-        { loanNo: 'LN20260501001', loanDate: '2026-05-01', bankCardNo: '****1234', channel: 'APP', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0501-001', status: '正常', amount: 50000, installments: 12 },
-        { loanNo: 'LN20260420002', loanDate: '2026-04-20', bankCardNo: '****5678', channel: 'H5', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0420-002', status: '正常', amount: 30000, installments: 6 },
-        { loanNo: 'LN20260315003', loanDate: '2026-03-15', bankCardNo: '****9012', channel: 'APP', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0315-003', status: '正常', amount: 20000, installments: 9 },
-        { loanNo: 'LN20260110005', loanDate: '2026-01-10', bankCardNo: '****3456', channel: '人工', result: '失败', rejectReason: '风险拦截', iouNo: null, status: '拒绝', amount: 0, installments: 0 }
+        { loanNo: 'LN20260501001', loanDate: '2026-05-01', bankCardNo: '****1234', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0501-001', thirdPartyIouNo: 'TPI-2026-0501-001', iouStatus: '正常', amount: 50000, installments: 12 },
+        { loanNo: 'LN20260420002', loanDate: '2026-04-20', bankCardNo: '****5678', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0420-002', thirdPartyIouNo: 'TPI-2026-0420-002', iouStatus: '正常', amount: 30000, installments: 6 },
+        { loanNo: 'LN20260315003', loanDate: '2026-03-15', bankCardNo: '****9012', result: '成功', rejectReason: null, iouNo: 'IOU-2026-0315-003', thirdPartyIouNo: 'TPI-2026-0315-003', iouStatus: '已结清', amount: 20000, installments: 9 },
+        { loanNo: 'LN20260110005', loanDate: '2026-01-10', bankCardNo: '****3456', result: '失败', rejectReason: '风险拦截', iouNo: null, thirdPartyIouNo: null, iouStatus: '拒绝', amount: 0, installments: 0 }
       ]
 )
 
@@ -179,13 +193,14 @@ const loanColumns = [
   { title: '用信单号', dataIndex: 'loanNo', slotName: 'loanNo', width: 140 },
   { title: '用信日期', dataIndex: 'loanDate', slotName: 'loanDate', width: 110 },
   { title: '银行卡号', dataIndex: 'bankCardNo', slotName: 'bankCardNo', width: 130 },
-  { title: '渠道', dataIndex: 'channel', width: 80 },
   { title: '用信结果', dataIndex: 'result', slotName: 'result', width: 90 },
   { title: '拒绝原因', dataIndex: 'rejectReason', slotName: 'rejectReason', width: 120 },
   { title: '借据号', dataIndex: 'iouNo', slotName: 'iouNo', width: 150 },
-  { title: '借据状态', dataIndex: 'status', slotName: 'status', width: 90 },
+  { title: '三方借据号', dataIndex: 'thirdPartyIouNo', slotName: 'thirdPartyIouNo', width: 150 },
+  { title: '借据状态', dataIndex: 'iouStatus', slotName: 'iouStatus', width: 90 },
   { title: '借款金额', dataIndex: 'amount', slotName: 'amount', width: 110 },
-  { title: '期数', dataIndex: 'installments', slotName: 'installments', width: 70 }
+  { title: '期数', dataIndex: 'installments', slotName: 'installments', width: 70 },
+  { title: '操作', dataIndex: 'actions', slotName: 'loanActions', width: 100, fixed: 'right' }
 ]
 
 const formatCurrency = (value: number): string => {
@@ -201,6 +216,15 @@ const getResultColor = (result?: string) => {
 const getStatusColor = (status?: string) => {
   const map: Record<string, string> = { '正常': 'green', '逾期': 'red', '已结清': 'gray', '冻结': 'orange', '拒绝': 'red' }
   return map[status || ''] || 'default'
+}
+
+const getIouStatusColor = (status?: string) => {
+  const map: Record<string, string> = { '正常': 'green', '逾期': 'red', '已结清': 'gray', '冻结': 'orange', '拒绝': 'red', '放款中': 'blue' }
+  return map[status || ''] || 'default'
+}
+
+const handleLoanDetail = (record: LoanRecord) => {
+  console.log('查看用信详情:', record)
 }
 
 const copyText = async (text?: string) => {

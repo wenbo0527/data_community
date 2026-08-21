@@ -230,7 +230,7 @@ export const VariableDraftStore = {
       midloanFeatureId: id,
       description: payload.processingLogic,
       dataSource: payload.sourceType === 'external' ? 'external' : payload.sourceType === 'credit' ? 'credit' : 'internal',
-      dataSourceName: payload.sourceType === 'external' ? '外部数据源（外数）' : payload.sourceType === 'credit' ? '征信机构' : '数仓（内数）',
+      dataSourceName: payload.sourceType === 'external' ? '外部数据源（外数）' : payload.sourceType === 'credit' ? '合作机构' : '数仓（内数）',
       creator,
       createdAt: now,
       updatedAt: now,

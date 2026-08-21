@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { getAvailableSuppliers, getSupplierById, getSuppliersByIds, checkSupplierAvailability } from '../../budget/api/supplierDictionary'
+import { getAvailableSuppliers, getSupplierById, getSuppliersByIds, checkSupplierAvailability, partnerOrgNames, shortToFullName } from '../../budget/api/supplierDictionary'
 import type { Supplier } from '../../external-data/types/supplier'
 
 export function useSettlementSupplier() {
@@ -8,9 +8,11 @@ export function useSettlementSupplier() {
   const error = ref<string | null>(null)
 
   const activeSuppliers = computed(() => suppliers.value.filter(s => s.status === 'active'))
+  // PRD R01: 合作机构选项列表（全称）
+  const partnerOrgOptions = computed(() => partnerOrgNames.map(name => ({ label: name, value: name })))
   const supplierOptions = computed(() => activeSuppliers.value.map(s => ({
     label: s.supplierName,
-    value: s.id,
+    value: s.supplierName,
     code: s.supplierCode,
     category: s.supplierType
   })))
@@ -34,7 +36,7 @@ export function useSettlementSupplier() {
       suppliers.value = data
       return data
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '加载征信机构失败'
+      error.value = err instanceof Error ? err.message : '加载合作机构失败'
       throw err
     } finally {
       loading.value = false
@@ -46,16 +48,16 @@ export function useSettlementSupplier() {
   const getSuppliers = (ids: string[]): Supplier[] => ids.map(id => getSupplier(id)).filter(Boolean) as Supplier[]
   const isSupplierAvailable = (id: string): boolean => { const supplier = getSupplier(id); return supplier !== undefined && supplier.status === 'active' }
   const getSuppliersByCategory = (category: string): Supplier[] => activeSuppliers.value.filter(s => s.supplierType === category)
-  const getSupplierName = (id: string): string => getSupplier(id)?.supplierName || '未知征信机构'
+  const getSupplierName = (id: string): string => getSupplier(id)?.supplierName || '未知合作机构'
   const getSupplierCode = (id: string): string => getSupplier(id)?.supplierCode || 'UNKNOWN'
 
   const validateSuppliers = async (supplierIds: string[]) => {
     const details = await Promise.all(
       supplierIds.map(async (id) => {
         const supplier = getSupplier(id)
-        if (!supplier) return { id, name: '未知征信机构', available: false, reason: '征信机构不存在' }
+        if (!supplier) return { id, name: '未知合作机构', available: false, reason: '合作机构不存在' }
         const available = await checkSupplierAvailability(id)
-        return { id, name: supplier.supplierName, available, reason: available ? undefined : '征信机构不可用' }
+        return { id, name: supplier.supplierName, available, reason: available ? undefined : '合作机构不可用' }
       })
     )
     const invalidIds = details.filter(d => !d.available).map(d => d.id)
@@ -78,8 +80,9 @@ export function useSettlementSupplier() {
 
   return {
     suppliers, loading, error,
-    activeSuppliers, supplierOptions, supplierMap, supplierCodeMap,
+    activeSuppliers, partnerOrgOptions, supplierOptions, supplierMap, supplierCodeMap,
     loadSuppliers, getSupplier, getSupplierByCode, getSuppliers, isSupplierAvailable,
-    getSuppliersByCategory, getSupplierName, getSupplierCode, validateSuppliers, extractSuppliersFromContracts
+    getSuppliersByCategory, getSupplierName, getSupplierCode, validateSuppliers, extractSuppliersFromContracts,
+    partnerOrgNames, shortToFullName
   }
 }

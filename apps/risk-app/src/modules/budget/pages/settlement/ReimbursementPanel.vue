@@ -1,8 +1,8 @@
 <template>
   <div class="reimbursement-panel">
     <a-form v-if="!embedded" :model="form" layout="inline" style="margin-bottom: 12px">
-      <a-form-item field="supplierId" label="征信机构" required>
-        <a-select v-model="form.supplierId" allow-clear placeholder="选择征信机构" style="width: 240px" disabled>
+      <a-form-item field="supplierId" label="合作机构" required>
+        <a-select v-model="form.supplierId" allow-clear placeholder="选择合作机构" style="width: 240px" disabled>
           <a-option v-for="s in supplierOptions" :key="s.value" :value="s.value">{{ s.label }}</a-option>
         </a-select>
       </a-form-item>
@@ -92,7 +92,7 @@ const saveTask = async () => {
 }
 
 const finishReimbursement = async (): Promise<boolean> => {
-  if (!form.value.supplierId || !form.value.month) { Message.error('请选择征信机构与账期'); return false }
+  if (!form.value.supplierId || !form.value.month) { Message.error('请选择合作机构与账期'); return false }
   if (!reimbursementForm.value.reimbursementNo || !reimbursementForm.value.paymentDate) {
     Message.warning('请填写完整的报销信息')
     return false

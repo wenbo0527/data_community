@@ -63,11 +63,16 @@
             </div>
             <div v-if="lp.loans.length > 0" class="lp-product-loans">
               <div class="loan-row-header">
-                <span>用信编号</span>
+                <span>用信单号</span>
                 <span>用信日期</span>
-                <span>借据金额</span>
-                <span>当前余额</span>
-                <span>状态</span>
+                <span>银行卡号</span>
+                <span>用信结果</span>
+                <span>拒绝原因</span>
+                <span>借据号</span>
+                <span>三方借据号</span>
+                <span>借据状态</span>
+                <span>借款金额</span>
+                <span>期数</span>
                 <span>操作</span>
               </div>
               <div
@@ -75,19 +80,28 @@
                 :key="loan.id"
                 class="loan-row"
               >
-                <span class="loan-cell loan-id">{{ loan.loanNo }}</span>
-                <span class="loan-cell">{{ loan.loanDate }}</span>
-                <span class="loan-cell amount">¥{{ formatAmount(loan.amount) }}</span>
-                <span class="loan-cell amount balance">¥{{ formatAmount(loan.balance) }}</span>
+                <span class="loan-cell loan-id">{{ loan.loanNo || '-' }}</span>
+                <span class="loan-cell">{{ loan.loanDate || '-' }}</span>
+                <span class="loan-cell">{{ loan.bankCardNo || '-' }}</span>
                 <span class="loan-cell">
-                  <a-tag :color="getStatusColor(loan.status)" size="mini">
-                    {{ loan.status }}
-                  </a-tag>
+                  <a-tag :color="getResultColor(loan.result)" size="mini">{{ loan.result || '-' }}</a-tag>
                 </span>
+                <span class="loan-cell" :class="{ 'text-red': loan.rejectReason }">{{ loan.rejectReason || '-' }}</span>
+                <span class="loan-cell loan-id">{{ loan.iouNo || '-' }}</span>
+                <span class="loan-cell loan-id">{{ loan.thirdPartyIouNo || '-' }}</span>
                 <span class="loan-cell">
-                  <a-button size="mini" type="text" @click="viewLoanDetail(loan)">
-                    详情
-                  </a-button>
+                  <a-tag :color="getIouStatusColor(loan.iouStatus)" size="mini">{{ loan.iouStatus || '-' }}</a-tag>
+                </span>
+                <span class="loan-cell amount">¥{{ formatAmount(loan.amount) }}</span>
+                <span class="loan-cell">{{ loan.installments ? loan.installments + '期' : '-' }}</span>
+                <span class="loan-cell">
+                  <a-space :size="2" wrap>
+                    <a-button size="mini" type="text" @click="emit('view-loan', loan)">详情</a-button>
+                    <a-button size="mini" type="text" @click="emit('view-disbursement', loan)">放款信息</a-button>
+                    <a-button size="mini" type="text" @click="emit('view-repayment', loan)">还款信息</a-button>
+                    <a-button size="mini" type="text" @click="emit('view-initial-plan', loan)">初始还款计划</a-button>
+                    <a-button size="mini" type="text" @click="emit('view-tags', loan)">标签</a-button>
+                  </a-space>
                 </span>
               </div>
             </div>
@@ -126,6 +140,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'view-loan': [loan: any]
+  'view-disbursement': [loan: any]
+  'view-repayment': [loan: any]
+  'view-initial-plan': [loan: any]
+  'view-tags': [loan: any]
 }>()
 
 // 一级：按 creditApplicationId 分组（不再按 creditProductId 分组）
@@ -213,8 +231,14 @@ const getStatusColor = (status?: string) => {
   return map[status || ''] || 'default'
 }
 
-const viewLoanDetail = (loan: any) => {
-  emit('view-loan', loan)
+const getResultColor = (result?: string) => {
+  const map: Record<string, string> = { '成功': 'green', '失败': 'red', '拒绝': 'orange', '待处理': 'blue' }
+  return map[result || ''] || 'default'
+}
+
+const getIouStatusColor = (status?: string) => {
+  const map: Record<string, string> = { '正常': 'green', '逾期': 'red', '已结清': 'gray', '结清': 'blue', '冻结': 'orange', '拒绝': 'red', '放款中': 'blue' }
+  return map[status || ''] || 'default'
 }
 </script>
 
@@ -343,15 +367,17 @@ const viewLoanDetail = (loan: any) => {
 /* 用信明细行（紧凑卡片式） */
 .lp-product-loans {
   padding: 4px 0;
+  overflow-x: auto;
 }
 
 .loan-row-header,
 .loan-row {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr 0.8fr 0.6fr;
-  gap: 12px;
+  grid-template-columns: 1.4fr 0.9fr 1fr 0.7fr 0.9fr 1.3fr 1.3fr 0.8fr 1fr 0.5fr 1.8fr;
+  gap: 8px;
   padding: 6px 12px;
   font-size: 12px;
+  min-width: 1200px;
 }
 
 .loan-row-header {
@@ -386,5 +412,9 @@ const viewLoanDetail = (loan: any) => {
 
 .loan-cell.amount.balance {
   color: #00b42a;
+}
+
+.text-red {
+  color: #f5222d;
 }
 </style>

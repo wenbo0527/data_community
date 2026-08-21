@@ -1,8 +1,8 @@
 <template>
   <div class="writeoff-panel">
     <a-form v-if="!embedded" :model="form" layout="inline" style="margin-bottom: 12px">
-      <a-form-item field="supplierId" label="征信机构" required>
-        <a-select v-model="form.supplierId" allow-clear placeholder="选择征信机构" style="width: 240px">
+      <a-form-item field="supplierId" label="合作机构" required>
+        <a-select v-model="form.supplierId" allow-clear placeholder="选择合作机构" style="width: 240px">
           <a-option v-for="s in supplierOptions" :key="s.value" :value="s.value">{{ s.label }}</a-option>
         </a-select>
       </a-form-item>
@@ -28,8 +28,17 @@
 
     <a-table :data="productRows" :pagination="false" row-key="productCode">
       <template #columns>
+        <!-- PRD R35: 已结算过的外数产品名称标红 -->
         <a-table-column title="产品名称" :width="200">
-          <template #cell="{ record }">{{ record.productName }}</template>
+          <template #cell="{ record }">
+            <span :style="{ color: record.previouslySettled ? '#f53f3f' : 'inherit', fontWeight: record.previouslySettled ? 'bold' : 'normal' }">
+              {{ record.productName }}
+            </span>
+            <!-- PRD R36: 展示上次结算信息 -->
+            <div v-if="record.previouslySettled && record.lastSettlement" style="font-size: 11px; color: #f53f3f; margin-top: 2px;">
+              上次：单价{{ formatAmount(record.lastSettlement.unitPrice) }} / 调用量{{ record.lastSettlement.usageQty }} / 减免{{ record.lastSettlement.freeDeducted }} / 费用{{ formatAmount(record.lastSettlement.totalAmount) }}
+            </div>
+          </template>
         </a-table-column>
         <a-table-column title="待核销总费用 (总额 / 剩余)" :width="240">
           <template #cell="{ record }">
@@ -236,7 +245,7 @@ const deleteWriteoffLine = (row: any, index: number) => {
 }
 const formatAmount = (n?: number) => { if (n === undefined || n === null) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) }
 const loadPending = () => {
-  if (!form.value.supplierId || !form.value.month) { Message.error('请选择征信机构与账期'); return }
+  if (!form.value.supplierId || !form.value.month) { Message.error('请选择合作机构与账期'); return }
   const byProduct = flowStore.pendingAmountByProduct(form.value.supplierId, form.value.month)
   const discountByProduct = flowStore.pendingDiscountByProduct(form.value.supplierId, form.value.month)
   const reconcile = flowStore.getReconcile(form.value.supplierId, form.value.month)
@@ -245,6 +254,12 @@ const loadPending = () => {
     const originalItem = reconcile?.items.find((i: any) => i.productCode === code)
     const totalAmount = originalItem?.finalAmount || 0
     const totalDiscount = originalItem?.finalDiscount || 0
+    // PRD R35/R36: 非首次结算时，标记已结算产品并展示上次结算信息
+    const writeoffHistory = flowStore.writeoffByKey?.[`${form.value.supplierId}-${form.value.month}`]
+    const prevSettledCodes = writeoffHistory?.records?.map((r: any) => r.productCode) || []
+    const isPrevSettled = prevSettledCodes.includes(code)
+    const lastRecord = writeoffHistory?.records?.filter((r: any) => r.productCode === code).pop()
+    const pricing = supplierProducts.value.find((p: any) => p.productCode === code)
     return { 
       productCode: code, 
       productName: name, 
@@ -252,7 +267,14 @@ const loadPending = () => {
       totalDiscount,
       pendingAmount: Number(byProduct[code].toFixed(2)), 
       pendingDiscount: Number((discountByProduct[code] || 0).toFixed(0)), 
-      writeoffs: [{ contractId: '', amount: 0, discountAmount: 0, remark: '' }] 
+      writeoffs: [{ contractId: '', amount: 0, discountAmount: 0, remark: '' }],
+      previouslySettled: isPrevSettled,
+      lastSettlement: lastRecord ? {
+        unitPrice: pricing?.unitPrice || 0,
+        usageQty: (originalItem as any)?.usageQty || 0,
+        freeDeducted: lastRecord.discountAmount || originalItem?.finalDiscount || 0,
+        totalAmount: lastRecord.amount || totalAmount
+      } : undefined
     }
   })
   if (!productRows.value.length) Message.info('当前无待核销产品')
@@ -262,7 +284,7 @@ const addWriteoffLine = (row: any) => { row.writeoffs.push({ contractId: '', amo
 const supplementMockData = async () => {
   const sid = form.value.supplierId || ''
   const mon = form.value.month || ''
-  if (!sid || !mon) { Message.error('请选择征信机构与账期'); return }
+  if (!sid || !mon) { Message.error('请选择合作机构与账期'); return }
   log('writeoff.mock.start', { supplierId: sid, month: mon })
   let costing = flowStore.getCosting(sid, mon)
   if (!costing) {
@@ -273,10 +295,11 @@ const supplementMockData = async () => {
   if (!costing) { Message.error('生成核算快照失败'); return }
   const lines = costing.lines.filter((l: any) => !costing.excluded[l.lineId])
   const pick = lines.slice(0, Math.min(6, lines.length))
-  const items = pick.map((l: any) => {
+  const items = pick.map((l: any, index: number) => {
     const sysAmt = Number(l.amountInclTax || 0)
     const extAmt = Number((sysAmt * 1.02).toFixed(2))
-    return { productCode: l.productCode, systemAmount: Number(sysAmt.toFixed(2)), externalAmount: extAmt, finalAmount: extAmt, finalDiscount: 10, reason: '' }
+    const paymentType = l.paymentType === '线上' ? '线上' : l.paymentType === '线下' ? '线下' : (index % 2 === 0 ? '线上' : '线下')
+    return { productCode: l.productCode, productName: l.productName, systemAmount: Number(sysAmt.toFixed(2)), externalAmount: extAmt, externalUnitPrice: Number(l.externalUnitPrice ?? l.unitPrice ?? 0), finalAmount: extAmt, finalDiscount: 10, callMethod: paymentType, reason: '' }
   })
   flowStore.setReconcileSnapshot(sid, mon, items)
   const c = availableContracts.value[0]

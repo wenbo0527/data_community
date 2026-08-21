@@ -2,12 +2,12 @@
   <div class="contract-management">
     <div class="page-header">
       <h3>合同管理</h3>
-      <p class="desc">合同统计、趋势与到期预警，按征信机构维度分析</p>
+      <p class="desc">合同统计、趋势与到期预警，按合作机构维度分析</p>
     </div>
     <a-card class="toolbar" :bordered="true">
       <a-form :model="filters" layout="inline">
-        <a-form-item field="supplier" label="征信机构">
-          <a-select v-model="filters.supplier" placeholder="选择征信机构" allow-clear style="width: 180px">
+        <a-form-item field="supplier" label="合作机构">
+          <a-select v-model="filters.supplier" placeholder="选择合作机构" allow-clear style="width: 180px">
             <a-option v-for="s in supplierOptions" :key="s" :value="s">{{ s }}</a-option>
           </a-select>
         </a-form-item>
@@ -31,7 +31,7 @@
           </a-button>
         </a-form-item>
         <a-form-item>
-          <a-button @click="showSupplierModal = true">新增征信机构</a-button>
+          <a-button @click="showSupplierModal = true">新增合作机构</a-button>
         </a-form-item>
         <a-form-item>
           <a-dropdown @select="handleSettlementSelect">
@@ -68,14 +68,14 @@
       </a-grid-item>
       <a-grid-item>
         <a-card hoverable>
-          <a-statistic title="征信机构数量" :value="stats.supplierCount" />
+          <a-statistic title="合作机构数量" :value="stats.supplierCount" />
         </a-card>
       </a-grid-item>
     </a-grid>
-    <a-card title="征信机构维度分析">
+    <a-card title="合作机构维度分析">
       <a-table :data="supplierSummary" :pagination="false" :bordered="{ wrapper: true, cell: false }">
         <template #columns>
-          <a-table-column title="征信机构">
+          <a-table-column title="合作机构">
             <template #cell="{ record }">
               {{ record.supplier }}
             </template>
@@ -154,14 +154,14 @@
         </a-tab-pane>
       </a-tabs>
     </a-card>
-    <a-modal v-model:visible="showSupplierModal" title="新增征信机构" :width="600" @ok="submitSupplier"
+    <a-modal v-model:visible="showSupplierModal" title="新增合作机构" :width="600" @ok="submitSupplier"
       @cancel="resetSupplierForm">
       <a-form ref="supplierFormRef" :model="supplierForm" :rules="supplierFormRules" layout="vertical">
-        <a-form-item label="征信机构名称" field="name" required>
-          <a-input v-model="supplierForm.name" placeholder="请输入征信机构名称" />
+        <a-form-item label="合作机构名称" field="name" required>
+          <a-input v-model="supplierForm.name" placeholder="请输入合作机构名称" />
         </a-form-item>
-        <a-form-item label="征信机构说明" field="description" required>
-          <a-textarea v-model="supplierForm.description" placeholder="请输入征信机构说明" :rows="3" />
+        <a-form-item label="合作机构说明" field="description" required>
+          <a-textarea v-model="supplierForm.description" placeholder="请输入合作机构说明" :rows="3" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -218,8 +218,8 @@ const goCreatePage = () => { router.push('/budget/contracts/create') }
 const showSupplierModal = ref(false)
 const supplierFormRef = ref()
 const supplierForm = reactive({ name: '', description: '' })
-const supplierFormRules = { name: [{ required: true, message: '请输入征信机构名称' }], description: [{ required: true, message: '请输入征信机构说明' }] }
-const submitSupplier = async () => { const valid = await supplierFormRef.value?.validate(); if (!valid) return; supplierRegistry.value.unshift({ name: supplierForm.name, description: supplierForm.description }); Message.success('新增征信机构成功'); showSupplierModal.value = false; resetSupplierForm() }
+const supplierFormRules = { name: [{ required: true, message: '请输入合作机构名称' }], description: [{ required: true, message: '请输入合作机构说明' }] }
+const submitSupplier = async () => { const valid = await supplierFormRef.value?.validate(); if (!valid) return; supplierRegistry.value.unshift({ name: supplierForm.name, description: supplierForm.description }); Message.success('新增合作机构成功'); showSupplierModal.value = false; resetSupplierForm() }
 const resetSupplierForm = () => { supplierForm.name = ''; supplierForm.description = ''; supplierFormRef.value?.clearValidate() }
 
 const formatAmount = (n?: number) => { if (!n && n !== 0) return '—'; return Number(n).toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' }) }
