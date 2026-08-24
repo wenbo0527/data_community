@@ -1,7 +1,7 @@
 <template>
   <a-modal
     :visible="visible"
-    :title="title || '新建衍生需求'"
+    :title="title || '新建需求'"
     :width="960"
     :ok-loading="submitting"
     :ok-text="okText || '提交'"
@@ -56,6 +56,26 @@
                 <a-option value="王数仓">王数仓</a-option>
                 <a-option value="李数仓">李数仓</a-option>
                 <a-option value="张数仓">张数仓</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item label="处理人" field="handler">
+              <a-select v-model="form.handler" allow-clear placeholder="选择业务方处理人">
+                <a-option value="业务方-张三">业务方-张三</a-option>
+                <a-option value="业务方-李四">业务方-李四</a-option>
+                <a-option value="业务方-王五">业务方-王五</a-option>
+                <a-option value="业务方-赵六">业务方-赵六</a-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item label="业务同步等级" field="syncLevel">
+              <a-select v-model="form.syncLevel" allow-clear placeholder="选择同步等级">
+                <a-option value="S">S级（核心）</a-option>
+                <a-option value="A">A级（重要）</a-option>
+                <a-option value="B">B级（一般）</a-option>
+                <a-option value="C">C级（低优先）</a-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -150,7 +170,7 @@
       </div>
 
       <a-alert type="info" :show-icon="false" style="margin-top:8px">
-        提交后将生成需求 ID <b>DRV-{{ todayYmd }}-NNNN</b>，状态：<a-tag color="gray">待开发</a-tag>
+        提交后将生成需求 ID <b>DRV-{{ todayYmd }}-NNNN</b>，状态：<a-tag color="blue">需求受理</a-tag>
       </a-alert>
     </a-form>
   </a-modal>
@@ -183,6 +203,8 @@ const form = reactive({
   dataSource: 'Hbase',
   dataFreshness: '',
   developer: '',
+  handler: '',
+  syncLevel: '',
   expectedEffect: '',
   featureEnName: '',
   featureCnName: '',
