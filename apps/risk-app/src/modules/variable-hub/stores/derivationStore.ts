@@ -1,12 +1,9 @@
 /**
- * 衍生需求 Pinia store
- * 阶段 1.3 · 包装 mock/risk-feature/derivations.ts
+ * 需求 Pinia store
+ * 包装 mock/risk-feature/derivations.ts
  *
- * 4 状态机：pending_dev → developing → pending_register → registered
- * 文档 §三 模块 A · F-01
- *
- * 注意：7 条 mock 数据已合并到 explore-store（demandType='derivation'）
- *       本 store 提供响应式包装，但底层数据仍用 DerivationStore（mock）
+ * 需求列表 2 状态：需求受理 / 需求驳回
+ * 特征台账 2 状态：需求提出 / 已注册（由 midloanStatus 跟踪）
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -14,7 +11,6 @@ import DerivationStore from '@/modules/variable-hub/mock/risk-feature/derivation
 import type { DerivationRecord } from '@/modules/variable-hub/mock/risk-feature/derivations'
 
 export const useDerivationStore = defineStore('derivation', () => {
-  // 触发响应式更新的 key
   const updateTrigger = ref(0)
 
   function refresh() {
@@ -37,29 +33,29 @@ export const useDerivationStore = defineStore('derivation', () => {
     return DerivationStore.get(id)
   }
 
-  /** 创建 */
-  function create(payload: Partial<DerivationRecord>, creator = 'Demo 用户') {
-    const r = DerivationStore.create(payload, creator)
+  /** 创建：初始状态为需求受理 */
+  function create(payload: Partial<DerivationRecord>, proposer = 'Demo 用户') {
+    const r = DerivationStore.create(payload, proposer)
     refresh()
     return r
   }
 
-  /** 状态流转 */
-  function updateStatus(id: string, newStatus: string, operator = 'Demo 用户') {
-    const r = DerivationStore.updateStatus(id, newStatus, operator)
-    refresh()
-    return r
-  }
-
-  /** 注册 */
+  /** 特征注册 */
   function register(id: string, payload: any) {
     const r = DerivationStore.register(id, payload)
     refresh()
     return r
   }
 
+  /** 需求驳回：仅需求受理状态可驳回 */
+  function reject(id: string, reason: string) {
+    const r = DerivationStore.reject(id, reason)
+    refresh()
+    return r
+  }
+
   /** 补充数据底表 */
-  function supplementDataTable(id: string, tableName: string, remark?: string) {
+  function supplementDataTable(id: string, tableName: string) {
     const r = DerivationStore.supplementDataTable?.(id, tableName)
     refresh()
     return r
@@ -71,10 +67,9 @@ export const useDerivationStore = defineStore('derivation', () => {
     const list = DerivationStore.list()
     return {
       total: list.length,
-      pending_dev: list.filter(d => d.status === 'pending_dev').length,
-      developing: list.filter(d => d.status === 'developing').length,
-      pending_register: list.filter(d => d.status === 'pending_register').length,
-      registered: list.filter(d => d.status === 'registered').length
+      requirement_accepted: list.filter(d => d.status === 'requirement_accepted').length,
+      rejected: list.filter(d => d.status === 'rejected').length,
+      registered: list.filter(d => d.featureId).length
     }
   })
 
@@ -83,8 +78,8 @@ export const useDerivationStore = defineStore('derivation', () => {
     list,
     get,
     create,
-    updateStatus,
     register,
+    reject,
     supplementDataTable,
     summary
   }

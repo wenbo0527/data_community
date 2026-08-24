@@ -3,11 +3,11 @@
  * 阶段 1.4 · 包装 mock/explore/explore-store.ts
  *
  * 包含：
- * - 6 个 TOPIC mock（探索课题）
- * - 7 个 derivation mock（衍生需求，demandType='derivation'）
+ * - 4 个 TOPIC mock（探索课题）
+ * - 8 个 derivation mock（需求，demandType='derivation'）
  *
  * 4 状态机（topic）：exploring / adopted / rejected / paused
- * 4 状态机（derivation）：pending_dev / developing / pending_register / registered
+ * 2 状态（derivation）：requirement_accepted / rejected
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -48,7 +48,7 @@ export const useExploreStore = defineStore('explore', () => {
     return r
   }
 
-  /** 仅衍生需求 4 状态机 */
+  /** 仅需求 2 状态流转 */
   function updateDerivationStatus(id: string, newStatus: string) {
     const t = ExploreStore.getTopicById(id)
     if (t && t.demandType === 'derivation') {

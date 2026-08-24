@@ -13,35 +13,17 @@
         >
           <template #prefix><icon-search /></template>
         </a-input>
-        <a-button type="primary" @click="requirementDrawerVisible = true">
-          <template #icon><icon-plus /></template>
-          新建需求
-        </a-button>
-        <a-dropdown trigger="click" @select="handleCreateMenuSelect">
-          <a-button type="primary">
-            <template #icon><icon-plus /></template>
-            新建特征
-          </a-button>
-          <template #content>
-            <a-doption value="add">注册为变量</a-doption>
-            <a-doption value="incremental">导入更新</a-doption>
-          </template>
-        </a-dropdown>
-        <a-button @click="handleExport">
-          <template #icon><icon-download /></template>
-          导出
-        </a-button>
       </template>
     </DmtPageHeader>
 
   <div class="page-content">
-      <!-- Tab 切换：特征台账 / 衍生需求 -->
+      <!-- Tab 切换：特征台账 / 需求列表 -->
       <a-tabs v-model:active-key="activeTab" size="large" class="risk-feature-tabs">
         <a-tab-pane key="features">
           <template #title><a-space :size="6"><icon-apps />特征台账</a-space></template>
         </a-tab-pane>
         <a-tab-pane key="derivations">
-          <template #title><a-space :size="6"><icon-file />衍生需求</a-space></template>
+          <template #title><a-space :size="6"><icon-file />需求列表</a-space></template>
         </a-tab-pane>
       </a-tabs>
 
@@ -194,6 +176,22 @@
             <a-link style="margin-left: 12px" @click="router.push('/explore/taxonomy')">管理变量类型/分类</a-link>
           </a-form-item>
         </a-form>
+        <div class="filter-actions">
+          <a-dropdown trigger="click" @select="handleCreateMenuSelect">
+            <a-button type="primary">
+              <template #icon><icon-plus /></template>
+              新建特征
+            </a-button>
+            <template #content>
+              <a-doption value="add">注册为变量</a-doption>
+              <a-doption value="incremental">导入更新</a-doption>
+            </template>
+          </a-dropdown>
+          <a-button @click="handleExport">
+            <template #icon><icon-download /></template>
+            导出
+          </a-button>
+        </div>
       </a-card>
 
       <a-card v-if="activeTab === 'features'" class="table-card">
@@ -233,13 +231,6 @@
       :requirement-data="registerDrawerRequirementData"
       @submit="handleRegisterSubmit"
       @save-draft="handleRegisterSaveDraft"
-    />
-
-    <!-- ============ 新建需求（A1 需求提出表单）============ -->
-    <RequirementProposalDrawer
-      v-model:visible="requirementDrawerVisible"
-      @submit="handleRequirementSubmit"
-      @batch-submit="handleBatchRequirementSubmit"
     />
 
     <!-- ============ 列表页通用 Action 抽屉（提交OA/发起验收/验收驳回）============ -->
@@ -620,19 +611,19 @@
         </a-table>
     </a-card>
 
-      <!-- ========== 衍生需求 Tab 内容 ========== -->
+      <!-- ========== 需求列表 Tab 内容 ========== -->
       <a-card v-if="activeTab === 'derivations'" class="derivation-card">
         <a-space class="derivation-toolbar" align="center" wrap>
           <a-space wrap>
             <span class="derivation-tip">
-              <icon-info-circle /> 衍生需求是特征台账的入口。一期聚焦「贷中行为」品类，需求流转：
-              <a-tag color="gray" size="small">待开发</a-tag>
+              <icon-info-circle /> 需求是特征台账的入口。一期聚焦「贷中行为」品类，需求流转：
+              <a-tag color="blue" size="small">需求受理</a-tag>
               <icon-right />
-              <a-tag color="blue" size="small">开发中</a-tag>
+              <a-tag color="green" size="small">特征台账：需求提出→已注册</a-tag>
+              <span style="margin: 0 4px; color: var(--color-text-3)">|</span>
+              <a-tag color="blue" size="small">需求受理</a-tag>
               <icon-right />
-              <a-tag color="arcoblue" size="small">待注册</a-tag>
-              <icon-right />
-              <a-tag color="green-light" size="small">已注册</a-tag>
+              <a-tag color="red" size="small">需求驳回（不创建特征）</a-tag>
             </span>
           </a-space>
           <a-space>
@@ -642,7 +633,7 @@
             </a-button>
             <a-button type="primary" @click="openDerivationCreate">
               <template #icon><icon-plus /></template>
-              新建衍生需求
+              新建需求
             </a-button>
           </a-space>
         </a-space>
@@ -653,10 +644,8 @@
           </a-form-item>
           <a-form-item label="状态">
             <a-select v-model="derivationFilter.status" allow-clear placeholder="全部状态" @change="refreshDerivations">
-              <a-option value="pending_dev">待开发</a-option>
-              <a-option value="developing">开发中</a-option>
-              <a-option value="pending_register">待注册</a-option>
-              <a-option value="registered">已注册</a-option>
+              <a-option value="requirement_accepted">需求受理</a-option>
+              <a-option value="rejected">需求驳回</a-option>
             </a-select>
           </a-form-item>
           <a-form-item>
@@ -679,6 +668,12 @@
               {{ getDerivationStatusLabel(record.status) }}
             </a-tag>
           </template>
+          <template #syncLevelCell="{ record }">
+            <a-tag v-if="record.syncLevel" :color="{ S: 'red', A: 'orange', B: 'blue', C: 'gray' }[record.syncLevel] || 'gray'">
+              {{ record.syncLevel }}级
+            </a-tag>
+            <span v-else class="placeholder">—</span>
+          </template>
           <template #featureIdCell="{ record }">
             <a-link v-if="record.featureId" @click="goFeatureDetail(record.featureId)">{{ record.featureId }}</a-link>
             <span v-else class="placeholder">—</span>
@@ -687,27 +682,20 @@
             <a-space>
               <a-button type="text" size="small" @click="openDerivationDetail(record)">详情</a-button>
               <a-button
-                v-if="record.status === 'pending_dev'"
-                type="text"
-                size="small"
-                status="success"
-                @click="devTransition(record)"
-              >开始开发</a-button>
-              <a-button
-                v-if="record.status === 'developing'"
-                type="text"
-                size="small"
-                status="success"
-                @click="completeDevTransition(record)"
-              >完成开发</a-button>
-              <a-button
-                v-if="record.status === 'pending_register'"
+                v-if="record.status === 'requirement_accepted' && !record.featureId"
                 type="primary"
                 size="small"
                 @click="goRegister(record)"
               >去注册</a-button>
               <a-button
-                v-if="record.status === 'registered' && record.featureId"
+                v-if="record.status === 'requirement_accepted' && !record.featureId"
+                type="text"
+                size="small"
+                status="danger"
+                @click="openRejectModal(record)"
+              >驳回</a-button>
+              <a-button
+                v-if="record.featureId"
                 type="text"
                 size="small"
                 @click="goFeatureDetail(record.featureId)"
@@ -717,11 +705,11 @@
         </a-table>
       </a-card>
 
-      <!-- 衍生需求详情抽屉 -->
+      <!-- 需求详情抽屉 -->
       <a-drawer
         :visible="derivationDetailVisible"
         :width="720"
-        :title="derivationDetail ? `衍生需求详情 · ${derivationDetail.id}` : '衍生需求详情'"
+        :title="derivationDetail ? `需求详情 · ${derivationDetail.id}` : '需求详情'"
         @cancel="derivationDetailVisible = false"
       >
         <template v-if="derivationDetail">
@@ -735,7 +723,7 @@
         </template>
       </a-drawer>
 
-      <!-- 新建衍生需求弹窗 -->
+      <!-- 新建需求弹窗 -->
       <DerivationCreateModal
         v-if="derivationCreateVisible"
         :visible="derivationCreateVisible"
@@ -743,7 +731,7 @@
         @cancel="derivationCreateVisible = false"
       />
 
-      <!-- 批量导入衍生需求弹窗（A1 R19） -->
+      <!-- 批量导入需求弹窗（A1 R19） -->
       <BulkImportDerivationModal
         v-if="bulkImportVisible"
         :visible="bulkImportVisible"
@@ -759,6 +747,34 @@
         @ok="onDerivationRegisterSubmit"
         @cancel="derivationRegisterVisible = false"
       />
+
+      <!-- 需求驳回弹窗 -->
+      <a-modal
+        v-model:visible="rejectModalVisible"
+        title="需求驳回"
+        :width="480"
+        ok-text="确认驳回"
+        cancel-text="取消"
+        @ok="confirmReject"
+        @cancel="rejectForm.reason = ''"
+      >
+        <a-alert type="warning" :show-icon="false" style="margin-bottom: 12px">
+          <p style="margin: 0; font-size: 13px;">
+            需求 <strong>{{ rejectTarget?.name || '' }}</strong>（{{ rejectTarget?.id || '' }}）驳回后不会创建特征，且不会出现在特征台账中。
+          </p>
+        </a-alert>
+        <a-form :model="rejectForm" layout="vertical">
+          <a-form-item label="驳回原因" required>
+            <a-textarea
+              v-model="rejectForm.reason"
+              :rows="3"
+              :max-length="200"
+              show-word-limit
+              placeholder="请填写驳回原因，例如：需求重复 / 业务方撤回 / 暂不实施等"
+            />
+          </a-form-item>
+        </a-form>
+      </a-modal>
     </div>
   </div>
 </template>
@@ -787,7 +803,6 @@ import DerivationCreateModal from '@/modules/variable-hub/components/risk-featur
 import BulkImportDerivationModal from '@/modules/variable-hub/components/risk-feature/BulkImportDerivationModal.vue'
 import DerivationRegisterModal from '@/modules/variable-hub/components/risk-feature/DerivationRegisterModal.vue'
 import VariableRegisterDrawer from '@/modules/variable-hub/components/risk-feature/VariableRegisterDrawer.vue'
-import RequirementProposalDrawer from '@/modules/variable-hub/components/risk-feature/RequirementProposalDrawer.vue'
 import MidloanActionDrawer from '@/modules/variable-hub/components/risk-feature/MidloanActionDrawer.vue'
 import { ExploreTaxonomyStore } from '@/modules/variable-hub/mock/explore/explore-taxonomy-store'
 import EvaluationTaskStore from '@/modules/variable-hub/mock/evaluation/evaluation-task-store'
@@ -1863,31 +1878,6 @@ const handleRegisterSaveDraft = (payload) => {
   Message.success('草稿已保存到「变量台账」底部，可在台账列表中查看')
 }
 
-// ============ 新建需求（A1 需求提出表单）============
-const requirementDrawerVisible = ref(false)
-
-const handleRequirementSubmit = (payload) => {
-  const proposal = VariableDraftStore.addRequirementProposal({
-    ...payload,
-    creator: UserContext.get().name || '小李'
-  })
-  Message.success(`已创建需求：${proposal.name}（${proposal.id}），状态：需求提出，已通知管理员审核`)
-  requirementDrawerVisible.value = false
-  // 刷新台账数据 + 跳转到详情页（A1）
-  fetchVariableList()
-  router.push({ name: 'VariableAssetDetail', params: { id: proposal.id } })
-}
-
-const handleBatchRequirementSubmit = (payloads) => {
-  const creator = UserContext.get().name || '小李'
-  const results = VariableDraftStore.batchAddRequirementProposals(
-    payloads.map((p) => ({ ...p, creator }))
-  )
-  Message.success(`已批量创建 ${results.length} 条需求，状态：需求提出，已通知管理员审核`)
-  requirementDrawerVisible.value = false
-  fetchVariableList()
-}
-
 const openBatchTopicModal = () => {
   if (!selectedRows.value.length) {
     Message.warning('请先勾选变量')
@@ -2054,16 +2044,14 @@ const confirmIncrementalUpload = async () => {
 onMounted(() => {
   fetchDataSources()
   fetchVariableList()
-  // 处理从课题页「新建衍生需求」跳转的 query
+  // 处理从课题页「新建需求」跳转的 query
   handleDerivationAction()
 })
 
-// ============ 衍生需求 Tab 数据 ============
+// ============ 需求列表 Tab 数据 ============
 const derivationStatusMap = {
-  pending_dev:       { label: '待开发', color: 'gray' },
-  developing:        { label: '开发中', color: 'blue' },
-  pending_register:  { label: '待注册', color: 'arcoblue' },
-  registered:        { label: '已注册', color: 'green-light' }
+  requirement_accepted: { label: '需求受理', color: 'blue' },
+  rejected:             { label: '需求驳回', color: 'red' }
 }
 const getDerivationStatusLabel = (s) => derivationStatusMap[s]?.label || s
 const getDerivationStatusColor = (s) => derivationStatusMap[s]?.color || 'gray'
@@ -2079,7 +2067,9 @@ const derivationColumns = [
   { title: '特征名', dataIndex: 'featureCnName', width: 200, ellipsis: true },
   { title: '状态', dataIndex: 'status', slotName: 'statusCell', width: 100 },
   { title: '关联特征ID', dataIndex: 'featureId', slotName: 'featureIdCell', width: 180 },
-  { title: '创建人', dataIndex: 'creator', width: 100 },
+  { title: '提出人', dataIndex: 'proposer', width: 100 },
+  { title: '处理人', dataIndex: 'handler', width: 120 },
+  { title: '业务同步等级', dataIndex: 'syncLevel', slotName: 'syncLevelCell', width: 120 },
   { title: '创建时间', dataIndex: 'createdAt', width: 170 },
   { title: '操作', dataIndex: 'actions', slotName: 'actions', width: 200, fixed: 'right' }
 ]
@@ -2097,18 +2087,6 @@ function resetDerivationFilter() {
 }
 
 // 流转动作
-function devTransition(record) {
-  DerivationStore.updateStatus(record.id, 'developing')
-  Message.success(`需求 ${record.id} 已进入「开发中」`)
-  refreshDerivations()
-}
-
-function completeDevTransition(record) {
-  DerivationStore.updateStatus(record.id, 'pending_register')
-  Message.success(`需求 ${record.id} 已完成开发，请补充注册信息`)
-  refreshDerivations()
-}
-
 function goRegister(record) {
   derivationRegisterTarget.value = DerivationStore.get(record.id) || record
   derivationRegisterVisible.value = true
@@ -2119,7 +2097,7 @@ function onDerivationRegisterSubmit(payload) {
   if (!target) return
   const rec = DerivationStore.register(target.id, payload)
   if (rec) {
-    Message.success(`已注册特征 ${rec.featureId}，状态：已注册`)
+    Message.success(`已注册特征 ${rec.featureId}，特征状态：已注册`)
     derivationRegisterVisible.value = false
     refreshDerivations()
   }
@@ -2129,7 +2107,7 @@ function goFeatureDetail(featureId) {
   router.push({ name: 'VariableAssetDetail', params: { id: featureId, mode: 'view' } })
 }
 
-// 新建衍生需求
+// 新建需求
 const derivationCreateVisible = ref(false)
 function openDerivationCreate() {
   derivationCreateVisible.value = true
@@ -2166,7 +2144,7 @@ function onBulkImport(rows) {
 }
 function onDerivationCreated(payload) {
   const rec = DerivationStore.create(payload, '小李')
-  Message.success(`已创建衍生需求 ${rec.id}，状态：待开发`)
+  Message.success(`已创建需求 ${rec.id}，状态：需求受理`)
   derivationCreateVisible.value = false
   refreshDerivations()
 }
@@ -2186,7 +2164,9 @@ const derivationDetailDesc = computed(() => derivationDetail.value ? [
   { label: '品类', value: '贷中行为' },
   { label: '数据源', value: derivationDetail.value.dataSource },
   { label: '开发人员', value: derivationDetail.value.developer },
-  { label: '创建人', value: derivationDetail.value.creator },
+  { label: '提出人', value: derivationDetail.value.proposer },
+  { label: '处理人', value: derivationDetail.value.handler || '—' },
+  { label: '业务同步等级', value: derivationDetail.value.syncLevel ? derivationDetail.value.syncLevel + '级' : '—' },
   { label: '创建时间', value: derivationDetail.value.createdAt }
 ] : [])
 const derivationDetailFeatureDesc = computed(() => derivationDetail.value ? [
@@ -2211,18 +2191,56 @@ const derivationDetailRegisterDesc = computed(() => derivationDetail.value ? [
   { label: '备注', value: derivationDetail.value.remark || '—' },
   { label: '关联特征ID', value: derivationDetail.value.featureId || '尚未注册' }
 ] : [])
-const derivationDetailTimeline = computed(() => derivationDetail.value ? [
-  { label: '创建时间', value: derivationDetail.value.createdAt + '  创建人：' + derivationDetail.value.creator },
-  { label: '最近更新', value: derivationDetail.value.updatedAt },
-  { label: '当前状态', value: getDerivationStatusLabel(derivationDetail.value.status) }
-] : [])
+const derivationDetailTimeline = computed(() => {
+  if (!derivationDetail.value) return []
+  const items = [
+    { label: '创建时间', value: derivationDetail.value.createdAt + '  提出人：' + derivationDetail.value.proposer },
+    { label: '最近更新', value: derivationDetail.value.updatedAt },
+    { label: '当前状态', value: getDerivationStatusLabel(derivationDetail.value.status) }
+  ]
+  if (derivationDetail.value.status === 'rejected') {
+    items.push({ label: '驳回时间', value: derivationDetail.value.rejectedAt || '—' })
+    items.push({ label: '驳回原因', value: derivationDetail.value.rejectReason || '—' })
+  }
+  if (derivationDetail.value.featureId) {
+    items.push({ label: '注册时间', value: derivationDetail.value.registeredAt || '—' })
+  }
+  return items
+})
 
 function openDerivationDetail(record) {
   derivationDetail.value = DerivationStore.get(record.id)
   derivationDetailVisible.value = true
 }
 
-// 进入页面时初始化衍生需求列表
+// ============ 需求驳回 ============
+const rejectModalVisible = ref(false)
+const rejectTarget = ref(null)
+const rejectForm = reactive({ reason: '' })
+
+function openRejectModal(record) {
+  rejectTarget.value = record
+  rejectForm.reason = ''
+  rejectModalVisible.value = true
+}
+
+function confirmReject() {
+  if (!rejectTarget.value) return
+  if (!rejectForm.reason.trim()) {
+    Message.warning('请填写驳回原因')
+    return
+  }
+  const rec = DerivationStore.reject(rejectTarget.value.id, rejectForm.reason.trim())
+  if (rec) {
+    Message.success(`需求 ${rec.id} 已驳回`)
+    rejectModalVisible.value = false
+    refreshDerivations()
+  } else {
+    Message.error('驳回失败，仅需求受理状态的需求可驳回')
+  }
+}
+
+// 进入页面时初始化需求列表
 refreshDerivations()
 </script>
 
@@ -2300,6 +2318,15 @@ refreshDerivations()
 
 .filter-card {
   margin-bottom: 16px;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border-2, #e5e6eb);
 }
 
 .table-card {

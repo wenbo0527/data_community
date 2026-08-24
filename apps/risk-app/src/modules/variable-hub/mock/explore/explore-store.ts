@@ -2,16 +2,16 @@ export type ExploreVisibility = 'team' | 'company' | 'audit'
 export type ExploreTopicStatus = 'exploring' | 'adopted' | 'rejected' | 'paused'
 
 /**
- * 衍生需求 4 状态机（文档 §三 模块 A · F-01）
- * 待开发 → 开发中 → 待注册 → 已注册（单向流转）
+ * 需求 2 状态（文档 §三 模块 A · F-01）
+ * 需求受理 / 需求驳回
  * 仅 demandType='derivation' 的 topic 才会走此状态机
  */
-export type DerivationStatus = 'pending_dev' | 'developing' | 'pending_register' | 'registered'
+export type DerivationStatus = 'requirement_accepted' | 'rejected'
 
 /**
  * 需求类型：探索课题 vs 衍生需求
  * - topic：探索中→已采纳/否决/暂缓
- * - derivation：衍生需求 4 状态机
+ * - derivation：需求 2 状态（需求受理/需求驳回）
  */
 export type DemandType = 'topic' | 'derivation'
 export type ExplorePriority = 'high' | 'medium' | 'low'
@@ -83,9 +83,17 @@ export interface ExploreTopic {
    * 探索中心只读展示，状态变更由变量中心事件驱动
    */
   variableSync?: VariableSyncInfo
-  /** ============ 衍生需求专属字段（demandType='derivation' 时使用） ============ */
-  /** 衍生需求 4 状态机（待开发/开发中/待注册/已注册） */
+  /** ============ 需求专属字段（demandType='derivation' 时使用） ============ */
+  /** 需求 2 状态（需求受理/需求驳回） */
   derivationStatus?: DerivationStatus
+  /** 驳回原因（仅 rejected 状态有值） */
+  rejectReason?: string
+  /** 驳回时间 */
+  rejectedAt?: string
+  /** 提出人 & 处理人 */
+  proposer?: string                      // 提出人（需求发起方）
+  handler?: string                       // 处理人（负责跟进的业务方）
+  syncLevel?: string                     // 业务同步等级（S/A/B/C）
   /** 业务场景：贷前/贷中/贷后 */
   businessScene?: string
   /** 预期效果 */
@@ -420,9 +428,9 @@ const experimentMocks: ExploreExperiment[] = [
   }
 ]
 
-// ============ 衍生需求（从 derivations.ts 合并 · 文档 §三 模块 A · F-01）============
+// ============ 需求（从 derivations.ts 合并 · 文档 §三 模块 A · F-01）============
 // 这些数据原本在 derivations.ts 中，现在作为 demandType='derivation' 的 ExploreTopic 存在
-// 4 状态机：pending_dev → developing → pending_register → registered
+// 3 状态：需求提出 → 特征注册 / 特征归档
 // 已合并到课题页统一管理
 const derivationMocks: ExploreTopic[] = [
   {
@@ -450,7 +458,7 @@ const derivationMocks: ExploreTopic[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '小李',
-    derivationStatus: 'registered',
+    derivationStatus: 'requirement_accepted',
     featureId: 'MIDLOAN-FEAT-0001',
     businessProblem: '贷中反欺诈需要识别异常大额交易',
     hypothesis: '近30日大额交易次数特征可显著提升欺诈识别效果',
@@ -460,6 +468,9 @@ const derivationMocks: ExploreTopic[] = [
     visibility: 'team',
     status: 'adopted',
     owner: '小李',
+    proposer: '小李',
+    handler: '业务方-张三',
+    syncLevel: 'S',
     createdAt: '2026-07-25 10:00:00',
     updatedAt: '2026-08-01 09:30:00',
     relatedResources: [
@@ -492,7 +503,7 @@ const derivationMocks: ExploreTopic[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '小李',
-    derivationStatus: 'registered',
+    derivationStatus: 'requirement_accepted',
     featureId: 'MIDLOAN-FEAT-0007',
     businessProblem: '贷中风险预警',
     hypothesis: '还款波动率反映用户行为稳定性',
@@ -502,6 +513,9 @@ const derivationMocks: ExploreTopic[] = [
     visibility: 'team',
     status: 'adopted',
     owner: '小李',
+    proposer: '小李',
+    handler: '业务方-李四',
+    syncLevel: 'A',
     createdAt: '2026-08-01 14:00:00',
     updatedAt: '2026-08-03 11:00:00',
     relatedResources: [
@@ -534,7 +548,7 @@ const derivationMocks: ExploreTopic[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '小李',
-    derivationStatus: 'developing',
+    derivationStatus: 'requirement_accepted',
     businessProblem: '识别异常夜间活动模式',
     hypothesis: '欺诈用户夜间活跃度显著高于正常用户',
     domainTags: ['风控', '反欺诈'],
@@ -543,6 +557,9 @@ const derivationMocks: ExploreTopic[] = [
     visibility: 'team',
     status: 'exploring',
     owner: '小李',
+    proposer: '小李',
+    handler: '业务方-张三',
+    syncLevel: 'B',
     createdAt: '2026-08-03 09:00:00',
     updatedAt: '2026-08-05 14:20:00',
     relatedResources: [
@@ -575,7 +592,7 @@ const derivationMocks: ExploreTopic[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '小李',
-    derivationStatus: 'developing',
+    derivationStatus: 'requirement_accepted',
     businessProblem: '评估用户信用历史',
     hypothesis: '信用历史长度与违约率负相关',
     domainTags: ['风控'],
@@ -584,6 +601,9 @@ const derivationMocks: ExploreTopic[] = [
     visibility: 'team',
     status: 'exploring',
     owner: '小李',
+    proposer: '小李',
+    handler: '业务方-王五',
+    syncLevel: 'A',
     createdAt: '2026-08-04 10:00:00',
     updatedAt: '2026-08-05 16:00:00',
     relatedResources: [
@@ -616,7 +636,7 @@ const derivationMocks: ExploreTopic[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '小李',
-    derivationStatus: 'pending_register',
+    derivationStatus: 'requirement_accepted',
     remark: '由原内数变量迁移为贷中行为品类',
     businessProblem: '评估用户申请行为',
     hypothesis: '申请频次激增预示用户风险',
@@ -626,6 +646,9 @@ const derivationMocks: ExploreTopic[] = [
     visibility: 'team',
     status: 'exploring',
     owner: '数据应用团队',
+    proposer: '小李',
+    handler: '业务方-赵六',
+    syncLevel: 'B',
     createdAt: '2026-08-05 10:00:00',
     updatedAt: '2026-08-04 09:15:00',
     relatedResources: [
@@ -659,7 +682,7 @@ const derivationMocks: ExploreTopic[] = [
     batch: '2026Q3',
     acceptor: '数据应用团队',
     remark: '由原内数变量迁移为贷中行为品类',
-    derivationStatus: 'pending_register',
+    derivationStatus: 'requirement_accepted',
     businessProblem: '评估用户活跃度',
     hypothesis: '交易频次反映用户活跃度',
     domainTags: ['风控'],
@@ -668,6 +691,9 @@ const derivationMocks: ExploreTopic[] = [
     visibility: 'team',
     status: 'exploring',
     owner: '数据应用团队',
+    proposer: '数据应用团队',
+    handler: '业务方-张三',
+    syncLevel: 'C',
     createdAt: '2026-08-03 11:20:00',
     updatedAt: '2026-08-04 09:15:00',
     relatedResources: [
@@ -699,7 +725,7 @@ const derivationMocks: ExploreTopic[] = [
     batch: '2026Q3',
     acceptor: '小李',
     remark: '需数仓团队联调社保查询 API',
-    derivationStatus: 'pending_dev',
+    derivationStatus: 'requirement_accepted',
     businessProblem: '评估用户工作稳定性',
     hypothesis: '社保连续缴纳反映工作稳定性',
     domainTags: ['风控'],
@@ -708,8 +734,55 @@ const derivationMocks: ExploreTopic[] = [
     visibility: 'team',
     status: 'exploring',
     owner: '小李',
+    proposer: '小李',
+    handler: '业务方-李四',
+    syncLevel: 'A',
     createdAt: '2026-08-05 10:30:00',
     updatedAt: '2026-08-05 10:30:00',
+    relatedResources: [],
+    referencedTopicIds: []
+  },
+  // ============ 特征归档状态（需求提出后未处理，记录归档原因）============
+  {
+    id: 'DRV-20260720-0003',
+    demandType: 'derivation',
+    name: '近90日账户余额均值',
+    businessScene: '贷中',
+    expectedEffect: '评估用户资金充裕程度',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_AVG_BAL_90D',
+    featureCnName: '近90日账户余额均值',
+    fieldType: 'Double',
+    processingLogic: '统计 user_id 近90日账户余额的均值',
+    defaultValue: '0.0',
+    l1Category: 'repayment',
+    l2Category: 'repayment_stability',
+    sourceTableAfter: '',
+    sourceTableBefore: '',
+    dataFreshness: 'offline_t2',
+    developer: '',
+    productScope: '现金贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    remark: '',
+    rejectReason: '业务方撤回需求，不再需要该特征',
+    rejectedAt: '2026-08-10 14:00:00',
+    derivationStatus: 'rejected',
+    businessProblem: '评估用户资金充裕程度',
+    hypothesis: '账户余额均值反映用户还款能力',
+    domainTags: ['风控'],
+    variableTypeTags: ['数值型'],
+    priority: 'low',
+    visibility: 'team',
+    status: 'paused',
+    owner: '小李',
+    proposer: '小李',
+    handler: '',
+    syncLevel: '',
+    createdAt: '2026-07-20 11:00:00',
+    updatedAt: '2026-08-10 14:00:00',
     relatedResources: [],
     referencedTopicIds: []
   }

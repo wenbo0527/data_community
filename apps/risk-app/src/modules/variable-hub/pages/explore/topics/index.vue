@@ -1,9 +1,9 @@
 <template>
   <div class="explore-topics-page">
-    <DmtPageHeader title="探索课题 / 衍生需求" subtitle="展示探索课题全过程 + 衍生需求 4 状态机（待开发/开发中/待注册/已注册）。">
+    <DmtPageHeader title="探索课题 / 需求" subtitle="展示探索课题全过程 + 需求 2 状态（需求受理/需求驳回）。">
       <template #extra>
         <a-button @click="router.push('/explore/map')">查看全景</a-button>
-        <a-button @click="handleCreateDerivation">新建衍生需求</a-button>
+        <a-button @click="handleCreateDerivation">新建需求</a-button>
         <a-button type="primary" @click="handleCreateTopic">新建课题</a-button>
       </template>
     </DmtPageHeader>
@@ -14,7 +14,7 @@
         <a-select v-model="filters.demandType" allow-clear placeholder="需求类型" style="width: 160px" :options="demandTypeOptions" />
         <a-select v-model="filters.domain" allow-clear placeholder="业务域" style="width: 160px" :options="domainOptions" />
         <a-select v-model="filters.status" allow-clear placeholder="状态" style="width: 160px" :options="statusOptions" />
-        <a-select v-model="filters.derivationStatus" allow-clear placeholder="衍生需求状态" style="width: 160px" :options="derivationStatusOptions" />
+        <a-select v-model="filters.derivationStatus" allow-clear placeholder="需求状态" style="width: 160px" :options="derivationStatusOptions" />
         <a-select v-model="filters.visibility" allow-clear placeholder="可见性" style="width: 160px" :options="visibilityOptions" />
         <a-select v-model="filters.priority" allow-clear placeholder="优先级" style="width: 160px" :options="priorityOptions" />
         <a-button @click="resetFilters">重置</a-button>
@@ -34,7 +34,7 @@
       >
         <template #nameCell="{ record }">
           <a-link @click="router.push(`/explore/topics/${record.id}`)">
-            <a-tag v-if="record.demandType === 'derivation'" size="mini" color="purple" style="margin-right: 4px">衍生需求</a-tag>
+            <a-tag v-if="record.demandType === 'derivation'" size="mini" color="purple" style="margin-right: 4px">需求</a-tag>
             <a-tag v-else size="mini" color="arcoblue" style="margin-right: 4px">探索课题</a-tag>
             {{ record.name }}
           </a-link>
@@ -145,7 +145,7 @@ const filters = reactive({
   demandType: '' as '' | 'topic' | 'derivation',
   domain: '',
   status: '' as '' | ExploreTopicStatus,
-  derivationStatus: '' as '' | 'pending_dev' | 'developing' | 'pending_register' | 'registered',
+  derivationStatus: '' as '' | 'requirement_accepted' | 'rejected',
   visibility: '' as '' | ExploreVisibility,
   priority: '' as '' | ExplorePriority
 })
@@ -191,28 +191,22 @@ const domainOptions = [
 
 const demandTypeOptions = [
   { label: '探索课题', value: 'topic' },
-  { label: '衍生需求', value: 'derivation' }
+  { label: '需求', value: 'derivation' }
 ]
 
 const derivationStatusOptions = [
-  { label: '待开发', value: 'pending_dev' },
-  { label: '开发中', value: 'developing' },
-  { label: '待注册', value: 'pending_register' },
-  { label: '已注册', value: 'registered' }
+  { label: '需求受理', value: 'requirement_accepted' },
+  { label: '需求驳回', value: 'rejected' }
 ]
 
 const derivationStatusLabel = (s: string) => ({
-  pending_dev: '待开发',
-  developing: '开发中',
-  pending_register: '待注册',
-  registered: '已注册'
+  requirement_accepted: '需求受理',
+  rejected: '需求驳回'
 }[s] || s)
 
 const derivationStatusColor = (s: string) => ({
-  pending_dev: 'gray',
-  developing: 'arcoblue',
-  pending_register: 'gold',
-  registered: 'green'
+  requirement_accepted: 'blue',
+  rejected: 'red'
 }[s] || 'gray')
 
 const statusOptions = [

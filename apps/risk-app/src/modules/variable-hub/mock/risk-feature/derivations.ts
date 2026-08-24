@@ -1,9 +1,15 @@
 /**
- * 风险特征衍生需求 mock store
- * 来源：风险数据一体化一期 文档 §三 模块 A F-01
+ * 风险特征需求 mock store
  *
- * 需求状态：待开发 → 开发中 → 待注册 → 已注册（单向流转）
- * 文档 附录 D.1 衍生需求ID：DRV-YYYYMMDD-NNNN
+ * 需求列表 2 状态：
+ * - 需求受理 (requirement_accepted)：初始状态
+ * - 需求驳回 (rejected)：驳回（含原因），不创建特征
+ *
+ * 特征台账 2 状态（对应 VariableAssetMock.midloanStatus）：
+ * - 需求提出 (requirement_proposal)：需求受理后「去注册」时在特征台账生成
+ * - 已注册 (registered)：注册完成后
+ *
+ * 需求ID：DRV-YYYYMMDD-NNNN
  */
 
 export interface DerivationRecord {
@@ -27,6 +33,10 @@ export interface DerivationRecord {
   dataFreshness: string               // 实时/离线T-1/离线T-2
   developer: string                   // 开发人员（数仓团队成员）
   excelReport?: string                // Excel 评估报告文件名
+  /** 提出人 & 处理人 */
+  proposer: string                    // 提出人（需求发起方）
+  handler?: string                    // 处理人（负责跟进/处理的业务方）
+  syncLevel?: string                  // 业务同步等级（S/A/B/C）
   /** 注册阶段补充 */
   dataTableName?: string              // 数据底表名称（可暂空）
   dwTaskId?: string                   // 数仓任务ID
@@ -37,16 +47,36 @@ export interface DerivationRecord {
   verifiedAt?: string                 // 验收时间
   registeredAt?: string               // 注册时间
   remark?: string                     // 备注
+  /** 驳回信息 */
+  rejectReason?: string               // 驳回原因（仅 rejected 状态）
+  rejectedAt?: string                 // 驳回时间
   /** 状态与系统字段 */
-  status: 'pending_dev' | 'developing' | 'pending_register' | 'registered'
-  featureId?: string                   // 关联特征ID（注册后写入）
-  creator: string                      // 创建人
+  status: 'requirement_accepted' | 'rejected'
+  featureId?: string                   // 关联特征ID（注册后写入，用于「查看特征」跳转）
   createdAt: string
   updatedAt: string
 }
 
-// 内存存储
-let store: DerivationRecord[] = [
+// localStorage 持久化（带版本号，版本变更时自动清除旧缓存）
+const STORAGE_KEY = 'variable.management.derivations'
+const STORAGE_VERSION_KEY = 'variable.management.derivations.version'
+const STORAGE_VERSION = '4' // v1: 4态 → v2: 3态 → v3: proposer/handler → v4: 2态(requirement_accepted/rejected)
+
+function safeParse(raw: string | null): DerivationRecord[] {
+  if (!raw) return []
+  try {
+    const data = JSON.parse(raw)
+    return Array.isArray(data) ? data : []
+  } catch { return [] }
+}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
+  localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION)
+}
+
+// 初始种子数据
+const SEED_DATA: DerivationRecord[] = [
   {
     id: 'DRV-20260725-0001',
     name: '近30日大额交易次数',
@@ -73,9 +103,11 @@ let store: DerivationRecord[] = [
     batch: '2026Q3',
     acceptor: '小李',
     remark: '',
-    status: 'registered',
+    status: 'requirement_accepted',
     featureId: 'MIDLOAN-FEAT-0001',
-    creator: '小李',
+    proposer: '小李',
+    handler: '业务方-张三',
+    syncLevel: 'S',
     createdAt: '2026-07-25 10:00:00',
     updatedAt: '2026-08-01 09:30:00'
   },
@@ -105,9 +137,11 @@ let store: DerivationRecord[] = [
     batch: '2026Q3',
     acceptor: '小李',
     remark: '',
-    status: 'registered',
+    status: 'requirement_accepted',
     featureId: 'MIDLOAN-FEAT-0002',
-    creator: '小李',
+    proposer: '小李',
+    handler: '业务方-李四',
+    syncLevel: 'A',
     createdAt: '2026-08-01 14:20:00',
     updatedAt: '2026-08-03 11:00:00'
   },
@@ -137,9 +171,11 @@ let store: DerivationRecord[] = [
     batch: '2026Q3',
     acceptor: '小李',
     remark: '数据底表未补充',
-    status: 'registered',
+    status: 'requirement_accepted',
     featureId: 'MIDLOAN-FEAT-0003',
-    creator: '小李',
+    proposer: '小李',
+    handler: '业务方-张三',
+    syncLevel: 'B',
     createdAt: '2026-08-03 09:15:00',
     updatedAt: '2026-08-04 18:00:00'
   },
@@ -166,9 +202,11 @@ let store: DerivationRecord[] = [
     listType: 'none',
     batch: '2026Q3',
     acceptor: '小李',
-    remark: '等待开发',
-    status: 'pending_register',
-    creator: '小李',
+    remark: '待注册',
+    status: 'requirement_accepted',
+    proposer: '小李',
+    handler: '业务方-王五',
+    syncLevel: 'A',
     createdAt: '2026-08-04 16:30:00',
     updatedAt: '2026-08-04 16:30:00'
   },
@@ -196,13 +234,14 @@ let store: DerivationRecord[] = [
     batch: '2026Q3',
     acceptor: '小李',
     remark: '',
-    status: 'developing',
-    creator: '小李',
+    status: 'requirement_accepted',
+    proposer: '小李',
+    handler: '业务方-赵六',
+    syncLevel: 'B',
     createdAt: '2026-08-05 09:30:00',
     updatedAt: '2026-08-05 09:30:00'
   },
   {
-    // 原内数变量（VAR-0003）迁移为贷中行为后保留关联
     id: 'DRV-20260803-0030',
     name: '近30日交易次数',
     businessScene: '贷中',
@@ -228,12 +267,14 @@ let store: DerivationRecord[] = [
     batch: '2026Q3',
     acceptor: '数据应用团队',
     remark: '由原内数变量迁移为贷中行为品类',
-    status: 'pending_register',
-    creator: '数据应用团队',
+    status: 'requirement_accepted',
+    proposer: '数据应用团队',
+    handler: '业务方-张三',
+    syncLevel: 'C',
     createdAt: '2026-08-03 11:20:00',
     updatedAt: '2026-08-04 09:15:00'
   },
-  // ============ 补齐：pending_dev 状态衍生需求 ============
+  // ============ 需求受理状态 ============
   {
     id: 'DRV-20260805-0050',
     name: '近30日社保缴纳连续月数',
@@ -258,12 +299,59 @@ let store: DerivationRecord[] = [
     batch: '2026Q3',
     acceptor: '小李',
     remark: '需数仓团队联调社保查询 API',
-    status: 'pending_dev',
-    creator: '小李',
+    status: 'requirement_accepted',
+    proposer: '小李',
+    handler: '业务方-李四',
+    syncLevel: 'A',
     createdAt: '2026-08-05 10:30:00',
     updatedAt: '2026-08-05 10:30:00'
+  },
+  // ============ 需求驳回状态（含驳回原因，不创建特征）============
+  {
+    id: 'DRV-20260720-0003',
+    name: '近90日账户余额均值',
+    businessScene: '贷中',
+    expectedEffect: '评估用户资金充裕程度',
+    category: 'midloan_behavior',
+    dataSource: 'Hbase',
+    featureEnName: 'MIDLOAN_AVG_BAL_90D',
+    featureCnName: '近90日账户余额均值',
+    fieldType: 'Double',
+    processingLogic: '统计 user_id 近90日账户余额的均值',
+    defaultValue: '0.0',
+    l1Category: 'repayment',
+    l2Category: 'repayment_stability',
+    sourceTableAfter: '',
+    sourceTableBefore: '',
+    originFeatureEnName: '',
+    dataFreshness: 'offline_t2',
+    developer: '',
+    productScope: '现金贷',
+    listType: 'none',
+    batch: '2026Q3',
+    acceptor: '小李',
+    remark: '',
+    rejectReason: '业务方撤回需求，不再需要该特征',
+    rejectedAt: '2026-08-10 14:00:00',
+    status: 'rejected',
+    proposer: '小李',
+    handler: '',
+    syncLevel: '',
+    createdAt: '2026-07-20 11:00:00',
+    updatedAt: '2026-08-10 14:00:00'
   }
 ]
+
+// 从 localStorage 初始化（版本号变更时自动清除旧缓存，重新使用种子数据）
+const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY)
+const storedData = safeParse(localStorage.getItem(STORAGE_KEY))
+let store: DerivationRecord[]
+if (storedVersion === STORAGE_VERSION && storedData.length > 0) {
+  store = storedData
+} else {
+  store = [...SEED_DATA]
+  persist()
+}
 
 /**
  * 生成下一个 DRV ID：DRV-YYYYMMDD-NNNN
@@ -296,40 +384,33 @@ export const DerivationStore = {
   get(id: string) {
     return store.find((d: any) => d.id === id) || null
   },
-  /** 创建（A1） */
-  create(payload: any, creator: string = 'Demo 用户') {
+  /** 创建：初始状态为需求受理 */
+  create(payload: any, proposer: string = 'Demo 用户') {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
     const record: DerivationRecord = {
       id: nextId(),
-      status: 'pending_dev',
-      creator,
+      status: 'requirement_accepted',
+      proposer,
       createdAt: now,
       updatedAt: now,
       ...payload
     }
     store.unshift(record)
+    persist()
     return record
   },
-  /** 状态流转：A2 */
-  updateStatus(id: string, newStatus: string, operator: string = 'Demo 用户') {
-    const d = store.find((x: any) => x.id === id)
-    if (!d) return null
-    d.status = newStatus as any
-    d.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
-    return d
-  },
-  /** 注册：B1 - 写入协作信息和数据底表 */
+  /** 特征注册：生成特征ID，写入特征台账（特征状态为需求提出→已注册） */
   register(id: string, payload: any) {
     const d = store.find(x => x.id === id)
     if (!d) return null
-    // 数据底表名称等可暂空
     Object.assign(d, payload)
-    d.status = 'registered'
     // 生成特征 ID：MIDLOAN-FEAT-NNNN
     const idx = String(store.filter(x => x.featureId).length + 1).padStart(4, '0')
     d.featureId = `MIDLOAN-FEAT-${idx}`
     d.registeredAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
     d.updatedAt = d.registeredAt
+    // 需求状态保持为 requirement_accepted（注册状态由特征台账的 midloanStatus 跟踪）
+    persist()
     // 同步把生成的 featureId / dataTableName 等写回变量表
     const v = (window as any).__midloanVariableList
     if (v && Array.isArray(v)) {
@@ -348,12 +429,25 @@ export const DerivationStore = {
     }
     return d
   },
-  /** 补充数据底表（B1 R10） */
+  /** 需求驳回：仅需求受理状态可驳回，记录驳回原因 */
+  reject(id: string, reason: string) {
+    const d = store.find(x => x.id === id)
+    if (!d) return null
+    if (d.status !== 'requirement_accepted') return null
+    d.status = 'rejected'
+    d.rejectReason = reason
+    d.rejectedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
+    d.updatedAt = d.rejectedAt
+    persist()
+    return d
+  },
+  /** 补充数据底表 */
   supplementDataTable(id: string, tableName: string) {
     const d = store.find(x => x.id === id)
     if (!d) return null
     d.dataTableName = tableName
     d.updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ')
+    persist()
     return d
   }
 }
